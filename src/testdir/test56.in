@@ -1,0 +1,21 @@
+Test for script-local function.     vim: set ft=vim :
+
+STARTTEST
+:so small.vim
+:"
+:set nocp viminfo+=nviminfo
+:/^start:/+1,/^end:/-1w! Xtest.vim
+:source Xtest.vim
+_x
+:$-1,$wq! test.out
+ENDTEST
+
+start:
+fun <SID>DoLast()
+  call append(line('$'), "last line")
+endfun
+fun s:DoNothing()
+  call append(line('$'), "nothing line")
+endfun
+nnoremap <buffer> _x	:call <SID>DoNothing()<bar>call <SID>DoLast()<bar>delfunc <SID>DoNothing<bar>delfunc <SID>DoLast<cr>
+end:

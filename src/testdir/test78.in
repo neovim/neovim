@@ -1,0 +1,46 @@
+Inserts 10000 lines with text to fill the swap file with two levels of pointer
+blocks.  Then recovers from the swap file and checks all text is restored.
+
+We need about 10000 lines of 100 characters to get two levels of pointer
+blocks.
+
+STARTTEST
+:so small.vim
+:set nocp fileformat=unix undolevels=-1 viminfo+=nviminfo
+:e! Xtest
+ggdG
+:let text = "\tabcdefghijklmnoparstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnoparstuvwxyz0123456789"
+:let i = 1
+:let linecount = 10000
+:while i <= linecount | call append(i - 1, i . text) | let i += 1 | endwhile
+:preserve
+:" get the name of the swap file
+:redir => swapname
+:swapname
+:redir END
+:let swapname = substitute(swapname, '[[:blank:][:cntrl:]]*\(.\{-}\)[[:blank:][:cntrl:]]*$', '\1', '')
+:" make a copy of the swap file in Xswap
+:set bin
+:exe 'sp ' . swapname
+:w! Xswap
+:echo swapname
+:set nobin
+:new
+:only!
+:bwipe! Xtest
+:call rename('Xswap', swapname)
+:recover Xtest
+:call delete(swapname)
+:new
+:call append(0, 'recovery start')
+:wincmd w
+:let linedollar = line('$')
+:if linedollar < linecount | exe 'wincmd w' | call append(line('$'), "expected " . linecount . " lines but found only " . linedollar) | exe 'wincmd w' | let linecount = linedollar | endif
+:let i = 1
+:while i <= linecount | if getline(i) != i . text | exe 'wincmd w' | call append(line('$'), i . ' differs') | exe 'wincmd w' | endif | let i += 1 | endwhile
+:q!
+:call append(line('$'), 'recovery end')
+:w! test.out
+:qa!
+ENDTEST
+

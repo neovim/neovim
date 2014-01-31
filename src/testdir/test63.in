@@ -1,0 +1,157 @@
+Test for ":match", ":2match", ":3match", "clearmatches()", "getmatches()",
+"matchadd()", "matcharg()", "matchdelete()", and "setmatches()".
+
+STARTTEST
+:so small.vim
+:" --- Check that "matcharg()" returns the correct group and pattern if a match
+:" --- is defined.
+:let @r = "*** Test 1: "
+:highlight MyGroup1 ctermbg=red
+:highlight MyGroup2 ctermbg=green
+:highlight MyGroup3 ctermbg=blue
+:match MyGroup1 /TODO/
+:2match MyGroup2 /FIXME/
+:3match MyGroup3 /XXX/
+:if matcharg(1) == ['MyGroup1', 'TODO'] && matcharg(2) == ['MyGroup2', 'FIXME'] && matcharg(3) == ['MyGroup3', 'XXX']
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:" --- Check that "matcharg()" returns an empty list if the argument is not 1,
+:" --- 2 or 3 (only 0 and 4 are tested).
+:let @r .= "*** Test 2: "
+:if matcharg(0) == [] && matcharg(4) == []
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:" --- Check that "matcharg()" returns ['', ''] if a match is not defined.
+:let @r .= "*** Test 3: "
+:match
+:2match
+:3match
+:if matcharg(1) == ['', ''] && matcharg(2) == ['', ''] && matcharg(3) == ['', '']
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:" --- Check that "matchadd()" and "getmatches()" agree on added matches and
+:" --- that default values apply.
+:let @r .= "*** Test 4: "
+:let m1 = matchadd("MyGroup1", "TODO")
+:let m2 = matchadd("MyGroup2", "FIXME", 42)
+:let m3 = matchadd("MyGroup3", "XXX", 60, 17)
+:if getmatches() == [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 4}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 42, 'id': 5}, {'group': 'MyGroup3', 'pattern': 'XXX', 'priority': 60, 'id': 17}]
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:" --- Check that "matchdelete()" deletes the matches defined in the previous
+:" --- test correctly.
+:let @r .= "*** Test 5: "
+:call matchdelete(m1)
+:call matchdelete(m2)
+:call matchdelete(m3)
+:unlet m1
+:unlet m2
+:unlet m3
+:if getmatches() == []
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:" --- Check that "matchdelete()" returns 0 if successful and otherwise -1.
+:let @r .= "*** Test 6: "
+:let m = matchadd("MyGroup1", "TODO")
+:let r1 = matchdelete(m)
+:let r2 = matchdelete(42)
+:if r1 == 0 && r2 == -1
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:unlet m
+:unlet r1
+:unlet r2
+:" --- Check that "clearmatches()" clears all matches defined by ":match" and
+:" --- "matchadd()".
+:let @r .= "*** Test 7: "
+:let m1 = matchadd("MyGroup1", "TODO")
+:let m2 = matchadd("MyGroup2", "FIXME", 42)
+:let m3 = matchadd("MyGroup3", "XXX", 60, 17)
+:match MyGroup1 /COFFEE/
+:2match MyGroup2 /HUMPPA/
+:3match MyGroup3 /VIM/
+:call clearmatches()
+:if getmatches() == []
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:unlet m1
+:unlet m2
+:unlet m3
+:" --- Check that "setmatches()" restores a list of matches saved by
+:" --- "getmatches()" without changes. (Matches with equal priority must also
+:" --- remain in the same order.)
+:let @r .= "*** Test 8: "
+:let m1 = matchadd("MyGroup1", "TODO")
+:let m2 = matchadd("MyGroup2", "FIXME", 42)
+:let m3 = matchadd("MyGroup3", "XXX", 60, 17)
+:match MyGroup1 /COFFEE/
+:2match MyGroup2 /HUMPPA/
+:3match MyGroup3 /VIM/
+:let ml = getmatches()
+:call clearmatches()
+:call setmatches(ml)
+:if getmatches() == ml
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:call clearmatches()
+:unlet m1
+:unlet m2
+:unlet m3
+:unlet ml
+:" --- Check that "setmatches()" will not add two matches with the same ID. The
+:" --- expected behaviour (for now) is to add the first match but not the
+:" --- second and to return 0 (even though it is a matter of debate whether
+:" --- this can be considered successful behaviour).
+:let @r .= "*** Test 9: "
+:let r1 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}, {'group': 'MyGroup2', 'pattern': 'FIXME', 'priority': 10, 'id': 1}])
+:if getmatches() == [{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}] && r1 == 0
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:call clearmatches()
+:unlet r1
+:" --- Check that "setmatches()" returns 0 if successful and otherwise -1.
+:" --- (A range of valid and invalid input values are tried out to generate the
+:" --- return values.)
+:let @r .= "*** Test 10: "
+:let rs1 = setmatches([])
+:let rs2 = setmatches([{'group': 'MyGroup1', 'pattern': 'TODO', 'priority': 10, 'id': 1}])
+:call clearmatches()
+:let rf1 = setmatches(0)
+:let rf2 = setmatches([0])
+:let rf3 = setmatches([{'wrong key': 'wrong value'}])
+:if rs1 == 0 && rs2 == 0 && rf1 == -1 && rf2 == -1 && rf3 == -1
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:unlet rs1
+:unlet rs2
+:unlet rf1
+:unlet rf2
+:unlet rf3
+:highlight clear MyGroup1
+:highlight clear MyGroup2
+:highlight clear MyGroup3
+G"rp
+:/^Results/,$wq! test.out
+ENDTEST
+
+Results of test63:

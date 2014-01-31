@@ -1,0 +1,23 @@
+start of testfile
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  2
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  3
+	xxxxxxxxxxAxxxxxxxxxxxxxxxxxxx    line  4
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  5
+	xxxxxxxxxxxxxxxxxLINE 6, COL 19   line  6
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  7
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  8
+	NO COLUMN SPECIFIEDxxxxxxxxxxx    line  9
+	AGAIN NO COLUMNxxxxxxxxxxxxxxx    line 10
+COL 1	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 11
+	COL 2xxxxxxxxxxxxxxxxxxxxxxxxx    line 12
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 13
+	xxxxxxxxCOL 10xxxxxxxxxxxxxxxx    line 14
+	xVCOL 10xxxxxxxxxxxxxxxxxxxxxx    line 15
+	Ixxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 16
+	xxxx. SPACE POINTERxxxxxxxxxxx    line 17
+	xxxxx. DOT POINTERxxxxxxxxxxxx    line 18
+	xxxxxx. DASH POINTERxxxxxxxxxx    line 19
+	xxxxxxx. TAB-SPACE POINTERxxxx    line 20
+	xxxxxxxx:cf Xerrorfile1xxxxxxx    line 21
+	xxxxxxxx:cf Xerrorfile2xxxxxxx    line 22
+end of testfile

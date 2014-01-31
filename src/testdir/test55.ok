@@ -1,0 +1,126 @@
+start:
+[1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
+{'a': 1}
+1
+Vim(put):E684: 
+[1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
+['as''d', [1, 2, function('strlen')], {'a': 1}]
+[1, 'as''d', [1, 2, function('strlen')]]
+[1, 'as''d', [1, 2, function('strlen')], {'a': 1}]
+[]
+101101
+{'1': 'asd', 'b': [1, 2, function('strlen')], '-1': {'a': 1}}asd
+['-1', '1', 'b']
+['asd', [1, 2, function('strlen')], {'a': 1}]
+1:'asd'
+b:[1, 2, function('strlen')]
+-1:{'a': 1}
+Vim(call):E737: 3
+{'c': 'ccc', '1': 99, 'b': [1, 2, function('strlen')], '3': 33, '-1': {'a': 1}}
+{'c': 'ccc', '1': 99, '3': 33, '-1': {'a': 1}}
+101101
+Vim(let):E706: d
+Vim(let):E706: l
+[1, 'as''d', {'a': 1}]
+[4]
+{'1': 99, '3': 33}
+[0, 1, 2, 3]
+[0, 1, 3]
+[0, 1]
+[0, 1]
+[0, 1]
+[0, 1, 2, 3]
+[0, 1, 3]
+[0, 3]
+[3]
+[3]
+[3]
+2
+3
+Vim(let):E687: 
+Vim(let):E688: 
+3000 2900 2001 1600 1501
+Vim(let):E716: 1500
+NONE 2999
+33=999
+{'33': 999}
+len: 3
+again: 3
+Vim(call):E725: 
+g:dict.func-4
+a:function('3')
+Vim(let):E698: 
+same list: 1
+depth is 0
+0000-000
+ppppppp
+0000-000
+ppppppp
+0000-000
+ppppppp
+depth is 1
+1000-000
+ppppppF
+0000-000
+ppppppp
+0000-000
+ppppppp
+depth is 2
+1100-100
+ppFppFF
+0000-000
+ppppppp
+0000-000
+ppppppp
+depth is 3
+1110-110
+pFFpFFF
+0010-010
+pFppFpp
+0000-000
+ppppppp
+depth is 4
+1111-111
+FFFFFFF
+0011-011
+FFpFFpp
+0000-000
+ppppppp
+locked g:footest#x:-1
+exists g:footest#x:0
+g:footest#x: 1
+caught a:000
+caught a:000[0]
+caught a:000[2]
+caught a:000[3]
+[1, 2, [3, 9, 5, 6], {'a': 12, '5': 8}]
+['x8', [0, 1, 2], 'foo6', 'foo', 4, 'xaaa', 2, 'A11', '-0']
+['x8', [0, 1, 2], 'foo6', 'foo', 4, 'xaaa', 2, 'A11', '-0']
+['-0', 'A11', 'foo', 'foo6', 'x8', 'xaaa', 2, 4, [0, 1, 2]]
+[[0, 1, 2], 4, 2, 'xaaa', 'x8', 'foo6', 'foo', 'A11', '-0']
+['-0', 'A11', 'foo', 'foo6', 'x8', 'xaaa', 2, 4, [0, 1, 2]]
+['aa', 'bb']
+['aa', 'bb']
+['', 'aa', 'bb', '']
+['', '', 'aa', '', 'bb', '', '']
+['aa', '', 'bb']
+['', 'aa', '', 'bb', '']
+['aa', '', 'bb', 'cc', '']
+['a', 'b', 'c']
+['', 'a', '', 'b', '', 'c', '']
+1
+1
+0
+0
+1
+1
+[1, 2, 3, 4, 5, 1, 2, 3, 4, 5]
+{'a': {'b': 'B'}}
+Vim(call):E737: a
+{'a': {'b': 'B'}}
+Vim(foldopen):E490:
+
+
+Error detected while processing :
+E492: Not an editor command: foobar|catch|let a = matchstr(v:exception,'^[^ ]*')|endtry
+

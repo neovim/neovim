@@ -1,0 +1,13 @@
+Tests for file with some lines ending in CTRL-M, some not
+
+STARTTEST
+:set ta tx
+:e!
+:$-3,$w! test.out
+:qa!
+ENDTEST
+
+this lines ends in a
+this one doesn't
+this one does
+and the last one doesn't

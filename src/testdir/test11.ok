@@ -1,0 +1,61 @@
+startstart
+start of testfile
+line 2	Abcdefghijklmnopqrstuvwxyz
+line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 4	Abcdefghijklmnopqrstuvwxyz
+line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 6	Abcdefghijklmnopqrstuvwxyz
+line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 8	Abcdefghijklmnopqrstuvwxyz
+line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 10 Abcdefghijklmnopqrstuvwxyz
+end of testfile
+
+start of test.c
+/*
+ * Here is a new .c file
+ */
+end of test.c
+start of testfile
+line 2	Abcdefghijklmnopqrstuvwxyz
+line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 4	Abcdefghijklmnopqrstuvwxyz
+linE 5	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 6	AbcdefghijklmnopqrstuvwXyz
+linE 7	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 8	AbcdefghijklmnopqrstuvwXyz
+linE 9	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 10 AbcdefghijklmnopqrstuvwXyz
+End of testfile
+
+/*
+ * HEre is a NEW .c file
+ */
+/*
+ * HEre is a new .c file
+ */
+start of tEstfile
+linE 2	AbcdefghijklmnopqrstuvwXyz
+linE 3	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 4	AbcdefghijklmnopqrstuvwXyz
+linE 5	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 6	AbcdefghijklmnopqrstuvwXyz
+linE 7	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 8	AbcdefghijklmnopqrstuvwXyz
+linE 9	XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+linE 10 AbcdefghijklmnopqrstuvwXyz
+End of testfile
+/*
+ * HEre is a new .c file
+ */
+start of testfiLe
+Line 2	Abcdefghijklmnopqrstuvwxyz
+Line 3	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Line 4	Abcdefghijklmnopqrstuvwxyz
+Line 5	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Line 6	Abcdefghijklmnopqrstuvwxyz
+Line 7	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Line 8	Abcdefghijklmnopqrstuvwxyz
+Line 9	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Line 10 Abcdefghijklmnopqrstuvwxyz
+end of testfiLe

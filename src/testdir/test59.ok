@@ -1,0 +1,270 @@
+test output:
+
+test 1-1
+# file: Xtest.utf-8.spl
+Comment
+deol
+déôr
+input
+OK
+output
+outputs
+outtest
+put
+puts
+test
+testen
+testn
+the end
+uk
+wrong
+-------
+bad
+['put', 'uk', 'OK']
+inputs
+['input', 'puts', 'outputs']
+comment
+['Comment', 'outtest', 'the end']
+ok
+['OK', 'uk', 'put']
+Ok
+['OK', 'Uk', 'Put']
+test
+['Test', 'testn', 'testen']
+déôl
+['deol', 'déôr', 'test']
+end
+['put', 'uk', 'test']
+the
+['put', 'uk', 'test']
+gebletegek
+kepereneven
+everles gesvets etele
+kbltykk
+kprnfn
+*fls kswts tl
+elekwent
+elequint
+elekwint
+elekwint
+elekwent
+elequint
+elekwent
+elequint
+elekwint
+
+test 2-1
+# file: Xtest.utf-8.spl
+Comment
+deol
+déôr
+OK
+put
+input
+output
+puts
+outputs
+test
+outtest
+testen
+testn
+the end
+uk
+wrong
+-------
+bad
+['put', 'uk', 'OK']
+inputs
+['input', 'puts', 'outputs']
+comment
+['Comment']
+ok
+['OK', 'uk', 'put']
+Ok
+['OK', 'Uk', 'Put']
+end
+['put', 'uk', 'deol']
+the
+['put', 'uk', 'test']
+test
+['Test', 'testn', 'testen']
+déôl
+['deol', 'déôr', 'test']
+
+test 3-3
+# file: Xtest.utf-8.spl
+foo
+mï
+-------
+bad
+['foo', 'mï']
+bar
+['barfoo', 'foobar', 'foo']
+la
+['mï', 'foo']
+foomï
+['foo mï', 'foo', 'foofoo']
+barmï
+['barfoo', 'mï', 'barbar']
+mïfoo
+['mï foo', 'foo', 'foofoo']
+mïbar
+['foobar', 'barbar', 'mï']
+mïmï
+['mï mï', 'mï']
+lala
+[]
+mïla
+['mï', 'mï mï']
+lamï
+['mï', 'mï mï']
+foola
+['foo', 'foobar', 'foofoo']
+labar
+['barbar', 'foobar']
+
+test 4-4
+# file: Xtest.utf-8.spl
+bork
+prebork
+end
+pro-ok
+start
+tomato
+util
+utilize
+utils
+word
+nouword
+-------
+bad
+['end', 'bork', 'word']
+wordutilize
+['word utilize', 'wordutils', 'wordutil']
+pro
+['bork', 'word', 'end']
+borkborkborkborkborkbork
+['bork borkborkborkborkbork', 'borkbork borkborkborkbork', 'borkborkbork borkborkbork']
+tomatotomatotomato
+['tomato tomatotomato', 'tomatotomato tomato', 'tomato tomato tomato']
+endstart
+['end start', 'start']
+endend
+['end end', 'end']
+startstart
+['start start']
+wordend
+['word end', 'word', 'wordword']
+wordstart
+['word start', 'bork start']
+preborkprebork
+['prebork prebork', 'preborkbork', 'preborkborkbork']
+preborkpreborkbork
+['prebork preborkbork', 'preborkborkbork', 'preborkborkborkbork']
+startwordwordwordwordend
+['startwordwordwordword end', 'startwordwordwordword', 'start wordwordwordword end']
+borkpreborkpreborkbork
+['bork preborkpreborkbork', 'bork prebork preborkbork', 'bork preborkprebork bork']
+utilsbork
+['utilbork', 'utils bork', 'util bork']
+startnouword
+['start nouword', 'startword', 'startborkword']
+
+test 5-5
+# file: Xtest.utf-8.spl
+bar
+barbork
+end
+fooa1
+fooaé
+nouend
+prebar
+prebarbork
+start
+-------
+bad
+['bar', 'end', 'fooa1']
+foo
+['fooa1', 'fooaé', 'bar']
+fooa2
+['fooa1', 'fooaé', 'bar']
+prabar
+['prebar', 'bar', 'bar bar']
+probarbirk
+['prebarbork']
+middle
+[]
+startmiddle
+['startmiddleend', 'startmiddlebar']
+middleend
+[]
+endstart
+['end start', 'start']
+startprobar
+['startprebar', 'start prebar', 'startbar']
+startnouend
+['start nouend', 'startend']
+
+test 6-6
+# file: Xtest.utf-8.spl
+bar
+barbork
+end
+lead
+meea1
+meeaé
+prebar
+prebarbork
+-------
+bad
+['bar', 'end', 'lead']
+mee
+['meea1', 'meeaé', 'bar']
+meea2
+['meea1', 'meeaé', 'lead']
+prabar
+['prebar', 'bar', 'leadbar']
+probarbirk
+['prebarbork']
+middle
+[]
+leadmiddle
+['leadmiddleend', 'leadmiddlebar']
+middleend
+[]
+endlead
+['end lead', 'lead', 'end end']
+leadprobar
+['leadprebar', 'lead prebar', 'leadbar']
+
+test 7-7
+# file: Xtest.utf-8.spl
+bar
+barmeat
+lead
+meea1
+meeaé
+prebar
+prebarmeat
+tail
+-------
+bad
+['bar', 'lead', 'tail']
+mee
+['meea1', 'meeaé', 'bar']
+meea2
+['meea1', 'meeaé', 'lead']
+prabar
+['prebar', 'bar', 'leadbar']
+probarmaat
+['prebarmeat']
+middle
+[]
+leadmiddle
+['leadmiddlebar']
+middletail
+[]
+taillead
+['tail lead', 'tail']
+leadprobar
+['leadprebar', 'lead prebar', 'leadbar']

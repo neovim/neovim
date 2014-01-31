@@ -1,0 +1,73 @@
+Test for 'errorformat'.
+
+STARTTEST
+:so small.vim
+:/start of errorfile/,/end of errorfile/w! Xerrorfile
+:/start of testfile/,/end of testfile/w! Xtestfile
+:cf Xerrorfile
+rA
+:cn
+rB
+:cn
+rC
+:cn
+rD
+:cn
+rE
+:w! test.out             " Write contents of this file
+:qa!
+ENDTEST
+
+start of errorfile
+
+                  printf(" %d \n", (number/other)%10 );
+..................^
+%CC-E-NOSEMI, Missing ";".
+at line number 4 in file SYS$DISK:XTESTFILE
+
+             other=10000000;
+.............^
+%CC-E-UNDECLARED, In this statement, "oszt" is not declared.
+at line number 7 in file SYS$DISK:XTESTFILE
+
+             for (i = 0; i<7 ; i++ ){
+..................^
+%CC-E-UNDECLARED, In this statement, "i" is not declared.
+at line number 16 in file SYS$DISK:XTESTFILE
+
+some other error somewhere here.
+...........................^
+%CC-W-WARRING, Sorry, but no expalnation for such an warring.
+at line number 19 in file SYS$DISK:XTESTFILE
+
+and finally some other error exactly here.
+.....................................^
+%CC-I-INFORMATIONAL, It should be some informational message.
+at line number 20 in file SYS$DISK:XTESTFILE
+
+Does anyone know what is the problem and how to correct ??  :)
+end of errorfile
+
+start of testfile
+01234567890123456789012345678901234567
+line 3  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 4  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 5  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 6  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 7  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 8  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 9  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 10 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 11 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 12 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 13 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 14 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 15 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 16 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 17 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 18 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 19 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 20 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 21 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+line 22 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+end of testfile

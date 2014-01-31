@@ -1,0 +1,85 @@
+Test for Lua interface and luaeval() function
+
+STARTTEST
+:so small.vim
+:so lua.vim
+:set nocompatible viminfo+=nviminfo
+:lua l = vim.list():add"item0":add"dictionary with list OK":add"item2"
+:lua h = vim.dict(); h.list = l
+:call garbagecollect()
+/^1
+:" change buffer contents
+:lua curbuf = vim.buffer()
+:lua curline = vim.eval"line('.')"
+:lua curbuf[curline] = "1 changed line 1"
+:" scalar test
+:let tmp_string = luaeval('"string"')
+:let tmp_1000 = luaeval('1000')
+:if printf("%s%.0f", tmp_string, tmp_1000) == "string1000"
+:let scalar_res = "OK"
+:else
+:let scalar_res = "FAILED"
+:endif
+:call append(search("^1"), "scalar test " . scalar_res)
+:" dictionary containing a list
+:let tmp = luaeval("h").list[1]
+:/^2/put =tmp
+:" circular list (at the same time test lists containing lists)
+:lua l[2] = l
+:let l2 = luaeval("h").list
+:if l2[2] == l2
+:let res = "OK"
+:else
+:let res = "FAILED"
+:endif
+:call setline(search("^3"), "circular test " . res)
+
+:let l = []
+:lua l = vim.eval("l")
+:lua l:add(123)
+:lua l:add("abc")
+:lua l:add(vim.eval("[1, 2, 3]"))
+:lua l:add(vim.eval("{'a':1, 'b':2, 'c':3}"))
+:lua l:insert(123)
+:lua l:insert("abc")
+:lua l:insert(vim.eval("[1, 2, 3]"))
+:lua l:insert(vim.eval("{'a':1, 'b':2, 'c':3}"))
+:lua l[0] = l[0]
+:lua l[1] = l[1]
+:lua l[2] = l[2]
+:lua l[3] = l[3]
+:lua l[0] = 123
+:lua l[1] = "abc"
+:lua l[2] = vim.eval("[1, 2, 3]")
+:lua l[3] = vim.eval("{'a':1, 'b':2, 'c':3}")
+:lua l[3] = nil
+:lua l[2] = nil
+:lua l[1] = nil
+:lua l[0] = nil
+:lua l = nil
+:$put =string(l)
+
+:let d = {}
+:lua d = vim.eval("d")
+:lua d[0] = 123
+:lua d[1] = "abc"
+:lua d[2] = vim.eval("[1, 2, 3]")
+:lua d[3] = vim.eval("{'a':1, 'b':2, 'c':3}")
+:lua d[4] = d[0]
+:lua d[5] = d[1]
+:lua d[6] = d[2]
+:lua d[7] = d[3]
+:lua d[3] = nil
+:lua d[2] = nil
+:lua d[1] = nil
+:lua d[0] = nil
+:lua d = nil
+:$put =string(d)
+
+:?^1?,$w! test.out
+:qa!
+ENDTEST
+
+1 line 1
+2 line 2
+3 line 3

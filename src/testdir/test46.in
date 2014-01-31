@@ -1,0 +1,27 @@
+Tests for multi-line regexps with ":s". vim: set ft=vim :
+
+STARTTEST
+:" test if replacing a line break works with a back reference
+:/^1/,/^2/s/\n\(.\)/ \1/
+:" test if inserting a line break works with a back reference
+:/^3/,/^4/s/\(.\)$/\r\1/
+:" test if replacing a line break with another line break works
+:/^5/,/^6/s/\(\_d\{3}\)/x\1x/
+:/^1/,$w! test.out
+:qa!
+ENDTEST
+
+1 aa
+bb
+cc
+2 dd
+ee
+3 ef
+gh
+4 ij
+5 a8
+8b c9
+9d
+6 e7
+77f
+xxxxx

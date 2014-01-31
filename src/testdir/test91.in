@@ -1,0 +1,111 @@
+Tests for getbufvar(), getwinvar(), gettabvar() and gettabwinvar().
+vim: set ft=vim :
+
+STARTTEST
+:so small.vim
+:so mbyte.vim
+:"
+:" Test for getbufvar()
+:" Use strings to test for memory leaks.
+:let b:var_num = '1234'
+:let def_num = '5678'
+:$put =string(getbufvar(1, 'var_num'))
+:$put =string(getbufvar(1, 'var_num', def_num))
+:$put =string(getbufvar(1, ''))
+:$put =string(getbufvar(1, '', def_num))
+:unlet b:var_num
+:$put =string(getbufvar(1, 'var_num', def_num))
+:$put =string(getbufvar(1, ''))
+:$put =string(getbufvar(1, '', def_num))
+:$put =string(getbufvar(9, ''))
+:$put =string(getbufvar(9, '', def_num))
+:unlet def_num
+:$put =string(getbufvar(1, '&autoindent'))
+:$put =string(getbufvar(1, '&autoindent', 1))
+:"
+:" Open new window with forced option values
+:set fileformats=unix,dos
+:new ++ff=dos ++bin ++enc=iso-8859-2
+:let otherff = getbufvar(bufnr('%'), '&fileformat')
+:let otherbin = getbufvar(bufnr('%'), '&bin')
+:let otherfenc = getbufvar(bufnr('%'), '&fenc')
+:close
+:$put =otherff
+:$put =string(otherbin)
+:$put =otherfenc
+:unlet otherff otherbin otherfenc
+:" test for getwinvar()
+:let w:var_str = "Dance"
+:let def_str = "Chance"
+:$put =string(getwinvar(1, 'var_str'))
+:$put =string(getwinvar(1, 'var_str', def_str))
+:$put =string(getwinvar(1, ''))
+:$put =string(getwinvar(1, '', def_str))
+:unlet w:var_str
+:$put =string(getwinvar(1, 'var_str', def_str))
+:$put =string(getwinvar(1, ''))
+:$put =string(getwinvar(1, '', def_str))
+:$put =string(getwinvar(9, ''))
+:$put =string(getwinvar(9, '', def_str))
+:$put =string(getwinvar(1, '&nu'))
+:$put =string(getwinvar(1, '&nu',  1))
+:unlet def_str
+:"
+:" test for gettabvar()
+:tabnew
+:tabnew
+:let t:var_list = [1, 2, 3]
+:let def_list = [4, 5, 6, 7]
+:tabrewind
+:$put =string(gettabvar(3, 'var_list'))
+:$put =string(gettabvar(3, 'var_list', def_list))
+:$put =string(gettabvar(3, ''))
+:$put =string(gettabvar(3, '', def_list))
+:tablast
+:unlet t:var_list
+:tabrewind
+:$put =string(gettabvar(3, 'var_list', def_list))
+:$put =string(gettabvar(9, ''))
+:$put =string(gettabvar(9, '', def_list))
+:$put =string(gettabvar(3, '&nu'))
+:$put =string(gettabvar(3, '&nu', def_list))
+:unlet def_list
+:tabonly
+:"
+:" test for gettabwinvar()
+:tabnew
+:tabnew
+:tabprev
+:split
+:split
+:wincmd w
+:vert split
+:wincmd w
+:let w:var_dict = {'dict': 'tabwin'}
+:let def_dict = {'dict2': 'newval'}
+:wincmd b
+:tabrewind
+:$put =string(gettabwinvar(2, 3, 'var_dict'))
+:$put =string(gettabwinvar(2, 3, 'var_dict', def_dict))
+:$put =string(gettabwinvar(2, 3, ''))
+:$put =string(gettabwinvar(2, 3, '', def_dict))
+:tabnext
+:3wincmd w
+:unlet w:var_dict
+:tabrewind
+:$put =string(gettabwinvar(2, 3, 'var_dict', def_dict))
+:$put =string(gettabwinvar(2, 3, ''))
+:$put =string(gettabwinvar(2, 3, '', def_dict))
+:$put =string(gettabwinvar(2, 9, ''))
+:$put =string(gettabwinvar(2, 9, '', def_dict))
+:$put =string(gettabwinvar(9, 3, ''))
+:$put =string(gettabwinvar(9, 3, '', def_dict))
+:unlet def_dict
+:$put =string(gettabwinvar(2, 3, '&nux'))
+:$put =string(gettabwinvar(2, 3, '&nux', 1))
+:tabonly
+:"
+:/^start/,$wq! test.out
+ENDTEST
+
+start:

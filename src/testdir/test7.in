@@ -1,0 +1,26 @@
+Test for autocommand that changes the buffer list, when doing ":ball".
+
+STARTTEST
+:so small.vim
+/^start of
+A1:.,/end of/w! Xxx1   " write test file Xxx1
+:sp Xxx1
+:close
+$r2:.,/end of/w! Xxx2    " write test file Xxx2
+:sp Xxx2
+:close
+$r3:.,/end of/w! Xxx3    " write test file Xxx3
+:sp Xxx3
+:close
+:au BufReadPost Xxx2 bwipe
+$r4:ball                 " open window for all args, close Xxx2
+:.,$w! test.out          " Write contents of this file
+:w >>test.out        " Append contents of second window (Xxx1)
+:/^start of/,$w >>test.out   " Append contents of last window (this file)
+:qa!
+ENDTEST
+
+start of test file Xxx
+	this is a test
+	this is a test
+end of test file Xxx

@@ -1,0 +1,15 @@
+#include "Xtestfile"
+run1 run3
+run3 run3
+
+Makefile	to	run3
+Makefile	to	run3
+Makefile	to	run3
+Xtest11.two
+STARTTEST
+ENDTEST
+unless
+test11file	36Gepeto	/Tag/ asd
+asd
+run1 run2
+

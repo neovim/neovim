@@ -1,0 +1,206 @@
+
+#myagroup: 1
+OK
+#myagroup+b: 0
+OK
+#myagroup#BufEnter: 1
+OK
+#myagroup#BufEnter#*.my: 1
+OK
+#BufEnter: 1
+OK
+#BufEnter#*.my: 1
+OK
+#xyzagroup: 0
+OK
+#xyzagroup#BufEnter: 0
+OK
+#myagroup#CmdwinEnter: 0
+OK
+#myagroup#xyzacmd: 0
+OK
+#myagroup#BufEnter#xyzpat: 0
+OK
+#BufEnter#xyzpat: 0
+OK
+###: 0
+OK
+##: 0
+OK
+##FileReadCmd: 1
+OK
+##MySpecialCmd: 0
+OK
+&textwidth: 1
+OK
+&tw: 1
+OK
+&tw-: 0
+OK
+&g:errorformat: 1
+OK
+&l:errorformat: 1
+OK
+&nojoinspaces: 0
+OK
+&nojs: 0
+OK
+&myxyzoption: 0
+OK
++incsearch: 1
+OK
++incsearch!1: 0
+OK
++is: 1
+OK
++autoprint: 0
+OK
+$EDITOR_NAME: 1
+OK
+$NON_ENV_VAR: 0
+OK
+*bufnr: 1
+OK
+*bufnr(): 1
+OK
+*myxyzfunc: 0
+OK
+*bufnr&6: 0
+OK
+*TestExists: 1
+OK
+*MyxyzFunc: 0
+OK
+*UndefFun: 0
+OK
+*footest#F: 0
+OK
+:edit: 2
+OK
+:edit/a: 0
+OK
+:q: 1
+OK
+:invalidcmd: 0
+OK
+:MyCmd: 2
+OK
+:My: 3
+OK
+:rightbelow: 2
+OK
+:MyCmd: 0
+OK
+:My: 0
+OK
+local_var: 1
+OK
+local_var%n: 0
+OK
+local_var: 0
+OK
+footest#x: 0
+OK
+local_list: 1
+OK
+local_list[1]: 1
+OK
+local_list[1]+5: 0
+OK
+local_list[2]: 0
+OK
+local_list: 0
+OK
+local_dict: 1
+OK
+local_dict: 0
+OK
+curly_local_var: 1
+OK
+curly_local_var: 0
+OK
+g:global_var: 1
+OK
+g:global_var-n: 1
+OK
+g:global_var: 0
+OK
+g:global_list: 1
+OK
+g:global_list: 0
+OK
+g:global_dict: 1
+OK
+g:global_dict: 0
+OK
+g:curly_global_var: 1
+OK
+g:curly_global_var: 0
+OK
+w:window_var: 1
+OK
+w:window_var: 0
+OK
+w:window_list: 1
+OK
+w:window_list: 0
+OK
+w:window_dict: 1
+OK
+w:window_dict: 0
+OK
+w:curly_window_var: 1
+OK
+w:curly_window_var: 0
+OK
+b:buffer_var: 1
+OK
+b:buffer_var: 0
+OK
+b:buffer_list: 1
+OK
+b:buffer_list: 0
+OK
+b:buffer_dict: 1
+OK
+b:buffer_dict: 0
+OK
+b:curly_buffer_var: 1
+OK
+b:curly_buffer_var: 0
+OK
+s:script_var: 1
+OK
+s:script_var: 0
+OK
+s:script_list: 1
+OK
+s:script_list: 0
+OK
+s:script_dict: 1
+OK
+s:script_dict: 0
+OK
+s:curly_script_var: 1
+OK
+s:curly_script_var: 0
+OK
+*s:my_script_func: 1
+OK
+*s:my_script_func: 0
+OK
+v:version: 1
+OK
+v:non_exists_var: 0
+OK
+a:func_arg: 1
+OK
+a:non_exists_arg: 0
+OK
+a:1: 1
+OK
+a:2: 0
+OK
+ g:footest#x = 1
+   footest#F() 0
+UndefFun() 0

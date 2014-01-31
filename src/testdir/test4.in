@@ -1,0 +1,31 @@
+Test for autocommand that changes current buffer on BufEnter event.
+Check if modelines are interpreted for the correct buffer.
+
+STARTTEST
+:so small.vim
+:set nocompatible viminfo+=nviminfo
+:au BufEnter Xxx brew
+/start of
+:.,/end of/w! Xxx   " write test file Xxx
+:set ai modeline modelines=3
+:sp Xxx             " split to Xxx, autocmd will do :brew
+G?this is a
+othis should be auto-indented
+:                   " Append text with autoindent to this file
+:au! BufEnter Xxx
+:buf Xxx            " go to Xxx, no autocmd anymore
+G?this is a
+othis should be in column 1:wq " append text without autoindent to Xxx
+G:r Xxx             " include Xxx in the current file
+:?startstart?,$w! test.out
+:qa!
+ENDTEST
+
+startstart
+start of test file Xxx
+vim: set noai :
+	this is a test
+	this is a test
+	this is a test
+	this is a test
+end of test file Xxx

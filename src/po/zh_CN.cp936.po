@@ -1,0 +1,6140 @@
+# Chinese (simplified) Translation for Vim
+#
+# Do ":help uganda"  in Vim to read copying and usage conditions.
+# Do ":help credits" in Vim to see a list of people who contributed.
+#
+# FIRST AUTHOR  Wang Jun <junw@turbolinux.com.cn>
+# 
+# TRANSLATORS
+#   Edyfox <edyfox@gmail.com>
+#   Yuheng Xie <elephant@linux.net.cn>
+#
+# Generated from zh_CN.po, DO NOT EDIT.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Vim(Simplified Chinese)\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-04-21 15:16+0800\n"
+"PO-Revision-Date: 2006-04-21 14:00+0800\n"
+"Last-Translator: Yuheng Xie <elephant@linux.net.cn>\n"
+"Language-Team: Simplified Chinese <i18n-translation@lists.linux.net.cn>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=gbk\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+msgid "E82: Cannot allocate any buffer, exiting..."
+msgstr "E82: 无法分配任何缓冲区，退出程序..."
+
+msgid "E83: Cannot allocate buffer, using other one..."
+msgstr "E83: 无法分配缓冲区，使用另一个缓冲区..."
+
+msgid "E515: No buffers were unloaded"
+msgstr "E515: 没有释放任何缓冲区"
+
+msgid "E516: No buffers were deleted"
+msgstr "E516: 没有删除任何缓冲区"
+
+msgid "E517: No buffers were wiped out"
+msgstr "E517: 没有清除任何缓冲区"
+
+msgid "1 buffer unloaded"
+msgstr "释放了 1 个缓冲区"
+
+#, c-format
+msgid "%d buffers unloaded"
+msgstr "释放了 %d 个缓冲区"
+
+msgid "1 buffer deleted"
+msgstr "删除了 1 个缓冲区"
+
+#, c-format
+msgid "%d buffers deleted"
+msgstr "删除了 %d 个缓冲区"
+
+msgid "1 buffer wiped out"
+msgstr "清除了 1 个缓冲区"
+
+#, c-format
+msgid "%d buffers wiped out"
+msgstr "清除了 %d 个缓冲区"
+
+msgid "E84: No modified buffer found"
+msgstr "E84: 没有修改过的缓冲区"
+
+#. back where we started, didn't find anything.
+msgid "E85: There is no listed buffer"
+msgstr "E85: 没有可列出的缓冲区"
+
+#, c-format
+msgid "E86: Buffer %ld does not exist"
+msgstr "E86: 缓冲区 %ld 不存在"
+
+msgid "E87: Cannot go beyond last buffer"
+msgstr "E87: 无法切换，已是最后一个缓冲区"
+
+msgid "E88: Cannot go before first buffer"
+msgstr "E88: 无法切换，已是第一个缓冲区"
+
+#, c-format
+msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgstr "E89: 缓冲区 %ld 已修改但尚未保存 (请加 ! 强制执行)"
+
+msgid "E90: Cannot unload last buffer"
+msgstr "E90: 无法释放最后一个缓冲区"
+
+msgid "W14: Warning: List of file names overflow"
+msgstr "W14: 警告: 文件名过多"
+
+#, c-format
+msgid "E92: Buffer %ld not found"
+msgstr "E92: 找不到缓冲区 %ld"
+
+#, c-format
+msgid "E93: More than one match for %s"
+msgstr "E93: 找到不止一个 %s"
+
+#, c-format
+msgid "E94: No matching buffer for %s"
+msgstr "E94: 没有匹配的缓冲区 %s"
+
+#, c-format
+msgid "line %ld"
+msgstr "第 %ld 行"
+
+msgid "E95: Buffer with this name already exists"
+msgstr "E95: 已有缓冲区使用该名称"
+
+msgid " [Modified]"
+msgstr " [已修改]"
+
+msgid "[Not edited]"
+msgstr "[未编辑]"
+
+msgid "[New file]"
+msgstr "[新文件]"
+
+msgid "[Read errors]"
+msgstr "[读错误]"
+
+msgid "[readonly]"
+msgstr "[只读]"
+
+#, c-format
+msgid "1 line --%d%%--"
+msgstr "1 行 --%d%%--"
+
+#, c-format
+msgid "%ld lines --%d%%--"
+msgstr "%ld 行 --%d%%--"
+
+#, c-format
+msgid "line %ld of %ld --%d%%-- col "
+msgstr "行 %ld / %ld --%d%%-- 列 "
+
+msgid "[No Name]"
+msgstr "[未命名]"
+
+#. must be a help buffer
+msgid "help"
+msgstr "帮助"
+
+msgid "[Help]"
+msgstr "[帮助]"
+
+msgid "[Preview]"
+msgstr "[预览]"
+
+msgid "All"
+msgstr "全部"
+
+msgid "Bot"
+msgstr "底端"
+
+msgid "Top"
+msgstr "顶端"
+
+#, c-format
+msgid ""
+"\n"
+"# Buffer list:\n"
+msgstr ""
+"\n"
+"# 缓冲区列表:\n"
+
+msgid "[Location List]"
+msgstr "[Location 列表]"
+
+msgid "[Quickfix List]"
+msgstr "[Quickfix 列表]"
+
+msgid ""
+"\n"
+"--- Signs ---"
+msgstr ""
+"\n"
+"--- Signs ---"
+
+#, c-format
+msgid "Signs for %s:"
+msgstr "%s 的 Signs:"
+
+#, c-format
+msgid "    line=%ld  id=%d  name=%s"
+msgstr "    行=%ld  id=%d  名称=%s"
+
+#, c-format
+msgid "E96: Can not diff more than %ld buffers"
+msgstr "E96: 不能比较(diff) %ld 个以上的缓冲区"
+
+msgid "E97: Cannot create diffs"
+msgstr "E97: 无法创建 diff"
+
+msgid "Patch file"
+msgstr "Patch 文件"
+
+msgid "E98: Cannot read diff output"
+msgstr "E98: 无法读取 diff 的输出"
+
+msgid "E99: Current buffer is not in diff mode"
+msgstr "E99: 当前缓冲区不在 diff 模式"
+
+msgid "E100: No other buffer in diff mode"
+msgstr "E100: 没有其它处于 diff 模式的缓冲区"
+
+msgid "E101: More than two buffers in diff mode, don't know which one to use"
+msgstr "E101: 有两个以上的缓冲区处于 diff 模式，不能决定用哪一个"
+
+#, c-format
+msgid "E102: Can't find buffer \"%s\""
+msgstr "E102: 找不到缓冲区 \"%s\""
+
+#, c-format
+msgid "E103: Buffer \"%s\" is not in diff mode"
+msgstr "E103: 缓冲区 \"%s\" 不在 diff 模式"
+
+msgid "E787: Buffer changed unexpectedly"
+msgstr "E787: 意外地改变了缓冲区"
+
+msgid "E104: Escape not allowed in digraph"
+msgstr "E104: 复合字符(digraph)中不能使用 Escape"
+
+msgid "E544: Keymap file not found"
+msgstr "E544: 找不到 Keymap 文件"
+
+msgid "E105: Using :loadkeymap not in a sourced file"
+msgstr "E105: 不是在脚本文件中使用 :loadkeymap "
+
+msgid " Keyword completion (^N^P)"
+msgstr " 关键字补全 (^N^P)"
+
+#. ctrl_x_mode == 0, ^P/^N compl.
+msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+msgstr " ^X 模式 (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+
+msgid " Whole line completion (^L^N^P)"
+msgstr " 整行补全 (^L^N^P)"
+
+msgid " File name completion (^F^N^P)"
+msgstr " 文件名补全 (^F^N^P)"
+
+msgid " Tag completion (^]^N^P)"
+msgstr " Tag 补全 (^]^N^P)"
+
+#, fuzzy
+#~ msgid " Path pattern completion (^N^P)"
+#~ msgstr " 路径模式补全 (^N^P)"
+
+msgid " Definition completion (^D^N^P)"
+msgstr " 定义补全 (^D^N^P)"
+
+msgid " Dictionary completion (^K^N^P)"
+msgstr " Dictionary 补全 (^K^N^P)"
+
+msgid " Thesaurus completion (^T^N^P)"
+msgstr " Thesaurus 补全 (^T^N^P)"
+
+msgid " Command-line completion (^V^N^P)"
+msgstr " 命令行补全 (^V^N^P)"
+
+msgid " User defined completion (^U^N^P)"
+msgstr " 用户自定义补全 (^U^N^P)"
+
+msgid " Omni completion (^O^N^P)"
+msgstr " 全能补全 (^O^N^P)"
+
+msgid " Spelling suggestion (s^N^P)"
+msgstr " 拼写建议 (s^N^P)"
+
+msgid " Keyword Local completion (^N^P)"
+msgstr " 关键字局部补全 (^N^P)"
+
+msgid "Hit end of paragraph"
+msgstr "已到段落结尾"
+
+msgid "'dictionary' option is empty"
+msgstr "选项 'dictionary' 为空"
+
+msgid "'thesaurus' option is empty"
+msgstr "选项 'thesaurus' 为空"
+
+#, c-format
+msgid "Scanning dictionary: %s"
+msgstr "正在扫描 dictionary: %s"
+
+msgid " (insert) Scroll (^E/^Y)"
+msgstr " (插入) Scroll (^E/^Y)"
+
+msgid " (replace) Scroll (^E/^Y)"
+msgstr " (替换) Scroll (^E/^Y)"
+
+#, c-format
+msgid "Scanning: %s"
+msgstr "正在扫描: %s"
+
+#, c-format
+msgid "Scanning tags."
+msgstr "扫描标签."
+
+msgid " Adding"
+msgstr " 增加"
+
+#. showmode might reset the internal line pointers, so it must
+#. * be called before line = ml_get(), or when this address is no
+#. * longer needed.  -- Acevedo.
+#.
+msgid "-- Searching..."
+msgstr "-- 查找中..."
+
+msgid "Back at original"
+msgstr "回到起点"
+
+msgid "Word from other line"
+msgstr "另一行的词"
+
+msgid "The only match"
+msgstr "唯一匹配"
+
+#, c-format
+msgid "match %d of %d"
+msgstr "匹配 %d / %d"
+
+#, c-format
+msgid "match %d"
+msgstr "匹配 %d"
+
+msgid "E18: Unexpected characters in :let"
+msgstr "E18: :let 中出现异常字符"
+
+#, c-format
+msgid "E684: list index out of range: %ld"
+msgstr "E684: List 索引超出范围: %ld"
+
+#, c-format
+msgid "E121: Undefined variable: %s"
+msgstr "E121: 未定义的变量: %s"
+
+msgid "E111: Missing ']'"
+msgstr "E111: 缺少 ']'"
+
+#, c-format
+msgid "E686: Argument of %s must be a List"
+msgstr "E686: %s 的参数必须是 List"
+
+#, c-format
+msgid "E712: Argument of %s must be a List or Dictionary"
+msgstr "E712: %s 的参数必须是 List 或者 Dictionary"
+
+msgid "E713: Cannot use empty key for Dictionary"
+msgstr "E713: Dictionary 的键不能为空"
+
+msgid "E714: List required"
+msgstr "E714: 需要 List"
+
+msgid "E715: Dictionary required"
+msgstr "E715: 需要 Dictionary"
+
+#, c-format
+msgid "E118: Too many arguments for function: %s"
+msgstr "E118: 函数的参数过多: %s"
+
+#, c-format
+msgid "E716: Key not present in Dictionary: %s"
+msgstr "E716: Dictionary 中不存在键: %s"
+
+#, c-format
+msgid "E122: Function %s already exists, add ! to replace it"
+msgstr "E122: 函数 %s 已存在，请加 ! 强制替换"
+
+msgid "E717: Dictionary entry already exists"
+msgstr "E717: Dictionary 项已存在"
+
+msgid "E718: Funcref required"
+msgstr "E718: 需要 Funcref"
+
+msgid "E719: Cannot use [:] with a Dictionary"
+msgstr "E719: 不能对 Dictionary 使用 [:]"
+
+#, c-format
+msgid "E734: Wrong variable type for %s="
+msgstr "E734: %s= 的变量类型不正确"
+
+#, c-format
+msgid "E130: Unknown function: %s"
+msgstr "E130: 未知的函数: %s"
+
+#, c-format
+msgid "E461: Illegal variable name: %s"
+msgstr "E461: 无效的变量名: %s"
+
+msgid "E687: Less targets than List items"
+msgstr "E687: 目标比 List 项数少"
+
+msgid "E688: More targets than List items"
+msgstr "E688: 目标比 List 项数多"
+
+msgid "Double ; in list of variables"
+msgstr "变量列表中出现两个 ;"
+
+#, c-format
+msgid "E738: Can't list variables for %s"
+msgstr "E738: 无法列出 %s 的变量"
+
+msgid "E689: Can only index a List or Dictionary"
+msgstr "E689: 只能索引 List 或 Dictionary"
+
+msgid "E708: [:] must come last"
+msgstr "E708: [:] 必须在最后"
+
+msgid "E709: [:] requires a List value"
+msgstr "E709: [:] 需要一个 List 值"
+
+msgid "E710: List value has more items than target"
+msgstr "E710: List 值的项比目标多"
+
+msgid "E711: List value has not enough items"
+msgstr "E711: List 值没有足够多的项"
+
+msgid "E690: Missing \"in\" after :for"
+msgstr "E690: :for 后缺少 \"in\""
+
+#, c-format
+msgid "E107: Missing parentheses: %s"
+msgstr "E107: 缺少括号: %s"
+
+#, c-format
+msgid "E108: No such variable: \"%s\""
+msgstr "E108: 无此变量: \"%s\""
+
+msgid "E743: variable nested too deep for (un)lock"
+msgstr "E743: (un)lock 的变量嵌套过深"
+
+msgid "E109: Missing ':' after '?'"
+msgstr "E109: '?' 后缺少 ':'"
+
+msgid "E691: Can only compare List with List"
+msgstr "E691: 只能比较 List 和 List"
+
+msgid "E692: Invalid operation for Lists"
+msgstr "E692: 对 List 无效的操作"
+
+msgid "E735: Can only compare Dictionary with Dictionary"
+msgstr "E735: 只能比较 Dictionary 和 Dictionary"
+
+msgid "E736: Invalid operation for Dictionary"
+msgstr "E736: 对 Dictionary 无效的操作"
+
+msgid "E693: Can only compare Funcref with Funcref"
+msgstr "E693: 只能比较 Funcref 和 Funcref"
+
+msgid "E694: Invalid operation for Funcrefs"
+msgstr "E694: 对 Funcrefs 无效的操作"
+
+msgid "E110: Missing ')'"
+msgstr "E110: 缺少 ')'"
+
+msgid "E695: Cannot index a Funcref"
+msgstr "E695: 不能索引一个 Funcref"
+
+#, c-format
+msgid "E112: Option name missing: %s"
+msgstr "E112: 缺少选项名称: %s"
+
+#, c-format
+msgid "E113: Unknown option: %s"
+msgstr "E113: 未知的选项: %s"
+
+#, c-format
+msgid "E114: Missing quote: %s"
+msgstr "E114: 缺少引号: %s"
+
+#, c-format
+msgid "E115: Missing quote: %s"
+msgstr "E115: 缺少引号: %s"
+
+#, c-format
+msgid "E696: Missing comma in List: %s"
+msgstr "E696: List 中缺少逗号: %s"
+
+#, c-format
+msgid "E697: Missing end of List ']': %s"
+msgstr "E697: List 缺少结束符 ']': %s"
+
+#, c-format
+msgid "E720: Missing colon in Dictionary: %s"
+msgstr "E720: Dictionary 中缺少冒号: %s"
+
+#, c-format
+msgid "E721: Duplicate key in Dictionary: \"%s\""
+msgstr "E721: Dictionary 中出现重复的键: \"%s\""
+
+#, c-format
+msgid "E722: Missing comma in Dictionary: %s"
+msgstr "E722: Dictionary 中缺少逗号: %s"
+
+#, c-format
+msgid "E723: Missing end of Dictionary '}': %s"
+msgstr "E723: Dictionary 缺少结束符 '}': %s"
+
+msgid "E724: variable nested too deep for displaying"
+msgstr "E724: 变量嵌套过深无法显示"
+
+msgid "E699: Too many arguments"
+msgstr "E699: 参数过多"
+
+msgid "E785: complete() can only be used in Insert mode"
+msgstr "E785: complete() 只能在插入模式中使用"
+
+#.
+#. * Yes this is ugly, I don't particularly like it either.  But doing it
+#. * this way has the compelling advantage that translations need not to
+#. * be touched at all.  See below what 'ok' and 'ync' are used for.
+#.
+msgid "&Ok"
+msgstr "确定(&O)"
+
+#, c-format
+msgid "E737: Key already exists: %s"
+msgstr "E737: 键已存在: %s"
+
+#, c-format
+msgid "+-%s%3ld lines: "
+msgstr "+-%s%3ld 行: "
+
+#, c-format
+msgid "E700: Unknown function: %s"
+msgstr "E700: 未知的函数: %s"
+
+msgid ""
+"&OK\n"
+"&Cancel"
+msgstr ""
+"确定(&O)\n"
+"取消(&C)"
+
+msgid "called inputrestore() more often than inputsave()"
+msgstr "inputrestore() 的调用次数多于 inputsave()"
+
+msgid "E786: Range not allowed"
+msgstr "E786: 不允许的范围"
+
+msgid "E701: Invalid type for len()"
+msgstr "E701: len() 的类型无效"
+
+msgid "E726: Stride is zero"
+msgstr "E726: 步长为零"
+
+msgid "E727: Start past end"
+msgstr "E727: 起始值在终止值后"
+
+msgid "<empty>"
+msgstr "<空>"
+
+msgid "E240: No connection to Vim server"
+msgstr "E240: 没有到 Vim 服务器的连接"
+
+#, c-format
+msgid "E241: Unable to send to %s"
+msgstr "E241: 无法发送到 %s"
+
+msgid "E277: Unable to read a server reply"
+msgstr "E277: 无法读取服务器响应"
+
+msgid "E655: Too many symbolic links (cycle?)"
+msgstr "E655: 符号连接过多(循环？)"
+
+msgid "E258: Unable to send to client"
+msgstr "E258: 无法发送到客户端"
+
+msgid "E702: Sort compare function failed"
+msgstr "E702: Sort 比较函数失败"
+
+msgid "(Invalid)"
+msgstr "(无效)"
+
+msgid "E677: Error writing temp file"
+msgstr "E677: 写临时文件出错"
+
+msgid "E703: Using a Funcref as a Number"
+msgstr "E703: 将 Funcref 作数字使用"
+
+msgid "E745: Using a List as a Number"
+msgstr "E745: 将 List 作数字使用"
+
+msgid "E728: Using a Dictionary as a Number"
+msgstr "E728: 将 Dictionary 作数字使用"
+
+msgid "E729: using Funcref as a String"
+msgstr "E729: 将 Funcref 作 String 使用"
+
+msgid "E730: using List as a String"
+msgstr "E730: 将 List 作 String 使用"
+
+msgid "E731: using Dictionary as a String"
+msgstr "E731: 将 Dictionary 作 String 使用"
+
+#, c-format
+msgid "E704: Funcref variable name must start with a capital: %s"
+msgstr "E704: Funcref 变量名必须以大写字母开头: %s"
+
+#, c-format
+msgid "E705: Variable name conflicts with existing function: %s"
+msgstr "E705: 变量名与已有函数名冲突: %s"
+
+#, c-format
+msgid "E706: Variable type mismatch for: %s"
+msgstr "E706: 变量类型不匹配: %s"
+
+#, c-format
+msgid "E741: Value is locked: %s"
+msgstr "E741: 值已锁定: %s"
+
+msgid "Unknown"
+msgstr "未知"
+
+#, c-format
+msgid "E742: Cannot change value of %s"
+msgstr "E742: 无法改变 %s 的值"
+
+msgid "E698: variable nested too deep for making a copy"
+msgstr "E698: 变量嵌套过深无法复制"
+
+#, c-format
+msgid "E124: Missing '(': %s"
+msgstr "E124: 缺少 '(': %s"
+
+#, c-format
+msgid "E125: Illegal argument: %s"
+msgstr "E125: 无效的参数: %s"
+
+msgid "E126: Missing :endfunction"
+msgstr "E126: 缺少 :endfunction"
+
+#, c-format
+msgid "E746: Function name does not match script file name: %s"
+msgstr "E746: 函数名与脚本文件名不匹配: %s"
+
+msgid "E129: Function name required"
+msgstr "E129: 需要函数名"
+
+#, c-format
+msgid "E128: Function name must start with a capital or contain a colon: %s"
+msgstr "E128: 函数名必须以大写字母开头或者包含冒号: %s"
+
+#, c-format
+msgid "E131: Cannot delete function %s: It is in use"
+msgstr "E131: 无法删除函数 %s: 正在使用中"
+
+msgid "E132: Function call depth is higher than 'maxfuncdepth'"
+msgstr "E132: 函数调用深度超出 'maxfuncdepth'"
+
+#, c-format
+msgid "calling %s"
+msgstr "调用 %s"
+
+#, c-format
+msgid "%s aborted"
+msgstr "%s 已中止"
+
+#, c-format
+msgid "%s returning #%ld"
+msgstr "%s 返回 #%ld "
+
+#, c-format
+msgid "%s returning %s"
+msgstr "%s 返回 %s"
+
+#, c-format
+msgid "continuing in %s"
+msgstr "在 %s 中继续"
+
+msgid "E133: :return not inside a function"
+msgstr "E133: :return 不在函数中"
+
+#, c-format
+msgid ""
+"\n"
+"# global variables:\n"
+msgstr ""
+"\n"
+"# 全局变量:\n"
+
+msgid ""
+"\n"
+"\tLast set from "
+msgstr ""
+"\n"
+"\t最近修改于 "
+
+#, c-format
+msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgstr "<%s>%s%s  %d,  十六进制 %02x,  八进制 %03o"
+
+#, c-format
+msgid "> %d, Hex %04x, Octal %o"
+msgstr "> %d, 十六进制 %04x, 八进制 %o"
+
+#, c-format
+msgid "> %d, Hex %08x, Octal %o"
+msgstr "> %d, 十六进制 %08x, 八进制 %o"
+
+msgid "E134: Move lines into themselves"
+msgstr "E134: 把行移动到自已中"
+
+msgid "1 line moved"
+msgstr "移动了 1 行"
+
+#, c-format
+msgid "%ld lines moved"
+msgstr "移动了 %ld 行"
+
+#, c-format
+msgid "%ld lines filtered"
+msgstr "过滤了 %ld 行"
+
+msgid "E135: *Filter* Autocommands must not change current buffer"
+msgstr "E135: *Filter* 自动命令不可以改变当前缓冲区"
+
+msgid "[No write since last change]\n"
+msgstr "[已修改但尚未保存]\n"
+
+# bad to translate
+#, c-format
+msgid "%sviminfo: %s in line: "
+msgstr "%sviminfo: %s 位于行: "
+
+msgid "E136: viminfo: Too many errors, skipping rest of file"
+msgstr "E136: viminfo: 错误过多，忽略文件的剩余部分"
+
+#, c-format
+msgid "Reading viminfo file \"%s\"%s%s%s"
+msgstr "读取 viminfo 文件 \"%s\"%s%s%s"
+
+msgid " info"
+msgstr " 信息"
+
+msgid " marks"
+msgstr " 标记"
+
+msgid " FAILED"
+msgstr " 失败"
+
+#, c-format
+msgid "E137: Viminfo file is not writable: %s"
+msgstr "E137: Viminfo 文件不可写入: %s"
+
+#, c-format
+msgid "E138: Can't write viminfo file %s!"
+msgstr "E138: 无法写入 viminfo 文件 %s！"
+
+#, c-format
+msgid "Writing viminfo file \"%s\""
+msgstr "写入 viminfo 文件 \"%s\""
+
+# do not translate to avoid writing Chinese in files
+#. Write the info:
+#, fuzzy, c-format
+#~ msgid "# This viminfo file was generated by Vim %s.\n"
+#~ msgstr "# 这个 viminfo 文件是由 Vim %s 生成的。\n"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy, c-format
+msgid ""
+"# You may edit it if you're careful!\n"
+"\n"
+msgstr ""
+"# 如果要自行修改请特别小心！\n"
+"\n"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy, c-format
+#~ msgid "# Value of 'encoding' when this file was written\n"
+#~ msgstr "# 'encoding' 在此文件建立时的值\n"
+
+msgid "Illegal starting char"
+msgstr "无效的启动字符"
+
+msgid "Save As"
+msgstr "另存为"
+
+msgid "Write partial file?"
+msgstr "要写入部分文件吗？"
+
+msgid "E140: Use ! to write partial buffer"
+msgstr "E140: 请使用 ! 来写入部分缓冲区"
+
+#, c-format
+msgid "Overwrite existing file \"%s\"?"
+msgstr "覆盖已存在的文件 \"%s\" 吗？"
+
+#, c-format
+msgid "Swap file \"%s\" exists, overwrite anyway?"
+msgstr "交换文件 \"%s\" 已存在，确实要覆盖吗？"
+
+#, c-format
+msgid "E768: Swap file exists: %s (:silent! overrides)"
+msgstr "E768: 交换文件已存在: %s (:silent! 强制执行)"
+
+#, c-format
+msgid "E141: No file name for buffer %ld"
+msgstr "E141: 缓冲区 %ld 没有文件名"
+
+msgid "E142: File not written: Writing is disabled by 'write' option"
+msgstr "E142: 文件未写入: 写入被 'write' 选项禁用"
+
+#, c-format
+msgid ""
+"'readonly' option is set for \"%s\".\n"
+"Do you wish to write anyway?"
+msgstr ""
+"\"%s\" 已设定 'readonly' 选项。\n"
+"确实要覆盖吗？"
+
+msgid "Edit File"
+msgstr "编辑文件"
+
+#, c-format
+msgid "E143: Autocommands unexpectedly deleted new buffer %s"
+msgstr "E143: 自动命令意外地删除了新缓冲区 %s"
+
+msgid "E144: non-numeric argument to :z"
+msgstr "E144: :z 不接受非数字的参数"
+
+msgid "E145: Shell commands not allowed in rvim"
+msgstr "E145: rvim 中禁止使用 shell 命令"
+
+msgid "E146: Regular expressions can't be delimited by letters"
+msgstr "E146: 正则表达式不能用字母作分界"
+
+#, c-format
+msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
+msgstr "替换为 %s (y/n/a/q/l/^E/^Y)？"
+
+msgid "(Interrupted) "
+msgstr "(已中断) "
+
+msgid "1 match"
+msgstr "1 个匹配，"
+
+msgid "1 substitution"
+msgstr "1 次替换，"
+
+#, c-format
+msgid "%ld matches"
+msgstr "%ld 个匹配，"
+
+#, c-format
+msgid "%ld substitutions"
+msgstr "%ld 次替换，"
+
+msgid " on 1 line"
+msgstr "共 1 行"
+
+#, c-format
+msgid " on %ld lines"
+msgstr "共 %ld 行"
+
+msgid "E147: Cannot do :global recursive"
+msgstr "E147: :global 不能递归执行"
+
+msgid "E148: Regular expression missing from global"
+msgstr "E148: global 缺少正则表达式"
+
+#, c-format
+msgid "Pattern found in every line: %s"
+msgstr "每行都匹配表达式: %s"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy, c-format
+msgid ""
+"\n"
+"# Last Substitute String:\n"
+"$"
+msgstr ""
+"\n"
+"# 最近的替换字符串:\n"
+"$"
+
+msgid "E478: Don't panic!"
+msgstr "E478: 不要慌！"
+
+#, c-format
+msgid "E661: Sorry, no '%s' help for %s"
+msgstr "E661: 抱歉，没有 '%s' 的 %s 的说明"
+
+#, c-format
+msgid "E149: Sorry, no help for %s"
+msgstr "E149: 抱歉，没有 %s 的说明"
+
+#, c-format
+msgid "Sorry, help file \"%s\" not found"
+msgstr "抱歉，找不到帮助文件 \"%s\""
+
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: 不是目录: %s"
+
+#, c-format
+msgid "E152: Cannot open %s for writing"
+msgstr "E152: 无法打开并写入 %s"
+
+#, c-format
+msgid "E153: Unable to open %s for reading"
+msgstr "E153: 无法打开并读取 %s"
+
+#, c-format
+msgid "E670: Mix of help file encodings within a language: %s"
+msgstr "E670: 在一种语言中混合了多种帮助文件编码: %s"
+
+#, c-format
+msgid "E154: Duplicate tag \"%s\" in file %s/%s"
+msgstr "E154: Tag \"%s\" 在文件 %s/%s 中重复出现"
+
+#, c-format
+msgid "E160: Unknown sign command: %s"
+msgstr "E160: 未知的 sign 命令: %s"
+
+msgid "E156: Missing sign name"
+msgstr "E156: 缺少 sign 名称"
+
+msgid "E612: Too many signs defined"
+msgstr "E612: Signs 定义过多"
+
+#, c-format
+msgid "E239: Invalid sign text: %s"
+msgstr "E239: 无效的 sign 文字: %s"
+
+#, c-format
+msgid "E155: Unknown sign: %s"
+msgstr "E155: 未知的 sign: %s"
+
+msgid "E159: Missing sign number"
+msgstr "E159: 缺少 sign 号"
+
+#, c-format
+msgid "E158: Invalid buffer name: %s"
+msgstr "E158: 无效的缓冲区名: %s"
+
+#, c-format
+msgid "E157: Invalid sign ID: %ld"
+msgstr "E157: 无效的 sign ID: %ld"
+
+msgid " (NOT FOUND)"
+msgstr " (找不到)"
+
+msgid " (not supported)"
+msgstr " (不支持)"
+
+msgid "[Deleted]"
+msgstr "[已删除]"
+
+msgid "Entering Debug mode.  Type \"cont\" to continue."
+msgstr "进入调试模式。输入 \"cont\" 继续运行。"
+
+#, c-format
+msgid "line %ld: %s"
+msgstr "第 %ld 行: %s"
+
+#, c-format
+msgid "cmd: %s"
+msgstr "命令: %s"
+
+#, c-format
+msgid "Breakpoint in \"%s%s\" line %ld"
+msgstr "断点 \"%s%s\" 第 %ld 行"
+
+#, c-format
+msgid "E161: Breakpoint not found: %s"
+msgstr "E161: 找不到断点: %s"
+
+msgid "No breakpoints defined"
+msgstr "没有定义断点"
+
+#, c-format
+msgid "%3d  %s %s  line %ld"
+msgstr "%3d  %s %s  第 %ld 行"
+
+msgid "E750: First use :profile start <fname>"
+msgstr "E750: 请先使用 :profile start <fname>"
+
+#, c-format
+msgid "Save changes to \"%s\"?"
+msgstr "将改变保存到 \"%s\" 吗？"
+
+msgid "Untitled"
+msgstr "未命名"
+
+#, c-format
+msgid "E162: No write since last change for buffer \"%s\""
+msgstr "E162: 缓冲区 \"%s\" 已修改但尚未保存"
+
+msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
+msgstr "警告: 意外地进入了其它缓冲区 (请检查自动命令)"
+
+msgid "E163: There is only one file to edit"
+msgstr "E163: 只有一个文件可编辑"
+
+msgid "E164: Cannot go before first file"
+msgstr "E164: 无法切换，已是第一个文件"
+
+msgid "E165: Cannot go beyond last file"
+msgstr "E165: 无法切换，已是最后一个文件"
+
+#, c-format
+msgid "E666: compiler not supported: %s"
+msgstr "E666: 不支持编译器: %s"
+
+#, c-format
+msgid "Searching for \"%s\" in \"%s\""
+msgstr "正在查找 \"%s\"，在 \"%s\" 中"
+
+#, c-format
+msgid "Searching for \"%s\""
+msgstr "正在查找 \"%s\""
+
+#, c-format
+msgid "not found in 'runtimepath': \"%s\""
+msgstr "在 'runtimepath' 中找不到 \"%s\""
+
+msgid "Source Vim script"
+msgstr "执行 Vim 脚本"
+
+#, c-format
+msgid "Cannot source a directory: \"%s\""
+msgstr "不能执行目录: \"%s\""
+
+#, c-format
+msgid "could not source \"%s\""
+msgstr "不能执行 \"%s\""
+
+#, c-format
+msgid "line %ld: could not source \"%s\""
+msgstr "第 %ld 行: 不能执行 \"%s\""
+
+#, c-format
+msgid "sourcing \"%s\""
+msgstr "执行 \"%s\""
+
+#, c-format
+msgid "line %ld: sourcing \"%s\""
+msgstr "第 %ld 行: 执行 \"%s\""
+
+#, c-format
+msgid "finished sourcing %s"
+msgstr "结束执行 %s"
+
+msgid "modeline"
+msgstr "modeline"
+
+msgid "--cmd argument"
+msgstr "--cmd 参数"
+
+msgid "-c argument"
+msgstr "-c 参数"
+
+msgid "environment variable"
+msgstr "环境变量"
+
+#~ msgid "error handler"
+#~ msgstr ""
+
+msgid "W15: Warning: Wrong line separator, ^M may be missing"
+msgstr "W15: 警告: 错误的行分隔符，可能是少了 ^M"
+
+msgid "E167: :scriptencoding used outside of a sourced file"
+msgstr "E167: 在脚本文件外使用了 :scriptencoding"
+
+msgid "E168: :finish used outside of a sourced file"
+msgstr "E168: 在脚本文件外使用了 :finish"
+
+#, c-format
+msgid "Current %slanguage: \"%s\""
+msgstr "当前的 %s语言: \"%s\""
+
+#, c-format
+msgid "E197: Cannot set language to \"%s\""
+msgstr "E197: 不能设定语言为 \"%s\""
+
+msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
+msgstr "进入 Ex 模式。输入 \"visual\" 回到正常模式。"
+
+msgid "E501: At end-of-file"
+msgstr "E501: 已到文件末尾"
+
+msgid "E169: Command too recursive"
+msgstr "E169: 命令递归层数过多"
+
+#, c-format
+msgid "E605: Exception not caught: %s"
+msgstr "E605: 异常没有被捕获: %s"
+
+msgid "End of sourced file"
+msgstr "脚本文件结束"
+
+msgid "End of function"
+msgstr "函数结束"
+
+msgid "E464: Ambiguous use of user-defined command"
+msgstr "E464: 不确定的用户自定义命令"
+
+msgid "E492: Not an editor command"
+msgstr "E492: 不是编辑器的命令"
+
+msgid "E493: Backwards range given"
+msgstr "E493: 使用了逆向的范围"
+
+msgid "Backwards range given, OK to swap"
+msgstr "使用了逆向的范围，确定交换吗"
+
+msgid "E494: Use w or w>>"
+msgstr "E494: 请使用 w 或 w>>"
+
+msgid "E319: Sorry, the command is not available in this version"
+msgstr "E319: 抱歉，命令在此版本中不可用"
+
+msgid "E172: Only one file name allowed"
+msgstr "E172: 只允许一个文件名"
+
+msgid "1 more file to edit.  Quit anyway?"
+msgstr "还有 1 个文件未编辑。确实要退出吗？"
+
+#, c-format
+msgid "%d more files to edit.  Quit anyway?"
+msgstr "还有 %d 个文件未编辑。确实要退出吗？"
+
+msgid "E173: 1 more file to edit"
+msgstr "E173: 还有 1 个文件未编辑"
+
+#, c-format
+msgid "E173: %ld more files to edit"
+msgstr "E173: 还有 %ld 个文件未编辑"
+
+msgid "E174: Command already exists: add ! to replace it"
+msgstr "E174: 命令已存在: 请加 ! 强制替换"
+
+msgid ""
+"\n"
+"    Name        Args Range Complete  Definition"
+msgstr ""
+"\n"
+"    名称        参数 范围  补全      定义      "
+
+msgid "No user-defined commands found"
+msgstr "找不到用户自定义命令"
+
+msgid "E175: No attribute specified"
+msgstr "E175: 没有指定属性"
+
+msgid "E176: Invalid number of arguments"
+msgstr "E176: 无效的参数个数"
+
+msgid "E177: Count cannot be specified twice"
+msgstr "E177: 不能指定两次计数"
+
+msgid "E178: Invalid default value for count"
+msgstr "E178: 无效的计数默认值"
+
+msgid "E179: argument required for -complete"
+msgstr "E179: -complete 需要参数"
+
+#, c-format
+msgid "E181: Invalid attribute: %s"
+msgstr "E181: 无效的属性: %s"
+
+msgid "E182: Invalid command name"
+msgstr "E182: 无效的命令名"
+
+msgid "E183: User defined commands must start with an uppercase letter"
+msgstr "E183: 用户自定义命令必须以大写字母开头"
+
+#, c-format
+msgid "E184: No such user-defined command: %s"
+msgstr "E184: 没有这个用户自定义命令: %s"
+
+#, c-format
+msgid "E180: Invalid complete value: %s"
+msgstr "E180: 无效的补全类型: %s"
+
+msgid "E468: Completion argument only allowed for custom completion"
+msgstr "E468: 只有 custom 补全才允许参数"
+
+msgid "E467: Custom completion requires a function argument"
+msgstr "E467: Custom 补全需要一个函数参数"
+
+#, c-format
+msgid "E185: Cannot find color scheme %s"
+msgstr "E185: 找不到配色方案 %s"
+
+msgid "Greetings, Vim user!"
+msgstr "您好，Vim 用户！"
+
+msgid "E784: Cannot close last tab page"
+msgstr "E784: 不能关闭最后一个 tab 页"
+
+msgid "Already only one tab page"
+msgstr "已经只剩一个 tab 页了"
+
+msgid "Edit File in new window"
+msgstr "在新窗口编辑文件"
+
+#, c-format
+msgid "Tab page %d"
+msgstr "Tab 页 %d"
+
+msgid "No swap file"
+msgstr "无交换文件"
+
+msgid "Append File"
+msgstr "追加文件"
+
+msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
+msgstr "E747: 不能改变目录，缓冲区已修改 (请加 ! 强制执行)"
+
+msgid "E186: No previous directory"
+msgstr "E186: 前一个目录不存在"
+
+msgid "E187: Unknown"
+msgstr "E187: 未知"
+
+msgid "E465: :winsize requires two number arguments"
+msgstr "E465: :winsize 需要两个数字参数"
+
+#, c-format
+msgid "Window position: X %d, Y %d"
+msgstr "窗口位置: X %d, Y %d"
+
+msgid "E188: Obtaining window position not implemented for this platform"
+msgstr "E188: 在此平台上不能获得窗口位置"
+
+msgid "E466: :winpos requires two number arguments"
+msgstr "E466: :winpos 需要两个数字参数"
+
+msgid "Save Redirection"
+msgstr "保存重定向"
+
+msgid "Save View"
+msgstr "保存视图"
+
+msgid "Save Session"
+msgstr "保存会话"
+
+msgid "Save Setup"
+msgstr "保存设定"
+
+#, c-format
+msgid "E739: Cannot create directory: %s"
+msgstr "E739: 无法创建目录: %s"
+
+#, c-format
+msgid "E189: \"%s\" exists (add ! to override)"
+msgstr "E189: \"%s\" 已存在 (请加 ! 强制执行)"
+
+#, c-format
+msgid "E190: Cannot open \"%s\" for writing"
+msgstr "E190: 无法打开并写入 \"%s\""
+
+#. set mark
+msgid "E191: Argument must be a letter or forward/backward quote"
+msgstr "E191: 参数必须是一个字母或者正/反引号"
+
+msgid "E192: Recursive use of :normal too deep"
+msgstr "E192: :normal 递归层数过深"
+
+msgid "E194: No alternate file name to substitute for '#'"
+msgstr "E194: 没有用于替换 '#' 的交替文件名"
+
+msgid "E495: no autocommand file name to substitute for \"<afile>\""
+msgstr "E495: 没有用于替换 \"<afile>\" 的自动命令文件名"
+
+msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
+msgstr "E496: 没有用于替换 \"<abuf>\" 的自动命令缓冲区号"
+
+msgid "E497: no autocommand match name to substitute for \"<amatch>\""
+msgstr "E497: 没有用于替换 \"<amatch>\" 的自动命令匹配名"
+
+msgid "E498: no :source file name to substitute for \"<sfile>\""
+msgstr "E498: 没有用于替换 \"<sfile>\" 的 :source 文件名"
+
+#, no-c-format
+msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
+msgstr "E499: '%' 或 '#' 为空文件名，只能用于 \":p:h\""
+
+msgid "E500: Evaluates to an empty string"
+msgstr "E500: 结果为空字符串"
+
+msgid "E195: Cannot open viminfo file for reading"
+msgstr "E195: 无法打开并读取 viminfo 文件"
+
+msgid "E196: No digraphs in this version"
+msgstr "E196: 此版本无复合字符(digraph)"
+
+msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
+msgstr "E608: 不能 :throw 前缀为 'Vim' 的异常"
+
+#. always scroll up, don't overwrite
+#, c-format
+msgid "Exception thrown: %s"
+msgstr "抛出异常: %s"
+
+#, c-format
+msgid "Exception finished: %s"
+msgstr "完成异常: %s"
+
+#, c-format
+msgid "Exception discarded: %s"
+msgstr "丢弃异常: %s"
+
+#, c-format
+msgid "%s, line %ld"
+msgstr "%s，第 %ld 行"
+
+#. always scroll up, don't overwrite
+#, c-format
+msgid "Exception caught: %s"
+msgstr "捕获异常: %s"
+
+#, c-format
+#~ msgid "%s made pending"
+#~ msgstr ""
+
+#, fuzzy, c-format
+#~ msgid "%s resumed"
+#~ msgstr " 已返回\n"
+
+#, c-format
+#~ msgid "%s discarded"
+#~ msgstr ""
+
+msgid "Exception"
+msgstr "异常"
+
+msgid "Error and interrupt"
+msgstr "错误和中断"
+
+msgid "Error"
+msgstr "错误"
+
+#. if (pending & CSTP_INTERRUPT)
+msgid "Interrupt"
+msgstr "中断"
+
+msgid "E579: :if nesting too deep"
+msgstr "E579: :if 嵌套层数过深"
+
+msgid "E580: :endif without :if"
+msgstr "E580: :endif 缺少对应的 :if"
+
+msgid "E581: :else without :if"
+msgstr "E581: :else 缺少对应的 :if"
+
+msgid "E582: :elseif without :if"
+msgstr "E582: :elseif 缺少对应的 :if"
+
+msgid "E583: multiple :else"
+msgstr "E583: 多个 :else"
+
+msgid "E584: :elseif after :else"
+msgstr "E584: :elseif 在 :else 后面"
+
+msgid "E585: :while/:for nesting too deep"
+msgstr "E585: :while/:for 嵌套层数过深"
+
+msgid "E586: :continue without :while or :for"
+msgstr "E586: :continue 缺少对应的 :while 或 :for"
+
+msgid "E587: :break without :while or :for"
+msgstr "E587: :break 缺少对应的 :while 或 :for"
+
+msgid "E732: Using :endfor with :while"
+msgstr "E732: :while 以 :endfor 结尾"
+
+msgid "E733: Using :endwhile with :for"
+msgstr "E733: :for 以 :endwhile 结尾"
+
+msgid "E601: :try nesting too deep"
+msgstr "E601: :try 嵌套层数过深"
+
+msgid "E603: :catch without :try"
+msgstr "E603: :catch 缺少对应的 :try"
+
+#. Give up for a ":catch" after ":finally" and ignore it.
+#. * Just parse.
+msgid "E604: :catch after :finally"
+msgstr "E604: :catch 在 :finally 后面"
+
+msgid "E606: :finally without :try"
+msgstr "E606: :finally 缺少对应的 :try"
+
+#. Give up for a multiple ":finally" and ignore it.
+msgid "E607: multiple :finally"
+msgstr "E607: 多个 :finally"
+
+msgid "E602: :endtry without :try"
+msgstr "E602: :endtry 缺少对应的 :try"
+
+msgid "E193: :endfunction not inside a function"
+msgstr "E193: :endfunction 不在函数内"
+
+msgid "E788: Not allowed to edit another buffer now"
+msgstr "E788: 目前不允许编辑别的缓冲区"
+
+msgid "tagname"
+msgstr "tag 名"
+
+msgid " kind file\n"
+msgstr " 类型 文件\n"
+
+msgid "'history' option is zero"
+msgstr "选项 'history' 为零"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy, c-format
+msgid ""
+"\n"
+"# %s History (newest to oldest):\n"
+msgstr ""
+"\n"
+"# %s 历史记录 (从新到旧):\n"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "Command Line"
+#~ msgstr "命令行"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "Search String"
+#~ msgstr "查找字符串"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "Expression"
+#~ msgstr "表达式"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "Input Line"
+#~ msgstr "输入行"
+
+msgid "E198: cmd_pchar beyond the command length"
+msgstr "E198: cmd_pchar 超过命令长度"
+
+msgid "E199: Active window or buffer deleted"
+msgstr "E199: 活动窗口或缓冲区已被删除"
+
+msgid "Illegal file name"
+msgstr "无效的文件名"
+
+msgid "is a directory"
+msgstr "是目录"
+
+msgid "is not a file"
+msgstr "不是文件"
+
+msgid "[New File]"
+msgstr "[新文件]"
+
+msgid "[New DIRECTORY]"
+msgstr "[新目录]"
+
+msgid "[File too big]"
+msgstr "[文件过大]"
+
+msgid "[Permission Denied]"
+msgstr "[权限不足]"
+
+msgid "E200: *ReadPre autocommands made the file unreadable"
+msgstr "E200: *ReadPre 自动命令导致文件不可读"
+
+msgid "E201: *ReadPre autocommands must not change current buffer"
+msgstr "E201: *ReadPre 自动命令不允许改变当前缓冲区"
+
+msgid "Vim: Reading from stdin...\n"
+msgstr "Vim: 从标准输入读取...\n"
+
+msgid "Reading from stdin..."
+msgstr "从标准输入读取..."
+
+#. Re-opening the original file failed!
+msgid "E202: Conversion made file unreadable!"
+msgstr "E202: 转换导致文件不可读"
+
+msgid "[fifo/socket]"
+msgstr "[fifo/socket]"
+
+msgid "[fifo]"
+msgstr "[fifo]"
+
+msgid "[socket]"
+msgstr "[socket]"
+
+msgid "[RO]"
+msgstr "[只读]"
+
+msgid "[CR missing]"
+msgstr "[缺少 CR]'"
+
+msgid "[NL found]"
+msgstr "[找到 NL]"
+
+msgid "[long lines split]"
+msgstr "[长行分割]"
+
+msgid "[NOT converted]"
+msgstr "[未转换]"
+
+msgid "[converted]"
+msgstr "[已转换]"
+
+msgid "[crypted]"
+msgstr "[已加密]"
+
+#, c-format
+msgid "[CONVERSION ERROR in line %ld]"
+msgstr "[第 %ld 行转换错误]"
+
+#, c-format
+msgid "[ILLEGAL BYTE in line %ld]"
+msgstr "[第 %ld 行无效字符]"
+
+msgid "[READ ERRORS]"
+msgstr "[读错误]"
+
+msgid "Can't find temp file for conversion"
+msgstr "找不到用于转换的临时文件"
+
+msgid "Conversion with 'charconvert' failed"
+msgstr "'charconvert' 转换失败"
+
+msgid "can't read output of 'charconvert'"
+msgstr "无法读取 'charconvert' 的输出"
+
+msgid "E676: No matching autocommands for acwrite buffer"
+msgstr "E676: 找不到 acwrite 缓冲区对应的自动命令"
+
+msgid "E203: Autocommands deleted or unloaded buffer to be written"
+msgstr "E203: 自动命令删除或释放了要写入的缓冲区"
+
+msgid "E204: Autocommand changed number of lines in unexpected way"
+msgstr "E204: 自动命令意外地改变了行数"
+
+msgid "NetBeans disallows writes of unmodified buffers"
+msgstr "NetBeans 不允许未修改的缓冲区写入"
+
+msgid "Partial writes disallowed for NetBeans buffers"
+msgstr "NetBeans 不允许缓冲区部分写入"
+
+msgid "is not a file or writable device"
+msgstr "不是文件或可写的设备"
+
+msgid "is read-only (add ! to override)"
+msgstr "只读 (请加 ! 强制执行)"
+
+msgid "E506: Can't write to backup file (add ! to override)"
+msgstr "E506: 无法写入备份文件 (请加 ! 强制执行)"
+
+msgid "E507: Close error for backup file (add ! to override)"
+msgstr "E507: 关闭备份文件出错 (请加 ! 强制执行)"
+
+msgid "E508: Can't read file for backup (add ! to override)"
+msgstr "E508: 无法读取文件以供备份 (请加 ! 强制执行)"
+
+msgid "E509: Cannot create backup file (add ! to override)"
+msgstr "E509: 无法创建备份文件 (请加 ! 强制执行)"
+
+msgid "E510: Can't make backup file (add ! to override)"
+msgstr "E510: 无法生成备份文件 (请加 ! 强制执行)"
+
+msgid "E460: The resource fork would be lost (add ! to override)"
+msgstr "E460: Resource fork 会丢失 (请加 ! 强制执行)"
+
+msgid "E214: Can't find temp file for writing"
+msgstr "E214: 找不到用于写入的临时文件"
+
+msgid "E213: Cannot convert (add ! to write without conversion)"
+msgstr "E213: 无法转换 (请加 ! 强制不转换写入)"
+
+msgid "E166: Can't open linked file for writing"
+msgstr "E166: 无法打开并写入链接文件"
+
+msgid "E212: Can't open file for writing"
+msgstr "E212: 无法打开并写入文件"
+
+msgid "E667: Fsync failed"
+msgstr "E667: 同步失败"
+
+msgid "E512: Close failed"
+msgstr "E512: 关闭失败"
+
+msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
+msgstr "E513: 写入错误，转换失败 (请将 'fenc' 置空以强制执行)"
+
+msgid "E514: write error (file system full?)"
+msgstr "E514: 写入错误 (文件系统已满？)"
+
+msgid " CONVERSION ERROR"
+msgstr " 转换错误"
+
+msgid "[Device]"
+msgstr "[设备]"
+
+msgid "[New]"
+msgstr "[新]"
+
+msgid " [a]"
+msgstr " [a]"
+
+msgid " appended"
+msgstr " 已追加"
+
+msgid " [w]"
+msgstr " [w]"
+
+msgid " written"
+msgstr " 已写入"
+
+msgid "E205: Patchmode: can't save original file"
+msgstr "E205: Patchmode: 无法保存原始文件"
+
+msgid "E206: patchmode: can't touch empty original file"
+msgstr "E206: Patchmode: 无法生成空的原始文件"
+
+msgid "E207: Can't delete backup file"
+msgstr "E207: 无法删除备份文件"
+
+msgid ""
+"\n"
+"WARNING: Original file may be lost or damaged\n"
+msgstr ""
+"\n"
+"警告: 原始文件可能已丢失或损坏\n"
+
+msgid "don't quit the editor until the file is successfully written!"
+msgstr "在文件正确写入前请勿退出编辑器！"
+
+msgid "[dos]"
+msgstr "[dos]"
+
+msgid "[dos format]"
+msgstr "[dos 格式]"
+
+msgid "[mac]"
+msgstr "[mac]"
+
+msgid "[mac format]"
+msgstr "[mac 格式]"
+
+msgid "[unix]"
+msgstr "[unix]"
+
+msgid "[unix format]"
+msgstr "[unix 格式]"
+
+msgid "1 line, "
+msgstr "1 行，"
+
+#, c-format
+msgid "%ld lines, "
+msgstr "%ld 行，"
+
+msgid "1 character"
+msgstr "1 个字符"
+
+#, c-format
+msgid "%ld characters"
+msgstr "%ld 个字符"
+
+msgid "[noeol]"
+msgstr "[noeol]"
+
+msgid "[Incomplete last line]"
+msgstr "[最后一行不完整]"
+
+#. don't overwrite messages here
+#. must give this prompt
+#. don't use emsg() here, don't want to flush the buffers
+msgid "WARNING: The file has been changed since reading it!!!"
+msgstr "警告: 此文件自读入后已发生变动！！！"
+
+msgid "Do you really want to write to it"
+msgstr "确实要写入吗"
+
+#, c-format
+msgid "E208: Error writing to \"%s\""
+msgstr "E208: 写入文件 \"%s\" 出错"
+
+#, c-format
+msgid "E209: Error closing \"%s\""
+msgstr "E209: 关闭文件 \"%s\" 出错"
+
+#, c-format
+msgid "E210: Error reading \"%s\""
+msgstr "E210: 读取文件 \"%s\" 出错"
+
+msgid "E246: FileChangedShell autocommand deleted buffer"
+msgstr "E246: FileChangedShell 自动命令删除了缓冲区"
+
+#, c-format
+msgid "E211: File \"%s\" no longer available"
+msgstr "E211: 文件 \"%s\" 已经不存在"
+
+#, c-format
+msgid ""
+"W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as "
+"well"
+msgstr "W12: 警告: 文件 \"%s\" 已变动，并且在 Vim 中的缓冲区也已变动"
+
+msgid "See \":help W12\" for more info."
+msgstr "进一步说明请见 \":help W12\""
+
+#, c-format
+msgid "W11: Warning: File \"%s\" has changed since editing started"
+msgstr "W11: 警告: 编辑开始后，文件 \"%s\" 已变动"
+
+msgid "See \":help W11\" for more info."
+msgstr "进一步说明请见 \":help W11\""
+
+#, c-format
+msgid "W16: Warning: Mode of file \"%s\" has changed since editing started"
+msgstr "W16: 警告: 编辑开始后，文件 \"%s\" 的模式已变动"
+
+msgid "See \":help W16\" for more info."
+msgstr "进一步说明请见 \":help W16\""
+
+#, c-format
+msgid "W13: Warning: File \"%s\" has been created after editing started"
+msgstr "W13: 警告: 编辑开始后，文件 \"%s\" 已被创建"
+
+msgid "Warning"
+msgstr "警告"
+
+msgid ""
+"&OK\n"
+"&Load File"
+msgstr ""
+"确定(&O)\n"
+"加载文件(&L)"
+
+#, c-format
+msgid "E462: Could not prepare for reloading \"%s\""
+msgstr "E462: 无法为重新加载 \"%s\" 做准备"
+
+#, c-format
+msgid "E321: Could not reload \"%s\""
+msgstr "E321: 无法重新加载 \"%s\""
+
+msgid "--Deleted--"
+msgstr "--已删除--"
+
+#, c-format
+#~ msgid "auto-removing autocommand: %s <buffer=%d>"
+#~ msgstr ""
+
+#. the group doesn't exist
+#, c-format
+msgid "E367: No such group: \"%s\""
+msgstr "E367: 无此组: \"%s\""
+
+#, c-format
+msgid "E215: Illegal character after *: %s"
+msgstr "E215: * 后面有无效字符: %s"
+
+#, c-format
+msgid "E216: No such event: %s"
+msgstr "E216: 无此事件: %s"
+
+#, c-format
+msgid "E216: No such group or event: %s"
+msgstr "E216: 无此组或事件: %s"
+
+#. Highlight title
+msgid ""
+"\n"
+"--- Auto-Commands ---"
+msgstr ""
+"\n"
+"--- 自动命令 ---"
+
+#, c-format
+msgid "E680: <buffer=%d>: invalid buffer number "
+msgstr "E680: <buffer=%d>: 无效的缓冲区号 "
+
+msgid "E217: Can't execute autocommands for ALL events"
+msgstr "E217: 不能对所有事件执行自动命令"
+
+msgid "No matching autocommands"
+msgstr "没有匹配的自动命令"
+
+msgid "E218: autocommand nesting too deep"
+msgstr "E218: 自动命令嵌套层数过深"
+
+#, c-format
+msgid "%s Auto commands for \"%s\""
+msgstr "%s 自动命令 \"%s\""
+
+#, c-format
+msgid "Executing %s"
+msgstr "执行 %s"
+
+#, c-format
+msgid "autocommand %s"
+msgstr "自动命令 %s"
+
+msgid "E219: Missing {."
+msgstr "E219: 缺少 {。"
+
+msgid "E220: Missing }."
+msgstr "E220: 缺少 }。"
+
+msgid "E490: No fold found"
+msgstr "E490: 找不到折叠"
+
+msgid "E350: Cannot create fold with current 'foldmethod'"
+msgstr "E350: 不能在当前的 'foldmethod' 下创建折叠"
+
+msgid "E351: Cannot delete fold with current 'foldmethod'"
+msgstr "E351: 不能在当前的 'foldmethod' 下删除折叠"
+
+#, c-format
+msgid "+--%3ld lines folded "
+msgstr "+--已折叠 %3ld 行"
+
+msgid "E222: Add to read buffer"
+msgstr "E222: 添加到已读缓冲区中"
+
+msgid "E223: recursive mapping"
+msgstr "E223: 递归映射"
+
+#, c-format
+msgid "E224: global abbreviation already exists for %s"
+msgstr "E224: 全局缩写 %s 已存在"
+
+#, c-format
+msgid "E225: global mapping already exists for %s"
+msgstr "E225: 全局映射 %s 已存在"
+
+#, c-format
+msgid "E226: abbreviation already exists for %s"
+msgstr "E226: 缩写 %s 已存在"
+
+#, c-format
+msgid "E227: mapping already exists for %s"
+msgstr "E227: 映射 %s 已存在"
+
+msgid "No abbreviation found"
+msgstr "找不到缩写"
+
+msgid "No mapping found"
+msgstr "找不到映射"
+
+msgid "E228: makemap: Illegal mode"
+msgstr "E228: makemap: 无效的模式"
+
+msgid "E229: Cannot start the GUI"
+msgstr "E229: 无法启动图形界面"
+
+#, c-format
+msgid "E230: Cannot read from \"%s\""
+msgstr "E230: 无法读取文件 \"%s\""
+
+msgid "E665: Cannot start GUI, no valid font found"
+msgstr "E665: 无法启动图形界面，找不到有效的字体"
+
+msgid "E231: 'guifontwide' invalid"
+msgstr "E231: 无效的 'guifontwide'"
+
+msgid "E599: Value of 'imactivatekey' is invalid"
+msgstr "E599: 'imactivatekey' 的值无效"
+
+#, c-format
+msgid "E254: Cannot allocate color %s"
+msgstr "E254: 无法分配颜色 %s"
+
+msgid "No match at cursor, finding next"
+msgstr "在光标处没有匹配，查找下一个"
+
+msgid "<cannot open> "
+msgstr "<无法打开>"
+
+#, c-format
+msgid "E616: vim_SelFile: can't get font %s"
+msgstr "E616: vim_SelFile: 无法获取字体 %s"
+
+msgid "E614: vim_SelFile: can't return to current directory"
+msgstr "E614: vim_SelFile: 无法返回当前目录"
+
+msgid "Pathname:"
+msgstr "路径:"
+
+msgid "E615: vim_SelFile: can't get current directory"
+msgstr "E615: vim_SelFile: 无法获取当前目录"
+
+msgid "OK"
+msgstr "确定"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
+msgstr "滚动条部件: 无法获取滑块图像的几何大小"
+
+msgid "Vim dialog"
+msgstr "Vim 对话框"
+
+msgid "E232: Cannot create BalloonEval with both message and callback"
+msgstr "E232: 不能同时使用消息和回调函数来创建 BalloonEval"
+
+msgid "Vim dialog..."
+msgstr "Vim 对话框..."
+
+msgid ""
+"&Yes\n"
+"&No\n"
+"&Cancel"
+msgstr ""
+"是(&Y)\n"
+"否(&N)\n"
+"取消(&C)"
+
+msgid "Input _Methods"
+msgstr "输入法(_M)"
+
+msgid "VIM - Search and Replace..."
+msgstr "VIM - 查找和替换..."
+
+msgid "VIM - Search..."
+msgstr "VIM - 查找..."
+
+msgid "Find what:"
+msgstr "查找内容:"
+
+msgid "Replace with:"
+msgstr "替换为:"
+
+#. whole word only button
+msgid "Match whole word only"
+msgstr "匹配完整的词"
+
+#. match case button
+msgid "Match case"
+msgstr "匹配大小写"
+
+msgid "Direction"
+msgstr "方向"
+
+#. 'Up' and 'Down' buttons
+msgid "Up"
+msgstr "向上"
+
+msgid "Down"
+msgstr "向下"
+
+msgid "Find Next"
+msgstr "查找下一个"
+
+msgid "Replace"
+msgstr "替换"
+
+msgid "Replace All"
+msgstr "全部替换"
+
+msgid "Vim: Received \"die\" request from session manager\n"
+msgstr "Vim: 从会话管理器收到 \"die\" 请求\n"
+
+msgid "Close"
+msgstr "关闭"
+
+msgid "New tab"
+msgstr "新建标签"
+
+msgid "Open Tab..."
+msgstr "打开标签..."
+
+msgid "Vim: Main window unexpectedly destroyed\n"
+msgstr "Vim: 主窗口被意外地摧毁\n"
+
+msgid "Font Selection"
+msgstr "选择字体"
+
+msgid "Used CUT_BUFFER0 instead of empty selection"
+msgstr "使用 CUT_BUFFER0 来取代空选择"
+
+msgid "&Filter"
+msgstr "过滤(&F)"
+
+msgid "&Cancel"
+msgstr "取消(&C)"
+
+msgid "Directories"
+msgstr "目录"
+
+msgid "Filter"
+msgstr "过滤器"
+
+msgid "&Help"
+msgstr "帮助(&H)"
+
+msgid "Files"
+msgstr "文件"
+
+msgid "&OK"
+msgstr "确定(&O)"
+
+msgid "Selection"
+msgstr "选择"
+
+msgid "Find &Next"
+msgstr "查找下一个(&N)"
+
+msgid "&Replace"
+msgstr "替换(&R)"
+
+msgid "Replace &All"
+msgstr "全部替换(&A)"
+
+msgid "&Undo"
+msgstr "撤销(&U)"
+
+#, c-format
+msgid "E671: Cannot find window title \"%s\""
+msgstr "E671: 找不到窗口标题 \"%s\""
+
+#, c-format
+msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
+msgstr "E243: 不支持的参数: \"-%s\"；请使用 OLE 版本。"
+
+msgid "E672: Unable to open window inside MDI application"
+msgstr "E672: 无法在 MDI 应用程序中打开窗口"
+
+msgid "Close tab"
+msgstr "关闭标签"
+
+msgid "Open tab..."
+msgstr "打开标签..."
+
+msgid "Find string (use '\\\\' to find  a '\\')"
+msgstr "查找字符串 (使用 '\\\\' 来查找 '\\')"
+
+msgid "Find & Replace (use '\\\\' to find  a '\\')"
+msgstr "查找和替换字符串 (使用 '\\\\' 来查找 '\\')"
+
+#. We fake this: Use a filter that doesn't select anything and a default
+#. * file name that won't be used.
+msgid "Not Used"
+msgstr "未使用"
+
+msgid "Directory\t*.nothing\n"
+msgstr "目录\t*.nothing\n"
+
+msgid "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
+msgstr "Vim E458: 无法分配颜色表项，某些颜色可能不正确"
+
+#, c-format
+msgid "E250: Fonts for the following charsets are missing in fontset %s:"
+msgstr "E250: Fontset %s 缺少下列字符集的字体:"
+
+#, c-format
+msgid "E252: Fontset name: %s"
+msgstr "E252: Fontset 名称: %s"
+
+#, c-format
+msgid "Font '%s' is not fixed-width"
+msgstr "'%s' 不是固定宽度的字体"
+
+#, c-format
+msgid "E253: Fontset name: %s\n"
+msgstr "E253: Fontset 名称: %s\n"
+
+#, c-format
+msgid "Font0: %s\n"
+msgstr "字体0: %s\n"
+
+#, c-format
+msgid "Font1: %s\n"
+msgstr "字体1: %s\n"
+
+#, c-format
+msgid "Font%ld width is not twice that of font0\n"
+msgstr "字体%ld的宽度不是字体0的两倍\n"
+
+#, c-format
+msgid "Font0 width: %ld\n"
+msgstr "字体0的宽度：%ld\n"
+
+#, c-format
+msgid ""
+"Font1 width: %ld\n"
+"\n"
+msgstr ""
+"字体1的宽度: %ld\n"
+"\n"
+
+msgid "Invalid font specification"
+msgstr "指定了无效的字体"
+
+msgid "&Dismiss"
+msgstr "取消(&D)"
+
+msgid "no specific match"
+msgstr "找不到匹配的项"
+
+msgid "Vim - Font Selector"
+msgstr "Vim - 字体选择器"
+
+msgid "Name:"
+msgstr "名称:"
+
+#. create toggle button
+#~ msgid "Show size in Points"
+#~ msgstr ""
+
+msgid "Encoding:"
+msgstr "编码:"
+
+msgid "Font:"
+msgstr "字体:"
+
+msgid "Style:"
+msgstr "风格:"
+
+msgid "Size:"
+msgstr "尺寸:"
+
+msgid "E256: Hangul automata ERROR"
+msgstr "E256: Hangul automata 错误"
+
+msgid "E550: Missing colon"
+msgstr "E550: 缺少冒号"
+
+msgid "E551: Illegal component"
+msgstr "E551: 无效的部分"
+
+msgid "E552: digit expected"
+msgstr "E552: 应该要有数字"
+
+#, c-format
+msgid "Page %d"
+msgstr "第 %d 页"
+
+msgid "No text to be printed"
+msgstr "没有要打印的文字"
+
+#, c-format
+msgid "Printing page %d (%d%%)"
+msgstr "正在打印第 %d 页 (%d%%)"
+
+#, c-format
+msgid " Copy %d of %d"
+msgstr "复制 %d / %d"
+
+#, c-format
+msgid "Printed: %s"
+msgstr "已打印: %s"
+
+msgid "Printing aborted"
+msgstr "打印中止"
+
+msgid "E455: Error writing to PostScript output file"
+msgstr "E455: 写入 PostScript 输出文件出错"
+
+#, c-format
+msgid "E624: Can't open file \"%s\""
+msgstr "E624: 无法打开文件 \"%s\""
+
+#, c-format
+msgid "E457: Can't read PostScript resource file \"%s\""
+msgstr "E457: 无法读取 PostScript 资源文件 \"%s\""
+
+#, c-format
+msgid "E618: file \"%s\" is not a PostScript resource file"
+msgstr "E618: 文件 \"%s\" 不是 PostScript 资源文件"
+
+#, c-format
+msgid "E619: file \"%s\" is not a supported PostScript resource file"
+msgstr "E619: 文件 \"%s\" 不是已支持的 PostScript 资源文件"
+
+#, c-format
+msgid "E621: \"%s\" resource file has wrong version"
+msgstr "E621: \"%s\" 资源文件版本不正确"
+
+msgid "E673: Incompatible multi-byte encoding and character set."
+msgstr "E673: 不兼容的多字节编码和字符集。"
+
+msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
+msgstr "E674: printmbcharset 在多字节编码下不能为空。"
+
+msgid "E675: No default font specified for multi-byte printing."
+msgstr "E675: 没有指定多字节打印的默认字体。"
+
+msgid "E324: Can't open PostScript output file"
+msgstr "E324: 无法打开 PostScript 输出文件"
+
+#, c-format
+msgid "E456: Can't open file \"%s\""
+msgstr "E456: 无法打开文件 \"%s\""
+
+msgid "E456: Can't find PostScript resource file \"prolog.ps\""
+msgstr "E456: 找不到 PostScript 资源文件 \"prolog.ps\""
+
+msgid "E456: Can't find PostScript resource file \"cidfont.ps\""
+msgstr "E456: 找不到 PostScript 资源文件 \"cidfont.ps\""
+
+#, c-format
+msgid "E456: Can't find PostScript resource file \"%s.ps\""
+msgstr "E456: 找不到 PostScript 资源文件 \"%s.ps\""
+
+#, c-format
+msgid "E620: Unable to convert to print encoding \"%s\""
+msgstr "E620: 无法转换至打印编码 \"%s\""
+
+msgid "Sending to printer..."
+msgstr "发送到打印机……"
+
+msgid "E365: Failed to print PostScript file"
+msgstr "E365: 无法打印 PostScript 文件"
+
+msgid "Print job sent."
+msgstr "打印任务已被发送。"
+
+msgid "Add a new database"
+msgstr "添加一个新的数据库"
+
+msgid "Query for a pattern"
+msgstr "查询一个模式"
+
+msgid "Show this message"
+msgstr "显示此信息"
+
+msgid "Kill a connection"
+msgstr "结束一个连接"
+
+msgid "Reinit all connections"
+msgstr "重置所有连接"
+
+msgid "Show connections"
+msgstr "显示连接"
+
+#, c-format
+msgid "E560: Usage: cs[cope] %s"
+msgstr "E560: 用法: cs[cope] %s"
+
+msgid "This cscope command does not support splitting the window.\n"
+msgstr "这个 cscope 命令不支持分割窗口。\n"
+
+msgid "E562: Usage: cstag <ident>"
+msgstr "E562: 用法: cstag <ident>"
+
+msgid "E257: cstag: tag not found"
+msgstr "E257: cstag: 找不到 tag"
+
+#, c-format
+msgid "E563: stat(%s) error: %d"
+msgstr "E563: stat(%s) 错误: %d"
+
+msgid "E563: stat error"
+msgstr "E563: stat 错误"
+
+#, c-format
+msgid "E564: %s is not a directory or a valid cscope database"
+msgstr "E564: %s 不是目录或有效的 cscope 数据库"
+
+#, c-format
+msgid "Added cscope database %s"
+msgstr "添加了 cscope 数据库 %s"
+
+#, c-format
+msgid "E262: error reading cscope connection %ld"
+msgstr "E262: 读取 cscope 连接 %ld 出错"
+
+msgid "E561: unknown cscope search type"
+msgstr "E561: 未知的 cscope 查找类型"
+
+msgid "E566: Could not create cscope pipes"
+msgstr "E566: 无法创建 cscope 管道"
+
+msgid "E622: Could not fork for cscope"
+msgstr "E622: 无法对 cscope 进行 fork"
+
+msgid "cs_create_connection exec failed"
+msgstr "cs_create_connection 执行失败"
+
+msgid "E623: Could not spawn cscope process"
+msgstr "E623: 无法生成 cscope 进程"
+
+msgid "cs_create_connection: fdopen for to_fp failed"
+msgstr "cs_create_connection: fdopen to_fp 失败"
+
+msgid "cs_create_connection: fdopen for fr_fp failed"
+msgstr "cs_create_connection: fdopen fr_fp 失败"
+
+msgid "E567: no cscope connections"
+msgstr "E567: 没有 cscope 连接"
+
+#, c-format
+msgid "E259: no matches found for cscope query %s of %s"
+msgstr "E259: cscope 查询 %s %s 没有找到匹配的结果"
+
+#, c-format
+msgid "E469: invalid cscopequickfix flag %c for %c"
+msgstr "E469: cscopequickfix 标志 %c 对 %c 无效"
+
+msgid "cscope commands:\n"
+msgstr "cscope 命令:\n"
+
+#, c-format
+msgid "%-5s: %-30s (Usage: %s)"
+msgstr "%-5s: %-30s (用法: %s)"
+
+#, c-format
+msgid "E625: cannot open cscope database: %s"
+msgstr "E625: 无法打开 cscope 数据库: %s"
+
+msgid "E626: cannot get cscope database information"
+msgstr "E626: 无法获取 cscope 数据库信息"
+
+msgid "E568: duplicate cscope database not added"
+msgstr "E568: 重复的 cscope 数据库未被加入"
+
+msgid "E569: maximum number of cscope connections reached"
+msgstr "E569: 已达到 cscope 的最大连接数"
+
+#, c-format
+msgid "E261: cscope connection %s not found"
+msgstr "E261: 找不到 cscope 连接 %s"
+
+#, c-format
+msgid "cscope connection %s closed"
+msgstr "cscope 连接 %s 已关闭"
+
+#. should not reach here
+msgid "E570: fatal error in cs_manage_matches"
+msgstr "E570: cs_manage_matches 严重错误"
+
+#, c-format
+msgid "Cscope tag: %s"
+msgstr "Cscope tag: %s"
+
+msgid ""
+"\n"
+"   #   line"
+msgstr ""
+"\n"
+"   #   行  "
+
+msgid "filename / context / line\n"
+msgstr "文件名 / 上下文 / 行\n"
+
+#, c-format
+msgid "E609: Cscope error: %s"
+msgstr "E609: Cscope 错误: %s"
+
+msgid "All cscope databases reset"
+msgstr "所有 cscope 数据库已被重置"
+
+msgid "no cscope connections\n"
+msgstr "没有 cscope 连接\n"
+
+msgid " # pid    database name                       prepend path\n"
+msgstr " # pid    数据库名                            prepend path\n"
+
+msgid ""
+"???: Sorry, this command is disabled, the MzScheme library could not be "
+"loaded."
+msgstr "???: 抱歉，此命令不可用，无法加载 MzScheme 库"
+
+msgid "invalid expression"
+msgstr "无效的表达式"
+
+msgid "expressions disabled at compile time"
+msgstr "编译时没有启用表达式"
+
+msgid "hidden option"
+msgstr "隐藏的选项"
+
+msgid "unknown option"
+msgstr "未知的选项"
+
+msgid "window index is out of range"
+msgstr "窗口索引超出范围"
+
+msgid "couldn't open buffer"
+msgstr "无法打开缓冲区"
+
+msgid "cannot save undo information"
+msgstr "无法保存撤销信息"
+
+msgid "cannot delete line"
+msgstr "无法删除行"
+
+msgid "cannot replace line"
+msgstr "无法替换行"
+
+msgid "cannot insert line"
+msgstr "无法插入行"
+
+msgid "string cannot contain newlines"
+msgstr "字符串不能包含换行(NL)"
+
+msgid "Vim error: ~a"
+msgstr "Vim 错误: ~a"
+
+msgid "Vim error"
+msgstr "Vim 错误"
+
+msgid "buffer is invalid"
+msgstr "缓冲区无效"
+
+msgid "window is invalid"
+msgstr "窗口无效"
+
+msgid "linenr out of range"
+msgstr "行号超出范围"
+
+msgid "not allowed in the Vim sandbox"
+msgstr "不允许在 sandbox 中使用"
+
+msgid ""
+"E263: Sorry, this command is disabled, the Python library could not be "
+"loaded."
+msgstr "E263: 抱歉，此命令不可用，无法加载 Python 库。"
+
+msgid "E659: Cannot invoke Python recursively"
+msgstr "E659: 不能递归调用 Python"
+
+msgid "can't delete OutputObject attributes"
+msgstr "不能删除 OutputObject 属性"
+
+msgid "softspace must be an integer"
+msgstr "softspace 必须是整数"
+
+msgid "invalid attribute"
+msgstr "无效的属性"
+
+msgid "writelines() requires list of strings"
+msgstr "writelines() 需要字符串列表作参数"
+
+msgid "E264: Python: Error initialising I/O objects"
+msgstr "E264: Python: 初始化 I/O 对象出错"
+
+msgid "attempt to refer to deleted buffer"
+msgstr "试图引用已被删除的缓冲区"
+
+msgid "line number out of range"
+msgstr "行号超出范围"
+
+#, c-format
+msgid "<buffer object (deleted) at %8lX>"
+msgstr "<缓冲区对象(已删除): %8lX>"
+
+msgid "invalid mark name"
+msgstr "无效的标记名称"
+
+msgid "no such buffer"
+msgstr "无此缓冲区"
+
+msgid "attempt to refer to deleted window"
+msgstr "试图引用已被删除的窗口"
+
+msgid "readonly attribute"
+msgstr "只读属性"
+
+msgid "cursor position outside buffer"
+msgstr "光标位置在缓冲区外"
+
+#, c-format
+msgid "<window object (deleted) at %.8lX>"
+msgstr "<窗口对象(已删除): %.8lX>"
+
+#, c-format
+msgid "<window object (unknown) at %.8lX>"
+msgstr "<窗口对象(未知): %.8lX>"
+
+#, c-format
+msgid "<window %d>"
+msgstr "<窗口 %d>"
+
+msgid "no such window"
+msgstr "无此窗口"
+
+msgid ""
+"E266: Sorry, this command is disabled, the Ruby library could not be loaded."
+msgstr "E266: 抱歉，此命令不可用，无法加载 Ruby 库"
+
+#, c-format
+msgid "E273: unknown longjmp status %d"
+msgstr "E273: 未知的 longjmp 状态 %d"
+
+msgid "Toggle implementation/definition"
+msgstr "切换实现/定义"
+
+msgid "Show base class of"
+msgstr "显示 base class of:"
+
+msgid "Show overridden member function"
+msgstr "显示被覆盖的成员函数"
+
+msgid "Retrieve from file"
+msgstr "恢复: 从文件"
+
+msgid "Retrieve from project"
+msgstr "恢复: 从对象"
+
+msgid "Retrieve from all projects"
+msgstr "恢复: 从所有项目"
+
+msgid "Retrieve"
+msgstr "恢复"
+
+msgid "Show source of"
+msgstr "显示源代码: "
+
+msgid "Find symbol"
+msgstr "查找 symbol"
+
+msgid "Browse class"
+msgstr "浏览 class"
+
+msgid "Show class in hierarchy"
+msgstr "显示层次关系的类"
+
+msgid "Show class in restricted hierarchy"
+msgstr "显示 restricted 层次关系的 class"
+
+msgid "Xref refers to"
+msgstr "Xref 参考到"
+
+msgid "Xref referred by"
+msgstr "Xref 被谁参考:"
+
+msgid "Xref has a"
+msgstr "Xref 有"
+
+msgid "Xref used by"
+msgstr "Xref 被谁使用:"
+
+msgid "Show docu of"
+msgstr "显示文件: "
+
+msgid "Generate docu for"
+msgstr "产生文件: "
+
+msgid ""
+"Cannot connect to SNiFF+. Check environment (sniffemacs must be found in "
+"$PATH).\n"
+msgstr "不能连接到 SNiFF+。请检查环境变量 ($PATH 里必需可以找到 sniffemacs)\n"
+
+msgid "E274: Sniff: Error during read. Disconnected"
+msgstr "E274: Sniff: 读取错误. 取消连接"
+
+msgid "SNiFF+ is currently "
+msgstr "SNiFF+ 目前"
+
+msgid "not "
+msgstr "未"
+
+msgid "connected"
+msgstr "连接中"
+
+#, c-format
+msgid "E275: Unknown SNiFF+ request: %s"
+msgstr "E275: 不正确的 SNiff+ 调用: %s"
+
+msgid "E276: Error connecting to SNiFF+"
+msgstr "E276: 连接到 SNiFF+ 失败"
+
+msgid "E278: SNiFF+ not connected"
+msgstr "E278: 未连接到 SNiFF+"
+
+msgid "E279: Not a SNiFF+ buffer"
+msgstr "E279: 不是 SNiFF+ 的缓冲区"
+
+msgid "Sniff: Error during write. Disconnected"
+msgstr "Sniff: 写入错误。结束连接"
+
+msgid "invalid buffer number"
+msgstr "无效的缓冲区号"
+
+msgid "not implemented yet"
+msgstr "尚未实现"
+
+#. ???
+msgid "cannot set line(s)"
+msgstr "无法设定行"
+
+msgid "mark not set"
+msgstr "没有设定标记"
+
+#, c-format
+msgid "row %d column %d"
+msgstr "第 %d 行 第 %d 列"
+
+msgid "cannot insert/append line"
+msgstr "无法插入/追加行"
+
+msgid "unknown flag: "
+msgstr "未知的标志: "
+
+msgid "unknown vimOption"
+msgstr "未知的 vim 选项"
+
+msgid "keyboard interrupt"
+msgstr "键盘中断"
+
+msgid "vim error"
+msgstr "vim 错误"
+
+msgid "cannot create buffer/window command: object is being deleted"
+msgstr "无法创建缓冲区/窗口命令: 对象将被删除"
+
+msgid ""
+"cannot register callback command: buffer/window is already being deleted"
+msgstr "无法注册回调命令: 缓冲区/窗口已被删除"
+
+#. This should never happen.  Famous last word?
+msgid ""
+"E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-dev@vim."
+"org"
+msgstr "E280: TCL 严重错误: reflist 损坏！？请报告给 vim-dev@vim.org"
+
+msgid "cannot register callback command: buffer/window reference not found"
+msgstr "无法注册回调命令: 找不到缓冲区/窗口引用"
+
+msgid ""
+"E571: Sorry, this command is disabled: the Tcl library could not be loaded."
+msgstr "E571: 抱歉，此命令不可用，无法加载 Tcl 库"
+
+msgid ""
+"E281: TCL ERROR: exit code is not int!? Please report this to vim-dev@vim.org"
+msgstr "E281: TCL 错误: 退出返回值不是整数！？请报告给 vim-dev@vim.org"
+
+#, c-format
+msgid "E572: exit code %d"
+msgstr "E572: 退出返回值 %d"
+
+msgid "cannot get line"
+msgstr "无法获取行"
+
+msgid "Unable to register a command server name"
+msgstr "无法注册命令服务器名"
+
+msgid "E248: Failed to send command to the destination program"
+msgstr "E248:  无法发送命令到目的程序"
+
+#, c-format
+msgid "E573: Invalid server id used: %s"
+msgstr "E573: 使用了无效的服务器 id: %s"
+
+msgid "E251: VIM instance registry property is badly formed.  Deleted!"
+msgstr "E251: VIM 实例注册属性有误。已删除！"
+
+msgid "Unknown option argument"
+msgstr "未知的选项参数"
+
+msgid "Too many edit arguments"
+msgstr "编辑参数过多"
+
+msgid "Argument missing after"
+msgstr "缺少必要的参数"
+
+msgid "Garbage after option argument"
+msgstr "选项参数后的内容无效"
+
+msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
+msgstr "\"+command\"、\"-c command\" 或 \"--cmd command\" 参数过多"
+
+msgid "Invalid argument for"
+msgstr "无效的参数"
+
+#, c-format
+msgid "%d files to edit\n"
+msgstr "还有 %d 个文件等待编辑\n"
+
+msgid "This Vim was not compiled with the diff feature."
+msgstr "此 Vim 编译时没有加入 diff 功能"
+
+msgid "Attempt to open script file again: \""
+msgstr "试图再次打开脚本文件: \""
+
+msgid "Cannot open for reading: \""
+msgstr "无法打开并读取: \""
+
+msgid "Cannot open for script output: \""
+msgstr "无法打开并输出脚本: \""
+
+msgid "Vim: Error: Failure to start gvim from NetBeans\n"
+msgstr "Vim: 错误: 无法从 NetBeans 中启动 gvim\n"
+
+msgid "Vim: Warning: Output is not to a terminal\n"
+msgstr "Vim: 警告: 输出不是到终端(屏幕)\n"
+
+msgid "Vim: Warning: Input is not from a terminal\n"
+msgstr "Vim: 警告: 输入不是来自终端(键盘)\n"
+
+#. just in case..
+msgid "pre-vimrc command line"
+msgstr "pre-vimrc 命令行"
+
+#, c-format
+msgid "E282: Cannot read from \"%s\""
+msgstr "E282: 无法读取 \"%s\""
+
+msgid ""
+"\n"
+"More info with: \"vim -h\"\n"
+msgstr ""
+"\n"
+"更多信息请见: \"vim -h\"\n"
+
+msgid "[file ..]       edit specified file(s)"
+msgstr "[文件 ..]       编辑指定的文件"
+
+msgid "-               read text from stdin"
+msgstr "-               从标准输入(stdin)读取文本"
+
+msgid "-t tag          edit file where tag is defined"
+msgstr "-t tag          编辑 tag 定义处的文件"
+
+msgid "-q [errorfile]  edit file with first error"
+msgstr "-q [errorfile]  编辑第一个出错处的文件"
+
+msgid ""
+"\n"
+"\n"
+"usage:"
+msgstr ""
+"\n"
+"\n"
+"用法:"
+
+msgid " vim [arguments] "
+msgstr " vim [参数] "
+
+msgid ""
+"\n"
+"   or:"
+msgstr ""
+"\n"
+"  或:"
+
+#~ msgid "where case is ignored prepend / to make flag upper case"
+#~ msgstr ""
+
+msgid ""
+"\n"
+"\n"
+"Arguments:\n"
+msgstr ""
+"\n"
+"\n"
+"参数:\n"
+
+msgid "--\t\t\tOnly file names after this"
+msgstr "--\t\t\t在这以后只有文件名"
+
+msgid "--literal\t\tDon't expand wildcards"
+msgstr "--literal\t\t不扩展通配符"
+
+msgid "-register\t\tRegister this gvim for OLE"
+msgstr "-register\t\t注册此 gvim 到 OLE"
+
+msgid "-unregister\t\tUnregister gvim for OLE"
+msgstr "-unregister\t\t取消 OLE 中的 gvim 注册"
+
+msgid "-g\t\t\tRun using GUI (like \"gvim\")"
+msgstr "-g\t\t\t使用图形界面 (同 \"gvim\")"
+
+msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
+msgstr "-f  或  --nofork\t前台: 启动图形界面时不 fork"
+
+msgid "-v\t\t\tVi mode (like \"vi\")"
+msgstr "-v\t\t\tVi 模式 (同 \"vi\")"
+
+msgid "-e\t\t\tEx mode (like \"ex\")"
+msgstr "-e\t\t\tEx 模式 (同 \"ex\")"
+
+msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
+msgstr "-s\t\t\t安静(批处理)模式 (只能与 \"ex\" 一起使用)"
+
+msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
+msgstr "-d\t\t\tDiff 模式 (同 \"vimdiff\")"
+
+msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
+msgstr "-y\t\t\t容易模式 (同 \"evim\"，无模式)"
+
+msgid "-R\t\t\tReadonly mode (like \"view\")"
+msgstr "-R\t\t\t只读模式 (同 \"view\")"
+
+msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
+msgstr "-Z\t\t\t限制模式 (同 \"rvim\")"
+
+msgid "-m\t\t\tModifications (writing files) not allowed"
+msgstr "-m\t\t\t不可修改(写入文件)"
+
+msgid "-M\t\t\tModifications in text not allowed"
+msgstr "-M\t\t\t文本不可修改"
+
+msgid "-b\t\t\tBinary mode"
+msgstr "-b\t\t\t二进制模式"
+
+msgid "-l\t\t\tLisp mode"
+msgstr "-l\t\t\tLisp 模式"
+
+msgid "-C\t\t\tCompatible with Vi: 'compatible'"
+msgstr "-C\t\t\t兼容传统的 Vi: 'compatible'"
+
+msgid "-N\t\t\tNot fully Vi compatible: 'nocompatible'"
+msgstr "-N\t\t\t不完全兼容传统的 Vi: 'nocompatible'"
+
+msgid "-V[N]\t\tVerbose level"
+msgstr "-V[N]\t\tVerbose 等级"
+
+msgid "-D\t\t\tDebugging mode"
+msgstr "-D\t\t\t调试模式"
+
+msgid "-n\t\t\tNo swap file, use memory only"
+msgstr "-n\t\t\t不使用交换文件，只使用内存"
+
+msgid "-r\t\t\tList swap files and exit"
+msgstr "-r\t\t\t列出交换文件并退出"
+
+msgid "-r (with file name)\tRecover crashed session"
+msgstr "-r (跟文件名)\t\t恢复崩溃的会话"
+
+msgid "-L\t\t\tSame as -r"
+msgstr "-L\t\t\t同 -r"
+
+msgid "-f\t\t\tDon't use newcli to open window"
+msgstr "-f\t\t\t不使用 newcli 来打开窗口"
+
+msgid "-dev <device>\t\tUse <device> for I/O"
+msgstr "-dev <device>\t\t使用 <device> 进行输入输出"
+
+msgid "-A\t\t\tstart in Arabic mode"
+msgstr "-A\t\t\t以 Arabic 模式启动"
+
+msgid "-H\t\t\tStart in Hebrew mode"
+msgstr "-H\t\t\t以 Hebrew 模式启动"
+
+msgid "-F\t\t\tStart in Farsi mode"
+msgstr "-F\t\t\t以 Farsi 模式启动"
+
+msgid "-T <terminal>\tSet terminal type to <terminal>"
+msgstr "-T <terminal>\t设定终端类型为 <terminal>"
+
+msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
+msgstr "-u <vimrc>\t\t使用 <vimrc> 替代任何 .vimrc"
+
+msgid "-U <gvimrc>\t\tUse <gvimrc> instead of any .gvimrc"
+msgstr "-U <gvimrc>\t\t使用 <gvimrc> 替代任何 .gvimrc"
+
+msgid "--noplugin\t\tDon't load plugin scripts"
+msgstr "--noplugin\t\t不加载 plugin 脚本"
+
+msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+msgstr "-P[N]\t\t打开 N 个标签页 (默认值: 每个文件一个)"
+
+msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+msgstr "-o[N]\t\t打开 N 个窗口 (默认值: 每个文件一个)"
+
+msgid "-O[N]\t\tLike -o but split vertically"
+msgstr "-O[N]\t\t同 -o 但垂直分割"
+
+msgid "+\t\t\tStart at end of file"
+msgstr "+\t\t\t启动后跳到文件末尾"
+
+msgid "+<lnum>\t\tStart at line <lnum>"
+msgstr "+<lnum>\t\t启动后跳到第 <lnum> 行"
+
+msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+msgstr "--cmd <command>\t加载任何 vimrc 文件前执行 <command>"
+
+msgid "-c <command>\t\tExecute <command> after loading the first file"
+msgstr "-c <command>\t\t加载第一个文件后执行 <command>"
+
+msgid "-S <session>\t\tSource file <session> after loading the first file"
+msgstr "-S <session>\t\t加载第一个文件后执行文件 <session>"
+
+msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+msgstr "-s <scriptin>\t从文件 <scriptin> 读入正常模式的命令"
+
+msgid "-w <scriptout>\tAppend all typed commands to file <scriptout>"
+msgstr "-w <scriptout>\t将所有输入的命令追加到文件 <scriptout>"
+
+msgid "-W <scriptout>\tWrite all typed commands to file <scriptout>"
+msgstr "-W <scriptout>\t将所有输入的命令写入到文件 <scriptout>"
+
+msgid "-x\t\t\tEdit encrypted files"
+msgstr "-x\t\t\t编辑加密的文件"
+
+msgid "-display <display>\tConnect vim to this particular X-server"
+msgstr "-display <display>\t将 vim 与指定的 X-server 连接"
+
+msgid "-X\t\t\tDo not connect to X server"
+msgstr "-X\t\t\t不连接到 X Server"
+
+msgid "--remote <files>\tEdit <files> in a Vim server if possible"
+msgstr "--remote <files>\t如有可能，在 Vim 服务器上编辑文件 <files>"
+
+msgid "--remote-silent <files>  Same, don't complain if there is no server"
+msgstr "--remote-silent <files>  同上，找不到服务器时不抱怨"
+
+msgid ""
+"--remote-wait <files>  As --remote but wait for files to have been edited"
+msgstr "--remote-wait <files>  同 --remote 但会等待文件完成编辑"
+
+msgid ""
+"--remote-wait-silent <files>  Same, don't complain if there is no server"
+msgstr "--remote-wait-silent <files>  同上，找不到服务器时不抱怨"
+
+msgid "--remote-tab <files>  As --remote but open tab page for each file"
+msgstr "--remote-tab <files>  同 --remote 但对每个文件打开一个标签页"
+
+msgid "--remote-send <keys>\tSend <keys> to a Vim server and exit"
+msgstr "--remote-send <keys>\t送出 <keys> 到 Vim 服务器并退出"
+
+msgid "--remote-expr <expr>\tEvaluate <expr> in a Vim server and print result"
+msgstr "--remote-expr <expr>\t在 Vim 服务器上求 <expr> 的值并打印结果"
+
+msgid "--serverlist\t\tList available Vim server names and exit"
+msgstr "--serverlist\t\t列出可用的 Vim 服务器名称并退出"
+
+msgid "--servername <name>\tSend to/become the Vim server <name>"
+msgstr "--servername <name>\t发送到或成为 Vim 服务器 <name>"
+
+msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
+msgstr "-i <viminfo>\t\t使用 <viminfo> 取代 .viminfo"
+
+msgid "-h  or  --help\tPrint Help (this message) and exit"
+msgstr "-h  或  --help\t打印帮助(本信息)并退出"
+
+msgid "--version\t\tPrint version information and exit"
+msgstr "--version\t\t打印版本信息并退出"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (Motif version):\n"
+msgstr ""
+"\n"
+"gvim (Motif 版本) 可识别的参数:\n"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (neXtaw version):\n"
+msgstr ""
+"\n"
+"gvim (neXtaw 版本) 可识别的参数:\n"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (Athena version):\n"
+msgstr ""
+"\n"
+"gvim (Athena 版本) 可识别的参数:\n"
+
+msgid "-display <display>\tRun vim on <display>"
+msgstr "-display <display>\t在 <display> 上运行 vim"
+
+msgid "-iconic\t\tStart vim iconified"
+msgstr "-iconic\t\t启动后最小化"
+
+msgid "-name <name>\t\tUse resource as if vim was <name>"
+msgstr "-name <name>\t\t读取 Resource 时把 vim 视为 <name>"
+
+msgid "\t\t\t  (Unimplemented)\n"
+msgstr "\t\t\t  (尚未实现)\n"
+
+msgid "-background <color>\tUse <color> for the background (also: -bg)"
+msgstr "-background <color>\t使用 <color> 作为背景色 (也可用 -bg)"
+
+msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
+msgstr "-foreground <color>\t使用 <color> 作为一般文字颜色 (也可用 -fg)"
+
+msgid "-font <font>\t\tUse <font> for normal text (also: -fn)"
+msgstr "-font <font>\t使用 <font> 作为一般字体 (也可用 -fn)"
+
+msgid "-boldfont <font>\tUse <font> for bold text"
+msgstr "-boldfont <font>\t使用 <font> 作为粗体字体"
+
+msgid "-italicfont <font>\tUse <font> for italic text"
+msgstr "-italicfont <font>\t使用 <font> 作为斜体字体"
+
+msgid "-geometry <geom>\tUse <geom> for initial geometry (also: -geom)"
+msgstr "-geometry <geom>\t使用 <geom> 作为初始位置 (也可用 -geom)"
+
+msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
+msgstr "-borderwidth <width>\t设定边框宽度为 <width> (也可用 -bw)"
+
+msgid "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
+msgstr "-scrollbarwidth <width> 设定滚动条宽度为 <width> (也可用 -sw)"
+
+msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
+msgstr "-menuheight <height>\t设定菜单栏高度为 <height> (也可用 -mh)"
+
+msgid "-reverse\t\tUse reverse video (also: -rv)"
+msgstr "-reverse\t\t使用反显 (也可用 -rv)"
+
+msgid "+reverse\t\tDon't use reverse video (also: +rv)"
+msgstr "+reverse\t\t不使用反显 (也可用 +rv)"
+
+msgid "-xrm <resource>\tSet the specified resource"
+msgstr "-xrm <resource>\t设定指定的资源"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (RISC OS version):\n"
+msgstr ""
+"\n"
+"gvim (RISC OS 版本) 可识别的参数:\n"
+
+msgid "--columns <number>\tInitial width of window in columns"
+msgstr "--columns <number>\t窗口初始宽度"
+
+msgid "--rows <number>\tInitial height of window in rows"
+msgstr "--rows <number>\t窗口初始高度"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (GTK+ version):\n"
+msgstr ""
+"\n"
+"gvim (GTK+ 版本) 可识别的参数:\n"
+
+msgid "-display <display>\tRun vim on <display> (also: --display)"
+msgstr "-display <display>\t在 <display> 上运行 vim (也可用 --display)"
+
+msgid "--role <role>\tSet a unique role to identify the main window"
+msgstr "--role <role>\t设置用于区分主窗口的窗口角色名"
+
+msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
+msgstr "--socketid <xid>\t在另一个 GTK 部件中打开 Vim"
+
+msgid "-P <parent title>\tOpen Vim inside parent application"
+msgstr "-P <parent title>\t在父应用程序中打开 Vim"
+
+msgid "No display"
+msgstr "没有 display"
+
+#. Failed to send, abort.
+msgid ": Send failed.\n"
+msgstr ": 发送失败。\n"
+
+#. Let vim start normally.
+msgid ": Send failed. Trying to execute locally\n"
+msgstr ": 发送失败。尝试本地执行\n"
+
+#, c-format
+msgid "%d of %d edited"
+msgstr "%d 中 %d 已编辑"
+
+msgid "No display: Send expression failed.\n"
+msgstr "没有 display: 发送表达式失败。\n"
+
+msgid ": Send expression failed.\n"
+msgstr ": 发送表达式失败。\n"
+
+msgid "No marks set"
+msgstr "没有设定标记"
+
+#, c-format
+msgid "E283: No marks matching \"%s\""
+msgstr "E283: 没有匹配 \"%s\" 的标记"
+
+#. Highlight title
+msgid ""
+"\n"
+"mark line  col file/text"
+msgstr ""
+"\n"
+"标记   行   列 文件/文本"
+
+#. Highlight title
+msgid ""
+"\n"
+" jump line  col file/text"
+msgstr ""
+"\n"
+" 跳转   行   列 文件/文本"
+
+#. Highlight title
+msgid ""
+"\n"
+"change line  col text"
+msgstr ""
+"\n"
+"  改变   行   列 文本"
+
+#, c-format
+msgid ""
+"\n"
+"# File marks:\n"
+msgstr ""
+"\n"
+"# 文件标记:\n"
+
+#. Write the jumplist with -'
+#, c-format
+msgid ""
+"\n"
+"# Jumplist (newest first):\n"
+msgstr ""
+"\n"
+"# 跳转列表 (从新到旧):\n"
+
+#, c-format
+msgid ""
+"\n"
+"# History of marks within files (newest to oldest):\n"
+msgstr ""
+"\n"
+"# 文件内的标记历史记录 (从新到旧):\n"
+
+msgid "Missing '>'"
+msgstr "缺少 '>'"
+
+msgid "E543: Not a valid codepage"
+msgstr "E543: 无效的代码页"
+
+msgid "E284: Cannot set IC values"
+msgstr "E284: 不能设定 IC 值"
+
+msgid "E285: Failed to create input context"
+msgstr "E285: 无法创建输入上下文"
+
+msgid "E286: Failed to open input method"
+msgstr "E286: 无法打开输入法"
+
+msgid "E287: Warning: Could not set destroy callback to IM"
+msgstr "E287: 警告: 无法设定输入法的释放回调函数"
+
+msgid "E288: input method doesn't support any style"
+msgstr "E288: 输入法不支持任何风格"
+
+msgid "E289: input method doesn't support my preedit type"
+msgstr "E289: 输入法不支持我的预编辑类型"
+
+msgid "E290: over-the-spot style requires fontset"
+msgstr "E290: over-the-spot 风格需要 Fontset"
+
+msgid "E291: Your GTK+ is older than 1.2.3. Status area disabled"
+msgstr "E291: 你的 GTK+ 比 1.2.3 旧。状态区不可用。"
+
+msgid "E292: Input Method Server is not running"
+msgstr "E292: 输入法服务器未运行"
+
+msgid "E293: block was not locked"
+msgstr "E293: 块未被锁定"
+
+msgid "E294: Seek error in swap file read"
+msgstr "E294: 交换文件读取定位错误"
+
+msgid "E295: Read error in swap file"
+msgstr "E295: 交换文件读取错误"
+
+msgid "E296: Seek error in swap file write"
+msgstr "E296: 交换文件写入定位错误"
+
+msgid "E297: Write error in swap file"
+msgstr "E297: 交换文件写入错误"
+
+msgid "E300: Swap file already exists (symlink attack?)"
+msgstr "E300: 交换文件已存在 (符号连接攻击？)"
+
+msgid "E298: Didn't get block nr 0?"
+msgstr "E298: 找不到块 0？"
+
+msgid "E298: Didn't get block nr 1?"
+msgstr "E298: 找不到块 1？"
+
+msgid "E298: Didn't get block nr 2?"
+msgstr "E298: 找不到块 2？"
+
+#. could not (re)open the swap file, what can we do????
+msgid "E301: Oops, lost the swap file!!!"
+msgstr "E301: 噢，交换文件不见了！！！"
+
+msgid "E302: Could not rename swap file"
+msgstr "E302: 无法重命名交换文件"
+
+#, c-format
+msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
+msgstr "E303: 无法打开 \"%s\" 的交换文件，恢复将不可能"
+
+msgid "E304: ml_upd_block0(): Didn't get block 0??"
+msgstr "E304: ml_upd_block0(): 找不到块 0？"
+
+#, c-format
+msgid "E305: No swap file found for %s"
+msgstr "E305: 找不到 %s 的交换文件"
+
+msgid "Enter number of swap file to use (0 to quit): "
+msgstr "请输入要使用的交换文件编号 (0 退出): "
+
+#, c-format
+msgid "E306: Cannot open %s"
+msgstr "E306: 无法打开 %s"
+
+msgid "Unable to read block 0 from "
+msgstr "无法读取块 0: "
+
+msgid ""
+"\n"
+"Maybe no changes were made or Vim did not update the swap file."
+msgstr ""
+"\n"
+"可能你没做过任何修改或是 Vim 还来不及更新交换文件。"
+
+msgid " cannot be used with this version of Vim.\n"
+msgstr " 不能在该版本的 Vim 中使用。\n"
+
+msgid "Use Vim version 3.0.\n"
+msgstr "使用 Vim 3.0。\n"
+
+#, c-format
+msgid "E307: %s does not look like a Vim swap file"
+msgstr "E307: %s 看起来不像是 Vim 交换文件"
+
+msgid " cannot be used on this computer.\n"
+msgstr " 不能在这台电脑上使用。\n"
+
+msgid "The file was created on "
+msgstr "此文件创建于 "
+
+msgid ""
+",\n"
+"or the file has been damaged."
+msgstr ""
+"，\n"
+"或是此文件已损坏。"
+
+#, c-format
+msgid "Using swap file \"%s\""
+msgstr "使用交换文件 \"%s\""
+
+#, c-format
+msgid "Original file \"%s\""
+msgstr "原始文件 \"%s\""
+
+msgid "E308: Warning: Original file may have been changed"
+msgstr "E308: 警告: 原始文件可能已被修改"
+
+#, c-format
+msgid "E309: Unable to read block 1 from %s"
+msgstr "E309: 无法从 %s 读取块 1"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "???MANY LINES MISSING"
+#~ msgstr "???缺少了太多行"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "???LINE COUNT WRONG"
+#~ msgstr "???行数错误"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "???EMPTY BLOCK"
+#~ msgstr "???空的块"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "???LINES MISSING"
+#~ msgstr "???缺少了一些行"
+
+#, c-format
+msgid "E310: Block 1 ID wrong (%s not a .swp file?)"
+msgstr "E310: 块 1 ID 错误 (%s 不是交换文件？)"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "???BLOCK MISSING"
+#~ msgstr "???缺少块"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "??? from here until ???END lines may be messed up"
+#~ msgstr "??? 从这里到 ???END 的行可能已混乱"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "??? from here until ???END lines may have been inserted/deleted"
+#~ msgstr "??? 从这里到 ???END 的行可能已被插入/删除过"
+
+# do not translate to avoid writing Chinese in files
+#, fuzzy
+#~ msgid "???END"
+#~ msgstr "???END"
+
+msgid "E311: Recovery Interrupted"
+msgstr "E311: 恢复已被中断"
+
+msgid ""
+"E312: Errors detected while recovering; look for lines starting with ???"
+msgstr "E312: 恢复时发生错误；请注意开头为 ??? 的行"
+
+msgid "See \":help E312\" for more information."
+msgstr "更多信息请见 \":help E312\""
+
+msgid "Recovery completed. You should check if everything is OK."
+msgstr "恢复完毕。请确定一切正常。"
+
+msgid ""
+"\n"
+"(You might want to write out this file under another name\n"
+msgstr ""
+"\n"
+"(你可能想要将这个文件另存为别的文件名\n"
+
+msgid "and run diff with the original file to check for changes)\n"
+msgstr "再运行 diff 与原文件比较以检查是否有改变)\n"
+
+msgid ""
+"Delete the .swp file afterwards.\n"
+"\n"
+msgstr ""
+"然后把 .swp 文件删掉。\n"
+"\n"
+
+#. use msg() to start the scrolling properly
+msgid "Swap files found:"
+msgstr "找到交换文件:"
+
+msgid "   In current directory:\n"
+msgstr "   位于当前目录:\n"
+
+msgid "   Using specified name:\n"
+msgstr "   使用指定的名字:\n"
+
+msgid "   In directory "
+msgstr "   位于目录 "
+
+msgid "      -- none --\n"
+msgstr "      -- 无 --\n"
+
+msgid "          owned by: "
+msgstr "            所有者: "
+
+msgid "   dated: "
+msgstr "    日期: "
+
+msgid "             dated: "
+msgstr "              日期: "
+
+msgid "         [from Vim version 3.0]"
+msgstr "         [来自 Vim 版本 3.0]"
+
+msgid "         [does not look like a Vim swap file]"
+msgstr "         [不像是 Vim 交换文件]"
+
+msgid "         file name: "
+msgstr "            文件名: "
+
+msgid ""
+"\n"
+"          modified: "
+msgstr ""
+"\n"
+"            修改过: "
+
+msgid "YES"
+msgstr "是"
+
+msgid "no"
+msgstr "否"
+
+msgid ""
+"\n"
+"         user name: "
+msgstr ""
+"\n"
+"            用户名: "
+
+msgid "   host name: "
+msgstr "      主机名: "
+
+msgid ""
+"\n"
+"         host name: "
+msgstr ""
+"\n"
+"            主机名: "
+
+msgid ""
+"\n"
+"        process ID: "
+msgstr ""
+"\n"
+"           进程 ID: "
+
+msgid " (still running)"
+msgstr " (仍在运行)"
+
+msgid ""
+"\n"
+"         [not usable with this version of Vim]"
+msgstr ""
+"\n"
+"         [不能在该版本的 Vim 上使用]"
+
+msgid ""
+"\n"
+"         [not usable on this computer]"
+msgstr ""
+"\n"
+"         [不能在本机上使用]"
+
+msgid "         [cannot be read]"
+msgstr "         [无法读取]"
+
+msgid "         [cannot be opened]"
+msgstr "         [无法打开]"
+
+msgid "E313: Cannot preserve, there is no swap file"
+msgstr "E313: 无法保留，没有交换文件"
+
+msgid "File preserved"
+msgstr "文件已保留"
+
+msgid "E314: Preserve failed"
+msgstr "E314: 保留失败"
+
+#, c-format
+msgid "E315: ml_get: invalid lnum: %ld"
+msgstr "E315: ml_get: 无效的 lnum: %ld"
+
+#, c-format
+msgid "E316: ml_get: cannot find line %ld"
+msgstr "E316: ml_get: 找不到第 %ld 行"
+
+msgid "E317: pointer block id wrong 3"
+msgstr "E317: 指针块 id 错误 3"
+
+msgid "stack_idx should be 0"
+msgstr "stack_idx 应该是 0"
+
+msgid "E318: Updated too many blocks?"
+msgstr "E318: 更新了太多的块？"
+
+msgid "E317: pointer block id wrong 4"
+msgstr "E317: 指针块 id 错误 4"
+
+msgid "deleted block 1?"
+msgstr "删除了块 1？"
+
+#, c-format
+msgid "E320: Cannot find line %ld"
+msgstr "E320: 找不到第 %ld 行"
+
+msgid "E317: pointer block id wrong"
+msgstr "E317: 指针块 id 错误"
+
+msgid "pe_line_count is zero"
+msgstr "pe_line_count 为零"
+
+#, c-format
+msgid "E322: line number out of range: %ld past the end"
+msgstr "E322: 行号超出范围: %ld 超出结尾"
+
+#, c-format
+msgid "E323: line count wrong in block %ld"
+msgstr "E323: 块 %ld 行数错误"
+
+msgid "Stack size increases"
+msgstr "堆栈大小增加"
+
+msgid "E317: pointer block id wrong 2"
+msgstr "E317: 指针块 id 错误 2"
+
+#, c-format
+msgid "E773: Symlink loop for \"%s\""
+msgstr "E773: \"%s\" 符号连接出现循环"
+
+msgid "E325: ATTENTION"
+msgstr "E325: 注意"
+
+msgid ""
+"\n"
+"Found a swap file by the name \""
+msgstr ""
+"\n"
+"发现交换文件 \""
+
+msgid "While opening file \""
+msgstr "正在打开文件 \""
+
+msgid "      NEWER than swap file!\n"
+msgstr "      比交换文件新！\n"
+
+#. Some of these messages are long to allow translation to
+#. * other languages.
+msgid ""
+"\n"
+"(1) Another program may be editing the same file.\n"
+"    If this is the case, be careful not to end up with two\n"
+"    different instances of the same file when making changes.\n"
+msgstr ""
+"\n"
+"(1) 另一个程序可能也在编辑同一个文件。\n"
+"    如果是这样，修改时请注意避免同一个文件产生两个不同的版本。\n"
+"\n"
+
+msgid "    Quit, or continue with caution.\n"
+msgstr "    退出，或小心地继续。\n"
+
+msgid ""
+"\n"
+"(2) An edit session for this file crashed.\n"
+msgstr ""
+"\n"
+"(2) 上次编辑此文件时崩溃。\n"
+
+msgid "    If this is the case, use \":recover\" or \"vim -r "
+msgstr "    如果是这样，请用 \":recover\" 或 \"vim -r "
+
+msgid ""
+"\"\n"
+"    to recover the changes (see \":help recovery\").\n"
+msgstr ""
+"\"\n"
+"    恢复修改的内容 (请见 \":help recovery\")。\n"
+
+msgid "    If you did this already, delete the swap file \""
+msgstr "    如果你已经进行了恢复，请删除交换文件 \""
+
+msgid ""
+"\"\n"
+"    to avoid this message.\n"
+msgstr ""
+"\"\n"
+"    以避免再看到此消息。\n"
+
+msgid "Swap file \""
+msgstr "交换文件 \""
+
+msgid "\" already exists!"
+msgstr "\" 已存在！"
+
+msgid "VIM - ATTENTION"
+msgstr "VIM - 注意"
+
+msgid "Swap file already exists!"
+msgstr "交换文件已存在！"
+
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+"以只读方式打开(&O)\n"
+"直接编辑(&E)\n"
+"恢复(&R)\n"
+"退出(&Q)\n"
+"中止(&A)"
+
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Delete it\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+"以只读方式打开(&O)\n"
+"直接编辑(&E)\n"
+"恢复(&R)\n"
+"删除交换文件(&D)\n"
+"退出(&Q)\n"
+"中止(&A)"
+
+msgid "E326: Too many swap files found"
+msgstr "E326: 找到太多交换文件"
+
+msgid "E327: Part of menu-item path is not sub-menu"
+msgstr "E327: 菜单项的某部分路径不是子菜单"
+
+msgid "E328: Menu only exists in another mode"
+msgstr "E328: 菜单只在其它模式中存在"
+
+#, c-format
+msgid "E329: No menu \"%s\""
+msgstr "E329: 没有菜单 \"%s\""
+
+msgid "E330: Menu path must not lead to a sub-menu"
+msgstr "E330: 菜单路径不能指向子菜单"
+
+msgid "E331: Must not add menu items directly to menu bar"
+msgstr "E331: 不能把菜单项直接加到菜单栏中"
+
+msgid "E332: Separator cannot be part of a menu path"
+msgstr "E332: 分隔线不能是菜单路径的一部分"
+
+#. Now we have found the matching menu, and we list the mappings
+#. Highlight title
+msgid ""
+"\n"
+"--- Menus ---"
+msgstr ""
+"\n"
+"--- 菜单 ---"
+
+msgid "Tear off this menu"
+msgstr "撕下此菜单"
+
+msgid "E333: Menu path must lead to a menu item"
+msgstr "E333: 菜单路径必须指向菜单项"
+
+#, c-format
+msgid "E334: Menu not found: %s"
+msgstr "E334: 找不到菜单: %s"
+
+#, c-format
+msgid "E335: Menu not defined for %s mode"
+msgstr "E335: %s 模式中菜单未定义"
+
+msgid "E336: Menu path must lead to a sub-menu"
+msgstr "E336: 菜单路径必须指向子菜单"
+
+msgid "E337: Menu not found - check menu names"
+msgstr "E337: 找不到菜单 - 请检查菜单名称"
+
+#, c-format
+msgid "Error detected while processing %s:"
+msgstr "处理 %s 时发生错误:"
+
+#, c-format
+msgid "line %4ld:"
+msgstr "第 %4ld 行:"
+
+#, c-format
+msgid "E354: Invalid register name: '%s'"
+msgstr "E354: 无效的寄存器名: '%s'"
+
+msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
+msgstr "简体中文消息维护者: Yuheng Xie <elephant@linux.net.cn>"
+
+msgid "Interrupt: "
+msgstr "已中断: "
+
+msgid "Press ENTER or type command to continue"
+msgstr "请按 ENTER 或其它命令继续"
+
+#, c-format
+msgid "%s line %ld"
+msgstr "%s 第 %ld 行"
+
+msgid "-- More --"
+msgstr "-- 更多 --"
+
+msgid " SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "
+msgstr " 空格/d/j: 屏幕/页/行 下翻，b/u/k: 上翻，q: 退出 "
+
+msgid "Question"
+msgstr "问题"
+
+msgid ""
+"&Yes\n"
+"&No"
+msgstr ""
+"是(&Y)\n"
+"否(&N)"
+
+msgid ""
+"&Yes\n"
+"&No\n"
+"Save &All\n"
+"&Discard All\n"
+"&Cancel"
+msgstr ""
+"是(&Y)\n"
+"否(&N)\n"
+"全部保存(&A)\n"
+"全部丢弃(&D)\n"
+"取消(&C)"
+
+msgid "Select Directory dialog"
+msgstr "选择目录对话框"
+
+msgid "Save File dialog"
+msgstr "保存文件对话框"
+
+msgid "Open File dialog"
+msgstr "打开文件对话框"
+
+#. TODO: non-GUI file selector here
+msgid "E338: Sorry, no file browser in console mode"
+msgstr "E338: 抱歉，控制台模式下没有文件浏览器"
+
+msgid "E766: Insufficient arguments for printf()"
+msgstr "E766: printf() 的参数不足"
+
+msgid "E767: Too many arguments to printf()"
+msgstr "E767: printf() 的参数过多"
+
+msgid "W10: Warning: Changing a readonly file"
+msgstr "W10: 警告: 正在修改一个只读文件"
+
+msgid "Type number or click with mouse (<Enter> cancels): "
+msgstr "请输入数字或点击鼠标 (<Enter> 取消): "
+
+msgid "Choice number (<Enter> cancels): "
+msgstr "请选择数字 (<Enter> 取消): "
+
+msgid "1 more line"
+msgstr "多了 1 行"
+
+msgid "1 line less"
+msgstr "少了 1 行"
+
+#, c-format
+msgid "%ld more lines"
+msgstr "多了 %ld 行"
+
+#, c-format
+msgid "%ld fewer lines"
+msgstr "少了 %ld 行"
+
+msgid " (Interrupted)"
+msgstr " (已中断)"
+
+msgid "Beep!"
+msgstr "Beep!"
+
+msgid "Vim: preserving files...\n"
+msgstr "Vim: 正在保留文件……\n"
+
+#. close all memfiles, without deleting
+msgid "Vim: Finished.\n"
+msgstr "Vim: 结束。\n"
+
+#, c-format
+msgid "ERROR: "
+msgstr "错误: "
+
+#, c-format
+msgid ""
+"\n"
+"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+msgstr ""
+"\n"
+"[字节] 总共 alloc-free %lu-%lu，使用中 %lu，高峰使用 %lu\n"
+
+#, c-format
+msgid ""
+"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"\n"
+msgstr ""
+"[调用] 总共 re/malloc(): %lu，总共 free()': %lu\n"
+"\n"
+
+msgid "E340: Line is becoming too long"
+msgstr "E340: 此行过长"
+
+#, c-format
+msgid "E341: Internal error: lalloc(%ld, )"
+msgstr "E341: 内部错误: lalloc(%ld, )"
+
+#, c-format
+msgid "E342: Out of memory!  (allocating %lu bytes)"
+msgstr "E342: 内存不足！(分配 %lu 字节)"
+
+#, c-format
+msgid "Calling shell to execute: \"%s\""
+msgstr "调用 shell 执行: \"%s\""
+
+msgid "E545: Missing colon"
+msgstr "E545: 缺少冒号"
+
+msgid "E546: Illegal mode"
+msgstr "E546: 无效的模式"
+
+msgid "E547: Illegal mouseshape"
+msgstr "E547: 无效的鼠标形状"
+
+msgid "E548: digit expected"
+msgstr "E548: 此处需要数字"
+
+msgid "E549: Illegal percentage"
+msgstr "E549: 无效的百分比"
+
+msgid "Enter encryption key: "
+msgstr "输入密码: "
+
+msgid "Enter same key again: "
+msgstr "请再输入一次: "
+
+msgid "Keys don't match!"
+msgstr "两次密码不匹配！"
+
+#, c-format
+msgid ""
+"E343: Invalid path: '**[number]' must be at the end of the path or be "
+"followed by '%s'."
+msgstr "E343: 无效的路径: '**[number]' 必须在路径末尾或者后面接 '%s'。"
+
+#, c-format
+msgid "E344: Can't find directory \"%s\" in cdpath"
+msgstr "E344: cdpath 中找不到目录 \"%s\""
+
+#, c-format
+msgid "E345: Can't find file \"%s\" in path"
+msgstr "E345: 在路径中找不到文件 \"%s\""
+
+#, c-format
+msgid "E346: No more directory \"%s\" found in cdpath"
+msgstr "E346: 在路径中找不到更多的文件 \"%s\""
+
+#, c-format
+msgid "E347: No more file \"%s\" found in path"
+msgstr "E347: 在路径中找不到更多的文件 \"%s\""
+
+#. Get here when the server can't be found.
+msgid "Cannot connect to Netbeans #2"
+msgstr "无法连接到 Netbeans #2"
+
+msgid "Cannot connect to Netbeans"
+msgstr "无法连接到 Netbeans"
+
+#, c-format
+msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
+msgstr "E668: NetBeans 连接信息文件中错误的访问模式: \"%s\""
+
+msgid "read from Netbeans socket"
+msgstr "从 Netbeans 套接字读取"
+
+#, c-format
+msgid "E658: NetBeans connection lost for buffer %ld"
+msgstr "E658: 缓冲区 %ld 丢失 NetBeans 连接"
+
+msgid "E505: "
+msgstr "E505: "
+
+msgid "E774: 'operatorfunc' is empty"
+msgstr "E774: 'operatorfunc' 为空"
+
+msgid "E775: Eval feature not available"
+msgstr "E775: 求值功能不可用"
+
+msgid "Warning: terminal cannot highlight"
+msgstr "警告: 你的终端不能显示高亮"
+
+msgid "E348: No string under cursor"
+msgstr "E348: 光标处没有字符串"
+
+msgid "E349: No identifier under cursor"
+msgstr "E349: 光标处没有识别字"
+
+msgid "E352: Cannot erase folds with current 'foldmethod'"
+msgstr "E352: 不能在当前的 'foldmethod' 下删除 fold"
+
+msgid "E664: changelist is empty"
+msgstr "E664: 改变列表为空"
+
+msgid "E662: At start of changelist"
+msgstr "E662: 已在改变列表的开始处"
+
+msgid "E663: At end of changelist"
+msgstr "E663: 已在改变列表的末尾处"
+
+msgid "Type  :quit<Enter>  to exit Vim"
+msgstr "输入  :quit<Enter>  退出 Vim"
+
+#, c-format
+msgid "1 line %sed 1 time"
+msgstr "1 行 %s 了 1 次"
+
+#, c-format
+msgid "1 line %sed %d times"
+msgstr "1 行 %s 了 %d 次"
+
+#, c-format
+msgid "%ld lines %sed 1 time"
+msgstr "%ld 行 %s 了 1 次"
+
+#, c-format
+msgid "%ld lines %sed %d times"
+msgstr "%ld 行 %s 了 %d 次"
+
+#, c-format
+msgid "%ld lines to indent... "
+msgstr "缩进 %ld 行…… "
+
+msgid "1 line indented "
+msgstr "缩进了 1 行 "
+
+#, c-format
+msgid "%ld lines indented "
+msgstr "缩进了 %ld 行 "
+
+msgid "E748: No previously used register"
+msgstr "E748: 没有前一个使用的寄存器"
+
+#. must display the prompt
+msgid "cannot yank; delete anyway"
+msgstr "无法复制；改为删除"
+
+msgid "1 line changed"
+msgstr "改变了 1 行"
+
+#, c-format
+msgid "%ld lines changed"
+msgstr "改变了 %ld 行"
+
+#, c-format
+msgid "freeing %ld lines"
+msgstr "释放了 %ld 行"
+
+msgid "block of 1 line yanked"
+msgstr "复制了 1 行的块"
+
+msgid "1 line yanked"
+msgstr "复制了 1 行"
+
+#, c-format
+msgid "block of %ld lines yanked"
+msgstr "复制了 %ld 行的块"
+
+#, c-format
+msgid "%ld lines yanked"
+msgstr "复制了 %ld 行"
+
+#, c-format
+msgid "E353: Nothing in register %s"
+msgstr "E353: 寄存器 %s 里没有东西"
+
+#. Highlight title
+msgid ""
+"\n"
+"--- Registers ---"
+msgstr ""
+"\n"
+"--- 寄存器 ---"
+
+msgid "Illegal register name"
+msgstr "无效的寄存器名"
+
+#, c-format
+msgid ""
+"\n"
+"# Registers:\n"
+msgstr ""
+"\n"
+"# 寄存器:\n"
+
+#, c-format
+msgid "E574: Unknown register type %d"
+msgstr "E574: 未知的寄存器类型 %d"
+
+#, c-format
+msgid "%ld Cols; "
+msgstr "%ld 列; "
+
+#, c-format
+msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
+msgstr "选择了 %s%ld/%ld 行; %ld/%ld 个词; %ld/%ld 个字节"
+
+#, c-format
+msgid ""
+"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Bytes"
+msgstr "选择了 %s%ld/%ld 行; %ld/%ld 个词; %ld/%ld 个字符; %ld/%ld 个字节"
+
+#, c-format
+msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
+msgstr "第 %s/%s 列; 第 %ld/%ld 行; 第 %ld/%ld 个词; 第 %ld/%ld 个字节"
+
+#, c-format
+msgid ""
+"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
+"%ld"
+msgstr ""
+"第 %s/%s 列; 第 %ld/%ld 行; 第 %ld/%ld 个词; 第 %ld/%ld 个字符; 第 %ld/%ld 个"
+"字节"
+
+#, c-format
+#~ msgid "(+%ld for BOM)"
+#~ msgstr ""
+
+#~ msgid "%<%f%h%m%=Page %N"
+#~ msgstr ""
+
+msgid "Thanks for flying Vim"
+msgstr "感谢您选择 Vim"
+
+msgid "E518: Unknown option"
+msgstr "E518: 未知的选项"
+
+msgid "E519: Option not supported"
+msgstr "E519: 不支持该选项"
+
+msgid "E520: Not allowed in a modeline"
+msgstr "E520: 不允许在 modeline 中使用"
+
+msgid "E521: Number required after ="
+msgstr "E521: = 后面需要数字"
+
+msgid "E522: Not found in termcap"
+msgstr "E522: Termcap 里面找不到"
+
+#, c-format
+msgid "E539: Illegal character <%s>"
+msgstr "E539: 无效的字符 <%s>"
+
+msgid "E529: Cannot set 'term' to empty string"
+msgstr "E529: 不能设定 'term' 为空字符串"
+
+msgid "E530: Cannot change term in GUI"
+msgstr "E530: 在图形界面中不能改变终端"
+
+msgid "E531: Use \":gui\" to start the GUI"
+msgstr "E531: 请用 \":gui\" 启动图形界面"
+
+msgid "E589: 'backupext' and 'patchmode' are equal"
+msgstr "E589: 'backupext' 和 'patchmode' 相等"
+
+msgid "E617: Cannot be changed in the GTK+ 2 GUI"
+msgstr "E617: 在 GTK+ 2 图形界面中不能更改"
+
+msgid "E524: Missing colon"
+msgstr "E524: 缺少冒号"
+
+msgid "E525: Zero length string"
+msgstr "E525: 字符串长度为零"
+
+#, c-format
+msgid "E526: Missing number after <%s>"
+msgstr "E526: <%s> 后面缺少数字"
+
+msgid "E527: Missing comma"
+msgstr "E527: 缺少逗号"
+
+msgid "E528: Must specify a ' value"
+msgstr "E528: 必须指定一个 ' 值"
+
+msgid "E595: contains unprintable or wide character"
+msgstr "E595: 包含不可显示字符或宽字符"
+
+msgid "E596: Invalid font(s)"
+msgstr "E596: 无效的字体"
+
+msgid "E597: can't select fontset"
+msgstr "E597: 无法选择 Fontset"
+
+msgid "E598: Invalid fontset"
+msgstr "E598: 无效的 Fontset"
+
+msgid "E533: can't select wide font"
+msgstr "E533: 无法选择宽字体"
+
+msgid "E534: Invalid wide font"
+msgstr "E534: 无效的宽字体"
+
+#, c-format
+msgid "E535: Illegal character after <%c>"
+msgstr "E535: <%c> 后面有无效的字符"
+
+msgid "E536: comma required"
+msgstr "E536: 需要逗号"
+
+#, c-format
+msgid "E537: 'commentstring' must be empty or contain %s"
+msgstr "E537: 'commentstring' 必须为空或包含 %s"
+
+msgid "E538: No mouse support"
+msgstr "E538: 不支持鼠标"
+
+msgid "E540: Unclosed expression sequence"
+msgstr "E540: 没有结束的表达式序列"
+
+msgid "E541: too many items"
+msgstr "E541: 项目过多"
+
+msgid "E542: unbalanced groups"
+msgstr "E542: 错乱的组"
+
+msgid "E590: A preview window already exists"
+msgstr "E590: 预览窗口已存在"
+
+msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
+msgstr "W17: Arabic 需要 UTF-8，请执行 ':set encoding=utf-8'"
+
+#, c-format
+msgid "E593: Need at least %d lines"
+msgstr "E593: 至少需要 %d 行"
+
+#, c-format
+msgid "E594: Need at least %d columns"
+msgstr "E594: 至少需要 %d 列"
+
+#, c-format
+msgid "E355: Unknown option: %s"
+msgstr "E355: 未知的选项: %s"
+
+msgid ""
+"\n"
+"--- Terminal codes ---"
+msgstr ""
+"\n"
+"--- 终端编码 ---"
+
+msgid ""
+"\n"
+"--- Global option values ---"
+msgstr ""
+"\n"
+"--- 全局选项值 ---"
+
+msgid ""
+"\n"
+"--- Local option values ---"
+msgstr ""
+"\n"
+"--- 局部选项值 ---"
+
+msgid ""
+"\n"
+"--- Options ---"
+msgstr ""
+"\n"
+"--- 选项 ---"
+
+msgid "E356: get_varp ERROR"
+msgstr "E356: get_varp 错误"
+
+#, c-format
+msgid "E357: 'langmap': Matching character missing for %s"
+msgstr "E357: 'langmap': 找不到 %s 对应的字符"
+
+#, c-format
+msgid "E358: 'langmap': Extra characters after semicolon: %s"
+msgstr "E358: 'langmap': 分号后有多余的字符: %s"
+
+msgid "cannot open "
+msgstr "不能打开"
+
+msgid "VIM: Can't open window!\n"
+msgstr "VIM: 不能打开窗口!\n"
+
+msgid "Need Amigados version 2.04 or later\n"
+msgstr "需要 Amigados 版本 2.04 以上\n"
+
+#, c-format
+msgid "Need %s version %ld\n"
+msgstr "需要 %s 版本 %ld\n"
+
+msgid "Cannot open NIL:\n"
+msgstr "不能打开 NIL:\n"
+
+msgid "Cannot create "
+msgstr "不能创建 "
+
+#, c-format
+msgid "Vim exiting with %d\n"
+msgstr "Vim 返回值: %d\n"
+
+msgid "cannot change console mode ?!\n"
+msgstr "不能切换主控台(console)模式 !?\n"
+
+msgid "mch_get_shellsize: not a console??\n"
+msgstr "mch_get_shellsize: 不是主控台(console)??\n"
+
+#. if Vim opened a window: Executing a shell may cause crashes
+msgid "E360: Cannot execute shell with -f option"
+msgstr "E360: 不能用 -f 选项执行 shell"
+
+msgid "Cannot execute "
+msgstr "不能执行 "
+
+msgid "shell "
+msgstr "shell "
+
+msgid " returned\n"
+msgstr " 已返回\n"
+
+msgid "ANCHOR_BUF_SIZE too small."
+msgstr "ANCHOR_BUF_SIZE 太小"
+
+msgid "I/O ERROR"
+msgstr "I/O 错误"
+
+msgid "Message"
+msgstr "消息"
+
+msgid "'columns' is not 80, cannot execute external commands"
+msgstr "'columns' 不是 80, 不能执行外部命令"
+
+msgid "E237: Printer selection failed"
+msgstr "E237: 选择打印机失败"
+
+#, c-format
+msgid "to %s on %s"
+msgstr "从 %s 到 %s"
+
+#, c-format
+msgid "E613: Unknown printer font: %s"
+msgstr "E613: 未知的打印机字体: %s"
+
+#, c-format
+msgid "E238: Print error: %s"
+msgstr "E238: 打印错误: %s"
+
+#, c-format
+msgid "Printing '%s'"
+msgstr "打印 '%s'"
+
+#, c-format
+msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
+msgstr "E244: 字符集 \"%s\" 不能对应字体\"%s\""
+
+#, c-format
+msgid "E245: Illegal char '%c' in font name \"%s\""
+msgstr "E245: 不正确的字符 '%c' 出现在字体名称 \"%s\" 内"
+
+msgid "Vim: Double signal, exiting\n"
+msgstr "Vim: 双重信号，退出中\n"
+
+#, c-format
+msgid "Vim: Caught deadly signal %s\n"
+msgstr "Vim: 拦截到致命信号(deadly signal) %s\n"
+
+#, c-format
+msgid "Vim: Caught deadly signal\n"
+msgstr "Vim: 拦截到致命信号(deadly signal)\n"
+
+#, c-format
+msgid "Opening the X display took %ld msec"
+msgstr "打开 X display 用时 %ld 秒"
+
+msgid ""
+"\n"
+"Vim: Got X error\n"
+msgstr ""
+"\n"
+"Vim: X 错误\n"
+
+msgid "Testing the X display failed"
+msgstr "测试 X display 失败"
+
+msgid "Opening the X display timed out"
+msgstr "打开 X display 超时"
+
+msgid ""
+"\n"
+"Cannot execute shell "
+msgstr ""
+"\n"
+"无法执行 shell"
+
+msgid ""
+"\n"
+"Cannot execute shell sh\n"
+msgstr ""
+"\n"
+"无法执行 shell sh\n"
+
+msgid ""
+"\n"
+"shell returned "
+msgstr ""
+"\n"
+"Shell 已返回"
+
+msgid ""
+"\n"
+"Cannot create pipes\n"
+msgstr ""
+"\n"
+"无法建立管道\n"
+
+msgid ""
+"\n"
+"Cannot fork\n"
+msgstr ""
+"\n"
+"无法 fork\n"
+
+msgid ""
+"\n"
+"Command terminated\n"
+msgstr ""
+"\n"
+"命令已结束\n"
+
+msgid "XSMP lost ICE connection"
+msgstr "XSMP 丢失了到 ICE 的连接"
+
+# do not translate
+#, c-format
+msgid "dlerror = \"%s\""
+msgstr "dlerror = \"%s\""
+
+msgid "Opening the X display failed"
+msgstr "打开 X display 失败"
+
+msgid "XSMP handling save-yourself request"
+msgstr "XSMP 处理 save-yourself 请求"
+
+msgid "XSMP opening connection"
+msgstr "XSMP 打开连接"
+
+msgid "XSMP ICE connection watch failed"
+msgstr "XSMP ICE 连接监视失败"
+
+#, c-format
+msgid "XSMP SmcOpenConnection failed: %s"
+msgstr "XSMP SmcOpenConnection 调用失败: %s"
+
+msgid "At line"
+msgstr "在行号 "
+
+msgid "Could not load vim32.dll!"
+msgstr "无法加载 vim32.dll！"
+
+msgid "VIM Error"
+msgstr "VIM 错误"
+
+msgid "Could not fix up function pointers to the DLL!"
+msgstr "无法修正到 DLL 的函数指针!"
+
+#, c-format
+msgid "shell returned %d"
+msgstr "Shell 返回 %d"
+
+#, c-format
+msgid "Vim: Caught %s event\n"
+msgstr "Vim: 拦截到 %s 事件\n"
+
+msgid "close"
+msgstr "关闭"
+
+msgid "logoff"
+msgstr "注消"
+
+msgid "shutdown"
+msgstr "关机"
+
+msgid "E371: Command not found"
+msgstr "E371: 找不到命令"
+
+msgid ""
+"VIMRUN.EXE not found in your $PATH.\n"
+"External commands will not pause after completion.\n"
+"See  :help win32-vimrun  for more information."
+msgstr ""
+"在你的 $PATH 中找不到 VIMRUN.EXE。\n"
+"外部命令执行完毕后将不会暂停。\n"
+"进一步说明请见 :help win32-vimrun"
+
+msgid "Vim Warning"
+msgstr "Vim 警告"
+
+#, c-format
+msgid "E372: Too many %%%c in format string"
+msgstr "E372: 格式化字符串里有太多 %%%c "
+
+#, c-format
+msgid "E373: Unexpected %%%c in format string"
+msgstr "E373: 格式化字符串不应该出现 %%%c "
+
+msgid "E374: Missing ] in format string"
+msgstr "E374: 格式化字符串里少了 ]"
+
+#, c-format
+msgid "E375: Unsupported %%%c in format string"
+msgstr "E375: 格式化字符串里有不支持的 %%%c "
+
+#, c-format
+msgid "E376: Invalid %%%c in format string prefix"
+msgstr "E376: 格式化字符串开头里有不正确的 %%%c "
+
+#, c-format
+msgid "E377: Invalid %%%c in format string"
+msgstr "E377: 格式化字符串里有不正确的 %%%c "
+
+msgid "E378: 'errorformat' contains no pattern"
+msgstr "E378: 'errorformat' 未设定"
+
+msgid "E379: Missing or empty directory name"
+msgstr "E379: 找不到目录名称或是空的目录名称"
+
+msgid "E553: No more items"
+msgstr "E553: 没有更多的项"
+
+#, c-format
+msgid "(%d of %d)%s%s: "
+msgstr "(%d / %d)%s%s: "
+
+msgid " (line deleted)"
+msgstr " (行已删除)"
+
+msgid "E380: At bottom of quickfix stack"
+msgstr "E380: Quickfix 堆栈底端"
+
+msgid "E381: At top of quickfix stack"
+msgstr "E381: Quickfix 堆栈顶端"
+
+#, c-format
+msgid "error list %d of %d; %d errors"
+msgstr "错误列表 %d / %d；共 %d 个错误"
+
+msgid "E382: Cannot write, 'buftype' option is set"
+msgstr "E382: 无法写入，已设定选项 'buftype'"
+
+msgid "E683: File name missing or invalid pattern"
+msgstr "E683: 缺少文件名或模式无效"
+
+#, c-format
+msgid "Cannot open file \"%s\""
+msgstr "无法打开文件 \"%s\""
+
+msgid "E681: Buffer is not loaded"
+msgstr "E681: 缓冲区未加载"
+
+msgid "E777: String or List expected"
+msgstr "E777: 此处需要 String 或者 List"
+
+#, c-format
+msgid "E369: invalid item in %s%%[]"
+msgstr "E369: %s%%[] 中有无效的项"
+
+msgid "E339: Pattern too long"
+msgstr "E339: 模式太长"
+
+msgid "E50: Too many \\z("
+msgstr "E50: 太多 \\z("
+
+#, c-format
+msgid "E51: Too many %s("
+msgstr "E51: 太多 %s("
+
+msgid "E52: Unmatched \\z("
+msgstr "E52: 不匹配的 \\z("
+
+#, c-format
+msgid "E53: Unmatched %s%%("
+msgstr "E53: 不匹配的 %s%%("
+
+#, c-format
+msgid "E54: Unmatched %s("
+msgstr "E54: 不匹配的 %s("
+
+#, c-format
+msgid "E55: Unmatched %s)"
+msgstr "E55: 不匹配的 %s)"
+
+#, c-format
+msgid "E59: invalid character after %s@"
+msgstr "E59: %s@ 后面有无效的字符"
+
+#, c-format
+msgid "E60: Too many complex %s{...}s"
+msgstr "E60: 太多复杂的 %s{...}s"
+
+#, c-format
+msgid "E61: Nested %s*"
+msgstr "E61: 嵌套的 %s*"
+
+#, c-format
+msgid "E62: Nested %s%c"
+msgstr "E62: 嵌套的 %s%c"
+
+msgid "E63: invalid use of \\_"
+msgstr "E63: 不正确地使用 \\_"
+
+#, c-format
+msgid "E64: %s%c follows nothing"
+msgstr "E64: %s%c 前面无内容"
+
+msgid "E65: Illegal back reference"
+msgstr "E65: 无效的回引"
+
+msgid "E66: \\z( not allowed here"
+msgstr "E66: 此处不允许 \\z("
+
+msgid "E67: \\z1 et al. not allowed here"
+msgstr "E67: 此处不允许 \\z1 等"
+
+msgid "E68: Invalid character after \\z"
+msgstr "E68: \\z 后面有无效的字符"
+
+#, c-format
+msgid "E69: Missing ] after %s%%["
+msgstr "E69: %s%%[ 后缺少 ]"
+
+#, c-format
+msgid "E70: Empty %s%%[]"
+msgstr "E70: 空的 %s%%[]"
+
+#, c-format
+msgid "E678: Invalid character after %s%%[dxouU]"
+msgstr "E678: %s%%[dxouU] 后面有无效的字符"
+
+#, c-format
+msgid "E71: Invalid character after %s%%"
+msgstr "E71: %s%% 后面有无效的字符"
+
+#, c-format
+msgid "E769: Missing ] after %s["
+msgstr "E769: %s[ 后缺少 ]"
+
+#, c-format
+msgid "E554: Syntax error in %s{...}"
+msgstr "E554: %s{...} 中语法错误"
+
+msgid "External submatches:\n"
+msgstr "外部符合:\n"
+
+msgid " VREPLACE"
+msgstr " V-替换"
+
+msgid " REPLACE"
+msgstr " 替换"
+
+msgid " REVERSE"
+msgstr " 反向"
+
+msgid " INSERT"
+msgstr " 插入"
+
+msgid " (insert)"
+msgstr " (插入)"
+
+msgid " (replace)"
+msgstr " (替换)"
+
+msgid " (vreplace)"
+msgstr " (V-替换)"
+
+msgid " Hebrew"
+msgstr " Hebrew"
+
+msgid " Arabic"
+msgstr " Arabic"
+
+msgid " (lang)"
+msgstr " (语言)"
+
+msgid " (paste)"
+msgstr " (粘帖)"
+
+msgid " VISUAL"
+msgstr " 可视"
+
+msgid " VISUAL LINE"
+msgstr " 可视 行"
+
+msgid " VISUAL BLOCK"
+msgstr " 可视 块"
+
+msgid " SELECT"
+msgstr " 选择"
+
+msgid " SELECT LINE"
+msgstr " 选择 行"
+
+msgid " SELECT BLOCK"
+msgstr " 选择 块"
+
+msgid "recording"
+msgstr "记录中"
+
+#, c-format
+msgid "E383: Invalid search string: %s"
+msgstr "E383: 无效的查找字符串: %s"
+
+#, c-format
+msgid "E384: search hit TOP without match for: %s"
+msgstr "E384: 已查找到文件开头仍找不到 %s"
+
+#, c-format
+msgid "E385: search hit BOTTOM without match for: %s"
+msgstr "E385: 已查找到文件结尾仍找不到 %s"
+
+msgid "E386: Expected '?' or '/'  after ';'"
+msgstr "E386: 在 ';' 后面应该有 '?' 或 '/'"
+
+msgid " (includes previously listed match)"
+msgstr " (包括上次列出符合项)"
+
+#. cursor at status line
+msgid "--- Included files "
+msgstr "--- 包含文件 "
+
+msgid "not found "
+msgstr "找不到 "
+
+msgid "in path ---\n"
+msgstr "在路径 ---\n"
+
+msgid "  (Already listed)"
+msgstr "  (已列出)"
+
+msgid "  NOT FOUND"
+msgstr "  找不到"
+
+#, c-format
+msgid "Scanning included file: %s"
+msgstr "查找包含文件: %s"
+
+#, c-format
+msgid "Searching included file %s"
+msgstr "查找包含的文件 %s"
+
+msgid "E387: Match is on current line"
+msgstr "E387: 当前行匹配"
+
+msgid "All included files were found"
+msgstr "所有包含文件都已找到"
+
+msgid "No included files"
+msgstr "没有包含文件"
+
+msgid "E388: Couldn't find definition"
+msgstr "E388: 找不到定义"
+
+msgid "E389: Couldn't find pattern"
+msgstr "E389: 找不到 pattern"
+
+msgid "E759: Format error in spell file"
+msgstr "E759: 拼写文件格式错误"
+
+msgid "E758: Truncated spell file"
+msgstr "E758: 已截断的拼写文件"
+
+#, c-format
+msgid "Trailing text in %s line %d: %s"
+msgstr "%s 第 %d 行，多余的后续字符: %s"
+
+#, c-format
+msgid "Affix name too long in %s line %d: %s"
+msgstr "%s 第 %d 行，附加项名字太长: %s"
+
+msgid "E761: Format error in affix file FOL, LOW or UPP"
+msgstr "E761: 附加文件 FOL、LOW 或 UPP 中格式错误"
+
+msgid "E762: Character in FOL, LOW or UPP is out of range"
+msgstr "E762: FOL、LOW 或 UPP 中字符超出范围"
+
+msgid "Compressing word tree..."
+msgstr "压缩单词树……"
+
+msgid "E756: Spell checking is not enabled"
+msgstr "E756: 拼写检查未启用"
+
+#, c-format
+msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
+msgstr "警告: 找不到单词列表 \"%s.%s.spl\" or \"%s.ascii.spl\""
+
+#, c-format
+msgid "Reading spell file \"%s\""
+msgstr "读取拼写文件 \"%s\""
+
+msgid "E757: This does not look like a spell file"
+msgstr "E757: 这看起来不像是拼写文件"
+
+msgid "E771: Old spell file, needs to be updated"
+msgstr "E771: 旧版本的拼写文件，需要更新"
+
+msgid "E772: Spell file is for newer version of Vim"
+msgstr "E772: 为更高版本的 Vim 所用的拼写文件"
+
+msgid "E770: Unsupported section in spell file"
+msgstr "E770: 拼写文件中存在不支持的节"
+
+#, c-format
+msgid "Warning: region %s not supported"
+msgstr "警告: 区域 %s 不支持"
+
+#, c-format
+msgid "Reading affix file %s ..."
+msgstr "读取附加文件 %s ……"
+
+#, c-format
+msgid "Conversion failure for word in %s line %d: %s"
+msgstr "单词 %s 转换失败，第 %d 行: %s"
+
+#, c-format
+msgid "Conversion in %s not supported: from %s to %s"
+msgstr "不支持 %s 中的转换: 从 %s 到 %s"
+
+#, c-format
+msgid "Conversion in %s not supported"
+msgstr "不支持 %s 中的转换"
+
+#, c-format
+msgid "Invalid value for FLAG in %s line %d: %s"
+msgstr "%s 第 %d 行，FLAG 的值无效: %s"
+
+#, c-format
+msgid "FLAG after using flags in %s line %d: %s"
+msgstr "%s 第 %d 行，在使用标志后出现 FLAG: %s"
+
+#, c-format
+#~ msgid ""
+#~ "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
+#~ "%d"
+#~ msgstr ""
+
+#, c-format
+#~ msgid ""
+#~ "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
+#~ "%d"
+#~ msgstr ""
+
+#, c-format
+msgid "Wrong COMPOUNDWORDMAX value in %s line %d: %s"
+msgstr "%s 第 %d 行，错误的 COMPOUNDWORDMAX 值: %s"
+
+#, c-format
+msgid "Wrong COMPOUNDMIN value in %s line %d: %s"
+msgstr "%s 第 %d 行，错误的 COMPOUNDMIN 值: %s"
+
+#, c-format
+msgid "Wrong COMPOUNDSYLMAX value in %s line %d: %s"
+msgstr "%s 第 %d 行，错误的 COMPOUNDSYLMAX 值: %s"
+
+#, c-format
+msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
+msgstr "%s 第 %d 行，错误的 CHECKCOMPOUNDPATTERN 值: %s"
+
+#, c-format
+msgid "Different combining flag in continued affix block in %s line %d: %s"
+msgstr "%s 第 %d 行，在连续的附加块中出现不同的组合标志: %s"
+
+#, c-format
+msgid "Duplicate affix in %s line %d: %s"
+msgstr "%s 第 %d 行，重复的附加项: %s"
+
+#, c-format
+msgid ""
+"Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in %s "
+"line %d: %s"
+msgstr ""
+"%s 第 %d 行，附加项被 BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST 使"
+"用: %s"
+
+#, c-format
+msgid "Expected Y or N in %s line %d: %s"
+msgstr "%s 第 %d 行，此处需要 Y 或 N: %s"
+
+#, c-format
+msgid "Broken condition in %s line %d: %s"
+msgstr "%s 第 %d 行，错误的条件: %s"
+
+#, c-format
+msgid "Expected REP(SAL) count in %s line %d"
+msgstr "%s 第 %d 行，此处需要 REP(SAL) 计数"
+
+#, c-format
+msgid "Expected MAP count in %s line %d"
+msgstr "%s 第 %d 行，此处需要 MAP 计数"
+
+#, c-format
+msgid "Duplicate character in MAP in %s line %d"
+msgstr "%s 第 %d 行，MAP 中存在重复的字符"
+
+#, c-format
+msgid "Unrecognized or duplicate item in %s line %d: %s"
+msgstr "%s 第 %d 行，无法识别或重复的项: %s"
+
+#, c-format
+msgid "Missing FOL/LOW/UPP line in %s"
+msgstr "%s 中缺少 FOL/LOW/UPP 行"
+
+msgid "COMPOUNDSYLMAX used without SYLLABLE"
+msgstr "在没有 SYLLABLE 的情况下使用了 COMPOUNDSYLMAX"
+
+msgid "Too many postponed prefixes"
+msgstr "太多延迟前缀"
+
+msgid "Too many compound flags"
+msgstr "太多组合标志"
+
+msgid "Too many postponed prefixes and/or compound flags"
+msgstr "太多延迟前缀和/或组合标志"
+
+#, c-format
+msgid "Missing SOFO%s line in %s"
+msgstr "%s 中缺少 SOFO%s 行"
+
+#, c-format
+msgid "Both SAL and SOFO lines in %s"
+msgstr "%s 同时出现 SQL 和 SOFO 行"
+
+#, c-format
+msgid "Flag is not a number in %s line %d: %s"
+msgstr "%s 第 %d 行，标志不是数字: %s"
+
+#, c-format
+msgid "Illegal flag in %s line %d: %s"
+msgstr "%s 第 %d 行，无效的标志: %s"
+
+#, c-format
+msgid "%s value differs from what is used in another .aff file"
+msgstr "%s 的值与另一个 .aff 文件中使用的值不相同"
+
+#, c-format
+msgid "Reading dictionary file %s ..."
+msgstr "读取字典文件 %s ……"
+
+#, c-format
+msgid "E760: No word count in %s"
+msgstr "E760: %s 中没有单词计数"
+
+#, c-format
+msgid "line %6d, word %6d - %s"
+msgstr "第 %6d 行，第 %6d 个单词 - %s"
+
+#, c-format
+msgid "Duplicate word in %s line %d: %s"
+msgstr "%s 第 %d 行，重复的单词: %s"
+
+#, c-format
+msgid "First duplicate word in %s line %d: %s"
+msgstr "%s 第 %d 行，首次重复的单词: %s"
+
+#, c-format
+msgid "%d duplicate word(s) in %s"
+msgstr "存在 %d 个重复的单词，在 %s 中"
+
+#, c-format
+msgid "Ignored %d word(s) with non-ASCII characters in %s"
+msgstr "忽略了含有非 ASCII 字符的 %d 个单词，在 %s 中"
+
+#, c-format
+msgid "Reading word file %s ..."
+msgstr "读取单词文件 %s ……"
+
+#, c-format
+#~ msgid "Duplicate /encoding= line ignored in %s line %d: %s"
+#~ msgstr ""
+
+#, c-format
+msgid "/encoding= line after word ignored in %s line %d: %s"
+msgstr "%s 第 %d 行，单词后的 /encoding= 行已被忽略: %s"
+
+#, c-format
+msgid "Duplicate /regions= line ignored in %s line %d: %s"
+msgstr "%s 第 %d 行，重复的 /regions= 行已被忽略: %s"
+
+#, c-format
+msgid "Too many regions in %s line %d: %s"
+msgstr "%s 第 %d 行，太多区域: %s"
+
+#, c-format
+msgid "/ line ignored in %s line %d: %s"
+msgstr "%s 第 %d 行，/ 行已被忽略: %s"
+
+#, c-format
+msgid "Invalid region nr in %s line %d: %s"
+msgstr "%s 第 %d 行，无效的区域号: %s"
+
+#, c-format
+msgid "Unrecognized flags in %s line %d: %s"
+msgstr "%s 第 %d 行，不可识别的标志: %s"
+
+#, c-format
+msgid "Ignored %d words with non-ASCII characters"
+msgstr "忽略了含有非 ASCII 字符的 %d 个单词"
+
+#, c-format
+msgid "Compressed %d of %d nodes; %d (%d%%) remaining"
+msgstr "压缩了 %d/%d 个节点；剩余 %d (%d%%)"
+
+msgid "Reading back spell file..."
+msgstr "读取拼写文件……"
+
+#.
+#. * Go through the trie of good words, soundfold each word and add it to
+#. * the soundfold trie.
+#.
+msgid "Performing soundfolding..."
+msgstr "正在 soundfolding……"
+
+#, c-format
+msgid "Number of words after soundfolding: %ld"
+msgstr "soundfolding 后的单词数: %ld"
+
+#, c-format
+msgid "Total number of words: %d"
+msgstr "单词总数: %d"
+
+#, c-format
+msgid "Writing suggestion file %s ..."
+msgstr "写入建议文件 %s ……"
+
+#, c-format
+msgid "Estimated runtime memory use: %d bytes"
+msgstr "估计运行时内存用量: %d 字节"
+
+msgid "E751: Output file name must not have region name"
+msgstr "E751: 输出文件名不能含有区域名"
+
+msgid "E754: Only up to 8 regions supported"
+msgstr "E754: 最多只支持 8 个区域"
+
+#, c-format
+msgid "E755: Invalid region in %s"
+msgstr "E755: %s 出现无效的范围"
+
+msgid "Warning: both compounding and NOBREAK specified"
+msgstr "警告: 同时指定了 compounding 和 NOBREAK"
+
+#, c-format
+msgid "Writing spell file %s ..."
+msgstr "写入拼写文件 %s ……"
+
+msgid "Done!"
+msgstr "完成！"
+
+#, c-format
+msgid "E765: 'spellfile' does not have %ld entries"
+msgstr "E765: 'spellfile' 没有 %ld 项"
+
+#, c-format
+msgid "Word removed from %s"
+msgstr "从 %s 中删除了单词"
+
+#, c-format
+msgid "Word added to %s"
+msgstr "向 %s 中添加了单词"
+
+msgid "E763: Word characters differ between spell files"
+msgstr "E763: 拼写文件之间的字符不相同"
+
+msgid "Sorry, no suggestions"
+msgstr "抱歉，没有建议"
+
+#, c-format
+msgid "Sorry, only %ld suggestions"
+msgstr "抱歉，只有 %ld 条建议"
+
+#. avoid more prompt
+#, c-format
+msgid "Change \"%.*s\" to:"
+msgstr "将 \"%.*s\" 改为："
+
+#, c-format
+msgid " < \"%.*s\""
+msgstr " < \"%.*s\""
+
+msgid "E752: No previous spell replacement"
+msgstr "E752: 之前没有拼写替换"
+
+#, c-format
+msgid "E753: Not found: %s"
+msgstr "E753: 找不到: %s"
+
+#, c-format
+msgid "E778: This does not look like a .sug file: %s"
+msgstr "E778: 看起来不像是 .sug 文件: %s"
+
+#, c-format
+#~ msgid "E779: Old .sug file, needs to be updated: %s"
+#~ msgstr ""
+
+#, c-format
+#~ msgid "E780: .sug file is for newer version of Vim: %s"
+#~ msgstr ""
+
+#, c-format
+#~ msgid "E781: .sug file doesn't match .spl file: %s"
+#~ msgstr ""
+
+#, fuzzy, c-format
+#~ msgid "E782: error while reading .sug file: %s"
+#~ msgstr "E47: 读取错误文件失败"
+
+#. This should have been checked when generating the .spl
+#. * file.
+#~ msgid "E783: duplicate char in MAP entry"
+#~ msgstr ""
+
+#, c-format
+msgid "E390: Illegal argument: %s"
+msgstr "E390: 无效的参数: %s"
+
+#, c-format
+msgid "E391: No such syntax cluster: %s"
+msgstr "E391: 无此语法 cluster: \"%s\""
+
+msgid "No Syntax items defined for this buffer"
+msgstr "这个缓冲区没有定义任何语法项"
+
+msgid "syncing on C-style comments"
+msgstr "C风格注释同步中"
+
+msgid "no syncing"
+msgstr "没有同步"
+
+msgid "syncing starts "
+msgstr "同步开始"
+
+msgid " lines before top line"
+msgstr "行号超出范围"
+
+msgid ""
+"\n"
+"--- Syntax sync items ---"
+msgstr ""
+"\n"
+"--- 语法同步项目 (Syntax sync items) ---"
+
+msgid ""
+"\n"
+"syncing on items"
+msgstr ""
+"\n"
+"同步中:"
+
+msgid ""
+"\n"
+"--- Syntax items ---"
+msgstr ""
+"\n"
+"--- 语法项目 ---"
+
+#, c-format
+msgid "E392: No such syntax cluster: %s"
+msgstr "E392: 无此语法 cluster: \"%s\""
+
+msgid "minimal "
+msgstr "最小"
+
+msgid "maximal "
+msgstr "最大"
+
+#, fuzzy
+#~ msgid "; match "
+#~ msgstr "匹配 %d"
+
+#, fuzzy
+#~ msgid " line breaks"
+#~ msgstr "少于一行"
+
+msgid "E395: contains argument not accepted here"
+msgstr "E395: 使用了不正确的参数"
+
+msgid "E396: containedin argument not accepted here"
+msgstr "E396: 使用了不正确的参数"
+
+msgid "E393: group[t]here not accepted here"
+msgstr "E393: 使用了不正确的参数"
+
+#, c-format
+msgid "E394: Didn't find region item for %s"
+msgstr "E394: 找不到 %s 的 region item"
+
+msgid "E397: Filename required"
+msgstr "E397: 需要文件名称"
+
+#, c-format
+msgid "E747: Missing ']': %s"
+msgstr "E747: 缺少 ']': %s"
+
+#, c-format
+msgid "E398: Missing '=': %s"
+msgstr "E398: 缺少 '=': %s"
+
+#, c-format
+msgid "E399: Not enough arguments: syntax region %s"
+msgstr "E399: syntax region %s 的参数太少"
+
+msgid "E400: No cluster specified"
+msgstr "E400: 没有指定的属性"
+
+#, c-format
+msgid "E401: Pattern delimiter not found: %s"
+msgstr "E401: 找不到分隔符号: %s"
+
+#, c-format
+msgid "E402: Garbage after pattern: %s"
+msgstr "E402: '%s' 后面的东西不能识别"
+
+msgid "E403: syntax sync: line continuations pattern specified twice"
+msgstr "E403: 语法同步: 连接行符号指定了两次"
+
+#, c-format
+msgid "E404: Illegal arguments: %s"
+msgstr "E404: 无效的参数: %s"
+
+#, c-format
+msgid "E405: Missing equal sign: %s"
+msgstr "E405: 缺少等号: %s"
+
+#, c-format
+msgid "E406: Empty argument: %s"
+msgstr "E406: 空的参数: %s"
+
+#, c-format
+msgid "E407: %s not allowed here"
+msgstr "E407: %s 不能在此出现"
+
+#, c-format
+msgid "E408: %s must be first in contains list"
+msgstr "E408: %s 必须是列表里的第一个"
+
+#, c-format
+msgid "E409: Unknown group name: %s"
+msgstr "E409: 不正确的组名: %s"
+
+#, c-format
+msgid "E410: Invalid :syntax subcommand: %s"
+msgstr "E410: 不正确的 :syntax 子命令: %s"
+
+msgid "E679: recursive loop loading syncolor.vim"
+msgstr "E679: 加载 syncolor.vim 时出现嵌套循环"
+
+#, c-format
+msgid "E411: highlight group not found: %s"
+msgstr "E411: 找不到 highlight group: %s"
+
+#, c-format
+msgid "E412: Not enough arguments: \":highlight link %s\""
+msgstr "E412: 参数太少: \":highlight link %s\""
+
+#, c-format
+msgid "E413: Too many arguments: \":highlight link %s\""
+msgstr "E413: 参数过多: \":highlight link %s\""
+
+msgid "E414: group has settings, highlight link ignored"
+msgstr "E414: 已设定组, 忽略 highlight link"
+
+#, c-format
+msgid "E415: unexpected equal sign: %s"
+msgstr "E415: 不该有的等号: %s"
+
+#, c-format
+msgid "E416: missing equal sign: %s"
+msgstr "E416: 缺少等号: %s"
+
+#, c-format
+msgid "E417: missing argument: %s"
+msgstr "E417: 缺少参数: %s"
+
+#, c-format
+msgid "E418: Illegal value: %s"
+msgstr "E418: 不合法的值: %s"
+
+msgid "E419: FG color unknown"
+msgstr "E419: 错误的前景颜色"
+
+msgid "E420: BG color unknown"
+msgstr "E420: 错误的背景颜色"
+
+#, c-format
+msgid "E421: Color name or number not recognized: %s"
+msgstr "E421: 错误的颜色名称或数值: %s"
+
+#, c-format
+msgid "E422: terminal code too long: %s"
+msgstr "E422: 终端编码太长: %s"
+
+#, c-format
+msgid "E423: Illegal argument: %s"
+msgstr "E423: 无效的参数: %s"
+
+msgid "E424: Too many different highlighting attributes in use"
+msgstr "E424: 使用了太多不同的高亮度属性"
+
+msgid "E669: Unprintable character in group name"
+msgstr "E669: 组名中存在不可显示字符"
+
+msgid "W18: Invalid character in group name"
+msgstr "W18: 组名中含有无效字符"
+
+msgid "E555: at bottom of tag stack"
+msgstr "E555: 已在 tag 堆栈底部"
+
+msgid "E556: at top of tag stack"
+msgstr "E556: 已在 tag 堆栈顶部"
+
+msgid "E425: Cannot go before first matching tag"
+msgstr "E425: 已到第一个匹配的 tag"
+
+#, c-format
+msgid "E426: tag not found: %s"
+msgstr "E426: 找不到 tag: %s"
+
+msgid "  # pri kind tag"
+msgstr "  # pri kind tag"
+
+msgid "file\n"
+msgstr "文件\n"
+
+msgid "E427: There is only one matching tag"
+msgstr "E427: 只有一个匹配的 tag"
+
+msgid "E428: Cannot go beyond last matching tag"
+msgstr "E428: 己到最后一个匹配的 tag"
+
+#, c-format
+msgid "File \"%s\" does not exist"
+msgstr "文件 \"%s\" 不存在"
+
+#. Give an indication of the number of matching tags
+#, c-format
+msgid "tag %d of %d%s"
+msgstr "找到 tag: %d / %d%s"
+
+msgid " or more"
+msgstr " 或更多"
+
+msgid "  Using tag with different case!"
+msgstr "  以不同大小写来使用 tag！"
+
+#, c-format
+msgid "E429: File \"%s\" does not exist"
+msgstr "E429: 文件 \"%s\" 不存在"
+
+#. Highlight title
+msgid ""
+"\n"
+"  # TO tag         FROM line  in file/text"
+msgstr ""
+"\n"
+"  # 到 tag         从   行    在 文件/文本"
+
+#, c-format
+msgid "Searching tags file %s"
+msgstr "查找 tag 文件 %s"
+
+#, c-format
+msgid "E430: Tag file path truncated for %s\n"
+msgstr "E430: Tag 文件路径被截断为 %s\n"
+
+#, c-format
+msgid "E431: Format error in tags file \"%s\""
+msgstr "E431: Tag 文件 \"%s\" 格式错误"
+
+#, c-format
+msgid "Before byte %ld"
+msgstr "在第 %ld 字节之前"
+
+#, c-format
+msgid "E432: Tags file not sorted: %s"
+msgstr "E432: Tag 文件未排序: %s"
+
+#. never opened any tags file
+msgid "E433: No tags file"
+msgstr "E433: 没有 tag 文件"
+
+msgid "E434: Can't find tag pattern"
+msgstr "E434: 找不到 tag 模式"
+
+msgid "E435: Couldn't find tag, just guessing!"
+msgstr "E435: 找不到 tag，试着猜！"
+
+msgid "' not known. Available builtin terminals are:"
+msgstr "' 未知。可用的内建终端有:"
+
+msgid "defaulting to '"
+msgstr "默认值为: '"
+
+msgid "E557: Cannot open termcap file"
+msgstr "E557: 无法打开 termcap 文件"
+
+msgid "E558: Terminal entry not found in terminfo"
+msgstr "E558: 在 terminfo 中找不到终端项"
+
+msgid "E559: Terminal entry not found in termcap"
+msgstr "E559: 在 termcap 中找不到终端项"
+
+#, c-format
+msgid "E436: No \"%s\" entry in termcap"
+msgstr "E436: termcap 中没有 \"%s\" 项"
+
+msgid "E437: terminal capability \"cm\" required"
+msgstr "E437: 终端需要能力 \"cm\""
+
+#. Highlight title
+msgid ""
+"\n"
+"--- Terminal keys ---"
+msgstr ""
+"\n"
+"--- 终端按键 ---"
+
+msgid "new shell started\n"
+msgstr "启动新 shell\n"
+
+msgid "Vim: Error reading input, exiting...\n"
+msgstr "Vim: 读错误，退出中...\n"
+
+#. must display the prompt
+msgid "No undo possible; continue anyway"
+msgstr "无法撤销；请继续"
+
+msgid "Already at oldest change"
+msgstr "已位于最旧的改变"
+
+msgid "Already at newest change"
+msgstr "已位于最新的改变"
+
+#, c-format
+msgid "Undo number %ld not found"
+msgstr "找不到撤销号 %ld"
+
+msgid "E438: u_undo: line numbers wrong"
+msgstr "E438: u_undo: 行号错误"
+
+msgid "more line"
+msgstr "行被加入"
+
+msgid "more lines"
+msgstr "行被加入"
+
+msgid "line less"
+msgstr "行被去掉"
+
+msgid "fewer lines"
+msgstr "行被去掉"
+
+msgid "change"
+msgstr "行发生改变"
+
+msgid "changes"
+msgstr "行发生改变"
+
+#, c-format
+msgid "%ld %s; %s #%ld  %s"
+msgstr "%ld %s；%s #%ld  %s"
+
+msgid "before"
+msgstr "before"
+
+msgid "after"
+msgstr "after"
+
+msgid "Nothing to undo"
+msgstr "无可撤销"
+
+msgid "number changes  time"
+msgstr "  编号    改变  时间"
+
+msgid "E439: undo list corrupt"
+msgstr "E439: 撤销列表损坏"
+
+msgid "E440: undo line missing"
+msgstr "E440: 找不到要撤销的行"
+
+#. Only MS VC 4.1 and earlier can do Win32s
+msgid ""
+"\n"
+"MS-Windows 16/32-bit GUI version"
+msgstr ""
+"\n"
+"MS-Windows 16/32 位图形界面版本"
+
+msgid ""
+"\n"
+"MS-Windows 32-bit GUI version"
+msgstr ""
+"\n"
+"MS-Windows 32 位图形界面版本"
+
+msgid " in Win32s mode"
+msgstr " Win32s 模式"
+
+msgid " with OLE support"
+msgstr " 带 OLE 支持"
+
+msgid ""
+"\n"
+"MS-Windows 32-bit console version"
+msgstr ""
+"\n"
+"MS-Windows 32 位控制台版本"
+
+msgid ""
+"\n"
+"MS-Windows 16-bit version"
+msgstr ""
+"\n"
+"MS-Windows 16 位控制台版本"
+
+msgid ""
+"\n"
+"32-bit MS-DOS version"
+msgstr ""
+"\n"
+"32 位 MS-DOS 版本"
+
+msgid ""
+"\n"
+"16-bit MS-DOS version"
+msgstr ""
+"\n"
+"16 位 MS-DOS 版本"
+
+msgid ""
+"\n"
+"MacOS X (unix) version"
+msgstr ""
+"\n"
+"MacOS X (unix) 版本"
+
+msgid ""
+"\n"
+"MacOS X version"
+msgstr ""
+"\n"
+"MacOS X 版本"
+
+msgid ""
+"\n"
+"MacOS version"
+msgstr ""
+"\n"
+"MacOS 版本"
+
+msgid ""
+"\n"
+"RISC OS version"
+msgstr ""
+"\n"
+"RISC OS 版本"
+
+msgid ""
+"\n"
+"Included patches: "
+msgstr ""
+"\n"
+"包含补丁: "
+
+msgid "Modified by "
+msgstr "修改者 "
+
+msgid ""
+"\n"
+"Compiled "
+msgstr ""
+"\n"
+"编译"
+
+msgid "by "
+msgstr "者 "
+
+msgid ""
+"\n"
+"Huge version "
+msgstr ""
+"\n"
+"巨型版本 "
+
+msgid ""
+"\n"
+"Big version "
+msgstr ""
+"\n"
+"大型版本 "
+
+msgid ""
+"\n"
+"Normal version "
+msgstr ""
+"\n"
+"正常版本 "
+
+msgid ""
+"\n"
+"Small version "
+msgstr ""
+"\n"
+"小型版本 "
+
+msgid ""
+"\n"
+"Tiny version "
+msgstr ""
+"\n"
+"微型版本 "
+
+msgid "without GUI."
+msgstr "无图形界面。"
+
+msgid "with GTK2-GNOME GUI."
+msgstr "带 GTK2-GNOME 图形界面。"
+
+msgid "with GTK-GNOME GUI."
+msgstr "带 GTK-GNOME 图形界面。"
+
+msgid "with GTK2 GUI."
+msgstr "带 GTK2 图形界面。"
+
+msgid "with GTK GUI."
+msgstr "带 GTK 图形界面。"
+
+msgid "with X11-Motif GUI."
+msgstr "带 X11-Motif 图形界面。"
+
+msgid "with X11-neXtaw GUI."
+msgstr "带 X11-neXtaw 图形界面。"
+
+msgid "with X11-Athena GUI."
+msgstr "带 X11-Athena 图形界面。"
+
+msgid "with Photon GUI."
+msgstr "带 Photon 图形界面。"
+
+msgid "with GUI."
+msgstr "带图形界面。"
+
+msgid "with Carbon GUI."
+msgstr "带 Carbon 图形界面。"
+
+msgid "with Cocoa GUI."
+msgstr "带 Cocoa 图形界面。"
+
+msgid "with (classic) GUI."
+msgstr "带(传统)图形界面。"
+
+msgid "  Features included (+) or not (-):\n"
+msgstr "  可使用(+)与不可使用(-)的功能:\n"
+
+msgid "   system vimrc file: \""
+msgstr "     系统 vimrc 文件: \""
+
+msgid "     user vimrc file: \""
+msgstr "     用户 vimrc 文件: \""
+
+msgid " 2nd user vimrc file: \""
+msgstr " 第二用户 vimrc 文件: \""
+
+msgid " 3rd user vimrc file: \""
+msgstr " 第三用户 vimrc 文件: \""
+
+msgid "      user exrc file: \""
+msgstr "      用户 exrc 文件: \""
+
+msgid "  2nd user exrc file: \""
+msgstr "  第二用户 exrc 文件: \""
+
+msgid "  system gvimrc file: \""
+msgstr "    系统 gvimrc 文件: \""
+
+msgid "    user gvimrc file: \""
+msgstr "    用户 gvimrc 文件: \""
+
+msgid "2nd user gvimrc file: \""
+msgstr "第二用户 gvimrc 文件: \""
+
+msgid "3rd user gvimrc file: \""
+msgstr "第三用户 gvimrc 文件: \""
+
+msgid "    system menu file: \""
+msgstr "        系统菜单文件: \""
+
+msgid "  fall-back for $VIM: \""
+msgstr "         $VIM 预设值: \""
+
+msgid " f-b for $VIMRUNTIME: \""
+msgstr "  $VIMRUNTIME 预设值: \""
+
+msgid "Compilation: "
+msgstr "编译方式: "
+
+msgid "Compiler: "
+msgstr "编译器: "
+
+msgid "Linking: "
+msgstr "链接方式: "
+
+msgid "  DEBUG BUILD"
+msgstr "  调试版本"
+
+msgid "VIM - Vi IMproved"
+msgstr "VIM - Vi IMproved"
+
+msgid "version "
+msgstr "版本 "
+
+msgid "by Bram Moolenaar et al."
+msgstr "维护人 Bram Moolenaar 等"
+
+msgid "Vim is open source and freely distributable"
+msgstr "Vim 是可自由分发的开放源代码软件"
+
+msgid "Help poor children in Uganda!"
+msgstr "帮助乌干达的可怜儿童！"
+
+msgid "type  :help iccf<Enter>       for information "
+msgstr "输入  :help iccf<Enter>       查看说明        "
+
+msgid "type  :q<Enter>               to exit         "
+msgstr "输入  :q<Enter>               退出            "
+
+msgid "type  :help<Enter>  or  <F1>  for on-line help"
+msgstr "输入  :help<Enter>  或  <F1>  查看在线帮助    "
+
+msgid "type  :help version7<Enter>   for version info"
+msgstr "输入  :help version7<Enter>   查看版本信息    "
+
+msgid "Running in Vi compatible mode"
+msgstr "运行于 Vi 兼容模式"
+
+msgid "type  :set nocp<Enter>        for Vim defaults"
+msgstr "输入  :set nocp<Enter>        恢复默认的 Vim  "
+
+msgid "type  :help cp-default<Enter> for info on this"
+msgstr "输入  :help cp-default<Enter> 查看相关说明    "
+
+msgid "menu  Help->Orphans           for information    "
+msgstr "菜单  Help->Orphans           查看说明           "
+
+msgid "Running modeless, typed text is inserted"
+msgstr "无模式运行，输入文字即插入"
+
+msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
+msgstr "菜单  Edit->Global Settings->Toggle Insert Mode  "
+
+#, fuzzy
+#~ msgid "                              for two modes      "
+#~ msgstr " # pid    数据库名称                          prepend path\n"
+
+#~ msgid "menu  Edit->Global Settings->Toggle Vi Compatible"
+#~ msgstr ""
+
+#, fuzzy
+#~ msgid "                              for Vim defaults   "
+#~ msgstr " # pid    数据库名称                          prepend path\n"
+
+msgid "Sponsor Vim development!"
+msgstr "赞助 Vim 的开发！"
+
+msgid "Become a registered Vim user!"
+msgstr "成为 Vim 的注册用户！"
+
+msgid "type  :help sponsor<Enter>    for information "
+msgstr "输入  :help sponsor<Enter>    查看说明        "
+
+msgid "type  :help register<Enter>   for information "
+msgstr "输入  :help register<Enter>   查看说明        "
+
+msgid "menu  Help->Sponsor/Register  for information    "
+msgstr "菜单  Help->Sponsor/Register  查看说明           "
+
+msgid "WARNING: Windows 95/98/ME detected"
+msgstr "警告: 检测到 Windows 95/98/ME"
+
+msgid "type  :help windows95<Enter>  for info on this"
+msgstr "输入  :help windows95<Enter>  查看相关说明    "
+
+msgid "Already only one window"
+msgstr "已经只剩一个窗口了"
+
+msgid "E441: There is no preview window"
+msgstr "E441: 没有预览窗口"
+
+msgid "E442: Can't split topleft and botright at the same time"
+msgstr "E442: 不能同时进行 topleft 和 botright 分割"
+
+msgid "E443: Cannot rotate when another window is split"
+msgstr "E443: 有其它分割窗口时不能旋转"
+
+msgid "E444: Cannot close last window"
+msgstr "E444: 不能关闭最后一个窗口"
+
+msgid "E445: Other window contains changes"
+msgstr "E445: 其它窗口有改变的内容"
+
+msgid "E446: No file name under cursor"
+msgstr "E446: 光标处没有文件名"
+
+#, c-format
+msgid "E447: Can't find file \"%s\" in path"
+msgstr "E447: 在路径中找不到文件 \"%s\""
+
+#, c-format
+msgid "E370: Could not load library %s"
+msgstr "E370: 无法加载库 %s"
+
+msgid "Sorry, this command is disabled: the Perl library could not be loaded."
+msgstr "抱歉，此命令不可用: 无法加载 Perl 库。"
+
+#~ msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
+#~ msgstr ""
+
+msgid "Edit with &multiple Vims"
+msgstr "用多个 Vim 编辑(&M)"
+
+msgid "Edit with single &Vim"
+msgstr "用单个 Vim 编辑(&V)"
+
+msgid "Diff with Vim"
+msgstr "用 Vim 比较(diff)"
+
+msgid "Edit with &Vim"
+msgstr "用 Vim 编辑(&V)"
+
+#. Now concatenate
+msgid "Edit with existing Vim - "
+msgstr "用当前的 Vim 编辑 - "
+
+msgid "Edits the selected file(s) with Vim"
+msgstr "用 Vim 编辑选中的文件"
+
+msgid "Error creating process: Check if gvim is in your path!"
+msgstr "创建进程失败: 请检查 gvim 是否在路径中！"
+
+msgid "gvimext.dll error"
+msgstr "gvimext.dll 错误"
+
+msgid "Path length too long!"
+msgstr "路径太长！"
+
+msgid "--No lines in buffer--"
+msgstr "--缓冲区无内容--"
+
+#.
+#. * The error messages that can be shared are included here.
+#. * Excluded are errors that are only used once and debugging messages.
+#.
+msgid "E470: Command aborted"
+msgstr "E470: 命令被中止"
+
+msgid "E471: Argument required"
+msgstr "E471: 需要参数"
+
+msgid "E10: \\ should be followed by /, ? or &"
+msgstr "E10: \\ 后面应该跟有 /、? 或 &"
+
+msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
+msgstr "E11: 在命令行窗口中无效；<CR> 执行，CTRL-C 退出"
+
+msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+msgstr "E12: 当前目录中的 exrc/vimrc 或 tag 查找中不允许此命令"
+
+msgid "E171: Missing :endif"
+msgstr "E171: 缺少 :endif"
+
+msgid "E600: Missing :endtry"
+msgstr "E600: 缺少 :endtry"
+
+msgid "E170: Missing :endwhile"
+msgstr "E170: 缺少 :endwhile"
+
+msgid "E170: Missing :endfor"
+msgstr "E170: 缺少 :endfor"
+
+msgid "E588: :endwhile without :while"
+msgstr "E588: :endwhile 缺少对应的 :while"
+
+msgid "E588: :endfor without :for"
+msgstr "E588: :endfor 缺少对应的 :for"
+
+msgid "E13: File exists (add ! to override)"
+msgstr "E13: 文件已存在 (请加 ! 强制执行)"
+
+msgid "E472: Command failed"
+msgstr "E472: 命令执行失败"
+
+#, c-format
+msgid "E234: Unknown fontset: %s"
+msgstr "E234: 未知的 Fontset: %s"
+
+#, c-format
+msgid "E235: Unknown font: %s"
+msgstr "E235: 未知的字体: %s"
+
+#, c-format
+msgid "E236: Font \"%s\" is not fixed-width"
+msgstr "E236: 字体 \"%s\" 不是等宽字体"
+
+msgid "E473: Internal error"
+msgstr "E473: 内部错误"
+
+msgid "Interrupted"
+msgstr "已中断"
+
+msgid "E14: Invalid address"
+msgstr "E14: 无效的地址"
+
+msgid "E474: Invalid argument"
+msgstr "E474: 无效的参数"
+
+#, c-format
+msgid "E475: Invalid argument: %s"
+msgstr "E475: 无效的参数: %s"
+
+#, c-format
+msgid "E15: Invalid expression: %s"
+msgstr "E15: 无效的表达式: %s"
+
+msgid "E16: Invalid range"
+msgstr "E16: 无效的范围"
+
+msgid "E476: Invalid command"
+msgstr "E476: 无效的命令"
+
+#, c-format
+msgid "E17: \"%s\" is a directory"
+msgstr "E17: \"%s\" 是目录"
+
+#, c-format
+msgid "E364: Library call failed for \"%s()\""
+msgstr "E364: 调用函数库 \"%s()\" 失败"
+
+#, c-format
+msgid "E448: Could not load library function %s"
+msgstr "E448: 无法加载库函数 %s"
+
+msgid "E19: Mark has invalid line number"
+msgstr "E19: 标记的行号无效"
+
+msgid "E20: Mark not set"
+msgstr "E20: 没有设定标记"
+
+msgid "E21: Cannot make changes, 'modifiable' is off"
+msgstr "E21: 不能修改，因为选项 'modifiable' 是关的"
+
+msgid "E22: Scripts nested too deep"
+msgstr "E22: 脚本嵌套过深"
+
+msgid "E23: No alternate file"
+msgstr "E23: 没有交替文件"
+
+msgid "E24: No such abbreviation"
+msgstr "E24: 没有这个缩写"
+
+msgid "E477: No ! allowed"
+msgstr "E477: 不能使用 \"!\""
+
+msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgstr "E25: 无法使用图形界面: 编译时没有启用"
+
+msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
+msgstr "E26: 无法使用 Hebrew: 编译时没有启用\n"
+
+msgid "E27: Farsi cannot be used: Not enabled at compile time\n"
+msgstr "E27: 无法使用 Farsi: 编译时没有启用\n"
+
+msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
+msgstr "E800: 无法使用 Arabic: 编译时没有启用\n"
+
+#, c-format
+msgid "E28: No such highlight group name: %s"
+msgstr "E28: 没有这个高亮群组名: %s"
+
+msgid "E29: No inserted text yet"
+msgstr "E29: 没有插入过文字"
+
+msgid "E30: No previous command line"
+msgstr "E30: 没有前一个命令行"
+
+msgid "E31: No such mapping"
+msgstr "E31: 没有这个映射"
+
+msgid "E479: No match"
+msgstr "E479: 没有匹配"
+
+#, c-format
+msgid "E480: No match: %s"
+msgstr "E480: 没有匹配: %s"
+
+msgid "E32: No file name"
+msgstr "E32: 没有文件名"
+
+msgid "E33: No previous substitute regular expression"
+msgstr "E33: 没有前一个替换正则表达式"
+
+msgid "E34: No previous command"
+msgstr "E34: 没有前一个命令"
+
+msgid "E35: No previous regular expression"
+msgstr "E35: 没有前一个正则表达式"
+
+msgid "E481: No range allowed"
+msgstr "E481: 不能使用范围"
+
+msgid "E36: Not enough room"
+msgstr "E36: 没有足够的空间"
+
+#, c-format
+msgid "E247: no registered server named \"%s\""
+msgstr "E247: 没有名叫 \"%s\" 的已注册的服务器"
+
+#, c-format
+msgid "E482: Can't create file %s"
+msgstr "E482: 无法创建文件 %s"
+
+msgid "E483: Can't get temp file name"
+msgstr "E483: 无法获取临时文件名"
+
+#, c-format
+msgid "E484: Can't open file %s"
+msgstr "E484: 无法打开文件 %s"
+
+#, c-format
+msgid "E485: Can't read file %s"
+msgstr "E485: 无法读取文件 %s"
+
+msgid "E37: No write since last change (add ! to override)"
+msgstr "E37: 已修改但尚未保存 (可用 ! 强制执行)"
+
+msgid "E38: Null argument"
+msgstr "E38: 空的参数"
+
+msgid "E39: Number expected"
+msgstr "E39: 此处需要数字"
+
+#, c-format
+msgid "E40: Can't open errorfile %s"
+msgstr "E40: 无法打开错误文件 %s"
+
+msgid "E233: cannot open display"
+msgstr "E233: 无法打开 display"
+
+msgid "E41: Out of memory!"
+msgstr "E41: 内存不足！"
+
+msgid "Pattern not found"
+msgstr "找不到模式"
+
+#, c-format
+msgid "E486: Pattern not found: %s"
+msgstr "E486: 找不到模式: %s"
+
+msgid "E487: Argument must be positive"
+msgstr "E487: 参数必须是正数"
+
+msgid "E459: Cannot go back to previous directory"
+msgstr "E459: 无法回到前一个目录"
+
+msgid "E42: No Errors"
+msgstr "E42: 没有错误"
+
+msgid "E776: No location list"
+msgstr "E776: 没有 location 列表"
+
+msgid "E43: Damaged match string"
+msgstr "E43: 已损坏的匹配字符串"
+
+msgid "E44: Corrupted regexp program"
+msgstr "E44: 已损坏的正则表达式程序"
+
+msgid "E45: 'readonly' option is set (add ! to override)"
+msgstr "E45: 已设定选项 'readonly' (请加 ! 强制执行)"
+
+#, c-format
+msgid "E46: Cannot change read-only variable \"%s\""
+msgstr "E46: 不能改变只读变量 \"%s\""
+
+#, c-format
+msgid "E46: Cannot set variable in the sandbox: \"%s\""
+msgstr "E46: 不能在 sandbox 中设定变量: \"%s\""
+
+msgid "E47: Error while reading errorfile"
+msgstr "E47: 读取错误文件失败"
+
+msgid "E48: Not allowed in sandbox"
+msgstr "E48: 不允许在 sandbox 中使用"
+
+msgid "E523: Not allowed here"
+msgstr "E523: 不允许在此使用"
+
+msgid "E359: Screen mode setting not supported"
+msgstr "E359: 不支持设定屏幕模式"
+
+msgid "E49: Invalid scroll size"
+msgstr "E49: 无效的滚动大小"
+
+msgid "E91: 'shell' option is empty"
+msgstr "E91: 选项 'shell' 为空"
+
+msgid "E255: Couldn't read in sign data!"
+msgstr "E255: 无法读取 sign 数据！"
+
+msgid "E72: Close error on swap file"
+msgstr "E72: 交换文件关闭错误"
+
+msgid "E73: tag stack empty"
+msgstr "E73: tag 堆栈为空"
+
+msgid "E74: Command too complex"
+msgstr "E74: 命令过复杂"
+
+msgid "E75: Name too long"
+msgstr "E75: 名字过长"
+
+msgid "E76: Too many ["
+msgstr "E76: [ 过多"
+
+msgid "E77: Too many file names"
+msgstr "E77: 文件名过多"
+
+msgid "E488: Trailing characters"
+msgstr "E488: 多余的尾部字符"
+
+msgid "E78: Unknown mark"
+msgstr "E78: 未知的标记"
+
+msgid "E79: Cannot expand wildcards"
+msgstr "E79: 无法扩展通配符"
+
+msgid "E591: 'winheight' cannot be smaller than 'winminheight'"
+msgstr "E591: 'winheight' 不能小于 'winminheight'"
+
+msgid "E592: 'winwidth' cannot be smaller than 'winminwidth'"
+msgstr "E592: 'winwidth' 不能小于 'winminwidth'"
+
+msgid "E80: Error while writing"
+msgstr "E80: 写入出错"
+
+msgid "Zero count"
+msgstr "计数为零"
+
+msgid "E81: Using <SID> not in a script context"
+msgstr "E81: 在脚本环境外使用了 <SID>"
+
+msgid "E449: Invalid expression received"
+msgstr "E449: 收到无效的表达式"
+
+#~ msgid "E463: Region is guarded, cannot modify"
+#~ msgstr ""
+
+msgid "E744: NetBeans does not allow changes in read-only files"
+msgstr "E744: NetBeans 不允许改变只读文件"
+
+#, c-format
+msgid "E685: Internal error: %s"
+msgstr "E685: 内部错误: %s"
+
+msgid "E363: pattern uses more memory than 'maxmempattern'"
+msgstr "E363: 表达式的内存使用超出 'maxmempattern'"
+
+msgid "E749: empty buffer"
+msgstr "E749: 空的缓冲区"
+
+msgid "E682: Invalid search pattern or delimiter"
+msgstr "E682: 无效的搜索表达式或分隔符"
+
+msgid "E139: File is loaded in another buffer"
+msgstr "E139: 文件已在另一个缓冲区中被加载"
+
+#, c-format
+msgid "E764: Option '%s' is not set"
+msgstr "E764: 没有设定选项 '%s'"
+
+msgid "search hit TOP, continuing at BOTTOM"
+msgstr "已查找到文件开头，再从结尾继续查找"
+
+msgid "search hit BOTTOM, continuing at TOP"
+msgstr "已查找到文件结尾，再从开头继续查找"
+
+#~ msgid "Affix flags ignored when PFXPOSTPONE used in %s line %d: %s"
+#~ msgstr "%s 第 %d 行，使用 PFXPOSTPONE 时附加标志被忽略: %s"
+
+#~ msgid "[No file]"
+#~ msgstr "[未命名]"
+
+#~ msgid "[Error List]"
+#~ msgstr "[错误列表]"
+
+#~ msgid "E106: Unknown variable: \"%s\""
+#~ msgstr "E106: 未定义的变量: \"%s\""
+
+#~ msgid "E119: Not enough arguments for function: %s"
+#~ msgstr "E119: 函数 %s 的参数太少"
+
+#~ msgid "E120: Using <SID> not in a script context: %s"
+#~ msgstr "E120: <SID> 不能在 script 上下文外使用: %s"
+
+#~ msgid "E123: Undefined function: %s"
+#~ msgstr "E123: 函数 %s 尚未定义"
+
+#~ msgid "E127: Cannot redefine function %s: It is in use"
+#~ msgstr "E127: 函数 %s 正在使用中，不能重新定义"
+
+#~ msgid "function "
+#~ msgstr "函数 "
+
+#~ msgid "E130: Undefined function: %s"
+#~ msgstr "E130: 函数 %s 尚未定义"
+
+#~ msgid "Run Macro"
+#~ msgstr "执行宏"
+
+#~ msgid "E242: Color name not recognized: %s"
+#~ msgstr "E242: %s 为不能识别的颜色名称"
+
+#~ msgid "error reading cscope connection %d"
+#~ msgstr "读取 cscope 连接 %d 时错误"
+
+#~ msgid "E260: cscope connection not found"
+#~ msgstr "E260: 找不到 cscope 连接"
+
+#~ msgid "cscope connection closed"
+#~ msgstr "cscope 连接已关闭"
+
+#~ msgid "couldn't malloc\n"
+#~ msgstr "不能使用 malloc\n"
+
+#~ msgid "%2d %-5ld  %-34s  <none>\n"
+#~ msgstr "%2d %-5ld  %-34s  <无>\n"
+
+#~ msgid "E249: couldn't read VIM instance registry property"
+#~ msgstr "E249: 不能读取 VIM 的 注册表属性"
+
+#~ msgid "\"\n"
+#~ msgstr "\"\n"
+
+#~ msgid "--help\t\tShow Gnome arguments"
+#~ msgstr "--help\t\t显示 Gnome 相关参数"
+
+#~ msgid "[string too long]"
+#~ msgstr "[字符串太长]"
+
+#~ msgid "Hit ENTER to continue"
+#~ msgstr "请按 ENTER 继续"
+
+#~ msgid " (RET/BS: line, SPACE/b: page, d/u: half page, q: quit)"
+#~ msgstr " (RET/BS: 向下/向上一行, 空格/b: 一页, d/u: 半页, q: 退出)"
+
+#~ msgid " (RET: line, SPACE: page, d: half page, q: quit)"
+#~ msgstr " (RET: 向下一行, 空白键: 一页, d: 半页, q: 退出)"
+
+#~ msgid "E361: Crash intercepted; regexp too complex?"
+#~ msgstr "E361: 不能执行; regular expression 太复杂?"
+
+#~ msgid "E363: pattern caused out-of-stack error"
+#~ msgstr "E363: regular expression 造成堆栈用光的错误"
+
+#~ msgid " BLOCK"
+#~ msgstr " 块"
+
+#~ msgid " LINE"
+#~ msgstr " 行"
+
+#~ msgid "Enter nr of choice (<CR> to abort): "
+#~ msgstr "输入 nr 或选择 (<CR> 退出): "
+
+#~ msgid "Linear tag search"
+#~ msgstr "线性查找标签 (Tags)"
+
+#~ msgid "Binary tag search"
+#~ msgstr "二进制查找(Binary search) 标签(Tags)"
+
+#~ msgid "with BeOS GUI."
+#~ msgstr "使用 BeOS 图形界面。"

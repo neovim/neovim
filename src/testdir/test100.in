@@ -1,0 +1,42 @@
+Tests for 'undolevel' setting being global-local
+
+STARTTEST
+:so small.vim
+:set nocompatible viminfo+=nviminfo ul=5
+:fu! FillBuffer()
+  :for i in range(1,13)
+    :put=i
+    :exe "setg ul=" . &g:ul
+  :endfor
+:endfu
+:fu! UndoLevel()
+  :redir @a | setglobal undolevels? | echon ' global' | setlocal undolevels? | echon ' local' |redir end
+  :$put a
+:endfu
+:new one
+:0put ='ONE: expecting global undolevels: 5, local undolevels: -123456 (default)'
+:call FillBuffer()
+:call feedkeys(":earlier 10\n", 't')
+:call UndoLevel()
+:%w! test.out
+:new two
+:0put ='TWO: expecting global undolevels: 5, local undolevels: 2 (first) then 10 (afterwards)'
+:setlocal ul=2
+:call FillBuffer()
+:call feedkeys(":earlier 10\n", 't')
+:call UndoLevel()
+:setlocal ul=10
+:call UndoLevel()
+:%w >> test.out
+:wincmd p
+:redir >>test.out | echo "global value shouldn't be changed and still be 5!" | echo 'ONE: expecting global undolevels: 5, local undolevels: -123456 (default)'|:setglobal undolevels? | echon ' global' | setlocal undolevels? | echon ' local' |echo "" |redir end
+:new three
+:setglobal ul=50
+:1put ='global value should be changed to 50'
+:2put ='THREE: expecting global undolevels: 50, local undolevels: -123456 (default)'
+:call UndoLevel()
+:%w >> test.out
+:"sleep 10
+:qa!
+ENDTEST
+

@@ -1,0 +1,36 @@
+" Tests for storing global variables in the .viminfo file vim: set ft=vim:
+
+STARTTEST
+:so small.vim
+:" Do all test in a separate window to avoid E211 when we recursively
+:" delete the Xfind directory during cleanup
+:"
+:" This will cause a few errors, do it silently.
+:set visualbell
+:set nocp viminfo+=!,nviminfo
+:let MY_GLOBAL_DICT={'foo': 1, 'bar': 0, 'longvarible': 1000}
+:" store a really long list, so line wrapping will occur in viminfo file
+:let MY_GLOBAL_LIST=range(1,100)
+:wv! Xviminfo
+:unlet MY_GLOBAL_DICT
+:unlet MY_GLOBAL_LIST
+:rv! Xviminfo
+:call delete('Xviminfo')
+:if exists("MY_GLOBAL_DICT")
+:redir >> test.out
+:echo MY_GLOBAL_DICT
+:redir end
+:endif
+:if exists("MY_GLOBAL_LIST")
+:redir >> test.out
+:echo MY_GLOBAL_LIST
+:redir end
+:endif
+:redir >> test.out
+:echo "foobar"
+:redir end
+:endif
+:qa!
+ENDTEST
+
+eof

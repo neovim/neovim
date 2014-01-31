@@ -1,0 +1,6893 @@
+# Russian translation for Vim
+#
+# Об условиях использования читайте в редакторе Vim ":help uganda"
+#
+# vassily "vr" ragosin <vrr@users.sourceforge.net>, 2004
+# Sergey Alyoshin <alyoshin.s@gmail.com>, 2013
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: vim_7.4_ru\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2013-08-31 16:42+0400\n"
+"PO-Revision-Date: 2013-08-31 21:11+0400\n"
+"Last-Translator: Sergey Alyoshin <alyoshin.s@gmail.com>\n"
+"Language-Team: \n"
+"Language: Russian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=cp1251\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "E831: bf_key_init() called with empty password"
+msgstr "E831: bf_key_init() вызван с пустым паролем"
+
+msgid "E820: sizeof(uint32_t) != 4"
+msgstr "E820: sizeof(uint32_t) != 4"
+
+msgid "E817: Blowfish big/little endian use wrong"
+msgstr ""
+"E817: Неправильное использование обратного/прямого порядка байт в Blowfish"
+
+msgid "E818: sha256 test failed"
+msgstr "E818: Не удалось выполнить тест sha256"
+
+msgid "E819: Blowfish test failed"
+msgstr "E819: Не удалось выполнить тест Blowfish"
+
+msgid "[Location List]"
+msgstr "[Список расположений]"
+
+msgid "[Quickfix List]"
+msgstr "[Список быстрых исправлений]"
+
+msgid "E855: Autocommands caused command to abort"
+msgstr "E855: Автокоманды вызвали прекращение команды"
+
+msgid "E82: Cannot allocate any buffer, exiting..."
+msgstr "E82: Невозможно выделить память даже для одного буфера, выход..."
+
+msgid "E83: Cannot allocate buffer, using other one..."
+msgstr "E83: Невозможно выделить память для буфера, используем другой буфер..."
+
+msgid "E515: No buffers were unloaded"
+msgstr "E515: Ни один буфер не был выгружен из памяти"
+
+msgid "E516: No buffers were deleted"
+msgstr "E516: Ни один буфер не был удалён"
+
+msgid "E517: No buffers were wiped out"
+msgstr "E517: Ни один буфер не был очищен"
+
+msgid "1 buffer unloaded"
+msgstr "Один буфер выгружен из памяти"
+
+#, c-format
+msgid "%d buffers unloaded"
+msgstr "Всего выгружено буферов из памяти: %d"
+
+msgid "1 buffer deleted"
+msgstr "Один буфер удалён"
+
+#, c-format
+msgid "%d buffers deleted"
+msgstr "Всего удалено буферов: %d"
+
+msgid "1 buffer wiped out"
+msgstr "Один буфер очищен"
+
+#, c-format
+msgid "%d buffers wiped out"
+msgstr "Всего очищено буферов: %d"
+
+msgid "E84: No modified buffer found"
+msgstr "E84: Изменённых буферов не обнаружено"
+
+#. back where we started, didn't find anything.
+msgid "E85: There is no listed buffer"
+msgstr "E85: Буферы в списке отсутствуют"
+
+#, c-format
+msgid "E86: Buffer %ld does not exist"
+msgstr "E86: Буфер %ld не существует"
+
+msgid "E87: Cannot go beyond last buffer"
+msgstr "E87: Это последний буфер"
+
+msgid "E88: Cannot go before first buffer"
+msgstr "E88: Это первый буфер"
+
+#, c-format
+msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgstr ""
+"E89: Изменения в буфере %ld не сохранены (добавьте !, чтобы обойти проверку)"
+
+msgid "E90: Cannot unload last buffer"
+msgstr "E90: Невозможно выгрузить из памяти последний буфер"
+
+msgid "W14: Warning: List of file names overflow"
+msgstr "W14: Предупреждение: переполнение списка имён файлов"
+
+#, c-format
+msgid "E92: Buffer %ld not found"
+msgstr "E92: Буфер %ld не найден"
+
+#, c-format
+msgid "E93: More than one match for %s"
+msgstr "E93: Несколько соответствий для %s"
+
+#, c-format
+msgid "E94: No matching buffer for %s"
+msgstr "E94: Нет соответствующего %s буфера"
+
+#, c-format
+msgid "line %ld"
+msgstr "строка %ld"
+
+msgid "E95: Buffer with this name already exists"
+msgstr "E95: Буфер с таким именем уже существует"
+
+msgid " [Modified]"
+msgstr " [Изменён]"
+
+msgid "[Not edited]"
+msgstr "[Не редактировался]"
+
+msgid "[New file]"
+msgstr "[Новый файл]"
+
+msgid "[Read errors]"
+msgstr "[Ошибки чтения]"
+
+msgid "[RO]"
+msgstr "[ТЧ]"
+
+msgid "[readonly]"
+msgstr "[только для чтения]"
+
+#, c-format
+msgid "1 line --%d%%--"
+msgstr "Одна строка --%d%%--"
+
+#, c-format
+msgid "%ld lines --%d%%--"
+msgstr "%ld стр. --%d%%--"
+
+#, c-format
+msgid "line %ld of %ld --%d%%-- col "
+msgstr "стр. %ld из %ld --%d%%-- кол. "
+
+msgid "[No Name]"
+msgstr "[Нет имени]"
+
+#. must be a help buffer
+msgid "help"
+msgstr "справка"
+
+msgid "[Help]"
+msgstr "[Справка]"
+
+msgid "[Preview]"
+msgstr "[Предпросмотр]"
+
+msgid "All"
+msgstr "Весь"
+
+msgid "Bot"
+msgstr "Внизу"
+
+msgid "Top"
+msgstr "Наверху"
+
+msgid ""
+"\n"
+"# Buffer list:\n"
+msgstr ""
+"\n"
+"# Список буферов:\n"
+
+msgid "[Scratch]"
+msgstr "[Временный]"
+
+msgid ""
+"\n"
+"--- Signs ---"
+msgstr ""
+"\n"
+"--- Значки ---"
+
+#, c-format
+msgid "Signs for %s:"
+msgstr "Значки для %s:"
+
+#, c-format
+msgid "    line=%ld  id=%d  name=%s"
+msgstr "    строка=%ld  id=%d  имя=%s"
+
+#, c-format
+msgid "E96: Can not diff more than %ld buffers"
+msgstr "E96: Следить за отличиями можно не более чем в %ld буферах"
+
+msgid "E810: Cannot read or write temp files"
+msgstr "E810: Невозможно прочитать или записать временные файлы"
+
+msgid "E97: Cannot create diffs"
+msgstr "E97: Невозможно создать файлы отличий"
+
+msgid "Patch file"
+msgstr "Файл-заплатка"
+
+msgid "E816: Cannot read patch output"
+msgstr "E816: Невозможно прочитать вывод patch"
+
+msgid "E98: Cannot read diff output"
+msgstr "E98: Невозможно прочитать вывод diff"
+
+msgid "E99: Current buffer is not in diff mode"
+msgstr "E99: Активный буфер не находится в режиме отличий"
+
+msgid "E793: No other buffer in diff mode is modifiable"
+msgstr "E793: Больше нет изменяемых буферов в режиме отличий"
+
+msgid "E100: No other buffer in diff mode"
+msgstr "E100: Больше нет буферов в режиме отличий"
+
+msgid "E101: More than two buffers in diff mode, don't know which one to use"
+msgstr "E101: В режиме отличий более двух буферов, не могу выбрать"
+
+#, c-format
+msgid "E102: Can't find buffer \"%s\""
+msgstr "E102: Не могу найти буфер \"%s\""
+
+#, c-format
+msgid "E103: Buffer \"%s\" is not in diff mode"
+msgstr "E103: Буфер \"%s\" не находится в режиме отличий"
+
+msgid "E787: Buffer changed unexpectedly"
+msgstr "E787: Буфер неожиданно изменился"
+
+msgid "E104: Escape not allowed in digraph"
+msgstr "E104: Экранирующий символ Escape нельзя использовать в диграфе"
+
+msgid "E544: Keymap file not found"
+msgstr "E544: Файл с раскладкой клавиатуры не найден"
+
+msgid "E105: Using :loadkeymap not in a sourced file"
+msgstr "E105: Команда :loadkeymap применена вне файла сценария"
+
+msgid "E791: Empty keymap entry"
+msgstr "E791: пустая запись раскладки клавиатуры"
+
+msgid " Keyword completion (^N^P)"
+msgstr " Автодополнение ключевого слова (^N^P)"
+
+#. ctrl_x_mode == 0, ^P/^N compl.
+msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+msgstr " Режим ^X (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+
+msgid " Whole line completion (^L^N^P)"
+msgstr " Автодополнение целой строки (^L^N^P)"
+
+msgid " File name completion (^F^N^P)"
+msgstr " Автодополнение имени файла (^F^N^P)"
+
+msgid " Tag completion (^]^N^P)"
+msgstr " Автодополнение метки (^]^N^P)"
+
+msgid " Path pattern completion (^N^P)"
+msgstr " Автодополнение шаблона пути (^N^P)"
+
+msgid " Definition completion (^D^N^P)"
+msgstr " Автодополнение определения (^D^N^P)"
+
+msgid " Dictionary completion (^K^N^P)"
+msgstr " Автодополнение по словарю (^K^N^P)"
+
+msgid " Thesaurus completion (^T^N^P)"
+msgstr " Автодополнение синонимов (^T^N^P)"
+
+msgid " Command-line completion (^V^N^P)"
+msgstr " Автодополнение командной строки (^V^N^P)"
+
+msgid " User defined completion (^U^N^P)"
+msgstr " Пользовательское автодополнение (^U^N^P)"
+
+msgid " Omni completion (^O^N^P)"
+msgstr " Omni-дополнение (^O^N^P)"
+
+msgid " Spelling suggestion (s^N^P)"
+msgstr " Предложение исправления правописания (s^N^P)"
+
+msgid " Keyword Local completion (^N^P)"
+msgstr " Местное автодополнение ключевого слова (^N^P)"
+
+msgid "Hit end of paragraph"
+msgstr "Конец абзаца"
+
+msgid "E839: Completion function changed window"
+msgstr "E839: Функция автодополнения изменила окно"
+
+msgid "E840: Completion function deleted text"
+msgstr "E840: Функция автодополнения удалила текст"
+
+msgid "'dictionary' option is empty"
+msgstr "Не задано значение опции 'dictionary'"
+
+msgid "'thesaurus' option is empty"
+msgstr "Не задано значение опции 'thesaurus'"
+
+#, c-format
+msgid "Scanning dictionary: %s"
+msgstr "Просмотр словаря: %s"
+
+msgid " (insert) Scroll (^E/^Y)"
+msgstr " (вставка) Прокрутка (^E/^Y)"
+
+msgid " (replace) Scroll (^E/^Y)"
+msgstr " (замена) Прокрутка (^E/^Y)"
+
+#, c-format
+msgid "Scanning: %s"
+msgstr "Просмотр: %s"
+
+msgid "Scanning tags."
+msgstr "Выполняется поиск среди меток."
+
+msgid " Adding"
+msgstr " Добавление"
+
+#. showmode might reset the internal line pointers, so it must
+#. * be called before line = ml_get(), or when this address is no
+#. * longer needed.  -- Acevedo.
+#.
+msgid "-- Searching..."
+msgstr "-- Поиск..."
+
+msgid "Back at original"
+msgstr "Исходное слово"
+
+msgid "Word from other line"
+msgstr "Слово из другой строки"
+
+msgid "The only match"
+msgstr "Единственное соответствие"
+
+#, c-format
+msgid "match %d of %d"
+msgstr "соответствие %d из %d"
+
+#, c-format
+msgid "match %d"
+msgstr "соответствие %d"
+
+msgid "E18: Unexpected characters in :let"
+msgstr "E18: Неожиданные символы в :let"
+
+#, c-format
+msgid "E684: list index out of range: %ld"
+msgstr "E684: Индекс списка за пределами диапазона: %ld"
+
+#, c-format
+msgid "E121: Undefined variable: %s"
+msgstr "E121: Неопределённая переменная: %s"
+
+msgid "E111: Missing ']'"
+msgstr "E111: Пропущена ']'"
+
+#, c-format
+msgid "E686: Argument of %s must be a List"
+msgstr "E686: Параметр %s должен быть списком"
+
+#, c-format
+msgid "E712: Argument of %s must be a List or Dictionary"
+msgstr "E712: Параметр %s должен быть списком или словарём"
+
+msgid "E713: Cannot use empty key for Dictionary"
+msgstr "E713: Невозможно использовать пустой ключ для словаря"
+
+msgid "E714: List required"
+msgstr "E714: Требуется список"
+
+msgid "E715: Dictionary required"
+msgstr "E715: Требуется словарь"
+
+#, c-format
+msgid "E118: Too many arguments for function: %s"
+msgstr "E118: Слишком много параметров для функции %s"
+
+#, c-format
+msgid "E716: Key not present in Dictionary: %s"
+msgstr "E716: Нет ключа в словаре: %s"
+
+#, c-format
+msgid "E122: Function %s already exists, add ! to replace it"
+msgstr "E122: Функция %s уже существует. Добавьте !, чтобы заменить её."
+
+msgid "E717: Dictionary entry already exists"
+msgstr "E717: Запись уже существует в словаре"
+
+msgid "E718: Funcref required"
+msgstr "E718: Требуется ссылка на функцию"
+
+msgid "E719: Cannot use [:] with a Dictionary"
+msgstr "E719: Невозможно использовать [:] со словарём"
+
+#, c-format
+msgid "E734: Wrong variable type for %s="
+msgstr "E734: Неправильный тип переменной для %s="
+
+#, c-format
+msgid "E130: Unknown function: %s"
+msgstr "E130: Неизвестная функция: %s"
+
+#, c-format
+msgid "E461: Illegal variable name: %s"
+msgstr "E461: Недопустимое имя переменной: %s"
+
+msgid "E806: using Float as a String"
+msgstr "E806: Использование числа с плавающей точкой как строки"
+
+msgid "E687: Less targets than List items"
+msgstr "E687: Целей меньше чем элементов списка"
+
+msgid "E688: More targets than List items"
+msgstr "E688: Целей больше чем элементов списка"
+
+msgid "Double ; in list of variables"
+msgstr "Двойная ; в списке переменных"
+
+#, c-format
+msgid "E738: Can't list variables for %s"
+msgstr "E738: Невозможно отобразить переменные для %s"
+
+msgid "E689: Can only index a List or Dictionary"
+msgstr "E689: Индексирование возможно только списка или словаря"
+
+msgid "E708: [:] must come last"
+msgstr "E708: [:] должно быть последним"
+
+msgid "E709: [:] requires a List value"
+msgstr "E709: [:] требует значением список"
+
+msgid "E710: List value has more items than target"
+msgstr "E710: Элементов списка-значения больше чем в цели"
+
+msgid "E711: List value has not enough items"
+msgstr "E711: Список-значение не содержит достаточно элементов"
+
+msgid "E690: Missing \"in\" after :for"
+msgstr "E690: Пропущено \"in\" после :for"
+
+#, c-format
+msgid "E107: Missing parentheses: %s"
+msgstr "E107: Пропущены скобки: %s"
+
+#, c-format
+msgid "E108: No such variable: \"%s\""
+msgstr "E108: Нет такой переменной: \"%s\""
+
+msgid "E743: variable nested too deep for (un)lock"
+msgstr "E743: Слишком глубоко вложенные переменные для (раз)блокировки"
+
+msgid "E109: Missing ':' after '?'"
+msgstr "E109: Пропущено ':' после '?'"
+
+msgid "E691: Can only compare List with List"
+msgstr "E691: Список можно сравнивать только со списком"
+
+msgid "E692: Invalid operation for Lists"
+msgstr "E692: Недопустимая операция для списков"
+
+msgid "E735: Can only compare Dictionary with Dictionary"
+msgstr "E735: Словарь можно сравнивать только со словарём"
+
+msgid "E736: Invalid operation for Dictionary"
+msgstr "E736: Недопустимая операция для словаря"
+
+msgid "E693: Can only compare Funcref with Funcref"
+msgstr "E693: Ссылку на функцию можно сравнивать только с ссылкой на функцию"
+
+msgid "E694: Invalid operation for Funcrefs"
+msgstr "E694: Недопустимая операция для ссылки на функцию"
+
+msgid "E804: Cannot use '%' with Float"
+msgstr "E804: Невозможно использовать '%' с числом с плавающей точкой"
+
+msgid "E110: Missing ')'"
+msgstr "E110: Пропущена ')'"
+
+msgid "E695: Cannot index a Funcref"
+msgstr "E695: Невозможно индексировать ссылку на функцию"
+
+#, c-format
+msgid "E112: Option name missing: %s"
+msgstr "E112: Не указано имя опции: %s"
+
+#, c-format
+msgid "E113: Unknown option: %s"
+msgstr "E113: Неизвестная опция: %s"
+
+#, c-format
+msgid "E114: Missing quote: %s"
+msgstr "E114: Пропущена кавычка: %s"
+
+#, c-format
+msgid "E115: Missing quote: %s"
+msgstr "E115: Пропущена кавычка: %s"
+
+#, c-format
+msgid "E696: Missing comma in List: %s"
+msgstr "E696: Пропущена запятая в списке: %s"
+
+#, c-format
+msgid "E697: Missing end of List ']': %s"
+msgstr "E697: Пропущено окончание списка ']': %s"
+
+#, c-format
+msgid "E720: Missing colon in Dictionary: %s"
+msgstr "E720: Пропущено двоеточие в словаре: %s"
+
+#, c-format
+msgid "E721: Duplicate key in Dictionary: \"%s\""
+msgstr "E721: Повтор ключа в словаре: \"%s\""
+
+#, c-format
+msgid "E722: Missing comma in Dictionary: %s"
+msgstr "E722: Пропущена запятая в словаре: %s"
+
+#, c-format
+msgid "E723: Missing end of Dictionary '}': %s"
+msgstr "E723: Пропущено окончание словаря '}': %s"
+
+msgid "E724: variable nested too deep for displaying"
+msgstr "E724: Слишком глубоко вложенные переменные для отображения"
+
+#, c-format
+msgid "E740: Too many arguments for function %s"
+msgstr "E740: Слишком много параметров для функции %s"
+
+#, c-format
+msgid "E116: Invalid arguments for function %s"
+msgstr "E116: Параметры для функции %s заданы неверно"
+
+#, c-format
+msgid "E117: Unknown function: %s"
+msgstr "E117: Неизвестная функция: %s"
+
+#, c-format
+msgid "E119: Not enough arguments for function: %s"
+msgstr "E119: Недостаточно параметров для функции %s"
+
+#, c-format
+msgid "E120: Using <SID> not in a script context: %s"
+msgstr "E120: <SID> используется вне сценария: %s"
+
+#, c-format
+msgid "E725: Calling dict function without Dictionary: %s"
+msgstr "E725: Вызов функции dict без словаря: %s"
+
+msgid "E808: Number or Float required"
+msgstr "E808: Требуется целое число или с плавающей точкой"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "add() argument"
+msgstr "параметра add()"
+
+msgid "E699: Too many arguments"
+msgstr "E699: Слишком много параметров"
+
+msgid "E785: complete() can only be used in Insert mode"
+msgstr "E785: complete() может использоваться только в режиме Вставки"
+
+#.
+#. * Yes this is ugly, I don't particularly like it either.  But doing it
+#. * this way has the compelling advantage that translations need not to
+#. * be touched at all.  See below what 'ok' and 'ync' are used for.
+#.
+msgid "&Ok"
+msgstr "&Ok"
+
+#, c-format
+msgid "E737: Key already exists: %s"
+msgstr "E737: Ключ уже существует: %s"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "extend() argument"
+msgstr "параметра extend()"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "map() argument"
+msgstr "параметра map()"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "filter() argument"
+msgstr "параметра filter()"
+
+#, c-format
+msgid "+-%s%3ld lines: "
+msgstr "+-%s%3ld строк: "
+
+#, c-format
+msgid "E700: Unknown function: %s"
+msgstr "E700: Неизвестная функция: %s"
+
+msgid ""
+"&OK\n"
+"&Cancel"
+msgstr ""
+"&OK\n"
+"&C Отмена"
+
+msgid "called inputrestore() more often than inputsave()"
+msgstr "Функция inputrestore() вызывается чаще, чем функция inputsave()"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "insert() argument"
+msgstr "параметра insert()"
+
+msgid "E786: Range not allowed"
+msgstr "E786: Диапазон не допускается"
+
+msgid "E701: Invalid type for len()"
+msgstr "E701: Неправильные тип для len()"
+
+msgid "E726: Stride is zero"
+msgstr "E726: Нулевой шаг"
+
+msgid "E727: Start past end"
+msgstr "E727: Начало после конца"
+
+msgid "<empty>"
+msgstr "<пусто>"
+
+msgid "E240: No connection to Vim server"
+msgstr "E240: Нет связи с сервером Vim"
+
+#, c-format
+msgid "E241: Unable to send to %s"
+msgstr "E241: Не могу отправить сообщение для %s"
+
+msgid "E277: Unable to read a server reply"
+msgstr "E277: Сервер не отвечает"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "remove() argument"
+msgstr "параметра remove()"
+
+msgid "E655: Too many symbolic links (cycle?)"
+msgstr "E655: Слишком много символических ссылок (цикл?)"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "reverse() argument"
+msgstr "параметра reverse()"
+
+msgid "E258: Unable to send to client"
+msgstr "E258: Не могу ответить клиенту"
+
+#. Используется для получения "значение параметра p()" в E741 и E742
+msgid "sort() argument"
+msgstr "параметра sort()"
+
+msgid "E702: Sort compare function failed"
+msgstr "E702: Неудачное завершение функции сравнения при сортировке"
+
+msgid "(Invalid)"
+msgstr "(Неправильно)"
+
+msgid "E677: Error writing temp file"
+msgstr "E677: Ошибка записи во временный файл"
+
+msgid "E805: Using a Float as a Number"
+msgstr "E805: Использование числа с плавающей точкой как целого"
+
+msgid "E703: Using a Funcref as a Number"
+msgstr "E703: Использование ссылки на функцию как числа"
+
+msgid "E745: Using a List as a Number"
+msgstr "E745: Использование списка как числа"
+
+msgid "E728: Using a Dictionary as a Number"
+msgstr "E728: Использование словаря как числа"
+
+msgid "E729: using Funcref as a String"
+msgstr "E729: Использование ссылки на функцию как строки"
+
+msgid "E730: using List as a String"
+msgstr "E730: Использование списка как строки"
+
+msgid "E731: using Dictionary as a String"
+msgstr "E731: Использование словаря как строки"
+
+#, c-format
+msgid "E706: Variable type mismatch for: %s"
+msgstr "E706: Несоответствие типа переменной для: %s"
+
+#, c-format
+msgid "E795: Cannot delete variable %s"
+msgstr "E795: Невозможно удалить переменную %s"
+
+#, c-format
+msgid "E704: Funcref variable name must start with a capital: %s"
+msgstr ""
+"E704: Имя переменной ссылки на функцию должно начинаться с заглавной буквы: "
+"%s"
+
+#, c-format
+msgid "E705: Variable name conflicts with existing function: %s"
+msgstr "E705: Имя переменной конфликтует с существующей функцией: %s"
+
+#. Используется с %s = "параметера p"
+#, c-format
+msgid "E741: Value is locked: %s"
+msgstr "E741: Значение %s заблокировано"
+
+msgid "Unknown"
+msgstr "Неизвестно"
+
+#. Используется с %s = "параметера p()"
+#, c-format
+msgid "E742: Cannot change value of %s"
+msgstr "E742: Невозможно изменить значение %s"
+
+msgid "E698: variable nested too deep for making a copy"
+msgstr "E698: Слишком глубоко вложенные переменные для копирования"
+
+#, c-format
+msgid "E123: Undefined function: %s"
+msgstr "E123: Неопределённая функция: %s"
+
+#, c-format
+msgid "E124: Missing '(': %s"
+msgstr "E124: Пропущена '(': %s"
+
+msgid "E862: Cannot use g: here"
+msgstr "E862: Здесь невозможно использовать g:"
+
+#, c-format
+msgid "E125: Illegal argument: %s"
+msgstr "E125: Недопустимый параметр: %s"
+
+#, c-format
+msgid "E853: Duplicate argument name: %s"
+msgstr "E853: Повторяющееся имя параметра: %s"
+
+msgid "E126: Missing :endfunction"
+msgstr "E126: Пропущена команда :endfunction"
+
+#, c-format
+msgid "E707: Function name conflicts with variable: %s"
+msgstr "E707: Имя функции конфликтует с переменной: %s"
+
+#, c-format
+msgid "E127: Cannot redefine function %s: It is in use"
+msgstr "E127: Невозможно переопределить функцию %s, она используется"
+
+#, c-format
+msgid "E746: Function name does not match script file name: %s"
+msgstr "E746: Имя функции не соответствует имени файла сценария: %s"
+
+msgid "E129: Function name required"
+msgstr "E129: Требуется имя функции"
+
+#, c-format
+msgid "E128: Function name must start with a capital or contain a colon: %s"
+msgstr ""
+"E128: Имя функции должно начинаться с заглавной буквы или содержать "
+"двоеточие: %s"
+
+#, c-format
+msgid "E131: Cannot delete function %s: It is in use"
+msgstr "E131: Невозможно удалить функцию %s, она используется"
+
+msgid "E132: Function call depth is higher than 'maxfuncdepth'"
+msgstr "E132: Глубина вызова функции больше, чем значение 'maxfuncdepth'"
+
+#, c-format
+msgid "calling %s"
+msgstr "вызов %s"
+
+#, c-format
+msgid "%s aborted"
+msgstr "%s прервана"
+
+#, c-format
+msgid "%s returning #%ld"
+msgstr "%s возвращает #%ld"
+
+#, c-format
+msgid "%s returning %s"
+msgstr "%s возвращает %s"
+
+#, c-format
+msgid "continuing in %s"
+msgstr "продолжение в %s"
+
+msgid "E133: :return not inside a function"
+msgstr "E133: команда :return вне функции"
+
+msgid ""
+"\n"
+"# global variables:\n"
+msgstr ""
+"\n"
+"# глобальные переменные:\n"
+
+msgid ""
+"\n"
+"\tLast set from "
+msgstr ""
+"\n"
+"\tВ последний раз опция изменена в "
+
+msgid "No old files"
+msgstr "Нет старых файлов"
+
+#, c-format
+msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgstr "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+
+#, c-format
+msgid "> %d, Hex %04x, Octal %o"
+msgstr "> %d, Hex %04x, Octal %o"
+
+#, c-format
+msgid "> %d, Hex %08x, Octal %o"
+msgstr "> %d, Hex %08x, Octal %o"
+
+msgid "E134: Move lines into themselves"
+msgstr "E134: Строки перемещаются сами на себя"
+
+msgid "1 line moved"
+msgstr "Перемещена одна строка"
+
+#, c-format
+msgid "%ld lines moved"
+msgstr "Перемещено строк: %ld"
+
+#, c-format
+msgid "%ld lines filtered"
+msgstr "Пропущено через фильтр строк: %ld"
+
+msgid "E135: *Filter* Autocommands must not change current buffer"
+msgstr "E135: Автокоманды *Filter* не должны изменять активный буфер"
+
+msgid "[No write since last change]\n"
+msgstr "[Изменения не сохранены]\n"
+
+#, c-format
+msgid "%sviminfo: %s in line: "
+msgstr "%sviminfo: %s в строке: "
+
+msgid "E136: viminfo: Too many errors, skipping rest of file"
+msgstr ""
+"E136: viminfo: Слишком много ошибок, остальная часть файла будет пропущена"
+
+#, c-format
+msgid "Reading viminfo file \"%s\"%s%s%s"
+msgstr "Чтение файла viminfo \"%s\"%s%s%s"
+
+msgid " info"
+msgstr " инфо"
+
+msgid " marks"
+msgstr " отметок"
+
+msgid " oldfiles"
+msgstr " старых файлов"
+
+msgid " FAILED"
+msgstr " НЕУДАЧНО"
+
+#. avoid a wait_return for this message, it's annoying
+#, c-format
+msgid "E137: Viminfo file is not writable: %s"
+msgstr "E137: Права на запись файла viminfo отсутствуют: %s"
+
+#, c-format
+msgid "E138: Can't write viminfo file %s!"
+msgstr "E138: Невозможно записать файл viminfo %s!"
+
+#, c-format
+msgid "Writing viminfo file \"%s\""
+msgstr "Запись файла viminfo \"%s\""
+
+#. Write the info:
+#, c-format
+msgid "# This viminfo file was generated by Vim %s.\n"
+msgstr "# Этот файл viminfo автоматически создан Vim %s.\n"
+
+msgid ""
+"# You may edit it if you're careful!\n"
+"\n"
+msgstr ""
+"# Его можно (осторожно!) редактировать.\n"
+"\n"
+
+msgid "# Value of 'encoding' when this file was written\n"
+msgstr "# Значение опции 'encoding' в момент записи файла\n"
+
+msgid "Illegal starting char"
+msgstr "Недопустимый начальный символ"
+
+msgid "Save As"
+msgstr "Сохранить как"
+
+msgid "Write partial file?"
+msgstr "Записать файл частично?"
+
+msgid "E140: Use ! to write partial buffer"
+msgstr "E140: Для записи части буфера используйте !"
+
+#, c-format
+msgid "Overwrite existing file \"%s\"?"
+msgstr "Перезаписать существующий файл \"%s\"?"
+
+#, c-format
+msgid "Swap file \"%s\" exists, overwrite anyway?"
+msgstr "Своп-файл \"%s\" существует, перезаписать?"
+
+#, c-format
+msgid "E768: Swap file exists: %s (:silent! overrides)"
+msgstr "E768: Своп-файл существует: %s (:silent! чтобы обойти проверку)"
+
+#, c-format
+msgid "E141: No file name for buffer %ld"
+msgstr "E141: Буфер %ld не связан с именем файла"
+
+msgid "E142: File not written: Writing is disabled by 'write' option"
+msgstr "E142: Файл не сохранён: запись отключена опцией 'write'"
+
+#, c-format
+msgid ""
+"'readonly' option is set for \"%s\".\n"
+"Do you wish to write anyway?"
+msgstr ""
+"Для \"%s\" включена опция 'readonly'.\n"
+"Записать?"
+
+#, c-format
+msgid ""
+"File permissions of \"%s\" are read-only.\n"
+"It may still be possible to write it.\n"
+"Do you wish to try?"
+msgstr ""
+"Файл \"%s\" имеет режим доступа только для чтения.\n"
+"Но, возможно, файл удастся записать.\n"
+"Хотите попробовать?"
+
+#, c-format
+msgid "E505: \"%s\" is read-only (add ! to override)"
+msgstr ""
+"E505: \"%s\" открыт только для чтения (добавьте !, чтобы обойти проверку)"
+
+msgid "Edit File"
+msgstr "Редактирование файла"
+
+#, c-format
+msgid "E143: Autocommands unexpectedly deleted new buffer %s"
+msgstr "E143: Автокоманды неожиданно убили новый буфер %s"
+
+msgid "E144: non-numeric argument to :z"
+msgstr "E144: Параметр команды :z должен быть числом"
+
+msgid "E145: Shell commands not allowed in rvim"
+msgstr "E145: Использование команд оболочки не допускается в rvim."
+
+msgid "E146: Regular expressions can't be delimited by letters"
+msgstr "E146: Регулярные выражения не могут разделяться буквами"
+
+#, c-format
+msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
+msgstr "заменить на %s? (y/n/a/q/l/^E/^Y)"
+
+msgid "(Interrupted) "
+msgstr "(Прервано)"
+
+msgid "1 match"
+msgstr "Одно соответствие"
+
+msgid "1 substitution"
+msgstr "Одна замена"
+
+#, c-format
+msgid "%ld matches"
+msgstr "%ld соответствий"
+
+#, c-format
+msgid "%ld substitutions"
+msgstr "%ld замен"
+
+msgid " on 1 line"
+msgstr " в одной строке"
+
+#, c-format
+msgid " on %ld lines"
+msgstr " в %ld стр."
+
+msgid "E147: Cannot do :global recursive"
+msgstr "E147: Команда :global не может быть рекурсивной"
+
+msgid "E148: Regular expression missing from global"
+msgstr "E148: В команде :global пропущено регулярное выражение"
+
+#, c-format
+msgid "Pattern found in every line: %s"
+msgstr "Соответствие шаблону найдено на каждой строке: %s"
+
+#, c-format
+msgid "Pattern not found: %s"
+msgstr "Шаблон не найден: %s"
+
+msgid ""
+"\n"
+"# Last Substitute String:\n"
+"$"
+msgstr ""
+"\n"
+"# Последняя строка для замены:\n"
+"$"
+
+msgid "E478: Don't panic!"
+msgstr "E478: Спокойствие, только спокойствие!"
+
+#, c-format
+msgid "E661: Sorry, no '%s' help for %s"
+msgstr "E661: К сожалению, справка '%s' для %s отсутствует"
+
+#, c-format
+msgid "E149: Sorry, no help for %s"
+msgstr "E149: К сожалению справка для %s отсутствует"
+
+#, c-format
+msgid "Sorry, help file \"%s\" not found"
+msgstr "Извините, файл справки \"%s\" не найден"
+
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr "E150: %s не является каталогом"
+
+#, c-format
+msgid "E152: Cannot open %s for writing"
+msgstr "E152: Невозможно открыть %s для записи"
+
+#, c-format
+msgid "E153: Unable to open %s for reading"
+msgstr "E153: Невозможно открыть %s для чтения"
+
+#, c-format
+msgid "E670: Mix of help file encodings within a language: %s"
+msgstr "E670: Файлы справки используют разные кодировки для одного языка: %s"
+
+#, c-format
+msgid "E154: Duplicate tag \"%s\" in file %s/%s"
+msgstr "E154: Повторяющаяся метка \"%s\" в файле %s/%s"
+
+#, c-format
+msgid "E160: Unknown sign command: %s"
+msgstr "E160: Неизвестная команда значка %s"
+
+msgid "E156: Missing sign name"
+msgstr "E156: Пропущено имя значка"
+
+msgid "E612: Too many signs defined"
+msgstr "E612: Определено слишком много значков"
+
+#, c-format
+msgid "E239: Invalid sign text: %s"
+msgstr "E239: Неправильный текст значка: %s"
+
+#, c-format
+msgid "E155: Unknown sign: %s"
+msgstr "E155: Неизвестный значок: %s"
+
+msgid "E159: Missing sign number"
+msgstr "E159: Пропущен номер значка"
+
+#, c-format
+msgid "E158: Invalid buffer name: %s"
+msgstr "E158: Неправильное имя буфера: %s"
+
+#, c-format
+msgid "E157: Invalid sign ID: %ld"
+msgstr "E157: Неправильный ID значка: %ld"
+
+msgid " (NOT FOUND)"
+msgstr " (НЕ НАЙДЕНО)"
+
+msgid " (not supported)"
+msgstr " (не поддерживается)"
+
+msgid "[Deleted]"
+msgstr "[Удалено]"
+
+msgid "Entering Debug mode.  Type \"cont\" to continue."
+msgstr "Включён режим отладки. Для продолжения наберите \"cont\""
+
+#, c-format
+msgid "line %ld: %s"
+msgstr "строка %ld: %s"
+
+#, c-format
+msgid "cmd: %s"
+msgstr "команда: %s"
+
+#, c-format
+msgid "Breakpoint in \"%s%s\" line %ld"
+msgstr "Точка остановки в \"%s%s\" стр. %ld"
+
+#, c-format
+msgid "E161: Breakpoint not found: %s"
+msgstr "E161: Точка остановки не найдена: %s"
+
+msgid "No breakpoints defined"
+msgstr "Точки остановки не определены"
+
+#, c-format
+msgid "%3d  %s %s  line %ld"
+msgstr "%3d  %s %s стр. %ld"
+
+msgid "E750: First use \":profile start {fname}\""
+msgstr "E750: Первое использование \":profile start {имя-файла}\""
+
+#, c-format
+msgid "Save changes to \"%s\"?"
+msgstr "Сохранить изменения в \"%s\"?"
+
+msgid "Untitled"
+msgstr "Без имени"
+
+#, c-format
+msgid "E162: No write since last change for buffer \"%s\""
+msgstr "E162: Несохранённые изменения в буфере \"%s\""
+
+msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
+msgstr ""
+"Предупреждение: Неожиданный переход в другой буфер (проверьте автокоманды)"
+
+msgid "E163: There is only one file to edit"
+msgstr "E163: Для редактирования доступен только один файл"
+
+msgid "E164: Cannot go before first file"
+msgstr "E164: Это первый файл"
+
+msgid "E165: Cannot go beyond last file"
+msgstr "E165: Это последний файл"
+
+#, c-format
+msgid "E666: compiler not supported: %s"
+msgstr "E666: Компилятор не поддерживается: %s"
+
+#, c-format
+msgid "Searching for \"%s\" in \"%s\""
+msgstr "Поиск \"%s\" в \"%s\""
+
+#, c-format
+msgid "Searching for \"%s\""
+msgstr "Поиск \"%s\""
+
+#, c-format
+msgid "not found in 'runtimepath': \"%s\""
+msgstr "не найдено в 'runtimepath': \"%s\""
+
+msgid "Source Vim script"
+msgstr "Выполнить сценарий Vim"
+
+#, c-format
+msgid "Cannot source a directory: \"%s\""
+msgstr "Нельзя считать каталог: \"%s\""
+
+#, c-format
+msgid "could not source \"%s\""
+msgstr "невозможно считать \"%s\""
+
+#, c-format
+msgid "line %ld: could not source \"%s\""
+msgstr "строка %ld: невозможно считать \"%s\""
+
+#, c-format
+msgid "sourcing \"%s\""
+msgstr "считывание сценария \"%s\""
+
+#, c-format
+msgid "line %ld: sourcing \"%s\""
+msgstr "строка %ld: считывание \"%s\""
+
+#, c-format
+msgid "finished sourcing %s"
+msgstr "считывание сценария %s завершено"
+
+msgid "modeline"
+msgstr "режимная строка"
+
+msgid "--cmd argument"
+msgstr "--cmd параметр"
+
+msgid "-c argument"
+msgstr "-c параметр"
+
+msgid "environment variable"
+msgstr "переменная окружения"
+
+msgid "error handler"
+msgstr "обработчик ошибки"
+
+msgid "W15: Warning: Wrong line separator, ^M may be missing"
+msgstr ""
+"W15: Предупреждение: неправильный разделитель строки. Возможно пропущено ^M"
+
+msgid "E167: :scriptencoding used outside of a sourced file"
+msgstr "E167: Команда :scriptencoding используется вне файла сценария"
+
+msgid "E168: :finish used outside of a sourced file"
+msgstr "E168: Команда :finish используется вне файла сценария"
+
+#, c-format
+msgid "Current %slanguage: \"%s\""
+msgstr "Активный %sязык: \"%s\""
+
+#, c-format
+msgid "E197: Cannot set language to \"%s\""
+msgstr "E197: Невозможно сменить язык на \"%s\""
+
+msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
+msgstr "Переход в режим Ex. Для перехода в Обычный режим наберите \"visual\""
+
+msgid "E501: At end-of-file"
+msgstr "E501: В конце файла"
+
+msgid "E169: Command too recursive"
+msgstr "E169: Слишком рекурсивная команда"
+
+#, c-format
+msgid "E605: Exception not caught: %s"
+msgstr "E605: Исключительная ситуация не обработана: %s"
+
+msgid "End of sourced file"
+msgstr "Конец считанного файла"
+
+msgid "End of function"
+msgstr "Конец функции"
+
+msgid "E464: Ambiguous use of user-defined command"
+msgstr "E464: Неоднозначное использование команды пользователя"
+
+msgid "E492: Not an editor command"
+msgstr "E492: Это не команда редактора"
+
+msgid "E493: Backwards range given"
+msgstr "E493: Задан обратный диапазон"
+
+msgid "Backwards range given, OK to swap"
+msgstr "Задан обратный диапазон, меняем границы местами"
+
+msgid "E494: Use w or w>>"
+msgstr "E494: Используйте w или w>>"
+
+msgid "E319: Sorry, the command is not available in this version"
+msgstr "E319: Извините, эта команда недоступна в данной версии"
+
+msgid "E172: Only one file name allowed"
+msgstr "E172: Разрешено использовать только одно имя файла"
+
+msgid "1 more file to edit.  Quit anyway?"
+msgstr "1 файл ожидает редактирования. Выйти?"
+
+#, c-format
+msgid "%d more files to edit.  Quit anyway?"
+msgstr "Есть неотредактированные файлы (%d). Выйти?"
+
+msgid "E173: 1 more file to edit"
+msgstr "E173: 1 файл ожидает редактирования."
+
+#, c-format
+msgid "E173: %ld more files to edit"
+msgstr "E173: Есть неотредактированные файлы (%ld)."
+
+msgid "E174: Command already exists: add ! to replace it"
+msgstr "E174: Команда уже существует. Добавьте ! для замены."
+
+msgid ""
+"\n"
+"    Name        Args Range Complete  Definition"
+msgstr ""
+"\n"
+"    Имя      Парам. Диап. Дополн.    Определение"
+
+msgid "No user-defined commands found"
+msgstr "Команды, определённые пользователем, не обнаружены."
+
+msgid "E175: No attribute specified"
+msgstr "E175: Параметр не задан"
+
+msgid "E176: Invalid number of arguments"
+msgstr "E176: Неправильное количество параметров"
+
+msgid "E177: Count cannot be specified twice"
+msgstr "E177: Число-приставку нельзя указывать дважды"
+
+msgid "E178: Invalid default value for count"
+msgstr "E178: Неправильное значение числа-приставки по умолчанию"
+
+msgid "E179: argument required for -complete"
+msgstr "E179: Для -complete требуется указать параметр"
+
+#, c-format
+msgid "E181: Invalid attribute: %s"
+msgstr "E181: Неправильный атрибут: %s"
+
+msgid "E182: Invalid command name"
+msgstr "E182: Неправильное имя команды"
+
+msgid "E183: User defined commands must start with an uppercase letter"
+msgstr "E183: Команда пользователя должна начинаться с заглавной буквы"
+
+msgid "E841: Reserved name, cannot be used for user defined command"
+msgstr ""
+"E841: Зарезервированное имя не может использоваться для команд пользователя"
+
+#, c-format
+msgid "E184: No such user-defined command: %s"
+msgstr "E184: Нет такой команды пользователя: %s"
+
+#, c-format
+msgid "E180: Invalid complete value: %s"
+msgstr "E180: Неправильное значение дополнения: %s"
+
+msgid "E468: Completion argument only allowed for custom completion"
+msgstr ""
+"E468: Параметр автодополнения можно использовать только с особым дополнением"
+
+msgid "E467: Custom completion requires a function argument"
+msgstr "E467: Особое дополнение требует указания параметра функции"
+
+msgid "unknown"
+msgstr "неизвестно"
+
+#, c-format
+msgid "E185: Cannot find color scheme '%s'"
+msgstr "E185: Невозможно найти цветовую схему '%s'"
+
+msgid "Greetings, Vim user!"
+msgstr "Приветствуем вас, пользователь Vim!"
+
+msgid "E784: Cannot close last tab page"
+msgstr "E784: Нельзя закрыть последнюю вкладку"
+
+msgid "Already only one tab page"
+msgstr "На экране всего одна вкладка"
+
+msgid "Edit File in new window"
+msgstr "Редактировать файл в новом окне"
+
+#, c-format
+msgid "Tab page %d"
+msgstr "Вкладка %d"
+
+msgid "No swap file"
+msgstr "Без своп-файла"
+
+msgid "Append File"
+msgstr "Добавить файл"
+
+msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
+msgstr ""
+"E747: Смена каталога невозможна, буфер изменён (добавьте !, чтобы обойти "
+"проверку)"
+
+msgid "E186: No previous directory"
+msgstr "E186: Нет предыдущего каталога"
+
+msgid "E187: Unknown"
+msgstr "E187: Неизвестно"
+
+msgid "E465: :winsize requires two number arguments"
+msgstr "E465: Команда :winsize требует указания двух числовых параметров"
+
+#, c-format
+msgid "Window position: X %d, Y %d"
+msgstr "Положение окна: X %d, Y %d"
+
+msgid "E188: Obtaining window position not implemented for this platform"
+msgstr "E188: В данной системе определение положения окна не работает"
+
+msgid "E466: :winpos requires two number arguments"
+msgstr "E466: Команда :winpos требует указания двух числовых параметров"
+
+msgid "Save Redirection"
+msgstr "Перенаправление записи"
+
+msgid "Save View"
+msgstr "Сохранение вида"
+
+msgid "Save Session"
+msgstr "Сохранение сеанса"
+
+msgid "Save Setup"
+msgstr "Сохранение настроек"
+
+#, c-format
+msgid "E739: Cannot create directory: %s"
+msgstr "E739: Невозможно создать каталог: %s"
+
+#, c-format
+msgid "E189: \"%s\" exists (add ! to override)"
+msgstr "E189: \"%s\" существует (добавьте !, чтобы обойти проверку)"
+
+#, c-format
+msgid "E190: Cannot open \"%s\" for writing"
+msgstr "E190: Невозможно открыть для записи \"%s\""
+
+#. set mark
+msgid "E191: Argument must be a letter or forward/backward quote"
+msgstr "E191: Параметр должен быть прямой/обратной кавычкой или буквой"
+
+msgid "E192: Recursive use of :normal too deep"
+msgstr "E192: Слишком глубокая рекурсия при использовании команды :normal"
+
+msgid "E809: #< is not available without the +eval feature"
+msgstr "E809: #< не доступно без особенности +eval"
+
+msgid "E194: No alternate file name to substitute for '#'"
+msgstr "E194: Нет соседнего имени файла для замены '#'"
+
+msgid "E495: no autocommand file name to substitute for \"<afile>\""
+msgstr "E495: Нет автокомандного имени файла для замены \"<afile>\""
+
+msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
+msgstr "E496: Нет автокомандного номера буфера для замены \"<abuf>\""
+
+msgid "E497: no autocommand match name to substitute for \"<amatch>\""
+msgstr "E497: Нет автокомандного имени соответствия для замены \"<amatch>\""
+
+msgid "E498: no :source file name to substitute for \"<sfile>\""
+msgstr "E498: Нет имени файла :source для замены \"<sfile>\""
+
+msgid "E842: no line number to use for \"<slnum>\""
+msgstr "E842: Нет номера строки для использования \"<slnum>\""
+
+#, no-c-format
+msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
+msgstr "E499: Пустое имя файла для '%' или '#', возможно только c \":p:h\""
+
+msgid "E500: Evaluates to an empty string"
+msgstr "E500: Результатом выражения является пустая строка"
+
+msgid "E195: Cannot open viminfo file for reading"
+msgstr "E195: Невозможно открыть файл viminfo для чтения"
+
+msgid "E196: No digraphs in this version"
+msgstr "E196: В этой версии диграфы не работают"
+
+msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
+msgstr ""
+"E608: Невозможно выполнить команду :throw для исключений с приставкой 'Vim'"
+
+#. always scroll up, don't overwrite
+#, c-format
+msgid "Exception thrown: %s"
+msgstr "Исключительная ситуация: %s"
+
+#, c-format
+msgid "Exception finished: %s"
+msgstr "Завершена обработка исключительной ситуации: %s"
+
+#, c-format
+msgid "Exception discarded: %s"
+msgstr "Исключительная ситуация проигнорирована: %s"
+
+#, c-format
+msgid "%s, line %ld"
+msgstr "%s, строка %ld"
+
+#. always scroll up, don't overwrite
+#, c-format
+msgid "Exception caught: %s"
+msgstr "Обработка исключительной ситуации: %s"
+
+#, c-format
+msgid "%s made pending"
+msgstr "%s выполняет ожидание"
+
+#, c-format
+msgid "%s resumed"
+msgstr "%s возобновлено"
+
+#, c-format
+msgid "%s discarded"
+msgstr "%s пропущено"
+
+msgid "Exception"
+msgstr "Исключительная ситуация"
+
+msgid "Error and interrupt"
+msgstr "Ошибка и прерывание"
+
+msgid "Error"
+msgstr "Ошибка"
+
+#. if (pending & CSTP_INTERRUPT)
+msgid "Interrupt"
+msgstr "Прерывание"
+
+msgid "E579: :if nesting too deep"
+msgstr "E579: Слишком глубоко вложенный :if"
+
+msgid "E580: :endif without :if"
+msgstr "E580: :endif без :if"
+
+msgid "E581: :else without :if"
+msgstr "E581: :else без :if"
+
+msgid "E582: :elseif without :if"
+msgstr "E582: :elseif без :if"
+
+msgid "E583: multiple :else"
+msgstr "E583: Обнаружено несколько :else"
+
+msgid "E584: :elseif after :else"
+msgstr "E584: :elseif после :else"
+
+msgid "E585: :while/:for nesting too deep"
+msgstr "E585: Слишком глубокое вложение :while или :for"
+
+msgid "E586: :continue without :while or :for"
+msgstr "E586: :continue без :while или :for"
+
+msgid "E587: :break without :while or :for"
+msgstr "E587: :break без :while или :for"
+
+msgid "E732: Using :endfor with :while"
+msgstr "E732: Использование :endfor с :while"
+
+msgid "E733: Using :endwhile with :for"
+msgstr "E733: Использование :endwhile с :for"
+
+msgid "E601: :try nesting too deep"
+msgstr "E601: Слишком глубоко вложенный :try"
+
+msgid "E603: :catch without :try"
+msgstr "E603: :catch без :try"
+
+#. Give up for a ":catch" after ":finally" and ignore it.
+#. * Just parse.
+msgid "E604: :catch after :finally"
+msgstr "E604: :catch без :finally"
+
+msgid "E606: :finally without :try"
+msgstr "E606: :finally без :try"
+
+#. Give up for a multiple ":finally" and ignore it.
+msgid "E607: multiple :finally"
+msgstr "E607: Обнаружено несколько :finally"
+
+msgid "E602: :endtry without :try"
+msgstr "E602: :endtry без :try"
+
+msgid "E193: :endfunction not inside a function"
+msgstr "E193: Команда :endfunction может использоваться только внутри функции"
+
+msgid "E788: Not allowed to edit another buffer now"
+msgstr "E788: Сейчас не допускается редактирование другого буфера"
+
+msgid "E811: Not allowed to change buffer information now"
+msgstr "E811: Сейчас не допускается изменение информации о буфере"
+
+msgid "tagname"
+msgstr "имя метки"
+
+msgid " kind file\n"
+msgstr " тип файла\n"
+
+msgid "'history' option is zero"
+msgstr "значение опции 'history' равно нулю"
+
+#, c-format
+msgid ""
+"\n"
+"# %s History (newest to oldest):\n"
+msgstr ""
+"\n"
+"# %s, история (начиная от свежего к старому):\n"
+
+msgid "Command Line"
+msgstr "Командная строка"
+
+msgid "Search String"
+msgstr "Строка поиска"
+
+msgid "Expression"
+msgstr "Выражение"
+
+msgid "Input Line"
+msgstr "Строка ввода"
+
+msgid "E198: cmd_pchar beyond the command length"
+msgstr "E198: cmd_pchar больше длины команды"
+
+msgid "E199: Active window or buffer deleted"
+msgstr "E199: Удалено активное окно или буфер"
+
+msgid "E812: Autocommands changed buffer or buffer name"
+msgstr "E812: Автокоманды изменили буфер или имя буфера"
+
+msgid "Illegal file name"
+msgstr "Недопустимое имя файла"
+
+msgid "is a directory"
+msgstr "является каталогом"
+
+msgid "is not a file"
+msgstr "не является файлом"
+
+msgid "is a device (disabled with 'opendevice' option)"
+msgstr "является устройством (отключено при опции 'opendevice')"
+
+msgid "[New File]"
+msgstr "[Новый файл]"
+
+msgid "[New DIRECTORY]"
+msgstr "[Новый КАТАЛОГ]"
+
+msgid "[File too big]"
+msgstr "[Файл слишком большой]"
+
+msgid "[Permission Denied]"
+msgstr "[Доступ запрещён]"
+
+msgid "E200: *ReadPre autocommands made the file unreadable"
+msgstr "E200: В результате выполнения автокоманд *ReadPre файл стал нечитаемым"
+
+msgid "E201: *ReadPre autocommands must not change current buffer"
+msgstr "E201: Автокоманды *ReadPre не должны изменять активный буфер"
+
+msgid "Vim: Reading from stdin...\n"
+msgstr "Vim: Чтение из стандартного потока ввода stdin...\n"
+
+msgid "Reading from stdin..."
+msgstr "Чтение из стандартного потока ввода stdin..."
+
+#. Re-opening the original file failed!
+msgid "E202: Conversion made file unreadable!"
+msgstr "E202: В результате преобразования файл стал нечитаемым!"
+
+msgid "[fifo/socket]"
+msgstr "[fifo/гнездо]"
+
+msgid "[fifo]"
+msgstr "[fifo]"
+
+msgid "[socket]"
+msgstr "[гнездо]"
+
+msgid "[character special]"
+msgstr "[специальный символьный]"
+
+msgid "[CR missing]"
+msgstr "[пропущены символы CR]"
+
+msgid "[long lines split]"
+msgstr "[длинные строки разбиты]"
+
+msgid "[NOT converted]"
+msgstr "[БЕЗ преобразований]"
+
+msgid "[converted]"
+msgstr "[перекодировано]"
+
+msgid "[blowfish]"
+msgstr "[blowfish]"
+
+msgid "[crypted]"
+msgstr "[зашифровано]"
+
+#, c-format
+msgid "[CONVERSION ERROR in line %ld]"
+msgstr "[ОШИБКА ПРЕОБРАЗОВАНИЯ в строке %ld]"
+
+#, c-format
+msgid "[ILLEGAL BYTE in line %ld]"
+msgstr "[НЕДОПУСТИМЫЙ БАЙТ в строке %ld]"
+
+msgid "[READ ERRORS]"
+msgstr "[ОШИБКИ ЧТЕНИЯ]"
+
+msgid "Can't find temp file for conversion"
+msgstr "Временный файл для перекодирования не найден"
+
+msgid "Conversion with 'charconvert' failed"
+msgstr "Преобразование с помощью 'charconvert' не выполнено"
+
+msgid "can't read output of 'charconvert'"
+msgstr "невозможно прочитать вывод 'charconvert'"
+
+msgid "E821: File is encrypted with unknown method"
+msgstr "E821: Файл зашифрован неизвестным методом"
+
+msgid "E676: No matching autocommands for acwrite buffer"
+msgstr "E676: Нет подходящих автокоманд для буфера acwrite"
+
+msgid "E203: Autocommands deleted or unloaded buffer to be written"
+msgstr ""
+"E203: Буфер, который требовалось записать, удалён или выгружен автокомандой"
+
+msgid "E204: Autocommand changed number of lines in unexpected way"
+msgstr "E204: Количество строк изменено автокомандой неожиданным образом"
+
+msgid "NetBeans disallows writes of unmodified buffers"
+msgstr "NetBeans не позволяет выполнять запись неизменённых буферов"
+
+msgid "Partial writes disallowed for NetBeans buffers"
+msgstr "Частичная запись буферов NetBeans не допускается"
+
+msgid "is not a file or writable device"
+msgstr "не является файлом или устройством, доступным для записи"
+
+msgid "writing to device disabled with 'opendevice' option"
+msgstr "запись в устройство отключена при опции 'opendevice'"
+
+msgid "is read-only (add ! to override)"
+msgstr "открыт только для чтения (добавьте !, чтобы обойти проверку)"
+
+msgid "E506: Can't write to backup file (add ! to override)"
+msgstr ""
+"E506: Запись в резервный файл невозможна (добавьте !, чтобы обойти проверку)"
+
+msgid "E507: Close error for backup file (add ! to override)"
+msgstr ""
+"E507: Ошибка закрытия резервного файла (добавьте !, чтобы обойти проверку)"
+
+msgid "E508: Can't read file for backup (add ! to override)"
+msgstr ""
+"E508: Невозможно прочитать резервный файл (добавьте !, чтобы обойти проверку)"
+
+msgid "E509: Cannot create backup file (add ! to override)"
+msgstr ""
+"E509: Невозможно создать резервный файл (добавьте !, чтобы обойти проверку)"
+
+msgid "E510: Can't make backup file (add ! to override)"
+msgstr ""
+"E510: Невозможно создать резервный файл (добавьте !, чтобы обойти проверку)"
+
+msgid "E460: The resource fork would be lost (add ! to override)"
+msgstr "E460: Ветвь ресурса будет потеряна (добавьте !, чтобы обойти проверку)"
+
+msgid "E214: Can't find temp file for writing"
+msgstr "E214: Временный файл для записи не найден"
+
+msgid "E213: Cannot convert (add ! to write without conversion)"
+msgstr ""
+"E213: Перекодировка невозможна (добавьте ! для записи без перекодировки)"
+
+msgid "E166: Can't open linked file for writing"
+msgstr "E166: Невозможно открыть связанный файл для записи"
+
+msgid "E212: Can't open file for writing"
+msgstr "E212: Невозможно открыть файл для записи"
+
+msgid "E667: Fsync failed"
+msgstr "E667: Не удалось выполнить функцию fsync()"
+
+msgid "E512: Close failed"
+msgstr "E512: Операция закрытия не удалась"
+
+msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
+msgstr ""
+"E513: Ошибка записи, преобразование не удалось (очистите 'fenc', чтобы "
+"обойти)"
+
+#, c-format
+msgid ""
+"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"override)"
+msgstr ""
+"E513: Ошибка записи, преобразование не удалось на строке %ld (очистите "
+"'fenc', чтобы обойти)"
+
+msgid "E514: write error (file system full?)"
+msgstr "E514: Ошибка записи (нет свободного места?)"
+
+msgid " CONVERSION ERROR"
+msgstr " ОШИБКА ПРЕОБРАЗОВАНИЯ"
+
+#, c-format
+msgid " in line %ld;"
+msgstr " на строке %ld;"
+
+msgid "[Device]"
+msgstr "[Устройство]"
+
+msgid "[New]"
+msgstr "[Новый]"
+
+msgid " [a]"
+msgstr " [д]"
+
+msgid " appended"
+msgstr " добавлено"
+
+msgid " [w]"
+msgstr " [з]"
+
+msgid " written"
+msgstr " записано"
+
+msgid "E205: Patchmode: can't save original file"
+msgstr "E205: Режим заплатки: невозможно сохранение исходного файла"
+
+msgid "E206: patchmode: can't touch empty original file"
+msgstr ""
+"E206: Режим заплатки: невозможно сменить параметры пустого исходного файла"
+
+msgid "E207: Can't delete backup file"
+msgstr "E207: Невозможно удалить резервный файл"
+
+msgid ""
+"\n"
+"WARNING: Original file may be lost or damaged\n"
+msgstr ""
+"\n"
+"ПРЕДУПРЕЖДЕНИЕ: Исходный файл может быть утрачен или повреждён\n"
+
+msgid "don't quit the editor until the file is successfully written!"
+msgstr "не выходите из редактора, пока файл не будет успешно записан!"
+
+msgid "[dos]"
+msgstr "[dos]"
+
+msgid "[dos format]"
+msgstr "[формат dos]"
+
+msgid "[mac]"
+msgstr "[mac]"
+
+msgid "[mac format]"
+msgstr "[формат mac]"
+
+msgid "[unix]"
+msgstr "[unix]"
+
+msgid "[unix format]"
+msgstr "[формат unix]"
+
+msgid "1 line, "
+msgstr "1 строка, "
+
+#, c-format
+msgid "%ld lines, "
+msgstr "строк: %ld, "
+
+msgid "1 character"
+msgstr "1 символ"
+
+#, c-format
+msgid "%lld characters"
+msgstr "символов: %lld"
+
+#. Explicit typecast avoids warning on Mac OS X 10.6
+#, c-format
+msgid "%ld characters"
+msgstr "символов: %ld"
+
+msgid "[noeol]"
+msgstr "[noeol]"
+
+msgid "[Incomplete last line]"
+msgstr "[Незавершённая последняя строка]"
+
+#. don't overwrite messages here
+#. must give this prompt
+#. don't use emsg() here, don't want to flush the buffers
+msgid "WARNING: The file has been changed since reading it!!!"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: Файл изменён с момента чтения!!!"
+
+msgid "Do you really want to write to it"
+msgstr "Серьёзно хотите записать в этот файл"
+
+#, c-format
+msgid "E208: Error writing to \"%s\""
+msgstr "E208: Ошибка записи в \"%s\""
+
+#, c-format
+msgid "E209: Error closing \"%s\""
+msgstr "E209: Ошибка закрытия \"%s\""
+
+#, c-format
+msgid "E210: Error reading \"%s\""
+msgstr "E210: Ошибка чтения \"%s\""
+
+msgid "E246: FileChangedShell autocommand deleted buffer"
+msgstr "E246: Буфер удалён при выполнении автокоманды FileChangedShell"
+
+#, c-format
+msgid "E211: File \"%s\" no longer available"
+msgstr "E211: Файл \"%s\" больше не доступен"
+
+#, c-format
+msgid ""
+"W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as "
+"well"
+msgstr ""
+"W12: Предупреждение: файл \"%s\" и буфер Vim были изменены независимо друг "
+"от друга"
+
+msgid "See \":help W12\" for more info."
+msgstr "См. \":help W12\" для дополнительной информации."
+
+#, c-format
+msgid "W11: Warning: File \"%s\" has changed since editing started"
+msgstr ""
+"W11: Предупреждение: файл \"%s\" был изменён после начала редактирования"
+
+msgid "See \":help W11\" for more info."
+msgstr "См. \":help W11\" для дополнительной информации."
+
+#, c-format
+msgid "W16: Warning: Mode of file \"%s\" has changed since editing started"
+msgstr ""
+"W16: Предупреждение: режим доступа к файлу \"%s\" был изменён после начала "
+"редактирования"
+
+msgid "See \":help W16\" for more info."
+msgstr "См. \":help W16\" для дополнительной информации."
+
+#, c-format
+msgid "W13: Warning: File \"%s\" has been created after editing started"
+msgstr ""
+"W13: Предупреждение: файл \"%s\" был создан после начала редактирования"
+
+msgid "Warning"
+msgstr "Предупреждение"
+
+msgid ""
+"&OK\n"
+"&Load File"
+msgstr ""
+"&OK\n"
+"&L Загрузить файл"
+
+#, c-format
+msgid "E462: Could not prepare for reloading \"%s\""
+msgstr "E462: Невозможно подготовиться к перезагрузке \"%s\""
+
+#, c-format
+msgid "E321: Could not reload \"%s\""
+msgstr "E321: Невозможно выполнить перезагрузку \"%s\""
+
+msgid "--Deleted--"
+msgstr "--Удалено--"
+
+#, c-format
+msgid "auto-removing autocommand: %s <buffer=%d>"
+msgstr "авто-удаление автокоманды: %s <буффер=%d>"
+
+#. the group doesn't exist
+#, c-format
+msgid "E367: No such group: \"%s\""
+msgstr "E367: Группа \"%s\" не существует"
+
+#, c-format
+msgid "E215: Illegal character after *: %s"
+msgstr "E215: Недопустимые символы после *: %s"
+
+#, c-format
+msgid "E216: No such event: %s"
+msgstr "E216: Несуществующее событие: %s"
+
+#, c-format
+msgid "E216: No such group or event: %s"
+msgstr "E216: Несуществующая группа или событие: %s"
+
+#. Highlight title
+msgid ""
+"\n"
+"--- Auto-Commands ---"
+msgstr ""
+"\n"
+"--- Автокоманды ---"
+
+#, c-format
+msgid "E680: <buffer=%d>: invalid buffer number "
+msgstr "E680: <buffer=%d>: неправильный номер буфера "
+
+msgid "E217: Can't execute autocommands for ALL events"
+msgstr "E217: Невозможно выполнить автокоманды для ВСЕХ событий"
+
+msgid "No matching autocommands"
+msgstr "Нет подходящих автокоманд"
+
+msgid "E218: autocommand nesting too deep"
+msgstr "E218: слишком глубоко вложенные автокоманды"
+
+#, c-format
+msgid "%s Auto commands for \"%s\""
+msgstr "%s Автокоманды для \"%s\""
+
+#, c-format
+msgid "Executing %s"
+msgstr "Выполнение %s"
+
+#, c-format
+msgid "autocommand %s"
+msgstr "автокоманда %s"
+
+msgid "E219: Missing {."
+msgstr "E219: Пропущена {."
+
+msgid "E220: Missing }."
+msgstr "E220: Пропущена }."
+
+msgid "E490: No fold found"
+msgstr "E490: Складок не обнаружено"
+
+msgid "E350: Cannot create fold with current 'foldmethod'"
+msgstr ""
+"E350: Складка не может быть создана с текущим значением опции 'foldmethod'"
+
+msgid "E351: Cannot delete fold with current 'foldmethod'"
+msgstr ""
+"E351: Складка не может быть удалена с текущим значением опции 'foldmethod'"
+
+#, c-format
+msgid "+--%3ld lines folded "
+msgstr "+--%3ld строк в складке"
+
+msgid "E222: Add to read buffer"
+msgstr "E222: Добавление в буфер чтения"
+
+msgid "E223: recursive mapping"
+msgstr "E223: Рекурсивная привязка"
+
+#, c-format
+msgid "E224: global abbreviation already exists for %s"
+msgstr "E224: Уже есть глобальное сокращение для %s"
+
+#, c-format
+msgid "E225: global mapping already exists for %s"
+msgstr "E225: Уже есть глобальная привязка для %s"
+
+#, c-format
+msgid "E226: abbreviation already exists for %s"
+msgstr "E226: Уже есть сокращение для %s"
+
+#, c-format
+msgid "E227: mapping already exists for %s"
+msgstr "E227: Уже есть привязка для %s"
+
+msgid "No abbreviation found"
+msgstr "Сокращения не найдены"
+
+msgid "No mapping found"
+msgstr "Привязки не найдены"
+
+msgid "E228: makemap: Illegal mode"
+msgstr "E228: makemap: недопустимый режим"
+
+msgid "E851: Failed to create a new process for the GUI"
+msgstr "E851: Невозможно создать новый процесс для граф. интерфейса"
+
+msgid "E852: The child process failed to start the GUI"
+msgstr "E852: Процессу-потомку не удалось запустить граф. интерфейс"
+
+msgid "E229: Cannot start the GUI"
+msgstr "E229: Невозможно перейти в режим графического интерфейса"
+
+#, c-format
+msgid "E230: Cannot read from \"%s\""
+msgstr "E230: Невозможно выполнить чтение \"%s\""
+
+msgid "E665: Cannot start GUI, no valid font found"
+msgstr ""
+"E665: Невозможно перейти в режим граф. интерфейса, неправильно заданы шрифты"
+
+msgid "E231: 'guifontwide' invalid"
+msgstr "E231: Неправильное значение опции 'guifontwide'"
+
+msgid "E599: Value of 'imactivatekey' is invalid"
+msgstr "E599: Неправильное значение опции 'imactivatekey'"
+
+#, c-format
+msgid "E254: Cannot allocate color %s"
+msgstr "E254: Невозможно назначить цвет %s"
+
+msgid "No match at cursor, finding next"
+msgstr "Нет совпадения под курсором, поиск следующего"
+
+msgid "<cannot open> "
+msgstr "<нельзя открыть> "
+
+#, c-format
+msgid "E616: vim_SelFile: can't get font %s"
+msgstr "E616: vim_SelFile: шрифт %s не найден"
+
+msgid "E614: vim_SelFile: can't return to current directory"
+msgstr "E614: vim_SelFile: возврат в текущий каталог невозможен"
+
+msgid "Pathname:"
+msgstr "Путь к файлу:"
+
+msgid "E615: vim_SelFile: can't get current directory"
+msgstr "E615: vim_SelFile: не могу найти текущий каталог"
+
+msgid "OK"
+msgstr "Да"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
+msgstr "Полоса прокрутки: не могу определить геометрию ползунка"
+
+msgid "Vim dialog"
+msgstr "Диалоговое окно Vim"
+
+msgid "E232: Cannot create BalloonEval with both message and callback"
+msgstr ""
+"E232: \"Пузырь\" для вычислений, включающий и сообщение, и обратный вызов, "
+"не может быть создан"
+
+msgid ""
+"&Yes\n"
+"&No\n"
+"&Cancel"
+msgstr ""
+"&Да\n"
+"&Нет\n"
+"О&тмена"
+
+msgid "Input _Methods"
+msgstr "Методы Ввода"
+
+msgid "VIM - Search and Replace..."
+msgstr "VIM — Поиск и замена..."
+
+msgid "VIM - Search..."
+msgstr "VIM — Поиск..."
+
+msgid "Find what:"
+msgstr "Что ищем:"
+
+msgid "Replace with:"
+msgstr "На что заменяем:"
+
+#. whole word only button
+msgid "Match whole word only"
+msgstr "Только точные соответствия"
+
+#. match case button
+msgid "Match case"
+msgstr "Регистрозависимые соответствия"
+
+msgid "Direction"
+msgstr "Направление"
+
+#. 'Up' and 'Down' buttons
+msgid "Up"
+msgstr "Вверх"
+
+msgid "Down"
+msgstr "Вниз"
+
+#. 'Find Next' button
+msgid "Find Next"
+msgstr "Найти следующее"
+
+#. 'Replace' button
+msgid "Replace"
+msgstr "Замена"
+
+#. 'Replace All' button
+msgid "Replace All"
+msgstr "Заменить все"
+
+msgid "Vim: Received \"die\" request from session manager\n"
+msgstr "Vim: Получен запрос на прекращение работы от диспетчера сеансов\n"
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "New tab"
+msgstr "Новая вкладка"
+
+msgid "Open Tab..."
+msgstr "Открыть вкладку..."
+
+msgid "Vim: Main window unexpectedly destroyed\n"
+msgstr "Vim: Основное окно было неожиданно закрыто\n"
+
+msgid "&Filter"
+msgstr "&Фильтр"
+
+msgid "&Cancel"
+msgstr "О&тмена"
+
+msgid "Directories"
+msgstr "Каталоги"
+
+msgid "Filter"
+msgstr "Фильтр"
+
+msgid "&Help"
+msgstr "&Справка"
+
+msgid "Files"
+msgstr "Файлы"
+
+msgid "&OK"
+msgstr "&Да"
+
+msgid "Selection"
+msgstr "Выделение"
+
+msgid "Find &Next"
+msgstr "Найти &следующее"
+
+msgid "&Replace"
+msgstr "За&мена"
+
+msgid "Replace &All"
+msgstr "Заменить &все"
+
+msgid "&Undo"
+msgstr "О&тмена"
+
+#, c-format
+msgid "E671: Cannot find window title \"%s\""
+msgstr "E671: Окно с заголовком \"%s\" не обнаружено"
+
+#, c-format
+msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
+msgstr "E243: Параметр не поддерживается: \"-%s\"; используйте версию OLE."
+
+msgid "E672: Unable to open window inside MDI application"
+msgstr "E672: Невозможно открыть окно внутри приложения MDI"
+
+msgid "Close tab"
+msgstr "Закрыть вкладку"
+
+msgid "Open tab..."
+msgstr "Открыть вкладку..."
+
+msgid "Find string (use '\\\\' to find  a '\\')"
+msgstr "Поиск строки (используйте '\\\\' для поиска '\\')"
+
+msgid "Find & Replace (use '\\\\' to find  a '\\')"
+msgstr "Поиск и замена (используйте '\\\\' для поиска '\\')"
+
+#. We fake this: Use a filter that doesn't select anything and a default
+#. * file name that won't be used.
+msgid "Not Used"
+msgstr "Не используется"
+
+msgid "Directory\t*.nothing\n"
+msgstr "Каталог\t*.ничего\n"
+
+msgid "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
+msgstr ""
+"Vim E458: Невозможно выделить запись в таблице цвета, некоторые цвета могут "
+"отображаться неправильно"
+
+#, c-format
+msgid "E250: Fonts for the following charsets are missing in fontset %s:"
+msgstr "E250: В наборе шрифтов %s отсутствуют шрифты для следующих кодировок:"
+
+#, c-format
+msgid "E252: Fontset name: %s"
+msgstr "E252: Набор шрифтов: %s"
+
+#, c-format
+msgid "Font '%s' is not fixed-width"
+msgstr "Шрифт '%s' не является моноширинным"
+
+#, c-format
+msgid "E253: Fontset name: %s"
+msgstr "E253: Набор шрифтов: %s"
+
+#, c-format
+msgid "Font0: %s"
+msgstr "Font0: %s"
+
+#, c-format
+msgid "Font1: %s"
+msgstr "Font1: %s"
+
+#, c-format
+msgid "Font%ld width is not twice that of font0"
+msgstr "Ширина шрифта font%ld должна быть вдвое больше ширины шрифта font0"
+
+#, c-format
+msgid "Font0 width: %ld"
+msgstr "Ширина шрифта font0: %ld"
+
+#, c-format
+msgid "Font1 width: %ld"
+msgstr "Ширина шрифта font1: %ld"
+
+msgid "Invalid font specification"
+msgstr "Неправильное определение шрифта"
+
+msgid "&Dismiss"
+msgstr "О&тклонить"
+
+msgid "no specific match"
+msgstr "нет специального совпадения"
+
+msgid "Vim - Font Selector"
+msgstr "Vim — Выбор шрифта"
+
+msgid "Name:"
+msgstr "Название:"
+
+#. create toggle button
+msgid "Show size in Points"
+msgstr "Показывать размер в пунктах"
+
+msgid "Encoding:"
+msgstr "Кодировка:"
+
+msgid "Font:"
+msgstr "Шрифт:"
+
+msgid "Style:"
+msgstr "Стиль:"
+
+msgid "Size:"
+msgstr "Размер:"
+
+msgid "E256: Hangul automata ERROR"
+msgstr "E256: ОШИБКА автоматики Хангыл"
+
+msgid "E550: Missing colon"
+msgstr "E550: Пропущено двоеточие"
+
+msgid "E551: Illegal component"
+msgstr "E551: Недопустимый компонент"
+
+msgid "E552: digit expected"
+msgstr "E552: Требуется указать цифру"
+
+#, c-format
+msgid "Page %d"
+msgstr "Страница %d"
+
+msgid "No text to be printed"
+msgstr "Печатать нечего"
+
+#, c-format
+msgid "Printing page %d (%d%%)"
+msgstr "Печать стр. %d (%d%%)"
+
+#, c-format
+msgid " Copy %d of %d"
+msgstr " Копия %d из %d"
+
+#, c-format
+msgid "Printed: %s"
+msgstr "Напечатано: %s"
+
+msgid "Printing aborted"
+msgstr "Печать прекращена"
+
+msgid "E455: Error writing to PostScript output file"
+msgstr "E455: Ошибка записи в файл PostScript"
+
+#, c-format
+msgid "E624: Can't open file \"%s\""
+msgstr "E624: Невозможно открыть файл \"%s\""
+
+#, c-format
+msgid "E457: Can't read PostScript resource file \"%s\""
+msgstr "E457: Невозможно прочитать файл ресурсов PostScript \"%s\""
+
+#, c-format
+msgid "E618: file \"%s\" is not a PostScript resource file"
+msgstr "E618: Файл \"%s\" не является файлом ресурсов PostScript"
+
+#, c-format
+msgid "E619: file \"%s\" is not a supported PostScript resource file"
+msgstr "E619: Файл \"%s\" не является допустимым файлом ресурсов PostScript"
+
+#, c-format
+msgid "E621: \"%s\" resource file has wrong version"
+msgstr "E621: Файл ресурсов \"%s\" неизвестной версии"
+
+msgid "E673: Incompatible multi-byte encoding and character set."
+msgstr "E673: Несовместимые многобайтовая кодировка и набор символов."
+
+msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
+msgstr "E674: printmbcharset не может быть пустым при многобайтовой кодировке."
+
+msgid "E675: No default font specified for multi-byte printing."
+msgstr "E675: Нет определения шрифта по умолчанию для многобайтовой печати."
+
+msgid "E324: Can't open PostScript output file"
+msgstr "E324: Невозможно открыть файл PostScript"
+
+#, c-format
+msgid "E456: Can't open file \"%s\""
+msgstr "E456: Невозможно открыть файл \"%s\""
+
+msgid "E456: Can't find PostScript resource file \"prolog.ps\""
+msgstr "E456: Файл ресурсов PostScript \"prolog.ps\" не найден"
+
+msgid "E456: Can't find PostScript resource file \"cidfont.ps\""
+msgstr "E456: Файл ресурсов PostScript \"cidfont.ps\" не найден"
+
+#, c-format
+msgid "E456: Can't find PostScript resource file \"%s.ps\""
+msgstr "E456: Файл ресурсов PostScript \"%s.ps\" не найден"
+
+#, c-format
+msgid "E620: Unable to convert to print encoding \"%s\""
+msgstr "E620: Невозможно преобразовать в кодировку печать \"%s\""
+
+msgid "Sending to printer..."
+msgstr "Отправка на печать..."
+
+msgid "E365: Failed to print PostScript file"
+msgstr "E365: Не удалось выполнить печать файла PostScript"
+
+msgid "Print job sent."
+msgstr "Задание на печать отправлено."
+
+msgid "Add a new database"
+msgstr "Добавить новую базу данных"
+
+msgid "Query for a pattern"
+msgstr "Запрос по шаблону"
+
+msgid "Show this message"
+msgstr "Показать это сообщение"
+
+msgid "Kill a connection"
+msgstr "Убить соединение"
+
+msgid "Reinit all connections"
+msgstr "Заново инициализировать все соединения"
+
+msgid "Show connections"
+msgstr "Показать соединения"
+
+#, c-format
+msgid "E560: Usage: cs[cope] %s"
+msgstr "E560: Использование: cs[cope] %s"
+
+msgid "This cscope command does not support splitting the window.\n"
+msgstr "Эта команда cscope не поддерживает разделение окна.\n"
+
+msgid "E562: Usage: cstag <ident>"
+msgstr "E562: Использование: cstag <имя>"
+
+msgid "E257: cstag: tag not found"
+msgstr "E257: cstag: метка не найдена"
+
+#, c-format
+msgid "E563: stat(%s) error: %d"
+msgstr "E563: Ошибка stat(%s): %d"
+
+msgid "E563: stat error"
+msgstr "E563: Ошибка stat"
+
+#, c-format
+msgid "E564: %s is not a directory or a valid cscope database"
+msgstr "E564: %s не является каталогом или именем базы cscope"
+
+#, c-format
+msgid "Added cscope database %s"
+msgstr "Добавлена база данных cscope %s"
+
+#, c-format
+msgid "E262: error reading cscope connection %ld"
+msgstr "E262: Ошибка получения информации от соединения cscope %ld"
+
+msgid "E561: unknown cscope search type"
+msgstr "E561: Неизвестный тип поиска cscope"
+
+msgid "E566: Could not create cscope pipes"
+msgstr "E566: Невозможно создать трубу для cscope"
+
+msgid "E622: Could not fork for cscope"
+msgstr "E622: Невозможно выполнить fork() для cscope"
+
+msgid "cs_create_connection setpgid failed"
+msgstr "cs_create_connection: не удалось выполнить setpgid"
+
+msgid "cs_create_connection exec failed"
+msgstr "cs_create_connection: не удалось выполнить exec"
+
+msgid "cs_create_connection: fdopen for to_fp failed"
+msgstr "cs_create_connection: не удалось выполнить fdopen для to_fp"
+
+msgid "cs_create_connection: fdopen for fr_fp failed"
+msgstr "cs_create_connection: не удалось выполнить fdopen для fr_fp"
+
+msgid "E623: Could not spawn cscope process"
+msgstr "E623: Не удалось запустить процесс cscope"
+
+msgid "E567: no cscope connections"
+msgstr "E567: Соединений с cscope не создано"
+
+#, c-format
+msgid "E469: invalid cscopequickfix flag %c for %c"
+msgstr "E469: Неправильный флаг cscopequickfix %c для %c"
+
+#, c-format
+msgid "E259: no matches found for cscope query %s of %s"
+msgstr "E259: Не найдено соответствий по запросу cscope %s для %s"
+
+msgid "cscope commands:\n"
+msgstr "Команды cscope:\n"
+
+#, c-format
+msgid "%-5s: %s%*s (Usage: %s)"
+msgstr "%-5s: %s%*s (использование: %s)"
+
+msgid ""
+"\n"
+"       c: Find functions calling this function\n"
+"       d: Find functions called by this function\n"
+"       e: Find this egrep pattern\n"
+"       f: Find this file\n"
+"       g: Find this definition\n"
+"       i: Find files #including this file\n"
+"       s: Find this C symbol\n"
+"       t: Find this text string\n"
+msgstr ""
+"\n"
+"       c: Найти функции вызывающие эту функцию\n"
+"       d: Найти функции вызываемые этой функцией\n"
+"       e: Найти этот шаблон egrep\n"
+"       f: Найти этот файл\n"
+"       g: Найти это определение\n"
+"       i: Найти файлы включающие (#include) этот файл\n"
+"       s: Найти этот C-символ\n"
+"       t: Найти эту текстовую строку\n"
+
+#, c-format
+msgid "E625: cannot open cscope database: %s"
+msgstr "E625: Невозможно открыть базу данных cscope: %s"
+
+msgid "E626: cannot get cscope database information"
+msgstr "E626: Информация о базе данных cscope не доступна"
+
+msgid "E568: duplicate cscope database not added"
+msgstr "E568: Данная база данных cscope уже подсоединена"
+
+#, c-format
+msgid "E261: cscope connection %s not found"
+msgstr "E261: Соединение с cscope %s не обнаружено"
+
+#, c-format
+msgid "cscope connection %s closed"
+msgstr "соединение с cscope %s закрыто"
+
+#. should not reach here
+msgid "E570: fatal error in cs_manage_matches"
+msgstr "E570: Критическая ошибка в cs_manage_matches"
+
+#, c-format
+msgid "Cscope tag: %s"
+msgstr "Метка cscope: %s"
+
+msgid ""
+"\n"
+"   #   line"
+msgstr ""
+"\n"
+"   #   строка"
+
+msgid "filename / context / line\n"
+msgstr "имя файла / контекст / строка\n"
+
+#, c-format
+msgid "E609: Cscope error: %s"
+msgstr "E609: Ошибка cscope: %s"
+
+msgid "All cscope databases reset"
+msgstr "Перезагрузка всех баз данных cscope"
+
+msgid "no cscope connections\n"
+msgstr "соединения с cscope отсутствуют\n"
+
+msgid " # pid    database name                       prepend path\n"
+msgstr " # pid    база данных                         начальный путь\n"
+
+msgid "Lua library cannot be loaded."
+msgstr "Библиотека Lua не может быть загружена."
+
+msgid "cannot save undo information"
+msgstr "невозможно сохранить информацию об отмене операции"
+
+msgid ""
+"E815: Sorry, this command is disabled, the MzScheme libraries could not be "
+"loaded."
+msgstr ""
+"E815: К сожалению эта команда не работает, поскольку не загружена библиотека "
+"MzScheme"
+
+msgid "invalid expression"
+msgstr "неправильное выражение"
+
+msgid "expressions disabled at compile time"
+msgstr "выражения отключены при компиляции"
+
+msgid "hidden option"
+msgstr "скрытая опция"
+
+msgid "unknown option"
+msgstr "неизвестная опция"
+
+msgid "window index is out of range"
+msgstr "индекс окна за пределами диапазона"
+
+msgid "couldn't open buffer"
+msgstr "невозможно открыть буфер"
+
+msgid "cannot delete line"
+msgstr "невозможно удалить строку"
+
+msgid "cannot replace line"
+msgstr "невозможно заменить строку"
+
+msgid "cannot insert line"
+msgstr "невозможно вставить строку"
+
+msgid "string cannot contain newlines"
+msgstr "строка не может содержать символ новой строки"
+
+msgid "error converting Scheme values to Vim"
+msgstr "невозможно преобразовать значения Scheme в Vim"
+
+msgid "Vim error: ~a"
+msgstr "ошибка Vim: ~a"
+
+msgid "Vim error"
+msgstr "ошибка Vim"
+
+msgid "buffer is invalid"
+msgstr "неправильный буфер"
+
+msgid "window is invalid"
+msgstr "неправильное окно"
+
+msgid "linenr out of range"
+msgstr "номер строки за пределами диапазона"
+
+msgid "not allowed in the Vim sandbox"
+msgstr "не допускается в песочнице Vim"
+
+msgid "E836: This Vim cannot execute :python after using :py3"
+msgstr "E836: Данный Vim не может выполнить :python после использования :py3"
+
+msgid ""
+"E263: Sorry, this command is disabled, the Python library could not be "
+"loaded."
+msgstr ""
+"E263: К сожалению эта команда не работает, поскольку не загружена библиотека "
+"Python"
+
+msgid "E659: Cannot invoke Python recursively"
+msgstr "E659: Невозможно выполнить рекурсивный вызов Python"
+
+msgid "E837: This Vim cannot execute :py3 after using :python"
+msgstr "E837: Данный Vim не может выполнить :py3 после использования :python"
+
+msgid "E265: $_ must be an instance of String"
+msgstr "E265: $_ должен быть экземпляром или строкой"
+
+msgid ""
+"E266: Sorry, this command is disabled, the Ruby library could not be loaded."
+msgstr ""
+"E266: К сожалению эта команда не работает, поскольку не загружена библиотека "
+"Ruby"
+
+msgid "E267: unexpected return"
+msgstr "E267: Неожиданный return"
+
+msgid "E268: unexpected next"
+msgstr "E268: Неожиданный next"
+
+msgid "E269: unexpected break"
+msgstr "E269: Неожиданный break"
+
+msgid "E270: unexpected redo"
+msgstr "E270: Неожиданный redo"
+
+msgid "E271: retry outside of rescue clause"
+msgstr "E271: retry вне оператора rescue"
+
+msgid "E272: unhandled exception"
+msgstr "E272: Необработанное исключение"
+
+#, c-format
+msgid "E273: unknown longjmp status %d"
+msgstr "E273: Неизвестное состояние longjmp %d"
+
+msgid "Toggle implementation/definition"
+msgstr "Переключение между реализацией/определением"
+
+msgid "Show base class of"
+msgstr "Показать основной класс"
+
+msgid "Show overridden member function"
+msgstr "Показать перегруженные функции"
+
+msgid "Retrieve from file"
+msgstr "Получить из файла"
+
+msgid "Retrieve from project"
+msgstr "Получить из проекта"
+
+msgid "Retrieve from all projects"
+msgstr "Получить из всех проектов"
+
+msgid "Retrieve"
+msgstr "Получить"
+
+msgid "Show source of"
+msgstr "Показать исходный код"
+
+msgid "Find symbol"
+msgstr "Найти символ"
+
+msgid "Browse class"
+msgstr "Просмотр класса"
+
+msgid "Show class in hierarchy"
+msgstr "Показать класс в иерархии"
+
+msgid "Show class in restricted hierarchy"
+msgstr "Показать класс в ограниченной иерархии"
+
+msgid "Xref refers to"
+msgstr "Xref ссылается на"
+
+msgid "Xref referred by"
+msgstr "Ссылка на xref из"
+
+msgid "Xref has a"
+msgstr "Xref имеет"
+
+msgid "Xref used by"
+msgstr "Xref используется"
+
+msgid "Show docu of"
+msgstr "Показать docu"
+
+msgid "Generate docu for"
+msgstr "Создать docu"
+
+msgid ""
+"Cannot connect to SNiFF+. Check environment (sniffemacs must be found in "
+"$PATH).\n"
+msgstr ""
+"Невозможно подсоединиться к SNiFF+. Проверьте настройки окружения."
+"(sniffemacs должны быть указаны в переменной $PATH).\n"
+
+msgid "E274: Sniff: Error during read. Disconnected"
+msgstr "E274: Sniff: Ошибка во время чтения. Отсоединение"
+
+msgid "SNiFF+ is currently "
+msgstr "В настоящий момент SNiFF+ "
+
+msgid "not "
+msgstr "не "
+
+msgid "connected"
+msgstr "подсоединён"
+
+#, c-format
+msgid "E275: Unknown SNiFF+ request: %s"
+msgstr "E275: Неизвестный запрос SNiFF+: %s"
+
+msgid "E276: Error connecting to SNiFF+"
+msgstr "E276: Ошибка соединения со SNiFF+"
+
+msgid "E278: SNiFF+ not connected"
+msgstr "E278: SNiFF+ не подсоединён"
+
+msgid "E279: Not a SNiFF+ buffer"
+msgstr "E279: Это не буфер SNiFF+"
+
+msgid "Sniff: Error during write. Disconnected"
+msgstr "Sniff: Ошибка во время записи. Отсоединение"
+
+msgid "invalid buffer number"
+msgstr "неправильный номер буфера"
+
+msgid "not implemented yet"
+msgstr "пока не реализовано"
+
+#. ???
+msgid "cannot set line(s)"
+msgstr "невозможно назначить строку или строки"
+
+msgid "invalid mark name"
+msgstr "неправильное имя отметки"
+
+msgid "mark not set"
+msgstr "отметка не установлена"
+
+#, c-format
+msgid "row %d column %d"
+msgstr "ряд %d колонка %d"
+
+msgid "cannot insert/append line"
+msgstr "невозможно вставить или добавить строку"
+
+msgid "line number out of range"
+msgstr "номер строки за пределами диапазона"
+
+msgid "unknown flag: "
+msgstr "неизвестный флаг: "
+
+msgid "unknown vimOption"
+msgstr "неизвестная vimOption"
+
+msgid "keyboard interrupt"
+msgstr "клавиатурное прерывание"
+
+msgid "vim error"
+msgstr "ошибка VIM"
+
+msgid "cannot create buffer/window command: object is being deleted"
+msgstr "невозможно создать команду буфера или окна: объект в процессе удаления"
+
+msgid ""
+"cannot register callback command: buffer/window is already being deleted"
+msgstr ""
+"невозможно зарегистрировать команду с обратным вызовом: буфер или окно в "
+"процессе удаления"
+
+#. This should never happen.  Famous last word?
+msgid ""
+"E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-dev@vim."
+"org"
+msgstr ""
+"E280: КРИТИЧЕСКАЯ ОШИБКА TCL: повреждён список ссылок?! Сообщите об этом по "
+"адресу vim-dev@vim.org"
+
+msgid "cannot register callback command: buffer/window reference not found"
+msgstr ""
+"невозможно зарегистрировать команду с обратным вызовом: ссылка на буфер или "
+"окно не обнаружена"
+
+msgid ""
+"E571: Sorry, this command is disabled: the Tcl library could not be loaded."
+msgstr ""
+"E571: К сожалению эта команда не работает, поскольку не загружена библиотека "
+"Tcl"
+
+#, c-format
+msgid "E572: exit code %d"
+msgstr "E572: Код выхода %d"
+
+msgid "cannot get line"
+msgstr "невозможно получить строку"
+
+msgid "Unable to register a command server name"
+msgstr "Невозможно зарегистрировать имя сервера команд"
+
+msgid "E248: Failed to send command to the destination program"
+msgstr "E248: Не удалась отправка команды в другую программу"
+
+#, c-format
+msgid "E573: Invalid server id used: %s"
+msgstr "E573: Используется неправильный id сервера: %s"
+
+msgid "E251: VIM instance registry property is badly formed.  Deleted!"
+msgstr ""
+"E251: Неправильно сформировано значение данного процесса VIM в реестре. "
+"Удалено!"
+
+msgid "Unknown option argument"
+msgstr "Неизвестный необязательный параметр"
+
+msgid "Too many edit arguments"
+msgstr "Слишком много параметров редактирования"
+
+msgid "Argument missing after"
+msgstr "Пропущен параметр после"
+
+msgid "Garbage after option argument"
+msgstr "Мусор после необязательного параметра"
+
+msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
+msgstr ""
+"Слишком много параметров \"+команда\", \"-c команда\" или \"--cmd команда\""
+
+msgid "Invalid argument for"
+msgstr "Недопустимый параметр для"
+
+#, c-format
+msgid "%d files to edit\n"
+msgstr "Файлов для редактирования: %d\n"
+
+msgid "netbeans is not supported with this GUI\n"
+msgstr "NetBeans не поддерживается с этим графическим интерфейсом\n"
+
+msgid "This Vim was not compiled with the diff feature."
+msgstr ""
+"Данный Vim был скомпилирован с выключенной особенностью просмотра отличий"
+
+msgid "'-nb' cannot be used: not enabled at compile time\n"
+msgstr "Невозможно использовать '-nb': не включено при компиляции\n"
+
+msgid "Attempt to open script file again: \""
+msgstr "Попытка повторного открытия файла сценария: \""
+
+msgid "Cannot open for reading: \""
+msgstr "Невозможно открыть для чтения: \""
+
+msgid "Cannot open for script output: \""
+msgstr "Невозможно открыть для вывода сценария: \""
+
+msgid "Vim: Error: Failure to start gvim from NetBeans\n"
+msgstr "Vim: Ошибка: Не удалось запустить gvim из NetBeans\n"
+
+msgid "Vim: Warning: Output is not to a terminal\n"
+msgstr "Vim: Предупреждение: Вывод осуществляется не на терминал\n"
+
+msgid "Vim: Warning: Input is not from a terminal\n"
+msgstr "Vim: Предупреждение: Ввод происходит не с терминала\n"
+
+#. just in case..
+msgid "pre-vimrc command line"
+msgstr "командная строка перед выполнением vimrc"
+
+#, c-format
+msgid "E282: Cannot read from \"%s\""
+msgstr "E282: Невозможно выполнить чтение из \"%s\""
+
+msgid ""
+"\n"
+"More info with: \"vim -h\"\n"
+msgstr ""
+"\n"
+"Дополнительная информация: \"vim -h\"\n"
+
+msgid "[file ..]       edit specified file(s)"
+msgstr "[файл ..] редактирование указанных файлов"
+
+msgid "-               read text from stdin"
+msgstr "-           чтение текста из потока ввода stdin"
+
+msgid "-t tag          edit file where tag is defined"
+msgstr "-t метка    редактирование файла с указанной меткой"
+
+# \n\t\t.. для умещения в 80 столбцов
+msgid "-q [errorfile]  edit file with first error"
+msgstr ""
+"-q [файл-ошибок]\n"
+"\t\t\t\t    редактирование файла с первой ошибкой"
+
+msgid ""
+"\n"
+"\n"
+"usage:"
+msgstr ""
+"\n"
+"\n"
+"Использование:"
+
+msgid " vim [arguments] "
+msgstr " vim [параметры] "
+
+msgid ""
+"\n"
+"   or:"
+msgstr ""
+"\n"
+"   или:"
+
+msgid ""
+"\n"
+"Where case is ignored prepend / to make flag upper case"
+msgstr ""
+"\n"
+"Если регистр игнорируется, добавьте перед флагом / для верхнего регистра"
+
+msgid ""
+"\n"
+"\n"
+"Arguments:\n"
+msgstr ""
+"\n"
+"\n"
+"Параметры:\n"
+
+msgid "--\t\t\tOnly file names after this"
+msgstr "--\t\t\tДалее указываются только имена файлов"
+
+msgid "--literal\t\tDon't expand wildcards"
+msgstr "--literal\t\tНе выполнять подстановку по маске"
+
+msgid "-register\t\tRegister this gvim for OLE"
+msgstr "-register\t\tЗарегистрировать этот gvim для OLE"
+
+msgid "-unregister\t\tUnregister gvim for OLE"
+msgstr "-unregister\t\tОтключить регистрацию данного gvim для OLE"
+
+msgid "-g\t\t\tRun using GUI (like \"gvim\")"
+msgstr "-g\t\t\tЗапустить с графическим интерфейсом (как \"gvim\")"
+
+msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
+msgstr "-f  или --nofork\tВ активной задаче: Не выполнять fork при запуске GUI"
+
+msgid "-v\t\t\tVi mode (like \"vi\")"
+msgstr "-v\t\t\tРежим Vi (как \"vi\")"
+
+msgid "-e\t\t\tEx mode (like \"ex\")"
+msgstr "-e\t\t\tРежим Ex (как \"ex\")"
+
+msgid "-E\t\t\tImproved Ex mode"
+msgstr "-E\t\t\tУлучшенный режим Ex"
+
+msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
+msgstr "-s\t\t\tТихий (пакетный) режим (только для \"ex\")"
+
+msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
+msgstr "-d\t\t\tРежим отличий (как \"vimdiff\")"
+
+msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
+msgstr "-y\t\t\tПростой режим (как \"evim\", безрежимный)"
+
+msgid "-R\t\t\tReadonly mode (like \"view\")"
+msgstr "-R\t\t\tТолько для чтения (как \"view\")"
+
+msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
+msgstr "-Z\t\t\tОграниченный режим (как \"rvim\")"
+
+msgid "-m\t\t\tModifications (writing files) not allowed"
+msgstr "-m\t\t\tБез возможности сохранения изменений (записи файлов)"
+
+msgid "-M\t\t\tModifications in text not allowed"
+msgstr "-M\t\t\tБез возможности внесения изменений в текст"
+
+msgid "-b\t\t\tBinary mode"
+msgstr "-b\t\t\tДвоичный режим"
+
+msgid "-l\t\t\tLisp mode"
+msgstr "-l\t\t\tРежим Lisp"
+
+msgid "-C\t\t\tCompatible with Vi: 'compatible'"
+msgstr "-C\t\t\tРежим совместимости с Vi: 'compatible'"
+
+msgid "-N\t\t\tNot fully Vi compatible: 'nocompatible'"
+msgstr "-N\t\t\tРежим неполной совместимости с Vi: 'nocompatible'"
+
+# \n\t\t.. для умещения в 80 столбцов
+msgid "-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"
+msgstr ""
+"-V[N][файл]\t\tВыводить дополнительные сообщения\n"
+"\t\t\t\t[уровень N] [записывать в файл]"
+
+msgid "-D\t\t\tDebugging mode"
+msgstr "-D\t\t\tРежим отладки"
+
+msgid "-n\t\t\tNo swap file, use memory only"
+msgstr "-n\t\t\tБез своп-файла, используется только память"
+
+msgid "-r\t\t\tList swap files and exit"
+msgstr "-r\t\t\tВывести список своп-файлов и завершить работу"
+
+msgid "-r (with file name)\tRecover crashed session"
+msgstr "-r (с именем файла)\tВосстановить аварийно завершённый сеанс"
+
+msgid "-L\t\t\tSame as -r"
+msgstr "-L\t\t\tТо же, что и -r"
+
+msgid "-f\t\t\tDon't use newcli to open window"
+msgstr "-f\t\t\tНе использовать newcli для открытия окна"
+
+msgid "-dev <device>\t\tUse <device> for I/O"
+msgstr "-dev <устройство>\t\tИспользовать для I/O указанное <устройство>"
+
+msgid "-A\t\t\tstart in Arabic mode"
+msgstr "-A\t\t\tЗапуск в Арабском режиме"
+
+msgid "-H\t\t\tStart in Hebrew mode"
+msgstr "-H\t\t\tЗапуск в режиме \"Иврит\""
+
+msgid "-F\t\t\tStart in Farsi mode"
+msgstr "-F\t\t\tЗапуск в режиме \"Фарси\""
+
+msgid "-T <terminal>\tSet terminal type to <terminal>"
+msgstr "-T <терминал>\tНазначить указанный тип <терминала>"
+
+msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
+msgstr "-u <vimrc>\t\tИспользовать <vimrc> вместо любых файлов .vimrc"
+
+msgid "-U <gvimrc>\t\tUse <gvimrc> instead of any .gvimrc"
+msgstr "-U <gvimrc>\t\tИспользовать <gvimrc> вместо любых файлов .gvimrc"
+
+msgid "--noplugin\t\tDon't load plugin scripts"
+msgstr "--noplugin\t\tНе загружать сценарии модулей"
+
+# \n\t\t.. для умещения в 80 столбцов
+msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+msgstr ""
+"-p[N]\t\tОткрыть N вкладок (по умолчанию: по одной\n"
+"\t\t\t\tна каждый файл)"
+
+# \n\t\t.. для умещения в 80 столбцов
+msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+msgstr ""
+"-o[N]\t\tОткрыть N окон (по умолчанию: по одному\n"
+"\t\t\t\tна каждый файл)"
+
+msgid "-O[N]\t\tLike -o but split vertically"
+msgstr "-O[N]\t\tТо же, что и -o, но с вертикальным разделением окон"
+
+msgid "+\t\t\tStart at end of file"
+msgstr "+\t\t\tНачать редактирование в конце файла"
+
+msgid "+<lnum>\t\tStart at line <lnum>"
+msgstr "+<lnum>\t\tНачать редактирование в строке с номером <lnum>"
+
+msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+msgstr "--cmd <команда>\tВыполнить <команду> перед загрузкой файла vimrc"
+
+msgid "-c <command>\t\tExecute <command> after loading the first file"
+msgstr "-c <команда>\t\tВыполнить <команду> после загрузки первого файла"
+
+# \n\t\t.. для умещения в 80 столбцов
+msgid "-S <session>\t\tSource file <session> after loading the first file"
+msgstr ""
+"-S <сеанс>\t\tПрочитать сценарий <сеанса> после загрузки\n"
+"\t\t\t\tпервого файла"
+
+# \n\t\t.. для умещения в 80 столбцов
+msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+msgstr ""
+"-s <сценарий>\tПрочитать команды Обычного режима из\n"
+"\t\t\t\tфайла <сценария>"
+
+msgid "-w <scriptout>\tAppend all typed commands to file <scriptout>"
+msgstr "-w <сценарий>\tДобавлять все введённые команды в файл <сценария>"
+
+msgid "-W <scriptout>\tWrite all typed commands to file <scriptout>"
+msgstr "-W <сценарий>\tЗаписать все введённые команды в файл <сценария>"
+
+msgid "-x\t\t\tEdit encrypted files"
+msgstr "-x\t\t\tРедактирование зашифрованных файлов"
+
+msgid "-display <display>\tConnect vim to this particular X-server"
+msgstr "-display <экран>\tПодсоединить VIM к указанному X-серверу"
+
+msgid "-X\t\t\tDo not connect to X server"
+msgstr "-X\t\t\tНе выполнять соединение с сервером X"
+
+msgid "--remote <files>\tEdit <files> in a Vim server if possible"
+msgstr "--remote <файлы>\tПо возможности редактировать <файлы> на сервере Vim"
+
+msgid "--remote-silent <files>  Same, don't complain if there is no server"
+msgstr "--remote-silent <файлы>  То же, но без жалоб на отсутствие сервера"
+
+msgid ""
+"--remote-wait <files>  As --remote but wait for files to have been edited"
+msgstr ""
+"--remote-wait <файлы>  То же, что и --remote, но с ожиданием завершения"
+
+msgid ""
+"--remote-wait-silent <files>  Same, don't complain if there is no server"
+msgstr ""
+"--remote-wait-silent <файлы>  То же, но без жалоб на отсутствие сервера"
+
+msgid ""
+"--remote-tab[-wait][-silent] <files>  As --remote but use tab page per file"
+msgstr ""
+"--remote-tab[-wait][-silent] <файлы>  То же, что и --remote, но с вкладками"
+
+msgid "--remote-send <keys>\tSend <keys> to a Vim server and exit"
+msgstr "--remote-send <кнопки>\tОтправить <кнопки> на сервер Vim и выйти"
+
+msgid "--remote-expr <expr>\tEvaluate <expr> in a Vim server and print result"
+msgstr "--remote-expr <выраж>\tВычислить <выраж> на сервере Vim и напечатать"
+
+msgid "--serverlist\t\tList available Vim server names and exit"
+msgstr "--serverlist\t\tПоказать список имён серверов Vim и завершить работу"
+
+msgid "--servername <name>\tSend to/become the Vim server <name>"
+msgstr ""
+"--servername <имя>\tОтправить на/стать сервером Vim с указанным <именем>"
+
+msgid "--startuptime <file>\tWrite startup timing messages to <file>"
+msgstr "--startuptime <файл>\tЗаписать временную метку о запуске в <файл>"
+
+msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
+msgstr "-i <viminfo>\t\tИспользовать вместо .viminfo файл <viminfo>"
+
+msgid "-h  or  --help\tPrint Help (this message) and exit"
+msgstr "-h или --help\tВывести справку (это сообщение) и завершить работу"
+
+msgid "--version\t\tPrint version information and exit"
+msgstr "--version\t\tВывести информацию о версии Vim и завершить работу"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (Motif version):\n"
+msgstr ""
+"\n"
+"Параметры для gvim (версия Motif):\n"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (neXtaw version):\n"
+msgstr ""
+"\n"
+"Параметры для gvim (версия neXtaw):\n"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (Athena version):\n"
+msgstr ""
+"\n"
+"Параметры для gvim (версия Athena):\n"
+
+msgid "-display <display>\tRun vim on <display>"
+msgstr "-display <дисплей>\tЗапустить VIM на указанном <дисплее>"
+
+msgid "-iconic\t\tStart vim iconified"
+msgstr "-iconic\t\tЗапустить VIM в свёрнутом виде"
+
+msgid "-background <color>\tUse <color> for the background (also: -bg)"
+msgstr ""
+"-background <цвет>\tИспользовать указанный <цвет> для фона (также: -bg)"
+
+msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
+msgstr ""
+"-foreground <цвет>\tИспользовать <цвет> для обычного текста (также: -fg)"
+
+msgid "-font <font>\t\tUse <font> for normal text (also: -fn)"
+msgstr "-font <шрифт>\t\tИспользовать <шрифт> для обычного текста (также: -fn)"
+
+msgid "-boldfont <font>\tUse <font> for bold text"
+msgstr "-boldfont <шрифт>\tИспользовать <шрифт> для жирного текста"
+
+msgid "-italicfont <font>\tUse <font> for italic text"
+msgstr "-italicfont <шрифт>\tИспользовать <шрифт> для наклонного текста"
+
+msgid "-geometry <geom>\tUse <geom> for initial geometry (also: -geom)"
+msgstr ""
+"-geometry <геометрия>\tИспользовать начальную <геометрию> (также: -geom)"
+
+msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
+msgstr "-borderwidth <ширина>\tИспользовать <ширину> бордюра (также: -bw)"
+
+msgid "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
+msgstr ""
+"-scrollbarwidth <ширина> Использовать ширину полосы прокрутки (также: -sw)"
+
+msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
+msgstr "-menuheight <высота>\tИспользовать <высоту> меню (также: -mh)"
+
+msgid "-reverse\t\tUse reverse video (also: -rv)"
+msgstr "-reverse\t\tИспользовать инверсный видеорежим (также: -rv)"
+
+msgid "+reverse\t\tDon't use reverse video (also: +rv)"
+msgstr "+reverse\t\tНе использовать инверсный видеорежим (также: +rv)"
+
+msgid "-xrm <resource>\tSet the specified resource"
+msgstr "-xrm <ресурс>\tУстановить указанный <ресурс>"
+
+msgid ""
+"\n"
+"Arguments recognised by gvim (GTK+ version):\n"
+msgstr ""
+"\n"
+"Параметры для gvim (версия GTK+):\n"
+
+msgid "-display <display>\tRun vim on <display> (also: --display)"
+msgstr ""
+"-display <дисплей>\tЗапустить VIM на указанном <дисплее> (также: --display)"
+
+msgid "--role <role>\tSet a unique role to identify the main window"
+msgstr ""
+"--role <роль>\tУстановить уникальную <роль> для идентификации главного окна"
+
+msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
+msgstr "--socketid <xid>\tОткрыть Vim внутри другого компонента GTK"
+
+msgid "--echo-wid\t\tMake gvim echo the Window ID on stdout"
+msgstr "--echo-wid\t\tВывести Window ID для gvim на стандартный поток вывода"
+
+msgid "-P <parent title>\tOpen Vim inside parent application"
+msgstr "-P <заголовок родителя>\tОткрыть Vim в родительском приложении"
+
+msgid "--windowid <HWND>\tOpen Vim inside another win32 widget"
+msgstr "--windowid <HWND>\tОткрыть Vim внутри другого компонента win32"
+
+msgid "No display"
+msgstr "Нет дисплея"
+
+#. Failed to send, abort.
+msgid ": Send failed.\n"
+msgstr ": Отправка не удалась.\n"
+
+#. Let vim start normally.
+msgid ": Send failed. Trying to execute locally\n"
+msgstr ": Отправка не удалась. Попытка местного выполнения\n"
+
+#, c-format
+msgid "%d of %d edited"
+msgstr "отредактировано %d из %d"
+
+msgid "No display: Send expression failed.\n"
+msgstr "Нет дисплея: отправка выражения не удалась.\n"
+
+msgid ": Send expression failed.\n"
+msgstr ": Отправка выражения не удалась.\n"
+
+msgid "No marks set"
+msgstr "Нет установленных отметок"
+
+#, c-format
+msgid "E283: No marks matching \"%s\""
+msgstr "E283: Нет отметок, совпадающих с \"%s\""
+
+#. Highlight title
+msgid ""
+"\n"
+"mark line  col file/text"
+msgstr ""
+"\n"
+"отмет стр  кол файл/текст"
+
+#. Highlight title
+msgid ""
+"\n"
+" jump line  col file/text"
+msgstr ""
+"\n"
+"прыжок стр  кол файл/текст"
+
+#. Highlight title
+msgid ""
+"\n"
+"change line  col text"
+msgstr ""
+"\n"
+"измен.  стр  кол текст"
+
+msgid ""
+"\n"
+"# File marks:\n"
+msgstr ""
+"\n"
+"# Глобальные отметки:\n"
+
+#. Write the jumplist with -'
+msgid ""
+"\n"
+"# Jumplist (newest first):\n"
+msgstr ""
+"\n"
+"# Список прыжков (сначала более свежие):\n"
+
+msgid ""
+"\n"
+"# History of marks within files (newest to oldest):\n"
+msgstr ""
+"\n"
+"# История местных отметок (от более свежих к старым):\n"
+
+msgid "Missing '>'"
+msgstr "Пропущена '>'"
+
+msgid "E543: Not a valid codepage"
+msgstr "E543: Недопустимое имя кодировки"
+
+msgid "E284: Cannot set IC values"
+msgstr "E284: Невозможно назначить значения контекста ввода"
+
+msgid "E285: Failed to create input context"
+msgstr "E285: Невозможно создать контекст ввода"
+
+msgid "E286: Failed to open input method"
+msgstr "E286: Неудачная попытка открыть метод ввода"
+
+msgid "E287: Warning: Could not set destroy callback to IM"
+msgstr ""
+"E287: Предупреждение: невозможно назначить обр. вызов уничтожения метода "
+"ввода"
+
+msgid "E288: input method doesn't support any style"
+msgstr "E288: Метод ввода не поддерживает стили"
+
+msgid "E289: input method doesn't support my preedit type"
+msgstr ""
+"E289: Метод ввода не поддерживает мой тип предварительного редактирования"
+
+msgid "E293: block was not locked"
+msgstr "E293: Блок не заблокирован"
+
+msgid "E294: Seek error in swap file read"
+msgstr "E294: Ошибка поиска при чтении своп-файла"
+
+msgid "E295: Read error in swap file"
+msgstr "E295: Ошибка чтения своп-файла"
+
+msgid "E296: Seek error in swap file write"
+msgstr "E296: Ошибка поиска при записи своп-файла"
+
+msgid "E297: Write error in swap file"
+msgstr "E297: Ошибка при записи своп-файла"
+
+msgid "E300: Swap file already exists (symlink attack?)"
+msgstr ""
+"E300: Своп-файл уже существует (атака с использованием символьной ссылки?)"
+
+msgid "E298: Didn't get block nr 0?"
+msgstr "E298: Не получен блок номер 0?"
+
+msgid "E298: Didn't get block nr 1?"
+msgstr "E298: Не получен блок номер 1?"
+
+msgid "E298: Didn't get block nr 2?"
+msgstr "E298: Не получен блок номер 2?"
+
+msgid "E843: Error while updating swap file crypt"
+msgstr "E843: Ошибка при обновлении шифрования своп-файла"
+
+#. could not (re)open the swap file, what can we do????
+msgid "E301: Oops, lost the swap file!!!"
+msgstr "E301: Ой, потерялся своп-файл!!!"
+
+msgid "E302: Could not rename swap file"
+msgstr "E302: Невозможно переименовать своп-файл"
+
+#, c-format
+msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
+msgstr ""
+"E303: Не удалось открыть своп-файл для \"%s\", восстановление невозможно"
+
+msgid "E304: ml_upd_block0(): Didn't get block 0??"
+msgstr "E304: ml_upd_block0(): Не получен блок 0??"
+
+#, c-format
+msgid "E305: No swap file found for %s"
+msgstr "E305: Своп-файл для %s не найден"
+
+msgid "Enter number of swap file to use (0 to quit): "
+msgstr ""
+"Введите номер своп-файла, который следует использовать (0 для выхода): "
+
+#, c-format
+msgid "E306: Cannot open %s"
+msgstr "E306: Не могу открыть %s"
+
+msgid "Unable to read block 0 from "
+msgstr "Невозможно прочитать блок 0 из "
+
+msgid ""
+"\n"
+"Maybe no changes were made or Vim did not update the swap file."
+msgstr ""
+"\n"
+"Нет изменений, или Vim не смог обновить своп-файл"
+
+msgid " cannot be used with this version of Vim.\n"
+msgstr " нельзя использовать в данной версии Vim.\n"
+
+msgid "Use Vim version 3.0.\n"
+msgstr "Используйте Vim версии 3.0.\n"
+
+#, c-format
+msgid "E307: %s does not look like a Vim swap file"
+msgstr "E307: %s не является своп-файлом Vim"
+
+msgid " cannot be used on this computer.\n"
+msgstr " нельзя использовать на этом компьютере.\n"
+
+msgid "The file was created on "
+msgstr "Файл был создан "
+
+msgid ""
+",\n"
+"or the file has been damaged."
+msgstr ""
+",\n"
+"либо файл был повреждён."
+
+#, c-format
+msgid ""
+"E833: %s is encrypted and this version of Vim does not support encryption"
+msgstr "E833: %s зашифрован, а эта версия Vim не поддерживает шифрование"
+
+msgid " has been damaged (page size is smaller than minimum value).\n"
+msgstr " был повреждён (размер страницы меньше минимального значения).\n"
+
+#, c-format
+msgid "Using swap file \"%s\""
+msgstr "Используется своп-файл \"%s\""
+
+#, c-format
+msgid "Original file \"%s\""
+msgstr "Исходный файл \"%s\""
+
+msgid "E308: Warning: Original file may have been changed"
+msgstr "E308: Предупреждение: исходный файл мог быть изменён"
+
+#, c-format
+msgid "Swap file is encrypted: \"%s\""
+msgstr "Своп-файл зашифрован: \"%s\""
+
+msgid ""
+"\n"
+"If you entered a new crypt key but did not write the text file,"
+msgstr ""
+"\n"
+"Если вы ввели новый пароль для шифрования, но не записали текстовый файл,"
+
+msgid ""
+"\n"
+"enter the new crypt key."
+msgstr ""
+"\n"
+"то введите новый пароль для шифрования."
+
+# Перевод сообщения разделён на две части, часть первая
+msgid ""
+"\n"
+"If you wrote the text file after changing the crypt key press enter"
+msgstr ""
+"\n"
+"Если вы записали текстовый файл после изменения пароля шифрования, то нажмите"
+
+# Перевод сообщения разделён на две части, часть вторая
+msgid ""
+"\n"
+"to use the same key for text file and swap file"
+msgstr ""
+"\n"
+"Enter для использования одного ключа для текстового файла и своп-файла"
+
+#, c-format
+msgid "E309: Unable to read block 1 from %s"
+msgstr "E309: Невозможно прочитать блок 1 из %s"
+
+msgid "???MANY LINES MISSING"
+msgstr "???ОТСУТСТВУЕТ МНОГО СТРОК"
+
+msgid "???LINE COUNT WRONG"
+msgstr "???НЕПРАВИЛЬНОЕ ЗНАЧЕНИЕ СЧЁТЧИКА СТРОК"
+
+msgid "???EMPTY BLOCK"
+msgstr "???ПУСТОЙ БЛОК"
+
+msgid "???LINES MISSING"
+msgstr "???ОТСУТСТВУЮТ СТРОКИ"
+
+#, c-format
+msgid "E310: Block 1 ID wrong (%s not a .swp file?)"
+msgstr "E310: Неправильный блок 1 ID (%s не является файлом .swp?)"
+
+msgid "???BLOCK MISSING"
+msgstr "???ПРОПУЩЕН БЛОК"
+
+msgid "??? from here until ???END lines may be messed up"
+msgstr "???строки могут быть испорчены отсюда до ???КОНЦА"
+
+msgid "??? from here until ???END lines may have been inserted/deleted"
+msgstr "???строки могли быть вставлены или удалены отсюда до ???КОНЦА"
+
+msgid "???END"
+msgstr "???КОНЕЦ"
+
+msgid "E311: Recovery Interrupted"
+msgstr "E311: Восстановление прервано"
+
+msgid ""
+"E312: Errors detected while recovering; look for lines starting with ???"
+msgstr ""
+"E312: Во время восстановления обнаружены ошибки; см. строки, начинающиеся "
+"с ???"
+
+msgid "See \":help E312\" for more information."
+msgstr "См. \":help E312\" для дополнительной информации."
+
+msgid "Recovery completed. You should check if everything is OK."
+msgstr "Восстановление завершено. Проверьте, всё ли в порядке."
+
+msgid ""
+"\n"
+"(You might want to write out this file under another name\n"
+msgstr ""
+"\n"
+"(Можете записать файл под другим именем и сравнить его с исходным\n"
+
+msgid "and run diff with the original file to check for changes)"
+msgstr "файлом при помощи программы diff)"
+
+msgid "Recovery completed. Buffer contents equals file contents."
+msgstr "Восстановление завершено. Содержимое буферов и файлов эквивалентно."
+
+msgid ""
+"\n"
+"You may want to delete the .swp file now.\n"
+"\n"
+msgstr ""
+"\n"
+"Вероятно, сейчас вы захотите удалить файл .swp.\n"
+"\n"
+
+msgid "Using crypt key from swap file for the text file.\n"
+msgstr "Использование ключа шифрования из своп-файла для текстового файла.\n"
+
+#. use msg() to start the scrolling properly
+msgid "Swap files found:"
+msgstr "Обнаружены своп-файлы:"
+
+msgid "   In current directory:\n"
+msgstr "   В текущем каталоге:\n"
+
+msgid "   Using specified name:\n"
+msgstr "   С указанным именем:\n"
+
+msgid "   In directory "
+msgstr "   В каталоге   "
+
+msgid "      -- none --\n"
+msgstr "      -- нет --\n"
+
+msgid "          owned by: "
+msgstr "          владелец: "
+
+msgid "   dated: "
+msgstr "    дата: "
+
+msgid "             dated: "
+msgstr "              дата: "
+
+msgid "         [from Vim version 3.0]"
+msgstr "         [от Vim версии 3.0]"
+
+msgid "         [does not look like a Vim swap file]"
+msgstr "         [не является своп-файлом Vim]"
+
+msgid "         file name: "
+msgstr "         имя файла: "
+
+msgid ""
+"\n"
+"          modified: "
+msgstr ""
+"\n"
+"           изменён: "
+
+msgid "YES"
+msgstr "ДА"
+
+msgid "no"
+msgstr "нет"
+
+msgid ""
+"\n"
+"         user name: "
+msgstr ""
+"\n"
+"      пользователь: "
+
+msgid "   host name: "
+msgstr "  компьютер: "
+
+msgid ""
+"\n"
+"         host name: "
+msgstr ""
+"\n"
+"         компьютер: "
+
+msgid ""
+"\n"
+"        process ID: "
+msgstr ""
+"\n"
+"           процесс: "
+
+msgid " (still running)"
+msgstr " (ещё выполняется)"
+
+msgid ""
+"\n"
+"         [not usable with this version of Vim]"
+msgstr ""
+"\n"
+"         [не пригоден для использования с данной версией Vim]"
+
+msgid ""
+"\n"
+"         [not usable on this computer]"
+msgstr ""
+"\n"
+"         [не пригоден для использования на этом компьютере]"
+
+msgid "         [cannot be read]"
+msgstr "         [не читается]"
+
+msgid "         [cannot be opened]"
+msgstr "         [не открывается]"
+
+msgid "E313: Cannot preserve, there is no swap file"
+msgstr "E313: Невозможно обновить своп-файл, поскольку он не обнаружен"
+
+msgid "File preserved"
+msgstr "Своп-файл обновлён"
+
+msgid "E314: Preserve failed"
+msgstr "E314: Неудачная попытка обновления своп-файла"
+
+#, c-format
+msgid "E315: ml_get: invalid lnum: %ld"
+msgstr "E315: ml_get: неправильное значение lnum: %ld"
+
+#, c-format
+msgid "E316: ml_get: cannot find line %ld"
+msgstr "E316: ml_get: невозможно найти строку %ld"
+
+msgid "E317: pointer block id wrong 3"
+msgstr "E317: Неправильное значение указателя блока 3"
+
+msgid "stack_idx should be 0"
+msgstr "значение stack_idx должно быть равно 0"
+
+msgid "E318: Updated too many blocks?"
+msgstr "E318: Обновлено слишком много блоков?"
+
+msgid "E317: pointer block id wrong 4"
+msgstr "E317: Неправильное значение указателя блока 4"
+
+msgid "deleted block 1?"
+msgstr "удалён блок 1?"
+
+#, c-format
+msgid "E320: Cannot find line %ld"
+msgstr "E320: Строка %ld не обнаружена"
+
+msgid "E317: pointer block id wrong"
+msgstr "E317: Неправильное значение указателя блока"
+
+msgid "pe_line_count is zero"
+msgstr "значение pe_line_count равно нулю"
+
+#, c-format
+msgid "E322: line number out of range: %ld past the end"
+msgstr "E322: Номер строки за пределами диапазона: %ld"
+
+#, c-format
+msgid "E323: line count wrong in block %ld"
+msgstr "E323: Неправильное значение счётчика строк в блоке %ld"
+
+msgid "Stack size increases"
+msgstr "Размер стека увеличен"
+
+msgid "E317: pointer block id wrong 2"
+msgstr "E317: Неправильное значение указателя блока 2"
+
+#, c-format
+msgid "E773: Symlink loop for \"%s\""
+msgstr "E773: Петля символьных ссылок для \"%s\""
+
+msgid "E325: ATTENTION"
+msgstr "E325: ВНИМАНИЕ"
+
+msgid ""
+"\n"
+"Found a swap file by the name \""
+msgstr ""
+"\n"
+"Обнаружен своп-файл с именем \""
+
+# С маленькой буквы, чтобы соответствовало по стилю соседним сообщениям.
+msgid "While opening file \""
+msgstr "при открытии файла: \""
+
+msgid "      NEWER than swap file!\n"
+msgstr "                    Более СВЕЖИЙ, чем своп-файл!\n"
+
+#. Some of these messages are long to allow translation to
+#. * other languages.
+msgid ""
+"\n"
+"(1) Another program may be editing the same file.  If this is the case,\n"
+"    be careful not to end up with two different instances of the same\n"
+"    file when making changes."
+msgstr ""
+"\n"
+"(1) Возможно, редактирование этого же файла выполняется в другой программе.\n"
+"    Если это так, то будьте внимательны при внесении изменений, чтобы\n"
+"    у вас не появилось два разных варианта одного и того же файла."
+
+# Сообщение разделено, " \n" добавлено т.к. строка не помещается.
+msgid "  Quit, or continue with caution.\n"
+msgstr ""
+" \n"
+"    Завершите работу или продолжайте с осторожностью.\n"
+
+msgid "(2) An edit session for this file crashed.\n"
+msgstr "(2) Сеанс редактирования этого файла завершён аварийно.\n"
+
+msgid "    If this is the case, use \":recover\" or \"vim -r "
+msgstr "    В этом случае, используйте команду \":recover\" или \"vim -r "
+
+msgid ""
+"\"\n"
+"    to recover the changes (see \":help recovery\").\n"
+msgstr ""
+"\"\n"
+"    для восстановления изменений (см. \":help recovery\").\n"
+
+msgid "    If you did this already, delete the swap file \""
+msgstr "    Если вы уже выполняли эту операцию, удалите своп-файл \""
+
+msgid ""
+"\"\n"
+"    to avoid this message.\n"
+msgstr ""
+"\"\n"
+"    чтобы избежать появления этого сообщения в будущем.\n"
+
+msgid "Swap file \""
+msgstr "Своп-файл \""
+
+msgid "\" already exists!"
+msgstr "\" уже существует!"
+
+msgid "VIM - ATTENTION"
+msgstr "VIM — ВНИМАНИЕ"
+
+msgid "Swap file already exists!"
+msgstr "Своп-файл уже существует!"
+
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+"&O Открыть для чтения\n"
+"&E Редактировать\n"
+"&R Восстановить\n"
+"&Q Выход\n"
+"&A Прервать"
+
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Delete it\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+"&O Открыть для чтения\n"
+"&E Редактировать\n"
+"&R Восстановить\n"
+"&D Удалить\n"
+"&Q Выход\n"
+"&A Прервать"
+
+msgid "E326: Too many swap files found"
+msgstr "E326: Обнаружено слишком много своп-файлов"
+
+msgid "E327: Part of menu-item path is not sub-menu"
+msgstr "E327: Компонент пути к элементу меню не является подменю"
+
+msgid "E328: Menu only exists in another mode"
+msgstr "E328: Меню в этом режиме не существует"
+
+#, c-format
+msgid "E329: No menu \"%s\""
+msgstr "E329: Нет меню %s"
+
+#. Only a mnemonic or accelerator is not valid.
+msgid "E792: Empty menu name"
+msgstr "E792: Пустое имя меню"
+
+msgid "E330: Menu path must not lead to a sub-menu"
+msgstr "E330: Путь к меню не должен вести к подменю"
+
+msgid "E331: Must not add menu items directly to menu bar"
+msgstr "E331: Элементы меню нельзя добавлять непосредственно в полоску меню"
+
+msgid "E332: Separator cannot be part of a menu path"
+msgstr "E332: Разделители не могут быть компонентом пути к меню"
+
+#. Now we have found the matching menu, and we list the mappings
+#. Highlight title
+msgid ""
+"\n"
+"--- Menus ---"
+msgstr ""
+"\n"
+"--- Меню ---"
+
+msgid "Tear off this menu"
+msgstr "Оторвать это меню"
+
+msgid "E333: Menu path must lead to a menu item"
+msgstr "E333: Путь к меню должен вести к элементу меню"
+
+#, c-format
+msgid "E334: Menu not found: %s"
+msgstr "E334: Меню не найдено: %s"
+
+#, c-format
+msgid "E335: Menu not defined for %s mode"
+msgstr "E335: Меню не определено для режима %s"
+
+msgid "E336: Menu path must lead to a sub-menu"
+msgstr "E336: Путь к меню должен вести к подменю"
+
+msgid "E337: Menu not found - check menu names"
+msgstr "E337: Меню не найдено — проверьте имена меню"
+
+#, c-format
+msgid "Error detected while processing %s:"
+msgstr "Обнаружена ошибка при обработке %s:"
+
+#, c-format
+msgid "line %4ld:"
+msgstr "строка %4ld:"
+
+#, c-format
+msgid "E354: Invalid register name: '%s'"
+msgstr "E354: Недопустимое имя регистра: '%s'"
+
+msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
+msgstr ""
+"Перевод сообщений на русский язык: Василий Рагозин <vrr@users.sourceforge."
+"net>, Сергей Алёшин <alyoshin.s@gmail.com>"
+
+msgid "Interrupt: "
+msgstr "Прерывание: "
+
+msgid "Press ENTER or type command to continue"
+msgstr "Нажмите ENTER или введите команду для продолжения"
+
+#, c-format
+msgid "%s line %ld"
+msgstr "%s строка %ld"
+
+msgid "-- More --"
+msgstr "-- Продолжение следует --"
+
+msgid " SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "
+msgstr " SPACE/d/j: экран/страница/строка вниз, b/u/k: вверх, q: выход "
+
+msgid "Question"
+msgstr "Вопрос"
+
+msgid ""
+"&Yes\n"
+"&No"
+msgstr ""
+"&Y Да\n"
+"&N Нет"
+
+msgid ""
+"&Yes\n"
+"&No\n"
+"Save &All\n"
+"&Discard All\n"
+"&Cancel"
+msgstr ""
+"&Y Да\n"
+"&N Нет\n"
+"&A Сохранить все\n"
+"&D Потерять все\n"
+"&C Отмена"
+
+msgid "Select Directory dialog"
+msgstr "Выбор каталога"
+
+msgid "Save File dialog"
+msgstr "Сохранение файла"
+
+msgid "Open File dialog"
+msgstr "Открытие файла"
+
+#. TODO: non-GUI file selector here
+msgid "E338: Sorry, no file browser in console mode"
+msgstr ""
+"E338: Извините, но в консольном режиме нет проводника по файловой системе"
+
+msgid "E766: Insufficient arguments for printf()"
+msgstr "E766: Недостаточно параметров для printf()"
+
+msgid "E807: Expected Float argument for printf()"
+msgstr "E807: Ожидался параметр типа с плавающей точкой для printf()"
+
+msgid "E767: Too many arguments to printf()"
+msgstr "E767: Слишком много параметров для printf()"
+
+msgid "W10: Warning: Changing a readonly file"
+msgstr "W10: Предупреждение: Изменение файла с правами только для чтения"
+
+msgid "Type number and <Enter> or click with mouse (empty cancels): "
+msgstr "Введите номер и <Enter> или щёлкните мышью (пусто для отмены): "
+
+msgid "Type number and <Enter> (empty cancels): "
+msgstr "Введите номер и <Enter> (пусто для отмены): "
+
+msgid "1 more line"
+msgstr "Добавлена одна строка"
+
+msgid "1 line less"
+msgstr "Убрана одна строка"
+
+#, c-format
+msgid "%ld more lines"
+msgstr "Добавлено строк: %ld"
+
+#, c-format
+msgid "%ld fewer lines"
+msgstr "Убрано строк: %ld"
+
+msgid " (Interrupted)"
+msgstr " (Прервано)"
+
+msgid "Beep!"
+msgstr "Би-би!"
+
+msgid "Vim: preserving files...\n"
+msgstr "Vim: сохранение файлов...\n"
+
+#. close all memfiles, without deleting
+msgid "Vim: Finished.\n"
+msgstr "Vim: Готово.\n"
+
+msgid "ERROR: "
+msgstr "ОШИБКА: "
+
+#, c-format
+msgid ""
+"\n"
+"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+msgstr ""
+"\n"
+"[байт] всего выдел.-освоб. %lu-%lu, использ. %lu, макс. использ. %lu\n"
+
+#, c-format
+msgid ""
+"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"\n"
+msgstr ""
+"[вызовы] re/malloc() всего %lu, free() всего %lu\n"
+"\n"
+
+msgid "E340: Line is becoming too long"
+msgstr "E340: Строка становится слишком длинной"
+
+#, c-format
+msgid "E341: Internal error: lalloc(%ld, )"
+msgstr "E341: Внутренняя ошибка: lalloc(%ld, )"
+
+#, c-format
+msgid "E342: Out of memory!  (allocating %lu bytes)"
+msgstr "E342: Не хватает памяти! (выделяется %lu байт)"
+
+#, c-format
+msgid "Calling shell to execute: \"%s\""
+msgstr "Вызов оболочки для исполнения: \"%s\""
+
+msgid "E545: Missing colon"
+msgstr "E545: Пропущено двоеточие"
+
+msgid "E546: Illegal mode"
+msgstr "E546: Недопустимый режим"
+
+msgid "E547: Illegal mouseshape"
+msgstr "E547: Недопустимая форма курсора"
+
+msgid "E548: digit expected"
+msgstr "E548: Требуется ввести цифру"
+
+msgid "E549: Illegal percentage"
+msgstr "E549: Недопустимое значение процентов"
+
+msgid "Enter encryption key: "
+msgstr "Введите пароль для шифрования: "
+
+msgid "Enter same key again: "
+msgstr "Повторите ввод пароля: "
+
+msgid "Keys don't match!"
+msgstr "Введённые пароли не совпадают!"
+
+msgid "E854: path too long for completion"
+msgstr "E854: слишком большой путь для автодополнения"
+
+#, c-format
+msgid ""
+"E343: Invalid path: '**[number]' must be at the end of the path or be "
+"followed by '%s'."
+msgstr ""
+"E343: Неправильно задан путь: '**[число]' должно быть либо в конце пути, "
+"либо за ним должно следовать '%s'"
+
+#, c-format
+msgid "E344: Can't find directory \"%s\" in cdpath"
+msgstr "E344: Каталог \"%s\" не найден в пути для смены каталога"
+
+#, c-format
+msgid "E345: Can't find file \"%s\" in path"
+msgstr "E345: Файл \"%s\" в известных каталогах не найден"
+
+#, c-format
+msgid "E346: No more directory \"%s\" found in cdpath"
+msgstr "E346: В пути смены каталога больше нет каталогов \"%s\""
+
+#, c-format
+msgid "E347: No more file \"%s\" found in path"
+msgstr "E347: В известных каталогах больше нет файлов \"%s\""
+
+msgid "Cannot connect to Netbeans #2"
+msgstr "Невозможно соединиться с NetBeans #2"
+
+msgid "Cannot connect to Netbeans"
+msgstr "Невозможно соединиться с NetBeans"
+
+#, c-format
+msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
+msgstr ""
+"E668: Неправильный режим доступа к информации о соединении с NetBeans: \"%s\""
+
+msgid "read from Netbeans socket"
+msgstr "чтение из гнезда NetBeans"
+
+#, c-format
+msgid "E658: NetBeans connection lost for buffer %ld"
+msgstr "E658: Потеряно соединение с NetBeans для буфера %ld"
+
+msgid "E838: netbeans is not supported with this GUI"
+msgstr "E838: NetBeans не поддерживается с этим графическим интерфейсом"
+
+msgid "E511: netbeans already connected"
+msgstr "E511: уже соединён с NetBeans"
+
+#, c-format
+msgid "E505: %s is read-only (add ! to override)"
+msgstr "E505: %s открыт только для чтения (добавьте !, чтобы обойти проверку)"
+
+msgid "E349: No identifier under cursor"
+msgstr "E349: Нет имени в позиции курсора"
+
+msgid "E774: 'operatorfunc' is empty"
+msgstr "E774: Значением опции 'operatorfunc' является пустая строка"
+
+msgid "E775: Eval feature not available"
+msgstr "E775: eval не доступна"
+
+msgid "Warning: terminal cannot highlight"
+msgstr "Предупреждение: терминал не может выполнять подсветку"
+
+msgid "E348: No string under cursor"
+msgstr "E348: Нет строки в позиции курсора"
+
+msgid "E352: Cannot erase folds with current 'foldmethod'"
+msgstr ""
+"E352: Невозможно стереть складки с текущим значением опции 'foldmethod'"
+
+msgid "E664: changelist is empty"
+msgstr "E664: Список изменений пустой"
+
+msgid "E662: At start of changelist"
+msgstr "E662: В начале списка изменений"
+
+msgid "E663: At end of changelist"
+msgstr "E663: В конце списка изменений"
+
+msgid "Type  :quit<Enter>  to exit Vim"
+msgstr "Введите :quit<Enter>  для выхода из Vim"
+
+#, c-format
+msgid "1 line %sed 1 time"
+msgstr "Изменены отступы в 1 строке (%s 1 раз)"
+
+#, c-format
+msgid "1 line %sed %d times"
+msgstr "Изменены отступы в 1 строке (%s %d раз)"
+
+#, c-format
+msgid "%ld lines %sed 1 time"
+msgstr "Изменены отступы, %ld строк (%s 1 раз)"
+
+#, c-format
+msgid "%ld lines %sed %d times"
+msgstr "Изменены отступы, %ld строк (%s %d раз)"
+
+#, c-format
+msgid "%ld lines to indent... "
+msgstr "Изменяются отступы строках (%ld)..."
+
+msgid "1 line indented "
+msgstr "Изменён отступ в одной строке "
+
+#, c-format
+msgid "%ld lines indented "
+msgstr "Изменены отступы в строках (%ld) "
+
+msgid "E748: No previously used register"
+msgstr "E748: Нет предыдущего использованного регистра"
+
+#. must display the prompt
+msgid "cannot yank; delete anyway"
+msgstr "скопировать не удалось, удаление выполнено"
+
+msgid "1 line changed"
+msgstr "изменена 1 строка"
+
+#, c-format
+msgid "%ld lines changed"
+msgstr "изменено строк: %ld"
+
+#, c-format
+msgid "freeing %ld lines"
+msgstr "очищено строк: %ld"
+
+msgid "block of 1 line yanked"
+msgstr "скопирован блок из одной строки"
+
+msgid "1 line yanked"
+msgstr "скопирована одна строка"
+
+#, c-format
+msgid "block of %ld lines yanked"
+msgstr "скопирован блок из строк: %ld"
+
+#, c-format
+msgid "%ld lines yanked"
+msgstr "скопировано строк: %ld"
+
+#, c-format
+msgid "E353: Nothing in register %s"
+msgstr "E353: В регистре %s ничего нет"
+
+#. Highlight title
+msgid ""
+"\n"
+"--- Registers ---"
+msgstr ""
+"\n"
+"--- Регистры ---"
+
+msgid "Illegal register name"
+msgstr "Недопустимое имя регистра"
+
+msgid ""
+"\n"
+"# Registers:\n"
+msgstr ""
+"\n"
+"# Регистры:\n"
+
+#, c-format
+msgid "E574: Unknown register type %d"
+msgstr "E574: Неизвестный тип регистра %d"
+
+#, c-format
+msgid "%ld Cols; "
+msgstr "Колонок: %ld; "
+
+#, c-format
+msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
+msgstr "Выделено %s%ld из %ld строк; %ld из %ld слов; %ld из %ld байт"
+
+#, c-format
+msgid ""
+"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Bytes"
+msgstr ""
+"Выделено %s%ld из %ld стр.; %ld из %ld слов; %ld из %ld симв.; %ld из %ld "
+"байт"
+
+#, c-format
+msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
+msgstr "Кол. %s из %s; стр. %ld из %ld; сл. %ld из %ld; байт %ld из %ld"
+
+#, c-format
+msgid ""
+"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
+"%ld"
+msgstr ""
+"Кол. %s из %s; стр. %ld из %ld; сл. %ld из %ld; симв. %ld из %ld; байт %ld "
+"из %ld"
+
+#, c-format
+msgid "(+%ld for BOM)"
+msgstr "(+%ld с учётом BOM)"
+
+msgid "%<%f%h%m%=Page %N"
+msgstr "%<%f%h%m%=Стр. %N"
+
+msgid "Thanks for flying Vim"
+msgstr "Благодарим за использование Vim"
+
+msgid "E518: Unknown option"
+msgstr "E518: Неизвестная опция"
+
+msgid "E519: Option not supported"
+msgstr "E519: Опция не поддерживается"
+
+msgid "E520: Not allowed in a modeline"
+msgstr "E520: Не допускается в режимной строке"
+
+msgid "E846: Key code not set"
+msgstr "E846: Код клавиши не установлен"
+
+msgid "E521: Number required after ="
+msgstr "E521: После = требуется указать число"
+
+msgid "E522: Not found in termcap"
+msgstr "E522: Не обнаружено в termcap"
+
+#, c-format
+msgid "E539: Illegal character <%s>"
+msgstr "E539: Недопустимый символ <%s>"
+
+msgid "E529: Cannot set 'term' to empty string"
+msgstr "E529: Значение опции 'term' не может быть пустой строкой"
+
+msgid "E530: Cannot change term in GUI"
+msgstr "E530: В графическом интерфейсе изменять терминал невозможно"
+
+msgid "E531: Use \":gui\" to start the GUI"
+msgstr "E531: Для запуска графического интерфейса используйте \":gui\""
+
+msgid "E589: 'backupext' and 'patchmode' are equal"
+msgstr "E589: Значения опций 'backupext' и 'patchmode' равны"
+
+msgid "E834: Conflicts with value of 'listchars'"
+msgstr "E834: Конфликтует со значением 'listchars'"
+
+msgid "E835: Conflicts with value of 'fillchars'"
+msgstr "E835: Конфликтует со значением 'fillchars'"
+
+msgid "E617: Cannot be changed in the GTK+ 2 GUI"
+msgstr "E617: Не может быть изменено в графическом интерфейсе GTK+ 2"
+
+msgid "E524: Missing colon"
+msgstr "E524: Пропущено двоеточие"
+
+msgid "E525: Zero length string"
+msgstr "E525: Строка с нулевой длиной"
+
+#, c-format
+msgid "E526: Missing number after <%s>"
+msgstr "E526: Пропущено число после <%s>"
+
+msgid "E527: Missing comma"
+msgstr "E527: Пропущена запятая"
+
+msgid "E528: Must specify a ' value"
+msgstr "E528: Необходимо указать значение для '"
+
+msgid "E595: contains unprintable or wide character"
+msgstr "E595: Содержит непечатный символ или символ двойной ширины"
+
+msgid "E596: Invalid font(s)"
+msgstr "E596: Неправильные шрифты"
+
+msgid "E597: can't select fontset"
+msgstr "E597: Невозможно выбрать шрифтовой набор"
+
+msgid "E598: Invalid fontset"
+msgstr "E598: Неправильный шрифтовой набор"
+
+msgid "E533: can't select wide font"
+msgstr "E533: Невозможно выбрать шрифт с символами двойной ширины"
+
+msgid "E534: Invalid wide font"
+msgstr "E534: Неправильный шрифт с символами двойной ширины"
+
+#, c-format
+msgid "E535: Illegal character after <%c>"
+msgstr "E535: Неправильный символ после <%c>"
+
+msgid "E536: comma required"
+msgstr "E536: Требуется запятая"
+
+#, c-format
+msgid "E537: 'commentstring' must be empty or contain %s"
+msgstr ""
+"E537: Значение опция 'commentstring' должно быть пустой строкой или "
+"содержать %s"
+
+msgid "E538: No mouse support"
+msgstr "E538: Мышь не поддерживается"
+
+msgid "E540: Unclosed expression sequence"
+msgstr "E540: Незакрытая последовательность выражения"
+
+msgid "E541: too many items"
+msgstr "E541: Слишком много элементов"
+
+msgid "E542: unbalanced groups"
+msgstr "E542: Несбалансированные группы"
+
+msgid "E590: A preview window already exists"
+msgstr "E590: Окно предпросмотра уже есть"
+
+msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
+msgstr ""
+"W17: Арабский требует использования UTF-8, введите ':set encoding=utf-8'"
+
+#, c-format
+msgid "E593: Need at least %d lines"
+msgstr "E593: Нужно хотя бы %d строк"
+
+#, c-format
+msgid "E594: Need at least %d columns"
+msgstr "E594: Нужно хотя бы %d колонок"
+
+#, c-format
+msgid "E355: Unknown option: %s"
+msgstr "E355: Неизвестная опция: %s"
+
+#. There's another character after zeros or the string
+#. * is empty.  In both cases, we are trying to set a
+#. * num option using a string.
+#, c-format
+msgid "E521: Number required: &%s = '%s'"
+msgstr "E521: Требуется указать число: &%s = '%s'"
+
+msgid ""
+"\n"
+"--- Terminal codes ---"
+msgstr ""
+"\n"
+"--- Терминальные коды ---"
+
+msgid ""
+"\n"
+"--- Global option values ---"
+msgstr ""
+"\n"
+"--- Глобальные значения опций ---"
+
+msgid ""
+"\n"
+"--- Local option values ---"
+msgstr ""
+"\n"
+"--- Местные значения опций ---"
+
+msgid ""
+"\n"
+"--- Options ---"
+msgstr ""
+"\n"
+"--- Опции ---"
+
+msgid "E356: get_varp ERROR"
+msgstr "E356: ОШИБКА get_varp"
+
+#, c-format
+msgid "E357: 'langmap': Matching character missing for %s"
+msgstr "E357: 'langmap': Нет соответствующего символа для %s"
+
+#, c-format
+msgid "E358: 'langmap': Extra characters after semicolon: %s"
+msgstr "E358: 'langmap': Лишние символы после точки с запятой: %s"
+
+msgid "cannot open "
+msgstr "невозможно открыть "
+
+msgid "VIM: Can't open window!\n"
+msgstr "VIM: Невозможно открыть окно!\n"
+
+msgid "Need Amigados version 2.04 or later\n"
+msgstr "Необходима Amigados версии 2.04 или более поздней\n"
+
+#, c-format
+msgid "Need %s version %ld\n"
+msgstr "Необходима %s версии %ld\n"
+
+msgid "Cannot open NIL:\n"
+msgstr "Невозможно открыть NIL:\n"
+
+msgid "Cannot create "
+msgstr "Невозможно создать "
+
+#, c-format
+msgid "Vim exiting with %d\n"
+msgstr "Прекращение работы Vim с кодом %d\n"
+
+msgid "cannot change console mode ?!\n"
+msgstr "невозможно сменить режим консоли?!\n"
+
+msgid "mch_get_shellsize: not a console??\n"
+msgstr "mch_get_shellsize: не в консоли??\n"
+
+#. if Vim opened a window: Executing a shell may cause crashes
+msgid "E360: Cannot execute shell with -f option"
+msgstr "E360: Невозможно выполнить оболочку с параметром -f"
+
+msgid "Cannot execute "
+msgstr "Невозможно выполнить "
+
+msgid "shell "
+msgstr "оболочка "
+
+msgid " returned\n"
+msgstr " завершила работу\n"
+
+msgid "ANCHOR_BUF_SIZE too small."
+msgstr "слишком малая величина ANCHOR_BUF_SIZE."
+
+msgid "I/O ERROR"
+msgstr "ОШИБКА ВВОДА/ВЫВОДА"
+
+msgid "Message"
+msgstr "Сообщение"
+
+msgid "'columns' is not 80, cannot execute external commands"
+msgstr "Значение опции 'columns' не равно 80, внешние программы не выполняются"
+
+msgid "E237: Printer selection failed"
+msgstr "E237: Неудачное завершение выбора принтера"
+
+#, c-format
+msgid "to %s on %s"
+msgstr "в %s на %s"
+
+#, c-format
+msgid "E613: Unknown printer font: %s"
+msgstr "E613: Неизвестный шрифт принтера: %s"
+
+#, c-format
+msgid "E238: Print error: %s"
+msgstr "E238: Ошибка печати: %s"
+
+#, c-format
+msgid "Printing '%s'"
+msgstr "Печать '%s'"
+
+#, c-format
+msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
+msgstr "E244: Недопустимое имя кодировки \"%s\" в имени шрифта \"%s\""
+
+#, c-format
+msgid "E245: Illegal char '%c' in font name \"%s\""
+msgstr "E245: Недопустимый символ '%c' в имени шрифта \"%s\""
+
+msgid "Vim: Double signal, exiting\n"
+msgstr "Vim: Двойной сигнал, завершение работы\n"
+
+#, c-format
+msgid "Vim: Caught deadly signal %s\n"
+msgstr "Vim: Получен убийственный сигнал %s\n"
+
+#, c-format
+msgid "Vim: Caught deadly signal\n"
+msgstr "Vim: Получен убийственный сигнал\n"
+
+#, c-format
+msgid "Opening the X display took %ld msec"
+msgstr "Открытие дисплея X заняло %ld msec"
+
+msgid ""
+"\n"
+"Vim: Got X error\n"
+msgstr ""
+"\n"
+"Vim: Ошибка X\n"
+
+msgid "Testing the X display failed"
+msgstr "Проверка дисплея X завершена неудачно"
+
+msgid "Opening the X display timed out"
+msgstr "Открытие дисплея X не выполнено в отведённое время"
+
+msgid ""
+"\n"
+"Could not get security context for "
+msgstr ""
+"\n"
+"Невозможно получить контекст безопасности для "
+
+msgid ""
+"\n"
+"Could not set security context for "
+msgstr ""
+"\n"
+"Невозможно установить контекст безопасности для "
+
+msgid ""
+"\n"
+"Cannot execute shell "
+msgstr ""
+"\n"
+"Невозможно запустить оболочку "
+
+msgid ""
+"\n"
+"Cannot execute shell sh\n"
+msgstr ""
+"\n"
+"Невозможно запустить оболочку sh\n"
+
+msgid ""
+"\n"
+"shell returned "
+msgstr ""
+"\n"
+"Оболочка завершила работу "
+
+msgid ""
+"\n"
+"Cannot create pipes\n"
+msgstr ""
+"\n"
+"Невозможно создать трубы\n"
+
+msgid ""
+"\n"
+"Cannot fork\n"
+msgstr ""
+"\n"
+"Невозможно выполнить fork()\n"
+
+msgid ""
+"\n"
+"Command terminated\n"
+msgstr ""
+"\n"
+"Выполнение команды прервано\n"
+
+msgid "XSMP lost ICE connection"
+msgstr "XSMP утеряно соединение ICE"
+
+#, c-format
+msgid "dlerror = \"%s\""
+msgstr "dlerror = \"%s\""
+
+msgid "Opening the X display failed"
+msgstr "Неудачное открытие дисплея X"
+
+msgid "XSMP handling save-yourself request"
+msgstr "XSMP обрабатывает запрос самосохранения"
+
+msgid "XSMP opening connection"
+msgstr "XSMP открывает соединение"
+
+msgid "XSMP ICE connection watch failed"
+msgstr "XSMP потеряно слежение за соединением ICE"
+
+#, c-format
+msgid "XSMP SmcOpenConnection failed: %s"
+msgstr "XSMP неудачно выполнено SmcOpenConnection: %s"
+
+msgid "At line"
+msgstr "В строке"
+
+msgid "Could not load vim32.dll!"
+msgstr "Невозможно загрузить vim32.dll!"
+
+msgid "VIM Error"
+msgstr "Ошибка VIM"
+
+msgid "Could not fix up function pointers to the DLL!"
+msgstr "Невозможно исправить указатели функций для DLL!"
+
+#, c-format
+msgid "shell returned %d"
+msgstr "завершение работы оболочки с кодом %d"
+
+#, c-format
+msgid "Vim: Caught %s event\n"
+msgstr "Vim: Перехвачено событие %s\n"
+
+msgid "close"
+msgstr "закрытие"
+
+msgid "logoff"
+msgstr "отключение"
+
+msgid "shutdown"
+msgstr "завершение"
+
+msgid "E371: Command not found"
+msgstr "E371: Команда не найдена"
+
+msgid ""
+"VIMRUN.EXE not found in your $PATH.\n"
+"External commands will not pause after completion.\n"
+"See  :help win32-vimrun  for more information."
+msgstr ""
+"VIMRUN.EXE не найден в пути, заданном в $PATH.\n"
+"Внешние команды не будут останавливаться после выполнения.\n"
+"Дополнительная информация в :help win32-vimrun"
+
+msgid "Vim Warning"
+msgstr "Предупреждение Vim"
+
+#, c-format
+msgid "E372: Too many %%%c in format string"
+msgstr "E372: В строке формата слишком много %%%c"
+
+#, c-format
+msgid "E373: Unexpected %%%c in format string"
+msgstr "E373: Неожиданный элемент %%%c в строке формата"
+
+msgid "E374: Missing ] in format string"
+msgstr "E374: В строке формата пропущена ]"
+
+#, c-format
+msgid "E375: Unsupported %%%c in format string"
+msgstr "E375: %%%c не поддерживается в строке формата"
+
+#, c-format
+msgid "E376: Invalid %%%c in format string prefix"
+msgstr "E376: Недопустимый %%%c в приставке в строке формата"
+
+#, c-format
+msgid "E377: Invalid %%%c in format string"
+msgstr "E377: Недопустимый %%%c в строке формата"
+
+msgid "E378: 'errorformat' contains no pattern"
+msgstr "E378: В значении опции 'errorformat' отсутствует шаблон"
+
+msgid "E379: Missing or empty directory name"
+msgstr "E379: Имя каталога не задано или равно пустой строке"
+
+msgid "E553: No more items"
+msgstr "E553: Больше нет элементов"
+
+#, c-format
+msgid "(%d of %d)%s%s: "
+msgstr "(%d из %d)%s%s: "
+
+msgid " (line deleted)"
+msgstr " (строка удалена)"
+
+msgid "E380: At bottom of quickfix stack"
+msgstr "E380: Внизу стека быстрых исправлений"
+
+msgid "E381: At top of quickfix stack"
+msgstr "E381: Наверху стека быстрых исправлений"
+
+#, c-format
+msgid "error list %d of %d; %d errors"
+msgstr "список ошибок %d из %d; %d ошибок"
+
+msgid "E382: Cannot write, 'buftype' option is set"
+msgstr ""
+"E382: Запись невозможна, значение опции 'buftype' не является пустой строкой"
+
+msgid "Error file"
+msgstr "Файл ошибок"
+
+msgid "E683: File name missing or invalid pattern"
+msgstr "E683: Нет имени файла или неправильный шаблон"
+
+#, c-format
+msgid "Cannot open file \"%s\""
+msgstr "Невозможно открыть файл \"%s\""
+
+msgid "E681: Buffer is not loaded"
+msgstr "E681: Буфер не выгружен"
+
+msgid "E777: String or List expected"
+msgstr "E777: Требуется строка или список"
+
+#, c-format
+msgid "E369: invalid item in %s%%[]"
+msgstr "E369: Недопустимый элемент в %s%%[]"
+
+#, c-format
+msgid "E769: Missing ] after %s["
+msgstr "E769: Пропущена ] после %s["
+
+#, c-format
+msgid "E53: Unmatched %s%%("
+msgstr "E53: Нет пары для %s%%("
+
+#, c-format
+msgid "E54: Unmatched %s("
+msgstr "E54: Нет пары для %s("
+
+#, c-format
+msgid "E55: Unmatched %s)"
+msgstr "E55: Нет пары для %s)"
+
+msgid "E66: \\z( not allowed here"
+msgstr "E66: \\z( не может быть использовано здесь"
+
+msgid "E67: \\z1 et al. not allowed here"
+msgstr "E67: \\z1 и т.п. не могут быть использованы здесь"
+
+#, c-format
+msgid "E69: Missing ] after %s%%["
+msgstr "E69: Пропущена ] после %s%%["
+
+#, c-format
+msgid "E70: Empty %s%%[]"
+msgstr "E70: Пустое %s%%[]"
+
+msgid "E339: Pattern too long"
+msgstr "E339: Слишком длинный шаблон"
+
+msgid "E50: Too many \\z("
+msgstr "E50: Слишком много \\z("
+
+#, c-format
+msgid "E51: Too many %s("
+msgstr "E51: Слишком много %s("
+
+msgid "E52: Unmatched \\z("
+msgstr "E52: Нет пары для \\z("
+
+#, c-format
+msgid "E59: invalid character after %s@"
+msgstr "E59: Недопустимый символ после %s@"
+
+#, c-format
+msgid "E60: Too many complex %s{...}s"
+msgstr "E60: Слишком много сложных конструкций %s{...}"
+
+#, c-format
+msgid "E61: Nested %s*"
+msgstr "E61: Вложенные %s*"
+
+#, c-format
+msgid "E62: Nested %s%c"
+msgstr "E62: Вложенные %s%c"
+
+msgid "E63: invalid use of \\_"
+msgstr "E63: Недопустимое использование \\_"
+
+#, c-format
+msgid "E64: %s%c follows nothing"
+msgstr "E64: %s%c ни за чем не следует"
+
+msgid "E65: Illegal back reference"
+msgstr "E65: Недопустимая обратная ссылка"
+
+msgid "E68: Invalid character after \\z"
+msgstr "E68: Недопустимый символ после \\z"
+
+#, c-format
+msgid "E678: Invalid character after %s%%[dxouU]"
+msgstr "E678: Недопустимый символ после %s%%[dxouU]"
+
+#, c-format
+msgid "E71: Invalid character after %s%%"
+msgstr "E71: Недопустимый символ после %s%%"
+
+#, c-format
+msgid "E554: Syntax error in %s{...}"
+msgstr "E554: Синтаксическая ошибка в %s{...}"
+
+msgid "External submatches:\n"
+msgstr "Внешние подсоответствия:\n"
+
+msgid ""
+"E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
+"used "
+msgstr ""
+"E864: после \\%#= может быть только 0, 1 или 2. Будет использоваться "
+"автоматическая машина"
+
+#, c-format
+msgid "E866: (NFA regexp) Misplaced %c"
+msgstr "E866: (рег. выражение НКА) неожиданный %c"
+
+msgid "E865: (NFA) Regexp end encountered prematurely"
+msgstr "E865: (НКА) неожиданный конец регулярного выражения"
+
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\z%c'"
+msgstr "E867: (НКА) неизвестный оператор '\\z%c'"
+
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\%%%c'"
+msgstr "E867: (НКА) неизвестный оператор '\\%%%c'"
+
+#. should never happen
+msgid "E868: Error building NFA with equivalence class!"
+msgstr "E868: ошибка при создании НКА с классом эквивалентности!"
+
+#, c-format
+msgid "E869: (NFA) Unknown operator '\\@%c'"
+msgstr "E869: (НКА) неизвестный оператор '\\@%c'"
+
+msgid "E870: (NFA regexp) Error reading repetition limits"
+msgstr "E870: (рег. выражение НКА) ошибка при чтении границ повторения"
+
+#. Can't have a multi follow a multi.
+msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
+msgstr "E871: (рег. выражение НКА) множество не может следовать за множеством!"
+
+#. Too many `('
+msgid "E872: (NFA regexp) Too many '('"
+msgstr "E872: (рег. выражение НКА) слишком много '('"
+
+msgid "E879: (NFA regexp) Too many \\z("
+msgstr "E879: (рег. выражение НКА) слишком много \\z("
+
+msgid "E873: (NFA regexp) proper termination error"
+msgstr "E873: (рег. выражение НКА) ошибка корректного завершения"
+
+msgid "E874: (NFA) Could not pop the stack !"
+msgstr "E874: (рег. выражение НКА) невозможно взять из стека!"
+
+msgid ""
+"E875: (NFA regexp) (While converting from postfix to NFA), too many states "
+"left on stack"
+msgstr ""
+"E875: (рег. выражение НКА) в стеке осталось слишком много состояний (при "
+"преобразовании из postfix в НКА)"
+
+msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
+msgstr "E876: (рег. выражение НКА) недостаточно места для хранения всего НКА"
+
+msgid "E878: (NFA) Could not allocate memory for branch traversal!"
+msgstr "E878: (НКА) невозможно выделить память для прохода ветви!"
+
+msgid ""
+"Could not open temporary log file for writing, displaying on stderr ... "
+msgstr ""
+"Невозможно открыть файл временного журнала для записи, вывод на stderr..."
+
+#, c-format
+msgid "(NFA) COULD NOT OPEN %s !"
+msgstr "(НКА) невозможно открыть %s!"
+
+msgid "Could not open temporary log file for writing "
+msgstr "Невозможно открыть файл временного журнала для записи"
+
+msgid " VREPLACE"
+msgstr " ВИРТУАЛЬНАЯ ЗАМЕНА"
+
+msgid " REPLACE"
+msgstr " ЗАМЕНА"
+
+msgid " REVERSE"
+msgstr " ОБРАТНАЯ"
+
+msgid " INSERT"
+msgstr " ВСТАВКА"
+
+msgid " (insert)"
+msgstr " (вставка)"
+
+msgid " (replace)"
+msgstr " (замена)"
+
+msgid " (vreplace)"
+msgstr " (виртуальная замена)"
+
+msgid " Hebrew"
+msgstr " Иврит"
+
+msgid " Arabic"
+msgstr " Арабский"
+
+msgid " (lang)"
+msgstr " (язык)"
+
+msgid " (paste)"
+msgstr " (вклейка)"
+
+msgid " VISUAL"
+msgstr " ВИЗУАЛЬНЫЙ РЕЖИМ"
+
+msgid " VISUAL LINE"
+msgstr " ВИЗУАЛЬНАЯ СТРОКА"
+
+msgid " VISUAL BLOCK"
+msgstr " ВИЗУАЛЬНЫЙ БЛОК"
+
+msgid " SELECT"
+msgstr " ВЫДЕЛЕНИЕ"
+
+msgid " SELECT LINE"
+msgstr " ВЫДЕЛЕНИЕ СТРОКИ"
+
+msgid " SELECT BLOCK"
+msgstr " ВЫДЕЛЕНИЕ БЛОКА"
+
+msgid "recording"
+msgstr "запись"
+
+#, c-format
+msgid "E383: Invalid search string: %s"
+msgstr "E383: Неправильная строка поиска: %s"
+
+#, c-format
+msgid "E384: search hit TOP without match for: %s"
+msgstr "E384: Поиск закончен в НАЧАЛЕ документа; %s не найдено"
+
+#, c-format
+msgid "E385: search hit BOTTOM without match for: %s"
+msgstr "E385: Поиск закончен в КОНЦЕ документа; %s не найдено"
+
+msgid "E386: Expected '?' or '/'  after ';'"
+msgstr "E386: После ';' ожидается ввод '?' или '/'"
+
+msgid " (includes previously listed match)"
+msgstr " (включает раннее показанные соответствия)"
+
+#. cursor at status line
+msgid "--- Included files "
+msgstr "--- Включённые файлы "
+
+msgid "not found "
+msgstr "не найдено "
+
+msgid "in path ---\n"
+msgstr "по пути ---\n"
+
+msgid "  (Already listed)"
+msgstr " (Уже показано)"
+
+msgid "  NOT FOUND"
+msgstr " НЕ НАЙДЕНО"
+
+#, c-format
+msgid "Scanning included file: %s"
+msgstr "Просмотр включённых файлов: %s"
+
+#, c-format
+msgid "Searching included file %s"
+msgstr "Поиск включённого файла %s"
+
+msgid "E387: Match is on current line"
+msgstr "E387: Соответствие в текущей строке"
+
+msgid "All included files were found"
+msgstr "Найдены все включённые файлы"
+
+msgid "No included files"
+msgstr "Включённых файлов нет"
+
+msgid "E388: Couldn't find definition"
+msgstr "E388: Определение не найдено"
+
+msgid "E389: Couldn't find pattern"
+msgstr "E389: Шаблон не найден"
+
+msgid "Substitute "
+msgstr "Замена "
+
+#, c-format
+msgid ""
+"\n"
+"# Last %sSearch Pattern:\n"
+"~"
+msgstr ""
+"\n"
+"# Последний %sШаблон поиска:\n"
+"~"
+
+msgid "E759: Format error in spell file"
+msgstr "E759: Ошибка формата в файле правописания"
+
+msgid "E758: Truncated spell file"
+msgstr "E758: Файл правописания обрезан"
+
+#, c-format
+msgid "Trailing text in %s line %d: %s"
+msgstr "Лишний текст на хвосте в %s стр. %d: %s"
+
+#, c-format
+msgid "Affix name too long in %s line %d: %s"
+msgstr "Имя аффикса слишком длинное в %s, строка %d: %s"
+
+msgid "E761: Format error in affix file FOL, LOW or UPP"
+msgstr "E761: Ошибка формата в файле аффиксов FOL, LOW или UPP"
+
+msgid "E762: Character in FOL, LOW or UPP is out of range"
+msgstr "E762: Символы в FOL, LOW или UPP за пределами диапазона"
+
+msgid "Compressing word tree..."
+msgstr "Сжатие дерева слов..."
+
+msgid "E756: Spell checking is not enabled"
+msgstr "E756: Проверка правописания выключена"
+
+#, c-format
+msgid "Warning: Cannot find word list \"%s_%s.spl\" or \"%s_ascii.spl\""
+msgstr ""
+"Предупреждение: Невозможно найти список слов \"%s_%s.spl\" или \"%s_ascii.spl"
+"\""
+
+#, c-format
+msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
+msgstr ""
+"Предупреждение: Невозможно найти список слов \"%s.%s.spl\" или \"%s.ascii.spl"
+"\""
+
+#, c-format
+msgid "Reading spell file \"%s\""
+msgstr "Чтение файла правописания \"%s\""
+
+msgid "E757: This does not look like a spell file"
+msgstr "E757: Это не похоже на файл правописания"
+
+msgid "E771: Old spell file, needs to be updated"
+msgstr "E771: Старый файл правописания, требуется его обновление"
+
+msgid "E772: Spell file is for newer version of Vim"
+msgstr "E772: Файл правописания предназначен для более новой версии Vim"
+
+msgid "E770: Unsupported section in spell file"
+msgstr "E770: Неподдерживаемый раздел в файле правописания"
+
+#, c-format
+msgid "Warning: region %s not supported"
+msgstr "Предупреждение: регион %s не поддерживается"
+
+#, c-format
+msgid "Reading affix file %s ..."
+msgstr "Чтение файла аффиксов %s ..."
+
+#, c-format
+msgid "Conversion failure for word in %s line %d: %s"
+msgstr "Не удалось преобразовать слово в %s, строка %d: %s"
+
+#, c-format
+msgid "Conversion in %s not supported: from %s to %s"
+msgstr "Преобразование в %s не поддерживается: из %s в %s"
+
+#, c-format
+msgid "Conversion in %s not supported"
+msgstr "Преобразование в %s не поддерживается"
+
+#, c-format
+msgid "Invalid value for FLAG in %s line %d: %s"
+msgstr "Неправильное значение FLAG в %s, строка %d: %s"
+
+#, c-format
+msgid "FLAG after using flags in %s line %d: %s"
+msgstr "FLAG после использования флагов в %s, строка %d: %s"
+
+#, c-format
+msgid ""
+"Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
+"%d"
+msgstr ""
+"Определение COMPOUNDFORBIDFLAG после элемента PFX может дать неправильные "
+"результаты в %s, строка %d"
+
+#, c-format
+msgid ""
+"Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
+"%d"
+msgstr ""
+"Определение COMPOUNDPERMITFLAG после элемента PFX может дать неправильные "
+"результаты в %s, строка %d"
+
+#, c-format
+msgid "Wrong COMPOUNDRULES value in %s line %d: %s"
+msgstr "Неправильное значение COMPOUNDRULES в %s, строка %d: %s"
+
+#, c-format
+msgid "Wrong COMPOUNDWORDMAX value in %s line %d: %s"
+msgstr "Неправильное значение COMPOUNDWORDMAX в %s, строка %d: %s"
+
+#, c-format
+msgid "Wrong COMPOUNDMIN value in %s line %d: %s"
+msgstr "Неправильное значение COMPOUNDMIN в %s, строка %d: %s"
+
+#, c-format
+msgid "Wrong COMPOUNDSYLMAX value in %s line %d: %s"
+msgstr "Неправильное значение COMPOUNDSYLMAX в %s, строка %d: %s"
+
+#, c-format
+msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
+msgstr "Неправильное значение CHECKCOMPOUNDPATTERN в %s, строка %d: %s"
+
+#, c-format
+msgid "Different combining flag in continued affix block in %s line %d: %s"
+msgstr ""
+"Другой объединяющий флаг в продолжающем блоке аффикса в %s, строка %d: %s"
+
+#, c-format
+msgid "Duplicate affix in %s line %d: %s"
+msgstr "Повторяющийся аффикс в %s, строка %d: %s"
+
+#, c-format
+msgid ""
+"Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in %s "
+"line %d: %s"
+msgstr ""
+"Аффикс также используется для BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/"
+"NOSUGGEST в %s, строка %d: %s"
+
+#, c-format
+msgid "Expected Y or N in %s line %d: %s"
+msgstr "Ожидалось Y или N в %s, строка %d: %s"
+
+#, c-format
+msgid "Broken condition in %s line %d: %s"
+msgstr "Нарушенное условие в %s, строка %d: %s"
+
+#, c-format
+msgid "Expected REP(SAL) count in %s line %d"
+msgstr "Ожидался счётчик REP(SAL) в %s, строка %d"
+
+#, c-format
+msgid "Expected MAP count in %s line %d"
+msgstr "Ожидался счётчик MAP в %s, строка %d"
+
+#, c-format
+msgid "Duplicate character in MAP in %s line %d"
+msgstr "Повторяющийся символ в MAP в %s, строка %d"
+
+#, c-format
+msgid "Unrecognized or duplicate item in %s line %d: %s"
+msgstr "Нераспознанный или повторяющийся элемент в %s, строка %d: %s"
+
+#, c-format
+msgid "Missing FOL/LOW/UPP line in %s"
+msgstr "Пропущена строка FOL/LOW/UPP в %s"
+
+msgid "COMPOUNDSYLMAX used without SYLLABLE"
+msgstr "COMPOUNDSYLMAX используется без SYLLABLE"
+
+msgid "Too many postponed prefixes"
+msgstr "Слишком много отложенных префиксов"
+
+msgid "Too many compound flags"
+msgstr "Слишком много составных флагов"
+
+msgid "Too many postponed prefixes and/or compound flags"
+msgstr "Слишком много отложенных префиксов и/или составных флагов"
+
+#, c-format
+msgid "Missing SOFO%s line in %s"
+msgstr "Пропущена строка SOFO%s в %s"
+
+#, c-format
+msgid "Both SAL and SOFO lines in %s"
+msgstr "Обе строки SAL и SOFO в %s"
+
+#, c-format
+msgid "Flag is not a number in %s line %d: %s"
+msgstr "Флаг не является числом в %s, строка %d: %s"
+
+#, c-format
+msgid "Illegal flag in %s line %d: %s"
+msgstr "Недопустимый флаг в %s на строке %d: %s"
+
+#, c-format
+msgid "%s value differs from what is used in another .aff file"
+msgstr "%s имеет другое значение, чем в файле .aff"
+
+#, c-format
+msgid "Reading dictionary file %s ..."
+msgstr "Чтение файла словаря %s ..."
+
+#, c-format
+msgid "E760: No word count in %s"
+msgstr "E760: Количество слов не указано в %s"
+
+#, c-format
+msgid "line %6d, word %6d - %s"
+msgstr "строка %6d, слово %6d — %s"
+
+#, c-format
+msgid "Duplicate word in %s line %d: %s"
+msgstr "Повтор слова в %s на строке %d: %s "
+
+#, c-format
+msgid "First duplicate word in %s line %d: %s"
+msgstr "Первый повтор слова в %s на строке %d: %s"
+
+#, c-format
+msgid "%d duplicate word(s) in %s"
+msgstr "%d повторяющихся слов в %s"
+
+#, c-format
+msgid "Ignored %d word(s) with non-ASCII characters in %s"
+msgstr "Пропущено %d слов с не ASCII символами в %s"
+
+#, c-format
+msgid "Reading word file %s ..."
+msgstr "Чтение файла слов %s ..."
+
+#, c-format
+msgid "Duplicate /encoding= line ignored in %s line %d: %s"
+msgstr "Проигнорирована повторяющаяся строка /encoding= в %s, строка %d: %s"
+
+#, c-format
+msgid "/encoding= line after word ignored in %s line %d: %s"
+msgstr "Проигнорирована строка /encoding= после слова в %s, строка %d: %s"
+
+#, c-format
+msgid "Duplicate /regions= line ignored in %s line %d: %s"
+msgstr "Пропускается повтор строки /regions= в %s, строка %d: %s"
+
+#, c-format
+msgid "Too many regions in %s line %d: %s"
+msgstr "Слишком много регионов в %s, строка %d: %s"
+
+#, c-format
+msgid "/ line ignored in %s line %d: %s"
+msgstr "/ строка пропускается в %s, строка %d: %s"
+
+#, c-format
+msgid "Invalid region nr in %s line %d: %s"
+msgstr "Недопустимый номер региона в %s, строка %d: %s"
+
+#, c-format
+msgid "Unrecognized flags in %s line %d: %s"
+msgstr "Нераспознанные флаги в %s, строка %d: %s"
+
+#, c-format
+msgid "Ignored %d words with non-ASCII characters"
+msgstr "Пропущено %d слов с не ASCII символами"
+
+msgid "E845: Insufficient memory, word list will be incomplete"
+msgstr "E845: Недостаточно оперативной памяти, список слов будет не полон"
+
+#, c-format
+msgid "Compressed %d of %d nodes; %d (%d%%) remaining"
+msgstr "Сжато %d из %d узлов; осталось %d (%d%%)"
+
+msgid "Reading back spell file..."
+msgstr "Чтение записанного файла правописания..."
+
+#.
+#. * Go through the trie of good words, soundfold each word and add it to
+#. * the soundfold trie.
+#.
+msgid "Performing soundfolding..."
+msgstr "Выполнение звуковой свёртки..."
+
+#, c-format
+msgid "Number of words after soundfolding: %ld"
+msgstr "Количество слов после звуковой свёртки: %ld"
+
+#, c-format
+msgid "Total number of words: %d"
+msgstr "Общее количество слов: %d"
+
+#, c-format
+msgid "Writing suggestion file %s ..."
+msgstr "Запись файла предложения исправлений правописания %s"
+
+#, c-format
+msgid "Estimated runtime memory use: %d bytes"
+msgstr "Оценка использования памяти при выполнении: %d байт"
+
+msgid "E751: Output file name must not have region name"
+msgstr "E751: Имя выходного файла не должно содержать названия региона"
+
+msgid "E754: Only up to 8 regions supported"
+msgstr "E754: Поддерживается не более 8-ми регионов"
+
+#, c-format
+msgid "E755: Invalid region in %s"
+msgstr "E755: Недопустимый регион в %s"
+
+msgid "Warning: both compounding and NOBREAK specified"
+msgstr "Предупреждение: оба составные и указано NOBREAK"
+
+#, c-format
+msgid "Writing spell file %s ..."
+msgstr "Запись файла правописания %s ..."
+
+msgid "Done!"
+msgstr "Завершено!"
+
+#, c-format
+msgid "E765: 'spellfile' does not have %ld entries"
+msgstr "E765: 'spellfile' не содержит %ld элементов"
+
+#, c-format
+msgid "Word removed from %s"
+msgstr "Слово удалено из %s"
+
+#, c-format
+msgid "Word added to %s"
+msgstr "Слово добавлено в %s"
+
+msgid "E763: Word characters differ between spell files"
+msgstr "E763: Символы слов отличаются в файлах правописания"
+
+msgid "Sorry, no suggestions"
+msgstr "Извините, нет предположений"
+
+#, c-format
+msgid "Sorry, only %ld suggestions"
+msgstr "Извините, только %ld предположений"
+
+#. for when 'cmdheight' > 1
+#. avoid more prompt
+#, c-format
+msgid "Change \"%.*s\" to:"
+msgstr "Заменить \"%.*s\" на:"
+
+#, c-format
+msgid " < \"%.*s\""
+msgstr " < \"%.*s\""
+
+msgid "E752: No previous spell replacement"
+msgstr "E752: Нет предыдущей замены правописания"
+
+#, c-format
+msgid "E753: Not found: %s"
+msgstr "E753: Не найдено: %s"
+
+#, c-format
+msgid "E778: This does not look like a .sug file: %s"
+msgstr "E778: Это не похоже на файл .sug: %s"
+
+#, c-format
+msgid "E779: Old .sug file, needs to be updated: %s"
+msgstr "E779: Старый файл .sug, требует обновления: %s"
+
+#, c-format
+msgid "E780: .sug file is for newer version of Vim: %s"
+msgstr "E780: Файл .sug для более новой версии Vim: %s"
+
+#, c-format
+msgid "E781: .sug file doesn't match .spl file: %s"
+msgstr "E781: Файл .sug не соответствует файлу .spl: %s"
+
+#, c-format
+msgid "E782: error while reading .sug file: %s"
+msgstr "E782: Ошибка при чтении файла .sug: %s"
+
+#. This should have been checked when generating the .spl
+#. * file.
+msgid "E783: duplicate char in MAP entry"
+msgstr "E783: Повторяющийся символ в элементе MAP"
+
+msgid "No Syntax items defined for this buffer"
+msgstr "Синтаксические элементы для данного буфера не определены"
+
+#, c-format
+msgid "E390: Illegal argument: %s"
+msgstr "E390: Недопустимый параметр: %s"
+
+#, c-format
+msgid "E391: No such syntax cluster: %s"
+msgstr "E391: Синтаксический кластер %s не найден"
+
+msgid "syncing on C-style comments"
+msgstr "Синхронизация по комментариям в стиле языка C"
+
+msgid "no syncing"
+msgstr "без синхронизации"
+
+msgid "syncing starts "
+msgstr "синхронизация начата "
+
+msgid " lines before top line"
+msgstr " строк перед верхней строкой"
+
+msgid ""
+"\n"
+"--- Syntax sync items ---"
+msgstr ""
+"\n"
+"--- Элементы синхронизации синтаксиса ---"
+
+msgid ""
+"\n"
+"syncing on items"
+msgstr ""
+"\n"
+"синхронизация по элементам"
+
+msgid ""
+"\n"
+"--- Syntax items ---"
+msgstr ""
+"\n"
+"--- Синтаксические элементы ---"
+
+#, c-format
+msgid "E392: No such syntax cluster: %s"
+msgstr "E392: Синтаксический кластер %s не найден"
+
+msgid "minimal "
+msgstr "минимум "
+
+msgid "maximal "
+msgstr "максимум "
+
+msgid "; match "
+msgstr "; соответствие "
+
+msgid " line breaks"
+msgstr " переносов строк"
+
+msgid "E395: contains argument not accepted here"
+msgstr "E395: Здесь нельзя использовать параметр contains"
+
+msgid "E844: invalid cchar value"
+msgstr "E844: Недопустимое значение cchar"
+
+msgid "E393: group[t]here not accepted here"
+msgstr "E393: Здесь нельзя использовать group[t]here"
+
+#, c-format
+msgid "E394: Didn't find region item for %s"
+msgstr "E394: Элемент области для %s не найден"
+
+msgid "E397: Filename required"
+msgstr "E397: Требуется указать имя файла"
+
+msgid "E847: Too many syntax includes"
+msgstr "E847: Слишком много синтаксических включений"
+
+#, c-format
+msgid "E789: Missing ']': %s"
+msgstr "E789: Пропущено ']': %s"
+
+#, c-format
+msgid "E398: Missing '=': %s"
+msgstr "E398: Пропущено '=': %s"
+
+#, c-format
+msgid "E399: Not enough arguments: syntax region %s"
+msgstr "E399: Не хватает параметров: синтаксический регион %s"
+
+msgid "E848: Too many syntax clusters"
+msgstr "E848: Слишком много синтаксических кластеров"
+
+msgid "E400: No cluster specified"
+msgstr "E400: Кластер не указан"
+
+#, c-format
+msgid "E401: Pattern delimiter not found: %s"
+msgstr "E401: Не найден разделитель шаблонов: %s"
+
+#, c-format
+msgid "E402: Garbage after pattern: %s"
+msgstr "E402: Мусор после шаблона: %s"
+
+msgid "E403: syntax sync: line continuations pattern specified twice"
+msgstr ""
+"E403: Синхронизация синтаксиса: шаблон продолжений строки указан дважды"
+
+#, c-format
+msgid "E404: Illegal arguments: %s"
+msgstr "E404: Недопустимые параметры: %s"
+
+#, c-format
+msgid "E405: Missing equal sign: %s"
+msgstr "E405: Пропущен знак равенства: %s"
+
+#, c-format
+msgid "E406: Empty argument: %s"
+msgstr "E406: Пустой параметр: %s"
+
+#, c-format
+msgid "E407: %s not allowed here"
+msgstr "E407: %s не допускается в этом месте"
+
+#, c-format
+msgid "E408: %s must be first in contains list"
+msgstr "E408: %s должно быть первым в списке contains"
+
+#, c-format
+msgid "E409: Unknown group name: %s"
+msgstr "E409: Неизвестная группа: %s"
+
+#, c-format
+msgid "E410: Invalid :syntax subcommand: %s"
+msgstr "E410: Неправильная подкоманда :syntax: %s"
+
+msgid ""
+"  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
+msgstr ""
+"  ВСЕГО       КОЛ.  СООТВ. ОТСТАЮЩИЙ    СРЕДНИЙ    ИМЯ                ШАБЛОН"
+
+msgid "E679: recursive loop loading syncolor.vim"
+msgstr "E679: Рекурсивная петля при загрузке syncolor.vim"
+
+#, c-format
+msgid "E411: highlight group not found: %s"
+msgstr "E411: Группа подсветки синтаксиса %s не найдена"
+
+#, c-format
+msgid "E412: Not enough arguments: \":highlight link %s\""
+msgstr "E412: Не хватает параметров: \":highlight link %s\""
+
+#, c-format
+msgid "E413: Too many arguments: \":highlight link %s\""
+msgstr "E413: Слишком много параметров: \":highlight link %s\""
+
+msgid "E414: group has settings, highlight link ignored"
+msgstr "E414: У группы есть настройки, пропускается highlight link"
+
+#, c-format
+msgid "E415: unexpected equal sign: %s"
+msgstr "E415: Неожиданный знак равенства: %s"
+
+#, c-format
+msgid "E416: missing equal sign: %s"
+msgstr "E416: Пропущен знак равенства: %s"
+
+#, c-format
+msgid "E417: missing argument: %s"
+msgstr "E417: Пропущен параметр: %s"
+
+#, c-format
+msgid "E418: Illegal value: %s"
+msgstr "E418: Недопустимое значение: %s"
+
+msgid "E419: FG color unknown"
+msgstr "E419: Неизвестный цвет текста"
+
+msgid "E420: BG color unknown"
+msgstr "E420: Неизвестный цвет фона"
+
+#, c-format
+msgid "E421: Color name or number not recognized: %s"
+msgstr "E421: Имя или номер цвета не известно: %s"
+
+#, c-format
+msgid "E422: terminal code too long: %s"
+msgstr "E422: Слишком длинный код терминала: %s"
+
+#, c-format
+msgid "E423: Illegal argument: %s"
+msgstr "E423: Недопустимый параметр: %s"
+
+msgid "E424: Too many different highlighting attributes in use"
+msgstr "E424: Используется слишком много разных атрибутов подсветки синтаксиса"
+
+msgid "E669: Unprintable character in group name"
+msgstr "E669: Непечатный символ в имени группы"
+
+msgid "W18: Invalid character in group name"
+msgstr "W18: Недопустимый символ в имени группы"
+
+msgid "E849: Too many highlight and syntax groups"
+msgstr "E849: Слишком много групп подсветки и синтаксиса"
+
+msgid "E555: at bottom of tag stack"
+msgstr "E555: Внизу стека меток"
+
+msgid "E556: at top of tag stack"
+msgstr "E556: Наверху стека меток"
+
+msgid "E425: Cannot go before first matching tag"
+msgstr "E425: Невозможно перейти в позицию до первой совпадающей метки"
+
+#, c-format
+msgid "E426: tag not found: %s"
+msgstr "E426: Метка не найдена: %s"
+
+msgid "  # pri kind tag"
+msgstr "  # при тип  метка"
+
+msgid "file\n"
+msgstr "файл\n"
+
+msgid "E427: There is only one matching tag"
+msgstr "E427: Есть только одна совпадающая метка"
+
+msgid "E428: Cannot go beyond last matching tag"
+msgstr "E428: Невозможно перейти в позицию за последней совпадающей меткой"
+
+#, c-format
+msgid "File \"%s\" does not exist"
+msgstr "Файл \"%s\" не существует"
+
+#. Give an indication of the number of matching tags
+#, c-format
+msgid "tag %d of %d%s"
+msgstr "метка %d из %d%s"
+
+msgid " or more"
+msgstr " и более"
+
+msgid "  Using tag with different case!"
+msgstr " Используется метка с символами в другом регистре!"
+
+#, c-format
+msgid "E429: File \"%s\" does not exist"
+msgstr "E429: Файл \"%s\" не существует"
+
+#. Highlight title
+msgid ""
+"\n"
+"  # TO tag         FROM line  in file/text"
+msgstr ""
+"\n"
+"  # К  метке       ОТ   стр.  в файле/тексте"
+
+#, c-format
+msgid "Searching tags file %s"
+msgstr "Поиск в файле меток %s"
+
+#, c-format
+msgid "E430: Tag file path truncated for %s\n"
+msgstr "E430: Путь к файлу меток %s обрезан\n"
+
+msgid "Ignoring long line in tags file"
+msgstr "Игнорирование длинной строки в файле tags"
+
+#, c-format
+msgid "E431: Format error in tags file \"%s\""
+msgstr "E431: Ошибка формата в файле меток \"%s\""
+
+#, c-format
+msgid "Before byte %ld"
+msgstr "Перед байтом %ld"
+
+#, c-format
+msgid "E432: Tags file not sorted: %s"
+msgstr "E432: Файл меток не отсортирован: %s"
+
+#. never opened any tags file
+msgid "E433: No tags file"
+msgstr "E433: Файл меток не обнаружен"
+
+msgid "E434: Can't find tag pattern"
+msgstr "E434: Не найден шаблон метки"
+
+msgid "E435: Couldn't find tag, just guessing!"
+msgstr "E435: Метка не найдена, пытаемся угадать!"
+
+#, c-format
+msgid "Duplicate field name: %s"
+msgstr "Повторяющееся имя поля: %s"
+
+msgid "' not known. Available builtin terminals are:"
+msgstr "' не известен. Доступны встроенные терминалы:"
+
+msgid "defaulting to '"
+msgstr "по умолчанию '"
+
+msgid "E557: Cannot open termcap file"
+msgstr "E557: Невозможно открыть файл termcap"
+
+msgid "E558: Terminal entry not found in terminfo"
+msgstr "E558: В terminfo нет записи об этом терминале"
+
+msgid "E559: Terminal entry not found in termcap"
+msgstr "E559: В termcap нет записи об этом терминале"
+
+#, c-format
+msgid "E436: No \"%s\" entry in termcap"
+msgstr "E436: В termcap нет записи \"%s\""
+
+msgid "E437: terminal capability \"cm\" required"
+msgstr "E437: Требуется способность терминала \"cm\""
+
+#. Highlight title
+msgid ""
+"\n"
+"--- Terminal keys ---"
+msgstr ""
+"\n"
+"--- Кнопки терминала ---"
+
+msgid "new shell started\n"
+msgstr "запуск новой оболочки\n"
+
+msgid "Vim: Error reading input, exiting...\n"
+msgstr "Vim: Ошибка чтения ввода, выход...\n"
+
+msgid "Used CUT_BUFFER0 instead of empty selection"
+msgstr "Вместо пустого выделения используется CUT_BUFFER0"
+
+#. This happens when the FileChangedRO autocommand changes the
+#. * file in a way it becomes shorter.
+msgid "E834: Line count changed unexpectedly"
+msgstr "E834: Неожиданно изменился счётчик строк"
+
+#. must display the prompt
+msgid "No undo possible; continue anyway"
+msgstr "Отмена невозможна; продолжать выполнение"
+
+#, c-format
+msgid "E828: Cannot open undo file for writing: %s"
+msgstr "E828: Невозможно открыть файл отмен для записи: %s"
+
+#, c-format
+msgid "E825: Corrupted undo file (%s): %s"
+msgstr "E825: Файл отмен повреждён (%s): %s"
+
+msgid "Cannot write undo file in any directory in 'undodir'"
+msgstr "Невозможно записать файл отмен в каком-либо каталоге из 'undodir'"
+
+#, c-format
+msgid "Will not overwrite with undo file, cannot read: %s"
+msgstr "Файл отмен не перезаписан, невозможно прочитать: %s"
+
+#, c-format
+msgid "Will not overwrite, this is not an undo file: %s"
+msgstr "Перезапись не выполнена, это не файл отмен: %s"
+
+msgid "Skipping undo file write, nothing to undo"
+msgstr "Пропущена запись файла отмен, нечего отменять"
+
+#, c-format
+msgid "Writing undo file: %s"
+msgstr "Запись файла отмен: %s"
+
+#, c-format
+msgid "E829: write error in undo file: %s"
+msgstr "E829: Ошибка при записи файла отмен: %s"
+
+#, c-format
+msgid "Not reading undo file, owner differs: %s"
+msgstr "Файл отмен не прочитан, другой владелец: %s"
+
+#, c-format
+msgid "Reading undo file: %s"
+msgstr "Чтение файла отмен: %s"
+
+#, c-format
+msgid "E822: Cannot open undo file for reading: %s"
+msgstr "E822: Невозможно открыть файл отмен для чтения: %s"
+
+#, c-format
+msgid "E823: Not an undo file: %s"
+msgstr "E823: Это не файл отмен: %s"
+
+#, c-format
+msgid "E832: Non-encrypted file has encrypted undo file: %s"
+msgstr "E832: Не зашифрованный файл имеет зашифрованный файл отмен: %s"
+
+#, c-format
+msgid "E826: Undo file decryption failed: %s"
+msgstr "E826: Не удалось дешифровать файл отмен: %s"
+
+#, c-format
+msgid "E827: Undo file is encrypted: %s"
+msgstr "E827: Файл отмен зашифрован: %s"
+
+#, c-format
+msgid "E824: Incompatible undo file: %s"
+msgstr "E824: Несовместимый файл отмен: %s"
+
+msgid "File contents changed, cannot use undo info"
+msgstr "Изменилось содержимое файла, невозможно использовать информацию отмен"
+
+#, c-format
+msgid "Finished reading undo file %s"
+msgstr "Завершено чтение файла отмен %s"
+
+msgid "Already at oldest change"
+msgstr "Уже на самом первом изменении"
+
+msgid "Already at newest change"
+msgstr "Уже на самом последнем изменении"
+
+#, c-format
+msgid "E830: Undo number %ld not found"
+msgstr "E830: Не найдена отмена номер %ld"
+
+msgid "E438: u_undo: line numbers wrong"
+msgstr "E438: u_undo: неправильные номера строк"
+
+msgid "more line"
+msgstr "стр. добавлена"
+
+msgid "more lines"
+msgstr "стр. добавлено"
+
+msgid "line less"
+msgstr "стр. удалена"
+
+msgid "fewer lines"
+msgstr "стр. удалено"
+
+msgid "change"
+msgstr "изм."
+
+msgid "changes"
+msgstr "изм."
+
+#, c-format
+msgid "%ld %s; %s #%ld  %s"
+msgstr "%ld %s; %s #%ld  %s"
+
+msgid "before"
+msgstr "перед"
+
+msgid "after"
+msgstr "после"
+
+msgid "Nothing to undo"
+msgstr "Нечего отменять"
+
+# Заголовок таблицы :undolist
+msgid "number changes  when               saved"
+msgstr " номер  измен.  когда              сохранено"
+
+#, c-format
+msgid "%ld seconds ago"
+msgstr "%ld с назад"
+
+msgid "E790: undojoin is not allowed after undo"
+msgstr "E790: Объединение отмен не допускается после отмены"
+
+msgid "E439: undo list corrupt"
+msgstr "E439: Повреждён список отмены"
+
+msgid "E440: undo line missing"
+msgstr "E440: Потеряна строка отмены"
+
+#. Only MS VC 4.1 and earlier can do Win32s
+msgid ""
+"\n"
+"MS-Windows 16/32-bit GUI version"
+msgstr ""
+"\n"
+"Версия с графическим интерфейсом для MS-Windows 16/32 бит"
+
+msgid ""
+"\n"
+"MS-Windows 64-bit GUI version"
+msgstr ""
+"\n"
+"Версия с графическим интерфейсом для MS-Windows 64 бит"
+
+msgid ""
+"\n"
+"MS-Windows 32-bit GUI version"
+msgstr ""
+"\n"
+"Версия с графическим интерфейсом для MS-Windows 32 бит"
+
+msgid " in Win32s mode"
+msgstr " в режиме Win32"
+
+msgid " with OLE support"
+msgstr " с поддержкой OLE"
+
+msgid ""
+"\n"
+"MS-Windows 64-bit console version"
+msgstr ""
+"\n"
+"Консольная версия для MS-Windows 64 бит"
+
+msgid ""
+"\n"
+"MS-Windows 32-bit console version"
+msgstr ""
+"\n"
+"Консольная версия для MS-Windows 32 бит"
+
+msgid ""
+"\n"
+"MS-Windows 16-bit version"
+msgstr ""
+"\n"
+"Версия для MS-Windows 16 бит"
+
+msgid ""
+"\n"
+"32-bit MS-DOS version"
+msgstr ""
+"\n"
+"Версия для MS-DOS 32 бит"
+
+msgid ""
+"\n"
+"16-bit MS-DOS version"
+msgstr ""
+"\n"
+"Версия для MS-DOS 16 бит"
+
+msgid ""
+"\n"
+"MacOS X (unix) version"
+msgstr ""
+"\n"
+"Версия для MacOS X (unix)"
+
+msgid ""
+"\n"
+"MacOS X version"
+msgstr ""
+"\n"
+"Версия для MacOS X"
+
+msgid ""
+"\n"
+"MacOS version"
+msgstr ""
+"\n"
+"Версия для MacOS"
+
+msgid ""
+"\n"
+"OpenVMS version"
+msgstr ""
+"\n"
+"Версия для OpenVMS"
+
+msgid ""
+"\n"
+"Included patches: "
+msgstr ""
+"\n"
+"Заплатки: "
+
+msgid ""
+"\n"
+"Extra patches: "
+msgstr ""
+"\n"
+"Дополнительные заплатки: "
+
+msgid "Modified by "
+msgstr "С изменениями, внесёнными "
+
+msgid ""
+"\n"
+"Compiled "
+msgstr ""
+"\n"
+"Скомпилирован "
+
+msgid "by "
+msgstr " "
+
+msgid ""
+"\n"
+"Huge version "
+msgstr ""
+"\n"
+"Огромная версия "
+
+msgid ""
+"\n"
+"Big version "
+msgstr ""
+"\n"
+"Большая версия "
+
+msgid ""
+"\n"
+"Normal version "
+msgstr ""
+"\n"
+"Обычная версия "
+
+msgid ""
+"\n"
+"Small version "
+msgstr ""
+"\n"
+"Малая версия "
+
+msgid ""
+"\n"
+"Tiny version "
+msgstr ""
+"\n"
+"Версия \"Кроха\" "
+
+msgid "without GUI."
+msgstr "без графического интерфейса."
+
+msgid "with GTK2-GNOME GUI."
+msgstr "с графическим интерфейсом GTK2-GNOME."
+
+msgid "with GTK2 GUI."
+msgstr "с графическим интерфейсом GTK2."
+
+msgid "with X11-Motif GUI."
+msgstr "с графическим интерфейсом X11-Motif."
+
+msgid "with X11-neXtaw GUI."
+msgstr "с графическим интерфейсом X11-neXtaw."
+
+msgid "with X11-Athena GUI."
+msgstr "с графическим интерфейсом X11-Athena."
+
+msgid "with Photon GUI."
+msgstr "с графическим интерфейсом Photon."
+
+msgid "with GUI."
+msgstr "с графическим интерфейсом."
+
+msgid "with Carbon GUI."
+msgstr "с графическим интерфейсом Carbon."
+
+msgid "with Cocoa GUI."
+msgstr "с графическим интерфейсом Cocoa."
+
+msgid "with (classic) GUI."
+msgstr "с классическим графическим интерфейсом."
+
+msgid "  Features included (+) or not (-):\n"
+msgstr "  Включённые (+) и отключённые (-) особенности:\n"
+
+msgid "   system vimrc file: \""
+msgstr "            общесистемный файл vimrc: \""
+
+msgid "     user vimrc file: \""
+msgstr "         пользовательский файл vimrc: \""
+
+msgid " 2nd user vimrc file: \""
+msgstr "  второй пользовательский файл vimrc: \""
+
+msgid " 3rd user vimrc file: \""
+msgstr "  третий пользовательский файл vimrc: \""
+
+msgid "      user exrc file: \""
+msgstr "          пользовательский файл exrc: \""
+
+msgid "  2nd user exrc file: \""
+msgstr "   второй пользовательский файл exrc: \""
+
+msgid "  system gvimrc file: \""
+msgstr "           общесистемный файл gvimrc: \""
+
+msgid "    user gvimrc file: \""
+msgstr "        пользовательский файл gvimrc: \""
+
+msgid "2nd user gvimrc file: \""
+msgstr " второй пользовательский файл gvimrc: \""
+
+msgid "3rd user gvimrc file: \""
+msgstr " третий пользовательский файл gvimrc: \""
+
+msgid "    system menu file: \""
+msgstr "             общесистемный файл меню: \""
+
+msgid "  fall-back for $VIM: \""
+msgstr "          значение $VIM по умолчанию: \""
+
+msgid " f-b for $VIMRUNTIME: \""
+msgstr "   значение $VIMRUNTIME по умолчанию: \""
+
+msgid "Compilation: "
+msgstr "Параметры компиляции: "
+
+msgid "Compiler: "
+msgstr "Компилятор: "
+
+msgid "Linking: "
+msgstr "Сборка: "
+
+msgid "  DEBUG BUILD"
+msgstr "  ОТЛАДОЧНАЯ СБОРКА"
+
+msgid "VIM - Vi IMproved"
+msgstr "VIM — Vi IMproved (улучшенный Vi)"
+
+msgid "version "
+msgstr "версия "
+
+msgid "by Bram Moolenaar et al."
+msgstr "Брам Мооленаар и другие"
+
+msgid "Vim is open source and freely distributable"
+msgstr "Vim это свободно распространяемая программа с открытым кодом"
+
+msgid "Help poor children in Uganda!"
+msgstr "Бедным детям в Уганде нужна ваша помощь!"
+
+msgid "type  :help iccf<Enter>       for information "
+msgstr "наберите :help iccf<Enter>       для дополнительной информации"
+
+msgid "type  :q<Enter>               to exit         "
+msgstr "наберите :q<Enter>               чтобы выйти из программы     "
+
+msgid "type  :help<Enter>  or  <F1>  for on-line help"
+msgstr "наберите :help<Enter> или <F1>   для получения справки        "
+
+msgid "type  :help version7<Enter>   for version info"
+msgstr "наберите :help version7<Enter>   чтобы узнать об этой версии  "
+
+msgid "Running in Vi compatible mode"
+msgstr "Работа в Vi-совместимом режиме"
+
+msgid "type  :set nocp<Enter>        for Vim defaults"
+msgstr "наберите :set nocp<Enter>        для перехода в режим Vim     "
+
+msgid "type  :help cp-default<Enter> for info on this"
+msgstr "наберите :help cp-default<Enter> для дополнительной информации"
+
+msgid "menu  Help->Orphans           for information    "
+msgstr "меню Справка->Сироты             для получения информации     "
+
+msgid "Running modeless, typed text is inserted"
+msgstr "Безрежимная работа, вставка введённого текста"
+
+msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
+msgstr "меню Правка->Глобальные настройки->Режим Вставки                     "
+
+msgid "                              for two modes      "
+msgstr "                                 для двух режимов               "
+
+msgid "menu  Edit->Global Settings->Toggle Vi Compatible"
+msgstr "меню Правка->Глобальные настройки->Совместимость с Vi                "
+
+msgid "                              for Vim defaults   "
+msgstr "                                 для перехода в режим Vim       "
+
+msgid "Sponsor Vim development!"
+msgstr "Помогите в разработке Vim!"
+
+msgid "Become a registered Vim user!"
+msgstr "Станьте зарегистрированным пользователем Vim!"
+
+msgid "type  :help sponsor<Enter>    for information "
+msgstr "наберите :help sponsor<Enter>    для получения информации     "
+
+msgid "type  :help register<Enter>   for information "
+msgstr "наберите :help register<Enter>   для получения информации     "
+
+msgid "menu  Help->Sponsor/Register  for information    "
+msgstr "меню Справка->Помощь/Регистрация для получения информации       "
+
+msgid "WARNING: Windows 95/98/ME detected"
+msgstr "ПРЕДУПРЕЖДЕНИЕ: обнаружена Windows 95/98/ME"
+
+msgid "type  :help windows95<Enter>  for info on this"
+msgstr "наберите :help windows95<Enter>  для получения информации     "
+
+msgid "Already only one window"
+msgstr "На экране всего одно окно"
+
+msgid "E441: There is no preview window"
+msgstr "E441: Окно предпросмотра отсутствует"
+
+msgid "E442: Can't split topleft and botright at the same time"
+msgstr "E442: Окно не может быть одновременно слева вверху и справа внизу"
+
+msgid "E443: Cannot rotate when another window is split"
+msgstr "E443: Невозможно поменять местами, пока другое окно разделено"
+
+msgid "E444: Cannot close last window"
+msgstr "E444: Нельзя закрыть последнее окно"
+
+msgid "E813: Cannot close autocmd window"
+msgstr "E813: Нельзя закрыть окно автокоманд"
+
+msgid "E814: Cannot close window, only autocmd window would remain"
+msgstr "E814: Нельзя закрыть окно, останется только окно автокоманд"
+
+msgid "E445: Other window contains changes"
+msgstr "E445: В другом окне есть несохранённые изменения"
+
+msgid "E446: No file name under cursor"
+msgstr "E446: Нет имени файла в позиции курсора"
+
+#, c-format
+msgid "E447: Can't find file \"%s\" in path"
+msgstr "E447: Файл \"%s\" не найден по известным путям"
+
+#, c-format
+msgid "E370: Could not load library %s"
+msgstr "E370: Невозможно загрузить библиотеку %s"
+
+msgid "Sorry, this command is disabled: the Perl library could not be loaded."
+msgstr ""
+"Извините, данная команда отключена: невозможно загрузить библиотеку Perl"
+
+msgid "E299: Perl evaluation forbidden in sandbox without the Safe module"
+msgstr ""
+"E299: Не допускается вычисление Perl в песочнице без модуля безопасности"
+
+msgid "Edit with &multiple Vims"
+msgstr "Редактировать в &разных Vim-ах"
+
+msgid "Edit with single &Vim"
+msgstr "Редактировать в &одном Vim"
+
+msgid "Diff with Vim"
+msgstr "Сравнить с помощью Vim"
+
+msgid "Edit with &Vim"
+msgstr "Ре&дактировать с помощью Vim"
+
+#. Now concatenate
+msgid "Edit with existing Vim - "
+msgstr "Редактировать в запущенном Vim — "
+
+msgid "Edits the selected file(s) with Vim"
+msgstr "Редактировать выделенные файлы с помощью Vim"
+
+msgid "Error creating process: Check if gvim is in your path!"
+msgstr "Ошибка создания процесса: проверьте доступность gvim в пути!"
+
+msgid "gvimext.dll error"
+msgstr "ошибка gvimext.dll"
+
+msgid "Path length too long!"
+msgstr "Слишком длинный путь!"
+
+msgid "--No lines in buffer--"
+msgstr "-- Нет строк в буфере --"
+
+#.
+#. * The error messages that can be shared are included here.
+#. * Excluded are errors that are only used once and debugging messages.
+#.
+msgid "E470: Command aborted"
+msgstr "E470: Выполнение команды прервано"
+
+msgid "E471: Argument required"
+msgstr "E471: Требуется указать параметр"
+
+msgid "E10: \\ should be followed by /, ? or &"
+msgstr "E10: После \\ должен идти символ /, ? или &"
+
+msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
+msgstr ""
+"E11: Недопустимо в окне командной строки; <CR> выполнение, CTRL-C выход"
+
+msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+msgstr ""
+"E12: Команда не допускается в exrc/vimrc в текущем каталоге или поиске меток"
+
+msgid "E171: Missing :endif"
+msgstr "E171: Отсутствует команда :endif"
+
+msgid "E600: Missing :endtry"
+msgstr "E600: Отсутствует команда :endtry"
+
+msgid "E170: Missing :endwhile"
+msgstr "E170: Отсутствует команда :endwhile"
+
+msgid "E170: Missing :endfor"
+msgstr "E170: Отсутствует команда :endfor"
+
+msgid "E588: :endwhile without :while"
+msgstr "E588: Команда :endwhile без парной команды :while"
+
+msgid "E588: :endfor without :for"
+msgstr "E588: :endfor без :for"
+
+msgid "E13: File exists (add ! to override)"
+msgstr "E13: Файл существует (добавьте !, чтобы перезаписать)"
+
+msgid "E472: Command failed"
+msgstr "E472: Не удалось выполнить команду"
+
+#, c-format
+msgid "E234: Unknown fontset: %s"
+msgstr "E234: Неизвестный шрифтовой набор: %s"
+
+#, c-format
+msgid "E235: Unknown font: %s"
+msgstr "E235: Неизвестный шрифт: %s"
+
+#, c-format
+msgid "E236: Font \"%s\" is not fixed-width"
+msgstr "E236: Шрифт \"%s\" не является моноширинным"
+
+msgid "E473: Internal error"
+msgstr "E473: Внутренняя ошибка"
+
+msgid "Interrupted"
+msgstr "Прервано"
+
+msgid "E14: Invalid address"
+msgstr "E14: Недопустимый адрес"
+
+msgid "E474: Invalid argument"
+msgstr "E474: Недопустимый параметр"
+
+#, c-format
+msgid "E475: Invalid argument: %s"
+msgstr "E475: Недопустимый параметр: %s"
+
+#, c-format
+msgid "E15: Invalid expression: %s"
+msgstr "E15: Недопустимое выражение: %s"
+
+msgid "E16: Invalid range"
+msgstr "E16: Недопустимый диапазон"
+
+msgid "E476: Invalid command"
+msgstr "E476: Недопустимая команда"
+
+#, c-format
+msgid "E17: \"%s\" is a directory"
+msgstr "E17: \"%s\" является каталогом"
+
+#, c-format
+msgid "E364: Library call failed for \"%s()\""
+msgstr "E364: Неудачный вызов функции \"%s()\" из библиотеки"
+
+#, c-format
+msgid "E448: Could not load library function %s"
+msgstr "E448: Не удалось загрузить функцию %s из библиотеки"
+
+msgid "E19: Mark has invalid line number"
+msgstr "E19: Отметка указывает на неправильный номер строки"
+
+msgid "E20: Mark not set"
+msgstr "E20: Отметка не определена"
+
+msgid "E21: Cannot make changes, 'modifiable' is off"
+msgstr "E21: Изменения невозможны, так как отключена опция 'modifiable'"
+
+msgid "E22: Scripts nested too deep"
+msgstr "E22: Слишком глубоко вложенные сценарии"
+
+msgid "E23: No alternate file"
+msgstr "E23: Соседний файл не существует"
+
+msgid "E24: No such abbreviation"
+msgstr "E24: Нет такого сокращения"
+
+msgid "E477: No ! allowed"
+msgstr "E477: ! не допускается"
+
+msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgstr ""
+"E25: Возможность использования графического интерфейса выключена при "
+"компиляции"
+
+msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
+msgstr "E26: Иврит выключен при компиляции\n"
+
+msgid "E27: Farsi cannot be used: Not enabled at compile time\n"
+msgstr "E27: Фарси выключено при компиляции\n"
+
+msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
+msgstr "E800: Арабский выключен при компиляции\n"
+
+#, c-format
+msgid "E28: No such highlight group name: %s"
+msgstr "E28: Группа подсветки синтаксиса %s не существует"
+
+msgid "E29: No inserted text yet"
+msgstr "E29: Пока нет вставленного текста"
+
+msgid "E30: No previous command line"
+msgstr "E30: Предыдущей командной строки нет"
+
+msgid "E31: No such mapping"
+msgstr "E31: Такой привязки не существует"
+
+msgid "E479: No match"
+msgstr "E479: Нет соответствия"
+
+#, c-format
+msgid "E480: No match: %s"
+msgstr "E480: Нет соответствия: %s"
+
+msgid "E32: No file name"
+msgstr "E32: Нет имени файла"
+
+msgid "E33: No previous substitute regular expression"
+msgstr "E33: Нет предыдущего регулярного выражения для замены"
+
+msgid "E34: No previous command"
+msgstr "E34: Нет предыдущей команды"
+
+msgid "E35: No previous regular expression"
+msgstr "E35: Нет предыдущего регулярного выражения"
+
+msgid "E481: No range allowed"
+msgstr "E481: Использование диапазона не допускается"
+
+msgid "E36: Not enough room"
+msgstr "E36: Недостаточно места"
+
+#, c-format
+msgid "E247: no registered server named \"%s\""
+msgstr "E247: Сервер \"%s\" не зарегистрирован"
+
+#, c-format
+msgid "E482: Can't create file %s"
+msgstr "E482: Невозможно создать файл %s"
+
+msgid "E483: Can't get temp file name"
+msgstr "E483: Невозможно получить имя временного файла"
+
+#, c-format
+msgid "E484: Can't open file %s"
+msgstr "E484: Невозможно открыть файл %s"
+
+#, c-format
+msgid "E485: Can't read file %s"
+msgstr "E485: Невозможно прочитать файл %s"
+
+msgid "E37: No write since last change (add ! to override)"
+msgstr "E37: Изменения не сохранены (добавьте !, чтобы обойти проверку)"
+
+msgid "E38: Null argument"
+msgstr "E38: Нулевой параметр"
+
+msgid "E39: Number expected"
+msgstr "E39: Требуется число"
+
+#, c-format
+msgid "E40: Can't open errorfile %s"
+msgstr "E40: Не удалось открыть файл ошибок %s"
+
+msgid "E233: cannot open display"
+msgstr "E233: Невозможно открыть дисплей"
+
+msgid "E41: Out of memory!"
+msgstr "E41: Не хватает памяти!"
+
+msgid "Pattern not found"
+msgstr "Шаблон не найден"
+
+#, c-format
+msgid "E486: Pattern not found: %s"
+msgstr "E486: Шаблон не найден: %s"
+
+msgid "E487: Argument must be positive"
+msgstr "E487: Параметр должен быть положительным числом"
+
+msgid "E459: Cannot go back to previous directory"
+msgstr "E459: Возврат в предыдущий каталог невозможен"
+
+msgid "E42: No Errors"
+msgstr "E42: Нет ошибок"
+
+msgid "E776: No location list"
+msgstr "E776: Нет списка расположений"
+
+msgid "E43: Damaged match string"
+msgstr "E43: Повреждена строка соответствия"
+
+msgid "E44: Corrupted regexp program"
+msgstr "E44: Программа обработки регулярных выражений повреждена"
+
+msgid "E45: 'readonly' option is set (add ! to override)"
+msgstr "E45: Включена опция 'readonly' (добавьте !, чтобы обойти проверку)"
+
+#, c-format
+msgid "E46: Cannot change read-only variable \"%s\""
+msgstr "E46: Невозможно изменить переменную только для чтения \"%s\""
+
+#, c-format
+msgid "E794: Cannot set variable in the sandbox: \"%s\""
+msgstr "E794: Невозможно изменить переменную в песочнице: \"%s\""
+
+msgid "E47: Error while reading errorfile"
+msgstr "E47: Ошибка при чтении файла ошибок"
+
+msgid "E48: Not allowed in sandbox"
+msgstr "E48: Не допускается в песочнице"
+
+msgid "E523: Not allowed here"
+msgstr "E523: Здесь не разрешено"
+
+msgid "E359: Screen mode setting not supported"
+msgstr "E359: Данный режим экрана не поддерживается"
+
+msgid "E49: Invalid scroll size"
+msgstr "E49: Недопустимый размер прокрутки"
+
+msgid "E91: 'shell' option is empty"
+msgstr "E91: Значением опции 'shell' является пустая строка"
+
+msgid "E255: Couldn't read in sign data!"
+msgstr "E255: Невозможно прочитать данные о значках!"
+
+msgid "E72: Close error on swap file"
+msgstr "E72: Ошибка закрытия своп-файла"
+
+msgid "E73: tag stack empty"
+msgstr "E73: Стек меток пустой"
+
+msgid "E74: Command too complex"
+msgstr "E74: Слишком сложная команда"
+
+msgid "E75: Name too long"
+msgstr "E75: Слишком длинное имя"
+
+msgid "E76: Too many ["
+msgstr "E76: Слишком много символов ["
+
+msgid "E77: Too many file names"
+msgstr "E77: Слишком много имён файлов"
+
+msgid "E488: Trailing characters"
+msgstr "E488: Лишние символы на хвосте"
+
+msgid "E78: Unknown mark"
+msgstr "E78: Неизвестная отметка"
+
+msgid "E79: Cannot expand wildcards"
+msgstr "E79: Невозможно выполнить подстановку по маске"
+
+msgid "E591: 'winheight' cannot be smaller than 'winminheight'"
+msgstr ""
+"E591: Значение опции 'winheight' не может быть меньше значения 'winminheight'"
+
+msgid "E592: 'winwidth' cannot be smaller than 'winminwidth'"
+msgstr ""
+"E592: Значение опции 'winwidth' не может быть меньше значения 'winminwidth'"
+
+msgid "E80: Error while writing"
+msgstr "E80: Ошибка при записи"
+
+msgid "Zero count"
+msgstr "Нулевое значение счётчика"
+
+msgid "E81: Using <SID> not in a script context"
+msgstr "E81: Использование <SID> вне контекста сценария"
+
+msgid "E449: Invalid expression received"
+msgstr "E449: Получено недопустимое выражение"
+
+msgid "E463: Region is guarded, cannot modify"
+msgstr "E463: Невозможно изменить охраняемую область"
+
+msgid "E744: NetBeans does not allow changes in read-only files"
+msgstr "E744: NetBeans не допускает изменений в файлах только для чтения"
+
+#, c-format
+msgid "E685: Internal error: %s"
+msgstr "E685: Внутренняя ошибка: %s"
+
+msgid "E363: pattern uses more memory than 'maxmempattern'"
+msgstr "E363: Шаблон использует больше памяти чем 'maxmempattern'"
+
+msgid "E749: empty buffer"
+msgstr "E749: Пустой буфер"
+
+msgid "E682: Invalid search pattern or delimiter"
+msgstr "E682: Неправильная строка поиска или разделитель"
+
+msgid "E139: File is loaded in another buffer"
+msgstr "E139: Файл загружен в другом буфере"
+
+#, c-format
+msgid "E764: Option '%s' is not set"
+msgstr "E764: Опция '%s' не установлена"
+
+msgid "E850: Invalid register name"
+msgstr "E850: Недопустимое имя регистра"
+
+msgid "search hit TOP, continuing at BOTTOM"
+msgstr "Поиск будет продолжен с КОНЦА документа"
+
+msgid "search hit BOTTOM, continuing at TOP"
+msgstr "Поиск будет продолжен с НАЧАЛА документа"
+
+#, c-format
+msgid "Need encryption key for \"%s\""
+msgstr "Требуется ключ шифрования для \"%s\""
+
+msgid "empty keys are not allowed"
+msgstr "Пустые ключи не допустимы"
+
+msgid "dictionary is locked"
+msgstr "Словарь заблокирован"
+
+msgid "list is locked"
+msgstr "Список заблокирован"
+
+#, c-format
+msgid "failed to add key '%s' to dictionary"
+msgstr "Невозможно добавить ключ '%s' к словарю"
+
+#, c-format
+msgid "index must be int or slice, not %s"
+msgstr "Индекс должен быть целым числом или выборкой, а не %s"
+
+#, c-format
+msgid "expected str() or unicode() instance, but got %s"
+msgstr "Ожидался экземпляр str() или unicode(), но получен %s"
+
+#, c-format
+msgid "expected bytes() or str() instance, but got %s"
+msgstr "Ожидался экземпляр bytes() или str(), но получен %s"
+
+#, c-format
+msgid ""
+"expected int(), long() or something supporting coercing to long(), but got %s"
+msgstr "Ожидалось int(), long() или что-то приводимое к long(), но получено %s"
+
+#, c-format
+msgid "expected int() or something supporting coercing to int(), but got %s"
+msgstr "Ожидалось int() или что-то приводимое к int(), но получено %s"
+
+msgid "value is too large to fit into C int type"
+msgstr "Значение слишком велико для целочисленного типа C"
+
+msgid "value is too small to fit into C int type"
+msgstr "Значение слишком мало для целочисленного типа C"
+
+msgid "number must be greater then zero"
+msgstr "Номер должен быть больше нуля"
+
+msgid "number must be greater or equal to zero"
+msgstr "Номер должен быть больше или равен нулю"
+
+msgid "can't delete OutputObject attributes"
+msgstr "Невозможно удалить атрибуты OutputObject"
+
+#, c-format
+msgid "invalid attribute: %s"
+msgstr "Неправильный атрибут: %s"
+
+msgid "E264: Python: Error initialising I/O objects"
+msgstr "E264: Python: Ошибка инициализации объектов I/O"
+
+msgid "failed to change directory"
+msgstr "Невозможно сменить каталог"
+
+#, c-format
+msgid "expected 3-tuple as imp.find_module() result, but got %s"
+msgstr "Ожидался 3-кортеж как результат imp.find_module(), но получен %s"
+
+#, c-format
+msgid "expected 3-tuple as imp.find_module() result, but got tuple of size %d"
+msgstr ""
+"Ожидался 3-кортеж как результат imp.find_module(), но получен кортеж с "
+"размером %d"
+
+msgid "internal error: imp.find_module returned tuple with NULL"
+msgstr "Внутренняя ошибка: imp.find_module возвратил "
+
+msgid "cannot delete vim.Dictionary attributes"
+msgstr "Невозможно удалить атрибуты vim.Dictionary"
+
+msgid "cannot modify fixed dictionary"
+msgstr "Невозможно изменить фиксированный словарь"
+
+#, c-format
+msgid "cannot set attribute %s"
+msgstr "Невозможно установить атрибут %s"
+
+msgid "hashtab changed during iteration"
+msgstr "Хэш-таблица изменилась при итерации"
+
+#, c-format
+msgid "expected sequence element of size 2, but got sequence of size %d"
+msgstr ""
+"Ожидался элемент-последовательность размера 2, а размер полученной "
+"последовательности %d"
+
+msgid "list constructor does not accept keyword arguments"
+msgstr "Конструктор списка не допускает ключевые слова как аргументы"
+
+msgid "list index out of range"
+msgstr "Индекс списка за пределами диапазона"
+
+#. No more suitable format specifications in python-2.3
+#, c-format
+msgid "internal error: failed to get vim list item %d"
+msgstr "Внутренняя ошибка: не удалось получить элемент VIM-списка %d"
+
+msgid "failed to add item to list"
+msgstr "Невозможно добавить элемент в список"
+
+#, c-format
+msgid "internal error: no vim list item %d"
+msgstr "Внутренняя ошибка: нет элемента VIM-списка %d"
+
+msgid "internal error: failed to add item to list"
+msgstr "Внутренняя ошибка: не удалось добавить элемент в список"
+
+msgid "cannot delete vim.List attributes"
+msgstr "Невозможно удалить атрибуты vim.List"
+
+msgid "cannot modify fixed list"
+msgstr "Невозможно изменить фиксированный список"
+
+#, c-format
+msgid "unnamed function %s does not exist"
+msgstr "Не существует безымянной функции %s"
+
+#, c-format
+msgid "function %s does not exist"
+msgstr "Функция %s не существует"
+
+msgid "function constructor does not accept keyword arguments"
+msgstr "Конструктор функции не допускает ключевые слова как аргументы"
+
+#, c-format
+msgid "failed to run function %s"
+msgstr "Невозможно выполнить функцию %s"
+
+msgid "unable to get option value"
+msgstr "Невозможно получить значение опции"
+
+msgid "internal error: unknown option type"
+msgstr "Внутренняя ошибка: неизвестный тип опции"
+
+msgid "problem while switching windows"
+msgstr "Проблема при переключении окон"
+
+#, c-format
+msgid "unable to unset global option %s"
+msgstr "Невозможно сбросить глобальную опцию %s"
+
+#, c-format
+msgid "unable to unset option %s which does not have global value"
+msgstr "Невозможно сбросить опцию %s без глобального значения"
+
+msgid "attempt to refer to deleted tab page"
+msgstr "Попытка сослаться на удалённую вкладку"
+
+msgid "no such tab page"
+msgstr "Нет такой вкладки"
+
+msgid "attempt to refer to deleted window"
+msgstr "Попытка сослаться на закрытое окно"
+
+msgid "readonly attribute: buffer"
+msgstr "Атрибут только для чтения: буфер"
+
+msgid "cursor position outside buffer"
+msgstr "Позиция курсора находится вне буфера"
+
+msgid "no such window"
+msgstr "Нет такого окна"
+
+msgid "attempt to refer to deleted buffer"
+msgstr "Попытка сослаться на уничтоженный буфер"
+
+msgid "failed to rename buffer"
+msgstr "Невозможно переименовать буфер"
+
+msgid "mark name must be a single character"
+msgstr "Название отметки должно быть одним символом"
+
+#, c-format
+msgid "expected vim.Buffer object, but got %s"
+msgstr "Ожидался объект vim.Buffer, но получен %s"
+
+#, c-format
+msgid "failed to switch to buffer %d"
+msgstr "Невозможно переключиться на буфер %d"
+
+#, c-format
+msgid "expected vim.Window object, but got %s"
+msgstr "Ожидался объект vim.Window, но получен %s"
+
+msgid "failed to find window in the current tab page"
+msgstr "Невозможно найти окно в текущей вкладке"
+
+msgid "did not switch to the specified window"
+msgstr "Невозможно переключиться на указанное окно"
+
+#, c-format
+msgid "expected vim.TabPage object, but got %s"
+msgstr "Ожидался объект vim.TabPage, но получен %s"
+
+msgid "did not switch to the specified tab page"
+msgstr "Невозможно переключиться на указанную вкладку"
+
+msgid "failed to run the code"
+msgstr "Невозможно выполнить код"
+
+msgid "E858: Eval did not return a valid python object"
+msgstr "E858: Eval не возвратил допустимого объекта Python"
+
+msgid "E859: Failed to convert returned python object to vim value"
+msgstr ""
+"E859: Не удалось преобразовать возвращённый объект Python в значение VIM"
+
+#, c-format
+msgid "unable to convert %s to vim dictionary"
+msgstr "Невозможно преобразовать %s в словарь VIM"
+
+#, c-format
+msgid "unable to convert %s to vim structure"
+msgstr "Невозможно преобразовать %s в структуру VIM"
+
+msgid "internal error: NULL reference passed"
+msgstr "Внутренняя ошибка: передана ссылка на NULL"
+
+msgid "internal error: invalid value type"
+msgstr "Внутренняя ошибка: неправильный тип значения"
+
+msgid ""
+"Failed to set path hook: sys.path_hooks is not a list\n"
+"You should now do the following:\n"
+"- append vim.path_hook to sys.path_hooks\n"
+"- append vim.VIM_SPECIAL_PATH to sys.path\n"
+msgstr ""
+"Ошибка при установке перехватчика пути: sys.path_hooks не является списком\n"
+"Следует сделать следующее:\n"
+"— Добавить vim.path_hook  в sys.path_hooks\n"
+"— Добавить vim.VIM_SPECIAL_PATH в sys.path\n"
+
+msgid ""
+"Failed to set path: sys.path is not a list\n"
+"You should now append vim.VIM_SPECIAL_PATH to sys.path"
+msgstr ""
+"Ошибка при установке пути: sys.path не является списком\n"
+"Следует добавить vim.VIM_SPECIAL_PATH в sys.path"

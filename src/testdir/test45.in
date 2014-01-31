@@ -1,0 +1,80 @@
+Tests for folding. vim: set ft=vim :
+
+STARTTEST
+:so small.vim
+:" We also need the +syntax feature here.
+:if !has("syntax")
+   e! test.ok
+   w! test.out
+   qa!
+:endif
+:" basic test if a fold can be created, opened, moving to the end and closed
+/^1
+zf2j:call append("$", "manual " . getline(foldclosed(".")))
+zo:call append("$", foldclosed("."))
+]z:call append("$", getline("."))
+zc:call append("$", getline(foldclosed(".")))
+:" test folding with markers.
+:set fdm=marker fdl=1 fdc=3
+/^5
+:call append("$", "marker " . foldlevel("."))
+[z:call append("$", foldlevel("."))
+jo{{ r{jj:call append("$", foldlevel("."))
+kYpj:call append("$", foldlevel("."))
+:" test folding with indent
+:set fdm=indent sw=2
+/^2 b
+i  jI    :call append("$", "indent " . foldlevel("."))
+k:call append("$", foldlevel("."))
+:" test syntax folding
+:set fdm=syntax fdl=0
+:syn region Hup start="dd" end="ii" fold contains=Fd1,Fd2,Fd3
+:syn region Fd1 start="ee" end="ff" fold contained
+:syn region Fd2 start="gg" end="hh" fold contained
+:syn region Fd3 start="commentstart" end="commentend" fold contained
+Gzk:call append("$", "folding " . getline("."))
+k:call append("$", getline("."))
+jAcommentstart  Acommentend:set fdl=1
+3j:call append("$", getline("."))
+:set fdl=0
+zOj:call append("$", getline("."))
+:" test expression folding
+:fun Flvl()
+  let l = getline(v:lnum)
+  if l =~ "bb$"
+    return 2
+  elseif l =~ "gg$"
+    return "s1"
+  elseif l =~ "ii$"
+    return ">2"
+  elseif l =~ "kk$"
+    return "0"
+  endif
+  return "="
+endfun
+:set fdm=expr fde=Flvl()
+/bb$
+:call append("$", "expr " . foldlevel("."))
+/hh$
+:call append("$", foldlevel("."))
+/ii$
+:call append("$", foldlevel("."))
+/kk$
+:call append("$", foldlevel("."))
+:/^last/+1,$w! test.out
+:delfun Flvl
+:qa!
+ENDTEST
+
+1 aa
+2 bb
+3 cc
+4 dd {{{
+5 ee {{{ }}}
+6 ff }}}
+7 gg
+8 hh
+9 ii
+a jj
+b kk
+last

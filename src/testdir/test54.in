@@ -1,0 +1,22 @@
+Some tests for buffer-local autocommands
+
+STARTTEST
+:so small.vim
+:e xx
+:if has("vms")
+: !del test.out.*
+: au BufLeave <buffer> :!write sys$output "buffer-local autommand in %" > test.out
+:else
+: !rm -f test.out
+: au BufLeave <buffer> :!echo buffer-local autommand in %>> test.out
+:endif
+:e somefile           " here, autocommand for xx shall write test.out 
+:                     " but autocommand shall not apply to buffer named <buffer>
+:bwipe xx             " here, autocommand shall be auto-deleted
+:e xx                 " nothing shall be written
+:e somefile           " nothing shall be written
+:qa!
+ENDTEST
+
+start of test file xx
+end of test file xx

@@ -1,0 +1,17 @@
+startstart
+start of test file Xxx
+vim: set noai :
+	this is a test
+	this is a test
+	this is a test
+	this is a test
+	this should be auto-indented
+end of test file Xxx
+start of test file Xxx
+vim: set noai :
+	this is a test
+	this is a test
+	this is a test
+	this is a test
+this should be in column 1
+end of test file Xxx

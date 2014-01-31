@@ -1,0 +1,63 @@
+Smoke test for MzScheme interface and mzeval() function
+
+STARTTEST
+:so mzscheme.vim
+:set nocompatible viminfo+=nviminfo
+:function! MzRequire()
+:redir => l:mzversion
+:mz (version)
+:redir END
+:if strpart(l:mzversion, 1, 1) < "4"
+:" MzScheme versions < 4.x:
+:mz (require (prefix vim- vimext))
+:else
+:" newer versions:
+:mz (require (prefix-in vim- 'vimext))
+:mz (require r5rs)
+:endif
+:endfunction
+:silent call MzRequire()
+:mz (define l '("item0" "dictionary with list OK" "item2"))
+:mz (define h (make-hash))
+:mz (hash-set! h "list" l)
+/^1
+:" change buffer contents
+:mz (vim-set-buff-line (vim-eval "line('.')") "1 changed line 1")
+:" scalar test
+:let tmp_string = mzeval('"string"')
+:let tmp_1000 = mzeval('1000')
+:if tmp_string . tmp_1000 == "string1000"
+:let scalar_res = "OK"
+:else
+:let scalar_res = "FAILED"
+:endif
+:call append(search("^1"), "scalar test " . scalar_res)
+:" dictionary containing a list
+:let tmp = mzeval("h")["list"][1]
+:/^2/put =tmp
+:" circular list (at the same time test lists containing lists)
+:mz (set-car! (cddr l) l)
+:let l2 = mzeval("h")["list"]
+:if l2[2] == l2
+:let res = "OK"
+:else
+:let res = "FAILED: " . l2[2]
+:endif
+:call setline(search("^3"), "circular test " . res)
+:" funcrefs
+:mz (define vim:max (vim-eval "function('max')"))
+:mz (define m (vim:max '(1 100 8)))
+:let m = mzeval('m')
+:if m == 100
+:let fref_res = "OK"
+:else
+:let fref_res = "FAILED: " . m
+:end
+:call append(line('$'), 'funcrefs '. fref_res)
+:?^1?,$w! test.out
+:qa!
+ENDTEST
+
+1 line 1
+2 line 2
+3 line 3

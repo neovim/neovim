@@ -1,0 +1,22 @@
+, foo
+keyword keyword
+all your base 
+are belong to vim
+1 2 3 4 5 7
+'i'   <-- should be 3 ' '
+'C'   <-- should be 3 ' '
+'a'    <-- should be 4 ' '
+'A'<-- should be 0 ' '
+'D'   <-- 'D' should be intact
+this is a test
+this is a test
+this is a test
+"r"    x<-- should be 'x'
+[This line should contain only the text between the brackets.]
+   v   i   m   <-- should show the name of a noted text editor
+    6   .   0   <-- and its version number
+
+a
+a
+a
+ 

@@ -1,0 +1,65 @@
+Tests for reading and writing files with conversion for Win32.
+
+STARTTEST
+:so mbyte.vim
+:" make this a dummy test for non-Win32 systems
+:if !has("win32") | e! test.ok | wq! test.out | endif
+:"
+:" write tests:
+:" combine three values for 'encoding' with three values for 'fileencoding'
+:" also write files for read tests
+/^1
+:set encoding=utf-8
+:.w! ++enc=utf-8 test.out
+:.w ++enc=cp1251 >>test.out
+:.w ++enc=cp866 >>test.out
+:.w! ++enc=utf-8 Xutf8
+/^2
+:set encoding=cp1251
+:.w ++enc=utf-8 >>test.out
+:.w ++enc=cp1251 >>test.out
+:.w ++enc=cp866 >>test.out
+:.w! ++enc=cp1251 Xcp1251
+/^3
+:set encoding=cp866
+:.w ++enc=utf-8 >>test.out
+:.w ++enc=cp1251 >>test.out
+:.w ++enc=cp866 >>test.out
+:.w! ++enc=cp866 Xcp866
+:"
+:" read three 'fileencoding's with utf-8 'encoding'
+:set encoding=utf-8 fencs=utf-8,cp1251
+:e Xutf8
+:.w ++enc=utf-8 >>test.out
+:e Xcp1251
+:.w ++enc=utf-8 >>test.out
+:set fencs=utf-8,cp866
+:e Xcp866
+:.w ++enc=utf-8 >>test.out
+:"
+:" read three 'fileencoding's with cp1251 'encoding'
+:set encoding=utf-8 fencs=utf-8,cp1251
+:e Xutf8
+:.w ++enc=cp1251 >>test.out
+:e Xcp1251
+:.w ++enc=cp1251 >>test.out
+:set fencs=utf-8,cp866
+:e Xcp866
+:.w ++enc=cp1251 >>test.out
+:"
+:" read three 'fileencoding's with cp866 'encoding'
+:set encoding=cp866 fencs=utf-8,cp1251
+:e Xutf8
+:.w ++enc=cp866 >>test.out
+:e Xcp1251
+:.w ++enc=cp866 >>test.out
+:set fencs=utf-8,cp866
+:e Xcp866
+:.w ++enc=cp866 >>test.out
+:"
+:qa!
+ENDTEST
+
+1 utf-8 text: Р”Р»СЏ Vim version 6.2.  РџРѕСЃР»РµРґРЅРµРµ РёР·РјРµРЅРµРЅРёРµ: 1970 Jan 01
+2 cp1251 text: Для Vim version 6.2.  Последнее изменение: 1970 Jan 01
+3 cp866 text: „«п Vim version 6.2.  Џ®б«Ґ¤­ҐҐ Ё§¬Ґ­Ґ­ЁҐ: 1970 Jan 01

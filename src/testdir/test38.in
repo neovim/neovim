@@ -1,0 +1,35 @@
+
+Test Virtual replace mode.
+
+STARTTEST
+:so small.vim
+:" make sure that backspace works, no matter what termcap is used
+:set t_kD=x7f t_kb=x08
+ggdGa
+abcdefghi
+jk	lmn
+    opq	rst
+uvwxyz
+gg:set ai
+:set bs=2
+gR0 1
+A
+BCDEFGHIJ
+	KL
+MNO
+PQRG:ka
+o0
+abcdefghi
+jk	lmn
+    opq	rst
+uvwxyz
+'ajgR0 1
+A
+BCDEFGHIJ
+	KL
+MNO
+PQR:$
+iab	cdefghi	jkl0gRAB......CDEFGHI.Jo:
+iabcdefghijklmnopqrst0gRAB	IJKLMNO	QR:wq! test.out
+ENDTEST
+

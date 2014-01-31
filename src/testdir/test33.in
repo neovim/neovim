@@ -1,0 +1,34 @@
+Test for 'lisp'
+If the lisp feature is not enabled, this will fail!
+
+STARTTEST
+:so small.vim
+:set lisp
+/^(defun
+=G:/^(defun/,$w! test.out
+:q!
+ENDTEST
+
+(defun html-file (base)
+(format nil "~(~A~).html" base))
+
+(defmacro page (name title &rest body)
+(let ((ti (gensym)))
+`(with-open-file (*standard-output*
+(html-file ,name)
+:direction :output
+:if-exists :supersede)
+(let ((,ti ,title))
+(as title ,ti)
+(with center 
+(as h2 (string-upcase ,ti)))
+(brs 3)
+,@body))))
+
+;;; Utilities for generating links
+
+(defmacro with-link (dest &rest body)
+`(progn
+(format t "<a href=\"~A\">" (html-file ,dest))
+,@body
+(princ "</a>")))

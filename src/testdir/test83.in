@@ -1,0 +1,76 @@
+Tests for tag search with !_TAG_FILE_ENCODING.
+
+STARTTEST
+:so mbyte.vim
+:set enc=utf8
+:if !has('iconv') || iconv("\x82\x60", "cp932", "utf-8") != "\uff21"
+: e! test.ok
+: w! test.out
+: qa!
+:endif
+
+:/^text for tags1$/,/^text for tags1$/+1w! Xtags1.txt
+:/^text for tags2$/,/^text for tags2$/+1w! Xtags2.txt
+:/^text for tags3$/,/^text for tags3$/+1w! Xtags3.txt
+:/^tags1$/+1,/^tags1-end$/-1w! Xtags1
+
+ggdG
+
+:call setline('.', 'Results of test83')
+
+:" case1:
+:new
+:set tags=Xtags1
+:let v:errmsg = ''
+:tag abcdefghijklmnopqrs
+:if v:errmsg =~ 'E426:' || getline('.') != 'abcdefghijklmnopqrs'
+: close
+: put ='case1: failed'
+:else
+: close
+: put ='case1: ok'
+:endif
+
+:" case2:
+:new
+:set tags=test83-tags2
+:let v:errmsg = ''
+:tag /.ＢＣ
+:if v:errmsg =~ 'E426:' || getline('.') != 'ＡＢＣ'
+: close
+: put ='case2: failed'
+:else
+: close
+: put ='case2: ok'
+:endif
+
+:" case3:
+:new
+:set tags=test83-tags3
+:let v:errmsg = ''
+:tag abc50
+:if v:errmsg =~ 'E426:' || getline('.') != 'ＡＢＣ'
+: close
+: put ='case3: failed'
+:else
+: close
+: put ='case3: ok'
+:endif
+:close
+
+:wq! test.out
+ENDTEST
+
+text for tags1
+abcdefghijklmnopqrs
+
+text for tags2
+ＡＢＣ
+
+text for tags3
+ＡＢＣ
+
+tags1
+!_TAG_FILE_ENCODING	utf-8	//
+abcdefghijklmnopqrs	Xtags1.txt	/abcdefghijklmnopqrs
+tags1-end

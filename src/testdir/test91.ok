@@ -1,0 +1,48 @@
+start:
+'1234'
+'1234'
+{'var_num': '1234'}
+{'var_num': '1234'}
+'5678'
+{}
+{}
+''
+'5678'
+0
+0
+dos
+1
+iso-8859-2
+'Dance'
+'Dance'
+{'var_str': 'Dance'}
+{'var_str': 'Dance'}
+'Chance'
+{}
+{}
+''
+'Chance'
+0
+0
+[1, 2, 3]
+[1, 2, 3]
+''
+[4, 5, 6, 7]
+[4, 5, 6, 7]
+''
+[4, 5, 6, 7]
+''
+[4, 5, 6, 7]
+{'dict': 'tabwin'}
+{'dict': 'tabwin'}
+{'var_dict': {'dict': 'tabwin'}}
+{'var_dict': {'dict': 'tabwin'}}
+{'dict2': 'newval'}
+{}
+{}
+''
+{'dict2': 'newval'}
+''
+{'dict2': 'newval'}
+''
+1

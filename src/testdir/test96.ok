@@ -1,0 +1,9 @@
+
+Test A:
+  - file name displayed: test://bar.txt
+  - quickfix claims that the file name displayed is: test://bar.txt
+Test B:
+  - number of window open: 2
+Test C:
+  - 'buftype' of the location list window: quickfix
+  - buffer displayed in the 2nd window: test://quux.txt

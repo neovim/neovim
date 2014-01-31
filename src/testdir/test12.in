@@ -1,0 +1,52 @@
+Tests for 'directory' option.
+- ".", in same dir as file
+- "./dir", in directory relative to file
+- "dir", in directory relative to current dir
+
+STARTTEST
+:so small.vim
+:set nocompatible viminfo+=nviminfo
+:set dir=.,~
+:/start of testfile/,/end of testfile/w! Xtest1
+:" do an ls of the current dir to find the swap file (should not be there)
+:if has("unix")
+:  !ls .X*.swp >test.out
+:else
+:  r !ls X*.swp >test.out
+:endif
+:!echo first line >>test.out
+:e Xtest1
+:if has("unix")
+:" Do an ls of the current dir to find the swap file, remove the leading dot
+:" to make the result the same for all systems.
+:  r!ls .X*.swp
+:  s/\.*X/X/
+:  .w >>test.out
+:  undo
+:else
+:  !ls X*.swp >>test.out
+:endif
+:!echo under Xtest1.swp >>test.out
+:!mkdir Xtest2
+:set dir=./Xtest2,.,~
+:e Xtest1
+:!ls X*.swp >>test.out
+:!echo under under >>test.out
+:!ls Xtest2 >>test.out
+:!echo under Xtest1.swp >>test.out
+:!mkdir Xtest.je
+:/start of testfile/,/end of testfile/w! Xtest2/Xtest3
+:set dir=Xtest.je,~
+:e Xtest2/Xtest3
+:swap
+:!ls Xtest2 >>test.out
+:!echo under Xtest3 >>test.out
+:!ls Xtest.je >>test.out
+:!echo under Xtest3.swp >>test.out
+:qa!
+ENDTEST
+
+start of testfile
+line 2 Abcdefghij
+line 3 Abcdefghij
+end of testfile

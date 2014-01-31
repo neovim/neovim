@@ -1,0 +1,17 @@
+Test whether glob()/globpath() return correct results with certain escaped
+characters.
+
+STARTTEST
+:so small.vim
+:set shell=doesnotexist
+:e test.out
+:put =glob('Xxx\{')
+:put =glob('Xxx\$')
+:w! Xxx{
+:w! Xxx\$
+:put =glob('Xxx\{')
+:put =glob('Xxx\$')
+:w
+:qa!
+ENDTEST
+

@@ -1,0 +1,36 @@
+Tests for ":highlight". vim: set ft=vim :
+
+STARTTEST
+:so small.vim
+:" basic test if ":highlight" doesn't crash
+:highlight
+:hi Search
+:" test setting colors.
+:" test clearing one color and all doesn't generate error or warning
+:hi NewGroup term=bold cterm=italic ctermfg=DarkBlue ctermbg=Grey gui= guifg=#00ff00 guibg=Cyan
+:hi Group2 term= cterm=
+:hi Group3 term=underline cterm=bold
+:redir! >test.out
+:hi NewGroup
+:hi Group2
+:hi Group3
+:hi clear NewGroup
+:hi NewGroup
+:hi Group2
+:hi Group2 NONE
+:hi Group2
+:hi clear
+:hi Group3
+:hi Crash term='asdf
+:redir END
+:" filter ctermfg and ctermbg, the numbers depend on the terminal
+:e test.out
+:%s/ctermfg=\d*/ctermfg=2/
+:%s/ctermbg=\d*/ctermbg=3/
+:" filter out possibly translated error message
+:%s/E475: [^:]*:/E475:/
+:" fix the fileformat
+:set ff&
+:wq!
+ENDTEST
+

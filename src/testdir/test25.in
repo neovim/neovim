@@ -1,0 +1,31 @@
+Test for jumping to a tag with 'hidden' set, with symbolic link in path of tag.
+This only works for Unix, because of the symbolic link.
+
+STARTTEST
+:so small.vim
+:set hidden
+:" Create a link from test25.dir to the current directory.
+:!rm -f test25.dir
+:!ln -s . test25.dir
+:" Create tags.text, with the current directory name inserted.
+/tags line
+:r !pwd
+d$/test
+hP:.w! tags.test
+:" Try jumping to a tag in the current file, but with a path that contains a
+:" symbolic link.  When wrong, this will give the ATTENTION message.  The next
+:" space will then be eaten by hit-return, instead of moving the cursor to 'd'.
+:set tags=tags.test
+G x:.w! test.out
+:!rm -f test25.dir tags.test
+:qa!
+ENDTEST
+
+tags line:
+SECTION_OFF	/test25.dir/test25.in	/^#define  SECTION_OFF  3$/
+
+/*tx.c*/
+#define  SECTION_OFF  3
+#define  NUM_SECTIONS 3
+
+SECTION_OFF

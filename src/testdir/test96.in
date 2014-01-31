@@ -1,0 +1,142 @@
+This will test for problems in quickfix:
+A. incorrectly copying location lists which caused the location list to show a
+   different name than the file that was actually being displayed.
+B. not reusing the window for which the location list window is opened but
+   instead creating new windows.
+C. make sure that the location list window is not reused instead of the window
+   it belongs to.
+
+Note: to debug a problem comment out the last ":b 1" in a test and testing will
+stop at this point.
+
+STARTTEST
+:so small.vim
+: enew
+: w! test.out
+: b 1
+: " Set up the test environment:
+: function! ReadTestProtocol(name)
+:   let base = substitute(a:name, '\v^test://(.*)%(\.[^.]+)?', '\1', '')
+:   let word = substitute(base, '\v(.*)\..*', '\1', '')
+:
+:   setl modifiable
+:   setl noreadonly
+:   setl noswapfile
+:   setl bufhidden=delete
+:   %del _
+:   " For problem 2:
+:   " 'buftype' has to be set to reproduce the constant opening of new windows
+:   setl buftype=nofile
+:
+:   call setline(1, word)
+:
+:   setl nomodified
+:   setl nomodifiable
+:   setl readonly
+:   exe 'doautocmd BufRead ' . substitute(a:name, '\v^test://(.*)', '\1', '')
+: endfunction
+: augroup testgroup
+:   au!
+:   autocmd BufReadCmd test://* call ReadTestProtocol(expand("<amatch>"))
+: augroup END
+: let words = [ "foo", "bar", "baz", "quux", "shmoo", "spam", "eggs" ]
+:
+: let qflist = []
+: for word in words
+:   call add(qflist, {'filename': 'test://' . word . '.txt', 'text': 'file ' . word . '.txt', })
+:   " NOTE: problem 1:
+:   " intentionally not setting 'lnum' so that the quickfix entries are not
+:   " valid
+:   call setloclist(0, qflist, ' ')
+: endfor
+ENDTEST
+
+Test A:
+STARTTEST
+:lrewind
+:enew
+:lopen
+:lnext
+:lnext
+:lnext
+:lnext
+:vert split
+:wincmd L
+:lopen
+:wincmd p
+:lnext
+:"b 1
+:let fileName = expand("%")
+:wincmd p
+:let locationListFileName = substitute(getline(line('.')), '\([^|]*\)|.*', '\1', '')
+:wincmd n
+:wincmd K
+:b test.out
+:let fileName = substitute(fileName, '\\', '/', 'g')
+:let locationListFileName = substitute(locationListFileName, '\\', '/', 'g')
+:call append(line('$'), "Test A:")
+:call append(line('$'), "  - file name displayed: " . fileName)
+:call append(line('$'), "  - quickfix claims that the file name displayed is: " . locationListFileName)
+:w
+:wincmd o
+:b 1
+ENDTEST
+
+Test B:
+STARTTEST
+:lrewind
+:lopen
+:2
+:exe "normal \<CR>"
+:wincmd p
+:3
+:exe "normal \<CR>"
+:wincmd p
+:4
+:exe "normal \<CR>"
+:let numberOfWindowsOpen = winnr('$')
+:wincmd n
+:wincmd K
+:b test.out
+:call append(line('$'), "Test B:")
+:call append(line('$'), "  - number of window open: " . numberOfWindowsOpen)
+:w
+:wincmd o
+:b 1
+ENDTEST
+
+Test C:
+STARTTEST
+:lrewind
+:lopen
+:" Let's move the location list window to the top to check whether it (the first
+:" window found) will be reused when we try to open new windows:
+:wincmd K
+:2
+:exe "normal \<CR>"
+:wincmd p
+:3
+:exe "normal \<CR>"
+:wincmd p
+:4
+:exe "normal \<CR>"
+:1wincmd w
+:let locationListWindowBufType = &buftype
+:2wincmd w
+:let bufferName = expand("%")
+:wincmd n
+:wincmd K
+:b test.out
+:let bufferName = substitute(bufferName, '\\', '/', 'g')
+:call append(line('$'), "Test C:")
+:call append(line('$'), "  - 'buftype' of the location list window: " . locationListWindowBufType)
+:call append(line('$'), "  - buffer displayed in the 2nd window: " . bufferName)
+:w
+:wincmd o
+:b 1
+ENDTEST
+
+STARTTEST
+:qa
+ENDTEST
+

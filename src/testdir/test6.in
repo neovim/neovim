@@ -1,0 +1,24 @@
+Test for autocommand that redefines the argument list, when doing ":all".
+
+STARTTEST
+:so small.vim
+:au BufReadPost Xxx2 next Xxx2 Xxx1
+/^start of
+A1:.,/end of/w! Xxx1    " write test file Xxx1
+$r2:.,/end of/w! Xxx2     " write test file Xxx2
+$r3:.,/end of/w! Xxx3     " write test file Xxx3
+:next! Xxx1 Xxx2 Xxx3     " redefine arglist; go to Xxx1
+:all                      " open window for all args
+:w! test.out              " Write contents of Xxx1
+:w >>test.out     " Append contents of last window (Xxx1)
+:rew                      " should now be in Xxx2
+:w >>test.out             " Append contents of Xxx2
+:qa!
+ENDTEST
+
+start of test file Xxx
+	this is a test
+	this is a test
+	this is a test
+	this is a test
+end of test file Xxx

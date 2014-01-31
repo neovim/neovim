@@ -1,0 +1,44 @@
+Test for :execute, :while and :if
+
+STARTTEST
+:so small.vim
+mt:let i = 0
+:while i < 12
+:  let i = i + 1
+:  if has("ebcdic")
+:    execute "normal o" . i . "\047"
+:  else
+:    execute "normal o" . i . "\033"
+:  endif
+:  if i % 2
+:    normal Ax
+:    if i == 9
+:      break
+:    endif
+:    if i == 5
+:      continue
+:    else
+:      let j = 9
+:      while j > 0
+:        if has("ebcdic")
+:          execute "normal" j . "a" . j . "\x27"
+:        else
+:          execute "normal" j . "a" . j . "\x1b"
+:        endif
+:        let j = j - 1
+:      endwhile
+:    endif
+:  endif
+:  if i == 9
+:    if has("ebcdic")
+:      execute "normal Az\047"
+:    else
+:      execute "normal Az\033"
+:    endif
+:  endif
+:endwhile
+:unlet i j
+:'t,$w! test.out
+:qa!
+ENDTEST
+

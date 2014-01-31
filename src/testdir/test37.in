@@ -1,0 +1,116 @@
+Test for 'scrollbind'. <eralston@computer.org>   Do not add a line below!
+STARTTEST
+:so small.vim
+:set noscrollbind
+:set scrollopt=ver,jump
+:set scrolloff=2
+:set nowrap
+:set noequalalways
+:set splitbelow
+:" TEST using two windows open to one buffer, one extra empty window
+:split
+:new
+t:
+:resize 8
+/^start of window 1$/
+zt:
+:set scrollbind
+j:
+:resize 7
+/^start of window 2$/
+zt:
+:set scrollbind
+:" -- start of tests --
+:" TEST scrolling down
+L5jHyybpr0tHyybpr1tL6jHyybpr2kHyybpr3:
+:" TEST scrolling up
+tH4kjHtHyybpr4kHyybpr5k3ktHjHyybpr6tHyybpr7:
+:" TEST horizontal scrolling
+:set scrollopt+=hor
+gg"zyyG"zpGt015zly$bp"zpGky$bp"zpG:
+k10jH7zhg0y$bp"zpGtHg0y$bp"zpG:
+:set scrollopt-=hor
+:" ****** tests using two different buffers *****
+tj:
+:close
+t:
+:set noscrollbind
+:/^start of window 2$/,/^end of window 2$/y
+:new
+tj4"zpGp:
+t/^start of window 1$/
+zt:
+:set scrollbind
+j:
+/^start of window 2$/
+zt:
+:set scrollbind
+:" -- start of tests --
+:" TEST scrolling down
+L5jHyybpr0tHyybpr1tL6jHyybpr2kHyybpr3:
+:" TEST scrolling up
+tH4kjHtHyybpr4kHyybpr5k3ktHjHyybpr6tHyybpr7:
+:" TEST horizontal scrolling
+:set scrollopt+=hor
+gg"zyyG"zpGt015zly$bp"zpGky$bp"zpG:
+k10jH7zhg0y$bp"zpGtHg0y$bp"zpG:
+:set scrollopt-=hor
+:" TEST syncbind
+t:set noscb
+ggLj:set noscb
+ggL:set scb
+t:set scb
+GjG:syncbind
+HktHjHyybptyybp:
+t:set noscb
+ggLj:set noscb
+ggL:set scb
+t:set scb
+tGjGt:syncbind
+HkjHtHyybptjyybp:
+tH3kjHtHyybptjyybp:
+:" ***** done with tests *****
+:w! test.out             " Write contents of this file
+:qa!
+ENDTEST
+
+
+start of window 1
+. line 01 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 01
+. line 02 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 02
+. line 03 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 03
+. line 04 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 04
+. line 05 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 05
+. line 06 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 06
+. line 07 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 07
+. line 08 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 08
+. line 09 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 09
+. line 10 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 10
+. line 11 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 11
+. line 12 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 12
+. line 13 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 13
+. line 14 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 14
+. line 15 0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ 15
+end of window 1
+
+
+start of window 2
+. line 01 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 01
+. line 02 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 02
+. line 03 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 03
+. line 04 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 04
+. line 05 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 05
+. line 06 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 06
+. line 07 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 07
+. line 08 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 08
+. line 09 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 09
+. line 10 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 10
+. line 11 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 11
+. line 12 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 12
+. line 13 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 13
+. line 14 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 14
+. line 15 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 15
+. line 16 ZYXWVUTSRQPONMLKJIHGREDCBA9876543210 16
+end of window 2
+
+end of test37.in (please don't delete this line)

@@ -1,0 +1,21 @@
+Test Ctrl-A and Ctrl-X, which increment and decrement decimal, hexadecimal,
+and octal numbers.
+
+STARTTEST
+/^start-here
+:set nrformats=octal,hex
+j102ll64128$
+:set nrformats=octal
+0102l2w65129blx6lD
+:set nrformats=hex
+0101l257Txldt   
+:set nrformats=
+0200l100w78k
+:$-3,$wq! test.out
+ENDTEST
+
+start-here
+100     0x100     077     0
+100     0x100     077     
+100     0x100     077     0xfF     0xFf
+100     0x100     077     

@@ -1,0 +1,12 @@
+Test if fnameescape is correct for special chars like !
+
+STARTTEST
+:%d
+:let fname = 'Xspa ce'
+:try | exe "w! " . fnameescape(fname) | put='Space' | endtry 
+:let fname = 'Xemark!'
+:try | exe "w! " . fnameescape(fname) | put='ExclamationMark' | endtry
+:w! test.out
+:qa!
+ENDTEST
+

@@ -1,0 +1,78 @@
+This is a test of 'virtualedit'.
+
+STARTTEST
+:so small.vim
+:set noswf
+:set ve=all
+-dgg
+:"
+:"   Insert "keyword keyw", ESC, C CTRL-N, shows "keyword ykeyword".
+:"    Repeating CTRL-N fixes it. (Mary Ellen Foster)
+2/w
+C
+:"
+:"   Using "C" then then <CR> moves the last remaining character to the next
+:"    line.  (Mary Ellen Foster)
+j^/are
+Care belong to vim
+:"
+:"   When past the end of a line that ends in a single character "b" skips
+:"    that word.
+^$15lbC7
+:"
+:"   Make sure 'i' works
+$4li<-- should be 3 ' '
+:"
+:"   Make sure 'C' works
+$4lC<-- should be 3 ' '
+:"
+:"   Make sure 'a' works
+$4la<-- should be 4 ' '
+:"
+:"   Make sure 'A' works
+$4lA<-- should be 0 ' '
+:"
+:"   Make sure 'D' works
+$4lDi<-- 'D' should be intact
+:"
+:"   Test for yank bug reported by Mark Waggoner.
+:set ve=block
+^2w3jyGp
+:"
+:" Test "r" beyond the end of the line
+:set ve=all
+/^"r"
+$5lrxa<-- should be 'x'
+:"
+:"   Test to make sure 'x' can delete control characters
+:set display=uhex
+^xxxxxxi[This line should contain only the text between the brackets.]
+:set display=
+:"
+:"   Test for ^Y/^E due to bad w_virtcol value, reported by
+:"   Roy <royl@netropolis.net>.
+^O3li4li4li   <-- should show the name of a noted text editor
+^o4li4li4li   <-- and its version number-dd
+:"
+:" Test for yanking and pasting using the small delete register
+gg/^foo
+dewve"-p
+:wq! test.out
+ENDTEST
+foo, bar
+keyword keyw
+all your base are belong to us
+1 2 3 4 5 6
+'i'
+'C'
+'a'
+'A'
+'D'
+this is a test
+this is a test
+this is a test
+"r"
+absd
+abcv6efi.him0kl
+
+

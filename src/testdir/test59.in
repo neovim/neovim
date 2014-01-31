@@ -1,0 +1,626 @@
+Tests for spell checking with 'encoding' set to "utf-8".  vim: set ft=vim :
+
+STARTTEST
+:so small.vim
+:so mbyte.vim
+:"
+:" Don't want to depend on the locale from the environment.  The .aff and .dic
+:" text is in latin1, the test text is utf-8.
+:set enc=latin1
+:e!
+:set enc=utf-8
+:set fenc=
+:"
+:" Function to test .aff/.dic with list of good and bad words.
+:func TestOne(aff, dic)
+  set spellfile=
+  $put =''
+  $put ='test '. a:aff . '-' . a:dic
+  " Generate a .spl file from a .dic and .aff file.
+  exe '1;/^' . a:aff . 'affstart/+1,/^' . a:aff . 'affend/-1w! Xtest.aff'
+  exe '1;/^' . a:dic . 'dicstart/+1,/^' . a:dic . 'dicend/-1w! Xtest.dic'
+  mkspell! Xtest Xtest
+  " use that spell file
+  set spl=Xtest.utf-8.spl spell
+  " list all valid words
+  spelldump
+  %yank
+  quit
+  $put
+  $put ='-------'
+  " find all bad words and suggestions for them
+  exe '1;/^' . a:aff . 'good:'
+  normal 0f:]s
+  let prevbad = ''
+  while 1
+    let [bad, a] = spellbadword()
+    if bad == '' || bad == prevbad || bad == 'badend'
+      break
+    endif
+    let prevbad = bad
+    let lst = spellsuggest(bad, 3)
+    normal mm
+    $put =bad
+    $put =string(lst)
+    normal `m]s
+  endwhile
+endfunc
+:"
+:call TestOne('1', '1')
+:$put =soundfold('goobledygoook')
+:$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')
+:$put =soundfold('oeverloos gezwets edale')
+:"
+:"
+:" and now with SAL instead of SOFO items; test automatic reloading
+gg:/^affstart_sal/+1,/^affend_sal/-1w! Xtest.aff
+:mkspell! Xtest Xtest
+:$put =soundfold('goobledygoook')
+:$put =soundfold('kÃ³opÃ«rÃ¿nÃ´ven')
+:$put =soundfold('oeverloos gezwets edale')
+:"
+:" also use an addition file
+gg:/^addstart/+1,/^addend/-1w! Xtest.utf-8.add
+:mkspell! Xtest.utf-8.add.spl Xtest.utf-8.add
+:set spellfile=Xtest.utf-8.add
+/^test2:
+]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_us.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_gb.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_nz.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:set spl=Xtest_ca.utf-8.spl
+/^test2:
+]smm:let [str, a] = spellbadword()
+:$put =str
+`m]s:let [str, a] = spellbadword()
+:$put =str
+:unlet str a
+:"
+:" Postponed prefixes
+:call TestOne('2', '1')
+:"
+:" Compound words
+:call TestOne('3', '3')
+:call TestOne('4', '4')
+:call TestOne('5', '5')
+:call TestOne('6', '6')
+:call TestOne('7', '7')
+:"
+:" clean up for valgrind
+:delfunc TestOne
+:set spl= enc=latin1
+:"
+gg:/^test output:/,$wq! test.out
+ENDTEST
+
+1affstart
+SET ISO8859-1
+TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+
+FOL  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+LOW  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ
+
+SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZàáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞ¿
+SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
+
+MIDWORD	'-
+
+KEP =
+RAR ?
+BAD !
+
+#NOSPLITSUGS
+
+PFX I N 1
+PFX I 0 in .
+
+PFX O Y 1
+PFX O 0 out .
+
+SFX S Y 2
+SFX S 0 s [^s]
+SFX S 0 es s
+
+SFX N N 3
+SFX N 0 en [^n]
+SFX N 0 nen n
+SFX N 0 n .
+
+REP 3
+REP g ch
+REP ch g
+REP svp s.v.p.
+
+MAP 9
+MAP aàáâãäå
+MAP eèéêë
+MAP iìíîï
+MAP oòóôõö
+MAP uùúûü
+MAP nñ
+MAP cç
+MAP yÿı
+MAP sß
+1affend
+
+affstart_sal
+SET ISO8859-1
+TRY esianrtolcdugmphbyfvkwjkqxz-ëéèêïîäàâöüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+
+FOL  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+LOW  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ
+
+MIDWORD	'-
+
+KEP =
+RAR ?
+BAD !
+
+#NOSPLITSUGS
+
+PFX I N 1
+PFX I 0 in .
+
+PFX O Y 1
+PFX O 0 out .
+
+SFX S Y 2
+SFX S 0 s [^s]
+SFX S 0 es s
+
+SFX N N 3
+SFX N 0 en [^n]
+SFX N 0 nen n
+SFX N 0 n .
+
+REP 3
+REP g ch
+REP ch g
+REP svp s.v.p.
+
+MAP 9
+MAP aàáâãäå
+MAP eèéêë
+MAP iìíîï
+MAP oòóôõö
+MAP uùúûü
+MAP nñ
+MAP cç
+MAP yÿı
+MAP sß
+
+SAL AH(AEIOUY)-^         *H
+SAL AR(AEIOUY)-^         *R
+SAL A(HR)^               *
+SAL A^                   *
+SAL AH(AEIOUY)-          H
+SAL AR(AEIOUY)-          R
+SAL A(HR)                _
+SAL À^                   *
+SAL Å^                   *
+SAL BB-                  _
+SAL B                    B
+SAL CQ-                  _
+SAL CIA                  X
+SAL CH                   X
+SAL C(EIY)-              S
+SAL CK                   K
+SAL COUGH^               KF
+SAL CC<                  C
+SAL C                    K
+SAL DG(EIY)              K
+SAL DD-                  _
+SAL D                    T
+SAL É<                   E
+SAL EH(AEIOUY)-^         *H
+SAL ER(AEIOUY)-^         *R
+SAL E(HR)^               *
+SAL ENOUGH^$             *NF
+SAL E^                   *
+SAL EH(AEIOUY)-          H
+SAL ER(AEIOUY)-          R
+SAL E(HR)                _
+SAL FF-                  _
+SAL F                    F
+SAL GN^                  N
+SAL GN$                  N
+SAL GNS$                 NS
+SAL GNED$                N
+SAL GH(AEIOUY)-          K
+SAL GH                   _
+SAL GG9                  K
+SAL G                    K
+SAL H                    H
+SAL IH(AEIOUY)-^         *H
+SAL IR(AEIOUY)-^         *R
+SAL I(HR)^               *
+SAL I^                   *
+SAL ING6                 N
+SAL IH(AEIOUY)-          H
+SAL IR(AEIOUY)-          R
+SAL I(HR)                _
+SAL J                    K
+SAL KN^                  N
+SAL KK-                  _
+SAL K                    K
+SAL LAUGH^               LF
+SAL LL-                  _
+SAL L                    L
+SAL MB$                  M
+SAL MM                   M
+SAL M                    M
+SAL NN-                  _
+SAL N                    N
+SAL OH(AEIOUY)-^         *H
+SAL OR(AEIOUY)-^         *R
+SAL O(HR)^               *
+SAL O^                   *
+SAL OH(AEIOUY)-          H
+SAL OR(AEIOUY)-          R
+SAL O(HR)                _
+SAL PH                   F
+SAL PN^                  N
+SAL PP-                  _
+SAL P                    P
+SAL Q                    K
+SAL RH^                  R
+SAL ROUGH^               RF
+SAL RR-                  _
+SAL R                    R
+SAL SCH(EOU)-            SK
+SAL SC(IEY)-             S
+SAL SH                   X
+SAL SI(AO)-              X
+SAL SS-                  _
+SAL S                    S
+SAL TI(AO)-              X
+SAL TH                   @
+SAL TCH--                _
+SAL TOUGH^               TF
+SAL TT-                  _
+SAL T                    T
+SAL UH(AEIOUY)-^         *H
+SAL UR(AEIOUY)-^         *R
+SAL U(HR)^               *
+SAL U^                   *
+SAL UH(AEIOUY)-          H
+SAL UR(AEIOUY)-          R
+SAL U(HR)                _
+SAL V^                   W
+SAL V                    F
+SAL WR^                  R
+SAL WH^                  W
+SAL W(AEIOU)-            W
+SAL X^                   S
+SAL X                    KS
+SAL Y(AEIOU)-            Y
+SAL ZZ-                  _
+SAL Z                    S
+affend_sal
+
+2affstart
+SET ISO8859-1
+
+FOL  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+LOW  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ
+
+PFXPOSTPONE
+
+MIDWORD	'-
+
+KEP =
+RAR ?
+BAD !
+
+#NOSPLITSUGS
+
+PFX I N 1
+PFX I 0 in .
+
+PFX O Y 1
+PFX O 0 out [a-z]
+
+SFX S Y 2
+SFX S 0 s [^s]
+SFX S 0 es s
+
+SFX N N 3
+SFX N 0 en [^n]
+SFX N 0 nen n
+SFX N 0 n .
+
+REP 3
+REP g ch
+REP ch g
+REP svp s.v.p.
+
+MAP 9
+MAP aàáâãäå
+MAP eèéêë
+MAP iìíîï
+MAP oòóôõö
+MAP uùúûü
+MAP nñ
+MAP cç
+MAP yÿı
+MAP sß
+2affend
+
+1dicstart
+123456
+test/NO
+# comment
+wrong
+Comment
+OK
+uk
+put/ISO
+the end
+deol
+déôr
+1dicend
+
+addstart
+/regions=usgbnz
+elequint/2
+elekwint/3
+addend
+
+1good: wrong OK puts. Test the end
+bad:  inputs comment ok Ok. test dÃ©Ã´l end the
+badend
+
+2good: puts
+bad: inputs comment ok Ok end the. test dÃ©Ã´l
+badend
+
+Test rules for compounding.
+
+3affstart
+SET ISO8859-1
+
+COMPOUNDMIN 3
+COMPOUNDRULE m*
+NEEDCOMPOUND x
+3affend
+
+3dicstart
+1234
+foo/m
+bar/mx
+mï/m
+la/mx
+3dicend
+
+3good: foo mÃ¯ foobar foofoobar barfoo barbarfoo
+bad: bar la foomÃ¯ barmÃ¯ mÃ¯foo mÃ¯bar mÃ¯mÃ¯ lala mÃ¯la lamÃ¯ foola labar
+badend
+
+
+Tests for compounding.
+
+4affstart
+SET ISO8859-1
+
+FOL  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+LOW  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ
+
+COMPOUNDRULE m+
+COMPOUNDRULE sm*e
+COMPOUNDRULE sm+
+COMPOUNDMIN 3
+COMPOUNDWORDMAX 3
+COMPOUNDFORBIDFLAG t
+
+COMPOUNDSYLMAX 5
+SYLLABLE aáeéiíoóöõuúüûy/aa/au/ea/ee/ei/ie/oa/oe/oo/ou/uu/ui
+
+MAP 9
+MAP aàáâãäå
+MAP eèéêë
+MAP iìíîï
+MAP oòóôõö
+MAP uùúûü
+MAP nñ
+MAP cç
+MAP yÿı
+MAP sß
+
+NEEDAFFIX x
+
+PFXPOSTPONE
+
+MIDWORD '-
+
+SFX q N 1
+SFX q   0    -ok .
+
+SFX a Y 2
+SFX a 0 s .
+SFX a 0 ize/t .
+
+PFX p N 1
+PFX p 0 pre .
+
+PFX P N 1
+PFX P 0 nou .
+4affend
+
+4dicstart
+1234
+word/mP
+util/am
+pro/xq
+tomato/m
+bork/mp
+start/s
+end/e
+4dicend
+
+4good: word util bork prebork start end wordutil wordutils pro-ok
+	bork borkbork borkborkbork borkborkborkbork borkborkborkborkbork
+	tomato tomatotomato startend startword startwordword startwordend
+	startwordwordend startwordwordwordend prebork preborkbork
+	preborkborkbork
+	nouword
+bad: wordutilize pro borkborkborkborkborkbork tomatotomatotomato
+	endstart endend startstart wordend wordstart
+	preborkprebork  preborkpreborkbork
+ 	startwordwordwordwordend borkpreborkpreborkbork
+	utilsbork  startnouword
+badend
+
+test2:
+elequint test elekwint test elekwent asdf
+
+Test affix flags with two characters
+
+5affstart
+SET ISO8859-1
+
+FLAG long
+
+NEEDAFFIX !!
+
+COMPOUNDRULE ssmm*ee
+
+NEEDCOMPOUND xx
+COMPOUNDPERMITFLAG pp
+
+SFX 13 Y 1
+SFX 13 0 bork .
+
+SFX a1 Y 1
+SFX a1 0 a1 .
+
+SFX aé Y 1
+SFX aé 0 aé .
+
+PFX zz Y 1
+PFX zz 0 pre/pp .
+
+PFX yy Y 1
+PFX yy 0 nou .
+5affend
+
+5dicstart
+1234
+foo/a1aé!!
+bar/zz13ee
+start/ss
+end/eeyy
+middle/mmxx
+5dicend
+
+5good: fooa1 fooaÃ© bar prebar barbork prebarbork  startprebar
+      start end startend  startmiddleend nouend
+bad: foo fooa2 prabar probarbirk middle startmiddle middleend endstart
+	startprobar startnouend
+badend
+
+6affstart
+SET ISO8859-1
+
+FLAG caplong
+
+NEEDAFFIX A!
+
+COMPOUNDRULE sMm*Ee
+
+NEEDCOMPOUND Xx
+
+COMPOUNDPERMITFLAG p
+
+SFX N3 Y 1
+SFX N3 0 bork .
+
+SFX A1 Y 1
+SFX A1 0 a1 .
+
+SFX Aé Y 1
+SFX Aé 0 aé .
+
+PFX Zz Y 1
+PFX Zz 0 pre/p .
+6affend
+
+6dicstart
+1234
+mee/A1AéA!
+bar/ZzN3Ee
+lead/s
+end/Ee
+middle/MmXx
+6dicend
+
+6good: meea1 meeaÃ© bar prebar barbork prebarbork  leadprebar
+      lead end leadend  leadmiddleend
+bad: mee meea2 prabar probarbirk middle leadmiddle middleend endlead
+	leadprobar
+badend
+
+7affstart
+SET ISO8859-1
+
+FOL  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+LOW  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
+UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ
+
+FLAG num
+
+NEEDAFFIX 9999
+
+COMPOUNDRULE 2,77*123
+
+NEEDCOMPOUND 1
+COMPOUNDPERMITFLAG 432
+
+SFX 61003 Y 1
+SFX 61003 0 meat .
+
+SFX 391 Y 1
+SFX 391 0 a1 .
+
+SFX 111 Y 1
+SFX 111 0 aé .
+
+PFX 17 Y 1
+PFX 17 0 pre/432 .
+7affend
+
+7dicstart
+1234
+mee/391,111,9999
+bar/17,61003,123
+lead/2
+tail/123
+middle/77,1
+7dicend
+
+7good: meea1 meeaÃ© bar prebar barmeat prebarmeat  leadprebar
+      lead tail leadtail  leadmiddletail
+bad: mee meea2 prabar probarmaat middle leadmiddle middletail taillead
+	leadprobar
+badend
+
+test output:

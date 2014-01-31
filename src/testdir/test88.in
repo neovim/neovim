@@ -1,0 +1,88 @@
+vim: set ft=vim
+
+Tests for correct display (cursor column position) with +conceal and
+tabulators.
+
+STARTTEST
+:so small.vim
+:if !has('conceal')
+   e! test.ok
+   wq! test.out
+:endif
+:" Conceal settings.
+:set conceallevel=2
+:set concealcursor=nc
+:syntax match test /|/ conceal
+:" Save current cursor position. Only works in <expr> mode, can't be used
+:" with :normal because it moves the cursor to the command line. Thanks to ZyX
+:" <zyx.vim@gmail.com> for the idea to use an <expr> mapping.
+:let positions = []
+:nnoremap <expr> GG ":let positions += ['".screenrow().":".screencol()."']\n"
+:" Start test.
+/^start:
+:normal ztj
+GGk
+:" We should end up in the same column when running these commands on the two
+:" lines.
+:normal ft
+GGk
+:normal $
+GGk
+:normal 0j
+GGk
+:normal ft
+GGk
+:normal $
+GGk
+:normal 0j0j
+GGk
+:" Same for next test block.
+:normal ft
+GGk
+:normal $
+GGk
+:normal 0j
+GGk
+:normal ft
+GGk
+:normal $
+GGk
+:normal 0j0j
+GGk
+:" And check W with multiple tabs and conceals in a line.
+:normal W
+GGk
+:normal W
+GGk
+:normal W
+GGk
+:normal $
+GGk
+:normal 0j
+GGk
+:normal W
+GGk
+:normal W
+GGk
+:normal W
+GGk
+:normal $
+GGk
+:set lbr
+:normal $
+GGk
+:" Display result.
+:call append('$', 'end:')
+:call append('$', positions)
+:/^end/,$wq! test.out
+ENDTEST
+
+start:
+.concealed.     text
+|concealed|	text
+
+	.concealed.	text
+	|concealed|	text
+
+.a.	.b.	.c.	.d.
+|a|	|b|	|c|	|d|

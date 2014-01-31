@@ -1,0 +1,30 @@
+Inserts 2 million lines with consecutive integers starting from 1
+(essentially, the output of GNU's seq 1 2000000), writes them to Xtest
+and writes its cksum to test.out.
+
+We need 2 million lines to trigger a call to mf_hash_grow().  If it would mess
+up the lines the checksum would differ.
+
+cksum is part of POSIX and so should be available on most Unixes.
+If it isn't available then the test will be skipped.
+
+STARTTEST
+:so small.vim
+:if !executable("cksum")
+: e! test.ok
+: w! test.out
+: qa!
+:endif
+:set fileformat=unix undolevels=-1
+ggdG
+:let i = 1
+:while i <= 2000000 | call append(i, range(i, i + 99)) | let i += 100 | endwhile
+ggdd
+:w! Xtest
+:r !cksum Xtest
+:s/\s/ /g
+:set fileformat&
+:.w! test.out
+:qa!
+ENDTEST
+

@@ -1,0 +1,24 @@
+Test for writing and reading a file of over 100 Kbyte
+
+1 line: "This is the start"
+3001 lines: "This is the leader"
+1 line: "This is the middle"
+3001 lines: "This is the trailer"
+1 line: "This is the end"
+
+STARTTEST
+:%d
+aThis is the start
+This is the leader
+This is the middle
+This is the trailer
+This is the endkY3000p2GY3000p
+:w! Xtest
+:%d
+:e! Xtest
+:.w! test.out
+3003G:.w >>test.out
+6005G:.w >>test.out
+:qa!
+ENDTEST
+

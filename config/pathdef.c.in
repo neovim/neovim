@@ -1,0 +1,7 @@
+#include "${PROJECT_SOURCE_DIR}/src/vim.h"
+char_u *default_vim_dir = (char_u *)"${CMAKE_INSTALL_PREFIX}/share/vim";
+char_u *default_vimruntime_dir = (char_u *)"";
+char_u *all_cflags = (char_u *)"${COMPILER_FLAGS}";
+char_u *all_lflags = (char_u *)"${LINKER_FLAGS}";
+char_u *compiled_user = (char_u *)"${USERNAME}";
+char_u *compiled_sys = (char_u *)"${HOSTNAME}";

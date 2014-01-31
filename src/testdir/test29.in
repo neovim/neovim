@@ -1,0 +1,202 @@
+Test for joining lines and marks in them
+ in compatible and nocompatible modes
+ and with 'joinspaces' set or not
+ and with 'cpoptions' flag 'j' set or not
+
+STARTTEST
+:so small.vim
+:set nocompatible viminfo+=nviminfo
+:set nojoinspaces
+:set cpoptions-=j
+/firstline/
+j"td/^STARTTEST/-1
+PJjJjJjJjJjJjJjJjJjJjJjJjJjJj05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions+=j
+j05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions-=j joinspaces
+j"tpJjJjJjJjJjJjJjJjJjJjJjJjJjJj05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions+=j
+j05lmx2j06lmy2k4Jy3l$p`xyl$p`yy2l$p:set cpoptions-=j nojoinspaces compatible
+j"tpJjJjJjJjJjJjJjJjJjJjJjJjJjJj4Jy3l$pjd/STARTTEST/-2
+ENDTEST
+
+firstline
+asdfasdf.
+asdf
+asdfasdf. 
+asdf
+asdfasdf.  
+asdf
+asdfasdf.	
+asdf
+asdfasdf. 	
+asdf
+asdfasdf.	 
+asdf
+asdfasdf.		
+asdf
+asdfasdf
+asdf
+asdfasdf 
+asdf
+asdfasdf  
+asdf
+asdfasdf	
+asdf
+asdfasdf	 
+asdf
+asdfasdf 	
+asdf
+asdfasdf		
+asdf
+zx cvn.
+as dfg?
+hjkl iop!
+ert
+zx cvn.
+as dfg?
+hjkl iop!
+ert
+
+STARTTEST
+/^{/+1
+:set comments=s1:/*,mb:*,ex:*/,://
+:set nojoinspaces fo=j
+:set backspace=eol,start
+:.,+3join
+j4J
+:.,+2join
+j3J
+:.,+2join
+j3J
+:.,+2join
+jj3J
+ENDTEST
+
+{
+
+/*
+ * Make sure the previous comment leader is not removed.
+ */
+
+/*
+ * Make sure the previous comment leader is not removed.
+ */
+
+// Should the next comment leader be left alone?
+// Yes.
+
+// Should the next comment leader be left alone?
+// Yes.
+
+/* Here the comment leader should be left intact. */
+// And so should this one.
+
+/* Here the comment leader should be left intact. */
+// And so should this one.
+
+if (condition) // Remove the next comment leader!
+               // OK, I will.
+    action();
+
+if (condition) // Remove the next comment leader!
+               // OK, I will.
+    action();
+}
+
+STARTTEST
+/^{/+1
+:set comments=sO:*\ -,mO:*\ \ ,exO:*/
+:set comments+=s1:/*,mb:*,ex:*/,://
+:set comments+=s1:>#,mb:#,ex:#<,:<
+:set cpoptions-=j joinspaces fo=j
+:set backspace=eol,start
+:.,+3join
+j4J
+:.,+8join
+j9J
+:.,+2join
+j3J
+:.,+2join
+j3J
+:.,+2join
+jj3J
+j:.,+2join
+jj3J
+j:.,+5join
+j6J
+oSome code!// Make sure backspacing does not remove this comment leader.0i
+ENDTEST
+
+{
+
+/*
+ * Make sure the previous comment leader is not removed.
+ */
+
+/*
+ * Make sure the previous comment leader is not removed.
+ */
+
+/* List:
+ * - item1
+ *   foo bar baz
+ *   foo bar baz
+ * - item2
+ *   foo bar baz
+ *   foo bar baz
+ */
+
+/* List:
+ * - item1
+ *   foo bar baz
+ *   foo bar baz
+ * - item2
+ *   foo bar baz
+ *   foo bar baz
+ */
+
+// Should the next comment leader be left alone?
+// Yes.
+
+// Should the next comment leader be left alone?
+// Yes.
+
+/* Here the comment leader should be left intact. */
+// And so should this one.
+
+/* Here the comment leader should be left intact. */
+// And so should this one.
+
+if (condition) // Remove the next comment leader!
+               // OK, I will.
+    action();
+
+if (condition) // Remove the next comment leader!
+               // OK, I will.
+    action();
+
+int i = 7 /* foo *// 3
+ // comment
+ ;
+
+int i = 7 /* foo *// 3
+ // comment
+ ;
+
+># Note that the last character of the ending comment leader (left angle
+ # bracket) is a comment leader itself. Make sure that this comment leader is
+ # not removed from the next line #<
+< On this line a new comment is opened which spans 2 lines. This comment should
+< retain its comment leader.
+
+># Note that the last character of the ending comment leader (left angle
+ # bracket) is a comment leader itself. Make sure that this comment leader is
+ # not removed from the next line #<
+< On this line a new comment is opened which spans 2 lines. This comment should
+< retain its comment leader.
+
+}
+
+STARTTEST
+:g/^STARTTEST/.,/^ENDTEST/d
+:?firstline?+1,$w! test.out
+:qa!
+ENDTEST

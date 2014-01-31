@@ -1,0 +1,95 @@
+Test for Visual mode and operators
+
+Tests for the two kinds of operations: Those executed with Visual mode
+followed by an operator and those executed via Operator-pending mode. Also
+part of the test are mappings, counts, and repetition with the . command.
+
+Test cases:
+- Visual modes (v V CTRL-V) followed by an operator; count; repeating
+- Visual mode maps; count; repeating
+  - Simple
+  - With an Ex command (custom text object)
+- Operator-pending mode maps
+  - Simple
+  - With Ex command moving the cursor
+  - With Ex command and Visual selection (custom text object)
+- Patch 7.3.879: Properly abort Ex command in Operator-pending mode
+
+STARTTEST
+:so small.vim
+:set nocp viminfo+=nviminfo
+:
+:" User functions
+:function MoveToCap()
+:  call search('\u', 'W')
+:endfunction
+:function SelectInCaps()
+:  let [line1, col1] = searchpos('\u', 'bcnW')
+:  let [line2, col2] = searchpos('.\u', 'nW')
+:  call setpos("'<", [0, line1, col1, 0])
+:  call setpos("'>", [0, line2, col2, 0])
+:  normal! gv
+:endfunction
+:
+:" Visual modes followed by operator
+/^apple
+lvld.l3vd.:
+/^line 1
+Vcnewlinej.j2Vd.:
+/^xxxx
+jlc  l.l2c----l.:
+:
+:" Visual mode maps (movement and text object)
+:vnoremap W /\u/s-1<CR>
+:vnoremap iW :<C-U>call SelectInCaps()<CR>
+/^Kiwi
+vWcNol.fD2vd.:
+/^Jambu
+llviWc-l.l2vdl.:
+:
+:" Operator-pending mode maps (movement and text object)
+:onoremap W /\u/<CR>
+:onoremap <Leader>W :<C-U>call MoveToCap()<CR>
+:onoremap iW :<C-U>call SelectInCaps()<CR>
+/^Pineapple
+cW-l.l2.l.:
+/^Juniper
+g?\WfD.:
+/^Lemon
+yiWPlciWNewfr.:
+:
+:" Patch 7.3.879: Properly abort Operator-pending mode for "dv:<Esc>" etc.
+/^zzzz
+dV:dv::set noma | let v:errmsg = ''
+d::set ma | put = v:errmsg =~# '^E21' ? 'ok' : 'failed'
+dv:dV::set noma | let v:errmsg = ''
+d::set ma | put = v:errmsg =~# '^E21' ? 'failed' : 'ok'
+:/^start:/+2,$w! test.out
+:q!
+ENDTEST
+
+start:
+
+apple banana cherry
+
+line 1 line 1
+line 2 line 2
+line 3 line 3
+line 4 line 4
+line 5 line 5
+line 6 line 6
+
+xxxxxxxxxxxxx
+xxxxxxxxxxxxx
+xxxxxxxxxxxxx
+xxxxxxxxxxxxx
+
+KiwiRaspberryDateWatermelonPeach
+JambuRambutanBananaTangerineMango
+
+PineappleQuinceLoganberryOrangeGrapefruitKiwiZ
+JuniperDurianZ
+LemonNectarineZ
+
+zzzz
+zzzz

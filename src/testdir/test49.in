@@ -1,0 +1,30 @@
+This is a test of the script language.
+
+If after adding a new test, the test output doesn't appear properly in
+test49.failed, try to add one ore more "G"s at the line ending in "test.out"
+
+STARTTEST
+:so small.vim
+:se nocp nomore viminfo+=nviminfo
+:lang mess C
+:so test49.vim
+GGGGGGGGGGGGGG"rp:.-,$w! test.out
+:"
+:" make valgrind happy
+:redir => funclist
+:silent func
+:redir END
+:for line in split(funclist, "\n")
+:  let name = matchstr(line, 'function \zs[A-Z]\w*\ze(')
+:  if name != ''
+:    exe "delfunc " . name
+:  endif
+:endfor
+:for v in keys(g:)
+:  silent! exe "unlet " . v
+:endfor
+:unlet v
+:qa!
+ENDTEST
+
+Results of test49.vim:

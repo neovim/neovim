@@ -1,0 +1,33 @@
+Test that groups and patterns are tested correctly when calling exists() for
+autocommands.
+
+STARTTEST
+:so small.vim
+:let results=[]
+:augroup auexists
+:augroup END
+:call add(results, "##BufEnter: " . exists("##BufEnter"))
+:call add(results, "#BufEnter: " . exists("#BufEnter"))
+:au BufEnter * let g:entered=1
+:call add(results, "#BufEnter: " . exists("#BufEnter"))
+:call add(results, "#auexists#BufEnter: " . exists("#auexists#BufEnter"))
+:augroup auexists
+:au BufEnter * let g:entered=1
+:augroup END
+:call add(results, "#auexists#BufEnter: " . exists("#auexists#BufEnter"))
+:call add(results, "#BufEnter#*.test: " . exists("#BufEnter#*.test"))
+:au BufEnter *.test let g:entered=1
+:call add(results, "#BufEnter#*.test: " . exists("#BufEnter#*.test"))
+:edit testfile.test
+:call add(results, "#BufEnter#<buffer>: " . exists("#BufEnter#<buffer>"))
+:au BufEnter <buffer> let g:entered=1
+:call add(results, "#BufEnter#<buffer>: " . exists("#BufEnter#<buffer>"))
+:edit testfile2.test
+:call add(results, "#BufEnter#<buffer>: " . exists("#BufEnter#<buffer>"))
+:e test.out
+:call append(0, results)
+:$d
+:w
+:qa!
+ENDTEST
+

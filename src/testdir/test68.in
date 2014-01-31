@@ -1,0 +1,131 @@
+Test for text formatting.
+
+Results of test68:
+
+STARTTEST
+:so small.vim
+/^{/+1
+:set noai tw=2 fo=t
+gRa b
+ENDTEST
+
+{
+    
+
+}
+
+STARTTEST
+/^{/+1
+:set ai tw=2 fo=tw
+gqgqjjllab
+ENDTEST
+
+{
+a  b  
+
+a    
+}
+
+STARTTEST
+/^{/+1
+:set tw=3 fo=t
+gqgqo
+a 
+ENDTEST
+
+{
+a 
+}
+
+STARTTEST
+/^{/+1
+:set tw=2 fo=tcq1 comments=:#
+gqgqjgqgqo
+a b
+#a b
+ENDTEST
+
+{
+a b
+#a b
+}
+
+STARTTEST
+/^{/+1
+:set tw=5 fo=tcn comments=:#
+A bjA b
+ENDTEST
+
+{
+  1 a
+# 1 a
+}
+
+STARTTEST
+/^{/+3
+:set tw=5 fo=t2a si
+i  A_
+ENDTEST
+
+{
+
+  x a
+  b
+ c
+
+}
+
+STARTTEST
+/^{/+1
+:set tw=5 fo=qn comments=:#
+gwap
+ENDTEST
+
+{
+# 1 a b
+}
+
+STARTTEST
+/^{/+1
+:set tw=5 fo=q2 comments=:#
+gwap
+ENDTEST
+
+{
+# x
+#   a b
+}
+
+STARTTEST
+/^{/+2
+:set tw& fo=a
+I^^
+ENDTEST
+
+{
+   1aa
+   2bb
+}
+
+STARTTEST
+/mno pqr/
+:setl tw=20 fo=an12wcq comments=s1:/*,mb:*,ex:*/
+A vwx yz
+ENDTEST
+
+/* abc def ghi jkl 
+ *    mno pqr stu
+ */
+
+STARTTEST
+/^#/
+:setl tw=12 fo=tqnc comments=:#
+A foobar
+ENDTEST
+
+# 1 xxxxx
+
+STARTTEST
+:g/^STARTTEST/.,/^ENDTEST/d
+:1;/^Results/,$wq! test.out
+ENDTEST

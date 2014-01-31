@@ -1,0 +1,62 @@
+Tests for vertical splits and filler lines in diff mode
+
+STARTTEST
+:so small.vim
+:" Disable the title to avoid xterm keeping the wrong one.
+:set notitle noicon
+/^1
+yG:new
+pkdd:w! Xtest
+ddGpkkrXoxxx:w! Xtest2
+:file Nop
+ggoyyyjjjozzzz
+:vert diffsplit Xtest
+:vert diffsplit Xtest2
+:" jump to second window for a moment to have filler line appear at start of
+:" first window
+ggpgg:let one = winline()
+j:let one = one . "-" . winline()
+j:let one = one . "-" . winline()
+j:let one = one . "-" . winline()
+j:let one = one . "-" . winline()
+j:let one = one . "-" . winline()
+gg:let two = winline()
+j:let two = two . "-" . winline()
+j:let two = two . "-" . winline()
+j:let two = two . "-" . winline()
+j:let two = two . "-" . winline()
+gg:let three = winline()
+j:let three = three . "-" . winline()
+j:let three = three . "-" . winline()
+j:let three = three . "-" . winline()
+j:let three = three . "-" . winline()
+j:let three = three . "-" . winline()
+j:let three = three . "-" . winline()
+:call append("$", one)
+:call append("$", two)
+:call append("$", three)
+:$-2,$w! test.out
+:" Test that diffing shows correct filler lines
+:diffoff!
+:windo :bw!
+:enew
+:put =range(4,10)
+:1d _
+:vnew
+:put =range(1,10)
+:1d _
+:windo :diffthis
+:wincmd h
+:let w0=line('w0')
+:enew
+:put =w0
+:.w >> test.out
+:unlet! one two three w0
+:qa!
+ENDTEST
+
+1 aa
+2 bb
+3 cc
+4 dd
+5 ee

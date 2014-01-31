@@ -1,0 +1,26 @@
+normal! 016|
+normal! 016|
+normal! 016|
+normal! 08|
+normal! 08|
+normal! 016|
+normal! 016|
+normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 8 . '|'
+  normal! 08|
+  exe 'normal! ' . s:c . '|zs' . 8 . '|'
+  normal! 08|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|
+  exe 'normal! ' . s:c . '|zs' . 16 . '|'
+  normal! 016|

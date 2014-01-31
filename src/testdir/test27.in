@@ -1,0 +1,20 @@
+Test for expanding file names
+
+STARTTEST
+:!mkdir Xdir1
+:!mkdir Xdir2
+:!mkdir Xdir3
+:cd Xdir3
+:!mkdir Xdir4
+:cd ..
+:w Xdir1/file
+:w Xdir3/Xdir4/file
+:n Xdir?/*/file
+Go%:.w! test.out
+:n! Xdir?/*/nofile
+Go%:.w >>test.out
+:e! xx
+:!rm -rf Xdir1 Xdir2 Xdir3
+:qa!
+ENDTEST
+

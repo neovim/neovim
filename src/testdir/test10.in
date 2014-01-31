@@ -1,0 +1,114 @@
+Test for 'errorformat'.  This will fail if the quickfix feature was disabled.
+
+STARTTEST
+:so small.vim
+:" Also test a BOM is ignored.
+:so mbyte.vim
+:set encoding=utf-8
+:7/start of errorfile/,/end of errorfile/w! Xerrorfile1
+:7/start of errorfile/,/end of errorfile/-1w! Xerrorfile2
+:/start of testfile/,/end of testfile/w! Xtestfile
+:set efm+==%f=\\,\ line\ %l%*\\D%v%*[^\ ]\ %m
+:set efm^=%AError\ in\ \"%f\"\ at\ line\ %l:,%Z%p^,%C%m
+:cf Xerrorfile2
+:clast
+:copen
+:let a=w:quickfix_title
+:wincmd p
+lgR=a
+:cf Xerrorfile1
+grA
+:cn
+gRLINE 6, COL 19
+:cn
+gRNO COLUMN SPECIFIED
+:cn
+gRAGAIN NO COLUMN
+:cn
+gRCOL 1
+:cn
+gRCOL 2
+:cn
+gRCOL 10
+:cn
+gRVCOL 10
+:cn
+grI
+:cn
+gR. SPACE POINTER
+:cn
+gR. DOT POINTER
+:cn
+gR. DASH POINTER
+:cn
+gR. TAB-SPACE POINTER
+:clast
+:cprev
+:cprev
+:wincmd w
+:let a=w:quickfix_title
+:wincmd p
+lgR=a
+:w! test.out             " Write contents of this file
+:qa!
+ENDTEST
+
+start of errorfile
+"Xtestfile", line 4.12: 1506-045 (S) Undeclared identifier fd_set.
+﻿"Xtestfile", line 6 col 19; this is an error
+gcc -c -DHAVE_CONFIsing-prototypes -I/usr/X11R6/include  version.c
+Xtestfile:9: parse error before `asd'
+make: *** [vim] Error 1
+in file "Xtestfile" linenr 10: there is an error
+
+2 returned
+"Xtestfile", line 11 col 1; this is an error
+"Xtestfile", line 12 col 2; this is another error
+"Xtestfile", line 14:10; this is an error in column 10
+=Xtestfile=, line 15:10; this is another error, but in vcol 10 this time
+"Xtestfile", linenr 16: yet another problem
+Error in "Xtestfile" at line 17:
+x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
+            ^
+Error in "Xtestfile" at line 18:
+x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
+.............^
+Error in "Xtestfile" at line 19:
+x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
+--------------^
+Error in "Xtestfile" at line 20:
+x should be a dot
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
+	       ^
+
+Does anyone know what is the problem and how to correction it?
+"Xtestfile", line 21 col 9: What is the title of the quickfix window?
+"Xtestfile", line 22 col 9: What is the title of the quickfix window?
+end of errorfile
+
+start of testfile
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  2
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  3
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  4
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  5
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  6
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  7
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  8
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line  9
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 10
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 11
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 12
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 13
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 14
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 15
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 16
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 17
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 18
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 19
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 20
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 21
+	xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx    line 22
+end of testfile

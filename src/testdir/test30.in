@@ -1,0 +1,222 @@
+Test for a lot of variations of the 'fileformats' option
+
+Note: This test will fail if "cat" is not available.
+
+STARTTEST
+:so small.vim
+:" first write three test files, one in each format
+:set fileformat=unix
+:set fileformats=
+:/^1/w! XX1
+:/^2/w! XX2
+:/^3/w! XX3
+:/^4/w! XX4
+:/^5/w! XX5
+:/^6/w! XX6
+:/^7/w! XX7
+:/^8/w! XX8
+:/^9/w! XX9
+:/^10/w! XX10
+:/^unix/;/eof/-1w! XXUnix
+:/^dos/;/eof/-1w! XXDos
+:set bin noeol
+:$w! XXMac
+:set nobin eol
+:bwipe XXUnix XXDos XXMac
+:" create mixed format files
+:if has("vms")
+: !copy XXUnix,XXDos XXUxDs.
+: !copy XXUnix,XXMac XXUxMac.
+: !copy XXDos,XXMac  XXDosMac.
+: !copy XXUnix,XXDos,XXMac XXUxDsMc.
+:elseif has("win32")
+: !copy /b XXUnix+XXDos XXUxDs
+: !copy /b XXUnix+XXMac XXUxMac
+: !copy /b XXDos+XXMac XXDosMac
+: !copy /b XXUnix+XXDos+XXMac XXUxDsMc
+:else
+: !cat XXUnix XXDos >XXUxDs
+: !cat XXUnix XXMac >XXUxMac
+: !cat XXDos XXMac >XXDosMac
+: !cat XXUnix XXDos XXMac >XXUxDsMc
+:endif
+:"
+:" try reading and writing with 'fileformats' empty
+:set fileformat=unix
+:e! XXUnix
+:w! test.out
+:e! XXDos
+:w! XXtt01
+:e! XXMac
+:w! XXtt02
+:bwipe XXUnix XXDos XXMac
+:set fileformat=dos
+:e! XXUnix
+:w! XXtt11
+:e! XXDos
+:w! XXtt12
+:e! XXMac
+:w! XXtt13
+:bwipe XXUnix XXDos XXMac
+:set fileformat=mac
+:e! XXUnix
+:w! XXtt21
+:e! XXDos
+:w! XXtt22
+:e! XXMac
+:w! XXtt23
+:bwipe XXUnix XXDos XXMac
+:"
+:" try reading and writing with 'fileformats' set to one format
+:set fileformats=unix
+:e! XXUxDsMc
+:w! XXtt31
+:bwipe XXUxDsMc
+:set fileformats=dos
+:e! XXUxDsMc
+:w! XXtt32
+:bwipe XXUxDsMc
+:set fileformats=mac
+:e! XXUxDsMc
+:w! XXtt33
+:bwipe XXUxDsMc
+:"
+:" try reading and writing with 'fileformats' set to two formats
+:set fileformats=unix,dos
+:e! XXUxDsMc
+:w! XXtt41
+:bwipe XXUxDsMc
+:e! XXUxMac
+:w! XXtt42
+:bwipe XXUxMac
+:e! XXDosMac
+:w! XXtt43
+:bwipe XXDosMac
+:set fileformats=unix,mac
+:e! XXUxDs
+:w! XXtt51
+:bwipe XXUxDs
+:e! XXUxDsMc
+:w! XXtt52
+:bwipe XXUxDsMc
+:e! XXDosMac
+:w! XXtt53
+:bwipe XXDosMac
+:set fileformats=dos,mac
+:e! XXUxDs
+:w! XXtt61
+:bwipe XXUxDs
+:e! XXUxMac
+:w! XXtt62
+:bwipe XXUxMac
+:e! XXUxDsMc
+:w! XXtt63
+:bwipe XXUxDsMc
+:"
+:" try reading and writing with 'fileformats' set to three formats
+:set fileformats=unix,dos,mac
+:e! XXUxDsMc
+:w! XXtt71
+:bwipe XXUxDsMc
+:set fileformats=mac,dos,unix
+:e! XXUxDsMc
+:w! XXtt81
+:bwipe XXUxDsMc
+:" try with 'binary' set
+:set fileformats=mac,unix,dos
+:set binary
+:e! XXUxDsMc
+:w! XXtt91
+:bwipe XXUxDsMc
+:set fileformats=mac
+:e! XXUxDsMc
+:w! XXtt92
+:bwipe XXUxDsMc
+:set fileformats=dos
+:e! XXUxDsMc
+:w! XXtt93
+:"
+:" Append "END" to each file so that we can see what the last written char was.
+:set fileformat=unix nobin
+ggdGaEND:w >>XXtt01
+:w >>XXtt02
+:w >>XXtt11
+:w >>XXtt12
+:w >>XXtt13
+:w >>XXtt21
+:w >>XXtt22
+:w >>XXtt23
+:w >>XXtt31
+:w >>XXtt32
+:w >>XXtt33
+:w >>XXtt41
+:w >>XXtt42
+:w >>XXtt43
+:w >>XXtt51
+:w >>XXtt52
+:w >>XXtt53
+:w >>XXtt61
+:w >>XXtt62
+:w >>XXtt63
+:w >>XXtt71
+:w >>XXtt81
+:w >>XXtt91
+:w >>XXtt92
+:w >>XXtt93
+:"
+:" Concatenate the results.
+:" Make fileformat of test.out the native fileformat.
+:" Add a newline at the end.
+:set binary
+:e! test.out
+:$r XXtt01
+:$r XXtt02
+Go1:$r XXtt11
+:$r XXtt12
+:$r XXtt13
+Go2:$r XXtt21
+:$r XXtt22
+:$r XXtt23
+Go3:$r XXtt31
+:$r XXtt32
+:$r XXtt33
+Go4:$r XXtt41
+:$r XXtt42
+:$r XXtt43
+Go5:$r XXtt51
+:$r XXtt52
+:$r XXtt53
+Go6:$r XXtt61
+:$r XXtt62
+:$r XXtt63
+Go7:$r XXtt71
+Go8:$r XXtt81
+Go9:$r XXtt91
+:$r XXtt92
+:$r XXtt93
+Go10:$r XXUnix
+:set nobinary ff&
+:w
+:qa!
+ENDTEST
+
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+
+unix
+unix
+eof
+
+dos
+dos
+eof
+
+macmac
