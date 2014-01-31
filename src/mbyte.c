@@ -612,7 +612,7 @@ char_u * mb_init()              {
     set_string_option_direct((char_u *)"fencs", -1,
         (char_u *)"ucs-bom,utf-8,default,latin1", OPT_FREE, 0);
 
-#if defined(HAVE_BIND_TEXTDOMAIN_CODESET) && defined(FEAT_GETTEXT)
+#ifdef HAVE_WORKING_LIBINTL
   /* GNU gettext 0.10.37 supports this feature: set the codeset used for
    * translated messages independently from the current locale. */
   (void)bind_textdomain_codeset(VIMPACKAGE,

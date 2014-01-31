@@ -14,7 +14,6 @@
 #define _FILE_OFFSET_BITS 64
 #define HAVE_ATTRIBUTE_UNUSED 1
 #define HAVE_BCMP 1
-#define HAVE_BIND_TEXTDOMAIN_CODESET 1
 #define HAVE_DATE_TIME 1
 #define HAVE_DIRENT_H 1
 #define HAVE_DLFCN_H 1
@@ -33,7 +32,6 @@
 #define HAVE_GETPWNAM 1
 #define HAVE_GETPWUID 1
 #define HAVE_GETRLIMIT 1
-#define HAVE_GETTEXT 1
 #define HAVE_GETTIMEOFDAY 1
 #define HAVE_GETWD 1
 #define HAVE_ICONV 1
@@ -61,7 +59,8 @@
 #define HAVE_READLINK 1
 #define HAVE_RENAME 1
 #define HAVE_SELECT 1
-#define HAVE_SELINUX 1
+// TODO: add proper cmake check
+// #define HAVE_SELINUX 1
 #define HAVE_SETENV 1
 #define HAVE_SETJMP_H 1
 #define HAVE_SETPGID 1
@@ -82,11 +81,13 @@
 #define HAVE_STRING_H 1
 #define HAVE_STRINGS_H 1
 #define HAVE_STRNCASECMP 1
-#define HAVE_STROPTS_H 1
+// TODO: add proper cmake check
+// #define HAVE_STROPTS_H 1
 #define HAVE_STRPBRK 1
 #define HAVE_STRTOL 1
 #define HAVE_SVR4_PTYS 1
-#define HAVE_SYSCONF 1
+// TODO: add proper cmake check
+// #define HAVE_SYSCONF 1
 #define HAVE_SYSINFO 1
 #define HAVE_SYSINFO_MEM_UNIT 1
 #define HAVE_SYS_IOCTL_H 1
@@ -96,7 +97,8 @@
 #define HAVE_SYS_SELECT_H 1
 #define HAVE_SYS_STATFS_H 1
 #define HAVE_SYS_SYSCTL_H 1
-#define HAVE_SYS_SYSINFO_H 1
+// TODO: add proper cmake check
+// #define HAVE_SYS_SYSINFO_H 1
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_SYS_UTSNAME_H 1
@@ -115,6 +117,7 @@
 #define HAVE_UTIMES 1
 #define HAVE_WCHAR_H 1
 #define HAVE_WCTYPE_H 1
+#cmakedefine HAVE_WORKING_LIBINTL
 #define RETSIGTYPE void
 #define SIGRETURN return
 #define SYS_SELECT_WITH_SYS_TIME 1

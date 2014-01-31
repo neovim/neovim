@@ -14,5 +14,20 @@ file( GLOB IO_SOURCES io/*.c )
 
 add_executable (vim ${NEOVIM_SOURCES} ${IO_SOURCES}) 
 
-target_link_libraries (vim m termcap selinux) 
+target_link_libraries (vim m)
+
+include(CheckLibraryExists)
+check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
+
+if (HAVE_LIBTERMCAP)
+  target_link_libraries(vim termcap)
+else()
+  check_library_exists(curses tgetent "" HAVE_LIBCURSES)
+  if (HAVE_LIBCURSES)
+    target_link_libraries(vim curses)
+  else()
+    message(FATAL_ERROR "can't find something resembling -ltermcap")
+  endif()
+endif()
+
 include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
