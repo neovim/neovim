@@ -206,8 +206,7 @@ static void ex_X __ARGS((exarg_T *eap));
 static void ex_fold __ARGS((exarg_T *eap));
 static void ex_foldopen __ARGS((exarg_T *eap));
 static void ex_folddo __ARGS((exarg_T *eap));
-#if !((defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-  && (defined(FEAT_GETTEXT) || defined(FEAT_MBYTE)))
+#ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
 #endif
 # define ex_sign                ex_ni
@@ -3161,8 +3160,7 @@ char_u      *buff;          /* buffer for command string */
     xp->xp_pattern = arg;
     break;
 
-#if (defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-    && (defined(FEAT_GETTEXT) || defined(FEAT_MBYTE))
+#ifdef HAVE_WORKING_LIBINTL
   case CMD_language:
     p = skiptowhite(arg);
     if (*p == NUL) {
@@ -4452,8 +4450,7 @@ static struct {
   {EXPAND_HELP, "help"},
   {EXPAND_HIGHLIGHT, "highlight"},
   {EXPAND_HISTORY, "history"},
-#if (defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-  && (defined(FEAT_GETTEXT) || defined(FEAT_MBYTE))
+#ifdef HAVE_WORKING_LIBINTL
   {EXPAND_LOCALES, "locale"},
 #endif
   {EXPAND_MAPPINGS, "mapping"},

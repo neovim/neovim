@@ -336,22 +336,17 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 # define USE_IM_CONTROL
 #endif
 
-/*
- * For dynamically loaded gettext library.  Currently, only for Win32.
- */
-
-
-/*
- * The _() stuff is for using gettext().  It is a no-op when libintl.h is not
- * found or the +multilang feature is disabled.
- */
+#ifdef HAVE_WORKING_LIBINTL
 #  include <libintl.h>
 #  define _(x) gettext((char *)(x))
-#  ifdef gettext_noop
-#   define N_(x) gettext_noop(x)
-#  else
-#   define N_(x) x
-#  endif
+#  define N_(x) gettext_noop(x)
+#else
+#  define _(x) ((char *)(x))
+#  define N_(x) x
+#  define bindtextdomain(x, y) /* empty */
+#  define bind_textdomain_codeset(x, y) /* empty */
+#  define textdomain(x) /* empty */
+#endif
 
 /*
  * flags for update_screen()

@@ -3349,11 +3349,7 @@ char_u * get_mess_lang()              {
 }
 
 /* Complicated #if; matches with where get_mess_env() is used below. */
-#if (defined(FEAT_EVAL) && !((defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-  && defined(LC_MESSAGES))) \
-  || ((defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-  && (defined(FEAT_GETTEXT) || defined(FEAT_MBYTE)) \
-  && !defined(LC_MESSAGES))
+#ifdef HAVE_WORKING_LIBINTL
 static char_u *get_mess_env __ARGS((void));
 
 /*
@@ -3411,8 +3407,7 @@ void set_lang_var()          {
   set_vim_var_string(VV_LC_TIME, loc, -1);
 }
 
-#if (defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-  && (defined(FEAT_GETTEXT) || defined(FEAT_MBYTE))
+#ifdef HAVE_WORKING_LIBINTL
 /*
  * ":language":  Set the language (locale).
  */

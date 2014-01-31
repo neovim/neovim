@@ -3783,8 +3783,7 @@ int options;              /* EW_ flags */
       {EXPAND_AUGROUP, get_augroup_name, TRUE, TRUE},
       {EXPAND_CSCOPE, get_cscope_name, TRUE, TRUE},
       {EXPAND_PROFILE, get_profile_name, TRUE, TRUE},
-#if (defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-      && (defined(FEAT_GETTEXT) || defined(FEAT_MBYTE))
+#ifdef HAVE_WORKING_LIBINTL
       {EXPAND_LANGUAGE, get_lang_arg, TRUE, FALSE},
       {EXPAND_LOCALES, get_locales, TRUE, FALSE},
 #endif
