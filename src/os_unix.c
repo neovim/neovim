@@ -623,14 +623,6 @@ static char *signal_stack;
 static void init_signal_stack()                 {
   if (signal_stack != NULL) {
 # ifdef HAVE_SIGALTSTACK
-#  if defined(__APPLE__) && (!defined(MAC_OS_X_VERSION_MAX_ALLOWED) \
-    || MAC_OS_X_VERSION_MAX_ALLOWED <= 1040)
-    /* missing prototype.  Adding it to osdef?.h.in doesn't work, because
-     * "struct sigaltstack" needs to be declared. */
-    extern int sigaltstack __ARGS((const struct sigaltstack *ss,
-                                   struct sigaltstack *oss));
-#  endif
-
     sigstk.ss_sp = signal_stack;
     sigstk.ss_size = SIGSTKSZ;
     sigstk.ss_flags = 0;

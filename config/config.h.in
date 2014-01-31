@@ -83,11 +83,13 @@
 #define HAVE_STRING_H 1
 #define HAVE_STRINGS_H 1
 #define HAVE_STRNCASECMP 1
-#define HAVE_STROPTS_H 1
+// TODO: add proper cmake check
+// #define HAVE_STROPTS_H 1
 #define HAVE_STRPBRK 1
 #define HAVE_STRTOL 1
 #define HAVE_SVR4_PTYS 1
-#define HAVE_SYSCONF 1
+// TODO: add proper cmake check
+// #define HAVE_SYSCONF 1
 #define HAVE_SYSINFO 1
 #define HAVE_SYSINFO_MEM_UNIT 1
 #define HAVE_SYS_IOCTL_H 1
@@ -97,7 +99,8 @@
 #define HAVE_SYS_SELECT_H 1
 #define HAVE_SYS_STATFS_H 1
 #define HAVE_SYS_SYSCTL_H 1
-#define HAVE_SYS_SYSINFO_H 1
+// TODO: add proper cmake check
+// #define HAVE_SYS_SYSINFO_H 1
 #define HAVE_SYS_TIME_H 1
 #define HAVE_SYS_TYPES_H 1
 #define HAVE_SYS_UTSNAME_H 1
