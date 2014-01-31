@@ -61,7 +61,8 @@
 #define HAVE_READLINK 1
 #define HAVE_RENAME 1
 #define HAVE_SELECT 1
-#define HAVE_SELINUX 1
+// TODO: add proper cmake check
+// #define HAVE_SELINUX 1
 #define HAVE_SETENV 1
 #define HAVE_SETJMP_H 1
 #define HAVE_SETPGID 1

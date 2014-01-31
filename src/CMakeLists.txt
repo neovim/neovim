@@ -14,5 +14,5 @@ file( GLOB IO_SOURCES io/*.c )
 
 add_executable (vim ${NEOVIM_SOURCES} ${IO_SOURCES}) 
 
-target_link_libraries (vim m termcap selinux) 
+target_link_libraries (vim m termcap)
 include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
