@@ -11,7 +11,6 @@ check_c_source_compiles("
 
 int main(int argc, char** argv) {
   gettext(\"foo\");
-  gettext_noop(\"foo\");
   bindtextdomain(\"foo\", \"bar\");
   bind_textdomain_codeset(\"foo\", \"bar\");
   textdomain(\"foo\");

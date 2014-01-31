@@ -339,7 +339,12 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 #ifdef HAVE_WORKING_LIBINTL
 #  include <libintl.h>
 #  define _(x) gettext((char *)(x))
-#  define N_(x) gettext_noop(x)
+// XXX do we actually need this?
+#  ifdef gettext_noop
+#    define N_(x) gettext_noop(x)
+#  else
+#    define N_(x) x
+#  endif
 #else
 #  define _(x) ((char *)(x))
 #  define N_(x) x
