@@ -16,3 +16,9 @@ add_executable (vim ${NEOVIM_SOURCES} ${IO_SOURCES})
 
 target_link_libraries (vim m termcap)
 include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
+
+find_path(LIBINTL_INCLUDE_DIR NAMES libintl.h)
+
+if (LIBINTL_INCLUDE_DIR)
+  include_directories("${LIBINTL_INCLUDE_DIR}")
+endif()
