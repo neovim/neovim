@@ -13,4 +13,4 @@ sh autogen.sh
 ./configure --prefix="$prefix"
 make
 make install
-rm "$prefix/lib/"libuv*.so "$prefix/lib/"libuv*.so.*
+rm "$prefix/lib/"libuv*.{so,dylib} "$prefix/lib/"libuv*.{so,dylib}.* || true
