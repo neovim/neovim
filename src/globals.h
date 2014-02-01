@@ -734,15 +734,12 @@ EXTERN int msg_silent INIT(= 0);        /* don't print messages */
 EXTERN int emsg_silent INIT(= 0);       /* don't print error messages */
 EXTERN int cmd_silent INIT(= FALSE);      /* don't echo the command line */
 
-#if defined(FEAT_GUI_DIALOG) || defined(FEAT_CON_DIALOG) \
-  || defined(FEAT_AUTOCMD)
-# define HAS_SWAP_EXISTS_ACTION
+#define HAS_SWAP_EXISTS_ACTION
 EXTERN int swap_exists_action INIT(= SEA_NONE);
 /* For dialog when swap file already
  * exists. */
 EXTERN int swap_exists_did_quit INIT(= FALSE);
 /* Selected "quit" at the dialog. */
-#endif
 
 EXTERN char_u   *IObuff;                /* sprintf's are done in this buffer,
                                            size is IOSIZE */
@@ -906,12 +903,9 @@ EXTERN int lcs_tab2 INIT(= NUL);
 EXTERN int lcs_trail INIT(= NUL);
 EXTERN int lcs_conceal INIT(= '-');
 
-#if defined(FEAT_WINDOWS) || defined(FEAT_WILDMENU) || defined(FEAT_STL_OPT) \
-  || defined(FEAT_FOLDING)
 /* Characters from 'fillchars' option */
 EXTERN int fill_stl INIT(= ' ');
 EXTERN int fill_stlnc INIT(= ' ');
-#endif
 EXTERN int fill_vert INIT(= ' ');
 EXTERN int fill_fold INIT(= '-');
 EXTERN int fill_diff INIT(= '-');
@@ -1002,13 +996,8 @@ EXTERN option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
 # define PRT_UNIT_POINT 3
 # define PRT_UNIT_NAMES {"pc", "in", "mm", "pt"}
 
-#if (defined(FEAT_PRINTER) && defined(FEAT_STL_OPT)) \
-  || defined(FEAT_GUI_TABLINE)
 /* Page number used for %N in 'pageheader' and 'guitablabel'. */
 EXTERN linenr_T printer_page_num;
-#endif
-
-
 
 
 EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
@@ -1073,10 +1062,6 @@ EXTERN char_u e_while[] INIT(= N_("E588: :endwhile without :while"));
 EXTERN char_u e_for[] INIT(= N_("E588: :endfor without :for"));
 EXTERN char_u e_exists[] INIT(= N_("E13: File exists (add ! to override)"));
 EXTERN char_u e_failed[] INIT(= N_("E472: Command failed"));
-#if defined(FEAT_GUI_X11) || defined(FEAT_GUI_GTK) || defined(MACOS) \
-  || defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MSWIN)
-EXTERN char_u e_font[] INIT(= N_("E235: Unknown font: %s"));
-#endif
 EXTERN char_u e_internal[] INIT(= N_("E473: Internal error"));
 EXTERN char_u e_interr[] INIT(= N_("Interrupted"));
 EXTERN char_u e_invaddr[] INIT(= N_("E14: Invalid address"));
@@ -1088,17 +1073,6 @@ EXTERN char_u e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 #ifdef FEAT_LIBCALL
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
-#endif
-#if defined(DYNAMIC_PERL) \
-  || defined(DYNAMIC_PYTHON) || defined(DYNAMIC_PYTHON3) \
-  || defined(DYNAMIC_RUBY) \
-  || defined(DYNAMIC_TCL) \
-  || defined(DYNAMIC_ICONV) \
-  || defined(DYNAMIC_GETTEXT) \
-  || defined(DYNAMIC_MZSCHEME) \
-  || defined(DYNAMIC_LUA)
-EXTERN char_u e_loadlib[] INIT(= N_("E370: Could not load library %s"));
-EXTERN char_u e_loadfunc[] INIT(= N_("E448: Could not load library function %s"));
 #endif
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
@@ -1186,10 +1160,7 @@ EXTERN char_u e_emptybuf[] INIT(= N_("E749: empty buffer"));
 EXTERN char_u e_invalpat[] INIT(= N_(
         "E682: Invalid search pattern or delimiter"));
 EXTERN char_u e_bufloaded[] INIT(= N_("E139: File is loaded in another buffer"));
-#if defined(FEAT_SYN_HL) || \
-  (defined(FEAT_INS_EXPAND) && defined(FEAT_COMPL_FUNC))
 EXTERN char_u e_notset[] INIT(= N_("E764: Option '%s' is not set"));
-#endif
 EXTERN char_u e_invalidreg[] INIT(= N_("E850: Invalid register name"));
 
 

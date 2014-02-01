@@ -10,11 +10,6 @@
 #define EXTERN
 #include "vim.h"
 
-#ifdef SPAWNO
-# include <spawno.h>            /* special MS-DOS swapping library */
-#endif
-
-
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
 
@@ -75,7 +70,6 @@ static int get_number_arg __ARGS((char_u *p, int *idx, int def));
 static void init_locale __ARGS((void));
 # endif
 static void parse_command_name __ARGS((mparm_T *parmp));
-static void early_arg_scan __ARGS((mparm_T *parmp));
 static void command_line_scan __ARGS((mparm_T *parmp));
 static void check_tty __ARGS((mparm_T *parmp));
 static void read_stdin __ARGS((void));
@@ -111,13 +105,10 @@ static char *(main_errors[]) =
 };
 
 #ifndef NO_VIM_MAIN     /* skip this for unittests */
-int
-# ifdef VIMDLL
-_export
-# endif
+  int
 main(argc, argv)
-int argc;
-char        **argv;
+  int argc;
+  char        **argv;
 {
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
@@ -167,16 +158,8 @@ char        **argv;
   qnx_init();           /* PhAttach() for clipboard, (and gui) */
 #endif
 
-#ifdef MAC_OS_CLASSIC
-  /* Prepare for possibly starting GUI sometime */
-  /* Macintosh needs this before any memory is allocated. */
-  gui_prepare(&params.argc, params.argv);
-  TIME_MSG("GUI prepared");
-#endif
-
   /* Init the table of Normal mode commands. */
   init_normal_cmds();
-
 
   /*
    * Allocate space for the generic buffers (needed for set_init_1() and
@@ -197,17 +180,6 @@ char        **argv;
   init_locale();
   TIME_MSG("locale set");
 #endif
-
-
-  /*
-   * Do a first scan of the arguments in "argv[]":
-   *   -display or --display
-   *   --server...
-   *   --socketid
-   *   --windowid
-   */
-  early_arg_scan(&params);
-
 
 
   /*
@@ -358,282 +330,273 @@ char        **argv;
 
 #endif /* NO_VIM_MAIN */
 
-/* vim_main2() needs to be produced when FEAT_MZSCHEME is defined even when
- * NO_VIM_MAIN is defined. */
+  /* vim_main2() needs to be produced when FEAT_MZSCHEME is defined even when
+   * NO_VIM_MAIN is defined. */
 
 #ifndef NO_VIM_MAIN
-/* Execute --cmd arguments. */
-exe_pre_commands(&params);
+  /* Execute --cmd arguments. */
+  exe_pre_commands(&params);
 
-/* Source startup scripts. */
-source_startup_scripts(&params);
+  /* Source startup scripts. */
+  source_startup_scripts(&params);
 
-/*
- * Read all the plugin files.
- * Only when compiled with +eval, since most plugins need it.
- */
-if (p_lpl) {
-  source_runtime((char_u *)"plugin/**/*.vim", TRUE);
-  TIME_MSG("loading plugins");
-}
-
-/* Decide about window layout for diff mode after reading vimrc. */
-if (params.diff_mode && params.window_layout == 0) {
-  if (diffopt_horizontal())
-    params.window_layout = WIN_HOR;             /* use horizontal split */
-  else
-    params.window_layout = WIN_VER;             /* use vertical split */
-}
-
-/*
- * Recovery mode without a file name: List swap files.
- * This uses the 'dir' option, therefore it must be after the
- * initializations.
- */
-if (recoverymode && fname == NULL) {
-  recover_names(NULL, TRUE, 0, NULL);
-  mch_exit(0);
-}
-
-/*
- * Set a few option defaults after reading .vimrc files:
- * 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
- */
-set_init_3();
-TIME_MSG("inits 3");
-
-/*
- * "-n" argument: Disable swap file by setting 'updatecount' to 0.
- * Note that this overrides anything from a vimrc file.
- */
-if (params.no_swap_file)
-  p_uc = 0;
-
-if (curwin->w_p_rl && p_altkeymap) {
-  p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
-  curwin->w_p_arab = FALSE;       /* Reset the Arabic keymap mode */
-  p_fkmap = TRUE;               /* Set the Farsi keymap mode */
-}
-
-
-#ifdef SPAWNO           /* special MSDOS swapping library */
-init_SPAWNO("", SWAP_ANY);
-#endif
-
-/*
- * Read in registers, history etc, but not marks, from the viminfo file.
- * This is where v:oldfiles gets filled.
- */
-if (*p_viminfo != NUL) {
-  read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
-  TIME_MSG("reading viminfo");
-}
-/* It's better to make v:oldfiles an empty list than NULL. */
-if (get_vim_var_list(VV_OLDFILES) == NULL)
-  set_vim_var_list(VV_OLDFILES, list_alloc());
-
-/*
- * "-q errorfile": Load the error file now.
- * If the error file can't be read, exit before doing anything else.
- */
-if (params.edit_type == EDIT_QF) {
-  if (params.use_ef != NULL)
-    set_string_option_direct((char_u *)"ef", -1,
-        params.use_ef, OPT_FREE, SID_CARG);
-  vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
-  if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
-    out_char('\n');
-    mch_exit(3);
+  /*
+   * Read all the plugin files.
+   * Only when compiled with +eval, since most plugins need it.
+   */
+  if (p_lpl) {
+    source_runtime((char_u *)"plugin/**/*.vim", TRUE);
+    TIME_MSG("loading plugins");
   }
-  TIME_MSG("reading errorfile");
-}
 
-/*
- * Start putting things on the screen.
- * Scroll screen down before drawing over it
- * Clear screen now, so file message will not be cleared.
- */
-starting = NO_BUFFERS;
-no_wait_return = FALSE;
-if (!exmode_active)
-  msg_scroll = FALSE;
+  /* Decide about window layout for diff mode after reading vimrc. */
+  if (params.diff_mode && params.window_layout == 0) {
+    if (diffopt_horizontal())
+      params.window_layout = WIN_HOR;             /* use horizontal split */
+    else
+      params.window_layout = WIN_VER;             /* use vertical split */
+  }
+
+  /*
+   * Recovery mode without a file name: List swap files.
+   * This uses the 'dir' option, therefore it must be after the
+   * initializations.
+   */
+  if (recoverymode && fname == NULL) {
+    recover_names(NULL, TRUE, 0, NULL);
+    mch_exit(0);
+  }
+
+  /*
+   * Set a few option defaults after reading .vimrc files:
+   * 'title' and 'icon', Unix: 'shellpipe' and 'shellredir'.
+   */
+  set_init_3();
+  TIME_MSG("inits 3");
+
+  /*
+   * "-n" argument: Disable swap file by setting 'updatecount' to 0.
+   * Note that this overrides anything from a vimrc file.
+   */
+  if (params.no_swap_file)
+    p_uc = 0;
+
+  if (curwin->w_p_rl && p_altkeymap) {
+    p_hkmap = FALSE;              /* Reset the Hebrew keymap mode */
+    curwin->w_p_arab = FALSE;       /* Reset the Arabic keymap mode */
+    p_fkmap = TRUE;               /* Set the Farsi keymap mode */
+  }
+
+  /*
+   * Read in registers, history etc, but not marks, from the viminfo file.
+   * This is where v:oldfiles gets filled.
+   */
+  if (*p_viminfo != NUL) {
+    read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
+    TIME_MSG("reading viminfo");
+  }
+  /* It's better to make v:oldfiles an empty list than NULL. */
+  if (get_vim_var_list(VV_OLDFILES) == NULL)
+    set_vim_var_list(VV_OLDFILES, list_alloc());
+
+  /*
+   * "-q errorfile": Load the error file now.
+   * If the error file can't be read, exit before doing anything else.
+   */
+  if (params.edit_type == EDIT_QF) {
+    if (params.use_ef != NULL)
+      set_string_option_direct((char_u *)"ef", -1,
+          params.use_ef, OPT_FREE, SID_CARG);
+    vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
+    if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
+      out_char('\n');
+      mch_exit(3);
+    }
+    TIME_MSG("reading errorfile");
+  }
+
+  /*
+   * Start putting things on the screen.
+   * Scroll screen down before drawing over it
+   * Clear screen now, so file message will not be cleared.
+   */
+  starting = NO_BUFFERS;
+  no_wait_return = FALSE;
+  if (!exmode_active)
+    msg_scroll = FALSE;
 
 
-
-
-
-
-/*
- * If "-" argument given: Read file from stdin.
- * Do this before starting Raw mode, because it may change things that the
- * writing end of the pipe doesn't like, e.g., in case stdin and stderr
- * are the same terminal: "cat | vim -".
- * Using autocommands here may cause trouble...
- */
-if (params.edit_type == EDIT_STDIN && !recoverymode)
-  read_stdin();
+  /*
+   * If "-" argument given: Read file from stdin.
+   * Do this before starting Raw mode, because it may change things that the
+   * writing end of the pipe doesn't like, e.g., in case stdin and stderr
+   * are the same terminal: "cat | vim -".
+   * Using autocommands here may cause trouble...
+   */
+  if (params.edit_type == EDIT_STDIN && !recoverymode)
+    read_stdin();
 
 #if defined(UNIX) || defined(VMS)
-/* When switching screens and something caused a message from a vimrc
- * script, need to output an extra newline on exit. */
-if ((did_emsg || msg_didout) && *T_TI != NUL)
-  newline_on_exit = TRUE;
+  /* When switching screens and something caused a message from a vimrc
+   * script, need to output an extra newline on exit. */
+  if ((did_emsg || msg_didout) && *T_TI != NUL)
+    newline_on_exit = TRUE;
 #endif
 
-/*
- * When done something that is not allowed or error message call
- * wait_return.  This must be done before starttermcap(), because it may
- * switch to another screen. It must be done after settmode(TMODE_RAW),
- * because we want to react on a single key stroke.
- * Call settmode and starttermcap here, so the T_KS and T_TI may be
- * defined by termcapinit and redefined in .exrc.
- */
-settmode(TMODE_RAW);
-TIME_MSG("setting raw mode");
+  /*
+   * When done something that is not allowed or error message call
+   * wait_return.  This must be done before starttermcap(), because it may
+   * switch to another screen. It must be done after settmode(TMODE_RAW),
+   * because we want to react on a single key stroke.
+   * Call settmode and starttermcap here, so the T_KS and T_TI may be
+   * defined by termcapinit and redefined in .exrc.
+   */
+  settmode(TMODE_RAW);
+  TIME_MSG("setting raw mode");
 
-if (need_wait_return || msg_didany) {
-  wait_return(TRUE);
-  TIME_MSG("waiting for return");
-}
+  if (need_wait_return || msg_didany) {
+    wait_return(TRUE);
+    TIME_MSG("waiting for return");
+  }
 
-starttermcap();             /* start termcap if not done by wait_return() */
-TIME_MSG("start termcap");
-may_req_ambiguous_char_width();
+  starttermcap();             /* start termcap if not done by wait_return() */
+  TIME_MSG("start termcap");
+  may_req_ambiguous_char_width();
 
-setmouse();                             /* may start using the mouse */
-if (scroll_region)
-  scroll_region_reset();                /* In case Rows changed */
-scroll_start();         /* may scroll the screen to the right position */
+  setmouse();                             /* may start using the mouse */
+  if (scroll_region)
+    scroll_region_reset();                /* In case Rows changed */
+  scroll_start();         /* may scroll the screen to the right position */
 
-/*
- * Don't clear the screen when starting in Ex mode, unless using the GUI.
- */
-if (exmode_active
-    )
-  must_redraw = CLEAR;
-else {
-  screenclear();                        /* clear screen */
-  TIME_MSG("clearing screen");
-}
+  /*
+   * Don't clear the screen when starting in Ex mode, unless using the GUI.
+   */
+  if (exmode_active
+     )
+    must_redraw = CLEAR;
+  else {
+    screenclear();                        /* clear screen */
+    TIME_MSG("clearing screen");
+  }
 
-if (params.ask_for_key) {
-  (void)blowfish_self_test();
-  (void)get_crypt_key(TRUE, TRUE);
-  TIME_MSG("getting crypt key");
-}
+  if (params.ask_for_key) {
+    (void)blowfish_self_test();
+    (void)get_crypt_key(TRUE, TRUE);
+    TIME_MSG("getting crypt key");
+  }
 
-no_wait_return = TRUE;
+  no_wait_return = TRUE;
 
-/*
- * Create the requested number of windows and edit buffers in them.
- * Also does recovery if "recoverymode" set.
- */
-create_windows(&params);
-TIME_MSG("opening buffers");
+  /*
+   * Create the requested number of windows and edit buffers in them.
+   * Also does recovery if "recoverymode" set.
+   */
+  create_windows(&params);
+  TIME_MSG("opening buffers");
 
-/* clear v:swapcommand */
-set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
+  /* clear v:swapcommand */
+  set_vim_var_string(VV_SWAPCOMMAND, NULL, -1);
 
-/* Ex starts at last line of the file */
-if (exmode_active)
-  curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+  /* Ex starts at last line of the file */
+  if (exmode_active)
+    curwin->w_cursor.lnum = curbuf->b_ml.ml_line_count;
 
-apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
-TIME_MSG("BufEnter autocommands");
-setpcmark();
+  apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
+  TIME_MSG("BufEnter autocommands");
+  setpcmark();
 
-/*
- * When started with "-q errorfile" jump to first error now.
- */
-if (params.edit_type == EDIT_QF) {
-  qf_jump(NULL, 0, 0, FALSE);
-  TIME_MSG("jump to first error");
-}
+  /*
+   * When started with "-q errorfile" jump to first error now.
+   */
+  if (params.edit_type == EDIT_QF) {
+    qf_jump(NULL, 0, 0, FALSE);
+    TIME_MSG("jump to first error");
+  }
 
-/*
- * If opened more than one window, start editing files in the other
- * windows.
- */
-edit_buffers(&params);
+  /*
+   * If opened more than one window, start editing files in the other
+   * windows.
+   */
+  edit_buffers(&params);
 
-if (params.diff_mode) {
-  win_T   *wp;
+  if (params.diff_mode) {
+    win_T   *wp;
 
-  /* set options in each window for "vimdiff". */
-  for (wp = firstwin; wp != NULL; wp = wp->w_next)
-    diff_win_options(wp, TRUE);
-}
+    /* set options in each window for "vimdiff". */
+    for (wp = firstwin; wp != NULL; wp = wp->w_next)
+      diff_win_options(wp, TRUE);
+  }
 
-/*
- * Shorten any of the filenames, but only when absolute.
- */
-shorten_fnames(FALSE);
+  /*
+   * Shorten any of the filenames, but only when absolute.
+   */
+  shorten_fnames(FALSE);
 
-/*
- * Need to jump to the tag before executing the '-c command'.
- * Makes "vim -c '/return' -t main" work.
- */
-if (params.tagname != NULL) {
+  /*
+   * Need to jump to the tag before executing the '-c command'.
+   * Makes "vim -c '/return' -t main" work.
+   */
+  if (params.tagname != NULL) {
 #if defined(HAS_SWAP_EXISTS_ACTION)
-  swap_exists_did_quit = FALSE;
+    swap_exists_did_quit = FALSE;
 #endif
 
-  vim_snprintf((char *)IObuff, IOSIZE, "ta %s", params.tagname);
-  do_cmdline_cmd(IObuff);
-  TIME_MSG("jumping to tag");
+    vim_snprintf((char *)IObuff, IOSIZE, "ta %s", params.tagname);
+    do_cmdline_cmd(IObuff);
+    TIME_MSG("jumping to tag");
 
 #if defined(HAS_SWAP_EXISTS_ACTION)
-  /* If the user doesn't want to edit the file then we quit here. */
-  if (swap_exists_did_quit)
-    getout(1);
+    /* If the user doesn't want to edit the file then we quit here. */
+    if (swap_exists_did_quit)
+      getout(1);
 #endif
-}
+  }
 
-/* Execute any "+", "-c" and "-S" arguments. */
-if (params.n_commands > 0)
-  exe_commands(&params);
+  /* Execute any "+", "-c" and "-S" arguments. */
+  if (params.n_commands > 0)
+    exe_commands(&params);
 
-RedrawingDisabled = 0;
-redraw_all_later(NOT_VALID);
-no_wait_return = FALSE;
-starting = 0;
+  RedrawingDisabled = 0;
+  redraw_all_later(NOT_VALID);
+  no_wait_return = FALSE;
+  starting = 0;
 
-/* Requesting the termresponse is postponed until here, so that a "-c q"
- * argument doesn't make it appear in the shell Vim was started from. */
-may_req_termresponse();
+  /* Requesting the termresponse is postponed until here, so that a "-c q"
+   * argument doesn't make it appear in the shell Vim was started from. */
+  may_req_termresponse();
 
-/* start in insert mode */
-if (p_im)
-  need_start_insertmode = TRUE;
+  /* start in insert mode */
+  if (p_im)
+    need_start_insertmode = TRUE;
 
-apply_autocmds(EVENT_VIMENTER, NULL, NULL, FALSE, curbuf);
-TIME_MSG("VimEnter autocommands");
-
-
-/* When a startup script or session file setup for diff'ing and
- * scrollbind, sync the scrollbind now. */
-if (curwin->w_p_diff && curwin->w_p_scb) {
-  update_topline();
-  check_scrollbind((linenr_T)0, 0L);
-  TIME_MSG("diff scrollbinding");
-}
+  apply_autocmds(EVENT_VIMENTER, NULL, NULL, FALSE, curbuf);
+  TIME_MSG("VimEnter autocommands");
 
 
+  /* When a startup script or session file setup for diff'ing and
+   * scrollbind, sync the scrollbind now. */
+  if (curwin->w_p_diff && curwin->w_p_scb) {
+    update_topline();
+    check_scrollbind((linenr_T)0, 0L);
+    TIME_MSG("diff scrollbinding");
+  }
 
-/* If ":startinsert" command used, stuff a dummy command to be able to
- * call normal_cmd(), which will then start Insert mode. */
-if (restart_edit != 0)
-  stuffcharReadbuff(K_NOP);
 
 
-TIME_MSG("before starting main loop");
+  /* If ":startinsert" command used, stuff a dummy command to be able to
+   * call normal_cmd(), which will then start Insert mode. */
+  if (restart_edit != 0)
+    stuffcharReadbuff(K_NOP);
 
-/*
- * Call the main command loop.  This never returns.
- */
-main_loop(FALSE, FALSE);
 
-return 0;
+  TIME_MSG("before starting main loop");
+
+  /*
+   * Call the main command loop.  This never returns.
+   */
+  main_loop(FALSE, FALSE);
+
+  return 0;
 }
 #endif /* NO_VIM_MAIN */
 
@@ -645,8 +608,8 @@ return 0;
  * commands, return when entering Ex mode.  "noexmode" is TRUE then.
  */
 void main_loop(cmdwin, noexmode)
-int cmdwin;                 /* TRUE when working in the command-line window */
-int noexmode;               /* TRUE when return on entering Ex mode */
+  int cmdwin;                 /* TRUE when working in the command-line window */
+  int noexmode;               /* TRUE when return on entering Ex mode */
 {
   oparg_T oa;                                   /* operator arguments */
   int previous_got_int = FALSE;                 /* "got_int" was TRUE */
@@ -657,8 +620,8 @@ int noexmode;               /* TRUE when return on entering Ex mode */
 
   clear_oparg(&oa);
   while (!cmdwin
-         || cmdwin_result == 0
-         ) {
+      || cmdwin_result == 0
+      ) {
     if (stuff_empty()) {
       did_check_timestamps = FALSE;
       if (need_check_timestamps)
@@ -667,7 +630,7 @@ int noexmode;               /* TRUE when return on entering Ex mode */
         wait_return(FALSE);             /* ... call it now */
       if (need_start_insertmode && goto_im()
           && !VIsual_active
-          ) {
+         ) {
         need_start_insertmode = FALSE;
         stuffReadbuff((char_u *)"i");           /* start insert mode next */
         /* skip the fileinfo message now, because it would be shown
@@ -796,8 +759,8 @@ int noexmode;               /* TRUE when return on entering Ex mode */
 
       if (conceal_update_lines
           && (conceal_old_cursor_line != conceal_new_cursor_line
-              || conceal_cursor_line(curwin)
-              || need_cursor_line_redraw)) {
+            || conceal_cursor_line(curwin)
+            || need_cursor_line_redraw)) {
         if (conceal_old_cursor_line != conceal_new_cursor_line
             && conceal_old_cursor_line
             <= curbuf->b_ml.ml_line_count)
@@ -854,7 +817,7 @@ int noexmode;               /* TRUE when return on entering Ex mode */
 
 /* Exit properly */
 void getout(exitval)
-int exitval;
+  int exitval;
 {
   buf_T       *buf;
   win_T       *wp;
@@ -880,7 +843,7 @@ int exitval;
     for (tp = first_tabpage; tp != NULL; tp = next_tp) {
       next_tp = tp->tp_next;
       for (wp = (tp == curtab)
-                ? firstwin : tp->tp_firstwin; wp != NULL; wp = wp->w_next) {
+          ? firstwin : tp->tp_firstwin; wp != NULL; wp = wp->w_next) {
         if (wp->w_buffer == NULL)
           /* Autocmd must have close the buffer already, skip. */
           continue;
@@ -917,7 +880,7 @@ int exitval;
   profile_dump();
 
   if (did_emsg
-      ) {
+     ) {
     /* give the user a chance to read the (error) message */
     no_wait_return = FALSE;
     wait_return(FALSE);
@@ -941,9 +904,9 @@ int exitval;
  * Get a (optional) count for a Vim argument.
  */
 static int get_number_arg(p, idx, def)
-char_u      *p;             /* pointer to argument */
-int         *idx;           /* index in argument, is incremented */
-int def;                    /* default value */
+  char_u      *p;             /* pointer to argument */
+  int         *idx;           /* index in argument, is incremented */
+  int def;                    /* default value */
 {
   if (vim_isdigit(p[*idx])) {
     def = atoi((char *)&(p[*idx]));
@@ -996,7 +959,7 @@ static void init_locale()                 {
  * by "im" use improved Ex mode.
  */
 static void parse_command_name(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   char_u      *initstr;
 
@@ -1013,7 +976,7 @@ mparm_T     *parmp;
   /* Use evim mode for "evim" and "egvim", not for "editor". */
   if (TOLOWER_ASC(initstr[0]) == 'e'
       && (TOLOWER_ASC(initstr[1]) == 'v'
-          || TOLOWER_ASC(initstr[1]) == 'g')) {
+        || TOLOWER_ASC(initstr[1]) == 'g')) {
     parmp->evim_mode = TRUE;
     ++initstr;
   }
@@ -1046,38 +1009,10 @@ mparm_T     *parmp;
 }
 
 /*
- * Get the name of the display, before gui_prepare() removes it from
- * argv[].  Used for the xterm-clipboard display.
- *
- * Also find the --server... arguments and --socketid and --windowid
- */
-static void early_arg_scan(parmp)
-mparm_T     *parmp UNUSED;
-{
-#if defined(FEAT_XCLIPBOARD) || defined(FEAT_CLIENTSERVER) \
-  || !defined(FEAT_NETBEANS_INTG)
-  int argc = parmp->argc;
-  char        **argv = parmp->argv;
-  int i;
-
-  for (i = 1; i < argc; i++) {
-    if (STRCMP(argv[i], "--") == 0)
-      break;
-
-    else if (strncmp(argv[i], "-nb", (size_t)3) == 0) {
-      mch_errmsg(_("'-nb' cannot be used: not enabled at compile time\n"));
-      mch_exit(2);
-    }
-
-  }
-#endif
-}
-
-/*
  * Scan the command line arguments.
  */
 static void command_line_scan(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   int argc = parmp->argc;
   char        **argv = parmp->argv;
@@ -1111,262 +1046,262 @@ mparm_T     *parmp;
       want_argument = FALSE;
       c = argv[0][argv_idx++];
       switch (c) {
-      case NUL:                 /* "vim -"  read from stdin */
-                                /* "ex -" silent mode */
-        if (exmode_active)
-          silent_mode = TRUE;
-        else {
-          if (parmp->edit_type != EDIT_NONE)
-            mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
-          parmp->edit_type = EDIT_STDIN;
-          read_cmd_fd = 2;              /* read from stderr instead of stdin */
-        }
-        argv_idx = -1;                  /* skip to next argument */
-        break;
+        case NUL:                 /* "vim -"  read from stdin */
+          /* "ex -" silent mode */
+          if (exmode_active)
+            silent_mode = TRUE;
+          else {
+            if (parmp->edit_type != EDIT_NONE)
+              mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+            parmp->edit_type = EDIT_STDIN;
+            read_cmd_fd = 2;              /* read from stderr instead of stdin */
+          }
+          argv_idx = -1;                  /* skip to next argument */
+          break;
 
-      case '-':                 /* "--" don't take any more option arguments */
-                                /* "--help" give help message */
-                                /* "--version" give version message */
-                                /* "--literal" take files literally */
-                                /* "--nofork" don't fork */
-                                /* "--noplugin[s]" skip plugins */
-                                /* "--cmd <cmd>" execute cmd before vimrc */
-        if (STRICMP(argv[0] + argv_idx, "help") == 0)
-          usage();
-        else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
-          Columns = 80;                 /* need to init Columns */
-          info_message = TRUE;           /* use mch_msg(), not mch_errmsg() */
-          list_version();
-          msg_putchar('\n');
-          msg_didout = FALSE;
-          mch_exit(0);
-        } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0)   {
+        case '-':                 /* "--" don't take any more option arguments */
+          /* "--help" give help message */
+          /* "--version" give version message */
+          /* "--literal" take files literally */
+          /* "--nofork" don't fork */
+          /* "--noplugin[s]" skip plugins */
+          /* "--cmd <cmd>" execute cmd before vimrc */
+          if (STRICMP(argv[0] + argv_idx, "help") == 0)
+            usage();
+          else if (STRICMP(argv[0] + argv_idx, "version") == 0) {
+            Columns = 80;                 /* need to init Columns */
+            info_message = TRUE;           /* use mch_msg(), not mch_errmsg() */
+            list_version();
+            msg_putchar('\n');
+            msg_didout = FALSE;
+            mch_exit(0);
+          } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0)   {
 #if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE)
-          parmp->literal = TRUE;
+            parmp->literal = TRUE;
 #endif
-        } else if (STRNICMP(argv[0] + argv_idx, "nofork", 6) == 0)   {
-        } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0)
-          p_lpl = FALSE;
-        else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
-          want_argument = TRUE;
-          argv_idx += 3;
-        } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0)   {
-          want_argument = TRUE;
-          argv_idx += 11;
-        } else   {
-          if (argv[0][argv_idx])
-            mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
-          had_minmin = TRUE;
-        }
-        if (!want_argument)
-          argv_idx = -1;                /* skip to next argument */
-        break;
+          } else if (STRNICMP(argv[0] + argv_idx, "nofork", 6) == 0)   {
+          } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0)
+            p_lpl = FALSE;
+          else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
+            want_argument = TRUE;
+            argv_idx += 3;
+          } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0)   {
+            want_argument = TRUE;
+            argv_idx += 11;
+          } else   {
+            if (argv[0][argv_idx])
+              mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
+            had_minmin = TRUE;
+          }
+          if (!want_argument)
+            argv_idx = -1;                /* skip to next argument */
+          break;
 
-      case 'A':                 /* "-A" start in Arabic mode */
-        set_option_value((char_u *)"arabic", 1L, NULL, 0);
-        break;
+        case 'A':                 /* "-A" start in Arabic mode */
+          set_option_value((char_u *)"arabic", 1L, NULL, 0);
+          break;
 
-      case 'b':                 /* "-b" binary mode */
-        /* Needs to be effective before expanding file names, because
-         * for Win32 this makes us edit a shortcut file itself,
-         * instead of the file it links to. */
-        set_options_bin(curbuf->b_p_bin, 1, 0);
-        curbuf->b_p_bin = 1;                /* binary file I/O */
-        break;
+        case 'b':                 /* "-b" binary mode */
+          /* Needs to be effective before expanding file names, because
+           * for Win32 this makes us edit a shortcut file itself,
+           * instead of the file it links to. */
+          set_options_bin(curbuf->b_p_bin, 1, 0);
+          curbuf->b_p_bin = 1;                /* binary file I/O */
+          break;
 
-      case 'C':                 /* "-C"  Compatible */
-        change_compatible(TRUE);
-        break;
+        case 'C':                 /* "-C"  Compatible */
+          change_compatible(TRUE);
+          break;
 
-      case 'e':                 /* "-e" Ex mode */
-        exmode_active = EXMODE_NORMAL;
-        break;
+        case 'e':                 /* "-e" Ex mode */
+          exmode_active = EXMODE_NORMAL;
+          break;
 
-      case 'E':                 /* "-E" Improved Ex mode */
-        exmode_active = EXMODE_VIM;
-        break;
+        case 'E':                 /* "-E" Improved Ex mode */
+          exmode_active = EXMODE_VIM;
+          break;
 
-      case 'f':                 /* "-f"  GUI: run in foreground.  Amiga: open
-                                   window directly, not with newcli */
-        break;
+        case 'f':                 /* "-f"  GUI: run in foreground.  Amiga: open
+                                     window directly, not with newcli */
+          break;
 
-      case 'g':                 /* "-g" start GUI */
-        main_start_gui();
-        break;
-
-      case 'F':                 /* "-F" start in Farsi mode: rl + fkmap set */
-        p_fkmap = TRUE;
-        set_option_value((char_u *)"rl", 1L, NULL, 0);
-        break;
-
-      case 'h':                 /* "-h" give help message */
-        usage();
-        break;
-
-      case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
-        p_hkmap = TRUE;
-        set_option_value((char_u *)"rl", 1L, NULL, 0);
-        break;
-
-      case 'l':                 /* "-l" lisp mode, 'lisp' and 'showmatch' on */
-        set_option_value((char_u *)"lisp", 1L, NULL, 0);
-        p_sm = TRUE;
-        break;
-
-      case 'M':                 /* "-M"  no changes or writing of files */
-        reset_modifiable();
-      /* FALLTHROUGH */
-
-      case 'm':                 /* "-m"  no writing of files */
-        p_write = FALSE;
-        break;
-
-      case 'y':                 /* "-y"  easy mode */
-        parmp->evim_mode = TRUE;
-        break;
-
-      case 'N':                 /* "-N"  Nocompatible */
-        change_compatible(FALSE);
-        break;
-
-      case 'n':                 /* "-n" no swap file */
-        parmp->no_swap_file = TRUE;
-        break;
-
-      case 'p':                 /* "-p[N]" open N tab pages */
-#ifdef TARGET_API_MAC_OSX
-        /* For some reason on MacOS X, an argument like:
-           -psn_0_10223617 is passed in when invoke from Finder
-           or with the 'open' command */
-        if (argv[0][argv_idx] == 's') {
-          argv_idx = -1;           /* bypass full -psn */
+        case 'g':                 /* "-g" start GUI */
           main_start_gui();
           break;
-        }
+
+        case 'F':                 /* "-F" start in Farsi mode: rl + fkmap set */
+          p_fkmap = TRUE;
+          set_option_value((char_u *)"rl", 1L, NULL, 0);
+          break;
+
+        case 'h':                 /* "-h" give help message */
+          usage();
+          break;
+
+        case 'H':                 /* "-H" start in Hebrew mode: rl + hkmap set */
+          p_hkmap = TRUE;
+          set_option_value((char_u *)"rl", 1L, NULL, 0);
+          break;
+
+        case 'l':                 /* "-l" lisp mode, 'lisp' and 'showmatch' on */
+          set_option_value((char_u *)"lisp", 1L, NULL, 0);
+          p_sm = TRUE;
+          break;
+
+        case 'M':                 /* "-M"  no changes or writing of files */
+          reset_modifiable();
+          /* FALLTHROUGH */
+
+        case 'm':                 /* "-m"  no writing of files */
+          p_write = FALSE;
+          break;
+
+        case 'y':                 /* "-y"  easy mode */
+          parmp->evim_mode = TRUE;
+          break;
+
+        case 'N':                 /* "-N"  Nocompatible */
+          change_compatible(FALSE);
+          break;
+
+        case 'n':                 /* "-n" no swap file */
+          parmp->no_swap_file = TRUE;
+          break;
+
+        case 'p':                 /* "-p[N]" open N tab pages */
+#ifdef TARGET_API_MAC_OSX
+          /* For some reason on MacOS X, an argument like:
+             -psn_0_10223617 is passed in when invoke from Finder
+             or with the 'open' command */
+          if (argv[0][argv_idx] == 's') {
+            argv_idx = -1;           /* bypass full -psn */
+            main_start_gui();
+            break;
+          }
 #endif
-        /* default is 0: open window for each file */
-        parmp->window_count = get_number_arg((char_u *)argv[0],
-            &argv_idx, 0);
-        parmp->window_layout = WIN_TABS;
-        break;
-
-      case 'o':                 /* "-o[N]" open N horizontal split windows */
-        /* default is 0: open window for each file */
-        parmp->window_count = get_number_arg((char_u *)argv[0],
-            &argv_idx, 0);
-        parmp->window_layout = WIN_HOR;
-        break;
-
-      case 'O':                 /* "-O[N]" open N vertical split windows */
-        /* default is 0: open window for each file */
-        parmp->window_count = get_number_arg((char_u *)argv[0],
-            &argv_idx, 0);
-        parmp->window_layout = WIN_VER;
-        break;
-
-      case 'q':                 /* "-q" QuickFix mode */
-        if (parmp->edit_type != EDIT_NONE)
-          mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
-        parmp->edit_type = EDIT_QF;
-        if (argv[0][argv_idx]) {                /* "-q{errorfile}" */
-          parmp->use_ef = (char_u *)argv[0] + argv_idx;
-          argv_idx = -1;
-        } else if (argc > 1)                    /* "-q {errorfile}" */
-          want_argument = TRUE;
-        break;
-
-      case 'R':                 /* "-R" readonly mode */
-        readonlymode = TRUE;
-        curbuf->b_p_ro = TRUE;
-        p_uc = 10000;                           /* don't update very often */
-        break;
-
-      case 'r':                 /* "-r" recovery mode */
-      case 'L':                 /* "-L" recovery mode */
-        recoverymode = 1;
-        break;
-
-      case 's':
-        if (exmode_active)              /* "-s" silent (batch) mode */
-          silent_mode = TRUE;
-        else                    /* "-s {scriptin}" read from script file */
-          want_argument = TRUE;
-        break;
-
-      case 't':                 /* "-t {tag}" or "-t{tag}" jump to tag */
-        if (parmp->edit_type != EDIT_NONE)
-          mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
-        parmp->edit_type = EDIT_TAG;
-        if (argv[0][argv_idx]) {                /* "-t{tag}" */
-          parmp->tagname = (char_u *)argv[0] + argv_idx;
-          argv_idx = -1;
-        } else                                  /* "-t {tag}" */
-          want_argument = TRUE;
-        break;
-
-      case 'D':                 /* "-D"		Debugging */
-        parmp->use_debug_break_level = 9999;
-        break;
-      case 'd':                 /* "-d"		'diff' */
-        parmp->diff_mode = TRUE;
-        break;
-      case 'V':                 /* "-V{N}"	Verbose level */
-        /* default is 10: a little bit verbose */
-        p_verbose = get_number_arg((char_u *)argv[0], &argv_idx, 10);
-        if (argv[0][argv_idx] != NUL) {
-          set_option_value((char_u *)"verbosefile", 0L,
-              (char_u *)argv[0] + argv_idx, 0);
-          argv_idx = (int)STRLEN(argv[0]);
-        }
-        break;
-
-      case 'v':                 /* "-v"  Vi-mode (as if called "vi") */
-        exmode_active = 0;
-        break;
-
-      case 'w':                 /* "-w{number}"	set window height */
-                                /* "-w {scriptout}"	write to script */
-        if (vim_isdigit(((char_u *)argv[0])[argv_idx])) {
-          n = get_number_arg((char_u *)argv[0], &argv_idx, 10);
-          set_option_value((char_u *)"window", n, NULL, 0);
+          /* default is 0: open window for each file */
+          parmp->window_count = get_number_arg((char_u *)argv[0],
+              &argv_idx, 0);
+          parmp->window_layout = WIN_TABS;
           break;
-        }
-        want_argument = TRUE;
-        break;
 
-      case 'x':                 /* "-x"  encrypted reading/writing of files */
-        parmp->ask_for_key = TRUE;
-        break;
-
-      case 'X':                 /* "-X"  don't connect to X server */
-        break;
-
-      case 'Z':                 /* "-Z"  restricted mode */
-        restricted = TRUE;
-        break;
-
-      case 'c':                 /* "-c{command}" or "-c {command}" execute
-                                   command */
-        if (argv[0][argv_idx] != NUL) {
-          if (parmp->n_commands >= MAX_ARG_CMDS)
-            mainerr(ME_EXTRA_CMD, NULL);
-          parmp->commands[parmp->n_commands++] = (char_u *)argv[0]
-                                                 + argv_idx;
-          argv_idx = -1;
+        case 'o':                 /* "-o[N]" open N horizontal split windows */
+          /* default is 0: open window for each file */
+          parmp->window_count = get_number_arg((char_u *)argv[0],
+              &argv_idx, 0);
+          parmp->window_layout = WIN_HOR;
           break;
-        }
-      /*FALLTHROUGH*/
-      case 'S':                 /* "-S {file}" execute Vim script */
-      case 'i':                 /* "-i {viminfo}" use for viminfo */
-      case 'T':                 /* "-T {terminal}" terminal name */
-      case 'u':                 /* "-u {vimrc}" vim inits file */
-      case 'U':                 /* "-U {gvimrc}" gvim inits file */
-      case 'W':                 /* "-W {scriptout}" overwrite */
-        want_argument = TRUE;
-        break;
 
-      default:
-        mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
+        case 'O':                 /* "-O[N]" open N vertical split windows */
+          /* default is 0: open window for each file */
+          parmp->window_count = get_number_arg((char_u *)argv[0],
+              &argv_idx, 0);
+          parmp->window_layout = WIN_VER;
+          break;
+
+        case 'q':                 /* "-q" QuickFix mode */
+          if (parmp->edit_type != EDIT_NONE)
+            mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+          parmp->edit_type = EDIT_QF;
+          if (argv[0][argv_idx]) {                /* "-q{errorfile}" */
+            parmp->use_ef = (char_u *)argv[0] + argv_idx;
+            argv_idx = -1;
+          } else if (argc > 1)                    /* "-q {errorfile}" */
+            want_argument = TRUE;
+          break;
+
+        case 'R':                 /* "-R" readonly mode */
+          readonlymode = TRUE;
+          curbuf->b_p_ro = TRUE;
+          p_uc = 10000;                           /* don't update very often */
+          break;
+
+        case 'r':                 /* "-r" recovery mode */
+        case 'L':                 /* "-L" recovery mode */
+          recoverymode = 1;
+          break;
+
+        case 's':
+          if (exmode_active)              /* "-s" silent (batch) mode */
+            silent_mode = TRUE;
+          else                    /* "-s {scriptin}" read from script file */
+            want_argument = TRUE;
+          break;
+
+        case 't':                 /* "-t {tag}" or "-t{tag}" jump to tag */
+          if (parmp->edit_type != EDIT_NONE)
+            mainerr(ME_TOO_MANY_ARGS, (char_u *)argv[0]);
+          parmp->edit_type = EDIT_TAG;
+          if (argv[0][argv_idx]) {                /* "-t{tag}" */
+            parmp->tagname = (char_u *)argv[0] + argv_idx;
+            argv_idx = -1;
+          } else                                  /* "-t {tag}" */
+            want_argument = TRUE;
+          break;
+
+        case 'D':                 /* "-D"		Debugging */
+          parmp->use_debug_break_level = 9999;
+          break;
+        case 'd':                 /* "-d"		'diff' */
+          parmp->diff_mode = TRUE;
+          break;
+        case 'V':                 /* "-V{N}"	Verbose level */
+          /* default is 10: a little bit verbose */
+          p_verbose = get_number_arg((char_u *)argv[0], &argv_idx, 10);
+          if (argv[0][argv_idx] != NUL) {
+            set_option_value((char_u *)"verbosefile", 0L,
+                (char_u *)argv[0] + argv_idx, 0);
+            argv_idx = (int)STRLEN(argv[0]);
+          }
+          break;
+
+        case 'v':                 /* "-v"  Vi-mode (as if called "vi") */
+          exmode_active = 0;
+          break;
+
+        case 'w':                 /* "-w{number}"	set window height */
+          /* "-w {scriptout}"	write to script */
+          if (vim_isdigit(((char_u *)argv[0])[argv_idx])) {
+            n = get_number_arg((char_u *)argv[0], &argv_idx, 10);
+            set_option_value((char_u *)"window", n, NULL, 0);
+            break;
+          }
+          want_argument = TRUE;
+          break;
+
+        case 'x':                 /* "-x"  encrypted reading/writing of files */
+          parmp->ask_for_key = TRUE;
+          break;
+
+        case 'X':                 /* "-X"  don't connect to X server */
+          break;
+
+        case 'Z':                 /* "-Z"  restricted mode */
+          restricted = TRUE;
+          break;
+
+        case 'c':                 /* "-c{command}" or "-c {command}" execute
+                                     command */
+          if (argv[0][argv_idx] != NUL) {
+            if (parmp->n_commands >= MAX_ARG_CMDS)
+              mainerr(ME_EXTRA_CMD, NULL);
+            parmp->commands[parmp->n_commands++] = (char_u *)argv[0]
+              + argv_idx;
+            argv_idx = -1;
+            break;
+          }
+          /*FALLTHROUGH*/
+        case 'S':                 /* "-S {file}" execute Vim script */
+        case 'i':                 /* "-i {viminfo}" use for viminfo */
+        case 'T':                 /* "-T {terminal}" terminal name */
+        case 'u':                 /* "-u {vimrc}" vim inits file */
+        case 'U':                 /* "-U {gvimrc}" gvim inits file */
+        case 'W':                 /* "-W {scriptout}" overwrite */
+          want_argument = TRUE;
+          break;
+
+        default:
+          mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
       }
 
       /*
@@ -1386,119 +1321,119 @@ mparm_T     *parmp;
         argv_idx = -1;
 
         switch (c) {
-        case 'c':               /* "-c {command}" execute command */
-        case 'S':               /* "-S {file}" execute Vim script */
-          if (parmp->n_commands >= MAX_ARG_CMDS)
-            mainerr(ME_EXTRA_CMD, NULL);
-          if (c == 'S') {
-            char    *a;
-
-            if (argc < 1)
-              /* "-S" without argument: use default session file
-               * name. */
-              a = SESSION_FILE;
-            else if (argv[0][0] == '-') {
-              /* "-S" followed by another option: use default
-               * session file name. */
-              a = SESSION_FILE;
-              ++argc;
-              --argv;
-            } else
-              a = argv[0];
-            p = alloc((unsigned)(STRLEN(a) + 4));
-            if (p == NULL)
-              mch_exit(2);
-            sprintf((char *)p, "so %s", a);
-            parmp->cmds_tofree[parmp->n_commands] = TRUE;
-            parmp->commands[parmp->n_commands++] = p;
-          } else
-            parmp->commands[parmp->n_commands++] =
-              (char_u *)argv[0];
-          break;
-
-        case '-':
-          if (argv[-1][2] == 'c') {
-            /* "--cmd {command}" execute command */
-            if (parmp->n_pre_commands >= MAX_ARG_CMDS)
+          case 'c':               /* "-c {command}" execute command */
+          case 'S':               /* "-S {file}" execute Vim script */
+            if (parmp->n_commands >= MAX_ARG_CMDS)
               mainerr(ME_EXTRA_CMD, NULL);
-            parmp->pre_commands[parmp->n_pre_commands++] =
-              (char_u *)argv[0];
-          }
-          /* "--startuptime <file>" already handled */
-          break;
+            if (c == 'S') {
+              char    *a;
 
-        /*	case 'd':   -d {device} is handled in mch_check_win() for the
-         *		    Amiga */
-
-        case 'q':               /* "-q {errorfile}" QuickFix mode */
-          parmp->use_ef = (char_u *)argv[0];
-          break;
-
-        case 'i':               /* "-i {viminfo}" use for viminfo */
-          use_viminfo = (char_u *)argv[0];
-          break;
-
-        case 's':               /* "-s {scriptin}" read from script file */
-          if (scriptin[0] != NULL) {
-scripterror:
-            mch_errmsg(_("Attempt to open script file again: \""));
-            mch_errmsg(argv[-1]);
-            mch_errmsg(" ");
-            mch_errmsg(argv[0]);
-            mch_errmsg("\"\n");
-            mch_exit(2);
-          }
-          if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
-            mch_errmsg(_("Cannot open for reading: \""));
-            mch_errmsg(argv[0]);
-            mch_errmsg("\"\n");
-            mch_exit(2);
-          }
-          if (save_typebuf() == FAIL)
-            mch_exit(2);                /* out of memory */
-          break;
-
-        case 't':               /* "-t {tag}" */
-          parmp->tagname = (char_u *)argv[0];
-          break;
-
-        case 'T':               /* "-T {terminal}" terminal name */
-          /*
-           * The -T term argument is always available and when
-           * HAVE_TERMLIB is supported it overrides the environment
-           * variable TERM.
-           */
-          parmp->term = (char_u *)argv[0];
-          break;
-
-        case 'u':               /* "-u {vimrc}" vim inits file */
-          parmp->use_vimrc = (char_u *)argv[0];
-          break;
-
-        case 'U':               /* "-U {gvimrc}" gvim inits file */
-          break;
-
-        case 'w':               /* "-w {nr}" 'window' value */
-                                /* "-w {scriptout}" append to script file */
-          if (vim_isdigit(*((char_u *)argv[0]))) {
-            argv_idx = 0;
-            n = get_number_arg((char_u *)argv[0], &argv_idx, 10);
-            set_option_value((char_u *)"window", n, NULL, 0);
-            argv_idx = -1;
+              if (argc < 1)
+                /* "-S" without argument: use default session file
+                 * name. */
+                a = SESSION_FILE;
+              else if (argv[0][0] == '-') {
+                /* "-S" followed by another option: use default
+                 * session file name. */
+                a = SESSION_FILE;
+                ++argc;
+                --argv;
+              } else
+                a = argv[0];
+              p = alloc((unsigned)(STRLEN(a) + 4));
+              if (p == NULL)
+                mch_exit(2);
+              sprintf((char *)p, "so %s", a);
+              parmp->cmds_tofree[parmp->n_commands] = TRUE;
+              parmp->commands[parmp->n_commands++] = p;
+            } else
+              parmp->commands[parmp->n_commands++] =
+                (char_u *)argv[0];
             break;
-          }
-        /*FALLTHROUGH*/
-        case 'W':               /* "-W {scriptout}" overwrite script file */
-          if (scriptout != NULL)
-            goto scripterror;
-          if ((scriptout = mch_fopen(argv[0],
-                   c == 'w' ? APPENDBIN : WRITEBIN)) == NULL) {
-            mch_errmsg(_("Cannot open for script output: \""));
-            mch_errmsg(argv[0]);
-            mch_errmsg("\"\n");
-            mch_exit(2);
-          }
-          break;
+
+          case '-':
+            if (argv[-1][2] == 'c') {
+              /* "--cmd {command}" execute command */
+              if (parmp->n_pre_commands >= MAX_ARG_CMDS)
+                mainerr(ME_EXTRA_CMD, NULL);
+              parmp->pre_commands[parmp->n_pre_commands++] =
+                (char_u *)argv[0];
+            }
+            /* "--startuptime <file>" already handled */
+            break;
+
+            /*	case 'd':   -d {device} is handled in mch_check_win() for the
+             *		    Amiga */
+
+          case 'q':               /* "-q {errorfile}" QuickFix mode */
+            parmp->use_ef = (char_u *)argv[0];
+            break;
+
+          case 'i':               /* "-i {viminfo}" use for viminfo */
+            use_viminfo = (char_u *)argv[0];
+            break;
+
+          case 's':               /* "-s {scriptin}" read from script file */
+            if (scriptin[0] != NULL) {
+scripterror:
+              mch_errmsg(_("Attempt to open script file again: \""));
+              mch_errmsg(argv[-1]);
+              mch_errmsg(" ");
+              mch_errmsg(argv[0]);
+              mch_errmsg("\"\n");
+              mch_exit(2);
+            }
+            if ((scriptin[0] = mch_fopen(argv[0], READBIN)) == NULL) {
+              mch_errmsg(_("Cannot open for reading: \""));
+              mch_errmsg(argv[0]);
+              mch_errmsg("\"\n");
+              mch_exit(2);
+            }
+            if (save_typebuf() == FAIL)
+              mch_exit(2);                /* out of memory */
+            break;
+
+          case 't':               /* "-t {tag}" */
+            parmp->tagname = (char_u *)argv[0];
+            break;
+
+          case 'T':               /* "-T {terminal}" terminal name */
+            /*
+             * The -T term argument is always available and when
+             * HAVE_TERMLIB is supported it overrides the environment
+             * variable TERM.
+             */
+            parmp->term = (char_u *)argv[0];
+            break;
+
+          case 'u':               /* "-u {vimrc}" vim inits file */
+            parmp->use_vimrc = (char_u *)argv[0];
+            break;
+
+          case 'U':               /* "-U {gvimrc}" gvim inits file */
+            break;
+
+          case 'w':               /* "-w {nr}" 'window' value */
+            /* "-w {scriptout}" append to script file */
+            if (vim_isdigit(*((char_u *)argv[0]))) {
+              argv_idx = 0;
+              n = get_number_arg((char_u *)argv[0], &argv_idx, 10);
+              set_option_value((char_u *)"window", n, NULL, 0);
+              argv_idx = -1;
+              break;
+            }
+            /*FALLTHROUGH*/
+          case 'W':               /* "-W {scriptout}" overwrite script file */
+            if (scriptout != NULL)
+              goto scripterror;
+            if ((scriptout = mch_fopen(argv[0],
+                    c == 'w' ? APPENDBIN : WRITEBIN)) == NULL) {
+              mch_errmsg(_("Cannot open for script output: \""));
+              mch_errmsg(argv[0]);
+              mch_errmsg("\"\n");
+              mch_exit(2);
+            }
+            break;
 
         }
       }
@@ -1574,7 +1509,7 @@ scripterror:
  * When starting in Ex mode and commands come from a file, set Silent mode.
  */
 static void check_tty(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   int input_isatty;                     /* is active input a terminal? */
 
@@ -1583,7 +1518,7 @@ mparm_T     *parmp;
     if (!input_isatty)
       silent_mode = TRUE;
   } else if (parmp->want_full_screen && (!parmp->stdout_isatty || !input_isatty)
-             ) {
+      ) {
     if (!parmp->stdout_isatty)
       mch_errmsg(_("Vim: Warning: Output is not to a terminal\n"));
     if (!input_isatty)
@@ -1629,7 +1564,7 @@ static void read_stdin()                 {
  * Also does recovery if "recoverymode" set.
  */
 static void create_windows(parmp)
-mparm_T     *parmp UNUSED;
+  mparm_T     *parmp UNUSED;
 {
   int dorewind;
   int done = 0;
@@ -1745,7 +1680,7 @@ mparm_T     *parmp UNUSED;
  * windows.  make_windows() has already opened the windows.
  */
 static void edit_buffers(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   int arg_idx;                          /* index in argument list */
   int i;
@@ -1848,7 +1783,7 @@ mparm_T     *parmp;
  * Execute the commands from --cmd arguments "cmds[cnt]".
  */
 static void exe_pre_commands(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   char_u      **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
@@ -1870,7 +1805,7 @@ mparm_T     *parmp;
  * Execute "+", "-c" and "-S" arguments.
  */
 static void exe_commands(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   int i;
 
@@ -1907,7 +1842,7 @@ mparm_T     *parmp;
  * Source startup scripts.
  */
 static void source_startup_scripts(parmp)
-mparm_T     *parmp;
+  mparm_T     *parmp;
 {
   int i;
 
@@ -1956,15 +1891,15 @@ mparm_T     *parmp;
       if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
 #ifdef USR_VIMRC_FILE2
           && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
-              DOSO_VIMRC) == FAIL
+            DOSO_VIMRC) == FAIL
 #endif
 #ifdef USR_VIMRC_FILE3
           && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
-              DOSO_VIMRC) == FAIL
+            DOSO_VIMRC) == FAIL
 #endif
 #ifdef USR_VIMRC_FILE4
           && do_source((char_u *)USR_VIMRC_FILE4, TRUE,
-              DOSO_VIMRC) == FAIL
+            DOSO_VIMRC) == FAIL
 #endif
           && process_env((char_u *)"EXINIT", FALSE) == FAIL
           && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
@@ -1988,24 +1923,24 @@ mparm_T     *parmp;
       /* If ".vimrc" file is not owned by user, set 'secure' mode. */
       if (!file_owned(VIMRC_FILE))
 #endif
-      secure = p_secure;
+        secure = p_secure;
 
       i = FAIL;
       if (fullpathcmp((char_u *)USR_VIMRC_FILE,
-              (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #ifdef USR_VIMRC_FILE2
           && fullpathcmp((char_u *)USR_VIMRC_FILE2,
-              (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #endif
 #ifdef USR_VIMRC_FILE3
           && fullpathcmp((char_u *)USR_VIMRC_FILE3,
-              (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #endif
 #ifdef SYS_VIMRC_FILE
           && fullpathcmp((char_u *)SYS_VIMRC_FILE,
-              (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #endif
-          )
+         )
         i = do_source((char_u *)VIMRC_FILE, TRUE, DOSO_VIMRC);
 
       if (i == FAIL) {
@@ -2017,12 +1952,12 @@ mparm_T     *parmp;
           secure = 0;
 #endif
         if (       fullpathcmp((char_u *)USR_EXRC_FILE,
-                       (char_u *)EXRC_FILE, FALSE) != FPC_SAME
+              (char_u *)EXRC_FILE, FALSE) != FPC_SAME
 #ifdef USR_EXRC_FILE2
-                   && fullpathcmp((char_u *)USR_EXRC_FILE2,
-                       (char_u *)EXRC_FILE, FALSE) != FPC_SAME
+            && fullpathcmp((char_u *)USR_EXRC_FILE2,
+              (char_u *)EXRC_FILE, FALSE) != FPC_SAME
 #endif
-                   )
+           )
           (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
       }
     }
@@ -2049,8 +1984,8 @@ static void main_start_gui()                 {
  * Returns FAIL if the environment variable was not executed, OK otherwise.
  */
 int process_env(env, is_viminit)
-char_u      *env;
-int is_viminit;             /* when TRUE, called for VIMINIT */
+  char_u      *env;
+  int is_viminit;             /* when TRUE, called for VIMINIT */
 {
   char_u      *initstr;
   char_u      *save_sourcing_name;
@@ -2082,7 +2017,7 @@ int is_viminit;             /* when TRUE, called for VIMINIT */
  * Use both stat() and lstat() for extra security.
  */
 static int file_owned(fname)
-char        *fname;
+  char        *fname;
 {
   struct stat s;
 # ifdef UNIX
@@ -2093,9 +2028,9 @@ char        *fname;
 
   return !(mch_stat(fname, &s) != 0 || s.st_uid != uid
 # ifdef HAVE_LSTAT
-           || mch_lstat(fname, &s) != 0 || s.st_uid != uid
+      || mch_lstat(fname, &s) != 0 || s.st_uid != uid
 # endif
-           );
+      );
 }
 #endif
 
@@ -2103,8 +2038,8 @@ char        *fname;
  * Give an error message main_errors["n"] and exit.
  */
 static void mainerr(n, str)
-int n;                  /* one of the ME_ defines */
-char_u      *str;       /* extra argument or NULL */
+  int n;                  /* one of the ME_ defines */
+  char_u      *str;       /* extra argument or NULL */
 {
 #if defined(UNIX) || defined(__EMX__) || defined(VMS)
   reset_signals();              /* kill us with CTRL-C here, if you like */
@@ -2124,7 +2059,7 @@ char_u      *str;       /* extra argument or NULL */
 }
 
 void mainerr_arg_missing(str)
-char_u      *str;
+  char_u      *str;
 {
   mainerr(ME_ARG_MISSING, str);
 }
@@ -2134,7 +2069,7 @@ char_u      *str;
  * print a message with three spaces prepended and '\n' appended.
  */
 static void main_msg(s)
-char *s;
+  char *s;
 {
   mch_msg("   ");
   mch_msg(s);
@@ -2211,7 +2146,7 @@ static void usage()                 {
   main_msg(_("--cmd <command>\tExecute <command> before loading any vimrc file"));
   main_msg(_("-c <command>\t\tExecute <command> after loading the first file"));
   main_msg(_(
-          "-S <session>\t\tSource file <session> after loading the first file"));
+        "-S <session>\t\tSource file <session> after loading the first file"));
   main_msg(_("-s <scriptin>\tRead Normal mode commands from file <scriptin>"));
   main_msg(_("-w <scriptout>\tAppend all typed commands to file <scriptout>"));
   main_msg(_("-W <scriptout>\tWrite all typed commands to file <scriptout>"));
@@ -2254,14 +2189,14 @@ static struct timeval prev_timeval;
  * set "*tv_rel" to the time elapsed so far.
  */
 void time_push(tv_rel, tv_start)
-void        *tv_rel, *tv_start;
+  void        *tv_rel, *tv_start;
 {
   *((struct timeval *)tv_rel) = prev_timeval;
   gettimeofday(&prev_timeval, NULL);
   ((struct timeval *)tv_rel)->tv_usec = prev_timeval.tv_usec
-                                        - ((struct timeval *)tv_rel)->tv_usec;
+    - ((struct timeval *)tv_rel)->tv_usec;
   ((struct timeval *)tv_rel)->tv_sec = prev_timeval.tv_sec
-                                       - ((struct timeval *)tv_rel)->tv_sec;
+    - ((struct timeval *)tv_rel)->tv_sec;
   if (((struct timeval *)tv_rel)->tv_usec < 0) {
     ((struct timeval *)tv_rel)->tv_usec += 1000000;
     --((struct timeval *)tv_rel)->tv_sec;
@@ -2276,7 +2211,7 @@ void        *tv_rel, *tv_start;
  * have struct timeval.
  */
 void time_pop(tp)
-void        *tp;        /* actually (struct timeval *) */
+  void        *tp;        /* actually (struct timeval *) */
 {
   prev_timeval.tv_usec -= ((struct timeval *)tp)->tv_usec;
   prev_timeval.tv_sec -= ((struct timeval *)tp)->tv_sec;
@@ -2287,22 +2222,22 @@ void        *tp;        /* actually (struct timeval *) */
 }
 
 static void time_diff(then, now)
-struct timeval      *then;
-struct timeval      *now;
+  struct timeval      *then;
+  struct timeval      *now;
 {
   long usec;
   long msec;
 
   usec = now->tv_usec - then->tv_usec;
   msec = (now->tv_sec - then->tv_sec) * 1000L + usec / 1000L,
-  usec = usec % 1000L;
+       usec = usec % 1000L;
   fprintf(time_fd, "%03ld.%03ld", msec, usec >= 0 ? usec : usec + 1000L);
 }
 
 void time_msg(mesg, tv_start)
-char        *mesg;
-void        *tv_start;      /* only for do_source: start time; actually
-                               (struct timeval *) */
+  char        *mesg;
+  void        *tv_start;      /* only for do_source: start time; actually
+                                 (struct timeval *) */
 {
   static struct timeval start;
   struct timeval now;

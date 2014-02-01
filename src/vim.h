@@ -18,13 +18,6 @@
 #define RUNTIME_DIRNAME "runtime"
 /* end */
 
-/* use fastcall for Borland, when compiling for Win32 (not for DOS16) */
-
-#if defined(MSDOS) || defined(WIN16) || defined(WIN32) || defined(_WIN64) \
-  || defined(__EMX__)
-# include "vimio.h"
-#endif
-
 /* ============ the header file puzzle (ca. 50-100 pieces) ========= */
 
 #ifdef HAVE_CONFIG_H    /* GNU autoconf (or something else) was here */
@@ -64,65 +57,12 @@ Error: configure did not run properly.Check auto/config.log.
 # define ROOT_UID 0
 
 
-/*
- * MACOS_CLASSIC compiling for MacOS prior to MacOS X
- * MACOS_X_UNIX  compiling for MacOS X (using os_unix.c)
- * MACOS_X       compiling for MacOS X (using os_unix.c)
- * MACOS	 compiling for either one
- */
-/* Unless made through the Makefile enforce GUI on Mac */
-
-#if defined(FEAT_GUI_MOTIF) \
-  || defined(FEAT_GUI_GTK) \
-  || defined(FEAT_GUI_ATHENA) \
-  || defined(FEAT_GUI_MAC) \
-  || defined(FEAT_GUI_W32) \
-  || defined(FEAT_GUI_W16) \
-  || defined(FEAT_GUI_PHOTON)
-# define FEAT_GUI_ENABLED  /* also defined with NO_X11_INCLUDES */
-# if !defined(FEAT_GUI) && !defined(NO_X11_INCLUDES)
-#  define FEAT_GUI
-# endif
-#endif
-
-/* Visual Studio 2005 has 'deprecated' many of the standard CRT functions */
-
-/* Practically everything is common to both Win32 and Win64 */
-
-/*
- * SIZEOF_INT is used in feature.h, and the system-specific included files
- * need items from feature.h.  Therefore define SIZEOF_INT here.
- */
-
-
-
-
-/* +x11 is only enabled when it's both available and wanted. */
-
-#ifdef NO_X11_INCLUDES
-/* In os_mac_conv.c and os_macosx.m NO_X11_INCLUDES is defined to avoid
- * X11 headers.  Disable all X11 related things to avoid conflicts. */
-#endif
-
-/* The Mac conversion stuff doesn't work under X11. */
-
 /* Can't use "PACKAGE" here, conflicts with a Perl include file. */
 #ifndef VIMPACKAGE
 # define VIMPACKAGE     "vim"
 #endif
 
-/*
- * Find out if function definitions should include argument types
- */
-
-
-
-
-
-#if (defined(UNIX) || defined(__EMX__) || defined(VMS)) \
-  && (!defined(MACOS_X) || defined(HAVE_CONFIG_H))
-# include "os_unix.h"       /* bring lots of system header files */
-#endif
+#include "os_unix.h"       /* bring lots of system header files */
 
 #ifndef __ARGS
 # if defined(__STDC__) || defined(__GNUC__) || defined(WIN3264)
@@ -132,11 +72,6 @@ Error: configure did not run properly.Check auto/config.log.
 # endif
 #endif
 
-/* __ARGS and __PARMS are the same thing. */
-#ifndef __PARMS
-# define __PARMS(x) __ARGS(x)
-#endif
-
 /* Mark unused function arguments with UNUSED, so that gcc -Wunused-parameter
  * can be used to check for mistakes. */
 #ifdef HAVE_ATTRIBUTE_UNUSED
@@ -144,26 +79,6 @@ Error: configure did not run properly.Check auto/config.log.
 #else
 # define UNUSED
 #endif
-
-/* if we're compiling in C++ (currently only KVim), the system
- * headers must have the correct prototypes or nothing will build.
- * conversely, our prototypes might clash due to throw() specifiers and
- * cause compilation failures even though the headers are correct.  For
- * a concrete example, gcc-3.2 enforces exception specifications, and
- * glibc-2.2.5 has them in their system headers.
- */
-#if !defined(__cplusplus) && defined(UNIX) \
-  && !defined(MACOS_X) /* MACOS_X doesn't yet support osdef.h */
-#endif
-
-
-
-
-
-
-
-
-
 
 # ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -245,46 +160,12 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 #  endif
 # endif
 
-#ifndef UNIX                /* For Unix this is included in os_unix.h */
-# include <stdio.h>
-# include <ctype.h>
-#endif
-
 #include "ascii.h"
 #include "keymap.h"
 #include "term.h"
 #include "macros.h"
 
-#ifdef LATTICE
-# include <sys/types.h>
-# include <sys/stat.h>
-#endif
-
-#if defined(HAVE_ERRNO_H) || defined(DJGPP) || defined(WIN16) \
-  || defined(WIN32) || defined(_WIN64) || defined(__EMX__)
-# include <errno.h>
-#endif
-
-/*
- * Allow other (non-unix) systems to configure themselves now
- * These are also in os_unix.h, because osdef.sh needs them there.
- */
-#ifndef UNIX
-/* Note: Some systems need both string.h and strings.h (Savage).  If the
- * system can't handle this, define NO_STRINGS_WITH_STRING_H. */
-# ifdef HAVE_STRING_H
-#  include <string.h>
-# endif
-# if defined(HAVE_STRINGS_H) && !defined(NO_STRINGS_WITH_STRING_H)
-#  include <strings.h>
-# endif
-# ifdef HAVE_STAT_H
-#  include <stat.h>
-# endif
-# ifdef HAVE_STDLIB_H
-#  include <stdlib.h>
-# endif
-#endif /* NON-UNIX */
+#include <errno.h>
 
 #include <assert.h>
 
@@ -306,35 +187,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 # include <sys/select.h>
 #endif
 
-#ifndef HAVE_SELECT
-# ifdef HAVE_SYS_POLL_H
-#  include <sys/poll.h>
-#  define HAVE_POLL
-# else
-#  ifdef HAVE_POLL_H
-#   include <poll.h>
-#   define HAVE_POLL
-#  endif
-# endif
-#endif
-
 /* ================ end of the header file puzzle =============== */
-
-/*
- * For dynamically loaded imm library. Currently, only for Win32.
- */
-#ifdef DYNAMIC_IME
-#  define FEAT_MBYTE_IME
-#endif
-
-/*
- * Check input method control.
- */
-#if defined(FEAT_XIM) \
-  || (defined(FEAT_GUI) && (defined(FEAT_MBYTE_IME) || defined(GLOBAL_IME))) \
-  || (defined(FEAT_GUI_MAC) && defined(FEAT_MBYTE))
-# define USE_IM_CONTROL
-#endif
 
 #ifdef HAVE_WORKING_LIBINTL
 #  include <libintl.h>

@@ -102,13 +102,6 @@ static RETSIGTYPE catch_sigint __ARGS(SIGPROTOARG);
 #if defined(SIGPWR)
 static RETSIGTYPE catch_sigpwr __ARGS(SIGPROTOARG);
 #endif
-#if defined(SIGALRM) && defined(FEAT_X11) \
-  && defined(FEAT_TITLE) && !defined(FEAT_GUI_GTK)
-# define SET_SIG_ALARM
-static RETSIGTYPE sig_alarm __ARGS(SIGPROTOARG);
-/* volatile because it is used in signal handler sig_alarm(). */
-static volatile int sig_alarm_called;
-#endif
 static RETSIGTYPE deathtrap __ARGS(SIGPROTOARG);
 
 static void catch_int_signal __ARGS((void));
@@ -179,7 +172,7 @@ static struct signalinfo {
 #ifdef SIGBUS
   {SIGBUS,        "BUS",      TRUE},
 #endif
-#if defined(SIGSEGV) && !defined(FEAT_MZSCHEME)
+#if defined(SIGSEGV)
   /* MzScheme uses SEGV in its garbage collector */
   {SIGSEGV,       "SEGV",     TRUE},
 #endif
@@ -192,10 +185,10 @@ static struct signalinfo {
 #ifdef SIGTERM
   {SIGTERM,       "TERM",     TRUE},
 #endif
-#if defined(SIGVTALRM) && !defined(FEAT_RUBY)
+#if defined(SIGVTALRM)
   {SIGVTALRM,     "VTALRM",   TRUE},
 #endif
-#if defined(SIGPROF) && !defined(FEAT_MZSCHEME) && !defined(WE_ARE_PROFILING)
+#if defined(SIGPROF) && !defined(WE_ARE_PROFILING)
   /* MzScheme uses SIGPROF for its own needs; On Linux with profiling
    * this makes Vim exit.  WE_ARE_PROFILING is defined in Makefile.  */
   {SIGPROF,       "PROF",     TRUE},
@@ -682,23 +675,7 @@ catch_sigpwr SIGDEFARG(sigarg) {
 
 #endif
 
-#ifdef SET_SIG_ALARM
-/*
- * signal function for alarm().
- */
-static RETSIGTYPE
-sig_alarm SIGDEFARG(sigarg) {
-  /* doesn't do anything, just to break a system call */
-  sig_alarm_called = TRUE;
-  SIGRETURN;
-}
-
-#endif
-
-#if (defined(HAVE_SETJMP_H) \
-  && ((defined(FEAT_X11) && defined(FEAT_XCLIPBOARD)) \
-  || defined(FEAT_LIBCALL))) \
-  || defined(PROTO)
+#if (defined(HAVE_SETJMP_H) && defined(FEAT_LIBCALL)) || defined(PROTO)
 /*
  * A simplistic version of setjmp() that only allows one level of using.
  * Don't call twice before calling mch_endjmp()!.
@@ -1192,11 +1169,6 @@ char_u *icon;
 
     if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
       term_settitle(title);
-#if defined(FEAT_GUI_GTK) \
-    || defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC)
-    else
-      gui_mch_settitle(title, icon);
-#endif
     did_set_title = TRUE;
   }
 
@@ -2152,42 +2124,6 @@ int on;
     ison = on;
   }
 
-
-
-# ifdef FEAT_MOUSE_JSB
-  else {
-    if (on) {
-      /* D - Enable Mouse up/down messages
-       * L - Enable Left Button Reporting
-       * M - Enable Middle Button Reporting
-       * R - Enable Right Button Reporting
-       * K - Enable SHIFT and CTRL key Reporting
-       * + - Enable Advanced messaging of mouse moves and up/down messages
-       * Q - Quiet No Ack
-       * # - Numeric value of mouse pointer required
-       *	  0 = Multiview 2000 cursor, used as standard
-       *	  1 = Windows Arrow
-       *	  2 = Windows I Beam
-       *	  3 = Windows Hour Glass
-       *	  4 = Windows Cross Hair
-       *	  5 = Windows UP Arrow
-       */
-#  ifdef JSBTERM_MOUSE_NONADVANCED
-      /* Disables full feedback of pointer movements */
-      out_str_nf((char_u *)IF_EB("\033[0~ZwLMRK1Q\033\\",
-              ESC_STR "[0~ZwLMRK1Q" ESC_STR "\\"));
-#  else
-      out_str_nf((char_u *)IF_EB("\033[0~ZwLMRK+1Q\033\\",
-              ESC_STR "[0~ZwLMRK+1Q" ESC_STR "\\"));
-#  endif
-      ison = TRUE;
-    } else   {
-      out_str_nf((char_u *)IF_EB("\033[0~ZwQ\033\\",
-              ESC_STR "[0~ZwQ" ESC_STR "\\"));
-      ison = FALSE;
-    }
-  }
-# endif
 }
 
 /*
@@ -2209,17 +2145,6 @@ void check_mouse_termcode()          {
   } else
     del_mouse_termcode(KS_MOUSE);
 
-
-
-# ifdef FEAT_MOUSE_JSB
-  /* conflicts with xterm mouse: "\033[" and "\033[M" ??? */
-  if (!use_xterm_mouse()
-      )
-    set_mouse_termcode(KS_JSBTERM_MOUSE,
-        (char_u *)IF_EB("\033[0~zw", ESC_STR "[0~zw"));
-  else
-    del_mouse_termcode(KS_JSBTERM_MOUSE);
-# endif
 
   /* There is no conflict, but one may type "ESC }" from Insert mode.  Don't
    * define it in the GUI or when using an xterm. */
