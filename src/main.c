@@ -320,8 +320,6 @@ main(argc, argv)
   msg_scroll = TRUE;
   no_wait_return = TRUE;
 
-  init_mappings();              /* set up initial mappings */
-
   init_highlight(TRUE, FALSE);   /* set the default highlight groups */
   TIME_MSG("init highlight");
 

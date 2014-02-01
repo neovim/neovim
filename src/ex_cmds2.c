@@ -3394,10 +3394,10 @@ void set_lang_var()          {
 
   /* When LC_MESSAGES isn't defined use the value from $LC_MESSAGES, fall
    * back to LC_CTYPE if it's empty. */
-# if defined(HAVE_GET_LOCALE_VAL) && defined(LC_MESSAGES)
-  loc = (char_u *)get_locale_val(LC_MESSAGES);
-# else
+# ifdef HAVE_WORKING_LIBINTL
   loc = get_mess_env();
+# else
+  loc = (char_u *)get_locale_val(LC_MESSAGES);
 # endif
   set_vim_var_string(VV_LANG, loc, -1);
 
@@ -3448,7 +3448,7 @@ exarg_T     *eap;
   }
 
   if (*name == NUL) {
-#ifndef LC_MESSAGES
+#ifdef HAVE_WORKING_LIBINTL
     if (what == VIM_LC_MESSAGES)
       p = get_mess_env();
     else

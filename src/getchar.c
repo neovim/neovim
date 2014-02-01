@@ -4249,12 +4249,6 @@ int         *local_ptr;         /* return: buffer-local mapping or NULL */
 }
 
 
-/*
- * Set up default mappings.
- */
-void init_mappings()          {
-}
-
 #if defined(MSDOS) || defined(MSWIN) || defined(OS2) \
   || defined(FEAT_CMDWIN) || defined(MACOS) || defined(PROTO)
 /*
