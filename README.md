@@ -176,11 +176,22 @@ For Ubuntu 12.04:
 
     sudo apt-get install build-essential cmake libncurses5-dev
 
+For OsX:
+
+* Install [Xcode](https://developer.apple.com/)
+* Install sha1sum
+
+  Via MacPorts:
+    
+      sudo port install md5sha1sum
+
+  Via Homebrew:
+    
+      sudo brew install md5sha1sum
+
 TODO: release the Dockerfile which has this in it
 
 TODO: Arch instructions
-
-TODO: OSX instructions
 
 
 ###Building
