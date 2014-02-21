@@ -28,7 +28,7 @@ the following goals:
   features get merged.
 - Split the responsibility between multiple developers.
 - Enable the implementation of new/modern user interfaces without any modifications
-  to the core source code.
+  to the core source. 
 - Improve the extensibility power with a new plugin architecture based on
   external processes. Plugins will be written in any programming language
   without any explicit support from the editor. This can be saw as a better
@@ -162,15 +162,16 @@ This new GUI architecture creates many interesting possibilities:
 - A multiplexing daemon could could keep neovim instances running in a
   headless server, while multiple remote GUIs could attach/detach to share
   editing sessions.
+- Neovim can be easily embedded into other programs.
 
 <a name="split"></a>
 ##### Split into many repositories
 
-Neovim will code will be split across many repositories in the [neovim
-organization](https://github.com/neovim). The organization will have separate
-repositories for GUIs, plugins, runtime files(official vimscript) and
-distributions. This way neovim will receive improvements much faster as the
-patches wont have to pass through the approval of a single person.
+Neovim's code will be split across many repositories in the [neovim
+organization](https://github.com/neovim). There will be separate repositories
+for GUIs, plugins, runtime files(official vimscript) and distributions. This
+will let neovim will receive improvements much faster as the patches wont have
+to pass through the approval of a single person.
 
 ###Status
 
