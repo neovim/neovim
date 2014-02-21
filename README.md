@@ -8,9 +8,9 @@ Vim is a powerful text editor with a big community that is constantly growing.  
 
 Over its more than 20 years of life, vim has accumulated about 300k lines of scary C89 code that very few people understand or have the guts to mess with.
 
-Another issue, is that as the only person responsible for maintaing vim's big codebase, Bram Moolenaar has to be extra-careful before accepting patches, because once merged, the new code will be his responsibility.
+Another issue, is that as the only person responsible for maintaining vim's big codebase, Bram Moolenaar has to be extra-careful before accepting patches, because once merged, the new code will be his responsibility.
 
-These problems make it very difficult to have new features and bug fixes merged into the core. Vim just cant keep up with the development speed of its plugin ecosystem.
+These problems make it very difficult to have new features and bug fixes merged into the core. Vim just can't keep up with the development speed of its plugin ecosystem.
 
 ### Solution
 
@@ -37,16 +37,16 @@ The following topics contain brief explanations of the major changes (and motiva
 <a name="build"></a>
 ##### Migrate to a cmake-based build
 
-The source tree has dozens (if not hundreds) of files dedicated to building vim with on various platforms with different configurations, and many of these files look abandoned or outdated. Most users dont care about selecting individual features and just compile using '--with-features=huge', which still generates an executable that is small enough even for lightweight systems by today's standards.
+The source tree has dozens (if not hundreds) of files dedicated to building vim with on various platforms with different configurations, and many of these files look abandoned or outdated. Most users don't care about selecting individual features and just compile using '--with-features=huge', which still generates an executable that is small enough even for lightweight systems by today's standards.
 
 All those files will be removed and vim will be built using [cmake](www.cmake.org), a modern build system that generates build scripts for the most relevant platforms.
 
 <a name="legacy"></a>
 ##### Legacy support and compile-time features
 
-Vim has a significant amount of code dedicated to supporting legacy systems and compilers. All that code increases the maintainance burden and will be removed.
+Vim has a significant amount of code dedicated to supporting legacy systems and compilers. All that code increases the maintenance burden and will be removed.
 
-Most optional features will no longer be optional (see above), with the exception of some broken and useless fetures (eg: netbeans integration, sun workshop) which will be removed permanently. Vi emulation will also be removed (setting 'nocompatible' will be a no-op).
+Most optional features will no longer be optional (see above), with the exception of some broken and useless features (eg: netbeans integration, sun workshop) which will be removed permanently. Vi emulation will also be removed (setting 'nocompatible' will be a no-op).
 
 These changes wont affect most users. Those that only have a C89 compiler installed or use vim on legacy systems such as Amiga, BeOS or MSDOS will have two options:
 
@@ -128,7 +128,7 @@ vim -> gui: {"method": "redraw", "params": {"clientId": 1, "lines": {"1": "Hello
 This new GUI architecture creates many interesting possibilities:
 
 - Modern GUIs written in high-level programming languages that integrate better with the operating system. We can have GUIs written using C#/WPF on Windows or Ruby/Cocoa on Mac, for example.
-- Plugins will be able to emit custom events that may be handled directly by GUIs.  This will enable the implementaton of advanced features such as sublime's minimap.
+- Plugins will be able to emit custom events that may be handled directly by GUIs.  This will enable the implementation of advanced features such as sublime's minimap.
 - A multiplexing daemon could keep neovim instances running in a headless server, while multiple remote GUIs could attach/detach to share editing sessions.
 - Simplified headless testing.
 - Embedding the editor into other programs. In fact, a GUI can be seen as a program that embeds neovim.
@@ -153,7 +153,7 @@ Server daemon listening on tcp sockets <------ GUI 1 (attach/detach to running i
 
 Development will happen on the [github organization](https://github.com/neovim), and the code will be split across many repositories, unlike the current vim source tree.
 
-There will be separate repositories for GUIs, plugins, runtime files (official vimscript) and distributions. This will let the editor receive improvements much faster as the patches dont have to go all through a single person for approval.
+There will be separate repositories for GUIs, plugins, runtime files (official vimscript) and distributions. This will let the editor receive improvements much faster as the patches don't have to go all through a single person for approval.
 
 Travis will also be used for continuous integration, so pull requests will be automatically checked.
 
