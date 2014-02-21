@@ -23,13 +23,13 @@ Neovim is a project that seeks to aggressively refactor vim source code in order
 
 By achieving those goals new developers will soon join the community, consequently improving the editor for all users.
 
-It is important to empathise that this is not a project to rewrite vim from the scratch or transform it into an IDE(though the new features provided will enable IDE-like distributions of the editor). The changes implemented here should have little impact on vim's editing model or vimscript in general. Most vimscript plugins should continue to work normally.
+It is important to emphasize that this is not a project to rewrite vim from scratch or transform it into an IDE (though the new features provided will enable IDE-like distributions of the editor). The changes implemented here should have little impact on vim's editing model or vimscript in general. Most vimscript plugins should continue to work normally.
 
-The following topics contains brief explanations of the major changes(and motivations) that will be performed in the first iteration:
+The following topics contain brief explanations of the major changes (and motivations) that will be performed in the first iteration:
 
 * <a href="#build"><b>Migrate to a cmake-based build</b></a>
 * <a href="#legacy"><b>Legacy support and compile-time features</b></a>
-* <a href="#platform"><b>Platform-specific code </b></a>
+* <a href="#platform"><b>Platform-specific code</b></a>
 * <a href="#plugins"><b>New plugin architecture</b></a>
 * <a href="#gui"><b>New GUI architecture</b></a>
 * <a href="#development"><b>Development on github</b></a>
@@ -37,7 +37,7 @@ The following topics contains brief explanations of the major changes(and motiva
 <a name="build"></a>
 ##### Migrate to a cmake-based build
 
-The source tree has dozens(if not hundreds) of files dedicated to building vim with on various platforms with different configurations, and many of these files look abandoned or outdated. Most users dont care about selecting individual features and just compile using '--with-features=huge', which still generates an executable that is small enough even for lightweight systems by today's standards.
+The source tree has dozens (if not hundreds) of files dedicated to building vim with on various platforms with different configurations, and many of these files look abandoned or outdated. Most users dont care about selecting individual features and just compile using '--with-features=huge', which still generates an executable that is small enough even for lightweight systems by today's standards.
 
 All those files will be removed and vim will be built using [cmake](www.cmake.org), a modern build system that generates build scripts for the most relevant platforms.
 
@@ -46,7 +46,7 @@ All those files will be removed and vim will be built using [cmake](www.cmake.or
 
 Vim has a significant amount of code dedicated to supporting legacy systems and compilers. All that code increases the maintainance burden and will be removed.
 
-Most optional features will no longer be optional(see above), with the exception of some broken and useless fetures(eg: netbeans integration, sun workshop) which will be removed permanently. Vi emulation will also be removed(setting 'nocompatible' will be a no-op).
+Most optional features will no longer be optional (see above), with the exception of some broken and useless fetures (eg: netbeans integration, sun workshop) which will be removed permanently. Vi emulation will also be removed (setting 'nocompatible' will be a no-op).
 
 These changes wont affect most users. Those that only have a C89 compiler installed or use vim on legacy systems such as Amiga, BeOS or MSDOS will have two options:
 
@@ -69,7 +69,7 @@ Compatibility layers will be provided for vim plugins written in some of the cur
 
 This is how the new plugin system will work:
 
-- Plugins are long-running programs/jobs(coprocesses) that communicate with vim through stdin/stdout using msgpack-rpc or json-rpc.
+- Plugins are long-running programs/jobs (coprocesses) that communicate with vim through stdin/stdout using msgpack-rpc or json-rpc.
 - Vim will discover and run these programs at startup, keeping two-way communication channels with each plugin through its lifetime.
 - Plugins will be able to listen to events and send commands to vim asynchronously.
 
@@ -128,7 +128,7 @@ vim -> gui: {"method": "redraw", "params": {"clientId": 1, "lines": {"1": "Hello
 This new GUI architecture creates many interesting possibilities:
 
 - Modern GUIs written in high-level programming languages that integrate better with the operating system. We can have GUIs written using C#/WPF on Windows or Ruby/Cocoa on Mac, for example.
-- Plugins will be able emit custom events that may be handled directly by GUIs.  This will enable the implementaton of advanced features such as sublime's minimap.
+- Plugins will be able to emit custom events that may be handled directly by GUIs.  This will enable the implementaton of advanced features such as sublime's minimap.
 - A multiplexing daemon could keep neovim instances running in a headless server, while multiple remote GUIs could attach/detach to share editing sessions.
 - Simplified headless testing.
 - Embedding the editor into other programs. In fact, a GUI can be seen as a program that embeds neovim.
@@ -153,7 +153,7 @@ Server daemon listening on tcp sockets <------ GUI 1 (attach/detach to running i
 
 Development will happen on the [github organization](https://github.com/neovim), and the code will be split across many repositories, unlike the current vim source tree.
 
-There will be separate repositories for GUIs, plugins, runtime files(official vimscript) and distributions. This will let the editor receive improvements much faster as the patches dont have to go all through a single person for approval.
+There will be separate repositories for GUIs, plugins, runtime files (official vimscript) and distributions. This will let the editor receive improvements much faster as the patches dont have to go all through a single person for approval.
 
 Travis will also be used for continuous integration, so pull requests will be automatically checked.
 
@@ -166,7 +166,7 @@ Here's a list of things that have been done so far:
 - Files were processed with [uncrustify](http://uncrustify.sourceforge.net/) to normalize source code formatting.
 - The autotools build system was replaced by [cmake](http://www.cmake.org/)
 
-and of what is being currently worked on:
+and what is currently being worked on:
 
 - Port all IO to libuv
 
