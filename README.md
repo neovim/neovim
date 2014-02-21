@@ -10,7 +10,7 @@ Over its more than 20 years of life, vim has accumulated about 300k lines of sca
 
 Another issue, is that as the only person responsible for maintaing vim's big codebase, Bram Moolenaar has to be extra-careful before accepting patches, because once merged, the new code will be his responsibility.
 
-These problems make it very difficult to have new features and bug fixes merged into the core. Vim just cant keep up with the development speed of its plugin echosystem.
+These problems make it very difficult to have new features and bug fixes merged into the core. Vim just cant keep up with the development speed of its plugin ecosystem.
 
 ### Solution
 
