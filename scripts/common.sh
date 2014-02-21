@@ -15,7 +15,7 @@ download() {
 			fifo="$tmp_dir/fifo"
 			mkfifo "$fifo"
 			# download, untar and calculate sha1 sum in one pass
-			(wget "$url" -O - | tee "$fifo" | \
+			(wget "$url" -O --no-check-certificate - | tee "$fifo" | \
 				(cd "$tgt";  tar --strip-components=1 -xvzf -)) &
 			sum=$(sha1sum < "$fifo" | cut -d ' ' -f1)
 			rm -rf "$tmp_dir"
