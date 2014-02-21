@@ -187,7 +187,7 @@ For OsX:
 
   Via Homebrew:
     
-      sudo brew install md5sha1sum
+      brew install md5sha1sum
 
 TODO: release the Dockerfile which has this in it
 
