@@ -131,6 +131,7 @@ The difference between plugins and GUIs is that plugins will be started by
 neovim, where GUIs will start neovim(or perhaps attach to a running session).
 Here's a sample diagram of the process tree:
 
+```txt
 GUI program
   |
   ---> Neovim
@@ -140,6 +141,7 @@ GUI program
          ---> Plugin 2
          |
          ---> Plugin 3
+```
 
 Sample:
 
