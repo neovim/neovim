@@ -183,11 +183,11 @@ For OsX:
 
   Via MacPorts:
     
-      sudo port install md5sha1sum cmake
+      sudo port install md5sha1sum cmake libtool
 
   Via Homebrew:
     
-      brew install md5sha1sum cmake
+      brew install md5sha1sum cmake libtool
 
 TODO: release the Dockerfile which has this in it
 
