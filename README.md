@@ -39,7 +39,7 @@ The following topics contain brief explanations of the major changes (and motiva
 
 The source tree has dozens (if not hundreds) of files dedicated to building vim with on various platforms with different configurations, and many of these files look abandoned or outdated. Most users dont care about selecting individual features and just compile using '--with-features=huge', which still generates an executable that is small enough even for lightweight systems by today's standards.
 
-All those files will be removed and vim will be built using [cmake](www.cmake.org), a modern build system that generates build scripts for the most relevant platforms.
+All those files will be removed and vim will be built using [cmake](http://www.cmake.org), a modern build system that generates build scripts for the most relevant platforms.
 
 <a name="legacy"></a>
 ##### Legacy support and compile-time features
