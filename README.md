@@ -92,7 +92,7 @@ This is how the new plugin system will work:
 
 Here's a sample plugin session using [json-rpc](http://www.jsonrpc.org/specification) (jsonrpc version omitted):
 
-```
+```js
 plugin -> vim: {"id": 1, "method": "listenEvent", "params": {"eventName": "keyPressed"}}
 vim -> plugin: {"id": 1, "result": true}
 vim -> plugin: {"method": "event", "params": {"name": "keyPressed", "eventArgs": {"keys": ["C"]}}}
@@ -131,7 +131,7 @@ The difference between plugins and GUIs is that plugins will be started by
 neovim, where GUIs will start neovim(or perhaps attach to a running session).
 Here's a sample diagram of the process tree:
 
-```txt
+```
 GUI program
   |
   ---> Neovim
