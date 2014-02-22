@@ -254,6 +254,10 @@ and what is currently being worked on:
 
     sudo apt-get install build-essential cmake libncurses5-dev
 
+#### Arch Linux
+
+    sudo pacman -S base-devel cmake ncurses
+
 #### OS X
 
 * Install [Xcode](https://developer.apple.com/)
@@ -269,7 +273,6 @@ and what is currently being worked on:
 
 #### TODO
 * Release the Dockerfile which has this in it.
-* Write instructions for Arch Linux.
 
 
 ### Building
