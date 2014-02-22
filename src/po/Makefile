@@ -127,7 +127,7 @@ CHECKFILES = \
 
 PACKAGE = vim
 SHELL = /bin/sh
-VIM = ../../build/src/vim
+VIM = ../../build/bin/vim
 
 # The OLD_PO_FILE_INPUT and OLD_PO_FILE_OUTPUT are for the new GNU gettext
 # tools 0.10.37, which use a slightly different .po file format that is not
