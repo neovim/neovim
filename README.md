@@ -207,3 +207,22 @@ To build and run the tests:
 ### Community
 
 Join the community on IRC in #neovim on Freenode.
+
+### License
+
+Vim itself is distributed under the terms of the Vim License.
+See vim-license.txt for details.
+
+Vim also includes a message along the following lines:
+
+    Vim is Charityware.  You can use and copy it as much as you like, but you are
+    encouraged to make a donation for needy children in Uganda.  Please see the
+    kcc section of the vim docs or visit the ICCF web site, available at these URLs:
+
+            http://iccf-holland.org/
+            http://www.vim.org/iccf/
+            http://www.iccf.nl/
+
+    You can also sponsor the development of Vim.  Vim sponsors can vote for
+    features.  The money goes to Uganda anyway.
+
