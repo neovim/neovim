@@ -204,4 +204,6 @@ To build and run the tests:
 
     make test
 
+### Community
 
+Join the community on IRC in #neovim on Freenode.
