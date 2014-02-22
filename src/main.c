@@ -71,6 +71,15 @@ static void init_locale __ARGS((void));
 # endif
 static void parse_command_name __ARGS((mparm_T *parmp));
 static void command_line_scan __ARGS((mparm_T *parmp));
+static void init_params __ARGS((mparm_T *parmp, int argc, char **argv));
+static void init_startuptime __ARGS((mparm_T *parmp));
+static void allocate_generic_buffers __ARGS((void));
+static void check_and_set_isatty __ARGS((mparm_T *parmp));
+static char_u* get_fname __ARGS((mparm_T *parmp));
+static void set_window_layout __ARGS((mparm_T *parmp));
+static void load_plugins __ARGS((void));
+static void handle_quickfix __ARGS((mparm_T *parmp));
+static void handle_tag __ARGS((char_u *tagname));
 static void check_tty __ARGS((mparm_T *parmp));
 static void read_stdin __ARGS((void));
 static void create_windows __ARGS((mparm_T *parmp));
@@ -113,10 +122,6 @@ main(argc, argv)
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
-#ifdef STARTUPTIME
-  int i;
-#endif
-
   /*
    * Do any system-specific initialisations.  These can NOT use IObuff or
    * NameBuff.  Thus emsg2() cannot be called!
@@ -126,30 +131,13 @@ main(argc, argv)
   /* Many variables are in "params" so that we can pass them to invoked
    * functions without a lot of arguments.  "argc" and "argv" are also
    * copied, so that they can be changed. */
-  vim_memset(&params, 0, sizeof(params));
-  params.argc = argc;
-  params.argv = argv;
-  params.want_full_screen = TRUE;
-  params.use_debug_break_level = -1;
-  params.window_count = -1;
-
-
+  init_params(&params, argc, argv);
 
 #ifdef MEM_PROFILE
   atexit(vim_mem_profile_dump);
 #endif
 
-#ifdef STARTUPTIME
-  for (i = 1; i < argc; ++i) {
-    if (STRICMP(argv[i], "--startuptime") == 0 && i + 1 < argc) {
-      time_fd = mch_fopen(argv[i + 1], "a");
-      TIME_MSG("--- VIM STARTING ---");
-      break;
-    }
-  }
-#endif
-  starttime = time(NULL);
-
+  init_startuptime(&params);
 
   (void)mb_init();      /* init mb_bytelen_tab[] to ones */
   eval_init();          /* init global variables */
@@ -165,11 +153,7 @@ main(argc, argv)
    * Allocate space for the generic buffers (needed for set_init_1() and
    * EMSG2()).
    */
-  if ((IObuff = alloc(IOSIZE)) == NULL
-      || (NameBuff = alloc(MAXPATHL)) == NULL)
-    mch_exit(0);
-  TIME_MSG("Allocated generic buffers");
-
+  allocate_generic_buffers();
 
 #if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
   /*
@@ -178,9 +162,7 @@ main(argc, argv)
    * work until set_init_1() has been called!
    */
   init_locale();
-  TIME_MSG("locale set");
 #endif
-
 
   /*
    * Check if we have an interactive window.
@@ -188,8 +170,7 @@ main(argc, argv)
    * (needed for :! to * work). mch_check_win() will also handle the -d or
    * -dev argument.
    */
-  params.stdout_isatty = (mch_check_win(params.argc, params.argv) != FAIL);
-  TIME_MSG("window checked");
+  check_and_set_isatty(&params);
 
   /*
    * Allocate the first window and buffer.
@@ -227,7 +208,6 @@ main(argc, argv)
    * argument list "global_alist".
    */
   command_line_scan(&params);
-  TIME_MSG("parsing arguments");
 
   /*
    * On some systems, when we compile with the GUI, we always use it.  On Mac
@@ -235,23 +215,8 @@ main(argc, argv)
    * :gui.
    */
 
-  if (GARGCOUNT > 0) {
-#if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE)
-    /*
-     * Expand wildcards in file names.
-     */
-    if (!params.literal) {
-      /* Temporarily add '(' and ')' to 'isfname'.  These are valid
-       * filename characters but are excluded from 'isfname' to make
-       * "gf" work on a file name in parenthesis (e.g.: see vim.h). */
-      do_cmdline_cmd((char_u *)":set isf+=(,)");
-      alist_expand(NULL, 0);
-      do_cmdline_cmd((char_u *)":set isf&");
-    }
-#endif
-    fname = alist_name(&GARGLIST[0]);
-  }
-
+  if (GARGCOUNT > 0)
+    fname = get_fname(&params);
 
   TIME_MSG("expanding arguments");
 
@@ -342,18 +307,10 @@ main(argc, argv)
    * Read all the plugin files.
    * Only when compiled with +eval, since most plugins need it.
    */
-  if (p_lpl) {
-    source_runtime((char_u *)"plugin/**/*.vim", TRUE);
-    TIME_MSG("loading plugins");
-  }
+  load_plugins();
 
   /* Decide about window layout for diff mode after reading vimrc. */
-  if (params.diff_mode && params.window_layout == 0) {
-    if (diffopt_horizontal())
-      params.window_layout = WIN_HOR;             /* use horizontal split */
-    else
-      params.window_layout = WIN_VER;             /* use vertical split */
-  }
+  set_window_layout(&params);
 
   /*
    * Recovery mode without a file name: List swap files.
@@ -401,17 +358,7 @@ main(argc, argv)
    * "-q errorfile": Load the error file now.
    * If the error file can't be read, exit before doing anything else.
    */
-  if (params.edit_type == EDIT_QF) {
-    if (params.use_ef != NULL)
-      set_string_option_direct((char_u *)"ef", -1,
-          params.use_ef, OPT_FREE, SID_CARG);
-    vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
-    if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
-      out_char('\n');
-      mch_exit(3);
-    }
-    TIME_MSG("reading errorfile");
-  }
+  handle_quickfix(&params);
 
   /*
    * Start putting things on the screen.
@@ -469,8 +416,7 @@ main(argc, argv)
   /*
    * Don't clear the screen when starting in Ex mode, unless using the GUI.
    */
-  if (exmode_active
-     )
+  if (exmode_active)
     must_redraw = CLEAR;
   else {
     screenclear();                        /* clear screen */
@@ -534,21 +480,7 @@ main(argc, argv)
    * Need to jump to the tag before executing the '-c command'.
    * Makes "vim -c '/return' -t main" work.
    */
-  if (params.tagname != NULL) {
-#if defined(HAS_SWAP_EXISTS_ACTION)
-    swap_exists_did_quit = FALSE;
-#endif
-
-    vim_snprintf((char *)IObuff, IOSIZE, "ta %s", params.tagname);
-    do_cmdline_cmd(IObuff);
-    TIME_MSG("jumping to tag");
-
-#if defined(HAS_SWAP_EXISTS_ACTION)
-    /* If the user doesn't want to edit the file then we quit here. */
-    if (swap_exists_did_quit)
-      getout(1);
-#endif
-  }
+  handle_tag(params.tagname);
 
   /* Execute any "+", "-c" and "-S" arguments. */
   if (params.n_commands > 0)
@@ -942,6 +874,7 @@ static void init_locale()                 {
       vim_free(p);
     textdomain(VIMPACKAGE);
   }
+  TIME_MSG("locale set");
 }
 
 #endif
@@ -1499,6 +1432,160 @@ scripterror:
       set_vim_var_string(VV_SWAPCOMMAND, p, -1);
       vim_free(p);
     }
+  }
+  TIME_MSG("parsing arguments");
+}
+
+/*
+ * Many variables are in "params" so that we can pass them to invoked
+ * functions without a lot of arguments.  "argc" and "argv" are also
+ * copied, so that they can be changed. */
+static void init_params(paramp, argc, argv)
+  mparm_T     *paramp;
+  int argc;
+  char        **argv;
+{
+  vim_memset(paramp, 0, sizeof(*paramp));
+  paramp->argc = argc;
+  paramp->argv = argv;
+  paramp->want_full_screen = TRUE;
+  paramp->use_debug_break_level = -1;
+  paramp->window_count = -1;
+}
+
+/*
+ * Initialize global startuptime file if "--startuptime" passed as an argument.
+ */
+static void init_startuptime(paramp)
+  mparm_T     *paramp;
+{
+#ifdef STARTUPTIME
+  int i;
+  for (i = 1; i < paramp->argc; ++i) {
+    if (STRICMP(paramp->argv[i], "--startuptime") == 0 && i + 1 < paramp->argc) {
+      time_fd = mch_fopen(paramp->argv[i + 1], "a");
+      TIME_MSG("--- VIM STARTING ---");
+      break;
+    }
+  }
+#endif
+  starttime = time(NULL);
+}
+
+/*
+ * Allocate space for the generic buffers (needed for set_init_1() and
+ * EMSG2()).
+ */
+static void allocate_generic_buffers()
+{
+  if ((IObuff = alloc(IOSIZE)) == NULL
+      || (NameBuff = alloc(MAXPATHL)) == NULL)
+    mch_exit(0);
+  TIME_MSG("Allocated generic buffers");
+}
+
+/*
+ * Check if we have an interactive window.
+ * On the Amiga: If there is no window, we open one with a newcli command
+ * (needed for :! to * work). mch_check_win() will also handle the -d or
+ * -dev argument.
+ */
+static void check_and_set_isatty(paramp)
+  mparm_T     *paramp;
+{
+  paramp->stdout_isatty = (mch_check_win(paramp->argc, paramp->argv) != FAIL);
+  TIME_MSG("window checked");
+}
+
+/*
+ * Get filename from command line, given that there is one.
+ */
+static char_u* get_fname(parmp)
+  mparm_T     *parmp;
+{
+#if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE)
+  /*
+   * Expand wildcards in file names.
+   */
+  if (!parmp->literal) {
+    /* Temporarily add '(' and ')' to 'isfname'.  These are valid
+     * filename characters but are excluded from 'isfname' to make
+     * "gf" work on a file name in parenthesis (e.g.: see vim.h). */
+    do_cmdline_cmd((char_u *)":set isf+=(,)");
+    alist_expand(NULL, 0);
+    do_cmdline_cmd((char_u *)":set isf&");
+  }
+#endif
+  return alist_name(&GARGLIST[0]);
+}
+
+/*
+ * Decide about window layout for diff mode after reading vimrc.
+ */
+static void set_window_layout(paramp)
+  mparm_T     *paramp;
+{
+  if (paramp->diff_mode && paramp->window_layout == 0) {
+    if (diffopt_horizontal())
+      paramp->window_layout = WIN_HOR;             /* use horizontal split */
+    else
+      paramp->window_layout = WIN_VER;             /* use vertical split */
+  }
+}
+
+/*
+ * Read all the plugin files.
+ * Only when compiled with +eval, since most plugins need it.
+ */
+static void load_plugins()
+{
+  if (p_lpl) {
+    source_runtime((char_u *)"plugin/**/*.vim", TRUE);
+    TIME_MSG("loading plugins");
+  }
+}
+
+/*
+ * "-q errorfile": Load the error file now.
+ * If the error file can't be read, exit before doing anything else.
+ */
+static void handle_quickfix(paramp)
+  mparm_T     *paramp;
+{
+  if (paramp->edit_type == EDIT_QF) {
+    if (paramp->use_ef != NULL)
+      set_string_option_direct((char_u *)"ef", -1,
+          paramp->use_ef, OPT_FREE, SID_CARG);
+    vim_snprintf((char *)IObuff, IOSIZE, "cfile %s", p_ef);
+    if (qf_init(NULL, p_ef, p_efm, TRUE, IObuff) < 0) {
+      out_char('\n');
+      mch_exit(3);
+    }
+    TIME_MSG("reading errorfile");
+  }
+}
+
+/*
+ * Need to jump to the tag before executing the '-c command'.
+ * Makes "vim -c '/return' -t main" work.
+ */
+static void handle_tag(tagname)
+  char_u      *tagname;
+{
+  if (tagname != NULL) {
+#if defined(HAS_SWAP_EXISTS_ACTION)
+    swap_exists_did_quit = FALSE;
+#endif
+
+    vim_snprintf((char *)IObuff, IOSIZE, "ta %s", tagname);
+    do_cmdline_cmd(IObuff);
+    TIME_MSG("jumping to tag");
+
+#if defined(HAS_SWAP_EXISTS_ACTION)
+    /* If the user doesn't want to edit the file then we quit here. */
+    if (swap_exists_did_quit)
+      getout(1);
+#endif
   }
 }
 
