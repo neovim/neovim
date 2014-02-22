@@ -250,7 +250,7 @@ and what is currently being worked on:
 
 ### Dependencies
 
-#### Ubuntu 12.04
+#### Ubuntu/Debian
 
     sudo apt-get install build-essential cmake libncurses5-dev
 
