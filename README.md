@@ -189,11 +189,11 @@ For OsX:
 
   Via MacPorts:
 
-      sudo port install md5sha1sum cmake libtool automake
+      sudo port install md5sha1sum cmake libtool automake wget
 
   Via Homebrew:
 
-      brew install md5sha1sum cmake libtool automake
+      brew install md5sha1sum cmake libtool automake wget
 
 For Arch Linux:
 
