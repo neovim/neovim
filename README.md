@@ -30,7 +30,7 @@ to achieve the following goals:
   merged.
 - Split the work between multiple developers.
 - Enable the implementation of new/modern user interfaces without any
-  modifications to the core source. 
+  modifications to the core source.
 - Improve the extensibility power with a new plugin architecture based on
   coprocesses. Plugins will be written in any programming language without
   any explicit support from the editor.
@@ -108,7 +108,7 @@ language.
 
 Compatibility layers will be provided for vim plugins written in some of the
 currently supported scripting languages such as Python or Ruby. Most plugins
-should work on neovim with little modifications, if any.  
+should work on neovim with little modifications, if any.
 
 This is how the new plugin system will work:
 
@@ -136,7 +136,7 @@ plugin -> neovim: {"id": 2, "result": true}}
 That shows a hypothetical conversation between neovim and a completion plugin
 which displays completions when the user presses Ctrl+Space. The above scheme
 gives neovim near limitless extensibility and also improves stability as plugins
-will be automatically isolated from the main executable. 
+will be automatically isolated from the main executable.
 
 This system can also easily emulate the current scripting language interfaces
 to vim. For example, a plugin can emulate the Python interface by running
@@ -206,7 +206,7 @@ Here's a diagram that illustrates how a client-server process tree might look li
 ```
 Server daemon listening on tcp sockets <------ GUI 1 (attach/detach to running instances using tcp sockets)
   |                                       |
-  `--> Neovim                             | 
+  `--> Neovim                             |
          |                                GUI 2 (sharing the same session with GUI 1)
          `--> Plugin 1
          |
@@ -260,11 +260,11 @@ and what is currently being worked on:
 * Install sha1sum
 
   Via MacPorts:
-    
+
       sudo port install md5sha1sum cmake libtool
 
   Via Homebrew:
-    
+
       brew install md5sha1sum cmake libtool
 
 #### TODO
