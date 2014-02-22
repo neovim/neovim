@@ -1,6 +1,6 @@
 # neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
 
-[![Build Status](https://travis-ci.org/neovim/neovim.png)](https://travis-ci.org/neovim/neovim)
+[![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
 
 ### Introduction
 
