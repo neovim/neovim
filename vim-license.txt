@@ -24,7 +24,7 @@ II) It is allowed to distribute a modified (or extended) version of Vim,
 	  The current maintainer is Bram Moolenaar <Bram@vim.org>.  If this
 	  changes it will be announced in appropriate places (most likely
 	  vim.sf.net, www.vim.org and/or comp.editors).  When it is completely
-	  impossible to contact the maintainer, the obligation to send him
+	  impossible to contact the maintainer, the obligation to send xem
 	  your changes ceases.  Once the maintainer has confirmed that he has
 	  received your changes they will not have to be sent again.
        b) If you have received a modified Vim that was distributed as
@@ -47,7 +47,7 @@ II) It is allowed to distribute a modified (or extended) version of Vim,
 	    distributing the corresponding modified Vim.  When the maintainer
 	    or someone who you distributed the modified Vim to asks you (in
 	    any way) for the changes within this period, you must make them
-	    available to him.
+	    available to xem.
 	  - You clearly describe in the distribution how to contact you.  This
 	    contact information must remain valid for at least three years
 	    after last distributing the corresponding modified Vim, or as long
@@ -61,7 +61,7 @@ II) It is allowed to distribute a modified (or extended) version of Vim,
        under 2)e) adding the message is only required for as far as this does
        not conflict with the license used for the changes.
     4) The contact information as required under 2)a) and 2)d) must not be
-       removed or changed, except that the person himself can make
+       removed or changed, except that the person xemself can make
        corrections.
 
 III) If you distribute a modified version of Vim, you are encouraged to use
