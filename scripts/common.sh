@@ -23,21 +23,29 @@ download() {
 
 	if [ ! -d "$tgt" ]; then
 		mkdir -p "$tgt"
+		local download_command=""
 		if which wget > /dev/null 2>&1; then
-			tmp_dir=$(mktemp -d "/tmp/download_sha1check_XXXXXXX")
-			fifo="$tmp_dir/fifo"
-			mkfifo "$fifo"
-			# download, untar and calculate sha1 sum in one pass
-			(wget "$url" -O - | tee "$fifo" | \
-				(cd "$tgt";  tar --strip-components=1 -xvzf -)) &
-			sum=$("$sha1sumcmd" < "$fifo" | cut -d ' ' -f1)
-			rm -rf "$tmp_dir"
-			if [ "$sum" != "$sha1" ]; then
-				echo "SHA1 sum doesn't match, expected '$sha1' got '$sum'"
-				exit 1
-			fi
+			# -O - to send output to stdout
+			download_command="wget $url -O -"
+		elif which curl >/dev/null 2>&1; then
+			# -L to follow the redirects that github will send us
+			# -sS to supress the progress bar, but show errors
+			# curl sends output to stdout by default
+			download_command="curl -L -sS $url"
 		else
-			echo "Missing wget utility"
+			echo "Missing wget utility and curl utility"
+			exit 1
+		fi
+		local tmp_dir=$(mktemp -d "/tmp/download_sha1check_XXXXXXX")
+		local fifo="$tmp_dir/fifo"
+		mkfifo "$fifo"
+		# download, untar and calculate sha1 sum in one pass
+		($download_command | tee "$fifo" | \
+			(cd "$tgt";  tar --strip-components=1 -xvzf -)) &
+		local sum=$("$sha1sumcmd" < "$fifo" | cut -d ' ' -f1)
+		rm -rf "$tmp_dir"
+		if [ "$sum" != "$sha1" ]; then
+			echo "SHA1 sum doesn't match, expected '$sha1' got '$sum'"
 			exit 1
 		fi
 	fi
