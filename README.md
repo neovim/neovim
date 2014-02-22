@@ -18,7 +18,7 @@ Neovim is a project that seeks to aggressively refactor vim source code in order
 
 - Simplify maintenance to improve the speed that bug fixes and features get merged.
 - Split the work between multiple developers.
-- Enable the implementation of new/modern user interfaces without any modifications to the core source. 
+- Enable the implementation of new/modern user interfaces without any modifications to the core source.
 - Improve the extensibility power with a new plugin architecture based on coprocesses. Plugins will be written in any programming language without any explicit support from the editor.
 
 By achieving those goals new developers will soon join the community, consequently improving the editor for all users.
@@ -65,7 +65,7 @@ libuv is a modern multi-platform library with functions to perform common system
 
 All code supporting embedded scripting language interpreters will be replaced by a new plugin system that will support extensions written in any programming language.
 
-Compatibility layers will be provided for vim plugins written in some of the currently supported scripting languages such as python or ruby. Most plugins should work on neovim with little modifications, if any.  
+Compatibility layers will be provided for vim plugins written in some of the currently supported scripting languages such as python or ruby. Most plugins should work on neovim with little modifications, if any.
 
 This is how the new plugin system will work:
 
@@ -86,7 +86,7 @@ plugin -> neovim: {"id": 2, "method": "showPopup", "params": {"size": {"width": 
 plugin -> neovim: {"id": 2, "result": true}}
 ```
 
-That shows an hypothetical conversation between neovim and completion plugin that displays completions when the user presses Ctrl+Space. The above scheme gives neovim near limitless extensibility and also improves stability as plugins will automatically be isolated from the main executable. 
+That shows an hypothetical conversation between neovim and completion plugin that displays completions when the user presses Ctrl+Space. The above scheme gives neovim near limitless extensibility and also improves stability as plugins will automatically be isolated from the main executable.
 
 This system can also easily emulate the current scripting languages interfaces to vim. For example, a plugin can emulate the python interface by running python scripts sent by vim in its own context and by exposing a 'vim' module with an API matching the current one. Calls to the API would simply be translated to json-rpc messages sent to vim.
 
@@ -138,7 +138,7 @@ Here's a diagram that illustrates how a client-server process tree might look li
 ```
 Server daemon listening on tcp sockets <------ GUI 1 (attach/detach to running instances using tcp sockets)
   |                                       |
-  ---> Neovim                             | 
+  ---> Neovim                             |
          |                                GUI 2 (sharing the same session with GUI 1)
          ---> Plugin 1
          |
@@ -182,16 +182,19 @@ For OsX:
 * Install sha1sum
 
   Via MacPorts:
-    
+
       sudo port install md5sha1sum cmake libtool
 
   Via Homebrew:
-    
+
       brew install md5sha1sum cmake libtool
+
+For Arch Linux:
+
+      sudo pacman -S base-devel cmake ncurses
 
 TODO: release the Dockerfile which has this in it
 
-TODO: Arch instructions
 
 
 ###Building
