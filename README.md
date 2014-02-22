@@ -176,7 +176,7 @@ and what is currently being worked on:
 
 For Ubuntu 12.04:
 
-    sudo apt-get install build-essential cmake libncurses5-dev
+    sudo apt-get install build-essential cmake libncurses5-dev libuv-dev
 
 For FreeBSD 10:
 
