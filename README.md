@@ -1,5 +1,7 @@
 # neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
 
+[![Build Status](https://travis-ci.org/neovim/neovim.png)](https://travis-ci.org/neovim/neovim)
+
 ### Introduction
 
 Vim is a powerful text editor with a big community that is constantly growing.  Even though the editor is about two decades old, people still extend and want to improve it, mostly using vimscript or one of the supported scripting languages.
