@@ -211,6 +211,10 @@ To build and run the tests:
 
 Join the community on IRC in #neovim on Freenode.
 
+### Contributing
+
+...would be awesome! See [the wiki](https://github.com/neovim/neovim/wiki/Contributing) for more details.
+
 ### License
 
 Vim itself is distributed under the terms of the Vim License.
