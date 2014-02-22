@@ -288,3 +288,5 @@ To build and run the tests:
 ### Community
 
 Join the community on IRC in #neovim on freenode.
+
+<!-- vim: set tw=80: -->
