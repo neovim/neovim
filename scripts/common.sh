@@ -1,3 +1,16 @@
+platform='unknown'
+unameval=`uname`
+if [ "$unameval" == 'Linux' ]; then
+	platform='linux'
+elif [ "$unameval" == 'FreeBSD' ]; then
+	platform='freebsd'
+fi
+
+sha1sumcmd='sha1sum'
+if [ "$platform" == 'freebsd' ]; then
+	sha1sumcmd='shasum'
+fi
+
 pkgroot="$(pwd)"
 deps="$pkgroot/.deps"
 prefix="$deps/usr"
@@ -17,7 +30,7 @@ download() {
 			# download, untar and calculate sha1 sum in one pass
 			(wget "$url" -O - | tee "$fifo" | \
 				(cd "$tgt";  tar --strip-components=1 -xvzf -)) &
-			sum=$(sha1sum < "$fifo" | cut -d ' ' -f1)
+			sum=$("$sha1sumcmd" < "$fifo" | cut -d ' ' -f1)
 			rm -rf "$tmp_dir"
 			if [ "$sum" != "$sha1" ]; then
 				echo "SHA1 sum doesn't match, expected '$sha1' got '$sum'"

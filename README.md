@@ -176,6 +176,10 @@ For Ubuntu 12.04:
 
     sudo apt-get install build-essential cmake libncurses5-dev
 
+For FreeBSD 10:
+
+    sudo pkg install cmake libtool sha
+    
 For OsX:
 
 * Install [Xcode](https://developer.apple.com/)
