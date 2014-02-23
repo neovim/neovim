@@ -101,17 +101,17 @@ struct efm_S {
 };
 
 static int qf_init_ext(qf_info_T *qi, char_u *efile, buf_T *buf,
-                               typval_T *tv, char_u *errorformat, int newlist,
-                               linenr_T lnumfirst,
-                               linenr_T lnumlast,
-                               char_u *qf_title);
+                       typval_T *tv, char_u *errorformat, int newlist,
+                       linenr_T lnumfirst,
+                       linenr_T lnumlast,
+                       char_u *qf_title);
 static void qf_new_list(qf_info_T *qi, char_u *qf_title);
 static void ll_free_all(qf_info_T **pqi);
 static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
-                                char_u *fname, int bufnum, char_u *mesg,
-                                long lnum, int col, int vis_col,
-                                char_u *pattern, int nr, int type,
-                                int valid);
+                        char_u *fname, int bufnum, char_u *mesg,
+                        long lnum, int col, int vis_col,
+                        char_u *pattern, int nr, int type,
+                        int valid);
 static qf_info_T *ll_new_list(void);
 static void qf_msg(qf_info_T *qi);
 static void qf_free(qf_info_T *qi, int idx);
