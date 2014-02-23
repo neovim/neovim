@@ -26,7 +26,7 @@ download() {
 		local download_command=""
 		if which wget > /dev/null 2>&1; then
 			# -O - to send output to stdout
-			download_command="wget $url -O -"
+			download_command="wget --no-verbose $url -O -"
 		elif which curl >/dev/null 2>&1; then
 			# -L to follow the redirects that github will send us
 			# -sS to supress the progress bar, but show errors
