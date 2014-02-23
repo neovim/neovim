@@ -40,6 +40,17 @@ else()
   endif()
 endif()
 
-include_directories ("${PROJECT_SOURCE_DIR}/src/proto")
+if (CMAKE_HOST_APPLE AND HAVE_WORKING_LIBINTL)
+  check_library_exists(intl gettext "${HOMEBREW_GETTEXT_PREFIX}/lib" HAVE_LIBINTL)
+  if (HAVE_LIBINTL)
+    include_directories("${HOMEBREW_GETTEXT_PREFIX}/include")
+    find_library(INTL_LIBRARY NAMES intl PATHS "${HOMEBREW_GETTEXT_PREFIX}/lib")
+    target_link_libraries(vim ${INTL_LIBRARY})
+  else()
+    message(FATAL_ERROR "can't find something resembling -lintl")
+  endif()
+endif()
+
+include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
 
 install(TARGETS nvim RUNTIME DESTINATION bin)
