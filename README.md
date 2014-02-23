@@ -181,25 +181,15 @@ For Debian/Ubuntu:
 For FreeBSD 10:
 
     sudo pkg install cmake libtool sha
-    
+
 For OsX:
 
-* Install [Xcode](https://developer.apple.com/)
-* Install sha1sum
+* Install [Xcode](https://developer.apple.com/) and [Homebrew][http://brew.sh]
 
-  Via MacPorts:
-
-      sudo port install md5sha1sum cmake libtool automake
-
-  Via Homebrew:
-
-      brew install md5sha1sum cmake libtool automake
 
 For Arch Linux:
 
       sudo pacman -S base-devel cmake ncurses
-
-
 
 ###Building
 
@@ -210,6 +200,10 @@ To generate the `Makefile`s:
 To build and run the tests:
 
     make test
+
+Using Homebrew on Mac:
+
+    brew install neovim/neovim/neovim
 
 ### Community
 
