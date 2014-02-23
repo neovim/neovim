@@ -448,9 +448,7 @@ static void syn_incl_toplevel __ARGS((int id, int *flagsp));
  * it.	Careful: curbuf and curwin are likely to point to another buffer and
  * window.
  */
-void syntax_start(wp, lnum)
-win_T       *wp;
-linenr_T lnum;
+void syntax_start(win_T *wp, linenr_T lnum)
 {
   synstate_T  *p;
   synstate_T  *last_valid = NULL;
@@ -610,8 +608,7 @@ linenr_T lnum;
  * We cannot simply discard growarrays full of state_items or buf_states; we
  * have to manually release their extmatch pointers first.
  */
-static void clear_syn_state(p)
-synstate_T *p;
+static void clear_syn_state(synstate_T *p)
 {
   int i;
   garray_T    *gap;
@@ -630,7 +627,7 @@ synstate_T *p;
 /*
  * Cleanup the current_state stack.
  */
-static void clear_current_state()                 {
+static void clear_current_state(void)                 {
   int i;
   stateitem_T *sip;
 
@@ -649,10 +646,7 @@ static void clear_current_state()                 {
  * 2. Search backwards for given sync patterns.
  * 3. Simply start on a given number of lines above "lnum".
  */
-static void syn_sync(wp, start_lnum, last_valid)
-win_T       *wp;
-linenr_T start_lnum;
-synstate_T  *last_valid;
+static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
 {
   buf_T       *curbuf_save;
   win_T       *curwin_save;
@@ -901,8 +895,7 @@ synstate_T  *last_valid;
 /*
  * Return TRUE if the line-continuation pattern matches in line "lnum".
  */
-static int syn_match_linecont(lnum)
-linenr_T lnum;
+static int syn_match_linecont(linenr_T lnum)
 {
   regmmatch_T regmatch;
 
@@ -918,7 +911,7 @@ linenr_T lnum;
 /*
  * Prepare the current state for the start of a line.
  */
-static void syn_start_line()                 {
+static void syn_start_line(void)                 {
   current_finished = FALSE;
   current_col = 0;
 
@@ -940,8 +933,7 @@ static void syn_start_line()                 {
  * When "startofline" is TRUE the last item is always updated.
  * When "startofline" is FALSE the item with "keepend" is forcefully updated.
  */
-static void syn_update_ends(startofline)
-int startofline;
+static void syn_update_ends(int startofline)
 {
   stateitem_T *cur_si;
   int i;
@@ -1035,8 +1027,7 @@ int startofline;
  * number of entries SST_MAX_ENTRIES, and the distance is computed.
  */
 
-static void syn_stack_free_block(block)
-synblock_T  *block;
+static void syn_stack_free_block(synblock_T *block)
 {
   synstate_T  *p;
 
@@ -1052,8 +1043,7 @@ synblock_T  *block;
  * Free b_sst_array[] for buffer "buf".
  * Used when syntax items changed to force resyncing everywhere.
  */
-void syn_stack_free_all(block)
-synblock_T  *block;
+void syn_stack_free_all(synblock_T *block)
 {
   win_T       *wp;
 
@@ -1074,7 +1064,7 @@ synblock_T  *block;
  * small, reallocate it.
  * Also used to allocate b_sst_array[] for the first time.
  */
-static void syn_stack_alloc()                 {
+static void syn_stack_alloc(void)                 {
   long len;
   synstate_T  *to, *from;
   synstate_T  *sstp;
@@ -1144,8 +1134,7 @@ static void syn_stack_alloc()                 {
  * Called from update_screen(), before screen is being updated, once for each
  * displayed buffer.
  */
-void syn_stack_apply_changes(buf)
-buf_T       *buf;
+void syn_stack_apply_changes(buf_T *buf)
 {
   win_T       *wp;
 
@@ -1158,9 +1147,7 @@ buf_T       *buf;
   }
 }
 
-static void syn_stack_apply_changes_block(block, buf)
-synblock_T  *block;
-buf_T       *buf;
+static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf)
 {
   synstate_T  *p, *prev, *np;
   linenr_T n;
@@ -1207,7 +1194,7 @@ buf_T       *buf;
  * Reduce the number of entries in the state stack for syn_buf.
  * Returns TRUE if at least one entry was freed.
  */
-static int syn_stack_cleanup()                {
+static int syn_stack_cleanup(void)                {
   synstate_T  *p, *prev;
   disptick_T tick;
   int above;
@@ -1263,9 +1250,7 @@ static int syn_stack_cleanup()                {
  * Free the allocated memory for a syn_state item.
  * Move the entry into the free list.
  */
-static void syn_stack_free_entry(block, p)
-synblock_T  *block;
-synstate_T  *p;
+static void syn_stack_free_entry(synblock_T *block, synstate_T *p)
 {
   clear_syn_state(p);
   p->sst_next = block->b_sst_firstfree;
@@ -1277,8 +1262,7 @@ synstate_T  *p;
  * Find an entry in the list of state stacks at or before "lnum".
  * Returns NULL when there is no entry or the first entry is after "lnum".
  */
-static synstate_T * syn_stack_find_entry(lnum)
-linenr_T lnum;
+static synstate_T *syn_stack_find_entry(linenr_T lnum)
 {
   synstate_T  *p, *prev;
 
@@ -1296,7 +1280,7 @@ linenr_T lnum;
  * Try saving the current state in b_sst_array[].
  * The current state must be valid for the start of the current_lnum line!
  */
-static synstate_T * store_current_state()                         {
+static synstate_T *store_current_state(void)                         {
   int i;
   synstate_T  *p;
   bufstate_T  *bp;
@@ -1400,8 +1384,7 @@ static synstate_T * store_current_state()                         {
 /*
  * Copy a state stack from "from" in b_sst_array[] to current_state;
  */
-static void load_current_state(from)
-synstate_T  *from;
+static void load_current_state(synstate_T *from)
 {
   int i;
   bufstate_T  *bp;
@@ -1443,8 +1426,7 @@ synstate_T  *from;
  * Compare saved state stack "*sp" with the current state.
  * Return TRUE when they are equal.
  */
-static int syn_stack_equal(sp)
-synstate_T *sp;
+static int syn_stack_equal(synstate_T *sp)
 {
   int i, j;
   bufstate_T  *bp;
@@ -1510,8 +1492,7 @@ synstate_T *sp;
  *	    displayed line
  * lnum ->  line below window
  */
-void syntax_end_parsing(lnum)
-linenr_T lnum;
+void syntax_end_parsing(linenr_T lnum)
 {
   synstate_T  *sp;
 
@@ -1527,14 +1508,14 @@ linenr_T lnum;
  * End of handling of the state stack.
  ****************************************/
 
-static void invalidate_current_state()                 {
+static void invalidate_current_state(void)                 {
   clear_current_state();
   current_state.ga_itemsize = 0;        /* mark current_state invalid */
   current_next_list = NULL;
   keepend_level = -1;
 }
 
-static void validate_current_state()                 {
+static void validate_current_state(void)                 {
   current_state.ga_itemsize = sizeof(stateitem_T);
   current_state.ga_growsize = 3;
 }
@@ -1544,8 +1525,7 @@ static void validate_current_state()                 {
  * This will only be called just after get_syntax_attr() for the previous
  * line, to check if the next line needs to be redrawn too.
  */
-int syntax_check_changed(lnum)
-linenr_T lnum;
+int syntax_check_changed(linenr_T lnum)
 {
   int retval = TRUE;
   synstate_T  *sp;
@@ -1590,8 +1570,10 @@ linenr_T lnum;
  * the line.  It can start anywhere in the line, as long as the current state
  * is valid.
  */
-static int syn_finish_line(syncing)
-int syncing;                    /* called for syncing */
+static int 
+syn_finish_line (
+    int syncing                    /* called for syncing */
+)
 {
   stateitem_T *cur_si;
   colnr_T prev_current_col;
@@ -1636,10 +1618,12 @@ int syncing;                    /* called for syncing */
  * When "can_spell" is not NULL set it to TRUE when spell-checking should be
  * done.
  */
-int get_syntax_attr(col, can_spell, keep_state)
-colnr_T col;
-int         *can_spell;
-int keep_state;                 /* keep state of char at "col" */
+int 
+get_syntax_attr (
+    colnr_T col,
+    int *can_spell,
+    int keep_state                 /* keep state of char at "col" */
+)
 {
   int attr = 0;
 
@@ -1682,11 +1666,13 @@ int keep_state;                 /* keep state of char at "col" */
 /*
  * Get syntax attributes for current_lnum, current_col.
  */
-static int syn_current_attr(syncing, displaying, can_spell, keep_state)
-int syncing;                            /* When 1: called for syncing */
-int displaying;                         /* result will be displayed */
-int         *can_spell;                 /* return: do spell checking */
-int keep_state;                         /* keep syntax stack afterwards */
+static int 
+syn_current_attr (
+    int syncing,                            /* When 1: called for syncing */
+    int displaying,                         /* result will be displayed */
+    int *can_spell,                 /* return: do spell checking */
+    int keep_state                         /* keep syntax stack afterwards */
+)
 {
   int syn_id;
   lpos_T endpos;                /* was: char_u *endp; */
@@ -2203,9 +2189,7 @@ int keep_state;                         /* keep syntax stack afterwards */
 /*
  * Check if we already matched pattern "idx" at the current column.
  */
-static int did_match_already(idx, gap)
-int idx;
-garray_T    *gap;
+static int did_match_already(int idx, garray_T *gap)
 {
   int i;
 
@@ -2227,8 +2211,7 @@ garray_T    *gap;
 /*
  * Push the next match onto the stack.
  */
-static stateitem_T * push_next_match(cur_si)
-stateitem_T *cur_si;
+static stateitem_T *push_next_match(stateitem_T *cur_si)
 {
   synpat_T    *spp;
   int save_flags;
@@ -2307,7 +2290,7 @@ stateitem_T *cur_si;
 /*
  * Check for end of current state (and the states before it).
  */
-static void check_state_ends()                 {
+static void check_state_ends(void)                 {
   stateitem_T *cur_si;
   int had_extend;
 
@@ -2400,8 +2383,7 @@ static void check_state_ends()                 {
  * Update an entry in the current_state stack for a match or region.  This
  * fills in si_attr, si_next_list and si_cont_list.
  */
-static void update_si_attr(idx)
-int idx;
+static void update_si_attr(int idx)
 {
   stateitem_T *sip = &CUR_STATE(idx);
   synpat_T    *spp;
@@ -2450,7 +2432,7 @@ int idx;
  * Check the current stack for patterns with "keepend" flag.
  * Propagate the match-end to contained items, until a "skipend" item is found.
  */
-static void check_keepend()                 {
+static void check_keepend(void)                 {
   int i;
   lpos_T maxpos;
   lpos_T maxpos_h;
@@ -2505,10 +2487,12 @@ static void check_keepend()                 {
  *
  * Return the flags for the matched END.
  */
-static void update_si_end(sip, startcol, force)
-stateitem_T *sip;
-int startcol;               /* where to start searching for the end */
-int force;                  /* when TRUE overrule a previous end */
+static void 
+update_si_end (
+    stateitem_T *sip,
+    int startcol,               /* where to start searching for the end */
+    int force                  /* when TRUE overrule a previous end */
+)
 {
   lpos_T startpos;
   lpos_T endpos;
@@ -2564,8 +2548,7 @@ int force;                  /* when TRUE overrule a previous end */
  * It is cleared and the index set to "idx".
  * Return FAIL if it's not possible (out of memory).
  */
-static int push_current_state(idx)
-int idx;
+static int push_current_state(int idx)
 {
   if (ga_grow(&current_state, 1) == FAIL)
     return FAIL;
@@ -2578,7 +2561,7 @@ int idx;
 /*
  * Remove a state from the current_state stack.
  */
-static void pop_current_state()                 {
+static void pop_current_state(void)                 {
   if (current_state.ga_len) {
     unref_extmatch(CUR_STATE(current_state.ga_len - 1).si_extmatch);
     --current_state.ga_len;
@@ -2600,16 +2583,17 @@ static void pop_current_state()                 {
  * If found, the end of the region and the end of the highlighting is
  * computed.
  */
-static void find_endpos(idx, startpos, m_endpos, hl_endpos, flagsp, end_endpos,
-    end_idx, start_ext)
-int idx;                        /* index of the pattern */
-lpos_T      *startpos;          /* where to start looking for an END match */
-lpos_T      *m_endpos;          /* return: end of match */
-lpos_T      *hl_endpos;         /* return: end of highlighting */
-long        *flagsp;            /* return: flags of matching END */
-lpos_T      *end_endpos;        /* return: end of end pattern match */
-int         *end_idx;           /* return: group ID for end pat. match, or 0 */
-reg_extmatch_T *start_ext;      /* submatches from the start pattern */
+static void 
+find_endpos (
+    int idx,                        /* index of the pattern */
+    lpos_T *startpos,          /* where to start looking for an END match */
+    lpos_T *m_endpos,          /* return: end of match */
+    lpos_T *hl_endpos,         /* return: end of highlighting */
+    long *flagsp,            /* return: flags of matching END */
+    lpos_T *end_endpos,        /* return: end of end pattern match */
+    int *end_idx,           /* return: group ID for end pat. match, or 0 */
+    reg_extmatch_T *start_ext      /* submatches from the start pattern */
+)
 {
   colnr_T matchcol;
   synpat_T    *spp, *spp_skip;
@@ -2806,9 +2790,7 @@ reg_extmatch_T *start_ext;      /* submatches from the start pattern */
 /*
  * Limit "pos" not to be after "limit".
  */
-static void limit_pos(pos, limit)
-lpos_T      *pos;
-lpos_T      *limit;
+static void limit_pos(lpos_T *pos, lpos_T *limit)
 {
   if (pos->lnum > limit->lnum)
     *pos = *limit;
@@ -2819,9 +2801,7 @@ lpos_T      *limit;
 /*
  * Limit "pos" not to be after "limit", unless pos->lnum is zero.
  */
-static void limit_pos_zero(pos, limit)
-lpos_T      *pos;
-lpos_T      *limit;
+static void limit_pos_zero(lpos_T *pos, lpos_T *limit)
 {
   if (pos->lnum == 0)
     *pos = *limit;
@@ -2832,12 +2812,14 @@ lpos_T      *limit;
 /*
  * Add offset to matched text for end of match or highlight.
  */
-static void syn_add_end_off(result, regmatch, spp, idx, extra)
-lpos_T      *result;            /* returned position */
-regmmatch_T *regmatch;          /* start/end of match */
-synpat_T    *spp;               /* matched pattern */
-int idx;                        /* index of offset */
-int extra;                      /* extra chars for offset to start */
+static void 
+syn_add_end_off (
+    lpos_T *result,            /* returned position */
+    regmmatch_T *regmatch,          /* start/end of match */
+    synpat_T *spp,               /* matched pattern */
+    int idx,                        /* index of offset */
+    int extra                      /* extra chars for offset to start */
+)
 {
   int col;
   int off;
@@ -2876,12 +2858,14 @@ int extra;                      /* extra chars for offset to start */
  * Add offset to matched text for start of match or highlight.
  * Avoid resulting column to become negative.
  */
-static void syn_add_start_off(result, regmatch, spp, idx, extra)
-lpos_T      *result;            /* returned position */
-regmmatch_T *regmatch;          /* start/end of match */
-synpat_T    *spp;
-int idx;
-int extra;                  /* extra chars for offset to end */
+static void 
+syn_add_start_off (
+    lpos_T *result,            /* returned position */
+    regmmatch_T *regmatch,          /* start/end of match */
+    synpat_T *spp,
+    int idx,
+    int extra                  /* extra chars for offset to end */
+)
 {
   int col;
   int off;
@@ -2920,7 +2904,7 @@ int extra;                  /* extra chars for offset to end */
 /*
  * Get current line in syntax buffer.
  */
-static char_u * syn_getcurline()                     {
+static char_u *syn_getcurline(void)                     {
   return ml_get_buf(syn_buf, current_lnum, FALSE);
 }
 
@@ -2928,11 +2912,7 @@ static char_u * syn_getcurline()                     {
  * Call vim_regexec() to find a match with "rmp" in "syn_buf".
  * Returns TRUE when there is a match.
  */
-static int syn_regexec(rmp, lnum, col, st)
-regmmatch_T *rmp;
-linenr_T lnum;
-colnr_T col;
-syn_time_T  *st UNUSED;
+static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T *st)
 {
   int r;
   proftime_T pt;
@@ -2966,15 +2946,16 @@ syn_time_T  *st UNUSED;
  * The caller must check if a keyword can start at startcol.
  * Return it's ID if found, 0 otherwise.
  */
-static int check_keyword_id(line, startcol, endcolp, flagsp, next_listp, cur_si,
-    ccharp)
-char_u      *line;
-int startcol;                   /* position in line to check for keyword */
-int         *endcolp;           /* return: character after found keyword */
-long        *flagsp;            /* return: flags of matching keyword */
-short       **next_listp;       /* return: next_list of matching keyword */
-stateitem_T *cur_si;            /* item at the top of the stack */
-int         *ccharp UNUSED;     /* conceal substitution char */
+static int 
+check_keyword_id (
+    char_u *line,
+    int startcol,                   /* position in line to check for keyword */
+    int *endcolp,           /* return: character after found keyword */
+    long *flagsp,            /* return: flags of matching keyword */
+    short **next_listp,       /* return: next_list of matching keyword */
+    stateitem_T *cur_si,            /* item at the top of the stack */
+    int *ccharp     /* conceal substitution char */
+)
 {
   keyentry_T  *kp;
   char_u      *kwp;
@@ -3046,9 +3027,7 @@ int         *ccharp UNUSED;     /* conceal substitution char */
 /*
  * Handle ":syntax conceal" command.
  */
-static void syn_cmd_conceal(eap, syncing)
-exarg_T     *eap UNUSED;
-int syncing UNUSED;
+static void syn_cmd_conceal(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   char_u      *next;
@@ -3069,9 +3048,7 @@ int syncing UNUSED;
 /*
  * Handle ":syntax case" command.
  */
-static void syn_cmd_case(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_case(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   char_u      *next;
@@ -3092,9 +3069,7 @@ int syncing UNUSED;
 /*
  * Handle ":syntax spell" command.
  */
-static void syn_cmd_spell(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_spell(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   char_u      *next;
@@ -3117,8 +3092,7 @@ int syncing UNUSED;
 /*
  * Clear all syntax info for one buffer.
  */
-void syntax_clear(block)
-synblock_T  *block;
+void syntax_clear(synblock_T *block)
 {
   int i;
 
@@ -3165,8 +3139,7 @@ synblock_T  *block;
 /*
  * Get rid of ownsyntax for window "wp".
  */
-void reset_synblock(wp)
-win_T *wp;
+void reset_synblock(win_T *wp)
 {
   if (wp->w_s != &wp->w_buffer->b_s) {
     syntax_clear(wp->w_s);
@@ -3178,7 +3151,7 @@ win_T *wp;
 /*
  * Clear syncing info for one buffer.
  */
-static void syntax_sync_clear()                 {
+static void syntax_sync_clear(void)                 {
   int i;
 
   /* free the syntax patterns */
@@ -3202,9 +3175,7 @@ static void syntax_sync_clear()                 {
 /*
  * Remove one pattern from the buffer's pattern list.
  */
-static void syn_remove_pattern(block, idx)
-synblock_T  *block;
-int idx;
+static void syn_remove_pattern(synblock_T *block, int idx)
 {
   synpat_T    *spp;
 
@@ -3221,9 +3192,7 @@ int idx;
  * Clear and free one syntax pattern.  When clearing all, must be called from
  * last to first!
  */
-static void syn_clear_pattern(block, i)
-synblock_T  *block;
-int i;
+static void syn_clear_pattern(synblock_T *block, int i)
 {
   vim_free(SYN_ITEMS(block)[i].sp_pattern);
   vim_regfree(SYN_ITEMS(block)[i].sp_prog);
@@ -3238,9 +3207,7 @@ int i;
 /*
  * Clear and free one syntax cluster.
  */
-static void syn_clear_cluster(block, i)
-synblock_T  *block;
-int i;
+static void syn_clear_cluster(synblock_T *block, int i)
 {
   vim_free(SYN_CLSTR(block)[i].scl_name);
   vim_free(SYN_CLSTR(block)[i].scl_name_u);
@@ -3250,9 +3217,7 @@ int i;
 /*
  * Handle ":syntax clear" command.
  */
-static void syn_cmd_clear(eap, syncing)
-exarg_T     *eap;
-int syncing;
+static void syn_cmd_clear(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   char_u      *arg_end;
@@ -3323,9 +3288,7 @@ int syncing;
 /*
  * Clear one syntax group for the current buffer.
  */
-static void syn_clear_one(id, syncing)
-int id;
-int syncing;
+static void syn_clear_one(int id, int syncing)
 {
   synpat_T    *spp;
   int idx;
@@ -3348,9 +3311,7 @@ int syncing;
 /*
  * Handle ":syntax on" command.
  */
-static void syn_cmd_on(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_on(exarg_T *eap, int syncing)
 {
   syn_cmd_onoff(eap, "syntax");
 }
@@ -3358,9 +3319,7 @@ int syncing UNUSED;
 /*
  * Handle ":syntax enable" command.
  */
-static void syn_cmd_enable(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
   set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
@@ -3370,9 +3329,7 @@ int syncing UNUSED;
 /*
  * Handle ":syntax reset" command.
  */
-static void syn_cmd_reset(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_reset(exarg_T *eap, int syncing)
 {
   eap->nextcmd = check_nextcmd(eap->arg);
   if (!eap->skip) {
@@ -3385,9 +3342,7 @@ int syncing UNUSED;
 /*
  * Handle ":syntax manual" command.
  */
-static void syn_cmd_manual(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_manual(exarg_T *eap, int syncing)
 {
   syn_cmd_onoff(eap, "manual");
 }
@@ -3395,16 +3350,12 @@ int syncing UNUSED;
 /*
  * Handle ":syntax off" command.
  */
-static void syn_cmd_off(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_off(exarg_T *eap, int syncing)
 {
   syn_cmd_onoff(eap, "nosyntax");
 }
 
-static void syn_cmd_onoff(eap, name)
-exarg_T     *eap;
-char        *name;
+static void syn_cmd_onoff(exarg_T *eap, char *name)
 {
   char_u buf[100];
 
@@ -3419,9 +3370,11 @@ char        *name;
 /*
  * Handle ":syntax [list]" command: list current syntax words.
  */
-static void syn_cmd_list(eap, syncing)
-exarg_T     *eap;
-int syncing;                        /* when TRUE: list syncing items */
+static void 
+syn_cmd_list (
+    exarg_T *eap,
+    int syncing                        /* when TRUE: list syncing items */
+)
 {
   char_u      *arg = eap->arg;
   int id;
@@ -3496,7 +3449,7 @@ int syncing;                        /* when TRUE: list syncing items */
   eap->nextcmd = check_nextcmd(arg);
 }
 
-static void syn_lines_msg()                 {
+static void syn_lines_msg(void)                 {
   if (curwin->w_s->b_syn_sync_maxlines > 0
       || curwin->w_s->b_syn_sync_minlines > 0) {
     MSG_PUTS("; ");
@@ -3514,7 +3467,7 @@ static void syn_lines_msg()                 {
   }
 }
 
-static void syn_match_msg()                 {
+static void syn_match_msg(void)                 {
   if (curwin->w_s->b_syn_sync_linebreaks > 0) {
     MSG_PUTS(_("; match "));
     msg_outnum(curwin->w_s->b_syn_sync_linebreaks);
@@ -3534,10 +3487,12 @@ static void syn_list_flags __ARGS((struct name_list *nl, int flags, int attr));
 /*
  * List one syntax item, for ":syntax" or "syntax list syntax_name".
  */
-static void syn_list_one(id, syncing, link_only)
-int id;
-int syncing;                        /* when TRUE: list syncing items */
-int link_only;                      /* when TRUE; list link-only too */
+static void 
+syn_list_one (
+    int id,
+    int syncing,                        /* when TRUE: list syncing items */
+    int link_only                      /* when TRUE; list link-only too */
+)
 {
   int attr;
   int idx;
@@ -3634,10 +3589,7 @@ int link_only;                      /* when TRUE; list link-only too */
   }
 }
 
-static void syn_list_flags(nlist, flags, attr)
-struct name_list    *nlist;
-int flags;
-int attr;
+static void syn_list_flags(struct name_list *nlist, int flags, int attr)
 {
   int i;
 
@@ -3651,8 +3603,7 @@ int attr;
 /*
  * List one syntax cluster, for ":syntax" or "syntax list syntax_name".
  */
-static void syn_list_cluster(id)
-int id;
+static void syn_list_cluster(int id)
 {
   int endcol = 15;
 
@@ -3675,10 +3626,7 @@ int id;
   }
 }
 
-static void put_id_list(name, list, attr)
-char_u      *name;
-short       *list;
-int attr;
+static void put_id_list(char_u *name, short *list, int attr)
 {
   short               *p;
 
@@ -3707,11 +3655,7 @@ int attr;
   msg_putchar(' ');
 }
 
-static void put_pattern(s, c, spp, attr)
-char        *s;
-int c;
-synpat_T    *spp;
-int attr;
+static void put_pattern(char *s, int c, synpat_T *spp, int attr)
 {
   long n;
   int mask;
@@ -3774,11 +3718,13 @@ int attr;
  * List or clear the keywords for one syntax group.
  * Return TRUE if the header has been printed.
  */
-static int syn_list_keywords(id, ht, did_header, attr)
-int id;
-hashtab_T   *ht;
-int did_header;                         /* header has already been printed */
-int attr;
+static int 
+syn_list_keywords (
+    int id,
+    hashtab_T *ht,
+    int did_header,                         /* header has already been printed */
+    int attr
+)
 {
   int outlen;
   hashitem_T  *hi;
@@ -3860,9 +3806,7 @@ int attr;
   return did_header;
 }
 
-static void syn_clear_keyword(id, ht)
-int id;
-hashtab_T   *ht;
+static void syn_clear_keyword(int id, hashtab_T *ht)
 {
   hashitem_T  *hi;
   keyentry_T  *kp;
@@ -3903,8 +3847,7 @@ hashtab_T   *ht;
 /*
  * Clear a whole keyword table.
  */
-static void clear_keywtab(ht)
-hashtab_T   *ht;
+static void clear_keywtab(hashtab_T *ht)
 {
   hashitem_T  *hi;
   int todo;
@@ -3930,13 +3873,15 @@ hashtab_T   *ht;
 /*
  * Add a keyword to the list of keywords.
  */
-static void add_keyword(name, id, flags, cont_in_list, next_list, conceal_char)
-char_u      *name;          /* name of keyword */
-int id;                     /* group ID for this keyword */
-int flags;                  /* flags for this keyword */
-short       *cont_in_list;     /* containedin for this keyword */
-short       *next_list;     /* nextgroup for this keyword */
-int conceal_char;
+static void 
+add_keyword (
+    char_u *name,          /* name of keyword */
+    int id,                     /* group ID for this keyword */
+    int flags,                  /* flags for this keyword */
+    short *cont_in_list,     /* containedin for this keyword */
+    short *next_list,     /* nextgroup for this keyword */
+    int conceal_char
+)
 {
   keyentry_T  *kp;
   hashtab_T   *ht;
@@ -3986,9 +3931,11 @@ int conceal_char;
  * Return a pointer to the first argument.
  * Return NULL if the end of the command was found instead of further args.
  */
-static char_u * get_group_name(arg, name_end)
-char_u      *arg;               /* start of the argument */
-char_u      **name_end;         /* pointer to end of the name */
+static char_u *
+get_group_name (
+    char_u *arg,               /* start of the argument */
+    char_u **name_end         /* pointer to end of the name */
+)
 {
   char_u      *rest;
 
@@ -4012,10 +3959,12 @@ char_u      **name_end;         /* pointer to end of the name */
  * Return a pointer to the next argument (which isn't an option).
  * Return NULL for any error;
  */
-static char_u * get_syn_options(arg, opt, conceal_char)
-char_u          *arg;                   /* next argument to be checked */
-syn_opt_arg_T   *opt;                   /* various things */
-int             *conceal_char UNUSED;
+static char_u *
+get_syn_options (
+    char_u *arg,                   /* next argument to be checked */
+    syn_opt_arg_T *opt,                   /* various things */
+    int *conceal_char
+)
 {
   char_u      *gname_start, *gname;
   int syn_id;
@@ -4161,9 +4110,7 @@ int             *conceal_char UNUSED;
  * Set the contained flag, and if the item is not already contained, add it
  * to the specified top-level group, if any.
  */
-static void syn_incl_toplevel(id, flagsp)
-int id;
-int         *flagsp;
+static void syn_incl_toplevel(int id, int *flagsp)
 {
   if ((*flagsp & HL_CONTAINED) || curwin->w_s->b_syn_topgrp == 0)
     return;
@@ -4185,9 +4132,7 @@ int         *flagsp;
 /*
  * Handle ":syntax include [@{group-name}] filename" command.
  */
-static void syn_cmd_include(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_include(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   int sgl_id = 1;
@@ -4256,9 +4201,7 @@ int syncing UNUSED;
 /*
  * Handle ":syntax keyword {group-name} [{option}] keyword .." command.
  */
-static void syn_cmd_keyword(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_keyword(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   char_u      *group_name_end;
@@ -4365,9 +4308,11 @@ int syncing UNUSED;
  *
  * Also ":syntax sync match {name} [[grouphere | groupthere] {group-name}] .."
  */
-static void syn_cmd_match(eap, syncing)
-exarg_T     *eap;
-int syncing;                        /* TRUE for ":syntax sync match .. " */
+static void 
+syn_cmd_match (
+    exarg_T *eap,
+    int syncing                        /* TRUE for ":syntax sync match .. " */
+)
 {
   char_u      *arg = eap->arg;
   char_u      *group_name_end;
@@ -4462,9 +4407,11 @@ int syncing;                        /* TRUE for ":syntax sync match .. " */
  * Handle ":syntax region {group-name} [matchgroup={group-name}]
  *		start {start} .. [skip {skip}] end {end} .. [{options}]".
  */
-static void syn_cmd_region(eap, syncing)
-exarg_T     *eap;
-int syncing;                        /* TRUE for ":syntax sync region .." */
+static void 
+syn_cmd_region (
+    exarg_T *eap,
+    int syncing                        /* TRUE for ":syntax sync region .." */
+)
 {
   char_u              *arg = eap->arg;
   char_u              *group_name_end;
@@ -4699,9 +4646,7 @@ int syncing;                        /* TRUE for ":syntax sync region .." */
 /*
  * A simple syntax group ID comparison function suitable for use in qsort()
  */
-static int syn_compare_stub(v1, v2)
-const void  *v1;
-const void  *v2;
+static int syn_compare_stub(const void *v1, const void *v2)
 {
   const short *s1 = v1;
   const short *s2 = v2;
@@ -4713,10 +4658,7 @@ const void  *v2;
  * Combines lists of syntax clusters.
  * *clstr1 and *clstr2 must both be allocated memory; they will be consumed.
  */
-static void syn_combine_list(clstr1, clstr2, list_op)
-short       **clstr1;
-short       **clstr2;
-int list_op;
+static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
 {
   int count1 = 0;
   int count2 = 0;
@@ -4832,8 +4774,7 @@ int list_op;
  * Lookup a syntax cluster name and return it's ID.
  * If it is not found, 0 is returned.
  */
-static int syn_scl_name2id(name)
-char_u      *name;
+static int syn_scl_name2id(char_u *name)
 {
   int i;
   char_u      *name_u;
@@ -4853,9 +4794,7 @@ char_u      *name;
 /*
  * Like syn_scl_name2id(), but take a pointer + length argument.
  */
-static int syn_scl_namen2id(linep, len)
-char_u  *linep;
-int len;
+static int syn_scl_namen2id(char_u *linep, int len)
 {
   char_u  *name;
   int id = 0;
@@ -4874,9 +4813,7 @@ int len;
  * If it doesn't exist yet, a new entry is created.
  * Return 0 for failure.
  */
-static int syn_check_cluster(pp, len)
-char_u      *pp;
-int len;
+static int syn_check_cluster(char_u *pp, int len)
 {
   int id;
   char_u      *name;
@@ -4898,8 +4835,7 @@ int len;
  * "name" must be an allocated string, it will be consumed.
  * Return 0 for failure.
  */
-static int syn_add_cluster(name)
-char_u      *name;
+static int syn_add_cluster(char_u *name)
 {
   int len;
 
@@ -4944,9 +4880,7 @@ char_u      *name;
  * Handle ":syntax cluster {cluster-name} [contains={groupname},..]
  *		[add={groupname},..] [remove={groupname},..]".
  */
-static void syn_cmd_cluster(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_cluster(exarg_T *eap, int syncing)
 {
   char_u      *arg = eap->arg;
   char_u      *group_name_end;
@@ -5010,7 +4944,7 @@ int syncing UNUSED;
 /*
  * On first call for current buffer: Init growing array.
  */
-static void init_syn_patterns()                 {
+static void init_syn_patterns(void)                 {
   curwin->w_s->b_syn_patterns.ga_itemsize = sizeof(synpat_T);
   curwin->w_s->b_syn_patterns.ga_growsize = 10;
 }
@@ -5020,9 +4954,7 @@ static void init_syn_patterns()                 {
  * Stores the pattern and program in a synpat_T.
  * Returns a pointer to the next argument, or NULL in case of an error.
  */
-static char_u * get_syn_pattern(arg, ci)
-char_u      *arg;
-synpat_T    *ci;
+static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
 {
   char_u      *end;
   int         *p;
@@ -5108,9 +5040,7 @@ synpat_T    *ci;
 /*
  * Handle ":syntax sync .." command.
  */
-static void syn_cmd_sync(eap, syncing)
-exarg_T     *eap;
-int syncing UNUSED;
+static void syn_cmd_sync(exarg_T *eap, int syncing)
 {
   char_u      *arg_start = eap->arg;
   char_u      *arg_end;
@@ -5239,11 +5169,13 @@ int syncing UNUSED;
  * Careful: the argument is modified (NULs added).
  * returns FAIL for some error, OK for success.
  */
-static int get_id_list(arg, keylen, list)
-char_u      **arg;
-int keylen;                     /* length of keyword */
-short       **list;             /* where to store the resulting list, if not
+static int 
+get_id_list (
+    char_u **arg,
+    int keylen,                     /* length of keyword */
+    short **list             /* where to store the resulting list, if not
                                    NULL, the list is silently skipped! */
+)
 {
   char_u      *p = NULL;
   char_u      *end;
@@ -5409,8 +5341,7 @@ short       **list;             /* where to store the resulting list, if not
 /*
  * Make a copy of an ID list.
  */
-static short * copy_id_list(list)
-short   *list;
+static short *copy_id_list(short *list)
 {
   int len;
   int count;
@@ -5436,11 +5367,13 @@ short   *list;
  * the current item.
  * This function is called very often, keep it fast!!
  */
-static int in_id_list(cur_si, list, ssp, contained)
-stateitem_T *cur_si;            /* current item or NULL */
-short       *list;              /* id list */
-struct sp_syn *ssp;             /* group id and ":syn include" tag of group */
-int contained;                  /* group id is contained */
+static int 
+in_id_list (
+    stateitem_T *cur_si,            /* current item or NULL */
+    short *list,              /* id list */
+    struct sp_syn *ssp,             /* group id and ":syn include" tag of group */
+    int contained                  /* group id is contained */
+)
 {
   int retval;
   short       *scl_list;
@@ -5554,8 +5487,7 @@ static struct subcommand subcommands[] =
  * This searches the subcommands[] table for the subcommand name, and calls a
  * syntax_subcommand() function to do the rest.
  */
-void ex_syntax(eap)
-exarg_T     *eap;
+void ex_syntax(exarg_T *eap)
 {
   char_u      *arg = eap->arg;
   char_u      *subcmd_end;
@@ -5588,8 +5520,7 @@ exarg_T     *eap;
   }
 }
 
-void ex_ownsyntax(eap)
-exarg_T     *eap;
+void ex_ownsyntax(exarg_T *eap)
 {
   char_u      *old_value;
   char_u      *new_value;
@@ -5628,8 +5559,7 @@ exarg_T     *eap;
   }
 }
 
-int syntax_present(win)
-win_T       *win;
+int syntax_present(win_T *win)
 {
   return win->w_s->b_syn_patterns.ga_len != 0
          || win->w_s->b_syn_clusters.ga_len != 0
@@ -5647,7 +5577,7 @@ static enum {
  * Reset include_link, include_default, include_none to 0.
  * Called when we are done expanding.
  */
-void reset_expand_highlight()          {
+void reset_expand_highlight(void)          {
   include_link = include_default = include_none = 0;
 }
 
@@ -5655,9 +5585,7 @@ void reset_expand_highlight()          {
  * Handle command line completion for :match and :echohl command: Add "None"
  * as highlight group.
  */
-void set_context_in_echohl_cmd(xp, arg)
-expand_T    *xp;
-char_u      *arg;
+void set_context_in_echohl_cmd(expand_T *xp, char_u *arg)
 {
   xp->xp_context = EXPAND_HIGHLIGHT;
   xp->xp_pattern = arg;
@@ -5667,9 +5595,7 @@ char_u      *arg;
 /*
  * Handle command line completion for :syntax command.
  */
-void set_context_in_syntax_cmd(xp, arg)
-expand_T    *xp;
-char_u      *arg;
+void set_context_in_syntax_cmd(expand_T *xp, char_u *arg)
 {
   char_u      *p;
 
@@ -5706,9 +5632,7 @@ static char *(case_args[]) = {"match", "ignore", NULL};
  * Function given to ExpandGeneric() to obtain the list syntax names for
  * expansion.
  */
-char_u * get_syntax_name(xp, idx)
-expand_T    *xp UNUSED;
-int idx;
+char_u *get_syntax_name(expand_T *xp, int idx)
 {
   if (expand_what == EXP_SUBCMD)
     return (char_u *)subcommands[idx].name;
@@ -5719,13 +5643,15 @@ int idx;
 /*
  * Function called for expression evaluation: get syntax ID at file position.
  */
-int syn_get_id(wp, lnum, col, trans, spellp, keep_state)
-win_T       *wp;
-long lnum;
-colnr_T col;
-int trans;                   /* remove transparency */
-int         *spellp;         /* return: can do spell checking */
-int keep_state;              /* keep state of char at "col" */
+int 
+syn_get_id (
+    win_T *wp,
+    long lnum,
+    colnr_T col,
+    int trans,                   /* remove transparency */
+    int *spellp,         /* return: can do spell checking */
+    int keep_state              /* keep state of char at "col" */
+)
 {
   /* When the position is not after the current position and in the same
    * line of the same buffer, need to restart parsing. */
@@ -5745,8 +5671,7 @@ int keep_state;              /* keep state of char at "col" */
  * Stores the current item sequence nr in "*seqnrp".
  * Returns the current flags.
  */
-int get_syntax_info(seqnrp)
-int         *seqnrp;
+int get_syntax_info(int *seqnrp)
 {
   *seqnrp = current_seqnr;
   return current_flags;
@@ -5755,7 +5680,7 @@ int         *seqnrp;
 /*
  * Return conceal substitution character
  */
-int syn_get_sub_char()         {
+int syn_get_sub_char(void)         {
   return current_sub_char;
 }
 
@@ -5764,8 +5689,7 @@ int syn_get_sub_char()         {
  * The caller must have called syn_get_id() before to fill the stack.
  * Returns -1 when "i" is out of range.
  */
-int syn_get_stack_item(i)
-int i;
+int syn_get_stack_item(int i)
 {
   if (i >= current_state.ga_len) {
     /* Need to invalidate the state, because we didn't properly finish it
@@ -5780,9 +5704,7 @@ int i;
 /*
  * Function called to get folding level for line "lnum" in window "wp".
  */
-int syn_get_foldlevel(wp, lnum)
-win_T       *wp;
-long lnum;
+int syn_get_foldlevel(win_T *wp, long lnum)
 {
   int level = 0;
   int i;
@@ -5806,8 +5728,7 @@ long lnum;
 /*
  * ":syntime".
  */
-void ex_syntime(eap)
-exarg_T     *eap;
+void ex_syntime(exarg_T *eap)
 {
   if (STRCMP(eap->arg, "on") == 0)
     syn_time_on = TRUE;
@@ -5821,8 +5742,7 @@ exarg_T     *eap;
     EMSG2(_(e_invarg2), eap->arg);
 }
 
-static void syn_clear_time(st)
-syn_time_T *st;
+static void syn_clear_time(syn_time_T *st)
 {
   profile_zero(&st->total);
   profile_zero(&st->slowest);
@@ -5833,7 +5753,7 @@ syn_time_T *st;
 /*
  * Clear the syntax timing for the current buffer.
  */
-static void syntime_clear()                 {
+static void syntime_clear(void)                 {
   int idx;
   synpat_T    *spp;
 
@@ -5851,9 +5771,7 @@ static void syntime_clear()                 {
  * Function given to ExpandGeneric() to obtain the possible arguments of the
  * ":syntime {on,off,clear,report}" command.
  */
-char_u * get_syntime_arg(xp, idx)
-expand_T    *xp UNUSED;
-int idx;
+char_u *get_syntime_arg(expand_T *xp, int idx)
 {
   switch (idx) {
   case 0: return (char_u *)"on";
@@ -5874,9 +5792,7 @@ typedef struct {
   char_u      *pattern;
 } time_entry_T;
 
-static int syn_compare_syntime(v1, v2)
-const void  *v1;
-const void  *v2;
+static int syn_compare_syntime(const void *v1, const void *v2)
 {
   const time_entry_T  *s1 = v1;
   const time_entry_T  *s2 = v2;
@@ -5887,7 +5803,7 @@ const void  *v2;
 /*
  * Clear the syntax timing for the current buffer.
  */
-static void syntime_report()                 {
+static void syntime_report(void)                 {
   int idx;
   synpat_T    *spp;
   proftime_T tm;
@@ -6151,9 +6067,11 @@ static char *(highlight_init_dark[]) =
   NULL
 };
 
-void init_highlight(both, reset)
-int both;                   /* include groups where 'bg' doesn't matter */
-int reset;                  /* clear group first */
+void 
+init_highlight (
+    int both,                   /* include groups where 'bg' doesn't matter */
+    int reset                  /* clear group first */
+)
 {
   int i;
   char        **pp;
@@ -6227,8 +6145,7 @@ int reset;                  /* clear group first */
  * Load color file "name".
  * Return OK for success, FAIL for failure.
  */
-int load_colors(name)
-char_u      *name;
+int load_colors(char_u *name)
 {
   char_u      *buf;
   int retval = FAIL;
@@ -6258,10 +6175,12 @@ char_u      *name;
  * When using ":hi clear" this is called recursively for each group with
  * "forceit" and "init" both TRUE.
  */
-void do_highlight(line, forceit, init)
-char_u      *line;
-int forceit;
-int init;                   /* TRUE when called for initializing */
+void 
+do_highlight (
+    char_u *line,
+    int forceit,
+    int init                   /* TRUE when called for initializing */
+)
 {
   char_u      *name_end;
   char_u      *p;
@@ -6871,7 +6790,7 @@ int init;                   /* TRUE when called for initializing */
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void free_highlight()          {
+void free_highlight(void)          {
   int i;
 
   for (i = 0; i < highlight_ga.ga_len; ++i) {
@@ -6888,7 +6807,7 @@ void free_highlight()          {
  * Reset the cterm colors to what they were before Vim was started, if
  * possible.  Otherwise reset them to zero.
  */
-void restore_cterm_colors()          {
+void restore_cterm_colors(void)          {
   cterm_normal_fg_color = 0;
   cterm_normal_fg_bold = 0;
   cterm_normal_bg_color = 0;
@@ -6898,9 +6817,7 @@ void restore_cterm_colors()          {
  * Return TRUE if highlight group "idx" has any settings.
  * When "check_link" is TRUE also check for an existing link.
  */
-static int hl_has_settings(idx, check_link)
-int idx;
-int check_link;
+static int hl_has_settings(int idx, int check_link)
 {
   return HL_TABLE()[idx].sg_term_attr != 0
          || HL_TABLE()[idx].sg_cterm_attr != 0
@@ -6910,8 +6827,7 @@ int check_link;
 /*
  * Clear highlighting for one group.
  */
-static void highlight_clear(idx)
-int idx;
+static void highlight_clear(int idx)
 {
   HL_TABLE()[idx].sg_term = 0;
   vim_free(HL_TABLE()[idx].sg_start);
@@ -6958,9 +6874,7 @@ static garray_T cterm_attr_table = {0, 0, 0, 0, NULL};
  * if the combination is new.
  * Return 0 for error (no more room).
  */
-static int get_attr_entry(table, aep)
-garray_T    *table;
-attrentry_T *aep;
+static int get_attr_entry(garray_T *table, attrentry_T *aep)
 {
   int i;
   attrentry_T *taep;
@@ -7051,7 +6965,7 @@ attrentry_T *aep;
 /*
  * Clear all highlight tables.
  */
-void clear_hl_tables()          {
+void clear_hl_tables(void)          {
   int i;
   attrentry_T *taep;
 
@@ -7073,9 +6987,7 @@ void clear_hl_tables()          {
  * result.
  * Return the resulting attributes.
  */
-int hl_combine_attr(char_attr, prim_attr)
-int char_attr;
-int prim_attr;
+int hl_combine_attr(int char_attr, int prim_attr)
 {
   attrentry_T *char_aep = NULL;
   attrentry_T *spell_aep;
@@ -7142,8 +7054,7 @@ int prim_attr;
  * Get the highlight attributes (HL_BOLD etc.) from an attribute nr.
  * Only to be used when "attr" > HL_ALL.
  */
-int syn_attr2attr(attr)
-int attr;
+int syn_attr2attr(int attr)
 {
   attrentry_T *aep;
 
@@ -7158,8 +7069,7 @@ int attr;
 }
 
 
-attrentry_T * syn_term_attr2entry(attr)
-int attr;
+attrentry_T *syn_term_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
   if (attr >= term_attr_table.ga_len)       /* did ":syntax clear" */
@@ -7167,8 +7077,7 @@ int attr;
   return &(TERM_ATTR_ENTRY(attr));
 }
 
-attrentry_T * syn_cterm_attr2entry(attr)
-int attr;
+attrentry_T *syn_cterm_attr2entry(int attr)
 {
   attr -= ATTR_OFF;
   if (attr >= cterm_attr_table.ga_len)          /* did ":syntax clear" */
@@ -7180,8 +7089,7 @@ int attr;
 #define LIST_STRING 2
 #define LIST_INT    3
 
-static void highlight_list_one(id)
-int id;
+static void highlight_list_one(int id)
 {
   struct hl_group     *sgp;
   int didh = FALSE;
@@ -7225,13 +7133,7 @@ int id;
     last_set_msg(sgp->sg_scriptID);
 }
 
-static int highlight_list_arg(id, didh, type, iarg, sarg, name)
-int id;
-int didh;
-int type;
-int iarg;
-char_u      *sarg;
-char        *name;
+static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg, char *name)
 {
   char_u buf[100];
   char_u      *ts;
@@ -7275,10 +7177,12 @@ char        *name;
  * Return "1" if highlight group "id" has attribute "flag".
  * Return NULL otherwise.
  */
-char_u * highlight_has_attr(id, flag, modec)
-int id;
-int flag;
-int modec;              /* 'g' for GUI, 'c' for cterm, 't' for term */
+char_u *
+highlight_has_attr (
+    int id,
+    int flag,
+    int modec              /* 'g' for GUI, 'c' for cterm, 't' for term */
+)
 {
   int attr;
 
@@ -7300,10 +7204,12 @@ int modec;              /* 'g' for GUI, 'c' for cterm, 't' for term */
 /*
  * Return color name of highlight group "id".
  */
-char_u * highlight_color(id, what, modec)
-int id;
-char_u      *what;      /* "font", "fg", "bg", "sp", "fg#", "bg#" or "sp#" */
-int modec;              /* 'g' for GUI, 'c' for cterm, 't' for term */
+char_u *
+highlight_color (
+    int id,
+    char_u *what,      /* "font", "fg", "bg", "sp", "fg#", "bg#" or "sp#" */
+    int modec              /* 'g' for GUI, 'c' for cterm, 't' for term */
+)
 {
   static char_u name[20];
   int n;
@@ -7349,9 +7255,11 @@ int modec;              /* 'g' for GUI, 'c' for cterm, 't' for term */
 /*
  * Return color name of highlight group "id" as RGB value.
  */
-long_u highlight_gui_color_rgb(id, fg)
-int id;
-int fg;                 /* TRUE = fg, FALSE = bg */
+long_u 
+highlight_gui_color_rgb (
+    int id,
+    int fg                 /* TRUE = fg, FALSE = bg */
+)
 {
   guicolor_T color;
 
@@ -7374,10 +7282,12 @@ int fg;                 /* TRUE = fg, FALSE = bg */
  * Output the syntax list header.
  * Return TRUE when started a new line.
  */
-static int syn_list_header(did_header, outlen, id)
-int did_header;                 /* did header already */
-int outlen;                     /* length of string that comes */
-int id;                         /* highlight group id */
+static int 
+syn_list_header (
+    int did_header,                 /* did header already */
+    int outlen,                     /* length of string that comes */
+    int id                         /* highlight group id */
+)
 {
   int endcol = 19;
   int newline = TRUE;
@@ -7417,8 +7327,10 @@ int id;                         /* highlight group id */
  * Set the attribute numbers for a highlight group.
  * Called after one of the attributes has changed.
  */
-static void set_hl_attr(idx)
-int idx;                    /* index in array */
+static void 
+set_hl_attr (
+    int idx                    /* index in array */
+)
 {
   attrentry_T at_en;
   struct hl_group     *sgp = HL_TABLE() + idx;
@@ -7458,8 +7370,7 @@ int idx;                    /* index in array */
  * Lookup a highlight group name and return it's ID.
  * If it is not found, 0 is returned.
  */
-int syn_name2id(name)
-char_u      *name;
+int syn_name2id(char_u *name)
 {
   int i;
   char_u name_u[200];
@@ -7479,8 +7390,7 @@ char_u      *name;
 /*
  * Return TRUE if highlight group "name" exists.
  */
-int highlight_exists(name)
-char_u      *name;
+int highlight_exists(char_u *name)
 {
   return syn_name2id(name) > 0;
 }
@@ -7489,8 +7399,7 @@ char_u      *name;
  * Return the name of highlight group "id".
  * When not a valid ID return an empty string.
  */
-char_u * syn_id2name(id)
-int id;
+char_u *syn_id2name(int id)
 {
   if (id <= 0 || id > highlight_ga.ga_len)
     return (char_u *)"";
@@ -7500,9 +7409,7 @@ int id;
 /*
  * Like syn_name2id(), but take a pointer + length argument.
  */
-int syn_namen2id(linep, len)
-char_u  *linep;
-int len;
+int syn_namen2id(char_u *linep, int len)
 {
   char_u  *name;
   int id = 0;
@@ -7521,9 +7428,7 @@ int len;
  * If it doesn't exist yet, a new entry is created.
  * Return 0 for failure.
  */
-int syn_check_group(pp, len)
-char_u              *pp;
-int len;
+int syn_check_group(char_u *pp, int len)
 {
   int id;
   char_u  *name;
@@ -7545,8 +7450,7 @@ int len;
  * "name" must be an allocated string, it will be consumed.
  * Return 0 for failure.
  */
-static int syn_add_group(name)
-char_u      *name;
+static int syn_add_group(char_u *name)
 {
   char_u      *p;
 
@@ -7599,7 +7503,7 @@ char_u      *name;
  * When, just after calling syn_add_group(), an error is discovered, this
  * function deletes the new name.
  */
-static void syn_unadd_group()                 {
+static void syn_unadd_group(void)                 {
   --highlight_ga.ga_len;
   vim_free(HL_TABLE()[highlight_ga.ga_len].sg_name);
   vim_free(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
@@ -7608,8 +7512,7 @@ static void syn_unadd_group()                 {
 /*
  * Translate a group ID to highlight attributes.
  */
-int syn_id2attr(hl_id)
-int hl_id;
+int syn_id2attr(int hl_id)
 {
   int attr;
   struct hl_group     *sgp;
@@ -7629,8 +7532,7 @@ int hl_id;
 /*
  * Translate a group ID to the final group ID (following links).
  */
-int syn_get_final_id(hl_id)
-int hl_id;
+int syn_get_final_id(int hl_id)
 {
   int count;
   struct hl_group     *sgp;
@@ -7661,7 +7563,7 @@ int hl_id;
  * screen redraw after any :highlight command.
  * Return FAIL when an invalid flag is found in 'highlight'.  OK otherwise.
  */
-int highlight_changed()         {
+int highlight_changed(void)         {
   int hlf;
   int i;
   char_u      *p;
@@ -7827,9 +7729,7 @@ static void highlight_list_two __ARGS((int cnt, int attr));
 /*
  * Handle command line completion for :highlight command.
  */
-void set_context_in_highlight_cmd(xp, arg)
-expand_T    *xp;
-char_u      *arg;
+void set_context_in_highlight_cmd(expand_T *xp, char_u *arg)
 {
   char_u      *p;
 
@@ -7872,7 +7772,7 @@ char_u      *arg;
 /*
  * List highlighting matches in a nice way.
  */
-static void highlight_list()                 {
+static void highlight_list(void)                 {
   int i;
 
   for (i = 10; --i >= 0; )
@@ -7881,9 +7781,7 @@ static void highlight_list()                 {
     highlight_list_two(99, 0);
 }
 
-static void highlight_list_two(cnt, attr)
-int cnt;
-int attr;
+static void highlight_list_two(int cnt, int attr)
 {
   msg_puts_attr((char_u *)&("N \bI \b!  \b"[cnt / 11]), attr);
   msg_clr_eos();
@@ -7898,9 +7796,7 @@ int attr;
  * Function given to ExpandGeneric() to obtain the list of group names.
  * Also used for synIDattr() function.
  */
-char_u * get_highlight_name(xp, idx)
-expand_T    *xp UNUSED;
-int idx;
+char_u *get_highlight_name(expand_T *xp, int idx)
 {
   if (idx == highlight_ga.ga_len && include_none != 0)
     return (char_u *)"none";

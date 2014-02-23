@@ -42,8 +42,7 @@ static int A_is_special __ARGS((int c));
 /*
  * Returns True if c is an ISO-8859-6 shaped ARABIC letter (user entered)
  */
-static int A_is_a(cur_c)
-int cur_c;
+static int A_is_a(int cur_c)
 {
   switch (cur_c) {
   case a_HAMZA:
@@ -93,8 +92,7 @@ int cur_c;
 /*
  * Returns True if c is an Isolated Form-B ARABIC letter
  */
-static int A_is_s(cur_c)
-int cur_c;
+static int A_is_s(int cur_c)
 {
   switch (cur_c) {
   case a_s_HAMZA:
@@ -143,8 +141,7 @@ int cur_c;
 /*
  * Returns True if c is a Final shape of an ARABIC letter
  */
-static int A_is_f(cur_c)
-int cur_c;
+static int A_is_f(int cur_c)
 {
   switch (cur_c) {
   case a_f_ALEF_MADDA:
@@ -195,8 +192,7 @@ int cur_c;
 /*
  * Change shape - from ISO-8859-6/Isolated to Form-B Isolated
  */
-static int chg_c_a2s(cur_c)
-int cur_c;
+static int chg_c_a2s(int cur_c)
 {
   int tempc;
 
@@ -323,8 +319,7 @@ int cur_c;
 /*
  * Change shape - from ISO-8859-6/Isolated to Initial
  */
-static int chg_c_a2i(cur_c)
-int cur_c;
+static int chg_c_a2i(int cur_c)
 {
   int tempc;
 
@@ -451,8 +446,7 @@ int cur_c;
 /*
  * Change shape - from ISO-8859-6/Isolated to Medial
  */
-static int chg_c_a2m(cur_c)
-int cur_c;
+static int chg_c_a2m(int cur_c)
 {
   int tempc;
 
@@ -579,8 +573,7 @@ int cur_c;
 /*
  * Change shape - from ISO-8859-6/Isolated to final
  */
-static int chg_c_a2f(cur_c)
-int cur_c;
+static int chg_c_a2f(int cur_c)
 {
   int tempc;
 
@@ -717,8 +710,7 @@ int cur_c;
 /*
  * Change shape - from Initial to Medial
  */
-static int chg_c_i2m(cur_c)
-int cur_c;
+static int chg_c_i2m(int cur_c)
 {
   int tempc;
 
@@ -803,8 +795,7 @@ int cur_c;
 /*
  * Change shape - from Final to Medial
  */
-static int chg_c_f2m(cur_c)
-int cur_c;
+static int chg_c_f2m(int cur_c)
 {
   int tempc;
 
@@ -911,8 +902,7 @@ int cur_c;
 /*
  * Change shape - from Combination (2 char) to an Isolated
  */
-static int chg_c_laa2i(hid_c)
-int hid_c;
+static int chg_c_laa2i(int hid_c)
 {
   int tempc;
 
@@ -940,8 +930,7 @@ int hid_c;
 /*
  * Change shape - from Combination-Isolated to Final
  */
-static int chg_c_laa2f(hid_c)
-int hid_c;
+static int chg_c_laa2f(int hid_c)
 {
   int tempc;
 
@@ -968,8 +957,7 @@ int hid_c;
 /*
  * Do "half-shaping" on character "c".  Return zero if no shaping.
  */
-static int half_shape(c)
-int c;
+static int half_shape(int c)
 {
   if (A_is_a(c))
     return chg_c_a2i(c);
@@ -987,13 +975,7 @@ int c;
  *		     (not shaped)
  * in:     "next_c"  is the next character (not shaped).
  */
-int arabic_shape(c, ccp, c1p, prev_c, prev_c1, next_c)
-int c;
-int         *ccp;
-int         *c1p;
-int prev_c;
-int prev_c1;
-int next_c;
+int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1, int next_c)
 {
   int curr_c;
   int shape_c;
@@ -1054,9 +1036,11 @@ int next_c;
 /*
  * A_firstc_laa returns first character of LAA combination if it exists
  */
-static int A_firstc_laa(c, c1)
-int c;          /* base character */
-int c1;         /* first composing character */
+static int 
+A_firstc_laa (
+    int c,          /* base character */
+    int c1         /* first composing character */
+)
 {
   if (c1 != NUL && c == a_LAM && !A_is_harakat(c1))
     return c1;
@@ -1068,8 +1052,7 @@ int c1;         /* first composing character */
  * A_is_harakat returns TRUE if 'c' is an Arabic Harakat character
  *		(harakat/tanween)
  */
-static int A_is_harakat(c)
-int c;
+static int A_is_harakat(int c)
 {
   return c >= a_FATHATAN && c <= a_SUKUN;
 }
@@ -1079,8 +1062,7 @@ int c;
  * A_is_iso returns TRUE if 'c' is an Arabic ISO-8859-6 character
  *		(alphabet/number/punctuation)
  */
-static int A_is_iso(c)
-int c;
+static int A_is_iso(int c)
 {
   return (c >= a_HAMZA && c <= a_GHAIN)
          || (c >= a_TATWEEL && c <= a_HAMZA_BELOW)
@@ -1092,8 +1074,7 @@ int c;
  * A_is_formb returns TRUE if 'c' is an Arabic 10646-1 FormB character
  *		(alphabet/number/punctuation)
  */
-static int A_is_formb(c)
-int c;
+static int A_is_formb(int c)
 {
   return (c >= a_s_FATHATAN && c <= a_s_DAMMATAN)
          || c == a_s_KASRATAN
@@ -1105,8 +1086,7 @@ int c;
 /*
  * A_is_ok returns TRUE if 'c' is an Arabic 10646 (8859-6 or Form-B)
  */
-static int A_is_ok(c)
-int c;
+static int A_is_ok(int c)
 {
   return A_is_iso(c) || A_is_formb(c);
 }
@@ -1116,8 +1096,7 @@ int c;
  * A_is_valid returns TRUE if 'c' is an Arabic 10646 (8859-6 or Form-B)
  *		with some exceptions/exclusions
  */
-static int A_is_valid(c)
-int c;
+static int A_is_valid(int c)
 {
   return A_is_ok(c) && !A_is_special(c);
 }
@@ -1127,8 +1106,7 @@ int c;
  * A_is_special returns TRUE if 'c' is not a special Arabic character.
  *		Specials don't adhere to most of the rules.
  */
-static int A_is_special(c)
-int c;
+static int A_is_special(int c)
 {
   return c == a_HAMZA || c == a_s_HAMZA;
 }

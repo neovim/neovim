@@ -125,10 +125,12 @@ sort_func_compare __ARGS((const void *s1, const void *s2));
  * Return pointer to allocated string if there is a commandline, NULL
  * otherwise.
  */
-char_u * getcmdline(firstc, count, indent)
-int firstc;
-long count UNUSED;              /* only used for incremental search */
-int indent;                     /* indent for inside conditionals */
+char_u *
+getcmdline (
+    int firstc,
+    long count,              /* only used for incremental search */
+    int indent                     /* indent for inside conditionals */
+)
 {
   int c;
   int i;
@@ -1545,12 +1547,14 @@ returncmd:
  * f_input() when evaluating an expression from CTRL-R =).
  * Returns the command line in allocated memory, or NULL.
  */
-char_u * getcmdline_prompt(firstc, prompt, attr, xp_context, xp_arg)
-int firstc;
-char_u      *prompt;            /* command line prompt */
-int attr;                       /* attributes for prompt */
-int xp_context;                 /* type of expansion */
-char_u      *xp_arg;            /* user-defined expansion argument */
+char_u *
+getcmdline_prompt (
+    int firstc,
+    char_u *prompt,            /* command line prompt */
+    int attr,                       /* attributes for prompt */
+    int xp_context,                 /* type of expansion */
+    char_u *xp_arg            /* user-defined expansion argument */
+)
 {
   char_u              *s;
   struct cmdline_info save_ccline;
@@ -1579,7 +1583,7 @@ char_u      *xp_arg;            /* user-defined expansion argument */
  * another window or buffer.  Used when editing the command line, evaluating
  * 'balloonexpr', etc.
  */
-int text_locked()         {
+int text_locked(void)         {
   if (cmdwin_type != 0)
     return TRUE;
   return textlock != 0;
@@ -1589,7 +1593,7 @@ int text_locked()         {
  * Give an error message for a command that isn't allowed while the cmdline
  * window is open or editing the cmdline in another way.
  */
-void text_locked_msg()          {
+void text_locked_msg(void)          {
   if (cmdwin_type != 0)
     EMSG(_(e_cmdwin));
   else
@@ -1600,7 +1604,7 @@ void text_locked_msg()          {
  * Check if "curbuf_lock" or "allbuf_lock" is set and return TRUE when it is
  * and give an error message.
  */
-int curbuf_locked()         {
+int curbuf_locked(void)         {
   if (curbuf_lock > 0) {
     EMSG(_("E788: Not allowed to edit another buffer now"));
     return TRUE;
@@ -1612,7 +1616,7 @@ int curbuf_locked()         {
  * Check if "allbuf_lock" is set and return TRUE when it is and give an error
  * message.
  */
-int allbuf_locked()         {
+int allbuf_locked(void)         {
   if (allbuf_lock > 0) {
     EMSG(_("E811: Not allowed to change buffer information now"));
     return TRUE;
@@ -1620,8 +1624,7 @@ int allbuf_locked()         {
   return FALSE;
 }
 
-static int cmdline_charsize(idx)
-int idx;
+static int cmdline_charsize(int idx)
 {
   if (cmdline_star > 0)             /* showing '*', always 1 position */
     return 1;
@@ -1632,7 +1635,7 @@ int idx;
  * Compute the offset of the cursor on the command line for the prompt and
  * indent.
  */
-static void set_cmdspos()                 {
+static void set_cmdspos(void)                 {
   if (ccline.cmdfirstc != NUL)
     ccline.cmdspos = 1 + ccline.cmdindent;
   else
@@ -1642,7 +1645,7 @@ static void set_cmdspos()                 {
 /*
  * Compute the screen position for the cursor on the command line.
  */
-static void set_cmdspos_cursor()                 {
+static void set_cmdspos_cursor(void)                 {
   int i, m, c;
 
   set_cmdspos();
@@ -1672,9 +1675,7 @@ static void set_cmdspos_cursor()                 {
  * Check if the character at "idx", which is "cells" wide, is a multi-byte
  * character that doesn't fit, so that a ">" must be displayed.
  */
-static void correct_cmdspos(idx, cells)
-int idx;
-int cells;
+static void correct_cmdspos(int idx, int cells)
 {
   if ((*mb_ptr2len)(ccline.cmdbuff + idx) > 1
       && (*mb_ptr2cells)(ccline.cmdbuff + idx) > 1
@@ -1685,10 +1686,12 @@ int cells;
 /*
  * Get an Ex command line for the ":" command.
  */
-char_u * getexline(c, cookie, indent)
-int c;                          /* normally ':', NUL for ":append" */
-void        *cookie UNUSED;
-int indent;                     /* indent for inside conditionals */
+char_u *
+getexline (
+    int c,                          /* normally ':', NUL for ":append" */
+    void *cookie,
+    int indent                     /* indent for inside conditionals */
+)
 {
   /* When executing a register, remove ':' that's in front of each line. */
   if (exec_from_reg && vpeekc() == ':')
@@ -1702,11 +1705,13 @@ int indent;                     /* indent for inside conditionals */
  * mappings or abbreviations.
  * Returns a string in allocated memory or NULL.
  */
-char_u * getexmodeline(promptc, cookie, indent)
-int promptc;                    /* normally ':', NUL for ":append" and '?' for
+char_u *
+getexmodeline (
+    int promptc,                    /* normally ':', NUL for ":append" and '?' for
                                    :s prompt */
-void        *cookie UNUSED;
-int indent;                     /* indent for inside conditionals */
+    void *cookie,
+    int indent                     /* indent for inside conditionals */
+)
 {
   garray_T line_ga;
   char_u      *pend;
@@ -1932,14 +1937,14 @@ redraw:
 /*
  * Return TRUE if ccline.overstrike is on.
  */
-int cmdline_overstrike()         {
+int cmdline_overstrike(void)         {
   return ccline.overstrike;
 }
 
 /*
  * Return TRUE if the cursor is at the end of the cmdline.
  */
-int cmdline_at_end()         {
+int cmdline_at_end(void)         {
   return ccline.cmdpos >= ccline.cmdlen;
 }
 
@@ -1952,8 +1957,7 @@ int cmdline_at_end()         {
  * Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
  * Returns the new value of ccline.cmdbuff and ccline.cmdbufflen.
  */
-static void alloc_cmdbuff(len)
-int len;
+static void alloc_cmdbuff(int len)
 {
   /*
    * give some extra space to avoid having to allocate all the time
@@ -1971,8 +1975,7 @@ int len;
  * Re-allocate the command line to length len + something extra.
  * return FAIL for failure, OK otherwise
  */
-static int realloc_cmdbuff(len)
-int len;
+static int realloc_cmdbuff(int len)
 {
   char_u      *p;
 
@@ -2009,7 +2012,7 @@ int len;
 static char_u   *arshape_buf = NULL;
 
 # if defined(EXITFREE) || defined(PROTO)
-void free_cmdline_buf()          {
+void free_cmdline_buf(void)          {
   vim_free(arshape_buf);
 }
 
@@ -2019,9 +2022,7 @@ void free_cmdline_buf()          {
  * Draw part of the cmdline at the current cursor position.  But draw stars
  * when cmdline_star is TRUE.
  */
-static void draw_cmdline(start, len)
-int start;
-int len;
+static void draw_cmdline(int start, int len)
 {
   int i;
 
@@ -2120,9 +2121,7 @@ int len;
  * right when "shift" is TRUE.  Used for CTRL-V, CTRL-K, etc.
  * "c" must be printable (fit in one display cell)!
  */
-void putcmdline(c, shift)
-int c;
-int shift;
+void putcmdline(int c, int shift)
 {
   if (cmd_silent)
     return;
@@ -2137,7 +2136,7 @@ int shift;
 /*
  * Undo a putcmdline(c, FALSE).
  */
-void unputcmdline()          {
+void unputcmdline(void)          {
   if (cmd_silent)
     return;
   msg_no_more = TRUE;
@@ -2160,10 +2159,7 @@ void unputcmdline()          {
  * twice in a row, then 'redraw' should be FALSE and redrawcmd() should be
  * called afterwards.
  */
-int put_on_cmdline(str, len, redraw)
-char_u      *str;
-int len;
-int redraw;
+int put_on_cmdline(char_u *str, int len, int redraw)
 {
   int retval;
   int i;
@@ -2298,8 +2294,7 @@ static int prev_ccline_used = FALSE;
  * and overwrite it.  But get_cmdline_str() may need it, thus make it
  * available globally in prev_ccline.
  */
-static void save_cmdline(ccp)
-struct cmdline_info *ccp;
+static void save_cmdline(struct cmdline_info *ccp)
 {
   if (!prev_ccline_used) {
     vim_memset(&prev_ccline, 0, sizeof(struct cmdline_info));
@@ -2315,8 +2310,7 @@ struct cmdline_info *ccp;
 /*
  * Restore ccline after it has been saved with save_cmdline().
  */
-static void restore_cmdline(ccp)
-struct cmdline_info *ccp;
+static void restore_cmdline(struct cmdline_info *ccp)
 {
   ccline = prev_ccline;
   prev_ccline = *ccp;
@@ -2327,7 +2321,7 @@ struct cmdline_info *ccp;
  * passed to restore_cmdline_alloc() later.
  * Returns NULL when failed.
  */
-char_u * save_cmdline_alloc()              {
+char_u *save_cmdline_alloc(void)              {
   struct cmdline_info *p;
 
   p = (struct cmdline_info *)alloc((unsigned)sizeof(struct cmdline_info));
@@ -2339,8 +2333,7 @@ char_u * save_cmdline_alloc()              {
 /*
  * Restore the command line from the return value of save_cmdline_alloc().
  */
-void restore_cmdline_alloc(p)
-char_u  *p;
+void restore_cmdline_alloc(char_u *p)
 {
   if (p != NULL) {
     restore_cmdline((struct cmdline_info *)p);
@@ -2356,10 +2349,12 @@ char_u  *p;
  *
  * return FAIL for failure, OK otherwise
  */
-static int cmdline_paste(regname, literally, remcr)
-int regname;
-int literally;          /* Insert text literally instead of "as typed" */
-int remcr;              /* remove trailing CR */
+static int 
+cmdline_paste (
+    int regname,
+    int literally,          /* Insert text literally instead of "as typed" */
+    int remcr              /* remove trailing CR */
+)
 {
   long i;
   char_u              *arg;
@@ -2433,9 +2428,7 @@ int remcr;              /* remove trailing CR */
  * When "literally" is FALSE, insert as typed, but don't leave the command
  * line.
  */
-void cmdline_paste_str(s, literally)
-char_u      *s;
-int literally;
+void cmdline_paste_str(char_u *s, int literally)
 {
   int c, cv;
 
@@ -2465,8 +2458,7 @@ int literally;
  * Delete characters on the command line, from "from" to the current
  * position.
  */
-static void cmdline_del(from)
-int from;
+static void cmdline_del(int from)
 {
   mch_memmove(ccline.cmdbuff + from, ccline.cmdbuff + ccline.cmdpos,
       (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
@@ -2478,7 +2470,7 @@ int from;
  * this function is called when the screen size changes and with incremental
  * search
  */
-void redrawcmdline()          {
+void redrawcmdline(void)          {
   if (cmd_silent)
     return;
   need_wait_return = FALSE;
@@ -2487,7 +2479,7 @@ void redrawcmdline()          {
   cursorcmd();
 }
 
-static void redrawcmdprompt()                 {
+static void redrawcmdprompt(void)                 {
   int i;
 
   if (cmd_silent)
@@ -2508,7 +2500,7 @@ static void redrawcmdprompt()                 {
 /*
  * Redraw what is currently on the command line.
  */
-void redrawcmd()          {
+void redrawcmd(void)          {
   if (cmd_silent)
     return;
 
@@ -2541,7 +2533,7 @@ void redrawcmd()          {
   skip_redraw = FALSE;
 }
 
-void compute_cmdrow()          {
+void compute_cmdrow(void)          {
   if (exmode_active || msg_scrolled != 0)
     cmdline_row = Rows - 1;
   else
@@ -2549,7 +2541,7 @@ void compute_cmdrow()          {
                   + W_STATUS_HEIGHT(lastwin);
 }
 
-static void cursorcmd()                 {
+static void cursorcmd(void)                 {
   if (cmd_silent)
     return;
 
@@ -2568,8 +2560,7 @@ static void cursorcmd()                 {
   windgoto(msg_row, msg_col);
 }
 
-void gotocmdline(clr)
-int clr;
+void gotocmdline(int clr)
 {
   msg_start();
   if (cmdmsg_rl)
@@ -2587,8 +2578,7 @@ int clr;
  * When an abbreviation is recognized it is removed from the text with
  * backspaces and the replacement string is inserted, followed by "c".
  */
-static int ccheck_abbr(c)
-int c;
+static int ccheck_abbr(int c)
 {
   if (p_paste || no_abbr)           /* no abbreviations or in paste mode */
     return FALSE;
@@ -2596,9 +2586,7 @@ int c;
   return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, 0);
 }
 
-static int sort_func_compare(s1, s2)
-const void *s1;
-const void *s2;
+static int sort_func_compare(const void *s1, const void *s2)
 {
   char_u *p1 = *(char_u **)s1;
   char_u *p2 = *(char_u **)s2;
@@ -2614,11 +2602,13 @@ const void *s2;
  * For the caller, this means that the character is just passed through like a
  * normal character (instead of being expanded).  This allows :s/^I^D etc.
  */
-static int nextwild(xp, type, options, escape)
-expand_T    *xp;
-int type;
-int options;                    /* extra options for ExpandOne() */
-int escape;                     /* if TRUE, escape the returned matches */
+static int 
+nextwild (
+    expand_T *xp,
+    int type,
+    int options,                    /* extra options for ExpandOne() */
+    int escape                     /* if TRUE, escape the returned matches */
+)
 {
   int i, j;
   char_u      *p1;
@@ -2753,12 +2743,14 @@ int escape;                     /* if TRUE, escape the returned matches */
  *
  * The variables xp->xp_context and xp->xp_backslash must have been set!
  */
-char_u * ExpandOne(xp, str, orig, options, mode)
-expand_T    *xp;
-char_u      *str;
-char_u      *orig;          /* allocated copy of original of expanded string */
-int options;
-int mode;
+char_u *
+ExpandOne (
+    expand_T *xp,
+    char_u *str,
+    char_u *orig,          /* allocated copy of original of expanded string */
+    int options,
+    int mode
+)
 {
   char_u      *ss = NULL;
   static int findex;
@@ -2937,8 +2929,7 @@ int mode;
 /*
  * Prepare an expand structure for use.
  */
-void ExpandInit(xp)
-expand_T    *xp;
+void ExpandInit(expand_T *xp)
 {
   xp->xp_pattern = NULL;
   xp->xp_pattern_len = 0;
@@ -2955,8 +2946,7 @@ expand_T    *xp;
 /*
  * Cleanup an expand structure after use.
  */
-void ExpandCleanup(xp)
-expand_T    *xp;
+void ExpandCleanup(expand_T *xp)
 {
   if (xp->xp_numfiles >= 0) {
     FreeWild(xp->xp_numfiles, xp->xp_files);
@@ -2964,12 +2954,7 @@ expand_T    *xp;
   }
 }
 
-void ExpandEscape(xp, str, numfiles, files, options)
-expand_T    *xp;
-char_u      *str;
-int numfiles;
-char_u      **files;
-int options;
+void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int options)
 {
   int i;
   char_u      *p;
@@ -3048,9 +3033,7 @@ int options;
  * after a Vim command, or, when "shell" is non-zero, a shell command.
  * Returns the result in allocated memory.
  */
-char_u * vim_strsave_fnameescape(fname, shell)
-char_u *fname;
-int shell;
+char_u *vim_strsave_fnameescape(char_u *fname, int shell)
 {
   char_u      *p;
 #ifdef BACKSLASH_IN_FILENAME
@@ -3087,8 +3070,7 @@ int shell;
 /*
  * Put a backslash before the file name in "pp", which is in allocated memory.
  */
-static void escape_fname(pp)
-char_u **pp;
+static void escape_fname(char_u **pp)
 {
   char_u      *p;
 
@@ -3105,10 +3087,7 @@ char_u **pp;
  * For each file name in files[num_files]:
  * If 'orig_pat' starts with "~/", replace the home directory with "~".
  */
-void tilde_replace(orig_pat, num_files, files)
-char_u  *orig_pat;
-int num_files;
-char_u  **files;
+void tilde_replace(char_u *orig_pat, int num_files, char_u **files)
 {
   int i;
   char_u  *p;
@@ -3129,9 +3108,7 @@ char_u  **files;
  * Returns EXPAND_NOTHING when the character that triggered expansion should
  * be inserted like a normal character.
  */
-static int showmatches(xp, wildmenu)
-expand_T    *xp;
-int wildmenu UNUSED;
+static int showmatches(expand_T *xp, int wildmenu)
 {
 #define L_SHOWFILE(m) (showtail ? sm_gettail(files_found[m]) : files_found[m])
   int num_files;
@@ -3285,8 +3262,7 @@ int wildmenu UNUSED;
  * Private gettail for showmatches() (and win_redr_status_matches()):
  * Find tail of file name path, but ignore trailing "/".
  */
-char_u * sm_gettail(s)
-char_u      *s;
+char_u *sm_gettail(char_u *s)
 {
   char_u      *p;
   char_u      *t = s;
@@ -3313,8 +3289,7 @@ char_u      *s;
  * When not completing file names or there is a wildcard in the path FALSE is
  * returned.
  */
-static int expand_showtail(xp)
-expand_T    *xp;
+static int expand_showtail(expand_T *xp)
 {
   char_u      *s;
   char_u      *end;
@@ -3347,10 +3322,12 @@ expand_T    *xp;
  * When expanding other names: The string will be used with regcomp().  Copy
  * the name into allocated memory and prepend "^".
  */
-char_u * addstar(fname, len, context)
-char_u      *fname;
-int len;
-int context;                    /* EXPAND_FILES etc. */
+char_u *
+addstar (
+    char_u *fname,
+    int len,
+    int context                    /* EXPAND_FILES etc. */
+)
 {
   char_u      *retval;
   int i, j;
@@ -3505,8 +3482,7 @@ int context;                    /* EXPAND_FILES etc. */
  *  EXPAND_ENV_VARS	    Complete environment variable names
  *  EXPAND_USER		    Complete user names
  */
-static void set_expand_context(xp)
-expand_T    *xp;
+static void set_expand_context(expand_T *xp)
 {
   /* only expansion for ':', '>' and '=' command-lines */
   if (ccline.cmdfirstc != ':'
@@ -3519,11 +3495,13 @@ expand_T    *xp;
   set_cmd_context(xp, ccline.cmdbuff, ccline.cmdlen, ccline.cmdpos);
 }
 
-void set_cmd_context(xp, str, len, col)
-expand_T    *xp;
-char_u      *str;           /* start of command line */
-int len;                    /* length of command line (excl. NUL) */
-int col;                    /* position of cursor */
+void 
+set_cmd_context (
+    expand_T *xp,
+    char_u *str,           /* start of command line */
+    int len,                    /* length of command line (excl. NUL) */
+    int col                    /* position of cursor */
+)
 {
   int old_char = NUL;
   char_u      *nextcomm;
@@ -3567,12 +3545,14 @@ int col;                    /* position of cursor */
  * key that triggered expansion literally.
  * Returns EXPAND_OK otherwise.
  */
-int expand_cmdline(xp, str, col, matchcount, matches)
-expand_T    *xp;
-char_u      *str;               /* start of command line */
-int col;                        /* position of cursor */
-int         *matchcount;        /* return: nr of matches */
-char_u      ***matches;         /* return: array of pointers to matches */
+int 
+expand_cmdline (
+    expand_T *xp,
+    char_u *str,               /* start of command line */
+    int col,                        /* position of cursor */
+    int *matchcount,        /* return: nr of matches */
+    char_u ***matches         /* return: array of pointers to matches */
+)
 {
   char_u      *file_str = NULL;
   int options = WILD_ADD_SLASH|WILD_SILENT;
@@ -3610,9 +3590,7 @@ char_u      ***matches;         /* return: array of pointers to matches */
  */
 static void cleanup_help_tags __ARGS((int num_file, char_u **file));
 
-static void cleanup_help_tags(num_file, file)
-int num_file;
-char_u      **file;
+static void cleanup_help_tags(int num_file, char_u **file)
 {
   int i, j;
   int len;
@@ -3636,12 +3614,14 @@ char_u      **file;
 /*
  * Do the expansion based on xp->xp_context and "pat".
  */
-static int ExpandFromContext(xp, pat, num_file, file, options)
-expand_T    *xp;
-char_u      *pat;
-int         *num_file;
-char_u      ***file;
-int options;              /* EW_ flags */
+static int 
+ExpandFromContext (
+    expand_T *xp,
+    char_u *pat,
+    int *num_file,
+    char_u ***file,
+    int options              /* EW_ flags */
+)
 {
   regmatch_T regmatch;
   int ret;
@@ -3900,11 +3880,13 @@ int escaped;
  * Complete a shell command.
  * Returns FAIL or OK;
  */
-static int expand_shellcmd(filepat, num_file, file, flagsarg)
-char_u      *filepat;           /* pattern to match with command names */
-int         *num_file;          /* return: number of matches */
-char_u      ***file;            /* return: array with matches */
-int flagsarg;                   /* EW_ flags */
+static int 
+expand_shellcmd (
+    char_u *filepat,           /* pattern to match with command names */
+    int *num_file,          /* return: number of matches */
+    char_u ***file,            /* return: array with matches */
+    int flagsarg                   /* EW_ flags */
+)
 {
   char_u      *pat;
   int i;
@@ -4051,11 +4033,7 @@ char_u      ***file;
 /*
  * Expand names with a function defined by the user.
  */
-static int ExpandUserDefined(xp, regmatch, num_file, file)
-expand_T    *xp;
-regmatch_T  *regmatch;
-int         *num_file;
-char_u      ***file;
+static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
 {
   char_u      *retstr;
   char_u      *s;
@@ -4101,10 +4079,7 @@ char_u      ***file;
 /*
  * Expand names with a list returned by a function defined by the user.
  */
-static int ExpandUserList(xp, num_file, file)
-expand_T    *xp;
-int         *num_file;
-char_u      ***file;
+static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 {
   list_T      *retlist;
   listitem_T  *li;
@@ -4139,11 +4114,7 @@ char_u      ***file;
  * 'runtimepath'/{dirnames}/{pat}.vim
  * "dirnames" is an array with one or more directory names.
  */
-static int ExpandRTDir(pat, num_file, file, dirnames)
-char_u      *pat;
-int         *num_file;
-char_u      ***file;
-char        *dirnames[];
+static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
 {
   char_u      *matches;
   char_u      *s;
@@ -4207,10 +4178,7 @@ char        *dirnames[];
  * Returns an allocated string with all matches concatenated, separated by
  * newlines.  Returns NULL for an error or no matches.
  */
-char_u * globpath(path, file, expand_options)
-char_u      *path;
-char_u      *file;
-int expand_options;
+char_u *globpath(char_u *path, char_u *file, int expand_options)
 {
   expand_T xpc;
   char_u      *buf;
@@ -4273,8 +4241,7 @@ int expand_options;
 /*
  * Translate a history character to the associated type number.
  */
-static int hist_char2type(c)
-int c;
+static int hist_char2type(int c)
 {
   if (c == ':')
     return HIST_CMD;
@@ -4307,9 +4274,7 @@ static char *(history_names[]) =
  * Function given to ExpandGeneric() to obtain the possible first
  * arguments of the ":history command.
  */
-static char_u * get_history_arg(xp, idx)
-expand_T    *xp UNUSED;
-int idx;
+static char_u *get_history_arg(expand_T *xp, int idx)
 {
   static char_u compl[2] = { NUL, NUL };
   char *short_names = ":=@>?/";
@@ -4331,7 +4296,7 @@ int idx;
  * init_history() - Initialize the command line history.
  * Also used to re-allocate the history when the size changes.
  */
-void init_history()          {
+void init_history(void)          {
   int newlen;               /* new length of history table */
   histentry_T *temp;
   int i;
@@ -4394,8 +4359,7 @@ void init_history()          {
   }
 }
 
-static void clear_hist_entry(hisptr)
-histentry_T *hisptr;
+static void clear_hist_entry(histentry_T *hisptr)
 {
   hisptr->hisnum = 0;
   hisptr->viminfo = FALSE;
@@ -4406,12 +4370,14 @@ histentry_T *hisptr;
  * Check if command line 'str' is already in history.
  * If 'move_to_front' is TRUE, matching entry is moved to end of history.
  */
-static int in_history(type, str, move_to_front, sep, writing)
-int type;
-char_u  *str;
-int move_to_front;              /* Move the entry to the front if it exists */
-int sep;
-int writing;                    /* ignore entries read from viminfo */
+static int 
+in_history (
+    int type,
+    char_u *str,
+    int move_to_front,              /* Move the entry to the front if it exists */
+    int sep,
+    int writing                    /* ignore entries read from viminfo */
+)
 {
   int i;
   int last_i = -1;
@@ -4460,8 +4426,7 @@ int writing;                    /* ignore entries read from viminfo */
  * When "name" is empty, return "cmd" history.
  * Returns -1 for unknown history name.
  */
-int get_histtype(name)
-char_u      *name;
+int get_histtype(char_u *name)
 {
   int i;
   int len = (int)STRLEN(name);
@@ -4487,11 +4452,13 @@ static int last_maptick = -1;           /* last seen maptick */
  * history then it is moved to the front.  "histype" may be one of he HIST_
  * values.
  */
-void add_to_history(histype, new_entry, in_map, sep)
-int histype;
-char_u      *new_entry;
-int in_map;                     /* consider maptick when inside a mapping */
-int sep;                        /* separator character used (search hist) */
+void 
+add_to_history (
+    int histype,
+    char_u *new_entry,
+    int in_map,                     /* consider maptick when inside a mapping */
+    int sep                        /* separator character used (search hist) */
+)
 {
   histentry_T *hisptr;
   int len;
@@ -4543,8 +4510,7 @@ int sep;                        /* separator character used (search hist) */
  * Get identifier of newest history entry.
  * "histype" may be one of the HIST_ values.
  */
-int get_history_idx(histype)
-int histype;
+int get_history_idx(int histype)
 {
   if (hislen == 0 || histype < 0 || histype >= HIST_COUNT
       || hisidx[histype] < 0)
@@ -4559,7 +4525,7 @@ static struct cmdline_info *get_ccline_ptr __ARGS((void));
  * Get pointer to the command line info to use. cmdline_paste() may clear
  * ccline and put the previous value in prev_ccline.
  */
-static struct cmdline_info * get_ccline_ptr()
+static struct cmdline_info *get_ccline_ptr(void)
 {
   if ((State & CMDLINE) == 0)
     return NULL;
@@ -4575,7 +4541,7 @@ static struct cmdline_info * get_ccline_ptr()
  * Only works when the command line is being edited.
  * Returns NULL when something is wrong.
  */
-char_u * get_cmdline_str()              {
+char_u *get_cmdline_str(void)              {
   struct cmdline_info *p = get_ccline_ptr();
 
   if (p == NULL)
@@ -4589,7 +4555,7 @@ char_u * get_cmdline_str()              {
  * Only works when the command line is being edited.
  * Returns -1 when something is wrong.
  */
-int get_cmdline_pos()         {
+int get_cmdline_pos(void)         {
   struct cmdline_info *p = get_ccline_ptr();
 
   if (p == NULL)
@@ -4602,8 +4568,7 @@ int get_cmdline_pos()         {
  * Only works when the command line is being edited.
  * Returns 1 when failed, 0 when OK.
  */
-int set_cmdline_pos(pos)
-int pos;
+int set_cmdline_pos(int pos)
 {
   struct cmdline_info *p = get_ccline_ptr();
 
@@ -4625,7 +4590,7 @@ int pos;
  * Only works when the command line is being edited.
  * Returns NUL when something is wrong.
  */
-int get_cmdline_type()         {
+int get_cmdline_type(void)         {
   struct cmdline_info *p = get_ccline_ptr();
 
   if (p == NULL)
@@ -4641,9 +4606,7 @@ int get_cmdline_type()         {
  *   num < 0: relative position in history wrt newest entry
  * "histype" may be one of the HIST_ values.
  */
-static int calc_hist_idx(histype, num)
-int histype;
-int num;
+static int calc_hist_idx(int histype, int num)
 {
   int i;
   histentry_T *hist;
@@ -4678,9 +4641,7 @@ int num;
  * Get a history entry by its index.
  * "histype" may be one of the HIST_ values.
  */
-char_u * get_history_entry(histype, idx)
-int histype;
-int idx;
+char_u *get_history_entry(int histype, int idx)
 {
   idx = calc_hist_idx(histype, idx);
   if (idx >= 0)
@@ -4693,8 +4654,7 @@ int idx;
  * Clear all entries of a history.
  * "histype" may be one of the HIST_ values.
  */
-int clr_history(histype)
-int histype;
+int clr_history(int histype)
 {
   int i;
   histentry_T *hisptr;
@@ -4716,9 +4676,7 @@ int histype;
  * Remove all entries matching {str} from a history.
  * "histype" may be one of the HIST_ values.
  */
-int del_history_entry(histype, str)
-int histype;
-char_u      *str;
+int del_history_entry(int histype, char_u *str)
 {
   regmatch_T regmatch;
   histentry_T *hisptr;
@@ -4767,9 +4725,7 @@ char_u      *str;
  * Remove an indexed entry from a history.
  * "histype" may be one of the HIST_ values.
  */
-int del_history_idx(histype, idx)
-int histype;
-int idx;
+int del_history_idx(int histype, int idx)
 {
   int i, j;
 
@@ -4802,7 +4758,7 @@ int idx;
  * Very specific function to remove the value in ":set key=val" from the
  * history.
  */
-void remove_key_from_history()          {
+void remove_key_from_history(void)          {
   char_u      *p;
   int i;
 
@@ -4830,10 +4786,7 @@ void remove_key_from_history()          {
  * text lines in a buffer!) from a string.  Used for ":history" and ":clist".
  * Returns OK if parsed successfully, otherwise FAIL.
  */
-int get_list_range(str, num1, num2)
-char_u      **str;
-int         *num1;
-int         *num2;
+int get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
   int first = FALSE;
@@ -4863,8 +4816,7 @@ int         *num2;
 /*
  * :history command - print a history
  */
-void ex_history(eap)
-exarg_T     *eap;
+void ex_history(exarg_T *eap)
 {
   histentry_T *hist;
   int histype1 = HIST_CMD;
@@ -4956,9 +4908,11 @@ static int hist_type2char __ARGS((int type, int use_question));
 /*
  * Translate a history type number to the associated character.
  */
-static int hist_type2char(type, use_question)
-int type;
-int use_question;                   /* use '?' instead of '/' */
+static int 
+hist_type2char (
+    int type,
+    int use_question                   /* use '?' instead of '/' */
+)
 {
   if (type == HIST_CMD)
     return ':';
@@ -4977,9 +4931,7 @@ int use_question;                   /* use '?' instead of '/' */
  * Prepare for reading the history from the viminfo file.
  * This allocates history arrays to store the read history lines.
  */
-void prepare_viminfo_history(asklen, writing)
-int asklen;
-int writing;
+void prepare_viminfo_history(int asklen, int writing)
 {
   int i;
   int num;
@@ -5017,9 +4969,7 @@ int writing;
  * Accept a line from the viminfo, store it in the history array when it's
  * new.
  */
-int read_viminfo_history(virp, writing)
-vir_T       *virp;
-int writing;
+int read_viminfo_history(vir_T *virp, int writing)
 {
   int type;
   long_u len;
@@ -5061,7 +5011,7 @@ int writing;
 /*
  * Finish reading history lines from viminfo.  Not used when writing viminfo.
  */
-void finish_viminfo_history()          {
+void finish_viminfo_history(void)          {
   int idx;
   int i;
   int type;
@@ -5114,9 +5064,7 @@ void finish_viminfo_history()          {
  * file, data is in viminfo_history[].
  * When "merge" is FALSE just write all history lines.  Used for ":wviminfo!".
  */
-void write_viminfo_history(fp, merge)
-FILE    *fp;
-int merge;
+void write_viminfo_history(FILE *fp, int merge)
 {
   int i;
   int type;
@@ -5202,8 +5150,7 @@ int merge;
  * Write a character at the current cursor+offset position.
  * It is directly written into the command buffer block.
  */
-void cmd_pchar(c, offset)
-int c, offset;
+void cmd_pchar(int c, int offset)
 {
   if (ccline.cmdpos + offset >= ccline.cmdlen || ccline.cmdpos + offset < 0) {
     EMSG(_("E198: cmd_pchar beyond the command length"));
@@ -5213,8 +5160,7 @@ int c, offset;
   ccline.cmdbuff[ccline.cmdlen] = NUL;
 }
 
-int cmd_gchar(offset)
-int offset;
+int cmd_gchar(int offset)
 {
   if (ccline.cmdpos + offset >= ccline.cmdlen || ccline.cmdpos + offset < 0) {
     /*  EMSG(_("cmd_gchar beyond the command length")); */
@@ -5231,7 +5177,7 @@ int offset;
  *	Ctrl_C	 if it is to be abandoned
  *	K_IGNORE if editing continues
  */
-static int ex_window()                {
+static int ex_window(void)                {
   struct cmdline_info save_ccline;
   buf_T               *old_curbuf = curbuf;
   win_T               *old_curwin = curwin;
@@ -5447,9 +5393,7 @@ static int ex_window()                {
  *	endmarker
  * Returns a pointer to allocated memory with {script} or NULL.
  */
-char_u * script_get(eap, cmd)
-exarg_T     *eap;
-char_u      *cmd;
+char_u *script_get(exarg_T *eap, char_u *cmd)
 {
   char_u      *theline;
   char        *end_pattern = NULL;

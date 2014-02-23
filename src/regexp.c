@@ -255,16 +255,14 @@
 static int no_Magic __ARGS((int x));
 static int toggle_Magic __ARGS((int x));
 
-static int no_Magic(x)
-int x;
+static int no_Magic(int x)
 {
   if (is_Magic(x))
     return un_Magic(x);
   return x;
 }
 
-static int toggle_Magic(x)
-int x;
+static int toggle_Magic(int x)
 {
   if (is_Magic(x))
     return un_Magic(x);
@@ -376,8 +374,7 @@ static char_u e_empty_sb[]  = N_("E70: Empty %s%%[]");
  * Return MULTI_ONE if c is a single "multi" operator.
  * Return MULTI_MULT if c is a multi "multi" operator.
  */
-static int re_multi_type(c)
-int c;
+static int re_multi_type(int c)
 {
   if (c == Magic('@') || c == Magic('=') || c == Magic('?'))
     return MULTI_ONE;
@@ -434,8 +431,7 @@ static void init_class_tab __ARGS((void));
 /*
  * Translate '\x' to its control character, except "\n", which is Magic.
  */
-static int backslash_trans(c)
-int c;
+static int backslash_trans(int c)
 {
   switch (c) {
   case 'r':   return CAR;
@@ -451,8 +447,7 @@ int c;
  * Returns one of the CLASS_ items. CLASS_NONE means that no item was
  * recognized.  Otherwise "pp" is advanced to after the item.
  */
-static int get_char_class(pp)
-char_u      **pp;
+static int get_char_class(char_u **pp)
 {
   static const char *(class_names[]) =
   {
@@ -518,7 +513,7 @@ static short class_tab[256];
 #define     RI_UPPER    0x80
 #define     RI_WHITE    0x100
 
-static void init_class_tab()                 {
+static void init_class_tab(void)                 {
   int i;
   static int done = FALSE;
 
@@ -687,8 +682,7 @@ static regengine_T nfa_regengine;
 /*
  * Return TRUE if compiled regular expression "prog" can match a line break.
  */
-int re_multiline(prog)
-regprog_T *prog;
+int re_multiline(regprog_T *prog)
 {
   return prog->regflags & RF_HASNL;
 }
@@ -697,8 +691,7 @@ regprog_T *prog;
  * Return TRUE if compiled regular expression "prog" looks before the start
  * position (pattern contains "\@<=" or "\@<!").
  */
-int re_lookbehind(prog)
-regprog_T *prog;
+int re_lookbehind(regprog_T *prog)
 {
   return prog->regflags & RF_LOOKBH;
 }
@@ -708,8 +701,7 @@ regprog_T *prog;
  * Returns a character representing the class. Zero means that no item was
  * recognized.  Otherwise "pp" is advanced to after the item.
  */
-static int get_equi_class(pp)
-char_u      **pp;
+static int get_equi_class(char_u **pp)
 {
   int c;
   int l = 1;
@@ -736,8 +728,7 @@ char_u      **pp;
  * Currently only handles latin1, latin9 and utf-8.
  * NOTE: When changing this function, also change nfa_emit_equi_class()
  */
-static void reg_equi_class(c)
-int c;
+static void reg_equi_class(int c)
 {
   if (enc_utf8 || STRCMP(p_enc, "latin1") == 0
       || STRCMP(p_enc, "iso-8859-15") == 0) {
@@ -1044,8 +1035,7 @@ int c;
  * "pp" is advanced to after the item.
  * Currently only single characters are recognized!
  */
-static int get_coll_element(pp)
-char_u      **pp;
+static int get_coll_element(char_u **pp)
 {
   int c;
   int l = 1;
@@ -1070,7 +1060,7 @@ static void get_cpo_flags __ARGS((void));
 static int reg_cpo_lit; /* 'cpoptions' contains 'l' flag */
 static int reg_cpo_bsl; /* 'cpoptions' contains '\' flag */
 
-static void get_cpo_flags()                 {
+static void get_cpo_flags(void)                 {
   reg_cpo_lit = vim_strchr(p_cpo, CPO_LITERAL) != NULL;
   reg_cpo_bsl = vim_strchr(p_cpo, CPO_BACKSL) != NULL;
 }
@@ -1080,8 +1070,7 @@ static void get_cpo_flags()                 {
  * "p" must point to the character after the '['.
  * The returned pointer is on the matching ']', or the terminating NUL.
  */
-static char_u * skip_anyof(p)
-char_u      *p;
+static char_u *skip_anyof(char_u *p)
 {
   int l;
 
@@ -1122,11 +1111,7 @@ char_u      *p;
  * expression and change "\?" to "?".  If "*newp" is not NULL the expression
  * is changed in-place.
  */
-char_u * skip_regexp(startp, dirc, magic, newp)
-char_u      *startp;
-int dirc;
-int magic;
-char_u      **newp;
+char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
 {
   int mymagic;
   char_u      *p = startp;
@@ -1192,9 +1177,7 @@ static void bt_regfree __ARGS((regprog_T *prog));
  * of the structure of the compiled regexp.
  * "re_flags": RE_MAGIC and/or RE_STRING.
  */
-static regprog_T * bt_regcomp(expr, re_flags)
-char_u      *expr;
-int re_flags;
+static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 {
   bt_regprog_T    *r;
   char_u      *scan;
@@ -1314,8 +1297,7 @@ int re_flags;
 /*
  * Free a compiled regexp program, returned by bt_regcomp().
  */
-static void bt_regfree(prog)
-regprog_T   *prog;
+static void bt_regfree(regprog_T *prog)
 {
   vim_free(prog);
 }
@@ -1323,9 +1305,11 @@ regprog_T   *prog;
 /*
  * Setup to parse the regexp.  Used once to get the length and once to do it.
  */
-static void regcomp_start(expr, re_flags)
-char_u      *expr;
-int re_flags;                       /* see vim_regcomp() */
+static void 
+regcomp_start (
+    char_u *expr,
+    int re_flags                       /* see vim_regcomp() */
+)
 {
   initchr(expr);
   if (re_flags & RE_MAGIC)
@@ -1351,7 +1335,7 @@ int re_flags;                       /* see vim_regcomp() */
  * Check if during the previous call to vim_regcomp the EOL item "$" has been
  * found.  This is messy, but it works fine.
  */
-int vim_regcomp_had_eol()         {
+int vim_regcomp_had_eol(void)         {
   return had_eol;
 }
 
@@ -1364,9 +1348,11 @@ int vim_regcomp_had_eol()         {
  * is a trifle forced, but the need to tie the tails of the branches to what
  * follows makes it hard to avoid.
  */
-static char_u * reg(paren, flagp)
-int paren;              /* REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN */
-int         *flagp;
+static char_u *
+reg (
+    int paren,              /* REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN */
+    int *flagp
+)
 {
   char_u      *ret;
   char_u      *br;
@@ -1460,8 +1446,7 @@ int         *flagp;
  * Parse one alternative of an | operator.
  * Implements the & operator.
  */
-static char_u * regbranch(flagp)
-int         *flagp;
+static char_u *regbranch(int *flagp)
 {
   char_u      *ret;
   char_u      *chain = NULL;
@@ -1501,8 +1486,7 @@ int         *flagp;
  * Parse one alternative of an | or & operator.
  * Implements the concatenation operator.
  */
-static char_u * regconcat(flagp)
-int         *flagp;
+static char_u *regconcat(int *flagp)
 {
   char_u      *first = NULL;
   char_u      *chain = NULL;
@@ -1581,8 +1565,7 @@ int         *flagp;
  * It might seem that this node could be dispensed with entirely, but the
  * endmarker role is not redundant.
  */
-static char_u * regpiece(flagp)
-int             *flagp;
+static char_u *regpiece(int *flagp)
 {
   char_u          *ret;
   int op;
@@ -1728,8 +1711,7 @@ static int classcodes[] = {
  * it can turn them into a single node, which is smaller to store and
  * faster to run.  Don't do this when one_exactly is set.
  */
-static char_u * regatom(flagp)
-int            *flagp;
+static char_u *regatom(int *flagp)
 {
   char_u          *ret;
   int flags;
@@ -2427,8 +2409,7 @@ do_multibyte:
  * Return TRUE if MULTIBYTECODE should be used instead of EXACTLY for
  * character "c".
  */
-static int use_multibytecode(c)
-int c;
+static int use_multibytecode(int c)
 {
   return has_mbyte && (*mb_char2len)(c) > 1
          && (re_multi_type(peekchr()) != NOT_MULTI
@@ -2439,8 +2420,7 @@ int c;
  * Emit a node.
  * Return pointer to generated code.
  */
-static char_u * regnode(op)
-int op;
+static char_u *regnode(int op)
 {
   char_u  *ret;
 
@@ -2458,8 +2438,7 @@ int op;
 /*
  * Emit (if appropriate) a byte of code
  */
-static void regc(b)
-int b;
+static void regc(int b)
 {
   if (regcode == JUST_CALC_SIZE)
     regsize++;
@@ -2470,8 +2449,7 @@ int b;
 /*
  * Emit (if appropriate) a multi-byte character of code
  */
-static void regmbc(c)
-int c;
+static void regmbc(int c)
 {
   if (!has_mbyte && c > 0xff)
     return;
@@ -2486,9 +2464,7 @@ int c;
  *
  * Means relocating the operand.
  */
-static void reginsert(op, opnd)
-int op;
-char_u     *opnd;
+static void reginsert(int op, char_u *opnd)
 {
   char_u      *src;
   char_u      *dst;
@@ -2514,10 +2490,7 @@ char_u     *opnd;
  * Insert an operator in front of already-emitted operand.
  * Add a number to the operator.
  */
-static void reginsert_nr(op, val, opnd)
-int op;
-long val;
-char_u      *opnd;
+static void reginsert_nr(int op, long val, char_u *opnd)
 {
   char_u      *src;
   char_u      *dst;
@@ -2546,11 +2519,7 @@ char_u      *opnd;
  *
  * Means relocating the operand.
  */
-static void reginsert_limits(op, minval, maxval, opnd)
-int op;
-long minval;
-long maxval;
-char_u      *opnd;
+static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 {
   char_u      *src;
   char_u      *dst;
@@ -2578,9 +2547,7 @@ char_u      *opnd;
 /*
  * Write a long as four bytes at "p" and return pointer to the next char.
  */
-static char_u * re_put_long(p, val)
-char_u      *p;
-long_u val;
+static char_u *re_put_long(char_u *p, long_u val)
 {
   *p++ = (char_u) ((val >> 24) & 0377);
   *p++ = (char_u) ((val >> 16) & 0377);
@@ -2592,9 +2559,7 @@ long_u val;
 /*
  * Set the next-pointer at the end of a node chain.
  */
-static void regtail(p, val)
-char_u      *p;
-char_u      *val;
+static void regtail(char_u *p, char_u *val)
 {
   char_u      *scan;
   char_u      *temp;
@@ -2630,9 +2595,7 @@ char_u      *val;
 /*
  * Like regtail, on item after a BRANCH; nop if none.
  */
-static void regoptail(p, val)
-char_u      *p;
-char_u      *val;
+static void regoptail(char_u *p, char_u *val)
 {
   /* When op is neither BRANCH nor BRACE_COMPLEX0-9, it is "operandless" */
   if (p == NULL || p == JUST_CALC_SIZE
@@ -2652,8 +2615,7 @@ static int prev_at_start;       /* True when on the second character */
 /*
  * Start parsing at "str".
  */
-static void initchr(str)
-char_u *str;
+static void initchr(char_u *str)
 {
   regparse = str;
   prevchr_len = 0;
@@ -2666,8 +2628,7 @@ char_u *str;
  * Save the current parse state, so that it can be restored and parsing
  * starts in the same state again.
  */
-static void save_parse_state(ps)
-parse_state_T *ps;
+static void save_parse_state(parse_state_T *ps)
 {
   ps->regparse = regparse;
   ps->prevchr_len = prevchr_len;
@@ -2683,8 +2644,7 @@ parse_state_T *ps;
 /*
  * Restore a previously saved parse state.
  */
-static void restore_parse_state(ps)
-parse_state_T *ps;
+static void restore_parse_state(parse_state_T *ps)
 {
   regparse = ps->regparse;
   prevchr_len = ps->prevchr_len;
@@ -2701,7 +2661,7 @@ parse_state_T *ps;
 /*
  * Get the next character without advancing.
  */
-static int peekchr()                {
+static int peekchr(void)                {
   static int after_slash = FALSE;
 
   if (curchr == -1) {
@@ -2844,7 +2804,7 @@ static int peekchr()                {
 /*
  * Eat one lexed character.  Do this in a way that we can undo it.
  */
-static void skipchr()                 {
+static void skipchr(void)                 {
   /* peekchr() eats a backslash, do the same here */
   if (*regparse == '\\')
     prevchr_len = 1;
@@ -2872,7 +2832,7 @@ static void skipchr()                 {
  * Skip a character while keeping the value of prev_at_start for at_start.
  * prevchr and prevprevchr are also kept.
  */
-static void skipchr_keepstart()                 {
+static void skipchr_keepstart(void)                 {
   int as = prev_at_start;
   int pr = prevchr;
   int prpr = prevprevchr;
@@ -2887,7 +2847,7 @@ static void skipchr_keepstart()                 {
  * Get the next character from the pattern. We know about magic and such, so
  * therefore we need a lexical analyzer.
  */
-static int getchr()                {
+static int getchr(void)                {
   int chr = peekchr();
 
   skipchr();
@@ -2897,7 +2857,7 @@ static int getchr()                {
 /*
  * put character back.  Works only once!
  */
-static void ungetchr()                 {
+static void ungetchr(void)                 {
   nextchr = curchr;
   curchr = prevchr;
   prevchr = prevprevchr;
@@ -2918,8 +2878,7 @@ static void ungetchr()                 {
  * The parameter controls the maximum number of input characters. This will be
  * 2 when reading a \%x20 sequence and 4 when reading a \%u20AC sequence.
  */
-static int gethexchrs(maxinputlen)
-int maxinputlen;
+static int gethexchrs(int maxinputlen)
 {
   int nr = 0;
   int c;
@@ -2943,7 +2902,7 @@ int maxinputlen;
  * Get and return the value of the decimal string immediately after the
  * current position. Return -1 for invalid.  Consumes all digits.
  */
-static int getdecchrs()                {
+static int getdecchrs(void)                {
   int nr = 0;
   int c;
   int i;
@@ -2971,7 +2930,7 @@ static int getdecchrs()                {
  *     blahblah\%o210asdf
  *	   before-^  ^-after
  */
-static int getoctchrs()                {
+static int getoctchrs(void)                {
   int nr = 0;
   int c;
   int i;
@@ -2994,7 +2953,7 @@ static int getoctchrs()                {
  * Get a number after a backslash that is inside [].
  * When nothing is recognized return a backslash.
  */
-static int coll_get_char()                {
+static int coll_get_char(void)                {
   int nr = -1;
 
   switch (*regparse++) {
@@ -3019,9 +2978,7 @@ static int coll_get_char()                {
  * Should end with 'end'.  If minval is missing, zero is default, if maxval is
  * missing, a very big number is the default.
  */
-static int read_limits(minval, maxval)
-long        *minval;
-long        *maxval;
+static int read_limits(long *minval, long *maxval)
 {
   int reverse = FALSE;
   char_u      *first_char;
@@ -3282,7 +3239,7 @@ static garray_T backpos = {0, 0, 0, 0, NULL};
 #define BACKPOS_INITIAL         64
 
 #if defined(EXITFREE) || defined(PROTO)
-void free_regexp_stuff()          {
+void free_regexp_stuff(void)          {
   ga_clear(&regstack);
   ga_clear(&backpos);
   vim_free(reg_tofree);
@@ -3294,8 +3251,7 @@ void free_regexp_stuff()          {
 /*
  * Get pointer to the line "lnum", which is relative to "reg_firstlnum".
  */
-static char_u * reg_getline(lnum)
-linenr_T lnum;
+static char_u *reg_getline(linenr_T lnum)
 {
   /* when looking behind for a match/no-match lnum is negative.  But we
    * can't go before line 1 */
@@ -3326,10 +3282,12 @@ static int bt_regexec __ARGS((regmatch_T *rmp, char_u *line, colnr_T col));
  *
  * Return TRUE if there is a match, FALSE if not.
  */
-static int bt_regexec(rmp, line, col)
-regmatch_T  *rmp;
-char_u      *line;      /* string to match against */
-colnr_T col;            /* column to start looking for match */
+static int 
+bt_regexec (
+    regmatch_T *rmp,
+    char_u *line,      /* string to match against */
+    colnr_T col            /* column to start looking for match */
+)
 {
   reg_match = rmp;
   reg_mmatch = NULL;
@@ -3351,10 +3309,12 @@ static int bt_regexec_nl __ARGS((regmatch_T *rmp, char_u *line, colnr_T col));
 /*
  * Like vim_regexec(), but consider a "\n" in "line" to be a line break.
  */
-static int bt_regexec_nl(rmp, line, col)
-regmatch_T  *rmp;
-char_u      *line;      /* string to match against */
-colnr_T col;            /* column to start looking for match */
+static int 
+bt_regexec_nl (
+    regmatch_T *rmp,
+    char_u *line,      /* string to match against */
+    colnr_T col            /* column to start looking for match */
+)
 {
   reg_match = rmp;
   reg_mmatch = NULL;
@@ -3414,7 +3374,7 @@ proftime_T  *tm;                /* timeout limit or NULL */
 static long bt_regexec_both(line, col, tm)
 char_u      *line;
 colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm UNUSED;         /* timeout limit or NULL */
+proftime_T  *tm;         /* timeout limit or NULL */
 {
   bt_regprog_T        *prog;
   char_u      *s;
@@ -3602,7 +3562,7 @@ static reg_extmatch_T *make_extmatch __ARGS((void));
 /*
  * Create a new extmatch and mark it as referenced once.
  */
-static reg_extmatch_T * make_extmatch()                             {
+static reg_extmatch_T *make_extmatch(void)                             {
   reg_extmatch_T      *em;
 
   em = (reg_extmatch_T *)alloc_clear((unsigned)sizeof(reg_extmatch_T));
@@ -3614,8 +3574,7 @@ static reg_extmatch_T * make_extmatch()                             {
 /*
  * Add a reference to an extmatch.
  */
-reg_extmatch_T * ref_extmatch(em)
-reg_extmatch_T      *em;
+reg_extmatch_T *ref_extmatch(reg_extmatch_T *em)
 {
   if (em != NULL)
     em->refcnt++;
@@ -3626,8 +3585,7 @@ reg_extmatch_T      *em;
  * Remove a reference to an extmatch.  If there are no references left, free
  * the info.
  */
-void unref_extmatch(em)
-reg_extmatch_T      *em;
+void unref_extmatch(reg_extmatch_T *em)
 {
   int i;
 
@@ -3642,9 +3600,7 @@ reg_extmatch_T      *em;
  * regtry - try match of "prog" with at regline["col"].
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long regtry(prog, col)
-bt_regprog_T    *prog;
-colnr_T col;
+static long regtry(bt_regprog_T *prog, colnr_T col)
 {
   reginput = regline + col;
   need_clear_subexpr = TRUE;
@@ -3707,7 +3663,7 @@ static int reg_prev_class __ARGS((void));
 /*
  * Get class of previous character.
  */
-static int reg_prev_class()                {
+static int reg_prev_class(void)                {
   if (reginput > regline)
     return mb_get_class_buf(reginput - 1
         - (*mb_head_off)(regline, reginput - 1), reg_buf);
@@ -3719,7 +3675,7 @@ static int reg_match_visual __ARGS((void));
 /*
  * Return TRUE if the current reginput position matches the Visual area.
  */
-static int reg_match_visual()                {
+static int reg_match_visual(void)                {
   pos_T top, bot;
   linenr_T lnum;
   colnr_T col;
@@ -3802,8 +3758,10 @@ static long bl_maxval;
  * Returns FALSE when there is no match.  Leaves reginput and reglnum in an
  * undefined state!
  */
-static int regmatch(scan)
-char_u      *scan;              /* Current node. */
+static int 
+regmatch (
+    char_u *scan              /* Current node. */
+)
 {
   char_u        *next;          /* Next node. */
   int op;
@@ -5103,9 +5061,7 @@ char_u      *scan;              /* Current node. */
  * Push an item onto the regstack.
  * Returns pointer to new item.  Returns NULL when out of memory.
  */
-static regitem_T * regstack_push(state, scan)
-regstate_T state;
-char_u      *scan;
+static regitem_T *regstack_push(regstate_T state, char_u *scan)
 {
   regitem_T   *rp;
 
@@ -5127,8 +5083,7 @@ char_u      *scan;
 /*
  * Pop an item from the regstack.
  */
-static void regstack_pop(scan)
-char_u      **scan;
+static void regstack_pop(char_u **scan)
 {
   regitem_T   *rp;
 
@@ -5142,9 +5097,11 @@ char_u      **scan;
  * regrepeat - repeatedly match something simple, return how many.
  * Advances reginput (and reglnum) to just after the matched chars.
  */
-static int regrepeat(p, maxcount)
-char_u      *p;
-long maxcount;              /* maximum number of matches allowed */
+static int 
+regrepeat (
+    char_u *p,
+    long maxcount              /* maximum number of matches allowed */
+)
 {
   long count = 0;
   char_u      *scan;
@@ -5486,8 +5443,7 @@ do_class:
  * Returns NULL when calculating size, when there is no next item and when
  * there is an error.
  */
-static char_u * regnext(p)
-char_u  *p;
+static char_u *regnext(char_u *p)
 {
   int offset;
 
@@ -5508,7 +5464,7 @@ char_u  *p;
  * Check the regexp program for its magic number.
  * Return TRUE if it's wrong.
  */
-static int prog_magic_wrong()                {
+static int prog_magic_wrong(void)                {
   regprog_T   *prog;
 
   prog = REG_MULTI ? reg_mmatch->regprog : reg_match->regprog;
@@ -5528,7 +5484,7 @@ static int prog_magic_wrong()                {
  * This construction is used to clear the subexpressions only when they are
  * used (to increase speed).
  */
-static void cleanup_subexpr()                 {
+static void cleanup_subexpr(void)                 {
   if (need_clear_subexpr) {
     if (REG_MULTI) {
       /* Use 0xff to set lnum to -1 */
@@ -5542,7 +5498,7 @@ static void cleanup_subexpr()                 {
   }
 }
 
-static void cleanup_zsubexpr()                 {
+static void cleanup_zsubexpr(void)                 {
   if (need_clear_zsubexpr) {
     if (REG_MULTI) {
       /* Use 0xff to set lnum to -1 */
@@ -5560,8 +5516,7 @@ static void cleanup_zsubexpr()                 {
  * Save the current subexpr to "bp", so that they can be restored
  * later by restore_subexpr().
  */
-static void save_subexpr(bp)
-regbehind_T *bp;
+static void save_subexpr(regbehind_T *bp)
 {
   int i;
 
@@ -5584,8 +5539,7 @@ regbehind_T *bp;
 /*
  * Restore the subexpr from "bp".
  */
-static void restore_subexpr(bp)
-regbehind_T *bp;
+static void restore_subexpr(regbehind_T *bp)
 {
   int i;
 
@@ -5607,7 +5561,7 @@ regbehind_T *bp;
 /*
  * Advance reglnum, regline and reginput to the next line.
  */
-static void reg_nextline()                 {
+static void reg_nextline(void)                 {
   regline = reg_getline(++reglnum);
   reginput = regline;
   fast_breakcheck();
@@ -5616,9 +5570,7 @@ static void reg_nextline()                 {
 /*
  * Save the input line and position in a regsave_T.
  */
-static void reg_save(save, gap)
-regsave_T   *save;
-garray_T    *gap;
+static void reg_save(regsave_T *save, garray_T *gap)
 {
   if (REG_MULTI) {
     save->rs_u.pos.col = (colnr_T)(reginput - regline);
@@ -5631,9 +5583,7 @@ garray_T    *gap;
 /*
  * Restore the input line and position from a regsave_T.
  */
-static void reg_restore(save, gap)
-regsave_T   *save;
-garray_T    *gap;
+static void reg_restore(regsave_T *save, garray_T *gap)
 {
   if (REG_MULTI) {
     if (reglnum != save->rs_u.pos.lnum) {
@@ -5651,8 +5601,7 @@ garray_T    *gap;
 /*
  * Return TRUE if current position is equal to saved position.
  */
-static int reg_save_equal(save)
-regsave_T   *save;
+static int reg_save_equal(regsave_T *save)
 {
   if (REG_MULTI)
     return reglnum == save->rs_u.pos.lnum
@@ -5667,18 +5616,14 @@ regsave_T   *save;
  * Use se_save() to use pointer (save_se_multi()) or position (save_se_one()),
  * depending on REG_MULTI.
  */
-static void save_se_multi(savep, posp)
-save_se_T   *savep;
-lpos_T      *posp;
+static void save_se_multi(save_se_T *savep, lpos_T *posp)
 {
   savep->se_u.pos = *posp;
   posp->lnum = reglnum;
   posp->col = (colnr_T)(reginput - regline);
 }
 
-static void save_se_one(savep, pp)
-save_se_T   *savep;
-char_u      **pp;
+static void save_se_one(save_se_T *savep, char_u **pp)
 {
   savep->se_u.ptr = *pp;
   *pp = reginput;
@@ -5687,9 +5632,7 @@ char_u      **pp;
 /*
  * Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
  */
-static int re_num_cmp(val, scan)
-long_u val;
-char_u      *scan;
+static int re_num_cmp(long_u val, char_u *scan)
 {
   long_u n = OPERAND_MIN(scan);
 
@@ -5706,12 +5649,7 @@ char_u      *scan;
  * If "bytelen" is not NULL, it is set to the byte length of the match in the
  * last line.
  */
-static int match_with_backref(start_lnum, start_col, end_lnum, end_col, bytelen)
-linenr_T start_lnum;
-colnr_T start_col;
-linenr_T end_lnum;
-colnr_T end_col;
-int      *bytelen;
+static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T end_lnum, colnr_T end_col, int *bytelen)
 {
   linenr_T clnum = start_lnum;
   colnr_T ccol = start_col;
@@ -5774,9 +5712,7 @@ int      *bytelen;
 /*
  * regdump - dump a regexp onto stdout in vaguely comprehensible form
  */
-static void regdump(pattern, r)
-char_u      *pattern;
-bt_regprog_T        *r;
+static void regdump(char_u *pattern, bt_regprog_T *r)
 {
   char_u  *s;
   int op = EXACTLY;             /* Arbitrary non-END op. */
@@ -5857,8 +5793,7 @@ bt_regprog_T        *r;
 /*
  * regprop - printable representation of opcode
  */
-static char_u * regprop(op)
-char_u         *op;
+static char_u *regprop(char_u *op)
 {
   char            *p;
   static char buf[50];
@@ -6265,21 +6200,21 @@ static decomp_T decomp_table[0xfb4f-0xfb20+1] =
   {0x5d4, 0x5bc, 0},            /* 0xfb34	he+dagesh */
   {0x5d5, 0x5bc, 0},            /* 0xfb35	vav+dagesh */
   {0x5d6, 0x5bc, 0},            /* 0xfb36	zayin+dagesh */
-  {0xfb37, 0, 0},               /* 0xfb37 -- UNUSED */
+  {0xfb37, 0, 0},               /* 0xfb37 -- */
   {0x5d8, 0x5bc, 0},            /* 0xfb38	tet+dagesh */
   {0x5d9, 0x5bc, 0},            /* 0xfb39	yud+dagesh */
   {0x5da, 0x5bc, 0},            /* 0xfb3a	kaf sofit+dagesh */
   {0x5db, 0x5bc, 0},            /* 0xfb3b	kaf+dagesh */
   {0x5dc, 0x5bc, 0},            /* 0xfb3c	lamed+dagesh */
-  {0xfb3d, 0, 0},               /* 0xfb3d -- UNUSED */
+  {0xfb3d, 0, 0},               /* 0xfb3d -- */
   {0x5de, 0x5bc, 0},            /* 0xfb3e	mem+dagesh */
-  {0xfb3f, 0, 0},               /* 0xfb3f -- UNUSED */
+  {0xfb3f, 0, 0},               /* 0xfb3f -- */
   {0x5e0, 0x5bc, 0},            /* 0xfb40	nun+dagesh */
   {0x5e1, 0x5bc, 0},            /* 0xfb41	samech+dagesh */
-  {0xfb42, 0, 0},               /* 0xfb42 -- UNUSED */
+  {0xfb42, 0, 0},               /* 0xfb42 -- */
   {0x5e3, 0x5bc, 0},            /* 0xfb43	pe sofit+dagesh */
   {0x5e4, 0x5bc,0},             /* 0xfb44	pe+dagesh */
-  {0xfb45, 0, 0},               /* 0xfb45 -- UNUSED */
+  {0xfb45, 0, 0},               /* 0xfb45 -- */
   {0x5e6, 0x5bc, 0},            /* 0xfb46	tsadi+dagesh */
   {0x5e7, 0x5bc, 0},            /* 0xfb47	qof+dagesh */
   {0x5e8, 0x5bc, 0},            /* 0xfb48	resh+dagesh */
@@ -6292,8 +6227,7 @@ static decomp_T decomp_table[0xfb4f-0xfb20+1] =
   {0x5d0, 0x5dc, 0}             /* 0xfb4f	alef-lamed */
 };
 
-static void mb_decompose(c, c1, c2, c3)
-int c, *c1, *c2, *c3;
+static void mb_decompose(int c, int *c1, int *c2, int *c3)
 {
   decomp_T d;
 
@@ -6313,9 +6247,7 @@ int c, *c1, *c2, *c3;
  * Return 0 if strings match, non-zero otherwise.
  * Correct the length "*n" when composing characters are ignored.
  */
-static int cstrncmp(s1, s2, n)
-char_u      *s1, *s2;
-int         *n;
+static int cstrncmp(char_u *s1, char_u *s2, int *n)
 {
   int result;
 
@@ -6363,9 +6295,7 @@ int         *n;
 /*
  * cstrchr: This function is used a lot for simple searches, keep it fast!
  */
-static char_u * cstrchr(s, c)
-char_u      *s;
-int c;
+static char_u *cstrchr(char_u *s, int c)
 {
   char_u      *p;
   int cc;
@@ -6475,9 +6405,7 @@ int c;
  *
  * The tildes are parsed once before the first call to vim_regsub().
  */
-char_u * regtilde(source, magic)
-char_u      *source;
-int magic;
+char_u *regtilde(char_u *source, int magic)
 {
   char_u      *newsub = source;
   char_u      *tmpsub;
@@ -6557,13 +6485,7 @@ static int submatch_line_lbr;
  *
  * Returns the size of the replacement, including terminating NUL.
  */
-int vim_regsub(rmp, source, dest, copy, magic, backslash)
-regmatch_T  *rmp;
-char_u      *source;
-char_u      *dest;
-int copy;
-int magic;
-int backslash;
+int vim_regsub(regmatch_T *rmp, char_u *source, char_u *dest, int copy, int magic, int backslash)
 {
   reg_match = rmp;
   reg_mmatch = NULL;
@@ -6572,14 +6494,7 @@ int backslash;
   return vim_regsub_both(source, dest, copy, magic, backslash);
 }
 
-int vim_regsub_multi(rmp, lnum, source, dest, copy, magic, backslash)
-regmmatch_T *rmp;
-linenr_T lnum;
-char_u      *source;
-char_u      *dest;
-int copy;
-int magic;
-int backslash;
+int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source, char_u *dest, int copy, int magic, int backslash)
 {
   reg_match = NULL;
   reg_mmatch = rmp;
@@ -6589,12 +6504,7 @@ int backslash;
   return vim_regsub_both(source, dest, copy, magic, backslash);
 }
 
-static int vim_regsub_both(source, dest, copy, magic, backslash)
-char_u      *source;
-char_u      *dest;
-int copy;
-int magic;
-int backslash;
+static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, int backslash)
 {
   char_u      *src;
   char_u      *dst;
@@ -6902,8 +6812,7 @@ static char_u *reg_getline_submatch __ARGS((linenr_T lnum));
  * substitute() was used the reg_maxline and other values have been
  * overwritten.
  */
-static char_u * reg_getline_submatch(lnum)
-linenr_T lnum;
+static char_u *reg_getline_submatch(linenr_T lnum)
 {
   char_u *s;
   linenr_T save_first = reg_firstlnum;
@@ -6924,8 +6833,7 @@ linenr_T lnum;
  * allocated memory.
  * Returns NULL when not in a ":s" command and for a non-existing submatch.
  */
-char_u * reg_submatch(no)
-int no;
+char_u *reg_submatch(int no)
 {
   char_u      *retval = NULL;
   char_u      *s;
@@ -7054,9 +6962,7 @@ static char_u regname[][30] = {
  * Use vim_regfree() to free the memory.
  * Returns NULL for an error.
  */
-regprog_T * vim_regcomp(expr_arg, re_flags)
-char_u      *expr_arg;
-int re_flags;
+regprog_T *vim_regcomp(char_u *expr_arg, int re_flags)
 {
   regprog_T   *prog = NULL;
   char_u      *expr = expr_arg;
@@ -7122,8 +7028,7 @@ int re_flags;
 /*
  * Free a compiled regexp program, returned by vim_regcomp().
  */
-void vim_regfree(prog)
-regprog_T   *prog;
+void vim_regfree(regprog_T *prog)
 {
   if (prog != NULL)
     prog->engine->regfree(prog);
@@ -7136,10 +7041,12 @@ regprog_T   *prog;
  *
  * Return TRUE if there is a match, FALSE if not.
  */
-int vim_regexec(rmp, line, col)
-regmatch_T *rmp;
-char_u      *line;      /* string to match against */
-colnr_T col;            /* column to start looking for match */
+int 
+vim_regexec (
+    regmatch_T *rmp,
+    char_u *line,      /* string to match against */
+    colnr_T col            /* column to start looking for match */
+)
 {
   return rmp->regprog->engine->regexec(rmp, line, col);
 }
@@ -7149,10 +7056,7 @@ colnr_T col;            /* column to start looking for match */
 /*
  * Like vim_regexec(), but consider a "\n" in "line" to be a line break.
  */
-int vim_regexec_nl(rmp, line, col)
-regmatch_T *rmp;
-char_u *line;
-colnr_T col;
+int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return rmp->regprog->engine->regexec_nl(rmp, line, col);
 }

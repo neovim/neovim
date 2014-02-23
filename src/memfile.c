@@ -109,9 +109,7 @@ static int mf_hash_grow __ARGS((mf_hashtab_T *));
  *
  * return value: identifier for this memory block file.
  */
-memfile_T * mf_open(fname, flags)
-char_u      *fname;
-int flags;
+memfile_T *mf_open(char_u *fname, int flags)
 {
   memfile_T           *mfp;
   off_t size;
@@ -203,9 +201,7 @@ int flags;
  *
  * return value: FAIL if file could not be opened, OK otherwise
  */
-int mf_open_file(mfp, fname)
-memfile_T   *mfp;
-char_u      *fname;
+int mf_open_file(memfile_T *mfp, char_u *fname)
 {
   mf_do_open(mfp, fname, O_RDWR|O_CREAT|O_EXCL);   /* try to open the file */
 
@@ -219,9 +215,7 @@ char_u      *fname;
 /*
  * Close a memory file and delete the associated file if 'del_file' is TRUE.
  */
-void mf_close(mfp, del_file)
-memfile_T   *mfp;
-int del_file;
+void mf_close(memfile_T *mfp, int del_file)
 {
   bhdr_T      *hp, *nextp;
 
@@ -251,9 +245,11 @@ int del_file;
 /*
  * Close the swap file for a memfile.  Used when 'swapfile' is reset.
  */
-void mf_close_file(buf, getlines)
-buf_T       *buf;
-int getlines;                   /* get all lines into memory? */
+void 
+mf_close_file (
+    buf_T *buf,
+    int getlines                   /* get all lines into memory? */
+)
 {
   memfile_T   *mfp;
   linenr_T lnum;
@@ -288,9 +284,7 @@ int getlines;                   /* get all lines into memory? */
  * Set new size for a memfile.  Used when block 0 of a swapfile has been read
  * and the size it indicates differs from what was guessed.
  */
-void mf_new_page_size(mfp, new_size)
-memfile_T   *mfp;
-unsigned new_size;
+void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 {
   /* Correct the memory used for block 0 to the new size, because it will be
    * freed with that size later on. */
@@ -303,10 +297,7 @@ unsigned new_size;
  *
  *   negative: TRUE if negative block number desired (data block)
  */
-bhdr_T * mf_new(mfp, negative, page_count)
-memfile_T   *mfp;
-int negative;
-int page_count;
+bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
 {
   bhdr_T      *hp;      /* new bhdr_T */
   bhdr_T      *freep;   /* first block in free list */
@@ -384,10 +375,7 @@ int page_count;
  *
  * Note: The caller should first check a negative nr with mf_trans_del()
  */
-bhdr_T * mf_get(mfp, nr, page_count)
-memfile_T   *mfp;
-blocknr_T nr;
-int page_count;
+bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, int page_count)
 {
   bhdr_T    *hp;
   /* doesn't exist */
@@ -440,11 +428,7 @@ int page_count;
  *
  *  no return value, function cannot fail
  */
-void mf_put(mfp, hp, dirty, infile)
-memfile_T   *mfp;
-bhdr_T      *hp;
-int dirty;
-int infile;
+void mf_put(memfile_T *mfp, bhdr_T *hp, int dirty, int infile)
 {
   int flags;
 
@@ -465,9 +449,7 @@ int infile;
 /*
  * block *hp is no longer in used, may put it in the free list of memfile *mfp
  */
-void mf_free(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+void mf_free(memfile_T *mfp, bhdr_T *hp)
 {
   vim_free(hp->bh_data);        /* free the memory */
   mf_rem_hash(mfp, hp);         /* get *hp out of the hash list */
@@ -502,9 +484,7 @@ static unsigned long fdtofh(int filedescriptor)                          {
  *
  * Return FAIL for failure, OK otherwise
  */
-int mf_sync(mfp, flags)
-memfile_T   *mfp;
-int flags;
+int mf_sync(memfile_T *mfp, int flags)
 {
   int status;
   bhdr_T      *hp;
@@ -603,8 +583,7 @@ int flags;
  * the dirty flag.  These are blocks that need to be written to a newly
  * created swapfile.
  */
-void mf_set_dirty(mfp)
-memfile_T   *mfp;
+void mf_set_dirty(memfile_T *mfp)
 {
   bhdr_T      *hp;
 
@@ -617,9 +596,7 @@ memfile_T   *mfp;
 /*
  * insert block *hp in front of hashlist of memfile *mfp
  */
-static void mf_ins_hash(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static void mf_ins_hash(memfile_T *mfp, bhdr_T *hp)
 {
   mf_hash_add_item(&mfp->mf_hash, (mf_hashitem_T *)hp);
 }
@@ -627,9 +604,7 @@ bhdr_T      *hp;
 /*
  * remove block *hp from hashlist of memfile list *mfp
  */
-static void mf_rem_hash(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static void mf_rem_hash(memfile_T *mfp, bhdr_T *hp)
 {
   mf_hash_rem_item(&mfp->mf_hash, (mf_hashitem_T *)hp);
 }
@@ -637,9 +612,7 @@ bhdr_T      *hp;
 /*
  * look in hash lists of memfile *mfp for block header with number 'nr'
  */
-static bhdr_T * mf_find_hash(mfp, nr)
-memfile_T   *mfp;
-blocknr_T nr;
+static bhdr_T *mf_find_hash(memfile_T *mfp, blocknr_T nr)
 {
   return (bhdr_T *)mf_hash_find(&mfp->mf_hash, nr);
 }
@@ -647,9 +620,7 @@ blocknr_T nr;
 /*
  * insert block *hp in front of used list of memfile *mfp
  */
-static void mf_ins_used(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static void mf_ins_used(memfile_T *mfp, bhdr_T *hp)
 {
   hp->bh_next = mfp->mf_used_first;
   mfp->mf_used_first = hp;
@@ -665,9 +636,7 @@ bhdr_T      *hp;
 /*
  * remove block *hp from used list of memfile *mfp
  */
-static void mf_rem_used(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static void mf_rem_used(memfile_T *mfp, bhdr_T *hp)
 {
   if (hp->bh_next == NULL)          /* last block in used list */
     mfp->mf_used_last = hp->bh_prev;
@@ -688,9 +657,7 @@ bhdr_T      *hp;
  * Return the block header to the caller, including the memory block, so
  * it can be re-used. Make sure the page_count is right.
  */
-static bhdr_T * mf_release(mfp, page_count)
-memfile_T   *mfp;
-int page_count;
+static bhdr_T *mf_release(memfile_T *mfp, int page_count)
 {
   bhdr_T      *hp;
   int need_release;
@@ -768,7 +735,7 @@ int page_count;
  *
  * return TRUE if any memory was released
  */
-int mf_release_all()         {
+int mf_release_all(void)         {
   buf_T       *buf;
   memfile_T   *mfp;
   bhdr_T      *hp;
@@ -804,9 +771,7 @@ int mf_release_all()         {
 /*
  * Allocate a block header and a block of memory for it
  */
-static bhdr_T * mf_alloc_bhdr(mfp, page_count)
-memfile_T   *mfp;
-int page_count;
+static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, int page_count)
 {
   bhdr_T      *hp;
 
@@ -824,8 +789,7 @@ int page_count;
 /*
  * Free a block header and the block of memory for it
  */
-static void mf_free_bhdr(hp)
-bhdr_T      *hp;
+static void mf_free_bhdr(bhdr_T *hp)
 {
   vim_free(hp->bh_data);
   vim_free(hp);
@@ -834,9 +798,7 @@ bhdr_T      *hp;
 /*
  * insert entry *hp in the free list
  */
-static void mf_ins_free(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static void mf_ins_free(memfile_T *mfp, bhdr_T *hp)
 {
   hp->bh_next = mfp->mf_free_first;
   mfp->mf_free_first = hp;
@@ -846,8 +808,7 @@ bhdr_T      *hp;
  * remove the first entry from the free list and return a pointer to it
  * Note: caller must check that mfp->mf_free_first is not NULL!
  */
-static bhdr_T * mf_rem_free(mfp)
-memfile_T   *mfp;
+static bhdr_T *mf_rem_free(memfile_T *mfp)
 {
   bhdr_T      *hp;
 
@@ -861,9 +822,7 @@ memfile_T   *mfp;
  *
  * Return FAIL for failure, OK otherwise
  */
-static int mf_read(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static int mf_read(memfile_T *mfp, bhdr_T *hp)
 {
   off_t offset;
   unsigned page_size;
@@ -896,9 +855,7 @@ bhdr_T      *hp;
  *
  * Return FAIL for failure, OK otherwise
  */
-static int mf_write(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static int mf_write(memfile_T *mfp, bhdr_T *hp)
 {
   off_t offset;             /* offset in the file */
   blocknr_T nr;             /* block nr which is being written */
@@ -969,11 +926,7 @@ bhdr_T      *hp;
  * Takes care of encryption.
  * Return FAIL or OK.
  */
-static int mf_write_block(mfp, hp, offset, size)
-memfile_T   *mfp;
-bhdr_T      *hp;
-off_t offset UNUSED;
-unsigned size;
+static int mf_write_block(memfile_T *mfp, bhdr_T *hp, off_t offset, unsigned size)
 {
   char_u      *data = hp->bh_data;
   int result = OK;
@@ -999,9 +952,7 @@ unsigned size;
  *
  * Return FAIL for failure, OK otherwise
  */
-static int mf_trans_add(mfp, hp)
-memfile_T   *mfp;
-bhdr_T      *hp;
+static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
 {
   bhdr_T      *freep;
   blocknr_T new_bnum;
@@ -1057,9 +1008,7 @@ bhdr_T      *hp;
  *
  * Return the positive new number when found, the old number when not found
  */
-blocknr_T mf_trans_del(mfp, old_nr)
-memfile_T   *mfp;
-blocknr_T old_nr;
+blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 {
   NR_TRANS    *np;
   blocknr_T new_bnum;
@@ -1085,8 +1034,7 @@ blocknr_T old_nr;
  * Only called when creating or renaming the swapfile.	Either way it's a new
  * name so we must work out the full path name.
  */
-void mf_set_ffname(mfp)
-memfile_T   *mfp;
+void mf_set_ffname(memfile_T *mfp)
 {
   mfp->mf_ffname = FullName_save(mfp->mf_fname, FALSE);
 }
@@ -1095,8 +1043,7 @@ memfile_T   *mfp;
  * Make the name of the file used for the memfile a full path.
  * Used before doing a :cd
  */
-void mf_fullname(mfp)
-memfile_T   *mfp;
+void mf_fullname(memfile_T *mfp)
 {
   if (mfp != NULL && mfp->mf_fname != NULL && mfp->mf_ffname != NULL) {
     vim_free(mfp->mf_fname);
@@ -1108,8 +1055,7 @@ memfile_T   *mfp;
 /*
  * return TRUE if there are any translations pending for 'mfp'
  */
-int mf_need_trans(mfp)
-memfile_T   *mfp;
+int mf_need_trans(memfile_T *mfp)
 {
   return mfp->mf_fname != NULL && mfp->mf_neg_count > 0;
 }
@@ -1119,10 +1065,12 @@ memfile_T   *mfp;
  * The "fname" must be in allocated memory, and is consumed (also when an
  * error occurs).
  */
-static void mf_do_open(mfp, fname, flags)
-memfile_T   *mfp;
-char_u      *fname;
-int flags;                      /* flags for open() */
+static void 
+mf_do_open (
+    memfile_T *mfp,
+    char_u *fname,
+    int flags                      /* flags for open() */
+)
 {
 #ifdef HAVE_LSTAT
   struct stat sb;
@@ -1191,8 +1139,7 @@ int flags;                      /* flags for open() */
 /*
  * Initialize an empty hash table.
  */
-static void mf_hash_init(mht)
-mf_hashtab_T *mht;
+static void mf_hash_init(mf_hashtab_T *mht)
 {
   vim_memset(mht, 0, sizeof(mf_hashtab_T));
   mht->mht_buckets = mht->mht_small_buckets;
@@ -1203,8 +1150,7 @@ mf_hashtab_T *mht;
  * Free the array of a hash table.  Does not free the items it contains!
  * The hash table must not be used again without another mf_hash_init() call.
  */
-static void mf_hash_free(mht)
-mf_hashtab_T *mht;
+static void mf_hash_free(mf_hashtab_T *mht)
 {
   if (mht->mht_buckets != mht->mht_small_buckets)
     vim_free(mht->mht_buckets);
@@ -1213,8 +1159,7 @@ mf_hashtab_T *mht;
 /*
  * Free the array of a hash table and all the items it contains.
  */
-static void mf_hash_free_all(mht)
-mf_hashtab_T    *mht;
+static void mf_hash_free_all(mf_hashtab_T *mht)
 {
   long_u idx;
   mf_hashitem_T   *mhi;
@@ -1233,9 +1178,7 @@ mf_hashtab_T    *mht;
  * Find "key" in hashtable "mht".
  * Returns a pointer to a mf_hashitem_T or NULL if the item was not found.
  */
-static mf_hashitem_T * mf_hash_find(mht, key)
-mf_hashtab_T    *mht;
-blocknr_T key;
+static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
 {
   mf_hashitem_T   *mhi;
 
@@ -1250,9 +1193,7 @@ blocknr_T key;
  * Add item "mhi" to hashtable "mht".
  * "mhi" must not be NULL.
  */
-static void mf_hash_add_item(mht, mhi)
-mf_hashtab_T    *mht;
-mf_hashitem_T   *mhi;
+static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
   long_u idx;
 
@@ -1282,9 +1223,7 @@ mf_hashitem_T   *mhi;
  * Remove item "mhi" from hashtable "mht".
  * "mhi" must not be NULL and must have been inserted into "mht".
  */
-static void mf_hash_rem_item(mht, mhi)
-mf_hashtab_T    *mht;
-mf_hashitem_T   *mhi;
+static void mf_hash_rem_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
   if (mhi->mhi_prev == NULL)
     mht->mht_buckets[mhi->mhi_key & mht->mht_mask] = mhi->mhi_next;
@@ -1305,8 +1244,7 @@ mf_hashitem_T   *mhi;
  * rehash items.
  * Returns FAIL when out of memory.
  */
-static int mf_hash_grow(mht)
-mf_hashtab_T    *mht;
+static int mf_hash_grow(mf_hashtab_T *mht)
 {
   long_u i, j;
   int shift;
