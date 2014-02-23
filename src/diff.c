@@ -926,7 +926,7 @@ void ex_diffthis(exarg_T *eap UNUSED)
 /*
  * Set options in window "wp" for diff mode.
  */
-void diff_win_options(win_T wp, int addbuf /* Add buffer to diff. */)
+void diff_win_options(win_T *wp, int addbuf /* Add buffer to diff. */)
 {
   win_T *old_curwin = curwin;
 
@@ -2128,7 +2128,7 @@ int diff_move_to(int dir, long count)
   return OK;
 }
 
-linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1, buf_T *buf2, linenr_T *lnum3)
+linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1, buf_T *buf2, linenr_T lnum3)
 {
   int idx1;
   int idx2;
