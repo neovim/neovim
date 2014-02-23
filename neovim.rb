@@ -11,5 +11,6 @@ class Neovim < Formula
 
   def install
     system "make", "PREFIX=#{prefix}", "cmake"
+    system "make", "PREFIX=#{prefix}"
   end
 end
