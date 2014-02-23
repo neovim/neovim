@@ -566,7 +566,7 @@ long count;
 
 
     /* Open fold at the cursor line, according to 'foldopen'. */
-    if (fdo_flags & FDO_INSERT)
+    if (foldoption_insert())
       foldOpenCursor();
     /* Close folds where the cursor isn't, according to 'foldclose' */
     if (!char_avail())
@@ -6045,7 +6045,7 @@ int upd_topline;                    /* When TRUE: update topline */
         /* If we entered a fold, move to the beginning, unless in
          * Insert mode or when 'foldopen' contains "all": it will open
          * in a moment. */
-        if (n > 0 || !((State & INSERT) || (fdo_flags & FDO_ALL)))
+        if (n > 0 || !((State & INSERT) || foldoption_all()))
           (void)hasFolding(lnum, &lnum, NULL);
       }
       if (lnum < 1)
@@ -7692,7 +7692,7 @@ int dir;
 static void ins_left()                 {
   pos_T tpos;
 
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  if (foldoption_hor() && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
   tpos = curwin->w_cursor;
@@ -7721,7 +7721,7 @@ int c;
 {
   pos_T tpos;
 
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  if (foldoption_hor() && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
   tpos = curwin->w_cursor;
@@ -7738,7 +7738,7 @@ int c;
 {
   pos_T tpos;
 
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  if (foldoption_hor() && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
   tpos = curwin->w_cursor;
@@ -7751,7 +7751,7 @@ int c;
 }
 
 static void ins_s_left()                 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  if (foldoption_hor() && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
   if (curwin->w_cursor.lnum > 1 || curwin->w_cursor.col > 0) {
@@ -7763,7 +7763,7 @@ static void ins_s_left()                 {
 }
 
 static void ins_right()                 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  if (foldoption_hor() && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
   if (gchar_cursor() != NUL
@@ -7797,7 +7797,7 @@ static void ins_right()                 {
 }
 
 static void ins_s_right()                 {
-  if ((fdo_flags & FDO_HOR) && KeyTyped)
+  if (foldoption_hor() && KeyTyped)
     foldOpenCursor();
   undisplay_dollar();
   if (curwin->w_cursor.lnum < curbuf->b_ml.ml_line_count

@@ -1916,6 +1916,18 @@ static int opt_strings_flags __ARGS((char_u *val, char **values,
 static int check_opt_strings __ARGS((char_u *val, char **values, int));
 static int check_opt_wim __ARGS((void));
 
+bool foldoption_all()      { return fdo_flags & FDO_ALL;      }
+bool foldoption_block()    { return fdo_flags & FDO_BLOCK;    }
+bool foldoption_hor()      { return fdo_flags & FDO_HOR;      }
+bool foldoption_mark()     { return fdo_flags & FDO_MARK;     }
+bool foldoption_percent()  { return fdo_flags & FDO_PERCENT;  }
+bool foldoption_quickfix() { return fdo_flags & FDO_QUICKFIX; }
+bool foldoption_search()   { return fdo_flags & FDO_SEARCH;   }
+bool foldoption_tag()      { return fdo_flags & FDO_TAG;      }
+bool foldoption_insert()   { return fdo_flags & FDO_INSERT;   }
+bool foldoption_undo()     { return fdo_flags & FDO_UNDO;     }
+bool foldoption_jump()     { return fdo_flags & FDO_JUMP;     }
+
 /*
  * Initialize the options, first part.
  *

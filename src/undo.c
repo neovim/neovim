@@ -2352,7 +2352,7 @@ int absolute;                   /* used ":undo N" */
   u_header_T  *uhp;
   char_u msgbuf[80];
 
-  if ((fdo_flags & FDO_UNDO) && KeyTyped)
+  if (foldoption_undo() && KeyTyped)
     foldOpenCursor();
 
   if (global_busy           /* no messages now, wait until global is finished */

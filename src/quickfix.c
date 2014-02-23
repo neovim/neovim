@@ -1677,7 +1677,7 @@ win_found:
         curwin->w_cursor = save_cursor;
     }
 
-    if ((fdo_flags & FDO_QUICKFIX) && old_KeyTyped)
+    if (foldoption_quickfix() && old_KeyTyped)
       foldOpenCursor();
     if (print_message) {
       /* Update the screen before showing the message, unless the screen

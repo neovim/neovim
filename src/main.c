@@ -90,6 +90,9 @@ static void exe_pre_commands __ARGS((mparm_T *parmp));
 static void exe_commands __ARGS((mparm_T *parmp));
 static void source_startup_scripts __ARGS((mparm_T *parmp));
 static void main_start_gui __ARGS((void));
+static void check_stuff_empty __ARGS((void));
+static bool reset_got_int __ARGS((bool previous_got_int, int noexmode));
+static void update_cursor_and_redraw __ARGS((void));
 # if defined(HAS_SWAP_EXISTS_ACTION)
 static void check_swap_exists_action __ARGS((void));
 # endif
@@ -544,52 +547,18 @@ void main_loop(cmdwin, noexmode)
   int noexmode;               /* TRUE when return on entering Ex mode */
 {
   oparg_T oa;                                   /* operator arguments */
-  int previous_got_int = FALSE;                 /* "got_int" was TRUE */
-  linenr_T conceal_old_cursor_line = 0;
-  linenr_T conceal_new_cursor_line = 0;
-  int conceal_update_lines = FALSE;
-
+  bool previous_got_int = false;                 /* "got_int" was TRUE */
 
   clear_oparg(&oa);
-  while (!cmdwin
-      || cmdwin_result == 0
-      ) {
-    if (stuff_empty()) {
-      did_check_timestamps = FALSE;
-      if (need_check_timestamps)
-        check_timestamps(FALSE);
-      if (need_wait_return)             /* if wait_return still needed ... */
-        wait_return(FALSE);             /* ... call it now */
-      if (need_start_insertmode && goto_im()
-          && !VIsual_active
-         ) {
-        need_start_insertmode = FALSE;
-        stuffReadbuff((char_u *)"i");           /* start insert mode next */
-        /* skip the fileinfo message now, because it would be shown
-         * after insert mode finishes! */
-        need_fileinfo = FALSE;
-      }
-    }
+  while (!cmdwin || cmdwin_result == 0) {
+    check_stuff_empty();
 
     /* Reset "got_int" now that we got back to the main loop.  Except when
      * inside a ":g/pat/cmd" command, then the "got_int" needs to abort
      * the ":g" command.
      * For ":g/pat/vi" we reset "got_int" when used once.  When used
      * a second time we go back to Ex mode and abort the ":g" command. */
-    if (got_int) {
-      if (noexmode && global_busy && !exmode_active && previous_got_int) {
-        /* Typed two CTRL-C in a row: go back to ex mode as if "Q" was
-         * used and keep "got_int" set, so that it aborts ":g". */
-        exmode_active = EXMODE_NORMAL;
-        State = NORMAL;
-      } else if (!global_busy || !exmode_active)   {
-        if (!quit_more)
-          (void)vgetc();                        /* flush all buffers */
-        got_int = FALSE;
-      }
-      previous_got_int = TRUE;
-    } else
-      previous_got_int = FALSE;
+    previous_got_int = reset_got_int(previous_got_int, noexmode);
 
     if (!exmode_active)
       msg_scroll = FALSE;
@@ -602,120 +571,8 @@ void main_loop(cmdwin, noexmode)
      */
     if (skip_redraw || exmode_active)
       skip_redraw = FALSE;
-    else if (do_redraw || stuff_empty()) {
-      /* Trigger CursorMoved if the cursor moved. */
-      if (!finish_op && (
-            has_cursormoved()
-            ||
-            curwin->w_p_cole > 0
-            )
-          && !equalpos(last_cursormoved, curwin->w_cursor)) {
-        if (has_cursormoved())
-          apply_autocmds(EVENT_CURSORMOVED, NULL, NULL,
-              FALSE, curbuf);
-        if (curwin->w_p_cole > 0) {
-          conceal_old_cursor_line = last_cursormoved.lnum;
-          conceal_new_cursor_line = curwin->w_cursor.lnum;
-          conceal_update_lines = TRUE;
-        }
-        last_cursormoved = curwin->w_cursor;
-      }
-
-      /* Trigger TextChanged if b_changedtick differs. */
-      if (!finish_op && has_textchanged()
-          && last_changedtick != curbuf->b_changedtick) {
-        if (last_changedtick_buf == curbuf)
-          apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL,
-              FALSE, curbuf);
-        last_changedtick_buf = curbuf;
-        last_changedtick = curbuf->b_changedtick;
-      }
-
-      /* Scroll-binding for diff mode may have been postponed until
-       * here.  Avoids doing it for every change. */
-      if (diff_need_scrollbind) {
-        check_scrollbind((linenr_T)0, 0L);
-        diff_need_scrollbind = FALSE;
-      }
-      /* Include a closed fold completely in the Visual area. */
-      foldAdjustVisual();
-      /*
-       * When 'foldclose' is set, apply 'foldlevel' to folds that don't
-       * contain the cursor.
-       * When 'foldopen' is "all", open the fold(s) under the cursor.
-       * This may mark the window for redrawing.
-       */
-      if (hasAnyFolding(curwin) && !char_avail()) {
-        foldCheckClose();
-        if (fdo_flags & FDO_ALL)
-          foldOpenCursor();
-      }
-
-      /*
-       * Before redrawing, make sure w_topline is correct, and w_leftcol
-       * if lines don't wrap, and w_skipcol if lines wrap.
-       */
-      update_topline();
-      validate_cursor();
-
-      if (VIsual_active)
-        update_curbuf(INVERTED);        /* update inverted part */
-      else if (must_redraw)
-        update_screen(0);
-      else if (redraw_cmdline || clear_cmdline)
-        showmode();
-      redraw_statuslines();
-      if (need_maketitle)
-        maketitle();
-      /* display message after redraw */
-      if (keep_msg != NULL) {
-        char_u *p;
-
-        /* msg_attr_keep() will set keep_msg to NULL, must free the
-         * string here. */
-        p = keep_msg;
-        keep_msg = NULL;
-        msg_attr(p, keep_msg_attr);
-        vim_free(p);
-      }
-      if (need_fileinfo) {              /* show file info after redraw */
-        fileinfo(FALSE, TRUE, FALSE);
-        need_fileinfo = FALSE;
-      }
-
-      emsg_on_display = FALSE;          /* can delete error message now */
-      did_emsg = FALSE;
-      msg_didany = FALSE;               /* reset lines_left in msg_start() */
-      may_clear_sb_text();              /* clear scroll-back text on next msg */
-      showruler(FALSE);
-
-      if (conceal_update_lines
-          && (conceal_old_cursor_line != conceal_new_cursor_line
-            || conceal_cursor_line(curwin)
-            || need_cursor_line_redraw)) {
-        if (conceal_old_cursor_line != conceal_new_cursor_line
-            && conceal_old_cursor_line
-            <= curbuf->b_ml.ml_line_count)
-          update_single_line(curwin, conceal_old_cursor_line);
-        update_single_line(curwin, conceal_new_cursor_line);
-        curwin->w_valid &= ~VALID_CROW;
-      }
-      setcursor();
-      cursor_on();
-
-      do_redraw = FALSE;
-
-#ifdef STARTUPTIME
-      /* Now that we have drawn the first screen all the startup stuff
-       * has been done, close any file for startup messages. */
-      if (time_fd != NULL) {
-        TIME_MSG("first screen update");
-        TIME_MSG("--- VIM STARTED ---");
-        fclose(time_fd);
-        time_fd = NULL;
-      }
-#endif
-    }
+    else if (do_redraw || stuff_empty())
+      update_cursor_and_redraw();
 
     /*
      * Update w_curswant if w_set_curswant has been set.
@@ -739,12 +596,166 @@ void main_loop(cmdwin, noexmode)
       if (noexmode)         /* End of ":global/path/visual" commands */
         return;
       do_exmode(exmode_active == EXMODE_VIM);
-    } else
+    } else {
       normal_cmd(&oa, TRUE);
+    }
   }
 }
 
+static void check_stuff_empty() {
+  if (stuff_empty()) {
+    did_check_timestamps = FALSE;
+    if (need_check_timestamps)
+      check_timestamps(FALSE);
+    if (need_wait_return)             /* if wait_return still needed ... */
+      wait_return(FALSE);             /* ... call it now */
+    if (need_start_insertmode && goto_im() && !VIsual_active) {
+      need_start_insertmode = FALSE;
+      stuffReadbuff((char_u *)"i");           /* start insert mode next */
+      /* skip the fileinfo message now, because it would be shown
+       * after insert mode finishes! */
+      need_fileinfo = FALSE;
+    }
+  }
+}
 
+static bool reset_got_int(previous_got_int, noexmode)
+  bool previous_got_int;
+  int noexmode;
+{
+  if (got_int) {
+    if (noexmode && global_busy && !exmode_active && previous_got_int) {
+      /* Typed two CTRL-C in a row: go back to ex mode as if "Q" was
+       * used and keep "got_int" set, so that it aborts ":g". */
+      exmode_active = EXMODE_NORMAL;
+      State = NORMAL;
+    } else if (!global_busy || !exmode_active)   {
+      if (!quit_more)
+        (void)vgetc();                        /* flush all buffers */
+      got_int = FALSE;
+    }
+    return true;
+  }
+  return false;
+}
+
+static void update_cursor_and_redraw() {
+  linenr_T conceal_old_cursor_line = 0;
+  linenr_T conceal_new_cursor_line = 0;
+  bool conceal_update_lines = false;
+
+  /* Trigger CursorMoved if the cursor moved. */
+  if (!finish_op
+      && (has_cursormoved() || curwin->w_p_cole > 0)
+      && !equalpos(last_cursormoved, curwin->w_cursor)) {
+    if (has_cursormoved())
+      apply_autocmds(EVENT_CURSORMOVED, NULL, NULL, FALSE, curbuf);
+    if (curwin->w_p_cole > 0) {
+      conceal_old_cursor_line = last_cursormoved.lnum;
+      conceal_new_cursor_line = curwin->w_cursor.lnum;
+      conceal_update_lines = true;
+    }
+    last_cursormoved = curwin->w_cursor;
+  }
+
+  /* Trigger TextChanged if b_changedtick differs. */
+  if (!finish_op && has_textchanged() && last_changedtick != curbuf->b_changedtick) {
+    if (last_changedtick_buf == curbuf)
+      apply_autocmds(EVENT_TEXTCHANGED, NULL, NULL, FALSE, curbuf);
+    last_changedtick_buf = curbuf;
+    last_changedtick = curbuf->b_changedtick;
+  }
+
+  /* Scroll-binding for diff mode may have been postponed until
+   * here.  Avoids doing it for every change. */
+  if (diff_need_scrollbind) {
+    check_scrollbind((linenr_T)0, 0L);
+    diff_need_scrollbind = FALSE;
+  }
+
+  /* Include a closed fold completely in the Visual area. */
+  foldAdjustVisual();
+
+  /*
+   * When 'foldclose' is set, apply 'foldlevel' to folds that don't
+   * contain the cursor.
+   * When 'foldopen' is "all", open the fold(s) under the cursor.
+   * This may mark the window for redrawing.
+   */
+  if (hasAnyFolding(curwin) && !char_avail()) {
+    foldCheckClose();
+    if (foldoption_all())
+      foldOpenCursor();
+  }
+
+  /*
+   * Before redrawing, make sure w_topline is correct, and w_leftcol
+   * if lines don't wrap, and w_skipcol if lines wrap.
+   */
+  update_topline();
+  validate_cursor();
+
+  if (VIsual_active)
+    update_curbuf(INVERTED);        /* update inverted part */
+  else if (must_redraw)
+    update_screen(0);
+  else if (redraw_cmdline || clear_cmdline)
+    showmode();
+
+  redraw_statuslines();
+
+  if (need_maketitle)
+    maketitle();
+
+  /* display message after redraw */
+  if (keep_msg != NULL) {
+    char_u *p;
+
+    /* msg_attr_keep() will set keep_msg to NULL, must free the
+     * string here. */
+    p = keep_msg;
+    keep_msg = NULL;
+    msg_attr(p, keep_msg_attr);
+    vim_free(p);
+  }
+  if (need_fileinfo) {              /* show file info after redraw */
+    fileinfo(FALSE, TRUE, FALSE);
+    need_fileinfo = FALSE;
+  }
+
+  emsg_on_display = FALSE;          /* can delete error message now */
+  did_emsg = FALSE;
+  msg_didany = FALSE;               /* reset lines_left in msg_start() */
+  may_clear_sb_text();              /* clear scroll-back text on next msg */
+  showruler(FALSE);
+
+  if (conceal_update_lines &&
+      (conceal_old_cursor_line != conceal_new_cursor_line
+       || conceal_cursor_line(curwin)
+       || need_cursor_line_redraw)) {
+    if (conceal_old_cursor_line != conceal_new_cursor_line
+        && conceal_old_cursor_line <= curbuf->b_ml.ml_line_count) {
+      update_single_line(curwin, conceal_old_cursor_line);
+    }
+    update_single_line(curwin, conceal_new_cursor_line);
+    curwin->w_valid &= ~VALID_CROW;
+  }
+  setcursor();
+  cursor_on();
+
+  do_redraw = FALSE;
+
+#ifdef STARTUPTIME
+  /* Now that we have drawn the first screen all the startup stuff
+   * has been done, close any file for startup messages. */
+  if (time_fd != NULL) {
+    TIME_MSG("first screen update");
+    TIME_MSG("--- VIM STARTED ---");
+    fclose(time_fd);
+    time_fd = NULL;
+  }
+#endif
+}
 
 
 /* Exit properly */
