@@ -45,7 +45,7 @@ static int selinux_enabled = -1;
 
 
 #if defined(HAVE_SELECT)
-extern int select __ARGS((int, fd_set *, fd_set *, fd_set *, struct timeval *));
+extern int select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 #endif
 
 
@@ -70,49 +70,49 @@ extern int select __ARGS((int, fd_set *, fd_set *, fd_set *, struct timeval *));
 #endif
 
 
-static int get_x11_title __ARGS((int));
-static int get_x11_icon __ARGS((int));
+static int get_x11_title(int);
+static int get_x11_icon(int);
 
 static char_u   *oldtitle = NULL;
 static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
 
-static void may_core_dump __ARGS((void));
+static void may_core_dump(void);
 
 #ifdef HAVE_UNION_WAIT
 typedef union wait waitstatus;
 #else
 typedef int waitstatus;
 #endif
-static pid_t wait4pid __ARGS((pid_t, waitstatus *));
+static pid_t wait4pid(pid_t, waitstatus *);
 
-static int WaitForChar __ARGS((long));
-static int RealWaitForChar __ARGS((int, long, int *));
+static int WaitForChar(long);
+static int RealWaitForChar(int, long, int *);
 
 
-static void handle_resize __ARGS((void));
+static void handle_resize(void);
 
 #if defined(SIGWINCH)
-static RETSIGTYPE sig_winch __ARGS(SIGPROTOARG);
+static RETSIGTYPE sig_winch SIGPROTOARG;
 #endif
 #if defined(SIGINT)
-static RETSIGTYPE catch_sigint __ARGS(SIGPROTOARG);
+static RETSIGTYPE catch_sigint SIGPROTOARG;
 #endif
 #if defined(SIGPWR)
-static RETSIGTYPE catch_sigpwr __ARGS(SIGPROTOARG);
+static RETSIGTYPE catch_sigpwr SIGPROTOARG;
 #endif
-static RETSIGTYPE deathtrap __ARGS(SIGPROTOARG);
+static RETSIGTYPE deathtrap SIGPROTOARG;
 
-static void catch_int_signal __ARGS((void));
-static void set_signals __ARGS((void));
-static void catch_signals __ARGS(
-    (RETSIGTYPE (*func_deadly)(), RETSIGTYPE (*func_other)()));
-static int have_wildcard __ARGS((int, char_u **));
-static int have_dollars __ARGS((int, char_u **));
+static void catch_int_signal(void);
+static void set_signals(void);
+static void catch_signals
+    (RETSIGTYPE (*func_deadly)(), RETSIGTYPE (*func_other)());
+static int have_wildcard(int, char_u **);
+static int have_dollars(int, char_u **);
 
-static int save_patterns __ARGS((int num_pat, char_u **pat, int *num_file,
-                                 char_u ***file));
+static int save_patterns(int num_pat, char_u **pat, int *num_file,
+                         char_u ***file);
 
 #ifndef SIG_ERR
 # define SIG_ERR        ((RETSIGTYPE (*)())-1)
@@ -501,7 +501,7 @@ int ignoreinput;
  * Return a pointer to an item on the stack.  Used to find out if the stack
  * grows up or down.
  */
-static void check_stack_growth __ARGS((char *p));
+static void check_stack_growth(char *p);
 static int stack_grows_downwards;
 
 /*
@@ -610,7 +610,7 @@ static stack_t sigstk;                  /* for sigaltstack() */
 static struct sigstack sigstk;          /* for sigstack() */
 # endif
 
-static void init_signal_stack __ARGS((void));
+static void init_signal_stack(void);
 static char *signal_stack;
 
 static void init_signal_stack()                 {
@@ -860,7 +860,7 @@ deathtrap SIGDEFARG(sigarg) {
  * volatile because it is used in signal handler sigcont_handler().
  */
 static volatile int sigcont_received;
-static RETSIGTYPE sigcont_handler __ARGS(SIGPROTOARG);
+static RETSIGTYPE sigcont_handler SIGPROTOARG;
 
 /*
  * signal handler for SIGCONT
@@ -1362,7 +1362,7 @@ long mch_get_pid()          {
 }
 
 #if !defined(HAVE_STRERROR) && defined(USE_GETCWD)
-static char *strerror __ARGS((int));
+static char *strerror(int);
 
 static char * strerror(err)
 int err;
@@ -1728,7 +1728,7 @@ char_u *name;
 #endif
 }
 
-static int executable_file __ARGS((char_u *name));
+static int executable_file(char_u *name);
 
 /*
  * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
@@ -1852,7 +1852,7 @@ void mch_free_mem()          {
 
 #endif
 
-static void exit_scroll __ARGS((void));
+static void exit_scroll(void);
 
 /*
  * Output a newline when exiting.
@@ -3844,10 +3844,10 @@ const char *src, *dest;
 
 
 #if defined(FEAT_LIBCALL) || defined(PROTO)
-typedef char_u * (*STRPROCSTR) __ARGS ((char_u *));
-typedef char_u * (*INTPROCSTR) __ARGS ((int));
-typedef int (*STRPROCINT) __ARGS ((char_u *));
-typedef int (*INTPROCINT) __ARGS ((int));
+typedef char_u * (*STRPROCSTR)(char_u *);
+typedef char_u * (*INTPROCSTR)(int);
+typedef int (*STRPROCINT)(char_u *);
+typedef int (*INTPROCINT)(int);
 
 /*
  * Call a DLL routine which takes either a string or int param

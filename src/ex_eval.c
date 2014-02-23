@@ -14,9 +14,9 @@
 #include "vim.h"
 
 
-static void free_msglist __ARGS((struct msglist *l));
-static int throw_exception __ARGS((void *, int, char_u *));
-static char_u   *get_end_emsg __ARGS((struct condstack *cstack));
+static void free_msglist(struct msglist *l);
+static int throw_exception(void *, int, char_u *);
+static char_u   *get_end_emsg(struct condstack *cstack);
 
 /*
  * Exception handling terms:
@@ -57,10 +57,10 @@ static char_u   *get_end_emsg __ARGS((struct condstack *cstack));
 # define THROW_ON_INTERRUPT     TRUE
 # define THROW_ON_INTERRUPT_TRUE
 
-static void catch_exception __ARGS((except_T *excp));
-static void finish_exception __ARGS((except_T *excp));
-static void discard_exception __ARGS((except_T *excp, int was_finished));
-static void report_pending __ARGS((int action, int pending, void *value));
+static void catch_exception(except_T *excp);
+static void finish_exception(except_T *excp);
+static void discard_exception(except_T *excp, int was_finished);
+static void report_pending(int action, int pending, void *value);
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until

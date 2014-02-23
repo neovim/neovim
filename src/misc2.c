@@ -16,8 +16,8 @@ static char_u   *username = NULL; /* cached result of mch_get_user_name() */
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
 
-static int coladvance2 __ARGS((pos_T *pos, int addspaces, int finetune,
-                               colnr_T wcol));
+static int coladvance2(pos_T *pos, int addspaces, int finetune,
+                       colnr_T wcol);
 
 /*
  * Return TRUE if in the current mode we need to use virtual.
@@ -574,10 +574,10 @@ static long_u mem_peak;
 static long_u num_alloc;
 static long_u num_freed;
 
-static void mem_pre_alloc_s __ARGS((size_t *sizep));
-static void mem_pre_alloc_l __ARGS((long_u *sizep));
-static void mem_post_alloc __ARGS((void **pp, size_t size));
-static void mem_pre_free __ARGS((void **pp));
+static void mem_pre_alloc_s(size_t *sizep);
+static void mem_pre_alloc_l(long_u *sizep);
+static void mem_post_alloc(void **pp, size_t size);
+static void mem_pre_free(void **pp);
 
 static void mem_pre_alloc_s(sizep)
 size_t *sizep;
@@ -855,7 +855,7 @@ long_u size;
 
 #if defined(EXITFREE) || defined(PROTO)
 
-static void free_findfile __ARGS((void));
+static void free_findfile(void);
 
 /*
  * Free everything that we allocated.
@@ -3099,7 +3099,7 @@ int mouse;
 typedef unsigned short ush;     /* unsigned 16-bit value */
 typedef unsigned long ulg;      /* unsigned 32-bit value */
 
-static void make_crc_tab __ARGS((void));
+static void make_crc_tab(void);
 
 static ulg crc_32_tab[256];
 
@@ -3529,20 +3529,19 @@ typedef struct ff_search_ctx_T {
 } ff_search_ctx_T;
 
 /* locally needed functions */
-static int ff_check_visited __ARGS((ff_visited_T **, char_u *, char_u *));
-static void vim_findfile_free_visited_list __ARGS(
-    (ff_visited_list_hdr_T **list_headp));
-static void ff_free_visited_list __ARGS((ff_visited_T *vl));
-static ff_visited_list_hdr_T* ff_get_visited_list __ARGS(
-    (char_u *, ff_visited_list_hdr_T **list_headp));
-static int ff_wc_equal __ARGS((char_u *s1, char_u *s2));
+static int ff_check_visited(ff_visited_T **, char_u *, char_u *);
+static void vim_findfile_free_visited_list(ff_visited_list_hdr_T **list_headp);
+static void ff_free_visited_list(ff_visited_T *vl);
+static ff_visited_list_hdr_T* ff_get_visited_list
+    (char_u *, ff_visited_list_hdr_T **list_headp);
+static int ff_wc_equal(char_u *s1, char_u *s2);
 
-static void ff_push __ARGS((ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr));
-static ff_stack_T *ff_pop __ARGS((ff_search_ctx_T *search_ctx));
-static void ff_clear __ARGS((ff_search_ctx_T *search_ctx));
-static void ff_free_stack_element __ARGS((ff_stack_T *stack_ptr));
-static ff_stack_T *ff_create_stack_element __ARGS((char_u *, char_u *, int, int));
-static int ff_path_in_stoplist __ARGS((char_u *, int, char_u **));
+static void ff_push(ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr);
+static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx);
+static void ff_clear(ff_search_ctx_T *search_ctx);
+static void ff_free_stack_element(ff_stack_T *stack_ptr);
+static ff_stack_T *ff_create_stack_element(char_u *, char_u *, int, int);
+static int ff_path_in_stoplist(char_u *, int, char_u **);
 
 static char_u e_pathtoolong[] = N_("E854: path too long for completion");
 
@@ -5017,7 +5016,7 @@ void qsort(base, elm_count, elm_size, cmp)
 void        *base;
 size_t elm_count;
 size_t elm_size;
-int (*cmp)__ARGS((const void *, const void *));
+int (*cmp)(const void *, const void *);
 {
   char_u      *buf;
   char_u      *p1;
@@ -5051,7 +5050,7 @@ int (*cmp)__ARGS((const void *, const void *));
  * Sort an array of strings.
  */
 static int
-sort_compare __ARGS((const void *s1, const void *s2));
+sort_compare(const void *s1, const void *s2);
 
 static int sort_compare(s1, s2)
 const void  *s1;
@@ -5170,9 +5169,9 @@ static int envsize = -1;        /* current size of environment */
 extern
 char **environ;                 /* the global which is your env. */
 
-static int findenv __ARGS((char *name));  /* look for a name in the env. */
-static int newenv __ARGS((void));       /* copy env. from stack to heap */
-static int moreenv __ARGS((void));      /* incr. size of env. */
+static int findenv(char *name);  /* look for a name in the env. */
+static int newenv(void);       /* copy env. from stack to heap */
+static int moreenv(void);      /* incr. size of env. */
 
 int putenv(string)
 const char *string;

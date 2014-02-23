@@ -14,20 +14,19 @@
 #include "vim.h"
 #include "version.h"
 
-static int linelen __ARGS((int *has_tab));
-static void do_filter __ARGS((linenr_T line1, linenr_T line2, exarg_T *eap,
-                              char_u *cmd, int do_in,
-                              int do_out));
-static char_u *viminfo_filename __ARGS((char_u  *));
-static void do_viminfo __ARGS((FILE *fp_in, FILE *fp_out, int flags));
-static int viminfo_encoding __ARGS((vir_T *virp));
-static int read_viminfo_up_to_marks __ARGS((vir_T *virp, int forceit,
-                                            int writing));
+static int linelen(int *has_tab);
+static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap,
+                      char_u *cmd, int do_in,
+                      int do_out);
+static char_u *viminfo_filename(char_u  *);
+static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags);
+static int viminfo_encoding(vir_T *virp);
+static int read_viminfo_up_to_marks(vir_T *virp, int forceit,
+                                    int writing);
 
-static int check_readonly __ARGS((int *forceit, buf_T *buf));
-static void delbuf_msg __ARGS((char_u *name));
-static int
-help_compare __ARGS((const void *s1, const void *s2));
+static int check_readonly(int *forceit, buf_T *buf);
+static void delbuf_msg(char_u *name);
+static int help_compare(const void *s1, const void *s2);
 
 /*
  * ":ascii" and "ga".
@@ -250,7 +249,7 @@ typedef struct {
 } sorti_T;
 
 static int
-sort_compare __ARGS((const void *s1, const void *s2));
+sort_compare(const void *s1, const void *s2);
 
 static int sort_compare(s1, s2)
 const void  *s1;
@@ -1370,7 +1369,7 @@ char_u      *fname;
 }
 
 
-static int no_viminfo __ARGS((void));
+static int no_viminfo(void);
 static int viminfo_errcnt;
 
 static int no_viminfo()                {
@@ -5346,8 +5345,8 @@ exarg_T     *eap UNUSED;
   do_cmdline_cmd((char_u *)"help normal-index");
 }
 
-static void helptags_one __ARGS((char_u *dir, char_u *ext, char_u *lang,
-                                 int add_help_tags));
+static void helptags_one(char_u *dir, char_u *ext, char_u *lang,
+                         int add_help_tags);
 
 /*
  * ":helptags"

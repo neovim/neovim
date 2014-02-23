@@ -23,7 +23,7 @@
 #include "vim.h"
 
 
-static void sha256_process __ARGS((context_sha256_T *ctx, char_u data[64]));
+static void sha256_process(context_sha256_T *ctx, char_u data[64]);
 
 #define GET_UINT32(n, b, i)                 \
   {                                           \
@@ -264,7 +264,7 @@ char_u digest[32];
   PUT_UINT32(ctx->state[7], digest, 28);
 }
 
-static unsigned int get_some_time __ARGS((void));
+static unsigned int get_some_time(void);
 
 /*
  * Returns hex digest of "buf[buf_len]" in a static array.

@@ -14,7 +14,7 @@
 #include "vim.h"
 #include "version.h"
 
-static void cmd_source __ARGS((char_u *fname, exarg_T *eap));
+static void cmd_source(char_u *fname, exarg_T *eap);
 
 /* Growarray to store info about already sourced scripts.
  * For Unix also store the dev/ino, so that we don't have to stat() each
@@ -363,10 +363,10 @@ static garray_T prof_ga = {0, 0, sizeof(struct debuggy), 4, NULL};
 #define DBG_FUNC        1
 #define DBG_FILE        2
 
-static int dbg_parsearg __ARGS((char_u *arg, garray_T *gap));
-static linenr_T debuggy_find __ARGS((int file,char_u *fname, linenr_T after,
-                                     garray_T *gap,
-                                     int *fp));
+static int dbg_parsearg(char_u *arg, garray_T *gap);
+static linenr_T debuggy_find(int file,char_u *fname, linenr_T after,
+                             garray_T *gap,
+                             int *fp);
 
 /*
  * Parse the arguments of ":profile", ":breakadd" or ":breakdel" and put them
@@ -820,8 +820,8 @@ int count;
 /*
  * Functions for profiling.
  */
-static void script_do_profile __ARGS((scriptitem_T *si));
-static void script_dump_profile __ARGS((FILE *fd));
+static void script_do_profile(scriptitem_T *si);
+static void script_dump_profile(FILE *fd);
 static proftime_T prof_wait_time;
 
 /*
@@ -1311,7 +1311,7 @@ int forceit;
          || forceit;
 }
 
-static void add_bufnum __ARGS((int *bufnrs, int *bufnump, int nr));
+static void add_bufnum(int *bufnrs, int *bufnump, int nr);
 
 /*
  * Add a buffer number to "bufnrs", unless it's already there.
@@ -1474,11 +1474,11 @@ int forceit;
  * Code to handle the argument list.
  */
 
-static char_u   *do_one_arg __ARGS((char_u *str));
-static int do_arglist __ARGS((char_u *str, int what, int after));
-static void alist_check_arg_idx __ARGS((void));
-static int editing_arg_idx __ARGS((win_T *win));
-static int alist_add_list __ARGS((int count, char_u **files, int after));
+static char_u   *do_one_arg(char_u *str);
+static int do_arglist(char_u *str, int what, int after);
+static void alist_check_arg_idx(void);
+static int editing_arg_idx(win_T *win);
+static int alist_add_list(int count, char_u **files, int after);
 #define AL_SET  1
 #define AL_ADD  2
 #define AL_DEL  3
@@ -2222,7 +2222,7 @@ exarg_T     *eap;
   source_runtime(eap->arg, eap->forceit);
 }
 
-static void source_callback __ARGS((char_u *fname, void *cookie));
+static void source_callback(char_u *fname, void *cookie);
 
 static void source_callback(fname, cookie)
 char_u      *fname;
@@ -2258,7 +2258,7 @@ int all;
 int do_in_runtimepath(name, all, callback, cookie)
 char_u      *name;
 int all;
-void        (*callback)__ARGS((char_u *fname, void *ck));
+void        (*callback)(char_u *fname, void *ck);
 void        *cookie;
 {
   char_u      *rtp;
@@ -2430,11 +2430,11 @@ void *cookie;
   return ((struct source_cookie *)cookie)->level;
 }
 
-static char_u *get_one_sourceline __ARGS((struct source_cookie *sp));
+static char_u *get_one_sourceline(struct source_cookie *sp);
 
 #if (defined(WIN32) && defined(FEAT_CSCOPE)) || defined(HAVE_FD_CLOEXEC)
 # define USE_FOPEN_NOINH
-static FILE *fopen_noinh_readbin __ARGS((char *filename));
+static FILE *fopen_noinh_readbin(char *filename);
 
 /*
  * Special function to open a file without handle inheritance.
@@ -3271,7 +3271,7 @@ int reanimate;
  * Return FALSE when not sourcing a file.
  */
 int source_finished(fgetline, cookie)
-char_u      *(*fgetline)__ARGS((int, void *, int));
+char_u      *(*fgetline)(int, void *, int);
 void        *cookie;
 {
   return getline_equal(fgetline, cookie, getsourceline)
@@ -3302,7 +3302,7 @@ exarg_T     *eap;
 #if (defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
   && (defined(FEAT_EVAL) || defined(FEAT_MULTI_LANG))
 # define HAVE_GET_LOCALE_VAL
-static char *get_locale_val __ARGS((int what));
+static char *get_locale_val(int what);
 
 static char * get_locale_val(what)
 int what;
@@ -3350,7 +3350,7 @@ char_u * get_mess_lang()              {
 
 /* Complicated #if; matches with where get_mess_env() is used below. */
 #ifdef HAVE_WORKING_LIBINTL
-static char_u *get_mess_env __ARGS((void));
+static char_u *get_mess_env(void);
 
 /*
  * Get the language used for messages from the environment.
@@ -3513,8 +3513,8 @@ exarg_T     *eap;
 static char_u   **locales = NULL;       /* Array of all available locales */
 static int did_init_locales = FALSE;
 
-static void init_locales __ARGS((void));
-static char_u **find_locales __ARGS((void));
+static void init_locales(void);
+static char_u **find_locales(void);
 
 /*
  * Lazy initialization of all available locales.
