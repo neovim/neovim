@@ -3894,7 +3894,7 @@ int forward;                    /* move forward or backwards */
 
   }
 
-  if (fdo_flags & FDO_SEARCH && KeyTyped)
+  if (foldoption_search() && KeyTyped)
     foldOpenCursor();
 
   may_start_select('c');

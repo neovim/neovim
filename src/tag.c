@@ -283,7 +283,7 @@ int verbose;                    /* print "tag not found" message */
         curwin->w_cursor.col = saved_fmark.mark.col;
         curwin->w_set_curswant = TRUE;
         check_cursor();
-        if ((fdo_flags & FDO_TAG) && old_KeyTyped)
+        if (foldoption_tag() && old_KeyTyped)
           foldOpenCursor();
 
         /* remove the old list of matches */
@@ -2609,7 +2609,7 @@ int keep_help;                  /* keep help flag (FALSE for cscope) */
        */
       if (curbuf->b_help)
         set_topline(curwin, curwin->w_cursor.lnum);
-      if ((fdo_flags & FDO_TAG) && old_KeyTyped)
+      if (foldoption_tag() && old_KeyTyped)
         foldOpenCursor();
     }
 

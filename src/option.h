@@ -381,6 +381,19 @@ static char *(p_fdo_values[]) = {"all", "block", "hor", "mark", "percent",
 # define FDO_INSERT             0x100
 # define FDO_UNDO               0x200
 # define FDO_JUMP               0x400
+
+bool foldoption_all();
+bool foldoption_block();
+bool foldoption_hor();
+bool foldoption_mark();
+bool foldoption_percent();
+bool foldoption_quickfix();
+bool foldoption_search();
+bool foldoption_tag();
+bool foldoption_insert();
+bool foldoption_undo();
+bool foldoption_jump();
+
 EXTERN char_u   *p_fp;          /* 'formatprg' */
 #ifdef HAVE_FSYNC
 EXTERN int p_fs;                /* 'fsync' */

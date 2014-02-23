@@ -3404,7 +3404,7 @@ int thisblock;                  /* 1 for "1gd" and "1gD" */
   if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
       || find_decl(ptr, len, nchar == 'd', thisblock, 0) == FAIL)
     clearopbeep(oap);
-  else if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP)
+  else if (foldoption_search() && KeyTyped && oap->op_type == OP_NOP)
     foldOpenCursor();
 }
 
@@ -3595,7 +3595,7 @@ long dist;
           --curwin->w_cursor.lnum;
           /* Move to the start of a closed fold.  Don't do that when
            * 'foldopen' contains "all": it will open in a moment. */
-          if (!(fdo_flags & FDO_ALL))
+          if (!foldoption_all())
             (void)hasFolding(curwin->w_cursor.lnum,
                 &curwin->w_cursor.lnum, NULL);
           linelen = linetabsize(ml_get_curline());
@@ -4779,7 +4779,7 @@ cmdarg_T    *cap;
       }
     }
   }
-  if (n != cap->count1 && (fdo_flags & FDO_HOR) && KeyTyped
+  if (n != cap->count1 && foldoption_hor() && KeyTyped
       && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
 }
@@ -4841,7 +4841,7 @@ cmdarg_T    *cap;
       break;
     }
   }
-  if (n != cap->count1 && (fdo_flags & FDO_HOR) && KeyTyped
+  if (n != cap->count1 && foldoption_hor() && KeyTyped
       && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
 }
@@ -4967,7 +4967,7 @@ cmdarg_T    *cap;
   if (cursor_down((long)(cap->count1 - 1),
           cap->oap->op_type == OP_NOP) == FAIL)
     clearopbeep(cap->oap);
-  else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
+  else if (foldoption_hor() && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
 }
 
@@ -5034,7 +5034,7 @@ int opt;                        /* extra flags for do_search() */
     if (i == 2)
       cap->oap->motion_type = MLINE;
     curwin->w_cursor.coladd = 0;
-    if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped)
+    if (cap->oap->op_type == OP_NOP && foldoption_search() && KeyTyped)
       foldOpenCursor();
   }
 
@@ -5074,7 +5074,7 @@ cmdarg_T    *cap;
     } else
       curwin->w_cursor.coladd = 0;
     adjust_for_sel(cap);
-    if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
+    if (foldoption_hor() && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
   }
 }
@@ -5238,8 +5238,7 @@ cmdarg_T    *cap;
       setpcmark();
       curwin->w_cursor = *pos;
       curwin->w_set_curswant = TRUE;
-      if ((fdo_flags & FDO_BLOCK) && KeyTyped
-          && cap->oap->op_type == OP_NOP)
+      if (foldoption_block() && KeyTyped && cap->oap->op_type == OP_NOP)
         foldOpenCursor();
     }
   }
@@ -5264,7 +5263,7 @@ cmdarg_T    *cap;
     else {
       if (cap->oap->op_type == OP_NOP)
         beginline(BL_WHITE | BL_FIX);
-      if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP)
+      if (foldoption_block() && KeyTyped && cap->oap->op_type == OP_NOP)
         foldOpenCursor();
     }
   }
@@ -5331,7 +5330,7 @@ cmdarg_T    *cap;
         clearopbeep(cap->oap);
         break;
       }
-    if (cap->oap->op_type == OP_NOP && (fdo_flags & FDO_SEARCH) && KeyTyped)
+    if (cap->oap->op_type == OP_NOP && foldoption_search() && KeyTyped)
       foldOpenCursor();
   }
   /* Not a valid cap->nchar. */
@@ -5382,7 +5381,7 @@ cmdarg_T    *cap;
   }
   if (cap->oap->op_type == OP_NOP
       && lnum != curwin->w_cursor.lnum
-      && (fdo_flags & FDO_PERCENT)
+      && foldoption_percent()
       && KeyTyped)
     foldOpenCursor();
 }
@@ -5406,7 +5405,7 @@ cmdarg_T    *cap;
     /* Don't leave the cursor on the NUL past end of line. */
     adjust_cursor(cap->oap);
     curwin->w_cursor.coladd = 0;
-    if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP)
+    if (foldoption_block() && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
   }
 }
@@ -5438,7 +5437,7 @@ cmdarg_T    *cap;
     clearopbeep(cap->oap);
   else {
     curwin->w_cursor.coladd = 0;
-    if ((fdo_flags & FDO_BLOCK) && KeyTyped && cap->oap->op_type == OP_NOP)
+    if (foldoption_block() && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
   }
 }
@@ -5939,7 +5938,7 @@ cmdarg_T    *cap;
   if (cap->oap->op_type == OP_NOP
       && pos != NULL
       && (pos == (pos_T *)-1 || !equalpos(old_cursor, *pos))
-      && (fdo_flags & FDO_MARK)
+      && foldoption_mark()
       && old_KeyTyped)
     foldOpenCursor();
 }
@@ -5975,7 +5974,7 @@ cmdarg_T    *cap;
       clearopbeep(cap->oap);
     if (cap->oap->op_type == OP_NOP
         && (pos == (pos_T *)-1 || lnum != curwin->w_cursor.lnum)
-        && (fdo_flags & FDO_MARK)
+        && foldoption_mark()
         && old_KeyTyped)
       foldOpenCursor();
   }
@@ -6899,7 +6898,7 @@ cmdarg_T    *cap;
   curwin->w_set_curswant = TRUE;
   if (bck_word(cap->count1, cap->arg, FALSE) == FAIL)
     clearopbeep(cap->oap);
-  else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
+  else if (foldoption_hor() && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
 }
 
@@ -6977,7 +6976,7 @@ cmdarg_T    *cap;
     clearopbeep(cap->oap);
   else {
     adjust_for_sel(cap);
-    if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
+    if (foldoption_hor() && KeyTyped && cap->oap->op_type == OP_NOP)
       foldOpenCursor();
   }
 }
@@ -7017,7 +7016,7 @@ cmdarg_T    *cap;
   cap->oap->motion_type = MCHAR;
   cap->oap->inclusive = FALSE;
   beginline(cap->arg);
-  if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
+  if (foldoption_hor() && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
   ins_at_eol = FALSE;       /* Don't move cursor past eol (only necessary in a
                                one-character line). */
@@ -7107,7 +7106,7 @@ cmdarg_T    *cap;
     lnum = curbuf->b_ml.ml_line_count;
   curwin->w_cursor.lnum = lnum;
   beginline(BL_SOL | BL_FIX);
-  if ((fdo_flags & FDO_JUMP) && KeyTyped && cap->oap->op_type == OP_NOP)
+  if (foldoption_jump() && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
 }
 
