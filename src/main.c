@@ -901,7 +901,7 @@ static void parse_command_name(parmp)
 
   set_vim_var_string(VV_PROGNAME, initstr, -1);
 
-  if (STRNICMP(initstr, "editor", 6) == 0)
+  if (parse_string(&initstr, "editor", 6))
     return;
 
   if (parse_char_i(&initstr, 'r'))
