@@ -2002,7 +2002,7 @@ static int wininfo_other_tab_diff(wininfo_T *wip)
  * another tab page.
  * Returns NULL when there isn't any info.
  */
-static wininfo_T * find_wininfo(buf_T *buf, int skip_diff_buffer)
+static wininfo_T * find_wininfo(buf_T *buf, int skip_diff_buffer UNUSED)
 {
   wininfo_T   *wip;
 
@@ -3613,7 +3613,9 @@ char_u * alist_name(aentry_T *aep)
 /*
  * do_arg_all(): Open up to 'count' windows, one for each argument.
  */
-void do_arg_all(int count, int forceit, int keep_tabs)
+void do_arg_all(int count,
+        int forceit,            /* hide buffers in current windows */
+        int keep_tabs)          /* keep current tabs, for ":tab drop file" */
 {
   int i;
   win_T       *wp, *wpnext;
