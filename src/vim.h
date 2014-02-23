@@ -72,14 +72,6 @@ Error: configure did not run properly.Check auto/config.log.
 # endif
 #endif
 
-/* Mark unused function arguments with UNUSED, so that gcc -Wunused-parameter
- * can be used to check for mistakes. */
-#ifdef HAVE_ATTRIBUTE_UNUSED
-# define UNUSED __attribute__((unused))
-#else
-# define UNUSED
-#endif
-
 # ifdef HAVE_LOCALE_H
 #  include <locale.h>
 # endif

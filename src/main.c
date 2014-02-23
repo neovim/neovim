@@ -116,10 +116,7 @@ static char *(main_errors[]) =
 };
 
 #ifndef NO_VIM_MAIN     /* skip this for unittests */
-  int
-main(argc, argv)
-  int argc;
-  char        **argv;
+  int main(int argc, char **argv)
 {
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
@@ -539,9 +536,11 @@ main(argc, argv)
  * Also used to handle ":visual" command after ":global": execute Normal mode
  * commands, return when entering Ex mode.  "noexmode" is TRUE then.
  */
-void main_loop(cmdwin, noexmode)
-  int cmdwin;                 /* TRUE when working in the command-line window */
-  int noexmode;               /* TRUE when return on entering Ex mode */
+void 
+main_loop (
+    int cmdwin,                 /* TRUE when working in the command-line window */
+    int noexmode               /* TRUE when return on entering Ex mode */
+)
 {
   oparg_T oa;                                   /* operator arguments */
   int previous_got_int = FALSE;                 /* "got_int" was TRUE */
@@ -748,8 +747,7 @@ void main_loop(cmdwin, noexmode)
 
 
 /* Exit properly */
-void getout(exitval)
-  int exitval;
+void getout(int exitval)
 {
   buf_T       *buf;
   win_T       *wp;
@@ -835,10 +833,12 @@ void getout(exitval)
 /*
  * Get a (optional) count for a Vim argument.
  */
-static int get_number_arg(p, idx, def)
-  char_u      *p;             /* pointer to argument */
-  int         *idx;           /* index in argument, is incremented */
-  int def;                    /* default value */
+static int 
+get_number_arg (
+    char_u *p,             /* pointer to argument */
+    int *idx,           /* index in argument, is incremented */
+    int def                    /* default value */
+)
 {
   if (vim_isdigit(p[*idx])) {
     def = atoi((char *)&(p[*idx]));
@@ -852,7 +852,7 @@ static int get_number_arg(p, idx, def)
 /*
  * Setup to use the current locale (for ctype() and many other things).
  */
-static void init_locale()                 {
+static void init_locale(void)                 {
   setlocale(LC_ALL, "");
 
 # if defined(FEAT_FLOAT) && defined(LC_NUMERIC)
@@ -891,8 +891,7 @@ static void init_locale()                 {
  * If the next characters are "ex" we start in Ex mode.  If it's followed
  * by "im" use improved Ex mode.
  */
-static void parse_command_name(parmp)
-  mparm_T     *parmp;
+static void parse_command_name(mparm_T *parmp)
 {
   char_u      *initstr;
 
@@ -961,8 +960,7 @@ static bool parse_string(input, val, len)
 /*
  * Scan the command line arguments.
  */
-static void command_line_scan(parmp)
-  mparm_T     *parmp;
+static void command_line_scan(mparm_T *parmp)
 {
   int argc = parmp->argc;
   char        **argv = parmp->argv;
@@ -1459,10 +1457,7 @@ scripterror:
  * Many variables are in "params" so that we can pass them to invoked
  * functions without a lot of arguments.  "argc" and "argv" are also
  * copied, so that they can be changed. */
-static void init_params(paramp, argc, argv)
-  mparm_T     *paramp;
-  int argc;
-  char        **argv;
+static void init_params(mparm_T *paramp, int argc, char **argv)
 {
   vim_memset(paramp, 0, sizeof(*paramp));
   paramp->argc = argc;
@@ -1475,8 +1470,7 @@ static void init_params(paramp, argc, argv)
 /*
  * Initialize global startuptime file if "--startuptime" passed as an argument.
  */
-static void init_startuptime(paramp)
-  mparm_T     *paramp;
+static void init_startuptime(mparm_T *paramp)
 {
 #ifdef STARTUPTIME
   int i;
@@ -1495,7 +1489,7 @@ static void init_startuptime(paramp)
  * Allocate space for the generic buffers (needed for set_init_1() and
  * EMSG2()).
  */
-static void allocate_generic_buffers()
+static void allocate_generic_buffers(void)
 {
   if ((IObuff = alloc(IOSIZE)) == NULL
       || (NameBuff = alloc(MAXPATHL)) == NULL)
@@ -1509,8 +1503,7 @@ static void allocate_generic_buffers()
  * (needed for :! to * work). mch_check_win() will also handle the -d or
  * -dev argument.
  */
-static void check_and_set_isatty(paramp)
-  mparm_T     *paramp;
+static void check_and_set_isatty(mparm_T *paramp)
 {
   paramp->stdout_isatty = (mch_check_win(paramp->argc, paramp->argv) != FAIL);
   TIME_MSG("window checked");
@@ -1519,8 +1512,7 @@ static void check_and_set_isatty(paramp)
 /*
  * Get filename from command line, given that there is one.
  */
-static char_u* get_fname(parmp)
-  mparm_T     *parmp;
+static char_u *get_fname(mparm_T *parmp)
 {
 #if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE)
   /*
@@ -1541,8 +1533,7 @@ static char_u* get_fname(parmp)
 /*
  * Decide about window layout for diff mode after reading vimrc.
  */
-static void set_window_layout(paramp)
-  mparm_T     *paramp;
+static void set_window_layout(mparm_T *paramp)
 {
   if (paramp->diff_mode && paramp->window_layout == 0) {
     if (diffopt_horizontal())
@@ -1556,7 +1547,7 @@ static void set_window_layout(paramp)
  * Read all the plugin files.
  * Only when compiled with +eval, since most plugins need it.
  */
-static void load_plugins()
+static void load_plugins(void)
 {
   if (p_lpl) {
     source_runtime((char_u *)"plugin/**/*.vim", TRUE);
@@ -1568,8 +1559,7 @@ static void load_plugins()
  * "-q errorfile": Load the error file now.
  * If the error file can't be read, exit before doing anything else.
  */
-static void handle_quickfix(paramp)
-  mparm_T     *paramp;
+static void handle_quickfix(mparm_T *paramp)
 {
   if (paramp->edit_type == EDIT_QF) {
     if (paramp->use_ef != NULL)
@@ -1588,8 +1578,7 @@ static void handle_quickfix(paramp)
  * Need to jump to the tag before executing the '-c command'.
  * Makes "vim -c '/return' -t main" work.
  */
-static void handle_tag(tagname)
-  char_u      *tagname;
+static void handle_tag(char_u *tagname)
 {
   if (tagname != NULL) {
 #if defined(HAS_SWAP_EXISTS_ACTION)
@@ -1612,8 +1601,7 @@ static void handle_tag(tagname)
  * Print a warning if stdout is not a terminal.
  * When starting in Ex mode and commands come from a file, set Silent mode.
  */
-static void check_tty(parmp)
-  mparm_T     *parmp;
+static void check_tty(mparm_T *parmp)
 {
   int input_isatty;                     /* is active input a terminal? */
 
@@ -1637,7 +1625,7 @@ static void check_tty(parmp)
 /*
  * Read text from stdin.
  */
-static void read_stdin()                 {
+static void read_stdin(void)                 {
   int i;
 
 #if defined(HAS_SWAP_EXISTS_ACTION)
@@ -1667,8 +1655,7 @@ static void read_stdin()                 {
  * Create the requested number of windows and edit buffers in them.
  * Also does recovery if "recoverymode" set.
  */
-static void create_windows(parmp)
-  mparm_T     *parmp UNUSED;
+static void create_windows(mparm_T *parmp)
 {
   int dorewind;
   int done = 0;
@@ -1783,8 +1770,7 @@ static void create_windows(parmp)
  * If opened more than one window, start editing files in the other
  * windows.  make_windows() has already opened the windows.
  */
-static void edit_buffers(parmp)
-  mparm_T     *parmp;
+static void edit_buffers(mparm_T *parmp)
 {
   int arg_idx;                          /* index in argument list */
   int i;
@@ -1886,8 +1872,7 @@ static void edit_buffers(parmp)
 /*
  * Execute the commands from --cmd arguments "cmds[cnt]".
  */
-static void exe_pre_commands(parmp)
-  mparm_T     *parmp;
+static void exe_pre_commands(mparm_T *parmp)
 {
   char_u      **cmds = parmp->pre_commands;
   int cnt = parmp->n_pre_commands;
@@ -1908,8 +1893,7 @@ static void exe_pre_commands(parmp)
 /*
  * Execute "+", "-c" and "-S" arguments.
  */
-static void exe_commands(parmp)
-  mparm_T     *parmp;
+static void exe_commands(mparm_T *parmp)
 {
   int i;
 
@@ -1945,8 +1929,7 @@ static void exe_commands(parmp)
 /*
  * Source startup scripts.
  */
-static void source_startup_scripts(parmp)
-  mparm_T     *parmp;
+static void source_startup_scripts(mparm_T *parmp)
 {
   int i;
 
@@ -2075,7 +2058,7 @@ static void source_startup_scripts(parmp)
 /*
  * Setup to start using the GUI.  Exit with an error when not available.
  */
-static void main_start_gui()                 {
+static void main_start_gui(void)                 {
   mch_errmsg(_(e_nogvim));
   mch_errmsg("\n");
   mch_exit(2);
@@ -2087,9 +2070,11 @@ static void main_start_gui()                 {
  * Get an environment variable, and execute it as Ex commands.
  * Returns FAIL if the environment variable was not executed, OK otherwise.
  */
-int process_env(env, is_viminit)
-  char_u      *env;
-  int is_viminit;             /* when TRUE, called for VIMINIT */
+int 
+process_env (
+    char_u *env,
+    int is_viminit             /* when TRUE, called for VIMINIT */
+)
 {
   char_u      *initstr;
   char_u      *save_sourcing_name;
@@ -2120,8 +2105,7 @@ int process_env(env, is_viminit)
  * Used for ".vimrc" and ".exrc".
  * Use both stat() and lstat() for extra security.
  */
-static int file_owned(fname)
-  char        *fname;
+static int file_owned(char *fname)
 {
   struct stat s;
 # ifdef UNIX
@@ -2141,9 +2125,11 @@ static int file_owned(fname)
 /*
  * Give an error message main_errors["n"] and exit.
  */
-static void mainerr(n, str)
-  int n;                  /* one of the ME_ defines */
-  char_u      *str;       /* extra argument or NULL */
+static void 
+mainerr (
+    int n,                  /* one of the ME_ defines */
+    char_u *str       /* extra argument or NULL */
+)
 {
 #if defined(UNIX) || defined(__EMX__) || defined(VMS)
   reset_signals();              /* kill us with CTRL-C here, if you like */
@@ -2162,8 +2148,7 @@ static void mainerr(n, str)
   mch_exit(1);
 }
 
-void mainerr_arg_missing(str)
-  char_u      *str;
+void mainerr_arg_missing(char_u *str)
 {
   mainerr(ME_ARG_MISSING, str);
 }
@@ -2172,8 +2157,7 @@ void mainerr_arg_missing(str)
 /*
  * print a message with three spaces prepended and '\n' appended.
  */
-static void main_msg(s)
-  char *s;
+static void main_msg(char *s)
 {
   mch_msg("   ");
   mch_msg(s);
@@ -2183,7 +2167,7 @@ static void main_msg(s)
 /*
  * Print messages for "vim -h" or "vim --help" and exit.
  */
-static void usage()                 {
+static void usage(void)                 {
   int i;
   static char *(use[]) =
   {
@@ -2272,7 +2256,7 @@ static void usage()                 {
  * When "Quit" selected, exit Vim.
  * When "Recover" selected, recover the file.
  */
-static void check_swap_exists_action()                 {
+static void check_swap_exists_action(void)                 {
   if (swap_exists_action == SEA_QUIT)
     getout(1);
   handle_swap_exists(NULL);
@@ -2292,8 +2276,7 @@ static struct timeval prev_timeval;
  * Save the previous time before doing something that could nest.
  * set "*tv_rel" to the time elapsed so far.
  */
-void time_push(tv_rel, tv_start)
-  void        *tv_rel, *tv_start;
+void time_push(void *tv_rel, void *tv_start)
 {
   *((struct timeval *)tv_rel) = prev_timeval;
   gettimeofday(&prev_timeval, NULL);
@@ -2314,8 +2297,10 @@ void time_push(tv_rel, tv_start)
  * Note: The arguments are (void *) to avoid trouble with systems that don't
  * have struct timeval.
  */
-void time_pop(tp)
-  void        *tp;        /* actually (struct timeval *) */
+void 
+time_pop (
+    void *tp        /* actually (struct timeval *) */
+)
 {
   prev_timeval.tv_usec -= ((struct timeval *)tp)->tv_usec;
   prev_timeval.tv_sec -= ((struct timeval *)tp)->tv_sec;
@@ -2325,9 +2310,7 @@ void time_pop(tp)
   }
 }
 
-static void time_diff(then, now)
-  struct timeval      *then;
-  struct timeval      *now;
+static void time_diff(struct timeval *then, struct timeval *now)
 {
   long usec;
   long msec;
@@ -2338,10 +2321,12 @@ static void time_diff(then, now)
   fprintf(time_fd, "%03ld.%03ld", msec, usec >= 0 ? usec : usec + 1000L);
 }
 
-void time_msg(mesg, tv_start)
-  char        *mesg;
-  void        *tv_start;      /* only for do_source: start time; actually
+void 
+time_msg (
+    char *mesg,
+    void *tv_start      /* only for do_source: start time; actually
                                  (struct timeval *) */
+)
 {
   static struct timeval start;
   struct timeval now;
