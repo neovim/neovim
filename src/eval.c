@@ -10734,6 +10734,7 @@ typval_T    *rettv;
 #ifdef FEAT_XTERM_SAVE
     "xterm_save",
 #endif
+    "neovim",
     NULL
   };
 
