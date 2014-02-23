@@ -174,9 +174,9 @@ and what is currently being worked on:
 
 ###Dependencies
 
-For Ubuntu 12.04:
+For Debian/Ubuntu:
 
-    sudo apt-get install build-essential cmake libncurses5-dev
+    sudo apt-get install libtool autoconf cmake libncurses5-dev g++
 
 For FreeBSD 10:
 
@@ -198,9 +198,6 @@ For OsX:
 For Arch Linux:
 
       sudo pacman -S base-devel cmake ncurses
-
-
-TODO: release the Dockerfile which has this in it
 
 
 
