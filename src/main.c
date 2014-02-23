@@ -70,6 +70,8 @@ static int get_number_arg __ARGS((char_u *p, int *idx, int def));
 static void init_locale __ARGS((void));
 # endif
 static void parse_command_name __ARGS((mparm_T *parmp));
+static bool parse_char_i __ARGS((char_u **input, char val));
+static bool parse_string __ARGS((char_u **input, char* val, int len));
 static void command_line_scan __ARGS((mparm_T *parmp));
 static void init_params __ARGS((mparm_T *parmp, int argc, char **argv));
 static void init_startuptime __ARGS((mparm_T *parmp));
@@ -91,7 +93,7 @@ static void main_start_gui __ARGS((void));
 # if defined(HAS_SWAP_EXISTS_ACTION)
 static void check_swap_exists_action __ARGS((void));
 # endif
-#endif
+#endif /* NO_VIM_MAIN */
 
 
 /*
@@ -899,44 +901,61 @@ static void parse_command_name(parmp)
 
   set_vim_var_string(VV_PROGNAME, initstr, -1);
 
-  if (TOLOWER_ASC(initstr[0]) == 'r') {
-    restricted = TRUE;
-    ++initstr;
-  }
+  if (STRNICMP(initstr, "editor", 6) == 0)
+    return;
 
-  /* Use evim mode for "evim" and "egvim", not for "editor". */
-  if (TOLOWER_ASC(initstr[0]) == 'e'
-      && (TOLOWER_ASC(initstr[1]) == 'v'
-        || TOLOWER_ASC(initstr[1]) == 'g')) {
+  if (parse_char_i(&initstr, 'r'))
+    restricted = TRUE;
+
+  if (parse_char_i(&initstr, 'e'))
     parmp->evim_mode = TRUE;
-    ++initstr;
-  }
 
   /* "gvim" starts the GUI.  Also accept "Gvim" for MS-Windows. */
-  if (TOLOWER_ASC(initstr[0]) == 'g') {
+  if (parse_char_i(&initstr, 'g'))
     main_start_gui();
-  }
 
-  if (STRNICMP(initstr, "view", 4) == 0) {
+  if (parse_string(&initstr, "view", 4)) {
     readonlymode = TRUE;
     curbuf->b_p_ro = TRUE;
     p_uc = 10000;                       /* don't update very often */
-    initstr += 4;
-  } else if (STRNICMP(initstr, "vim", 3) == 0)
-    initstr += 3;
-
-  /* Catch "[r][g]vimdiff" and "[r][g]viewdiff". */
-  if (STRICMP(initstr, "diff") == 0) {
-    parmp->diff_mode = TRUE;
+  } else {
+    parse_string(&initstr, "vim", 3);   /* consume "vim" if it's there */
   }
 
-  if (STRNICMP(initstr, "ex", 2) == 0) {
-    if (STRNICMP(initstr + 2, "im", 2) == 0)
+  /* Catch "[r][g]vimdiff" and "[r][g]viewdiff". */
+  if (parse_string(&initstr, "diff", 4))
+    parmp->diff_mode = TRUE;
+
+  if (parse_string(&initstr, "ex", 2)) {
+    if (parse_string(&initstr, "im", 2))
       exmode_active = EXMODE_VIM;
     else
       exmode_active = EXMODE_NORMAL;
     change_compatible(TRUE);            /* set 'compatible' */
   }
+}
+
+static bool parse_char_i(input, val)
+  char_u      **input;
+  char val;
+{
+  if (TOLOWER_ASC(**input) == val) {
+    *input += 1;  /* or (*input)++ WITH parens */
+    return true;
+  }
+  return false;
+}
+
+static bool parse_string(input, val, len)
+  char_u      **input;
+  char        *val;
+  int len;
+{
+  if (STRNICMP(*input, val, len) == 0) {
+    *input += len;
+    return true;
+  }
+  return false;
 }
 
 /*
@@ -2062,7 +2081,7 @@ static void main_start_gui()                 {
   mch_exit(2);
 }
 
-#endif  /* NO_VIM_MAIN */
+#endif /* NO_VIM_MAIN */
 
 /*
  * Get an environment variable, and execute it as Ex commands.
