@@ -319,9 +319,7 @@ static UINT32_T sbi[4][256] = {
         sbx[3][xr & 0xFF];
 
 
-static void bf_e_block(p_xl, p_xr)
-UINT32_T *p_xl;
-UINT32_T *p_xr;
+static void bf_e_block(UINT32_T *p_xl, UINT32_T *p_xr)
 {
   UINT32_T temp, xl = *p_xl, xr = *p_xr;
 
@@ -346,8 +344,7 @@ UINT32_T *p_xr;
 # define htonl2(x)
 #endif
 
-static void bf_e_cblock(block)
-char_u *block;
+static void bf_e_cblock(char_u *block)
 {
   block8 bk;
 
@@ -365,10 +362,7 @@ char_u *block;
  * Initialize the crypt method using "password" as the encryption key and
  * "salt[salt_len]" as the salt.
  */
-void bf_key_init(password, salt, salt_len)
-char_u *password;
-char_u *salt;
-int salt_len;
+void bf_key_init(char_u *password, char_u *salt, int salt_len)
 {
   int i, j, keypos = 0;
   unsigned u;
@@ -421,10 +415,7 @@ int salt_len;
 /*
  * BF Self test for corrupted tables or instructions
  */
-static int bf_check_tables(a_ipa, a_sbi, val)
-UINT32_T a_ipa[18];
-UINT32_T a_sbi[4][256];
-UINT32_T val;
+static int bf_check_tables(UINT32_T a_ipa[18], UINT32_T a_sbi[4][256], UINT32_T val)
 {
   int i, j;
   UINT32_T c = 0;
@@ -509,9 +500,7 @@ static char_u ofb_buffer[BF_OFB_LEN]; /* 64 bytes */
 /*
  * Initialize with seed "iv[iv_len]".
  */
-void bf_ofb_init(iv, iv_len)
-char_u *iv;
-int iv_len;
+void bf_ofb_init(char_u *iv, int iv_len)
 {
   int i, mi;
 
@@ -542,10 +531,7 @@ int iv_len;
  * Encrypt "from[len]" into "to[len]".
  * "from" and "to" can be equal to encrypt in place.
  */
-void bf_crypt_encode(from, len, to)
-char_u      *from;
-size_t len;
-char_u      *to;
+void bf_crypt_encode(char_u *from, size_t len, char_u *to)
 {
   size_t i;
   int ztemp, t;
@@ -561,9 +547,7 @@ char_u      *to;
 /*
  * Decrypt "ptr[len]" in place.
  */
-void bf_crypt_decode(ptr, len)
-char_u      *ptr;
-long len;
+void bf_crypt_decode(char_u *ptr, long len)
 {
   char_u      *p;
   int t;
@@ -579,8 +563,7 @@ long len;
  * Initialize the encryption keys and the random header according to
  * the given password.
  */
-void bf_crypt_init_keys(passwd)
-char_u *passwd;                 /* password string with which to modify keys */
+void bf_crypt_init_keys(char_u *passwd /* password string with which to modify keys */)
 {
   char_u *p;
 
