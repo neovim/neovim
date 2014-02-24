@@ -1,6 +1,6 @@
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
 
-build/bin/nvim: deps
+build/bin/nvim: deps cmake
 	cd build && make
 
 test: build/bin/nvim
