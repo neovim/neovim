@@ -333,100 +333,16 @@ int mch_char_avail()         {
   return WaitForChar(0L);
 }
 
-#if defined(HAVE_TOTAL_MEM) || defined(PROTO)
-# ifdef HAVE_SYS_RESOURCE_H
-#  include <sys/resource.h>
-# endif
-# if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTL)
-#  include <sys/sysctl.h>
-# endif
-# if defined(HAVE_SYS_SYSINFO_H) && defined(HAVE_SYSINFO)
-#  include <sys/sysinfo.h>
-# endif
-
 /*
  * Return total amount of memory available in Kbyte.
  * Doesn't change when memory has been allocated.
  */
 long_u mch_total_mem(int special)
 {
-  long_u mem = 0;
-  long_u shiftright = 10;         /* how much to shift "mem" right for Kbyte */
-
-#  ifdef HAVE_SYSCTL
-  int mib[2], physmem;
-  size_t len;
-
-  /* BSD way of getting the amount of RAM available. */
-  mib[0] = CTL_HW;
-  mib[1] = HW_USERMEM;
-  len = sizeof(physmem);
-  if (sysctl(mib, 2, &physmem, &len, NULL, 0) == 0)
-    mem = (long_u)physmem;
-#  endif
-
-#  if defined(HAVE_SYS_SYSINFO_H) && defined(HAVE_SYSINFO)
-  if (mem == 0) {
-    struct sysinfo sinfo;
-
-    /* Linux way of getting amount of RAM available */
-    if (sysinfo(&sinfo) == 0) {
-#   ifdef HAVE_SYSINFO_MEM_UNIT
-      /* avoid overflow as much as possible */
-      while (shiftright > 0 && (sinfo.mem_unit & 1) == 0) {
-        sinfo.mem_unit = sinfo.mem_unit >> 1;
-        --shiftright;
-      }
-      mem = sinfo.totalram * sinfo.mem_unit;
-#   else
-      mem = sinfo.totalram;
-#   endif
-    }
-  }
-#  endif
-
-#  ifdef HAVE_SYSCONF
-  if (mem == 0) {
-    long pagesize, pagecount;
-
-    /* Solaris way of getting amount of RAM available */
-    pagesize = sysconf(_SC_PAGESIZE);
-    pagecount = sysconf(_SC_PHYS_PAGES);
-    if (pagesize > 0 && pagecount > 0) {
-      /* avoid overflow as much as possible */
-      while (shiftright > 0 && (pagesize & 1) == 0) {
-        pagesize = (long_u)pagesize >> 1;
-        --shiftright;
-      }
-      mem = (long_u)pagesize * pagecount;
-    }
-  }
-#  endif
-
-  /* Return the minimum of the physical memory and the user limit, because
-   * using more than the user limit may cause Vim to be terminated. */
-#  if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_GETRLIMIT)
-  {
-    struct rlimit rlp;
-
-    if (getrlimit(RLIMIT_DATA, &rlp) == 0
-        && rlp.rlim_cur < ((rlim_t)1 << (sizeof(long_u) * 8 - 1))
-#   ifdef RLIM_INFINITY
-        && rlp.rlim_cur != RLIM_INFINITY
-#   endif
-        && ((long_u)rlp.rlim_cur >> 10) < (mem >> shiftright)
-        ) {
-      mem = (long_u)rlp.rlim_cur;
-      shiftright = 10;
-    }
-  }
-#  endif
-
-  if (mem > 0)
-    return mem >> shiftright;
-  return (long_u)0x1fffff;
+  /* We need to return memory in *Kbytes* but uv_get_total_memory() returns the
+   * number of bytes of total memory. */
+  return uv_get_total_memory() >> 10;
 }
-#endif
 
 void mch_delay(long msec, int ignoreinput)
 {
