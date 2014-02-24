@@ -14,7 +14,7 @@ file( GLOB OS_SOURCES os/*.c )
 
 add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
 
-target_link_libraries (nvim m uv ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (vim m ${LibUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
 include(CheckLibraryExists)
 check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
