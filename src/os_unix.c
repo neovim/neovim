@@ -229,7 +229,7 @@ int mch_chdir(char *path)
     smsg((char_u *)"chdir(%s)", path);
     verbose_leave();
   }
-  return chdir(path);
+  return uv_chdir(path);
 }
 
 /*
