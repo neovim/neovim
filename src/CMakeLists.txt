@@ -12,19 +12,19 @@ list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
 
 file( GLOB IO_SOURCES io/*.c )
 
-add_executable (vim ${NEOVIM_SOURCES} ${IO_SOURCES}) 
+add_executable (nvim ${NEOVIM_SOURCES} ${IO_SOURCES})
 
-target_link_libraries (vim m uv ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (nvim m uv ${CMAKE_THREAD_LIBS_INIT})
 
 include(CheckLibraryExists)
 check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
 
 if (HAVE_LIBTERMCAP)
-  target_link_libraries(vim termcap)
+  target_link_libraries(nvim termcap)
 else()
   check_library_exists(curses tgetent "" HAVE_LIBCURSES)
   if (HAVE_LIBCURSES)
-    target_link_libraries(vim curses)
+    target_link_libraries(nvim curses)
   else()
     message(FATAL_ERROR "can't find something resembling -ltermcap")
   endif()
