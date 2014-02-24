@@ -231,7 +231,7 @@ Using Homebrew on Mac:
 
 ### Community
 
-Join the community on IRC in #neovim on Freenode.
+Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
 
 ### Contributing
 
