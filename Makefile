@@ -1,9 +1,9 @@
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
 
-build/bin/vim: deps
+build/bin/nvim: deps
 	cd build && make
 
-test: build/bin/vim
+test: build/bin/nvim
 	cd src/testdir && make
 
 deps: .deps/usr/lib/libuv.a
@@ -23,4 +23,4 @@ clean:
 
 .PHONY: test deps cmake
 
-.DEFAULT: build/bin/vim
+.DEFAULT: build/bin/nvim
