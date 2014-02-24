@@ -1,6 +1,6 @@
 -include local.mk
 
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
 
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS :=
