@@ -191,6 +191,12 @@ and what is currently being worked on:
 
 #### For FreeBSD 10:
 
+    sudo pkg install cmake libtool sha wget
+
+You may also need to tell `wget` to find your CA bundle in the correct place:
+
+    echo "ca_certificate = /usr/local/share/certs/ca-root-nss.crt" >> $HOME/.wgetrc 
+
     sudo pkg install cmake libtool sha
 
 #### For OS X:
