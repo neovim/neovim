@@ -15,9 +15,13 @@ else()
   set(DEBUG 0)
 endif()
 
+option(FetchLibuv "FetchLibuv" ON)
+
+set(DEPS_LIB_PATH "${PROJECT_SOURCE_DIR}/.deps/usr/lib")
+set(DEPS_INCLUDE_PATH "${PROJECT_SOURCE_DIR}/.deps/usr/include")
 # add dependencies to include/lib directories
-link_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/lib")
-include_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/include") 
+link_directories ("${DEPS_LIB_PATH}")
+include_directories ("${DEPS_LIB_PATH}")
 
 include_directories ("${PROJECT_BINARY_DIR}/config") 
 
