@@ -1,0 +1,11 @@
+# top-most EditorConfig file
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+[*.c]
+indent_style = space
+indent_size = 2
