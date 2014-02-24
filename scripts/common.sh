@@ -1,13 +1,13 @@
 platform='unknown'
 unameval=`uname`
-if [ "$unameval" == 'Linux' ]; then
+if [ "$unameval" = 'Linux' ]; then
 	platform='linux'
-elif [ "$unameval" == 'FreeBSD' ]; then
+elif [ "$unameval" = 'FreeBSD' ]; then
 	platform='freebsd'
 fi
 
 sha1sumcmd='sha1sum'
-if [ "$platform" == 'freebsd' ]; then
+if [ "$platform" = 'freebsd' ]; then
 	sha1sumcmd='shasum'
 fi
 
