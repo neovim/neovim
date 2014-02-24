@@ -16,7 +16,7 @@ deps: .deps/usr/lib/libuv.a
 .deps/usr/lib/libuv.a:
 	sh -e scripts/compile-libuv.sh
 
-cmake: clean
+cmake: clean deps
 	mkdir build
 	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
 
