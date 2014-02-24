@@ -32,6 +32,7 @@
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
+#include "uv.h"
 
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
