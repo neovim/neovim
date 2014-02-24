@@ -27,6 +27,9 @@ if(NOT CMAKE_USE_PTHREADS_INIT)
   message(SEND_ERROR "The pthread library must be installed on your system.")
 endif(NOT CMAKE_USE_PTHREADS_INIT)
 
+# Require libuv
+find_package(LibUV REQUIRED)
+
 # add dependencies to include/lib directories
 link_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/lib")
 include_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/include") 
