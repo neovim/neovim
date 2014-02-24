@@ -14,7 +14,7 @@ file( GLOB IO_SOURCES io/*.c )
 
 add_executable (vim ${NEOVIM_SOURCES} ${IO_SOURCES}) 
 
-target_link_libraries (vim m uv pthread)
+target_link_libraries (vim m uv ${CMAKE_THREAD_LIBS_INIT})
 
 include(CheckLibraryExists)
 check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
