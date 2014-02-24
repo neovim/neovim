@@ -31,10 +31,6 @@ endif(NOT CMAKE_USE_PTHREADS_INIT)
 find_package(LibUV REQUIRED)
 include_directories(${LibUV_INCLUDE_DIRS})
 
-# add dependencies to include/lib directories
-link_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/lib")
-include_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/include") 
-
 include_directories ("${PROJECT_BINARY_DIR}/config") 
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
