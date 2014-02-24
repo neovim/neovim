@@ -3,6 +3,27 @@
 [![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 
+* [Introduction](#introduction)
+* [Problem](#problem)
+* [Solution](#solution)
+  * [Migrate to a cmake-based build](#migrate-to-a-cmake-based-build)
+  * [Legacy support and compile-time features](#legacy-support-and-compile-time-features)
+  * [Platform-specific code](#platform-specific code)
+  * [New plugin architecture](#new-plugin-architecture)
+  * [New GUI architecture](#new-gui-architecture)
+  * [Development on github](#development-on-github)
+* [Status](#status)
+* [Dependencies](#dependencies)
+  * [For Debian/Ubuntu](#for-debianubuntu)
+  * [For FreeBSD 10](#for-freebsd-10)
+  * [For OS X](#for-os-x)
+* [For Arch Linux](#for-arch-linux)
+* [Building](#building)
+* [Community](#community)
+* [Contributing](#contributing)
+* [License](#license)
+
+
 ### Introduction
 
 Vim is a powerful text editor with a big community that is constantly growing.  Even though the editor is about two decades old, people still extend and want to improve it, mostly using vimscript or one of the supported scripting languages.
@@ -28,23 +49,14 @@ By achieving those goals new developers will soon join the community, consequent
 
 It is important to emphasize that this is not a project to rewrite vim from scratch or transform it into an IDE (though the new features provided will enable IDE-like distributions of the editor). The changes implemented here should have little impact on vim's editing model or vimscript in general. Most vimscript plugins should continue to work normally.
 
-The following topics contain brief explanations of the major changes (and motivations) that will be performed in the first iteration:
+The following topics contain brief explanations of the major changes (and motivations) that will be performed in the first iteration.
 
-* <a href="#build"><b>Migrate to a cmake-based build</b></a>
-* <a href="#legacy"><b>Legacy support and compile-time features</b></a>
-* <a href="#platform"><b>Platform-specific code</b></a>
-* <a href="#plugins"><b>New plugin architecture</b></a>
-* <a href="#gui"><b>New GUI architecture</b></a>
-* <a href="#development"><b>Development on github</b></a>
-
-<a name="build"></a>
 ##### Migrate to a cmake-based build
 
 The source tree has dozens (if not hundreds) of files dedicated to building vim with on various platforms with different configurations, and many of these files look abandoned or outdated. Most users don't care about selecting individual features and just compile using '--with-features=huge', which still generates an executable that is small enough even for lightweight systems by today's standards.
 
 All those files will be removed and vim will be built using [cmake](http://www.cmake.org), a modern build system that generates build scripts for the most relevant platforms.
 
-<a name="legacy"></a>
 ##### Legacy support and compile-time features
 
 Vim has a significant amount of code dedicated to supporting legacy systems and compilers. All that code increases the maintenance burden and will be removed.
@@ -56,14 +68,12 @@ These changes wont affect most users. Those that only have a C89 compiler instal
 - Upgrade their software
 - Continue using vim
 
-<a name="platform"></a>
 ##### Platform-specific code
 
 Most of the platform-specific code will be removed and [libuv](https://github.com/joyent/libuv) will be used to handle system differences.
 
 libuv is a modern multi-platform library with functions to perform common system tasks, and supports most unixes and windows, so the vast majority of vim's community will be covered.
 
-<a name="plugins"></a>
 ##### New plugin architecture
 
 All code supporting embedded scripting language interpreters will be replaced by a new plugin system that will support extensions written in any programming language.
