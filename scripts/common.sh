@@ -1,14 +1,13 @@
-platform='unknown'
-unameval=`uname`
-if [ "$unameval" == 'Linux' ]; then
-	platform='linux'
-elif [ "$unameval" == 'FreeBSD' ]; then
-	platform='freebsd'
-fi
+platform=`uname | tr '[:upper:]' '[:lower:]'`
 
 sha1sumcmd='sha1sum'
+tar='tar'
+wget='wget'
 if [ "$platform" == 'freebsd' ]; then
 	sha1sumcmd='shasum'
+elif [ "$platform" == 'openbsd' ]; then
+	sha1sumcmd='sha1'
+	tar='gtar' # uses gnu feature --strip-components
 fi
 
 pkgroot="$(pwd)"
@@ -28,8 +27,9 @@ download() {
 			fifo="$tmp_dir/fifo"
 			mkfifo "$fifo"
 			# download, untar and calculate sha1 sum in one pass
+			# XXX remove GNU tar dependency
 			(wget "$url" -O - | tee "$fifo" | \
-				(cd "$tgt";  tar --strip-components=1 -xvzf -)) &
+				(cd "$tgt";  "$tar" --strip-components=1 -xvzf -)) &
 			sum=$("$sha1sumcmd" < "$fifo" | cut -d ' ' -f1)
 			rm -rf "$tmp_dir"
 			if [ "$sum" != "$sha1" ]; then
