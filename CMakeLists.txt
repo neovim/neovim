@@ -29,6 +29,7 @@ endif(NOT CMAKE_USE_PTHREADS_INIT)
 
 # Require libuv
 find_package(LibUV REQUIRED)
+include_directories(${LibUV_INCLUDE_DIRS})
 
 # add dependencies to include/lib directories
 link_directories ("${PROJECT_SOURCE_DIR}/.deps/usr/lib")
