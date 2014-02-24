@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 project (NEOVIM)
 
+# Point CMake at any custom modules we may ship
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
 set(NEOVIM_VERSION_MAJOR 0)
 set(NEOVIM_VERSION_MINOR 0)
 set(NEOVIM_VERSION_PATCH 0)
