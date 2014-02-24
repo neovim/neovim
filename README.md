@@ -1,7 +1,7 @@
-[![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 # neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
 
 [![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
+[![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 
 ### Introduction
 
