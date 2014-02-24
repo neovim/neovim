@@ -185,16 +185,8 @@ and what is currently being worked on:
 
 #### For OS X:
 
-* Install [Xcode](https://developer.apple.com/)
+* Install [Xcode](https://developer.apple.com/) and [Homebrew][http://brew.sh]
 * Install sha1sum
-
-  Via MacPorts:
-
-      sudo port install md5sha1sum cmake libtool automake
-
-  Via Homebrew:
-
-      brew install md5sha1sum cmake libtool automake
 
 If you run into wget certificate errors, you may be missing the root SSL
 certificates or have not set them up correctly:
@@ -222,6 +214,10 @@ To generate the `Makefile`s:
 To build and run the tests:
 
     make test
+
+Using Homebrew on Mac:
+
+    brew install neovim/neovim/neovim
 
 ### Community
 
