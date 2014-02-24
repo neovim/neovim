@@ -9,7 +9,7 @@ test: build/src/vim
 deps: .deps/usr/lib/libuv.a
 
 .deps/usr/lib/libuv.a:
-	sh -e scripts/get-libuv.sh
+	sh -e scripts/compile-libuv.sh
 
 cmake: clean
 	mkdir build
