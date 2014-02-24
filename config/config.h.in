@@ -12,7 +12,6 @@
 #define SIZEOF_OFF_T @SIZEOF_OFF_T@
 
 #define _FILE_OFFSET_BITS 64
-#define HAVE_ATTRIBUTE_UNUSED 1
 #define HAVE_BCMP 1
 #define HAVE_DATE_TIME 1
 #define HAVE_DIRENT_H 1

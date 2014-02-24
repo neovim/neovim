@@ -1623,8 +1623,7 @@ static digr_T digraphdefault[] =
 /*
  * handle digraphs after typing a character
  */
-int do_digraph(c)
-int c;
+int do_digraph(int c)
 {
   static int backspaced;        /* character before K_BS */
   static int lastchar;          /* last typed character */
@@ -1647,8 +1646,10 @@ int c;
  * mode.
  * Returns composed character, or NUL when ESC was used.
  */
-int get_digraph(cmdline)
-int cmdline;                    /* TRUE when called from the cmdline */
+int 
+get_digraph (
+    int cmdline                    /* TRUE when called from the cmdline */
+)
 {
   int c, cc;
 
@@ -1683,10 +1684,7 @@ int cmdline;                    /* TRUE when called from the cmdline */
  * If no match, return "char2".
  * If "meta_char" is TRUE and "char1" is a space, return "char2" | 0x80.
  */
-static int getexactdigraph(char1, char2, meta_char)
-int char1;
-int char2;
-int meta_char;
+static int getexactdigraph(int char1, int char2, int meta_char)
 {
   int i;
   int retval = 0;
@@ -1759,10 +1757,7 @@ int meta_char;
  * Get digraph.
  * Allow for both char1-char2 and char2-char1
  */
-int getdigraph(char1, char2, meta_char)
-int char1;
-int char2;
-int meta_char;
+int getdigraph(int char1, int char2, int meta_char)
 {
   int retval;
 
@@ -1777,8 +1772,7 @@ int meta_char;
  * Add the digraphs in the argument to the digraph table.
  * format: {c1}{c2} char {c1}{c2} char ...
  */
-void putdigraph(str)
-char_u *str;
+void putdigraph(char_u *str)
 {
   int char1, char2, n;
   int i;
@@ -1828,7 +1822,7 @@ char_u *str;
   }
 }
 
-void listdigraphs()          {
+void listdigraphs(void)          {
   int i;
   digr_T      *dp;
 
@@ -1867,8 +1861,7 @@ void listdigraphs()          {
                                wrong, in which case we messed up ScreenLines */
 }
 
-static void printdigraph(dp)
-digr_T      *dp;
+static void printdigraph(digr_T *dp)
 {
   char_u buf[30];
   char_u      *p;
@@ -1925,7 +1918,7 @@ static void keymap_unload __ARGS((void));
  * used when setting the option, not later when the value has already been
  * checked.
  */
-char_u * keymap_init()              {
+char_u *keymap_init(void)              {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 
   if (*curbuf->b_p_keymap == NUL) {
@@ -1967,8 +1960,7 @@ char_u * keymap_init()              {
 /*
  * ":loadkeymap" command: load the following lines as the keymap.
  */
-void ex_loadkeymap(eap)
-exarg_T     *eap;
+void ex_loadkeymap(exarg_T *eap)
 {
   char_u      *line;
   char_u      *p;
@@ -2044,7 +2036,7 @@ exarg_T     *eap;
 /*
  * Stop using 'keymap'.
  */
-static void keymap_unload()                 {
+static void keymap_unload(void)                 {
   char_u buf[KMAP_MAXLEN + 10];
   int i;
   char_u      *save_cpo = p_cpo;

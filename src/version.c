@@ -568,7 +568,7 @@ static char *(extra_patches[]) =
   NULL
 };
 
-int highest_patch()         {
+int highest_patch(void)         {
   int i;
   int h = 0;
 
@@ -581,8 +581,7 @@ int highest_patch()         {
 /*
  * Return TRUE if patch "n" has been included.
  */
-int has_patch(n)
-int n;
+int has_patch(int n)
 {
   int i;
 
@@ -592,8 +591,7 @@ int n;
   return FALSE;
 }
 
-void ex_version(eap)
-exarg_T     *eap;
+void ex_version(exarg_T *eap)
 {
   /*
    * Ignore a ":version 9.99" command.
@@ -607,7 +605,7 @@ exarg_T     *eap;
 /*
  * List all features aligned in columns, dictionary style.
  */
-static void list_features()                 {
+static void list_features(void)                 {
   int i;
   int ncol;
   int nrow;
@@ -662,7 +660,7 @@ static void list_features()                 {
   }
 }
 
-void list_version()          {
+void list_version(void)          {
   int i;
   int first;
   char        *s = "";
@@ -792,8 +790,7 @@ void list_version()          {
  * Output a string for the version message.  If it's going to wrap, output a
  * newline, unless the message is too long to fit on the screen anyway.
  */
-static void version_msg(s)
-char        *s;
+static void version_msg(char *s)
 {
   int len = (int)STRLEN(s);
 
@@ -810,7 +807,7 @@ static void do_intro_line __ARGS((int row, char_u *mesg, int add_version,
 /*
  * Show the intro message when not editing a file.
  */
-void maybe_intro_message()          {
+void maybe_intro_message(void)          {
   if (bufempty()
       && curbuf->b_fname == NULL
       && firstwin->w_next == NULL
@@ -823,8 +820,10 @@ void maybe_intro_message()          {
  * Only used when starting Vim on an empty file, without a file name.
  * Or with the ":intro" command (for Sven :-).
  */
-void intro_message(colon)
-int colon;                      /* TRUE for ":intro" */
+void 
+intro_message (
+    int colon                      /* TRUE for ":intro" */
+)
 {
   int i;
   int row;
@@ -904,11 +903,7 @@ int colon;                      /* TRUE for ":intro" */
     msg_row = row;
 }
 
-static void do_intro_line(row, mesg, add_version, attr)
-int row;
-char_u      *mesg;
-int add_version;
-int attr;
+static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
 {
   char_u vers[20];
   int col;
@@ -969,8 +964,7 @@ int attr;
 /*
  * ":intro": clear screen, display intro screen and wait for return.
  */
-void ex_intro(eap)
-exarg_T     *eap UNUSED;
+void ex_intro(exarg_T *eap)
 {
   screenclear();
   intro_message(TRUE);
