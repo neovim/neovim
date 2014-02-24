@@ -47,12 +47,12 @@ vimscript plugins should continue to work normally.
 The following topics contain brief explanations of the major changes (and
 motivations) that will be performed in the first iteration:
 
-* [#build](**Migrate to a cmake-based build**)
-* [#legacy](**Legacy support and compile-time features**)
-* [#platform](**Platform-specific code**)
-* [#plugins](**New plugin architecture**)
-* [#gui](**New GUI architecture**)
-* [#development](**Development on GitHub**)
+* [Migrate to a CMake-based build](#cmake)
+* [Legacy support and compile-time features](#legacy)
+* [Platform-specific code](#platform)
+* [New plugin architecture](#plugins)
+* [New GUI architecture](#gui)
+* [Development on GitHub](#development)
 
 <a name="build"></a>
 ### Migrate to a CMake-based build
