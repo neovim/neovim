@@ -39,13 +39,10 @@ static int pum_set_selected __ARGS((int n, int repeat));
  * "array" must remain valid until pum_undisplay() is called!
  * When possible the leftmost character is aligned with screen column "col".
  * The menu appears above the screen line "row" or at "row" + "height" - 1.
+ *
+ * selected: index of initially selected item, none if out of range
  */
-void pum_display(array, size, selected)
-pumitem_T   *array;
-int size;
-int selected;                   /* index of initially selected item, none if
-                                   out of range */
-{
+void pum_display(pumitem_T *array, int size, int  selected) {
   int w;
   int def_width;
   int max_width;
@@ -415,10 +412,7 @@ void pum_redraw()          {
  * Returns TRUE when the window was resized and the location of the popup menu
  * must be recomputed.
  */
-static int pum_set_selected(n, repeat)
-int n;
-int repeat;
-{
+static int pum_set_selected(int n, int repeat) {
   int resized = FALSE;
   int context = pum_height / 2;
 
