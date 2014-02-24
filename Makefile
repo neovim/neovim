@@ -1,4 +1,4 @@
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
 
 build/bin/vim: deps
 	cd build && make
