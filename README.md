@@ -8,7 +8,7 @@
 * [Solution](#solution)
   * [Migrate to a cmake-based build](#migrate-to-a-cmake-based-build)
   * [Legacy support and compile-time features](#legacy-support-and-compile-time-features)
-  * [Platform-specific code](#platform-specific code)
+  * [Platform-specific code](#platform-specific-code)
   * [New plugin architecture](#new-plugin-architecture)
   * [New GUI architecture](#new-gui-architecture)
   * [Development on github](#development-on-github)
