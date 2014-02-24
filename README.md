@@ -8,7 +8,7 @@
 * [Solution](#solution)
   * [Migrate to a cmake-based build](#migrate-to-a-cmake-based-build)
   * [Legacy support and compile-time features](#legacy-support-and-compile-time-features)
-  * [Platform-specific code](#platform-specific code)
+  * [Platform-specific code](#platform-specific-code)
   * [New plugin architecture](#new-plugin-architecture)
   * [New GUI architecture](#new-gui-architecture)
   * [Development on github](#development-on-github)
@@ -61,9 +61,9 @@ All those files will be removed and vim will be built using [cmake](http://www.c
 
 Vim has a significant amount of code dedicated to supporting legacy systems and compilers. All that code increases the maintenance burden and will be removed.
 
-Most optional features will no longer be optional (see above), with the exception of some broken and useless features (eg: netbeans integration, sun workshop) which will be removed permanently. Vi emulation will also be removed (setting 'nocompatible' will be a no-op).
+Most optional features will no longer be optional (see above), with the exception of some broken and useless features (e.g., netbeans integration, sun workshop) which will be removed permanently. Vi emulation will also be removed (setting 'nocompatible' will be a no-op).
 
-These changes wont affect most users. Those that only have a C89 compiler installed or use vim on legacy systems such as Amiga, BeOS or MSDOS will have two options:
+These changes won't affect most users. Those that only have a C89 compiler installed or use vim on legacy systems such as Amiga, BeOS or MS-DOS will have two options:
 
 - Upgrade their software
 - Continue using vim
@@ -231,7 +231,7 @@ Using Homebrew on Mac:
 
 ### Community
 
-Join the community on IRC in #neovim on Freenode.
+Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
 
 ### Contributing
 

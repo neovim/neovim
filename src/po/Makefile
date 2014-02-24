@@ -125,9 +125,9 @@ CHECKFILES = \
 		uk.cp1251.ck \
 		zh_CN.cp936.ck
 
-PACKAGE = vim
+PACKAGE = nvim
 SHELL = /bin/sh
-VIM = ../../build/bin/vim
+VIM = ../../build/bin/nvim
 
 # The OLD_PO_FILE_INPUT and OLD_PO_FILE_OUTPUT are for the new GNU gettext
 # tools 0.10.37, which use a slightly different .po file format that is not
