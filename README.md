@@ -164,7 +164,7 @@ Travis will also be used for continuous integration, so pull requests will be au
 Here's a list of things that have been done so far:
 
 - Source tree was cleaned up, leaving only files necessary for compilation/testing of the core.
-- Source files were processed with [unifdef](http://freecode.com/projects/unifdef) to remove tons of FEAT_* macros
+- Source files were processed with [unifdef](http://freecode.com/projects/unifdef) to remove tons of `FEAT_*` macros
 - Files were processed with [uncrustify](http://uncrustify.sourceforge.net/) to normalize source code formatting.
 - The autotools build system was replaced by [cmake](http://www.cmake.org/)
 
@@ -172,17 +172,17 @@ and what is currently being worked on:
 
 - Port all IO to libuv
 
-###Dependencies
+### Dependencies
 
-For Debian/Ubuntu:
+#### For Debian/Ubuntu:
 
     sudo apt-get install libtool autoconf cmake libncurses5-dev g++
 
-For FreeBSD 10:
+#### For FreeBSD 10:
 
     sudo pkg install cmake libtool sha
-    
-For OsX:
+
+#### For OS X:
 
 * Install [Xcode](https://developer.apple.com/)
 * Install sha1sum
@@ -195,13 +195,24 @@ For OsX:
 
       brew install md5sha1sum cmake libtool automake
 
-For Arch Linux:
+If you run into wget certificate errors, you may be missing the root SSL
+certificates or have not set them up correctly:
+
+  Via MacPorts:
+
+      sudo port install curl-ca-bundle
+      echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
+
+  Via Homebrew:
+
+      brew install curl-ca-bundle
+      echo CA_CERTIFICATE=/usr/local/opt/curl-ca-bundle/share/ca-bundle.crt >> ~/.wgetrc
+
+#### For Arch Linux:
 
       sudo pacman -S base-devel cmake ncurses
 
-
-
-###Building
+### Building
 
 To generate the `Makefile`s:
 
