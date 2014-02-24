@@ -17,7 +17,7 @@
   * [For Debian/Ubuntu](#for-debianubuntu)
   * [For FreeBSD 10](#for-freebsd-10)
   * [For OS X](#for-os-x)
-* [For Arch Linux](#for-arch-linux)
+  * [For Arch Linux](#for-arch-linux)
 * [Building](#building)
 * [Community](#community)
 * [Contributing](#contributing)
