@@ -32,8 +32,6 @@
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
-#include "uv.h"
-
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
 static int selinux_enabled = -1;
@@ -222,16 +220,6 @@ static struct signalinfo {
   {-1,            "Unknown!", FALSE}
 };
 
-int mch_chdir(char *path)
-{
-  if (p_verbose >= 5) {
-    verbose_enter();
-    smsg((char_u *)"chdir(%s)", path);
-    verbose_leave();
-  }
-  return uv_chdir(path);
-}
-
 /*
  * Write s[len] to the screen.
  */
@@ -331,17 +319,6 @@ static void handle_resize()                 {
  */
 int mch_char_avail()         {
   return WaitForChar(0L);
-}
-
-/*
- * Return total amount of memory available in Kbyte.
- * Doesn't change when memory has been allocated.
- */
-long_u mch_total_mem(int special)
-{
-  /* We need to return memory in *Kbytes* but uv_get_total_memory() returns the
-   * number of bytes of total memory. */
-  return uv_get_total_memory() >> 10;
 }
 
 void mch_delay(long msec, int ignoreinput)
