@@ -186,15 +186,15 @@ and what is currently being worked on:
 #### For OS X:
 
 * Install [Xcode](https://developer.apple.com/)
-* Install sha1sum
+* Install building tools
 
   Via MacPorts:
 
-      sudo port install md5sha1sum cmake libtool automake
+      sudo port install cmake libtool automake
 
   Via Homebrew:
 
-      brew install md5sha1sum cmake libtool automake
+      brew install cmake libtool automake
 
 If you run into wget certificate errors, you may be missing the root SSL
 certificates or have not set them up correctly:
