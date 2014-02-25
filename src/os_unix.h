@@ -42,16 +42,6 @@
  * Sun defines FILE on SunOS 4.x.x, Solaris has a typedef for FILE
  */
 
-/*
- * Using getcwd() is preferred, because it checks for a buffer overflow.
- * Don't use getcwd() on systems do use system("sh -c pwd").  There is an
- * autoconf check for this.
- * Use getcwd() anyway if getwd() isn't present.
- */
-#if defined(HAVE_GETCWD) && !(defined(BAD_GETCWD) && defined(HAVE_GETWD))
-# define USE_GETCWD
-#endif
-
 #ifndef __ARGS
 /* The AIX VisualAge cc compiler defines __EXTENDED__ instead of __STDC__
  * because it includes pre-ansi features. */

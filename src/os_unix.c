@@ -1228,22 +1228,6 @@ long mch_get_pid()          {
   return (long)getpid();
 }
 
-#if !defined(HAVE_STRERROR) && defined(USE_GETCWD)
-static char *strerror __ARGS((int));
-
-static char * strerror(int err)
-{
-  extern int sys_nerr;
-  extern char     *sys_errlist[];
-  static char er[20];
-
-  if (err > 0 && err < sys_nerr)
-    return sys_errlist[err];
-  sprintf(er, "Error %d", err);
-  return er;
-}
-#endif
-
 #if defined(USE_FNAME_CASE) || defined(PROTO)
 /*
  * Set the case of the file name, if it already exists.  This will cause the
