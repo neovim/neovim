@@ -23,6 +23,9 @@ clean:
 		rm -f src/testdir/$$file.vim; \
 	done
 
-.PHONY: test deps cmake
+install: build/bin/nvim
+	cd build && make install
+
+.PHONY: test deps cmake install
 
 .DEFAULT: build/bin/nvim
