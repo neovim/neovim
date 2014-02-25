@@ -187,7 +187,7 @@ and what is currently being worked on:
 
 #### For Debian/Ubuntu:
 
-    sudo apt-get install libtool autoconf cmake libncurses5-dev g++
+    sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
 
 #### For FreeBSD 10:
 
