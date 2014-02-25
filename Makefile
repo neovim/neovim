@@ -1,3 +1,5 @@
+-include local.mk
+
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
 
 build/bin/nvim: deps
