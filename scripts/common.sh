@@ -39,14 +39,17 @@ download() {
 		local tmp_dir=$(mktemp -d "/tmp/download_sha1check_XXXXXXX")
 		local fifo="$tmp_dir/fifo"
 		mkfifo "$fifo"
+		echo "Downloading $url..."
 		# download, untar and calculate sha1 sum in one pass
 		($download_command | tee "$fifo" | \
-			(cd "$tgt";  tar --strip-components=1 -xvzf -)) &
+			(cd "$tgt";  tar --strip-components=1 -xzf -)) &
 		local sum=$("$sha1sumcmd" < "$fifo" | cut -d ' ' -f1)
 		rm -rf "$tmp_dir"
 		if [ "$sum" != "$sha1" ]; then
 			echo "SHA1 sum doesn't match, expected '$sha1' got '$sum'"
 			exit 1
+		else
+			echo "Download complete."
 		fi
 	fi
 }
