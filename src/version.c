@@ -24,6 +24,8 @@
 
 #include "version.h"
 
+#define MODIFIED_BY "the Neovim contributors"
+
 char            *Version = VIM_VERSION_SHORT;
 static char     *mediumVersion = VIM_VERSION_MEDIUM;
 
