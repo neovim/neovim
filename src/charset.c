@@ -8,6 +8,14 @@
  */
 
 #include "vim.h"
+#include "charset.h"
+#include "main.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "os_unix.h"
 
 static int win_chartabsize __ARGS((win_T *wp, char_u *p, colnr_T col));
 

@@ -13,6 +13,15 @@
  */
 
 #include "vim.h"
+#include "menu.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_docmd.h"
+#include "getchar.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "term.h"
 
 
 #define MENUDEPTH   10          /* maximum depth of menus */

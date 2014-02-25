@@ -17,7 +17,21 @@
  */
 
 #include "vim.h"
-
+#include "ui.h"
+#include "diff.h"
+#include "ex_cmds2.h"
+#include "fold.h"
+#include "main.h"
+#include "mbyte.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "os_unix.h"
+#include "screen.h"
+#include "term.h"
+#include "window.h"
 
 void ui_write(char_u *s, int len)
 {

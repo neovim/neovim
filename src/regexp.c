@@ -45,6 +45,15 @@
 /* #define REGEXP_DEBUG */
 
 #include "vim.h"
+#include "regexp.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds2.h"
+#include "mark.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
 
 #ifdef REGEXP_DEBUG
 /* show/save debugging data when BT engine is used */
@@ -56,7 +65,7 @@
 #endif
 
 /*
- * The "internal use only" fields in regexp.h are present to pass info from
+ * The "internal use only" fields in regexp_defs.h are present to pass info from
  * compile to execute that permits the execute phase to run lots faster on
  * simple cases.  They are:
  *

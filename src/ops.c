@@ -13,6 +13,31 @@
  */
 
 #include "vim.h"
+#include "ops.h"
+#include "buffer.h"
+#include "charset.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "ex_cmds2.h"
+#include "ex_getln.h"
+#include "fold.h"
+#include "getchar.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "screen.h"
+#include "search.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
+#include "window.h"
 
 /*
  * Number of registers.

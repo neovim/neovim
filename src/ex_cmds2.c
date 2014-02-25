@@ -12,7 +12,32 @@
  */
 
 #include "vim.h"
-#include "version.h"
+#include "version_defs.h"
+#include "ex_cmds2.h"
+#include "buffer.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "ex_docmd.h"
+#include "ex_eval.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "getchar.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "os_unix.h"
+#include "quickfix.h"
+#include "regexp.h"
+#include "screen.h"
+#include "term.h"
+#include "undo.h"
+#include "window.h"
 
 static void cmd_source __ARGS((char_u *fname, exarg_T *eap));
 

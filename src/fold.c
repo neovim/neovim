@@ -13,7 +13,21 @@
  */
 
 #include "vim.h"
-
+#include "fold.h"
+#include "charset.h"
+#include "diff.h"
+#include "eval.h"
+#include "ex_docmd.h"
+#include "mark.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "option.h"
+#include "screen.h"
+#include "syntax.h"
+#include "undo.h"
 
 /* local declarations. {{{1 */
 /* typedef fold_T {{{2 */

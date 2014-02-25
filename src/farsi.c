@@ -7,6 +7,10 @@
  * See README.txt for an overview of the Vim source code.
  */
 
+#include "farsi.h"
+#include "edit.h"
+#include "ex_getln.h"
+
 /*
  * farsi.c: functions for Farsi language
  *

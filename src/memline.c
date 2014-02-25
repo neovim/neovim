@@ -43,9 +43,30 @@
  */
 
 #include "vim.h"
+#include "memline.h"
+#include "blowfish.h"
+#include "buffer.h"
+#include "eval.h"
+#include "fileio.h"
+#include "main.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "memfile.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "option.h"
+#include "os_unix.h"
+#include "screen.h"
+#include "sha256.h"
+#include "spell.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
+#include "window.h"
 #include "os/os.h"
 
-#ifndef UNIX            /* it's in os_unix.h for Unix */
+#ifndef UNIX            /* it's in os_unix_defs.h for Unix */
 # include <time.h>
 #endif
 

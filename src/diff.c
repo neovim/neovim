@@ -12,8 +12,27 @@
  */
 
 #include "vim.h"
+#include "diff.h"
+#include "buffer.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "ex_docmd.h"
+#include "fileio.h"
+#include "fold.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "screen.h"
+#include "undo.h"
+#include "window.h"
 #include "os/os.h"
-
 
 static int diff_busy = FALSE;           /* ex_diffgetput() is busy */
 
