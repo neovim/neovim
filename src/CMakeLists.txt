@@ -14,7 +14,11 @@ file( GLOB OS_SOURCES os/*.c )
 
 add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
 
-target_link_libraries (nvim m uv ${CMAKE_THREAD_LIBS_INIT})
+if (UNIX AND NOT APPLE)
+    target_link_libraries (nvim rt m uv ${CMAKE_THREAD_LIBS_INIT})
+else()
+    target_link_libraries (nvim m uv ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 include(CheckLibraryExists)
 check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
