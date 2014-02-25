@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "os/os.h"
 
 /*
  * Structure that stores information about a highlight group.
