@@ -8,6 +8,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 #include "os/os.h"
 
 static int path_is_url __ARGS((char_u *p));

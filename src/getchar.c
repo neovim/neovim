@@ -17,6 +17,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 
 /*
  * These buffers are used for storing:

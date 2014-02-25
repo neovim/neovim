@@ -49,7 +49,6 @@
 #  include "hangulin.pro"
 # include "hardcopy.pro"
 # include "hashtab.pro"
-# include "main.pro"
 # include "mark.pro"
 # include "memfile.pro"
 # include "memline.pro"

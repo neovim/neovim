@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 #include "version.h"
 #include "os/os.h"
 

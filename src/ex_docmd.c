@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 #include "os/os.h"
 
 static int quitmore = 0;

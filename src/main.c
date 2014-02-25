@@ -9,6 +9,7 @@
 
 #define EXTERN
 #include "vim.h"
+#include "main.h"
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10

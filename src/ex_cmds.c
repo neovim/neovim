@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 #include "version.h"
 
 static int linelen __ARGS((int *has_tab));
