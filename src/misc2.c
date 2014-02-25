@@ -11,6 +11,28 @@
  * misc2.c: Various functions.
  */
 #include "vim.h"
+#include "misc2.h"
+#include "blowfish.h"
+#include "charset.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_docmd.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "fold.h"
+#include "mbyte.h"
+#include "memfile.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "move.h"
+#include "option.h"
+#include "os_unix.h"
+#include "screen.h"
+#include "tag.h"
+#include "term.h"
+#include "ui.h"
+#include "window.h"
 #include "os/os.h"
 
 static char_u   *username = NULL; /* cached result of mch_get_user_name() */

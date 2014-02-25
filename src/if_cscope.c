@@ -10,14 +10,25 @@
  */
 
 #include "vim.h"
-
+#include "if_cscope.h"
+#include "charset.h"
+#include "eval.h"
+#include "fileio.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "os_unix.h"
+#include "quickfix.h"
+#include "tag.h"
+#include "ui.h"
+#include "window.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #if defined(UNIX)
 # include <sys/wait.h>
 #endif
-#include "if_cscope.h"
+#include "if_cscope_defs.h"
 
 static void cs_usage_msg __ARGS((csid_e x));
 static int cs_add __ARGS((exarg_T *eap));
@@ -542,7 +553,7 @@ staterr:
 #if defined(UNIX)
   else if (S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode))
 #else
-  /* WIN32 - substitute define S_ISREG from os_unix.h */
+  /* WIN32 - substitute define S_ISREG from os_unix_defs.h */
   else if (((statbuf.st_mode) & S_IFMT) == S_IFREG)
 #endif
   {

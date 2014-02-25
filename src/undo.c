@@ -82,6 +82,21 @@
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
 #include "vim.h"
+#include "undo.h"
+#include "edit.h"
+#include "eval.h"
+#include "fileio.h"
+#include "fold.h"
+#include "mark.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "option.h"
+#include "os_unix.h"
+#include "quickfix.h"
+#include "screen.h"
+#include "sha256.h"
 
 static long get_undolevel __ARGS((void));
 static void u_unch_branch __ARGS((u_header_T *uhp));

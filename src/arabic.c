@@ -7,6 +7,8 @@
  * See README.txt for an overview of the Vim source code.
  */
 
+#include "arabic.h"
+
 /*
  * arabic.c: functions for Arabic language
  *

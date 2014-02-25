@@ -8,6 +8,12 @@
  */
 
 #include "vim.h"
+#include "hangulin.h"
+#include "message.h"
+#include "misc1.h"
+#include "screen.h"
+#include "term.h"
+#include "ui.h"
 
 #ifndef HANGUL_DEFAULT_KEYBOARD
 # define HANGUL_DEFAULT_KEYBOARD 3

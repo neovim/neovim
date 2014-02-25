@@ -12,7 +12,18 @@
  */
 
 #include "vim.h"
-
+#include "digraph.h"
+#include "charset.h"
+#include "ex_cmds2.h"
+#include "ex_docmd.h"
+#include "ex_getln.h"
+#include "getchar.h"
+#include "mbyte.h"
+#include "message.h"
+#include "misc2.h"
+#include "normal.h"
+#include "screen.h"
+#include "ui.h"
 
 typedef int result_T;
 

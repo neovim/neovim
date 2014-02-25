@@ -12,6 +12,14 @@
  */
 
 #include "vim.h"
+#include "ex_eval.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds2.h"
+#include "ex_docmd.h"
+#include "message.h"
+#include "misc2.h"
+#include "regexp.h"
 
 
 static void free_msglist __ARGS((struct msglist *l));

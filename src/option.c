@@ -11,7 +11,7 @@
  * Code to handle user-settable options. This is all pretty much table-
  * driven. Checklist for adding a new option:
  * - Put it in the options array below (copy an existing entry).
- * - For a global option: Add a variable for it in option.h.
+ * - For a global option: Add a variable for it in option_defs.h.
  * - For a buffer or window local option:
  *   - Add a PV_XX entry to the enum below.
  *   - Add a variable to the window or buffer struct in structs.h.
@@ -33,6 +33,37 @@
 
 #define IN_OPTION_C
 #include "vim.h"
+#include "option.h"
+#include "blowfish.h"
+#include "buffer.h"
+#include "charset.h"
+#include "diff.h"
+#include "digraph.h"
+#include "eval.h"
+#include "ex_cmds2.h"
+#include "ex_docmd.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "fold.h"
+#include "getchar.h"
+#include "hardcopy.h"
+#include "mbyte.h"
+#include "memfile.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "os_unix.h"
+#include "regexp.h"
+#include "screen.h"
+#include "spell.h"
+#include "syntax.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
+#include "window.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of
@@ -52,7 +83,7 @@
 
 /*
  * Definition of the PV_ values for buffer-local options.
- * The BV_ values are defined in option.h.
+ * The BV_ values are defined in option_defs.h.
  */
 #define PV_AI           OPT_BUF(BV_AI)
 #define PV_AR           OPT_BOTH(OPT_BUF(BV_AR))
@@ -130,7 +161,7 @@
 
 /*
  * Definition of the PV_ values for window-local options.
- * The WV_ values are defined in option.h.
+ * The WV_ values are defined in option_defs.h.
  */
 #define PV_LIST         OPT_WIN(WV_LIST)
 # define PV_ARAB        OPT_WIN(WV_ARAB)

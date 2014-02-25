@@ -18,6 +18,17 @@
  */
 
 #include "vim.h"
+#include "move.h"
+#include "charset.h"
+#include "diff.h"
+#include "edit.h"
+#include "fold.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "popupmnu.h"
+#include "screen.h"
 
 static void comp_botline __ARGS((win_T *wp));
 static int scrolljump_value __ARGS((void));

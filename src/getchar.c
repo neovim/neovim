@@ -17,6 +17,27 @@
  */
 
 #include "vim.h"
+#include "getchar.h"
+#include "charset.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_docmd.h"
+#include "ex_getln.h"
+#include "main.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "ops.h"
+#include "option.h"
+#include "regexp.h"
+#include "screen.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
 
 /*
  * These buffers are used for storing:

@@ -14,6 +14,20 @@
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
 #include "vim.h"
+#include "message.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_eval.h"
+#include "fileio.h"
+#include "getchar.h"
+#include "mbyte.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "ops.h"
+#include "option.h"
+#include "screen.h"
+#include "term.h"
+#include "ui.h"
 
 #if defined(FEAT_FLOAT) && defined(HAVE_MATH_H)
 # include <math.h>

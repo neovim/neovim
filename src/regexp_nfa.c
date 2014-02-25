@@ -5,6 +5,8 @@
  * This file is included in "regexp.c".
  */
 
+#include "misc2.h"
+
 /*
  * Logging of NFA engine.
  *

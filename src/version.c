@@ -8,7 +8,12 @@
  */
 
 #include "vim.h"
-
+#include "version.h"
+#include "charset.h"
+#include "memline.h"
+#include "message.h"
+#include "misc2.h"
+#include "screen.h"
 
 /*
  * Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred)
@@ -22,7 +27,7 @@
  * interesting.
  */
 
-#include "version.h"
+#include "version_defs.h"
 
 char            *Version = VIM_VERSION_SHORT;
 static char     *mediumVersion = VIM_VERSION_MEDIUM;

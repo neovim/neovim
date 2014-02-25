@@ -28,8 +28,24 @@
 # define select select_declared_wrong
 
 #include "vim.h"
+#include "os_unix.h"
+#include "buffer.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "fileio.h"
+#include "getchar.h"
+#include "main.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "screen.h"
+#include "syntax.h"
+#include "term.h"
+#include "ui.h"
 #include "os/os.h"
-
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
