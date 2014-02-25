@@ -41,7 +41,7 @@ else()
 endif()
 
 if (HAVE_LIBINTL AND LIBINTL_LIB)
-  target_link_libraries(vim ${LIBINTL_LIB})
+  target_link_libraries(nvim ${LIBINTL_LIB})
 endif()
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
