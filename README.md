@@ -335,7 +335,7 @@ To build and run the tests:
 
 Using Homebrew on Mac:
 
-    brew install neovim/neovim/neovim
+    brew install --HEAD https://raw.github.com/neovim/neovim/master/neovim.rb
 
 ## Community
 
