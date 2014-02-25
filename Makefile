@@ -2,6 +2,9 @@
 
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
 
+# Extra CMake flags which extend the default set
+CMAKE_EXTRA_FLAGS :=
+
 build/bin/nvim: deps
 	cd build && make
 
@@ -15,7 +18,7 @@ deps: .deps/usr/lib/libuv.a
 
 cmake: clean
 	mkdir build
-	cd build && cmake $(CMAKE_FLAGS) ../
+	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
 
 clean:
 	rm -rf build
