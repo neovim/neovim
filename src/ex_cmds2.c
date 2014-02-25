@@ -13,6 +13,7 @@
 
 #include "vim.h"
 #include "version.h"
+#include "window.h"
 
 static void cmd_source __ARGS((char_u *fname, exarg_T *eap));
 

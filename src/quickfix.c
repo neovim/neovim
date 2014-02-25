@@ -13,6 +13,7 @@
 
 #include "vim.h"
 #include "os/os.h"
+#include "window.h"
 
 
 struct dir_stack_T {

@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 /*
  * Structure to hold pointers to various items in a tag line.
