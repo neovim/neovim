@@ -13,6 +13,7 @@
 
 #include "vim.h"
 #include "version.h"
+#include "window.h"
 
 static int linelen __ARGS((int *has_tab));
 static void do_filter __ARGS((linenr_T line1, linenr_T line2, exarg_T *eap,

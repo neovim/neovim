@@ -12,6 +12,7 @@
  */
 #include "vim.h"
 #include "os/os.h"
+#include "window.h"
 
 static char_u   *username = NULL; /* cached result of mch_get_user_name() */
 
