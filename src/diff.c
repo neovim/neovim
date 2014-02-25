@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "os/os.h"
 
 
 static int diff_busy = FALSE;           /* ex_diffgetput() is busy */

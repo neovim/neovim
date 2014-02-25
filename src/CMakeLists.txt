@@ -10,9 +10,9 @@ endforeach()
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
 
-file( GLOB IO_SOURCES io/*.c )
+file( GLOB OS_SOURCES os/*.c )
 
-add_executable (nvim ${NEOVIM_SOURCES} ${IO_SOURCES})
+add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
 
 target_link_libraries (nvim m uv ${CMAKE_THREAD_LIBS_INIT})
 

@@ -28,6 +28,7 @@
 # define select select_declared_wrong
 
 #include "vim.h"
+#include "os/os.h"
 
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
