@@ -11,6 +11,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 
 static void save_re_pat __ARGS((int idx, char_u *pat, int magic));
 static void set_vv_searchforward __ARGS((void));

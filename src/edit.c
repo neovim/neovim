@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 
 /*
  * definitions used for CTRL-X submode

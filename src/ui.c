@@ -17,6 +17,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 
 
 void ui_write(char_u *s, int len)

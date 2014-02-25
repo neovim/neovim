@@ -43,6 +43,7 @@
  */
 
 #include "vim.h"
+#include "main.h"
 
 #ifndef UNIX            /* it's in os_unix.h for Unix */
 # include <time.h>

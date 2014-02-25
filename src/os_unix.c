@@ -28,6 +28,7 @@
 # define select select_declared_wrong
 
 #include "vim.h"
+#include "main.h"
 #include "os/os.h"
 
 

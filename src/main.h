@@ -1,4 +1,5 @@
-/* main.c */
+#ifdef NEOVIM_MAIN_H
+#define NEOVIM_MAIN_H
 void main_loop __ARGS((int cmdwin, int noexmode));
 void getout_preserve_modified __ARGS((int exitval));
 void getout __ARGS((int exitval));
@@ -25,3 +26,4 @@ void farsi_fkey __ARGS((cmdarg_T *cap));
 int arabic_shape __ARGS((int c, int *ccp, int *c1p, int prev_c, int prev_c1,
                          int next_c));
 /* vim: set ft=c : */
+#endif /* NEOVIM_MAIN_H */
