@@ -12,9 +12,9 @@ find_path(LibUV_INCLUDE_DIR
     NAMES uv.h
 )
 
-# The library itself
+# The library itself. Note that we prefer the static version.
 find_library(LibUV_LIBRARY
-    NAMES uv
+    NAMES libuv.a uv
 )
 
 # Set the include dir variables and the libraries and let libfind_process do the rest.
