@@ -23,3 +23,17 @@ int mch_chdir(char *path) {
   }
   return uv_chdir(path);
 }
+
+/*
+ * Get name of current directory into buffer 'buf' of length 'len' bytes.
+ * Return OK for success, FAIL for failure.
+ */
+int mch_dirname(char_u *buf, int len)
+{
+  int errno;
+  if ((errno = uv_cwd((char *)buf, len)) != 0) {
+      STRCPY(buf, uv_strerror(errno));
+      return FAIL;
+  }
+  return OK;
+}

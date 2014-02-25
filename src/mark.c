@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "os/os.h"
 
 /*
  * This file contains routines to maintain and manipulate marks.
