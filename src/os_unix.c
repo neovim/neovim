@@ -1245,24 +1245,6 @@ static char * strerror(int err)
 #endif
 
 /*
- * Get name of current directory into buffer 'buf' of length 'len' bytes.
- * Return OK for success, FAIL for failure.
- */
-int mch_dirname(char_u *buf, int len)
-{
-#if defined(USE_GETCWD)
-  if (getcwd((char *)buf, len) == NULL) {
-    STRCPY(buf, strerror(errno));
-    return FAIL;
-  }
-  return OK;
-#else
-  return getwd((char *)buf) != NULL ? OK : FAIL;
-#endif
-}
-
-
-/*
  * Get absolute file name into "buf[len]".
  *
  * return FAIL for failure, OK for success

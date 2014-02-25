@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "os/os.h"
 
 
 #if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
