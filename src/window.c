@@ -8,6 +8,7 @@
  */
 
 #include "vim.h"
+#include "os/os.h"
 
 static int path_is_url __ARGS((char_u *p));
 static void win_init __ARGS((win_T *newp, win_T *oldp, int flags));

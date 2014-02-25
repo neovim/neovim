@@ -1,4 +1,9 @@
+-include local.mk
+
 CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
+
+# Extra CMake flags which extend the default set
+CMAKE_EXTRA_FLAGS :=
 
 build/bin/nvim: deps
 	cd build && make
@@ -13,7 +18,7 @@ deps: .deps/usr/lib/libuv.a
 
 cmake: clean deps
 	mkdir build
-	cd build && cmake $(CMAKE_FLAGS) ../
+	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
 
 clean:
 	rm -rf build
@@ -21,6 +26,9 @@ clean:
 		rm -f src/testdir/$$file.vim; \
 	done
 
-.PHONY: test deps cmake
+install: build/bin/nvim
+	cd build && make install
+
+.PHONY: test deps cmake install
 
 .DEFAULT: build/bin/nvim

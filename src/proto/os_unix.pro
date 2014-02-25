@@ -1,9 +1,7 @@
 /* os_unix.c */
-int mch_chdir __ARGS((char *path));
 void mch_write __ARGS((char_u *s, int len));
 int mch_inchar __ARGS((char_u *buf, int maxlen, long wtime, int tb_change_cnt));
 int mch_char_avail __ARGS((void));
-long_u mch_total_mem __ARGS((int special));
 void mch_delay __ARGS((long msec, int ignoreinput));
 int mch_stackcheck __ARGS((char *p));
 void mch_startjmp __ARGS((void));
@@ -29,7 +27,6 @@ int mch_get_user_name __ARGS((char_u *s, int len));
 int mch_get_uname __ARGS((uid_t uid, char_u *s, int len));
 void mch_get_host_name __ARGS((char_u *s, int len));
 long mch_get_pid __ARGS((void));
-int mch_dirname __ARGS((char_u *buf, int len));
 void slash_adjust __ARGS((char_u *p));
 int mch_FullName __ARGS((char_u *fname, char_u *buf, int len, int force));
 int mch_isFullName __ARGS((char_u *fname));

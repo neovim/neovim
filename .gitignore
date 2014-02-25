@@ -23,3 +23,6 @@ src/testdir/test.log
 src/testdir/test.ok
 src/testdir/*.failed
 src/testdir/X*
+
+# local make targets
+local.mk

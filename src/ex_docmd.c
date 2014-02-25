@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "os/os.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
