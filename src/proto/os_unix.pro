@@ -28,8 +28,6 @@ int mch_get_uname __ARGS((uid_t uid, char_u *s, int len));
 void mch_get_host_name __ARGS((char_u *s, int len));
 long mch_get_pid __ARGS((void));
 void slash_adjust __ARGS((char_u *p));
-int mch_FullName __ARGS((char_u *fname, char_u *buf, int len, int force));
-int mch_isFullName __ARGS((char_u *fname));
 void fname_case __ARGS((char_u *name, int len));
 long mch_getperm __ARGS((char_u *name));
 int mch_setperm __ARGS((char_u *name, long perm));
