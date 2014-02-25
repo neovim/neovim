@@ -31,3 +31,5 @@ else()
 endif()
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
+
+install(TARGETS nvim RUNTIME DESTINATION bin)
