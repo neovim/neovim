@@ -19,6 +19,7 @@ cmake: clean
 
 clean:
 	rm -rf build
+	rm -f tags
 	for file in lua mbyte mzscheme small tiny; do \
 		rm -f src/testdir/$$file.vim; \
 	done
@@ -26,3 +27,6 @@ clean:
 .PHONY: test deps cmake
 
 .DEFAULT: build/bin/nvim
+
+tags:
+	ctags src/*
