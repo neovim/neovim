@@ -10,6 +10,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 
 #include <sys/types.h>

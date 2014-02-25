@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.

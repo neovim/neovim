@@ -24,6 +24,7 @@
 
 #define tgetstr tgetstr_defined_wrong
 #include "vim.h"
+#include "window.h"
 
 #ifdef HAVE_TGETENT
 # ifdef HAVE_TERMIOS_H

@@ -13,6 +13,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 /*
  * The Visual area is remembered for reselection.

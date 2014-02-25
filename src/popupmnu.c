@@ -11,6 +11,7 @@
  * popupmnu.c: Popup menu (PUM)
  */
 #include "vim.h"
+#include "window.h"
 
 
 static pumitem_T *pum_array = NULL;     /* items of displayed pum */

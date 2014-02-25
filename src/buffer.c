@@ -26,6 +26,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 static char_u   *buflist_match __ARGS((regprog_T *prog, buf_T *buf));
 # define HAVE_BUFLIST_MATCH

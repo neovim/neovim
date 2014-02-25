@@ -29,6 +29,7 @@
 
 #include "vim.h"
 #include "os/os.h"
+#include "window.h"
 
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */

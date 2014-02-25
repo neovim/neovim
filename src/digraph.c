@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 
 typedef int result_T;

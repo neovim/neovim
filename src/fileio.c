@@ -13,6 +13,7 @@
 
 #include "vim.h"
 #include "os/os.h"
+#include "window.h"
 
 
 #if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)

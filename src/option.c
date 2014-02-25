@@ -33,6 +33,7 @@
 
 #define IN_OPTION_C
 #include "vim.h"
+#include "window.h"
 
 /*
  * The options that are local to a window or buffer have "indir" set to one of

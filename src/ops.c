@@ -13,6 +13,7 @@
  */
 
 #include "vim.h"
+#include "window.h"
 
 /*
  * Number of registers.

@@ -14,6 +14,7 @@
 #include "vim.h"
 #include "version.h"
 #include "os/os.h"
+#include "window.h"
 
 static char_u *vim_version_dir __ARGS((char_u *vimdir));
 static char_u *remove_tail __ARGS((char_u *p, char_u *pend, char_u *name));

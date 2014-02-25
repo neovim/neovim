@@ -1,3 +1,6 @@
+#ifndef NEOVIM_WINDOW_H
+#define NEOVIM_WINDOW_H
+
 /* window.c */
 void do_window __ARGS((int nchar, long Prenum, int xchar));
 int win_split __ARGS((int size, int flags));
@@ -91,3 +94,5 @@ matchitem_T *get_match __ARGS((win_T *wp, int id));
 int get_win_number __ARGS((win_T *wp, win_T *first_win));
 int get_tab_number __ARGS((tabpage_T *tp));
 /* vim: set ft=c : */
+
+#endif /* NEOVIM_WINDOW_H */
