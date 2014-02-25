@@ -7,14 +7,31 @@ check_type_size("time_t" SIZEOF_TIME_T)
 check_type_size("off_t" SIZEOF_OFF_T)
 
 if (CMAKE_HOST_APPLE)
-  execute_process(COMMAND brew --prefix gettext
-    OUTPUT_VARIABLE _TMP_HOMEBREW_GETTEXT_PREFIX
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(HOMEBREW_GETTEXT_PREFIX ${_TMP_HOMEBREW_GETTEXT_PREFIX}
-    CACHE PATH "homebrew gettext directory (${_TMP_HOMEBREW_GETTEXT_PREFIX})")
-  set(CMAKE_REQUIRED_LIBRARIES intl)
-  set(CMAKE_REQUIRED_INCLUDES "${HOMEBREW_GETTEXT_PREFIX}/include")
-  set(CMAKE_REQUIRED_FLAGS "-L${HOMEBREW_GETTEXT_PREFIX}/lib")
+  find_program(HAVE_HOMEBREW brew)
+  if (HAVE_HOMEBREW)
+    execute_process(COMMAND brew --prefix gettext
+      OUTPUT_VARIABLE _TMP_HOMEBREW_GETTEXT_PREFIX
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(HOMEBREW_GETTEXT_PREFIX ${_TMP_HOMEBREW_GETTEXT_PREFIX}
+      CACHE
+      PATH "homebrew gettext directory (${_TMP_HOMEBREW_GETTEXT_PREFIX})")
+    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_GETTEXT_PREFIX}")
+  endif()
+endif()
+
+find_path(LIBINTL_INCLUDE_DIR libintl.h)
+find_library(LIBINTL_LIB intl)
+get_filename_component(LIBINTL_LIB_DIR "${LIBINTL_LIB}" NAME)
+
+if (LIBINTL_INCLUDE_DIR)
+  set(CMAKE_REQUIRED_INCLUDES "${LIBINTL_INCLUDE_DIR}")
+endif()
+
+# This is required because some operating systems don't have a separate
+# libintl--it is built into glibc.  So we only need to specify the library if
+# one was actually found.
+if (LIBINTL_LIB)
+  set(CMAKE_REQUIRED_LIBRARIES "${LIBINTL_LIB}")
 endif()
 
 check_c_source_compiles("
@@ -25,7 +42,7 @@ int main(int argc, char** argv) {
   bindtextdomain(\"foo\", \"bar\");
   bind_textdomain_codeset(\"foo\", \"bar\");
   textdomain(\"foo\");
-}" HAVE_WORKING_LIBINTL)
+}" HAVE_LIBINTL)
 
 # generate configuration header and update include directories
 configure_file (
