@@ -1,9 +1,7 @@
 /* os_unix.c */
-int mch_chdir __ARGS((char *path));
 void mch_write __ARGS((char_u *s, int len));
 int mch_inchar __ARGS((char_u *buf, int maxlen, long wtime, int tb_change_cnt));
 int mch_char_avail __ARGS((void));
-long_u mch_total_mem __ARGS((int special));
 void mch_delay __ARGS((long msec, int ignoreinput));
 int mch_stackcheck __ARGS((char *p));
 void mch_startjmp __ARGS((void));

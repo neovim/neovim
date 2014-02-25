@@ -11,6 +11,7 @@
  * misc2.c: Various functions.
  */
 #include "vim.h"
+#include "os/os.h"
 
 static char_u   *username = NULL; /* cached result of mch_get_user_name() */
 

@@ -8,15 +8,14 @@
  */
 
 /*
- * io.c -- filesystem access, event loop etc.
+ * fs.c -- filesystem access
  */
 
-#include "vim.h"
+#include <uv.h>
 
-#include "uv.h"
+#include "os.h"
 
-int mch_chdir(char *path)
-{
+int mch_chdir(char *path) {
   if (p_verbose >= 5) {
     verbose_enter();
     smsg((char_u *)"chdir(%s)", path);
