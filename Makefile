@@ -11,10 +11,10 @@ build/bin/nvim: deps
 test: build/bin/nvim
 	cd src/testdir && make
 
-deps: .deps/usr/lib/libuv.a
+#deps: .deps/usr/lib/libuv.a
 
-.deps/usr/lib/libuv.a:
-	sh -e scripts/get-libuv.sh
+#.deps/usr/lib/libuv.a:
+#	sh -e scripts/get-libuv.sh
 
 cmake: clean
 	mkdir build
