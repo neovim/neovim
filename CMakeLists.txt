@@ -18,6 +18,10 @@ else()
   set(DEBUG 0)
 endif()
 
+if(DEFINED $ENV{VALGRIND_CHECK})
+  add_definitions(-DEXITFREE)
+endif()
+
 # Modules used by platform auto-detection
 include(CheckLibraryExists)
 
