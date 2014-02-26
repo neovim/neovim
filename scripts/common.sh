@@ -4,10 +4,12 @@ if [ "$unameval" = 'Linux' ]; then
 	platform='linux'
 elif [ "$unameval" = 'FreeBSD' ]; then
 	platform='freebsd'
+elif [ "$unameval" = 'Darwin' ]; then
+	platform='macosx'
 fi
 
 sha1sumcmd='sha1sum'
-if [ "$platform" = 'freebsd' ]; then
+if [ "$platform" = 'freebsd' ] || [ "$platform" = 'macosx' ]; then
 	sha1sumcmd='shasum'
 fi
 
