@@ -33,6 +33,14 @@
  */
 
 #include "vim.h"
+#include "memfile.h"
+#include "fileio.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "os_unix.h"
+#include "ui.h"
 
 /*
  * Some systems have the page size in statfs.f_bsize, some in stat.st_blksize

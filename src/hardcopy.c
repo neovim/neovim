@@ -12,7 +12,24 @@
  */
 
 #include "vim.h"
-#include "version.h"
+#include "version_defs.h"
+#include "hardcopy.h"
+#include "buffer.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds2.h"
+#include "ex_docmd.h"
+#include "fileio.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "option.h"
+#include "screen.h"
+#include "syntax.h"
+#include "term.h"
+#include "ui.h"
 
 /*
  * To implement printing on a platform, the following functions must be

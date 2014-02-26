@@ -1,2 +1,2 @@
 language: c
-script: make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist" && make test && make install
+script: make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist" && make && make test > /dev/null 2>&1 && make install

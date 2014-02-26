@@ -298,9 +298,34 @@
  */
 
 #include "vim.h"
+#include "spell.h"
+#include "buffer.h"
+#include "charset.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "ex_cmds2.h"
+#include "ex_docmd.h"
+#include "fileio.h"
+#include "getchar.h"
+#include "hashtab.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "normal.h"
+#include "option.h"
+#include "os_unix.h"
+#include "regexp.h"
+#include "screen.h"
+#include "search.h"
+#include "syntax.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
 
-
-#ifndef UNIX            /* it's in os_unix.h for Unix */
+#ifndef UNIX            /* it's in os_unix_defs.h for Unix */
 # include <time.h>      /* for time_t */
 #endif
 

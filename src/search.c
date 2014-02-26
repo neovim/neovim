@@ -11,6 +11,31 @@
  */
 
 #include "vim.h"
+#include "search.h"
+#include "charset.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "ex_cmds2.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "fold.h"
+#include "getchar.h"
+#include "main.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "regexp.h"
+#include "screen.h"
+#include "term.h"
+#include "ui.h"
+#include "window.h"
 
 static void save_re_pat __ARGS((int idx, char_u *pat, int magic));
 static void set_vv_searchforward __ARGS((void));

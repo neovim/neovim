@@ -12,6 +12,48 @@
  */
 
 #include "vim.h"
+#include "ex_docmd.h"
+#include "blowfish.h"
+#include "buffer.h"
+#include "charset.h"
+#include "diff.h"
+#include "digraph.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "ex_cmds2.h"
+#include "ex_eval.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "fold.h"
+#include "getchar.h"
+#include "hardcopy.h"
+#include "if_cscope.h"
+#include "main.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "menu.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "ops.h"
+#include "option.h"
+#include "os_unix.h"
+#include "quickfix.h"
+#include "regexp.h"
+#include "screen.h"
+#include "search.h"
+#include "spell.h"
+#include "syntax.h"
+#include "tag.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
+#include "version.h"
+#include "window.h"
 #include "os/os.h"
 
 static int quitmore = 0;
@@ -223,7 +265,7 @@ static void ex_folddo __ARGS((exarg_T *eap));
  * Declare cmdnames[].
  */
 #define DO_DECLARE_EXCMD
-#include "ex_cmds.h"
+#include "ex_cmds_defs.h"
 
 /*
  * Table used to quickly search for a command, based on its first character.

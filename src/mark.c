@@ -12,6 +12,24 @@
  */
 
 #include "vim.h"
+#include "mark.h"
+#include "buffer.h"
+#include "charset.h"
+#include "diff.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "fileio.h"
+#include "fold.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "option.h"
+#include "quickfix.h"
+#include "search.h"
+#include "term.h"
+#include "ui.h"
 #include "os/os.h"
 
 /*

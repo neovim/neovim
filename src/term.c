@@ -24,6 +24,25 @@
 
 #define tgetstr tgetstr_defined_wrong
 #include "vim.h"
+#include "term.h"
+#include "buffer.h"
+#include "charset.h"
+#include "edit.h"
+#include "eval.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "getchar.h"
+#include "message.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "os_unix.h"
+#include "popupmnu.h"
+#include "screen.h"
+#include "syntax.h"
+#include "ui.h"
+#include "window.h"
 
 #ifdef HAVE_TGETENT
 # ifdef HAVE_TERMIOS_H

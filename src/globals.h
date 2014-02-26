@@ -6,6 +6,11 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
+#ifndef NEOVIM_GLOBALS_H
+#define NEOVIM_GLOBALS_H
+
+#include "mbyte.h"
+
 /*
  * definition of global variables
  */
@@ -1197,3 +1202,5 @@ EXTERN char *ignoredp;
  * Optional Arabic support. Include it here, so EXTERN and INIT are defined.
  */
 # include "arabic.h"
+
+#endif /* NEOVIM_GLOBALS_H */

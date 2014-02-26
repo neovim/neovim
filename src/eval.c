@@ -12,11 +12,47 @@
  */
 
 #include "vim.h"
+#include "eval.h"
+#include "buffer.h"
+#include "charset.h"
+#include "diff.h"
+#include "edit.h"
+#include "ex_cmds.h"
+#include "ex_cmds2.h"
+#include "ex_docmd.h"
+#include "ex_eval.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "fold.h"
+#include "getchar.h"
+#include "hashtab.h"
+#include "if_cscope.h"
+#include "mark.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "ops.h"
+#include "option.h"
+#include "os_unix.h"
+#include "popupmnu.h"
+#include "quickfix.h"
+#include "regexp.h"
+#include "screen.h"
+#include "search.h"
+#include "sha256.h"
+#include "spell.h"
+#include "syntax.h"
+#include "tag.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
+#include "version.h"
+#include "window.h"
 #include "os/os.h"
-
-
-
-
 
 #if defined(FEAT_FLOAT) && defined(HAVE_MATH_H)
 # include <math.h>
@@ -264,7 +300,7 @@ typedef struct {
  * The reason to use this table anyway is for very quick access to the
  * variables with the VV_ defines.
  */
-#include "version.h"
+#include "version_defs.h"
 
 /* values for vv_flags: */
 #define VV_COMPAT       1       /* compatible, also used without "v:" */

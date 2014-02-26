@@ -78,6 +78,17 @@
  */
 
 #include "vim.h"
+#include "mbyte.h"
+#include "charset.h"
+#include "fileio.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "option.h"
+#include "screen.h"
+#include "spell.h"
+#include "ui.h"
 
 # define WINBYTE BYTE
 

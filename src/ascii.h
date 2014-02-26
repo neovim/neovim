@@ -6,6 +6,9 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
+#ifndef NEOVIM_ASCII_H
+#define NEOVIM_ASCII_H
+
 /*
  * Definitions of various common control characters.
  * For EBCDIC we have to use different values.
@@ -94,3 +97,5 @@
 # define PATHSEP        '/'
 # define PATHSEPSTR     "/"
 #endif
+
+#endif /* NEOVIM_ASCII_H */
