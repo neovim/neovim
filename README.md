@@ -195,7 +195,7 @@ and what is currently being worked on:
 
 #### For OS X:
 
-* Install [Xcode](https://developer.apple.com/) and [Homebrew][http://brew.sh]
+* Install [Xcode](https://developer.apple.com/) and [Homebrew](http://brew.sh)
 * Install sha1sum
 
 If you run into wget certificate errors, you may be missing the root SSL
