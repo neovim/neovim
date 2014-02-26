@@ -15,6 +15,7 @@
 
 #include "os.h"
 #include "../message.h"
+#include "../misc2.h"
 
 int mch_chdir(char *path) {
   if (p_verbose >= 5) {
