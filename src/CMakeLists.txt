@@ -23,6 +23,10 @@ if(HAVE_CLOCK_GETTIME)
   list(APPEND NVIM_LINK_LIBRARIES rt)
 endif(HAVE_CLOCK_GETTIME)
 
+if (LibIntl_FOUND)
+  list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
+endif()
+
 target_link_libraries (nvim ${NVIM_LINK_LIBRARIES})
 
 include(CheckLibraryExists)
@@ -37,10 +41,6 @@ else()
   else()
     message(FATAL_ERROR "can't find something resembling -ltermcap")
   endif()
-endif()
-
-if (HAVE_LIBINTL AND LIBINTL_LIB)
-  target_link_libraries(nvim ${LIBINTL_LIB})
 endif()
 
 include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
