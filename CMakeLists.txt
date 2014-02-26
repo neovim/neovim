@@ -18,6 +18,9 @@ else()
   set(DEBUG 0)
 endif()
 
+# Modules used by platform auto-detection
+include(CheckLibraryExists)
+
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
 # explicitly to indicate a strong preference for pthread. It is an error to not
 # have pthread installed even if, for example, the Win32 threading API is found.
@@ -27,11 +30,15 @@ if(NOT CMAKE_USE_PTHREADS_INIT)
   message(SEND_ERROR "The pthread library must be installed on your system.")
 endif(NOT CMAKE_USE_PTHREADS_INIT)
 
+# Detect if clock_gettime exists in -lrt. If so we need to link with it because
+# the static libuv doesn't but uses clock_gettime.
+check_library_exists(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
+
 # Require libuv
 find_package(LibUV REQUIRED)
 include_directories(${LibUV_INCLUDE_DIRS})
 
-include_directories ("${PROJECT_BINARY_DIR}/config") 
+include_directories ("${PROJECT_BINARY_DIR}/config")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
