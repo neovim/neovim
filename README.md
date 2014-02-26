@@ -300,7 +300,7 @@ certificates or have not set them up correctly:
   Via Homebrew:
 
       brew install curl-ca-bundle libtool automake cmake
-      echo CA_CERTIFICATE=/usr/local/opt/curl-ca-bundle/share/ca-bundle.crt >> ~/.wgetrc
+      echo CA_CERTIFICATE=$(brew --prefix curl-ca-bundle)/share/ca-bundle.crt >> ~/.wgetrc
 
 
 ### Building
