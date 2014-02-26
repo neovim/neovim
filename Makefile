@@ -1,6 +1,6 @@
 -include local.mk
 
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr -DLibUV_USE_STATIC=YES
 
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS :=
