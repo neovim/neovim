@@ -6,8 +6,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef VIM__H
-# define VIM__H
+#ifndef NEOVIM_VIM_H
+# define NEOVIM_VIM_H
 /* Included when ported to cmake */
 /* This is needed to replace TRUE/FALSE macros by true/false from c99 */
 #include <stdbool.h>
@@ -62,7 +62,7 @@ Error: configure did not run properly.Check auto/config.log.
 # define VIMPACKAGE     "vim"
 #endif
 
-#include "os_unix.h"       /* bring lots of system header files */
+#include "os_unix_defs.h"       /* bring lots of system header files */
 
 #ifndef __ARGS
 # if defined(__STDC__) || defined(__GNUC__) || defined(WIN3264)
@@ -70,14 +70,6 @@ Error: configure did not run properly.Check auto/config.log.
 # else
 #  define __ARGS(x) ()
 # endif
-#endif
-
-/* Mark unused function arguments with UNUSED, so that gcc -Wunused-parameter
- * can be used to check for mistakes. */
-#ifdef HAVE_ATTRIBUTE_UNUSED
-# define UNUSED __attribute__((unused))
-#else
-# define UNUSED
 #endif
 
 # ifdef HAVE_LOCALE_H
@@ -162,7 +154,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 
 #include "ascii.h"
 #include "keymap.h"
-#include "term.h"
+#include "term_defs.h"
 #include "macros.h"
 
 #include <errno.h>
@@ -1268,9 +1260,9 @@ int vim_memcmp __ARGS((void *, void *, size_t));
 
 typedef struct timeval proftime_T;
 
-/* Include option.h before structs.h, because the number of window-local and
+/* Include option_defs.h before structs.h, because the number of window-local and
  * buffer-local options is used there. */
-#include "option.h"         /* options and default values */
+#include "option_defs.h"         /* options and default values */
 
 /* Note that gui.h is included by structs.h */
 
@@ -1420,7 +1412,7 @@ typedef struct timeval proftime_T;
 typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
-#include "ex_cmds.h"        /* Ex command defines */
+#include "ex_cmds_defs.h"        /* Ex command defines */
 #include "proto.h"          /* function prototypes */
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
@@ -1602,4 +1594,4 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
     VV_HLSEARCH, !no_hlsearch)
 
-#endif /* VIM__H */
+#endif /* NEOVIM_VIM_H */

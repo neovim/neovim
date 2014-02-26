@@ -28,10 +28,26 @@
 # define select select_declared_wrong
 
 #include "vim.h"
-
+#include "os_unix.h"
+#include "buffer.h"
+#include "charset.h"
+#include "eval.h"
+#include "ex_cmds.h"
+#include "fileio.h"
+#include "getchar.h"
+#include "main.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "screen.h"
+#include "syntax.h"
+#include "term.h"
+#include "ui.h"
+#include "os/os.h"
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
-
 
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
@@ -221,23 +237,10 @@ static struct signalinfo {
   {-1,            "Unknown!", FALSE}
 };
 
-int mch_chdir(path)
-char *path;
-{
-  if (p_verbose >= 5) {
-    verbose_enter();
-    smsg((char_u *)"chdir(%s)", path);
-    verbose_leave();
-  }
-  return chdir(path);
-}
-
 /*
  * Write s[len] to the screen.
  */
-void mch_write(s, len)
-char_u      *s;
-int len;
+void mch_write(char_u *s, int len)
 {
   ignored = (int)write(1, (char *)s, len);
   if (p_wd)             /* Unix is too fast, slow down a bit more */
@@ -252,74 +255,75 @@ int len;
  * If wtime == n wait a short time for characters.
  * If wtime == -1 wait forever for characters.
  */
-int mch_inchar(buf, maxlen, wtime, tb_change_cnt)
-char_u      *buf;
-int maxlen;
-long wtime;                 /* don't use "time", MIPS cannot handle it */
-int tb_change_cnt;
+int mch_inchar(
+        char_u      *buf,
+        int maxlen,
+        long wtime,                 /* don't use "time", MIPS cannot handle it */
+        int tb_change_cnt
+        )
 {
-  int len;
+    int len;
 
 
-  /* Check if window changed size while we were busy, perhaps the ":set
-   * columns=99" command was used. */
-  while (do_resize)
-    handle_resize();
-
-  if (wtime >= 0) {
-    while (WaitForChar(wtime) == 0) {           /* no character available */
-      if (!do_resize)           /* return if not interrupted by resize */
-        return 0;
-      handle_resize();
-    }
-  } else   {    /* wtime == -1 */
-    /*
-     * If there is no character available within 'updatetime' seconds
-     * flush all the swap files to disk.
-     * Also done when interrupted by SIGWINCH.
-     */
-    if (WaitForChar(p_ut) == 0) {
-      if (trigger_cursorhold() && maxlen >= 3
-          && !typebuf_changed(tb_change_cnt)) {
-        buf[0] = K_SPECIAL;
-        buf[1] = KS_EXTRA;
-        buf[2] = (int)KE_CURSORHOLD;
-        return 3;
-      }
-      before_blocking();
-    }
-  }
-
-  for (;; ) {   /* repeat until we got a character */
-    while (do_resize)        /* window changed size */
-      handle_resize();
-
-    /*
-     * We want to be interrupted by the winch signal
-     * or by an event on the monitored file descriptors.
-     */
-    if (WaitForChar(-1L) == 0) {
-      if (do_resize)                /* interrupted by SIGWINCH signal */
+    /* Check if window changed size while we were busy, perhaps the ":set
+     * columns=99" command was used. */
+    while (do_resize)
         handle_resize();
-      return 0;
+
+    if (wtime >= 0) {
+        while (WaitForChar(wtime) == 0) {           /* no character available */
+            if (!do_resize)           /* return if not interrupted by resize */
+                return 0;
+            handle_resize();
+        }
+    } else   {    /* wtime == -1 */
+        /*
+         * If there is no character available within 'updatetime' seconds
+         * flush all the swap files to disk.
+         * Also done when interrupted by SIGWINCH.
+         */
+        if (WaitForChar(p_ut) == 0) {
+            if (trigger_cursorhold() && maxlen >= 3
+                    && !typebuf_changed(tb_change_cnt)) {
+                buf[0] = K_SPECIAL;
+                buf[1] = KS_EXTRA;
+                buf[2] = (int)KE_CURSORHOLD;
+                return 3;
+            }
+            before_blocking();
+        }
     }
 
-    /* If input was put directly in typeahead buffer bail out here. */
-    if (typebuf_changed(tb_change_cnt))
-      return 0;
+    for (;; ) {   /* repeat until we got a character */
+        while (do_resize)        /* window changed size */
+            handle_resize();
 
-    /*
-     * For some terminals we only get one character at a time.
-     * We want the get all available characters, so we could keep on
-     * trying until none is available
-     * For some other terminals this is quite slow, that's why we don't do
-     * it.
-     */
-    len = read_from_input_buf(buf, (long)maxlen);
-    if (len > 0) {
-      return len;
+        /*
+         * We want to be interrupted by the winch signal
+         * or by an event on the monitored file descriptors.
+         */
+        if (WaitForChar(-1L) == 0) {
+            if (do_resize)                /* interrupted by SIGWINCH signal */
+                handle_resize();
+            return 0;
+        }
+
+        /* If input was put directly in typeahead buffer bail out here. */
+        if (typebuf_changed(tb_change_cnt))
+            return 0;
+
+        /*
+         * For some terminals we only get one character at a time.
+         * We want the get all available characters, so we could keep on
+         * trying until none is available
+         * For some other terminals this is quite slow, that's why we don't do
+         * it.
+         */
+        len = read_from_input_buf(buf, (long)maxlen);
+        if (len > 0) {
+            return len;
+        }
     }
-  }
 }
 
 static void handle_resize()                 {
@@ -334,105 +338,7 @@ int mch_char_avail()         {
   return WaitForChar(0L);
 }
 
-#if defined(HAVE_TOTAL_MEM) || defined(PROTO)
-# ifdef HAVE_SYS_RESOURCE_H
-#  include <sys/resource.h>
-# endif
-# if defined(HAVE_SYS_SYSCTL_H) && defined(HAVE_SYSCTL)
-#  include <sys/sysctl.h>
-# endif
-# if defined(HAVE_SYS_SYSINFO_H) && defined(HAVE_SYSINFO)
-#  include <sys/sysinfo.h>
-# endif
-
-/*
- * Return total amount of memory available in Kbyte.
- * Doesn't change when memory has been allocated.
- */
-long_u mch_total_mem(special)
-int special UNUSED;
-{
-  long_u mem = 0;
-  long_u shiftright = 10;         /* how much to shift "mem" right for Kbyte */
-
-#  ifdef HAVE_SYSCTL
-  int mib[2], physmem;
-  size_t len;
-
-  /* BSD way of getting the amount of RAM available. */
-  mib[0] = CTL_HW;
-  mib[1] = HW_USERMEM;
-  len = sizeof(physmem);
-  if (sysctl(mib, 2, &physmem, &len, NULL, 0) == 0)
-    mem = (long_u)physmem;
-#  endif
-
-#  if defined(HAVE_SYS_SYSINFO_H) && defined(HAVE_SYSINFO)
-  if (mem == 0) {
-    struct sysinfo sinfo;
-
-    /* Linux way of getting amount of RAM available */
-    if (sysinfo(&sinfo) == 0) {
-#   ifdef HAVE_SYSINFO_MEM_UNIT
-      /* avoid overflow as much as possible */
-      while (shiftright > 0 && (sinfo.mem_unit & 1) == 0) {
-        sinfo.mem_unit = sinfo.mem_unit >> 1;
-        --shiftright;
-      }
-      mem = sinfo.totalram * sinfo.mem_unit;
-#   else
-      mem = sinfo.totalram;
-#   endif
-    }
-  }
-#  endif
-
-#  ifdef HAVE_SYSCONF
-  if (mem == 0) {
-    long pagesize, pagecount;
-
-    /* Solaris way of getting amount of RAM available */
-    pagesize = sysconf(_SC_PAGESIZE);
-    pagecount = sysconf(_SC_PHYS_PAGES);
-    if (pagesize > 0 && pagecount > 0) {
-      /* avoid overflow as much as possible */
-      while (shiftright > 0 && (pagesize & 1) == 0) {
-        pagesize = (long_u)pagesize >> 1;
-        --shiftright;
-      }
-      mem = (long_u)pagesize * pagecount;
-    }
-  }
-#  endif
-
-  /* Return the minimum of the physical memory and the user limit, because
-   * using more than the user limit may cause Vim to be terminated. */
-#  if defined(HAVE_SYS_RESOURCE_H) && defined(HAVE_GETRLIMIT)
-  {
-    struct rlimit rlp;
-
-    if (getrlimit(RLIMIT_DATA, &rlp) == 0
-        && rlp.rlim_cur < ((rlim_t)1 << (sizeof(long_u) * 8 - 1))
-#   ifdef RLIM_INFINITY
-        && rlp.rlim_cur != RLIM_INFINITY
-#   endif
-        && ((long_u)rlp.rlim_cur >> 10) < (mem >> shiftright)
-        ) {
-      mem = (long_u)rlp.rlim_cur;
-      shiftright = 10;
-    }
-  }
-#  endif
-
-  if (mem > 0)
-    return mem >> shiftright;
-  return (long_u)0x1fffff;
-}
-#endif
-
-void mch_delay(msec, ignoreinput)
-long msec;
-int ignoreinput;
+void mch_delay(long msec, int ignoreinput)
 {
   int old_tmode;
 
@@ -508,8 +414,7 @@ static int stack_grows_downwards;
  * Find out if the stack grows upwards or downwards.
  * "p" points to a variable on the stack of the caller.
  */
-static void check_stack_growth(p)
-char        *p;
+static void check_stack_growth(char *p)
 {
   int i;
 
@@ -577,8 +482,7 @@ static void get_stack_limit()                 {
  * Return FAIL when running out of stack space.
  * "p" must point to any variable local to the caller that's on the stack.
  */
-int mch_stackcheck(p)
-char        *p;
+int mch_stackcheck(char *p)
 {
   if (stack_limit != NULL) {
     if (stack_grows_downwards) {
@@ -1005,9 +909,10 @@ void reset_signals()          {
 #endif
 }
 
-static void catch_signals(func_deadly, func_other)
-RETSIGTYPE (*func_deadly)();
-RETSIGTYPE (*func_other)();
+static void catch_signals(
+        RETSIGTYPE (*func_deadly)(),
+        RETSIGTYPE (*func_other)()
+        )
 {
   int i;
 
@@ -1056,8 +961,7 @@ RETSIGTYPE (*func_other)();
  *			     signal
  * Returns TRUE when Vim should exit.
  */
-int vim_handle_signal(sig)
-int sig;
+int vim_handle_signal(int sig)
 {
   static int got_signal = 0;
   static int blocked = TRUE;
@@ -1088,9 +992,7 @@ int sig;
 /*
  * Check_win checks whether we have an interactive stdout.
  */
-int mch_check_win(argc, argv)
-int argc UNUSED;
-char    **argv UNUSED;
+int mch_check_win(int argc, char **argv)
 {
   if (isatty(1))
     return OK;
@@ -1106,14 +1008,12 @@ int mch_input_isatty()         {
   return FALSE;
 }
 
-static int get_x11_title(test_only)
-int test_only UNUSED;
+static int get_x11_title(int test_only)
 {
   return FALSE;
 }
 
-static int get_x11_icon(test_only)
-int test_only;
+static int get_x11_icon(int test_only)
 {
   if (!test_only) {
     if (STRNCMP(T_NAME, "builtin_", 8) == 0)
@@ -1136,9 +1036,7 @@ int mch_can_restore_icon()         {
 /*
  * Set the window title and icon.
  */
-void mch_settitle(title, icon)
-char_u *title;
-char_u *icon;
+void mch_settitle(char_u *title, char_u *icon)
 {
   int type = 0;
   static int recursive = 0;
@@ -1195,8 +1093,7 @@ char_u *icon;
  *  2  only restore icon
  *  3  restore title and icon
  */
-void mch_restore_title(which)
-int which;
+void mch_restore_title(int which)
 {
   /* only restore the title or icon when it has been set */
   mch_settitle(((which & 1) && did_set_title) ?
@@ -1209,8 +1106,7 @@ int which;
  * Return TRUE if "name" looks like some xterm name.
  * Seiichi Sato mentioned that "mlterm" works like xterm.
  */
-int vim_is_xterm(name)
-char_u *name;
+int vim_is_xterm(char_u *name)
 {
   if (name == NULL)
     return FALSE;
@@ -1227,8 +1123,7 @@ char_u *name;
  * known to support the xterm-style mouse protocol.
  * Relies on term_is_xterm having been set to its correct value.
  */
-int use_xterm_like_mouse(name)
-char_u *name;
+int use_xterm_like_mouse(char_u *name)
 {
   return name != NULL
          && (term_is_xterm || STRNICMP(name, "screen", 6) == 0);
@@ -1253,8 +1148,7 @@ int use_xterm_mouse()         {
   return 0;
 }
 
-int vim_is_iris(name)
-char_u  *name;
+int vim_is_iris(char_u *name)
 {
   if (name == NULL)
     return FALSE;
@@ -1262,8 +1156,7 @@ char_u  *name;
          || STRCMP(name, "builtin_iris-ansi") == 0;
 }
 
-int vim_is_vt300(name)
-char_u  *name;
+int vim_is_vt300(char_u *name)
 {
   if (name == NULL)
     return FALSE;              /* actually all ANSI comp. terminals should be here  */
@@ -1277,8 +1170,7 @@ char_u  *name;
  * Return TRUE if "name" is a terminal for which 'ttyfast' should be set.
  * This should include all windowed terminal emulators.
  */
-int vim_is_fastterm(name)
-char_u  *name;
+int vim_is_fastterm(char_u *name)
 {
   if (name == NULL)
     return FALSE;
@@ -1294,9 +1186,7 @@ char_u  *name;
  * Insert user name in s[len].
  * Return OK if a name found.
  */
-int mch_get_user_name(s, len)
-char_u  *s;
-int len;
+int mch_get_user_name(char_u *s, int len)
 {
   return mch_get_uname(getuid(), s, len);
 }
@@ -1305,10 +1195,7 @@ int len;
  * Insert user name for "uid" in s[len].
  * Return OK if a name found.
  */
-int mch_get_uname(uid, s, len)
-uid_t uid;
-char_u      *s;
-int len;
+int mch_get_uname(uid_t uid, char_u *s, int len)
 {
 #if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
   struct passwd   *pw;
@@ -1328,9 +1215,7 @@ int len;
  */
 
 #ifdef HAVE_SYS_UTSNAME_H
-void mch_get_host_name(s, len)
-char_u  *s;
-int len;
+void mch_get_host_name(char_u *s, int len)
 {
   struct utsname vutsname;
 
@@ -1345,9 +1230,7 @@ int len;
 #  define gethostname(nam, len) sysinfo(SI_HOSTNAME, nam, len)
 # endif
 
-void mch_get_host_name(s, len)
-char_u  *s;
-int len;
+void mch_get_host_name(char_u *s, int len)
 {
   gethostname((char *)s, len);
   s[len - 1] = NUL;     /* make sure it's terminated */
@@ -1361,172 +1244,16 @@ long mch_get_pid()          {
   return (long)getpid();
 }
 
-#if !defined(HAVE_STRERROR) && defined(USE_GETCWD)
-static char *strerror __ARGS((int));
-
-static char * strerror(err)
-int err;
-{
-  extern int sys_nerr;
-  extern char     *sys_errlist[];
-  static char er[20];
-
-  if (err > 0 && err < sys_nerr)
-    return sys_errlist[err];
-  sprintf(er, "Error %d", err);
-  return er;
-}
-#endif
-
-/*
- * Get name of current directory into buffer 'buf' of length 'len' bytes.
- * Return OK for success, FAIL for failure.
- */
-int mch_dirname(buf, len)
-char_u  *buf;
-int len;
-{
-#if defined(USE_GETCWD)
-  if (getcwd((char *)buf, len) == NULL) {
-    STRCPY(buf, strerror(errno));
-    return FAIL;
-  }
-  return OK;
-#else
-  return getwd((char *)buf) != NULL ? OK : FAIL;
-#endif
-}
-
-
-/*
- * Get absolute file name into "buf[len]".
- *
- * return FAIL for failure, OK for success
- */
-int mch_FullName(fname, buf, len, force)
-char_u      *fname, *buf;
-int len;
-int force;                      /* also expand when already absolute path */
-{
-  int l;
-#ifdef HAVE_FCHDIR
-  int fd = -1;
-  static int dont_fchdir = FALSE;       /* TRUE when fchdir() doesn't work */
-#endif
-  char_u olddir[MAXPATHL];
-  char_u      *p;
-  int retval = OK;
-
-
-
-  /* expand it if forced or not an absolute path */
-  if (force || !mch_isFullName(fname)) {
-    /*
-     * If the file name has a path, change to that directory for a moment,
-     * and then do the getwd() (and get back to where we were).
-     * This will get the correct path name with "../" things.
-     */
-    if ((p = vim_strrchr(fname, '/')) != NULL) {
-#ifdef HAVE_FCHDIR
-      /*
-       * Use fchdir() if possible, it's said to be faster and more
-       * reliable.  But on SunOS 4 it might not work.  Check this by
-       * doing a fchdir() right now.
-       */
-      if (!dont_fchdir) {
-        fd = open(".", O_RDONLY | O_EXTRA, 0);
-        if (fd >= 0 && fchdir(fd) < 0) {
-          close(fd);
-          fd = -1;
-          dont_fchdir = TRUE;               /* don't try again */
-        }
-      }
-#endif
-
-      /* Only change directory when we are sure we can return to where
-       * we are now.  After doing "su" chdir(".") might not work. */
-      if (
-#ifdef HAVE_FCHDIR
-        fd < 0 &&
-#endif
-        (mch_dirname(olddir, MAXPATHL) == FAIL
-         || mch_chdir((char *)olddir) != 0)) {
-        p = NULL;               /* can't get current dir: don't chdir */
-        retval = FAIL;
-      } else   {
-        /* The directory is copied into buf[], to be able to remove
-         * the file name without changing it (could be a string in
-         * read-only memory) */
-        if (p - fname >= len)
-          retval = FAIL;
-        else {
-          vim_strncpy(buf, fname, p - fname);
-          if (mch_chdir((char *)buf))
-            retval = FAIL;
-          else
-            fname = p + 1;
-          *buf = NUL;
-        }
-      }
-    }
-    if (mch_dirname(buf, len) == FAIL) {
-      retval = FAIL;
-      *buf = NUL;
-    }
-    if (p != NULL) {
-#ifdef HAVE_FCHDIR
-      if (fd >= 0) {
-        if (p_verbose >= 5) {
-          verbose_enter();
-          MSG("fchdir() to previous dir");
-          verbose_leave();
-        }
-        l = fchdir(fd);
-        close(fd);
-      } else
-#endif
-      l = mch_chdir((char *)olddir);
-      if (l != 0)
-        EMSG(_(e_prev_dir));
-    }
-
-    l = STRLEN(buf);
-    if (l >= len - 1)
-      retval = FAIL;       /* no space for trailing "/" */
-    else if (l > 0 && buf[l - 1] != '/' && *fname != NUL
-             && STRCMP(fname, ".") != 0)
-      STRCAT(buf, "/");
-  }
-
-  /* Catch file names which are too long. */
-  if (retval == FAIL || (int)(STRLEN(buf) + STRLEN(fname)) >= len)
-    return FAIL;
-
-  /* Do not append ".", "/dir/." is equal to "/dir". */
-  if (STRCMP(fname, ".") != 0)
-    STRCAT(buf, fname);
-
-  return OK;
-}
-
-/*
- * Return TRUE if "fname" does not depend on the current directory.
- */
-int mch_isFullName(fname)
-char_u      *fname;
-{
-  return *fname == '/' || *fname == '~';
-}
-
 #if defined(USE_FNAME_CASE) || defined(PROTO)
 /*
  * Set the case of the file name, if it already exists.  This will cause the
  * file name to remain exactly the same.
  * Only required for file systems where case is ignored and preserved.
  */
-void fname_case(name, len)
-char_u      *name;
-int len UNUSED;              /* buffer size, only used when name gets longer */
+void fname_case(
+char_u      *name,
+int len;              /* buffer size, only used when name gets longer */
+)
 {
   struct stat st;
   char_u      *slash, *tail;
@@ -1578,8 +1305,7 @@ int len UNUSED;              /* buffer size, only used when name gets longer */
  * Get file permissions for 'name'.
  * Returns -1 when it doesn't exist.
  */
-long mch_getperm(name)
-char_u *name;
+long mch_getperm(char_u *name)
 {
   struct stat statb;
 
@@ -1600,9 +1326,7 @@ char_u *name;
  *
  * return FAIL for failure, OK otherwise
  */
-int mch_setperm(name, perm)
-char_u  *name;
-long perm;
+int mch_setperm(char_u *name, long perm)
 {
   return chmod((char *)
       name,
@@ -1622,9 +1346,7 @@ long perm;
 /*
  * Copy security info from "from_file" to "to_file".
  */
-void mch_copy_sec(from_file, to_file)
-char_u      *from_file;
-char_u      *to_file;
+void mch_copy_sec(char_u *from_file, char_u *to_file)
 {
   if (from_file == NULL)
     return;
@@ -1672,8 +1394,7 @@ char_u      *to_file;
  * Return a pointer to the ACL of file "fname" in allocated memory.
  * Return NULL if the ACL is not available for whatever reason.
  */
-vim_acl_T mch_get_acl(fname)
-char_u      *fname UNUSED;
+vim_acl_T mch_get_acl(char_u *fname)
 {
   vim_acl_T ret = NULL;
   return ret;
@@ -1682,16 +1403,13 @@ char_u      *fname UNUSED;
 /*
  * Set the ACL of file "fname" to "acl" (unless it's NULL).
  */
-void mch_set_acl(fname, aclent)
-char_u      *fname UNUSED;
-vim_acl_T aclent;
+void mch_set_acl(char_u *fname, vim_acl_T aclent)
 {
   if (aclent == NULL)
     return;
 }
 
-void mch_free_acl(aclent)
-vim_acl_T aclent;
+void mch_free_acl(vim_acl_T aclent)
 {
   if (aclent == NULL)
     return;
@@ -1701,8 +1419,7 @@ vim_acl_T aclent;
 /*
  * Set hidden flag for "name".
  */
-void mch_hide(name)
-char_u      *name UNUSED;
+void mch_hide(char_u *name)
 {
   /* can't hide a file */
 }
@@ -1712,8 +1429,7 @@ char_u      *name UNUSED;
  * return FALSE if "name" is not a directory
  * return FALSE for error
  */
-int mch_isdir(name)
-char_u *name;
+int mch_isdir(char_u *name)
 {
   struct stat statb;
 
@@ -1733,8 +1449,7 @@ static int executable_file __ARGS((char_u *name));
 /*
  * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
  */
-static int executable_file(name)
-char_u      *name;
+static int executable_file(char_u *name)
 {
   struct stat st;
 
@@ -1747,8 +1462,7 @@ char_u      *name;
  * Return 1 if "name" can be found in $PATH and executed, 0 if not.
  * Return -1 if unknown.
  */
-int mch_can_exe(name)
-char_u      *name;
+int mch_can_exe(char_u *name)
 {
   char_u      *buf;
   char_u      *p, *e;
@@ -1801,8 +1515,7 @@ char_u      *name;
  * NODE_WRITABLE: writable device, socket, fifo, etc.
  * NODE_OTHER: non-writable things
  */
-int mch_nodetype(name)
-char_u      *name;
+int mch_nodetype(char_u *name)
 {
   struct stat st;
 
@@ -1876,8 +1589,7 @@ static void exit_scroll()                 {
   }
 }
 
-void mch_exit(r)
-int r;
+void mch_exit(int r)
 {
   exiting = TRUE;
 
@@ -1934,8 +1646,7 @@ static void may_core_dump()                 {
   }
 }
 
-void mch_settmode(tmode)
-int tmode;
+void mch_settmode(int tmode)
 {
   static int first = TRUE;
 
@@ -2196,7 +1907,7 @@ void check_mouse_termcode()          {
  * set screen mode, always fails.
  */
 int mch_screenmode(arg)
-char_u   *arg UNUSED;
+char_u   *arg;
 {
   EMSG(_(e_screenmode));
   return FAIL;
@@ -3153,7 +2864,7 @@ long msec;
 static int RealWaitForChar(fd, msec, check_for_gpm)
 int fd;
 long msec;
-int         *check_for_gpm UNUSED;
+int         *check_for_gpm;
 {
   int ret;
 

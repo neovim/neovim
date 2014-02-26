@@ -8,6 +8,14 @@
  */
 
 #include "vim.h"
+#include "charset.h"
+#include "main.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "os_unix.h"
 
 static int win_chartabsize __ARGS((win_T *wp, char_u *p, colnr_T col));
 
@@ -56,13 +64,15 @@ static int chartab_initialized = FALSE;
  * Return FAIL if 'iskeyword', 'isident', 'isfname' or 'isprint' option has an
  * error, OK otherwise.
  */
-int init_chartab()         {
+int init_chartab(void)         {
   return buf_init_chartab(curbuf, TRUE);
 }
 
-int buf_init_chartab(buf, global)
-buf_T       *buf;
-int global;                     /* FALSE: only set buf->b_chartab[] */
+int 
+buf_init_chartab (
+    buf_T *buf,
+    int global                     /* FALSE: only set buf->b_chartab[] */
+)
 {
   int c;
   int c2;
@@ -246,9 +256,7 @@ int global;                     /* FALSE: only set buf->b_chartab[] */
  * The result is a string with only printable characters, but if there is not
  * enough room, not all characters will be translated.
  */
-void trans_characters(buf, bufsize)
-char_u      *buf;
-int bufsize;
+void trans_characters(char_u *buf, int bufsize)
 {
   int len;                      /* length of string needing translation */
   int room;                     /* room in buffer after string */
@@ -283,8 +291,7 @@ int bufsize;
  * Translate a string into allocated memory, replacing special chars with
  * printable chars.  Returns NULL when out of memory.
  */
-char_u * transstr(s)
-char_u      *s;
+char_u *transstr(char_u *s)
 {
   char_u      *res;
   char_u      *p;
@@ -342,11 +349,7 @@ char_u      *s;
  * When "buf" is NULL returns an allocated string (NULL for out-of-memory).
  * Otherwise puts the result in "buf[buflen]".
  */
-char_u * str_foldcase(str, orglen, buf, buflen)
-char_u      *str;
-int orglen;
-char_u      *buf;
-int buflen;
+char_u *str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
 {
   garray_T ga;
   int i;
@@ -440,8 +443,7 @@ int buflen;
  */
 static char_u transchar_buf[7];
 
-char_u * transchar(c)
-int c;
+char_u *transchar(int c)
 {
   int i;
 
@@ -469,8 +471,7 @@ int c;
  * Like transchar(), but called with a byte instead of a character.  Checks
  * for an illegal UTF-8 byte.
  */
-char_u * transchar_byte(c)
-int c;
+char_u *transchar_byte(int c)
 {
   if (enc_utf8 && c >= 0x80) {
     transchar_nonprint(transchar_buf, c);
@@ -484,9 +485,7 @@ int c;
  * "buf[]".  "buf" needs to be able to hold five bytes.
  * Does NOT work for multi-byte characters, c must be <= 255.
  */
-void transchar_nonprint(buf, c)
-char_u      *buf;
-int c;
+void transchar_nonprint(char_u *buf, int c)
 {
   if (c == NL)
     c = NUL;                    /* we use newline in place of a NUL */
@@ -518,9 +517,7 @@ int c;
   }
 }
 
-void transchar_hex(buf, c)
-char_u      *buf;
-int c;
+void transchar_hex(char_u *buf, int c)
 {
   int i = 0;
 
@@ -540,8 +537,7 @@ int c;
  * Lower case letters are used to avoid the confusion of <F1> being 0xf1 or
  * function key 1.
  */
-static unsigned nr2hex(c)
-unsigned c;
+static unsigned nr2hex(unsigned c)
 {
   if ((c & 0xf) <= 9)
     return (c & 0xf) + '0';
@@ -556,8 +552,7 @@ unsigned c;
  * For UTF-8 mode this will return 0 for bytes >= 0x80, because the number of
  * cells depends on further bytes.
  */
-int byte2cells(b)
-int b;
+int byte2cells(int b)
 {
   if (enc_utf8 && b >= 0x80)
     return 0;
@@ -569,8 +564,7 @@ int b;
  * "c" can be a special key (negative number) in which case 3 or 4 is returned.
  * A TAB is counted as two cells: "^I" or four: "<09>".
  */
-int char2cells(c)
-int c;
+int char2cells(int c)
 {
   if (IS_SPECIAL(c))
     return char2cells(K_SECOND(c)) + 2;
@@ -593,8 +587,7 @@ int c;
  * Return number of display cells occupied by character at "*p".
  * A TAB is counted as two cells: "^I" or four: "<09>".
  */
-int ptr2cells(p)
-char_u      *p;
+int ptr2cells(char_u *p)
 {
   /* For UTF-8 we need to look at more bytes if the first byte is >= 0x80. */
   if (enc_utf8 && *p >= 0x80)
@@ -607,8 +600,7 @@ char_u      *p;
  * Return the number of character cells string "s" will take on the screen,
  * counting TABs as two characters: "^I".
  */
-int vim_strsize(s)
-char_u      *s;
+int vim_strsize(char_u *s)
 {
   return vim_strnsize(s, (int)MAXCOL);
 }
@@ -617,9 +609,7 @@ char_u      *s;
  * Return the number of character cells string "s[len]" will take on the
  * screen, counting TABs as two characters: "^I".
  */
-int vim_strnsize(s, len)
-char_u      *s;
-int len;
+int vim_strnsize(char_u *s, int len)
 {
   int size = 0;
 
@@ -655,18 +645,13 @@ int len;
 
 #if defined(FEAT_VREPLACE) || defined(FEAT_EX_EXTRA) || defined(FEAT_GUI) \
   || defined(FEAT_VIRTUALEDIT) || defined(PROTO)
-int chartabsize(p, col)
-char_u      *p;
-colnr_T col;
+int chartabsize(char_u *p, colnr_T col)
 {
   RET_WIN_BUF_CHARTABSIZE(curwin, curbuf, p, col)
 }
 #endif
 
-static int win_chartabsize(wp, p, col)
-win_T       *wp;
-char_u      *p;
-colnr_T col;
+static int win_chartabsize(win_T *wp, char_u *p, colnr_T col)
 {
   RET_WIN_BUF_CHARTABSIZE(wp, wp->w_buffer, p, col)
 }
@@ -675,8 +660,7 @@ colnr_T col;
  * Return the number of characters the string 's' will take on the screen,
  * taking into account the size of a tab.
  */
-int linetabsize(s)
-char_u      *s;
+int linetabsize(char_u *s)
 {
   return linetabsize_col(0, s);
 }
@@ -684,9 +668,7 @@ char_u      *s;
 /*
  * Like linetabsize(), but starting at column "startcol".
  */
-int linetabsize_col(startcol, s)
-int startcol;
-char_u      *s;
+int linetabsize_col(int startcol, char_u *s)
 {
   colnr_T col = startcol;
 
@@ -698,10 +680,7 @@ char_u      *s;
 /*
  * Like linetabsize(), but for a given window instead of the current one.
  */
-int win_linetabsize(wp, p, len)
-win_T       *wp;
-char_u      *p;
-colnr_T len;
+int win_linetabsize(win_T *wp, char_u *p, colnr_T len)
 {
   colnr_T col = 0;
   char_u      *s;
@@ -715,8 +694,7 @@ colnr_T len;
  * Return TRUE if 'c' is a normal identifier character:
  * Letters and characters from the 'isident' option.
  */
-int vim_isIDc(c)
-int c;
+int vim_isIDc(int c)
 {
   return c > 0 && c < 0x100 && (chartab[c] & CT_ID_CHAR);
 }
@@ -726,15 +704,12 @@ int c;
  * 'iskeyword' option for current buffer.
  * For multi-byte characters mb_get_class() is used (builtin rules).
  */
-int vim_iswordc(c)
-int c;
+int vim_iswordc(int c)
 {
   return vim_iswordc_buf(c, curbuf);
 }
 
-int vim_iswordc_buf(c, buf)
-int c;
-buf_T       *buf;
+int vim_iswordc_buf(int c, buf_T *buf)
 {
   if (c >= 0x100) {
     if (enc_dbcs != 0)
@@ -748,17 +723,14 @@ buf_T       *buf;
 /*
  * Just like vim_iswordc() but uses a pointer to the (multi-byte) character.
  */
-int vim_iswordp(p)
-char_u *p;
+int vim_iswordp(char_u *p)
 {
   if (has_mbyte && MB_BYTE2LEN(*p) > 1)
     return mb_get_class(p) >= 2;
   return GET_CHARTAB(curbuf, *p) != 0;
 }
 
-int vim_iswordp_buf(p, buf)
-char_u      *p;
-buf_T       *buf;
+int vim_iswordp_buf(char_u *p, buf_T *buf)
 {
   if (has_mbyte && MB_BYTE2LEN(*p) > 1)
     return mb_get_class(p) >= 2;
@@ -769,8 +741,7 @@ buf_T       *buf;
  * return TRUE if 'c' is a valid file-name character
  * Assume characters above 0x100 are valid (multi-byte).
  */
-int vim_isfilec(c)
-int c;
+int vim_isfilec(int c)
 {
   return c >= 0x100 || (c > 0 && (chartab[c] & CT_FNAME_CHAR));
 }
@@ -781,8 +752,7 @@ int c;
  * Explicitly interpret ']' as a wildcard character as mch_has_wildcard("]")
  * returns false.
  */
-int vim_isfilec_or_wc(c)
-int c;
+int vim_isfilec_or_wc(int c)
 {
   char_u buf[2];
 
@@ -796,8 +766,7 @@ int c;
  * Assume characters above 0x100 are printable (multi-byte), except for
  * Unicode.
  */
-int vim_isprintc(c)
-int c;
+int vim_isprintc(int c)
 {
   if (enc_utf8 && c >= 0x100)
     return utf_printable(c);
@@ -808,8 +777,7 @@ int c;
  * Strict version of vim_isprintc(c), don't return TRUE if "c" is the head
  * byte of a double-byte character.
  */
-int vim_isprintc_strict(c)
-int c;
+int vim_isprintc_strict(int c)
 {
   if (enc_dbcs != 0 && c < 0x100 && MB_BYTE2LEN(c) > 1)
     return FALSE;
@@ -821,9 +789,7 @@ int c;
 /*
  * like chartabsize(), but also check for line breaks on the screen
  */
-int lbr_chartabsize(s, col)
-unsigned char       *s;
-colnr_T col;
+int lbr_chartabsize(unsigned char *s, colnr_T col)
 {
   if (!curwin->w_p_lbr && *p_sbr == NUL) {
     if (curwin->w_p_wrap)
@@ -836,9 +802,7 @@ colnr_T col;
 /*
  * Call lbr_chartabsize() and advance the pointer.
  */
-int lbr_chartabsize_adv(s, col)
-char_u      **s;
-colnr_T col;
+int lbr_chartabsize_adv(char_u **s, colnr_T col)
 {
   int retval;
 
@@ -854,11 +818,7 @@ colnr_T col;
  * string at start of line.  Warning: *headp is only set if it's a non-zero
  * value, init to 0 before calling.
  */
-int win_lbr_chartabsize(wp, s, col, headp)
-win_T       *wp;
-char_u      *s;
-colnr_T col;
-int         *headp UNUSED;
+int win_lbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
 {
   int c;
   int size;
@@ -967,11 +927,7 @@ int         *headp UNUSED;
  * 'wrap' is on.  This means we need to check for a double-byte character that
  * doesn't fit at the end of the screen line.
  */
-static int win_nolbr_chartabsize(wp, s, col, headp)
-win_T       *wp;
-char_u      *s;
-colnr_T col;
-int         *headp;
+static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
 {
   int n;
 
@@ -994,9 +950,7 @@ int         *headp;
  * Return TRUE if virtual column "vcol" is in the rightmost column of window
  * "wp".
  */
-int in_win_border(wp, vcol)
-win_T       *wp;
-colnr_T vcol;
+int in_win_border(win_T *wp, colnr_T vcol)
 {
   int width1;                   /* width of first line (after line number) */
   int width2;                   /* width of further lines */
@@ -1022,12 +976,7 @@ colnr_T vcol;
  *
  * This is used very often, keep it fast!
  */
-void getvcol(wp, pos, start, cursor, end)
-win_T       *wp;
-pos_T       *pos;
-colnr_T     *start;
-colnr_T     *cursor;
-colnr_T     *end;
+void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   colnr_T vcol;
   char_u      *ptr;             /* points to current char */
@@ -1129,8 +1078,7 @@ colnr_T     *end;
 /*
  * Get virtual cursor column in the current window, pretending 'list' is off.
  */
-colnr_T getvcol_nolist(posp)
-pos_T       *posp;
+colnr_T getvcol_nolist(pos_T *posp)
 {
   int list_save = curwin->w_p_list;
   colnr_T vcol;
@@ -1144,12 +1092,7 @@ pos_T       *posp;
 /*
  * Get virtual column in virtual mode.
  */
-void getvvcol(wp, pos, start, cursor, end)
-win_T       *wp;
-pos_T       *pos;
-colnr_T     *start;
-colnr_T     *cursor;
-colnr_T     *end;
+void getvvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor, colnr_T *end)
 {
   colnr_T col;
   colnr_T coladd;
@@ -1190,10 +1133,7 @@ colnr_T     *end;
  * Get the leftmost and rightmost virtual column of pos1 and pos2.
  * Used for Visual block mode.
  */
-void getvcols(wp, pos1, pos2, left, right)
-win_T       *wp;
-pos_T       *pos1, *pos2;
-colnr_T     *left, *right;
+void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left, colnr_T *right)
 {
   colnr_T from1, from2, to1, to2;
 
@@ -1220,8 +1160,7 @@ colnr_T     *left, *right;
 /*
  * skipwhite: skip over ' ' and '\t'.
  */
-char_u * skipwhite(q)
-char_u      *q;
+char_u *skipwhite(char_u *q)
 {
   char_u      *p = q;
 
@@ -1233,8 +1172,7 @@ char_u      *q;
 /*
  * skip over digits
  */
-char_u * skipdigits(q)
-char_u      *q;
+char_u *skipdigits(char_u *q)
 {
   char_u      *p = q;
 
@@ -1246,8 +1184,7 @@ char_u      *q;
 /*
  * skip over digits and hex characters
  */
-char_u * skiphex(q)
-char_u      *q;
+char_u *skiphex(char_u *q)
 {
   char_u      *p = q;
 
@@ -1259,8 +1196,7 @@ char_u      *q;
 /*
  * skip to digit (or NUL after the string)
  */
-char_u * skiptodigit(q)
-char_u      *q;
+char_u *skiptodigit(char_u *q)
 {
   char_u      *p = q;
 
@@ -1272,8 +1208,7 @@ char_u      *q;
 /*
  * skip to hex character (or NUL after the string)
  */
-char_u * skiptohex(q)
-char_u      *q;
+char_u *skiptohex(char_u *q)
 {
   char_u      *p = q;
 
@@ -1288,8 +1223,7 @@ char_u      *q;
  * superscript 1 to be a digit.
  * Use the VIM_ISDIGIT() macro for simple arguments.
  */
-int vim_isdigit(c)
-int c;
+int vim_isdigit(int c)
 {
   return c >= '0' && c <= '9';
 }
@@ -1299,8 +1233,7 @@ int c;
  * We don't use isxdigit() here, because on some systems it also considers
  * superscript 1 to be a digit.
  */
-int vim_isxdigit(c)
-int c;
+int vim_isxdigit(int c)
 {
   return (c >= '0' && c <= '9')
          || (c >= 'a' && c <= 'f')
@@ -1323,8 +1256,7 @@ static char_u latin1upper[257] =
 static char_u latin1lower[257] =
   "                                 !\"#$%&'()*+,-./0123456789:;<=>?@abcdefghijklmnopqrstuvwxyz[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\x7f\x80\x81\x82\x83\x84\x85\x86\x87\x88\x89\x8a\x8b\x8c\x8d\x8e\x8f\x90\x91\x92\x93\x94\x95\x96\x97\x98\x99\x9a\x9b\x9c\x9d\x9e\x9f\xa0\xa1\xa2\xa3\xa4\xa5\xa6\xa7\xa8\xa9\xaa\xab\xac\xad\xae\xaf\xb0\xb1\xb2\xb3\xb4\xb5\xb6\xb7\xb8\xb9\xba\xbb\xbc\xbd\xbe\xbf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xd7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xdf\xe0\xe1\xe2\xe3\xe4\xe5\xe6\xe7\xe8\xe9\xea\xeb\xec\xed\xee\xef\xf0\xf1\xf2\xf3\xf4\xf5\xf6\xf7\xf8\xf9\xfa\xfb\xfc\xfd\xfe\xff";
 
-int vim_islower(c)
-int c;
+int vim_islower(int c)
 {
   if (c <= '@')
     return FALSE;
@@ -1345,8 +1277,7 @@ int c;
   return islower(c);
 }
 
-int vim_isupper(c)
-int c;
+int vim_isupper(int c)
 {
   if (c <= '@')
     return FALSE;
@@ -1367,8 +1298,7 @@ int c;
   return isupper(c);
 }
 
-int vim_toupper(c)
-int c;
+int vim_toupper(int c)
 {
   if (c <= '@')
     return c;
@@ -1389,8 +1319,7 @@ int c;
   return TOUPPER_LOC(c);
 }
 
-int vim_tolower(c)
-int c;
+int vim_tolower(int c)
 {
   if (c <= '@')
     return c;
@@ -1414,8 +1343,7 @@ int c;
 /*
  * skiptowhite: skip over text until ' ' or '\t' or NUL.
  */
-char_u * skiptowhite(p)
-char_u      *p;
+char_u *skiptowhite(char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL)
     ++p;
@@ -1427,8 +1355,7 @@ char_u      *p;
 /*
  * skiptowhite_esc: Like skiptowhite(), but also skip escaped chars
  */
-char_u * skiptowhite_esc(p)
-char_u      *p;
+char_u *skiptowhite_esc(char_u *p)
 {
   while (*p != ' ' && *p != '\t' && *p != NUL) {
     if ((*p == '\\' || *p == Ctrl_V) && *(p + 1) != NUL)
@@ -1443,8 +1370,7 @@ char_u      *p;
  * Getdigits: Get a number from a string and skip over it.
  * Note: the argument is a pointer to a char_u pointer!
  */
-long getdigits(pp)
-char_u **pp;
+long getdigits(char_u **pp)
 {
   char_u      *p;
   long retval;
@@ -1461,8 +1387,7 @@ char_u **pp;
 /*
  * Return TRUE if "lbuf" is empty or only contains blanks.
  */
-int vim_isblankline(lbuf)
-char_u      *lbuf;
+int vim_isblankline(char_u *lbuf)
 {
   char_u      *p;
 
@@ -1486,15 +1411,17 @@ char_u      *lbuf;
  * If "dohex" is non-zero recognize hex numbers, when > 1 always assume
  * hex number.
  */
-void vim_str2nr(start, hexp, len, dooct, dohex, nptr, unptr)
-char_u              *start;
-int                 *hexp;          /* return: type of number 0 = decimal, 'x'
+void 
+vim_str2nr (
+    char_u *start,
+    int *hexp,          /* return: type of number 0 = decimal, 'x'
                                        or 'X' is hex, '0' = octal */
-int                 *len;           /* return: detected length of number */
-int dooct;                          /* recognize octal number */
-int dohex;                          /* recognize hex number */
-long                *nptr;          /* return: signed result */
-unsigned long       *unptr;         /* return: unsigned result */
+    int *len,           /* return: detected length of number */
+    int dooct,                          /* recognize octal number */
+    int dohex,                          /* recognize hex number */
+    long *nptr,          /* return: signed result */
+    unsigned long *unptr         /* return: unsigned result */
+)
 {
   char_u          *ptr = start;
   int hex = 0;                          /* default is decimal */
@@ -1569,8 +1496,7 @@ unsigned long       *unptr;         /* return: unsigned result */
  * Return the value of a single hex character.
  * Only valid when the argument is '0' - '9', 'A' - 'F' or 'a' - 'f'.
  */
-int hex2nr(c)
-int c;
+int hex2nr(int c)
 {
   if (c >= 'a' && c <= 'f')
     return c - 'a' + 10;
@@ -1585,8 +1511,7 @@ int c;
  * Convert two hex characters to a byte.
  * Return -1 if one of the characters is not hex.
  */
-int hexhex2nr(p)
-char_u      *p;
+int hexhex2nr(char_u *p)
 {
   if (!vim_isxdigit(p[0]) || !vim_isxdigit(p[1]))
     return -1;
@@ -1607,8 +1532,7 @@ char_u      *p;
  * character, assume that all multi-byte characters are valid file name
  * characters.
  */
-int rem_backslash(str)
-char_u  *str;
+int rem_backslash(char_u *str)
 {
 #ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\'
@@ -1628,8 +1552,7 @@ char_u  *str;
  * For MS-DOS we only do this if the character after the backslash
  * is not a normal file character.
  */
-void backslash_halve(p)
-char_u      *p;
+void backslash_halve(char_u *p)
 {
   for (; *p; ++p)
     if (rem_backslash(p))
@@ -1639,8 +1562,7 @@ char_u      *p;
 /*
  * backslash_halve() plus save the result in allocated memory.
  */
-char_u * backslash_halve_save(p)
-char_u      *p;
+char_u *backslash_halve_save(char_u *p)
 {
   char_u      *res;
 

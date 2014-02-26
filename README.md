@@ -1,5 +1,27 @@
 # neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
 
+[![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
+[![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
+
+* [Introduction](#introduction)
+* [Problem](#problem)
+* [Solution](#solution)
+  * [Migrate to a cmake-based build](#migrate-to-a-cmake-based-build)
+  * [Legacy support and compile-time features](#legacy-support-and-compile-time-features)
+  * [Platform-specific code](#platform-specific-code)
+  * [New plugin architecture](#new-plugin-architecture)
+  * [New GUI architecture](#new-gui-architecture)
+  * [Development on github](#development-on-github)
+* [Status](#status)
+* [Dependencies](#dependencies)
+  * [For Debian/Ubuntu](#for-debianubuntu)
+  * [For FreeBSD 10](#for-freebsd-10)
+  * [For OS X](#for-os-x)
+  * [For Arch Linux](#for-arch-linux)
+* [Building](#building)
+* [Community](#community)
+* [Contributing](#contributing)
+* [License](#license)
 
 ## Introduction
 
@@ -252,7 +274,11 @@ and what is currently being worked on:
 
 #### Ubuntu/Debian
 
-    sudo apt-get install build-essential cmake libncurses5-dev
+    sudo apt-get install libtool autoconf cmake libncurses5-dev g++
+
+#### FreeBSD 10
+
+    sudo pkg install cmake libtool sha
 
 #### Arch Linux
 
@@ -263,16 +289,18 @@ and what is currently being worked on:
 * Install [Xcode](https://developer.apple.com/)
 * Install sha1sum
 
+If you run into wget certificate errors, you may be missing the root SSL
+certificates or have not set them up correctly:
+
   Via MacPorts:
 
-      sudo port install md5sha1sum cmake libtool
+      sudo port install curl-ca-bundle
+      echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
 
   Via Homebrew:
 
-      brew install md5sha1sum cmake libtool
-
-#### TODO
-* Release the Dockerfile which has this in it.
+      brew install curl-ca-bundle
+      echo CA_CERTIFICATE=/usr/local/opt/curl-ca-bundle/share/ca-bundle.crt >> ~/.wgetrc
 
 
 ### Building
@@ -285,8 +313,34 @@ To build and run the tests:
 
     make test
 
+Using Homebrew on Mac:
+
+    brew install neovim/neovim/neovim
+
 ### Community
 
-Join the community on IRC in #neovim on freenode.
+Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
+
+### Contributing
+
+...would be awesome! See [the wiki](https://github.com/neovim/neovim/wiki/Contributing) for more details.
+
+### License
+
+Vim itself is distributed under the terms of the Vim License.
+See vim-license.txt for details.
+
+Vim also includes a message along the following lines:
+
+    Vim is Charityware.  You can use and copy it as much as you like, but you are
+    encouraged to make a donation for needy children in Uganda.  Please see the
+    kcc section of the vim docs or visit the ICCF web site, available at these URLs:
+
+            http://iccf-holland.org/
+            http://www.vim.org/iccf/
+            http://www.iccf.nl/
+
+    You can also sponsor the development of Vim.  Vim sponsors can vote for
+    features.  The money goes to Uganda anyway.
 
 <!-- vim: set tw=80: -->

@@ -88,6 +88,37 @@
  */
 
 #include "vim.h"
+#include "screen.h"
+#include "buffer.h"
+#include "charset.h"
+#include "diff.h"
+#include "eval.h"
+#include "ex_cmds2.h"
+#include "ex_getln.h"
+#include "fileio.h"
+#include "fold.h"
+#include "getchar.h"
+#include "main.h"
+#include "mbyte.h"
+#include "memline.h"
+#include "menu.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "move.h"
+#include "normal.h"
+#include "option.h"
+#include "popupmnu.h"
+#include "quickfix.h"
+#include "regexp.h"
+#include "search.h"
+#include "spell.h"
+#include "syntax.h"
+#include "term.h"
+#include "ui.h"
+#include "undo.h"
+#include "version.h"
+#include "window.h"
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
@@ -163,15 +194,12 @@ static int screen_char_attr = 0;
  * Set must_redraw only if not already set to a higher value.
  * e.g. if must_redraw is CLEAR, type NOT_VALID will do nothing.
  */
-void redraw_later(type)
-int type;
+void redraw_later(int type)
 {
   redraw_win_later(curwin, type);
 }
 
-void redraw_win_later(wp, type)
-win_T       *wp;
-int type;
+void redraw_win_later(win_T *wp, int type)
 {
   if (wp->w_redr_type < type) {
     wp->w_redr_type = type;
@@ -186,7 +214,7 @@ int type;
  * Force a complete redraw later.  Also resets the highlighting.  To be used
  * after executing a shell command that messes up the screen.
  */
-void redraw_later_clear()          {
+void redraw_later_clear(void)          {
   redraw_all_later(CLEAR);
   /* Use attributes that is very unlikely to appear in text. */
   screen_attr = HL_BOLD | HL_UNDERLINE | HL_INVERSE;
@@ -195,8 +223,7 @@ void redraw_later_clear()          {
 /*
  * Mark all windows to be redrawn later.
  */
-void redraw_all_later(type)
-int type;
+void redraw_all_later(int type)
 {
   win_T       *wp;
 
@@ -209,15 +236,12 @@ int type;
 /*
  * Mark all windows that are editing the current buffer to be updated later.
  */
-void redraw_curbuf_later(type)
-int type;
+void redraw_curbuf_later(int type)
 {
   redraw_buf_later(curbuf, type);
 }
 
-void redraw_buf_later(buf, type)
-buf_T       *buf;
-int type;
+void redraw_buf_later(buf_T *buf, int type)
 {
   win_T       *wp;
 
@@ -233,8 +257,7 @@ int type;
  * right away and restore what was on the command line.
  * Return a code indicating what happened.
  */
-int redraw_asap(type)
-int type;
+int redraw_asap(int type)
 {
   int rows;
   int r;
@@ -360,9 +383,11 @@ int type;
  * Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
  * may become invalid and the whole window will have to be redrawn.
  */
-void redrawWinline(lnum, invalid)
-linenr_T lnum;
-int invalid UNUSED;             /* window line height is invalid now */
+void 
+redrawWinline (
+    linenr_T lnum,
+    int invalid             /* window line height is invalid now */
+)
 {
   int i;
 
@@ -385,8 +410,7 @@ int invalid UNUSED;             /* window line height is invalid now */
 /*
  * update all windows that are editing the current buffer
  */
-void update_curbuf(type)
-int type;
+void update_curbuf(int type)
 {
   redraw_curbuf_later(type);
   update_screen(type);
@@ -399,8 +423,7 @@ int type;
  * Based on the current value of curwin->w_topline, transfer a screenfull
  * of stuff from Filemem to ScreenLines[], and update curwin->w_botline.
  */
-void update_screen(type)
-int type;
+void update_screen(int type)
 {
   win_T       *wp;
   static int did_intro = FALSE;
@@ -591,8 +614,7 @@ int type;
  * Return TRUE if the cursor line in window "wp" may be concealed, according
  * to the 'concealcursor' option.
  */
-int conceal_cursor_line(wp)
-win_T       *wp;
+int conceal_cursor_line(win_T *wp)
 {
   int c;
 
@@ -614,7 +636,7 @@ win_T       *wp;
 /*
  * Check if the cursor line needs to be redrawn because of 'concealcursor'.
  */
-void conceal_check_cursur_line()          {
+void conceal_check_cursur_line(void)          {
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
     need_cursor_line_redraw = TRUE;
     /* Need to recompute cursor column, e.g., when starting Visual mode
@@ -623,9 +645,7 @@ void conceal_check_cursur_line()          {
   }
 }
 
-void update_single_line(wp, lnum)
-win_T       *wp;
-linenr_T lnum;
+void update_single_line(win_T *wp, linenr_T lnum)
 {
   int row;
   int j;
@@ -680,8 +700,7 @@ linenr_T lnum;
  * mid: from mid_start to mid_end (update inversion or changed text)
  * bot: from bot_start to last row (when scrolled up)
  */
-static void win_update(wp)
-win_T       *wp;
+static void win_update(win_T *wp)
 {
   buf_T       *buf = wp->w_buffer;
   int type;
@@ -1633,13 +1652,7 @@ win_T       *wp;
  * Clear the rest of the window and mark the unused lines with "c1".  use "c2"
  * as the filler character.
  */
-static void win_draw_end(wp, c1, c2, row, endrow, hl)
-win_T       *wp;
-int c1;
-int c2;
-int row;
-int endrow;
-hlf_T hl;
+static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T hl)
 {
   int n = 0;
 # define FDC_OFF n
@@ -1695,9 +1708,7 @@ static int advance_color_col __ARGS((int vcol, int **color_cols));
 /*
  * Advance **color_cols and return TRUE when there are columns to draw.
  */
-static int advance_color_col(vcol, color_cols)
-int vcol;
-int     **color_cols;
+static int advance_color_col(int vcol, int **color_cols)
 {
   while (**color_cols >= 0 && vcol > **color_cols)
     ++*color_cols;
@@ -1707,12 +1718,7 @@ int     **color_cols;
 /*
  * Display one folded line.
  */
-static void fold_line(wp, fold_count, foldinfo, lnum, row)
-win_T       *wp;
-long fold_count;
-foldinfo_T  *foldinfo;
-linenr_T lnum;
-int row;
+static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T lnum, int row)
 {
   char_u buf[51];
   pos_T       *top, *bot;
@@ -2018,11 +2024,7 @@ int row;
 /*
  * Copy "buf[len]" to ScreenLines["off"] and set attributes to "attr".
  */
-static void copy_text_attr(off, buf, len, attr)
-int off;
-char_u      *buf;
-int len;
-int attr;
+static void copy_text_attr(int off, char_u *buf, int len, int attr)
 {
   int i;
 
@@ -2037,11 +2039,13 @@ int attr;
  * Fill the foldcolumn at "p" for window "wp".
  * Only to be called when 'foldcolumn' > 0.
  */
-static void fill_foldcolumn(p, wp, closed, lnum)
-char_u      *p;
-win_T       *wp;
-int closed;                     /* TRUE of FALSE */
-linenr_T lnum;                  /* current line number */
+static void 
+fill_foldcolumn (
+    char_u *p,
+    win_T *wp,
+    int closed,                     /* TRUE of FALSE */
+    linenr_T lnum                  /* current line number */
+)
 {
   int i = 0;
   int level;
@@ -2087,12 +2091,14 @@ linenr_T lnum;                  /* current line number */
  *
  * Return the number of last row the line occupies.
  */
-static int win_line(wp, lnum, startrow, endrow, nochange)
-win_T       *wp;
-linenr_T lnum;
-int startrow;
-int endrow;
-int nochange UNUSED;                    /* not updating for changed text */
+static int 
+win_line (
+    win_T *wp,
+    linenr_T lnum,
+    int startrow,
+    int endrow,
+    int nochange                    /* not updating for changed text */
+)
 {
   int col;                              /* visual column on screen */
   unsigned off;                         /* offset in ScreenLines/ScreenAttrs */
@@ -4056,9 +4062,7 @@ static int comp_char_differs __ARGS((int, int));
  * Return if the composing characters at "off_from" and "off_to" differ.
  * Only to be used when ScreenLinesUC[off_from] != 0.
  */
-static int comp_char_differs(off_from, off_to)
-int off_from;
-int off_to;
+static int comp_char_differs(int off_from, int off_to)
 {
   int i;
 
@@ -4078,10 +4082,7 @@ int off_to;
  * - the character is multi-byte and the next byte is different
  * - the character is two cells wide and the second cell differs.
  */
-static int char_needs_redraw(off_from, off_to, cols)
-int off_from;
-int off_to;
-int cols;
+static int char_needs_redraw(int off_from, int off_to, int cols)
 {
   if (cols > 0
       && ((ScreenLines[off_from] != ScreenLines[off_to]
@@ -4116,13 +4117,7 @@ int cols;
  *    When TRUE and "clear_width" > 0, clear columns 0 to "endcol"
  *    When FALSE and "clear_width" > 0, clear columns "endcol" to "clear_width"
  */
-static void screen_line(row, coloff, endcol, clear_width
-    , rlflag    )
-int row;
-int coloff;
-int endcol;
-int clear_width;
-int rlflag;
+static void screen_line(int row, int coloff, int endcol, int clear_width, int rlflag)
 {
   unsigned off_from;
   unsigned off_to;
@@ -4376,8 +4371,7 @@ int rlflag;
  * Mirror text "str" for right-left displaying.
  * Only works for single-byte characters (e.g., numbers).
  */
-void rl_mirror(str)
-char_u      *str;
+void rl_mirror(char_u *str)
 {
   char_u      *p1, *p2;
   int t;
@@ -4392,7 +4386,7 @@ char_u      *str;
 /*
  * mark all status lines for redraw; used after first :cd
  */
-void status_redraw_all()          {
+void status_redraw_all(void)          {
   win_T       *wp;
 
   for (wp = firstwin; wp; wp = wp->w_next)
@@ -4405,7 +4399,7 @@ void status_redraw_all()          {
 /*
  * mark all status lines of the current buffer for redraw
  */
-void status_redraw_curbuf()          {
+void status_redraw_curbuf(void)          {
   win_T       *wp;
 
   for (wp = firstwin; wp; wp = wp->w_next)
@@ -4418,7 +4412,7 @@ void status_redraw_curbuf()          {
 /*
  * Redraw all status lines that need to be redrawn.
  */
-void redraw_statuslines()          {
+void redraw_statuslines(void)          {
   win_T       *wp;
 
   for (wp = firstwin; wp; wp = wp->w_next)
@@ -4431,8 +4425,7 @@ void redraw_statuslines()          {
 /*
  * Redraw all status lines at the bottom of frame "frp".
  */
-void win_redraw_last_status(frp)
-frame_T     *frp;
+void win_redraw_last_status(frame_T *frp)
 {
   if (frp->fr_layout == FR_LEAF)
     frp->fr_win->w_redr_status = TRUE;
@@ -4450,9 +4443,7 @@ frame_T     *frp;
 /*
  * Draw the verticap separator right of window "wp" starting with line "row".
  */
-static void draw_vsep_win(wp, row)
-win_T       *wp;
-int row;
+static void draw_vsep_win(win_T *wp, int row)
 {
   int hl;
   int c;
@@ -4472,9 +4463,7 @@ static int skip_status_match_char __ARGS((expand_T *xp, char_u *s));
 /*
  * Get the length of an item as it will be shown in the status line.
  */
-static int status_match_len(xp, s)
-expand_T    *xp;
-char_u      *s;
+static int status_match_len(expand_T *xp, char_u *s)
 {
   int len = 0;
 
@@ -4498,9 +4487,7 @@ char_u      *s;
  * Return the number of characters that should be skipped in a status match.
  * These are backslashes used for escaping.  Do show backslashes in help tags.
  */
-static int skip_status_match_char(xp, s)
-expand_T    *xp;
-char_u      *s;
+static int skip_status_match_char(expand_T *xp, char_u *s)
 {
   if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS
@@ -4523,12 +4510,14 @@ char_u      *s;
  *
  * If inversion is possible we use it. Else '=' characters are used.
  */
-void win_redr_status_matches(xp, num_matches, matches, match, showtail)
-expand_T    *xp;
-int num_matches;
-char_u      **matches;          /* list of matches */
-int match;
-int showtail;
+void 
+win_redr_status_matches (
+    expand_T *xp,
+    int num_matches,
+    char_u **matches,          /* list of matches */
+    int match,
+    int showtail
+)
 {
 #define L_MATCH(m) (showtail ? sm_gettail(matches[m]) : matches[m])
   int row;
@@ -4702,8 +4691,7 @@ int showtail;
  *
  * If inversion is possible we use it. Else '=' characters are used.
  */
-void win_redr_status(wp)
-win_T       *wp;
+void win_redr_status(win_T *wp)
 {
   int row;
   char_u      *p;
@@ -4823,8 +4811,7 @@ win_T       *wp;
  * Redraw the status line according to 'statusline' and take care of any
  * errors encountered.
  */
-static void redraw_custom_statusline(wp)
-win_T           *wp;
+static void redraw_custom_statusline(win_T *wp)
 {
   static int entered = FALSE;
   int save_called_emsg = called_emsg;
@@ -4854,8 +4841,7 @@ win_T           *wp;
  * line of the window right of it.  If not, then it's a vertical separator.
  * Only call if (wp->w_vsep_width != 0).
  */
-int stl_connected(wp)
-win_T       *wp;
+int stl_connected(win_T *wp)
 {
   frame_T     *fr;
 
@@ -4877,10 +4863,12 @@ win_T       *wp;
 /*
  * Get the value to show for the language mappings, active 'keymap'.
  */
-int get_keymap_str(wp, buf, len)
-win_T       *wp;
-char_u      *buf;           /* buffer for the result */
-int len;                    /* length of buffer */
+int 
+get_keymap_str (
+    win_T *wp,
+    char_u *buf,           /* buffer for the result */
+    int len                    /* length of buffer */
+)
 {
   char_u      *p;
 
@@ -4919,9 +4907,11 @@ int len;                    /* length of buffer */
  * Redraw the status line or ruler of window "wp".
  * When "wp" is NULL redraw the tab pages line from 'tabline'.
  */
-static void win_redr_custom(wp, draw_ruler)
-win_T       *wp;
-int draw_ruler;                 /* TRUE or FALSE */
+static void 
+win_redr_custom (
+    win_T *wp,
+    int draw_ruler                 /* TRUE or FALSE */
+)
 {
   static int entered = FALSE;
   int attr;
@@ -5079,10 +5069,7 @@ theend:
 /*
  * Output a single character directly to the screen and update ScreenLines.
  */
-void screen_putchar(c, row, col, attr)
-int c;
-int row, col;
-int attr;
+void screen_putchar(int c, int row, int col, int attr)
 {
   char_u buf[MB_MAXBYTES + 1];
 
@@ -5099,10 +5086,7 @@ int attr;
  * Get a single character directly from ScreenLines into "bytes[]".
  * Also return its attribute in *attrp;
  */
-void screen_getbytes(row, col, bytes, attrp)
-int row, col;
-char_u  *bytes;
-int     *attrp;
+void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
 {
   unsigned off;
 
@@ -5133,9 +5117,7 @@ static int screen_comp_differs __ARGS((int, int*));
  * composing characters in "u8cc".
  * Only to be used when ScreenLinesUC[off] != 0.
  */
-static int screen_comp_differs(off, u8cc)
-int off;
-int     *u8cc;
+static int screen_comp_differs(int off, int *u8cc)
 {
   int i;
 
@@ -5154,11 +5136,7 @@ int     *u8cc;
  * Note: only outputs within one row, message is truncated at screen boundary!
  * Note: if ScreenLines[], row and/or col is invalid, nothing is done.
  */
-void screen_puts(text, row, col, attr)
-char_u      *text;
-int row;
-int col;
-int attr;
+void screen_puts(char_u *text, int row, int col, int attr)
 {
   screen_puts_len(text, -1, row, col, attr);
 }
@@ -5167,12 +5145,7 @@ int attr;
  * Like screen_puts(), but output "text[len]".  When "len" is -1 output up to
  * a NUL.
  */
-void screen_puts_len(text, len, row, col, attr)
-char_u      *text;
-int len;
-int row;
-int col;
-int attr;
+void screen_puts_len(char_u *text, int len, int row, int col, int attr)
 {
   unsigned off;
   char_u      *ptr = text;
@@ -5383,7 +5356,7 @@ int attr;
 /*
  * Prepare for 'hlsearch' highlighting.
  */
-static void start_search_hl()                 {
+static void start_search_hl(void)                 {
   if (p_hls && !no_hlsearch) {
     last_pat_prog(&search_hl.rm);
     search_hl.attr = hl_attr(HLF_L);
@@ -5395,7 +5368,7 @@ static void start_search_hl()                 {
 /*
  * Clean up for 'hlsearch' highlighting.
  */
-static void end_search_hl()                 {
+static void end_search_hl(void)                 {
   if (search_hl.rm.regprog != NULL) {
     vim_regfree(search_hl.rm.regprog);
     search_hl.rm.regprog = NULL;
@@ -5405,8 +5378,7 @@ static void end_search_hl()                 {
 /*
  * Init for calling prepare_search_hl().
  */
-static void init_search_hl(wp)
-win_T       *wp;
+static void init_search_hl(win_T *wp)
 {
   matchitem_T *cur;
 
@@ -5435,9 +5407,7 @@ win_T       *wp;
 /*
  * Advance to the match in window "wp" line "lnum" or past it.
  */
-static void prepare_search_hl(wp, lnum)
-win_T       *wp;
-linenr_T lnum;
+static void prepare_search_hl(win_T *wp, linenr_T lnum)
 {
   matchitem_T *cur;             /* points to the match list */
   match_T     *shl;             /* points to search_hl or a match */
@@ -5495,11 +5465,13 @@ linenr_T lnum;
  * shl->lnum is zero.
  * Careful: Any pointers for buffer lines will become invalid.
  */
-static void next_search_hl(win, shl, lnum, mincol)
-win_T       *win;
-match_T     *shl;               /* points to search_hl or a match */
-linenr_T lnum;
-colnr_T mincol;                 /* minimal column for a match */
+static void 
+next_search_hl (
+    win_T *win,
+    match_T *shl,               /* points to search_hl or a match */
+    linenr_T lnum,
+    colnr_T mincol                 /* minimal column for a match */
+)
 {
   linenr_T l;
   colnr_T matchcol;
@@ -5586,8 +5558,7 @@ colnr_T mincol;                 /* minimal column for a match */
   }
 }
 
-static void screen_start_highlight(attr)
-int attr;
+static void screen_start_highlight(int attr)
 {
   attrentry_T *aep = NULL;
 
@@ -5641,7 +5612,7 @@ int attr;
   }
 }
 
-void screen_stop_highlight()            {
+void screen_stop_highlight(void)            {
   int do_ME = FALSE;                /* output T_ME code */
 
   if (screen_attr != 0
@@ -5716,7 +5687,7 @@ void screen_stop_highlight()            {
  * Reset the colors for a cterm.  Used when leaving Vim.
  * The machine specific code may override this again.
  */
-void reset_cterm_colors()          {
+void reset_cterm_colors(void)          {
   if (t_colors > 1) {
     /* set Normal cterm colors */
     if (cterm_normal_fg_color > 0 || cterm_normal_bg_color > 0) {
@@ -5734,10 +5705,7 @@ void reset_cterm_colors()          {
  * Put character ScreenLines["off"] on the screen at position "row" and "col",
  * using the attributes from ScreenAttrs["off"].
  */
-static void screen_char(off, row, col)
-unsigned off;
-int row;
-int col;
+static void screen_char(unsigned off, int row, int col)
 {
   int attr;
 
@@ -5799,10 +5767,7 @@ int col;
  * The attributes of the first byte is used for all.  This is required to
  * output the two bytes of a double-byte character with nothing in between.
  */
-static void screen_char_2(off, row, col)
-unsigned off;
-int row;
-int col;
+static void screen_char_2(unsigned off, int row, int col)
 {
   /* Check for illegal values (could be wrong when screen was resized). */
   if (off + 1 >= (unsigned)(screen_Rows * screen_Columns))
@@ -5826,12 +5791,7 @@ int col;
  * Draw a rectangle of the screen, inverted when "invert" is TRUE.
  * This uses the contents of ScreenLines[] and doesn't change it.
  */
-void screen_draw_rectangle(row, col, height, width, invert)
-int row;
-int col;
-int height;
-int width;
-int invert;
+void screen_draw_rectangle(int row, int col, int height, int width, int invert)
 {
   int r, c;
   int off;
@@ -5863,10 +5823,7 @@ int invert;
 /*
  * Redraw the characters for a vertically split window.
  */
-static void redraw_block(row, end, wp)
-int row;
-int end;
-win_T       *wp;
+static void redraw_block(int row, int end, win_T *wp)
 {
   int col;
   int width;
@@ -5887,11 +5844,7 @@ win_T       *wp;
  * with character 'c1' in first column followed by 'c2' in the other columns.
  * Use attributes 'attr'.
  */
-void screen_fill(start_row, end_row, start_col, end_col, c1, c2, attr)
-int start_row, end_row;
-int start_col, end_col;
-int c1, c2;
-int attr;
+void screen_fill(int start_row, int end_row, int start_col, int end_col, int c1, int c2, int attr)
 {
   int row;
   int col;
@@ -6042,8 +5995,7 @@ int attr;
  * Check if there should be a delay.  Used before clearing or redrawing the
  * screen or the command line.
  */
-void check_for_delay(check_msg_scroll)
-int check_msg_scroll;
+void check_for_delay(int check_msg_scroll)
 {
   if ((emsg_on_display || (check_msg_scroll && msg_scroll))
       && !did_wait_return
@@ -6062,8 +6014,7 @@ int check_msg_scroll;
  *	Returns TRUE if there is a valid screen to write to.
  *	Returns FALSE when starting up and screen not initialized yet.
  */
-int screen_valid(doclear)
-int doclear;
+int screen_valid(int doclear)
 {
   screenalloc(doclear);            /* allocate screen buffers if size changed */
   return ScreenLines != NULL;
@@ -6079,8 +6030,7 @@ int doclear;
  * in ScreenLines[].  Use Rows and Columns for positioning text etc. where the
  * final size of the shell is needed.
  */
-void screenalloc(doclear)
-int doclear;
+void screenalloc(int doclear)
 {
   int new_row, old_row;
   win_T           *wp;
@@ -6327,7 +6277,7 @@ give_up:
   }
 }
 
-void free_screenlines()          {
+void free_screenlines(void)          {
   int i;
 
   vim_free(ScreenLinesUC);
@@ -6341,13 +6291,13 @@ void free_screenlines()          {
   vim_free(TabPageIdxs);
 }
 
-void screenclear()          {
+void screenclear(void)          {
   check_for_delay(FALSE);
   screenalloc(FALSE);       /* allocate screen buffers if size changed */
   screenclear2();           /* clear the screen */
 }
 
-static void screenclear2()                 {
+static void screenclear2(void)                 {
   int i;
 
   if (starting == NO_SCREEN || ScreenLines == NULL
@@ -6394,9 +6344,7 @@ static void screenclear2()                 {
 /*
  * Clear one line in ScreenLines.
  */
-static void lineclear(off, width)
-unsigned off;
-int width;
+static void lineclear(unsigned off, int width)
 {
   (void)vim_memset(ScreenLines + off, ' ', (size_t)width * sizeof(schar_T));
   if (enc_utf8)
@@ -6409,9 +6357,7 @@ int width;
  * Mark one line in ScreenLines invalid by setting the attributes to an
  * invalid value.
  */
-static void lineinvalid(off, width)
-unsigned off;
-int width;
+static void lineinvalid(unsigned off, int width)
 {
   (void)vim_memset(ScreenAttrs + off, -1, (size_t)width * sizeof(sattr_T));
 }
@@ -6419,10 +6365,7 @@ int width;
 /*
  * Copy part of a Screenline for vertically split window "wp".
  */
-static void linecopy(to, from, wp)
-int to;
-int from;
-win_T       *wp;
+static void linecopy(int to, int from, win_T *wp)
 {
   unsigned off_to = LineOffset[to] + wp->w_wincol;
   unsigned off_from = LineOffset[from] + wp->w_wincol;
@@ -6449,8 +6392,7 @@ win_T       *wp;
  * Return TRUE if clearing with term string "p" would work.
  * It can't work when the string is empty or it won't set the right background.
  */
-int can_clear(p)
-char_u      *p;
+int can_clear(char_u *p)
 {
   return *p != NUL && (t_colors <= 1
                        || cterm_normal_bg_color == 0 || *T_UT != NUL);
@@ -6461,7 +6403,7 @@ char_u      *p;
  * something directly to the screen (shell commands) or a terminal control
  * code.
  */
-void screen_start()          {
+void screen_start(void)          {
   screen_cur_row = screen_cur_col = 9999;
 }
 
@@ -6470,9 +6412,7 @@ void screen_start()          {
  * This tries to find the most efficient way to move, minimizing the number of
  * characters sent to the terminal.
  */
-void windgoto(row, col)
-int row;
-int col;
+void windgoto(int row, int col)
 {
   sattr_T         *p;
   int i;
@@ -6685,7 +6625,7 @@ int col;
 /*
  * Set cursor to its position in the current window.
  */
-void setcursor()          {
+void setcursor(void)          {
   if (redrawing()) {
     validate_cursor();
     windgoto(W_WINROW(curwin) + curwin->w_wrow,
@@ -6708,12 +6648,7 @@ void setcursor()          {
  * scrolling.
  * Returns FAIL if the lines are not inserted, OK for success.
  */
-int win_ins_lines(wp, row, line_count, invalid, mayclear)
-win_T       *wp;
-int row;
-int line_count;
-int invalid;
-int mayclear;
+int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
   int did_delete;
   int nextrow;
@@ -6782,12 +6717,7 @@ int mayclear;
  * scrolling
  * Return OK for success, FAIL if the lines are not deleted.
  */
-int win_del_lines(wp, row, line_count, invalid, mayclear)
-win_T       *wp;
-int row;
-int line_count;
-int invalid;
-int mayclear;
+int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
 {
   int retval;
 
@@ -6830,12 +6760,7 @@ int mayclear;
  * Returns OK or FAIL when the work has been done.
  * Returns MAYBE when not finished yet.
  */
-static int win_do_lines(wp, row, line_count, mayclear, del)
-win_T       *wp;
-int row;
-int line_count;
-int mayclear;
-int del;
+static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int del)
 {
   int retval;
 
@@ -6900,8 +6825,7 @@ int del;
 /*
  * window 'wp' and everything after it is messed up, mark it for redraw
  */
-static void win_rest_invalid(wp)
-win_T       *wp;
+static void win_rest_invalid(win_T *wp)
 {
   while (wp != NULL) {
     redraw_win_later(wp, NOT_VALID);
@@ -6942,12 +6866,14 @@ win_T       *wp;
  *
  * return FAIL for failure, OK for success.
  */
-int screen_ins_lines(off, row, line_count, end, wp)
-int off;
-int row;
-int line_count;
-int end;
-win_T       *wp;            /* NULL or window to use width from */
+int 
+screen_ins_lines (
+    int off,
+    int row,
+    int line_count,
+    int end,
+    win_T *wp            /* NULL or window to use width from */
+)
 {
   int i;
   int j;
@@ -7113,13 +7039,15 @@ win_T       *wp;            /* NULL or window to use width from */
  *
  * Return OK for success, FAIL if the lines are not deleted.
  */
-int screen_del_lines(off, row, line_count, end, force, wp)
-int off;
-int row;
-int line_count;
-int end;
-int force;                      /* even when line_count > p_ttyscroll */
-win_T       *wp UNUSED;         /* NULL or window to use width from */
+int 
+screen_del_lines (
+    int off,
+    int row,
+    int line_count,
+    int end,
+    int force,                      /* even when line_count > p_ttyscroll */
+    win_T *wp         /* NULL or window to use width from */
+)
 {
   int j;
   int i;
@@ -7292,7 +7220,7 @@ win_T       *wp UNUSED;         /* NULL or window to use width from */
  * cleared only if a mode is shown.
  * Return the length of the message (0 if no message).
  */
-int showmode()         {
+int showmode(void)         {
   int need_clear;
   int length = 0;
   int do_mode;
@@ -7443,7 +7371,7 @@ int showmode()         {
 /*
  * Position for a mode message.
  */
-static void msg_pos_mode()                 {
+static void msg_pos_mode(void)                 {
   msg_col = 0;
   msg_row = Rows - 1;
 }
@@ -7453,8 +7381,7 @@ static void msg_pos_mode()                 {
  * Insert mode (but Insert mode didn't end yet!).
  * Caller should check "mode_displayed".
  */
-void unshowmode(force)
-int force;
+void unshowmode(int force)
 {
   /*
    * Don't delete it right now, when not redrawing or inside a mapping.
@@ -7472,7 +7399,7 @@ int force;
 /*
  * Draw the tab pages line at the top of the Vim window.
  */
-static void draw_tabline()                 {
+static void draw_tabline(void)                 {
   int tabcount = 0;
   tabpage_T   *tp;
   int tabwidth;
@@ -7622,8 +7549,7 @@ static void draw_tabline()                 {
  * Get buffer name for "buf" into NameBuff[].
  * Takes care of special buffer names and translates special characters.
  */
-void get_trans_bufname(buf)
-buf_T       *buf;
+void get_trans_bufname(buf_T *buf)
 {
   if (buf_spname(buf) != NULL)
     vim_strncpy(NameBuff, buf_spname(buf), MAXPATHL - 1);
@@ -7635,9 +7561,7 @@ buf_T       *buf;
 /*
  * Get the character to use in a status line.  Get its attributes in "*attr".
  */
-static int fillchar_status(attr, is_curwin)
-int         *attr;
-int is_curwin;
+static int fillchar_status(int *attr, int is_curwin)
 {
   int fill;
   if (is_curwin) {
@@ -7663,8 +7587,7 @@ int is_curwin;
  * Get the character to use in a separator between vertically split windows.
  * Get its attributes in "*attr".
  */
-static int fillchar_vsep(attr)
-int     *attr;
+static int fillchar_vsep(int *attr)
 {
   *attr = hl_attr(HLF_C);
   if (*attr == 0 && fill_vert == ' ')
@@ -7676,7 +7599,7 @@ int     *attr;
 /*
  * Return TRUE if redrawing should currently be done.
  */
-int redrawing()         {
+int redrawing(void)         {
   return !RedrawingDisabled
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
 }
@@ -7684,7 +7607,7 @@ int redrawing()         {
 /*
  * Return TRUE if printing messages should currently be done.
  */
-int messaging()         {
+int messaging(void)         {
   return !(p_lz && char_avail() && !KeyTyped);
 }
 
@@ -7692,8 +7615,7 @@ int messaging()         {
  * Show current status info in ruler and various other places
  * If always is FALSE, only show ruler if position has changed.
  */
-void showruler(always)
-int always;
+void showruler(int always)
 {
   if (!always && !redrawing())
     return;
@@ -7717,9 +7639,7 @@ int always;
     draw_tabline();
 }
 
-static void win_redr_ruler(wp, always)
-win_T       *wp;
-int always;
+static void win_redr_ruler(win_T *wp, int always)
 {
 #define RULER_BUF_LEN 70
   char_u buffer[RULER_BUF_LEN];
@@ -7887,8 +7807,7 @@ int always;
  * Caller may need to check if 'number' or 'relativenumber' is set.
  * Otherwise it depends on 'numberwidth' and the line count.
  */
-int number_width(wp)
-win_T       *wp;
+int number_width(win_T *wp)
 {
   int n;
   linenr_T lnum;
@@ -7922,7 +7841,7 @@ win_T       *wp;
  * Return the current cursor column. This is the actual position on the
  * screen. First column is 0.
  */
-int screen_screencol()         {
+int screen_screencol(void)         {
   return screen_cur_col;
 }
 
@@ -7930,7 +7849,7 @@ int screen_screencol()         {
  * Return the current cursor row. This is the actual position on the screen.
  * First row is 0.
  */
-int screen_screenrow()         {
+int screen_screenrow(void)         {
   return screen_cur_row;
 }
 

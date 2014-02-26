@@ -28,8 +28,9 @@
  */
 
 #include "vim.h"
-
-
+#include "hashtab.h"
+#include "message.h"
+#include "misc2.h"
 
 /* Magic value for algorithm that walks through the array. */
 #define PERTURB_SHIFT 5
@@ -40,8 +41,7 @@ static int hash_may_resize __ARGS((hashtab_T *ht, int minitems));
 /*
  * Initialize an empty hash table.
  */
-void hash_init(ht)
-hashtab_T *ht;
+void hash_init(hashtab_T *ht)
 {
   /* This zeroes all "ht_" entries and all the "hi_key" in "ht_smallarray". */
   vim_memset(ht, 0, sizeof(hashtab_T));
@@ -53,8 +53,7 @@ hashtab_T *ht;
  * Free the array of a hash table.  Does not free the items it contains!
  * If "ht" is not freed then you should call hash_init() next!
  */
-void hash_clear(ht)
-hashtab_T *ht;
+void hash_clear(hashtab_T *ht)
 {
   if (ht->ht_array != ht->ht_smallarray)
     vim_free(ht->ht_array);
@@ -65,9 +64,7 @@ hashtab_T *ht;
  * have been allocated.  "off" is the offset from the start of the allocate
  * memory to the location of the key (it's always positive).
  */
-void hash_clear_all(ht, off)
-hashtab_T   *ht;
-int off;
+void hash_clear_all(hashtab_T *ht, int off)
 {
   long todo;
   hashitem_T  *hi;
@@ -90,9 +87,7 @@ int off;
  * WARNING: The returned pointer becomes invalid when the hashtable is changed
  * (adding, setting or removing an item)!
  */
-hashitem_T * hash_find(ht, key)
-hashtab_T   *ht;
-char_u      *key;
+hashitem_T *hash_find(hashtab_T *ht, char_u *key)
 {
   return hash_lookup(ht, key, hash_hash(key));
 }
@@ -100,10 +95,7 @@ char_u      *key;
 /*
  * Like hash_find(), but caller computes "hash".
  */
-hashitem_T * hash_lookup(ht, key, hash)
-hashtab_T   *ht;
-char_u      *key;
-hash_T hash;
+hashitem_T *hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
 {
   hash_T perturb;
   hashitem_T  *freeitem;
@@ -163,7 +155,7 @@ hash_T hash;
  * Useful when trying different hash algorithms.
  * Called when exiting.
  */
-void hash_debug_results()          {
+void hash_debug_results(void)          {
 #ifdef HT_DEBUG
   fprintf(stderr, "\r\n\r\n\r\n\r\n");
   fprintf(stderr, "Number of hashtable lookups: %ld\r\n", hash_count_lookup);
@@ -177,9 +169,7 @@ void hash_debug_results()          {
  * Add item with key "key" to hashtable "ht".
  * Returns FAIL when out of memory or the key is already present.
  */
-int hash_add(ht, key)
-hashtab_T   *ht;
-char_u      *key;
+int hash_add(hashtab_T *ht, char_u *key)
 {
   hash_T hash = hash_hash(key);
   hashitem_T  *hi;
@@ -198,11 +188,7 @@ char_u      *key;
  * "hi" is invalid after this!
  * Returns OK or FAIL (out of memory).
  */
-int hash_add_item(ht, hi, key, hash)
-hashtab_T   *ht;
-hashitem_T  *hi;
-char_u      *key;
-hash_T hash;
+int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 {
   /* If resizing failed before and it fails again we can't add an item. */
   if (ht->ht_error && hash_may_resize(ht, 0) == FAIL)
@@ -224,9 +210,7 @@ hash_T hash;
  * hash_lookup().
  * The caller must take care of freeing the item itself.
  */
-void hash_remove(ht, hi)
-hashtab_T   *ht;
-hashitem_T  *hi;
+void hash_remove(hashtab_T *ht, hashitem_T *hi)
 {
   --ht->ht_used;
   hi->hi_key = HI_KEY_REMOVED;
@@ -238,8 +222,7 @@ hashitem_T  *hi;
  * Don't use this when items are to be added!
  * Must call hash_unlock() later.
  */
-void hash_lock(ht)
-hashtab_T   *ht;
+void hash_lock(hashtab_T *ht)
 {
   ++ht->ht_locked;
 }
@@ -250,8 +233,7 @@ hashtab_T   *ht;
  * Table will be resized (shrink) when necessary.
  * This must balance a call to hash_lock().
  */
-void hash_unlock(ht)
-hashtab_T   *ht;
+void hash_unlock(hashtab_T *ht)
 {
   --ht->ht_locked;
   (void)hash_may_resize(ht, 0);
@@ -262,9 +244,11 @@ hashtab_T   *ht;
  * Grow a hashtable when there is not enough empty space.
  * Returns OK or FAIL (out of memory).
  */
-static int hash_may_resize(ht, minitems)
-hashtab_T   *ht;
-int minitems;                           /* minimal number of items */
+static int 
+hash_may_resize (
+    hashtab_T *ht,
+    int minitems                           /* minimal number of items */
+)
 {
   hashitem_T temparray[HT_INIT_SIZE];
   hashitem_T  *oldarray, *newarray;
@@ -395,8 +379,7 @@ int minitems;                           /* minimal number of items */
  * when exiting.  Try that with the current hash algorithm and yours.  The
  * lower the percentage the better.
  */
-hash_T hash_hash(key)
-char_u      *key;
+hash_T hash_hash(char_u *key)
 {
   hash_T hash;
   char_u      *p;
