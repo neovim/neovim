@@ -42,6 +42,8 @@
  *  mf_get().
  */
 
+#include <signal.h>
+
 #include "vim.h"
 #include "memline.h"
 #include "blowfish.h"

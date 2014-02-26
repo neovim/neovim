@@ -42,6 +42,7 @@
 #include "quickfix.h"
 #include "screen.h"
 #include "search.h"
+#include "signals.h"
 #include "spell.h"
 #include "syntax.h"
 #include "tag.h"
@@ -172,6 +173,7 @@ static void nv_join(cmdarg_T *cap);
 static void nv_put(cmdarg_T *cap);
 static void nv_open(cmdarg_T *cap);
 static void nv_cursorhold(cmdarg_T *cap);
+static void nv_signal(cmdarg_T *cap);
 
 static char *e_noident = N_("E349: No identifier under cursor");
 
@@ -404,6 +406,7 @@ static const struct nv_cmd {
   {K_F8,      farsi_fkey,     0,                      0},
   {K_F9,      farsi_fkey,     0,                      0},
   {K_CURSORHOLD, nv_cursorhold, NV_KEEPREG,           0},
+  {K_SIGNAL, nv_signal, NV_KEEPREG,           0},
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -7497,5 +7500,12 @@ static void nv_cursorhold(cmdarg_T *cap)
 {
   apply_autocmds(EVENT_CURSORHOLD, NULL, NULL, FALSE, curbuf);
   did_cursorhold = TRUE;
+  cap->retval |= CA_COMMAND_BUSY;       /* don't call edit() now */
+}
+
+
+static void nv_signal(cmdarg_T *cap)
+{
+  handle_signal();
   cap->retval |= CA_COMMAND_BUSY;       /* don't call edit() now */
 }

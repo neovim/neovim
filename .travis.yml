@@ -1,6 +1,7 @@
 language: c
 compiler:
-  - clang
+  - clang-tsan
+  - clang-asan
   - gcc
 before_install:
   - sudo ./scripts/travis-setup.sh 

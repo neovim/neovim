@@ -1,0 +1,2 @@
+# See this libuv issue: https://github.com/joyent/libuv/issues/1198
+race:uv__async_send

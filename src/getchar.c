@@ -2514,8 +2514,8 @@ fix_input_buffer (
   for (i = len; --i >= 0; ++p) {
     if (p[0] == NUL || (p[0] == K_SPECIAL && !script
                         /* timeout may generate K_CURSORHOLD */
-                        && (i < 2 || p[1] != KS_EXTRA || p[2] !=
-                            (int)KE_CURSORHOLD)
+                        && (i < 2 || p[1] != KS_EXTRA || (p[2] !=
+                            KE_CURSORHOLD && p[2] != KE_SIGNAL))
                         )) {
       mch_memmove(p + 3, p + 1, (size_t)i);
       p[2] = K_THIRD(p[0]);

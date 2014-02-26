@@ -47,29 +47,6 @@
 #  define mch_rmdir(x) rmdir((char *)(x))
 #  define mch_remove(x) unlink((char *)(x))
 
-/* The number of arguments to a signal handler is configured here. */
-/* It used to be a long list of almost all systems. Any system that doesn't
- * have an argument??? */
-#define SIGHASARG
-
-/* List 3 arg systems here. I guess __sgi, please test and correct me. jw. */
-
-#ifdef SIGHASARG
-# ifdef SIGHAS3ARGS
-#  define SIGPROTOARG   (int, int, struct sigcontext *)
-#  define SIGDEFARG(s)  (s, sig2, scont) int s, sig2; struct sigcontext *scont;
-#  define SIGDUMMYARG   0, 0, (struct sigcontext *)0
-# else
-#  define SIGPROTOARG   (int)
-#  define SIGDEFARG(s)  (s) int s;
-#  define SIGDUMMYARG   0
-# endif
-#else
-# define SIGPROTOARG   (void)
-# define SIGDEFARG(s)  ()
-# define SIGDUMMYARG
-#endif
-
 #ifdef HAVE_DIRENT_H
 # include <dirent.h>
 # ifndef NAMLEN

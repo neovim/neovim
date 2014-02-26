@@ -40,6 +40,7 @@
 #include "normal.h"
 #include "option.h"
 #include "os_unix.h"
+#include "os/time.h"
 #include "popupmnu.h"
 #include "screen.h"
 #include "syntax.h"

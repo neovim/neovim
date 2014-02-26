@@ -40,6 +40,7 @@
 #include "regexp.h"
 #include "screen.h"
 #include "search.h"
+#include "signals.h"
 #include "spell.h"
 #include "syntax.h"
 #include "tag.h"
@@ -1020,7 +1021,9 @@ doESCkey:
       did_cursorhold = TRUE;
       break;
 
-
+    case K_SIGNAL:
+      handle_signal();
+      break;
 
     case K_HOME:        /* <Home> */
     case K_KHOME:
@@ -1267,7 +1270,7 @@ normalchar:
     }       /* end of switch (c) */
 
     /* If typed something may trigger CursorHoldI again. */
-    if (c != K_CURSORHOLD)
+    if (c != K_CURSORHOLD && c != K_SIGNAL)
       did_cursorhold = FALSE;
 
     /* If the cursor was moved we didn't just insert a space */
