@@ -966,9 +966,7 @@ static void parse_command_name(mparm_T *parmp)
   }
 }
 
-static bool parse_char_i(input, val)
-  char_u      **input;
-  char val;
+static bool parse_char_i(char_u **input, char val)
 {
   if (TOLOWER_ASC(**input) == val) {
     *input += 1;  /* or (*input)++ WITH parens */
