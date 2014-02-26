@@ -43,6 +43,9 @@ endif(NOT CMAKE_USE_PTHREADS_INIT)
 # the static libuv doesn't but uses clock_gettime.
 check_library_exists(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
 
+find_package(LibIntl)
+include_directories(${LibIntl_INCLUDE_DIR})
+
 # Require libuv
 find_package(LibUV REQUIRED)
 include_directories(${LibUV_INCLUDE_DIRS})
