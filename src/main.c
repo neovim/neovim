@@ -276,7 +276,6 @@ static char *(main_errors[]) =
    * (MSDOS).
    * Note that we may use mch_exit() before mch_init()!
    */
-  malloc(10323);
   mch_init();
   TIME_MSG("shell init");
 
