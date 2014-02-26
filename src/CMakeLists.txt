@@ -14,7 +14,16 @@ file( GLOB OS_SOURCES os/*.c )
 
 add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
 
-target_link_libraries (vim m ${LibUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+# The libraries we link against for nvim
+set(NVIM_LINK_LIBRARIES m ${LibUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+
+# Add any libraries needed for a specific platform
+if(HAVE_CLOCK_GETTIME)
+  # Work around libuv.a not linking in rt.
+  list(APPEND NVIM_LINK_LIBRARIES rt)
+endif(HAVE_CLOCK_GETTIME)
+
+target_link_libraries (nvim ${NVIM_LINK_LIBRARIES})
 
 include(CheckLibraryExists)
 check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
@@ -30,6 +39,6 @@ else()
   endif()
 endif()
 
-include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
+include_directories ("${PROJECT_SOURCE_DIR}/src/proto")
 
 install(TARGETS nvim RUNTIME DESTINATION bin)
