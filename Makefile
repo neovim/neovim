@@ -6,7 +6,7 @@ CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
 CMAKE_EXTRA_FLAGS :=
 
 build/bin/nvim: deps
-	cd build && make
+	${MAKE} -C build
 
 test: build/bin/nvim
 	cd src/testdir && make
@@ -27,7 +27,7 @@ clean:
 	done
 
 install: build/bin/nvim
-	cd build && make install
+	${MAKE} -C build install
 
 .PHONY: test deps cmake install
 
