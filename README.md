@@ -203,12 +203,12 @@ certificates or have not set them up correctly:
 
   Via MacPorts:
 
-      sudo port install curl-ca-bundle
+      sudo port install curl-ca-bundle libtool automake cmake
       echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
 
   Via Homebrew:
 
-      brew install curl-ca-bundle
+      brew install curl-ca-bundle libtool automake cmake
       echo CA_CERTIFICATE=/usr/local/opt/curl-ca-bundle/share/ca-bundle.crt >> ~/.wgetrc
 
 #### For Arch Linux:
