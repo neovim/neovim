@@ -11,4 +11,7 @@ cmake:
 test:
 	$(MAKE) -C scripts/ test
 
-.PHONY: build cmake test
+test:
+	$(MAKE) -C scripts/ install
+
+.PHONY: build cmake test install
