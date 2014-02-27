@@ -10,7 +10,8 @@ if (USE_INCLUDED_LibUV)
     set (LibUV_LIBRARIES ${LibUV_INSTALL_DIR}/lib/libuv.so PARENT_SCOPE)
   endif()
   externalproject_add (LibUV
-    SOURCE_DIR "${LibUV_SOURCE_DIR}"
+    GIT_REPOSITORY "https://github.com/joyent/libuv.git"
+    GIT_TAG "v0.11.21"
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND "./autogen.sh" "&&" "./configure" "--prefix=${LibUV_INSTALL_DIR}"
     BUILD_COMMAND "make" "&&" "make" "install"
