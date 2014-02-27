@@ -4096,11 +4096,11 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
  */
 int paragraph_start(linenr_T lnum)
 {
-  char_u      *p;
+  char_u *p;
   int leader_len = 0;                   /* leader len of current line */
-  char_u      *leader_flags = NULL;     /* flags for leader of current line */
-  int next_leader_len;                  /* leader len of next line */
-  char_u      *next_leader_flags;       /* flags for leader of next line */
+  char_u *leader_flags = NULL;          /* flags for leader of current line */
+  int next_leader_len = 0;              /* leader len of next line */
+  char_u *next_leader_flags = NULL;     /* flags for leader of next line */
   int do_comments;                      /* format comments */
 
   if (lnum <= 1)
