@@ -317,15 +317,43 @@ certificates or have not set them up correctly:
 
 ## Building
 
-To generate the `Makefile`s:
+There are many ways to build neovim depending on your needs and the amount of
+customization you require.
 
-    make cmake
+### The all-in-one build script
 
-To build and run the tests:
+This method makes use of the dependencies bundled with the source tree and is
+provided as a convenience to those whose platforms do not provide packages for
+the dependencies and who do not wish to install them separately. Compilation is
+via a Makefile in the ``scripts/`` directory. In the top-level directory simply:
 
-    make test
+```console
+$ make -C scripts/ build
+```
 
-Using Homebrew on Mac:
+To run the tests:
+```console
+$ make -C scripts/ test
+```
+
+There is also a top-level Makefile which will forward ``build`` and ``test`` to
+the ``scripts/Makefile``. This is purely for compatibility with some existing
+build scripts and will be removed.
+
+### CMake
+
+If you are packaging neovim or if you already have all the dependencies
+installed on your system, a standard CMake-based build may be used. This is the
+recommended option for developers since it will rapidly show any regressions
+between updated dependencies and neovim.
+
+```console
+$ mkdir build && cd build
+$ cmake .. && make              # For normal 'make'-based builds.
+$ cmake -G Ninja .. && ninja    # For faster builds using the 'ninja' utility.
+```
+
+### Homebrew on Mac
 
     brew install neovim/neovim/neovim
 
