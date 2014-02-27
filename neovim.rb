@@ -8,6 +8,8 @@ class Neovim < Formula
   depends_on 'cmake'
   depends_on 'libtool'
   depends_on 'automake'
+  depends_on 'wget'
+  depends_on 'gettext'
 
   def install
     system "make", "PREFIX=#{prefix}", "cmake"
