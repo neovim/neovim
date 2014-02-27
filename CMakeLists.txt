@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (NEOVIM)
+include (ExternalProject)
 
 # Point CMake at any custom modules we may ship
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -51,7 +52,20 @@ if(LibIntl_FOUND)
 endif()
 
 # Require libuv
-find_package(LibUV REQUIRED)
+if (LibUV_USE_STATIC MATCHES "YES")
+  set (LibUV_SOURCE_DIR ${CMAKE_SOURCE_DIR}/third-party/libuv)
+  set (LibUV_INSTALL_DIR ${CMAKE_SOURCE_DIR}/${CMAKE_PREFIX_PATH})
+  set (LibUV_LIBRARIES ${LibUV_INSTALL_DIR}/lib/libuv.a)
+  set (LibUV_INCLUDE_DIRS ${LibUV_INSTALL_DIR}/include)
+  externalproject_add (LibUV
+    SOURCE_DIR "${LibUV_SOURCE_DIR}"
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND "./autogen.sh" "&&" "./configure" "--prefix=${LibUV_INSTALL_DIR}"
+    BUILD_COMMAND "make" "&&" "make" "install"
+  )
+else()
+  find_package(LibUV REQUIRED)
+endif()
 include_directories(${LibUV_INCLUDE_DIRS})
 
 include_directories ("${PROJECT_BINARY_DIR}/config")
