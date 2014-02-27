@@ -33,7 +33,9 @@ int mch_chdir(char *path) {
 int mch_dirname(char_u *buf, int len)
 {
   int errno;
-  if ((errno = uv_cwd((char *)buf, len)) != 0) {
+  int _len = len;
+
+  if ((errno = uv_cwd((char *)buf, &_len)) != 0) {
       STRCPY(buf, uv_strerror(errno));
       return FAIL;
   }
