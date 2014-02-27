@@ -1407,9 +1407,9 @@ static void convert_ks_to_3(const char_u *src, int *fp, int *mp, int *lp)
   int low = *(src + 1);
   int c;
   int i;
+  const ssize_t tablesize = sizeof(ks_table1) / sizeof(ks_table1[0]);
 
-  if ((i = han_index(h, low)) >= 0
-      && i < sizeof(ks_table1)/sizeof(ks_table1[0])) {
+  if ((i = han_index(h, low)) >= 0 && i < tablesize) {
     *fp = ks_table1[i][0];
     *mp = ks_table1[i][1];
     *lp = ks_table1[i][2];
