@@ -1157,6 +1157,9 @@ static struct vimoption
      (char_u *)"extend",
      (char_u *)0L
    } SCRIPTID_INIT},
+  {"mousescroll",   "mscr",   P_NUM|P_VI_DEF,
+   (char_u *)&p_mscr, PV_NONE,
+   {(char_u *)1L, (char_u *)0L} SCRIPTID_INIT},
   {"mouseshape",  "mouses",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
    (char_u *)NULL, PV_NONE,
    {(char_u *)NULL, (char_u *)0L}
