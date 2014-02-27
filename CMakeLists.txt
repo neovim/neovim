@@ -12,9 +12,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # If the C compiler is some GNU-alike, use the gnu99 standard and enable all warnings.
 if(CMAKE_COMPILER_IS_GNUCC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99")
 elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99")
 endif(CMAKE_COMPILER_IS_GNUCC)
 
 add_definitions(-DHAVE_CONFIG_H)

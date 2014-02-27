@@ -4209,15 +4209,14 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
 
   if (insert_space)
     *p++ = ' ';
-  if (shortmess(SHM_LINES))
-    sprintf((char *)p,
+  if (shortmess(SHM_LINES)) {
 #ifdef LONG_LONG_OFF_T
-        "%ldL, %lldC", lnum, nchars
+     sprintf((char *)p, "%ldL, %lldC", lnum, nchars);
 #else
-        /* Explicit typecast avoids warning on Mac OS X 10.6 */
-        "%ldL, %ldC", lnum, (long)nchars
+     /* Explicit typecast avoids warning on Mac OS X 10.6 */
+     sprintf((char *)p, "%ldL, %ldC", lnum, (long)nchars);
 #endif
-        );
+  }
   else {
     if (lnum == 1)
       STRCPY(p, _("1 line, "));
@@ -4226,15 +4225,13 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
     p += STRLEN(p);
     if (nchars == 1)
       STRCPY(p, _("1 character"));
-    else
-      sprintf((char *)p,
+    else {
 #ifdef LONG_LONG_OFF_T
-          _("%lld characters"), nchars
+      sprintf((char *)p, _("%lld characters"), nchars);
 #else
-          /* Explicit typecast avoids warning on Mac OS X 10.6 */
-          _("%ld characters"), (long)nchars
+      sprintf((char *)p, _("%ld characters"), (long)nchars);
 #endif
-          );
+    }
   }
 }
 

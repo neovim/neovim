@@ -6932,6 +6932,9 @@ static regengine_T bt_regengine =
 #ifdef REGEXP_DEBUG
   ,(char_u *)""
 #endif
+#ifdef DEBUG
+  ,NULL
+#endif
 };
 
 
@@ -6949,6 +6952,9 @@ static regengine_T nfa_regengine =
   nfa_regexec_multi
 #ifdef REGEXP_DEBUG
   ,(char_u *)""
+#endif
+#ifdef DEBUG
+  , NULL
 #endif
 };
 

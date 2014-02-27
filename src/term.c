@@ -2225,12 +2225,14 @@ static void term_color(char_u *s, int n)
       && (STRCMP(s + i + 1, "%p1%dm") == 0
           || STRCMP(s + i + 1, "%dm") == 0)
       && (s[i] == '3' || s[i] == '4')) {
-    sprintf(buf,
+    const char *fmt =
 #ifdef TERMINFO
-        "%s%s%%p1%%dm",
+        "%s%s%%p1%%dm";
 #else
-        "%s%s%%dm",
+        "%s%s%%dm";
 #endif
+    sprintf(buf,
+        fmt,
         i == 2 ? IF_EB("\033[", ESC_STR "[") : "\233",
         s[i] == '3' ? (n >= 16 ? "38;5;" : "9")
         : (n >= 16 ? "48;5;" : "10"));
