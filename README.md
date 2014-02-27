@@ -13,6 +13,7 @@
   * [New GUI architecture](#new-gui-architecture)
   * [Development on github](#development-on-github)
 * [Status](#status)
+* [Quick install](#quick-install)
 * [Dependencies](#dependencies)
   * [For Debian/Ubuntu](#for-debianubuntu)
   * [For CentOS/RHEL](#for-centos-rhel)
@@ -271,6 +272,13 @@ and what is currently being worked on:
 [uncrustify]: http://uncrustify.sourceforge.net/
 [CMake]: http://cmake.org/
 
+
+## Quick install
+
+### OS X / [homebrew](http://brew.sh)
+
+    brew install neovim/neovim/neovim
+
 ## Dependencies
 
 <a name="for-debianubuntu"></a>
@@ -317,17 +325,31 @@ certificates or have not set them up correctly:
 
 ## Building
 
-To generate the `Makefile`s:
+1. [Install the dependencies.](#dependencies)
 
-    make cmake
+2. Generate the `Makefile`s:
 
-To build and run the tests:
+     ```
+     make cmake
+     ```
+    
+3. Build the binary:
 
-    make test
+     ```
+     make
+     ```
+    
+4. By default it installs to:
 
-Using Homebrew on Mac:
+     ```
+     ./build/bin/nvim
+     ```
 
-    brew install neovim/neovim/neovim
+5. To rebuild and run the tests:
+
+     ```
+     make test
+     ```
 
 ## Community
 
