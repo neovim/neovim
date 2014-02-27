@@ -15,7 +15,7 @@
 * [Status](#status)
 * [Dependencies](#dependencies)
   * [For Debian/Ubuntu](#for-debianubuntu)
-  * [For CentOS/RHEL](#centosrhel)
+  * [For CentOS/RHEL](#for-centos-rhel)
   * [For FreeBSD 10](#for-freebsd-10)
   * [For Arch Linux](#for-arch-linux)
   * [For OS X](#for-os-x)
@@ -278,6 +278,7 @@ and what is currently being worked on:
 
     sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
 
+<a name="for-centos-rhel"></a>
 ### CentOS/RHEL
 
 If you're using CentOS/RHEL 6 you need at least autoconf version 2.69 for
