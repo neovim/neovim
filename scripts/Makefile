@@ -29,7 +29,7 @@ clean:
 	${MAKE} -C ../src/testdir clean
 
 install: ../build/bin/nvim
-	${MAKE} -C build install
+	${MAKE} -C ../build install
 
 .PHONY: test deps cmake install build
 
