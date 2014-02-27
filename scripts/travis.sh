@@ -16,4 +16,4 @@ if ! make test > /dev/null; then
 	fi
 	exit 1
 fi
-make install
+make -C scripts/ install
