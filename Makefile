@@ -22,9 +22,7 @@ cmake: clean deps
 
 clean:
 	rm -rf build
-	for file in lua mbyte mzscheme small tiny; do \
-		rm -f src/testdir/$$file.vim; \
-	done
+	cd src/testdir && make clean
 
 install: build/bin/nvim
 	${MAKE} -C build install
