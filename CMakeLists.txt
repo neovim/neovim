@@ -51,26 +51,10 @@ if(LibIntl_FOUND)
   include_directories(${LibIntl_INCLUDE_DIR})
 endif()
 
-# Require libuv
-if (LibUV_USE_STATIC MATCHES "YES")
-  set (LibUV_SOURCE_DIR ${CMAKE_SOURCE_DIR}/third-party/libuv)
-  set (LibUV_INSTALL_DIR ${CMAKE_SOURCE_DIR}/${CMAKE_PREFIX_PATH})
-  set (LibUV_LIBRARIES ${LibUV_INSTALL_DIR}/lib/libuv.a)
-  set (LibUV_INCLUDE_DIRS ${LibUV_INSTALL_DIR}/include)
-  externalproject_add (LibUV
-    SOURCE_DIR "${LibUV_SOURCE_DIR}"
-    BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND "./autogen.sh" "&&" "./configure" "--prefix=${LibUV_INSTALL_DIR}"
-    BUILD_COMMAND "make" "&&" "make" "install"
-  )
-else()
-  find_package(LibUV REQUIRED)
-endif()
-include_directories(${LibUV_INCLUDE_DIRS})
-
 include_directories ("${PROJECT_BINARY_DIR}/config")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+add_subdirectory(third-party)
 add_subdirectory(config)
 add_subdirectory(src)
