@@ -16,8 +16,8 @@
 * [Dependencies](#dependencies)
   * [For Debian/Ubuntu](#for-debianubuntu)
   * [For FreeBSD 10](#for-freebsd-10)
-  * [For OS X](#for-os-x)
   * [For Arch Linux](#for-arch-linux)
+  * [For OS X](#for-os-x)
 * [Building](#building)
 * [Community](#community)
 * [Contributing](#contributing)
@@ -272,18 +272,22 @@ and what is currently being worked on:
 
 ## Dependencies
 
+<a name="for-debianubuntu"></a>
 ### Ubuntu/Debian
 
     sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
 
+<a name="for-freebsd-10"></a>
 ### FreeBSD 10
 
     sudo pkg install cmake libtool sha
 
+<a name="for-arch-linux"></a>
 ### Arch Linux
 
     sudo pacman -S base-devel cmake ncurses
 
+<a name="for-os-x"></a>
 ### OS X
 
 * Install [Xcode](https://developer.apple.com/) and [Homebrew](http://brew.sh)
