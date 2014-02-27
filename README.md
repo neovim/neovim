@@ -16,8 +16,8 @@
 * [Dependencies](#dependencies)
   * [For Debian/Ubuntu](#for-debianubuntu)
   * [For FreeBSD 10](#for-freebsd-10)
-  * [For OS X](#for-os-x)
   * [For Arch Linux](#for-arch-linux)
+  * [For OS X](#for-os-x)
 * [Building](#building)
 * [Community](#community)
 * [Contributing](#contributing)
@@ -253,7 +253,7 @@ automatically checked.
 
 [GitHub organization]: https://github.com/neovim
 
-### Status
+## Status
 
 Here's a list of things that have been done so far:
 
@@ -270,21 +270,25 @@ and what is currently being worked on:
 [uncrustify]: http://uncrustify.sourceforge.net/
 [CMake]: http://cmake.org/
 
-### Dependencies
+## Dependencies
 
-#### Ubuntu/Debian
+<a name="for-debianubuntu"></a>
+### Ubuntu/Debian
 
     sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
 
-#### FreeBSD 10
+<a name="for-freebsd-10"></a>
+### FreeBSD 10
 
     sudo pkg install cmake libtool sha
 
-#### Arch Linux
+<a name="for-arch-linux"></a>
+### Arch Linux
 
     sudo pacman -S base-devel cmake ncurses
 
-#### OS X
+<a name="for-os-x"></a>
+### OS X
 
 * Install [Xcode](https://developer.apple.com/) and [Homebrew](http://brew.sh)
   or [MacPorts](http://www.macports.org)
@@ -304,7 +308,7 @@ certificates or have not set them up correctly:
       echo CA_CERTIFICATE=$(brew --prefix curl-ca-bundle)/share/ca-bundle.crt >> ~/.wgetrc
 
 
-### Building
+## Building
 
 To generate the `Makefile`s:
 
@@ -318,15 +322,15 @@ Using Homebrew on Mac:
 
     brew install neovim/neovim/neovim
 
-### Community
+## Community
 
 Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
 
-### Contributing
+## Contributing
 
 ...would be awesome! See [the wiki](https://github.com/neovim/neovim/wiki/Contributing) for more details.
 
-### License
+## License
 
 Vim itself is distributed under the terms of the Vim License.
 See vim-license.txt for details.
