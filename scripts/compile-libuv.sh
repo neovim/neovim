@@ -1,6 +1,6 @@
-. scripts/common.sh
+. ./common.sh
 
-uv_dir="third-party/libuv"
+uv_dir="../third-party/libuv"
 
 cd "$uv_dir"
 sh autogen.sh

@@ -1,6 +1,6 @@
 # Build/deps dir
 build/
-.deps/
+third-party/dist/
 
 *.rej
 *.orig

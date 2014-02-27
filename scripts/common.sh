@@ -11,9 +11,9 @@ if [ "$platform" = 'freebsd' ]; then
 	sha1sumcmd='shasum'
 fi
 
-pkgroot="$(pwd)"
-deps="$pkgroot/.deps"
-prefix="$deps/usr"
+pkgroot="$(pwd)/"
+deps="$pkgroot/../third-party/dist"
+prefix="$deps/"
 export PATH="$prefix/bin:$PATH"
 
 download() {
