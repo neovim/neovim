@@ -11,10 +11,19 @@ build/bin/nvim: deps
 test: build/bin/nvim
 	cd src/testdir && make
 
-deps: .deps/usr/lib/libuv.a
+unittest: build/bin/nvim
+	sh -e scripts/unittest.sh
+
+deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
 
 .deps/usr/lib/libuv.a:
 	sh -e scripts/compile-libuv.sh
+
+.deps/usr/lib/libluajit-5.1.a:
+	sh -e scripts/compile-lua.sh
+
+.deps/usr/bin/busted:
+	sh -e scripts/setup-test-tools.sh
 
 cmake: clean deps
 	mkdir build
