@@ -524,7 +524,6 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
 
   ret = alloc(len);
   if (ret != NULL) {
-    len = 0;
     p = start->out->out;     /* skip first char, it goes into regstart */
     s = ret;
     while (p->c > 0) {

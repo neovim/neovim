@@ -2520,7 +2520,7 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  place = re_put_long(place, (long_u)val);
+  re_put_long(place, (long_u)val);
 }
 
 /*
