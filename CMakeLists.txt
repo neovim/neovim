@@ -10,7 +10,12 @@ set(NEOVIM_VERSION_PATCH 0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_definitions(-DHAVE_CONFIG_H -Wall -std=gnu99)
+# If the C compiler is some GNU-alike, use the gnu99 standard and enable all warnings.
+if(CMAKE_COMPILER_IS_GNUCC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=gnu99")
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   # cmake automatically appends -g to the compiler flags
   set(DEBUG 1)
