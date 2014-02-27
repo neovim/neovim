@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 
+**Installation instructions can be found in the [INSTALL.md](INSTALL.md) file.**
+
 * [Introduction](#introduction)
 * [Problem](#problem)
 * [Solution](#solution)
@@ -13,13 +15,6 @@
   * [New GUI architecture](#new-gui-architecture)
   * [Development on github](#development-on-github)
 * [Status](#status)
-* [Dependencies](#dependencies)
-  * [For Debian/Ubuntu](#for-debianubuntu)
-  * [For CentOS/RHEL](#for-centos-rhel)
-  * [For FreeBSD 10](#for-freebsd-10)
-  * [For Arch Linux](#for-arch-linux)
-  * [For OS X](#for-os-x)
-* [Building](#building)
 * [Community](#community)
 * [Contributing](#contributing)
 * [License](#license)
@@ -270,65 +265,6 @@ and what is currently being worked on:
 [unifdef]: http://freecode.com/projects/unifdef
 [uncrustify]: http://uncrustify.sourceforge.net/
 [CMake]: http://cmake.org/
-
-## Dependencies
-
-<a name="for-debianubuntu"></a>
-### Ubuntu/Debian
-
-    sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
-
-<a name="for-centos-rhel"></a>
-### CentOS/RHEL
-
-If you're using CentOS/RHEL 6 you need at least autoconf version 2.69 for
-compiling the libuv dependency. See joyent/libuv#1158.
-
-<a name="for-freebsd-10"></a>
-### FreeBSD 10
-
-    sudo pkg install cmake libtool sha
-
-<a name="for-arch-linux"></a>
-### Arch Linux
-
-    sudo pacman -S base-devel cmake ncurses
-
-<a name="for-os-x"></a>
-### OS X
-
-* Install [Xcode](https://developer.apple.com/) and [Homebrew](http://brew.sh)
-  or [MacPorts](http://www.macports.org)
-* Install sha1sum
-
-If you run into wget certificate errors, you may be missing the root SSL
-certificates or have not set them up correctly:
-
-  Via MacPorts:
-
-      sudo port install curl-ca-bundle libtool automake cmake
-      echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
-
-  Via Homebrew:
-
-      brew install curl-ca-bundle libtool automake cmake
-      echo CA_CERTIFICATE=$(brew --prefix curl-ca-bundle)/share/ca-bundle.crt >> ~/.wgetrc
-
-
-## Building
-
-To generate the `Makefile`s:
-
-    make cmake
-
-To build and run the tests:
-
-    make test
-
-Using Homebrew on Mac:
-
-    brew install neovim/neovim/neovim
-
 ## Community
 
 Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
