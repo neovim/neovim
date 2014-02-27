@@ -36,6 +36,6 @@ clean:
 install: build/bin/nvim
 	${MAKE} -C build install
 
-.PHONY: test deps cmake install
+.PHONY: test unittest deps cmake install
 
 .DEFAULT: build/bin/nvim
