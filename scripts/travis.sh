@@ -1,10 +1,12 @@
 #!/bin/sh -e
 
+MAKE="make -C scripts/"
+
 export VALGRIND_CHECK=1
-make -C scripts/ cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist"
-make -C scripts/
+$MAKE cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist"
+$MAKE
 echo "Running tests with valgrind..."
-if ! make test > /dev/null; then
+if ! $MAKE test > /dev/null; then
 	if ls src/testdir/valgrind.* > /dev/null 2>&1; then
 		echo "Memory leak detected" >&2
 		cat src/testdir/valgrind.*
@@ -16,4 +18,4 @@ if ! make test > /dev/null; then
 	fi
 	exit 1
 fi
-make -C scripts/ install
+$MAKE install
