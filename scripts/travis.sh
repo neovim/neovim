@@ -4,7 +4,7 @@ export VALGRIND_CHECK=1
 make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist"
 make
 echo "Running tests with valgrind..."
-if ! make test > /dev/null 2>&1; then
+if ! make test > /dev/null; then
 	if ls src/testdir/valgrind.* > /dev/null 2>&1; then
 		echo "Memory leak detected" >&2 
 		cat src/testdir/valgrind.*
