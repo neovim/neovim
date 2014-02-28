@@ -1,16 +1,58 @@
-file( GLOB NEOVIM_SOURCES *.c )
-
-foreach(sfile ${NEOVIM_SOURCES})
-  get_filename_component(f ${sfile} NAME)
-  if(${f} MATCHES "^(regexp_nfa.c|farsi.c|arabic.c)$")
-    list(APPEND to_remove ${sfile})
-  endif()
-endforeach()
-
-list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
+set(NEOVIM_SOURCES
+    blowfish.c
+    buffer.c
+    charset.c
+    diff.c
+    digraph.c
+    edit.c
+    eval.c
+    ex_cmds2.c
+    ex_cmds.c
+    ex_docmd.c
+    ex_eval.c
+    ex_getln.c
+    fileio.c
+    fold.c
+    getchar.c
+    hangulin.c
+    hardcopy.c
+    hashtab.c
+    if_cscope.c
+    main.c
+    mark.c
+    mbyte.c
+    memfile.c
+    memline.c
+    menu.c
+    message.c
+    misc1.c
+    misc2.c
+    move.c
+    normal.c
+    ops.c
+    option.c
+    os_unix.c
+    popupmnu.c
+    quickfix.c
+    regexp.c
+    screen.c
+    search.c
+    sha256.c
+    spell.c
+    syntax.c
+    tag.c
+    term.c
+    ui.c
+    undo.c
+    version.c
+    window.c
+   )
 list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
 
-file( GLOB OS_SOURCES os/*.c )
+set(OS_SOURCES
+    os/fs.c
+    os/mem.c
+   )
 
 add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
 add_library (nvim-test MODULE ${NEOVIM_SOURCES} ${OS_SOURCES})
