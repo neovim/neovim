@@ -116,10 +116,12 @@ char_u *ga_concat_strings(garray_T const *const gap)
   int len = 0;
   for (int i = 0; i < gap->ga_len; ++i)
     len += (int)STRLEN(GAP_STR[i]);
-  len += gap->ga_len; // make room for "," between
+  // make room for "," between each string.
+  // -1 because we won't add a trailing "," on the last item.
+  len += gap->ga_len - 1;
 
+  char_u *s = alloc(len);
   // TODO (simensdjo): We've run out of memory, but we're not notifying anyone.
-  char_u *s = alloc(len + 1);
   if (!s)
     return NULL;
 
