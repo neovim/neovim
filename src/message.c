@@ -23,6 +23,7 @@
 #include "mbyte.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 #include "ops.h"
 #include "option.h"
 #include "screen.h"

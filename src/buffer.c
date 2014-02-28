@@ -47,6 +47,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 #include "move.h"
 #include "option.h"
 #include "os_unix.h"

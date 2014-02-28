@@ -6,6 +6,7 @@
  */
 
 #include "misc2.h"
+#include "garray.h"
 
 /*
  * Logging of NFA engine.
