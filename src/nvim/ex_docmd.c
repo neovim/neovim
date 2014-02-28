@@ -6961,15 +6961,6 @@ static void ex_mkrc(exarg_T *eap)
         failed = TRUE;
     }
 
-    if (eap->cmdidx != CMD_mkview) {
-      /* Write setting 'compatible' first, because it has side effects.
-       * For that same reason only do it when needed. */
-      if (p_cp)
-        (void)put_line(fd, "if !&cp | set cp | endif");
-      else
-        (void)put_line(fd, "if &cp | set nocp | endif");
-    }
-
     if (!view_session
         || (eap->cmdidx == CMD_mksession
             && (*flagp & SSOP_OPTIONS)))
