@@ -13,7 +13,7 @@ list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
 file( GLOB OS_SOURCES os/*.c )
 
 add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
-add_library (nvim-test SHARED ${NEOVIM_SOURCES} ${OS_SOURCES}) 
+add_library (nvim-test MODULE ${NEOVIM_SOURCES} ${OS_SOURCES})
 
 # The libraries we link against for nvim
 set(NVIM_LINK_LIBRARIES m ${LibUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
