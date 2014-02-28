@@ -1,5 +1,7 @@
 ffi = require 'ffi'
 
+ffi.cdef('void free(void *p);')
+
 -- load neovim shared library
 libnvim = ffi.load './build/src/libnvim-test.so'
 
