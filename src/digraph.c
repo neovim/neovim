@@ -21,6 +21,7 @@
 #include "mbyte.h"
 #include "message.h"
 #include "misc2.h"
+#include "garray.h"
 #include "normal.h"
 #include "screen.h"
 #include "ui.h"

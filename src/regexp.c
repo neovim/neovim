@@ -54,6 +54,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 
 #ifdef REGEXP_DEBUG
 /* show/save debugging data when BT engine is used */
