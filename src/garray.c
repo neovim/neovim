@@ -101,6 +101,7 @@ int ga_grow(garray_T *gap, int n)
  *   NULL -> NULL
  *   [] -> NULL
  *   [""] -> ""
+ *   ["", ""] -> ","
  *   ["a"] -> "a"
  *   ["a", "b"] -> "a,b"
  *   ["", "a", ""] -> ",a,"
