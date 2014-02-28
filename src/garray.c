@@ -109,7 +109,7 @@ int ga_grow(garray_T *gap, int n)
  */
 char_u *ga_concat_strings(garray_T const *const gap)
 {
-  if(!gap || gap->ga_len == 0)
+  if (!gap || gap->ga_len == 0)
     return NULL; // nothing to do
 
 #define GAP_STR ((char_u **)(gap->ga_data))
