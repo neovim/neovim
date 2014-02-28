@@ -142,7 +142,7 @@ void ga_concat(garray_T *gap, char_u const *const s)
 {
   assert(gap);
   int len = (int)STRLEN(s);
-  if(len == 0)
+  if (len == 0)
     return; // nothing to do
 
   if (ga_grow(gap, len) == OK) {
