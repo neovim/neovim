@@ -45,6 +45,10 @@
 #include "window.h"
 #include "os/os.h"
 
+#ifdef HAVE_CRT_EXTERNS_H
+#include <crt_externs.h>
+#endif
+
 static char_u *vim_version_dir __ARGS((char_u *vimdir));
 static char_u *remove_tail __ARGS((char_u *p, char_u *pend, char_u *name));
 static void init_users __ARGS((void));
@@ -3642,6 +3646,7 @@ void vim_setenv(char_u *name, char_u *val)
   }
 }
 
+
 /*
  * Function given to ExpandGeneric() to obtain an environment variable name.
  */
@@ -3653,9 +3658,11 @@ char_u *get_env_name(expand_T *xp, int idx)
    */
   return NULL;
 # else
-# ifndef __WIN32__
+# if !defined(__WIN32__) && !defined(HAVE__NSGETENVIRON)
   /* Borland C++ 5.2 has this in a header file. */
   extern char         **environ;
+# else
+  char **environ = *_NSGetEnviron();
 # endif
 # define ENVNAMELEN 100
   static char_u name[ENVNAMELEN];
