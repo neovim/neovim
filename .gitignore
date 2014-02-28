@@ -8,6 +8,8 @@
 *.swp
 *~
 *.pyc
+*.o
+*.so
 /src/po/vim.pot
 
 /src/po/*.ck
