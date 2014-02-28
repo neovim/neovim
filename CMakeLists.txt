@@ -44,7 +44,9 @@ endif(NOT CMAKE_USE_PTHREADS_INIT)
 check_library_exists(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
 
 find_package(LibIntl)
-include_directories(${LibIntl_INCLUDE_DIR})
+if(LibIntl_FOUND)
+  include_directories(${LibIntl_INCLUDE_DIR})
+endif()
 
 # Require libuv
 find_package(LibUV REQUIRED)
