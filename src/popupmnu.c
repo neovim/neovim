@@ -234,6 +234,7 @@ static int pum_calc_col()
 /* If there is a preview window at the top avoid drawing over it. */
 static void pum_avoid_preview_win_overlap()
 {
+  // TODO (simendsjo): What's the magic '4' below?
   assert(firstwin);
   if (firstwin->w_p_pvw
       && pum_row < firstwin->w_height
@@ -258,6 +259,47 @@ static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
     return col < scr_cols - PUM_DEF_WIDTH || col < scr_cols - max_text_width;
 }
 
+static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
+  int max_text_width, int max_kind_width, int max_extra_width)
+{
+  int col = pum_calc_col();
+  int fits_width = pum_fits_width(rtol, scr_width, col, max_text_width);
+  if (fits_width) {
+    /* align pum column with "col" */
+    pum_col = col;
+
+    if (rtol)
+      pum_width = pum_col - pum_scrollbar + 1;
+    else
+      pum_width = scr_width - pum_col - pum_scrollbar;
+
+    if (pum_width > max_text_width + max_kind_width + max_extra_width + 1
+        && pum_width > PUM_DEF_WIDTH)
+    {
+      pum_width = max_text_width + max_kind_width + max_extra_width + 1;
+      if (pum_width < PUM_DEF_WIDTH)
+        pum_width = PUM_DEF_WIDTH;
+    }
+  } else if (scr_width < def_width) { // pum wider than screen
+    // Use entire screen
+    if (rtol)
+      pum_col = scr_width - 1;
+    else
+      pum_col = 0;
+
+    pum_width = Columns - 1;
+  } else {
+    if (max_text_width > PUM_DEF_WIDTH)
+      max_text_width = PUM_DEF_WIDTH;        /* truncate */
+
+    if (rtol)
+      pum_col = max_text_width - 1;
+    else
+      pum_col = Columns - max_text_width;
+    pum_width = max_text_width - pum_scrollbar;
+  }
+}
+
 /*
  * Show the popup menu with items "items[size]".
  * "items" must remain valid until pum_undisplay() is called!
@@ -271,9 +313,9 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   int redo_count = 0;
 
   int def_width   = PUM_DEF_WIDTH;
-  int max_width   = 0;
-  int kind_width  = 0;
-  int extra_width = 0;
+  int max_text_width  = 0;
+  int max_kind_width  = 0;
+  int max_extra_width = 0;
 redo:
 
   /* Pretend the pum is already there to avoid that must_redraw is set when
@@ -290,58 +332,26 @@ redo:
 
   pum_avoid_preview_win_overlap();
 
-  max_width   = pum_max_text_width(items, num_items);
-  kind_width  = pum_max_kind_width(items, num_items);
-  extra_width = pum_max_extra_width(items, num_items);
+  max_text_width  = pum_max_text_width(items, num_items);
+  max_kind_width  = pum_max_kind_width(items, num_items);
+  max_extra_width = pum_max_extra_width(items, num_items);
 
-  pum_base_width = max_width;
-  pum_kind_width = kind_width;
+  pum_base_width = max_text_width;
+  pum_kind_width = max_kind_width;
 
   /* if there are more items than room we need a scrollbar */
   if (pum_height < num_items) {
     pum_scrollbar = TRUE;
-    ++max_width;
+    ++max_text_width;
   } else {
     pum_scrollbar = FALSE;
   }
 
-  if (def_width < max_width)
-    def_width = max_width;
+  if (def_width < max_text_width)
+    def_width = max_text_width;
 
-  int col = pum_calc_col();
-
-  int fits_width = pum_fits_width(curwin->w_p_rl, Columns, col, max_width);
-  if (fits_width) {
-    /* align pum column with "col" */
-    pum_col = col;
-
-    if (curwin->w_p_rl)
-      pum_width = pum_col - pum_scrollbar + 1;
-    else
-      pum_width = Columns - pum_col - pum_scrollbar;
-
-    if (pum_width > max_width + kind_width + extra_width + 1
-        && pum_width > PUM_DEF_WIDTH) {
-      pum_width = max_width + kind_width + extra_width + 1;
-      if (pum_width < PUM_DEF_WIDTH)
-        pum_width = PUM_DEF_WIDTH;
-    }
-  } else if (Columns < def_width)   {
-    /* not enough room, will use what we have */
-    if (curwin->w_p_rl)
-      pum_col = Columns - 1;
-    else
-      pum_col = 0;
-    pum_width = Columns - 1;
-  } else   {
-    if (max_width > PUM_DEF_WIDTH)
-      max_width = PUM_DEF_WIDTH;        /* truncate */
-    if (curwin->w_p_rl)
-      pum_col = max_width - 1;
-    else
-      pum_col = Columns - max_width;
-    pum_width = max_width - pum_scrollbar;
-  }
+  pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, max_text_width,
+    max_kind_width, max_extra_width);
 
   pum_array = items;
   pum_size = num_items;
