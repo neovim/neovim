@@ -48,14 +48,10 @@ static int pum_set_selected __ARGS((int n, int repeat));
  * "array" must remain valid until pum_undisplay() is called!
  * When possible the leftmost character is aligned with screen column "col".
  * The menu appears above the screen line "row" or at "row" + "height" - 1.
+ *
+ * @param selected index of initially selected item, none if out of range
  */
-void 
-pum_display (
-    pumitem_T *array,
-    int size,
-    int selected                   /* index of initially selected item, none if
-                                   out of range */
-)
+void pum_display(pumitem_T *array, int size, int selected)
 {
   int w;
   int def_width;
@@ -242,7 +238,8 @@ redo:
 /*
  * Redraw the popup menu, using "pum_first" and "pum_selected".
  */
-void pum_redraw(void)          {
+void pum_redraw(void)
+{
   int row = pum_row;
   int col;
   int attr_norm = highlight_attr[HLF_PNI];
@@ -593,7 +590,8 @@ static int pum_set_selected(int n, int repeat)
 /*
  * Undisplay the popup menu (later).
  */
-void pum_undisplay(void)          {
+void pum_undisplay(void)
+{
   pum_array = NULL;
   redraw_all_later(SOME_VALID);
   redraw_tabline = TRUE;
@@ -604,7 +602,8 @@ void pum_undisplay(void)          {
  * Clear the popup menu.  Currently only resets the offset to the first
  * displayed item.
  */
-void pum_clear(void)          {
+void pum_clear(void)
+{
   pum_first = 0;
 }
 
@@ -612,7 +611,8 @@ void pum_clear(void)          {
  * Return TRUE if the popup menu is displayed.
  * Overruled when "pum_do_redraw" is set, used to redraw the status lines.
  */
-int pum_visible(void)         {
+int pum_visible(void)
+{
   return !pum_do_redraw && pum_array != NULL;
 }
 
@@ -620,7 +620,8 @@ int pum_visible(void)         {
  * Return the height of the popup menu, the number of entries visible.
  * Only valid when pum_visible() returns TRUE!
  */
-int pum_get_height(void)         {
+int pum_get_height(void)
+{
   return pum_height;
 }
 
