@@ -5,7 +5,6 @@ void mch_write(char_u *s, int len);
 int mch_inchar(char_u *buf, int maxlen, long wtime, int tb_change_cnt);
 int mch_char_avail(void);
 void mch_delay(long msec, int ignoreinput);
-int mch_stackcheck(char *p);
 void mch_startjmp(void);
 void mch_endjmp(void);
 void mch_didjmp(void);
