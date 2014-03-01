@@ -67,8 +67,10 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
+  assert(curwin);
   int row = curwin->w_wrow + W_WINROW(curwin);
 
+  assert(firstwin);
   int top_clear;
   if (firstwin->w_p_pvw)
     top_clear = firstwin->w_height;
@@ -78,6 +80,7 @@ redo:
   /* When the preview window is at the bottom stop just above it.  Also
    * avoid drawing over the status line so that it's clear there is a window
    * boundary. */
+  assert(lastwin);
   int above_row = cmdline_row;
   if (lastwin->w_p_pvw)
     above_row -= lastwin->w_height + lastwin->w_status_height + 1;
