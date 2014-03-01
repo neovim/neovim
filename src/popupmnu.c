@@ -80,10 +80,10 @@ typedef struct {
  */
 static int pum_calc_height(int num_items)
 {
-  int pum_height = num_items < PUM_DEF_HEIGHT ? num_items : PUM_DEF_HEIGHT;
-  if (p_ph > 0 && pum_height > p_ph)
-    pum_height = p_ph;
-  return pum_height;
+  int height = num_items < PUM_DEF_HEIGHT ? num_items : PUM_DEF_HEIGHT;
+  if (p_ph > 0 && height > p_ph)
+    height = p_ph;
+  return height;
 }
 
 /**
@@ -129,21 +129,25 @@ static int pum_calc_context_lines_if_below(int lines)
 /**
  *
  */
-static void pum_calc_and_set_row_and_height_if_above(int size, int ctx_lines,
+static pum_loc_T pum_calc_row_and_height_if_above(int num_items, int ctx_lines,
   int row)
 {
-  if (row >= size + ctx_lines) {
-    pum_row = row - size - ctx_lines;
-    pum_height = size;
+  pum_loc_T result;
+
+  if (row >= num_items + ctx_lines) {
+    result.row    = row - num_items - ctx_lines;
+    result.height = num_items;
   } else {
-    pum_row = 0;
-    pum_height = row - ctx_lines;
+    result.row    = 0;
+    result.height = row - ctx_lines;
   }
 
-  if (p_ph > 0 && pum_height > p_ph) {
-    pum_row += pum_height - p_ph;
-    pum_height = p_ph;
+  if (p_ph > 0 && result.height > p_ph) {
+    result.row    += result.height - p_ph;
+    result.height  = p_ph;
   }
+
+  return result;
 }
 
 static int pum_should_render_above(int row, int bottom_row, int pum_height,
@@ -155,29 +159,33 @@ static int pum_should_render_above(int row, int bottom_row, int pum_height,
 
 /**
  */
-static void pum_calc_and_set_row_and_height_if_below(int size, int above_row,
-  int row, int context_lines)
+static pum_loc_T  pum_calc_row_and_height_if_below(int num_items,
+  int above_row, int row, int context_lines)
 {
-  pum_row = row + context_lines;
-  if (size > above_row - pum_row)
-    pum_height = above_row - pum_row;
+  pum_loc_T result;
+  result.row = row + context_lines;
+  if (num_items > above_row - result.row)
+    result.height = above_row - result.row;
   else
-    pum_height = size;
+    result.height = num_items;
 
-  if (p_ph > 0 && pum_height > p_ph)
-    pum_height = p_ph;
+  if (p_ph > 0 && result.height > p_ph)
+    result.height = p_ph;
+
+  return result;
 }
 
 /**
  */
-static void pum_calc_and_set_row_and_height(int num_items)
+static pum_loc_T pum_calc_row_and_height(int num_items)
 {
   /* When the preview window is at the bottom stop just above it.  Also
    * avoid drawing over the status line so that it's clear there is a window
    * boundary. */
   int above_row = pum_find_last_possible_render_row();
 
-  pum_height = pum_calc_height(num_items);
+  pum_loc_T result;
+  result.height = pum_calc_height(num_items);
 
   // Find start row
   assert(curwin);
@@ -188,17 +196,23 @@ static void pum_calc_and_set_row_and_height(int num_items)
 
   /* Put the pum below "row" if possible.  If there are few lines decide on
    * where there is more room. */
-  int render_above = pum_should_render_above(row, above_row, pum_height,
+  int render_above = pum_should_render_above(row, above_row, result.height,
       top_clear);
   if (render_above) {
     /* Leave two lines of context if possible */
     const int context_lines = pum_calc_context_lines_if_above(2);
-    pum_calc_and_set_row_and_height_if_above(num_items, context_lines, row);
+    const pum_loc_T loc = pum_calc_row_and_height_if_above(num_items, context_lines, row);
+    result.row    = loc.row;
+    result.height = loc.height;
   } else {
     /* Leave two lines of context if possible */
     const int context_lines = pum_calc_context_lines_if_below(3);
-    pum_calc_and_set_row_and_height_if_below(num_items, above_row, row, context_lines);
+    const pum_loc_T loc = pum_calc_row_and_height_if_below(num_items, above_row, row, context_lines);
+    result.row    = loc.row;
+    result.height = loc.height;
   }
+
+  return result;
 }
 
 static int pum_max_text_width(pum_items_T *items)
@@ -259,16 +273,16 @@ static int pum_calc_col()
 }
 
 /* If there is a preview window at the top avoid drawing over it. */
-static void pum_avoid_preview_win_overlap()
+static void pum_avoid_preview_win_overlap(pum_loc_T *loc)
 {
   // TODO (simendsjo): What's the magic '4' below?
   assert(firstwin);
   if (firstwin->w_p_pvw
-      && pum_row < firstwin->w_height
-      && pum_height > firstwin->w_height + 4)
+      && loc->row    < firstwin->w_height
+      && loc->height > firstwin->w_height + 4)
   {
-    pum_row    += firstwin->w_height;
-    pum_height -= firstwin->w_height;
+    loc->row    += firstwin->w_height;
+    loc->height -= firstwin->w_height;
   }
 }
 
@@ -344,15 +358,15 @@ redo:
 
   /* Calculate start row and height */
 
-  pum_calc_and_set_row_and_height(menu->items.num_items);
+  pum_loc_T loc = pum_calc_row_and_height(menu->items.num_items);
   /* don't display when we only have room for one line */
-  if (pum_height < 1 || (pum_height == 1 && menu->items.num_items > 1))
+  if (loc.row < 1 || (loc.height == 1 && menu->items.num_items > 1))
     return;
 
-  pum_avoid_preview_win_overlap();
+  pum_avoid_preview_win_overlap(&loc);
 
   /* if there are more items than room we need a scrollbar */
-  pum_scrollbar = pum_height < menu->items.num_items;
+  pum_scrollbar = loc.height < menu->items.num_items;
 
   /* Calculate start column and width */
 
@@ -368,6 +382,9 @@ redo:
 
   if (def_width < maxwidth.text)
     def_width = maxwidth.text;
+
+  pum_row    = loc.row;
+  pum_height = loc.height;
 
   pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, maxwidth);
 
