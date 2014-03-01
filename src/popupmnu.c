@@ -44,13 +44,13 @@ static int pum_set_selected __ARGS((int n, int repeat));
 #define PUM_DEF_WIDTH  15
 
 /**
- * Figure out the size and position of the pum.
+ * Figure out the height of the pum.
  */
-static int pum_calc_height(int size)
+static int pum_calc_height(int num_items)
 {
   int pum_height;
-  if (size < PUM_DEF_HEIGHT)
-    pum_height = size;
+  if (num_items < PUM_DEF_HEIGHT)
+    pum_height = num_items;
   else
     pum_height = PUM_DEF_HEIGHT;
 
@@ -79,7 +79,7 @@ static int pum_find_last_possible_render_row()
  *
  * Try to make room for 'lines' context lines.
  */
-static int pum_calc_context_lines(int lines)
+static int pum_calc_context_lines_if_above(int lines)
 {
   assert(curwin);
   int context_lines = (curwin->w_wrow - curwin->w_cline_row >= lines) ?
@@ -90,7 +90,7 @@ static int pum_calc_context_lines(int lines)
 
 /**
  */
-static int pum_calc_context_lines2(int lines)
+static int pum_calc_context_lines_if_below(int lines)
 {
   assert(curwin);
   int context_lines =
@@ -103,7 +103,7 @@ static int pum_calc_context_lines2(int lines)
 /**
  *
  */
-static void pum_calc_and_set_row_and_height(int size, int ctx_lines, int row)
+static void pum_calc_and_set_row_and_height_if_above(int size, int ctx_lines, int row)
 {
   if (row >= size + ctx_lines) {
     pum_row = row - size - ctx_lines;
@@ -119,9 +119,15 @@ static void pum_calc_and_set_row_and_height(int size, int ctx_lines, int row)
   }
 }
 
+static int pum_should_render_above(int row, int bottom_row, int pum_height, int top_clear)
+{
+  return row  + 2 >= bottom_row - pum_height &&
+    row > (bottom_row - top_clear) / 2;
+}
+
 /**
  */
-static void pum_calc_and_set_row_and_height2(int size, int above_row, int row,
+static void pum_calc_and_set_row_and_height_if_below(int size, int above_row, int row,
   int context_lines)
 {
   pum_row = row + context_lines;
@@ -157,21 +163,99 @@ static void pum_calc_and_set_size_and_pos(int size)
 
   /* Put the pum below "row" if possible.  If there are few lines decide on
    * where there is more room. */
-  if (row  + 2 >= above_row - pum_height &&
-      row > (above_row - top_clear) / 2)
-  {
-    /* pum above "row" */
-
+  int render_above = pum_should_render_above(row, above_row, pum_height,
+      top_clear);
+  if (render_above) {
     /* Leave two lines of context if possible */
-    int context_lines = pum_calc_context_lines(2);
-    pum_calc_and_set_row_and_height(size, context_lines, row);
+    int context_lines = pum_calc_context_lines_if_above(2);
+    pum_calc_and_set_row_and_height_if_above(size, context_lines, row);
   } else {
-    /* pum below "row" */
-
     /* Leave two lines of context if possible */
-    int context_lines = pum_calc_context_lines2(3);
-    pum_calc_and_set_row_and_height2(size, above_row, row, context_lines);
+    int context_lines = pum_calc_context_lines_if_below(3);
+    pum_calc_and_set_row_and_height_if_below(size, above_row, row, context_lines);
   }
+}
+
+static int pum_max_text_width(pumitem_T *items, int num_items)
+{
+  assert(items);
+  assert(num_items >= 0);
+
+  int max = 0;
+  for (int i = 0; i < num_items; ++i) {
+    if(!items[i].pum_text) continue;
+    int w = vim_strsize(items[i].pum_text);
+    if (max < w)
+      max = w;
+  }
+  return max;
+}
+
+static int pum_max_kind_width(pumitem_T *items, int num_items)
+{
+  assert(items);
+  assert(num_items >= 0);
+
+  int max = 0;
+  for (int i = 0; i < num_items; ++i) {
+    if(!items[i].pum_kind) continue;
+    int w = vim_strsize(items[i].pum_kind) + 1;
+    if (max < w)
+      max = w;
+  }
+  return max;
+}
+
+static int pum_max_extra_width(pumitem_T *items, int num_items)
+{
+  assert(items);
+  assert(num_items >= 0);
+
+  int max = 0;
+  for (int i = 0; i < num_items; ++i) {
+    if(!items[i].pum_extra) continue;
+    int w = vim_strsize(items[i].pum_extra) + 1;
+    if (max < w)
+      max = w;
+  }
+  return max;
+}
+
+
+/* Calculate column */
+static int pum_calc_col()
+{
+  assert(curwin);
+  return curwin-> w_p_rl ?
+    W_WINCOL(curwin) + W_WIDTH(curwin) - curwin->w_wcol - 1 :
+    W_WINCOL(curwin) + curwin->w_wcol;
+}
+
+/* If there is a preview window at the top avoid drawing over it. */
+static void pum_avoid_preview_win_overlap()
+{
+  assert(firstwin);
+  if (firstwin->w_p_pvw
+      && pum_row < firstwin->w_height
+      && pum_height > firstwin->w_height + 4)
+  {
+    pum_row    += firstwin->w_height;
+    pum_height -= firstwin->w_height;
+  }
+}
+
+/**
+ * @param r_to_l Render text right to left?
+ * @param scr_cols Number of columns our screen has
+ * @param col Starting column for the pum
+ * @param max_text_width The longest text width of the pum items to be rendered
+ * */
+static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
+{
+  if(r_to_l)
+    return col > PUM_DEF_WIDTH || col > max_text_width;
+  else
+    return col < scr_cols - PUM_DEF_WIDTH || col < scr_cols - max_text_width;
 }
 
 /*
@@ -204,56 +288,30 @@ redo:
   if (pum_height < 1 || (pum_height == 1 && size > 1))
     return;
 
-  /* If there is a preview window at the top avoid drawing over it. */
-  assert(firstwin);
-  if (firstwin->w_p_pvw
-      && pum_row < firstwin->w_height
-      && pum_height > firstwin->w_height + 4)
-  {
-    pum_row += firstwin->w_height;
-    pum_height -= firstwin->w_height;
-  }
+  pum_avoid_preview_win_overlap();
 
-  /* Compute the width of the widest match and the widest extra. */
-  for (int i = 0; i < size; ++i) {
-    int w = vim_strsize(array[i].pum_text);
-    if (max_width < w)
-      max_width = w;
-    if (array[i].pum_kind != NULL) {
-      w = vim_strsize(array[i].pum_kind) + 1;
-      if (kind_width < w)
-        kind_width = w;
-    }
-    if (array[i].pum_extra != NULL) {
-      w = vim_strsize(array[i].pum_extra) + 1;
-      if (extra_width < w)
-        extra_width = w;
-    }
-  }
+  max_width   = pum_max_text_width(array, size);
+  kind_width  = pum_max_kind_width(array, size);
+  extra_width = pum_max_extra_width(array, size);
+
   pum_base_width = max_width;
   pum_kind_width = kind_width;
 
-  /* Calculate column */
-  int col;
-  if (curwin->w_p_rl)
-    col = W_WINCOL(curwin) + W_WIDTH(curwin) - curwin->w_wcol - 1;
-  else
-    col = W_WINCOL(curwin) + curwin->w_wcol;
-
   /* if there are more items than room we need a scrollbar */
   if (pum_height < size) {
-    pum_scrollbar = 1;
+    pum_scrollbar = TRUE;
     ++max_width;
-  } else
-    pum_scrollbar = 0;
+  } else {
+    pum_scrollbar = FALSE;
+  }
 
   if (def_width < max_width)
     def_width = max_width;
 
-  if (((col < Columns - PUM_DEF_WIDTH || col < Columns - max_width)
-       && !curwin->w_p_rl)
-      || (curwin->w_p_rl && (col > PUM_DEF_WIDTH || col > max_width)
-          )) {
+  int col = pum_calc_col();
+
+  int fits_width = pum_fits_width(curwin->w_p_rl, Columns, col, max_width);
+  if (fits_width) {
     /* align pum column with "col" */
     pum_col = col;
 
