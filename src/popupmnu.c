@@ -53,24 +53,13 @@ static int pum_set_selected __ARGS((int n, int repeat));
  */
 void pum_display(pumitem_T *array, int size, int selected)
 {
-  int w;
-  int def_width;
-  int max_width;
-  int kind_width;
-  int extra_width;
-  int i;
-  int top_clear;
-  int row;
-  int context_lines;
-  int col;
-  int above_row = cmdline_row;
   int redo_count = 0;
 
+  int def_width   = PUM_DEF_WIDTH;
+  int max_width   = 0;
+  int kind_width  = 0;
+  int extra_width = 0;
 redo:
-  def_width = PUM_DEF_WIDTH;
-  max_width = 0;
-  kind_width = 0;
-  extra_width = 0;
 
   /* Pretend the pum is already there to avoid that must_redraw is set when
    * 'cuc' is on. */
@@ -78,8 +67,9 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
-  row = curwin->w_wrow + W_WINROW(curwin);
+  int row = curwin->w_wrow + W_WINROW(curwin);
 
+  int top_clear;
   if (firstwin->w_p_pvw)
     top_clear = firstwin->w_height;
   else
@@ -88,6 +78,7 @@ redo:
   /* When the preview window is at the bottom stop just above it.  Also
    * avoid drawing over the status line so that it's clear there is a window
    * boundary. */
+  int above_row = cmdline_row;
   if (lastwin->w_p_pvw)
     above_row -= lastwin->w_height + lastwin->w_status_height + 1;
 
@@ -108,6 +99,7 @@ redo:
     /* pum above "row" */
 
     /* Leave two lines of context if possible */
+    int context_lines;
     if (curwin->w_wrow - curwin->w_cline_row >= 2)
       context_lines = 2;
     else
@@ -128,6 +120,7 @@ redo:
     /* pum below "row" */
 
     /* Leave two lines of context if possible */
+    int context_lines;
     if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3)
       context_lines = 3;
     else
@@ -156,7 +149,8 @@ redo:
   }
 
   /* Compute the width of the widest match and the widest extra. */
-  for (i = 0; i < size; ++i) {
+  int w;
+  for (int i = 0; i < size; ++i) {
     w = vim_strsize(array[i].pum_text);
     if (max_width < w)
       max_width = w;
@@ -175,6 +169,7 @@ redo:
   pum_kind_width = kind_width;
 
   /* Calculate column */
+  int col;
   if (curwin->w_p_rl)
     col = W_WINCOL(curwin) + W_WIDTH(curwin) - curwin->w_wcol - 1;
   else
