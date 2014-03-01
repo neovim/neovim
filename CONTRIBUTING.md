@@ -40,7 +40,7 @@ someone else doesn't duplicate the work.
 
 ### Coding style
 
-- Try to match the existing indent style. (TODO: specify)
+- Use the 'hybrid' style described [here](https://gist.github.com/davidzchen/9188090). Get a `.editorconfig` for it [here](https://gist.github.com/ashleyh/9292108)
 - Don't abuse the pre-processor.
 - Don't mix platform-specific stuff into the main code.
 - TODO: commit messages?
