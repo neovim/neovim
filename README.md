@@ -299,19 +299,27 @@ compiling the libuv dependency. See joyent/libuv#1158.
 
 * Install [Xcode](https://developer.apple.com/) and [Homebrew](http://brew.sh)
   or [MacPorts](http://www.macports.org)
-* Install sha1sum
+* Install libtool, sha1sum, automake and cmake:
+
+  Via MacPorts:
+
+      sudo port install md5sha1sum libtool automake cmake
+      
+  Via Homebrew:
+
+      brew install md5sha1sum libtool automake cmake
 
 If you run into wget certificate errors, you may be missing the root SSL
 certificates or have not set them up correctly:
 
   Via MacPorts:
 
-      sudo port install curl-ca-bundle libtool automake cmake
+      sudo port install curl-ca-bundle
       echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
 
   Via Homebrew:
 
-      brew install curl-ca-bundle libtool automake cmake
+      brew install curl-ca-bundle
       echo CA_CERTIFICATE=$(brew --prefix curl-ca-bundle)/share/ca-bundle.crt >> ~/.wgetrc
 
 
