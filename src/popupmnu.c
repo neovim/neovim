@@ -43,6 +43,137 @@ static int pum_set_selected __ARGS((int n, int repeat));
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
 
+/**
+ * Figure out the size and position of the pum.
+ */
+static int pum_calc_height(int size)
+{
+  int pum_height;
+  if (size < PUM_DEF_HEIGHT)
+    pum_height = size;
+  else
+    pum_height = PUM_DEF_HEIGHT;
+
+  if (p_ph > 0 && pum_height > p_ph)
+    pum_height = p_ph;
+
+  return pum_height;
+}
+
+/**
+ * Finds the last possible row where the pum must stop.
+ *
+ * This returns the row just above the status bar
+ */
+static int pum_find_last_possible_render_row()
+{
+  assert(lastwin);
+  int last_row = cmdline_row;
+  if (lastwin->w_p_pvw)
+    last_row -= lastwin->w_height + lastwin->w_status_height + 1;
+  return last_row;
+}
+
+/**
+ * Calculate number of context lines we can show.
+ *
+ * Try to make room for 'lines' context lines.
+ */
+static int pum_calc_context_lines(int lines)
+{
+  assert(curwin);
+  int context_lines = (curwin->w_wrow - curwin->w_cline_row >= lines) ?
+    lines : curwin->w_wrow - curwin->w_cline_row;
+  assert(context_lines >= 0 && context_lines <= lines);
+  return context_lines;
+}
+
+/**
+ */
+static int pum_calc_context_lines2(int lines)
+{
+  assert(curwin);
+  int context_lines =
+    (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= lines) ?
+    lines : curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow;
+  assert(context_lines >= 0 && context_lines <= lines);
+  return context_lines;
+}
+
+/**
+ *
+ */
+static void pum_calc_and_set_row_and_height(int size, int ctx_lines, int row)
+{
+  if (row >= size + ctx_lines) {
+    pum_row = row - size - ctx_lines;
+    pum_height = size;
+  } else {
+    pum_row = 0;
+    pum_height = row - ctx_lines;
+  }
+
+  if (p_ph > 0 && pum_height > p_ph) {
+    pum_row += pum_height - p_ph;
+    pum_height = p_ph;
+  }
+}
+
+/**
+ */
+static void pum_calc_and_set_row_and_height2(int size, int above_row, int row,
+  int context_lines)
+{
+  pum_row = row + context_lines;
+  if (size > above_row - pum_row)
+    pum_height = above_row - pum_row;
+  else
+    pum_height = size;
+
+  if (p_ph > 0 && pum_height > p_ph)
+    pum_height = p_ph;
+}
+
+/**
+ */
+static void pum_calc_and_set_size_and_pos(int size)
+{
+  /* When the preview window is at the bottom stop just above it.  Also
+   * avoid drawing over the status line so that it's clear there is a window
+   * boundary. */
+  int above_row = pum_find_last_possible_render_row();
+
+  pum_height = pum_calc_height(size);
+
+  assert(curwin);
+  int row = curwin->w_wrow + W_WINROW(curwin);
+
+  assert(firstwin);
+  int top_clear;
+  if (firstwin->w_p_pvw)
+    top_clear = firstwin->w_height;
+  else
+    top_clear = 0;
+
+  /* Put the pum below "row" if possible.  If there are few lines decide on
+   * where there is more room. */
+  if (row  + 2 >= above_row - pum_height &&
+      row > (above_row - top_clear) / 2)
+  {
+    /* pum above "row" */
+
+    /* Leave two lines of context if possible */
+    int context_lines = pum_calc_context_lines(2);
+    pum_calc_and_set_row_and_height(size, context_lines, row);
+  } else {
+    /* pum below "row" */
+
+    /* Leave two lines of context if possible */
+    int context_lines = pum_calc_context_lines2(3);
+    pum_calc_and_set_row_and_height2(size, above_row, row, context_lines);
+  }
+}
+
 /*
  * Show the popup menu with items "array[size]".
  * "array" must remain valid until pum_undisplay() is called!
@@ -67,94 +198,25 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
-  assert(curwin);
-  int row = curwin->w_wrow + W_WINROW(curwin);
-
-  assert(firstwin);
-  int top_clear;
-  if (firstwin->w_p_pvw)
-    top_clear = firstwin->w_height;
-  else
-    top_clear = 0;
-
-  /* When the preview window is at the bottom stop just above it.  Also
-   * avoid drawing over the status line so that it's clear there is a window
-   * boundary. */
-  assert(lastwin);
-  int above_row = cmdline_row;
-  if (lastwin->w_p_pvw)
-    above_row -= lastwin->w_height + lastwin->w_status_height + 1;
-
-  /*
-   * Figure out the size and position of the pum.
-   */
-  if (size < PUM_DEF_HEIGHT)
-    pum_height = size;
-  else
-    pum_height = PUM_DEF_HEIGHT;
-  if (p_ph > 0 && pum_height > p_ph)
-    pum_height = p_ph;
-
-  /* Put the pum below "row" if possible.  If there are few lines decide on
-   * where there is more room. */
-  if (row  + 2 >= above_row - pum_height
-      && row > (above_row - top_clear) / 2) {
-    /* pum above "row" */
-
-    /* Leave two lines of context if possible */
-    int context_lines;
-    if (curwin->w_wrow - curwin->w_cline_row >= 2)
-      context_lines = 2;
-    else
-      context_lines = curwin->w_wrow - curwin->w_cline_row;
-
-    if (row >= size + context_lines) {
-      pum_row = row - size - context_lines;
-      pum_height = size;
-    } else   {
-      pum_row = 0;
-      pum_height = row - context_lines;
-    }
-    if (p_ph > 0 && pum_height > p_ph) {
-      pum_row += pum_height - p_ph;
-      pum_height = p_ph;
-    }
-  } else   {
-    /* pum below "row" */
-
-    /* Leave two lines of context if possible */
-    int context_lines;
-    if (curwin->w_cline_row + curwin->w_cline_height - curwin->w_wrow >= 3)
-      context_lines = 3;
-    else
-      context_lines = curwin->w_cline_row
-                      + curwin->w_cline_height - curwin->w_wrow;
-
-    pum_row = row + context_lines;
-    if (size > above_row - pum_row)
-      pum_height = above_row - pum_row;
-    else
-      pum_height = size;
-    if (p_ph > 0 && pum_height > p_ph)
-      pum_height = p_ph;
-  }
+  pum_calc_and_set_size_and_pos(size);
 
   /* don't display when we only have room for one line */
   if (pum_height < 1 || (pum_height == 1 && size > 1))
     return;
 
   /* If there is a preview window at the top avoid drawing over it. */
+  assert(firstwin);
   if (firstwin->w_p_pvw
       && pum_row < firstwin->w_height
-      && pum_height > firstwin->w_height + 4) {
+      && pum_height > firstwin->w_height + 4)
+  {
     pum_row += firstwin->w_height;
     pum_height -= firstwin->w_height;
   }
 
   /* Compute the width of the widest match and the widest extra. */
-  int w;
   for (int i = 0; i < size; ++i) {
-    w = vim_strsize(array[i].pum_text);
+    int w = vim_strsize(array[i].pum_text);
     if (max_width < w)
       max_width = w;
     if (array[i].pum_kind != NULL) {
