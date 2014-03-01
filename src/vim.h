@@ -1166,7 +1166,7 @@ typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
  * Include a prototype for mch_memmove(), it may not be in alloc.pro.
  */
 #ifdef VIM_MEMMOVE
-void mch_memmove __ARGS((void *, void *, size_t));
+void mch_memmove(void *, void *, size_t);
 #else
 # ifndef mch_memmove
 #  define mch_memmove(to, from, len) memmove(to, from, len)
@@ -1186,7 +1186,7 @@ void mch_memmove __ARGS((void *, void *, size_t));
 #ifdef HAVE_MEMSET
 # define vim_memset(ptr, c, size)   memset((ptr), (c), (size))
 #else
-void *vim_memset __ARGS((void *, int, size_t));
+void *vim_memset(void *, int, size_t);
 #endif
 
 #ifdef HAVE_MEMCMP
@@ -1195,7 +1195,7 @@ void *vim_memset __ARGS((void *, int, size_t));
 # ifdef HAVE_BCMP
 #  define vim_memcmp(p1, p2, len)   bcmp((p1), (p2), (len))
 # else
-int vim_memcmp __ARGS((void *, void *, size_t));
+int vim_memcmp(void *, void *, size_t);
 #  define VIM_MEMCMP
 # endif
 #endif
