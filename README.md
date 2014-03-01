@@ -294,6 +294,8 @@ compiling the libuv dependency. See joyent/libuv#1158.
 
     sudo pacman -S base-devel cmake ncurses
 
+    Package can be installed from [AUR](https://aur.archlinux.org/packages/neovim-git/)
+
 <a name="for-os-x"></a>
 ### OS X
 
