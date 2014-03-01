@@ -5,11 +5,15 @@ CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr -DLibUV_US
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS :=
 
+# For use where we want to make sure only a single job is run.  This also avoids
+# any warnings from the sub-make.
+SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
+
 build/bin/nvim: deps
-	${MAKE} -C build
+	$(MAKE) -C build
 
 test: build/bin/nvim
-	cd src/testdir && make
+	$(SINGLE_MAKE) -C src/testdir
 
 unittest: build/bin/nvim
 	sh -e scripts/unittest.sh
@@ -31,10 +35,10 @@ cmake: clean deps
 
 clean:
 	rm -rf build
-	cd src/testdir && make clean
+	$(MAKE) -C src/testdir clean
 
 install: build/bin/nvim
-	${MAKE} -C build install
+	$(MAKE) -C build install
 
 .PHONY: test unittest deps cmake install
 
