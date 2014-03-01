@@ -10,6 +10,7 @@ class Neovim < Formula
   depends_on 'automake'
 
   def install
+    ENV.deparallelize
     system "make", "PREFIX=#{prefix}", "cmake"
     system "make", "PREFIX=#{prefix}"
     system "make", "PREFIX=#{prefix}", "install"
