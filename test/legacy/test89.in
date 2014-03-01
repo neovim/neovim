@@ -54,16 +54,16 @@ STARTTEST
 :cd ..
 :" Tests may be run from a shadow directory, so an extra cd needs to be done to
 :" get above src/
-:if fnamemodify(getcwd(), ':t') != 'src' | cd ../.. | else | cd .. | endif
+:if fnamemodify(getcwd(), ':t') != 'test' | cd ../.. | else | cd .. | endif
 :$put =''
 :$put ='Testing findfile'
 :$put =''
 :set ssl
-:$put =findfile('test19.in','src/test*')
+:$put =findfile('test19.in','test/leg*')
 :exe "cd" cwd
 :cd ..
-:$put =findfile('test19.in','test*')
-:$put =findfile('test19.in','testdir')
+:$put =findfile('test19.in','leg*')
+:$put =findfile('test19.in','legacy')
 :exe "cd" cwd
 :/^results/,$w! test.out
 :q!

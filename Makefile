@@ -9,7 +9,7 @@ build/bin/nvim: deps
 	${MAKE} -C build
 
 test: build/bin/nvim
-	cd src/testdir && make
+	cd test/legacy && ./runtests.sh
 
 unittest: build/bin/nvim
 	sh -e scripts/unittest.sh
@@ -31,7 +31,6 @@ cmake: clean deps
 
 clean:
 	rm -rf build
-	cd src/testdir && make clean
 
 install: build/bin/nvim
 	${MAKE} -C build install
