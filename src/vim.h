@@ -6,8 +6,11 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef VIM__H
-# define VIM__H
+#ifndef NEOVIM_VIM_H
+# define NEOVIM_VIM_H
+
+#include "types.h"
+
 /* Included when ported to cmake */
 /* This is needed to replace TRUE/FALSE macros by true/false from c99 */
 #include <stdbool.h>
@@ -62,15 +65,7 @@ Error: configure did not run properly.Check auto/config.log.
 # define VIMPACKAGE     "vim"
 #endif
 
-#include "os_unix.h"       /* bring lots of system header files */
-
-/* Mark unused function arguments with UNUSED, so that gcc -Wunused-parameter
- * can be used to check for mistakes. */
-#ifdef HAVE_ATTRIBUTE_UNUSED
-# define UNUSED __attribute__((unused))
-#else
-# define UNUSED
-#endif
+#include "os_unix_defs.h"       /* bring lots of system header files */
 
 # ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -96,13 +91,6 @@ Error: configure did not run properly.Check auto/config.log.
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
-/*
- * Shorthand for unsigned variables. Many systems, but not all, have u_char
- * already defined, so we use char_u to avoid trouble.
- */
-typedef unsigned char char_u;
-typedef unsigned short short_u;
-typedef unsigned int int_u;
 /* Make sure long_u is big enough to hold a pointer.
  * On Win64, longs are 32 bits and pointers are 64 bits.
  * For printf() and scanf(), we need to take care of long_u specifically. */
@@ -154,7 +142,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 
 #include "ascii.h"
 #include "keymap.h"
-#include "term.h"
+#include "term_defs.h"
 #include "macros.h"
 
 #include <errno.h>
@@ -1178,7 +1166,7 @@ typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
  * Include a prototype for mch_memmove(), it may not be in alloc.pro.
  */
 #ifdef VIM_MEMMOVE
-void mch_memmove(void *, void *, size_t);
+void mch_memmove __ARGS((void *, void *, size_t));
 #else
 # ifndef mch_memmove
 #  define mch_memmove(to, from, len) memmove(to, from, len)
@@ -1198,7 +1186,7 @@ void mch_memmove(void *, void *, size_t);
 #ifdef HAVE_MEMSET
 # define vim_memset(ptr, c, size)   memset((ptr), (c), (size))
 #else
-void *vim_memset(void *, int, size_t);
+void *vim_memset __ARGS((void *, int, size_t));
 #endif
 
 #ifdef HAVE_MEMCMP
@@ -1207,7 +1195,7 @@ void *vim_memset(void *, int, size_t);
 # ifdef HAVE_BCMP
 #  define vim_memcmp(p1, p2, len)   bcmp((p1), (p2), (len))
 # else
-int vim_memcmp(void *, void *, size_t);
+int vim_memcmp __ARGS((void *, void *, size_t));
 #  define VIM_MEMCMP
 # endif
 #endif
@@ -1260,9 +1248,9 @@ int vim_memcmp(void *, void *, size_t);
 
 typedef struct timeval proftime_T;
 
-/* Include option.h before structs.h, because the number of window-local and
+/* Include option_defs.h before structs.h, because the number of window-local and
  * buffer-local options is used there. */
-#include "option.h"         /* options and default values */
+#include "option_defs.h"         /* options and default values */
 
 /* Note that gui.h is included by structs.h */
 
@@ -1412,7 +1400,7 @@ typedef struct timeval proftime_T;
 typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
-#include "ex_cmds.h"        /* Ex command defines */
+#include "ex_cmds_defs.h"        /* Ex command defines */
 #include "proto.h"          /* function prototypes */
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
@@ -1594,4 +1582,4 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
     VV_HLSEARCH, !no_hlsearch)
 
-#endif /* VIM__H */
+#endif /* NEOVIM_VIM_H */

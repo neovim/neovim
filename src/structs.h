@@ -56,9 +56,9 @@ typedef int scid_T;                             /* script ID */
 typedef struct file_buffer buf_T;       /* forward declaration */
 
 /*
- * This is here because regexp.h needs pos_T and below regprog_T is used.
+ * This is here because regexp_defs.h needs pos_T and below regprog_T is used.
  */
-#include "regexp.h"
+#include "regexp_defs.h"
 
 /*
  * This is here because gui.h needs the pos_T and win_T, and win_T needs gui.h

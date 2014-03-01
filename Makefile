@@ -1,26 +1,41 @@
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
+-include local.mk
 
-build/src/vim: deps
-	cd build && make
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr -DLibUV_USE_STATIC=YES
 
-test: build/src/vim
+# Extra CMake flags which extend the default set
+CMAKE_EXTRA_FLAGS :=
+
+build/bin/nvim: deps
+	${MAKE} -C build
+
+test: build/bin/nvim
 	cd src/testdir && make
 
-deps: .deps/usr/lib/libuv.a
+unittest: build/bin/nvim
+	sh -e scripts/unittest.sh
+
+deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
 
 .deps/usr/lib/libuv.a:
-	sh -e scripts/get-libuv.sh
+	sh -e scripts/compile-libuv.sh
 
-cmake: clean
+.deps/usr/lib/libluajit-5.1.a:
+	sh -e scripts/compile-lua.sh
+
+.deps/usr/bin/busted:
+	sh -e scripts/setup-test-tools.sh
+
+cmake: clean deps
 	mkdir build
-	cd build && cmake $(CMAKE_FLAGS) ../
+	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
 
 clean:
 	rm -rf build
-	for file in lua mbyte mzscheme small tiny; do \
-		rm -f src/testdir/$$file.vim; \
-	done
+	cd src/testdir && make clean
 
-.PHONY: test deps cmake
+install: build/bin/nvim
+	${MAKE} -C build install
 
-.DEFAULT: build/src/vim
+.PHONY: test unittest deps cmake install
+
+.DEFAULT: build/bin/nvim

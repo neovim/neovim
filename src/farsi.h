@@ -6,6 +6,9 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
+#ifndef NEOVIM_FARSI_H
+#define NEOVIM_FARSI_H
+
 /*
  * Farsi characters are categorized into following types:
  *
@@ -224,3 +227,5 @@ EXTERN char_u farsi_text_5[]
   = { ' ', YE_, _SIN, RE, ALEF_, _FE, '\0'}
 #endif
 ;
+
+#endif /* NEOVIM_FARSI_H */

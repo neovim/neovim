@@ -2,16 +2,9 @@
 # Makefile to run all tests for Vim
 #
 
-VIMPROG = ../../build/src/vim
+VIMPROG := ../../build/bin/nvim
 
-# Uncomment this line to use valgrind for memory leaks and extra warnings.
-#   The output goes into a file "valgrind.testN"
-#   Vim should be compiled with EXITFREE to avoid false warnings.
-#   This will make testing about 10 times as slow.
-# VALGRIND = valgrind --tool=memcheck --leak-check=yes --num-callers=15 --log-file=valgrind.$*
-
-
-SCRIPTS = test1.out test2.out test3.out test4.out test5.out test6.out \
+SCRIPTS := test1.out test2.out test3.out test4.out test5.out test6.out \
 		test7.out test8.out test9.out test10.out test11.out \
 		test12.out test13.out test14.out test15.out test17.out \
 		test18.out test19.out test20.out test21.out test22.out \
@@ -32,7 +25,15 @@ SCRIPTS = test1.out test2.out test3.out test4.out test5.out test6.out \
 		test94.out test95.out test96.out test97.out test98.out \
 		test99.out test100.out test101.out test102.out test103.out
 
-SCRIPTS_GUI = test16.out
+SCRIPTS_GUI := test16.out
+
+ifdef VALGRIND_CHECK
+VALGRIND = valgrind --suppressions=../../.valgrind.supp --leak-check=full --error-exitcode=111 --log-file=valgrind.$*
+endif
+
+ifdef TESTNUM
+SCRIPTS := test$(TESTNUM).out
+endif
 
 .SUFFIXES: .in .out
 
