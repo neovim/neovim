@@ -77,6 +77,10 @@ typedef struct {
   pum_items_T items;    /// Menuitems
 } pum_menu_T;
 
+/**
+ * Widths for the menuitem with the longest field in a collection of
+ * pum_items_T.
+ */
 typedef struct {
   int text;
   int kind;
@@ -84,7 +88,14 @@ typedef struct {
 } pum_menu_maxwidths_T;
 
 /**
- * Figure out the height of the pum.
+ * Figure out the initial height of the pum.
+ *
+ * Takes into account PUM_DEF_HEIGHT and 'pumheight'.
+ *
+ * @seealso ':help pumheight'
+ *
+ * @param num_items Number of items in the menu
+ * @returns The required height for the menu
  */
 static int pum_calc_height(int num_items)
 {
@@ -109,9 +120,10 @@ static int pum_find_last_possible_render_row()
 }
 
 /**
- * Calculate number of context lines we can show.
+ * Calculates the number of context lines available for the menu if the menu is
+ * to be positioned above the current line.
  *
- * Try to make room for 'lines' context lines.
+ * @param lines Number of context lines we want to have.
  */
 static int pum_calc_context_lines_if_above(int lines)
 {
@@ -123,7 +135,11 @@ static int pum_calc_context_lines_if_above(int lines)
 }
 
 /**
-*/
+ * Calculates the number of context lines available for the menu if the menu is
+ * to be positioned under the current line.
+ *
+ * @param lines Number of context lines we want to have.
+ */
 static int pum_calc_context_lines_if_below(int lines)
 {
   assert(curwin);
@@ -135,7 +151,12 @@ static int pum_calc_context_lines_if_below(int lines)
 }
 
 /**
+ * Calculates top row and height of the menu if the menu should be positioned
+ * above the row.
  *
+ * @param num_items Number of items in the menu
+ * @ctx_lines Number of context lines we wish to show
+ * @row The row we should place the menu above
  */
 static pum_line_T pum_calc_row_and_height_if_above(int num_items, int ctx_lines,
   int row)
@@ -294,14 +315,14 @@ static void pum_avoid_preview_win_overlap(pum_line_T *loc)
 }
 
 /**
- * @param r_to_l Render text right to left?
+ * @param rtol Render text right to left?
  * @param scr_cols Number of columns our screen has
  * @param col Starting column for the pum
  * @param max_text_width The longest text width of the pum items to be rendered
  * */
-static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
+static int pum_fits_width(int rtol, int scr_cols, int col, int max_text_width)
 {
-  if(r_to_l)
+  if(rtol)
     return col > PUM_DEF_WIDTH || col > max_text_width;
   else
     return col < scr_cols - PUM_DEF_WIDTH || col < scr_cols - max_text_width;
@@ -309,13 +330,19 @@ static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
 
 /**
  * Sets the menu start column and width
+ *
+ * @param rtol TRUE if we render text right-to-left
+ * @param scr_width Current screen width
+ * @param def_width Default width
+ * @param maxwidth Maximum widths for the menuitems to render
+ * @param scrollbar TRUE if we need a scrollbar to render the items
  */
 static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
-  pum_menu_maxwidths_T maxwidth, int scrollbar)
+  pum_menu_maxwidths_T const *const maxwidth, int scrollbar)
 {
   pum_line_T result = { -1, -1 };
   const int col = pum_calc_col();
-  const int fits_width = pum_fits_width(rtol, scr_width, col, maxwidth.text);
+  const int fits_width = pum_fits_width(rtol, scr_width, col, maxwidth->text);
   if (fits_width) {
     /* align pum column with "col" */
     result.pos = col;
@@ -325,7 +352,7 @@ static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
     else
       result.len = scr_width - result.pos - scrollbar;
 
-    const int totwidth = maxwidth.text + maxwidth.kind + maxwidth.extra + 1;
+    const int totwidth = maxwidth->text + maxwidth->kind + maxwidth->extra + 1;
     if (result.len > totwidth && result.len > PUM_DEF_WIDTH) {
       result.len = totwidth;
       if (result.len < PUM_DEF_WIDTH)
@@ -340,14 +367,15 @@ static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
 
     result.len = scr_width - 1;
   } else {
-    if (maxwidth.text > PUM_DEF_WIDTH)
-      maxwidth.text = PUM_DEF_WIDTH;        /* truncate */
+    int textwidth = maxwidth->text;
+    if (textwidth > PUM_DEF_WIDTH)
+      textwidth = PUM_DEF_WIDTH;        /* truncate */
 
     if (rtol)
-      result.pos = maxwidth.text - 1;
+      result.pos = textwidth - 1;
     else
-      result.pos = scr_width - maxwidth.text;
-    result.len = maxwidth.text - scrollbar;
+      result.pos = scr_width - textwidth;
+    result.len = textwidth - scrollbar;
   }
 
   assert(result.pos >= 0 && result.len >= 0);
@@ -356,9 +384,21 @@ static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
 }
 
 /**
-*/
-static int pum_set_pos_size(pum_menu_T *menu)
+ * Set menu location.
+ *
+ * @param menu The menu
+ * @param widths Filled with the maximum field with of all the items in menu
+ * @param scrollbar Set to TRUE if we need to render a scrollbar
+ *
+ * @returns FAIL if we only have room to display a single line, OK otherwise.
+ */
+static int pum_set_loc(pum_menu_T *menu, pum_menu_maxwidths_T *widths,
+  int *scrollbar)
 {
+  assert(menu);
+  assert(widths);
+  assert(scrollbar);
+
   /* Calculate start row and height (vertical)*/
 
   pum_line_T vloc = pum_calc_vloc(menu->items.num_items);
@@ -368,36 +408,29 @@ static int pum_set_pos_size(pum_menu_T *menu)
 
   pum_avoid_preview_win_overlap(&vloc);
 
-  /* if there are more items than room we need a scrollbar */
-  pum_scrollbar = vloc.len < menu->items.num_items;
+  menu->loc.row    = vloc.pos;
+  menu->loc.height = vloc.len;
 
-  pum_row    = vloc.pos;
-  pum_height = vloc.len;
+  /* if there are more items than room we need a scrollbar */
+  *scrollbar = vloc.len < menu->items.num_items;
+  //pum_scrollbar = vloc.len < menu->items.num_items;
 
   /* Calculate start column and width */
 
   // Calculate the maximum space used by the menu
-  const pum_menu_maxwidths_T maxwidth = {
-    pum_max_text_width(&menu->items) + (pum_scrollbar ? 1 : 0),
-    pum_max_kind_width(&menu->items),
-    pum_max_extra_width(&menu->items)
-  };
-
-  pum_base_width = maxwidth.text;
-  pum_kind_width = maxwidth.kind;
+  widths->text  = pum_max_text_width(&menu->items) + (*scrollbar ? 1 : 0);
+  widths->kind  = pum_max_kind_width(&menu->items);
+  widths->extra = pum_max_extra_width(&menu->items);
 
   int def_width = PUM_DEF_WIDTH;
-  if (def_width < maxwidth.text)
-    def_width = maxwidth.text;
+  if (def_width < widths->text)
+    def_width = widths->text;
 
   const pum_line_T hloc = pum_calc_hloc(curwin->w_p_rl, Columns, def_width,
-    maxwidth, pum_scrollbar);
+    widths, *scrollbar);
 
-  pum_col   = hloc.pos;
-  pum_width = hloc.len;
-
-  pum_array = menu->items.items;
-  pum_size  = menu->items.num_items;
+  menu->loc.col   = hloc.pos;
+  menu->loc.width = hloc.len;
 
   return OK;
 }
@@ -406,7 +439,6 @@ static void pum_display_menu(pum_menu_T *menu, int selected)
 {
   int redo_count = 0;
 
-  int def_width = PUM_DEF_WIDTH;
 redo:
 
   /* Pretend the pum is already there to avoid that must_redraw is set when
@@ -415,8 +447,20 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
-  if(pum_set_pos_size(menu) == FAIL)
+  pum_menu_maxwidths_T widths;
+  if(pum_set_loc(menu, &widths, &pum_scrollbar) == FAIL)
     return;
+
+  pum_row    = menu->loc.row;
+  pum_height = menu->loc.height;
+  pum_col    = menu->loc.col;
+  pum_width  = menu->loc.width;
+
+  pum_array = menu->items.items;
+  pum_size  = menu->items.num_items;
+
+  pum_base_width = widths.text;
+  pum_kind_width = widths.kind;
 
   /* Set selected item and redraw.  If the window size changed need to redo
    * the positioning.  Limit this to two times, when there is not much
