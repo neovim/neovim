@@ -259,14 +259,14 @@ static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
 }
 
 /*
- * Show the popup menu with items "array[size]".
- * "array" must remain valid until pum_undisplay() is called!
+ * Show the popup menu with items "items[size]".
+ * "items" must remain valid until pum_undisplay() is called!
  * When possible the leftmost character is aligned with screen column "col".
  * The menu appears above the screen line "row" or at "row" + "height" - 1.
  *
  * @param selected index of initially selected item, none if out of range
  */
-void pum_display(pumitem_T *array, int size, int selected)
+void pum_display(pumitem_T *items, int num_items, int selected)
 {
   int redo_count = 0;
 
@@ -282,23 +282,23 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
-  pum_calc_and_set_size_and_pos(size);
+  pum_calc_and_set_size_and_pos(num_items);
 
   /* don't display when we only have room for one line */
-  if (pum_height < 1 || (pum_height == 1 && size > 1))
+  if (pum_height < 1 || (pum_height == 1 && num_items > 1))
     return;
 
   pum_avoid_preview_win_overlap();
 
-  max_width   = pum_max_text_width(array, size);
-  kind_width  = pum_max_kind_width(array, size);
-  extra_width = pum_max_extra_width(array, size);
+  max_width   = pum_max_text_width(items, num_items);
+  kind_width  = pum_max_kind_width(items, num_items);
+  extra_width = pum_max_extra_width(items, num_items);
 
   pum_base_width = max_width;
   pum_kind_width = kind_width;
 
   /* if there are more items than room we need a scrollbar */
-  if (pum_height < size) {
+  if (pum_height < num_items) {
     pum_scrollbar = TRUE;
     ++max_width;
   } else {
@@ -343,8 +343,8 @@ redo:
     pum_width = max_width - pum_scrollbar;
   }
 
-  pum_array = array;
-  pum_size = size;
+  pum_array = items;
+  pum_size = num_items;
 
   /* Set selected item and redraw.  If the window size changed need to redo
    * the positioning.  Limit this to two times, when there is not much
