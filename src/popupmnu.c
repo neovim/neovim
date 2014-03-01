@@ -44,19 +44,39 @@ static int pum_set_selected __ARGS((int n, int repeat));
 #define PUM_DEF_WIDTH  15
 
 /**
+ * Location for a popup menu
+ */
+typedef struct {
+  int row;      /// Start row
+  int col;      /// Start col
+  int height;   /// Height
+  int width;    /// Width
+} pum_loc_T;
+
+/**
+ * Items contained in a popup menu
+ */
+typedef struct {
+  pumitem_T *items;    /// Menuitems
+  int num_items;       /// Number of menuitems
+} pum_items_T;
+
+/**
+ * A popup menu
+ */
+typedef struct {
+  pum_loc_T   loc;      /// Menu location
+  pum_items_T items;    /// Menuitems
+} pum_menu_T;
+
+/**
  * Figure out the height of the pum.
  */
 static int pum_calc_height(int num_items)
 {
-  int pum_height;
-  if (num_items < PUM_DEF_HEIGHT)
-    pum_height = num_items;
-  else
-    pum_height = PUM_DEF_HEIGHT;
-
+  int pum_height = num_items < PUM_DEF_HEIGHT ? num_items : PUM_DEF_HEIGHT;
   if (p_ph > 0 && pum_height > p_ph)
     pum_height = p_ph;
-
   return pum_height;
 }
 
@@ -103,7 +123,8 @@ static int pum_calc_context_lines_if_below(int lines)
 /**
  *
  */
-static void pum_calc_and_set_row_and_height_if_above(int size, int ctx_lines, int row)
+static void pum_calc_and_set_row_and_height_if_above(int size, int ctx_lines,
+  int row)
 {
   if (row >= size + ctx_lines) {
     pum_row = row - size - ctx_lines;
@@ -119,7 +140,8 @@ static void pum_calc_and_set_row_and_height_if_above(int size, int ctx_lines, in
   }
 }
 
-static int pum_should_render_above(int row, int bottom_row, int pum_height, int top_clear)
+static int pum_should_render_above(int row, int bottom_row, int pum_height,
+  int top_clear)
 {
   return row  + 2 >= bottom_row - pum_height &&
     row > (bottom_row - top_clear) / 2;
@@ -127,8 +149,8 @@ static int pum_should_render_above(int row, int bottom_row, int pum_height, int 
 
 /**
  */
-static void pum_calc_and_set_row_and_height_if_below(int size, int above_row, int row,
-  int context_lines)
+static void pum_calc_and_set_row_and_height_if_below(int size, int above_row,
+  int row, int context_lines)
 {
   pum_row = row + context_lines;
   if (size > above_row - pum_row)
@@ -142,24 +164,21 @@ static void pum_calc_and_set_row_and_height_if_below(int size, int above_row, in
 
 /**
  */
-static void pum_calc_and_set_size_and_pos(int size)
+static void pum_calc_and_set_row_and_height(int num_items)
 {
   /* When the preview window is at the bottom stop just above it.  Also
    * avoid drawing over the status line so that it's clear there is a window
    * boundary. */
   int above_row = pum_find_last_possible_render_row();
 
-  pum_height = pum_calc_height(size);
+  pum_height = pum_calc_height(num_items);
 
+  // Find start row
   assert(curwin);
-  int row = curwin->w_wrow + W_WINROW(curwin);
+  const int row = curwin->w_wrow + W_WINROW(curwin);
 
   assert(firstwin);
-  int top_clear;
-  if (firstwin->w_p_pvw)
-    top_clear = firstwin->w_height;
-  else
-    top_clear = 0;
+  const int top_clear = firstwin->w_p_pvw ? firstwin->w_height : 0;
 
   /* Put the pum below "row" if possible.  If there are few lines decide on
    * where there is more room. */
@@ -167,60 +186,62 @@ static void pum_calc_and_set_size_and_pos(int size)
       top_clear);
   if (render_above) {
     /* Leave two lines of context if possible */
-    int context_lines = pum_calc_context_lines_if_above(2);
-    pum_calc_and_set_row_and_height_if_above(size, context_lines, row);
+    const int context_lines = pum_calc_context_lines_if_above(2);
+    pum_calc_and_set_row_and_height_if_above(num_items, context_lines, row);
   } else {
     /* Leave two lines of context if possible */
-    int context_lines = pum_calc_context_lines_if_below(3);
-    pum_calc_and_set_row_and_height_if_below(size, above_row, row, context_lines);
+    const int context_lines = pum_calc_context_lines_if_below(3);
+    pum_calc_and_set_row_and_height_if_below(num_items, above_row, row, context_lines);
   }
 }
 
-static int pum_max_text_width(pumitem_T *items, int num_items)
+static int pum_max_text_width(pum_items_T *items)
 {
   assert(items);
-  assert(num_items >= 0);
+  assert(items->items);
+  assert(items->num_items >= 0);
 
   int max = 0;
-  for (int i = 0; i < num_items; ++i) {
-    if(!items[i].pum_text) continue;
-    int w = vim_strsize(items[i].pum_text);
+  for (int i = 0; i < items->num_items; ++i) {
+    if(!items->items[i].pum_text) continue;
+    int w = vim_strsize(items->items[i].pum_text);
     if (max < w)
       max = w;
   }
   return max;
 }
 
-static int pum_max_kind_width(pumitem_T *items, int num_items)
+static int pum_max_kind_width(pum_items_T *items)
 {
   assert(items);
-  assert(num_items >= 0);
+  assert(items->items);
+  assert(items->num_items >= 0);
 
   int max = 0;
-  for (int i = 0; i < num_items; ++i) {
-    if(!items[i].pum_kind) continue;
-    int w = vim_strsize(items[i].pum_kind) + 1;
+  for (int i = 0; i < items->num_items; ++i) {
+    if(!items->items[i].pum_kind) continue;
+    int w = vim_strsize(items->items[i].pum_kind) + 1;
     if (max < w)
       max = w;
   }
   return max;
 }
 
-static int pum_max_extra_width(pumitem_T *items, int num_items)
+static int pum_max_extra_width(pum_items_T *items)
 {
   assert(items);
-  assert(num_items >= 0);
+  assert(items->items);
+  assert(items->num_items >= 0);
 
   int max = 0;
-  for (int i = 0; i < num_items; ++i) {
-    if(!items[i].pum_extra) continue;
-    int w = vim_strsize(items[i].pum_extra) + 1;
+  for (int i = 0; i < items->num_items; ++i) {
+    if(!items->items[i].pum_extra) continue;
+    int w = vim_strsize(items->items[i].pum_extra) + 1;
     if (max < w)
       max = w;
   }
   return max;
 }
-
 
 /* Calculate column */
 static int pum_calc_col()
@@ -259,6 +280,9 @@ static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
     return col < scr_cols - PUM_DEF_WIDTH || col < scr_cols - max_text_width;
 }
 
+/**
+ * Sets the menu start column and width
+ */
 static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
   int max_text_width, int max_kind_width, int max_extra_width)
 {
@@ -300,6 +324,57 @@ static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
   }
 }
 
+static void pum_display_menu(pum_menu_T *menu, int selected)
+{
+  int redo_count = 0;
+
+  int def_width = PUM_DEF_WIDTH;
+redo:
+
+  /* Pretend the pum is already there to avoid that must_redraw is set when
+   * 'cuc' is on. */
+  pum_array = (pumitem_T *)1;
+  validate_cursor_col();
+  pum_array = NULL;
+
+  /* Calculate start row and height */
+
+  pum_calc_and_set_row_and_height(menu->items.num_items);
+  /* don't display when we only have room for one line */
+  if (pum_height < 1 || (pum_height == 1 && menu->items.num_items > 1))
+    return;
+
+  pum_avoid_preview_win_overlap();
+
+  /* if there are more items than room we need a scrollbar */
+  pum_scrollbar = pum_height < menu->items.num_items;
+
+  /* Calculate start column and width */
+
+  const int max_text_width  = pum_max_text_width(&menu->items) +
+    (pum_scrollbar ? 1 : 0);
+  const int max_kind_width  = pum_max_kind_width(&menu->items);
+  const int max_extra_width = pum_max_extra_width(&menu->items);
+
+  pum_base_width = max_text_width;
+  pum_kind_width = max_kind_width;
+
+  if (def_width < max_text_width)
+    def_width = max_text_width;
+
+  pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, max_text_width,
+    max_kind_width, max_extra_width);
+
+  pum_array = menu->items.items;
+  pum_size  = menu->items.num_items;
+
+  /* Set selected item and redraw.  If the window size changed need to redo
+   * the positioning.  Limit this to two times, when there is not much
+   * room the window size will keep changing. */
+  if (pum_set_selected(selected, redo_count) && ++redo_count <= 2)
+    goto redo;
+}
+
 /*
  * Show the popup menu with items "items[size]".
  * "items" must remain valid until pum_undisplay() is called!
@@ -310,57 +385,12 @@ static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
  */
 void pum_display(pumitem_T *items, int num_items, int selected)
 {
-  int redo_count = 0;
+  pum_menu_T menu = {
+    {0, 0, 0, 0},       // location
+    {items, num_items}  // items
+  };
 
-  int def_width   = PUM_DEF_WIDTH;
-  int max_text_width  = 0;
-  int max_kind_width  = 0;
-  int max_extra_width = 0;
-redo:
-
-  /* Pretend the pum is already there to avoid that must_redraw is set when
-   * 'cuc' is on. */
-  pum_array = (pumitem_T *)1;
-  validate_cursor_col();
-  pum_array = NULL;
-
-  pum_calc_and_set_size_and_pos(num_items);
-
-  /* don't display when we only have room for one line */
-  if (pum_height < 1 || (pum_height == 1 && num_items > 1))
-    return;
-
-  pum_avoid_preview_win_overlap();
-
-  max_text_width  = pum_max_text_width(items, num_items);
-  max_kind_width  = pum_max_kind_width(items, num_items);
-  max_extra_width = pum_max_extra_width(items, num_items);
-
-  pum_base_width = max_text_width;
-  pum_kind_width = max_kind_width;
-
-  /* if there are more items than room we need a scrollbar */
-  if (pum_height < num_items) {
-    pum_scrollbar = TRUE;
-    ++max_text_width;
-  } else {
-    pum_scrollbar = FALSE;
-  }
-
-  if (def_width < max_text_width)
-    def_width = max_text_width;
-
-  pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, max_text_width,
-    max_kind_width, max_extra_width);
-
-  pum_array = items;
-  pum_size = num_items;
-
-  /* Set selected item and redraw.  If the window size changed need to redo
-   * the positioning.  Limit this to two times, when there is not much
-   * room the window size will keep changing. */
-  if (pum_set_selected(selected, redo_count) && ++redo_count <= 2)
-    goto redo;
+  pum_display_menu(&menu, selected);
 }
 
 /*
