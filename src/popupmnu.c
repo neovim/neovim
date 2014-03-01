@@ -123,7 +123,7 @@ static int pum_calc_context_lines_if_above(int lines)
 }
 
 /**
- */
+*/
 static int pum_calc_context_lines_if_below(int lines)
 {
   assert(curwin);
@@ -167,7 +167,7 @@ static int pum_should_render_above(int row, int bottom_row, int height,
 }
 
 /**
- */
+*/
 static pum_line_T pum_calc_row_and_height_if_below(int num_items,
   int above_row, int row, int context_lines)
 {
@@ -185,7 +185,7 @@ static pum_line_T pum_calc_row_and_height_if_below(int num_items,
 }
 
 /**
- */
+*/
 static pum_line_T pum_calc_vloc(int num_items)
 {
   pum_line_T result = { -1, -1 };
@@ -347,7 +347,7 @@ static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
       result.pos = maxwidth.text - 1;
     else
       result.pos = scr_width - maxwidth.text;
-    result.len = maxwidth.text - pum_scrollbar;
+    result.len = maxwidth.text - scrollbar;
   }
 
   assert(result.pos >= 0 && result.len >= 0);
@@ -356,7 +356,7 @@ static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
 }
 
 /**
- */
+*/
 static int pum_set_pos_size(pum_menu_T *menu)
 {
   /* Calculate start row and height (vertical)*/
