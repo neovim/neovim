@@ -44,7 +44,7 @@ static int pum_set_selected __ARGS((int n, int repeat));
 #define PUM_DEF_WIDTH  15
 
 /**
- * Location for a popup menu
+ * Location for a popup menu.
  */
 typedef struct {
   int row;      /// Start row
@@ -52,6 +52,14 @@ typedef struct {
   int height;   /// Height
   int width;    /// Width
 } pum_loc_T;
+
+/**
+ * A line without direction.
+ */
+typedef struct {
+  int pos;  /// Start position
+  int len;  /// Length
+} pum_line_T;
 
 /**
  * Items contained in a popup menu
@@ -129,63 +137,65 @@ static int pum_calc_context_lines_if_below(int lines)
 /**
  *
  */
-static pum_loc_T pum_calc_row_and_height_if_above(int num_items, int ctx_lines,
+static pum_line_T pum_calc_row_and_height_if_above(int num_items, int ctx_lines,
   int row)
 {
-  pum_loc_T result;
+  pum_line_T result = { -1, -1 };
 
   if (row >= num_items + ctx_lines) {
-    result.row    = row - num_items - ctx_lines;
-    result.height = num_items;
+    result.pos = row - num_items - ctx_lines;
+    result.len = num_items;
   } else {
-    result.row    = 0;
-    result.height = row - ctx_lines;
+    result.pos = 0;
+    result.len = row - ctx_lines;
   }
 
-  if (p_ph > 0 && result.height > p_ph) {
-    result.row    += result.height - p_ph;
-    result.height  = p_ph;
+  if (p_ph > 0 && result.len > p_ph) {
+    result.pos += result.len - p_ph;
+    result.len  = p_ph;
   }
 
+  assert(result.pos >= 0 && result.len >= 0);
   return result;
 }
 
-static int pum_should_render_above(int row, int bottom_row, int pum_height,
+static int pum_should_render_above(int row, int bottom_row, int height,
   int top_clear)
 {
-  return row  + 2 >= bottom_row - pum_height &&
+  return row  + 2 >= bottom_row - height &&
     row > (bottom_row - top_clear) / 2;
 }
 
 /**
  */
-static pum_loc_T  pum_calc_row_and_height_if_below(int num_items,
+static pum_line_T pum_calc_row_and_height_if_below(int num_items,
   int above_row, int row, int context_lines)
 {
-  pum_loc_T result;
-  result.row = row + context_lines;
-  if (num_items > above_row - result.row)
-    result.height = above_row - result.row;
+  pum_line_T result;
+  result.pos = row + context_lines;
+  if (num_items > above_row - result.pos)
+    result.len = above_row - result.pos;
   else
-    result.height = num_items;
+    result.len = num_items;
 
-  if (p_ph > 0 && result.height > p_ph)
-    result.height = p_ph;
+  if (p_ph > 0 && result.len > p_ph)
+    result.len = p_ph;
 
   return result;
 }
 
 /**
  */
-static pum_loc_T pum_calc_row_and_height(int num_items)
+static pum_line_T pum_calc_vloc(int num_items)
 {
+  pum_line_T result = { -1, -1 };
+
   /* When the preview window is at the bottom stop just above it.  Also
    * avoid drawing over the status line so that it's clear there is a window
    * boundary. */
-  int above_row = pum_find_last_possible_render_row();
+  const int above_row = pum_find_last_possible_render_row();
 
-  pum_loc_T result;
-  result.height = pum_calc_height(num_items);
+  result.len = pum_calc_height(num_items);
 
   // Find start row
   assert(curwin);
@@ -196,23 +206,20 @@ static pum_loc_T pum_calc_row_and_height(int num_items)
 
   /* Put the pum below "row" if possible.  If there are few lines decide on
    * where there is more room. */
-  int render_above = pum_should_render_above(row, above_row, result.height,
+  int render_above = pum_should_render_above(row, above_row, result.len,
       top_clear);
   if (render_above) {
     /* Leave two lines of context if possible */
     const int context_lines = pum_calc_context_lines_if_above(2);
-    const pum_loc_T loc = pum_calc_row_and_height_if_above(num_items, context_lines, row);
-    result.row    = loc.row;
-    result.height = loc.height;
+
+    return pum_calc_row_and_height_if_above(num_items, context_lines, row);
   } else {
     /* Leave two lines of context if possible */
     const int context_lines = pum_calc_context_lines_if_below(3);
-    const pum_loc_T loc = pum_calc_row_and_height_if_below(num_items, above_row, row, context_lines);
-    result.row    = loc.row;
-    result.height = loc.height;
-  }
 
-  return result;
+    return pum_calc_row_and_height_if_below(num_items, above_row, row, context_lines);
+  }
+  assert(0);
 }
 
 static int pum_max_text_width(pum_items_T *items)
@@ -273,16 +280,16 @@ static int pum_calc_col()
 }
 
 /* If there is a preview window at the top avoid drawing over it. */
-static void pum_avoid_preview_win_overlap(pum_loc_T *loc)
+static void pum_avoid_preview_win_overlap(pum_line_T *loc)
 {
   // TODO (simendsjo): What's the magic '4' below?
   assert(firstwin);
   if (firstwin->w_p_pvw
-      && loc->row    < firstwin->w_height
-      && loc->height > firstwin->w_height + 4)
+      && loc->pos < firstwin->w_height
+      && loc->len > firstwin->w_height + 4)
   {
-    loc->row    += firstwin->w_height;
-    loc->height -= firstwin->w_height;
+    loc->pos += firstwin->w_height;
+    loc->len -= firstwin->w_height;
   }
 }
 
@@ -303,44 +310,96 @@ static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
 /**
  * Sets the menu start column and width
  */
-static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
-  pum_menu_maxwidths_T maxwidth)
+static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
+  pum_menu_maxwidths_T maxwidth, int scrollbar)
 {
+  pum_line_T result = { -1, -1 };
   const int col = pum_calc_col();
   const int fits_width = pum_fits_width(rtol, scr_width, col, maxwidth.text);
   if (fits_width) {
     /* align pum column with "col" */
-    pum_col = col;
+    result.pos = col;
 
     if (rtol)
-      pum_width = pum_col - pum_scrollbar + 1;
+      result.len = result.pos - scrollbar + 1;
     else
-      pum_width = scr_width - pum_col - pum_scrollbar;
+      result.len = scr_width - result.pos - scrollbar;
 
     const int totwidth = maxwidth.text + maxwidth.kind + maxwidth.extra + 1;
-    if (pum_width > totwidth && pum_width > PUM_DEF_WIDTH) {
-      pum_width = totwidth;
-      if (pum_width < PUM_DEF_WIDTH)
-        pum_width = PUM_DEF_WIDTH;
+    if (result.len > totwidth && result.len > PUM_DEF_WIDTH) {
+      result.len = totwidth;
+      if (result.len < PUM_DEF_WIDTH)
+        result.len = PUM_DEF_WIDTH;
     }
   } else if (scr_width < def_width) { // pum wider than screen
     // Use entire screen
     if (rtol)
-      pum_col = scr_width - 1;
+      result.pos = scr_width - 1;
     else
-      pum_col = 0;
+      result.pos = 0;
 
-    pum_width = scr_width - 1;
+    result.len = scr_width - 1;
   } else {
     if (maxwidth.text > PUM_DEF_WIDTH)
       maxwidth.text = PUM_DEF_WIDTH;        /* truncate */
 
     if (rtol)
-      pum_col = maxwidth.text - 1;
+      result.pos = maxwidth.text - 1;
     else
-      pum_col = scr_width - maxwidth.text;
-    pum_width = maxwidth.text - pum_scrollbar;
+      result.pos = scr_width - maxwidth.text;
+    result.len = maxwidth.text - pum_scrollbar;
   }
+
+  assert(result.pos >= 0 && result.len >= 0);
+
+  return result;
+}
+
+/**
+ */
+static int pum_set_pos_size(pum_menu_T *menu)
+{
+  /* Calculate start row and height (vertical)*/
+
+  pum_line_T vloc = pum_calc_vloc(menu->items.num_items);
+  /* don't display when we only have room for one line */
+  if (vloc.pos < 1 || (vloc.len == 1 && menu->items.num_items > 1))
+    return FAIL;
+
+  pum_avoid_preview_win_overlap(&vloc);
+
+  /* if there are more items than room we need a scrollbar */
+  pum_scrollbar = vloc.len < menu->items.num_items;
+
+  pum_row    = vloc.pos;
+  pum_height = vloc.len;
+
+  /* Calculate start column and width */
+
+  // Calculate the maximum space used by the menu
+  const pum_menu_maxwidths_T maxwidth = {
+    pum_max_text_width(&menu->items) + (pum_scrollbar ? 1 : 0),
+    pum_max_kind_width(&menu->items),
+    pum_max_extra_width(&menu->items)
+  };
+
+  pum_base_width = maxwidth.text;
+  pum_kind_width = maxwidth.kind;
+
+  int def_width = PUM_DEF_WIDTH;
+  if (def_width < maxwidth.text)
+    def_width = maxwidth.text;
+
+  const pum_line_T hloc = pum_calc_hloc(curwin->w_p_rl, Columns, def_width,
+    maxwidth, pum_scrollbar);
+
+  pum_col   = hloc.pos;
+  pum_width = hloc.len;
+
+  pum_array = menu->items.items;
+  pum_size  = menu->items.num_items;
+
+  return OK;
 }
 
 static void pum_display_menu(pum_menu_T *menu, int selected)
@@ -356,40 +415,8 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
-  /* Calculate start row and height */
-
-  pum_loc_T loc = pum_calc_row_and_height(menu->items.num_items);
-  /* don't display when we only have room for one line */
-  if (loc.row < 1 || (loc.height == 1 && menu->items.num_items > 1))
+  if(pum_set_pos_size(menu) == FAIL)
     return;
-
-  pum_avoid_preview_win_overlap(&loc);
-
-  /* if there are more items than room we need a scrollbar */
-  pum_scrollbar = loc.height < menu->items.num_items;
-
-  /* Calculate start column and width */
-
-  // Calculate the maximum space used by the menu
-  const pum_menu_maxwidths_T maxwidth = {
-    pum_max_text_width(&menu->items) + (pum_scrollbar ? 1 : 0),
-    pum_max_kind_width(&menu->items),
-    pum_max_extra_width(&menu->items)
-  };
-
-  pum_base_width = maxwidth.text;
-  pum_kind_width = maxwidth.kind;
-
-  if (def_width < maxwidth.text)
-    def_width = maxwidth.text;
-
-  pum_row    = loc.row;
-  pum_height = loc.height;
-
-  pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, maxwidth);
-
-  pum_array = menu->items.items;
-  pum_size  = menu->items.num_items;
 
   /* Set selected item and redraw.  If the window size changed need to redo
    * the positioning.  Limit this to two times, when there is not much
