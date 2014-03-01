@@ -69,6 +69,12 @@ typedef struct {
   pum_items_T items;    /// Menuitems
 } pum_menu_T;
 
+typedef struct {
+  int text;
+  int kind;
+  int extra;
+} pum_menu_maxwidths_T;
+
 /**
  * Figure out the height of the pum.
  */
@@ -284,10 +290,10 @@ static int pum_fits_width(int r_to_l, int scr_cols, int col, int max_text_width)
  * Sets the menu start column and width
  */
 static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
-  int max_text_width, int max_kind_width, int max_extra_width)
+  pum_menu_maxwidths_T maxwidth)
 {
-  int col = pum_calc_col();
-  int fits_width = pum_fits_width(rtol, scr_width, col, max_text_width);
+  const int col = pum_calc_col();
+  const int fits_width = pum_fits_width(rtol, scr_width, col, maxwidth.text);
   if (fits_width) {
     /* align pum column with "col" */
     pum_col = col;
@@ -297,10 +303,9 @@ static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
     else
       pum_width = scr_width - pum_col - pum_scrollbar;
 
-    if (pum_width > max_text_width + max_kind_width + max_extra_width + 1
-        && pum_width > PUM_DEF_WIDTH)
-    {
-      pum_width = max_text_width + max_kind_width + max_extra_width + 1;
+    const int totwidth = maxwidth.text + maxwidth.kind + maxwidth.extra + 1;
+    if (pum_width > totwidth && pum_width > PUM_DEF_WIDTH) {
+      pum_width = totwidth;
       if (pum_width < PUM_DEF_WIDTH)
         pum_width = PUM_DEF_WIDTH;
     }
@@ -311,16 +316,16 @@ static void pum_set_col_and_width(int rtol, int scr_width, int def_width,
     else
       pum_col = 0;
 
-    pum_width = Columns - 1;
+    pum_width = scr_width - 1;
   } else {
-    if (max_text_width > PUM_DEF_WIDTH)
-      max_text_width = PUM_DEF_WIDTH;        /* truncate */
+    if (maxwidth.text > PUM_DEF_WIDTH)
+      maxwidth.text = PUM_DEF_WIDTH;        /* truncate */
 
     if (rtol)
-      pum_col = max_text_width - 1;
+      pum_col = maxwidth.text - 1;
     else
-      pum_col = Columns - max_text_width;
-    pum_width = max_text_width - pum_scrollbar;
+      pum_col = scr_width - maxwidth.text;
+    pum_width = maxwidth.text - pum_scrollbar;
   }
 }
 
@@ -351,19 +356,20 @@ redo:
 
   /* Calculate start column and width */
 
-  const int max_text_width  = pum_max_text_width(&menu->items) +
-    (pum_scrollbar ? 1 : 0);
-  const int max_kind_width  = pum_max_kind_width(&menu->items);
-  const int max_extra_width = pum_max_extra_width(&menu->items);
+  // Calculate the maximum space used by the menu
+  const pum_menu_maxwidths_T maxwidth = {
+    pum_max_text_width(&menu->items) + (pum_scrollbar ? 1 : 0),
+    pum_max_kind_width(&menu->items),
+    pum_max_extra_width(&menu->items)
+  };
 
-  pum_base_width = max_text_width;
-  pum_kind_width = max_kind_width;
+  pum_base_width = maxwidth.text;
+  pum_kind_width = maxwidth.kind;
 
-  if (def_width < max_text_width)
-    def_width = max_text_width;
+  if (def_width < maxwidth.text)
+    def_width = maxwidth.text;
 
-  pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, max_text_width,
-    max_kind_width, max_extra_width);
+  pum_set_col_and_width(curwin->w_p_rl, Columns, def_width, maxwidth);
 
   pum_array = menu->items.items;
   pum_size  = menu->items.num_items;
