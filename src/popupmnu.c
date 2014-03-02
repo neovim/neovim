@@ -557,13 +557,11 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 
             if (curwin->w_p_rl) {
               if (st != NULL) {
-                char_u  *rt = reverse_text(st);
+                char_u *rt = reverse_text(st);
 
                 if (rt != NULL) {
-                  char_u      *rt_start = rt;
-                  int size;
-
-                  size = vim_strsize(rt);
+                  char_u *rt_start = rt;
+                  int size = vim_strsize(rt);
                   if (size > pum_width) {
                     do {
                       size -= has_mbyte
