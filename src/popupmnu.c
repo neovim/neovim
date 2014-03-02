@@ -659,6 +659,8 @@ void pum_redraw(void)
 
 static int pum_find_first_selected(const int height, int first, const int selected)
 {
+  // TODO (simendsjo): Figure out these constants
+
   if (first > selected - 4) {
     /* scroll down; when we did a jump it's probably a PageUp then
      * scroll a whole page */
@@ -752,6 +754,7 @@ static int pum_prepare_buffer()
       set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
       set_option_value((char_u *)"diff", 0L, NULL, OPT_LOCAL);
     }
+    // TODO (simendsjo): What to do when creating a new file fails?
 
     return res;
   }
