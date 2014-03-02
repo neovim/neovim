@@ -22,7 +22,6 @@
 #include "search.h"
 #include "window.h"
 
-static pumitem_T *pum_array = NULL;     /* items of displayed pum */
 static int pum_selected;                /* index of selected item or -1 */
 static int pum_first = 0;               /* index of top item */
 
@@ -450,17 +449,21 @@ redo:
 
   /* Pretend the pum is already there to avoid that must_redraw is set when
    * 'cuc' is on. */
-  pum_array = (pumitem_T *)1;
-  validate_cursor_col();
-  pum_array = NULL;
+  if (menu->items.num_items) {
+    validate_cursor_col();
+  } else {
+    assert(!menu->items.items);
+
+    menu->items.items = (pumitem_T*)1;
+    validate_cursor_col();
+    menu->items.items = NULL;
+  }
 
   pum_menu_maxwidths_T widths;
   if(pum_set_loc(menu, &widths, &pum_scrollbar) == FAIL)
     return;
 
   pum_col    = menu->loc.col;
-
-  pum_array = menu->items.items;
 
   pum_base_width = widths.text;
   pum_kind_width = widths.kind;
@@ -538,9 +541,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       char_u *s = NULL;
       char_u *p = NULL;
       switch (round) {
-      case 1: p = pum_array[idx].pum_text; break;
-      case 2: p = pum_array[idx].pum_kind; break;
-      case 3: p = pum_array[idx].pum_extra; break;
+      case 1: p = pum_menu_getitem(menu, idx).pum_text; break;
+      case 2: p = pum_menu_getitem(menu, idx).pum_kind; break;
+      case 3: p = pum_menu_getitem(menu, idx).pum_extra; break;
       }
 
       if (p != NULL) {
@@ -628,9 +631,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 
       /* Stop when there is nothing more to display. */
       if (round == 3
-          || (round == 2 && pum_array[idx].pum_extra == NULL)
-          || (round == 1 && pum_array[idx].pum_kind == NULL
-              && pum_array[idx].pum_extra == NULL)
+          || (round == 2 && pum_menu_getitem(menu, idx).pum_extra == NULL)
+          || (round == 1 && pum_menu_getitem(menu, idx).pum_kind == NULL
+              && pum_menu_getitem(menu, idx).pum_extra == NULL)
           || pum_base_width + n >= pum_width)
       {
         break;
@@ -677,7 +680,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
  */
 void pum_redraw(void)
 {
-    pum_redraw_internal(pum_menu, pum_scrollbar, pum_selected);
+    pum_redraw_internal(&pum_menu, pum_scrollbar, pum_selected);
 }
 
 static int pum_find_first_selected(pum_menu_T const *const menu, int first, const int selected)
@@ -918,7 +921,7 @@ static int pum_set_selected(int selected, int repeat)
  */
 void pum_undisplay(void)
 {
-  pum_array = NULL;
+  pum_menu.items = (pum_items_T){ NULL, 0 };
   redraw_all_later(SOME_VALID);
   redraw_tabline = TRUE;
   status_redraw_all();
@@ -939,7 +942,7 @@ void pum_clear(void)
  */
 int pum_visible(void)
 {
-  return !pum_do_redraw && pum_array != NULL;
+  return !pum_do_redraw && pum_menu.items.items != NULL;
 }
 
 /*
