@@ -489,7 +489,7 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
-static void pum_redraw_internal(int scrollbar, int selected)
+static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 {
   const int pum_size   = pum_menu.items.num_items;
   const int pum_height = pum_menu.loc.height;
@@ -677,7 +677,7 @@ static void pum_redraw_internal(int scrollbar, int selected)
  */
 void pum_redraw(void)
 {
-    pum_redraw_internal(pum_scrollbar, pum_selected);
+    pum_redraw_internal(pum_menu, pum_scrollbar, pum_selected);
 }
 
 static int pum_find_first_selected(pum_menu_T const *const menu, int first, const int selected)
