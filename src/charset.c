@@ -600,6 +600,8 @@ int ptr2cells(char_u *p)
 /*
  * Return the number of character cells string "s" will take on the screen,
  * counting TABs as two characters: "^I".
+ *
+ * 's' must be non-null.
  */
 int vim_strsize(char_u *s)
 {
@@ -609,9 +611,12 @@ int vim_strsize(char_u *s)
 /*
  * Return the number of character cells string "s[len]" will take on the
  * screen, counting TABs as two characters: "^I".
+ *
+ * 's' must be non-null.
  */
 int vim_strnsize(char_u *s, int len)
 {
+  assert(s);
   int size = 0;
 
   while (*s != NUL && --len >= 0) {
