@@ -490,8 +490,8 @@ void pum_display(pumitem_T *items, int num_items, int selected)
 
 static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 {
-  const int pum_size   = pum_menu.items.num_items;
-  const int pum_height = pum_menu.loc.height;
+  const int pum_size   = menu->items.num_items;
+  const int pum_height = menu->loc.height;
 
   /* Never display more than we have */
   if (pum_first > pum_size - pum_height)
@@ -509,9 +509,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
                 / (pum_size - pum_height);
   }
 
-  int row = pum_menu.loc.row;
+  int row = menu->loc.row;
   const int pum_col = menu->loc.col;
-  const int pum_width  = pum_menu.loc.width;
+  const int pum_width  = menu->loc.width;
 
   int attr_norm   = highlight_attr[HLF_PNI];
   int attr_select = highlight_attr[HLF_PSI];
