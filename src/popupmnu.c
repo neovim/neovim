@@ -584,17 +584,16 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
                       row, col - size + 1, attr);
                   vim_free(rt_start);
                 }
-                vim_free(st);
               }
               col -= width;
             } else {
-              if (st != NULL) {
-                screen_puts_len(st, (int)STRLEN(st), row, col,
-                    attr);
-                vim_free(st);
-              }
+              if (st != NULL)
+                screen_puts_len(st, (int)STRLEN(st), row, col, attr);
               col += width;
             }
+
+            if (st)
+              vim_free(st);
 
             if (*p != TAB)
               break;
