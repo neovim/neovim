@@ -66,7 +66,6 @@ typedef struct {
   int extra;
 } pum_menu_maxwidths_T;
 
-
 static int pum_selected;                /* index of selected item or -1 */
 static int pum_first = 0;               /* index of top item */
 
@@ -78,16 +77,16 @@ static pum_menu_T pum_menu;             /* menu currently being displayed */
 
 static int pum_do_redraw = FALSE;       /* do redraw anyway */
 
-static int pum_set_selected __ARGS((int n, int repeat));
+static int pum_set_selected (int n, int repeat);
+static void pum_display_menu(pum_menu_T *menu, int selected);
+static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected);
 
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
 
-static void pum_display_menu(pum_menu_T *menu, int selected);
-static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected);
-
-/*
- * Show the popup menu with items "items[size]".
+/**
+ * Show the popup menu with items "items[num_items]".
+ *
  * "items" must remain valid until pum_undisplay() is called!
  * When possible the leftmost character is aligned with screen column "col".
  * The menu appears above the screen line "row" or at "row" + "height" - 1.
@@ -103,15 +102,15 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
-/*
- * Redraw the popup menu, using "pum_first" and "pum_selected".
+/**
+ * Redraw the popup menu.
  */
 void pum_redraw(void)
 {
     pum_redraw_internal(&pum_menu, pum_scrollbar, pum_selected);
 }
 
-/*
+/**
  * Undisplay the popup menu (later).
  */
 void pum_undisplay(void)
@@ -123,16 +122,18 @@ void pum_undisplay(void)
 }
 
 /*
- * Clear the popup menu.  Currently only resets the offset to the first
- * displayed item.
+ * Clear the popup menu.
+ *
+ * Currently only resets the offset to the first displayed item.
  */
 void pum_clear(void)
 {
   pum_first = 0;
 }
 
-/*
+/**
  * Return TRUE if the popup menu is displayed.
+ *
  * Overruled when "pum_do_redraw" is set, used to redraw the status lines.
  */
 int pum_visible(void)
@@ -140,8 +141,9 @@ int pum_visible(void)
   return !pum_do_redraw && pum_menu.items.items != NULL;
 }
 
-/*
+/**
  * Return the height of the popup menu, the number of entries visible.
+ *
  * Only valid when pum_visible() returns TRUE!
  */
 int pum_get_height(void)
@@ -149,6 +151,20 @@ int pum_get_height(void)
   return pum_menu.loc.height;
 }
 
+
+
+/******************************************************************************
+ *                                                                            *
+ *                           PRIVATE FUNCTIONS                                *
+ *                                                                            *
+ *****************************************************************************/
+
+/**
+ * Get the 'index' element out of the 'menu'.
+ *
+ * @param menu menu containing at least 'index - 1' elements.
+ * @param index index of element to get.
+ */
 static pumitem_T pum_menu_getitem(pum_menu_T const *const menu, int index)
 {
   assert(menu);
@@ -166,6 +182,7 @@ static pumitem_T pum_menu_getitem(pum_menu_T const *const menu, int index)
  * @seealso ':help pumheight'
  *
  * @param num_items Number of items in the menu
+ *
  * @returns The required height for the menu
  */
 static int pum_calc_height(int num_items)
@@ -194,7 +211,10 @@ static int pum_find_last_possible_render_row()
  * Calculates the number of context lines available for the menu if the menu is
  * to be positioned above the current line.
  *
+ * There are no guarantees 'lines' number of context lines can be displayed.
+ *
  * @param lines Number of context lines we want to have.
+ * @returns Number of context lines from 0 to 'lines'
  */
 static int pum_calc_context_lines_if_above(int lines)
 {
@@ -209,7 +229,10 @@ static int pum_calc_context_lines_if_above(int lines)
  * Calculates the number of context lines available for the menu if the menu is
  * to be positioned under the current line.
  *
+ * There are no guarantees 'lines' number of context lines can be displayed.
+ *
  * @param lines Number of context lines we want to have.
+ * @returns Number of context lines from 0 to 'lines'
  */
 static int pum_calc_context_lines_if_below(int lines)
 {
@@ -228,6 +251,8 @@ static int pum_calc_context_lines_if_below(int lines)
  * @param num_items Number of items in the menu
  * @ctx_lines Number of context lines we wish to show
  * @row The row we should place the menu above
+ *
+ * @returns Start row and height
  */
 static pum_line_T pum_calc_row_and_height_if_above(int num_items, int ctx_lines,
   int row)
@@ -251,6 +276,17 @@ static pum_line_T pum_calc_row_and_height_if_above(int num_items, int ctx_lines,
   return result;
 }
 
+/**
+ * Render menu above or below current line?
+ *
+ * @param row The current row
+ * @param bottom_row Last row we could render at
+ * @param height Height of the menu
+ * @param top_clear ???
+ *
+ * @returns TRUE if we should render the menu above 'row', FALSE if we should
+ * render it below.
+ */
 static int pum_should_render_above(int row, int bottom_row, int height,
   int top_clear)
 {
@@ -259,7 +295,16 @@ static int pum_should_render_above(int row, int bottom_row, int height,
 }
 
 /**
-*/
+ * Calculates top row and height of the menu if the menu should be positioned
+ * below the row.
+ *
+ * @param num_items Number of items in the menu
+ * @param above_row Need to render it above this row
+ * @row The row we should place the menu below
+ * @ctx_lines Number of context lines we wish to show
+ *
+ * @returns Start row and height
+ */
 static pum_line_T pum_calc_row_and_height_if_below(int num_items,
   int above_row, int row, int context_lines)
 {
@@ -277,7 +322,12 @@ static pum_line_T pum_calc_row_and_height_if_below(int num_items,
 }
 
 /**
-*/
+ * Calculate vertical position and size.
+ *
+ * @param num_items Number of items in the menu.
+ *
+ * @returns Vertical position and size
+ */
 static pum_line_T pum_calc_vloc(int num_items)
 {
   pum_line_T result = { -1, -1 };
@@ -314,6 +364,13 @@ static pum_line_T pum_calc_vloc(int num_items)
   assert(0);
 }
 
+/**
+ * Finds the longest text field of the items.
+ *
+ * @params items Menuitems
+ *
+ * @returns Longest field
+ */
 static int pum_max_text_width(pum_items_T *items)
 {
   assert(items);
@@ -330,6 +387,13 @@ static int pum_max_text_width(pum_items_T *items)
   return max;
 }
 
+/**
+ * Finds the longest kind field of the items.
+ *
+ * @params items Menuitems
+ *
+ * @returns Longest field
+ */
 static int pum_max_kind_width(pum_items_T *items)
 {
   assert(items);
@@ -346,6 +410,13 @@ static int pum_max_kind_width(pum_items_T *items)
   return max;
 }
 
+/**
+ * Finds the longest extra field of the items.
+ *
+ * @params items Menuitems
+ *
+ * @returns Longest field
+ */
 static int pum_max_extra_width(pum_items_T *items)
 {
   assert(items);
@@ -362,7 +433,11 @@ static int pum_max_extra_width(pum_items_T *items)
   return max;
 }
 
-/* Calculate column */
+/**
+ * Calculate start column for the menu
+ *
+ * @returns Start column
+ */
 static int pum_calc_col()
 {
   assert(curwin);
@@ -371,7 +446,10 @@ static int pum_calc_col()
     W_WINCOL(curwin) + curwin->w_wcol;
 }
 
-/* If there is a preview window at the top avoid drawing over it. */
+/**
+ * If there is a preview window at the top, loc will be offset to avoid drawing
+ * over it.
+ */
 static void pum_avoid_preview_win_overlap(pum_line_T *loc)
 {
   // TODO (simendsjo): What's the magic '4' below?
@@ -386,10 +464,15 @@ static void pum_avoid_preview_win_overlap(pum_line_T *loc)
 }
 
 /**
- * @param rtol Render text right to left?
+ * See if a menu can fit within our screen.
+ *
+ * @param rtol TRUE if we render text right-to-left
  * @param scr_cols Number of columns our screen has
  * @param col Starting column for the pum
  * @param max_text_width The longest text width of the pum items to be rendered
+ *
+ * @returns TRUE if the settings makes our menu fit within our screen, FALSE
+ * otherwise.
  * */
 static int pum_fits_width(int rtol, int scr_cols, int col, int max_text_width)
 {
@@ -400,13 +483,15 @@ static int pum_fits_width(int rtol, int scr_cols, int col, int max_text_width)
 }
 
 /**
- * Sets the menu start column and width
+ * Calculates horizontal position and size for a menu.
  *
  * @param rtol TRUE if we render text right-to-left
  * @param scr_width Current screen width
  * @param def_width Default width
  * @param maxwidth Maximum widths for the menuitems to render
  * @param scrollbar TRUE if we need a scrollbar to render the items
+ *
+ * @returns The start row and height
  */
 static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
   pum_menu_maxwidths_T const *const maxwidth, int scrollbar)
@@ -493,6 +578,9 @@ static int pum_set_loc(pum_menu_T *menu, pum_menu_maxwidths_T *widths,
   return OK;
 }
 
+/**
+ * Displays a menu
+ */
 static void pum_display_menu(pum_menu_T *menu, int selected)
 {
   int redo_count = 0;
@@ -525,8 +613,21 @@ redo:
     goto redo;
 }
 
-static void pum_draw_text(char_u *txt, const int rtol, const int attr, const int pum_width,
-    const int row, int *const col, int *const totwidth)
+/**
+ * Draws text into our menu.
+ *
+ * TODO (simendsjo): More documentation
+ *
+ * @params txt The text to draw
+ * @params rtol TRUE if we render text right-to-left
+ * @params attr Attributes to use for drawing
+ * @params pum_width Width of menu
+ * @params row Current screen row we're drawing at
+ * @params col Current column we're drawing at
+ * @params totwidth ???
+ */
+static void pum_draw_text(char_u *txt, const int rtol, const int attr,
+  const int pum_width, const int row, int *const col, int *const totwidth)
 {
   assert(txt);
 
@@ -610,6 +711,15 @@ static void pum_draw_text(char_u *txt, const int rtol, const int attr, const int
   }
 }
 
+/**
+ * Redraw a menu
+ *
+ * TODO (simendsjo): More documentation
+ *
+ * @params menu The menu to draw
+ * @params scrollbar TRUE if we need to draw a scrollbar
+ * @params selected Index for the currently selected menuitem
+ */
 static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 {
   const int num_items  = menu->items.num_items;
@@ -711,6 +821,15 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
   }
 }
 
+/**
+ * Finds what menuitem to select as the first selected.
+ *
+ * TODO (simendsjo): More documentation
+ *
+ * @params height ???
+ * @params first ???
+ * @params selected ???
+ */
 static int pum_find_first_selected(const int height, int first, const int selected)
 {
   // TODO (simendsjo): Figure out these constants
@@ -759,7 +878,15 @@ static int pum_find_first_selected(const int height, int first, const int select
   return first;
 }
 
-// fill buffer
+/**
+ * Fill currently open buffer with the text 'info'
+ *
+ * TODO (simendsjo): More documentation
+ *
+ * @params info Text to fill into the buffer
+ *
+ * @returns linenumber ???
+ */
 static linenr_T pum_fill_buffer(char_u *const info)
 {
   assert(info);
@@ -782,7 +909,11 @@ static linenr_T pum_fill_buffer(char_u *const info)
   return lnum;
 }
 
-/// Prepare buffer
+/**
+ * Prepare a buffer to be used for our popup menu.
+ *
+ * @returns OK if we were able to prepare a buffer, FAIL otherwise.
+ */
 static int pum_prepare_buffer()
 {
   int can_reuse_buffer = curbuf->b_fname == NULL // not bound to a file
@@ -815,6 +946,14 @@ static int pum_prepare_buffer()
   assert(0);
 }
 
+/**
+ * Initialize a window
+ *
+ * TODO (simendsjo): More documentation
+ *
+ * @params oldwin ???
+ * @params resized ???
+ */
 static int pum_init_window(win_T *oldwin, int resized)
 {
   assert(oldwin);
@@ -856,7 +995,17 @@ static int pum_init_window(win_T *oldwin, int resized)
 }
 
 
-static int pum_set_selected_internal(pum_menu_T const *const menu, const int selected, const int repeat)
+/**
+ * Mark a menuitem as selected
+ *
+ * TODO (simendsjo): More documentation
+ *
+ * @params menu The menu
+ * @params selected Index for item we wish to select
+ * @params repeat ???
+ */
+static int pum_set_selected_internal(pum_menu_T const *const menu,
+  const int selected, const int repeat)
 {
   assert(menu);
   assert(menu->items.num_items);
@@ -932,13 +1081,15 @@ L_done:
   return resized;
 }
 
-/*
+/**
  * Set the index of the currently selected item.  The menu will scroll when
  * necessary.  When "n" is out of range don't scroll.
+ *
  * This may be repeated when the preview window is used:
  * "repeat" == 0: open preview window normally
  * "repeat" == 1: open preview window but don't set the size
  * "repeat" == 2: don't open preview window
+ *
  * Returns TRUE when the window was resized and the location of the popup menu
  * must be recomputed.
  */
