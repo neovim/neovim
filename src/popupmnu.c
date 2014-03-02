@@ -490,23 +490,23 @@ void pum_display(pumitem_T *items, int num_items, int selected)
 
 static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 {
-  const int pum_size   = menu->items.num_items;
+  const int num_items  = menu->items.num_items;
   const int pum_height = menu->loc.height;
 
   /* Never display more than we have */
-  if (pum_first > pum_size - pum_height)
-    pum_first = pum_size - pum_height;
+  if (pum_first > num_items - pum_height)
+    pum_first = num_items - pum_height;
 
   int thumb_pos    = 0;
   int thumb_heigth = 1;
 
   if (scrollbar) {
-    thumb_heigth = pum_height * pum_height / pum_size;
+    thumb_heigth = pum_height * pum_height / num_items;
     if (thumb_heigth == 0)
       thumb_heigth = 1;
     thumb_pos = (pum_first * (pum_height - thumb_heigth)
-                 + (pum_size - pum_height) / 2)
-                / (pum_size - pum_height);
+                 + (num_items - pum_height) / 2)
+                / (num_items - pum_height);
   }
 
   int row             = menu->loc.row;
