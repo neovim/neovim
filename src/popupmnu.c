@@ -518,7 +518,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
   for (int i = 0; i < pum_height; ++i) {
     int idx = i + pum_first;
     const pumitem_T item = pum_menu_getitem(menu, idx);
-    int attr = (idx == selected) ? attr_select : attr_norm;
+    const int attr = (idx == selected) ? attr_select : attr_norm;
 
     /* prepend a space if there is room */
     if (curwin->w_p_rl) {
