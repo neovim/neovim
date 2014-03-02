@@ -517,7 +517,6 @@ void pum_redraw(void)
   }
 
   int row = pum_menu.loc.row;
-  int col;
 
   int attr_norm   = highlight_attr[HLF_PNI];
   int attr_select = highlight_attr[HLF_PSI];
@@ -537,7 +536,7 @@ void pum_redraw(void)
 
     /* Display each entry, use two spaces for a Tab.
      * Do this 3 times: For the main text, kind and extra info */
-    col = pum_col;
+    int col = pum_col;
     int totwidth = 0;
     for (int round = 1; round <= 3; ++round) {
       int width = 0;
