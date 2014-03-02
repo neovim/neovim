@@ -18,6 +18,7 @@
 #include "diff.h"
 #include "eval.h"
 #include "ex_docmd.h"
+#include "indent.h"
 #include "mark.h"
 #include "memline.h"
 #include "message.h"

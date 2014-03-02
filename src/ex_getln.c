@@ -25,6 +25,7 @@
 #include "fileio.h"
 #include "getchar.h"
 #include "if_cscope.h"
+#include "indent.h"
 #include "main.h"
 #include "mbyte.h"
 #include "memline.h"
