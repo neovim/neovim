@@ -35,6 +35,7 @@ cmake: clean
 
 clean:
 	rm -rf build
+	rm -rf .deps
 	$(MAKE) -C src/testdir clean
 
 install: build/bin/nvim
