@@ -516,7 +516,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
   const int attr_norm   = highlight_attr[HLF_PNI];
   const int attr_select = highlight_attr[HLF_PSI];
   for (int i = 0; i < pum_height; ++i) {
-    int idx = i + pum_first;
+    const int idx = i + pum_first;
     const pumitem_T item = pum_menu_getitem(menu, idx);
     const int attr = (idx == selected) ? attr_select : attr_norm;
 
