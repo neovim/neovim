@@ -553,8 +553,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
                   int size = vim_strsize(rt);
                   if (size > pum_width) {
                     do {
-                      size -= has_mbyte
-                              ? (*mb_ptr2cells)(rt) : 1;
+                      size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
                       mb_ptr_adv(rt);
                     } while (size > pum_width);
 
