@@ -531,8 +531,9 @@ void pum_redraw(void)
     if (curwin->w_p_rl) {
       if (pum_col < W_WINCOL(curwin) + W_WIDTH(curwin) - 1)
         screen_putchar(' ', row, pum_col + 1, attr);
-    } else if (pum_col > 0)
+    } else if (pum_col > 0) {
       screen_putchar(' ', row, pum_col - 1, attr);
+    }
 
     /* Display each entry, use two spaces for a Tab.
      * Do this 3 times: For the main text, kind and extra info */
