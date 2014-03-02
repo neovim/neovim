@@ -619,11 +619,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
         }
       }
 
-      int n;
-      if (round > 1)
-        n = pum_kind_width + 1;
-      else
-        n = 1;
+      int n = round > 1 ? pum_kind_width + 1 : 1;
 
       /* Stop when there is nothing more to display. */
       if (round == 3
