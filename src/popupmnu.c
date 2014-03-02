@@ -551,7 +551,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
             /* Display the text that fits or comes before a Tab.
              * First convert it to printable characters. */
             char_u  *st;
-            int saved = *p;
+            char_u saved = *p;
 
             *p = NUL;
             st = transstr(s);
