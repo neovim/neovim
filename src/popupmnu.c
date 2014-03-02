@@ -351,35 +351,23 @@ static pum_line_T pum_calc_hloc(int rtol, int scr_width, int def_width,
   if (fits_width) {
     /* align pum column with "col" */
     result.pos = col;
-
-    if (rtol)
-      result.len = result.pos - scrollbar + 1;
-    else
-      result.len = scr_width - result.pos - scrollbar;
+    result.len = rtol ? result.pos - scrollbar + 1 :
+      scr_width - result.pos - scrollbar;
 
     const int totwidth = maxwidth->text + maxwidth->kind + maxwidth->extra + 1;
     if (result.len > totwidth && result.len > PUM_DEF_WIDTH) {
-      result.len = totwidth;
-      if (result.len < PUM_DEF_WIDTH)
-        result.len = PUM_DEF_WIDTH;
+      result.len = totwidth < PUM_DEF_WIDTH ? PUM_DEF_WIDTH : totwidth;
     }
   } else if (scr_width < def_width) { // pum wider than screen
     // Use entire screen
-    if (rtol)
-      result.pos = scr_width - 1;
-    else
-      result.pos = 0;
-
+    result.pos = rtol ? scr_width - 1 : 0;
     result.len = scr_width - 1;
   } else {
-    int textwidth = maxwidth->text;
-    if (textwidth > PUM_DEF_WIDTH)
-      textwidth = PUM_DEF_WIDTH;        /* truncate */
+    // trucate
+    const int textwidth = maxwidth->text > PUM_DEF_WIDTH ?
+      PUM_DEF_WIDTH : maxwidth->text;
 
-    if (rtol)
-      result.pos = textwidth - 1;
-    else
-      result.pos = scr_width - textwidth;
+    result.pos = rtol ? textwidth - 1 : scr_width - textwidth;
     result.len = textwidth - scrollbar;
   }
 
@@ -639,6 +627,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       totwidth = pum_base_width + n;
     }
 
+    // Fill rest of the width with blanks
     if (curwin->w_p_rl) {
       screen_fill(row, row + 1, pum_col - pum_width + 1, col + 1, ' ',
           ' ', attr);
