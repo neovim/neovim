@@ -776,6 +776,47 @@ static int pum_prepare_buffer()
   return res;
 }
 
+static int pum_init_window(win_T *oldwin, int resized)
+{
+  assert(oldwin);
+  assert(curwin);
+
+  int should_do_redraw = curwin != oldwin && win_valid(oldwin);
+  if (!should_do_redraw)
+    return FALSE;
+
+  /* Return cursor to where we were */
+  validate_cursor();
+  redraw_later(SOME_VALID);
+
+  /* When the preview window was resized we need to
+   * update the view on the buffer.  Only go back to
+   * the window when needed, otherwise it will always be
+   * redraw. */
+  if (resized) {
+    win_enter(oldwin, TRUE);
+    update_topline();
+  }
+
+  /* Update the screen before drawing the popup menu.
+   * Enable updating the status lines. */
+  pum_do_redraw = TRUE;
+  update_screen(0);
+  pum_do_redraw = FALSE;
+
+  if (!resized && win_valid(oldwin))
+    win_enter(oldwin, TRUE);
+
+  /* May need to update the screen again when there are
+   * autocommands involved. */
+  pum_do_redraw = TRUE;
+  update_screen(0);
+  pum_do_redraw = FALSE;
+
+  return TRUE;
+}
+
+
 static int pum_set_selected_internal(pum_menu_T const *const menu, const int selected, const int repeat)
 {
   assert(menu);
@@ -836,42 +877,14 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
     }
   }
 
-  curbuf->b_changed     = 0;
-  curbuf->b_p_ma        = FALSE;
+  curbuf->b_changed = 0;
+  curbuf->b_p_ma    = FALSE;
+
   curwin->w_cursor.lnum = 1;
   curwin->w_cursor.col  = 0;
 
-  int should_do_redraw = curwin != curwin_save && win_valid(curwin_save);
-  if (!should_do_redraw)
+  if(!pum_init_window(curwin_save, resized))
     goto L_done;
-
-  /* Return cursor to where we were */
-  validate_cursor();
-  redraw_later(SOME_VALID);
-
-  /* When the preview window was resized we need to
-   * update the view on the buffer.  Only go back to
-   * the window when needed, otherwise it will always be
-   * redraw. */
-  if (resized) {
-    win_enter(curwin_save, TRUE);
-    update_topline();
-  }
-
-  /* Update the screen before drawing the popup menu.
-   * Enable updating the status lines. */
-  pum_do_redraw = TRUE;
-  update_screen(0);
-  pum_do_redraw = FALSE;
-
-  if (!resized && win_valid(curwin_save))
-    win_enter(curwin_save, TRUE);
-
-  /* May need to update the screen again when there are
-   * autocommands involved. */
-  pum_do_redraw = TRUE;
-  update_screen(0);
-  pum_do_redraw = FALSE;
 
 L_done:
   if (!resized)
