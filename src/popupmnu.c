@@ -736,6 +736,13 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   /* Find first item in the pum */
   pum_first = pum_find_first_selected(menu, pum_first, selected);
 
+  int should_show_extra = pum_menu_getitem(menu, selected).pum_info != NULL &&
+    Rows > 10 &&
+    repeat <= 1 &&
+    vim_strchr(p_cot, 'p') != NULL;
+  if(!should_show_extra)
+    goto L_done;
+
   /*
    * Show extra info in the preview window if there is something and
    * 'completeopt' contains "preview".
@@ -743,111 +750,107 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
    * Skip this also when there is not much room.
    * NOTE: Be very careful not to sync undo!
    */
-  if (pum_menu_getitem(menu, selected).pum_info != NULL
-      && Rows > 10
-      && repeat <= 1
-      && vim_strchr(p_cot, 'p') != NULL)
+  win_T *curwin_save = curwin;
+  int res = OK;
+
+  /* Open a preview window.  3 lines by default.  Prefer
+   * 'previewheight' if set and smaller. */
+  g_do_tagpreview = 3;
+  if (p_pvh > 0 && p_pvh < g_do_tagpreview)
+    g_do_tagpreview = p_pvh;
+  resized = prepare_tagpreview(FALSE);
+  g_do_tagpreview = 0;
+
+  if (!curwin->w_p_pvw)
+    goto L_done;
+
+  if (curbuf->b_fname == NULL
+      && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f'
+      && curbuf->b_p_bh[0] == 'w')
   {
-    win_T *curwin_save = curwin;
-    int res = OK;
+    /* Already a "wipeout" buffer, make it empty. */
+    while (!bufempty())
+      ml_delete((linenr_T)1, FALSE);
+  } else {
+    /* Don't want to sync undo in the current buffer. */
+    ++no_u_sync;
+    res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
+    --no_u_sync;
+    if (res == OK) {
+      /* Edit a new, empty buffer. Set options for a "wipeout"
+       * buffer. */
+      set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+      set_option_value((char_u *)"bt", 0L,
+          (char_u *)"nofile", OPT_LOCAL);
+      set_option_value((char_u *)"bh", 0L,
+          (char_u *)"wipe", OPT_LOCAL);
+      set_option_value((char_u *)"diff", 0L,
+          NULL, OPT_LOCAL);
+    }
+  }
 
-    /* Open a preview window.  3 lines by default.  Prefer
-     * 'previewheight' if set and smaller. */
-    g_do_tagpreview = 3;
-    if (p_pvh > 0 && p_pvh < g_do_tagpreview)
-      g_do_tagpreview = p_pvh;
-    resized = prepare_tagpreview(FALSE);
-    g_do_tagpreview = 0;
+  if (res == OK) {
+    char_u      *p, *e;
+    linenr_T lnum = 0;
 
-    if (curwin->w_p_pvw) {
-      if (curbuf->b_fname == NULL
-          && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f'
-          && curbuf->b_p_bh[0] == 'w')
-      {
-        /* Already a "wipeout" buffer, make it empty. */
-        while (!bufempty())
-          ml_delete((linenr_T)1, FALSE);
+    for (p = pum_menu_getitem(menu, selected).pum_info; *p != NUL; ) {
+      e = vim_strchr(p, '\n');
+      if (e == NULL) {
+        ml_append(lnum++, p, 0, FALSE);
+        break;
       } else {
-        /* Don't want to sync undo in the current buffer. */
-        ++no_u_sync;
-        res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
-        --no_u_sync;
-        if (res == OK) {
-          /* Edit a new, empty buffer. Set options for a "wipeout"
-           * buffer. */
-          set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-          set_option_value((char_u *)"bt", 0L,
-              (char_u *)"nofile", OPT_LOCAL);
-          set_option_value((char_u *)"bh", 0L,
-              (char_u *)"wipe", OPT_LOCAL);
-          set_option_value((char_u *)"diff", 0L,
-              NULL, OPT_LOCAL);
-        }
+        *e = NUL;
+        ml_append(lnum++, p, (int)(e - p + 1), FALSE);
+        *e = '\n';
+        p = e + 1;
       }
-      if (res == OK) {
-        char_u      *p, *e;
-        linenr_T lnum = 0;
+    }
 
-        for (p = pum_menu_getitem(menu, selected).pum_info; *p != NUL; ) {
-          e = vim_strchr(p, '\n');
-          if (e == NULL) {
-            ml_append(lnum++, p, 0, FALSE);
-            break;
-          } else {
-            *e = NUL;
-            ml_append(lnum++, p, (int)(e - p + 1), FALSE);
-            *e = '\n';
-            p = e + 1;
-          }
-        }
+    /* Increase the height of the preview window to show the
+     * text, but no more than 'previewheight' lines. */
+    if (repeat == 0) {
+      if (lnum > p_pvh)
+        lnum = p_pvh;
 
-        /* Increase the height of the preview window to show the
-         * text, but no more than 'previewheight' lines. */
-        if (repeat == 0) {
-          if (lnum > p_pvh)
-            lnum = p_pvh;
-
-          if (curwin->w_height < lnum) {
-            win_setheight((int)lnum);
-            resized = TRUE;
-          }
-        }
-
-        curbuf->b_changed = 0;
-        curbuf->b_p_ma = FALSE;
-        curwin->w_cursor.lnum = 1;
-        curwin->w_cursor.col = 0;
-
-        if (curwin != curwin_save && win_valid(curwin_save)) {
-          /* Return cursor to where we were */
-          validate_cursor();
-          redraw_later(SOME_VALID);
-
-          /* When the preview window was resized we need to
-           * update the view on the buffer.  Only go back to
-           * the window when needed, otherwise it will always be
-           * redraw. */
-          if (resized) {
-            win_enter(curwin_save, TRUE);
-            update_topline();
-          }
-
-          /* Update the screen before drawing the popup menu.
-           * Enable updating the status lines. */
-          pum_do_redraw = TRUE;
-          update_screen(0);
-          pum_do_redraw = FALSE;
-
-          if (!resized && win_valid(curwin_save))
-            win_enter(curwin_save, TRUE);
-
-          /* May need to update the screen again when there are
-           * autocommands involved. */
-          pum_do_redraw = TRUE;
-          update_screen(0);
-          pum_do_redraw = FALSE;
-        }
+      if (curwin->w_height < lnum) {
+        win_setheight((int)lnum);
+        resized = TRUE;
       }
+    }
+
+    curbuf->b_changed = 0;
+    curbuf->b_p_ma = FALSE;
+    curwin->w_cursor.lnum = 1;
+    curwin->w_cursor.col = 0;
+
+    if (curwin != curwin_save && win_valid(curwin_save)) {
+      /* Return cursor to where we were */
+      validate_cursor();
+      redraw_later(SOME_VALID);
+
+      /* When the preview window was resized we need to
+       * update the view on the buffer.  Only go back to
+       * the window when needed, otherwise it will always be
+       * redraw. */
+      if (resized) {
+        win_enter(curwin_save, TRUE);
+        update_topline();
+      }
+
+      /* Update the screen before drawing the popup menu.
+       * Enable updating the status lines. */
+      pum_do_redraw = TRUE;
+      update_screen(0);
+      pum_do_redraw = FALSE;
+
+      if (!resized && win_valid(curwin_save))
+        win_enter(curwin_save, TRUE);
+
+      /* May need to update the screen again when there are
+       * autocommands involved. */
+      pum_do_redraw = TRUE;
+      update_screen(0);
+      pum_do_redraw = FALSE;
     }
   }
 
