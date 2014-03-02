@@ -825,35 +825,37 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   curwin->w_cursor.lnum = 1;
   curwin->w_cursor.col  = 0;
 
-  if (curwin != curwin_save && win_valid(curwin_save)) {
-    /* Return cursor to where we were */
-    validate_cursor();
-    redraw_later(SOME_VALID);
+  int should_do_redraw = curwin != curwin_save && win_valid(curwin_save);
+  if (!should_do_redraw)
+    goto L_done;
 
-    /* When the preview window was resized we need to
-     * update the view on the buffer.  Only go back to
-     * the window when needed, otherwise it will always be
-     * redraw. */
-    if (resized) {
-      win_enter(curwin_save, TRUE);
-      update_topline();
-    }
+  /* Return cursor to where we were */
+  validate_cursor();
+  redraw_later(SOME_VALID);
 
-    /* Update the screen before drawing the popup menu.
-     * Enable updating the status lines. */
-    pum_do_redraw = TRUE;
-    update_screen(0);
-    pum_do_redraw = FALSE;
-
-    if (!resized && win_valid(curwin_save))
-      win_enter(curwin_save, TRUE);
-
-    /* May need to update the screen again when there are
-     * autocommands involved. */
-    pum_do_redraw = TRUE;
-    update_screen(0);
-    pum_do_redraw = FALSE;
+  /* When the preview window was resized we need to
+   * update the view on the buffer.  Only go back to
+   * the window when needed, otherwise it will always be
+   * redraw. */
+  if (resized) {
+    win_enter(curwin_save, TRUE);
+    update_topline();
   }
+
+  /* Update the screen before drawing the popup menu.
+   * Enable updating the status lines. */
+  pum_do_redraw = TRUE;
+  update_screen(0);
+  pum_do_redraw = FALSE;
+
+  if (!resized && win_valid(curwin_save))
+    win_enter(curwin_save, TRUE);
+
+  /* May need to update the screen again when there are
+   * autocommands involved. */
+  pum_do_redraw = TRUE;
+  update_screen(0);
+  pum_do_redraw = FALSE;
 
 L_done:
   if (!resized)
