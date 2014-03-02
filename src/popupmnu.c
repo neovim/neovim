@@ -686,8 +686,9 @@ static int pum_find_first_selected(pum_menu_T const *const menu, int first, cons
         first = 0;
       else if (first > selected)
         first = selected;
-    } else
+    } else {
       first = selected;
+    }
   } else if (first < selected - height + 5)   {
     /* scroll up; when we did a jump it's probably a PageDown then
      * scroll a whole page */
@@ -695,14 +696,16 @@ static int pum_find_first_selected(pum_menu_T const *const menu, int first, cons
       first += height - 2;
       if (first < selected - height + 1)
         first = selected - height + 1;
-    } else
+    } else {
       first = selected - height + 1;
+    }
   }
 
-  int context = height / 2;
   /* Give a few lines of context when possible. */
+  int context = height / 2;
   if (context > 3)
     context = 3;
+
   if (height > 2) {
     if (first > selected - context) {
       /* scroll down */
