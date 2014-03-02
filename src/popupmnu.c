@@ -33,7 +33,7 @@ typedef struct {
 } pum_loc_T;
 
 /**
- * A line without direction.
+ * A line segment.
  */
 typedef struct {
   int pos;  /// Start position
@@ -56,16 +56,6 @@ typedef struct {
   pum_items_T items;    /// Menuitems
 } pum_menu_T;
 
-
-static pumitem_T pum_menu_getitem(pum_menu_T const *const menu, int index)
-{
-  assert(menu);
-  assert(index >= 0);
-  assert(index < menu->items.num_items);
-
-  return menu->items.items[index];
-}
-
 /**
  * Widths for the menuitem with the longest field in a collection of
  * pum_items_T.
@@ -75,6 +65,7 @@ typedef struct {
   int kind;
   int extra;
 } pum_menu_maxwidths_T;
+
 
 static int pum_selected;                /* index of selected item or -1 */
 static int pum_first = 0;               /* index of top item */
@@ -91,6 +82,81 @@ static int pum_set_selected __ARGS((int n, int repeat));
 
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
+
+static void pum_display_menu(pum_menu_T *menu, int selected);
+static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected);
+
+/*
+ * Show the popup menu with items "items[size]".
+ * "items" must remain valid until pum_undisplay() is called!
+ * When possible the leftmost character is aligned with screen column "col".
+ * The menu appears above the screen line "row" or at "row" + "height" - 1.
+ *
+ * @param selected index of initially selected item, none if out of range
+ */
+void pum_display(pumitem_T *items, int num_items, int selected)
+{
+  pum_menu = (pum_menu_T) {
+    {0, 0, 0, 0},
+    {items, num_items}
+  };
+  pum_display_menu(&pum_menu, selected);
+}
+
+/*
+ * Redraw the popup menu, using "pum_first" and "pum_selected".
+ */
+void pum_redraw(void)
+{
+    pum_redraw_internal(&pum_menu, pum_scrollbar, pum_selected);
+}
+
+/*
+ * Undisplay the popup menu (later).
+ */
+void pum_undisplay(void)
+{
+  pum_menu.items = (pum_items_T){ NULL, 0 };
+  redraw_all_later(SOME_VALID);
+  redraw_tabline = TRUE;
+  status_redraw_all();
+}
+
+/*
+ * Clear the popup menu.  Currently only resets the offset to the first
+ * displayed item.
+ */
+void pum_clear(void)
+{
+  pum_first = 0;
+}
+
+/*
+ * Return TRUE if the popup menu is displayed.
+ * Overruled when "pum_do_redraw" is set, used to redraw the status lines.
+ */
+int pum_visible(void)
+{
+  return !pum_do_redraw && pum_menu.items.items != NULL;
+}
+
+/*
+ * Return the height of the popup menu, the number of entries visible.
+ * Only valid when pum_visible() returns TRUE!
+ */
+int pum_get_height(void)
+{
+  return pum_menu.loc.height;
+}
+
+static pumitem_T pum_menu_getitem(pum_menu_T const *const menu, int index)
+{
+  assert(menu);
+  assert(index >= 0);
+  assert(index < menu->items.num_items);
+
+  return menu->items.items[index];
+}
 
 /**
  * Figure out the initial height of the pum.
@@ -459,23 +525,6 @@ redo:
     goto redo;
 }
 
-/*
- * Show the popup menu with items "items[size]".
- * "items" must remain valid until pum_undisplay() is called!
- * When possible the leftmost character is aligned with screen column "col".
- * The menu appears above the screen line "row" or at "row" + "height" - 1.
- *
- * @param selected index of initially selected item, none if out of range
- */
-void pum_display(pumitem_T *items, int num_items, int selected)
-{
-  pum_menu = (pum_menu_T) {
-    {0, 0, 0, 0},
-    {items, num_items}
-  };
-  pum_display_menu(&pum_menu, selected);
-}
-
 static void pum_draw_text(char_u *txt, const int rtol, const int attr, const int pum_width,
     const int row, int *const col, int *const totwidth)
 {
@@ -660,14 +709,6 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 
     ++row;
   }
-}
-
-/*
- * Redraw the popup menu, using "pum_first" and "pum_selected".
- */
-void pum_redraw(void)
-{
-    pum_redraw_internal(&pum_menu, pum_scrollbar, pum_selected);
 }
 
 static int pum_find_first_selected(const int height, int first, const int selected)
@@ -905,43 +946,5 @@ static int pum_set_selected(int selected, int repeat)
 {
   pum_selected = selected;
   return pum_set_selected_internal(&pum_menu, selected, repeat);
-}
-
-/*
- * Undisplay the popup menu (later).
- */
-void pum_undisplay(void)
-{
-  pum_menu.items = (pum_items_T){ NULL, 0 };
-  redraw_all_later(SOME_VALID);
-  redraw_tabline = TRUE;
-  status_redraw_all();
-}
-
-/*
- * Clear the popup menu.  Currently only resets the offset to the first
- * displayed item.
- */
-void pum_clear(void)
-{
-  pum_first = 0;
-}
-
-/*
- * Return TRUE if the popup menu is displayed.
- * Overruled when "pum_do_redraw" is set, used to redraw the status lines.
- */
-int pum_visible(void)
-{
-  return !pum_do_redraw && pum_menu.items.items != NULL;
-}
-
-/*
- * Return the height of the popup menu, the number of entries visible.
- * Only valid when pum_visible() returns TRUE!
- */
-int pum_get_height(void)
-{
-  return pum_menu.loc.height;
 }
 
