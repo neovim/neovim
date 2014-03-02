@@ -534,7 +534,6 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
     int col = pum_col;
     int totwidth = 0;
     for (int round = 1; round <= 3; ++round) {
-      int width = 0;
       char_u *p = NULL;
       switch (round) {
       case 1: p = item.pum_text; break;
@@ -543,6 +542,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       }
 
       if (p != NULL) {
+        int width = 0;
         char_u *s = NULL;
         for (;; mb_ptr_adv(p)) {
           if (s == NULL)
