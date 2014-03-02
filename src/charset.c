@@ -600,6 +600,8 @@ int ptr2cells(char_u *p)
 /*
  * Return the number of character cells string "s" will take on the screen,
  * counting TABs as two characters: "^I".
+ *
+ * If s is empty or NULL, 0 will be returned.
  */
 int vim_strsize(char_u *s)
 {
@@ -609,11 +611,14 @@ int vim_strsize(char_u *s)
 /*
  * Return the number of character cells string "s[len]" will take on the
  * screen, counting TABs as two characters: "^I".
+ *
+ * If s is empty or NULL, 0 will be returned.
  */
 int vim_strnsize(char_u *s, int len)
 {
-  int size = 0;
+  if (!s) return 0;
 
+  int size = 0;
   while (*s != NUL && --len >= 0) {
     if (has_mbyte) {
       int l = (*mb_ptr2len)(s);
