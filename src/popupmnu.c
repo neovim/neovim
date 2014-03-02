@@ -789,69 +789,70 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
     }
   }
 
-  if (res == OK) {
-    char_u      *p, *e;
-    linenr_T lnum = 0;
+  if (res != OK)
+    goto L_done;
 
-    for (p = pum_menu_getitem(menu, selected).pum_info; *p != NUL; ) {
-      e = vim_strchr(p, '\n');
-      if (e == NULL) {
-        ml_append(lnum++, p, 0, FALSE);
-        break;
-      } else {
-        *e = NUL;
-        ml_append(lnum++, p, (int)(e - p + 1), FALSE);
-        *e = '\n';
-        p = e + 1;
-      }
+  char_u *p, *e;
+  linenr_T lnum = 0;
+
+  for (p = pum_menu_getitem(menu, selected).pum_info; *p != NUL; ) {
+    e = vim_strchr(p, '\n');
+    if (e == NULL) {
+      ml_append(lnum++, p, 0, FALSE);
+      break;
+    } else {
+      *e = NUL;
+      ml_append(lnum++, p, (int)(e - p + 1), FALSE);
+      *e = '\n';
+      p = e + 1;
+    }
+  }
+
+  /* Increase the height of the preview window to show the
+   * text, but no more than 'previewheight' lines. */
+  if (repeat == 0) {
+    if (lnum > p_pvh)
+      lnum = p_pvh;
+
+    if (curwin->w_height < lnum) {
+      win_setheight((int)lnum);
+      resized = TRUE;
+    }
+  }
+
+  curbuf->b_changed = 0;
+  curbuf->b_p_ma = FALSE;
+  curwin->w_cursor.lnum = 1;
+  curwin->w_cursor.col = 0;
+
+  if (curwin != curwin_save && win_valid(curwin_save)) {
+    /* Return cursor to where we were */
+    validate_cursor();
+    redraw_later(SOME_VALID);
+
+    /* When the preview window was resized we need to
+     * update the view on the buffer.  Only go back to
+     * the window when needed, otherwise it will always be
+     * redraw. */
+    if (resized) {
+      win_enter(curwin_save, TRUE);
+      update_topline();
     }
 
-    /* Increase the height of the preview window to show the
-     * text, but no more than 'previewheight' lines. */
-    if (repeat == 0) {
-      if (lnum > p_pvh)
-        lnum = p_pvh;
+    /* Update the screen before drawing the popup menu.
+     * Enable updating the status lines. */
+    pum_do_redraw = TRUE;
+    update_screen(0);
+    pum_do_redraw = FALSE;
 
-      if (curwin->w_height < lnum) {
-        win_setheight((int)lnum);
-        resized = TRUE;
-      }
-    }
+    if (!resized && win_valid(curwin_save))
+      win_enter(curwin_save, TRUE);
 
-    curbuf->b_changed = 0;
-    curbuf->b_p_ma = FALSE;
-    curwin->w_cursor.lnum = 1;
-    curwin->w_cursor.col = 0;
-
-    if (curwin != curwin_save && win_valid(curwin_save)) {
-      /* Return cursor to where we were */
-      validate_cursor();
-      redraw_later(SOME_VALID);
-
-      /* When the preview window was resized we need to
-       * update the view on the buffer.  Only go back to
-       * the window when needed, otherwise it will always be
-       * redraw. */
-      if (resized) {
-        win_enter(curwin_save, TRUE);
-        update_topline();
-      }
-
-      /* Update the screen before drawing the popup menu.
-       * Enable updating the status lines. */
-      pum_do_redraw = TRUE;
-      update_screen(0);
-      pum_do_redraw = FALSE;
-
-      if (!resized && win_valid(curwin_save))
-        win_enter(curwin_save, TRUE);
-
-      /* May need to update the screen again when there are
-       * autocommands involved. */
-      pum_do_redraw = TRUE;
-      update_screen(0);
-      pum_do_redraw = FALSE;
-    }
+    /* May need to update the screen again when there are
+     * autocommands involved. */
+    pum_do_redraw = TRUE;
+    update_screen(0);
+    pum_do_redraw = FALSE;
   }
 
 L_done:
