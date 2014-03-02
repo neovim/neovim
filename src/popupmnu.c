@@ -489,10 +489,7 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
-/*
- * Redraw the popup menu, using "pum_first" and "pum_selected".
- */
-void pum_redraw(void)
+static void pum_redraw_internal()
 {
   const int pum_size   = pum_menu.items.num_items;
   const int pum_height = pum_menu.loc.height;
@@ -673,6 +670,14 @@ void pum_redraw(void)
 
     ++row;
   }
+}
+
+/*
+ * Redraw the popup menu, using "pum_first" and "pum_selected".
+ */
+void pum_redraw(void)
+{
+    pum_redraw_internal();
 }
 
 static int pum_find_first_selected(pum_menu_T const *const menu, int first, const int selected)
