@@ -524,8 +524,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
     if (curwin->w_p_rl) {
       if (pum_col < W_WINCOL(curwin) + W_WIDTH(curwin) - 1)
         screen_putchar(' ', row, pum_col + 1, attr);
-    } else if (pum_col > 0) {
-      screen_putchar(' ', row, pum_col - 1, attr);
+    } else {
+      if (pum_col > 0)
+        screen_putchar(' ', row, pum_col - 1, attr);
     }
 
     /* Display each entry, use two spaces for a Tab.
