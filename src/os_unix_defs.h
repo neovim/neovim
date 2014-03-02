@@ -125,10 +125,6 @@
 # include <pwd.h>
 #endif
 
-#ifdef __COHERENT__
-# undef __ARGS
-#endif
-
 /*
  * Unix system-dependent file names
  */
