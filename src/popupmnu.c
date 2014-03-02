@@ -476,24 +476,24 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
-static void pum_draw_text(char_u *p, const int rtol, const int attr, const int pum_width,
+static void pum_draw_text(char_u *txt, const int rtol, const int attr, const int pum_width,
     const int row, int *const col, int *const totwidth)
 {
-  assert(p);
+  assert(txt);
 
   int width = 0;
-  char_u *s = NULL;
-  for (;; mb_ptr_adv(p)) {
-    if (s == NULL)
-      s = p;
-    const int chwidth = ptr2cells(p);
-    if (*p == NUL || *p == TAB || *totwidth + chwidth > pum_width) {
+  char_u *ch = NULL;
+  for (;; mb_ptr_adv(txt)) {
+    if (ch == NULL)
+      ch = txt;
+    const int chwidth = ptr2cells(txt);
+    if (*txt == NUL || *txt == TAB || *totwidth + chwidth > pum_width) {
       /* Display the text that fits or comes before a Tab.
        * First convert it to printable characters. */
-      char_u saved = *p;
-      *p = NUL;
-      char_u *st = transstr(s);
-      *p = saved;
+      char_u saved = *txt;
+      *txt = NUL;
+      char_u *st = transstr(ch);
+      *txt = saved;
 
       if (rtol) {
         if (st != NULL) {
@@ -533,7 +533,7 @@ static void pum_draw_text(char_u *p, const int rtol, const int attr, const int p
       if (st)
         vim_free(st);
 
-      if (*p != TAB)
+      if (*txt != TAB)
         break;
 
       /* Display two spaces for a Tab. */
@@ -546,7 +546,7 @@ static void pum_draw_text(char_u *p, const int rtol, const int attr, const int p
         *col += 2;
       }
       *totwidth += 2;
-      s = NULL;                       /* start text at next char */
+      ch = NULL;                       /* start text at next char */
       width = 0;
     } else {
       width += chwidth;
