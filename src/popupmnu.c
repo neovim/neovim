@@ -650,15 +650,10 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
     if (scrollbar > 0) {
       const int attr_scroll = highlight_attr[HLF_PSB];
       const int attr_thumb  = highlight_attr[HLF_PST];
-      if (curwin->w_p_rl) {
-        screen_putchar(' ', row, pum_col - pum_width,
-            i >= thumb_pos && i < thumb_pos + thumb_heigth
-            ? attr_thumb : attr_scroll);
-      } else {
-        screen_putchar(' ', row, pum_col + pum_width,
-            i >= thumb_pos && i < thumb_pos + thumb_heigth
-            ? attr_thumb : attr_scroll);
-      }
+      const int attr = i >= thumb_pos && i < thumb_pos + thumb_heigth
+        ? attr_thumb : attr_scroll;
+      const int col = curwin->w_p_rl ? pum_col - pum_width : pum_col + pum_width;
+      screen_putchar(' ', row, col, attr);
     }
 
     ++row;
