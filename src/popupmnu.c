@@ -497,15 +497,16 @@ void pum_display(pumitem_T *items, int num_items, int selected)
  */
 void pum_redraw(void)
 {
-  const int pum_size = pum_menu.items.num_items;
+  const int pum_size   = pum_menu.items.num_items;
   const int pum_height = pum_menu.loc.height;
 
   /* Never display more than we have */
   if (pum_first > pum_size - pum_height)
     pum_first = pum_size - pum_height;
 
-  int thumb_pos = 0;
+  int thumb_pos    = 0;
   int thumb_heigth = 1;
+
   if (pum_scrollbar) {
     thumb_heigth = pum_height * pum_height / pum_size;
     if (thumb_heigth == 0)
@@ -518,10 +519,10 @@ void pum_redraw(void)
   int row = pum_menu.loc.row;
   int col;
 
-  int attr_norm = highlight_attr[HLF_PNI];
+  int attr_norm   = highlight_attr[HLF_PNI];
   int attr_select = highlight_attr[HLF_PSI];
   int attr_scroll = highlight_attr[HLF_PSB];
-  int attr_thumb = highlight_attr[HLF_PST];
+  int attr_thumb  = highlight_attr[HLF_PST];
   for (int i = 0; i < pum_height; ++i) {
     int idx = i + pum_first;
     int attr = (idx == pum_selected) ? attr_select : attr_norm;
@@ -546,7 +547,8 @@ void pum_redraw(void)
       case 2: p = pum_array[idx].pum_kind; break;
       case 3: p = pum_array[idx].pum_extra; break;
       }
-      if (p != NULL)
+
+      if (p != NULL) {
         for (;; mb_ptr_adv(p)) {
           if (s == NULL)
             s = p;
@@ -593,7 +595,7 @@ void pum_redraw(void)
                 vim_free(st);
               }
               col -= width;
-            } else   {
+            } else {
               if (st != NULL) {
                 screen_puts_len(st, (int)STRLEN(st), row, col,
                     attr);
@@ -610,16 +612,18 @@ void pum_redraw(void)
               screen_puts_len((char_u *)"  ", 2, row, col - 1,
                   attr);
               col -= 2;
-            } else   {
+            } else {
               screen_puts_len((char_u *)"  ", 2, row, col, attr);
               col += 2;
             }
             totwidth += 2;
             s = NULL;                       /* start text at next char */
             width = 0;
-          } else
+          } else {
             width += w;
+          }
         }
+      }
 
       int n;
       if (round > 1)
@@ -633,12 +637,15 @@ void pum_redraw(void)
           || (round == 1 && pum_array[idx].pum_kind == NULL
               && pum_array[idx].pum_extra == NULL)
           || pum_base_width + n >= pum_width)
+      {
         break;
+      }
+
       if (curwin->w_p_rl) {
         screen_fill(row, row + 1, pum_col - pum_base_width - n + 1,
             col + 1, ' ', ' ', attr);
         col = pum_col - pum_base_width - n + 1;
-      } else   {
+      } else {
         screen_fill(row, row + 1, col, pum_col + pum_base_width + n,
             ' ', ' ', attr);
         col = pum_col + pum_base_width + n;
@@ -646,21 +653,24 @@ void pum_redraw(void)
       totwidth = pum_base_width + n;
     }
 
-    if (curwin->w_p_rl)
+    if (curwin->w_p_rl) {
       screen_fill(row, row + 1, pum_col - pum_width + 1, col + 1, ' ',
           ' ', attr);
-    else
+    } else {
       screen_fill(row, row + 1, col, pum_col + pum_width, ' ', ' ',
           attr);
+    }
+
     if (pum_scrollbar > 0) {
-      if (curwin->w_p_rl)
+      if (curwin->w_p_rl) {
         screen_putchar(' ', row, pum_col - pum_width,
             i >= thumb_pos && i < thumb_pos + thumb_heigth
             ? attr_thumb : attr_scroll);
-      else
+      } else {
         screen_putchar(' ', row, pum_col + pum_width,
             i >= thumb_pos && i < thumb_pos + thumb_heigth
             ? attr_thumb : attr_scroll);
+      }
     }
 
     ++row;
