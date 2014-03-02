@@ -721,6 +721,61 @@ static int pum_find_first_selected(pum_menu_T const *const menu, int first, cons
   return first;
 }
 
+// fill buffer
+static linenr_T pum_fill_buffer(char_u *const info)
+{
+  assert(info);
+
+  linenr_T lnum = 0;
+
+  for (char_u *p = info; *p != NUL; ) {
+    char_u *e = vim_strchr(p, '\n');
+    if (e == NULL) {
+      ml_append(lnum++, p, 0, FALSE);
+      break;
+    } else {
+      *e = NUL;
+      ml_append(lnum++, p, (int)(e - p + 1), FALSE);
+      *e = '\n';
+      p = e + 1;
+    }
+  }
+
+  return lnum;
+}
+
+/// Prepare buffer
+static int pum_prepare_buffer()
+{
+  int res = OK;
+  if (curbuf->b_fname == NULL
+      && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f'
+      && curbuf->b_p_bh[0] == 'w')
+  {
+    /* Already a "wipeout" buffer, make it empty. */
+    while (!bufempty())
+      ml_delete((linenr_T)1, FALSE);
+  } else {
+    /* Don't want to sync undo in the current buffer. */
+    ++no_u_sync;
+    res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
+    --no_u_sync;
+    if (res == OK) {
+      /* Edit a new, empty buffer. Set options for a "wipeout"
+       * buffer. */
+      set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
+      set_option_value((char_u *)"bt", 0L,
+          (char_u *)"nofile", OPT_LOCAL);
+      set_option_value((char_u *)"bh", 0L,
+          (char_u *)"wipe", OPT_LOCAL);
+      set_option_value((char_u *)"diff", 0L,
+          NULL, OPT_LOCAL);
+    }
+  }
+
+  return res;
+}
+
 static int pum_set_selected_internal(pum_menu_T const *const menu, const int selected, const int repeat)
 {
   assert(menu);
@@ -751,7 +806,6 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
    * NOTE: Be very careful not to sync undo!
    */
   win_T *curwin_save = curwin;
-  int res = OK;
 
   /* Open a preview window.  3 lines by default.  Prefer
    * 'previewheight' if set and smaller. */
@@ -764,49 +818,11 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   if (!curwin->w_p_pvw)
     goto L_done;
 
-  if (curbuf->b_fname == NULL
-      && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f'
-      && curbuf->b_p_bh[0] == 'w')
-  {
-    /* Already a "wipeout" buffer, make it empty. */
-    while (!bufempty())
-      ml_delete((linenr_T)1, FALSE);
-  } else {
-    /* Don't want to sync undo in the current buffer. */
-    ++no_u_sync;
-    res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
-    --no_u_sync;
-    if (res == OK) {
-      /* Edit a new, empty buffer. Set options for a "wipeout"
-       * buffer. */
-      set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-      set_option_value((char_u *)"bt", 0L,
-          (char_u *)"nofile", OPT_LOCAL);
-      set_option_value((char_u *)"bh", 0L,
-          (char_u *)"wipe", OPT_LOCAL);
-      set_option_value((char_u *)"diff", 0L,
-          NULL, OPT_LOCAL);
-    }
-  }
-
+  int res = pum_prepare_buffer();
   if (res != OK)
     goto L_done;
 
-  char_u *p, *e;
-  linenr_T lnum = 0;
-
-  for (p = pum_menu_getitem(menu, selected).pum_info; *p != NUL; ) {
-    e = vim_strchr(p, '\n');
-    if (e == NULL) {
-      ml_append(lnum++, p, 0, FALSE);
-      break;
-    } else {
-      *e = NUL;
-      ml_append(lnum++, p, (int)(e - p + 1), FALSE);
-      *e = '\n';
-      p = e + 1;
-    }
-  }
+  linenr_T lnum = pum_fill_buffer(pum_menu_getitem(menu, selected).pum_info);
 
   /* Increase the height of the preview window to show the
    * text, but no more than 'previewheight' lines. */
