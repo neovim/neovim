@@ -325,9 +325,17 @@ certificates or have not set them up correctly:
 
 ## Building
 
-To generate the `Makefile`s:
+If you just want to build it:
 
-    make cmake
+    make
+
+This will compile the bundled versions of the dependencies.
+If you care deeply about using the system-provided versions of the
+dependencies use
+
+    make USE_BUNDLED_DEPS=false
+
+instead.
 
 To build and run the tests:
 
