@@ -29,12 +29,13 @@ deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
 .deps/usr/bin/busted:
 	sh -e scripts/setup-test-tools.sh
 
-cmake: clean deps
+cmake: clean
 	mkdir build
 	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
 
 clean:
 	rm -rf build
+	rm -rf .deps
 	$(MAKE) -C src/testdir clean
 
 install: build/bin/nvim
