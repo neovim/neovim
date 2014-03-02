@@ -26,7 +26,6 @@ static pumitem_T *pum_array = NULL;     /* items of displayed pum */
 static int pum_selected;                /* index of selected item or -1 */
 static int pum_first = 0;               /* index of top item */
 
-static int pum_height;                  /* nr of displayed pum items */
 static int pum_width;                   /* width of displayed pum items */
 static int pum_base_width;              /* width of pum items base */
 static int pum_kind_width;              /* width of pum items kind column */
@@ -461,7 +460,6 @@ redo:
   if(pum_set_loc(menu, &widths, &pum_scrollbar) == FAIL)
     return;
 
-  pum_height = menu->loc.height;
   pum_col    = menu->loc.col;
   pum_width  = menu->loc.width;
 
@@ -517,6 +515,7 @@ void pum_redraw(void)
   int n;
 
   const int pum_size = pum_menu.items.num_items;
+  const int pum_height = pum_menu.loc.height;
   /* Never display more than we have */
   if (pum_first > pum_size - pum_height)
     pum_first = pum_size - pum_height;
@@ -941,6 +940,6 @@ int pum_visible(void)
  */
 int pum_get_height(void)
 {
-  return pum_height;
+  return pum_menu.loc.height;
 }
 
