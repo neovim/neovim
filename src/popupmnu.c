@@ -819,8 +819,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   if (!curwin->w_p_pvw)
     goto L_done;
 
-  int res = pum_prepare_buffer();
-  if (res != OK)
+  if (pum_prepare_buffer() != OK)
     goto L_done;
 
   linenr_T lnum = pum_fill_buffer(selected_info);
