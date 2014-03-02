@@ -547,8 +547,8 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
         for (;; mb_ptr_adv(p)) {
           if (s == NULL)
             s = p;
-          int w = ptr2cells(p);
-          if (*p == NUL || *p == TAB || totwidth + w > pum_width) {
+          const int chwidth = ptr2cells(p);
+          if (*p == NUL || *p == TAB || totwidth + chwidth > pum_width) {
             /* Display the text that fits or comes before a Tab.
              * First convert it to printable characters. */
             char_u saved = *p;
@@ -611,7 +611,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
             s = NULL;                       /* start text at next char */
             width = 0;
           } else {
-            width += w;
+            width += chwidth;
           }
         }
       }
