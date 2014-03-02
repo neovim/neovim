@@ -678,6 +678,10 @@ void pum_redraw(void)
 
 static int pum_set_selected_internal(pum_menu_T const *const menu, const int selected, const int repeat)
 {
+  assert(menu);
+  assert(menu->items);
+  assert(menu->loc.height > 0);
+
   const int height = menu->loc.height;
 
   int resized = FALSE;
