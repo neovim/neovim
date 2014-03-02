@@ -489,7 +489,7 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
-static void pum_redraw_internal()
+static void pum_redraw_internal(int scrollbar)
 {
   const int pum_size   = pum_menu.items.num_items;
   const int pum_height = pum_menu.loc.height;
@@ -502,7 +502,7 @@ static void pum_redraw_internal()
   int thumb_pos    = 0;
   int thumb_heigth = 1;
 
-  if (pum_scrollbar) {
+  if (scrollbar) {
     thumb_heigth = pum_height * pum_height / pum_size;
     if (thumb_heigth == 0)
       thumb_heigth = 1;
@@ -656,7 +656,7 @@ static void pum_redraw_internal()
           attr);
     }
 
-    if (pum_scrollbar > 0) {
+    if (scrollbar > 0) {
       if (curwin->w_p_rl) {
         screen_putchar(' ', row, pum_col - pum_width,
             i >= thumb_pos && i < thumb_pos + thumb_heigth
@@ -677,7 +677,7 @@ static void pum_redraw_internal()
  */
 void pum_redraw(void)
 {
-    pum_redraw_internal();
+    pum_redraw_internal(pum_scrollbar);
 }
 
 static int pum_find_first_selected(pum_menu_T const *const menu, int first, const int selected)
