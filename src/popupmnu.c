@@ -673,10 +673,8 @@ void pum_redraw(void)
     pum_redraw_internal(&pum_menu, pum_scrollbar, pum_selected);
 }
 
-static int pum_find_first_selected(pum_menu_T const *const menu, int first, const int selected)
+static int pum_find_first_selected(const int height, int first, const int selected)
 {
-  const int height = menu->items.num_items;
-
   if (first > selected - 4) {
     /* scroll down; when we did a jump it's probably a PageUp then
      * scroll a whole page */
@@ -830,7 +828,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
     goto L_done;
 
   /* Find first item in the pum */
-  pum_first = pum_find_first_selected(menu, pum_first, selected);
+  pum_first = pum_find_first_selected(menu->items.num_items, pum_first, selected);
 
   char_u *selected_info = pum_menu_getitem(menu, selected).pum_info;
   int should_show_extra = selected_info != NULL &&
