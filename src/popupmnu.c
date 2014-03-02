@@ -747,33 +747,33 @@ static linenr_T pum_fill_buffer(char_u *const info)
 /// Prepare buffer
 static int pum_prepare_buffer()
 {
-  int res = OK;
-  if (curbuf->b_fname == NULL
-      && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f'
-      && curbuf->b_p_bh[0] == 'w')
-  {
+  int can_reuse_buffer = curbuf->b_fname == NULL // not bound to a file
+      && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f' // 'nofile' type
+      && curbuf->b_p_bh[0] == 'w'; // wipeout buffer
+
+  if (can_reuse_buffer) {
     /* Already a "wipeout" buffer, make it empty. */
     while (!bufempty())
       ml_delete((linenr_T)1, FALSE);
+
+    return OK;
   } else {
     /* Don't want to sync undo in the current buffer. */
     ++no_u_sync;
-    res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
+    int res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
     --no_u_sync;
     if (res == OK) {
       /* Edit a new, empty buffer. Set options for a "wipeout"
        * buffer. */
       set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
-      set_option_value((char_u *)"bt", 0L,
-          (char_u *)"nofile", OPT_LOCAL);
-      set_option_value((char_u *)"bh", 0L,
-          (char_u *)"wipe", OPT_LOCAL);
-      set_option_value((char_u *)"diff", 0L,
-          NULL, OPT_LOCAL);
+      set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
+      set_option_value((char_u *)"bh", 0L, (char_u *)"wipe", OPT_LOCAL);
+      set_option_value((char_u *)"diff", 0L, NULL, OPT_LOCAL);
     }
-  }
 
-  return res;
+    return res;
+  }
+  assert(0);
 }
 
 static int pum_init_window(win_T *oldwin, int resized)
