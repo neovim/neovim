@@ -513,12 +513,11 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
   const int pum_col   = menu->loc.col;
   const int pum_width = menu->loc.width;
 
-  int attr_norm   = highlight_attr[HLF_PNI];
-  int attr_select = highlight_attr[HLF_PSI];
-  int attr_scroll = highlight_attr[HLF_PSB];
-  int attr_thumb  = highlight_attr[HLF_PST];
+  const int attr_norm   = highlight_attr[HLF_PNI];
+  const int attr_select = highlight_attr[HLF_PSI];
   for (int i = 0; i < pum_height; ++i) {
     int idx = i + pum_first;
+    const pumitem_T item = pum_menu_getitem(menu, idx);
     int attr = (idx == selected) ? attr_select : attr_norm;
 
     /* prepend a space if there is room */
@@ -538,9 +537,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       char_u *s = NULL;
       char_u *p = NULL;
       switch (round) {
-      case 1: p = pum_menu_getitem(menu, idx).pum_text; break;
-      case 2: p = pum_menu_getitem(menu, idx).pum_kind; break;
-      case 3: p = pum_menu_getitem(menu, idx).pum_extra; break;
+      case 1: p = item.pum_text; break;
+      case 2: p = item.pum_kind; break;
+      case 3: p = item.pum_extra; break;
       }
 
       if (p != NULL) {
@@ -628,9 +627,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 
       /* Stop when there is nothing more to display. */
       if (round == 3
-          || (round == 2 && pum_menu_getitem(menu, idx).pum_extra == NULL)
-          || (round == 1 && pum_menu_getitem(menu, idx).pum_kind == NULL
-              && pum_menu_getitem(menu, idx).pum_extra == NULL)
+          || (round == 2 && item.pum_extra == NULL)
+          || (round == 1 && item.pum_kind == NULL
+              && item.pum_extra == NULL)
           || pum_base_width + n >= pum_width)
       {
         break;
@@ -657,6 +656,8 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
     }
 
     if (scrollbar > 0) {
+      const int attr_scroll = highlight_attr[HLF_PSB];
+      const int attr_thumb  = highlight_attr[HLF_PST];
       if (curwin->w_p_rl) {
         screen_putchar(' ', row, pum_col - pum_width,
             i >= thumb_pos && i < thumb_pos + thumb_heigth
