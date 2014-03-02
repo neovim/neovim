@@ -77,6 +77,8 @@ typedef struct {
   pum_items_T items;    /// Menuitems
 } pum_menu_T;
 
+static pum_menu_T pum_menu;
+
 /**
  * Widths for the menuitem with the longest field in a collection of
  * pum_items_T.
@@ -479,12 +481,11 @@ redo:
  */
 void pum_display(pumitem_T *items, int num_items, int selected)
 {
-  pum_menu_T menu = {
-    {0, 0, 0, 0},       // location
-    {items, num_items}  // items
+  pum_menu = {
+    {0, 0, 0, 0},
+    {items, num_items}
   };
-
-  pum_display_menu(&menu, selected);
+  pum_display_menu(&pum_menu, selected);
 }
 
 /*
@@ -665,18 +666,12 @@ void pum_redraw(void)
   }
 }
 
-/*
- * Set the index of the currently selected item.  The menu will scroll when
- * necessary.  When "n" is out of range don't scroll.
- * This may be repeated when the preview window is used:
- * "repeat" == 0: open preview window normally
- * "repeat" == 1: open preview window but don't set the size
- * "repeat" == 2: don't open preview window
- * Returns TRUE when the window was resized and the location of the popup menu
- * must be recomputed.
- */
-static int pum_set_selected(int n, int repeat)
+static int pum_set_selected_internal(pum_menu_T const *const menu, const int n, const int repeat)
 {
+  pumitem_T const *const pum_array = menu->items.items;
+  const int pum_size = menu->items.num_items;
+  const int pum_height = menu->loc.height;
+
   int resized = FALSE;
   int context = pum_height / 2;
 
@@ -837,6 +832,21 @@ static int pum_set_selected(int n, int repeat)
     pum_redraw();
 
   return resized;
+}
+
+/*
+ * Set the index of the currently selected item.  The menu will scroll when
+ * necessary.  When "n" is out of range don't scroll.
+ * This may be repeated when the preview window is used:
+ * "repeat" == 0: open preview window normally
+ * "repeat" == 1: open preview window but don't set the size
+ * "repeat" == 2: don't open preview window
+ * Returns TRUE when the window was resized and the location of the popup menu
+ * must be recomputed.
+ */
+static int pum_set_selected(int n, int repeat)
+{
+    return pum_set_selected_internal(&pum_menu, n, repeat);
 }
 
 /*
