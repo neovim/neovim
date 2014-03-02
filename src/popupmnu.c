@@ -479,7 +479,7 @@ void pum_display(pumitem_T *items, int num_items, int selected)
 static void pum_draw_text(char_u *p, const int rtol, const int attr, const int pum_width,
     const int row, int *const col, int *const totwidth)
 {
-  if(!p) return;
+  assert(p);
 
   int width = 0;
   char_u *s = NULL;
@@ -607,7 +607,8 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       case 3: p = item.pum_extra; break;
       }
 
-      pum_draw_text(p, curwin->w_p_rl, attr, pum_width, row, &col, &totwidth);
+      if(p)
+        pum_draw_text(p, curwin->w_p_rl, attr, pum_width, row, &col, &totwidth);
 
       int n = round > 1 ? pum_kind_width + 1 : 1;
 
