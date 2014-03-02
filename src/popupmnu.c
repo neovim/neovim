@@ -746,8 +746,9 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   if (pum_menu_getitem(menu, selected).pum_info != NULL
       && Rows > 10
       && repeat <= 1
-      && vim_strchr(p_cot, 'p') != NULL) {
-    win_T       *curwin_save = curwin;
+      && vim_strchr(p_cot, 'p') != NULL)
+  {
+    win_T *curwin_save = curwin;
     int res = OK;
 
     /* Open a preview window.  3 lines by default.  Prefer
@@ -761,11 +762,12 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
     if (curwin->w_p_pvw) {
       if (curbuf->b_fname == NULL
           && curbuf->b_p_bt[0] == 'n' && curbuf->b_p_bt[2] == 'f'
-          && curbuf->b_p_bh[0] == 'w') {
+          && curbuf->b_p_bh[0] == 'w')
+      {
         /* Already a "wipeout" buffer, make it empty. */
         while (!bufempty())
           ml_delete((linenr_T)1, FALSE);
-      } else   {
+      } else {
         /* Don't want to sync undo in the current buffer. */
         ++no_u_sync;
         res = do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, 0, NULL);
@@ -791,7 +793,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
           if (e == NULL) {
             ml_append(lnum++, p, 0, FALSE);
             break;
-          } else   {
+          } else {
             *e = NUL;
             ml_append(lnum++, p, (int)(e - p + 1), FALSE);
             *e = '\n';
@@ -804,6 +806,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
         if (repeat == 0) {
           if (lnum > p_pvh)
             lnum = p_pvh;
+
           if (curwin->w_height < lnum) {
             win_setheight((int)lnum);
             resized = TRUE;
