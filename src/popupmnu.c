@@ -23,7 +23,6 @@
 #include "window.h"
 
 static pumitem_T *pum_array = NULL;     /* items of displayed pum */
-static int pum_size;                    /* nr of items in "pum_array" */
 static int pum_selected;                /* index of selected item or -1 */
 static int pum_first = 0;               /* index of top item */
 
@@ -467,7 +466,6 @@ redo:
   pum_width  = menu->loc.width;
 
   pum_array = menu->items.items;
-  pum_size  = menu->items.num_items;
 
   pum_base_width = widths.text;
   pum_kind_width = widths.kind;
@@ -518,6 +516,7 @@ void pum_redraw(void)
   int round;
   int n;
 
+  const int pum_size = pum_menu.items.num_items;
   /* Never display more than we have */
   if (pum_first > pum_size - pum_height)
     pum_first = pum_size - pum_height;
