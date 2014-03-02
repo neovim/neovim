@@ -23,7 +23,7 @@ int mch_chdir(char *path) {
     smsg((char_u *)"chdir(%s)", path);
     verbose_leave();
   }
-  return uv_chdir(path);
+  return uv_chdir(path).code;
 }
 
 /*
@@ -32,10 +32,11 @@ int mch_chdir(char *path) {
  */
 int mch_dirname(char_u *buf, int len)
 {
-  int errno;
-  if ((errno = uv_cwd((char *)buf, len)) != 0) {
-      STRCPY(buf, uv_strerror(errno));
-      return FAIL;
+  uv_err_t err = uv_cwd((char *) buf, len);
+
+  if (err.code != 0) {
+    STRCPY(buf, uv_strerror(err));
+    return FAIL;
   }
   return OK;
 }
