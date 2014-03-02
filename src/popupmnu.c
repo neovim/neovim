@@ -509,9 +509,9 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
                 / (pum_size - pum_height);
   }
 
-  int row = menu->loc.row;
-  const int pum_col = menu->loc.col;
-  const int pum_width  = menu->loc.width;
+  int row             = menu->loc.row;
+  const int pum_col   = menu->loc.col;
+  const int pum_width = menu->loc.width;
 
   int attr_norm   = highlight_attr[HLF_PNI];
   int attr_select = highlight_attr[HLF_PSI];
