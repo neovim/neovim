@@ -489,7 +489,7 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
-static void pum_redraw_internal(int scrollbar)
+static void pum_redraw_internal(int scrollbar, int selected)
 {
   const int pum_size   = pum_menu.items.num_items;
   const int pum_height = pum_menu.loc.height;
@@ -519,7 +519,7 @@ static void pum_redraw_internal(int scrollbar)
   int attr_thumb  = highlight_attr[HLF_PST];
   for (int i = 0; i < pum_height; ++i) {
     int idx = i + pum_first;
-    int attr = (idx == pum_selected) ? attr_select : attr_norm;
+    int attr = (idx == selected) ? attr_select : attr_norm;
 
     /* prepend a space if there is room */
     if (curwin->w_p_rl) {
@@ -677,7 +677,7 @@ static void pum_redraw_internal(int scrollbar)
  */
 void pum_redraw(void)
 {
-    pum_redraw_internal(pum_scrollbar);
+    pum_redraw_internal(pum_scrollbar, pum_selected);
 }
 
 static int pum_find_first_selected(pum_menu_T const *const menu, int first, const int selected)
