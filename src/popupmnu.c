@@ -476,6 +476,84 @@ void pum_display(pumitem_T *items, int num_items, int selected)
   pum_display_menu(&pum_menu, selected);
 }
 
+static void pum_draw_text(char_u *p, const int rtol, const int attr, const int pum_width,
+    const int row, int *const col, int *const totwidth)
+{
+  if(!p) return;
+
+  int width = 0;
+  char_u *s = NULL;
+  for (;; mb_ptr_adv(p)) {
+    if (s == NULL)
+      s = p;
+    const int chwidth = ptr2cells(p);
+    if (*p == NUL || *p == TAB || *totwidth + chwidth > pum_width) {
+      /* Display the text that fits or comes before a Tab.
+       * First convert it to printable characters. */
+      char_u saved = *p;
+      *p = NUL;
+      char_u *st = transstr(s);
+      *p = saved;
+
+      if (rtol) {
+        if (st != NULL) {
+          char_u *rt = reverse_text(st);
+
+          if (rt != NULL) {
+            char_u *rt_start = rt;
+            int size = vim_strsize(rt);
+            if (size > pum_width) {
+              do {
+                size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
+                mb_ptr_adv(rt);
+              } while (size > pum_width);
+
+              if (size < pum_width) {
+                /* Most left character requires
+                 * 2-cells but only 1 cell is
+                 * available on screen.  Put a
+                 * '<' on the left of the pum
+                 * item */
+                *(--rt) = '<';
+                size++;
+              }
+            }
+            screen_puts_len(rt, (int)STRLEN(rt),
+                row, *col - size + 1, attr);
+            vim_free(rt_start);
+          }
+        }
+        *col -= width;
+      } else {
+        if (st != NULL)
+          screen_puts_len(st, (int)STRLEN(st), row, *col, attr);
+        *col += width;
+      }
+
+      if (st)
+        vim_free(st);
+
+      if (*p != TAB)
+        break;
+
+      /* Display two spaces for a Tab. */
+      if (rtol) {
+        screen_puts_len((char_u *)"  ", 2, row, *col - 1,
+            attr);
+        *col -= 2;
+      } else {
+        screen_puts_len((char_u *)"  ", 2, row, *col, attr);
+        *col += 2;
+      }
+      *totwidth += 2;
+      s = NULL;                       /* start text at next char */
+      width = 0;
+    } else {
+      width += chwidth;
+    }
+  }
+}
+
 static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
 {
   const int num_items  = menu->items.num_items;
@@ -529,79 +607,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       case 3: p = item.pum_extra; break;
       }
 
-      if (p != NULL) {
-        int width = 0;
-        char_u *s = NULL;
-        for (;; mb_ptr_adv(p)) {
-          if (s == NULL)
-            s = p;
-          const int chwidth = ptr2cells(p);
-          if (*p == NUL || *p == TAB || totwidth + chwidth > pum_width) {
-            /* Display the text that fits or comes before a Tab.
-             * First convert it to printable characters. */
-            char_u saved = *p;
-            *p = NUL;
-            char_u *st = transstr(s);
-            *p = saved;
-
-            if (curwin->w_p_rl) {
-              if (st != NULL) {
-                char_u *rt = reverse_text(st);
-
-                if (rt != NULL) {
-                  char_u *rt_start = rt;
-                  int size = vim_strsize(rt);
-                  if (size > pum_width) {
-                    do {
-                      size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
-                      mb_ptr_adv(rt);
-                    } while (size > pum_width);
-
-                    if (size < pum_width) {
-                      /* Most left character requires
-                       * 2-cells but only 1 cell is
-                       * available on screen.  Put a
-                       * '<' on the left of the pum
-                       * item */
-                      *(--rt) = '<';
-                      size++;
-                    }
-                  }
-                  screen_puts_len(rt, (int)STRLEN(rt),
-                      row, col - size + 1, attr);
-                  vim_free(rt_start);
-                }
-              }
-              col -= width;
-            } else {
-              if (st != NULL)
-                screen_puts_len(st, (int)STRLEN(st), row, col, attr);
-              col += width;
-            }
-
-            if (st)
-              vim_free(st);
-
-            if (*p != TAB)
-              break;
-
-            /* Display two spaces for a Tab. */
-            if (curwin->w_p_rl) {
-              screen_puts_len((char_u *)"  ", 2, row, col - 1,
-                  attr);
-              col -= 2;
-            } else {
-              screen_puts_len((char_u *)"  ", 2, row, col, attr);
-              col += 2;
-            }
-            totwidth += 2;
-            s = NULL;                       /* start text at next char */
-            width = 0;
-          } else {
-            width += chwidth;
-          }
-        }
-      }
+      pum_draw_text(p, curwin->w_p_rl, attr, pum_width, row, &col, &totwidth);
 
       int n = round > 1 ? pum_kind_width + 1 : 1;
 
