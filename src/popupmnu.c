@@ -29,8 +29,6 @@ static int pum_base_width;              /* width of pum items base */
 static int pum_kind_width;              /* width of pum items kind column */
 static int pum_scrollbar;               /* TRUE when scrollbar present */
 
-static int pum_col;                     /* left column of pum */
-
 static int pum_do_redraw = FALSE;       /* do redraw anyway */
 
 static int pum_set_selected __ARGS((int n, int repeat));
@@ -463,8 +461,6 @@ redo:
   if(pum_set_loc(menu, &widths, &pum_scrollbar) == FAIL)
     return;
 
-  pum_col    = menu->loc.col;
-
   pum_base_width = widths.text;
   pum_kind_width = widths.kind;
 
@@ -515,6 +511,7 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
   }
 
   int row = pum_menu.loc.row;
+  const int pum_col = menu->loc.col;
 
   int attr_norm   = highlight_attr[HLF_PNI];
   int attr_select = highlight_attr[HLF_PSI];
