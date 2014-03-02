@@ -282,7 +282,7 @@
 # ifdef HAVE_RENAME
 #  define mch_rename(src, dst) rename(src, dst)
 # else
-int mch_rename __ARGS((const char *src, const char *dest);
+int mch_rename(const char *src, const char *dest);
 # endif
 #  ifdef __MVS__
 /* on OS390 Unix getenv() doesn't return a pointer to persistent
