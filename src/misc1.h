@@ -1,12 +1,6 @@
 #ifndef NEOVIM_MISC1_H
 #define NEOVIM_MISC1_H
 /* misc1.c */
-int get_indent __ARGS((void));
-int get_indent_lnum __ARGS((linenr_T lnum));
-int get_indent_buf __ARGS((buf_T *buf, linenr_T lnum));
-int get_indent_str __ARGS((char_u *ptr, int ts));
-int set_indent __ARGS((int size, int flags));
-int get_number_indent __ARGS((linenr_T lnum));
 int open_line __ARGS((int dir, int flags, int second_line_indent));
 int get_leader_len __ARGS((char_u *line, char_u **flags, int backward,
                            int include_space));
