@@ -622,14 +622,13 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
       int n = round > 1 ? pum_kind_width + 1 : 1;
 
       /* Stop when there is nothing more to display. */
-      if (round == 3
+      int finished = round == 3
           || (round == 2 && item.pum_extra == NULL)
           || (round == 1 && item.pum_kind == NULL
               && item.pum_extra == NULL)
-          || pum_base_width + n >= pum_width)
-      {
+          || pum_base_width + n >= pum_width;
+      if (finished)
         break;
-      }
 
       if (curwin->w_p_rl) {
         screen_fill(row, row + 1, pum_col - pum_base_width - n + 1,
