@@ -497,29 +497,15 @@ void pum_display(pumitem_T *items, int num_items, int selected)
  */
 void pum_redraw(void)
 {
-  int row = pum_menu.loc.row;
-  int col;
-  int attr_norm = highlight_attr[HLF_PNI];
-  int attr_select = highlight_attr[HLF_PSI];
-  int attr_scroll = highlight_attr[HLF_PSB];
-  int attr_thumb = highlight_attr[HLF_PST];
-  int attr;
-  int i;
-  int idx;
-  char_u      *s;
-  char_u      *p = NULL;
-  int totwidth, width, w;
-  int thumb_pos = 0;
-  int thumb_heigth = 1;
-  int round;
-  int n;
-
   const int pum_size = pum_menu.items.num_items;
   const int pum_height = pum_menu.loc.height;
+
   /* Never display more than we have */
   if (pum_first > pum_size - pum_height)
     pum_first = pum_size - pum_height;
 
+  int thumb_pos = 0;
+  int thumb_heigth = 1;
   if (pum_scrollbar) {
     thumb_heigth = pum_height * pum_height / pum_size;
     if (thumb_heigth == 0)
@@ -529,9 +515,16 @@ void pum_redraw(void)
                 / (pum_size - pum_height);
   }
 
-  for (i = 0; i < pum_height; ++i) {
-    idx = i + pum_first;
-    attr = (idx == pum_selected) ? attr_select : attr_norm;
+  int row = pum_menu.loc.row;
+  int col;
+
+  int attr_norm = highlight_attr[HLF_PNI];
+  int attr_select = highlight_attr[HLF_PSI];
+  int attr_scroll = highlight_attr[HLF_PSB];
+  int attr_thumb = highlight_attr[HLF_PST];
+  for (int i = 0; i < pum_height; ++i) {
+    int idx = i + pum_first;
+    int attr = (idx == pum_selected) ? attr_select : attr_norm;
 
     /* prepend a space if there is room */
     if (curwin->w_p_rl) {
@@ -543,10 +536,11 @@ void pum_redraw(void)
     /* Display each entry, use two spaces for a Tab.
      * Do this 3 times: For the main text, kind and extra info */
     col = pum_col;
-    totwidth = 0;
-    for (round = 1; round <= 3; ++round) {
-      width = 0;
-      s = NULL;
+    int totwidth = 0;
+    for (int round = 1; round <= 3; ++round) {
+      int width = 0;
+      char_u *s = NULL;
+      char_u *p = NULL;
       switch (round) {
       case 1: p = pum_array[idx].pum_text; break;
       case 2: p = pum_array[idx].pum_kind; break;
@@ -556,7 +550,7 @@ void pum_redraw(void)
         for (;; mb_ptr_adv(p)) {
           if (s == NULL)
             s = p;
-          w = ptr2cells(p);
+          int w = ptr2cells(p);
           if (*p == NUL || *p == TAB || totwidth + w > pum_width) {
             /* Display the text that fits or comes before a Tab.
              * First convert it to printable characters. */
@@ -627,6 +621,7 @@ void pum_redraw(void)
             width += w;
         }
 
+      int n;
       if (round > 1)
         n = pum_kind_width + 1;
       else
