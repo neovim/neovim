@@ -22,20 +22,6 @@
 #include "search.h"
 #include "window.h"
 
-static int pum_selected;                /* index of selected item or -1 */
-static int pum_first = 0;               /* index of top item */
-
-static int pum_base_width;              /* width of pum items base */
-static int pum_kind_width;              /* width of pum items kind column */
-static int pum_scrollbar;               /* TRUE when scrollbar present */
-
-static int pum_do_redraw = FALSE;       /* do redraw anyway */
-
-static int pum_set_selected __ARGS((int n, int repeat));
-
-#define PUM_DEF_HEIGHT 10
-#define PUM_DEF_WIDTH  15
-
 /**
  * Location for a popup menu.
  */
@@ -80,8 +66,6 @@ static pumitem_T pum_menu_getitem(pum_menu_T const *const menu, int index)
   return menu->items.items[index];
 }
 
-static pum_menu_T pum_menu;
-
 /**
  * Widths for the menuitem with the longest field in a collection of
  * pum_items_T.
@@ -91,6 +75,22 @@ typedef struct {
   int kind;
   int extra;
 } pum_menu_maxwidths_T;
+
+static int pum_selected;                /* index of selected item or -1 */
+static int pum_first = 0;               /* index of top item */
+
+static int pum_base_width;              /* width of pum items base */
+static int pum_kind_width;              /* width of pum items kind column */
+static int pum_scrollbar;               /* TRUE when scrollbar present */
+
+static pum_menu_T pum_menu;             /* menu currently being displayed */
+
+static int pum_do_redraw = FALSE;       /* do redraw anyway */
+
+static int pum_set_selected __ARGS((int n, int repeat));
+
+#define PUM_DEF_HEIGHT 10
+#define PUM_DEF_WIDTH  15
 
 /**
  * Figure out the initial height of the pum.
