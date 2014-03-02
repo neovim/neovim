@@ -4109,156 +4109,227 @@ void ex_buffer_all(exarg_T *eap)
 
 static int chk_modeline __ARGS((linenr_T, int));
 
-/*
- * do_modelines() - process mode lines for the current file
+/**
+ * Process mode lines for the current buffer
+ *
+ * Modelines will only be processed if "modeline" is set and "modelines" is
+ * greater than 0.
+ *
+ * Parsing modelines stops if there are any errors in the options being set or
+ * problems allocating memory.
+ *
+ * The processing starts at the first line, and will continue "modelines"
+ * number of lines down. If all these succeeds (or doesn't have modelines), it
+ * will continue parsing from the last line and "modelines" number of lines up,
+ * again stopping only if there are errors.
+ *
+ * If the buffer is less than 2*"modelines" long, some lines might be parsed
+ * twice because of the rules above.
+ * TODO (simendjo): Is this a problem?
+ *
+ * See alse chk_modeline() and find_modeline_options().
  *
  * "flags" can be:
- * OPT_WINONLY	    only set options local to window
- * OPT_NOWIN	    don't set options local to window
- *
- * Returns immediately if the "ml" option isn't set.
+ * OPT_WINONLY  only set options local to window
+ * OPT_NOWIN    don't set options local to window
  */
 void do_modelines(int flags)
 {
-  linenr_T lnum;
-  int nmlines;
-  static int entered = 0;
+  assert(curbuf);
+  if (!curbuf->b_p_ml) return; // "modeline" is not set
 
-  if (!curbuf->b_p_ml || (nmlines = (int)p_mls) == 0)
-    return;
+  int nmlines = (int)p_mls;
+  if (nmlines == 0) return; // "modelines" is 0
 
   /* Disallow recursive entry here.  Can happen when executing a modeline
    * triggers an autocommand, which reloads modelines with a ":do". */
+  static int entered = 0;
   if (entered)
     return;
 
   ++entered;
-  for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count && lnum <= nmlines;
-       ++lnum)
-    if (chk_modeline(lnum, flags) == FAIL)
-      nmlines = 0;
 
-  for (lnum = curbuf->b_ml.ml_line_count; lnum > 0 && lnum > nmlines
-       && lnum > curbuf->b_ml.ml_line_count - nmlines; --lnum)
+  /* We now check for a valid modeline. We break on the first modeline parsing
+   * fails. */
+
+  // Check the top "modelines" lines of the current buffer for modelines
+  for (linenr_T lnum = 1;
+       lnum <= curbuf->b_ml.ml_line_count && lnum <= nmlines;
+        ++lnum)
+  {
     if (chk_modeline(lnum, flags) == FAIL)
-      nmlines = 0;
+      goto L_finished;
+  }
+
+  // Check the bottom "modelines" lines of the current buffer for modelines
+  for (linenr_T lnum = curbuf->b_ml.ml_line_count;
+       lnum > 0 && lnum > nmlines && lnum > curbuf->b_ml.ml_line_count - nmlines;
+       --lnum)
+  {
+    if (chk_modeline(lnum, flags) == FAIL)
+      goto L_finished;
+  }
+
+L_finished:
   --entered;
 }
 
 #include "version_defs.h"            /* for version number */
 
-/*
- * chk_modeline() - check a single line for a mode string
- * Return FAIL if an error encountered.
- */
-static int 
-chk_modeline (
-    linenr_T lnum,
-    int flags                      /* Same as for do_modelines(). */
-)
-{
-  char_u      *s;
-  char_u      *e;
-  char_u      *linecopy;                /* local copy of any modeline found */
-  int prev;
-  int vers;
-  int end;
-  int retval = OK;
-  char_u      *save_sourcing_name;
-  linenr_T save_sourcing_lnum;
-  scid_T save_SID;
+static char_u *find_modeline_options(char_u *line);
 
-  prev = -1;
-  for (s = ml_get(lnum); *s != NUL; ++s) {
-    if (prev == -1 || vim_isspace(prev)) {
-      if ((prev != -1 && STRNCMP(s, "ex:", (size_t)3) == 0)
-          || STRNCMP(s, "vi:", (size_t)3) == 0)
+/*
+ * Check a single line for a mode string and process the commands if found.
+ *
+ * See ":help modeline" and find_modeline_options
+ *
+ * "flags" can be:
+ * OPT_WINONLY  only set options local to window
+ * OPT_NOWIN    don't set options local to window
+ *
+ * Returns FAIL if it cannot allocate memory or execute the modeline.
+ * Returns OK if no modeline specifier is found at the line, or if it executes
+ * correctly.
+ */
+static int chk_modeline(linenr_T lnum, int flags)
+{
+  char_u *start = find_modeline_options(ml_get(lnum));
+  if (*start == NUL)
+    return OK; // No modeline on this line
+
+  // copy the line, it *will* change
+  char_u *linecopy;
+  start = linecopy = vim_strsave(start);
+  if (!linecopy)
+    return FAIL; // TODO (simendsjo): This means out-of-memory for the copy?
+
+  linenr_T save_sourcing_lnum = sourcing_lnum;
+  char_u *save_sourcing_name  = sourcing_name;
+
+  sourcing_lnum = lnum; /* prepare for emsg() */
+  sourcing_name = (char_u *)"modelines";
+
+  // Parse modeline options and execute commands
+
+  int retval = OK;
+  int found_end = FALSE;
+  while (found_end == FALSE) {
+    start = skipwhite(start);
+    if (*start == NUL)
+      break;
+
+    /*
+     * Find end of set command: ':' or end of line.
+     * Skip over "\:", replacing it with ":".
+     */
+    char_u *end;
+    for (end = start; *end != ':' && *end != NUL; ++end)
+      if (end[0] == '\\' && end[1] == ':')
+        STRMOVE(end, end + 1);
+    if (*end == NUL)
+      found_end = TRUE;
+
+    /*
+     * If there is a "set" command, require a terminating ':' and
+     * ignore the stuff after the ':'.
+     *
+     * "vi:set opt opt opt: foo" -- foo not interpreted
+     * "vi:opt opt opt: foo" -- foo interpreted
+     *
+     * Accept "se" for compatibility with Elvis.
+     */
+    if (STRNCMP(start, "set ", (size_t)4) == 0 ||
+        STRNCMP(start, "se " , (size_t)3) == 0)
+    {
+      if (*end != ':') // no terminating ':'?
         break;
-      /* Accept both "vim" and "Vim". */
+      found_end = TRUE;
+      start = vim_strchr(start, ' ') + 1;
+    }
+    *end = NUL; // truncate the set command
+
+    // skip over an empty "::"
+    if (*start != NUL) {
+      scid_T save_SID = current_SID;
+      current_SID     = SID_MODELINE;
+      retval          = do_set(start, OPT_MODELINE | OPT_LOCAL | flags);
+      current_SID     = save_SID;
+      if (retval == FAIL) // stop if error found
+        break;
+    }
+    start = end + 1; // advance to next part
+  }
+
+  sourcing_lnum = save_sourcing_lnum;
+  sourcing_name = save_sourcing_name;
+
+  vim_free(linecopy);
+  return retval;
+}
+
+/**
+ * Find the starting position for modeline options in 'line'
+ *
+ * The specifier might be anywhere in the line as long as it's at the first
+ * column or preceeded by a space.
+ *
+ * See ':help modeline' for more info on how the valid spec looks like.
+ *
+ * Returns the string where the first character is at the position after the
+ * first ':' if a modeline has been successfully parsed.
+ * If no modeline exists, the first character will be NUL.
+ */
+static char_u *find_modeline_options(char_u *line)
+{
+  int prev = -1; // -1 represents the first call.
+  char_u *s;
+  for (s = line; *s != NUL; ++s) {
+    // Check for old modeline forms "vi:" and "ex:" either as the first
+    // characters of the line, or if it's following a space
+    if (prev == -1 || vim_isspace(prev)) {
+      if ((prev != -1 && STRNCMP(s, "ex:", (size_t)3) == 0) ||
+          STRNCMP(s, "vi:", (size_t)3) == 0)
+      {
+        break;
+      }
+
+      // Accept both "vim" and "Vim".
       if ((s[0] == 'v' || s[0] == 'V') && s[1] == 'i' && s[2] == 'm') {
+        // Parses optional version specifier for "vim" and "Vim"
+        char_u *e;
         if (s[3] == '<' || s[3] == '=' || s[3] == '>')
           e = s + 4;
         else
           e = s + 3;
-        vers = getdigits(&e);
+
+        int vers = getdigits(&e);
         if (*e == ':'
             && (s[0] != 'V'
                 || STRNCMP(skipwhite(e + 1), "set", 3) == 0)
             && (s[3] == ':'
                 || (VIM_VERSION_100 >= vers && isdigit(s[3]))
-                || (VIM_VERSION_100 < vers && s[3] == '<')
-                || (VIM_VERSION_100 > vers && s[3] == '>')
+                || (VIM_VERSION_100 <  vers && s[3] == '<')
+                || (VIM_VERSION_100 >  vers && s[3] == '>')
                 || (VIM_VERSION_100 == vers && s[3] == '=')))
-          break;
+        {
+            break;
+        }
       }
     }
     prev = *s;
   }
 
-  if (*s) {
-    do                                  /* skip over "ex:", "vi:" or "vim:" */
-      ++s;
-    while (s[-1] != ':');
-
-    s = linecopy = vim_strsave(s);      /* copy the line, it will change */
-    if (linecopy == NULL)
-      return FAIL;
-
-    save_sourcing_lnum = sourcing_lnum;
-    save_sourcing_name = sourcing_name;
-    sourcing_lnum = lnum;               /* prepare for emsg() */
-    sourcing_name = (char_u *)"modelines";
-
-    end = FALSE;
-    while (end == FALSE) {
-      s = skipwhite(s);
-      if (*s == NUL)
-        break;
-
-      /*
-       * Find end of set command: ':' or end of line.
-       * Skip over "\:", replacing it with ":".
-       */
-      for (e = s; *e != ':' && *e != NUL; ++e)
-        if (e[0] == '\\' && e[1] == ':')
-          STRMOVE(e, e + 1);
-      if (*e == NUL)
-        end = TRUE;
-
-      /*
-       * If there is a "set" command, require a terminating ':' and
-       * ignore the stuff after the ':'.
-       * "vi:set opt opt opt: foo" -- foo not interpreted
-       * "vi:opt opt opt: foo" -- foo interpreted
-       * Accept "se" for compatibility with Elvis.
-       */
-      if (STRNCMP(s, "set ", (size_t)4) == 0
-          || STRNCMP(s, "se ", (size_t)3) == 0) {
-        if (*e != ':')                  /* no terminating ':'? */
-          break;
-        end = TRUE;
-        s = vim_strchr(s, ' ') + 1;
-      }
-      *e = NUL;                         /* truncate the set command */
-
-      if (*s != NUL) {                  /* skip over an empty "::" */
-        save_SID = current_SID;
-        current_SID = SID_MODELINE;
-        retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);
-        current_SID = save_SID;
-        if (retval == FAIL)                     /* stop if error found */
-          break;
-      }
-      s = e + 1;                        /* advance to next part */
-    }
-
-    sourcing_lnum = save_sourcing_lnum;
-    sourcing_name = save_sourcing_name;
-
-    vim_free(linecopy);
+  // *s now points at the first character of the modeline, or outside the line
+  assert(*s == NUL || *s == 'e' || *s == 'v' || *s == 'V');
+  if (*s != NUL) {
+    // skip the modeline identifier ("vim:" etc)
+    while (s[0] != ':') ++s;
+    ++s;
   }
-  return retval;
+
+  return s;
 }
+
 
 int read_viminfo_bufferlist(vir_T *virp, int writing)
 {
