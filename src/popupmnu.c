@@ -550,12 +550,11 @@ static void pum_redraw_internal(pum_menu_T *menu, int scrollbar, int selected)
           if (*p == NUL || *p == TAB || totwidth + w > pum_width) {
             /* Display the text that fits or comes before a Tab.
              * First convert it to printable characters. */
-            char_u  *st;
             char_u saved = *p;
-
             *p = NUL;
-            st = transstr(s);
+            char_u *st = transstr(s);
             *p = saved;
+
             if (curwin->w_p_rl) {
               if (st != NULL) {
                 char_u  *rt = reverse_text(st);
