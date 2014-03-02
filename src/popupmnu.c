@@ -482,75 +482,82 @@ static void pum_draw_text(char_u *txt, const int rtol, const int attr, const int
   assert(txt);
 
   int width = 0;
-  char_u *ch = NULL;
+  char_u *start = NULL; // start of the string we wish to print
+
   for (;; mb_ptr_adv(txt)) {
-    if (ch == NULL)
-      ch = txt;
+    if (start == NULL) start = txt; // start of new string
     const int chwidth = ptr2cells(txt);
-    if (*txt == NUL || *txt == TAB || *totwidth + chwidth > pum_width) {
-      /* Display the text that fits or comes before a Tab.
-       * First convert it to printable characters. */
-      char_u saved = *txt;
-      *txt = NUL;
-      char_u *st = transstr(ch);
-      *txt = saved;
 
-      if (rtol) {
-        if (st != NULL) {
-          char_u *rt = reverse_text(st);
-
-          if (rt != NULL) {
-            char_u *rt_start = rt;
-            int size = vim_strsize(rt);
-            if (size > pum_width) {
-              do {
-                size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
-                mb_ptr_adv(rt);
-              } while (size > pum_width);
-
-              if (size < pum_width) {
-                /* Most left character requires
-                 * 2-cells but only 1 cell is
-                 * available on screen.  Put a
-                 * '<' on the left of the pum
-                 * item */
-                *(--rt) = '<';
-                size++;
-              }
-            }
-            screen_puts_len(rt, (int)STRLEN(rt),
-                row, *col - size + 1, attr);
-            vim_free(rt_start);
-          }
-        }
-        *col -= width;
-      } else {
-        if (st != NULL)
-          screen_puts_len(st, (int)STRLEN(st), row, *col, attr);
-        *col += width;
-      }
-
-      if (st)
-        vim_free(st);
-
-      if (*txt != TAB)
-        break;
-
-      /* Display two spaces for a Tab. */
-      if (rtol) {
-        screen_puts_len((char_u *)"  ", 2, row, *col - 1,
-            attr);
-        *col -= 2;
-      } else {
-        screen_puts_len((char_u *)"  ", 2, row, *col, attr);
-        *col += 2;
-      }
-      *totwidth += 2;
-      ch = NULL;                       /* start text at next char */
-      width = 0;
-    } else {
+    // We only break to print the string on the following conditions
+    if (!(*txt == NUL || *txt == TAB || *totwidth + chwidth > pum_width)) {
       width += chwidth;
+      continue;
     }
+
+    // We must print our string from start to txt
+
+    /* Display the text that fits or comes before a Tab.
+     * First convert it to printable characters. */
+
+    // temporary store a null so transstr only works up to txts position
+    char_u saved = *txt;
+    *txt = NUL;
+    char_u *st = transstr(start);
+    *txt = saved;
+
+    if (rtol) {
+      if (st != NULL) { // only draw if we could allocate memory
+        char_u *rt = reverse_text(st);
+
+        if (rt != NULL) { // only draw if we could allocate memory
+          char_u *rt_start = rt;
+          int size = vim_strsize(rt);
+          // TODO (simendsjo): ? What is this?
+          if (size > pum_width) {
+            do {
+              size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
+              mb_ptr_adv(rt);
+            } while (size > pum_width);
+
+            if (size < pum_width) {
+              /* Most left character requires
+               * 2-cells but only 1 cell is
+               * available on screen.  Put a
+               * '<' on the left of the pum
+               * item */
+              *(--rt) = '<';
+              size++;
+            }
+          }
+
+          screen_puts_len(rt, (int)STRLEN(rt), row, *col - size + 1, attr);
+          vim_free(rt_start);
+        }
+      }
+      *col -= width;
+    } else { // left-to-right
+      if (st != NULL) // only draw if we could allocate memory
+        screen_puts_len(st, (int)STRLEN(st), row, *col, attr);
+      *col += width;
+    }
+
+    if (st)
+      vim_free(st);
+
+    if (*txt != TAB)
+      break; // all of txt has been written, or we have no more room
+
+    /* Display two spaces for a Tab. */
+    if (rtol) {
+      screen_puts_len((char_u *)"  ", 2, row, *col - 1, attr);
+      *col -= 2;
+    } else {
+      screen_puts_len((char_u *)"  ", 2, row, *col, attr);
+      *col += 2;
+    }
+    *totwidth += 2;
+    start = NULL;                       /* start text at next char */
+    width = 0;
   }
 }
 
