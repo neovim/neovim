@@ -791,7 +791,8 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   /* Find first item in the pum */
   pum_first = pum_find_first_selected(menu, pum_first, selected);
 
-  int should_show_extra = pum_menu_getitem(menu, selected).pum_info != NULL &&
+  char_u *selected_info = pum_menu_getitem(menu, selected).pum_info;
+  int should_show_extra = selected_info != NULL &&
     Rows > 10 &&
     repeat <= 1 &&
     vim_strchr(p_cot, 'p') != NULL;
@@ -822,7 +823,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int sel
   if (res != OK)
     goto L_done;
 
-  linenr_T lnum = pum_fill_buffer(pum_menu_getitem(menu, selected).pum_info);
+  linenr_T lnum = pum_fill_buffer(selected_info);
 
   /* Increase the height of the preview window to show the
    * text, but no more than 'previewheight' lines. */
