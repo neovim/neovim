@@ -1,12 +1,12 @@
 #ifndef NEOVIM_DIGRAPH_H
 #define NEOVIM_DIGRAPH_H
 /* digraph.c */
-int do_digraph __ARGS((int c));
-int get_digraph __ARGS((int cmdline));
-int getdigraph __ARGS((int char1, int char2, int meta_char));
-void putdigraph __ARGS((char_u *str));
-void listdigraphs __ARGS((void));
-char_u *keymap_init __ARGS((void));
-void ex_loadkeymap __ARGS((exarg_T *eap));
+int do_digraph(int c);
+int get_digraph(int cmdline);
+int getdigraph(int char1, int char2, int meta_char);
+void putdigraph(char_u *str);
+void listdigraphs(void);
+char_u *keymap_init(void);
+void ex_loadkeymap(exarg_T *eap);
 /* vim: set ft=c : */
 #endif /* NEOVIM_DIGRAPH_H */

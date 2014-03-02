@@ -243,34 +243,34 @@ typedef enum {
   , UB_CRYPT            /* update crypt key */
 } upd_block0_T;
 
-static void ml_set_b0_crypt __ARGS((buf_T *buf, ZERO_BL *b0p));
-static int ml_check_b0_id __ARGS((ZERO_BL *b0p));
-static void ml_upd_block0 __ARGS((buf_T *buf, upd_block0_T what));
-static void set_b0_fname __ARGS((ZERO_BL *, buf_T *buf));
-static void set_b0_dir_flag __ARGS((ZERO_BL *b0p, buf_T *buf));
-static void add_b0_fenc __ARGS((ZERO_BL *b0p, buf_T *buf));
-static time_t swapfile_info __ARGS((char_u *));
-static int recov_file_names __ARGS((char_u **, char_u *, int prepend_dot));
-static int ml_append_int __ARGS((buf_T *, linenr_T, char_u *, colnr_T, int, int));
-static int ml_delete_int __ARGS((buf_T *, linenr_T, int));
-static char_u *findswapname __ARGS((buf_T *, char_u **, char_u *));
-static void ml_flush_line __ARGS((buf_T *));
-static bhdr_T *ml_new_data __ARGS((memfile_T *, int, int));
-static bhdr_T *ml_new_ptr __ARGS((memfile_T *));
-static bhdr_T *ml_find_line __ARGS((buf_T *, linenr_T, int));
-static int ml_add_stack __ARGS((buf_T *));
-static void ml_lineadd __ARGS((buf_T *, int));
-static int b0_magic_wrong __ARGS((ZERO_BL *));
+static void ml_set_b0_crypt(buf_T *buf, ZERO_BL *b0p);
+static int ml_check_b0_id(ZERO_BL *b0p);
+static void ml_upd_block0(buf_T *buf, upd_block0_T what);
+static void set_b0_fname(ZERO_BL *, buf_T *buf);
+static void set_b0_dir_flag(ZERO_BL *b0p, buf_T *buf);
+static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf);
+static time_t swapfile_info(char_u *);
+static int recov_file_names(char_u **, char_u *, int prepend_dot);
+static int ml_append_int(buf_T *, linenr_T, char_u *, colnr_T, int, int);
+static int ml_delete_int(buf_T *, linenr_T, int);
+static char_u *findswapname(buf_T *, char_u **, char_u *);
+static void ml_flush_line(buf_T *);
+static bhdr_T *ml_new_data(memfile_T *, int, int);
+static bhdr_T *ml_new_ptr(memfile_T *);
+static bhdr_T *ml_find_line(buf_T *, linenr_T, int);
+static int ml_add_stack(buf_T *);
+static void ml_lineadd(buf_T *, int);
+static int b0_magic_wrong(ZERO_BL *);
 #ifdef CHECK_INODE
-static int fnamecmp_ino __ARGS((char_u *, char_u *, long));
+static int fnamecmp_ino(char_u *, char_u *, long);
 #endif
-static void long_to_char __ARGS((long, char_u *));
-static long char_to_long __ARGS((char_u *));
+static void long_to_char(long, char_u *);
+static long char_to_long(char_u *);
 #if defined(UNIX) || defined(WIN3264)
-static char_u *make_percent_swname __ARGS((char_u *dir, char_u *name));
+static char_u *make_percent_swname(char_u *dir, char_u *name);
 #endif
-static void ml_crypt_prepare __ARGS((memfile_T *mfp, off_t offset, int reading));
-static void ml_updatechunk __ARGS((buf_T *buf, long line, long len, int updtype));
+static void ml_crypt_prepare(memfile_T *mfp, off_t offset, int reading);
+static void ml_updatechunk(buf_T *buf, long line, long len, int updtype);
 
 /*
  * Open a new memline for "buf".
@@ -3506,7 +3506,7 @@ get_file_in_dir (
   return retval;
 }
 
-static void attention_message __ARGS((buf_T *buf, char_u *fname));
+static void attention_message(buf_T *buf, char_u *fname);
 
 /*
  * Print the ATTENTION message: info about an existing swap file.
@@ -3557,7 +3557,7 @@ attention_message (
   --no_wait_return;
 }
 
-static int do_swapexists __ARGS((buf_T *buf, char_u *fname));
+static int do_swapexists(buf_T *buf, char_u *fname);
 
 /*
  * Trigger the SwapExists autocommands.

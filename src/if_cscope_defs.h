@@ -37,7 +37,7 @@
 
 typedef struct {
   char *  name;
-  int (*func)__ARGS((exarg_T *eap));
+  int (*func)(exarg_T *eap);
   char *  help;
   char *  usage;
   int cansplit;                 /* if supports splitting window */
