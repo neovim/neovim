@@ -77,6 +77,16 @@ typedef struct {
   pum_items_T items;    /// Menuitems
 } pum_menu_T;
 
+
+static pumitem_T pum_menu_getitem(pum_menu_T const *const menu, int index)
+{
+  assert(menu);
+  assert(index >= 0);
+  assert(index < menu->items.num_items);
+
+  return menu->items.items[index];
+}
+
 static pum_menu_T pum_menu;
 
 /**
@@ -481,7 +491,7 @@ redo:
  */
 void pum_display(pumitem_T *items, int num_items, int selected)
 {
-  pum_menu = {
+  pum_menu = (pum_menu_T) {
     {0, 0, 0, 0},
     {items, num_items}
   };
@@ -666,52 +676,48 @@ void pum_redraw(void)
   }
 }
 
-static int pum_set_selected_internal(pum_menu_T const *const menu, const int n, const int repeat)
+static int pum_set_selected_internal(pum_menu_T const *const menu, const int selected, const int repeat)
 {
-  pumitem_T const *const pum_array = menu->items.items;
-  const int pum_size = menu->items.num_items;
-  const int pum_height = menu->loc.height;
+  const int height = menu->loc.height;
 
   int resized = FALSE;
-  int context = pum_height / 2;
+  int context = height / 2;
 
-  pum_selected = n;
-
-  if (pum_selected >= 0 && pum_selected < pum_size) {
-    if (pum_first > pum_selected - 4) {
+  if (selected >= 0 && selected < menu->items.num_items) {
+    if (pum_first > selected - 4) {
       /* scroll down; when we did a jump it's probably a PageUp then
        * scroll a whole page */
-      if (pum_first > pum_selected - 2) {
-        pum_first -= pum_height - 2;
+      if (pum_first > selected - 2) {
+        pum_first -= height - 2;
         if (pum_first < 0)
           pum_first = 0;
-        else if (pum_first > pum_selected)
-          pum_first = pum_selected;
+        else if (pum_first > selected)
+          pum_first = selected;
       } else
-        pum_first = pum_selected;
-    } else if (pum_first < pum_selected - pum_height + 5)   {
+        pum_first = selected;
+    } else if (pum_first < selected - height + 5)   {
       /* scroll up; when we did a jump it's probably a PageDown then
        * scroll a whole page */
-      if (pum_first < pum_selected - pum_height + 1 + 2) {
-        pum_first += pum_height - 2;
-        if (pum_first < pum_selected - pum_height + 1)
-          pum_first = pum_selected - pum_height + 1;
+      if (pum_first < selected - height + 1 + 2) {
+        pum_first += height - 2;
+        if (pum_first < selected - height + 1)
+          pum_first = selected - height + 1;
       } else
-        pum_first = pum_selected - pum_height + 1;
+        pum_first = selected - height + 1;
     }
 
     /* Give a few lines of context when possible. */
     if (context > 3)
       context = 3;
-    if (pum_height > 2) {
-      if (pum_first > pum_selected - context) {
+    if (height > 2) {
+      if (pum_first > selected - context) {
         /* scroll down */
-        pum_first = pum_selected - context;
+        pum_first = selected - context;
         if (pum_first < 0)
           pum_first = 0;
-      } else if (pum_first < pum_selected + context - pum_height + 1)   {
+      } else if (pum_first < selected + context - height + 1)   {
         /* scroll up */
-        pum_first = pum_selected + context - pum_height + 1;
+        pum_first = selected + context - height + 1;
       }
     }
 
@@ -722,7 +728,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int n, 
      * Skip this also when there is not much room.
      * NOTE: Be very careful not to sync undo!
      */
-    if (pum_array[pum_selected].pum_info != NULL
+    if (pum_menu_getitem(menu, selected).pum_info != NULL
         && Rows > 10
         && repeat <= 1
         && vim_strchr(p_cot, 'p') != NULL) {
@@ -765,7 +771,7 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int n, 
           char_u      *p, *e;
           linenr_T lnum = 0;
 
-          for (p = pum_array[pum_selected].pum_info; *p != NUL; ) {
+          for (p = pum_menu_getitem(menu, selected).pum_info; *p != NUL; ) {
             e = vim_strchr(p, '\n');
             if (e == NULL) {
               ml_append(lnum++, p, 0, FALSE);
@@ -844,9 +850,10 @@ static int pum_set_selected_internal(pum_menu_T const *const menu, const int n, 
  * Returns TRUE when the window was resized and the location of the popup menu
  * must be recomputed.
  */
-static int pum_set_selected(int n, int repeat)
+static int pum_set_selected(int selected, int repeat)
 {
-    return pum_set_selected_internal(&pum_menu, n, repeat);
+  pum_selected = selected;
+  return pum_set_selected_internal(&pum_menu, selected, repeat);
 }
 
 /*
