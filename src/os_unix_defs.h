@@ -42,16 +42,6 @@
  * Sun defines FILE on SunOS 4.x.x, Solaris has a typedef for FILE
  */
 
-#ifndef __ARGS
-/* The AIX VisualAge cc compiler defines __EXTENDED__ instead of __STDC__
- * because it includes pre-ansi features. */
-# if defined(__STDC__) || defined(__GNUC__) || defined(__EXTENDED__)
-#  define __ARGS(x) x
-# else
-#  define __ARGS(x) ()
-# endif
-#endif
-
 /* always use unlink() to remove files */
 #  define vim_mkdir(x, y) mkdir((char *)(x), y)
 #  define mch_rmdir(x) rmdir((char *)(x))
@@ -133,10 +123,6 @@
 
 #ifdef HAVE_PWD_H
 # include <pwd.h>
-#endif
-
-#ifdef __COHERENT__
-# undef __ARGS
 #endif
 
 /*
@@ -292,7 +278,7 @@
 # ifdef HAVE_RENAME
 #  define mch_rename(src, dst) rename(src, dst)
 # else
-int mch_rename __ARGS((const char *src, const char *dest));
+int mch_rename(const char *src, const char *dest);
 # endif
 #  ifdef __MVS__
 /* on OS390 Unix getenv() doesn't return a pointer to persistent

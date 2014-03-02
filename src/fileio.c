@@ -69,27 +69,27 @@ static int crypt_seed_len[] = {0, 8};
 /* Is there any system that doesn't have access()? */
 #define USE_MCH_ACCESS
 
-static char_u *next_fenc __ARGS((char_u **pp));
-static char_u *readfile_charconvert __ARGS((char_u *fname, char_u *fenc,
-                                            int *fdp));
-static void check_marks_read __ARGS((void));
-static int crypt_method_from_magic __ARGS((char *ptr, int len));
-static char_u *check_for_cryptkey __ARGS((char_u *cryptkey, char_u *ptr,
-                                          long *sizep, off_t *filesizep,
-                                          int newfile, char_u *fname,
-                                          int *did_ask));
+static char_u *next_fenc(char_u **pp);
+static char_u *readfile_charconvert(char_u *fname, char_u *fenc,
+                                            int *fdp);
+static void check_marks_read(void);
+static int crypt_method_from_magic(char *ptr, int len);
+static char_u *check_for_cryptkey(char_u *cryptkey, char_u *ptr,
+                                  long *sizep, off_t *filesizep,
+                                  int newfile, char_u *fname,
+                                  int *did_ask);
 #ifdef UNIX
-static void set_file_time __ARGS((char_u *fname, time_t atime, time_t mtime));
+static void set_file_time(char_u *fname, time_t atime, time_t mtime);
 #endif
-static int set_rw_fname __ARGS((char_u *fname, char_u *sfname));
-static int msg_add_fileformat __ARGS((int eol_type));
-static void msg_add_eol __ARGS((void));
-static int check_mtime __ARGS((buf_T *buf, struct stat *s));
-static int time_differs __ARGS((long t1, long t2));
-static int apply_autocmds_exarg __ARGS((event_T event, char_u *fname, char_u *
-                                        fname_io, int force, buf_T *buf,
-                                        exarg_T *eap));
-static int au_find_group __ARGS((char_u *name));
+static int set_rw_fname(char_u *fname, char_u *sfname);
+static int msg_add_fileformat(int eol_type);
+static void msg_add_eol(void);
+static int check_mtime(buf_T *buf, struct stat *s);
+static int time_differs(long t1, long t2);
+static int apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io,
+                                int force, buf_T *buf,
+                                exarg_T *eap);
+static int au_find_group(char_u *name);
 
 # define AUGROUP_DEFAULT    -1      /* default autocmd group */
 # define AUGROUP_ERROR      -2      /* erroneous autocmd group */
@@ -138,18 +138,18 @@ struct bw_info {
 # endif
 };
 
-static int buf_write_bytes __ARGS((struct bw_info *ip));
+static int buf_write_bytes(struct bw_info *ip);
 
-static linenr_T readfile_linenr __ARGS((linenr_T linecnt, char_u *p,
-                                        char_u *endp));
-static int ucs2bytes __ARGS((unsigned c, char_u **pp, int flags));
-static int need_conversion __ARGS((char_u *fenc));
-static int get_fio_flags __ARGS((char_u *ptr));
-static char_u *check_for_bom __ARGS((char_u *p, long size, int *lenp, int flags));
-static int make_bom __ARGS((char_u *buf, char_u *name));
-static int move_lines __ARGS((buf_T *frombuf, buf_T *tobuf));
+static linenr_T readfile_linenr(linenr_T linecnt, char_u *p,
+                                char_u *endp);
+static int ucs2bytes(unsigned c, char_u **pp, int flags);
+static int need_conversion(char_u *fenc);
+static int get_fio_flags(char_u *ptr);
+static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags);
+static int make_bom(char_u *buf, char_u *name);
+static int move_lines(buf_T *frombuf, buf_T *tobuf);
 #ifdef TEMPDIRNAMES
-static void vim_settempdir __ARGS((char_u *tempdir));
+static void vim_settempdir(char_u *tempdir);
 #endif
 static char *e_auchangedbuf = N_(
     "E812: Autocommands changed buffer or buffer name");
@@ -6151,25 +6151,24 @@ static int current_augroup = AUGROUP_DEFAULT;
 
 static int au_need_clean = FALSE;   /* need to delete marked patterns */
 
-static void show_autocmd __ARGS((AutoPat *ap, event_T event));
-static void au_remove_pat __ARGS((AutoPat *ap));
-static void au_remove_cmds __ARGS((AutoPat *ap));
-static void au_cleanup __ARGS((void));
-static int au_new_group __ARGS((char_u *name));
-static void au_del_group __ARGS((char_u *name));
-static event_T event_name2nr __ARGS((char_u *start, char_u **end));
-static char_u *event_nr2name __ARGS((event_T event));
-static char_u *find_end_event __ARGS((char_u *arg, int have_group));
-static int event_ignored __ARGS((event_T event));
-static int au_get_grouparg __ARGS((char_u **argp));
-static int do_autocmd_event __ARGS((event_T event, char_u *pat, int nested,
-                                    char_u *cmd, int forceit,
-                                    int group));
-static int apply_autocmds_group __ARGS((event_T event, char_u *fname, char_u *
-                                        fname_io, int force, int group, buf_T *
-                                        buf,
-                                        exarg_T *eap));
-static void auto_next_pat __ARGS((AutoPatCmd *apc, int stop_at_last));
+static void show_autocmd(AutoPat *ap, event_T event);
+static void au_remove_pat(AutoPat *ap);
+static void au_remove_cmds(AutoPat *ap);
+static void au_cleanup(void);
+static int au_new_group(char_u *name);
+static void au_del_group(char_u *name);
+static event_T event_name2nr(char_u *start, char_u **end);
+static char_u *event_nr2name(event_T event);
+static char_u *find_end_event(char_u *arg, int have_group);
+static int event_ignored(event_T event);
+static int au_get_grouparg(char_u **argp);
+static int do_autocmd_event(event_T event, char_u *pat, int nested,
+                            char_u *cmd, int forceit,
+                            int group);
+static int apply_autocmds_group(event_T event, char_u *fname, char_u *fname_io,
+                                int force, int group, buf_T *buf,
+                                exarg_T *eap);
+static void auto_next_pat(AutoPatCmd *apc, int stop_at_last);
 
 
 static event_T last_event;

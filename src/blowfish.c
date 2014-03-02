@@ -28,11 +28,11 @@ typedef union {
 } block8;
 
 
-static void bf_e_block __ARGS((UINT32_T *p_xl, UINT32_T *p_xr));
-static void bf_e_cblock __ARGS((char_u *block));
-static int bf_check_tables __ARGS((UINT32_T a_ipa[18], UINT32_T a_sbi[4][256],
-                                   UINT32_T val));
-static int bf_self_test __ARGS((void));
+static void bf_e_block(UINT32_T *p_xl, UINT32_T *p_xr);
+static void bf_e_cblock(char_u *block);
+static int bf_check_tables(UINT32_T a_ipa[18], UINT32_T a_sbi[4][256],
+                           UINT32_T val);
+static int bf_self_test(void);
 
 /* Blowfish code */
 static UINT32_T pax[18];

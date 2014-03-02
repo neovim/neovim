@@ -30,45 +30,45 @@
 #endif
 #include "if_cscope_defs.h"
 
-static void cs_usage_msg __ARGS((csid_e x));
-static int cs_add __ARGS((exarg_T *eap));
-static void cs_stat_emsg __ARGS((char *fname));
-static int cs_add_common __ARGS((char *, char *, char *));
-static int cs_check_for_connections __ARGS((void));
-static int cs_check_for_tags __ARGS((void));
-static int cs_cnt_connections __ARGS((void));
-static void cs_reading_emsg __ARGS((int idx));
-static int cs_cnt_matches __ARGS((int idx));
-static char *       cs_create_cmd __ARGS((char *csoption, char *pattern));
-static int cs_create_connection __ARGS((int i));
-static void do_cscope_general __ARGS((exarg_T *eap, int make_split));
-static void cs_file_results __ARGS((FILE *, int *));
-static void cs_fill_results __ARGS((char *, int, int *, char ***,
-                                    char ***, int *));
-static int cs_find __ARGS((exarg_T *eap));
-static int cs_find_common __ARGS((char *opt, char *pat, int, int, int,
-                                  char_u *cmdline));
-static int cs_help __ARGS((exarg_T *eap));
-static void clear_csinfo __ARGS((int i));
-static int cs_insert_filelist __ARGS((char *, char *, char *,
-                                      struct stat *));
-static int cs_kill __ARGS((exarg_T *eap));
-static void cs_kill_execute __ARGS((int, char *));
-static cscmd_T *    cs_lookup_cmd __ARGS((exarg_T *eap));
-static char *       cs_make_vim_style_matches __ARGS((char *, char *,
-                                                      char *, char *));
-static char *       cs_manage_matches __ARGS((char **, char **, int, mcmd_e));
-static char *       cs_parse_results __ARGS((int cnumber, char *buf,
-                                             int bufsize, char **context,
-                                             char **linenumber,
-                                             char **search));
-static char *       cs_pathcomponents __ARGS((char *path));
-static void cs_print_tags_priv __ARGS((char **, char **, int));
-static int cs_read_prompt __ARGS((int));
-static void cs_release_csp __ARGS((int, int freefnpp));
-static int cs_reset __ARGS((exarg_T *eap));
-static char *       cs_resolve_file __ARGS((int, char *));
-static int cs_show __ARGS((exarg_T *eap));
+static void cs_usage_msg(csid_e x);
+static int cs_add(exarg_T *eap);
+static void cs_stat_emsg(char *fname);
+static int cs_add_common(char *, char *, char *);
+static int cs_check_for_connections(void);
+static int cs_check_for_tags(void);
+static int cs_cnt_connections(void);
+static void cs_reading_emsg(int idx);
+static int cs_cnt_matches(int idx);
+static char *       cs_create_cmd(char *csoption, char *pattern);
+static int cs_create_connection(int i);
+static void do_cscope_general(exarg_T *eap, int make_split);
+static void cs_file_results(FILE *, int *);
+static void cs_fill_results(char *, int, int *, char ***,
+                                    char ***, int *);
+static int cs_find(exarg_T *eap);
+static int cs_find_common(char *opt, char *pat, int, int, int,
+                                  char_u *cmdline);
+static int cs_help(exarg_T *eap);
+static void clear_csinfo(int i);
+static int cs_insert_filelist(char *, char *, char *,
+                                      struct stat *);
+static int cs_kill(exarg_T *eap);
+static void cs_kill_execute(int, char *);
+static cscmd_T *    cs_lookup_cmd(exarg_T *eap);
+static char *       cs_make_vim_style_matches(char *, char *,
+                                              char *, char *);
+static char *       cs_manage_matches(char **, char **, int, mcmd_e);
+static char *       cs_parse_results(int cnumber, char *buf,
+                                     int bufsize, char **context,
+                                     char **linenumber,
+                                     char **search);
+static char *       cs_pathcomponents(char *path);
+static void cs_print_tags_priv(char **, char **, int);
+static int cs_read_prompt(int);
+static void cs_release_csp(int, int freefnpp);
+static int cs_reset(exarg_T *eap);
+static char *       cs_resolve_file(int, char *);
+static int cs_show(exarg_T *eap);
 
 
 static csinfo_T *   csinfo = NULL;
@@ -1235,7 +1235,7 @@ static void clear_csinfo(int i)
 }
 
 #ifndef UNIX
-static char *GetWin32Error __ARGS((void));
+static char *GetWin32Error(void);
 
 static char *GetWin32Error(void)                   {
   char *msg = NULL;

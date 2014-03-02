@@ -742,13 +742,13 @@ static int did_set_spelltab;
 #define CF_WORD         0x01
 #define CF_UPPER        0x02
 
-static void clear_spell_chartab __ARGS((spelltab_T *sp));
-static int set_spell_finish __ARGS((spelltab_T  *new_st));
-static int spell_iswordp __ARGS((char_u *p, win_T *wp));
-static int spell_iswordp_nmw __ARGS((char_u *p, win_T *wp));
-static int spell_mb_isword_class __ARGS((int cl, win_T *wp));
-static int spell_iswordp_w __ARGS((int *p, win_T *wp));
-static int write_spell_prefcond __ARGS((FILE *fd, garray_T *gap));
+static void clear_spell_chartab(spelltab_T *sp);
+static int set_spell_finish(spelltab_T  *new_st);
+static int spell_iswordp(char_u *p, win_T *wp);
+static int spell_iswordp_nmw(char_u *p, win_T *wp);
+static int spell_mb_isword_class(int cl, win_T *wp);
+static int spell_iswordp_w(int *p, win_T *wp);
+static int write_spell_prefcond(FILE *fd, garray_T *gap);
 
 /*
  * For finding suggestions: At each node in the tree these states are tried:
@@ -826,135 +826,133 @@ typedef struct trystate_S {
 #define FIND_COMPOUND       3   /* find case-folded compound word */
 #define FIND_KEEPCOMPOUND   4   /* find keep-case compound word */
 
-static slang_T *slang_alloc __ARGS((char_u *lang));
-static void slang_free __ARGS((slang_T *lp));
-static void slang_clear __ARGS((slang_T *lp));
-static void slang_clear_sug __ARGS((slang_T *lp));
-static void find_word __ARGS((matchinf_T *mip, int mode));
-static int match_checkcompoundpattern __ARGS((char_u *ptr, int wlen,
-                                              garray_T *gap));
-static int can_compound __ARGS((slang_T *slang, char_u *word, char_u *flags));
-static int can_be_compound __ARGS((trystate_T *sp, slang_T *slang, char_u *
-                                   compflags,
-                                   int flag));
-static int match_compoundrule __ARGS((slang_T *slang, char_u *compflags));
-static int valid_word_prefix __ARGS((int totprefcnt, int arridx, int flags,
-                                     char_u *word, slang_T *slang,
-                                     int cond_req));
-static void find_prefix __ARGS((matchinf_T *mip, int mode));
-static int fold_more __ARGS((matchinf_T *mip));
-static int spell_valid_case __ARGS((int wordflags, int treeflags));
-static int no_spell_checking __ARGS((win_T *wp));
-static void spell_load_lang __ARGS((char_u *lang));
-static char_u *spell_enc __ARGS((void));
-static void int_wordlist_spl __ARGS((char_u *fname));
-static void spell_load_cb __ARGS((char_u *fname, void *cookie));
-static slang_T *spell_load_file __ARGS((char_u *fname, char_u *lang, slang_T *
-                                        old_lp,
-                                        int silent));
-static char_u *read_cnt_string __ARGS((FILE *fd, int cnt_bytes, int *lenp));
-static int read_region_section __ARGS((FILE *fd, slang_T *slang, int len));
-static int read_charflags_section __ARGS((FILE *fd));
-static int read_prefcond_section __ARGS((FILE *fd, slang_T *lp));
-static int read_rep_section __ARGS((FILE *fd, garray_T *gap, short *first));
-static int read_sal_section __ARGS((FILE *fd, slang_T *slang));
-static int read_words_section __ARGS((FILE *fd, slang_T *lp, int len));
-static void count_common_word __ARGS((slang_T *lp, char_u *word, int len,
-                                      int count));
-static int score_wordcount_adj __ARGS((slang_T *slang, int score, char_u *word,
-                                       int split));
-static int read_sofo_section __ARGS((FILE *fd, slang_T *slang));
-static int read_compound __ARGS((FILE *fd, slang_T *slang, int len));
-static int byte_in_str __ARGS((char_u *str, int byte));
-static int init_syl_tab __ARGS((slang_T *slang));
-static int count_syllables __ARGS((slang_T *slang, char_u *word));
-static int set_sofo __ARGS((slang_T *lp, char_u *from, char_u *to));
-static void set_sal_first __ARGS((slang_T *lp));
-static int *mb_str2wide __ARGS((char_u *s));
-static int spell_read_tree __ARGS((FILE *fd, char_u **bytsp, idx_T **idxsp,
-                                   int prefixtree,
-                                   int prefixcnt));
-static idx_T read_tree_node __ARGS((FILE *fd, char_u *byts, idx_T *idxs,
-                                    int maxidx, idx_T startidx, int prefixtree,
-                                    int maxprefcondnr));
-static void clear_midword __ARGS((win_T *buf));
-static void use_midword __ARGS((slang_T *lp, win_T *buf));
-static int find_region __ARGS((char_u *rp, char_u *region));
-static int captype __ARGS((char_u *word, char_u *end));
-static int badword_captype __ARGS((char_u *word, char_u *end));
-static void spell_reload_one __ARGS((char_u *fname, int added_word));
-static void set_spell_charflags __ARGS((char_u *flags, int cnt, char_u *upp));
-static int set_spell_chartab __ARGS((char_u *fol, char_u *low, char_u *upp));
-static int spell_casefold __ARGS((char_u *p, int len, char_u *buf, int buflen));
-static int check_need_cap __ARGS((linenr_T lnum, colnr_T col));
-static void spell_find_suggest __ARGS((char_u *badptr, int badlen, suginfo_T *
-                                       su, int maxcount, int banbadword,
-                                       int need_cap,
-                                       int interactive));
-static void spell_suggest_expr __ARGS((suginfo_T *su, char_u *expr));
-static void spell_suggest_file __ARGS((suginfo_T *su, char_u *fname));
-static void spell_suggest_intern __ARGS((suginfo_T *su, int interactive));
-static void suggest_load_files __ARGS((void));
-static void tree_count_words __ARGS((char_u *byts, idx_T *idxs));
-static void spell_find_cleanup __ARGS((suginfo_T *su));
-static void onecap_copy __ARGS((char_u *word, char_u *wcopy, int upper));
-static void allcap_copy __ARGS((char_u *word, char_u *wcopy));
-static void suggest_try_special __ARGS((suginfo_T *su));
-static void suggest_try_change __ARGS((suginfo_T *su));
-static void suggest_trie_walk __ARGS((suginfo_T *su, langp_T *lp, char_u *fword,
-                                      int soundfold));
-static void go_deeper __ARGS((trystate_T *stack, int depth, int score_add));
-static int nofold_len __ARGS((char_u *fword, int flen, char_u *word));
-static void find_keepcap_word __ARGS((slang_T *slang, char_u *fword,
-                                      char_u *kword));
-static void score_comp_sal __ARGS((suginfo_T *su));
-static void score_combine __ARGS((suginfo_T *su));
-static int stp_sal_score __ARGS((suggest_T *stp, suginfo_T *su, slang_T *slang,
-                                 char_u *badsound));
-static void suggest_try_soundalike_prep __ARGS((void));
-static void suggest_try_soundalike __ARGS((suginfo_T *su));
-static void suggest_try_soundalike_finish __ARGS((void));
-static void add_sound_suggest __ARGS((suginfo_T *su, char_u *goodword,
-                                      int score,
-                                      langp_T *lp));
-static int soundfold_find __ARGS((slang_T *slang, char_u *word));
-static void make_case_word __ARGS((char_u *fword, char_u *cword, int flags));
-static void set_map_str __ARGS((slang_T *lp, char_u *map));
-static int similar_chars __ARGS((slang_T *slang, int c1, int c2));
-static void add_suggestion __ARGS((suginfo_T *su, garray_T *gap, char_u *
-                                   goodword, int badlen, int score,
-                                   int altscore, int had_bonus, slang_T *slang,
-                                   int maxsf));
-static void check_suggestions __ARGS((suginfo_T *su, garray_T *gap));
-static void add_banned __ARGS((suginfo_T *su, char_u *word));
-static void rescore_suggestions __ARGS((suginfo_T *su));
-static void rescore_one __ARGS((suginfo_T *su, suggest_T *stp));
-static int cleanup_suggestions __ARGS((garray_T *gap, int maxscore, int keep));
-static void spell_soundfold __ARGS((slang_T *slang, char_u *inword, int folded,
-                                    char_u *res));
-static void spell_soundfold_sofo __ARGS((slang_T *slang, char_u *inword,
-                                         char_u *res));
-static void spell_soundfold_sal __ARGS((slang_T *slang, char_u *inword,
-                                        char_u *res));
-static void spell_soundfold_wsal __ARGS((slang_T *slang, char_u *inword,
-                                         char_u *res));
-static int soundalike_score __ARGS((char_u *goodsound, char_u *badsound));
-static int spell_edit_score __ARGS((slang_T *slang, char_u *badword,
-                                    char_u *goodword));
-static int spell_edit_score_limit __ARGS((slang_T *slang, char_u *badword,
-                                          char_u *goodword,
-                                          int limit));
-static int spell_edit_score_limit_w __ARGS((slang_T *slang, char_u *badword,
-                                            char_u *goodword,
-                                            int limit));
-static void dump_word __ARGS((slang_T *slang, char_u *word, char_u *pat,
+static slang_T *slang_alloc(char_u *lang);
+static void slang_free(slang_T *lp);
+static void slang_clear(slang_T *lp);
+static void slang_clear_sug(slang_T *lp);
+static void find_word(matchinf_T *mip, int mode);
+static int match_checkcompoundpattern(char_u *ptr, int wlen,
+                                      garray_T *gap);
+static int can_compound(slang_T *slang, char_u *word, char_u *flags);
+static int can_be_compound(trystate_T *sp, slang_T *slang, char_u *compflags,
+                           int flag);
+static int match_compoundrule(slang_T *slang, char_u *compflags);
+static int valid_word_prefix(int totprefcnt, int arridx, int flags,
+                             char_u *word, slang_T *slang,
+                             int cond_req);
+static void find_prefix(matchinf_T *mip, int mode);
+static int fold_more(matchinf_T *mip);
+static int spell_valid_case(int wordflags, int treeflags);
+static int no_spell_checking(win_T *wp);
+static void spell_load_lang(char_u *lang);
+static char_u *spell_enc(void);
+static void int_wordlist_spl(char_u *fname);
+static void spell_load_cb(char_u *fname, void *cookie);
+static slang_T *spell_load_file(char_u *fname, char_u *lang, slang_T *old_lp,
+                                int silent);
+static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *lenp);
+static int read_region_section(FILE *fd, slang_T *slang, int len);
+static int read_charflags_section(FILE *fd);
+static int read_prefcond_section(FILE *fd, slang_T *lp);
+static int read_rep_section(FILE *fd, garray_T *gap, short *first);
+static int read_sal_section(FILE *fd, slang_T *slang);
+static int read_words_section(FILE *fd, slang_T *lp, int len);
+static void count_common_word(slang_T *lp, char_u *word, int len,
+                              int count);
+static int score_wordcount_adj(slang_T *slang, int score, char_u *word,
+                               int split);
+static int read_sofo_section(FILE *fd, slang_T *slang);
+static int read_compound(FILE *fd, slang_T *slang, int len);
+static int byte_in_str(char_u *str, int byte);
+static int init_syl_tab(slang_T *slang);
+static int count_syllables(slang_T *slang, char_u *word);
+static int set_sofo(slang_T *lp, char_u *from, char_u *to);
+static void set_sal_first(slang_T *lp);
+static int *mb_str2wide(char_u *s);
+static int spell_read_tree(FILE *fd, char_u **bytsp, idx_T **idxsp,
+                           int prefixtree,
+                           int prefixcnt);
+static idx_T read_tree_node(FILE *fd, char_u *byts, idx_T *idxs,
+                            int maxidx, idx_T startidx, int prefixtree,
+                            int maxprefcondnr);
+static void clear_midword(win_T *buf);
+static void use_midword(slang_T *lp, win_T *buf);
+static int find_region(char_u *rp, char_u *region);
+static int captype(char_u *word, char_u *end);
+static int badword_captype(char_u *word, char_u *end);
+static void spell_reload_one(char_u *fname, int added_word);
+static void set_spell_charflags(char_u *flags, int cnt, char_u *upp);
+static int set_spell_chartab(char_u *fol, char_u *low, char_u *upp);
+static int spell_casefold(char_u *p, int len, char_u *buf, int buflen);
+static int check_need_cap(linenr_T lnum, colnr_T col);
+static void spell_find_suggest(char_u *badptr, int badlen, suginfo_T *su,
+                               int maxcount, int banbadword,
+                               int need_cap,
+                               int interactive);
+static void spell_suggest_expr(suginfo_T *su, char_u *expr);
+static void spell_suggest_file(suginfo_T *su, char_u *fname);
+static void spell_suggest_intern(suginfo_T *su, int interactive);
+static void suggest_load_files(void);
+static void tree_count_words(char_u *byts, idx_T *idxs);
+static void spell_find_cleanup(suginfo_T *su);
+static void onecap_copy(char_u *word, char_u *wcopy, int upper);
+static void allcap_copy(char_u *word, char_u *wcopy);
+static void suggest_try_special(suginfo_T *su);
+static void suggest_try_change(suginfo_T *su);
+static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword,
+                              int soundfold);
+static void go_deeper(trystate_T *stack, int depth, int score_add);
+static int nofold_len(char_u *fword, int flen, char_u *word);
+static void find_keepcap_word(slang_T *slang, char_u *fword,
+                              char_u *kword);
+static void score_comp_sal(suginfo_T *su);
+static void score_combine(suginfo_T *su);
+static int stp_sal_score(suggest_T *stp, suginfo_T *su, slang_T *slang,
+                         char_u *badsound);
+static void suggest_try_soundalike_prep(void);
+static void suggest_try_soundalike(suginfo_T *su);
+static void suggest_try_soundalike_finish(void);
+static void add_sound_suggest(suginfo_T *su, char_u *goodword,
+                              int score,
+                              langp_T *lp);
+static int soundfold_find(slang_T *slang, char_u *word);
+static void make_case_word(char_u *fword, char_u *cword, int flags);
+static void set_map_str(slang_T *lp, char_u *map);
+static int similar_chars(slang_T *slang, int c1, int c2);
+static void add_suggestion(suginfo_T *su, garray_T *gap, char_u *goodword,
+                           int badlen, int score,
+                           int altscore, int had_bonus, slang_T *slang,
+                           int maxsf);
+static void check_suggestions(suginfo_T *su, garray_T *gap);
+static void add_banned(suginfo_T *su, char_u *word);
+static void rescore_suggestions(suginfo_T *su);
+static void rescore_one(suginfo_T *su, suggest_T *stp);
+static int cleanup_suggestions(garray_T *gap, int maxscore, int keep);
+static void spell_soundfold(slang_T *slang, char_u *inword, int folded,
+                            char_u *res);
+static void spell_soundfold_sofo(slang_T *slang, char_u *inword,
+                                 char_u *res);
+static void spell_soundfold_sal(slang_T *slang, char_u *inword,
+                                char_u *res);
+static void spell_soundfold_wsal(slang_T *slang, char_u *inword,
+                                 char_u *res);
+static int soundalike_score(char_u *goodsound, char_u *badsound);
+static int spell_edit_score(slang_T *slang, char_u *badword,
+                            char_u *goodword);
+static int spell_edit_score_limit(slang_T *slang, char_u *badword,
+                                  char_u *goodword,
+                                  int limit);
+static int spell_edit_score_limit_w(slang_T *slang, char_u *badword,
+                                    char_u *goodword,
+                                    int limit);
+static void dump_word(slang_T *slang, char_u *word, char_u *pat,
+                      int *dir, int round, int flags,
+                      linenr_T lnum);
+static linenr_T dump_prefixes(slang_T *slang, char_u *word, char_u *pat,
                               int *dir, int round, int flags,
-                              linenr_T lnum));
-static linenr_T dump_prefixes __ARGS((slang_T *slang, char_u *word, char_u *pat,
-                                      int *dir, int round, int flags,
-                                      linenr_T startlnum));
-static buf_T *open_spellbuf __ARGS((void));
-static void close_spellbuf __ARGS((buf_T *buf));
+                              linenr_T startlnum);
+static buf_T *open_spellbuf(void);
+static void close_spellbuf(buf_T *buf);
 
 /*
  * Use our own character-case definitions, because the current locale may
@@ -4560,75 +4558,75 @@ typedef struct spellinfo_S {
   int si_newcompID;             /* current value for compound ID */
 } spellinfo_T;
 
-static afffile_T *spell_read_aff __ARGS((spellinfo_T *spin, char_u *fname));
-static int is_aff_rule __ARGS((char_u **items, int itemcnt, char *rulename,
-                               int mincount));
-static void aff_process_flags __ARGS((afffile_T *affile, affentry_T *entry));
-static int spell_info_item __ARGS((char_u *s));
-static unsigned affitem2flag __ARGS((int flagtype, char_u *item, char_u *fname,
-                                     int lnum));
-static unsigned get_affitem __ARGS((int flagtype, char_u **pp));
-static void process_compflags __ARGS((spellinfo_T *spin, afffile_T *aff,
-                                      char_u *compflags));
-static void check_renumber __ARGS((spellinfo_T *spin));
-static int flag_in_afflist __ARGS((int flagtype, char_u *afflist, unsigned flag));
-static void aff_check_number __ARGS((int spinval, int affval, char *name));
-static void aff_check_string __ARGS((char_u *spinval, char_u *affval,
-                                     char *name));
-static int str_equal __ARGS((char_u *s1, char_u *s2));
-static void add_fromto __ARGS((spellinfo_T *spin, garray_T *gap, char_u *from,
-                               char_u *to));
-static int sal_to_bool __ARGS((char_u *s));
-static void spell_free_aff __ARGS((afffile_T *aff));
-static int spell_read_dic __ARGS((spellinfo_T *spin, char_u *fname,
-                                  afffile_T *affile));
-static int get_affix_flags __ARGS((afffile_T *affile, char_u *afflist));
-static int get_pfxlist __ARGS((afffile_T *affile, char_u *afflist,
-                               char_u *store_afflist));
-static void get_compflags __ARGS((afffile_T *affile, char_u *afflist,
-                                  char_u *store_afflist));
-static int store_aff_word __ARGS((spellinfo_T *spin, char_u *word, char_u *
-                                  afflist, afffile_T *affile, hashtab_T *ht,
-                                  hashtab_T *xht, int condit, int flags,
-                                  char_u *pfxlist,
-                                  int pfxlen));
-static int spell_read_wordfile __ARGS((spellinfo_T *spin, char_u *fname));
-static void *getroom __ARGS((spellinfo_T *spin, size_t len, int align));
-static char_u *getroom_save __ARGS((spellinfo_T *spin, char_u *s));
-static void free_blocks __ARGS((sblock_T *bl));
-static wordnode_T *wordtree_alloc __ARGS((spellinfo_T *spin));
-static int store_word __ARGS((spellinfo_T *spin, char_u *word, int flags,
-                              int region, char_u *pfxlist,
-                              int need_affix));
-static int tree_add_word __ARGS((spellinfo_T *spin, char_u *word, wordnode_T *
-                                 tree, int flags, int region,
-                                 int affixID));
-static wordnode_T *get_wordnode __ARGS((spellinfo_T *spin));
-static int deref_wordnode __ARGS((spellinfo_T *spin, wordnode_T *node));
-static void free_wordnode __ARGS((spellinfo_T *spin, wordnode_T *n));
-static void wordtree_compress __ARGS((spellinfo_T *spin, wordnode_T *root));
-static int node_compress __ARGS((spellinfo_T *spin, wordnode_T *node,
-                                 hashtab_T *ht,
-                                 int *tot));
-static int node_equal __ARGS((wordnode_T *n1, wordnode_T *n2));
-static int write_vim_spell __ARGS((spellinfo_T *spin, char_u *fname));
-static void clear_node __ARGS((wordnode_T *node));
-static int put_node __ARGS((FILE *fd, wordnode_T *node, int idx, int regionmask,
-                            int prefixtree));
-static void spell_make_sugfile __ARGS((spellinfo_T *spin, char_u *wfname));
-static int sug_filltree __ARGS((spellinfo_T *spin, slang_T *slang));
-static int sug_maketable __ARGS((spellinfo_T *spin));
-static int sug_filltable __ARGS((spellinfo_T *spin, wordnode_T *node,
-                                 int startwordnr,
-                                 garray_T *gap));
-static int offset2bytes __ARGS((int nr, char_u *buf));
-static int bytes2offset __ARGS((char_u **pp));
-static void sug_write __ARGS((spellinfo_T *spin, char_u *fname));
-static void mkspell __ARGS((int fcount, char_u **fnames, int ascii,
-                            int over_write,
-                            int added_word));
-static void spell_message __ARGS((spellinfo_T *spin, char_u *str));
-static void init_spellfile __ARGS((void));
+static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname);
+static int is_aff_rule(char_u **items, int itemcnt, char *rulename,
+                       int mincount);
+static void aff_process_flags(afffile_T *affile, affentry_T *entry);
+static int spell_info_item(char_u *s);
+static unsigned affitem2flag(int flagtype, char_u *item, char_u *fname,
+                             int lnum);
+static unsigned get_affitem(int flagtype, char_u **pp);
+static void process_compflags(spellinfo_T *spin, afffile_T *aff,
+                              char_u *compflags);
+static void check_renumber(spellinfo_T *spin);
+static int flag_in_afflist(int flagtype, char_u *afflist, unsigned flag);
+static void aff_check_number(int spinval, int affval, char *name);
+static void aff_check_string(char_u *spinval, char_u *affval,
+                             char *name);
+static int str_equal(char_u *s1, char_u *s2);
+static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from,
+                       char_u *to);
+static int sal_to_bool(char_u *s);
+static void spell_free_aff(afffile_T *aff);
+static int spell_read_dic(spellinfo_T *spin, char_u *fname,
+                          afffile_T *affile);
+static int get_affix_flags(afffile_T *affile, char_u *afflist);
+static int get_pfxlist(afffile_T *affile, char_u *afflist,
+                       char_u *store_afflist);
+static void get_compflags(afffile_T *affile, char_u *afflist,
+                          char_u *store_afflist);
+static int store_aff_word(spellinfo_T *spin, char_u *word, char_u *afflist,
+                          afffile_T *affile, hashtab_T *ht,
+                          hashtab_T *xht, int condit, int flags,
+                          char_u *pfxlist,
+                          int pfxlen);
+static int spell_read_wordfile(spellinfo_T *spin, char_u *fname);
+static void *getroom(spellinfo_T *spin, size_t len, int align);
+static char_u *getroom_save(spellinfo_T *spin, char_u *s);
+static void free_blocks(sblock_T *bl);
+static wordnode_T *wordtree_alloc(spellinfo_T *spin);
+static int store_word(spellinfo_T *spin, char_u *word, int flags,
+                      int region, char_u *pfxlist,
+                      int need_affix);
+static int tree_add_word(spellinfo_T *spin, char_u *word,
+                         wordnode_T *tree, int flags, int region,
+                         int affixID);
+static wordnode_T *get_wordnode(spellinfo_T *spin);
+static int deref_wordnode(spellinfo_T *spin, wordnode_T *node);
+static void free_wordnode(spellinfo_T *spin, wordnode_T *n);
+static void wordtree_compress(spellinfo_T *spin, wordnode_T *root);
+static int node_compress(spellinfo_T *spin, wordnode_T *node,
+                         hashtab_T *ht,
+                         int *tot);
+static int node_equal(wordnode_T *n1, wordnode_T *n2);
+static int write_vim_spell(spellinfo_T *spin, char_u *fname);
+static void clear_node(wordnode_T *node);
+static int put_node(FILE *fd, wordnode_T *node, int idx, int regionmask,
+                    int prefixtree);
+static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname);
+static int sug_filltree(spellinfo_T *spin, slang_T *slang);
+static int sug_maketable(spellinfo_T *spin);
+static int sug_filltable(spellinfo_T *spin, wordnode_T *node,
+                         int startwordnr,
+                         garray_T *gap);
+static int offset2bytes(int nr, char_u *buf);
+static int bytes2offset(char_u **pp);
+static void sug_write(spellinfo_T *spin, char_u *fname);
+static void mkspell(int fcount, char_u **fnames, int ascii,
+                    int over_write,
+                    int added_word);
+static void spell_message(spellinfo_T *spin, char_u *str);
+static void init_spellfile(void);
 
 /* In the postponed prefixes tree wn_flags is used to store the WFP_ flags,
  * but it must be negative to indicate the prefix tree to tree_add_word().
@@ -7111,7 +7109,7 @@ static int node_equal(wordnode_T *n1, wordnode_T *n2)
 }
 
 static int
-rep_compare __ARGS((const void *s1, const void *s2));
+rep_compare(const void *s1, const void *s2);
 
 /*
  * Function given to qsort() to sort the REP items on "from" string.
@@ -12417,7 +12415,7 @@ static void rescore_one(suginfo_T *su, suggest_T *stp)
 }
 
 static int
-sug_compare __ARGS((const void *s1, const void *s2));
+sug_compare(const void *s1, const void *s2);
 
 /*
  * Function given to qsort() to sort the suggestions on st_score.

@@ -49,10 +49,10 @@
 #include <crt_externs.h>
 #endif
 
-static char_u *vim_version_dir __ARGS((char_u *vimdir));
-static char_u *remove_tail __ARGS((char_u *p, char_u *pend, char_u *name));
-static void init_users __ARGS((void));
-static int copy_indent __ARGS((int size, char_u *src));
+static char_u *vim_version_dir(char_u *vimdir);
+static char_u *remove_tail(char_u *p, char_u *pend, char_u *name);
+static void init_users(void);
+static int copy_indent(int size, char_u *src);
 
 /* All user names (for ~user completion as done by shell). */
 static garray_T ga_users;
@@ -451,7 +451,7 @@ int get_number_indent(linenr_T lnum)
 }
 
 
-static int cin_is_cinword __ARGS((char_u *line));
+static int cin_is_cinword(char_u *line);
 
 /*
  * Return TRUE if the string "line" starts with a word from 'cinwords'.
@@ -2342,11 +2342,11 @@ void changed_int(void)          {
   need_maketitle = TRUE;            /* set window title later */
 }
 
-static void changedOneline __ARGS((buf_T *buf, linenr_T lnum));
-static void changed_lines_buf __ARGS((buf_T *buf, linenr_T lnum, linenr_T lnume,
-                                      long xtra));
-static void changed_common __ARGS((linenr_T lnum, colnr_T col, linenr_T lnume,
-                                   long xtra));
+static void changedOneline(buf_T *buf, linenr_T lnum);
+static void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume,
+                              long xtra);
+static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
+                           long xtra);
 
 /*
  * Changed bytes within a single line for the current buffer.
@@ -3982,7 +3982,7 @@ char_u *gettail(char_u *fname)
   return p1;
 }
 
-static char_u *gettail_dir __ARGS((char_u *fname));
+static char_u *gettail_dir(char_u *fname);
 
 /*
  * Return the end of the directory name, on the first path
@@ -4276,8 +4276,8 @@ FullName_save (
 }
 
 
-static char_u   *skip_string __ARGS((char_u *p));
-static pos_T *ind_find_start_comment __ARGS((void));
+static char_u   *skip_string(char_u *p);
+static pos_T *ind_find_start_comment(void);
 
 /*
  * Find the start of a comment, not knowing if we are in a comment right now.
@@ -4381,41 +4381,41 @@ void do_c_expr_indent(void)          {
  * Below "XXX" means that this function may unlock the current line.
  */
 
-static char_u   *cin_skipcomment __ARGS((char_u *));
-static int cin_nocode __ARGS((char_u *));
-static pos_T    *find_line_comment __ARGS((void));
-static int cin_islabel_skip __ARGS((char_u **));
-static int cin_isdefault __ARGS((char_u *));
-static char_u   *after_label __ARGS((char_u *l));
-static int get_indent_nolabel __ARGS((linenr_T lnum));
-static int skip_label __ARGS((linenr_T, char_u **pp));
-static int cin_first_id_amount __ARGS((void));
-static int cin_get_equal_amount __ARGS((linenr_T lnum));
-static int cin_ispreproc __ARGS((char_u *));
-static int cin_ispreproc_cont __ARGS((char_u **pp, linenr_T *lnump));
-static int cin_iscomment __ARGS((char_u *));
-static int cin_islinecomment __ARGS((char_u *));
-static int cin_isterminated __ARGS((char_u *, int, int));
-static int cin_isinit __ARGS((void));
-static int cin_isfuncdecl __ARGS((char_u **, linenr_T, linenr_T));
-static int cin_isif __ARGS((char_u *));
-static int cin_iselse __ARGS((char_u *));
-static int cin_isdo __ARGS((char_u *));
-static int cin_iswhileofdo __ARGS((char_u *, linenr_T));
-static int cin_is_if_for_while_before_offset __ARGS((char_u *line, int *poffset));
-static int cin_iswhileofdo_end __ARGS((int terminated));
-static int cin_isbreak __ARGS((char_u *));
-static int cin_is_cpp_baseclass __ARGS((colnr_T *col));
-static int get_baseclass_amount __ARGS((int col));
-static int cin_ends_in __ARGS((char_u *, char_u *, char_u *));
-static int cin_starts_with __ARGS((char_u *s, char *word));
-static int cin_skip2pos __ARGS((pos_T *trypos));
-static pos_T    *find_start_brace __ARGS((void));
-static pos_T    *find_match_paren __ARGS((int));
-static int corr_ind_maxparen __ARGS((pos_T *startpos));
-static int find_last_paren __ARGS((char_u *l, int start, int end));
-static int find_match __ARGS((int lookfor, linenr_T ourscope));
-static int cin_is_cpp_namespace __ARGS((char_u *));
+static char_u   *cin_skipcomment(char_u *);
+static int cin_nocode(char_u *);
+static pos_T    *find_line_comment(void);
+static int cin_islabel_skip(char_u **);
+static int cin_isdefault(char_u *);
+static char_u   *after_label(char_u *l);
+static int get_indent_nolabel(linenr_T lnum);
+static int skip_label(linenr_T, char_u **pp);
+static int cin_first_id_amount(void);
+static int cin_get_equal_amount(linenr_T lnum);
+static int cin_ispreproc(char_u *);
+static int cin_ispreproc_cont(char_u **pp, linenr_T *lnump);
+static int cin_iscomment(char_u *);
+static int cin_islinecomment(char_u *);
+static int cin_isterminated(char_u *, int, int);
+static int cin_isinit(void);
+static int cin_isfuncdecl(char_u **, linenr_T, linenr_T);
+static int cin_isif(char_u *);
+static int cin_iselse(char_u *);
+static int cin_isdo(char_u *);
+static int cin_iswhileofdo(char_u *, linenr_T);
+static int cin_is_if_for_while_before_offset(char_u *line, int *poffset);
+static int cin_iswhileofdo_end(int terminated);
+static int cin_isbreak(char_u *);
+static int cin_is_cpp_baseclass(colnr_T *col);
+static int get_baseclass_amount(int col);
+static int cin_ends_in(char_u *, char_u *, char_u *);
+static int cin_starts_with(char_u *s, char *word);
+static int cin_skip2pos(pos_T *trypos);
+static pos_T    *find_start_brace(void);
+static pos_T    *find_match_paren(int);
+static int corr_ind_maxparen(pos_T *startpos);
+static int find_last_paren(char_u *l, int start, int end);
+static int find_match(int lookfor, linenr_T ourscope);
+static int cin_is_cpp_namespace(char_u *);
 
 /*
  * Skip over white space and C comments within the line.
@@ -7586,7 +7586,7 @@ int get_expr_indent(void)         {
   return indent;
 }
 
-static int lisp_match __ARGS((char_u *p));
+static int lisp_match(char_u *p);
 
 static int lisp_match(char_u *p)
 {
@@ -8023,8 +8023,8 @@ int match_suffix(char_u *fname)
 
 #if !defined(NO_EXPANDPATH) || defined(PROTO)
 
-static int vim_backtick __ARGS((char_u *p));
-static int expand_backtick __ARGS((garray_T *gap, char_u *pat, int flags));
+static int vim_backtick(char_u *p);
+static int expand_backtick(garray_T *gap, char_u *pat, int flags);
 
 
 #if (defined(UNIX) && !defined(VMS)) || defined(USE_UNIXFILENAME) \
@@ -8033,7 +8033,7 @@ static int expand_backtick __ARGS((garray_T *gap, char_u *pat, int flags));
  * Unix style wildcard expansion code.
  * It's here because it's used both for Unix and Mac.
  */
-static int pstrcmp __ARGS((const void *, const void *));
+static int pstrcmp(const void *, const void *);
 
 static int pstrcmp(const void *a, const void *b)
 {
@@ -8237,12 +8237,12 @@ unix_expandpath (
 }
 #endif
 
-static int find_previous_pathsep __ARGS((char_u *path, char_u **psep));
-static int is_unique __ARGS((char_u *maybe_unique, garray_T *gap, int i));
-static void expand_path_option __ARGS((char_u *curdir, garray_T *gap));
-static char_u *get_path_cutoff __ARGS((char_u *fname, garray_T *gap));
-static void uniquefy_paths __ARGS((garray_T *gap, char_u *pattern));
-static int expand_in_path __ARGS((garray_T *gap, char_u *pattern, int flags));
+static int find_previous_pathsep(char_u *path, char_u **psep);
+static int is_unique(char_u *maybe_unique, garray_T *gap, int i);
+static void expand_path_option(char_u *curdir, garray_T *gap);
+static char_u *get_path_cutoff(char_u *fname, garray_T *gap);
+static void uniquefy_paths(garray_T *gap, char_u *pattern);
+static int expand_in_path(garray_T *gap, char_u *pattern, int flags);
 
 /*
  * Moves "*psep" back to the previous path separator in "path".
@@ -8629,7 +8629,7 @@ void remove_duplicates(garray_T *gap)
     }
 }
 
-static int has_env_var __ARGS((char_u *p));
+static int has_env_var(char_u *p);
 
 /*
  * Return TRUE if "p" contains what looks like an environment variable.
@@ -8649,7 +8649,7 @@ static int has_env_var(char_u *p)
 }
 
 #ifdef SPECIAL_WILDCHAR
-static int has_special_wildchar __ARGS((char_u *p));
+static int has_special_wildchar(char_u *p);
 
 /*
  * Return TRUE if "p" contains a special wildcard character.

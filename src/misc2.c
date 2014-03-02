@@ -38,8 +38,8 @@
 
 static char_u   *username = NULL; /* cached result of mch_get_user_name() */
 
-static int coladvance2 __ARGS((pos_T *pos, int addspaces, int finetune,
-                               colnr_T wcol));
+static int coladvance2(pos_T *pos, int addspaces, int finetune,
+                       colnr_T wcol);
 
 /*
  * Return TRUE if in the current mode we need to use virtual.
@@ -589,10 +589,10 @@ static long_u mem_peak;
 static long_u num_alloc;
 static long_u num_freed;
 
-static void mem_pre_alloc_s __ARGS((size_t *sizep));
-static void mem_pre_alloc_l __ARGS((long_u *sizep));
-static void mem_post_alloc __ARGS((void **pp, size_t size));
-static void mem_pre_free __ARGS((void **pp));
+static void mem_pre_alloc_s(size_t *sizep);
+static void mem_pre_alloc_l(long_u *sizep);
+static void mem_post_alloc(void **pp, size_t size);
+static void mem_pre_free(void **pp);
 
 static void mem_pre_alloc_s(size_t *sizep)
 {
@@ -2883,7 +2883,7 @@ int get_shape_idx(int mouse)
 typedef unsigned short ush;     /* unsigned 16-bit value */
 typedef unsigned long ulg;      /* unsigned 32-bit value */
 
-static void make_crc_tab __ARGS((void));
+static void make_crc_tab(void);
 
 static ulg crc_32_tab[256];
 
@@ -3183,7 +3183,7 @@ void qsort(base, elm_count, elm_size, cmp)
 void        *base;
 size_t elm_count;
 size_t elm_size;
-int (*cmp)__ARGS((const void *, const void *));
+int (*cmp)(const void *, const void *);
 {
   char_u      *buf;
   char_u      *p1;
@@ -3217,7 +3217,7 @@ int (*cmp)__ARGS((const void *, const void *));
  * Sort an array of strings.
  */
 static int
-sort_compare __ARGS((const void *s1, const void *s2));
+sort_compare(const void *s1, const void *s2);
 
 static int sort_compare(const void *s1, const void *s2)
 {
@@ -3330,9 +3330,9 @@ static int envsize = -1;        /* current size of environment */
 extern
 char **environ;                 /* the global which is your env. */
 
-static int findenv __ARGS((char *name));  /* look for a name in the env. */
-static int newenv __ARGS((void));       /* copy env. from stack to heap */
-static int moreenv __ARGS((void));      /* incr. size of env. */
+static int findenv(char *name);  /* look for a name in the env. */
+static int newenv(void);       /* copy env. from stack to heap */
+static int moreenv(void);      /* incr. size of env. */
 
 int putenv(const char *string)
 {
