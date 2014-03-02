@@ -421,7 +421,6 @@ static int pum_set_loc(pum_menu_T *menu, pum_menu_maxwidths_T *widths,
 
   /* if there are more items than room we need a scrollbar */
   *scrollbar = vloc.len < menu->items.num_items;
-  //pum_scrollbar = vloc.len < menu->items.num_items;
 
   /* Calculate start column and width */
 
