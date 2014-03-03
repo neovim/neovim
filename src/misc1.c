@@ -3658,11 +3658,11 @@ char_u *get_env_name(expand_T *xp, int idx)
    */
   return NULL;
 # else
-# if !defined(__WIN32__) && !defined(HAVE__NSGETENVIRON)
+# if defined(HAVE__NSGETENVIRON)
+  char **environ = *_NSGetEnviron();
+# elif !defined(__WIN32__)
   /* Borland C++ 5.2 has this in a header file. */
   extern char         **environ;
-# else
-  char **environ = *_NSGetEnviron();
 # endif
 # define ENVNAMELEN 100
   static char_u name[ENVNAMELEN];
