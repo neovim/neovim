@@ -1,6 +1,6 @@
 include(CheckTypeSize)
 include(CheckIncludeFiles)
-include(CheckSymbolExists)
+include(CheckFunctionExists)
 
 check_type_size("int" SIZEOF_INT)
 check_type_size("long" SIZEOF_LONG)
@@ -8,7 +8,11 @@ check_type_size("time_t" SIZEOF_TIME_T)
 check_type_size("off_t" SIZEOF_OFF_T)
 
 check_include_files(crt_externs.h HAVE_CRT_EXTERNS_H)
-check_symbol_exists(_NSGetEnviron "crt_externs.h" HAVE__NSGETENVIRON)
+
+if (HAVE_CRT_EXTERNS_H)
+  set(CMAKE_REQUIRED_INCLUDES  crt_externs.h)
+endif()
+check_function_exists(_NSGetEnviron HAVE__NSGETENVIRON)
 
 # generate configuration header and update include directories
 configure_file (
