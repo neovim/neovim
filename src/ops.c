@@ -23,6 +23,7 @@
 #include "ex_getln.h"
 #include "fold.h"
 #include "getchar.h"
+#include "indent.h"
 #include "mark.h"
 #include "mbyte.h"
 #include "memline.h"

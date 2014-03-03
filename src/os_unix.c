@@ -397,105 +397,6 @@ void mch_delay(long msec, int ignoreinput)
     WaitForChar(msec);
 }
 
-#if defined(HAVE_STACK_LIMIT) \
-  || (!defined(HAVE_SIGALTSTACK) && defined(HAVE_SIGSTACK))
-# define HAVE_CHECK_STACK_GROWTH
-/*
- * Support for checking for an almost-out-of-stack-space situation.
- */
-
-/*
- * Return a pointer to an item on the stack.  Used to find out if the stack
- * grows up or down.
- */
-static void check_stack_growth(char *p);
-static int stack_grows_downwards;
-
-/*
- * Find out if the stack grows upwards or downwards.
- * "p" points to a variable on the stack of the caller.
- */
-static void check_stack_growth(char *p)
-{
-  int i;
-
-  stack_grows_downwards = (p > (char *)&i);
-}
-#endif
-
-#if defined(HAVE_STACK_LIMIT) || defined(PROTO)
-static char *stack_limit = NULL;
-
-#if defined(_THREAD_SAFE) && defined(HAVE_PTHREAD_NP_H)
-# include <pthread.h>
-# include <pthread_np.h>
-#endif
-
-/*
- * Find out until how var the stack can grow without getting into trouble.
- * Called when starting up and when switching to the signal stack in
- * deathtrap().
- */
-static void get_stack_limit()                 {
-  struct rlimit rlp;
-  int i;
-  long lim;
-
-  /* Set the stack limit to 15/16 of the allowable size.  Skip this when the
-   * limit doesn't fit in a long (rlim_cur might be "long long"). */
-  if (getrlimit(RLIMIT_STACK, &rlp) == 0
-      && rlp.rlim_cur < ((rlim_t)1 << (sizeof(long_u) * 8 - 1))
-#  ifdef RLIM_INFINITY
-      && rlp.rlim_cur != RLIM_INFINITY
-#  endif
-      ) {
-    lim = (long)rlp.rlim_cur;
-#if defined(_THREAD_SAFE) && defined(HAVE_PTHREAD_NP_H)
-    {
-      pthread_attr_t attr;
-      size_t size;
-
-      /* On FreeBSD the initial thread always has a fixed stack size, no
-       * matter what the limits are set to.  Normally it's 1 Mbyte. */
-      pthread_attr_init(&attr);
-      if (pthread_attr_get_np(pthread_self(), &attr) == 0) {
-        pthread_attr_getstacksize(&attr, &size);
-        if (lim > (long)size)
-          lim = (long)size;
-      }
-      pthread_attr_destroy(&attr);
-    }
-#endif
-    if (stack_grows_downwards) {
-      stack_limit = (char *)((long)&i - (lim / 16L * 15L));
-      if (stack_limit >= (char *)&i)
-        /* overflow, set to 1/16 of current stack position */
-        stack_limit = (char *)((long)&i / 16L);
-    } else   {
-      stack_limit = (char *)((long)&i + (lim / 16L * 15L));
-      if (stack_limit <= (char *)&i)
-        stack_limit = NULL;             /* overflow */
-    }
-  }
-}
-
-/*
- * Return FAIL when running out of stack space.
- * "p" must point to any variable local to the caller that's on the stack.
- */
-int mch_stackcheck(char *p)
-{
-  if (stack_limit != NULL) {
-    if (stack_grows_downwards) {
-      if (p < stack_limit)
-        return FAIL;
-    } else if (p > stack_limit)
-      return FAIL;
-  }
-  return OK;
-}
-#endif
-
 #if defined(HAVE_SIGALTSTACK) || defined(HAVE_SIGSTACK)
 /*
  * Support for using the signal stack.
@@ -696,13 +597,6 @@ deathtrap SIGDEFARG(sigarg) {
 
   /* Set the v:dying variable. */
   set_vim_var_nr(VV_DYING, (long)entered);
-
-#ifdef HAVE_STACK_LIMIT
-  /* Since we are now using the signal stack, need to reset the stack
-   * limit.  Otherwise using a regexp will fail. */
-  get_stack_limit();
-#endif
-
 
 #ifdef SIGHASARG
   /* try to find the name of this signal */
@@ -1531,17 +1425,6 @@ int mch_nodetype(char_u *name)
 }
 
 void mch_early_init()          {
-#ifdef HAVE_CHECK_STACK_GROWTH
-  int i;
-
-  check_stack_growth((char *)&i);
-
-# ifdef HAVE_STACK_LIMIT
-  get_stack_limit();
-# endif
-
-#endif
-
   /*
    * Setup an alternative stack for signals.  Helps to catch signals when
    * running out of stack space.
