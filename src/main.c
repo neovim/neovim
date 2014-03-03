@@ -2114,7 +2114,8 @@ process_env (
   linenr_T save_sourcing_lnum;
   scid_T save_sid;
 
-  if ((initstr = mch_getenv(env)) != NULL && *initstr != NUL) {
+  initstr = (char_u *)mch_getenv((char *)env);
+  if (initstr != NULL && *initstr != NUL) {
     if (is_viminit)
       vimrc_found(NULL, NULL);
     save_sourcing_name = sourcing_name;

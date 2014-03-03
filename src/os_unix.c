@@ -1349,7 +1349,7 @@ int mch_can_exe(char_u *name)
                                                       name[2] == '/'))))
     return executable_file(name);
 
-  p = (char_u *)getenv("PATH");
+  p = (char_u *)mch_getenv("PATH");
   if (p == NULL || *p == NUL)
     return -1;
   buf = alloc((unsigned)(STRLEN(name) + STRLEN(p) + 2));
@@ -1837,9 +1837,9 @@ int mch_get_shellsize()         {
    *    the ioctl() values!
    */
   if (columns == 0 || rows == 0 || vim_strchr(p_cpo, CPO_TSIZE) != NULL) {
-    if ((p = (char_u *)getenv("LINES")))
+    if ((p = (char_u *)mch_getenv("LINES")))
       rows = atoi((char *)p);
-    if ((p = (char_u *)getenv("COLUMNS")))
+    if ((p = (char_u *)mch_getenv("COLUMNS")))
       columns = atoi((char *)p);
   }
 
@@ -1950,12 +1950,7 @@ int options;                    /* SHELL_*, see vim.h */
   int fd_toshell[2];                    /* for pipes */
   int fd_fromshell[2];
   int pipe_error = FALSE;
-# ifdef HAVE_SETENV
   char envbuf[50];
-# else
-  static char envbuf_Rows[20];
-  static char envbuf_Columns[20];
-# endif
   int did_settmode = FALSE;             /* settmode(TMODE_RAW) called */
 
   newcmd = vim_strsave(p_sh);
@@ -2125,27 +2120,13 @@ int options;                    /* SHELL_*, see vim.h */
         }
 # endif
         /* Simulate to have a dumb terminal (for now) */
-# ifdef HAVE_SETENV
-        setenv("TERM", "dumb", 1);
+        mch_setenv("TERM", "dumb", 1);
         sprintf((char *)envbuf, "%ld", Rows);
-        setenv("ROWS", (char *)envbuf, 1);
+        mch_setenv("ROWS", (char *)envbuf, 1);
         sprintf((char *)envbuf, "%ld", Rows);
-        setenv("LINES", (char *)envbuf, 1);
+        mch_setenv("LINES", (char *)envbuf, 1);
         sprintf((char *)envbuf, "%ld", Columns);
-        setenv("COLUMNS", (char *)envbuf, 1);
-# else
-        /*
-         * Putenv does not copy the string, it has to remain valid.
-         * Use a static array to avoid losing allocated memory.
-         */
-        putenv("TERM=dumb");
-        sprintf(envbuf_Rows, "ROWS=%ld", Rows);
-        putenv(envbuf_Rows);
-        sprintf(envbuf_Rows, "LINES=%ld", Rows);
-        putenv(envbuf_Rows);
-        sprintf(envbuf_Columns, "COLUMNS=%ld", Columns);
-        putenv(envbuf_Columns);
-# endif
+        mch_setenv("COLUMNS", (char *)envbuf, 1);
 
         /*
          * stderr is only redirected when using the GUI, so that a

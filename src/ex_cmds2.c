@@ -3322,11 +3322,11 @@ static char_u *get_mess_env(void);
 static char_u *get_mess_env(void)                     {
   char_u      *p;
 
-  p = mch_getenv((char_u *)"LC_ALL");
+  p = (char_u *)mch_getenv("LC_ALL");
   if (p == NULL || *p == NUL) {
-    p = mch_getenv((char_u *)"LC_MESSAGES");
+    p = (char_u *)mch_getenv("LC_MESSAGES");
     if (p == NULL || *p == NUL) {
-      p = mch_getenv((char_u *)"LANG");
+      p = (char_u *)mch_getenv("LANG");
       if (p != NULL && VIM_ISDIGIT(*p))
         p = NULL;                       /* ignore something like "1043" */
 # ifdef HAVE_GET_LOCALE_VAL

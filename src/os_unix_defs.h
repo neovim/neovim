@@ -280,14 +280,6 @@
 # else
 int mch_rename(const char *src, const char *dest);
 # endif
-#  ifdef __MVS__
-/* on OS390 Unix getenv() doesn't return a pointer to persistent
- * storage -> use __getenv() */
-#   define mch_getenv(x) (char_u *)__getenv((char *)(x))
-#  else
-#   define mch_getenv(x) (char_u *)getenv((char *)(x))
-#  endif
-#  define mch_setenv(name, val, x) setenv(name, val, x)
 
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 # define        S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
