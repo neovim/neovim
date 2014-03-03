@@ -162,7 +162,7 @@ static char utf8len_tab_zero[256] =
  * "iso-8859-n" is handled by enc_canonize() directly.
  */
 static struct
-{   char *name;         int prop;               int codepage; }
+{   const char *name;   int prop;              int codepage; }
 enc_canon_table[] =
 {
 #define IDX_LATIN_1     0
@@ -300,7 +300,7 @@ enc_canon_table[] =
  * Aliases for encoding names.
  */
 static struct
-{   char *name;         int canon; }
+{   const char *name; int canon; }
 enc_alias_table[] =
 {
   {"ansi",            IDX_LATIN_1},
@@ -374,7 +374,7 @@ enc_alias_table[] =
  * Find encoding "name" in the list of canonical encoding names.
  * Returns -1 if not found.
  */
-static int enc_canon_search(char_u *name)
+static int enc_canon_search(const char_u *name)
 {
   int i;
 
@@ -390,7 +390,7 @@ static int enc_canon_search(char_u *name)
  * Find canonical encoding "name" in the list and return its properties.
  * Returns 0 if not found.
  */
-int enc_canon_props(char_u *name)
+int enc_canon_props(const char_u *name)
 {
   int i;
 
@@ -667,12 +667,12 @@ void remove_bom(char_u *s)
  * 2 for an (ASCII) word character
  * >2 for other word characters
  */
-int mb_get_class(char_u *p)
+int mb_get_class(const char_u *p)
 {
   return mb_get_class_buf(p, curbuf);
 }
 
-int mb_get_class_buf(char_u *p, buf_T *buf)
+int mb_get_class_buf(const char_u *p, buf_T *buf)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
     if (p[0] == NUL || vim_iswhite(p[0]))
@@ -927,7 +927,7 @@ static int dbcs_ptr2len_len(const char_u *p, int size)
 /*
  * Return true if "c" is in "table[size / sizeof(struct interval)]".
  */
-static bool intable(struct interval *table, size_t size, int c)
+static bool intable(const struct interval *table, size_t size, int c)
 {
   int mid, bot, top;
 
@@ -3570,7 +3570,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       if ((*mb_ptr2cells)((char_u *)from) > 1)
         *to++ = '?';
       if (enc_utf8)
-        l = utfc_ptr2len_len((char_u *)from, (int)fromlen);
+        l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
       else {
         l = (*mb_ptr2len)((char_u *)from);
         if (l > (int)fromlen)
