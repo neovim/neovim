@@ -292,32 +292,6 @@ struct u_header {
 #define UH_EMPTYBUF 0x02        /* buffer was empty */
 
 /*
- * structures used in undo.c
- */
-#if SIZEOF_INT > 2
-# define ALIGN_LONG     /* longword alignment and use filler byte */
-# define ALIGN_SIZE (sizeof(long))
-#else
-# define ALIGN_SIZE (sizeof(short))
-#endif
-
-#define ALIGN_MASK (ALIGN_SIZE - 1)
-
-typedef struct m_info minfo_T;
-
-/*
- * structure used to link chunks in one of the free chunk lists.
- */
-struct m_info {
-#ifdef ALIGN_LONG
-  long_u m_size;                /* size of the chunk (including m_info) */
-#else
-  short_u m_size;               /* size of the chunk (including m_info) */
-#endif
-  minfo_T     *m_next;          /* pointer to next free chunk in the list */
-};
-
-/*
  * things used in memfile.c
  */
 
