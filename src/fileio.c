@@ -4769,7 +4769,7 @@ void shorten_fnames(int force)
         && !path_with_url(buf->b_fname)
         && (force
             || buf->b_sfname == NULL
-            || mch_isFullName(buf->b_sfname))) {
+            || mch_is_full_name(buf->b_sfname))) {
       vim_free(buf->b_sfname);
       buf->b_sfname = NULL;
       p = shorten_fname(buf->b_ffname, dirname);
