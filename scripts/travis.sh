@@ -17,6 +17,14 @@ check_and_report() {
 	)
 }
 
+# Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
+# what we really have available.  According to their documentation, it only has
+# 1.5 virtual cores.
+# See:
+#   http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
+# for more information.
+alias make="make -j2"
+
 if [ "$CC" = "clang" ]; then
 	# force using the version installed by 'travis-setup.sh'
 	export CC=/usr/bin/clang
@@ -46,9 +54,8 @@ if [ "$CC" = "clang" ]; then
 	check_and_report
 	make install
 else
-	export BUSTED_OUTPUT_TYPE="TAP"
 	export SKIP_EXEC=1
+	make CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP"
 	make cmake
 	make unittest
 fi
-

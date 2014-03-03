@@ -25,15 +25,12 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   endif()
 endif()
 
-if(NOT DEFINED ENV{SKIP_EXEC})
-  add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
-endif()
-if(NOT DEFINED ENV{SKIP_UNITTEST})
-  add_library (nvim-test MODULE ${NEOVIM_SOURCES} ${OS_SOURCES})
-endif()
-
 # The libraries we link against for nvim
-set(NVIM_LINK_LIBRARIES m ${LibUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(NVIM_LINK_LIBRARIES
+    m
+    ${LIBUV_LIBRARIES}
+    ${LUAJIT_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT})
 
 # Add any libraries needed for a specific platform
 if(HAVE_CLOCK_GETTIME)
@@ -45,34 +42,25 @@ if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()
 
-if(NOT DEFINED ENV{SKIP_EXEC})
-  target_link_libraries (nvim ${NVIM_LINK_LIBRARIES})
+include(CheckLibraryExists)
+
+check_library_exists(curses tgetent "" HAVE_LIBCURSES)
+if (HAVE_LIBCURSES)
+  list(APPEND NVIM_LINK_LIBRARIES curses)
+else()
+  find_package(Curses REQUIRED)
+  list(APPEND NVIM_LINK_LIBRARIES ${CURSES_LIBRARIES})
 endif()
+
+if(NOT DEFINED ENV{SKIP_EXEC})
+  add_executable(nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
+  target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
+  install(TARGETS nvim RUNTIME DESTINATION bin)
+endif()
+
 if(NOT DEFINED ENV{SKIP_UNITTEST})
+  add_library(nvim-test MODULE ${NEOVIM_SOURCES} ${OS_SOURCES})
   target_link_libraries (nvim-test ${NVIM_LINK_LIBRARIES})
 endif()
 
-include(CheckLibraryExists)
-check_library_exists(curses tgetent "" HAVE_LIBCURSES)
-if (HAVE_LIBCURSES)
-  if(NOT DEFINED ENV{SKIP_EXEC})
-    target_link_libraries(nvim curses)
-  endif()
-  if(NOT DEFINED ENV{SKIP_UNITTEST})
-    target_link_libraries(nvim-test curses)
-  endif()
-else()
-  find_package(Curses REQUIRED)
-  if(NOT DEFINED ENV{SKIP_EXEC})
-    target_link_libraries(nvim ${CURSES_LIBRARIES})
-  endif()
-  if(DEFINED ENV{SKIP_UNITTEST})
-    target_link_libraries(nvim-test ${CURSES_LIBRARIES})
-  endif()
-endif()
-
-include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
-
-if(NOT DEFINED ENV{SKIP_EXEC})
-  install(TARGETS nvim RUNTIME DESTINATION bin)
-endif()
+include_directories ("${PROJECT_SOURCE_DIR}/src/proto")

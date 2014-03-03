@@ -1,46 +1,67 @@
 -include local.mk
 
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr -DLibUV_USE_STATIC=YES
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
+
+BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
+    echo "Unix Makefiles")
+
+ifeq (,$(BUILD_TOOL))
+  ifeq (Ninja,$(BUILD_TYPE))
+      ifneq ($(shell cmake --help 2>/dev/null | grep Ninja),)
+          BUILD_TOOL := ninja
+      else
+          # User's version of CMake doesn't support Ninja
+          BUILD_TOOL = $(MAKE)
+          BUILD_TYPE := Unix Makefiles
+      endif
+  else
+      BUILD_TOOL = $(MAKE)
+  endif
+endif
 
 # Extra CMake flags which extend the default set
-CMAKE_EXTRA_FLAGS :=
+CMAKE_EXTRA_FLAGS ?=
+DEPS_CMAKE_FLAGS ?=
 
 # For use where we want to make sure only a single job is run.  This also avoids
 # any warnings from the sub-make.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
-build/bin/nvim: deps
-	$(MAKE) -C build
+all: nvim
 
-test: build/bin/nvim
-	$(SINGLE_MAKE) -C src/testdir
+nvim: build/.ran-cmake deps
+	+$(BUILD_TOOL) -C build
 
-unittest: build/bin/nvim
-	sh -e scripts/unittest.sh
+cmake: | build/.ran-cmake
 
-deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
+build/.ran-cmake: | deps
+	mkdir -p build
+	cd build && cmake -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
+	touch $@
 
-.deps/usr/lib/libuv.a:
-	sh -e scripts/compile-libuv.sh
+deps: | .deps/build/third-party/.ran-cmake
+	+$(BUILD_TOOL) -C .deps/build/third-party
 
-.deps/usr/lib/libluajit-5.1.a:
-	sh -e scripts/compile-lua.sh
+.deps/build/third-party/.ran-cmake:
+	mkdir -p .deps/build/third-party
+	cd .deps/build/third-party && \
+		cmake -G '$(BUILD_TYPE)' $(DEPS_CMAKE_FLAGS) ../../../third-party
+	touch $@
 
-.deps/usr/bin/busted:
-	sh -e scripts/setup-test-tools.sh
+test: | nvim
+	+$(SINGLE_MAKE) -C src/testdir
 
-cmake: clean deps
-	mkdir build
-	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
+unittest: | nvim
+	+$(BUILD_TOOL) -C build unittest
 
 clean:
-	rm -rf build
+	+test -d build && $(BUILD_TOOL) -C build clean || true
 	$(MAKE) -C src/testdir clean
-	$(MAKE) -C test/includes clean
 
-install: build/bin/nvim
-	$(MAKE) -C build install
+distclean: clean
+	rm -rf .deps build
 
-.PHONY: test unittest deps cmake install
+install: | nvim
+	+$(BUILD_TOOL) -C build install
 
-.DEFAULT: build/bin/nvim
+.PHONY: test unittest clean distclean nvim cmake deps install
