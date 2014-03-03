@@ -1253,12 +1253,12 @@ int utf_char2cells(int c)
  * Return the number of display cells character at "*p" occupies.
  * This doesn't take care of unprintable characters, use ptr2cells() for that.
  */
-int latin_ptr2cells(char_u *p)
+int latin_ptr2cells(const char_u *p)
 {
   return 1;
 }
 
-int utf_ptr2cells(char_u *p)
+int utf_ptr2cells(const char_u *p)
 {
   int c;
 
@@ -1276,7 +1276,7 @@ int utf_ptr2cells(char_u *p)
   return 1;
 }
 
-int dbcs_ptr2cells(char_u *p)
+int dbcs_ptr2cells(const char_u *p)
 {
   /* Number of cells is equal to number of bytes, except for euc-jp when
    * the first byte is 0x8e. */
@@ -1348,7 +1348,7 @@ static int dbcs_char2cells(int c)
  * Return the number of cells occupied by string "p".
  * Stop at a NUL character.  When "len" >= 0 stop at character "p[len]".
  */
-int mb_string2cells(char_u *p, int len)
+int mb_string2cells(const char_u *p, int len)
 {
   int i;
   int clen = 0;
@@ -1615,8 +1615,8 @@ int utfc_ptr2char(
  * composing characters.  Use no more than p[maxlen].
  */
 int utfc_ptr2char_len(
-    char_u      *p,
-    int         *pcc,       /* return: composing chars, last one is 0 */
+    const char_u *p,
+    int          *pcc,       /* return: composing chars, last one is 0 */
     int maxlen
     )
 {
@@ -2960,14 +2960,14 @@ void show_utf8()          {
  * If "p" points to the NUL at the end of the string return 0.
  * Returns 0 when already at the first byte of a character.
  */
-int latin_head_off(char_u *base, char_u *p)
+int latin_head_off(const char_u *base, const char_u *p)
 {
   return 0;
 }
 
-int dbcs_head_off(char_u *base, char_u *p)
+int dbcs_head_off(const char_u *base, const char_u *p)
 {
-  char_u      *q;
+  const char_u      *q;
 
   /* It can't be a trailing byte when not using DBCS, at the start of the
    * string or the previous byte can't start a double-byte. */
@@ -2986,9 +2986,9 @@ int dbcs_head_off(char_u *base, char_u *p)
  * Special version of dbcs_head_off() that works for ScreenLines[], where
  * single-width DBCS_JPNU characters are stored separately.
  */
-int dbcs_screen_head_off(char_u *base, char_u *p)
+int dbcs_screen_head_off(const char_u *base, const char_u *p)
 {
-  char_u      *q;
+  const char_u      *q;
 
   /* It can't be a trailing byte when not using DBCS, at the start of the
    * string or the previous byte can't start a double-byte.
@@ -3014,13 +3014,13 @@ int dbcs_screen_head_off(char_u *base, char_u *p)
   return (q == p) ? 0 : 1;
 }
 
-int utf_head_off(char_u *base, char_u *p)
+int utf_head_off(const char_u *base, const char_u *p)
 {
-  char_u      *q;
-  char_u      *s;
+  const char_u *q;
+  const char_u *s;
   int c;
   int len;
-  char_u      *j;
+  const char_u *j;
 
   if (*p < 0x80)                /* be quick for ASCII */
     return 0;
@@ -3080,7 +3080,7 @@ void mb_copy_char(char_u **fp, char_u **tp)
  * at the start of a character 0 is returned, otherwise the offset to the next
  * character.  Can start anywhere in a stream of bytes.
  */
-int mb_off_next(char_u *base, char_u *p)
+int mb_off_next(const char_u *base, const char_u *p)
 {
   int i;
   int j;
@@ -3112,7 +3112,7 @@ int mb_off_next(char_u *base, char_u *p)
  * Return the offset from "p" to the last byte of the character it points
  * into.  Can start anywhere in a stream of bytes.
  */
-int mb_tail_off(char_u *base, char_u *p)
+int mb_tail_off(const char_u *base, const char_u *p)
 {
   int i;
   int j;
