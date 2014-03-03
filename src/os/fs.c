@@ -1,4 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
+/* vi:set ts=2 sts=2 sw=2:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -33,96 +33,129 @@ int mch_chdir(char *path) {
 int mch_dirname(char_u *buf, int len)
 {
   int errno;
-  if ((errno = uv_cwd((char *)buf, len)) != 0) {
+  if ((errno = uv_cwd((char *) buf, len)) != 0) {
       STRCPY(buf, uv_strerror(errno));
       return FAIL;
   }
   return OK;
 }
 
+/* 
+ * Get the absolute name of the given relative directory.
+ *
+ * parameter directory: Directory name, relative to current directory.
+ * return FAIL for failure, OK for success
+ */
+int mch_full_dir_name(char *directory, char *buffer, int len)
+{
+  int retval = OK;
+
+  if(0 == STRLEN(directory)) {
+    return mch_dirname((char_u *) buffer, len);
+  }
+
+  char old_dir[MAXPATHL];
+
+  /* Get current directory name. */
+  if (FAIL == mch_dirname((char_u *) old_dir, MAXPATHL)) {
+    return FAIL;
+  }
+
+  /* We have to get back to the current dir at the end, check if that works. */
+  if (0 != mch_chdir(old_dir)) {
+    return FAIL;
+  }
+
+  if (0 != mch_chdir(directory)) {
+    retval = FAIL;
+  }
+
+  if ((FAIL == retval) || (FAIL == mch_dirname((char_u *) buffer, len))) {
+    retval = FAIL;
+  }
+   
+  if (0 != mch_chdir(old_dir)) {
+    /* That shouldn't happen, since we've tested if it works. */
+    retval = FAIL;
+    EMSG(_(e_prev_dir));
+  }
+  return retval;
+}
+
+/* 
+ * Append to_append to path with a slash in between.
+ */
+int append_path(char *path, char *to_append, int max_len)
+{
+  int current_length = STRLEN(path);
+  int to_append_length = STRLEN(to_append);
+
+  /* Do not append empty strings. */
+  if (0 == to_append_length)
+    return OK;
+
+  /* Do not append a dot. */
+  if (STRCMP(to_append, ".") == 0)
+    return OK;
+
+  /* Glue both paths with a slash. */
+  if (current_length > 0 && path[current_length-1] != '/') {
+    current_length += 1; /* Count the trailing slash. */
+
+    if (current_length > max_len)
+      return FAIL;
+
+    STRCAT(path, "/");
+  }
+
+  /* +1 for the NUL at the end. */
+  if (current_length + to_append_length +1 > max_len) {
+    return FAIL;
+  }
+
+  STRCAT(path, to_append);
+  return OK;
+}
+
 /*
  * Get absolute file name into "buf[len]".
  *
+ * parameter force: Also expand when the given path in fname is already
+ * absolute.
+ *
  * return FAIL for failure, OK for success
  */
-int mch_FullName(
-        char_u      *fname,
-        char_u      *buf,
-        int len,
-        int force                       /* also expand when already absolute path */
-        )
+int mch_full_name(char_u *fname, char_u *buf, int len, int force)
 {
-  int l;
-  char_u olddir[MAXPATHL];
-  char_u      *p;
-  int retval = OK;
+  char_u *p;
+  *buf = NUL;
 
-
+  char relative_directory[len];
+  char *end_of_path = (char *) fname;
 
   /* expand it if forced or not an absolute path */
-  if (force || !mch_isFullName(fname)) {
-    /*
-     * If the file name has a path, change to that directory for a moment,
-     * and then do the getwd() (and get back to where we were).
-     * This will get the correct path name with "../" things.
-     */
+  if (force || !mch_is_full_name(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
 
-      /* Only change directory when we are sure we can return to where
-       * we are now.  After doing "su" chdir(".") might not work. */
-      if ((mch_dirname(olddir, MAXPATHL) == FAIL
-         || mch_chdir((char *)olddir) != 0)) {
-        p = NULL;               /* can't get current dir: don't chdir */
-        retval = FAIL;
-      } else   {
-        /* The directory is copied into buf[], to be able to remove
-         * the file name without changing it (could be a string in
-         * read-only memory) */
-        if (p - fname >= len)
-          retval = FAIL;
-        else {
-          vim_strncpy(buf, fname, p - fname);
-          if (mch_chdir((char *)buf))
-            retval = FAIL;
-          else
-            fname = p + 1;
-          *buf = NUL;
-        }
-      }
-    }
-    if (mch_dirname(buf, len) == FAIL) {
-      retval = FAIL;
-      *buf = NUL;
-    }
-    if (p != NULL) {
-      l = mch_chdir((char *)olddir);
-      if (l != 0)
-        EMSG(_(e_prev_dir));
+      STRNCPY(relative_directory, fname, p-fname);
+      relative_directory[p-fname] = NUL;
+      end_of_path = (char *) (p + 1);
+    } else {
+      relative_directory[0] = NUL;
+      end_of_path = (char *) fname;
     }
 
-    l = STRLEN(buf);
-    if (l >= len - 1)
-      retval = FAIL;       /* no space for trailing "/" */
-    else if (l > 0 && buf[l - 1] != '/' && *fname != NUL
-             && STRCMP(fname, ".") != 0)
-      STRCAT(buf, "/");
+    if (FAIL == mch_full_dir_name(relative_directory, (char *) buf, len)) {
+      return FAIL;
+    }
   }
-
-  /* Catch file names which are too long. */
-  if (retval == FAIL || (int)(STRLEN(buf) + STRLEN(fname)) >= len)
-    return FAIL;
-
-  /* Do not append ".", "/dir/." is equal to "/dir". */
-  if (STRCMP(fname, ".") != 0)
-    STRCAT(buf, fname);
-
-  return OK;
+  return append_path((char *) buf, (char *) end_of_path, len);
 }
 
 /*
  * Return TRUE if "fname" does not depend on the current directory.
  */
-int mch_isFullName(char_u *fname)
+int mch_is_full_name(char_u *fname)
 {
   return *fname == '/' || *fname == '~';
 }

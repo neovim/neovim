@@ -5065,7 +5065,7 @@ int path_with_url(char_u *fname)
  */
 int vim_isAbsName(char_u *name)
 {
-  return path_with_url(name) != 0 || mch_isFullName(name);
+  return path_with_url(name) != 0 || mch_is_full_name(name);
 }
 
 /*
@@ -5090,7 +5090,7 @@ vim_FullName (
 
   url = path_with_url(fname);
   if (!url)
-    retval = mch_FullName(fname, buf, len, force);
+    retval = mch_full_name(fname, buf, len, force);
   if (url || retval == FAIL) {
     /* something failed; use the file name (truncate when too long) */
     vim_strncpy(buf, fname, len - 1);
