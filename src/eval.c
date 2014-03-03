@@ -8552,7 +8552,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv)
   p = get_tv_string(&argvars[0]);
   if (*p == '$') {                      /* environment variable */
     /* first try "normal" environment variables (fast) */
-    if (mch_getenv(p + 1) != NULL)
+    if (mch_getenv((char *)(p + 1)) != NULL)
       n = TRUE;
     else {
       /* try expanding things like $VIM and ${HOME} */

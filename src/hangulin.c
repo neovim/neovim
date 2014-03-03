@@ -14,6 +14,7 @@
 #include "screen.h"
 #include "term.h"
 #include "ui.h"
+#include "os/os.h"
 
 #ifndef HANGUL_DEFAULT_KEYBOARD
 # define HANGUL_DEFAULT_KEYBOARD 3
@@ -653,12 +654,12 @@ static int hangul_automata3(char_u *buf, int_u *c)
 
 void hangul_keyboard_set(void)          {
   int keyboard;
-  char    *s;
+  const char *s;
 
   hangul_input_clear();
 
-  if ((s = getenv("VIM_KEYBOARD")) == NULL)
-    s = getenv("HANGUL_KEYBOARD_TYPE");
+  if ((s = mch_getenv("VIM_KEYBOARD")) == NULL)
+    s = mch_getenv("HANGUL_KEYBOARD_TYPE");
 
   if (s) {
     if (*s == '2')

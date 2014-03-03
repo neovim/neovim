@@ -9,5 +9,8 @@ int mch_dirname(char_u *buf, int len);
 int mch_full_name (char_u *fname, char_u *buf, int len, int force);
 int mch_is_full_name (char_u *fname);
 int mch_isdir(char_u *name);
+const char *mch_getenv(const char *name);
+int mch_setenv(const char *name, const char *value, int overwrite);
+char *mch_getenvname_at_index(size_t index);
 
 #endif
