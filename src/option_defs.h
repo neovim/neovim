@@ -456,6 +456,7 @@ EXTERN char_u   *p_msm;         /* 'mkspellmem' */
 EXTERN long p_mls;              /* 'modelines' */
 EXTERN char_u   *p_mouse;       /* 'mouse' */
 EXTERN char_u   *p_mousem;      /* 'mousemodel' */
+EXTERN long     p_mscr;         /* 'mousescroll' */
 EXTERN long p_mouset;           /* 'mousetime' */
 EXTERN int p_more;              /* 'more' */
 EXTERN char_u   *p_opfunc;      /* 'operatorfunc' */
