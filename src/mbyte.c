@@ -692,12 +692,12 @@ void remove_bom(char_u *s)
  * 2 for an (ASCII) word character
  * >2 for other word characters
  */
-int mb_get_class(char_u *p)
+int mb_get_class(const char_u *p)
 {
   return mb_get_class_buf(p, curbuf);
 }
 
-int mb_get_class_buf(char_u *p, buf_T *buf)
+int mb_get_class_buf(const char_u *p, buf_T *buf)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
     if (p[0] == NUL || vim_iswhite(p[0]))
