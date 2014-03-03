@@ -16,7 +16,7 @@ int utf_char2cells(int c);
 int latin_ptr2cells(char_u *p);
 int utf_ptr2cells(char_u *p);
 int dbcs_ptr2cells(char_u *p);
-int latin_ptr2cells_len(char_u *p, int size);
+int latin_ptr2cells_len(const char_u *p, int size);
 int latin_char2cells(int c);
 int mb_string2cells(char_u *p, int len);
 int latin_off2cells(unsigned off, unsigned max_off);

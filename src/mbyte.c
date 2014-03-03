@@ -106,9 +106,9 @@ static int dbcs_char2len(int c);
 static int dbcs_char2bytes(int c, char_u *buf);
 static int dbcs_ptr2len(const char_u *p);
 static int dbcs_ptr2len_len(const char_u *p, int size);
-static int utf_ptr2cells_len(char_u *p, int size);
+static int utf_ptr2cells_len(const char_u *p, int size);
 static int dbcs_char2cells(int c);
-static int dbcs_ptr2cells_len(char_u *p, int size);
+static int dbcs_ptr2cells_len(const char_u *p, int size);
 static int dbcs_ptr2char(const char_u *p);
 static int utf_safe_read_char_adv(char_u **s, size_t *n);
 
@@ -1290,12 +1290,12 @@ int dbcs_ptr2cells(char_u *p)
  * Like mb_ptr2cells(), but limit string length to "size".
  * For an empty string or truncated character returns 1.
  */
-int latin_ptr2cells_len(char_u *p, int size)
+int latin_ptr2cells_len(const char_u *p, int size)
 {
   return 1;
 }
 
-static int utf_ptr2cells_len(char_u *p, int size)
+static int utf_ptr2cells_len(const char_u *p, int size)
 {
   int c;
 
@@ -1315,7 +1315,7 @@ static int utf_ptr2cells_len(char_u *p, int size)
   return 1;
 }
 
-static int dbcs_ptr2cells_len(char_u *p, int size)
+static int dbcs_ptr2cells_len(const char_u *p, int size)
 {
   /* Number of cells is equal to number of bytes, except for euc-jp when
    * the first byte is 0x8e. */

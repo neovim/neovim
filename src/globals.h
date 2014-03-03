@@ -653,7 +653,7 @@ EXTERN int (*mb_char2len)(int c) INIT(= latin_char2len);
 /* convert char to bytes, return the length */
 EXTERN int (*mb_char2bytes)(int c, char_u *buf) INIT(= latin_char2bytes);
 EXTERN int (*mb_ptr2cells)(char_u *p) INIT(= latin_ptr2cells);
-EXTERN int (*mb_ptr2cells_len)(char_u *p, int size) INIT(
+EXTERN int (*mb_ptr2cells_len)(const char_u *p, int size) INIT(
       = latin_ptr2cells_len);
 EXTERN int (*mb_char2cells)(int c) INIT(= latin_char2cells);
 EXTERN int (*mb_off2cells)(unsigned off, unsigned max_off) INIT(
