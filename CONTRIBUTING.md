@@ -17,7 +17,7 @@ Raise documentation issues.
 Neovim uses [waffle.io](https://waffle.io/neovim/neovim), so check there
 first.
 
-You can also ask for an issues to be assigned to you.
+You can also ask for an issue to be assigned to you.
 Ideally wait until we assign it to you to minimize
 work duplication.
 
