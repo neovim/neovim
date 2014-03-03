@@ -101,7 +101,7 @@
 
 
 
-static int enc_canon_search(char_u *name);
+static int enc_canon_search(const char_u *name);
 static int dbcs_char2len(int c);
 static int dbcs_char2bytes(int c, char_u *buf);
 static int dbcs_ptr2len(char_u *p);
@@ -179,7 +179,7 @@ static void xim_log(char *s, ...)                 {
  * "iso-8859-n" is handled by enc_canonize() directly.
  */
 static struct
-{   char *name;         int prop;               int codepage; }
+{   const char *name;   int prop;              int codepage; }
 enc_canon_table[] =
 {
 #define IDX_LATIN_1     0
@@ -317,7 +317,7 @@ enc_canon_table[] =
  * Aliases for encoding names.
  */
 static struct
-{   char *name;         int canon; }
+{   const char *name; int canon; }
 enc_alias_table[] =
 {
   {"ansi",            IDX_LATIN_1},
@@ -391,7 +391,7 @@ enc_alias_table[] =
  * Find encoding "name" in the list of canonical encoding names.
  * Returns -1 if not found.
  */
-static int enc_canon_search(char_u *name)
+static int enc_canon_search(const char_u *name)
 {
   int i;
 
