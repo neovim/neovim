@@ -1,7 +1,7 @@
 #ifndef NEOVIM_MBYTE_H
 #define NEOVIM_MBYTE_H
 /* mbyte.c */
-int enc_canon_props(char_u *name);
+int enc_canon_props(const char_u *name);
 char_u *mb_init(void);
 int bomb_size(void);
 void remove_bom(char_u *s);

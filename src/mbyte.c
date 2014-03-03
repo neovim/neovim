@@ -407,7 +407,7 @@ static int enc_canon_search(const char_u *name)
  * Find canonical encoding "name" in the list and return its properties.
  * Returns 0 if not found.
  */
-int enc_canon_props(char_u *name)
+int enc_canon_props(const char_u *name)
 {
   int i;
 
@@ -953,12 +953,11 @@ struct interval {
   long first;
   long last;
 };
-static int intable(struct interval *table, size_t size, int c);
 
 /*
  * Return TRUE if "c" is in "table[size / sizeof(struct interval)]".
  */
-static int intable(struct interval *table, size_t size, int c)
+static int intable(const struct interval *table, size_t size, int c)
 {
   int mid, bot, top;
 
