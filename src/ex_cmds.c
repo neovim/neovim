@@ -52,6 +52,7 @@
 #include "ui.h"
 #include "undo.h"
 #include "window.h"
+#include "os/os.h"
 
 static int linelen(int *has_tab);
 static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap,

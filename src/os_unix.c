@@ -1319,26 +1319,6 @@ void mch_hide(char_u *name)
   /* can't hide a file */
 }
 
-/*
- * return TRUE if "name" is a directory
- * return FALSE if "name" is not a directory
- * return FALSE for error
- */
-int mch_isdir(char_u *name)
-{
-  struct stat statb;
-
-  if (*name == NUL)         /* Some stat()s don't flag "" as an error. */
-    return FALSE;
-  if (stat((char *)name, &statb))
-    return FALSE;
-#ifdef _POSIX_SOURCE
-  return S_ISDIR(statb.st_mode) ? TRUE : FALSE;
-#else
-  return (statb.st_mode & S_IFMT) == S_IFDIR ? TRUE : FALSE;
-#endif
-}
-
 int executable_file(char_u *name);
 
 /*

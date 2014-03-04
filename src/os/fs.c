@@ -160,3 +160,22 @@ int mch_is_full_name(char_u *fname)
   return *fname == '/' || *fname == '~';
 }
 
+/*
+ * return TRUE if "name" is a directory
+ * return FALSE if "name" is not a directory
+ * return FALSE for error
+ */
+int mch_isdir(char_u *name)
+{
+  uv_fs_t request;
+  if (0 != uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL)) {
+    return FALSE;
+  }
+
+  if (!S_ISDIR(request.statbuf.st_mode)) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+

@@ -39,6 +39,7 @@
 #include "term.h"
 #include "undo.h"
 #include "window.h"
+#include "os/os.h"
 
 static void cmd_source(char_u *fname, exarg_T *eap);
 
