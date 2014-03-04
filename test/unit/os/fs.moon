@@ -1,16 +1,22 @@
-{:cimport, :internalize, :eq, :ffi} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
 require 'lfs'
 
-fs = cimport './src/fs.h'
-cstr = ffi.typeof 'char[?]'
+-- fs = cimport './src/os/os.h'
+-- remove these statements once 'cimport' is working properly for misc1.h
+fs = lib
+ffi.cdef [[
+enum OKFAIL {
+  OK = 1, FAIL = 0
+};
+int mch_dirname(char_u *buf, int len);
+]]
+
+-- import constants parsed by ffi
+{:OK, :FAIL} = lib
 
 describe 'fs function', ->
 
-  export OK = 1
-  export FAIL = 0
-
   describe 'mch_dirname', ->
-    ffi.cdef 'int mch_dirname(char *buf, int len);'
 
     mch_dirname = (buf, len) ->
       fs.mch_dirname buf, len
