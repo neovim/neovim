@@ -1339,12 +1339,12 @@ int mch_isdir(char_u *name)
 #endif
 }
 
-static int executable_file(char_u *name);
+int executable_file(char_u *name);
 
 /*
  * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
  */
-static int executable_file(char_u *name)
+int executable_file(char_u *name)
 {
   struct stat st;
 
