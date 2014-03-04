@@ -19,7 +19,7 @@ describe 'os_unix function', ->
     lfs.touch 'unit-test-directory/test.file'
 
     -- Since the tests are executed, they are called by an executable. We use
-    -- that to unit test several functions.
+    -- that executable for several asserts.
     export absolute_executable = arg[0]
 
     -- Split absolute_executable into a directory and the actual file name and

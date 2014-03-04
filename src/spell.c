@@ -325,6 +325,7 @@
 #include "term.h"
 #include "ui.h"
 #include "undo.h"
+#include "os/os.h"
 
 #ifndef UNIX            /* it's in os_unix_defs.h for Unix */
 # include <time.h>      /* for time_t */

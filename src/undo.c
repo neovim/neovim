@@ -98,6 +98,7 @@
 #include "quickfix.h"
 #include "screen.h"
 #include "sha256.h"
+#include "os/os.h"
 
 static long get_undolevel(void);
 static void u_unch_branch(u_header_T *uhp);
