@@ -13,7 +13,7 @@ if (USE_INCLUDED_LibUV)
     GIT_REPOSITORY "https://github.com/joyent/libuv.git"
     GIT_TAG "v0.11.21"
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND "./autogen.sh" "&&" "./configure" "--prefix=${LibUV_INSTALL_DIR}"
+    CONFIGURE_COMMAND "./autogen.sh" "&&" "./configure" "--prefix=${LibUV_INSTALL_DIR}" "--with-pic"
     BUILD_COMMAND "make" "&&" "make" "install"
   )
 else ()
