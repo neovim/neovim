@@ -4868,8 +4868,12 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   /* Some patterns may take a long time to match, especially when using
    * recursive_regmatch(). Allow interrupting them with CTRL-C. */
   fast_breakcheck();
-  if (got_int)
+  if (got_int) {
+#ifdef NFA_REGEXP_DEBUG_LOG
+    fclose(debug);
+#endif
     return FALSE;
+  }
 
   nfa_match = FALSE;
 
