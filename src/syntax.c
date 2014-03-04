@@ -4187,7 +4187,7 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
    */
   eap->argt |= (XFILE | NOSPC);
   separate_nextcmd(eap);
-  if (*eap->arg == '<' || *eap->arg == '$' || mch_isFullName(eap->arg)) {
+  if (*eap->arg == '<' || *eap->arg == '$' || mch_is_full_name(eap->arg)) {
     /* For an absolute path, "$VIM/..." or "<sfile>.." we ":source" the
      * file.  Need to expand the file name first.  In other cases
      * ":runtime!" is used. */

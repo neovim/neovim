@@ -1,13 +1,21 @@
-{:cimport, :internalize, :eq, :ffi} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
 
-misc1 = cimport './src/misc1.h'
-cstr = ffi.typeof 'char[?]'
+--misc1 = cimport './src/misc1.h'
 
--- TODO extract constants from vim.h
+-- remove these statements once 'cimport' is working properly for misc1.h
+misc1 = lib
+ffi.cdef [[
+enum FPC {
+  FPC_SAME = 1, FPC_DIFF = 2, FPC_NOTX = 4, FPC_DIFFX = 6, FPC_SAMEX = 7
+};
+int fullpathcmp(char_u *s1, char_u *s2, int checkname);
+]]
+
+-- import constants parsed by ffi
+{:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = lib
 
 describe 'misc1 function', ->
   describe 'fullpathcmp', ->
-    ffi.cdef 'int fullpathcmp(char *s1, char *s2, int checkname);'
 
     fullpathcmp = (s1, s2, cn) ->
       s1 = cstr (string.len s1) + 1, s1
@@ -16,12 +24,6 @@ describe 'misc1 function', ->
 
     f1 = 'f1.o'
     f2 = 'f2.o'
-
-    FPC_SAME = 1
-    FPC_DIFF = 2
-    FPC_NOTX = 4
-    FPC_DIFFX = 6
-    FPC_SAMEX = 7
 
     before_each ->
       -- create the three files that will be used in this spec
