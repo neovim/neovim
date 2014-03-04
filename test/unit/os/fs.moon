@@ -58,10 +58,10 @@ describe 'fs function', ->
       eq FAIL, mch_full_dir_name('does_not_exist', buffer, len)
 
     it 'works with a normal relative dir', ->
-      lfs.mkdir('empty-test-directory')
+      lfs.mkdir 'empty-test-directory'
       result = mch_full_dir_name('empty-test-directory', buffer, len)
-      lfs.rmdir('empty-test-directory')
-      eq lfs.currentdir! .. '/empty-test-directory', ffi.string(buffer)
+      lfs.rmdir 'empty-test-directory'
+      eq lfs.currentdir! .. '/empty-test-directory', (ffi.string buffer)
       eq OK, result
 
   describe 'mch_full_name', ->
@@ -78,11 +78,11 @@ describe 'fs function', ->
 
       -- Create a directory and an empty file inside in order to know some
       -- existing relative path.
-      lfs.mkdir('empty-test-directory')
-      lfs.touch('empty-test-directory/empty.file')
+      lfs.mkdir 'empty-test-directory'
+      lfs.touch 'empty-test-directory/empty.file'
 
     after_each ->
-      lfs.rmdir('empty-test-directory')
+      lfs.rmdir 'empty-test-directory'
 
     it 'fails if given filename contains non-existing directory', ->
       force_expansion = 1
