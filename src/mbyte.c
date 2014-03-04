@@ -101,16 +101,16 @@
 
 
 
-static int enc_canon_search __ARGS((char_u *name));
-static int dbcs_char2len __ARGS((int c));
-static int dbcs_char2bytes __ARGS((int c, char_u *buf));
-static int dbcs_ptr2len __ARGS((char_u *p));
-static int dbcs_ptr2len_len __ARGS((char_u *p, int size));
-static int utf_ptr2cells_len __ARGS((char_u *p, int size));
-static int dbcs_char2cells __ARGS((int c));
-static int dbcs_ptr2cells_len __ARGS((char_u *p, int size));
-static int dbcs_ptr2char __ARGS((char_u *p));
-static int utf_safe_read_char_adv __ARGS((char_u **s, size_t *n));
+static int enc_canon_search(char_u *name);
+static int dbcs_char2len(int c);
+static int dbcs_char2bytes(int c, char_u *buf);
+static int dbcs_ptr2len(char_u *p);
+static int dbcs_ptr2len_len(char_u *p, int size);
+static int utf_ptr2cells_len(char_u *p, int size);
+static int dbcs_char2cells(int c);
+static int dbcs_ptr2cells_len(char_u *p, int size);
+static int dbcs_ptr2char(char_u *p);
+static int utf_safe_read_char_adv(char_u **s, size_t *n);
 
 /*
  * Lookup table to quickly get the length in bytes of a UTF-8 character from
@@ -953,7 +953,7 @@ struct interval {
   long first;
   long last;
 };
-static int intable __ARGS((struct interval *table, size_t size, int c));
+static int intable(struct interval *table, size_t size, int c);
 
 /*
  * Return TRUE if "c" is in "table[size / sizeof(struct interval)]".
@@ -2405,8 +2405,8 @@ static convertStruct foldCase[] =
   {0x10400,0x10427,1,40}
 };
 
-static int utf_convert __ARGS((int a, convertStruct table[], int tableSize));
-static int utf_strnicmp __ARGS((char_u *s1, char_u *s2, size_t n1, size_t n2));
+static int utf_convert(int a, convertStruct table[], int tableSize);
+static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2);
 
 /*
  * Generic conversion function for case operations.
@@ -3366,7 +3366,7 @@ int mb_fix_col(int col, int row)
   return col;
 }
 
-static int enc_alias_search __ARGS((char_u *name));
+static int enc_alias_search(char_u *name);
 
 /*
  * Skip the Vim specific head of a 'encoding' name.
@@ -3526,8 +3526,8 @@ char_u * enc_locale()              {
 # if defined(USE_ICONV) || defined(PROTO)
 
 static char_u *
-iconv_string __ARGS((vimconv_T *vcp, char_u *str, int slen, int *unconvlenp,
-      int *resultlenp));
+iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvlenp,
+             int *resultlenp);
 
 /*
  * Call iconv_open() with a check if iconv() works properly (there are broken

@@ -25,6 +25,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 #include "option.h"
 #include "screen.h"
 #include "syntax.h"
@@ -146,23 +147,23 @@ typedef struct {
   int ff;                           /* seen form feed character */
 } prt_pos_T;
 
-static char_u *parse_list_options __ARGS((char_u *option_str, option_table_T *
-                                          table,
-                                          int table_size));
+static char_u *parse_list_options(char_u *option_str,
+                                  option_table_T *table,
+                                  int table_size);
 
-static long_u darken_rgb __ARGS((long_u rgb));
-static long_u prt_get_term_color __ARGS((int colorindex));
-static void prt_set_fg __ARGS((long_u fg));
-static void prt_set_bg __ARGS((long_u bg));
-static void prt_set_font __ARGS((int bold, int italic, int underline));
-static void prt_line_number __ARGS((prt_settings_T *psettings, int page_line,
-                                    linenr_T lnum));
-static void prt_header __ARGS((prt_settings_T *psettings, int pagenum,
-                               linenr_T lnum));
-static void prt_message __ARGS((char_u *s));
-static colnr_T hardcopy_line __ARGS((prt_settings_T *psettings, int page_line,
-                                     prt_pos_T *ppos));
-static void prt_get_attr __ARGS((int hl_id, prt_text_attr_T* pattr, int modec));
+static long_u darken_rgb(long_u rgb);
+static long_u prt_get_term_color(int colorindex);
+static void prt_set_fg(long_u fg);
+static void prt_set_bg(long_u bg);
+static void prt_set_font(int bold, int italic, int underline);
+static void prt_line_number(prt_settings_T *psettings, int page_line,
+                            linenr_T lnum);
+static void prt_header(prt_settings_T *psettings, int pagenum,
+                       linenr_T lnum);
+static void prt_message(char_u *s);
+static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line,
+                             prt_pos_T *ppos);
+static void prt_get_attr(int hl_id, prt_text_attr_T* pattr, int modec);
 
 /*
  * Parse 'printoptions' and set the flags in "printer_opts".
@@ -1198,61 +1199,60 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
    PRT_DSC_ENDCOMMENTS_TYPE}
 };
 
-static void prt_write_file_raw_len __ARGS((char_u *buffer, int bytes));
-static void prt_write_file __ARGS((char_u *buffer));
-static void prt_write_file_len __ARGS((char_u *buffer, int bytes));
-static void prt_write_string __ARGS((char *s));
-static void prt_write_int __ARGS((int i));
-static void prt_write_boolean __ARGS((int b));
-static void prt_def_font __ARGS((char *new_name, char *encoding, int height,
-                                 char *font));
-static void prt_real_bits __ARGS((double real, int precision, int *pinteger,
-                                  int *pfraction));
-static void prt_write_real __ARGS((double val, int prec));
-static void prt_def_var __ARGS((char *name, double value, int prec));
-static void prt_flush_buffer __ARGS((void));
-static void prt_resource_name __ARGS((char_u *filename, void *cookie));
-static int prt_find_resource __ARGS((char *name,
-                                     struct prt_ps_resource_S *resource));
-static int prt_open_resource __ARGS((struct prt_ps_resource_S *resource));
-static int prt_check_resource __ARGS((struct prt_ps_resource_S *resource,
-                                      char_u *version));
-static void prt_dsc_start __ARGS((void));
-static void prt_dsc_noarg __ARGS((char *comment));
-static void prt_dsc_textline __ARGS((char *comment, char *text));
-static void prt_dsc_text __ARGS((char *comment, char *text));
-static void prt_dsc_ints __ARGS((char *comment, int count, int *ints));
-static void prt_dsc_requirements __ARGS((int duplex, int tumble, int collate,
-                                         int color,
-                                         int num_copies));
-static void prt_dsc_docmedia __ARGS((char *paper_name, double width,
-                                     double height, double weight, char *colour,
-                                     char *type));
-static void prt_dsc_resources __ARGS((char *comment, char *type, char *strings));
-static void prt_dsc_font_resource __ARGS((char *resource,
-                                          struct prt_ps_font_S *ps_font));
-static float to_device_units __ARGS((int idx, double physsize, int def_number));
-static void prt_page_margins __ARGS((double width, double height, double *left,
-                                     double *right, double *top,
-                                     double *bottom));
-static void prt_font_metrics __ARGS((int font_scale));
-static int prt_get_cpl __ARGS((void));
-static int prt_get_lpp __ARGS((void));
-static int prt_add_resource __ARGS((struct prt_ps_resource_S *resource));
-static int prt_resfile_next_line __ARGS((void));
-static int prt_resfile_strncmp __ARGS((int offset, char *string, int len));
-static int prt_resfile_skip_nonws __ARGS((int offset));
-static int prt_resfile_skip_ws __ARGS((int offset));
-static int prt_next_dsc __ARGS((struct prt_dsc_line_S *p_dsc_line));
-static int prt_build_cid_fontname __ARGS((int font, char_u *name, int name_len));
-static void prt_def_cidfont __ARGS((char *new_name, int height, char *cidfont));
-static void prt_dup_cidfont __ARGS((char *original_name, char *new_name));
-static int prt_match_encoding __ARGS((char *p_encoding,
-                                      struct prt_ps_mbfont_S *p_cmap,
-                                      struct prt_ps_encoding_S **pp_mbenc));
-static int prt_match_charset __ARGS((char *p_charset,
-                                     struct prt_ps_mbfont_S *p_cmap,
-                                     struct prt_ps_charset_S **pp_mbchar));
+static void prt_write_file_raw_len(char_u *buffer, int bytes);
+static void prt_write_file(char_u *buffer);
+static void prt_write_file_len(char_u *buffer, int bytes);
+static void prt_write_string(char *s);
+static void prt_write_int(int i);
+static void prt_write_boolean(int b);
+static void prt_def_font(char *new_name, char *encoding, int height,
+                         char *font);
+static void prt_real_bits(double real, int precision, int *pinteger,
+                          int *pfraction);
+static void prt_write_real(double val, int prec);
+static void prt_def_var(char *name, double value, int prec);
+static void prt_flush_buffer(void);
+static void prt_resource_name(char_u *filename, void *cookie);
+static int prt_find_resource(char *name, struct prt_ps_resource_S *resource);
+static int prt_open_resource(struct prt_ps_resource_S *resource);
+static int prt_check_resource(struct prt_ps_resource_S *resource,
+                              char_u *version);
+static void prt_dsc_start(void);
+static void prt_dsc_noarg(char *comment);
+static void prt_dsc_textline(char *comment, char *text);
+static void prt_dsc_text(char *comment, char *text);
+static void prt_dsc_ints(char *comment, int count, int *ints);
+static void prt_dsc_requirements(int duplex, int tumble, int collate,
+                                 int color,
+                                 int num_copies);
+static void prt_dsc_docmedia(char *paper_name, double width,
+                             double height, double weight, char *colour,
+                             char *type);
+static void prt_dsc_resources(char *comment, char *type, char *strings);
+static void prt_dsc_font_resource(char *resource,
+                                  struct prt_ps_font_S *ps_font);
+static float to_device_units(int idx, double physsize, int def_number);
+static void prt_page_margins(double width, double height, double *left,
+                             double *right, double *top,
+                             double *bottom);
+static void prt_font_metrics(int font_scale);
+static int prt_get_cpl(void);
+static int prt_get_lpp(void);
+static int prt_add_resource(struct prt_ps_resource_S *resource);
+static int prt_resfile_next_line(void);
+static int prt_resfile_strncmp(int offset, char *string, int len);
+static int prt_resfile_skip_nonws(int offset);
+static int prt_resfile_skip_ws(int offset);
+static int prt_next_dsc(struct prt_dsc_line_S *p_dsc_line);
+static int prt_build_cid_fontname(int font, char_u *name, int name_len);
+static void prt_def_cidfont(char *new_name, int height, char *cidfont);
+static void prt_dup_cidfont(char *original_name, char *new_name);
+static int prt_match_encoding(char *p_encoding,
+                              struct prt_ps_mbfont_S *p_cmap,
+                              struct prt_ps_encoding_S **pp_mbenc);
+static int prt_match_charset(char *p_charset,
+                             struct prt_ps_mbfont_S *p_cmap,
+                             struct prt_ps_charset_S **pp_mbchar);
 
 /*
  * Variables for the output PostScript file.

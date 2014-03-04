@@ -34,6 +34,7 @@
 #include "getchar.h"
 #include "message.h"
 #include "misc2.h"
+#include "garray.h"
 #include "move.h"
 #include "normal.h"
 #include "option.h"
@@ -84,32 +85,32 @@ struct builtin_term {
 /* start of keys that are not directly used by Vim but can be mapped */
 #define BT_EXTRA_KEYS   0x101
 
-static struct builtin_term *find_builtin_term __ARGS((char_u *name));
-static void parse_builtin_tcap __ARGS((char_u *s));
-static void term_color __ARGS((char_u *s, int n));
-static void gather_termleader __ARGS((void));
-static void req_codes_from_term __ARGS((void));
-static void req_more_codes_from_term __ARGS((void));
-static void got_code_from_term __ARGS((char_u *code, int len));
-static void check_for_codes_from_term __ARGS((void));
+static struct builtin_term *find_builtin_term(char_u *name);
+static void parse_builtin_tcap(char_u *s);
+static void term_color(char_u *s, int n);
+static void gather_termleader(void);
+static void req_codes_from_term(void);
+static void req_more_codes_from_term(void);
+static void got_code_from_term(char_u *code, int len);
+static void check_for_codes_from_term(void);
 #if defined(FEAT_GUI) \
   || (defined(FEAT_MOUSE) && (!defined(UNIX) || defined(FEAT_MOUSE_XTERM) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE)))
-static int get_bytes_from_buf __ARGS((char_u *, char_u *, int));
+static int get_bytes_from_buf(char_u *, char_u *, int);
 #endif
-static void del_termcode_idx __ARGS((int idx));
-static int term_is_builtin __ARGS((char_u *name));
-static int term_7to8bit __ARGS((char_u *p));
-static void switch_to_8bit __ARGS((void));
+static void del_termcode_idx(int idx);
+static int term_is_builtin(char_u *name);
+static int term_7to8bit(char_u *p);
+static void switch_to_8bit(void);
 
 #ifdef HAVE_TGETENT
-static char_u *tgetent_error __ARGS((char_u *, char_u *));
+static char_u *tgetent_error(char_u *, char_u *);
 
 /*
  * Here is our own prototype for tgetstr(), any prototypes from the include
  * files have been disabled by the define at the start of this file.
  */
-char            *tgetstr __ARGS((char *, char **));
+char            *tgetstr(char *, char **);
 
 /* Change this to "if 1" to debug what happens with termresponse. */
 #   define LOG_TR(msg)
@@ -148,7 +149,7 @@ char *UP, *BC, PC;
 
 # define TGETSTR(s, p)  vim_tgetstr((s), (p))
 # define TGETENT(b, t)  tgetent((char *)(b), (char *)(t))
-static char_u *vim_tgetstr __ARGS((char *s, char_u **pp));
+static char_u *vim_tgetstr(char *s, char_u **pp);
 #endif /* HAVE_TGETENT */
 
 static int detected_8bit = FALSE;       /* detected 8-bit terminal */
@@ -1232,7 +1233,7 @@ static void parse_builtin_tcap(char_u *term)
     }
   }
 }
-static void set_color_count __ARGS((int nr));
+static void set_color_count(int nr);
 
 /*
  * Set number of colors.
@@ -1962,7 +1963,7 @@ char_u *tltoa(unsigned long i)
  * minimal tgoto() implementation.
  * no padding and we only parse for %i %d and %+char
  */
-static char *tgoto __ARGS((char *, int, int));
+static char *tgoto(char *, int, int);
 
 static char *tgoto(char *cm, int x, int y)
 {
@@ -2085,7 +2086,7 @@ void out_char(unsigned c)
     out_flush();
 }
 
-static void out_char_nf __ARGS((unsigned));
+static void out_char_nf(unsigned);
 
 /*
  * out_char_nf(c): like out_char(), but don't flush when p_wd is set
@@ -2224,12 +2225,14 @@ static void term_color(char_u *s, int n)
       && (STRCMP(s + i + 1, "%p1%dm") == 0
           || STRCMP(s + i + 1, "%dm") == 0)
       && (s[i] == '3' || s[i] == '4')) {
-    sprintf(buf,
+    const char *fmt =
 #ifdef TERMINFO
-        "%s%s%%p1%%dm",
+        "%s%s%%p1%%dm";
 #else
-        "%s%s%%dm",
+        "%s%s%%dm";
 #endif
+    sprintf(buf,
+        fmt,
         i == 2 ? IF_EB("\033[", ESC_STR "[") : "\233",
         s[i] == '3' ? (n >= 16 ? "38;5;" : "9")
         : (n >= 16 ? "48;5;" : "10"));
@@ -2360,7 +2363,7 @@ void add_long_to_buf(long_u val, char_u *dst)
   }
 }
 
-static int get_long_from_buf __ARGS((char_u *buf, long_u *val));
+static int get_long_from_buf(char_u *buf, long_u *val);
 
 /*
  * Interpret the next string of bytes in buf as a long integer, with the most
@@ -2948,7 +2951,7 @@ static struct termcode {
 static int tc_max_len = 0;  /* number of entries that termcodes[] can hold */
 static int tc_len = 0;      /* current number of entries in termcodes[] */
 
-static int termcode_star __ARGS((char_u *code, int len));
+static int termcode_star(char_u *code, int len);
 
 void clear_termcodes(void)          {
   while (tc_len > 0)

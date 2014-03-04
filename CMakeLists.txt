@@ -10,7 +10,14 @@ set(NEOVIM_VERSION_PATCH 0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_definitions(-DHAVE_CONFIG_H -Wall -std=gnu99)
+# If the C compiler is some GNU-alike, use the gnu99 standard and enable all warnings.
+if(CMAKE_COMPILER_IS_GNUCC)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99")
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99")
+endif(CMAKE_COMPILER_IS_GNUCC)
+
+add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   # cmake automatically appends -g to the compiler flags
   set(DEBUG 1)
@@ -38,6 +45,11 @@ endif(NOT CMAKE_USE_PTHREADS_INIT)
 # the static libuv doesn't but uses clock_gettime.
 check_library_exists(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
 
+find_package(LibIntl)
+if(LibIntl_FOUND)
+  include_directories(${LibIntl_INCLUDE_DIR})
+endif()
+
 # Require libuv
 find_package(LibUV REQUIRED)
 include_directories(${LibUV_INCLUDE_DIRS})
@@ -46,5 +58,5 @@ include_directories ("${PROJECT_BINARY_DIR}/config")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-add_subdirectory(src)
 add_subdirectory(config)
+add_subdirectory(src)

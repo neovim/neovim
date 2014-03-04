@@ -37,20 +37,20 @@
 #include "ui.h"
 #include "window.h"
 
-static void save_re_pat __ARGS((int idx, char_u *pat, int magic));
-static void set_vv_searchforward __ARGS((void));
-static int first_submatch __ARGS((regmmatch_T *rp));
-static int check_prevcol __ARGS((char_u *linep, int col, int ch, int *prevcol));
-static int inmacro __ARGS((char_u *, char_u *));
-static int check_linecomment __ARGS((char_u *line));
-static int cls __ARGS((void));
-static int skip_chars __ARGS((int, int));
-static void back_in_line __ARGS((void));
-static void find_first_blank __ARGS((pos_T *));
-static void findsent_forward __ARGS((long count, int at_start_sent));
-static void show_pat_in_path __ARGS((char_u *, int,
-                                     int, int, FILE *, linenr_T *, long));
-static void wvsp_one __ARGS((FILE *fp, int idx, char *s, int sc));
+static void save_re_pat(int idx, char_u *pat, int magic);
+static void set_vv_searchforward(void);
+static int first_submatch(regmmatch_T *rp);
+static int check_prevcol(char_u *linep, int col, int ch, int *prevcol);
+static int inmacro(char_u *, char_u *);
+static int check_linecomment(char_u *line);
+static int cls(void);
+static int skip_chars(int, int);
+static void back_in_line(void);
+static void find_first_blank(pos_T *);
+static void findsent_forward(long count, int at_start_sent);
+static void show_pat_in_path(char_u *, int,
+                             int, int, FILE *, linenr_T *, long);
+static void wvsp_one(FILE *fp, int idx, char *s, int sc);
 
 /*
  * This file contains various searching-related routines. These fall into
@@ -2088,7 +2088,7 @@ int findsent(int dir, long count)
 {
   pos_T pos, tpos;
   int c;
-  int         (*func)__ARGS((pos_T *));
+  int         (*func)(pos_T *);
   int startlnum;
   int noskip = FALSE;               /* do not skip blanks */
   int cpo_J;
@@ -3091,7 +3091,7 @@ current_block (
   return OK;
 }
 
-static int in_html_tag __ARGS((int));
+static int in_html_tag(int);
 
 /*
  * Return TRUE if the cursor is on a "<aaa>" tag.  Ignore "<aaa/>".
@@ -3492,10 +3492,10 @@ extend:
   return OK;
 }
 
-static int find_next_quote __ARGS((char_u *top_ptr, int col, int quotechar,
-                                   char_u *escape));
-static int find_prev_quote __ARGS((char_u *line, int col_start, int quotechar,
-                                   char_u *escape));
+static int find_next_quote(char_u *top_ptr, int col, int quotechar,
+                           char_u *escape);
+static int find_prev_quote(char_u *line, int col_start, int quotechar,
+                           char_u *escape);
 
 /*
  * Search quote char from string line[col].
@@ -3772,7 +3772,7 @@ current_quote (
 }
 
 
-static int is_one_char __ARGS((char_u *pattern));
+static int is_one_char(char_u *pattern);
 
 /*
  * Find next search match under cursor, cursor at end.

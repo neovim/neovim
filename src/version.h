@@ -1,13 +1,13 @@
 #ifndef NEOVIM_VERSION_H
 #define NEOVIM_VERSION_H
 /* version.c */
-void make_version __ARGS((void));
-int highest_patch __ARGS((void));
-int has_patch __ARGS((int n));
-void ex_version __ARGS((exarg_T *eap));
-void list_version __ARGS((void));
-void maybe_intro_message __ARGS((void));
-void intro_message __ARGS((int colon));
-void ex_intro __ARGS((exarg_T *eap));
+void make_version(void);
+int highest_patch(void);
+int has_patch(int n);
+void ex_version(exarg_T *eap);
+void list_version(void);
+void maybe_intro_message(void);
+void intro_message(int colon);
+void ex_intro(exarg_T *eap);
 /* vim: set ft=c : */
 #endif /* NEOVIM_VERSION_H */

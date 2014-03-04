@@ -29,6 +29,8 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "file_search.h"
+#include "garray.h"
 #include "move.h"
 #include "option.h"
 #include "os_unix.h"
@@ -82,17 +84,17 @@ static char     *mt_names[MT_COUNT/2] =
 #define NOTAGFILE       99              /* return value for jumpto_tag */
 static char_u   *nofile_fname = NULL;   /* fname for NOTAGFILE error */
 
-static void taglen_advance __ARGS((int l));
+static void taglen_advance(int l);
 
-static int jumpto_tag __ARGS((char_u *lbuf, int forceit, int keep_help));
-static int parse_tag_line __ARGS((char_u *lbuf, tagptrs_T *tagp));
-static int test_for_static __ARGS((tagptrs_T *));
-static int parse_match __ARGS((char_u *lbuf, tagptrs_T *tagp));
-static char_u *tag_full_fname __ARGS((tagptrs_T *tagp));
-static char_u *expand_tag_fname __ARGS((char_u *fname, char_u *tag_fname,
-                                        int expand));
-static int test_for_current __ARGS((char_u *, char_u *, char_u *, char_u *));
-static int find_extra __ARGS((char_u **pp));
+static int jumpto_tag(char_u *lbuf, int forceit, int keep_help);
+static int parse_tag_line(char_u *lbuf, tagptrs_T *tagp);
+static int test_for_static(tagptrs_T *);
+static int parse_match(char_u *lbuf, tagptrs_T *tagp);
+static char_u *tag_full_fname(tagptrs_T *tagp);
+static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname,
+                                int expand);
+static int test_for_current(char_u *, char_u *, char_u *, char_u *);
+static int find_extra(char_u **pp);
 
 static char_u *bottommsg = (char_u *)N_("E555: at bottom of tag stack");
 static char_u *topmsg = (char_u *)N_("E556: at top of tag stack");
@@ -998,7 +1000,7 @@ void do_tags(exarg_T *eap)
 # define tag_fgets vim_fgets
 #endif
 
-static int tag_strnicmp __ARGS((char_u *s1, char_u *s2, size_t len));
+static int tag_strnicmp(char_u *s1, char_u *s2, size_t len);
 
 /*
  * Compare two strings, for length "len", ignoring case the ASCII way.
@@ -1033,7 +1035,7 @@ typedef struct {
   regmatch_T regmatch;          /* regexp program, may be NULL */
 } pat_T;
 
-static void prepare_pats __ARGS((pat_T *pats, int has_re));
+static void prepare_pats(pat_T *pats, int has_re);
 
 /*
  * Extract info from the tag search pattern "pats->pat".
@@ -2038,7 +2040,7 @@ findtag_end:
 }
 
 static garray_T tag_fnames = GA_EMPTY;
-static void found_tagfile_cb __ARGS((char_u *fname, void *cookie));
+static void found_tagfile_cb(char_u *fname, void *cookie);
 
 /*
  * Callback function for finding all "tags" and "tags-??" files in
@@ -2990,8 +2992,8 @@ expand_tags (
   return ret;
 }
 
-static int add_tag_field __ARGS((dict_T *dict, char *field_name, char_u *start,
-                                 char_u *end));
+static int add_tag_field(dict_T *dict, char *field_name, char_u *start,
+                         char_u *end);
 
 /*
  * Add a tag field to the dictionary "dict".

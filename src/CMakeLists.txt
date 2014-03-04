@@ -13,6 +13,7 @@ list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
 file( GLOB OS_SOURCES os/*.c )
 
 add_executable (nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
+add_library (nvim-test MODULE ${NEOVIM_SOURCES} ${OS_SOURCES})
 
 # The libraries we link against for nvim
 set(NVIM_LINK_LIBRARIES m ${LibUV_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
@@ -23,22 +24,31 @@ if(HAVE_CLOCK_GETTIME)
   list(APPEND NVIM_LINK_LIBRARIES rt)
 endif(HAVE_CLOCK_GETTIME)
 
+if (LibIntl_FOUND)
+  list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
+endif()
+
 target_link_libraries (nvim ${NVIM_LINK_LIBRARIES})
+target_link_libraries (nvim-test ${NVIM_LINK_LIBRARIES})
 
 include(CheckLibraryExists)
 check_library_exists(termcap tgetent "" HAVE_LIBTERMCAP)
 
 if (HAVE_LIBTERMCAP)
   target_link_libraries(nvim termcap)
+  target_link_libraries(nvim-test termcap)
 else()
   check_library_exists(curses tgetent "" HAVE_LIBCURSES)
   if (HAVE_LIBCURSES)
     target_link_libraries(nvim curses)
+    target_link_libraries(nvim-test curses)
   else()
-    message(FATAL_ERROR "can't find something resembling -ltermcap")
+    find_package(Curses REQUIRED)
+    target_link_libraries(nvim ${CURSES_LIBRARIES})
+    target_link_libraries(nvim-test ${CURSES_LIBRARIES})
   endif()
 endif()
 
-include_directories ("${PROJECT_SOURCE_DIR}/src/proto")
+include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
 
 install(TARGETS nvim RUNTIME DESTINATION bin)

@@ -23,6 +23,7 @@
 #include "mbyte.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 #include "ops.h"
 #include "option.h"
 #include "screen.h"
@@ -33,29 +34,29 @@
 # include <math.h>
 #endif
 
-static int other_sourcing_name __ARGS((void));
-static char_u *get_emsg_source __ARGS((void));
-static char_u *get_emsg_lnum __ARGS((void));
-static void add_msg_hist __ARGS((char_u *s, int len, int attr));
-static void hit_return_msg __ARGS((void));
-static void msg_home_replace_attr __ARGS((char_u *fname, int attr));
-static char_u *screen_puts_mbyte __ARGS((char_u *s, int l, int attr));
-static void msg_puts_attr_len __ARGS((char_u *str, int maxlen, int attr));
-static void msg_puts_display __ARGS((char_u *str, int maxlen, int attr,
-                                     int recurse));
-static void msg_scroll_up __ARGS((void));
-static void inc_msg_scrolled __ARGS((void));
-static void store_sb_text __ARGS((char_u **sb_str, char_u *s, int attr,
-                                  int *sb_col,
-                                  int finish));
-static void t_puts __ARGS((int *t_col, char_u *t_s, char_u *s, int attr));
-static void msg_puts_printf __ARGS((char_u *str, int maxlen));
-static int do_more_prompt __ARGS((int typed_char));
-static void msg_screen_putchar __ARGS((int c, int attr));
-static int msg_check_screen __ARGS((void));
-static void redir_write __ARGS((char_u *s, int maxlen));
-static char_u *msg_show_console_dialog __ARGS((char_u *message, char_u *buttons,
-                                               int dfltbutton));
+static int other_sourcing_name(void);
+static char_u *get_emsg_source(void);
+static char_u *get_emsg_lnum(void);
+static void add_msg_hist(char_u *s, int len, int attr);
+static void hit_return_msg(void);
+static void msg_home_replace_attr(char_u *fname, int attr);
+static char_u *screen_puts_mbyte(char_u *s, int l, int attr);
+static void msg_puts_attr_len(char_u *str, int maxlen, int attr);
+static void msg_puts_display(char_u *str, int maxlen, int attr,
+                             int recurse);
+static void msg_scroll_up(void);
+static void inc_msg_scrolled(void);
+static void store_sb_text(char_u **sb_str, char_u *s, int attr,
+                          int *sb_col,
+                          int finish);
+static void t_puts(int *t_col, char_u *t_s, char_u *s, int attr);
+static void msg_puts_printf(char_u *str, int maxlen);
+static int do_more_prompt(int typed_char);
+static void msg_screen_putchar(int c, int attr);
+static int msg_check_screen(void);
+static void redir_write(char_u *s, int maxlen);
+static char_u *msg_show_console_dialog(char_u *message, char_u *buttons,
+                                       int dfltbutton);
 static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
 static char_u   *confirm_msg = NULL;            /* ":confirm" message */
 static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
@@ -325,14 +326,14 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
 # ifndef HAVE_STDARG_H
 
 int
-smsg __ARGS((char_u *, long, long, long,
-             long, long, long, long, long, long, long));
+smsg(char_u *, long, long, long,
+     long, long, long, long, long, long, long);
 int
-smsg_attr __ARGS((int, char_u *, long, long, long,
-                  long, long, long, long, long, long, long));
+smsg_attr(int, char_u *, long, long, long,
+          long, long, long, long, long, long, long);
 
-int vim_snprintf __ARGS((char *, size_t, char *, long, long, long,
-                         long, long, long, long, long, long, long));
+int vim_snprintf(char *, size_t, char *, long, long, long,
+                 long, long, long, long, long, long, long);
 
 /*
  * smsg(str, arg, ...) is like using sprintf(buf, str, arg, ...) and then
@@ -1860,8 +1861,8 @@ struct msgchunk_S {
 
 static msgchunk_T *last_msgchunk = NULL; /* last displayed text */
 
-static msgchunk_T *msg_sb_start __ARGS((msgchunk_T *mps));
-static msgchunk_T *disp_sb_line __ARGS((int row, msgchunk_T *smp));
+static msgchunk_T *msg_sb_start(msgchunk_T *mps);
+static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp);
 
 static int do_clear_sb_text = FALSE;    /* clear text on next msg */
 
@@ -2797,7 +2798,7 @@ do_dialog (
   return retval;
 }
 
-static int copy_char __ARGS((char_u *from, char_u *to, int lowercase));
+static int copy_char(char_u *from, char_u *to, int lowercase);
 
 /*
  * Copy one character from "*from" to "*to", taking care of multi-byte
@@ -3022,9 +3023,9 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt
 #if defined(HAVE_STDARG_H) && defined(FEAT_EVAL)
 static char *e_printf = N_("E766: Insufficient arguments for printf()");
 
-static long tv_nr __ARGS((typval_T *tvs, int *idxp));
-static char *tv_str __ARGS((typval_T *tvs, int *idxp));
-static double tv_float __ARGS((typval_T *tvs, int *idxp));
+static long tv_nr(typval_T *tvs, int *idxp);
+static char *tv_str(typval_T *tvs, int *idxp);
+static double tv_float(typval_T *tvs, int *idxp);
 
 /*
  * Get number argument from "idxp" entry in "tvs".  First entry is 1.

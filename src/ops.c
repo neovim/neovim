@@ -23,6 +23,7 @@
 #include "ex_getln.h"
 #include "fold.h"
 #include "getchar.h"
+#include "indent.h"
 #include "mark.h"
 #include "mbyte.h"
 #include "memline.h"
@@ -90,29 +91,29 @@ struct block_def {
   colnr_T start_char_vcols;       /* number of vcols of pre-block char */
 };
 
-static void shift_block __ARGS((oparg_T *oap, int amount));
-static void block_insert __ARGS((oparg_T *oap, char_u *s, int b_insert,
-                                 struct block_def*bdp));
-static int stuff_yank __ARGS((int, char_u *));
-static void put_reedit_in_typebuf __ARGS((int silent));
-static int put_in_typebuf __ARGS((char_u *s, int esc, int colon,
-                                  int silent));
-static void stuffescaped __ARGS((char_u *arg, int literally));
-static void mb_adjust_opend __ARGS((oparg_T *oap));
-static void free_yank __ARGS((long));
-static void free_yank_all __ARGS((void));
-static int yank_copy_line __ARGS((struct block_def *bd, long y_idx));
-static void dis_msg __ARGS((char_u *p, int skip_esc));
-static char_u   *skip_comment __ARGS((char_u *line, int process,
-                                      int include_space,
-                                      int *is_comment));
-static void block_prep __ARGS((oparg_T *oap, struct block_def *, linenr_T, int));
-static void str_to_reg __ARGS((struct yankreg *y_ptr, int type, char_u *str,
-                               long len,
-                               long blocklen));
-static int ends_in_white __ARGS((linenr_T lnum));
-static int same_leader __ARGS((linenr_T lnum, int, char_u *, int, char_u *));
-static int fmt_check_par __ARGS((linenr_T, int *, char_u **, int do_comments));
+static void shift_block(oparg_T *oap, int amount);
+static void block_insert(oparg_T *oap, char_u *s, int b_insert,
+                         struct block_def*bdp);
+static int stuff_yank(int, char_u *);
+static void put_reedit_in_typebuf(int silent);
+static int put_in_typebuf(char_u *s, int esc, int colon,
+                          int silent);
+static void stuffescaped(char_u *arg, int literally);
+static void mb_adjust_opend(oparg_T *oap);
+static void free_yank(long);
+static void free_yank_all(void);
+static int yank_copy_line(struct block_def *bd, long y_idx);
+static void dis_msg(char_u *p, int skip_esc);
+static char_u   *skip_comment(char_u *line, int process,
+                              int include_space,
+                              int *is_comment);
+static void block_prep(oparg_T *oap, struct block_def *, linenr_T, int);
+static void str_to_reg(struct yankreg *y_ptr, int type, char_u *str,
+                       long len,
+                       long blocklen);
+static int ends_in_white(linenr_T lnum);
+static int same_leader(linenr_T lnum, int, char_u *, int, char_u *);
+static int fmt_check_par(linenr_T, int *, char_u **, int do_comments);
 
 /*
  * The names of operators.
@@ -574,7 +575,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
  */
 void op_reindent(oap, how)
 oparg_T     *oap;
-int         (*how)__ARGS((void));
+int         (*how)(void);
 {
   long i;
   char_u      *l;
@@ -1890,7 +1891,7 @@ int op_replace(oparg_T *oap, int c)
   return OK;
 }
 
-static int swapchars __ARGS((int op_type, pos_T *pos, int length));
+static int swapchars(int op_type, pos_T *pos, int length);
 
 /*
  * Handle the (non-standard vi) tilde operator.  Also for "gu", "gU" and "g?".
@@ -4096,11 +4097,11 @@ static int fmt_check_par(linenr_T lnum, int *leader_len, char_u **leader_flags, 
  */
 int paragraph_start(linenr_T lnum)
 {
-  char_u      *p;
+  char_u *p;
   int leader_len = 0;                   /* leader len of current line */
-  char_u      *leader_flags = NULL;     /* flags for leader of current line */
-  int next_leader_len;                  /* leader len of next line */
-  char_u      *next_leader_flags;       /* flags for leader of next line */
+  char_u *leader_flags = NULL;          /* flags for leader of current line */
+  int next_leader_len = 0;              /* leader len of next line */
+  char_u *next_leader_flags = NULL;     /* flags for leader of next line */
   int do_comments;                      /* format comments */
 
   if (lnum <= 1)
@@ -4257,7 +4258,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
   bdp->textstart = pstart;
 }
 
-static void reverse_line __ARGS((char_u *s));
+static void reverse_line(char_u *s);
 
 static void reverse_line(char_u *s)
 {
@@ -4979,9 +4980,9 @@ void clear_oparg(oparg_T *oap)
   vim_memset(oap, 0, sizeof(oparg_T));
 }
 
-static long line_count_info __ARGS((char_u *line, long *wc, long *cc,
-                                    long limit,
-                                    int eol_size));
+static long line_count_info(char_u *line, long *wc, long *cc,
+                            long limit,
+                            int eol_size);
 
 /*
  *  Count the number of bytes, characters and "words" in a line.

@@ -15,6 +15,7 @@
 * [Status](#status)
 * [Dependencies](#dependencies)
   * [For Debian/Ubuntu](#for-debianubuntu)
+  * [For CentOS/RHEL](#for-centos-rhel)
   * [For FreeBSD 10](#for-freebsd-10)
   * [For Arch Linux](#for-arch-linux)
   * [For OS X](#for-os-x)
@@ -277,6 +278,12 @@ and what is currently being worked on:
 
     sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
 
+<a name="for-centos-rhel"></a>
+### CentOS/RHEL
+
+If you're using CentOS/RHEL 6 you need at least autoconf version 2.69 for
+compiling the libuv dependency. See joyent/libuv#1158.
+
 <a name="for-freebsd-10"></a>
 ### FreeBSD 10
 
@@ -292,19 +299,27 @@ and what is currently being worked on:
 
 * Install [Xcode](https://developer.apple.com/) and [Homebrew](http://brew.sh)
   or [MacPorts](http://www.macports.org)
-* Install sha1sum
+* Install libtool, automake and cmake:
+
+  Via MacPorts:
+
+      sudo port install libtool automake cmake
+      
+  Via Homebrew:
+
+      brew install libtool automake cmake
 
 If you run into wget certificate errors, you may be missing the root SSL
 certificates or have not set them up correctly:
 
   Via MacPorts:
 
-      sudo port install curl-ca-bundle libtool automake cmake
+      sudo port install curl-ca-bundle
       echo CA_CERTIFICATE=/opt/local/share/curl/curl-ca-bundle.crt >> ~/.wgetrc
 
   Via Homebrew:
 
-      brew install curl-ca-bundle libtool automake cmake
+      brew install curl-ca-bundle
       echo CA_CERTIFICATE=$(brew --prefix curl-ca-bundle)/share/ca-bundle.crt >> ~/.wgetrc
 
 
@@ -320,7 +335,7 @@ To build and run the tests:
 
 Using Homebrew on Mac:
 
-    brew install neovim/neovim/neovim
+    brew install --HEAD https://raw.github.com/neovim/neovim/master/neovim.rb
 
 ## Community
 

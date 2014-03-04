@@ -49,24 +49,23 @@ static int diff_flags = DIFF_FILLER;
 static int diff_a_works = MAYBE; /* TRUE when "diff -a" works, FALSE when it
                                     doesn't work, MAYBE when not checked yet */
 
-static int diff_buf_idx __ARGS((buf_T *buf));
-static int diff_buf_idx_tp __ARGS((buf_T *buf, tabpage_T *tp));
-static void diff_mark_adjust_tp __ARGS((tabpage_T *tp, int idx, linenr_T line1,
-                                        linenr_T line2, long amount,
-                                        long amount_after));
-static void diff_check_unchanged __ARGS((tabpage_T *tp, diff_T *dp));
-static int diff_check_sanity __ARGS((tabpage_T *tp, diff_T *dp));
-static void diff_redraw __ARGS((int dofold));
-static int diff_write __ARGS((buf_T *buf, char_u *fname));
-static void diff_file __ARGS((char_u *tmp_orig, char_u *tmp_new,
-                              char_u *tmp_diff));
-static int diff_equal_entry __ARGS((diff_T *dp, int idx1, int idx2));
-static int diff_cmp __ARGS((char_u *s1, char_u *s2));
-static void diff_fold_update __ARGS((diff_T *dp, int skip_idx));
-static void diff_read __ARGS((int idx_orig, int idx_new, char_u *fname));
-static void diff_copy_entry __ARGS((diff_T *dprev, diff_T *dp, int idx_orig,
-                                    int idx_new));
-static diff_T *diff_alloc_new __ARGS((tabpage_T *tp, diff_T *dprev, diff_T *dp));
+static int diff_buf_idx(buf_T *buf);
+static int diff_buf_idx_tp(buf_T *buf, tabpage_T *tp);
+static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
+                                linenr_T line2, long amount,
+                                long amount_after);
+static void diff_check_unchanged(tabpage_T *tp, diff_T *dp);
+static int diff_check_sanity(tabpage_T *tp, diff_T *dp);
+static void diff_redraw(int dofold);
+static int diff_write(buf_T *buf, char_u *fname);
+static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff);
+static int diff_equal_entry(diff_T *dp, int idx1, int idx2);
+static int diff_cmp(char_u *s1, char_u *s2);
+static void diff_fold_update(diff_T *dp, int skip_idx);
+static void diff_read(int idx_orig, int idx_new, char_u *fname);
+static void diff_copy_entry(diff_T *dprev, diff_T *dp, int idx_orig,
+                            int idx_new);
+static diff_T *diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp);
 
 #ifndef USE_CR
 # define tag_fgets vim_fgets

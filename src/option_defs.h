@@ -6,6 +6,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
+#include "types.h"
+
 /*
  * option_defs.h: definition of global variables for settable options
  */

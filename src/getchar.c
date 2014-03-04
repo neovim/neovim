@@ -29,6 +29,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 #include "move.h"
 #include "normal.h"
 #include "ops.h"
@@ -134,23 +135,23 @@ static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
 static int last_recorded_len = 0;       /* number of last recorded chars */
 
-static char_u   *get_buffcont __ARGS((struct buffheader *, int));
-static void add_buff __ARGS((struct buffheader *, char_u *, long n));
-static void add_num_buff __ARGS((struct buffheader *, long));
-static void add_char_buff __ARGS((struct buffheader *, int));
-static int read_stuff __ARGS((int advance));
-static void start_stuff __ARGS((void));
-static int read_redo __ARGS((int, int));
-static void copy_redo __ARGS((int));
-static void init_typebuf __ARGS((void));
-static void gotchars __ARGS((char_u *, int));
-static void may_sync_undo __ARGS((void));
-static void closescript __ARGS((void));
-static int vgetorpeek __ARGS((int));
-static void map_free __ARGS((mapblock_T **));
-static void validate_maphash __ARGS((void));
-static void showmap __ARGS((mapblock_T *mp, int local));
-static char_u   *eval_map_expr __ARGS((char_u *str, int c));
+static char_u   *get_buffcont(struct buffheader *, int);
+static void add_buff(struct buffheader *, char_u *, long n);
+static void add_num_buff(struct buffheader *, long);
+static void add_char_buff(struct buffheader *, int);
+static int read_stuff(int advance);
+static void start_stuff(void);
+static int read_redo(int, int);
+static void copy_redo(int);
+static void init_typebuf(void);
+static void gotchars(char_u *, int);
+static void may_sync_undo(void);
+static void closescript(void);
+static int vgetorpeek(int);
+static void map_free(mapblock_T **);
+static void validate_maphash(void);
+static void showmap(mapblock_T *mp, int local);
+static char_u   *eval_map_expr(char_u *str, int c);
 
 /*
  * Free and clear a buffer.

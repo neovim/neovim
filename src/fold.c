@@ -18,11 +18,13 @@
 #include "diff.h"
 #include "eval.h"
 #include "ex_docmd.h"
+#include "indent.h"
 #include "mark.h"
 #include "memline.h"
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "garray.h"
 #include "move.h"
 #include "option.h"
 #include "screen.h"
@@ -55,35 +57,35 @@ typedef struct {
 #define MAX_LEVEL       20      /* maximum fold depth */
 
 /* static functions {{{2 */
-static void newFoldLevelWin __ARGS((win_T *wp));
-static int checkCloseRec __ARGS((garray_T *gap, linenr_T lnum, int level));
-static int foldFind __ARGS((garray_T *gap, linenr_T lnum, fold_T **fpp));
-static int foldLevelWin __ARGS((win_T *wp, linenr_T lnum));
-static void checkupdate __ARGS((win_T *wp));
-static void setFoldRepeat __ARGS((linenr_T lnum, long count, int do_open));
-static linenr_T setManualFold __ARGS((linenr_T lnum, int opening, int recurse,
-                                      int *donep));
-static linenr_T setManualFoldWin __ARGS((win_T *wp, linenr_T lnum, int opening,
-                                         int recurse,
-                                         int *donep));
-static void foldOpenNested __ARGS((fold_T *fpr));
-static void deleteFoldEntry __ARGS((garray_T *gap, int idx, int recursive));
-static void foldMarkAdjustRecurse __ARGS((garray_T *gap, linenr_T line1,
-                                          linenr_T line2, long amount,
-                                          long amount_after));
-static int getDeepestNestingRecurse __ARGS((garray_T *gap));
-static int check_closed __ARGS((win_T *win, fold_T *fp, int *use_levelp,
-                                int level, int *maybe_smallp,
-                                linenr_T lnum_off));
-static void checkSmall __ARGS((win_T *wp, fold_T *fp, linenr_T lnum_off));
-static void setSmallMaybe __ARGS((garray_T *gap));
-static void foldCreateMarkers __ARGS((linenr_T start, linenr_T end));
-static void foldAddMarker __ARGS((linenr_T lnum, char_u *marker, int markerlen));
-static void deleteFoldMarkers __ARGS((fold_T *fp, int recursive,
-                                      linenr_T lnum_off));
-static void foldDelMarker __ARGS((linenr_T lnum, char_u *marker, int markerlen));
-static void foldUpdateIEMS __ARGS((win_T *wp, linenr_T top, linenr_T bot));
-static void parseMarker __ARGS((win_T *wp));
+static void newFoldLevelWin(win_T *wp);
+static int checkCloseRec(garray_T *gap, linenr_T lnum, int level);
+static int foldFind(garray_T *gap, linenr_T lnum, fold_T **fpp);
+static int foldLevelWin(win_T *wp, linenr_T lnum);
+static void checkupdate(win_T *wp);
+static void setFoldRepeat(linenr_T lnum, long count, int do_open);
+static linenr_T setManualFold(linenr_T lnum, int opening, int recurse,
+                              int *donep);
+static linenr_T setManualFoldWin(win_T *wp, linenr_T lnum, int opening,
+                                 int recurse,
+                                 int *donep);
+static void foldOpenNested(fold_T *fpr);
+static void deleteFoldEntry(garray_T *gap, int idx, int recursive);
+static void foldMarkAdjustRecurse(garray_T *gap, linenr_T line1,
+                                  linenr_T line2, long amount,
+                                  long amount_after);
+static int getDeepestNestingRecurse(garray_T *gap);
+static int check_closed(win_T *win, fold_T *fp, int *use_levelp,
+                        int level, int *maybe_smallp,
+                        linenr_T lnum_off);
+static void checkSmall(win_T *wp, fold_T *fp, linenr_T lnum_off);
+static void setSmallMaybe(garray_T *gap);
+static void foldCreateMarkers(linenr_T start, linenr_T end);
+static void foldAddMarker(linenr_T lnum, char_u *marker, int markerlen);
+static void deleteFoldMarkers(fold_T *fp, int recursive,
+                              linenr_T lnum_off);
+static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen);
+static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot);
+static void parseMarker(win_T *wp);
 
 static char *e_nofold = N_("E490: No fold found");
 
@@ -1875,20 +1877,19 @@ typedef struct {
 static int fold_changed;
 
 /* Function declarations. {{{2 */
-static linenr_T foldUpdateIEMSRecurse __ARGS((garray_T *gap, int level,
-                                              linenr_T startlnum, fline_T *flp,
-                                              void (*getlevel)__ARGS(
-                                                  (fline_T *)), linenr_T bot,
-                                              int topflags));
-static int foldInsert __ARGS((garray_T *gap, int i));
-static void foldSplit __ARGS((garray_T *gap, int i, linenr_T top, linenr_T bot));
-static void foldRemove __ARGS((garray_T *gap, linenr_T top, linenr_T bot));
-static void foldMerge __ARGS((fold_T *fp1, garray_T *gap, fold_T *fp2));
-static void foldlevelIndent __ARGS((fline_T *flp));
-static void foldlevelDiff __ARGS((fline_T *flp));
-static void foldlevelExpr __ARGS((fline_T *flp));
-static void foldlevelMarker __ARGS((fline_T *flp));
-static void foldlevelSyntax __ARGS((fline_T *flp));
+static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
+                                      linenr_T startlnum, fline_T *flp,
+                                      void (*getlevel)(fline_T *), linenr_T bot,
+                                      int topflags);
+static int foldInsert(garray_T *gap, int i);
+static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot);
+static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot);
+static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2);
+static void foldlevelIndent(fline_T *flp);
+static void foldlevelDiff(fline_T *flp);
+static void foldlevelExpr(fline_T *flp);
+static void foldlevelMarker(fline_T *flp);
+static void foldlevelSyntax(fline_T *flp);
 
 /* foldUpdateIEMS() {{{2 */
 /*
@@ -1900,7 +1901,7 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
   linenr_T start;
   linenr_T end;
   fline_T fline;
-  void        (*getlevel)__ARGS((fline_T *));
+  void        (*getlevel)(fline_T *);
   int level;
   fold_T      *fp;
 
@@ -2131,7 +2132,7 @@ garray_T    *gap;
 int level;
 linenr_T startlnum;
 fline_T     *flp;
-void        (*getlevel)__ARGS((fline_T *));
+void        (*getlevel)(fline_T *);
 linenr_T bot;
 int topflags;                   /* flags used by containing fold */
 {
@@ -2909,10 +2910,10 @@ static void foldlevelSyntax(fline_T *flp)
 
 /* functions for storing the fold state in a View {{{1 */
 /* put_folds() {{{2 */
-static int put_folds_recurse __ARGS((FILE *fd, garray_T *gap, linenr_T off));
-static int put_foldopen_recurse __ARGS((FILE *fd, win_T *wp, garray_T *gap,
-                                        linenr_T off));
-static int put_fold_open_close __ARGS((FILE *fd, fold_T *fp, linenr_T off));
+static int put_folds_recurse(FILE *fd, garray_T *gap, linenr_T off);
+static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap,
+                                linenr_T off);
+static int put_fold_open_close(FILE *fd, fold_T *fp, linenr_T off);
 
 /*
  * Write commands to "fd" to restore the manual folds in window "wp".
