@@ -9,37 +9,55 @@ CMAKE_EXTRA_FLAGS :=
 # any warnings from the sub-make.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
-build/bin/nvim: deps
+USE_BUNDLED_DEPS := true
+
+OBJ_NVIM = build/bin/nvim
+OBJ_LIBUV = .deps/usr/lib/libuv.a
+OBJ_LIBLUAJIT = .deps/usr/lib/libluajit-5.1.a
+OBJ_BUSTED = .deps/usr/bin/busted
+
+.DEFAULT: $(OBJ_NVIM)
+$(OBJ_NVIM): cmake
 	$(MAKE) -C build
 
-test: build/bin/nvim
+# run legacy tests
+.PHONY: test
+test: $(OBJ_NVIM)
 	$(SINGLE_MAKE) -C src/testdir
 
-unittest: build/bin/nvim
+.PHONY: unittest
+unittest: $(OBJ_NVIM) test-deps
 	sh -e scripts/unittest.sh
 
-deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
+.PHONY: build-deps
+build-deps: $(OBJ_LIBUV)
 
-.deps/usr/lib/libuv.a:
+$(OBJ_LIBUV):
 	sh -e scripts/compile-libuv.sh
 
-.deps/usr/lib/libluajit-5.1.a:
+.PHONY: test-deps
+test-deps: $(OBJ_LIBLUAJIT) $(OBJ_BUSTED)
+
+$(OBJ_LIBLUAJIT):
 	sh -e scripts/compile-lua.sh
 
-.deps/usr/bin/busted:
+$(OBJ_BUSTED):
 	sh -e scripts/setup-test-tools.sh
 
-cmake: clean deps
-	mkdir build
+.PHONY: cmake
+cmake: $(CMAKE_DEPS)
+	mkdir -p build
 	cd build && cmake $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ../
 
+ifeq ($(USE_BUNDLED_DEPS), true)
+cmake: build-deps
+endif
+
+.PHONY: clean
 clean:
-	rm -rf build
+	rm -rf build .deps
 	$(MAKE) -C src/testdir clean
 
-install: build/bin/nvim
+.PHONY: install
+install: $(OBJ_NVIM)
 	$(MAKE) -C build install
-
-.PHONY: test unittest deps cmake install
-
-.DEFAULT: build/bin/nvim

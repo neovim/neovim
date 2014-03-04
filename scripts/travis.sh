@@ -1,8 +1,7 @@
 #!/bin/sh -e
 
 # export VALGRIND_CHECK=1
-make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist"
-make
+make CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist"
 make unittest
 echo "Running tests with valgrind..."
 if ! make test > /dev/null; then
