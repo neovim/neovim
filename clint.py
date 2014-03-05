@@ -2644,11 +2644,6 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
               'Redundant blank line at the end of a code block '
               'should be deleted.')
 
-    matched = Match(r'\s*(public|protected|private):', prev_line)
-    if matched:
-      error(filename, linenum, 'whitespace/blank_line', 3,
-            'Do not leave a blank line after "%s:"' % matched.group(1))
-
   # Next, we complain if there's a comment too near the text
   commentpos = line.find('//')
   if commentpos != -1:
@@ -2870,7 +2865,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
 
   # You shouldn't have spaces before your brackets, except maybe after
   # 'delete []' or 'new char * []'.
-  if Search(r'\w\s+\[', line) and not Search(r'delete\s+\[', line):
+  if Search(r'\w\s+\[', line):
     error(filename, linenum, 'whitespace/braces', 5,
           'Extra space before [')
 
@@ -2889,13 +2884,6 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
     error(filename, linenum, 'whitespace/semicolon', 5,
           'Extra space before last semicolon. If this should be an empty '
           'statement, use {} instead.')
-
-  # In range-based for, we wanted spaces before and after the colon, but
-  # not around "::" tokens that might appear.
-  if (Search('for *\(.*[^:]:[^: ]', line) or
-      Search('for *\(.*[^: ]:[^:]', line)):
-    error(filename, linenum, 'whitespace/forcolon', 2,
-          'Missing space around colon in range-based for loop')
 
 
 def GetPreviousNonBlankLine(clean_lines, linenum):
