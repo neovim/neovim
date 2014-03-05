@@ -1701,116 +1701,6 @@ class _BlockInfo(object):
     pass
 
 
-class _ClassInfo(_BlockInfo):
-  """Stores information about a class."""
-
-  def __init__(self, name, class_or_struct, clean_lines, linenum):
-    _BlockInfo.__init__(self, False)
-    self.name = name
-    self.starting_linenum = linenum
-    self.is_derived = False
-    if class_or_struct == 'struct':
-      self.access = 'public'
-      self.is_struct = True
-    else:
-      self.access = 'private'
-      self.is_struct = False
-
-    # Remember initial indentation level for this class.  Using raw_lines here
-    # instead of elided to account for leading comments.
-    initial_indent = Match(r'^( *)\S', clean_lines.raw_lines[linenum])
-    if initial_indent:
-      self.class_indent = len(initial_indent.group(1))
-    else:
-      self.class_indent = 0
-
-    # Try to find the end of the class.  This will be confused by things like:
-    #   class A {
-    #   } *x = { ...
-    #
-    # But it's still good enough for CheckSectionSpacing.
-    self.last_line = 0
-    depth = 0
-    for i in range(linenum, clean_lines.NumLines()):
-      line = clean_lines.elided[i]
-      depth += line.count('{') - line.count('}')
-      if not depth:
-        self.last_line = i
-        break
-
-  def CheckBegin(self, filename, clean_lines, linenum, error):
-    # Look for a bare ':'
-    if Search('(^|[^:]):($|[^:])', clean_lines.elided[linenum]):
-      self.is_derived = True
-
-  def CheckEnd(self, filename, clean_lines, linenum, error):
-    # Check that closing brace is aligned with beginning of the class.
-    # Only do this if the closing brace is indented by only whitespaces.
-    # This means we will not check single-line class definitions.
-    indent = Match(r'^( *)\}', clean_lines.elided[linenum])
-    if indent and len(indent.group(1)) != self.class_indent:
-      if self.is_struct:
-        parent = 'struct ' + self.name
-      else:
-        parent = 'class ' + self.name
-      error(filename, linenum, 'whitespace/indent', 3,
-            'Closing brace should be aligned with beginning of %s' % parent)
-
-
-class _NamespaceInfo(_BlockInfo):
-  """Stores information about a namespace."""
-
-  def __init__(self, name, linenum):
-    _BlockInfo.__init__(self, False)
-    self.name = name or ''
-    self.starting_linenum = linenum
-
-  def CheckEnd(self, filename, clean_lines, linenum, error):
-    """Check end of namespace comments."""
-    line = clean_lines.raw_lines[linenum]
-
-    # Check how many lines is enclosed in this namespace.  Don't issue
-    # warning for missing namespace comments if there aren't enough
-    # lines.  However, do apply checks if there is already an end of
-    # namespace comment and it's incorrect.
-    #
-    # TODO(unknown): We always want to check end of namespace comments
-    # if a namespace is large, but sometimes we also want to apply the
-    # check if a short namespace contained nontrivial things (something
-    # other than forward declarations).  There is currently no logic on
-    # deciding what these nontrivial things are, so this check is
-    # triggered by namespace size only, which works most of the time.
-    if (linenum - self.starting_linenum < 10
-        and not Match(r'};*\s*(//|/\*).*\bnamespace\b', line)):
-      return
-
-    # Look for matching comment at end of namespace.
-    #
-    # Note that we accept C style "/* */" comments for terminating
-    # namespaces, so that code that terminate namespaces inside
-    # preprocessor macros can be cpplint clean.
-    #
-    # We also accept stuff like "// end of namespace <name>." with the
-    # period at the end.
-    #
-    # Besides these, we don't accept anything else, otherwise we might
-    # get false negatives when existing comment is a substring of the
-    # expected namespace.
-    if self.name:
-      # Named namespace
-      if not Match((r'};*\s*(//|/\*).*\bnamespace\s+' + re.escape(self.name) +
-                    r'[\*/\.\\\s]*$'),
-                   line):
-        error(filename, linenum, 'readability/namespace', 5,
-              'Namespace should be terminated with "// namespace %s"' %
-              self.name)
-    else:
-      # Anonymous namespace
-      if not Match(r'};*\s*(//|/\*).*\bnamespace[\*/\.\\\s]*$', line):
-        error(filename, linenum, 'readability/namespace', 5,
-              'Namespace should be terminated with "// namespace"')
-
-
 class _PreprocessorInfo(object):
   """Stores checkpoints of nesting stacks when #if/#else is seen."""
 
@@ -1830,11 +1720,9 @@ class _NestingState(object):
 
   def __init__(self):
     # Stack for tracking all braces.  An object is pushed whenever we
-    # see a "{", and popped when we see a "}".  Only 3 types of
-    # objects are possible:
-    # - _ClassInfo: a class or struct.
-    # - _NamespaceInfo: a namespace.
-    # - _BlockInfo: some other type of block.
+    # see a "{", and popped when we see a "}".  Only 1 type of
+    # object is possible:
+    # - _BlockInfo: some type of block.
     self.stack = []
 
     # Stack of _PreprocessorInfo objects.
@@ -1848,14 +1736,6 @@ class _NestingState(object):
       block is still expecting an opening brace.
     """
     return (not self.stack) or self.stack[-1].seen_open_brace
-
-  def InNamespaceBody(self):
-    """Check if we are currently one level inside a namespace body.
-
-    Returns:
-      True if top of the stack is a namespace block, False otherwise.
-    """
-    return self.stack and isinstance(self.stack[-1], _NamespaceInfo)
 
   def UpdatePreprocessor(self, line):
     """Update preprocessor stack.
@@ -1950,89 +1830,6 @@ class _NestingState(object):
         # Exit assembly block
         inner_block.inline_asm = _END_ASM
 
-    # Consume namespace declaration at the beginning of the line.  Do
-    # this in a loop so that we catch same line declarations like this:
-    #   namespace proto2 { namespace bridge { class MessageSet; } }
-    while True:
-      # Match start of namespace.  The "\b\s*" below catches namespace
-      # declarations even if it weren't followed by a whitespace, this
-      # is so that we don't confuse our namespace checker.  The
-      # missing spaces will be flagged by CheckSpacing.
-      namespace_decl_match = Match(r'^\s*namespace\b\s*([:\w]+)?(.*)$', line)
-      if not namespace_decl_match:
-        break
-
-      new_namespace = _NamespaceInfo(namespace_decl_match.group(1), linenum)
-      self.stack.append(new_namespace)
-
-      line = namespace_decl_match.group(2)
-      if line.find('{') != -1:
-        new_namespace.seen_open_brace = True
-        line = line[line.find('{') + 1:]
-
-    # Look for a class declaration in whatever is left of the line
-    # after parsing namespaces.  The regexp accounts for decorated classes
-    # such as in:
-    #   class LOCKABLE API Object {
-    #   };
-    #
-    # Templates with class arguments may confuse the parser, for example:
-    #   template <class T
-    #             class Comparator = less<T>,
-    #             class Vector = vector<T> >
-    #   class HeapQueue {
-    #
-    # Because this parser has no nesting state about templates, by the
-    # time it saw "class Comparator", it may think that it's a new class.
-    # Nested templates have a similar problem:
-    #   template <
-    #       typename ExportedType,
-    #       typename TupleType,
-    #       template <typename, typename> class ImplTemplate>
-    #
-    # To avoid these cases, we ignore classes that are followed by '=' or '>'
-    class_decl_match = Match(
-        r'\s*(template\s*<[\w\s<>,:]*>\s*)?'
-        r'(class|struct)\s+([A-Z_]+\s+)*(\w+(?:::\w+)*)'
-        r'(([^=>]|<[^<>]*>|<[^<>]*<[^<>]*>\s*>)*)$', line)
-    if (class_decl_match and
-        (not self.stack or self.stack[-1].open_parentheses == 0)):
-      self.stack.append(_ClassInfo(
-          class_decl_match.group(4), class_decl_match.group(2),
-          clean_lines, linenum))
-      line = class_decl_match.group(5)
-
-    # If we have not yet seen the opening brace for the innermost block,
-    # run checks here.
-    if not self.SeenOpenBrace():
-      self.stack[-1].CheckBegin(filename, clean_lines, linenum, error)
-
-    # Update access control if we are inside a class/struct
-    if self.stack and isinstance(self.stack[-1], _ClassInfo):
-      classinfo = self.stack[-1]
-      access_match = Match(
-          r'^(.*)\b(public|private|protected|signals)(\s+(?:slots\s*)?)?'
-          r':(?:[^:]|$)',
-          line)
-      if access_match:
-        classinfo.access = access_match.group(2)
-
-        # Check that access keywords are indented +1 space.  Skip this
-        # check if the keywords are not preceded by whitespaces.
-        indent = access_match.group(1)
-        if (len(indent) != classinfo.class_indent + 1 and
-            Match(r'^\s*$', indent)):
-          if classinfo.is_struct:
-            parent = 'struct ' + classinfo.name
-          else:
-            parent = 'class ' + classinfo.name
-          slots = ''
-          if access_match.group(3):
-            slots = access_match.group(3)
-          error(filename, linenum, 'whitespace/indent', 3,
-                '%s%s: should be indented +1 space inside %s' % (
-                    access_match.group(2), slots, parent))
-
     # Consume braces or semicolons from what's left of the line
     while True:
       # Match first brace, semicolon, or closed parenthesis.
@@ -2068,39 +1865,6 @@ class _NestingState(object):
           self.stack[-1].CheckEnd(filename, clean_lines, linenum, error)
           self.stack.pop()
       line = matched.group(2)
-
-  def InnermostClass(self):
-    """Get class info on the top of the stack.
-
-    Returns:
-      A _ClassInfo object if we are inside a class, or None otherwise.
-    """
-    for i in range(len(self.stack), 0, -1):
-      classinfo = self.stack[i - 1]
-      if isinstance(classinfo, _ClassInfo):
-        return classinfo
-    return None
-
-  def CheckCompletedBlocks(self, filename, error):
-    """Checks that all classes and namespaces have been completely parsed.
-
-    Call this when all lines in a file have been processed.
-    Args:
-      filename: The name of the current file.
-      error: The function to call with any errors found.
-    """
-    # Note: This test can result in false positives if #ifdef constructs
-    # get in the way of brace matching. See the testBuildClass test in
-    # cpplint_unittest.py for an example of this.
-    for obj in self.stack:
-      if isinstance(obj, _ClassInfo):
-        error(filename, obj.starting_linenum, 'build/class', 5,
-              'Failed to find complete declaration of class %s' %
-              obj.name)
-      elif isinstance(obj, _NamespaceInfo):
-        error(filename, obj.starting_linenum, 'build/namespaces', 5,
-              'Failed to find complete declaration of namespace %s' %
-              obj.name)
 
 
 def CheckForNonStandardConstructs(filename, clean_lines, linenum,
