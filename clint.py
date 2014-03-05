@@ -3707,32 +3707,6 @@ def _GetTextInside(text, start_pattern):
   return text[start_position:position - 1]
 
 
-# Patterns for matching call-by-reference parameters.
-#
-# Supports nested templates up to 2 levels deep using this messy pattern:
-#   < (?: < (?: < [^<>]*
-#               >
-#           |   [^<>] )*
-#         >
-#     |   [^<>] )*
-#   >
-_RE_PATTERN_IDENT = r'[_a-zA-Z]\w*'  # =~ [[:alpha:]][[:alnum:]]*
-_RE_PATTERN_TYPE = (
-    r'(?:const\s+)?(?:typename\s+|class\s+|struct\s+|union\s+|enum\s+)?'
-    r'(?:\w|'
-    r'\s*<(?:<(?:<[^<>]*>|[^<>])*>|[^<>])*>|'
-    r'::)+')
-# A call-by-reference parameter ends with '& identifier'.
-_RE_PATTERN_REF_PARAM = re.compile(
-    r'(' + _RE_PATTERN_TYPE + r'(?:\s*(?:\bconst\b|[*]))*\s*'
-    r'&\s*' + _RE_PATTERN_IDENT + r')\s*(?:=[^,()]+)?[,)]')
-# A call-by-const-reference parameter either ends with 'const& identifier'
-# or looks like 'const type& identifier' when 'type' is atomic.
-_RE_PATTERN_CONST_REF_PARAM = (
-    r'(?:.*\s*\bconst\s*&\s*' + _RE_PATTERN_IDENT +
-    r'|const\s+' + _RE_PATTERN_TYPE + r'\s*&\s*' + _RE_PATTERN_IDENT + r')')
-
-
 def CheckLanguage(filename, clean_lines, linenum, file_extension,
                   include_state, nesting_state, error):
   """Checks rules from the 'C++ language rules' section of cppguide.html.
