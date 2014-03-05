@@ -3511,23 +3511,6 @@ def _DropCommonSuffixes(filename):
   return os.path.splitext(filename)[0]
 
 
-def _IsTestFilename(filename):
-  """Determines if the given filename has a suffix that identifies it as a test.
-
-  Args:
-    filename: The input filename.
-
-  Returns:
-    True if 'filename' looks like a test, False otherwise.
-  """
-  if (filename.endswith('_test.cc') or
-      filename.endswith('_unittest.cc') or
-      filename.endswith('_regtest.cc')):
-    return True
-  else:
-    return False
-
-
 def _ClassifyInclude(fileinfo, include, is_system):
   """Figures out what kind of header 'include' is.
 
