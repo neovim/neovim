@@ -94,7 +94,7 @@ static char *(features[]) =
   "+folding",
   "-footer",
   /* only interesting on Unix systems */
-#if !defined(USE_SYSTEM) && defined(UNIX)
+#if defined(UNIX)
   "+fork()",
 #endif
   "+gettext",
@@ -175,10 +175,6 @@ static char *(features[]) =
   "+statusline",
   "-sun_workshop",
   "+syntax",
-  /* only interesting on Unix systems */
-#if defined(USE_SYSTEM) && (defined(UNIX) || defined(__EMX__))
-  "+system()",
-#endif
   "+tag_binary",
   "+tag_old_static",
 #ifdef FEAT_TAG_ANYWHITE

@@ -1926,49 +1926,6 @@ char_u      *cmd;
 int options;                    /* SHELL_*, see vim.h */
 {
   int tmode = cur_tmode;
-#ifdef USE_SYSTEM       /* use system() to start the shell: simple but slow */
-  int x;
-  char_u  *newcmd;     /* only needed for unix */
-
-  out_flush();
-
-  if (options & SHELL_COOKED)
-    settmode(TMODE_COOK);           /* set to normal mode */
-
-
-  if (cmd == NULL)
-    x = system((char *)p_sh);
-  else {
-    newcmd = lalloc(STRLEN(p_sh)
-        + (extra_shell_arg == NULL ? 0 : STRLEN(extra_shell_arg))
-        + STRLEN(p_shcf) + STRLEN(cmd) + 4, TRUE);
-    if (newcmd == NULL)
-      x = 0;
-    else {
-      sprintf((char *)newcmd, "%s %s %s %s", p_sh,
-          extra_shell_arg == NULL ? "" : (char *)extra_shell_arg,
-          (char *)p_shcf,
-          (char *)cmd);
-      x = system((char *)newcmd);
-      vim_free(newcmd);
-    }
-  }
-  if (emsg_silent)
-    ;
-  else if (x == 127)
-    MSG_PUTS(_("\nCannot execute shell sh\n"));
-  else if (x && !(options & SHELL_SILENT)) {
-    MSG_PUTS(_("\nshell returned "));
-    msg_outnum((long)x);
-    msg_putchar('\n');
-  }
-
-  if (tmode == TMODE_RAW)
-    settmode(TMODE_RAW);        /* set to raw mode */
-  resettitle();
-  return x;
-
-#else /* USE_SYSTEM */	    /* don't use system(), use fork()/exec() */
 
 # define EXEC_FAILED 122    /* Exit code when shell didn't execute.  Don't use
                                127, some shells use that already */
@@ -2677,8 +2634,6 @@ error:
   vim_free(newcmd);
 
   return retval;
-
-#endif /* USE_SYSTEM */
 }
 
 /*
@@ -2968,16 +2923,12 @@ int flags;                      /* EW_* flags */
   for (i = 0; i < num_pat; ++i) {
     /* Count the length of the patterns in the same way as they are put in
      * "command" below. */
-#ifdef USE_SYSTEM
-    len += STRLEN(pat[i]) + 3;          /* add space and two quotes */
-#else
     ++len;                              /* add space */
     for (j = 0; pat[i][j] != NUL; ++j) {
       if (vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL)
         ++len;                  /* may add a backslash */
       ++len;
     }
-#endif
   }
   command = alloc(len);
   if (command == NULL) {
@@ -3026,14 +2977,8 @@ int flags;                      /* EW_* flags */
 
   if (shell_style != STYLE_BT)
     for (i = 0; i < num_pat; ++i) {
-      /* When using system() always add extra quotes, because the shell
-       * is started twice.  Otherwise put a backslash before special
+      /* Put a backslash before special
        * characters, except inside ``. */
-#ifdef USE_SYSTEM
-      STRCAT(command, " \"");
-      STRCAT(command, pat[i]);
-      STRCAT(command, "\"");
-#else
       int intick = FALSE;
 
       p = command + STRLEN(command);
@@ -3060,7 +3005,6 @@ int flags;                      /* EW_* flags */
         *p++ = pat[i][j];
       }
       *p = NUL;
-#endif
     }
   if (flags & EW_SILENT)
     show_shell_mess = FALSE;
@@ -3102,24 +3046,16 @@ int flags;                      /* EW_* flags */
     vim_free(tempname);
     /*
      * With interactive completion, the error message is not printed.
-     * However with USE_SYSTEM, I don't know how to turn off error messages
-     * from the shell, so screen may still get messed up -- webb.
      */
-#ifndef USE_SYSTEM
     if (!(flags & EW_SILENT))
-#endif
     {
       redraw_later_clear();             /* probably messed up screen */
       msg_putchar('\n');                /* clear bottom line quickly */
       cmdline_row = Rows - 1;           /* continue on last line */
-#ifdef USE_SYSTEM
-      if (!(flags & EW_SILENT))
-#endif
-      {
-        MSG(_(e_wildexpand));
-        msg_start();                    /* don't overwrite this message */
-      }
+      MSG(_(e_wildexpand));
+      msg_start();                    /* don't overwrite this message */
     }
+
     /* If a `cmd` expansion failed, don't list `cmd` as a match, even when
      * EW_NOTFOUND is given */
     if (shell_style == STYLE_BT)

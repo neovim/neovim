@@ -125,7 +125,7 @@ void ga_append(garray_T *gap, int c)
   }
 }
 
-#if (defined(UNIX) && !defined(USE_SYSTEM)) || defined(WIN3264)
+#if defined(UNIX) || defined(WIN3264)
 /*
  * Append the text in "gap" below the cursor line and clear "gap".
  */

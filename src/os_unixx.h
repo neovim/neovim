@@ -22,8 +22,6 @@
 # include <sys/ioctl.h>
 #endif
 
-#ifndef USE_SYSTEM      /* use fork/exec to start the shell */
-
 # if defined(HAVE_SYS_WAIT_H) || defined(HAVE_UNION_WAIT)
 #  include <sys/wait.h>
 # endif
@@ -43,8 +41,6 @@
 #   define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #  endif
 # endif
-
-#endif /* !USE_SYSTEM */
 
 #ifdef HAVE_STROPTS_H
 #ifdef sinix
