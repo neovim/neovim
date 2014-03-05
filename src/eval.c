@@ -10243,7 +10243,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "find_in_path",
     "float",
     "folding",
-#if !defined(USE_SYSTEM) && defined(UNIX)
+#if defined(UNIX)
     "fork",
 #endif
     "gettext",
@@ -10299,7 +10299,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "statusline",
     "spell",
     "syntax",
-#if defined(USE_SYSTEM) || !defined(UNIX)
+#if !defined(UNIX)
     "system",
 #endif
     "tag_binary",

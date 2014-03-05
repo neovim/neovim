@@ -1410,11 +1410,7 @@ static struct vimoption
   {"shellxquote", "sxq",  P_STRING|P_VI_DEF|P_SECURE,
    (char_u *)&p_sxq, PV_NONE,
    {
-#if defined(UNIX) && defined(USE_SYSTEM) && !defined(__EMX__)
-     (char_u *)"\"",
-#else
      (char_u *)"",
-#endif
      (char_u *)0L
    } SCRIPTID_INIT},
   {"shellxescape", "sxe", P_STRING|P_VI_DEF|P_SECURE,
