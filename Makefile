@@ -9,7 +9,7 @@ CMAKE_EXTRA_FLAGS :=
 # any warnings from the sub-make.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
-build/bin/nvim: deps
+build/bin/nvim: cmake
 	$(MAKE) -C build
 
 test: build/bin/nvim
