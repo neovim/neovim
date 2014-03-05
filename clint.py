@@ -1071,67 +1071,6 @@ def IsCppString(line):
   return ((line.count('"') - line.count(r'\"') - line.count("'\"'")) & 1) == 1
 
 
-def CleanseRawStrings(raw_lines):
-  """Removes C++11 raw strings from lines.
-
-    Before:
-      static const char kData[] = R"(
-          multi-line string
-          )";
-
-    After:
-      static const char kData[] = ""
-          (replaced by blank line)
-          "";
-
-  Args:
-    raw_lines: list of raw lines.
-
-  Returns:
-    list of lines with C++11 raw strings replaced by empty strings.
-  """
-
-  delimiter = None
-  lines_without_raw_strings = []
-  for line in raw_lines:
-    if delimiter:
-      # Inside a raw string, look for the end
-      end = line.find(delimiter)
-      if end >= 0:
-        # Found the end of the string, match leading space for this
-        # line and resume copying the original lines, and also insert
-        # a "" on the last line.
-        leading_space = Match(r'^(\s*)\S', line)
-        line = leading_space.group(1) + '""' + line[end + len(delimiter):]
-        delimiter = None
-      else:
-        # Haven't found the end yet, append a blank line.
-        line = ''
-
-    else:
-      # Look for beginning of a raw string.
-      # See 2.14.15 [lex.string] for syntax.
-      matched = Match(r'^(.*)\b(?:R|u8R|uR|UR|LR)"([^\s\\()]*)\((.*)$', line)
-      if matched:
-        delimiter = ')' + matched.group(2) + '"'
-
-        end = matched.group(3).find(delimiter)
-        if end >= 0:
-          # Raw string ended on same line
-          line = (matched.group(1) + '""' +
-                  matched.group(3)[end + len(delimiter):])
-          delimiter = None
-        else:
-          # Start of a multi-line raw string
-          line = matched.group(1) + '""'
-
-    lines_without_raw_strings.append(line)
-
-  # TODO(unknown): if delimiter is not None here, we might want to
-  # emit a warning for unterminated string.
-  return lines_without_raw_strings
-
-
 def FindNextMultiLineCommentStart(lines, lineix):
   """Find the beginning marker for a multiline comment."""
   while lineix < len(lines):
