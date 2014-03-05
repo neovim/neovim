@@ -50,35 +50,38 @@ int mch_full_dir_name(char *directory, char *buffer, int len)
 {
   int retval = OK;
 
-  if(0 == STRLEN(directory)) {
+  if(STRLEN(directory) == 0) {
     return mch_dirname((char_u *) buffer, len);
   }
 
   char old_dir[MAXPATHL];
 
   /* Get current directory name. */
-  if (FAIL == mch_dirname((char_u *) old_dir, MAXPATHL)) {
+  if (mch_dirname((char_u *) old_dir, MAXPATHL) == FAIL) {
     return FAIL;
   }
 
   /* We have to get back to the current dir at the end, check if that works. */
-  if (0 != mch_chdir(old_dir)) {
+  if (mch_chdir(old_dir) != 0) {
     return FAIL;
   }
 
-  if (0 != mch_chdir(directory)) {
+  if (mch_chdir(directory) != 0) {
+    /* Do not return immediatly since we may be in the wrong directory. */
     retval = FAIL;
   }
 
-  if ((FAIL == retval) || (FAIL == mch_dirname((char_u *) buffer, len))) {
+  if (retval == FAIL || mch_dirname((char_u *) buffer, len) == FAIL) {
+    /* Do not return immediatly since we are in the wrong directory. */
     retval = FAIL;
   }
    
-  if (0 != mch_chdir(old_dir)) {
+  if (mch_chdir(old_dir) != 0) {
     /* That shouldn't happen, since we've tested if it works. */
     retval = FAIL;
     EMSG(_(e_prev_dir));
   }
+
   return retval;
 }
 
@@ -91,19 +94,23 @@ int append_path(char *path, char *to_append, int max_len)
   int to_append_length = STRLEN(to_append);
 
   /* Do not append empty strings. */
-  if (0 == to_append_length)
+  if (to_append_length == 0) {
     return OK;
+  }
 
   /* Do not append a dot. */
-  if (STRCMP(to_append, ".") == 0)
+  if (STRCMP(to_append, ".") == 0) {
     return OK;
+  }
 
   /* Glue both paths with a slash. */
   if (current_length > 0 && path[current_length-1] != '/') {
     current_length += 1; /* Count the trailing slash. */
 
-    if (current_length > max_len)
+    /* +1 for the NUL at the end. */
+    if (current_length +1 > max_len) {
       return FAIL;
+    }
 
     STRCAT(path, "/");
   }
@@ -125,7 +132,7 @@ int append_path(char *path, char *to_append, int max_len)
  *
  * return FAIL for failure, OK for success
  */
-int mch_full_name(char_u *fname, char_u *buf, int len, int force)
+int mch_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
 {
   char_u *p;
   *buf = NUL;
@@ -134,7 +141,7 @@ int mch_full_name(char_u *fname, char_u *buf, int len, int force)
   char *end_of_path = (char *) fname;
 
   /* expand it if forced or not an absolute path */
-  if (force || !mch_is_full_name(fname)) {
+  if (force || !mch_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
 
       STRNCPY(relative_directory, fname, p-fname);
@@ -155,7 +162,7 @@ int mch_full_name(char_u *fname, char_u *buf, int len, int force)
 /*
  * Return TRUE if "fname" does not depend on the current directory.
  */
-int mch_is_full_name(char_u *fname)
+int mch_is_absolute_path(char_u *fname)
 {
   return *fname == '/' || *fname == '~';
 }

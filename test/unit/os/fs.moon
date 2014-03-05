@@ -70,12 +70,12 @@ describe 'fs function', ->
       eq lfs.currentdir! .. '/empty-test-directory', (ffi.string buffer)
       eq OK, result
 
-  describe 'mch_full_name', ->
-    ffi.cdef 'int mch_full_name(char *fname, char *buf, int len, int force);'
+  describe 'mch_get_absolute_path', ->
+    ffi.cdef 'int mch_get_absolute_path(char *fname, char *buf, int len, int force);'
 
-    mch_full_name = (filename, buffer, length, force) ->
+    mch_get_absolute_path = (filename, buffer, length, force) ->
       filename = cstr (string.len filename) + 1, filename
-      fs.mch_full_name filename, buffer, length, force
+      fs.mch_get_absolute_path filename, buffer, length, force
 
     before_each ->
       -- Create empty string buffer which will contain the resulting path.
@@ -92,12 +92,12 @@ describe 'fs function', ->
 
     it 'fails if given filename contains non-existing directory', ->
       force_expansion = 1
-      result = mch_full_name 'non_existing_dir/test.file', buffer, len, force_expansion
+      result = mch_get_absolute_path 'non_existing_dir/test.file', buffer, len, force_expansion
       eq FAIL, result
 
     it 'concatenates given filename if it does not contain a slash', ->
       force_expansion = 1
-      result = mch_full_name 'test.file', buffer, len, force_expansion
+      result = mch_get_absolute_path 'test.file', buffer, len, force_expansion
       expected = lfs.currentdir! .. '/test.file'
       eq expected, (ffi.string buffer)
       eq OK, result
@@ -105,7 +105,7 @@ describe 'fs function', ->
     it 'concatenates given filename if it is a directory but does not contain a
     slash', ->
       force_expansion = 1
-      result = mch_full_name '..', buffer, len, force_expansion
+      result = mch_get_absolute_path '..', buffer, len, force_expansion
       expected = lfs.currentdir! .. '/..'
       eq expected, (ffi.string buffer)
       eq OK, result
@@ -115,7 +115,7 @@ describe 'fs function', ->
     it 'enters given directory (instead of just concatenating the strings) if
     possible and if path contains a slash', ->
       force_expansion = 1
-      result = mch_full_name '../test.file', buffer, len, force_expansion
+      result = mch_get_absolute_path '../test.file', buffer, len, force_expansion
       old_dir = lfs.currentdir!
       lfs.chdir '..'
       expected = lfs.currentdir! .. '/test.file'
@@ -126,26 +126,26 @@ describe 'fs function', ->
     it 'just copies the path if it is already absolute and force=0', ->
       force_expansion = 0
       absolute_path = '/absolute/path'
-      result = mch_full_name absolute_path, buffer, len, force_expansion
+      result = mch_get_absolute_path absolute_path, buffer, len, force_expansion
       eq absolute_path, (ffi.string buffer)
       eq OK, result
 
     it 'fails when the path is relative to HOME', ->
       force_expansion = 1
       absolute_path = '~/home.file'
-      result = mch_full_name absolute_path, buffer, len, force_expansion
+      result = mch_get_absolute_path absolute_path, buffer, len, force_expansion
       eq FAIL, result
 
     it 'works with some "normal" relative path with directories', ->
       force_expansion = 1
-      result = mch_full_name 'empty-test-directory/empty.file', buffer, len, force_expansion
+      result = mch_get_absolute_path 'empty-test-directory/empty.file', buffer, len, force_expansion
       eq OK, result
       eq lfs.currentdir! .. '/empty-test-directory/empty.file', (ffi.string buffer)
 
     it 'does not modify the given filename', ->
       force_expansion = 1
       filename = cstr 100, 'empty-test-directory/empty.file'
-      result = fs.mch_full_name filename, buffer, len, force_expansion
+      result = fs.mch_get_absolute_path filename, buffer, len, force_expansion
       eq lfs.currentdir! .. '/empty-test-directory/empty.file', (ffi.string buffer)
       eq 'empty-test-directory/empty.file', (ffi.string filename)
       eq OK, result
@@ -188,18 +188,18 @@ describe 'fs function', ->
       eq OK, (fs.append_path path, to_append, 7)
       eq '/path2', (ffi.string path)
 
-  describe 'mch_is_full_name', ->
-    ffi.cdef 'int mch_is_full_name(char *fname);'
+  describe 'mch_is_absolute_path', ->
+    ffi.cdef 'int mch_is_absolute_path(char *fname);'
 
-    mch_is_full_name = (filename) ->
+    mch_is_absolute_path = (filename) ->
       filename = cstr (string.len filename) + 1, filename
-      fs.mch_is_full_name filename
+      fs.mch_is_absolute_path filename
 
     it 'returns true if filename starts with a slash', ->
-      eq OK, mch_is_full_name '/some/directory/'
+      eq OK, mch_is_absolute_path '/some/directory/'
 
     it 'returns true if filename starts with a tilde', ->
-      eq OK, mch_is_full_name '~/in/my/home~/directory'
+      eq OK, mch_is_absolute_path '~/in/my/home~/directory'
 
     it 'returns false if filename starts not with slash nor tilde', ->
-      eq FAIL, mch_is_full_name 'not/in/my/home~/directory'
+      eq FAIL, mch_is_absolute_path 'not/in/my/home~/directory'
