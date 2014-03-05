@@ -7945,7 +7945,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     else if (path_with_url(buf))
       /* URL can't be used here */
       continue;
-    else if (!mch_is_full_name(buf)) {
+    else if (!mch_is_absolute_path(buf)) {
       /* Expand relative path to their full path equivalent */
       len = (int)STRLEN(curdir);
       if (len + (int)STRLEN(buf) + 3 > MAXPATHL)
@@ -8086,7 +8086,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
         break;
       }
 
-    if (mch_is_full_name(path)) {
+    if (mch_is_absolute_path(path)) {
       /*
        * Last resort: shorten relative to curdir if possible.
        * 'possible' means:
@@ -8375,7 +8375,7 @@ gen_expand_wildcards (
        */
       if (mch_has_exp_wildcard(p)) {
         if ((flags & EW_PATH)
-            && !mch_is_full_name(p)
+            && !mch_is_absolute_path(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.' && vim_ispathsep(p[2]))))

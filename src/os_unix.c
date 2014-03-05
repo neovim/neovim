@@ -1344,7 +1344,7 @@ int mch_can_exe(char_u *name)
   int retval;
 
   /* If it's an absolute or relative path don't need to use $PATH. */
-  if (mch_is_full_name(name) || (name[0] == '.' && (name[1] == '/'
+  if (mch_is_absolute_path(name) || (name[0] == '.' && (name[1] == '/'
                                                   || (name[1] == '.' &&
                                                       name[2] == '/'))))
     return executable_file(name);

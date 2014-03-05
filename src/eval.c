@@ -12468,7 +12468,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
           q[-1] = NUL;
           q = gettail(p);
         }
-        if (q > p && !mch_is_full_name(buf)) {
+        if (q > p && !mch_is_absolute_path(buf)) {
           /* symlink is relative to directory of argument */
           cpy = alloc((unsigned)(STRLEN(p) + STRLEN(buf) + 1));
           if (cpy != NULL) {
