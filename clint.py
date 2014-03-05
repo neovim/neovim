@@ -2155,7 +2155,12 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
 
   if Search(r'\b(const|volatile|void|char|short|int|long'
             r'|float|double|signed|unsigned'
-            r'|schar|u?int8|u?int16|u?int32|u?int64)'
+            r'|u?int8_t|u?int16_t|u?int32_t|u?int64_t'
+            r'|u?int_least8_t|u?int_least16_t|u?int_least32_t'
+            r'|u?int_least64_t'
+            r'|u?int_fast8_t|u?int_fast16_t|u?int_fast32_t'
+            r'|u?int_fast64_t'
+            r'|u?intptr_t|u?intmax_t)'
             r'\s+(register|static|extern|typedef)\b',
             line):
     error(filename, linenum, 'build/storage_class', 5,
@@ -2165,49 +2170,10 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
     error(filename, linenum, 'build/endif_comment', 5,
           'Uncommented text after #endif is non-standard.  Use a comment.')
 
-  if Match(r'\s*class\s+(\w+\s*::\s*)+\w+\s*;', line):
-    error(filename, linenum, 'build/forward_decl', 5,
-          'Inner-style forward declarations are invalid.  Remove this line.')
-
   if Search(r'(\w+|[+-]?\d+(\.\d*)?)\s*(<|>)\?=?\s*(\w+|[+-]?\d+)(\.\d*)?',
             line):
     error(filename, linenum, 'build/deprecated', 3,
           '>? and <? (max and min) operators are non-standard and deprecated.')
-
-  if Search(r'^\s*const\s*string\s*&\s*\w+\s*;', line):
-    # TODO(unknown): Could it be expanded safely to arbitrary references,
-    # without triggering too many false positives? The first
-    # attempt triggered 5 warnings for mostly benign code in the regtest, hence
-    # the restriction.
-    # Here's the original regexp, for the reference:
-    # type_name = r'\w+((\s*::\s*\w+)|(\s*<\s*\w+?\s*>))?'
-    # r'\s*const\s*' + type_name + '\s*&\s*\w+\s*;'
-    error(filename, linenum, 'runtime/member_string_references', 2,
-          'const string& members are dangerous. It is much better to use '
-          'alternatives, such as pointers or simple constants.')
-
-  # Everything else in this function operates on class declarations.
-  # Return early if the top of the nesting stack is not a class, or if
-  # the class head is not completed yet.
-  classinfo = nesting_state.InnermostClass()
-  if not classinfo or not classinfo.seen_open_brace:
-    return
-
-  # The class may have been declared with namespace or classname qualifiers.
-  # The constructor and destructor will not have those qualifiers.
-  base_classname = classinfo.name.split('::')[-1]
-
-  # Look for single-argument constructors that aren't marked explicit.
-  # Technically a valid construct, but against style.
-  args = Match(r'\s+(?:inline\s+)?%s\s*\(([^,()]+)\)'
-               % re.escape(base_classname),
-               line)
-  if (args and
-      args.group(1) != 'void' and
-      not Match(r'(const\s+)?%s(\s+const)?\s*(?:<\w+>\s*)?&'
-                % re.escape(base_classname), args.group(1).strip())):
-    error(filename, linenum, 'runtime/explicit', 5,
-          'Single-argument constructors should be marked explicit.')
 
 
 def CheckSpacingForFunctionCall(filename, line, linenum, error):
@@ -2248,8 +2214,7 @@ def CheckSpacingForFunctionCall(filename, line, linenum, error):
   # Note that we assume the contents of [] to be short enough that
   # they'll never need to wrap.
   if (  # Ignore control structures.
-      not Search(r'\b(if|for|while|switch|return|sizeof)\b',
-                 fncall) and
+      not Search(r'\b(if|for|while|switch|return|sizeof)\b', fncall) and
       # Ignore pointers/references to functions.
       not Search(r' \([^)]+\)\([^)]*(\)|,$)', fncall) and
       # Ignore pointers/references to arrays.
