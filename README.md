@@ -15,7 +15,7 @@
 * [Status](#status)
 * [Dependencies](#dependencies)
   * [For Debian/Ubuntu](#for-debianubuntu)
-  * [For CentOS/RHEL](#for-centos-rhel)
+  * [For CentOS/RHEL/Fedora](#for-centos-rhel-fedora)
   * [For FreeBSD 10](#for-freebsd-10)
   * [For Arch Linux](#for-arch-linux)
   * [For OS X](#for-os-x)
@@ -278,11 +278,13 @@ and what is currently being worked on:
 
     sudo apt-get install libtool autoconf automake cmake libncurses5-dev g++
 
-<a name="for-centos-rhel"></a>
-### CentOS/RHEL
+<a name="for-centos-rhel-fedora"></a>
+### CentOS/RHEL/Fedora
 
 If you're using CentOS/RHEL 6 you need at least autoconf version 2.69 for
-compiling the libuv dependency. See joyent/libuv#1158.
+compiling the libuv dependency. See https://github.com/joyent/libuv/issues/1158.
+
+    sudo yum -y install autoconf automake cmake gcc libtool ncurses-devel
 
 <a name="for-freebsd-10"></a>
 ### FreeBSD 10
