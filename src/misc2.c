@@ -1,4 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
+/* vi:set expandtab ts=2 sts=2 sw=2:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -581,25 +581,15 @@ int leftcol_changed(void)         {
 #if defined(MEM_PROFILE) || defined(PROTO)
 
 # define MEM_SIZES  8200
-static long_u mem_allocs[MEM_SIZES];
-static long_u mem_frees[MEM_SIZES];
-static long_u mem_allocated;
-static long_u mem_freed;
-static long_u mem_peak;
-static long_u num_alloc;
-static long_u num_freed;
+static uintmax_t mem_allocs[MEM_SIZES];
+static uintmax_t mem_frees[MEM_SIZES];
+static uintmax_t mem_allocated;
+static uintmax_t mem_freed;
+static uintmax_t mem_peak;
+static uintmax_t num_alloc;
+static uintmax_t num_freed;
 
-static void mem_pre_alloc_s(size_t *sizep);
-static void mem_pre_alloc_l(long_u *sizep);
-static void mem_post_alloc(void **pp, size_t size);
-static void mem_pre_free(void **pp);
-
-static void mem_pre_alloc_s(size_t *sizep)
-{
-  *sizep += sizeof(size_t);
-}
-
-static void mem_pre_alloc_l(long_u *sizep)
+static void mem_pre_alloc(size_t *sizep)
 {
   *sizep += sizeof(size_t);
 }
@@ -609,28 +599,29 @@ static void mem_post_alloc(void **pp, size_t size)
   if (*pp == NULL)
     return;
   size -= sizeof(size_t);
-  *(long_u *)*pp = size;
-  if (size <= MEM_SIZES-1)
+  *(size_t *)*pp = size;
+  if (size <= MEM_SIZES-1) {
     mem_allocs[size-1]++;
-  else
+  } else {
     mem_allocs[MEM_SIZES-1]++;
+  }
   mem_allocated += size;
-  if (mem_allocated - mem_freed > mem_peak)
+  if (mem_allocated - mem_freed > mem_peak) {
     mem_peak = mem_allocated - mem_freed;
+  }
   num_alloc++;
-  *pp = (void *)((char *)*pp + sizeof(size_t));
+  *pp = (char *)*pp + sizeof(size_t);
 }
 
 static void mem_pre_free(void **pp)
 {
-  long_u size;
-
-  *pp = (void *)((char *)*pp - sizeof(size_t));
-  size = *(size_t *)*pp;
-  if (size <= MEM_SIZES-1)
+  *pp = (char *)*pp - sizeof(size_t);
+  size_t size = *(size_t *)*pp;
+  if (size <= MEM_SIZES-1) {
     mem_frees[size-1]++;
-  else
+  } else {
     mem_frees[MEM_SIZES-1]++;
+  }
   mem_freed += size;
   num_freed++;
 }
@@ -638,95 +629,79 @@ static void mem_pre_free(void **pp)
 /*
  * called on exit via atexit()
  */
-void vim_mem_profile_dump(void)          {
-  int i, j;
-
-  printf("\r\n");
-  j = 0;
-  for (i = 0; i < MEM_SIZES - 1; i++) {
+void vim_mem_profile_dump(void)
+{
+  printf("\n");
+  int j = 0;
+  for (size_t i = 0; i < MEM_SIZES - 1; i++) {
     if (mem_allocs[i] || mem_frees[i]) {
-      if (mem_frees[i] > mem_allocs[i])
-        printf("\r\n%s", _("ERROR: "));
-      printf("[%4d / %4lu-%-4lu] ", i + 1, mem_allocs[i], mem_frees[i]);
+      if (mem_frees[i] > mem_allocs[i]) {
+        printf("\n%s", _("ERROR: "));
+      }
+      printf("[%4zu / %4ju-%-4ju] ", i + 1, mem_allocs[i], mem_frees[i]);
       j++;
       if (j > 3) {
         j = 0;
-        printf("\r\n");
+        printf("\n");
       }
     }
   }
 
-  i = MEM_SIZES - 1;
+  size_t i = MEM_SIZES - 1;
   if (mem_allocs[i]) {
-    printf("\r\n");
-    if (mem_frees[i] > mem_allocs[i])
+    printf("\n");
+    if (mem_frees[i] > mem_allocs[i]) {
       puts(_("ERROR: "));
-    printf("[>%d / %4lu-%-4lu]", i, mem_allocs[i], mem_frees[i]);
+    }
+    printf("[>%zu / %4ju-%-4ju]", i, mem_allocs[i], mem_frees[i]);
   }
 
-  printf(_("\n[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"),
+  printf(_("\n[bytes] total alloc-freed %ju-%ju, in use %ju, peak use %ju\n"),
       mem_allocated, mem_freed, mem_allocated - mem_freed, mem_peak);
-  printf(_("[calls] total re/malloc()'s %lu, total free()'s %lu\n\n"),
+  printf(_("[calls] total re/malloc()'s %ju, total free()'s %ju\n\n"),
       num_alloc, num_freed);
 }
 
 #endif /* MEM_PROFILE */
 
 /*
- * Some memory is reserved for error messages and for being able to
- * call mf_release_all(), which needs some memory for mf_trans_add().
- */
-# define KEEP_ROOM (2 * 8192L)
-#define KEEP_ROOM_KB (KEEP_ROOM / 1024L)
-
-/*
  * Note: if unsigned is 16 bits we can only allocate up to 64K with alloc().
  * Use lalloc for larger blocks.
  */
-char_u *alloc(unsigned size)
+void *alloc(size_t size)
 {
-  return lalloc((long_u)size, TRUE);
+  return lalloc(size, TRUE);
 }
 
 /*
  * Allocate memory and set all bytes to zero.
  */
-char_u *alloc_clear(unsigned size)
+void *alloc_clear(size_t size)
 {
-  char_u *p;
-
-  p = lalloc((long_u)size, TRUE);
-  if (p != NULL)
-    (void)vim_memset(p, 0, (size_t)size);
+  void *p = lalloc(size, TRUE);
+  if (p) {
+    memset(p, 0, size);
+  }
   return p;
 }
 
 /*
- * alloc() with check for maximum line length
+ * FIXME: Remove this.
  */
-char_u *alloc_check(unsigned size)
+void *alloc_check(size_t size)
 {
-#if !defined(UNIX) && !defined(__EMX__)
-  if (sizeof(int) == 2 && size > 0x7fff) {
-    /* Don't hide this message */
-    emsg_silent = 0;
-    EMSG(_("E340: Line is becoming too long"));
-    return NULL;
-  }
-#endif
-  return lalloc((long_u)size, TRUE);
+  return lalloc(size, TRUE);
 }
 
 /*
  * Allocate memory like lalloc() and set all bytes to zero.
  */
-char_u *lalloc_clear(long_u size, int message)
+void *lalloc_clear(size_t size, int message)
 {
-  char_u *p;
-
-  p = (lalloc(size, message));
-  if (p != NULL)
-    (void)vim_memset(p, 0, (size_t)size);
+  void *p = lalloc(size, message);
+  if (p) {
+    memset(p, 0, size);
+  }
   return p;
 }
 
@@ -734,85 +709,29 @@ char_u *lalloc_clear(long_u size, int message)
  * Low level memory allocation function.
  * This is used often, KEEP IT FAST!
  */
-char_u *lalloc(long_u size, int message)
+void *lalloc(size_t size, int message)
 {
-  char_u      *p;                   /* pointer to new storage space */
-  static int releasing = FALSE;     /* don't do mf_release_all() recursive */
-  int try_again;
-#if defined(HAVE_AVAIL_MEM) && !defined(SMALL_MEM)
-  static long_u allocated = 0;      /* allocated since last avail check */
-#endif
-
   /* Safety check for allocating zero bytes */
   if (size == 0) {
     /* Don't hide this message */
     emsg_silent = 0;
-    EMSGN(_("E341: Internal error: lalloc(%ld, )"), size);
+    EMSGN(_("E341: Internal error: lalloc(%zd, )"), size);
     return NULL;
   }
 
 #ifdef MEM_PROFILE
-  mem_pre_alloc_l(&size);
+  mem_pre_alloc(&size);
 #endif
 
-
-  /*
-   * Loop when out of memory: Try to release some memfile blocks and
-   * if some blocks are released call malloc again.
-   */
-  for (;; ) {
-    /*
-     * Handle three kind of systems:
-     * 1. No check for available memory: Just return.
-     * 2. Slow check for available memory: call mch_avail_mem() after
-     *    allocating KEEP_ROOM amount of memory.
-     * 3. Strict check for available memory: call mch_avail_mem()
-     */
-    if ((p = (char_u *)malloc((size_t)size)) != NULL) {
-#ifndef HAVE_AVAIL_MEM
-      /* 1. No check for available memory: Just return. */
-      goto theend;
-#else
-# ifndef SMALL_MEM
-      /* 2. Slow check for available memory: call mch_avail_mem() after
-       *    allocating (KEEP_ROOM / 2) amount of memory. */
-      allocated += size;
-      if (allocated < KEEP_ROOM / 2)
-        goto theend;
-      allocated = 0;
-# endif
-      /* 3. check for available memory: call mch_avail_mem() */
-      if (mch_avail_mem(TRUE) < KEEP_ROOM_KB && !releasing) {
-        free((char *)p);                /* System is low... no go! */
-        p = NULL;
-      } else
-        goto theend;
-#endif
-    }
-    /*
-     * Remember that mf_release_all() is being called to avoid an endless
-     * loop, because mf_release_all() may call alloc() recursively.
-     */
-    if (releasing)
-      break;
-    releasing = TRUE;
-
-    clear_sb_text();                  /* free any scrollback text */
-    try_again = mf_release_all();     /* release as many blocks as possible */
-    try_again |= garbage_collect();     /* cleanup recursive lists/dicts */
-
-    releasing = FALSE;
-    if (!try_again)
-      break;
+  void *p = malloc(size);
+  if (message && p == NULL) {
+    do_outofmem_msg(size);
   }
 
-  if (message && p == NULL)
-    do_outofmem_msg(size);
-
-theend:
 #ifdef MEM_PROFILE
-  mem_post_alloc((void **)&p, (size_t)size);
+  mem_post_alloc(&p, size);
 #endif
+
   return p;
 }
 
@@ -820,16 +739,18 @@ theend:
 /*
  * realloc() with memory profiling.
  */
-void *mem_realloc(void *ptr, size_t size)
+void *mem_realloc(void *p, size_t size)
 {
-  void *p;
+  if (p) {
+    mem_pre_free(&p);
+  }
+  mem_pre_alloc(&size);
 
-  mem_pre_free(&ptr);
-  mem_pre_alloc_s(&size);
+  p = realloc(p, size);
 
-  p = realloc(ptr, size);
-
-  mem_post_alloc(&p, size);
+  if (p) {
+    mem_post_alloc(&p, size);
+  }
 
   return p;
 }
@@ -839,7 +760,7 @@ void *mem_realloc(void *ptr, size_t size)
  * Avoid repeating the error message many times (they take 1 second each).
  * Did_outofmem_msg is reset when a character is read.
  */
-void do_outofmem_msg(long_u size)
+void do_outofmem_msg(size_t size)
 {
   if (!did_outofmem_msg) {
     /* Don't hide this message */
@@ -849,7 +770,7 @@ void do_outofmem_msg(long_u size)
      * message fails, e.g. when setting v:errmsg. */
     did_outofmem_msg = TRUE;
 
-    EMSGN(_("E342: Out of memory!  (allocating %lu bytes)"), size);
+    EMSGN(_("E342: Out of memory!  (allocating %zu bytes)"), size);
   }
 }
 
@@ -862,7 +783,8 @@ void do_outofmem_msg(long_u size)
  * surprised if Vim crashes...
  * Some things can't be freed, esp. things local to a library function.
  */
-void free_all_mem(void)          {
+void free_all_mem(void)
+{
   buf_T       *buf, *nextbuf;
   static int entered = FALSE;
 
