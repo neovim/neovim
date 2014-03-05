@@ -3768,112 +3768,11 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
 
   # TODO(unknown): figure out if they're using default arguments in fn proto.
 
-  # Check to see if they're using an conversion function cast.
-  # I just try to capture the most common basic types, though there are more.
-  # Parameterless conversion functions, such as bool(), are allowed as they are
-  # probably a member operator declaration or default constructor.
-  match = Search(
-      r'(\bnew\s+)?\b'  # Grab 'new' operator, if it's there
-      r'(int|float|double|bool|char|int32|uint32|int64|uint64)'
-      r'(\([^)].*)', line)
+  # Check if people are using the verboten C basic types.
+  match = Search(r'\b(short|long(?! +double)|long long)\b', line)
   if match:
-    matched_new = match.group(1)
-    matched_type = match.group(2)
-    matched_funcptr = match.group(3)
-
-    # gMock methods are defined using some variant of MOCK_METHODx(name, type)
-    # where type may be float(), int(string), etc.  Without context they are
-    # virtually indistinguishable from int(x) casts. Likewise, gMock's
-    # MockCallback takes a template parameter of the form return_type(arg_type),
-    # which looks much like the cast we're trying to detect.
-    #
-    # std::function<> wrapper has a similar problem.
-    #
-    # Return types for function pointers also look like casts if they
-    # don't have an extra space.
-    if (matched_new is None and  # If new operator, then this isn't a cast
-        not (Match(r'^\s*MOCK_(CONST_)?METHOD\d+(_T)?\(', line) or
-             Search(r'\bMockCallback<.*>', line) or
-             Search(r'\bstd::function<.*>', line)) and
-        not (matched_funcptr and
-             Match(r'\((?:[^() ]+::\s*\*\s*)?[^() ]+\)\s*\(',
-                   matched_funcptr))):
-      # Try a bit harder to catch gmock lines: the only place where
-      # something looks like an old-style cast is where we declare the
-      # return type of the mocked method, and the only time when we
-      # are missing context is if MOCK_METHOD was split across
-      # multiple lines.  The missing MOCK_METHOD is usually one or two
-      # lines back, so scan back one or two lines.
-      #
-      # It's not possible for gmock macros to appear in the first 2
-      # lines, since the class head + section name takes up 2 lines.
-      if (linenum < 2 or
-          not (Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\((?:\S+,)?\s*$',
-                     clean_lines.elided[linenum - 1]) or
-               Match(r'^\s*MOCK_(?:CONST_)?METHOD\d+(?:_T)?\(\s*$',
-                     clean_lines.elided[linenum - 2]))):
-        error(filename, linenum, 'readability/casting', 4,
-              'Using deprecated casting style.  '
-              'Use static_cast<%s>(...) instead' %
-              matched_type)
-
-  # In addition, we look for people taking the address of a cast.  This
-  # is dangerous -- casts can assign to temporaries, so the pointer doesn't
-  # point where you think.
-  match = Search(
-      r'(?:&\(([^)]+)\)[\w(])|'
-      r'(?:&(static|dynamic|down|reinterpret)_cast\b)', line)
-  if match and match.group(1) != '*':
-    error(filename, linenum, 'runtime/casting', 4,
-          ('Are you taking an address of a cast?  '
-           'This is dangerous: could be a temp var.  '
-           'Take the address before doing the cast, rather than after'))
-
-  # Check for people declaring static/global STL strings at the top level.
-  # This is dangerous because the C++ language does not guarantee that
-  # globals with constructors are initialized before the first access.
-  match = Match(
-      r'((?:|static +)(?:|const +))string +([a-zA-Z0-9_:]+)\b(.*)',
-      line)
-  # Make sure it's not a function.
-  # Function template specialization looks like: "string foo<Type>(...".
-  # Class template definitions look like: "string Foo<Type>::Method(...".
-  #
-  # Also ignore things that look like operators.  These are matched separately
-  # because operator names cross non-word boundaries.  If we change the pattern
-  # above, we would decrease the accuracy of matching identifiers.
-  if (match and
-      not Search(r'\boperator\W', line) and
-      not Match(r'\s*(<.*>)?(::[a-zA-Z0-9_]+)?\s*\(([^"]|$)', match.group(3))):
-    error(filename, linenum, 'runtime/string', 4,
-          'For a static/global string constant, use a C style string instead: '
-          '"%schar %s[]".' %
-          (match.group(1), match.group(2)))
-
-  if Search(r'\b([A-Za-z0-9_]*_)\(\1\)', line):
-    error(filename, linenum, 'runtime/init', 4,
-          'You seem to be initializing a member variable with itself.')
-
-  if file_extension == 'h':
-    # TODO(unknown): check that 1-arg constructors are explicit.
-    #                How to tell it's a constructor?
-    #                (handled in CheckForNonStandardConstructs for now)
-    # TODO(unknown): check that classes have DISALLOW_EVIL_CONSTRUCTORS
-    #                (level 1 error)
-    pass
-
-  # Check if people are using the verboten C basic types.  The only exception
-  # we regularly allow is "unsigned short port" for port.
-  if not (file_extension == 'c' or file_extension == 'h'):
-    if Search(r'\bshort port\b', line):
-      if not Search(r'\bunsigned short port\b', line):
-        error(filename, linenum, 'runtime/int', 4,
-              'Use "unsigned short" for ports, not "short"')
-    else:
-      match = Search(r'\b(short|long(?! +double)|long long)\b', line)
-      if match:
-        error(filename, linenum, 'runtime/int', 4,
-              'Use int16/int64/etc, rather than the C type %s' % match.group(1))
+    error(filename, linenum, 'runtime/int', 4,
+          'Use int16_t/int64_t/etc, rather than the C type %s' % match.group(1))
 
   # When snprintf is used, the second argument shouldn't be a literal.
   match = Search(r'snprintf\s*\(([^,]*),\s*([0-9]*)\s*,', line)
@@ -3891,16 +3790,6 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
   if match:
     error(filename, linenum, 'runtime/printf', 4,
           'Almost always, snprintf is better than %s' % match.group(1))
-
-  # Check if some verboten operator overloading is going on
-  # TODO(unknown): catch out-of-line unary operator&:
-  #   class X {};
-  #   int operator&(const X& x) { return 42; }  // unary operator&
-  # The trick is it's hard to tell apart from binary operator&:
-  #   class Y { int operator&(const Y& x) { return 23; } }; // binary operator&
-  if Search(r'\boperator\s*&\s*\(\s*\)', line):
-    error(filename, linenum, 'runtime/operator', 4,
-          'Unary operator& is dangerous.  Do not use it.')
 
   # Check for suspicious usage of "if" like
   # } if (a == b) {
@@ -3938,6 +3827,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
           'Use using-declarations instead.')
 
   # Detect variable-length arrays.
+  # XXX: Do we want this in Neovim?
   match = Match(r'\s*(.+::)?(\w+) [a-z]\w*\[(.+)];', line)
   if (match and match.group(2) != 'return' and match.group(2) != 'delete' and
       match.group(3).find(']') == -1):
@@ -3975,37 +3865,6 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
       error(filename, linenum, 'runtime/arrays', 1,
             'Do not use variable-length arrays.  Use an appropriately named '
             "('k' followed by CamelCase) compile-time constant for the size.")
-
-  # If DISALLOW_EVIL_CONSTRUCTORS, DISALLOW_COPY_AND_ASSIGN, or
-  # DISALLOW_IMPLICIT_CONSTRUCTORS is present, then it should be the last thing
-  # in the class declaration.
-  match = Match(
-      (r'\s*'
-       r'(DISALLOW_(EVIL_CONSTRUCTORS|COPY_AND_ASSIGN|IMPLICIT_CONSTRUCTORS))'
-       r'\(.*\);$'),
-      line)
-  if match and linenum + 1 < clean_lines.NumLines():
-    next_line = clean_lines.elided[linenum + 1]
-    # We allow some, but not all, declarations of variables to be present
-    # in the statement that defines the class.  The [\w\*,\s]* fragment of
-    # the regular expression below allows users to declare instances of
-    # the class or pointers to instances, but not less common types such
-    # as function pointers or arrays.  It's a tradeoff between allowing
-    # reasonable code and avoiding trying to parse more C++ using regexps.
-    if not Search(r'^\s*}[\w\*,\s]*;', next_line):
-      error(filename, linenum, 'readability/constructors', 3,
-            match.group(1) + ' should be the last thing in the class')
-
-  # Check for use of unnamed namespaces in header files.  Registration
-  # macros are typically OK, so we allow use of "namespace {" on lines
-  # that end with backslashes.
-  if (file_extension == 'h'
-      and Search(r'\bnamespace\s*{', line)
-      and line[-1] != '\\'):
-    error(filename, linenum, 'build/namespaces', 4,
-          'Do not use unnamed namespaces in header files.  See '
-          'http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#Namespaces'
-          ' for more information.')
 
 
 def ProcessLine(filename, file_extension, clean_lines, line,
