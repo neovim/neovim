@@ -3827,23 +3827,6 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
               'Use static_cast<%s>(...) instead' %
               matched_type)
 
-  if not (filename.endswith('.c') or filename.endswith('.h')):
-    CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
-                    'static_cast',
-                    r'\((int|float|double|bool|char|u?int(16|32|64))\)', error)
-
-    # This doesn't catch all cases. Consider (const char * const)"hello".
-    #
-    # (char *) "foo" should always be a const_cast (reinterpret_cast won't
-    # compile).
-    if CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
-                       'const_cast', r'\((char\s?\*+\s?)\)\s*"', error):
-      pass
-    else:
-      # Check pointer casts for other than string constants
-      CheckCStyleCast(filename, linenum, line, clean_lines.raw_lines[linenum],
-                      'reinterpret_cast', r'\((\w+\s?\*+\s?)\)', error)
-
   # In addition, we look for people taking the address of a cast.  This
   # is dangerous -- casts can assign to temporaries, so the pointer doesn't
   # point where you think.
@@ -4145,100 +4128,6 @@ def CheckForNonConstReference(filename, clean_lines, linenum,
               'Is this a non-const reference? '
               'If so, make const or use a pointer: ' +
               ReplaceAll(' *<', '<', parameter))
-
-
-def CheckCStyleCast(filename, linenum, line, raw_line, cast_type, pattern,
-                    error):
-  """Checks for a C-style cast by looking for the pattern.
-
-  Args:
-    filename: The name of the current file.
-    linenum: The number of the line to check.
-    line: The line of code to check.
-    raw_line: The raw line of code to check, with comments.
-    cast_type: The string for the C++ cast to recommend.  This is either
-      reinterpret_cast, static_cast, or const_cast, depending.
-    pattern: The regular expression used to find C-style casts.
-    error: The function to call with any errors found.
-
-  Returns:
-    True if an error was emitted.
-    False otherwise.
-  """
-  match = Search(pattern, line)
-  if not match:
-    return False
-
-  # Exclude lines with sizeof, since sizeof looks like a cast.
-  sizeof_match = Match(r'.*sizeof\s*$', line[0:match.start(1) - 1])
-  if sizeof_match:
-    return False
-
-  # operator++(int) and operator--(int)
-  if (line[0:match.start(1) - 1].endswith(' operator++') or
-      line[0:match.start(1) - 1].endswith(' operator--')):
-    return False
-
-  # A single unnamed argument for a function tends to look like old
-  # style cast.  If we see those, don't issue warnings for deprecated
-  # casts, instead issue warnings for unnamed arguments where
-  # appropriate.
-  #
-  # These are things that we want warnings for, since the style guide
-  # explicitly require all parameters to be named:
-  #   Function(int);
-  #   Function(int) {
-  #   ConstMember(int) const;
-  #   ConstMember(int) const {
-  #   ExceptionMember(int) throw (...);
-  #   ExceptionMember(int) throw (...) {
-  #   PureVirtual(int) = 0;
-  #
-  # These are functions of some sort, where the compiler would be fine
-  # if they had named parameters, but people often omit those
-  # identifiers to reduce clutter:
-  #   (FunctionPointer)(int);
-  #   (FunctionPointer)(int) = value;
-  #   Function((function_pointer_arg)(int))
-  #   <TemplateArgument(int)>;
-  #   <(FunctionPointerTemplateArgument)(int)>;
-  remainder = line[match.end(0):]
-  if Match(r'^\s*(?:;|const\b|throw\b|=|>|\{|\))', remainder):
-    # Looks like an unnamed parameter.
-
-    # Don't warn on any kind of template arguments.
-    if Match(r'^\s*>', remainder):
-      return False
-
-    # Don't warn on assignments to function pointers, but keep warnings for
-    # unnamed parameters to pure virtual functions.  Note that this pattern
-    # will also pass on assignments of "0" to function pointers, but the
-    # preferred values for those would be "nullptr" or "NULL".
-    matched_zero = Match(r'^\s=\s*(\S+)\s*;', remainder)
-    if matched_zero and matched_zero.group(1) != '0':
-      return False
-
-    # Don't warn on function pointer declarations.  For this we need
-    # to check what came before the "(type)" string.
-    if Match(r'.*\)\s*$', line[0:match.start(0)]):
-      return False
-
-    # Don't warn if the parameter is named with block comments, e.g.:
-    #  Function(int /*unused_param*/);
-    if '/*' in raw_line:
-      return False
-
-    # Passed all filters, issue warning here.
-    error(filename, linenum, 'readability/function', 3,
-          'All parameters should be named in a function')
-    return True
-
-  # At this point, all that should be left is actual casts.
-  error(filename, linenum, 'readability/casting', 4,
-        'Using C-style cast.  Use %s<%s>(...) instead' %
-        (cast_type, match.group(1)))
-
-  return True
 
 
 def ProcessLine(filename, file_extension, clean_lines, line,
