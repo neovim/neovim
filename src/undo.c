@@ -81,6 +81,8 @@
 #define UH_MAGIC 0x18dade       /* value for uh_magic when in use */
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
+#include <stdint.h>
+
 #include "vim.h"
 #include "undo.h"
 #include "edit.h"
@@ -666,7 +668,7 @@ void u_compute_hash(char_u *hash)
   sha256_start(&ctx);
   for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
     p = ml_get(lnum);
-    sha256_update(&ctx, p, (UINT32_T)(STRLEN(p) + 1));
+    sha256_update(&ctx, p, (uint32_t)(STRLEN(p) + 1));
   }
   sha256_finish(&ctx, hash);
 }

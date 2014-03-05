@@ -11,6 +11,7 @@
 
 #include "types.h"
 
+#include <stdint.h>
 /* Included when ported to cmake */
 /* This is needed to replace TRUE/FALSE macros by true/false from c99 */
 #include <stdbool.h>
@@ -36,24 +37,6 @@
 Error: configure did not run properly.Check auto/config.log.
 # endif
 
-/*
- * Cygwin may have fchdir() in a newer release, but in most versions it
- * doesn't work well and avoiding it keeps the binary backward compatible.
- */
-
-/* We may need to define the uint32_t on non-Unix system, but using the same
- * identifier causes conflicts.  Therefore use UINT32_T. */
-# define UINT32_TYPEDEF uint32_t
-#endif
-
-#if !defined(UINT32_TYPEDEF)
-# if defined(uint32_t)  /* this doesn't catch typedefs, unfortunately */
-#  define UINT32_TYPEDEF uint32_t
-# else
-/* Fall back to assuming unsigned int is 32 bit.  If this is wrong then the
- * test in blowfish.c will fail. */
-#  define UINT32_TYPEDEF unsigned int
-# endif
 #endif
 
 /* user ID of root is usually zero, but not for everybody */
@@ -91,22 +74,6 @@ Error: configure did not run properly.Check auto/config.log.
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
-/* Make sure long_u is big enough to hold a pointer.
- * On Win64, longs are 32 bits and pointers are 64 bits.
- * For printf() and scanf(), we need to take care of long_u specifically. */
-/* Microsoft-specific. The __w64 keyword should be specified on any typedefs
- * that change size between 32-bit and 64-bit platforms.  For any such type,
- * __w64 should appear only on the 32-bit definition of the typedef.
- * Define __w64 as an empty token for everything but MSVC 7.x or later.
- */
-#  define __w64
-typedef unsigned long __w64 long_u;
-typedef          long __w64 long_i;
-# define SCANF_HEX_LONG_U       "%lx"
-# define SCANF_DECIMAL_LONG_U   "%lu"
-# define PRINTF_HEX_LONG_U      "0x%lx"
-#define PRINTF_DECIMAL_LONG_U SCANF_DECIMAL_LONG_U
-
 /*
  * Only systems which use configure will have SIZEOF_OFF_T and SIZEOF_LONG
  * defined, which is ok since those are the same systems which can have
@@ -121,7 +88,7 @@ typedef          long __w64 long_i;
  * The characters and attributes cached for the screen.
  */
 typedef char_u schar_T;
-typedef unsigned short sattr_T;
+typedef short_u sattr_T;
 # define MAX_TYPENR 65535
 
 /*
@@ -130,15 +97,11 @@ typedef unsigned short sattr_T;
  * bits.  u8char_T is only used for displaying, it could be 16 bits to save
  * memory.
  */
-# ifdef UNICODE16
-typedef unsigned short u8char_T;    /* short should be 16 bits */
-# else
-#  if SIZEOF_INT >= 4
-typedef unsigned int u8char_T;      /* int is 32 bits */
-#  else
-typedef unsigned long u8char_T;     /* long should be 32 bits or more */
-#  endif
-# endif
+#ifdef UNICODE16
+typedef uint16_t u8char_T;
+#else
+typedef uint32_t u8char_T;
+#endif
 
 #include "ascii.h"
 #include "keymap.h"
@@ -149,12 +112,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 
 #include <assert.h>
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
+#include <inttypes.h>
 #ifdef HAVE_WCTYPE_H
 # include <wctype.h>
 #endif
@@ -940,10 +898,6 @@ typedef enum {
 
 #define MAYBE   2           /* sometimes used for a variant on TRUE */
 
-#ifndef UINT32_T
-typedef UINT32_TYPEDEF UINT32_T;
-#endif
-
 /*
  * Operator IDs; The order must correspond to opchars[] in ops.c!
  */
@@ -1132,35 +1086,18 @@ typedef UINT32_TYPEDEF UINT32_T;
 # define PERROR(msg)                perror(msg)
 #endif
 
-typedef long linenr_T;                  /* line number type */
-typedef int colnr_T;                    /* column number type */
-typedef unsigned short disptick_T;      /* display tick type */
+typedef int64_t  linenr_T;   /* line number type */
+typedef int32_t  colnr_T;    /* column number type */
+typedef uint16_t disptick_T; /* display tick type */
 
-#define MAXLNUM (0x7fffffffL)           /* maximum (invalid) line number */
+// TODO(mahkoh): Set MAXLNUM to INT64_MAX once all `long` variables are gone.
+#define MAXLNUM  INT32_MAX   /* maximum (invalid) line number */
+#define MAXCOL   INT32_MAX   /* maximum column number */
 
-/*
- * Well, you won't believe it, but some S/390 machines ("host", now also known
- * as zServer) use 31 bit pointers. There are also some newer machines, that
- * use 64 bit pointers. I don't know how to distinguish between 31 and 64 bit
- * machines, so the best way is to assume 31 bits whenever we detect OS/390
- * Unix.
- * With this we restrict the maximum line length to 1073741823. I guess this is
- * not a real problem. BTW:  Longer lines are split.
- */
-#if SIZEOF_INT >= 4
-# ifdef __MVS__
-#  define MAXCOL (0x3fffffffL)          /* maximum column number, 30 bits */
-# else
-#  define MAXCOL (0x7fffffffL)          /* maximum column number, 31 bits */
-# endif
-#else
-# define MAXCOL (0x7fff)                /* maximum column number, 15 bits */
-#endif
+#define SHOWCMD_COLS 10      /* columns needed by shown command */
+#define STL_MAX_ITEM 80      /* max nr of %<flag> in statusline */
 
-#define SHOWCMD_COLS 10                 /* columns needed by shown command */
-#define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
-
-typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
+typedef void *vim_acl_T;     /* dummy to pass an ACL to a function */
 
 /*
  * Include a prototype for mch_memmove(), it may not be in alloc.pro.
