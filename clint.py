@@ -1065,7 +1065,7 @@ class CleansedLines(object):
     self.lines = []
     self.raw_lines = lines
     self.num_lines = len(lines)
-    self.lines_without_raw_strings = CleanseRawStrings(lines)
+    self.lines_without_raw_strings = lines
     for linenum in range(len(self.lines_without_raw_strings)):
       self.lines.append(CleanseComments(
           self.lines_without_raw_strings[linenum]))
@@ -2174,7 +2174,7 @@ def CheckSpacing(filename, clean_lines, linenum, nesting_state, error):
   #   }
   #
   # A warning about missing end of namespace comments will be issued instead.
-  if IsBlankLine(line) and not nesting_state.InNamespaceBody():
+  if IsBlankLine(line):
     elided = clean_lines.elided
     prev_line = elided[linenum - 1]
     prevbrace = prev_line.rfind('{')
@@ -2990,9 +2990,6 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, nesting_state,
   CheckSpacing(filename, clean_lines, linenum, nesting_state, error)
   CheckCheck(filename, clean_lines, linenum, error)
   CheckAltTokens(filename, clean_lines, linenum, error)
-  classinfo = nesting_state.InnermostClass()
-  if classinfo:
-    CheckSectionSpacing(filename, clean_lines, classinfo, linenum, error)
 
 
 _RE_PATTERN_INCLUDE_NEW_STYLE = re.compile(r'#include +"[^/]+\.h"')
@@ -3376,13 +3373,11 @@ def ProcessLine(filename, file_extension, clean_lines, line,
   CheckStyle(filename, clean_lines, line, file_extension, nesting_state, error)
   CheckLanguage(filename, clean_lines, line, file_extension, include_state,
                 nesting_state, error)
-  CheckForNonConstReference(filename, clean_lines, line, nesting_state, error)
   CheckForNonStandardConstructs(filename, clean_lines, line,
                                 nesting_state, error)
   CheckVlogArguments(filename, clean_lines, line, error)
   CheckPosixThreading(filename, clean_lines, line, error)
   CheckInvalidIncrement(filename, clean_lines, line, error)
-  CheckMakePairUsesDeduction(filename, clean_lines, line, error)
   for check_fn in extra_check_functions:
     check_fn(filename, clean_lines, line, error)
 
@@ -3421,9 +3416,6 @@ def ProcessFileData(filename, file_extension, lines, error,
     ProcessLine(filename, file_extension, clean_lines, line,
                 include_state, function_state, nesting_state, error,
                 extra_check_functions)
-  nesting_state.CheckCompletedBlocks(filename, error)
-
-  CheckForIncludeWhatYouUse(filename, clean_lines, include_state, error)
 
   # We check here rather than inside ProcessLine so that we see raw
   # lines rather than "cleaned" lines.
