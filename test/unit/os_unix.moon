@@ -74,10 +74,8 @@ describe 'os_unix function', ->
     it 'returns false when given a regular file without executable bit set', ->
       -- This is a critical test since Windows does not have any executable
       -- bit. Thus executable_file returns TRUE on every regular file on
-      -- Windows. This test must probably differentiate between Windows and
-      -- other systems, which have an executable bit.
-      pending 'Test executable_file with a regular file which is not
-          executable. Need a solution which also works on Windows.'
+      -- Windows and this test will fail.
+      eq FALSE, (executable_file 'unit-test-directory/test.file')
 
   describe 'mch_can_exe', ->
     mch_can_exe = (name) ->
