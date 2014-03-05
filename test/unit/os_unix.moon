@@ -85,6 +85,9 @@ describe 'os_unix function', ->
     it 'returns false when given a directory', ->
       eq FALSE, (mch_can_exe 'unit-test-directory')
 
+    it 'returns false when the given file does not exists', ->
+      eq FALSE, (mch_can_exe 'does-not-exist.file')
+
     it 'returns true when given an executable in the current directory', ->
       old_dir = lfs.currentdir!
       lfs.chdir directory
