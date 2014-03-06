@@ -6,6 +6,9 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
+#ifndef SRC_ARABIC_H_
+#define SRC_ARABIC_H_
+
 /*
  * Arabic characters are categorized into following types:
  *
@@ -256,3 +259,5 @@
 
 /* Range of Arabic characters that might be shaped. */
 #define ARABIC_CHAR(c)          ((c) >= a_HAMZA && (c) <= a_MINI_ALEF)
+
+#endif  // SRC_ARABIC_H_
