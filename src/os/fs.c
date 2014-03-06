@@ -89,7 +89,7 @@ int mch_full_dir_name(char *directory, char *buffer, int len)
 /*
  * Append to_append to path with a slash in between.
  */
-int append_path(char *path, char *to_append, int max_len)
+int append_path(char *path, const char *to_append, int max_len)
 {
   int current_length = STRLEN(path);
   int to_append_length = STRLEN(to_append);
@@ -163,7 +163,7 @@ int mch_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
 /*
  * Return TRUE if "fname" does not depend on the current directory.
  */
-int mch_is_absolute_path(char_u *fname)
+int mch_is_absolute_path(const char_u *fname)
 {
   return *fname == '/' || *fname == '~';
 }
@@ -173,7 +173,7 @@ int mch_is_absolute_path(char_u *fname)
  * return FALSE if "name" is not a directory
  * return FALSE for error
  */
-int mch_isdir(char_u *name)
+int mch_isdir(const char_u *name)
 {
   uv_fs_t request;
   int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
@@ -192,14 +192,14 @@ int mch_isdir(char_u *name)
   return TRUE;
 }
 
-static int is_executable(char_u *name);
-static int is_executable_in_path(char_u *name);
+static int is_executable(const char_u *name);
+static int is_executable_in_path(const char_u *name);
 
 /*
  * Return TRUE if "name" is executable and can be found in $PATH, is absolute
  * or relative to current dir, FALSE if not.
  */
-int mch_can_exe(char_u *name)
+int mch_can_exe(const char_u *name)
 {
   /* If it's an absolute or relative path don't need to use $PATH. */
   if (mch_is_absolute_path(name) ||
@@ -212,17 +212,21 @@ int mch_can_exe(char_u *name)
 }
 
 /*
- * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
+ * Return TRUE if "name" is an executable file, FALSE if not or it doesn't
+ * exist.
  */
-static int is_executable(char_u *name)
+static int is_executable(const char_u *name)
 {
   uv_fs_t request;
-  if (0 != uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL)) {
+  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  uint64_t mode = request.statbuf.st_mode;
+  uv_fs_req_cleanup(&request);
+
+  if (result != 0) {
     return FALSE;
   }
 
-  if (S_ISREG(request.statbuf.st_mode) &&
-     (S_IEXEC & request.statbuf.st_mode)) {
+  if (S_ISREG(mode) && (S_IEXEC & mode)) {
     return TRUE;
   }
 
@@ -233,9 +237,9 @@ static int is_executable(char_u *name)
  * Return TRUE if "name" can be found in $PATH and executed, FALSE if not or an
  * error occurs.
  */
-static int is_executable_in_path(char_u *name)
+static int is_executable_in_path(const char_u *name)
 {
-  char_u *path = (char_u *)getenv("PATH");
+  const char *path = getenv("PATH");
   /* PATH environment variable does not exist or is empty. */
   if (path == NULL || *path == NUL) {
     return FALSE;
@@ -252,15 +256,15 @@ static int is_executable_in_path(char_u *name)
    * is an executable file.
    */
   for (;; ) {
-    char_u *e = (char_u *)strchr((char *)path, ':');
+    const char *e = strchr(path, ':');
     if (e == NULL) {
       e = path + STRLEN(path);
     }
 
     /* Glue together the given directory from $PATH with name and save into
      * buf. */
-    vim_strncpy(buf, path, e - path);
-    append_path((char *) buf, (char *) name, buf_len);
+    vim_strncpy(buf, (char_u *) path, e - path);
+    append_path((char *) buf, (const char *) name, buf_len);
 
     if (is_executable(buf)) {
       /* Found our executable. Free buf and return. */
@@ -269,7 +273,7 @@ static int is_executable_in_path(char_u *name)
     }
 
     if (*e != ':') {
-      /* End of $PATH without without finding any executable called name. */
+      /* End of $PATH without finding any executable called name. */
       vim_free(buf);
       return FALSE;
     }
@@ -277,5 +281,7 @@ static int is_executable_in_path(char_u *name)
     path = e + 1;
   }
 
+  /* We should never get to this point. */
+  assert(false);
   return FALSE;
 }

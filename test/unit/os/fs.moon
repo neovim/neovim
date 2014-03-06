@@ -1,4 +1,4 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 require 'lfs'
 
 -- fs = cimport './src/os/os.h'
@@ -8,16 +8,36 @@ ffi.cdef [[
 enum OKFAIL {
   OK = 1, FAIL = 0
 };
+enum BOOLEAN {
+  TRUE = 1, FALSE = 0
+};
 int mch_dirname(char_u *buf, int len);
+int mch_isdir(char_u * name);
+int is_executable(char_u *name);
+int mch_can_exe(char_u *name);
 ]]
 
 -- import constants parsed by ffi
 {:OK, :FAIL} = lib
+{:TRUE, :FALSE} = lib
 
 describe 'fs function', ->
+  setup ->
+    lfs.mkdir 'unit-test-directory'
+    lfs.touch 'unit-test-directory/test.file'
+
+    -- Since the tests are executed, they are called by an executable. We use
+    -- that executable for several asserts.
+    export absolute_executable = arg[0]
+
+    -- Split absolute_executable into a directory and the actual file name for
+    -- later usage.
+    export directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
+
+  teardown ->
+    lfs.rmdir 'unit-test-directory'
 
   describe 'mch_dirname', ->
-
     mch_dirname = (buf, len) ->
       fs.mch_dirname buf, len
 
@@ -39,8 +59,8 @@ describe 'fs function', ->
     ffi.cdef 'int mch_full_dir_name(char *directory, char *buffer, int len);'
 
     mch_full_dir_name = (directory, buffer, len) ->
-      directory = cstr (string.len directory), directory
-      fs.mch_full_dir_name(directory, buffer, len)
+      directory = to_cstr directory
+      fs.mch_full_dir_name directory, buffer, len
 
     before_each ->
       -- Create empty string buffer which will contain the resulting path.
@@ -64,31 +84,21 @@ describe 'fs function', ->
       eq FAIL, mch_full_dir_name('does_not_exist', buffer, len)
 
     it 'works with a normal relative dir', ->
-      lfs.mkdir 'empty-test-directory'
-      result = mch_full_dir_name('empty-test-directory', buffer, len)
-      lfs.rmdir 'empty-test-directory'
-      eq lfs.currentdir! .. '/empty-test-directory', (ffi.string buffer)
+      result = mch_full_dir_name('unit-test-directory', buffer, len)
+      eq lfs.currentdir! .. '/unit-test-directory', (ffi.string buffer)
       eq OK, result
 
   describe 'mch_get_absolute_path', ->
     ffi.cdef 'int mch_get_absolute_path(char *fname, char *buf, int len, int force);'
 
     mch_get_absolute_path = (filename, buffer, length, force) ->
-      filename = cstr (string.len filename) + 1, filename
+      filename = to_cstr filename
       fs.mch_get_absolute_path filename, buffer, length, force
 
     before_each ->
       -- Create empty string buffer which will contain the resulting path.
       export len = (string.len lfs.currentdir!) + 33
       export buffer = cstr len, ''
-
-      -- Create a directory and an empty file inside in order to know some
-      -- existing relative path.
-      lfs.mkdir 'empty-test-directory'
-      lfs.touch 'empty-test-directory/empty.file'
-
-    after_each ->
-      lfs.rmdir 'empty-test-directory'
 
     it 'fails if given filename contains non-existing directory', ->
       force_expansion = 1
@@ -138,16 +148,18 @@ describe 'fs function', ->
 
     it 'works with some "normal" relative path with directories', ->
       force_expansion = 1
-      result = mch_get_absolute_path 'empty-test-directory/empty.file', buffer, len, force_expansion
+      result = mch_get_absolute_path 'unit-test-directory/test.file', buffer, len, force_expansion
       eq OK, result
-      eq lfs.currentdir! .. '/empty-test-directory/empty.file', (ffi.string buffer)
+      eq lfs.currentdir! .. '/unit-test-directory/test.file', (ffi.string buffer)
 
     it 'does not modify the given filename', ->
       force_expansion = 1
-      filename = cstr 100, 'empty-test-directory/empty.file'
+      filename = to_cstr 'unit-test-directory/test.file'
+      -- Don't use the wrapper here but pass a cstring directly to the c
+      -- function.
       result = fs.mch_get_absolute_path filename, buffer, len, force_expansion
-      eq lfs.currentdir! .. '/empty-test-directory/empty.file', (ffi.string buffer)
-      eq 'empty-test-directory/empty.file', (ffi.string filename)
+      eq lfs.currentdir! .. '/unit-test-directory/test.file', (ffi.string buffer)
+      eq 'unit-test-directory/test.file', (ffi.string filename)
       eq OK, result
 
   describe 'append_path', ->
@@ -155,36 +167,36 @@ describe 'fs function', ->
 
     it 'joins given paths with a slash', ->
      path = cstr 100, 'path1'
-     to_append = cstr 6, 'path2'
+     to_append = to_cstr 'path2'
      eq OK, (fs.append_path path, to_append, 100)
      eq "path1/path2", (ffi.string path)
 
     it 'joins given paths without adding an unnecessary slash', ->
      path = cstr 100, 'path1/'
-     to_append = cstr 6, 'path2'
+     to_append = to_cstr 'path2'
      eq OK, fs.append_path path, to_append, 100
      eq "path1/path2", (ffi.string path)
 
     it 'fails if there is not enough space left for to_append', ->
       path = cstr 11, 'path1/'
-      to_append = cstr 6, 'path2'
+      to_append = to_cstr 'path2'
       eq FAIL, (fs.append_path path, to_append, 11)
 
     it 'does not append a slash if to_append is empty', ->
       path = cstr 6, 'path1'
-      to_append = cstr 1, ''
+      to_append = to_cstr ''
       eq OK, (fs.append_path path, to_append, 6)
       eq 'path1', (ffi.string path)
 
     it 'does not append unnecessary dots', ->
       path = cstr 6, 'path1'
-      to_append = cstr 2, '.'
+      to_append = to_cstr '.'
       eq OK, (fs.append_path path, to_append, 6)
       eq 'path1', (ffi.string path)
 
     it 'copies to_append to path, if path is empty', ->
       path = cstr 7, ''
-      to_append = cstr 7, '/path2'
+      to_append = to_cstr '/path2'
       eq OK, (fs.append_path path, to_append, 7)
       eq '/path2', (ffi.string path)
 
@@ -192,7 +204,7 @@ describe 'fs function', ->
     ffi.cdef 'int mch_is_absolute_path(char *fname);'
 
     mch_is_absolute_path = (filename) ->
-      filename = cstr (string.len filename) + 1, filename
+      filename = to_cstr filename
       fs.mch_is_absolute_path filename
 
     it 'returns true if filename starts with a slash', ->
@@ -203,3 +215,54 @@ describe 'fs function', ->
 
     it 'returns false if filename starts not with slash nor tilde', ->
       eq FAIL, mch_is_absolute_path 'not/in/my/home~/directory'
+
+  describe 'mch_isdir', ->
+    mch_isdir = (name) ->
+      fs.mch_isdir (to_cstr name)
+
+    it 'returns false if an empty string is given', ->
+      eq FALSE, (mch_isdir '')
+
+    it 'returns false if a nonexisting directory is given', ->
+      eq FALSE, (mch_isdir 'non-existing-directory')
+
+    it 'returns false if a nonexisting absolute directory is given', ->
+      eq FALSE, (mch_isdir '/non-existing-directory')
+
+    it 'returns false if an existing file is given', ->
+      eq FALSE, (mch_isdir 'unit-test-directory/test.file')
+
+    it 'returns true if the current directory is given', ->
+      eq TRUE, (mch_isdir '.')
+
+    it 'returns true if the parent directory is given', ->
+      eq TRUE, (mch_isdir '..')
+
+    it 'returns true if an arbitrary directory is given', ->
+      eq TRUE, (mch_isdir 'unit-test-directory')
+
+    it 'returns true if an absolute directory is given', ->
+      eq TRUE, (mch_isdir directory)
+
+  describe 'mch_can_exe', ->
+    mch_can_exe = (name) ->
+      fs.mch_can_exe (to_cstr name)
+
+    it 'returns false when given a directory', ->
+      eq FALSE, (mch_can_exe './unit-test-directory')
+
+    it 'returns false when given a regular file without executable bit set', ->
+      eq FALSE, (mch_can_exe 'unit-test-directory/test.file')
+
+    it 'returns false when the given file does not exists', ->
+      eq FALSE, (mch_can_exe 'does-not-exist.file')
+
+    it 'returns true when given an executable inside $PATH', ->
+      eq TRUE, (mch_can_exe executable_name)
+
+    it 'returns true when given an executable relative to the current dir', ->
+      old_dir = lfs.currentdir!
+      lfs.chdir directory
+      relative_executable = './' .. executable_name
+      eq TRUE, (mch_can_exe relative_executable)
+      lfs.chdir old_dir
