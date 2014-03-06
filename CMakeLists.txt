@@ -1,5 +1,6 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 2.8.5)
 project (NEOVIM)
+include (ExternalProject)
 
 # Point CMake at any custom modules we may ship
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
@@ -50,13 +51,10 @@ if(LibIntl_FOUND)
   include_directories(${LibIntl_INCLUDE_DIR})
 endif()
 
-# Require libuv
-find_package(LibUV REQUIRED)
-include_directories(${LibUV_INCLUDE_DIRS})
-
 include_directories ("${PROJECT_BINARY_DIR}/config")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+add_subdirectory(third-party)
 add_subdirectory(config)
 add_subdirectory(src)

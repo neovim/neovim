@@ -18,10 +18,7 @@ test: build/bin/nvim
 unittest: build/bin/nvim
 	sh -e scripts/unittest.sh
 
-deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
-
-.deps/usr/lib/libuv.a:
-	sh -e scripts/compile-libuv.sh
+deps: .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
 
 .deps/usr/lib/libluajit-5.1.a:
 	sh -e scripts/compile-lua.sh
@@ -40,6 +37,6 @@ clean:
 install: build/bin/nvim
 	$(MAKE) -C build install
 
-.PHONY: test unittest deps cmake install
+.PHONY: test unittest cmake install
 
 .DEFAULT: build/bin/nvim

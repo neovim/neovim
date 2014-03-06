@@ -49,6 +49,6 @@ else()
   endif()
 endif()
 
-include_directories ("${PROJECT_SOURCE_DIR}/src/proto") 
+include_directories (${LibUV_INCLUDE_DIRS} "${PROJECT_SOURCE_DIR}/src/proto")
 
 install(TARGETS nvim RUNTIME DESTINATION bin)
