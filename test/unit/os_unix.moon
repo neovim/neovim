@@ -55,26 +55,6 @@ describe 'os_unix function', ->
     it 'returns true if an arbitrary directory is given', ->
       eq TRUE, (mch_isdir 'unit-test-directory')
 
-  describe 'is_executable', ->
-    is_executable = (name) ->
-      name = cstr (string.len name), name
-      os.is_executable name
-
-    it 'returns false when given a directory', ->
-      eq FALSE, (is_executable 'unit-test-directory')
-
-    it 'returns false when the given file does not exists', ->
-      eq FALSE, (is_executable 'does-not-exist.file')
-
-    it 'returns true when given an executable regular file', ->
-      eq TRUE, (is_executable absolute_executable)
-
-    it 'returns false when given a regular file without executable bit set', ->
-      -- This is a critical test since Windows does not have any executable
-      -- bit. Thus is_executable returns TRUE on every regular file on
-      -- Windows and this test will fail.
-      eq FALSE, (is_executable 'unit-test-directory/test.file')
-
   describe 'mch_can_exe', ->
     mch_can_exe = (name) ->
       name = cstr (string.len name), name
@@ -82,6 +62,9 @@ describe 'os_unix function', ->
 
     it 'returns false when given a directory', ->
       eq FALSE, (mch_can_exe './unit-test-directory')
+
+    it 'returns false when given a regular file without executable bit set', ->
+      eq FALSE, (mch_can_exe 'unit-test-directory/test.file')
 
     it 'returns false when the given file does not exists', ->
       eq FALSE, (mch_can_exe 'does-not-exist.file')
