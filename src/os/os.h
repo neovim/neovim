@@ -14,5 +14,7 @@ const char *mch_getenv(const char *name);
 int mch_setenv(const char *name, const char *value, int overwrite);
 char *mch_getenvname_at_index(size_t index);
 int mch_get_usernames(garray_T *usernames);
+int mch_get_user_name(char *s, size_t len);
+int mch_get_uname(uid_t uid, char *s, size_t len);
 
 #endif
