@@ -29,6 +29,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "keymap.h"
 #include "move.h"
 #include "normal.h"
 #include "ops.h"
