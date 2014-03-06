@@ -196,8 +196,8 @@ static int is_executable(char_u *name);
 static int is_executable_in_path(char_u *name);
 
 /*
- * Return 1 if "name" can be found in $PATH and executed, 0 if not.
- * Return -1 if unknown.
+ * Return TRUE if "name" is executable and can be found in $PATH, is absolute
+ * or relative to current dir, FALSE if not.
  */
 int mch_can_exe(char_u *name)
 {
@@ -229,18 +229,22 @@ static int is_executable(char_u *name)
   return FALSE;
 }
 
+/*
+ * Return TRUE if "name" can be found in $PATH and executed, FALSE if not or an
+ * error occurs.
+ */
 static int is_executable_in_path(char_u *name)
 {
   char_u *path = (char_u *)getenv("PATH");
   /* PATH environment variable does not exist or is empty. */
   if (path == NULL || *path == NUL) {
-    return -1;
+    return FALSE;
   }
 
   int buf_len = STRLEN(name) + STRLEN(path) + 2;
   char_u *buf = alloc((unsigned)(buf_len));
   if (buf == NULL) {
-    return -1;
+    return FALSE;
   }
 
   /*
