@@ -6,8 +6,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef NEOVIM_FARSI_H
-#define NEOVIM_FARSI_H
+#ifndef SRC_FARSI_H_
+#define SRC_FARSI_H_
 
 /*
  * Farsi characters are categorized into following types:
@@ -186,46 +186,49 @@
 #define W_CONV 0x1
 #define W_R_L  0x2
 
-
 /* special Farsi text messages */
 
-EXTERN char_u farsi_text_1[]
 #ifdef DO_INIT
-  = { YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M',
-      ' ', F_HE, _BE, ' ', SHIN, RE, _GAF, DAL,' ', NOON,
-      ALEF_, _YE, ALEF_, _PE, '\0'}
-
+EXTERN char_u farsi_text_1[] = {
+  YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M',
+  ' ', F_HE, _BE, ' ', SHIN, RE, _GAF, DAL, ' ', NOON,
+  ALEF_, _YE, ALEF_, _PE, '\0'
+};
+#else
+EXTERN char_u farsi_text_1[];
 #endif
-;
 
-EXTERN char_u farsi_text_2[]
 #ifdef DO_INIT
-  = { YE_, _SIN, RE, ALEF_, _FE, ' ', FARSI_3, FARSI_3,
-      FARSI_4, FARSI_2, ' ', DAL, RE, ALEF, DAL, _NOON,
-      ALEF_, _TE, _SIN, ALEF, ' ', F_HE, _BE, ' ', SHIN,
-      RE,  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'}
-
+EXTERN char_u farsi_text_2[] = {
+  YE_, _SIN, RE, ALEF_, _FE, ' ', FARSI_3, FARSI_3,
+  FARSI_4, FARSI_2, ' ', DAL, RE, ALEF, DAL, _NOON,
+  ALEF_, _TE, _SIN, ALEF, ' ', F_HE, _BE, ' ', SHIN,
+  RE,  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'
+};
+#else
+EXTERN char_u farsi_text_2[];
 #endif
-;
 
-EXTERN char_u farsi_text_3[]
 #ifdef DO_INIT
-  = { DAL, WAW, _SHIN, _YE, _MIM, _NOON, ' ', YE_, _NOON,
-      ALEF_,_BE, _YE, _TE, _SHIN, _PE, ' ', 'R','E','P','L',
-      'A','C','E', ' ', NOON, ALEF_, _MIM, RE, _FE, ZE, ALEF,
-      ' ', 'R', 'E', 'V', 'E', 'R', 'S', 'E', ' ', 'I', 'N',
-      'S', 'E', 'R', 'T', ' ', SHIN, WAW, RE, ' ', ALEF_, _BE,
-      ' ', YE_, _SIN, RE, ALEF_, _FE, ' ', RE, DAL, ' ', RE,
-      ALEF_, _KAF,' ', MIM, ALEF_, _GAF, _NOON, _HE, '\0'}
-
+EXTERN char_u farsi_text_3[] = {
+  DAL, WAW, _SHIN, _YE, _MIM, _NOON, ' ', YE_, _NOON,
+  ALEF_, _BE, _YE, _TE, _SHIN, _PE, ' ', 'R', 'E', 'P', 'L',
+  'A', 'C', 'E', ' ', NOON, ALEF_, _MIM, RE, _FE, ZE, ALEF,
+  ' ', 'R', 'E', 'V', 'E', 'R', 'S', 'E', ' ', 'I', 'N',
+  'S', 'E', 'R', 'T', ' ', SHIN, WAW, RE, ' ', ALEF_, _BE,
+  ' ', YE_, _SIN, RE, ALEF_, _FE, ' ', RE, DAL, ' ', RE,
+  ALEF_, _KAF, ' ', MIM, ALEF_, _GAF, _NOON, _HE, '\0'
+};
+#else
+EXTERN char_u farsi_text_3[];
 #endif
-;
 
-
-EXTERN char_u farsi_text_5[]
 #ifdef DO_INIT
-  = { ' ', YE_, _SIN, RE, ALEF_, _FE, '\0'}
+EXTERN char_u farsi_text_5[] = {
+  ' ', YE_, _SIN, RE, ALEF_, _FE, '\0'
+};
+#else
+EXTERN char_u farsi_text_5[];
 #endif
-;
 
-#endif /* NEOVIM_FARSI_H */
+#endif  // SRC_FARSI_H_
