@@ -343,7 +343,7 @@ int ml_open(buf_T *buf)
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = get_fileformat(buf) + 1;
     set_b0_fname(b0p, buf);
-    (void)get_user_name(b0p->b0_uname, B0_UNAME_SIZE);
+    (void)mch_get_user_name((char *)b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     mch_get_host_name(b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
@@ -833,8 +833,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
   if (buf->b_ffname == NULL)
     b0p->b0_fname[0] = NUL;
   else {
-    size_t flen, ulen;
-    char_u uname[B0_UNAME_SIZE];
+    char uname[B0_UNAME_SIZE];
 
     /*
      * For a file under the home directory of the current user, we try to
@@ -846,13 +845,14 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     home_replace(NULL, buf->b_ffname, b0p->b0_fname,
         B0_FNAME_SIZE_CRYPT, TRUE);
     if (b0p->b0_fname[0] == '~') {
-      flen = STRLEN(b0p->b0_fname);
       /* If there is no user name or it is too long, don't use "~/" */
-      if (get_user_name(uname, B0_UNAME_SIZE) == FAIL
-          || (ulen = STRLEN(uname)) + flen > B0_FNAME_SIZE_CRYPT - 1)
+      int retval = mch_get_user_name(uname, B0_UNAME_SIZE);
+      size_t ulen = STRLEN(uname);
+      size_t flen = STRLEN(b0p->b0_fname);
+      if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
         vim_strncpy(b0p->b0_fname, buf->b_ffname,
             B0_FNAME_SIZE_CRYPT - 1);
-      else {
+      } else {
         mch_memmove(b0p->b0_fname + ulen + 1, b0p->b0_fname + 1, flen);
         mch_memmove(b0p->b0_fname + 1, uname, ulen);
       }

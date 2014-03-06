@@ -66,7 +66,6 @@ int same_directory(char_u *f1, char_u *f2);
 int vim_chdirfile(char_u *fname);
 int illegal_slash(char *name);
 int vim_chdir(char_u *new_dir);
-int get_user_name(char_u *buf, int len);
 void sort_strings(char_u **files, int count);
 int pathcmp(const char *p, const char *q, int maxlen);
 int filewritable(char_u *fname);

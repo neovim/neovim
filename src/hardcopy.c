@@ -31,6 +31,7 @@
 #include "syntax.h"
 #include "term.h"
 #include "ui.h"
+#include "os/os.h"
 
 /*
  * To implement printing on a platform, the following functions must be
@@ -2500,8 +2501,9 @@ int mch_print_begin(prt_settings_T *psettings)
    */
   prt_dsc_start();
   prt_dsc_textline("Title", (char *)psettings->jobname);
-  if (!get_user_name((char_u *)buffer, 256))
+  if (mch_get_user_name(buffer, 256) == FAIL) {
     STRCPY(buffer, "Unknown");
+  }
   prt_dsc_textline("For", buffer);
   prt_dsc_textline("Creator", VIM_VERSION_LONG);
   /* Note: to ensure Clean8bit I don't think we can use LC_TIME */

@@ -47,8 +47,6 @@
 #include "window.h"
 #include "os/os.h"
 
-static char_u   *username = NULL; /* cached result of mch_get_user_name() */
-
 static int coladvance2(pos_T *pos, int addspaces, int finetune,
                        colnr_T wcol);
 
@@ -935,7 +933,6 @@ void free_all_mem(void)          {
   clear_sb_text();            /* free any scrollback text */
 
   /* Free some global vars. */
-  vim_free(username);
   vim_free(last_cmdline);
   vim_free(new_last_cmdline);
   set_keep_msg(NULL, 0);
@@ -1874,24 +1871,6 @@ int vim_chdir(char_u *new_dir)
   r = mch_chdir((char *)dir_name);
   vim_free(dir_name);
   return r;
-}
-
-/*
- * Get user name from machine-specific function.
- * Returns the user name in "buf[len]".
- * Some systems are quite slow in obtaining the user name (Windows NT), thus
- * cache the result.
- * Returns OK or FAIL.
- */
-int get_user_name(char_u *buf, int len)
-{
-  if (username == NULL) {
-    if (mch_get_user_name((char *)buf, len) == FAIL)
-      return FAIL;
-    username = vim_strsave(buf);
-  } else
-    vim_strncpy(buf, username, len - 1);
-  return OK;
 }
 
 #ifndef HAVE_QSORT
