@@ -6,13 +6,11 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-/*
- * This file contains various definitions of structures that are used by Vim
- */
+// for garray_T
+#include "garray.h"
 
 /*
- * There is something wrong in the SAS compiler that makes typedefs not
- * valid in include files.  Has been fixed in version 6.58.
+ * This file contains various definitions of structures that are used by Vim
  */
 
 /*
@@ -33,21 +31,6 @@ typedef struct {
   linenr_T lnum;        /* line number */
   colnr_T col;          /* column number */
 } lpos_T;
-
-/*
- * Structure used for growing arrays.
- * This is used to store information that only grows, is deleted all at
- * once, and needs to be accessed by index.  See ga_clear() and ga_grow().
- */
-typedef struct growarray {
-  int ga_len;                       /* current number of items used */
-  int ga_maxlen;                    /* maximum number of items possible */
-  int ga_itemsize;                  /* sizeof(item) */
-  int ga_growsize;                  /* number of items to grow each time */
-  void    *ga_data;                 /* pointer to the first item */
-} garray_T;
-
-#define GA_EMPTY    {0, 0, 0, 0, NULL}
 
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
