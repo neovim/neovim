@@ -238,62 +238,6 @@ _DEFAULT_FILTERS = ['-build/include_alpha']
 # hard-coded international strings, which belong in a separate i18n file.
 
 
-# C++ headers
-_CPP_HEADERS = frozenset([
-    # Legacy
-    'algobase.h',
-    'algo.h',
-    'alloc.h',
-    'builtinbuf.h',
-    'bvector.h',
-    'complex.h',
-    'defalloc.h',
-    'deque.h',
-    'editbuf.h',
-    'fstream.h',
-    'function.h',
-    'hash_map',
-    'hash_map.h',
-    'hash_set',
-    'hash_set.h',
-    'hashtable.h',
-    'heap.h',
-    'indstream.h',
-    'iomanip.h',
-    'iostream.h',
-    'istream.h',
-    'iterator.h',
-    'list.h',
-    'map.h',
-    'multimap.h',
-    'multiset.h',
-    'ostream.h',
-    'pair.h',
-    'parsestream.h',
-    'pfstream.h',
-    'procbuf.h',
-    'pthread_alloc',
-    'pthread_alloc.h',
-    'rope',
-    'rope.h',
-    'ropeimpl.h',
-    'set.h',
-    'slist',
-    'slist.h',
-    'stack.h',
-    'stdiostream.h',
-    'stl_alloc.h',
-    'stl_relops.h',
-    'streambuf.h',
-    'stream.h',
-    'strfile.h',
-    'strstream.h',
-    'tempbuf.h',
-    'tree.h',
-    'type_traits.h',
-    'vector.h',
-    ])
-
 # Assertion macros.  These are defined in base/logging.h and
 # testing/base/gunit.h.  Note that the _M versions need to come first
 # for substring matching to work.
@@ -3043,8 +2987,6 @@ def _ClassifyInclude(fileinfo, include, is_system):
   For example:
     >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'stdio.h', True)
     _C_SYS_HEADER
-    >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'string', True)
-    _CPP_SYS_HEADER
     >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'foo/foo.h', False)
     _LIKELY_MY_HEADER
     >>> _ClassifyInclude(FileInfo('foo/foo_unknown_extension.cc'),
@@ -3053,15 +2995,9 @@ def _ClassifyInclude(fileinfo, include, is_system):
     >>> _ClassifyInclude(FileInfo('foo/foo.cc'), 'foo/bar.h', False)
     _OTHER_HEADER
   """
-  # This is a list of all standard c++ header files, except
-  # those already checked for above.
-  is_cpp_h = include in _CPP_HEADERS
 
   if is_system:
-    if is_cpp_h:
-      return _CPP_SYS_HEADER
-    else:
-      return _C_SYS_HEADER
+    return _C_SYS_HEADER
 
   # If the target file and the include we're checking share a
   # basename when we drop common extensions, and the include
