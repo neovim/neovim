@@ -30,11 +30,17 @@ internalize = (cdata) ->
   ffi.gc cdata, ffi.C.free
   return ffi.string cdata
 
+cstr = ffi.typeof 'char[?]'
+
+to_cstr = (string) ->
+  cstr (string.len string) + 1, string
+
 return {
   cimport: cimport
   internalize: internalize
   eq: (expected, actual) -> assert.are.same expected, actual
   ffi: ffi
   lib: libnvim
-  cstr: ffi.typeof 'char[?]'
+  cstr: cstr
+  to_cstr: to_cstr
 }

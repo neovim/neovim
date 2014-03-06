@@ -1,4 +1,4 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 require 'lfs'
 
 -- fs = cimport './src/os/os.h'
@@ -10,18 +10,15 @@ int mch_setenv(const char *name, const char *value, int override);
 char *mch_getenvname_at_index(size_t index);
 ]]
 
-str_to_charp = (str) ->
-  cstr (string.len str), str
-
 NULL = ffi.cast 'void*', 0
 
 describe 'env function', ->
 
   mch_setenv = (name, value, override) ->
-    env.mch_setenv (str_to_charp name), (str_to_charp value), override
+    env.mch_setenv (to_cstr name), (to_cstr value), override
 
   mch_getenv = (name) ->
-    rval = env.mch_getenv (str_to_charp name)
+    rval = env.mch_getenv (to_cstr name)
     if rval != NULL
       ffi.string rval
     else

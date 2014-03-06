@@ -1,4 +1,4 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 
 --misc1 = cimport './src/misc1.h'
 
@@ -18,8 +18,8 @@ describe 'misc1 function', ->
   describe 'fullpathcmp', ->
 
     fullpathcmp = (s1, s2, cn) ->
-      s1 = cstr (string.len s1) + 1, s1
-      s2 = cstr (string.len s2) + 1, s2
+      s1 = to_cstr s1
+      s2 = to_cstr s2
       misc1.fullpathcmp s1, s2, cn or 0
 
     f1 = 'f1.o'
