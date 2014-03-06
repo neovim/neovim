@@ -212,31 +212,16 @@ static int is_executable(char_u *name)
   return FALSE;
 }
 
-/*
- * Return 1 if "name" can be found in $PATH and executed, 0 if not.
- * Return -1 if unknown.
- */
-int mch_can_exe(char_u *name)
+static int is_executable_in_path(char_u *name)
 {
-  char_u      *buf;
-  char_u      *path, *e;
-  int retval;
-
-  /* If it's an absolute or relative path don't need to use $PATH. */
-  if (mch_is_absolute_path(name) ||
-     (name[0] == '.' && (name[1] == '/' ||
-                        (name[1] == '.' && name[2] == '/')))) {
-    return is_executable(name);
-  }
-
-  path = (char_u *)getenv("PATH");
+  char_u *path = (char_u *)getenv("PATH");
   /* PATH environment variable does not exist or is empty. */
   if (path == NULL || *path == NUL) {
     return -1;
   }
 
   int buf_len = STRLEN(name) + STRLEN(path) + 2;
-  buf = alloc((unsigned)(buf_len));
+  char_u *buf = alloc((unsigned)(buf_len));
   if (buf == NULL) {
     return -1;
   }
@@ -246,32 +231,46 @@ int mch_can_exe(char_u *name)
    * is an executable file.
    */
   for (;; ) {
-    e = (char_u *)strchr((char *)path, ':');
+    char_u *e = (char_u *)strchr((char *)path, ':');
     if (e == NULL) {
       e = path + STRLEN(path);
     }
 
-    if (e - path <= 1) {             /* empty entry means current dir */
-      STRCPY(buf, "./");
-    } else {
-      vim_strncpy(buf, path, e - path);
-      add_pathsep(buf);
-    }
-
+    /* Glue together the given directory from $PATH with name and save into
+     * buf. */
+    vim_strncpy(buf, path, e - path);
     append_path((char *) buf, (char *) name, buf_len);
 
-    retval = is_executable(buf);
-    if (retval == OK) {
-      break;
+    if (is_executable(buf)) {
+      /* Found our executable. Free buf and return. */
+      vim_free(buf);
+      return OK;
     }
 
     if (*e != ':') {
-      break;
+      /* End of $PATH without without finding any executable called name. */
+      vim_free(buf);
+      return FALSE;
     }
 
     path = e + 1;
   }
 
-  vim_free(buf);
-  return retval;
+  return FALSE;
+}
+
+/*
+ * Return 1 if "name" can be found in $PATH and executed, 0 if not.
+ * Return -1 if unknown.
+ */
+int mch_can_exe(char_u *name)
+{
+  /* If it's an absolute or relative path don't need to use $PATH. */
+  if (mch_is_absolute_path(name) ||
+     (name[0] == '.' && (name[1] == '/' ||
+                        (name[1] == '.' && name[2] == '/')))) {
+    return is_executable(name);
+  }
+
+  return is_executable_in_path(name);
 }
