@@ -1,6 +1,39 @@
 #ifndef NEOVIM_HARDCOPY_H
 #define NEOVIM_HARDCOPY_H
-/* hardcopy.c */
+
+/*
+ * Structure to hold printing color and font attributes.
+ */
+typedef struct {
+  long_u fg_color;
+  long_u bg_color;
+  int bold;
+  int italic;
+  int underline;
+  int undercurl;
+} prt_text_attr_T;
+
+/*
+ * Structure passed back to the generic printer code.
+ */
+typedef struct {
+  int n_collated_copies;
+  int n_uncollated_copies;
+  int duplex;
+  int chars_per_line;
+  int lines_per_page;
+  int has_color;
+  prt_text_attr_T number;
+  int modec;
+  int do_syntax;
+  int user_abort;
+  char_u      *jobname;
+  char_u      *outfile;
+  char_u      *arguments;
+} prt_settings_T;
+
+#define PRINT_NUMBER_WIDTH 8
+
 char_u *parse_printoptions(void);
 char_u *parse_printmbfont(void);
 int prt_header_height(void);

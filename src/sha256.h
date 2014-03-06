@@ -1,6 +1,12 @@
 #ifndef NEOVIM_SHA256_H
 #define NEOVIM_SHA256_H
-/* sha256.c */
+
+typedef struct {
+  UINT32_T total[2];
+  UINT32_T state[8];
+  char_u buffer[64];
+} context_sha256_T;
+
 void sha256_start(context_sha256_T *ctx);
 void sha256_update(context_sha256_T *ctx, char_u *input,
                    UINT32_T length);

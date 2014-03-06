@@ -10,6 +10,7 @@
 #define NEOVIM_GLOBALS_H
 
 #include "mbyte.h"
+#include "menu.h"
 
 /*
  * definition of global variables
