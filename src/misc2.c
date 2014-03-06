@@ -1886,7 +1886,7 @@ int vim_chdir(char_u *new_dir)
 int get_user_name(char_u *buf, int len)
 {
   if (username == NULL) {
-    if (mch_get_user_name(buf, len) == FAIL)
+    if (mch_get_user_name((char *)buf, len) == FAIL)
       return FAIL;
     username = vim_strsave(buf);
   } else

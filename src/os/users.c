@@ -55,3 +55,32 @@ int mch_get_usernames(garray_T *users)
   return OK;
 }
 
+/*
+ * Insert user name in s[len].
+ * Return OK if a name found.
+ */
+int mch_get_user_name(char *s, size_t len)
+{
+  return mch_get_uname(getuid(), s, len);
+}
+
+/*
+ * Insert user name for "uid" in s[len].
+ * Return OK if a name found.
+ * If the name is not found, write the uid into s[len] and return FAIL.
+ */
+int mch_get_uname(uid_t uid, char *s, size_t len)
+{
+#if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
+  struct passwd *pw;
+
+  if ((pw = getpwuid(uid)) != NULL
+      && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
+    vim_strncpy((char_u *)s, (char_u *)pw->pw_name, len - 1);
+    return OK;
+  }
+#endif
+  snprintf(s, len, "%d", (int)uid);
+  return FAIL; // a number is not a name
+}
+

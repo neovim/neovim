@@ -1078,34 +1078,6 @@ int vim_is_fastterm(char_u *name)
 }
 
 /*
- * Insert user name in s[len].
- * Return OK if a name found.
- */
-int mch_get_user_name(char_u *s, int len)
-{
-  return mch_get_uname(getuid(), s, len);
-}
-
-/*
- * Insert user name for "uid" in s[len].
- * Return OK if a name found.
- */
-int mch_get_uname(uid_t uid, char_u *s, int len)
-{
-#if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
-  struct passwd   *pw;
-
-  if ((pw = getpwuid(uid)) != NULL
-      && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
-    vim_strncpy(s, (char_u *)pw->pw_name, len - 1);
-    return OK;
-  }
-#endif
-  sprintf((char *)s, "%d", (int)uid);       /* assumes s is long enough */
-  return FAIL;                              /* a number is not a name */
-}
-
-/*
  * Insert host name is s[len].
  */
 

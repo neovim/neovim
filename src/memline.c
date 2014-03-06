@@ -1739,7 +1739,7 @@ static time_t swapfile_info(char_u *fname)
   time_t x = (time_t)0;
   char            *p;
 #ifdef UNIX
-  char_u uname[B0_UNAME_SIZE];
+  char uname[B0_UNAME_SIZE];
 #endif
 
   /* print the swap file date */
@@ -1748,7 +1748,7 @@ static time_t swapfile_info(char_u *fname)
     /* print name of owner of the file */
     if (mch_get_uname(st.st_uid, uname, B0_UNAME_SIZE) == OK) {
       MSG_PUTS(_("          owned by: "));
-      msg_outtrans(uname);
+      msg_outtrans((char_u *)uname);
       MSG_PUTS(_("   dated: "));
     } else
 #endif
