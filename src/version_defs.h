@@ -25,7 +25,7 @@
 #define VIM_VERSION_PATCHLEVEL           0
 #define VIM_VERSION_PATCHLEVEL_STR      "0"
 /* Used by MacOS port should be one of: development, alpha, beta, final */
-#define VIM_VERSION_RELEASE             final
+#define VIM_VERSION_RELEASE             development
 
 /*
  * VIM_VERSION_NODOT is used for the runtime directory name.
@@ -36,5 +36,8 @@
 #define VIM_VERSION_NODOT       "vim74"
 #define VIM_VERSION_SHORT       "7.4"
 #define VIM_VERSION_MEDIUM      "7.4"
-#define VIM_VERSION_LONG        "VIM - Vi IMproved 7.4 (2013 Aug 10)"
-#define VIM_VERSION_LONG_DATE   "VIM - Vi IMproved 7.4 (2013 Aug 10, compiled "
+#define VIM_VERSION_LONG        "VIM - Vi IMproved 7.4 (2014)"
+#define VIM_VERSION_LONG_DATE   "VIM - Vi IMproved 7.4 (2014, compiled "
+
+/* Displayed on splash screen. */
+#define MODIFIED_BY "the Neovim contributors."
