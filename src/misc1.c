@@ -3256,34 +3256,17 @@ char_u *get_env_name(expand_T *xp, int idx)
  * Find all user names for user completion.
  * Done only once and then cached.
  */
-static void init_users(void)                 {
+static void init_users(void)
+{
   static int lazy_init_done = FALSE;
 
-  if (lazy_init_done)
+  if (lazy_init_done) {
     return;
+  }
 
   lazy_init_done = TRUE;
-  ga_init2(&ga_users, sizeof(char_u *), 20);
-
-# if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
-  {
-    char_u*         user;
-    struct passwd*  pw;
-
-    setpwent();
-    while ((pw = getpwent()) != NULL)
-      /* pw->pw_name shouldn't be NULL but just in case... */
-      if (pw->pw_name != NULL) {
-        if (ga_grow(&ga_users, 1) == FAIL)
-          break;
-        user = vim_strsave((char_u*)pw->pw_name);
-        if (user == NULL)
-          break;
-        ((char_u **)(ga_users.ga_data))[ga_users.ga_len++] = user;
-      }
-    endpwent();
-  }
-# endif
+  
+  mch_get_usernames(&ga_users);
 }
 
 /*
