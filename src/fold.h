@@ -1,6 +1,18 @@
 #ifndef NEOVIM_FOLD_H
 #define NEOVIM_FOLD_H
-/* fold.c */
+
+/*
+ * Info used to pass info about a fold from the fold-detection code to the
+ * code that displays the foldcolumn.
+ */
+typedef struct foldinfo {
+  int fi_level;                 /* level of the fold; when this is zero the
+                                   other fields are invalid */
+  int fi_lnum;                  /* line number where fold starts */
+  int fi_low_level;             /* lowest fold level that starts in the same
+                                   line */
+} foldinfo_T;
+
 void copyFoldingState(win_T *wp_from, win_T *wp_to);
 int hasAnyFolding(win_T *win);
 int hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp);

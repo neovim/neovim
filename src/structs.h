@@ -196,18 +196,6 @@ struct wininfo_S {
   garray_T wi_folds;            /* clone of w_folds */
 };
 
-/*
- * Info used to pass info about a fold from the fold-detection code to the
- * code that displays the foldcolumn.
- */
-typedef struct foldinfo {
-  int fi_level;                 /* level of the fold; when this is zero the
-                                   other fields are invalid */
-  int fi_lnum;                  /* line number where fold starts */
-  int fi_low_level;             /* lowest fold level that starts in the same
-                                   line */
-} foldinfo_T;
-
 /* Structure to store info about the Visual area. */
 typedef struct {
   pos_T vi_start;               /* start pos of last VIsual */
@@ -1861,54 +1849,6 @@ typedef struct cursor_entry {
 } cursorentry_T;
 #endif /* CURSOR_SHAPE */
 
-
-/* Indices into vimmenu_T->strings[] and vimmenu_T->noremap[] for each mode */
-#define MENU_INDEX_INVALID      -1
-#define MENU_INDEX_NORMAL       0
-#define MENU_INDEX_VISUAL       1
-#define MENU_INDEX_SELECT       2
-#define MENU_INDEX_OP_PENDING   3
-#define MENU_INDEX_INSERT       4
-#define MENU_INDEX_CMDLINE      5
-#define MENU_INDEX_TIP          6
-#define MENU_MODES              7
-
-/* Menu modes */
-#define MENU_NORMAL_MODE        (1 << MENU_INDEX_NORMAL)
-#define MENU_VISUAL_MODE        (1 << MENU_INDEX_VISUAL)
-#define MENU_SELECT_MODE        (1 << MENU_INDEX_SELECT)
-#define MENU_OP_PENDING_MODE    (1 << MENU_INDEX_OP_PENDING)
-#define MENU_INSERT_MODE        (1 << MENU_INDEX_INSERT)
-#define MENU_CMDLINE_MODE       (1 << MENU_INDEX_CMDLINE)
-#define MENU_TIP_MODE           (1 << MENU_INDEX_TIP)
-#define MENU_ALL_MODES          ((1 << MENU_INDEX_TIP) - 1)
-/*note MENU_INDEX_TIP is not a 'real' mode*/
-
-/* Start a menu name with this to not include it on the main menu bar */
-#define MNU_HIDDEN_CHAR         ']'
-
-typedef struct VimMenu vimmenu_T;
-
-struct VimMenu {
-  int modes;                        /* Which modes is this menu visible for? */
-  int enabled;                      /* for which modes the menu is enabled */
-  char_u      *name;                /* Name of menu, possibly translated */
-  char_u      *dname;               /* Displayed Name ("name" without '&') */
-  char_u      *en_name;             /* "name" untranslated, NULL when "name"
-                                     * was not translated */
-  char_u      *en_dname;            /* "dname" untranslated, NULL when "dname"
-                                     * was not translated */
-  int mnemonic;                     /* mnemonic key (after '&') */
-  char_u      *actext;              /* accelerator text (after TAB) */
-  int priority;                     /* Menu order priority */
-  char_u      *strings[MENU_MODES];   /* Mapped string for each mode */
-  int noremap[MENU_MODES];           /* A REMAP_ flag for each mode */
-  char silent[MENU_MODES];          /* A silent flag for each mode */
-  vimmenu_T   *children;            /* Children of sub-menu */
-  vimmenu_T   *parent;              /* Parent of menu */
-  vimmenu_T   *next;                /* Next item in menu */
-};
-
 /*
  * Struct to save values in before executing autocommands for a buffer that is
  * not the current buffer.  Without FEAT_AUTOCMD only "curbuf" is remembered.
@@ -1933,72 +1873,3 @@ typedef struct {
   int strlen;
   int present;
 } option_table_T;
-
-/*
- * Structure to hold printing color and font attributes.
- */
-typedef struct {
-  long_u fg_color;
-  long_u bg_color;
-  int bold;
-  int italic;
-  int underline;
-  int undercurl;
-} prt_text_attr_T;
-
-/*
- * Structure passed back to the generic printer code.
- */
-typedef struct {
-  int n_collated_copies;
-  int n_uncollated_copies;
-  int duplex;
-  int chars_per_line;
-  int lines_per_page;
-  int has_color;
-  prt_text_attr_T number;
-  int modec;
-  int do_syntax;
-  int user_abort;
-  char_u      *jobname;
-  char_u      *outfile;
-  char_u      *arguments;
-} prt_settings_T;
-
-#define PRINT_NUMBER_WIDTH 8
-
-/*
- * Used for popup menu items.
- */
-typedef struct {
-  char_u      *pum_text;        /* main menu text */
-  char_u      *pum_kind;        /* extra kind text (may be truncated) */
-  char_u      *pum_extra;       /* extra menu text (may be truncated) */
-  char_u      *pum_info;        /* extra info */
-} pumitem_T;
-
-/*
- * Structure used for get_tagfname().
- */
-typedef struct {
-  char_u      *tn_tags;         /* value of 'tags' when starting */
-  char_u      *tn_np;           /* current position in tn_tags */
-  int tn_did_filefind_init;
-  int tn_hf_idx;
-  void        *tn_search_ctx;
-} tagname_T;
-
-/*
- * Array indexes used for cptext argument of ins_compl_add().
- */
-#define CPT_ABBR    0   /* "abbr" */
-#define CPT_MENU    1   /* "menu" */
-#define CPT_KIND    2   /* "kind" */
-#define CPT_INFO    3   /* "info" */
-#define CPT_COUNT   4   /* Number of entries */
-
-typedef struct {
-  UINT32_T total[2];
-  UINT32_T state[8];
-  char_u buffer[64];
-} context_sha256_T;
