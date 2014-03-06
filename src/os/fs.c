@@ -192,12 +192,12 @@ int mch_isdir(char_u *name)
   return TRUE;
 }
 
-int is_executable(char_u *name);
+static int is_executable(char_u *name);
 
 /*
  * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
  */
-int is_executable(char_u *name)
+static int is_executable(char_u *name)
 {
   uv_fs_t request;
   if (0 != uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL)) {
