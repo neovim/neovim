@@ -13,5 +13,6 @@ int mch_can_exe(const char_u *name);
 const char *mch_getenv(const char *name);
 int mch_setenv(const char *name, const char *value, int overwrite);
 char *mch_getenvname_at_index(size_t index);
+int mch_get_usernames(garray_T *usernames);
 
 #endif
