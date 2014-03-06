@@ -37,7 +37,6 @@ vim_acl_T mch_get_acl(char_u *fname);
 void mch_set_acl(char_u *fname, vim_acl_T aclent);
 void mch_free_acl(vim_acl_T aclent);
 void mch_hide(char_u *name);
-int mch_can_exe(char_u *name);
 int mch_nodetype(char_u *name);
 void mch_early_init(void);
 void mch_free_mem(void);

@@ -15,6 +15,7 @@
 
 #include "os.h"
 #include "../message.h"
+#include "../misc1.h"
 #include "../misc2.h"
 
 int mch_chdir(char *path) {
@@ -40,7 +41,7 @@ int mch_dirname(char_u *buf, int len)
   return OK;
 }
 
-/* 
+/*
  * Get the absolute name of the given relative directory.
  *
  * parameter directory: Directory name, relative to current directory.
@@ -85,7 +86,7 @@ int mch_full_dir_name(char *directory, char *buffer, int len)
   return retval;
 }
 
-/* 
+/*
  * Append to_append to path with a slash in between.
  */
 int append_path(char *path, char *to_append, int max_len)
@@ -191,3 +192,86 @@ int mch_isdir(char_u *name)
   return TRUE;
 }
 
+int is_executable(char_u *name);
+
+/*
+ * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
+ */
+int is_executable(char_u *name)
+{
+  uv_fs_t request;
+  if (0 != uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL)) {
+    return FALSE;
+  }
+
+  if (S_ISREG(request.statbuf.st_mode) &&
+     (S_IEXEC & request.statbuf.st_mode)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/*
+ * Return 1 if "name" can be found in $PATH and executed, 0 if not.
+ * Return -1 if unknown.
+ */
+int mch_can_exe(char_u *name)
+{
+  char_u      *buf;
+  char_u      *path, *e;
+  int retval;
+
+  /* If it's an absolute or relative path don't need to use $PATH. */
+  if (mch_is_absolute_path(name) ||
+     (name[0] == '.' && (name[1] == '/' ||
+                        (name[1] == '.' && name[2] == '/')))) {
+    return is_executable(name);
+  }
+
+  path = (char_u *)getenv("PATH");
+  /* PATH environment variable does not exist or is empty. */
+  if (path == NULL || *path == NUL) {
+    return -1;
+  }
+
+  int buf_len = STRLEN(name) + STRLEN(path) + 2;
+  buf = alloc((unsigned)(buf_len));
+  if (buf == NULL) {
+    return -1;
+  }
+
+  /*
+   * Walk through all entries in $PATH to check if "name" exists there and
+   * is an executable file.
+   */
+  for (;; ) {
+    e = (char_u *)strchr((char *)path, ':');
+    if (e == NULL) {
+      e = path + STRLEN(path);
+    }
+
+    if (e - path <= 1) {             /* empty entry means current dir */
+      STRCPY(buf, "./");
+    } else {
+      vim_strncpy(buf, path, e - path);
+      add_pathsep(buf);
+    }
+
+    append_path((char *) buf, (char *) name, buf_len);
+
+    retval = is_executable(buf);
+    if (retval == OK) {
+      break;
+    }
+
+    if (*e != ':') {
+      break;
+    }
+
+    path = e + 1;
+  }
+
+  vim_free(buf);
+  return retval;
+}
