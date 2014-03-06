@@ -193,6 +193,23 @@ int mch_isdir(char_u *name)
 }
 
 static int is_executable(char_u *name);
+static int is_executable_in_path(char_u *name);
+
+/*
+ * Return 1 if "name" can be found in $PATH and executed, 0 if not.
+ * Return -1 if unknown.
+ */
+int mch_can_exe(char_u *name)
+{
+  /* If it's an absolute or relative path don't need to use $PATH. */
+  if (mch_is_absolute_path(name) ||
+     (name[0] == '.' && (name[1] == '/' ||
+                        (name[1] == '.' && name[2] == '/')))) {
+    return is_executable(name);
+  }
+
+  return is_executable_in_path(name);
+}
 
 /*
  * Return 1 if "name" is an executable file, 0 if not or it doesn't exist.
@@ -257,20 +274,4 @@ static int is_executable_in_path(char_u *name)
   }
 
   return FALSE;
-}
-
-/*
- * Return 1 if "name" can be found in $PATH and executed, 0 if not.
- * Return -1 if unknown.
- */
-int mch_can_exe(char_u *name)
-{
-  /* If it's an absolute or relative path don't need to use $PATH. */
-  if (mch_is_absolute_path(name) ||
-     (name[0] == '.' && (name[1] == '/' ||
-                        (name[1] == '.' && name[2] == '/')))) {
-    return is_executable(name);
-  }
-
-  return is_executable_in_path(name);
 }
