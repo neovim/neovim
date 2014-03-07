@@ -33,10 +33,12 @@ int mch_chdir(char *path) {
  */
 int mch_dirname(char_u *buf, int len)
 {
+  assert(buf && len);
+
   int errno;
-  if ((errno = uv_cwd((char *) buf, len)) != 0) {
-      STRCPY(buf, uv_strerror(errno));
-      return FAIL;
+  if ((errno = uv_cwd((char *)buf, len)) != 0) {
+    vim_strncpy(buf, (char_u *)uv_strerror(errno), len - 1);
+    return FAIL;
   }
   return OK;
 }
