@@ -22,6 +22,7 @@
 /src/testdir/tiny.vim
 /src/testdir/test*.out
 /src/testdir/test.log
+/src/testdir/viminfo
 /src/testdir/test.ok
 /src/testdir/*.failed
 /src/testdir/X*
