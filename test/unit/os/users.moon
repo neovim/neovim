@@ -14,6 +14,7 @@ typedef struct growarray {
 int mch_get_usernames(garray_T *usernames);
 int mch_get_user_name(char *s, size_t len);
 int mch_get_uname(int uid, char *s, size_t len);
+char *mch_get_user_directory(const char *name);
 int getuid(void);
 ]]
 
@@ -74,4 +75,16 @@ describe 'users function', ->
       user_id = 2342
       eq FAIL, users.mch_get_uname(user_id, name_out, 100)
       eq '2342', ffi.string name_out
+
+  describe 'mch_get_user_directory', ->
+
+    it 'should return NULL if called with NULL', ->
+      eq NULL, users.mch_get_user_directory NULL
+
+    it 'should return $HOME for the current user', ->
+      home = os.getenv('HOME')
+      eq home, ffi.string (users.mch_get_user_directory current_username)
+
+    it 'should return NULL if the user is not found', ->
+      eq NULL, users.mch_get_user_directory 'neovim_user_not_found_test'
 

@@ -2895,25 +2895,14 @@ expand_env_esc (
         *var = NUL;
 # ifdef UNIX
         /*
-         * If the system supports getpwnam(), use it.
-         * Otherwise, or if getpwnam() fails, the shell is used to
-         * expand ~user.  This is slower and may fail if the shell
+         * Use mch_get_user_directory() to get the user directory.
+         * If this function fails, the shell is used to
+         * expand ~user. This is slower and may fail if the shell
          * does not support ~user (old versions of /bin/sh).
          */
-#  if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
-        {
-          struct passwd *pw;
-
-          /* Note: memory allocated by getpwnam() is never freed.
-           * Calling endpwent() apparently doesn't help. */
-          pw = getpwnam((char *)dst + 1);
-          if (pw != NULL)
-            var = (char_u *)pw->pw_dir;
-          else
-            var = NULL;
-        }
+        var = (char_u *)mch_get_user_directory((char *)dst + 1);
+        mustfree = TRUE;
         if (var == NULL)
-#  endif
         {
           expand_T xpc;
 
