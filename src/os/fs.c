@@ -175,11 +175,16 @@ int mch_is_absolute_path(char_u *fname)
 int mch_isdir(char_u *name)
 {
   uv_fs_t request;
-  if (0 != uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL)) {
+  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  uint64_t mode = request.statbuf.st_mode;
+
+  uv_fs_req_cleanup(&request);
+
+  if (0 != result) {
     return FALSE;
   }
 
-  if (!S_ISDIR(request.statbuf.st_mode)) {
+  if (!S_ISDIR(mode)) {
     return FALSE;
   }
 

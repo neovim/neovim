@@ -28,7 +28,7 @@ SCRIPTS := test1.out test2.out test3.out test4.out test5.out test6.out \
 SCRIPTS_GUI := test16.out
 
 ifdef VALGRIND_CHECK
-VALGRIND = valgrind --suppressions=../../.valgrind.supp --leak-check=full --error-exitcode=111 --log-file=valgrind.$*
+VALGRIND = valgrind --suppressions=../../.valgrind.supp --leak-check=full --error-exitcode=123 --log-file=valgrind.$*
 endif
 
 ifdef TESTNUM
