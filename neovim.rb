@@ -8,6 +8,7 @@ class Neovim < Formula
   depends_on 'cmake'
   depends_on 'libtool'
   depends_on 'automake'
+  depends_on 'luarocks'
 
   def install
     ENV.deparallelize
