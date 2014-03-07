@@ -27,8 +27,12 @@ SCRIPTS := test1.out test2.out test3.out test4.out test5.out test6.out \
 
 SCRIPTS_GUI := test16.out
 
+ifdef VALGRIND_GDB
+VGDB := --vgdb=yes --vgdb-error=0
+endif
+
 ifdef VALGRIND_CHECK
-VALGRIND = valgrind --suppressions=../../.valgrind.supp --leak-check=full --error-exitcode=123 --log-file=valgrind.$*
+VALGRIND = valgrind --suppressions=../../.valgrind.supp --leak-check=full --error-exitcode=123 --log-file=valgrind.$* $(VGDB)
 endif
 
 ifdef TESTNUM
