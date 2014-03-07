@@ -294,6 +294,11 @@ compiling the libuv dependency. See joyent/libuv#1158.
 
     sudo pacman -S base-devel cmake ncurses
 
+<a name="for-opensuse"></a>
+### openSUSE
+
+    sudo zypper install libtool autoconf automake cmake ncurses-devel gcc-c++
+
 <a name="for-os-x"></a>
 ### OS X
 
