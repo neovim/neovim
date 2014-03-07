@@ -16,5 +16,6 @@ char *mch_getenvname_at_index(size_t index);
 int mch_get_usernames(garray_T *usernames);
 int mch_get_user_name(char *s, size_t len);
 int mch_get_uname(uid_t uid, char *s, size_t len);
+char *mch_get_user_directory(const char *name);
 
 #endif

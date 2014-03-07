@@ -84,3 +84,25 @@ int mch_get_uname(uid_t uid, char *s, size_t len)
   return FAIL; // a number is not a name
 }
 
+/*
+ * Returns the user directory for the given username.
+ * The caller has to free() the returned string.
+ * If the username is not found, NULL is returned.
+ */
+char *mch_get_user_directory(const char *name)
+{
+#if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
+  struct passwd *pw;
+  if (name == NULL) {
+    return NULL;
+  }
+  pw = getpwnam(name);
+  if (pw != NULL) {
+    // save the string from the static passwd entry into malloced memory
+    char *user_directory = (char *)vim_strsave((char_u *)pw->pw_dir);
+    return user_directory;
+  }
+#endif
+  return NULL;
+}
+

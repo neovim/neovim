@@ -121,10 +121,6 @@
 
 #define BASENAMELEN     (MAXNAMLEN - 5)
 
-#ifdef HAVE_PWD_H
-# include <pwd.h>
-#endif
-
 /*
  * Unix system-dependent file names
  */
