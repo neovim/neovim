@@ -1,6 +1,7 @@
 #!/bin/sh -e
 
 export VALGRIND_CHECK=1
+export BUSTED_OUTPUT_TYPE="TAP"
 make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$PWD/dist"
 make
 make unittest
