@@ -16,6 +16,10 @@ cd "$luarocks_dir"
 
 make bootstrap
 
+echo 'rocks_servers = {
+   "http://luarocks.giga.puc-rio.br/";
+}' >> "$prefix/etc/luarocks/config-5.1.lua"
+
 # install tools for testing
 luarocks install moonrocks --server=http://rocks.moonscript.org
 moonrocks install moonscript
