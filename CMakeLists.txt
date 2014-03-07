@@ -25,7 +25,8 @@ else()
   set(DEBUG 0)
 endif()
 
-if(DEFINED $ENV{VALGRIND_CHECK})
+if(DEFINED ENV{VALGRIND_CHECK})
+  message(STATUS "Defining EXITFREE for valgrind checks")
   add_definitions(-DEXITFREE)
 endif()
 
