@@ -165,21 +165,21 @@
 
 
 #ifndef USR_VIMRC_FILE
-#  define USR_VIMRC_FILE "$HOME/.neovimrc"
+#  define USR_VIMRC_FILE "$HOME/.nvimrc"
 #endif
 
 
 #if !defined(USR_EXRC_FILE2)
-#    define USR_VIMRC_FILE2     "~/.neovim/vimrc"
+#    define USR_VIMRC_FILE2     "~/.nvim/vimrc"
 #endif
 
 
 #ifndef USR_GVIMRC_FILE
-#  define USR_GVIMRC_FILE "$HOME/.neogvimrc"
+#  define USR_GVIMRC_FILE "$HOME/.ngvimrc"
 #endif
 
 #ifndef USR_GVIMRC_FILE2
-#   define USR_GVIMRC_FILE2     "~/.neovim/gvimrc"
+#   define USR_GVIMRC_FILE2     "~/.nvim/gvimrc"
 #endif
 
 
@@ -188,7 +188,7 @@
 #endif
 
 # ifndef VIMINFO_FILE
-#   define VIMINFO_FILE "$HOME/.neoviminfo"
+#   define VIMINFO_FILE "$HOME/.nviminfo"
 # endif
 
 #ifndef EXRC_FILE
@@ -196,7 +196,7 @@
 #endif
 
 #ifndef VIMRC_FILE
-# define VIMRC_FILE     ".neovimrc"
+# define VIMRC_FILE     ".nvimrc"
 #endif
 
 
@@ -213,17 +213,17 @@
 #endif
 
 #ifndef DFLT_VDIR
-#   define DFLT_VDIR    "$HOME/.neovim/view"       /* default for 'viewdir' */
+#   define DFLT_VDIR    "$HOME/.nvim/view"       /* default for 'viewdir' */
 #endif
 
 #define DFLT_ERRORFILE          "errors.err"
 
 #  ifdef RUNTIME_GLOBAL
-#   define DFLT_RUNTIMEPATH     "~/.neovim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
-  RUNTIME_GLOBAL "/after,~/.neovim/after"
+#   define DFLT_RUNTIMEPATH     "~/.nvim," RUNTIME_GLOBAL ",$VIMRUNTIME," \
+  RUNTIME_GLOBAL "/after,~/.nvim/after"
 #  else
 #   define DFLT_RUNTIMEPATH \
-  "~/.neovim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.neovim/after"
+  "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
 #  endif
 
 #  define TEMPDIRNAMES  "$TMPDIR", "/tmp", ".", "$HOME"
