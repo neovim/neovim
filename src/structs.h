@@ -8,29 +8,12 @@
 
 // for garray_T
 #include "garray.h"
+// for pos_T and lpos_T
+#include "pos.h"
 
 /*
  * This file contains various definitions of structures that are used by Vim
  */
-
-/*
- * position in file or buffer
- */
-typedef struct {
-  linenr_T lnum;        /* line number */
-  colnr_T col;          /* column number */
-  colnr_T coladd;
-} pos_T;
-
-# define INIT_POS_T(l, c, ca) {l, c, ca}
-
-/*
- * Same, but without coladd.
- */
-typedef struct {
-  linenr_T lnum;        /* line number */
-  colnr_T col;          /* column number */
-} lpos_T;
 
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
@@ -39,7 +22,7 @@ typedef int scid_T;                             /* script ID */
 typedef struct file_buffer buf_T;       /* forward declaration */
 
 /*
- * This is here because regexp_defs.h needs pos_T and below regprog_T is used.
+ * This is here because regexp_defs.h needs win_T and regprog_T is used below.
  */
 #include "regexp_defs.h"
 

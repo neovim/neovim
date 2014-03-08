@@ -13,6 +13,8 @@
 #ifndef _REGEXP_H
 #define _REGEXP_H
 
+#include "pos.h"
+
 /*
  * The number of sub-matches is limited to 10.
  * The first one (index 0) is the whole match, referenced with "\0".
