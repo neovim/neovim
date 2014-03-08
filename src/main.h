@@ -2,7 +2,6 @@
 #define NEOVIM_MAIN_H
 /* main.c */
 void main_loop(int cmdwin, int noexmode);
-void getout_preserve_modified(int exitval);
 void getout(int exitval);
 int process_env(char_u *env, int is_viminit);
 void mainerr_arg_missing(char_u *str);

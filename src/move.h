@@ -18,7 +18,6 @@ void invalidate_botline_win(win_T *wp);
 void approximate_botline_win(win_T *wp);
 int cursor_valid(void);
 void validate_cursor(void);
-void validate_cline_row(void);
 void validate_virtcol(void);
 void validate_virtcol_win(win_T *wp);
 void validate_cursor_col(void);

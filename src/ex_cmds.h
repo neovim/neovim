@@ -63,14 +63,10 @@ void ex_exusage(exarg_T *eap);
 void ex_viusage(exarg_T *eap);
 void ex_helptags(exarg_T *eap);
 void ex_sign(exarg_T *eap);
-void sign_gui_started(void);
-int sign_get_attr(int typenr, int line);
 char_u *sign_get_text(int typenr);
 void *sign_get_image(int typenr);
 char_u *sign_typenr2name(int typenr);
-void free_signs(void);
 char_u *get_sign_name(expand_T *xp, int idx);
-void set_context_in_sign_cmd(expand_T *xp, char_u *arg);
 void ex_drop(exarg_T *eap);
 /* vim: set ft=c : */
 #endif /* NEOVIM_EX_CMDS_H */

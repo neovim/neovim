@@ -8,7 +8,6 @@ void free_all_options(void);
 void set_init_2(void);
 void set_init_3(void);
 void set_helplang_default(char_u *lang);
-void init_gui_options(void);
 void set_title_defaults(void);
 int do_set(char_u *arg, int opt_flags);
 void set_options_bin(int oldval, int newval, int opt_flags);
