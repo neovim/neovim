@@ -11,6 +11,8 @@
  * fileio.c: read from and write to a file
  */
 
+#include <stdio.h>
+
 #include "vim.h"
 #include "fileio.h"
 #include "blowfish.h"
@@ -3651,7 +3653,7 @@ restore_backup:
      */
     ptr = ml_get_buf(buf, lnum, FALSE) - 1;
     if (write_undo_file)
-      sha256_update(&sha_ctx, ptr + 1, (UINT32_T)(STRLEN(ptr + 1) + 1));
+      sha256_update(&sha_ctx, ptr + 1, (uint32_t)(STRLEN(ptr + 1) + 1));
     while ((c = *++ptr) != NUL) {
       if (c == NL)
         *s = NUL;                       /* replace newlines with NULs */

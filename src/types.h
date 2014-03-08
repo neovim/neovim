@@ -9,12 +9,23 @@
 #ifndef NEOVIM_TYPES_H
 #define NEOVIM_TYPES_H
 
+#include <stdint.h>
+
 /*
  * Shorthand for unsigned variables. Many systems, but not all, have u_char
  * already defined, so we use char_u to avoid trouble.
  */
-typedef unsigned char char_u;
-typedef unsigned short short_u;
-typedef unsigned int int_u;
+typedef uint8_t  char_u;
+/*
+ * FIXME: Remove these?
+ */
+typedef uint16_t short_u;
+typedef uint32_t int_u;
+/*
+ * FIXME; Replace long_u by size_t, uintptr_t, uint64_t, etc. in the source.
+ * XXX: Right now long_u must hold a pointer.
+ */
+typedef uint64_t long_u;
+typedef int64_t  long_i;
 
 #endif /* NEOVIM_TYPES_H */
