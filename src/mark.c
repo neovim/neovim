@@ -25,6 +25,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "normal.h"
 #include "option.h"
 #include "quickfix.h"
 #include "search.h"

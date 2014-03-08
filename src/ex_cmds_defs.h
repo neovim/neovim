@@ -6,6 +6,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
+#include "normal.h"
+
 /*
  * This file defines the Ex commands.
  * When DO_DECLARE_EXCMD is defined, the table with ex command names and
