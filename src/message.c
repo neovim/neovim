@@ -27,6 +27,7 @@
 #include "garray.h"
 #include "ops.h"
 #include "option.h"
+#include "normal.h"
 #include "screen.h"
 #include "term.h"
 #include "ui.h"
