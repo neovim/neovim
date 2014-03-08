@@ -58,7 +58,6 @@ int menu_is_menubar(char_u *name);
 int menu_is_popup(char_u *name);
 int menu_is_toolbar(char_u *name);
 int menu_is_separator(char_u *name);
-void gui_show_popupmenu(void);
 void ex_emenu(exarg_T *eap);
 vimmenu_T *gui_find_menu(char_u *path_name);
 void ex_menutranslate(exarg_T *eap);
