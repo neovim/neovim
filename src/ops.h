@@ -16,14 +16,12 @@ int valid_yank_reg(int regname, int writing);
 void get_yank_register(int regname, int writing);
 void *get_register(int name, int copy);
 void put_register(int name, void *reg);
-void free_register(void *reg);
 int yank_register_mline(int regname);
 int do_record(int c);
 int do_execreg(int regname, int colon, int addcr, int silent);
 int insert_reg(int regname, int literally);
 int get_spec_reg(int regname, char_u **argp, int *allocated, int errmsg);
 int cmdline_paste_reg(int regname, int literally, int remcr);
-void adjust_clip_reg(int *rp);
 int op_delete(oparg_T *oap);
 int op_replace(oparg_T *oap, int c);
 void op_tilde(oparg_T *oap);
@@ -48,8 +46,6 @@ int paragraph_start(linenr_T lnum);
 int do_addsub(int command, linenr_T Prenum1);
 int read_viminfo_register(vir_T *virp, int force);
 void write_viminfo_registers(FILE *fp);
-void clip_yank_selection(int type, char_u *str, long len,
-                         VimClipboard *cbd);
 char_u get_reg_type(int regname, long *reglen);
 char_u *get_reg_contents(int regname, int allowexpr, int expr_src);
 void write_reg_contents(int name, char_u *str, int maxlen,

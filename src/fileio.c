@@ -4790,35 +4790,6 @@ void shorten_fnames(int force)
   redraw_tabline = TRUE;
 }
 
-#if (defined(FEAT_DND) && defined(FEAT_GUI_GTK)) \
-  || defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_MAC) \
-  || defined(PROTO)
-/*
- * Shorten all filenames in "fnames[count]" by current directory.
- */
-void shorten_filenames(char_u **fnames, int count)
-{
-  int i;
-  char_u dirname[MAXPATHL];
-  char_u      *p;
-
-  if (fnames == NULL || count < 1)
-    return;
-  mch_dirname(dirname, sizeof(dirname));
-  for (i = 0; i < count; ++i) {
-    if ((p = shorten_fname(fnames[i], dirname)) != NULL) {
-      /* shorten_fname() returns pointer in given "fnames[i]".  If free
-       * "fnames[i]" first, "p" becomes invalid.  So we need to copy
-       * "p" first then free fnames[i]. */
-      p = vim_strsave(p);
-      vim_free(fnames[i]);
-      fnames[i] = p;
-    }
-  }
-}
-#endif
-
 /*
  * add extension to file name - change path/fo.o.h to path/fo.o.h.ext or
  * fo_o_h.ext for MSDOS or when shortname option set.
@@ -7708,10 +7679,6 @@ void unblock_autocmds(void)          {
   if (autocmd_blocked == 0
       && get_vim_var_str(VV_TERMRESPONSE) != old_termresponse)
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, FALSE, curbuf);
-}
-
-int is_autocmd_blocked(void)         {
-  return autocmd_blocked != 0;
 }
 
 /*

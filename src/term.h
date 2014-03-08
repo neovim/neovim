@@ -24,7 +24,6 @@ void term_fg_color(int n);
 void term_bg_color(int n);
 void term_settitle(char_u *title);
 void ttest(int pairs);
-void add_long_to_buf(long_u val, char_u *dst);
 void check_shellsize(void);
 void limit_screen_size(void);
 void win_new_shellsize(void);

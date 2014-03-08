@@ -64,7 +64,6 @@ int read_viminfo_bufferlist(vir_T *virp, int writing);
 void write_viminfo_bufferlist(FILE *fp);
 char_u *buf_spname(buf_T *buf);
 int find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp);
-int buf_findsign(buf_T *buf, int id);
 void set_buflisted(int on);
 int buf_contents_changed(buf_T *buf);
 void wipe_buffer(buf_T *buf, int aucmd);
