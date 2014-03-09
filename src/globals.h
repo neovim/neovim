@@ -944,11 +944,6 @@ EXTERN int stl_syntax INIT(= 0);
 EXTERN int no_hlsearch INIT(= FALSE);
 
 
-#ifdef CURSOR_SHAPE
-/* the table is in misc2.c, because of initializations */
-extern cursorentry_T shape_table[SHAPE_IDX_COUNT];
-#endif
-
 /*
  * Printer stuff shared between hardcopy.c and machine-specific printing code.
  */

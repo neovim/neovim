@@ -56,6 +56,7 @@
 #include "keymap.h"
 #include "crypt.h"
 #include "garray.h"
+#include "cursor_shape.h"
 #include "move.h"
 #include "normal.h"
 #include "os_unix.h"
