@@ -60,16 +60,5 @@ int mch_has_wildcard(char_u *p);
 int mch_libcall(char_u *libname, char_u *funcname, char_u *argstring,
                 int argint, char_u **string_result,
                 int *number_result);
-void setup_term_clip(void);
-void start_xterm_trace(int button);
-void stop_xterm_trace(void);
-void clear_xterm_clip(void);
-int clip_xterm_own_selection(VimClipboard *cbd);
-void clip_xterm_lose_selection(VimClipboard *cbd);
-void clip_xterm_request_selection(VimClipboard *cbd);
-void clip_xterm_set_selection(VimClipboard *cbd);
-int xsmp_handle_requests(void);
-void xsmp_init(void);
-void xsmp_close(void);
 /* vim: set ft=c : */
 #endif /* NEOVIM_OS_UNIX_H */

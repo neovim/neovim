@@ -20,7 +20,6 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars);
 char_u *shorten_fname1(char_u *full_path);
 char_u *shorten_fname(char_u *full_path, char_u *dir_name);
 void shorten_fnames(int force);
-void shorten_filenames(char_u **fnames, int count);
 char_u *modname(char_u *fname, char_u *ext, int prepend_dot);
 char_u *buf_modname(int shortname, char_u *fname, char_u *ext,
                     int prepend_dot);
@@ -63,7 +62,6 @@ int has_textchangedI(void);
 int has_insertcharpre(void);
 void block_autocmds(void);
 void unblock_autocmds(void);
-int is_autocmd_blocked(void);
 char_u *getnextac(int c, void *cookie, int indent);
 int has_autocmd(event_T event, char_u *sfname, buf_T *buf);
 char_u *get_augroup_name(expand_T *xp, int idx);

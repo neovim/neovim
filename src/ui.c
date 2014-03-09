@@ -326,14 +326,6 @@ int vim_is_input_buf_empty(void)         {
   return inbufcount == 0;
 }
 
-#if defined(FEAT_OLE) || defined(PROTO)
-int vim_free_in_input_buf(void)         {
-  return INBUFLEN - inbufcount;
-}
-
-#endif
-
-
 /*
  * Return the current contents of the input buffer and make it empty.
  * The returned pointer must be passed to set_input_buf() later.
@@ -618,56 +610,6 @@ int check_row(int row)
   return row;
 }
 #endif
-
-/*
- * Stuff for the X clipboard.  Shared between VMS and Unix.
- */
-
-
-#if defined(FEAT_XCLIPBOARD) || defined(FEAT_GUI_X11) \
-  || defined(FEAT_GUI_GTK) || defined(PROTO)
-/*
- * Get the contents of the X CUT_BUFFER0 and put it in "cbd".
- */
-void yank_cut_buffer0(Display *dpy, VimClipboard *cbd)
-{
-  int nbytes = 0;
-  char_u      *buffer = (char_u *)XFetchBuffer(dpy, &nbytes, 0);
-
-  if (nbytes > 0) {
-    int done = FALSE;
-
-    /* CUT_BUFFER0 is supposed to be always latin1.  Convert to 'enc' when
-     * using a multi-byte encoding.  Conversion between two 8-bit
-     * character sets usually fails and the text might actually be in
-     * 'enc' anyway. */
-    if (has_mbyte) {
-      char_u      *conv_buf;
-      vimconv_T vc;
-
-      vc.vc_type = CONV_NONE;
-      if (convert_setup(&vc, (char_u *)"latin1", p_enc) == OK) {
-        conv_buf = string_convert(&vc, buffer, &nbytes);
-        if (conv_buf != NULL) {
-          clip_yank_selection(MCHAR, conv_buf, (long)nbytes, cbd);
-          vim_free(conv_buf);
-          done = TRUE;
-        }
-        convert_setup(&vc, NULL, NULL);
-      }
-    }
-    if (!done)      /* use the text without conversion */
-      clip_yank_selection(MCHAR, buffer, (long)nbytes, cbd);
-    XFree((void *)buffer);
-    if (p_verbose > 0) {
-      verbose_enter();
-      verb_msg((char_u *)_("Used CUT_BUFFER0 instead of empty selection"));
-      verbose_leave();
-    }
-  }
-}
-#endif
-
 
 /*
  * Move the cursor to the specified row and column on the screen.
@@ -1080,68 +1022,6 @@ win_T *mouse_find_win(int *rowp, int *colp)
   }
   return fp->fr_win;
 }
-
-#if defined(FEAT_GUI_MOTIF) || defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MAC) \
-  || defined(FEAT_GUI_ATHENA) || defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_PHOTON) || defined(PROTO)
-/*
- * Translate window coordinates to buffer position without any side effects
- */
-int get_fpos_of_mouse(pos_T *mpos)
-{
-  win_T       *wp;
-  int row = mouse_row;
-  int col = mouse_col;
-
-  if (row < 0 || col < 0)               /* check if it makes sense */
-    return IN_UNKNOWN;
-
-  /* find the window where the row is in */
-  wp = mouse_find_win(&row, &col);
-  /*
-   * winpos and height may change in win_enter()!
-   */
-  if (row >= wp->w_height)      /* In (or below) status line */
-    return IN_STATUS_LINE;
-  if (col >= wp->w_width)       /* In vertical separator line */
-    return IN_SEP_LINE;
-
-  if (wp != curwin)
-    return IN_UNKNOWN;
-
-  /* compute the position in the buffer line from the posn on the screen */
-  if (mouse_comp_pos(curwin, &row, &col, &mpos->lnum))
-    return IN_STATUS_LINE;     /* past bottom */
-
-  mpos->col = vcol2col(wp, mpos->lnum, col);
-
-  if (mpos->col > 0)
-    --mpos->col;
-  mpos->coladd = 0;
-  return IN_BUFFER;
-}
-
-/*
- * Convert a virtual (screen) column to a character column.
- * The first column is one.
- */
-int vcol2col(win_T *wp, linenr_T lnum, int vcol)
-{
-  /* try to advance to the specified column */
-  int count = 0;
-  char_u      *ptr;
-  char_u      *start;
-
-  start = ptr = ml_get_buf(wp->w_buffer, lnum, FALSE);
-  while (count < vcol && *ptr != NUL) {
-    count += win_lbr_chartabsize(wp, ptr, count, NULL);
-    mb_ptr_adv(ptr);
-  }
-  return (int)(ptr - start);
-}
-#endif
-
-
 
 #if defined(USE_IM_CONTROL) || defined(PROTO)
 /*

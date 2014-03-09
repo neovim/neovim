@@ -823,17 +823,6 @@ void put_register(int name, void *reg)
 
 }
 
-void free_register(void *reg)
-{
-  struct yankreg tmp;
-
-  tmp = *y_current;
-  *y_current = *(struct yankreg *)reg;
-  free_yank_all();
-  vim_free(reg);
-  *y_current = tmp;
-}
-
 /*
  * return TRUE if the current yank register has type MLINE
  */
@@ -1427,8 +1416,6 @@ int op_delete(oparg_T *oap)
     /*
      * Put deleted text into register 1 and shift number registers if the
      * delete contains a line break, or when a regname has been specified.
-     * Use the register name from before adjust_clip_reg() may have
-     * changed it.
      */
     if (orig_regname != 0 || oap->motion_type == MLINE
         || oap->line_count > 1 || oap->use_reg_one) {

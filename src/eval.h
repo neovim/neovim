@@ -89,7 +89,6 @@ char_u *get_expr_name(expand_T *xp, int idx);
 int func_call(char_u *name, typval_T *args, dict_T *selfdict,
               typval_T *rettv);
 void dict_extend(dict_T *d1, dict_T *d2, char_u *action);
-void mzscheme_call_vim(char_u *name, typval_T *args, typval_T *rettv);
 float_T vim_round(float_T f);
 long do_searchpair(char_u *spat, char_u *mpat, char_u *epat, int dir,
                    char_u *skip, int flags, pos_T *match_pos,
