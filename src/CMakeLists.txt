@@ -1,3 +1,5 @@
+include(CheckLibraryExists)
+
 file( GLOB NEOVIM_SOURCES *.c )
 
 foreach(sfile ${NEOVIM_SOURCES})
@@ -25,24 +27,11 @@ if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   endif()
 endif()
 
-# The libraries we link against for nvim
-set(NVIM_LINK_LIBRARIES
-    m
-    ${LIBUV_LIBRARIES}
-    ${LUAJIT_LIBRARIES}
-    ${CMAKE_THREAD_LIBS_INIT})
-
-# Add any libraries needed for a specific platform
-if(HAVE_CLOCK_GETTIME)
-  # Work around libuv.a not linking in rt.
-  list(APPEND NVIM_LINK_LIBRARIES rt)
-endif(HAVE_CLOCK_GETTIME)
+# Our dependencies come first.
 
 if (LibIntl_FOUND)
   list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
 endif()
-
-include(CheckLibraryExists)
 
 check_library_exists(curses tgetent "" HAVE_LIBCURSES)
 if (HAVE_LIBCURSES)
@@ -51,6 +40,13 @@ else()
   find_package(Curses REQUIRED)
   list(APPEND NVIM_LINK_LIBRARIES ${CURSES_LIBRARIES})
 endif()
+
+# Put these last on the link line, since multiple things may depend on them.
+list(APPEND NVIM_LINK_LIBRARIES
+    ${LIBUV_LIBRARIES}
+    ${LUAJIT_LIBRARIES}
+    m
+    ${CMAKE_THREAD_LIBS_INIT})
 
 if(NOT DEFINED ENV{SKIP_EXEC})
   add_executable(nvim ${NEOVIM_SOURCES} ${OS_SOURCES})

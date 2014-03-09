@@ -40,10 +40,6 @@ if(NOT CMAKE_USE_PTHREADS_INIT)
   message(SEND_ERROR "The pthread library must be installed on your system.")
 endif(NOT CMAKE_USE_PTHREADS_INIT)
 
-# Detect if clock_gettime exists in -lrt. If so we need to link with it because
-# the static libuv doesn't but uses clock_gettime.
-check_library_exists(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
-
 find_package(LibIntl)
 if(LibIntl_FOUND)
   include_directories(${LibIntl_INCLUDE_DIR})
