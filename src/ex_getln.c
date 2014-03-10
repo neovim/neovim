@@ -33,6 +33,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "cursor_shape.h"
 #include "keymap.h"
 #include "garray.h"
 #include "move.h"
@@ -46,6 +47,7 @@
 #include "tag.h"
 #include "term.h"
 #include "window.h"
+#include "ui.h"
 #include "os/os.h"
 
 /*
