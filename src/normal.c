@@ -532,15 +532,11 @@ normal_cmd (
    * will terminate it. Finish_op tells us to finish the operation before
    * returning this time (unless the operation was cancelled).
    */
-#ifdef CURSOR_SHAPE
   c = finish_op;
-#endif
   finish_op = (oap->op_type != OP_NOP);
-#ifdef CURSOR_SHAPE
   if (finish_op != c) {
     ui_cursor_shape();                  /* may show different cursor shape */
   }
-#endif
 
   /* When not finishing an operator and no register name typed, reset the
    * count. */
@@ -836,12 +832,10 @@ getcount:
      * Get a second or third character.
      */
     if (cp != NULL) {
-#ifdef CURSOR_SHAPE
       if (repl) {
         State = REPLACE;                /* pretend Replace mode */
         ui_cursor_shape();              /* show different cursor shape */
       }
-#endif
       if (lang && curbuf->b_p_iminsert == B_IMODE_LMAP) {
         /* Allow mappings defined with ":lmap". */
         --no_mapping;
@@ -875,9 +869,7 @@ getcount:
       }
       p_smd = save_smd;
 #endif
-#ifdef CURSOR_SHAPE
       State = NORMAL_BUSY;
-#endif
       need_flushbuf |= add_to_showcmd(*cp);
 
       if (!lit) {
@@ -1107,17 +1099,13 @@ normal_end:
   msg_nowait = FALSE;
 
   /* Reset finish_op, in case it was set */
-#ifdef CURSOR_SHAPE
   c = finish_op;
-#endif
   finish_op = FALSE;
-#ifdef CURSOR_SHAPE
   /* Redraw the cursor with another shape, if we were in Operator-pending
    * mode or did a replace command. */
   if (c || ca.cmdchar == 'r') {
     ui_cursor_shape();                  /* may show different cursor shape */
   }
-#endif
 
   if (oap->op_type == OP_NOP && oap->regname == 0
       && ca.cmdchar != K_CURSORHOLD

@@ -397,9 +397,7 @@ EXTERN char_u   *p_pfn;         /* 'printfont' */
 EXTERN char_u   *p_popt;        /* 'printoptions' */
 EXTERN char_u   *p_header;      /* 'printheader' */
 EXTERN int p_prompt;            /* 'prompt' */
-#ifdef CURSOR_SHAPE
 EXTERN char_u   *p_guicursor;   /* 'guicursor' */
-#endif
 EXTERN char_u   *p_hf;          /* 'helpfile' */
 EXTERN long p_hh;               /* 'helpheight' */
 EXTERN char_u   *p_hlg;         /* 'helplang' */

@@ -2890,7 +2890,6 @@ void cursor_off(void)          {
   }
 }
 
-#if defined(CURSOR_SHAPE) || defined(PROTO)
 /*
  * Set cursor shape to match Insert mode.
  */
@@ -2910,8 +2909,6 @@ void term_cursor_shape(void)          {
     showing_insert_mode = FALSE;
   }
 }
-
-#endif
 
 /*
  * Set scrolling region for window 'wp'.

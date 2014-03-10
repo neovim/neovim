@@ -828,16 +828,11 @@ static struct vimoption
    }
    SCRIPTID_INIT},
   {"guicursor",    "gcr",  P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-#ifdef CURSOR_SHAPE
    (char_u *)&p_guicursor, PV_NONE,
    {
      (char_u *)"n-v-c:block,o:hor50,i-ci:hor15,r-cr:hor30,sm:block",
      (char_u *)0L
    }
-#else
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)NULL, (char_u *)0L}
-#endif
    SCRIPTID_INIT},
   {"guifont",     "gfn",  P_STRING|P_VI_DEF|P_RCLR|P_COMMA|P_NODUP,
    (char_u *)NULL, PV_NONE,
@@ -2424,9 +2419,7 @@ void set_init_2(void)          {
     options[idx].flags &= ~P_WAS_SET;
   }
 
-#ifdef CURSOR_SHAPE
   parse_shape_opt(SHAPE_CURSOR);   /* set cursor shapes from 'guicursor' */
-#endif
   (void)parse_printoptions();       /* parse 'printoptions' default value */
 }
 
@@ -4405,13 +4398,9 @@ did_set_string_option (
     }
   }
 
-
-#ifdef CURSOR_SHAPE
   /* 'guicursor' */
   else if (varp == &p_guicursor)
     errmsg = parse_shape_opt(SHAPE_CURSOR);
-#endif
-
 
   else if (varp == &p_popt)
     errmsg = parse_printoptions();

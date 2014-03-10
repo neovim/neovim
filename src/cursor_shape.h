@@ -1,7 +1,6 @@
 #ifndef NEOVIM_CURSOR_SHAPE_H
 #define NEOVIM_CURSOR_SHAPE_H
 
-#ifdef CURSOR_SHAPE
 /*
  * struct to store values from 'guicursor' and 'mouseshape'
  */
@@ -47,7 +46,6 @@ typedef struct cursor_entry {
   char        *name;            /* mode name (fixed) */
   char used_for;                /* SHAPE_MOUSE and/or SHAPE_CURSOR */
 } cursorentry_T;
-#endif /* CURSOR_SHAPE */
 
 char_u *parse_shape_opt(int what);
 int get_shape_idx(int mouse);

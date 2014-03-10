@@ -10227,9 +10227,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "cryptv",
     "cscope",
     "cursorbind",
-#ifdef CURSOR_SHAPE
     "cursorshape",
-#endif
 #ifdef DEBUG
     "debug",
 #endif

@@ -1,10 +1,9 @@
 #include "vim.h"
 #include "cursor_shape.h"
 #include "misc2.h"
+#include "ex_getln.h"
 #include "charset.h"
 #include "syntax.h"
-
-#if defined(CURSOR_SHAPE) || defined(PROTO)
 
 /*
  * Handling of cursor and mouse pointer shapes in various modes.
@@ -209,8 +208,6 @@ char_u *parse_shape_opt(int what)
   return NULL;
 }
 
-# if defined(MCH_CURSOR_SHAPE) || defined(FEAT_GUI) \
-  || defined(FEAT_MOUSESHAPE) || defined(PROTO)
 /*
  * Return the index into shape_table[] for the current mode.
  * When "mouse" is TRUE, consider indexes valid for the mouse pointer.
@@ -242,6 +239,3 @@ int get_shape_idx(int mouse)
   }
   return SHAPE_IDX_N;
 }
-#endif
-
-#endif /* CURSOR_SHAPE */

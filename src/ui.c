@@ -579,7 +579,6 @@ void read_error_exit(void)          {
   preserve_exit();
 }
 
-#if defined(CURSOR_SHAPE) || defined(PROTO)
 /*
  * May update the shape of the cursor.
  */
@@ -589,8 +588,6 @@ void ui_cursor_shape(void)          {
 
   conceal_check_cursur_line();
 }
-
-#endif
 
 #if defined(FEAT_CLIPBOARD) || defined(FEAT_GUI) || defined(FEAT_RIGHTLEFT) \
   || defined(FEAT_MBYTE) || defined(PROTO)
