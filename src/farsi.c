@@ -1,21 +1,13 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
+/// @file farsi.c
+///
+/// Functions for Farsi language
+///
+/// Included by main.c, when FEAT_FKMAP is defined.
 
 #include "farsi.h"
 #include "edit.h"
 #include "ex_getln.h"
 
-/*
- * farsi.c: functions for Farsi language
- *
- * Included by main.c, when FEAT_FKMAP is defined.
- */
 
 static int toF_Xor_X_(int c);
 static int F_is_TyE(int c);
@@ -38,9 +30,11 @@ static int F_isterm(int c);
 static int toF_ending(int c);
 static void lrswapbuf(char_u *buf, int len);
 
-/*
-** Convert the given Farsi character into a _X or _X_ type
-*/
+/// Convert the given Farsi character into a _X or _X_ type
+///
+/// @param c The character to convert.
+///
+/// @return Farsi character converted to a _X or _X_ type.
 static int toF_Xor_X_(int c)
 {
   int tempc;
@@ -152,9 +146,11 @@ static int toF_Xor_X_(int c)
   return 0;
 }
 
-/*
-** Convert the given Farsi character into Farsi capital character .
-*/
+/// Convert the given Farsi character into Farsi capital character.
+///
+/// @param c The character to convert.
+///
+/// @return Character converted to the Farsi capital leter.
 int toF_TyA(int c)
 {
   switch (c) {
@@ -216,7 +212,8 @@ int toF_TyA(int c)
     case _GHAF:
       return GHAF;
 
-    /* I am not sure what it is !!!    case _KAF_H: */
+    // I am not sure what it is !!!
+    // case _KAF_H:
     case _KAF:
       return KAF;
 
@@ -254,11 +251,14 @@ int toF_TyA(int c)
   return c;
 }
 
-/*
-** Is the character under the cursor+offset in the given buffer a join type.
-** That is a character that is combined with the others.
-** Note: the offset is used only for command line buffer.
-*/
+/// Is the character under the cursor+offset in the given buffer a join type.
+/// That is a character that is combined with the others.
+/// Note: the offset is used only for command line buffer.
+///
+/// @param src
+/// @param offset
+///
+/// @return TRUE if the character under the cursor+offset is a join type.
 static int F_is_TyB_TyC_TyD(int src, int offset)
 {
   int c;
@@ -306,9 +306,11 @@ static int F_is_TyB_TyC_TyD(int src, int offset)
   return FALSE;
 }
 
-/*
-** Is the Farsi character one of the terminating only type.
-*/
+/// Is the Farsi character one of the terminating only type.
+///
+/// @param c The character to check.
+///
+/// @return TRUE if the Farsi character is one of the terminating only types.
 static int F_is_TyE(int c)
 {
   switch (c) {
@@ -327,9 +329,11 @@ static int F_is_TyE(int c)
   return FALSE;
 }
 
-/*
-** Is the Farsi character one of the none leading type.
-*/
+/// Is the Farsi character one of the none leading type.
+///
+/// @param c The character to check.
+///
+/// @return TRUE if the Farsi character is one of the none-leading types.
 static int F_is_TyC_TyD(int c)
 {
   switch (c) {
@@ -349,9 +353,11 @@ static int F_is_TyC_TyD(int c)
   return FALSE;
 }
 
-/*
-** Convert a none leading Farsi char into a leading type.
-*/
+/// Convert a none leading Farsi char into a leading type.
+///
+/// @param c The character to convert.
+///
+/// @return The character converted into a leading type.
 static int toF_TyB(int c)
 {
   switch (c) {
@@ -365,13 +371,15 @@ static int toF_TyB(int c)
       return _AYN;
 
     case AYN_:
-      return AYN; /* exception - there are many of them */
+      // exception - there are many of them
+      return AYN;
 
     case _GHAYN_:
       return _GHAYN;
 
     case GHAYN_:
-      return GHAYN; /* exception - there are many of them */
+      // exception - there are many of them
+      return GHAYN;
 
     case _HE_:
       return _HE;
@@ -391,9 +399,9 @@ static int toF_TyB(int c)
   return c;
 }
 
-/*
-** Overwrite the current redo and cursor characters + left adjust
-*/
+/// Overwrite the current redo and cursor characters + left adjust
+///
+/// @param c
 static void put_curr_and_l_to_X(int c)
 {
   int tempc;
@@ -434,9 +442,7 @@ static void put_and_redo(int c)
   AppendCharToRedobuff(c);
 }
 
-/*
-** Change the char. under the cursor to a X_ or X type
-*/
+/// Change the char. under the cursor to a X_ or X type
 static void chg_c_toX_orX(void)
 {
   int tempc, curc;
@@ -582,9 +588,7 @@ static void chg_c_toX_orX(void)
   }
 }
 
-/*
-** Change the char. under the cursor to a _X_ or X_ type
-*/
+/// Change the char. under the cursor to a _X_ or X_ type
 static void chg_c_to_X_orX_(void)
 {
   int tempc;
@@ -643,9 +647,7 @@ static void chg_c_to_X_orX_(void)
   }
 }
 
-/*
-** Change the char. under the cursor to a _X_ or _X type
-*/
+/// Change the char. under the cursor to a _X_ or _X type
 static void chg_c_to_X_or_X(void)
 {
   int tempc;
@@ -669,15 +671,13 @@ static void chg_c_to_X_or_X(void)
   }
 }
 
-/*
-** Change the character left to the cursor to a _X_ or X_ type
-*/
+/// Change the character left to the cursor to a _X_ or X_ type
 static void chg_l_to_X_orX_(void)
 {
   int tempc;
 
-  if ((curwin->w_cursor.col != 0) &&
-      (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(ml_get_curline()))) {
+  if ((curwin->w_cursor.col != 0)
+      && (curwin->w_cursor.col + 1 == (colnr_T)STRLEN(ml_get_curline()))) {
     return;
   }
 
@@ -751,9 +751,7 @@ static void chg_l_to_X_orX_(void)
   }
 }
 
-/*
-** Change the character left to the cursor to a X or _X type
-*/
+/// Change the character left to the cursor to a X or _X type
 static void chg_l_toXor_X(void)
 {
   int tempc;
@@ -833,9 +831,7 @@ static void chg_l_toXor_X(void)
   }
 }
 
-/*
-** Change the character right to the cursor to a _X or _X_ type
-*/
+/// Change the character right to the cursor to a _X or _X_ type
 static void chg_r_to_Xor_X_(void)
 {
   int tempc, c;
@@ -856,9 +852,7 @@ static void chg_r_to_Xor_X_(void)
   }
 }
 
-/*
-** Map Farsi keyboard when in fkmap mode.
-*/
+/// Map Farsi keyboard when in fkmap mode.
 int fkmap(int c)
 {
   int tempc;
@@ -868,14 +862,15 @@ int fkmap(int c)
     return c;
   }
 
-  if (VIM_ISDIGIT(c) ||
-      (((c == '.') ||
-        (c == '+') ||
-        (c == '-') ||
-        (c == '^') ||
-        (c == '%') ||
-        (c == '#') ||
-        (c == '=')) && revins)) {
+  if (VIM_ISDIGIT(c)
+      || (((c == '.')
+           || (c == '+')
+           || (c == '-')
+           || (c == '^')
+           || (c == '%')
+           || (c == '#')
+           || (c == '='))
+          && revins)) {
     if (!revins) {
       if (curwin->w_cursor.col) {
         if (!p_ri) {
@@ -897,7 +892,7 @@ int fkmap(int c)
       inc_cursor();
     }
 
-    ++revins;
+    revins++;
     p_ri = 1;
   } else {
     if (revins) {
@@ -906,28 +901,28 @@ int fkmap(int c)
 
       revins = 0;
       if (curwin->w_p_rl) {
-        while ((F_isdigit(gchar_cursor()) ||
-                (gchar_cursor() == F_PERIOD ||
-                   gchar_cursor() == F_PLUS ||
-                   gchar_cursor() == F_MINUS ||
-                   gchar_cursor() == F_MUL ||
-                   gchar_cursor() == F_DIVIDE ||
-                   gchar_cursor() == F_PERCENT ||
-                   gchar_cursor() == F_EQUALS)) &&
-                   gchar_cursor() != NUL) {
-          ++curwin->w_cursor.col;
+        while ((F_isdigit(gchar_cursor())
+                || (gchar_cursor() == F_PERIOD
+                    || gchar_cursor() == F_PLUS
+                    || gchar_cursor() == F_MINUS
+                    || gchar_cursor() == F_MUL
+                    || gchar_cursor() == F_DIVIDE
+                    || gchar_cursor() == F_PERCENT
+                    || gchar_cursor() == F_EQUALS))
+                && gchar_cursor() != NUL) {
+          curwin->w_cursor.col++;
         }
       } else   {
         if (curwin->w_cursor.col) {
-          while ((F_isdigit(gchar_cursor()) ||
-                  (gchar_cursor() == F_PERIOD ||
-                   gchar_cursor() == F_PLUS ||
-                   gchar_cursor() == F_MINUS ||
-                   gchar_cursor() == F_MUL ||
-                   gchar_cursor() == F_DIVIDE ||
-                   gchar_cursor() == F_PERCENT ||
-                   gchar_cursor() == F_EQUALS)) &&
-                 --curwin->w_cursor.col) {
+          while ((F_isdigit(gchar_cursor())
+                 || (gchar_cursor() == F_PERIOD
+                     || gchar_cursor() == F_PLUS
+                     || gchar_cursor() == F_MINUS
+                     || gchar_cursor() == F_MUL
+                     || gchar_cursor() == F_DIVIDE
+                     || gchar_cursor() == F_PERCENT
+                     || gchar_cursor() == F_EQUALS))
+                 && --curwin->w_cursor.col) {
           }
         }
 
@@ -963,7 +958,6 @@ int fkmap(int c)
   }
 
   tempc = 0;
-
   switch (c) {
     case '`':
     case ' ':
@@ -1022,10 +1016,8 @@ int fkmap(int c)
     case  NL:
     case  TAB:
       if (p_ri && (c == NL) && curwin->w_cursor.col) {
-        /*
-        ** If the char before the cursor is _X_ or X_ do not change
-        ** the one under the cursor with X type.
-        */
+        // If the char before the cursor is _X_ or X_ do not change
+        // the one under the cursor with X type.
 
         dec_cursor();
         if (F_isalpha(gchar_cursor())) {
@@ -1853,9 +1845,11 @@ int fkmap(int c)
   return c;
 }
 
-/*
-** Convert a none leading Farsi char into a leading type.
-*/
+/// Convert a none leading Farsi char into a leading type.
+///
+/// @param c The character to convert.
+///
+/// @return The non-leading Farsi character converted to a leading type.
 static int toF_leading(int c)
 {
   switch (c) {
@@ -1951,9 +1945,11 @@ static int toF_leading(int c)
   return c;
 }
 
-/*
-** Convert a given Farsi char into right joining type.
-*/
+/// Convert a given Farsi char into right joining type.
+///
+/// @param c The character to convert.
+///
+/// @return The Farsi character converted into a right joining type
 static int toF_Rjoin(int c)
 {
   switch (c) {
@@ -2052,9 +2048,11 @@ static int toF_Rjoin(int c)
   return c;
 }
 
-/*
-** Can a given Farsi character join via its left edj.
-*/
+/// Can a given Farsi character join via its left edj.
+///
+/// @param c The character to check.
+///
+/// @return TRUE if the character can join via its left edj.
 static int canF_Ljoin(int c)
 {
   switch (c) {
@@ -2124,9 +2122,11 @@ static int canF_Ljoin(int c)
   return FALSE;
 }
 
-/*
-** Can a given Farsi character join via its right edj.
-*/
+/// Can a given Farsi character join via its right edj.
+///
+/// @param c
+///
+/// @return TRUE if the character can join via its right edj.
 static int canF_Rjoin(int c)
 {
   switch (c) {
@@ -2149,9 +2149,11 @@ static int canF_Rjoin(int c)
   return canF_Ljoin(c);
 }
 
-/*
-** is a given Farsi character a terminating type.
-*/
+/// Is a given Farsi character a terminating type.
+///
+/// @param c
+///
+/// @return TRUE if the character is a terminating type.
 static int F_isterm(int c)
 {
   switch (c) {
@@ -2174,9 +2176,11 @@ static int F_isterm(int c)
   return FALSE;
 }
 
-/*
-** Convert the given Farsi character into a ending type .
-*/
+/// Convert the given Farsi character into a ending type.
+///
+/// @param c The character to convert.
+///
+/// @return The character converted into an ending type.
 static int toF_ending(int c)
 {
   switch (c) {
@@ -2278,9 +2282,7 @@ static int toF_ending(int c)
   return c;
 }
 
-/*
-** Convert the Farsi 3342 standard into Farsi VIM.
-*/
+/// Convert the Farsi 3342 standard into Farsi VIM.
 void conv_to_pvim(void)
 {
   char_u *ptr;
@@ -2292,14 +2294,14 @@ void conv_to_pvim(void)
     for (i = 0; i < llen - 1; i++) {
       if (canF_Ljoin(ptr[i]) && canF_Rjoin(ptr[i + 1])) {
         ptr[i] = toF_leading(ptr[i]);
-        ++i;
+        i++;
 
         while (canF_Rjoin(ptr[i]) && i < llen) {
           ptr[i] = toF_Rjoin(ptr[i]);
           if (F_isterm(ptr[i]) || !F_isalpha(ptr[i])) {
             break;
           }
-          ++i;
+          i++;
         }
 
         if (!F_isalpha(ptr[i]) || !canF_Rjoin(ptr[i])) {
@@ -2311,30 +2313,22 @@ void conv_to_pvim(void)
     }
   }
 
-  /*
-   * Following lines contains Farsi encoded character.
-   */
-
+  // Following lines contains Farsi encoded character.
   do_cmdline_cmd((char_u *)"%s/\202\231/\232/g");
   do_cmdline_cmd((char_u *)"%s/\201\231/\370\334/g");
 
-  /* Assume the screen has been messed up: clear it and redraw. */
+  // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
   MSG_ATTR(farsi_text_1, hl_attr(HLF_S));
 }
 
-/*
- * Convert the Farsi VIM into Farsi 3342 standard.
- */
+/// Convert the Farsi VIM into Farsi 3342 standard.
 void conv_to_pstd(void)
 {
   char_u *ptr;
   int lnum, llen, i;
 
-  /*
-   * Following line contains Farsi encoded character.
-   */
-
+  // Following line contains Farsi encoded character.
   do_cmdline_cmd((char_u *)"%s/\232/\202\231/g");
   for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
     ptr = ml_get((linenr_T)lnum);
@@ -2344,14 +2338,15 @@ void conv_to_pstd(void)
     }
   }
 
-  /* Assume the screen has been messed up: clear it and redraw. */
+  // Assume the screen has been messed up: clear it and redraw.
   redraw_later(CLEAR);
   MSG_ATTR(farsi_text_2, hl_attr(HLF_S));
 }
 
-/*
- * left-right swap the characters in buf[len].
- */
+/// left-right swap the characters in buf[len].
+///
+/// @param buf
+/// @param len
 static void lrswapbuf(char_u *buf, int len)
 {
   char_u *s, *e;
@@ -2368,9 +2363,11 @@ static void lrswapbuf(char_u *buf, int len)
   }
 }
 
-/*
- * swap all the characters in reverse direction
- */
+/// swap all the characters in reverse direction
+///
+/// @param ibuf
+///
+/// @return The buffer with the characters swapped.
 char_u* lrswap(char_u *ibuf)
 {
   if ((ibuf != NULL) && (*ibuf != NUL)) {
@@ -2379,9 +2376,12 @@ char_u* lrswap(char_u *ibuf)
   return ibuf;
 }
 
-/*
- * swap all the Farsi characters in reverse direction
- */
+/// swap all the Farsi characters in reverse direction
+///
+/// @param cmdbuf
+/// @param .
+///
+/// @return The buffer with all Farsi characters swapped.
 char_u* lrFswap(char_u *cmdbuf, int len)
 {
   int i, cnt;
@@ -2394,10 +2394,10 @@ char_u* lrFswap(char_u *cmdbuf, int len)
   }
 
   for (i = 0; i < len; i++) {
-    for (cnt = 0; i + cnt < len &&
-         (F_isalpha(cmdbuf[i + cnt]) ||
-          F_isdigit(cmdbuf[i + cnt]) ||
-          cmdbuf[i + cnt] == ' '); ++cnt) {
+    for (cnt = 0; i + cnt < len
+         && (F_isalpha(cmdbuf[i + cnt])
+             || F_isdigit(cmdbuf[i + cnt])
+             || cmdbuf[i + cnt] == ' '); ++cnt) {
     }
 
     lrswapbuf(cmdbuf + i, cnt);
@@ -2406,11 +2406,14 @@ char_u* lrFswap(char_u *cmdbuf, int len)
   return cmdbuf;
 }
 
-/*
- * Reverse the characters in the search path and substitute section
- * accordingly.
- * TODO: handle different separator characters.  Use skip_regexp().
- */
+/// Reverse the characters in the search path and substitute section
+/// accordingly.
+/// TODO: handle different separator characters.  Use skip_regexp().
+///
+/// @param ibuf
+///
+/// @return The buffer with the characters in the search path and substitute
+///         section reversed.
 char_u* lrF_sub(char_u *ibuf)
 {
   char_u *p, *ep;
@@ -2418,7 +2421,7 @@ char_u* lrF_sub(char_u *ibuf)
 
   p = ibuf;
 
-  /* Find the boundary of the search path */
+  // Find the boundary of the search path
   while (((p = vim_strchr(p + 1, '/')) != NULL) && p[-1] == '\\') {
   }
 
@@ -2426,17 +2429,17 @@ char_u* lrF_sub(char_u *ibuf)
     return ibuf;
   }
 
-  /* Reverse the Farsi characters in the search path. */
+  // Reverse the Farsi characters in the search path.
   lrFswap(ibuf, (int)(p - ibuf));
 
-  /* Now find the boundary of the substitute section */
+  // Now find the boundary of the substitute section
   if ((ep = (char_u *)strrchr((char *)++p, '/')) != NULL) {
     cnt = (int)(ep - p);
   } else {
     cnt = (int)STRLEN(p);
   }
 
-  /* Reverse the characters in the substitute section and take care of '\' */
+  // Reverse the characters in the substitute section and take care of '\'
   for (i = 0; i < cnt - 1; i++) {
     if (p[i] == '\\') {
       p[i] = p[i + 1];
@@ -2448,9 +2451,11 @@ char_u* lrF_sub(char_u *ibuf)
   return ibuf;
 }
 
-/*
- * Map Farsi keyboard when in cmd_fkmap mode.
- */
+/// Map Farsi keyboard when in cmd_fkmap mode.
+///
+/// @param c
+///
+/// @return The mapped character.
 int cmdl_fkmap(int c)
 {
   int tempc;
@@ -2567,7 +2572,7 @@ int cmdl_fkmap(int c)
           if (F_is_TyB_TyC_TyD(SRC_CMD, AT_CURSOR + 1)) {
             cmd_pchar(YE_, AT_CURSOR);
           } else {
-            cmd_pchar(YE,  AT_CURSOR);
+            cmd_pchar(YE, AT_CURSOR);
           }
       }
 
@@ -2881,27 +2886,33 @@ int cmdl_fkmap(int c)
   return c;
 }
 
-/*
- * F_isalpha returns TRUE if 'c' is a Farsi alphabet
- */
+/// F_isalpha returns TRUE if 'c' is a Farsi alphabet
+///
+/// @param c The character to check.
+///
+/// @return TRUE if 'c' is a Farsi alphabet character.
 int F_isalpha(int c)
 {
-  return (c >= TEE_ && c <= _YE) ||
-         (c >= ALEF_A && c <= YE) ||
-         (c >= _IE && c <= YE_);
+  return (c >= TEE_ && c <= _YE)
+         || (c >= ALEF_A && c <= YE)
+         || (c >= _IE && c <= YE_);
 }
 
-/*
- * F_isdigit returns TRUE if 'c' is a Farsi digit
- */
+/// F_isdigit returns TRUE if 'c' is a Farsi digit
+///
+/// @param c The character to check.
+///
+/// @return TRUE if 'c' is a Farsi digit.
 int F_isdigit(int c)
 {
   return c >= FARSI_0 && c <= FARSI_9;
 }
 
-/*
- * F_ischar returns TRUE if 'c' is a Farsi character.
- */
+/// F_ischar returns TRUE if 'c' is a Farsi character.
+///
+/// @param c The character to check.
+///
+/// @return TRUE if 'c' is a Farsi character.
 int F_ischar(int c)
 {
   return c >= TEE_ && c <= YE_;

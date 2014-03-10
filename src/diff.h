@@ -1,6 +1,6 @@
 #ifndef NEOVIM_DIFF_H
 #define NEOVIM_DIFF_H
-/* diff.c */
+
 void diff_buf_delete(buf_T *buf);
 void diff_buf_adjust(win_T *win);
 void diff_buf_add(buf_T *buf);
@@ -29,5 +29,6 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1,
                                      buf_T *buf2,
                                      linenr_T lnum3);
 linenr_T diff_lnum_win(linenr_T lnum, win_T *wp);
-/* vim: set ft=c : */
-#endif /* NEOVIM_DIFF_H */
+
+// vim: set ft=c:
+#endif  // NEOVIM_DIFF_H

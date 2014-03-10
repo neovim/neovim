@@ -16,11 +16,11 @@
 #include "message.h"
 #include "sha256.h"
 
-#define ARRAY_LENGTH(A)      (sizeof(A)/sizeof(A[0]))
+#define ARRAY_LENGTH(A) (sizeof(A) / sizeof(A[0]))
 
 #define BF_BLOCK    8
 #define BF_BLOCK_MASK 7
-#define BF_OFB_LEN  (8*(BF_BLOCK))
+#define BF_OFB_LEN  (8 * (BF_BLOCK))
 
 typedef union {
   uint32_t ul[2];
@@ -305,7 +305,6 @@ static uint32_t sbi[4][256] = {
    0xb74e6132u, 0xce77e25bu, 0x578fdfe3u, 0x3ac372e6u}
 };
 
-
 #define F1(i) \
   xl ^= pax[i]; \
   xr ^= ((sbx[0][xl >> 24] + \
@@ -323,7 +322,9 @@ static uint32_t sbi[4][256] = {
 
 static void bf_e_block(uint32_t *p_xl, uint32_t *p_xr)
 {
-  uint32_t temp, xl = *p_xl, xr = *p_xr;
+  uint32_t temp;
+  uint32_t xl = *p_xl;
+  uint32_t xr = *p_xr;
 
   F1(0) F2(1) F1(2) F2(3) F1(4) F2(5) F1(6) F2(7)
   F1(8) F2(9) F1(10) F2(11) F1(12) F2(13) F1(14) F2(15)
@@ -336,15 +337,13 @@ static void bf_e_block(uint32_t *p_xl, uint32_t *p_xr)
   *p_xr = xr;
 }
 
-
-
 #ifdef WORDS_BIGENDIAN
 # define htonl2(x) \
-  x = ((((x) &     0xffL) << 24) | (((x) & 0xff00L) <<  8) | \
+  x = ((((x) & 0xffL) << 24) | (((x) & 0xff00L) <<  8) | \
        (((x) & 0xff0000L) >>  8) | (((x) & 0xff000000L) >> 24))
-#else
+#else  // ifdef WORDS_BIGENDIAN
 # define htonl2(x)
-#endif
+#endif  // ifdef WORDS_BIGENDIAN
 
 static void bf_e_cblock(char_u *block)
 {
@@ -359,31 +358,28 @@ static void bf_e_cblock(char_u *block)
   memcpy(block, bk.uc, 8);
 }
 
-
-/*
- * Initialize the crypt method using "password" as the encryption key and
- * "salt[salt_len]" as the salt.
- */
+// Initialize the crypt method using "password" as the encryption key and
+// "salt[salt_len]" as the salt.
 void bf_key_init(char_u *password, char_u *salt, int salt_len)
 {
-  int i, j, keypos = 0;
-  unsigned u;
-  uint32_t val, data_l, data_r;
-  char_u   *key;
-  int keylen;
+  // Process the key 1000 times.
+  // See http://en.wikipedia.org/wiki/Key_strengthening.
+  char_u *key = sha256_key(password, salt, salt_len);
 
-  /* Process the key 1000 times.
-   * See http://en.wikipedia.org/wiki/Key_strengthening. */
-  key = sha256_key(password, salt, salt_len);
-  for (i = 0; i < 1000; i++)
+  int i;
+  for (i = 0; i < 1000; i++) {
     key = sha256_key(key, salt, salt_len);
+  }
 
-  /* Convert the key from 64 hex chars to 32 binary chars. */
-  keylen = (int)STRLEN(key) / 2;
+  // Convert the key from 64 hex chars to 32 binary chars.
+  int keylen = (int)STRLEN(key) / 2;
+
   if (keylen == 0) {
     EMSG(_("E831: bf_key_init() called with empty password"));
     return;
   }
+
+  unsigned u;
   for (i = 0; i < keylen; i++) {
     sscanf((char *)&key[i * 2], "%2x", &u);
     key[i] = u;
@@ -391,21 +387,27 @@ void bf_key_init(char_u *password, char_u *salt, int salt_len)
 
   mch_memmove(sbx, sbi, 4 * 4 * 256);
 
-  for (i = 0; i < 18; ++i) {
-    val = 0;
-    for (j = 0; j < 4; ++j)
+  int keypos = 0;
+  for (i = 0; i < 18; i++) {
+    uint32_t val = 0;
+
+    int j;
+    for (j = 0; j < 4; j++) {
       val = (val << 8) | key[keypos++ % keylen];
+    }
     pax[i] = ipa[i] ^ val;
   }
 
-  data_l = data_r = 0;
+  uint32_t data_l = 0;
+  uint32_t data_r = 0;
   for (i = 0; i < 18; i += 2) {
     bf_e_block(&data_l, &data_r);
     pax[i + 0] = data_l;
     pax[i + 1] = data_r;
   }
 
-  for (i = 0; i < 4; ++i) {
+  for (i = 0; i < 4; i++) {
+    int j;
     for (j = 0; j < 256; j += 2) {
       bf_e_block(&data_l, &data_r);
       sbx[i][j + 0] = data_l;
@@ -414,19 +416,22 @@ void bf_key_init(char_u *password, char_u *salt, int salt_len)
   }
 }
 
-/*
- * BF Self test for corrupted tables or instructions
- */
-static int bf_check_tables(uint32_t a_ipa[18], uint32_t a_sbi[4][256], uint32_t val)
+/// BF Self test for corrupted tables or instructions
+static int bf_check_tables(uint32_t a_ipa[18], uint32_t a_sbi[4][256],
+                           uint32_t val)
 {
-  int i, j;
   uint32_t c = 0;
-
-  for (i = 0; i < 18; i++)
+  int i;
+  for (i = 0; i < 18; i++) {
     c ^= a_ipa[i];
-  for (i = 0; i < 4; i++)
-    for (j = 0; j < 256; j++)
+  }
+
+  for (i = 0; i < 4; i++) {
+    int j;
+    for (j = 0; j < 256; j++) {
       c ^= a_sbi[i][j];
+    }
+  }
   return c == val;
 }
 
@@ -435,50 +440,50 @@ typedef struct {
   char_u salt[9];
   char_u plaintxt[9];
   char_u cryptxt[9];
-  char_u badcryptxt[9];     /* cryptxt when big/little endian is wrong */
+  char_u badcryptxt[9]; // cryptxt when big/little endian is wrong.
   uint32_t keysum;
 } struct_bf_test_data;
 
-/*
- * Assert bf(password, plaintxt) is cryptxt.
- * Assert csum(pax sbx(password)) is keysum.
- */
+// Assert bf(password, plaintxt) is cryptxt.
+// Assert csum(pax sbx(password)) is keysum.
 static struct_bf_test_data bf_test_data[] = {
   {
     "password",
     "salt",
     "plaintxt",
-    "\xad\x3d\xfa\x7f\xe8\xea\x40\xf6",   /* cryptxt */
-    "\x72\x50\x3b\x38\x10\x60\x22\xa7",   /* badcryptxt */
-    0x56701b5du   /* keysum */
+    "\xad\x3d\xfa\x7f\xe8\xea\x40\xf6", // cryptxt
+    "\x72\x50\x3b\x38\x10\x60\x22\xa7", // badcryptxt
+    0x56701b5du                         // keysum
   },
 };
 
-/*
- * Return FAIL when there is something wrong with blowfish encryption.
- */
-static int bf_self_test(void)                {
-  int i, bn;
+// Return FAIL when there is something wrong with blowfish encryption.
+static int bf_self_test(void)
+{
   int err = 0;
-  block8 bk;
-
-  if (!bf_check_tables(ipa, sbi, 0x6ffa520a))
+  if (!bf_check_tables(ipa, sbi, 0x6ffa520a)) {
     err++;
+  }
 
-  bn = ARRAY_LENGTH(bf_test_data);
+  int bn = ARRAY_LENGTH(bf_test_data);
+  int i;
   for (i = 0; i < bn; i++) {
-    bf_key_init((char_u *)(bf_test_data[i].password),
-        bf_test_data[i].salt,
-        (int)STRLEN(bf_test_data[i].salt));
-    if (!bf_check_tables(pax, sbx, bf_test_data[i].keysum))
-      err++;
+    bf_key_init((char_u *)(bf_test_data[i].password), bf_test_data[i].salt,
+                (int)STRLEN(bf_test_data[i].salt));
 
-    /* Don't modify bf_test_data[i].plaintxt, self test is idempotent. */
+    if (!bf_check_tables(pax, sbx, bf_test_data[i].keysum)) {
+      err++;
+    }
+
+    // Don't modify bf_test_data[i].plaintxt, self test is idempotent.
+    block8 bk;
     memcpy(bk.uc, bf_test_data[i].plaintxt, 8);
     bf_e_cblock(bk.uc);
+
     if (memcmp(bk.uc, bf_test_data[i].cryptxt, 8) != 0) {
-      if (err == 0 && memcmp(bk.uc, bf_test_data[i].badcryptxt, 8) == 0)
+      if ((err == 0) && (memcmp(bk.uc, bf_test_data[i].badcryptxt, 8) == 0)) {
         EMSG(_("E817: Blowfish big/little endian use wrong"));
+      }
       err++;
     }
   }
@@ -486,52 +491,51 @@ static int bf_self_test(void)                {
   return err > 0 ? FAIL : OK;
 }
 
-/* Output feedback mode. */
+// Output feedback mode.
 static int randbyte_offset = 0;
 static int update_offset = 0;
-static char_u ofb_buffer[BF_OFB_LEN]; /* 64 bytes */
+static char_u ofb_buffer[BF_OFB_LEN]; // 64 bytes
 
-/*
- * Initialize with seed "iv[iv_len]".
- */
+// Initialize with seed "iv[iv_len]".
 void bf_ofb_init(char_u *iv, int iv_len)
 {
-  int i, mi;
-
   randbyte_offset = update_offset = 0;
   vim_memset(ofb_buffer, 0, BF_OFB_LEN);
+
   if (iv_len > 0) {
-    mi = iv_len > BF_OFB_LEN ? iv_len : BF_OFB_LEN;
-    for (i = 0; i < mi; i++)
+    int mi = iv_len > BF_OFB_LEN ? iv_len : BF_OFB_LEN;
+    int i;
+    for (i = 0; i < mi; i++) {
       ofb_buffer[i % BF_OFB_LEN] ^= iv[i % iv_len];
+    }
   }
 }
 
 #define BF_OFB_UPDATE(c) { \
-    ofb_buffer[update_offset] ^= (char_u)c; \
-    if (++update_offset == BF_OFB_LEN) \
-      update_offset = 0; \
+  ofb_buffer[update_offset] ^= (char_u)c; \
+  if (++update_offset == BF_OFB_LEN) { \
+    update_offset = 0; \
+  } \
 }
 
 #define BF_RANBYTE(t) { \
-    if ((randbyte_offset & BF_BLOCK_MASK) == 0) \
-      bf_e_cblock(&ofb_buffer[randbyte_offset]); \
-    t = ofb_buffer[randbyte_offset]; \
-    if (++randbyte_offset == BF_OFB_LEN) \
-      randbyte_offset = 0; \
+  if ((randbyte_offset & BF_BLOCK_MASK) == 0) { \
+    bf_e_cblock(&ofb_buffer[randbyte_offset]); \
+  } \
+  t = ofb_buffer[randbyte_offset]; \
+  if (++randbyte_offset == BF_OFB_LEN) { \
+    randbyte_offset = 0; \
+  } \
 }
 
-/*
- * Encrypt "from[len]" into "to[len]".
- * "from" and "to" can be equal to encrypt in place.
- */
+// Encrypt "from[len]" into "to[len]".
+// "from" and "to" can be equal to encrypt in place.
 void bf_crypt_encode(char_u *from, size_t len, char_u *to)
 {
   size_t i;
-  int ztemp, t;
-
-  for (i = 0; i < len; ++i) {
-    ztemp = from[i];
+  for (i = 0; i < len; i++) {
+    int ztemp = from[i];
+    int t;
     BF_RANBYTE(t);
     BF_OFB_UPDATE(ztemp);
     to[i] = t ^ ztemp;
@@ -543,10 +547,9 @@ void bf_crypt_encode(char_u *from, size_t len, char_u *to)
  */
 void bf_crypt_decode(char_u *ptr, long len)
 {
-  char_u      *p;
-  int t;
-
-  for (p = ptr; p < ptr + len; ++p) {
+  char_u *p;
+  for (p = ptr; p < ptr + len; p++) {
+    int t;
     BF_RANBYTE(t);
     *p ^= t;
     BF_OFB_UPDATE(*p);
@@ -556,15 +559,12 @@ void bf_crypt_decode(char_u *ptr, long len)
 /*
  * Initialize the encryption keys and the random header according to
  * the given password.
+ * in: "passwd" password string with which to modify keys
  */
-void 
-bf_crypt_init_keys (
-    char_u *passwd                 /* password string with which to modify keys */
-)
+void bf_crypt_init_keys(char_u *passwd)
 {
   char_u *p;
-
-  for (p = passwd; *p != NUL; ++p) {
+  for (p = passwd; *p != NUL; p++) {
     BF_OFB_UPDATE(*p);
   }
 }
@@ -579,7 +579,8 @@ static uint32_t save_sbx[4][256];
  * Save the current crypt state.  Can only be used once before
  * bf_crypt_restore().
  */
-void bf_crypt_save(void)          {
+void bf_crypt_save(void)
+{
   save_randbyte_offset = randbyte_offset;
   save_update_offset = update_offset;
   mch_memmove(save_ofb_buffer, ofb_buffer, BF_OFB_LEN);
@@ -591,7 +592,8 @@ void bf_crypt_save(void)          {
  * Restore the current crypt state.  Can only be used after
  * bf_crypt_save().
  */
-void bf_crypt_restore(void)          {
+void bf_crypt_restore(void)
+{
   randbyte_offset = save_randbyte_offset;
   update_offset = save_update_offset;
   mch_memmove(ofb_buffer, save_ofb_buffer, BF_OFB_LEN);
@@ -603,7 +605,8 @@ void bf_crypt_restore(void)          {
  * Run a test to check if the encryption works as expected.
  * Give an error and return FAIL when not.
  */
-int blowfish_self_test(void)         {
+int blowfish_self_test(void)
+{
   if (sha256_self_test() == FAIL) {
     EMSG(_("E818: sha256 test failed"));
     return FAIL;
@@ -614,4 +617,3 @@ int blowfish_self_test(void)         {
   }
   return OK;
 }
-

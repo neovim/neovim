@@ -1,31 +1,19 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
+/// @file farsi.h
+///
+/// Farsi characters are categorized into following types:
+///
+/// TyA  (for capital letter representation)
+/// TyB  (for types that look like _X  e.g. AYN)
+/// TyC  (for types that look like X_  e.g. YE_)
+/// TyD  (for types that look like _X_  e.g. _AYN_)
+/// TyE  (for types that look like X  e.g. RE)
 
-#ifndef SRC_FARSI_H_
-#define SRC_FARSI_H_
+#ifndef NEOVIM_FARSI_H
+#define NEOVIM_FARSI_H
 
-/*
- * Farsi characters are categorized into following types:
- *
- * TyA	(for capital letter representation)
- * TyB	(for types that look like _X  e.g. AYN)
- * TyC	(for types that look like X_  e.g. YE_)
- * TyD	(for types that look like _X_  e.g. _AYN_)
- * TyE	(for types that look like X  e.g. RE)
- */
+// Farsi character set definition
 
-/*
- * Farsi character set definition
- */
-
-/*
- * Begin of the non-standard part
- */
+// Begin of the non-standard part
 
 #define TEE_            0x80
 #define ALEF_U_H_       0x81
@@ -66,30 +54,26 @@
 #define YEE_            0xef
 #define YE_             0xff
 
-/*
- * End of the non-standard part
- */
+// End of the non-standard part
 
-/*
- * Standard part
- */
+// Standard part
 
-#define F_BLANK         0xa0    /* Farsi ' ' (SP) character */
-#define F_PSP           0xa1    /* PSP for capitalizing of a character */
-#define F_PCN           0xa2    /* PCN for redefining of the hamye meaning */
-#define F_EXCL          0xa3    /* Farsi ! character */
-#define F_CURRENCY      0xa4    /* Farsi Rial character */
-#define F_PERCENT       0xa5    /* Farsi % character */
-#define F_PERIOD        0xa6    /* Farsi '.' character */
-#define F_COMMA         0xa7    /* Farsi ',' character */
-#define F_LPARENT       0xa8    /* Farsi '(' character */
-#define F_RPARENT       0xa9    /* Farsi ')' character */
-#define F_MUL           0xaa    /* Farsi 'x' character */
-#define F_PLUS          0xab    /* Farsi '+' character */
-#define F_BCOMMA        0xac    /* Farsi comma character */
-#define F_MINUS         0xad    /* Farsi '-' character */
-#define F_DIVIDE        0xae    /* Farsi divide (/) character */
-#define F_SLASH         0xaf    /* Farsi '/' character */
+#define F_BLANK         0xa0    // Farsi ' ' (SP) character
+#define F_PSP           0xa1    // PSP for capitalizing of a character
+#define F_PCN           0xa2    // PCN for redefining of the hamye meaning
+#define F_EXCL          0xa3    // Farsi ! character
+#define F_CURRENCY      0xa4    // Farsi Rial character
+#define F_PERCENT       0xa5    // Farsi % character
+#define F_PERIOD        0xa6    // Farsi '.' character
+#define F_COMMA         0xa7    // Farsi ',' character
+#define F_LPARENT       0xa8    // Farsi '(' character
+#define F_RPARENT       0xa9    // Farsi ')' character
+#define F_MUL           0xaa    // Farsi 'x' character
+#define F_PLUS          0xab    // Farsi '+' character
+#define F_BCOMMA        0xac    // Farsi comma character
+#define F_MINUS         0xad    // Farsi '-' character
+#define F_DIVIDE        0xae    // Farsi divide (/) character
+#define F_SLASH         0xaf    // Farsi '/' character
 
 #define FARSI_0         0xb0
 #define FARSI_1         0xb1
@@ -102,12 +86,12 @@
 #define FARSI_8         0xb8
 #define FARSI_9         0xb9
 
-#define F_DCOLON        0xba    /* Farsi ':' character */
-#define F_SEMICOLON     0xbb    /* Farsi ';' character */
-#define F_GREATER       0xbc    /* Farsi '>' character */
-#define F_EQUALS        0xbd    /* Farsi '=' character */
-#define F_LESS          0xbe    /* Farsi '<' character */
-#define F_QUESTION      0xbf    /* Farsi ? character */
+#define F_DCOLON        0xba    // Farsi ':' character
+#define F_SEMICOLON     0xbb    // Farsi ';' character
+#define F_GREATER       0xbc    // Farsi '>' character
+#define F_EQUALS        0xbd    // Farsi '=' character
+#define F_LESS          0xbe    // Farsi '<' character
+#define F_QUESTION      0xbf    // Farsi ? character
 
 #define ALEF_A  0xc0
 #define ALEF    0xc1
@@ -141,22 +125,22 @@
 #define MIM     0xdd
 #define NOON    0xde
 #define WAW     0xdf
-#define F_HE    0xe0            /* F_ added for name clash with Perl */
+#define F_HE    0xe0            // F_ added for name clash with Perl
 #define YE      0xe1
 #define TEE     0xfc
 #define _KAF_H  0xfd
 #define YEE     0xfe
 
-#define F_LBRACK        0xe2    /* Farsi '[' character */
-#define F_RBRACK        0xe3    /* Farsi ']' character */
-#define F_LBRACE        0xe4    /* Farsi '{' character */
-#define F_RBRACE        0xe5    /* Farsi '}' character */
-#define F_LQUOT         0xe6    /* Farsi left quotation character */
-#define F_RQUOT         0xe7    /* Farsi right quotation character */
-#define F_STAR          0xe8    /* Farsi '*' character */
-#define F_UNDERLINE     0xe9    /* Farsi '_' character */
-#define F_PIPE          0xea    /* Farsi '|' character */
-#define F_BSLASH        0xeb    /* Farsi '\' character */
+#define F_LBRACK        0xe2    // Farsi '[' character
+#define F_RBRACK        0xe3    // Farsi ']' character
+#define F_LBRACE        0xe4    // Farsi '{' character
+#define F_RBRACE        0xe5    // Farsi '}' character
+#define F_LQUOT         0xe6    // Farsi left quotation character
+#define F_RQUOT         0xe7    // Farsi right quotation character
+#define F_STAR          0xe8    // Farsi '*' character
+#define F_UNDERLINE     0xe9    // Farsi '_' character
+#define F_PIPE          0xea    // Farsi '|' character
+#define F_BSLASH        0xeb    // Farsi '\' character
 
 #define MAD             0xf0
 #define JAZR            0xf1
@@ -170,23 +154,19 @@
 #define WAW_H           0xf9
 #define ALEF_D_H        0xfa
 
-/*
- * global definitions
- * ==================
- */
+// global definitions
+// ==================
 
 #define SRC_EDT 0
 #define SRC_CMD 1
 
 #define AT_CURSOR 0
 
-/*
- * definitions for the window dependent functions (w_farsi).
- */
+// definitions for the window dependent functions (w_farsi).
 #define W_CONV 0x1
 #define W_R_L  0x2
 
-/* special Farsi text messages */
+// special Farsi text messages
 
 #ifdef DO_INIT
 EXTERN char_u farsi_text_1[] = {
@@ -231,4 +211,4 @@ EXTERN char_u farsi_text_5[] = {
 EXTERN char_u farsi_text_5[];
 #endif
 
-#endif  // SRC_FARSI_H_
+#endif  // NEOVIM_FARSI_H

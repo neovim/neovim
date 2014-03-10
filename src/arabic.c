@@ -1,24 +1,10 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
- * VIM - Vi IMproved    by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
+/// @file arabic.c
+///
+/// Functions for Arabic language
+///
+/// Included by main.c, when FEAT_ARABIC & FEAT_GUI is defined.
 
 #include "arabic.h"
-
-/*
- * arabic.c: functions for Arabic language
- *
- * Included by main.c, when FEAT_ARABIC & FEAT_GUI is defined.
- *
- * --
- *
- * Author: Nadim Shaikli & Isam Bayazidi
- *
- */
 
 static int A_is_a(int cur_c);
 static int A_is_s(int cur_c);
@@ -40,9 +26,7 @@ static int A_is_ok(int c);
 static int A_is_valid(int c);
 static int A_is_special(int c);
 
-/*
- * Returns True if c is an ISO-8859-6 shaped ARABIC letter (user entered)
- */
+// Returns True if c is an ISO-8859-6 shaped ARABIC letter (user entered).
 static int A_is_a(int cur_c)
 {
   switch (cur_c) {
@@ -89,9 +73,7 @@ static int A_is_a(int cur_c)
   return FALSE;
 }
 
-/*
- * Returns True if c is an Isolated Form-B ARABIC letter
- */
+// Returns True if c is an Isolated Form-B ARABIC letter
 static int A_is_s(int cur_c)
 {
   switch (cur_c) {
@@ -137,9 +119,7 @@ static int A_is_s(int cur_c)
   return FALSE;
 }
 
-/*
- * Returns True if c is a Final shape of an ARABIC letter
- */
+// Returns True if c is a Final shape of an ARABIC letter
 static int A_is_f(int cur_c)
 {
   switch (cur_c) {
@@ -187,9 +167,7 @@ static int A_is_f(int cur_c)
   return FALSE;
 }
 
-/*
- * Change shape - from ISO-8859-6/Isolated to Form-B Isolated
- */
+// Change shape - from ISO-8859-6/Isolated to Form-B Isolated
 static int chg_c_a2s(int cur_c)
 {
   int tempc;
@@ -243,7 +221,7 @@ static int chg_c_a2s(int cur_c)
       tempc = a_s_ZAIN;
       break;
 
-    case a_TATWEEL: /* exceptions */
+    case a_TATWEEL: // exceptions
       tempc = cur_c;
       break;
 
@@ -350,9 +328,7 @@ static int chg_c_a2s(int cur_c)
   return tempc;
 }
 
-/*
- * Change shape - from ISO-8859-6/Isolated to Initial
- */
+// Change shape - from ISO-8859-6/Isolated to Initial
 static int chg_c_a2i(int cur_c)
 {
   int tempc;
@@ -362,59 +338,59 @@ static int chg_c_a2i(int cur_c)
       tempc = a_i_YEH_HAMZA;
       break;
 
-    case a_HAMZA: /* exceptions */
+    case a_HAMZA: // exceptions
       tempc = a_s_HAMZA;
       break;
 
-    case a_ALEF_MADDA: /* exceptions */
+    case a_ALEF_MADDA: // exceptions
       tempc = a_s_ALEF_MADDA;
       break;
 
-    case a_ALEF_HAMZA_ABOVE: /* exceptions */
+    case a_ALEF_HAMZA_ABOVE: // exceptions
       tempc = a_s_ALEF_HAMZA_ABOVE;
       break;
 
-    case a_WAW_HAMZA: /* exceptions */
+    case a_WAW_HAMZA: // exceptions
       tempc = a_s_WAW_HAMZA;
       break;
 
-    case a_ALEF_HAMZA_BELOW: /* exceptions */
+    case a_ALEF_HAMZA_BELOW: // exceptions
       tempc = a_s_ALEF_HAMZA_BELOW;
       break;
 
-    case a_ALEF: /* exceptions */
+    case a_ALEF: // exceptions
       tempc = a_s_ALEF;
       break;
 
-    case a_TEH_MARBUTA: /* exceptions */
+    case a_TEH_MARBUTA: // exceptions
       tempc = a_s_TEH_MARBUTA;
       break;
 
-    case a_DAL: /* exceptions */
+    case a_DAL: // exceptions
       tempc = a_s_DAL;
       break;
 
-    case a_THAL: /* exceptions */
+    case a_THAL: // exceptions
       tempc = a_s_THAL;
       break;
 
-    case a_REH: /* exceptions */
+    case a_REH: // exceptions
       tempc = a_s_REH;
       break;
 
-    case a_ZAIN: /* exceptions */
+    case a_ZAIN: // exceptions
       tempc = a_s_ZAIN;
       break;
 
-    case a_TATWEEL: /* exceptions */
+    case a_TATWEEL: // exceptions
       tempc = cur_c;
       break;
 
-    case a_WAW: /* exceptions */
+    case a_WAW: // exceptions
       tempc = a_s_WAW;
       break;
 
-    case a_ALEF_MAKSURA: /* exceptions */
+    case a_ALEF_MAKSURA: // exceptions
       tempc = a_s_ALEF_MAKSURA;
       break;
 
@@ -513,31 +489,29 @@ static int chg_c_a2i(int cur_c)
   return tempc;
 }
 
-/*
- * Change shape - from ISO-8859-6/Isolated to Medial
- */
+// Change shape - from ISO-8859-6/Isolated to Medial
 static int chg_c_a2m(int cur_c)
 {
   int tempc;
 
   switch (cur_c) {
-    case a_HAMZA: /* exception */
+    case a_HAMZA: // exception
       tempc = a_s_HAMZA;
       break;
 
-    case a_ALEF_MADDA: /* exception */
+    case a_ALEF_MADDA: // exception
       tempc = a_f_ALEF_MADDA;
       break;
 
-    case a_ALEF_HAMZA_ABOVE: /* exception */
+    case a_ALEF_HAMZA_ABOVE: // exception
       tempc = a_f_ALEF_HAMZA_ABOVE;
       break;
 
-    case a_WAW_HAMZA: /* exception */
+    case a_WAW_HAMZA: // exception
       tempc = a_f_WAW_HAMZA;
       break;
 
-    case a_ALEF_HAMZA_BELOW: /* exception */
+    case a_ALEF_HAMZA_BELOW: // exception
       tempc = a_f_ALEF_HAMZA_BELOW;
       break;
 
@@ -545,7 +519,7 @@ static int chg_c_a2m(int cur_c)
       tempc = a_m_YEH_HAMZA;
       break;
 
-    case a_ALEF: /* exception */
+    case a_ALEF: // exception
       tempc = a_f_ALEF;
       break;
 
@@ -553,7 +527,7 @@ static int chg_c_a2m(int cur_c)
       tempc = a_m_BEH;
       break;
 
-    case a_TEH_MARBUTA: /* exception */
+    case a_TEH_MARBUTA: // exception
       tempc = a_f_TEH_MARBUTA;
       break;
 
@@ -577,19 +551,19 @@ static int chg_c_a2m(int cur_c)
       tempc = a_m_KHAH;
       break;
 
-    case a_DAL: /* exception */
+    case a_DAL: // exception
       tempc = a_f_DAL;
       break;
 
-    case a_THAL: /* exception */
+    case a_THAL: // exception
       tempc = a_f_THAL;
       break;
 
-    case a_REH: /* exception */
+    case a_REH: // exception
       tempc = a_f_REH;
       break;
 
-    case a_ZAIN: /* exception */
+    case a_ZAIN: // exception
       tempc = a_f_ZAIN;
       break;
 
@@ -625,7 +599,7 @@ static int chg_c_a2m(int cur_c)
       tempc = a_m_GHAIN;
       break;
 
-    case a_TATWEEL: /* exception */
+    case a_TATWEEL: // exception
       tempc = cur_c;
       break;
 
@@ -657,11 +631,11 @@ static int chg_c_a2m(int cur_c)
       tempc = a_m_HEH;
       break;
 
-    case a_WAW: /* exception */
+    case a_WAW: // exception
       tempc = a_f_WAW;
       break;
 
-    case a_ALEF_MAKSURA: /* exception */
+    case a_ALEF_MAKSURA: // exception
       tempc = a_f_ALEF_MAKSURA;
       break;
 
@@ -676,25 +650,22 @@ static int chg_c_a2m(int cur_c)
   return tempc;
 }
 
-/*
- * Change shape - from ISO-8859-6/Isolated to final
- */
+// Change shape - from ISO-8859-6/Isolated to final
 static int chg_c_a2f(int cur_c)
 {
   int tempc;
 
-  /* NOTE: these encodings need to be accounted for
-
-      a_f_ALEF_MADDA;
-      a_f_ALEF_HAMZA_ABOVE;
-      a_f_ALEF_HAMZA_BELOW;
-      a_f_LAM_ALEF_MADDA_ABOVE;
-      a_f_LAM_ALEF_HAMZA_ABOVE;
-      a_f_LAM_ALEF_HAMZA_BELOW;
-   */
+  // NOTE: these encodings need to be accounted for
+  //
+  // a_f_ALEF_MADDA;
+  // a_f_ALEF_HAMZA_ABOVE;
+  // a_f_ALEF_HAMZA_BELOW;
+  // a_f_LAM_ALEF_MADDA_ABOVE;
+  // a_f_LAM_ALEF_HAMZA_ABOVE;
+  // a_f_LAM_ALEF_HAMZA_BELOW;
 
   switch (cur_c) {
-    case a_HAMZA: /* exception */
+    case a_HAMZA: // exception
       tempc = a_s_HAMZA;
       break;
 
@@ -798,7 +769,7 @@ static int chg_c_a2f(int cur_c)
       tempc = a_f_GHAIN;
       break;
 
-    case a_TATWEEL: /* exception */
+    case a_TATWEEL: // exception
       tempc = cur_c;
       break;
 
@@ -849,9 +820,7 @@ static int chg_c_a2f(int cur_c)
   return tempc;
 }
 
-/*
- * Change shape - from Initial to Medial
- */
+// Change shape - from Initial to Medial
 static int chg_c_i2m(int cur_c)
 {
   int tempc;
@@ -956,24 +925,21 @@ static int chg_c_i2m(int cur_c)
   return tempc;
 }
 
-/*
- * Change shape - from Final to Medial
- */
+// Change shape - from Final to Medial
 static int chg_c_f2m(int cur_c)
 {
   int tempc;
 
   switch (cur_c) {
-    /* NOTE: these encodings are multi-positional, no ?
-       case a_f_ALEF_MADDA:
-       case a_f_ALEF_HAMZA_ABOVE:
-       case a_f_ALEF_HAMZA_BELOW:
-     */
+    // NOTE: these encodings are multi-positional, no ?
+    // case a_f_ALEF_MADDA:
+    // case a_f_ALEF_HAMZA_ABOVE:
+    // case a_f_ALEF_HAMZA_BELOW:
     case a_f_YEH_HAMZA:
       tempc = a_m_YEH_HAMZA;
       break;
 
-    case a_f_WAW_HAMZA: /* exceptions */
+    case a_f_WAW_HAMZA: // exceptions
     case a_f_ALEF:
     case a_f_TEH_MARBUTA:
     case a_f_DAL:
