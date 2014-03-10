@@ -21,8 +21,8 @@
 
 /* from zip.h */
 
-typedef unsigned short ush;     /* unsigned 16-bit value */
-typedef unsigned long ulg;      /* unsigned 32-bit value */
+typedef unsigned short ush; /* unsigned 16-bit value */
+typedef unsigned long ulg;  /* unsigned 32-bit value */
 
 static void make_crc_tab(void);
 
@@ -31,16 +31,21 @@ static ulg crc_32_tab[256];
 /*
  * Fill the CRC table.
  */
-static void make_crc_tab(void)                 {
-  ulg s,t,v;
+static void make_crc_tab(void)
+{
+  ulg s, t, v;
   static int done = FALSE;
 
-  if (done)
+  if (done) {
     return;
+  }
+
   for (t = 0; t < 256; t++) {
     v = t;
-    for (s = 0; s < 8; s++)
+
+    for (s = 0; s < 8; s++) {
       v = (v >> 1) ^ ((v & 1) * (ulg)0xedb88320L);
+    }
     crc_32_tab[t] = v;
   }
   done = TRUE;
@@ -54,20 +59,19 @@ static ulg keys[3]; /* keys defining the pseudo-random sequence */
  * Return the next byte in the pseudo-random sequence.
  */
 #define DECRYPT_BYTE_ZIP(t) { \
-    ush temp; \
- \
-    temp = (ush)keys[2] | 2; \
-    t = (int)(((unsigned)(temp * (temp ^ 1U)) >> 8) & 0xff); \
+  ush temp; \
+  temp = (ush)keys[2] | 2; \
+  t = (int)(((unsigned)(temp * (temp ^ 1U)) >> 8) & 0xff); \
 }
 
 /*
  * Update the encryption keys with the next byte of plain text.
  */
 #define UPDATE_KEYS_ZIP(c) { \
-    keys[0] = CRC32(keys[0], (c)); \
-    keys[1] += keys[0] & 0xff; \
-    keys[1] = keys[1] * 134775813L + 1; \
-    keys[2] = CRC32(keys[2], (int)(keys[1] >> 24)); \
+  keys[0] = CRC32(keys[0], (c)); \
+  keys[1] += keys[0] & 0xff; \
+  keys[1] = keys[1] * 134775813L + 1; \
+  keys[2] = CRC32(keys[2], (int)(keys[1] >> 24)); \
 }
 
 static int crypt_busy = 0;
@@ -107,18 +111,21 @@ void set_crypt_method(buf_T *buf, int method)
  * the state.
  * Must always be called symmetrically with crypt_pop_state().
  */
-void crypt_push_state(void)          {
+void crypt_push_state(void)
+{
   if (crypt_busy == 1) {
     /* save the state */
     if (use_crypt_method == 0) {
       saved_keys[0] = keys[0];
       saved_keys[1] = keys[1];
       saved_keys[2] = keys[2];
-    } else
+    } else {
       bf_crypt_save();
+    }
     saved_crypt_method = use_crypt_method;
-  } else if (crypt_busy > 1)
+  } else if (crypt_busy > 1) {
     EMSG2(_(e_intern2), "crypt_push_state()");
+  }
   ++crypt_busy;
 }
 
@@ -127,16 +134,20 @@ void crypt_push_state(void)          {
  * the saved state.
  * Must always be called symmetrically with crypt_push_state().
  */
-void crypt_pop_state(void)          {
+void crypt_pop_state(void)
+{
   --crypt_busy;
+
   if (crypt_busy == 1) {
     use_crypt_method = saved_crypt_method;
+
     if (use_crypt_method == 0) {
       keys[0] = saved_keys[0];
       keys[1] = saved_keys[1];
       keys[2] = saved_keys[2];
-    } else
+    } else {
       bf_crypt_restore();
+    }
   }
 }
 
@@ -149,15 +160,16 @@ void crypt_encode(char_u *from, size_t len, char_u *to)
   size_t i;
   int ztemp, t;
 
-  if (use_crypt_method == 0)
+  if (use_crypt_method == 0) {
     for (i = 0; i < len; ++i) {
       ztemp = from[i];
       DECRYPT_BYTE_ZIP(t);
       UPDATE_KEYS_ZIP(ztemp);
       to[i] = t ^ ztemp;
     }
-  else
+  } else {
     bf_crypt_encode(from, len, to);
+  }
 }
 
 /*
@@ -167,7 +179,7 @@ void crypt_decode(char_u *ptr, long len)
 {
   char_u *p;
 
-  if (use_crypt_method == 0)
+  if (use_crypt_method == 0) {
     for (p = ptr; p < ptr + len; ++p) {
       ush temp;
 
@@ -175,21 +187,20 @@ void crypt_decode(char_u *ptr, long len)
       temp = (int)(((unsigned)(temp * (temp ^ 1U)) >> 8) & 0xff);
       UPDATE_KEYS_ZIP(*p ^= temp);
     }
-  else
+  } else {
     bf_crypt_decode(ptr, len);
+  }
 }
 
 /*
  * Initialize the encryption keys and the random header according to
  * the given password.
  * If "passwd" is NULL or empty, don't do anything.
+ * in: "passwd" password string with which to modify keys
  */
-void 
-crypt_init_keys (
-    char_u *passwd                 /* password string with which to modify keys */
-)
+void crypt_init_keys(char_u *passwd)
 {
-  if (passwd != NULL && *passwd != NUL) {
+  if ((passwd != NULL) && (*passwd != NUL)) {
     if (use_crypt_method == 0) {
       char_u *p;
 
@@ -197,11 +208,13 @@ crypt_init_keys (
       keys[0] = 305419896L;
       keys[1] = 591751049L;
       keys[2] = 878082192L;
-      for (p = passwd; *p!= NUL; ++p) {
+
+      for (p = passwd; *p != NUL; ++p) {
         UPDATE_KEYS_ZIP((int)*p);
       }
-    } else
+    } else {
       bf_crypt_init_keys(passwd);
+    }
   }
 }
 
@@ -214,8 +227,9 @@ void free_crypt_key(char_u *key)
   char_u *p;
 
   if (key != NULL) {
-    for (p = key; *p != NUL; ++p)
+    for (p = key; *p != NUL; ++p) {
       *p = 0;
+    }
     vim_free(key);
   }
 }
@@ -225,41 +239,38 @@ void free_crypt_key(char_u *key)
  * When "store" is TRUE, the new key is stored in the 'key' option, and the
  * 'key' option value is returned: Don't free it.
  * When "store" is FALSE, the typed key is returned in allocated memory.
+ * in: "twice" Ask for the key twice.
  * Returns NULL on failure.
  */
-char_u *
-get_crypt_key (
-    int store,
-    int twice                  /* Ask for the key twice. */
-)
+char_u *get_crypt_key(int store, int twice)
 {
-  char_u      *p1, *p2 = NULL;
+  char_u *p1, *p2 = NULL;
   int round;
 
   for (round = 0;; ++round) {
     cmdline_star = TRUE;
     cmdline_row = msg_row;
-    p1 = getcmdline_prompt(NUL, round == 0
-        ? (char_u *)_("Enter encryption key: ")
-        : (char_u *)_("Enter same key again: "), 0, EXPAND_NOTHING,
-        NULL);
+    char_u *prompt = (round == 0)
+        ? (char_u *) _("Enter encryption key: ")
+        : (char_u *) _("Enter same key again: ");
+    p1 = getcmdline_prompt(NUL, prompt, 0, EXPAND_NOTHING, NULL);
     cmdline_star = FALSE;
-
-    if (p1 == NULL)
+    if (p1 == NULL) {
       break;
+    }
 
     if (round == twice) {
-      if (p2 != NULL && STRCMP(p1, p2) != 0) {
+      if ((p2 != NULL) && (STRCMP(p1, p2) != 0)) {
         MSG(_("Keys don't match!"));
         free_crypt_key(p1);
         free_crypt_key(p2);
         p2 = NULL;
-        round = -1;                     /* do it again */
+        round = -1; /* do it again */
         continue;
       }
 
       if (store) {
-        set_option_value((char_u *)"key", 0L, p1, OPT_LOCAL);
+        set_option_value((char_u *) "key", 0L, p1, OPT_LOCAL);
         free_crypt_key(p1);
         p1 = curbuf->b_p_key;
       }
@@ -269,12 +280,12 @@ get_crypt_key (
   }
 
   /* since the user typed this, no need to wait for return */
-  if (msg_didout)
+  if (msg_didout) {
     msg_putchar('\n');
+  }
   need_wait_return = FALSE;
   msg_didout = FALSE;
 
   free_crypt_key(p2);
   return p1;
 }
-

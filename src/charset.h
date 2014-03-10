@@ -1,6 +1,6 @@
 #ifndef NEOVIM_CHARSET_H
 #define NEOVIM_CHARSET_H
-/* charset.c */
+
 int init_chartab(void);
 int buf_init_chartab(buf_T *buf, int global);
 void trans_characters(char_u *buf, int bufsize);
@@ -63,5 +63,6 @@ int rem_backslash(char_u *str);
 void backslash_halve(char_u *p);
 char_u *backslash_halve_save(char_u *p);
 void ebcdic2ascii(char_u *buffer, int len);
-/* vim: set ft=c : */
-#endif /* NEOVIM_CHARSET_H */
+
+// vim: set ft=c:
+#endif  // NEOVIM_CHARSET_H

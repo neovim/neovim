@@ -1,37 +1,20 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
- * VIM - Vi IMproved    by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
+/// @file arabic.h
+///
+/// Arabic characters are categorized into following types:
+///
+/// Isolated    - iso-8859-6 form         char denoted with  a_*
+/// Initial     - unicode form-B start    char denoted with  a_i_*
+/// Medial      - unicode form-B middle   char denoted with  a_m_*
+/// Final       - unicode form-B final    char denoted with  a_f_*
+/// Stand-Alone - unicode form-B isolated char denoted with  a_s_* (NOT USED)
+///
 
-#ifndef SRC_ARABIC_H_
-#define SRC_ARABIC_H_
+#ifndef NEOVIM_ARABIC_H
+#define NEOVIM_ARABIC_H
 
-/*
- * Arabic characters are categorized into following types:
- *
- * Isolated	- iso-8859-6 form	  char denoted with	a_*
- * Initial	- unicode form-B start	  char denoted with	a_i_*
- * Medial	- unicode form-B middle   char denoted with	a_m_*
- * Final	- unicode form-B final	  char denoted with	a_f_*
- * Stand-Alone	- unicode form-B isolated char denoted with	a_s_* (NOT USED)
- *
- * --
- *
- * Author: Nadim Shaikli & Isam Bayazidi
- * - (based on Unicode)
- *
- */
+// Arabic ISO-10646-1 character set definition
 
-/*
- * Arabic ISO-10646-1 character set definition
- */
-
-/*
- * Arabic ISO-8859-6 (subset of 10646; 0600 - 06FF)
- */
+// Arabic ISO-8859-6 (subset of 10646; 0600 - 06FF)
 #define a_COMMA                         0x060C
 #define a_SEMICOLON                     0x061B
 #define a_QUESTION                      0x061F
@@ -101,17 +84,15 @@
 #define a_THOUSANDS                     0x066c
 #define a_STAR                          0x066d
 #define a_MINI_ALEF                     0x0670
-/* Rest of 8859-6 does not relate to Arabic */
+// Rest of 8859-6 does not relate to Arabic
 
-/*
- * Arabic Presentation Form-B (subset of 10646; FE70 - FEFF)
- *
- *  s -> isolated
- *  i -> initial
- *  m -> medial
- *  f -> final
- *
- */
+// Arabic Presentation Form-B (subset of 10646; FE70 - FEFF)
+//
+//  s -> isolated
+//  i -> initial
+//  m -> medial
+//  f -> final
+//
 #define a_s_FATHATAN                    0xfe70
 #define a_m_TATWEEL_FATHATAN            0xfe71
 #define a_s_DAMMATAN                    0xfe72
@@ -257,7 +238,7 @@
 
 #define a_BYTE_ORDER_MARK               0xfeff
 
-/* Range of Arabic characters that might be shaped. */
+// Range of Arabic characters that might be shaped.
 #define ARABIC_CHAR(c)          ((c) >= a_HAMZA && (c) <= a_MINI_ALEF)
 
-#endif  // SRC_ARABIC_H_
+#endif  // NEOVIM_ARABIC_H
