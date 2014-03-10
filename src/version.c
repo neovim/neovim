@@ -73,11 +73,7 @@ static char *(features[]) =
   "+cryptv",
   "+cscope",
   "+cursorbind",
-#ifdef CURSOR_SHAPE
   "+cursorshape",
-#else
-  "-cursorshape",
-#endif
   "+dialog_con",
   "+diff",
   "+digraphs",

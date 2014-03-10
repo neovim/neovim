@@ -547,9 +547,7 @@ edit (
   if (!p_im && did_restart_edit == 0)
     change_warning(i == 0 ? 0 : i + 1);
 
-#ifdef CURSOR_SHAPE
   ui_cursor_shape();            /* may show different cursor shape */
-#endif
   do_digraph(-1);               /* clear digraphs */
 
   /*
@@ -7074,9 +7072,7 @@ ins_esc (
   changed_cline_bef_curs();
 
   setmouse();
-#ifdef CURSOR_SHAPE
   ui_cursor_shape();            /* may show different cursor shape */
-#endif
 
   /*
    * When recording or for CTRL-O, need to display the new mode.
@@ -7190,9 +7186,7 @@ static void ins_insert(int replaceState)
     State = replaceState | (State & LANGMAP);
   AppendCharToRedobuff(K_INS);
   showmode();
-#ifdef CURSOR_SHAPE
   ui_cursor_shape();            /* may show different cursor shape */
-#endif
 }
 
 /*
