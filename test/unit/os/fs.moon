@@ -1,5 +1,6 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+{:cimport, :cppimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 require 'lfs'
+require 'bit'
 
 -- fs = cimport './src/os/os.h'
 -- remove these statements once 'cimport' is working properly for misc1.h
@@ -15,16 +16,20 @@ int mch_dirname(char_u *buf, int len);
 int mch_isdir(char_u * name);
 int is_executable(char_u *name);
 int mch_can_exe(char_u *name);
+long mch_getperm(char_u *name);
+int mch_setperm(char_u *name, long perm);
 ]]
 
 -- import constants parsed by ffi
 {:OK, :FAIL} = lib
 {:TRUE, :FALSE} = lib
 
+cppimport 'sys/stat.h'
+
 describe 'fs function', ->
   setup ->
     lfs.mkdir 'unit-test-directory'
-    lfs.touch 'unit-test-directory/test.file'
+    (io.open 'unit-test-directory/test.file', 'w').close!
 
     -- Since the tests are executed, they are called by an executable. We use
     -- that executable for several asserts.
@@ -35,6 +40,7 @@ describe 'fs function', ->
     export directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
 
   teardown ->
+    os.remove 'unit-test-directory/test.file'
     lfs.rmdir 'unit-test-directory'
 
   describe 'mch_dirname', ->
@@ -266,3 +272,51 @@ describe 'fs function', ->
       relative_executable = './' .. executable_name
       eq TRUE, (mch_can_exe relative_executable)
       lfs.chdir old_dir
+
+  describe 'file permissions', ->
+    mch_getperm = (filename) ->
+      perm = fs.mch_getperm (to_cstr filename)
+      tonumber perm
+
+    mch_setperm = (filename, perm) ->
+      fs.mch_setperm (to_cstr filename), perm
+
+    bit_set = (number, check_bit) ->
+      if 0 == (bit.band number, check_bit) then false else true
+
+    set_bit = (number, to_set) ->
+      return bit.bor number, to_set
+
+    unset_bit = (number, to_unset) ->
+      return bit.band number, (bit.bnot to_unset)
+
+    describe 'mch_getperm', ->
+      it 'returns -1 when the given file does not exist', ->
+        eq -1, (mch_getperm 'non-existing-file')
+
+      it 'returns a perm > 0 when given an existing file', -> 
+        assert.is_true (mch_getperm 'unit-test-directory') > 0
+
+      it 'returns S_IRUSR when the file is readable', ->
+        perm = mch_getperm 'unit-test-directory'
+        assert.is_true (bit_set perm, ffi.C.kS_IRUSR)
+
+    describe 'mch_setperm', ->
+      it 'can set and unset the executable bit of a file', ->
+        perm = mch_getperm 'unit-test-directory/test.file'
+
+        perm = unset_bit perm, ffi.C.kS_IXUSR
+        eq OK, (mch_setperm 'unit-test-directory/test.file', perm)
+
+        perm = mch_getperm 'unit-test-directory/test.file'
+        assert.is_false (bit_set perm, ffi.C.kS_IXUSR)
+
+        perm = set_bit perm, ffi.C.kS_IXUSR
+        eq OK, mch_setperm 'unit-test-directory/test.file', perm
+
+        perm = mch_getperm 'unit-test-directory/test.file'
+        assert.is_true (bit_set perm, ffi.C.kS_IXUSR)
+
+      it 'fails if given file does not exist', ->
+        perm = ffi.C.kS_IXUSR
+        eq FAIL, (mch_setperm 'non-existing-file', perm)
