@@ -36,6 +36,7 @@ cmake: clean deps
 clean:
 	rm -rf build
 	$(MAKE) -C src/testdir clean
+	$(MAKE) -C test/includes clean
 
 install: build/bin/nvim
 	$(MAKE) -C build install
