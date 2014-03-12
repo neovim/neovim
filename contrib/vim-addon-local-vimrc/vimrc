@@ -1,0 +1,11 @@
+set modelines=0
+
+augroup LOCAL_SETUP
+  autocmd!
+  autocmd BufRead,BufNewFile *.h set filetype=c
+  autocmd FileType c setlocal expandtab
+  autocmd FileType c setlocal shiftwidth=2
+  autocmd FileType c setlocal softtabstop=2
+  autocmd FileType c setlocal textwidth=80
+  autocmd FileType c setlocal comments=:///,://
+augroup end
