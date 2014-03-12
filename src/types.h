@@ -9,6 +9,8 @@
 #ifndef NEOVIM_TYPES_H
 #define NEOVIM_TYPES_H
 
+#include <stdint.h>
+
 /*
  * Shorthand for unsigned variables. Many systems, but not all, have u_char
  * already defined, so we use char_u to avoid trouble.
