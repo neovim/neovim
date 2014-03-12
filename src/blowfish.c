@@ -461,14 +461,6 @@ static int bf_self_test(void)                {
   int i, bn;
   int err = 0;
   block8 bk;
-  uint32_t ui = 0xffffffffUL;
-
-  /* We can't simply use sizeof(uint32_t), it would generate a compiler
-   * warning. */
-  if (ui != 0xffffffffUL || ui + 1 != 0) {
-    err++;
-    EMSG(_("E820: sizeof(uint32_t) != 4"));
-  }
 
   if (!bf_check_tables(ipa, sbi, 0x6ffa520a))
     err++;
