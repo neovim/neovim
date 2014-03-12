@@ -27,10 +27,10 @@ static void sha256_process(context_sha256_T *ctx, char_u data[64]);
 
 #define GET_UINT32(n, b, i)                 \
   {                                           \
-    (n) = ( (UINT32_T)(b)[(i)    ] << 24)   \
-          | ( (UINT32_T)(b)[(i) + 1] << 16)   \
-          | ( (UINT32_T)(b)[(i) + 2] <<  8)   \
-          | ( (UINT32_T)(b)[(i) + 3]      );  \
+    (n) = ( (uint32_t)(b)[(i)    ] << 24)   \
+          | ( (uint32_t)(b)[(i) + 1] << 16)   \
+          | ( (uint32_t)(b)[(i) + 2] <<  8)   \
+          | ( (uint32_t)(b)[(i) + 3]      );  \
   }
 
 #define PUT_UINT32(n,b,i)                 \
@@ -58,8 +58,8 @@ void sha256_start(context_sha256_T *ctx)
 
 static void sha256_process(context_sha256_T *ctx, char_u data[64])
 {
-  UINT32_T temp1, temp2, W[64];
-  UINT32_T A, B, C, D, E, F, G, H;
+  uint32_t temp1, temp2, W[64];
+  uint32_t A, B, C, D, E, F, G, H;
 
   GET_UINT32(W[0],  data,  0);
   GET_UINT32(W[1],  data,  4);
@@ -187,9 +187,9 @@ static void sha256_process(context_sha256_T *ctx, char_u data[64])
   ctx->state[7] += H;
 }
 
-void sha256_update(context_sha256_T *ctx, char_u *input, UINT32_T length)
+void sha256_update(context_sha256_T *ctx, char_u *input, uint32_t length)
 {
-  UINT32_T left, fill;
+  uint32_t left, fill;
 
   if (length == 0)
     return;
@@ -230,8 +230,8 @@ static char_u sha256_padding[64] = {
 
 void sha256_finish(context_sha256_T *ctx, char_u digest[32])
 {
-  UINT32_T last, padn;
-  UINT32_T high, low;
+  uint32_t last, padn;
+  uint32_t high, low;
   char_u msglen[8];
 
   high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);

@@ -666,7 +666,7 @@ void u_compute_hash(char_u *hash)
   sha256_start(&ctx);
   for (lnum = 1; lnum <= curbuf->b_ml.ml_line_count; ++lnum) {
     p = ml_get(lnum);
-    sha256_update(&ctx, p, (UINT32_T)(STRLEN(p) + 1));
+    sha256_update(&ctx, p, (uint32_t)(STRLEN(p) + 1));
   }
   sha256_finish(&ctx, hash);
 }

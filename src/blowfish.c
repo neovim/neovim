@@ -23,20 +23,20 @@
 #define BF_OFB_LEN  (8*(BF_BLOCK))
 
 typedef union {
-  UINT32_T ul[2];
+  uint32_t ul[2];
   char_u uc[8];
 } block8;
 
 
-static void bf_e_block(UINT32_T *p_xl, UINT32_T *p_xr);
+static void bf_e_block(uint32_t *p_xl, uint32_t *p_xr);
 static void bf_e_cblock(char_u *block);
-static int bf_check_tables(UINT32_T a_ipa[18], UINT32_T a_sbi[4][256],
-                           UINT32_T val);
+static int bf_check_tables(uint32_t a_ipa[18], uint32_t a_sbi[4][256],
+                           uint32_t val);
 static int bf_self_test(void);
 
 /* Blowfish code */
-static UINT32_T pax[18];
-static UINT32_T ipa[18] = {
+static uint32_t pax[18];
+static uint32_t ipa[18] = {
   0x243f6a88u, 0x85a308d3u, 0x13198a2eu,
   0x03707344u, 0xa4093822u, 0x299f31d0u,
   0x082efa98u, 0xec4e6c89u, 0x452821e6u,
@@ -45,8 +45,8 @@ static UINT32_T ipa[18] = {
   0xb5470917u, 0x9216d5d9u, 0x8979fb1bu
 };
 
-static UINT32_T sbx[4][256];
-static UINT32_T sbi[4][256] = {
+static uint32_t sbx[4][256];
+static uint32_t sbi[4][256] = {
   {0xd1310ba6u, 0x98dfb5acu, 0x2ffd72dbu, 0xd01adfb7u,
    0xb8e1afedu, 0x6a267e96u, 0xba7c9045u, 0xf12c7f99u,
    0x24a19947u, 0xb3916cf7u, 0x0801f2e2u, 0x858efc16u,
@@ -321,9 +321,9 @@ static UINT32_T sbi[4][256] = {
         sbx[3][xr & 0xFF];
 
 
-static void bf_e_block(UINT32_T *p_xl, UINT32_T *p_xr)
+static void bf_e_block(uint32_t *p_xl, uint32_t *p_xr)
 {
-  UINT32_T temp, xl = *p_xl, xr = *p_xr;
+  uint32_t temp, xl = *p_xl, xr = *p_xr;
 
   F1(0) F2(1) F1(2) F2(3) F1(4) F2(5) F1(6) F2(7)
   F1(8) F2(9) F1(10) F2(11) F1(12) F2(13) F1(14) F2(15)
@@ -368,7 +368,7 @@ void bf_key_init(char_u *password, char_u *salt, int salt_len)
 {
   int i, j, keypos = 0;
   unsigned u;
-  UINT32_T val, data_l, data_r;
+  uint32_t val, data_l, data_r;
   char_u   *key;
   int keylen;
 
@@ -417,10 +417,10 @@ void bf_key_init(char_u *password, char_u *salt, int salt_len)
 /*
  * BF Self test for corrupted tables or instructions
  */
-static int bf_check_tables(UINT32_T a_ipa[18], UINT32_T a_sbi[4][256], UINT32_T val)
+static int bf_check_tables(uint32_t a_ipa[18], uint32_t a_sbi[4][256], uint32_t val)
 {
   int i, j;
-  UINT32_T c = 0;
+  uint32_t c = 0;
 
   for (i = 0; i < 18; i++)
     c ^= a_ipa[i];
@@ -436,7 +436,7 @@ typedef struct {
   char_u plaintxt[9];
   char_u cryptxt[9];
   char_u badcryptxt[9];     /* cryptxt when big/little endian is wrong */
-  UINT32_T keysum;
+  uint32_t keysum;
 } struct_bf_test_data;
 
 /*
@@ -461,9 +461,9 @@ static int bf_self_test(void)                {
   int i, bn;
   int err = 0;
   block8 bk;
-  UINT32_T ui = 0xffffffffUL;
+  uint32_t ui = 0xffffffffUL;
 
-  /* We can't simply use sizeof(UINT32_T), it would generate a compiler
+  /* We can't simply use sizeof(uint32_t), it would generate a compiler
    * warning. */
   if (ui != 0xffffffffUL || ui + 1 != 0) {
     err++;
@@ -580,8 +580,8 @@ bf_crypt_init_keys (
 static int save_randbyte_offset;
 static int save_update_offset;
 static char_u save_ofb_buffer[BF_OFB_LEN];
-static UINT32_T save_pax[18];
-static UINT32_T save_sbx[4][256];
+static uint32_t save_pax[18];
+static uint32_t save_sbx[4][256];
 
 /*
  * Save the current crypt state.  Can only be used once before
