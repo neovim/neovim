@@ -27,6 +27,7 @@
 #include "fileio.h"
 #include "fold.h"
 #include "getchar.h"
+#include "indent_c.h"
 #include "main.h"
 #include "mark.h"
 #include "memline.h"

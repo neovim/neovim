@@ -47,6 +47,7 @@
 #include "fold.h"
 #include "getchar.h"
 #include "hardcopy.h"
+#include "indent_c.h"
 #include "mbyte.h"
 #include "memfile.h"
 #include "memline.h"

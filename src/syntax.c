@@ -20,6 +20,7 @@
 #include "fileio.h"
 #include "fold.h"
 #include "hashtab.h"
+#include "indent_c.h"
 #include "mbyte.h"
 #include "memline.h"
 #include "message.h"
