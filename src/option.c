@@ -14,7 +14,7 @@
  * - For a global option: Add a variable for it in option_defs.h.
  * - For a buffer or window local option:
  *   - Add a PV_XX entry to the enum below.
- *   - Add a variable to the window or buffer struct in structs.h.
+ *   - Add a variable to the window or buffer struct in buffer_defs.h.
  *   - For a window option, add some code to copy_winopt().
  *   - For a buffer option, add some code to buf_copy_options().
  *   - For a buffer string option, add code to check_buf_options().

@@ -1,5 +1,10 @@
 #ifndef NEOVIM_SYNTAX_H
 #define NEOVIM_SYNTAX_H
+
+#include "buffer_defs.h"
+
+typedef int guicolor_T;
+
 /* syntax.c */
 void syntax_start(win_T *wp, linenr_T lnum);
 void syn_stack_free_all(synblock_T *block);
