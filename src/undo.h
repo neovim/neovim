@@ -1,5 +1,8 @@
 #ifndef NEOVIM_UNDO_H
 #define NEOVIM_UNDO_H
+
+#include "undo_defs.h"
+
 /* undo.c */
 int u_save_cursor(void);
 int u_save(linenr_T top, linenr_T bot);

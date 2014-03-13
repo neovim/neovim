@@ -1,5 +1,10 @@
 #ifndef NEOVIM_MARK_H
 #define NEOVIM_MARK_H
+
+#include "buffer_defs.h"
+#include "mark_defs.h"
+#include "pos.h"
+
 /* mark.c */
 int setmark(int c);
 int setmark_pos(int c, pos_T *pos, int fnum);

@@ -1228,14 +1228,6 @@ int vim_memcmp(void *, void *, size_t);
 
 typedef struct timeval proftime_T;
 
-/* Include option_defs.h before structs.h, because the number of window-local and
- * buffer-local options is used there. */
-#include "option_defs.h"         /* options and default values */
-
-/* Note that gui.h is included by structs.h */
-
-#include "structs.h"        /* file that defines many structures */
-
 /* Values for "do_profiling". */
 #define PROF_NONE       0       /* profiling not started */
 #define PROF_YES        1       /* profiling busy */
@@ -1380,6 +1372,7 @@ typedef struct timeval proftime_T;
 typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
+#include "buffer_defs.h"         /* buffer and windows */
 #include "ex_cmds_defs.h"        /* Ex command defines */
 #include "proto.h"          /* function prototypes */
 

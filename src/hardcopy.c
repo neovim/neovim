@@ -92,6 +92,29 @@
  * printed in the margin.
  */
 
+static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
+#ifdef DO_INIT
+  =
+  {
+  {"top",     TRUE, 0, NULL, 0, FALSE},
+  {"bottom",  TRUE, 0, NULL, 0, FALSE},
+  {"left",    TRUE, 0, NULL, 0, FALSE},
+  {"right",   TRUE, 0, NULL, 0, FALSE},
+  {"header",  TRUE, 0, NULL, 0, FALSE},
+  {"syntax",  FALSE, 0, NULL, 0, FALSE},
+  {"number",  FALSE, 0, NULL, 0, FALSE},
+  {"wrap",    FALSE, 0, NULL, 0, FALSE},
+  {"duplex",  FALSE, 0, NULL, 0, FALSE},
+  {"portrait", FALSE, 0, NULL, 0, FALSE},
+  {"paper",   FALSE, 0, NULL, 0, FALSE},
+  {"collate", FALSE, 0, NULL, 0, FALSE},
+  {"jobsplit", FALSE, 0, NULL, 0, FALSE},
+  {"formfeed", FALSE, 0, NULL, 0, FALSE},
+  }
+#endif
+;
+
+
 static const long_u cterm_color_8[8] =
 {
   (long_u)0x000000L, (long_u)0xff0000L, (long_u)0x00ff00L, (long_u)0xffff00L,

@@ -1,59 +1,42 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- */
+#ifndef NEOVIM_BUFFER_DEFS_H
+#define NEOVIM_BUFFER_DEFS_H
 
 // for garray_T
 #include "garray.h"
 // for pos_T and lpos_T
 #include "pos.h"
-
-/*
- * This file contains various definitions of structures that are used by Vim
- */
+// for the number window-local and buffer-local options
+#include "option_defs.h"
+// for jump list and tag stack sizes in a buffer and mark types
+#include "mark_defs.h"
+// for u_header_T
+#include "undo_defs.h"
+// for hashtab_T
+#include "hashtab.h"
+// for dict_T
+#include "eval_defs.h"
 
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
-typedef int scid_T;                             /* script ID */
+typedef int scid_T;                     /* script ID */
 typedef struct file_buffer buf_T;       /* forward declaration */
+typedef struct memfile memfile_T;
+
+// for struct memline (it needs memfile_T)
+#include "memline_defs.h"
+
+// for struct memfile, bhdr_T, blocknr_T... (it needs buf_T)
+#include "memfile_defs.h"
 
 /*
- * This is here because regexp_defs.h needs win_T and regprog_T is used below.
+ * This is here because regexp_defs.h needs win_T and buf_T. regprog_T is
+ * used below.
  */
 #include "regexp_defs.h"
 
-/*
- * This is here because gui.h needs the pos_T and win_T, and win_T needs gui.h
- * for scrollbar_T.
- */
-# define guicolor_T int         /* avoid error in prototypes */
-
-/*
- * marks: positions in a file
- * (a normal mark is a lnum/col pair, the same as a file position)
- */
-
-/* (Note: for EBCDIC there are more than 26, because there are gaps in the
- * alphabet coding.  To minimize changes to the code, I decided to just
- * increase the number of possible marks. */
-#define NMARKS          ('z' - 'a' + 1) /* max. # of named marks */
-#define JUMPLISTSIZE    100             /* max. # of marks in jump list */
-#define TAGSTACKSIZE    20              /* max. # of tags in tag stack */
-
-typedef struct filemark {
-  pos_T mark;                   /* cursor position */
-  int fnum;                     /* file number */
-} fmark_T;
-
-/* Xtended file mark: also has a file name */
-typedef struct xfilemark {
-  fmark_T fmark;
-  char_u      *fname;           /* file name, used when fnum == 0 */
-} xfmark_T;
+// for  synstate_T (needs reg_extmatch_T, win_T and buf_T)
+#include "syntax_defs.h"
 
 /*
  * The taggy struct is used to store the information about a :tag command.
@@ -64,6 +47,24 @@ typedef struct taggy {
   int cur_match;                /* match number */
   int cur_fnum;                 /* buffer number used for cur_match */
 } taggy_T;
+
+/*
+ * structure used to store one block of the stuff/redo/recording buffers
+ */
+struct buffblock {
+  struct buffblock    *b_next;          /* pointer to next buffblock */
+  char_u b_str[1];                      /* contents (actually longer) */
+};
+
+/*
+ * header used for the stuff buffer and the redo buffer
+ */
+struct buffheader {
+  struct buffblock bh_first;            /* first (dummy) block of list */
+  struct buffblock    *bh_curr;         /* buffblock for appending */
+  int bh_index;                         /* index for reading */
+  int bh_space;                         /* space in bh_curr for appending */
+};
 
 /*
  * Structure that contains all options that are local to a window.
@@ -179,302 +180,11 @@ struct wininfo_S {
   garray_T wi_folds;            /* clone of w_folds */
 };
 
-/* Structure to store info about the Visual area. */
-typedef struct {
-  pos_T vi_start;               /* start pos of last VIsual */
-  pos_T vi_end;                 /* end position of last VIsual */
-  int vi_mode;                  /* VIsual_mode of last VIsual */
-  colnr_T vi_curswant;          /* MAXCOL from w_curswant */
-} visualinfo_T;
-
-/*
- * structures used for undo
- */
-
-typedef struct u_entry u_entry_T;
-typedef struct u_header u_header_T;
-struct u_entry {
-  u_entry_T   *ue_next;         /* pointer to next entry in list */
-  linenr_T ue_top;              /* number of line above undo block */
-  linenr_T ue_bot;              /* number of line below undo block */
-  linenr_T ue_lcount;           /* linecount when u_save called */
-  char_u      **ue_array;       /* array of lines in undo block */
-  long ue_size;                 /* number of lines in ue_array */
-#ifdef U_DEBUG
-  int ue_magic;                 /* magic number to check allocation */
-#endif
-};
-
-struct u_header {
-  /* The following have a pointer and a number. The number is used when
-   * reading the undo file in u_read_undo() */
-  union {
-    u_header_T *ptr;            /* pointer to next undo header in list */
-    long seq;
-  } uh_next;
-  union {
-    u_header_T *ptr;            /* pointer to previous header in list */
-    long seq;
-  } uh_prev;
-  union {
-    u_header_T *ptr;            /* pointer to next header for alt. redo */
-    long seq;
-  } uh_alt_next;
-  union {
-    u_header_T *ptr;            /* pointer to previous header for alt. redo */
-    long seq;
-  } uh_alt_prev;
-  long uh_seq;                  /* sequence number, higher == newer undo */
-  int uh_walk;                  /* used by undo_time() */
-  u_entry_T   *uh_entry;        /* pointer to first entry */
-  u_entry_T   *uh_getbot_entry;   /* pointer to where ue_bot must be set */
-  pos_T uh_cursor;              /* cursor position before saving */
-  long uh_cursor_vcol;
-  int uh_flags;                 /* see below */
-  pos_T uh_namedm[NMARKS];              /* marks before undo/after redo */
-  visualinfo_T uh_visual;       /* Visual areas before undo/after redo */
-  time_t uh_time;               /* timestamp when the change was made */
-  long uh_save_nr;              /* set when the file was saved after the
-                                   changes in this block */
-#ifdef U_DEBUG
-  int uh_magic;                 /* magic number to check allocation */
-#endif
-};
-
-/* values for uh_flags */
-#define UH_CHANGED  0x01        /* b_changed flag before undo/after redo */
-#define UH_EMPTYBUF 0x02        /* buffer was empty */
-
-/*
- * things used in memfile.c
- */
-
-typedef struct block_hdr bhdr_T;
-typedef struct memfile memfile_T;
-typedef long blocknr_T;
-
-/*
- * mf_hashtab_T is a chained hashtable with blocknr_T key and arbitrary
- * structures as items.  This is an intrusive data structure: we require
- * that items begin with mf_hashitem_T which contains the key and linked
- * list pointers.  List of items in each bucket is doubly-linked.
- */
-
-typedef struct mf_hashitem_S mf_hashitem_T;
-
-struct mf_hashitem_S {
-  mf_hashitem_T   *mhi_next;
-  mf_hashitem_T   *mhi_prev;
-  blocknr_T mhi_key;
-};
-
-#define MHT_INIT_SIZE   64
-
-typedef struct mf_hashtab_S {
-  long_u mht_mask;                  /* mask used for hash value (nr of items
-                                     * in array is "mht_mask" + 1) */
-  long_u mht_count;                 /* nr of items inserted into hashtable */
-  mf_hashitem_T   **mht_buckets;    /* points to mht_small_buckets or
-                                     *dynamically allocated array */
-  mf_hashitem_T   *mht_small_buckets[MHT_INIT_SIZE];     /* initial buckets */
-  char mht_fixed;                   /* non-zero value forbids growth */
-} mf_hashtab_T;
-
-/*
- * for each (previously) used block in the memfile there is one block header.
- *
- * The block may be linked in the used list OR in the free list.
- * The used blocks are also kept in hash lists.
- *
- * The used list is a doubly linked list, most recently used block first.
- *	The blocks in the used list have a block of memory allocated.
- *	mf_used_count is the number of pages in the used list.
- * The hash lists are used to quickly find a block in the used list.
- * The free list is a single linked list, not sorted.
- *	The blocks in the free list have no block of memory allocated and
- *	the contents of the block in the file (if any) is irrelevant.
- */
-
-struct block_hdr {
-  mf_hashitem_T bh_hashitem;        /* header for hash table and key */
-#define bh_bnum bh_hashitem.mhi_key /* block number, part of bh_hashitem */
-
-  bhdr_T      *bh_next;             /* next block_hdr in free or used list */
-  bhdr_T      *bh_prev;             /* previous block_hdr in used list */
-  char_u      *bh_data;             /* pointer to memory (for used block) */
-  int bh_page_count;                /* number of pages in this block */
-
-#define BH_DIRTY    1
-#define BH_LOCKED   2
-  char bh_flags;                    /* BH_DIRTY or BH_LOCKED */
-};
-
-/*
- * when a block with a negative number is flushed to the file, it gets
- * a positive number. Because the reference to the block is still the negative
- * number, we remember the translation to the new positive number in the
- * double linked trans lists. The structure is the same as the hash lists.
- */
-typedef struct nr_trans NR_TRANS;
-
-struct nr_trans {
-  mf_hashitem_T nt_hashitem;            /* header for hash table and key */
-#define nt_old_bnum nt_hashitem.mhi_key /* old, negative, number */
-
-  blocknr_T nt_new_bnum;                /* new, positive, number */
-};
-
-/*
- * structure used to store one block of the stuff/redo/recording buffers
- */
-struct buffblock {
-  struct buffblock    *b_next;          /* pointer to next buffblock */
-  char_u b_str[1];                      /* contents (actually longer) */
-};
-
-/*
- * header used for the stuff buffer and the redo buffer
- */
-struct buffheader {
-  struct buffblock bh_first;            /* first (dummy) block of list */
-  struct buffblock    *bh_curr;         /* buffblock for appending */
-  int bh_index;                         /* index for reading */
-  int bh_space;                         /* space in bh_curr for appending */
-};
-
-/*
- * used for completion on the command line
- */
-typedef struct expand {
-  int xp_context;                       /* type of expansion */
-  char_u      *xp_pattern;              /* start of item to expand */
-  int xp_pattern_len;                   /* bytes in xp_pattern before cursor */
-  char_u      *xp_arg;                  /* completion function */
-  int xp_scriptID;                      /* SID for completion function */
-  int xp_backslash;                     /* one of the XP_BS_ values */
-#ifndef BACKSLASH_IN_FILENAME
-  int xp_shell;                         /* TRUE for a shell command, more
-                                           characters need to be escaped */
-#endif
-  int xp_numfiles;                      /* number of files found by
-                                                    file name completion */
-  char_u      **xp_files;               /* list of files */
-  char_u      *xp_line;                 /* text being completed */
-  int xp_col;                           /* cursor position in line */
-} expand_T;
-
-/* values for xp_backslash */
-#define XP_BS_NONE      0       /* nothing special for backslashes */
-#define XP_BS_ONE       1       /* uses one backslash before a space */
-#define XP_BS_THREE     2       /* uses three backslashes before a space */
-
-/*
- * Command modifiers ":vertical", ":browse", ":confirm" and ":hide" set a flag.
- * This needs to be saved for recursive commands, put them in a structure for
- * easy manipulation.
- */
-typedef struct {
-  int hide;                             /* TRUE when ":hide" was used */
-  int split;                            /* flags for win_split() */
-  int tab;                              /* > 0 when ":tab" was used */
-  int confirm;                          /* TRUE to invoke yes/no dialog */
-  int keepalt;                          /* TRUE when ":keepalt" was used */
-  int keepmarks;                        /* TRUE when ":keepmarks" was used */
-  int keepjumps;                        /* TRUE when ":keepjumps" was used */
-  int lockmarks;                        /* TRUE when ":lockmarks" was used */
-  int keeppatterns;                     /* TRUE when ":keeppatterns" was used */
-  char_u      *save_ei;                 /* saved value of 'eventignore' */
-} cmdmod_T;
-
-#define MF_SEED_LEN     8
-
-struct memfile {
-  char_u      *mf_fname;                /* name of the file */
-  char_u      *mf_ffname;               /* idem, full path */
-  int mf_fd;                            /* file descriptor */
-  bhdr_T      *mf_free_first;           /* first block_hdr in free list */
-  bhdr_T      *mf_used_first;           /* mru block_hdr in used list */
-  bhdr_T      *mf_used_last;            /* lru block_hdr in used list */
-  unsigned mf_used_count;               /* number of pages in used list */
-  unsigned mf_used_count_max;           /* maximum number of pages in memory */
-  mf_hashtab_T mf_hash;                 /* hash lists */
-  mf_hashtab_T mf_trans;                /* trans lists */
-  blocknr_T mf_blocknr_max;             /* highest positive block number + 1*/
-  blocknr_T mf_blocknr_min;             /* lowest negative block number - 1 */
-  blocknr_T mf_neg_count;               /* number of negative blocks numbers */
-  blocknr_T mf_infile_count;            /* number of pages in the file */
-  unsigned mf_page_size;                /* number of bytes in a page */
-  int mf_dirty;                         /* TRUE if there are dirty blocks */
-  buf_T       *mf_buffer;               /* bufer this memfile is for */
-  char_u mf_seed[MF_SEED_LEN];          /* seed for encryption */
-
-  /* Values for key, method and seed used for reading data blocks when
-   * updating for a newly set key or method. Only when mf_old_key != NULL. */
-  char_u      *mf_old_key;
-  int mf_old_cm;
-  char_u mf_old_seed[MF_SEED_LEN];
-};
-
-/*
- * things used in memline.c
- */
-/*
- * When searching for a specific line, we remember what blocks in the tree
- * are the branches leading to that block. This is stored in ml_stack.  Each
- * entry is a pointer to info in a block (may be data block or pointer block)
- */
-typedef struct info_pointer {
-  blocknr_T ip_bnum;            /* block number */
-  linenr_T ip_low;              /* lowest lnum in this block */
-  linenr_T ip_high;             /* highest lnum in this block */
-  int ip_index;                 /* index for block with current lnum */
-} infoptr_T;    /* block/index pair */
-
-typedef struct ml_chunksize {
-  int mlcs_numlines;
-  long mlcs_totalsize;
-} chunksize_T;
-
-/* Flags when calling ml_updatechunk() */
-
-#define ML_CHNK_ADDLINE 1
-#define ML_CHNK_DELLINE 2
-#define ML_CHNK_UPDLINE 3
-
-/*
- * the memline structure holds all the information about a memline
- */
-typedef struct memline {
-  linenr_T ml_line_count;       /* number of lines in the buffer */
-
-  memfile_T   *ml_mfp;          /* pointer to associated memfile */
-
-#define ML_EMPTY        1       /* empty buffer */
-#define ML_LINE_DIRTY   2       /* cached line was changed and allocated */
-#define ML_LOCKED_DIRTY 4       /* ml_locked was changed */
-#define ML_LOCKED_POS   8       /* ml_locked needs positive block number */
-  int ml_flags;
-
-  infoptr_T   *ml_stack;        /* stack of pointer blocks (array of IPTRs) */
-  int ml_stack_top;             /* current top if ml_stack */
-  int ml_stack_size;            /* total number of entries in ml_stack */
-
-  linenr_T ml_line_lnum;        /* line number of cached line, 0 if not valid */
-  char_u      *ml_line_ptr;     /* pointer to cached line */
-
-  bhdr_T      *ml_locked;       /* block used by last ml_get */
-  linenr_T ml_locked_low;       /* first line in ml_locked */
-  linenr_T ml_locked_high;      /* last line in ml_locked */
-  int ml_locked_lineadd;            /* number of lines inserted in ml_locked */
-  chunksize_T *ml_chunksize;
-  int ml_numchunks;
-  int ml_usedchunks;
-} memline_T;
-
-
 /*
  * Argument list: Array of file names.
  * Used for the global argument list and the argument lists local to a window.
+ *
+ * TODO: move struct arglist to another header
  */
 typedef struct arglist {
   garray_T al_ga;               /* growarray with the array of file names */
@@ -485,6 +195,8 @@ typedef struct arglist {
  * For each argument remember the file name as it was given, and the buffer
  * number that contains the expanded file name (required for when ":cd" is
  * used.
+ *
+ * TODO: move aentry_T to another header
  */
 typedef struct argentry {
   char_u      *ae_fname;        /* file name as specified */
@@ -499,195 +211,6 @@ typedef struct argentry {
 #define GARGCOUNT       (global_alist.al_ga.ga_len)
 #define ARGCOUNT        (ALIST(curwin)->al_ga.ga_len)
 #define WARGCOUNT(wp)   (ALIST(wp)->al_ga.ga_len)
-
-/*
- * A list used for saving values of "emsg_silent".  Used by ex_try() to save the
- * value of "emsg_silent" if it was non-zero.  When this is done, the CSF_SILENT
- * flag below is set.
- */
-
-typedef struct eslist_elem eslist_T;
-struct eslist_elem {
-  int saved_emsg_silent;                /* saved value of "emsg_silent" */
-  eslist_T    *next;                    /* next element on the list */
-};
-
-/*
- * For conditional commands a stack is kept of nested conditionals.
- * When cs_idx < 0, there is no conditional command.
- */
-#define CSTACK_LEN      50
-
-struct condstack {
-  short cs_flags[CSTACK_LEN];           /* CSF_ flags */
-  char cs_pending[CSTACK_LEN];          /* CSTP_: what's pending in ":finally"*/
-  union {
-    void    *csp_rv[CSTACK_LEN];        /* return typeval for pending return */
-    void    *csp_ex[CSTACK_LEN];        /* exception for pending throw */
-  }           cs_pend;
-  void        *cs_forinfo[CSTACK_LEN];   /* info used by ":for" */
-  int cs_line[CSTACK_LEN];              /* line nr of ":while"/":for" line */
-  int cs_idx;                           /* current entry, or -1 if none */
-  int cs_looplevel;                     /* nr of nested ":while"s and ":for"s */
-  int cs_trylevel;                      /* nr of nested ":try"s */
-  eslist_T    *cs_emsg_silent_list;     /* saved values of "emsg_silent" */
-  char cs_lflags;                       /* loop flags: CSL_ flags */
-};
-# define cs_rettv       cs_pend.csp_rv
-# define cs_exception   cs_pend.csp_ex
-
-/* There is no CSF_IF, the lack of CSF_WHILE, CSF_FOR and CSF_TRY means ":if"
- * was used. */
-# define CSF_TRUE       0x0001  /* condition was TRUE */
-# define CSF_ACTIVE     0x0002  /* current state is active */
-# define CSF_ELSE       0x0004  /* ":else" has been passed */
-# define CSF_WHILE      0x0008  /* is a ":while" */
-# define CSF_FOR        0x0010  /* is a ":for" */
-
-# define CSF_TRY        0x0100  /* is a ":try" */
-# define CSF_FINALLY    0x0200  /* ":finally" has been passed */
-# define CSF_THROWN     0x0400  /* exception thrown to this try conditional */
-# define CSF_CAUGHT     0x0800  /* exception caught by this try conditional */
-# define CSF_SILENT     0x1000  /* "emsg_silent" reset by ":try" */
-/* Note that CSF_ELSE is only used when CSF_TRY and CSF_WHILE are unset
- * (an ":if"), and CSF_SILENT is only used when CSF_TRY is set. */
-
-/*
- * What's pending for being reactivated at the ":endtry" of this try
- * conditional:
- */
-# define CSTP_NONE      0       /* nothing pending in ":finally" clause */
-# define CSTP_ERROR     1       /* an error is pending */
-# define CSTP_INTERRUPT 2       /* an interrupt is pending */
-# define CSTP_THROW     4       /* a throw is pending */
-# define CSTP_BREAK     8       /* ":break" is pending */
-# define CSTP_CONTINUE  16      /* ":continue" is pending */
-# define CSTP_RETURN    24      /* ":return" is pending */
-# define CSTP_FINISH    32      /* ":finish" is pending */
-
-/*
- * Flags for the cs_lflags item in struct condstack.
- */
-# define CSL_HAD_LOOP    1      /* just found ":while" or ":for" */
-# define CSL_HAD_ENDLOOP 2      /* just found ":endwhile" or ":endfor" */
-# define CSL_HAD_CONT    4      /* just found ":continue" */
-# define CSL_HAD_FINA    8      /* just found ":finally" */
-
-/*
- * A list of error messages that can be converted to an exception.  "throw_msg"
- * is only set in the first element of the list.  Usually, it points to the
- * original message stored in that element, but sometimes it points to a later
- * message in the list.  See cause_errthrow() below.
- */
-struct msglist {
-  char_u              *msg;             /* original message */
-  char_u              *throw_msg;       /* msg to throw: usually original one */
-  struct msglist      *next;            /* next of several messages in a row */
-};
-
-/*
- * Structure describing an exception.
- * (don't use "struct exception", it's used by the math library).
- */
-typedef struct vim_exception except_T;
-struct vim_exception {
-  int type;                             /* exception type */
-  char_u              *value;           /* exception value */
-  struct msglist      *messages;        /* message(s) causing error exception */
-  char_u              *throw_name;      /* name of the throw point */
-  linenr_T throw_lnum;                  /* line number of the throw point */
-  except_T            *caught;          /* next exception on the caught stack */
-};
-
-/*
- * The exception types.
- */
-#define ET_USER         0       /* exception caused by ":throw" command */
-#define ET_ERROR        1       /* error exception */
-#define ET_INTERRUPT    2       /* interrupt exception triggered by Ctrl-C */
-
-/*
- * Structure to save the error/interrupt/exception state between calls to
- * enter_cleanup() and leave_cleanup().  Must be allocated as an automatic
- * variable by the (common) caller of these functions.
- */
-typedef struct cleanup_stuff cleanup_T;
-struct cleanup_stuff {
-  int pending;                  /* error/interrupt/exception state */
-  except_T *exception;          /* exception value */
-};
-
-/* struct passed to in_id_list() */
-struct sp_syn {
-  int inc_tag;                  /* ":syn include" unique tag */
-  short id;                     /* highlight group ID of item */
-  short       *cont_in_list;    /* cont.in group IDs, if non-zero */
-};
-
-/*
- * Each keyword has one keyentry, which is linked in a hash list.
- */
-typedef struct keyentry keyentry_T;
-
-struct keyentry {
-  keyentry_T  *ke_next;         /* next entry with identical "keyword[]" */
-  struct sp_syn k_syn;          /* struct passed to in_id_list() */
-  short       *next_list;       /* ID list for next match (if non-zero) */
-  int flags;
-  int k_char;                   /* conceal substitute character */
-  char_u keyword[1];            /* actually longer */
-};
-
-/*
- * Struct used to store one state of the state stack.
- */
-typedef struct buf_state {
-  int bs_idx;                    /* index of pattern */
-  int bs_flags;                  /* flags for pattern */
-  int bs_seqnr;                  /* stores si_seqnr */
-  int bs_cchar;                  /* stores si_cchar */
-  reg_extmatch_T *bs_extmatch;   /* external matches from start pattern */
-} bufstate_T;
-
-/*
- * syn_state contains the syntax state stack for the start of one line.
- * Used by b_sst_array[].
- */
-typedef struct syn_state synstate_T;
-
-struct syn_state {
-  synstate_T  *sst_next;        /* next entry in used or free list */
-  linenr_T sst_lnum;            /* line number for this state */
-  union {
-    bufstate_T sst_stack[SST_FIX_STATES];          /* short state stack */
-    garray_T sst_ga;            /* growarray for long state stack */
-  } sst_union;
-  int sst_next_flags;           /* flags for sst_next_list */
-  int sst_stacksize;            /* number of states on the stack */
-  short       *sst_next_list;   /* "nextgroup" list in this state
-                                 * (this is a copy, don't free it! */
-  disptick_T sst_tick;          /* tick when last displayed */
-  linenr_T sst_change_lnum;     /* when non-zero, change in this line
-                                 * may have made the state invalid */
-};
-
-/*
- * Structure shared between syntax.c, screen.c and gui_x11.c.
- */
-typedef struct attr_entry {
-  short ae_attr;                        /* HL_BOLD, etc. */
-  union {
-    struct {
-      char_u          *start;           /* start escape sequence */
-      char_u          *stop;            /* stop escape sequence */
-    } term;
-    struct {
-      /* These colors need to be > 8 bits to hold 256. */
-      short_u fg_color;                 /* foreground color number */
-      short_u bg_color;                 /* background color number */
-    } cterm;
-  } ae_u;
-} attrentry_T;
 
 #ifdef USE_ICONV
 # ifdef HAVE_ICONV_H
@@ -777,163 +300,6 @@ struct mapblock {
 struct stl_hlrec {
   char_u      *start;
   int userhl;                   /* 0: no HL, 1-9: User HL, < 0 for syn ID */
-};
-
-
-/*
- * Syntax items - usually buffer-specific.
- */
-
-/* Item for a hashtable.  "hi_key" can be one of three values:
- * NULL:	   Never been used
- * HI_KEY_REMOVED: Entry was removed
- * Otherwise:	   Used item, pointer to the actual key; this usually is
- *		   inside the item, subtract an offset to locate the item.
- *		   This reduces the size of hashitem by 1/3.
- */
-typedef struct hashitem_S {
-  long_u hi_hash;               /* cached hash number of hi_key */
-  char_u      *hi_key;
-} hashitem_T;
-
-/* The address of "hash_removed" is used as a magic number for hi_key to
- * indicate a removed item. */
-#define HI_KEY_REMOVED &hash_removed
-#define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL || (hi)->hi_key == \
-                            &hash_removed)
-
-/* Initial size for a hashtable.  Our items are relatively small and growing
- * is expensive, thus use 16 as a start.  Must be a power of 2. */
-#define HT_INIT_SIZE 16
-
-typedef struct hashtable_S {
-  long_u ht_mask;               /* mask used for hash value (nr of items in
-                                 * array is "ht_mask" + 1) */
-  long_u ht_used;               /* number of items used */
-  long_u ht_filled;             /* number of items used + removed */
-  int ht_locked;                /* counter for hash_lock() */
-  int ht_error;                 /* when set growing failed, can't add more
-                                   items before growing works */
-  hashitem_T  *ht_array;        /* points to the array, allocated when it's
-                                   not "ht_smallarray" */
-  hashitem_T ht_smallarray[HT_INIT_SIZE];      /* initial array */
-} hashtab_T;
-
-typedef long_u hash_T;          /* Type for hi_hash */
-
-
-#if SIZEOF_INT <= 3             /* use long if int is smaller than 32 bits */
-typedef long varnumber_T;
-#else
-typedef int varnumber_T;
-#endif
-typedef double float_T;
-
-typedef struct listvar_S list_T;
-typedef struct dictvar_S dict_T;
-
-/*
- * Structure to hold an internal variable without a name.
- */
-typedef struct {
-  char v_type;              /* see below: VAR_NUMBER, VAR_STRING, etc. */
-  char v_lock;              /* see below: VAR_LOCKED, VAR_FIXED */
-  union {
-    varnumber_T v_number;               /* number value */
-    float_T v_float;                    /* floating number value */
-    char_u          *v_string;          /* string value (can be NULL!) */
-    list_T          *v_list;            /* list value (can be NULL!) */
-    dict_T          *v_dict;            /* dict value (can be NULL!) */
-  }           vval;
-} typval_T;
-
-/* Values for "v_type". */
-#define VAR_UNKNOWN 0
-#define VAR_NUMBER  1   /* "v_number" is used */
-#define VAR_STRING  2   /* "v_string" is used */
-#define VAR_FUNC    3   /* "v_string" is function name */
-#define VAR_LIST    4   /* "v_list" is used */
-#define VAR_DICT    5   /* "v_dict" is used */
-#define VAR_FLOAT   6   /* "v_float" is used */
-
-/* Values for "dv_scope". */
-#define VAR_SCOPE     1 /* a:, v:, s:, etc. scope dictionaries */
-#define VAR_DEF_SCOPE 2 /* l:, g: scope dictionaries: here funcrefs are not
-                           allowed to mask existing functions */
-
-/* Values for "v_lock". */
-#define VAR_LOCKED  1   /* locked with lock(), can use unlock() */
-#define VAR_FIXED   2   /* locked forever */
-
-/*
- * Structure to hold an item of a list: an internal variable without a name.
- */
-typedef struct listitem_S listitem_T;
-
-struct listitem_S {
-  listitem_T  *li_next;         /* next item in list */
-  listitem_T  *li_prev;         /* previous item in list */
-  typval_T li_tv;               /* type and value of the variable */
-};
-
-/*
- * Struct used by those that are using an item in a list.
- */
-typedef struct listwatch_S listwatch_T;
-
-struct listwatch_S {
-  listitem_T          *lw_item;         /* item being watched */
-  listwatch_T         *lw_next;         /* next watcher */
-};
-
-/*
- * Structure to hold info about a list.
- */
-struct listvar_S {
-  listitem_T  *lv_first;        /* first item, NULL if none */
-  listitem_T  *lv_last;         /* last item, NULL if none */
-  int lv_refcount;              /* reference count */
-  int lv_len;                   /* number of items */
-  listwatch_T *lv_watch;        /* first watcher, NULL if none */
-  int lv_idx;                   /* cached index of an item */
-  listitem_T  *lv_idx_item;     /* when not NULL item at index "lv_idx" */
-  int lv_copyID;                /* ID used by deepcopy() */
-  list_T      *lv_copylist;     /* copied list used by deepcopy() */
-  char lv_lock;                 /* zero, VAR_LOCKED, VAR_FIXED */
-  list_T      *lv_used_next;    /* next list in used lists list */
-  list_T      *lv_used_prev;    /* previous list in used lists list */
-};
-
-/*
- * Structure to hold an item of a Dictionary.
- * Also used for a variable.
- * The key is copied into "di_key" to avoid an extra alloc/free for it.
- */
-struct dictitem_S {
-  typval_T di_tv;               /* type and value of the variable */
-  char_u di_flags;              /* flags (only used for variable) */
-  char_u di_key[1];             /* key (actually longer!) */
-};
-
-typedef struct dictitem_S dictitem_T;
-
-#define DI_FLAGS_RO     1 /* "di_flags" value: read-only variable */
-#define DI_FLAGS_RO_SBX 2 /* "di_flags" value: read-only in the sandbox */
-#define DI_FLAGS_FIX    4 /* "di_flags" value: fixed variable, not allocated */
-#define DI_FLAGS_LOCK   8 /* "di_flags" value: locked variable */
-
-/*
- * Structure to hold info about a Dictionary.
- */
-struct dictvar_S {
-  char dv_lock;                 /* zero, VAR_LOCKED, VAR_FIXED */
-  char dv_scope;                /* zero, VAR_SCOPE, VAR_DEF_SCOPE */
-  int dv_refcount;              /* reference count */
-  int dv_copyID;                /* ID used by deepcopy() */
-  hashtab_T dv_hashtab;         /* hashtab that refers to the items */
-  dict_T      *dv_copydict;     /* copied dict used by deepcopy() */
-  dict_T      *dv_used_next;    /* next dict in used dicts list */
-  dict_T      *dv_used_prev;    /* previous dict in used dicts list */
 };
 
 /* values for b_syn_spell: what to do with toplevel text */
@@ -1331,20 +697,10 @@ struct file_buffer {
   int b_shortname;              /* this file has an 8.3 file name */
 #endif
 
-
-
-
-
-
-
   synblock_T b_s;               /* Info related to syntax highlighting.  w_s
                                  * normally points to this, but some windows
                                  * may use a different synblock_T. */
-
-
-
 };
-
 
 /*
  * Stuff for diff mode.
@@ -1400,8 +756,6 @@ struct tabpage_S {
   frame_T         *(tp_snapshot[SNAP_COUNT]);    /* window layout snapshots */
   dictitem_T tp_winvar;             /* variable for "t:" Dictionary */
   dict_T          *tp_vars;         /* internal variables, local to tab page */
-
-
 };
 
 /*
@@ -1724,27 +1078,4 @@ struct window_S {
   qf_info_T   *w_llist_ref;
 };
 
-/*
- * Struct to save values in before executing autocommands for a buffer that is
- * not the current buffer.  Without FEAT_AUTOCMD only "curbuf" is remembered.
- */
-typedef struct {
-  buf_T       *save_curbuf;     /* saved curbuf */
-  int use_aucmd_win;            /* using aucmd_win */
-  win_T       *save_curwin;     /* saved curwin */
-  win_T       *new_curwin;      /* new curwin */
-  buf_T       *new_curbuf;      /* new curbuf */
-  char_u      *globaldir;       /* saved value of globaldir */
-} aco_save_T;
-
-/*
- * Generic option table item, only used for printer at the moment.
- */
-typedef struct {
-  const char  *name;
-  int hasnum;
-  long number;
-  char_u      *string;          /* points into option string */
-  int strlen;
-  int present;
-} option_table_T;
+#endif // NEOVIM_BUFFER_DEFS_H

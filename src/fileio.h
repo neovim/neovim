@@ -1,5 +1,21 @@
 #ifndef NEOVIM_FILEIO_H
 #define NEOVIM_FILEIO_H
+
+#include "buffer_defs.h"
+
+/*
+ * Struct to save values in before executing autocommands for a buffer that is
+ * not the current buffer.  Without FEAT_AUTOCMD only "curbuf" is remembered.
+ */
+typedef struct {
+  buf_T       *save_curbuf;     /* saved curbuf */
+  int use_aucmd_win;            /* using aucmd_win */
+  win_T       *save_curwin;     /* saved curwin */
+  win_T       *new_curwin;      /* new curwin */
+  buf_T       *new_curbuf;      /* new curbuf */
+  char_u      *globaldir;       /* saved value of globaldir */
+} aco_save_T;
+
 /* fileio.c */
 void filemess(buf_T *buf, char_u *name, char_u *s, int attr);
 int readfile(char_u *fname, char_u *sfname, linenr_T from,
