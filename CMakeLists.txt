@@ -10,12 +10,7 @@ set(NEOVIM_VERSION_PATCH 0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# If the C compiler is some GNU-alike, use the gnu99 standard and enable all warnings.
-if(CMAKE_COMPILER_IS_GNUCC)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99")
-elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99")
-endif(CMAKE_COMPILER_IS_GNUCC)
+add_definitions(-Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)
 
 add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
@@ -23,11 +18,6 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(DEBUG 1)
 else()
   set(DEBUG 0)
-endif()
-
-if(DEFINED ENV{VALGRIND_CHECK})
-  message(STATUS "Defining EXITFREE for valgrind checks")
-  add_definitions(-DEXITFREE)
 endif()
 
 # Modules used by platform auto-detection

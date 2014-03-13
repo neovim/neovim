@@ -1,7 +1,8 @@
 language: c
-script: ./scripts/travis.sh
-before_install:
-  - sudo apt-get install valgrind
 compiler:
   - clang
   - gcc
+before_install:
+  - sudo ./scripts/travis-setup.sh 
+script:
+  - ./scripts/travis.sh

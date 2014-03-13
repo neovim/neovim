@@ -1,6 +1,8 @@
 # Build/deps dir
 /build/
+/dist/
 /.deps/
+/tmp/
 
 *.rej
 *.orig
