@@ -4275,7 +4275,7 @@ eval6 (
         else if (op == '/') {
           /* We rely on the floating point library to handle divide
            * by zero to result in "inf" and not a crash. */
-          f1 = f1 / f2;
+          f1 = f2 != 0 ? f1 / f2 : INFINITY;
         } else   {
           EMSG(_("E804: Cannot use '%' with Float"));
           return FAIL;
