@@ -27,6 +27,7 @@
 #include "getchar.h"
 #include "hashtab.h"
 #include "if_cscope.h"
+#include "indent_c.h"
 #include "indent.h"
 #include "mark.h"
 #include "mbyte.h"
