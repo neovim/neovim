@@ -1,18 +1,16 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+import cimport, eq from require 'test.unit.helpers'
+import lib, ffi, cstr, to_cstr, internalize from cimport './src/types.h', './src/vim.h', './src/misc1.h'
 
---misc1 = cimport './src/misc1.h'
-
--- remove these statements once 'cimport' is working properly for misc1.h
 misc1 = lib
+
 ffi.cdef [[
 enum FPC {
   FPC_SAME = 1, FPC_DIFF = 2, FPC_NOTX = 4, FPC_DIFFX = 6, FPC_SAMEX = 7
 };
-int fullpathcmp(char_u *s1, char_u *s2, int checkname);
 ]]
 
 -- import constants parsed by ffi
-{:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = lib
+{:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = misc1
 
 describe 'misc1 function', ->
   describe 'fullpathcmp', ->
