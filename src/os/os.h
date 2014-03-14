@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_H
-#define NEOVIM_OS_H
+#ifndef NEOVIM_OS_OS_H
+#define NEOVIM_OS_OS_H
 
 #include "../vim.h"
 
@@ -18,4 +18,4 @@ int mch_get_user_name(char *s, size_t len);
 int mch_get_uname(uid_t uid, char *s, size_t len);
 char *mch_get_user_directory(const char *name);
 
-#endif
+#endif  // NEOVIM_OS_OS_H

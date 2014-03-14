@@ -81,7 +81,7 @@ int mch_get_uname(uid_t uid, char *s, size_t len)
   }
 #endif
   snprintf(s, len, "%d", (int)uid);
-  return FAIL; // a number is not a name
+  return FAIL;  // a number is not a name
 }
 
 /*
