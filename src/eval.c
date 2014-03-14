@@ -10246,7 +10246,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "fork",
 #endif
     "gettext",
-    "hangul_input",
 #if defined(HAVE_ICONV_H) && defined(USE_ICONV)
     "iconv",
 #endif

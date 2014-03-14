@@ -1,15 +1,19 @@
 #!/bin/sh -e
 
 check_and_report() {
-	reset
 	(
 	cd $tmpdir
-	if [ -f asan.* ] || [ -f tsan.* ] || [ -f ubsan.* ]; then
-		cat $tmpdir/asan.* 2> /dev/null || true
-	 	cat $tmpdir/tsan.* 2> /dev/null || true
-	 	cat $tmpdir/ubsan.* 2> /dev/null || true
-		exit 1
-	fi
+	set -- [*]san.[*] *san.*
+	case $1$2 in
+		'[*]san.[*]*san.*')
+			;;
+		*)
+			shift
+			cat "$@"
+			echo "Runtime errors detected"
+			exit 1
+			;;
+	esac
 	)
 }
 
@@ -36,6 +40,7 @@ if [ "$CC" = "clang" ]; then
 	make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir"
 	make
 	if ! make test; then
+		reset
 		check_and_report
 	fi
 	check_and_report
