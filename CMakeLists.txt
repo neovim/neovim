@@ -46,6 +46,7 @@ find_package(LibUV REQUIRED)
 include_directories(${LibUV_INCLUDE_DIRS})
 
 include_directories ("${PROJECT_BINARY_DIR}/config")
+include_directories ("${PROJECT_SOURCE_DIR}/src")
 
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 

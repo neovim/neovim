@@ -13,8 +13,8 @@
 
 #include <uv.h>
 
-#include "os.h"
-#include "../misc2.h"
+#include "os/os.h"
+#include "misc2.h"
 
 #ifdef HAVE_CRT_EXTERNS_H
 #include <crt_externs.h>

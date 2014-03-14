@@ -13,7 +13,7 @@
 
 #include <uv.h>
 
-#include "os.h"
+#include "os/os.h"
 
 /*
  * Return total amount of memory available in Kbyte.
