@@ -1168,38 +1168,6 @@ int len;              /* buffer size, only used when name gets longer */
 }
 #endif
 
-/*
- * Get file permissions for 'name'.
- * Returns -1 when it doesn't exist.
- */
-long mch_getperm(char_u *name)
-{
-  struct stat statb;
-
-  /* Keep the #ifdef outside of stat(), it may be a macro. */
-  if (stat((char *)name, &statb))
-    return -1;
-#ifdef __INTERIX
-  /* The top bit makes the value negative, which means the file doesn't
-   * exist.  Remove the bit, we don't use it. */
-  return statb.st_mode & ~S_ADDACE;
-#else
-  return statb.st_mode;
-#endif
-}
-
-/*
- * set file permission for 'name' to 'perm'
- *
- * return FAIL for failure, OK otherwise
- */
-int mch_setperm(char_u *name, long perm)
-{
-  return chmod((char *)
-      name,
-      (mode_t)perm) == 0 ? OK : FAIL;
-}
-
 #if defined(HAVE_ACL) || defined(PROTO)
 # ifdef HAVE_SYS_ACL_H
 #  include <sys/acl.h>
