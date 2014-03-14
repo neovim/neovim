@@ -89,13 +89,8 @@
 # endif
 #endif
 
-#if !defined(HAVE_SYS_TIME_H) || defined(TIME_WITH_SYS_TIME)
-# include <time.h>          /* on some systems time.h should not be
-                               included together with sys/time.h */
-#endif
-#ifdef HAVE_SYS_TIME_H
-# include <sys/time.h>
-#endif
+#include <time.h>
+#include <sys/time.h>
 
 #include <signal.h>
 
