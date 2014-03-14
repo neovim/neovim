@@ -10,17 +10,16 @@ cimport = (...) ->
 
   for path in *paths
     new_cdefs = {}
-    header_file = io.popen "/usr/bin/env cc -E #{path}"
+    header_file = io.popen "/usr/bin/env cc -P -E #{path}"
 
     if not header_file
       error "cannot find #{path}"
 
     for line in header_file\lines! do
-      if not line\match '^#[^\n]*$'
-        -- find if line has already been cdef'ed
-        defined = [buffer_line for buffer_line in *cdef_buffer when line == buffer_line]
-        if next(defined) == nil
-          table.insert(new_cdefs, line)
+      -- find if line has already been cdef'ed
+      defined = [buffer_line for buffer_line in *cdef_buffer when line == buffer_line]
+      if next(defined) == nil
+        table.insert(new_cdefs, line)
 
     header_file.close!
 
