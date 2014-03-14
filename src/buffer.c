@@ -40,6 +40,7 @@
 #include "fold.h"
 #include "getchar.h"
 #include "hashtab.h"
+#include "indent.h"
 #include "indent_c.h"
 #include "main.h"
 #include "mark.h"

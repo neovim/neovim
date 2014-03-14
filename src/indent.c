@@ -1,10 +1,12 @@
 #include "indent.h"
+#include "eval.h"
 #include "charset.h"
 #include "memline.h"
 #include "misc1.h"
 #include "misc2.h"
 #include "option.h"
 #include "regexp.h"
+#include "search.h"
 #include "undo.h"
 
 /*
@@ -398,4 +400,259 @@ int get_number_indent(linenr_T lnum)
     return -1;
   getvcol(curwin, &pos, &col, NULL, NULL);
   return (int)col;
+}
+
+/*
+ * When extra == 0: Return TRUE if the cursor is before or on the first
+ *		    non-blank in the line.
+ * When extra == 1: Return TRUE if the cursor is before the first non-blank in
+ *		    the line.
+ */
+int inindent(int extra)
+{
+  char_u      *ptr;
+  colnr_T col;
+
+  for (col = 0, ptr = ml_get_curline(); vim_iswhite(*ptr); ++col)
+    ++ptr;
+  if (col >= curwin->w_cursor.col + extra)
+    return TRUE;
+  else
+    return FALSE;
+}
+
+/*
+ * Get indent level from 'indentexpr'.
+ */
+int get_expr_indent(void)         {
+  int indent;
+  pos_T save_pos;
+  colnr_T save_curswant;
+  int save_set_curswant;
+  int save_State;
+  int use_sandbox = was_set_insecurely((char_u *)"indentexpr",
+      OPT_LOCAL);
+
+  /* Save and restore cursor position and curswant, in case it was changed
+   * via :normal commands */
+  save_pos = curwin->w_cursor;
+  save_curswant = curwin->w_curswant;
+  save_set_curswant = curwin->w_set_curswant;
+  set_vim_var_nr(VV_LNUM, curwin->w_cursor.lnum);
+  if (use_sandbox)
+    ++sandbox;
+  ++textlock;
+  indent = eval_to_number(curbuf->b_p_inde);
+  if (use_sandbox)
+    --sandbox;
+  --textlock;
+
+  /* Restore the cursor position so that 'indentexpr' doesn't need to.
+   * Pretend to be in Insert mode, allow cursor past end of line for "o"
+   * command. */
+  save_State = State;
+  State = INSERT;
+  curwin->w_cursor = save_pos;
+  curwin->w_curswant = save_curswant;
+  curwin->w_set_curswant = save_set_curswant;
+  check_cursor();
+  State = save_State;
+
+  /* If there is an error, just keep the current indent. */
+  if (indent < 0)
+    indent = get_indent();
+
+  return indent;
+}
+
+static int lisp_match(char_u *p);
+
+static int lisp_match(char_u *p)
+{
+  char_u buf[LSIZE];
+  int len;
+  char_u      *word = p_lispwords;
+
+  while (*word != NUL) {
+    (void)copy_option_part(&word, buf, LSIZE, ",");
+    len = (int)STRLEN(buf);
+    if (STRNCMP(buf, p, len) == 0 && p[len] == ' ')
+      return TRUE;
+  }
+  return FALSE;
+}
+
+/*
+ * When 'p' is present in 'cpoptions, a Vi compatible method is used.
+ * The incompatible newer method is quite a bit better at indenting
+ * code in lisp-like languages than the traditional one; it's still
+ * mostly heuristics however -- Dirk van Deun, dirk@rave.org
+ *
+ * TODO:
+ * Findmatch() should be adapted for lisp, also to make showmatch
+ * work correctly: now (v5.3) it seems all C/C++ oriented:
+ * - it does not recognize the #\( and #\) notations as character literals
+ * - it doesn't know about comments starting with a semicolon
+ * - it incorrectly interprets '(' as a character literal
+ * All this messes up get_lisp_indent in some rare cases.
+ * Update from Sergey Khorev:
+ * I tried to fix the first two issues.
+ */
+int get_lisp_indent(void)         {
+  pos_T       *pos, realpos, paren;
+  int amount;
+  char_u      *that;
+  colnr_T col;
+  colnr_T firsttry;
+  int parencount, quotecount;
+  int vi_lisp;
+
+  /* Set vi_lisp to use the vi-compatible method */
+  vi_lisp = (vim_strchr(p_cpo, CPO_LISP) != NULL);
+
+  realpos = curwin->w_cursor;
+  curwin->w_cursor.col = 0;
+
+  if ((pos = findmatch(NULL, '(')) == NULL)
+    pos = findmatch(NULL, '[');
+  else {
+    paren = *pos;
+    pos = findmatch(NULL, '[');
+    if (pos == NULL || ltp(pos, &paren))
+      pos = &paren;
+  }
+  if (pos != NULL) {
+    /* Extra trick: Take the indent of the first previous non-white
+     * line that is at the same () level. */
+    amount = -1;
+    parencount = 0;
+
+    while (--curwin->w_cursor.lnum >= pos->lnum) {
+      if (linewhite(curwin->w_cursor.lnum))
+        continue;
+      for (that = ml_get_curline(); *that != NUL; ++that) {
+        if (*that == ';') {
+          while (*(that + 1) != NUL)
+            ++that;
+          continue;
+        }
+        if (*that == '\\') {
+          if (*(that + 1) != NUL)
+            ++that;
+          continue;
+        }
+        if (*that == '"' && *(that + 1) != NUL) {
+          while (*++that && *that != '"') {
+            /* skipping escaped characters in the string */
+            if (*that == '\\') {
+              if (*++that == NUL)
+                break;
+              if (that[1] == NUL) {
+                ++that;
+                break;
+              }
+            }
+          }
+        }
+        if (*that == '(' || *that == '[')
+          ++parencount;
+        else if (*that == ')' || *that == ']')
+          --parencount;
+      }
+      if (parencount == 0) {
+        amount = get_indent();
+        break;
+      }
+    }
+
+    if (amount == -1) {
+      curwin->w_cursor.lnum = pos->lnum;
+      curwin->w_cursor.col = pos->col;
+      col = pos->col;
+
+      that = ml_get_curline();
+
+      if (vi_lisp && get_indent() == 0)
+        amount = 2;
+      else {
+        amount = 0;
+        while (*that && col) {
+          amount += lbr_chartabsize_adv(&that, (colnr_T)amount);
+          col--;
+        }
+
+        /*
+         * Some keywords require "body" indenting rules (the
+         * non-standard-lisp ones are Scheme special forms):
+         *
+         * (let ((a 1))    instead    (let ((a 1))
+         *   (...))	      of	   (...))
+         */
+
+        if (!vi_lisp && (*that == '(' || *that == '[')
+            && lisp_match(that + 1))
+          amount += 2;
+        else {
+          that++;
+          amount++;
+          firsttry = amount;
+
+          while (vim_iswhite(*that)) {
+            amount += lbr_chartabsize(that, (colnr_T)amount);
+            ++that;
+          }
+
+          if (*that && *that != ';') {         /* not a comment line */
+            /* test *that != '(' to accommodate first let/do
+             * argument if it is more than one line */
+            if (!vi_lisp && *that != '(' && *that != '[')
+              firsttry++;
+
+            parencount = 0;
+            quotecount = 0;
+
+            if (vi_lisp
+                || (*that != '"'
+                    && *that != '\''
+                    && *that != '#'
+                    && (*that < '0' || *that > '9'))) {
+              while (*that
+                     && (!vim_iswhite(*that)
+                         || quotecount
+                         || parencount)
+                     && (!((*that == '(' || *that == '[')
+                           && !quotecount
+                           && !parencount
+                           && vi_lisp))) {
+                if (*that == '"')
+                  quotecount = !quotecount;
+                if ((*that == '(' || *that == '[')
+                    && !quotecount)
+                  ++parencount;
+                if ((*that == ')' || *that == ']')
+                    && !quotecount)
+                  --parencount;
+                if (*that == '\\' && *(that+1) != NUL)
+                  amount += lbr_chartabsize_adv(&that,
+                      (colnr_T)amount);
+                amount += lbr_chartabsize_adv(&that,
+                    (colnr_T)amount);
+              }
+            }
+            while (vim_iswhite(*that)) {
+              amount += lbr_chartabsize(that, (colnr_T)amount);
+              that++;
+            }
+            if (!*that || *that == ';')
+              amount = firsttry;
+          }
+        }
+      }
+    }
+  } else
+    amount = 0;         /* no matching '(' or '[' found, use zero indent */
+
+  curwin->w_cursor = realpos;
+
+  return amount;
 }
