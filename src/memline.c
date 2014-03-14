@@ -3636,7 +3636,7 @@ findswapname (
    * check below for a 8.3 file name is used.
    */
   if (!(buf->b_p_sn || buf->b_shortname) && buf_fname != NULL
-      && mch_getperm(buf_fname) < 0)
+      && !os_file_exists(buf_fname))
     dummyfd = mch_fopen((char *)buf_fname, "w");
 #endif
 
@@ -3753,7 +3753,7 @@ findswapname (
     /*
      * check if the swapfile already exists
      */
-    if (mch_getperm(fname) < 0) {       /* it does not exist */
+    if (!os_file_exists(fname)) {       /* it does not exist */
 #ifdef HAVE_LSTAT
       struct stat sb;
 
@@ -3961,7 +3961,7 @@ findswapname (
             }
 
             /* If the file was deleted this fname can be used. */
-            if (mch_getperm(fname) < 0)
+            if (!os_file_exists(fname))
               break;
           } else
 #endif

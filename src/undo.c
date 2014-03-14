@@ -1173,7 +1173,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
 
   /* If the undo file already exists, verify that it actually is an undo
    * file, and delete it. */
-  if (mch_getperm(file_name) >= 0) {
+  if (os_file_exists(file_name)) {
     if (name == NULL || !forceit) {
       /* Check we can read it and it's an undo file. */
       fd = mch_open((char *)file_name, O_RDONLY|O_EXTRA, 0);

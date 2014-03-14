@@ -615,7 +615,7 @@ restofline:
           *regmatch.endp[i] = c;
 
           if (vim_strchr((char_u *)"OPQ", idx) != NULL
-              && mch_getperm(namebuf) == -1)
+              && !os_file_exists(namebuf))
             continue;
         }
         if ((i = (int)fmt_ptr->addr[1]) > 0) {                  /* %n */
@@ -750,7 +750,7 @@ restofline:
       } else if (vim_strchr((char_u *)"OPQ", idx) != NULL)   {
         /* global file names */
         valid = FALSE;
-        if (*namebuf == NUL || mch_getperm(namebuf) >= 0) {
+        if (*namebuf == NUL || os_file_exists(namebuf)) {
           if (*namebuf && idx == 'P')
             currfile = qf_push_dir(namebuf, &file_stack);
           else if (idx == 'Q')
@@ -1131,7 +1131,7 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
        * "leaving directory"-messages we might have missed a
        * directory change.
        */
-      if (mch_getperm(ptr) < 0) {
+      if (!os_file_exists(ptr)) {
         vim_free(ptr);
         directory = qf_guess_filepath(fname);
         if (directory)
@@ -1289,7 +1289,7 @@ static char_u *qf_guess_filepath(char_u *filename)
     /* If concat_fnames failed, just go on. The worst thing that can happen
      * is that we delete the entire stack.
      */
-    if ((fullname != NULL) && (mch_getperm(fullname) >= 0))
+    if (fullname != NULL && os_file_exists(fullname))
       break;
 
     ds_ptr = ds_ptr->next;
@@ -2609,7 +2609,7 @@ static char_u *get_mef_name(void)                     {
     STRCPY(name, p_mef);
     sprintf((char *)name + (p - p_mef), "%d%d", start, off);
     STRCAT(name, p + 2);
-    if (mch_getperm(name) < 0
+    if (!os_file_exists(name)
 #ifdef HAVE_LSTAT
         /* Don't accept a symbolic link, its a security risk. */
         && mch_lstat((char *)name, &sb) < 0

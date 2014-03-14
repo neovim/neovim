@@ -2450,7 +2450,7 @@ jumpto_tag (
    * file.  Also accept a file name for which there is a matching BufReadCmd
    * autocommand event (e.g., http://sys/file).
    */
-  if (mch_getperm(fname) < 0
+  if (!os_file_exists(fname)
       && !has_autocmd(EVENT_BUFREADCMD, fname, NULL)
       ) {
     retval = NOTAGFILE;

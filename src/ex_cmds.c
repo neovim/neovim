@@ -2310,7 +2310,7 @@ check_overwrite (
               || (buf->b_flags & BF_READERR))
              && !p_wa
              && !bt_nofile(buf)
-             && vim_fexists(ffname)) {
+             && os_file_exists(ffname)) {
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
       /* with UNIX it is possible to open a directory */
@@ -2336,7 +2336,6 @@ check_overwrite (
     if (other && !emsg_silent) {
       char_u      *dir;
       char_u      *p;
-      int r;
       char_u      *swapname;
 
       /* We only try the first entry in 'directory', without checking if
@@ -2358,8 +2357,7 @@ check_overwrite (
       }
       swapname = makeswapname(fname, ffname, curbuf, dir);
       vim_free(dir);
-      r = vim_fexists(swapname);
-      if (r) {
+      if (os_file_exists(swapname)) {
         if (p_confirm || cmdmod.confirm) {
           char_u buff[DIALOG_MSG_SIZE];
 

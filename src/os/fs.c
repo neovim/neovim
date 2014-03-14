@@ -315,3 +315,20 @@ int mch_setperm(const char_u *name, int perm)
     return OK;
   }
 }
+
+/*
+ * return TRUE if "name" exists.
+ */
+int os_file_exists(char_u *name)
+{
+  uv_fs_t request;
+  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  uv_fs_req_cleanup(&request);
+
+  if (result != 0) {
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+

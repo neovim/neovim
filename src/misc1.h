@@ -84,7 +84,6 @@ int get_expr_indent(void);
 int get_lisp_indent(void);
 void prepare_to_exit(void);
 void preserve_exit(void);
-int vim_fexists(char_u *fname);
 void line_breakcheck(void);
 void fast_breakcheck(void);
 int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
