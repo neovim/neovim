@@ -41,6 +41,7 @@
 #include "term.h"
 #include "ui.h"
 #include "window.h"
+#include "os/os.h"
 
 /*
  * Structure to hold pointers to various items in a tag line.

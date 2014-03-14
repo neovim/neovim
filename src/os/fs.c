@@ -177,13 +177,8 @@ int mch_is_absolute_path(const char_u *fname)
  */
 int mch_isdir(const char_u *name)
 {
-  uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
-  uint64_t mode = request.statbuf.st_mode;
-
-  uv_fs_req_cleanup(&request);
-
-  if (0 != result) {
+  long mode = mch_getperm(name);
+  if (mode < 0) {
     return FALSE;
   }
 
@@ -219,12 +214,9 @@ int mch_can_exe(const char_u *name)
  */
 static int is_executable(const char_u *name)
 {
-  uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
-  uint64_t mode = request.statbuf.st_mode;
-  uv_fs_req_cleanup(&request);
+  long mode = mch_getperm(name);
 
-  if (result != 0) {
+  if (mode < 0) {
     return FALSE;
   }
 
@@ -286,4 +278,40 @@ static int is_executable_in_path(const char_u *name)
   /* We should never get to this point. */
   assert(false);
   return FALSE;
+}
+
+/*
+ * Get file permissions for 'name'.
+ * Returns -1 when it doesn't exist.
+ */
+long mch_getperm(const char_u *name)
+{
+  uv_fs_t request;
+  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  uint64_t mode = request.statbuf.st_mode;
+  uv_fs_req_cleanup(&request);
+
+  if (result != 0) {
+    return -1;
+  } else {
+    return (long) mode;
+  }
+}
+
+/*
+ * Set file permission for 'name' to 'perm'.
+ * Returns FAIL for failure, OK otherwise.
+ */
+int mch_setperm(const char_u *name, int perm)
+{
+  uv_fs_t request;
+  int result = uv_fs_chmod(uv_default_loop(), &request,
+                           (const char*)name, perm, NULL);
+  uv_fs_req_cleanup(&request);
+
+  if (result != 0) {
+    return FAIL;
+  } else {
+    return OK;
+  }
 }

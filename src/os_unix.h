@@ -28,8 +28,6 @@ void mch_get_host_name(char_u *s, int len);
 long mch_get_pid(void);
 void slash_adjust(char_u *p);
 void fname_case(char_u *name, int len);
-long mch_getperm(char_u *name);
-int mch_setperm(char_u *name, long perm);
 void mch_copy_sec(char_u *from_file, char_u *to_file);
 vim_acl_T mch_get_acl(char_u *fname);
 void mch_set_acl(char_u *fname, vim_acl_T aclent);
