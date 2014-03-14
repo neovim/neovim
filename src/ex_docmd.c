@@ -7424,7 +7424,7 @@ open_exfile (
     return NULL;
   }
 #endif
-  if (!forceit && *mode != 'a' && vim_fexists(fname)) {
+  if (!forceit && *mode != 'a' && os_file_exists(fname)) {
     EMSG2(_("E189: \"%s\" exists (add ! to override)"), fname);
     return NULL;
   }

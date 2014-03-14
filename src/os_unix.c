@@ -3063,7 +3063,7 @@ int flags;                      /* EW_* flags */
    */
   for (j = 0, i = 0; i < *num_file; ++i) {
     /* Require the files to exist.	Helps when using /bin/sh */
-    if (!(flags & EW_NOTFOUND) && mch_getperm((*file)[i]) < 0)
+    if (!(flags & EW_NOTFOUND) && !os_file_exists((*file)[i]))
       continue;
 
     /* check if this entry should be included */

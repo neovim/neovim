@@ -18,6 +18,7 @@ int is_executable(char_u *name);
 int mch_can_exe(char_u *name);
 long mch_getperm(char_u *name);
 int mch_setperm(char_u *name, long perm);
+int os_file_exists(const char_u *name);
 ]]
 
 -- import constants parsed by ffi
@@ -320,3 +321,13 @@ describe 'fs function', ->
       it 'fails if given file does not exist', ->
         perm = ffi.C.kS_IXUSR
         eq FAIL, (mch_setperm 'non-existing-file', perm)
+
+  describe 'os_file_exists', ->
+    os_file_exists = (filename) ->
+      fs.os_file_exists (to_cstr filename)
+
+    it 'returns FALSE when given a non-existing file', ->
+      eq FALSE, (os_file_exists 'non-existing-file')
+
+    it 'returns TRUE when given an existing file', ->
+      eq TRUE, (os_file_exists 'unit-test-directory/test.file')

@@ -3828,18 +3828,6 @@ void preserve_exit(void)          {
 }
 
 /*
- * return TRUE if "fname" exists.
- */
-int vim_fexists(char_u *fname)
-{
-  struct stat st;
-
-  if (mch_stat((char *)fname, &st))
-    return FALSE;
-  return TRUE;
-}
-
-/*
  * Check for CTRL-C pressed, but only once in a while.
  * Should be used instead of ui_breakcheck() for functions that check for
  * each line in the file.  Calling ui_breakcheck() each time takes too much
@@ -4196,7 +4184,7 @@ unix_expandpath (
           /* remove backslashes for the remaining components only */
           if (*path_end != NUL)
             backslash_halve(buf + len + 1);
-          if (mch_getperm(buf) >= 0) {          /* add existing file */
+          if (os_file_exists(buf)) {          /* add existing file */
 #ifdef MACOS_CONVERT
             size_t precomp_len = STRLEN(buf)+1;
             char_u *precomp_buf =
@@ -4782,7 +4770,7 @@ gen_expand_wildcards (
        * "vim c:/" work. */
       if (flags & EW_NOTFOUND)
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
-      else if (mch_getperm(t) >= 0)
+      else if (os_file_exists(t))
         addfile(&ga, t, flags);
       vim_free(t);
     }
@@ -4884,7 +4872,7 @@ addfile (
   int isdir;
 
   /* if the file/dir doesn't exist, may not add it */
-  if (!(flags & EW_NOTFOUND) && mch_getperm(f) < 0)
+  if (!(flags & EW_NOTFOUND) && !os_file_exists(f))
     return;
 
 #ifdef FNAME_ILLEGAL

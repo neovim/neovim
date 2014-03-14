@@ -81,7 +81,6 @@ void add_pathsep(char_u *p);
 char_u *FullName_save(char_u *fname, int force);
 void prepare_to_exit(void);
 void preserve_exit(void);
-int vim_fexists(char_u *fname);
 void line_breakcheck(void);
 void fast_breakcheck(void);
 int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,

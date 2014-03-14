@@ -19,5 +19,6 @@ int mch_get_uname(uid_t uid, char *s, size_t len);
 char *mch_get_user_directory(const char *name);
 long mch_getperm(const char_u *name);
 int mch_setperm(const char_u *name, int perm);
+int os_file_exists(char_u *name);
 
 #endif
