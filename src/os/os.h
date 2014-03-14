@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_H
-#define NEOVIM_OS_H
+#ifndef NEOVIM_OS_OS_H
+#define NEOVIM_OS_OS_H
 
 #include "../vim.h"
 

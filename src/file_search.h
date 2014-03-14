@@ -1,5 +1,5 @@
-#ifndef NEOVIM_FIND_FILE_H
-#define NEOVIM_FIND_FILE_H
+#ifndef NEOVIM_FILE_SEARCH_H
+#define NEOVIM_FILE_SEARCH_H
 
 void *vim_findfile_init(char_u *path, char_u *filename, char_u *
                                 stopdirs, int level, int free_visited,
@@ -20,4 +20,4 @@ char_u *find_file_in_path_option(char_u *ptr, int len, int options,
                                          int find_what, char_u *rel_fname,
                                          char_u *suffixes);
 
-#endif /* NEOVIM_FIND_FILE_H */
+#endif /* NEOVIM_FILE_SEARCH_H */
