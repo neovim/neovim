@@ -1,14 +1,8 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+import cimport, eq from require 'test.unit.helpers'
+import lib, ffi, cstr, to_cstr, internalize from cimport './src/types.h', './src/os/os.h'
 require 'lfs'
 
--- fs = cimport './src/os/os.h'
--- remove these statements once 'cimport' is working properly for misc1.h
 env = lib
-ffi.cdef [[
-const char *mch_getenv(const char *name);
-int mch_setenv(const char *name, const char *value, int override);
-char *mch_getenvname_at_index(size_t index);
-]]
 
 NULL = ffi.cast 'void*', 0
 

@@ -1,46 +1,55 @@
-ffi = require 'ffi'
+-- cdef_buffer keeps a list of all the lines that have been defined.
+-- cdef_buffer is global because anything defined by ffi.cdef is permanent to the process
 
--- load neovim shared library
-libnvim = ffi.load './build/src/libnvim-test.so'
+export cdef_buffer = {}
 
--- Luajit ffi parser doesn't understand preprocessor directives, so
--- this helper function removes common directives before passing it the to ffi.
--- It will return a pointer to the library table, emulating 'requires'
-cimport = (path) ->
-  header_file = io.open path, 'rb'
+cimport = (...) ->
+  paths = {...}
+  ffi = require 'ffi'
+  libnvim = ffi.load './build/src/libnvim-test.so'
 
-  if not header_file
-    error "cannot find #{path}"
+  for path in *paths
+    new_cdefs = {}
+    header_file = io.popen "/usr/bin/env cc -P -E #{path}"
 
-  header = header_file\read '*a'
-  header_file.close!
-  header = string.gsub header, '#include[^\n]*\n', ''
-  header = string.gsub header, '#ifndef[^\n]*\n', ''
-  header = string.gsub header, '#define[^\n]*\n', ''
-  header = string.gsub header, '#endif[^\n]*\n', ''
-  ffi.cdef header
+    if not header_file
+      error "cannot find #{path}"
 
-  return libnvim
+    for line in header_file\lines! do
+      -- find if line has already been cdef'ed
+      defined = [buffer_line for buffer_line in *cdef_buffer when line == buffer_line]
+      if next(defined) == nil
+        table.insert(new_cdefs, line)
 
-cimport './src/types.h'
+    header_file.close!
 
--- take a pointer to a C-allocated string and return an interned
--- version while also freeing the memory
-internalize = (cdata) ->
-  ffi.gc cdata, ffi.C.free
-  return ffi.string cdata
+    -- add the lines to the buffer
+    for line in *new_cdefs
+      table.insert(cdef_buffer, line)
 
-cstr = ffi.typeof 'char[?]'
+    ffi.cdef table.concat(new_cdefs, "\n")
 
-to_cstr = (string) ->
-  cstr (string.len string) + 1, string
+  -- take a pointer to a C-allocated string and return an interned
+  -- version while also freeing the memory
+  internalize = (cdata) ->
+    ffi.gc cdata, ffi.C.free
+    return ffi.string cdata
+
+  cstr = ffi.typeof 'char[?]'
+
+  to_cstr = (string) ->
+    cstr (string.len string) + 1, string
+
+  return {
+    ffi: ffi
+    lib: libnvim
+    cstr: cstr
+    to_cstr: to_cstr
+    internalize: internalize
+  }
+
 
 return {
   cimport: cimport
-  internalize: internalize
   eq: (expected, actual) -> assert.are.same expected, actual
-  ffi: ffi
-  lib: libnvim
-  cstr: cstr
-  to_cstr: to_cstr
 }

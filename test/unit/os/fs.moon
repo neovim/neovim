@@ -1,9 +1,10 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+import cimport, eq from require 'test.unit.helpers'
+import lib, ffi, cstr, to_cstr, internalize from cimport './src/types.h', './src/os/os.h'
+
+fs = lib
+
 require 'lfs'
 
--- fs = cimport './src/os/os.h'
--- remove these statements once 'cimport' is working properly for misc1.h
-fs = lib
 ffi.cdef [[
 enum OKFAIL {
   OK = 1, FAIL = 0
@@ -11,10 +12,6 @@ enum OKFAIL {
 enum BOOLEAN {
   TRUE = 1, FALSE = 0
 };
-int mch_dirname(char_u *buf, int len);
-int mch_isdir(char_u * name);
-int is_executable(char_u *name);
-int mch_can_exe(char_u *name);
 ]]
 
 -- import constants parsed by ffi
