@@ -1,5 +1,5 @@
 import cimport, eq from require 'test.unit.helpers'
-import lib, ffi, cstr, to_cstr, internalize from cimport './src/types.h', './src/vim.h', './src/misc1.h'
+import lib, ffi, cstr, to_cstr, internalize from cimport './src/types.h', './src/os/os.h'
 
 users = lib
 
