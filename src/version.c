@@ -94,7 +94,6 @@ static char *(features[]) =
   "+fork()",
 #endif
   "+gettext",
-  "+hangul_input",
 #if (defined(HAVE_ICONV_H) && defined(USE_ICONV)) || defined(DYNAMIC_ICONV)
 # ifdef DYNAMIC_ICONV
   "+iconv/dyn",

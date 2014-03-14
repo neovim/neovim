@@ -672,11 +672,6 @@ EXTERN int (*iconvctl)(iconv_t cd, int request, void *argument);
 EXTERN int* (*iconv_errno)(void);
 # endif
 
-
-
-EXTERN int composing_hangul INIT(= 0);
-EXTERN char_u composing_hangul_buffer[5];
-
 /*
  * "State" is the main state of Vim.
  * There are other variables that modify the state:
