@@ -42,12 +42,28 @@ endif()
 
 include(ExternalProject)
 
+set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.21.tar.gz)
+set(LIBUV_MD5 bc334c8da8618754ce9e2a4c5be73487)
+
+set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.2.tar.gz)
+set(LUAJIT_MD5 112dfb82548b03377fbefbba2e0e3a5b)
+
+set(LUAROCKS_URL http://github.com/keplerproject/luarocks/archive/v2.1.2.tar.gz)
+set(LUAROCKS_MD5 df591c00a85d51fb754ec08c77896aad)
+
 if(USE_BUNDLED_LIBUV)
   ExternalProject_Add(libuv
     PREFIX ${DEPS_BUILD_DIR}
-    URL https://github.com/joyent/libuv/archive/v0.11.21.tar.gz
-    URL_MD5 bc334c8da8618754ce9e2a4c5be73487
+    URL ${LIBUV_URL}
+    URL_MD5 ${LIBUV_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/libuv
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/libuv
+      -DURL=${LIBUV_URL}
+      -DEXPECTED_MD5=${LIBUV_MD5}
+      -DTARGET=libuv
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
       ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
         --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
@@ -58,9 +74,16 @@ endif()
 if(USE_BUNDLED_LUAJIT)
   ExternalProject_Add(luajit
     PREFIX ${DEPS_BUILD_DIR}
-    URL http://luajit.org/download/LuaJIT-2.0.2.tar.gz
-    URL_MD5 112dfb82548b03377fbefbba2e0e3a5b
+    URL ${LUAJIT_URL}
+    URL_MD5 ${LUAJIT_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luajit
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luajit
+      -DURL=${LUAJIT_URL}
+      -DEXPECTED_MD5=${LUAJIT_MD5}
+      -DTARGET=luajit
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
@@ -79,9 +102,16 @@ if(USE_BUNDLED_LUAROCKS)
   endif()
   ExternalProject_Add(luarocks
     PREFIX ${DEPS_BUILD_DIR}
-    URL http://github.com/keplerproject/luarocks/archive/v2.1.2.tar.gz
-    URL_MD5 df591c00a85d51fb754ec08c77896aad
+    URL ${LUAROCKS_URL}
+    URL_MD5 ${LUAROCKS_MD5}
     DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/luarocks
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/luarocks
+      -DURL=${LUAROCKS_URL}
+      -DEXPECTED_MD5=${LUAROCKS_MD5}
+      -DTARGET=luarocks
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     BUILD_IN_SOURCE 1
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/luarocks/configure
       --prefix=${DEPS_INSTALL_DIR} --force-config ${LUAROCKS_OPTS}
