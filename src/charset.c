@@ -3,6 +3,7 @@
 /// Code related to character sets.
 
 #include <string.h>
+#include <wctype.h>
 
 #include "vim.h"
 #include "charset.h"
@@ -1552,12 +1553,9 @@ int vim_islower(int c)
     }
 
     if (c >= 0x100) {
-#ifdef HAVE_ISWLOWER
-
       if (has_mbyte) {
         return iswlower(c);
       }
-#endif  // ifdef HAVE_ISWLOWER
 
       // islower() can't handle these chars and may crash
       return FALSE;
@@ -1582,12 +1580,9 @@ int vim_isupper(int c)
     }
 
     if (c >= 0x100) {
-#ifdef HAVE_ISWUPPER
-
       if (has_mbyte) {
         return iswupper(c);
       }
-#endif  // ifdef HAVE_ISWUPPER
 
       // islower() can't handle these chars and may crash
       return FALSE;
@@ -1612,12 +1607,9 @@ int vim_toupper(int c)
     }
 
     if (c >= 0x100) {
-#ifdef HAVE_TOWUPPER
-
       if (has_mbyte) {
         return towupper(c);
       }
-#endif  // ifdef HAVE_TOWUPPER
 
       // toupper() can't handle these chars and may crash
       return c;
@@ -1642,12 +1634,9 @@ int vim_tolower(int c)
     }
 
     if (c >= 0x100) {
-#ifdef HAVE_TOWLOWER
-
       if (has_mbyte) {
         return towlower(c);
       }
-#endif  // ifdef HAVE_TOWLOWER
 
       // tolower() can't handle these chars and may crash
       return c;

@@ -969,32 +969,17 @@ static void close_spellbuf(buf_T *buf);
 # endif
 /* Multi-byte implementation.  For Unicode we can call utf_*(), but don't do
  * that for ASCII, because we don't want to use 'casemap' here.  Otherwise use
- * the "w" library function for characters above 255 if available. */
-# ifdef HAVE_TOWLOWER
-#  define SPELL_TOFOLD(c) (enc_utf8 && (c) >= 128 ? utf_fold(c) \
-                           : (c) < \
-                           256 ? (int)spelltab.st_fold[c] : (int)towlower(c))
-# else
-#  define SPELL_TOFOLD(c) (enc_utf8 && (c) >= 128 ? utf_fold(c) \
-                           : (c) < 256 ? (int)spelltab.st_fold[c] : (c))
-# endif
+ * the "w" library function for characters above 255. */
+#define SPELL_TOFOLD(c) (enc_utf8 && (c) >= 128 ? utf_fold(c) \
+                         : (c) < \
+                         256 ? (int)spelltab.st_fold[c] : (int)towlower(c))
 
-# ifdef HAVE_TOWUPPER
-#  define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? utf_toupper(c) \
-                            : (c) < \
-                            256 ? (int)spelltab.st_upper[c] : (int)towupper(c))
-# else
-#  define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? utf_toupper(c) \
-                            : (c) < 256 ? (int)spelltab.st_upper[c] : (c))
-# endif
+#define SPELL_TOUPPER(c) (enc_utf8 && (c) >= 128 ? utf_toupper(c) \
+                          : (c) < \
+                          256 ? (int)spelltab.st_upper[c] : (int)towupper(c))
 
-# ifdef HAVE_ISWUPPER
-#  define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? utf_isupper(c) \
-                            : (c) < 256 ? spelltab.st_isu[c] : iswupper(c))
-# else
-#  define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? utf_isupper(c) \
-                            : (c) < 256 ? spelltab.st_isu[c] : (FALSE))
-# endif
+#define SPELL_ISUPPER(c) (enc_utf8 && (c) >= 128 ? utf_isupper(c) \
+                          : (c) < 256 ? spelltab.st_isu[c] : iswupper(c))
 
 
 static char *e_format = N_("E759: Format error in spell file");
