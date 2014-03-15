@@ -53,7 +53,7 @@ int mch_full_dir_name(char *directory, char *buffer, int len)
 {
   int retval = OK;
 
-  if(STRLEN(directory) == 0) {
+  if (STRLEN(directory) == 0) {
     return mch_dirname((char_u *) buffer, len);
   }
 
@@ -78,7 +78,7 @@ int mch_full_dir_name(char *directory, char *buffer, int len)
     /* Do not return immediatly since we are in the wrong directory. */
     retval = FAIL;
   }
-   
+
   if (mch_chdir(old_dir) != 0) {
     /* That shouldn't happen, since we've tested if it works. */
     retval = FAIL;
@@ -139,14 +139,14 @@ int mch_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
 {
   char_u *p;
   *buf = NUL;
+  int rv = OK;
 
-  char relative_directory[len];
+  char *relative_directory = (char *)alloc(len);
   char *end_of_path = (char *) fname;
 
   /* expand it if forced or not an absolute path */
   if (force || !mch_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
-
       STRNCPY(relative_directory, fname, p-fname);
       relative_directory[p-fname] = NUL;
       end_of_path = (char *) (p + 1);
@@ -156,10 +156,15 @@ int mch_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
     }
 
     if (FAIL == mch_full_dir_name(relative_directory, (char *) buf, len)) {
-      return FAIL;
+      rv = FAIL;
     }
   }
-  return append_path((char *) buf, (char *) end_of_path, len);
+  vim_free(relative_directory);
+  if (rv == FAIL) {
+    return FAIL;
+  } else {
+    return append_path((char *) buf, (char *) end_of_path, len);
+  }
 }
 
 /*
@@ -178,7 +183,7 @@ int mch_is_absolute_path(const char_u *fname)
 int mch_isdir(const char_u *name)
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  int result = uv_fs_stat(uv_default_loop(), &request, (const char*)name, NULL);
   uint64_t mode = request.statbuf.st_mode;
 
   uv_fs_req_cleanup(&request);
@@ -220,7 +225,7 @@ int mch_can_exe(const char_u *name)
 static int is_executable(const char_u *name)
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  int result = uv_fs_stat(uv_default_loop(), &request, (const char*)name, NULL);
   uint64_t mode = request.statbuf.st_mode;
   uv_fs_req_cleanup(&request);
 
