@@ -13,7 +13,6 @@
 
 #define _FILE_OFFSET_BITS 64
 #cmakedefine HAVE__NSGETENVIRON
-#define HAVE_BCMP 1
 #cmakedefine HAVE_CRT_EXTERNS_H
 #define HAVE_DATE_TIME 1
 #define HAVE_DIRENT_H 1
