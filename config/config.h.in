@@ -35,7 +35,6 @@
 #define HAVE_GETWD 1
 #define HAVE_ICONV 1
 #define HAVE_ICONV_H 1
-#define HAVE_ISWUPPER 1
 #define HAVE_LANGINFO_H 1
 #define HAVE_LIBGEN_H 1
 #define HAVE_LIBINTL_H 1
@@ -98,8 +97,6 @@
 #define HAVE_TERMIO_H 1
 #define HAVE_TERMIOS_H 1
 #define HAVE_TGETENT 1
-#define HAVE_TOWLOWER 1
-#define HAVE_TOWUPPER 1
 #define HAVE_UNISTD_H 1
 #define HAVE_UP_BC_PC 1
 #define HAVE_USLEEP 1
