@@ -65,7 +65,6 @@
 #define HAVE_SIGSTACK 1
 #define HAVE_SIGVEC 1
 #define HAVE_ST_BLKSIZE 1
-#define HAVE_STDARG_H 1
 #define HAVE_STDLIB_H 1
 #define HAVE_STRCASECMP 1
 #define HAVE_STRERROR 1

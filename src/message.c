@@ -328,40 +328,6 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
  * Note: Caller of smgs() and smsg_attr() must check the resulting string is
  * shorter than IOSIZE!!!
  */
-# ifndef HAVE_STDARG_H
-
-int
-smsg(char_u *, long, long, long,
-     long, long, long, long, long, long, long);
-int
-smsg_attr(int, char_u *, long, long, long,
-          long, long, long, long, long, long, long);
-
-int vim_snprintf(char *, size_t, char *, long, long, long,
-                 long, long, long, long, long, long, long);
-
-/*
- * smsg(str, arg, ...) is like using sprintf(buf, str, arg, ...) and then
- * calling msg(buf).
- * The buffer used is IObuff, the message is truncated at IOSIZE.
- */
-
-/* VARARGS */
-int smsg(char_u *s, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10)
-{
-  return smsg_attr(0, s, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-}
-
-/* VARARGS */
-int smsg_attr(int attr, char_u *s, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10)
-{
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s,
-      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-  return msg_attr(IObuff, attr);
-}
-
-# else /* HAVE_STDARG_H */
-
 int vim_snprintf(char *str, size_t str_m, char *fmt, ...);
 
 int smsg(char_u *s, ...)
@@ -383,8 +349,6 @@ int smsg_attr(int attr, char_u *s, ...)
   va_end(arglist);
   return msg_attr(IObuff, attr);
 }
-
-# endif /* HAVE_STDARG_H */
 
 /*
  * Remember the last sourcing name/lnum used in an error message, so that it
@@ -3060,7 +3024,7 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt
 
 
 
-#if defined(HAVE_STDARG_H) && defined(FEAT_EVAL)
+#if defined(FEAT_EVAL)
 static char *e_printf = N_("E766: Insufficient arguments for printf()");
 
 static long tv_nr(typval_T *tvs, int *idxp);
@@ -3173,7 +3137,6 @@ static double tv_float(typval_T *tvs, int *idxp)
 /* When generating prototypes all of this is skipped, cproto doesn't
  * understand this. */
 
-# ifdef HAVE_STDARG_H
 /* Like vim_vsnprintf() but append to the string. */
 int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
 {
@@ -3192,23 +3155,6 @@ int vim_snprintf_add(char *str, size_t str_m, char *fmt, ...)
   return str_l;
 }
 
-# else
-/* Like vim_vsnprintf() but append to the string. */
-int vim_snprintf_add(char *str, size_t str_m, char *fmt, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10)
-{
-  size_t len = STRLEN(str);
-  size_t space;
-
-  if (str_m <= len)
-    space = 0;
-  else
-    space = str_m - len;
-  return vim_vsnprintf(str + len, space, fmt,
-      a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
-}
-# endif
-
-# ifdef HAVE_STDARG_H
 int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
 {
   va_list ap;
@@ -3220,26 +3166,7 @@ int vim_snprintf(char *str, size_t str_m, char *fmt, ...)
   return str_l;
 }
 
-int vim_vsnprintf(str, str_m, fmt, ap, tvs)
-# else
-/* clumsy way to work around missing va_list */
-#  define get_a_arg(i) (++i, i == 2 ? a1 : i == 3 ? a2 : i == 4 ? a3 : i == \
-                        5 ? a4 : i == 6 ? a5 : i == 7 ? a6 : i == 8 ? a7 : i == \
-                        9 ? a8 : i == \
-                        10 ? a9 : a10)
-
-/* VARARGS */
-int vim_snprintf(str, str_m, fmt, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-# endif
-char        *str;
-size_t str_m;
-char        *fmt;
-# ifdef HAVE_STDARG_H
-va_list ap;
-typval_T    *tvs;
-# else
-long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
-# endif
+int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
 {
   size_t str_l = 0;
   char        *p = fmt;
@@ -3326,13 +3253,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
         int j;
 
         p++;
-        j =
-#ifndef HAVE_STDARG_H
-          get_a_arg(arg_idx);
-#else
-          tvs != NULL ? tv_nr(tvs, &arg_idx) :
-          va_arg(ap, int);
-#endif
+        j = tvs != NULL ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
         if (j >= 0)
           min_field_width = j;
         else {
@@ -3356,13 +3277,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
         if (*p == '*') {
           int j;
 
-          j =
-#ifndef HAVE_STDARG_H
-            get_a_arg(arg_idx);
-#else
-            tvs != NULL ? tv_nr(tvs, &arg_idx) :
-            va_arg(ap, int);
-#endif
+          j = tvs != NULL ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
           p++;
           if (j >= 0)
             precision = j;
@@ -3422,13 +3337,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
         {
           int j;
 
-          j =
-#ifndef HAVE_STDARG_H
-            get_a_arg(arg_idx);
-#else
-            tvs != NULL ? tv_nr(tvs, &arg_idx) :
-            va_arg(ap, int);
-#endif
+          j = tvs != NULL ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
           /* standard demands unsigned char */
           uchar_arg = (unsigned char)j;
           str_arg = (char *)&uchar_arg;
@@ -3437,13 +3346,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
 
         case 's':
         case 'S':
-          str_arg =
-#ifndef HAVE_STDARG_H
-            (char *)get_a_arg(arg_idx);
-#else
-            tvs != NULL ? tv_str(tvs, &arg_idx) :
-            va_arg(ap, char *);
-#endif
+          str_arg = tvs != NULL ? tv_str(tvs, &arg_idx) : va_arg(ap, char *);
           if (str_arg == NULL) {
             str_arg = "[NULL]";
             str_arg_l = 6;
@@ -3517,13 +3420,8 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
 
         if (fmt_spec == 'p') {
           length_modifier = '\0';
-          ptr_arg =
-#ifndef HAVE_STDARG_H
-            (void *)get_a_arg(arg_idx);
-#else
-            tvs != NULL ? (void *)tv_str(tvs, &arg_idx) :
-            va_arg(ap, void *);
-#endif
+          ptr_arg = tvs != NULL ? (void *)tv_str(tvs, &arg_idx)
+                                : va_arg(ap, void *);
           if (ptr_arg != NULL)
             arg_sign = 1;
         } else if (fmt_spec == 'd') {
@@ -3532,26 +3430,15 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           case '\0':
           case 'h':
             /* char and short arguments are passed as int. */
-            int_arg =
-#ifndef HAVE_STDARG_H
-              get_a_arg(arg_idx);
-#else
-              tvs != NULL ? tv_nr(tvs, &arg_idx) :
-              va_arg(ap, int);
-#endif
+            int_arg = tvs != NULL ? tv_nr(tvs, &arg_idx) : va_arg(ap, int);
             if (int_arg > 0)
               arg_sign =  1;
             else if (int_arg < 0)
               arg_sign = -1;
             break;
           case 'l':
-            long_arg =
-#ifndef HAVE_STDARG_H
-              get_a_arg(arg_idx);
-#else
-              tvs != NULL ? tv_nr(tvs, &arg_idx) :
-              va_arg(ap, long int);
-#endif
+            long_arg = tvs != NULL ? tv_nr(tvs, &arg_idx)
+                                   : va_arg(ap, long int);
             if (long_arg > 0)
               arg_sign =  1;
             else if (long_arg < 0)
@@ -3563,26 +3450,14 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           switch (length_modifier) {
           case '\0':
           case 'h':
-            uint_arg =
-#ifndef HAVE_STDARG_H
-              get_a_arg(arg_idx);
-#else
-              tvs != NULL ? (unsigned)
-              tv_nr(tvs, &arg_idx) :
-              va_arg(ap, unsigned int);
-#endif
+            uint_arg = tvs != NULL ? (unsigned)tv_nr(tvs, &arg_idx)
+                                   : va_arg(ap, unsigned int);
             if (uint_arg != 0)
               arg_sign = 1;
             break;
           case 'l':
-            ulong_arg =
-#ifndef HAVE_STDARG_H
-              get_a_arg(arg_idx);
-#else
-              tvs != NULL ? (unsigned long)
-              tv_nr(tvs, &arg_idx) :
-              va_arg(ap, unsigned long int);
-#endif
+            ulong_arg = tvs != NULL ? (unsigned long)tv_nr(tvs, &arg_idx)
+                                    : va_arg(ap, unsigned long int);
             if (ulong_arg != 0)
               arg_sign = 1;
             break;
@@ -3725,13 +3600,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
         int l;
         int remove_trailing_zeroes = FALSE;
 
-        f =
-# ifndef HAVE_STDARG_H
-          get_a_arg(arg_idx);
-# else
-          tvs != NULL ? tv_float(tvs, &arg_idx) :
-          va_arg(ap, double);
-# endif
+        f = tvs != NULL ? tv_float(tvs, &arg_idx) : va_arg(ap, double);
         abs_f = f < 0 ? -f : f;
 
         if (fmt_spec == 'g' || fmt_spec == 'G') {
@@ -3952,10 +3821,8 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
     str[str_l <= str_m - 1 ? str_l : str_m - 1] = '\0';
   }
 
-#ifdef HAVE_STDARG_H
   if (tvs != NULL && tvs[arg_idx - 1].v_type != VAR_UNKNOWN)
     EMSG(_("E767: Too many arguments to printf()"));
-#endif
 
   /* Return the number of characters formatted (excluding trailing nul
    * character), that is, the number of characters that would have been

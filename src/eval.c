@@ -11865,13 +11865,11 @@ static void f_prevnonblank(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = lnum;
 }
 
-#ifdef HAVE_STDARG_H
 /* This dummy va_list is here because:
  * - passing a NULL pointer doesn't work when va_list isn't a pointer
  * - locally in the function results in a "used before set" warning
  * - using va_start() to initialize it gives "function with fixed args" error */
 static va_list ap;
-#endif
 
 /*
  * "printf()" function
@@ -11880,7 +11878,6 @@ static void f_printf(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-#ifdef HAVE_STDARG_H        /* only very old compilers can't do this */
   {
     char_u buf[NUMBUFLEN];
     int len;
@@ -11901,7 +11898,6 @@ static void f_printf(typval_T *argvars, typval_T *rettv)
     }
     did_emsg |= saved_did_emsg;
   }
-#endif
 }
 
 /*
