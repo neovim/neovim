@@ -299,52 +299,54 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 /*
  * values for xp_context when doing command line completion
  */
-#define EXPAND_UNSUCCESSFUL     (-2)
-#define EXPAND_OK               (-1)
-#define EXPAND_NOTHING          0
-#define EXPAND_COMMANDS         1
-#define EXPAND_FILES            2
-#define EXPAND_DIRECTORIES      3
-#define EXPAND_SETTINGS         4
-#define EXPAND_BOOL_SETTINGS    5
-#define EXPAND_TAGS             6
-#define EXPAND_OLD_SETTING      7
-#define EXPAND_HELP             8
-#define EXPAND_BUFFERS          9
-#define EXPAND_EVENTS           10
-#define EXPAND_MENUS            11
-#define EXPAND_SYNTAX           12
-#define EXPAND_HIGHLIGHT        13
-#define EXPAND_AUGROUP          14
-#define EXPAND_USER_VARS        15
-#define EXPAND_MAPPINGS         16
-#define EXPAND_TAGS_LISTFILES   17
-#define EXPAND_FUNCTIONS        18
-#define EXPAND_USER_FUNC        19
-#define EXPAND_EXPRESSION       20
-#define EXPAND_MENUNAMES        21
-#define EXPAND_USER_COMMANDS    22
-#define EXPAND_USER_CMD_FLAGS   23
-#define EXPAND_USER_NARGS       24
-#define EXPAND_USER_COMPLETE    25
-#define EXPAND_ENV_VARS         26
-#define EXPAND_LANGUAGE         27
-#define EXPAND_COLORS           28
-#define EXPAND_COMPILER         29
-#define EXPAND_USER_DEFINED     30
-#define EXPAND_USER_LIST        31
-#define EXPAND_SHELLCMD         32
-#define EXPAND_CSCOPE           33
-#define EXPAND_SIGN             34
-#define EXPAND_PROFILE          35
-#define EXPAND_BEHAVE           36
-#define EXPAND_FILETYPE         37
-#define EXPAND_FILES_IN_PATH    38
-#define EXPAND_OWNSYNTAX        39
-#define EXPAND_LOCALES          40
-#define EXPAND_HISTORY          41
-#define EXPAND_USER             42
-#define EXPAND_SYNTIME          43
+enum {
+  EXPAND_UNSUCCESSFUL = -2,
+  EXPAND_OK = -1,
+  EXPAND_NOTHING = 0,
+  EXPAND_COMMANDS,
+  EXPAND_FILES,
+  EXPAND_DIRECTORIES,
+  EXPAND_SETTINGS,
+  EXPAND_BOOL_SETTINGS,
+  EXPAND_TAGS,
+  EXPAND_OLD_SETTING,
+  EXPAND_HELP,
+  EXPAND_BUFFERS,
+  EXPAND_EVENTS,
+  EXPAND_MENUS,
+  EXPAND_SYNTAX,
+  EXPAND_HIGHLIGHT,
+  EXPAND_AUGROUP,
+  EXPAND_USER_VARS,
+  EXPAND_MAPPINGS,
+  EXPAND_TAGS_LISTFILES,
+  EXPAND_FUNCTIONS,
+  EXPAND_USER_FUNC,
+  EXPAND_EXPRESSION,
+  EXPAND_MENUNAMES,
+  EXPAND_USER_COMMANDS,
+  EXPAND_USER_CMD_FLAGS,
+  EXPAND_USER_NARGS,
+  EXPAND_USER_COMPLETE,
+  EXPAND_ENV_VARS,
+  EXPAND_LANGUAGE,
+  EXPAND_COLORS,
+  EXPAND_COMPILER,
+  EXPAND_USER_DEFINED,
+  EXPAND_USER_LIST,
+  EXPAND_SHELLCMD,
+  EXPAND_CSCOPE,
+  EXPAND_SIGN,
+  EXPAND_PROFILE,
+  EXPAND_BEHAVE,
+  EXPAND_FILETYPE,
+  EXPAND_FILES_IN_PATH,
+  EXPAND_OWNSYNTAX,
+  EXPAND_LOCALES,
+  EXPAND_HISTORY,
+  EXPAND_USER,
+  EXPAND_SYNTIME,
+};
 
 /* Values for exmode_active (0 is no exmode) */
 #define EXMODE_NORMAL           1
@@ -1304,64 +1306,66 @@ typedef struct timeval proftime_T;
 #define VALID_HEAD              2
 
 /* Defines for Vim variables.  These must match vimvars[] in eval.c! */
-#define VV_COUNT        0
-#define VV_COUNT1       1
-#define VV_PREVCOUNT    2
-#define VV_ERRMSG       3
-#define VV_WARNINGMSG   4
-#define VV_STATUSMSG    5
-#define VV_SHELL_ERROR  6
-#define VV_THIS_SESSION 7
-#define VV_VERSION      8
-#define VV_LNUM         9
-#define VV_TERMRESPONSE 10
-#define VV_FNAME        11
-#define VV_LANG         12
-#define VV_LC_TIME      13
-#define VV_CTYPE        14
-#define VV_CC_FROM      15
-#define VV_CC_TO        16
-#define VV_FNAME_IN     17
-#define VV_FNAME_OUT    18
-#define VV_FNAME_NEW    19
-#define VV_FNAME_DIFF   20
-#define VV_CMDARG       21
-#define VV_FOLDSTART    22
-#define VV_FOLDEND      23
-#define VV_FOLDDASHES   24
-#define VV_FOLDLEVEL    25
-#define VV_PROGNAME     26
-#define VV_SEND_SERVER  27
-#define VV_DYING        28
-#define VV_EXCEPTION    29
-#define VV_THROWPOINT   30
-#define VV_REG          31
-#define VV_CMDBANG      32
-#define VV_INSERTMODE   33
-#define VV_VAL          34
-#define VV_KEY          35
-#define VV_PROFILING    36
-#define VV_FCS_REASON   37
-#define VV_FCS_CHOICE   38
-#define VV_BEVAL_BUFNR  39
-#define VV_BEVAL_WINNR  40
-#define VV_BEVAL_LNUM   41
-#define VV_BEVAL_COL    42
-#define VV_BEVAL_TEXT   43
-#define VV_SCROLLSTART  44
-#define VV_SWAPNAME     45
-#define VV_SWAPCHOICE   46
-#define VV_SWAPCOMMAND  47
-#define VV_CHAR         48
-#define VV_MOUSE_WIN    49
-#define VV_MOUSE_LNUM   50
-#define VV_MOUSE_COL    51
-#define VV_OP           52
-#define VV_SEARCHFORWARD 53
-#define VV_HLSEARCH     54
-#define VV_OLDFILES     55
-#define VV_WINDOWID     56
-#define VV_LEN          57      /* number of v: vars */
+enum {
+    VV_COUNT,
+    VV_COUNT1,
+    VV_PREVCOUNT,
+    VV_ERRMSG,
+    VV_WARNINGMSG,
+    VV_STATUSMSG,
+    VV_SHELL_ERROR,
+    VV_THIS_SESSION,
+    VV_VERSION,
+    VV_LNUM,
+    VV_TERMRESPONSE,
+    VV_FNAME,
+    VV_LANG,
+    VV_LC_TIME,
+    VV_CTYPE,
+    VV_CC_FROM,
+    VV_CC_TO,
+    VV_FNAME_IN,
+    VV_FNAME_OUT,
+    VV_FNAME_NEW,
+    VV_FNAME_DIFF,
+    VV_CMDARG,
+    VV_FOLDSTART,
+    VV_FOLDEND,
+    VV_FOLDDASHES,
+    VV_FOLDLEVEL,
+    VV_PROGNAME,
+    VV_SEND_SERVER,
+    VV_DYING,
+    VV_EXCEPTION,
+    VV_THROWPOINT,
+    VV_REG,
+    VV_CMDBANG,
+    VV_INSERTMODE,
+    VV_VAL,
+    VV_KEY,
+    VV_PROFILING,
+    VV_FCS_REASON,
+    VV_FCS_CHOICE,
+    VV_BEVAL_BUFNR,
+    VV_BEVAL_WINNR,
+    VV_BEVAL_LNUM,
+    VV_BEVAL_COL,
+    VV_BEVAL_TEXT,
+    VV_SCROLLSTART,
+    VV_SWAPNAME,
+    VV_SWAPCHOICE,
+    VV_SWAPCOMMAND,
+    VV_CHAR,
+    VV_MOUSE_WIN,
+    VV_MOUSE_LNUM,
+    VV_MOUSE_COL,
+    VV_OP,
+    VV_SEARCHFORWARD,
+    VV_HLSEARCH,
+    VV_OLDFILES,
+    VV_WINDOWID,
+    VV_LEN, /* number of v: vars */
+};
 
 typedef int VimClipboard;       /* This is required for the prototypes. */
 
