@@ -1819,11 +1819,7 @@ int emsg3(char_u *s, char_u *a1, char_u *a2)
 {
   if (emsg_not_now())
     return TRUE;                /* no error messages at the moment */
-#ifdef HAVE_STDARG_H
   vim_snprintf((char *)IObuff, IOSIZE, (char *)s, a1, a2);
-#else
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, (long_u)a1, (long_u)a2);
-#endif
   return emsg(IObuff);
 }
 

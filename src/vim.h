@@ -140,9 +140,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 #ifdef HAVE_WCTYPE_H
 # include <wctype.h>
 #endif
-#ifdef HAVE_STDARG_H
-# include <stdarg.h>
-#endif
+#include <stdarg.h>
 
 #if defined(HAVE_SYS_SELECT_H) && \
   (!defined(HAVE_SYS_TIME_H) || defined(SYS_SELECT_WITH_SYS_TIME))
