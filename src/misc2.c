@@ -1394,20 +1394,6 @@ void vim_free(void *x)
   }
 }
 
-#ifndef HAVE_MEMSET
-void * vim_memset(ptr, c, size)
-void    *ptr;
-int c;
-size_t size;
-{
-  char *p = ptr;
-
-  while (size-- > 0)
-    *p++ = c;
-  return ptr;
-}
-#endif
-
 #ifdef VIM_MEMCMP
 /*
  * Return zero when "b1" and "b2" are the same for "len" bytes.
