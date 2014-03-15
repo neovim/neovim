@@ -136,9 +136,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 
 #include <assert.h>
 
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
+#include <inttypes.h>
 #ifdef HAVE_WCTYPE_H
 # include <wctype.h>
 #endif
