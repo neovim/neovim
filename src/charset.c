@@ -1270,10 +1270,8 @@ int vim_islower(int c)
     if (enc_utf8)
       return utf_islower(c);
     if (c >= 0x100) {
-#ifdef HAVE_ISWLOWER
       if (has_mbyte)
         return iswlower(c);
-#endif
       /* islower() can't handle these chars and may crash */
       return FALSE;
     }
@@ -1291,10 +1289,8 @@ int vim_isupper(int c)
     if (enc_utf8)
       return utf_isupper(c);
     if (c >= 0x100) {
-#ifdef HAVE_ISWUPPER
       if (has_mbyte)
         return iswupper(c);
-#endif
       /* islower() can't handle these chars and may crash */
       return FALSE;
     }
@@ -1312,10 +1308,8 @@ int vim_toupper(int c)
     if (enc_utf8)
       return utf_toupper(c);
     if (c >= 0x100) {
-#ifdef HAVE_TOWUPPER
       if (has_mbyte)
         return towupper(c);
-#endif
       /* toupper() can't handle these chars and may crash */
       return c;
     }
@@ -1333,10 +1327,8 @@ int vim_tolower(int c)
     if (enc_utf8)
       return utf_tolower(c);
     if (c >= 0x100) {
-#ifdef HAVE_TOWLOWER
       if (has_mbyte)
         return towlower(c);
-#endif
       /* tolower() can't handle these chars and may crash */
       return c;
     }
