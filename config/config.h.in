@@ -35,7 +35,6 @@
 #define HAVE_GETWD 1
 #define HAVE_ICONV 1
 #define HAVE_ICONV_H 1
-#define HAVE_INTTYPES_H 1
 #define HAVE_ISWUPPER 1
 #define HAVE_LANGINFO_H 1
 #define HAVE_LIBGEN_H 1
