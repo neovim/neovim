@@ -26,7 +26,6 @@
 #  define GdkEventKey int
 #  define XImage int
 
-# if !defined MESSAGE_FILE || defined(HAVE_STDARG_H)
 /* These prototypes cannot be produced automatically and conflict with
  * the old-style prototypes in message.c. */
 int
@@ -41,18 +40,10 @@ vim_snprintf_add(char *, size_t, char *, ...);
 int
 vim_snprintf(char *, size_t, char *, ...);
 
-#  if defined(HAVE_STDARG_H)
 int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs);
-#  endif
-# endif
 
 #ifndef HAVE_STRPBRK        /* not generated automatically from misc2.c */
 char_u *vim_strpbrk(char_u *s, char_u *charset);
-#endif
-#ifndef HAVE_QSORT
-/* Use our own qsort(), don't define the prototype when not used. */
-void qsort(void *base, size_t elm_count, size_t elm_size,
-           int (*cmp)(const void *, const void *));
 #endif
 
 /* Ugly solution for "BalloonEval" not being defined while it's used in some

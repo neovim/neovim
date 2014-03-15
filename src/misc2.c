@@ -1394,20 +1394,6 @@ void vim_free(void *x)
   }
 }
 
-#ifndef HAVE_MEMSET
-void * vim_memset(ptr, c, size)
-void    *ptr;
-int c;
-size_t size;
-{
-  char *p = ptr;
-
-  while (size-- > 0)
-    *p++ = c;
-  return ptr;
-}
-#endif
-
 #ifdef VIM_MEMCMP
 /*
  * Return zero when "b1" and "b2" are the same for "len" bytes.
@@ -1873,45 +1859,6 @@ int vim_chdir(char_u *new_dir)
   return r;
 }
 
-#ifndef HAVE_QSORT
-/*
- * Our own qsort(), for systems that don't have it.
- * It's simple and slow.  From the K&R C book.
- */
-void qsort(base, elm_count, elm_size, cmp)
-void        *base;
-size_t elm_count;
-size_t elm_size;
-int (*cmp)(const void *, const void *);
-{
-  char_u      *buf;
-  char_u      *p1;
-  char_u      *p2;
-  int i, j;
-  int gap;
-
-  buf = alloc((unsigned)elm_size);
-  if (buf == NULL)
-    return;
-
-  for (gap = elm_count / 2; gap > 0; gap /= 2)
-    for (i = gap; i < elm_count; ++i)
-      for (j = i - gap; j >= 0; j -= gap) {
-        /* Compare the elements. */
-        p1 = (char_u *)base + j * elm_size;
-        p2 = (char_u *)base + (j + gap) * elm_size;
-        if ((*cmp)((void *)p1, (void *)p2) <= 0)
-          break;
-        /* Exchange the elements. */
-        mch_memmove(buf, p1, elm_size);
-        mch_memmove(p1, p2, elm_size);
-        mch_memmove(p2, buf, elm_size);
-      }
-
-  vim_free(buf);
-}
-#endif
-
 /*
  * Sort an array of strings.
  */
@@ -2030,11 +1977,7 @@ int emsg3(char_u *s, char_u *a1, char_u *a2)
 {
   if (emsg_not_now())
     return TRUE;                /* no error messages at the moment */
-#ifdef HAVE_STDARG_H
   vim_snprintf((char *)IObuff, IOSIZE, (char *)s, a1, a2);
-#else
-  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, (long_u)a1, (long_u)a2);
-#endif
   return emsg(IObuff);
 }
 

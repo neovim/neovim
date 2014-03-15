@@ -136,15 +136,11 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 
 #include <assert.h>
 
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
-#endif
+#include <inttypes.h>
 #ifdef HAVE_WCTYPE_H
 # include <wctype.h>
 #endif
-#ifdef HAVE_STDARG_H
-# include <stdarg.h>
-#endif
+#include <stdarg.h>
 
 #if defined(HAVE_SYS_SELECT_H) && \
   (!defined(HAVE_SYS_TIME_H) || defined(SYS_SELECT_WITH_SYS_TIME))
@@ -1163,22 +1159,9 @@ void mch_memmove(void *, void *, size_t);
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#ifdef HAVE_MEMSET
-# define vim_memset(ptr, c, size)   memset((ptr), (c), (size))
-#else
-void *vim_memset(void *, int, size_t);
-#endif
+#define vim_memset(ptr, c, size)   memset((ptr), (c), (size))
 
-#ifdef HAVE_MEMCMP
-# define vim_memcmp(p1, p2, len)   memcmp((p1), (p2), (len))
-#else
-# ifdef HAVE_BCMP
-#  define vim_memcmp(p1, p2, len)   bcmp((p1), (p2), (len))
-# else
-int vim_memcmp(void *, void *, size_t);
-#  define VIM_MEMCMP
-# endif
-#endif
+#define vim_memcmp(p1, p2, len)   memcmp((p1), (p2), (len))
 
 #if defined(UNIX) || defined(FEAT_GUI) || defined(OS2) || defined(VMS) \
   || defined(FEAT_CLIENTSERVER)
