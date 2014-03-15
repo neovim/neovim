@@ -64,7 +64,7 @@
 #include "os/os.h"
 #include "os/shell.h"
 
-#if defined(FEAT_FLOAT) && defined(HAVE_MATH_H)
+#if defined(FEAT_FLOAT)
 # include <math.h>
 #endif
 

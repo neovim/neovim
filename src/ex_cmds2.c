@@ -824,9 +824,7 @@ proftime_T *tm;
 }
 
 
-# if defined(HAVE_MATH_H)
-#  include <math.h>
-# endif
+#include <math.h>
 
 /*
  * Divide the time "tm" by "count" and store in "tm2".
