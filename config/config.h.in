@@ -20,7 +20,6 @@
 #define HAVE_DLFCN_H 1
 #define HAVE_DLOPEN 1
 #define HAVE_DLSYM 1
-#define HAVE_ERRNO_H 1
 #define HAVE_FCHDIR 1
 #define HAVE_FCHOWN 1
 #define HAVE_FCNTL_H 1
