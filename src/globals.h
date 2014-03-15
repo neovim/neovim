@@ -589,7 +589,6 @@ EXTERN int orig_line_count INIT(= 0);       /* Line count when "gR" started */
 EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 
 
-#if defined(HAVE_SETJMP_H)
 /*
  * Stuff for setjmp() and longjmp().
  * Used to protect areas where we could crash.
@@ -602,7 +601,6 @@ EXTERN volatile int lc_signal;  /* caught signal number, 0 when no was signal
 # endif
 /* volatile because it is used in signal handler deathtrap(). */
 EXTERN volatile int lc_active INIT(= FALSE); /* TRUE when lc_jump_env is valid. */
-#endif
 
 /*
  * These flags are set based upon 'fileencoding'.
