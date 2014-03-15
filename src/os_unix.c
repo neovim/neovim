@@ -340,7 +340,7 @@ catch_sigpwr SIGDEFARG(sigarg) {
 
 #endif
 
-#if (defined(HAVE_SETJMP_H) && defined(FEAT_LIBCALL)) || defined(PROTO)
+#if defined(FEAT_LIBCALL) || defined(PROTO)
 /*
  * A simplistic version of setjmp() that only allows one level of using.
  * Don't call twice before calling mch_endjmp()!.
@@ -401,21 +401,19 @@ deathtrap SIGDEFARG(sigarg) {
   int i;
 #endif
 
-#if defined(HAVE_SETJMP_H)
   /*
    * Catch a crash in protected code.
    * Restores the environment saved in lc_jump_env, which looks like
    * SETJMP() returns 1.
    */
   if (lc_active) {
-# if defined(SIGHASARG)
+#if defined(SIGHASARG)
     lc_signal = sigarg;
-# endif
+#endif
     lc_active = FALSE;          /* don't jump again */
     LONGJMP(lc_jump_env, 1);
     /* NOTREACHED */
   }
-#endif
 
 #ifdef SIGHASARG
 # ifdef SIGQUIT
@@ -3043,7 +3041,6 @@ int         *number_result;
 
   /* If the handle is valid, try to get the function address. */
   if (hinstLib != NULL) {
-# ifdef HAVE_SETJMP_H
     /*
      * Catch a crash when calling the library function.  For example when
      * using a number where a string pointer is expected.
@@ -3051,12 +3048,11 @@ int         *number_result;
     mch_startjmp();
     if (SETJMP(lc_jump_env) != 0) {
       success = FALSE;
-#  if defined(USE_DLOPEN)
+# if defined(USE_DLOPEN)
       dlerr = NULL;
-#  endif
+# endif
       mch_didjmp();
     } else
-# endif
     {
       retval_str = NULL;
       retval_int = 0;
@@ -3111,9 +3107,8 @@ int         *number_result;
         *string_result = vim_strsave(retval_str);
     }
 
-# ifdef HAVE_SETJMP_H
     mch_endjmp();
-#  ifdef SIGHASARG
+# ifdef SIGHASARG
     if (lc_signal != 0) {
       int i;
 
@@ -3123,7 +3118,6 @@ int         *number_result;
           break;
       EMSG2("E368: got SIG%s in libcall()", signal_info[i].name);
     }
-#  endif
 # endif
 
 # if defined(USE_DLOPEN)
