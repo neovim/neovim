@@ -62,7 +62,6 @@
 // TODO: add proper cmake check
 // #define HAVE_SELINUX 1
 #define HAVE_SETENV 1
-#define HAVE_SETJMP_H 1
 #define HAVE_SETPGID 1
 #define HAVE_SETSID 1
 #define HAVE_SGTTY_H 1

@@ -287,17 +287,15 @@ int mch_rename(const char *src, const char *dest);
 # include <strings.h>
 #endif
 
-#if defined(HAVE_SETJMP_H)
-# include <setjmp.h>
-# ifdef HAVE_SIGSETJMP
-#  define JMP_BUF sigjmp_buf
-#  define SETJMP(x) sigsetjmp((x), 1)
-#  define LONGJMP siglongjmp
-# else
-#  define JMP_BUF jmp_buf
-#  define SETJMP(x) setjmp(x)
-#  define LONGJMP longjmp
-# endif
+#include <setjmp.h>
+#ifdef HAVE_SIGSETJMP
+# define JMP_BUF sigjmp_buf
+# define SETJMP(x) sigsetjmp((x), 1)
+# define LONGJMP siglongjmp
+#else
+# define JMP_BUF jmp_buf
+# define SETJMP(x) setjmp(x)
+# define LONGJMP longjmp
 #endif
 
 #define HAVE_DUP                /* have dup() */
