@@ -120,7 +120,6 @@
  * On VMS file names are different and require a translation.
  * On the Mac open() has only two arguments.
  */
-#   define mch_access(n, p)     access((n), (p))
 #  define mch_fopen(n, p)       fopen((n), (p))
 # define mch_fstat(n, p)        fstat((n), (p))
 #  ifdef STAT_IGNORES_SLASH
