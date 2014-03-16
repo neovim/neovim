@@ -71,9 +71,6 @@ static int crypt_seed_len[] = {0, 8};
 #define CRYPT_SALT_LEN_MAX 8
 #define CRYPT_SEED_LEN_MAX 8
 
-/* Is there any system that doesn't have access()? */
-#define USE_MCH_ACCESS
-
 static char_u *next_fenc(char_u **pp);
 static char_u *readfile_charconvert(char_u *fname, char_u *fenc,
                                             int *fdp);
@@ -2443,34 +2440,6 @@ set_file_time (
 }
 #endif /* UNIX */
 
-
-/*
- * Return TRUE if a file appears to be read-only from the file permissions.
- */
-int 
-check_file_readonly (
-    char_u *fname,             /* full path to file */
-    int perm                       /* known permissions on file */
-)
-{
-#ifndef USE_MCH_ACCESS
-  int fd = 0;
-#endif
-
-  return
-#ifdef USE_MCH_ACCESS
-# ifdef UNIX
-    (perm & 0222) == 0 ||
-# endif
-    mch_access((char *)fname, W_OK)
-#else
-    (fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0
-    ? TRUE : (close(fd), FALSE)
-#endif
-  ;
-}
-
-
 /*
  * buf_write() - write to file "fname" lines "start" through "end"
  *
@@ -2887,7 +2856,7 @@ buf_write (
      * Check if the file is really writable (when renaming the file to
      * make a backup we won't discover it later).
      */
-    file_readonly = check_file_readonly(fname, (int)perm);
+    file_readonly = os_file_is_readonly((char *)fname);
 
     if (!forceit && file_readonly) {
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {

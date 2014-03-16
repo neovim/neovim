@@ -2496,15 +2496,11 @@ int not_writing(void)
  */
 static int check_readonly(int *forceit, buf_T *buf)
 {
-  struct stat st;
-
   /* Handle a file being readonly when the 'readonly' option is set or when
-   * the file exists and permissions are read-only.
-   * We will send 0777 to check_file_readonly(), as the "perm" variable is
-   * important for device checks but not here. */
+   * the file exists and permissions are read-only. */
   if (!*forceit && (buf->b_p_ro
-                    || (mch_stat((char *)buf->b_ffname, &st) >= 0
-                        && check_file_readonly(buf->b_ffname, 0777)))) {
+                    || (os_file_exists(buf->b_ffname)
+                        && os_file_is_readonly((char *)buf->b_ffname)))) {
     if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
       char_u buff[DIALOG_MSG_SIZE];
 

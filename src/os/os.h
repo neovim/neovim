@@ -68,5 +68,6 @@ int os_get_usernames(garray_T *usernames);
 int os_get_user_name(char *s, size_t len);
 int os_get_uname(uid_t uid, char *s, size_t len);
 char *os_get_user_directory(const char *name);
+int os_file_is_readonly(const char *name);
 
 #endif  // NEOVIM_OS_OS_H
