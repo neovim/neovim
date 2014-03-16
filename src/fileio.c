@@ -475,21 +475,11 @@ readfile (
   }
 
   /*
-   * for UNIX: check readonly with perm and mch_access()
-   * for MSDOS and Amiga: check readonly by trying to open the file for writing
+   * check readonly by trying to open the file for writing
    */
   file_readonly = FALSE;
   if (read_stdin) {
   } else if (!read_buffer) {
-#ifdef USE_MCH_ACCESS
-    if (
-# ifdef UNIX
-      !(perm & 0222) ||
-# endif
-      mch_access((char *)fname, W_OK))
-      file_readonly = TRUE;
-    fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
-#else
     if (!newfile
         || readonlymode
         || (fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0) {
@@ -497,7 +487,6 @@ readfile (
       /* try to open ro */
       fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
     }
-#endif
   }
 
   if (fd < 0) {                     /* cannot open at all */
