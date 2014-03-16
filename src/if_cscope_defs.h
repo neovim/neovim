@@ -1,6 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
- * CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
+/* CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
  * Ported to Win32 by Sergey Khorev <sergey.khorev@gmail.com>
  *
  * The basic idea/structure of cscope for Vim was borrowed from Nvi.
