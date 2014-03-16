@@ -19,6 +19,7 @@ int os_can_exe(char_u *name);
 int32_t os_getperm(char_u *name);
 int os_setperm(char_u *name, long perm);
 int os_file_exists(const char_u *name);
+int os_file_is_readonly(char *fname);
 ]]
 
 -- import constants parsed by ffi
@@ -282,6 +283,9 @@ describe 'fs function', ->
     os_setperm = (filename, perm) ->
       fs.os_setperm (to_cstr filename), perm
 
+    os_file_is_readonly = (filename) ->
+      fs.os_file_is_readonly (to_cstr filename)
+
     bit_set = (number, check_bit) ->
       if 0 == (bit.band number, check_bit) then false else true
 
@@ -321,6 +325,20 @@ describe 'fs function', ->
       it 'fails if given file does not exist', ->
         perm = ffi.C.kS_IXUSR
         eq FAIL, (os_setperm 'non-existing-file', perm)
+
+    describe 'os_file_is_readonly', ->
+      it 'returns TRUE if the file is readonly', ->
+        perm = os_getperm 'unit-test-directory/test.file'
+        perm_orig = perm
+        perm = unset_bit perm, ffi.C.kS_IWUSR
+        perm = unset_bit perm, ffi.C.kS_IWGRP
+        perm = unset_bit perm, ffi.C.kS_IWOTH
+        eq OK, (os_setperm 'unit-test-directory/test.file', perm)
+        eq TRUE, os_file_is_readonly 'unit-test-directory/test.file'
+        eq OK, (os_setperm 'unit-test-directory/test.file', perm_orig)
+
+      it 'returns FALSE if the file is writable', ->
+        eq FALSE, os_file_is_readonly 'unit-test-directory/test.file'
 
   describe 'os_file_exists', ->
     os_file_exists = (filename) ->

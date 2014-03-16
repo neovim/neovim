@@ -278,3 +278,13 @@ int os_file_exists(const char_u *name)
   }
 }
 
+// return TRUE if a file appears to be read-only from the file permissions.
+int os_file_is_readonly(const char *name)
+{
+  if (mch_access(name, W_OK) == 0) {
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
