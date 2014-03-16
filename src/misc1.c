@@ -255,7 +255,7 @@ open_line (
               }
             }
           }
-        } else   {      /* Not a comment line */
+        } else {      /* Not a comment line */
           /* Find last non-blank in line */
           p = ptr + STRLEN(ptr) - 1;
           while (p > ptr && vim_iswhite(*p))
@@ -304,7 +304,7 @@ open_line (
                    && cin_is_cinword(ptr))
             did_si = TRUE;
         }
-      } else   { /* dir == BACKWARD */
+      } else { /* dir == BACKWARD */
                  /*
                   * Skip preprocessor directives, unless they are
                   * recognised as comments.
@@ -571,7 +571,7 @@ open_line (
               } else if (!vim_iswhite(*p))
                 *p = ' ';
             }
-          } else   {                        /* left adjusted leader */
+          } else {                        /* left adjusted leader */
             p = skipwhite(leader);
             /* Compute the length of the replaced characters in
              * screen characters, not bytes. Move the part that is
@@ -605,7 +605,7 @@ open_line (
                   --lead_len;
                   mch_memmove(p, p + 1,
                       (leader + lead_len) - p);
-                } else   {
+                } else {
                   int l = (*mb_ptr2len)(p);
 
                   if (l > 1) {
@@ -679,7 +679,7 @@ open_line (
 
       }
       did_si = can_si = FALSE;
-    } else if (comment_end != NULL)   {
+    } else if (comment_end != NULL) {
       /*
        * We have finished a comment, so we don't use the leader.
        * If this was a C-comment and 'ai' or 'si' is set do a normal
@@ -769,7 +769,7 @@ open_line (
      * with markers. */
     mark_adjust(curwin->w_cursor.lnum + 1, (linenr_T)MAXLNUM, 1L, 0L);
     did_append = TRUE;
-  } else   {
+  } else {
     /*
      * In VREPLACE mode we are starting to replace the next line.
      */
@@ -1362,7 +1362,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
     if (x > 0) {
       ++count;              /* count 1 for "+-- folded" line */
       first += x;
-    } else   {
+    } else {
       if (first == wp->w_topline)
         count += plines_win_nofill(wp, first, TRUE) + wp->w_topfill;
       else
@@ -1490,7 +1490,7 @@ void ins_char_bytes(char_u *buf, int charlen)
           newlen += vcol - new_vcol;
       }
       curwin->w_p_list = old_list;
-    } else if (oldp[col] != NUL)    {
+    } else if (oldp[col] != NUL)  {
       /* normal replace */
       oldlen = (*mb_ptr2len)(oldp + col);
     }
@@ -1816,7 +1816,8 @@ int gchar_pos(pos_T *pos)
   return (int)*ptr;
 }
 
-int gchar_cursor(void)         {
+int gchar_cursor(void)
+{
   if (has_mbyte)
     return (*mb_ptr2char)(ml_get_cursor());
   return (int)*ml_get_cursor();
@@ -1852,7 +1853,8 @@ char_u *skip_to_option_part(char_u *p)
  *
  * Careful: may trigger autocommands that reload the buffer.
  */
-void changed(void)          {
+void changed(void)
+{
 
   if (!curbuf->b_changed) {
     int save_msg_scroll = msg_scroll;
@@ -1887,7 +1889,8 @@ void changed(void)          {
 /*
  * Internal part of changed(), no user interaction.
  */
-void changed_int(void)          {
+void changed_int(void)
+{
   curbuf->b_changed = TRUE;
   ml_setflags(curbuf);
   check_status(curbuf);
@@ -1936,7 +1939,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
       buf->b_mod_top = lnum;
     else if (lnum >= buf->b_mod_bot)
       buf->b_mod_bot = lnum + 1;
-  } else   {
+  } else {
     /* set the area that must be redisplayed to one line */
     buf->b_mod_set = TRUE;
     buf->b_mod_top = lnum;
@@ -2048,7 +2051,7 @@ changed_lines_buf (
     if (lnume + xtra > buf->b_mod_bot)
       buf->b_mod_bot = lnume + xtra;
     buf->b_mod_xlines += xtra;
-  } else   {
+  } else {
     /* set the area that must be redisplayed */
     buf->b_mod_set = TRUE;
     buf->b_mod_top = lnum;
@@ -2190,12 +2193,12 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
             if (wp->w_lines[i].wl_lnum < lnume) {
               /* line included in change */
               wp->w_lines[i].wl_valid = FALSE;
-            } else if (xtra != 0)   {
+            } else if (xtra != 0) {
               /* line below change */
               wp->w_lines[i].wl_lnum += xtra;
               wp->w_lines[i].wl_lastlnum += xtra;
             }
-          } else if (wp->w_lines[i].wl_lastlnum >= lnum)   {
+          } else if (wp->w_lines[i].wl_lastlnum >= lnum) {
             /* change somewhere inside this range of folded lines,
              * may need to be redrawn */
             wp->w_lines[i].wl_valid = FALSE;
@@ -2387,7 +2390,8 @@ int is_mouse_key(int c)
  * Disadvantage: typeahead is ignored.
  * Translates the interrupt character for unix to ESC.
  */
-int get_keystroke(void)         {
+int get_keystroke(void)
+{
   char_u      *buf = NULL;
   int buflen = 150;
   int maxlen;
@@ -2517,17 +2521,17 @@ get_number (
       n = n * 10 + c - '0';
       msg_putchar(c);
       ++typed;
-    } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H)   {
+    } else if (c == K_DEL || c == K_KDEL || c == K_BS || c == Ctrl_H) {
       if (typed > 0) {
         MSG_PUTS("\b \b");
         --typed;
       }
       n /= 10;
-    } else if (mouse_used != NULL && c == K_LEFTMOUSE)   {
+    } else if (mouse_used != NULL && c == K_LEFTMOUSE) {
       *mouse_used = TRUE;
       n = mouse_row + 1;
       break;
-    } else if (n == 0 && c == ':' && colon)   {
+    } else if (n == 0 && c == ':' && colon) {
       stuffcharReadbuff(':');
       if (!exmode_active)
         cmdline_row = msg_row;
@@ -2608,7 +2612,7 @@ void msgmore(long n)
       else
         vim_strncpy(msg_buf, (char_u *)_("1 line less"),
             MSG_BUF_LEN - 1);
-    } else   {
+    } else {
       if (n > 0)
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
             _("%ld more lines"), pn);
@@ -2628,7 +2632,8 @@ void msgmore(long n)
 /*
  * flush map and typeahead buffers and give a warning for an error
  */
-void beep_flush(void)          {
+void beep_flush(void)
+{
   if (emsg_silent == 0) {
     flush_buffers(FALSE);
     vim_beep();
@@ -2638,12 +2643,13 @@ void beep_flush(void)          {
 /*
  * give a warning for an error
  */
-void vim_beep(void)          {
+void vim_beep(void)
+{
   if (emsg_silent == 0) {
     if (p_vb
         ) {
       out_str(T_VB);
-    } else   {
+    } else {
       out_char(BELL);
     }
 
@@ -2667,7 +2673,8 @@ void vim_beep(void)          {
  */
 static char_u   *homedir = NULL;
 
-void init_homedir(void)          {
+void init_homedir(void)
+{
   char_u  *var;
 
   /* In case we are called a second time (when 'encoding' changes). */
@@ -2699,11 +2706,13 @@ void init_homedir(void)          {
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void free_homedir(void)          {
+void free_homedir(void)
+{
   vim_free(homedir);
 }
 
-void free_users(void)          {
+void free_users(void)
+{
   ga_clear_strings(&ga_users);
 }
 
@@ -2831,7 +2840,7 @@ expand_env_esc (
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
         var = homedir;
         tail = src + 1;
-      } else   {                                        /* user directory */
+      } else {                                        /* user directory */
 #if defined(UNIX) || (defined(VMS) && defined(USER_HOME))
         /*
          * Copy ~user to dst[], so we can put a NUL after it.
@@ -3069,7 +3078,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       if (p != NULL && !mch_isdir(p)) {
         vim_free(p);
         p = NULL;
-      } else   {
+      } else {
 #ifdef USE_EXE_NAME
         /* may add "/vim54" or "/runtime" if it exists */
         if (vimruntime && (pend = vim_version_dir(p)) != NULL) {
@@ -3090,7 +3099,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
     if (vimruntime && *default_vimruntime_dir != NUL) {
       p = default_vimruntime_dir;
       *mustfree = FALSE;
-    } else if (*default_vim_dir != NUL)   {
+    } else if (*default_vim_dir != NUL) {
       if (vimruntime && (p = vim_version_dir(default_vim_dir)) != NULL)
         *mustfree = TRUE;
       else {
@@ -3109,7 +3118,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
     if (vimruntime) {
       vim_setenv((char_u *)"VIMRUNTIME", p);
       didset_vimruntime = TRUE;
-    } else   {
+    } else {
       vim_setenv((char_u *)"VIM", p);
       didset_vim = TRUE;
     }
@@ -3496,7 +3505,7 @@ static char_u *gettail_dir(char_u *fname)
         next_dir_end = p;
         look_for_sep = FALSE;
       }
-    } else   {
+    } else {
       if (!look_for_sep)
         dir_end = next_dir_end;
       look_for_sep = TRUE;
@@ -3611,10 +3620,10 @@ void shorten_dir(char_u *str)
       *d++ = *s;
       if (*s == NUL)
         break;
-    } else if (vim_ispathsep(*s))   {       /* copy '/' and next char */
+    } else if (vim_ispathsep(*s)) {       /* copy '/' and next char */
       *d++ = *s;
       skip = FALSE;
-    } else if (!skip)   {
+    } else if (!skip) {
       *d++ = *s;                    /* copy next char */
       if (*s != '~' && *s != '.')       /* and leading "~" and "." */
         skip = TRUE;
@@ -3768,7 +3777,8 @@ FullName_save (
   return new_fname;
 }
 
-void prepare_to_exit(void)          {
+void prepare_to_exit(void)
+{
 #if defined(SIGHUP) && defined(SIG_IGN)
   /* Ignore SIGHUP, because a dropped connection causes a read error, which
    * makes Vim exit and then handling SIGHUP causes various reentrance
@@ -3795,7 +3805,8 @@ void prepare_to_exit(void)          {
  * NOTE: This may be called from deathtrap() in a signal handler, avoid unsafe
  * functions, such as allocating memory.
  */
-void preserve_exit(void)          {
+void preserve_exit(void)
+{
   buf_T       *buf;
 
   prepare_to_exit();
@@ -3840,7 +3851,8 @@ void preserve_exit(void)          {
 
 static int breakcheck_count = 0;
 
-void line_breakcheck(void)          {
+void line_breakcheck(void)
+{
   if (++breakcheck_count >= BREAKCHECK_SKIP) {
     breakcheck_count = 0;
     ui_breakcheck();
@@ -3850,7 +3862,8 @@ void line_breakcheck(void)          {
 /*
  * Like line_breakcheck() but check 10 times less often.
  */
-void fast_breakcheck(void)          {
+void fast_breakcheck(void)
+{
   if (++breakcheck_count >= BREAKCHECK_SKIP * 10) {
     breakcheck_count = 0;
     ui_breakcheck();
@@ -3988,7 +4001,7 @@ int match_suffix(char_u *fname)
         setsuflen = 1;
         break;
       }
-    } else   {
+    } else {
       if (fnamelen >= setsuflen
           && fnamencmp(suf_buf, fname + fnamelen - setsuflen,
               (size_t)setsuflen) == 0)
@@ -4179,7 +4192,7 @@ unix_expandpath (
           /* need to expand another component of the path */
           /* remove backslashes for the remaining components only */
           (void)unix_expandpath(gap, buf, len + 1, flags, FALSE);
-        } else   {
+        } else {
           /* no more wildcards, check if there is a match */
           /* remove backslashes for the remaining components only */
           if (*path_end != NUL)
@@ -4574,7 +4587,7 @@ expand_in_path (
     if (*e == NUL) {
       addfile(gap, s, flags);
       break;
-    } else   {
+    } else {
       /* *e is '\n' */
       *e = NUL;
       addfile(gap, s, flags);
@@ -4987,7 +5000,7 @@ get_cmd_output (
     EMSG2(_(e_notread), tempname);
     vim_free(buffer);
     buffer = NULL;
-  } else   {
+  } else {
     /* Change NUL into SOH, otherwise the string is truncated. */
     for (i = 0; i < len; ++i)
       if (buffer[i] == NUL)
@@ -5019,7 +5032,8 @@ void FreeWild(int count, char_u **files)
  * Don't do this when still processing a command or a mapping.
  * Don't do this when inside a ":normal" command.
  */
-int goto_im(void)         {
+int goto_im(void)
+{
   return p_im && stuff_empty() && typebuf_typed();
 }
 

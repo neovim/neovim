@@ -53,7 +53,8 @@ static int coladvance2(pos_T *pos, int addspaces, int finetune,
 /*
  * Return TRUE if in the current mode we need to use virtual.
  */
-int virtual_active(void)         {
+int virtual_active(void)
+{
   /* While an operator is being executed we return "virtual_op", because
    * VIsual_active has already been reset, thus we can't check for "block"
    * being used. */
@@ -67,7 +68,8 @@ int virtual_active(void)         {
 /*
  * Get the screen position of the cursor.
  */
-int getviscol(void)         {
+int getviscol(void)
+{
   colnr_T x;
 
   getvvcol(curwin, &curwin->w_cursor, &x, NULL, NULL);
@@ -172,7 +174,7 @@ coladvance2 (
       if (curwin->w_curswant > 0)
         --curwin->w_curswant;
     }
-  } else   {
+  } else {
     int width = W_WIDTH(curwin) - win_col_off(curwin);
 
     if (finetune
@@ -241,7 +243,7 @@ coladvance2 (
         changed_bytes(pos->lnum, (colnr_T)idx);
         idx += correct;
         col = wcol;
-      } else   {
+      } else {
         /* Break a tab */
         int linelen = (int)STRLEN(line);
         int correct = wcol - col - csize + 1;             /* negative!! */
@@ -290,7 +292,7 @@ coladvance2 (
         getvcol(curwin, pos, &scol, NULL, &ecol);
         pos->coladd = ecol - scol;
       }
-    } else   {
+    } else {
       int b = (int)wcol - (int)col;
 
       /* The difference between wcol and col is used to set coladd. */
@@ -313,7 +315,8 @@ coladvance2 (
 /*
  * Increment the cursor position.  See inc() for return values.
  */
-int inc_cursor(void)         {
+int inc_cursor(void)
+{
   return inc(&curwin->w_cursor);
 }
 
@@ -366,7 +369,8 @@ int incl(pos_T *lp)
  * Decrement the line pointer 'p' crossing line boundaries as necessary.
  * Return 1 when crossing a line, -1 when at start of file, 0 otherwise.
  */
-int dec_cursor(void)         {
+int dec_cursor(void)
+{
   return dec(&curwin->w_cursor);
 }
 
@@ -430,7 +434,7 @@ get_cursor_rel_lnum (
           retval++;
         lnum--;
       }
-    } else if (lnum < cursor)   {
+    } else if (lnum < cursor) {
       while (lnum < cursor) {
         (void)hasFoldingWin(wp, lnum, NULL, &lnum, TRUE, NULL);
         /* if lnum and cursor are in the same fold,
@@ -452,7 +456,8 @@ get_cursor_rel_lnum (
 /*
  * Make sure curwin->w_cursor.lnum is valid.
  */
-void check_cursor_lnum(void)          {
+void check_cursor_lnum(void)
+{
   if (curwin->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
     /* If there is a closed fold at the end of the file, put the cursor in
      * its first line.  Otherwise in the last line. */
@@ -467,7 +472,8 @@ void check_cursor_lnum(void)          {
 /*
  * Make sure curwin->w_cursor.col is valid.
  */
-void check_cursor_col(void)          {
+void check_cursor_col(void)
+{
   check_cursor_col_win(curwin);
 }
 
@@ -519,7 +525,8 @@ void check_cursor_col_win(win_T *win)
 /*
  * make sure curwin->w_cursor in on a valid character
  */
-void check_cursor(void)          {
+void check_cursor(void)
+{
   check_cursor_lnum();
   check_cursor_col();
 }
@@ -528,7 +535,8 @@ void check_cursor(void)          {
  * Make sure curwin->w_cursor is not on the NUL at the end of the line.
  * Allow it when in Visual mode and 'selection' is not "old".
  */
-void adjust_cursor_col(void)          {
+void adjust_cursor_col(void)
+{
   if (curwin->w_cursor.col > 0
       && (!VIsual_active || *p_sel == 'o')
       && gchar_cursor() == NUL)
@@ -539,7 +547,8 @@ void adjust_cursor_col(void)          {
  * When curwin->w_leftcol has changed, adjust the cursor position.
  * Return TRUE if the cursor was moved.
  */
-int leftcol_changed(void)         {
+int leftcol_changed(void)
+{
   long lastcol;
   colnr_T s, e;
   int retval = FALSE;
@@ -555,7 +564,7 @@ int leftcol_changed(void)         {
   if (curwin->w_virtcol > (colnr_T)(lastcol - p_siso)) {
     retval = TRUE;
     coladvance((colnr_T)(lastcol - p_siso));
-  } else if (curwin->w_virtcol < curwin->w_leftcol + p_siso)   {
+  } else if (curwin->w_virtcol < curwin->w_leftcol + p_siso) {
     retval = TRUE;
     (void)coladvance((colnr_T)(curwin->w_leftcol + p_siso));
   }
@@ -569,7 +578,7 @@ int leftcol_changed(void)         {
   if (e > (colnr_T)lastcol) {
     retval = TRUE;
     coladvance(s - 1);
-  } else if (s < curwin->w_leftcol)   {
+  } else if (s < curwin->w_leftcol) {
     retval = TRUE;
     if (coladvance(e + 1) == FAIL) {    /* there isn't another character */
       curwin->w_leftcol = s;            /* adjust w_leftcol instead */
@@ -647,7 +656,8 @@ static void mem_pre_free(void **pp)
 /*
  * called on exit via atexit()
  */
-void vim_mem_profile_dump(void)          {
+void vim_mem_profile_dump(void)
+{
   int i, j;
 
   printf("\r\n");
@@ -871,7 +881,8 @@ void do_outofmem_msg(long_u size)
  * surprised if Vim crashes...
  * Some things can't be freed, esp. things local to a library function.
  */
-void free_all_mem(void)          {
+void free_all_mem(void)
+{
   buf_T       *buf, *nextbuf;
   static int entered = FALSE;
 
@@ -1102,7 +1113,8 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
 /*
  * Return TRUE when 'shell' has "csh" in the tail.
  */
-int csh_like_shell(void)         {
+int csh_like_shell(void)
+{
   return strstr((char *)gettail(p_sh), "csh") != NULL;
 }
 
@@ -1693,7 +1705,8 @@ set_fileformat (
 /*
  * Return the default fileformat from 'fileformats'.
  */
-int default_fileformat(void)         {
+int default_fileformat(void)
+{
   switch (*p_ffs) {
   case 'm':   return EOL_MAC;
   case 'd':   return EOL_DOS;
@@ -1725,7 +1738,7 @@ int call_shell(char_u *cmd, int opt)
   if (*p_sh == NUL) {
     EMSG(_(e_shellempty));
     retval = -1;
-  } else   {
+  } else {
     /* The external command may update a tags file, clear cached tags. */
     tag_freematch();
 
@@ -1773,7 +1786,8 @@ int call_shell(char_u *cmd, int opt)
  * VISUAL, SELECTMODE and OP_PENDING State are never set, they are equal to
  * NORMAL State with a condition.  This function returns the real State.
  */
-int get_real_state(void)         {
+int get_real_state(void)
+{
   if (State & NORMAL) {
     if (VIsual_active) {
       if (VIsual_select)

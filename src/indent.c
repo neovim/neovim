@@ -12,7 +12,8 @@
 /*
  * Count the size (in window cells) of the indent in the current line.
  */
-int get_indent(void)         {
+int get_indent(void)
+{
   return get_indent_str(ml_get_curline(), (int)curbuf->b_p_ts);
 }
 
@@ -113,7 +114,7 @@ set_indent (
           todo -= tab_pad;
           ++ind_len;
           ind_done += tab_pad;
-        } else   {
+        } else {
           --todo;
           ++ind_len;
           ++ind_done;
@@ -192,7 +193,7 @@ set_indent (
     while (vim_iswhite(*p))
       ++p;
 
-  } else   {
+  } else {
     todo = size;
     newline = alloc(ind_len + line_len);
     if (newline == NULL)
@@ -218,7 +219,7 @@ set_indent (
             break;
           todo -= tab_pad;
           ind_done += tab_pad;
-        } else   {
+        } else {
           --todo;
           ++ind_done;
         }
@@ -305,7 +306,7 @@ int copy_indent(int size, char_u *src)
           break;
         todo -= tab_pad;
         ind_done += tab_pad;
-      } else   {
+      } else {
         --todo;
         ++ind_done;
       }
@@ -424,7 +425,8 @@ int inindent(int extra)
 /*
  * Get indent level from 'indentexpr'.
  */
-int get_expr_indent(void)         {
+int get_expr_indent(void)
+{
   int indent;
   pos_T save_pos;
   colnr_T save_curswant;
@@ -498,7 +500,8 @@ static int lisp_match(char_u *p)
  * Update from Sergey Khorev:
  * I tried to fix the first two issues.
  */
-int get_lisp_indent(void)         {
+int get_lisp_indent(void)
+{
   pos_T       *pos, realpos, paren;
   int amount;
   char_u      *that;

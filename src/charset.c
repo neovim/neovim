@@ -352,7 +352,7 @@ char_u *transstr(char_u *s)
           transchar_hex(hexbuf, c);
           len += (int)STRLEN(hexbuf);
         }
-      } else   {
+      } else {
         l = byte2cells(*p++);
 
         if (l > 0) {

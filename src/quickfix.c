@@ -396,20 +396,20 @@ qf_init_ext (
                * follows should work. */
               STRCPY(ptr, ".\\{-1,}");
               ptr += 7;
-            } else   {
+            } else {
               /* File name followed by '\\' or '%': include as
                * many file name chars as possible. */
               STRCPY(ptr, "\\f\\+");
               ptr += 4;
             }
-          } else   {
+          } else {
             srcptr = (char_u *)fmt_pat[idx].pattern;
             while ((*ptr = *srcptr++) != NUL)
               ++ptr;
           }
           *ptr++ = '\\';
           *ptr++ = ')';
-        } else if (*efmp == '*')   {
+        } else if (*efmp == '*') {
           if (*++efmp == '[' || *efmp == '\\') {
             if ((*ptr++ = *efmp) == '[') {              /* %*[^a-z0-9] etc. */
               if (efmp[1] == '^')
@@ -428,7 +428,7 @@ qf_init_ext (
               *ptr++ = *++efmp;
             *ptr++ = '\\';
             *ptr++ = '+';
-          } else   {
+          } else {
             /* TODO: scanf()-like: %*ud, %*3c, %*f, ... ? */
             sprintf((char *)errmsg,
                 _("E375: Unsupported %%%c in format string"), *efmp);
@@ -452,13 +452,13 @@ qf_init_ext (
             EMSG(errmsg);
             goto error2;
           }
-        } else   {
+        } else {
           sprintf((char *)errmsg,
               _("E377: Invalid %%%c in format string"), *efmp);
           EMSG(errmsg);
           goto error2;
         }
-      } else   {                        /* copy normal character */
+      } else {                        /* copy normal character */
         if (*efmp == '\\' && efmp + 1 < efm + len)
           ++efmp;
         else if (vim_strchr((char_u *)".*^$~[", *efmp) != NULL)
@@ -524,7 +524,7 @@ qf_init_ext (
             vim_strncpy(IObuff, p_str, len);
 
           p_str += len;
-        } else if (tv->v_type == VAR_LIST)   {
+        } else if (tv->v_type == VAR_LIST) {
           /* Get the next line from the supplied list */
           while (p_li && p_li->li_tv.v_type != VAR_STRING)
             p_li = p_li->li_next;               /* Skip non-string items */
@@ -540,7 +540,7 @@ qf_init_ext (
 
           p_li = p_li->li_next;                 /* next item */
         }
-      } else   {
+      } else {
         /* Get the next line from the supplied buffer */
         if (buflnum > lnumlast)
           break;
@@ -709,7 +709,7 @@ restofline:
       STRCPY(errmsg, IObuff);           /* copy whole line to error message */
       if (fmt_ptr == NULL)
         multiline = multiignore = FALSE;
-    } else if (fmt_ptr != NULL)   {
+    } else if (fmt_ptr != NULL) {
       /* honor %> item */
       if (fmt_ptr->conthere)
         fmt_start = fmt_ptr;
@@ -747,7 +747,7 @@ restofline:
           multiline = multiignore = FALSE;
         line_breakcheck();
         continue;
-      } else if (vim_strchr((char_u *)"OPQ", idx) != NULL)   {
+      } else if (vim_strchr((char_u *)"OPQ", idx) != NULL) {
         /* global file names */
         valid = FALSE;
         if (*namebuf == NUL || os_file_exists(namebuf)) {
@@ -794,7 +794,7 @@ restofline:
         qi->qf_lists[qi->qf_curlist].qf_start;
       qi->qf_lists[qi->qf_curlist].qf_index = 1;
       qi->qf_lists[qi->qf_curlist].qf_nonevalid = TRUE;
-    } else   {
+    } else {
       qi->qf_lists[qi->qf_curlist].qf_nonevalid = FALSE;
       if (qi->qf_lists[qi->qf_curlist].qf_ptr == NULL)
         qi->qf_lists[qi->qf_curlist].qf_ptr =
@@ -957,7 +957,7 @@ qf_add_entry (
     /* first element in the list */
     qi->qf_lists[qi->qf_curlist].qf_start = qfp;
     qfp->qf_prev = qfp;         /* first element points to itself */
-  } else   {
+  } else {
     qfp->qf_prev = *prevp;
     (*prevp)->qf_next = qfp;
   }
@@ -978,7 +978,8 @@ qf_add_entry (
 /*
  * Allocate a new location list
  */
-static qf_info_T *ll_new_list(void)                        {
+static qf_info_T *ll_new_list(void)
+{
   qf_info_T *qi;
 
   qi = (qf_info_T *)alloc((unsigned)sizeof(qf_info_T));
@@ -1385,7 +1386,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
                || (dir == FORWARD_FILE && qf_ptr->qf_fnum == old_qf_fnum));
       err = NULL;
     }
-  } else if (dir == BACKWARD || dir == BACKWARD_FILE)   { /* prev. valid entry */
+  } else if (dir == BACKWARD || dir == BACKWARD_FILE) { /* prev. valid entry */
     while (errornr--) {
       old_qf_ptr = qf_ptr;
       prev_index = qf_index;
@@ -1408,7 +1409,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
                || (dir == BACKWARD_FILE && qf_ptr->qf_fnum == old_qf_fnum));
       err = NULL;
     }
-  } else if (errornr != 0)   {  /* go to specified number */
+  } else if (errornr != 0) {  /* go to specified number */
     while (errornr < qf_index && qf_index > 1 && qf_ptr->qf_prev != NULL) {
       --qf_index;
       qf_ptr = qf_ptr->qf_prev;
@@ -1547,7 +1548,7 @@ win_found:
         curwin->w_llist = ll_ref;
         ll_ref->qf_refcount++;
       }
-    } else   {
+    } else {
       if (curwin->w_llist_ref != NULL) {
         /* In a location window */
         win = usable_win_ptr;
@@ -1577,7 +1578,7 @@ win_found:
           win->w_llist = ll_ref;
           ll_ref->qf_refcount++;
         }
-      } else   {
+      } else {
 
         /*
          * Try to find a window that shows the right buffer.
@@ -1678,7 +1679,7 @@ win_found:
         check_cursor();
       } else
         beginline(BL_WHITE | BL_FIX);
-    } else   {
+    } else {
       pos_T save_cursor;
 
       /* Move the cursor to the first line in the buffer */
@@ -1715,7 +1716,7 @@ win_found:
       msg_attr_keep(IObuff, 0, TRUE);
       msg_scroll = i;
     }
-  } else   {
+  } else {
     if (opened_window)
       win_close(curwin, TRUE);          /* Close opened window */
     if (qf_ptr->qf_fnum != 0) {
@@ -1889,7 +1890,7 @@ void qf_age(exarg_T *eap)
         break;
       }
       --qi->qf_curlist;
-    } else   {
+    } else {
       if (qi->qf_curlist >= qi->qf_listcount - 1) {
         EMSG(_("E381: At top of quickfix stack"));
         break;
@@ -2212,7 +2213,7 @@ qf_win_pos_update (
     if (qf_index > old_qf_index) {
       curwin->w_redraw_top = old_qf_index;
       curwin->w_redraw_bot = qf_index;
-    } else   {
+    } else {
       curwin->w_redraw_top = qf_index;
       curwin->w_redraw_bot = old_qf_index;
     }
@@ -2363,7 +2364,7 @@ static void qf_fill_buffer(qf_info_T *qi)
         sprintf((char *)IObuff + len, "%s",
             (char *)qf_types(qfp->qf_type, qfp->qf_nr));
         len += (int)STRLEN(IObuff + len);
-      } else if (qfp->qf_pattern != NULL)   {
+      } else if (qfp->qf_pattern != NULL) {
         qf_fmt_text(qfp->qf_pattern, IObuff + len, IOSIZE - len);
         len += (int)STRLEN(IObuff + len);
       }
@@ -2573,7 +2574,8 @@ void ex_make(exarg_T *eap)
  * Find a new unique name when 'makeef' contains "##".
  * Returns NULL for error.
  */
-static char_u *get_mef_name(void)                     {
+static char_u *get_mef_name(void)
+{
   char_u      *p;
   char_u      *name;
   static int start = -1;
@@ -2732,7 +2734,7 @@ void ex_cfile(exarg_T *eap)
     if (wp != NULL)
       qi = GET_LOC_LIST(wp);
     qf_jump(qi, 0, 0, eap->forceit);            /* display first error */
-  } else   {
+  } else {
     if (au_name != NULL)
       apply_autocmds(EVENT_QUICKFIXCMDPOST, au_name, NULL, FALSE, curbuf);
   }
@@ -2934,7 +2936,7 @@ void ex_vimgrep(exarg_T *eap)
     if (buf == NULL) {
       if (!got_int)
         smsg((char_u *)_("Cannot open file \"%s\""), fname);
-    } else   {
+    } else {
       /* Try for a match in all lines of the buffer.
        * For ":1vimgrep" look for first match only. */
       found_match = FALSE;
@@ -2999,7 +3001,7 @@ void ex_vimgrep(exarg_T *eap)
           if (!found_match) {
             wipe_dummy_buffer(buf, dirname_start);
             buf = NULL;
-          } else if (buf != first_match_buf || (flags & VGR_NOJUMP))   {
+          } else if (buf != first_match_buf || (flags & VGR_NOJUMP)) {
             unload_dummy_buffer(buf, dirname_start);
             buf = NULL;
           }
@@ -3092,7 +3094,7 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
     p = skiptowhite(p);
     if (s != NULL && *p != NUL)
       *p++ = NUL;
-  } else   {
+  } else {
     /* ":vimgrep /pattern/[g][j] fname" */
     if (s != NULL)
       *s = p + 1;

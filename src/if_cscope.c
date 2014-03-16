@@ -278,7 +278,7 @@ void do_cstag(exarg_T *eap)
         if (cs_check_for_tags())
           ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
       }
-    } else if (cs_check_for_tags())   {
+    } else if (cs_check_for_tags()) {
       ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
     }
     break;
@@ -296,7 +296,7 @@ void do_cstag(exarg_T *eap)
             cs_free_tags();
         }
       }
-    } else if (cs_check_for_connections())   {
+    } else if (cs_check_for_connections()) {
       ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, FALSE,
           FALSE, *eap->cmdlinep);
       if (ret == FALSE)
@@ -340,7 +340,8 @@ int cs_fgets(char_u *buf, int size)
  *
  * called only from do_tag(), when popping the tag stack
  */
-void cs_free_tags(void)          {
+void cs_free_tags(void)
+{
   cs_manage_matches(NULL, NULL, -1, Free);
 }
 
@@ -349,7 +350,8 @@ void cs_free_tags(void)          {
  *
  * called from do_tag()
  */
-void cs_print_tags(void)          {
+void cs_print_tags(void)
+{
   cs_manage_matches(NULL, NULL, -1, Print);
 }
 
@@ -558,7 +560,7 @@ staterr:
 #endif
   {
     i = cs_insert_filelist(fname, ppath, flags, &statbuf);
-  } else   {
+  } else {
     if (p_csverbose)
       (void)EMSG2(
           _("E564: %s is not a directory or a valid cscope database"),
@@ -594,11 +596,13 @@ add_err:
 } /* cs_add_common */
 
 
-static int cs_check_for_connections(void)                {
+static int cs_check_for_connections(void)
+{
   return cs_cnt_connections() > 0;
 } /* cs_check_for_connections */
 
-static int cs_check_for_tags(void)                {
+static int cs_check_for_tags(void)
+{
   return p_tags[0] != NUL && curbuf->b_p_tags != NULL;
 } /* cs_check_for_tags */
 
@@ -607,7 +611,8 @@ static int cs_check_for_tags(void)                {
  *
  * count the number of cscope connections
  */
-static int cs_cnt_connections(void)                {
+static int cs_cnt_connections(void)
+{
   short i;
   short cnt = 0;
 
@@ -1158,7 +1163,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     vim_free(tmp);
     vim_free(nummatches);
     return TRUE;
-  } else   {
+  } else {
     char **matches = NULL, **contexts = NULL;
     int matched = 0;
 
@@ -1237,7 +1242,8 @@ static void clear_csinfo(int i)
 #ifndef UNIX
 static char *GetWin32Error(void);
 
-static char *GetWin32Error(void)                   {
+static char *GetWin32Error(void)
+{
   char *msg = NULL;
   FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
       NULL, GetLastError(), 0, (LPSTR)&msg, 0, NULL);
@@ -1321,7 +1327,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, struct stat
        * reallocated. */
       csinfo_size = 1;
       csinfo = (csinfo_T *)alloc_clear(sizeof(csinfo_T));
-    } else   {
+    } else {
       /* Reallocate space for more connections. */
       csinfo_size *= 2;
       csinfo = vim_realloc(csinfo, sizeof(csinfo_T)*csinfo_size);
@@ -1437,7 +1443,7 @@ static int cs_kill(exarg_T *eap)
   if ((i != -1) && (i >= csinfo_size || i < -1 || csinfo[i].fname == NULL)) {
     if (p_csverbose)
       (void)EMSG2(_("E261: cscope connection %s not found"), stok);
-  } else   {
+  } else {
     if (i == -1) {
       for (i = 0; i < csinfo_size; i++) {
         if (csinfo[i].fname)
@@ -1514,7 +1520,7 @@ static char *cs_make_vim_style_matches(char *fname, char *slno, char *search, ch
       return NULL;
 
     (void)sprintf(buf, "%s\t%s\t%s;\"\t%s", tagstr, fname, slno, search);
-  } else   {
+  } else {
     amt = (int)(strlen(fname) + strlen(slno) + strlen(tagstr) + 5);
     if ((buf = (char *)alloc(amt)) == NULL)
       return NULL;
@@ -2239,11 +2245,11 @@ static char *cs_resolve_file(int i, char *name)
       ) {
     if ((fullname = (char *)alloc(len)) != NULL)
       (void)sprintf(fullname, "%s/%s", csinfo[i].ppath, name);
-  } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != NUL)   {
+  } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != NUL) {
     /* Check for csdir to be non empty to avoid empty path concatenated to
      * cscope output. */
     fullname = (char *)concat_fnames(csdir, (char_u *)name, TRUE);
-  } else   {
+  } else {
     fullname = (char *)vim_strsave((char_u *)name);
   }
 
@@ -2289,7 +2295,8 @@ static int cs_show(exarg_T *eap)
  *
  * Only called when VIM exits to quit any cscope sessions.
  */
-void cs_end(void)          {
+void cs_end(void)
+{
   int i;
 
   for (i = 0; i < csinfo_size; i++)

@@ -17,7 +17,8 @@ static pos_T *ind_find_start_comment(void);
  * Find the start of a comment, not knowing if we are in a comment right now.
  * Search starts at w_cursor.lnum and goes backwards.
  */
-static pos_T *ind_find_start_comment(void)                    { /* XXX */
+static pos_T *ind_find_start_comment(void)
+{ /* XXX */
   return find_start_comment(curbuf->b_ind_maxcomment);
 }
 
@@ -79,7 +80,7 @@ static char_u *skip_string(char_u *p)
         p += i;
         continue;
       }
-    } else if (p[0] == '"')   {             /* start of string */
+    } else if (p[0] == '"') {             /* start of string */
       for (++p; p[0]; ++p) {
         if (p[0] == '\\' && p[1] != NUL)
           ++p;
@@ -219,7 +220,8 @@ static int cin_nocode(char_u *s)
 /*
  * Check previous lines for a "//" line comment, skipping over blank lines.
  */
-static pos_T *find_line_comment(void)                    { /* XXX */
+static pos_T *find_line_comment(void)   /* XXX */
+{
   static pos_T pos;
   char_u       *line;
   char_u       *p;
@@ -259,7 +261,8 @@ static int cin_islabel_skip(char_u **s)
  * Recognize a label: "label:".
  * Note: curwin->w_cursor must be where we are looking for the label.
  */
-int cin_islabel(void)         { /* XXX */
+int cin_islabel(void)
+{ /* XXX */
   char_u      *s;
 
   s = cin_skipcomment(ml_get_curline());
@@ -318,7 +321,8 @@ int cin_islabel(void)         { /* XXX */
  * "[typedef] [static|public|protected|private] enum"
  * "[typedef] [static|public|protected|private] = {"
  */
-static int cin_isinit(void)                {
+static int cin_isinit(void)
+{
   char_u      *s;
   static char *skip[] = {"static", "public", "protected", "private"};
 
@@ -437,13 +441,13 @@ static int cin_is_cpp_namespace(char_u *s)
       if (vim_iswhite(*p)) {
         has_name = TRUE;         /* found end of a name */
         p = cin_skipcomment(skipwhite(p));
-      } else if (*p == '{')   {
+      } else if (*p == '{') {
         break;
-      } else if (vim_iswordc(*p))   {
+      } else if (vim_iswordc(*p)) {
         if (has_name)
           return FALSE;           /* word character after skipping past name */
         ++p;
-      } else   {
+      } else {
         return FALSE;
       }
     }
@@ -523,7 +527,7 @@ static int skip_label(linenr_T lnum, char_u **pp)
     l = after_label(ml_get_curline());
     if (l == NULL)              /* just in case */
       l = ml_get_curline();
-  } else   {
+  } else {
     amount = get_indent();
     l = ml_get_curline();
   }
@@ -540,7 +544,8 @@ static int skip_label(linenr_T lnum, char_u **pp)
  *  enum bla    c,		indent of "c"
  * Returns zero when it doesn't look like a declaration.
  */
-static int cin_first_id_amount(void)                {
+static int cin_first_id_amount(void)
+{
   char_u      *line, *p, *s;
   int len;
   pos_T fp;
@@ -1058,7 +1063,7 @@ cin_is_cpp_baseclass (
          * initialization any more */
         lookfor_ctor_init = FALSE;
         s = cin_skipcomment(s + 2);
-      } else if (lookfor_ctor_init || class_or_struct)   {
+      } else if (lookfor_ctor_init || class_or_struct) {
         /* we have something found, that looks like the start of
          * cpp-base-class-declaration or constructor-initialization */
         cpp_base_class = TRUE;
@@ -1076,22 +1081,22 @@ cin_is_cpp_baseclass (
         s = cin_skipcomment(s + 5);
       else
         s = cin_skipcomment(s + 6);
-    } else   {
+    } else {
       if (s[0] == '{' || s[0] == '}' || s[0] == ';') {
         cpp_base_class = lookfor_ctor_init = class_or_struct = FALSE;
-      } else if (s[0] == ')')   {
+      } else if (s[0] == ')') {
         /* Constructor-initialization is assumed if we come across
          * something like "):" */
         class_or_struct = FALSE;
         lookfor_ctor_init = TRUE;
-      } else if (s[0] == '?')   {
+      } else if (s[0] == '?') {
         /* Avoid seeing '() :' after '?' as constructor init. */
         return FALSE;
-      } else if (!vim_isIDc(s[0]))   {
+      } else if (!vim_isIDc(s[0])) {
         /* if it is not an identifier, we are wrong */
         class_or_struct = FALSE;
         lookfor_ctor_init = FALSE;
-      } else if (*col == 0)   {
+      } else if (*col == 0) {
         /* it can't be a constructor-initialization any more */
         lookfor_ctor_init = FALSE;
 
@@ -1124,7 +1129,7 @@ static int get_baseclass_amount(int col)
       amount = get_indent_lnum(trypos->lnum);       /* XXX */
     if (!cin_ends_in(ml_get_curline(), (char_u *)",", NULL))
       amount += curbuf->b_ind_cpp_baseclass;
-  } else   {
+  } else {
     curwin->w_cursor.col = col;
     getvcol(curwin, &curwin->w_cursor, &vcol, NULL, NULL);
     amount = (int)vcol;
@@ -1200,7 +1205,8 @@ static int cin_skip2pos(pos_T *trypos)
 /* {	    */
 /* }	    */
 
-static pos_T *find_start_brace(void)                    { /* XXX */
+static pos_T *find_start_brace(void)
+{ /* XXX */
   pos_T cursor_save;
   pos_T       *trypos;
   pos_T       *pos;
@@ -1509,7 +1515,8 @@ void parse_cino(buf_T *buf)
   }
 }
 
-int get_c_indent(void)         {
+int get_c_indent(void)
+{
   pos_T cur_curpos;
   int amount;
   int scope_amount;
@@ -1662,10 +1669,10 @@ int get_c_indent(void)         {
         lead_start_len = (int)STRLEN(lead_start);
         start_off = off;
         start_align = align;
-      } else if (what == COM_MIDDLE)   {
+      } else if (what == COM_MIDDLE) {
         STRCPY(lead_middle, lead_end);
         lead_middle_len = (int)STRLEN(lead_middle);
-      } else if (what == COM_END)   {
+      } else if (what == COM_END) {
         /* If our line starts with the middle comment string, line it
          * up with the comment opener per the 'comments' option. */
         if (STRNCMP(theline, lead_middle, lead_middle_len) == 0
@@ -1778,7 +1785,7 @@ int get_c_indent(void)         {
       if (theline[0] == ')' && curbuf->b_ind_paren_prev) {
         /* Line up with the start of the matching paren line. */
         amount = get_indent_lnum(curwin->w_cursor.lnum - 1);      /* XXX */
-      } else   {
+      } else {
         amount = -1;
         our_paren_pos = *trypos;
         for (lnum = cur_curpos.lnum - 1; lnum > our_paren_pos.lnum; --lnum) {
@@ -1937,7 +1944,7 @@ int get_c_indent(void)         {
                        && *look == '(' && ignore_paren_col == 0)) {
           if (cur_amount != MAXCOL)
             amount = cur_amount;
-        } else   {
+        } else {
           /* Add b_ind_unclosed2 for each '(' before our matching one,
            * but ignore (void) before the line (ignore_paren_col). */
           col = our_paren_pos.col;
@@ -2009,7 +2016,7 @@ int get_c_indent(void)         {
           start_brace = BRACE_IN_COL0;
         else
           start_brace = BRACE_AT_START;
-      } else   {
+      } else {
         /*
          * that opening brace might have been on a continuation
          * line.  if so, find the start of the line.
@@ -2053,7 +2060,7 @@ int get_c_indent(void)         {
          * other than the open brace.  indulge them, if so.
          */
         amount += curbuf->b_ind_close_extra;
-      } else   {
+      } else {
         /*
          * If we're looking at an "else", try to find an "if"
          * to match it with.
@@ -2093,14 +2100,14 @@ int get_c_indent(void)         {
                    lookfor_cpp_namespace) {       /* '{' is at start */
 
           lookfor_cpp_namespace = TRUE;
-        } else   {
+        } else {
           if (start_brace == BRACE_AT_END) {        /* '{' is at end of line */
             amount += curbuf->b_ind_open_imag;
 
             l = skipwhite(ml_get_curline());
             if (cin_is_cpp_namespace(l))
               amount += curbuf->b_ind_cpp_namespace;
-          } else   {
+          } else {
             /* Compensate for adding b_ind_open_extra later. */
             amount -= curbuf->b_ind_open_extra;
             if (amount < 0)
@@ -2113,10 +2120,10 @@ int get_c_indent(void)         {
         if (cin_iscase(theline, FALSE)) {       /* it's a switch() label */
           lookfor = LOOKFOR_CASE;       /* find a previous switch() label */
           amount += curbuf->b_ind_case;
-        } else if (cin_isscopedecl(theline))   { /* private:, ... */
+        } else if (cin_isscopedecl(theline)) { /* private:, ... */
           lookfor = LOOKFOR_SCOPEDECL;          /* class decl is this block */
           amount += curbuf->b_ind_scopedecl;
-        } else   {
+        } else {
           if (curbuf->b_ind_case_break && cin_isbreak(theline))
             /* break; ... */
             lookfor_break = TRUE;
@@ -2250,12 +2257,12 @@ int get_c_indent(void)         {
                 amount = cont_amount;
               else
                 amount += ind_continuation;
-            } else if (lookfor == LOOKFOR_UNTERM)   {
+            } else if (lookfor == LOOKFOR_UNTERM) {
               if (cont_amount > 0)
                 amount = cont_amount;
               else
                 amount += ind_continuation;
-            } else   {
+            } else {
               if (lookfor != LOOKFOR_TERM
                   && lookfor != LOOKFOR_CPP_BASECLASS) {
                 amount = scope_amount;
@@ -2472,7 +2479,7 @@ int get_c_indent(void)         {
                 amount = cont_amount;
               else
                 amount += ind_continuation;
-            } else if (theline[0] == '{')   {
+            } else if (theline[0] == '{') {
               /* Need to find start of the declaration. */
               lookfor = LOOKFOR_UNTERM;
               ind_continuation = 0;
@@ -2481,7 +2488,7 @@ int get_c_indent(void)         {
               /* XXX */
               amount = get_baseclass_amount(col);
             break;
-          } else if (lookfor == LOOKFOR_CPP_BASECLASS)   {
+          } else if (lookfor == LOOKFOR_CPP_BASECLASS) {
             /* only look, whether there is a cpp base class
              * declaration or initialization before the opening brace.
              */
@@ -2714,7 +2721,7 @@ int get_c_indent(void)         {
                  * reduce indent. */
                 if (amount > cur_amount)
                   amount = cur_amount;
-              } else   {
+              } else {
                 /*
                  * Found first unterminated line on a row, may
                  * line up with this line, remember its indent
@@ -2737,7 +2744,7 @@ int get_c_indent(void)         {
                 if (lookfor == LOOKFOR_INITIAL && terminated == ',') {
                   lookfor = LOOKFOR_ENUM_OR_INIT;
                   cont_amount = cin_first_id_amount();
-                } else   {
+                } else {
                   if (lookfor == LOOKFOR_INITIAL
                       && *l != NUL
                       && l[STRLEN(l) - 1] == '\\')
@@ -2987,7 +2994,7 @@ term_again:
                  cur_curpos.lnum + 1)
              && !cin_isterminated(theline, FALSE, TRUE)) {
       amount = curbuf->b_ind_func_type;
-    } else   {
+    } else {
       amount = 0;
       curwin->w_cursor = cur_curpos;
 
@@ -3206,7 +3213,7 @@ static int find_match(int lookfor, linenr_T ourscope)
   if (lookfor == LOOKFOR_IF) {
     elselevel = 1;
     whilelevel = 0;
-  } else   {
+  } else {
     elselevel = 0;
     whilelevel = 1;
   }
@@ -3300,7 +3307,8 @@ static int find_match(int lookfor, linenr_T ourscope)
 /*
  * Do C or expression indenting on the current line.
  */
-void do_c_expr_indent(void)          {
+void do_c_expr_indent(void)
+{
   if (*curbuf->b_p_inde != NUL)
     fixthisline(get_expr_indent);
   else

@@ -1743,7 +1743,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
       if (dp->df_count[toidx] == dp->df_count[fromidx]) {
         // same number of lines: use same filler count
         towin->w_topfill = fromwin->w_topfill;
-      } else if (dp->df_count[toidx] > dp->df_count[fromidx])   {
+      } else if (dp->df_count[toidx] > dp->df_count[fromidx]) {
         if (lnum == dp->df_lnum[fromidx] + dp->df_count[fromidx]) {
           // more lines in towin and fromwin doesn't show diff
           // lines, only filler lines
@@ -1869,7 +1869,8 @@ int diffopt_changed(void)
 /// Return TRUE if 'diffopt' contains "horizontal".
 ///
 /// @return TRUE if 'diffopt' contains "horizontal"
-int diffopt_horizontal(void) {
+int diffopt_horizontal(void)
+{
   return (diff_flags & DIFF_HORIZONTAL) != 0;
 }
 

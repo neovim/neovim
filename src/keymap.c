@@ -472,7 +472,7 @@ char_u *get_special_key_name(int c, int modifiers)
           string[idx++] = *s++;
       }
     }
-  } else   {            /* use name of special key */
+  } else {            /* use name of special key */
     STRCPY(string + idx, key_names_table[table_idx].name);
     idx = (int)STRLEN(string);
   }
@@ -596,7 +596,7 @@ find_special_key (
         /* <Char-123> or <Char-033> or <Char-0x33> */
         vim_str2nr(last_dash + 6, NULL, NULL, TRUE, TRUE, NULL, &n);
         key = (int)n;
-      } else   {
+      } else {
         /*
          * Modifier with single letter, or special key name.
          */

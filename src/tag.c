@@ -211,7 +211,7 @@ do_tag (
   if ((!p_tgst && *tag != NUL)) {
     use_tagstack = FALSE;
     new_tag = TRUE;
-  } else   {
+  } else {
     if (g_do_tagpreview != 0)
       use_tagstack = FALSE;
     else
@@ -230,12 +230,12 @@ do_tag (
            * the CursorHold autocommand example works. */
           cur_match = ptag_entry.cur_match;
           cur_fnum = ptag_entry.cur_fnum;
-        } else   {
+        } else {
           vim_free(ptag_entry.tagname);
           if ((ptag_entry.tagname = vim_strsave(tag)) == NULL)
             goto end_do_tag;
         }
-      } else   {
+      } else {
         /*
          * If the last used entry is not at the top, delete all tag
          * stack entries above it.
@@ -265,7 +265,7 @@ do_tag (
       }
 
       new_tag = TRUE;
-    } else   {
+    } else {
       if (
         g_do_tagpreview != 0 ? ptag_entry.tagname == NULL :
         tagstacklen == 0) {
@@ -308,7 +308,7 @@ do_tag (
           /* An BufReadPost autocommand may jump to the '" mark, but
            * we don't what that here. */
           curwin->w_cursor.lnum = saved_fmark.mark.lnum;
-        } else   {
+        } else {
           setpcmark();
           curwin->w_cursor.lnum = saved_fmark.mark.lnum;
         }
@@ -332,7 +332,7 @@ do_tag (
         if (g_do_tagpreview != 0) {
           cur_match = ptag_entry.cur_match;
           cur_fnum = ptag_entry.cur_fnum;
-        } else   {
+        } else {
           /* ":tag" (no argument): go to newer pattern */
           save_pos = TRUE;              /* save the cursor position below */
           if ((tagstackidx += count - 1) >= tagstacklen) {
@@ -353,14 +353,14 @@ do_tag (
           cur_fnum = tagstack[tagstackidx].cur_fnum;
         }
         new_tag = TRUE;
-      } else   {                                /* go to other matching tag */
+      } else {                                /* go to other matching tag */
         /* Save index for when selection is cancelled. */
         prevtagstackidx = tagstackidx;
 
         if (g_do_tagpreview != 0) {
           cur_match = ptag_entry.cur_match;
           cur_fnum = ptag_entry.cur_fnum;
-        } else   {
+        } else {
           if (--tagstackidx < 0)
             tagstackidx = 0;
           cur_match = tagstack[tagstackidx].cur_match;
@@ -391,7 +391,7 @@ do_tag (
         ptag_entry.cur_match = cur_match;
         ptag_entry.cur_fnum = cur_fnum;
       }
-    } else   {
+    } else {
       /*
        * For ":tag [arg]" or ":tselect" remember position before the jump.
        */
@@ -504,7 +504,7 @@ do_tag (
       if (verbose)
         EMSG2(_("E426: tag not found: %s"), name);
       g_do_tagpreview = 0;
-    } else   {
+    } else {
       int ask_for_selection = FALSE;
 
       if (type == DT_CSCOPE && num_matches > 1) {
@@ -613,7 +613,7 @@ do_tag (
                 break;
               msg_advance(15);
             }
-          } else   {
+          } else {
             for (p = tagp.command;
                  *p && *p != '\r' && *p != '\n'; ++p)
               ;
@@ -919,7 +919,7 @@ do_tag (
           continue;
         }
         EMSG2(_("E429: File \"%s\" does not exist"), nofile_fname);
-      } else   {
+      } else {
         /* We may have jumped to another window, check that
          * tagstackidx is still valid. */
         if (use_tagstack && tagstackidx > curwin->w_tagstacklen)
@@ -942,7 +942,8 @@ end_do_tag:
 /*
  * Free cached tags.
  */
-void tag_freematch(void)          {
+void tag_freematch(void)
+{
   vim_free(tagmatchname);
   tagmatchname = NULL;
 }
@@ -1443,7 +1444,7 @@ line_read_in:
               vim_free(lbuf);
               lbuf = conv_line;
               lbuf_size = len;
-            } else   {
+            } else {
               STRCPY(lbuf, conv_line);
               vim_free(conv_line);
             }
@@ -1783,7 +1784,7 @@ parse_line:
           if (use_cscope) {
             /* Don't change the ordering, always use the same table. */
             mtt = MT_GL_OTH;
-          } else   {
+          } else {
             /* Decide in which array to store this match. */
             is_current = test_for_current(
                 tagp.fname, tagp.fname_end, tag_fname,
@@ -1802,7 +1803,7 @@ parse_line:
                 mtt = MT_ST_CUR;
               else
                 mtt = MT_ST_OTH;
-            } else   {
+            } else {
               if (is_current)
                 mtt = MT_GL_CUR;
               else
@@ -1871,7 +1872,7 @@ parse_line:
                 } else
                   mfp = NULL;
                 get_it_again = FALSE;
-              } else   {
+              } else {
                 len = (int)(tagp.tagname_end - tagp.tagname);
                 mfp = (struct match_found *)alloc(
                     (int)sizeof(struct match_found) + len);
@@ -1885,7 +1886,7 @@ parse_line:
                 if (State & INSERT)
                   get_it_again = p_sft;
               }
-            } else   {
+            } else {
               /* Save the tag in a buffer.
                * Emacs tag: <mtt><tag_fname><NUL><ebuf><NUL><lbuf>
                * other tag: <mtt><tag_fname><NUL><NUL><lbuf>
@@ -1936,7 +1937,7 @@ parse_line:
               } else
                 vim_free(mfp);
             }
-          } else   {    /* Out of memory! Just forget about the rest. */
+          } else {    /* Out of memory! Just forget about the rest. */
             retval = OK;
             stop_searching = TRUE;
             break;
@@ -2055,7 +2056,8 @@ static void found_tagfile_cb(char_u *fname, void *cookie)
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void free_tag_stuff(void)          {
+void free_tag_stuff(void)
+{
   ga_clear_strings(&tag_fnames);
   do_tag(NULL, DT_FREE, 0, 0, 0);
   tag_freematch();
@@ -2138,7 +2140,7 @@ get_tagfname (
         break;
 
       tnp->tn_did_filefind_init = FALSE;
-    } else   {
+    } else {
       char_u  *filename = NULL;
 
       /* Stop when used all parts of 'tags'. */
@@ -2583,7 +2585,7 @@ jumpto_tag (
         if (found == 0) {
           EMSG(_("E434: Can't find tag pattern"));
           curwin->w_cursor.lnum = save_lnum;
-        } else   {
+        } else {
           /*
            * Only give a message when really guessed, not when 'ic'
            * is set and match found while ignoring case.
@@ -2605,7 +2607,7 @@ jumpto_tag (
       /* A search command may have positioned the cursor beyond the end
        * of the line.  May need to correct that here. */
       check_cursor();
-    } else   {
+    } else {
       curwin->w_cursor.lnum = 1;                /* start command in line 1 */
       do_cmdline_cmd(pbuf);
       retval = OK;
@@ -2651,7 +2653,7 @@ jumpto_tag (
     }
 
     --RedrawingDisabled;
-  } else   {
+  } else {
     --RedrawingDisabled;
     if (postponed_split) {              /* close the window */
       win_close(curwin, FALSE);
@@ -2851,7 +2853,7 @@ void simplify_filename(char_u *filename)
            * components that might be stripped later on. */
           p = tail;
           components = 0;
-        } else   {
+        } else {
           /* Strip previous component.  If the result would get empty
            * and there is no trailing path separator, leave a single
            * "." instead.  If we are at the end of the file name and
@@ -2861,7 +2863,7 @@ void simplify_filename(char_u *filename)
           if (p == start && relative && tail[-1] == '.') {
             *p++ = '.';
             *p = NUL;
-          } else   {
+          } else {
             if (p > start && tail[-1] == '.')
               --p;
             STRMOVE(p, tail);                   /* strip previous component */
@@ -2878,7 +2880,7 @@ void simplify_filename(char_u *filename)
         }
         p = tail;                       /* skip to char after ".." or "../" */
       }
-    } else   {
+    } else {
       ++components;                     /* simple path component */
       p = getnextcomp(p);
     }

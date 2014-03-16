@@ -912,7 +912,7 @@ int fkmap(int c)
                 && gchar_cursor() != NUL) {
           curwin->w_cursor.col++;
         }
-      } else   {
+      } else {
         if (curwin->w_cursor.col) {
           while ((F_isdigit(gchar_cursor())
                  || (gchar_cursor() == F_PERIOD

@@ -136,7 +136,8 @@ int setmark_pos(int c, pos_T *pos, int fnum)
  * Set the previous context mark to the current position and add it to the
  * jump list.
  */
-void setpcmark(void)          {
+void setpcmark(void)
+{
   int i;
   xfmark_T    *fm;
 #ifdef JUMPLIST_ROTATE
@@ -188,7 +189,8 @@ void setpcmark(void)          {
  * context will only be changed if the cursor moved to a different line.
  * If pcmark was deleted (with "dG") the previous mark is restored.
  */
-void checkpcmark(void)          {
+void checkpcmark(void)
+{
   if (curwin->w_prev_pcmark.lnum != 0
       && (equalpos(curwin->w_pcmark, curwin->w_cursor)
           || curwin->w_pcmark.lnum == 0)) {
@@ -265,7 +267,7 @@ pos_T *movechangelist(int count)
     if (n == 0)
       return (pos_T *)NULL;
     n = 0;
-  } else if (n + count >= curbuf->b_changelistlen)   {
+  } else if (n + count >= curbuf->b_changelistlen) {
     if (n == curbuf->b_changelistlen - 1)
       return (pos_T *)NULL;
     n = curbuf->b_changelistlen - 1;
@@ -310,7 +312,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
     return posp;
   if (c > '~')                          /* check for islower()/isupper() */
     ;
-  else if (c == '\'' || c == '`')  {    /* previous context mark */
+  else if (c == '\'' || c == '`') {    /* previous context mark */
     pos_copy = curwin->w_pcmark;        /* need to make a copy because */
     posp = &pos_copy;                   /*   w_pcmark may be changed soon */
   } else if (c == '"')                  /* to pos when leaving buffer */
@@ -337,7 +339,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
     }
     curwin->w_cursor = pos;
     listcmd_busy = slcb;
-  } else if (c == '(' || c == ')')   {  /* to previous/next sentence */
+  } else if (c == '(' || c == ')') {  /* to previous/next sentence */
     pos_T pos;
     int slcb = listcmd_busy;
 
@@ -349,7 +351,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
     }
     curwin->w_cursor = pos;
     listcmd_busy = slcb;
-  } else if (c == '<' || c == '>')   {  /* start/end of visual area */
+  } else if (c == '<' || c == '>') {  /* start/end of visual area */
     startp = &buf->b_visual.vi_start;
     endp = &buf->b_visual.vi_end;
     if ((c == '<') == lt(*startp, *endp))
@@ -368,9 +370,9 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
         pos_copy.col = MAXCOL;
       pos_copy.coladd = 0;
     }
-  } else if (ASCII_ISLOWER(c))   {      /* normal named mark */
+  } else if (ASCII_ISLOWER(c)) {      /* normal named mark */
     posp = &(buf->b_namedm[c - 'a']);
-  } else if (ASCII_ISUPPER(c) || VIM_ISDIGIT(c))   {    /* named file mark */
+  } else if (ASCII_ISUPPER(c) || VIM_ISDIGIT(c)) {    /* named file mark */
     if (VIM_ISDIGIT(c))
       c = c - '0' + NMARKS;
     else
@@ -437,7 +439,7 @@ getnextmark (
         if ((result == NULL || lt(curbuf->b_namedm[i], *result))
             && lt(pos, curbuf->b_namedm[i]))
           result = &curbuf->b_namedm[i];
-      } else   {
+      } else {
         if ((result == NULL || lt(*result, curbuf->b_namedm[i]))
             && lt(curbuf->b_namedm[i], pos))
           result = &curbuf->b_namedm[i];
@@ -988,7 +990,7 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
           } else                        /* keep topline on the same line */
             win->w_topline += amount;
           win->w_topfill = 0;
-        } else if (amount_after && win->w_topline > line2)   {
+        } else if (amount_after && win->w_topline > line2) {
           win->w_topline += amount_after;
           win->w_topfill = 0;
         }
@@ -1104,7 +1106,8 @@ void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_a
  * When deleting lines, this may create duplicate marks in the
  * jumplist. They will be removed here for the current window.
  */
-static void cleanup_jumplist(void)                 {
+static void cleanup_jumplist(void)
+{
   int i;
   int from, to;
 
@@ -1163,7 +1166,8 @@ void set_last_cursor(win_T *win)
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void free_all_marks(void)          {
+void free_all_marks(void)
+{
   int i;
 
   for (i = 0; i < NMARKS + EXTRA_MARKS; i++)
@@ -1460,7 +1464,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
         if (fnamecmp(str, name_buf) == 0)
           load_marks = TRUE;
       }
-    } else   { /* fp_out != NULL */
+    } else { /* fp_out != NULL */
              /* This is slow if there are many buffers!! */
       for (buf = firstbuf; buf != NULL; buf = buf->b_next)
         if (buf->b_ffname != NULL) {
