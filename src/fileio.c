@@ -472,16 +472,19 @@ readfile (
   }
 
   /*
-   * check readonly by trying to open the file for writing
+   * Check readonly by trying to open the file for writing.
+   * If this fails, we know that the file is readonly.
    */
   file_readonly = FALSE;
-  if (read_stdin) {
-  } else if (!read_buffer) {
-    if (!newfile
-        || readonlymode
-        || (fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0) {
+  if (!read_buffer && !read_stdin) {
+    if (!newfile || readonlymode) {
       file_readonly = TRUE;
-      /* try to open ro */
+    } else if ((fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0) {
+      // opening in readwrite mode failed => file is readonly
+      file_readonly = TRUE;
+    }
+    if (file_readonly == TRUE) {
+      // try to open readonly
       fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
     }
   }
