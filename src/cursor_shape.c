@@ -142,7 +142,7 @@ char_u *parse_shape_opt(int what)
                     shape_table[idx].shape = SHAPE_HOR;
                   shape_table[idx].percentage = n;
                 }
-              } else if (round == 2)   {
+              } else if (round == 2) {
                 if (len == 9)
                   shape_table[idx].blinkwait = n;
                 else if (len == 7)
@@ -150,11 +150,11 @@ char_u *parse_shape_opt(int what)
                 else
                   shape_table[idx].blinkoff = n;
               }
-            } else if (STRNICMP(p, "block", 5) == 0)   {
+            } else if (STRNICMP(p, "block", 5) == 0) {
               if (round == 2)
                 shape_table[idx].shape = SHAPE_BLOCK;
               p += 5;
-            } else   {          /* must be a highlight group name then */
+            } else {          /* must be a highlight group name then */
               endp = vim_strchr(p, '-');
               if (commap == NULL) {                         /* last part */
                 if (endp == NULL)

@@ -112,7 +112,7 @@ redo:
     if (row >= size + context_lines) {
       pum_row = row - size - context_lines;
       pum_height = size;
-    } else   {
+    } else {
       pum_row = 0;
       pum_height = row - context_lines;
     }
@@ -390,7 +390,7 @@ void pum_redraw(void)
             if (curwin->w_p_rl) {
               screen_puts_len((char_u *)"  ", 2, row, col - 1, attr);
               col -= 2;
-            } else   {
+            } else {
               screen_puts_len((char_u *)"  ", 2, row, col, attr);
               col += 2;
             }
@@ -425,7 +425,7 @@ void pum_redraw(void)
         screen_fill(row, row + 1, pum_col - pum_base_width - n + 1,
                     col + 1, ' ', ' ', attr);
         col = pum_col - pum_base_width - n + 1;
-      } else   {
+      } else {
         screen_fill(row, row + 1, col, pum_col + pum_base_width + n,
                     ' ', ' ', attr);
         col = pum_col + pum_base_width + n;

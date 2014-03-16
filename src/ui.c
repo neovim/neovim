@@ -172,7 +172,8 @@ theend:
 /*
  * return non-zero if a character is available
  */
-int ui_char_avail(void)         {
+int ui_char_avail(void)
+{
 #ifndef NO_CONSOLE
 # ifdef NO_CONSOLE_INPUT
   if (no_console_input())
@@ -198,7 +199,8 @@ void ui_delay(long msec, int ignoreinput)
  * otherwise fake it by starting a new shell.
  * When running the GUI iconify the window.
  */
-void ui_suspend(void)          {
+void ui_suspend(void)
+{
   mch_suspend();
 }
 
@@ -207,7 +209,8 @@ void ui_suspend(void)          {
  * When the OS can't really suspend, call this function to start a shell.
  * This is never called in the GUI.
  */
-void suspend_shell(void)          {
+void suspend_shell(void)
+{
   if (*p_sh == NUL)
     EMSG(_(e_shellempty));
   else {
@@ -223,7 +226,8 @@ void suspend_shell(void)          {
  * Use the new sizes as defaults for 'columns' and 'lines'.
  * Return OK when size could be determined, FAIL otherwise.
  */
-int ui_get_shellsize(void)         {
+int ui_get_shellsize(void)
+{
   int retval;
 
   retval = mch_get_shellsize();
@@ -255,13 +259,15 @@ ui_set_shellsize (
  * Called when Rows and/or Columns changed.  Adjust scroll region and mouse
  * region.
  */
-void ui_new_shellsize(void)          {
+void ui_new_shellsize(void)
+{
   if (full_screen && !exiting) {
     mch_new_shellsize();
   }
 }
 
-void ui_breakcheck(void)          {
+void ui_breakcheck(void)
+{
   mch_breakcheck();
 }
 
@@ -318,16 +324,19 @@ static int inbufcount = 0;          /* number of chars in inbuf[] */
  * are used by the gui_* calls when a GUI is used to handle keyboard input.
  */
 
-int vim_is_input_buf_full(void)         {
+int vim_is_input_buf_full(void)
+{
   return inbufcount >= INBUFLEN;
 }
 
-int vim_is_input_buf_empty(void)         {
+int vim_is_input_buf_empty(void)
+{
   return inbufcount == 0;
 }
 
 #if defined(FEAT_OLE) || defined(PROTO)
-int vim_free_in_input_buf(void)         {
+int vim_free_in_input_buf(void)
+{
   return INBUFLEN - inbufcount;
 }
 
@@ -338,7 +347,8 @@ int vim_free_in_input_buf(void)         {
  * Return the current contents of the input buffer and make it empty.
  * The returned pointer must be passed to set_input_buf() later.
  */
-char_u *get_input_buf(void)              {
+char_u *get_input_buf(void)
+{
   garray_T    *gap;
 
   /* We use a growarray to store the data pointer and the length. */
@@ -432,7 +442,8 @@ void push_raw_key(char_u *s, int len)
 #if defined(FEAT_GUI) || defined(FEAT_EVAL) || defined(FEAT_EX_EXTRA) \
   || defined(PROTO)
 /* Remove everything from the input buffer.  Called when ^C is found */
-void trash_input_buf(void)          {
+void trash_input_buf(void)
+{
   inbufcount = 0;
 }
 
@@ -489,7 +500,7 @@ void fill_input_buf(int exit_on_error)
     if (unconverted == restlen) {
       vim_free(rest);
       rest = NULL;
-    } else   {
+    } else {
       restlen -= unconverted;
       mch_memmove(rest, rest + unconverted, restlen);
     }
@@ -537,7 +548,7 @@ void fill_input_buf(int exit_on_error)
     /* Interrupted, pretend a CTRL-C was typed. */
     inbuf[0] = 3;
     inbufcount = 1;
-  } else   {
+  } else {
     /*
      * May perform conversion on the input characters.
      * Include the unconverted rest of the previous call.
@@ -572,7 +583,8 @@ void fill_input_buf(int exit_on_error)
 /*
  * Exit because of an input read error.
  */
-void read_error_exit(void)          {
+void read_error_exit(void)
+{
   if (silent_mode)      /* Normal way to exit for "ex -s" */
     getout(0);
   STRCPY(IObuff, _("Vim: Error reading input, exiting...\n"));
@@ -582,7 +594,8 @@ void read_error_exit(void)          {
 /*
  * May update the shape of the cursor.
  */
-void ui_cursor_shape(void)          {
+void ui_cursor_shape(void)
+{
   term_cursor_shape();
 
 
@@ -858,7 +871,7 @@ retnomove:
       did_drag |= count;
     }
     return IN_SEP_LINE;                         /* Cursor didn't move */
-  } else   { /* keep_window_focus must be TRUE */
+  } else { /* keep_window_focus must be TRUE */
           /* before moving the cursor for a left click, stop Visual mode */
     if (flags & MOUSE_MAY_STOP_VIS) {
       end_visual_mode();
@@ -1067,7 +1080,7 @@ win_T *mouse_find_win(int *rowp, int *colp)
           break;
         *colp -= fp->fr_width;
       }
-    } else   {  /* fr_layout == FR_COL */
+    } else {  /* fr_layout == FR_COL */
       for (fp = fp->fr_child; fp->fr_next != NULL; fp = fp->fr_next) {
         if (*rowp < fp->fr_height)
           break;

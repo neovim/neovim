@@ -459,7 +459,7 @@ readfile (
        */
       swap_mode = (st.st_mode & 0644) | 0600;
 #endif
-    } else   {
+    } else {
       curbuf->b_mtime = 0;
       curbuf->b_mtime_read = 0;
       curbuf->b_orig_size = 0;
@@ -477,7 +477,7 @@ readfile (
    */
   file_readonly = FALSE;
   if (read_stdin) {
-  } else if (!read_buffer)   {
+  } else if (!read_buffer) {
 #ifdef USE_MCH_ACCESS
     if (
 # ifdef UNIX
@@ -559,7 +559,7 @@ readfile (
         if (aborting())               /* autocmds may abort script processing */
           return FAIL;
         return OK;                  /* a new file is not an error */
-      } else   {
+      } else {
         filemess(curbuf, sfname, (char_u *)(
 # ifdef EFBIG
               (errno == EFBIG) ? _("[File too big]") :
@@ -733,10 +733,10 @@ readfile (
     fenc = enc_canonize(eap->cmd + eap->force_enc);
     fenc_alloced = TRUE;
     keep_dest_enc = TRUE;
-  } else if (curbuf->b_p_bin)   {
+  } else if (curbuf->b_p_bin) {
     fenc = (char_u *)"";                /* binary: don't convert */
     fenc_alloced = FALSE;
-  } else if (curbuf->b_help)   {
+  } else if (curbuf->b_help) {
     char_u firstline[80];
     int fc;
 
@@ -774,10 +774,10 @@ readfile (
         keep_dest_enc = TRUE;
     }
     fenc_alloced = FALSE;
-  } else if (*p_fencs == NUL)   {
+  } else if (*p_fencs == NUL) {
     fenc = curbuf->b_p_fenc;            /* use format from buffer */
     fenc_alloced = FALSE;
-  } else   {
+  } else {
     fenc_next = p_fencs;                /* try items in 'fileencodings' */
     fenc = next_fenc(&fenc_next);
     fenc_alloced = TRUE;
@@ -808,7 +808,7 @@ retry:
     if (read_buffer) {
       read_buf_lnum = 1;
       read_buf_col = 0;
-    } else if (read_stdin || lseek(fd, (off_t)0L, SEEK_SET) != 0)   {
+    } else if (read_stdin || lseek(fd, (off_t)0L, SEEK_SET) != 0) {
       /* Can't rewind the file, give up. */
       error = TRUE;
       goto failed;
@@ -870,13 +870,13 @@ retry:
         vim_free(fenc);
       fenc = (char_u *)"";
       fenc_alloced = FALSE;
-    } else   {
+    } else {
       if (fenc_alloced)
         vim_free(fenc);
       if (fenc_next != NULL) {
         fenc = next_fenc(&fenc_next);
         fenc_alloced = (fenc_next != NULL);
-      } else   {
+      } else {
         fenc = (char_u *)"";
         fenc_alloced = FALSE;
       }
@@ -954,7 +954,7 @@ retry:
           goto retry;
         }
       }
-    } else   {
+    } else {
       if (fio_flags == 0
 # ifdef USE_ICONV
           && iconv_fd == (iconv_t)-1
@@ -1092,7 +1092,7 @@ retry:
                 }
                 read_buf_col += n;
                 break;
-              } else   {
+              } else {
                 /* Append whole line and new-line.  Change NL
                 * to NUL to reverse the effect done below. */
                 for (ni = 0; ni < n; ++ni) {
@@ -1114,7 +1114,7 @@ retry:
               }
             }
           }
-        } else   {
+        } else {
           /*
            * Read bytes from the file.
            */
@@ -1149,7 +1149,7 @@ retry:
             if (bad_char_behavior == BAD_DROP) {
               *(ptr - conv_restlen) = NUL;
               conv_restlen = 0;
-            } else   {
+            } else {
               /* Replace the trailing bytes with the replacement
                * character if we were converting; if we weren't,
                * leave the UTF8 checking code to do it, as it
@@ -1230,7 +1230,7 @@ retry:
           if (ccname == NULL) {
             /* No BOM detected: retry with next encoding. */
             advance_fenc = TRUE;
-          } else   {
+          } else {
             /* BOM detected: set "fenc" and jump back */
             if (fenc_alloced)
               vim_free(fenc);
@@ -1292,7 +1292,7 @@ retry:
           if (bad_char_behavior == BAD_KEEP) {
             *top++ = *(fromp - 1);
             --to_size;
-          } else if (bad_char_behavior != BAD_DROP)   {
+          } else if (bad_char_behavior != BAD_DROP) {
             *top++ = bad_char_behavior;
             --to_size;
           }
@@ -1348,7 +1348,7 @@ retry:
             else
               p = tail;
           }
-        } else if (fio_flags & (FIO_UCS2 | FIO_UTF16))   {
+        } else if (fio_flags & (FIO_UCS2 | FIO_UTF16)) {
           /* Check for a trailing byte */
           p = ptr + (size & ~1);
           if (size & 1)
@@ -1358,7 +1358,7 @@ retry:
             if (fio_flags & FIO_ENDIAN_L) {
               u8c = (*--p << 8);
               u8c += *--p;
-            } else   {
+            } else {
               u8c = *--p;
               u8c += (*--p << 8);
             }
@@ -1367,7 +1367,7 @@ retry:
             else
               p += 2;
           }
-        } else   {   /*  FIO_UCS4 */
+        } else {   /*  FIO_UCS4 */
                      /* Check for trailing 1, 2 or 3 bytes */
           p = ptr + (size & ~3);
           if (size & 3)
@@ -1390,7 +1390,7 @@ retry:
             if (fio_flags & FIO_ENDIAN_L) {
               u8c = (*--p << 8);
               u8c += *--p;
-            } else   {
+            } else {
               u8c = *--p;
               u8c += (*--p << 8);
             }
@@ -1416,7 +1416,7 @@ retry:
               if (fio_flags & FIO_ENDIAN_L) {
                 u16c = (*--p << 8);
                 u16c += *--p;
-              } else   {
+              } else {
                 u16c = *--p;
                 u16c += (*--p << 8);
               }
@@ -1436,19 +1436,19 @@ retry:
                   u8c = bad_char_behavior;
               }
             }
-          } else if (fio_flags & FIO_UCS4)   {
+          } else if (fio_flags & FIO_UCS4) {
             if (fio_flags & FIO_ENDIAN_L) {
               u8c = (*--p << 24);
               u8c += (*--p << 16);
               u8c += (*--p << 8);
               u8c += *--p;
-            } else   {          /* big endian */
+            } else {          /* big endian */
               u8c = *--p;
               u8c += (*--p << 8);
               u8c += (*--p << 16);
               u8c += (*--p << 24);
             }
-          } else   {        /* UTF-8 */
+          } else {        /* UTF-8 */
             if (*--p < 0x80)
               u8c = *p;
             else {
@@ -1474,7 +1474,7 @@ retry:
           if (enc_utf8) {               /* produce UTF-8 */
             dest -= utf_char2len(u8c);
             (void)utf_char2bytes(u8c, dest);
-          } else   {                    /* produce Latin1 */
+          } else {                    /* produce Latin1 */
             --dest;
             if (u8c >= 0x100) {
               /* character doesn't fit in latin1, retry with
@@ -1502,7 +1502,7 @@ retry:
         mch_memmove(line_start, buffer, (size_t)linerest);
         size = (long)((ptr + real_size) - dest);
         ptr = dest;
-      } else if (enc_utf8 && !curbuf->b_p_bin)   {
+      } else if (enc_utf8 && !curbuf->b_p_bin) {
         int incomplete_tail = FALSE;
 
         /* Reading UTF-8: Check if the bytes are valid UTF-8. */
@@ -1667,7 +1667,7 @@ rewind_retry:
           line_start = ptr + 1;
         }
       }
-    } else   {
+    } else {
       --ptr;
       while (++ptr, --size >= 0) {
         if ((c = *ptr) != NUL && c != NL)          /* catch most common case */
@@ -1903,7 +1903,7 @@ failed:
       if (notconverted) {
         STRCAT(IObuff, _("[NOT converted]"));
         c = TRUE;
-      } else if (converted)   {
+      } else if (converted) {
         STRCAT(IObuff, _("[converted]"));
         c = TRUE;
       }
@@ -1918,11 +1918,11 @@ failed:
         sprintf((char *)IObuff + STRLEN(IObuff),
             _("[CONVERSION ERROR in line %ld]"), (long)conv_error);
         c = TRUE;
-      } else if (illegal_byte > 0)   {
+      } else if (illegal_byte > 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
             _("[ILLEGAL BYTE in line %ld]"), (long)illegal_byte);
         c = TRUE;
-      } else if (error)    {
+      } else if (error)  {
         STRCAT(IObuff, _("[READ ERRORS]"));
         c = TRUE;
       }
@@ -2167,7 +2167,7 @@ static char_u *next_fenc(char_u **pp)
   if (p == NULL) {
     r = enc_canonize(*pp);
     *pp += STRLEN(*pp);
-  } else   {
+  } else {
     r = vim_strnsave(*pp, (int)(p - *pp));
     *pp = p + 1;
     if (r != NULL) {
@@ -2238,7 +2238,8 @@ readfile_charconvert (
  * Read marks for the current buffer from the viminfo file, when we support
  * buffer marks and the buffer has a name.
  */
-static void check_marks_read(void)                 {
+static void check_marks_read(void)
+{
   if (!curbuf->b_marks_read && get_viminfo_parameter('\'') > 0
       && curbuf->b_ffname != NULL)
     read_viminfo(NULL, VIF_WANT_MARKS);
@@ -2687,7 +2688,7 @@ buf_write (
           apply_autocmds_exarg(EVENT_FILEAPPENDPRE,
               sfname, sfname, FALSE, curbuf, eap);
       }
-    } else if (filtering)   {
+    } else if (filtering) {
       apply_autocmds_exarg(EVENT_FILTERWRITEPRE,
           NULL, sfname, FALSE, curbuf, eap);
     } else if (reset_changed && whole)   {
@@ -2703,14 +2704,14 @@ buf_write (
           u_unchanged(curbuf);
           u_update_save_nr(curbuf);
         }
-      } else   {
+      } else {
         if (overwriting && bt_nofile(curbuf))
           nofile_err = TRUE;
         else
           apply_autocmds_exarg(EVENT_BUFWRITEPRE,
               sfname, sfname, FALSE, curbuf, eap);
       }
-    } else   {
+    } else {
       if (!(did_cmd = apply_autocmds_exarg(EVENT_FILEWRITECMD,
                 sfname, sfname, FALSE, curbuf, eap))) {
         if (overwriting && bt_nofile(curbuf))
@@ -2875,7 +2876,7 @@ buf_write (
     device = TRUE;
     newfile = TRUE;
     perm = -1;
-  } else   {
+  } else {
     perm = mch_getperm(fname);
     if (perm < 0)
       newfile = TRUE;
@@ -2900,7 +2901,7 @@ buf_write (
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {
         errnum = (char_u *)"E504: ";
         errmsg = (char_u *)_(err_readonly);
-      } else   {
+      } else {
         errnum = (char_u *)"E505: ";
         errmsg = (char_u *)_("is read-only (add ! to override)");
       }
@@ -3195,7 +3196,7 @@ buf_write (
           if (bfd < 0) {
             vim_free(backup);
             backup = NULL;
-          } else   {
+          } else {
             /* set file protection same as original file, but
              * strip s-bit */
             (void)mch_setperm(backup, perm & 0777);
@@ -3273,7 +3274,7 @@ nobackup:
         goto fail;
       }
       errmsg = NULL;
-    } else   {
+    } else {
       char_u      *dirp;
       char_u      *p;
       char_u      *rootname;
@@ -3564,7 +3565,7 @@ restore_backup:
           /* if original file does exist throw away the copy */
           if (mch_stat((char *)fname, &st) >= 0)
             mch_remove(backup);
-        } else   {
+        } else {
           /* try to put the original file back */
           vim_rename(backup, fname);
         }
@@ -3861,7 +3862,7 @@ restore_backup:
           }
           close(fd);            /* ignore errors for closing read file */
         }
-      } else   {
+      } else {
         if (vim_rename(backup, fname) == 0)
           end = 1;
       }
@@ -3884,17 +3885,17 @@ restore_backup:
       if (write_info.bw_conv_error_lnum != 0)
         vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %ld;"),
             (long)write_info.bw_conv_error_lnum);
-    } else if (notconverted)   {
+    } else if (notconverted) {
       STRCAT(IObuff, _("[NOT converted]"));
       c = TRUE;
-    } else if (converted)   {
+    } else if (converted) {
       STRCAT(IObuff, _("[converted]"));
       c = TRUE;
     }
     if (device) {
       STRCAT(IObuff, _("[Device]"));
       c = TRUE;
-    } else if (newfile)   {
+    } else if (newfile) {
       STRCAT(IObuff, shortmess(SHM_NEW) ? _("[New]") : _("[New File]"));
       c = TRUE;
     }
@@ -4240,7 +4241,8 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
 /*
  * Append message for missing line separator to IObuff.
  */
-static void msg_add_eol(void)                 {
+static void msg_add_eol(void)
+{
   STRCAT(IObuff,
       shortmess(SHM_LAST) ? _("[noeol]") : _("[Incomplete last line]"));
 }
@@ -4311,7 +4313,7 @@ static int buf_write_bytes(struct bw_info *ip)
         p += utf_char2bytes(buf[wlen], p);
       buf = ip->bw_conv_buf;
       len = (int)(p - ip->bw_conv_buf);
-    } else if (flags & (FIO_UCS4 | FIO_UTF16 | FIO_UCS2 | FIO_LATIN1))   {
+    } else if (flags & (FIO_UCS4 | FIO_UTF16 | FIO_UCS2 | FIO_LATIN1)) {
       /*
        * Convert UTF-8 bytes in the buffer to UCS-2, UCS-4, UTF-16 or
        * Latin1 chars in the file.
@@ -4348,13 +4350,13 @@ static int buf_write_bytes(struct bw_info *ip)
           if (n >= ip->bw_restlen) {
             n -= ip->bw_restlen;
             ip->bw_restlen = 0;
-          } else   {
+          } else {
             ip->bw_restlen -= n;
             mch_memmove(ip->bw_rest, ip->bw_rest + n,
                 (size_t)ip->bw_restlen);
             n = 0;
           }
-        } else   {
+        } else {
           n = utf_ptr2len_len(buf + wlen, len - wlen);
           if (n > len - wlen) {
             /* We have an incomplete byte sequence at the end to
@@ -4405,7 +4407,7 @@ static int buf_write_bytes(struct bw_info *ip)
         from = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
         mch_memmove(from, ip->bw_rest, (size_t)ip->bw_restlen);
         mch_memmove(from + ip->bw_restlen, buf, (size_t)len);
-      } else   {
+      } else {
         from = buf;
         fromlen = len;
       }
@@ -4440,7 +4442,7 @@ static int buf_write_bytes(struct bw_info *ip)
         mch_memmove(fp + ip->bw_restlen, buf, (size_t)len);
         from = fp;
         tolen = ip->bw_conv_buflen - fromlen;
-      } else   {
+      } else {
         from = (const char *)buf;
         fromlen = len;
         tolen = ip->bw_conv_buflen;
@@ -4513,13 +4515,13 @@ ucs2bytes (
       *p++ = (c >> 8);
       *p++ = (c >> 16);
       *p++ = (c >> 24);
-    } else   {
+    } else {
       *p++ = (c >> 24);
       *p++ = (c >> 16);
       *p++ = (c >> 8);
       *p++ = c;
     }
-  } else if (flags & (FIO_UCS2 | FIO_UTF16))   {
+  } else if (flags & (FIO_UCS2 | FIO_UTF16)) {
     if (c >= 0x10000) {
       if (flags & FIO_UTF16) {
         /* Make two words, ten bits of the character in each.  First
@@ -4531,7 +4533,7 @@ ucs2bytes (
         if (flags & FIO_ENDIAN_L) {
           *p++ = cc;
           *p++ = ((unsigned)cc >> 8);
-        } else   {
+        } else {
           *p++ = ((unsigned)cc >> 8);
           *p++ = cc;
         }
@@ -4542,11 +4544,11 @@ ucs2bytes (
     if (flags & FIO_ENDIAN_L) {
       *p++ = c;
       *p++ = (c >> 8);
-    } else   {
+    } else {
       *p++ = (c >> 8);
       *p++ = c;
     }
-  } else   { /* Latin1 */
+  } else { /* Latin1 */
     if (c >= 0x100) {
       error = TRUE;
       *p++ = 0xBF;
@@ -4571,7 +4573,7 @@ static int need_conversion(char_u *fenc)
   if (*fenc == NUL || STRCMP(p_enc, fenc) == 0) {
     same_encoding = TRUE;
     fenc_flags = 0;
-  } else   {
+  } else {
     /* Ignore difference between "ansi" and "latin1", "ucs-4" and
      * "ucs-4be", etc. */
     enc_flags = get_fio_flags(p_enc);
@@ -4643,7 +4645,7 @@ static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
       && (flags == FIO_ALL || flags == FIO_UTF8 || flags == 0)) {
     name = "utf-8";             /* EF BB BF */
     len = 3;
-  } else if (p[0] == 0xff && p[1] == 0xfe)   {
+  } else if (p[0] == 0xff && p[1] == 0xfe) {
     if (size >= 4 && p[2] == 0 && p[3] == 0
         && (flags == FIO_ALL || flags == (FIO_UCS4 | FIO_ENDIAN_L))) {
       name = "ucs-4le";         /* FF FE 00 00 */
@@ -4883,7 +4885,7 @@ buf_modname (
 #ifndef SHORT_FNAME
     prepend_dot = FALSE;            /* nothing to prepend a dot to */
 #endif
-  } else   {
+  } else {
     fnamelen = (int)STRLEN(fname);
     retval = alloc((unsigned)(fnamelen + extlen + 3));
     if (retval == NULL)
@@ -5480,11 +5482,11 @@ buf_check_timestamp (
             mesg = _(
                 "W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as well");
             mesg2 = _("See \":help W12\" for more info.");
-          } else if (reason[1] == 'h')   {
+          } else if (reason[1] == 'h') {
             mesg = _(
                 "W11: Warning: File \"%s\" has changed since editing started");
             mesg2 = _("See \":help W11\" for more info.");
-          } else if (*reason == 'm')   {
+          } else if (*reason == 'm') {
             mesg = _(
                 "W16: Warning: Mode of file \"%s\" has changed since editing started");
             mesg2 = _("See \":help W16\" for more info.");
@@ -5524,14 +5526,14 @@ buf_check_timestamp (
                 (char_u *)_("&OK\n&Load File"), 1, NULL, TRUE) == 2)
           reload = TRUE;
       } else if (State > NORMAL_BUSY || (State & CMDLINE) ||
-                 already_warned)        {
+                 already_warned) {
         if (*mesg2 != NUL) {
           STRCAT(tbuf, "; ");
           STRCAT(tbuf, mesg2);
         }
         EMSG(tbuf);
         retval = 2;
-      } else   {
+      } else {
         if (!autocmd_busy) {
           msg_start();
           msg_puts_attr(tbuf, hl_attr(HLF_E) + MSG_HIST);
@@ -5659,13 +5661,13 @@ void buf_reload(buf_T *buf, int orig_mode)
               break;
           (void)move_lines(savebuf, buf);
         }
-      } else if (buf == curbuf)   {  /* "buf" still valid */
+      } else if (buf == curbuf) {  /* "buf" still valid */
         /* Mark the buffer as unmodified and free undo info. */
         unchanged(buf, TRUE);
         if ((flags & READ_KEEP_UNDO) == 0) {
           u_blockfree(buf);
           u_clearall(buf);
-        } else   {
+        } else {
           /* Mark all undo states as changed. */
           u_unchanged(curbuf);
         }
@@ -5741,7 +5743,8 @@ static long temp_count = 0;             /* Temp filename counter. */
 /*
  * Delete the temp directory and all files it contains.
  */
-void vim_deltempdir(void)          {
+void vim_deltempdir(void)
+{
   char_u      **files;
   int file_count;
   int i;
@@ -6262,7 +6265,8 @@ static void au_remove_cmds(AutoPat *ap)
  * Cleanup autocommands and patterns that have been deleted.
  * This is only done when not executing autocommands.
  */
-static void au_cleanup(void)                 {
+static void au_cleanup(void)
+{
   AutoPat     *ap, **prev_ap;
   AutoCmd     *ac, **prev_ac;
   event_T event;
@@ -6415,7 +6419,7 @@ void do_augroup(char_u *arg, int del_group)
     i = au_new_group(arg);
     if (i != AUGROUP_ERROR)
       current_augroup = i;
-  } else   {                        /* ":aug": list the group names */
+  } else {                        /* ":aug": list the group names */
     msg_start();
     for (i = 0; i < augroups.ga_len; ++i) {
       if (AUGROUP_NAME(i) != NULL) {
@@ -6429,7 +6433,8 @@ void do_augroup(char_u *arg, int del_group)
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void free_all_autocmds(void)          {
+void free_all_autocmds(void)
+{
   for (current_augroup = -1; current_augroup < augroups.ga_len;
        ++current_augroup)
     do_autocmd((char_u *)"", TRUE);
@@ -6496,7 +6501,7 @@ find_end_event (
       return NULL;
     }
     pat = arg + 1;
-  } else   {
+  } else {
     for (pat = arg; *pat && !vim_iswhite(*pat); pat = p) {
       if ((int)event_name2nr(pat, &p) >= (int)NUM_EVENTS) {
         if (have_group)
@@ -6530,7 +6535,8 @@ static int event_ignored(event_T event)
 /*
  * Return OK when the contents of p_ei is valid, FAIL otherwise.
  */
-int check_ei(void)         {
+int check_ei(void)
+{
   char_u      *p = p_ei;
 
   while (*p) {
@@ -6702,7 +6708,7 @@ void do_autocmd(char_u *arg, int forceit)
       if (do_autocmd_event(event, pat,
               nested, cmd, forceit, group) == FAIL)
         break;
-  } else   {
+  } else {
     while (*arg && !vim_iswhite(*arg))
       if (do_autocmd_event(event_name2nr(arg, &arg), pat,
               nested, cmd, forceit, group) == FAIL)
@@ -6911,7 +6917,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
         if (is_buflocal) {
           ap->buflocal_nr = buflocal_nr;
           ap->reg_prog = NULL;
-        } else   {
+        } else {
           char_u      *reg_pat;
 
           ap->buflocal_nr = 0;
@@ -7114,7 +7120,7 @@ aucmd_prepbuf (
      * "buf" is curbuf). */
     aco->use_aucmd_win = FALSE;
     curwin = win;
-  } else   {
+  } else {
     /* There is no window for "buf", use "aucmd_win".  To minimize the side
      * effects, insert it in the current tab page.
      * Anything related to a window (e.g., setting folds) may have
@@ -7217,7 +7223,7 @@ win_found:
       curwin->w_topline = curbuf->b_ml.ml_line_count;
       curwin->w_topfill = 0;
     }
-  } else   {
+  } else {
     /* restore curwin */
     if (win_valid(aco->save_curwin)) {
       /* Restore the buffer which was previously edited by curwin, if
@@ -7303,7 +7309,8 @@ apply_autocmds_retval (
 /*
  * Return TRUE when there is a CursorHold autocommand defined.
  */
-int has_cursorhold(void)         {
+int has_cursorhold(void)
+{
   return first_autopat[(int)(get_real_state() == NORMAL_BUSY
                              ? EVENT_CURSORHOLD : EVENT_CURSORHOLDI)] != NULL;
 }
@@ -7311,7 +7318,8 @@ int has_cursorhold(void)         {
 /*
  * Return TRUE if the CursorHold event can be triggered.
  */
-int trigger_cursorhold(void)         {
+int trigger_cursorhold(void)
+{
   int state;
 
   if (!did_cursorhold
@@ -7330,35 +7338,40 @@ int trigger_cursorhold(void)         {
 /*
  * Return TRUE when there is a CursorMoved autocommand defined.
  */
-int has_cursormoved(void)         {
+int has_cursormoved(void)
+{
   return first_autopat[(int)EVENT_CURSORMOVED] != NULL;
 }
 
 /*
  * Return TRUE when there is a CursorMovedI autocommand defined.
  */
-int has_cursormovedI(void)         {
+int has_cursormovedI(void)
+{
   return first_autopat[(int)EVENT_CURSORMOVEDI] != NULL;
 }
 
 /*
  * Return TRUE when there is a TextChanged autocommand defined.
  */
-int has_textchanged(void)         {
+int has_textchanged(void)
+{
   return first_autopat[(int)EVENT_TEXTCHANGED] != NULL;
 }
 
 /*
  * Return TRUE when there is a TextChangedI autocommand defined.
  */
-int has_textchangedI(void)         {
+int has_textchangedI(void)
+{
   return first_autopat[(int)EVENT_TEXTCHANGEDI] != NULL;
 }
 
 /*
  * Return TRUE when there is an InsertCharPre autocommand defined.
  */
-int has_insertcharpre(void)         {
+int has_insertcharpre(void)
+{
   return first_autopat[(int)EVENT_INSERTCHARPRE] != NULL;
 }
 
@@ -7512,7 +7525,7 @@ apply_autocmds_group (
     if (fname == NULL)
       fname = (char_u *)"";
     fname = vim_strsave(fname);         /* make a copy, so we can change it */
-  } else   {
+  } else {
     sfname = vim_strsave(fname);
     /* Don't try expanding FileType, Syntax, FuncUndefined, WindowID,
      * ColorScheme or QuickFixCmd* */
@@ -7693,14 +7706,16 @@ static char_u   *old_termresponse = NULL;
  * Block triggering autocommands until unblock_autocmd() is called.
  * Can be used recursively, so long as it's symmetric.
  */
-void block_autocmds(void)          {
+void block_autocmds(void)
+{
   /* Remember the value of v:termresponse. */
   if (autocmd_blocked == 0)
     old_termresponse = get_vim_var_str(VV_TERMRESPONSE);
   ++autocmd_blocked;
 }
 
-void unblock_autocmds(void)          {
+void unblock_autocmds(void)
+{
   --autocmd_blocked;
 
   /* When v:termresponse was set while autocommands were blocked, trigger
@@ -7711,7 +7726,8 @@ void unblock_autocmds(void)          {
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, FALSE, curbuf);
 }
 
-int is_autocmd_blocked(void)         {
+int is_autocmd_blocked(void)
+{
   return autocmd_blocked != 0;
 }
 
@@ -8004,7 +8020,7 @@ int au_exists(char_u *arg)
     /* Didn't match a group name, assume the first argument is an event. */
     group = AUGROUP_ALL;
     event_name = arg_save;
-  } else   {
+  } else {
     if (p == NULL) {
       /* "Group": group name is present and it's recognized */
       retval = TRUE;
@@ -8358,7 +8374,7 @@ file_pat_to_reg_pat (
         reg_pat[i++] = '\\';
         reg_pat[i++] = '{';
         p += 2;
-      } else   {
+      } else {
         if (allow_dirs != NULL && vim_ispathsep(*p)
 #ifdef BACKSLASH_IN_FILENAME
             && (!no_bslash || *p != '\\')

@@ -322,12 +322,12 @@ void dbg_check_breakpoint(exarg_T *eap)
           (long)debug_breakpoint_lnum);
       debug_breakpoint_name = NULL;
       do_debug(eap->cmd);
-    } else   {
+    } else {
       debug_skipped = TRUE;
       debug_skipped_name = debug_breakpoint_name;
       debug_breakpoint_name = NULL;
     }
-  } else if (ex_nesting_level <= debug_break_level)   {
+  } else if (ex_nesting_level <= debug_break_level) {
     if (!eap->skip)
       do_debug(eap->cmd);
     else {
@@ -426,7 +426,7 @@ dbg_parsearg (
     }
     bp->dbg_type = DBG_FILE;
     here = TRUE;
-  } else   {
+  } else {
     EMSG2(_(e_invarg2), p);
     return FAIL;
   }
@@ -551,10 +551,10 @@ void ex_breakdel(exarg_T *eap)
         todel = i;
         break;
       }
-  } else if (*eap->arg == '*')   {
+  } else if (*eap->arg == '*') {
     todel = 0;
     del_all = TRUE;
-  } else   {
+  } else {
     /* ":breakdel {func|file} [lnum] {name}" */
     if (dbg_parsearg(eap->arg, gap) == FAIL)
       return;
@@ -947,13 +947,13 @@ void ex_profile(exarg_T *eap)
     if (do_profiling == PROF_YES)
       profile_start(&pause_time);
     do_profiling = PROF_PAUSED;
-  } else if (STRCMP(eap->arg, "continue") == 0)   {
+  } else if (STRCMP(eap->arg, "continue") == 0) {
     if (do_profiling == PROF_PAUSED) {
       profile_end(&pause_time);
       profile_add(&prof_wait_time, &pause_time);
     }
     do_profiling = PROF_YES;
-  } else   {
+  } else {
     /* The rest is similar to ":breakadd". */
     ex_breakadd(eap);
   }
@@ -1024,7 +1024,8 @@ void set_context_in_profile_cmd(expand_T *xp, char_u *arg)
 /*
  * Dump the profiling info.
  */
-void profile_dump(void)          {
+void profile_dump(void)
+{
   FILE        *fd;
 
   if (profile_fname != NULL) {
@@ -1094,14 +1095,16 @@ static proftime_T inchar_time;
 /*
  * Called when starting to wait for the user to type a character.
  */
-void prof_inchar_enter(void)          {
+void prof_inchar_enter(void)
+{
   profile_start(&inchar_time);
 }
 
 /*
  * Called when finished waiting for the user to type a character.
  */
-void prof_inchar_exit(void)          {
+void prof_inchar_exit(void)
+{
   profile_end(&inchar_time);
   profile_add(&prof_wait_time, &inchar_time);
 }
@@ -1160,7 +1163,8 @@ static void script_dump_profile(FILE *fd)
  * Return TRUE when a function defined in the current script should be
  * profiled.
  */
-int prof_def_func(void)         {
+int prof_def_func(void)
+{
   if (current_SID > 0)
     return SCRIPT_ITEM(current_SID).sn_pr_force;
   return FALSE;
@@ -1193,7 +1197,8 @@ int autowrite(buf_T *buf, int forceit)
 /*
  * flush all buffers, except the ones that are readonly
  */
-void autowrite_all(void)          {
+void autowrite_all(void)
+{
   buf_T       *buf;
 
   if (!(p_aw || p_awa) || !p_write)
@@ -1281,9 +1286,9 @@ dialog_changed (
             buf->b_fname, buf->b_ffname, FALSE) == OK)
       /* didn't hit Cancel */
       (void)buf_write_all(buf, FALSE);
-  } else if (ret == VIM_NO)   {
+  } else if (ret == VIM_NO) {
     unchanged(buf, TRUE);
-  } else if (ret == VIM_ALL)   {
+  } else if (ret == VIM_ALL) {
     /*
      * Write all modified files that can be written.
      * Skip readonly buffers, these need to be confirmed
@@ -1303,7 +1308,7 @@ dialog_changed (
           buf2 = firstbuf;
       }
     }
-  } else if (ret == VIM_DISCARDALL)   {
+  } else if (ret == VIM_DISCARDALL) {
     /*
      * mark all buffers as unchanged
      */
@@ -1453,7 +1458,8 @@ theend:
  * return FAIL if there is no file name, OK if there is one
  * give error message for FAIL
  */
-int check_fname(void)         {
+int check_fname(void)
+{
   if (curbuf->b_ffname == NULL) {
     EMSG(_(e_noname));
     return FAIL;
@@ -1511,7 +1517,7 @@ static char_u *do_one_arg(char_u *str)
     if (rem_backslash(str)) {
       *p++ = *str++;
       *p++ = *str;
-    } else   {
+    } else {
       /* An item ends at a space not in backticks */
       if (!inbacktick && vim_isspace(*str))
         break;
@@ -1637,7 +1643,7 @@ do_arglist (
         EMSG2(_(e_nomatch2), ((char_u **)new_ga.ga_data)[i]);
     }
     ga_clear(&new_ga);
-  } else   {
+  } else {
     i = expand_wildcards(new_ga.ga_len, (char_u **)new_ga.ga_data,
         &exp_count, &exp_files, EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
@@ -1663,7 +1669,8 @@ do_arglist (
 /*
  * Check the validity of the arg_idx for each other window.
  */
-static void alist_check_arg_idx(void)                 {
+static void alist_check_arg_idx(void)
+{
   win_T       *win;
   tabpage_T   *tp;
 
@@ -1706,7 +1713,7 @@ void check_arg_idx(win_T *win)
                 && (fullpathcmp(alist_name(&GARGLIST[GARGCOUNT - 1]),
                         win->w_buffer->b_ffname, TRUE) & FPC_SAME))))
       arg_had_last = TRUE;
-  } else   {
+  } else {
     /* We are editing the current entry in the argument list.
      * Set "arg_had_last" if it's also the last one */
     win->w_arg_idx_invalid = FALSE;
@@ -1738,7 +1745,7 @@ void ex_args(exarg_T *eap)
      * Also for ":argslocal file .." and ":argsglobal file ..".
      */
     ex_next(eap);
-  } else if (eap->cmdidx == CMD_args)    {
+  } else if (eap->cmdidx == CMD_args)  {
     /*
      * ":args": list arguments.
      */
@@ -1755,7 +1762,7 @@ void ex_args(exarg_T *eap)
         msg_putchar(' ');
       }
     }
-  } else if (eap->cmdidx == CMD_arglocal)   {
+  } else if (eap->cmdidx == CMD_arglocal) {
     garray_T        *gap = &curwin->w_alist->al_ga;
 
     /*
@@ -1831,7 +1838,7 @@ void do_argfile(exarg_T *eap, int argn)
       EMSG(_("E164: Cannot go before first file"));
     else
       EMSG(_("E165: Cannot go beyond last file"));
-  } else   {
+  } else {
     setpcmark();
 
     /* split window or create new tab page first */
@@ -1839,7 +1846,7 @@ void do_argfile(exarg_T *eap, int argn)
       if (win_split(0, 0) == FAIL)
         return;
       RESET_BINDING(curwin);
-    } else   {
+    } else {
       /*
        * if 'hidden' set, only check for changed file when re-editing
        * the same buffer
@@ -2036,7 +2043,7 @@ void ex_listdo(exarg_T *eap)
         if (curwin->w_arg_idx != i)
           break;
         ++i;
-      } else if (eap->cmdidx == CMD_windo)   {
+      } else if (eap->cmdidx == CMD_windo) {
         /* go to window "wp" */
         if (!win_valid(wp))
           break;
@@ -2044,13 +2051,13 @@ void ex_listdo(exarg_T *eap)
         if (curwin != wp)
           break;            /* something must be wrong */
         wp = curwin->w_next;
-      } else if (eap->cmdidx == CMD_tabdo)   {
+      } else if (eap->cmdidx == CMD_tabdo) {
         /* go to window "tp" */
         if (!valid_tabpage(tp))
           break;
         goto_tabpage_tp(tp, TRUE, TRUE);
         tp = tp->tp_next;
-      } else if (eap->cmdidx == CMD_bufdo)   {
+      } else if (eap->cmdidx == CMD_bufdo) {
         /* Remember the number of the next listed buffer, in case
          * ":bwipe" is used or autocommands do something strange. */
         next_fnum = -1;
@@ -2158,14 +2165,14 @@ void ex_compiler(exarg_T *eap)
     /* List all compiler scripts. */
     do_cmdline_cmd((char_u *)"echo globpath(&rtp, 'compiler/*.vim')");
     /* ) keep the indenter happy... */
-  } else   {
+  } else {
     buf = alloc((unsigned)(STRLEN(eap->arg) + 14));
     if (buf != NULL) {
       if (eap->forceit) {
         /* ":compiler! {name}" sets global options */
         do_cmdline_cmd((char_u *)
             "command -nargs=* CompilerSet set <args>");
-      } else   {
+      } else {
         /* ":compiler! {name}" sets local options.
          * To remain backwards compatible "current_compiler" is always
          * used.  A user's compiler plugin may set it, the distributed
@@ -2280,7 +2287,7 @@ void        *cookie;
         (*callback)(buf, (void *) &cookie);
         if (!did_one)
           did_one = (cookie == NULL);
-      } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL)   {
+      } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL) {
         add_pathsep(buf);
         tail = buf + STRLEN(buf);
 
@@ -2771,7 +2778,8 @@ void ex_scriptnames(exarg_T *eap)
 /*
  * Fix slashes in the list of script names for 'shellslash'.
  */
-void scriptnames_slash_adjust(void)          {
+void scriptnames_slash_adjust(void)
+{
   int i;
 
   for (i = 1; i <= script_items.ga_len; ++i)
@@ -2800,7 +2808,8 @@ char_u *get_scriptname(scid_T id)
 }
 
 # if defined(EXITFREE) || defined(PROTO)
-void free_scriptnames(void)          {
+void free_scriptnames(void)
+{
   int i;
 
   for (i = script_items.ga_len; i > 0; --i)
@@ -3053,7 +3062,7 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
           buf[len - 2] = '\n';
           --len;
           --ga.ga_len;
-        } else   {          /* lines like ":map xx yy^M" will have failed */
+        } else {          /* lines like ":map xx yy^M" will have failed */
           if (!sp->error) {
             msg_source(hl_attr(HLF_W));
             EMSG(_("W15: Warning: Wrong line separator, ^M may be missing"));
@@ -3096,7 +3105,8 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
  * When skipping lines it may not actually be executed, but we won't find out
  * until later and we need to store the time now.
  */
-void script_line_start(void)          {
+void script_line_start(void)
+{
   scriptitem_T    *si;
   sn_prl_T        *pp;
 
@@ -3127,7 +3137,8 @@ void script_line_start(void)          {
 /*
  * Called when actually executing a function line.
  */
-void script_line_exec(void)          {
+void script_line_exec(void)
+{
   scriptitem_T    *si;
 
   if (current_SID <= 0 || current_SID > script_items.ga_len)
@@ -3140,7 +3151,8 @@ void script_line_exec(void)          {
 /*
  * Called when done with a function line.
  */
-void script_line_end(void)          {
+void script_line_end(void)
+{
   scriptitem_T    *si;
   sn_prl_T        *pp;
 
@@ -3288,7 +3300,8 @@ static char *get_locale_val(int what)
  * Obtain the current messages language.  Used to set the default for
  * 'helplang'.  May return NULL or an empty string.
  */
-char_u *get_mess_lang(void)              {
+char_u *get_mess_lang(void)
+{
   char_u *p;
 
 # ifdef HAVE_GET_LOCALE_VAL
@@ -3319,7 +3332,8 @@ static char_u *get_mess_env(void);
 /*
  * Get the language used for messages from the environment.
  */
-static char_u *get_mess_env(void)                     {
+static char_u *get_mess_env(void)
+{
   char_u      *p;
 
   p = (char_u *)mch_getenv("LC_ALL");
@@ -3345,7 +3359,8 @@ static char_u *get_mess_env(void)                     {
  * Set the "v:lang" variable according to the current locale setting.
  * Also do "v:lc_time"and "v:ctype".
  */
-void set_lang_var(void)          {
+void set_lang_var(void)
+{
   char_u      *loc;
 
 # ifdef HAVE_GET_LOCALE_VAL
@@ -3399,11 +3414,11 @@ void ex_language(exarg_T *eap)
       what = VIM_LC_MESSAGES;
       name = skipwhite(p);
       whatstr = "messages ";
-    } else if (STRNICMP(eap->arg, "ctype", p - eap->arg) == 0)   {
+    } else if (STRNICMP(eap->arg, "ctype", p - eap->arg) == 0) {
       what = LC_CTYPE;
       name = skipwhite(p);
       whatstr = "ctype ";
-    } else if (STRNICMP(eap->arg, "time", p - eap->arg) == 0)   {
+    } else if (STRNICMP(eap->arg, "time", p - eap->arg) == 0) {
       what = LC_TIME;
       name = skipwhite(p);
       whatstr = "time ";
@@ -3420,7 +3435,7 @@ void ex_language(exarg_T *eap)
     if (p == NULL || *p == NUL)
       p = (char_u *)"Unknown";
     smsg((char_u *)_("Current %slanguage: \"%s\""), whatstr, p);
-  } else   {
+  } else {
 #ifndef LC_MESSAGES
     if (what == VIM_LC_MESSAGES)
       loc = "";
@@ -3482,7 +3497,8 @@ static char_u **find_locales(void);
 /*
  * Lazy initialization of all available locales.
  */
-static void init_locales(void)                 {
+static void init_locales(void)
+{
   if (!did_init_locales) {
     did_init_locales = TRUE;
     locales = find_locales();
@@ -3491,7 +3507,8 @@ static void init_locales(void)                 {
 
 /* Return an array of strings for all available locales + NULL for the
  * last element.  Return NULL in case of error. */
-static char_u **find_locales(void)                      {
+static char_u **find_locales(void)
+{
   garray_T locales_ga;
   char_u      *loc;
 
@@ -3527,7 +3544,8 @@ static char_u **find_locales(void)                      {
 }
 
 #  if defined(EXITFREE) || defined(PROTO)
-void free_locales(void)          {
+void free_locales(void)
+{
   int i;
   if (locales != NULL) {
     for (i = 0; locales[i] != NULL; i++)

@@ -215,7 +215,8 @@ void redraw_win_later(win_T *wp, int type)
  * Force a complete redraw later.  Also resets the highlighting.  To be used
  * after executing a shell command that messes up the screen.
  */
-void redraw_later_clear(void)          {
+void redraw_later_clear(void)
+{
   redraw_all_later(CLEAR);
   /* Use attributes that is very unlikely to appear in text. */
   screen_attr = HL_BOLD | HL_UNDERLINE | HL_INVERSE;
@@ -483,7 +484,7 @@ void update_screen(int type)
               && wp->w_topline == wp->w_lines[0].wl_lnum) {
             wp->w_upd_rows = msg_scrolled - W_WINROW(wp);
             wp->w_redr_type = REDRAW_TOP;
-          } else   {
+          } else {
             wp->w_redr_type = NOT_VALID;
             if (W_WINROW(wp) + wp->w_height + W_STATUS_HEIGHT(wp)
                 <= msg_scrolled)
@@ -637,7 +638,8 @@ int conceal_cursor_line(win_T *wp)
 /*
  * Check if the cursor line needs to be redrawn because of 'concealcursor'.
  */
-void conceal_check_cursur_line(void)          {
+void conceal_check_cursur_line(void)
+{
   if (curwin->w_p_cole > 0 && conceal_cursor_line(curwin)) {
     need_cursor_line_redraw = TRUE;
     /* Need to recompute cursor column, e.g., when starting Visual mode
@@ -770,15 +772,14 @@ static void win_update(win_T *wp)
   if (wp->w_nrwidth != i) {
     type = NOT_VALID;
     wp->w_nrwidth = i;
-  } else if (buf->b_mod_set && buf->b_mod_xlines != 0 && wp->w_redraw_top !=
-             0)        {
+  } else if (buf->b_mod_set && buf->b_mod_xlines != 0 && wp->w_redraw_top != 0) {
     /*
      * When there are both inserted/deleted lines and specific lines to be
      * redrawn, w_redraw_top and w_redraw_bot may be invalid, just redraw
      * everything (only happens when redrawing is off for while).
      */
     type = NOT_VALID;
-  } else   {
+  } else {
     /*
      * Set mod_top to the first line that needs displaying because of
      * changes.  Set mod_bot to the first line after the changes.
@@ -987,7 +988,7 @@ static void win_update(win_T *wp)
           mid_start = 0;                        /* redraw all lines */
       } else
         mid_start = 0;                  /* redraw all lines */
-    } else   {
+    } else {
       /*
        * New topline is at or below old topline: May scroll up.
        * When topline didn't change, find first entry in w_lines[] that
@@ -1009,7 +1010,7 @@ static void win_update(win_T *wp)
         /* if wp->w_topline is not in wp->w_lines[].wl_lnum redraw all
          * lines */
         mid_start = 0;
-      } else   {
+      } else {
         /*
          * Try to delete the correct number of lines.
          * wp->w_topline is at wp->w_lines[i].wl_lnum.
@@ -1088,7 +1089,7 @@ static void win_update(win_T *wp)
      * NOT_VALID, need to reset it here to avoid redrawing twice. */
     if (screen_cleared == TRUE)
       must_redraw = 0;
-  } else   {
+  } else {
     /* Not VALID or INVERTED: redraw all lines. */
     mid_start = 0;
     mid_end = wp->w_height;
@@ -1118,7 +1119,7 @@ static void win_update(win_T *wp)
         if (curwin->w_cursor.lnum < VIsual.lnum) {
           from = curwin->w_cursor.lnum;
           to = VIsual.lnum;
-        } else   {
+        } else {
           from = VIsual.lnum;
           to = curwin->w_cursor.lnum;
         }
@@ -1131,7 +1132,7 @@ static void win_update(win_T *wp)
           from = wp->w_old_visual_lnum;
         if (wp->w_old_visual_lnum > to)
           to = wp->w_old_visual_lnum;
-      } else   {
+      } else {
         /*
          * Find the line numbers that need to be updated: The lines
          * between the old cursor position and the current cursor
@@ -1140,7 +1141,7 @@ static void win_update(win_T *wp)
         if (curwin->w_cursor.lnum < wp->w_old_cursor_lnum) {
           from = curwin->w_cursor.lnum;
           to = wp->w_old_cursor_lnum;
-        } else   {
+        } else {
           from = wp->w_old_cursor_lnum;
           to = curwin->w_cursor.lnum;
           if (from == 0)                /* Visual mode just started */
@@ -1184,12 +1185,12 @@ static void win_update(win_T *wp)
         wp->w_old_cursor_fcol = fromc;
         wp->w_old_cursor_lcol = toc;
       }
-    } else   {
+    } else {
       /* Use the line numbers of the old Visual area. */
       if (wp->w_old_cursor_lnum < wp->w_old_visual_lnum) {
         from = wp->w_old_cursor_lnum;
         to = wp->w_old_visual_lnum;
-      } else   {
+      } else {
         from = wp->w_old_visual_lnum;
         to = wp->w_old_cursor_lnum;
       }
@@ -1260,7 +1261,7 @@ static void win_update(win_T *wp)
     wp->w_old_visual_lnum = VIsual.lnum;
     wp->w_old_visual_col = VIsual.col;
     wp->w_old_curswant = curwin->w_curswant;
-  } else   {
+  } else {
     wp->w_old_visual_mode = 0;
     wp->w_old_cursor_lnum = 0;
     wp->w_old_visual_lnum = 0;
@@ -1369,7 +1370,7 @@ static void win_update(win_T *wp)
            * need to redraw until the end of the window.
            * Inserting/deleting lines has no use. */
           bot_start = 0;
-        } else   {
+        } else {
           /* Able to count old number of rows: Count new window
            * rows, and may insert/delete lines */
           j = idx;
@@ -1404,7 +1405,7 @@ static void win_update(win_T *wp)
               else
                 bot_start = wp->w_height + xtra_rows;
             }
-          } else if (xtra_rows > 0)   {
+          } else if (xtra_rows > 0) {
             /* May scroll text down.  If there is not enough
              * remaining text of scrolling fails, must redraw the
              * rest. */
@@ -1447,7 +1448,7 @@ static void win_update(win_T *wp)
               }
               if (bot_start > x)
                 bot_start = x;
-            } else   {       /* j > i */
+            } else {       /* j > i */
                              /* move entries in w_lines[] downwards */
               j -= i;
               wp->w_lines_valid += j;
@@ -1492,7 +1493,7 @@ static void win_update(win_T *wp)
         /* This line is not going to fit.  Don't draw anything here,
          * will draw "@  " lines below. */
         row = wp->w_height + 1;
-      } else   {
+      } else {
         prepare_search_hl(wp, lnum);
         /* Let the syntax stuff know we skipped a few lines. */
         if (syntax_last_parsed != 0 && syntax_last_parsed + 1 < lnum
@@ -1523,7 +1524,7 @@ static void win_update(win_T *wp)
         wp->w_lines[idx].wl_size = row - srow;
       ++idx;
       lnum += fold_count + 1;
-    } else   {
+    } else {
       /* This line does not need updating, advance to the next one */
       row += wp->w_lines[idx++].wl_size;
       if (row > wp->w_height)           /* past end of screen */
@@ -1564,11 +1565,11 @@ static void win_update(win_T *wp)
        * Don't overwrite it, it can be edited.
        */
       wp->w_botline = lnum + 1;
-    } else if (diff_check_fill(wp, lnum) >= wp->w_height - srow)   {
+    } else if (diff_check_fill(wp, lnum) >= wp->w_height - srow) {
       /* Window ends in filler lines. */
       wp->w_botline = lnum;
       wp->w_filler_rows = wp->w_height - srow;
-    } else if (dy_flags & DY_LASTLINE)   {      /* 'display' has "lastline" */
+    } else if (dy_flags & DY_LASTLINE) {      /* 'display' has "lastline" */
       /*
        * Last line isn't finished: Display "@@@" at the end.
        */
@@ -1578,11 +1579,11 @@ static void win_update(win_T *wp)
           '@', '@', hl_attr(HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
-    } else   {
+    } else {
       win_draw_end(wp, '@', ' ', srow, wp->w_height, HLF_AT);
       wp->w_botline = lnum;
     }
-  } else   {
+  } else {
     draw_vsep_win(wp, row);
     if (eof) {                  /* we hit the end of the file */
       wp->w_botline = buf->b_ml.ml_line_count + 1;
@@ -1676,7 +1677,7 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
     screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
         W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
         c1, c2, hl_attr(hl));
-  } else   {
+  } else {
     if (cmdwin_type != 0 && wp == curwin) {
       /* draw the cmdline character in the leftmost column */
       n = 1;
@@ -1866,7 +1867,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
         if (*p < 0x80 && u8cc[0] == 0) {
           ScreenLinesUC[idx] = 0;
           prev_c = u8c;
-        } else   {
+        } else {
           if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
             /* Do Arabic shaping. */
             int pc, pc1, nc;
@@ -1880,7 +1881,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
               pc1 = prev_c1;
               nc = utf_ptr2char(p + c_len);
               prev_c1 = u8cc[0];
-            } else   {
+            } else {
               pc = utfc_ptr2char(p + c_len, pcc);
               nc = prev_c;
               pc1 = pcc[0];
@@ -1917,7 +1918,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       idx += cells;
       p += c_len;
     }
-  } else   {
+  } else {
     len = (int)STRLEN(text);
     if (len > W_WIDTH(wp) - col)
       len = W_WIDTH(wp) - col;
@@ -1958,7 +1959,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       /* Visual is after curwin->w_cursor */
       top = &curwin->w_cursor;
       bot = &VIsual;
-    } else   {
+    } else {
       /* Visual is before curwin->w_cursor */
       top = &VIsual;
       bot = &curwin->w_cursor;
@@ -1986,7 +1987,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           RL_MEMSET(wp->w_old_cursor_fcol + txtcol, hl_attr(HLF_V),
               len - (int)wp->w_old_cursor_fcol);
         }
-      } else   {
+      } else {
         /* Set all attributes of the text */
         RL_MEMSET(txtcol, hl_attr(HLF_V), W_WIDTH(wp) - txtcol);
       }
@@ -2304,7 +2305,7 @@ win_line (
     if (ltoreq(curwin->w_cursor, VIsual)) {
       top = &curwin->w_cursor;
       bot = &VIsual;
-    } else   {                          /* Visual is before curwin->w_cursor */
+    } else {                          /* Visual is before curwin->w_cursor */
       top = &VIsual;
       bot = &curwin->w_cursor;
     }
@@ -2314,7 +2315,7 @@ win_line (
         fromcol = wp->w_old_cursor_fcol;
         tocol = wp->w_old_cursor_lcol;
       }
-    } else   {                          /* non-block mode */
+    } else {                          /* non-block mode */
       if (lnum > top->lnum && lnum <= bot->lnum)
         fromcol = 0;
       else if (lnum == top->lnum) {
@@ -2423,7 +2424,7 @@ win_line (
       /* No next line or it is empty. */
       nextlinecol = MAXCOL;
       nextline_idx = 0;
-    } else   {
+    } else {
       v = (long)STRLEN(line);
       if (v < SPWORDLEN) {
         /* Short line, use it completely and append the start of the
@@ -2432,7 +2433,7 @@ win_line (
         mch_memmove(nextline, line, (size_t)v);
         STRMOVE(nextline + v, nextline + SPWORDLEN);
         nextline_idx = v + 1;
-      } else   {
+      } else {
         /* Long line, use only the last SPWORDLEN bytes. */
         nextlinecol = v - SPWORDLEN;
         mch_memmove(nextline, line + nextlinecol, SPWORDLEN);
@@ -2526,7 +2527,7 @@ win_line (
          * word */
         spell_hlf = HLF_COUNT;
         word_end = (int)(spell_to_word_end(ptr, wp) - line + 1);
-      } else   {
+      } else {
         /* bad word found, use attributes until end of word */
         word_end = wp->w_cursor.col + len + 1;
 
@@ -2813,7 +2814,7 @@ win_line (
                 && v >= (long)shl->startcol
                 && v < (long)shl->endcol) {
               shl->attr_cur = shl->attr;
-            } else if (v == (long)shl->endcol)   {
+            } else if (v == (long)shl->endcol) {
               shl->attr_cur = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v);
@@ -2926,7 +2927,7 @@ win_line (
           c = 0xc0;
         } else
           mb_utf8 = FALSE;
-      } else   {
+      } else {
         c = *p_extra;
         if (has_mbyte) {
           mb_c = c;
@@ -2942,7 +2943,7 @@ win_line (
               mb_utf8 = TRUE;
               c = 0xc0;
             }
-          } else   {
+          } else {
             /* if this is a DBCS character, put it in "mb_c" */
             mb_l = MB_BYTE2LEN(c);
             if (mb_l >= n_extra)
@@ -2968,7 +2969,7 @@ win_line (
              * character at the start of the next line. */
             ++n_extra;
             --p_extra;
-          } else   {
+          } else {
             n_extra -= mb_l - 1;
             p_extra += mb_l - 1;
           }
@@ -2976,7 +2977,7 @@ win_line (
         ++p_extra;
       }
       --n_extra;
-    } else   {
+    } else {
       /*
        * Get a character from the line itself.
        */
@@ -3060,7 +3061,7 @@ win_line (
               pc1 = prev_c1;
               nc = utf_ptr2char(ptr + mb_l);
               prev_c1 = u8cc[0];
-            } else   {
+            } else {
               pc = utfc_ptr2char(ptr + mb_l, pcc);
               nc = prev_c;
               pc1 = pcc[0];
@@ -3070,7 +3071,7 @@ win_line (
             mb_c = arabic_shape(mb_c, &c, &u8cc[0], pc, pc1, nc);
           } else
             prev_c = mb_c;
-        } else   {      /* enc_dbcs */
+        } else {      /* enc_dbcs */
           mb_l = MB_BYTE2LEN(c);
           if (mb_l == 0)            /* at the NUL at end-of-line */
             mb_l = 1;
@@ -3085,7 +3086,7 @@ win_line (
                 /* head byte at end of line */
                 mb_l = 1;
                 transchar_nonprint(extra, c);
-              } else   {
+              } else {
                 /* illegal tail byte */
                 mb_l = 2;
                 STRCPY(extra, "XX");
@@ -3341,7 +3342,7 @@ win_line (
               u8cc[0] = 0;
               c = 0xc0;
             }
-          } else   {
+          } else {
             c_extra = ' ';
             c = ' ';
           }
@@ -3398,7 +3399,7 @@ win_line (
             c = 0xc0;
           } else
             mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
-        } else if (c != NUL)   {
+        } else if (c != NUL) {
           p_extra = transchar(c);
           if ((dy_flags & DY_UHEX) && wp->w_p_rl)
             rl_mirror(p_extra);                 /* reverse "<12>" */
@@ -3479,14 +3480,14 @@ win_line (
             if (wp->w_p_rl) {
               col -= n_extra;
               boguscols -= n_extra;
-            } else   {
+            } else {
               boguscols += n_extra;
               col += n_extra;
             }
           }
           n_extra = 0;
           n_attr = 0;
-        } else if (n_skip == 0)   {
+        } else if (n_skip == 0) {
           is_concealing = TRUE;
           n_skip = 1;
         }
@@ -3497,7 +3498,7 @@ win_line (
           c = 0xc0;
         } else
           mb_utf8 = FALSE;              /* don't draw as UTF-8 */
-      } else   {
+      } else {
         prev_syntax_id = 0;
         is_concealing = FALSE;
       }
@@ -3603,7 +3604,7 @@ win_line (
         if (wp->w_p_rl) {
           if (col < 0)
             n = 1;
-        } else   {
+        } else {
           if (col >= W_WIDTH(wp))
             n = -1;
         }
@@ -3612,7 +3613,7 @@ win_line (
            * instead (better than nothing). */
           off += n;
           col += n;
-        } else   {
+        } else {
           /* Add a blank character to highlight. */
           ScreenLines[off] = ' ';
           if (enc_utf8)
@@ -3643,7 +3644,7 @@ win_line (
         if (wp->w_p_rl) {
           --col;
           --off;
-        } else   {
+        } else {
           ++col;
           ++off;
         }
@@ -3776,7 +3777,7 @@ win_line (
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUC));
-      } else if (draw_color_col && VCOL_HLC == *color_cols)   {
+      } else if (draw_color_col && VCOL_HLC == *color_cols) {
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(char_attr, hl_attr(HLF_MC));
       }
@@ -3801,7 +3802,7 @@ win_line (
         if ((mb_c & 0xff00) == 0x8e00)
           ScreenLines[off] = 0x8e;
         ScreenLines2[off] = mb_c & 0xff;
-      } else if (enc_utf8)   {
+      } else if (enc_utf8) {
         if (mb_utf8) {
           int i;
 
@@ -3846,11 +3847,11 @@ win_line (
       if (wp->w_p_rl) {
         --off;
         --col;
-      } else   {
+      } else {
         ++off;
         ++col;
       }
-    } else if (wp->w_p_cole > 0 && is_concealing)   {
+    } else if (wp->w_p_cole > 0 && is_concealing) {
       --n_skip;
       ++vcol_off;
       if (n_extra > 0)
@@ -3874,7 +3875,7 @@ win_line (
           if (wp->w_p_rl) {
             col -= n_extra;
             boguscols -= n_extra;
-          } else   {
+          } else {
             col += n_extra;
             boguscols += n_extra;
           }
@@ -3888,7 +3889,7 @@ win_line (
           if (wp->w_p_rl) {
             --boguscols;
             --col;
-          } else   {
+          } else {
             ++boguscols;
             ++col;
           }
@@ -3897,11 +3898,11 @@ win_line (
         if (wp->w_p_rl) {
           --boguscols;
           --col;
-        } else   {
+        } else {
           ++boguscols;
           ++col;
         }
-      } else   {
+      } else {
         if (n_extra > 0) {
           vcol += n_extra;
           n_extra = 0;
@@ -4387,7 +4388,8 @@ void rl_mirror(char_u *str)
 /*
  * mark all status lines for redraw; used after first :cd
  */
-void status_redraw_all(void)          {
+void status_redraw_all(void)
+{
   win_T       *wp;
 
   for (wp = firstwin; wp; wp = wp->w_next)
@@ -4400,7 +4402,8 @@ void status_redraw_all(void)          {
 /*
  * mark all status lines of the current buffer for redraw
  */
-void status_redraw_curbuf(void)          {
+void status_redraw_curbuf(void)
+{
   win_T       *wp;
 
   for (wp = firstwin; wp; wp = wp->w_next)
@@ -4413,7 +4416,8 @@ void status_redraw_curbuf(void)          {
 /*
  * Redraw all status lines that need to be redrawn.
  */
-void redraw_statuslines(void)          {
+void redraw_statuslines(void)
+{
   win_T       *wp;
 
   for (wp = firstwin; wp; wp = wp->w_next)
@@ -4433,7 +4437,7 @@ void win_redraw_last_status(frame_T *frp)
   else if (frp->fr_layout == FR_ROW) {
     for (frp = frp->fr_child; frp != NULL; frp = frp->fr_next)
       win_redraw_last_status(frp);
-  } else   { /* frp->fr_layout == FR_COL */
+  } else { /* frp->fr_layout == FR_COL */
     frp = frp->fr_child;
     while (frp->fr_next != NULL)
       frp = frp->fr_next;
@@ -4560,7 +4564,7 @@ win_redr_status_matches (
     /* jumping left, as far as we can go */
     first_match = match;
     add_left = TRUE;
-  } else   {
+  } else {
     /* check if match fits on the screen */
     for (i = first_match; i < match; ++i)
       clen += status_match_len(xp, L_MATCH(i)) + 2;
@@ -4593,7 +4597,7 @@ win_redr_status_matches (
   if (first_match == 0) {
     *buf = NUL;
     len = 0;
-  } else   {
+  } else {
     STRCPY(buf, "< ");
     len = 2;
   }
@@ -4623,7 +4627,7 @@ win_redr_status_matches (
           STRNCPY(buf + len, s, l);
           s += l - 1;
           len += l;
-        } else   {
+        } else {
           STRCPY(buf + len, transchar_byte(*s));
           len += (int)STRLEN(buf + len);
         }
@@ -4654,12 +4658,12 @@ win_redr_status_matches (
         if (cmdline_row == Rows - 1) {
           screen_del_lines(0, 0, 1, (int)Rows, TRUE, NULL);
           ++msg_scrolled;
-        } else   {
+        } else {
           ++cmdline_row;
           ++row;
         }
         wild_menu_showing = WM_SCROLLED;
-      } else   {
+      } else {
         /* Create status line if needed by setting 'laststatus' to 2.
          * Set 'winminheight' to zero to avoid that the window is
          * resized. */
@@ -4719,10 +4723,10 @@ void win_redr_status(win_T *wp)
              ) {
     /* Don't redraw right now, do it later. */
     wp->w_redr_status = TRUE;
-  } else if (*p_stl != NUL || *wp->w_p_stl != NUL)   {
+  } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
     /* redraw custom status line */
     redraw_custom_statusline(wp);
-  } else   {
+  } else {
     fillchar = fillchar_status(&attr, wp == curwin);
 
     get_trans_bufname(wp->w_buffer);
@@ -4757,7 +4761,7 @@ void win_redr_status(win_T *wp)
     if (this_ru_col <= 1) {
       p = (char_u *)"<";                /* No room for file name! */
       len = 1;
-    } else if (has_mbyte)    {
+    } else if (has_mbyte) {
       int clen = 0, i;
 
       /* Count total number of display cells. */
@@ -4775,7 +4779,7 @@ void win_redr_status(win_T *wp)
         ++len;
       }
 
-    } else if (len > this_ru_col - 1)        {
+    } else if (len > this_ru_col - 1) {
       p += len - (this_ru_col - 1);
       *p = '<';
       len = this_ru_col - 1;
@@ -4851,7 +4855,7 @@ int stl_connected(win_T *wp)
     if (fr->fr_parent->fr_layout == FR_COL) {
       if (fr->fr_next != NULL)
         break;
-    } else   {
+    } else {
       if (fr->fr_next != NULL)
         return TRUE;
     }
@@ -4949,7 +4953,7 @@ win_redr_custom (
     attr = hl_attr(HLF_TPF);
     maxwidth = Columns;
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
-  } else   {
+  } else {
     row = W_WINROW(wp) + wp->w_height;
     fillchar = fillchar_status(&attr, wp == curwin);
     maxwidth = W_WIDTH(wp);
@@ -4978,7 +4982,7 @@ win_redr_custom (
       }
 
       use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
-    } else   {
+    } else {
       if (*wp->w_p_stl != NUL)
         stl = wp->w_p_stl;
       else
@@ -5104,7 +5108,7 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
       bytes[0] = ScreenLines[off];
       bytes[1] = ScreenLines2[off];
       bytes[2] = NUL;
-    } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1)   {
+    } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1) {
       bytes[1] = ScreenLines[off + 1];
       bytes[2] = NUL;
     }
@@ -5220,7 +5224,7 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
             /* Past end of string to be displayed. */
             nc = NUL;
             nc1 = NUL;
-          } else   {
+          } else {
             nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
                 (int)((text + len) - ptr - mbyte_blen));
             nc1 = pcc[0];
@@ -5321,11 +5325,11 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
           ScreenAttrs[off + 1] = attr;
         }
         screen_char(off, row, col);
-      } else if (mbyte_cells == 2)   {
+      } else if (mbyte_cells == 2) {
         ScreenLines[off + 1] = ptr[1];
         ScreenAttrs[off + 1] = attr;
         screen_char_2(off, row, col);
-      } else if (enc_dbcs == DBCS_JPNU && c == 0x8e)   {
+      } else if (enc_dbcs == DBCS_JPNU && c == 0x8e) {
         ScreenLines2[off] = ptr[1];
         screen_char(off, row, col);
       } else
@@ -5337,7 +5341,7 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
       ptr += mbyte_blen;
       if (clear_next_cell)
         ptr = (char_u *)" ";
-    } else   {
+    } else {
       ++off;
       ++col;
       ++ptr;
@@ -5357,7 +5361,8 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
 /*
  * Prepare for 'hlsearch' highlighting.
  */
-static void start_search_hl(void)                 {
+static void start_search_hl(void)
+{
   if (p_hls && !no_hlsearch) {
     last_pat_prog(&search_hl.rm);
     search_hl.attr = hl_attr(HLF_L);
@@ -5369,7 +5374,8 @@ static void start_search_hl(void)                 {
 /*
  * Clean up for 'hlsearch' highlighting.
  */
-static void end_search_hl(void)                 {
+static void end_search_hl(void)
+{
   if (search_hl.rm.regprog != NULL) {
     vim_regfree(search_hl.rm.regprog);
     search_hl.rm.regprog = NULL;
@@ -5447,7 +5453,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
                             + shl->rm.endpos[0].lnum
                             - shl->rm.startpos[0].lnum;
           n = shl->rm.endpos[0].col;
-        } else   {
+        } else {
           ++shl->first_lnum;
           n = 0;
         }
@@ -5604,7 +5610,7 @@ static void screen_start_highlight(int attr)
             term_fg_color(aep->ae_u.cterm.fg_color - 1);
           if (aep->ae_u.cterm.bg_color)
             term_bg_color(aep->ae_u.cterm.bg_color - 1);
-        } else   {
+        } else {
           if (aep->ae_u.term.start != NULL)
             out_str(aep->ae_u.term.start);
         }
@@ -5613,7 +5619,8 @@ static void screen_start_highlight(int attr)
   }
 }
 
-void screen_stop_highlight(void)            {
+void screen_stop_highlight(void)
+{
   int do_ME = FALSE;                /* output T_ME code */
 
   if (screen_attr != 0
@@ -5630,7 +5637,7 @@ void screen_stop_highlight(void)            {
           if (aep != NULL && (aep->ae_u.cterm.fg_color
                               || aep->ae_u.cterm.bg_color))
             do_ME = TRUE;
-        } else   {
+        } else {
           aep = syn_term_attr2entry(screen_attr);
           if (aep != NULL && aep->ae_u.term.stop != NULL) {
             if (STRCMP(aep->ae_u.term.stop, T_ME) == 0)
@@ -5688,7 +5695,8 @@ void screen_stop_highlight(void)            {
  * Reset the colors for a cterm.  Used when leaving Vim.
  * The machine specific code may override this again.
  */
-void reset_cterm_colors(void)          {
+void reset_cterm_colors(void)
+{
   if (t_colors > 1) {
     /* set Normal cterm colors */
     if (cterm_normal_fg_color > 0 || cterm_normal_bg_color > 0) {
@@ -5750,7 +5758,7 @@ static void screen_char(unsigned off, int row, int col)
     out_str(buf);
     if (utf_char2cells(ScreenLinesUC[off]) > 1)
       ++screen_cur_col;
-  } else   {
+  } else {
     out_flush_check();
     out_char(ScreenLines[off]);
     /* double-byte character in single-width cell */
@@ -5811,7 +5819,7 @@ void screen_draw_rectangle(int row, int col, int height, int width, int invert)
       if (enc_dbcs != 0 && dbcs_off2cells(off + c, max_off) > 1) {
         screen_char_2(off + c, r, c);
         ++c;
-      } else   {
+      } else {
         screen_char(off + c, r, c);
         if (utf_off2cells(off + c, max_off) > 1)
           ++c;
@@ -5833,7 +5841,7 @@ static void redraw_block(int row, int end, win_T *wp)
   if (wp == NULL) {
     col = 0;
     width = Columns;
-  } else   {
+  } else {
     col = wp->w_wincol;
     width = wp->w_width;
   }
@@ -6173,7 +6181,7 @@ give_up:
     new_LineWraps = NULL;
     vim_free(new_TabPageIdxs);
     new_TabPageIdxs = NULL;
-  } else   {
+  } else {
     done_outofmem_msg = FALSE;
 
     for (new_row = 0; new_row < Rows; ++new_row) {
@@ -6278,7 +6286,8 @@ give_up:
   }
 }
 
-void free_screenlines(void)          {
+void free_screenlines(void)
+{
   int i;
 
   vim_free(ScreenLinesUC);
@@ -6292,13 +6301,15 @@ void free_screenlines(void)          {
   vim_free(TabPageIdxs);
 }
 
-void screenclear(void)          {
+void screenclear(void)
+{
   check_for_delay(FALSE);
   screenalloc(FALSE);       /* allocate screen buffers if size changed */
   screenclear2();           /* clear the screen */
 }
 
-static void screenclear2(void)                 {
+static void screenclear2(void)
+{
   int i;
 
   if (starting == NO_SCREEN || ScreenLines == NULL
@@ -6319,7 +6330,7 @@ static void screenclear2(void)                 {
     out_str(T_CL);              /* clear the display */
     clear_cmdline = FALSE;
     mode_displayed = FALSE;
-  } else   {
+  } else {
     /* can't clear the screen, mark all chars with invalid attributes */
     for (i = 0; i < Rows; ++i)
       lineinvalid(LineOffset[i], (int)Columns);
@@ -6404,7 +6415,8 @@ int can_clear(char_u *p)
  * something directly to the screen (shell commands) or a terminal control
  * code.
  */
-void screen_start(void)          {
+void screen_start(void)
+{
   screen_cur_row = screen_cur_col = 9999;
 }
 
@@ -6486,7 +6498,7 @@ void windgoto(int row, int col)
           plan = PLAN_CR;
           wouldbe_col = 0;
           cost = 1;                         /* CR is just one character */
-        } else   {
+        } else {
           plan = PLAN_LE;
           wouldbe_col = col;
         }
@@ -6564,12 +6576,12 @@ void windgoto(int row, int col)
             out_str(bs);
             --screen_cur_col;
           }
-        } else if (plan == PLAN_CR)   {
+        } else if (plan == PLAN_CR) {
           if (noinvcurs)
             screen_stop_highlight();
           out_char('\r');
           screen_cur_col = 0;
-        } else if (plan == PLAN_NL)   {
+        } else if (plan == PLAN_NL) {
           if (noinvcurs)
             screen_stop_highlight();
           while (screen_cur_row < row) {
@@ -6589,7 +6601,7 @@ void windgoto(int row, int col)
           if (T_ND[0] != NUL && T_ND[1] == NUL) {
             while (i-- > 0)
               out_char(*T_ND);
-          } else   {
+          } else {
             int off;
 
             off = LineOffset[row] + screen_cur_col;
@@ -6626,7 +6638,8 @@ void windgoto(int row, int col)
 /*
  * Set cursor to its position in the current window.
  */
-void setcursor(void)          {
+void setcursor(void)
+{
   if (redrawing()) {
     validate_cursor();
     windgoto(W_WINROW(curwin) + curwin->w_wrow,
@@ -6980,7 +6993,7 @@ screen_ins_lines (
       else
         lineinvalid(LineOffset[j] + wp->w_wincol, wp->w_width);
       LineWraps[j] = FALSE;
-    } else   {
+    } else {
       j = end - 1 - i;
       temp = LineOffset[j];
       while ((j -= line_count) >= row) {
@@ -7005,7 +7018,7 @@ screen_ins_lines (
   else if (type == USE_T_CAL)  {
     term_append_lines(line_count);
     screen_start();             /* don't know where cursor is now */
-  } else   {
+  } else {
     for (i = 0; i < line_count; i++) {
       if (type == USE_T_AL) {
         if (i && cursor_row != 0)
@@ -7121,7 +7134,7 @@ screen_del_lines (
   if (*T_CCS != NUL) {      /* cursor relative to region */
     cursor_row = row;
     cursor_end = end;
-  } else   {
+  } else {
     cursor_row = row + off;
     cursor_end = end + off;
   }
@@ -7144,7 +7157,7 @@ screen_del_lines (
       else
         lineinvalid(LineOffset[j] + wp->w_wincol, wp->w_width);
       LineWraps[j] = FALSE;
-    } else   {
+    } else {
       /* whole width, moving the line pointers is faster */
       j = row + i;
       temp = LineOffset[j];
@@ -7166,11 +7179,11 @@ screen_del_lines (
   /* redraw the characters */
   if (type == USE_REDRAW)
     redraw_block(row, end, wp);
-  else if (type == USE_T_CD)  { /* delete the lines */
+  else if (type == USE_T_CD) { /* delete the lines */
     windgoto(cursor_row, 0);
     out_str(T_CD);
     screen_start();                     /* don't know where cursor is now */
-  } else if (type == USE_T_CDL)   {
+  } else if (type == USE_T_CDL) {
     windgoto(cursor_row, 0);
     term_delete_lines(line_count);
     screen_start();                     /* don't know where cursor is now */
@@ -7184,12 +7197,12 @@ screen_del_lines (
     windgoto(cursor_end - 1, 0);
     for (i = line_count; --i >= 0; )
       out_char('\n');                   /* cursor will remain on same line */
-  } else   {
+  } else {
     for (i = line_count; --i >= 0; ) {
       if (type == USE_T_DL) {
         windgoto(cursor_row, 0);
         out_str(T_DL);                  /* delete a line */
-      } else   { /* type == USE_T_CE */
+      } else { /* type == USE_T_CE */
         windgoto(cursor_row + i, 0);
         out_str(T_CE);                  /* erase a line */
       }
@@ -7221,7 +7234,8 @@ screen_del_lines (
  * cleared only if a mode is shown.
  * Return the length of the message (0 if no message).
  */
-int showmode(void)         {
+int showmode(void)
+{
   int need_clear;
   int length = 0;
   int do_mode;
@@ -7285,7 +7299,7 @@ int showmode(void)         {
           }
         }
         length = 0;
-      } else   {
+      } else {
         if (State & VREPLACE_FLAG)
           MSG_PUTS_ATTR(_(" VREPLACE"), attr);
         else if (State & REPLACE_FLAG)
@@ -7372,7 +7386,8 @@ int showmode(void)         {
 /*
  * Position for a mode message.
  */
-static void msg_pos_mode(void)                 {
+static void msg_pos_mode(void)
+{
   msg_col = 0;
   msg_row = Rows - 1;
 }
@@ -7400,7 +7415,8 @@ void unshowmode(int force)
 /*
  * Draw the tab pages line at the top of the Vim window.
  */
-static void draw_tabline(void)                 {
+static void draw_tabline(void)
+{
   int tabcount = 0;
   tabpage_T   *tp;
   int tabwidth;
@@ -7444,7 +7460,7 @@ static void draw_tabline(void)                 {
       set_string_option_direct((char_u *)"tabline", -1,
           (char_u *)"", OPT_FREE, SID_ERROR);
     called_emsg |= save_called_emsg;
-  } else   {
+  } else {
     for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
       ++tabcount;
 
@@ -7472,7 +7488,7 @@ static void draw_tabline(void)                 {
       if (tp == curtab) {
         cwp = curwin;
         wp = firstwin;
-      } else   {
+      } else {
         cwp = tp->tp_curwin;
         wp = tp->tp_firstwin;
       }
@@ -7509,7 +7525,7 @@ static void draw_tabline(void)                 {
             len -= ptr2cells(p);
             mb_ptr_adv(p);
           }
-        else if (len > room)  {
+        else if (len > room) {
           p += len - room;
           len = room;
         }
@@ -7568,7 +7584,7 @@ static int fillchar_status(int *attr, int is_curwin)
   if (is_curwin) {
     *attr = hl_attr(HLF_S);
     fill = fill_stl;
-  } else   {
+  } else {
     *attr = hl_attr(HLF_SNC);
     fill = fill_stlnc;
   }
@@ -7600,7 +7616,8 @@ static int fillchar_vsep(int *attr)
 /*
  * Return TRUE if redrawing should currently be done.
  */
-int redrawing(void)         {
+int redrawing(void)
+{
   return !RedrawingDisabled
          && !(p_lz && char_avail() && !KeyTyped && !do_redraw);
 }
@@ -7608,7 +7625,8 @@ int redrawing(void)         {
 /*
  * Return TRUE if printing messages should currently be done.
  */
-int messaging(void)         {
+int messaging(void)
+{
   return !(p_lz && char_avail() && !KeyTyped);
 }
 
@@ -7717,7 +7735,7 @@ static void win_redr_ruler(win_T *wp, int always)
       fillchar = fillchar_status(&attr, wp == curwin);
       off = W_WINCOL(wp);
       width = W_WIDTH(wp);
-    } else   {
+    } else {
       row = Rows - 1;
       fillchar = ' ';
       attr = 0;
@@ -7842,7 +7860,8 @@ int number_width(win_T *wp)
  * Return the current cursor column. This is the actual position on the
  * screen. First column is 0.
  */
-int screen_screencol(void)         {
+int screen_screencol(void)
+{
   return screen_cur_col;
 }
 
@@ -7850,7 +7869,8 @@ int screen_screencol(void)         {
  * Return the current cursor row. This is the actual position on the screen.
  * First row is 0.
  */
-int screen_screenrow(void)         {
+int screen_screenrow(void)
+{
   return screen_cur_row;
 }
 

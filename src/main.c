@@ -616,7 +616,7 @@ main_loop (
          * used and keep "got_int" set, so that it aborts ":g". */
         exmode_active = EXMODE_NORMAL;
         State = NORMAL;
-      } else if (!global_busy || !exmode_active)   {
+      } else if (!global_busy || !exmode_active) {
         if (!quit_more)
           (void)vgetc();                        /* flush all buffers */
         got_int = FALSE;
@@ -887,7 +887,8 @@ get_number_arg (
 /*
  * Setup to use the current locale (for ctype() and many other things).
  */
-static void init_locale(void)                 {
+static void init_locale(void)
+{
   setlocale(LC_ALL, "");
 
 # if defined(FEAT_FLOAT) && defined(LC_NUMERIC)
@@ -1056,20 +1057,20 @@ static void command_line_scan(mparm_T *parmp)
             msg_putchar('\n');
             msg_didout = FALSE;
             mch_exit(0);
-          } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0)   {
+          } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE)
             parmp->literal = TRUE;
 #endif
-          } else if (STRNICMP(argv[0] + argv_idx, "nofork", 6) == 0)   {
+          } else if (STRNICMP(argv[0] + argv_idx, "nofork", 6) == 0) {
           } else if (STRNICMP(argv[0] + argv_idx, "noplugin", 8) == 0)
             p_lpl = FALSE;
           else if (STRNICMP(argv[0] + argv_idx, "cmd", 3) == 0) {
             want_argument = TRUE;
             argv_idx += 3;
-          } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0)   {
+          } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0) {
             want_argument = TRUE;
             argv_idx += 11;
-          } else   {
+          } else {
             if (argv[0][argv_idx])
               mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
             had_minmin = TRUE;
@@ -1658,7 +1659,8 @@ static void check_tty(mparm_T *parmp)
 /*
  * Read text from stdin.
  */
-static void read_stdin(void)                 {
+static void read_stdin(void)
+{
   int i;
 
 #if defined(HAS_SWAP_EXISTS_ACTION)
@@ -1708,7 +1710,7 @@ static void create_windows(mparm_T *parmp)
     if (parmp->window_layout == WIN_TABS) {
       parmp->window_count = make_tabpages(parmp->window_count);
       TIME_MSG("making tab pages");
-    } else if (firstwin->w_next == NULL)   {
+    } else if (firstwin->w_next == NULL) {
       parmp->window_count = make_windows(parmp->window_count,
           parmp->window_layout == WIN_VER);
       TIME_MSG("making windows");
@@ -1723,7 +1725,7 @@ static void create_windows(mparm_T *parmp)
     if (curbuf->b_ml.ml_mfp == NULL)     /* failed */
       getout(1);
     do_modelines(0);                    /* do modelines */
-  } else   {
+  } else {
     /*
      * Open a buffer for windows that don't have one yet.
      * Commands in the .vimrc might have loaded a file or split the window.
@@ -1741,11 +1743,11 @@ static void create_windows(mparm_T *parmp)
           goto_tabpage(1);
         else
           curwin = firstwin;
-      } else if (parmp->window_layout == WIN_TABS)   {
+      } else if (parmp->window_layout == WIN_TABS) {
         if (curtab->tp_next == NULL)
           break;
         goto_tabpage(0);
-      } else   {
+      } else {
         if (curwin->w_next == NULL)
           break;
         curwin = curwin->w_next;
@@ -1837,7 +1839,7 @@ static void edit_buffers(mparm_T *parmp)
         if (curtab->tp_next == NULL)            /* just checking */
           break;
         goto_tabpage(0);
-      } else   {
+      } else {
         if (curwin->w_next == NULL)             /* just checking */
           break;
         win_enter(curwin->w_next, FALSE);
@@ -1984,11 +1986,11 @@ static void source_startup_scripts(mparm_T *parmp)
         || STRCMP(parmp->use_vimrc, "NORC") == 0) {
       if (parmp->use_vimrc[2] == 'N')
         p_lpl = FALSE;                      /* don't load plugins either */
-    } else   {
+    } else {
       if (do_source(parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
     }
-  } else if (!silent_mode)   {
+  } else if (!silent_mode) {
 
     /*
      * Get system wide defaults, if the file name is defined.
@@ -2091,7 +2093,8 @@ static void source_startup_scripts(mparm_T *parmp)
 /*
  * Setup to start using the GUI.  Exit with an error when not available.
  */
-static void main_start_gui(void)                 {
+static void main_start_gui(void)
+{
   mch_errmsg(_(e_nogvim));
   mch_errmsg("\n");
   mch_exit(2);
@@ -2201,7 +2204,8 @@ static void main_msg(char *s)
 /*
  * Print messages for "vim -h" or "vim --help" and exit.
  */
-static void usage(void)                 {
+static void usage(void)
+{
   int i;
   static char *(use[]) =
   {
@@ -2290,7 +2294,8 @@ static void usage(void)                 {
  * When "Quit" selected, exit Vim.
  * When "Recover" selected, recover the file.
  */
-static void check_swap_exists_action(void)                 {
+static void check_swap_exists_action(void)
+{
   if (swap_exists_action == SEA_QUIT)
     getout(1);
   handle_swap_exists(NULL);

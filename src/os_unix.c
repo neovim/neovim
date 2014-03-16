@@ -277,7 +277,7 @@ int mch_inchar(
                 return 0;
             handle_resize();
         }
-    } else   {    /* wtime == -1 */
+    } else {    /* wtime == -1 */
         /*
          * If there is no character available within 'updatetime' seconds
          * flush all the swap files to disk.
@@ -327,7 +327,8 @@ int mch_inchar(
     }
 }
 
-static void handle_resize()                 {
+static void handle_resize()
+{
   do_resize = FALSE;
   shell_resized();
 }
@@ -335,7 +336,8 @@ static void handle_resize()                 {
 /*
  * return non-zero if a character is available
  */
-int mch_char_avail()         {
+int mch_char_avail()
+{
   return WaitForChar(0L);
 }
 
@@ -419,7 +421,8 @@ static struct sigstack sigstk;          /* for sigstack() */
 static void init_signal_stack(void);
 static char *signal_stack;
 
-static void init_signal_stack()                 {
+static void init_signal_stack()
+{
   if (signal_stack != NULL) {
 # ifdef HAVE_SIGALTSTACK
     sigstk.ss_sp = signal_stack;
@@ -502,18 +505,21 @@ catch_sigpwr SIGDEFARG(sigarg) {
  * Returns OK for normal return, FAIL when the protected code caused a
  * problem and LONGJMP() was used.
  */
-void mch_startjmp()          {
+void mch_startjmp()
+{
 #ifdef SIGHASARG
   lc_signal = 0;
 #endif
   lc_active = TRUE;
 }
 
-void mch_endjmp()          {
+void mch_endjmp()
+{
   lc_active = FALSE;
 }
 
-void mch_didjmp()          {
+void mch_didjmp()
+{
 # if defined(HAVE_SIGALTSTACK) || defined(HAVE_SIGSTACK)
   /* On FreeBSD the signal stack has to be reset after using siglongjmp(),
    * otherwise catching the signal only works once. */
@@ -677,7 +683,8 @@ sigcont_handler SIGDEFARG(sigarg) {
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
  */
-void mch_suspend()          {
+void mch_suspend()
+{
   /* BeOS does have SIGTSTP, but it doesn't work. */
 #if defined(SIGTSTP) && !defined(__BEOS__)
   out_flush();              /* needed to make cursor visible on some systems */
@@ -722,7 +729,8 @@ void mch_suspend()          {
 #endif
 }
 
-void mch_init()          {
+void mch_init()
+{
   Columns = 80;
   Rows = 24;
 
@@ -734,7 +742,8 @@ void mch_init()          {
 #endif
 }
 
-static void set_signals()                 {
+static void set_signals()
+{
 #if defined(SIGWINCH)
   /*
    * WINDOW CHANGE signal is handled with sig_winch().
@@ -790,13 +799,15 @@ static void set_signals()                 {
 /*
  * Catch CTRL-C (only works while in Cooked mode).
  */
-static void catch_int_signal()                 {
+static void catch_int_signal()
+{
   signal(SIGINT, (RETSIGTYPE (*)())catch_sigint);
 }
 
 #endif
 
-void reset_signals()          {
+void reset_signals()
+{
   catch_signals(SIG_DFL, SIG_DFL);
 #if defined(_REENTRANT) && defined(SIGCONT)
   /* SIGCONT isn't in the list, because its default action is ignore */
@@ -897,7 +908,8 @@ int mch_check_win(int argc, char **argv)
 /*
  * Return TRUE if the input comes from a terminal, FALSE otherwise.
  */
-int mch_input_isatty()         {
+int mch_input_isatty()
+{
   if (isatty(read_cmd_fd))
     return TRUE;
   return FALSE;
@@ -920,11 +932,13 @@ static int get_x11_icon(int test_only)
 }
 
 
-int mch_can_restore_title()         {
+int mch_can_restore_title()
+{
   return get_x11_title(TRUE);
 }
 
-int mch_can_restore_icon()         {
+int mch_can_restore_icon()
+{
   return get_x11_icon(TRUE);
 }
 
@@ -1031,7 +1045,8 @@ int use_xterm_like_mouse(char_u *name)
  * Return 3 for "urxvt".
  * Return 4 for "sgr".
  */
-int use_xterm_mouse()         {
+int use_xterm_mouse()
+{
   if (ttym_flags == TTYM_SGR)
     return 4;
   if (ttym_flags == TTYM_URXVT)
@@ -1107,7 +1122,8 @@ void mch_get_host_name(char_u *s, int len)
 /*
  * return process ID
  */
-long mch_get_pid()          {
+long mch_get_pid()
+{
   return (long)getpid();
 }
 
@@ -1133,7 +1149,7 @@ int len;              /* buffer size, only used when name gets longer */
     if (slash == NULL) {
       dirp = opendir(".");
       tail = name;
-    } else   {
+    } else {
       *slash = NUL;
       dirp = opendir((char *)name);
       *slash = '/';
@@ -1279,7 +1295,8 @@ int mch_nodetype(char_u *name)
   return NODE_WRITABLE;
 }
 
-void mch_early_init()          {
+void mch_early_init()
+{
   /*
    * Setup an alternative stack for signals.  Helps to catch signals when
    * running out of stack space.
@@ -1310,7 +1327,8 @@ static void exit_scroll(void);
  * Output a newline when exiting.
  * Make sure the newline goes to the same stream as the text.
  */
-static void exit_scroll()                 {
+static void exit_scroll()
+{
   if (silent_mode)
     return;
   if (newline_on_exit || msg_didout) {
@@ -1321,7 +1339,7 @@ static void exit_scroll()                 {
         mch_errmsg("\r\n");
     } else
       out_char('\n');
-  } else   {
+  } else {
     restore_cterm_colors();             /* get original colors back */
     msg_clr_eos_force();                /* clear the rest of the display */
     windgoto((int)Rows - 1, 0);         /* may have moved the cursor */
@@ -1378,7 +1396,8 @@ void mch_exit(int r)
   exit(r);
 }
 
-static void may_core_dump()                 {
+static void may_core_dump()
+{
   if (deadly_signal != 0) {
     signal(deadly_signal, SIG_DFL);
     kill(getpid(), deadly_signal);      /* Die using the signal we caught */
@@ -1482,7 +1501,8 @@ void mch_settmode(int tmode)
  * be), they're going to get really annoyed if their erase key starts
  * doing forward deletes for no reason. (Eric Fischer)
  */
-void get_stty()          {
+void get_stty()
+{
   char_u buf[2];
   char_u  *p;
 
@@ -1566,7 +1586,7 @@ int on;
            ? IF_EB("\033[?1002l", ESC_STR "[?1002l")
            : IF_EB("\033[?1000l", ESC_STR "[?1000l")));
     ison = on;
-  } else if (ttym_flags == TTYM_DEC)   {
+  } else if (ttym_flags == TTYM_DEC) {
     if (on)     /* enable mouse events */
       out_str_nf((char_u *)"\033[1;2'z\033[1;3'{");
     else        /* disable mouse events */
@@ -1579,7 +1599,8 @@ int on;
 /*
  * Set the mouse termcode, depending on the 'term' and 'ttymouse' options.
  */
-void check_mouse_termcode()          {
+void check_mouse_termcode()
+{
   if (use_xterm_mouse()
       && use_xterm_mouse() != 3
       ) {
@@ -1661,7 +1682,8 @@ char_u   *arg;
  * 4. keep using the old values
  * Return OK when size could be determined, FAIL otherwise.
  */
-int mch_get_shellsize()         {
+int mch_get_shellsize()
+{
   long rows = 0;
   long columns = 0;
   char_u      *p;
@@ -1741,7 +1763,8 @@ int mch_get_shellsize()         {
 /*
  * Try to set the window size to Rows and Columns.
  */
-void mch_set_shellsize()          {
+void mch_set_shellsize()
+{
   if (*T_CWS) {
     /*
      * NOTE: if you get an error here that term_set_winsize() is
@@ -1757,7 +1780,8 @@ void mch_set_shellsize()          {
 /*
  * Rows and/or Columns has changed.
  */
-void mch_new_shellsize()          {
+void mch_new_shellsize()
+{
   /* Nothing to do. */
 }
 
@@ -1939,7 +1963,7 @@ int options;                    /* SHELL_*, see vim.h */
           close(fd_fromshell[1]);
         }
       }
-    } else if (pid == 0)   {    /* child */
+    } else if (pid == 0) {    /* child */
       reset_signals();                  /* handle signals normally */
 
       if (!show_shell_mess || (options & SHELL_EXPAND)) {
@@ -2033,7 +2057,7 @@ int options;                    /* SHELL_*, see vim.h */
        */
       execvp(argv[0], argv);
       _exit(EXEC_FAILED);           /* exec failed, return failure code */
-    } else   {                  /* parent */
+    } else {                  /* parent */
       /*
        * While child is running, ignore terminating signals.
        * Do catch CTRL-C, so that "got_int" is set.
@@ -2098,7 +2122,7 @@ int options;                    /* SHELL_*, see vim.h */
            * external program. */
           if ((wpid = fork()) == -1) {
             MSG_PUTS(_("\nCannot fork\n"));
-          } else if (wpid == 0)   {     /* child */
+          } else if (wpid == 0) {     /* child */
             linenr_T lnum = curbuf->b_op_start.lnum;
             int written = 0;
             char_u      *lp = ml_get(lnum);
@@ -2143,7 +2167,7 @@ int options;                    /* SHELL_*, see vim.h */
                 written += len;
             }
             _exit(0);
-          } else   {     /* parent */
+          } else {     /* parent */
             close(toshell_fd);
             toshell_fd = -1;
           }
@@ -2321,7 +2345,7 @@ int options;                    /* SHELL_*, see vim.h */
                 else
                   ga_append(&ga, buffer[i]);
               }
-            } else if (has_mbyte)   {
+            } else if (has_mbyte) {
               int l;
 
               len += buffer_off;
@@ -2356,7 +2380,7 @@ int options;                    /* SHELL_*, see vim.h */
                 continue;
               }
               buffer_off = 0;
-            } else   {
+            } else {
               buffer[len] = NUL;
               msg_puts(buffer);
             }
@@ -2469,7 +2493,7 @@ finished:
             MSG_PUTS(_("\nCannot execute shell "));
             msg_outtrans(p_sh);
             msg_putchar('\n');
-          } else if (!(options & SHELL_SILENT))   {
+          } else if (!(options & SHELL_SILENT)) {
             MSG_PUTS(_("\nshell returned "));
             msg_outnum((long)retval);
             msg_putchar('\n');
@@ -2496,7 +2520,8 @@ error:
  * Check for CTRL-C typed by reading all available characters.
  * In cooked mode we should get SIGINT, no need to check.
  */
-void mch_breakcheck()          {
+void mch_breakcheck()
+{
   if (curr_tmode == TMODE_RAW && RealWaitForChar(read_cmd_fd, 0L, NULL))
     fill_input_buf(FALSE);
 }
@@ -2814,7 +2839,7 @@ int flags;                      /* EW_* flags */
       *p = ' ';
     }
     STRCAT(command, ">");
-  } else   {
+  } else {
     if (flags & EW_NOTFOUND)
       STRCPY(command, "set nonomatch; ");
     else
@@ -3051,7 +3076,7 @@ int flags;                      /* EW_* flags */
         *p++ = NUL;
         p = skipwhite(p);                       /* skip to next entry */
       }
-    } else   {          /* NUL separates */
+    } else {          /* NUL separates */
       while (*p && p < buffer + len)            /* skip entry */
         ++p;
       ++p;                                      /* skip NUL */
@@ -3302,7 +3327,7 @@ int         *number_result;
           else
             retval_str = (ProcAdd)(argstring);
         }
-      } else   {
+      } else {
 # if defined(USE_DLOPEN)
         ProcAddI = (INTPROCSTR)dlsym(hinstLib, (const char *)funcname);
         dlerr = (char *)dlerror();

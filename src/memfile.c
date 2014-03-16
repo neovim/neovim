@@ -133,7 +133,7 @@ memfile_T *mf_open(char_u *fname, int flags)
     mfp->mf_fname = NULL;
     mfp->mf_ffname = NULL;
     mfp->mf_fd = -1;
-  } else   {
+  } else {
     mf_do_open(mfp, fname, flags);      /* try to open the file */
 
     /* if the file cannot be opened, return here */
@@ -341,23 +341,23 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
       hp->bh_bnum = freep->bh_bnum;
       freep->bh_bnum += page_count;
       freep->bh_page_count -= page_count;
-    } else if (hp == NULL)   {      /* need to allocate memory for this block */
+    } else if (hp == NULL) {      /* need to allocate memory for this block */
       if ((p = (char_u *)alloc(mfp->mf_page_size * page_count)) == NULL)
         return NULL;
       hp = mf_rem_free(mfp);
       hp->bh_data = p;
-    } else   {              /* use the number, remove entry from free list */
+    } else {              /* use the number, remove entry from free list */
       freep = mf_rem_free(mfp);
       hp->bh_bnum = freep->bh_bnum;
       vim_free(freep);
     }
-  } else   {    /* get a new number */
+  } else {    /* get a new number */
     if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
       return NULL;
     if (negative) {
       hp->bh_bnum = mfp->mf_blocknr_min--;
       mfp->mf_neg_count++;
-    } else   {
+    } else {
       hp->bh_bnum = mfp->mf_blocknr_max;
       mfp->mf_blocknr_max += page_count;
     }
@@ -416,7 +416,7 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, int page_count)
       mf_free_bhdr(hp);
       return NULL;
     }
-  } else   {
+  } else {
     mf_rem_used(mfp, hp);       /* remove from list, insert in front below */
     mf_rem_hash(mfp, hp);
   }
@@ -473,7 +473,8 @@ void mf_free(memfile_T *mfp, bhdr_T *hp)
 /* function is missing in MorphOS libnix version */
 extern unsigned long *__stdfiledes;
 
-static unsigned long fdtofh(int filedescriptor)                          {
+static unsigned long fdtofh(int filedescriptor)
+{
   return __stdfiledes[filedescriptor];
 }
 
@@ -743,7 +744,8 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
  *
  * return TRUE if any memory was released
  */
-int mf_release_all(void)         {
+int mf_release_all(void)
+{
   buf_T       *buf;
   memfile_T   *mfp;
   bhdr_T      *hp;
@@ -989,11 +991,11 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
     if (freep->bh_page_count > page_count) {
       freep->bh_bnum += page_count;
       freep->bh_page_count -= page_count;
-    } else   {
+    } else {
       freep = mf_rem_free(mfp);
       vim_free(freep);
     }
-  } else   {
+  } else {
     new_bnum = mfp->mf_blocknr_max;
     mfp->mf_blocknr_max += page_count;
   }
@@ -1119,7 +1121,7 @@ mf_do_open (
     vim_free(mfp->mf_ffname);
     mfp->mf_fname = NULL;
     mfp->mf_ffname = NULL;
-  } else   {
+  } else {
 #ifdef HAVE_FD_CLOEXEC
     int fdflags = fcntl(mfp->mf_fd, F_GETFD);
     if (fdflags >= 0 && (fdflags & FD_CLOEXEC) == 0)
@@ -1290,7 +1292,7 @@ static int mf_hash_grow(mf_hashtab_T *mht)
         buckets[i + (j << shift)] = mhi;
         tails[j] = mhi;
         mhi->mhi_prev = NULL;
-      } else   {
+      } else {
         tails[j]->mhi_next = mhi;
         mhi->mhi_prev = tails[j];
         tails[j] = mhi;

@@ -228,7 +228,8 @@ static void u_check(int newhead_may_be_NULL)                 {
  * Careful: may trigger autocommands that reload the buffer.
  * Returns OK or FAIL.
  */
-int u_save_cursor(void)         {
+int u_save_cursor(void)
+{
   return u_save((linenr_T)(curwin->w_cursor.lnum - 1),
       (linenr_T)(curwin->w_cursor.lnum + 1));
 }
@@ -303,7 +304,8 @@ int u_savedel(linenr_T lnum, long nlines)
  * Return TRUE when undo is allowed.  Otherwise give an error message and
  * return FALSE.
  */
-int undo_allowed(void)         {
+int undo_allowed(void)
+{
   /* Don't allow changes when 'modifiable' is off.  */
   if (!curbuf->b_p_ma) {
     EMSG(_(e_modifiable));
@@ -331,7 +333,8 @@ int undo_allowed(void)         {
 /*
  * Get the undolevle value for the current buffer.
  */
-static long get_undolevel(void)                 {
+static long get_undolevel(void)
+{
   if (curbuf->b_p_ul == NO_LOCAL_UNDOLEVEL)
     return p_ul;
   return curbuf->b_p_ul;
@@ -488,7 +491,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
     if (curbuf->b_u_oldhead == NULL)
       curbuf->b_u_oldhead = uhp;
     ++curbuf->b_u_numhead;
-  } else   {
+  } else {
     if (get_undolevel() < 0)            /* no undo at all */
       return OK;
 
@@ -717,7 +720,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       mch_memmove(p + 1, p, STRLEN(p) + 1);
       *p = '.';
       STRCAT(p, ".un~");
-    } else   {
+    } else {
       dir_name[dir_len] = NUL;
       if (mch_isdir(dir_name)) {
         if (munged_name == NULL) {
@@ -1188,7 +1191,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
             verbose_leave();
         }
         goto theend;
-      } else   {
+      } else {
         char_u mbuf[UF_START_MAGIC_LEN];
         int len;
 
@@ -1720,7 +1723,7 @@ static void u_doit(int startcount)
       }
 
       u_undoredo(TRUE);
-    } else   {
+    } else {
       if (curbuf->b_u_curhead == NULL || get_undolevel() <= 0) {
         beep_flush();           /* nothing to redo */
         if (count == startcount - 1) {
@@ -1782,7 +1785,7 @@ void undo_time(long step, int sec, int file, int absolute)
   if (absolute) {
     target = step;
     closest = -1;
-  } else   {
+  } else {
     /* When doing computations with time_t subtract starttime, because
      * time_t converted to a long may result in a wrong number. */
     if (dosec)
@@ -1808,7 +1811,7 @@ void undo_time(long step, int sec, int file, int absolute)
           /* Go to before first write: before the oldest change. Use
            * the sequence number for that. */
           dofile = FALSE;
-      } else   {
+      } else {
         /* Moving forward to a newer write. */
         target = curbuf->b_u_save_nr_cur + step;
         if (target > curbuf->b_u_save_nr_last) {
@@ -1824,7 +1827,7 @@ void undo_time(long step, int sec, int file, int absolute)
       if (target < 0)
         target = 0;
       closest = -1;
-    } else   {
+    } else {
       if (dosec)
         closest = (long)(time(NULL) - starttime + 1);
       else if (dofile)
@@ -1919,7 +1922,7 @@ void undo_time(long step, int sec, int file, int absolute)
         if (uhp == curbuf->b_u_curhead)
           uhp->uh_walk = nomark;
         uhp = uhp->uh_next.ptr;
-      } else   {
+      } else {
         /* need to backtrack; mark this node as useless */
         uhp->uh_walk = nomark;
         if (uhp->uh_alt_prev.ptr != NULL)
@@ -2122,7 +2125,7 @@ static void u_undoredo(int undo)
       if (lnum >= top && lnum <= top + newsize + 1) {
         curwin->w_cursor = curhead->uh_cursor;
         newlnum = curwin->w_cursor.lnum - 1;
-      } else   {
+      } else {
         /* Use the first line that actually changed.  Avoids that
          * undoing auto-formatting puts the cursor in the previous
          * line. */
@@ -2260,7 +2263,7 @@ static void u_undoredo(int undo)
         curwin->w_cursor.coladd = 0;
     } else
       beginline(BL_SOL | BL_FIX);
-  } else   {
+  } else {
     /* We get here with the current cursor line being past the end (eg
      * after adding lines at the end of the file, and then undoing it).
      * check_cursor() will move the cursor to the last line.  Move it to
@@ -2454,7 +2457,7 @@ void ex_undolist(exarg_T *eap)
              && uhp->uh_next.ptr->uh_walk != mark) {
       uhp = uhp->uh_next.ptr;
       --changes;
-    } else   {
+    } else {
       /* need to backtrack; mark this node as done */
       uhp->uh_walk = nomark;
       if (uhp->uh_alt_prev.ptr != NULL)
@@ -2544,7 +2547,8 @@ void u_unchanged(buf_T *buf)
  * After reloading a buffer which was saved for 'undoreload': Find the first
  * line that was changed and set the cursor there.
  */
-void u_find_first_changed(void)          {
+void u_find_first_changed(void)
+{
   u_header_T  *uhp = curbuf->b_u_newhead;
   u_entry_T   *uep;
   linenr_T lnum;
@@ -2606,7 +2610,8 @@ static void u_unch_branch(u_header_T *uhp)
  * Get pointer to last added entry.
  * If it's not valid, give an error message and return NULL.
  */
-static u_entry_T *u_get_headentry(void)                        {
+static u_entry_T *u_get_headentry(void)
+{
   if (curbuf->b_u_newhead == NULL || curbuf->b_u_newhead->uh_entry == NULL) {
     EMSG(_("E439: undo list corrupt"));
     return NULL;
@@ -2618,7 +2623,8 @@ static u_entry_T *u_get_headentry(void)                        {
  * u_getbot(): compute the line number of the previous u_save
  *		It is called only when b_u_synced is FALSE.
  */
-static void u_getbot(void)                 {
+static void u_getbot(void)
+{
   u_entry_T   *uep;
   linenr_T extra;
 
@@ -2800,7 +2806,8 @@ void u_saveline(linenr_T lnum)
  * clear the line saved for the "U" command
  * (this is used externally for crossing a line while in insert mode)
  */
-void u_clearline(void)          {
+void u_clearline(void)
+{
   if (curbuf->b_u_line_ptr != NULL) {
     vim_free(curbuf->b_u_line_ptr);
     curbuf->b_u_line_ptr = NULL;
@@ -2814,7 +2821,8 @@ void u_clearline(void)          {
  * We also allow the cursor to be in another line.
  * Careful: may trigger autocommands that reload the buffer.
  */
-void u_undoline(void)          {
+void u_undoline(void)
+{
   colnr_T t;
   char_u  *oldp;
 
@@ -2880,7 +2888,8 @@ int bufIsChanged(buf_T *buf)
     (buf->b_changed || file_ff_differs(buf, TRUE));
 }
 
-int curbufIsChanged(void)         {
+int curbufIsChanged(void)
+{
   return
     !bt_dontwrite(curbuf) &&
     (curbuf->b_changed || file_ff_differs(curbuf, TRUE));

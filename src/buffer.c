@@ -158,7 +158,7 @@ open_buffer (
     /* Help buffer is filtered. */
     if (curbuf->b_help)
       fix_help_buffer();
-  } else if (read_stdin)   {
+  } else if (read_stdin) {
     int save_bin = curbuf->b_p_bin;
     linenr_T line_count;
 
@@ -182,7 +182,7 @@ open_buffer (
         /* Delete the binary lines. */
         while (--line_count >= 0)
           ml_delete((linenr_T)1, FALSE);
-      } else   {
+      } else {
         /* Delete the converted lines. */
         while (curbuf->b_ml.ml_line_count > line_count)
           ml_delete(line_count, FALSE);
@@ -316,7 +316,7 @@ close_buffer (
   if (buf->b_p_bh[0] == 'd') {          /* 'bufhidden' == "delete" */
     del_buf = TRUE;
     unload_buf = TRUE;
-  } else if (buf->b_p_bh[0] == 'w')   { /* 'bufhidden' == "wipe" */
+  } else if (buf->b_p_bh[0] == 'w') { /* 'bufhidden' == "wipe" */
     del_buf = TRUE;
     unload_buf = TRUE;
     wipe_buf = TRUE;
@@ -437,7 +437,7 @@ aucmd_abort:
     else
       buf->b_next->b_prev = buf->b_prev;
     free_buffer(buf);
-  } else   {
+  } else {
     if (del_buf) {
       /* Free all internal variables and reset option values, to make
        * ":bdel" compatible with Vim 5.7. */
@@ -655,7 +655,7 @@ void handle_swap_exists(buf_T *old_curbuf)
     /* Restore the error/interrupt/exception state if not discarded by a
      * new aborting error, interrupt, or uncaught exception. */
     leave_cleanup(&cs);
-  } else if (swap_exists_action == SEA_RECOVER)   {
+  } else if (swap_exists_action == SEA_RECOVER) {
     /* Reset the error/interrupt/exception state here so that
      * aborting() returns FALSE when closing a buffer. */
     enter_cleanup(&cs);
@@ -706,7 +706,7 @@ do_bufdel (
 
   if (addr_count == 0) {
     (void)do_buffer(command, DOBUF_CURRENT, FORWARD, 0, forceit);
-  } else   {
+  } else {
     if (addr_count == 2) {
       if (*arg)                 /* both range and argument is not allowed */
         return (char_u *)_(e_trailing);
@@ -733,7 +733,7 @@ do_bufdel (
       if (addr_count == 2) {
         if (++bnr > end_bnr)
           break;
-      } else   {    /* addr_count == 1 */
+      } else {    /* addr_count == 1 */
         arg = skipwhite(arg);
         if (*arg == NUL)
           break;
@@ -760,18 +760,18 @@ do_bufdel (
       else
         STRCPY(IObuff, _("E517: No buffers were wiped out"));
       errormsg = IObuff;
-    } else if (deleted >= p_report)   {
+    } else if (deleted >= p_report) {
       if (command == DOBUF_UNLOAD) {
         if (deleted == 1)
           MSG(_("1 buffer unloaded"));
         else
           smsg((char_u *)_("%d buffers unloaded"), deleted);
-      } else if (command == DOBUF_DEL)   {
+      } else if (command == DOBUF_DEL) {
         if (deleted == 1)
           MSG(_("1 buffer deleted"));
         else
           smsg((char_u *)_("%d buffers deleted"), deleted);
-      } else   {
+      } else {
         if (deleted == 1)
           MSG(_("1 buffer wiped out"));
         else
@@ -870,10 +870,10 @@ do_buffer (
       EMSG(_("E84: No modified buffer found"));
       return FAIL;
     }
-  } else if (start == DOBUF_FIRST && count)   { /* find specified buffer number */
+  } else if (start == DOBUF_FIRST && count) { /* find specified buffer number */
     while (buf != NULL && buf->b_fnum != count)
       buf = buf->b_next;
-  } else   {
+  } else {
     bp = NULL;
     while (count > 0 || (!unload && !buf->b_p_bl && bp != buf)) {
       /* remember the buffer where we start, we come back there when all
@@ -884,7 +884,7 @@ do_buffer (
         buf = buf->b_next;
         if (buf == NULL)
           buf = firstbuf;
-      } else   {
+      } else {
         buf = buf->b_prev;
         if (buf == NULL)
           buf = lastbuf;
@@ -937,7 +937,7 @@ do_buffer (
          * mentioned why it fails. */
         if (bufIsChanged(buf))
           return FAIL;
-      } else   {
+      } else {
         EMSGN(_(
                 "E89: No write since last change for buffer %ld (add ! to override)"),
             buf->b_fnum);
@@ -991,7 +991,7 @@ do_buffer (
     bp = NULL;          /* used when no loaded buffer found */
     if (au_new_curbuf != NULL && buf_valid(au_new_curbuf))
       buf = au_new_curbuf;
-    else if (curwin->w_jumplistlen > 0)  {
+    else if (curwin->w_jumplistlen > 0) {
       int jumpidx;
 
       jumpidx = curwin->w_jumplistidx - 1;
@@ -1226,7 +1226,7 @@ void enter_buffer(buf_T *buf)
       did_filetype = FALSE;
 
     open_buffer(FALSE, NULL, 0);
-  } else   {
+  } else {
     if (!msg_silent)
       need_fileinfo = TRUE;             /* display file info after redraw */
     (void)buf_check_timestamp(curbuf, FALSE);     /* check if file changed */
@@ -1264,7 +1264,8 @@ void enter_buffer(buf_T *buf)
 /*
  * Change to the directory of the current buffer.
  */
-void do_autochdir(void)          {
+void do_autochdir(void)
+{
   if (curbuf->b_ffname != NULL && vim_chdirfile(curbuf->b_ffname) == OK)
     shorten_fnames(TRUE);
 }
@@ -1410,7 +1411,7 @@ buflist_new (
 
     /* need to reload lmaps and set b:keymap_name */
     curbuf->b_kmap_state |= KEYMAP_INIT;
-  } else   {
+  } else {
     /*
      * put new buffer at the end of the buffer list
      */
@@ -1418,7 +1419,7 @@ buflist_new (
     if (firstbuf == NULL) {             /* buffer list is empty */
       buf->b_prev = NULL;
       firstbuf = buf;
-    } else   {                          /* append new buffer at end of list */
+    } else {                          /* append new buffer at end of list */
       lastbuf->b_next = buf;
       buf->b_prev = lastbuf;
     }
@@ -1619,7 +1620,8 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
 /*
  * go to the last know line number for the current buffer
  */
-void buflist_getfpos(void)          {
+void buflist_getfpos(void)
+{
   pos_T       *fpos;
 
   fpos = buflist_findfpos(curbuf);
@@ -2000,7 +2002,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
     wip->wi_win = win;
     if (lnum == 0)              /* set lnum even when it's 0 */
       lnum = 1;
-  } else   {
+  } else {
     /* remove the entry from the list */
     if (wip->wi_prev)
       wip->wi_prev->wi_next = wip->wi_next;
@@ -2232,7 +2234,7 @@ setfname (
 #ifdef UNIX
     st.st_dev = (dev_T)-1;
 #endif
-  } else   {
+  } else {
     fname_expand(buf, &ffname, &sfname);     /* will allocate ffname */
     if (ffname == NULL)                     /* out of memory */
       return FAIL;
@@ -2396,7 +2398,8 @@ int buflist_add(char_u *fname, int flags)
 /*
  * Adjust slashes in file names.  Called after 'shellslash' was set.
  */
-void buflist_slash_adjust(void)          {
+void buflist_slash_adjust(void)
+{
   buf_T       *bp;
 
   for (bp = firstbuf; bp != NULL; bp = bp->b_next) {
@@ -2562,14 +2565,14 @@ fileinfo (
               (long)curbuf->b_ml.ml_line_count);
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
-  } else if (p_ru)   {
+  } else if (p_ru) {
     /* Current line and column are already on the screen -- webb */
     if (curbuf->b_ml.ml_line_count == 1)
       vim_snprintf_add((char *)buffer, IOSIZE, _("1 line --%d%%--"), n);
     else
       vim_snprintf_add((char *)buffer, IOSIZE, _("%ld lines --%d%%--"),
           (long)curbuf->b_ml.ml_line_count, n);
-  } else   {
+  } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
         _("line %ld of %ld --%d%%-- col "),
         (long)curwin->w_cursor.lnum,
@@ -2591,7 +2594,7 @@ fileinfo (
     msg_scroll = TRUE;
     msg(buffer);
     msg_scroll = n;
-  } else   {
+  } else {
     p = msg_trunc_attr(buffer, FALSE, 0);
     if (restart_edit != 0 || (msg_scrolled && !need_wait_return))
       /* Need to repeat the message after redrawing when:
@@ -2620,7 +2623,8 @@ void col_print(char_u *buf, size_t buflen, int col, int vcol)
 static char_u *lasttitle = NULL;
 static char_u *lasticon = NULL;
 
-void maketitle(void)          {
+void maketitle(void)
+{
   char_u      *p;
   char_u      *t_str = NULL;
   char_u      *i_name;
@@ -2665,7 +2669,7 @@ void maketitle(void)          {
         called_emsg |= save_called_emsg;
       } else
         t_str = p_titlestring;
-    } else   {
+    } else {
       /* format: "fname + (path) (1 of 2) - VIM" */
 
 #define SPACE_FOR_FNAME (IOSIZE - 100)
@@ -2719,7 +2723,7 @@ void maketitle(void)          {
           p = transstr(buf + off);
           vim_strncpy(buf + off, p, (size_t)(SPACE_FOR_DIR - off));
           vim_free(p);
-        } else   {
+        } else {
           vim_strncpy(buf + off, (char_u *)"...",
               (size_t)(SPACE_FOR_ARGNR - off));
         }
@@ -2757,7 +2761,7 @@ void maketitle(void)          {
         called_emsg |= save_called_emsg;
       } else
         i_str = p_iconstring;
-    } else   {
+    } else {
       if (buf_spname(curbuf) != NULL)
         i_name = buf_spname(curbuf);
       else                          /* use file name only in icon */
@@ -2804,12 +2808,14 @@ static int ti_change(char_u *str, char_u **last)
 /*
  * Put current window title back (used after calling a shell)
  */
-void resettitle(void)          {
+void resettitle(void)
+{
   mch_settitle(lasttitle, lasticon);
 }
 
 # if defined(EXITFREE) || defined(PROTO)
-void free_titles(void)          {
+void free_titles(void)
+{
   vim_free(lasttitle);
   vim_free(lasticon);
 }
@@ -3016,7 +3022,7 @@ build_stl_str_hl (
           if (item[l].start < t)
             item[l].start = t;
         }
-      } else if (abs(item[groupitem[groupdepth]].minwid) > l)   {
+      } else if (abs(item[groupitem[groupdepth]].minwid) > l) {
         /* fill */
         n = item[groupitem[groupdepth]].minwid;
         if (n < 0) {
@@ -3024,7 +3030,7 @@ build_stl_str_hl (
           n = 0 - n;
           while (l++ < n && p + 1 < out + outlen)
             *p++ = fillchar;
-        } else   {
+        } else {
           /* fill by inserting characters */
           mch_memmove(t + n - l, t, (size_t)(p - t));
           l = n - l;
@@ -3378,7 +3384,7 @@ build_stl_str_hl (
       }
       for (; l < minwid && p + 1 < out + outlen; l++)
         *p++ = fillchar;
-    } else if (num >= 0)   {
+    } else if (num >= 0) {
       int nbase = (base == 'D' ? 10 : (base == 'O' ? 8 : 16));
       char_u nstr[20];
 
@@ -3474,7 +3480,7 @@ build_stl_str_hl (
       itemcnt = l;
       *s++ = '>';
       *s = 0;
-    } else   {
+    } else {
       if (has_mbyte) {
         n = 0;
         while (width >= maxwidth) {
@@ -3504,7 +3510,7 @@ build_stl_str_hl (
     }
     width = maxwidth;
   } else if (width < maxwidth && STRLEN(out) + maxwidth - width + 1 <
-             outlen)   {
+             outlen) {
     /* Apply STL_MIDDLE if any */
     for (l = 0; l < itemcnt; l++)
       if (item[l].type == Middle)
@@ -3877,7 +3883,7 @@ do_arg_all (
           }
         }
       }
-    } else if (split_ret == OK)   {
+    } else if (split_ret == OK) {
       if (!use_firstwin) {              /* split current window */
         p_ea_save = p_ea;
         p_ea = TRUE;                    /* use space from all windows */
@@ -4015,7 +4021,7 @@ void ex_buffer_all(exarg_T *eap)
         wp = lastwin;               /* buffer has a window, skip it */
       else
         wp = NULL;
-    } else   {
+    } else {
       /* Check if this buffer already has a window */
       for (wp = firstwin; wp != NULL; wp = wp->w_next)
         if (wp->w_buffer == buf)
@@ -4094,11 +4100,11 @@ void ex_buffer_all(exarg_T *eap)
     if (!win_valid(wp)) {
       /* BufWrite Autocommands made the window invalid, start over */
       wp = lastwin;
-    } else if (r)    {
+    } else if (r) {
       win_close(wp, !P_HID(wp->w_buffer));
       --open_wins;
       wp = lastwin;
-    } else   {
+    } else {
       wp = wp->w_prev;
       if (wp == NULL)
         break;
