@@ -20,6 +20,7 @@ int32_t os_getperm(char_u *name);
 int os_setperm(char_u *name, long perm);
 int os_file_exists(const char_u *name);
 int os_file_is_readonly(char *fname);
+int os_file_is_writable(const char *name);
 ]]
 
 -- import constants parsed by ffi
@@ -286,6 +287,9 @@ describe 'fs function', ->
     os_file_is_readonly = (filename) ->
       fs.os_file_is_readonly (to_cstr filename)
 
+    os_file_is_writable = (filename) ->
+      fs.os_file_is_writable (to_cstr filename)
+
     bit_set = (number, check_bit) ->
       if 0 == (bit.band number, check_bit) then false else true
 
@@ -339,6 +343,23 @@ describe 'fs function', ->
 
       it 'returns FALSE if the file is writable', ->
         eq FALSE, os_file_is_readonly 'unit-test-directory/test.file'
+
+    describe 'os_file_is_writable', ->
+      it 'returns FALSE if the file is readonly', ->
+        perm = os_getperm 'unit-test-directory/test.file'
+        perm_orig = perm
+        perm = unset_bit perm, ffi.C.kS_IWUSR
+        perm = unset_bit perm, ffi.C.kS_IWGRP
+        perm = unset_bit perm, ffi.C.kS_IWOTH
+        eq OK, (os_setperm 'unit-test-directory/test.file', perm)
+        eq FALSE, os_file_is_writable 'unit-test-directory/test.file'
+        eq OK, (os_setperm 'unit-test-directory/test.file', perm_orig)
+
+      it 'returns TRUE if the file is writable', ->
+        eq TRUE, os_file_is_writable 'unit-test-directory/test.file'
+
+      it 'returns 2 when given a folder with rights to write into', ->
+        eq 2, os_file_is_writable 'unit-test-directory'
 
   describe 'os_file_exists', ->
     os_file_exists = (filename) ->
