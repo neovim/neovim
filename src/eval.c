@@ -8877,7 +8877,8 @@ static void f_filereadable(typval_T *argvars, typval_T *rettv)
  */
 static void f_filewritable(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = filewritable(get_tv_string(&argvars[0]));
+  char *filename = (char *)get_tv_string(&argvars[0]);
+  rettv->vval.v_number = os_file_is_writable(filename);
 }
 
 static void findfilendir(typval_T *argvars, typval_T *rettv,

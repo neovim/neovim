@@ -1667,33 +1667,6 @@ void sort_strings(char_u **files, int count)
 }
 
 /*
- * Return 0 for not writable, 1 for writable file, 2 for a dir which we have
- * rights to write into.
- */
-int filewritable(char_u *fname)
-{
-  int retval = 0;
-#if defined(UNIX) || defined(VMS)
-  int perm = 0;
-#endif
-
-#if defined(UNIX) || defined(VMS)
-  perm = os_getperm(fname);
-#endif
-  if (
-# if defined(UNIX) || defined(VMS)
-    (perm & 0222) &&
-#  endif
-    mch_access((char *)fname, W_OK) == 0
-    ) {
-    ++retval;
-    if (os_isdir(fname))
-      ++retval;
-  }
-  return retval;
-}
-
-/*
  * Print an error message with one or two "%s" and one or two string arguments.
  * This is not in message.c to avoid a warning for prototypes.
  */

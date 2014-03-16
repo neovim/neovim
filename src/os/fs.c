@@ -288,3 +288,16 @@ int os_file_is_readonly(const char *name)
   }
 }
 
+// return 0 for not writable, 1 for writable file, 2 for a dir which we have
+// rights to write into.
+int os_file_is_writable(const char *name)
+{
+  if (mch_access(name, W_OK) == 0) {
+    if (os_isdir((char_u *)name)) {
+      return 2;
+    }
+    return 1;
+  }
+  return 0;
+}
+
