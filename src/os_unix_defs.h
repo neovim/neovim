@@ -117,10 +117,10 @@
  * Unix system-dependent file names
  */
 #ifndef SYS_VIMRC_FILE
-# define SYS_VIMRC_FILE "$VIM/vimrc"
+# define SYS_VIMRC_FILE "$VIM/nvimrc"
 #endif
 #ifndef SYS_GVIMRC_FILE
-# define SYS_GVIMRC_FILE "$VIM/gvimrc"
+# define SYS_GVIMRC_FILE "$VIM/ngvimrc"
 #endif
 #ifndef DFLT_HELPFILE
 # define DFLT_HELPFILE  "$VIMRUNTIME/doc/help.txt"
@@ -158,7 +158,7 @@
 
 
 #if !defined(USR_EXRC_FILE2)
-#    define USR_VIMRC_FILE2     "~/.nvim/vimrc"
+#    define USR_VIMRC_FILE2     "~/.nvim/nvimrc"
 #endif
 
 
@@ -167,7 +167,7 @@
 #endif
 
 #ifndef USR_GVIMRC_FILE2
-#   define USR_GVIMRC_FILE2     "~/.nvim/gvimrc"
+#   define USR_GVIMRC_FILE2     "~/.nvim/ngvimrc"
 #endif
 
 
