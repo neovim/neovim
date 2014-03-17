@@ -28,10 +28,6 @@
  *    long name of the command.
  */
 
-#ifdef RANGE
-# undef RANGE                   /* SASC on Amiga defines it */
-#endif
-
 #define RANGE           0x001   /* allow a linespecs */
 #define BANG            0x002   /* allow a ! after the command name */
 #define EXTRA           0x004   /* allow extra args after command name */

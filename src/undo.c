@@ -568,15 +568,6 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
     u_getbot();
   }
 
-#if !defined(UNIX) && !defined(DJGPP) && !defined(WIN32) && !defined(__EMX__)
-  /*
-   * With Amiga and MSDOS 16 bit we can't handle big undo's, because
-   * then u_alloc_line would have to allocate a block larger than 32K
-   */
-  if (size >= 8000)
-    goto nomem;
-#endif
-
   /*
    * add lines in front of entry list
    */
