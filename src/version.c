@@ -48,7 +48,6 @@ static char *(features[]) = {
 #endif  // ifdef ALL_BUILTIN_TCAPS
   "+byte_offset",
   "+cindent",
-  "-clientserver",
   "-clipboard",
   "+cmdline_compl",
   "+cmdline_hist",
