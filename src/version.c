@@ -153,7 +153,6 @@ static char *(features[]) = {
   "+scrollbind",
   "+signs",
   "+smartindent",
-  "-sniff",
 #ifdef STARTUPTIME
   "+startuptime",
 #else  // ifdef STARTUPTIME

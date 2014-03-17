@@ -1661,11 +1661,6 @@ char_u* skiptowhite(char_u *p)
   return p;
 }
 
-#if defined(FEAT_LISTCMDS) \
-  || defined(FEAT_SIGNS) \
-  || defined(FEAT_SNIFF) \
-  || defined(PROTO)
-
 /// skiptowhite_esc: Like skiptowhite(), but also skip escaped chars
 ///
 /// @param p
@@ -1681,9 +1676,6 @@ char_u* skiptowhite_esc(char_u *p)
   }
   return p;
 }
-
-#endif  // if defined(FEAT_LISTCMDS) || defined(FEAT_SIGNS)
-        //    || defined(FEAT_SNIFF) || defined(PROTO)
 
 /// Getdigits: Get a number from a string and skip over it.
 ///

@@ -1566,7 +1566,6 @@ error:
  * "msec" == 0 will check for characters once.
  * "msec" == -1 will block until a character is available.
  * When a GUI is being used, this will not be used for input -- webb
- * Returns also, when a request from Sniff is waiting -- toni.
  * Or when a Linux GPM mouse event is waiting.
  */
 static int RealWaitForChar(fd, msec, check_for_gpm)

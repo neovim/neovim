@@ -859,8 +859,6 @@ enum CMD_index
       RANGE|NOTADR|ZEROR|EXTRA|TRLBAR|NOTRLCOM|USECTRLV|CMDWIN),
   EX(CMD_snext,           "snext",        ex_next,
       RANGE|NOTADR|BANG|FILES|EDITCMD|ARGOPT|TRLBAR),
-  EX(CMD_sniff,           "sniff",        ex_sniff,
-      EXTRA|TRLBAR),
   EX(CMD_snomagic,        "snomagic",     ex_submagic,
       RANGE|WHOLEFOLD|EXTRA|CMDWIN),
   EX(CMD_snoremap,        "snoremap",     ex_map,

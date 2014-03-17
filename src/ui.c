@@ -292,7 +292,7 @@ void ui_breakcheck(void)
  * descriptions which would otherwise overflow.  The buffer is considered full
  * when only this extra space (or part of it) remains.
  */
-# define INBUFLEN 250
+# define INBUFLEN 4096
 
 static char_u inbuf[INBUFLEN + MAX_KEY_CODE_LEN];
 static int inbufcount = 0;          /* number of chars in inbuf[] */
@@ -364,8 +364,7 @@ void set_input_buf(char_u *p)
 #if defined(FEAT_GUI) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE) \
   || defined(FEAT_XCLIPBOARD) || defined(VMS) \
-  || defined(FEAT_SNIFF) || defined(FEAT_CLIENTSERVER) \
-  || defined(PROTO)
+  || defined(PROTO) || defined(FEAT_CLIENTSERVER)
 /*
  * Add the given bytes to the input buffer
  * Special keys start with CSI.  A real CSI must have been translated to
