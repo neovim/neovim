@@ -11,8 +11,10 @@ class Neovim < Formula
 
   def install
     ENV.deparallelize
-    system "make", "PREFIX=#{prefix}", "cmake"
-    system "make", "PREFIX=#{prefix}"
-    system "make", "PREFIX=#{prefix}", "install"
+    system "sh", "-e", "scripts/compile-libuv.sh"
+    system "sh", "-e", "scripts/compile-lua.sh"
+    system "sh", "-e", "scripts/setup-test-tools.sh"
+    system "cmake", "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_PREFIX_PATH=.deps/usr", "-DLibUV_USE_STATIC=YES", "-DCMAKE_INSTALL_PREFIX:PATH=#{prefix}"
+    system "make", "install"
   end
 end
