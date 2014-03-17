@@ -790,8 +790,6 @@ do_bufdel (
   return errormsg;
 }
 
-#if defined(FEAT_LISTCMDS) || defined(FEAT_PYTHON) \
-  || defined(FEAT_PYTHON3) || defined(PROTO)
 
 static int empty_curbuf(int close_others, int forceit, int action);
 
@@ -1125,7 +1123,7 @@ do_buffer (
 
   return OK;
 }
-#endif
+
 
 /*
  * Set current buffer to "buf".  Executes autocommands and closes current
@@ -1708,8 +1706,6 @@ static buf_T *buflist_findname_stat(char_u *ffname, struct stat *stp)
   return NULL;
 }
 
-#if defined(FEAT_LISTCMDS) || defined(FEAT_EVAL) || defined(FEAT_PERL) \
-  || defined(PROTO)
 /*
  * Find file in buffer list by a regexp pattern.
  * Return fnum of the found buffer.
@@ -1818,7 +1814,6 @@ buflist_findpat (
     EMSG2(_("E94: No matching buffer for %s"), pattern);
   return match;
 }
-#endif
 
 
 /*
@@ -4355,9 +4350,6 @@ char_u *buf_spname(buf_T *buf)
   return NULL;
 }
 
-#if (defined(FEAT_QUICKFIX) && defined(FEAT_WINDOWS)) \
-  || defined(FEAT_PYTHON) || defined(FEAT_PYTHON3) \
-  || defined(PROTO)
 /*
  * Find a window for buffer "buf".
  * If found OK is returned and "wp" and "tp" are set to the window and tabpage.

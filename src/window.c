@@ -3298,8 +3298,6 @@ void win_goto(win_T *wp)
 }
 
 
-#if (defined(FEAT_WINDOWS) && (defined(FEAT_PYTHON) || defined(FEAT_PYTHON3))) \
-  || defined(PROTO)
 /*
  * Find the tabpage for window "win".
  */
@@ -3315,7 +3313,6 @@ tabpage_T *win_find_tabpage(win_T *win)
         return tp;
   return NULL;
 }
-#endif
 
 /*
  * Move to window above or below "count" times.
@@ -5171,8 +5168,6 @@ static win_T *restore_snapshot_rec(frame_T *sn, frame_T *fr)
 }
 
 
-#if defined(FEAT_EVAL) || defined(FEAT_PYTHON) || defined(FEAT_PYTHON3) \
-  || defined(PROTO)
 /*
  * Set "win" to be the curwin and "tp" to be the current tab page.
  * restore_win() MUST be called to undo.
@@ -5257,7 +5252,6 @@ void restore_buffer(buf_T *save_curbuf)
     ++curbuf->b_nwindows;
   }
 }
-#endif
 
 
 /*

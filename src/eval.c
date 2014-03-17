@@ -5268,8 +5268,7 @@ list_equal (
   return item1 == NULL && item2 == NULL;
 }
 
-#if defined(FEAT_RUBY) || defined(FEAT_PYTHON) || defined(FEAT_PYTHON3) \
-  || defined(FEAT_MZSCHEME) || defined(FEAT_LUA) || defined(PROTO)
+#if defined(PROTO)
 /*
  * Return the dictitem that an entry in a hashtable points to.
  */
