@@ -1376,7 +1376,7 @@ make_filter_cmd (
       if (p != NULL)
         *p = NUL;
     }
-    STRCAT(buf, " <");          /* " < " causes problems on Amiga */
+    STRCAT(buf, " < ");
     STRCAT(buf, itmp);
     if (*p_shq == NUL) {
       p = vim_strchr(cmd, '|');

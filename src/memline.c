@@ -75,10 +75,6 @@
 # include <time.h>
 #endif
 
-#if defined(SASC) || defined(__amigaos4__)
-# include <proto/dos.h>     /* for Open() and Close() */
-#endif
-
 typedef struct block0 ZERO_BL;              /* contents of the first block */
 typedef struct pointer_block PTR_BL;        /* contents of a pointer block */
 typedef struct data_block DATA_BL;          /* contents of a data block */

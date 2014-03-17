@@ -2949,7 +2949,7 @@ expand_env_esc (
         /* if var[] ends in a path separator and tail[] starts
          * with it, skip a character */
         if (*var != NUL && after_pathsep(dst, dst + c)
-#if defined(BACKSLASH_IN_FILENAME) || defined(AMIGA)
+#if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
             && vim_ispathsep(*tail))

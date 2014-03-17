@@ -556,7 +556,7 @@ char_u * mb_init()
     else if (enc_dbcs == 0)
       n = 1;
     else {
-# if defined(MACOS) || defined(__amigaos4__)
+# if defined(MACOS)
       /*
        * if mblen() is not available, character which MSB is turned on
        * are treated as leading byte character. (note : This assumption
@@ -3857,7 +3857,7 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
   return OK;
 }
 
-#if defined(FEAT_GUI) || defined(AMIGA) || defined(WIN3264) \
+#if defined(FEAT_GUI) || defined(WIN3264) \
   || defined(MSDOS) || defined(PROTO)
 /*
  * Do conversion on typed input characters in-place.
