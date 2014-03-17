@@ -1615,11 +1615,9 @@ getcmdline_prompt (
 
 /*
  * Return TRUE when the text must not be changed and we can't switch to
- * another window or buffer.  Used when editing the command line, evaluating
- * 'balloonexpr', etc.
+ * another window or buffer.  Used when editing the command line etc.
  */
-int text_locked(void)
-{
+int text_locked(void) {
   if (cmdwin_type != 0)
     return TRUE;
   return textlock != 0;

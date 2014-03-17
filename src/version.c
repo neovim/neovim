@@ -36,7 +36,6 @@ static char *(features[]) = {
 #endif  // ifdef HAVE_ACL
   "+arabic",
   "+autocmd",
-  "-balloon_eval",
   "-browse",
 #ifdef NO_BUILTIN_TCAPS
   "-builtin_terms",

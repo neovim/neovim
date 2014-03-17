@@ -42,8 +42,4 @@ vim_snprintf(char *, size_t, char *, ...);
 
 int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs);
 
-/* Ugly solution for "BalloonEval" not being defined while it's used in some
- * .pro files. */
-#  define BalloonEval int
-
 #endif /* !PROTO && !NOPROTO */
