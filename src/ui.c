@@ -364,7 +364,7 @@ void set_input_buf(char_u *p)
 #if defined(FEAT_GUI) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE) \
   || defined(FEAT_XCLIPBOARD) || defined(VMS) \
-  || defined(PROTO) || defined(FEAT_CLIENTSERVER)
+  || defined(PROTO)
 /*
  * Add the given bytes to the input buffer
  * Special keys start with CSI.  A real CSI must have been translated to
