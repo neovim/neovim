@@ -1710,10 +1710,7 @@ del_bytes (
 
   /*
    * If the old line has been allocated the deletion can be done in the
-   * existing line. Otherwise a new line has to be allocated
-   * Can't do this when using Netbeans, because we would need to invoke
-   * netbeans_removed(), which deallocates the line.  Let ml_replace() take
-   * care of notifying Netbeans.
+   * existing line. Otherwise a new line has to be allocated.
    */
   was_alloced = ml_line_alloced();          /* check if oldp was allocated */
   if (was_alloced)

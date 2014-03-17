@@ -2974,8 +2974,7 @@ static void ml_flush_line(buf_T *buf)
     return;             /* nothing to do */
 
   if (buf->b_ml.ml_flags & ML_LINE_DIRTY) {
-    /* This code doesn't work recursively, but Netbeans may call back here
-     * when obtaining the cursor position. */
+    /* This code doesn't work recursively. */
     if (entered)
       return;
     entered = TRUE;
