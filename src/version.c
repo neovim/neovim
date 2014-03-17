@@ -138,7 +138,6 @@ static char *(features[]) = {
   "+multi_byte",
   "+multi_lang",
   "-mzscheme",
-  "-netbeans_intg",
   "+path_extra",
   "-perl",
   "+persistent_undo",
@@ -161,7 +160,6 @@ static char *(features[]) = {
   "-startuptime",
 #endif  // ifdef STARTUPTIME
   "+statusline",
-  "-sun_workshop",
   "+syntax",
   "+tag_binary",
   "+tag_old_static",

@@ -292,17 +292,7 @@ void ui_breakcheck(void)
  * descriptions which would otherwise overflow.  The buffer is considered full
  * when only this extra space (or part of it) remains.
  */
-#if defined(FEAT_SUN_WORKSHOP) || defined(FEAT_NETBEANS_INTG) \
-  || defined(FEAT_CLIENTSERVER)
-/*
- * Sun WorkShop and NetBeans stuff debugger commands into the input buffer.
- * This requires a larger buffer...
- * (Madsen) Go with this for remote input as well ...
- */
-# define INBUFLEN 4096
-#else
 # define INBUFLEN 250
-#endif
 
 static char_u inbuf[INBUFLEN + MAX_KEY_CODE_LEN];
 static int inbufcount = 0;          /* number of chars in inbuf[] */
