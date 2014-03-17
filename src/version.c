@@ -200,7 +200,6 @@ static char *(features[]) = {
   "-X11",
 #endif  // if defined(UNIX) || defined(VMS)
   "-xfontset",
-  "-xim",
 #if defined(UNIX) || defined(VMS)
   "-xsmp",
   "-xterm_clipboard",

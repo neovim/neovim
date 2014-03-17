@@ -142,36 +142,6 @@ static char utf8len_tab_zero[256] =
 };
 
 /*
- * XIM often causes trouble.  Define XIM_DEBUG to get a log of XIM callbacks
- * in the "xim.log" file.
- */
-/* #define XIM_DEBUG */
-#ifdef XIM_DEBUG
-static void xim_log(char *s, ...)
-{
-  va_list arglist;
-  static FILE *fd = NULL;
-
-  if (fd == (FILE *)-1)
-    return;
-  if (fd == NULL) {
-    fd = mch_fopen("xim.log", "w");
-    if (fd == NULL) {
-      EMSG("Cannot open xim.log");
-      fd = (FILE *)-1;
-      return;
-    }
-  }
-
-  va_start(arglist, s);
-  vfprintf(fd, s, arglist);
-  va_end(arglist);
-}
-
-#endif
-
-
-/*
  * Canonical encoding names and their properties.
  * "iso-8859-n" is handled by enc_canonize() directly.
  */
