@@ -191,7 +191,6 @@ static void ex_nogui(exarg_T *eap);
 # define ex_ruby                ex_script_ni
 # define ex_rubydo              ex_ni
 # define ex_rubyfile            ex_ni
-# define ex_sniff               ex_ni
 static void ex_swapname(exarg_T *eap);
 static void ex_syncbind(exarg_T *eap);
 static void ex_read(exarg_T *eap);
