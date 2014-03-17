@@ -12,13 +12,13 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 build/bin/nvim: deps
 	$(MAKE) -C build
 
-test: build/bin/nvim
+test: build/bin/nvim .deps/usr/bin/busted
 	$(SINGLE_MAKE) -C src/testdir
 
-unittest: build/bin/nvim
+unittest: build/bin/nvim .deps/usr/bin/busted
 	sh -e scripts/unittest.sh
 
-deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a .deps/usr/bin/busted
+deps: .deps/usr/lib/libuv.a .deps/usr/lib/libluajit-5.1.a
 
 .deps/usr/lib/libuv.a:
 	sh -e scripts/compile-libuv.sh
