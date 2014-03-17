@@ -419,8 +419,6 @@ redrawWinline (
   }
 }
 
-#if defined(FEAT_RUBY) || defined(FEAT_PERL) || defined(FEAT_VISUAL) || \
-  (defined(FEAT_CLIPBOARD) && defined(FEAT_X11)) || defined(PROTO)
 /*
  * update all windows that are editing the current buffer
  */
@@ -429,7 +427,6 @@ void update_curbuf(int type)
   redraw_curbuf_later(type);
   update_screen(type);
 }
-#endif
 
 /*
  * update_screen()
