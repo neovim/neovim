@@ -1995,7 +1995,6 @@ void                *cookie;                    /*argument for fgetline() */
     case CMD_let:
     case CMD_lockmarks:
     case CMD_match:
-    case CMD_mzscheme:
     case CMD_psearch:
     case CMD_return:
     case CMD_rightbelow:

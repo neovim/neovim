@@ -97,7 +97,6 @@ static int have_dollars(int, char_u **);
 static int save_patterns(int num_pat, char_u **pat, int *num_file,
                          char_u ***file);
 
-
 /*
  * Write s[len] to the screen.
  */

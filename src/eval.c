@@ -10376,10 +10376,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     else if (STRICMP(name, "iconv") == 0)
       n = iconv_enabled(FALSE);
 #endif
-#ifdef DYNAMIC_MZSCHEME
-    else if (STRICMP(name, "mzscheme") == 0)
-      n = mzscheme_enabled(FALSE);
-#endif
     else if (STRICMP(name, "syntax_items") == 0)
       n = syntax_present(curwin);
   }
