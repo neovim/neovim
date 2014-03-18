@@ -202,7 +202,6 @@ static char *(features[]) = {
 #else  // ifdef FEAT_XTERM_SAVE
   "-xterm_save",
 #endif  // ifdef FEAT_XTERM_SAVE
-  "-xpm",
   NULL
 };
 

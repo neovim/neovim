@@ -10339,11 +10339,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "windows",
     "winaltkeys",
     "writebackup",
-#ifdef FEAT_XPM_W32
-    "xpm",
-    "xpm_w32",          /* for backward compatibility */
-#else
-#endif
 #ifdef FEAT_XTERM_SAVE
     "xterm_save",
 #endif
