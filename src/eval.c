@@ -10290,9 +10290,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "multi_byte",
     "multi_lang",
-#ifdef FEAT_OLE
-    "ole",
-#endif
     "path_extra",
     "persistent_undo",
     "postscript",
