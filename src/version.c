@@ -197,11 +197,6 @@ static char *(features[]) = {
   "-xsmp",
   "-xterm_clipboard",
 #endif  // if defined(UNIX) || defined(VMS)
-#ifdef FEAT_XTERM_SAVE
-  "+xterm_save",
-#else  // ifdef FEAT_XTERM_SAVE
-  "-xterm_save",
-#endif  // ifdef FEAT_XTERM_SAVE
   NULL
 };
 
