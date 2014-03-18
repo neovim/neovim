@@ -134,7 +134,6 @@ static char *(features[]) = {
 
   "+multi_byte",
   "+multi_lang",
-  "-mzscheme",
   "+path_extra",
   "+persistent_undo",
   "+postscript",

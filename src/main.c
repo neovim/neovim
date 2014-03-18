@@ -326,12 +326,6 @@ static char *(main_errors[]) =
   /* Set the break level after the terminal is initialized. */
   debug_break_level = params.use_debug_break_level;
 
-#endif /* NO_VIM_MAIN */
-
-  /* vim_main2() needs to be produced when FEAT_MZSCHEME is defined even when
-   * NO_VIM_MAIN is defined. */
-
-#ifndef NO_VIM_MAIN
   /* Execute --cmd arguments. */
   exe_pre_commands(&params);
 
