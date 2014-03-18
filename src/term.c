@@ -730,11 +730,6 @@ static struct builtin_term builtin_termcaps[] =
 #  endif
   {(int)KS_KS,        IF_EB("\033[?1h\033=", ESC_STR "[?1h" ESC_STR_nc "=")},
   {(int)KS_KE,        IF_EB("\033[?1l\033>", ESC_STR "[?1l" ESC_STR_nc ">")},
-#  ifdef FEAT_XTERM_SAVE
-  {(int)KS_TI,        IF_EB("\0337\033[?47h", ESC_STR "7" ESC_STR_nc "[?47h")},
-  {(int)KS_TE,        IF_EB("\033[2J\033[?47l\0338",
-       ESC_STR "[2J" ESC_STR_nc "[?47l" ESC_STR_nc "8")},
-#  endif
   {(int)KS_CIS,       IF_EB("\033]1;", ESC_STR "]1;")},
   {(int)KS_CIE,       "\007"},
   {(int)KS_TS,        IF_EB("\033]2;", ESC_STR "]2;")},

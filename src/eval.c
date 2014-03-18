@@ -10339,9 +10339,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "windows",
     "winaltkeys",
     "writebackup",
-#ifdef FEAT_XTERM_SAVE
-    "xterm_save",
-#endif
     "neovim",
     NULL
   };
