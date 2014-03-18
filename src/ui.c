@@ -313,12 +313,10 @@ int vim_is_input_buf_empty(void)
   return inbufcount == 0;
 }
 
-#if defined(FEAT_OLE) || defined(PROTO)
-int vim_free_in_input_buf(void)
-{
+#ifdef PROTO
+int vim_free_in_input_buf(void) {
   return INBUFLEN - inbufcount;
 }
-
 #endif
 
 

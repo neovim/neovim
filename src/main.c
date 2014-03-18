@@ -2225,10 +2225,6 @@ static void usage(void)
 #if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE)
   main_msg(_("--literal\t\tDon't expand wildcards"));
 #endif
-#ifdef FEAT_OLE
-  main_msg(_("-register\t\tRegister this gvim for OLE"));
-  main_msg(_("-unregister\t\tUnregister gvim for OLE"));
-#endif
   main_msg(_("-v\t\t\tVi mode (like \"vi\")"));
   main_msg(_("-e\t\t\tEx mode (like \"ex\")"));
   main_msg(_("-E\t\t\tImproved Ex mode"));
