@@ -526,14 +526,6 @@ char_u * mb_init()
     else if (enc_dbcs == 0)
       n = 1;
     else {
-# if defined(MACOS)
-      /*
-       * if mblen() is not available, character which MSB is turned on
-       * are treated as leading byte character. (note : This assumption
-       * is not always true.)
-       */
-      n = (i & 0x80) ? 2 : 1;
-# else
       char buf[MB_MAXBYTES + 1];
       if (i == NUL)             /* just in case mblen() can't handle "" */
         n = 1;
@@ -568,9 +560,7 @@ char_u * mb_init()
             n = 1;
         }
       }
-# endif
     }
-
     mb_bytelen_tab[i] = n;
   }
 

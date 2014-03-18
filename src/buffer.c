@@ -4364,7 +4364,6 @@ int find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 win_found:
   return OK;
 }
-#endif
 
 /*
  * Insert the sign into the signlist.
