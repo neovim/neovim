@@ -2004,7 +2004,6 @@ void                *cookie;                    /*argument for fgetline() */
     case CMD_substitute:
     case CMD_syntax:
     case CMD_tab:
-    case CMD_tcl:
     case CMD_throw:
     case CMD_tilde:
     case CMD_topleft:

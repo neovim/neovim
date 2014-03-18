@@ -159,7 +159,6 @@ static char *(features[]) = {
 #else  // ifdef FEAT_TAG_ANYWHITE
   "-tag_any_white",
 #endif  // ifdef FEAT_TAG_ANYWHITE
-  "-tcl",
 #if defined(UNIX) || defined(__EMX__)
 
   // only Unix (or OS/2 with EMX!) can have terminfo instead of termcap
