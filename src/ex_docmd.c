@@ -119,7 +119,6 @@ static linenr_T get_address(char_u **, int skip, int to_other_file);
 static void get_flags(exarg_T *eap);
 # define HAVE_EX_SCRIPT_NI
 static void ex_script_ni(exarg_T *eap);
-#endif
 static char_u   *invalid_range(exarg_T *eap);
 static void correct_range(exarg_T *eap);
 static char_u   *replace_makeprg(exarg_T *eap, char_u *p,
