@@ -2388,7 +2388,7 @@ int is_mouse_key(int c)
  * Translates the interrupt character for unix to ESC.
  */
 int get_keystroke(void)         {
-  char_u      *buf = NULL;
+  char_u      *buf = NULL, *new_buf = NULL;
   int buflen = 150;
   int maxlen;
   int len = 0;
@@ -2411,7 +2411,11 @@ int get_keystroke(void)         {
       /* Need some more space. This might happen when receiving a long
        * escape sequence. */
       buflen += 100;
-      buf = vim_realloc(buf, buflen);
+      new_buf = vim_realloc(buf, buflen);
+      if (new_buf != buf) {
+          free(buf);
+	  buf = new_buf;
+      }
       maxlen = (buflen - 6 - len) / 3;
     }
     if (buf == NULL) {
