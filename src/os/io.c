@@ -5,7 +5,6 @@
 #include "vim.h"
 #include "misc2.h"
 
-#define UNUSED(x) (void)(x)
 #define BUF_SIZE 4096
 
 typedef struct {
@@ -28,15 +27,16 @@ static void stop_loop(uv_async_t *, int);
 static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
 static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
 static void signal_cb(uv_signal_t *, int signum);
-static void io_lock();
-static void io_unlock();
+static void io_lock(void);
+static void io_unlock(void);
 static void io_timedwait(uint64_t ms, bool *condition);
 static void io_wait(bool *condition);
 static void io_notify(bool *condition);
 
 
 /* Start event loop and wait until it's running */
-void io_start() {
+void io_start()
+{
   sigset_t set;
 
   time_init();
@@ -55,7 +55,8 @@ void io_start() {
   io_unlock();
 }
 
-void io_stop() {
+void io_stop()
+{
   if (!running)
     return;
 
@@ -71,8 +72,9 @@ void io_stop() {
   uv_thread_join(&thread);
 }
 
-/* Replacement for `read(2)` */
-uint32_t io_read(char *buf, uint32_t count) {
+/* Replacement for `read(2)` that acts on `read_cmd_fd` with O_NONBLOCK */
+uint32_t io_read(char *buf, uint32_t count)
+{
   uint32_t rv = 0;
 
   io_lock();
@@ -88,7 +90,8 @@ uint32_t io_read(char *buf, uint32_t count) {
 }
 
 /* Poll the system for user input or a signal. Signals take priority. */
-poll_result_t io_poll(int32_t ms) {
+poll_result_t io_poll(int32_t ms)
+{
   poll_result_t rv;
 
   io_lock();
@@ -131,7 +134,8 @@ poll_result_t io_poll(int32_t ms) {
   return POLL_NONE;
 }
 
-int io_consume_signal() {
+int io_consume_signal()
+{
   /* FIXME pending_signal must be a queue of signals, right now the event loop
    * is blocking until this function is called. */
   int rv;
@@ -145,7 +149,8 @@ int io_consume_signal() {
   return rv;
 }
 
-static void event_loop(void *arg) {
+static void event_loop(void *arg)
+{
   sigset_t set;
   uv_loop_t *loop;
   uv_idle_t idler; 
@@ -194,7 +199,8 @@ static void event_loop(void *arg) {
 }
 
 /* Signal the main thread that the loop started running */
-static void loop_running(uv_idle_t *handle, int status) {
+static void loop_running(uv_idle_t *handle, int status)
+{
   uv_idle_stop(handle);
   io_lock();
   uv_read_start((uv_stream_t *)handle->data, alloc_cb, read_cb);
@@ -202,7 +208,8 @@ static void loop_running(uv_idle_t *handle, int status) {
   io_unlock();
 }
 
-static void stop_loop(uv_async_t *handle, int status) {
+static void stop_loop(uv_async_t *handle, int status)
+{
   uv_stop(handle->loop);
 }
 
@@ -210,9 +217,6 @@ static void stop_loop(uv_async_t *handle, int status) {
 static void alloc_cb(uv_handle_t *handle, size_t ssize, uv_buf_t *rv)
 {
   uint32_t available;
-
-  UNUSED(handle);
-  UNUSED(ssize);
 
   if ((available = BUF_SIZE - in_buffer.apos) == 0) {
     rv->len = 0;
@@ -229,10 +233,9 @@ static void alloc_cb(uv_handle_t *handle, size_t ssize, uv_buf_t *rv)
  * by `alloc_cb`. This is also called on EOF or when `alloc_cb` returns a
  * 0-length buffer.
  */
-static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf) {
+static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
+{
   uint32_t move_count;
-
-  UNUSED(buf);
 
   io_lock();
 
@@ -281,7 +284,8 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf) {
   io_unlock();
 }
 
-static void signal_cb(uv_signal_t *handle, int signum) {
+static void signal_cb(uv_signal_t *handle, int signum)
+{
   io_lock();
   pending_signal = signum;
   io_notify(&activity); /* unblock */
@@ -290,20 +294,24 @@ static void signal_cb(uv_signal_t *handle, int signum) {
 }
 
 /* Helpers for dealing with io synchronization */
-static void io_lock() {
+static void io_lock()
+{
   uv_mutex_lock(&mutex);
 }
 
-static void io_unlock() {
+static void io_unlock()
+{
   uv_mutex_unlock(&mutex);
 }
 
-static void io_wait(bool *condition) {
+static void io_wait(bool *condition)
+{
   while (!(*condition)) uv_cond_wait(&cond, &mutex);
   *condition = false;
 }
 
-static void io_timedwait(uint64_t ms, bool *condition) {
+static void io_timedwait(uint64_t ms, bool *condition)
+{
   uint64_t hrtime;
   int64_t ns = ms * 1000000; /* convert to nanoseconds */
 
@@ -319,7 +327,8 @@ static void io_timedwait(uint64_t ms, bool *condition) {
   *condition = false;
 }
 
-static void io_notify(bool *condition) {
+static void io_notify(bool *condition)
+{
   *condition = true;
   uv_cond_signal(&cond);
 }

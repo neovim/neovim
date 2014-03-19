@@ -10,12 +10,14 @@ static uv_cond_t delay_cond;
 
 static void delay(uint64_t ms);
 
-void time_init() {
+void time_init()
+{
   uv_mutex_init(&delay_mutex);
   uv_cond_init(&delay_cond);
 }
 
-void mch_delay(uint64_t ms, int ignoreinput) {
+void mch_delay(uint64_t ms, int ignoreinput)
+{
   int old_tmode;
 
   if (ignoreinput) {
@@ -35,7 +37,8 @@ void mch_delay(uint64_t ms, int ignoreinput) {
   }
 }
 
-static void delay(uint64_t ms) {
+static void delay(uint64_t ms)
+{
   uint64_t hrtime;
   int64_t ns = ms * 1000000; /* convert to nanoseconds */
 
