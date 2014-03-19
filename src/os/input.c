@@ -71,7 +71,7 @@ void mch_breakcheck()
 static poll_result_t inbuf_poll(int32_t ms)
 {
   if (input_available())
-    return true;
+    return POLL_INPUT;
 
   return io_poll(ms);
 }
