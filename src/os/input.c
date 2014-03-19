@@ -12,26 +12,26 @@
 
 static int cursorhold_key(char_u *buf);
 static int signal_key(char_u *buf);
-static bool inbuf_poll(int32_t ms);
+static poll_result_t inbuf_poll(int32_t ms);
 
 
 int mch_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt) {
   poll_result_t result;
 
   if (ms >= 0) {
-    if (!inbuf_poll(ms)) {
+    if ((result = inbuf_poll(ms)) != POLL_INPUT) {
       return 0;
     }
-    result = POLL_NONE;
   } else {
-    if ((result = io_poll(p_ut)) != POLL_INPUT) {
+    if ((result = inbuf_poll(p_ut)) != POLL_INPUT) {
       if (trigger_cursorhold() && maxlen >= 3 &&
           !typebuf_changed(tb_change_cnt)) {
         return cursorhold_key(buf);
+
       }
 
       before_blocking();
-      result = io_poll(-1);
+      result = inbuf_poll(-1);
     }
   }
 
@@ -65,11 +65,11 @@ void mch_breakcheck() {
 }
 
 /* This is a replacement for the old `WaitForChar` function in os_unix.c */
-static bool inbuf_poll(int32_t ms) {
+static poll_result_t inbuf_poll(int32_t ms) {
   if (input_available())
     return true;
 
-  return io_poll(ms) == POLL_INPUT;
+  return io_poll(ms);
 }
 
 static int cursorhold_key(char_u *buf) {
