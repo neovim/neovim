@@ -92,31 +92,31 @@ uint32_t io_read(char *buf, uint32_t count)
 /* Poll the system for user input or a signal. Signals take priority. */
 poll_result_t io_poll(int32_t ms)
 {
-  poll_result_t rv;
-
   io_lock();
-
-  if (eof && in_buffer.rpos == in_buffer.wpos) {
-    io_unlock();
-    return POLL_EOF;
-  }
-
-  if (ms == 0) {
-    rv = in_buffer.rpos < in_buffer.wpos ? POLL_INPUT : POLL_NONE;
-    io_unlock();
-    return rv;
-  }
 
   if (pending_signal) {
     io_unlock();
     return POLL_SIGNAL;
   }
 
+  if (in_buffer.rpos < in_buffer.wpos) {
+    io_unlock();
+    return POLL_INPUT;
+  }
+
+  if (eof) {
+    io_unlock();
+    return POLL_EOF;
+  }
+
   if (ms < 0) {
     io_wait(&activity);
-  } else {
+  } else if (ms > 0) {
     /* Wait up to 'ms' milliseconds */
     io_timedwait(ms, &activity);
+  } else {
+    io_unlock();
+    return POLL_NONE;
   }
 
   if (pending_signal) {
@@ -127,6 +127,11 @@ poll_result_t io_poll(int32_t ms)
   if (in_buffer.rpos < in_buffer.wpos) {
     io_unlock();
     return POLL_INPUT;
+  }
+
+  if (eof) {
+    io_unlock();
+    return POLL_EOF;
   }
 
   io_unlock();
