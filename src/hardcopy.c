@@ -93,7 +93,6 @@
  */
 
 static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
-#ifdef DO_INIT
   =
   {
   {"top",     TRUE, 0, NULL, 0, FALSE},
@@ -111,7 +110,6 @@ static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
   {"jobsplit", FALSE, 0, NULL, 0, FALSE},
   {"formfeed", FALSE, 0, NULL, 0, FALSE},
   }
-#endif
 ;
 
 
