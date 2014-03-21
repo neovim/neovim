@@ -185,12 +185,10 @@ static void event_loop(void *arg)
     in_buffer.apos = BUF_SIZE;
     uv_fs_read(loop, read_req, read_cmd_fd, in_buffer.data, BUF_SIZE,
         in_buffer.fpos, fread_cb);
-  } else if (stdin_type == UV_FILE) {
+  } else if (stdin_type == UV_TTY) {
     stdin_stream = (uv_stream_t *)malloc(sizeof(uv_tty_t));
     uv_tty_init(loop, (uv_tty_t *)stdin_stream, read_cmd_fd, 1);
   } else {
-    /* FIXME setting fd to non-blocking is only needed on unix */
-    // fcntl(read_cmd_fd, F_SETFL, fcntl(read_cmd_fd, F_GETFL, 0) | O_NONBLOCK);
     stdin_stream = (uv_stream_t *)malloc(sizeof(uv_pipe_t));
     uv_pipe_init(loop, (uv_pipe_t *)stdin_stream, 0);
     uv_pipe_open((uv_pipe_t *)stdin_stream, read_cmd_fd);
