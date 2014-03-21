@@ -8,10 +8,11 @@
 #define BUF_SIZE 4096
 
 typedef struct {
-  uint32_t rpos, wpos, apos;
+  uint32_t rpos, wpos, apos, fpos;
   char_u data[BUF_SIZE];
 } input_buffer_T;
 
+static uv_handle_type stdin_type;
 static int pending_signal = 0;
 static uv_thread_t thread;
 static uv_mutex_t mutex;
@@ -26,7 +27,9 @@ static void loop_running(uv_idle_t *, int);
 static void stop_loop(uv_async_t *, int);
 static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
 static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
+static void fread_cb(uv_fs_t *);
 static void signal_cb(uv_signal_t *, int signum);
+static void relocate(void);
 static void io_lock(void);
 static void io_unlock(void);
 static void io_timedwait(uint64_t ms, bool *condition);
@@ -160,9 +163,11 @@ static void event_loop(void *arg)
   uv_loop_t *loop;
   uv_idle_t idler; 
   uv_signal_t sint, shup, squit, sabrt, sterm, swinch;
-  uv_pipe_t stdin_stream;
+  uv_stream_t *stdin_stream = NULL;
+  uv_fs_t *read_req = NULL;
 
-  in_buffer.wpos = in_buffer.rpos = in_buffer.apos = 0;
+
+  in_buffer.wpos = in_buffer.rpos = in_buffer.apos = in_buffer.fpos = 0;
 #ifdef DEBUG
   memset(&in_buffer.data, 0, BUF_SIZE);
 #endif
@@ -173,17 +178,30 @@ static void event_loop(void *arg)
   pthread_sigmask(SIG_SETMASK, &set, NULL);
 
   loop = uv_loop_new();
+
+  /* Setup stdin_stream */
+  if ((stdin_type = uv_guess_handle(read_cmd_fd)) == UV_FILE) {
+    read_req = (uv_fs_t *)malloc(sizeof(uv_fs_t));
+    in_buffer.apos = BUF_SIZE;
+    uv_fs_read(loop, read_req, read_cmd_fd, in_buffer.data, BUF_SIZE,
+        in_buffer.fpos, fread_cb);
+  } else if (stdin_type == UV_FILE) {
+    stdin_stream = (uv_stream_t *)malloc(sizeof(uv_tty_t));
+    uv_tty_init(loop, (uv_tty_t *)stdin_stream, read_cmd_fd, 1);
+  } else {
+    /* FIXME setting fd to non-blocking is only needed on unix */
+    // fcntl(read_cmd_fd, F_SETFL, fcntl(read_cmd_fd, F_GETFL, 0) | O_NONBLOCK);
+    stdin_stream = (uv_stream_t *)malloc(sizeof(uv_pipe_t));
+    uv_pipe_init(loop, (uv_pipe_t *)stdin_stream, 0);
+    uv_pipe_open((uv_pipe_t *)stdin_stream, read_cmd_fd);
+  }
+
   /* Idler for signaling the main thread when the loop is running */
   uv_idle_init(loop, &idler);
-  idler.data = &stdin_stream;
+  idler.data = stdin_stream;
   uv_idle_start(&idler, loop_running);
   /* Async watcher used by the main thread to stop the loop */
   uv_async_init(loop, &stop_loop_async, stop_loop);
-  /* stdin */
-  /* FIXME setting fd to non-blocking is only needed on unix */
-  fcntl(read_cmd_fd, F_SETFL, fcntl(read_cmd_fd, F_GETFL, 0) | O_NONBLOCK);
-  uv_pipe_init(loop, &stdin_stream, 0);
-  uv_pipe_open(&stdin_stream, read_cmd_fd);
   /* signals */
   uv_signal_init(loop, &sint);
   uv_signal_start(&sint, signal_cb, SIGINT);
@@ -199,6 +217,15 @@ static void event_loop(void *arg)
   uv_signal_start(&swinch, signal_cb, SIGWINCH);
   /* start processing events */
   uv_run(loop, UV_RUN_DEFAULT);
+
+  if (stdin_stream != NULL)
+    free(stdin_stream);
+
+  if (read_req != NULL) {
+    uv_cancel((uv_req_t *)read_req);
+    free(read_req);
+  }
+
   /* free the event loop */
   uv_loop_delete(loop);
 }
@@ -208,7 +235,8 @@ static void loop_running(uv_idle_t *handle, int status)
 {
   uv_idle_stop(handle);
   io_lock();
-  uv_read_start((uv_stream_t *)handle->data, alloc_cb, read_cb);
+  if (stdin_type != UV_FILE)
+    uv_read_start((uv_stream_t *)handle->data, alloc_cb, read_cb);
   io_notify(&running);
   io_unlock();
 }
@@ -240,8 +268,6 @@ static void alloc_cb(uv_handle_t *handle, size_t ssize, uv_buf_t *rv)
  */
 static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 {
-  uint32_t move_count;
-
   io_lock();
 
   if (cnt < 0) {
@@ -255,24 +281,10 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
         io_notify(&activity);
       }
     } else if (cnt == UV_ENOBUFS) {
-      if (in_buffer.apos > in_buffer.wpos) {
-        /* Restore `apos` to `wpos` */
-        in_buffer.apos = in_buffer.wpos;
-      } else {
-        if (in_buffer.rpos == 0) {
-          /* Pause until the main thread consumes some data. */
-          io_notify(&activity);
-          io_wait(&input_consumed);
-        }
-        /* Move data to the 'left' as much as possible. */
-        move_count = in_buffer.apos - in_buffer.rpos;
-        memmove(in_buffer.data, in_buffer.data + in_buffer.rpos, move_count);
-        in_buffer.apos -= in_buffer.rpos;
-        in_buffer.wpos -= in_buffer.rpos;
-        in_buffer.rpos = 0;
-      } 
+      io_notify(&activity);
+      relocate();
     } else {
-      fprintf(stderr, "Unexpected error %ld\n", cnt);
+      fprintf(stderr, "Unexpected error %s\n", uv_strerror(cnt));
     }
     io_unlock();
     return;
@@ -289,6 +301,43 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   io_unlock();
 }
 
+static void fread_cb(uv_fs_t *req)
+{
+  uint32_t available;
+
+  uv_fs_req_cleanup(req);
+  io_lock();
+
+  if (req->result <= 0) {
+    if (req->result == 0) {
+      /* EOF, stop the event loop and signal the main thread. This will cause
+       * vim to exit */
+      if (!eof) {
+        /* Dont close the loop if it was already closed in `io_stop` */
+        eof = true;
+        uv_stop(req->loop);
+        io_notify(&activity);
+      }
+    } else {
+      fprintf(stderr, "Unexpected error %s\n", uv_strerror(req->result));
+    }
+    io_unlock();
+    return;
+  }
+
+  in_buffer.wpos += req->result;
+  in_buffer.fpos += req->result;
+  io_notify(&activity);
+  relocate();
+  io_unlock();
+
+  available = BUF_SIZE - in_buffer.apos;
+  /* Read more */
+  uv_fs_read(req->loop, req, read_cmd_fd, in_buffer.data + in_buffer.apos,
+      available, in_buffer.fpos, fread_cb);
+  in_buffer.apos += available;
+}
+
 static void signal_cb(uv_signal_t *handle, int signum)
 {
   io_lock();
@@ -296,6 +345,29 @@ static void signal_cb(uv_signal_t *handle, int signum)
   io_notify(&activity); /* unblock */
   io_wait(&signal_consumed);
   io_unlock();
+}
+
+static void relocate()
+{
+  uint32_t move_count;
+
+  if (in_buffer.apos > in_buffer.wpos) {
+    /* Restore `apos` to `wpos` */
+    in_buffer.apos = in_buffer.wpos;
+    return;
+  }
+
+  if (in_buffer.rpos == 0) {
+    /* Pause until the main thread consumes some data. */
+    io_wait(&input_consumed);
+  } 
+
+  /* Move data to the 'left' as much as possible. */
+  move_count = in_buffer.apos - in_buffer.rpos;
+  memmove(in_buffer.data, in_buffer.data + in_buffer.rpos, move_count);
+  in_buffer.apos -= in_buffer.rpos;
+  in_buffer.wpos -= in_buffer.rpos;
+  in_buffer.rpos = 0;
 }
 
 /* Helpers for dealing with io synchronization */
