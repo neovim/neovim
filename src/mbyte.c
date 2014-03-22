@@ -1533,34 +1533,6 @@ int mb_cptr2char_adv(char_u **pp)
 }
 
 /*
- * Check whether we are dealing with Arabic combining characters.
- * Note: these are NOT really composing characters!
- */
-int arabic_combine(
-    int one,                    /* first character */
-    int two                     /* character just after "one" */
-    )
-{
-  if (one == a_LAM)
-    return arabic_maycombine(two);
-  return FALSE;
-}
-
-/*
- * Check whether we are dealing with a character that could be regarded as an
- * Arabic combining character, need to check the character before this.
- */
-int arabic_maycombine(int two)
-{
-  if (p_arshape && !p_tbidi)
-    return two == a_ALEF_MADDA
-      || two == a_ALEF_HAMZA_ABOVE
-      || two == a_ALEF_HAMZA_BELOW
-      || two == a_ALEF;
-  return FALSE;
-}
-
-/*
  * Check if the character pointed to by "p2" is a composing character when it
  * comes after "p1".  For Arabic sometimes "ab" is replaced with "c", which
  * behaves like a composing character.

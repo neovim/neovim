@@ -1136,9 +1136,4 @@ EXTERN char *ignoredp;
  */
 # include "farsi.h"
 
-/*
- * Optional Arabic support. Include it here, so EXTERN and INIT are defined.
- */
-# include "arabic.h"
-
 #endif /* NEOVIM_GLOBALS_H */
