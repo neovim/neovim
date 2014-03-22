@@ -9,6 +9,11 @@
 #include "ex_getln.h"
 
 
+#define SRC_EDT 0
+#define SRC_CMD 1
+
+#define AT_CURSOR 0
+
 static int toF_Xor_X_(int c);
 static int F_is_TyE(int c);
 static int F_is_TyC_TyD(int c);

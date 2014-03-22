@@ -154,14 +154,6 @@
 #define WAW_H           0xf9
 #define ALEF_D_H        0xfa
 
-// global definitions
-// ==================
-
-#define SRC_EDT 0
-#define SRC_CMD 1
-
-#define AT_CURSOR 0
-
 // definitions for the window dependent functions (w_farsi).
 #define W_CONV 0x1
 #define W_R_L  0x2
