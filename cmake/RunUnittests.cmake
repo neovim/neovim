@@ -1,0 +1,9 @@
+get_filename_component(BUSTED_DIR ${BUSTED_PRG} PATH)
+set(ENV{PATH} "${BUSTED_DIR}:$ENV{PATH}")
+set(ENV{NVIM_TEST_LIB} ${NVIM_TEST_LIB})
+set(ENV{TEST_INCLUDES} ${TEST_INCLUDES})
+
+execute_process(
+  COMMAND ${BUSTED_PRG} -l ${LUAJIT_PRG} -o ${BUSTED_OUTPUT_TYPE}
+    --pattern=.moon ${TEST_DIR}
+  WORKING_DIRECTORY ${WORKING_DIR})
