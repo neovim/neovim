@@ -238,7 +238,6 @@
 
 #define a_BYTE_ORDER_MARK               0xfeff
 
-// Range of Arabic characters that might be shaped.
-#define ARABIC_CHAR(c)          ((c) >= a_HAMZA && (c) <= a_MINI_ALEF)
+int arabic_char(int c);
 
 #endif  // NEOVIM_ARABIC_H

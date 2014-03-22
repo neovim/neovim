@@ -1129,6 +1129,12 @@ static int half_shape(int c)
   return 0;
 }
 
+/// Whether c belongs to the range of Arabic characters that might be shaped.
+int arabic_char(int c)
+{
+    return c >= a_HAMZA && c <= a_MINI_ALEF;
+}
+
 /*
  * Do Arabic shaping on character "c".  Returns the shaped character.
  * out:    "ccp" points to the first byte of the character to be shaped.
