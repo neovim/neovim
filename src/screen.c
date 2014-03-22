@@ -88,6 +88,7 @@
  */
 
 #include "vim.h"
+#include "arabic.h"
 #include "screen.h"
 #include "buffer.h"
 #include "charset.h"
@@ -1868,7 +1869,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           ScreenLinesUC[idx] = 0;
           prev_c = u8c;
         } else {
-          if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
+          if (p_arshape && !p_tbidi && arabic_char(u8c)) {
             /* Do Arabic shaping. */
             int pc, pc1, nc;
             int pcc[MAX_MCO];
@@ -3049,7 +3050,7 @@ win_line (
             }
           } else if (mb_l == 0)          /* at the NUL at end-of-line */
             mb_l = 1;
-          else if (p_arshape && !p_tbidi && ARABIC_CHAR(mb_c)) {
+          else if (p_arshape && !p_tbidi && arabic_char(mb_c)) {
             /* Do Arabic shaping. */
             int pc, pc1, nc;
             int pcc[MAX_MCO];
@@ -5218,7 +5219,7 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
             attr = hl_attr(HLF_8);
         }
 # endif
-        if (p_arshape && !p_tbidi && ARABIC_CHAR(u8c)) {
+        if (p_arshape && !p_tbidi && arabic_char(u8c)) {
           /* Do Arabic shaping. */
           if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
             /* Past end of string to be displayed. */

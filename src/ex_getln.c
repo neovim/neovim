@@ -12,6 +12,7 @@
  */
 
 #include "vim.h"
+#include "arabic.h"
 #include "ex_getln.h"
 #include "buffer.h"
 #include "charset.h"
@@ -2100,7 +2101,7 @@ static void draw_cmdline(int start, int len)
       p = ccline.cmdbuff + j;
       u8c = utfc_ptr2char_len(p, u8cc, start + len - j);
       mb_l = utfc_ptr2len_len(p, start + len - j);
-      if (ARABIC_CHAR(u8c)) {
+      if (arabic_char(u8c)) {
         /* Do Arabic shaping. */
         if (cmdmsg_rl) {
           /* displaying from right to left */
