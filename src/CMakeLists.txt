@@ -55,8 +55,8 @@ if(NOT DEFINED ENV{SKIP_EXEC})
 endif()
 
 if(NOT DEFINED ENV{SKIP_UNITTEST})
-  add_library(nvim-test MODULE ${NEOVIM_SOURCES} ${OS_SOURCES})
-  target_link_libraries (nvim-test ${NVIM_LINK_LIBRARIES})
+  add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_SOURCES} ${OS_SOURCES})
+  target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 endif()
 
-include_directories ("${PROJECT_SOURCE_DIR}/src/proto")
+include_directories("${PROJECT_SOURCE_DIR}/src/proto")

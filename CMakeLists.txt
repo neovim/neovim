@@ -88,18 +88,20 @@ if(NOT BUSTED_OUTPUT_TYPE)
   set(BUSTED_OUTPUT_TYPE "utf_terminal")
 endif()
 
-get_target_property(NVIM_TEST_LIB nvim-test LOCATION)
-add_custom_target(unittest
-  COMMAND ${CMAKE_COMMAND}
-    -DBUSTED_PRG=${BUSTED_PRG}
-    -DLUAJIT_PRG=${LUAJIT_PRG}
-    -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-    -DNVIM_TEST_LIB=${NVIM_TEST_LIB}
-    -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
-    -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-    -DTEST_INCLUDES=${CMAKE_BINARY_DIR}/test/includes/post
-    -P ${CMAKE_MODULE_PATH}/RunUnittests.cmake
-  DEPENDS nvim-test unittest-headers)
+if(BUSTED_PRG)
+  get_target_property(NVIM_TEST_LIB nvim-test LOCATION)
+  add_custom_target(unittest
+    COMMAND ${CMAKE_COMMAND}
+      -DBUSTED_PRG=${BUSTED_PRG}
+      -DLUAJIT_PRG=${LUAJIT_PRG}
+      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -DNVIM_TEST_LIB=${NVIM_TEST_LIB}
+      -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
+      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DTEST_INCLUDES=${CMAKE_BINARY_DIR}/test/includes/post
+      -P ${CMAKE_MODULE_PATH}/RunUnittests.cmake
+    DEPENDS nvim-test unittest-headers)
+endif()
 
 # Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
 # pseudo-tty when launching processes, because it can put many jobs in parallel
