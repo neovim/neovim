@@ -2,17 +2,55 @@
 ///
 /// Functions for Farsi language
 ///
-/// Included by main.c, when FEAT_FKMAP is defined.
 
-#include "farsi.h"
+
 #include "edit.h"
+#include "ex_docmd.h"
+#include "ex_eval.h"
 #include "ex_getln.h"
+#include "farsi.h"
+#include "getchar.h"
+#include "memline.h"
+#include "message.h"
+#include "misc1.h"
+#include "misc2.h"
+#include "screen.h"
+#include "vim.h"
 
 
 #define SRC_EDT 0
 #define SRC_CMD 1
 
 #define AT_CURSOR 0
+
+// special Farsi text messages
+
+const char_u farsi_text_1[] = {
+  YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M',
+  ' ', F_HE, _BE, ' ', SHIN, RE, _GAF, DAL, ' ', NOON,
+  ALEF_, _YE, ALEF_, _PE, '\0'
+};
+
+const char_u farsi_text_2[] = {
+  YE_, _SIN, RE, ALEF_, _FE, ' ', FARSI_3, FARSI_3,
+  FARSI_4, FARSI_2, ' ', DAL, RE, ALEF, DAL, _NOON,
+  ALEF_, _TE, _SIN, ALEF, ' ', F_HE, _BE, ' ', SHIN,
+  RE,  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'
+};
+
+const char_u farsi_text_3[] = {
+  DAL, WAW, _SHIN, _YE, _MIM, _NOON, ' ', YE_, _NOON,
+  ALEF_, _BE, _YE, _TE, _SHIN, _PE, ' ', 'R', 'E', 'P', 'L',
+  'A', 'C', 'E', ' ', NOON, ALEF_, _MIM, RE, _FE, ZE, ALEF,
+  ' ', 'R', 'E', 'V', 'E', 'R', 'S', 'E', ' ', 'I', 'N',
+  'S', 'E', 'R', 'T', ' ', SHIN, WAW, RE, ' ', ALEF_, _BE,
+  ' ', YE_, _SIN, RE, ALEF_, _FE, ' ', RE, DAL, ' ', RE,
+  ALEF_, _KAF, ' ', MIM, ALEF_, _GAF, _NOON, _HE, '\0'
+};
+
+const char_u farsi_text_5[] = {
+  ' ', YE_, _SIN, RE, ALEF_, _FE, '\0'
+};
 
 static int toF_Xor_X_(int c);
 static int F_is_TyE(int c);

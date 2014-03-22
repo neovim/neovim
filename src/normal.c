@@ -24,6 +24,7 @@
 #include "ex_cmds2.h"
 #include "ex_docmd.h"
 #include "ex_getln.h"
+#include "farsi.h"
 #include "fileio.h"
 #include "fold.h"
 #include "getchar.h"

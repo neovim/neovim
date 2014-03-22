@@ -4,7 +4,7 @@ file( GLOB NEOVIM_SOURCES *.c )
 
 foreach(sfile ${NEOVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
-  if(${f} MATCHES "^(regexp_nfa.c|farsi.c)$")
+  if(${f} MATCHES "^(regexp_nfa.c)$")
     list(APPEND to_remove ${sfile})
   endif()
 endforeach()

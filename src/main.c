@@ -2392,10 +2392,3 @@ time_msg (
 }
 
 #endif
-
-
-
-/*
- * When FEAT_FKMAP is defined, also compile the Farsi source code.
- */
-# include "farsi.c"

@@ -4,6 +4,7 @@
 
 #include "vim.h"
 #include "charset.h"
+#include "farsi.h"
 #include "main.h"
 #include "mbyte.h"
 #include "memline.h"

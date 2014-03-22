@@ -23,6 +23,7 @@
 #include "eval.h"
 #include "ex_docmd.h"
 #include "ex_getln.h"
+#include "farsi.h"
 #include "main.h"
 #include "mbyte.h"
 #include "memline.h"
