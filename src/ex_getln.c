@@ -23,6 +23,7 @@
 #include "ex_cmds2.h"
 #include "ex_docmd.h"
 #include "ex_eval.h"
+#include "farsi.h"
 #include "fileio.h"
 #include "getchar.h"
 #include "if_cscope.h"

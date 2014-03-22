@@ -11,6 +11,9 @@
 #ifndef NEOVIM_FARSI_H
 #define NEOVIM_FARSI_H
 
+#include "normal.h"
+#include "types.h"
+
 // Farsi character set definition
 
 // Begin of the non-standard part
@@ -159,48 +162,22 @@
 #define W_R_L  0x2
 
 // special Farsi text messages
+extern const char_u farsi_text_1[];
+extern const char_u farsi_text_2[];
+extern const char_u farsi_text_3[];
+extern const char_u farsi_text_5[];
 
-#ifdef DO_INIT
-EXTERN char_u farsi_text_1[] = {
-  YE_, _SIN, RE, ALEF_, _FE, ' ', 'V', 'I', 'M',
-  ' ', F_HE, _BE, ' ', SHIN, RE, _GAF, DAL, ' ', NOON,
-  ALEF_, _YE, ALEF_, _PE, '\0'
-};
-#else
-EXTERN char_u farsi_text_1[];
-#endif
-
-#ifdef DO_INIT
-EXTERN char_u farsi_text_2[] = {
-  YE_, _SIN, RE, ALEF_, _FE, ' ', FARSI_3, FARSI_3,
-  FARSI_4, FARSI_2, ' ', DAL, RE, ALEF, DAL, _NOON,
-  ALEF_, _TE, _SIN, ALEF, ' ', F_HE, _BE, ' ', SHIN,
-  RE,  _GAF, DAL, ' ', NOON, ALEF_, _YE, ALEF_, _PE, '\0'
-};
-#else
-EXTERN char_u farsi_text_2[];
-#endif
-
-#ifdef DO_INIT
-EXTERN char_u farsi_text_3[] = {
-  DAL, WAW, _SHIN, _YE, _MIM, _NOON, ' ', YE_, _NOON,
-  ALEF_, _BE, _YE, _TE, _SHIN, _PE, ' ', 'R', 'E', 'P', 'L',
-  'A', 'C', 'E', ' ', NOON, ALEF_, _MIM, RE, _FE, ZE, ALEF,
-  ' ', 'R', 'E', 'V', 'E', 'R', 'S', 'E', ' ', 'I', 'N',
-  'S', 'E', 'R', 'T', ' ', SHIN, WAW, RE, ' ', ALEF_, _BE,
-  ' ', YE_, _SIN, RE, ALEF_, _FE, ' ', RE, DAL, ' ', RE,
-  ALEF_, _KAF, ' ', MIM, ALEF_, _GAF, _NOON, _HE, '\0'
-};
-#else
-EXTERN char_u farsi_text_3[];
-#endif
-
-#ifdef DO_INIT
-EXTERN char_u farsi_text_5[] = {
-  ' ', YE_, _SIN, RE, ALEF_, _FE, '\0'
-};
-#else
-EXTERN char_u farsi_text_5[];
-#endif
+int toF_TyA(int c);
+int fkmap(int c);
+void conv_to_pvim(void);
+void conv_to_pstd(void);
+char_u *lrswap(char_u *ibuf);
+char_u *lrFswap(char_u *cmdbuf, int len);
+char_u *lrF_sub(char_u *ibuf);
+int cmdl_fkmap(int c);
+int F_isalpha(int c);
+int F_isdigit(int c);
+int F_ischar(int c);
+void farsi_fkey(cmdarg_T *cap);
 
 #endif  // NEOVIM_FARSI_H

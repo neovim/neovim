@@ -19,6 +19,7 @@
 #include "ex_docmd.h"
 #include "ex_eval.h"
 #include "ex_getln.h"
+#include "farsi.h"
 #include "fileio.h"
 #include "fold.h"
 #include "getchar.h"

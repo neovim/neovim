@@ -1139,9 +1139,4 @@ EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 /* volatile because it is used in signal handler deathtrap(). */
 EXTERN volatile bool in_mch_delay INIT(= false);  /* sleeping in mch_delay() */
 
-/*
- * Optional Farsi support.  Include it here, so EXTERN and INIT are defined.
- */
-# include "farsi.h"
-
 #endif /* NEOVIM_GLOBALS_H */
