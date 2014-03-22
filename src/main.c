@@ -2399,8 +2399,3 @@ time_msg (
  * When FEAT_FKMAP is defined, also compile the Farsi source code.
  */
 # include "farsi.c"
-
-/*
- * When FEAT_ARABIC is defined, also compile the Arabic source code.
- */
-# include "arabic.c"
