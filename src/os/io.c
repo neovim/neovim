@@ -185,8 +185,8 @@ static void event_loop(void *arg)
     read_req = (uv_fs_t *)malloc(sizeof(uv_fs_t));
     in_buffer.uvbuf.len = in_buffer.apos = BUF_SIZE;
     in_buffer.uvbuf.base = (char *)in_buffer.data;
-    uv_fs_read(&loop, read_req, read_cmd_fd, &in_buffer.uvbuf,
-        in_buffer.uvbuf.len, in_buffer.fpos, fread_cb);
+    uv_fs_read(&loop, read_req, read_cmd_fd, &in_buffer.uvbuf, 1,
+        in_buffer.fpos, fread_cb);
   } else if (stdin_type == UV_TTY) {
     stdin_stream = (uv_stream_t *)malloc(sizeof(uv_tty_t));
     uv_tty_init(&loop, (uv_tty_t *)stdin_stream, read_cmd_fd, 1);
@@ -334,8 +334,8 @@ static void fread_cb(uv_fs_t *req)
   /* Read more */
   in_buffer.uvbuf.len = available;
   in_buffer.uvbuf.base = (char *)(in_buffer.data + in_buffer.apos);
-  uv_fs_read(req->loop, req, read_cmd_fd, &in_buffer.uvbuf,
-      in_buffer.uvbuf.len, in_buffer.fpos, fread_cb);
+  uv_fs_read(req->loop, req, read_cmd_fd, &in_buffer.uvbuf, 1, in_buffer.fpos,
+      fread_cb);
   in_buffer.apos += available;
 }
 
