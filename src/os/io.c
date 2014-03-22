@@ -8,6 +8,7 @@
 #define BUF_SIZE 4096
 
 typedef struct {
+  uv_buf_t uvbuf;
   uint32_t rpos, wpos, apos, fpos;
   char_u data[BUF_SIZE];
 } input_buffer_T;
@@ -160,7 +161,7 @@ int io_consume_signal()
 static void event_loop(void *arg)
 {
   sigset_t set;
-  uv_loop_t *loop;
+  uv_loop_t loop;
   uv_idle_t idler; 
   uv_signal_t sint, shup, squit, sabrt, sterm, swinch;
   uv_stream_t *stdin_stream = NULL;
@@ -177,44 +178,45 @@ static void event_loop(void *arg)
   sigaddset(&set, SIGTSTP);
   pthread_sigmask(SIG_SETMASK, &set, NULL);
 
-  loop = uv_loop_new();
+  uv_loop_init(&loop);
 
   /* Setup stdin_stream */
   if ((stdin_type = uv_guess_handle(read_cmd_fd)) == UV_FILE) {
     read_req = (uv_fs_t *)malloc(sizeof(uv_fs_t));
-    in_buffer.apos = BUF_SIZE;
-    uv_fs_read(loop, read_req, read_cmd_fd, in_buffer.data, BUF_SIZE,
-        in_buffer.fpos, fread_cb);
+    in_buffer.uvbuf.len = in_buffer.apos = BUF_SIZE;
+    in_buffer.uvbuf.base = (char *)in_buffer.data;
+    uv_fs_read(&loop, read_req, read_cmd_fd, &in_buffer.uvbuf,
+        in_buffer.uvbuf.len, in_buffer.fpos, fread_cb);
   } else if (stdin_type == UV_TTY) {
     stdin_stream = (uv_stream_t *)malloc(sizeof(uv_tty_t));
-    uv_tty_init(loop, (uv_tty_t *)stdin_stream, read_cmd_fd, 1);
+    uv_tty_init(&loop, (uv_tty_t *)stdin_stream, read_cmd_fd, 1);
   } else {
     stdin_stream = (uv_stream_t *)malloc(sizeof(uv_pipe_t));
-    uv_pipe_init(loop, (uv_pipe_t *)stdin_stream, 0);
+    uv_pipe_init(&loop, (uv_pipe_t *)stdin_stream, 0);
     uv_pipe_open((uv_pipe_t *)stdin_stream, read_cmd_fd);
   }
 
   /* Idler for signaling the main thread when the loop is running */
-  uv_idle_init(loop, &idler);
+  uv_idle_init(&loop, &idler);
   idler.data = stdin_stream;
   uv_idle_start(&idler, loop_running);
   /* Async watcher used by the main thread to stop the loop */
-  uv_async_init(loop, &stop_loop_async, stop_loop);
+  uv_async_init(&loop, &stop_loop_async, stop_loop);
   /* signals */
-  uv_signal_init(loop, &sint);
+  uv_signal_init(&loop, &sint);
   uv_signal_start(&sint, signal_cb, SIGINT);
-  uv_signal_init(loop, &shup);
+  uv_signal_init(&loop, &shup);
   uv_signal_start(&shup, signal_cb, SIGHUP);
-  uv_signal_init(loop, &squit);
+  uv_signal_init(&loop, &squit);
   uv_signal_start(&squit, signal_cb, SIGQUIT);
-  uv_signal_init(loop, &sabrt);
+  uv_signal_init(&loop, &sabrt);
   uv_signal_start(&sabrt, signal_cb, SIGABRT);
-  uv_signal_init(loop, &sterm);
+  uv_signal_init(&loop, &sterm);
   uv_signal_start(&sterm, signal_cb, SIGTERM);
-  uv_signal_init(loop, &swinch);
+  uv_signal_init(&loop, &swinch);
   uv_signal_start(&swinch, signal_cb, SIGWINCH);
   /* start processing events */
-  uv_run(loop, UV_RUN_DEFAULT);
+  uv_run(&loop, UV_RUN_DEFAULT);
 
   if (stdin_stream != NULL)
     free(stdin_stream);
@@ -224,8 +226,8 @@ static void event_loop(void *arg)
     free(read_req);
   }
 
-  /* free the event loop */
-  uv_loop_delete(loop);
+  /* cleanup resources acquired by the event loop */
+  uv_loop_close(&loop);
 }
 
 /* Signal the main thread that the loop started running */
@@ -328,11 +330,12 @@ static void fread_cb(uv_fs_t *req)
   io_notify(&activity);
   relocate();
   io_unlock();
-
   available = BUF_SIZE - in_buffer.apos;
   /* Read more */
-  uv_fs_read(req->loop, req, read_cmd_fd, in_buffer.data + in_buffer.apos,
-      available, in_buffer.fpos, fread_cb);
+  in_buffer.uvbuf.len = available;
+  in_buffer.uvbuf.base = (char *)(in_buffer.data + in_buffer.apos);
+  uv_fs_read(req->loop, req, read_cmd_fd, &in_buffer.uvbuf,
+      in_buffer.uvbuf.len, in_buffer.fpos, fread_cb);
   in_buffer.apos += available;
 }
 
