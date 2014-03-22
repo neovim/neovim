@@ -31,12 +31,12 @@ int mch_chdir(char *path) {
  * Get name of current directory into buffer 'buf' of length 'len' bytes.
  * Return OK for success, FAIL for failure.
  */
-int mch_dirname(char_u *buf, int len)
+int mch_dirname(char_u *buf, size_t len)
 {
   assert(buf && len);
 
   int errno;
-  if ((errno = uv_cwd((char *)buf, len)) != 0) {
+  if ((errno = uv_cwd((char *)buf, &len)) != 0) {
     vim_strncpy(buf, (char_u *)uv_strerror(errno), len - 1);
     return FAIL;
   }

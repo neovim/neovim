@@ -42,8 +42,8 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.21.tar.gz)
-set(LIBUV_MD5 bc334c8da8618754ce9e2a4c5be73487)
+set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.22.tar.gz)
+set(LIBUV_MD5 d0cb0fea847afa35333ccbda56ed16d4)
 
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.2.tar.gz)
 set(LUAJIT_MD5 112dfb82548b03377fbefbba2e0e3a5b)
