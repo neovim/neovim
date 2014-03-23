@@ -18,7 +18,7 @@ set(NEOVIM_VERSION_PATCH 0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_definitions(-Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)
+add_definitions(-Werror -Wall -Wextra -pedantic -Wvla -Wno-unused-parameter -std=gnu99)
 
 add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
