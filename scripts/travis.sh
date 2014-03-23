@@ -25,37 +25,45 @@ check_and_report() {
 # for more information.
 alias make="make -j2"
 
-if [ "$CC" = "clang" ]; then
-	# force using the version installed by 'travis-setup.sh'
-	export CC=/usr/bin/clang
+case $CC in
+	clang-*)
+		install_dir="$(pwd)/dist"
+		# temporary directory for writing sanitizer logs
+		tmpdir="$(pwd)/tmp"
+		rm -rf "$tmpdir"
+		mkdir -p "$tmpdir"
 
-	install_dir="$(pwd)/dist"
-	# temporary directory for writing sanitizer logs
-	tmpdir="$(pwd)/tmp"
-	rm -rf "$tmpdir"
-	mkdir -p "$tmpdir"
+		# need the symbolizer path for stack traces with source information
+		export symbolizer=/usr/bin/llvm-symbolizer-3.4
+		export SKIP_UNITTEST=1
 
-	# need the symbolizer path for stack traces with source information
-	symbolizer=/usr/bin/llvm-symbolizer-3.4
+		if [ "$CC" = "clang-tsan" ]; then
+			export SANITIZE=thread
+			export TSAN_OPTIONS="suppressions=$(pwd)/.tsan-suppress:external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
+		else
+			export SANITIZE=address
+			export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
+			export ASAN_SYMBOLIZER_PATH=$symbolizer
+			export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
+		fi
 
-	export SKIP_UNITTEST=1
-	export SANITIZE=1
-	export ASAN_SYMBOLIZER_PATH=$symbolizer
-	export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
-	export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
-	export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
+		# force using the version installed by 'travis-setup.sh'
+		export CC=/usr/bin/clang
 
-	make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir"
-	make
-	if ! make test; then
-		reset
+		make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir"
+		make
+		if ! make test; then
+			reset
+			check_and_report
+			exit 1
+		fi
 		check_and_report
-	fi
-	check_and_report
-	make install
-else
-	export SKIP_EXEC=1
-	make CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP"
-	make cmake
-	make unittest
-fi
+		make install
+		;;
+	*)
+		export BUSTED_OUTPUT_TYPE="TAP"
+		export SKIP_EXEC=1
+		make cmake
+		make unittest
+		;;
+esac

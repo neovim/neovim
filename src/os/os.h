@@ -3,11 +3,13 @@
 
 #include "vim.h"
 
-long_u mch_total_mem(int special);
-int mch_chdir(char *path);
+void mch_exit(int);
+long_u mch_total_mem(int);
+int mch_chdir(char *);
 int mch_dirname(char_u *buf, size_t len);
 int mch_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
 int mch_is_absolute_path(const char_u *fname);
+
 int mch_isdir(const char_u *name);
 int mch_can_exe(const char_u *name);
 const char *mch_getenv(const char *name);
@@ -22,3 +24,4 @@ int mch_setperm(const char_u *name, int perm);
 int os_file_exists(char_u *name);
 
 #endif
+

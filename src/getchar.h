@@ -1,5 +1,8 @@
 #ifndef NEOVIM_GETCHAR_H
 #define NEOVIM_GETCHAR_H
+
+#include "vim.h"
+
 /* getchar.c */
 void free_buff(struct buffheader *buf);
 char_u *get_recorded(void);
@@ -75,3 +78,4 @@ void init_mappings(void);
 void add_map(char_u *map, int mode);
 /* vim: set ft=c : */
 #endif /* NEOVIM_GETCHAR_H */
+

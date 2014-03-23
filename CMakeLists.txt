@@ -16,6 +16,16 @@ set(NEOVIM_VERSION_MAJOR 0)
 set(NEOVIM_VERSION_MINOR 0)
 set(NEOVIM_VERSION_PATCH 0)
 
+if(DEFINED ENV{STATIC_NEOVIM}) 
+  set(ENV{SKIP_UNITTEST} 1)
+  message(STATUS "Building a static executable")
+  set(CMAKE_EXE_LINKER_FLAGS -static) 
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a) 
+  set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
+  set(CMAKE_SHARED_LIBRARY_C_FLAGS)
+  set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
+endif() 
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_definitions(-Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)

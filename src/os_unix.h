@@ -2,15 +2,11 @@
 #define NEOVIM_OS_UNIX_H
 /* os_unix.c */
 void mch_write(char_u *s, int len);
-int mch_inchar(char_u *buf, int maxlen, long wtime, int tb_change_cnt);
-int mch_char_avail(void);
-void mch_delay(long msec, int ignoreinput);
 void mch_startjmp(void);
 void mch_endjmp(void);
 void mch_didjmp(void);
 void mch_suspend(void);
 void mch_init(void);
-void reset_signals(void);
 int vim_handle_signal(int sig);
 int mch_check_win(int argc, char **argv);
 int mch_input_isatty(void);
@@ -34,9 +30,7 @@ void mch_set_acl(char_u *fname, vim_acl_T aclent);
 void mch_free_acl(vim_acl_T aclent);
 void mch_hide(char_u *name);
 int mch_nodetype(char_u *name);
-void mch_early_init(void);
 void mch_free_mem(void);
-void mch_exit(int r);
 void mch_settmode(int tmode);
 void get_stty(void);
 void mch_setmouse(int on);
@@ -46,7 +40,6 @@ int mch_get_shellsize(void);
 void mch_set_shellsize(void);
 void mch_new_shellsize(void);
 int mch_call_shell(char_u *cmd, int options);
-void mch_breakcheck(void);
 int mch_expandpath(garray_T *gap, char_u *path, int flags);
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,

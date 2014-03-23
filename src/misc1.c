@@ -3779,24 +3779,15 @@ FullName_save (
 
 void prepare_to_exit(void)
 {
-#if defined(SIGHUP) && defined(SIG_IGN)
-  /* Ignore SIGHUP, because a dropped connection causes a read error, which
-   * makes Vim exit and then handling SIGHUP causes various reentrance
-   * problems. */
-  signal(SIGHUP, SIG_IGN);
-#endif
+  windgoto((int)Rows - 1, 0);
 
-  {
-    windgoto((int)Rows - 1, 0);
-
-    /*
-     * Switch terminal mode back now, so messages end up on the "normal"
-     * screen (if there are two screens).
-     */
-    settmode(TMODE_COOK);
-    stoptermcap();
-    out_flush();
-  }
+  /*
+   * Switch terminal mode back now, so messages end up on the "normal"
+   * screen (if there are two screens).
+   */
+  settmode(TMODE_COOK);
+  stoptermcap();
+  out_flush();
 }
 
 /*

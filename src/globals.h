@@ -1131,6 +1131,9 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
 EXTERN int ignored;
 EXTERN char *ignoredp;
 
+/* Temporarily moved these static variables to assist in migrating from
+ * os_unix.c */
+EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 /*
  * Optional Farsi support.  Include it here, so EXTERN and INIT are defined.
  */

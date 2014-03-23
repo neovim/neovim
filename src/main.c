@@ -36,6 +36,7 @@
 #include "ops.h"
 #include "option.h"
 #include "os_unix.h"
+#include "os/io.h"
 #include "quickfix.h"
 #include "screen.h"
 #include "syntax.h"
@@ -156,11 +157,6 @@ static char *(main_errors[]) =
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
-  /*
-   * Do any system-specific initialisations.  These can NOT use IObuff or
-   * NameBuff.  Thus emsg2() cannot be called!
-   */
-  mch_early_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
    * functions without a lot of arguments.  "argc" and "argv" are also
@@ -2168,9 +2164,11 @@ mainerr (
     char_u *str       /* extra argument or NULL */
 )
 {
+  /* TODO Remove ?
 #if defined(UNIX) || defined(__EMX__) || defined(VMS)
-  reset_signals();              /* kill us with CTRL-C here, if you like */
+  reset_signals();              kill us with CTRL-C here, if you like 
 #endif
+  */
 
   mch_errmsg(longVersion);
   mch_errmsg("\n");
@@ -2215,9 +2213,11 @@ static void usage(void)
     N_("-q [errorfile]  edit file with first error")
   };
 
+  /* TODO Remove?
 #if defined(UNIX) || defined(__EMX__) || defined(VMS)
-  reset_signals();              /* kill us with CTRL-C here, if you like */
+  reset_signals();
 #endif
+  */
 
   mch_msg(longVersion);
   mch_msg(_("\n\nusage:"));

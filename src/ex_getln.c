@@ -43,6 +43,7 @@
 #include "regexp.h"
 #include "screen.h"
 #include "search.h"
+#include "signals.h"
 #include "syntax.h"
 #include "tag.h"
 #include "term.h"
@@ -781,6 +782,9 @@ getcmdline (
      * Big switch for a typed command line character.
      */
     switch (c) {
+    case K_SIGNAL:
+      handle_signal();
+      goto cmdline_not_changed;
     case K_BS:
     case Ctrl_H:
     case K_DEL:
