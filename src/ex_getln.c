@@ -11,6 +11,8 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "arabic.h"
 #include "ex_getln.h"
@@ -2331,7 +2333,7 @@ static int prev_ccline_used = FALSE;
 static void save_cmdline(struct cmdline_info *ccp)
 {
   if (!prev_ccline_used) {
-    vim_memset(&prev_ccline, 0, sizeof(struct cmdline_info));
+    memset(&prev_ccline, 0, sizeof(struct cmdline_info));
     prev_ccline_used = TRUE;
   }
   *ccp = prev_ccline;

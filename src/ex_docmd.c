@@ -11,6 +11,8 @@
  * ex_docmd.c: functions for executing an Ex command line.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "ex_docmd.h"
 #include "blowfish.h"
@@ -590,7 +592,7 @@ int flags;
   if (flags & DOCMD_EXCRESET)
     save_dbg_stuff(&debug_saved);
   else
-    vim_memset(&debug_saved, 0, 1);
+    memset(&debug_saved, 0, 1);
 
   initial_trylevel = trylevel;
 
@@ -1310,7 +1312,7 @@ void                *cookie;                    /*argument for fgetline() */
   cmdmod_T save_cmdmod;
   int ni;                                       /* set when Not Implemented */
 
-  vim_memset(&ea, 0, sizeof(ea));
+  memset(&ea, 0, sizeof(ea));
   ea.line1 = 1;
   ea.line2 = 1;
   ++ex_nesting_level;
@@ -1329,7 +1331,7 @@ void                *cookie;                    /*argument for fgetline() */
    * recursive calls.
    */
   save_cmdmod = cmdmod;
-  vim_memset(&cmdmod, 0, sizeof(cmdmod));
+  memset(&cmdmod, 0, sizeof(cmdmod));
 
   /* "#!anything" is handled like a comment. */
   if ((*cmdlinep)[0] == '#' && (*cmdlinep)[1] == '!')
@@ -5797,7 +5799,7 @@ handle_drop (
    * Move to the first file.
    */
   /* Fake up a minimal "next" command for do_argfile() */
-  vim_memset(&ea, 0, sizeof(ea));
+  memset(&ea, 0, sizeof(ea));
   ea.cmd = (char_u *)"next";
   do_argfile(&ea, 0);
 
@@ -6089,7 +6091,7 @@ void tabpage_new(void)
 {
   exarg_T ea;
 
-  vim_memset(&ea, 0, sizeof(ea));
+  memset(&ea, 0, sizeof(ea));
   ea.cmdidx = CMD_tabnew;
   ea.cmd = (char_u *)"tabn";
   ea.arg = (char_u *)"";

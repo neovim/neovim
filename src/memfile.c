@@ -32,6 +32,8 @@
  * file is opened.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "memfile.h"
 #include "fileio.h"
@@ -372,7 +374,7 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
    * Init the data to all zero, to avoid reading uninitialized data.
    * This also avoids that the passwd file ends up in the swap file!
    */
-  (void)vim_memset((char *)(hp->bh_data), 0,
+  (void)memset((char *)(hp->bh_data), 0,
       (size_t)mfp->mf_page_size * page_count);
 
   return hp;
@@ -1151,7 +1153,7 @@ mf_do_open (
  */
 static void mf_hash_init(mf_hashtab_T *mht)
 {
-  vim_memset(mht, 0, sizeof(mf_hashtab_T));
+  memset(mht, 0, sizeof(mf_hashtab_T));
   mht->mht_buckets = mht->mht_small_buckets;
   mht->mht_mask = MHT_INIT_SIZE - 1;
 }
@@ -1284,7 +1286,7 @@ static int mf_hash_grow(mf_hashtab_T *mht)
      * a power of two.
      */
 
-    vim_memset(tails, 0, sizeof(tails));
+    memset(tails, 0, sizeof(tails));
 
     for (mhi = mht->mht_buckets[i]; mhi != NULL; mhi = mhi->mhi_next) {
       j = (mhi->mhi_key >> shift) & (MHT_GROWTH_FACTOR - 1);

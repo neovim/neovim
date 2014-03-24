@@ -11,6 +11,8 @@
  * quickfix.c: functions for quickfix mode, using a file with error messages
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "quickfix.h"
 #include "buffer.h"
@@ -857,7 +859,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
     qi->qf_curlist = LISTCOUNT - 1;
   } else
     qi->qf_curlist = qi->qf_listcount++;
-  vim_memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
+  memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
   if (qf_title != NULL) {
     char_u *p = alloc((int)STRLEN(qf_title) + 2);
 
@@ -984,7 +986,7 @@ static qf_info_T *ll_new_list(void)
 
   qi = (qf_info_T *)alloc((unsigned)sizeof(qf_info_T));
   if (qi != NULL) {
-    vim_memset(qi, 0, (size_t)(sizeof(qf_info_T)));
+    memset(qi, 0, (size_t)(sizeof(qf_info_T)));
     qi->qf_refcount++;
   }
 

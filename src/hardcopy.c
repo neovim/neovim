@@ -11,6 +11,8 @@
  * hardcopy.c: printing to paper
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "version_defs.h"
 #include "hardcopy.h"
@@ -521,7 +523,7 @@ void ex_hardcopy(exarg_T *eap)
   int page_line;
   int jobsplit;
 
-  vim_memset(&settings, 0, sizeof(prt_settings_T));
+  memset(&settings, 0, sizeof(prt_settings_T));
   settings.has_color = TRUE;
 
   if (*eap->arg == '>') {
@@ -625,7 +627,7 @@ void ex_hardcopy(exarg_T *eap)
     prt_pos_T page_prtpos;              /* print position at page start */
     int side;
 
-    vim_memset(&page_prtpos, 0, sizeof(prt_pos_T));
+    memset(&page_prtpos, 0, sizeof(prt_pos_T));
     page_prtpos.file_line = eap->line1;
     prtpos = page_prtpos;
 
@@ -1747,7 +1749,7 @@ static int prt_open_resource(struct prt_ps_resource_S *resource)
     EMSG2(_("E624: Can't open file \"%s\""), resource->filename);
     return FALSE;
   }
-  vim_memset(prt_resfile.buffer, NUL, PRT_FILE_BUFFER_LEN);
+  memset(prt_resfile.buffer, NUL, PRT_FILE_BUFFER_LEN);
 
   /* Parse first line to ensure valid resource file */
   prt_resfile.len = (int)fread((char *)prt_resfile.buffer, sizeof(char_u),

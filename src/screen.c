@@ -87,6 +87,8 @@
  *   update_screen() called to redraw.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "arabic.h"
 #include "screen.h"
@@ -2034,7 +2036,7 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
 
   mch_memmove(ScreenLines + off, buf, (size_t)len);
   if (enc_utf8)
-    vim_memset(ScreenLinesUC + off, 0, sizeof(u8char_T) * (size_t)len);
+    memset(ScreenLinesUC + off, 0, sizeof(u8char_T) * (size_t)len);
   for (i = 0; i < len; ++i)
     ScreenAttrs[off + i] = attr;
 }
@@ -6116,7 +6118,7 @@ retry:
 
   new_ScreenLines = (schar_T *)lalloc((long_u)(
         (Rows + 1) * Columns * sizeof(schar_T)), FALSE);
-  vim_memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
+  memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
   if (enc_utf8) {
     new_ScreenLinesUC = (u8char_T *)lalloc((long_u)(
           (Rows + 1) * Columns * sizeof(u8char_T)), FALSE);
@@ -6197,20 +6199,20 @@ give_up:
        * executing an external command, for the GUI).
        */
       if (!doclear) {
-        (void)vim_memset(new_ScreenLines + new_row * Columns,
+        (void)memset(new_ScreenLines + new_row * Columns,
             ' ', (size_t)Columns * sizeof(schar_T));
         if (enc_utf8) {
-          (void)vim_memset(new_ScreenLinesUC + new_row * Columns,
+          (void)memset(new_ScreenLinesUC + new_row * Columns,
               0, (size_t)Columns * sizeof(u8char_T));
           for (i = 0; i < p_mco; ++i)
-            (void)vim_memset(new_ScreenLinesC[i]
+            (void)memset(new_ScreenLinesC[i]
                 + new_row * Columns,
                 0, (size_t)Columns * sizeof(u8char_T));
         }
         if (enc_dbcs == DBCS_JPNU)
-          (void)vim_memset(new_ScreenLines2 + new_row * Columns,
+          (void)memset(new_ScreenLines2 + new_row * Columns,
               0, (size_t)Columns * sizeof(schar_T));
-        (void)vim_memset(new_ScreenAttrs + new_row * Columns,
+        (void)memset(new_ScreenAttrs + new_row * Columns,
             0, (size_t)Columns * sizeof(sattr_T));
         old_row = new_row + (screen_Rows - Rows);
         if (old_row >= 0 && ScreenLines != NULL) {
@@ -6360,11 +6362,11 @@ static void screenclear2(void)
  */
 static void lineclear(unsigned off, int width)
 {
-  (void)vim_memset(ScreenLines + off, ' ', (size_t)width * sizeof(schar_T));
+  (void)memset(ScreenLines + off, ' ', (size_t)width * sizeof(schar_T));
   if (enc_utf8)
-    (void)vim_memset(ScreenLinesUC + off, 0,
+    (void)memset(ScreenLinesUC + off, 0,
         (size_t)width * sizeof(u8char_T));
-  (void)vim_memset(ScreenAttrs + off, 0, (size_t)width * sizeof(sattr_T));
+  (void)memset(ScreenAttrs + off, 0, (size_t)width * sizeof(sattr_T));
 }
 
 /*
@@ -6373,7 +6375,7 @@ static void lineclear(unsigned off, int width)
  */
 static void lineinvalid(unsigned off, int width)
 {
-  (void)vim_memset(ScreenAttrs + off, -1, (size_t)width * sizeof(sattr_T));
+  (void)memset(ScreenAttrs + off, -1, (size_t)width * sizeof(sattr_T));
 }
 
 /*

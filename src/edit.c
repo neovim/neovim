@@ -11,6 +11,8 @@
  * edit.c: functions for Insert mode
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "edit.h"
 #include "buffer.h"
@@ -3504,7 +3506,7 @@ int ins_compl_add_tv(typval_T *tv, int dir)
       aempty = get_dict_number(tv->vval.v_dict, (char_u *)"empty");
   } else {
     word = get_tv_string_chk(tv);
-    vim_memset(cptext, 0, sizeof(cptext));
+    memset(cptext, 0, sizeof(cptext));
   }
   if (word == NULL || (!aempty && *word == NUL))
     return FAIL;

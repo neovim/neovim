@@ -11,6 +11,8 @@
  * syntax.c: code for syntax highlighting
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "syntax.h"
 #include "charset.h"
@@ -2583,7 +2585,7 @@ static int push_current_state(int idx)
 {
   if (ga_grow(&current_state, 1) == FAIL)
     return FAIL;
-  vim_memset(&CUR_STATE(current_state.ga_len), 0, sizeof(stateitem_T));
+  memset(&CUR_STATE(current_state.ga_len), 0, sizeof(stateitem_T));
   CUR_STATE(current_state.ga_len).si_idx = idx;
   ++current_state.ga_len;
   return OK;
@@ -4375,7 +4377,7 @@ syn_cmd_match (
 
   /* get the pattern. */
   init_syn_patterns();
-  vim_memset(&item, 0, sizeof(item));
+  memset(&item, 0, sizeof(item));
   rest = get_syn_pattern(rest, &item);
   if (vim_regcomp_had_eol() && !(syn_opt_arg.flags & HL_EXCLUDENL))
     syn_opt_arg.flags |= HL_HAS_EOL;
@@ -4898,7 +4900,7 @@ static int syn_add_cluster(char_u *name)
     return 0;
   }
 
-  vim_memset(&(SYN_CLSTR(curwin->w_s)[len]), 0, sizeof(syn_cluster_T));
+  memset(&(SYN_CLSTR(curwin->w_s)[len]), 0, sizeof(syn_cluster_T));
   SYN_CLSTR(curwin->w_s)[len].scl_name = name;
   SYN_CLSTR(curwin->w_s)[len].scl_name_u = vim_strsave_up(name);
   SYN_CLSTR(curwin->w_s)[len].scl_list = NULL;
@@ -6986,7 +6988,7 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
     return 0;
 
   taep = &(((attrentry_T *)table->ga_data)[table->ga_len]);
-  vim_memset(taep, 0, sizeof(attrentry_T));
+  memset(taep, 0, sizeof(attrentry_T));
   taep->ae_attr = aep->ae_attr;
   if (table == &term_attr_table) {
     if (aep->ae_u.term.start == NULL)
@@ -7048,7 +7050,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
     if (char_aep != NULL)
       new_en = *char_aep;
     else {
-      vim_memset(&new_en, 0, sizeof(new_en));
+      memset(&new_en, 0, sizeof(new_en));
       if (char_attr <= HL_ALL)
         new_en.ae_attr = char_attr;
     }
@@ -7073,7 +7075,7 @@ int hl_combine_attr(int char_attr, int prim_attr)
   if (char_aep != NULL)
     new_en = *char_aep;
   else {
-    vim_memset(&new_en, 0, sizeof(new_en));
+    memset(&new_en, 0, sizeof(new_en));
     if (char_attr <= HL_ALL)
       new_en.ae_attr = char_attr;
   }
@@ -7535,7 +7537,7 @@ static int syn_add_group(char_u *name)
     return 0;
   }
 
-  vim_memset(&(HL_TABLE()[highlight_ga.ga_len]), 0, sizeof(struct hl_group));
+  memset(&(HL_TABLE()[highlight_ga.ga_len]), 0, sizeof(struct hl_group));
   HL_TABLE()[highlight_ga.ga_len].sg_name = name;
   HL_TABLE()[highlight_ga.ga_len].sg_name_u = vim_strsave_up(name);
   ++highlight_ga.ga_len;
@@ -7717,7 +7719,7 @@ int highlight_changed(void)
     return FAIL;
   hlcnt = highlight_ga.ga_len;
   if (id_S == 0) {  /* Make sure id_S is always valid to simplify code below */
-    vim_memset(&HL_TABLE()[hlcnt + 9], 0, sizeof(struct hl_group));
+    memset(&HL_TABLE()[hlcnt + 9], 0, sizeof(struct hl_group));
     HL_TABLE()[hlcnt + 9].sg_term = highlight_attr[HLF_S];
     id_S = hlcnt + 10;
   }
@@ -7732,7 +7734,7 @@ int highlight_changed(void)
 
       highlight_user[i] = syn_id2attr(id);
       if (id_SNC == 0) {
-        vim_memset(&hlt[hlcnt + i], 0, sizeof(struct hl_group));
+        memset(&hlt[hlcnt + i], 0, sizeof(struct hl_group));
         hlt[hlcnt + i].sg_term = highlight_attr[HLF_SNC];
         hlt[hlcnt + i].sg_cterm = highlight_attr[HLF_SNC];
         hlt[hlcnt + i].sg_gui = highlight_attr[HLF_SNC];

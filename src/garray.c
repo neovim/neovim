@@ -2,6 +2,8 @@
 ///
 /// Functions for handling growing arrays.
 
+#include <string.h>
+
 #include "vim.h"
 #include "ascii.h"
 #include "misc2.h"
@@ -77,7 +79,7 @@ int ga_grow(garray_T *gap, int n)
       return FAIL;
     }
     old_len = gap->ga_itemsize * gap->ga_maxlen;
-    vim_memset(pp + old_len, 0, new_len - old_len);
+    memset(pp + old_len, 0, new_len - old_len);
     gap->ga_maxlen = gap->ga_len + n;
     gap->ga_data = pp;
   }

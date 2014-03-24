@@ -16,6 +16,8 @@
  * mappings and abbreviations
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "getchar.h"
 #include "charset.h"
@@ -3073,7 +3075,7 @@ static void map_free(mapblock_T **mpp)
 static void validate_maphash(void)
 {
   if (!maphash_valid) {
-    vim_memset(maphash, 0, sizeof(maphash));
+    memset(maphash, 0, sizeof(maphash));
     maphash_valid = TRUE;
   }
 }

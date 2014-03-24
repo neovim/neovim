@@ -1163,12 +1163,6 @@ void mch_memmove(void *, void *, size_t);
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#ifdef HAVE_MEMSET
-# define vim_memset(ptr, c, size)   memset((ptr), (c), (size))
-#else
-void *vim_memset(void *, int, size_t);
-#endif
-
 #ifdef HAVE_MEMCMP
 # define vim_memcmp(p1, p2, len)   memcmp((p1), (p2), (len))
 #else

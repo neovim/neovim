@@ -13,6 +13,8 @@
 
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
+#include <string.h>
+
 #include "vim.h"
 #include "message.h"
 #include "charset.h"
@@ -3861,7 +3863,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           if (str_l < str_m) {
             size_t avail = str_m - str_l;
 
-            vim_memset(str + str_l, zero_padding ? '0' : ' ',
+            memset(str + str_l, zero_padding ? '0' : ' ',
                 (size_t)pn > avail ? avail
                 : (size_t)pn);
           }
@@ -3898,7 +3900,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           if (str_l < str_m) {
             size_t avail = str_m-str_l;
 
-            vim_memset(str + str_l, '0',
+            memset(str + str_l, '0',
                 (size_t)zn > avail ? avail
                 : (size_t)zn);
           }
@@ -3933,7 +3935,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           if (str_l < str_m) {
             size_t avail = str_m - str_l;
 
-            vim_memset(str + str_l, ' ',
+            memset(str + str_l, ' ',
                 (size_t)pn > avail ? avail
                 : (size_t)pn);
           }

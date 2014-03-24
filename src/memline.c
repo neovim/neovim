@@ -42,6 +42,8 @@
  *  mf_get().
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "memline.h"
 #include "blowfish.h"
@@ -4217,7 +4219,7 @@ char_u *ml_encrypt_data(memfile_T *mfp, char_u *data, off_t offset, unsigned siz
 
   /* Clear the gap. */
   if (head_end < text_start)
-    vim_memset(new_data + (head_end - data), 0, text_start - head_end);
+    memset(new_data + (head_end - data), 0, text_start - head_end);
 
   return new_data;
 }

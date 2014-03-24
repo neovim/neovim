@@ -11,6 +11,8 @@
  * eval.c: Expression evaluation.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "eval.h"
 #include "buffer.h"
@@ -2333,7 +2335,7 @@ get_lval (
   int quiet = flags & GLV_QUIET;
 
   /* Clear everything in "lp". */
-  vim_memset(lp, 0, sizeof(lval_T));
+  memset(lp, 0, sizeof(lval_T));
 
   if (skip) {
     /* When skipping just find the end of the name. */
@@ -14431,7 +14433,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
   lnum = get_tv_lnum(argvars);                  /* -1 on type error */
   col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
 
-  vim_memset(str, NUL, sizeof(str));
+  memset(str, NUL, sizeof(str));
 
   if (rettv_list_alloc(rettv) != FAIL) {
     if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
@@ -16112,7 +16114,7 @@ void clear_tv(typval_T *varp)
 static void init_tv(typval_T *varp)
 {
   if (varp != NULL)
-    vim_memset(varp, 0, sizeof(typval_T));
+    memset(varp, 0, sizeof(typval_T));
 }
 
 /*
@@ -17691,7 +17693,7 @@ trans_function_name (
   lval_T lv;
 
   if (fdp != NULL)
-    vim_memset(fdp, 0, sizeof(funcdict_T));
+    memset(fdp, 0, sizeof(funcdict_T));
   start = *pp;
 
   /* Check for hard coded <SNR>: already translated function ID (from a user
@@ -18476,7 +18478,7 @@ call_user_func (
   v->di_tv.v_type = VAR_LIST;
   v->di_tv.v_lock = VAR_FIXED;
   v->di_tv.vval.v_list = &fc->l_varlist;
-  vim_memset(&fc->l_varlist, 0, sizeof(list_T));
+  memset(&fc->l_varlist, 0, sizeof(list_T));
   fc->l_varlist.lv_refcount = DO_NOT_FREE_CNT;
   fc->l_varlist.lv_lock = VAR_FIXED;
 

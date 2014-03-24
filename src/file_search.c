@@ -44,6 +44,8 @@
  *	functions.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "file_search.h"
 #include "charset.h"
@@ -278,7 +280,7 @@ vim_findfile_init (
     search_ctx = (ff_search_ctx_T*)alloc((unsigned)sizeof(ff_search_ctx_T));
     if (search_ctx == NULL)
       goto error_return;
-    vim_memset(search_ctx, 0, sizeof(ff_search_ctx_T));
+    memset(search_ctx, 0, sizeof(ff_search_ctx_T));
   }
   search_ctx->ffsc_find_what = find_what;
   search_ctx->ffsc_tagfile = tagfile;
