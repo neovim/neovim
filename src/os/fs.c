@@ -140,7 +140,7 @@ int mch_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
   char_u *p;
   *buf = NUL;
 
-  char relative_directory[len];
+  char relative_directory[MAXPATHL];
   char *end_of_path = (char *) fname;
 
   /* expand it if forced or not an absolute path */
