@@ -30,6 +30,7 @@
 #include "normal.h"
 #include "option.h"
 #include "os_unix.h"
+#include "os/time.h"
 #include "screen.h"
 #include "term.h"
 #include "window.h"

@@ -9,6 +9,8 @@
 #ifndef NEOVIM_GLOBALS_H
 #define NEOVIM_GLOBALS_H
 
+#include <stdbool.h>
+
 #include "ex_eval.h"
 #include "mbyte.h"
 #include "menu.h"
@@ -1130,6 +1132,12 @@ EXTERN FILE *time_fd INIT(= NULL);  /* where to write startup timing */
  */
 EXTERN int ignored;
 EXTERN char *ignoredp;
+
+/* Temporarily moved these static variables to assist in migrating from
+ * os_unix.c */
+EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
+/* volatile because it is used in signal handler deathtrap(). */
+EXTERN volatile bool in_mch_delay INIT(= false);  /* sleeping in mch_delay() */
 
 /*
  * Optional Farsi support.  Include it here, so EXTERN and INIT are defined.

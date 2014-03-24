@@ -46,6 +46,7 @@
 #include "ui.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/time.h"
 
 #ifdef HAVE_TGETENT
 # ifdef HAVE_TERMIOS_H
