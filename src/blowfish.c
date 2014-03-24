@@ -11,6 +11,8 @@
  * Based on http://www.schneier.com/blowfish.html by Bruce Schneier.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "blowfish.h"
 #include "message.h"
@@ -500,7 +502,7 @@ static char_u ofb_buffer[BF_OFB_LEN]; // 64 bytes
 void bf_ofb_init(char_u *iv, int iv_len)
 {
   randbyte_offset = update_offset = 0;
-  vim_memset(ofb_buffer, 0, BF_OFB_LEN);
+  memset(ofb_buffer, 0, BF_OFB_LEN);
 
   if (iv_len > 0) {
     int mi = iv_len > BF_OFB_LEN ? iv_len : BF_OFB_LEN;

@@ -11,6 +11,8 @@
  * Code to handle tags and the tag stack
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "tag.h"
 #include "buffer.h"
@@ -1239,7 +1241,7 @@ find_tags (
 
   /* This is only to avoid a compiler warning for using search_info
    * uninitialised. */
-  vim_memset(&search_info, 0, (size_t)1);
+  memset(&search_info, 0, (size_t)1);
 
   /*
    * When finding a specified number of matches, first try with matching
@@ -2087,7 +2089,7 @@ get_tagfname (
   char_u              *r_ptr;
 
   if (first)
-    vim_memset(tnp, 0, sizeof(tagname_T));
+    memset(tnp, 0, sizeof(tagname_T));
 
   if (curbuf->b_help) {
     /*

@@ -2,6 +2,8 @@
 ///
 /// Code related to character sets.
 
+#include <string.h>
+
 #include "vim.h"
 #include "charset.h"
 #include "main.h"
@@ -128,7 +130,7 @@ int buf_init_chartab(buf_T *buf, int global)
   }
 
   // Init word char flags all to FALSE
-  vim_memset(buf->b_chartab, 0, (size_t)32);
+  memset(buf->b_chartab, 0, (size_t)32);
 
   if (enc_dbcs != 0) {
     for (c = 0; c < 256; ++c) {

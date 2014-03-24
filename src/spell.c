@@ -297,6 +297,8 @@
  *			    few bytes as possible, see offset2bytes())
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "spell.h"
 #include "buffer.h"
@@ -1047,7 +1049,7 @@ spell_check (
   if (wp->w_s->b_langp.ga_len == 0)
     return 1;
 
-  vim_memset(&mi, 0, sizeof(matchinf_T));
+  memset(&mi, 0, sizeof(matchinf_T));
 
   /* A number is always OK.  Also skip hexadecimal numbers 0xFF99 and
    * 0X99FF.  But always do check spelling to find "3GPP" and "11
@@ -2274,7 +2276,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
      * concatenate. */
     n = (int)(p - line) + 1;
     if (n < maxlen - 1) {
-      vim_memset(buf, ' ', n);
+      memset(buf, ' ', n);
       vim_strncpy(buf +  n, p, maxlen - 1 - n);
     }
   }
@@ -3536,7 +3538,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     ga_init2(gap, sizeof(int *), 1);
     if (ga_grow(gap, 256) == FAIL)
       return SP_OTHERERROR;
-    vim_memset(gap->ga_data, 0, sizeof(int *) * 256);
+    memset(gap->ga_data, 0, sizeof(int *) * 256);
     gap->ga_len = 256;
 
     /* First count the number of items for each list.  Temporarily use
@@ -3562,7 +3564,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
 
     /* Put the characters up to 255 in sl_sal_first[] the rest in a sl_sal
      * list. */
-    vim_memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
+    memset(lp->sl_sal_first, 0, sizeof(salfirst_T) * 256);
     for (p = from, s = to; *p != NUL && *s != NUL; ) {
       c = mb_cptr2char_adv(&p);
       i = mb_cptr2char_adv(&s);
@@ -4108,7 +4110,7 @@ theend:
  */
 static void clear_midword(win_T *wp)
 {
-  vim_memset(wp->w_s->b_spell_ismw, 0, 256);
+  memset(wp->w_s->b_spell_ismw, 0, 256);
   vim_free(wp->w_s->b_spell_ismw_mb);
   wp->w_s->b_spell_ismw_mb = NULL;
 }
@@ -6913,7 +6915,7 @@ static wordnode_T *get_wordnode(spellinfo_T *spin)
   else {
     n = spin->si_first_free;
     spin->si_first_free = n->wn_child;
-    vim_memset(n, 0, sizeof(wordnode_T));
+    memset(n, 0, sizeof(wordnode_T));
     --spin->si_free_count;
   }
 #ifdef SPELL_PRINTTREE
@@ -8167,7 +8169,7 @@ mkspell (
   int error = FALSE;
   spellinfo_T spin;
 
-  vim_memset(&spin, 0, sizeof(spin));
+  memset(&spin, 0, sizeof(spin));
   spin.si_verbose = !added_word;
   spin.si_ascii = ascii;
   spin.si_followup = TRUE;
@@ -8641,8 +8643,8 @@ static void clear_spell_chartab(spelltab_T *sp)
   int i;
 
   /* Init everything to FALSE. */
-  vim_memset(sp->st_isw, FALSE, sizeof(sp->st_isw));
-  vim_memset(sp->st_isu, FALSE, sizeof(sp->st_isu));
+  memset(sp->st_isw, FALSE, sizeof(sp->st_isw));
+  memset(sp->st_isu, FALSE, sizeof(sp->st_isu));
   for (i = 0; i < 256; ++i) {
     sp->st_fold[i] = i;
     sp->st_upper[i] = i;
@@ -9471,7 +9473,7 @@ spell_find_suggest (
   /*
    * Set the info in "*su".
    */
-  vim_memset(su, 0, sizeof(suginfo_T));
+  memset(su, 0, sizeof(suginfo_T));
   ga_init2(&su->su_ga, (int)sizeof(suggest_T), 10);
   ga_init2(&su->su_sga, (int)sizeof(suggest_T), 10);
   if (*badptr == NUL)
@@ -10150,7 +10152,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
    */
   depth = 0;
   sp = &stack[0];
-  vim_memset(sp, 0, sizeof(trystate_T));
+  memset(sp, 0, sizeof(trystate_T));
   sp->ts_curi = 1;
 
   if (soundfold) {

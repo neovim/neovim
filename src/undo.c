@@ -81,6 +81,8 @@
 #define UH_MAGIC 0x18dade       /* value for uh_magic when in use */
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
+#include <string.h>
+
 #include "vim.h"
 #include "undo.h"
 #include "edit.h"
@@ -579,7 +581,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   uep = (u_entry_T *)U_ALLOC_LINE(sizeof(u_entry_T));
   if (uep == NULL)
     goto nomem;
-  vim_memset(uep, 0, sizeof(u_entry_T));
+  memset(uep, 0, sizeof(u_entry_T));
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
 #endif
@@ -919,7 +921,7 @@ static u_header_T *unserialize_uhp(FILE *fp, char_u *file_name)
   uhp = (u_header_T *)U_ALLOC_LINE(sizeof(u_header_T));
   if (uhp == NULL)
     return NULL;
-  vim_memset(uhp, 0, sizeof(u_header_T));
+  memset(uhp, 0, sizeof(u_header_T));
 #ifdef U_DEBUG
   uhp->uh_magic = UH_MAGIC;
 #endif
@@ -1017,7 +1019,7 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   uep = (u_entry_T *)U_ALLOC_LINE(sizeof(u_entry_T));
   if (uep == NULL)
     return NULL;
-  vim_memset(uep, 0, sizeof(u_entry_T));
+  memset(uep, 0, sizeof(u_entry_T));
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
 #endif
@@ -1031,7 +1033,7 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
       *error = TRUE;
       return uep;
     }
-    vim_memset(array, 0, sizeof(char_u *) * uep->ue_size);
+    memset(array, 0, sizeof(char_u *) * uep->ue_size);
   } else
     array = NULL;
   uep->ue_array = array;

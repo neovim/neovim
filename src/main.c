@@ -8,6 +8,8 @@
  */
 
 #define EXTERN
+#include <string.h>
+
 #include "vim.h"
 #include "main.h"
 #include "blowfish.h"
@@ -1493,7 +1495,7 @@ scripterror:
  * copied, so that they can be changed. */
 static void init_params(mparm_T *paramp, int argc, char **argv)
 {
-  vim_memset(paramp, 0, sizeof(*paramp));
+  memset(paramp, 0, sizeof(*paramp));
   paramp->argc = argc;
   paramp->argv = argv;
   paramp->want_full_screen = TRUE;

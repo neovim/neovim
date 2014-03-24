@@ -10,6 +10,8 @@
 /*
  * misc2.c: Various functions.
  */
+#include <string.h>
+
 #include "vim.h"
 #include "misc2.h"
 #include "file_search.h"
@@ -716,7 +718,7 @@ char_u *alloc_clear(unsigned size)
 
   p = lalloc((long_u)size, TRUE);
   if (p != NULL)
-    (void)vim_memset(p, 0, (size_t)size);
+    (void)memset(p, 0, (size_t)size);
   return p;
 }
 
@@ -745,7 +747,7 @@ char_u *lalloc_clear(long_u size, int message)
 
   p = (lalloc(size, message));
   if (p != NULL)
-    (void)vim_memset(p, 0, (size_t)size);
+    (void)memset(p, 0, (size_t)size);
   return p;
 }
 
@@ -1405,20 +1407,6 @@ void vim_free(void *x)
     free(x);
   }
 }
-
-#ifndef HAVE_MEMSET
-void * vim_memset(ptr, c, size)
-void    *ptr;
-int c;
-size_t size;
-{
-  char *p = ptr;
-
-  while (size-- > 0)
-    *p++ = c;
-  return ptr;
-}
-#endif
 
 #ifdef VIM_MEMCMP
 /*

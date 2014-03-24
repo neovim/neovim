@@ -3544,10 +3544,10 @@ static void clear_sub(regsub_T *sub)
 {
   if (REG_MULTI)
     /* Use 0xff to set lnum to -1 */
-    vim_memset(sub->list.multi, 0xff,
+    memset(sub->list.multi, 0xff,
         sizeof(struct multipos) * nfa_nsubexpr);
   else
-    vim_memset(sub->list.line, 0, sizeof(struct linepos) * nfa_nsubexpr);
+    memset(sub->list.line, 0, sizeof(struct linepos) * nfa_nsubexpr);
   sub->in_use = 0;
 }
 

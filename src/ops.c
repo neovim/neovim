@@ -12,6 +12,8 @@
  *	  op_change, op_yank, do_put, do_join
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "ops.h"
 #include "buffer.h"
@@ -382,7 +384,7 @@ static void shift_block(oparg_T *oap, int amount)
     newp = alloc_check((unsigned)(bd.textcol + i + j + len));
     if (newp == NULL)
       return;
-    vim_memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
+    memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
     mch_memmove(newp, oldp, (size_t)bd.textcol);
     copy_chars(newp + bd.textcol, (size_t)i, TAB);
     copy_spaces(newp + bd.textcol + i, (size_t)j);
@@ -1778,7 +1780,7 @@ int op_replace(oparg_T *oap, int c)
       newp = alloc_check((unsigned)oldlen + 1 + n);
       if (newp == NULL)
         continue;
-      vim_memset(newp, NUL, (size_t)(oldlen + 1 + n));
+      memset(newp, NUL, (size_t)(oldlen + 1 + n));
       /* copy up to deleted part */
       mch_memmove(newp, oldp, (size_t)bd.textcol);
       oldp += bd.textcol + bd.textlen;
@@ -4985,7 +4987,7 @@ str_to_reg (
 
 void clear_oparg(oparg_T *oap)
 {
-  vim_memset(oap, 0, sizeof(oparg_T));
+  memset(oap, 0, sizeof(oparg_T));
 }
 
 static long line_count_info(char_u *line, long *wc, long *cc,

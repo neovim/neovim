@@ -13,6 +13,8 @@
 ///  2. sha2_seed() generates a random header.
 /// sha256_self_test() is implicitly called once.
 
+#include <string.h>
+
 #include "vim.h"
 #include "sha256.h"
 
@@ -342,7 +344,7 @@ int sha256_self_test(void)
       STRCPY(output, hexit);
     } else {
       sha256_start(&ctx);
-      vim_memset(buf, 'a', 1000);
+      memset(buf, 'a', 1000);
 
       for (j = 0; j < 1000; j++) {
         sha256_update(&ctx, (char_u *) buf, 1000);

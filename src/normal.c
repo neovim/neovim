@@ -12,6 +12,8 @@
  *		the operators.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "normal.h"
 #include "buffer.h"
@@ -521,7 +523,7 @@ normal_cmd (
   int idx;
   int set_prevcount = FALSE;
 
-  vim_memset(&ca, 0, sizeof(ca));       /* also resets ca.retval */
+  memset(&ca, 0, sizeof(ca));       /* also resets ca.retval */
   ca.oap = oap;
 
   /* Use a count remembered from before entering an operator.  After typing
@@ -4338,7 +4340,7 @@ void do_nv_ident(int c1, int c2)
   cmdarg_T ca;
 
   clear_oparg(&oa);
-  vim_memset(&ca, 0, sizeof(ca));
+  memset(&ca, 0, sizeof(ca));
   ca.oap = &oa;
   ca.cmdchar = c1;
   ca.nchar = c2;

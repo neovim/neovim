@@ -18,6 +18,8 @@
 /// of the entries is empty to keep the lookup efficient (at the cost of extra
 /// memory).
 
+#include <string.h>
+
 #include "vim.h"
 #include "hashtab.h"
 #include "message.h"
@@ -35,7 +37,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems);
 void hash_init(hashtab_T *ht)
 {
   // This zeroes all "ht_" entries and all the "hi_key" in "ht_smallarray".
-  vim_memset(ht, 0, sizeof(hashtab_T));
+  memset(ht, 0, sizeof(hashtab_T));
   ht->ht_array = ht->ht_smallarray;
   ht->ht_mask = HT_INIT_SIZE - 1;
 }
@@ -356,7 +358,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
     }
     oldarray = ht->ht_array;
   }
-  vim_memset(newarray, 0, (size_t)(sizeof(hashitem_T) * newsize));
+  memset(newarray, 0, (size_t)(sizeof(hashitem_T) * newsize));
 
   // Move all the items from the old array to the new one, placing them in
   // the right spot.  The new array won't have any removed items, thus this

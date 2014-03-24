@@ -12,6 +12,8 @@
  * fold.c: code for folding
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "fold.h"
 #include "charset.h"
@@ -1725,7 +1727,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
     level = foldinfo->fi_level;
     if (level > (int)sizeof(dashes) - 1)
       level = (int)sizeof(dashes) - 1;
-    vim_memset(dashes, '-', (size_t)level);
+    memset(dashes, '-', (size_t)level);
     dashes[level] = NUL;
     set_vim_var_string(VV_FOLDDASHES, dashes, -1);
     set_vim_var_nr(VV_FOLDLEVEL, (long)level);
