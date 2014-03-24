@@ -29,6 +29,7 @@
 
 #include "vim.h"
 #include "os_unix.h"
+#include "os/time.h"
 #include "buffer.h"
 #include "charset.h"
 #include "eval.h"
@@ -47,6 +48,7 @@
 #include "term.h"
 #include "ui.h"
 #include "os/os.h"
+#include "os/time.h"
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
@@ -141,10 +143,6 @@ static char_u   *extra_shell_arg = NULL;
 static int show_shell_mess = TRUE;
 /* volatile because it is used in signal handler deathtrap(). */
 static volatile int deadly_signal = 0;      /* The signal we caught */
-/* volatile because it is used in signal handler deathtrap(). */
-static volatile int in_mch_delay = FALSE;    /* sleeping in mch_delay() */
-
-static int curr_tmode = TMODE_COOK;     /* contains current terminal mode */
 
 
 #ifdef SYS_SIGLIST_DECLARED
@@ -339,64 +337,6 @@ static void handle_resize()
 int mch_char_avail()
 {
   return WaitForChar(0L);
-}
-
-void mch_delay(long msec, int ignoreinput)
-{
-  int old_tmode;
-
-  if (ignoreinput) {
-    /* Go to cooked mode without echo, to allow SIGINT interrupting us
-     * here.  But we don't want QUIT to kill us (CTRL-\ used in a
-     * shell may produce SIGQUIT). */
-    in_mch_delay = TRUE;
-    old_tmode = curr_tmode;
-    if (curr_tmode == TMODE_RAW)
-      settmode(TMODE_SLEEP);
-
-    /*
-     * Everybody sleeps in a different way...
-     * Prefer nanosleep(), some versions of usleep() can only sleep up to
-     * one second.
-     */
-#ifdef HAVE_NANOSLEEP
-    {
-      struct timespec ts;
-
-      ts.tv_sec = msec / 1000;
-      ts.tv_nsec = (msec % 1000) * 1000000;
-      (void)nanosleep(&ts, NULL);
-    }
-#else
-# ifdef HAVE_USLEEP
-    while (msec >= 1000) {
-      usleep((unsigned int)(999 * 1000));
-      msec -= 999;
-    }
-    usleep((unsigned int)(msec * 1000));
-# else
-#  ifndef HAVE_SELECT
-    poll(NULL, 0, (int)msec);
-#  else
-    {
-      struct timeval tv;
-
-      tv.tv_sec = msec / 1000;
-      tv.tv_usec = (msec % 1000) * 1000;
-      /*
-       * NOTE: Solaris 2.6 has a bug that makes select() hang here.  Get
-       * a patch from Sun to fix this.  Reported by Gunnar Pedersen.
-       */
-      select(0, NULL, NULL, NULL, &tv);
-    }
-#  endif /* HAVE_SELECT */
-# endif /* HAVE_NANOSLEEP */
-#endif /* HAVE_USLEEP */
-
-    settmode(old_tmode);
-    in_mch_delay = FALSE;
-  } else
-    WaitForChar(msec);
 }
 
 #if defined(HAVE_SIGALTSTACK) || defined(HAVE_SIGSTACK)
@@ -1307,6 +1247,8 @@ void mch_early_init()
   signal_stack = (char *)alloc(SIGSTKSZ);
   init_signal_stack();
 #endif
+
+  time_init();
 }
 
 #if defined(EXITFREE) || defined(PROTO)
