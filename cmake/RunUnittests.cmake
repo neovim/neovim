@@ -6,4 +6,9 @@ set(ENV{TEST_INCLUDES} ${TEST_INCLUDES})
 execute_process(
   COMMAND ${BUSTED_PRG} -l ${LUAJIT_PRG} -o ${BUSTED_OUTPUT_TYPE}
     --pattern=.moon ${TEST_DIR}
-  WORKING_DIRECTORY ${WORKING_DIR})
+  WORKING_DIRECTORY ${WORKING_DIR}
+  RESULT_VARIABLE res)
+
+if(NOT res EQUAL 0)
+  message(FATAL_ERROR "Unit tests failed.")
+endif()
