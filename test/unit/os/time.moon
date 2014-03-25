@@ -4,6 +4,9 @@
 time = cimport './src/os/time.h'
 
 describe 'time function', ->
+  setup ->
+    time.time_init!
+
   describe 'mch_delay', ->
     mch_delay = (ms) ->
       time.mch_delay ms, false
