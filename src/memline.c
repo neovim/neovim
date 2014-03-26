@@ -4371,7 +4371,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     if (buf->b_ml.ml_usedchunks + 1 >= buf->b_ml.ml_numchunks) {
       buf->b_ml.ml_numchunks = buf->b_ml.ml_numchunks * 3 / 2;
       buf->b_ml.ml_chunksize = (chunksize_T *)
-                               vim_realloc(buf->b_ml.ml_chunksize,
+                               realloc(buf->b_ml.ml_chunksize,
           sizeof(chunksize_T) * buf->b_ml.ml_numchunks);
       if (buf->b_ml.ml_chunksize == NULL) {
         /* Hmmmm, Give up on offset for this buffer */

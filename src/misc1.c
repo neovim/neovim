@@ -2417,7 +2417,7 @@ int get_keystroke(void)
       /* Need some more space. This might happen when receiving a long
        * escape sequence. */
       buflen += 100;
-      buf = vim_realloc(buf, buflen);
+      buf = realloc(buf, buflen);
       maxlen = (buflen - 6 - len) / 3;
     }
     if (buf == NULL) {

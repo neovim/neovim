@@ -73,7 +73,7 @@ int ga_grow(garray_T *gap, int n)
     new_len = gap->ga_itemsize * (gap->ga_len + n);
     pp = (gap->ga_data == NULL)
          ? alloc((unsigned)new_len)
-         : vim_realloc(gap->ga_data, new_len);
+         : realloc(gap->ga_data, new_len);
 
     if (pp == NULL) {
       return FAIL;
