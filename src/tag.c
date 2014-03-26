@@ -2026,7 +2026,7 @@ findtag_end:
         /* To avoid allocating memory again we turn the struct
          * match_found into a string.  For help the priority was not
          * included in the length. */
-        mch_memmove(mfp, mfp->match,
+        memmove(mfp, mfp->match,
             (size_t)(mfp->len + (help_only ? ML_HELP_LEN : 0)));
         matches[match_count++] = (char_u *)mfp;
       }
@@ -2984,14 +2984,14 @@ expand_tags (
     for (i = 0; i < *num_file; i++) {
       parse_match((*file)[i], &t_p);
       c = (int)(t_p.tagname_end - t_p.tagname);
-      mch_memmove(tagnm, t_p.tagname, (size_t)c);
+      memmove(tagnm, t_p.tagname, (size_t)c);
       tagnm[c++] = 0;
       tagnm[c++] = (t_p.tagkind != NULL && *t_p.tagkind)
                    ? *t_p.tagkind : 'f';
       tagnm[c++] = 0;
-      mch_memmove((*file)[i] + c, t_p.fname, t_p.fname_end - t_p.fname);
+      memmove((*file)[i] + c, t_p.fname, t_p.fname_end - t_p.fname);
       (*file)[i][c + (t_p.fname_end - t_p.fname)] = 0;
-      mch_memmove((*file)[i], tagnm, (size_t)c);
+      memmove((*file)[i], tagnm, (size_t)c);
     }
   }
   return ret;

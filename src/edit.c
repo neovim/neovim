@@ -6298,7 +6298,7 @@ replace_push (
       return;
     }
     if (replace_stack != NULL) {
-      mch_memmove(p, replace_stack,
+      memmove(p, replace_stack,
           (size_t)(replace_stack_nr * sizeof(char_u)));
       vim_free(replace_stack);
     }
@@ -6306,7 +6306,7 @@ replace_push (
   }
   p = replace_stack + replace_stack_nr - replace_offset;
   if (replace_offset)
-    mch_memmove(p + 1, p, (size_t)(replace_offset * sizeof(char_u)));
+    memmove(p + 1, p, (size_t)(replace_offset * sizeof(char_u)));
   *p = c;
   ++replace_stack_nr;
 }
@@ -6352,7 +6352,7 @@ replace_join (
   for (i = replace_stack_nr; --i >= 0; )
     if (replace_stack[i] == NUL && off-- <= 0) {
       --replace_stack_nr;
-      mch_memmove(replace_stack + i, replace_stack + i + 1,
+      memmove(replace_stack + i, replace_stack + i + 1,
           (size_t)(replace_stack_nr - i));
       return;
     }

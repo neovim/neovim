@@ -10,6 +10,8 @@
  * search.c: code for normal mode searching commands
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "search.h"
 #include "charset.h"
@@ -247,7 +249,7 @@ char_u *reverse_text(char_u *s)
 
         mb_len = (*mb_ptr2len)(s + s_i);
         rev_i -= mb_len;
-        mch_memmove(rev + rev_i, s + s_i, mb_len);
+        memmove(rev + rev_i, s + s_i, mb_len);
         s_i += mb_len - 1;
       } else
         rev[--rev_i] = s[s_i];

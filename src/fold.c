@@ -624,7 +624,7 @@ void foldCreate(linenr_T start, linenr_T end)
       if (end_rel < fp[cont - 1].fd_top + fp[cont - 1].fd_len - 1)
         end_rel = fp[cont - 1].fd_top + fp[cont - 1].fd_len - 1;
       /* Move contained folds to inside new fold. */
-      mch_memmove(fold_ga.ga_data, fp, sizeof(fold_T) * cont);
+      memmove(fold_ga.ga_data, fp, sizeof(fold_T) * cont);
       fold_ga.ga_len += cont;
       i += cont;
 
@@ -635,7 +635,7 @@ void foldCreate(linenr_T start, linenr_T end)
     }
     /* Move remaining entries to after the new fold. */
     if (i < gap->ga_len)
-      mch_memmove(fp + 1, (fold_T *)gap->ga_data + i,
+      memmove(fp + 1, (fold_T *)gap->ga_data + i,
           sizeof(fold_T) * (gap->ga_len - i));
     gap->ga_len = gap->ga_len + 1 - cont;
 
@@ -1302,7 +1302,7 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
     deleteFoldRecurse(&fp->fd_nested);
     --gap->ga_len;
     if (idx < gap->ga_len)
-      mch_memmove(fp, fp + 1, sizeof(fold_T) * (gap->ga_len - idx));
+      memmove(fp, fp + 1, sizeof(fold_T) * (gap->ga_len - idx));
   } else {
     /* Move nested folds one level up, to overwrite the fold that is
      * deleted. */
@@ -1323,10 +1323,10 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
 
       /* move the existing folds down to make room */
       if (idx + 1 < gap->ga_len)
-        mch_memmove(fp + moved, fp + 1,
+        memmove(fp + moved, fp + 1,
             sizeof(fold_T) * (gap->ga_len - (idx + 1)));
       /* move the contained folds one level up */
-      mch_memmove(fp, nfp, (size_t)(sizeof(fold_T) * moved));
+      memmove(fp, nfp, (size_t)(sizeof(fold_T) * moved));
       vim_free(nfp);
       gap->ga_len += moved - 1;
     }
@@ -2516,7 +2516,7 @@ static int foldInsert(garray_T *gap, int i)
     return FAIL;
   fp = (fold_T *)gap->ga_data + i;
   if (i < gap->ga_len)
-    mch_memmove(fp + 1, fp, sizeof(fold_T) * (gap->ga_len - i));
+    memmove(fp + 1, fp, sizeof(fold_T) * (gap->ga_len - i));
   ++gap->ga_len;
   ga_init2(&fp->fd_nested, (int)sizeof(fold_T), 10);
   return OK;

@@ -1058,7 +1058,7 @@ typedef enum {
 #endif
 
 /* Like strcpy() but allows overlapped source and destination. */
-#define STRMOVE(d, s)       mch_memmove((d), (s), STRLEN(s) + 1)
+#define STRMOVE(d, s)       memmove((d), (s), STRLEN(s) + 1)
 
 #ifdef HAVE_STRNCASECMP
 # define STRNICMP(d, s, n)  strncasecmp((char *)(d), (char *)(s), (size_t)(n))
@@ -1143,17 +1143,6 @@ typedef unsigned short disptick_T;      /* display tick type */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
 
 typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
-
-/*
- * Include a prototype for mch_memmove(), it may not be in alloc.pro.
- */
-#ifdef VIM_MEMMOVE
-void mch_memmove(void *, void *, size_t);
-#else
-# ifndef mch_memmove
-#  define mch_memmove(to, from, len) memmove(to, from, len)
-# endif
-#endif
 
 /*
  * fnamecmp() is used to compare file names.

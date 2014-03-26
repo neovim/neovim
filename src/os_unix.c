@@ -27,6 +27,8 @@
  */
 # define select select_declared_wrong
 
+#include <string.h>
+
 #include "vim.h"
 #include "os_unix.h"
 #include "os/time.h"
@@ -2189,7 +2191,7 @@ int options;                    /* SHELL_*, see vim.h */
                 if (ta_buf[i] == CSI && len - i > 2) {
                   c = TERMCAP2KEY(ta_buf[i + 1], ta_buf[i + 2]);
                   if (c == K_DEL || c == K_KDEL || c == K_BS) {
-                    mch_memmove(ta_buf + i + 1, ta_buf + i + 3,
+                    memmove(ta_buf + i + 1, ta_buf + i + 3,
                         (size_t)(len - i - 2));
                     if (c == K_DEL || c == K_KDEL)
                       ta_buf[i] = DEL;
@@ -2239,7 +2241,7 @@ int options;                    /* SHELL_*, see vim.h */
                 len = write(toshell_fd, (char *)ta_buf, (size_t)1);
                 if (len > 0) {
                   ta_len -= len;
-                  mch_memmove(ta_buf, ta_buf + len, ta_len);
+                  memmove(ta_buf, ta_buf + len, ta_len);
                 }
               }
             }
@@ -2318,7 +2320,7 @@ int options;                    /* SHELL_*, see vim.h */
               if (p < buffer + len) {
                 *p = c;
                 buffer_off = (buffer + len) - p;
-                mch_memmove(buffer, p, buffer_off);
+                memmove(buffer, p, buffer_off);
                 continue;
               }
               buffer_off = 0;

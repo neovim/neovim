@@ -1851,7 +1851,7 @@ add_indent:
           char_u *s = skipwhite(p);
 
           ga_grow(&line_ga, 1);
-          mch_memmove(s + 1, s, line_ga.ga_len - (s - p) + 1);
+          memmove(s + 1, s, line_ga.ga_len - (s - p) + 1);
           *s = ' ';
           ++line_ga.ga_len;
         }
@@ -1892,7 +1892,7 @@ redraw:
         while (get_indent_str(p, 8) > indent) {
           char_u *s = skipwhite(p);
 
-          mch_memmove(s - 1, s, line_ga.ga_len - (s - p) + 1);
+          memmove(s - 1, s, line_ga.ga_len - (s - p) + 1);
           --line_ga.ga_len;
         }
         goto add_indent;
@@ -2024,7 +2024,7 @@ static int realloc_cmdbuff(int len)
   }
   /* There isn't always a NUL after the command, but it may need to be
    * there, thus copy up to the NUL and add a NUL. */
-  mch_memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
+  memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
   ccline.cmdbuff[ccline.cmdlen] = NUL;
   vim_free(p);
 
@@ -2141,7 +2141,7 @@ static void draw_cmdline(int start, int len)
         }
       } else {
         prev_c = u8c;
-        mch_memmove(arshape_buf + newlen, p, mb_l);
+        memmove(arshape_buf + newlen, p, mb_l);
         newlen += mb_l;
       }
     }
@@ -2212,7 +2212,7 @@ int put_on_cmdline(char_u *str, int len, int redraw)
     retval = OK;
   if (retval == OK) {
     if (!ccline.overstrike) {
-      mch_memmove(ccline.cmdbuff + ccline.cmdpos + len,
+      memmove(ccline.cmdbuff + ccline.cmdpos + len,
           ccline.cmdbuff + ccline.cmdpos,
           (size_t)(ccline.cmdlen - ccline.cmdpos));
       ccline.cmdlen += len;
@@ -2228,7 +2228,7 @@ int put_on_cmdline(char_u *str, int len, int redraw)
              i += (*mb_ptr2len)(ccline.cmdbuff + i))
           --m;
         if (i < ccline.cmdlen) {
-          mch_memmove(ccline.cmdbuff + ccline.cmdpos + len,
+          memmove(ccline.cmdbuff + ccline.cmdpos + len,
               ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
           ccline.cmdlen += ccline.cmdpos + len - i;
         } else
@@ -2236,7 +2236,7 @@ int put_on_cmdline(char_u *str, int len, int redraw)
       } else if (ccline.cmdpos + len > ccline.cmdlen)
         ccline.cmdlen = ccline.cmdpos + len;
     }
-    mch_memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
+    memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
     ccline.cmdbuff[ccline.cmdlen] = NUL;
 
     if (enc_utf8) {
@@ -2497,7 +2497,7 @@ void cmdline_paste_str(char_u *s, int literally)
  */
 static void cmdline_del(int from)
 {
-  mch_memmove(ccline.cmdbuff + from, ccline.cmdbuff + ccline.cmdpos,
+  memmove(ccline.cmdbuff + from, ccline.cmdbuff + ccline.cmdpos,
       (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
   ccline.cmdlen -= ccline.cmdpos - from;
   ccline.cmdpos = from;
@@ -2724,10 +2724,10 @@ nextwild (
     } else
       v = OK;
     if (v == OK) {
-      mch_memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
+      memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
           &ccline.cmdbuff[ccline.cmdpos],
           (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
-      mch_memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
+      memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
       ccline.cmdlen += difflen;
       ccline.cmdpos += difflen;
     }
@@ -5037,12 +5037,12 @@ int read_viminfo_history(vir_T *virp, int writing)
           if (type == HIST_SEARCH) {
             /* Search entry: Move the separator from the first
              * column to after the NUL. */
-            mch_memmove(p, val + 1, (size_t)len);
+            memmove(p, val + 1, (size_t)len);
             p[len] = sep;
           } else {
             /* Not a search entry: No separator in the viminfo
              * file, add a NUL separator. */
-            mch_memmove(p, val, (size_t)len + 1);
+            memmove(p, val, (size_t)len + 1);
             p[len + 1] = NUL;
           }
           viminfo_history[type][viminfo_hisidx[type]++] = p;

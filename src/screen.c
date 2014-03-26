@@ -309,23 +309,23 @@ int redraw_asap(int type)
   if (ret != 2) {
     /* Save the text displayed in the command line area. */
     for (r = 0; r < rows; ++r) {
-      mch_memmove(screenline + r * Columns,
+      memmove(screenline + r * Columns,
           ScreenLines + LineOffset[cmdline_row + r],
           (size_t)Columns * sizeof(schar_T));
-      mch_memmove(screenattr + r * Columns,
+      memmove(screenattr + r * Columns,
           ScreenAttrs + LineOffset[cmdline_row + r],
           (size_t)Columns * sizeof(sattr_T));
       if (enc_utf8) {
-        mch_memmove(screenlineUC + r * Columns,
+        memmove(screenlineUC + r * Columns,
             ScreenLinesUC + LineOffset[cmdline_row + r],
             (size_t)Columns * sizeof(u8char_T));
         for (i = 0; i < p_mco; ++i)
-          mch_memmove(screenlineC[i] + r * Columns,
+          memmove(screenlineC[i] + r * Columns,
               ScreenLinesC[r] + LineOffset[cmdline_row + r],
               (size_t)Columns * sizeof(u8char_T));
       }
       if (enc_dbcs == DBCS_JPNU)
-        mch_memmove(screenline2 + r * Columns,
+        memmove(screenline2 + r * Columns,
             ScreenLines2 + LineOffset[cmdline_row + r],
             (size_t)Columns * sizeof(schar_T));
     }
@@ -338,23 +338,23 @@ int redraw_asap(int type)
 
       /* Restore the text displayed in the command line area. */
       for (r = 0; r < rows; ++r) {
-        mch_memmove(current_ScreenLine,
+        memmove(current_ScreenLine,
             screenline + r * Columns,
             (size_t)Columns * sizeof(schar_T));
-        mch_memmove(ScreenAttrs + off,
+        memmove(ScreenAttrs + off,
             screenattr + r * Columns,
             (size_t)Columns * sizeof(sattr_T));
         if (enc_utf8) {
-          mch_memmove(ScreenLinesUC + off,
+          memmove(ScreenLinesUC + off,
               screenlineUC + r * Columns,
               (size_t)Columns * sizeof(u8char_T));
           for (i = 0; i < p_mco; ++i)
-            mch_memmove(ScreenLinesC[i] + off,
+            memmove(ScreenLinesC[i] + off,
                 screenlineC[i] + r * Columns,
                 (size_t)Columns * sizeof(u8char_T));
         }
         if (enc_dbcs == DBCS_JPNU)
-          mch_memmove(ScreenLines2 + off,
+          memmove(ScreenLines2 + off,
               screenline2 + r * Columns,
               (size_t)Columns * sizeof(schar_T));
         SCREEN_LINE(cmdline_row + r, 0, Columns, Columns, FALSE);
@@ -2034,7 +2034,7 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
 {
   int i;
 
-  mch_memmove(ScreenLines + off, buf, (size_t)len);
+  memmove(ScreenLines + off, buf, (size_t)len);
   if (enc_utf8)
     memset(ScreenLinesUC + off, 0, sizeof(u8char_T) * (size_t)len);
   for (i = 0; i < len; ++i)
@@ -2434,13 +2434,13 @@ win_line (
         /* Short line, use it completely and append the start of the
          * next line. */
         nextlinecol = 0;
-        mch_memmove(nextline, line, (size_t)v);
+        memmove(nextline, line, (size_t)v);
         STRMOVE(nextline + v, nextline + SPWORDLEN);
         nextline_idx = v + 1;
       } else {
         /* Long line, use only the last SPWORDLEN bytes. */
         nextlinecol = v - SPWORDLEN;
-        mch_memmove(nextline, line + nextlinecol, SPWORDLEN);
+        memmove(nextline, line + nextlinecol, SPWORDLEN);
         nextline_idx = SPWORDLEN + 1;
       }
     }
@@ -6224,25 +6224,25 @@ give_up:
            * may be invalid now.  Also when p_mco changes. */
           if (!(enc_utf8 && ScreenLinesUC == NULL)
               && p_mco == Screen_mco)
-            mch_memmove(new_ScreenLines + new_LineOffset[new_row],
+            memmove(new_ScreenLines + new_LineOffset[new_row],
                 ScreenLines + LineOffset[old_row],
                 (size_t)len * sizeof(schar_T));
           if (enc_utf8 && ScreenLinesUC != NULL
               && p_mco == Screen_mco) {
-            mch_memmove(new_ScreenLinesUC + new_LineOffset[new_row],
+            memmove(new_ScreenLinesUC + new_LineOffset[new_row],
                 ScreenLinesUC + LineOffset[old_row],
                 (size_t)len * sizeof(u8char_T));
             for (i = 0; i < p_mco; ++i)
-              mch_memmove(new_ScreenLinesC[i]
+              memmove(new_ScreenLinesC[i]
                   + new_LineOffset[new_row],
                   ScreenLinesC[i] + LineOffset[old_row],
                   (size_t)len * sizeof(u8char_T));
           }
           if (enc_dbcs == DBCS_JPNU && ScreenLines2 != NULL)
-            mch_memmove(new_ScreenLines2 + new_LineOffset[new_row],
+            memmove(new_ScreenLines2 + new_LineOffset[new_row],
                 ScreenLines2 + LineOffset[old_row],
                 (size_t)len * sizeof(schar_T));
-          mch_memmove(new_ScreenAttrs + new_LineOffset[new_row],
+          memmove(new_ScreenAttrs + new_LineOffset[new_row],
               ScreenAttrs + LineOffset[old_row],
               (size_t)len * sizeof(sattr_T));
         }
@@ -6386,21 +6386,21 @@ static void linecopy(int to, int from, win_T *wp)
   unsigned off_to = LineOffset[to] + wp->w_wincol;
   unsigned off_from = LineOffset[from] + wp->w_wincol;
 
-  mch_memmove(ScreenLines + off_to, ScreenLines + off_from,
+  memmove(ScreenLines + off_to, ScreenLines + off_from,
       wp->w_width * sizeof(schar_T));
   if (enc_utf8) {
     int i;
 
-    mch_memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
+    memmove(ScreenLinesUC + off_to, ScreenLinesUC + off_from,
         wp->w_width * sizeof(u8char_T));
     for (i = 0; i < p_mco; ++i)
-      mch_memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
+      memmove(ScreenLinesC[i] + off_to, ScreenLinesC[i] + off_from,
           wp->w_width * sizeof(u8char_T));
   }
   if (enc_dbcs == DBCS_JPNU)
-    mch_memmove(ScreenLines2 + off_to, ScreenLines2 + off_from,
+    memmove(ScreenLines2 + off_to, ScreenLines2 + off_from,
         wp->w_width * sizeof(schar_T));
-  mch_memmove(ScreenAttrs + off_to, ScreenAttrs + off_from,
+  memmove(ScreenAttrs + off_to, ScreenAttrs + off_from,
       wp->w_width * sizeof(sattr_T));
 }
 

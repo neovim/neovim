@@ -3872,9 +3872,9 @@ static char_u *repl_cmdline(exarg_T *eap, char_u *src, int srclen, char_u *repl,
    * Copy the next commands, if there are any.
    */
   i = (int)(src - *cmdlinep);   /* length of part before match */
-  mch_memmove(new_cmdline, *cmdlinep, (size_t)i);
+  memmove(new_cmdline, *cmdlinep, (size_t)i);
 
-  mch_memmove(new_cmdline + i, repl, (size_t)len);
+  memmove(new_cmdline + i, repl, (size_t)len);
   i += len;                             /* remember the end of the string */
   STRCPY(new_cmdline + i, src + srclen);
   src = new_cmdline + i;                /* remember where to continue */
@@ -4399,7 +4399,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
       goto fail;
 
     cmd = USER_CMD_GA(gap, i);
-    mch_memmove(cmd + 1, cmd, (gap->ga_len - i) * sizeof(ucmd_T));
+    memmove(cmd + 1, cmd, (gap->ga_len - i) * sizeof(ucmd_T));
 
     ++gap->ga_len;
 
@@ -4817,7 +4817,7 @@ static void ex_delcommand(exarg_T *eap)
   --gap->ga_len;
 
   if (i < gap->ga_len)
-    mch_memmove(cmd, cmd + 1, (gap->ga_len - i) * sizeof(ucmd_T));
+    memmove(cmd, cmd + 1, (gap->ga_len - i) * sizeof(ucmd_T));
 }
 
 /*
@@ -5131,7 +5131,7 @@ static void do_ucmd(exarg_T *eap)
           * Also change K_SPECIAL KS_EXTRA KE_CSI into CSI. */
           len = ksp - p;
           if (len > 0) {
-            mch_memmove(q, p, len);
+            memmove(q, p, len);
             q += len;
           }
           *q++ = ksp[1] == KS_SPECIAL ? K_SPECIAL : CSI;
@@ -5152,7 +5152,7 @@ static void do_ucmd(exarg_T *eap)
       if (buf == NULL)
         totlen += len;
       else {
-        mch_memmove(q, p, len);
+        memmove(q, p, len);
         q += len;
       }
 
@@ -8180,7 +8180,7 @@ char_u *expand_sfile(char_u *arg)
         vim_free(result);
         return NULL;
       }
-      mch_memmove(newres, result, (size_t)(p - result));
+      memmove(newres, result, (size_t)(p - result));
       STRCPY(newres + (p - result), repl);
       len = (int)STRLEN(newres);
       STRCAT(newres, p + srclen);

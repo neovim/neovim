@@ -311,9 +311,9 @@ void trans_characters(char_u *buf, int bufsize)
         if (room <= 0) {
           return;
         }
-        mch_memmove(buf + trs_len, buf + 1, (size_t)len);
+        memmove(buf + trs_len, buf + 1, (size_t)len);
       }
-      mch_memmove(buf, trs, (size_t)trs_len);
+      memmove(buf, trs, (size_t)trs_len);
       --len;
     }
     buf += trs_len;
@@ -427,14 +427,14 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
     if (ga_grow(&ga, len + 1) == FAIL) {
       return NULL;
     }
-    mch_memmove(ga.ga_data, str, (size_t)len);
+    memmove(ga.ga_data, str, (size_t)len);
     ga.ga_len = len;
   } else {
     if (len >= buflen) {
       // Ugly!
       len = buflen - 1;
     }
-    mch_memmove(buf, str, (size_t)len);
+    memmove(buf, str, (size_t)len);
   }
 
   if (buf == NULL) {

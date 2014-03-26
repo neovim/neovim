@@ -32,6 +32,8 @@
  */
 
 #define IN_OPTION_C
+#include <string.h>
+
 #include "vim.h"
 #include "option.h"
 #include "blowfish.h"
@@ -3161,7 +3163,7 @@ do_set (
                 if (has_mbyte
                     && (i = (*mb_ptr2len)(arg)) > 1) {
                   /* copy multibyte char */
-                  mch_memmove(s, arg, (size_t)i);
+                  memmove(s, arg, (size_t)i);
                   arg += i;
                   s += i;
                 } else
@@ -3228,9 +3230,9 @@ do_set (
                          && *newval != NUL);
                 if (adding) {
                   i = (int)STRLEN(origval);
-                  mch_memmove(newval + i + comma, newval,
+                  memmove(newval + i + comma, newval,
                       STRLEN(newval) + 1);
-                  mch_memmove(newval, origval, (size_t)i);
+                  memmove(newval, origval, (size_t)i);
                 } else {
                   i = (int)STRLEN(newval);
                   STRMOVE(newval + i + comma, origval);
@@ -3336,7 +3338,7 @@ skip:
       if (i + (arg - startarg) < IOSIZE) {
         /* append the argument with the error */
         STRCAT(IObuff, ": ");
-        mch_memmove(IObuff + i, startarg, (arg - startarg));
+        memmove(IObuff + i, startarg, (arg - startarg));
         IObuff[i + (arg - startarg)] = NUL;
       }
       /* make sure all characters are printable */
@@ -7677,7 +7679,7 @@ static void langmap_set_entry(int from, int to)
 
   /* insert new entry at position "a" */
   entries = (langmap_entry_T *)(langmap_mapga.ga_data) + a;
-  mch_memmove(entries + 1, entries,
+  memmove(entries + 1, entries,
       (langmap_mapga.ga_len - a) * sizeof(langmap_entry_T));
   ++langmap_mapga.ga_len;
   entries[0].from = from;

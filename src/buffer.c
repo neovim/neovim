@@ -25,6 +25,8 @@
  * The current implementation remembers all file names ever used.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "buffer.h"
 #include "charset.h"
@@ -2933,7 +2935,7 @@ build_stl_str_hl (
       /* There are too many items.  Add the error code to the statusline
        * to give the user a hint about what went wrong. */
       if (p + 6 < out + outlen) {
-        mch_memmove(p, " E541", (size_t)5);
+        memmove(p, " E541", (size_t)5);
         p += 5;
       }
       break;
@@ -3010,7 +3012,7 @@ build_stl_str_hl (
           n = (long)(p - t) - item[groupitem[groupdepth]].maxwid + 1;
 
         *t = '<';
-        mch_memmove(t + 1, t + n, (size_t)(p - (t + n)));
+        memmove(t + 1, t + n, (size_t)(p - (t + n)));
         p = p - n + 1;
         /* Fill up space left over by half a double-wide char. */
         while (++l < item[groupitem[groupdepth]].minwid)
@@ -3032,7 +3034,7 @@ build_stl_str_hl (
             *p++ = fillchar;
         } else {
           /* fill by inserting characters */
-          mch_memmove(t + n - l, t, (size_t)(p - t));
+          memmove(t + n - l, t, (size_t)(p - t));
           l = n - l;
           if (p + l >= out + outlen)
             l = (long)((out + outlen) - p - 1);

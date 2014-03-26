@@ -486,7 +486,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
                     ((curbuf->b_ml.ml_flags & ML_EMPTY) ? UH_EMPTYBUF : 0);
 
     /* save named marks and Visual marks for undo */
-    mch_memmove(uhp->uh_namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
+    memmove(uhp->uh_namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
     uhp->uh_visual = curbuf->b_visual;
 
     curbuf->b_u_newhead = uhp;
@@ -719,7 +719,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       if (undo_file_name == NULL)
         break;
       p = gettail(undo_file_name);
-      mch_memmove(p + 1, p, STRLEN(p) + 1);
+      memmove(p + 1, p, STRLEN(p) + 1);
       *p = '.';
       STRCAT(p, ".un~");
     } else {
@@ -2096,7 +2096,7 @@ static void u_undoredo(int undo)
   /*
    * save marks before undo/redo
    */
-  mch_memmove(namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
+  memmove(namedm, curbuf->b_namedm, sizeof(pos_T) * NMARKS);
   visualinfo = curbuf->b_visual;
   curbuf->b_op_start.lnum = curbuf->b_ml.ml_line_count;
   curbuf->b_op_start.col = 0;

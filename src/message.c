@@ -312,11 +312,11 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
 
   /* Set the middle and copy the last part. */
   if (e + 3 < buflen) {
-    mch_memmove(buf + e, "...", (size_t)3);
+    memmove(buf + e, "...", (size_t)3);
     len = (int)STRLEN(s + i) + 1;
     if (len >= buflen - e - 3)
       len = buflen - e - 3 - 1;
-    mch_memmove(buf + e + 3, s + i, len);
+    memmove(buf + e + 3, s + i, len);
     buf[e + 3 + len - 1] = NUL;
   } else {
     buf[e - 1] = NUL;      /* make sure it is truncated */
@@ -1446,7 +1446,7 @@ void msg_prt_line(char_u *s, int list)
         mb_char2bytes(lcs_nbsp, buf);
         buf[(*mb_ptr2len)(buf)] = NUL;
       } else {
-        mch_memmove(buf, s, (size_t)l);
+        memmove(buf, s, (size_t)l);
         buf[l] = NUL;
       }
       msg_puts(buf);
@@ -2334,7 +2334,7 @@ void mch_errmsg(char *str)
     error_ga.ga_itemsize = 1;
   }
   if (ga_grow(&error_ga, len) == OK) {
-    mch_memmove((char_u *)error_ga.ga_data + error_ga.ga_len,
+    memmove((char_u *)error_ga.ga_data + error_ga.ga_len,
         (char_u *)str, len);
 #ifdef UNIX
     /* remove CR characters, they are displayed */
@@ -2859,7 +2859,7 @@ copy_char (
       return (*mb_char2bytes)(c, to);
     } else {
       len = (*mb_ptr2len)(from);
-      mch_memmove(to, from, (size_t)len);
+      memmove(to, from, (size_t)len);
       return len;
     }
   } else {
@@ -3256,7 +3256,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
       if (str_l < str_m) {
         size_t avail = str_m - str_l;
 
-        mch_memmove(str + str_l, p, n > avail ? avail : n);
+        memmove(str + str_l, p, n > avail ? avail : n);
       }
       p += n;
       str_l += n;
@@ -3886,7 +3886,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           if (str_l < str_m) {
             size_t avail = str_m - str_l;
 
-            mch_memmove(str + str_l, str_arg,
+            memmove(str + str_l, str_arg,
                 (size_t)zn > avail ? avail
                 : (size_t)zn);
           }
@@ -3917,7 +3917,7 @@ long a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
           if (str_l < str_m) {
             size_t avail = str_m - str_l;
 
-            mch_memmove(str + str_l,
+            memmove(str + str_l,
                 str_arg + zero_padding_insertion_ind,
                 (size_t)sn > avail ? avail : (size_t)sn);
           }

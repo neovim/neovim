@@ -6453,9 +6453,9 @@ char_u *regtilde(char_u *source, int magic)
         if (tmpsub != NULL) {
           /* copy prefix */
           len = (int)(p - newsub);              /* not including ~ */
-          mch_memmove(tmpsub, newsub, (size_t)len);
+          memmove(tmpsub, newsub, (size_t)len);
           /* interpret tilde */
-          mch_memmove(tmpsub + len, reg_prev_sub, (size_t)prevlen);
+          memmove(tmpsub + len, reg_prev_sub, (size_t)prevlen);
           /* copy postfix */
           if (!magic)
             ++p;                                /* back off \ */
@@ -6724,7 +6724,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
              * are composing characters; copy them as-is. */
             if (clen < totlen) {
               if (copy)
-                mch_memmove(dst + 1, src - 1 + clen,
+                memmove(dst + 1, src - 1 + clen,
                     (size_t)(totlen - clen));
               dst += totlen - clen;
             }

@@ -552,7 +552,7 @@ static int realloc_post_list(void)
   new_start = (int *)lalloc(new_max * sizeof(int), TRUE);
   if (new_start == NULL)
     return FAIL;
-  mch_memmove(new_start, post_start, nstate_max * sizeof(int));
+  memmove(new_start, post_start, nstate_max * sizeof(int));
   old_start = post_start;
   post_start = new_start;
   post_ptr = new_start + (post_ptr - old_start);
@@ -3560,11 +3560,11 @@ static void copy_sub(regsub_T *to, regsub_T *from)
   if (from->in_use > 0) {
     /* Copy the match start and end positions. */
     if (REG_MULTI)
-      mch_memmove(&to->list.multi[0],
+      memmove(&to->list.multi[0],
           &from->list.multi[0],
           sizeof(struct multipos) * from->in_use);
     else
-      mch_memmove(&to->list.line[0],
+      memmove(&to->list.line[0],
           &from->list.line[0],
           sizeof(struct linepos) * from->in_use);
   }
@@ -3580,11 +3580,11 @@ static void copy_sub_off(regsub_T *to, regsub_T *from)
   if (from->in_use > 1) {
     /* Copy the match start and end positions. */
     if (REG_MULTI)
-      mch_memmove(&to->list.multi[1],
+      memmove(&to->list.multi[1],
           &from->list.multi[1],
           sizeof(struct multipos) * (from->in_use - 1));
     else
-      mch_memmove(&to->list.line[1],
+      memmove(&to->list.line[1],
           &from->list.line[1],
           sizeof(struct linepos) * (from->in_use - 1));
   }
@@ -4221,13 +4221,13 @@ addstate_here (
       newl = (nfa_thread_T *)alloc(l->len * sizeof(nfa_thread_T));
       if (newl == NULL)
         return;
-      mch_memmove(&(newl[0]),
+      memmove(&(newl[0]),
           &(l->t[0]),
           sizeof(nfa_thread_T) * listidx);
-      mch_memmove(&(newl[listidx]),
+      memmove(&(newl[listidx]),
           &(l->t[l->n - count]),
           sizeof(nfa_thread_T) * count);
-      mch_memmove(&(newl[listidx + count]),
+      memmove(&(newl[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - count - listidx - 1));
       vim_free(l->t);
@@ -4235,10 +4235,10 @@ addstate_here (
     } else {
       /* make space for new states, then move them from the
        * end to the current position */
-      mch_memmove(&(l->t[listidx + count]),
+      memmove(&(l->t[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - listidx - 1));
-      mch_memmove(&(l->t[listidx]),
+      memmove(&(l->t[listidx]),
           &(l->t[l->n - 1]),
           sizeof(nfa_thread_T) * count);
     }

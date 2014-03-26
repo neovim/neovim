@@ -16,6 +16,8 @@
  * 3. Input buffer stuff.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "ui.h"
 #include "diff.h"
@@ -78,11 +80,11 @@ void ui_inchar_undo(char_u *s, int len)
   new = alloc(newlen);
   if (new != NULL) {
     if (ta_str != NULL) {
-      mch_memmove(new, ta_str + ta_off, (size_t)(ta_len - ta_off));
-      mch_memmove(new + ta_len - ta_off, s, (size_t)len);
+      memmove(new, ta_str + ta_off, (size_t)(ta_len - ta_off));
+      memmove(new + ta_len - ta_off, s, (size_t)len);
       vim_free(ta_str);
     } else
-      mch_memmove(new, s, (size_t)len);
+      memmove(new, s, (size_t)len);
     ta_str = new;
     ta_len = newlen;
     ta_off = 0;
@@ -358,7 +360,7 @@ char_u *get_input_buf(void)
     /* Add one to avoid a zero size. */
     gap->ga_data = alloc((unsigned)inbufcount + 1);
     if (gap->ga_data != NULL)
-      mch_memmove(gap->ga_data, inbuf, (size_t)inbufcount);
+      memmove(gap->ga_data, inbuf, (size_t)inbufcount);
     gap->ga_len = inbufcount;
   }
   trash_input_buf();
@@ -375,7 +377,7 @@ void set_input_buf(char_u *p)
 
   if (gap != NULL) {
     if (gap->ga_data != NULL) {
-      mch_memmove(inbuf, gap->ga_data, gap->ga_len);
+      memmove(inbuf, gap->ga_data, gap->ga_len);
       inbufcount = gap->ga_len;
       vim_free(gap->ga_data);
     }
@@ -461,10 +463,10 @@ int read_from_input_buf(char_u *buf, long maxlen)
     fill_input_buf(TRUE);
   if (maxlen > inbufcount)
     maxlen = inbufcount;
-  mch_memmove(buf, inbuf, (size_t)maxlen);
+  memmove(buf, inbuf, (size_t)maxlen);
   inbufcount -= maxlen;
   if (inbufcount)
-    mch_memmove(inbuf, inbuf + maxlen, (size_t)inbufcount);
+    memmove(inbuf, inbuf + maxlen, (size_t)inbufcount);
   return (int)maxlen;
 }
 
@@ -497,13 +499,13 @@ void fill_input_buf(int exit_on_error)
       unconverted = INBUFLEN - inbufcount;
     else
       unconverted = restlen;
-    mch_memmove(inbuf + inbufcount, rest, unconverted);
+    memmove(inbuf + inbufcount, rest, unconverted);
     if (unconverted == restlen) {
       vim_free(rest);
       rest = NULL;
     } else {
       restlen -= unconverted;
-      mch_memmove(rest, rest + unconverted, restlen);
+      memmove(rest, rest + unconverted, restlen);
     }
     inbufcount += unconverted;
   } else
@@ -570,7 +572,7 @@ void fill_input_buf(int exit_on_error)
        */
       if (inbuf[inbufcount] == 3 && ctrl_c_interrupts) {
         /* remove everything typed before the CTRL-C */
-        mch_memmove(inbuf, inbuf + inbufcount, (size_t)(len + 1));
+        memmove(inbuf, inbuf + inbufcount, (size_t)(len + 1));
         inbufcount = 0;
         got_int = TRUE;
       }

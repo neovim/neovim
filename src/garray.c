@@ -126,7 +126,7 @@ void ga_concat(garray_T *gap, char_u *s)
 {
   int len = (int)STRLEN(s);
   if (ga_grow(gap, len) == OK) {
-    mch_memmove((char *)gap->ga_data + gap->ga_len, s, (size_t)len);
+    memmove((char *)gap->ga_data + gap->ga_len, s, (size_t)len);
     gap->ga_len += len;
   }
 }

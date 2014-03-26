@@ -3219,7 +3219,7 @@ static void syn_remove_pattern(synblock_T *block, int idx)
   if (spp->sp_flags & HL_FOLD)
     --block->b_syn_folditems;
   syn_clear_pattern(block, idx);
-  mch_memmove(spp, spp + 1,
+  memmove(spp, spp + 1,
       sizeof(synpat_T) * (block->b_syn_patterns.ga_len - idx - 1));
   --block->b_syn_patterns.ga_len;
 }
@@ -4316,7 +4316,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
             if (has_mbyte) {
               int l = (*mb_ptr2len)(p + 1);
 
-              mch_memmove(p, p + 1, l);
+              memmove(p, p + 1, l);
               p += l;
             } else {
               p[0] = p[1];
@@ -5394,7 +5394,7 @@ static short *copy_id_list(short *list)
   len = (count + 1) * sizeof(short);
   retval = (short *)alloc((unsigned)len);
   if (retval != NULL)
-    mch_memmove(retval, list, (size_t)len);
+    memmove(retval, list, (size_t)len);
 
   return retval;
 }
@@ -7739,7 +7739,7 @@ int highlight_changed(void)
         hlt[hlcnt + i].sg_cterm = highlight_attr[HLF_SNC];
         hlt[hlcnt + i].sg_gui = highlight_attr[HLF_SNC];
       } else
-        mch_memmove(&hlt[hlcnt + i],
+        memmove(&hlt[hlcnt + i],
             &hlt[id_SNC - 1],
             sizeof(struct hl_group));
       hlt[hlcnt + i].sg_link = 0;

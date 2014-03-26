@@ -12,6 +12,8 @@
  * Code for menus.  Used for the GUI and 'wildmenu'.
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "menu.h"
 #include "charset.h"
@@ -1180,7 +1182,7 @@ static char_u *popup_mode_name(char_u *name, int idx)
 
   p = vim_strnsave(name, len + 1);
   if (p != NULL) {
-    mch_memmove(p + 6, p + 5, (size_t)(len - 4));
+    memmove(p + 6, p + 5, (size_t)(len - 4));
     p[5] = menu_mode_chars[idx];
   }
   return p;
