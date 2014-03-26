@@ -169,10 +169,6 @@ static char *(main_errors[]) =
    * copied, so that they can be changed. */
   init_params(&params, argc, argv);
 
-#ifdef MEM_PROFILE
-  atexit(vim_mem_profile_dump);
-#endif
-
   init_startuptime(&params);
 
   (void)mb_init();      /* init mb_bytelen_tab[] to ones */

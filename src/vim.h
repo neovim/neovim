@@ -1388,11 +1388,7 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
 /* Note: a NULL argument for vim_realloc() is not portable, don't use it. */
-#if defined(MEM_PROFILE)
-# define vim_realloc(ptr, size)  mem_realloc((ptr), (size))
-#else
-# define vim_realloc(ptr, size)  realloc((ptr), (size))
-#endif
+#define vim_realloc(ptr, size)  realloc((ptr), (size))
 
 /*
  * The following macros stop display/event loop nesting at the wrong time.
