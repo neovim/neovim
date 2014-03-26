@@ -1927,7 +1927,7 @@ parse_line:
                   mfp2 = ((struct match_found **)
                           (ga_match[mtt].ga_data))[i];
                   if (mfp2->len == mfp->len
-                      && vim_memcmp(mfp2->match, mfp->match,
+                      && memcmp(mfp2->match, mfp->match,
                           (size_t)mfp->len) == 0)
                     break;
                   line_breakcheck();

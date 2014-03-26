@@ -1154,17 +1154,6 @@ typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#ifdef HAVE_MEMCMP
-# define vim_memcmp(p1, p2, len)   memcmp((p1), (p2), (len))
-#else
-# ifdef HAVE_BCMP
-#  define vim_memcmp(p1, p2, len)   bcmp((p1), (p2), (len))
-# else
-int vim_memcmp(void *, void *, size_t);
-#  define VIM_MEMCMP
-# endif
-#endif
-
 #if defined(UNIX) || defined(FEAT_GUI) || defined(OS2) || defined(VMS) \
   || defined(FEAT_CLIENTSERVER)
 # define USE_INPUT_BUF
