@@ -1366,7 +1366,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
           if (p[col] == c && stop)
             break;
         } else {
-          if (vim_memcmp(p + col, bytes, bytelen) == 0 && stop)
+          if (memcmp(p + col, bytes, bytelen) == 0 && stop)
             break;
         }
         stop = TRUE;
