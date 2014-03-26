@@ -11,6 +11,8 @@
  * mark.c: functions for setting marks and jumping to them
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "mark.h"
 #include "buffer.h"
@@ -1502,7 +1504,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
              * first */
             if (curbuf->b_changelistlen == JUMPLISTSIZE)
               /* list is full, remove oldest entry */
-              mch_memmove(curbuf->b_changelist,
+              memmove(curbuf->b_changelist,
                   curbuf->b_changelist + 1,
                   sizeof(pos_T) * (JUMPLISTSIZE - 1));
             else

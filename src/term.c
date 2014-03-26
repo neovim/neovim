@@ -23,6 +23,8 @@
  */
 
 #define tgetstr tgetstr_defined_wrong
+#include <string.h>
+
 #include "vim.h"
 #include "term.h"
 #include "buffer.h"
@@ -4138,22 +4140,22 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
        * Careful: del_typebuf() and ins_typebuf() may have reallocated
        * typebuf.tb_buf[]!
        */
-      mch_memmove(typebuf.tb_buf + typebuf.tb_off + offset, string,
+      memmove(typebuf.tb_buf + typebuf.tb_off + offset, string,
           (size_t)new_slen);
     } else {
       if (extra < 0)
         /* remove matched characters */
-        mch_memmove(buf + offset, buf + offset - extra,
+        memmove(buf + offset, buf + offset - extra,
             (size_t)(*buflen + offset + extra));
       else if (extra > 0) {
         /* Insert the extra space we need.  If there is insufficient
          * space return -1. */
         if (*buflen + extra + new_slen >= bufsize)
           return -1;
-        mch_memmove(buf + offset + extra, buf + offset,
+        memmove(buf + offset + extra, buf + offset,
             (size_t)(*buflen - offset));
       }
-      mch_memmove(buf + offset, string, (size_t)new_slen);
+      memmove(buf + offset, string, (size_t)new_slen);
       *buflen = *buflen + extra + new_slen;
     }
     return retval == 0 ? (len + extra + offset) : retval;

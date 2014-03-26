@@ -11,6 +11,8 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "version_defs.h"
 #include "ex_cmds2.h"
@@ -582,7 +584,7 @@ void ex_breakdel(exarg_T *eap)
       vim_regfree(DEBUGGY(gap, todel).dbg_prog);
       --gap->ga_len;
       if (todel < gap->ga_len)
-        mch_memmove(&DEBUGGY(gap, todel), &DEBUGGY(gap, todel + 1),
+        memmove(&DEBUGGY(gap, todel), &DEBUGGY(gap, todel + 1),
             (gap->ga_len - todel) * sizeof(struct debuggy));
       if (eap->cmdidx == CMD_breakdel)
         ++debug_tick;
@@ -1629,7 +1631,7 @@ do_arglist (
                 (colnr_T)0)) {
           didone = TRUE;
           vim_free(ARGLIST[match].ae_fname);
-          mch_memmove(ARGLIST + match, ARGLIST + match + 1,
+          memmove(ARGLIST + match, ARGLIST + match + 1,
               (ARGCOUNT - match - 1) * sizeof(aentry_T));
           --ALIST(curwin)->al_ga.ga_len;
           if (curwin->w_arg_idx > match)
@@ -1973,7 +1975,7 @@ void ex_argdelete(exarg_T *eap)
     else {
       for (i = eap->line1; i <= eap->line2; ++i)
         vim_free(ARGLIST[i - 1].ae_fname);
-      mch_memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
+      memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
           (size_t)((ARGCOUNT - eap->line2) * sizeof(aentry_T)));
       ALIST(curwin)->al_ga.ga_len -= n;
       if (curwin->w_arg_idx >= eap->line2)
@@ -2134,7 +2136,7 @@ alist_add_list (
     if (after > ARGCOUNT)
       after = ARGCOUNT;
     if (after < ARGCOUNT)
-      mch_memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
+      memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
           (ARGCOUNT - after) * sizeof(aentry_T));
     for (i = 0; i < count; ++i) {
       ARGLIST[after + i].ae_fname = files[i];

@@ -245,7 +245,7 @@ set_indent (
     *s++ = ' ';
     --todo;
   }
-  mch_memmove(s, p, (size_t)line_len);
+  memmove(s, p, (size_t)line_len);
 
   /* Replace the line (unless undo fails). */
   if (!(flags & SIN_UNDO) || u_savesub(curwin->w_cursor.lnum) == OK) {
@@ -353,7 +353,7 @@ int copy_indent(int size, char_u *src)
   }
 
   /* Append the original line */
-  mch_memmove(p, ml_get_curline(), (size_t)line_len);
+  memmove(p, ml_get_curline(), (size_t)line_len);
 
   /* Replace the line */
   ml_replace(curwin->w_cursor.lnum, line, FALSE);

@@ -385,11 +385,11 @@ static void shift_block(oparg_T *oap, int amount)
     if (newp == NULL)
       return;
     memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
-    mch_memmove(newp, oldp, (size_t)bd.textcol);
+    memmove(newp, oldp, (size_t)bd.textcol);
     copy_chars(newp + bd.textcol, (size_t)i, TAB);
     copy_spaces(newp + bd.textcol + i, (size_t)j);
     /* the end */
-    mch_memmove(newp + bd.textcol + i + j, bd.textstart, (size_t)len);
+    memmove(newp + bd.textcol + i + j, bd.textstart, (size_t)len);
   } else { /* left */
     colnr_T destination_col;            /* column to which text in block will
                                            be shifted */
@@ -470,7 +470,7 @@ static void shift_block(oparg_T *oap, int amount)
     newp = alloc_check(new_line_len);
     if (newp == NULL)
       return;
-    mch_memmove(newp, oldp, (size_t)(verbatim_copy_end - oldp));
+    memmove(newp, oldp, (size_t)(verbatim_copy_end - oldp));
     copy_spaces(newp + (verbatim_copy_end - oldp), (size_t)fill);
     STRMOVE(newp + (verbatim_copy_end - oldp) + fill, non_white);
   }
@@ -534,14 +534,14 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       continue;
 
     /* copy up to shifted part */
-    mch_memmove(newp, oldp, (size_t)(offset));
+    memmove(newp, oldp, (size_t)(offset));
     oldp += offset;
 
     /* insert pre-padding */
     copy_spaces(newp + offset, (size_t)spaces);
 
     /* copy the new text */
-    mch_memmove(newp + offset + spaces, s, (size_t)s_len);
+    memmove(newp + offset + spaces, s, (size_t)s_len);
     offset += s_len;
 
     if (spaces && !bdp->is_short) {
@@ -1507,7 +1507,7 @@ int op_delete(oparg_T *oap)
       if (newp == NULL)
         continue;
       /* copy up to deleted part */
-      mch_memmove(newp, oldp, (size_t)bd.textcol);
+      memmove(newp, oldp, (size_t)bd.textcol);
       /* insert spaces */
       copy_spaces(newp + bd.textcol,
           (size_t)(bd.startspaces + bd.endspaces));
@@ -1782,7 +1782,7 @@ int op_replace(oparg_T *oap, int c)
         continue;
       memset(newp, NUL, (size_t)(oldlen + 1 + n));
       /* copy up to deleted part */
-      mch_memmove(newp, oldp, (size_t)bd.textcol);
+      memmove(newp, oldp, (size_t)bd.textcol);
       oldp += bd.textcol + bd.textlen;
       /* insert pre-spaces */
       copy_spaces(newp + bd.textcol, (size_t)bd.startspaces);
@@ -2300,11 +2300,11 @@ int op_change(oparg_T *oap)
             if (newp == NULL)
               continue;
             /* copy up to block start */
-            mch_memmove(newp, oldp, (size_t)bd.textcol);
+            memmove(newp, oldp, (size_t)bd.textcol);
             offset = bd.textcol;
             copy_spaces(newp + offset, (size_t)vpos.coladd);
             offset += vpos.coladd;
-            mch_memmove(newp + offset, ins_text, (size_t)ins_len);
+            memmove(newp + offset, ins_text, (size_t)ins_len);
             offset += ins_len;
             oldp += bd.textcol;
             STRMOVE(newp + offset, oldp);
@@ -2620,7 +2620,7 @@ static int yank_copy_line(struct block_def *bd, long y_idx)
   y_current->y_array[y_idx] = pnew;
   copy_spaces(pnew, (size_t)bd->startspaces);
   pnew += bd->startspaces;
-  mch_memmove(pnew, bd->textstart, (size_t)bd->textlen);
+  memmove(pnew, bd->textstart, (size_t)bd->textlen);
   pnew += bd->textlen;
   copy_spaces(pnew, (size_t)bd->endspaces);
   pnew += bd->endspaces;
@@ -2937,14 +2937,14 @@ do_put (
         break;
       /* copy part up to cursor to new line */
       ptr = newp;
-      mch_memmove(ptr, oldp, (size_t)bd.textcol);
+      memmove(ptr, oldp, (size_t)bd.textcol);
       ptr += bd.textcol;
       /* may insert some spaces before the new text */
       copy_spaces(ptr, (size_t)bd.startspaces);
       ptr += bd.startspaces;
       /* insert the new text */
       for (j = 0; j < count; ++j) {
-        mch_memmove(ptr, y_array[i], (size_t)yanklen);
+        memmove(ptr, y_array[i], (size_t)yanklen);
         ptr += yanklen;
 
         /* insert block's trailing spaces only if there's text behind */
@@ -2957,7 +2957,7 @@ do_put (
       copy_spaces(ptr, (size_t)bd.endspaces);
       ptr += bd.endspaces;
       /* move the text after the cursor to the end of the line. */
-      mch_memmove(ptr, oldp + bd.textcol + delcount,
+      memmove(ptr, oldp + bd.textcol + delcount,
           (size_t)(oldlen - bd.textcol - delcount + 1));
       ml_replace(curwin->w_cursor.lnum, newp, FALSE);
 
@@ -3033,10 +3033,10 @@ do_put (
           newp = alloc_check((unsigned)(STRLEN(oldp) + totlen + 1));
           if (newp == NULL)
             goto end;                   /* alloc() gave an error message */
-          mch_memmove(newp, oldp, (size_t)col);
+          memmove(newp, oldp, (size_t)col);
           ptr = newp + col;
           for (i = 0; i < count; ++i) {
-            mch_memmove(ptr, y_array[0], (size_t)yanklen);
+            memmove(ptr, y_array[0], (size_t)yanklen);
             ptr += yanklen;
           }
           STRMOVE(ptr, oldp + col);
@@ -3089,9 +3089,9 @@ do_put (
           if (newp == NULL)
             goto error;
           /* copy first part of line */
-          mch_memmove(newp, oldp, (size_t)col);
+          memmove(newp, oldp, (size_t)col);
           /* append to first line */
-          mch_memmove(newp + col, y_array[0], (size_t)(yanklen + 1));
+          memmove(newp + col, y_array[0], (size_t)(yanklen + 1));
           ml_replace(lnum, newp, FALSE);
 
           curwin->w_cursor.lnum = lnum;
@@ -3595,7 +3595,7 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
    */
   for (t = count - 1;; --t) {
     cend -= currsize;
-    mch_memmove(cend, curr, (size_t)currsize);
+    memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
       cend -= spaces[t];
       copy_spaces(cend, (size_t)(spaces[t]));
@@ -4962,11 +4962,11 @@ str_to_reg (
     if (s == NULL)
       break;
     if (extra)
-      mch_memmove(s, y_ptr->y_array[lnum], (size_t)extra);
+      memmove(s, y_ptr->y_array[lnum], (size_t)extra);
     if (append)
       vim_free(y_ptr->y_array[lnum]);
     if (i)
-      mch_memmove(s + extra, str + start, (size_t)i);
+      memmove(s + extra, str + start, (size_t)i);
     extra += i;
     s[extra] = NUL;
     y_ptr->y_array[lnum++] = s;

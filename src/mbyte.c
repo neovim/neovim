@@ -77,6 +77,8 @@
  * some commands, like ":menutrans"
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "mbyte.h"
 #include "charset.h"
@@ -3048,7 +3050,7 @@ void mb_copy_char(char_u **fp, char_u **tp)
 {
   int l = (*mb_ptr2len)(*fp);
 
-  mch_memmove(*tp, *fp, (size_t)l);
+  memmove(*tp, *fp, (size_t)l);
   *tp += l;
   *fp += l;
 }
@@ -3583,7 +3585,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       len = len + fromlen * 2 + 40;
       p = alloc((unsigned)len);
       if (p != NULL && done > 0)
-        mch_memmove(p, result, done);
+        memmove(p, result, done);
       vim_free(result);
       result = p;
       if (result == NULL)       /* out of memory */
@@ -3902,10 +3904,10 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
         /* Move the unconverted characters to allocated memory. */
         *restp = alloc(unconvertlen);
         if (*restp != NULL)
-          mch_memmove(*restp, ptr + len - unconvertlen, unconvertlen);
+          memmove(*restp, ptr + len - unconvertlen, unconvertlen);
         *restlenp = unconvertlen;
       }
-      mch_memmove(ptr, d, dlen);
+      memmove(ptr, d, dlen);
     } else
       /* result is too long, keep the unconverted text (the caller must
        * have done something wrong!) */

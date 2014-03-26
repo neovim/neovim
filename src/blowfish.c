@@ -387,7 +387,7 @@ void bf_key_init(char_u *password, char_u *salt, int salt_len)
     key[i] = u;
   }
 
-  mch_memmove(sbx, sbi, 4 * 4 * 256);
+  memmove(sbx, sbi, 4 * 4 * 256);
 
   int keypos = 0;
   for (i = 0; i < 18; i++) {
@@ -585,9 +585,9 @@ void bf_crypt_save(void)
 {
   save_randbyte_offset = randbyte_offset;
   save_update_offset = update_offset;
-  mch_memmove(save_ofb_buffer, ofb_buffer, BF_OFB_LEN);
-  mch_memmove(save_pax, pax, 4 * 18);
-  mch_memmove(save_sbx, sbx, 4 * 4 * 256);
+  memmove(save_ofb_buffer, ofb_buffer, BF_OFB_LEN);
+  memmove(save_pax, pax, 4 * 18);
+  memmove(save_sbx, sbx, 4 * 4 * 256);
 }
 
 /*
@@ -598,9 +598,9 @@ void bf_crypt_restore(void)
 {
   randbyte_offset = save_randbyte_offset;
   update_offset = save_update_offset;
-  mch_memmove(ofb_buffer, save_ofb_buffer, BF_OFB_LEN);
-  mch_memmove(pax, save_pax, 4 * 18);
-  mch_memmove(sbx, save_sbx, 4 * 4 * 256);
+  memmove(ofb_buffer, save_ofb_buffer, BF_OFB_LEN);
+  memmove(pax, save_pax, 4 * 18);
+  memmove(sbx, save_sbx, 4 * 4 * 256);
 }
 
 /*

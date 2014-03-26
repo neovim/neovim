@@ -1105,7 +1105,7 @@ void var_redir_str(char_u *value, int value_len)
     len = value_len;                    /* Append only "value_len" characters */
 
   if (ga_grow(&redir_ga, len) == OK) {
-    mch_memmove((char *)redir_ga.ga_data + redir_ga.ga_len, value, len);
+    memmove((char *)redir_ga.ga_data + redir_ga.ga_len, value, len);
     redir_ga.ga_len += len;
   } else
     var_redir_stop();
@@ -7321,7 +7321,7 @@ call_func (
       if (fname == NULL)
         error = ERROR_OTHER;
       else {
-        mch_memmove(fname, fname_buf, (size_t)i);
+        memmove(fname, fname_buf, (size_t)i);
         STRCPY(fname + i, name + llen);
       }
     }
@@ -12016,7 +12016,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
            * the bytes are only copied once, and very long lines are
            * allocated only once.  */
           if ((s = vim_realloc(prev, prevlen + len + 1)) != NULL) {
-            mch_memmove(s + prevlen, start, len);
+            memmove(s + prevlen, start, len);
             s[prevlen + len] = NUL;
             prev = NULL;             /* the list will own the string */
             prevlen = prevsize = 0;
@@ -12071,7 +12071,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
               dest = buf;
             }
             if (readlen > p - buf + 1)
-              mch_memmove(dest, p + 1, readlen - (p - buf) - 1);
+              memmove(dest, p + 1, readlen - (p - buf) - 1);
             readlen -= 3 - adjust_prevlen;
             prevlen -= adjust_prevlen;
             p = dest - 1;
@@ -12109,7 +12109,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
         prev = newprev;
       }
       /* Add the line part to end of "prev". */
-      mch_memmove(prev + prevlen, start, p - start);
+      memmove(prev + prevlen, start, p - start);
       prevlen += (long)(p - start);
     }
   }   /* while */
@@ -12372,7 +12372,7 @@ static void f_repeat(typval_T *argvars, typval_T *rettv)
     r = alloc(len + 1);
     if (r != NULL) {
       for (i = 0; i < n; i++)
-        mch_memmove(r + i * slen, p, (size_t)slen);
+        memmove(r + i * slen, p, (size_t)slen);
       r[len] = NUL;
     }
 
@@ -14905,7 +14905,7 @@ error:
       }
 
       ga_grow(&ga, cplen);
-      mch_memmove((char *)ga.ga_data + ga.ga_len, cpstr, (size_t)cplen);
+      memmove((char *)ga.ga_data + ga.ga_len, cpstr, (size_t)cplen);
       ga.ga_len += cplen;
 
       in_str += inlen;
@@ -17829,7 +17829,7 @@ trans_function_name (
       if (lead > 3)             /* If it's "<SID>" */
         STRCPY(name + 3, sid_buf);
     }
-    mch_memmove(name + lead, lv.ll_name, (size_t)len);
+    memmove(name + lead, lv.ll_name, (size_t)len);
     name[len + lead] = NUL;
   }
   *pp = end;
@@ -19587,7 +19587,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
       /* copy the text up to where the match is */
       i = (int)(regmatch.startp[0] - tail);
-      mch_memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
+      memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       /* add the substituted text */
       (void)vim_regsub(&regmatch, sub, (char_u *)ga.ga_data
           + ga.ga_len + i, TRUE, TRUE, FALSE);

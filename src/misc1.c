@@ -11,6 +11,8 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "version_defs.h"
 #include "misc1.h"
@@ -546,11 +548,11 @@ open_line (
               }
               l = lead_repl_len - (int)(endp - p);
               if (l != 0)
-                mch_memmove(endp + l, endp,
+                memmove(endp + l, endp,
                     (size_t)((leader + lead_len) - endp));
               lead_len += l;
             }
-            mch_memmove(p, lead_repl, (size_t)lead_repl_len);
+            memmove(p, lead_repl, (size_t)lead_repl_len);
             if (p + lead_repl_len > leader + lead_len)
               p[lead_repl_len] = NUL;
 
@@ -564,7 +566,7 @@ open_line (
                   p[1] = ' ';
                   --l;
                 }
-                mch_memmove(p + 1, p + l + 1,
+                memmove(p + 1, p + l + 1,
                     (size_t)((leader + lead_len) - (p + l + 1)));
                 lead_len -= l;
                 *p = ' ';
@@ -588,12 +590,12 @@ open_line (
                   break;
               }
               if (i != lead_repl_len) {
-                mch_memmove(p + lead_repl_len, p + i,
+                memmove(p + lead_repl_len, p + i,
                     (size_t)(lead_len - i - (p - leader)));
                 lead_len += lead_repl_len - i;
               }
             }
-            mch_memmove(p, lead_repl, (size_t)lead_repl_len);
+            memmove(p, lead_repl, (size_t)lead_repl_len);
 
             /* Replace any remaining non-white chars in the old
              * leader by spaces.  Keep Tabs, the indent must
@@ -603,7 +605,7 @@ open_line (
                 /* Don't put a space before a TAB. */
                 if (p + 1 < leader + lead_len && p[1] == TAB) {
                   --lead_len;
-                  mch_memmove(p, p + 1,
+                  memmove(p, p + 1,
                       (leader + lead_len) - p);
                 } else {
                   int l = (*mb_ptr2len)(p);
@@ -615,7 +617,7 @@ open_line (
                       --l;
                       *p++ = ' ';
                     }
-                    mch_memmove(p + 1, p + l,
+                    memmove(p + 1, p + l,
                         (leader + lead_len) - p);
                     lead_len -= l - 1;
                   }
@@ -1515,15 +1517,15 @@ void ins_char_bytes(char_u *buf, int charlen)
 
   /* Copy bytes before the cursor. */
   if (col > 0)
-    mch_memmove(newp, oldp, (size_t)col);
+    memmove(newp, oldp, (size_t)col);
 
   /* Copy bytes after the changed character(s). */
   p = newp + col;
-  mch_memmove(p + newlen, oldp + col + oldlen,
+  memmove(p + newlen, oldp + col + oldlen,
       (size_t)(linelen - col - oldlen));
 
   /* Insert or overwrite the new character. */
-  mch_memmove(p, buf, charlen);
+  memmove(p, buf, charlen);
   i = charlen;
 
   /* Fill with spaces when necessary. */
@@ -1583,9 +1585,9 @@ void ins_str(char_u *s)
   if (newp == NULL)
     return;
   if (col > 0)
-    mch_memmove(newp, oldp, (size_t)col);
-  mch_memmove(newp + col, s, (size_t)newlen);
-  mch_memmove(newp + col + newlen, oldp + col, (size_t)(oldlen - col + 1));
+    memmove(newp, oldp, (size_t)col);
+  memmove(newp + col, s, (size_t)newlen);
+  memmove(newp + col + newlen, oldp + col, (size_t)(oldlen - col + 1));
   ml_replace(lnum, newp, FALSE);
   changed_bytes(lnum, col);
   curwin->w_cursor.col += newlen;
@@ -1717,9 +1719,9 @@ del_bytes (
     newp = alloc((unsigned)(oldlen + 1 - count));
     if (newp == NULL)
       return FAIL;
-    mch_memmove(newp, oldp, (size_t)col);
+    memmove(newp, oldp, (size_t)col);
   }
-  mch_memmove(newp + col, oldp + col + count, (size_t)movelen);
+  memmove(newp + col, oldp + col + count, (size_t)movelen);
   if (!was_alloced)
     ml_replace(lnum, newp, FALSE);
 
@@ -2110,7 +2112,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
         if (curbuf->b_changelistlen == JUMPLISTSIZE) {
           /* changelist is full: remove oldest entry */
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
-          mch_memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
+          memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
               sizeof(pos_T) * (JUMPLISTSIZE - 1));
           FOR_ALL_TAB_WINDOWS(tp, wp)
           {
@@ -2464,7 +2466,7 @@ int get_keystroke(void)
           mod_mask = buf[2];
         len -= 3;
         if (len > 0)
-          mch_memmove(buf, buf + 3, (size_t)len);
+          memmove(buf, buf + 3, (size_t)len);
         continue;
       }
       break;
@@ -4204,7 +4206,7 @@ unix_expandpath (
               mac_precompose_path(buf, precomp_len, &precomp_len);
 
             if (precomp_buf) {
-              mch_memmove(buf, precomp_buf, precomp_len);
+              memmove(buf, precomp_buf, precomp_len);
               vim_free(precomp_buf);
             }
 #endif
@@ -4322,7 +4324,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
         buf[len] = NUL;
       else
         STRMOVE(buf + len, buf + 2);
-      mch_memmove(buf, curbuf->b_ffname, len);
+      memmove(buf, curbuf->b_ffname, len);
       simplify_filename(buf);
     } else if (buf[0] == NUL)
       /* relative to current directory */
@@ -4467,7 +4469,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
           && is_unique(pathsep_p + 1, gap, i)
           && path_cutoff != NULL && pathsep_p + 1 >= path_cutoff) {
         sort_again = TRUE;
-        mch_memmove(path, pathsep_p + 1, STRLEN(pathsep_p));
+        memmove(path, pathsep_p + 1, STRLEN(pathsep_p));
         break;
       }
 

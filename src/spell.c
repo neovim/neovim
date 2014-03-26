@@ -3639,7 +3639,7 @@ static void set_sal_first(slang_T *lp)
             ++i;
             --n;
             tsal = smp[i + n];
-            mch_memmove(smp + i + 1, smp + i,
+            memmove(smp + i + 1, smp + i,
                 sizeof(salitem_T) * n);
             smp[i] = tsal;
           }
@@ -3894,7 +3894,7 @@ char_u *did_set_spelllang(win_T *wp)
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
         vim_strncpy(region_cp, p + 1, 2);
-        mch_memmove(p, p + 3, len - (p - lang) - 2);
+        memmove(p, p + 3, len - (p - lang) - 2);
         len -= 3;
         region = region_cp;
       } else
@@ -9251,7 +9251,7 @@ void spell_suggest(int count)
         + stp->st_wordlen + 1);
     if (p != NULL) {
       c = (int)(sug.su_badptr - line);
-      mch_memmove(p, line, c);
+      memmove(p, line, c);
       STRCPY(p + c, stp->st_word);
       STRCAT(p, sug.su_badptr + stp->st_orglen);
       ml_replace(curwin->w_cursor.lnum, p, FALSE);
@@ -9376,7 +9376,7 @@ void ex_spellrepall(exarg_T *eap)
       p = alloc((unsigned)STRLEN(line) + addlen + 1);
       if (p == NULL)
         break;
-      mch_memmove(p, line, curwin->w_cursor.col);
+      memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
       ml_replace(curwin->w_cursor.lnum, p, FALSE);
@@ -10642,7 +10642,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
                 l = 1;
               if (fword_ends) {
                 /* Copy the skipped character to preword. */
-                mch_memmove(preword + sp->ts_prewordlen,
+                memmove(preword + sp->ts_prewordlen,
                     fword + sp->ts_fidx, l);
                 sp->ts_prewordlen += l;
                 preword[sp->ts_prewordlen] = NUL;
@@ -11050,7 +11050,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         ++depth;
         if (has_mbyte) {
           fl = mb_char2len(c2);
-          mch_memmove(p, p + n, fl);
+          memmove(p, p + n, fl);
           mb_char2bytes(c, p + fl);
           stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
         } else {
@@ -11069,7 +11069,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
       if (has_mbyte) {
         n = MB_BYTE2LEN(*p);
         c = mb_ptr2char(p + n);
-        mch_memmove(p + MB_BYTE2LEN(p[n]), p, n);
+        memmove(p + MB_BYTE2LEN(p[n]), p, n);
         mb_char2bytes(c, p);
       } else {
         c = *p;
@@ -11121,7 +11121,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         ++depth;
         if (has_mbyte) {
           tl = mb_char2len(c3);
-          mch_memmove(p, p + n + fl, tl);
+          memmove(p, p + n + fl, tl);
           mb_char2bytes(c2, p + tl);
           mb_char2bytes(c, p + fl + tl);
           stack[depth].ts_fidxtry = sp->ts_fidx + n + fl + tl;
@@ -11143,7 +11143,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         fl = MB_BYTE2LEN(p[n]);
         c = mb_ptr2char(p + n + fl);
         tl = MB_BYTE2LEN(p[n + fl]);
-        mch_memmove(p + fl + tl, p, n);
+        memmove(p + fl + tl, p, n);
         mb_char2bytes(c, p);
         mb_char2bytes(c2, p + tl);
         p = p + tl;
@@ -11179,7 +11179,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
           c = mb_ptr2char(p);
           fl = mb_cptr2len(p + n);
           fl += mb_cptr2len(p + n + fl);
-          mch_memmove(p, p + n, fl);
+          memmove(p, p + n, fl);
           mb_char2bytes(c, p + fl);
           stack[depth].ts_fidxtry = sp->ts_fidx + n + fl;
         } else {
@@ -11201,7 +11201,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         n += MB_BYTE2LEN(p[n]);
         c = mb_ptr2char(p + n);
         tl = MB_BYTE2LEN(p[n]);
-        mch_memmove(p + tl, p, n);
+        memmove(p + tl, p, n);
         mb_char2bytes(c, p);
       } else {
         c = p[2];
@@ -11228,7 +11228,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
           n += mb_cptr2len(p + n);
           c = mb_ptr2char(p + n);
           tl = mb_cptr2len(p + n);
-          mch_memmove(p + tl, p, n);
+          memmove(p + tl, p, n);
           mb_char2bytes(c, p);
           stack[depth].ts_fidxtry = sp->ts_fidx + n + tl;
         } else {
@@ -11250,7 +11250,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         tl = MB_BYTE2LEN(*p);
         n = MB_BYTE2LEN(p[tl]);
         n += MB_BYTE2LEN(p[tl + n]);
-        mch_memmove(p, p + tl, n);
+        memmove(p, p + tl, n);
         mb_char2bytes(c, p + n);
       } else {
         c = *p;
@@ -11324,7 +11324,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
             STRMOVE(p + tl, p + fl);
             repextra += tl - fl;
           }
-          mch_memmove(p, ftp->ft_to, tl);
+          memmove(p, ftp->ft_to, tl);
           stack[depth].ts_fidxtry = sp->ts_fidx + tl;
           stack[depth].ts_tcharlen = 0;
           break;
@@ -11351,7 +11351,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         STRMOVE(p + fl, p + tl);
         repextra -= tl - fl;
       }
-      mch_memmove(p, ftp->ft_from, fl);
+      memmove(p, ftp->ft_from, fl);
       sp->ts_state = STATE_REP;
       break;
 
@@ -12367,7 +12367,7 @@ check_suggestions (
       vim_free(stp[i].st_word);
       --gap->ga_len;
       if (i < gap->ga_len)
-        mch_memmove(stp + i, stp + i + 1,
+        memmove(stp + i, stp + i + 1,
             sizeof(suggest_T) * (gap->ga_len - i));
     }
   }
@@ -13070,7 +13070,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
                 ws++;
               }
             if (k > k0)
-              mch_memmove(word + i + k0, word + i + k,
+              memmove(word + i + k0, word + i + k,
                   sizeof(int) * (wordlen - (i + k) + 1));
 
             /* new "actual letter" */
@@ -13094,7 +13094,7 @@ static void spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
             if (strstr((char *)s, "^^") != NULL) {
               if (c != NUL)
                 wres[reslen++] = c;
-              mch_memmove(word, word + i + 1,
+              memmove(word, word + i + 1,
                   sizeof(int) * (wordlen - (i + 1) + 1));
               i = 0;
               z0 = 1;

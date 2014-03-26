@@ -424,7 +424,7 @@ static void ml_set_b0_crypt(buf_T *buf, ZERO_BL *b0p)
       b0p->b0_id[1] = BLOCK0_ID1_C1;
       /* Generate a seed and store it in block 0 and in the memfile. */
       sha2_seed(&b0p->b0_seed, MF_SEED_LEN, NULL, 0);
-      mch_memmove(buf->b_ml.ml_mfp->mf_seed, &b0p->b0_seed, MF_SEED_LEN);
+      memmove(buf->b_ml.ml_mfp->mf_seed, &b0p->b0_seed, MF_SEED_LEN);
     }
   }
 }
@@ -458,7 +458,7 @@ void ml_set_crypt_key(buf_T *buf, char_u *old_key, int old_cm)
   mfp->mf_old_key = old_key;
   mfp->mf_old_cm = old_cm;
   if (old_cm > 0)
-    mch_memmove(mfp->mf_old_seed, mfp->mf_seed, MF_SEED_LEN);
+    memmove(mfp->mf_old_seed, mfp->mf_seed, MF_SEED_LEN);
 
   /* Update block 0 with the crypt flag and may set a new seed. */
   ml_upd_block0(buf, UB_CRYPT);
@@ -857,8 +857,8 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
         vim_strncpy(b0p->b0_fname, buf->b_ffname,
             B0_FNAME_SIZE_CRYPT - 1);
       } else {
-        mch_memmove(b0p->b0_fname + ulen + 1, b0p->b0_fname + 1, flen);
-        mch_memmove(b0p->b0_fname + 1, uname, ulen);
+        memmove(b0p->b0_fname + ulen + 1, b0p->b0_fname + 1, flen);
+        memmove(b0p->b0_fname + 1, uname, ulen);
       }
     }
     if (mch_stat((char *)buf->b_ffname, &st) >= 0) {
@@ -916,7 +916,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   if ((int)STRLEN(b0p->b0_fname) + n + 1 > size)
     b0p->b0_flags &= ~B0_HAS_FENC;
   else {
-    mch_memmove((char *)b0p->b0_fname + size - n,
+    memmove((char *)b0p->b0_fname + size - n,
         (char *)buf->b_p_fenc, (size_t)n);
     *(b0p->b0_fname + size - n - 1) = NUL;
     b0p->b0_flags |= B0_HAS_FENC;
@@ -1100,7 +1100,7 @@ void ml_recover(void)
     b0_cm = 0;
   else if (b0p->b0_id[1] == BLOCK0_ID1_C1) {
     b0_cm = 1;
-    mch_memmove(mfp->mf_seed, &b0p->b0_seed, MF_SEED_LEN);
+    memmove(mfp->mf_seed, &b0p->b0_seed, MF_SEED_LEN);
   }
   set_crypt_method(buf, b0_cm);
 
@@ -1131,7 +1131,7 @@ void ml_recover(void)
     p = alloc(mfp->mf_page_size);
     if (p == NULL)
       goto theend;
-    mch_memmove(p, hp->bh_data, previous_page_size);
+    memmove(p, hp->bh_data, previous_page_size);
     vim_free(hp->bh_data);
     hp->bh_data = p;
     b0p = (ZERO_BL *)(hp->bh_data);
@@ -2309,7 +2309,7 @@ ml_append_int (
         offset = dp->db_txt_end;
       else
         offset = ((dp->db_index[db_idx]) & DB_INDEX_MASK);
-      mch_memmove((char *)dp + dp->db_txt_start,
+      memmove((char *)dp + dp->db_txt_start,
           (char *)dp + dp->db_txt_start + len,
           (size_t)(offset - (dp->db_txt_start + len)));
       for (i = line_count - 1; i > db_idx; --i)
@@ -2321,7 +2321,7 @@ ml_append_int (
     /*
      * copy the text into the block
      */
-    mch_memmove((char *)dp + dp->db_index[db_idx + 1], line, (size_t)len);
+    memmove((char *)dp + dp->db_index[db_idx + 1], line, (size_t)len);
     if (mark)
       dp->db_index[db_idx + 1] |= DB_MARKED;
 
@@ -2424,7 +2424,7 @@ ml_append_int (
       if (mark)
         dp_right->db_index[0] |= DB_MARKED;
 
-      mch_memmove((char *)dp_right + dp_right->db_txt_start,
+      memmove((char *)dp_right + dp_right->db_txt_start,
           line, (size_t)len);
       ++line_count_right;
     }
@@ -2436,7 +2436,7 @@ ml_append_int (
        */
       dp_right->db_txt_start -= data_moved;
       dp_right->db_free -= total_moved;
-      mch_memmove((char *)dp_right + dp_right->db_txt_start,
+      memmove((char *)dp_right + dp_right->db_txt_start,
           (char *)dp_left + dp_left->db_txt_start,
           (size_t)data_moved);
       offset = dp_right->db_txt_start - dp_left->db_txt_start;
@@ -2462,7 +2462,7 @@ ml_append_int (
       dp_left->db_index[line_count_left] = dp_left->db_txt_start;
       if (mark)
         dp_left->db_index[line_count_left] |= DB_MARKED;
-      mch_memmove((char *)dp_left + dp_left->db_txt_start,
+      memmove((char *)dp_left + dp_left->db_txt_start,
           line, (size_t)len);
       ++line_count_left;
     }
@@ -2523,7 +2523,7 @@ ml_append_int (
       /* block not full, add one entry */
       if (pp->pb_count < pp->pb_count_max) {
         if (pb_idx + 1 < (int)pp->pb_count)
-          mch_memmove(&pp->pb_pointer[pb_idx + 2],
+          memmove(&pp->pb_pointer[pb_idx + 2],
               &pp->pb_pointer[pb_idx + 1],
               (size_t)(pp->pb_count - pb_idx - 1) * sizeof(PTR_EN));
         ++pp->pb_count;
@@ -2578,7 +2578,7 @@ ml_append_int (
            * block 1 is updated to point to the new block
            * then continue to split the new block
            */
-          mch_memmove(pp_new, pp, (size_t)page_size);
+          memmove(pp_new, pp, (size_t)page_size);
           pp->pb_count = 1;
           pp->pb_pointer[0].pe_bnum = hp_new->bh_bnum;
           pp->pb_pointer[0].pe_line_count = buf->b_ml.ml_line_count;
@@ -2597,7 +2597,7 @@ ml_append_int (
          */
         total_moved = pp->pb_count - pb_idx - 1;
         if (total_moved) {
-          mch_memmove(&pp_new->pb_pointer[0],
+          memmove(&pp_new->pb_pointer[0],
               &pp->pb_pointer[pb_idx + 1],
               (size_t)(total_moved) * sizeof(PTR_EN));
           pp_new->pb_count = total_moved;
@@ -2795,7 +2795,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
         mf_free(mfp, hp);
       else {
         if (count != idx)               /* move entries after the deleted one */
-          mch_memmove(&pp->pb_pointer[idx], &pp->pb_pointer[idx + 1],
+          memmove(&pp->pb_pointer[idx], &pp->pb_pointer[idx + 1],
               (size_t)(count - idx) * sizeof(PTR_EN));
         mf_put(mfp, hp, TRUE, FALSE);
 
@@ -2817,7 +2817,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
      * delete the text by moving the next lines forwards
      */
     text_start = dp->db_txt_start;
-    mch_memmove((char *)dp + text_start + line_size,
+    memmove((char *)dp + text_start + line_size,
         (char *)dp + text_start, (size_t)(line_start - text_start));
 
     /*
@@ -3004,7 +3004,7 @@ static void ml_flush_line(buf_T *buf)
         count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low + 1;
         if (extra != 0 && idx < count - 1) {
           /* move text of following lines */
-          mch_memmove((char *)dp + dp->db_txt_start - extra,
+          memmove((char *)dp + dp->db_txt_start - extra,
               (char *)dp + dp->db_txt_start,
               (size_t)(start - dp->db_txt_start));
 
@@ -3019,7 +3019,7 @@ static void ml_flush_line(buf_T *buf)
         dp->db_txt_start -= extra;
 
         /* copy new line into the data block */
-        mch_memmove(old_line - extra, new_line, (size_t)new_len);
+        memmove(old_line - extra, new_line, (size_t)new_len);
         buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
         /* The else case is already covered by the insert and delete */
         ml_updatechunk(buf, lnum, (long)extra, ML_CHNK_UPDLINE);
@@ -3296,7 +3296,7 @@ static int ml_add_stack(buf_T *buf)
         (buf->b_ml.ml_stack_size + STACK_INCR));
     if (newstack == NULL)
       return -1;
-    mch_memmove(newstack, buf->b_ml.ml_stack,
+    memmove(newstack, buf->b_ml.ml_stack,
         (size_t)top * sizeof(infoptr_T));
     vim_free(buf->b_ml.ml_stack);
     buf->b_ml.ml_stack = newstack;
@@ -4209,7 +4209,7 @@ char_u *ml_encrypt_data(memfile_T *mfp, char_u *data, off_t offset, unsigned siz
   text_len = size - dp->db_txt_start;
 
   /* Copy the header and the text. */
-  mch_memmove(new_data, dp, head_end - (char_u *)dp);
+  memmove(new_data, dp, head_end - (char_u *)dp);
 
   /* Encrypt the text. */
   crypt_push_state();
@@ -4386,7 +4386,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
       int text_end;
       int linecnt;
 
-      mch_memmove(buf->b_ml.ml_chunksize + curix + 1,
+      memmove(buf->b_ml.ml_chunksize + curix + 1,
           buf->b_ml.ml_chunksize + curix,
           (buf->b_ml.ml_usedchunks - curix) *
           sizeof(chunksize_T));
@@ -4471,7 +4471,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
       curchnk = buf->b_ml.ml_chunksize + curix;
     } else if (curix == 0 && curchnk->mlcs_numlines <= 0) {
       buf->b_ml.ml_usedchunks--;
-      mch_memmove(buf->b_ml.ml_chunksize, buf->b_ml.ml_chunksize + 1,
+      memmove(buf->b_ml.ml_chunksize, buf->b_ml.ml_chunksize + 1,
           buf->b_ml.ml_usedchunks * sizeof(chunksize_T));
       return;
     } else if (curix == 0 || (curchnk->mlcs_numlines > 10
@@ -4486,7 +4486,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     curchnk[-1].mlcs_totalsize += curchnk->mlcs_totalsize;
     buf->b_ml.ml_usedchunks--;
     if (curix < buf->b_ml.ml_usedchunks) {
-      mch_memmove(buf->b_ml.ml_chunksize + curix,
+      memmove(buf->b_ml.ml_chunksize + curix,
           buf->b_ml.ml_chunksize + curix + 1,
           (buf->b_ml.ml_usedchunks - curix) *
           sizeof(chunksize_T));

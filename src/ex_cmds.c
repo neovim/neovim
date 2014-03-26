@@ -11,6 +11,8 @@
  * ex_cmds.c: some functions for command line commands
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "version_defs.h"
 #include "ex_cmds.h"
@@ -625,8 +627,8 @@ void ex_retab(exarg_T *eap)
             if (new_line == NULL)
               break;
             if (start_col > 0)
-              mch_memmove(new_line, ptr, (size_t)start_col);
-            mch_memmove(new_line + start_col + len,
+              memmove(new_line, ptr, (size_t)start_col);
+            memmove(new_line + start_col + len,
                 ptr + col, (size_t)(old_len - col + 1));
             ptr = new_line + start_col;
             for (col = 0; col < len; col++)
@@ -4150,7 +4152,7 @@ void do_sub(exarg_T *eap)
               vim_free(new_start);
               goto outofmem;
             }
-            mch_memmove(p1, new_start, (size_t)(len + 1));
+            memmove(p1, new_start, (size_t)(len + 1));
             vim_free(new_start);
             new_start = p1;
           }
@@ -4160,7 +4162,7 @@ void do_sub(exarg_T *eap)
         /*
          * copy the text up to the part that matched
          */
-        mch_memmove(new_end, sub_firstline + copycol, (size_t)copy_len);
+        memmove(new_end, sub_firstline + copycol, (size_t)copy_len);
         new_end += copy_len;
 
         (void)vim_regsub_multi(&regmatch,
@@ -5088,16 +5090,16 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
       if (*IObuff == '`') {
         if (d > IObuff + 2 && d[-1] == '`') {
           /* remove the backticks from `command` */
-          mch_memmove(IObuff, IObuff + 1, STRLEN(IObuff));
+          memmove(IObuff, IObuff + 1, STRLEN(IObuff));
           d[-2] = NUL;
         } else if (d > IObuff + 3 && d[-2] == '`' && d[-1] == ',') {
           /* remove the backticks and comma from `command`, */
-          mch_memmove(IObuff, IObuff + 1, STRLEN(IObuff));
+          memmove(IObuff, IObuff + 1, STRLEN(IObuff));
           d[-3] = NUL;
         } else if (d > IObuff + 4 && d[-3] == '`'
                    && d[-2] == '\\' && d[-1] == '.') {
           /* remove the backticks and dot from `command`\. */
-          mch_memmove(IObuff, IObuff + 1, STRLEN(IObuff));
+          memmove(IObuff, IObuff + 1, STRLEN(IObuff));
           d[-4] = NUL;
         }
       }

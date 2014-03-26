@@ -11,6 +11,8 @@
  * fileio.c: read from and write to a file
  */
 
+#include <string.h>
+
 #include "vim.h"
 #include "fileio.h"
 #include "blowfish.h"
@@ -1026,7 +1028,7 @@ retry:
           break;
         }
         if (linerest)           /* copy characters from the previous buffer */
-          mch_memmove(new_buffer, ptr - linerest, (size_t)linerest);
+          memmove(new_buffer, ptr - linerest, (size_t)linerest);
         vim_free(buffer);
         buffer = new_buffer;
         ptr = buffer + linerest;
@@ -1059,7 +1061,7 @@ retry:
 
         if (conv_restlen > 0) {
           /* Insert unconverted bytes from previous line. */
-          mch_memmove(ptr, conv_rest, conv_restlen);
+          memmove(ptr, conv_rest, conv_restlen);
           ptr += conv_restlen;
           size -= conv_restlen;
         }
@@ -1219,7 +1221,7 @@ retry:
           /* Remove BOM from the text */
           filesize += blen;
           size -= blen;
-          mch_memmove(ptr, ptr + blen, (size_t)size);
+          memmove(ptr, ptr + blen, (size_t)size);
           if (set_options) {
             curbuf->b_p_bomb = TRUE;
             curbuf->b_start_bomb = TRUE;
@@ -1301,13 +1303,13 @@ retry:
         if (from_size > 0) {
           /* Some remaining characters, keep them for the next
            * round. */
-          mch_memmove(conv_rest, (char_u *)fromp, from_size);
+          memmove(conv_rest, (char_u *)fromp, from_size);
           conv_restlen = (int)from_size;
         }
 
         /* move the linerest to before the converted characters */
         line_start = ptr - linerest;
-        mch_memmove(line_start, buffer, (size_t)linerest);
+        memmove(line_start, buffer, (size_t)linerest);
         size = (long)((char_u *)top - ptr);
       }
 # endif
@@ -1378,7 +1380,7 @@ retry:
          * conv_rest[]. */
         if (tail != NULL) {
           conv_restlen = (int)((ptr + size) - tail);
-          mch_memmove(conv_rest, (char_u *)tail, conv_restlen);
+          memmove(conv_rest, (char_u *)tail, conv_restlen);
           size -= conv_restlen;
         }
 
@@ -1499,7 +1501,7 @@ retry:
 
         /* move the linerest to before the converted characters */
         line_start = dest - linerest;
-        mch_memmove(line_start, buffer, (size_t)linerest);
+        memmove(line_start, buffer, (size_t)linerest);
         size = (long)((ptr + real_size) - dest);
         ptr = dest;
       } else if (enc_utf8 && !curbuf->b_p_bin) {
@@ -1530,7 +1532,7 @@ retry:
                * already done so. */
               if (p > ptr) {
                 conv_restlen = todo;
-                mch_memmove(conv_rest, p, conv_restlen);
+                memmove(conv_rest, p, conv_restlen);
                 size -= conv_restlen;
                 break;
               }
@@ -1552,7 +1554,7 @@ retry:
 
               /* Drop, keep or replace the bad byte. */
               if (bad_char_behavior == BAD_DROP) {
-                mch_memmove(p, p + 1, todo - 1);
+                memmove(p, p + 1, todo - 1);
                 --p;
                 --size;
               } else if (bad_char_behavior != BAD_KEEP)
@@ -2338,7 +2340,7 @@ check_for_cryptkey (
       /* Remove magic number from the text */
       *filesizep += CRYPT_MAGIC_LEN + salt_len + seed_len;
       *sizep -= CRYPT_MAGIC_LEN + salt_len + seed_len;
-      mch_memmove(ptr, ptr + CRYPT_MAGIC_LEN + salt_len + seed_len,
+      memmove(ptr, ptr + CRYPT_MAGIC_LEN + salt_len + seed_len,
           (size_t)*sizep);
       /* Restore the read-only flag. */
       curbuf->b_p_ro = b_p_ro;
@@ -4050,7 +4052,7 @@ nofail:
      * front of the file name. */
     if (errnum != NULL) {
       STRMOVE(IObuff + numlen, IObuff);
-      mch_memmove(IObuff, errnum, (size_t)numlen);
+      memmove(IObuff, errnum, (size_t)numlen);
     }
     STRCAT(IObuff, errmsg);
     emsg(IObuff);
@@ -4332,7 +4334,7 @@ static int buf_write_bytes(struct bw_info *ip)
           l = CONV_RESTLEN - ip->bw_restlen;
           if (l > len)
             l = len;
-          mch_memmove(ip->bw_rest + ip->bw_restlen, buf, (size_t)l);
+          memmove(ip->bw_rest + ip->bw_restlen, buf, (size_t)l);
           n = utf_ptr2len_len(ip->bw_rest, ip->bw_restlen + l);
           if (n > ip->bw_restlen + len) {
             /* We have an incomplete byte sequence at the end to
@@ -4352,7 +4354,7 @@ static int buf_write_bytes(struct bw_info *ip)
             ip->bw_restlen = 0;
           } else {
             ip->bw_restlen -= n;
-            mch_memmove(ip->bw_rest, ip->bw_rest + n,
+            memmove(ip->bw_rest, ip->bw_rest + n,
                 (size_t)ip->bw_restlen);
             n = 0;
           }
@@ -4365,7 +4367,7 @@ static int buf_write_bytes(struct bw_info *ip)
             if (len - wlen > CONV_RESTLEN)
               return FAIL;
             ip->bw_restlen = len - wlen;
-            mch_memmove(ip->bw_rest, buf + wlen,
+            memmove(ip->bw_rest, buf + wlen,
                 (size_t)ip->bw_restlen);
             break;
           }
@@ -4405,8 +4407,8 @@ static int buf_write_bytes(struct bw_info *ip)
          * conversion buffer for this. */
         fromlen = len + ip->bw_restlen;
         from = ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
-        mch_memmove(from, ip->bw_rest, (size_t)ip->bw_restlen);
-        mch_memmove(from + ip->bw_restlen, buf, (size_t)len);
+        memmove(from, ip->bw_rest, (size_t)ip->bw_restlen);
+        memmove(from + ip->bw_restlen, buf, (size_t)len);
       } else {
         from = buf;
         fromlen = len;
@@ -4438,8 +4440,8 @@ static int buf_write_bytes(struct bw_info *ip)
          * conversion buffer for this. */
         fromlen = len + ip->bw_restlen;
         fp = (char *)ip->bw_conv_buf + ip->bw_conv_buflen - fromlen;
-        mch_memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
-        mch_memmove(fp + ip->bw_restlen, buf, (size_t)len);
+        memmove(fp, ip->bw_rest, (size_t)ip->bw_restlen);
+        memmove(fp + ip->bw_restlen, buf, (size_t)len);
         from = fp;
         tolen = ip->bw_conv_buflen - fromlen;
       } else {
@@ -4477,7 +4479,7 @@ static int buf_write_bytes(struct bw_info *ip)
 
       /* copy remainder to ip->bw_rest[] to be used for the next call. */
       if (fromlen > 0)
-        mch_memmove(ip->bw_rest, (void *)from, fromlen);
+        memmove(ip->bw_rest, (void *)from, fromlen);
       ip->bw_restlen = (int)fromlen;
 
       buf = ip->bw_conv_buf;
@@ -8248,7 +8250,7 @@ file_pat_to_reg_pat (
         /* The 'pattern' is a filetype check ONLY */
         reg_pat = (char_u *)alloc(check_length + 1);
         if (reg_pat != NULL) {
-          mch_memmove(reg_pat, pat, (size_t)check_length);
+          memmove(reg_pat, pat, (size_t)check_length);
           reg_pat[check_length] = NUL;
         }
         return reg_pat;
@@ -8295,7 +8297,7 @@ file_pat_to_reg_pat (
 #ifdef FEAT_OSFILETYPE
   /* Copy the type check in to the start. */
   if (check_length)
-    mch_memmove(reg_pat, pat - check_length, (size_t)check_length);
+    memmove(reg_pat, pat - check_length, (size_t)check_length);
   i = check_length;
 #else
   i = 0;

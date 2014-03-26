@@ -337,7 +337,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
       // Moving from ht_smallarray to ht_smallarray!  Happens when there
       // are many removed items.  Copy the items to be able to clean up
       // removed items.
-      mch_memmove(temparray, newarray, sizeof(temparray));
+      memmove(temparray, newarray, sizeof(temparray));
       oldarray = temparray;
     } else {
       oldarray = ht->ht_array;

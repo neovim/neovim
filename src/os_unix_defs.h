@@ -253,24 +253,6 @@
 #  define DFLT_MAXMEMTOT        (10*1024)    /* use up to 10 Mbyte for Vim */
 # endif
 
-/* memmove is not present on all systems, use memmove, bcopy, memcpy or our
- * own version */
-/* Some systems have (void *) arguments, some (char *). If we use (char *) it
- * works for all */
-#ifdef USEMEMMOVE
-# define mch_memmove(to, from, len) memmove((char *)(to), (char *)(from), len)
-#else
-# ifdef USEBCOPY
-#  define mch_memmove(to, from, len) bcopy((char *)(from), (char *)(to), len)
-# else
-#  ifdef USEMEMCPY
-#   define mch_memmove(to, from, len) memcpy((char *)(to), (char *)(from), len)
-#  else
-#   define VIM_MEMMOVE      /* found in misc2.c */
-#  endif
-# endif
-#endif
-
 # ifdef HAVE_RENAME
 #  define mch_rename(src, dst) rename(src, dst)
 # else

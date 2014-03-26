@@ -1034,7 +1034,7 @@ char_u *vim_strsave(char_u *string)
   len = (unsigned)STRLEN(string) + 1;
   p = alloc(len);
   if (p != NULL)
-    mch_memmove(p, string, (size_t)len);
+    memmove(p, string, (size_t)len);
   return p;
 }
 
@@ -1098,7 +1098,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
     p2 = escaped_string;
     for (p = string; *p; p++) {
       if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-        mch_memmove(p2, p, (size_t)l);
+        memmove(p2, p, (size_t)l);
         p2 += l;
         p += l - 1;                     /* skip multibyte char  */
         continue;
@@ -1275,7 +1275,7 @@ char_u *strup_save(char_u *orig)
           s = alloc((unsigned)STRLEN(res) + 1 + newl - l);
           if (s == NULL)
             break;
-          mch_memmove(s, res, p - res);
+          memmove(s, res, p - res);
           STRCPY(s + (p - res) + newl, p + l);
           p = s + (p - res);
           vim_free(res);
@@ -1352,7 +1352,7 @@ void vim_strcat(char_u *to, char_u *from, size_t tosize)
   size_t fromlen = STRLEN(from);
 
   if (tolen + fromlen + 1 > tosize) {
-    mch_memmove(to + tolen, from, tosize - tolen - 1);
+    memmove(to + tolen, from, tosize - tolen - 1);
     to[tosize - 1] = NUL;
   } else
     STRCPY(to + tolen, from);
@@ -1427,32 +1427,6 @@ size_t len;
     ++p2;
   }
   return 0;
-}
-#endif
-
-#ifdef VIM_MEMMOVE
-/*
- * Version of memmove() that handles overlapping source and destination.
- * For systems that don't have a function that is guaranteed to do that (SYSV).
- */
-void mch_memmove(dst_arg, src_arg, len)
-void    *src_arg, *dst_arg;
-size_t len;
-{
-  /*
-   * A void doesn't have a size, we use char pointers.
-   */
-  char *dst = dst_arg, *src = src_arg;
-
-  /* overlap, copy backwards */
-  if (dst > src && dst < src + len) {
-    src += len;
-    dst += len;
-    while (len-- > 0)
-      *--dst = *--src;
-  } else                                /* copy forwards */
-    while (len-- > 0)
-      *dst++ = *src++;
 }
 #endif
 
@@ -1905,9 +1879,9 @@ int (*cmp)(const void *, const void *);
         if ((*cmp)((void *)p1, (void *)p2) <= 0)
           break;
         /* Exchange the elements. */
-        mch_memmove(buf, p1, elm_size);
-        mch_memmove(p1, p2, elm_size);
-        mch_memmove(p2, buf, elm_size);
+        memmove(buf, p1, elm_size);
+        memmove(p1, p2, elm_size);
+        memmove(p2, buf, elm_size);
       }
 
   vim_free(buf);
