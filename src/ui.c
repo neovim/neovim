@@ -33,6 +33,7 @@
 #include "option.h"
 #include "os_unix.h"
 #include "os/time.h"
+#include "os/input.h"
 #include "screen.h"
 #include "term.h"
 #include "window.h"
@@ -475,7 +476,6 @@ void fill_input_buf(int exit_on_error)
 #if defined(UNIX) || defined(OS2) || defined(VMS) || defined(MACOS_X_UNIX)
   int len;
   int try;
-  static int did_read_something = FALSE;
   static char_u *rest = NULL;       /* unconverted rest of previous read */
   static int restlen = 0;
   int unconverted;
@@ -513,40 +513,20 @@ void fill_input_buf(int exit_on_error)
 
   len = 0;      /* to avoid gcc warning */
   for (try = 0; try < 100; ++try) {
-    len = read(read_cmd_fd,
-        (char *)inbuf + inbufcount, (size_t)((INBUFLEN - inbufcount)
-                                             / input_conv.vc_factor
-                                             ));
+    len = input_read(
+        (char *)inbuf + inbufcount,
+        (size_t)((INBUFLEN - inbufcount) / input_conv.vc_factor));
 
     if (len > 0 || got_int)
       break;
-    /*
-     * If reading stdin results in an error, continue reading stderr.
-     * This helps when using "foo | xargs vim".
-     */
-    if (!did_read_something && !isatty(read_cmd_fd) && read_cmd_fd == 0) {
-      int m = cur_tmode;
 
-      /* We probably set the wrong file descriptor to raw mode.  Switch
-       * back to cooked mode, use another descriptor and set the mode to
-       * what it was. */
-      settmode(TMODE_COOK);
-#ifdef HAVE_DUP
-      /* Use stderr for stdin, also works for shell commands. */
-      close(0);
-      ignored = dup(2);
-#else
-      read_cmd_fd = 2;          /* read from stderr instead of stdin */
-#endif
-      settmode(m);
-    }
     if (!exit_on_error)
       return;
   }
+
   if (len <= 0 && !got_int)
     read_error_exit();
-  if (len > 0)
-    did_read_something = TRUE;
+
   if (got_int) {
     /* Interrupted, pretend a CTRL-C was typed. */
     inbuf[0] = 3;
