@@ -1387,9 +1387,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 /* stop using fastcall for Borland */
 
 
-/* Note: a NULL argument for vim_realloc() is not portable, don't use it. */
-#define vim_realloc(ptr, size)  realloc((ptr), (size))
-
 /*
  * The following macros stop display/event loop nesting at the wrong time.
  */
