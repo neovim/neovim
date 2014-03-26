@@ -2,8 +2,6 @@
 #define NEOVIM_OS_UNIX_H
 /* os_unix.c */
 void mch_write(char_u *s, int len);
-int mch_inchar(char_u *buf, int maxlen, long wtime, int tb_change_cnt);
-int mch_char_avail(void);
 void mch_startjmp(void);
 void mch_endjmp(void);
 void mch_didjmp(void);
@@ -45,7 +43,6 @@ int mch_get_shellsize(void);
 void mch_set_shellsize(void);
 void mch_new_shellsize(void);
 int mch_call_shell(char_u *cmd, int options);
-void mch_breakcheck(void);
 int mch_expandpath(garray_T *gap, char_u *path, int flags);
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,
