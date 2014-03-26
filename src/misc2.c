@@ -599,13 +599,6 @@ int leftcol_changed(void)
  */
 
 /*
- * Some memory is reserved for error messages and for being able to
- * call mf_release_all(), which needs some memory for mf_trans_add().
- */
-# define KEEP_ROOM (2 * 8192L)
-#define KEEP_ROOM_KB (KEEP_ROOM / 1024L)
-
-/*
  * Note: if unsigned is 16 bits we can only allocate up to 64K with alloc().
  * Use lalloc for larger blocks.
  */
@@ -665,9 +658,6 @@ char_u *lalloc(long_u size, int message)
   char_u      *p;                   /* pointer to new storage space */
   static int releasing = FALSE;     /* don't do mf_release_all() recursive */
   int try_again;
-#if defined(HAVE_AVAIL_MEM) && !defined(SMALL_MEM)
-  static long_u allocated = 0;      /* allocated since last avail check */
-#endif
 
   /* Safety check for allocating zero bytes */
   if (size == 0) {
@@ -682,33 +672,9 @@ char_u *lalloc(long_u size, int message)
    * if some blocks are released call malloc again.
    */
   for (;; ) {
-    /*
-     * Handle three kind of systems:
-     * 1. No check for available memory: Just return.
-     * 2. Slow check for available memory: call mch_avail_mem() after
-     *    allocating KEEP_ROOM amount of memory.
-     * 3. Strict check for available memory: call mch_avail_mem()
-     */
     if ((p = (char_u *)malloc((size_t)size)) != NULL) {
-#ifndef HAVE_AVAIL_MEM
-      /* 1. No check for available memory: Just return. */
+      /* No check for available memory: Just return. */
       goto theend;
-#else
-# ifndef SMALL_MEM
-      /* 2. Slow check for available memory: call mch_avail_mem() after
-       *    allocating (KEEP_ROOM / 2) amount of memory. */
-      allocated += size;
-      if (allocated < KEEP_ROOM / 2)
-        goto theend;
-      allocated = 0;
-# endif
-      /* 3. check for available memory: call mch_avail_mem() */
-      if (mch_avail_mem(TRUE) < KEEP_ROOM_KB && !releasing) {
-        free((char *)p);                /* System is low... no go! */
-        p = NULL;
-      } else
-        goto theend;
-#endif
     }
     /*
      * Remember that mf_release_all() is being called to avoid an endless
