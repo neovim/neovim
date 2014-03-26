@@ -1330,7 +1330,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, struct stat
     } else {
       /* Reallocate space for more connections. */
       csinfo_size *= 2;
-      csinfo = vim_realloc(csinfo, sizeof(csinfo_T)*csinfo_size);
+      csinfo = realloc(csinfo, sizeof(csinfo_T)*csinfo_size);
     }
     if (csinfo == NULL)
       return -1;
@@ -1870,7 +1870,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     /* hopefully 'num' (num of matches) will be less than 10^16 */
     newsize = (int)(strlen(csfmt_str) + 16 + strlen(lno));
     if (bufsize < newsize) {
-      buf = (char *)vim_realloc(buf, newsize);
+      buf = (char *)realloc(buf, newsize);
       if (buf == NULL)
         bufsize = 0;
       else
@@ -1891,7 +1891,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     newsize = (int)(strlen(context) + strlen(cntxformat));
 
     if (bufsize < newsize) {
-      buf = (char *)vim_realloc(buf, newsize);
+      buf = (char *)realloc(buf, newsize);
       if (buf == NULL)
         bufsize = 0;
       else
