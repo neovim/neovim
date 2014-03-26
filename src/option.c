@@ -2024,25 +2024,20 @@ void set_init_1(void)
    */
   opt_idx = findoption((char_u *)"maxmemtot");
   if (opt_idx >= 0) {
-#if !defined(HAVE_AVAIL_MEM) && !defined(HAVE_TOTAL_MEM)
+#ifndef HAVE_TOTAL_MEM
     if (options[opt_idx].def_val[VI_DEFAULT] == (char_u *)0L)
 #endif
     {
-#ifdef HAVE_AVAIL_MEM
-      /* Use amount of memory available at this moment. */
-      n = (mch_avail_mem(FALSE) >> 1);
-#else
-# ifdef HAVE_TOTAL_MEM
+#ifdef HAVE_TOTAL_MEM
       /* Use amount of memory available to Vim. */
       n = (mch_total_mem(FALSE) >> 1);
-# else
+#else
       n = (0x7fffffff >> 11);
-# endif
 #endif
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       opt_idx = findoption((char_u *)"maxmem");
       if (opt_idx >= 0) {
-#if !defined(HAVE_AVAIL_MEM) && !defined(HAVE_TOTAL_MEM)
+#ifndef HAVE_TOTAL_MEM
         if ((long)options[opt_idx].def_val[VI_DEFAULT] > (long)n
             || (long)options[opt_idx].def_val[VI_DEFAULT] == 0L)
 #endif
