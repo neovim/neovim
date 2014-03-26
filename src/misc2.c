@@ -598,101 +598,6 @@ int leftcol_changed(void)
  * Various routines dealing with allocation and deallocation of memory.
  */
 
-#if defined(MEM_PROFILE) || defined(PROTO)
-
-# define MEM_SIZES  8200
-static long_u mem_allocs[MEM_SIZES];
-static long_u mem_frees[MEM_SIZES];
-static long_u mem_allocated;
-static long_u mem_freed;
-static long_u mem_peak;
-static long_u num_alloc;
-static long_u num_freed;
-
-static void mem_pre_alloc_s(size_t *sizep);
-static void mem_pre_alloc_l(long_u *sizep);
-static void mem_post_alloc(void **pp, size_t size);
-static void mem_pre_free(void **pp);
-
-static void mem_pre_alloc_s(size_t *sizep)
-{
-  *sizep += sizeof(size_t);
-}
-
-static void mem_pre_alloc_l(long_u *sizep)
-{
-  *sizep += sizeof(size_t);
-}
-
-static void mem_post_alloc(void **pp, size_t size)
-{
-  if (*pp == NULL)
-    return;
-  size -= sizeof(size_t);
-  *(long_u *)*pp = size;
-  if (size <= MEM_SIZES-1)
-    mem_allocs[size-1]++;
-  else
-    mem_allocs[MEM_SIZES-1]++;
-  mem_allocated += size;
-  if (mem_allocated - mem_freed > mem_peak)
-    mem_peak = mem_allocated - mem_freed;
-  num_alloc++;
-  *pp = (void *)((char *)*pp + sizeof(size_t));
-}
-
-static void mem_pre_free(void **pp)
-{
-  long_u size;
-
-  *pp = (void *)((char *)*pp - sizeof(size_t));
-  size = *(size_t *)*pp;
-  if (size <= MEM_SIZES-1)
-    mem_frees[size-1]++;
-  else
-    mem_frees[MEM_SIZES-1]++;
-  mem_freed += size;
-  num_freed++;
-}
-
-/*
- * called on exit via atexit()
- */
-void vim_mem_profile_dump(void)
-{
-  int i, j;
-
-  printf("\r\n");
-  j = 0;
-  for (i = 0; i < MEM_SIZES - 1; i++) {
-    if (mem_allocs[i] || mem_frees[i]) {
-      if (mem_frees[i] > mem_allocs[i])
-        printf("\r\n%s", _("ERROR: "));
-      printf("[%4d / %4lu-%-4lu] ", i + 1, mem_allocs[i], mem_frees[i]);
-      j++;
-      if (j > 3) {
-        j = 0;
-        printf("\r\n");
-      }
-    }
-  }
-
-  i = MEM_SIZES - 1;
-  if (mem_allocs[i]) {
-    printf("\r\n");
-    if (mem_frees[i] > mem_allocs[i])
-      puts(_("ERROR: "));
-    printf("[>%d / %4lu-%-4lu]", i, mem_allocs[i], mem_frees[i]);
-  }
-
-  printf(_("\n[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"),
-      mem_allocated, mem_freed, mem_allocated - mem_freed, mem_peak);
-  printf(_("[calls] total re/malloc()'s %lu, total free()'s %lu\n\n"),
-      num_alloc, num_freed);
-}
-
-#endif /* MEM_PROFILE */
-
 /*
  * Some memory is reserved for error messages and for being able to
  * call mf_release_all(), which needs some memory for mf_trans_add().
@@ -772,11 +677,6 @@ char_u *lalloc(long_u size, int message)
     return NULL;
   }
 
-#ifdef MEM_PROFILE
-  mem_pre_alloc_l(&size);
-#endif
-
-
   /*
    * Loop when out of memory: Try to release some memfile blocks and
    * if some blocks are released call malloc again.
@@ -831,30 +731,8 @@ char_u *lalloc(long_u size, int message)
     do_outofmem_msg(size);
 
 theend:
-#ifdef MEM_PROFILE
-  mem_post_alloc((void **)&p, (size_t)size);
-#endif
   return p;
 }
-
-#if defined(MEM_PROFILE) || defined(PROTO)
-/*
- * realloc() with memory profiling.
- */
-void *mem_realloc(void *ptr, size_t size)
-{
-  void *p;
-
-  mem_pre_free(&ptr);
-  mem_pre_alloc_s(&size);
-
-  p = realloc(ptr, size);
-
-  mem_post_alloc(&p, size);
-
-  return p;
-}
-#endif
 
 /*
  * Avoid repeating the error message many times (they take 1 second each).
@@ -1401,9 +1279,6 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
 void vim_free(void *x)
 {
   if (x != NULL && !really_exiting) {
-#ifdef MEM_PROFILE
-    mem_pre_free(&x);
-#endif
     free(x);
   }
 }

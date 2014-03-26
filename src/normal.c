@@ -6129,15 +6129,6 @@ static void nv_g_cmd(cmdarg_T *cap)
   int flag = FALSE;
 
   switch (cap->nchar) {
-#ifdef MEM_PROFILE
-  /*
-   * "g^A": dump log of used memory.
-   */
-  case Ctrl_A:
-    vim_mem_profile_dump();
-    break;
-#endif
-
   /*
    * "gR": Enter virtual replace mode.
    */
