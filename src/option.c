@@ -63,6 +63,7 @@
 #include "move.h"
 #include "normal.h"
 #include "os_unix.h"
+#include "path.h"
 #include "regexp.h"
 #include "screen.h"
 #include "spell.h"

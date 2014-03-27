@@ -38,6 +38,7 @@
 #include "normal.h"
 #include "ops.h"
 #include "option.h"
+#include "path.h"
 #include "popupmnu.h"
 #include "quickfix.h"
 #include "regexp.h"

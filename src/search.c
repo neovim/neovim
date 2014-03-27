@@ -35,6 +35,7 @@
 #include "move.h"
 #include "normal.h"
 #include "option.h"
+#include "path.h"
 #include "regexp.h"
 #include "screen.h"
 #include "term.h"

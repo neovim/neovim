@@ -29,6 +29,7 @@
 #include "misc2.h"
 #include "garray.h"
 #include "option.h"
+#include "path.h"
 #include "screen.h"
 #include "syntax.h"
 #include "term.h"

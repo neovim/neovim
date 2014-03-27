@@ -98,6 +98,7 @@
 #include "garray.h"
 #include "option.h"
 #include "os_unix.h"
+#include "path.h"
 #include "quickfix.h"
 #include "screen.h"
 #include "sha256.h"
