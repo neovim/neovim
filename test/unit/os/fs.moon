@@ -16,7 +16,7 @@ int os_dirname(char_u *buf, int len);
 int os_isdir(char_u * name);
 int is_executable(char_u *name);
 int os_can_exe(char_u *name);
-long os_getperm(char_u *name);
+int32_t os_getperm(char_u *name);
 int os_setperm(char_u *name, long perm);
 int os_file_exists(const char_u *name);
 ]]

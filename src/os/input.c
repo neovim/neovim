@@ -31,8 +31,8 @@ typedef struct {
 
 static ReadBuffer rbuffer;
 static uv_pipe_t read_stream;
-/* Use an idle handle to make reading from the fs look like a normal libuv
- * event */
+// Use an idle handle to make reading from the fs look like a normal libuv
+// event
 static uv_idle_t fread_idle;
 static uv_handle_type read_channel_type;
 static bool eof = false;
@@ -58,30 +58,30 @@ void input_init()
   }
 }
 
-/* Check if there's a pending input event */
+// Check if there's a pending input event
 bool input_ready()
 {
   return rbuffer.rpos < rbuffer.wpos || eof;
 }
 
-/* Listen for input */
+// Listen for input
 void input_start()
 {
-  /* Pin the buffer used by libuv */
+  // Pin the buffer used by libuv
   rbuffer.uvbuf.len = READ_BUFFER_LENGTH - rbuffer.wpos;
   rbuffer.uvbuf.base = (char *)(rbuffer.data + rbuffer.wpos);
 
   if (read_channel_type == UV_FILE) {
-    /* Just invoke the `fread_idle_cb` as soon as the loop starts */
+    // Just invoke the `fread_idle_cb` as soon as the loop starts
     uv_idle_start(&fread_idle, fread_idle_cb);
   } else {
-    /* Start reading */
+    // Start reading
     rbuffer.reading = false;
     uv_read_start((uv_stream_t *)&read_stream, alloc_cb, read_cb);
   }
 }
 
-/* Stop listening for input */
+// Stop listening for input
 void input_stop()
 {
   if (read_channel_type == UV_FILE) {
@@ -91,7 +91,7 @@ void input_stop()
   }
 }
 
-/* Copies (at most `count`) of was read from `read_cmd_fd` into `buf` */
+// Copies (at most `count`) of was read from `read_cmd_fd` into `buf`
 uint32_t input_read(char *buf, uint32_t count)
 {
   uint32_t read_count = rbuffer.wpos - rbuffer.rpos;
@@ -106,13 +106,12 @@ uint32_t input_read(char *buf, uint32_t count)
   }
 
   if (rbuffer.wpos == READ_BUFFER_LENGTH) {
-    /* `wpos` is at the end of the buffer, so free some space by moving unread
-     * data... */
+    // `wpos` is at the end of the buffer, so free some space by moving unread
+    // data...
     memmove(
-        rbuffer.data,/* ...To the beginning of the buffer(rpos 0) */
-        rbuffer.data + rbuffer.rpos,/* ...From the first unread position */
-        rbuffer.wpos - rbuffer.rpos/* ...By the number of unread bytes */
-        );
+        rbuffer.data,  // ...To the beginning of the buffer(rpos 0)
+        rbuffer.data + rbuffer.rpos,  // ...From the first unread position
+        rbuffer.wpos - rbuffer.rpos);  // ...By the number of unread bytes
     rbuffer.wpos -= rbuffer.rpos;
     rbuffer.rpos = 0;
   }
@@ -121,8 +120,8 @@ uint32_t input_read(char *buf, uint32_t count)
 }
 
 
-/* Low level input function. */
-int os_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
+// Low level input function.
+int os_inchar(char_u *buf, int maxlen, int32_t ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
@@ -132,8 +131,8 @@ int os_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
     }
   } else {
     if ((result = inbuf_poll(p_ut)) != kInputAvail) {
-      if (trigger_cursorhold() && maxlen >= 3 &&
-          !typebuf_changed(tb_change_cnt)) {
+      if (trigger_cursorhold() && maxlen >= 3
+          && !typebuf_changed(tb_change_cnt)) {
         buf[0] = K_SPECIAL;
         buf[1] = KS_EXTRA;
         buf[2] = KE_CURSORHOLD;
@@ -145,7 +144,7 @@ int os_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
     }
   }
 
-  /* If input was put directly in typeahead buffer bail out here. */
+  // If input was put directly in typeahead buffer bail out here.
   if (typebuf_changed(tb_change_cnt))
     return 0;
 
@@ -157,23 +156,21 @@ int os_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
   return read_from_input_buf(buf, (long)maxlen);
 }
 
-/* Check if a character is available for reading */
+// Check if a character is available for reading
 bool os_char_avail()
 {
   return inbuf_poll(0) == kInputAvail;
 }
 
-/*
- * Check for CTRL-C typed by reading all available characters.
- * In cooked mode we should get SIGINT, no need to check.
- */
+// Check for CTRL-C typed by reading all available characters.
+// In cooked mode we should get SIGINT, no need to check.
 void os_breakcheck()
 {
   if (curr_tmode == TMODE_RAW && event_poll(0))
     fill_input_buf(FALSE);
 }
 
-/* This is a replacement for the old `WaitForChar` function in os_unix.c */
+// This is a replacement for the old `WaitForChar` function in os_unix.c
 static InbufPollResult inbuf_poll(int32_t ms)
 {
   if (input_available())
@@ -192,23 +189,23 @@ static InbufPollResult inbuf_poll(int32_t ms)
 static void stderr_switch()
 {
   int mode = cur_tmode;
-  /* We probably set the wrong file descriptor to raw mode. Switch back to
-   * cooked mode */
+  // We probably set the wrong file descriptor to raw mode. Switch back to
+  // cooked mode
   settmode(TMODE_COOK);
-  /* Stop the idle handle */
+  // Stop the idle handle
   uv_idle_stop(&fread_idle);
-  /* Use stderr for stdin, also works for shell commands. */
+  // Use stderr for stdin, also works for shell commands.
   read_cmd_fd = 2;
-  /* Initialize and start the input stream */
+  // Initialize and start the input stream
   uv_pipe_init(uv_default_loop(), &read_stream, 0);
   uv_pipe_open(&read_stream, read_cmd_fd);
   uv_read_start((uv_stream_t *)&read_stream, alloc_cb, read_cb);
   rbuffer.reading = false;
-  /* Set the mode back to what it was */
+  // Set the mode back to what it was
   settmode(mode);
 }
 
-/* Called by libuv to allocate memory for reading. */
+// Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   if (rbuffer.reading) {
@@ -218,36 +215,34 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 
   buf->base = rbuffer.uvbuf.base;
   buf->len = rbuffer.uvbuf.len;
-  /* Avoid `alloc_cb`, `alloc_cb` sequences on windows */
+  // Avoid `alloc_cb`, `alloc_cb` sequences on windows
   rbuffer.reading = true;
 }
 
-/*
- * Callback invoked by libuv after it copies the data into the buffer provided
- * by `alloc_cb`. This is also called on EOF or when `alloc_cb` returns a
- * 0-length buffer.
- */
+// Callback invoked by libuv after it copies the data into the buffer provided
+// by `alloc_cb`. This is also called on EOF or when `alloc_cb` returns a
+// 0-length buffer.
 static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 {
   if (cnt <= 0) {
     if (cnt != UV_ENOBUFS) {
-      /* Read error or EOF, either way vim must exit */
+      // Read error or EOF, either way vim must exit
       eof = true;
     }
     return;
   }
 
-  /* Data was already written, so all we need is to update 'wpos' to reflect
-   * the space actually used in the buffer. */
+  // Data was already written, so all we need is to update 'wpos' to reflect
+  // the space actually used in the buffer.
   rbuffer.wpos += cnt;
 }
 
-/* Called by the by the 'idle' handle to emulate a reading event */
+// Called by the by the 'idle' handle to emulate a reading event
 static void fread_idle_cb(uv_idle_t *handle, int status)
 {
   uv_fs_t req;
 
-  /* Synchronous read */
+  // Synchronous read
   uv_fs_read(
       uv_default_loop(),
       &req,
@@ -255,16 +250,15 @@ static void fread_idle_cb(uv_idle_t *handle, int status)
       &rbuffer.uvbuf,
       1,
       rbuffer.fpos,
-      NULL
-      );
+      NULL);
 
   uv_fs_req_cleanup(&req);
 
   if (req.result <= 0) {
     if (rbuffer.fpos == 0 && uv_guess_handle(2) == UV_TTY) {
-      /* Read error. Since stderr is a tty we switch to reading from it. This
-       * is for handling for cases like "foo | xargs vim" because xargs
-       * redirects stdin from /dev/null. Previously, this was done in ui.c */
+      // Read error. Since stderr is a tty we switch to reading from it. This
+      // is for handling for cases like "foo | xargs vim" because xargs
+      // redirects stdin from /dev/null. Previously, this was done in ui.c
       stderr_switch();
     } else {
       eof = true;

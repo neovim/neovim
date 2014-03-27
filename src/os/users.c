@@ -1,15 +1,4 @@
-/* vi:set ts=2 sts=2 sw=2:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
- * users.c -- operating system user information
- */
+// users.c -- operating system user information
 
 #include <uv.h>
 
@@ -20,10 +9,8 @@
 # include <pwd.h>
 #endif
 
-/*
- * Initialize users garray and fill it with os usernames.
- * Return Ok for success, FAIL for failure.
- */
+// Initialize users garray and fill it with os usernames.
+// Return Ok for success, FAIL for failure.
 int os_get_usernames(garray_T *users)
 {
   if (users == NULL) {
@@ -37,7 +24,7 @@ int os_get_usernames(garray_T *users)
 
   setpwent();
   while ((pw = getpwent()) != NULL) {
-    /* pw->pw_name shouldn't be NULL but just in case... */
+    // pw->pw_name shouldn't be NULL but just in case...
     if (pw->pw_name != NULL) {
       if (ga_grow(users, 1) == FAIL) {
         return FAIL;
@@ -55,20 +42,16 @@ int os_get_usernames(garray_T *users)
   return OK;
 }
 
-/*
- * Insert user name in s[len].
- * Return OK if a name found.
- */
+// Insert user name in s[len].
+// Return OK if a name found.
 int os_get_user_name(char *s, size_t len)
 {
   return os_get_uname(getuid(), s, len);
 }
 
-/*
- * Insert user name for "uid" in s[len].
- * Return OK if a name found.
- * If the name is not found, write the uid into s[len] and return FAIL.
- */
+// Insert user name for "uid" in s[len].
+// Return OK if a name found.
+// If the name is not found, write the uid into s[len] and return FAIL.
 int os_get_uname(uid_t uid, char *s, size_t len)
 {
 #if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
@@ -81,14 +64,12 @@ int os_get_uname(uid_t uid, char *s, size_t len)
   }
 #endif
   snprintf(s, len, "%d", (int)uid);
-  return FAIL; // a number is not a name
+  return FAIL;  // a number is not a name
 }
 
-/*
- * Returns the user directory for the given username.
- * The caller has to free() the returned string.
- * If the username is not found, NULL is returned.
- */
+// Returns the user directory for the given username.
+// The caller has to free() the returned string.
+// If the username is not found, NULL is returned.
 char *os_get_user_directory(const char *name)
 {
 #if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)

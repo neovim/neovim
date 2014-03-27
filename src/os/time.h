@@ -7,5 +7,4 @@
 void time_init(void);
 void os_delay(uint64_t ms, bool ignoreinput);
 
-#endif
-
+#endif  // NEOVIM_OS_TIME_H

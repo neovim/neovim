@@ -1,15 +1,4 @@
-/* vi:set ts=2 sts=2 sw=2:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
- * fs.c -- filesystem access
- */
+// fs.c -- filesystem access
 
 #include <uv.h>
 
@@ -18,7 +7,7 @@
 #include "misc1.h"
 #include "misc2.h"
 
-int os_chdir(char *path) {
+int os_chdir(const char *path) {
   if (p_verbose >= 5) {
     verbose_enter();
     smsg((char_u *)"chdir(%s)", path);
@@ -27,10 +16,8 @@ int os_chdir(char *path) {
   return uv_chdir(path);
 }
 
-/*
- * Get name of current directory into buffer 'buf' of length 'len' bytes.
- * Return OK for success, FAIL for failure.
- */
+// Get name of current directory into buffer 'buf' of length 'len' bytes.
+// Return OK for success, FAIL for failure.
 int os_dirname(char_u *buf, size_t len)
 {
   assert(buf && len);
@@ -43,44 +30,42 @@ int os_dirname(char_u *buf, size_t len)
   return OK;
 }
 
-/*
- * Get the absolute name of the given relative directory.
- *
- * parameter directory: Directory name, relative to current directory.
- * return FAIL for failure, OK for success
- */
+// Get the absolute name of the given relative directory.
+//
+// parameter directory: Directory name, relative to current directory.
+// return FAIL for failure, OK for success
 int os_full_dir_name(char *directory, char *buffer, int len)
 {
   int retval = OK;
 
-  if(STRLEN(directory) == 0) {
+  if (STRLEN(directory) == 0) {
     return os_dirname((char_u *) buffer, len);
   }
 
   char old_dir[MAXPATHL];
 
-  /* Get current directory name. */
+  // Get current directory name.
   if (os_dirname((char_u *) old_dir, MAXPATHL) == FAIL) {
     return FAIL;
   }
 
-  /* We have to get back to the current dir at the end, check if that works. */
+  // We have to get back to the current dir at the end, check if that works.
   if (os_chdir(old_dir) != 0) {
     return FAIL;
   }
 
   if (os_chdir(directory) != 0) {
-    /* Do not return immediatly since we may be in the wrong directory. */
+    // Do not return immediatly since we may be in the wrong directory.
     retval = FAIL;
   }
 
   if (retval == FAIL || os_dirname((char_u *) buffer, len) == FAIL) {
-    /* Do not return immediatly since we are in the wrong directory. */
+    // Do not return immediatly since we are in the wrong directory.
     retval = FAIL;
   }
-   
+
   if (os_chdir(old_dir) != 0) {
-    /* That shouldn't happen, since we've tested if it works. */
+    // That shouldn't happen, since we've tested if it works.
     retval = FAIL;
     EMSG(_(e_prev_dir));
   }
@@ -88,38 +73,36 @@ int os_full_dir_name(char *directory, char *buffer, int len)
   return retval;
 }
 
-/*
- * Append to_append to path with a slash in between.
- */
+// Append to_append to path with a slash in between.
 int append_path(char *path, const char *to_append, int max_len)
 {
   int current_length = STRLEN(path);
   int to_append_length = STRLEN(to_append);
 
-  /* Do not append empty strings. */
+  // Do not append empty strings.
   if (to_append_length == 0) {
     return OK;
   }
 
-  /* Do not append a dot. */
+  // Do not append a dot.
   if (STRCMP(to_append, ".") == 0) {
     return OK;
   }
 
-  /* Glue both paths with a slash. */
+  // Glue both paths with a slash.
   if (current_length > 0 && path[current_length-1] != '/') {
-    current_length += 1; /* Count the trailing slash. */
+    current_length += 1;  // Count the trailing slash.
 
-    /* +1 for the NUL at the end. */
-    if (current_length +1 > max_len) {
+    // +1 for the NUL at the end.
+    if (current_length + 1 > max_len) {
       return FAIL;
     }
 
     STRCAT(path, "/");
   }
 
-  /* +1 for the NUL at the end. */
-  if (current_length + to_append_length +1 > max_len) {
+  // +1 for the NUL at the end.
+  if (current_length + to_append_length + 1 > max_len) {
     return FAIL;
   }
 
@@ -127,14 +110,12 @@ int append_path(char *path, const char *to_append, int max_len)
   return OK;
 }
 
-/*
- * Get absolute file name into "buf[len]".
- *
- * parameter force: Also expand when the given path in fname is already
- * absolute.
- *
- * return FAIL for failure, OK for success
- */
+// Get absolute file name into "buf[len]".
+//
+// parameter force: Also expand when the given path in fname is already
+// absolute.
+//
+// return FAIL for failure, OK for success
 int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
 {
   char_u *p;
@@ -143,10 +124,9 @@ int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
   char relative_directory[len];
   char *end_of_path = (char *) fname;
 
-  /* expand it if forced or not an absolute path */
+  // expand it if forced or not an absolute path
   if (force || !os_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
-
       STRNCPY(relative_directory, fname, p-fname);
       relative_directory[p-fname] = NUL;
       end_of_path = (char *) (p + 1);
@@ -162,22 +142,18 @@ int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
   return append_path((char *) buf, (char *) end_of_path, len);
 }
 
-/*
- * Return TRUE if "fname" does not depend on the current directory.
- */
+// Return TRUE if "fname" does not depend on the current directory.
 int os_is_absolute_path(const char_u *fname)
 {
   return *fname == '/' || *fname == '~';
 }
 
-/*
- * return TRUE if "name" is a directory
- * return FALSE if "name" is not a directory
- * return FALSE for error
- */
+// return TRUE if "name" is a directory
+// return FALSE if "name" is not a directory
+// return FALSE for error
 int os_isdir(const char_u *name)
 {
-  long mode = os_getperm(name);
+  int32_t mode = os_getperm(name);
   if (mode < 0) {
     return FALSE;
   }
@@ -192,13 +168,11 @@ int os_isdir(const char_u *name)
 static int is_executable(const char_u *name);
 static int is_executable_in_path(const char_u *name);
 
-/*
- * Return TRUE if "name" is executable and can be found in $PATH, is absolute
- * or relative to current dir, FALSE if not.
- */
+// Return TRUE if "name" is executable and can be found in $PATH, is absolute
+// or relative to current dir, FALSE if not.
 int os_can_exe(const char_u *name)
 {
-  /* If it's an absolute or relative path don't need to use $PATH. */
+  // If it's an absolute or relative path don't need to use $PATH.
   if (os_is_absolute_path(name) ||
      (name[0] == '.' && (name[1] == '/' ||
                         (name[1] == '.' && name[2] == '/')))) {
@@ -208,13 +182,11 @@ int os_can_exe(const char_u *name)
   return is_executable_in_path(name);
 }
 
-/*
- * Return TRUE if "name" is an executable file, FALSE if not or it doesn't
- * exist.
- */
+// Return TRUE if "name" is an executable file, FALSE if not or it doesn't
+// exist.
 static int is_executable(const char_u *name)
 {
-  long mode = os_getperm(name);
+  int32_t mode = os_getperm(name);
 
   if (mode < 0) {
     return FALSE;
@@ -227,14 +199,12 @@ static int is_executable(const char_u *name)
   return FALSE;
 }
 
-/*
- * Return TRUE if "name" can be found in $PATH and executed, FALSE if not or an
- * error occurs.
- */
+// Return TRUE if "name" can be found in $PATH and executed, FALSE if not or an
+// error occurs.
 static int is_executable_in_path(const char_u *name)
 {
   const char *path = getenv("PATH");
-  /* PATH environment variable does not exist or is empty. */
+  // PATH environment variable does not exist or is empty.
   if (path == NULL || *path == NUL) {
     return FALSE;
   }
@@ -245,29 +215,27 @@ static int is_executable_in_path(const char_u *name)
     return FALSE;
   }
 
-  /*
-   * Walk through all entries in $PATH to check if "name" exists there and
-   * is an executable file.
-   */
+  // Walk through all entries in $PATH to check if "name" exists there and
+  // is an executable file.
   for (;; ) {
     const char *e = strchr(path, ':');
     if (e == NULL) {
       e = path + STRLEN(path);
     }
 
-    /* Glue together the given directory from $PATH with name and save into
-     * buf. */
+    // Glue together the given directory from $PATH with name and save into
+    // buf.
     vim_strncpy(buf, (char_u *) path, e - path);
     append_path((char *) buf, (const char *) name, buf_len);
 
     if (is_executable(buf)) {
-      /* Found our executable. Free buf and return. */
+      // Found our executable. Free buf and return.
       vim_free(buf);
       return OK;
     }
 
     if (*e != ':') {
-      /* End of $PATH without finding any executable called name. */
+      // End of $PATH without finding any executable called name.
       vim_free(buf);
       return FALSE;
     }
@@ -275,33 +243,30 @@ static int is_executable_in_path(const char_u *name)
     path = e + 1;
   }
 
-  /* We should never get to this point. */
+  // We should never get to this point.
   assert(false);
   return FALSE;
 }
 
-/*
- * Get file permissions for 'name'.
- * Returns -1 when it doesn't exist.
- */
-long os_getperm(const char_u *name)
+// Get file permissions for 'name'.
+// Returns -1 when it doesn't exist.
+int32_t os_getperm(const char_u *name)
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  int result = uv_fs_stat(uv_default_loop(), &request,
+                          (const char *)name, NULL);
   uint64_t mode = request.statbuf.st_mode;
   uv_fs_req_cleanup(&request);
 
   if (result != 0) {
     return -1;
   } else {
-    return (long) mode;
+    return (int32_t) mode;
   }
 }
 
-/*
- * Set file permission for 'name' to 'perm'.
- * Returns FAIL for failure, OK otherwise.
- */
+// Set file permission for 'name' to 'perm'.
+// Returns FAIL for failure, OK otherwise.
 int os_setperm(const char_u *name, int perm)
 {
   uv_fs_t request;
@@ -316,13 +281,12 @@ int os_setperm(const char_u *name, int perm)
   }
 }
 
-/*
- * return TRUE if "name" exists.
- */
-int os_file_exists(char_u *name)
+// return TRUE if "name" exists.
+int os_file_exists(const char_u *name)
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request, (const char*) name, NULL);
+  int result = uv_fs_stat(uv_default_loop(), &request,
+                          (const char *)name, NULL);
   uv_fs_req_cleanup(&request);
 
   if (result != 0) {
