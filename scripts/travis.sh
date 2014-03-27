@@ -23,7 +23,7 @@ check_and_report() {
 # See:
 #   http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
 # for more information.
-alias make="make -j2"
+MAKE_CMD="make -j2"
 
 if [ "$CC" = "clang" ]; then
 	# force using the version installed by 'travis-setup.sh'
@@ -45,17 +45,17 @@ if [ "$CC" = "clang" ]; then
 	export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
 	export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
-	make cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir"
-	make
-	if ! make test; then
+	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir"
+	$MAKE_CMD
+	if ! $MAKE_CMD test; then
 		reset
 		check_and_report
 	fi
 	check_and_report
-	make install
+	$MAKE_CMD install
 else
 	export SKIP_EXEC=1
-	make CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP"
-	make cmake
-	make unittest
+	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP"
+	$MAKE_CMD cmake
+	$MAKE_CMD unittest
 fi
