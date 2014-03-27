@@ -2,15 +2,10 @@
 #define NEOVIM_OS_EVENT_H
 
 #include <stdint.h>
-
-typedef enum {
-  kEventNone,
-  kEventInput,
-  kEventEof
-} EventType;
+#include <stdbool.h>
 
 void event_init(void);
-EventType event_poll(int32_t ms);
+bool event_poll(int32_t ms);
 
 #endif
 

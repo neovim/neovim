@@ -4,11 +4,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "os/event.h"
 #include "types.h"
 
 void input_init(void);
-EventType input_check(void);
+bool input_ready(void);
 void input_start(void);
 void input_stop(void);
 uint32_t input_read(char *buf, uint32_t count);
