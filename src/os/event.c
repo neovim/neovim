@@ -65,10 +65,8 @@ bool event_poll(int32_t ms)
   input_stop();
 
   if (ms > 0) {
-    /* Timer event did not trigger, stop the watcher since we no longer
-     * care about it */
+    /* Stop the timer */
     uv_timer_stop(&timer);
-    uv_prepare_stop(&timer_prepare);
   }
 
   return input_ready();
@@ -82,5 +80,6 @@ static void timer_cb(uv_timer_t *handle, int status)
 
 static void timer_prepare_cb(uv_prepare_t *handle, int status)
 {
-  uv_timer_start(&timer, timer_cb, *(uint32_t *)handle->data, 0);
+  uv_timer_start(&timer, timer_cb, *(uint32_t *)timer_prepare.data, 0);
+  uv_prepare_stop(&timer_prepare);
 }
