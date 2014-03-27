@@ -27,12 +27,8 @@ SCRIPTS := test1.out test2.out test3.out test4.out test5.out test6.out \
 
 SCRIPTS_GUI := test16.out
 
-ifdef VALGRIND_GDB
-VGDB := --vgdb=yes --vgdb-error=0
-endif
-
-ifdef VALGRIND_CHECK
-VALGRIND = valgrind --suppressions=../../.valgrind.supp --leak-check=full --error-exitcode=123 --log-file=valgrind.$* $(VGDB)
+ifdef USE_GDB
+GDB = gdb --args
 endif
 
 ifdef TESTNUM
@@ -44,6 +40,9 @@ endif
 nongui:	nolog $(SCRIPTS) report
 
 gui:	nolog $(SCRIPTS) $(SCRIPTS_GUI) report
+
+.gdbinit:
+	echo 'set $$_exitcode = -1\nrun\nif $$_exitcode != -1\n  quit\nend' > .gdbinit
 
 report:
 	@echo
@@ -57,12 +56,12 @@ $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG)
 
 RM_ON_RUN = test.out X* viminfo
 RM_ON_START = tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok
-RUN_VIM = $(VALGRIND) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in
+RUN_VIM = $(GDB) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in
 
 clean:
 	-rm -rf *.out *.failed *.rej *.orig test.log $(RM_ON_RUN) $(RM_ON_START) valgrind.*
 
-test1.out: test1.in
+test1.out: .gdbinit test1.in
 	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
 	$(RUN_VIM) $*.in
 	@/bin/sh -c "if test -e wrongtermsize; \
@@ -76,7 +75,7 @@ test1.out: test1.in
 		echo; exit 1; fi"
 	-rm -rf X* viminfo
 
-.in.out:
+.in.out: .gdbinit
 	-rm -rf $*.failed test.ok $(RM_ON_RUN)
 	cp $*.ok test.ok
 	# Sleep a moment to avoid that the xterm title is messed up.

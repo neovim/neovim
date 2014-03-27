@@ -1024,7 +1024,23 @@ do_filter (
   if (do_out)
     shell_flags |= SHELL_DOOUT;
 
-  if ((do_in && (itmp = vim_tempname('i')) == NULL)
+  if (!do_in && do_out && !p_stmp) {
+    // Use a pipe to fetch stdout of the command, do not use a temp file.
+    shell_flags |= SHELL_READ;
+    curwin->w_cursor.lnum = line2;
+  } else if (do_in && !do_out && !p_stmp) {
+    // Use a pipe to write stdin of the command, do not use a temp file.
+    shell_flags |= SHELL_WRITE;
+    curbuf->b_op_start.lnum = line1;
+    curbuf->b_op_end.lnum = line2;
+  } else if (do_in && do_out && !p_stmp) {
+    // Use a pipe to write stdin and fetch stdout of the command, do not
+    // use a temp file.
+    shell_flags |= SHELL_READ|SHELL_WRITE;
+    curbuf->b_op_start.lnum = line1;
+    curbuf->b_op_end.lnum = line2;
+    curwin->w_cursor.lnum = line2;
+  } else if ((do_in && (itmp = vim_tempname('i')) == NULL)
       || (do_out && (otmp = vim_tempname('o')) == NULL)) {
     EMSG(_(e_notmp));
     goto filterend;

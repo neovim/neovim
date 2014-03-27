@@ -10252,6 +10252,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "extra_search",
     "farsi",
     "file_in_path",
+    "filterpipe",
     "find_in_path",
     "float",
     "folding",
