@@ -1962,7 +1962,7 @@ void set_init_1(void)
   p_cp = TRUE;
 
   /* Use POSIX compatibility when $VIM_POSIX is set. */
-  if (mch_getenv("VIM_POSIX") != NULL) {
+  if (os_getenv("VIM_POSIX") != NULL) {
     set_string_default("cpo", (char_u *)CPO_ALL);
     set_string_default("shm", (char_u *)"A");
   }
@@ -1971,7 +1971,7 @@ void set_init_1(void)
    * Find default value for 'shell' option.
    * Don't use it if it is empty.
    */
-  if (((p = (char_u *)mch_getenv("SHELL")) != NULL && *p != NUL)
+  if (((p = (char_u *)os_getenv("SHELL")) != NULL && *p != NUL)
       )
     set_string_default("sh", p);
 
@@ -2030,7 +2030,7 @@ void set_init_1(void)
     {
 #ifdef HAVE_TOTAL_MEM
       /* Use amount of memory available to Vim. */
-      n = (mch_total_mem(FALSE) >> 1);
+      n = (os_total_mem(FALSE) >> 1);
 #else
       n = (0x7fffffff >> 11);
 #endif
@@ -2166,7 +2166,7 @@ void set_init_1(void)
    * NOTE: mlterm's author is being asked to 'set' a variable
    *       instead of an environment variable due to inheritance.
    */
-  if (mch_getenv("MLTERM") != NULL)
+  if (os_getenv("MLTERM") != NULL)
     set_option_value((char_u *)"tbidi", 1L, NULL, 0);
 
   /* Parse default for 'fillchars'. */
@@ -2444,7 +2444,7 @@ static char_u *term_bg_default(void)
       || STRCMP(T_NAME, "screen.linux") == 0
       || STRCMP(T_NAME, "cygwin") == 0
       || STRCMP(T_NAME, "putty") == 0
-      || ((p = (char_u *)mch_getenv("COLORFGBG")) != NULL
+      || ((p = (char_u *)os_getenv("COLORFGBG")) != NULL
           && (p = vim_strrchr(p, ';')) != NULL
           && ((p[1] >= '0' && p[1] <= '6') || p[1] == '8')
           && p[2] == NUL))

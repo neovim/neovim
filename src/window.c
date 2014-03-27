@@ -3499,15 +3499,15 @@ static void win_enter_ext(win_T *wp, int undo_sync, int curwin_invalid, int trig
     if (globaldir == NULL) {
       char_u cwd[MAXPATHL];
 
-      if (mch_dirname(cwd, MAXPATHL) == OK)
+      if (os_dirname(cwd, MAXPATHL) == OK)
         globaldir = vim_strsave(cwd);
     }
-    if (mch_chdir((char *)curwin->w_localdir) == 0)
+    if (os_chdir((char *)curwin->w_localdir) == 0)
       shorten_fnames(TRUE);
   } else if (globaldir != NULL) {
     /* Window doesn't have a local directory and we are not in the global
      * directory: Change to the global directory. */
-    ignored = mch_chdir((char *)globaldir);
+    ignored = os_chdir((char *)globaldir);
     vim_free(globaldir);
     globaldir = NULL;
     shorten_fnames(TRUE);
@@ -5084,7 +5084,7 @@ int path_with_url(char_u *fname)
  */
 int vim_isAbsName(char_u *name)
 {
-  return path_with_url(name) != 0 || mch_is_absolute_path(name);
+  return path_with_url(name) != 0 || os_is_absolute_path(name);
 }
 
 /*
@@ -5109,7 +5109,7 @@ vim_FullName (
 
   url = path_with_url(fname);
   if (!url)
-    retval = mch_get_absolute_path(fname, buf, len, force);
+    retval = os_get_absolute_path(fname, buf, len, force);
   if (url || retval == FAIL) {
     /* something failed; use the file name (truncate when too long) */
     vim_strncpy(buf, fname, len - 1);

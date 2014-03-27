@@ -1137,6 +1137,6 @@ EXTERN char *ignoredp;
  * os_unix.c */
 EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 /* volatile because it is used in signal handler deathtrap(). */
-EXTERN volatile bool in_mch_delay INIT(= false);  /* sleeping in mch_delay() */
+EXTERN volatile bool in_os_delay INIT(= false);  /* sleeping in os_delay() */
 
 #endif /* NEOVIM_GLOBALS_H */

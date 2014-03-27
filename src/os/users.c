@@ -24,7 +24,7 @@
  * Initialize users garray and fill it with os usernames.
  * Return Ok for success, FAIL for failure.
  */
-int mch_get_usernames(garray_T *users)
+int os_get_usernames(garray_T *users)
 {
   if (users == NULL) {
     return FALSE;
@@ -59,9 +59,9 @@ int mch_get_usernames(garray_T *users)
  * Insert user name in s[len].
  * Return OK if a name found.
  */
-int mch_get_user_name(char *s, size_t len)
+int os_get_user_name(char *s, size_t len)
 {
-  return mch_get_uname(getuid(), s, len);
+  return os_get_uname(getuid(), s, len);
 }
 
 /*
@@ -69,7 +69,7 @@ int mch_get_user_name(char *s, size_t len)
  * Return OK if a name found.
  * If the name is not found, write the uid into s[len] and return FAIL.
  */
-int mch_get_uname(uid_t uid, char *s, size_t len)
+int os_get_uname(uid_t uid, char *s, size_t len)
 {
 #if defined(HAVE_PWD_H) && defined(HAVE_GETPWUID)
   struct passwd *pw;
@@ -89,7 +89,7 @@ int mch_get_uname(uid_t uid, char *s, size_t len)
  * The caller has to free() the returned string.
  * If the username is not found, NULL is returned.
  */
-char *mch_get_user_directory(const char *name)
+char *os_get_user_directory(const char *name)
 {
 #if defined(HAVE_GETPWNAM) && defined(HAVE_PWD_H)
   struct passwd *pw;

@@ -129,7 +129,7 @@ ui_inchar (
     static int count = 0;
 
 # ifndef NO_CONSOLE
-    retval = mch_inchar(buf, maxlen, (wtime >= 0 && wtime < 10)
+    retval = os_inchar(buf, maxlen, (wtime >= 0 && wtime < 10)
         ? 10L : wtime, tb_change_cnt);
     if (retval > 0 || typebuf_changed(tb_change_cnt) || wtime >= 0)
       goto theend;
@@ -155,7 +155,7 @@ ui_inchar (
 
 #ifndef NO_CONSOLE
   {
-    retval = mch_inchar(buf, maxlen, wtime, tb_change_cnt);
+    retval = os_inchar(buf, maxlen, wtime, tb_change_cnt);
   }
 #endif
 
@@ -183,7 +183,7 @@ int ui_char_avail(void)
   if (no_console_input())
     return 0;
 # endif
-  return mch_char_avail();
+  return os_char_avail();
 #else
   return 0;
 #endif
@@ -195,7 +195,7 @@ int ui_char_avail(void)
  */
 void ui_delay(long msec, int ignoreinput)
 {
-  mch_delay(msec, ignoreinput);
+  os_delay(msec, ignoreinput);
 }
 
 /*
@@ -272,7 +272,7 @@ void ui_new_shellsize(void)
 
 void ui_breakcheck(void)
 {
-  mch_breakcheck();
+  os_breakcheck();
 }
 
 /*****************************************************************************

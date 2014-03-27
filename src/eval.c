@@ -8549,7 +8549,7 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv)
  */
 static void f_executable(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = mch_can_exe(get_tv_string(&argvars[0]));
+  rettv->vval.v_number = os_can_exe(get_tv_string(&argvars[0]));
 }
 
 /*
@@ -8565,7 +8565,7 @@ static void f_exists(typval_T *argvars, typval_T *rettv)
   p = get_tv_string(&argvars[0]);
   if (*p == '$') {                      /* environment variable */
     /* first try "normal" environment variables (fast) */
-    if (mch_getenv((char *)(p + 1)) != NULL)
+    if (os_getenv((char *)(p + 1)) != NULL)
       n = TRUE;
     else {
       /* try expanding things like $VIM and ${HOME} */
@@ -8862,7 +8862,7 @@ static void f_filereadable(typval_T *argvars, typval_T *rettv)
 # define O_NONBLOCK 0
 #endif
   p = get_tv_string(&argvars[0]);
-  if (*p && !mch_isdir(p) && (fd = mch_open((char *)p,
+  if (*p && !os_isdir(p) && (fd = mch_open((char *)p,
                                   O_RDONLY | O_NONBLOCK, 0)) >= 0) {
     n = TRUE;
     close(fd);
@@ -9660,7 +9660,7 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string = NULL;
   cwd = alloc(MAXPATHL);
   if (cwd != NULL) {
-    if (mch_dirname(cwd, MAXPATHL) != FAIL) {
+    if (os_dirname(cwd, MAXPATHL) != FAIL) {
       rettv->vval.v_string = vim_strsave(cwd);
 #ifdef BACKSLASH_IN_FILENAME
       if (rettv->vval.v_string != NULL)
@@ -9719,7 +9719,7 @@ static void f_getfsize(typval_T *argvars, typval_T *rettv)
   rettv->v_type = VAR_NUMBER;
 
   if (mch_stat((char *)fname, &st) >= 0) {
-    if (mch_isdir(fname))
+    if (os_isdir(fname))
       rettv->vval.v_number = 0;
     else {
       rettv->vval.v_number = (varnumber_T)st.st_size;
@@ -9812,7 +9812,7 @@ static void f_getftype(typval_T *argvars, typval_T *rettv)
     default: t = "other";
     }
 # else
-    if (mch_isdir(fname))
+    if (os_isdir(fname))
       t = "dir";
     else
       t = "file";
@@ -10886,7 +10886,7 @@ static void f_invert(typval_T *argvars, typval_T *rettv)
  */
 static void f_isdirectory(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = mch_isdir(get_tv_string(&argvars[0]));
+  rettv->vval.v_number = os_isdir(get_tv_string(&argvars[0]));
 }
 
 /*
@@ -11664,7 +11664,7 @@ static int mkdir_recurse(char_u *dir, int prot)
   updir = vim_strnsave(dir, (int)(p - dir));
   if (updir == NULL)
     return FAIL;
-  if (mch_isdir(updir))
+  if (os_isdir(updir))
     r = OK;
   else if (mkdir_recurse(updir, prot) == OK)
     r = vim_mkdir_emsg(updir, prot);
@@ -12479,7 +12479,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
           q[-1] = NUL;
           q = gettail(p);
         }
-        if (q > p && !mch_is_absolute_path(buf)) {
+        if (q > p && !os_is_absolute_path(buf)) {
           /* symlink is relative to directory of argument */
           cpy = alloc((unsigned)(STRLEN(p) + STRLEN(buf) + 1));
           if (cpy != NULL) {
@@ -19345,7 +19345,7 @@ repeat:
     }
 
     /* Append a path separator to a directory. */
-    if (mch_isdir(*fnamep)) {
+    if (os_isdir(*fnamep)) {
       /* Make room for one or two extra characters. */
       *fnamep = vim_strnsave(*fnamep, (int)STRLEN(*fnamep) + 2);
       vim_free(*bufp);          /* free any allocated file name */
@@ -19379,7 +19379,7 @@ repeat:
 
     if (p != NULL) {
       if (c == '.') {
-        mch_dirname(dirname, MAXPATHL);
+        os_dirname(dirname, MAXPATHL);
         s = shorten_fname(p, dirname);
         if (s != NULL) {
           *fnamep = s;

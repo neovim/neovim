@@ -6607,7 +6607,7 @@ void post_chdir(int local)
     if (globaldir == NULL && prev_dir != NULL)
       globaldir = vim_strsave(prev_dir);
     /* Remember this local directory for the window. */
-    if (mch_dirname(NameBuff, MAXPATHL) == OK)
+    if (os_dirname(NameBuff, MAXPATHL) == OK)
       curwin->w_localdir = vim_strsave(NameBuff);
   } else {
     /* We are now in the global directory, no need to remember its
@@ -6656,7 +6656,7 @@ void ex_cd(exarg_T *eap)
 
     /* Save current directory for next ":cd -" */
     tofree = prev_dir;
-    if (mch_dirname(NameBuff, MAXPATHL) == OK)
+    if (os_dirname(NameBuff, MAXPATHL) == OK)
       prev_dir = vim_strsave(NameBuff);
     else
       prev_dir = NULL;
@@ -6687,7 +6687,7 @@ void ex_cd(exarg_T *eap)
  */
 static void ex_pwd(exarg_T *eap)
 {
-  if (mch_dirname(NameBuff, MAXPATHL) == OK) {
+  if (os_dirname(NameBuff, MAXPATHL) == OK) {
 #ifdef BACKSLASH_IN_FILENAME
     slash_adjust(NameBuff);
 #endif
@@ -7281,7 +7281,7 @@ static void ex_mkrc(exarg_T *eap)
 
 #if defined(FEAT_SESSION) && defined(vim_mkdir)
   /* When using 'viewdir' may have to create the directory. */
-  if (using_vdir && !mch_isdir(p_vdir))
+  if (using_vdir && !os_isdir(p_vdir))
     vim_mkdir_emsg(p_vdir, 0755);
 #endif
 
@@ -7337,15 +7337,15 @@ static void ex_mkrc(exarg_T *eap)
           /*
            * Change to session file's dir.
            */
-          if (mch_dirname(dirnow, MAXPATHL) == FAIL
-              || mch_chdir((char *)dirnow) != 0)
+          if (os_dirname(dirnow, MAXPATHL) == FAIL
+              || os_chdir((char *)dirnow) != 0)
             *dirnow = NUL;
           if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
             if (vim_chdirfile(fname) == OK)
               shorten_fnames(TRUE);
           } else if (*dirnow != NUL
                      && (ssop_flags & SSOP_CURDIR) && globaldir != NULL) {
-            if (mch_chdir((char *)globaldir) == 0)
+            if (os_chdir((char *)globaldir) == 0)
               shorten_fnames(TRUE);
           }
 
@@ -7355,7 +7355,7 @@ static void ex_mkrc(exarg_T *eap)
           if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
                                  || ((ssop_flags & SSOP_CURDIR) && globaldir !=
                                      NULL))) {
-            if (mch_chdir((char *)dirnow) != 0)
+            if (os_chdir((char *)dirnow) != 0)
               EMSG(_(e_prev_dir));
             shorten_fnames(TRUE);
           }
@@ -7428,7 +7428,7 @@ open_exfile (
 
 #ifdef UNIX
   /* with Unix it is possible to open a directory */
-  if (mch_isdir(fname)) {
+  if (os_isdir(fname)) {
     EMSG2(_(e_isadir2), fname);
     return NULL;
   }

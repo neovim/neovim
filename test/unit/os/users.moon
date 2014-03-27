@@ -11,10 +11,10 @@ typedef struct growarray {
   int ga_growsize;
   void    *ga_data;
 } garray_T;
-int mch_get_usernames(garray_T *usernames);
-int mch_get_user_name(char *s, size_t len);
-int mch_get_uname(int uid, char *s, size_t len);
-char *mch_get_user_directory(const char *name);
+int os_get_usernames(garray_T *usernames);
+int os_get_user_name(char *s, size_t len);
+int os_get_uname(int uid, char *s, size_t len);
+char *os_get_user_directory(const char *name);
 int getuid(void);
 ]]
 
@@ -37,14 +37,14 @@ describe 'users function', ->
   -- will probably not work on windows
   current_username = os.getenv 'USER'
 
-  describe 'mch_get_usernames', ->
+  describe 'os_get_usernames', ->
 
     it 'returns FAIL if called with NULL', ->
-      eq FAIL, users.mch_get_usernames NULL
+      eq FAIL, users.os_get_usernames NULL
 
     it 'fills the names garray with os usernames and returns OK', ->
       ga_users = garray_new!
-      eq OK, users.mch_get_usernames ga_users
+      eq OK, users.os_get_usernames ga_users
       user_count = garray_get_len ga_users
       assert.is_true user_count > 0
       current_username_found = false
@@ -54,37 +54,37 @@ describe 'users function', ->
           current_username_found = true
       assert.is_true current_username_found
 
-  describe 'mch_get_user_name', ->
+  describe 'os_get_user_name', ->
 
     it 'should write the username into the buffer and return OK', ->
       name_out = ffi.new 'char[100]'
-      eq OK, users.mch_get_user_name(name_out, 100)
+      eq OK, users.os_get_user_name(name_out, 100)
       eq current_username, ffi.string name_out
 
-  describe 'mch_get_uname', ->
+  describe 'os_get_uname', ->
 
     it 'should write the username into the buffer and return OK', ->
       name_out = ffi.new 'char[100]'
       user_id = lib.getuid!
-      eq OK, users.mch_get_uname(user_id, name_out, 100)
+      eq OK, users.os_get_uname(user_id, name_out, 100)
       eq current_username, ffi.string name_out
 
     it 'should FAIL if the userid is not found', ->
       name_out = ffi.new 'char[100]'
       -- hoping nobody has this uid
       user_id = 2342
-      eq FAIL, users.mch_get_uname(user_id, name_out, 100)
+      eq FAIL, users.os_get_uname(user_id, name_out, 100)
       eq '2342', ffi.string name_out
 
-  describe 'mch_get_user_directory', ->
+  describe 'os_get_user_directory', ->
 
     it 'should return NULL if called with NULL', ->
-      eq NULL, users.mch_get_user_directory NULL
+      eq NULL, users.os_get_user_directory NULL
 
     it 'should return $HOME for the current user', ->
       home = os.getenv('HOME')
-      eq home, ffi.string (users.mch_get_user_directory current_username)
+      eq home, ffi.string (users.os_get_user_directory current_username)
 
     it 'should return NULL if the user is not found', ->
-      eq NULL, users.mch_get_user_directory 'neovim_user_not_found_test'
+      eq NULL, users.os_get_user_directory 'neovim_user_not_found_test'
 

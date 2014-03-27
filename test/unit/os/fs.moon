@@ -12,12 +12,12 @@ enum OKFAIL {
 enum BOOLEAN {
   TRUE = 1, FALSE = 0
 };
-int mch_dirname(char_u *buf, int len);
-int mch_isdir(char_u * name);
+int os_dirname(char_u *buf, int len);
+int os_isdir(char_u * name);
 int is_executable(char_u *name);
-int mch_can_exe(char_u *name);
-long mch_getperm(char_u *name);
-int mch_setperm(char_u *name, long perm);
+int os_can_exe(char_u *name);
+long os_getperm(char_u *name);
+int os_setperm(char_u *name, long perm);
 int os_file_exists(const char_u *name);
 ]]
 
@@ -44,9 +44,9 @@ describe 'fs function', ->
     os.remove 'unit-test-directory/test.file'
     lfs.rmdir 'unit-test-directory'
 
-  describe 'mch_dirname', ->
-    mch_dirname = (buf, len) ->
-      fs.mch_dirname buf, len
+  describe 'os_dirname', ->
+    os_dirname = (buf, len) ->
+      fs.os_dirname buf, len
 
     before_each ->
       export len = (string.len lfs.currentdir!) + 1
@@ -54,20 +54,20 @@ describe 'fs function', ->
 
     it 'returns OK and writes current directory into the buffer if it is large
     enough', ->
-      eq OK, (mch_dirname buf, len)
+      eq OK, (os_dirname buf, len)
       eq lfs.currentdir!, (ffi.string buf)
 
     -- What kind of other failing cases are possible?
     it 'returns FAIL if the buffer is too small', ->
       buf = cstr (len-1), ''
-      eq FAIL, (mch_dirname buf, (len-1))
+      eq FAIL, (os_dirname buf, (len-1))
 
-  describe 'mch_full_dir_name', ->
-    ffi.cdef 'int mch_full_dir_name(char *directory, char *buffer, int len);'
+  describe 'os_full_dir_name', ->
+    ffi.cdef 'int os_full_dir_name(char *directory, char *buffer, int len);'
 
-    mch_full_dir_name = (directory, buffer, len) ->
+    os_full_dir_name = (directory, buffer, len) ->
       directory = to_cstr directory
-      fs.mch_full_dir_name directory, buffer, len
+      fs.os_full_dir_name directory, buffer, len
 
     before_each ->
       -- Create empty string buffer which will contain the resulting path.
@@ -75,7 +75,7 @@ describe 'fs function', ->
       export buffer = cstr len, ''
 
     it 'returns the absolute directory name of a given relative one', ->
-      result = mch_full_dir_name '..', buffer, len
+      result = os_full_dir_name '..', buffer, len
       eq OK, result
       old_dir = lfs.currentdir!
       lfs.chdir '..'
@@ -84,23 +84,23 @@ describe 'fs function', ->
       eq expected, (ffi.string buffer)
 
     it 'returns the current directory name if the given string is empty', ->
-      eq OK, (mch_full_dir_name '', buffer, len)
+      eq OK, (os_full_dir_name '', buffer, len)
       eq lfs.currentdir!, (ffi.string buffer)
 
     it 'fails if the given directory does not exist', ->
-      eq FAIL, mch_full_dir_name('does_not_exist', buffer, len)
+      eq FAIL, os_full_dir_name('does_not_exist', buffer, len)
 
     it 'works with a normal relative dir', ->
-      result = mch_full_dir_name('unit-test-directory', buffer, len)
+      result = os_full_dir_name('unit-test-directory', buffer, len)
       eq lfs.currentdir! .. '/unit-test-directory', (ffi.string buffer)
       eq OK, result
 
-  describe 'mch_get_absolute_path', ->
-    ffi.cdef 'int mch_get_absolute_path(char *fname, char *buf, int len, int force);'
+  describe 'os_get_absolute_path', ->
+    ffi.cdef 'int os_get_absolute_path(char *fname, char *buf, int len, int force);'
 
-    mch_get_absolute_path = (filename, buffer, length, force) ->
+    os_get_absolute_path = (filename, buffer, length, force) ->
       filename = to_cstr filename
-      fs.mch_get_absolute_path filename, buffer, length, force
+      fs.os_get_absolute_path filename, buffer, length, force
 
     before_each ->
       -- Create empty string buffer which will contain the resulting path.
@@ -109,12 +109,12 @@ describe 'fs function', ->
 
     it 'fails if given filename contains non-existing directory', ->
       force_expansion = 1
-      result = mch_get_absolute_path 'non_existing_dir/test.file', buffer, len, force_expansion
+      result = os_get_absolute_path 'non_existing_dir/test.file', buffer, len, force_expansion
       eq FAIL, result
 
     it 'concatenates given filename if it does not contain a slash', ->
       force_expansion = 1
-      result = mch_get_absolute_path 'test.file', buffer, len, force_expansion
+      result = os_get_absolute_path 'test.file', buffer, len, force_expansion
       expected = lfs.currentdir! .. '/test.file'
       eq expected, (ffi.string buffer)
       eq OK, result
@@ -122,7 +122,7 @@ describe 'fs function', ->
     it 'concatenates given filename if it is a directory but does not contain a
     slash', ->
       force_expansion = 1
-      result = mch_get_absolute_path '..', buffer, len, force_expansion
+      result = os_get_absolute_path '..', buffer, len, force_expansion
       expected = lfs.currentdir! .. '/..'
       eq expected, (ffi.string buffer)
       eq OK, result
@@ -132,7 +132,7 @@ describe 'fs function', ->
     it 'enters given directory (instead of just concatenating the strings) if
     possible and if path contains a slash', ->
       force_expansion = 1
-      result = mch_get_absolute_path '../test.file', buffer, len, force_expansion
+      result = os_get_absolute_path '../test.file', buffer, len, force_expansion
       old_dir = lfs.currentdir!
       lfs.chdir '..'
       expected = lfs.currentdir! .. '/test.file'
@@ -143,19 +143,19 @@ describe 'fs function', ->
     it 'just copies the path if it is already absolute and force=0', ->
       force_expansion = 0
       absolute_path = '/absolute/path'
-      result = mch_get_absolute_path absolute_path, buffer, len, force_expansion
+      result = os_get_absolute_path absolute_path, buffer, len, force_expansion
       eq absolute_path, (ffi.string buffer)
       eq OK, result
 
     it 'fails when the path is relative to HOME', ->
       force_expansion = 1
       absolute_path = '~/home.file'
-      result = mch_get_absolute_path absolute_path, buffer, len, force_expansion
+      result = os_get_absolute_path absolute_path, buffer, len, force_expansion
       eq FAIL, result
 
     it 'works with some "normal" relative path with directories', ->
       force_expansion = 1
-      result = mch_get_absolute_path 'unit-test-directory/test.file', buffer, len, force_expansion
+      result = os_get_absolute_path 'unit-test-directory/test.file', buffer, len, force_expansion
       eq OK, result
       eq lfs.currentdir! .. '/unit-test-directory/test.file', (ffi.string buffer)
 
@@ -164,7 +164,7 @@ describe 'fs function', ->
       filename = to_cstr 'unit-test-directory/test.file'
       -- Don't use the wrapper here but pass a cstring directly to the c
       -- function.
-      result = fs.mch_get_absolute_path filename, buffer, len, force_expansion
+      result = fs.os_get_absolute_path filename, buffer, len, force_expansion
       eq lfs.currentdir! .. '/unit-test-directory/test.file', (ffi.string buffer)
       eq 'unit-test-directory/test.file', (ffi.string filename)
       eq OK, result
@@ -207,80 +207,80 @@ describe 'fs function', ->
       eq OK, (fs.append_path path, to_append, 7)
       eq '/path2', (ffi.string path)
 
-  describe 'mch_is_absolute_path', ->
-    ffi.cdef 'int mch_is_absolute_path(char *fname);'
+  describe 'os_is_absolute_path', ->
+    ffi.cdef 'int os_is_absolute_path(char *fname);'
 
-    mch_is_absolute_path = (filename) ->
+    os_is_absolute_path = (filename) ->
       filename = to_cstr filename
-      fs.mch_is_absolute_path filename
+      fs.os_is_absolute_path filename
 
     it 'returns true if filename starts with a slash', ->
-      eq OK, mch_is_absolute_path '/some/directory/'
+      eq OK, os_is_absolute_path '/some/directory/'
 
     it 'returns true if filename starts with a tilde', ->
-      eq OK, mch_is_absolute_path '~/in/my/home~/directory'
+      eq OK, os_is_absolute_path '~/in/my/home~/directory'
 
     it 'returns false if filename starts not with slash nor tilde', ->
-      eq FAIL, mch_is_absolute_path 'not/in/my/home~/directory'
+      eq FAIL, os_is_absolute_path 'not/in/my/home~/directory'
 
-  describe 'mch_isdir', ->
-    mch_isdir = (name) ->
-      fs.mch_isdir (to_cstr name)
+  describe 'os_isdir', ->
+    os_isdir = (name) ->
+      fs.os_isdir (to_cstr name)
 
     it 'returns false if an empty string is given', ->
-      eq FALSE, (mch_isdir '')
+      eq FALSE, (os_isdir '')
 
     it 'returns false if a nonexisting directory is given', ->
-      eq FALSE, (mch_isdir 'non-existing-directory')
+      eq FALSE, (os_isdir 'non-existing-directory')
 
     it 'returns false if a nonexisting absolute directory is given', ->
-      eq FALSE, (mch_isdir '/non-existing-directory')
+      eq FALSE, (os_isdir '/non-existing-directory')
 
     it 'returns false if an existing file is given', ->
-      eq FALSE, (mch_isdir 'unit-test-directory/test.file')
+      eq FALSE, (os_isdir 'unit-test-directory/test.file')
 
     it 'returns true if the current directory is given', ->
-      eq TRUE, (mch_isdir '.')
+      eq TRUE, (os_isdir '.')
 
     it 'returns true if the parent directory is given', ->
-      eq TRUE, (mch_isdir '..')
+      eq TRUE, (os_isdir '..')
 
     it 'returns true if an arbitrary directory is given', ->
-      eq TRUE, (mch_isdir 'unit-test-directory')
+      eq TRUE, (os_isdir 'unit-test-directory')
 
     it 'returns true if an absolute directory is given', ->
-      eq TRUE, (mch_isdir directory)
+      eq TRUE, (os_isdir directory)
 
-  describe 'mch_can_exe', ->
-    mch_can_exe = (name) ->
-      fs.mch_can_exe (to_cstr name)
+  describe 'os_can_exe', ->
+    os_can_exe = (name) ->
+      fs.os_can_exe (to_cstr name)
 
     it 'returns false when given a directory', ->
-      eq FALSE, (mch_can_exe './unit-test-directory')
+      eq FALSE, (os_can_exe './unit-test-directory')
 
     it 'returns false when given a regular file without executable bit set', ->
-      eq FALSE, (mch_can_exe 'unit-test-directory/test.file')
+      eq FALSE, (os_can_exe 'unit-test-directory/test.file')
 
     it 'returns false when the given file does not exists', ->
-      eq FALSE, (mch_can_exe 'does-not-exist.file')
+      eq FALSE, (os_can_exe 'does-not-exist.file')
 
     it 'returns true when given an executable inside $PATH', ->
-      eq TRUE, (mch_can_exe executable_name)
+      eq TRUE, (os_can_exe executable_name)
 
     it 'returns true when given an executable relative to the current dir', ->
       old_dir = lfs.currentdir!
       lfs.chdir directory
       relative_executable = './' .. executable_name
-      eq TRUE, (mch_can_exe relative_executable)
+      eq TRUE, (os_can_exe relative_executable)
       lfs.chdir old_dir
 
   describe 'file permissions', ->
-    mch_getperm = (filename) ->
-      perm = fs.mch_getperm (to_cstr filename)
+    os_getperm = (filename) ->
+      perm = fs.os_getperm (to_cstr filename)
       tonumber perm
 
-    mch_setperm = (filename, perm) ->
-      fs.mch_setperm (to_cstr filename), perm
+    os_setperm = (filename, perm) ->
+      fs.os_setperm (to_cstr filename), perm
 
     bit_set = (number, check_bit) ->
       if 0 == (bit.band number, check_bit) then false else true
@@ -291,36 +291,36 @@ describe 'fs function', ->
     unset_bit = (number, to_unset) ->
       return bit.band number, (bit.bnot to_unset)
 
-    describe 'mch_getperm', ->
+    describe 'os_getperm', ->
       it 'returns -1 when the given file does not exist', ->
-        eq -1, (mch_getperm 'non-existing-file')
+        eq -1, (os_getperm 'non-existing-file')
 
       it 'returns a perm > 0 when given an existing file', -> 
-        assert.is_true (mch_getperm 'unit-test-directory') > 0
+        assert.is_true (os_getperm 'unit-test-directory') > 0
 
       it 'returns S_IRUSR when the file is readable', ->
-        perm = mch_getperm 'unit-test-directory'
+        perm = os_getperm 'unit-test-directory'
         assert.is_true (bit_set perm, ffi.C.kS_IRUSR)
 
-    describe 'mch_setperm', ->
+    describe 'os_setperm', ->
       it 'can set and unset the executable bit of a file', ->
-        perm = mch_getperm 'unit-test-directory/test.file'
+        perm = os_getperm 'unit-test-directory/test.file'
 
         perm = unset_bit perm, ffi.C.kS_IXUSR
-        eq OK, (mch_setperm 'unit-test-directory/test.file', perm)
+        eq OK, (os_setperm 'unit-test-directory/test.file', perm)
 
-        perm = mch_getperm 'unit-test-directory/test.file'
+        perm = os_getperm 'unit-test-directory/test.file'
         assert.is_false (bit_set perm, ffi.C.kS_IXUSR)
 
         perm = set_bit perm, ffi.C.kS_IXUSR
-        eq OK, mch_setperm 'unit-test-directory/test.file', perm
+        eq OK, os_setperm 'unit-test-directory/test.file', perm
 
-        perm = mch_getperm 'unit-test-directory/test.file'
+        perm = os_getperm 'unit-test-directory/test.file'
         assert.is_true (bit_set perm, ffi.C.kS_IXUSR)
 
       it 'fails if given file does not exist', ->
         perm = ffi.C.kS_IXUSR
-        eq FAIL, (mch_setperm 'non-existing-file', perm)
+        eq FAIL, (os_setperm 'non-existing-file', perm)
 
   describe 'os_file_exists', ->
     os_file_exists = (filename) ->

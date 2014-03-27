@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 void time_init(void);
-void mch_delay(uint64_t ms, bool ignoreinput);
+void os_delay(uint64_t ms, bool ignoreinput);
 
 #endif
 

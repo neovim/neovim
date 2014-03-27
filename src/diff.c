@@ -824,7 +824,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
 
     if (cmd != NULL) {
       /* We don't want $DIFF_OPTIONS to get in the way. */
-      if (mch_getenv("DIFF_OPTIONS")) {
+      if (os_getenv("DIFF_OPTIONS")) {
         vim_setenv((char_u *)"DIFF_OPTIONS", (char_u *)"");
       }
 
@@ -906,18 +906,18 @@ void ex_diffpatch(exarg_T *eap)
   // have our own temp dir use that instead, it will be cleaned up when we
   // exit (any .rej files created).  Don't change directory if we can't
   // return to the current.
-  if ((mch_dirname(dirbuf, MAXPATHL) != OK)
-      || (mch_chdir((char *)dirbuf) != 0)) {
+  if ((os_dirname(dirbuf, MAXPATHL) != OK)
+      || (os_chdir((char *)dirbuf) != 0)) {
     dirbuf[0] = NUL;
   } else {
 # ifdef TEMPDIRNAMES
     if (vim_tempdir != NULL) {
-      ignored = mch_chdir((char *)vim_tempdir);
+      ignored = os_chdir((char *)vim_tempdir);
     } else {
-      ignored = mch_chdir("/tmp");
+      ignored = os_chdir("/tmp");
     }
 # else
-    ignored = mch_chdir("/tmp");
+    ignored = os_chdir("/tmp");
 # endif  // ifdef TEMPDIRNAMES
     shorten_fnames(TRUE);
   }
@@ -948,7 +948,7 @@ void ex_diffpatch(exarg_T *eap)
 
 #ifdef UNIX
   if (dirbuf[0] != NUL) {
-    if (mch_chdir((char *)dirbuf) != 0) {
+    if (os_chdir((char *)dirbuf) != 0) {
       EMSG(_(e_prev_dir));
     }
     shorten_fnames(TRUE);

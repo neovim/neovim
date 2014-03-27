@@ -1434,8 +1434,8 @@ scripterror:
       if (ga_grow(&global_alist.al_ga, 1) == FAIL
           || (p = vim_strsave((char_u *)argv[0])) == NULL)
         mch_exit(2);
-      if (parmp->diff_mode && mch_isdir(p) && GARGCOUNT > 0
-          && !mch_isdir(alist_name(&GARGLIST[0]))) {
+      if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
+          && !os_isdir(alist_name(&GARGLIST[0]))) {
         char_u      *r;
 
         r = concat_fnames(p, gettail(alist_name(&GARGLIST[0])), TRUE);
@@ -2115,7 +2115,7 @@ process_env (
   linenr_T save_sourcing_lnum;
   scid_T save_sid;
 
-  initstr = (char_u *)mch_getenv((char *)env);
+  initstr = (char_u *)os_getenv((char *)env);
   if (initstr != NULL && *initstr != NUL) {
     if (is_viminit)
       vimrc_found(NULL, NULL);

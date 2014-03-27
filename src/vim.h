@@ -499,7 +499,7 @@ enum {
 #define SHELL_WRITE     64      /* write lines from buffer */
 
 /* Values returned by mch_nodetype() */
-#define NODE_NORMAL     0       /* file or directory, check with mch_isdir()*/
+#define NODE_NORMAL     0       /* file or directory, check with os_isdir()*/
 #define NODE_WRITABLE   1       /* something we can write to (character
                                    device, fifo, socket, ..) */
 #define NODE_OTHER      2       /* non-writable thing (e.g., block device) */

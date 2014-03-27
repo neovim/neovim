@@ -17,7 +17,7 @@ void time_init()
   uv_cond_init(&delay_cond);
 }
 
-void mch_delay(uint64_t ms, bool ignoreinput)
+void os_delay(uint64_t ms, bool ignoreinput)
 {
   int old_tmode;
 
@@ -25,7 +25,7 @@ void mch_delay(uint64_t ms, bool ignoreinput)
     /* Go to cooked mode without echo, to allow SIGINT interrupting us
      * here.  But we don't want QUIT to kill us (CTRL-\ used in a
      * shell may produce SIGQUIT). */
-    in_mch_delay = true;
+    in_os_delay = true;
     old_tmode = curr_tmode;
 
     if (curr_tmode == TMODE_RAW)
@@ -34,7 +34,7 @@ void mch_delay(uint64_t ms, bool ignoreinput)
     delay(ms);
 
     settmode(old_tmode);
-    in_mch_delay = false;
+    in_os_delay = false;
   } else {
     delay(ms);
   }
