@@ -480,7 +480,7 @@ static void fname2fnum(xfmark_T *fm)
       vim_strncpy(NameBuff, fm->fname, MAXPATHL - 1);
 
     /* Try to shorten the file name. */
-    mch_dirname(IObuff, IOSIZE);
+    os_dirname(IObuff, IOSIZE);
     p = shorten_fname(NameBuff, IObuff);
 
     /* buflist_new() will call fmarks_check_names() */

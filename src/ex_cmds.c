@@ -1730,7 +1730,7 @@ static char_u *viminfo_filename(char_u *file)
     else if ((file = find_viminfo_parameter('n')) == NULL || *file == NUL) {
 #ifdef VIMINFO_FILE2
       /* don't use $HOME when not defined (turned into "c:/"!). */
-      if (mch_getenv((char_u *)"HOME") == NULL) {
+      if (os_getenv((char_u *)"HOME") == NULL) {
         /* don't use $VIM when not available. */
         expand_env((char_u *)"$VIM", NameBuff, MAXPATHL);
         if (STRCMP("$VIM", NameBuff) != 0)          /* $VIM was expanded */
@@ -2335,7 +2335,7 @@ check_overwrite (
     if (!eap->forceit && !eap->append) {
 #ifdef UNIX
       /* with UNIX it is possible to open a directory */
-      if (mch_isdir(ffname)) {
+      if (os_isdir(ffname)) {
         EMSG2(_(e_isadir2), ffname);
         return FAIL;
       }
@@ -5384,7 +5384,7 @@ void ex_helptags(exarg_T *eap)
   xpc.xp_context = EXPAND_DIRECTORIES;
   dirname = ExpandOne(&xpc, eap->arg, NULL,
       WILD_LIST_NOTFOUND|WILD_SILENT, WILD_EXPAND_FREE);
-  if (dirname == NULL || !mch_isdir(dirname)) {
+  if (dirname == NULL || !os_isdir(dirname)) {
     EMSG2(_("E150: Not a directory: %s"), eap->arg);
     return;
   }

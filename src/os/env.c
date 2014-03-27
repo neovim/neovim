@@ -20,17 +20,17 @@
 #include <crt_externs.h>
 #endif
 
-const char *mch_getenv(const char *name)
+const char *os_getenv(const char *name)
 {
   return getenv(name);
 }
 
-int mch_setenv(const char *name, const char *value, int overwrite)
+int os_setenv(const char *name, const char *value, int overwrite)
 {
   return setenv(name, value, overwrite);
 }
 
-char *mch_getenvname_at_index(size_t index)
+char *os_getenvname_at_index(size_t index)
 {
 # if defined(AMIGA) || defined(__MRC__) || defined(__SC__)
   /*

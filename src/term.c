@@ -379,7 +379,7 @@ static struct builtin_term builtin_termcaps[] =
   /*
    * These codes are valid when nansi.sys or equivalent has been installed.
    * Function keys on a PC are preceded with a NUL. These are converted into
-   * K_NUL '\316' in mch_inchar(), because we cannot handle NULs in key codes.
+   * K_NUL '\316' in os_inchar(), because we cannot handle NULs in key codes.
    * CTRL-arrow is used instead of SHIFT-arrow.
    */
   {(int)KS_NAME,      "pcansi"},
@@ -2025,7 +2025,7 @@ void termcapinit(char_u *name)
   term = name;
 
   if (term == NULL)
-    term = (char_u *)mch_getenv("TERM");
+    term = (char_u *)os_getenv("TERM");
   if (term == NULL || *term == NUL)
     term = DEFAULT_TERM;
   set_string_option_direct((char_u *)"term", -1, term, OPT_FREE, 0);
@@ -2035,7 +2035,7 @@ void termcapinit(char_u *name)
   set_string_default("ttytype", term);
 
   /*
-   * Avoid using "term" here, because the next mch_getenv() may overwrite it.
+   * Avoid using "term" here, because the next os_getenv() may overwrite it.
    */
   set_termname(T_NAME != NULL ? T_NAME : term);
 }
@@ -2674,7 +2674,7 @@ void stoptermcap(void)
       if (crv_status == CRV_SENT || u7_status == U7_SENT) {
 # ifdef UNIX
         /* Give the terminal a chance to respond. */
-        mch_delay(100L, FALSE);
+        os_delay(100L, FALSE);
 # endif
 # ifdef TCIFLUSH
         /* Discard data received but not read. */

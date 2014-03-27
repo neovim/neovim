@@ -3463,9 +3463,9 @@ char_u * enc_locale()
 #  if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
     if ((s = setlocale(LC_CTYPE, NULL)) == NULL || *s == NUL)
 #  endif
-      if ((s = (char *)mch_getenv("LC_ALL")) == NULL || *s == NUL)
-        if ((s = (char *)mch_getenv("LC_CTYPE")) == NULL || *s == NUL)
-          s = (char *)mch_getenv("LANG");
+      if ((s = (char *)os_getenv("LC_ALL")) == NULL || *s == NUL)
+        if ((s = (char *)os_getenv("LC_CTYPE")) == NULL || *s == NUL)
+          s = (char *)os_getenv("LANG");
 
   if (s == NULL || *s == NUL)
     return FAIL;

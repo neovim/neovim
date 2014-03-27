@@ -724,7 +724,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       STRCAT(p, ".un~");
     } else {
       dir_name[dir_len] = NUL;
-      if (mch_isdir(dir_name)) {
+      if (os_isdir(dir_name)) {
         if (munged_name == NULL) {
           munged_name = vim_strsave(ffname);
           if (munged_name == NULL)
@@ -1167,7 +1167,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
       st_old_valid = TRUE;
     }
 #else
-    perm = mch_getperm(buf->b_ffname);
+    perm = os_getperm(buf->b_ffname);
     if (perm < 0)
       perm = 0600;
 #endif
@@ -1231,7 +1231,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
     EMSG2(_(e_not_open), file_name);
     goto theend;
   }
-  (void)mch_setperm(file_name, perm);
+  (void)os_setperm(file_name, perm);
   if (p_verbose > 0) {
     verbose_enter();
     smsg((char_u *)_("Writing undo file: %s"), file_name);
@@ -1256,7 +1256,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
       && fchown(fd, (uid_t)-1, st_old.st_gid) != 0
 # endif
       )
-    mch_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
+    os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
 # ifdef HAVE_SELINUX
   if (buf->b_ffname != NULL)
     mch_copy_sec(buf->b_ffname, file_name);

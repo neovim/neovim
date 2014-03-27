@@ -343,7 +343,7 @@ vim_findfile_init (
       path += 2;
     } else
 #endif
-    if (mch_dirname(ff_expand_buffer, MAXPATHL) == FAIL)
+    if (os_dirname(ff_expand_buffer, MAXPATHL) == FAIL)
       goto error_return;
 
     search_ctx->ffsc_start_dir = vim_strsave(ff_expand_buffer);
@@ -498,7 +498,7 @@ vim_findfile_init (
 
     STRCPY(buf, ff_expand_buffer);
     STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
-    if (mch_isdir(buf)) {
+    if (os_isdir(buf)) {
       STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
       add_pathsep(ff_expand_buffer);
     } else {
@@ -818,7 +818,7 @@ char_u *vim_findfile(void *search_ctx_arg)
           for (i = stackp->ffs_filearray_cur;
                i < stackp->ffs_filearray_size; ++i) {
             if (!path_with_url(stackp->ffs_filearray[i])
-                && !mch_isdir(stackp->ffs_filearray[i]))
+                && !os_isdir(stackp->ffs_filearray[i]))
               continue;                 /* not a directory */
 
             /* prepare the filename to be checked for existence
@@ -844,7 +844,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                            == FINDFILE_BOTH
                            || ((search_ctx->ffsc_find_what
                                 == FINDFILE_DIR)
-                               == mch_isdir(file_path)))))
+                               == os_isdir(file_path)))))
 #ifndef FF_VERBOSE
                   && (ff_check_visited(
                           &search_ctx->ffsc_visited_list->ffvl_visited_list,
@@ -877,7 +877,7 @@ char_u *vim_findfile(void *search_ctx_arg)
 
                 if (!path_with_url(file_path))
                   simplify_filename(file_path);
-                if (mch_dirname(ff_expand_buffer, MAXPATHL)
+                if (os_dirname(ff_expand_buffer, MAXPATHL)
                     == OK) {
                   p = shorten_fname(file_path,
                       ff_expand_buffer);
@@ -910,7 +910,7 @@ char_u *vim_findfile(void *search_ctx_arg)
            */
           for (i = stackp->ffs_filearray_cur;
                i < stackp->ffs_filearray_size; ++i) {
-            if (!mch_isdir(stackp->ffs_filearray[i]))
+            if (!os_isdir(stackp->ffs_filearray[i]))
               continue;                 /* not a directory */
 
             ff_push(search_ctx,
@@ -934,7 +934,7 @@ char_u *vim_findfile(void *search_ctx_arg)
           if (fnamecmp(stackp->ffs_filearray[i],
                   stackp->ffs_fix_path) == 0)
             continue;             /* don't repush same directory */
-          if (!mch_isdir(stackp->ffs_filearray[i]))
+          if (!os_isdir(stackp->ffs_filearray[i]))
             continue;               /* not a directory */
           ff_push(search_ctx,
               ff_create_stack_element(stackp->ffs_filearray[i],
@@ -1519,7 +1519,7 @@ find_file_in_path_option (
             (os_file_exists(NameBuff)
              && (find_what == FINDFILE_BOTH
                  || ((find_what == FINDFILE_DIR)
-                     == mch_isdir(NameBuff))))) {
+                     == os_isdir(NameBuff))))) {
             file_name = vim_strsave(NameBuff);
             goto theend;
           }

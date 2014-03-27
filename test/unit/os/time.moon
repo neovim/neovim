@@ -7,12 +7,12 @@ describe 'time function', ->
   setup ->
     time.time_init!
 
-  describe 'mch_delay', ->
-    mch_delay = (ms) ->
-      time.mch_delay ms, false
+  describe 'os_delay', ->
+    os_delay = (ms) ->
+      time.os_delay ms, false
 
     it 'sleeps at least the number of requested milliseconds', ->
       curtime = lua_time!
-      mch_delay 1000
+      os_delay 1000
       ellapsed = lua_time! - curtime
       eq true, ellapsed >= 1 and ellapsed <=2

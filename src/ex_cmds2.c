@@ -2493,7 +2493,7 @@ do_source (
   vim_free(p);
   if (fname_exp == NULL)
     return retval;
-  if (mch_isdir(fname_exp)) {
+  if (os_isdir(fname_exp)) {
     smsg((char_u *)_("Cannot source a directory: \"%s\""), fname);
     goto theend;
   }
@@ -3317,11 +3317,11 @@ char_u *get_mess_lang(void)
   p = (char_u *)get_locale_val(LC_COLLATE);
 #  endif
 # else
-  p = mch_getenv((char_u *)"LC_ALL");
+  p = os_getenv((char_u *)"LC_ALL");
   if (p == NULL || *p == NUL) {
-    p = mch_getenv((char_u *)"LC_MESSAGES");
+    p = os_getenv((char_u *)"LC_MESSAGES");
     if (p == NULL || *p == NUL)
-      p = mch_getenv((char_u *)"LANG");
+      p = os_getenv((char_u *)"LANG");
   }
 # endif
   return p;
@@ -3338,11 +3338,11 @@ static char_u *get_mess_env(void)
 {
   char_u      *p;
 
-  p = (char_u *)mch_getenv("LC_ALL");
+  p = (char_u *)os_getenv("LC_ALL");
   if (p == NULL || *p == NUL) {
-    p = (char_u *)mch_getenv("LC_MESSAGES");
+    p = (char_u *)os_getenv("LC_MESSAGES");
     if (p == NULL || *p == NUL) {
-      p = (char_u *)mch_getenv("LANG");
+      p = (char_u *)os_getenv("LANG");
       if (p != NULL && VIM_ISDIGIT(*p))
         p = NULL;                       /* ignore something like "1043" */
 # ifdef HAVE_GET_LOCALE_VAL

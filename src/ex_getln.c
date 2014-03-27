@@ -3256,13 +3256,13 @@ static int showmatches(expand_T *xp, int wildmenu)
             exp_path = expand_env_save_opt(files_found[k], TRUE);
             halved_slash = backslash_halve_save(
                 exp_path != NULL ? exp_path : files_found[k]);
-            j = mch_isdir(halved_slash != NULL ? halved_slash
+            j = os_isdir(halved_slash != NULL ? halved_slash
                 : files_found[k]);
             vim_free(exp_path);
             vim_free(halved_slash);
           } else
             /* Expansion was done here, file names are literal. */
-            j = mch_isdir(files_found[k]);
+            j = os_isdir(files_found[k]);
           if (showtail)
             p = L_SHOWFILE(k);
           else {
@@ -3954,7 +3954,7 @@ expand_shellcmd (
   flags |= EW_FILE | EW_EXEC;
 
   /* For an absolute name we don't use $PATH. */
-  if (mch_is_absolute_path(pat))
+  if (os_is_absolute_path(pat))
     path = (char_u *)" ";
   else if ((pat[0] == '.' && (vim_ispathsep(pat[1])
                               || (pat[1] == '.' && vim_ispathsep(pat[2])))))

@@ -2669,7 +2669,7 @@ void vim_beep(void)
  * - get value of $HOME
  * For Unix:
  *  - go to that directory
- *  - do mch_dirname() to get the real name of that directory.
+ *  - do os_dirname() to get the real name of that directory.
  *  This also works with mounts and links.
  *  Don't do this for MS-DOS, it will change the "current dir" for a drive.
  */
@@ -2683,7 +2683,7 @@ void init_homedir(void)
   vim_free(homedir);
   homedir = NULL;
 
-  var = (char_u *)mch_getenv("HOME");
+  var = (char_u *)os_getenv("HOME");
 
   if (var != NULL && *var == NUL)       /* empty is same as not set */
     var = NULL;
@@ -2695,11 +2695,11 @@ void init_homedir(void)
      * Change to the directory and get the actual path.  This resolves
      * links.  Don't do it when we can't return.
      */
-    if (mch_dirname(NameBuff, MAXPATHL) == OK
-        && mch_chdir((char *)NameBuff) == 0) {
-      if (!mch_chdir((char *)var) && mch_dirname(IObuff, IOSIZE) == OK)
+    if (os_dirname(NameBuff, MAXPATHL) == OK
+        && os_chdir((char *)NameBuff) == 0) {
+      if (!os_chdir((char *)var) && os_dirname(IObuff, IOSIZE) == OK)
         var = IObuff;
-      if (mch_chdir((char *)NameBuff) != 0)
+      if (os_chdir((char *)NameBuff) != 0)
         EMSG(_(e_prev_dir));
     }
 #endif
@@ -2858,12 +2858,12 @@ expand_env_esc (
         *var = NUL;
 # ifdef UNIX
         /*
-         * Use mch_get_user_directory() to get the user directory.
+         * Use os_get_user_directory() to get the user directory.
          * If this function fails, the shell is used to
          * expand ~user. This is slower and may fail if the shell
          * does not support ~user (old versions of /bin/sh).
          */
-        var = (char_u *)mch_get_user_directory((char *)dst + 1);
+        var = (char_u *)os_get_user_directory((char *)dst + 1);
         mustfree = TRUE;
         if (var == NULL)
         {
@@ -2999,7 +2999,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
   int vimruntime;
 
 
-  p = (char_u *)mch_getenv((char *)name);
+  p = (char_u *)os_getenv((char *)name);
   if (p != NULL && *p == NUL)       /* empty is the same as not set */
     p = NULL;
 
@@ -3020,7 +3020,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       && *default_vimruntime_dir == NUL
 #endif
       ) {
-    p = (char_u *)mch_getenv("VIM");
+    p = (char_u *)os_getenv("VIM");
     if (p != NULL && *p == NUL)             /* empty is the same as not set */
       p = NULL;
     if (p != NULL) {
@@ -3028,7 +3028,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       if (p != NULL)
         *mustfree = TRUE;
       else
-        p = (char_u *)mch_getenv("VIM");
+        p = (char_u *)os_getenv("VIM");
 
     }
   }
@@ -3077,7 +3077,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       /* check that the result is a directory name */
       p = vim_strnsave(p, (int)(pend - p));
 
-      if (p != NULL && !mch_isdir(p)) {
+      if (p != NULL && !os_isdir(p)) {
         vim_free(p);
         p = NULL;
       } else {
@@ -3139,11 +3139,11 @@ static char_u *vim_version_dir(char_u *vimdir)
   if (vimdir == NULL || *vimdir == NUL)
     return NULL;
   p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
-  if (p != NULL && mch_isdir(p))
+  if (p != NULL && os_isdir(p))
     return p;
   vim_free(p);
   p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, TRUE);
-  if (p != NULL && mch_isdir(p))
+  if (p != NULL && os_isdir(p))
     return p;
   vim_free(p);
   return NULL;
@@ -3170,7 +3170,7 @@ static char_u *remove_tail(char_u *p, char_u *pend, char_u *name)
  */
 void vim_setenv(char_u *name, char_u *val)
 {
-  mch_setenv((char *)name, (char *)val, 1);
+  os_setenv((char *)name, (char *)val, 1);
   /*
    * When setting $VIMRUNTIME adjust the directory to find message
    * translations to $VIMRUNTIME/lang.
@@ -3194,7 +3194,7 @@ char_u *get_env_name(expand_T *xp, int idx)
 # define ENVNAMELEN 100
   // this static buffer is needed to avoid a memory leak in ExpandGeneric
   static char_u name[ENVNAMELEN];
-  char *envname = mch_getenvname_at_index(idx);
+  char *envname = os_getenvname_at_index(idx);
   if (envname) {
     vim_strncpy(name, (char_u *)envname, ENVNAMELEN - 1);
     vim_free(envname);
@@ -3218,7 +3218,7 @@ static void init_users(void)
 
   lazy_init_done = TRUE;
   
-  mch_get_usernames(&ga_users);
+  os_get_usernames(&ga_users);
 }
 
 /*
@@ -3294,7 +3294,7 @@ home_replace (
   if (homedir != NULL)
     dirlen = STRLEN(homedir);
 
-  homedir_env_orig = homedir_env = (char_u *)mch_getenv("HOME");
+  homedir_env_orig = homedir_env = (char_u *)os_getenv("HOME");
   /* Empty is the same as not set. */
   if (homedir_env != NULL && *homedir_env == NUL)
     homedir_env = NULL;
@@ -3656,7 +3656,7 @@ int dir_of_file_exists(char_u *fname)
     return TRUE;
   c = *p;
   *p = NUL;
-  retval = mch_isdir(fname);
+  retval = os_isdir(fname);
   *p = c;
   return retval;
 }
@@ -4332,7 +4332,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     else if (path_with_url(buf))
       /* URL can't be used here */
       continue;
-    else if (!mch_is_absolute_path(buf)) {
+    else if (!os_is_absolute_path(buf)) {
       /* Expand relative path to their full path equivalent */
       len = (int)STRLEN(curdir);
       if (len + (int)STRLEN(buf) + 3 > MAXPATHL)
@@ -4438,7 +4438,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
   if ((curdir = alloc((int)(MAXPATHL))) == NULL)
     goto theend;
-  mch_dirname(curdir, MAXPATHL);
+  os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
   in_curdir = (char_u **)alloc_clear(gap->ga_len * sizeof(char_u *));
@@ -4473,7 +4473,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
         break;
       }
 
-    if (mch_is_absolute_path(path)) {
+    if (os_is_absolute_path(path)) {
       /*
        * Last resort: shorten relative to curdir if possible.
        * 'possible' means:
@@ -4563,7 +4563,7 @@ expand_in_path (
 
   if ((curdir = alloc((unsigned)MAXPATHL)) == NULL)
     return 0;
-  mch_dirname(curdir, MAXPATHL);
+  os_dirname(curdir, MAXPATHL);
 
   ga_init2(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option(curdir, &path_ga);
@@ -4762,7 +4762,7 @@ gen_expand_wildcards (
        */
       if (mch_has_exp_wildcard(p)) {
         if ((flags & EW_PATH)
-            && !mch_is_absolute_path(p)
+            && !os_is_absolute_path(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.' && vim_ispathsep(p[2]))))
@@ -4896,12 +4896,12 @@ addfile (
     return;
 #endif
 
-  isdir = mch_isdir(f);
+  isdir = os_isdir(f);
   if ((isdir && !(flags & EW_DIR)) || (!isdir && !(flags & EW_FILE)))
     return;
 
   /* If the file isn't executable, may not add it.  Do accept directories. */
-  if (!isdir && (flags & EW_EXEC) && !mch_can_exe(f))
+  if (!isdir && (flags & EW_EXEC) && !os_can_exe(f))
     return;
 
   /* Make room for another item in the file list. */

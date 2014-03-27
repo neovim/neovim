@@ -8235,7 +8235,7 @@ mkspell (
       EMSG(_(e_exists));
       goto theend;
     }
-    if (mch_isdir(wfname)) {
+    if (os_isdir(wfname)) {
       EMSG2(_(e_isadir2), wfname);
       goto theend;
     }

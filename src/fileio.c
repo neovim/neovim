@@ -405,7 +405,7 @@ readfile (
      * On Unix it is possible to read a directory, so we have to
      * check for it before the mch_open().
      */
-    perm = mch_getperm(fname);
+    perm = os_getperm(fname);
     if (perm >= 0 && !S_ISREG(perm)                 /* not a regular file ... */
 # ifdef S_ISFIFO
         && !S_ISFIFO(perm)                          /* ... or fifo */
@@ -508,8 +508,8 @@ readfile (
     /*
      * On MSDOS and Amiga we can't open a directory, check here.
      */
-    isdir_f = (mch_isdir(fname));
-    perm = mch_getperm(fname);      /* check if the file exists */
+    isdir_f = (os_isdir(fname));
+    perm = os_getperm(fname);      /* check if the file exists */
     if (isdir_f) {
       filemess(curbuf, sfname, (char_u *)_("is a directory"), 0);
       curbuf->b_p_ro = TRUE;            /* must use "w!" now */
@@ -613,7 +613,7 @@ readfile (
     /* Set swap file protection bits after creating it. */
     if (swap_mode > 0 && curbuf->b_ml.ml_mfp != NULL
         && curbuf->b_ml.ml_mfp->mf_fname != NULL)
-      (void)mch_setperm(curbuf->b_ml.ml_mfp->mf_fname, (long)swap_mode);
+      (void)os_setperm(curbuf->b_ml.ml_mfp->mf_fname, (long)swap_mode);
 #endif
   }
 
@@ -2879,10 +2879,10 @@ buf_write (
     newfile = TRUE;
     perm = -1;
   } else {
-    perm = mch_getperm(fname);
+    perm = os_getperm(fname);
     if (perm < 0)
       newfile = TRUE;
-    else if (mch_isdir(fname)) {
+    else if (os_isdir(fname)) {
       errnum = (char_u *)"E502: ";
       errmsg = (char_u *)_("is a directory");
       goto fail;
@@ -3201,7 +3201,7 @@ buf_write (
           } else {
             /* set file protection same as original file, but
              * strip s-bit */
-            (void)mch_setperm(backup, perm & 0777);
+            (void)os_setperm(backup, perm & 0777);
 
 #ifdef UNIX
             /*
@@ -3215,7 +3215,7 @@ buf_write (
                 && fchown(bfd, (uid_t)-1, st_old.st_gid) != 0
 # endif
                 )
-              mch_setperm(backup,
+              os_setperm(backup,
                   (perm & 0707) | ((perm & 07) << 3));
 # ifdef HAVE_SELINUX
             mch_copy_sec(fname, backup);
@@ -3371,7 +3371,7 @@ nobackup:
   if (forceit && perm >= 0 && !(perm & 0200) && st_old.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
     perm |= 0200;
-    (void)mch_setperm(fname, perm);
+    (void)os_setperm(fname, perm);
     made_writable = TRUE;
   }
 #endif
@@ -3760,7 +3760,7 @@ restore_backup:
         || st.st_gid != st_old.st_gid) {
       ignored = fchown(fd, st_old.st_uid, st_old.st_gid);
       if (perm >= 0)            /* set permission again, may have changed */
-        (void)mch_setperm(wfname, perm);
+        (void)os_setperm(wfname, perm);
     }
 # endif
     buf_setino(buf);
@@ -3779,7 +3779,7 @@ restore_backup:
     perm &= ~0200;              /* reset 'w' bit for security reasons */
 #endif
   if (perm >= 0)                /* set perm. of new file same as old file */
-    (void)mch_setperm(wfname, perm);
+    (void)os_setperm(wfname, perm);
 #ifdef HAVE_ACL
   /* Probably need to set the ACL before changing the user (can't set the
    * ACL on a file the user doesn't own). */
@@ -3996,7 +3996,7 @@ restore_backup:
         close(empty_fd);
     }
     if (org != NULL) {
-      mch_setperm((char_u *)org, mch_getperm(fname) & 0777);
+      os_setperm((char_u *)org, os_getperm(fname) & 0777);
       vim_free(org);
     }
   }
@@ -4716,7 +4716,7 @@ char_u *shorten_fname1(char_u *full_path)
   dirname = alloc(MAXPATHL);
   if (dirname == NULL)
     return full_path;
-  if (mch_dirname(dirname, MAXPATHL) == OK) {
+  if (os_dirname(dirname, MAXPATHL) == OK) {
     p = shorten_fname(full_path, dirname);
     if (p == NULL || *p == NUL)
       p = full_path;
@@ -4768,14 +4768,14 @@ void shorten_fnames(int force)
   buf_T       *buf;
   char_u      *p;
 
-  mch_dirname(dirname, MAXPATHL);
+  os_dirname(dirname, MAXPATHL);
   for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
     if (buf->b_fname != NULL
         && !bt_nofile(buf)
         && !path_with_url(buf->b_fname)
         && (force
             || buf->b_sfname == NULL
-            || mch_is_absolute_path(buf->b_sfname))) {
+            || os_is_absolute_path(buf->b_sfname))) {
       vim_free(buf->b_sfname);
       buf->b_sfname = NULL;
       p = shorten_fname(buf->b_ffname, dirname);
@@ -4810,7 +4810,7 @@ void shorten_filenames(char_u **fnames, int count)
 
   if (fnames == NULL || count < 1)
     return;
-  mch_dirname(dirname, sizeof(dirname));
+  os_dirname(dirname, sizeof(dirname));
   for (i = 0; i < count; ++i) {
     if ((p = shorten_fname(fnames[i], dirname)) != NULL) {
       /* shorten_fname() returns pointer in given "fnames[i]".  If free
@@ -4875,7 +4875,7 @@ buf_modname (
     retval = alloc((unsigned)(MAXPATHL + extlen + 3));
     if (retval == NULL)
       return NULL;
-    if (mch_dirname(retval, MAXPATHL) == FAIL ||
+    if (os_dirname(retval, MAXPATHL) == FAIL ||
         (fnamelen = (int)STRLEN(retval)) == 0) {
       vim_free(retval);
       return NULL;
@@ -5185,7 +5185,7 @@ int vim_rename(char_u *from, char_u *to)
   /*
    * Rename() failed, try copying the file.
    */
-  perm = mch_getperm(from);
+  perm = os_getperm(from);
 #ifdef HAVE_ACL
   /* For systems that support ACL: get the ACL from the original file. */
   acl = mch_get_acl(from);
@@ -5234,7 +5234,7 @@ int vim_rename(char_u *from, char_u *to)
     to = from;
   }
 #ifndef UNIX        /* for Unix mch_open() already set the permission */
-  mch_setperm(to, perm);
+  os_setperm(to, perm);
 #endif
 #ifdef HAVE_ACL
   mch_set_acl(to, acl);
@@ -5405,7 +5405,7 @@ buf_check_timestamp (
 #ifdef HAVE_ST_MODE
                  || (int)st.st_mode != buf->b_orig_mode
 #else
-                 || mch_getperm(buf->b_ffname) != buf->b_orig_mode
+                 || os_getperm(buf->b_ffname) != buf->b_orig_mode
 #endif
                  )) {
     retval = 1;
@@ -5421,7 +5421,7 @@ buf_check_timestamp (
 
     /* Don't do anything for a directory.  Might contain the file
      * explorer. */
-    if (mch_isdir(buf->b_fname))
+    if (os_isdir(buf->b_fname))
       ;
 
     /*
@@ -5725,7 +5725,7 @@ void buf_store_time(buf_T *buf, struct stat *st, char_u *fname)
 #ifdef HAVE_ST_MODE
   buf->b_orig_mode = (int)st->st_mode;
 #else
-  buf->b_orig_mode = mch_getperm(fname);
+  buf->b_orig_mode = os_getperm(fname);
 #endif
 }
 
@@ -5836,7 +5836,7 @@ vim_tempname (
 
       /* expand $TMP, leave room for "/v1100000/999999999" */
       expand_env((char_u *)tempdirs[i], itmp, TEMPNAMELEN - 20);
-      if (mch_isdir(itmp)) {                    /* directory exists */
+      if (os_isdir(itmp)) {                    /* directory exists */
         add_pathsep(itmp);
 
 # ifdef HAVE_MKDTEMP

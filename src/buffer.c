@@ -2425,7 +2425,7 @@ void buflist_altfpos(win_T *win)
 
 /*
  * Return TRUE if 'ffname' is not the same file as current file.
- * Fname must have a full path (expanded by mch_get_absolute_path()).
+ * Fname must have a full path (expanded by os_get_absolute_path()).
  */
 int otherfile(char_u *ffname)
 {

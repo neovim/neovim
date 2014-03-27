@@ -419,10 +419,10 @@ deathtrap SIGDEFARG(sigarg) {
 
 #ifdef SIGHASARG
 # ifdef SIGQUIT
-  /* While in mch_delay() we go to cooked mode to allow a CTRL-C to
+  /* While in os_delay() we go to cooked mode to allow a CTRL-C to
    * interrupt us.  But in cooked mode we may also get SIGQUIT, e.g., when
    * pressing CTRL-\, but we don't want Vim to exit then. */
-  if (in_mch_delay && sigarg == SIGQUIT)
+  if (in_os_delay && sigarg == SIGQUIT)
     SIGRETURN;
 # endif
 
@@ -568,7 +568,7 @@ void mch_suspend()
     long wait_time;
     for (wait_time = 0; !sigcont_received && wait_time <= 3L; wait_time++)
       /* Loop is not entered most of the time */
-      mch_delay(wait_time, FALSE);
+      os_delay(wait_time, FALSE);
   }
 # endif
 
@@ -1594,9 +1594,9 @@ int mch_get_shellsize()
    *    the ioctl() values!
    */
   if (columns == 0 || rows == 0 || vim_strchr(p_cpo, CPO_TSIZE) != NULL) {
-    if ((p = (char_u *)mch_getenv("LINES")))
+    if ((p = (char_u *)os_getenv("LINES")))
       rows = atoi((char *)p);
-    if ((p = (char_u *)mch_getenv("COLUMNS")))
+    if ((p = (char_u *)os_getenv("COLUMNS")))
       columns = atoi((char *)p);
   }
 
@@ -1667,7 +1667,7 @@ waitstatus  *status;
 # endif
     if (wait_pid == 0) {
       /* Wait for 10 msec before trying again. */
-      mch_delay(10L, TRUE);
+      os_delay(10L, TRUE);
       continue;
     }
     if (wait_pid <= 0
@@ -1879,13 +1879,13 @@ int options;                    /* SHELL_*, see vim.h */
         }
 # endif
         /* Simulate to have a dumb terminal (for now) */
-        mch_setenv("TERM", "dumb", 1);
+        os_setenv("TERM", "dumb", 1);
         sprintf((char *)envbuf, "%ld", Rows);
-        mch_setenv("ROWS", (char *)envbuf, 1);
+        os_setenv("ROWS", (char *)envbuf, 1);
         sprintf((char *)envbuf, "%ld", Rows);
-        mch_setenv("LINES", (char *)envbuf, 1);
+        os_setenv("LINES", (char *)envbuf, 1);
         sprintf((char *)envbuf, "%ld", Columns);
-        mch_setenv("COLUMNS", (char *)envbuf, 1);
+        os_setenv("COLUMNS", (char *)envbuf, 1);
 
         /*
          * stderr is only redirected when using the GUI, so that a
@@ -2180,7 +2180,7 @@ int options;                    /* SHELL_*, see vim.h */
            * Check if the child has any characters to be printed.
            * Read them and write them to our window.	Repeat this as
            * long as there is something to do, avoid the 10ms wait
-           * for mch_inchar(), or sending typeahead characters to
+           * for os_inchar(), or sending typeahead characters to
            * the external process.
            * TODO: This should handle escape sequences, compatible
            * to some terminal (vt52?).
@@ -2739,7 +2739,7 @@ int flags;                      /* EW_* flags */
   /* When running in the background, give it some time to create the temp
    * file, but don't wait for it to finish. */
   if (ampersent)
-    mch_delay(10L, TRUE);
+    os_delay(10L, TRUE);
 
   extra_shell_arg = NULL;               /* cleanup */
   show_shell_mess = TRUE;
@@ -2915,12 +2915,12 @@ int flags;                      /* EW_* flags */
       continue;
 
     /* check if this entry should be included */
-    dir = (mch_isdir((*file)[i]));
+    dir = (os_isdir((*file)[i]));
     if ((dir && !(flags & EW_DIR)) || (!dir && !(flags & EW_FILE)))
       continue;
 
     /* Skip files that are not executable if we check for that. */
-    if (!dir && (flags & EW_EXEC) && !mch_can_exe((*file)[i]))
+    if (!dir && (flags & EW_EXEC) && !os_can_exe((*file)[i]))
       continue;
 
     p = alloc((unsigned)(STRLEN((*file)[i]) + 1 + dir));

@@ -1628,7 +1628,7 @@ int vim_chdirfile(char_u *fname)
 
   vim_strncpy(dir, fname, MAXPATHL - 1);
   *gettail_sep(dir) = NUL;
-  return mch_chdir((char *)dir) == 0 ? OK : FAIL;
+  return os_chdir((char *)dir) == 0 ? OK : FAIL;
 }
 #endif
 
@@ -1644,7 +1644,7 @@ int illegal_slash(char *name)
     return FALSE;           /* no file name is not illegal */
   if (name[strlen(name) - 1] != '/')
     return FALSE;           /* no trailing slash */
-  if (mch_isdir((char_u *)name))
+  if (os_isdir((char_u *)name))
     return FALSE;           /* trailing slash for a directory */
   return TRUE;
 }
@@ -1652,7 +1652,7 @@ int illegal_slash(char *name)
 
 /*
  * Change directory to "new_dir".  If FEAT_SEARCHPATH is defined, search
- * 'cdpath' for relative directory names, otherwise just mch_chdir().
+ * 'cdpath' for relative directory names, otherwise just os_chdir().
  */
 int vim_chdir(char_u *new_dir)
 {
@@ -1663,7 +1663,7 @@ int vim_chdir(char_u *new_dir)
       FNAME_MESS, curbuf->b_ffname);
   if (dir_name == NULL)
     return -1;
-  r = mch_chdir((char *)dir_name);
+  r = os_chdir((char *)dir_name);
   vim_free(dir_name);
   return r;
 }
@@ -1802,7 +1802,7 @@ int filewritable(char_u *fname)
 #endif
 
 #if defined(UNIX) || defined(VMS)
-  perm = mch_getperm(fname);
+  perm = os_getperm(fname);
 #endif
   if (
 # if defined(UNIX) || defined(VMS)
@@ -1811,7 +1811,7 @@ int filewritable(char_u *fname)
     mch_access((char *)fname, W_OK) == 0
     ) {
     ++retval;
-    if (mch_isdir(fname))
+    if (os_isdir(fname))
       ++retval;
   }
   return retval;

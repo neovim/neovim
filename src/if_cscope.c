@@ -2073,7 +2073,7 @@ static void cs_release_csp(int i, int freefnpp)
       waitpid_errno = errno;
       if (pid != 0)
         break;          /* break unless the process is still running */
-      mch_delay(50L, FALSE);       /* sleep 50 ms */
+      os_delay(50L, FALSE);       /* sleep 50 ms */
     }
 # endif
     /*
@@ -2104,7 +2104,7 @@ static void cs_release_csp(int i, int freefnpp)
             alive = FALSE;             /* cscope process no longer exists */
             break;
           }
-          mch_delay(50L, FALSE);           /* sleep 50ms */
+          os_delay(50L, FALSE);           /* sleep 50ms */
         }
       }
       if (alive)

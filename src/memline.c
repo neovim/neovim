@@ -345,7 +345,7 @@ int ml_open(buf_T *buf)
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
     b0p->b0_flags = get_fileformat(buf) + 1;
     set_b0_fname(b0p, buf);
-    (void)mch_get_user_name((char *)b0p->b0_uname, B0_UNAME_SIZE);
+    (void)os_get_user_name((char *)b0p->b0_uname, B0_UNAME_SIZE);
     b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     mch_get_host_name(b0p->b0_hname, B0_HNAME_SIZE);
     b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
@@ -850,7 +850,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
         B0_FNAME_SIZE_CRYPT, TRUE);
     if (b0p->b0_fname[0] == '~') {
       /* If there is no user name or it is too long, don't use "~/" */
-      int retval = mch_get_user_name(uname, B0_UNAME_SIZE);
+      int retval = os_get_user_name(uname, B0_UNAME_SIZE);
       size_t ulen = STRLEN(uname);
       size_t flen = STRLEN(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
@@ -1751,7 +1751,7 @@ static time_t swapfile_info(char_u *fname)
   if (mch_stat((char *)fname, &st) != -1) {
 #ifdef UNIX
     /* print name of owner of the file */
-    if (mch_get_uname(st.st_uid, uname, B0_UNAME_SIZE) == OK) {
+    if (os_get_uname(st.st_uid, uname, B0_UNAME_SIZE) == OK) {
       MSG_PUTS(_("          owned by: "));
       msg_outtrans((char_u *)uname);
       MSG_PUTS(_("   dated: "));
@@ -3392,7 +3392,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
      * portion of the filename (if any) and the path the symlink
      * points to.
      */
-    if (mch_is_absolute_path(buf))
+    if (os_is_absolute_path(buf))
       STRCPY(tmp, buf);
     else {
       char_u *tail;
@@ -3798,7 +3798,7 @@ findswapname (
        */
       if (!(buf->b_p_sn || buf->b_shortname)) {         /* not tried yet */
         fname[n - 1] = 'x';
-        r = mch_getperm(fname);                 /* try "file.swx" */
+        r = os_getperm(fname);                 /* try "file.swx" */
         fname[n - 1] = 'p';
         if (r >= 0) {                       /* "file.swx" seems to exist */
           buf->b_shortname = TRUE;

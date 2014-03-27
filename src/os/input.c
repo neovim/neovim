@@ -122,7 +122,7 @@ uint32_t input_read(char *buf, uint32_t count)
 
 
 /* Low level input function. */
-int mch_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
+int os_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
@@ -158,7 +158,7 @@ int mch_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
 }
 
 /* Check if a character is available for reading */
-bool mch_char_avail()
+bool os_char_avail()
 {
   return inbuf_poll(0) == kInputAvail;
 }
@@ -167,7 +167,7 @@ bool mch_char_avail()
  * Check for CTRL-C typed by reading all available characters.
  * In cooked mode we should get SIGINT, no need to check.
  */
-void mch_breakcheck()
+void os_breakcheck()
 {
   if (curr_tmode == TMODE_RAW && event_poll(0))
     fill_input_buf(FALSE);
