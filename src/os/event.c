@@ -19,15 +19,14 @@ void event_init()
 }
 
 /* Wait for some event */
-EventType event_poll(int32_t ms)
+bool event_poll(int32_t ms)
 {
   bool timed_out;
-  EventType event;
   uv_run_mode run_mode = UV_RUN_ONCE;
 
-  if ((event = input_check()) != kEventNone) {
+  if (input_ready()) {
     /* If there's a pending input event to be consumed, do it now */
-    return event;
+    return true;
   }
 
   input_start();
@@ -47,11 +46,12 @@ EventType event_poll(int32_t ms)
   }
 
   do {
-    /* Wait for some event */
+    /* Run one event loop iteration, blocking for events if run_mode is
+     * UV_RUN_ONCE */
     uv_run(uv_default_loop(), run_mode);
   } while (
       /* Continue running if ... */
-      (event = input_check()) == kEventNone && /* ... we have no input */
+      !input_ready() && /* ... we have no input */
       run_mode != UV_RUN_NOWAIT && /* ... ms != 0 */
       !timed_out  /* ... we didn't get a timeout */
       );
@@ -64,7 +64,7 @@ EventType event_poll(int32_t ms)
     uv_timer_stop(&timer_req);
   }
 
-  return event;
+  return input_ready();
 }
 
 /* Set a flag in the `event_poll` loop for signaling of a timeout */

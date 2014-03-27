@@ -16,6 +16,12 @@
 
 #define READ_BUFFER_LENGTH 4096
 
+typedef enum {
+  kInputNone,
+  kInputAvail,
+  kInputEof
+} InbufPollResult;
+
 typedef struct {
   uv_buf_t uvbuf;
   uint32_t rpos, wpos, fpos;
@@ -31,7 +37,7 @@ static uv_idle_t fread_idle;
 static uv_handle_type read_channel_type;
 static bool eof = false;
 
-static EventType inbuf_poll(int32_t ms);
+static InbufPollResult inbuf_poll(int32_t ms);
 static void stderr_switch(void);
 static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
 static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
@@ -53,17 +59,9 @@ void input_init()
 }
 
 /* Check if there's a pending input event */
-EventType input_check()
+bool input_ready()
 {
-  if (rbuffer.rpos < rbuffer.wpos) {
-    return kEventInput;
-  }
-
-  if (eof) {
-    return kEventEof;
-  }
-
-  return kEventNone;
+  return rbuffer.rpos < rbuffer.wpos || eof;
 }
 
 /* Listen for input */
@@ -74,7 +72,7 @@ void input_start()
   rbuffer.uvbuf.base = (char *)(rbuffer.data + rbuffer.wpos);
 
   if (read_channel_type == UV_FILE) {
-    /* Just invoke the `fread_idle_cb` as soon as there are no pending events */
+    /* Just invoke the `fread_idle_cb` as soon as the loop starts */
     uv_idle_start(&fread_idle, fread_idle_cb);
   } else {
     /* Start reading */
@@ -126,14 +124,14 @@ uint32_t input_read(char *buf, uint32_t count)
 /* Low level input function. */
 int mch_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
 {
-  EventType result;
+  InbufPollResult result;
 
   if (ms >= 0) {
-    if ((result = inbuf_poll(ms)) != kEventInput) {
+    if ((result = inbuf_poll(ms)) != kInputAvail) {
       return 0;
     }
   } else {
-    if ((result = inbuf_poll(p_ut)) != kEventInput) {
+    if ((result = inbuf_poll(p_ut)) != kInputAvail) {
       if (trigger_cursorhold() && maxlen >= 3 &&
           !typebuf_changed(tb_change_cnt)) {
         buf[0] = K_SPECIAL;
@@ -151,7 +149,7 @@ int mch_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
   if (typebuf_changed(tb_change_cnt))
     return 0;
 
-  if (result == kEventEof) {
+  if (result == kInputEof) {
     read_error_exit();
     return 0;
   }
@@ -162,7 +160,7 @@ int mch_inchar(char_u *buf, int maxlen, long ms, int tb_change_cnt)
 /* Check if a character is available for reading */
 bool mch_char_avail()
 {
-  return inbuf_poll(0) == kEventInput;
+  return inbuf_poll(0) == kInputAvail;
 }
 
 /*
@@ -171,17 +169,24 @@ bool mch_char_avail()
  */
 void mch_breakcheck()
 {
-  if (curr_tmode == TMODE_RAW && event_poll(0) == kEventInput)
+  if (curr_tmode == TMODE_RAW && event_poll(0))
     fill_input_buf(FALSE);
 }
 
 /* This is a replacement for the old `WaitForChar` function in os_unix.c */
-static EventType inbuf_poll(int32_t ms)
+static InbufPollResult inbuf_poll(int32_t ms)
 {
   if (input_available())
-    return kEventInput;
+    return kInputAvail;
 
-  return event_poll(ms);
+  if (event_poll(ms)) {
+    if (rbuffer.rpos == rbuffer.wpos && eof) {
+      return kInputEof;
+    }
+    return kInputAvail;
+  }
+
+  return kInputNone;
 }
 
 static void stderr_switch()
