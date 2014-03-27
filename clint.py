@@ -1381,19 +1381,6 @@ def ReverseCloseExpression(clean_lines, linenum, pos):
   return (line, 0, -1)
 
 
-def CheckForCopyright(filename, lines, error):
-  """Logs an error if no Copyright message appears at the top of the file."""
-
-  # We'll say it should occur by line 10. Don't forget there's a
-  # dummy line at the front.
-  for line in range(1, min(len(lines), 11)):
-    if re.search(r'Copyright', lines[line], re.I): break
-  else:                       # means no copyright line was found
-    error(filename, 0, 'legal/copyright', 5,
-          'No copyright message found.  '
-          'You should have a line: "Copyright [year] <Copyright Owner>"')
-
-
 def GetHeaderGuardCPPVariable(filename):
   """Returns the CPP variable that should be used as a header guard.
 
@@ -1415,7 +1402,8 @@ def GetHeaderGuardCPPVariable(filename):
   file_path_from_root = fileinfo.RepositoryName()
   if _root:
     file_path_from_root = re.sub('^' + _root + os.sep, '', file_path_from_root)
-  return re.sub(r'[-./\s]', '_', file_path_from_root).upper() + '_'
+  header_guard = re.sub(r'[-./\s]', '_', file_path_from_root).upper()
+  return re.sub('SRC', 'NEOVIM', header_guard)
 
 
 def CheckForHeaderGuard(filename, lines, error):
@@ -4564,8 +4552,6 @@ def ProcessFileData(filename, file_extension, lines, error,
   nesting_state = _NestingState()
 
   ResetNolintSuppressions()
-
-  CheckForCopyright(filename, lines, error)
 
   if file_extension == 'h':
     CheckForHeaderGuard(filename, lines, error)
