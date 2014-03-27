@@ -18,6 +18,7 @@
 #include "misc1.h"
 #include "misc2.h"
 #include "os/time.h"
+#include "path.h"
 #include "quickfix.h"
 #include "tag.h"
 #include "ui.h"

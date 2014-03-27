@@ -60,6 +60,7 @@
 #include "crypt.h"
 #include "option.h"
 #include "os_unix.h"
+#include "path.h"
 #include "screen.h"
 #include "sha256.h"
 #include "spell.h"

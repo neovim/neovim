@@ -29,6 +29,7 @@
 #include "misc2.h"
 #include "normal.h"
 #include "option.h"
+#include "path.h"
 #include "quickfix.h"
 #include "search.h"
 #include "term.h"

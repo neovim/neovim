@@ -20,6 +20,7 @@
 #include "move.h"
 #include "normal.h"
 #include "option.h"
+#include "path.h"
 #include "screen.h"
 #include "undo.h"
 #include "window.h"

@@ -38,6 +38,7 @@
 #include "ops.h"
 #include "option.h"
 #include "os_unix.h"
+#include "path.h"
 #include "quickfix.h"
 #include "screen.h"
 #include "syntax.h"

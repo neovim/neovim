@@ -42,6 +42,7 @@
 #include "misc1.h"
 #include "misc2.h"
 #include "os_unix.h"
+#include "path.h"
 #include "ui.h"
 
 /*
