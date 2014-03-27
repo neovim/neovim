@@ -1,15 +1,4 @@
-/* vi:set ts=2 sts=2 sw=2:
- *
- * VIM - Vi IMproved	by Bram Moolenaar
- *
- * Do ":help uganda"  in Vim to read copying and usage conditions.
- * Do ":help credits" in Vim to see a list of people who contributed.
- * See README.txt for an overview of the Vim source code.
- */
-
-/*
- * env.c -- environment variable access
- */
+// env.c -- environment variable access
 
 #include <uv.h>
 
@@ -33,15 +22,13 @@ int os_setenv(const char *name, const char *value, int overwrite)
 char *os_getenvname_at_index(size_t index)
 {
 # if defined(AMIGA) || defined(__MRC__) || defined(__SC__)
-  /*
-   * No environ[] on the Amiga and on the Mac (using MPW).
-   */
+  // No environ[] on the Amiga and on the Mac (using MPW).
   return NULL;
 # else
 # if defined(HAVE__NSGETENVIRON)
   char **environ = *_NSGetEnviron();
 # elif !defined(__WIN32__)
-  /* Borland C++ 5.2 has this in a header file. */
+  // Borland C++ 5.2 has this in a header file.
   extern char         **environ;
 # endif
   // check if index is inside the environ array

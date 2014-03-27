@@ -7,5 +7,5 @@
 void event_init(void);
 bool event_poll(int32_t ms);
 
-#endif
+#endif  // NEOVIM_OS_EVENT_H
 

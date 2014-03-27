@@ -22,9 +22,9 @@ void os_delay(uint64_t ms, bool ignoreinput)
   int old_tmode;
 
   if (ignoreinput) {
-    /* Go to cooked mode without echo, to allow SIGINT interrupting us
-     * here.  But we don't want QUIT to kill us (CTRL-\ used in a
-     * shell may produce SIGQUIT). */
+    // Go to cooked mode without echo, to allow SIGINT interrupting us
+    // here.  But we don't want QUIT to kill us (CTRL-\ used in a
+    // shell may produce SIGQUIT).
     in_os_delay = true;
     old_tmode = curr_tmode;
 
@@ -43,7 +43,7 @@ void os_delay(uint64_t ms, bool ignoreinput)
 static void delay(uint64_t ms)
 {
   uint64_t hrtime;
-  int64_t ns = ms * 1000000; /* convert to nanoseconds */
+  int64_t ns = ms * 1000000;  // convert to nanoseconds
 
   uv_mutex_lock(&delay_mutex);
 
