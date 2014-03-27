@@ -10,7 +10,6 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len);
 char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep);
 int unix_expandpath(garray_T *gap, char_u *path, int wildoff, int flags,
                     int didstar);
-void remove_duplicates(garray_T *gap);
 int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,
                          int flags);

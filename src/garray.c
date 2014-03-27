@@ -7,6 +7,7 @@
 #include "vim.h"
 #include "ascii.h"
 #include "misc2.h"
+#include "path.h"
 #include "garray.h"
 
 // #include "globals.h"
@@ -84,6 +85,26 @@ int ga_grow(garray_T *gap, int n)
     gap->ga_data = pp;
   }
   return OK;
+}
+
+/// Sort "gap" and remove duplicate entries.  "gap" is expected to contain a
+/// list of file names in allocated memory.
+///
+/// @param gap
+void ga_remove_duplicate_strings(garray_T *gap)
+{
+  int i;
+  int j;
+  char_u  **fnames = (char_u **)gap->ga_data;
+
+  sort_strings(fnames, gap->ga_len);
+  for (i = gap->ga_len - 1; i > 0; --i)
+    if (fnamecmp(fnames[i - 1], fnames[i]) == 0) {
+      vim_free(fnames[i]);
+      for (j = i + 1; j < gap->ga_len; ++j)
+        fnames[j - 1] = fnames[j];
+      --gap->ga_len;
+    }
 }
 
 /// For a growing array that contains a list of strings: concatenate all the

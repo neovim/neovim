@@ -4207,7 +4207,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 
   /* Sort and remove duplicates which can happen when specifying multiple
    * directories in dirnames. */
-  remove_duplicates(&ga);
+  ga_remove_duplicate_strings(&ga);
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;

@@ -4,17 +4,17 @@
 #include "eval.h"
 #include "ex_getln.h"
 #include "fileio.h"
+#include "garray.h"
 #include "memline.h"
 #include "misc1.h"
 #include "misc2.h"
-#include "garray.h"
-#include "types.h"
+#include "os/os.h"
 #include "os_unix.h"
 #include "regexp.h"
 #include "tag.h"
+#include "types.h"
 #include "ui.h"
 #include "window.h"
-#include "os/os.h"
 
 /*
  * Compare two file names and return:
@@ -801,7 +801,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   char_u      **in_curdir = NULL;
   char_u      *short_name;
 
-  remove_duplicates(gap);
+  ga_remove_duplicate_strings(gap);
   ga_init2(&path_ga, (int)sizeof(char_u *), 1);
 
   /*
@@ -930,7 +930,7 @@ theend:
   vim_regfree(regmatch.regprog);
 
   if (sort_again)
-    remove_duplicates(gap);
+    ga_remove_duplicate_strings(gap);
 }
 
 /*
@@ -993,25 +993,6 @@ expand_in_path (
   return gap->ga_len;
 }
 
-/*
- * Sort "gap" and remove duplicate entries.  "gap" is expected to contain a
- * list of file names in allocated memory.
- */
-void remove_duplicates(garray_T *gap)
-{
-  int i;
-  int j;
-  char_u  **fnames = (char_u **)gap->ga_data;
-
-  sort_strings(fnames, gap->ga_len);
-  for (i = gap->ga_len - 1; i > 0; --i)
-    if (fnamecmp(fnames[i - 1], fnames[i]) == 0) {
-      vim_free(fnames[i]);
-      for (j = i + 1; j < gap->ga_len; ++j)
-        fnames[j - 1] = fnames[j];
-      --gap->ga_len;
-    }
-}
 
 static int has_env_var(char_u *p);
 
