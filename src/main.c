@@ -834,7 +834,7 @@ void getout(int exitval)
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
   }
 
-  if (*p_viminfo != NUL)
+  if (p_viminfo && *p_viminfo != NUL)
     /* Write out the registers, history, marks etc, to the viminfo file */
     write_viminfo(NULL, FALSE);
 
