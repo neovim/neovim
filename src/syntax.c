@@ -6014,6 +6014,8 @@ static char *(highlight_init_light[]) =
   CENT(
       "FoldColumn term=standout ctermbg=Grey ctermfg=DarkBlue",
       "FoldColumn term=standout ctermbg=Grey ctermfg=DarkBlue guibg=Grey guifg=DarkBlue"),
+  CENT("SignColumn term=standout ctermbg=Grey ctermfg=DarkBlue",
+       "SignColumn term=standout ctermbg=Grey ctermfg=DarkBlue guibg=Grey guifg=DarkBlue"),
   CENT("Visual term=reverse",
       "Visual term=reverse guibg=LightGrey"),
   CENT("DiffAdd term=bold ctermbg=LightBlue",
@@ -6084,6 +6086,8 @@ static char *(highlight_init_dark[]) =
   CENT(
       "FoldColumn term=standout ctermbg=DarkGrey ctermfg=Cyan",
       "FoldColumn term=standout ctermbg=DarkGrey ctermfg=Cyan guibg=Grey guifg=Cyan"),
+  CENT("SignColumn term=standout ctermbg=DarkGrey ctermfg=Cyan",
+      "SignColumn term=standout ctermbg=DarkGrey ctermfg=Cyan guibg=Grey guifg=Cyan"),
   CENT("Visual term=reverse",
       "Visual term=reverse guibg=DarkGrey"),
   CENT("DiffAdd term=bold ctermbg=DarkBlue",
@@ -7847,6 +7851,7 @@ static void highlight_list_two(int cnt, int attr)
  */
 char_u *get_highlight_name(expand_T *xp, int idx)
 {
+  //TODO: 'xp' is unused
   if (idx == highlight_ga.ga_len && include_none != 0)
     return (char_u *)"none";
   if (idx == highlight_ga.ga_len + include_none && include_default != 0)

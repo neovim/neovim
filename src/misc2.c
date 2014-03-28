@@ -786,6 +786,7 @@ void free_all_mem(void)
   free_regexp_stuff();
   free_tag_stuff();
   free_cd_dir();
+  free_signs();
   set_expr_line(NULL);
   diff_clear(curtab);
   clear_sb_text();            /* free any scrollback text */

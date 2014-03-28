@@ -5643,6 +5643,11 @@ comp_textwidth (
     if (cmdwin_type != 0)
       textwidth -= 1;
     textwidth -= curwin->w_p_fdc;
+
+    if (curwin->w_buffer->b_signlist != NULL) {
+        textwidth -= 1;
+    }
+
     if (curwin->w_p_nu || curwin->w_p_rnu)
       textwidth -= 8;
   }

@@ -679,6 +679,7 @@ int win_col_off(win_T *wp)
   return ((wp->w_p_nu || wp->w_p_rnu) ? number_width(wp) + 1 : 0)
          + (cmdwin_type == 0 || wp != curwin ? 0 : 1)
          + wp->w_p_fdc
+         + (wp->w_buffer->b_signlist != NULL ? 2 : 0)
   ;
 }
 

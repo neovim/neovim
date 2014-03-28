@@ -10305,6 +10305,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "scrollbind",
     "showcmd",
     "cmdline_info",
+    "signs",
     "smartindent",
 #ifdef STARTUPTIME
     "startuptime",

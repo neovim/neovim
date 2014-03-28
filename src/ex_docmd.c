@@ -259,7 +259,6 @@ static void ex_folddo(exarg_T *eap);
 #ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
 #endif
-# define ex_sign                ex_ni
 # define ex_wsverb              ex_ni
 # define ex_nbclose             ex_ni
 # define ex_nbkey               ex_ni
@@ -3102,6 +3101,9 @@ set_one_cmd_context (
   case CMD_scscope:
     set_context_in_cscope_cmd(xp, arg, ea.cmdidx);
     break;
+  case CMD_sign:
+    set_context_in_sign_cmd(xp, arg);
+    break;
   case CMD_bdelete:
   case CMD_bwipeout:
   case CMD_bunload:
@@ -4460,6 +4462,7 @@ static struct {
   {EXPAND_SYNTIME, "syntime"},
   {EXPAND_SETTINGS, "option"},
   {EXPAND_SHELLCMD, "shellcmd"},
+  {EXPAND_SIGN, "sign"},
   {EXPAND_TAGS, "tag"},
   {EXPAND_TAGS_LISTFILES, "tag_listfiles"},
   {EXPAND_USER, "user"},
