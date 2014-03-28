@@ -642,63 +642,56 @@ char_u *alloc_check(unsigned size)
  */
 char_u *lalloc_clear(long_u size, int message)
 {
-  char_u *p;
-
-  p = (lalloc(size, message));
-  if (p != NULL)
-    (void)memset(p, 0, (size_t)size);
+  char_u *p = lalloc(size, message);
+  memset(p, 0, (size_t)size);
   return p;
 }
 
-/*
- * Low level memory allocation function.
- * This is used often, KEEP IT FAST!
- */
+/// When out of memory: try to release some memfile blocks and
+/// if some blocks are released call malloc again.
+void try_to_free_memory()
+{
+  static bool trying_to_free = false;
+  // avoid recursive calls
+  if (trying_to_free)
+    return;
+  trying_to_free = true;
+
+  // free any scrollback text
+  clear_sb_text();
+  // Try to save all buffers and release as many blocks as possible
+  mf_release_all();
+  // cleanup recursive lists/dicts
+  garbage_collect();
+
+  trying_to_free = false;
+}
+
+void *xmalloc(size_t size)
+{
+  void *ret = malloc(size);
+
+  if (!ret && !size)
+    ret = malloc(1);
+
+  if (!ret) {
+    try_to_free_memory();
+    ret = malloc(size);
+    if (!ret && !size)
+      ret = malloc(1);
+    if (!ret) {
+      OUT_STR("Vim: Error: Out of memory.\n");
+      preserve_exit();
+    }
+  }
+
+  return ret;
+}
+
+/// Old low level memory allocation function. Prefer xmalloc() from now on.
 char_u *lalloc(long_u size, int message)
 {
-  char_u      *p;                   /* pointer to new storage space */
-  static int releasing = FALSE;     /* don't do mf_release_all() recursive */
-  int try_again;
-
-  /* Safety check for allocating zero bytes */
-  if (size == 0) {
-    /* Don't hide this message */
-    emsg_silent = 0;
-    EMSGN(_("E341: Internal error: lalloc(%ld, )"), size);
-    return NULL;
-  }
-
-  /*
-   * Loop when out of memory: Try to release some memfile blocks and
-   * if some blocks are released call malloc again.
-   */
-  for (;; ) {
-    if ((p = (char_u *)malloc((size_t)size)) != NULL) {
-      /* No check for available memory: Just return. */
-      goto theend;
-    }
-    /*
-     * Remember that mf_release_all() is being called to avoid an endless
-     * loop, because mf_release_all() may call alloc() recursively.
-     */
-    if (releasing)
-      break;
-    releasing = TRUE;
-
-    clear_sb_text();                  /* free any scrollback text */
-    try_again = mf_release_all();     /* release as many blocks as possible */
-    try_again |= garbage_collect();     /* cleanup recursive lists/dicts */
-
-    releasing = FALSE;
-    if (!try_again)
-      break;
-  }
-
-  if (message && p == NULL)
-    do_outofmem_msg(size);
-
-theend:
-  return p;
+  return (char_u *)xmalloc((size_t)size);
 }
 
 /*
