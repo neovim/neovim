@@ -38,6 +38,9 @@ typedef struct memfile memfile_T;
 // for  synstate_T (needs reg_extmatch_T, win_T and buf_T)
 #include "syntax_defs.h"
 
+// for signlist_T
+#include "sign_defs.h"
+
 /*
  * The taggy struct is used to store the information about a :tag command.
  */
@@ -700,6 +703,8 @@ struct file_buffer {
   synblock_T b_s;               /* Info related to syntax highlighting.  w_s
                                  * normally points to this, but some windows
                                  * may use a different synblock_T. */
+
+  signlist_T *b_signlist;       /* list of signs to draw */
 };
 
 /*

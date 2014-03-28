@@ -1081,6 +1081,7 @@ EXTERN char_u e_screenmode[] INIT(= N_(
 #endif
 EXTERN char_u e_scroll[] INIT(= N_("E49: Invalid scroll size"));
 EXTERN char_u e_shellempty[] INIT(= N_("E91: 'shell' option is empty"));
+EXTERN char_u e_signdata[] INIT(= N_("E255: Couldn't read in sign data!"));
 EXTERN char_u e_swapclose[] INIT(= N_("E72: Close error on swap file"));
 EXTERN char_u e_tagstack[] INIT(= N_("E73: tag stack empty"));
 EXTERN char_u e_toocompl[] INIT(= N_("E74: Command too complex"));

@@ -96,6 +96,7 @@
 #include "charset.h"
 #include "diff.h"
 #include "eval.h"
+#include "ex_cmds.h"
 #include "ex_cmds2.h"
 #include "ex_getln.h"
 #include "farsi.h"
@@ -191,6 +192,11 @@ static int fillchar_status(int *attr, int is_curwin);
 static int fillchar_vsep(int *attr);
 static void win_redr_custom(win_T *wp, int draw_ruler);
 static void win_redr_ruler(win_T *wp, int always);
+
+//signs column
+static void update_prepare(void);
+static void update_finish(void);
+static int draw_signcolumn (win_T *wp);
 
 /* Ugly global: overrule attribute used by screen_char() */
 static int screen_char_attr = 0;
@@ -678,7 +684,87 @@ void update_single_line(win_T *wp, linenr_T lnum)
 }
 
 
+/*
+ * Prepare for updating one or more windows.
+ * Caller must check for "updating_screen" already set to avoid recursiveness.
+ */
+static void update_prepare()
+{
+    cursor_off();
+    updating_screen = TRUE;
+    start_search_hl();
+}
 
+/*
+ * Finish updating one or more windows.
+ */
+static void update_finish()
+{
+    if (redraw_cmdline) {
+        showmode();
+    }
+
+    end_search_hl();
+    updating_screen = FALSE;
+}
+
+void update_debug_sign(buf_T *buf, linenr_T lnum)
+{
+    win_T *wp;
+    int  doit = FALSE;
+    win_foldinfo.fi_level = 0;
+
+    /* update/delete a specific mark */
+    FOR_ALL_WINDOWS(wp)
+    {
+	if (buf != NULL && lnum > 0) {
+	    if (wp->w_buffer == buf && lnum >= wp->w_topline
+                && lnum < wp->w_botline)
+            {
+                if (wp->w_redraw_top == 0 || wp->w_redraw_top > lnum) {
+                    wp->w_redraw_top = lnum;
+                }
+                if (wp->w_redraw_bot == 0 || wp->w_redraw_bot < lnum) {
+                    wp->w_redraw_bot = lnum;
+                }
+                redraw_win_later(wp, VALID);
+            }
+        } else {
+            redraw_win_later(wp, VALID);
+        }
+        if (wp->w_redr_type != 0) {
+            doit = TRUE;
+        }
+    }
+
+    /* Return when there is nothing to do, screen updating is already
+     * happening (recursive call) or still starting up. */
+    if (!doit || updating_screen || starting) {
+        return;
+    }
+
+    /* update all windows that need updating */
+    update_prepare();
+
+    for (wp = firstwin; wp; wp = wp->w_next) {
+        if (wp->w_redr_type != 0) {
+            win_update(wp);
+        }
+        if (wp->w_redr_status) {
+            win_redr_status(wp);
+        }
+    }
+
+    update_finish();
+}
+
+/*
+ * Return TRUE when window "wp" has a column to draw signs in.
+ */
+static int draw_signcolumn(win_T *wp)
+{
+    return (wp->w_buffer->b_signlist != NULL);
+}
 
 
 /*
@@ -1676,6 +1762,20 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
           W_ENDCOL(wp) - n, (int)W_ENDCOL(wp),
           ' ', ' ', hl_attr(HLF_FC));
     }
+
+    if (draw_signcolumn(wp)) {
+        int nn = n + 2;
+
+        /* draw the sign column left of the fold column */
+        if (nn > W_WIDTH(wp)) {
+            nn = W_WIDTH(wp);
+        }
+        screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
+                W_ENDCOL(wp) - nn, (int)W_ENDCOL(wp) - n,
+                ' ', ' ', hl_attr(HLF_SC));
+        n = nn;
+    }
+
     screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
         W_WINCOL(wp), W_ENDCOL(wp) - 1 - FDC_OFF,
         c2, c2, hl_attr(hl));
@@ -1703,6 +1803,21 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
           ' ', ' ', hl_attr(HLF_FC));
       n = nn;
     }
+
+    if (draw_signcolumn(wp))
+    {
+        int nn = n + 2;
+
+        /* draw the sign column after the fold column */
+        if (nn > W_WIDTH(wp)) {
+            nn = W_WIDTH(wp);
+        }
+        screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
+                W_WINCOL(wp) + n, (int)W_WINCOL(wp) + nn,
+                ' ', ' ', hl_attr(HLF_SC));
+        n = nn;
+    }
+
     screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
         W_WINCOL(wp) + FDC_OFF, (int)W_ENDCOL(wp),
         c1, c2, hl_attr(hl));
@@ -1792,6 +1907,17 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * text */
   RL_MEMSET(col, hl_attr(HLF_FL), W_WIDTH(wp) - col);
 
+  /* If signs are being displayed, add two spaces. */
+  if (draw_signcolumn(wp)) {
+      len = W_WIDTH(wp) - col;
+      if (len > 0) {
+          if (len > 2) {
+              len = 2;
+          }
+          copy_text_attr(off + col, (char_u *)"  ", len, hl_attr(HLF_FL));
+          col += len;
+      }
+  }
 
   /*
    * 3. Add the 'number' or 'relativenumber' column
@@ -2211,7 +2337,7 @@ win_line (
 #define WL_START        0               /* nothing done yet */
 # define WL_CMDLINE     WL_START + 1    /* cmdline window column */
 # define WL_FOLD        WL_CMDLINE + 1  /* 'foldcolumn' */
-# define WL_SIGN        WL_FOLD         /* column for signs */
+# define WL_SIGN        WL_FOLD + 1     /* column for signs */
 #define WL_NR           WL_SIGN + 1     /* line number */
 # define WL_SBR         WL_NR + 1       /* 'showbreak' or 'diff' */
 #define WL_LINE         WL_SBR + 1      /* text in the line */
@@ -2407,6 +2533,11 @@ win_line (
   filler_todo = filler_lines;
 
 #ifdef LINE_ATTR
+  /* If this line has a sign with line highlighting set line_attr. */
+  v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
+  if (v != 0)
+      line_attr = sign_get_attr((int)v, TRUE);
+
   /* Highlight the current line in the quickfix window. */
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum)
     line_attr = hl_attr(HLF_L);
@@ -2667,6 +2798,31 @@ win_line (
         }
       }
 
+      //sign column
+      if (draw_state == WL_SIGN - 1 && n_extra == 0) {
+          draw_state = WL_SIGN;
+          /* Show the sign column when there are any signs in this
+           * buffer or when using Netbeans. */
+          if (draw_signcolumn(wp) && filler_todo <= 0) {
+              int text_sign;
+              /* Draw two cells with the sign value or blank. */
+              c_extra = ' ';
+              char_attr = hl_attr(HLF_SC);
+              n_extra = 2;
+
+              if (row == startrow) {
+                  text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT);
+                  if (text_sign != 0) {
+                      p_extra = sign_get_text(text_sign);
+                      if (p_extra != NULL) {
+                          c_extra = NUL;
+                          n_extra = (int)STRLEN(p_extra);
+                      }
+                      char_attr = sign_get_attr(text_sign, FALSE);
+                  }
+              }
+          }
+      }
 
       if (draw_state == WL_NR - 1 && n_extra == 0) {
         draw_state = WL_NR;
