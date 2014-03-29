@@ -1723,26 +1723,7 @@ int options;                    /* SHELL_*, see vim.h */
 
   // Count the number of arguments for the shell
   p = newcmd;
-  argc = 0;
-  while (true) {
-    ++argc;
-    shell_skip_word(&p);
-    if (*p == NUL)
-      break;
-    // Move to the next word
-    p = skipwhite(p);
-  }
-
-  // Account for multiple args in p_shcf('shellcmdflag' option)
-  p = p_shcf;
-  while (true) {
-    // Same as above, but doesn't need to take quotes into consideration
-    p = skiptowhite(p);
-    if (*p == NUL)
-      break;
-    ++argc;
-    p = skipwhite(p);
-  }
+  argc = shell_count_argc(&p);
 
   // Allocate argv memory
   argv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));

@@ -6,6 +6,7 @@
 #include "types.h"
 
 void shell_skip_word(char_u **ptr);
+int shell_count_argc(char_u **ptr);
 
 #endif  // NEOVIM_OS_SHELL_H
 
