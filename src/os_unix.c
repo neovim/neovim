@@ -1721,47 +1721,59 @@ int options;                    /* SHELL_*, see vim.h */
   if (options & SHELL_COOKED)
     settmode(TMODE_COOK);               /* set to normal mode */
 
-  /*
-   * Do this loop twice:
-   * 1: find number of arguments
-   * 2: separate them and build argv[]
-   */
-  for (i = 0; i < 2; ++i) {
-    p = newcmd;
-    inquote = FALSE;
-    argc = 0;
-    for (;; ) {
-      if (i == 1)
-        argv[argc] = (char *)p;
-      ++argc;
-      while (*p && (inquote || (*p != ' ' && *p != TAB))) {
-        if (*p == '"')
-          inquote = !inquote;
-        ++p;
-      }
-      if (*p == NUL)
-        break;
-      if (i == 1)
-        *p++ = NUL;
-      p = skipwhite(p);
+  // Count the number of arguments for the shell
+  p = newcmd;
+  inquote = FALSE;
+  argc = 0;
+  while (true) {
+    ++argc;
+    // Move `p` to the end of shell word by advancing the pointer it while it's
+    // inside a quote or it's a non-whitespace character
+    while (*p && (inquote || (*p != ' ' && *p != TAB))) {
+      if (*p == '"')
+        // Found a quote character, switch the `inquote` flag
+        inquote = !inquote;
+      ++p;
     }
-    if (argv == NULL) {
-      /*
-       * Account for possible multiple args in p_shcf.
-       */
-      p = p_shcf;
-      for (;; ) {
-        p = skiptowhite(p);
-        if (*p == NUL)
-          break;
-        ++argc;
-        p = skipwhite(p);
-      }
+    if (*p == NUL)
+      break;
+    // Move to the next word
+    p = skipwhite(p);
+  }
 
-      argv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));
-      if (argv == NULL)             /* out of memory */
-        goto error;
+  // Account for multiple args in p_shcf('shellcmdflag' option)
+  p = p_shcf;
+  while (true) {
+    // Same as above, but doesn't need to take quotes into consideration
+    p = skiptowhite(p);
+    if (*p == NUL)
+      break;
+    ++argc;
+    p = skipwhite(p);
+  }
+
+  // Allocate argv memory
+  argv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));
+  if (argv == NULL) // out of memory
+    goto error;
+  
+  // Build argv[]
+  p = newcmd;
+  inquote = FALSE;
+  argc = 0;
+  while (true) {
+    argv[argc] = (char *)p;
+    ++argc;
+    while (*p && (inquote || (*p != ' ' && *p != TAB))) {
+      if (*p == '"')
+        inquote = !inquote;
+      ++p;
     }
+    if (*p == NUL)
+      break;
+    // Terminate the word
+    *p++ = NUL;
+    p = skipwhite(p);
   }
   if (cmd != NULL) {
     char_u  *s;
