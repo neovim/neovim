@@ -104,15 +104,15 @@
 
 
 
-static int enc_canon_search(char_u *name);
+static int enc_canon_search(const char_u *name);
 static int dbcs_char2len(int c);
 static int dbcs_char2bytes(int c, char_u *buf);
-static int dbcs_ptr2len(char_u *p);
-static int dbcs_ptr2len_len(char_u *p, int size);
-static int utf_ptr2cells_len(char_u *p, int size);
+static int dbcs_ptr2len(const char_u *p);
+static int dbcs_ptr2len_len(const char_u *p, int size);
+static int utf_ptr2cells_len(const char_u *p, int size);
 static int dbcs_char2cells(int c);
-static int dbcs_ptr2cells_len(char_u *p, int size);
-static int dbcs_ptr2char(char_u *p);
+static int dbcs_ptr2cells_len(const char_u *p, int size);
+static int dbcs_ptr2char(const char_u *p);
 static int utf_safe_read_char_adv(char_u **s, size_t *n);
 
 /*
@@ -183,7 +183,7 @@ static void xim_log(char *s, ...)
  * "iso-8859-n" is handled by enc_canonize() directly.
  */
 static struct
-{   char *name;         int prop;               int codepage; }
+{   const char *name;   int prop;              int codepage; }
 enc_canon_table[] =
 {
 #define IDX_LATIN_1     0
@@ -321,7 +321,7 @@ enc_canon_table[] =
  * Aliases for encoding names.
  */
 static struct
-{   char *name;         int canon; }
+{   const char *name; int canon; }
 enc_alias_table[] =
 {
   {"ansi",            IDX_LATIN_1},
@@ -395,7 +395,7 @@ enc_alias_table[] =
  * Find encoding "name" in the list of canonical encoding names.
  * Returns -1 if not found.
  */
-static int enc_canon_search(char_u *name)
+static int enc_canon_search(const char_u *name)
 {
   int i;
 
@@ -411,7 +411,7 @@ static int enc_canon_search(char_u *name)
  * Find canonical encoding "name" in the list and return its properties.
  * Returns 0 if not found.
  */
-int enc_canon_props(char_u *name)
+int enc_canon_props(const char_u *name)
 {
   int i;
 
@@ -698,12 +698,12 @@ void remove_bom(char_u *s)
  * 2 for an (ASCII) word character
  * >2 for other word characters
  */
-int mb_get_class(char_u *p)
+int mb_get_class(const char_u *p)
 {
   return mb_get_class_buf(p, curbuf);
 }
 
-int mb_get_class_buf(char_u *p, buf_T *buf)
+int mb_get_class_buf(const char_u *p, buf_T *buf)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
     if (p[0] == NUL || vim_iswhite(p[0]))
@@ -911,12 +911,12 @@ static int dbcs_char2bytes(int c, char_u *buf)
  * For UTF-8 this includes following composing characters.
  * Returns 0 when *p is NUL.
  */
-int latin_ptr2len(char_u *p)
+int latin_ptr2len(const char_u *p)
 {
   return MB_BYTE2LEN(*p);
 }
 
-static int dbcs_ptr2len(char_u *p)
+static int dbcs_ptr2len(const char_u *p)
 {
   int len;
 
@@ -933,14 +933,14 @@ static int dbcs_ptr2len(char_u *p)
  * Returns 0 for an empty string.
  * Returns 1 for an illegal char or an incomplete byte sequence.
  */
-int latin_ptr2len_len(char_u *p, int size)
+int latin_ptr2len_len(const char_u *p, int size)
 {
   if (size < 1 || *p == NUL)
     return 0;
   return 1;
 }
 
-static int dbcs_ptr2len_len(char_u *p, int size)
+static int dbcs_ptr2len_len(const char_u *p, int size)
 {
   int len;
 
@@ -959,12 +959,11 @@ struct interval {
   long first;
   long last;
 };
-static int intable(struct interval *table, size_t size, int c);
 
 /*
  * Return TRUE if "c" is in "table[size / sizeof(struct interval)]".
  */
-static int intable(struct interval *table, size_t size, int c)
+static int intable(const struct interval *table, size_t size, int c)
 {
   int mid, bot, top;
 
@@ -1260,12 +1259,12 @@ int utf_char2cells(int c)
  * Return the number of display cells character at "*p" occupies.
  * This doesn't take care of unprintable characters, use ptr2cells() for that.
  */
-int latin_ptr2cells(char_u *p)
+int latin_ptr2cells(const char_u *p)
 {
   return 1;
 }
 
-int utf_ptr2cells(char_u *p)
+int utf_ptr2cells(const char_u *p)
 {
   int c;
 
@@ -1283,7 +1282,7 @@ int utf_ptr2cells(char_u *p)
   return 1;
 }
 
-int dbcs_ptr2cells(char_u *p)
+int dbcs_ptr2cells(const char_u *p)
 {
   /* Number of cells is equal to number of bytes, except for euc-jp when
    * the first byte is 0x8e. */
@@ -1297,12 +1296,12 @@ int dbcs_ptr2cells(char_u *p)
  * Like mb_ptr2cells(), but limit string length to "size".
  * For an empty string or truncated character returns 1.
  */
-int latin_ptr2cells_len(char_u *p, int size)
+int latin_ptr2cells_len(const char_u *p, int size)
 {
   return 1;
 }
 
-static int utf_ptr2cells_len(char_u *p, int size)
+static int utf_ptr2cells_len(const char_u *p, int size)
 {
   int c;
 
@@ -1322,7 +1321,7 @@ static int utf_ptr2cells_len(char_u *p, int size)
   return 1;
 }
 
-static int dbcs_ptr2cells_len(char_u *p, int size)
+static int dbcs_ptr2cells_len(const char_u *p, int size)
 {
   /* Number of cells is equal to number of bytes, except for euc-jp when
    * the first byte is 0x8e. */
@@ -1355,7 +1354,7 @@ static int dbcs_char2cells(int c)
  * Return the number of cells occupied by string "p".
  * Stop at a NUL character.  When "len" >= 0 stop at character "p[len]".
  */
-int mb_string2cells(char_u *p, int len)
+int mb_string2cells(const char_u *p, int len)
 {
   int i;
   int clen = 0;
@@ -1397,12 +1396,12 @@ int utf_off2cells(unsigned off, unsigned max_off)
  * mb_ptr2char() function pointer.
  * Convert a byte sequence into a character.
  */
-int latin_ptr2char(char_u *p)
+int latin_ptr2char(const char_u *p)
 {
   return *p;
 }
 
-static int dbcs_ptr2char(char_u *p)
+static int dbcs_ptr2char(const char_u *p)
 {
   if (MB_BYTE2LEN(*p) > 1 && p[1] != NUL)
     return (p[0] << 8) + p[1];
@@ -1415,7 +1414,7 @@ static int dbcs_ptr2char(char_u *p)
  * returned.
  * Does not include composing characters, of course.
  */
-int utf_ptr2char(char_u *p)
+int utf_ptr2char(const char_u *p)
 {
   int len;
 
@@ -1539,7 +1538,7 @@ int mb_cptr2char_adv(char_u **pp)
  * comes after "p1".  For Arabic sometimes "ab" is replaced with "c", which
  * behaves like a composing character.
  */
-int utf_composinglike(char_u *p1, char_u *p2)
+int utf_composinglike(const char_u *p1, const char_u *p2)
 {
   int c2;
 
@@ -1556,8 +1555,8 @@ int utf_composinglike(char_u *p1, char_u *p2)
  * composing characters.
  */
 int utfc_ptr2char(
-    char_u      *p,
-    int         *pcc        /* return: composing chars, last one is 0 */
+    const char_u *p,
+    int          *pcc        /* return: composing chars, last one is 0 */
     )
 {
   int len;
@@ -1594,8 +1593,8 @@ int utfc_ptr2char(
  * composing characters.  Use no more than p[maxlen].
  */
 int utfc_ptr2char_len(
-    char_u      *p,
-    int         *pcc,       /* return: composing chars, last one is 0 */
+    const char_u *p,
+    int          *pcc,       /* return: composing chars, last one is 0 */
     int maxlen
     )
 {
@@ -1657,7 +1656,7 @@ int utfc_char2bytes(int off, char_u *buf)
  * Returns 0 for "".
  * Returns 1 for an illegal byte sequence.
  */
-int utf_ptr2len(char_u *p)
+int utf_ptr2len(const char_u *p)
 {
   int len;
   int i;
@@ -1689,7 +1688,7 @@ int utf_byte2len(int b)
  * Returns number > "size" for an incomplete byte sequence.
  * Never returns zero.
  */
-int utf_ptr2len_len(char_u *p, int size)
+int utf_ptr2len_len(const char_u *p, int size)
 {
   int len;
   int i;
@@ -1712,7 +1711,7 @@ int utf_ptr2len_len(char_u *p, int size)
  * Return the number of bytes the UTF-8 encoding of the character at "p" takes.
  * This includes following composing characters.
  */
-int utfc_ptr2len(char_u *p)
+int utfc_ptr2len(const char_u *p)
 {
   int len;
   int b0 = *p;
@@ -1751,7 +1750,7 @@ int utfc_ptr2len(char_u *p)
  * Returns 0 for an empty string.
  * Returns 1 for an illegal char or an incomplete byte sequence.
  */
-int utfc_ptr2len_len(char_u *p, int size)
+int utfc_ptr2len_len(const char_u *p, int size)
 {
   int len;
   int prevlen;
@@ -2940,14 +2939,14 @@ void show_utf8()
  * If "p" points to the NUL at the end of the string return 0.
  * Returns 0 when already at the first byte of a character.
  */
-int latin_head_off(char_u *base, char_u *p)
+int latin_head_off(const char_u *base, const char_u *p)
 {
   return 0;
 }
 
-int dbcs_head_off(char_u *base, char_u *p)
+int dbcs_head_off(const char_u *base, const char_u *p)
 {
-  char_u      *q;
+  const char_u      *q;
 
   /* It can't be a trailing byte when not using DBCS, at the start of the
    * string or the previous byte can't start a double-byte. */
@@ -2966,9 +2965,9 @@ int dbcs_head_off(char_u *base, char_u *p)
  * Special version of dbcs_head_off() that works for ScreenLines[], where
  * single-width DBCS_JPNU characters are stored separately.
  */
-int dbcs_screen_head_off(char_u *base, char_u *p)
+int dbcs_screen_head_off(const char_u *base, const char_u *p)
 {
-  char_u      *q;
+  const char_u      *q;
 
   /* It can't be a trailing byte when not using DBCS, at the start of the
    * string or the previous byte can't start a double-byte.
@@ -2994,13 +2993,13 @@ int dbcs_screen_head_off(char_u *base, char_u *p)
   return (q == p) ? 0 : 1;
 }
 
-int utf_head_off(char_u *base, char_u *p)
+int utf_head_off(const char_u *base, const char_u *p)
 {
-  char_u      *q;
-  char_u      *s;
+  const char_u *q;
+  const char_u *s;
   int c;
   int len;
-  char_u      *j;
+  const char_u *j;
 
   if (*p < 0x80)                /* be quick for ASCII */
     return 0;
@@ -3060,7 +3059,7 @@ void mb_copy_char(char_u **fp, char_u **tp)
  * at the start of a character 0 is returned, otherwise the offset to the next
  * character.  Can start anywhere in a stream of bytes.
  */
-int mb_off_next(char_u *base, char_u *p)
+int mb_off_next(const char_u *base, const char_u *p)
 {
   int i;
   int j;
@@ -3092,7 +3091,7 @@ int mb_off_next(char_u *base, char_u *p)
  * Return the offset from "p" to the last byte of the character it points
  * into.  Can start anywhere in a stream of bytes.
  */
-int mb_tail_off(char_u *base, char_u *p)
+int mb_tail_off(const char_u *base, const char_u *p)
 {
   int i;
   int j;
@@ -3624,7 +3623,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       if ((*mb_ptr2cells)((char_u *)from) > 1)
         *to++ = '?';
       if (enc_utf8)
-        l = utfc_ptr2len_len((char_u *)from, (int)fromlen);
+        l = utfc_ptr2len_len((const char_u *)from, (int)fromlen);
       else {
         l = (*mb_ptr2len)((char_u *)from);
         if (l > (int)fromlen)
