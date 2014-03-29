@@ -1,13 +1,11 @@
-# neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
+# Neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
 
 [![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 
-## What's this?
+Neovim is a project that seeks to aggressively refactor Vim in order to:
 
-Neovim is a project that seeks to aggressively refactor vim in order to:
-
-- Simplify maintenance
+- Simplify maintenance and encourage contributions
 - Split the work between multiple developers
 - Enable the implementation of new/modern user interfaces without any
   modifications to the core source
@@ -16,47 +14,54 @@ Neovim is a project that seeks to aggressively refactor vim in order to:
 For lots more details, see
 [the wiki](https://github.com/neovim/neovim/wiki/Introduction)!
 
-## What's been done so far
+### What's been done so far
 
-- Source tree was cleaned up, leaving only files necessary for
-  compilation/testing of the core
-- Source files were processed with [unifdef][] to remove tons of `FEAT_*`
-  macros
-- Files were processed with [uncrustify][] to normalize source code
-  formatting
-- The autotools build system was replaced by [CMake][]
+- Cleaned up source tree, leaving only core files
+- Removed support for legacy systems and moved to C99
+    - Removed tons of `FEAT_*` macros with [unifdef]
+    - Reduced C code from 300k lines to 170k
+- Enabled modern compiler features and [optimizations](https://github.com/neovim/neovim/pull/426)
+- Formatted entire source with [uncrustify]
+- Replaced autotools build system with [CMake]
+- Implemented [continuous integration] and [test coverage]
+- Wrote 60+ new unit tests
+- Split large, monolithic files (`misc1.c`) into logical units
+  (`path.c`, `indent.c`, `garray.c`, `keymap.c`, ...)
 
 [unifdef]: http://freecode.com/projects/unifdef
 [uncrustify]: http://uncrustify.sourceforge.net/
 [CMake]: http://cmake.org/
+[continuous integration]: https://travis-ci.org/neovim/neovim
+[test coverage]: https://coveralls.io/r/neovim/neovim
 
-## What's being worked on now
+### What's being worked on now
 
 - Porting all IO to libuv
 - Lots of refactoring
-- A VimL -> Lua transpiler
+- A VimL => Lua transpiler
+- Formatting with `clint.py`
 
-## How do I get it?
+### How do I get it?
 
 There is a formula for OSX/homebrew, a PKGBUILD for Arch Linux,
 and detailed instructions for building on other OSes.
 
 See [the wiki](https://github.com/neovim/neovim/wiki/Installing)!
 
-## Community
+### Community
 
 Join the community on IRC in #neovim on Freenode or the [mailing list](https://groups.google.com/forum/#!forum/neovim)
 
-## Contributing
+### Contributing
 
 ...would be awesome! See [the wiki](https://github.com/neovim/neovim/wiki/Contributing) for more details.
 
-## License
+### License
 
 Vim itself is distributed under the terms of the Vim License.
 See vim-license.txt for details.
 
-Vim also includes a message along the following lines:
+Vim also includes this message:
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the
