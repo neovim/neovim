@@ -4496,7 +4496,7 @@ static void nv_ident(cmdarg_T *cap)
       vim_free(buf);
       return;
     }
-    newbuf = (char_u *)realloc(buf, STRLEN(buf) + STRLEN(p) + 1);
+    newbuf = (char_u *)xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
     if (newbuf == NULL) {
       vim_free(buf);
       vim_free(p);

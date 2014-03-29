@@ -387,7 +387,7 @@ vim_findfile_init (
         void    *ptr;
 
         helper = walker;
-        ptr = realloc(search_ctx->ffsc_stopdirs_v,
+        ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
             (dircount + 1) * sizeof(char_u *));
         if (ptr)
           search_ctx->ffsc_stopdirs_v = ptr;
