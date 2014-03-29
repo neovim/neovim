@@ -12018,7 +12018,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           /* Change "prev" buffer to be the right size.  This way
            * the bytes are only copied once, and very long lines are
            * allocated only once.  */
-          if ((s = realloc(prev, prevlen + len + 1)) != NULL) {
+          if ((s = xrealloc(prev, prevlen + len + 1)) != NULL) {
             memmove(s + prevlen, start, len);
             s[prevlen + len] = NUL;
             prev = NULL;             /* the list will own the string */
@@ -12103,7 +12103,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
         newprev = prev == NULL ? alloc(prevsize)
-                  : realloc(prev, prevsize);
+                  : xrealloc(prev, prevsize);
         if (newprev == NULL) {
           do_outofmem_msg((long_u)prevsize);
           failed = TRUE;

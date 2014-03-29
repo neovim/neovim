@@ -696,6 +696,32 @@ void *xmalloc(size_t size)
   return ret;
 }
 
+/// realloc() wrapper
+///
+/// @see {xmalloc}
+/// @param size
+/// @return pointer to reallocated space. Never NULL
+void *xrealloc(void *ptr, size_t size)
+{
+  void *ret = realloc(ptr, size);
+
+  if (!ret && !size)
+    ret = realloc(ptr, 1);
+
+  if (!ret) {
+    try_to_free_memory();
+    ret = realloc(ptr, size);
+    if (!ret && !size)
+      ret = realloc(ptr, 1);
+    if (!ret) {
+      OUT_STR("Vim: Error: Out of memory.\n");
+      preserve_exit();
+    }
+  }
+
+  return ret;
+}
+
 /// Old low level memory allocation function.
 ///
 /// @deprecated use xmalloc() directly instead

@@ -3963,7 +3963,7 @@ skip_add:
         subs = &temp_subs;
       }
 
-      l->t = realloc(l->t, newlen * sizeof(nfa_thread_T));
+      l->t = xrealloc(l->t, newlen * sizeof(nfa_thread_T));
       l->len = newlen;
     }
 
