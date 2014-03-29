@@ -1,5 +1,8 @@
 #ifndef NEOVIM_MISC2_H
 #define NEOVIM_MISC2_H
+
+#include "func_attr.h"
+
 /* misc2.c */
 int virtual_active(void);
 int getviscol(void);
@@ -20,11 +23,11 @@ void check_cursor_col_win(win_T *win);
 void check_cursor(void);
 void adjust_cursor_col(void);
 int leftcol_changed(void);
-char_u *alloc(unsigned size);
-char_u *alloc_clear(unsigned size);
-char_u *alloc_check(unsigned size);
-char_u *lalloc_clear(long_u size, int message);
-char_u *lalloc(long_u size, int message);
+char_u *alloc(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+char_u *alloc_clear(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+char_u *alloc_check(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+char_u *lalloc_clear(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+char_u *lalloc(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
 void do_outofmem_msg(long_u size);
 void free_all_mem(void);
 char_u *vim_strsave(char_u *string);
