@@ -53,6 +53,7 @@
 #include "os/time.h"
 #include "os/event.h"
 #include "os/input.h"
+#include "os/shell.h"
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
@@ -1705,7 +1706,6 @@ int options;                    /* SHELL_*, see vim.h */
   char_u      *p_shcf_copy = NULL;
   int i;
   char_u      *p;
-  int inquote;
   int pty_master_fd = -1;                   /* for pty's */
   int fd_toshell[2];                    /* for pipes */
   int fd_fromshell[2];
@@ -1723,18 +1723,10 @@ int options;                    /* SHELL_*, see vim.h */
 
   // Count the number of arguments for the shell
   p = newcmd;
-  inquote = FALSE;
   argc = 0;
   while (true) {
     ++argc;
-    // Move `p` to the end of shell word by advancing the pointer it while it's
-    // inside a quote or it's a non-whitespace character
-    while (*p && (inquote || (*p != ' ' && *p != TAB))) {
-      if (*p == '"')
-        // Found a quote character, switch the `inquote` flag
-        inquote = !inquote;
-      ++p;
-    }
+    shell_skip_word(&p);
     if (*p == NUL)
       break;
     // Move to the next word
@@ -1759,16 +1751,11 @@ int options;                    /* SHELL_*, see vim.h */
   
   // Build argv[]
   p = newcmd;
-  inquote = FALSE;
   argc = 0;
   while (true) {
     argv[argc] = (char *)p;
     ++argc;
-    while (*p && (inquote || (*p != ' ' && *p != TAB))) {
-      if (*p == '"')
-        inquote = !inquote;
-      ++p;
-    }
+    shell_skip_word(&p);
     if (*p == NUL)
       break;
     // Terminate the word
