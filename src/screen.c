@@ -688,49 +688,24 @@ void update_single_line(win_T *wp, linenr_T lnum)
  * Prepare for updating one or more windows.
  * Caller must check for "updating_screen" already set to avoid recursiveness.
  */
-    static void
-update_prepare()
+static void update_prepare()
 {
     cursor_off();
     updating_screen = TRUE;
-#ifdef FEAT_GUI
-    /* Remove the cursor before starting to do anything, because scrolling may
-     * make it difficult to redraw the text under it. */
-    if (gui.in_use)
-	gui_undraw_cursor();
-#endif
-#ifdef FEAT_SEARCH_EXTRA
     start_search_hl();
-#endif
 }
 
 /*
  * Finish updating one or more windows.
  */
-    static void
-update_finish()
+static void update_finish()
 {
-    if (redraw_cmdline)
-	showmode();
-
-# ifdef FEAT_SEARCH_EXTRA
-    end_search_hl();
-# endif
-
-    updating_screen = FALSE;
-
-# ifdef FEAT_GUI
-    gui_may_resize_shell();
-
-    /* Redraw the cursor and update the scrollbars when all screen updating is
-     * done. */
-    if (gui.in_use)
-    {
-	out_flush();	/* required before updating the cursor */
-	gui_update_cursor(FALSE, FALSE);
-	gui_update_scrollbars(FALSE);
+    if (redraw_cmdline) {
+        showmode();
     }
-# endif
+
+    end_search_hl();
+    updating_screen = FALSE;
 }
 
 void update_debug_sign(buf_T *buf, linenr_T lnum)
@@ -764,11 +739,7 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
 
     /* Return when there is nothing to do, screen updating is already
      * happening (recursive call) or still starting up. */
-    if (!doit || updating_screen
-#ifdef FEAT_GUI
-        || gui.starting
-#endif
-        || starting) {
+    if (!doit || updating_screen || starting) {
         return;
     }
 

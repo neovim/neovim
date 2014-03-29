@@ -5874,7 +5874,7 @@ void ex_sign(exarg_T *eap)
 			int	len;
 
 			arg += 5;
-#ifdef FEAT_MBYTE
+
 			/* Count cells and check for non-printable chars */
 			if (has_mbyte)
 			{
@@ -5887,7 +5887,7 @@ void ex_sign(exarg_T *eap)
 			    }
 			}
 			else
-#endif
+
 			{
 			    for (s = arg; s < p; ++s)
 				if (!vim_isprintc(*s))
@@ -6090,9 +6090,8 @@ void ex_sign(exarg_T *eap)
 		    do_cmdline_cmd(cmd);
 		    vim_free(cmd);
 		}
-#ifdef FEAT_FOLDING
+
 		foldOpenCursor();
-#endif
 	    }
 	    else
 		EMSGN(_("E157: Invalid sign ID: %ld"), id);
@@ -6271,7 +6270,6 @@ free_signs()
 }
 #endif
 
-#if defined(FEAT_CMDL_COMPL) || defined(PROTO)
 static enum
 {
     EXP_SUBCMD,		/* expand :sign sub-commands */
@@ -6446,5 +6444,4 @@ set_context_in_sign_cmd(xp, arg)
         }
     }
 }
-#endif
 
