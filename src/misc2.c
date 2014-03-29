@@ -647,8 +647,8 @@ char_u *lalloc_clear(long_u size, int message)
   return p;
 }
 
-/// When out of memory: try to release some memfile blocks and
-/// if some blocks are released call malloc again.
+/// Try to free memory. Used when trying to recover from out of memory errors.
+/// @see {xmalloc}
 void try_to_free_memory()
 {
   static bool trying_to_free = false;
@@ -667,6 +667,14 @@ void try_to_free_memory()
   trying_to_free = false;
 }
 
+/// malloc() wrapper
+///
+/// xmalloc() succeeds or gracefully aborts when out of memory.
+/// Before aborting try to free some memory and call malloc again.
+///
+/// @see {try_to_free_memory}
+/// @param size
+/// @return pointer to allocated space. Never NULL
 void *xmalloc(size_t size)
 {
   void *ret = malloc(size);
@@ -688,7 +696,11 @@ void *xmalloc(size_t size)
   return ret;
 }
 
-/// Old low level memory allocation function. Prefer xmalloc() from now on.
+/// Old low level memory allocation function.
+///
+/// @deprecated use xmalloc() directly instead
+/// @param size
+/// @return pointer to allocated space. Never NULL
 char_u *lalloc(long_u size, int message)
 {
   return (char_u *)xmalloc((size_t)size);
