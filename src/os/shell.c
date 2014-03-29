@@ -9,108 +9,105 @@
 #include "option_defs.h"
 #include "charset.h"
 
+static int tokenize(char_u *str, char **argv);
+static int word_length(char_u *command);
 
-void shell_skip_word(char_u **cmd)
+// Returns the argument vector for running a shell, with an optional command
+// and extra shell option.
+char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
 {
-  char_u *p = *cmd;
-  bool inquote = false;
+  int i;
+  char **rv;
+  int argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
 
-  // Move `p` to the end of shell word by advancing the pointer it while it's
-  // inside a quote or it's a non-whitespace character
-  while (*p && (inquote || (*p != ' ' && *p != TAB))) {
-    if (*p == '"')
-      // Found a quote character, switch the `inquote` flag
-      inquote = !inquote;
-    ++p;
+  rv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));
+
+  if (rv == NULL) {
+    // out of memory
+    return NULL;
+  }
+  
+  // Split 'shell'
+  i = tokenize(p_sh, rv);
+
+  if (extra_shell_opt != NULL) {
+    // Push a copy of `extra_shell_opt`
+    rv[i++] = strdup((char *)extra_shell_opt);
   }
 
-  *cmd = p;
-}
-
-int shell_count_argc(char_u **ptr)
-{
-  int rv = 0;
-  char_u *p = *ptr;
-
-  while (true) {
-    rv++;
-    shell_skip_word(&p);
-    if (*p == NUL)
-      break;
-    // Move to the next word
-    p = skipwhite(p);
+  if (cmd != NULL) {
+    // Split 'shellcmdflag'
+    i += tokenize(p_shcf, rv + i);
+    rv[i++] = strdup((char *)cmd);
   }
 
-  // Account for multiple args in p_shcf('shellcmdflag' option)
-  p = p_shcf;
-  while (true) {
-    // Same as above, but doesn't need to take quotes into consideration
-    p = skiptowhite(p);
-    if (*p == NUL)
-      break;
-    rv++;
-    p = skipwhite(p);
-  }
-
-  *ptr = p;
+  rv[i] = NULL;
 
   return rv;
 }
 
-char ** shell_build_argv(int argc, char_u *cmd,
-    char_u *extra_shell_arg, char_u **ptr, char_u **p_shcf_copy_ptr)
+void shell_free_argv(char **argv)
 {
-  char **argv;
-  char_u *p_shcf_copy = *p_shcf_copy_ptr;
-  char_u *p = *ptr;
-  // Allocate argv memory
-  argv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));
-  if (argv == NULL) // out of memory
-    return NULL;
-  
-  // Build argv[]
-  argc = 0;
-  while (true) {
-    argv[argc] = (char *)p;
-    ++argc;
-    shell_skip_word(&p);
-    if (*p == NUL)
-      break;
-    // Terminate the word
-    *p++ = NUL;
+  char **p = argv;
+
+  if (p == NULL) {
+    // Nothing was allocated, return
+    return;
+  }
+
+  while (*p != NULL) {
+    // Free each argument 
+    free(*p);
+    p++;
+  }
+
+  free(argv);
+}
+
+// Walks through a string and returns the number of shell tokens it contains.
+// If a non-null `argv` parameter is passed, it will be filled with copies
+// of the tokens.
+static int tokenize(char_u *str, char **argv)
+{
+  int argc = 0, len;
+  char_u *p = str;
+
+  while (*p != NUL) {
+    len = word_length(p);
+
+    if (argv != NULL) {
+      // Fill the slot
+      argv[argc] = malloc(len + 1);
+      memcpy(argv[argc], p, len);
+      argv[argc][len] = NUL;
+    }
+
+    argc++;
+    p += len;
     p = skipwhite(p);
   }
-  if (cmd != NULL) {
-    char_u  *s;
 
-    if (extra_shell_arg != NULL)
-      argv[argc++] = (char *)extra_shell_arg;
+  return argc;
+}
 
-    // Break 'shellcmdflag' into white separated parts.  This doesn't
-    // handle quoted strings, they are very unlikely to appear.
-    p_shcf_copy = alloc((unsigned)STRLEN(p_shcf) + 1);
-    if (p_shcf_copy == NULL) {
-      // out of memory 
-      free(argv);
-      return NULL;
+// Returns the length of the shell token in `str`
+static int word_length(char_u *str)
+{
+  char_u *p = str;
+  bool inquote = false;
+  int length = 0;
+
+  // Move `p` to the end of shell word by advancing the pointer while it's
+  // inside a quote or it's a non-whitespace character
+  while (*p && (inquote || (*p != ' ' && *p != TAB))) {
+    if (*p == '"') {
+      // Found a quote character, switch the `inquote` flag
+      inquote = !inquote;
     }
 
-    s = p_shcf_copy;
-    p = p_shcf;
-    while (*p != NUL) {
-      argv[argc++] = (char *)s;
-      while (*p && *p != ' ' && *p != TAB)
-        *s++ = *p++;
-      *s++ = NUL;
-      p = skipwhite(p);
-    }
-
-    argv[argc++] = (char *)cmd;
+    p++;
+    length++;
   }
 
-  argv[argc] = NULL;
-  *ptr = p;
-  *p_shcf_copy_ptr = p_shcf_copy;
-
-  return argv;
+  return length;
 }

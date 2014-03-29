@@ -1688,7 +1688,6 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
 # define EXEC_FAILED 122    /* Exit code when shell didn't execute.  Don't use
                                127, some shells use that already */
 
-  char_u      *newcmd = NULL;
   pid_t pid;
   pid_t wpid = 0;
   pid_t wait_pid = 0;
@@ -1699,8 +1698,6 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
 # endif
   int retval = -1;
   char        **argv = NULL;
-  int argc;
-  char_u      *p_shcf_copy = NULL;
   int i;
   char_u      *p;
   int pty_master_fd = -1;                   /* for pty's */
@@ -1710,19 +1707,11 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
   char envbuf[50];
   int did_settmode = FALSE;             /* settmode(TMODE_RAW) called */
 
-  newcmd = vim_strsave(p_sh);
-  if (newcmd == NULL)           /* out of memory */
-    goto error;
-
   out_flush();
   if (options & SHELL_COOKED)
     settmode(TMODE_COOK);               /* set to normal mode */
 
-  // Count the number of arguments for the shell
-  p = newcmd;
-  argc = shell_count_argc(&p);
-  p = newcmd;
-  argv = shell_build_argv(argc, cmd, extra_shell_arg, &p, &p_shcf_copy);
+  argv = shell_build_argv(cmd, extra_shell_arg);
 
   if (argv == NULL) {
     goto error;
@@ -2304,15 +2293,13 @@ finished:
         MSG_PUTS(_("\nCommand terminated\n"));
     }
   }
-  vim_free(argv);
-  vim_free(p_shcf_copy);
+  shell_free_argv(argv);
 
 error:
   if (!did_settmode)
     if (tmode == TMODE_RAW)
       settmode(TMODE_RAW);              /* set to raw mode */
   resettitle();
-  vim_free(newcmd);
 
   return retval;
 }

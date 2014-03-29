@@ -5,10 +5,8 @@
 
 #include "types.h"
 
-void shell_skip_word(char_u **ptr);
-int shell_count_argc(char_u **ptr);
-char ** shell_build_argv(int argc, char_u *cmd,
-    char_u *extra_shell_arg, char_u **ptr, char_u **p_shcf_copy_ptr);
+char ** shell_build_argv(char_u *cmd, char_u *extra_shell_arg);
+void shell_free_argv(char **argv);
 
 #endif  // NEOVIM_OS_SHELL_H
 
