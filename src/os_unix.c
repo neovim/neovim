@@ -1721,51 +1721,14 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
   // Count the number of arguments for the shell
   p = newcmd;
   argc = shell_count_argc(&p);
-
-  // Allocate argv memory
-  argv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));
-  if (argv == NULL) // out of memory
-    goto error;
-  
-  // Build argv[]
   p = newcmd;
-  argc = 0;
-  while (true) {
-    argv[argc] = (char *)p;
-    ++argc;
-    shell_skip_word(&p);
-    if (*p == NUL)
-      break;
-    // Terminate the word
-    *p++ = NUL;
-    p = skipwhite(p);
+  argv = shell_build_argv(argc, cmd, extra_shell_arg, &p, &p_shcf_copy);
+
+  if (argv == NULL) {
+    goto error;
   }
-  if (cmd != NULL) {
-    char_u  *s;
 
-    if (extra_shell_arg != NULL)
-      argv[argc++] = (char *)extra_shell_arg;
-
-    /* Break 'shellcmdflag' into white separated parts.  This doesn't
-     * handle quoted strings, they are very unlikely to appear. */
-    p_shcf_copy = alloc((unsigned)STRLEN(p_shcf) + 1);
-    if (p_shcf_copy == NULL)        /* out of memory */
-      goto error;
-    s = p_shcf_copy;
-    p = p_shcf;
-    while (*p != NUL) {
-      argv[argc++] = (char *)s;
-      while (*p && *p != ' ' && *p != TAB)
-        *s++ = *p++;
-      *s++ = NUL;
-      p = skipwhite(p);
-    }
-
-    argv[argc++] = (char *)cmd;
-  }
-  argv[argc] = NULL;
-
-  /*
+ /*
    * For the GUI, when writing the output into the buffer and when reading
    * input from the buffer: Try using a pseudo-tty to get the stdin/stdout
    * of the executed command into the Vim window.  Or use a pipe.
