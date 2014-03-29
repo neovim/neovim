@@ -143,7 +143,6 @@ static int save_patterns(int num_pat, char_u **pat, int *num_file,
 
 /* volatile because it is used in signal handler sig_winch(). */
 static volatile int do_resize = FALSE;
-static char_u   *extra_shell_arg = NULL;
 static int show_shell_mess = TRUE;
 /* volatile because it is used in signal handler deathtrap(). */
 static volatile int deadly_signal = 0;      /* The signal we caught */
@@ -1682,9 +1681,7 @@ waitstatus  *status;
   return wait_pid;
 }
 
-int mch_call_shell(cmd, options)
-char_u      *cmd;
-int options;                    /* SHELL_*, see vim.h */
+int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
 {
   int tmode = cur_tmode;
 
@@ -2515,6 +2512,7 @@ int flags;                      /* EW_* flags */
   size_t len;
   char_u      *p;
   int dir;
+  char_u *extra_shell_arg = NULL;
   /*
    * This is the non-OS/2 implementation (really Unix).
    */
@@ -2715,14 +2713,13 @@ int flags;                      /* EW_* flags */
   /*
    * execute the shell command
    */
-  i = call_shell(command, SHELL_EXPAND | SHELL_SILENT);
+  i = call_shell(command, SHELL_EXPAND | SHELL_SILENT, extra_shell_arg);
 
   /* When running in the background, give it some time to create the temp
    * file, but don't wait for it to finish. */
   if (ampersent)
     os_delay(10L, TRUE);
 
-  extra_shell_arg = NULL;               /* cleanup */
   show_shell_mess = TRUE;
   vim_free(command);
 

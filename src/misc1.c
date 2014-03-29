@@ -3670,7 +3670,7 @@ get_cmd_output (
    * Don't check timestamps here.
    */
   ++no_check_timestamps;
-  call_shell(command, SHELL_DOOUT | SHELL_EXPAND | flags);
+  call_shell(command, SHELL_DOOUT | SHELL_EXPAND | flags, NULL);
   --no_check_timestamps;
 
   vim_free(command);

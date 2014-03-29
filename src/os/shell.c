@@ -53,3 +53,5 @@ int shell_count_argc(char_u **ptr)
 
   return rv;
 }
+
+char ** shell_build_argv(char_u **ptr, int argc);

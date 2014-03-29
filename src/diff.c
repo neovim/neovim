@@ -840,7 +840,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
                    tmp_orig, tmp_new);
       append_redir(cmd, (int)len, p_srr, tmp_diff);
       block_autocmds(); /* Avoid ShellCmdPost stuff */
-      (void)call_shell(cmd, SHELL_FILTER | SHELL_SILENT | SHELL_DOOUT);
+      (void)call_shell(cmd, SHELL_FILTER | SHELL_SILENT | SHELL_DOOUT, NULL);
       unblock_autocmds();
       vim_free(cmd);
     }
@@ -943,7 +943,7 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
     // Avoid ShellCmdPost stuff
     block_autocmds();
-    (void)call_shell(buf, SHELL_FILTER | SHELL_COOKED);
+    (void)call_shell(buf, SHELL_FILTER | SHELL_COOKED, NULL);
     unblock_autocmds();
   }
 

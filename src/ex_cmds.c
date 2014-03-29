@@ -1102,7 +1102,7 @@ do_filter (
    * like ":r !cat" hangs.
    * Pass on the SHELL_DOOUT flag when the output is being redirected.
    */
-  if (call_shell(cmd_buf, SHELL_FILTER | SHELL_COOKED | shell_flags)) {
+  if (call_shell(cmd_buf, SHELL_FILTER | SHELL_COOKED | shell_flags, NULL)) {
     redraw_later_clear();
     wait_return(FALSE);
   }
@@ -1256,7 +1256,7 @@ do_shell (
   if (!swapping_screen())
     windgoto(msg_row, msg_col);
   cursor_on();
-  (void)call_shell(cmd, SHELL_COOKED | flags);
+  (void)call_shell(cmd, SHELL_COOKED | flags, NULL);
   did_check_timestamps = FALSE;
   need_check_timestamps = TRUE;
 

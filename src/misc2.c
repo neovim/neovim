@@ -1531,7 +1531,7 @@ int default_fileformat(void)
 /*
  * Call shell.	Calls mch_call_shell, with 'shellxquote' added.
  */
-int call_shell(char_u *cmd, int opt)
+int call_shell(char_u *cmd, int opt, char_u *extra_shell_arg)
 {
   char_u      *ncmd;
   int retval;
@@ -1557,7 +1557,7 @@ int call_shell(char_u *cmd, int opt)
     tag_freematch();
 
     if (cmd == NULL || *p_sxq == NUL)
-      retval = mch_call_shell(cmd, opt);
+      retval = mch_call_shell(cmd, opt, extra_shell_arg);
     else {
       char_u *ecmd = cmd;
 
@@ -1575,7 +1575,7 @@ int call_shell(char_u *cmd, int opt)
         STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
             : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
             : p_sxq);
-        retval = mch_call_shell(ncmd, opt);
+        retval = mch_call_shell(ncmd, opt, extra_shell_arg);
         vim_free(ncmd);
       } else
         retval = -1;
