@@ -26,8 +26,8 @@ check_and_report() {
 MAKE_CMD="make -j2"
 
 if [ "$CC" = "clang" ]; then
-	# force using the version installed by 'travis-setup.sh'
-	export CC=/usr/bin/clang
+	# force using the version installed by 'travis-setup.sh', if enabled
+	test -f /usr/bin/clang && export CC=/usr/bin/clang
 
 	install_dir="$(pwd)/dist"
 	# temporary directory for writing sanitizer logs
@@ -35,11 +35,20 @@ if [ "$CC" = "clang" ]; then
 	rm -rf "$tmpdir"
 	mkdir -p "$tmpdir"
 
+	echo "### CC: $CC"
 	# need the symbolizer path for stack traces with source information
-	symbolizer=/usr/bin/llvm-symbolizer-3.4
+	if [ "$CC" = "/usr/bin/clang" ]; then
+		symbolizer=/usr/bin/llvm-symbolizer-3.4
+	else
+		symbolizer=asan_symbolize
+	fi
 
-	export SKIP_UNITTEST=1
+	echo "### symbolizer: $symbolizer"
+	echo "### symbolizer: $(type asan_symbolize)"
+	echo "### symbolizer: $(type llvm-symbolizer)"
+
 	export SANITIZE=1
+	export SKIP_UNITTEST=1
 	export ASAN_SYMBOLIZER_PATH=$symbolizer
 	export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
 	export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
