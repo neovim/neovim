@@ -12422,7 +12422,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
       p[len - 1] = NUL;       /* the trailing slash breaks readlink() */
     }
 
-    q = getnextcomp(p);
+    q = path_next_component(p);
     if (*q != NUL) {
       /* Separate the first path component in "p", and keep the
        * remainder (beginning with the path separator). */
@@ -12456,7 +12456,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
 
         /* Separate the first path component in the link value and
          * concatenate the remainders. */
-        q = getnextcomp(vim_ispathsep(*buf) ? buf + 1 : buf);
+        q = path_next_component(vim_ispathsep(*buf) ? buf + 1 : buf);
         if (*q != NUL) {
           if (remain == NULL)
             remain = vim_strsave(q - 1);
@@ -12495,7 +12495,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
         break;
 
       /* Append the first path component of "remain" to "p". */
-      q = getnextcomp(remain + 1);
+      q = path_next_component(remain + 1);
       len = q - remain - (*q != NUL);
       cpy = vim_strnsave(p, STRLEN(p) + len);
       if (cpy != NULL) {

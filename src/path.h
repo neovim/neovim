@@ -33,12 +33,19 @@ char_u *path_tail(char_u *fname);
 ///
 /// Takes care of "c:/" and "//". That means `path_tail_with_seperator("dir///file.txt")`
 /// will return a pointer to `"///file.txt"`.
-/// @param fname A file path.
+/// @param fname A file path. (Must be != NULL.)
 /// @return
 ///   - Pointer to the last path seperator of `fname`, if there is any.
 ///   - `fname` if it contains no path seperator.
 ///   - Never NULL.
 char_u *path_tail_with_seperator(char_u *fname);
+
+/// Get the next path component of a path name.
+///
+/// @param fname A file path. (Must be != NULL.)
+/// @return Pointer to first found path seperator + 1.
+/// An empty string, if `fname` doesn't contain a path seperator, 
+char_u *path_next_component(char_u *fname);
 
 int vim_ispathsep(int c);
 int vim_ispathsep_nocolon(int c);
@@ -54,7 +61,6 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,
                          int flags);
 void addfile(garray_T *gap, char_u *f, int flags);
-char_u *getnextcomp(char_u *fname);
 char_u *get_past_head(char_u *path);
 char_u *concat_str(char_u *str1, char_u *str2);
 void add_pathsep(char_u *p);

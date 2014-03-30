@@ -93,15 +93,15 @@ char_u *path_tail_with_seperator(char_u *fname)
   return tail;
 }
 
-/*
- * get the next path component (just after the next path separator).
- */
-char_u *getnextcomp(char_u *fname)
+char_u *path_next_component(char_u *fname)
 {
-  while (*fname && !vim_ispathsep(*fname))
+  assert(fname != NULL);
+  while (*fname != NUL && !vim_ispathsep(*fname)) {
     mb_ptr_adv(fname);
-  if (*fname)
+  }
+  if (*fname != NUL) {
     ++fname;
+  }
   return fname;
 }
 
@@ -1428,7 +1428,7 @@ void simplify_filename(char_u *filename)
       }
     } else {
       ++components;                     /* simple path component */
-      p = getnextcomp(p);
+      p = path_next_component(p);
     }
   } while (*p != NUL);
 }
