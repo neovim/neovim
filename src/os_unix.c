@@ -1943,7 +1943,7 @@ int flags;                      /* EW_* flags */
     else if (STRCMP(p_sh + len - 3, "zsh") == 0)
       shell_style = STYLE_PRINT;
   }
-  if (shell_style == STYLE_ECHO && strstr((char *)gettail(p_sh),
+  if (shell_style == STYLE_ECHO && strstr((char *)path_tail(p_sh),
           "sh") != NULL)
     shell_style = STYLE_VIMGLOB;
 

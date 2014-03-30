@@ -2519,7 +2519,7 @@ do_source (
      * Try again, replacing file name ".vimrc" by "_vimrc" or vice versa,
      * and ".exrc" by "_exrc" or vice versa.
      */
-    p = gettail(fname_exp);
+    p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
         && (STRICMP(p + 1, "vimrc") == 0
             || STRICMP(p + 1, "gvimrc") == 0

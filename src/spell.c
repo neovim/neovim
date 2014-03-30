@@ -2580,7 +2580,7 @@ spell_load_file (
       goto endFAIL;
 
     /* Check for .add.spl (_add.spl for VMS). */
-    lp->sl_add = strstr((char *)gettail(fname), SPL_FNAME_ADD) != NULL;
+    lp->sl_add = strstr((char *)path_tail(fname), SPL_FNAME_ADD) != NULL;
   } else
     lp = old_lp;
 
@@ -3875,7 +3875,7 @@ char_u *did_set_spelllang(win_T *wp)
       filename = TRUE;
 
       /* Locate a region and remove it from the file name. */
-      p = vim_strchr(gettail(lang), '_');
+      p = vim_strchr(path_tail(lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
         vim_strncpy(region_cp, p + 1, 2);
@@ -4006,7 +4006,7 @@ char_u *did_set_spelllang(win_T *wp)
       if (round == 0)
         STRCPY(lang, "internal wordlist");
       else {
-        vim_strncpy(lang, gettail(spf_name), MAXWLEN);
+        vim_strncpy(lang, path_tail(spf_name), MAXWLEN);
         p = vim_strchr(lang, '.');
         if (p != NULL)
           *p = NUL;             /* truncate at ".encoding.add" */
@@ -8199,17 +8199,17 @@ mkspell (
           fnames[0], spin.si_ascii ? (char_u *)"ascii" : spell_enc());
 
     /* Check for .ascii.spl. */
-    if (strstr((char *)gettail(wfname), SPL_FNAME_ASCII) != NULL)
+    if (strstr((char *)path_tail(wfname), SPL_FNAME_ASCII) != NULL)
       spin.si_ascii = TRUE;
 
     /* Check for .add.spl. */
-    if (strstr((char *)gettail(wfname), SPL_FNAME_ADD) != NULL)
+    if (strstr((char *)path_tail(wfname), SPL_FNAME_ADD) != NULL)
       spin.si_add = TRUE;
   }
 
   if (incount <= 0)
     EMSG(_(e_invarg));          /* need at least output and input names */
-  else if (vim_strchr(gettail(wfname), '_') != NULL)
+  else if (vim_strchr(path_tail(wfname), '_') != NULL)
     EMSG(_("E751: Output file name must not have region name"));
   else if (incount > 8)
     EMSG(_("E754: Only up to 8 regions supported"));
@@ -8238,7 +8238,7 @@ mkspell (
 
       if (incount > 1) {
         len = (int)STRLEN(innames[i]);
-        if (STRLEN(gettail(innames[i])) < 5
+        if (STRLEN(path_tail(innames[i])) < 5
             || innames[i][len - 3] != '_') {
           EMSG2(_("E755: Invalid region in %s"), innames[i]);
           goto theend;
@@ -8607,7 +8607,7 @@ static void init_spellfile(void)
                 ->lp_slang->sl_fname;
         vim_snprintf((char *)buf + l, MAXPATHL - l, ".%s.add",
             fname != NULL
-            && strstr((char *)gettail(fname), ".ascii.") != NULL
+            && strstr((char *)path_tail(fname), ".ascii.") != NULL
             ? (char_u *)"ascii" : spell_enc());
         set_option_value((char_u *)"spellfile", 0L, buf, OPT_LOCAL);
         break;

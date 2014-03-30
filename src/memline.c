@@ -1589,7 +1589,7 @@ recover_names (
         } else
 #endif
         {
-          tail = gettail(fname_res);
+          tail = path_tail(fname_res);
           tail = concat_fnames(dir_name, tail, TRUE);
         }
         if (tail == NULL)
@@ -1682,7 +1682,7 @@ recover_names (
           /* print the swap file name */
           msg_outnum((long)++file_count);
           MSG_PUTS(".    ");
-          msg_puts(gettail(files[i]));
+          msg_puts(path_tail(files[i]));
           msg_putchar('\n');
           (void)swapfile_info(files[i]);
         }
@@ -3398,7 +3398,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
     else {
       char_u *tail;
 
-      tail = gettail(tmp);
+      tail = path_tail(tmp);
       if (STRLEN(tail) + STRLEN(buf) >= MAXPATHL)
         return FAIL;
       STRCPY(tail, buf);
@@ -3492,7 +3492,7 @@ get_file_in_dir (
   char_u      *retval;
   int save_char;
 
-  tail = gettail(fname);
+  tail = path_tail(fname);
 
   if (dname[0] == '.' && dname[1] == NUL)
     retval = vim_strsave(fname);
@@ -3697,10 +3697,10 @@ findswapname (
        * It either contains two dots, is longer than 8 chars, or starts
        * with a dot.
        */
-      tail = gettail(buf_fname);
+      tail = path_tail(buf_fname);
       if (       vim_strchr(tail, '.') != NULL
                  || STRLEN(tail) > (size_t)8
-                 || *gettail(fname) == '.') {
+                 || *path_tail(fname) == '.') {
         fname2 = alloc(n + 2);
         if (fname2 != NULL) {
           STRCPY(fname2, fname);
@@ -3710,7 +3710,7 @@ findswapname (
            */
           if (vim_strchr(tail, '.') != NULL)
             fname2[n - 1] = 'x';
-          else if (*gettail(fname) == '.') {
+          else if (*path_tail(fname) == '.') {
             fname2[n] = 'x';
             fname2[n + 1] = NUL;
           } else
@@ -3835,8 +3835,8 @@ findswapname (
              * have a different mountpoint.
              */
             if (b0.b0_flags & B0_SAME_DIR) {
-              if (fnamecmp(gettail(buf->b_ffname),
-                      gettail(b0.b0_fname)) != 0
+              if (fnamecmp(path_tail(buf->b_ffname),
+                      path_tail(b0.b0_fname)) != 0
                   || !same_directory(fname, buf->b_ffname)) {
 #ifdef CHECK_INODE
                 /* Symlinks may point to the same file even

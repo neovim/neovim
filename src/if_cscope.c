@@ -2231,7 +2231,7 @@ static char *cs_resolve_file(int i, char *name)
     csdir = alloc(MAXPATHL);
     if (csdir != NULL) {
       vim_strncpy(csdir, (char_u *)csinfo[i].fname,
-          gettail((char_u *)csinfo[i].fname)
+          path_tail((char_u *)csinfo[i].fname)
           - (char_u *)csinfo[i].fname);
       len += (int)STRLEN(csdir);
     }

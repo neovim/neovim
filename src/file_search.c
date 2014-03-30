@@ -318,7 +318,7 @@ vim_findfile_init (
       && (vim_ispathsep(path[1]) || path[1] == NUL)
       && (!tagfile || vim_strchr(p_cpo, CPO_DOTTAG) == NULL)
       && rel_fname != NULL) {
-    int len = (int)(gettail(rel_fname) - rel_fname);
+    int len = (int)(path_tail(rel_fname) - rel_fname);
 
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       /* Make the start dir an absolute path name. */
@@ -503,7 +503,7 @@ vim_findfile_init (
       STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
       add_pathsep(ff_expand_buffer);
     } else {
-      char_u *p =  gettail(search_ctx->ffsc_fix_path);
+      char_u *p =  path_tail(search_ctx->ffsc_fix_path);
       char_u *wc_path = NULL;
       char_u *temp = NULL;
       int len = 0;
@@ -1505,7 +1505,7 @@ find_file_in_path_option (
             && rel_fname != NULL
             && STRLEN(rel_fname) + l < MAXPATHL) {
           STRCPY(NameBuff, rel_fname);
-          STRCPY(gettail(NameBuff), ff_file_to_find);
+          STRCPY(path_tail(NameBuff), ff_file_to_find);
           l = (int)STRLEN(NameBuff);
         } else {
           STRCPY(NameBuff, ff_file_to_find);

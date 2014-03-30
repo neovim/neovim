@@ -994,7 +994,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
  */
 int csh_like_shell(void)
 {
-  return strstr((char *)gettail(p_sh), "csh") != NULL;
+  return strstr((char *)path_tail(p_sh), "csh") != NULL;
 }
 
 /*
