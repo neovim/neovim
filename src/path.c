@@ -61,23 +61,21 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   return FPC_DIFF;
 }
 
-/*
- * Get the tail of a path: the file name.
- * When the path ends in a path separator the tail is the NUL after it.
- * Fail safe: never returns NULL.
- */
-char_u *gettail(char_u *fname)
+char_u *path_tail(char_u *fname)
 {
-  char_u  *p1, *p2;
-
-  if (fname == NULL)
+  if (fname == NULL) {
     return (char_u *)"";
-  for (p1 = p2 = get_past_head(fname); *p2; ) { /* find last part of path */
-    if (vim_ispathsep_nocolon(*p2))
-      p1 = p2 + 1;
+  }
+
+  char_u  *tail, *p2;
+  // Find last part of path.
+  for (tail = p2 = get_past_head(fname); *p2; ) {
+    if (vim_ispathsep_nocolon(*p2)) {
+      tail = p2 + 1;
+    }
     mb_ptr_adv(p2);
   }
-  return p1;
+  return tail;
 }
 
 /*
@@ -91,7 +89,7 @@ char_u *gettail_sep(char_u *fname)
   char_u      *t;
 
   p = get_past_head(fname);     /* don't remove the '/' from "c:/file" */
-  t = gettail(fname);
+  t = path_tail(fname);
   while (t > p && after_pathsep(fname, t))
     --t;
   return t;
@@ -178,7 +176,7 @@ void shorten_dir(char_u *str)
   char_u      *tail, *s, *d;
   int skip = FALSE;
 
-  tail = gettail(str);
+  tail = path_tail(str);
   d = str;
   for (s = str;; ++s) {
     if (s >= tail) {                /* copy the whole tail */
@@ -644,7 +642,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
        * "/path/file"  + "./subdir" -> "/path/subdir" */
       if (curbuf->b_ffname == NULL)
         continue;
-      p = gettail(curbuf->b_ffname);
+      p = path_tail(curbuf->b_ffname);
       len = (int)(p - curbuf->b_ffname);
       if (len + (int)STRLEN(buf) >= MAXPATHL)
         continue;
@@ -1942,7 +1940,7 @@ int match_suffix(char_u *fname)
   for (setsuf = p_su; *setsuf; ) {
     setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
-      char_u *tail = gettail(fname);
+      char_u *tail = path_tail(fname);
 
       /* empty entry: match name without a '.' */
       if (vim_strchr(tail, '.') == NULL) {

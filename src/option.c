@@ -2493,7 +2493,7 @@ void set_init_3(void)
   p = skiptowhite(p_sh);
   if (*p == NUL) {
     /* No white space, use the tail. */
-    p = vim_strsave(gettail(p_sh));
+    p = vim_strsave(path_tail(p_sh));
   } else {
     char_u  *p1, *p2;
 

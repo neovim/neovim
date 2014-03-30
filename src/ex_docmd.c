@@ -8058,7 +8058,7 @@ eval_vars (
     resultlen = (int)STRLEN(result);            /* length of new string */
     if (src[*usedlen] == '<') {         /* remove the file name extension */
       ++*usedlen;
-      if ((s = vim_strrchr(result, '.')) != NULL && s >= gettail(result))
+      if ((s = vim_strrchr(result, '.')) != NULL && s >= path_tail(result))
         resultlen = (int)(s - result);
     } else if (!skip_mod) {
       valid |= modify_fname(src, usedlen, &result, &resultbuf,

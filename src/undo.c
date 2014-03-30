@@ -719,7 +719,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       undo_file_name = vim_strnsave(ffname, (int)(STRLEN(ffname) + 5));
       if (undo_file_name == NULL)
         break;
-      p = gettail(undo_file_name);
+      p = path_tail(undo_file_name);
       memmove(p + 1, p, STRLEN(p) + 1);
       *p = '.';
       STRCAT(p, ".un~");

@@ -19,6 +19,16 @@ typedef enum file_comparison {
 /// @return Enum of type FileComparison. @see FileComparison.
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 
+/// Get the tail of a path:the file name.
+/// 
+/// @param fname A file path.
+/// @return
+///   - Empty string, if fname is NULL.
+///   - The position of the last path seperator + 1. (i.e. empty string, if
+///   fname ends in a slash).
+///   - Never NULL.
+char_u *path_tail(char_u *fname);
+
 int vim_ispathsep(int c);
 int vim_ispathsep_nocolon(int c);
 int vim_ispathlistsep(int c);
@@ -33,7 +43,6 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,
                          int flags);
 void addfile(garray_T *gap, char_u *f, int flags);
-char_u *gettail(char_u *fname);
 char_u *gettail_sep(char_u *fname);
 char_u *getnextcomp(char_u *fname);
 char_u *get_past_head(char_u *path);

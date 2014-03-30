@@ -2113,7 +2113,7 @@ get_tagfname (
         return FAIL;
       ++tnp->tn_hf_idx;
       STRCPY(buf, p_hf);
-      STRCPY(gettail(buf), "tags");
+      STRCPY(path_tail(buf), "tags");
     } else
       vim_strncpy(buf, ((char_u **)(tag_fnames.ga_data))[
             tnp->tn_hf_idx++], MAXPATHL - 1);
@@ -2162,7 +2162,7 @@ get_tagfname (
       r_ptr = vim_findfile_stopdir(buf);
       /* move the filename one char forward and truncate the
        * filepath with a NUL */
-      filename = gettail(buf);
+      filename = path_tail(buf);
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
 
@@ -2702,7 +2702,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
 
   if ((p_tr || curbuf->b_help)
       && !vim_isAbsName(fname)
-      && (p = gettail(tag_fname)) != tag_fname) {
+      && (p = path_tail(tag_fname)) != tag_fname) {
     retval = alloc(MAXPATHL);
     if (retval != NULL) {
       STRCPY(retval, tag_fname);

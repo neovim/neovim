@@ -3052,7 +3052,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
 #endif
     if (p != NULL) {
       /* remove the file name */
-      pend = gettail(p);
+      pend = path_tail(p);
 
       /* remove "doc/" from 'helpfile', if present */
       if (p == p_hf)
@@ -3285,7 +3285,7 @@ home_replace (
    * If the file is a help file, remove the path completely.
    */
   if (buf != NULL && buf->b_help) {
-    STRCPY(dst, gettail(src));
+    STRCPY(dst, path_tail(src));
     return;
   }
 

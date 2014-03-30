@@ -1,4 +1,4 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 
 path = lib
 
@@ -7,10 +7,12 @@ typedef enum file_comparison {
   FPC_SAME = 1, FPC_DIFF = 2, FPC_NOTX = 4, FPC_DIFFX = 6, FPC_SAMEX = 7
 } FileComparison;
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
+char_u *path_tail(char_u *fname);
 ]]
 
 -- import constants parsed by ffi
 {:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = path
+NULL = ffi.cast 'void*', 0
 
 describe 'path function', ->
   describe 'path_full_compare', ->
@@ -49,3 +51,14 @@ describe 'path function', ->
       eq FPC_DIFFX, (path_full_compare f1, 'null.txt')
       eq FPC_DIFFX, (path_full_compare 'null.txt', f1)
 
+  describe 'path_tail', ->
+    path_tail = (file) ->
+      res = path.path_tail (to_cstr file)
+      neq NULL, res
+      ffi.string res
+
+    it 'returns the tail of a given file path', ->
+      eq 'file.txt', path_tail 'directory/file.txt'
+
+    it 'returns an empty string if file ends in a slash', ->
+      eq '', path_tail 'directory/'

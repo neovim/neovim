@@ -931,7 +931,7 @@ static void parse_command_name(mparm_T *parmp)
 {
   char_u      *initstr;
 
-  initstr = gettail((char_u *)parmp->argv[0]);
+  initstr = path_tail((char_u *)parmp->argv[0]);
 
 
   set_vim_var_string(VV_PROGNAME, initstr, -1);
@@ -1440,7 +1440,7 @@ scripterror:
           && !os_isdir(alist_name(&GARGLIST[0]))) {
         char_u      *r;
 
-        r = concat_fnames(p, gettail(alist_name(&GARGLIST[0])), TRUE);
+        r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), TRUE);
         if (r != NULL) {
           vim_free(p);
           p = r;
