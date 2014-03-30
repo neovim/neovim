@@ -42,3 +42,5 @@ wget -q -O - http://llvm.org/releases/3.4/clang+llvm-3.4-x86_64-unknown-ubuntu12
 
 # [ -n "$USE_CLANG_34" ] &&
 # 	apt-get -qq -y --no-install-recommends install clang-3.4 lldb-3.4
+
+pip install cpp-coveralls --use-mirrors
