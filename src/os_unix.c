@@ -2406,22 +2406,6 @@ select_eintr:
   return ret > 0;
 }
 
-#ifndef NO_EXPANDPATH
-/*
- * Expand a path into all matching files and/or directories.  Handles "*",
- * "?", "[a-z]", "**", etc.
- * "path" has backslashes before chars that are not to be expanded.
- * Returns the number of matches found.
- */
-int mch_expandpath(gap, path, flags)
-garray_T    *gap;
-char_u      *path;
-int flags;                      /* EW_* flags */
-{
-  return unix_expandpath(gap, path, 0, flags, FALSE);
-}
-#endif
-
 /*
  * mch_expand_wildcards() - this code does wild-card pattern matching using
  * the shell
