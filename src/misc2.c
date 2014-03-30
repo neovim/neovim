@@ -1614,17 +1614,6 @@ int get_real_state(void)
 }
 
 /*
- * Return TRUE if "p" points to just after a path separator.
- * Takes care of multi-byte characters.
- * "b" must point to the start of the file name
- */
-int after_pathsep(char_u *b, char_u *p)
-{
-  return p > b && vim_ispathsep(p[-1])
-         && (!has_mbyte || (*mb_head_off)(b, p - 1) == 0);
-}
-
-/*
  * Return TRUE if file names "f1" and "f2" are in the same directory.
  * "f1" may be a short name, "f2" must be a full path.
  */

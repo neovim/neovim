@@ -1662,3 +1662,14 @@ char_u *fix_fname(char_u *fname)
 #endif
 }
 
+/*
+ * Return TRUE if "p" points to just after a path separator.
+ * Takes care of multi-byte characters.
+ * "b" must point to the start of the file name
+ */
+int after_pathsep(char_u *b, char_u *p)
+{
+  return p > b && vim_ispathsep(p[-1])
+         && (!has_mbyte || (*mb_head_off)(b, p - 1) == 0);
+}
+

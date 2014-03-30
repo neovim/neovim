@@ -68,7 +68,6 @@ void set_fileformat(int t, int opt_flags);
 int default_fileformat(void);
 int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg);
 int get_real_state(void);
-int after_pathsep(char_u *b, char_u *p);
 int same_directory(char_u *f1, char_u *f2);
 int vim_chdirfile(char_u *fname);
 int illegal_slash(char *name);
