@@ -28,6 +28,15 @@ else()
   set(DEBUG 0)
 endif()
 
+option(USE_GCOV "Enable gcov support" OFF)
+
+if(USE_GCOV)
+  message(STATUS "Enabling gcov support")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+endif()
+
 # Modules used by platform auto-detection
 include(CheckLibraryExists)
 

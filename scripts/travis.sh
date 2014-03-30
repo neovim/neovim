@@ -60,7 +60,7 @@ if [ "$CC" = "clang" ]; then
 	export SKIP_UNITTEST=1
 	export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
-	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir"
+	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
 	$MAKE_CMD
 	if ! $MAKE_CMD test; then
 		reset
@@ -70,7 +70,7 @@ if [ "$CC" = "clang" ]; then
 	$MAKE_CMD install
 else
 	export SKIP_EXEC=1
-	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP"
-	$MAKE_CMD cmake
+	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP -DUSE_GCOV=ON"
+	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DUSE_GCOV=ON"
 	$MAKE_CMD unittest
 fi

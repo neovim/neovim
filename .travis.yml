@@ -6,3 +6,5 @@ before_install:
   - sudo ./scripts/travis-setup.sh 
 script:
   - ./scripts/travis.sh
+after_success:
+  - coveralls --encoding iso-8859-1
