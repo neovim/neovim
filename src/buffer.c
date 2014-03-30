@@ -2713,7 +2713,7 @@ void maketitle(void)
           off += 2;
 #endif
         /* remove the file name */
-        p = gettail_sep(buf + off);
+        p = path_tail_with_seperator(buf + off);
         if (p == buf + off)
           /* must be a help buffer */
           vim_strncpy(buf + off, (char_u *)_("help"),

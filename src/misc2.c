@@ -1609,7 +1609,7 @@ int vim_chdirfile(char_u *fname)
   char_u dir[MAXPATHL];
 
   vim_strncpy(dir, fname, MAXPATHL - 1);
-  *gettail_sep(dir) = NUL;
+  *path_tail_with_seperator(dir) = NUL;
   return os_chdir((char *)dir) == 0 ? OK : FAIL;
 }
 #endif
