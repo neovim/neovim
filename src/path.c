@@ -78,21 +78,19 @@ char_u *path_tail(char_u *fname)
   return tail;
 }
 
-/*
- * Get pointer to tail of "fname", including path separators.  Putting a NUL
- * here leaves the directory name.  Takes care of "c:/" and "//".
- * Always returns a valid pointer.
- */
-char_u *gettail_sep(char_u *fname)
+char_u *path_tail_with_seperator(char_u *fname)
 {
-  char_u      *p;
-  char_u      *t;
+  assert(fname != NULL);
+  char_u      *past_head;
+  char_u      *tail;
 
-  p = get_past_head(fname);     /* don't remove the '/' from "c:/file" */
-  t = path_tail(fname);
-  while (t > p && after_pathsep(fname, t))
-    --t;
-  return t;
+  // Don't remove the '/' from "c:/file".
+  past_head = get_past_head(fname);
+  tail = path_tail(fname);
+  while (tail > past_head && after_pathsep(fname, tail)) {
+    --tail;
+  }
+  return tail;
 }
 
 /*
@@ -212,7 +210,7 @@ int dir_of_file_exists(char_u *fname)
   int c;
   int retval;
 
-  p = gettail_sep(fname);
+  p = path_tail_with_seperator(fname);
   if (p == fname)
     return TRUE;
   c = *p;
@@ -1646,8 +1644,8 @@ int same_directory(char_u *f1, char_u *f2)
     return FALSE;
 
   (void)vim_FullName(f1, ffname, MAXPATHL, FALSE);
-  t1 = gettail_sep(ffname);
-  t2 = gettail_sep(f2);
+  t1 = path_tail_with_seperator(ffname);
+  t2 = path_tail_with_seperator(f2);
   return t1 - ffname == t2 - f2
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }

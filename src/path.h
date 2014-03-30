@@ -19,7 +19,7 @@ typedef enum file_comparison {
 /// @return Enum of type FileComparison. @see FileComparison.
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 
-/// Get the tail of a path:the file name.
+/// Get the tail of a path: the file name.
 /// 
 /// @param fname A file path.
 /// @return
@@ -28,6 +28,17 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 ///   fname ends in a slash).
 ///   - Never NULL.
 char_u *path_tail(char_u *fname);
+
+/// Get pointer to tail of "fname", including path separators.
+///
+/// Takes care of "c:/" and "//". That means `path_tail_with_seperator("dir///file.txt")`
+/// will return a pointer to `"///file.txt"`.
+/// @param fname A file path.
+/// @return
+///   - Pointer to the last path seperator of `fname`, if there is any.
+///   - `fname` if it contains no path seperator.
+///   - Never NULL.
+char_u *path_tail_with_seperator(char_u *fname);
 
 int vim_ispathsep(int c);
 int vim_ispathsep_nocolon(int c);
@@ -43,7 +54,6 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,
                          int flags);
 void addfile(garray_T *gap, char_u *f, int flags);
-char_u *gettail_sep(char_u *fname);
 char_u *getnextcomp(char_u *fname);
 char_u *get_past_head(char_u *path);
 char_u *concat_str(char_u *str1, char_u *str2);

@@ -8507,7 +8507,7 @@ spell_add_word (
        * file.  We may need to create the "spell" directory first.  We
        * already checked the runtime directory is writable in
        * init_spellfile(). */
-      if (!dir_of_file_exists(fname) && (p = gettail_sep(fname)) != fname) {
+      if (!dir_of_file_exists(fname) && (p = path_tail_with_seperator(fname)) != fname) {
         int c = *p;
 
         /* The directory doesn't exist.  Try creating it and opening
