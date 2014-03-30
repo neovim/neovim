@@ -6,10 +6,13 @@
 #include "eval.h"
 #include "ex_getln.h"
 #include "fileio.h"
+#include "file_search.h"
 #include "garray.h"
 #include "memline.h"
+#include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "option.h"
 #include "os/os.h"
 #include "os/shell.h"
 #include "os_unix.h"
@@ -18,6 +21,9 @@
 #include "types.h"
 #include "ui.h"
 #include "window.h"
+
+#define URL_SLASH       1               /* path_is_url() has found "://" */
+#define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
 /*
  * Compare two file names and return:
@@ -1470,3 +1476,147 @@ void simplify_filename(char_u *filename)
     }
   } while (*p != NUL);
 }
+
+static char_u *eval_includeexpr(char_u *ptr, int len);
+
+static char_u *eval_includeexpr(char_u *ptr, int len)
+{
+  char_u      *res;
+
+  set_vim_var_string(VV_FNAME, ptr, len);
+  res = eval_to_string_safe(curbuf->b_p_inex, NULL,
+      was_set_insecurely((char_u *)"includeexpr", OPT_LOCAL));
+  set_vim_var_string(VV_FNAME, NULL, 0);
+  return res;
+}
+
+/*
+ * Return the name of the file ptr[len] in 'path'.
+ * Otherwise like file_name_at_cursor().
+ */
+char_u *
+find_file_name_in_path (
+    char_u *ptr,
+    int len,
+    int options,
+    long count,
+    char_u *rel_fname         /* file we are searching relative to */
+)
+{
+  char_u      *file_name;
+  int c;
+  char_u      *tofree = NULL;
+
+  if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
+    tofree = eval_includeexpr(ptr, len);
+    if (tofree != NULL) {
+      ptr = tofree;
+      len = (int)STRLEN(ptr);
+    }
+  }
+
+  if (options & FNAME_EXP) {
+    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
+        TRUE, rel_fname);
+
+    /*
+     * If the file could not be found in a normal way, try applying
+     * 'includeexpr' (unless done already).
+     */
+    if (file_name == NULL
+        && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
+      tofree = eval_includeexpr(ptr, len);
+      if (tofree != NULL) {
+        ptr = tofree;
+        len = (int)STRLEN(ptr);
+        file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
+            TRUE, rel_fname);
+      }
+    }
+    if (file_name == NULL && (options & FNAME_MESS)) {
+      c = ptr[len];
+      ptr[len] = NUL;
+      EMSG2(_("E447: Can't find file \"%s\" in path"), ptr);
+      ptr[len] = c;
+    }
+
+    /* Repeat finding the file "count" times.  This matters when it
+     * appears several times in the path. */
+    while (file_name != NULL && --count > 0) {
+      vim_free(file_name);
+      file_name = find_file_in_path(ptr, len, options, FALSE, rel_fname);
+    }
+  } else
+    file_name = vim_strnsave(ptr, len);
+
+  vim_free(tofree);
+
+  return file_name;
+}
+
+/*
+ * Check if the "://" of a URL is at the pointer, return URL_SLASH.
+ * Also check for ":\\", which MS Internet Explorer accepts, return
+ * URL_BACKSLASH.
+ */
+int path_is_url(char_u *p)
+{
+  if (STRNCMP(p, "://", (size_t)3) == 0)
+    return URL_SLASH;
+  else if (STRNCMP(p, ":\\\\", (size_t)3) == 0)
+    return URL_BACKSLASH;
+  return 0;
+}
+
+/*
+ * Check if "fname" starts with "name://".  Return URL_SLASH if it does.
+ * Return URL_BACKSLASH for "name:\\".
+ * Return zero otherwise.
+ */
+int path_with_url(char_u *fname)
+{
+  char_u *p;
+
+  for (p = fname; isalpha(*p); ++p)
+    ;
+  return path_is_url(p);
+}
+
+/*
+ * Return TRUE if "name" is a full (absolute) path name or URL.
+ */
+int vim_isAbsName(char_u *name)
+{
+  return path_with_url(name) != 0 || os_is_absolute_path(name);
+}
+
+/*
+ * Get absolute file name into buffer "buf[len]".
+ *
+ * return FAIL for failure, OK otherwise
+ */
+int 
+vim_FullName (
+    char_u *fname,
+    char_u *buf,
+    int len,
+    int force                  /* force expansion even when already absolute */
+)
+{
+  int retval = OK;
+  int url;
+
+  *buf = NUL;
+  if (fname == NULL)
+    return FAIL;
+
+  url = path_with_url(fname);
+  if (!url)
+    retval = os_get_absolute_path(fname, buf, len, force);
+  if (url || retval == FAIL) {
+    /* something failed; use the file name (truncate when too long) */
+    vim_strncpy(buf, fname, len - 1);
+  }
+  return retval;
+}
+
