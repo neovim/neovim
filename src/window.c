@@ -36,6 +36,7 @@
 #include "normal.h"
 #include "option.h"
 #include "os_unix.h"
+#include "path.h"
 #include "quickfix.h"
 #include "regexp.h"
 #include "screen.h"
@@ -45,7 +46,6 @@
 #include "undo.h"
 #include "os/os.h"
 
-static int path_is_url(char_u *p);
 static void win_init(win_T *newp, win_T *oldp, int flags);
 static void win_init_some(win_T *newp, win_T *oldp);
 static void frame_comp_pos(frame_T *topfrp, int *row, int *col);
@@ -108,9 +108,6 @@ static int frame_check_width(frame_T *topfrp, int width);
 
 static win_T *win_alloc(win_T *after, int hidden);
 static void set_fraction(win_T *wp);
-
-#define URL_SLASH       1               /* path_is_url() has found "://" */
-#define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
 #define NOWIN           (win_T *)-1     /* non-existing window */
 
@@ -4778,81 +4775,6 @@ static void frame_add_height(frame_T *frp, int n)
 }
 
 /*
- * Add or remove a status line for the bottom window(s), according to the
- * value of 'laststatus'.
- */
-void 
-last_status (
-    int morewin                    /* pretend there are two or more windows */
-)
-{
-  /* Don't make a difference between horizontal or vertical split. */
-  last_status_rec(topframe, (p_ls == 2
-                             || (p_ls == 1 && (morewin || lastwin != firstwin))));
-}
-
-static void last_status_rec(frame_T *fr, int statusline)
-{
-  frame_T     *fp;
-  win_T       *wp;
-
-  if (fr->fr_layout == FR_LEAF) {
-    wp = fr->fr_win;
-    if (wp->w_status_height != 0 && !statusline) {
-      /* remove status line */
-      win_new_height(wp, wp->w_height + 1);
-      wp->w_status_height = 0;
-      comp_col();
-    } else if (wp->w_status_height == 0 && statusline) {
-      /* Find a frame to take a line from. */
-      fp = fr;
-      while (fp->fr_height <= frame_minheight(fp, NULL)) {
-        if (fp == topframe) {
-          EMSG(_(e_noroom));
-          return;
-        }
-        /* In a column of frames: go to frame above.  If already at
-         * the top or in a row of frames: go to parent. */
-        if (fp->fr_parent->fr_layout == FR_COL && fp->fr_prev != NULL)
-          fp = fp->fr_prev;
-        else
-          fp = fp->fr_parent;
-      }
-      wp->w_status_height = 1;
-      if (fp != fr) {
-        frame_new_height(fp, fp->fr_height - 1, FALSE, FALSE);
-        frame_fix_height(wp);
-        (void)win_comp_pos();
-      } else
-        win_new_height(wp, wp->w_height - 1);
-      comp_col();
-      redraw_all_later(SOME_VALID);
-    }
-  } else if (fr->fr_layout == FR_ROW) {
-    /* vertically split windows, set status line for each one */
-    for (fp = fr->fr_child; fp != NULL; fp = fp->fr_next)
-      last_status_rec(fp, statusline);
-  } else {
-    /* horizontally split window, set status line for last one */
-    for (fp = fr->fr_child; fp->fr_next != NULL; fp = fp->fr_next)
-      ;
-    last_status_rec(fp, statusline);
-  }
-}
-
-/*
- * Return the number of lines used by the tab page line.
- */
-int tabline_height(void)
-{
-  switch (p_stal) {
-  case 0: return 0;
-  case 1: return (first_tabpage->tp_next == NULL) ? 0 : 1;
-  }
-  return 1;
-}
-
-/*
  * Get the file name at the cursor.
  * If Visual mode is active, use the selected text if it's in one line.
  * Returns the name in allocated memory, NULL for failure.
@@ -4974,147 +4896,79 @@ file_name_in_line (
   return find_file_name_in_path(ptr, len, options, count, rel_fname);
 }
 
-static char_u *eval_includeexpr(char_u *ptr, int len);
-
-static char_u *eval_includeexpr(char_u *ptr, int len)
-{
-  char_u      *res;
-
-  set_vim_var_string(VV_FNAME, ptr, len);
-  res = eval_to_string_safe(curbuf->b_p_inex, NULL,
-      was_set_insecurely((char_u *)"includeexpr", OPT_LOCAL));
-  set_vim_var_string(VV_FNAME, NULL, 0);
-  return res;
-}
-
 /*
- * Return the name of the file ptr[len] in 'path'.
- * Otherwise like file_name_at_cursor().
+ * Add or remove a status line for the bottom window(s), according to the
+ * value of 'laststatus'.
  */
-char_u *
-find_file_name_in_path (
-    char_u *ptr,
-    int len,
-    int options,
-    long count,
-    char_u *rel_fname         /* file we are searching relative to */
+void 
+last_status (
+    int morewin                    /* pretend there are two or more windows */
 )
 {
-  char_u      *file_name;
-  int c;
-  char_u      *tofree = NULL;
+  /* Don't make a difference between horizontal or vertical split. */
+  last_status_rec(topframe, (p_ls == 2
+                             || (p_ls == 1 && (morewin || lastwin != firstwin))));
+}
 
-  if ((options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-    tofree = eval_includeexpr(ptr, len);
-    if (tofree != NULL) {
-      ptr = tofree;
-      len = (int)STRLEN(ptr);
-    }
-  }
+static void last_status_rec(frame_T *fr, int statusline)
+{
+  frame_T     *fp;
+  win_T       *wp;
 
-  if (options & FNAME_EXP) {
-    file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-        TRUE, rel_fname);
-
-    /*
-     * If the file could not be found in a normal way, try applying
-     * 'includeexpr' (unless done already).
-     */
-    if (file_name == NULL
-        && !(options & FNAME_INCL) && *curbuf->b_p_inex != NUL) {
-      tofree = eval_includeexpr(ptr, len);
-      if (tofree != NULL) {
-        ptr = tofree;
-        len = (int)STRLEN(ptr);
-        file_name = find_file_in_path(ptr, len, options & ~FNAME_MESS,
-            TRUE, rel_fname);
+  if (fr->fr_layout == FR_LEAF) {
+    wp = fr->fr_win;
+    if (wp->w_status_height != 0 && !statusline) {
+      /* remove status line */
+      win_new_height(wp, wp->w_height + 1);
+      wp->w_status_height = 0;
+      comp_col();
+    } else if (wp->w_status_height == 0 && statusline) {
+      /* Find a frame to take a line from. */
+      fp = fr;
+      while (fp->fr_height <= frame_minheight(fp, NULL)) {
+        if (fp == topframe) {
+          EMSG(_(e_noroom));
+          return;
+        }
+        /* In a column of frames: go to frame above.  If already at
+         * the top or in a row of frames: go to parent. */
+        if (fp->fr_parent->fr_layout == FR_COL && fp->fr_prev != NULL)
+          fp = fp->fr_prev;
+        else
+          fp = fp->fr_parent;
       }
+      wp->w_status_height = 1;
+      if (fp != fr) {
+        frame_new_height(fp, fp->fr_height - 1, FALSE, FALSE);
+        frame_fix_height(wp);
+        (void)win_comp_pos();
+      } else
+        win_new_height(wp, wp->w_height - 1);
+      comp_col();
+      redraw_all_later(SOME_VALID);
     }
-    if (file_name == NULL && (options & FNAME_MESS)) {
-      c = ptr[len];
-      ptr[len] = NUL;
-      EMSG2(_("E447: Can't find file \"%s\" in path"), ptr);
-      ptr[len] = c;
-    }
-
-    /* Repeat finding the file "count" times.  This matters when it
-     * appears several times in the path. */
-    while (file_name != NULL && --count > 0) {
-      vim_free(file_name);
-      file_name = find_file_in_path(ptr, len, options, FALSE, rel_fname);
-    }
-  } else
-    file_name = vim_strnsave(ptr, len);
-
-  vim_free(tofree);
-
-  return file_name;
-}
-
-/*
- * Check if the "://" of a URL is at the pointer, return URL_SLASH.
- * Also check for ":\\", which MS Internet Explorer accepts, return
- * URL_BACKSLASH.
- */
-static int path_is_url(char_u *p)
-{
-  if (STRNCMP(p, "://", (size_t)3) == 0)
-    return URL_SLASH;
-  else if (STRNCMP(p, ":\\\\", (size_t)3) == 0)
-    return URL_BACKSLASH;
-  return 0;
-}
-
-/*
- * Check if "fname" starts with "name://".  Return URL_SLASH if it does.
- * Return URL_BACKSLASH for "name:\\".
- * Return zero otherwise.
- */
-int path_with_url(char_u *fname)
-{
-  char_u *p;
-
-  for (p = fname; isalpha(*p); ++p)
-    ;
-  return path_is_url(p);
-}
-
-/*
- * Return TRUE if "name" is a full (absolute) path name or URL.
- */
-int vim_isAbsName(char_u *name)
-{
-  return path_with_url(name) != 0 || os_is_absolute_path(name);
-}
-
-/*
- * Get absolute file name into buffer "buf[len]".
- *
- * return FAIL for failure, OK otherwise
- */
-int 
-vim_FullName (
-    char_u *fname,
-    char_u *buf,
-    int len,
-    int force                  /* force expansion even when already absolute */
-)
-{
-  int retval = OK;
-  int url;
-
-  *buf = NUL;
-  if (fname == NULL)
-    return FAIL;
-
-  url = path_with_url(fname);
-  if (!url)
-    retval = os_get_absolute_path(fname, buf, len, force);
-  if (url || retval == FAIL) {
-    /* something failed; use the file name (truncate when too long) */
-    vim_strncpy(buf, fname, len - 1);
+  } else if (fr->fr_layout == FR_ROW) {
+    /* vertically split windows, set status line for each one */
+    for (fp = fr->fr_child; fp != NULL; fp = fp->fr_next)
+      last_status_rec(fp, statusline);
+  } else {
+    /* horizontally split window, set status line for last one */
+    for (fp = fr->fr_child; fp->fr_next != NULL; fp = fp->fr_next)
+      ;
+    last_status_rec(fp, statusline);
   }
-  return retval;
+}
+
+/*
+ * Return the number of lines used by the tab page line.
+ */
+int tabline_height(void)
+{
+  switch (p_stal) {
+  case 0: return 0;
+  case 1: return (first_tabpage->tp_next == NULL) ? 0 : 1;
+  }
+  return 1;
 }
 
 /*

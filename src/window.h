@@ -59,20 +59,14 @@ void win_new_height(win_T *wp, int height);
 void win_new_width(win_T *wp, int width);
 void win_comp_scroll(win_T *wp);
 void command_height(void);
-void last_status(int morewin);
-int tabline_height(void);
 char_u *grab_file_name(long count, linenr_T *file_lnum);
 char_u *file_name_at_cursor(int options, long count,
                             linenr_T *file_lnum);
 char_u *file_name_in_line(char_u *line, int col, int options,
                           long count, char_u *rel_fname,
                           linenr_T *file_lnum);
-char_u *find_file_name_in_path(char_u *ptr, int len, int options,
-                               long count,
-                               char_u *rel_fname);
-int path_with_url(char_u *fname);
-int vim_isAbsName(char_u *name);
-int vim_FullName(char_u *fname, char_u *buf, int len, int force);
+void last_status(int morewin);
+int tabline_height(void);
 int min_rows(void);
 int only_one_window(void);
 void check_lnums(int do_curwin);
