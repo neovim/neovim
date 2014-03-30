@@ -33,10 +33,6 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start,
               int filtering);
 void msg_add_fname(buf_T *buf, char_u *fname);
 void msg_add_lines(int insert_space, long lnum, off_t nchars);
-char_u *shorten_fname1(char_u *full_path);
-char_u *shorten_fname(char_u *full_path, char_u *dir_name);
-void shorten_fnames(int force);
-void shorten_filenames(char_u **fnames, int count);
 char_u *modname(char_u *fname, char_u *ext, int prepend_dot);
 char_u *buf_modname(int shortname, char_u *fname, char_u *ext,
                     int prepend_dot);
