@@ -3621,48 +3621,6 @@ append_arg_number (
 }
 
 /*
- * If fname is not a full path, make it a full path.
- * Returns pointer to allocated memory (NULL for failure).
- */
-char_u *fix_fname(char_u *fname)
-{
-  /*
-   * Force expanding the path always for Unix, because symbolic links may
-   * mess up the full path name, even though it starts with a '/'.
-   * Also expand when there is ".." in the file name, try to remove it,
-   * because "c:/src/../README" is equal to "c:/README".
-   * Similarly "c:/src//file" is equal to "c:/src/file".
-   * For MS-Windows also expand names like "longna~1" to "longname".
-   */
-#ifdef UNIX
-  return FullName_save(fname, TRUE);
-#else
-  if (!vim_isAbsName(fname)
-      || strstr((char *)fname, "..") != NULL
-      || strstr((char *)fname, "//") != NULL
-# ifdef BACKSLASH_IN_FILENAME
-      || strstr((char *)fname, "\\\\") != NULL
-# endif
-      )
-    return FullName_save(fname, FALSE);
-
-  fname = vim_strsave(fname);
-
-# ifdef USE_FNAME_CASE
-#  ifdef USE_LONG_FNAME
-  if (USE_LONG_FNAME)
-#  endif
-  {
-    if (fname != NULL)
-      fname_case(fname, 0);             /* set correct case for file name */
-  }
-# endif
-
-  return fname;
-#endif
-}
-
-/*
  * Make "ffname" a full file name, set "sfname" to "ffname" if not NULL.
  * "ffname" becomes a pointer to allocated memory (or NULL).
  */
