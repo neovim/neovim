@@ -9,6 +9,7 @@ typedef enum file_comparison {
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 char_u *path_tail(char_u *fname);
 char_u *path_tail_with_seperator(char_u *fname);
+char_u *path_next_component(char_u *fname);
 ]]
 
 -- import constants parsed by ffi
@@ -85,3 +86,15 @@ describe 'path function', ->
 
     it 'returns the whole file name if there is no seperator', ->
       eq 'file.txt', path_tail_with_seperator 'file.txt'
+
+  describe 'path_next_component', ->
+    path_next_component = (file) ->
+      res = path.path_next_component (to_cstr file)
+      neq NULL, res
+      ffi.string res
+
+    it 'returns', ->
+      eq 'directory/file.txt', path_next_component 'some/directory/file.txt'
+
+    it 'returns empty string if given file contains no seperator', ->
+      eq '', path_next_component 'file.txt'
