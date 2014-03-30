@@ -35,4 +35,8 @@ int after_pathsep(char_u *b, char_u *p);
 int same_directory(char_u *f1, char_u *f2);
 int pathcmp(const char *p, const char *q, int maxlen);
 int mch_expandpath(garray_T *gap, char_u *path, int flags);
+char_u *shorten_fname1(char_u *full_path);
+char_u *shorten_fname(char_u *full_path, char_u *dir_name);
+void shorten_fnames(int force);
+void shorten_filenames(char_u **fnames, int count);
 #endif
