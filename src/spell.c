@@ -3887,7 +3887,7 @@ char_u *did_set_spelllang(win_T *wp)
 
       /* Check if we loaded this language before. */
       for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-        if (fullpathcmp(lang, slang->sl_fname, FALSE) == FPC_SAME)
+        if (path_full_compare(lang, slang->sl_fname, FALSE) == FPC_SAME)
           break;
     } else {
       filename = FALSE;
@@ -3932,7 +3932,7 @@ char_u *did_set_spelllang(win_T *wp)
      * Loop over the languages, there can be several files for "lang".
      */
     for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (filename ? fullpathcmp(lang, slang->sl_fname, FALSE) == FPC_SAME
+      if (filename ? path_full_compare(lang, slang->sl_fname, FALSE) == FPC_SAME
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -3988,7 +3988,7 @@ char_u *did_set_spelllang(win_T *wp)
       /* If it was already found above then skip it. */
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
-        if (p != NULL && fullpathcmp(spf_name, p, FALSE) == FPC_SAME)
+        if (p != NULL && path_full_compare(spf_name, p, FALSE) == FPC_SAME)
           break;
       }
       if (c < ga.ga_len)
@@ -3997,7 +3997,7 @@ char_u *did_set_spelllang(win_T *wp)
 
     /* Check if it was loaded already. */
     for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (fullpathcmp(spf_name, slang->sl_fname, FALSE) == FPC_SAME)
+      if (path_full_compare(spf_name, slang->sl_fname, FALSE) == FPC_SAME)
         break;
     if (slang == NULL) {
       /* Not loaded, try loading it now.  The language name includes the
@@ -4334,7 +4334,7 @@ spell_reload_one (
   int didit = FALSE;
 
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (fullpathcmp(fname, slang->sl_fname, FALSE) == FPC_SAME) {
+    if (path_full_compare(fname, slang->sl_fname, FALSE) == FPC_SAME) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, FALSE) == NULL)
         /* reloading failed, clear the language */
@@ -7679,7 +7679,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
    * It might have been done already by spell_reload_one().
    */
   for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-    if (fullpathcmp(wfname, slang->sl_fname, FALSE) == FPC_SAME)
+    if (path_full_compare(wfname, slang->sl_fname, FALSE) == FPC_SAME)
       break;
   if (slang == NULL) {
     spell_message(spin, (char_u *)_("Reading back spell file..."));

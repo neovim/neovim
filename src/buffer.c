@@ -3738,7 +3738,7 @@ do_arg_all (
         for (i = 0; i < opened_len; ++i) {
           if (i < alist->al_ga.ga_len
               && (AARGLIST(alist)[i].ae_fnum == buf->b_fnum
-                  || fullpathcmp(alist_name(&AARGLIST(alist)[i]),
+                  || path_full_compare(alist_name(&AARGLIST(alist)[i]),
                       buf->b_ffname, TRUE) & FPC_SAME)) {
             int weight = 1;
 

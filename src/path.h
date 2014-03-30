@@ -1,7 +1,7 @@
 #ifndef NEOVIM_PATH_H
 #define NEOVIM_PATH_H
 
-/// Return value for the comparison of two files. Also @see fullpathcmp.
+/// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {
   FPC_SAME = 1,   ///< Both exist and are the same file.
   FPC_DIFF = 2,   ///< Both exist and are different files.
@@ -17,7 +17,7 @@ typedef enum file_comparison {
 /// @param s2 Second file name.
 /// @param checkname When both files don't exist, only compare their names.
 /// @return Enum of type FileComparison. @see FileComparison.
-FileComparison fullpathcmp(char_u *s1, char_u *s2, int checkname);
+FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 
 int vim_ispathsep(int c);
 int vim_ispathsep_nocolon(int c);

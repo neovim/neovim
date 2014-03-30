@@ -2723,7 +2723,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
 
 /*
  * Check if we have a tag for the buffer with name "buf_ffname".
- * This is a bit slow, because of the full path compare in fullpathcmp().
+ * This is a bit slow, because of the full path compare in path_full_compare().
  * Return TRUE if tag for file "fname" if tag file "tag_fname" is for current
  * file.
  */
@@ -2740,7 +2740,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
     if (fullname != NULL) {
-      retval = (fullpathcmp(fullname, buf_ffname, TRUE) & FPC_SAME);
+      retval = (path_full_compare(fullname, buf_ffname, TRUE) & FPC_SAME);
       vim_free(fullname);
     }
     *fname_end = c;
