@@ -30,4 +30,5 @@ int path_is_url(char_u *p);
 int path_with_url(char_u *fname);
 int vim_isAbsName(char_u *name);
 int vim_FullName(char_u *fname, char_u *buf, int len, int force);
+char_u *fix_fname(char_u *fname);
 #endif

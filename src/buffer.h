@@ -54,7 +54,6 @@ int build_stl_str_hl(win_T *wp, char_u *out, size_t outlen, char_u *fmt,
                      struct stl_hlrec *hltab,
                      struct stl_hlrec *tabtab);
 void get_rel_pos(win_T *wp, char_u *buf, int buflen);
-char_u *fix_fname(char_u *fname);
 void fname_expand(buf_T *buf, char_u **ffname, char_u **sfname);
 char_u *alist_name(aentry_T *aep);
 void do_arg_all(int count, int forceit, int keep_tabs);
