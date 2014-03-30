@@ -1,7 +1,5 @@
 // fs.c -- filesystem access
 
-#include <uv.h>
-
 #include "os/os.h"
 #include "message.h"
 #include "misc1.h"
@@ -235,18 +233,28 @@ static int is_executable_in_path(const char_u *name)
   return FALSE;
 }
 
-int32_t os_getperm(const char_u *name)
+int os_stat(const char_u *name, uv_stat_t *statbuf)
 {
   uv_fs_t request;
   int result = uv_fs_stat(uv_default_loop(), &request,
                           (const char *)name, NULL);
-  uint64_t mode = request.statbuf.st_mode;
+  *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
 
-  if (result != 0) {
+  if (result == 0) {
+    return OK;
+  } else {
+    return FAIL;
+  }
+}
+
+int32_t os_getperm(const char_u *name)
+{
+  uv_stat_t statbuf;
+  if (os_stat(name, &statbuf) == FAIL) {
     return -1;
   } else {
-    return (int32_t) mode;
+    return (int32_t)statbuf.st_mode;
   }
 }
 
@@ -266,15 +274,11 @@ int os_setperm(const char_u *name, int perm)
 
 int os_file_exists(const char_u *name)
 {
-  uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request,
-                          (const char *)name, NULL);
-  uv_fs_req_cleanup(&request);
-
-  if (result != 0) {
-    return FALSE;
-  } else {
+  uv_stat_t statbuf;
+  if (os_stat(name, &statbuf) == OK) {
     return TRUE;
+  } else {
+    return FALSE;
   }
 }
 

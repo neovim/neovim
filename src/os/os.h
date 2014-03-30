@@ -1,5 +1,6 @@
 #ifndef NEOVIM_OS_OS_H
 #define NEOVIM_OS_OS_H
+#include <uv.h>
 
 #include "vim.h"
 
@@ -80,5 +81,10 @@ int os_get_usernames(garray_T *usernames);
 int os_get_user_name(char *s, size_t len);
 int os_get_uname(uid_t uid, char *s, size_t len);
 char *os_get_user_directory(const char *name);
+
+/// Get stat information for a file.
+///
+/// @return OK on success, FAIL if an failure occured.
+int os_stat(const char_u *name, uv_stat_t *statbuf);
 
 #endif  // NEOVIM_OS_OS_H
