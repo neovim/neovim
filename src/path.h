@@ -34,4 +34,5 @@ char_u *fix_fname(char_u *fname);
 int after_pathsep(char_u *b, char_u *p);
 int same_directory(char_u *f1, char_u *f2);
 int pathcmp(const char *p, const char *q, int maxlen);
+int mch_expandpath(garray_T *gap, char_u *path, int flags);
 #endif
