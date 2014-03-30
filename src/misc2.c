@@ -1613,27 +1613,6 @@ int get_real_state(void)
   return State;
 }
 
-/*
- * Return TRUE if file names "f1" and "f2" are in the same directory.
- * "f1" may be a short name, "f2" must be a full path.
- */
-int same_directory(char_u *f1, char_u *f2)
-{
-  char_u ffname[MAXPATHL];
-  char_u      *t1;
-  char_u      *t2;
-
-  /* safety check */
-  if (f1 == NULL || f2 == NULL)
-    return FALSE;
-
-  (void)vim_FullName(f1, ffname, MAXPATHL, FALSE);
-  t1 = gettail_sep(ffname);
-  t2 = gettail_sep(f2);
-  return t1 - ffname == t2 - f2
-         && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
-}
-
 #if defined(FEAT_SESSION) || defined(MSWIN) || defined(FEAT_GUI_MAC) \
   || ((defined(FEAT_GUI_GTK)) \
   && ( defined(FEAT_WINDOWS) || defined(FEAT_DND)) ) \
