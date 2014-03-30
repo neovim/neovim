@@ -115,37 +115,6 @@ char_u *gettail(char_u *fname)
   return p1;
 }
 
-static char_u *gettail_dir(char_u *fname);
-
-/*
- * Return the end of the directory name, on the first path
- * separator:
- * "/path/file", "/path/dir/", "/path//dir", "/file"
- *	 ^	       ^	     ^	      ^
- */
-static char_u *gettail_dir(char_u *fname)
-{
-  char_u      *dir_end = fname;
-  char_u      *next_dir_end = fname;
-  int look_for_sep = TRUE;
-  char_u      *p;
-
-  for (p = fname; *p != NUL; ) {
-    if (vim_ispathsep(*p)) {
-      if (look_for_sep) {
-        next_dir_end = p;
-        look_for_sep = FALSE;
-      }
-    } else {
-      if (!look_for_sep)
-        dir_end = next_dir_end;
-      look_for_sep = TRUE;
-    }
-    mb_ptr_adv(p);
-  }
-  return dir_end;
-}
-
 /*
  * Get pointer to tail of "fname", including path separators.  Putting a NUL
  * here leaves the directory name.  Takes care of "c:/" and "//".
@@ -785,6 +754,8 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
   return cutoff;
 }
 
+static char_u *gettail_dir(char_u *fname);
+
 /*
  * Sorts, removes duplicates and modifies all the fullpath names in "gap" so
  * that they are unique with respect to each other while conserving the part
@@ -935,6 +906,36 @@ theend:
   if (sort_again)
     ga_remove_duplicate_strings(gap);
 }
+
+/*
+ * Return the end of the directory name, on the first path
+ * separator:
+ * "/path/file", "/path/dir/", "/path//dir", "/file"
+ *	 ^	       ^	     ^	      ^
+ */
+static char_u *gettail_dir(char_u *fname)
+{
+  char_u      *dir_end = fname;
+  char_u      *next_dir_end = fname;
+  int look_for_sep = TRUE;
+  char_u      *p;
+
+  for (p = fname; *p != NUL; ) {
+    if (vim_ispathsep(*p)) {
+      if (look_for_sep) {
+        next_dir_end = p;
+        look_for_sep = FALSE;
+      }
+    } else {
+      if (!look_for_sep)
+        dir_end = next_dir_end;
+      look_for_sep = TRUE;
+    }
+    mb_ptr_adv(p);
+  }
+  return dir_end;
+}
+
 
 /*
  * Calls globpath() with 'path' values for the given pattern and stores the
