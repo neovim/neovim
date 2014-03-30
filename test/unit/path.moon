@@ -1,26 +1,24 @@
 {:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 
---misc1 = cimport './src/misc1.h'
+path = lib
 
--- remove these statements once 'cimport' is working properly for misc1.h
-misc1 = lib
 ffi.cdef [[
-enum FPC {
+typedef enum file_comparison {
   FPC_SAME = 1, FPC_DIFF = 2, FPC_NOTX = 4, FPC_DIFFX = 6, FPC_SAMEX = 7
-};
-int fullpathcmp(char_u *s1, char_u *s2, int checkname);
+} FileComparison;
+FileComparison fullpathcmp(char_u *s1, char_u *s2, int checkname);
 ]]
 
 -- import constants parsed by ffi
-{:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = lib
+{:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = path
 
-describe 'misc1 function', ->
+describe 'path function', ->
   describe 'fullpathcmp', ->
 
     fullpathcmp = (s1, s2, cn) ->
       s1 = to_cstr s1
       s2 = to_cstr s2
-      misc1.fullpathcmp s1, s2, cn or 0
+      path.fullpathcmp s1, s2, cn or 0
 
     f1 = 'f1.o'
     f2 = 'f2.o'
@@ -33,7 +31,7 @@ describe 'misc1 function', ->
     after_each ->
       os.remove f1
       os.remove f2
-    
+
     it 'returns FPC_SAME when passed the same file', ->
       eq FPC_SAME, (fullpathcmp f1, f1)
 
