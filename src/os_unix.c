@@ -143,7 +143,6 @@ static int save_patterns(int num_pat, char_u **pat, int *num_file,
 
 /* volatile because it is used in signal handler sig_winch(). */
 static volatile int do_resize = FALSE;
-static int show_shell_mess = TRUE;
 /* volatile because it is used in signal handler deathtrap(). */
 static volatile int deadly_signal = 0;      /* The signal we caught */
 
@@ -1754,7 +1753,7 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     } else if (pid == 0) {    /* child */
       reset_signals();                  /* handle signals normally */
 
-      if (!show_shell_mess || (opts & kShellOptExpand)) {
+      if (opts & (kShellOptHideMess | kShellOptExpand)) {
         int fd;
 
         /*
@@ -2459,6 +2458,7 @@ int flags;                      /* EW_* flags */
   char_u      *p;
   int dir;
   char_u *extra_shell_arg = NULL;
+  ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   /*
    * This is the non-OS/2 implementation (really Unix).
    */
@@ -2635,8 +2635,11 @@ int flags;                      /* EW_* flags */
       }
       *p = NUL;
     }
-  if (flags & EW_SILENT)
-    show_shell_mess = FALSE;
+
+  if (flags & EW_SILENT) {
+    shellopts |= kShellOptHideMess;
+  }
+
   if (ampersent)
     STRCAT(command, "&");               /* put the '&' after the redirection */
 
@@ -2661,7 +2664,7 @@ int flags;                      /* EW_* flags */
    */
   i = call_shell(
       command,
-      kShellOptExpand | kShellOptSilent,
+      shellopts,
       extra_shell_arg
       );
 
@@ -2670,7 +2673,6 @@ int flags;                      /* EW_* flags */
   if (ampersent)
     os_delay(10L, TRUE);
 
-  show_shell_mess = TRUE;
   vim_free(command);
 
   if (i != 0) {                         /* mch_call_shell() failed */
