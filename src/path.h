@@ -33,4 +33,5 @@ int vim_FullName(char_u *fname, char_u *buf, int len, int force);
 char_u *fix_fname(char_u *fname);
 int after_pathsep(char_u *b, char_u *p);
 int same_directory(char_u *f1, char_u *f2);
+int pathcmp(const char *p, const char *q, int maxlen);
 #endif
