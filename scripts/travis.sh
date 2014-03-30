@@ -25,13 +25,19 @@ check_and_report() {
 # for more information.
 MAKE_CMD="make -j2"
 
-if dpkg -s clang-3.4 > /dev/null 2>&1; then
-	USE_CLANG_34=true
-fi
-
 if [ "$CC" = "clang" ]; then
-	# force using the version installed by 'travis-setup.sh', if enabled
-	test -f /usr/bin/clang && export CC=/usr/bin/clang
+	if test -f /usr/local/clang-3.4/bin/clang; then
+		USE_CLANG_34=true
+		export CC=/usr/local/clang-3.4/bin/clang
+		symbolizer=/usr/local/clang-3.4/bin/llvm-symbolizer
+	fi
+
+	# Try to detect clang-3.4 installed via apt and through llvm.org/apt/.
+	if dpkg -s clang-3.4 > /dev/null 2>&1; then
+		USE_CLANG_34=true
+		export CC=/usr/bin/clang
+		symbolizer=/usr/bin/llvm-symbolizer-3.4
+	fi
 
 	install_dir="$(pwd)/dist"
 	# temporary directory for writing sanitizer logs
@@ -41,7 +47,6 @@ if [ "$CC" = "clang" ]; then
 
 	# need the symbolizer path for stack traces with source information
 	if [ -n "$USE_CLANG_34" ]; then
-		symbolizer=/usr/bin/llvm-symbolizer-3.4
 		export ASAN_OPTIONS="detect_leaks=1:"
 	else
 		symbolizer=/usr/local/clang-3.3/bin/llvm-symbolizer
