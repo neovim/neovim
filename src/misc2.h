@@ -2,6 +2,7 @@
 #define NEOVIM_MISC2_H
 
 #include "func_attr.h"
+#include "os/shell.h"
 
 /* misc2.c */
 int virtual_active(void);
@@ -64,7 +65,7 @@ int get_fileformat(buf_T *buf);
 int get_fileformat_force(buf_T *buf, exarg_T *eap);
 void set_fileformat(int t, int opt_flags);
 int default_fileformat(void);
-int call_shell(char_u *cmd, int opt, char_u *extra_shell_arg);
+int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg);
 int get_real_state(void);
 int after_pathsep(char_u *b, char_u *p);
 int same_directory(char_u *f1, char_u *f2);
