@@ -22,4 +22,5 @@ char_u *get_past_head(char_u *path);
 char_u *concat_str(char_u *str1, char_u *str2);
 void add_pathsep(char_u *p);
 char_u *FullName_save(char_u *fname, int force);
+void simplify_filename(char_u *filename);
 #endif
