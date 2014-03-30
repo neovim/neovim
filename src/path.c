@@ -29,20 +29,10 @@
 #define URL_SLASH       1               /* path_is_url() has found "://" */
 #define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
-/*
- * Compare two file names and return:
- * FPC_SAME   if they both exist and are the same file.
- * FPC_SAMEX  if they both don't exist and have the same file name.
- * FPC_DIFF   if they both exist and are different files.
- * FPC_NOTX   if they both don't exist.
- * FPC_DIFFX  if one of them doesn't exist.
- * For the first name environment variables are expanded
- */
-int 
-fullpathcmp (
+FileComparison fullpathcmp (
     char_u *s1,
     char_u *s2,
-    int checkname                  /* when both don't exist, check file names */
+    int checkname
 )
 {
 #ifdef UNIX

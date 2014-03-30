@@ -1,5 +1,24 @@
 #ifndef NEOVIM_PATH_H
 #define NEOVIM_PATH_H
+
+/// Return value for the comparison of two files. Also @see fullpathcmp.
+typedef enum file_comparison {
+  FPC_SAME = 1,   ///< Both exist and are the same file.
+  FPC_DIFF = 2,   ///< Both exist and are different files.
+  FPC_NOTX = 4,   ///< Both don't exist.
+  FPC_DIFFX = 6,  ///< One of them doesn't exist.
+  FPC_SAMEX = 7   ///< Both don't exist and file names are same.
+} FileComparison;
+
+/// Compare two file names.
+///
+/// @param s1 First file name. Environment variables in this name will be
+///   expanded.
+/// @param s2 Second file name.
+/// @param checkname When both files don't exist, only compare their names.
+/// @return Enum of type FileComparison. @see FileComparison.
+FileComparison fullpathcmp(char_u *s1, char_u *s2, int checkname);
+
 int vim_ispathsep(int c);
 int vim_ispathsep_nocolon(int c);
 int vim_ispathlistsep(int c);
@@ -14,7 +33,6 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,
                          int flags);
 void addfile(garray_T *gap, char_u *f, int flags);
-int fullpathcmp(char_u *s1, char_u *s2, int checkname);
 char_u *gettail(char_u *fname);
 char_u *gettail_sep(char_u *fname);
 char_u *getnextcomp(char_u *fname);

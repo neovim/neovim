@@ -537,14 +537,6 @@ enum {
 # define REX_SET        1       /* to allow \z\(...\), */
 # define REX_USE        2       /* to allow \z\1 et al. */
 
-/* Return values for fullpathcmp() */
-/* Note: can use (fullpathcmp() & FPC_SAME) to check for equal files */
-#define FPC_SAME        1       /* both exist and are the same file. */
-#define FPC_DIFF        2       /* both exist and are different files. */
-#define FPC_NOTX        4       /* both don't exist. */
-#define FPC_DIFFX       6       /* one of them doesn't exist. */
-#define FPC_SAMEX       7       /* both don't exist and file names are same. */
-
 /* flags for do_ecmd() */
 #define ECMD_HIDE       0x01    /* don't free the current buffer */
 #define ECMD_SET_HELP   0x02    /* set b_help flag of (new) buffer before
