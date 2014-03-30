@@ -57,6 +57,7 @@
 #include "undo.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/shell.h"
 
 static int linelen(int *has_tab);
 static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap,
@@ -1023,21 +1024,21 @@ do_filter (
    */
 
   if (do_out)
-    shell_flags |= SHELL_DOOUT;
+    shell_flags |= kShellOptDoOut;
 
   if (!do_in && do_out && !p_stmp) {
     // Use a pipe to fetch stdout of the command, do not use a temp file.
-    shell_flags |= SHELL_READ;
+    shell_flags |= kShellOptRead;
     curwin->w_cursor.lnum = line2;
   } else if (do_in && !do_out && !p_stmp) {
     // Use a pipe to write stdin of the command, do not use a temp file.
-    shell_flags |= SHELL_WRITE;
+    shell_flags |= kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
     curbuf->b_op_end.lnum = line2;
   } else if (do_in && do_out && !p_stmp) {
     // Use a pipe to write stdin and fetch stdout of the command, do not
     // use a temp file.
-    shell_flags |= SHELL_READ|SHELL_WRITE;
+    shell_flags |= kShellOptRead | kShellOptWrite;
     curbuf->b_op_start.lnum = line1;
     curbuf->b_op_end.lnum = line2;
     curwin->w_cursor.lnum = line2;
@@ -1100,9 +1101,13 @@ do_filter (
    * 'u' to fix the text
    * Switch to cooked mode when not redirecting stdin, avoids that something
    * like ":r !cat" hangs.
-   * Pass on the SHELL_DOOUT flag when the output is being redirected.
+   * Pass on the kShellDoOut flag when the output is being redirected.
    */
-  if (call_shell(cmd_buf, SHELL_FILTER | SHELL_COOKED | shell_flags, NULL)) {
+  if (call_shell(
+        cmd_buf,
+        kShellOptFilter | kShellOptCooked | shell_flags,
+        NULL
+        )) {
     redraw_later_clear();
     wait_return(FALSE);
   }
@@ -1133,7 +1138,7 @@ do_filter (
 
     read_linecount = curbuf->b_ml.ml_line_count - read_linecount;
 
-    if (shell_flags & SHELL_READ) {
+    if (shell_flags & kShellOptRead) {
       curbuf->b_op_start.lnum = line2 + 1;
       curbuf->b_op_end.lnum = curwin->w_cursor.lnum;
       appended_lines_mark(line2, read_linecount);
@@ -1256,7 +1261,7 @@ do_shell (
   if (!swapping_screen())
     windgoto(msg_row, msg_col);
   cursor_on();
-  (void)call_shell(cmd, SHELL_COOKED | flags, NULL);
+  (void)call_shell(cmd, kShellOptCooked | flags, NULL);
   did_check_timestamps = FALSE;
   need_check_timestamps = TRUE;
 

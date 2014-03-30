@@ -1681,7 +1681,7 @@ waitstatus  *status;
   return wait_pid;
 }
 
-int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
+int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   int tmode = cur_tmode;
 
@@ -1708,7 +1708,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
   int did_settmode = FALSE;             /* settmode(TMODE_RAW) called */
 
   out_flush();
-  if (options & SHELL_COOKED)
+  if (opts & kShellOptCooked)
     settmode(TMODE_COOK);               /* set to normal mode */
 
   argv = shell_build_argv(cmd, extra_shell_arg);
@@ -1722,8 +1722,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
    * input from the buffer: Try using a pseudo-tty to get the stdin/stdout
    * of the executed command into the Vim window.  Or use a pipe.
    */
-  if ((options & (SHELL_READ|SHELL_WRITE))
-      ) {
+  if (opts & (kShellOptRead|kShellOptWrite)) {
     {
       pipe_error = (pipe(fd_toshell) < 0);
       if (!pipe_error) {                            /* pipe create OK */
@@ -1744,8 +1743,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
 
     if ((pid = fork()) == -1) {         /* maybe we should use vfork() */
       MSG_PUTS(_("\nCannot fork\n"));
-      if ((options & (SHELL_READ|SHELL_WRITE))
-          ) {
+      if (opts & (kShellOptRead | kShellOptWrite)) {
         {
           close(fd_toshell[0]);
           close(fd_toshell[1]);
@@ -1756,7 +1754,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
     } else if (pid == 0) {    /* child */
       reset_signals();                  /* handle signals normally */
 
-      if (!show_shell_mess || (options & SHELL_EXPAND)) {
+      if (!show_shell_mess || (opts & kShellOptExpand)) {
         int fd;
 
         /*
@@ -1789,8 +1787,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
           /* Don't need this now that we've duplicated it */
           close(fd);
         }
-      } else if ((options & (SHELL_READ|SHELL_WRITE))
-                 ) {
+      } else if (opts & (kShellOptRead|kShellOptWrite)) {
 
 # ifdef HAVE_SETSID
         /* Create our own process group, so that the child and all its
@@ -1860,8 +1857,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
        * This is also used to pipe stdin/stdout to/from the external
        * command.
        */
-      if ((options & (SHELL_READ|SHELL_WRITE))
-          ) {
+      if (opts & (kShellOptRead|kShellOptWrite)) {
 # define BUFLEN 100             /* length for buffer, pseudo tty limit is 128 */
         char_u buffer[BUFLEN + 1];
         int buffer_off = 0;                     /* valid bytes in buffer[] */
@@ -1907,7 +1903,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
         old_State = State;
         State = EXTERNCMD;              /* don't redraw at window resize */
 
-        if ((options & SHELL_WRITE) && toshell_fd >= 0) {
+        if ((opts & kShellOptWrite) && toshell_fd >= 0) {
           /* Fork a process that will write the lines to the
            * external program. */
           if ((wpid = fork()) == -1) {
@@ -1963,7 +1959,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
           }
         }
 
-        if (options & SHELL_READ)
+        if (opts & kShellOptRead)
           ga_init2(&ga, 1, BUFLEN);
 
         noread_cnt = 0;
@@ -1986,10 +1982,10 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
            * typeahead.
            */
           len = 0;
-          if (!(options & SHELL_EXPAND)
-              && ((options &
-                   (SHELL_READ|SHELL_WRITE|SHELL_COOKED))
-                  != (SHELL_READ|SHELL_WRITE|SHELL_COOKED)
+          if (!(opts & kShellOptExpand)
+              && ((opts &
+                   (kShellOptRead|kShellOptWrite|kShellOptCooked))
+                  != (kShellOptRead|kShellOptWrite|kShellOptCooked)
                   )
               && wait_pid == 0
               && (ta_len > 0 || noread_cnt > 4)) {
@@ -2081,7 +2077,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
                * When writing buffer lines, drop the typed
                * characters (only check for CTRL-C).
                */
-              if (options & SHELL_WRITE)
+              if (opts & kShellOptWrite)
                 ta_len = 0;
               else if (toshell_fd >= 0) {
                 len = write(toshell_fd, (char *)ta_buf, (size_t)1);
@@ -2124,7 +2120,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
               goto finished;
 
             noread_cnt = 0;
-            if (options & SHELL_READ) {
+            if (opts & kShellOptRead) {
               /* Do NUL -> NL translation, append NL separated
                * lines to the current buffer. */
               for (i = 0; i < len; ++i) {
@@ -2227,7 +2223,7 @@ int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg)
         }
 finished:
         p_more = p_more_save;
-        if (options & SHELL_READ) {
+        if (opts & kShellOptRead) {
           if (ga.ga_len > 0) {
             append_ga_line(&ga);
             /* remember that the NL was missing */
@@ -2283,7 +2279,7 @@ finished:
             MSG_PUTS(_("\nCannot execute shell "));
             msg_outtrans(p_sh);
             msg_putchar('\n');
-          } else if (!(options & SHELL_SILENT)) {
+          } else if (!(opts & kShellOptSilent)) {
             MSG_PUTS(_("\nshell returned "));
             msg_outnum((long)retval);
             msg_putchar('\n');
@@ -2663,7 +2659,11 @@ int flags;                      /* EW_* flags */
   /*
    * execute the shell command
    */
-  i = call_shell(command, SHELL_EXPAND | SHELL_SILENT, extra_shell_arg);
+  i = call_shell(
+      command,
+      kShellOptExpand | kShellOptSilent,
+      extra_shell_arg
+      );
 
   /* When running in the background, give it some time to create the temp
    * file, but don't wait for it to finish. */

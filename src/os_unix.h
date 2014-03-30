@@ -1,5 +1,8 @@
 #ifndef NEOVIM_OS_UNIX_H
 #define NEOVIM_OS_UNIX_H
+
+#include "os/shell.h"
+
 /* os_unix.c */
 void mch_write(char_u *s, int len);
 void mch_startjmp(void);
@@ -42,7 +45,7 @@ int mch_screenmode(char_u *arg);
 int mch_get_shellsize(void);
 void mch_set_shellsize(void);
 void mch_new_shellsize(void);
-int mch_call_shell(char_u *cmd, int options, char_u *extra_shell_arg);
+int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg);
 int mch_expandpath(garray_T *gap, char_u *path, int flags);
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          char_u ***file,

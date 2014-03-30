@@ -489,15 +489,6 @@ enum {
 #define REMAP_SCRIPT    -2      /* remap script-local mappings only */
 #define REMAP_SKIP      -3      /* no remapping for first char */
 
-/* Values for mch_call_shell() second argument */
-#define SHELL_FILTER    1       /* filtering text */
-#define SHELL_EXPAND    2       /* expanding wildcards */
-#define SHELL_COOKED    4       /* set term to cooked mode */
-#define SHELL_DOOUT     8       /* redirecting output */
-#define SHELL_SILENT    16      /* don't print error returned by command */
-#define SHELL_READ      32      /* read lines and insert into buffer */
-#define SHELL_WRITE     64      /* write lines from buffer */
-
 /* Values returned by mch_nodetype() */
 #define NODE_NORMAL     0       /* file or directory, check with os_isdir()*/
 #define NODE_WRITABLE   1       /* something we can write to (character

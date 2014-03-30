@@ -49,6 +49,7 @@
 #include "undo.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/shell.h"
 static char_u *vim_version_dir(char_u *vimdir);
 static char_u *remove_tail(char_u *p, char_u *pend, char_u *name);
 static void init_users(void);
@@ -3670,7 +3671,7 @@ get_cmd_output (
    * Don't check timestamps here.
    */
   ++no_check_timestamps;
-  call_shell(command, SHELL_DOOUT | SHELL_EXPAND | flags, NULL);
+  call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL);
   --no_check_timestamps;
 
   vim_free(command);

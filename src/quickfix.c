@@ -2546,7 +2546,7 @@ void ex_make(exarg_T *eap)
   msg_outtrans(cmd);            /* show what we are doing */
 
   /* let the shell know if we are redirecting output or not */
-  do_shell(cmd, *p_sp != NUL ? SHELL_DOOUT : 0);
+  do_shell(cmd, *p_sp != NUL ? kShellOptDoOut : 0);
 
 
   res = qf_init(wp, fname, (eap->cmdidx != CMD_make
