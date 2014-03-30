@@ -2048,18 +2048,18 @@ static void source_startup_scripts(mparm_T *parmp)
         secure = p_secure;
 
       i = FAIL;
-      if (fullpathcmp((char_u *)USR_VIMRC_FILE,
+      if (path_full_compare((char_u *)USR_VIMRC_FILE,
             (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #ifdef USR_VIMRC_FILE2
-          && fullpathcmp((char_u *)USR_VIMRC_FILE2,
+          && path_full_compare((char_u *)USR_VIMRC_FILE2,
             (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #endif
 #ifdef USR_VIMRC_FILE3
-          && fullpathcmp((char_u *)USR_VIMRC_FILE3,
+          && path_full_compare((char_u *)USR_VIMRC_FILE3,
             (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #endif
 #ifdef SYS_VIMRC_FILE
-          && fullpathcmp((char_u *)SYS_VIMRC_FILE,
+          && path_full_compare((char_u *)SYS_VIMRC_FILE,
             (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
 #endif
          )
@@ -2073,10 +2073,10 @@ static void source_startup_scripts(mparm_T *parmp)
         else
           secure = 0;
 #endif
-        if (       fullpathcmp((char_u *)USR_EXRC_FILE,
+        if (       path_full_compare((char_u *)USR_EXRC_FILE,
               (char_u *)EXRC_FILE, FALSE) != FPC_SAME
 #ifdef USR_EXRC_FILE2
-            && fullpathcmp((char_u *)USR_EXRC_FILE2,
+            && path_full_compare((char_u *)USR_EXRC_FILE2,
               (char_u *)EXRC_FILE, FALSE) != FPC_SAME
 #endif
            )
