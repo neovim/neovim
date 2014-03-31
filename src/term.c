@@ -4716,9 +4716,7 @@ translate_mapping (
   int cpo_special;
   int cpo_keycode;
 
-  ga_init(&ga);
-  ga.ga_itemsize = 1;
-  ga.ga_growsize = 40;
+  ga_init2(&ga, 1, 40);
 
   cpo_bslash = (vim_strchr(p_cpo, CPO_BSLASH) != NULL);
   cpo_special = (vim_strchr(p_cpo, CPO_SPECI) != NULL);

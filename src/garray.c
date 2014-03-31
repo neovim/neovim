@@ -17,7 +17,11 @@
 void ga_clear(garray_T *gap)
 {
   vim_free(gap->ga_data);
-  ga_init(gap);
+
+  // Initialize growing array without resetting itemsize or growsize
+  gap->ga_data = NULL;
+  gap->ga_maxlen = 0;
+  gap->ga_len = 0;
 }
 
 /// Clear a growing array that contains a list of strings.
@@ -32,17 +36,6 @@ void ga_clear_strings(garray_T *gap)
   ga_clear(gap);
 }
 
-/// Initialize a growing array.	Don't forget to set ga_itemsize and
-/// ga_growsize!  Or use ga_init2().
-///
-/// @param gap
-void ga_init(garray_T *gap)
-{
-  gap->ga_data = NULL;
-  gap->ga_maxlen = 0;
-  gap->ga_len = 0;
-}
-
 /// Initialize a growing array.
 ///
 /// @param gap
@@ -50,7 +43,9 @@ void ga_init(garray_T *gap)
 /// @param growsize
 void ga_init2(garray_T *gap, int itemsize, int growsize)
 {
-  ga_init(gap);
+  gap->ga_data = NULL;
+  gap->ga_maxlen = 0;
+  gap->ga_len = 0;
   gap->ga_itemsize = itemsize;
   gap->ga_growsize = growsize;
 }
