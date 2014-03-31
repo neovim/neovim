@@ -33,6 +33,7 @@
 
 #define IN_OPTION_C
 #include <string.h>
+#include <stdlib.h>
 
 #include "vim.h"
 #include "option.h"
