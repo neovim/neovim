@@ -12,8 +12,14 @@
 static int tokenize(char_u *str, char **argv);
 static int word_length(char_u *command);
 
-// Returns the argument vector for running a shell, with an optional command
-// and extra shell option.
+/// Builds the argument vector for running the shell configured in `sh`
+/// ('shell' option), optionally with a command that will be passed with `shcf`
+/// ('shellcmdflag').
+///
+/// @param  cmd Command string. If NULL it will run an interactive shell.
+/// @param  extra_shell_opt Extra argument to the shell (Optional).
+/// @return A newly allocated argument vector. It must be freed with
+///         `shell_free_argv` when no longer needed.
 char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
 {
   int i;
@@ -46,6 +52,9 @@ char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
   return rv;
 }
 
+/// Release the memory allocated by `shell_build_argv`.
+///
+/// @param  argv The argument vector.
 void shell_free_argv(char **argv)
 {
   char **p = argv;
@@ -64,9 +73,13 @@ void shell_free_argv(char **argv)
   free(argv);
 }
 
-// Walks through a string and returns the number of shell tokens it contains.
-// If a non-null `argv` parameter is passed, it will be filled with copies
-// of the tokens.
+/// Parse a command string into a sequence of words, taking quotes into
+/// consideration.
+///
+/// @param  str The command string to be parsed
+/// @param  argv The vector that will be filled with copies of the parsed
+///         words. It can be NULL if the caller only needs to count words.
+/// @return The number of words parsed.
 static int tokenize(char_u *str, char **argv)
 {
   int argc = 0, len;
@@ -90,7 +103,10 @@ static int tokenize(char_u *str, char **argv)
   return argc;
 }
 
-// Returns the length of the shell token in `str`
+/// Calculate the length of a shell word.
+///
+/// @param  str A pointer to the beginning of the word
+/// @return The offset from `str` at which the word ends.
 static int word_length(char_u *str)
 {
   char_u *p = str;
