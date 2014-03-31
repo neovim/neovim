@@ -32,7 +32,9 @@ all: nvim
 nvim: build/.ran-cmake deps
 	+$(BUILD_TOOL) -C build
 
-cmake: | build/.ran-cmake
+cmake:
+	touch CMakeLists.txt
+	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
 	mkdir -p build
