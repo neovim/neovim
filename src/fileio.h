@@ -33,6 +33,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start,
               int filtering);
 void msg_add_fname(buf_T *buf, char_u *fname);
 void msg_add_lines(int insert_space, long lnum, off_t nchars);
+void shorten_fnames(int force);
 char_u *modname(char_u *fname, char_u *ext, int prepend_dot);
 char_u *buf_modname(int shortname, char_u *fname, char_u *ext,
                     int prepend_dot);
