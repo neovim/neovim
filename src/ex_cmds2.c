@@ -1053,7 +1053,7 @@ static void script_do_profile(scriptitem_T *si)
   profile_zero(&si->sn_pr_total);
   profile_zero(&si->sn_pr_self);
 
-  ga_init2(&si->sn_prl_ga, sizeof(sn_prl_T), 100);
+  ga_init(&si->sn_prl_ga, sizeof(sn_prl_T), 100);
   si->sn_prl_idx = -1;
   si->sn_prof_on = TRUE;
   si->sn_pr_nest = 0;
@@ -1542,7 +1542,7 @@ static char_u *do_one_arg(char_u *str)
  */
 int get_arglist(garray_T *gap, char_u *str)
 {
-  ga_init2(gap, (int)sizeof(char_u *), 20);
+  ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
     if (ga_grow(gap, 1) == FAIL) {
       ga_clear(gap);
@@ -2922,7 +2922,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
     if (sp->nextline != NULL && *(p = skipwhite(sp->nextline)) == '\\') {
       garray_T ga;
 
-      ga_init2(&ga, (int)sizeof(char_u), 400);
+      ga_init(&ga, (int)sizeof(char_u), 400);
       ga_concat(&ga, line);
       ga_concat(&ga, p + 1);
       for (;; ) {
@@ -2986,7 +2986,7 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
   int have_read = FALSE;
 
   /* use a growarray to store the sourced line */
-  ga_init2(&ga, 1, 250);
+  ga_init(&ga, 1, 250);
 
   /*
    * Loop until there is a finished line (or end-of-file).
@@ -3522,7 +3522,7 @@ static char_u **find_locales(void)
       NULL, kShellOptSilent);
   if (locale_a == NULL)
     return NULL;
-  ga_init2(&locales_ga, sizeof(char_u *), 20);
+  ga_init(&locales_ga, sizeof(char_u *), 20);
 
   /* Transform locale_a string where each locale is separated by "\n"
    * into an array of locale strings. */

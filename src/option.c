@@ -1990,7 +1990,7 @@ void set_init_1(void)
     garray_T ga;
     int mustfree;
 
-    ga_init2(&ga, 1, 100);
+    ga_init(&ga, 1, 100);
     for (n = 0; n < (long)(sizeof(names) / sizeof(char *)); ++n) {
       mustfree = FALSE;
 # ifdef UNIX
@@ -7711,7 +7711,7 @@ static void langmap_init(void)
 
   for (i = 0; i < 256; i++)
     langmap_mapchar[i] = i;      /* we init with a one-to-one map */
-  ga_init2(&langmap_mapga, sizeof(langmap_entry_T), 8);
+  ga_init(&langmap_mapga, sizeof(langmap_entry_T), 8);
 }
 
 /*

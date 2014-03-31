@@ -555,7 +555,7 @@ int flags;
   cstack.cs_trylevel = 0;
   cstack.cs_emsg_silent_list = NULL;
   cstack.cs_lflags = 0;
-  ga_init2(&lines_ga, (int)sizeof(wcmd_T), 10);
+  ga_init(&lines_ga, (int)sizeof(wcmd_T), 10);
 
   real_cookie = getline_cookie(fgetline, cookie);
 
@@ -4358,7 +4358,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
   if (flags & UC_BUFFER) {
     gap = &curbuf->b_ucmds;
     if (gap->ga_itemsize == 0)
-      ga_init2(gap, (int)sizeof(ucmd_T), 4);
+      ga_init(gap, (int)sizeof(ucmd_T), 4);
   } else
     gap = &ucmds;
 
@@ -5833,7 +5833,7 @@ void alist_clear(alist_T *al)
  */
 void alist_init(alist_T *al)
 {
-  ga_init2(&al->al_ga, (int)sizeof(aentry_T), 5);
+  ga_init(&al->al_ga, (int)sizeof(aentry_T), 5);
 }
 
 

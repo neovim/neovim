@@ -422,7 +422,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
 
   // Copy "str" into "buf" or allocated memory, unmodified.
   if (buf == NULL) {
-    ga_init2(&ga, 1, 10);
+    ga_init(&ga, 1, 10);
 
     if (ga_grow(&ga, len + 1) == FAIL) {
       return NULL;

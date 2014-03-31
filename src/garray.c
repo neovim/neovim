@@ -41,7 +41,7 @@ void ga_clear_strings(garray_T *gap)
 /// @param gap
 /// @param itemsize
 /// @param growsize
-void ga_init2(garray_T *gap, int itemsize, int growsize)
+void ga_init(garray_T *gap, int itemsize, int growsize)
 {
   gap->ga_data = NULL;
   gap->ga_maxlen = 0;

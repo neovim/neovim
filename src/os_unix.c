@@ -1959,7 +1959,7 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
         }
 
         if (opts & kShellOptRead)
-          ga_init2(&ga, 1, BUFLEN);
+          ga_init(&ga, 1, BUFLEN);
 
         noread_cnt = 0;
 # if defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)

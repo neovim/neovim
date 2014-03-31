@@ -1200,7 +1200,7 @@ find_tags (
   lbuf = alloc(lbuf_size);
   tag_fname = alloc(MAXPATHL + 1);
   for (mtt = 0; mtt < MT_COUNT; ++mtt)
-    ga_init2(&ga_match[mtt], (int)sizeof(struct match_found *), 100);
+    ga_init(&ga_match[mtt], (int)sizeof(struct match_found *), 100);
 
   /* check for out of memory situation */
   if (lbuf == NULL || tag_fname == NULL
@@ -2100,7 +2100,7 @@ get_tagfname (
      */
     if (first) {
       ga_clear_strings(&tag_fnames);
-      ga_init2(&tag_fnames, (int)sizeof(char_u *), 10);
+      ga_init(&tag_fnames, (int)sizeof(char_u *), 10);
       do_in_runtimepath((char_u *)
           "doc/tags doc/tags-??"
           , TRUE, found_tagfile_cb, NULL);

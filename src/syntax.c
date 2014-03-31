@@ -1386,7 +1386,7 @@ static synstate_T *store_current_state(void)
     if (current_state.ga_len > SST_FIX_STATES) {
       /* Need to clear it, might be something remaining from when the
        * length was less than SST_FIX_STATES. */
-      ga_init2(&sp->sst_union.sst_ga, (int)sizeof(bufstate_T), 1);
+      ga_init(&sp->sst_union.sst_ga, (int)sizeof(bufstate_T), 1);
       if (ga_grow(&sp->sst_union.sst_ga, current_state.ga_len) == FAIL)
         sp->sst_stacksize = 0;
       else
@@ -1776,7 +1776,7 @@ syn_current_attr (
 
   /* Init the list of zero-width matches with a nextlist.  This is used to
    * avoid matching the same item in the same position twice. */
-  ga_init2(&zero_width_next_ga, (int)sizeof(int), 10);
+  ga_init(&zero_width_next_ga, (int)sizeof(int), 10);
 
   /*
    * Repeat matching keywords and patterns, to find contained items at the
@@ -5861,7 +5861,7 @@ static void syntime_report(void)
     return;
   }
 
-  ga_init2(&ga, sizeof(time_entry_T), 50);
+  ga_init(&ga, sizeof(time_entry_T), 50);
   profile_zero(&total_total);
   for (idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; ++idx) {
     spp = &(SYN_ITEMS(curwin->w_s)[idx]);

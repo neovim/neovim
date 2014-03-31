@@ -5409,7 +5409,7 @@ void ex_helptags(exarg_T *eap)
 
   /* Go over all files in the directory to find out what languages are
    * present. */
-  ga_init2(&ga, 1, 10);
+  ga_init(&ga, 1, 10);
   for (i = 0; i < filecount; ++i) {
     len = (int)STRLEN(files[i]);
     if (len > 4) {
@@ -5524,7 +5524,7 @@ helptags_one (
    * If using the "++t" argument or generating tags for "$VIMRUNTIME/doc"
    * add the "help-tags" tag.
    */
-  ga_init2(&ga, (int)sizeof(char_u *), 100);
+  ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags || fullpathcmp((char_u *)"$VIMRUNTIME/doc",
           dir, FALSE) == FPC_SAME) {
     if (ga_grow(&ga, 1) == FAIL)

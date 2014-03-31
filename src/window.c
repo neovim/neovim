@@ -3876,7 +3876,7 @@ void win_size_save(garray_T *gap)
 {
   win_T       *wp;
 
-  ga_init2(gap, (int)sizeof(int), 1);
+  ga_init(gap, (int)sizeof(int), 1);
   if (ga_grow(gap, win_count() * 2) == OK)
     for (wp = firstwin; wp != NULL; wp = wp->w_next) {
       ((int *)gap->ga_data)[gap->ga_len++] =

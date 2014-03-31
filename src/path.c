@@ -803,7 +803,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   char_u      *short_name;
 
   ga_remove_duplicate_strings(gap);
-  ga_init2(&path_ga, (int)sizeof(char_u *), 1);
+  ga_init(&path_ga, (int)sizeof(char_u *), 1);
 
   /*
    * We need to prepend a '*' at the beginning of file_pattern so that the
@@ -957,7 +957,7 @@ expand_in_path (
     return 0;
   os_dirname(curdir, MAXPATHL);
 
-  ga_init2(&path_ga, (int)sizeof(char_u *), 1);
+  ga_init(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option(curdir, &path_ga);
   vim_free(curdir);
   if (path_ga.ga_len == 0)
@@ -1093,7 +1093,7 @@ gen_expand_wildcards (
   /*
    * The matching file names are stored in a growarray.  Init it empty.
    */
-  ga_init2(&ga, (int)sizeof(char_u *), 30);
+  ga_init(&ga, (int)sizeof(char_u *), 30);
 
   for (i = 0; i < num_pat; ++i) {
     add_pat = -1;
