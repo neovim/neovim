@@ -67,11 +67,6 @@ void prepare_to_exit(void);
 void preserve_exit(void);
 void line_breakcheck(void);
 void fast_breakcheck(void);
-int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
-                          int flags);
-int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u *
-                     **file,
-                     int flags);
 int match_suffix(char_u *fname);
 char_u *get_cmd_output(char_u *cmd, char_u *infile, int flags);
 void FreeWild(int count, char_u **files);

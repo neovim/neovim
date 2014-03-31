@@ -39,4 +39,9 @@ char_u *shorten_fname1(char_u *full_path);
 char_u *shorten_fname(char_u *full_path, char_u *dir_name);
 void shorten_fnames(int force);
 void shorten_filenames(char_u **fnames, int count);
+int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
+                          int flags);
+int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u *
+                     **file,
+                     int flags);
 #endif
