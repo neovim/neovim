@@ -43,7 +43,6 @@
 #define HAVE_LOCALE_H 1
 #define HAVE_LSTAT 1
 #define HAVE_MATH_H 1
-#define HAVE_MEMCMP 1
 #define HAVE_MEMSET 1
 #define HAVE_MKDTEMP 1
 #define HAVE_NANOSLEEP 1
