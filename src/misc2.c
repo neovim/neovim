@@ -1701,45 +1701,6 @@ int vim_chdir(char_u *new_dir)
   return r;
 }
 
-#ifndef HAVE_QSORT
-/*
- * Our own qsort(), for systems that don't have it.
- * It's simple and slow.  From the K&R C book.
- */
-void qsort(base, elm_count, elm_size, cmp)
-void        *base;
-size_t elm_count;
-size_t elm_size;
-int (*cmp)(const void *, const void *);
-{
-  char_u      *buf;
-  char_u      *p1;
-  char_u      *p2;
-  int i, j;
-  int gap;
-
-  buf = alloc((unsigned)elm_size);
-  if (buf == NULL)
-    return;
-
-  for (gap = elm_count / 2; gap > 0; gap /= 2)
-    for (i = gap; i < elm_count; ++i)
-      for (j = i - gap; j >= 0; j -= gap) {
-        /* Compare the elements. */
-        p1 = (char_u *)base + j * elm_size;
-        p2 = (char_u *)base + (j + gap) * elm_size;
-        if ((*cmp)((void *)p1, (void *)p2) <= 0)
-          break;
-        /* Exchange the elements. */
-        memmove(buf, p1, elm_size);
-        memmove(p1, p2, elm_size);
-        memmove(p2, buf, elm_size);
-      }
-
-  vim_free(buf);
-}
-#endif
-
 /*
  * Sort an array of strings.
  */

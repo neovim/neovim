@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "vim.h"
 #include "path.h"
 #include "charset.h"

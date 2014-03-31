@@ -56,7 +56,6 @@
 #define HAVE_POLL_H 1
 #define HAVE_PUTENV 1
 #define HAVE_PWD_H 1
-#define HAVE_QSORT 1
 #define HAVE_READLINK 1
 #define HAVE_RENAME 1
 #define HAVE_SELECT 1
