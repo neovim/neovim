@@ -9,6 +9,7 @@
 #include "misc1.h"
 #include "misc2.h"
 #include "os/os.h"
+#include "os/shell.h"
 #include "os_unix.h"
 #include "regexp.h"
 #include "tag.h"
@@ -1212,7 +1213,7 @@ expand_backtick (
     buffer = eval_to_string(cmd + 1, &p, TRUE);
   else
     buffer = get_cmd_output(cmd, NULL,
-        (flags & EW_SILENT) ? SHELL_SILENT : 0);
+        (flags & EW_SILENT) ? kShellOptSilent : 0);
   vim_free(cmd);
   if (buffer == NULL)
     return 0;

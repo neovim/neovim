@@ -61,6 +61,7 @@
 #include "version.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/shell.h"
 
 #if defined(FEAT_FLOAT) && defined(HAVE_MATH_H)
 # include <math.h>
@@ -14543,7 +14544,7 @@ static void f_system(typval_T *argvars, typval_T *rettv)
   }
 
   res = get_cmd_output(get_tv_string(&argvars[0]), infile,
-      SHELL_SILENT | SHELL_COOKED);
+      kShellOptSilent | kShellOptCooked);
 
 #ifdef USE_CR
   /* translate <CR> into <NL> */

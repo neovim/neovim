@@ -53,6 +53,7 @@
 #include "os/time.h"
 #include "os/event.h"
 #include "os/input.h"
+#include "os/shell.h"
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
@@ -142,8 +143,6 @@ static int save_patterns(int num_pat, char_u **pat, int *num_file,
 
 /* volatile because it is used in signal handler sig_winch(). */
 static volatile int do_resize = FALSE;
-static char_u   *extra_shell_arg = NULL;
-static int show_shell_mess = TRUE;
 /* volatile because it is used in signal handler deathtrap(). */
 static volatile int deadly_signal = 0;      /* The signal we caught */
 
@@ -1681,16 +1680,13 @@ waitstatus  *status;
   return wait_pid;
 }
 
-int mch_call_shell(cmd, options)
-char_u      *cmd;
-int options;                    /* SHELL_*, see vim.h */
+int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   int tmode = cur_tmode;
 
 # define EXEC_FAILED 122    /* Exit code when shell didn't execute.  Don't use
                                127, some shells use that already */
 
-  char_u      *newcmd = NULL;
   pid_t pid;
   pid_t wpid = 0;
   pid_t wait_pid = 0;
@@ -1701,11 +1697,8 @@ int options;                    /* SHELL_*, see vim.h */
 # endif
   int retval = -1;
   char        **argv = NULL;
-  int argc;
-  char_u      *p_shcf_copy = NULL;
   int i;
   char_u      *p;
-  int inquote;
   int pty_master_fd = -1;                   /* for pty's */
   int fd_toshell[2];                    /* for pipes */
   int fd_fromshell[2];
@@ -1713,88 +1706,22 @@ int options;                    /* SHELL_*, see vim.h */
   char envbuf[50];
   int did_settmode = FALSE;             /* settmode(TMODE_RAW) called */
 
-  newcmd = vim_strsave(p_sh);
-  if (newcmd == NULL)           /* out of memory */
-    goto error;
-
   out_flush();
-  if (options & SHELL_COOKED)
+  if (opts & kShellOptCooked)
     settmode(TMODE_COOK);               /* set to normal mode */
 
-  /*
-   * Do this loop twice:
-   * 1: find number of arguments
-   * 2: separate them and build argv[]
-   */
-  for (i = 0; i < 2; ++i) {
-    p = newcmd;
-    inquote = FALSE;
-    argc = 0;
-    for (;; ) {
-      if (i == 1)
-        argv[argc] = (char *)p;
-      ++argc;
-      while (*p && (inquote || (*p != ' ' && *p != TAB))) {
-        if (*p == '"')
-          inquote = !inquote;
-        ++p;
-      }
-      if (*p == NUL)
-        break;
-      if (i == 1)
-        *p++ = NUL;
-      p = skipwhite(p);
-    }
-    if (argv == NULL) {
-      /*
-       * Account for possible multiple args in p_shcf.
-       */
-      p = p_shcf;
-      for (;; ) {
-        p = skiptowhite(p);
-        if (*p == NUL)
-          break;
-        ++argc;
-        p = skipwhite(p);
-      }
+  argv = shell_build_argv(cmd, extra_shell_arg);
 
-      argv = (char **)alloc((unsigned)((argc + 4) * sizeof(char *)));
-      if (argv == NULL)             /* out of memory */
-        goto error;
-    }
+  if (argv == NULL) {
+    goto error;
   }
-  if (cmd != NULL) {
-    char_u  *s;
 
-    if (extra_shell_arg != NULL)
-      argv[argc++] = (char *)extra_shell_arg;
-
-    /* Break 'shellcmdflag' into white separated parts.  This doesn't
-     * handle quoted strings, they are very unlikely to appear. */
-    p_shcf_copy = alloc((unsigned)STRLEN(p_shcf) + 1);
-    if (p_shcf_copy == NULL)        /* out of memory */
-      goto error;
-    s = p_shcf_copy;
-    p = p_shcf;
-    while (*p != NUL) {
-      argv[argc++] = (char *)s;
-      while (*p && *p != ' ' && *p != TAB)
-        *s++ = *p++;
-      *s++ = NUL;
-      p = skipwhite(p);
-    }
-
-    argv[argc++] = (char *)cmd;
-  }
-  argv[argc] = NULL;
-
-  /*
+ /*
    * For the GUI, when writing the output into the buffer and when reading
    * input from the buffer: Try using a pseudo-tty to get the stdin/stdout
    * of the executed command into the Vim window.  Or use a pipe.
    */
-  if ((options & (SHELL_READ|SHELL_WRITE))
-      ) {
+  if (opts & (kShellOptRead|kShellOptWrite)) {
     {
       pipe_error = (pipe(fd_toshell) < 0);
       if (!pipe_error) {                            /* pipe create OK */
@@ -1815,8 +1742,7 @@ int options;                    /* SHELL_*, see vim.h */
 
     if ((pid = fork()) == -1) {         /* maybe we should use vfork() */
       MSG_PUTS(_("\nCannot fork\n"));
-      if ((options & (SHELL_READ|SHELL_WRITE))
-          ) {
+      if (opts & (kShellOptRead | kShellOptWrite)) {
         {
           close(fd_toshell[0]);
           close(fd_toshell[1]);
@@ -1827,7 +1753,7 @@ int options;                    /* SHELL_*, see vim.h */
     } else if (pid == 0) {    /* child */
       reset_signals();                  /* handle signals normally */
 
-      if (!show_shell_mess || (options & SHELL_EXPAND)) {
+      if (opts & (kShellOptHideMess | kShellOptExpand)) {
         int fd;
 
         /*
@@ -1860,8 +1786,7 @@ int options;                    /* SHELL_*, see vim.h */
           /* Don't need this now that we've duplicated it */
           close(fd);
         }
-      } else if ((options & (SHELL_READ|SHELL_WRITE))
-                 ) {
+      } else if (opts & (kShellOptRead|kShellOptWrite)) {
 
 # ifdef HAVE_SETSID
         /* Create our own process group, so that the child and all its
@@ -1931,8 +1856,7 @@ int options;                    /* SHELL_*, see vim.h */
        * This is also used to pipe stdin/stdout to/from the external
        * command.
        */
-      if ((options & (SHELL_READ|SHELL_WRITE))
-          ) {
+      if (opts & (kShellOptRead|kShellOptWrite)) {
 # define BUFLEN 100             /* length for buffer, pseudo tty limit is 128 */
         char_u buffer[BUFLEN + 1];
         int buffer_off = 0;                     /* valid bytes in buffer[] */
@@ -1978,7 +1902,7 @@ int options;                    /* SHELL_*, see vim.h */
         old_State = State;
         State = EXTERNCMD;              /* don't redraw at window resize */
 
-        if ((options & SHELL_WRITE) && toshell_fd >= 0) {
+        if ((opts & kShellOptWrite) && toshell_fd >= 0) {
           /* Fork a process that will write the lines to the
            * external program. */
           if ((wpid = fork()) == -1) {
@@ -2034,7 +1958,7 @@ int options;                    /* SHELL_*, see vim.h */
           }
         }
 
-        if (options & SHELL_READ)
+        if (opts & kShellOptRead)
           ga_init2(&ga, 1, BUFLEN);
 
         noread_cnt = 0;
@@ -2057,10 +1981,10 @@ int options;                    /* SHELL_*, see vim.h */
            * typeahead.
            */
           len = 0;
-          if (!(options & SHELL_EXPAND)
-              && ((options &
-                   (SHELL_READ|SHELL_WRITE|SHELL_COOKED))
-                  != (SHELL_READ|SHELL_WRITE|SHELL_COOKED)
+          if (!(opts & kShellOptExpand)
+              && ((opts &
+                   (kShellOptRead|kShellOptWrite|kShellOptCooked))
+                  != (kShellOptRead|kShellOptWrite|kShellOptCooked)
                   )
               && wait_pid == 0
               && (ta_len > 0 || noread_cnt > 4)) {
@@ -2152,7 +2076,7 @@ int options;                    /* SHELL_*, see vim.h */
                * When writing buffer lines, drop the typed
                * characters (only check for CTRL-C).
                */
-              if (options & SHELL_WRITE)
+              if (opts & kShellOptWrite)
                 ta_len = 0;
               else if (toshell_fd >= 0) {
                 len = write(toshell_fd, (char *)ta_buf, (size_t)1);
@@ -2195,7 +2119,7 @@ int options;                    /* SHELL_*, see vim.h */
               goto finished;
 
             noread_cnt = 0;
-            if (options & SHELL_READ) {
+            if (opts & kShellOptRead) {
               /* Do NUL -> NL translation, append NL separated
                * lines to the current buffer. */
               for (i = 0; i < len; ++i) {
@@ -2298,7 +2222,7 @@ int options;                    /* SHELL_*, see vim.h */
         }
 finished:
         p_more = p_more_save;
-        if (options & SHELL_READ) {
+        if (opts & kShellOptRead) {
           if (ga.ga_len > 0) {
             append_ga_line(&ga);
             /* remember that the NL was missing */
@@ -2354,7 +2278,7 @@ finished:
             MSG_PUTS(_("\nCannot execute shell "));
             msg_outtrans(p_sh);
             msg_putchar('\n');
-          } else if (!(options & SHELL_SILENT)) {
+          } else if (!(opts & kShellOptSilent)) {
             MSG_PUTS(_("\nshell returned "));
             msg_outnum((long)retval);
             msg_putchar('\n');
@@ -2364,15 +2288,13 @@ finished:
         MSG_PUTS(_("\nCommand terminated\n"));
     }
   }
-  vim_free(argv);
-  vim_free(p_shcf_copy);
+  shell_free_argv(argv);
 
 error:
   if (!did_settmode)
     if (tmode == TMODE_RAW)
       settmode(TMODE_RAW);              /* set to raw mode */
   resettitle();
-  vim_free(newcmd);
 
   return retval;
 }
@@ -2535,6 +2457,8 @@ int flags;                      /* EW_* flags */
   size_t len;
   char_u      *p;
   int dir;
+  char_u *extra_shell_arg = NULL;
+  ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   /*
    * This is the non-OS/2 implementation (really Unix).
    */
@@ -2711,8 +2635,11 @@ int flags;                      /* EW_* flags */
       }
       *p = NUL;
     }
-  if (flags & EW_SILENT)
-    show_shell_mess = FALSE;
+
+  if (flags & EW_SILENT) {
+    shellopts |= kShellOptHideMess;
+  }
+
   if (ampersent)
     STRCAT(command, "&");               /* put the '&' after the redirection */
 
@@ -2735,15 +2662,17 @@ int flags;                      /* EW_* flags */
   /*
    * execute the shell command
    */
-  i = call_shell(command, SHELL_EXPAND | SHELL_SILENT);
+  i = call_shell(
+      command,
+      shellopts,
+      extra_shell_arg
+      );
 
   /* When running in the background, give it some time to create the temp
    * file, but don't wait for it to finish. */
   if (ampersent)
     os_delay(10L, TRUE);
 
-  extra_shell_arg = NULL;               /* cleanup */
-  show_shell_mess = TRUE;
   vim_free(command);
 
   if (i != 0) {                         /* mch_call_shell() failed */
