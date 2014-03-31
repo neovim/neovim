@@ -9,17 +9,20 @@
 #include "option_defs.h"
 #include "charset.h"
 
+/// Parses a command string into a sequence of words, taking quotes into
+/// consideration.
+///
+/// @param str The command string to be parsed
+/// @param argv The vector that will be filled with copies of the parsed
+///        words. It can be NULL if the caller only needs to count words.
+/// @return The number of words parsed.
 static int tokenize(char_u *str, char **argv);
+/// Calculates the length of a shell word.
+///
+/// @param str A pointer to the first character of the word
+/// @return The offset from `str` at which the word ends.
 static int word_length(char_u *command);
 
-/// Builds the argument vector for running the shell configured in `sh`
-/// ('shell' option), optionally with a command that will be passed with `shcf`
-/// ('shellcmdflag').
-///
-/// @param  cmd Command string. If NULL it will run an interactive shell.
-/// @param  extra_shell_opt Extra argument to the shell (Optional).
-/// @return A newly allocated argument vector. It must be freed with
-///         `shell_free_argv` when no longer needed.
 char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
 {
   int i;
@@ -52,9 +55,6 @@ char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
   return rv;
 }
 
-/// Release the memory allocated by `shell_build_argv`.
-///
-/// @param  argv The argument vector.
 void shell_free_argv(char **argv)
 {
   char **p = argv;
@@ -73,13 +73,6 @@ void shell_free_argv(char **argv)
   free(argv);
 }
 
-/// Parse a command string into a sequence of words, taking quotes into
-/// consideration.
-///
-/// @param  str The command string to be parsed
-/// @param  argv The vector that will be filled with copies of the parsed
-///         words. It can be NULL if the caller only needs to count words.
-/// @return The number of words parsed.
 static int tokenize(char_u *str, char **argv)
 {
   int argc = 0, len;
@@ -103,10 +96,6 @@ static int tokenize(char_u *str, char **argv)
   return argc;
 }
 
-/// Calculate the length of a shell word.
-///
-/// @param  str A pointer to the beginning of the word
-/// @return The offset from `str` at which the word ends.
 static int word_length(char_u *str)
 {
   char_u *p = str;
