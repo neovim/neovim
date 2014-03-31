@@ -44,4 +44,5 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
 int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u *
                      **file,
                      int flags);
+int match_suffix(char_u *fname);
 #endif
