@@ -29,8 +29,6 @@
   // (not definition), like so:
   // void myfunc(void) FUNC_ATTR_ALWAYS_INLINE;
   #define FUNC_ATTR_MALLOC __attribute__((malloc))
-  #define FUNC_ATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
-  #define FUNC_ATTR_ALLOC_SIZE_PROD(x,y) __attribute__((alloc_size(x,y)))
   #define FUNC_ATTR_ALLOC_ALIGN(x) __attribute__((alloc_align(x)))
   #define FUNC_ATTR_PURE __attribute__ ((pure))
   #define FUNC_ATTR_CONST __attribute__((const))
@@ -43,15 +41,43 @@
     // intel only
   #else
     // gcc only
+    #define FUNC_ATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
+    #define FUNC_ATTR_ALLOC_SIZE_PROD(x,y) __attribute__((alloc_size(x,y)))
   #endif
-#else
+#endif
+
+// define function attributes that haven't been defined for this specific
+// compiler.
+
+#ifndef FUNC_ATTR_MALLOC
   #define FUNC_ATTR_MALLOC
+#endif
+
+#ifndef FUNC_ATTR_ALLOC_SIZE
   #define FUNC_ATTR_ALLOC_SIZE(x)
+#endif
+
+#ifndef FUNC_ATTR_ALLOC_SIZE_PROD
   #define FUNC_ATTR_ALLOC_SIZE_PROD(x,y)
+#endif
+
+#ifndef FUNC_ATTR_ALLOC_ALIGN
   #define FUNC_ATTR_ALLOC_ALIGN(x)
+#endif
+
+#ifndef FUNC_ATTR_PURE
   #define FUNC_ATTR_PURE
+#endif
+
+#ifndef FUNC_ATTR_CONST
   #define FUNC_ATTR_CONST
+#endif
+
+#ifndef FUNC_ATTR_WARN_UNUSED_RESULT
   #define FUNC_ATTR_WARN_UNUSED_RESULT
+#endif
+
+#ifndef FUNC_ATTR_ALWAYS_INLINE
   #define FUNC_ATTR_ALWAYS_INLINE
 #endif
 
