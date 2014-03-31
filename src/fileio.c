@@ -4703,6 +4703,48 @@ static int make_bom(char_u *buf, char_u *name)
 }
 
 /*
+ * Shorten filenames for all buffers.
+ * When "force" is TRUE: Use full path from now on for files currently being
+ * edited, both for file name and swap file name.  Try to shorten the file
+ * names a bit, if safe to do so.
+ * When "force" is FALSE: Only try to shorten absolute file names.
+ * For buffers that have buftype "nofile" or "scratch": never change the file
+ * name.
+ */
+void shorten_fnames(int force)
+{
+  char_u dirname[MAXPATHL];
+  buf_T       *buf;
+  char_u      *p;
+
+  os_dirname(dirname, MAXPATHL);
+  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    if (buf->b_fname != NULL
+        && !bt_nofile(buf)
+        && !path_with_url(buf->b_fname)
+        && (force
+            || buf->b_sfname == NULL
+            || os_is_absolute_path(buf->b_sfname))) {
+      vim_free(buf->b_sfname);
+      buf->b_sfname = NULL;
+      p = shorten_fname(buf->b_ffname, dirname);
+      if (p != NULL) {
+        buf->b_sfname = vim_strsave(p);
+        buf->b_fname = buf->b_sfname;
+      }
+      if (p == NULL || buf->b_fname == NULL)
+        buf->b_fname = buf->b_ffname;
+    }
+
+    /* Always make the swap file name a full path, a "nofile" buffer may
+     * also have a swap file. */
+    mf_fullname(buf->b_ml.ml_mfp);
+  }
+  status_redraw_all();
+  redraw_tabline = TRUE;
+}
+
+/*
  * add extension to file name - change path/fo.o.h to path/fo.o.h.ext or
  * fo_o_h.ext for MSDOS or when shortname option set.
  *
