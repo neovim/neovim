@@ -40,9 +40,18 @@
   #elif defined(__INTEL_COMPILER)
     // intel only
   #else
+    #define GCC_VERSION \
+           (__GNUC__ * 10000 + \
+            __GNUC_MINOR__ * 100 + \
+            __GNUC_PATCHLEVEL__)
     // gcc only
     #define FUNC_ATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
     #define FUNC_ATTR_ALLOC_SIZE_PROD(x,y) __attribute__((alloc_size(x,y)))
+    #define FUNC_ATTR_NONNULL_ALL __attribute__((nonnull))
+    #define FUNC_ATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
+    #if GCC_VERSION >= 40900
+      #define FUNC_ATTR_NONNULL_RET __attribute__((returns_nonnull))
+    #endif
   #endif
 #endif
 
@@ -79,6 +88,18 @@
 
 #ifndef FUNC_ATTR_ALWAYS_INLINE
   #define FUNC_ATTR_ALWAYS_INLINE
+#endif
+
+#ifndef FUNC_ATTR_NONNULL_ALL
+  #define FUNC_ATTR_NONNULL_ALL
+#endif
+
+#ifndef FUNC_ATTR_NONNULL_ARG
+  #define FUNC_ATTR_NONNULL_ARG(...)
+#endif
+
+#ifndef FUNC_ATTR_NONNULL_RET
+  #define FUNC_ATTR_NONNULL_RET
 #endif
 
 #endif // NEOVIM_FUNC_ATTR_H
