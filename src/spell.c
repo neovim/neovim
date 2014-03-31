@@ -2381,8 +2381,8 @@ static slang_T *slang_alloc(char_u *lang)
   if (lp != NULL) {
     if (lang != NULL)
       lp->sl_name = vim_strsave(lang);
-    ga_init2(&lp->sl_rep, sizeof(fromto_T), 10);
-    ga_init2(&lp->sl_repsal, sizeof(fromto_T), 10);
+    ga_init(&lp->sl_rep, sizeof(fromto_T), 10);
+    ga_init(&lp->sl_repsal, sizeof(fromto_T), 10);
     lp->sl_compmax = MAXWLEN;
     lp->sl_compsylmax = MAXWLEN;
     hash_init(&lp->sl_wordcount);
@@ -2980,7 +2980,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     return SP_TRUNCERROR;
 
   gap = &slang->sl_sal;
-  ga_init2(gap, sizeof(salitem_T), 10);
+  ga_init(gap, sizeof(salitem_T), 10);
   if (ga_grow(gap, cnt + 1) == FAIL)
     return SP_OTHERERROR;
 
@@ -3283,7 +3283,7 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     gap = &slang->sl_comppat;
     c = get2c(fd);                                      /* <comppatcount> */
     todo -= 2;
-    ga_init2(gap, sizeof(char_u *), c);
+    ga_init(gap, sizeof(char_u *), c);
     if (ga_grow(gap, c) == OK)
       while (--c >= 0) {
         ((char_u **)(gap->ga_data))[gap->ga_len++] =
@@ -3440,7 +3440,7 @@ static int init_syl_tab(slang_T *slang)
   int l;
   syl_item_T  *syl;
 
-  ga_init2(&slang->sl_syl_items, sizeof(syl_item_T), 4);
+  ga_init(&slang->sl_syl_items, sizeof(syl_item_T), 4);
   p = vim_strchr(slang->sl_syllable, '/');
   while (p != NULL) {
     *p++ = NUL;
@@ -3536,7 +3536,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
      * The list contains from-to pairs with a terminating NUL.
      * sl_sal_first[] is used for latin1 "from" characters. */
     gap = &lp->sl_sal;
-    ga_init2(gap, sizeof(int *), 1);
+    ga_init(gap, sizeof(int *), 1);
     if (ga_grow(gap, 256) == FAIL)
       return SP_OTHERERROR;
     memset(gap->ga_data, 0, sizeof(int *) * 256);
@@ -3861,7 +3861,7 @@ char_u *did_set_spelllang(win_T *wp)
     return NULL;
   recursive = TRUE;
 
-  ga_init2(&ga, sizeof(langp_T), 2);
+  ga_init(&ga, sizeof(langp_T), 2);
   clear_midword(wp);
 
   /* Make a copy of 'spelllang', the SpellFileMissing autocommands may change
@@ -7875,7 +7875,7 @@ static int sug_maketable(spellinfo_T *spin)
 
   /* Use a buffer to store the line info, avoids allocating many small
    * pieces of memory. */
-  ga_init2(&ga, 1, 100);
+  ga_init(&ga, 1, 100);
 
   /* recursively go through the tree */
   if (sug_filltable(spin, spin->si_foldroot->wn_sibling, 0, &ga) == -1)
@@ -8175,12 +8175,12 @@ mkspell (
   spin.si_ascii = ascii;
   spin.si_followup = TRUE;
   spin.si_rem_accents = TRUE;
-  ga_init2(&spin.si_rep, (int)sizeof(fromto_T), 20);
-  ga_init2(&spin.si_repsal, (int)sizeof(fromto_T), 20);
-  ga_init2(&spin.si_sal, (int)sizeof(fromto_T), 20);
-  ga_init2(&spin.si_map, (int)sizeof(char_u), 100);
-  ga_init2(&spin.si_comppat, (int)sizeof(char_u *), 20);
-  ga_init2(&spin.si_prefcond, (int)sizeof(char_u *), 50);
+  ga_init(&spin.si_rep, (int)sizeof(fromto_T), 20);
+  ga_init(&spin.si_repsal, (int)sizeof(fromto_T), 20);
+  ga_init(&spin.si_sal, (int)sizeof(fromto_T), 20);
+  ga_init(&spin.si_map, (int)sizeof(char_u), 100);
+  ga_init(&spin.si_comppat, (int)sizeof(char_u *), 20);
+  ga_init(&spin.si_prefcond, (int)sizeof(char_u *), 50);
   hash_init(&spin.si_commonwords);
   spin.si_newcompID = 127;      /* start compound ID at first maximum */
 
@@ -9423,7 +9423,7 @@ spell_suggest_list (
   spell_find_suggest(word, 0, &sug, maxcount, FALSE, need_cap, interactive);
 
   /* Make room in "gap". */
-  ga_init2(gap, sizeof(char_u *), sug.su_ga.ga_len + 1);
+  ga_init(gap, sizeof(char_u *), sug.su_ga.ga_len + 1);
   if (ga_grow(gap, sug.su_ga.ga_len) == OK) {
     for (i = 0; i < sug.su_ga.ga_len; ++i) {
       stp = &SUG(sug.su_ga, i);
@@ -9475,8 +9475,8 @@ spell_find_suggest (
    * Set the info in "*su".
    */
   memset(su, 0, sizeof(suginfo_T));
-  ga_init2(&su->su_ga, (int)sizeof(suggest_T), 10);
-  ga_init2(&su->su_sga, (int)sizeof(suggest_T), 10);
+  ga_init(&su->su_ga, (int)sizeof(suggest_T), 10);
+  ga_init(&su->su_sga, (int)sizeof(suggest_T), 10);
   if (*badptr == NUL)
     return;
   hash_init(&su->su_banned);
@@ -9833,7 +9833,7 @@ someerror:
 
       /* Read all the wordnr lists into the buffer, one NUL terminated
        * list per line. */
-      ga_init2(&ga, 1, 100);
+      ga_init(&ga, 1, 100);
       for (wordnr = 0; wordnr < wcount; ++wordnr) {
         ga.ga_len = 0;
         for (;; ) {
@@ -11652,7 +11652,7 @@ static void score_combine(suginfo_T *su)
   check_suggestions(su, &su->su_sga);
   (void)cleanup_suggestions(&su->su_sga, su->su_maxscore, su->su_maxcount);
 
-  ga_init2(&ga, (int)sizeof(suginfo_T), 1);
+  ga_init(&ga, (int)sizeof(suginfo_T), 1);
   if (ga_grow(&ga, su->su_ga.ga_len + su->su_sga.ga_len) == FAIL)
     return;
 

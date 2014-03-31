@@ -3411,13 +3411,13 @@ proftime_T  *tm;         /* timeout limit or NULL */
   if (regstack.ga_data == NULL) {
     /* Use an item size of 1 byte, since we push different things
      * onto the regstack. */
-    ga_init2(&regstack, 1, REGSTACK_INITIAL);
+    ga_init(&regstack, 1, REGSTACK_INITIAL);
     ga_grow(&regstack, REGSTACK_INITIAL);
     regstack.ga_growsize = REGSTACK_INITIAL * 8;
   }
 
   if (backpos.ga_data == NULL) {
-    ga_init2(&backpos, sizeof(backpos_T), BACKPOS_INITIAL);
+    ga_init(&backpos, sizeof(backpos_T), BACKPOS_INITIAL);
     ga_grow(&backpos, BACKPOS_INITIAL);
     backpos.ga_growsize = BACKPOS_INITIAL * 8;
   }

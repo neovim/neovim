@@ -607,7 +607,7 @@ void foldCreate(linenr_T start, linenr_T end)
   i = (int)(fp - (fold_T *)gap->ga_data);
   if (ga_grow(gap, 1) == OK) {
     fp = (fold_T *)gap->ga_data + i;
-    ga_init2(&fold_ga, (int)sizeof(fold_T), 10);
+    ga_init(&fold_ga, (int)sizeof(fold_T), 10);
 
     /* Count number of folds that will be contained in the new fold. */
     for (cont = 0; i + cont < gap->ga_len; ++cont)
@@ -931,7 +931,7 @@ foldMoveTo (
  */
 void foldInitWin(win_T *new_win)
 {
-  ga_init2(&new_win->w_folds, (int)sizeof(fold_T), 10);
+  ga_init(&new_win->w_folds, (int)sizeof(fold_T), 10);
 }
 
 /* find_wl_entry() {{{2 */
@@ -1009,7 +1009,7 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
   fold_T      *from_p;
   fold_T      *to_p;
 
-  ga_init2(to, from->ga_itemsize, from->ga_growsize);
+  ga_init(to, from->ga_itemsize, from->ga_growsize);
   if (from->ga_len == 0 || ga_grow(to, from->ga_len) == FAIL)
     return;
 
@@ -2518,7 +2518,7 @@ static int foldInsert(garray_T *gap, int i)
   if (i < gap->ga_len)
     memmove(fp + 1, fp, sizeof(fold_T) * (gap->ga_len - i));
   ++gap->ga_len;
-  ga_init2(&fp->fd_nested, (int)sizeof(fold_T), 10);
+  ga_init(&fp->fd_nested, (int)sizeof(fold_T), 10);
   return OK;
 }
 

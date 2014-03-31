@@ -16,7 +16,7 @@ typedef struct growarray {
 
 void ga_clear(garray_T *gap);
 void ga_clear_strings(garray_T *gap);
-void ga_init2(garray_T *gap, int itemsize, int growsize);
+void ga_init(garray_T *gap, int itemsize, int growsize);
 int ga_grow(garray_T *gap, int n);
 char_u *ga_concat_strings(garray_T *gap);
 void ga_remove_duplicate_strings(garray_T *gap);

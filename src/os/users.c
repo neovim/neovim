@@ -16,7 +16,7 @@ int os_get_usernames(garray_T *users)
   if (users == NULL) {
     return FALSE;
   }
-  ga_init2(users, sizeof(char *), 20);
+  ga_init(users, sizeof(char *), 20);
 
 # if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
   char *user;

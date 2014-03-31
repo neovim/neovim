@@ -1778,7 +1778,7 @@ getexmodeline (
     startcol = msg_col;
   }
 
-  ga_init2(&line_ga, 1, 30);
+  ga_init(&line_ga, 1, 30);
 
   /* autoindent for :insert and :append is in the line itself */
   if (promptc <= 0) {
@@ -3970,7 +3970,7 @@ expand_shellcmd (
    * Go over all directories in $PATH.  Expand matches in that directory and
    * collect them in "ga".
    */
-  ga_init2(&ga, (int)sizeof(char *), 10);
+  ga_init(&ga, (int)sizeof(char *), 10);
   for (s = path; *s != NUL; s = e) {
     if (*s == ' ')
       ++s;              /* Skip space used for absolute path name. */
@@ -4087,7 +4087,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
   if (retstr == NULL)
     return FAIL;
 
-  ga_init2(&ga, (int)sizeof(char *), 3);
+  ga_init(&ga, (int)sizeof(char *), 3);
   for (s = retstr; *s != NUL; s = e) {
     e = vim_strchr(s, '\n');
     if (e == NULL)
@@ -4131,7 +4131,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   if (retlist == NULL)
     return FAIL;
 
-  ga_init2(&ga, (int)sizeof(char *), 3);
+  ga_init(&ga, (int)sizeof(char *), 3);
   /* Loop over the items in the list. */
   for (li = retlist->lv_first; li != NULL; li = li->li_next) {
     if (li->li_tv.v_type != VAR_STRING || li->li_tv.vval.v_string == NULL)
@@ -4168,7 +4168,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
   *num_file = 0;
   *file = NULL;
   pat_len = (int)STRLEN(pat);
-  ga_init2(&ga, (int)sizeof(char *), 10);
+  ga_init(&ga, (int)sizeof(char *), 10);
 
   for (i = 0; dirnames[i] != NULL; ++i) {
     s = alloc((unsigned)(STRLEN(dirnames[i]) + pat_len + 7));
@@ -4238,7 +4238,7 @@ char_u *globpath(char_u *path, char_u *file, int expand_options)
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;
 
-  ga_init2(&ga, 1, 100);
+  ga_init(&ga, 1, 100);
 
   /* Loop over all entries in {path}. */
   while (*path != NUL) {
@@ -5452,7 +5452,7 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
   if (cmd[0] != '<' || cmd[1] != '<' || eap->getline == NULL)
     return NULL;
 
-  ga_init2(&ga, 1, 0x400);
+  ga_init(&ga, 1, 0x400);
 
   if (cmd[2] != NUL)
     end_pattern = (char *)skipwhite(cmd + 2);

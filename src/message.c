@@ -1311,7 +1311,7 @@ str2special_save (
   garray_T ga;
   char_u      *p = str;
 
-  ga_init2(&ga, 1, 40);
+  ga_init(&ga, 1, 40);
   while (*p != NUL)
     ga_concat(&ga, str2special(&p, is_lhs));
   ga_append(&ga, NUL);

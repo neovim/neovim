@@ -1490,7 +1490,7 @@ void ex_menutranslate(exarg_T *eap)
   char_u              *from, *from_noamp, *to;
 
   if (menutrans_ga.ga_itemsize == 0)
-    ga_init2(&menutrans_ga, (int)sizeof(menutrans_T), 5);
+    ga_init(&menutrans_ga, (int)sizeof(menutrans_T), 5);
 
   /*
    * ":menutrans clear": clear all translations.

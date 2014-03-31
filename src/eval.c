@@ -1045,7 +1045,7 @@ var_redir_start (
   }
 
   /* The output is stored in growarray "redir_ga" until redirection ends. */
-  ga_init2(&redir_ga, (int)sizeof(char), 500);
+  ga_init(&redir_ga, (int)sizeof(char), 500);
 
   /* Parse the variable name (can be a dict or list entry). */
   redir_endp = get_lval(redir_varname, NULL, redir_lval, FALSE, FALSE, 0,
@@ -1302,7 +1302,7 @@ char_u *eval_to_string(char_u *arg, char_u **nextcmd, int convert)
     retval = NULL;
   else {
     if (convert && tv.v_type == VAR_LIST) {
-      ga_init2(&ga, (int)sizeof(char), 80);
+      ga_init(&ga, (int)sizeof(char), 80);
       if (tv.vval.v_list != NULL) {
         list_join(&ga, tv.vval.v_list, (char_u *)"\n", TRUE, 0);
         if (tv.vval.v_list->lv_len > 0)
@@ -5759,7 +5759,7 @@ static char_u *list2string(typval_T *tv, int copyID)
 
   if (tv->vval.v_list == NULL)
     return NULL;
-  ga_init2(&ga, (int)sizeof(char), 80);
+  ga_init(&ga, (int)sizeof(char), 80);
   ga_append(&ga, '[');
   if (list_join(&ga, tv->vval.v_list, (char_u *)", ", FALSE, copyID) == FAIL) {
     vim_free(ga.ga_data);
@@ -5854,7 +5854,7 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
   join_T      *p;
   int i;
 
-  ga_init2(&join_ga, (int)sizeof(join_T), l->lv_len);
+  ga_init(&join_ga, (int)sizeof(join_T), l->lv_len);
   retval = list_join_inner(gap, l, sep, echo_style, copyID, &join_ga);
 
   /* Dispose each item in join_ga. */
@@ -6450,7 +6450,7 @@ static char_u *dict2string(typval_T *tv, int copyID)
 
   if ((d = tv->vval.v_dict) == NULL)
     return NULL;
-  ga_init2(&ga, (int)sizeof(char), 80);
+  ga_init(&ga, (int)sizeof(char), 80);
   ga_append(&ga, '{');
 
   todo = (int)d->dv_hashtab.ht_used;
@@ -11044,7 +11044,7 @@ static void f_join(typval_T *argvars, typval_T *rettv)
   rettv->v_type = VAR_STRING;
 
   if (sep != NULL) {
-    ga_init2(&ga, (int)sizeof(char), 80);
+    ga_init(&ga, (int)sizeof(char), 80);
     list_join(&ga, argvars[0].vval.v_list, sep, TRUE, 0);
     ga_append(&ga, NUL);
     rettv->vval.v_string = (char_u *)ga.ga_data;
@@ -14859,7 +14859,7 @@ static void f_tr(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_string = NULL;
   if (fromstr == NULL || tostr == NULL)
     return;                     /* type error; errmsg already given */
-  ga_init2(&ga, (int)sizeof(char), 80);
+  ga_init(&ga, (int)sizeof(char), 80);
 
   if (!has_mbyte)
     /* not multi-byte: fromstr and tostr must be the same length */
@@ -15132,7 +15132,7 @@ static void f_winrestcmd(typval_T *argvars, typval_T *rettv)
   garray_T ga;
   char_u buf[50];
 
-  ga_init2(&ga, (int)sizeof(char), 70);
+  ga_init(&ga, (int)sizeof(char), 70);
   for (wp = firstwin; wp != NULL; wp = wp->w_next) {
     sprintf((char *)buf, "%dresize %d|", winnr, wp->w_height);
     ga_concat(&ga, buf);
@@ -16994,7 +16994,7 @@ void ex_execute(exarg_T *eap)
   int len;
   int save_did_emsg;
 
-  ga_init2(&ga, 1, 80);
+  ga_init(&ga, 1, 80);
 
   if (eap->skip)
     ++emsg_skip;
@@ -17261,8 +17261,8 @@ void ex_function(exarg_T *eap)
   }
   p = skipwhite(p + 1);
 
-  ga_init2(&newargs, (int)sizeof(char_u *), 3);
-  ga_init2(&newlines, (int)sizeof(char_u *), 3);
+  ga_init(&newargs, (int)sizeof(char_u *), 3);
+  ga_init(&newlines, (int)sizeof(char_u *), 3);
 
   if (!eap->skip) {
     /* Check the name of the function.  Unless it's a dictionary function
@@ -19554,7 +19554,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   save_cpo = p_cpo;
   p_cpo = empty_option;
 
-  ga_init2(&ga, 1, 200);
+  ga_init(&ga, 1, 200);
 
   do_all = (flags[0] == 'g');
 
