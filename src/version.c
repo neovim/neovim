@@ -23,11 +23,7 @@
 char *Version = VIM_VERSION_SHORT;
 static char *mediumVersion = VIM_VERSION_MEDIUM;
 
-#if defined(HAVE_DATE_TIME) || defined(PROTO)
 char *longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
-#else  // if defined(HAVE_DATE_TIME) || defined(PROTO)
-char *longVersion = VIM_VERSION_LONG;
-#endif  // if defined(HAVE_DATE_TIME) || defined(PROTO)
 
 static void list_features(void);
 static void version_msg(char *s);
