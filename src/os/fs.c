@@ -5,6 +5,9 @@
 #include "misc1.h"
 #include "misc2.h"
 
+// Many fs functions from libuv return that value on success.
+static const int kLibuvSuccess = 0;
+
 int os_chdir(const char *path) {
   if (p_verbose >= 5) {
     verbose_enter();
@@ -19,7 +22,7 @@ int os_dirname(char_u *buf, size_t len)
   assert(buf && len);
 
   int errno;
-  if ((errno = uv_cwd((char *)buf, &len)) != 0) {
+  if ((errno = uv_cwd((char *)buf, &len)) != kLibuvSuccess) {
     vim_strncpy(buf, (char_u *)uv_strerror(errno), len - 1);
     return FAIL;
   }
@@ -46,11 +49,11 @@ int os_full_dir_name(char *directory, char *buffer, int len)
   }
 
   // We have to get back to the current dir at the end, check if that works.
-  if (os_chdir(old_dir) != 0) {
+  if (os_chdir(old_dir) != kLibuvSuccess) {
     return FAIL;
   }
 
-  if (os_chdir(directory) != 0) {
+  if (os_chdir(directory) != kLibuvSuccess) {
     // Do not return immediatly since we may be in the wrong directory.
     retval = FAIL;
   }
@@ -60,7 +63,7 @@ int os_full_dir_name(char *directory, char *buffer, int len)
     retval = FAIL;
   }
 
-  if (os_chdir(old_dir) != 0) {
+  if (os_chdir(old_dir) != kLibuvSuccess) {
     // That shouldn't happen, since we've tested if it works.
     retval = FAIL;
     EMSG(_(e_prev_dir));
@@ -241,11 +244,11 @@ int os_stat(const char_u *name, uv_stat_t *statbuf)
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
 
-  if (result == 0) {
+  if (result == kLibuvSuccess) {
     return OK;
-  } else {
-    return FAIL;
   }
+
+  return FAIL;
 }
 
 int32_t os_getperm(const char_u *name)
@@ -265,11 +268,11 @@ int os_setperm(const char_u *name, int perm)
                            (const char*)name, perm, NULL);
   uv_fs_req_cleanup(&request);
 
-  if (result != 0) {
-    return FAIL;
-  } else {
+  if (result == kLibuvSuccess) {
     return OK;
   }
+
+  return FAIL;
 }
 
 int os_file_exists(const char_u *name)
@@ -277,18 +280,18 @@ int os_file_exists(const char_u *name)
   uv_stat_t statbuf;
   if (os_stat(name, &statbuf) == OK) {
     return TRUE;
-  } else {
-    return FALSE;
   }
+
+  return FALSE;
 }
 
 int os_file_is_readonly(const char *name)
 {
   if (access(name, W_OK) == 0) {
     return FALSE;
-  } else {
-    return TRUE;
   }
+
+  return TRUE;
 }
 
 int os_file_is_writable(const char *name)
@@ -300,5 +303,19 @@ int os_file_is_writable(const char *name)
     return 1;
   }
   return 0;
+}
+
+int os_rename(const char_u *path, const char_u *new_path)
+{
+  uv_fs_t request;
+  int result = uv_fs_rename(uv_default_loop(), &request,
+                            (const char *)path, (const char *)new_path, NULL);
+  uv_fs_req_cleanup(&request);
+
+  if (result == kLibuvSuccess) {
+    return OK;
+  }
+
+  return FAIL;
 }
 

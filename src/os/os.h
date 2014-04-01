@@ -73,6 +73,11 @@ int os_file_is_readonly(const char *name);
 /// @return `2` for a directory which we have rights to write into.
 int os_file_is_writable(const char *name);
 
+/// Rename a file or directory.
+///
+/// @return `OK` for success, `FAIL` for failure.
+int os_rename(const char_u *path, const char_u *new_path);
+
 long_u os_total_mem(int special);
 const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int overwrite);
