@@ -1643,14 +1643,12 @@ change_indent (
       curwin->w_cursor.col = (colnr_T)new_cursor_col;
       i = (int)curwin->w_virtcol - vcol;
       ptr = alloc((unsigned)(i + 1));
-      if (ptr != NULL) {
-        new_cursor_col += i;
-        ptr[i] = NUL;
-        while (--i >= 0)
-          ptr[i] = ' ';
-        ins_str(ptr);
-        vim_free(ptr);
-      }
+      new_cursor_col += i;
+      ptr[i] = NUL;
+      while (--i >= 0)
+        ptr[i] = ' ';
+      ins_str(ptr);
+      vim_free(ptr);
     }
 
     /*
@@ -1987,83 +1985,81 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 
     /* Allocate wide character array for the completion and fill it. */
     wca = (int *)alloc((unsigned)(actual_len * sizeof(int)));
-    if (wca != NULL) {
-      p = str;
-      for (i = 0; i < actual_len; ++i)
-        if (has_mbyte)
-          wca[i] = mb_ptr2char_adv(&p);
-        else
-          wca[i] = *(p++);
+    p = str;
+    for (i = 0; i < actual_len; ++i)
+      if (has_mbyte)
+        wca[i] = mb_ptr2char_adv(&p);
+      else
+        wca[i] = *(p++);
 
-      /* Rule 1: Were any chars converted to lower? */
-      p = compl_orig_text;
-      for (i = 0; i < min_len; ++i) {
-        if (has_mbyte)
-          c = mb_ptr2char_adv(&p);
-        else
-          c = *(p++);
-        if (vim_islower(c)) {
-          has_lower = TRUE;
-          if (vim_isupper(wca[i])) {
-            /* Rule 1 is satisfied. */
-            for (i = actual_compl_length; i < actual_len; ++i)
-              wca[i] = vim_tolower(wca[i]);
-            break;
-          }
+    /* Rule 1: Were any chars converted to lower? */
+    p = compl_orig_text;
+    for (i = 0; i < min_len; ++i) {
+      if (has_mbyte)
+        c = mb_ptr2char_adv(&p);
+      else
+        c = *(p++);
+      if (vim_islower(c)) {
+        has_lower = TRUE;
+        if (vim_isupper(wca[i])) {
+          /* Rule 1 is satisfied. */
+          for (i = actual_compl_length; i < actual_len; ++i)
+            wca[i] = vim_tolower(wca[i]);
+          break;
         }
       }
-
-      /*
-       * Rule 2: No lower case, 2nd consecutive letter converted to
-       * upper case.
-       */
-      if (!has_lower) {
-        p = compl_orig_text;
-        for (i = 0; i < min_len; ++i) {
-          if (has_mbyte)
-            c = mb_ptr2char_adv(&p);
-          else
-            c = *(p++);
-          if (was_letter && vim_isupper(c) && vim_islower(wca[i])) {
-            /* Rule 2 is satisfied. */
-            for (i = actual_compl_length; i < actual_len; ++i)
-              wca[i] = vim_toupper(wca[i]);
-            break;
-          }
-          was_letter = vim_islower(c) || vim_isupper(c);
-        }
-      }
-
-      /* Copy the original case of the part we typed. */
-      p = compl_orig_text;
-      for (i = 0; i < min_len; ++i) {
-        if (has_mbyte)
-          c = mb_ptr2char_adv(&p);
-        else
-          c = *(p++);
-        if (vim_islower(c))
-          wca[i] = vim_tolower(wca[i]);
-        else if (vim_isupper(c))
-          wca[i] = vim_toupper(wca[i]);
-      }
-
-      /*
-       * Generate encoding specific output from wide character array.
-       * Multi-byte characters can occupy up to five bytes more than
-       * ASCII characters, and we also need one byte for NUL, so stay
-       * six bytes away from the edge of IObuff.
-       */
-      p = IObuff;
-      i = 0;
-      while (i < actual_len && (p - IObuff + 6) < IOSIZE)
-        if (has_mbyte)
-          p += (*mb_char2bytes)(wca[i++], p);
-        else
-          *(p++) = wca[i++];
-      *p = NUL;
-
-      vim_free(wca);
     }
+
+    /*
+     * Rule 2: No lower case, 2nd consecutive letter converted to
+     * upper case.
+     */
+    if (!has_lower) {
+      p = compl_orig_text;
+      for (i = 0; i < min_len; ++i) {
+        if (has_mbyte)
+          c = mb_ptr2char_adv(&p);
+        else
+          c = *(p++);
+        if (was_letter && vim_isupper(c) && vim_islower(wca[i])) {
+          /* Rule 2 is satisfied. */
+          for (i = actual_compl_length; i < actual_len; ++i)
+            wca[i] = vim_toupper(wca[i]);
+          break;
+        }
+        was_letter = vim_islower(c) || vim_isupper(c);
+      }
+    }
+
+    /* Copy the original case of the part we typed. */
+    p = compl_orig_text;
+    for (i = 0; i < min_len; ++i) {
+      if (has_mbyte)
+        c = mb_ptr2char_adv(&p);
+      else
+        c = *(p++);
+      if (vim_islower(c))
+        wca[i] = vim_tolower(wca[i]);
+      else if (vim_isupper(c))
+        wca[i] = vim_toupper(wca[i]);
+    }
+
+    /*
+     * Generate encoding specific output from wide character array.
+     * Multi-byte characters can occupy up to five bytes more than
+     * ASCII characters, and we also need one byte for NUL, so stay
+     * six bytes away from the edge of IObuff.
+     */
+    p = IObuff;
+    i = 0;
+    while (i < actual_len && (p - IObuff + 6) < IOSIZE)
+      if (has_mbyte)
+        p += (*mb_char2bytes)(wca[i++], p);
+      else
+        *(p++) = wca[i++];
+    *p = NUL;
+
+    vim_free(wca);
 
     return ins_compl_add(IObuff, len, icase, fname, NULL, dir,
         flags, FALSE);
@@ -2120,8 +2116,6 @@ ins_compl_add (
    * Copy the values to the new match structure.
    */
   match = (compl_T *)alloc_clear((unsigned)sizeof(compl_T));
-  if (match == NULL)
-    return FAIL;
   match->cp_number = -1;
   if (flags & ORIGINAL_TEXT)
     match->cp_number = 0;
@@ -2459,67 +2453,65 @@ void ins_compl_show_pum(void)
     compl_match_array = (pumitem_T *)alloc_clear(
         (unsigned)(sizeof(pumitem_T)
                    * compl_match_arraysize));
-    if (compl_match_array != NULL) {
-      /* If the current match is the original text don't find the first
-       * match after it, don't highlight anything. */
-      if (compl_shown_match->cp_flags & ORIGINAL_TEXT)
-        shown_match_ok = TRUE;
+    /* If the current match is the original text don't find the first
+     * match after it, don't highlight anything. */
+    if (compl_shown_match->cp_flags & ORIGINAL_TEXT)
+      shown_match_ok = TRUE;
 
-      i = 0;
-      compl = compl_first_match;
-      do {
-        if ((compl->cp_flags & ORIGINAL_TEXT) == 0
-            && (compl_leader == NULL
-                || ins_compl_equal(compl, compl_leader, lead_len))) {
-          if (!shown_match_ok) {
-            if (compl == compl_shown_match || did_find_shown_match) {
-              /* This item is the shown match or this is the
-               * first displayed item after the shown match. */
-              compl_shown_match = compl;
-              did_find_shown_match = TRUE;
-              shown_match_ok = TRUE;
-            } else
-              /* Remember this displayed match for when the
-               * shown match is just below it. */
-              shown_compl = compl;
-            cur = i;
-          }
-
-          if (compl->cp_text[CPT_ABBR] != NULL)
-            compl_match_array[i].pum_text =
-              compl->cp_text[CPT_ABBR];
-          else
-            compl_match_array[i].pum_text = compl->cp_str;
-          compl_match_array[i].pum_kind = compl->cp_text[CPT_KIND];
-          compl_match_array[i].pum_info = compl->cp_text[CPT_INFO];
-          if (compl->cp_text[CPT_MENU] != NULL)
-            compl_match_array[i++].pum_extra =
-              compl->cp_text[CPT_MENU];
-          else
-            compl_match_array[i++].pum_extra = compl->cp_fname;
+    i = 0;
+    compl = compl_first_match;
+    do {
+      if ((compl->cp_flags & ORIGINAL_TEXT) == 0
+          && (compl_leader == NULL
+              || ins_compl_equal(compl, compl_leader, lead_len))) {
+        if (!shown_match_ok) {
+          if (compl == compl_shown_match || did_find_shown_match) {
+            /* This item is the shown match or this is the
+             * first displayed item after the shown match. */
+            compl_shown_match = compl;
+            did_find_shown_match = TRUE;
+            shown_match_ok = TRUE;
+          } else
+            /* Remember this displayed match for when the
+             * shown match is just below it. */
+            shown_compl = compl;
+          cur = i;
         }
 
-        if (compl == compl_shown_match) {
-          did_find_shown_match = TRUE;
+        if (compl->cp_text[CPT_ABBR] != NULL)
+          compl_match_array[i].pum_text =
+            compl->cp_text[CPT_ABBR];
+        else
+          compl_match_array[i].pum_text = compl->cp_str;
+        compl_match_array[i].pum_kind = compl->cp_text[CPT_KIND];
+        compl_match_array[i].pum_info = compl->cp_text[CPT_INFO];
+        if (compl->cp_text[CPT_MENU] != NULL)
+          compl_match_array[i++].pum_extra =
+            compl->cp_text[CPT_MENU];
+        else
+          compl_match_array[i++].pum_extra = compl->cp_fname;
+      }
 
-          /* When the original text is the shown match don't set
-           * compl_shown_match. */
-          if (compl->cp_flags & ORIGINAL_TEXT)
-            shown_match_ok = TRUE;
+      if (compl == compl_shown_match) {
+        did_find_shown_match = TRUE;
 
-          if (!shown_match_ok && shown_compl != NULL) {
-            /* The shown match isn't displayed, set it to the
-             * previously displayed match. */
-            compl_shown_match = shown_compl;
-            shown_match_ok = TRUE;
-          }
+        /* When the original text is the shown match don't set
+         * compl_shown_match. */
+        if (compl->cp_flags & ORIGINAL_TEXT)
+          shown_match_ok = TRUE;
+
+        if (!shown_match_ok && shown_compl != NULL) {
+          /* The shown match isn't displayed, set it to the
+           * previously displayed match. */
+          compl_shown_match = shown_compl;
+          shown_match_ok = TRUE;
         }
-        compl = compl->cp_next;
-      } while (compl != NULL && compl != compl_first_match);
+      }
+      compl = compl->cp_next;
+    } while (compl != NULL && compl != compl_first_match);
 
-      if (!shown_match_ok)          /* no displayed match at all */
-        cur = -1;
-    }
+    if (!shown_match_ok)          /* no displayed match at all */
+      cur = -1;
   } else {
     /* popup menu already exists, only need to find the current item.*/
     for (i = 0; i < compl_match_arraysize; ++i)
@@ -2575,8 +2567,6 @@ ins_compl_dictionaries (
   }
 
   buf = alloc(LSIZE);
-  if (buf == NULL)
-    return;
   regmatch.regprog = NULL;      /* so that we can goto theend */
 
   /* If 'infercase' is set, don't use 'smartcase' here */
@@ -2595,10 +2585,6 @@ ins_compl_dictionaries (
       goto theend;
     len = STRLEN(pat_esc) + 10;
     ptr = alloc((unsigned)len);
-    if (ptr == NULL) {
-      vim_free(pat_esc);
-      goto theend;
-    }
     vim_snprintf((char *)ptr, len, "^\\s*\\zs\\V%s", pat_esc);
     regmatch.regprog = vim_regcomp(ptr, RE_MAGIC);
     vim_free(pat_esc);
@@ -5885,16 +5871,14 @@ void set_last_insert(int c)
 
   vim_free(last_insert);
   last_insert = alloc(MB_MAXBYTES * 3 + 5);
-  if (last_insert != NULL) {
-    s = last_insert;
-    /* Use the CTRL-V only when entering a special char */
-    if (c < ' ' || c == DEL)
-      *s++ = Ctrl_V;
-    s = add_char2buf(c, s);
-    *s++ = ESC;
-    *s++ = NUL;
-    last_insert_skip = 0;
-  }
+  s = last_insert;
+  /* Use the CTRL-V only when entering a special char */
+  if (c < ' ' || c == DEL)
+    *s++ = Ctrl_V;
+  s = add_char2buf(c, s);
+  *s++ = ESC;
+  *s++ = NUL;
+  last_insert_skip = 0;
 }
 
 #if defined(EXITFREE) || defined(PROTO)
@@ -6300,10 +6284,6 @@ replace_push (
   if (replace_stack_len <= replace_stack_nr) {
     replace_stack_len += 50;
     p = lalloc(sizeof(char_u) * replace_stack_len, TRUE);
-    if (p == NULL) {        /* out of memory */
-      replace_stack_len -= 50;
-      return;
-    }
     if (replace_stack != NULL) {
       memmove(p, replace_stack,
           (size_t)(replace_stack_nr * sizeof(char_u)));

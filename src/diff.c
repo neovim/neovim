@@ -825,31 +825,29 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
         + STRLEN(p_srr) + 27;
     char_u *cmd = alloc((unsigned)len);
 
-    if (cmd != NULL) {
-      /* We don't want $DIFF_OPTIONS to get in the way. */
-      if (os_getenv("DIFF_OPTIONS")) {
-        vim_setenv((char_u *)"DIFF_OPTIONS", (char_u *)"");
-      }
-
-      /* Build the diff command and execute it.  Always use -a, binary
-       * differences are of no use.  Ignore errors, diff returns
-       * non-zero when differences have been found. */
-      vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s %s",
-                   diff_a_works == FALSE ? "" : "-a ",
-                   "",
-                   (diff_flags & DIFF_IWHITE) ? "-b " : "",
-                   (diff_flags & DIFF_ICASE) ? "-i " : "",
-                   tmp_orig, tmp_new);
-      append_redir(cmd, (int)len, p_srr, tmp_diff);
-      block_autocmds(); /* Avoid ShellCmdPost stuff */
-      (void)call_shell(
-          cmd,
-          kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-          NULL
-          );
-      unblock_autocmds();
-      vim_free(cmd);
+    /* We don't want $DIFF_OPTIONS to get in the way. */
+    if (os_getenv("DIFF_OPTIONS")) {
+      vim_setenv((char_u *)"DIFF_OPTIONS", (char_u *)"");
     }
+
+    /* Build the diff command and execute it.  Always use -a, binary
+     * differences are of no use.  Ignore errors, diff returns
+     * non-zero when differences have been found. */
+    vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s %s",
+                 diff_a_works == FALSE ? "" : "-a ",
+                 "",
+                 (diff_flags & DIFF_IWHITE) ? "-b " : "",
+                 (diff_flags & DIFF_ICASE) ? "-i " : "",
+                 tmp_orig, tmp_new);
+    append_redir(cmd, (int)len, p_srr, tmp_diff);
+    block_autocmds(); /* Avoid ShellCmdPost stuff */
+    (void)call_shell(
+        cmd,
+        kShellOptFilter | kShellOptSilent | kShellOptDoOut,
+        NULL
+        );
+    unblock_autocmds();
+    vim_free(cmd);
   }
 }
 
@@ -902,9 +900,6 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
 
   buf = alloc((unsigned)buflen);
-  if (buf == NULL) {
-    goto theend;
-  }
 
 #ifdef UNIX
 

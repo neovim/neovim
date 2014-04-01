@@ -1123,8 +1123,6 @@ static void syn_stack_alloc(void)
     }
 
     sstp = (synstate_T *)alloc_clear((unsigned)(len * sizeof(synstate_T)));
-    if (sstp == NULL)           /* out of memory! */
-      return;
 
     to = sstp - 1;
     if (syn_block->b_sst_array != NULL) {
@@ -3936,8 +3934,6 @@ add_keyword (
   else
     name_ic = name;
   kp = (keyentry_T *)alloc((int)(sizeof(keyentry_T) + STRLEN(name_ic)));
-  if (kp == NULL)
-    return;
   STRCPY(kp->keyword, name_ic);
   kp->k_syn.id = id;
   kp->k_syn.inc_tag = current_syn_inc_tag;
@@ -4160,12 +4156,10 @@ static void syn_incl_toplevel(int id, int *flagsp)
     short       *grp_list = (short *)alloc((unsigned)(2 * sizeof(short)));
     int tlg_id = curwin->w_s->b_syn_topgrp - SYNID_CLUSTER;
 
-    if (grp_list != NULL) {
-      grp_list[0] = id;
-      grp_list[1] = 0;
-      syn_combine_list(&SYN_CLSTR(curwin->w_s)[tlg_id].scl_list, &grp_list,
-          CLUSTER_ADD);
-    }
+    grp_list[0] = id;
+    grp_list[1] = 0;
+    syn_combine_list(&SYN_CLSTR(curwin->w_s)[tlg_id].scl_list, &grp_list,
+        CLUSTER_ADD);
   }
 }
 
@@ -4261,77 +4255,75 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
     if (syn_id != 0)
       /* allocate a buffer, for removing backslashes in the keyword */
       keyword_copy = alloc((unsigned)STRLEN(rest) + 1);
-    if (keyword_copy != NULL) {
-      syn_opt_arg.flags = 0;
-      syn_opt_arg.keyword = TRUE;
-      syn_opt_arg.sync_idx = NULL;
-      syn_opt_arg.has_cont_list = FALSE;
-      syn_opt_arg.cont_in_list = NULL;
-      syn_opt_arg.next_list = NULL;
+    syn_opt_arg.flags = 0;
+    syn_opt_arg.keyword = TRUE;
+    syn_opt_arg.sync_idx = NULL;
+    syn_opt_arg.has_cont_list = FALSE;
+    syn_opt_arg.cont_in_list = NULL;
+    syn_opt_arg.next_list = NULL;
+
+    /*
+     * The options given apply to ALL keywords, so all options must be
+     * found before keywords can be created.
+     * 1: collect the options and copy the keywords to keyword_copy.
+     */
+    cnt = 0;
+    p = keyword_copy;
+    for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
+      rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
+      if (rest == NULL || ends_excmd(*rest))
+        break;
+      /* Copy the keyword, removing backslashes, and add a NUL. */
+      while (*rest != NUL && !vim_iswhite(*rest)) {
+        if (*rest == '\\' && rest[1] != NUL)
+          ++rest;
+        *p++ = *rest++;
+      }
+      *p++ = NUL;
+      ++cnt;
+    }
+
+    if (!eap->skip) {
+      /* Adjust flags for use of ":syn include". */
+      syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
 
       /*
-       * The options given apply to ALL keywords, so all options must be
-       * found before keywords can be created.
-       * 1: collect the options and copy the keywords to keyword_copy.
+       * 2: Add an entry for each keyword.
        */
-      cnt = 0;
-      p = keyword_copy;
-      for (; rest != NULL && !ends_excmd(*rest); rest = skipwhite(rest)) {
-        rest = get_syn_options(rest, &syn_opt_arg, &conceal_char);
-        if (rest == NULL || ends_excmd(*rest))
-          break;
-        /* Copy the keyword, removing backslashes, and add a NUL. */
-        while (*rest != NUL && !vim_iswhite(*rest)) {
-          if (*rest == '\\' && rest[1] != NUL)
-            ++rest;
-          *p++ = *rest++;
-        }
-        *p++ = NUL;
-        ++cnt;
-      }
+      for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
+        for (p = vim_strchr(kw, '[');; ) {
+          if (p != NULL)
+            *p = NUL;
+          add_keyword(kw, syn_id, syn_opt_arg.flags,
+              syn_opt_arg.cont_in_list,
+              syn_opt_arg.next_list, conceal_char);
+          if (p == NULL)
+            break;
+          if (p[1] == NUL) {
+            EMSG2(_("E789: Missing ']': %s"), kw);
+            kw = p + 2;                       /* skip over the NUL */
+            break;
+          }
+          if (p[1] == ']') {
+            kw = p + 1;                       /* skip over the "]" */
+            break;
+          }
+          if (has_mbyte) {
+            int l = (*mb_ptr2len)(p + 1);
 
-      if (!eap->skip) {
-        /* Adjust flags for use of ":syn include". */
-        syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-
-        /*
-         * 2: Add an entry for each keyword.
-         */
-        for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
-          for (p = vim_strchr(kw, '[');; ) {
-            if (p != NULL)
-              *p = NUL;
-            add_keyword(kw, syn_id, syn_opt_arg.flags,
-                syn_opt_arg.cont_in_list,
-                syn_opt_arg.next_list, conceal_char);
-            if (p == NULL)
-              break;
-            if (p[1] == NUL) {
-              EMSG2(_("E789: Missing ']': %s"), kw);
-              kw = p + 2;                       /* skip over the NUL */
-              break;
-            }
-            if (p[1] == ']') {
-              kw = p + 1;                       /* skip over the "]" */
-              break;
-            }
-            if (has_mbyte) {
-              int l = (*mb_ptr2len)(p + 1);
-
-              memmove(p, p + 1, l);
-              p += l;
-            } else {
-              p[0] = p[1];
-              ++p;
-            }
+            memmove(p, p + 1, l);
+            p += l;
+          } else {
+            p[0] = p[1];
+            ++p;
           }
         }
       }
-
-      vim_free(keyword_copy);
-      vim_free(syn_opt_arg.cont_in_list);
-      vim_free(syn_opt_arg.next_list);
     }
+
+    vim_free(keyword_copy);
+    vim_free(syn_opt_arg.cont_in_list);
+    vim_free(syn_opt_arg.next_list);
   }
 
   if (rest != NULL)
@@ -4563,17 +4555,9 @@ syn_cmd_region (
        * used from end to start).
        */
       ppp = (struct pat_ptr *)alloc((unsigned)sizeof(struct pat_ptr));
-      if (ppp == NULL) {
-        rest = NULL;
-        break;
-      }
       ppp->pp_next = pat_ptrs[item];
       pat_ptrs[item] = ppp;
       ppp->pp_synp = (synpat_T *)alloc_clear((unsigned)sizeof(synpat_T));
-      if (ppp->pp_synp == NULL) {
-        rest = NULL;
-        break;
-      }
 
       /*
        * Get the syntax pattern and the following offset(s).
@@ -4796,8 +4780,6 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
         break;
       }
       clstr = (short *)alloc((unsigned)((count + 1) * sizeof(short)));
-      if (clstr == NULL)
-        break;
       clstr[count] = 0;
     }
   }
@@ -5260,10 +5242,6 @@ get_id_list (
       for (end = p; *end && !vim_iswhite(*end) && *end != ','; ++end)
         ;
       name = alloc((int)(end - p + 3));             /* leave room for "^$" */
-      if (name == NULL) {
-        failed = TRUE;
-        break;
-      }
       vim_strncpy(name + 1, p, end - p);
       if (       STRCMP(name + 1, "ALLBUT") == 0
                  || STRCMP(name + 1, "ALL") == 0
@@ -5358,8 +5336,6 @@ get_id_list (
       break;
     if (round == 1) {
       retval = (short *)alloc((unsigned)((count + 1) * sizeof(short)));
-      if (retval == NULL)
-        break;
       retval[count] = 0;            /* zero means end of the list */
       total_count = count;
     }
@@ -5395,8 +5371,7 @@ static short *copy_id_list(short *list)
     ;
   len = (count + 1) * sizeof(short);
   retval = (short *)alloc((unsigned)len);
-  if (retval != NULL)
-    memmove(retval, list, (size_t)len);
+  memmove(retval, list, (size_t)len);
 
   return retval;
 }
@@ -6208,12 +6183,11 @@ int load_colors(char_u *name)
 
   recursive = TRUE;
   buf = alloc((unsigned)(STRLEN(name) + 12));
-  if (buf != NULL) {
-    sprintf((char *)buf, "colors/%s.vim", name);
-    retval = source_runtime(buf, FALSE);
-    vim_free(buf);
-    apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
-  }
+  sprintf((char *)buf, "colors/%s.vim", name);
+  retval = source_runtime(buf, FALSE);
+  vim_free(buf);
+  apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
+
   recursive = FALSE;
 
   return retval;

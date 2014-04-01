@@ -293,82 +293,74 @@ int redraw_asap(int type)
       (long_u)(rows * Columns * sizeof(schar_T)), FALSE);
   screenattr = (sattr_T *)lalloc(
       (long_u)(rows * Columns * sizeof(sattr_T)), FALSE);
-  if (screenline == NULL || screenattr == NULL)
-    ret = 2;
+
   if (enc_utf8) {
     screenlineUC = (u8char_T *)lalloc(
         (long_u)(rows * Columns * sizeof(u8char_T)), FALSE);
-    if (screenlineUC == NULL)
-      ret = 2;
+
     for (i = 0; i < p_mco; ++i) {
       screenlineC[i] = (u8char_T *)lalloc(
           (long_u)(rows * Columns * sizeof(u8char_T)), FALSE);
-      if (screenlineC[i] == NULL)
-        ret = 2;
     }
   }
   if (enc_dbcs == DBCS_JPNU) {
     screenline2 = (schar_T *)lalloc(
         (long_u)(rows * Columns * sizeof(schar_T)), FALSE);
-    if (screenline2 == NULL)
-      ret = 2;
   }
 
-  if (ret != 2) {
-    /* Save the text displayed in the command line area. */
-    for (r = 0; r < rows; ++r) {
-      memmove(screenline + r * Columns,
-          ScreenLines + LineOffset[cmdline_row + r],
+  /* Save the text displayed in the command line area. */
+  for (r = 0; r < rows; ++r) {
+    memmove(screenline + r * Columns,
+        ScreenLines + LineOffset[cmdline_row + r],
+        (size_t)Columns * sizeof(schar_T));
+    memmove(screenattr + r * Columns,
+        ScreenAttrs + LineOffset[cmdline_row + r],
+        (size_t)Columns * sizeof(sattr_T));
+    if (enc_utf8) {
+      memmove(screenlineUC + r * Columns,
+          ScreenLinesUC + LineOffset[cmdline_row + r],
+          (size_t)Columns * sizeof(u8char_T));
+      for (i = 0; i < p_mco; ++i)
+        memmove(screenlineC[i] + r * Columns,
+            ScreenLinesC[r] + LineOffset[cmdline_row + r],
+            (size_t)Columns * sizeof(u8char_T));
+    }
+    if (enc_dbcs == DBCS_JPNU)
+      memmove(screenline2 + r * Columns,
+          ScreenLines2 + LineOffset[cmdline_row + r],
           (size_t)Columns * sizeof(schar_T));
-      memmove(screenattr + r * Columns,
-          ScreenAttrs + LineOffset[cmdline_row + r],
+  }
+
+  update_screen(0);
+  ret = 3;
+
+  if (must_redraw == 0) {
+    int off = (int)(current_ScreenLine - ScreenLines);
+
+    /* Restore the text displayed in the command line area. */
+    for (r = 0; r < rows; ++r) {
+      memmove(current_ScreenLine,
+          screenline + r * Columns,
+          (size_t)Columns * sizeof(schar_T));
+      memmove(ScreenAttrs + off,
+          screenattr + r * Columns,
           (size_t)Columns * sizeof(sattr_T));
       if (enc_utf8) {
-        memmove(screenlineUC + r * Columns,
-            ScreenLinesUC + LineOffset[cmdline_row + r],
+        memmove(ScreenLinesUC + off,
+            screenlineUC + r * Columns,
             (size_t)Columns * sizeof(u8char_T));
         for (i = 0; i < p_mco; ++i)
-          memmove(screenlineC[i] + r * Columns,
-              ScreenLinesC[r] + LineOffset[cmdline_row + r],
+          memmove(ScreenLinesC[i] + off,
+              screenlineC[i] + r * Columns,
               (size_t)Columns * sizeof(u8char_T));
       }
       if (enc_dbcs == DBCS_JPNU)
-        memmove(screenline2 + r * Columns,
-            ScreenLines2 + LineOffset[cmdline_row + r],
+        memmove(ScreenLines2 + off,
+            screenline2 + r * Columns,
             (size_t)Columns * sizeof(schar_T));
+      SCREEN_LINE(cmdline_row + r, 0, Columns, Columns, FALSE);
     }
-
-    update_screen(0);
-    ret = 3;
-
-    if (must_redraw == 0) {
-      int off = (int)(current_ScreenLine - ScreenLines);
-
-      /* Restore the text displayed in the command line area. */
-      for (r = 0; r < rows; ++r) {
-        memmove(current_ScreenLine,
-            screenline + r * Columns,
-            (size_t)Columns * sizeof(schar_T));
-        memmove(ScreenAttrs + off,
-            screenattr + r * Columns,
-            (size_t)Columns * sizeof(sattr_T));
-        if (enc_utf8) {
-          memmove(ScreenLinesUC + off,
-              screenlineUC + r * Columns,
-              (size_t)Columns * sizeof(u8char_T));
-          for (i = 0; i < p_mco; ++i)
-            memmove(ScreenLinesC[i] + off,
-                screenlineC[i] + r * Columns,
-                (size_t)Columns * sizeof(u8char_T));
-        }
-        if (enc_dbcs == DBCS_JPNU)
-          memmove(ScreenLines2 + off,
-              screenline2 + r * Columns,
-              (size_t)Columns * sizeof(schar_T));
-        SCREEN_LINE(cmdline_row + r, 0, Columns, Columns, FALSE);
-      }
-      ret = 4;
-    }
+    ret = 4;
   }
 
   vim_free(screenline);
@@ -4708,8 +4700,6 @@ win_redr_status_matches (
     buf = alloc((unsigned)Columns * MB_MAXBYTES + 1);
   else
     buf = alloc((unsigned)Columns + 1);
-  if (buf == NULL)
-    return;
 
   if (match == -1) {    /* don't show match but original text */
     match = 0;

@@ -1010,12 +1010,7 @@ retry:
         for (; size >= 10; size = (long)((long_u)size >> 1)) {
           if ((new_buffer = lalloc((long_u)(size + linerest + 1),
                    FALSE)) != NULL)
-            break;
-        }
-        if (new_buffer == NULL) {
-          do_outofmem_msg((long_u)(size * 2 + linerest + 1));
-          error = TRUE;
-          break;
+              break;
         }
         if (linerest)           /* copy characters from the previous buffer */
           memmove(new_buffer, ptr - linerest, (size_t)linerest);
@@ -2394,22 +2389,21 @@ char_u *prepare_crypt_write(buf_T *buf, int *lenp)
 
   header = alloc_clear(CRYPT_MAGIC_LEN + CRYPT_SALT_LEN_MAX
       + CRYPT_SEED_LEN_MAX + 2);
-  if (header != NULL) {
-    crypt_push_state();
-    use_crypt_method = get_crypt_method(buf);      /* select zip or blowfish */
-    vim_strncpy(header, (char_u *)crypt_magic[use_crypt_method],
-        CRYPT_MAGIC_LEN);
-    if (use_crypt_method == 0)
-      crypt_init_keys(buf->b_p_key);
-    else {
-      /* Using blowfish, add salt and seed. */
-      salt = header + CRYPT_MAGIC_LEN;
-      seed = salt + salt_len;
-      sha2_seed(salt, salt_len, seed, seed_len);
-      bf_key_init(buf->b_p_key, salt, salt_len);
-      bf_cfb_init(seed, seed_len);
-    }
+  crypt_push_state();
+  use_crypt_method = get_crypt_method(buf);      /* select zip or blowfish */
+  vim_strncpy(header, (char_u *)crypt_magic[use_crypt_method],
+      CRYPT_MAGIC_LEN);
+  if (use_crypt_method == 0)
+    crypt_init_keys(buf->b_p_key);
+  else {
+    /* Using blowfish, add salt and seed. */
+    salt = header + CRYPT_MAGIC_LEN;
+    seed = salt + salt_len;
+    sha2_seed(salt, salt_len, seed, seed_len);
+    bf_key_init(buf->b_p_key, salt, salt_len);
+    bf_cfb_init(seed, seed_len);
   }
+
   *lenp = CRYPT_MAGIC_LEN + salt_len + seed_len;
   return header;
 }
@@ -2789,9 +2783,12 @@ buf_write (
   msg_scroll = FALSE;               /* always overwrite the file message now */
 
   buffer = alloc(BUFSIZE);
-  if (buffer == NULL) {             /* can't allocate big buffer, use small
-                                     * one (to be able to write when out of
-                                     * memory) */
+  // TODO: decide how to handle this now that alloc never returns NULL. The fact
+  // that the OOM handling code calls this should be considered.
+  //
+  // can't allocate big buffer, use small one (to be able to write when out of
+  // memory)
+  if (buffer == NULL) {
     buffer = smallbuf;
     bufsize = SMBUFSIZE;
   } else
@@ -3029,10 +3026,6 @@ buf_write (
 #endif
 
       copybuf = alloc(BUFSIZE + 1);
-      if (copybuf == NULL) {
-        some_error = TRUE;                  /* out of memory */
-        goto nobackup;
-      }
 
       /*
        * Try to make the backup in each directory in the 'bdir' option.
@@ -3400,8 +3393,6 @@ nobackup:
         write_info.bw_conv_buflen = bufsize * 4;
       write_info.bw_conv_buf
         = lalloc((long_u)write_info.bw_conv_buflen, TRUE);
-      if (write_info.bw_conv_buf == NULL)
-        end = 0;
     }
   }
 
@@ -3420,8 +3411,6 @@ nobackup:
       write_info.bw_conv_buflen = bufsize * ICONV_MULT;
       write_info.bw_conv_buf
         = lalloc((long_u)write_info.bw_conv_buflen, TRUE);
-      if (write_info.bw_conv_buf == NULL)
-        end = 0;
       write_info.bw_first = TRUE;
     } else
 #  endif
@@ -5661,13 +5650,11 @@ static void vim_settempdir(char_u *tempdir)
   char_u      *buf;
 
   buf = alloc((unsigned)MAXPATHL + 2);
-  if (buf != NULL) {
-    if (vim_FullName(tempdir, buf, MAXPATHL, FALSE) == FAIL)
-      STRCPY(buf, tempdir);
-    add_pathsep(buf);
-    vim_tempdir = vim_strsave(buf);
-    vim_free(buf);
-  }
+  if (vim_FullName(tempdir, buf, MAXPATHL, FALSE) == FAIL)
+    STRCPY(buf, tempdir);
+  add_pathsep(buf);
+  vim_tempdir = vim_strsave(buf);
+  vim_free(buf);
 }
 #endif
 
@@ -7648,14 +7635,12 @@ auto_next_pat (
         s = _("%s Auto commands for \"%s\"");
         sourcing_name = alloc((unsigned)(STRLEN(s)
                                          + STRLEN(name) + ap->patlen + 1));
-        if (sourcing_name != NULL) {
-          sprintf((char *)sourcing_name, s,
-              (char *)name, (char *)ap->pat);
-          if (p_verbose >= 8) {
-            verbose_enter();
-            smsg((char_u *)_("Executing %s"), sourcing_name);
-            verbose_leave();
-          }
+        sprintf((char *)sourcing_name, s,
+            (char *)name, (char *)ap->pat);
+        if (p_verbose >= 8) {
+          verbose_enter();
+          smsg((char_u *)_("Executing %s"), sourcing_name);
+          verbose_leave();
         }
 
         apc->curpat = ap;
@@ -8130,10 +8115,8 @@ file_pat_to_reg_pat (
       if (p + 1 >= pat_end) {
         /* The 'pattern' is a filetype check ONLY */
         reg_pat = (char_u *)alloc(check_length + 1);
-        if (reg_pat != NULL) {
-          memmove(reg_pat, pat, (size_t)check_length);
-          reg_pat[check_length] = NUL;
-        }
+        memmove(reg_pat, pat, (size_t)check_length);
+        reg_pat[check_length] = NUL;
         return reg_pat;
       }
     }

@@ -509,180 +509,176 @@ open_line (
           + (second_line_indent > 0 ? second_line_indent : 0) + 1);
       allocated = leader;                   /* remember to free it later */
 
-      if (leader == NULL)
-        lead_len = 0;
-      else {
-        vim_strncpy(leader, saved_line, lead_len);
+      vim_strncpy(leader, saved_line, lead_len);
 
-        /*
-         * Replace leader with lead_repl, right or left adjusted
-         */
-        if (lead_repl != NULL) {
-          int c = 0;
-          int off = 0;
+      /*
+       * Replace leader with lead_repl, right or left adjusted
+       */
+      if (lead_repl != NULL) {
+        int c = 0;
+        int off = 0;
 
-          for (p = lead_flags; *p != NUL && *p != ':'; ) {
-            if (*p == COM_RIGHT || *p == COM_LEFT)
-              c = *p++;
-            else if (VIM_ISDIGIT(*p) || *p == '-')
-              off = getdigits(&p);
-            else
-              ++p;
-          }
-          if (c == COM_RIGHT) {            /* right adjusted leader */
-            /* find last non-white in the leader to line up with */
-            for (p = leader + lead_len - 1; p > leader
-                 && vim_iswhite(*p); --p)
-              ;
+        for (p = lead_flags; *p != NUL && *p != ':'; ) {
+          if (*p == COM_RIGHT || *p == COM_LEFT)
+            c = *p++;
+          else if (VIM_ISDIGIT(*p) || *p == '-')
+            off = getdigits(&p);
+          else
             ++p;
+        }
+        if (c == COM_RIGHT) {            /* right adjusted leader */
+          /* find last non-white in the leader to line up with */
+          for (p = leader + lead_len - 1; p > leader
+               && vim_iswhite(*p); --p)
+            ;
+          ++p;
 
-            /* Compute the length of the replaced characters in
-             * screen characters, not bytes. */
-            {
-              int repl_size = vim_strnsize(lead_repl,
-                  lead_repl_len);
-              int old_size = 0;
-              char_u  *endp = p;
-              int l;
+          /* Compute the length of the replaced characters in
+           * screen characters, not bytes. */
+          {
+            int repl_size = vim_strnsize(lead_repl,
+                lead_repl_len);
+            int old_size = 0;
+            char_u  *endp = p;
+            int l;
 
-              while (old_size < repl_size && p > leader) {
-                mb_ptr_back(leader, p);
-                old_size += ptr2cells(p);
-              }
-              l = lead_repl_len - (int)(endp - p);
-              if (l != 0)
-                memmove(endp + l, endp,
-                    (size_t)((leader + lead_len) - endp));
-              lead_len += l;
+            while (old_size < repl_size && p > leader) {
+              mb_ptr_back(leader, p);
+              old_size += ptr2cells(p);
             }
-            memmove(p, lead_repl, (size_t)lead_repl_len);
-            if (p + lead_repl_len > leader + lead_len)
-              p[lead_repl_len] = NUL;
+            l = lead_repl_len - (int)(endp - p);
+            if (l != 0)
+              memmove(endp + l, endp,
+                  (size_t)((leader + lead_len) - endp));
+            lead_len += l;
+          }
+          memmove(p, lead_repl, (size_t)lead_repl_len);
+          if (p + lead_repl_len > leader + lead_len)
+            p[lead_repl_len] = NUL;
 
-            /* blank-out any other chars from the old leader. */
-            while (--p >= leader) {
-              int l = mb_head_off(leader, p);
+          /* blank-out any other chars from the old leader. */
+          while (--p >= leader) {
+            int l = mb_head_off(leader, p);
 
-              if (l > 1) {
-                p -= l;
-                if (ptr2cells(p) > 1) {
-                  p[1] = ' ';
-                  --l;
-                }
-                memmove(p + 1, p + l + 1,
-                    (size_t)((leader + lead_len) - (p + l + 1)));
-                lead_len -= l;
-                *p = ' ';
-              } else if (!vim_iswhite(*p))
-                *p = ' ';
-            }
-          } else {                        /* left adjusted leader */
-            p = skipwhite(leader);
-            /* Compute the length of the replaced characters in
-             * screen characters, not bytes. Move the part that is
-             * not to be overwritten. */
-            {
-              int repl_size = vim_strnsize(lead_repl,
-                  lead_repl_len);
-              int i;
-              int l;
-
-              for (i = 0; p[i] != NUL && i < lead_len; i += l) {
-                l = (*mb_ptr2len)(p + i);
-                if (vim_strnsize(p, i + l) > repl_size)
-                  break;
+            if (l > 1) {
+              p -= l;
+              if (ptr2cells(p) > 1) {
+                p[1] = ' ';
+                --l;
               }
-              if (i != lead_repl_len) {
-                memmove(p + lead_repl_len, p + i,
-                    (size_t)(lead_len - i - (p - leader)));
-                lead_len += lead_repl_len - i;
-              }
+              memmove(p + 1, p + l + 1,
+                  (size_t)((leader + lead_len) - (p + l + 1)));
+              lead_len -= l;
+              *p = ' ';
+            } else if (!vim_iswhite(*p))
+              *p = ' ';
+          }
+        } else {                        /* left adjusted leader */
+          p = skipwhite(leader);
+          /* Compute the length of the replaced characters in
+           * screen characters, not bytes. Move the part that is
+           * not to be overwritten. */
+          {
+            int repl_size = vim_strnsize(lead_repl,
+                lead_repl_len);
+            int i;
+            int l;
+
+            for (i = 0; p[i] != NUL && i < lead_len; i += l) {
+              l = (*mb_ptr2len)(p + i);
+              if (vim_strnsize(p, i + l) > repl_size)
+                break;
             }
-            memmove(p, lead_repl, (size_t)lead_repl_len);
+            if (i != lead_repl_len) {
+              memmove(p + lead_repl_len, p + i,
+                  (size_t)(lead_len - i - (p - leader)));
+              lead_len += lead_repl_len - i;
+            }
+          }
+          memmove(p, lead_repl, (size_t)lead_repl_len);
 
-            /* Replace any remaining non-white chars in the old
-             * leader by spaces.  Keep Tabs, the indent must
-             * remain the same. */
-            for (p += lead_repl_len; p < leader + lead_len; ++p)
-              if (!vim_iswhite(*p)) {
-                /* Don't put a space before a TAB. */
-                if (p + 1 < leader + lead_len && p[1] == TAB) {
-                  --lead_len;
-                  memmove(p, p + 1,
-                      (leader + lead_len) - p);
-                } else {
-                  int l = (*mb_ptr2len)(p);
+          /* Replace any remaining non-white chars in the old
+           * leader by spaces.  Keep Tabs, the indent must
+           * remain the same. */
+          for (p += lead_repl_len; p < leader + lead_len; ++p)
+            if (!vim_iswhite(*p)) {
+              /* Don't put a space before a TAB. */
+              if (p + 1 < leader + lead_len && p[1] == TAB) {
+                --lead_len;
+                memmove(p, p + 1,
+                    (leader + lead_len) - p);
+              } else {
+                int l = (*mb_ptr2len)(p);
 
-                  if (l > 1) {
-                    if (ptr2cells(p) > 1) {
-                      /* Replace a double-wide char with
-                       * two spaces */
-                      --l;
-                      *p++ = ' ';
-                    }
-                    memmove(p + 1, p + l,
-                        (leader + lead_len) - p);
-                    lead_len -= l - 1;
+                if (l > 1) {
+                  if (ptr2cells(p) > 1) {
+                    /* Replace a double-wide char with
+                     * two spaces */
+                    --l;
+                    *p++ = ' ';
                   }
-                  *p = ' ';
+                  memmove(p + 1, p + l,
+                      (leader + lead_len) - p);
+                  lead_len -= l - 1;
                 }
+                *p = ' ';
               }
-            *p = NUL;
-          }
-
-          /* Recompute the indent, it may have changed. */
-          if (curbuf->b_p_ai
-              || do_si
-              )
-            newindent = get_indent_str(leader, (int)curbuf->b_p_ts);
-
-          /* Add the indent offset */
-          if (newindent + off < 0) {
-            off = -newindent;
-            newindent = 0;
-          } else
-            newindent += off;
-
-          /* Correct trailing spaces for the shift, so that
-           * alignment remains equal. */
-          while (off > 0 && lead_len > 0
-                 && leader[lead_len - 1] == ' ') {
-            /* Don't do it when there is a tab before the space */
-            if (vim_strchr(skipwhite(leader), '\t') != NULL)
-              break;
-            --lead_len;
-            --off;
-          }
-
-          /* If the leader ends in white space, don't add an
-           * extra space */
-          if (lead_len > 0 && vim_iswhite(leader[lead_len - 1]))
-            extra_space = FALSE;
-          leader[lead_len] = NUL;
+            }
+          *p = NUL;
         }
 
-        if (extra_space) {
-          leader[lead_len++] = ' ';
-          leader[lead_len] = NUL;
+        /* Recompute the indent, it may have changed. */
+        if (curbuf->b_p_ai
+            || do_si
+            )
+          newindent = get_indent_str(leader, (int)curbuf->b_p_ts);
+
+        /* Add the indent offset */
+        if (newindent + off < 0) {
+          off = -newindent;
+          newindent = 0;
+        } else
+          newindent += off;
+
+        /* Correct trailing spaces for the shift, so that
+         * alignment remains equal. */
+        while (off > 0 && lead_len > 0
+               && leader[lead_len - 1] == ' ') {
+          /* Don't do it when there is a tab before the space */
+          if (vim_strchr(skipwhite(leader), '\t') != NULL)
+            break;
+          --lead_len;
+          --off;
         }
 
-        newcol = lead_len;
-
-        /*
-         * if a new indent will be set below, remove the indent that
-         * is in the comment leader
-         */
-        if (newindent
-            || did_si
-            ) {
-          while (lead_len && vim_iswhite(*leader)) {
-            --lead_len;
-            --newcol;
-            ++leader;
-          }
-        }
-
+        /* If the leader ends in white space, don't add an
+         * extra space */
+        if (lead_len > 0 && vim_iswhite(leader[lead_len - 1]))
+          extra_space = FALSE;
+        leader[lead_len] = NUL;
       }
+
+      if (extra_space) {
+        leader[lead_len++] = ' ';
+        leader[lead_len] = NUL;
+      }
+
+      newcol = lead_len;
+
+      /*
+       * if a new indent will be set below, remove the indent that
+       * is in the comment leader
+       */
+      if (newindent
+          || did_si
+          ) {
+        while (lead_len && vim_iswhite(*leader)) {
+          --lead_len;
+          --newcol;
+          ++leader;
+        }
+      }
+
       did_si = can_si = FALSE;
     } else if (comment_end != NULL) {
       /*
@@ -2420,10 +2416,6 @@ int get_keystroke(void)
       buf = xrealloc(buf, buflen);
       maxlen = (buflen - 6 - len) / 3;
     }
-    if (buf == NULL) {
-      do_outofmem_msg((long_u)buflen);
-      return ESC;        /* panic! */
-    }
 
     /* First time: blocking wait.  Second time: wait up to 100ms for a
      * terminal code to complete. */
@@ -2739,8 +2731,7 @@ char_u *expand_env_save_opt(char_u *src, int one)
   char_u      *p;
 
   p = alloc(MAXPATHL);
-  if (p != NULL)
-    expand_env_esc(src, p, MAXPATHL, FALSE, one, NULL);
+  expand_env_esc(src, p, MAXPATHL, FALSE, one, NULL);
   return p;
 }
 
@@ -3385,8 +3376,7 @@ home_replace_save (
   if (src != NULL)              /* just in case */
     len += (unsigned)STRLEN(src);
   dst = alloc(len);
-  if (dst != NULL)
-    home_replace(buf, src, dst, len, TRUE);
+  home_replace(buf, src, dst, len, TRUE);
   return dst;
 }
 
@@ -3547,8 +3537,7 @@ get_cmd_output (
   fseek(fd, 0L, SEEK_SET);
 
   buffer = alloc(len + 1);
-  if (buffer != NULL)
-    i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
+  i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
   fclose(fd);
   mch_remove(tempname);
   if (buffer == NULL)

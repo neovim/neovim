@@ -1318,8 +1318,6 @@ static void command_line_scan(mparm_T *parmp)
               } else
                 a = argv[0];
               p = alloc((unsigned)(STRLEN(a) + 4));
-              if (p == NULL)
-                mch_exit(2);
               sprintf((char *)p, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = TRUE;
               parmp->commands[parmp->n_commands++] = p;
@@ -1473,11 +1471,9 @@ scripterror:
    * one. */
   if (parmp->n_commands > 0) {
     p = alloc((unsigned)STRLEN(parmp->commands[0]) + 3);
-    if (p != NULL) {
-      sprintf((char *)p, ":%s\r", parmp->commands[0]);
-      set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-      vim_free(p);
-    }
+    sprintf((char *)p, ":%s\r", parmp->commands[0]);
+    set_vim_var_string(VV_SWAPCOMMAND, p, -1);
+    vim_free(p);
   }
   TIME_MSG("parsing arguments");
 }
@@ -1520,9 +1516,8 @@ static void init_startuptime(mparm_T *paramp)
  */
 static void allocate_generic_buffers(void)
 {
-  if ((IObuff = alloc(IOSIZE)) == NULL
-      || (NameBuff = alloc(MAXPATHL)) == NULL)
-    mch_exit(0);
+  IObuff = alloc(IOSIZE);
+  NameBuff = alloc(MAXPATHL);
   TIME_MSG("Allocated generic buffers");
 }
 

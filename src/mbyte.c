@@ -3334,49 +3334,47 @@ char_u * enc_canonize(char_u *enc)
 
   /* copy "enc" to allocated memory, with room for two '-' */
   r = alloc((unsigned)(STRLEN(enc) + 3));
-  if (r != NULL) {
-    /* Make it all lower case and replace '_' with '-'. */
-    p = r;
-    for (s = enc; *s != NUL; ++s) {
-      if (*s == '_')
-        *p++ = '-';
-      else
-        *p++ = TOLOWER_ASC(*s);
-    }
-    *p = NUL;
+  /* Make it all lower case and replace '_' with '-'. */
+  p = r;
+  for (s = enc; *s != NUL; ++s) {
+    if (*s == '_')
+      *p++ = '-';
+    else
+      *p++ = TOLOWER_ASC(*s);
+  }
+  *p = NUL;
 
-    /* Skip "2byte-" and "8bit-". */
-    p = enc_skip(r);
+  /* Skip "2byte-" and "8bit-". */
+  p = enc_skip(r);
 
-    /* Change "microsoft-cp" to "cp".  Used in some spell files. */
-    if (STRNCMP(p, "microsoft-cp", 12) == 0)
-      STRMOVE(p, p + 10);
+  /* Change "microsoft-cp" to "cp".  Used in some spell files. */
+  if (STRNCMP(p, "microsoft-cp", 12) == 0)
+    STRMOVE(p, p + 10);
 
-    /* "iso8859" -> "iso-8859" */
-    if (STRNCMP(p, "iso8859", 7) == 0) {
-      STRMOVE(p + 4, p + 3);
-      p[3] = '-';
-    }
+  /* "iso8859" -> "iso-8859" */
+  if (STRNCMP(p, "iso8859", 7) == 0) {
+    STRMOVE(p + 4, p + 3);
+    p[3] = '-';
+  }
 
-    /* "iso-8859n" -> "iso-8859-n" */
-    if (STRNCMP(p, "iso-8859", 8) == 0 && p[8] != '-') {
-      STRMOVE(p + 9, p + 8);
-      p[8] = '-';
-    }
+  /* "iso-8859n" -> "iso-8859-n" */
+  if (STRNCMP(p, "iso-8859", 8) == 0 && p[8] != '-') {
+    STRMOVE(p + 9, p + 8);
+    p[8] = '-';
+  }
 
-    /* "latin-N" -> "latinN" */
-    if (STRNCMP(p, "latin-", 6) == 0)
-      STRMOVE(p + 5, p + 6);
+  /* "latin-N" -> "latinN" */
+  if (STRNCMP(p, "latin-", 6) == 0)
+    STRMOVE(p + 5, p + 6);
 
-    if (enc_canon_search(p) >= 0) {
-      /* canonical name can be used unmodified */
-      if (p != r)
-        STRMOVE(r, p);
-    } else if ((i = enc_alias_search(p)) >= 0) {
-      /* alias recognized, get canonical name */
-      vim_free(r);
-      r = vim_strsave((char_u *)enc_canon_table[i].name);
-    }
+  if (enc_canon_search(p) >= 0) {
+    /* canonical name can be used unmodified */
+    if (p != r)
+      STRMOVE(r, p);
+  } else if ((i = enc_alias_search(p)) >= 0) {
+    /* alias recognized, get canonical name */
+    vim_free(r);
+    r = vim_strsave((char_u *)enc_canon_table[i].name);
   }
   return r;
 }
@@ -3537,7 +3535,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
        * increase the buffer size. */
       len = len + fromlen * 2 + 40;
       p = alloc((unsigned)len);
-      if (p != NULL && done > 0)
+      if (done > 0)
         memmove(p, result, done);
       vim_free(result);
       result = p;
@@ -3856,8 +3854,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
       if (unconvertlen > 0) {
         /* Move the unconverted characters to allocated memory. */
         *restp = alloc(unconvertlen);
-        if (*restp != NULL)
-          memmove(*restp, ptr + len - unconvertlen, unconvertlen);
+        memmove(*restp, ptr + len - unconvertlen, unconvertlen);
         *restlenp = unconvertlen;
       }
       memmove(ptr, d, dlen);
@@ -3913,8 +3910,6 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
   switch (vcp->vc_type) {
     case CONV_TO_UTF8:            /* latin1 to utf-8 conversion */
       retval = alloc(len * 2 + 1);
-      if (retval == NULL)
-        break;
       d = retval;
       for (i = 0; i < len; ++i) {
         c = ptr[i];
@@ -3932,8 +3927,6 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
 
     case CONV_9_TO_UTF8:          /* latin9 to utf-8 conversion */
       retval = alloc(len * 3 + 1);
-      if (retval == NULL)
-        break;
       d = retval;
       for (i = 0; i < len; ++i) {
         c = ptr[i];
@@ -3957,8 +3950,6 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
     case CONV_TO_LATIN1:          /* utf-8 to latin1 conversion */
     case CONV_TO_LATIN9:          /* utf-8 to latin9 conversion */
       retval = alloc(len + 1);
-      if (retval == NULL)
-        break;
       d = retval;
       for (i = 0; i < len; ++i) {
         l = utf_ptr2len_len(ptr + i, len - i);

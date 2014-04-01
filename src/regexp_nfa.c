@@ -523,18 +523,17 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
     return NULL;
 
   ret = alloc(len);
-  if (ret != NULL) {
-    p = start->out->out;     /* skip first char, it goes into regstart */
-    s = ret;
-    while (p->c > 0) {
-      if (has_mbyte)
-        s += (*mb_char2bytes)(p->c, s);
-      else
-        *s++ = p->c;
-      p = p->out;
-    }
-    *s = NUL;
+  p = start->out->out;     /* skip first char, it goes into regstart */
+  s = ret;
+  while (p->c > 0) {
+    if (has_mbyte)
+      s += (*mb_char2bytes)(p->c, s);
+    else
+      *s++ = p->c;
+    p = p->out;
   }
+  *s = NUL;
+
   return ret;
 }
 
@@ -4219,8 +4218,6 @@ addstate_here (
 
       l->len = l->len * 3 / 2 + 50;
       newl = (nfa_thread_T *)alloc(l->len * sizeof(nfa_thread_T));
-      if (newl == NULL)
-        return;
       memmove(&(newl[0]),
           &(l->t[0]),
           sizeof(nfa_thread_T) * listidx);
@@ -4550,10 +4547,6 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
      * values and clear them. */
     if (*listids == NULL) {
       *listids = (int *)lalloc(sizeof(int) * nstate, TRUE);
-      if (*listids == NULL) {
-        EMSG(_("E878: (NFA) Could not allocate memory for branch traversal!"));
-        return 0;
-      }
     }
     nfa_save_listids(prog, *listids);
     need_restore = TRUE;
@@ -4885,8 +4878,6 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   list[0].len = nstate + 1;
   list[1].t = (nfa_thread_T *)lalloc(size, TRUE);
   list[1].len = nstate + 1;
-  if (list[0].t == NULL || list[1].t == NULL)
-    goto theend;
 
 #ifdef ENABLE_LOG
   log_fd = fopen(NFA_REGEXP_RUN_LOG, "a");
@@ -6037,7 +6028,6 @@ nextchar:
   log_fd = NULL;
 #endif
 
-theend:
   /* Free memory */
   vim_free(list[0].t);
   vim_free(list[1].t);
@@ -6314,8 +6304,6 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   /* allocate the regprog with space for the compiled regexp */
   prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (nstate - 1);
   prog = (nfa_regprog_T *)lalloc(prog_size, TRUE);
-  if (prog == NULL)
-    goto fail;
   state_ptr = prog->state;
 
   /*

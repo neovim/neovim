@@ -3434,8 +3434,7 @@ find_decl (
   int retval = OK;
   int incll;
 
-  if ((pat = alloc(len + 7)) == NULL)
-    return FAIL;
+  pat = alloc(len + 7);
 
   /* Put "\V" before the pattern to avoid that the special meaning of "."
    * and "~" causes trouble. */
@@ -4410,8 +4409,6 @@ static void nv_ident(cmdarg_T *cap)
   kp_help = (*kp == NUL || STRCMP(kp, ":he") == 0
              || STRCMP(kp, ":help") == 0);
   buf = alloc((unsigned)(n * 2 + 30 + STRLEN(kp)));
-  if (buf == NULL)
-    return;
   buf[0] = NUL;
 
   switch (cmdchar) {
@@ -4500,11 +4497,6 @@ static void nv_ident(cmdarg_T *cap)
       return;
     }
     newbuf = (char_u *)xrealloc(buf, STRLEN(buf) + STRLEN(p) + 1);
-    if (newbuf == NULL) {
-      vim_free(buf);
-      vim_free(p);
-      return;
-    }
     buf = newbuf;
     STRCAT(buf, p);
     vim_free(p);

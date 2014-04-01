@@ -182,10 +182,6 @@ int set_indent(int size, int flags)
   // after the if (!curbuf->b_p_et) below.
   if (orig_char_len != -1) {
     newline = alloc(orig_char_len + size - ind_done + line_len);
-
-    if (newline == NULL) {
-      return FALSE;
-    }
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
@@ -207,10 +203,6 @@ int set_indent(int size, int flags)
   } else {
     todo = size;
     newline = alloc(ind_len + line_len);
-
-    if (newline == NULL) {
-      return FALSE;
-    }
     s = newline;
   }
 
@@ -376,10 +368,6 @@ int copy_indent(int size, char_u *src)
       // and the rest of the line.
       line_len = (int)STRLEN(ml_get_curline()) + 1;
       line = alloc(ind_len + line_len);
-
-      if (line == NULL) {
-        return FALSE;
-      }
       p = line;
     }
   }

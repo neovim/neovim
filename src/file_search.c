@@ -390,11 +390,7 @@ vim_findfile_init (
         helper = walker;
         ptr = xrealloc(search_ctx->ffsc_stopdirs_v,
             (dircount + 1) * sizeof(char_u *));
-        if (ptr)
-          search_ctx->ffsc_stopdirs_v = ptr;
-        else
-          /* ignore, keep what we have and continue */
-          break;
+        search_ctx->ffsc_stopdirs_v = ptr;
         walker = vim_strchr(walker, ';');
         if (walker) {
           search_ctx->ffsc_stopdirs_v[dircount-1] =
@@ -789,9 +785,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         if (path_with_url(dirptrs[0])) {
           stackp->ffs_filearray = (char_u **)
                                   alloc((unsigned)sizeof(char *));
-          if (stackp->ffs_filearray != NULL
-              && (stackp->ffs_filearray[0]
-                    = vim_strsave(dirptrs[0])) != NULL)
+          if ((stackp->ffs_filearray[0] = vim_strsave(dirptrs[0])) != NULL)
             stackp->ffs_filearray_size = 1;
           else
             stackp->ffs_filearray_size = 0;
@@ -1136,10 +1130,6 @@ static int ff_wc_equal(char_u *s1, char_u *s2)
  * maintains the list of already visited files and dirs
  * returns FAIL if the given file/dir is already in the list
  * returns OK if it is newly added
- *
- * TODO: What to do on memory allocation problems?
- *	 -> return TRUE - Better the file is found several times instead of
- *	    never.
  */
 static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *wc_path)
 {
@@ -1189,29 +1179,27 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   vp = (ff_visited_T *)alloc((unsigned)(sizeof(ff_visited_T)
                                         + STRLEN(ff_expand_buffer)));
 
-  if (vp != NULL) {
 #ifdef UNIX
-    if (!url) {
-      vp->ffv_dev_valid = TRUE;
-      vp->ffv_ino = st.st_ino;
-      vp->ffv_dev = st.st_dev;
-      vp->ffv_fname[0] = NUL;
-    } else {
-      vp->ffv_dev_valid = FALSE;
-      STRCPY(vp->ffv_fname, ff_expand_buffer);
-    }
-#else
+  if (!url) {
+    vp->ffv_dev_valid = TRUE;
+    vp->ffv_ino = st.st_ino;
+    vp->ffv_dev = st.st_dev;
+    vp->ffv_fname[0] = NUL;
+  } else {
+    vp->ffv_dev_valid = FALSE;
     STRCPY(vp->ffv_fname, ff_expand_buffer);
+  }
+#else
+  STRCPY(vp->ffv_fname, ff_expand_buffer);
 #endif
 
-    if (wc_path != NULL)
-      vp->ffv_wc_path = vim_strsave(wc_path);
-    else
-      vp->ffv_wc_path = NULL;
+  if (wc_path != NULL)
+    vp->ffv_wc_path = vim_strsave(wc_path);
+  else
+    vp->ffv_wc_path = NULL;
 
-    vp->ffv_next = *visited_list;
-    *visited_list = vp;
-  }
+  vp->ffv_next = *visited_list;
+  *visited_list = vp;
 
   return OK;
 }
@@ -1563,8 +1551,7 @@ find_file_in_path_option (
           break;
         }
 
-        if ((buf = alloc((int)(MAXPATHL))) == NULL)
-          break;
+        buf = alloc((int)(MAXPATHL));
 
         /* copy next path */
         buf[0] = 0;

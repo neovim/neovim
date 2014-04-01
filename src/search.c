@@ -4199,22 +4199,20 @@ find_pattern_in_path (
         if (depth + 1 == old_files) {
           bigger = (SearchedFile *)lalloc((long_u)(
                 max_path_depth * 2 * sizeof(SearchedFile)), TRUE);
-          if (bigger != NULL) {
-            for (i = 0; i <= depth; i++)
-              bigger[i] = files[i];
-            for (i = depth + 1; i < old_files + max_path_depth; i++) {
-              bigger[i].fp = NULL;
-              bigger[i].name = NULL;
-              bigger[i].lnum = 0;
-              bigger[i].matched = FALSE;
-            }
-            for (i = old_files; i < max_path_depth; i++)
-              bigger[i + max_path_depth] = files[i];
-            old_files += max_path_depth;
-            max_path_depth *= 2;
-            vim_free(files);
-            files = bigger;
+          for (i = 0; i <= depth; i++)
+            bigger[i] = files[i];
+          for (i = depth + 1; i < old_files + max_path_depth; i++) {
+            bigger[i].fp = NULL;
+            bigger[i].name = NULL;
+            bigger[i].lnum = 0;
+            bigger[i].matched = FALSE;
           }
+          for (i = old_files; i < max_path_depth; i++)
+            bigger[i + max_path_depth] = files[i];
+          old_files += max_path_depth;
+          max_path_depth *= 2;
+          vim_free(files);
+          files = bigger;
         }
         if ((files[depth + 1].fp = mch_fopen((char *)new_fname, "r"))
             == NULL)

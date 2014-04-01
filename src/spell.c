@@ -2078,8 +2078,6 @@ spell_move_to (
       vim_free(buf);
       buflen = len + MAXWLEN + 2;
       buf = alloc(buflen);
-      if (buf == NULL)
-        break;
     }
 
     /* In first line check first word for Capital. */
@@ -2363,15 +2361,13 @@ static slang_T *slang_alloc(char_u *lang)
   slang_T *lp;
 
   lp = (slang_T *)alloc_clear(sizeof(slang_T));
-  if (lp != NULL) {
-    if (lang != NULL)
-      lp->sl_name = vim_strsave(lang);
-    ga_init(&lp->sl_rep, sizeof(fromto_T), 10);
-    ga_init(&lp->sl_repsal, sizeof(fromto_T), 10);
-    lp->sl_compmax = MAXWLEN;
-    lp->sl_compsylmax = MAXWLEN;
-    hash_init(&lp->sl_wordcount);
-  }
+  if (lang != NULL)
+    lp->sl_name = vim_strsave(lang);
+  ga_init(&lp->sl_rep, sizeof(fromto_T), 10);
+  ga_init(&lp->sl_repsal, sizeof(fromto_T), 10);
+  lp->sl_compmax = MAXWLEN;
+  lp->sl_compsylmax = MAXWLEN;
+  hash_init(&lp->sl_wordcount);
 
   return lp;
 }
@@ -2867,8 +2863,6 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
 
   lp->sl_prefprog = (regprog_T **)alloc_clear(
       (unsigned)sizeof(regprog_T *) * cnt);
-  if (lp->sl_prefprog == NULL)
-    return SP_OTHERERROR;
   lp->sl_prefixcnt = cnt;
 
   for (i = 0; i < cnt; ++i) {
@@ -2975,8 +2969,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     ccnt = getc(fd);                            /* <salfromlen> */
     if (ccnt < 0)
       return SP_TRUNCERROR;
-    if ((p = alloc(ccnt + 2)) == NULL)
-      return SP_OTHERERROR;
+    p = alloc(ccnt + 2);
     smp->sm_lead = p;
 
     /* Read up to the first special char into sm_lead. */
@@ -3049,8 +3042,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     /* Add one extra entry to mark the end with an empty sm_lead.  Avoids
      * that we need to check the index every time. */
     smp = &((salitem_T *)gap->ga_data)[gap->ga_len];
-    if ((p = alloc(1)) == NULL)
-      return SP_OTHERERROR;
+    p = alloc(1);
     p[0] = NUL;
     smp->sm_lead = p;
     smp->sm_leadlen = 0;
@@ -3132,8 +3124,6 @@ count_common_word (
   hi = hash_lookup(&lp->sl_wordcount, p, hash);
   if (HASHITEM_EMPTY(hi)) {
     wc = (wordcount_T *)alloc((unsigned)(sizeof(wordcount_T) + STRLEN(p)));
-    if (wc == NULL)
-      return;
     STRCPY(wc->wc_word, p);
     wc->wc_count = count;
     hash_add_item(&lp->sl_wordcount, hi, wc->wc_word, hash);
@@ -3290,24 +3280,14 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   if (enc_utf8)
     c += todo * 2;
   pat = alloc((unsigned)c);
-  if (pat == NULL)
-    return SP_OTHERERROR;
 
   /* We also need a list of all flags that can appear at the start and one
    * for all flags. */
   cp = alloc(todo + 1);
-  if (cp == NULL) {
-    vim_free(pat);
-    return SP_OTHERERROR;
-  }
   slang->sl_compstartflags = cp;
   *cp = NUL;
 
   ap = alloc(todo + 1);
-  if (ap == NULL) {
-    vim_free(pat);
-    return SP_OTHERERROR;
-  }
   slang->sl_compallflags = ap;
   *ap = NUL;
 
@@ -3542,8 +3522,6 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     for (i = 0; i < 256; ++i)
       if (lp->sl_sal_first[i] > 0) {
         p = alloc(sizeof(int) * (lp->sl_sal_first[i] * 2 + 1));
-        if (p == NULL)
-          return SP_OTHERERROR;
         ((int **)gap->ga_data)[i] = (int *)p;
         *(int *)p = 0;
       }
@@ -3681,14 +3659,10 @@ spell_read_tree (
   if (len > 0) {
     /* Allocate the byte array. */
     bp = lalloc((long_u)len, TRUE);
-    if (bp == NULL)
-      return SP_OTHERERROR;
     *bytsp = bp;
 
     /* Allocate the index array. */
     ip = (idx_T *)lalloc_clear((long_u)(len * sizeof(int)), TRUE);
-    if (ip == NULL)
-      return SP_OTHERERROR;
     *idxsp = ip;
 
     /* Recursively read the tree and store it in the array. */
@@ -7731,8 +7705,6 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
    * Make the file name by changing ".spl" to ".sug".
    */
   fname = alloc(MAXPATHL);
-  if (fname == NULL)
-    goto theend;
   vim_strncpy(fname, wfname, MAXPATHL - 1);
   len = (int)STRLEN(fname);
   fname[len - 2] = 'u';
@@ -8174,8 +8146,6 @@ mkspell (
   incount = fcount - 1;
 
   wfname = alloc(MAXPATHL);
-  if (wfname == NULL)
-    return;
 
   if (fcount >= 1) {
     len = (int)STRLEN(fnames[0]);
@@ -8227,8 +8197,6 @@ mkspell (
     }
 
     fname = alloc(MAXPATHL);
-    if (fname == NULL)
-      goto theend;
 
     /*
      * Init the aff and dic pointers.
@@ -8439,8 +8407,6 @@ spell_add_word (
       return;
     }
     fnamebuf = alloc(MAXPATHL);
-    if (fnamebuf == NULL)
-      return;
 
     for (spf = curwin->w_s->b_p_spf, i = 1; *spf != NUL; ++i) {
       copy_option_part(&spf, fnamebuf, MAXPATHL, ",");
@@ -8562,8 +8528,6 @@ static void init_spellfile(void)
 
   if (*curwin->w_s->b_p_spl != NUL && curwin->w_s->b_langp.ga_len > 0) {
     buf = alloc(MAXPATHL);
-    if (buf == NULL)
-      return;
 
     /* Find the end of the language name.  Exclude the region.  If there
      * is a path separator remember the start of the tail. */
@@ -9235,24 +9199,22 @@ void spell_suggest(int count)
     /* Replace the word. */
     p = alloc((unsigned)STRLEN(line) - stp->st_orglen
         + stp->st_wordlen + 1);
-    if (p != NULL) {
-      c = (int)(sug.su_badptr - line);
-      memmove(p, line, c);
-      STRCPY(p + c, stp->st_word);
-      STRCAT(p, sug.su_badptr + stp->st_orglen);
-      ml_replace(curwin->w_cursor.lnum, p, FALSE);
-      curwin->w_cursor.col = c;
+    c = (int)(sug.su_badptr - line);
+    memmove(p, line, c);
+    STRCPY(p + c, stp->st_word);
+    STRCAT(p, sug.su_badptr + stp->st_orglen);
+    ml_replace(curwin->w_cursor.lnum, p, FALSE);
+    curwin->w_cursor.col = c;
 
-      /* For redo we use a change-word command. */
-      ResetRedobuff();
-      AppendToRedobuff((char_u *)"ciw");
-      AppendToRedobuffLit(p + c,
-          stp->st_wordlen + sug.su_badlen - stp->st_orglen);
-      AppendCharToRedobuff(ESC);
+    /* For redo we use a change-word command. */
+    ResetRedobuff();
+    AppendToRedobuff((char_u *)"ciw");
+    AppendToRedobuffLit(p + c,
+        stp->st_wordlen + sug.su_badlen - stp->st_orglen);
+    AppendCharToRedobuff(ESC);
 
-      /* After this "p" may be invalid. */
-      changed_bytes(curwin->w_cursor.lnum, c);
-    }
+    /* After this "p" may be invalid. */
+    changed_bytes(curwin->w_cursor.lnum, c);
   } else
     curwin->w_cursor = prev_cursor;
 
@@ -9341,8 +9303,6 @@ void ex_spellrepall(exarg_T *eap)
   addlen = (int)(STRLEN(repl_to) - STRLEN(repl_from));
 
   frompat = alloc((unsigned)STRLEN(repl_from) + 7);
-  if (frompat == NULL)
-    return;
   sprintf((char *)frompat, "\\V\\<%s\\>", repl_from);
   p_ws = FALSE;
 
@@ -9360,8 +9320,6 @@ void ex_spellrepall(exarg_T *eap)
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
             repl_to, STRLEN(repl_to)) != 0) {
       p = alloc((unsigned)STRLEN(line) + addlen + 1);
-      if (p == NULL)
-        break;
       memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
@@ -9417,8 +9375,6 @@ spell_suggest_list (
        * replaced part. */
       wcopy = alloc(stp->st_wordlen
           + (unsigned)STRLEN(sug.su_badptr + stp->st_orglen) + 1);
-      if (wcopy == NULL)
-        break;
       STRCPY(wcopy, stp->st_word);
       STRCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
       ((char_u **)gap->ga_data)[gap->ga_len++] = wcopy;
@@ -11864,11 +11820,9 @@ add_sound_suggest (
   if (HASHITEM_EMPTY(hi)) {
     sft = (sftword_T *)alloc((unsigned)(sizeof(sftword_T)
                                         + STRLEN(goodword)));
-    if (sft != NULL) {
-      sft->sft_score = score;
-      STRCPY(sft->sft_word, goodword);
-      hash_add_item(&slang->sl_sounddone, hi, sft->sft_word, hash);
-    }
+    sft->sft_score = score;
+    STRCPY(sft->sft_word, goodword);
+    hash_add_item(&slang->sl_sounddone, hi, sft->sft_word, hash);
   } else {
     sft = HI2SFT(hi);
     if (score >= sft->sft_score)
@@ -12142,8 +12096,6 @@ static void set_map_str(slang_T *lp, char_u *map)
         hashitem_T  *hi;
 
         b = alloc((unsigned)(cl + headcl + 2));
-        if (b == NULL)
-          return;
         mb_char2bytes(c, b);
         b[cl] = NUL;
         mb_char2bytes(headc, b + cl + 1);
@@ -13370,8 +13322,6 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
 #define CNT(a, b)   cnt[(a) + (b) * (badlen + 1)]
   cnt = (int *)lalloc((long_u)(sizeof(int) * (badlen + 1) * (goodlen + 1)),
       TRUE);
-  if (cnt == NULL)
-    return 0;           /* out of memory */
 
   CNT(0, 0) = 0;
   for (j = 1; j <= goodlen; ++j)

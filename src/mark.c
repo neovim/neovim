@@ -1417,8 +1417,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
   pos_T pos;
   list_T      *list = NULL;
 
-  if ((name_buf = alloc(LSIZE)) == NULL)
-    return;
+  name_buf = alloc(LSIZE);
   *name_buf = NUL;
 
   if (fp_out == NULL && (flags & (VIF_GET_OLDFILES | VIF_FORCEIT))) {

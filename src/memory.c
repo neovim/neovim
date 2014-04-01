@@ -71,8 +71,7 @@ char_u *alloc_clear(unsigned size)
   char_u *p;
 
   p = lalloc((long_u)size, TRUE);
-  if (p != NULL)
-    (void)memset(p, 0, (size_t)size);
+  (void)memset(p, 0, (size_t)size);
   return p;
 }
 

@@ -197,7 +197,8 @@ static char_u *get_buffcont(buffheader_T *buffer,
   for (bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
     count += (long_u)STRLEN(bp->b_str);
 
-  if ((count || dozero) && (p = lalloc(count + 1, TRUE)) != NULL) {
+  if (count || dozero) {
+    p = lalloc(count + 1, TRUE);
     p2 = p;
     for (bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
       for (str = bp->b_str; *str; )
@@ -290,8 +291,6 @@ add_buff (
     else
       len = slen;
     p = (buffblock_T *)lalloc((long_u)(sizeof(buffblock_T) + len), TRUE);
-    if (p == NULL)
-      return;       /* no space, just forget it */
     buf->bh_space = (int)(len - slen);
     vim_strncpy(p->b_str, s, (size_t)slen);
 
@@ -3827,30 +3826,29 @@ char_u *vim_strsave_escape_csi(char_u *p)
 
   /* Need a buffer to hold up to three times as much. */
   res = alloc((unsigned)(STRLEN(p) * 3) + 1);
-  if (res != NULL) {
-    d = res;
-    for (s = p; *s != NUL; ) {
-      if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
-        /* Copy special key unmodified. */
-        *d++ = *s++;
-        *d++ = *s++;
-        *d++ = *s++;
-      } else {
-        int len  = mb_char2len(PTR2CHAR(s));
-        int len2 = mb_ptr2len(s);
-        /* Add character, possibly multi-byte to destination, escaping
-         * CSI and K_SPECIAL. */
-        d = add_char2buf(PTR2CHAR(s), d);
-        while (len < len2) {
-          /* add following combining char */
-          d = add_char2buf(PTR2CHAR(s + len), d);
-          len += mb_char2len(PTR2CHAR(s + len));
-        }
-        mb_ptr_adv(s);
+  d = res;
+  for (s = p; *s != NUL; ) {
+    if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+      /* Copy special key unmodified. */
+      *d++ = *s++;
+      *d++ = *s++;
+      *d++ = *s++;
+    } else {
+      int len  = mb_char2len(PTR2CHAR(s));
+      int len2 = mb_ptr2len(s);
+      /* Add character, possibly multi-byte to destination, escaping
+       * CSI and K_SPECIAL. */
+      d = add_char2buf(PTR2CHAR(s), d);
+      while (len < len2) {
+        /* add following combining char */
+        d = add_char2buf(PTR2CHAR(s + len), d);
+        len += mb_char2len(PTR2CHAR(s + len));
       }
+      mb_ptr_adv(s);
     }
-    *d = NUL;
   }
+  *d = NUL;
+
   return res;
 }
 

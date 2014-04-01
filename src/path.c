@@ -397,8 +397,6 @@ unix_expandpath (
 
   /* make room for file name */
   buf = alloc((int)STRLEN(path) + BASENAMELEN + 5);
-  if (buf == NULL)
-    return 0;
 
   /*
    * Find the first part in the path name that contains a wildcard.
@@ -627,8 +625,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   char_u      *p;
   int len;
 
-  if ((buf = alloc((int)MAXPATHL)) == NULL)
-    return;
+  buf = alloc((int)MAXPATHL);
 
   while (*path_option != NUL) {
     copy_option_part(&path_option, buf, MAXPATHL, " ,");
@@ -745,8 +742,6 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
    */
   len = (int)STRLEN(pattern);
   file_pattern = alloc(len + 2);
-  if (file_pattern == NULL)
-    return;
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
@@ -761,14 +756,11 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   if (regmatch.regprog == NULL)
     return;
 
-  if ((curdir = alloc((int)(MAXPATHL))) == NULL)
-    goto theend;
+  curdir = alloc((int)(MAXPATHL));
   os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
   in_curdir = (char_u **)alloc_clear(gap->ga_len * sizeof(char_u *));
-  if (in_curdir == NULL)
-    goto theend;
 
   for (i = 0; i < gap->ga_len && !got_int; i++) {
     char_u      *path = fnames[i];
@@ -841,8 +833,6 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     }
 
     rel_path = alloc((int)(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2));
-    if (rel_path == NULL)
-      goto theend;
     STRCPY(rel_path, ".");
     add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
@@ -853,7 +843,6 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     ui_breakcheck();
   }
 
-theend:
   vim_free(curdir);
   if (in_curdir != NULL) {
     for (i = 0; i < gap->ga_len; i++)
@@ -916,8 +905,7 @@ expand_in_path (
   char_u      *e;       /* end */
   char_u      *paths = NULL;
 
-  if ((curdir = alloc((unsigned)MAXPATHL)) == NULL)
-    return 0;
+  curdir = alloc((unsigned)MAXPATHL);
   os_dirname(curdir, MAXPATHL);
 
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
@@ -1245,8 +1233,6 @@ addfile (
     return;
 
   p = alloc((unsigned)(STRLEN(f) + 1 + isdir));
-  if (p == NULL)
-    return;
 
   STRCPY(p, f);
 #ifdef BACKSLASH_IN_FILENAME
@@ -1745,8 +1731,6 @@ char_u *shorten_fname1(char_u *full_path)
   char_u      *p = full_path;
 
   dirname = alloc(MAXPATHL);
-  if (dirname == NULL)
-    return full_path;
   if (os_dirname(dirname, MAXPATHL) == OK) {
     p = shorten_fname(full_path, dirname);
     if (p == NULL || *p == NUL)

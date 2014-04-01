@@ -81,17 +81,15 @@ void ui_inchar_undo(char_u *s, int len)
   if (ta_str != NULL)
     newlen += ta_len - ta_off;
   new = alloc(newlen);
-  if (new != NULL) {
-    if (ta_str != NULL) {
-      memmove(new, ta_str + ta_off, (size_t)(ta_len - ta_off));
-      memmove(new + ta_len - ta_off, s, (size_t)len);
-      vim_free(ta_str);
-    } else
-      memmove(new, s, (size_t)len);
-    ta_str = new;
-    ta_len = newlen;
-    ta_off = 0;
-  }
+  if (ta_str != NULL) {
+    memmove(new, ta_str + ta_off, (size_t)(ta_len - ta_off));
+    memmove(new + ta_len - ta_off, s, (size_t)len);
+    vim_free(ta_str);
+  } else
+    memmove(new, s, (size_t)len);
+  ta_str = new;
+  ta_len = newlen;
+  ta_off = 0;
 }
 #endif
 
@@ -317,13 +315,12 @@ char_u *get_input_buf(void)
 
   /* We use a growarray to store the data pointer and the length. */
   gap = (garray_T *)alloc((unsigned)sizeof(garray_T));
-  if (gap != NULL) {
-    /* Add one to avoid a zero size. */
-    gap->ga_data = alloc((unsigned)inbufcount + 1);
-    if (gap->ga_data != NULL)
-      memmove(gap->ga_data, inbuf, (size_t)inbufcount);
-    gap->ga_len = inbufcount;
-  }
+  /* Add one to avoid a zero size. */
+  gap->ga_data = alloc((unsigned)inbufcount + 1);
+  if (gap->ga_data != NULL)
+    memmove(gap->ga_data, inbuf, (size_t)inbufcount);
+  gap->ga_len = inbufcount;
+
   trash_input_buf();
   return (char_u *)gap;
 }
