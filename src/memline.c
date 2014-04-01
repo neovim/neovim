@@ -1015,8 +1015,6 @@ void ml_recover(void)
    * Only the memline and crypt information in it are really used.
    */
   buf = (buf_T *)alloc((unsigned)sizeof(buf_T));
-  if (buf == NULL)
-    goto theend;
 
   /*
    * init fields in memline struct
@@ -1127,8 +1125,6 @@ void ml_recover(void)
 
     /* need to reallocate the memory used to store the data */
     p = alloc(mfp->mf_page_size);
-    if (p == NULL)
-      goto theend;
     memmove(p, hp->bh_data, previous_page_size);
     vim_free(hp->bh_data);
     hp->bh_data = p;
@@ -1627,11 +1623,9 @@ recover_names (
       if (swapname != NULL) {
         if (mch_stat((char *)swapname, &st) != -1) {                /* It exists! */
           files = (char_u **)alloc((unsigned)sizeof(char_u *));
-          if (files != NULL) {
-            files[0] = swapname;
-            swapname = NULL;
-            num_files = 1;
-          }
+          files[0] = swapname;
+          swapname = NULL;
+          num_files = 1;
         }
         vim_free(swapname);
       }
@@ -1711,14 +1705,12 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
   d = NULL;
   if (f != NULL) {
     s = alloc((unsigned)(STRLEN(f) + 1));
-    if (s != NULL) {
-      STRCPY(s, f);
-      for (d = s; *d != NUL; mb_ptr_adv(d))
-        if (vim_ispathsep(*d))
-          *d = '%';
-      d = concat_fnames(dir, s, TRUE);
-      vim_free(s);
-    }
+    STRCPY(s, f);
+    for (d = s; *d != NUL; mb_ptr_adv(d))
+      if (vim_ispathsep(*d))
+        *d = '%';
+    d = concat_fnames(dir, s, TRUE);
+    vim_free(s);
     vim_free(f);
   }
   return d;
@@ -3652,10 +3644,7 @@ findswapname (
    * First allocate some memory to put the directory name in.
    */
   dir_name = alloc((unsigned)STRLEN(*dirp) + 1);
-  if (dir_name == NULL)
-    *dirp = NULL;
-  else
-    (void)copy_option_part(dirp, dir_name, 31000, ",");
+  (void)copy_option_part(dirp, dir_name, 31000, ",");
 
   /*
    * we try different names until we find one that does not exist yet
@@ -3698,61 +3687,59 @@ findswapname (
                  || STRLEN(tail) > (size_t)8
                  || *path_tail(fname) == '.') {
         fname2 = alloc(n + 2);
-        if (fname2 != NULL) {
-          STRCPY(fname2, fname);
-          /* if fname == "xx.xx.swp",	    fname2 = "xx.xx.swx"
-           * if fname == ".xx.swp",	    fname2 = ".xx.swpx"
-           * if fname == "123456789.swp", fname2 = "12345678x.swp"
-           */
-          if (vim_strchr(tail, '.') != NULL)
-            fname2[n - 1] = 'x';
-          else if (*path_tail(fname) == '.') {
-            fname2[n] = 'x';
-            fname2[n + 1] = NUL;
-          } else
-            fname2[n - 5] += 1;
-          /*
-           * may need to create the files to be able to use mch_stat()
-           */
-          f1 = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
-          if (f1 < 0) {
-            f1 = mch_open_rw((char *)fname,
+        STRCPY(fname2, fname);
+        /* if fname == "xx.xx.swp",	    fname2 = "xx.xx.swx"
+         * if fname == ".xx.swp",	    fname2 = ".xx.swpx"
+         * if fname == "123456789.swp", fname2 = "12345678x.swp"
+         */
+        if (vim_strchr(tail, '.') != NULL)
+          fname2[n - 1] = 'x';
+        else if (*path_tail(fname) == '.') {
+          fname2[n] = 'x';
+          fname2[n + 1] = NUL;
+        } else
+          fname2[n - 5] += 1;
+        /*
+         * may need to create the files to be able to use mch_stat()
+         */
+        f1 = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
+        if (f1 < 0) {
+          f1 = mch_open_rw((char *)fname,
+              O_RDWR|O_CREAT|O_EXCL|O_EXTRA);
+          created1 = TRUE;
+        }
+        if (f1 >= 0) {
+          f2 = mch_open((char *)fname2, O_RDONLY | O_EXTRA, 0);
+          if (f2 < 0) {
+            f2 = mch_open_rw((char *)fname2,
                 O_RDWR|O_CREAT|O_EXCL|O_EXTRA);
-            created1 = TRUE;
+            created2 = TRUE;
           }
-          if (f1 >= 0) {
-            f2 = mch_open((char *)fname2, O_RDONLY | O_EXTRA, 0);
-            if (f2 < 0) {
-              f2 = mch_open_rw((char *)fname2,
-                  O_RDWR|O_CREAT|O_EXCL|O_EXTRA);
-              created2 = TRUE;
-            }
-            if (f2 >= 0) {
-              /*
-               * Both files exist now. If mch_stat() returns the
-               * same device and inode they are the same file.
-               */
-              if (mch_fstat(f1, &s1) != -1
-                  && mch_fstat(f2, &s2) != -1
-                  && s1.st_dev == s2.st_dev
-                  && s1.st_ino == s2.st_ino)
-                same = TRUE;
-              close(f2);
-              if (created2)
-                mch_remove(fname2);
-            }
-            close(f1);
-            if (created1)
-              mch_remove(fname);
+          if (f2 >= 0) {
+            /*
+             * Both files exist now. If mch_stat() returns the
+             * same device and inode they are the same file.
+             */
+            if (mch_fstat(f1, &s1) != -1
+                && mch_fstat(f2, &s2) != -1
+                && s1.st_dev == s2.st_dev
+                && s1.st_ino == s2.st_ino)
+              same = TRUE;
+            close(f2);
+            if (created2)
+              mch_remove(fname2);
           }
-          vim_free(fname2);
-          if (same) {
-            buf->b_shortname = TRUE;
-            vim_free(fname);
-            fname = makeswapname(buf_fname, buf->b_ffname,
-                buf, dir_name);
-            continue;                   /* try again with b_shortname set */
-          }
+          close(f1);
+          if (created1)
+            mch_remove(fname);
+        }
+        vim_free(fname2);
+        if (same) {
+          buf->b_shortname = TRUE;
+          vim_free(fname);
+          fname = makeswapname(buf_fname, buf->b_ffname,
+              buf, dir_name);
+          continue;                   /* try again with b_shortname set */
         }
       }
     }
@@ -3913,12 +3900,10 @@ findswapname (
             name = alloc((unsigned)(STRLEN(fname)
                                     + STRLEN(_("Swap file \""))
                                     + STRLEN(_("\" already exists!")) + 5));
-            if (name != NULL) {
-              STRCPY(name, _("Swap file \""));
-              home_replace(NULL, fname, name + STRLEN(name),
-                  1000, TRUE);
-              STRCAT(name, _("\" already exists!"));
-            }
+            STRCPY(name, _("Swap file \""));
+            home_replace(NULL, fname, name + STRLEN(name),
+                1000, TRUE);
+            STRCAT(name, _("\" already exists!"));
             choice = do_dialog(VIM_WARNING,
                 (char_u *)_("VIM - ATTENTION"),
                 name == NULL
@@ -4370,11 +4355,6 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
       buf->b_ml.ml_chunksize = (chunksize_T *)
                                xrealloc(buf->b_ml.ml_chunksize,
           sizeof(chunksize_T) * buf->b_ml.ml_numchunks);
-      if (buf->b_ml.ml_chunksize == NULL) {
-        /* Hmmmm, Give up on offset for this buffer */
-        buf->b_ml.ml_usedchunks = -1;
-        return;
-      }
     }
 
     if (buf->b_ml.ml_chunksize[curix].mlcs_numlines >= MLCS_MAXL) {

@@ -121,16 +121,14 @@ char_u* ga_concat_strings(garray_T *gap)
 
   s = alloc(len + 1);
 
-  if (s != NULL) {
-    *s = NUL;
-
-    for (i = 0; i < gap->ga_len; ++i) {
-      if (*s != NUL) {
-        STRCAT(s, ",");
-      }
-      STRCAT(s, ((char_u **)(gap->ga_data))[i]);
+  *s = NUL;
+  for (i = 0; i < gap->ga_len; ++i) {
+    if (*s != NUL) {
+      STRCAT(s, ",");
     }
+    STRCAT(s, ((char_u **)(gap->ga_data))[i]);
   }
+
   return s;
 }
 

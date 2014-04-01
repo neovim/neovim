@@ -200,9 +200,6 @@ static int is_executable_in_path(const char_u *name)
 
   int buf_len = STRLEN(name) + STRLEN(path) + 2;
   char_u *buf = alloc((unsigned)(buf_len));
-  if (buf == NULL) {
-    return FALSE;
-  }
 
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.

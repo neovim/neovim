@@ -404,8 +404,6 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
        * up the undo info when out of memory.
        */
       uhp = (u_header_T *)U_ALLOC_LINE(sizeof(u_header_T));
-      if (uhp == NULL)
-        goto nomem;
 #ifdef U_DEBUG
       uhp->uh_magic = UH_MAGIC;
 #endif
@@ -572,8 +570,6 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
    * add lines in front of entry list
    */
   uep = (u_entry_T *)U_ALLOC_LINE(sizeof(u_entry_T));
-  if (uep == NULL)
-    goto nomem;
   memset(uep, 0, sizeof(u_entry_T));
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
@@ -595,11 +591,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   }
 
   if (size > 0) {
-    if ((uep->ue_array = (char_u **)U_ALLOC_LINE(
-             sizeof(char_u *) * size)) == NULL) {
-      u_freeentry(uep, 0L);
-      goto nomem;
-    }
+    uep->ue_array = (char_u **)U_ALLOC_LINE(sizeof(char_u *) * size);
     for (i = 0, lnum = top + 1; i < size; ++i) {
       fast_breakcheck();
       if (got_int) {
@@ -778,8 +770,6 @@ static size_t fwrite_crypt(buf_T *buf, char_u *ptr, size_t len, FILE *fp)
     copy = small_buf;      /* no malloc()/free() for short strings */
   else {
     copy = lalloc(len, FALSE);
-    if (copy == NULL)
-      return 0;
   }
   crypt_encode(ptr, len, copy);
   i = fwrite(copy, len, (size_t)1, fp);
@@ -912,8 +902,6 @@ static u_header_T *unserialize_uhp(FILE *fp, char_u *file_name)
   int error;
 
   uhp = (u_header_T *)U_ALLOC_LINE(sizeof(u_header_T));
-  if (uhp == NULL)
-    return NULL;
   memset(uhp, 0, sizeof(u_header_T));
 #ifdef U_DEBUG
   uhp->uh_magic = UH_MAGIC;
@@ -1010,8 +998,6 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   int line_len;
 
   uep = (u_entry_T *)U_ALLOC_LINE(sizeof(u_entry_T));
-  if (uep == NULL)
-    return NULL;
   memset(uep, 0, sizeof(u_entry_T));
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
@@ -1022,10 +1008,6 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   uep->ue_size = get4c(fp);
   if (uep->ue_size > 0) {
     array = (char_u **)U_ALLOC_LINE(sizeof(char_u *) * uep->ue_size);
-    if (array == NULL) {
-      *error = TRUE;
-      return uep;
-    }
     memset(array, 0, sizeof(char_u *) * uep->ue_size);
   } else
     array = NULL;
@@ -1504,8 +1486,6 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   if (num_head > 0) {
     uhp_table = (u_header_T **)U_ALLOC_LINE(
         num_head * sizeof(u_header_T *));
-    if (uhp_table == NULL)
-      goto error;
   }
 
   while ((c = get2c(fp)) == UF_HEADER_MAGIC) {
@@ -2141,20 +2121,7 @@ static void u_undoredo(int undo)
 
     /* delete the lines between top and bot and save them in newarray */
     if (oldsize > 0) {
-      if ((newarray = (char_u **)U_ALLOC_LINE(
-               sizeof(char_u *) * oldsize)) == NULL) {
-        do_outofmem_msg((long_u)(sizeof(char_u *) * oldsize));
-        /*
-         * We have messed up the entry list, repair is impossible.
-         * we have to free the rest of the list.
-         */
-        while (uep != NULL) {
-          nuep = uep->ue_next;
-          u_freeentry(uep, uep->ue_size);
-          uep = nuep;
-        }
-        break;
-      }
+      newarray = (char_u **)U_ALLOC_LINE(sizeof(char_u *) * oldsize);
       /* delete backwards, it goes faster in most cases */
       for (lnum = bot - 1, i = oldsize; --i >= 0; --lnum) {
         /* what can we do when we run out of memory? */

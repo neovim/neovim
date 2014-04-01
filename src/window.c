@@ -2834,10 +2834,8 @@ static void new_frame(win_T *wp)
   frame_T *frp = (frame_T *)alloc_clear((unsigned)sizeof(frame_T));
 
   wp->w_frame = frp;
-  if (frp != NULL) {
-    frp->fr_layout = FR_LEAF;
-    frp->fr_win = wp;
-  }
+  frp->fr_layout = FR_LEAF;
+  frp->fr_win = wp;
 }
 
 /*
@@ -2861,8 +2859,6 @@ static tabpage_T *alloc_tabpage(void)
 
 
   tp = (tabpage_T *)alloc_clear((unsigned)sizeof(tabpage_T));
-  if (tp == NULL)
-    return NULL;
 
   /* init t: variables */
   tp->tp_vars = dict_alloc();
@@ -3596,8 +3592,6 @@ static win_T *win_alloc(win_T *after, int hidden)
    * allocate window structure and linesizes arrays
    */
   new_wp = (win_T *)alloc_clear((unsigned)sizeof(win_T));
-  if (new_wp == NULL)
-    return NULL;
 
   if (win_alloc_lines(new_wp) == FAIL) {
     vim_free(new_wp);
@@ -5063,8 +5057,6 @@ void make_snapshot(int idx)
 static void make_snapshot_rec(frame_T *fr, frame_T **frp)
 {
   *frp = (frame_T *)alloc_clear((unsigned)sizeof(frame_T));
-  if (*frp == NULL)
-    return;
   (*frp)->fr_layout = fr->fr_layout;
   (*frp)->fr_width = fr->fr_width;
   (*frp)->fr_height = fr->fr_height;

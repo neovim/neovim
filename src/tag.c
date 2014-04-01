@@ -685,13 +685,6 @@ do_tag (
         fname = alloc(MAXPATHL + 1);
         cmd = alloc(CMDBUFFSIZE + 1);
         list = list_alloc();
-        if (list == NULL || fname == NULL || cmd == NULL) {
-          vim_free(cmd);
-          vim_free(fname);
-          if (list != NULL)
-            list_free(list, TRUE);
-          goto end_do_tag;
-        }
 
         for (i = 0; i < num_matches; ++i) {
           int len, cmd_len;
@@ -1202,11 +1195,6 @@ find_tags (
   tag_fname = alloc(MAXPATHL + 1);
   for (mtt = 0; mtt < MT_COUNT; ++mtt)
     ga_init(&ga_match[mtt], (int)sizeof(struct match_found *), 100);
-
-  /* check for out of memory situation */
-  if (lbuf == NULL || tag_fname == NULL
-      )
-    goto findtag_end;
 
   STRCPY(tag_fname, "from cscope");             /* for error messages */
 
@@ -1838,21 +1826,20 @@ parse_line:
               mfp = (struct match_found *)
                     alloc((int)sizeof(struct match_found) + len
                   + 10 + ML_EXTRA);
-              if (mfp != NULL) {
-                /* "len" includes the language and the NUL, but
-                 * not the priority. */
-                mfp->len = len + ML_EXTRA + 1;
+              /* "len" includes the language and the NUL, but
+               * not the priority. */
+              mfp->len = len + ML_EXTRA + 1;
 #define ML_HELP_LEN 6
-                p = mfp->match;
-                STRCPY(p, tagp.tagname);
-                p[len] = '@';
-                STRCPY(p + len + 1, help_lang);
-                sprintf((char *)p + len + 1 + ML_EXTRA, "%06d",
-                    help_heuristic(tagp.tagname,
-                        match_re ? matchoff : 0, !match_no_ic)
-                    + help_pri
-                    );
-              }
+              p = mfp->match;
+              STRCPY(p, tagp.tagname);
+              p[len] = '@';
+              STRCPY(p + len + 1, help_lang);
+              sprintf((char *)p + len + 1 + ML_EXTRA, "%06d",
+                  help_heuristic(tagp.tagname,
+                      match_re ? matchoff : 0, !match_no_ic)
+                  + help_pri
+                  );
+
               *tagp.tagname_end = TAB;
             } else if (name_only)   {
               if (get_it_again) {
@@ -1868,11 +1855,9 @@ parse_line:
                   len = (int)(temp_end - tagp.command - 2);
                   mfp = (struct match_found *)alloc(
                       (int)sizeof(struct match_found) + len);
-                  if (mfp != NULL) {
-                    mfp->len = len + 1;                 /* include the NUL */
-                    p = mfp->match;
-                    vim_strncpy(p, tagp.command + 2, len);
-                  }
+                  mfp->len = len + 1;                 /* include the NUL */
+                  p = mfp->match;
+                  vim_strncpy(p, tagp.command + 2, len);
                 } else
                   mfp = NULL;
                 get_it_again = FALSE;
@@ -1880,11 +1865,9 @@ parse_line:
                 len = (int)(tagp.tagname_end - tagp.tagname);
                 mfp = (struct match_found *)alloc(
                     (int)sizeof(struct match_found) + len);
-                if (mfp != NULL) {
-                  mfp->len = len + 1;               /* include the NUL */
-                  p = mfp->match;
-                  vim_strncpy(p, tagp.tagname, len);
-                }
+                mfp->len = len + 1;               /* include the NUL */
+                p = mfp->match;
+                vim_strncpy(p, tagp.tagname, len);
 
                 /* if wanted, re-read line to get long form too */
                 if (State & INSERT)
@@ -1900,19 +1883,17 @@ parse_line:
                     + (int)STRLEN(lbuf) + 3;
               mfp = (struct match_found *)alloc(
                   (int)sizeof(struct match_found) + len);
-              if (mfp != NULL) {
-                mfp->len = len;
-                p = mfp->match;
-                p[0] = mtt;
-                STRCPY(p + 1, tag_fname);
+              mfp->len = len;
+              p = mfp->match;
+              p[0] = mtt;
+              STRCPY(p + 1, tag_fname);
 #ifdef BACKSLASH_IN_FILENAME
-                /* Ignore differences in slashes, avoid adding
-                 * both path/file and path\file. */
-                slash_adjust(p + 1);
+              /* Ignore differences in slashes, avoid adding
+               * both path/file and path\file. */
+              slash_adjust(p + 1);
 #endif
-                s = p + 1 + STRLEN(tag_fname) + 1;
-                STRCPY(s, lbuf);
-              }
+              s = p + 1 + STRLEN(tag_fname) + 1;
+              STRCPY(s, lbuf);
             }
 
             if (mfp != NULL) {
@@ -2414,7 +2395,7 @@ jumpto_tag (
   pbuf = alloc(LSIZE);
 
   /* parse the match line into the tagp structure */
-  if (pbuf == NULL || parse_match(lbuf, &tagp) == FAIL) {
+  if (parse_match(lbuf, &tagp) == FAIL) {
     tagp.fname_end = NULL;
     goto erret;
   }
@@ -2705,15 +2686,13 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
       && !vim_isAbsName(fname)
       && (p = path_tail(tag_fname)) != tag_fname) {
     retval = alloc(MAXPATHL);
-    if (retval != NULL) {
-      STRCPY(retval, tag_fname);
-      vim_strncpy(retval + (p - tag_fname), fname,
-          MAXPATHL - (p - tag_fname) - 1);
-      /*
-       * Translate names like "src/a/../b/file.c" into "src/b/file.c".
-       */
-      simplify_filename(retval);
-    }
+    STRCPY(retval, tag_fname);
+    vim_strncpy(retval + (p - tag_fname), fname,
+        MAXPATHL - (p - tag_fname) - 1);
+    /*
+     * Translate names like "src/a/../b/file.c" into "src/b/file.c".
+     */
+    simplify_filename(retval);
   } else
     retval = vim_strsave(fname);
 
@@ -2859,8 +2838,6 @@ add_tag_field (
     return FAIL;
   }
   buf = alloc(MAXPATHL);
-  if (buf == NULL)
-    return FAIL;
   if (start != NULL) {
     if (end == NULL) {
       end = start + STRLEN(start);

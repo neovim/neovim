@@ -799,22 +799,21 @@ get_register (
 
   get_yank_register(name, 0);
   reg = (struct yankreg *)alloc((unsigned)sizeof(struct yankreg));
-  if (reg != NULL) {
-    *reg = *y_current;
-    if (copy) {
-      /* If we run out of memory some or all of the lines are empty. */
-      if (reg->y_size == 0)
-        reg->y_array = NULL;
-      else
-        reg->y_array = (char_u **)alloc((unsigned)(sizeof(char_u *)
-                                                   * reg->y_size));
-      if (reg->y_array != NULL) {
-        for (i = 0; i < reg->y_size; ++i)
-          reg->y_array[i] = vim_strsave(y_current->y_array[i]);
-      }
-    } else
-      y_current->y_array = NULL;
-  }
+  *reg = *y_current;
+  if (copy) {
+    /* If we run out of memory some or all of the lines are empty. */
+    if (reg->y_size == 0)
+      reg->y_array = NULL;
+    else
+      reg->y_array = (char_u **)alloc((unsigned)(sizeof(char_u *)
+                                                 * reg->y_size));
+    if (reg->y_array != NULL) {
+      for (i = 0; i < reg->y_size; ++i)
+        reg->y_array[i] = vim_strsave(y_current->y_array[i]);
+    }
+  } else
+    y_current->y_array = NULL;
+
   return (void *)reg;
 }
 
@@ -931,10 +930,6 @@ static int stuff_yank(int regname, char_u *p)
   if (y_append && y_current->y_array != NULL) {
     pp = &(y_current->y_array[y_current->y_size - 1]);
     lp = lalloc((long_u)(STRLEN(*pp) + STRLEN(p) + 1), TRUE);
-    if (lp == NULL) {
-      vim_free(p);
-      return FAIL;
-    }
     STRCPY(lp, *pp);
     STRCAT(lp, p);
     vim_free(p);
@@ -942,11 +937,7 @@ static int stuff_yank(int regname, char_u *p)
     *pp = lp;
   } else {
     free_yank_all();
-    if ((y_current->y_array =
-           (char_u **)alloc((unsigned)sizeof(char_u *))) == NULL) {
-      vim_free(p);
-      return FAIL;
-    }
+    y_current->y_array = (char_u **)alloc((unsigned)sizeof(char_u *));
     y_current->y_array[0] = p;
     y_current->y_size = 1;
     y_current->y_type = MCHAR;      /* used to be MLINE, why? */
@@ -2443,11 +2434,6 @@ int op_yank(oparg_T *oap, int deleting, int mess)
   y_current->y_array = (char_u **)lalloc_clear((long_u)(sizeof(char_u *) *
                                                         yanklines), TRUE);
 
-  if (y_current->y_array == NULL) {
-    y_current = curr;
-    return FAIL;
-  }
-
   y_idx = 0;
   lnum = oap->start.lnum;
 
@@ -2545,8 +2531,6 @@ int op_yank(oparg_T *oap, int deleting, int mess)
         (long_u)(sizeof(char_u *) *
                  (curr->y_size + y_current->y_size)),
         TRUE);
-    if (new_ptr == NULL)
-      goto fail;
     for (j = 0; j < curr->y_size; ++j)
       new_ptr[j] = curr->y_array[j];
     vim_free(curr->y_array);
@@ -2560,10 +2544,6 @@ int op_yank(oparg_T *oap, int deleting, int mess)
     if (curr->y_type == MCHAR && vim_strchr(p_cpo, CPO_REGAPPEND) == NULL) {
       pnew = lalloc((long_u)(STRLEN(curr->y_array[curr->y_size - 1])
                              + STRLEN(y_current->y_array[0]) + 1), TRUE);
-      if (pnew == NULL) {
-        y_idx = y_current->y_size - 1;
-        goto fail;
-      }
       STRCPY(pnew, curr->y_array[--j]);
       STRCAT(pnew, y_current->y_array[0]);
       vim_free(curr->y_array[j]);
@@ -2746,8 +2726,6 @@ do_put (
           break;
         y_array = (char_u **)alloc((unsigned)
             (y_size * sizeof(char_u *)));
-        if (y_array == NULL)
-          goto end;
       }
     } else {
       y_size = 1;               /* use fake one-line yank register */
@@ -3512,14 +3490,8 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
    * line.  We will use it to pre-compute the length of the new line and the
    * proper placement of each original line in the new one. */
   spaces = lalloc_clear((long_u)count, TRUE);
-  if (spaces == NULL)
-    return FAIL;
   if (remove_comments) {
     comments = (int *)lalloc_clear((long_u)count * sizeof(int), TRUE);
-    if (comments == NULL) {
-      vim_free(spaces);
-      return FAIL;
-    }
   }
 
   /*
@@ -4486,8 +4458,6 @@ int do_addsub(int command, linenr_T Prenum1)
      * a bit too much.
      */
     buf1 = alloc((unsigned)length + NUMBUFLEN);
-    if (buf1 == NULL)
-      return FAIL;
     ptr = buf1;
     if (negative) {
       *ptr++ = '-';
@@ -4954,8 +4924,6 @@ str_to_reg (
    */
   pp = (char_u **)lalloc_clear((y_ptr->y_size + newlines)
       * sizeof(char_u *), TRUE);
-  if (pp == NULL)       /* out of memory */
-    return;
   for (lnum = 0; lnum < y_ptr->y_size; ++lnum)
     pp[lnum] = y_ptr->y_array[lnum];
   vim_free(y_ptr->y_array);
@@ -4978,8 +4946,6 @@ str_to_reg (
     } else
       extra = 0;
     s = alloc((unsigned)(i + extra + 1));
-    if (s == NULL)
-      break;
     if (extra)
       memmove(s, y_ptr->y_array[lnum], (size_t)extra);
     if (append)

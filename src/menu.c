@@ -375,8 +375,6 @@ add_menu_path (
 
       /* Not already there, so lets add it */
       menu = (vimmenu_T *)alloc_clear((unsigned)sizeof(vimmenu_T));
-      if (menu == NULL)
-        goto erret;
 
       menu->modes = modes;
       menu->enabled = MENU_ALL_MODES;
@@ -467,22 +465,20 @@ add_menu_path (
 
         if (c != 0) {
           menu->strings[i] = alloc((unsigned)(STRLEN(call_data) + 5 ));
-          if (menu->strings[i] != NULL) {
-            menu->strings[i][0] = c;
-            if (d == 0)
-              STRCPY(menu->strings[i] + 1, call_data);
-            else {
-              menu->strings[i][1] = d;
-              STRCPY(menu->strings[i] + 2, call_data);
-            }
-            if (c == Ctrl_C) {
-              int len = (int)STRLEN(menu->strings[i]);
+          menu->strings[i][0] = c;
+          if (d == 0)
+            STRCPY(menu->strings[i] + 1, call_data);
+          else {
+            menu->strings[i][1] = d;
+            STRCPY(menu->strings[i] + 2, call_data);
+          }
+          if (c == Ctrl_C) {
+            int len = (int)STRLEN(menu->strings[i]);
 
-              /* Append CTRL-\ CTRL-G to obey 'insertmode'. */
-              menu->strings[i][len] = Ctrl_BSL;
-              menu->strings[i][len + 1] = Ctrl_G;
-              menu->strings[i][len + 2] = NUL;
-            }
+            /* Append CTRL-\ CTRL-G to obey 'insertmode'. */
+            menu->strings[i][len] = Ctrl_BSL;
+            menu->strings[i][len + 1] = Ctrl_G;
+            menu->strings[i][len + 2] = NUL;
           }
         } else
           menu->strings[i] = p;

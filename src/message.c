@@ -239,8 +239,7 @@ msg_strtrunc (
       else
         len = room + 2;
       buf = alloc(len);
-      if (buf != NULL)
-        trunc_string(s, buf, room, len);
+      trunc_string(s, buf, room, len);
     }
   }
   return buf;
@@ -394,8 +393,7 @@ static char_u *get_emsg_source(void)
   if (sourcing_name != NULL && other_sourcing_name()) {
     p = (char_u *)_("Error detected while processing %s:");
     Buf = alloc((unsigned)(STRLEN(sourcing_name) + STRLEN(p)));
-    if (Buf != NULL)
-      sprintf((char *)Buf, (char *)p, sourcing_name);
+    sprintf((char *)Buf, (char *)p, sourcing_name);
     return Buf;
   }
   return NULL;
@@ -417,8 +415,7 @@ static char_u *get_emsg_lnum(void)
       && sourcing_lnum != 0) {
     p = (char_u *)_("line %4ld:");
     Buf = alloc((unsigned)(STRLEN(p) + 20));
-    if (Buf != NULL)
-      sprintf((char *)Buf, (char *)p, (long)sourcing_lnum);
+    sprintf((char *)Buf, (char *)p, (long)sourcing_lnum);
     return Buf;
   }
   return NULL;
@@ -665,26 +662,24 @@ add_msg_hist (
 
   /* allocate an entry and add the message at the end of the history */
   p = (struct msg_hist *)alloc((int)sizeof(struct msg_hist));
-  if (p != NULL) {
-    if (len < 0)
-      len = (int)STRLEN(s);
-    /* remove leading and trailing newlines */
-    while (len > 0 && *s == '\n') {
-      ++s;
-      --len;
-    }
-    while (len > 0 && s[len - 1] == '\n')
-      --len;
-    p->msg = vim_strnsave(s, len);
-    p->next = NULL;
-    p->attr = attr;
-    if (last_msg_hist != NULL)
-      last_msg_hist->next = p;
-    last_msg_hist = p;
-    if (first_msg_hist == NULL)
-      first_msg_hist = last_msg_hist;
-    ++msg_hist_len;
+  if (len < 0)
+    len = (int)STRLEN(s);
+  /* remove leading and trailing newlines */
+  while (len > 0 && *s == '\n') {
+    ++s;
+    --len;
   }
+  while (len > 0 && s[len - 1] == '\n')
+    --len;
+  p->msg = vim_strnsave(s, len);
+  p->next = NULL;
+  p->attr = attr;
+  if (last_msg_hist != NULL)
+    last_msg_hist->next = p;
+  last_msg_hist = p;
+  if (first_msg_hist == NULL)
+    first_msg_hist = last_msg_hist;
+  ++msg_hist_len;
 }
 
 /*
@@ -1818,11 +1813,9 @@ static void inc_msg_scrolled(void)
     else {
       len = (int)STRLEN(p) + 40;
       tofree = alloc(len);
-      if (tofree != NULL) {
-        vim_snprintf((char *)tofree, len, _("%s line %ld"),
-            p, (long)sourcing_lnum);
-        p = tofree;
-      }
+      vim_snprintf((char *)tofree, len, _("%s line %ld"),
+          p, (long)sourcing_lnum);
+      p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);
     vim_free(tofree);
@@ -1872,22 +1865,20 @@ store_sb_text (
 
   if (s > *sb_str) {
     mp = (msgchunk_T *)alloc((int)(sizeof(msgchunk_T) + (s - *sb_str)));
-    if (mp != NULL) {
-      mp->sb_eol = finish;
-      mp->sb_msg_col = *sb_col;
-      mp->sb_attr = attr;
-      vim_strncpy(mp->sb_text, *sb_str, s - *sb_str);
+    mp->sb_eol = finish;
+    mp->sb_msg_col = *sb_col;
+    mp->sb_attr = attr;
+    vim_strncpy(mp->sb_text, *sb_str, s - *sb_str);
 
-      if (last_msgchunk == NULL) {
-        last_msgchunk = mp;
-        mp->sb_prev = NULL;
-      } else {
-        mp->sb_prev = last_msgchunk;
-        last_msgchunk->sb_next = mp;
-        last_msgchunk = mp;
-      }
-      mp->sb_next = NULL;
+    if (last_msgchunk == NULL) {
+      last_msgchunk = mp;
+      mp->sb_prev = NULL;
+    } else {
+      mp->sb_prev = last_msgchunk;
+      last_msgchunk->sb_next = mp;
+      last_msgchunk = mp;
     }
+    mp->sb_next = NULL;
   } else if (finish && last_msgchunk != NULL)
     last_msgchunk->sb_eol = TRUE;
 

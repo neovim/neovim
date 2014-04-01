@@ -288,8 +288,6 @@ qf_init_ext (
   namebuf = alloc(CMDBUFFSIZE + 1);
   errmsg = alloc(CMDBUFFSIZE + 1);
   pattern = alloc(CMDBUFFSIZE + 1);
-  if (namebuf == NULL || errmsg == NULL || pattern == NULL)
-    goto qf_init_end;
 
   if (efile != NULL && (fd = mch_fopen((char *)efile, "r")) == NULL) {
     EMSG2(_(e_openerrf), efile);
@@ -325,16 +323,13 @@ qf_init_ext (
 #else
   i += 2;   /* "%f" can become two chars longer */
 #endif
-  if ((fmtstr = alloc(i)) == NULL)
-    goto error2;
+  fmtstr = alloc(i);
 
   while (efm[0] != NUL) {
     /*
      * Allocate a new eformat structure and put it at the end of the list
      */
     fmt_ptr = (efm_T *)alloc_clear((unsigned)sizeof(efm_T));
-    if (fmt_ptr == NULL)
-      goto error2;
     if (fmt_first == NULL)          /* first one */
       fmt_first = fmt_ptr;
     else
@@ -725,9 +720,7 @@ restofline:
           goto error2;
         if (*errmsg && !multiignore) {
           len = (int)STRLEN(qfprev->qf_text);
-          if ((ptr = alloc((unsigned)(len + STRLEN(errmsg) + 2)))
-              == NULL)
-            goto error2;
+          ptr = alloc((unsigned)(len + STRLEN(errmsg) + 2));
           STRCPY(ptr, qfprev->qf_text);
           vim_free(qfprev->qf_text);
           qfprev->qf_text = ptr;
@@ -866,8 +859,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
     char_u *p = alloc((int)STRLEN(qf_title) + 2);
 
     qi->qf_lists[qi->qf_curlist].qf_title = p;
-    if (p != NULL)
-      sprintf((char *)p, ":%s", (char *)qf_title);
+    sprintf((char *)p, ":%s", (char *)qf_title);
   }
 }
 
@@ -931,8 +923,8 @@ qf_add_entry (
 {
   qfline_T    *qfp;
 
-  if ((qfp = (qfline_T *)alloc((unsigned)sizeof(qfline_T))) == NULL)
-    return FAIL;
+  qfp = (qfline_T *)alloc((unsigned)sizeof(qfline_T));
+
   if (bufnum != 0)
     qfp->qf_fnum = bufnum;
   else
@@ -987,10 +979,8 @@ static qf_info_T *ll_new_list(void)
   qf_info_T *qi;
 
   qi = (qf_info_T *)alloc((unsigned)sizeof(qf_info_T));
-  if (qi != NULL) {
-    memset(qi, 0, (size_t)(sizeof(qf_info_T)));
-    qi->qf_refcount++;
-  }
+  memset(qi, 0, (size_t)(sizeof(qf_info_T)));
+  qi->qf_refcount++;
 
   return qi;
 }
@@ -1164,8 +1154,6 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
 
   /* allocate new stack element and hook it in */
   ds_new = (struct dir_stack_T *)alloc((unsigned)sizeof(struct dir_stack_T));
-  if (ds_new == NULL)
-    return NULL;
 
   ds_new->next = *stackptr;
   *stackptr = ds_new;
@@ -2530,8 +2518,6 @@ void ex_make(exarg_T *eap)
   if (*p_sp != NUL)
     len += (unsigned)STRLEN(p_sp) + (unsigned)STRLEN(fname) + 3;
   cmd = alloc(len);
-  if (cmd == NULL)
-    return;
   sprintf((char *)cmd, "%s%s%s", (char *)p_shq, (char *)eap->arg,
       (char *)p_shq);
   if (*p_sp != NUL)
@@ -2610,8 +2596,6 @@ static char_u *get_mef_name(void)
       off += 19;
 
     name = alloc((unsigned)STRLEN(p_mef) + 30);
-    if (name == NULL)
-      break;
     STRCPY(name, p_mef);
     sprintf((char *)name + (p - p_mef), "%d%d", start, off);
     STRCAT(name, p + 2);
@@ -2863,8 +2847,6 @@ void ex_vimgrep(exarg_T *eap)
 
   dirname_start = alloc(MAXPATHL);
   dirname_now = alloc(MAXPATHL);
-  if (dirname_start == NULL || dirname_now == NULL)
-    goto theend;
 
   /* Remember the current directory, because a BufRead autocommand that does
    * ":lcd %:p:h" changes the meaning of short path names. */
@@ -3134,19 +3116,17 @@ static void restore_start_dir(char_u *dirname_start)
 {
   char_u *dirname_now = alloc(MAXPATHL);
 
-  if (NULL != dirname_now) {
-    os_dirname(dirname_now, MAXPATHL);
-    if (STRCMP(dirname_start, dirname_now) != 0) {
-      /* If the directory has changed, change it back by building up an
-       * appropriate ex command and executing it. */
-      exarg_T ea;
+  os_dirname(dirname_now, MAXPATHL);
+  if (STRCMP(dirname_start, dirname_now) != 0) {
+    /* If the directory has changed, change it back by building up an
+     * appropriate ex command and executing it. */
+    exarg_T ea;
 
-      ea.arg = dirname_start;
-      ea.cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd;
-      ex_cd(&ea);
-    }
-    vim_free(dirname_now);
+    ea.arg = dirname_start;
+    ea.cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd;
+    ex_cd(&ea);
   }
+  vim_free(dirname_now);
 }
 
 /*

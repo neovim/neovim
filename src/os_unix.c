@@ -1143,11 +1143,6 @@ int flags;                      /* EW_* flags */
     }
   }
   command = alloc(len);
-  if (command == NULL) {
-    /* out of memory */
-    vim_free(tempname);
-    return FAIL;
-  }
 
   /*
    * Build the shell command:
@@ -1297,13 +1292,6 @@ int flags;                      /* EW_* flags */
   len = ftell(fd);                      /* get size of temp file */
   fseek(fd, 0L, SEEK_SET);
   buffer = alloc(len + 1);
-  if (buffer == NULL) {
-    /* out of memory */
-    mch_remove(tempname);
-    vim_free(tempname);
-    fclose(fd);
-    return FAIL;
-  }
   i = fread((char *)buffer, 1, len, fd);
   fclose(fd);
   mch_remove(tempname);
@@ -1388,11 +1376,6 @@ int flags;                      /* EW_* flags */
   }
   *num_file = i;
   *file = (char_u **)alloc(sizeof(char_u *) * i);
-  if (*file == NULL) {
-    /* out of memory */
-    vim_free(buffer);
-    return FAIL;
-  }
 
   /*
    * Isolate the individual file names.
@@ -1437,12 +1420,10 @@ int flags;                      /* EW_* flags */
       continue;
 
     p = alloc((unsigned)(STRLEN((*file)[i]) + 1 + dir));
-    if (p) {
-      STRCPY(p, (*file)[i]);
-      if (dir)
-        add_pathsep(p);             /* add '/' to a directory name */
-      (*file)[j++] = p;
-    }
+    STRCPY(p, (*file)[i]);
+    if (dir)
+      add_pathsep(p);             /* add '/' to a directory name */
+    (*file)[j++] = p;
   }
   vim_free(buffer);
   *num_file = j;
