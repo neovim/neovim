@@ -964,9 +964,7 @@ static void close_spellbuf(buf_T *buf);
  * differ from what the .spl file uses.
  * These must not be called with negative number!
  */
-# if defined(HAVE_WCHAR_H)
-#  include <wchar.h>        /* for towupper() and towlower() */
-# endif
+#include <wchar.h>        /* for towupper() and towlower() */
 /* Multi-byte implementation.  For Unicode we can call utf_*(), but don't do
  * that for ASCII, because we don't want to use 'casemap' here.  Otherwise use
  * the "w" library function for characters above 255. */

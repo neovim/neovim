@@ -85,7 +85,6 @@
 #define HAVE_UTIME 1
 #define HAVE_UTIME_H 1
 #define HAVE_UTIMES 1
-#define HAVE_WCHAR_H 1
 #define HAVE_WCTYPE_H 1
 #cmakedefine HAVE_WORKING_LIBINTL
 #define RETSIGTYPE void

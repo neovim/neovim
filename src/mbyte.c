@@ -78,6 +78,7 @@
  */
 
 #include <string.h>
+# include <wchar.h>
 
 #include "vim.h"
 #include "mbyte.h"
@@ -94,15 +95,6 @@
 #include "os/os.h"
 
 # define WINBYTE BYTE
-
-
-
-
-#ifdef HAVE_WCHAR_H
-# include <wchar.h>
-#endif
-
-
 
 static int enc_canon_search(char_u *name);
 static int dbcs_char2len(int c);
