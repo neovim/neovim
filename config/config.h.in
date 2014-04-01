@@ -67,8 +67,6 @@
 // #define HAVE_STROPTS_H 1
 // TODO: add proper cmake check
 // #define HAVE_SYSCONF 1
-#define HAVE_SYSINFO 1
-#define HAVE_SYSINFO_MEM_UNIT 1
 #define HAVE_SYS_IOCTL_H 1
 #define HAVE_SYS_PARAM_H 1
 #define HAVE_SYS_POLL_H 1
