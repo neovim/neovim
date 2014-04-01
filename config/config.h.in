@@ -16,7 +16,6 @@
 #cmakedefine HAVE_CRT_EXTERNS_H
 #define HAVE_DIRENT_H 1
 #define HAVE_DLFCN_H 1
-#define HAVE_FCHDIR 1
 #define HAVE_FCHOWN 1
 #define HAVE_FCNTL_H 1
 #define HAVE_FD_CLOEXEC 1
