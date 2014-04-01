@@ -42,10 +42,6 @@ vim_snprintf(char *, size_t, char *, ...);
 
 int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs);
 
-#ifndef HAVE_STRPBRK        /* not generated automatically from misc2.c */
-char_u *vim_strpbrk(char_u *s, char_u *charset);
-#endif
-
 /* Ugly solution for "BalloonEval" not being defined while it's used in some
  * .pro files. */
 #  define BalloonEval int

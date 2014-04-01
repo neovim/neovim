@@ -1411,25 +1411,6 @@ char_u *vim_strrchr(char_u *string, int c)
 }
 
 /*
- * Vim's version of strpbrk(), in case it's missing.
- * Don't generate a prototype for this, causes problems when it's not used.
- */
-# ifndef HAVE_STRPBRK
-#  ifdef vim_strpbrk
-#   undef vim_strpbrk
-#  endif
-char_u *vim_strpbrk(char_u *s, char_u *charset)
-{
-  while (*s) {
-    if (vim_strchr(charset, *s) != NULL)
-      return s;
-    mb_ptr_adv(s);
-  }
-  return NULL;
-}
-# endif
-
-/*
  * Vim has its own isspace() function, because on some machines isspace()
  * can't handle characters above 128.
  */
