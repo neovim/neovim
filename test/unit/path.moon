@@ -8,7 +8,7 @@ typedef enum file_comparison {
 } FileComparison;
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 char_u *path_tail(char_u *fname);
-char_u *path_tail_with_seperator(char_u *fname);
+char_u *path_tail_with_sep(char_u *fname);
 char_u *path_next_component(char_u *fname);
 ]]
 
@@ -65,27 +65,27 @@ describe 'path function', ->
     it 'returns an empty string if file ends in a slash', ->
       eq '', path_tail 'directory/'
 
-  describe 'path_tail_with_seperator', ->
-    path_tail_with_seperator = (file) ->
-      res = path.path_tail_with_seperator (to_cstr file)
+  describe 'path_tail_with_sep', ->
+    path_tail_with_sep = (file) ->
+      res = path.path_tail_with_sep (to_cstr file)
       neq NULL, res
       ffi.string res
 
     it 'returns the tail of a file together with its seperator', ->
-      eq '///file.txt', path_tail_with_seperator 'directory///file.txt'
+      eq '///file.txt', path_tail_with_sep 'directory///file.txt'
 
     it 'returns an empty string when given an empty file name', ->
-      eq '', path_tail_with_seperator ''
+      eq '', path_tail_with_sep ''
 
     it 'returns only the seperator if there is a traling seperator', ->
-      eq '/', path_tail_with_seperator 'some/directory/'
+      eq '/', path_tail_with_sep 'some/directory/'
 
     it 'cuts a leading seperator', ->
-      eq 'file.txt', path_tail_with_seperator '/file.txt'
-      eq '', path_tail_with_seperator '/'
+      eq 'file.txt', path_tail_with_sep '/file.txt'
+      eq '', path_tail_with_sep '/'
 
     it 'returns the whole file name if there is no seperator', ->
-      eq 'file.txt', path_tail_with_seperator 'file.txt'
+      eq 'file.txt', path_tail_with_sep 'file.txt'
 
   describe 'path_next_component', ->
     path_next_component = (file) ->

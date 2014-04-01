@@ -78,7 +78,7 @@ char_u *path_tail(char_u *fname)
   return tail;
 }
 
-char_u *path_tail_with_seperator(char_u *fname)
+char_u *path_tail_with_sep(char_u *fname)
 {
   assert(fname != NULL);
   char_u      *past_head;
@@ -210,7 +210,7 @@ int dir_of_file_exists(char_u *fname)
   int c;
   int retval;
 
-  p = path_tail_with_seperator(fname);
+  p = path_tail_with_sep(fname);
   if (p == fname)
     return TRUE;
   c = *p;
@@ -1644,8 +1644,8 @@ int same_directory(char_u *f1, char_u *f2)
     return FALSE;
 
   (void)vim_FullName(f1, ffname, MAXPATHL, FALSE);
-  t1 = path_tail_with_seperator(ffname);
-  t2 = path_tail_with_seperator(f2);
+  t1 = path_tail_with_sep(ffname);
+  t2 = path_tail_with_sep(f2);
   return t1 - ffname == t2 - f2
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }
