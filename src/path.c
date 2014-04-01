@@ -36,11 +36,10 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   char_u full1[MAXPATHL];
   char_u full2[MAXPATHL];
   uv_stat_t st1, st2;
-  int r1, r2;
 
   expand_env(s1, exp1, MAXPATHL);
-  r1 = os_stat(exp1, &st1);
-  r2 = os_stat(s2, &st2);
+  int r1 = os_stat(exp1, &st1);
+  int r2 = os_stat(s2, &st2);
   if (r1 != OK && r2 != OK) {
     // If os_stat() doesn't work, may compare the names.
     if (checkname) {
@@ -67,13 +66,14 @@ char_u *path_tail(char_u *fname)
     return (char_u *)"";
   }
 
-  char_u  *tail, *p2;
+  char_u *tail = get_past_head(fname);
+  char_u *p = tail;
   // Find last part of path.
-  for (tail = p2 = get_past_head(fname); *p2; ) {
-    if (vim_ispathsep_nocolon(*p2)) {
-      tail = p2 + 1;
+  while (*p != NUL) {
+    if (vim_ispathsep_nocolon(*p)) {
+      tail = p + 1;
     }
-    mb_ptr_adv(p2);
+    mb_ptr_adv(p);
   }
   return tail;
 }
@@ -81,14 +81,12 @@ char_u *path_tail(char_u *fname)
 char_u *path_tail_with_sep(char_u *fname)
 {
   assert(fname != NULL);
-  char_u      *past_head;
-  char_u      *tail;
 
   // Don't remove the '/' from "c:/file".
-  past_head = get_past_head(fname);
-  tail = path_tail(fname);
+  char_u *past_head = get_past_head(fname);
+  char_u *tail = path_tail(fname);
   while (tail > past_head && after_pathsep(fname, tail)) {
-    --tail;
+    tail--;
   }
   return tail;
 }
@@ -100,7 +98,7 @@ char_u *path_next_component(char_u *fname)
     mb_ptr_adv(fname);
   }
   if (*fname != NUL) {
-    ++fname;
+    fname++;
   }
   return fname;
 }
