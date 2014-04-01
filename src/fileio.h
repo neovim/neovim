@@ -39,7 +39,6 @@ char_u *buf_modname(int shortname, char_u *fname, char_u *ext,
                     int prepend_dot);
 int vim_fgets(char_u *buf, int size, FILE *fp);
 int tag_fgets(char_u *buf, int size, FILE *fp);
-int vim_rename(char_u *from, char_u *to);
 int check_timestamps(int focus);
 int buf_check_timestamp(buf_T *buf, int focus);
 void buf_reload(buf_T *buf, int orig_mode);
