@@ -4278,7 +4278,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_LOWER:
-    if (MB_ISLOWER(c))
+    if (vim_islower(c))
       return OK;
     break;
   case NFA_CLASS_PRINT:
@@ -4294,7 +4294,7 @@ static int check_char_class(int class, int c)
       return OK;
     break;
   case NFA_CLASS_UPPER:
-    if (MB_ISUPPER(c))
+    if (vim_isupper(c))
       return OK;
     break;
   case NFA_CLASS_XDIGIT:
@@ -4803,7 +4803,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
     for (len1 = 0; match_text[len1] != NUL; len1 += MB_CHAR2LEN(c1)) {
       c1 = PTR2CHAR(match_text + len1);
       c2 = PTR2CHAR(regline + col + len2);
-      if (c1 != c2 && (!ireg_ic || MB_TOLOWER(c1) != MB_TOLOWER(c2))) {
+      if (c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) {
         match = FALSE;
         break;
       }
@@ -5462,11 +5462,11 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
               break;
             }
             if (ireg_ic) {
-              int curc_low = MB_TOLOWER(curc);
+              int curc_low = vim_tolower(curc);
               int done = FALSE;
 
               for (; c1 <= c2; ++c1)
-                if (MB_TOLOWER(c1) == curc_low) {
+                if (vim_tolower(c1) == curc_low) {
                   result = result_if_matched;
                   done = TRUE;
                   break;
@@ -5476,8 +5476,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             }
           } else if (state->c < 0 ? check_char_class(state->c, curc)
                      : (curc == state->c
-                        || (ireg_ic && MB_TOLOWER(curc)
-                            == MB_TOLOWER(state->c)))) {
+                        || (ireg_ic && vim_tolower(curc)
+                            == vim_tolower(state->c)))) {
             result = result_if_matched;
             break;
           }
@@ -5838,7 +5838,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         result = (c == curc);
 
         if (!result && ireg_ic)
-          result = MB_TOLOWER(c) == MB_TOLOWER(curc);
+          result = vim_tolower(c) == vim_tolower(curc);
         /* If there is a composing character which is not being
          * ignored there can be no match. Match with composing
          * character uses NFA_COMPOSING above. */
@@ -5985,8 +5985,8 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             /* Checking if the required start character matches is
              * cheaper than adding a state that won't match. */
             c = PTR2CHAR(reginput + clen);
-            if (c != prog->regstart && (!ireg_ic || MB_TOLOWER(c)
-                                        != MB_TOLOWER(prog->regstart))) {
+            if (c != prog->regstart && (!ireg_ic || vim_tolower(c)
+                                        != vim_tolower(prog->regstart))) {
 #ifdef ENABLE_LOG
               fprintf(log_fd,
                   "  Skipping start state, regstart does not match\n");
