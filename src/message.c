@@ -2772,7 +2772,7 @@ do_dialog (
         }
 
         /* Make the character lowercase, as chars in "hotkeys" are. */
-        c = MB_TOLOWER(c);
+        c = vim_tolower(c);
         retval = 1;
         for (i = 0; hotkeys[i]; ++i) {
           if (has_mbyte) {
@@ -2820,7 +2820,7 @@ copy_char (
 
   if (has_mbyte) {
     if (lowercase) {
-      c = MB_TOLOWER((*mb_ptr2char)(from));
+      c = vim_tolower((*mb_ptr2char)(from));
       return (*mb_char2bytes)(c, to);
     } else {
       len = (*mb_ptr2len)(from);

@@ -8685,13 +8685,13 @@ void init_spell_chartab(void)
   } else {
     /* Rough guess: use locale-dependent library functions. */
     for (i = 128; i < 256; ++i) {
-      if (MB_ISUPPER(i)) {
+      if (vim_isupper(i)) {
         spelltab.st_isw[i] = TRUE;
         spelltab.st_isu[i] = TRUE;
-        spelltab.st_fold[i] = MB_TOLOWER(i);
-      } else if (MB_ISLOWER(i))   {
+        spelltab.st_fold[i] = vim_tolower(i);
+      } else if (vim_islower(i))   {
         spelltab.st_isw[i] = TRUE;
-        spelltab.st_upper[i] = MB_TOUPPER(i);
+        spelltab.st_upper[i] = vim_toupper(i);
       }
     }
   }

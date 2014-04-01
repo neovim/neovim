@@ -2868,7 +2868,7 @@ int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
       if (l <= 1) {
         /* Single byte: first check normally, then with ignore case. */
         if (s1[i] != s2[i]) {
-          cdiff = MB_TOLOWER(s1[i]) - MB_TOLOWER(s2[i]);
+          cdiff = vim_tolower(s1[i]) - vim_tolower(s2[i]);
           if (cdiff != 0)
             return cdiff;
         }

@@ -1146,7 +1146,7 @@ getcmdline (
            * command line has no uppercase characters, convert
            * the character to lowercase */
           if (p_ic && p_scs && !pat_has_uppercase(ccline.cmdbuff))
-            c = MB_TOLOWER(c);
+            c = vim_tolower(c);
           if (c != NUL) {
             if (c == firstc || vim_strchr((char_u *)(
                       p_magic ? "\\^$.*[" : "\\^$"), c)

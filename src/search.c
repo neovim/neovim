@@ -365,7 +365,7 @@ int pat_has_uppercase(char_u *pat)
         p += 2;
       else
         p += 1;
-    } else if (MB_ISUPPER(*p))
+    } else if (vim_isupper(*p))
       return TRUE;
     else
       ++p;

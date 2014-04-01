@@ -51,7 +51,7 @@
  * characters, first use islower() or isupper() then.
  * Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
  * range 0 - 255.  toupper()/tolower() on some systems can't handle others.
- * Note: It is often better to use MB_TOLOWER() and MB_TOUPPER(), because many
+ * Note: It is often better to use vim_tolower() and vim_toupper(), because many
  * toupper() and tolower() implementations only work for ASCII.
  */
 # ifdef BROKEN_TOUPPER
@@ -65,15 +65,6 @@
 /* toupper() and tolower() for ASCII only and ignore the current locale. */
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
 # define TOLOWER_ASC(c) (((c) < 'A' || (c) > 'Z') ? (c) : (c) + ('a' - 'A'))
-
-/*
- * MB_ISLOWER() and MB_ISUPPER() are to be used on multi-byte characters.  But
- * don't use them for negative values!
- */
-# define MB_ISLOWER(c)  vim_islower(c)
-# define MB_ISUPPER(c)  vim_isupper(c)
-# define MB_TOLOWER(c)  vim_tolower(c)
-# define MB_TOUPPER(c)  vim_toupper(c)
 
 /* Use our own isdigit() replacement, because on MS-Windows isdigit() returns
  * non-zero for superscript 1.  Also avoids that isdigit() crashes for numbers

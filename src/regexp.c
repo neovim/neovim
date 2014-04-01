@@ -2289,7 +2289,7 @@ collection:
               break;
             case CLASS_LOWER:
               for (cu = 1; cu <= 255; cu++)
-                if (MB_ISLOWER(cu))
+                if (vim_islower(cu))
                   regc(cu);
               break;
             case CLASS_PRINT:
@@ -2309,7 +2309,7 @@ collection:
               break;
             case CLASS_UPPER:
               for (cu = 1; cu <= 255; cu++)
-                if (MB_ISUPPER(cu))
+                if (vim_isupper(cu))
                   regc(cu);
               break;
             case CLASS_XDIGIT:
@@ -3513,7 +3513,7 @@ proftime_T  *tm;         /* timeout limit or NULL */
         || (ireg_ic && ((
                           (enc_utf8 && utf_fold(prog->regstart) == utf_fold(c)))
                         || (c < 255 && prog->regstart < 255 &&
-                            MB_TOLOWER(prog->regstart) == MB_TOLOWER(c)))))
+                            vim_tolower(prog->regstart) == vim_tolower(c)))))
       retval = regtry(prog, col);
     else
       retval = 0;
@@ -4186,7 +4186,7 @@ regmatch (
           if (*opnd != *reginput
               && (!ireg_ic || (
                     !enc_utf8 &&
-                    MB_TOLOWER(*opnd) != MB_TOLOWER(*reginput))))
+                    vim_tolower(*opnd) != vim_tolower(*reginput))))
             status = RA_NOMATCH;
           else if (*opnd == NUL) {
             /* match empty string always works; happens when "~" is
@@ -4598,10 +4598,10 @@ regmatch (
           if (OP(next) == EXACTLY) {
             rst.nextb = *OPERAND(next);
             if (ireg_ic) {
-              if (MB_ISUPPER(rst.nextb))
-                rst.nextb_ic = MB_TOLOWER(rst.nextb);
+              if (vim_isupper(rst.nextb))
+                rst.nextb_ic = vim_tolower(rst.nextb);
               else
-                rst.nextb_ic = MB_TOUPPER(rst.nextb);
+                rst.nextb_ic = vim_toupper(rst.nextb);
             } else
               rst.nextb_ic = rst.nextb;
           } else {
@@ -5367,8 +5367,8 @@ do_class:
      * would have been used for it.  It does handle single-byte
      * characters, such as latin1. */
     if (ireg_ic) {
-      cu = MB_TOUPPER(*opnd);
-      cl = MB_TOLOWER(*opnd);
+      cu = vim_toupper(*opnd);
+      cl = vim_tolower(*opnd);
       while (count < maxcount && (*scan == cu || *scan == cl)) {
         count++;
         scan++;
@@ -6342,10 +6342,10 @@ static char_u *cstrchr(char_u *s, int c)
    * For UTF-8 need to use folded case. */
   if (enc_utf8 && c > 0x80)
     cc = utf_fold(c);
-  else if (MB_ISUPPER(c))
-    cc = MB_TOLOWER(c);
-  else if (MB_ISLOWER(c))
-    cc = MB_TOUPPER(c);
+  else if (vim_isupper(c))
+    cc = vim_tolower(c);
+  else if (vim_islower(c))
+    cc = vim_toupper(c);
   else
     return vim_strchr(s, c);
 
@@ -6393,7 +6393,7 @@ static fptr_T do_upper(d, c)
 int         *d;
 int c;
 {
-  *d = MB_TOUPPER(c);
+  *d = vim_toupper(c);
 
   return (fptr_T)NULL;
 }
@@ -6402,7 +6402,7 @@ static fptr_T do_Upper(d, c)
 int         *d;
 int c;
 {
-  *d = MB_TOUPPER(c);
+  *d = vim_toupper(c);
 
   return (fptr_T)do_Upper;
 }
@@ -6411,7 +6411,7 @@ static fptr_T do_lower(d, c)
 int         *d;
 int c;
 {
-  *d = MB_TOLOWER(c);
+  *d = vim_tolower(c);
 
   return (fptr_T)NULL;
 }
@@ -6420,7 +6420,7 @@ static fptr_T do_Lower(d, c)
 int         *d;
 int c;
 {
-  *d = MB_TOLOWER(c);
+  *d = vim_tolower(c);
 
   return (fptr_T)do_Lower;
 }

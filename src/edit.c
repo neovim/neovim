@@ -2002,12 +2002,12 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
           c = mb_ptr2char_adv(&p);
         else
           c = *(p++);
-        if (MB_ISLOWER(c)) {
+        if (vim_islower(c)) {
           has_lower = TRUE;
-          if (MB_ISUPPER(wca[i])) {
+          if (vim_isupper(wca[i])) {
             /* Rule 1 is satisfied. */
             for (i = actual_compl_length; i < actual_len; ++i)
-              wca[i] = MB_TOLOWER(wca[i]);
+              wca[i] = vim_tolower(wca[i]);
             break;
           }
         }
@@ -2024,13 +2024,13 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
             c = mb_ptr2char_adv(&p);
           else
             c = *(p++);
-          if (was_letter && MB_ISUPPER(c) && MB_ISLOWER(wca[i])) {
+          if (was_letter && vim_isupper(c) && vim_islower(wca[i])) {
             /* Rule 2 is satisfied. */
             for (i = actual_compl_length; i < actual_len; ++i)
-              wca[i] = MB_TOUPPER(wca[i]);
+              wca[i] = vim_toupper(wca[i]);
             break;
           }
-          was_letter = MB_ISLOWER(c) || MB_ISUPPER(c);
+          was_letter = vim_islower(c) || vim_isupper(c);
         }
       }
 
@@ -2041,10 +2041,10 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
           c = mb_ptr2char_adv(&p);
         else
           c = *(p++);
-        if (MB_ISLOWER(c))
-          wca[i] = MB_TOLOWER(wca[i]);
-        else if (MB_ISUPPER(c))
-          wca[i] = MB_TOUPPER(wca[i]);
+        if (vim_islower(c))
+          wca[i] = vim_tolower(wca[i]);
+        else if (vim_isupper(c))
+          wca[i] = vim_toupper(wca[i]);
       }
 
       /*
@@ -2231,7 +2231,7 @@ static void ins_compl_longest_match(compl_T *match)
         c1 = *p;
         c2 = *s;
       }
-      if (match->cp_icase ? (MB_TOLOWER(c1) != MB_TOLOWER(c2))
+      if (match->cp_icase ? (vim_tolower(c1) != vim_tolower(c2))
           : (c1 != c2))
         break;
       if (has_mbyte) {

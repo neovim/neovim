@@ -222,8 +222,8 @@ int buf_init_chartab(buf_T *buf, int global)
         // work properly when 'encoding' is "latin1" and the locale is
         // "C".
         if (!do_isalpha
-            || MB_ISLOWER(c)
-            || MB_ISUPPER(c)
+            || vim_islower(c)
+            || vim_isupper(c)
             || (p_altkeymap && (F_isalpha(c) || F_isdigit(c)))) {
           if (i == 0) {
             // (re)set ID flag

@@ -1123,7 +1123,7 @@ static int ff_wc_equal(char_u *s1, char_u *s2)
     int c1 = PTR2CHAR(s1 + i);
     int c2 = PTR2CHAR(s2 + i);
 
-    if ((p_fic ? MB_TOLOWER(c1) != MB_TOLOWER(c2) : c1 != c2)
+    if ((p_fic ? vim_tolower(c1) != vim_tolower(c2) : c1 != c2)
         && (prev1 != '*' || prev2 != '*'))
       return FAIL;
     prev2 = prev1;
