@@ -4,6 +4,7 @@
 
 #include <string.h>
 #include <wctype.h>
+#include <wchar.h>  // for towupper() and towlower()
 
 #include "vim.h"
 #include "charset.h"
@@ -19,9 +20,6 @@
 
 static int win_chartabsize(win_T *wp, char_u *p, colnr_T col);
 
-#if defined(HAVE_WCHAR_H)
-# include <wchar.h>  // for towupper() and towlower()
-#endif  // if defined(HAVE_WCHAR_H)
 static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col,
                                  int *headp);
 
