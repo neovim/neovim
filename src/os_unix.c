@@ -2370,29 +2370,6 @@ char_u  **file;
   return FALSE;
 }
 
-#ifndef HAVE_RENAME
-/*
- * Scaled-down version of rename(), which is missing in Xenix.
- * This version can only move regular files and will fail if the
- * destination exists.
- */
-int mch_rename(src, dest)
-const char *src, *dest;
-{
-  struct stat st;
-
-  if (stat(dest, &st) >= 0)         /* fail if destination exists */
-    return -1;
-  if (link(src, dest) != 0)         /* link file to new name */
-    return -1;
-  if (mch_remove(src) == 0)         /* delete link to old name */
-    return 0;
-  return -1;
-}
-#endif /* !HAVE_RENAME */
-
-
-
 #if defined(FEAT_LIBCALL) || defined(PROTO)
 typedef char_u * (*STRPROCSTR)(char_u *);
 typedef char_u * (*INTPROCSTR)(int);

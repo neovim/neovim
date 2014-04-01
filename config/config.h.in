@@ -48,7 +48,6 @@
 #define HAVE_PUTENV 1
 #define HAVE_PWD_H 1
 #define HAVE_READLINK 1
-#define HAVE_RENAME 1
 #define HAVE_SELECT 1
 // TODO: add proper cmake check
 // #define HAVE_SELINUX 1
