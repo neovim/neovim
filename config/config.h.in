@@ -22,7 +22,6 @@
 #define HAVE_FCHOWN 1
 #define HAVE_FCNTL_H 1
 #define HAVE_FD_CLOEXEC 1
-#define HAVE_FLOAT_FUNCS 1
 #define HAVE_FSEEKO 1
 #define HAVE_FSYNC 1
 #define HAVE_GETCWD 1
