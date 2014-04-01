@@ -137,9 +137,7 @@ typedef unsigned long u8char_T;     /* long should be 32 bits or more */
 #include <assert.h>
 
 #include <inttypes.h>
-#ifdef HAVE_WCTYPE_H
-# include <wctype.h>
-#endif
+#include <wctype.h>
 #include <stdarg.h>
 
 #if defined(HAVE_SYS_SELECT_H) && \
