@@ -253,11 +253,7 @@
 #  define DFLT_MAXMEMTOT        (10*1024)    /* use up to 10 Mbyte for Vim */
 # endif
 
-# ifdef HAVE_RENAME
-#  define mch_rename(src, dst) rename(src, dst)
-# else
-int mch_rename(const char *src, const char *dest);
-# endif
+#define mch_rename(src, dst) rename(src, dst)
 
 #if !defined(S_ISDIR) && defined(S_IFDIR)
 # define        S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
