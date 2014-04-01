@@ -2049,18 +2049,18 @@ static void source_startup_scripts(mparm_T *parmp)
 
       i = FAIL;
       if (path_full_compare((char_u *)USR_VIMRC_FILE,
-            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #ifdef USR_VIMRC_FILE2
           && path_full_compare((char_u *)USR_VIMRC_FILE2,
-            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #endif
 #ifdef USR_VIMRC_FILE3
           && path_full_compare((char_u *)USR_VIMRC_FILE3,
-            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #endif
 #ifdef SYS_VIMRC_FILE
           && path_full_compare((char_u *)SYS_VIMRC_FILE,
-            (char_u *)VIMRC_FILE, FALSE) != FPC_SAME
+            (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #endif
          )
         i = do_source((char_u *)VIMRC_FILE, TRUE, DOSO_VIMRC);
@@ -2074,10 +2074,10 @@ static void source_startup_scripts(mparm_T *parmp)
           secure = 0;
 #endif
         if (       path_full_compare((char_u *)USR_EXRC_FILE,
-              (char_u *)EXRC_FILE, FALSE) != FPC_SAME
+              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
 #ifdef USR_EXRC_FILE2
             && path_full_compare((char_u *)USR_EXRC_FILE2,
-              (char_u *)EXRC_FILE, FALSE) != FPC_SAME
+              (char_u *)EXRC_FILE, FALSE) != kEqualFiles
 #endif
            )
           (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);

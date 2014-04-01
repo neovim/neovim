@@ -1693,7 +1693,7 @@ static int editing_arg_idx(win_T *win)
                && (win->w_buffer->b_ffname == NULL
                    || !(path_full_compare(
                             alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                            win->w_buffer->b_ffname, TRUE) & FPC_SAME))));
+                            win->w_buffer->b_ffname, TRUE) & kEqualFiles))));
 }
 
 /*
@@ -1713,7 +1713,7 @@ void check_arg_idx(win_T *win)
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
                 && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                        win->w_buffer->b_ffname, TRUE) & FPC_SAME))))
+                        win->w_buffer->b_ffname, TRUE) & kEqualFiles))))
       arg_had_last = TRUE;
   } else {
     /* We are editing the current entry in the argument list.

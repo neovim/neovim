@@ -46,18 +46,18 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
       vim_FullName(exp1, full1, MAXPATHL, FALSE);
       vim_FullName(s2, full2, MAXPATHL, FALSE);
       if (fnamecmp(full1, full2) == 0) {
-        return FPC_SAMEX;
+        return kEqualFileNames;
       }
     }
-    return FPC_NOTX;
+    return kBothFilesMissing;
   }
   if (r1 != OK || r2 != OK) {
-    return FPC_DIFFX;
+    return kOneFileMissing;
   }
   if (st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino) {
-    return FPC_SAME;
+    return kEqualFiles;
   }
-  return FPC_DIFF;
+  return kDifferentFiles;
 }
 
 char_u *path_tail(char_u *fname)
