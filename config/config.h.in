@@ -65,7 +65,6 @@
 #define HAVE_STRNCASECMP 1
 // TODO: add proper cmake check
 // #define HAVE_STROPTS_H 1
-#define HAVE_STRTOL 1
 #define HAVE_SVR4_PTYS 1
 // TODO: add proper cmake check
 // #define HAVE_SYSCONF 1
