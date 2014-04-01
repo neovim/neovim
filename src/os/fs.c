@@ -278,7 +278,6 @@ int os_file_exists(const char_u *name)
   }
 }
 
-// return TRUE if a file appears to be read-only from the file permissions.
 int os_file_is_readonly(const char *name)
 {
   if (access(name, W_OK) == 0) {
@@ -288,8 +287,6 @@ int os_file_is_readonly(const char *name)
   }
 }
 
-// return 0 for not writable, 1 for writable file, 2 for a dir which we have
-// rights to write into.
 int os_file_is_writable(const char *name)
 {
   if (access(name, W_OK) == 0) {

@@ -60,6 +60,18 @@ int os_setperm(const char_u *name, int perm);
 /// @return `TRUE` if `name` exists.
 int os_file_exists(const char_u *name);
 
+/// Check if a file is readonly.
+///
+/// @return `True` if `name` is readonly.
+int os_file_is_readonly(const char *name);
+
+/// Check if a file is writable.
+///
+/// @return `0` if `name` is not writable,
+/// @return `1` if `name` is writable,
+/// @return `2` for a directory which we have rights to write into.
+int os_file_is_writable(const char *name);
+
 long_u os_total_mem(int special);
 const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int overwrite);
@@ -68,7 +80,5 @@ int os_get_usernames(garray_T *usernames);
 int os_get_user_name(char *s, size_t len);
 int os_get_uname(uid_t uid, char *s, size_t len);
 char *os_get_user_directory(const char *name);
-int os_file_is_readonly(const char *name);
-int os_file_is_writable(const char *name);
 
 #endif  // NEOVIM_OS_OS_H
