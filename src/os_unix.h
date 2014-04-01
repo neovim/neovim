@@ -5,9 +5,6 @@
 
 /* os_unix.c */
 void mch_write(char_u *s, int len);
-void mch_startjmp(void);
-void mch_endjmp(void);
-void mch_didjmp(void);
 void mch_suspend(void);
 void mch_init(void);
 void reset_signals(void);

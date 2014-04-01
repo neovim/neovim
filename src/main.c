@@ -47,6 +47,7 @@
 #include "version.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/signal.h"
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
@@ -2167,9 +2168,7 @@ mainerr (
     char_u *str       /* extra argument or NULL */
 )
 {
-#if defined(UNIX) || defined(__EMX__) || defined(VMS)
-  reset_signals();              /* kill us with CTRL-C here, if you like */
-#endif
+  signal_stop();              /* kill us with CTRL-C here, if you like */
 
   mch_errmsg(longVersion);
   mch_errmsg("\n");
@@ -2214,9 +2213,7 @@ static void usage(void)
     N_("-q [errorfile]  edit file with first error")
   };
 
-#if defined(UNIX) || defined(__EMX__) || defined(VMS)
-  reset_signals();              /* kill us with CTRL-C here, if you like */
-#endif
+  signal_stop();              /* kill us with CTRL-C here, if you like */
 
   mch_msg(longVersion);
   mch_msg(_("\n\nusage:"));

@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -58,7 +59,7 @@ void input_init()
   }
 }
 
-// Check if there's a pending input event
+// Check if there's pending input
 bool input_ready()
 {
   return rbuffer.rpos < rbuffer.wpos || eof;
@@ -126,11 +127,11 @@ int os_inchar(char_u *buf, int maxlen, int32_t ms, int tb_change_cnt)
   InbufPollResult result;
 
   if (ms >= 0) {
-    if ((result = inbuf_poll(ms)) != kInputAvail) {
+    if ((result = inbuf_poll(ms)) == kInputNone) {
       return 0;
     }
   } else {
-    if ((result = inbuf_poll(p_ut)) != kInputAvail) {
+    if ((result = inbuf_poll(p_ut)) == kInputNone) {
       if (trigger_cursorhold() && maxlen >= 3
           && !typebuf_changed(tb_change_cnt)) {
         buf[0] = K_SPECIAL;
@@ -177,9 +178,10 @@ static InbufPollResult inbuf_poll(int32_t ms)
     return kInputAvail;
 
   if (event_poll(ms)) {
-    if (rbuffer.rpos == rbuffer.wpos && eof) {
+    if (!got_int && rbuffer.rpos == rbuffer.wpos && eof) {
       return kInputEof;
     }
+
     return kInputAvail;
   }
 
