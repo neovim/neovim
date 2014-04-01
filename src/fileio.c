@@ -5072,12 +5072,12 @@ int vim_rename(char_u *from, char_u *to)
     for (n = 123; n < 99999; ++n) {
       sprintf((char *)gettail((char_u *)tempname), "%d", n);
       if (mch_stat(tempname, &st) < 0) {
-        if (mch_rename((char *)from, tempname) == 0) {
-          if (mch_rename(tempname, (char *)to) == 0)
+        if (rename((char *)from, tempname) == 0) {
+          if (rename(tempname, (char *)to) == 0)
             return 0;
           /* Strange, the second step failed.  Try moving the
            * file back and return failure. */
-          mch_rename(tempname, (char *)from);
+          rename(tempname, (char *)from);
           return -1;
         }
         /* If it fails for one temp name it will most likely fail
@@ -5090,8 +5090,8 @@ int vim_rename(char_u *from, char_u *to)
 
   /*
    * Delete the "to" file, this is required on some systems to make the
-   * mch_rename() work, on other systems it makes sure that we don't have
-   * two files when the mch_rename() fails.
+   * rename() work, on other systems it makes sure that we don't have
+   * two files when the rename() fails.
    */
 
   mch_remove(to);
@@ -5099,7 +5099,7 @@ int vim_rename(char_u *from, char_u *to)
   /*
    * First try a normal rename, return if it works.
    */
-  if (mch_rename((char *)from, (char *)to) == 0)
+  if (rename((char *)from, (char *)to) == 0)
     return 0;
 
   /*
