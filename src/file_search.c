@@ -1198,11 +1198,12 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
       vp->ffv_fname[0] = NUL;
     } else {
       vp->ffv_dev_valid = FALSE;
-#endif
+      STRCPY(vp->ffv_fname, ff_expand_buffer);
+    }
+#else
     STRCPY(vp->ffv_fname, ff_expand_buffer);
-#ifdef UNIX
-  }
 #endif
+
     if (wc_path != NULL)
       vp->ffv_wc_path = vim_strsave(wc_path);
     else
