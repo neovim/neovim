@@ -3536,7 +3536,7 @@ static void win_enter_ext(win_T *wp, int undo_sync, int curwin_invalid, int trig
   setmouse();                   /* in case jumped to/from help buffer */
 
   /* Change directories when the 'acd' option is set. */
-  DO_AUTOCHDIR
+  do_autochdir();
 }
 
 

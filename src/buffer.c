@@ -425,7 +425,7 @@ aucmd_abort:
     return;
 
   /* Change directories when the 'acd' option is set. */
-  DO_AUTOCHDIR
+  do_autochdir();
 
   /*
    * Remove the buffer from the list.
@@ -1255,7 +1255,7 @@ void enter_buffer(buf_T *buf)
 
 
   /* Change directories when the 'acd' option is set. */
-  DO_AUTOCHDIR
+  do_autochdir();
 
   if (curbuf->b_kmap_state & KEYMAP_INIT)
     (void)keymap_init();
@@ -1272,8 +1272,11 @@ void enter_buffer(buf_T *buf)
  */
 void do_autochdir(void)
 {
-  if (curbuf->b_ffname != NULL && vim_chdirfile(curbuf->b_ffname) == OK)
-    shorten_fnames(TRUE);
+  if (p_acd) {
+    if (curbuf->b_ffname != NULL && vim_chdirfile(curbuf->b_ffname) == OK) {
+      shorten_fnames(TRUE);
+    }
+  }
 }
 
 /*

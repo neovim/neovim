@@ -2106,7 +2106,7 @@ int rename_buffer(char_u *new_fname)
   vim_free(sfname);
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, curbuf);
   /* Change directories when the 'acd' option is set. */
-  DO_AUTOCHDIR
+  do_autochdir();
   return OK;
 }
 
@@ -2303,7 +2303,7 @@ int do_write(exarg_T *eap)
         redraw_tabline = TRUE;
       }
       /* Change directories when the 'acd' option is set. */
-      DO_AUTOCHDIR
+      do_autochdir();
     }
   }
 
@@ -3046,7 +3046,7 @@ do_ecmd (
     }
 
     /* Change directories when the 'acd' option is set. */
-    DO_AUTOCHDIR
+    do_autochdir();
 
     /*
      * Careful: open_buffer() and apply_autocmds() may change the current
@@ -3185,7 +3185,7 @@ do_ecmd (
     need_start_insertmode = TRUE;
 
   /* Change directories when the 'acd' option is set. */
-  DO_AUTOCHDIR
+  do_autochdir();
 
 
 theend:

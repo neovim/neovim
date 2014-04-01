@@ -5351,7 +5351,7 @@ set_bool_option (
     p_wiv = (*T_XS != NUL);
   } else if ((int *)varp == &p_acd) {
     /* Change directories when the 'acd' option is set now. */
-    DO_AUTOCHDIR
+    do_autochdir();
   }
   /* 'diff' */
   else if ((int *)varp == &curwin->w_p_diff) {
