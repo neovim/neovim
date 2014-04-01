@@ -2970,13 +2970,9 @@ do_set (
               i = 0;
               if (*arg == '-')
                 i = 1;
-#ifdef HAVE_STRTOL
               value = strtol((char *)arg, NULL, 0);
               if (arg[i] == '0' && TOLOWER_ASC(arg[i + 1]) == 'x')
                 i += 2;
-#else
-              value = atol((char *)arg);
-#endif
               while (VIM_ISDIGIT(arg[i]))
                 ++i;
               if (arg[i] != NUL && !vim_iswhite(arg[i])) {
