@@ -82,7 +82,6 @@
 #define HAVE_TGETENT 1
 #define HAVE_UNISTD_H 1
 #define HAVE_UP_BC_PC 1
-#define HAVE_USLEEP 1
 #define HAVE_UTIME 1
 #define HAVE_UTIME_H 1
 #define HAVE_UTIMES 1
