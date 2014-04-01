@@ -11657,7 +11657,7 @@ static int mkdir_recurse(char_u *dir, int prot)
 
   /* Get end of directory name in "dir".
    * We're done when it's "/" or "c:/". */
-  p = path_tail_with_seperator(dir);
+  p = path_tail_with_sep(dir);
   if (p <= get_past_head(dir))
     return OK;
 
@@ -11693,7 +11693,7 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv)
   else {
     if (*path_tail(dir) == NUL)
       /* remove trailing slashes */
-      *path_tail_with_seperator(dir) = NUL;
+      *path_tail_with_sep(dir) = NUL;
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
       if (argvars[2].v_type != VAR_UNKNOWN)
@@ -12544,7 +12544,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
     if (!has_trailing_pathsep) {
       q = p + STRLEN(p);
       if (after_pathsep(p, q))
-        *path_tail_with_seperator(p) = NUL;
+        *path_tail_with_sep(p) = NUL;
     }
 
     rettv->vval.v_string = p;

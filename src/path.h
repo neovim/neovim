@@ -24,27 +24,27 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 /// @param fname A file path.
 /// @return
 ///   - Empty string, if fname is NULL.
-///   - The position of the last path seperator + 1. (i.e. empty string, if
+///   - The position of the last path separator + 1. (i.e. empty string, if
 ///   fname ends in a slash).
 ///   - Never NULL.
 char_u *path_tail(char_u *fname);
 
 /// Get pointer to tail of "fname", including path separators.
 ///
-/// Takes care of "c:/" and "//". That means `path_tail_with_seperator("dir///file.txt")`
+/// Takes care of "c:/" and "//". That means `path_tail_with_sep("dir///file.txt")`
 /// will return a pointer to `"///file.txt"`.
 /// @param fname A file path. (Must be != NULL.)
 /// @return
-///   - Pointer to the last path seperator of `fname`, if there is any.
-///   - `fname` if it contains no path seperator.
+///   - Pointer to the last path separator of `fname`, if there is any.
+///   - `fname` if it contains no path separator.
 ///   - Never NULL.
-char_u *path_tail_with_seperator(char_u *fname);
+char_u *path_tail_with_sep(char_u *fname);
 
 /// Get the next path component of a path name.
 ///
 /// @param fname A file path. (Must be != NULL.)
-/// @return Pointer to first found path seperator + 1.
-/// An empty string, if `fname` doesn't contain a path seperator, 
+/// @return Pointer to first found path separator + 1.
+/// An empty string, if `fname` doesn't contain a path separator, 
 char_u *path_next_component(char_u *fname);
 
 int vim_ispathsep(int c);
