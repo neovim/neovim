@@ -716,9 +716,7 @@ static void f_sqrt(typval_T *argvars, typval_T *rettv);
 static void f_str2float(typval_T *argvars, typval_T *rettv);
 static void f_str2nr(typval_T *argvars, typval_T *rettv);
 static void f_strchars(typval_T *argvars, typval_T *rettv);
-#ifdef HAVE_STRFTIME
 static void f_strftime(typval_T *argvars, typval_T *rettv);
-#endif
 static void f_stridx(typval_T *argvars, typval_T *rettv);
 static void f_string(typval_T *argvars, typval_T *rettv);
 static void f_strlen(typval_T *argvars, typval_T *rettv);
@@ -7037,9 +7035,7 @@ static struct fst {
   {"str2nr",          1, 2, f_str2nr},
   {"strchars",        1, 1, f_strchars},
   {"strdisplaywidth", 1, 2, f_strdisplaywidth},
-#ifdef HAVE_STRFTIME
   {"strftime",        1, 2, f_strftime},
-#endif
   {"stridx",          2, 3, f_stridx},
   {"string",          1, 1, f_string},
   {"strlen",          1, 1, f_strlen},
@@ -14024,7 +14020,6 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = n;
 }
 
-#ifdef HAVE_STRFTIME
 /*
  * "strftime({format}[, {time}])" function
  */
@@ -14074,7 +14069,6 @@ static void f_strftime(typval_T *argvars, typval_T *rettv)
     vim_free(enc);
   }
 }
-#endif
 
 /*
  * "stridx()" function

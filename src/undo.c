@@ -2497,7 +2497,6 @@ void ex_undolist(exarg_T *eap)
  */
 static void u_add_time(char_u *buf, size_t buflen, time_t tt)
 {
-#ifdef HAVE_STRFTIME
   struct tm   *curtime;
 
   if (time(NULL) - tt >= 100) {
@@ -2509,7 +2508,6 @@ static void u_add_time(char_u *buf, size_t buflen, time_t tt)
       /* longer ago */
       (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", curtime);
   } else
-#endif
   vim_snprintf((char *)buf, buflen, _("%ld seconds ago"),
       (long)(time(NULL) - tt));
 }
