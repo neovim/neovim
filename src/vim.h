@@ -1071,9 +1071,7 @@ typedef enum {
 #define STRCAT(d, s)        strcat((char *)(d), (char *)(s))
 #define STRNCAT(d, s, n)    strncat((char *)(d), (char *)(s), (size_t)(n))
 
-#ifdef HAVE_STRPBRK
 # define vim_strpbrk(s, cs) (char_u *)strpbrk((char *)(s), (char *)(cs))
-#endif
 
 #define MSG(s)                      msg((char_u *)(s))
 #define MSG_ATTR(s, attr)           msg_attr((char_u *)(s), (attr))
