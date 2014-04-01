@@ -2740,7 +2740,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
     if (fullname != NULL) {
-      retval = (path_full_compare(fullname, buf_ffname, TRUE) & FPC_SAME);
+      retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
       vim_free(fullname);
     }
     *fname_end = c;

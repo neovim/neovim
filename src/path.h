@@ -3,11 +3,11 @@
 
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {
-  FPC_SAME = 1,   ///< Both exist and are the same file.
-  FPC_DIFF = 2,   ///< Both exist and are different files.
-  FPC_NOTX = 4,   ///< Both don't exist.
-  FPC_DIFFX = 6,  ///< One of them doesn't exist.
-  FPC_SAMEX = 7   ///< Both don't exist and file names are same.
+  kEqualFiles = 1,        ///< Both exist and are the same file.
+  kDifferentFiles = 2,    ///< Both exist and are different files.
+  kBothFilesMissing = 4,  ///< Both don't exist.
+  kOneFileMissing = 6,    ///< One of them doesn't exist.
+  kEqualFileNames = 7     ///< Both don't exist and file names are same.
 } FileComparison;
 
 /// Compare two file names.

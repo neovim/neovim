@@ -4,7 +4,7 @@ path = lib
 
 ffi.cdef [[
 typedef enum file_comparison {
-  FPC_SAME = 1, FPC_DIFF = 2, FPC_NOTX = 4, FPC_DIFFX = 6, FPC_SAMEX = 7
+  kEqualFiles = 1, kDifferentFiles = 2, kBothFilesMissing = 4, kOneFileMissing = 6, kEqualFileNames = 7
 } FileComparison;
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 char_u *path_tail(char_u *fname);
@@ -13,7 +13,7 @@ char_u *path_next_component(char_u *fname);
 ]]
 
 -- import constants parsed by ffi
-{:FPC_SAME, :FPC_DIFF, :FPC_NOTX, :FPC_DIFFX, :FPC_SAMEX} = path
+{:kEqualFiles, :kDifferentFiles, :kBothFilesMissing, :kOneFileMissing, :kEqualFileNames} = path
 NULL = ffi.cast 'void*', 0
 
 describe 'path function', ->
@@ -36,22 +36,22 @@ describe 'path function', ->
       os.remove f1
       os.remove f2
 
-    it 'returns FPC_SAME when passed the same file', ->
-      eq FPC_SAME, (path_full_compare f1, f1)
+    it 'returns kEqualFiles when passed the same file', ->
+      eq kEqualFiles, (path_full_compare f1, f1)
 
-    it 'returns FPC_SAMEX when files that dont exist and have same name', ->
-      eq FPC_SAMEX, (path_full_compare 'null.txt', 'null.txt', true)
+    it 'returns kEqualFileNames when files that dont exist and have same name', ->
+      eq kEqualFileNames, (path_full_compare 'null.txt', 'null.txt', true)
 
-    it 'returns FPC_NOTX when files that dont exist', ->
-      eq FPC_NOTX, (path_full_compare 'null.txt', 'null.txt')
+    it 'returns kBothFilesMissing when files that dont exist', ->
+      eq kBothFilesMissing, (path_full_compare 'null.txt', 'null.txt')
 
-    it 'returns FPC_DIFF when passed different files', ->
-      eq FPC_DIFF, (path_full_compare f1, f2)
-      eq FPC_DIFF, (path_full_compare f2, f1)
+    it 'returns kDifferentFiles when passed different files', ->
+      eq kDifferentFiles, (path_full_compare f1, f2)
+      eq kDifferentFiles, (path_full_compare f2, f1)
 
-    it 'returns FPC_DIFFX if only one does not exist', ->
-      eq FPC_DIFFX, (path_full_compare f1, 'null.txt')
-      eq FPC_DIFFX, (path_full_compare 'null.txt', f1)
+    it 'returns kOneFileMissing if only one does not exist', ->
+      eq kOneFileMissing, (path_full_compare f1, 'null.txt')
+      eq kOneFileMissing, (path_full_compare 'null.txt', f1)
 
   describe 'path_tail', ->
     path_tail = (file) ->

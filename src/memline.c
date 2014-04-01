@@ -1646,7 +1646,7 @@ recover_names (
     if (curbuf->b_ml.ml_mfp != NULL
         && (p = curbuf->b_ml.ml_mfp->mf_fname) != NULL) {
       for (i = 0; i < num_files; ++i)
-        if (path_full_compare(p, files[i], TRUE) & FPC_SAME) {
+        if (path_full_compare(p, files[i], TRUE) & kEqualFiles) {
           /* Remove the name from files[i].  Move further entries
            * down.  When the array becomes empty free it here, since
            * FreeWild() won't be called below. */

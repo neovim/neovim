@@ -5213,7 +5213,7 @@ void fix_help_buffer(void)
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
         mustfree = FALSE;
         rt = vim_getenv((char_u *)"VIMRUNTIME", &mustfree);
-        if (path_full_compare(rt, NameBuff, FALSE) != FPC_SAME) {
+        if (path_full_compare(rt, NameBuff, FALSE) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
           FILE        *fd;
@@ -5523,7 +5523,7 @@ helptags_one (
    */
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
-          dir, FALSE) == FPC_SAME) {
+          dir, FALSE) == kEqualFiles) {
     if (ga_grow(&ga, 1) == FAIL)
       got_int = TRUE;
     else {
