@@ -274,9 +274,7 @@
 
 /* Note: Some systems need both string.h and strings.h (Savage).  However,
  * some systems can't handle both, only use string.h in that case. */
-#ifdef HAVE_STRING_H
 # include <string.h>
-#endif
 #if defined(HAVE_STRINGS_H) && !defined(NO_STRINGS_WITH_STRING_H)
 # include <strings.h>
 #endif

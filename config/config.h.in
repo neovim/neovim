@@ -61,7 +61,6 @@
 #define HAVE_SIGVEC 1
 #define HAVE_ST_BLKSIZE 1
 #define HAVE_STRCASECMP 1
-#define HAVE_STRING_H 1
 #define HAVE_STRINGS_H 1
 #define HAVE_STRNCASECMP 1
 // TODO: add proper cmake check
