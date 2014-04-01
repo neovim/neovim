@@ -4514,7 +4514,7 @@ eval7 (
       if (**arg == '(') {               /* recursive! */
         /* If "s" is the name of a variable of type VAR_FUNC
          * use its contents. */
-        s = deref_func_name(s, &len, FALSE);
+        s = deref_func_name(s, &len, !evaluate);
 
         /* Invoke the function. */
         ret = get_func_tv(s, len, rettv, arg,
