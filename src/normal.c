@@ -7480,9 +7480,6 @@ static void nv_open(cmdarg_T *cap)
     n_opencmd(cap);
 }
 
-
-
-
 /*
  * Trigger CursorHold event.
  * When waiting for a character for 'updatetime' K_CURSORHOLD is put in the
