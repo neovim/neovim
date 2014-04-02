@@ -1699,6 +1699,14 @@ static void mb_adjust_opend(oparg_T *oap)
 }
 
 /*
+ * Put character 'c' at position 'lp'
+ */
+static inline void pchar(pos_T lp, int c)
+{
+    *(ml_get_buf(curbuf, lp.lnum, TRUE) + lp.col) = c;;
+}
+
+/*
  * Replace a whole area with one character.
  */
 int op_replace(oparg_T *oap, int c)
