@@ -42,20 +42,13 @@
 
 /*
  * toupper() and tolower() that use the current locale.
- * On some systems toupper()/tolower() only work on lower/uppercase
- * characters, first use islower() or isupper() then.
  * Careful: Only call TOUPPER_LOC() and TOLOWER_LOC() with a character in the
  * range 0 - 255.  toupper()/tolower() on some systems can't handle others.
  * Note: It is often better to use vim_tolower() and vim_toupper(), because many
  * toupper() and tolower() implementations only work for ASCII.
  */
-# ifdef BROKEN_TOUPPER
-#  define TOUPPER_LOC(c)        (islower(c) ? toupper(c) : (c))
-#  define TOLOWER_LOC(c)        (isupper(c) ? tolower(c) : (c))
-# else
-#  define TOUPPER_LOC           toupper
-#  define TOLOWER_LOC           tolower
-# endif
+#define TOUPPER_LOC toupper
+#define TOLOWER_LOC tolower
 
 /* toupper() and tolower() for ASCII only and ignore the current locale. */
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
