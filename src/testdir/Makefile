@@ -35,8 +35,6 @@ ifdef TESTNUM
 SCRIPTS := test$(TESTNUM).out
 endif
 
-.SUFFIXES: .in .out
-
 nongui:	nolog $(SCRIPTS) report
 
 gui:	nolog $(SCRIPTS) $(SCRIPTS_GUI) report
@@ -75,7 +73,7 @@ test1.out: .gdbinit test1.in
 		echo; exit 1; fi"
 	-rm -rf X* viminfo
 
-.in.out: .gdbinit
+%.out: %.in .gdbinit
 	-rm -rf $*.failed test.ok $(RM_ON_RUN)
 	cp $*.ok test.ok
 	# Sleep a moment to avoid that the xterm title is messed up.
