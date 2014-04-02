@@ -6708,7 +6708,7 @@ static void ex_sleep(exarg_T *eap)
   if (cursor_valid()) {
     n = W_WINROW(curwin) + curwin->w_wrow - msg_scrolled;
     if (n >= 0)
-      windgoto((int)n, curwin->w_wcol);
+      windgoto((int)n, W_WINCOL(curwin) + curwin->w_wcol);
   }
 
   len = eap->line2;
