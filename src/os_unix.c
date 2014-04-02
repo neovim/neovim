@@ -1123,7 +1123,6 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   char        **argv = NULL;
   int i;
   char_u      *p;
-  int pty_master_fd = -1;                   /* for pty's */
   int fd_toshell[2];                    /* for pipes */
   int fd_fromshell[2];
   int pipe_error = FALSE;
@@ -1389,128 +1388,7 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
         gettimeofday(&start_tv, NULL);
 # endif
         for (;; ) {
-          /*
-           * Check if keys have been typed, write them to the child
-           * if there are any.
-           * Don't do this if we are expanding wild cards (would eat
-           * typeahead).
-           * Don't do this when filtering and terminal is in cooked
-           * mode, the shell command will handle the I/O.  Avoids
-           * that a typed password is echoed for ssh or gpg command.
-           * Don't get characters when the child has already
-           * finished (wait_pid == 0).
-           * Don't read characters unless we didn't get output for a
-           * while (noread_cnt > 4), avoids that ":r !ls" eats
-           * typeahead.
-           */
           len = 0;
-          if (!(opts & kShellOptExpand)
-              && ((opts &
-                   (kShellOptRead|kShellOptWrite|kShellOptCooked))
-                  != (kShellOptRead|kShellOptWrite|kShellOptCooked)
-                  )
-              && wait_pid == 0
-              && (ta_len > 0 || noread_cnt > 4)) {
-            if (ta_len == 0) {
-              /* Get extra characters when we don't have any.
-               * Reset the counter and timer. */
-              noread_cnt = 0;
-# if defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)
-              gettimeofday(&start_tv, NULL);
-# endif
-              len = ui_inchar(ta_buf, BUFLEN, 10L, 0);
-            }
-            if (ta_len > 0 || len > 0) {
-              /*
-               * For pipes:
-               * Check for CTRL-C: send interrupt signal to child.
-               * Check for CTRL-D: EOF, close pipe to child.
-               */
-              if (len == 1 && (pty_master_fd < 0 || cmd != NULL)) {
-# ifdef SIGINT
-                /*
-                 * Send SIGINT to the child's group or all
-                 * processes in our group.
-                 */
-                if (ta_buf[ta_len] == Ctrl_C
-                    || ta_buf[ta_len] == intr_char) {
-#  ifdef HAVE_SETSID
-                  kill(-pid, SIGINT);
-#  else
-                  kill(0, SIGINT);
-#  endif
-                  if (wpid > 0)
-                    kill(wpid, SIGINT);
-                }
-# endif
-                if (pty_master_fd < 0 && toshell_fd >= 0
-                    && ta_buf[ta_len] == Ctrl_D) {
-                  close(toshell_fd);
-                  toshell_fd = -1;
-                }
-              }
-
-              /* replace K_BS by <BS> and K_DEL by <DEL> */
-              for (i = ta_len; i < ta_len + len; ++i) {
-                if (ta_buf[i] == CSI && len - i > 2) {
-                  c = TERMCAP2KEY(ta_buf[i + 1], ta_buf[i + 2]);
-                  if (c == K_DEL || c == K_KDEL || c == K_BS) {
-                    memmove(ta_buf + i + 1, ta_buf + i + 3,
-                        (size_t)(len - i - 2));
-                    if (c == K_DEL || c == K_KDEL)
-                      ta_buf[i] = DEL;
-                    else
-                      ta_buf[i] = Ctrl_H;
-                    len -= 2;
-                  }
-                } else if (ta_buf[i] == '\r')
-                  ta_buf[i] = '\n';
-                if (has_mbyte)
-                  i += (*mb_ptr2len_len)(ta_buf + i,
-                                         ta_len + len - i) - 1;
-              }
-
-              /*
-               * For pipes: echo the typed characters.
-               * For a pty this does not seem to work.
-               */
-              if (pty_master_fd < 0) {
-                for (i = ta_len; i < ta_len + len; ++i) {
-                  if (ta_buf[i] == '\n' || ta_buf[i] == '\b')
-                    msg_putchar(ta_buf[i]);
-                  else if (has_mbyte) {
-                    int l = (*mb_ptr2len)(ta_buf + i);
-
-                    msg_outtrans_len(ta_buf + i, l);
-                    i += l - 1;
-                  } else
-                    msg_outtrans_len(ta_buf + i, 1);
-                }
-                windgoto(msg_row, msg_col);
-                out_flush();
-              }
-
-              ta_len += len;
-
-              /*
-               * Write the characters to the child, unless EOF has
-               * been typed for pipes.  Write one character at a
-               * time, to avoid losing too much typeahead.
-               * When writing buffer lines, drop the typed
-               * characters (only check for CTRL-C).
-               */
-              if (opts & kShellOptWrite)
-                ta_len = 0;
-              else if (toshell_fd >= 0) {
-                len = write(toshell_fd, (char *)ta_buf, (size_t)1);
-                if (len > 0) {
-                  ta_len -= len;
-                  memmove(ta_buf, ta_buf + len, ta_len);
-                }
-              }
-            }
-          }
-
           if (got_int) {
             /* CTRL-C sends a signal to the child, we ignore it
              * ourselves */
