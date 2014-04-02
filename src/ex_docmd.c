@@ -155,7 +155,6 @@ static void ex_stop(exarg_T *eap);
 static void ex_exit(exarg_T *eap);
 static void ex_print(exarg_T *eap);
 static void ex_goto(exarg_T *eap);
-static void ex_shell(exarg_T *eap);
 static void ex_preserve(exarg_T *eap);
 static void ex_recover(exarg_T *eap);
 static void ex_mode(exarg_T *eap);
@@ -5720,14 +5719,6 @@ static void ex_print(exarg_T *eap)
 static void ex_goto(exarg_T *eap)
 {
   goto_byte(eap->line2);
-}
-
-/*
- * ":shell".
- */
-static void ex_shell(exarg_T *eap)
-{
-  do_shell(NULL, 0);
 }
 
 #if (defined(FEAT_WINDOWS) && defined(HAVE_DROP_FILE)) \
