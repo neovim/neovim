@@ -25,7 +25,7 @@ check_and_report() {
 # for more information.
 MAKE_CMD="make -j2"
 
-if [ "$CC" = "clang" ]; then
+if [ "$CC" = "clang-asan" ]; then
 	if test -f /usr/local/clang-3.4/bin/clang; then
 		USE_CLANG_34=true
 		export CC=/usr/local/clang-3.4/bin/clang
@@ -68,7 +68,12 @@ if [ "$CC" = "clang" ]; then
 	fi
 	check_and_report
 	$MAKE_CMD install
-else
+elif [ "$CC" = "gcc-gcov" ]; then
+	export CC=gcc
+	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
+	$MAKE_CMD test
+elif [ "$CC" = "gcc-unittest" ]; then
+	export CC=gcc
 	export SKIP_EXEC=1
 	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP -DUSE_GCOV=ON"
 	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DUSE_GCOV=ON"
