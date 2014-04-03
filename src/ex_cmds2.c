@@ -39,7 +39,7 @@
 #include "quickfix.h"
 #include "regexp.h"
 #include "screen.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "undo.h"
 #include "window.h"
 #include "os/os.h"

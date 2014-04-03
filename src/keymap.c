@@ -7,7 +7,7 @@
 #include "keymap.h"
 #include "charset.h"
 #include "edit.h"
-#include "term.h"
+#include "neovimterm.h"
 
 
 /*

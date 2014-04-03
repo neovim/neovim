@@ -121,7 +121,7 @@
 #include "search.h"
 #include "spell.h"
 #include "syntax.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "undo.h"
 #include "version.h"

@@ -1,6 +1,6 @@
 #ifndef NEOVIM_TERM_H
 #define NEOVIM_TERM_H
-/* term.c */
+/* neovimterm.c */
 int set_termname(char_u *term);
 void set_mouse_termcode(int n, char_u *s);
 void del_mouse_termcode(int n);

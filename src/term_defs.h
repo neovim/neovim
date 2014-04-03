@@ -84,7 +84,7 @@ enum SpecialKey {
  * IMPORTANT: When making changes, note the following:
  * - there should be an entry for each code in the builtin termcaps
  * - there should be an option for each code in option.c
- * - there should be code in term.c to obtain the value from the termcap
+ * - there should be code in neovimterm.c to obtain the value from the termcap
  */
 
 extern char_u *(term_strings[]);    /* current terminal strings */

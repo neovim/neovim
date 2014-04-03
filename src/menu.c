@@ -25,7 +25,7 @@
 #include "misc2.h"
 #include "keymap.h"
 #include "garray.h"
-#include "term.h"
+#include "neovimterm.h"
 
 
 #define MENUDEPTH   10          /* maximum depth of menus */

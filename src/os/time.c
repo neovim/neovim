@@ -4,7 +4,7 @@
 #include <uv.h>
 
 #include "vim.h"
-#include "term.h"
+#include "neovimterm.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;

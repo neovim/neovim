@@ -49,7 +49,7 @@
 #include "spell.h"
 #include "syntax.h"
 #include "tag.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "undo.h"
 #include "window.h"

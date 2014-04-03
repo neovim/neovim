@@ -8,7 +8,7 @@
  */
 /*
  *
- * term.c: functions for controlling the terminal
+ * neovimterm.c: functions for controlling the terminal
  *
  * primitive termcap support for Amiga, MSDOS, and Win32 included
  *
@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "vim.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "buffer.h"
 #include "charset.h"
 #include "edit.h"

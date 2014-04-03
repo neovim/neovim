@@ -32,7 +32,7 @@
 #include "path.h"
 #include "screen.h"
 #include "syntax.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "os/os.h"
 

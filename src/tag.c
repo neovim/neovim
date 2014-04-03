@@ -41,7 +41,7 @@
 #include "regexp.h"
 #include "screen.h"
 #include "search.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "window.h"
 #include "os/os.h"

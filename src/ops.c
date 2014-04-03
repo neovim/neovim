@@ -38,7 +38,7 @@
 #include "path.h"
 #include "screen.h"
 #include "search.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "undo.h"
 #include "window.h"

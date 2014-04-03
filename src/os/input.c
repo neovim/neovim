@@ -12,7 +12,7 @@
 #include "types.h"
 #include "fileio.h"
 #include "getchar.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "misc2.h"
 
 #define READ_BUFFER_LENGTH 4096
