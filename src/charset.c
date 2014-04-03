@@ -1885,18 +1885,7 @@ int hexhex2nr(char_u *p)
 /// @return TRUE if `str` starts with a backslash that should be removed.
 int rem_backslash(char_u *str)
 {
-#ifdef BACKSLASH_IN_FILENAME
-  return str[0] == '\\'
-         && str[1] < 0x80
-         && (str[1] == ' '
-             || (str[1] != NUL
-                 && str[1] != '*'
-                 && str[1] != '?'
-                 && !vim_isfilec(str[1])));
-
-#else  // ifdef BACKSLASH_IN_FILENAME
   return str[0] == '\\' && str[1] != NUL;
-#endif  // ifdef BACKSLASH_IN_FILENAME
 }
 
 /// Halve the number of backslashes in a file name argument.
