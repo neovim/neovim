@@ -9662,10 +9662,6 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
   if (cwd != NULL) {
     if (os_dirname(cwd, MAXPATHL) != FAIL) {
       rettv->vval.v_string = vim_strsave(cwd);
-#ifdef BACKSLASH_IN_FILENAME
-      if (rettv->vval.v_string != NULL)
-        slash_adjust(rettv->vval.v_string);
-#endif
     }
     vim_free(cwd);
   }
@@ -19305,9 +19301,6 @@ repeat:
     if ((*fnamep)[0] == '~'
 #if !defined(UNIX) && !(defined(VMS) && defined(USER_HOME))
         && ((*fnamep)[1] == '/'
-# ifdef BACKSLASH_IN_FILENAME
-            || (*fnamep)[1] == '\\'
-# endif
             || (*fnamep)[1] == NUL)
 
 #endif
