@@ -6,7 +6,7 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  * See README.txt for an overview of the Vim source code.
  *
- * Blowfish encryption for Vim; in Blowfish output feedback mode.
+ * Blowfish encryption for Vim; in Blowfish cipher feedback mode.
  * Contributed by Mohsin Ahmed, http://www.cs.albany.edu/~mosh
  * Based on http://www.schneier.com/blowfish.html by Bruce Schneier.
  */
@@ -22,7 +22,7 @@
 
 #define BF_BLOCK    8
 #define BF_BLOCK_MASK 7
-#define BF_OFB_LEN  (8 * (BF_BLOCK))
+#define BF_CFB_LEN (8 * (BF_BLOCK))
 
 typedef union {
   uint32_t ul[2];
@@ -493,42 +493,44 @@ static int bf_self_test(void)
   return err > 0 ? FAIL : OK;
 }
 
-// Output feedback mode.
+// Cipher feedback mode.
 static int randbyte_offset = 0;
 static int update_offset = 0;
-static char_u ofb_buffer[BF_OFB_LEN]; // 64 bytes
+static char_u cfb_buffer[BF_CFB_LEN];  // 64 bytes
 
 // Initialize with seed "iv[iv_len]".
-void bf_ofb_init(char_u *iv, int iv_len)
+void bf_cfb_init(char_u *iv, int iv_len)
 {
   randbyte_offset = update_offset = 0;
-  memset(ofb_buffer, 0, BF_OFB_LEN);
+  memset(cfb_buffer, 0, BF_CFB_LEN);
 
   if (iv_len > 0) {
-    int mi = iv_len > BF_OFB_LEN ? iv_len : BF_OFB_LEN;
+    int mi = iv_len > BF_CFB_LEN ? iv_len : BF_CFB_LEN;
     int i;
     for (i = 0; i < mi; i++) {
-      ofb_buffer[i % BF_OFB_LEN] ^= iv[i % iv_len];
+      cfb_buffer[i % BF_CFB_LEN] ^= iv[i % iv_len];
     }
   }
 }
 
-#define BF_OFB_UPDATE(c) { \
-  ofb_buffer[update_offset] ^= (char_u)c; \
-  if (++update_offset == BF_OFB_LEN) { \
-    update_offset = 0; \
-  } \
-}
+#define BF_CFB_UPDATE(c)                    \
+  {                                         \
+    cfb_buffer[update_offset] ^= (char_u)c; \
+    if (++update_offset == BF_CFB_LEN) {    \
+      update_offset = 0;                    \
+    }                                       \
+  }
 
-#define BF_RANBYTE(t) { \
-  if ((randbyte_offset & BF_BLOCK_MASK) == 0) { \
-    bf_e_cblock(&ofb_buffer[randbyte_offset]); \
-  } \
-  t = ofb_buffer[randbyte_offset]; \
-  if (++randbyte_offset == BF_OFB_LEN) { \
-    randbyte_offset = 0; \
-  } \
-}
+#define BF_RANBYTE(t)                             \
+  {                                               \
+    if ((randbyte_offset & BF_BLOCK_MASK) == 0) { \
+      bf_e_cblock(&cfb_buffer[randbyte_offset]);  \
+    }                                             \
+    t = cfb_buffer[randbyte_offset];              \
+    if (++randbyte_offset == BF_CFB_LEN) {        \
+      randbyte_offset = 0;                        \
+    }                                             \
+  }
 
 // Encrypt "from[len]" into "to[len]".
 // "from" and "to" can be equal to encrypt in place.
@@ -539,7 +541,7 @@ void bf_crypt_encode(char_u *from, size_t len, char_u *to)
     int ztemp = from[i];
     int t;
     BF_RANBYTE(t);
-    BF_OFB_UPDATE(ztemp);
+    BF_CFB_UPDATE(ztemp);
     to[i] = t ^ ztemp;
   }
 }
@@ -554,7 +556,7 @@ void bf_crypt_decode(char_u *ptr, long len)
     int t;
     BF_RANBYTE(t);
     *p ^= t;
-    BF_OFB_UPDATE(*p);
+    BF_CFB_UPDATE(*p);
   }
 }
 
@@ -567,13 +569,13 @@ void bf_crypt_init_keys(char_u *passwd)
 {
   char_u *p;
   for (p = passwd; *p != NUL; p++) {
-    BF_OFB_UPDATE(*p);
+    BF_CFB_UPDATE(*p);
   }
 }
 
 static int save_randbyte_offset;
 static int save_update_offset;
-static char_u save_ofb_buffer[BF_OFB_LEN];
+static char_u save_cfb_buffer[BF_CFB_LEN];
 static uint32_t save_pax[18];
 static uint32_t save_sbx[4][256];
 
@@ -585,7 +587,7 @@ void bf_crypt_save(void)
 {
   save_randbyte_offset = randbyte_offset;
   save_update_offset = update_offset;
-  memmove(save_ofb_buffer, ofb_buffer, BF_OFB_LEN);
+  memmove(save_cfb_buffer, cfb_buffer, BF_CFB_LEN);
   memmove(save_pax, pax, 4 * 18);
   memmove(save_sbx, sbx, 4 * 4 * 256);
 }
@@ -598,7 +600,7 @@ void bf_crypt_restore(void)
 {
   randbyte_offset = save_randbyte_offset;
   update_offset = save_update_offset;
-  memmove(ofb_buffer, save_ofb_buffer, BF_OFB_LEN);
+  memmove(cfb_buffer, save_cfb_buffer, BF_CFB_LEN);
   memmove(pax, save_pax, 4 * 18);
   memmove(sbx, save_sbx, 4 * 4 * 256);
 }
