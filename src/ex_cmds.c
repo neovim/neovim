@@ -4979,14 +4979,18 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\?", "/\\z(\\)", "\\=", ":s\\=",
                              "[count]", "[quotex]", "[range]",
-                             "[pattern]", "\\|", "\\%$"};
+                             "[pattern]", "\\|", "\\%$",
+                             "s/\\~", "s/\\U", "s/\\L",
+                             "s/\\1", "s/\\2", "s/\\3", "s/\\9"};
   static char *(rtable[]) = {"star", "gstar", "[star", "]star", ":star",
                              "/star", "/\\\\star", "quotestar", "starstar",
                              "cpo-star", "/\\\\(\\\\)", "/\\\\%(\\\\)",
                              "?", ":?", "?<CR>", "g?", "g?g?", "g??", "z?",
                              "/\\\\?", "/\\\\z(\\\\)", "\\\\=", ":s\\\\=",
                              "\\[count]", "\\[quotex]", "\\[range]",
-                             "\\[pattern]", "\\\\bar", "/\\\\%\\$"};
+                             "\\[pattern]", "\\\\bar", "/\\\\%\\$",
+                             "s/\\\\\\~", "s/\\\\U", "s/\\\\L",
+                             "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
   int flags;
 
   d = IObuff;               /* assume IObuff is long enough! */
@@ -5020,7 +5024,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
       /* Replace:
        * "[:...:]" with "\[:...:]"
        * "[++...]" with "\[++...]"
-       * "\{" with "\\{"
+       * "\{" with "\\{"               -- matching "} \}"
        */
       if ((arg[0] == '[' && (arg[1] == ':'
                              || (arg[1] == '+' && arg[2] == '+')))
