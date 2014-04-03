@@ -65,6 +65,7 @@ if [ "$CC" = "clang" ]; then
 	if ! $MAKE_CMD test; then
 		reset
 		check_and_report
+		exit 1
 	fi
 	check_and_report
 	$MAKE_CMD install
