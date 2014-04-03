@@ -72,7 +72,6 @@ int vim_chdirfile(char_u *fname);
 int illegal_slash(char *name);
 int vim_chdir(char_u *new_dir);
 void sort_strings(char_u **files, int count);
-int filewritable(char_u *fname);
 int emsg3(char_u *s, char_u *a1, char_u *a2);
 int emsgn(char_u *s, long n);
 int get2c(FILE *fd);

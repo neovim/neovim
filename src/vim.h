@@ -1016,13 +1016,6 @@ typedef enum {
 # define O_NOFOLLOW 0
 #endif
 
-#ifndef W_OK
-# define W_OK 2         /* for systems that don't have W_OK in unistd.h */
-#endif
-#ifndef R_OK
-# define R_OK 4         /* for systems that don't have R_OK in unistd.h */
-#endif
-
 /*
  * defines to avoid typecasts from (char_u *) to (char *) and back
  * (vim_strchr() and vim_strrchr() are now in alloc.c)

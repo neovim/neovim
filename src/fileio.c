@@ -71,9 +71,6 @@ static int crypt_seed_len[] = {0, 8};
 #define CRYPT_SALT_LEN_MAX 8
 #define CRYPT_SEED_LEN_MAX 8
 
-/* Is there any system that doesn't have access()? */
-#define USE_MCH_ACCESS
-
 static char_u *next_fenc(char_u **pp);
 static char_u *readfile_charconvert(char_u *fname, char_u *fenc,
                                             int *fdp);
@@ -475,29 +472,21 @@ readfile (
   }
 
   /*
-   * for UNIX: check readonly with perm and mch_access()
-   * for MSDOS and Amiga: check readonly by trying to open the file for writing
+   * Check readonly by trying to open the file for writing.
+   * If this fails, we know that the file is readonly.
    */
   file_readonly = FALSE;
-  if (read_stdin) {
-  } else if (!read_buffer) {
-#ifdef USE_MCH_ACCESS
-    if (
-# ifdef UNIX
-      !(perm & 0222) ||
-# endif
-      mch_access((char *)fname, W_OK))
+  if (!read_buffer && !read_stdin) {
+    if (!newfile || readonlymode) {
       file_readonly = TRUE;
-    fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
-#else
-    if (!newfile
-        || readonlymode
-        || (fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0) {
+    } else if ((fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0) {
+      // opening in readwrite mode failed => file is readonly
       file_readonly = TRUE;
-      /* try to open ro */
+    }
+    if (file_readonly == TRUE) {
+      // try to open readonly
       fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
     }
-#endif
   }
 
   if (fd < 0) {                     /* cannot open at all */
@@ -2454,34 +2443,6 @@ set_file_time (
 }
 #endif /* UNIX */
 
-
-/*
- * Return TRUE if a file appears to be read-only from the file permissions.
- */
-int 
-check_file_readonly (
-    char_u *fname,             /* full path to file */
-    int perm                       /* known permissions on file */
-)
-{
-#ifndef USE_MCH_ACCESS
-  int fd = 0;
-#endif
-
-  return
-#ifdef USE_MCH_ACCESS
-# ifdef UNIX
-    (perm & 0222) == 0 ||
-# endif
-    mch_access((char *)fname, W_OK)
-#else
-    (fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0
-    ? TRUE : (close(fd), FALSE)
-#endif
-  ;
-}
-
-
 /*
  * buf_write() - write to file "fname" lines "start" through "end"
  *
@@ -2898,7 +2859,7 @@ buf_write (
      * Check if the file is really writable (when renaming the file to
      * make a backup we won't discover it later).
      */
-    file_readonly = check_file_readonly(fname, (int)perm);
+    file_readonly = os_file_is_readonly((char *)fname);
 
     if (!forceit && file_readonly) {
       if (vim_strchr(p_cpo, CPO_FWRITE) != NULL) {

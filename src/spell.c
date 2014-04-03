@@ -8585,7 +8585,7 @@ static void init_spellfile(void)
       else
         /* Copy the path from 'runtimepath' to buf[]. */
         copy_option_part(&rtp, buf, MAXPATHL, ",");
-      if (filewritable(buf) == 2) {
+      if (os_file_is_writable((char *)buf) == 2) {
         /* Use the first language name from 'spelllang' and the
          * encoding used in the first loaded .spl file. */
         if (aspath)
@@ -8595,7 +8595,7 @@ static void init_spellfile(void)
           /* Create the "spell" directory if it doesn't exist yet. */
           l = (int)STRLEN(buf);
           vim_snprintf((char *)buf + l, MAXPATHL - l, "/spell");
-          if (filewritable(buf) != 2)
+          if (os_file_is_writable((char *)buf) != 2)
             vim_mkdir(buf, 0755);
 
           l = (int)STRLEN(buf);

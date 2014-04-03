@@ -60,6 +60,18 @@ int os_setperm(const char_u *name, int perm);
 /// @return `TRUE` if `name` exists.
 int os_file_exists(const char_u *name);
 
+/// Check if a file is readonly.
+///
+/// @return `True` if `name` is readonly.
+int os_file_is_readonly(const char *name);
+
+/// Check if a file is writable.
+///
+/// @return `0` if `name` is not writable,
+/// @return `1` if `name` is writable,
+/// @return `2` for a directory which we have rights to write into.
+int os_file_is_writable(const char *name);
+
 long_u os_total_mem(int special);
 const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int overwrite);

@@ -278,3 +278,23 @@ int os_file_exists(const char_u *name)
   }
 }
 
+int os_file_is_readonly(const char *name)
+{
+  if (access(name, W_OK) == 0) {
+    return FALSE;
+  } else {
+    return TRUE;
+  }
+}
+
+int os_file_is_writable(const char *name)
+{
+  if (access(name, W_OK) == 0) {
+    if (os_isdir((char_u *)name)) {
+      return 2;
+    }
+    return 1;
+  }
+  return 0;
+}
+
