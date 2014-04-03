@@ -1614,6 +1614,7 @@ void scroll_cursor_halfway(int atend)
   int used;
   lineoff_T loff;
   lineoff_T boff;
+  linenr_T old_topline = curwin->w_topline;
 
   loff.lnum = boff.lnum = curwin->w_cursor.lnum;
   (void)hasFolding(loff.lnum, &loff.lnum, &boff.lnum);
@@ -1652,6 +1653,8 @@ void scroll_cursor_halfway(int atend)
   if (!hasFolding(topline, &curwin->w_topline, NULL))
     curwin->w_topline = topline;
   curwin->w_topfill = topfill;
+  if (old_topline > curwin->w_topline + curwin->w_height)
+    curwin->w_botfill = FALSE;
   check_topfill(curwin, FALSE);
   curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
   curwin->w_valid |= VALID_TOPLINE;
