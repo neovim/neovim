@@ -3303,7 +3303,7 @@ static int showmatches(expand_T *xp, int wildmenu)
 }
 
 /*
- * Private gettail for showmatches() (and win_redr_status_matches()):
+ * Private path_tail for showmatches() (and win_redr_status_matches()):
  * Find tail of file name path, but ignore trailing "/".
  */
 char_u *sm_gettail(char_u *s)
@@ -3344,7 +3344,7 @@ static int expand_showtail(expand_T *xp)
       && xp->xp_context != EXPAND_DIRECTORIES)
     return FALSE;
 
-  end = gettail(xp->xp_pattern);
+  end = path_tail(xp->xp_pattern);
   if (end == xp->xp_pattern)            /* there is no path separator */
     return FALSE;
 
@@ -3461,7 +3461,7 @@ addstar (
        * ` could be anywhere in the file name.
        * When the name ends in '$' don't add a star, remove the '$'.
        */
-      tail = gettail(retval);
+      tail = path_tail(retval);
       ends_in_star = (len > 0 && retval[len - 1] == '*');
 #ifndef BACKSLASH_IN_FILENAME
       for (i = len - 2; i >= 0; --i) {

@@ -1303,7 +1303,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, struct stat
         && csinfo[j].st_dev == sb->st_dev && csinfo[j].st_ino == sb->st_ino
 #else
         /* compare pathnames first */
-        && ((fullpathcmp(csinfo[j].fname, fname, FALSE) & FPC_SAME)
+        && ((path_full_compare(csinfo[j].fname, fname, FALSE) & kEqualFiles)
             /* if not Windows 9x, test index file attributes too */
             || (!mch_windows95()
                 && csinfo[j].nVolume == bhfi.dwVolumeSerialNumber
@@ -2231,7 +2231,7 @@ static char *cs_resolve_file(int i, char *name)
     csdir = alloc(MAXPATHL);
     if (csdir != NULL) {
       vim_strncpy(csdir, (char_u *)csinfo[i].fname,
-          gettail((char_u *)csinfo[i].fname)
+          path_tail((char_u *)csinfo[i].fname)
           - (char_u *)csinfo[i].fname);
       len += (int)STRLEN(csdir);
     }

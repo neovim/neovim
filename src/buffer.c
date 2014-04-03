@@ -2683,7 +2683,7 @@ void maketitle(void)
       if (curbuf->b_fname == NULL)
         vim_strncpy(buf, (char_u *)_("[No Name]"), SPACE_FOR_FNAME);
       else {
-        p = transstr(gettail(curbuf->b_fname));
+        p = transstr(path_tail(curbuf->b_fname));
         vim_strncpy(buf, p, SPACE_FOR_FNAME);
         vim_free(p);
       }
@@ -2713,7 +2713,7 @@ void maketitle(void)
           off += 2;
 #endif
         /* remove the file name */
-        p = gettail_sep(buf + off);
+        p = path_tail_with_sep(buf + off);
         if (p == buf + off)
           /* must be a help buffer */
           vim_strncpy(buf + off, (char_u *)_("help"),
@@ -2770,7 +2770,7 @@ void maketitle(void)
       if (buf_spname(curbuf) != NULL)
         i_name = buf_spname(curbuf);
       else                          /* use file name only in icon */
-        i_name = gettail(curbuf->b_ffname);
+        i_name = path_tail(curbuf->b_ffname);
       *i_str = NUL;
       /* Truncate name at 100 bytes. */
       len = (int)STRLEN(i_name);
@@ -3143,7 +3143,7 @@ build_stl_str_hl (
       if (opt != STL_FILENAME)
         str = NameBuff;
       else
-        str = gettail(NameBuff);
+        str = path_tail(NameBuff);
       break;
 
     case STL_VIM_EXPR:     /* '{' */
@@ -3738,8 +3738,8 @@ do_arg_all (
         for (i = 0; i < opened_len; ++i) {
           if (i < alist->al_ga.ga_len
               && (AARGLIST(alist)[i].ae_fnum == buf->b_fnum
-                  || fullpathcmp(alist_name(&AARGLIST(alist)[i]),
-                      buf->b_ffname, TRUE) & FPC_SAME)) {
+                  || path_full_compare(alist_name(&AARGLIST(alist)[i]),
+                      buf->b_ffname, TRUE) & kEqualFiles)) {
             int weight = 1;
 
             if (old_curtab == curtab) {

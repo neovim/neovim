@@ -1691,9 +1691,9 @@ static int editing_arg_idx(win_T *win)
            || (win->w_buffer->b_fnum
                != WARGLIST(win)[win->w_arg_idx].ae_fnum
                && (win->w_buffer->b_ffname == NULL
-                   || !(fullpathcmp(
+                   || !(path_full_compare(
                             alist_name(&WARGLIST(win)[win->w_arg_idx]),
-                            win->w_buffer->b_ffname, TRUE) & FPC_SAME))));
+                            win->w_buffer->b_ffname, TRUE) & kEqualFiles))));
 }
 
 /*
@@ -1712,8 +1712,8 @@ void check_arg_idx(win_T *win)
         && win->w_arg_idx < GARGCOUNT
         && (win->w_buffer->b_fnum == GARGLIST[GARGCOUNT - 1].ae_fnum
             || (win->w_buffer->b_ffname != NULL
-                && (fullpathcmp(alist_name(&GARGLIST[GARGCOUNT - 1]),
-                        win->w_buffer->b_ffname, TRUE) & FPC_SAME))))
+                && (path_full_compare(alist_name(&GARGLIST[GARGCOUNT - 1]),
+                        win->w_buffer->b_ffname, TRUE) & kEqualFiles))))
       arg_had_last = TRUE;
   } else {
     /* We are editing the current entry in the argument list.
@@ -2519,7 +2519,7 @@ do_source (
      * Try again, replacing file name ".vimrc" by "_vimrc" or vice versa,
      * and ".exrc" by "_exrc" or vice versa.
      */
-    p = gettail(fname_exp);
+    p = path_tail(fname_exp);
     if ((*p == '.' || *p == '_')
         && (STRICMP(p + 1, "vimrc") == 0
             || STRICMP(p + 1, "gvimrc") == 0

@@ -1621,8 +1621,8 @@ void write_viminfo(char_u *file, int forceit)
          * the same file as the original.
          */
         wp = tempname + STRLEN(tempname) - 5;
-        if (wp < gettail(tempname))                 /* empty file name? */
-          wp = gettail(tempname);
+        if (wp < path_tail(tempname))                 /* empty file name? */
+          wp = path_tail(tempname);
         for (*wp = 'z'; mch_stat((char *)tempname, &st_new) == 0;
              --*wp) {
           /*
@@ -5193,7 +5193,7 @@ void fix_help_buffer(void)
    * In the "help.txt" and "help.abx" file, add the locally added help
    * files.  This uses the very first line in the help file.
    */
-  fname = gettail(curbuf->b_fname);
+  fname = path_tail(curbuf->b_fname);
   if (fnamecmp(fname, "help.txt") == 0
       || (fnamencmp(fname, "help.", 5) == 0
           && ASCII_ISALPHA(fname[5])
@@ -5213,7 +5213,7 @@ void fix_help_buffer(void)
         copy_option_part(&p, NameBuff, MAXPATHL, ",");
         mustfree = FALSE;
         rt = vim_getenv((char_u *)"VIMRUNTIME", &mustfree);
-        if (fullpathcmp(rt, NameBuff, FALSE) != FPC_SAME) {
+        if (path_full_compare(rt, NameBuff, FALSE) != kEqualFiles) {
           int fcount;
           char_u      **fnames;
           FILE        *fd;
@@ -5246,11 +5246,11 @@ void fix_help_buffer(void)
                   continue;
                 f1 = fnames[i1];
                 f2 = fnames[i2];
-                t1 = gettail(f1);
+                t1 = path_tail(f1);
                 if (fnamencmp(f1, f2, t1 - f1) != 0)
                   continue;
                 e1 = vim_strrchr(t1, '.');
-                e2 = vim_strrchr(gettail(f2), '.');
+                e2 = vim_strrchr(path_tail(f2), '.');
                 if (e1 == NUL || e2 == NUL)
                   continue;
                 if (fnamecmp(e1, ".txt") != 0
@@ -5522,8 +5522,8 @@ helptags_one (
    * add the "help-tags" tag.
    */
   ga_init(&ga, (int)sizeof(char_u *), 100);
-  if (add_help_tags || fullpathcmp((char_u *)"$VIMRUNTIME/doc",
-          dir, FALSE) == FPC_SAME) {
+  if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
+          dir, FALSE) == kEqualFiles) {
     if (ga_grow(&ga, 1) == FAIL)
       got_int = TRUE;
     else {

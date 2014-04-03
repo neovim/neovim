@@ -2580,7 +2580,7 @@ spell_load_file (
       goto endFAIL;
 
     /* Check for .add.spl (_add.spl for VMS). */
-    lp->sl_add = strstr((char *)gettail(fname), SPL_FNAME_ADD) != NULL;
+    lp->sl_add = strstr((char *)path_tail(fname), SPL_FNAME_ADD) != NULL;
   } else
     lp = old_lp;
 
@@ -3875,7 +3875,7 @@ char_u *did_set_spelllang(win_T *wp)
       filename = TRUE;
 
       /* Locate a region and remove it from the file name. */
-      p = vim_strchr(gettail(lang), '_');
+      p = vim_strchr(path_tail(lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
         vim_strncpy(region_cp, p + 1, 2);
@@ -3887,7 +3887,7 @@ char_u *did_set_spelllang(win_T *wp)
 
       /* Check if we loaded this language before. */
       for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-        if (fullpathcmp(lang, slang->sl_fname, FALSE) == FPC_SAME)
+        if (path_full_compare(lang, slang->sl_fname, FALSE) == kEqualFiles)
           break;
     } else {
       filename = FALSE;
@@ -3932,7 +3932,7 @@ char_u *did_set_spelllang(win_T *wp)
      * Loop over the languages, there can be several files for "lang".
      */
     for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (filename ? fullpathcmp(lang, slang->sl_fname, FALSE) == FPC_SAME
+      if (filename ? path_full_compare(lang, slang->sl_fname, FALSE) == kEqualFiles
           : STRICMP(lang, slang->sl_name) == 0) {
         region_mask = REGION_ALL;
         if (!filename && region != NULL) {
@@ -3988,7 +3988,7 @@ char_u *did_set_spelllang(win_T *wp)
       /* If it was already found above then skip it. */
       for (c = 0; c < ga.ga_len; ++c) {
         p = LANGP_ENTRY(ga, c)->lp_slang->sl_fname;
-        if (p != NULL && fullpathcmp(spf_name, p, FALSE) == FPC_SAME)
+        if (p != NULL && path_full_compare(spf_name, p, FALSE) == kEqualFiles)
           break;
       }
       if (c < ga.ga_len)
@@ -3997,7 +3997,7 @@ char_u *did_set_spelllang(win_T *wp)
 
     /* Check if it was loaded already. */
     for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-      if (fullpathcmp(spf_name, slang->sl_fname, FALSE) == FPC_SAME)
+      if (path_full_compare(spf_name, slang->sl_fname, FALSE) == kEqualFiles)
         break;
     if (slang == NULL) {
       /* Not loaded, try loading it now.  The language name includes the
@@ -4006,7 +4006,7 @@ char_u *did_set_spelllang(win_T *wp)
       if (round == 0)
         STRCPY(lang, "internal wordlist");
       else {
-        vim_strncpy(lang, gettail(spf_name), MAXWLEN);
+        vim_strncpy(lang, path_tail(spf_name), MAXWLEN);
         p = vim_strchr(lang, '.');
         if (p != NULL)
           *p = NUL;             /* truncate at ".encoding.add" */
@@ -4334,7 +4334,7 @@ spell_reload_one (
   int didit = FALSE;
 
   for (slang = first_lang; slang != NULL; slang = slang->sl_next) {
-    if (fullpathcmp(fname, slang->sl_fname, FALSE) == FPC_SAME) {
+    if (path_full_compare(fname, slang->sl_fname, FALSE) == kEqualFiles) {
       slang_clear(slang);
       if (spell_load_file(fname, NULL, slang, FALSE) == NULL)
         /* reloading failed, clear the language */
@@ -7679,7 +7679,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
    * It might have been done already by spell_reload_one().
    */
   for (slang = first_lang; slang != NULL; slang = slang->sl_next)
-    if (fullpathcmp(wfname, slang->sl_fname, FALSE) == FPC_SAME)
+    if (path_full_compare(wfname, slang->sl_fname, FALSE) == kEqualFiles)
       break;
   if (slang == NULL) {
     spell_message(spin, (char_u *)_("Reading back spell file..."));
@@ -8199,17 +8199,17 @@ mkspell (
           fnames[0], spin.si_ascii ? (char_u *)"ascii" : spell_enc());
 
     /* Check for .ascii.spl. */
-    if (strstr((char *)gettail(wfname), SPL_FNAME_ASCII) != NULL)
+    if (strstr((char *)path_tail(wfname), SPL_FNAME_ASCII) != NULL)
       spin.si_ascii = TRUE;
 
     /* Check for .add.spl. */
-    if (strstr((char *)gettail(wfname), SPL_FNAME_ADD) != NULL)
+    if (strstr((char *)path_tail(wfname), SPL_FNAME_ADD) != NULL)
       spin.si_add = TRUE;
   }
 
   if (incount <= 0)
     EMSG(_(e_invarg));          /* need at least output and input names */
-  else if (vim_strchr(gettail(wfname), '_') != NULL)
+  else if (vim_strchr(path_tail(wfname), '_') != NULL)
     EMSG(_("E751: Output file name must not have region name"));
   else if (incount > 8)
     EMSG(_("E754: Only up to 8 regions supported"));
@@ -8238,7 +8238,7 @@ mkspell (
 
       if (incount > 1) {
         len = (int)STRLEN(innames[i]);
-        if (STRLEN(gettail(innames[i])) < 5
+        if (STRLEN(path_tail(innames[i])) < 5
             || innames[i][len - 3] != '_') {
           EMSG2(_("E755: Invalid region in %s"), innames[i]);
           goto theend;
@@ -8507,7 +8507,7 @@ spell_add_word (
        * file.  We may need to create the "spell" directory first.  We
        * already checked the runtime directory is writable in
        * init_spellfile(). */
-      if (!dir_of_file_exists(fname) && (p = gettail_sep(fname)) != fname) {
+      if (!dir_of_file_exists(fname) && (p = path_tail_with_sep(fname)) != fname) {
         int c = *p;
 
         /* The directory doesn't exist.  Try creating it and opening
@@ -8607,7 +8607,7 @@ static void init_spellfile(void)
                 ->lp_slang->sl_fname;
         vim_snprintf((char *)buf + l, MAXPATHL - l, ".%s.add",
             fname != NULL
-            && strstr((char *)gettail(fname), ".ascii.") != NULL
+            && strstr((char *)path_tail(fname), ".ascii.") != NULL
             ? (char_u *)"ascii" : spell_enc());
         set_option_value((char_u *)"spellfile", 0L, buf, OPT_LOCAL);
         break;

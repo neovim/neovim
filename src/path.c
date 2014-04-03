@@ -29,159 +29,77 @@
 #define URL_SLASH       1               /* path_is_url() has found "://" */
 #define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
-/*
- * Compare two file names and return:
- * FPC_SAME   if they both exist and are the same file.
- * FPC_SAMEX  if they both don't exist and have the same file name.
- * FPC_DIFF   if they both exist and are different files.
- * FPC_NOTX   if they both don't exist.
- * FPC_DIFFX  if one of them doesn't exist.
- * For the first name environment variables are expanded
- */
-int 
-fullpathcmp (
-    char_u *s1,
-    char_u *s2,
-    int checkname                  /* when both don't exist, check file names */
-)
+FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
 {
-#ifdef UNIX
+  assert(s1 && s2);
   char_u exp1[MAXPATHL];
   char_u full1[MAXPATHL];
   char_u full2[MAXPATHL];
-  struct stat st1, st2;
-  int r1, r2;
+  uv_stat_t st1, st2;
 
   expand_env(s1, exp1, MAXPATHL);
-  r1 = mch_stat((char *)exp1, &st1);
-  r2 = mch_stat((char *)s2, &st2);
-  if (r1 != 0 && r2 != 0) {
-    /* if mch_stat() doesn't work, may compare the names */
+  int r1 = os_stat(exp1, &st1);
+  int r2 = os_stat(s2, &st2);
+  if (r1 != OK && r2 != OK) {
+    // If os_stat() doesn't work, may compare the names.
     if (checkname) {
-      if (fnamecmp(exp1, s2) == 0)
-        return FPC_SAMEX;
-      r1 = vim_FullName(exp1, full1, MAXPATHL, FALSE);
-      r2 = vim_FullName(s2, full2, MAXPATHL, FALSE);
-      if (r1 == OK && r2 == OK && fnamecmp(full1, full2) == 0)
-        return FPC_SAMEX;
-    }
-    return FPC_NOTX;
-  }
-  if (r1 != 0 || r2 != 0)
-    return FPC_DIFFX;
-  if (st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
-    return FPC_SAME;
-  return FPC_DIFF;
-#else
-  char_u  *exp1;                /* expanded s1 */
-  char_u  *full1;               /* full path of s1 */
-  char_u  *full2;               /* full path of s2 */
-  int retval = FPC_DIFF;
-  int r1, r2;
-
-  /* allocate one buffer to store three paths (alloc()/free() is slow!) */
-  if ((exp1 = alloc(MAXPATHL * 3)) != NULL) {
-    full1 = exp1 + MAXPATHL;
-    full2 = full1 + MAXPATHL;
-
-    expand_env(s1, exp1, MAXPATHL);
-    r1 = vim_FullName(exp1, full1, MAXPATHL, FALSE);
-    r2 = vim_FullName(s2, full2, MAXPATHL, FALSE);
-
-    /* If vim_FullName() fails, the file probably doesn't exist. */
-    if (r1 != OK && r2 != OK) {
-      if (checkname && fnamecmp(exp1, s2) == 0)
-        retval = FPC_SAMEX;
-      else
-        retval = FPC_NOTX;
-    } else if (r1 != OK || r2 != OK)
-      retval = FPC_DIFFX;
-    else if (fnamecmp(full1, full2))
-      retval = FPC_DIFF;
-    else
-      retval = FPC_SAME;
-    vim_free(exp1);
-  }
-  return retval;
-#endif
-}
-
-/*
- * Get the tail of a path: the file name.
- * When the path ends in a path separator the tail is the NUL after it.
- * Fail safe: never returns NULL.
- */
-char_u *gettail(char_u *fname)
-{
-  char_u  *p1, *p2;
-
-  if (fname == NULL)
-    return (char_u *)"";
-  for (p1 = p2 = get_past_head(fname); *p2; ) { /* find last part of path */
-    if (vim_ispathsep_nocolon(*p2))
-      p1 = p2 + 1;
-    mb_ptr_adv(p2);
-  }
-  return p1;
-}
-
-static char_u *gettail_dir(char_u *fname);
-
-/*
- * Return the end of the directory name, on the first path
- * separator:
- * "/path/file", "/path/dir/", "/path//dir", "/file"
- *	 ^	       ^	     ^	      ^
- */
-static char_u *gettail_dir(char_u *fname)
-{
-  char_u      *dir_end = fname;
-  char_u      *next_dir_end = fname;
-  int look_for_sep = TRUE;
-  char_u      *p;
-
-  for (p = fname; *p != NUL; ) {
-    if (vim_ispathsep(*p)) {
-      if (look_for_sep) {
-        next_dir_end = p;
-        look_for_sep = FALSE;
+      vim_FullName(exp1, full1, MAXPATHL, FALSE);
+      vim_FullName(s2, full2, MAXPATHL, FALSE);
+      if (fnamecmp(full1, full2) == 0) {
+        return kEqualFileNames;
       }
-    } else {
-      if (!look_for_sep)
-        dir_end = next_dir_end;
-      look_for_sep = TRUE;
+    }
+    return kBothFilesMissing;
+  }
+  if (r1 != OK || r2 != OK) {
+    return kOneFileMissing;
+  }
+  if (st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino) {
+    return kEqualFiles;
+  }
+  return kDifferentFiles;
+}
+
+char_u *path_tail(char_u *fname)
+{
+  if (fname == NULL) {
+    return (char_u *)"";
+  }
+
+  char_u *tail = get_past_head(fname);
+  char_u *p = tail;
+  // Find last part of path.
+  while (*p != NUL) {
+    if (vim_ispathsep_nocolon(*p)) {
+      tail = p + 1;
     }
     mb_ptr_adv(p);
   }
-  return dir_end;
+  return tail;
 }
 
-/*
- * Get pointer to tail of "fname", including path separators.  Putting a NUL
- * here leaves the directory name.  Takes care of "c:/" and "//".
- * Always returns a valid pointer.
- */
-char_u *gettail_sep(char_u *fname)
+char_u *path_tail_with_sep(char_u *fname)
 {
-  char_u      *p;
-  char_u      *t;
+  assert(fname != NULL);
 
-  p = get_past_head(fname);     /* don't remove the '/' from "c:/file" */
-  t = gettail(fname);
-  while (t > p && after_pathsep(fname, t))
-    --t;
-  return t;
+  // Don't remove the '/' from "c:/file".
+  char_u *past_head = get_past_head(fname);
+  char_u *tail = path_tail(fname);
+  while (tail > past_head && after_pathsep(fname, tail)) {
+    tail--;
+  }
+  return tail;
 }
 
-/*
- * get the next path component (just after the next path separator).
- */
-char_u *getnextcomp(char_u *fname)
+char_u *path_next_component(char_u *fname)
 {
-  while (*fname && !vim_ispathsep(*fname))
+  assert(fname != NULL);
+  while (*fname != NUL && !vim_ispathsep(*fname)) {
     mb_ptr_adv(fname);
-  if (*fname)
-    ++fname;
+  }
+  if (*fname != NUL) {
+    fname++;
+  }
   return fname;
 }
 
@@ -254,7 +172,7 @@ void shorten_dir(char_u *str)
   char_u      *tail, *s, *d;
   int skip = FALSE;
 
-  tail = gettail(str);
+  tail = path_tail(str);
   d = str;
   for (s = str;; ++s) {
     if (s >= tail) {                /* copy the whole tail */
@@ -290,7 +208,7 @@ int dir_of_file_exists(char_u *fname)
   int c;
   int retval;
 
-  p = gettail_sep(fname);
+  p = path_tail_with_sep(fname);
   if (p == fname)
     return TRUE;
   c = *p;
@@ -720,7 +638,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
        * "/path/file"  + "./subdir" -> "/path/subdir" */
       if (curbuf->b_ffname == NULL)
         continue;
-      p = gettail(curbuf->b_ffname);
+      p = path_tail(curbuf->b_ffname);
       len = (int)(p - curbuf->b_ffname);
       if (len + (int)STRLEN(buf) >= MAXPATHL)
         continue;
@@ -794,6 +712,8 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
 
   return cutoff;
 }
+
+static char_u *gettail_dir(char_u *fname);
 
 /*
  * Sorts, removes duplicates and modifies all the fullpath names in "gap" so
@@ -945,6 +865,36 @@ theend:
   if (sort_again)
     ga_remove_duplicate_strings(gap);
 }
+
+/*
+ * Return the end of the directory name, on the first path
+ * separator:
+ * "/path/file", "/path/dir/", "/path//dir", "/file"
+ *	 ^	       ^	     ^	      ^
+ */
+static char_u *gettail_dir(char_u *fname)
+{
+  char_u      *dir_end = fname;
+  char_u      *next_dir_end = fname;
+  int look_for_sep = TRUE;
+  char_u      *p;
+
+  for (p = fname; *p != NUL; ) {
+    if (vim_ispathsep(*p)) {
+      if (look_for_sep) {
+        next_dir_end = p;
+        look_for_sep = FALSE;
+      }
+    } else {
+      if (!look_for_sep)
+        dir_end = next_dir_end;
+      look_for_sep = TRUE;
+    }
+    mb_ptr_adv(p);
+  }
+  return dir_end;
+}
+
 
 /*
  * Calls globpath() with 'path' values for the given pattern and stores the
@@ -1476,7 +1426,7 @@ void simplify_filename(char_u *filename)
       }
     } else {
       ++components;                     /* simple path component */
-      p = getnextcomp(p);
+      p = path_next_component(p);
     }
   } while (*p != NUL);
 }
@@ -1692,8 +1642,8 @@ int same_directory(char_u *f1, char_u *f2)
     return FALSE;
 
   (void)vim_FullName(f1, ffname, MAXPATHL, FALSE);
-  t1 = gettail_sep(ffname);
-  t2 = gettail_sep(f2);
+  t1 = path_tail_with_sep(ffname);
+  t2 = path_tail_with_sep(f2);
   return t1 - ffname == t2 - f2
          && pathcmp((char *)ffname, (char *)f2, (int)(t1 - ffname)) == 0;
 }
@@ -1986,7 +1936,7 @@ int match_suffix(char_u *fname)
   for (setsuf = p_su; *setsuf; ) {
     setsuflen = copy_option_part(&setsuf, suf_buf, MAXSUFLEN, ".,");
     if (setsuflen == 0) {
-      char_u *tail = gettail(fname);
+      char_u *tail = path_tail(fname);
 
       /* empty entry: match name without a '.' */
       if (vim_strchr(tail, '.') == NULL) {

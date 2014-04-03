@@ -11657,7 +11657,7 @@ static int mkdir_recurse(char_u *dir, int prot)
 
   /* Get end of directory name in "dir".
    * We're done when it's "/" or "c:/". */
-  p = gettail_sep(dir);
+  p = path_tail_with_sep(dir);
   if (p <= get_past_head(dir))
     return OK;
 
@@ -11691,9 +11691,9 @@ static void f_mkdir(typval_T *argvars, typval_T *rettv)
   if (*dir == NUL)
     rettv->vval.v_number = FAIL;
   else {
-    if (*gettail(dir) == NUL)
+    if (*path_tail(dir) == NUL)
       /* remove trailing slashes */
-      *gettail_sep(dir) = NUL;
+      *path_tail_with_sep(dir) = NUL;
 
     if (argvars[1].v_type != VAR_UNKNOWN) {
       if (argvars[2].v_type != VAR_UNKNOWN)
@@ -12422,7 +12422,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
       p[len - 1] = NUL;       /* the trailing slash breaks readlink() */
     }
 
-    q = getnextcomp(p);
+    q = path_next_component(p);
     if (*q != NUL) {
       /* Separate the first path component in "p", and keep the
        * remainder (beginning with the path separator). */
@@ -12456,7 +12456,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
 
         /* Separate the first path component in the link value and
          * concatenate the remainders. */
-        q = getnextcomp(vim_ispathsep(*buf) ? buf + 1 : buf);
+        q = path_next_component(vim_ispathsep(*buf) ? buf + 1 : buf);
         if (*q != NUL) {
           if (remain == NULL)
             remain = vim_strsave(q - 1);
@@ -12470,18 +12470,18 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
           q[-1] = NUL;
         }
 
-        q = gettail(p);
+        q = path_tail(p);
         if (q > p && *q == NUL) {
           /* Ignore trailing path separator. */
           q[-1] = NUL;
-          q = gettail(p);
+          q = path_tail(p);
         }
         if (q > p && !os_is_absolute_path(buf)) {
           /* symlink is relative to directory of argument */
           cpy = alloc((unsigned)(STRLEN(p) + STRLEN(buf) + 1));
           if (cpy != NULL) {
             STRCPY(cpy, p);
-            STRCPY(gettail(cpy), buf);
+            STRCPY(path_tail(cpy), buf);
             vim_free(p);
             p = cpy;
           }
@@ -12495,7 +12495,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
         break;
 
       /* Append the first path component of "remain" to "p". */
-      q = getnextcomp(remain + 1);
+      q = path_next_component(remain + 1);
       len = q - remain - (*q != NUL);
       cpy = vim_strnsave(p, STRLEN(p) + len);
       if (cpy != NULL) {
@@ -12544,7 +12544,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
     if (!has_trailing_pathsep) {
       q = p + STRLEN(p);
       if (after_pathsep(p, q))
-        *gettail_sep(p) = NUL;
+        *path_tail_with_sep(p) = NUL;
     }
 
     rettv->vval.v_string = p;
@@ -19400,7 +19400,7 @@ repeat:
     }
   }
 
-  tail = gettail(*fnamep);
+  tail = path_tail(*fnamep);
   *fnamelen = (int)STRLEN(*fnamep);
 
   /* ":h" - head, remove "/file_name", can be repeated  */

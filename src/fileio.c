@@ -2957,7 +2957,7 @@ buf_write (
          */
         STRCPY(IObuff, fname);
         for (i = 4913;; i += 123) {
-          sprintf((char *)gettail(IObuff), "%d", i);
+          sprintf((char *)path_tail(IObuff), "%d", i);
           if (mch_lstat((char *)IObuff, &st) < 0)
             break;
         }
@@ -4872,7 +4872,7 @@ buf_modname (
   /*
    * Prepend the dot.
    */
-  if (prepend_dot && !shortname && *(e = gettail(retval)) != '.'
+  if (prepend_dot && !shortname && *(e = path_tail(retval)) != '.'
 #ifdef USE_LONG_FNAME
       && USE_LONG_FNAME
 #endif
@@ -4994,7 +4994,7 @@ int vim_rename(char_u *from, char_u *to)
    * the file name differs we need to go through a temp file.
    */
   if (fnamecmp(from, to) == 0) {
-    if (p_fic && STRCMP(gettail(from), gettail(to)) != 0)
+    if (p_fic && STRCMP(path_tail(from), path_tail(to)) != 0)
       use_tmp_file = TRUE;
     else
       return 0;
@@ -5031,7 +5031,7 @@ int vim_rename(char_u *from, char_u *to)
       return -1;
     STRCPY(tempname, from);
     for (n = 123; n < 99999; ++n) {
-      sprintf((char *)gettail((char_u *)tempname), "%d", n);
+      sprintf((char *)path_tail((char_u *)tempname), "%d", n);
       if (mch_stat(tempname, &st) < 0) {
         if (rename((char *)from, tempname) == 0) {
           if (rename(tempname, (char *)to) == 0)
@@ -5640,7 +5640,7 @@ void vim_deltempdir(void)
         mch_remove(files[i]);
       FreeWild(file_count, files);
     }
-    gettail(NameBuff)[-1] = NUL;
+    path_tail(NameBuff)[-1] = NUL;
     (void)mch_rmdir(NameBuff);
 
     vim_free(vim_tempdir);
@@ -7482,7 +7482,7 @@ apply_autocmds_group (
   if (event == EVENT_FILETYPE)
     did_filetype = TRUE;
 
-  tail = gettail(fname);
+  tail = path_tail(fname);
 
   /* Find first autocommand that matches */
   patcmd.curpat = first_autopat[(int)event];
@@ -7739,7 +7739,7 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
 {
   AutoPat     *ap;
   char_u      *fname;
-  char_u      *tail = gettail(sfname);
+  char_u      *tail = path_tail(sfname);
   int retval = FALSE;
 
   fname = FullName_save(sfname, FALSE);
@@ -8064,7 +8064,7 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
   int match;
   char_u      *p;
 
-  tail = gettail(sfname);
+  tail = path_tail(sfname);
 
   /* try all patterns in 'wildignore' */
   p = list;

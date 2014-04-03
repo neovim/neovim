@@ -1800,7 +1800,7 @@ void qf_list(exarg_T *eap)
           && (buf = buflist_findnr(qfp->qf_fnum)) != NULL) {
         fname = buf->b_fname;
         if (qfp->qf_type == 1)          /* :helpgrep */
-          fname = gettail(fname);
+          fname = path_tail(fname);
       }
       if (fname == NULL)
         sprintf((char *)IObuff, "%2d", i);
@@ -2347,7 +2347,7 @@ static void qf_fill_buffer(qf_info_T *qi)
           && (errbuf = buflist_findnr(qfp->qf_fnum)) != NULL
           && errbuf->b_fname != NULL) {
         if (qfp->qf_type == 1)          /* :helpgrep */
-          STRCPY(IObuff, gettail(errbuf->b_fname));
+          STRCPY(IObuff, path_tail(errbuf->b_fname));
         else
           STRCPY(IObuff, errbuf->b_fname);
         len = (int)STRLEN(IObuff);

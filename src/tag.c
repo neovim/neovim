@@ -2113,7 +2113,7 @@ get_tagfname (
         return FAIL;
       ++tnp->tn_hf_idx;
       STRCPY(buf, p_hf);
-      STRCPY(gettail(buf), "tags");
+      STRCPY(path_tail(buf), "tags");
     } else
       vim_strncpy(buf, ((char_u **)(tag_fnames.ga_data))[
             tnp->tn_hf_idx++], MAXPATHL - 1);
@@ -2162,7 +2162,7 @@ get_tagfname (
       r_ptr = vim_findfile_stopdir(buf);
       /* move the filename one char forward and truncate the
        * filepath with a NUL */
-      filename = gettail(buf);
+      filename = path_tail(buf);
       STRMOVE(filename + 1, filename);
       *filename++ = NUL;
 
@@ -2702,7 +2702,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
 
   if ((p_tr || curbuf->b_help)
       && !vim_isAbsName(fname)
-      && (p = gettail(tag_fname)) != tag_fname) {
+      && (p = path_tail(tag_fname)) != tag_fname) {
     retval = alloc(MAXPATHL);
     if (retval != NULL) {
       STRCPY(retval, tag_fname);
@@ -2723,7 +2723,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
 
 /*
  * Check if we have a tag for the buffer with name "buf_ffname".
- * This is a bit slow, because of the full path compare in fullpathcmp().
+ * This is a bit slow, because of the full path compare in path_full_compare().
  * Return TRUE if tag for file "fname" if tag file "tag_fname" is for current
  * file.
  */
@@ -2740,7 +2740,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
     if (fullname != NULL) {
-      retval = (fullpathcmp(fullname, buf_ffname, TRUE) & FPC_SAME);
+      retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
       vim_free(fullname);
     }
     *fname_end = c;
