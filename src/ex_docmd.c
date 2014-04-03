@@ -2811,9 +2811,6 @@ set_one_cmd_context (
 
     /* For a shell command more chars need to be escaped. */
     if (usefilter || ea.cmdidx == CMD_bang) {
-#ifndef BACKSLASH_IN_FILENAME
-      xp->xp_shell = TRUE;
-#endif
       /* When still after the command name expand executables. */
       if (xp->xp_pattern == skipwhite(arg))
         xp->xp_context = EXPAND_SHELLCMD;
@@ -3710,14 +3707,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 #endif
         ) {
       char_u      *l;
-#ifdef BACKSLASH_IN_FILENAME
-      /* Don't escape a backslash here, because rem_backslash() doesn't
-       * remove it later. */
-      static char_u *nobslash = (char_u *)" \t\"|";
-# define ESCAPE_CHARS nobslash
-#else
 # define ESCAPE_CHARS escape_chars
-#endif
 
       for (l = repl; *l; ++l)
         if (vim_strchr(ESCAPE_CHARS, *l) != NULL) {
@@ -5949,37 +5939,12 @@ alist_add (
 {
   if (fname == NULL)            /* don't add NULL file names */
     return;
-#ifdef BACKSLASH_IN_FILENAME
-  slash_adjust(fname);
-#endif
   AARGLIST(al)[al->al_ga.ga_len].ae_fname = fname;
   if (set_fnum > 0)
     AARGLIST(al)[al->al_ga.ga_len].ae_fnum =
       buflist_add(fname, BLN_LISTED | (set_fnum == 2 ? BLN_CURBUF : 0));
   ++al->al_ga.ga_len;
 }
-
-#if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
-/*
- * Adjust slashes in file names.  Called after 'shellslash' was set.
- */
-void alist_slash_adjust(void)
-{
-  int i;
-  win_T       *wp;
-  tabpage_T   *tp;
-
-  for (i = 0; i < GARGCOUNT; ++i)
-    if (GARGLIST[i].ae_fname != NULL)
-      slash_adjust(GARGLIST[i].ae_fname);
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  if (wp->w_alist != &global_alist)
-    for (i = 0; i < WARGCOUNT(wp); ++i)
-      if (WARGLIST(wp)[i].ae_fname != NULL)
-        slash_adjust(WARGLIST(wp)[i].ae_fname);
-}
-
-#endif
 
 /*
  * ":preserve".
@@ -6692,9 +6657,6 @@ void ex_cd(exarg_T *eap)
 static void ex_pwd(exarg_T *eap)
 {
   if (os_dirname(NameBuff, MAXPATHL) == OK) {
-#ifdef BACKSLASH_IN_FILENAME
-    slash_adjust(NameBuff);
-#endif
     msg(NameBuff);
   } else
     EMSG(_("E187: Unknown"));
@@ -8947,11 +8909,6 @@ static char_u *get_view_file(int c)
         *s++ = '=';
       } else if (vim_ispathsep(*p)) {
         *s++ = '=';
-#if defined(BACKSLASH_IN_FILENAME) || defined(AMIGA) || defined(VMS)
-        if (*p == ':')
-          *s++ = '-';
-        else
-#endif
         *s++ = '+';
       } else
         *s++ = *p;
