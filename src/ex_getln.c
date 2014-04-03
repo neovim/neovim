@@ -51,7 +51,7 @@
 #include "search.h"
 #include "syntax.h"
 #include "tag.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "window.h"
 #include "ui.h"
 #include "os/os.h"

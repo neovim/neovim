@@ -40,7 +40,7 @@
 #include "option.h"
 #include "regexp.h"
 #include "screen.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "undo.h"
 

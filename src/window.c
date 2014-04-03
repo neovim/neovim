@@ -42,7 +42,7 @@
 #include "screen.h"
 #include "search.h"
 #include "syntax.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "undo.h"
 #include "os/os.h"
 

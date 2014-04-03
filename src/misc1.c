@@ -44,7 +44,7 @@
 #include "screen.h"
 #include "search.h"
 #include "tag.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "undo.h"
 #include "window.h"

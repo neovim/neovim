@@ -42,7 +42,7 @@
 #include "quickfix.h"
 #include "screen.h"
 #include "syntax.h"
-#include "term.h"
+#include "neovimterm.h"
 #include "ui.h"
 #include "version.h"
 #include "window.h"
