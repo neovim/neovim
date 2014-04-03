@@ -32,6 +32,7 @@
 #include "mark.h"
 #include "mbyte.h"
 #include "memline.h"
+#include "memory.h"
 #include "message.h"
 #include "misc2.h"
 #include "garray.h"

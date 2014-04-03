@@ -33,6 +33,7 @@
 #include "misc2.h"
 #include "crypt.h"
 #include "garray.h"
+#include "memory.h"
 #include "move.h"
 #include "normal.h"
 #include "ops.h"

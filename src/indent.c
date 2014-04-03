@@ -2,6 +2,7 @@
 #include "eval.h"
 #include "charset.h"
 #include "memline.h"
+#include "memory.h"
 #include "misc1.h"
 #include "misc2.h"
 #include "option.h"

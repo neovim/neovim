@@ -5,6 +5,7 @@
 #include "types.h"
 #include "vim.h"
 #include "ascii.h"
+#include "memory.h"
 #include "misc2.h"
 #include "option_defs.h"
 #include "charset.h"

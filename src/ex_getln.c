@@ -38,6 +38,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "memory.h"
 #include "cursor_shape.h"
 #include "keymap.h"
 #include "garray.h"

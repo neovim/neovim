@@ -106,6 +106,7 @@
 #include "main.h"
 #include "mbyte.h"
 #include "memline.h"
+#include "memory.h"
 #include "menu.h"
 #include "message.h"
 #include "misc1.h"

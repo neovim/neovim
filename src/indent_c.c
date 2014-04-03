@@ -5,6 +5,7 @@
 #include "indent.h"
 #include "indent_c.h"
 #include "memline.h"
+#include "memory.h"
 #include "misc2.h"
 #include "option.h"
 #include "search.h"

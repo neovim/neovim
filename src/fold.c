@@ -23,6 +23,7 @@
 #include "indent.h"
 #include "mark.h"
 #include "memline.h"
+#include "memory.h"
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"

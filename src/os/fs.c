@@ -1,6 +1,7 @@
 // fs.c -- filesystem access
 
 #include "os/os.h"
+#include "memory.h"
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
