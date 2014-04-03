@@ -1711,7 +1711,7 @@ void write_viminfo(char_u *file, int forceit)
      * In case of an error keep the original viminfo file.
      * Otherwise rename the newly written file.
      */
-    if (viminfo_errcnt || os_rename(tempname, fname) == FAIL)
+    if (viminfo_errcnt || vim_rename(tempname, fname) == -1)
       mch_remove(tempname);
 
   }
