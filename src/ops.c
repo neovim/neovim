@@ -3528,6 +3528,11 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
    */
   for (t = 0; t < count; ++t) {
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
+    if (t == 0) {
+      // Set the '[ mark.
+      curwin->w_buffer->b_op_start.lnum = curwin->w_cursor.lnum;
+      curwin->w_buffer->b_op_start.col = (colnr_T)STRLEN(curr);
+    }
     if (remove_comments) {
       /* We don't want to remove the comment leader if the
        * previous line is not a comment. */
@@ -3622,6 +3627,10 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
     currsize = (int)STRLEN(curr);
   }
   ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+
+  // Set the '] mark.
+  curwin->w_buffer->b_op_end.lnum = curwin->w_cursor.lnum;
+  curwin->w_buffer->b_op_end.col = (colnr_T)STRLEN(newp);
 
   /* Only report the change in the first line here, del_lines() will report
    * the deleted line. */
