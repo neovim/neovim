@@ -16,35 +16,10 @@ int os_chdir(const char *path);
 /// @return `OK` for success, `FAIL` for failure.
 int os_dirname(char_u *buf, size_t len);
 
-/// Expand a given file to its absolute path.
-///
-/// @param fname The filename which should be expanded.
-/// @param buf Buffer to store the absolute path of `fname`.
-/// @param len Length of `buf`.
-/// @param force Also expand when `fname` is already absolute.
-/// @return `FAIL` for failure, `OK` for success.
-int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
-
-/// Check if the given file is absolute.
-///
-/// This just checks if the file name starts with '/' or '~'.
-/// @return `true` if "fname" is absolute.
-int os_is_absolute_path(const char_u *fname);
-
 /// Check if the given path is a directory or not.
 ///
 /// @return `true` if `fname` is a directory.
 bool os_isdir(const char_u *name);
-
-/// Check if the given path represents an executable file.
-///
-/// @return `true` if `name` is executable and
-///   - can be found in $PATH,
-///   - is relative to current dir or
-///   - is absolute.
-///
-/// @return `false` otherwise.
-bool os_can_exe(const char_u *name);
 
 /// Get the file permissions for a given file.
 ///
