@@ -23,6 +23,7 @@
 #include "fileio.h"
 #include "getchar.h"
 #include "mbyte.h"
+#include "memory.h"
 #include "misc1.h"
 #include "misc2.h"
 #include "keymap.h"

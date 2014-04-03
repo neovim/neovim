@@ -38,6 +38,7 @@
 #include "misc2.h"
 #include "garray.h"
 #include "keymap.h"
+#include "memory.h"
 #include "move.h"
 #include "normal.h"
 #include "option.h"

@@ -20,6 +20,7 @@
 #include "eval.h"
 #include "ex_docmd.h"
 #include "getchar.h"
+#include "memory.h"
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"

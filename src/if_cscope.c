@@ -17,6 +17,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "memory.h"
 #include "os/time.h"
 #include "path.h"
 #include "quickfix.h"

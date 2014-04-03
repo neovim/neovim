@@ -88,6 +88,7 @@
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "memory.h"
 #include "option.h"
 #include "screen.h"
 #include "spell.h"

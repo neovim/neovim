@@ -54,6 +54,7 @@
 #include "mark.h"
 #include "mbyte.h"
 #include "memfile.h"
+#include "memory.h"
 #include "message.h"
 #include "misc1.h"
 #include "misc2.h"

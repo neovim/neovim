@@ -33,6 +33,7 @@
 #include "misc2.h"
 #include "file_search.h"
 #include "garray.h"
+#include "memory.h"
 #include "move.h"
 #include "option.h"
 #include "os_unix.h"

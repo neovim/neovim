@@ -24,18 +24,6 @@ void check_cursor_col_win(win_T *win);
 void check_cursor(void);
 void adjust_cursor_col(void);
 int leftcol_changed(void);
-char_u *alloc(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
-char_u *alloc_clear(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
-char_u *alloc_check(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
-char_u *lalloc_clear(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
-void try_to_free_memory();
-void *xmalloc(size_t size)
-  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET;
-void *xrealloc(void *ptr, size_t size)
-  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET;
-char_u *lalloc(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
-void do_outofmem_msg(long_u size);
-void free_all_mem(void);
 char_u *vim_strsave(char_u *string);
 char_u *vim_strnsave(char_u *string, int len);
 char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars);

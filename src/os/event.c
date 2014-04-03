@@ -8,6 +8,7 @@
 #include "os/input.h"
 #include "os/signal.h"
 #include "vim.h"
+#include "memory.h"
 #include "misc2.h"
 
 typedef struct EventNode {

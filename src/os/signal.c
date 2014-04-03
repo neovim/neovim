@@ -8,6 +8,7 @@
 #include "memline.h"
 #include "eval.h"
 #include "term.h"
+#include "memory.h"
 #include "misc1.h"
 #include "misc2.h"
 #include "os/event.h"
