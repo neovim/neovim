@@ -3314,7 +3314,7 @@ nobackup:
            * If the renaming of the original file to the backup file
            * works, quit here.
            */
-          if (os_rename(fname, backup) == OK)
+          if (vim_rename(fname, backup) == 0)
             break;
 
           vim_free(backup);             /* don't do the rename below */
@@ -3520,18 +3520,18 @@ restore_backup:
           /*
            * There is a small chance that we removed the original,
            * try to move the copy in its place.
-           * This may not work if the os_rename() fails.
+           * This may not work if the vim_rename() fails.
            * In that case we leave the copy around.
            */
           /* If file does not exist, put the copy in its place */
           if (mch_stat((char *)fname, &st) < 0)
-            os_rename(backup, fname);
+            vim_rename(backup, fname);
           /* if original file does exist throw away the copy */
           if (mch_stat((char *)fname, &st) >= 0)
             mch_remove(backup);
         } else {
           /* try to put the original file back */
-          os_rename(backup, fname);
+          vim_rename(backup, fname);
         }
       }
 
@@ -3827,7 +3827,7 @@ restore_backup:
           close(fd);            /* ignore errors for closing read file */
         }
       } else {
-        if (os_rename(backup, fname) == OK)
+        if (vim_rename(backup, fname) == 0)
           end = 1;
       }
     }
@@ -3934,7 +3934,7 @@ restore_backup:
       if (org == NULL)
         EMSG(_("E205: Patchmode: can't save original file"));
       else if (mch_stat(org, &st) < 0) {
-        os_rename(backup, (char_u *)org);
+        vim_rename(backup, (char_u *)org);
         vim_free(backup);                   /* don't delete the file */
         backup = NULL;
 #ifdef UNIX
@@ -4968,6 +4968,169 @@ int tag_fgets(char_u *buf, int size, FILE *fp)
   return eof;
 }
 #endif
+
+/*
+ * os_rename() only works if both files are on the same file system, this
+ * function will (attempts to?) copy the file across if rename fails -- webb
+ * Return -1 for failure, 0 for success.
+ */
+int vim_rename(char_u *from, char_u *to)
+{
+  int fd_in;
+  int fd_out;
+  int n;
+  char        *errmsg = NULL;
+  char        *buffer;
+  struct stat st;
+  long perm;
+#ifdef HAVE_ACL
+  vim_acl_T acl;                /* ACL from original file */
+#endif
+  int use_tmp_file = FALSE;
+
+  /*
+   * When the names are identical, there is nothing to do.  When they refer
+   * to the same file (ignoring case and slash/backslash differences) but
+   * the file name differs we need to go through a temp file.
+   */
+  if (fnamecmp(from, to) == 0) {
+    if (p_fic && STRCMP(path_tail(from), path_tail(to)) != 0)
+      use_tmp_file = TRUE;
+    else
+      return 0;
+  }
+
+  /*
+   * Fail if the "from" file doesn't exist.  Avoids that "to" is deleted.
+   */
+  if (mch_stat((char *)from, &st) < 0)
+    return -1;
+
+#ifdef UNIX
+  {
+    struct stat st_to;
+
+    /* It's possible for the source and destination to be the same file.
+     * This happens when "from" and "to" differ in case and are on a FAT32
+     * filesystem.  In that case go through a temp file name. */
+    if (mch_stat((char *)to, &st_to) >= 0
+        && st.st_dev == st_to.st_dev
+        && st.st_ino == st_to.st_ino)
+      use_tmp_file = TRUE;
+  }
+#endif
+
+  if (use_tmp_file) {
+    char_u tempname[MAXPATHL + 1];
+
+    /*
+     * Find a name that doesn't exist and is in the same directory.
+     * Rename "from" to "tempname" and then rename "tempname" to "to".
+     */
+    if (STRLEN(from) >= MAXPATHL - 5)
+      return -1;
+    STRCPY(tempname, from);
+    for (n = 123; n < 99999; ++n) {
+      sprintf((char *)path_tail(tempname), "%d", n);
+      if (os_file_exists(tempname) == FALSE) {
+        if (os_rename(from, tempname) == OK) {
+          if (os_rename(tempname, to) == OK)
+            return 0;
+          /* Strange, the second step failed.  Try moving the
+           * file back and return failure. */
+          os_rename(tempname, from);
+          return -1;
+        }
+        /* If it fails for one temp name it will most likely fail
+         * for any temp name, give up. */
+        return -1;
+      }
+    }
+    return -1;
+  }
+
+  /*
+   * Delete the "to" file, this is required on some systems to make the
+   * os_rename() work, on other systems it makes sure that we don't have
+   * two files when the os_rename() fails.
+   */
+
+  mch_remove(to);
+
+  /*
+   * First try a normal rename, return if it works.
+   */
+  if (os_rename(from, to) == OK)
+    return 0;
+
+  /*
+   * Rename() failed, try copying the file.
+   */
+  perm = os_getperm(from);
+#ifdef HAVE_ACL
+  /* For systems that support ACL: get the ACL from the original file. */
+  acl = mch_get_acl(from);
+#endif
+  fd_in = mch_open((char *)from, O_RDONLY|O_EXTRA, 0);
+  if (fd_in == -1) {
+#ifdef HAVE_ACL
+    mch_free_acl(acl);
+#endif
+    return -1;
+  }
+
+  /* Create the new file with same permissions as the original. */
+  fd_out = mch_open((char *)to,
+      O_CREAT|O_EXCL|O_WRONLY|O_EXTRA|O_NOFOLLOW, (int)perm);
+  if (fd_out == -1) {
+    close(fd_in);
+#ifdef HAVE_ACL
+    mch_free_acl(acl);
+#endif
+    return -1;
+  }
+
+  buffer = (char *)alloc(BUFSIZE);
+  if (buffer == NULL) {
+    close(fd_out);
+    close(fd_in);
+#ifdef HAVE_ACL
+    mch_free_acl(acl);
+#endif
+    return -1;
+  }
+
+  while ((n = read_eintr(fd_in, buffer, BUFSIZE)) > 0)
+    if (write_eintr(fd_out, buffer, n) != n) {
+      errmsg = _("E208: Error writing to \"%s\"");
+      break;
+    }
+
+  vim_free(buffer);
+  close(fd_in);
+  if (close(fd_out) < 0)
+    errmsg = _("E209: Error closing \"%s\"");
+  if (n < 0) {
+    errmsg = _("E210: Error reading \"%s\"");
+    to = from;
+  }
+#ifndef UNIX        /* for Unix mch_open() already set the permission */
+  os_setperm(to, perm);
+#endif
+#ifdef HAVE_ACL
+  mch_set_acl(to, acl);
+  mch_free_acl(acl);
+#endif
+#ifdef HAVE_SELINUX
+  mch_copy_sec(from, to);
+#endif
+  if (errmsg != NULL) {
+    EMSG2(errmsg, to);
+    return -1;
+  }
+  mch_remove(from);
+  return 0;
+}
 
 static int already_warned = FALSE;
 

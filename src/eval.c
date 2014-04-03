@@ -12329,14 +12329,13 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
  */
 static void f_rename(typval_T *argvars, typval_T *rettv)
 {
-  if (check_restricted() || check_secure()) {
+  char_u buf[NUMBUFLEN];
+
+  if (check_restricted() || check_secure())
     rettv->vval.v_number = -1;
-  } else {
-    char_u buf[NUMBUFLEN];
-    char_u *from = get_tv_string(&argvars[0]);
-    char_u *to = get_tv_string_buf(&argvars[1], buf);
-    rettv->vval.v_number = os_rename(from, to) == OK ? 0 : -1;
-  }
+  else
+    rettv->vval.v_number = vim_rename(get_tv_string(&argvars[0]),
+        get_tv_string_buf(&argvars[1], buf));
 }
 
 /*

@@ -598,7 +598,7 @@ void ml_setname(buf_T *buf)
     }
 
     /* try to rename the swap file */
-    if (os_rename(mfp->mf_fname, fname) == OK) {
+    if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = TRUE;
       vim_free(mfp->mf_fname);
       mfp->mf_fname = fname;
