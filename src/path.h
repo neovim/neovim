@@ -87,4 +87,39 @@ int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u *
                      **file,
                      int flags);
 int match_suffix(char_u *fname);
+
+/// Get the absolute name of the given relative directory.
+///
+/// @param directory Directory name, relative to current directory.
+/// @return `FAIL` for failure, `OK` for success.
+int os_full_dir_name(char *directory, char *buffer, int len);
+
+// Append to_append to path with a slash in between.
+int append_path(char *path, const char *to_append, int max_len);
+
+/// Expand a given file to its absolute path.
+///
+/// @param fname The filename which should be expanded.
+/// @param buf Buffer to store the absolute path of `fname`.
+/// @param len Length of `buf`.
+/// @param force Also expand when `fname` is already absolute.
+/// @return `FAIL` for failure, `OK` for success.
+int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
+
+/// Check if the given file is absolute.
+///
+/// This just checks if the file name starts with '/' or '~'.
+/// @return `TRUE` if "fname" is absolute.
+int os_is_absolute_path(const char_u *fname);
+
+/// Check if the given path represents an executable file.
+///
+/// @return `TRUE` if `name` is executable and
+///   - can be found in $PATH,
+///   - is relative to current dir or
+///   - is absolute.
+///
+/// @return `FALSE` otherwise.
+int os_can_exe(const char_u *name);
+
 #endif
