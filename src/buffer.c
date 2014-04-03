@@ -2399,24 +2399,6 @@ int buflist_add(char_u *fname, int flags)
   return 0;
 }
 
-#if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
-/*
- * Adjust slashes in file names.  Called after 'shellslash' was set.
- */
-void buflist_slash_adjust(void)
-{
-  buf_T       *bp;
-
-  for (bp = firstbuf; bp != NULL; bp = bp->b_next) {
-    if (bp->b_ffname != NULL)
-      slash_adjust(bp->b_ffname);
-    if (bp->b_sfname != NULL)
-      slash_adjust(bp->b_sfname);
-  }
-}
-
-#endif
-
 /*
  * Set alternate cursor position for the current buffer and window "win".
  * Also save the local window option values.
@@ -2707,11 +2689,6 @@ void maketitle(void)
         buf[off++] = '(';
         home_replace(curbuf, curbuf->b_ffname,
             buf + off, SPACE_FOR_DIR - off, TRUE);
-#ifdef BACKSLASH_IN_FILENAME
-        /* avoid "c:/name" to be reduced to "c" */
-        if (isalpha(buf[off]) && buf[off + 1] == ':')
-          off += 2;
-#endif
         /* remove the file name */
         p = path_tail_with_sep(buf + off);
         if (p == buf + off)
