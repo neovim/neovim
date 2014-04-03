@@ -5,7 +5,7 @@
 #include "os/os.h"
 #include "misc2.h"
 
-#ifdef HAVE_CRT_EXTERNS_H
+#ifdef HAVE__NSGETENVIRON
 #include <crt_externs.h>
 #endif
 
