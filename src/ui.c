@@ -209,23 +209,6 @@ void ui_suspend(void)
   mch_suspend();
 }
 
-#if !defined(UNIX) || !defined(SIGTSTP) || defined(PROTO) || defined(__BEOS__)
-/*
- * When the OS can't really suspend, call this function to start a shell.
- * This is never called in the GUI.
- */
-void suspend_shell(void)
-{
-  if (*p_sh == NUL)
-    EMSG(_(e_shellempty));
-  else {
-    MSG_PUTS(_("new shell started\n"));
-    do_shell(NULL, 0);
-  }
-}
-
-#endif
-
 /*
  * Try to get the current Vim shell size.  Put the result in Rows and Columns.
  * Use the new sizes as defaults for 'columns' and 'lines'.

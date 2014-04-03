@@ -843,8 +843,6 @@ enum CMD_index
       BANG|FILE1|RANGE|NOTADR|EDITCMD|ARGOPT|TRLBAR),
   EX(CMD_sfirst,          "sfirst",       ex_rewind,
       EXTRA|BANG|EDITCMD|ARGOPT|TRLBAR),
-  EX(CMD_shell,           "shell",        ex_shell,
-      TRLBAR|CMDWIN),
   EX(CMD_simalt,          "simalt",       ex_simalt,
       NEEDARG|WORD1|TRLBAR|CMDWIN),
   EX(CMD_sign,            "sign",         ex_sign,
