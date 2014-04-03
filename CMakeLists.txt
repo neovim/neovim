@@ -37,8 +37,22 @@ if(USE_GCOV)
   set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
 endif()
 
+include_directories("${PROJECT_BINARY_DIR}/config")
+include_directories("${PROJECT_SOURCE_DIR}/src")
+
 # Modules used by platform auto-detection
 include(CheckLibraryExists)
+
+find_package(LibUV REQUIRED)
+include_directories(${LIBUV_INCLUDE_DIRS})
+
+find_package(LuaJit REQUIRED)
+include_directories(${LUAJIT_INCLUDE_DIRS})
+
+find_package(LibIntl)
+if(LibIntl_FOUND)
+  include_directories(${LibIntl_INCLUDE_DIR})
+endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
 # explicitly to indicate a strong preference for pthread. It is an error to not
@@ -48,20 +62,6 @@ find_package(Threads REQUIRED)
 if(NOT CMAKE_USE_PTHREADS_INIT)
   message(SEND_ERROR "The pthread library must be installed on your system.")
 endif(NOT CMAKE_USE_PTHREADS_INIT)
-
-find_package(LibIntl)
-if(LibIntl_FOUND)
-  include_directories(${LibIntl_INCLUDE_DIR})
-endif()
-
-find_package(LibUV REQUIRED)
-include_directories(${LIBUV_INCLUDE_DIRS})
-
-find_package(LuaJit REQUIRED)
-include_directories(${LUAJIT_INCLUDE_DIRS})
-
-include_directories ("${PROJECT_BINARY_DIR}/config")
-include_directories ("${PROJECT_SOURCE_DIR}/src")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
