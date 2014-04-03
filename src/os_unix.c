@@ -1122,7 +1122,6 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   int retval = -1;
   char        **argv = NULL;
   int i;
-  char_u      *p;
   int fd_toshell[2];                    /* for pipes */
   int fd_fromshell[2];
   int pipe_error = FALSE;
@@ -1287,7 +1286,6 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
         int len;
         int p_more_save;
         int old_State;
-        int c;
         int toshell_fd;
         int fromshell_fd;
         garray_T ga;
@@ -1431,44 +1429,6 @@ int mch_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
                 else
                   ga_append(&ga, buffer[i]);
               }
-            } else if (has_mbyte) {
-              int l;
-
-              len += buffer_off;
-              buffer[len] = NUL;
-
-              /* Check if the last character in buffer[] is
-               * incomplete, keep these bytes for the next
-               * round. */
-              for (p = buffer; p < buffer + len; p += l) {
-                l = mb_cptr2len(p);
-                if (l == 0)
-                  l = 1;                    /* NUL byte? */
-                else if (MB_BYTE2LEN(*p) != l)
-                  break;
-              }
-              if (p == buffer) {                /* no complete character */
-                /* avoid getting stuck at an illegal byte */
-                if (len >= 12)
-                  ++p;
-                else {
-                  buffer_off = len;
-                  continue;
-                }
-              }
-              c = *p;
-              *p = NUL;
-              msg_puts(buffer);
-              if (p < buffer + len) {
-                *p = c;
-                buffer_off = (buffer + len) - p;
-                memmove(buffer, p, buffer_off);
-                continue;
-              }
-              buffer_off = 0;
-            } else {
-              buffer[len] = NUL;
-              msg_puts(buffer);
             }
 
             windgoto(msg_row, msg_col);
