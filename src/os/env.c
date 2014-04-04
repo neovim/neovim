@@ -50,3 +50,13 @@ char *os_getenvname_at_index(size_t index)
 # endif
 }
 
+
+long os_get_pid()
+{
+#ifdef _WIN32
+  return (long)GetCurrentProcessId();
+#else
+  return (long)getpid();
+#endif
+}
+

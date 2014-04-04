@@ -2605,7 +2605,7 @@ static char_u *get_mef_name(void)
   /* Keep trying until the name doesn't exist yet. */
   for (;; ) {
     if (start == -1)
-      start = mch_get_pid();
+      start = os_get_pid();
     else
       off += 19;
 

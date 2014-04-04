@@ -9872,7 +9872,7 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv)
  */
 static void f_getpid(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = mch_get_pid();
+  rettv->vval.v_number = os_get_pid();
 }
 
 /*

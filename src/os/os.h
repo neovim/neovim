@@ -82,6 +82,11 @@ long_u os_total_mem(int special);
 const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int overwrite);
 char *os_getenvname_at_index(size_t index);
+
+/// Get the process ID of the Neovim process.
+///
+/// @return the process ID.
+long os_get_pid(void);
 int os_get_usernames(garray_T *usernames);
 int os_get_user_name(char *s, size_t len);
 int os_get_uname(uid_t uid, char *s, size_t len);

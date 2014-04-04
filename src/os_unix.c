@@ -424,14 +424,6 @@ void mch_get_host_name(char_u *s, int len)
 }
 #endif /* HAVE_SYS_UTSNAME_H */
 
-/*
- * return process ID
- */
-long mch_get_pid()
-{
-  return (long)getpid();
-}
-
 #if defined(USE_FNAME_CASE) || defined(PROTO)
 /*
  * Set the case of the file name, if it already exists.  This will cause the
