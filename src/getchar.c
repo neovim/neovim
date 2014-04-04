@@ -384,7 +384,7 @@ static int read_readbuf(buffheader_T *buf, int advance)
 }
 
 /*
- * Prepare the read buffers for reading (if they contains something).
+ * Prepare the read buffers for reading (if they contain something).
  */
 static void start_stuff(void)
 {
@@ -1939,6 +1939,10 @@ static int vgetorpeek(int advance)
                 msg_row = Rows - 1;
                 msg_clr_eos();                          /* clear ruler */
               }
+#ifdef FEAT_WINDOWS
+              status_redraw_all();
+              redraw_statuslines();
+#endif
               showmode();
               setcursor();
               continue;
