@@ -1403,7 +1403,6 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     notset = TRUE;
   }
 
-done:
   fclose(fd);
 }
 

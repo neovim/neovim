@@ -1877,12 +1877,6 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
         break;
       if (round == 1) {
         *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
-        if (*file == NULL) {
-          vim_regfree(prog);
-          if (patc != pat)
-            vim_free(patc);
-          return FAIL;
-        }
       }
     }
     vim_regfree(prog);

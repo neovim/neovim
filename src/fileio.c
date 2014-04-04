@@ -4739,8 +4739,6 @@ buf_modname (
    */
   if (fname == NULL || *fname == NUL) {
     retval = alloc((unsigned)(MAXPATHL + extlen + 3));
-    if (retval == NULL)
-      return NULL;
     if (os_dirname(retval, MAXPATHL) == FAIL ||
         (fnamelen = (int)STRLEN(retval)) == 0) {
       vim_free(retval);
@@ -4756,8 +4754,6 @@ buf_modname (
   } else {
     fnamelen = (int)STRLEN(fname);
     retval = alloc((unsigned)(fnamelen + extlen + 3));
-    if (retval == NULL)
-      return NULL;
     STRCPY(retval, fname);
   }
 
@@ -6772,8 +6768,6 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
         }
 
         ap = (AutoPat *)alloc((unsigned)sizeof(AutoPat));
-        if (ap == NULL)
-          return FAIL;
         ap->pat = vim_strnsave(pat, patlen);
         ap->patlen = patlen;
         if (ap->pat == NULL) {
@@ -6815,8 +6809,6 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
       while ((ac = *prev_ac) != NULL)
         prev_ac = &ac->next;
       ac = (AutoCmd *)alloc((unsigned)sizeof(AutoCmd));
-      if (ac == NULL)
-        return FAIL;
       ac->cmd = vim_strsave(cmd);
       ac->scriptID = current_SID;
       if (ac->cmd == NULL) {

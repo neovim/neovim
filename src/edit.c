@@ -4345,8 +4345,6 @@ static int ins_complete(int c)
         /* we need up to 2 extra chars for the prefix */
         compl_pattern = alloc(quote_meta(NULL, line + compl_col,
                 compl_length) + 2);
-        if (compl_pattern == NULL)
-          return FAIL;
         if (!vim_iswordp(line + compl_col)
             || (compl_col > 0
                 && (
@@ -4392,16 +4390,12 @@ static int ins_complete(int c)
            * alloc(7) is enough  -- Acevedo
            */
           compl_pattern = alloc(7);
-          if (compl_pattern == NULL)
-            return FAIL;
           STRCPY((char *)compl_pattern, "\\<");
           (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
           STRCAT((char *)compl_pattern, "\\k");
         } else {
           compl_pattern = alloc(quote_meta(NULL, line + compl_col,
                   compl_length) + 2);
-          if (compl_pattern == NULL)
-            return FAIL;
           STRCPY((char *)compl_pattern, "\\<");
           (void)quote_meta(compl_pattern + 2, line + compl_col,
               compl_length);
