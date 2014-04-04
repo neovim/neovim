@@ -1,5 +1,7 @@
 ffi = require 'ffi'
 
+ffi.cdef('void free(void *p);')
+
 -- load neovim shared library
 testlib = os.getenv 'NVIM_TEST_LIB'
 unless testlib
