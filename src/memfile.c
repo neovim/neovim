@@ -91,7 +91,7 @@ static void mf_hash_free_all(mf_hashtab_T *);
 static mf_hashitem_T *mf_hash_find(mf_hashtab_T *, blocknr_T);
 static void mf_hash_add_item(mf_hashtab_T *, mf_hashitem_T *);
 static void mf_hash_rem_item(mf_hashtab_T *, mf_hashitem_T *);
-static int mf_hash_grow(mf_hashtab_T *);
+static void mf_hash_grow(mf_hashtab_T *);
 
 /*
  * The functions for using a memfile:
@@ -1226,10 +1226,7 @@ static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
    */
   if (mht->mht_fixed == 0
       && (mht->mht_count >> MHT_LOG_LOAD_FACTOR) > mht->mht_mask) {
-    if (mf_hash_grow(mht) == FAIL) {
-      /* stop trying to grow after first failure to allocate memory */
-      mht->mht_fixed = 1;
-    }
+    mf_hash_grow(mht);
   }
 }
 
@@ -1256,9 +1253,8 @@ static void mf_hash_rem_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 /*
  * Increase number of buckets in the hashtable by MHT_GROWTH_FACTOR and
  * rehash items.
- * Returns FAIL when out of memory.
  */
-static int mf_hash_grow(mf_hashtab_T *mht)
+static void mf_hash_grow(mf_hashtab_T *mht)
 {
   long_u i, j;
   int shift;
@@ -1269,8 +1265,6 @@ static int mf_hash_grow(mf_hashtab_T *mht)
 
   size = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR * sizeof(void *);
   buckets = (mf_hashitem_T **)lalloc_clear(size, FALSE);
-  if (buckets == NULL)
-    return FAIL;
 
   shift = 0;
   while ((mht->mht_mask >> shift) != 0)
@@ -1313,6 +1307,4 @@ static int mf_hash_grow(mf_hashtab_T *mht)
 
   mht->mht_buckets = buckets;
   mht->mht_mask = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR - 1;
-
-  return OK;
 }
