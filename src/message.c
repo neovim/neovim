@@ -2941,12 +2941,8 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
        */
       vim_free(confirm_msg);
       confirm_msg = alloc(len);
-      if (confirm_msg == NULL)
-        return NULL;
       *confirm_msg = NUL;
       hotk = alloc(lenhotkey);
-      if (hotk == NULL)
-        return NULL;
 
       *confirm_msg = '\n';
       STRCPY(confirm_msg + 1, message);

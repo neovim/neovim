@@ -1596,8 +1596,6 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   int retval;
 
   buffer = alloc(MAXPATHL + 1);
-  if (buffer == NULL)
-    return FALSE;
 
   vim_strncpy(resource->name, (char_u *)name, 63);
   /* Look for named resource file in runtimepath */
