@@ -344,35 +344,34 @@ void pum_redraw(void)
             *p = saved;
 
             if (curwin->w_p_rl) {
-              if (st != NULL) {
-                char_u  *rt = reverse_text(st);
+              char_u  *rt = reverse_text(st);
 
-                if (rt != NULL) {
-                  char_u *rt_start = rt;
-                  int size;
+              if (rt != NULL) {
+                char_u *rt_start = rt;
+                int size;
 
-                  size = vim_strsize(rt);
+                size = vim_strsize(rt);
 
-                  if (size > pum_width) {
-                    do {
-                      size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
-                      mb_ptr_adv(rt);
-                    } while (size > pum_width);
+                if (size > pum_width) {
+                  do {
+                    size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
+                    mb_ptr_adv(rt);
+                  } while (size > pum_width);
 
-                    if (size < pum_width) {
-                      // Most left character requires 2-cells but only 1 cell
-                      // is available on screen.  Put a '<' on the left of the 
-                      // pum item
-                      *(--rt) = '<';
-                      size++;
-                    }
+                  if (size < pum_width) {
+                    // Most left character requires 2-cells but only 1 cell
+                    // is available on screen.  Put a '<' on the left of the 
+                    // pum item
+                    *(--rt) = '<';
+                    size++;
                   }
-                  screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1,
-                                  attr);
-                  vim_free(rt_start);
                 }
-                vim_free(st);
+                screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1,
+                                attr);
+                vim_free(rt_start);
               }
+              vim_free(st);
+
               col -= width;
             } else {
               if (st != NULL) {

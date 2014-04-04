@@ -5163,10 +5163,8 @@ win_redr_custom (
 
   /* Make all characters printable. */
   p = transstr(buf);
-  if (p != NULL) {
-    vim_strncpy(buf, p, sizeof(buf) - 1);
-    vim_free(p);
-  }
+  vim_strncpy(buf, p, sizeof(buf) - 1);
+  vim_free(p);
 
   /* fill up with "fillchar" */
   len = (int)STRLEN(buf);
