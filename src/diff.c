@@ -266,10 +266,6 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
         && !diff_busy) {
       diff_T *dnext = diff_alloc_new(tp, dprev, dp);
 
-      if (dnext == NULL) {
-        return;
-      }
-
       dnext->df_lnum[idx] = line1;
       dnext->df_count[idx] = inserted;
       int i;
@@ -467,14 +463,14 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
   diff_T *dnew = (diff_T *)alloc((unsigned)sizeof(diff_T));
-  if (dnew != NULL) {
-    dnew->df_next = dp;
-    if (dprev == NULL) {
-      tp->tp_first_diff = dnew;
-    } else {
-      dprev->df_next = dnew;
-    }
+
+  dnew->df_next = dp;
+  if (dprev == NULL) {
+    tp->tp_first_diff = dnew;
+  } else {
+    dprev->df_next = dnew;
   }
+
   return dnew;
 }
 
@@ -1372,9 +1368,6 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     } else {
       // Allocate a new diffblock.
       dp = diff_alloc_new(curtab, dprev, dp);
-      if (dp == NULL) {
-        goto done;
-      }
 
       dp->df_lnum[idx_orig] = lnum_orig;
       dp->df_count[idx_orig] = count_orig;
