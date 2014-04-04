@@ -1418,14 +1418,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # undef NBDEBUG
 # define nbdebug(a)
 
-
-/* values for vim_handle_signal() that are not a signal */
-#define SIGNAL_BLOCK    -1
-#define SIGNAL_UNBLOCK  -2
-#if !defined(UNIX) && !defined(VMS) && !defined(OS2)
-# define vim_handle_signal(x) 0
-#endif
-
 /* flags for skip_vimgrep_pat() */
 #define VGR_GLOBAL      1
 #define VGR_NOJUMP      2
