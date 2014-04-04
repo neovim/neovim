@@ -4,6 +4,8 @@ Note that the end-of-line moves the cursor to the next test line.
 
 Also test match() and matchstr()
 
+Also test the gn command and repeating it.
+
 STARTTEST
 :so small.vim
 /^start:/
@@ -28,6 +30,28 @@ fXdat
 :put =matchstr(\"abcd\", \".\", 0, -1) " a
 :put =match(\"abcd\", \".\", 0, 5) " -1
 :put =match(\"abcd\", \".\", 0, -1) " 0
+:put =match('abc', '.', 0, 1) " 0
+:put =match('abc', '.', 0, 2) " 1
+:put =match('abc', '.', 0, 3) " 2
+:put =match('abc', '.', 0, 4) " -1
+:put =match('abc', '.', 1, 1) " 1
+:put =match('abc', '.', 2, 1) " 2
+:put =match('abc', '.', 3, 1) " -1
+:put =match('abc', '$', 0, 1) " 3
+:put =match('abc', '$', 0, 2) " -1
+:put =match('abc', '$', 1, 1) " 3
+:put =match('abc', '$', 2, 1) " 3
+:put =match('abc', '$', 3, 1) " 3
+:put =match('abc', '$', 4, 1) " -1
+:put =match('abc', '\zs', 0, 1) " 0
+:put =match('abc', '\zs', 0, 2) " 1
+:put =match('abc', '\zs', 0, 3) " 2
+:put =match('abc', '\zs', 0, 4) " 3
+:put =match('abc', '\zs', 0, 5) " -1
+:put =match('abc', '\zs', 1, 1) " 1
+:put =match('abc', '\zs', 2, 1) " 2
+:put =match('abc', '\zs', 3, 1) " 3
+:put =match('abc', '\zs', 4, 1) " -1
 /^foobar
 gncsearchmatch/one\_s*two\_s
 :1
@@ -49,6 +73,12 @@ cgnj
 :" Make sure there is no other match y uppercase.
 /x59
 gggnd
+:" test repeating dgn
+/^Johnny
+ggdgn.
+:" test repeating gUgn
+/^Depp
+gggUgn.
 :/^start:/,/^end:/wq! test.out
 ENDTEST
 
@@ -81,4 +111,13 @@ for (i=0; i<=10; i++)
 Y
 text
 Y
+--1
+Johnny
+--2
+Johnny
+--3
+Depp
+--4
+Depp
+--5
 end:

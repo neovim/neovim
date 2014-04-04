@@ -11465,6 +11465,7 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int start);
 static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
 {
   char_u      *str = NULL;
+  long        len = 0;
   char_u      *expr = NULL;
   char_u      *pat;
   regmatch_T regmatch;
@@ -11498,8 +11499,10 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     if ((l = argvars[0].vval.v_list) == NULL)
       goto theend;
     li = l->lv_first;
-  } else
+  } else {
     expr = str = get_tv_string(&argvars[0]);
+    len = (long)STRLEN(str);
+  }
 
   pat = get_tv_string_buf_chk(&argvars[1], patbuf);
   if (pat == NULL)
@@ -11519,15 +11522,17 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     } else {
       if (start < 0)
         start = 0;
-      if (start > (long)STRLEN(str))
+      if (start > len)
         goto theend;
       /* When "count" argument is there ignore matches before "start",
        * otherwise skip part of the string.  Differs when pattern is "^"
        * or "\<". */
       if (argvars[3].v_type != VAR_UNKNOWN)
         startcol = start;
-      else
+      else {
         str += start;
+        len -= start;
+      }
     }
 
     if (argvars[3].v_type != VAR_UNKNOWN)
@@ -11566,6 +11571,10 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
       } else {
         startcol = (colnr_T)(regmatch.startp[0]
                              + (*mb_ptr2len)(regmatch.startp[0]) - str);
+        if (startcol > (colnr_T)len || str + startcol <= regmatch.startp[0]) {
+            match = FALSE;
+            break;
+        }
       }
     }
 
