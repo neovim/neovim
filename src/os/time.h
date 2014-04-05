@@ -5,6 +5,8 @@
 #include <stdbool.h>
 
 void time_init(void);
-void os_delay(uint64_t ms, bool ignoreinput);
+void os_delay(uint64_t milliseconds, bool ignoreinput);
+void os_microdelay(uint64_t microseconds, bool ignoreinput);
 
 #endif  // NEOVIM_OS_TIME_H
+
