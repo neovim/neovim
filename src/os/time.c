@@ -29,9 +29,7 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
 
   if (ignoreinput) {
     // Go to cooked mode without echo, to allow SIGINT interrupting us
-    // here.  But we don't want QUIT to kill us (CTRL-\ used in a
-    // shell may produce SIGQUIT).
-    in_os_delay = true;
+    // here
     old_tmode = curr_tmode;
 
     if (curr_tmode == TMODE_RAW)
@@ -40,7 +38,6 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
     microdelay(microseconds);
 
     settmode(old_tmode);
-    in_os_delay = false;
   } else {
     microdelay(microseconds);
   }
