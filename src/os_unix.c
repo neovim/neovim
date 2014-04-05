@@ -64,16 +64,6 @@
 static int selinux_enabled = -1;
 #endif
 
-/*
- * Use this prototype for select, some include files have a wrong prototype
- */
-# undef select
-
-
-#if defined(HAVE_SELECT)
-extern int select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
-#endif
-
 static int get_x11_title(int);
 static int get_x11_icon(int);
 
@@ -81,14 +71,6 @@ static char_u   *oldtitle = NULL;
 static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
-
-#ifdef HAVE_UNION_WAIT
-typedef union wait waitstatus;
-#else
-typedef int waitstatus;
-#endif
-
-static int RealWaitForChar(int, long, int *);
 
 static int have_wildcard(int, char_u **);
 static int have_dollars(int, char_u **);
@@ -103,7 +85,7 @@ void mch_write(char_u *s, int len)
 {
   ignored = (int)write(1, (char *)s, len);
   if (p_wd)             /* Unix is too fast, slow down a bit more */
-    RealWaitForChar(read_cmd_fd, p_wd, NULL);
+    os_microdelay(p_wd, 0);
 }
 
 /*
@@ -1023,120 +1005,6 @@ void mch_set_shellsize()
     out_flush();
     screen_start();                     /* don't know where cursor is now */
   }
-}
-
-/*
- * Rows and/or Columns has changed.
- */
-void mch_new_shellsize()
-{
-  /* Nothing to do. */
-}
-
-/*
- * Wait "msec" msec until a character is available from file descriptor "fd".
- * "msec" == 0 will check for characters once.
- * "msec" == -1 will block until a character is available.
- * When a GUI is being used, this will not be used for input -- webb
- * Or when a Linux GPM mouse event is waiting.
- */
-static int RealWaitForChar(fd, msec, check_for_gpm)
-int fd;
-long msec;
-int         *check_for_gpm;
-{
-  int ret;
-
-#ifdef MAY_LOOP
-  for (;; )
-#endif
-  {
-#ifdef MAY_LOOP
-    int finished = TRUE;                 /* default is to 'loop' just once */
-#endif
-#ifndef HAVE_SELECT
-    struct pollfd fds[6];
-    int nfd;
-    int towait = (int)msec;
-
-    fds[0].fd = fd;
-    fds[0].events = POLLIN;
-    nfd = 1;
-
-
-    ret = poll(fds, nfd, towait);
-
-
-
-#else /* HAVE_SELECT */
-
-    struct timeval tv;
-    struct timeval  *tvp;
-    fd_set rfds, efds;
-    int maxfd;
-    long towait = msec;
-
-
-    if (towait >= 0) {
-      tv.tv_sec = towait / 1000;
-      tv.tv_usec = (towait % 1000) * (1000000/1000);
-      tvp = &tv;
-    } else
-      tvp = NULL;
-
-    /*
-     * Select on ready for reading and exceptional condition (end of file).
-     */
-select_eintr:
-    FD_ZERO(&rfds);
-    FD_ZERO(&efds);
-    FD_SET(fd, &rfds);
-    /* For QNX select() always returns 1 if this is set.  Why? */
-    FD_SET(fd, &efds);
-    maxfd = fd;
-
-
-    ret = select(maxfd + 1, &rfds, NULL, &efds, tvp);
-# ifdef EINTR
-    if (ret == -1 && errno == EINTR) {
-      /* Check whether window has been resized, EINTR may be caused by
-       * SIGWINCH. FIXME this is broken for now */
-
-      /* Interrupted by a signal, need to try again.  We ignore msec
-       * here, because we do want to check even after a timeout if
-       * characters are available.  Needed for reading output of an
-       * external command after the process has finished. */
-      goto select_eintr;
-    }
-# endif
-
-
-#endif /* HAVE_SELECT */
-
-#ifdef MAY_LOOP
-    if (finished || msec == 0)
-      break;
-
-    /* We're going to loop around again, find out for how long */
-    if (msec > 0) {
-# ifdef USE_START_TV
-      struct timeval mtv;
-
-      /* Compute remaining wait time. */
-      gettimeofday(&mtv, NULL);
-      msec -= (mtv.tv_sec - start_tv.tv_sec) * 1000L
-              + (mtv.tv_usec - start_tv.tv_usec) / 1000L;
-# else
-      /* Guess we got interrupted halfway. */
-      msec = msec / 2;
-# endif
-      if (msec <= 0)
-        break;          /* waited long enough */
-    }
-#endif
-  }
-
-  return ret > 0;
 }
 
 /*
