@@ -50,6 +50,7 @@
 #include "ui.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/shell.h"
 
 static int coladvance2(pos_T *pos, int addspaces, int finetune,
                        colnr_T wcol);
@@ -1234,7 +1235,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     tag_freematch();
 
     if (cmd == NULL || *p_sxq == NUL)
-      retval = mch_call_shell(cmd, opts, extra_shell_arg);
+      retval = os_call_shell(cmd, opts, extra_shell_arg);
     else {
       char_u *ecmd = cmd;
 
@@ -1252,7 +1253,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
         STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
             : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
             : p_sxq);
-        retval = mch_call_shell(ncmd, opts, extra_shell_arg);
+        retval = os_call_shell(ncmd, opts, extra_shell_arg);
         vim_free(ncmd);
       } else
         retval = -1;

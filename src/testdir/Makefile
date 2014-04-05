@@ -2,6 +2,8 @@
 # Makefile to run all tests for Vim
 #
 
+export SHELL := sh
+
 VIMPROG := ../../build/bin/nvim
 
 SCRIPTS := test1.out test2.out test3.out test4.out test5.out test6.out \
@@ -27,8 +29,19 @@ SCRIPTS := test1.out test2.out test3.out test4.out test5.out test6.out \
 
 SCRIPTS_GUI := test16.out
 
+
+ifdef VALGRIND_GDB
+VGDB := --vgdb=yes --vgdb-error=0
+endif
+
+ifdef USE_VALGRIND
+VALGRIND_TOOL=--tool=memcheck --leak-check=yes --track-origins=yes
+# VALGRIND_TOOL=exp-sgcheck
+TOOL = valgrind -q -q $(VALGRIND_TOOL) --suppressions=../../.valgrind.supp --error-exitcode=123 --log-file=valgrind.\%p.$* $(VGDB) --trace-children=yes
+else
 ifdef USE_GDB
-GDB = gdb --args
+TOOL = gdb --args
+endif
 endif
 
 ifdef TESTNUM
@@ -54,10 +67,10 @@ $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG)
 
 RM_ON_RUN = test.out X* viminfo
 RM_ON_START = tiny.vim small.vim mbyte.vim mzscheme.vim lua.vim test.ok
-RUN_VIM = $(GDB) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in
+RUN_VIM = $(TOOL) $(VIMPROG) -u unix.vim -U NONE --noplugin -s dotest.in
 
 clean:
-	-rm -rf *.out *.failed *.rej *.orig test.log $(RM_ON_RUN) $(RM_ON_START) valgrind.*
+	-rm -rf *.out *.failed *.rej *.orig test.log $(RM_ON_RUN) $(RM_ON_START) valgrind.* .*.swp .*.swo
 
 test1.out: .gdbinit test1.in
 	-rm -rf $*.failed $(RM_ON_RUN) $(RM_ON_START) wrongtermsize
