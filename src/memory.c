@@ -1,5 +1,6 @@
  // Various routines dealing with allocation and deallocation of memory.
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "vim.h"
@@ -68,11 +69,7 @@ char_u *alloc(unsigned size)
  */
 char_u *alloc_clear(unsigned size)
 {
-  char_u *p;
-
-  p = lalloc((long_u)size, TRUE);
-  (void)memset(p, 0, (size_t)size);
-  return p;
+  return (char_u *)xcalloc(1, (size_t)size);
 }
 
 /*
@@ -96,9 +93,7 @@ char_u *alloc_check(unsigned size)
  */
 char_u *lalloc_clear(long_u size, int message)
 {
-  char_u *p = lalloc(size, message);
-  memset(p, 0, (size_t)size);
-  return p;
+  return (char_u *)xcalloc(1, (size_t)size);
 }
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
@@ -133,6 +128,27 @@ void *xmalloc(size_t size)
     ret = malloc(size);
     if (!ret && !size)
       ret = malloc(1);
+    if (!ret) {
+      OUT_STR("Vim: Error: Out of memory.\n");
+      preserve_exit();
+    }
+  }
+
+  return ret;
+}
+
+void *xcalloc(size_t count, size_t size)
+{
+  void *ret = calloc(count, size);
+
+  if (!ret && (!count || !size))
+    ret = calloc(1, 1);
+
+  if (!ret) {
+    try_to_free_memory();
+    ret = calloc(count, size);
+    if (!ret && (!count || !size))
+      ret = calloc(1, 1);
     if (!ret) {
       OUT_STR("Vim: Error: Out of memory.\n");
       preserve_exit();

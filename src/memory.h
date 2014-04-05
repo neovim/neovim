@@ -2,6 +2,8 @@
 #define NEOVIM_MEMORY_H
 
 #include "func_attr.h"
+#include "types.h"
+#include "vim.h"
 
 char_u *alloc(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
 char_u *alloc_clear(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
@@ -18,6 +20,15 @@ char_u *lalloc_clear(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_
 /// @return pointer to allocated space. Never NULL
 void *xmalloc(size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET;
+
+/// calloc() wrapper
+///
+/// @see {xmalloc}
+/// @param count
+/// @param size
+/// @return pointer to allocated space. Never NULL
+void *xcalloc(size_t count, size_t size)
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET;
 
 /// realloc() wrapper
 ///
