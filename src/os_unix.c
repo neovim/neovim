@@ -397,33 +397,6 @@ int vim_is_fastterm(char_u *name)
          || STRNICMP(name, "dtterm", 6) == 0;
 }
 
-/*
- * Insert host name is s[len].
- */
-
-#ifdef HAVE_SYS_UTSNAME_H
-void mch_get_host_name(char_u *s, int len)
-{
-  struct utsname vutsname;
-
-  if (uname(&vutsname) < 0)
-    *s = NUL;
-  else
-    vim_strncpy(s, (char_u *)vutsname.nodename, len - 1);
-}
-#else /* HAVE_SYS_UTSNAME_H */
-
-# ifdef HAVE_SYS_SYSTEMINFO_H
-#  define gethostname(nam, len) sysinfo(SI_HOSTNAME, nam, len)
-# endif
-
-void mch_get_host_name(char_u *s, int len)
-{
-  gethostname((char *)s, len);
-  s[len - 1] = NUL;     /* make sure it's terminated */
-}
-#endif /* HAVE_SYS_UTSNAME_H */
-
 #if defined(USE_FNAME_CASE) || defined(PROTO)
 /*
  * Set the case of the file name, if it already exists.  This will cause the
