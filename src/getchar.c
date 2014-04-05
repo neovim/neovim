@@ -67,11 +67,17 @@
 
 #define MINIMAL_SIZE 20                 /* minimal size for b_str */
 
-static struct buffheader redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static struct buffheader old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static struct buffheader save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static struct buffheader save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static struct buffheader recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
+
+// First read ahead buffer. Used for translated commands.
+static buffheader_T readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
+
+// Second read ahead buffer. Used for redo.
+static buffheader_T readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
 
 static int typeahead_char = 0;          /* typeahead char that's not flushed */
 
@@ -140,11 +146,12 @@ static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
 static int last_recorded_len = 0;       /* number of last recorded chars */
 
-static char_u   *get_buffcont(struct buffheader *, int);
-static void add_buff(struct buffheader *, char_u *, long n);
-static void add_num_buff(struct buffheader *, long);
-static void add_char_buff(struct buffheader *, int);
-static int read_stuff(int advance);
+static char_u *get_buffcont(buffheader_T *, int);
+static void add_buff(buffheader_T *, char_u *, long n);
+static void add_num_buff(buffheader_T *, long);
+static void add_char_buff(buffheader_T *, int);
+static int read_readbuffers(int advance);
+static int read_readbuf(buffheader_T *buf, int advance);
 static void start_stuff(void);
 static int read_redo(int, int);
 static void copy_redo(int);
@@ -161,9 +168,9 @@ static char_u   *eval_map_expr(char_u *str, int c);
 /*
  * Free and clear a buffer.
  */
-void free_buff(struct buffheader *buf)
+void free_buff(buffheader_T *buf)
 {
-  struct buffblock    *p, *np;
+  buffblock_T    *p, *np;
 
   for (p = buf->bh_first.b_next; p != NULL; p = np) {
     np = p->b_next;
@@ -176,17 +183,15 @@ void free_buff(struct buffheader *buf)
  * Return the contents of a buffer as a single string.
  * K_SPECIAL and CSI in the returned string are escaped.
  */
-static char_u *
-get_buffcont (
-    struct buffheader *buffer,
-    int dozero                         /* count == zero is not an error */
-)
+static char_u *get_buffcont(buffheader_T *buffer,
+                            int dozero  // count == zero is not an error
+                            )
 {
   long_u count = 0;
   char_u          *p = NULL;
   char_u          *p2;
   char_u          *str;
-  struct buffblock *bp;
+  buffblock_T *bp;
 
   /* compute the total length of the string */
   for (bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
@@ -250,12 +255,12 @@ char_u *get_inserted(void)
  */
 static void 
 add_buff (
-    struct buffheader *buf,
+    buffheader_T *buf,
     char_u *s,
     long slen                      /* length of "s" or -1 */
 )
 {
-  struct buffblock *p;
+  buffblock_T *p;
   long_u len;
 
   if (slen < 0)
@@ -284,8 +289,7 @@ add_buff (
       len = MINIMAL_SIZE;
     else
       len = slen;
-    p = (struct buffblock *)lalloc((long_u)(sizeof(struct buffblock) + len),
-        TRUE);
+    p = (buffblock_T *)lalloc((long_u)(sizeof(buffblock_T) + len), TRUE);
     if (p == NULL)
       return;       /* no space, just forget it */
     buf->bh_space = (int)(len - slen);
@@ -301,7 +305,7 @@ add_buff (
 /*
  * Add number "n" to buffer "buf".
  */
-static void add_num_buff(struct buffheader *buf, long n)
+static void add_num_buff(buffheader_T *buf, long n)
 {
   char_u number[32];
 
@@ -313,7 +317,7 @@ static void add_num_buff(struct buffheader *buf, long n)
  * Add character 'c' to buffer "buf".
  * Translates special keys, NUL, CSI, K_SPECIAL and multibyte characters.
  */
-static void add_char_buff(struct buffheader *buf, int c)
+static void add_char_buff(buffheader_T *buf, int c)
 {
   char_u bytes[MB_MAXBYTES + 1];
   int len;
@@ -343,39 +347,54 @@ static void add_char_buff(struct buffheader *buf, int c)
 }
 
 /*
- * Get one byte from the stuff buffer.
+ * Get one byte from the read buffers.  Use readbuf1 one first, use readbuf2
+ * if that one is empty.
  * If advance == TRUE go to the next char.
  * No translation is done K_SPECIAL and CSI are escaped.
  */
-static int read_stuff(int advance)
+static int read_readbuffers(int advance)
+{
+  int c;
+
+  c = read_readbuf(&readbuf1, advance);
+  if (c == NUL)
+    c = read_readbuf(&readbuf2, advance);
+  return c;
+}
+
+static int read_readbuf(buffheader_T *buf, int advance)
 {
   char_u c;
-  struct buffblock    *curr;
+  buffblock_T *curr;
 
-  if (stuffbuff.bh_first.b_next == NULL)    /* buffer is empty */
+  if (buf->bh_first.b_next == NULL) /* buffer is empty */
     return NUL;
 
-  curr = stuffbuff.bh_first.b_next;
-  c = curr->b_str[stuffbuff.bh_index];
+  curr = buf->bh_first.b_next;
+  c = curr->b_str[buf->bh_index];
 
   if (advance) {
-    if (curr->b_str[++stuffbuff.bh_index] == NUL) {
-      stuffbuff.bh_first.b_next = curr->b_next;
+    if (curr->b_str[++buf->bh_index] == NUL) {
+      buf->bh_first.b_next = curr->b_next;
       vim_free(curr);
-      stuffbuff.bh_index = 0;
+      buf->bh_index = 0;
     }
   }
   return c;
 }
 
 /*
- * Prepare the stuff buffer for reading (if it contains something).
+ * Prepare the read buffers for reading (if they contains something).
  */
 static void start_stuff(void)
 {
-  if (stuffbuff.bh_first.b_next != NULL) {
-    stuffbuff.bh_curr = &(stuffbuff.bh_first);
-    stuffbuff.bh_space = 0;
+  if (readbuf1.bh_first.b_next != NULL) {
+    readbuf1.bh_curr = &(readbuf1.bh_first);
+    readbuf1.bh_space = 0;
+  }
+  if (readbuf2.bh_first.b_next != NULL) {
+    readbuf2.bh_curr = &(readbuf2.bh_first);
+    readbuf2.bh_space = 0;
   }
 }
 
@@ -384,7 +403,16 @@ static void start_stuff(void)
  */
 int stuff_empty(void)
 {
-  return stuffbuff.bh_first.b_next == NULL;
+  return (readbuf1.bh_first.b_next == NULL && readbuf2.bh_first.b_next == NULL);
+}
+
+/*
+ * Return TRUE if readbuf1 is empty.  There may still be redo characters in
+ * redbuf2.
+ */
+int readbuf1_empty()
+{
+  return (readbuf1.bh_first.b_next == NULL);
 }
 
 /*
@@ -405,8 +433,8 @@ void flush_buffers(int flush_typeahead)
   init_typebuf();
 
   start_stuff();
-  while (read_stuff(TRUE) != NUL)
-    ;
+  while (read_readbuffers(TRUE) != NUL) {
+  }
 
   if (flush_typeahead) {            /* remove all typeahead */
     /*
@@ -453,8 +481,8 @@ void CancelRedo(void)
     redobuff = old_redobuff;
     old_redobuff.bh_first.b_next = NULL;
     start_stuff();
-    while (read_stuff(TRUE) != NUL)
-      ;
+    while (read_readbuffers(TRUE) != NUL) {
+    }
   }
 }
 
@@ -585,12 +613,12 @@ void AppendNumberToRedobuff(long n)
  */
 void stuffReadbuff(char_u *s)
 {
-  add_buff(&stuffbuff, s, -1L);
+  add_buff(&readbuf1, s, -1L);
 }
 
 void stuffReadbuffLen(char_u *s, long len)
 {
-  add_buff(&stuffbuff, s, len);
+  add_buff(&readbuf1, s, len);
 }
 
 /*
@@ -622,7 +650,7 @@ void stuffReadbuffSpec(char_u *s)
  */
 void stuffcharReadbuff(int c)
 {
-  add_char_buff(&stuffbuff, c);
+  add_char_buff(&readbuf1, c);
 }
 
 /*
@@ -630,7 +658,7 @@ void stuffcharReadbuff(int c)
  */
 void stuffnumReadbuff(long n)
 {
-  add_num_buff(&stuffbuff, n);
+  add_num_buff(&readbuf1, n);
 }
 
 /*
@@ -643,8 +671,8 @@ void stuffnumReadbuff(long n)
  */
 static int read_redo(int init, int old_redo)
 {
-  static struct buffblock     *bp;
-  static char_u               *p;
+  static buffblock_T *bp;
+  static char_u *p;
   int c;
   int n;
   char_u buf[MB_MAXBYTES + 1];
@@ -701,12 +729,13 @@ static void copy_redo(int old_redo)
 {
   int c;
 
-  while ((c = read_redo(FALSE, old_redo)) != NUL)
-    stuffcharReadbuff(c);
+  while ((c = read_redo(FALSE, old_redo)) != NUL) {
+    add_char_buff(&readbuf2, c);
+  }
 }
 
 /*
- * Stuff the redo buffer into the stuffbuff.
+ * Stuff the redo buffer into readbuf2.
  * Insert the redo count into the command.
  * If "old_redo" is TRUE, the last but one command is repeated
  * instead of the last command (inserting text). This is used for
@@ -726,13 +755,13 @@ int start_redo(long count, int old_redo)
 
   /* copy the buffer name, if present */
   if (c == '"') {
-    add_buff(&stuffbuff, (char_u *)"\"", 1L);
+    add_buff(&readbuf2, (char_u *)"\"", 1L);
     c = read_redo(FALSE, old_redo);
 
     /* if a numbered buffer is used, increment the number */
     if (c >= '1' && c < '9')
       ++c;
-    add_char_buff(&stuffbuff, c);
+    add_char_buff(&readbuf2, c);
     c = read_redo(FALSE, old_redo);
   }
 
@@ -749,18 +778,18 @@ int start_redo(long count, int old_redo)
   if (count) {
     while (VIM_ISDIGIT(c))      /* skip "old" count */
       c = read_redo(FALSE, old_redo);
-    add_num_buff(&stuffbuff, count);
+    add_num_buff(&readbuf2, count);
   }
 
   /* copy from the redo buffer into the stuff buffer */
-  add_char_buff(&stuffbuff, c);
+  add_char_buff(&readbuf2, c);
   copy_redo(old_redo);
   return OK;
 }
 
 /*
  * Repeat the last insert (R, o, O, a, A, i or I command) by stuffing
- * the redo buffer into the stuffbuff.
+ * the redo buffer into readbuf2.
  * return FAIL for failure, OK otherwise
  */
 int start_redo_ins(void)
@@ -774,8 +803,9 @@ int start_redo_ins(void)
   /* skip the count and the command character */
   while ((c = read_redo(FALSE, FALSE)) != NUL) {
     if (vim_strchr((char_u *)"AaIiRrOo", c) != NULL) {
-      if (c == 'O' || c == 'o')
-        stuffReadbuff(NL_STR);
+      if (c == 'O' || c == 'o') {
+        add_buff(&readbuf2, NL_STR, -1L);
+      }
       break;
     }
   }
@@ -1194,8 +1224,10 @@ void save_typeahead(tasave_T *tp)
   tp->old_mod_mask = old_mod_mask;
   old_char = -1;
 
-  tp->save_stuffbuff = stuffbuff;
-  stuffbuff.bh_first.b_next = NULL;
+  tp->save_readbuf1 = readbuf1;
+  readbuf1.bh_first.b_next = NULL;
+  tp->save_readbuf2 = readbuf2;
+  readbuf2.bh_first.b_next = NULL;
 # ifdef USE_INPUT_BUF
   tp->save_inputbuf = get_input_buf();
 # endif
@@ -1215,8 +1247,10 @@ void restore_typeahead(tasave_T *tp)
   old_char = tp->old_char;
   old_mod_mask = tp->old_mod_mask;
 
-  free_buff(&stuffbuff);
-  stuffbuff = tp->save_stuffbuff;
+  free_buff(&readbuf1);
+  readbuf1 = tp->save_readbuf1;
+  free_buff(&readbuf2);
+  readbuf2 = tp->save_readbuf2;
 # ifdef USE_INPUT_BUF
   set_input_buf(tp->save_inputbuf);
 # endif
@@ -1678,8 +1712,9 @@ static int vgetorpeek(int advance)
       c = typeahead_char;
       if (advance)
         typeahead_char = 0;
-    } else
-      c = read_stuff(advance);
+    } else {
+      c = read_readbuffers(advance);
+    }
     if (c != NUL && !got_int) {
       if (advance) {
         /* KeyTyped = FALSE;  When the command that stuffed something
