@@ -265,9 +265,6 @@ getcmdline (
   }
   xpc.xp_context = EXPAND_NOTHING;
   xpc.xp_backslash = XP_BS_NONE;
-#ifndef BACKSLASH_IN_FILENAME
-  xpc.xp_shell = FALSE;
-#endif
 
   if (ccline.input_fn) {
     xpc.xp_context = ccline.xp_context;
@@ -532,12 +529,7 @@ getcmdline (
         while (--j > i) {
           if (has_mbyte)
             j -= (*mb_head_off)(ccline.cmdbuff, ccline.cmdbuff + j);
-          if (vim_ispathsep(ccline.cmdbuff[j])
-#ifdef BACKSLASH_IN_FILENAME
-              && vim_strchr(" *?[{`$%#", ccline.cmdbuff[j + 1])
-              == NULL
-#endif
-              ) {
+          if (vim_ispathsep(ccline.cmdbuff[j])) {
             if (found) {
               i = j + 1;
               break;
@@ -2979,9 +2971,6 @@ void ExpandInit(expand_T *xp)
   xp->xp_pattern = NULL;
   xp->xp_pattern_len = 0;
   xp->xp_backslash = XP_BS_NONE;
-#ifndef BACKSLASH_IN_FILENAME
-  xp->xp_shell = FALSE;
-#endif
   xp->xp_numfiles = -1;
   xp->xp_files = NULL;
   xp->xp_arg = NULL;
@@ -3027,20 +3016,9 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
           if (p != NULL) {
             vim_free(files[i]);
             files[i] = p;
-#if defined(BACKSLASH_IN_FILENAME)
-            p = vim_strsave_escaped(files[i], (char_u *)" ");
-            if (p != NULL) {
-              vim_free(files[i]);
-              files[i] = p;
-            }
-#endif
           }
         }
-#ifdef BACKSLASH_IN_FILENAME
-        p = vim_strsave_fnameescape(files[i], FALSE);
-#else
         p = vim_strsave_fnameescape(files[i], xp->xp_shell);
-#endif
         if (p != NULL) {
           vim_free(files[i]);
           files[i] = p;
@@ -3081,17 +3059,6 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 char_u *vim_strsave_fnameescape(char_u *fname, int shell)
 {
   char_u      *p;
-#ifdef BACKSLASH_IN_FILENAME
-  char_u buf[20];
-  int j = 0;
-
-  /* Don't escape '[', '{' and '!' if they are in 'isfname'. */
-  for (p = PATH_ESC_CHARS; *p != NUL; ++p)
-    if ((*p != '[' && *p != '{' && *p != '!') || !vim_isfilec(*p))
-      buf[j++] = *p;
-  buf[j] = NUL;
-  p = vim_strsave_escaped(fname, buf);
-#else
   p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
   if (shell && csh_like_shell() && p != NULL) {
     char_u      *s;
@@ -3102,7 +3069,6 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
     vim_free(p);
     p = s;
   }
-#endif
 
   /* '>' and '+' are special at the start of some commands, e.g. ":edit" and
    * ":write".  "cd -" has a special meaning. */
@@ -3314,11 +3280,7 @@ char_u *sm_gettail(char_u *s)
   int had_sep = FALSE;
 
   for (p = s; *p != NUL; ) {
-    if (vim_ispathsep(*p)
-#ifdef BACKSLASH_IN_FILENAME
-        && !rem_backslash(p)
-#endif
-        )
+    if (vim_ispathsep(*p))
       had_sep = TRUE;
     else if (had_sep) {
       t = p;
@@ -3464,13 +3426,11 @@ addstar (
        */
       tail = path_tail(retval);
       ends_in_star = (len > 0 && retval[len - 1] == '*');
-#ifndef BACKSLASH_IN_FILENAME
       for (i = len - 2; i >= 0; --i) {
         if (retval[i] != '\\')
           break;
         ends_in_star = !ends_in_star;
       }
-#endif
       if ((*retval != '~' || tail != retval)
           && !ends_in_star
           && vim_strchr(tail, '$') == NULL

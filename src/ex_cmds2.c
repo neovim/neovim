@@ -2777,21 +2777,6 @@ void ex_scriptnames(exarg_T *eap)
     }
 }
 
-# if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)
-/*
- * Fix slashes in the list of script names for 'shellslash'.
- */
-void scriptnames_slash_adjust(void)
-{
-  int i;
-
-  for (i = 1; i <= script_items.ga_len; ++i)
-    if (SCRIPT_ITEM(i).sn_name != NULL)
-      slash_adjust(SCRIPT_ITEM(i).sn_name);
-}
-
-# endif
-
 /*
  * Get a pointer to a script name.  Used for ":verbose set".
  */
