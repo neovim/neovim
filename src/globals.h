@@ -753,11 +753,6 @@ EXTERN int RedrawingDisabled INIT(= 0);
 EXTERN int readonlymode INIT(= FALSE);      /* Set to TRUE for "view" */
 EXTERN int recoverymode INIT(= FALSE);      /* Set to TRUE for "-r" option */
 
-EXTERN struct buffheader stuffbuff      /* stuff buffer */
-#ifdef DO_INIT
-  = {{NULL, {NUL}}, NULL, 0, 0}
-#endif
-;
 EXTERN typebuf_T typebuf                /* typeahead buffer */
 #ifdef DO_INIT
   = {NULL, NULL, 0, 0, 0, 0, 0, 0, 0}

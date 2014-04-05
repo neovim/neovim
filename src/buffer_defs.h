@@ -51,22 +51,25 @@ typedef struct taggy {
   int cur_fnum;                 /* buffer number used for cur_match */
 } taggy_T;
 
+typedef struct buffblock buffblock_T;
+typedef struct buffheader buffheader_T;
+
 /*
  * structure used to store one block of the stuff/redo/recording buffers
  */
 struct buffblock {
-  struct buffblock    *b_next;          /* pointer to next buffblock */
-  char_u b_str[1];                      /* contents (actually longer) */
+  buffblock_T *b_next;  // pointer to next buffblock
+  char_u b_str[1];      // contents (actually longer)
 };
 
 /*
  * header used for the stuff buffer and the redo buffer
  */
 struct buffheader {
-  struct buffblock bh_first;            /* first (dummy) block of list */
-  struct buffblock    *bh_curr;         /* buffblock for appending */
-  int bh_index;                         /* index for reading */
-  int bh_space;                         /* space in bh_curr for appending */
+  buffblock_T bh_first;  // first (dummy) block of list
+  buffblock_T *bh_curr;  // buffblock for appending
+  int bh_index;          // index for reading
+  int bh_space;          // space in bh_curr for appending
 };
 
 /*
@@ -245,7 +248,8 @@ typedef struct {
   int typebuf_valid;                        /* TRUE when save_typebuf valid */
   int old_char;
   int old_mod_mask;
-  struct buffheader save_stuffbuff;
+  buffheader_T save_readbuf1;
+  buffheader_T save_readbuf2;
 #ifdef USE_INPUT_BUF
   char_u              *save_inputbuf;
 #endif
