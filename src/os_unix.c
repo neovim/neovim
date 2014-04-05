@@ -85,7 +85,7 @@ void mch_write(char_u *s, int len)
 {
   ignored = (int)write(1, (char *)s, len);
   if (p_wd)             /* Unix is too fast, slow down a bit more */
-    os_microdelay(p_wd, 0);
+    os_microdelay(p_wd, false);
 }
 
 /*
