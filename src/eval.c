@@ -10530,11 +10530,11 @@ static void f_hlexists(typval_T *argvars, typval_T *rettv)
  */
 static void f_hostname(typval_T *argvars, typval_T *rettv)
 {
-  char_u hostname[256];
+  char hostname[256];
 
-  mch_get_host_name(hostname, 256);
+  os_get_hostname(hostname, 256);
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = vim_strsave(hostname);
+  rettv->vval.v_string = vim_strsave((char_u *)hostname);
 }
 
 /*

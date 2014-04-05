@@ -58,10 +58,6 @@
 # include <sys/stream.h>
 #endif
 
-#ifdef HAVE_SYS_UTSNAME_H
-# include <sys/utsname.h>
-#endif
-
 #ifdef HAVE_SYS_SYSTEMINFO_H
 /*
  * foolish Sinix <sys/systeminfo.h> uses SYS_NMLN but doesn't include

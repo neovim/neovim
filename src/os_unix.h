@@ -19,7 +19,6 @@ int use_xterm_mouse(void);
 int vim_is_iris(char_u *name);
 int vim_is_vt300(char_u *name);
 int vim_is_fastterm(char_u *name);
-void mch_get_host_name(char_u *s, int len);
 void slash_adjust(char_u *p);
 void fname_case(char_u *name, int len);
 void mch_copy_sec(char_u *from_file, char_u *to_file);

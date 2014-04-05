@@ -9,6 +9,7 @@ const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int override);
 char *os_getenvname_at_index(size_t index);
 long os_get_pid(void);
+void os_get_hostname(char *hostname, size_t len);
 ]]
 
 NULL = ffi.cast 'void*', 0
@@ -103,4 +104,14 @@ describe 'env function', ->
       else
         -- /proc is not avaliable on all systems, test if pid is nonzero.
         eq true, (env.os_get_pid! > 0)
+
+  describe 'os_get_hostname', ->
+
+    it 'returns the hostname', ->
+      handle = io.popen 'hostname'
+      hostname = handle\read '*l'
+      handle\close!
+      hostname_buf = cstr 255, ''
+      env.os_get_hostname hostname_buf, 255
+      eq hostname,  (ffi.string hostname_buf)
 
