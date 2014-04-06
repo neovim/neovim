@@ -105,7 +105,7 @@ describe 'path function', ->
     it 'returns empty string if given file contains no seperator', ->
       eq '', path_next_component 'file.txt'
 
-describe 'former os function', ->
+describe 'more path function', ->
   setup ->
     lfs.mkdir 'unit-test-directory'
     (io.open 'unit-test-directory/test.file', 'w').close!
@@ -122,26 +122,40 @@ describe 'former os function', ->
     os.remove 'unit-test-directory/test.file'
     lfs.rmdir 'unit-test-directory'
 
-  describe 'os_get_absolute_path', ->
-    ffi.cdef 'int os_get_absolute_path(char *fname, char *buf, int len, int force);'
+  describe 'vim_FullName', ->
+    ffi.cdef 'int vim_FullName(char *fname, char *buf, int len, int force);'
 
-    os_get_absolute_path = (filename, buffer, length, force) ->
+    vim_FullName = (filename, buffer, length, force) ->
       filename = to_cstr filename
-      path.os_get_absolute_path filename, buffer, length, force
+      path.vim_FullName filename, buffer, length, force
 
     before_each ->
       -- Create empty string buffer which will contain the resulting path.
       export len = (string.len lfs.currentdir!) + 33
       export buffer = cstr len, ''
 
-    it 'fails if given filename contains non-existing directory', ->
+    it 'fails if given filename is NULL', ->
       force_expansion = 1
-      result = os_get_absolute_path 'non_existing_dir/test.file', buffer, len, force_expansion
+      result = path.vim_FullName NULL, buffer, len, force_expansion
+      eq FAIL, result
+
+    it 'uses the filename if the filename is a URL', ->
+      force_expansion = 1
+      filename = 'http://www.neovim.org'
+      result = vim_FullName filename, buffer, len, force_expansion
+      eq filename, (ffi.string buffer)
+      eq OK, result
+
+    it 'fails and uses filename if given filename contains non-existing directory', ->
+      force_expansion = 1
+      filename = 'non_existing_dir/test.file'
+      result = vim_FullName filename, buffer, len, force_expansion
+      eq filename, (ffi.string buffer)
       eq FAIL, result
 
     it 'concatenates given filename if it does not contain a slash', ->
       force_expansion = 1
-      result = os_get_absolute_path 'test.file', buffer, len, force_expansion
+      result = vim_FullName 'test.file', buffer, len, force_expansion
       expected = lfs.currentdir! .. '/test.file'
       eq expected, (ffi.string buffer)
       eq OK, result
@@ -149,7 +163,7 @@ describe 'former os function', ->
     it 'concatenates given filename if it is a directory but does not contain a
     slash', ->
       force_expansion = 1
-      result = os_get_absolute_path '..', buffer, len, force_expansion
+      result = vim_FullName '..', buffer, len, force_expansion
       expected = lfs.currentdir! .. '/..'
       eq expected, (ffi.string buffer)
       eq OK, result
@@ -159,7 +173,7 @@ describe 'former os function', ->
     it 'enters given directory (instead of just concatenating the strings) if
     possible and if path contains a slash', ->
       force_expansion = 1
-      result = os_get_absolute_path '../test.file', buffer, len, force_expansion
+      result = vim_FullName '../test.file', buffer, len, force_expansion
       old_dir = lfs.currentdir!
       lfs.chdir '..'
       expected = lfs.currentdir! .. '/test.file'
@@ -170,19 +184,20 @@ describe 'former os function', ->
     it 'just copies the path if it is already absolute and force=0', ->
       force_expansion = 0
       absolute_path = '/absolute/path'
-      result = os_get_absolute_path absolute_path, buffer, len, force_expansion
+      result = vim_FullName absolute_path, buffer, len, force_expansion
       eq absolute_path, (ffi.string buffer)
       eq OK, result
 
-    it 'fails when the path is relative to HOME', ->
+    it 'fails and uses filename when the path is relative to HOME', ->
       force_expansion = 1
       absolute_path = '~/home.file'
-      result = os_get_absolute_path absolute_path, buffer, len, force_expansion
+      result = vim_FullName absolute_path, buffer, len, force_expansion
+      eq absolute_path, (ffi.string buffer)
       eq FAIL, result
 
     it 'works with some "normal" relative path with directories', ->
       force_expansion = 1
-      result = os_get_absolute_path 'unit-test-directory/test.file', buffer, len, force_expansion
+      result = vim_FullName 'unit-test-directory/test.file', buffer, len, force_expansion
       eq OK, result
       eq lfs.currentdir! .. '/unit-test-directory/test.file', (ffi.string buffer)
 
@@ -191,7 +206,7 @@ describe 'former os function', ->
       filename = to_cstr 'unit-test-directory/test.file'
       -- Don't use the wrapper here but pass a cstring directly to the c
       -- function.
-      result = path.os_get_absolute_path filename, buffer, len, force_expansion
+      result = path.vim_FullName filename, buffer, len, force_expansion
       eq lfs.currentdir! .. '/unit-test-directory/test.file', (ffi.string buffer)
       eq 'unit-test-directory/test.file', (ffi.string filename)
       eq OK, result
@@ -211,7 +226,7 @@ describe 'former os function', ->
      eq OK, path.append_path path1, to_append, 100
      eq "path1/path2", (ffi.string path1)
 
-    it 'fails if there is not enough space left for to_append', ->
+    it 'fails and uses filename if there is not enough space left for to_append', ->
       path1 = cstr 11, 'path1/'
       to_append = to_cstr 'path2'
       eq FAIL, (path.append_path path1, to_append, 11)
