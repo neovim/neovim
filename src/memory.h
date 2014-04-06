@@ -27,6 +27,22 @@ void *xmalloc(size_t size)
 void *xrealloc(void *ptr, size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET;
 
+/// strdup() wrapper
+///
+/// @see {xmalloc}
+/// @param str 0-terminated string that will be copied
+/// @return pointer to a copy of the string
+char * xstrdup(const char *str)
+ FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET;
+
+/// strndup() wrapper
+///
+/// @see {xmalloc}
+/// @param str 0-terminated string that will be copied
+/// @return pointer to a copy of the string
+char * xstrndup(const char *str, size_t len)
+ FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET;
+
 /// Old low level memory allocation function.
 ///
 /// @deprecated use xmalloc() directly instead
