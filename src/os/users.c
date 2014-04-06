@@ -14,7 +14,7 @@
 int os_get_usernames(garray_T *users)
 {
   if (users == NULL) {
-    return FALSE;
+    return FAIL;
   }
   ga_init(users, sizeof(char *), 20);
 

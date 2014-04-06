@@ -1174,7 +1174,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
       vim_free((*stackptr)->dirname);
       (*stackptr)->dirname = concat_fnames(ds_new->dirname, dirbuf,
           TRUE);
-      if (os_isdir((*stackptr)->dirname) == TRUE)
+      if (os_isdir((*stackptr)->dirname))
         break;
 
       ds_new = ds_new->next;

@@ -141,24 +141,24 @@ int os_is_absolute_path(const char_u *fname)
   return *fname == '/' || *fname == '~';
 }
 
-int os_isdir(const char_u *name)
+bool os_isdir(const char_u *name)
 {
   int32_t mode = os_getperm(name);
   if (mode < 0) {
-    return FALSE;
+    return false;
   }
 
   if (!S_ISDIR(mode)) {
-    return FALSE;
+    return false;
   }
 
-  return TRUE;
+  return true;
 }
 
-static int is_executable(const char_u *name);
-static int is_executable_in_path(const char_u *name);
+static bool is_executable(const char_u *name);
+static bool is_executable_in_path(const char_u *name);
 
-int os_can_exe(const char_u *name)
+bool os_can_exe(const char_u *name)
 {
   // If it's an absolute or relative path don't need to use $PATH.
   if (os_is_absolute_path(name) ||
@@ -170,32 +170,32 @@ int os_can_exe(const char_u *name)
   return is_executable_in_path(name);
 }
 
-// Return TRUE if "name" is an executable file, FALSE if not or it doesn't
+// Return true if "name" is an executable file, false if not or it doesn't
 // exist.
-static int is_executable(const char_u *name)
+static bool is_executable(const char_u *name)
 {
   int32_t mode = os_getperm(name);
 
   if (mode < 0) {
-    return FALSE;
+    return false;
   }
 
   if (S_ISREG(mode) && (S_IEXEC & mode)) {
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /// Check if a file is inside the $PATH and is executable.
 ///
-/// @return `TRUE` if `name` is an executable inside $PATH.
-static int is_executable_in_path(const char_u *name)
+/// @return `true` if `name` is an executable inside $PATH.
+static bool is_executable_in_path(const char_u *name)
 {
   const char *path = getenv("PATH");
   // PATH environment variable does not exist or is empty.
   if (path == NULL || *path == NUL) {
-    return FALSE;
+    return false;
   }
 
   int buf_len = STRLEN(name) + STRLEN(path) + 2;
@@ -217,13 +217,13 @@ static int is_executable_in_path(const char_u *name)
     if (is_executable(buf)) {
       // Found our executable. Free buf and return.
       vim_free(buf);
-      return OK;
+      return true;
     }
 
     if (*e != ':') {
       // End of $PATH without finding any executable called name.
       vim_free(buf);
-      return FALSE;
+      return false;
     }
 
     path = e + 1;
@@ -231,7 +231,7 @@ static int is_executable_in_path(const char_u *name)
 
   // We should never get to this point.
   assert(false);
-  return FALSE;
+  return false;
 }
 
 int os_stat(const char_u *name, uv_stat_t *statbuf)
@@ -273,23 +273,19 @@ int os_setperm(const char_u *name, int perm)
   return FAIL;
 }
 
-int os_file_exists(const char_u *name)
+bool os_file_exists(const char_u *name)
 {
   uv_stat_t statbuf;
   if (os_stat(name, &statbuf) == OK) {
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
-int os_file_is_readonly(const char *name)
+bool os_file_is_readonly(const char *name)
 {
-  if (access(name, W_OK) == 0) {
-    return FALSE;
-  }
-
-  return TRUE;
+  return access(name, W_OK) != 0;
 }
 
 int os_file_is_writable(const char *name)

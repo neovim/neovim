@@ -9,24 +9,20 @@ ffi.cdef [[
 enum OKFAIL {
   OK = 1, FAIL = 0
 };
-enum BOOLEAN {
-  TRUE = 1, FALSE = 0
-};
 int os_dirname(char_u *buf, int len);
-int os_isdir(char_u * name);
-int is_executable(char_u *name);
-int os_can_exe(char_u *name);
+bool os_isdir(char_u * name);
+bool is_executable(char_u *name);
+bool os_can_exe(char_u *name);
 int32_t os_getperm(char_u *name);
 int os_setperm(char_u *name, long perm);
-int os_file_exists(const char_u *name);
-int os_file_is_readonly(char *fname);
+bool os_file_exists(const char_u *name);
+bool os_file_is_readonly(char *fname);
 int os_file_is_writable(const char *name);
 int os_rename(const char_u *path, const char_u *new_path);
 ]]
 
 -- import constants parsed by ffi
 {:OK, :FAIL} = lib
-{:TRUE, :FALSE} = lib
 
 cppimport 'sys/stat.h'
 
@@ -231,50 +227,50 @@ describe 'fs function', ->
       fs.os_isdir (to_cstr name)
 
     it 'returns false if an empty string is given', ->
-      eq FALSE, (os_isdir '')
+      eq false, (os_isdir '')
 
     it 'returns false if a nonexisting directory is given', ->
-      eq FALSE, (os_isdir 'non-existing-directory')
+      eq false, (os_isdir 'non-existing-directory')
 
     it 'returns false if a nonexisting absolute directory is given', ->
-      eq FALSE, (os_isdir '/non-existing-directory')
+      eq false, (os_isdir '/non-existing-directory')
 
     it 'returns false if an existing file is given', ->
-      eq FALSE, (os_isdir 'unit-test-directory/test.file')
+      eq false, (os_isdir 'unit-test-directory/test.file')
 
     it 'returns true if the current directory is given', ->
-      eq TRUE, (os_isdir '.')
+      eq true, (os_isdir '.')
 
     it 'returns true if the parent directory is given', ->
-      eq TRUE, (os_isdir '..')
+      eq true, (os_isdir '..')
 
     it 'returns true if an arbitrary directory is given', ->
-      eq TRUE, (os_isdir 'unit-test-directory')
+      eq true, (os_isdir 'unit-test-directory')
 
     it 'returns true if an absolute directory is given', ->
-      eq TRUE, (os_isdir directory)
+      eq true, (os_isdir directory)
 
   describe 'os_can_exe', ->
     os_can_exe = (name) ->
       fs.os_can_exe (to_cstr name)
 
     it 'returns false when given a directory', ->
-      eq FALSE, (os_can_exe './unit-test-directory')
+      eq false, (os_can_exe './unit-test-directory')
 
     it 'returns false when given a regular file without executable bit set', ->
-      eq FALSE, (os_can_exe 'unit-test-directory/test.file')
+      eq false, (os_can_exe 'unit-test-directory/test.file')
 
     it 'returns false when the given file does not exists', ->
-      eq FALSE, (os_can_exe 'does-not-exist.file')
+      eq false, (os_can_exe 'does-not-exist.file')
 
     it 'returns true when given an executable inside $PATH', ->
-      eq TRUE, (os_can_exe executable_name)
+      eq true, (os_can_exe executable_name)
 
     it 'returns true when given an executable relative to the current dir', ->
       old_dir = lfs.currentdir!
       lfs.chdir directory
       relative_executable = './' .. executable_name
-      eq TRUE, (os_can_exe relative_executable)
+      eq true, (os_can_exe relative_executable)
       lfs.chdir old_dir
 
   describe 'file permissions', ->
@@ -332,32 +328,32 @@ describe 'fs function', ->
         eq FAIL, (os_setperm 'non-existing-file', perm)
 
     describe 'os_file_is_readonly', ->
-      it 'returns TRUE if the file is readonly', ->
+      it 'returns true if the file is readonly', ->
         perm = os_getperm 'unit-test-directory/test.file'
         perm_orig = perm
         perm = unset_bit perm, ffi.C.kS_IWUSR
         perm = unset_bit perm, ffi.C.kS_IWGRP
         perm = unset_bit perm, ffi.C.kS_IWOTH
         eq OK, (os_setperm 'unit-test-directory/test.file', perm)
-        eq TRUE, os_file_is_readonly 'unit-test-directory/test.file'
+        eq true, os_file_is_readonly 'unit-test-directory/test.file'
         eq OK, (os_setperm 'unit-test-directory/test.file', perm_orig)
 
-      it 'returns FALSE if the file is writable', ->
-        eq FALSE, os_file_is_readonly 'unit-test-directory/test.file'
+      it 'returns false if the file is writable', ->
+        eq false, os_file_is_readonly 'unit-test-directory/test.file'
 
     describe 'os_file_is_writable', ->
-      it 'returns FALSE if the file is readonly', ->
+      it 'returns 0 if the file is readonly', ->
         perm = os_getperm 'unit-test-directory/test.file'
         perm_orig = perm
         perm = unset_bit perm, ffi.C.kS_IWUSR
         perm = unset_bit perm, ffi.C.kS_IWGRP
         perm = unset_bit perm, ffi.C.kS_IWOTH
         eq OK, (os_setperm 'unit-test-directory/test.file', perm)
-        eq FALSE, os_file_is_writable 'unit-test-directory/test.file'
+        eq 0, os_file_is_writable 'unit-test-directory/test.file'
         eq OK, (os_setperm 'unit-test-directory/test.file', perm_orig)
 
-      it 'returns TRUE if the file is writable', ->
-        eq TRUE, os_file_is_writable 'unit-test-directory/test.file'
+      it 'returns 1 if the file is writable', ->
+        eq 1, os_file_is_writable 'unit-test-directory/test.file'
 
       it 'returns 2 when given a folder with rights to write into', ->
         eq 2, os_file_is_writable 'unit-test-directory'
@@ -370,11 +366,11 @@ describe 'fs function', ->
       fs.os_rename (to_cstr path), (to_cstr new_path)
 
     describe 'os_file_exists', ->
-      it 'returns FALSE when given a non-existing file', ->
-        eq FALSE, (os_file_exists 'non-existing-file')
+      it 'returns false when given a non-existing file', ->
+        eq false, (os_file_exists 'non-existing-file')
 
-      it 'returns TRUE when given an existing file', ->
-        eq TRUE, (os_file_exists 'unit-test-directory/test.file')
+      it 'returns true when given an existing file', ->
+        eq true, (os_file_exists 'unit-test-directory/test.file')
 
     describe 'os_rename', ->
       test = 'unit-test-directory/test.file'
@@ -382,8 +378,8 @@ describe 'fs function', ->
 
       it 'can rename file if destination file does not exist', ->
         eq OK, (os_rename test, not_exist)
-        eq FALSE, (os_file_exists test)
-        eq TRUE, (os_file_exists not_exist)
+        eq false, (os_file_exists test)
+        eq true, (os_file_exists not_exist)
         eq OK, (os_rename not_exist, test)  -- restore test file
 
       it 'fail if source file does not exist', ->
@@ -397,8 +393,8 @@ describe 'fs function', ->
         file\close!
 
         eq OK, (os_rename other, test)
-        eq FALSE, (os_file_exists other)
-        eq TRUE, (os_file_exists test)
+        eq false, (os_file_exists other)
+        eq true, (os_file_exists test)
         file = io.open test, 'r'
         eq 'other', (file\read '*all')
         file\close!

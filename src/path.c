@@ -1208,7 +1208,7 @@ addfile (
 )
 {
   char_u      *p;
-  int isdir;
+  bool isdir;
 
   /* if the file/dir doesn't exist, may not add it */
   if (!(flags & EW_NOTFOUND) && !os_file_exists(f))

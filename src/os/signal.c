@@ -73,7 +73,7 @@ void signal_handle(Event event)
 
   switch (signum) {
     case SIGINT:
-      got_int = TRUE;
+      got_int = true;
       break;
 #ifdef SIGPWR
     case SIGPWR:

@@ -28,23 +28,23 @@ int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
 /// Check if the given file is absolute.
 ///
 /// This just checks if the file name starts with '/' or '~'.
-/// @return `TRUE` if "fname" is absolute.
+/// @return `true` if "fname" is absolute.
 int os_is_absolute_path(const char_u *fname);
 
 /// Check if the given path is a directory or not.
 ///
-/// @return `TRUE` if `fname` is a directory.
-int os_isdir(const char_u *name);
+/// @return `true` if `fname` is a directory.
+bool os_isdir(const char_u *name);
 
 /// Check if the given path represents an executable file.
 ///
-/// @return `TRUE` if `name` is executable and
+/// @return `true` if `name` is executable and
 ///   - can be found in $PATH,
 ///   - is relative to current dir or
 ///   - is absolute.
 ///
-/// @return `FALSE` otherwise.
-int os_can_exe(const char_u *name);
+/// @return `false` otherwise.
+bool os_can_exe(const char_u *name);
 
 /// Get the file permissions for a given file.
 ///
@@ -58,13 +58,13 @@ int os_setperm(const char_u *name, int perm);
 
 /// Check if a file exists.
 ///
-/// @return `TRUE` if `name` exists.
-int os_file_exists(const char_u *name);
+/// @return `true` if `name` exists.
+bool os_file_exists(const char_u *name);
 
 /// Check if a file is readonly.
 ///
-/// @return `True` if `name` is readonly.
-int os_file_is_readonly(const char *name);
+/// @return `true` if `name` is readonly.
+bool os_file_is_readonly(const char *name);
 
 /// Check if a file is writable.
 ///

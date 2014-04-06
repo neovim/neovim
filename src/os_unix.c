@@ -1039,7 +1039,7 @@ int flags;                      /* EW_* flags */
   int i;
   size_t len;
   char_u      *p;
-  int dir;
+  bool dir;
   char_u *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
   /*
