@@ -26,8 +26,10 @@
 #ifndef _AC_KLIST_H
 #define _AC_KLIST_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 
+#include "func_attr.h"
 #include "memory.h"
 
 #define KMEMPOOL_INIT(name, kmptype_t, kmpfree_f)                       \
@@ -84,6 +86,8 @@
         kl->head->next = 0;                                             \
         return kl;                                                      \
     }                                                                   \
+    static inline void kl_destroy_##name(kl_##name##_t *kl)             \
+        FUNC_ATTR_UNUSED;                                               \
     static inline void kl_destroy_##name(kl_##name##_t *kl) {           \
         kl1_##name *p;                                                  \
         for (p = kl->head; p != kl->tail; p = p->next)                  \
@@ -119,5 +123,6 @@
 #define kl_destroy(name, kl) kl_destroy_##name(kl)
 #define kl_pushp(name, kl) kl_pushp_##name(kl)
 #define kl_shift(name, kl, d) kl_shift_##name(kl, d)
+#define kl_empty(kl) ((kl)->size == 0)
 
 #endif

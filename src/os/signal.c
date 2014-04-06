@@ -67,12 +67,11 @@ void signal_accept_deadly()
   rejecting_deadly = false;
 }
 
-void signal_handle(Event *event)
+void signal_handle(Event event)
 {
-  int signum = *(int *)event->data;
+  int signum = *(int *)event.data;
 
-  free(event->data);
-  free(event);
+  free(event.data);
 
   switch (signum) {
     case SIGINT:
@@ -148,8 +147,6 @@ static void deadly_signal(int signum)
 
 static void signal_cb(uv_signal_t *handle, int signum)
 {
-  Event *event;
-
   if (rejecting_deadly) {
     if (signum == SIGINT) {
       got_int = true;
@@ -158,9 +155,10 @@ static void signal_cb(uv_signal_t *handle, int signum)
     return;
   } 
 
-  event = (Event *)xmalloc(sizeof(Event));
-  event->type = kEventSignal;
-  event->data = xmalloc(sizeof(int));
-  *(int *)event->data = signum;
+  Event event = {
+    .type = kEventSignal,
+    .data = xmalloc(sizeof(int))
+  };
+  *(int *)event.data = signum;
   event_push(event);
 }
