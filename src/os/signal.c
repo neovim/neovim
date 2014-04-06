@@ -69,9 +69,7 @@ void signal_accept_deadly()
 
 void signal_handle(Event event)
 {
-  int signum = *(int *)event.data;
-
-  free(event.data);
+  int signum = event.data.signum;
 
   switch (signum) {
     case SIGINT:
@@ -157,8 +155,9 @@ static void signal_cb(uv_signal_t *handle, int signum)
 
   Event event = {
     .type = kEventSignal,
-    .data = xmalloc(sizeof(int))
+    .data = {
+      .signum = signum
+    }
   };
-  *(int *)event.data = signum;
   event_push(event);
 }

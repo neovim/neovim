@@ -10,7 +10,9 @@ typedef enum {
 
 typedef struct {
   EventType type;
-  void *data;
+  union {
+    int signum;
+  } data;
 } Event;
 
 void event_init(void);
