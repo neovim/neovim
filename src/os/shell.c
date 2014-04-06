@@ -79,13 +79,13 @@ char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
 
   if (extra_shell_opt != NULL) {
     // Push a copy of `extra_shell_opt`
-    rv[i++] = strdup((char *)extra_shell_opt);
+    rv[i++] = xstrdup((char *)extra_shell_opt);
   }
 
   if (cmd != NULL) {
     // Split 'shellcmdflag'
     i += tokenize(p_shcf, rv + i);
-    rv[i++] = strdup((char *)cmd);
+    rv[i++] = xstrdup((char *)cmd);
   }
 
   rv[i] = NULL;

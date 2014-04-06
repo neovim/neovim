@@ -42,6 +42,17 @@
 #include "os/os.h"
 
 static void try_to_free_memory();
+static void *xmallocz(size_t size);
+
+/// Allocates (len + 1) bytes of memory, duplicates `len` bytes of
+/// `data` to the allocated memory, zero terminates the allocated memory,
+/// and returns a pointer to the allocated memory. If the allocation fails,
+/// the program dies.
+///
+/// @see {xmalloc}
+/// @param data Pointer to the data that will be copied
+/// @param len number of bytes that will be copied
+static void *xmemdupz(const void *data, size_t len);
 
 /*
  * Note: if unsigned is 16 bits we can only allocate up to 64K with alloc().
@@ -152,6 +163,29 @@ void *xrealloc(void *ptr, size_t size)
 
   return ret;
 }
+
+char * xstrdup(const char *str)
+{
+  char *ret = strdup(str);
+
+  if (!ret) {
+    try_to_free_memory();
+    ret = strdup(str);
+    if (!ret) {
+      OUT_STR("Vim: Error: Out of memory.\n");
+      preserve_exit();
+    }
+  }
+
+  return ret;
+}
+
+char *xstrndup(const char *str, size_t len)
+{
+  char *p = memchr(str, '\0', len);
+  return xmemdupz(str, p ? (size_t)(p - str) : len);
+}
+
 
 char_u *lalloc(long_u size, int message)
 {
@@ -325,3 +359,25 @@ void free_all_mem(void)
 }
 
 #endif
+
+static void *xmallocz(size_t size)
+{
+  size_t total_size = size + 1;
+  void *ret;
+
+  if (total_size < size) {
+    OUT_STR("Vim: Data too large to fit into virtual memory space\n");
+    preserve_exit();
+  }
+
+  ret = xmalloc(total_size);
+  ((char*)ret)[size] = 0;
+
+  return ret;
+}
+
+static void *xmemdupz(const void *data, size_t len)
+{
+  return memcpy(xmallocz(len), data, len);
+}
+
