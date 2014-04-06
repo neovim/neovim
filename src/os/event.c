@@ -12,7 +12,7 @@
 #include "memory.h"
 #include "misc2.h"
 
-// event.data will be cleaned up after the event is processed
+// event will be cleaned up after it gets processed
 #define _destroy_event(x)  // do nothing
 KLIST_INIT(Event, Event, _destroy_event)
 
