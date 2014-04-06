@@ -4,6 +4,7 @@
 
 #include <uv.h>
 
+#include "lib/klist.h"
 #include "os/event.h"
 #include "os/input.h"
 #include "os/signal.h"
@@ -11,22 +12,22 @@
 #include "memory.h"
 #include "misc2.h"
 
-typedef struct EventNode {
-  Event *event;
-  struct EventNode *next;
-} EventNode;
+// event.data will be cleaned up after the event is processed
+#define _destroy_event(x)  // do nothing
+KLIST_INIT(Event, Event, _destroy_event)
 
-static EventNode *head, *tail;
+static klist_t(Event) *event_queue;
 static uv_timer_t timer;
 static uv_prepare_t timer_prepare;
 static bool poll_uv_loop(int ms);
 static void process_all_events(void);
-static bool has_pending_events(void);
 static void timer_cb(uv_timer_t *handle, int);
 static void timer_prepare_cb(uv_prepare_t *, int);
 
 void event_init()
 {
+  // Initialize the event queue
+  event_queue = kl_init(Event);
   // Initialize input events
   input_init();
   // Timer to wake the event loop if a timeout argument is passed to
@@ -72,48 +73,25 @@ bool event_poll(int32_t ms)
 }
 
 // Push an event to the queue
-void event_push(Event *event)
+void event_push(Event event)
 {
-  EventNode *node = (EventNode *)xmalloc(sizeof(EventNode));
-  node->event = event;
-  node->next = NULL;
-
-  if (head == NULL) {
-    head = node;
-  } else {
-    tail->next = node;
-  }
-
-  tail = node;
+  *kl_pushp(Event, event_queue) = event;
 }
 
 // Runs the appropriate action for each queued event
 static void process_all_events()
 {
-  EventNode *next;
-  Event *event;
+  Event event;
 
-  while (has_pending_events()) {
-    next = head->next;
-    event = head->event;
-    free(head);
-    head = next;
-
-    switch (event->type) {
+  while (kl_shift(Event, event_queue, &event) == 0) {
+    switch (event.type) {
       case kEventSignal:
         signal_handle(event);
         break;
       default:
         abort();
     }
-
   }
-}
-
-// Checks if there are queued events
-bool has_pending_events()
-{
-  return head != NULL;
 }
 
 // Wait for some event
@@ -150,7 +128,7 @@ static bool poll_uv_loop(int32_t ms)
   } while (
       // Continue running if ...
       !input_ready() && // we have no input
-      !has_pending_events() && // no events are waiting to be processed
+      kl_empty(event_queue) && // no events are waiting to be processed
       run_mode != UV_RUN_NOWAIT && // ms != 0
       !timed_out  // we didn't get a timeout
       );
@@ -162,7 +140,7 @@ static bool poll_uv_loop(int32_t ms)
     uv_timer_stop(&timer);
   }
 
-  return input_ready() || has_pending_events();
+  return input_ready() || !kl_empty(event_queue);
 }
 
 // Set a flag in the `event_poll` loop for signaling of a timeout

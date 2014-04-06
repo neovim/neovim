@@ -34,6 +34,7 @@
   #define FUNC_ATTR_CONST __attribute__((const))
   #define FUNC_ATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
   #define FUNC_ATTR_ALWAYS_INLINE __attribute__((always_inline))
+  #define FUNC_ATTR_UNUSED __attribute__((unused))
 
   #ifdef __clang__
     // clang only
@@ -88,6 +89,10 @@
 
 #ifndef FUNC_ATTR_ALWAYS_INLINE
   #define FUNC_ATTR_ALWAYS_INLINE
+#endif
+
+#ifndef FUNC_ATTR_UNUSED
+  #define FUNC_ATTR_UNUSED
 #endif
 
 #ifndef FUNC_ATTR_NONNULL_ALL
