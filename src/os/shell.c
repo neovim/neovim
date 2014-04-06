@@ -222,7 +222,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
       // TODO for now this is only needed if the terminal is in raw mode, but
       // when the UI is externalized we'll also need it, so leave it here
       uv_process_kill(&proc, SIGINT);
-      got_int = FALSE;
+      got_int = false;
     }
   }
 

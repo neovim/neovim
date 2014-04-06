@@ -490,17 +490,13 @@ readfile (
   }
 
   if (fd < 0) {                     /* cannot open at all */
-#ifndef UNIX
-    int isdir_f;
-#endif
     msg_scroll = msg_save;
 #ifndef UNIX
     /*
      * On MSDOS and Amiga we can't open a directory, check here.
      */
-    isdir_f = (os_isdir(fname));
     perm = os_getperm(fname);      /* check if the file exists */
-    if (isdir_f) {
+    if (os_isdir(fname)) {
       filemess(curbuf, sfname, (char_u *)_("is a directory"), 0);
       curbuf->b_p_ro = TRUE;            /* must use "w!" now */
     } else
@@ -2496,7 +2492,7 @@ buf_write (
   int device = FALSE;                       /* writing to a device */
   struct stat st_old;
   int prev_got_int = got_int;
-  int file_readonly = FALSE;                /* overwritten file is read-only */
+  bool file_readonly = false;               /* overwritten file is read-only */
   static char     *err_readonly =
     "is read-only (cannot override: \"W\" in 'cpoptions')";
 #if defined(UNIX) || defined(__EMX__XX)     /*XXX fix me sometime? */
@@ -5021,7 +5017,7 @@ int vim_rename(char_u *from, char_u *to)
     STRCPY(tempname, from);
     for (n = 123; n < 99999; ++n) {
       sprintf((char *)path_tail(tempname), "%d", n);
-      if (os_file_exists(tempname) == FALSE) {
+      if (!os_file_exists(tempname)) {
         if (os_rename(from, tempname) == OK) {
           if (os_rename(tempname, to) == OK)
             return 0;
