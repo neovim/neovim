@@ -3,13 +3,14 @@
 
 #include <uv.h>
 
+#include "os/time.h"
 #include "vim.h"
 #include "term.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
-static void delay(uint64_t ms);
+static void microdelay(uint64_t ms);
 
 void time_init()
 {
@@ -17,33 +18,35 @@ void time_init()
   uv_cond_init(&delay_cond);
 }
 
-void os_delay(uint64_t ms, bool ignoreinput)
+void os_delay(uint64_t milliseconds, bool ignoreinput)
+{
+  os_microdelay(milliseconds * 1000, ignoreinput);
+}
+
+void os_microdelay(uint64_t microseconds, bool ignoreinput)
 {
   int old_tmode;
 
   if (ignoreinput) {
     // Go to cooked mode without echo, to allow SIGINT interrupting us
-    // here.  But we don't want QUIT to kill us (CTRL-\ used in a
-    // shell may produce SIGQUIT).
-    in_os_delay = true;
+    // here
     old_tmode = curr_tmode;
 
     if (curr_tmode == TMODE_RAW)
       settmode(TMODE_SLEEP);
 
-    delay(ms);
+    microdelay(microseconds);
 
     settmode(old_tmode);
-    in_os_delay = false;
   } else {
-    delay(ms);
+    microdelay(microseconds);
   }
 }
 
-static void delay(uint64_t ms)
+static void microdelay(uint64_t microseconds)
 {
   uint64_t hrtime;
-  int64_t ns = ms * 1000000;  // convert to nanoseconds
+  int64_t ns = microseconds * 1000;  // convert to nanoseconds
 
   uv_mutex_lock(&delay_mutex);
 

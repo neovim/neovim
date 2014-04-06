@@ -237,22 +237,9 @@ int ui_get_shellsize(void)
  * new size.  If this is not possible, it will adjust Rows and Columns.
  */
 void 
-ui_set_shellsize (
-    int mustset             /* set by the user */
-)
+ui_set_shellsize(int mustset)
 {
   mch_set_shellsize();
-}
-
-/*
- * Called when Rows and/or Columns changed.  Adjust scroll region and mouse
- * region.
- */
-void ui_new_shellsize(void)
-{
-  if (full_screen && !exiting) {
-    mch_new_shellsize();
-  }
 }
 
 void ui_breakcheck(void)

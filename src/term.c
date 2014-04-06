@@ -2465,8 +2465,6 @@ void win_new_shellsize(void)
   static int old_Rows = 0;
   static int old_Columns = 0;
 
-  if (old_Rows != Rows || old_Columns != Columns)
-    ui_new_shellsize();
   if (old_Rows != Rows) {
     /* if 'window' uses the whole screen, keep it using that */
     if (p_window == old_Rows - 1 || old_Rows == 0)
