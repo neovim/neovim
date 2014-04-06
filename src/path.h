@@ -97,15 +97,6 @@ int os_full_dir_name(char *directory, char *buffer, int len);
 // Append to_append to path with a slash in between.
 int append_path(char *path, const char *to_append, int max_len);
 
-/// Expand a given file to its absolute path.
-///
-/// @param fname The filename which should be expanded.
-/// @param buf Buffer to store the absolute path of `fname`.
-/// @param len Length of `buf`.
-/// @param force Also expand when `fname` is already absolute.
-/// @return `FAIL` for failure, `OK` for success.
-int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
-
 /// Check if the given file is absolute.
 ///
 /// This just checks if the file name starts with '/' or '~'.

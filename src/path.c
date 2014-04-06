@@ -30,6 +30,7 @@
 #define URL_SLASH       1               /* path_is_url() has found "://" */
 #define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
+static int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
 static bool is_executable(const char_u *name);
 static bool is_executable_in_path(const char_u *name);
 
@@ -2023,7 +2024,14 @@ int append_path(char *path, const char *to_append, int max_len)
   return OK;
 }
 
-int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
+/// Expand a given file to its absolute path.
+///
+/// @param fname The filename which should be expanded.
+/// @param buf Buffer to store the absolute path of `fname`.
+/// @param len Length of `buf`.
+/// @param force Also expand when `fname` is already absolute.
+/// @return `FAIL` for failure, `OK` for success.
+static int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
 {
   char_u *p;
   *buf = NUL;
