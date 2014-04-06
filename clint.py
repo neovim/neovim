@@ -172,6 +172,7 @@ _ERROR_CATEGORIES = [
   'build/printf_format',
   'build/storage_class',
   'readability/alt_tokens',
+  'readability/bool',
   'readability/braces',
   'readability/fn_size',
   'readability/multiline_comment',
@@ -2814,6 +2815,12 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
             'Do not use variable-length arrays.  Use an appropriately named '
             "('k' followed by CamelCase) compile-time constant for the size.")
 
+  # Detect TRUE and FALSE.
+  match = Search(r'(TRUE|FALSE)', line)
+  if match:
+    token = match.group(1)
+    error(filename, linenum, 'readability/bool', 4,
+          'Use %s instead of %s.' % (token.lower(), token))
 
 def ProcessLine(filename, file_extension, clean_lines, line,
                 include_state, function_state, nesting_state, error,
