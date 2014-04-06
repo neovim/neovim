@@ -152,14 +152,15 @@ static void signal_cb(uv_signal_t *handle, int signum)
 
   if (rejecting_deadly) {
     if (signum == SIGINT) {
-      got_int = TRUE;
+      got_int = true;
     }
-  } else {
-    event = (Event *)xmalloc(sizeof(Event));
-    event->type = kEventSignal;
-    event->data = xmalloc(sizeof(int));
-    *(int *)event->data = signum;
-    event_push(event);
-  }
 
+    return;
+  } 
+
+  event = (Event *)xmalloc(sizeof(Event));
+  event->type = kEventSignal;
+  event->data = xmalloc(sizeof(int));
+  *(int *)event->data = signum;
+  event_push(event);
 }
