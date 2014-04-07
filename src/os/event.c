@@ -8,6 +8,7 @@
 #include "os/event.h"
 #include "os/input.h"
 #include "os/signal.h"
+#include "os/job.h"
 #include "vim.h"
 #include "memory.h"
 #include "misc2.h"
@@ -34,6 +35,8 @@ void event_init()
   // `event_poll`
   // Signals
   signal_init();
+  // Jobs
+  job_init();
   uv_timer_init(uv_default_loop(), &timer);
   // This prepare handle that actually starts the timer
   uv_prepare_init(uv_default_loop(), &timer_prepare);
@@ -87,6 +90,9 @@ static void process_all_events()
     switch (event.type) {
       case kEventSignal:
         signal_handle(event);
+        break;
+      case kEventJobActivity:
+        job_handle(event);
         break;
       default:
         abort();

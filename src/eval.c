@@ -63,6 +63,7 @@
 #include "version.h"
 #include "window.h"
 #include "os/os.h"
+#include "os/job.h"
 #include "os/shell.h"
 
 #if defined(FEAT_FLOAT)
@@ -388,6 +389,7 @@ static struct vimvar {
   {VV_NAME("hlsearch",         VAR_NUMBER), 0},
   {VV_NAME("oldfiles",         VAR_LIST), 0},
   {VV_NAME("windowid",         VAR_NUMBER), VV_RO},
+  {VV_NAME("job_data",         VAR_LIST), 0}
 };
 
 /* shorthand */
@@ -401,6 +403,11 @@ static struct vimvar {
 static dictitem_T vimvars_var;                  /* variable used for v: */
 #define vimvarht  vimvardict.dv_hashtab
 
+static void apply_job_autocmds(int id,
+                               void *data,
+                               char *buffer,
+                               uint32_t len,
+                               bool from_stdout);
 static void prepare_vimvar(int idx, typval_T *save_tv);
 static void restore_vimvar(int idx, typval_T *save_tv);
 static int ex_let_vars(char_u *arg, typval_T *tv, int copy,
@@ -629,6 +636,9 @@ static void f_invert(typval_T *argvars, typval_T *rettv);
 static void f_isdirectory(typval_T *argvars, typval_T *rettv);
 static void f_islocked(typval_T *argvars, typval_T *rettv);
 static void f_items(typval_T *argvars, typval_T *rettv);
+static void f_job_start(typval_T *argvars, typval_T *rettv);
+static void f_job_stop(typval_T *argvars, typval_T *rettv);
+static void f_job_write(typval_T *argvars, typval_T *rettv);
 static void f_join(typval_T *argvars, typval_T *rettv);
 static void f_keys(typval_T *argvars, typval_T *rettv);
 static void f_last_buffer_nr(typval_T *argvars, typval_T *rettv);
@@ -1365,6 +1375,7 @@ int eval_to_number(char_u *expr)
 
   return retval;
 }
+
 
 /*
  * Prepare v: variable "idx" to be used.
@@ -6946,6 +6957,9 @@ static struct fst {
   {"isdirectory",     1, 1, f_isdirectory},
   {"islocked",        1, 1, f_islocked},
   {"items",           1, 1, f_items},
+  {"jobstart",        2, 3, f_job_start},
+  {"jobstop",         1, 1, f_job_stop},
+  {"jobwrite",        2, 2, f_job_write},
   {"join",            1, 2, f_join},
   {"keys",            1, 1, f_keys},
   {"last_buffer_nr",  0, 0, f_last_buffer_nr},  /* obsolete */
@@ -11001,6 +11015,143 @@ static void f_items(typval_T *argvars, typval_T *rettv)
   dict_list(argvars, rettv, 2);
 }
 
+// "jobstart()" function
+static void f_job_start(typval_T *argvars, typval_T *rettv)
+{
+  list_T *args = NULL;
+  listitem_T *arg;
+  int i, argvl, argsl;
+  char **argv = NULL;
+
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    goto cleanup;
+  }
+
+  if (argvars[0].v_type != VAR_STRING
+      || argvars[1].v_type != VAR_STRING
+      || (argvars[2].v_type != VAR_LIST
+      && argvars[2].v_type != VAR_UNKNOWN)) {
+    // Wrong argument types
+    EMSG(_(e_invarg));
+    goto cleanup;
+  }
+
+  argsl = 0;
+  if (argvars[2].v_type == VAR_LIST) {
+    args = argvars[2].vval.v_list;
+    argsl = args->lv_len;
+    // Assert that all list items are strings
+    for (arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+      if (arg->li_tv.v_type != VAR_STRING) {
+        EMSG(_(e_invarg));
+        goto cleanup;
+      }
+    }
+  }
+
+  if (!os_can_exe(get_tv_string(&argvars[1]))) {
+    // String is not executable
+    EMSG2(e_jobexe, get_tv_string(&argvars[1]));
+    goto cleanup;
+  }
+
+  // Allocate extra memory for the argument vector and the NULL pointer
+  argvl = argsl + 2;
+  argv = xmalloc(sizeof(char_u *) * argvl);
+
+  // Copy program name
+  argv[0] = xstrdup((char *)argvars[1].vval.v_string);
+
+  i = 1;
+  // Copy arguments to the vector
+  if (argsl > 0) {
+    for (arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+      argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+    }
+  }
+
+  // The last item of argv must be NULL
+  argv[i] = NULL;
+
+  rettv->vval.v_number = job_start(argv,
+                                   xstrdup((char *)argvars[0].vval.v_string),
+                                   apply_job_autocmds);
+
+  if (rettv->vval.v_number <= 0) {
+    if (rettv->vval.v_number == 0) {
+      EMSG(_(e_jobtblfull));
+    } else {
+      EMSG(_(e_jobexe));
+    }
+  }
+
+cleanup:
+  if (rettv->vval.v_number > 0) {
+    // Success
+    return;
+  }
+  // Cleanup argv memory in case the `job_start` call failed
+  shell_free_argv(argv);
+}
+
+// "jobstop()" function
+static void f_job_stop(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER) {
+    // Only argument is the job id
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  if (!job_stop(argvars[0].vval.v_number)) {
+    // Probably an invalid job id
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  rettv->vval.v_number = 1;
+}
+
+// "jobwrite()" function
+static void f_job_write(typval_T *argvars, typval_T *rettv)
+{
+  bool res;
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
+    // First argument is the job id and second is the string to write to 
+    // the job's stdin
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  res = job_write(argvars[0].vval.v_number,
+                  xstrdup((char *)argvars[1].vval.v_string),
+                  strlen((char *)argvars[1].vval.v_string));
+
+  if (!res) {
+    // Invalid job id
+    EMSG(_(e_invjob));
+  }
+
+  rettv->vval.v_number = 1;
+}
+
 /*
  * "join()" function
  */
@@ -11045,7 +11196,7 @@ static void f_keys(typval_T *argvars, typval_T *rettv)
 static void f_last_buffer_nr(typval_T *argvars, typval_T *rettv)
 {
   int n = 0;
-  buf_T       *buf;
+  buf_T *buf;
 
   for (buf = firstbuf; buf != NULL; buf = buf->b_next)
     if (n < buf->b_fnum)
@@ -19591,5 +19742,22 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
     free_string_option(save_cpo);
 
   return ret;
+}
+
+static void apply_job_autocmds(int id,
+                               void *data,
+                               char *buffer,
+                               uint32_t len,
+                               bool from_stdout)
+{
+  list_T *list;
+
+  // Call JobActivity autocommands
+  list = list_alloc();
+  list_append_number(list, id);
+  list_append_string(list, (char_u *)buffer, len);
+  list_append_string(list, (char_u *)(from_stdout ? "out" : "err"), 3);
+  set_vim_var_list(VV_JOB_DATA, list);
+  apply_autocmds(EVENT_JOBACTIVITY, (char_u *)data, NULL, TRUE, NULL);
 }
 
