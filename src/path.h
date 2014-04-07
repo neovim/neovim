@@ -92,7 +92,7 @@ int match_suffix(char_u *fname);
 ///
 /// @param directory Directory name, relative to current directory.
 /// @return `FAIL` for failure, `OK` for success.
-int os_full_dir_name(char *directory, char *buffer, int len);
+int path_full_dir_name(char *directory, char *buffer, int len);
 
 // Append to_append to path with a slash in between.
 int append_path(char *path, const char *to_append, int max_len);
@@ -101,7 +101,7 @@ int append_path(char *path, const char *to_append, int max_len);
 ///
 /// This just checks if the file name starts with '/' or '~'.
 /// @return `TRUE` if "fname" is absolute.
-int os_is_absolute_path(const char_u *fname);
+int path_is_absolute_path(const char_u *fname);
 
 /// Check if the given path represents an executable file.
 ///
@@ -111,6 +111,6 @@ int os_is_absolute_path(const char_u *fname);
 ///   - is absolute.
 ///
 /// @return `FALSE` otherwise.
-int os_can_exe(const char_u *name);
+int path_can_exe(const char_u *name);
 
 #endif

@@ -12,7 +12,7 @@ char_u *path_tail(char_u *fname);
 char_u *path_tail_with_sep(char_u *fname);
 char_u *path_next_component(char_u *fname);
 int is_executable(char_u *name);
-int os_can_exe(char_u *name);
+int path_can_exe(char_u *name);
 ]]
 
 
@@ -249,41 +249,41 @@ describe 'more path function', ->
       eq OK, (path.append_path path1, to_append, 7)
       eq '/path2', (ffi.string path1)
 
-  describe 'os_is_absolute_path', ->
-    ffi.cdef 'int os_is_absolute_path(char *fname);'
+  describe 'path_is_absolute_path', ->
+    ffi.cdef 'int path_is_absolute_path(char *fname);'
 
-    os_is_absolute_path = (filename) ->
+    path_is_absolute_path = (filename) ->
       filename = to_cstr filename
-      path.os_is_absolute_path filename
+      path.path_is_absolute_path filename
 
     it 'returns true if filename starts with a slash', ->
-      eq OK, os_is_absolute_path '/some/directory/'
+      eq OK, path_is_absolute_path '/some/directory/'
 
     it 'returns true if filename starts with a tilde', ->
-      eq OK, os_is_absolute_path '~/in/my/home~/directory'
+      eq OK, path_is_absolute_path '~/in/my/home~/directory'
 
     it 'returns false if filename starts not with slash nor tilde', ->
-      eq FAIL, os_is_absolute_path 'not/in/my/home~/directory'
+      eq FAIL, path_is_absolute_path 'not/in/my/home~/directory'
 
-  describe 'os_can_exe', ->
-    os_can_exe = (name) ->
-      path.os_can_exe (to_cstr name)
+  describe 'path_can_exe', ->
+    path_can_exe = (name) ->
+      path.path_can_exe (to_cstr name)
 
     it 'returns false when given a directory', ->
-      eq FALSE, (os_can_exe './unit-test-directory')
+      eq FALSE, (path_can_exe './unit-test-directory')
 
     it 'returns false when given a regular file without executable bit set', ->
-      eq FALSE, (os_can_exe 'unit-test-directory/test.file')
+      eq FALSE, (path_can_exe 'unit-test-directory/test.file')
 
     it 'returns false when the given file does not exists', ->
-      eq FALSE, (os_can_exe 'does-not-exist.file')
+      eq FALSE, (path_can_exe 'does-not-exist.file')
 
     it 'returns true when given an executable inside $PATH', ->
-      eq TRUE, (os_can_exe executable_name)
+      eq TRUE, (path_can_exe executable_name)
 
     it 'returns true when given an executable relative to the current dir', ->
       old_dir = lfs.currentdir!
       lfs.chdir directory
       relative_executable = './' .. executable_name
-      eq TRUE, (os_can_exe relative_executable)
+      eq TRUE, (path_can_exe relative_executable)
       lfs.chdir old_dir
