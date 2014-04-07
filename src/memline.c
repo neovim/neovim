@@ -3381,7 +3381,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
      * portion of the filename (if any) and the path the symlink
      * points to.
      */
-    if (os_is_absolute_path(buf))
+    if (path_is_absolute_path(buf))
       STRCPY(tmp, buf);
     else {
       char_u *tail;

@@ -8562,7 +8562,7 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv)
  */
 static void f_executable(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = os_can_exe(get_tv_string(&argvars[0]));
+  rettv->vval.v_number = path_can_exe(get_tv_string(&argvars[0]));
 }
 
 /*
@@ -12617,7 +12617,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
           q[-1] = NUL;
           q = path_tail(p);
         }
-        if (q > p && !os_is_absolute_path(buf)) {
+        if (q > p && !path_is_absolute_path(buf)) {
           /* symlink is relative to directory of argument */
           cpy = alloc((unsigned)(STRLEN(p) + STRLEN(buf) + 1));
           if (cpy != NULL) {

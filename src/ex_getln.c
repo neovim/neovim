@@ -3964,7 +3964,7 @@ expand_shellcmd (
   flags |= EW_FILE | EW_EXEC;
 
   /* For an absolute name we don't use $PATH. */
-  if (os_is_absolute_path(pat))
+  if (path_is_absolute_path(pat))
     path = (char_u *)" ";
   else if ((pat[0] == '.' && (vim_ispathsep(pat[1])
                               || (pat[1] == '.' && vim_ispathsep(pat[2])))))

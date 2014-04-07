@@ -656,7 +656,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     else if (path_with_url(buf))
       /* URL can't be used here */
       continue;
-    else if (!os_is_absolute_path(buf)) {
+    else if (!path_is_absolute_path(buf)) {
       /* Expand relative path to their full path equivalent */
       len = (int)STRLEN(curdir);
       if (len + (int)STRLEN(buf) + 3 > MAXPATHL)
@@ -794,7 +794,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
         break;
       }
 
-    if (os_is_absolute_path(path)) {
+    if (path_is_absolute_path(path)) {
       /*
        * Last resort: shorten relative to curdir if possible.
        * 'possible' means:
@@ -1090,7 +1090,7 @@ gen_expand_wildcards (
        */
       if (mch_has_exp_wildcard(p)) {
         if ((flags & EW_PATH)
-            && !os_is_absolute_path(p)
+            && !path_is_absolute_path(p)
             && !(p[0] == '.'
                  && (vim_ispathsep(p[1])
                      || (p[1] == '.' && vim_ispathsep(p[2]))))
@@ -1229,7 +1229,7 @@ addfile (
     return;
 
   /* If the file isn't executable, may not add it.  Do accept directories. */
-  if (!isdir && (flags & EW_EXEC) && !os_can_exe(f))
+  if (!isdir && (flags & EW_EXEC) && !path_can_exe(f))
     return;
 
   /* Make room for another item in the file list. */
@@ -1532,7 +1532,7 @@ int path_with_url(char_u *fname)
  */
 int vim_isAbsName(char_u *name)
 {
-  return path_with_url(name) != 0 || os_is_absolute_path(name);
+  return path_with_url(name) != 0 || path_is_absolute_path(name);
 }
 
 /*
@@ -1557,7 +1557,7 @@ vim_FullName (
 
   url = path_with_url(fname);
   if (!url)
-    retval = os_get_absolute_path(fname, buf, len, force);
+    retval = path_get_absolute_path(fname, buf, len, force);
   if (url || retval == FAIL) {
     /* something failed; use the file name (truncate when too long) */
     vim_strncpy(buf, fname, len - 1);
@@ -1947,7 +1947,7 @@ int match_suffix(char_u *fname)
 ///
 /// @param directory Directory name, relative to current directory.
 /// @return `FAIL` for failure, `OK` for success.
-int os_full_dir_name(char *directory, char *buffer, int len)
+int path_full_dir_name(char *directory, char *buffer, int len)
 {
   int SUCCESS = 0;
   int retval = OK;
@@ -2031,7 +2031,7 @@ int append_path(char *path, const char *to_append, int max_len)
 /// @param len Length of `buf`.
 /// @param force Also expand when `fname` is already absolute.
 /// @return `FAIL` for failure, `OK` for success.
-static int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
+static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
 {
   char_u *p;
   *buf = NUL;
@@ -2040,7 +2040,7 @@ static int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
   char *end_of_path = (char *) fname;
 
   // expand it if forced or not an absolute path
-  if (force || !os_is_absolute_path(fname)) {
+  if (force || !path_is_absolute_path(fname)) {
     if ((p = vim_strrchr(fname, '/')) != NULL) {
       STRNCPY(relative_directory, fname, p-fname);
       relative_directory[p-fname] = NUL;
@@ -2050,14 +2050,14 @@ static int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force)
       end_of_path = (char *) fname;
     }
 
-    if (FAIL == os_full_dir_name(relative_directory, (char *) buf, len)) {
+    if (FAIL == path_full_dir_name(relative_directory, (char *) buf, len)) {
       return FAIL;
     }
   }
   return append_path((char *) buf, (char *) end_of_path, len);
 }
 
-int os_is_absolute_path(const char_u *fname)
+int path_is_absolute_path(const char_u *fname)
 {
   return *fname == '/' || *fname == '~';
 }
@@ -2065,7 +2065,7 @@ int os_is_absolute_path(const char_u *fname)
 bool os_can_exe(const char_u *name)
 {
   // If it's an absolute or relative path don't need to use $PATH.
-  if (os_is_absolute_path(name) ||
+  if (path_is_absolute_path(name) ||
      (name[0] == '.' && (name[1] == '/' ||
                         (name[1] == '.' && name[2] == '/')))) {
     return is_executable(name);
