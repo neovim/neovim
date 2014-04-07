@@ -1,638 +1,638 @@
-DigitalOcean          $1,000.00   Mar  3, 2014 1:33:14  PM
-Ryan Durk             $500.00     Mar 23, 2014 12:39:08 PM
-Bountysource          $500.00     Mar 22, 2014 2:32:09  PM
-superjer              $500.00     Mar 23, 2014 12:42:09 AM
-takac                 $50.00      Feb 23, 2014 6:56:23  PM
-koehr                 $50.00      Feb 23, 2014 8:26:23  PM
-signedupforneovim     $50.00      Feb 23, 2014 11:17:39 PM
-openstandards         $50.00      Feb 24, 2014 3:33:19  AM
-ernstla               $50.00      Feb 24, 2014 9:00:12  AM
-hoop33                $50.00      Feb 24, 2014 9:25:34  AM
-JusRussell            $50.00      Feb 24, 2014 9:47:51  AM
-Anonymous             $256.00     Feb 24, 2014 4:20:57  PM
-ggreer                $50.00      Feb 24, 2014 4:48:42  PM
-mdp                   $50.00      Feb 24, 2014 3:12:40  AM
-iauns                 $50.00      Mar 23, 2014 2:49:21  PM
-jonaias               $50.00      Feb 25, 2014 12:43:04 AM
-cinaeco               $50.00      Feb 25, 2014 1:37:10  AM
-jpk                   $100.00     Feb 25, 2014 2:15:22  AM
-Anonymous             $50.00      Feb 25, 2014 3:35:22  AM
-valberg               $100.00     Feb 25, 2014 5:14:14  AM
-alind                 $50.00      Feb 25, 2014 7:05:40  AM
-nb                    $50.00      Feb 25, 2014 7:58:12  AM
-simendsjo             $100.00     Feb 25, 2014 10:44:04 AM
-grmpyprogrammer       $50.00      Feb 25, 2014 11:17:41 AM
-Tae                   $50.00      Feb 25, 2014 12:52:40 PM
-jaredly               $50.00      Feb 25, 2014 1:19:49  PM
-wezm                  $50.00      Feb 25, 2014 8:02:22  PM
-foxxtrot              $50.00      Feb 25, 2014 9:59:20  PM
-oysteinkrog           $50.00      Feb 26, 2014 10:11:47 AM
-drodger               $50.00      Feb 26, 2014 2:56:04  PM
-zeekay                $50.00      Feb 26, 2014 3:23:42  PM
-KevinSjoberg          $50.00      Feb 26, 2014 5:43:55  PM
-petems                $50.00      Feb 25, 2014 2:35:47  PM
-adri                  $50.00      Feb 25, 2014 5:14:00  PM
-woahdae               $100.00     Feb 26, 2014 8:32:49  PM
-sickill               $100.00     Feb 27, 2014 4:59:31  PM
-jasoncodes            $50.00      Feb 27, 2014 5:25:05  PM
-John W. Long          $50.00      Mar 22, 2014 12:23:13 PM
-mindtheft             $50.00      Mar 22, 2014 1:45:14  PM
-polymetis             $50.00      Mar 22, 2014 5:15:36  PM
-Steven Myint          $100.00     Mar 1,  2014 6:24:27  PM
-stefanpenner          $50.00      Mar 2,  2014 4:43:28  AM
-justinmk              $100.00     Feb 21, 2014 3:38:10  PM
-thomascannon          $50.00      Feb 21, 2014 3:39:19  PM
-segphault             $100.00     Feb 21, 2014 4:21:14  PM
-timoxley              $100.00     Feb 27, 2014 10:22:14 PM
-niclasnilsson         $50.00      Feb 28, 2014 5:12:30  AM
-mitechie              $100.00     Feb 21, 2014 4:45:22  PM
-jmorrell              $50.00      Feb 21, 2014 9:24:41  PM
-grod                  $50.00      Feb 22, 2014 9:13:41  AM
-mikker                $50.00      Feb 22, 2014 9:35:10  AM
-hollow                $50.00      Feb 22, 2014 10:33:30 AM
-gabrielelana          $100.00     Feb 22, 2014 3:49:11  AM
-adammclain            $100.00     Feb 21, 2014 8:54:31  PM
-joebadmo              $50.00      Feb 21, 2014 6:46:54  PM
-jasonpeacock          $250.00     Feb 21, 2014 5:24:04  PM
-pgdouyon              $50.00      Feb 22, 2014 2:02:14  AM
-reedes                $100.00     Feb 22, 2014 3:40:16  AM
-So8res                $50.00      Feb 22, 2014 4:19:05  AM
-Sean-Der              $100.00     Feb 21, 2014 4:55:04  PM
-jyurek                $100.00     Feb 21, 2014 10:26:34 PM
-mrallen1              $50.00      Feb 21, 2014 6:27:22  PM
-jimhester             $50.00      Feb 21, 2014 4:22:41  PM
-Anonymous             $50.00      Feb 22, 2014 4:54:26  AM
-thejspr               $50.00      Feb 22, 2014 5:45:18  AM
-pablobm               $100.00     Feb 22, 2014 6:07:08  AM
-jceb                  $50.00      Feb 22, 2014 6:51:25  AM
-kopischke             $50.00      Feb 22, 2014 6:55:03  AM
-tiziano88             $101.00     Feb 22, 2014 6:58:12  AM
-Daniel Collin         $50.00      Feb 22, 2014 8:41:18  AM
-RobertMeta            $250.00     Feb 22, 2014 8:52:28  AM
-awwaiid               $50.00      Feb 22, 2014 1:47:21  AM
-duckpunch             $50.00      Feb 22, 2014 1:50:58  AM
-Darshan Sawardekar    $50.00      Feb 22, 2014 2:18:54  AM
-asgeo1                $200.00     Feb 22, 2014 7:28:07  AM
-emilh                 $50.00      Feb 22, 2014 9:46:15  AM
-Myshov                $50.00      Feb 22, 2014 11:51:51 AM
-Valloric              $100.00     Feb 22, 2014 1:49:48  AM
-benichu               $50.00      Feb 22, 2014 11:45:54 AM
-ahri                  $50.00      Feb 22, 2014 12:39:33 PM
-esiegel               $50.00      Feb 21, 2014 6:15:54  PM
-ansdell               $60.00      Feb 22, 2014 9:07:31  AM
-beloglazov            $50.00      Feb 22, 2014 7:30:06  PM
-cweagans              $50.00      Feb 22, 2014 7:50:56  PM
-jeremyjh              $100.00     Feb 22, 2014 10:01:35 PM
-Matt Greer            $100.00     Feb 22, 2014 12:30:18 PM
-toban                 $200.00     Feb 22, 2014 5:41:14  PM
-svermeulen            $100.00     Feb 22, 2014 11:28:45 PM
-alxndr                $50.00      Feb 23, 2014 12:31:21 AM
-jdavis                $50.00      Mar 13, 2014 10:02:04 AM
-msprev                $100.00     Mar 14, 2014 8:50:56  AM
-masukomi              $50.00      Mar 14, 2014 3:44:40  PM
-jfelchner             $100.00     Mar 15, 2014 10:45:27 PM
-jjmaestro             $50.00      Mar 16, 2014 5:26:24  AM
-Futile                $50.00      Mar 16, 2014 6:26:13  PM
-christofferholmstedt  $50.00      Mar 17, 2014 12:12:27 PM
-terabyte              $50.00      Feb 24, 2014 8:47:32  PM
-reardencode           $50.00      Mar 18, 2014 11:50:47 AM
-shurane               $50.00      Mar 18, 2014 1:12:21  PM
-Andrew M. Farrell     $50.00      Mar 18, 2014 2:20:01  PM
-ciarand               $50.00      Mar 18, 2014 8:47:38  PM
-Kevin Sumner          $50.00      Mar 18, 2014 10:39:33 PM
-svermeulen            $50.00      Mar 19, 2014 3:07:05  PM
-Anonymous             $50.00      Mar 19, 2014 9:20:55  PM
-jiuka                 $100.00     Mar 20, 2014 4:40:17  PM
-Jlevesque             $100.00     Mar 20, 2014 11:50:19 PM
-in4mer                $64.00      Mar 21, 2014 1:47:30  AM
-slashfoo              $50.00      Mar 21, 2014 1:56:57  AM
-Frew                  $50.00      Mar 21, 2014 9:04:33  AM
-Ethan Schoonover      $100.00     Mar 21, 2014 12:03:07 AM
-sebastien             $50.00      Mar 21, 2014 10:49:07 AM
-mikaelj               $50.00      Mar 21, 2014 11:01:56 AM
-mmai                  $50.00      Mar 21, 2014 1:16:57  PM
-TristramShandy        $50.00      Mar 21, 2014 3:42:33  PM
-metaxis               $50.00      Mar 21, 2014 4:47:15  PM
-alex.dabija           $50.00      Mar 22, 2014 5:12:01  AM
-dipti                 $50.00      Mar 22, 2014 12:39:08 PM
-jakesjews             $51.00      Mar 22, 2014 1:15:22  PM
-timoxley              $100.00     Mar 22, 2014 1:33:23  PM
-ppi                   $50.00      Mar 22, 2014 1:53:53  PM
-jamestomasino         $50.00      Mar 22, 2014 2:13:47  PM
-Happy-Dude            $50.00      Mar 22, 2014 2:37:24  PM
-saggim                $50.00      Mar 22, 2014 3:36:11  PM
-prateekrungta         $50.00      Mar 22, 2014 7:07:20  PM
-Gavinguy              $50.00      Mar 22, 2014 7:42:09  PM
-Slava                 $50.00      Mar 22, 2014 9:17:04  PM
-afh                   $100.00     Mar 23, 2014 5:14:23  AM
-jsiei97               $50.00      Mar 23, 2014 5:22:09  AM
-modal                 $50.00      Mar 23, 2014 12:36:02 PM
-gstrauss              $50.00      Mar 23, 2014 3:26:03  PM
-the-isz               $50.00      Feb 23, 2014 5:48:02  AM
-mikl                  $100.00     Feb 23, 2014 6:34:01  AM
-wirrbel               $50.00      Feb 23, 2014 6:38:27  AM
-nikush                $50.00      Mar 11, 2014 10:00:16 AM
-Loa                   $50.00      Mar 2,  2014 1:11:36  PM
-brennen               $50.00      Mar 2,  2014 1:45:55  PM
-lightblade            $50.00      Mar 2,  2014 10:00:17 PM
-darrenli              $50.00      Feb 27, 2014 5:06:50  PM
-carlosalvesuy         $50.00      Mar 1,  2014 12:52:04 PM
-emning                $50.00      Mar 3,  2014 5:27:11  AM
-bfredl                $80.00      Feb 25, 2014 5:27:32  AM
-bobbrez               $50.00      Mar 3,  2014 12:13:09 PM
-jamesaoverton         $100.00     Mar 3,  2014 1:28:36  PM
-jdahm                 $50.00      Mar 3,  2014 3:13:52  PM
-b2c                   $50.00      Mar 3,  2014 3:57:15  PM
-(unknown)             $50.00      Mar 3,  2014 6:15:07  PM
-danpansa              $50.00      Mar 3,  2014 10:29:22 PM
-saamalik              $100.00     Mar 4,  2014 7:02:15  AM
-brandonmwang          $50.00      Mar 5,  2014 4:29:54  PM
-dsummersl             $100.00     Mar 6,  2014 5:37:26  PM
-R4zzM                 $50.00      Mar 6,  2014 6:08:49  PM
-tobiassjosten         $50.00      Mar 3,  2014 10:36:17 AM
-chernesk              $50.00      Mar 7,  2014 12:44:49 AM
-xuhdev                $50.00      Mar 7,  2014 7:13:45  PM
-jszakmeister          $250.00     Mar 9,  2014 11:25:19 AM
-neektza               $50.00      Mar 10, 2014 1:11:20  PM
-timuruski             $50.00      Mar 11, 2014 11:03:35 AM
-elbaschid             $50.00      Mar 11, 2014 7:44:37  PM
-schmee                $20.00      Mar 13, 2014 8:29:15  AM
-zsoltika              $20.00      Feb 23, 2014 4:42:06  PM
-pablasso              $20.00      Feb 23, 2014 7:32:50  PM
-Ipsquiggle            $20.00      Feb 23, 2014 9:52:31  PM
-houqp                 $20.00      Feb 23, 2014 10:40:54 PM
-erik.goldman          $20.00      Feb 23, 2014 11:35:39 PM
-juancampa             $20.00      Feb 23, 2014 11:43:29 PM
-hoschi                $40.00      Feb 24, 2014 4:16:31  AM
-szymzet               $20.00      Feb 24, 2014 4:58:22  AM
-voy                   $20.00      Feb 24, 2014 6:13:26  AM
-mlitwiniuk            $20.00      Feb 24, 2014 7:46:27  AM
-elkatwork             $20.00      Feb 24, 2014 8:03:55  AM
-gaveen                $20.00      Mar 17, 2014 5:27:27  AM
-stefanwienert         $20.00      Feb 24, 2014 11:34:27 AM
-berkes                $20.00      Feb 24, 2014 11:47:41 AM
-jtmkrueger            $20.00      Feb 24, 2014 12:36:10 PM
-mean-old-man          $20.00      Feb 24, 2014 1:09:04  PM
-pdf                   $20.00      Feb 24, 2014 2:43:48  PM
-Anonymous             $20.00      Feb 24, 2014 2:56:58  PM
-iterion               $20.00      Feb 24, 2014 3:07:27  PM
-LarryRiedel           $20.00      Feb 24, 2014 4:03:21  PM
-JoelPM                $20.00      Feb 24, 2014 4:12:00  PM
-jonathanj             $20.00      Feb 24, 2014 5:42:54  AM
-Deraen                $20.00      Feb 24, 2014 4:49:07  PM
-xytis                 $20.00      Feb 24, 2014 5:14:12  PM
-JoshuaBrookover       $20.00      Feb 24, 2014 8:40:27  PM
-MrException           $20.00      Feb 24, 2014 8:50:22  PM
-philipefarias         $20.00      Mar 23, 2014 3:19:54  PM
-oryband               $30.00      Mar 23, 2014 3:37:19  PM
-jkt                   $20.00      Mar 23, 2014 4:36:41  PM
-machuga               $20.00      Mar 23, 2014 5:45:36  PM
-saxman7000            $20.00      Mar 23, 2014 7:04:39  PM
-jamesoff              $20.00      Mar 23, 2014 7:36:01  PM
-ewgarci               $20.00      Mar 18, 2014 1:28:39  AM
-Silanus               $20.00      Mar 23, 2014 8:23:03  PM
-fuzz.dk               $20.00      Mar 23, 2014 8:54:19  PM
-michael.iles          $20.00      Feb 24, 2014 10:49:18 PM
-evraamsdonk           $20.00      Feb 25, 2014 5:17:52  AM
-taketwo               $20.00      Feb 25, 2014 5:41:46  AM
-avetisk               $20.00      Feb 25, 2014 6:04:30  AM
-kioopi                $20.00      Feb 25, 2014 6:36:18  AM
-jherdman              $20.00      Feb 25, 2014 11:11:47 AM
-gramic                $20.00      Feb 25, 2014 11:25:44 AM
-Anonymous             $20.00      Feb 25, 2014 11:29:35 AM
-grmarcil              $20.00      Feb 25, 2014 1:37:49  PM
-Wavey                 $20.00      Feb 25, 2014 2:35:02  PM
-tomwadley             $20.00      Feb 25, 2014 3:10:04  PM
-ticviking             $20.00      Feb 25, 2014 5:08:49  PM
-apsoto                $20.00      Feb 25, 2014 5:13:17  PM
-lucaswerkmeister      $20.00      Feb 25, 2014 5:31:01  PM
-terminalmage          $20.00      Feb 25, 2014 6:30:03  PM
-calin.don             $20.00      Feb 25, 2014 6:41:56  PM
-werebus               $20.00      Feb 25, 2014 8:04:13  PM
-goodgravy             $20.00      Feb 26, 2014 12:24:45 AM
-dritter               $100.00     Feb 26, 2014 6:46:49  AM
-hencjo                $20.00      Feb 26, 2014 7:02:28  AM
-lsc                   $20.00      Feb 26, 2014 7:12:48  AM
-ajtakrajta            $20.00      Mar 21, 2014 7:19:01  PM
-bozz                  $20.00      Feb 26, 2014 10:04:48 AM
-fdv                   $20.00      Feb 26, 2014 10:16:26 AM
-xpayn                 $20.00      Feb 26, 2014 11:06:42 AM
-Anonymous             $50.00      Feb 26, 2014 11:32:55 AM
-adriand               $20.00      Feb 26, 2014 11:35:26 AM
-jfrazelle             $20.00      Feb 26, 2014 12:05:10 PM
-davits                $20.00      Feb 26, 2014 12:46:37 PM
-mpendse               $20.00      Feb 26, 2014 2:19:19  PM
-bart9h                $20.00      Feb 26, 2014 3:15:51  PM
-TypedLambda           $20.00      Feb 26, 2014 4:41:42  PM
-jasonlong             $20.00      Feb 26, 2014 5:03:02  PM
-sanpi                 $20.00      Feb 26, 2014 7:13:17  PM
-px0                   $20.00      Feb 24, 2014 7:19:38  PM
-sirgeoo               $20.00      Feb 24, 2014 7:43:15  PM
-a13xb                 $20.00      Feb 25, 2014 1:37:49  AM
-jschornick            $20.00      Feb 25, 2014 4:43:26  PM
-shazow                $20.00      Feb 26, 2014 10:23:53 PM
-jhbabon               $20.00      Feb 27, 2014 5:34:54  AM
-Wolfy87               $20.00      Feb 27, 2014 6:34:02  AM
-jaywilliams           $20.00      Feb 27, 2014 12:02:38 PM
-Anonymous             $40.00      Feb 27, 2014 3:56:28  PM
-mdobler               $20.00      Feb 27, 2014 4:43:38  PM
-cablehead             $20.00      Feb 27, 2014 5:33:23  PM
-dvidsilva             $20.00      Feb 27, 2014 7:05:35  PM
-amitbeka              $20.00      Feb 27, 2014 7:07:43  PM
-andruby               $20.00      Mar 22, 2014 2:29:14  PM
-grota                 $25.00      Mar 22, 2014 7:38:15  PM
-RanaExMachina         $20.00      Mar 1,  2014 12:50:32 PM
-nicksloan             $20.00      Mar 1,  2014 1:17:42  PM
-mlotze                $25.00      Mar 1,  2014 4:27:47  PM
-bengt                 $20.00      Mar 1,  2014 8:39:56  PM
-mikewadsten           $20.00      Mar 2,  2014 2:44:38  AM
-muff1nman             $20.00      Mar 2,  2014 4:56:41  AM
-ah-                   $20.00      Mar 2,  2014 8:07:16  AM
-hg                    $20.00      Mar 2,  2014 9:06:02  AM
-metellius             $50.00      Mar 2,  2014 10:45:35 AM
-Heeton                $20.00      Feb 21, 2014 9:10:43  PM
-hkupty                $45.00      Feb 21, 2014 10:46:24 PM
-Anonymous             $20.00      Feb 22, 2014 1:18:07  AM
-Anonymous             $35.00      Feb 21, 2014 6:07:36  PM
-sc68cal               $15.00      Feb 21, 2014 6:20:58  PM
-santiycr              $30.00      Feb 21, 2014 4:45:02  PM
-aleproscia            $20.00      Mar 22, 2014 4:32:56  PM
-Anonymous             $25.00      Mar 22, 2014 4:57:22  PM
-burningTyger          $20.00      Mar 22, 2014 12:10:16 PM
-Rio                   $20.00      Mar 22, 2014 2:45:24  PM
-milesfrain            $20.00      Mar 22, 2014 3:36:51  PM
-ravipinto             $20.00      Mar 22, 2014 4:19:00  PM
-henning               $35.00      Feb 28, 2014 5:38:54  AM
-rahenri               $20.00      Feb 28, 2014 6:04:48  AM
-JorisM                $20.00      Feb 28, 2014 8:06:35  AM
-MrTango               $20.00      Feb 28, 2014 9:05:03  AM
-trumanellis           $35.00      Feb 21, 2014 9:13:03  PM
-tbelaire              $20.00      Feb 21, 2014 9:15:03  PM
-adonm                 $100.00     Feb 21, 2014 10:03:09 PM
-rschmitt              $35.00      Feb 21, 2014 7:53:20  PM
-georgebashi           $100.00     Feb 21, 2014 8:15:39  PM
-nfm                   $20.00      Feb 21, 2014 9:56:53  PM
-iliis                 $20.00      Feb 21, 2014 11:12:21 PM
-harry.glaser          $50.00      Feb 21, 2014 7:25:41  PM
-lhl                   $25.00      Feb 21, 2014 9:49:18  PM
-treppo                $20.00      Feb 22, 2014 10:17:03 AM
-gokhan                $20.00      Feb 22, 2014 11:14:07 AM
-euoia                 $20.00      Feb 21, 2014 5:08:25  PM
-sumpfgottheit         $20.00      Feb 28, 2014 10:49:10 AM
-flubba                $20.00      Feb 28, 2014 11:07:29 AM
-yuvallanger           $20.00      Feb 28, 2014 2:01:32  PM
-prithvi               $20.00      Feb 28, 2014 2:55:12  PM
-joeytrapp             $20.00      Feb 28, 2014 4:59:18  PM
-ssloss                $35.00      Feb 28, 2014 5:51:30  PM
-federicogalassi       $20.00      Feb 28, 2014 6:09:58  PM
-degeberg              $20.00      Feb 28, 2014 7:59:30  PM
-dccollie              $20.00      Feb 28, 2014 9:23:56  PM
-webgefrickel          $20.00      Mar 1,  2014 7:22:39  AM
-soney                 $20.00      Feb 21, 2014 7:45:50  PM
-marcusm               $35.00      Feb 21, 2014 7:48:29  PM
-Luke Sampson          $25.00      Feb 21, 2014 8:01:59  PM
-quasarj               $25.00      Feb 21, 2014 8:03:10  PM
-msanders              $20.00      Feb 21, 2014 8:24:36  PM
-So8res                $20.00      Feb 21, 2014 8:28:10  PM
-corytheboyd           $20.00      Feb 21, 2014 9:07:12  PM
-nzjames               $20.00      Feb 21, 2014 9:09:26  PM
-kevinw                $20.00      Feb 22, 2014 12:32:20 AM
-arvinddeshpande       $20.00      Feb 22, 2014 12:48:22 AM
-ShaneDelmore          $20.00      Feb 22, 2014 2:17:43  AM
-simonratner           $100.00     Feb 22, 2014 2:48:19  AM
-defrex                $20.00      Feb 22, 2014 3:15:28  AM
-rekab                 $20.00      Feb 22, 2014 4:27:43  AM
-nelsonjchen           $20.00      Feb 22, 2014 4:32:08  AM
-asdf                  $20.00      Feb 22, 2014 9:26:45  AM
-dpc                   $20.00      Feb 22, 2014 5:32:49  AM
-rolisz                $20.00      Feb 22, 2014 5:41:33  AM
-Cwiiis                $20.00      Feb 22, 2014 6:05:30  AM
-jqln-0                $35.00      Feb 22, 2014 7:03:21  AM
-damacus               $20.00      Feb 22, 2014 7:29:16  AM
-stegtmeyer            $35.00      Feb 22, 2014 7:33:50  AM
-aocenas               $20.00      Feb 22, 2014 7:36:30  AM
-Mat Moore             $20.00      Feb 22, 2014 7:41:06  AM
-arnoo                 $20.00      Feb 22, 2014 7:44:00  AM
-passy                 $20.00      Feb 22, 2014 7:50:58  AM
-richard.mihalovic     $20.00      Feb 22, 2014 7:53:44  AM
-javaguirre            $20.00      Feb 22, 2014 8:31:01  AM
-weitzjan              $20.00      Feb 22, 2014 8:47:12  AM
-meryn                 $20.00      Feb 22, 2014 8:49:01  AM
-deanmorin             $20.00      Feb 22, 2014 12:28:45 AM
-wbinnssmith           $20.00      Feb 22, 2014 1:38:42  AM
-haarts                $20.00      Feb 22, 2014 5:28:20  AM
-alepane               $20.00      Feb 22, 2014 7:29:20  AM
-ryz                   $20.00      Feb 22, 2014 8:02:41  AM
-macat                 $20.00      Feb 22, 2014 9:39:17  AM
-Tranquility           $20.00      Feb 22, 2014 11:12:53 AM
-tv                    $20.00      Feb 22, 2014 11:34:43 AM
-robodwyer             $20.00      Feb 21, 2014 5:23:49  PM
-joedicastro           $20.00      Feb 22, 2014 9:23:04  AM
-rradonic              $20.00      Feb 22, 2014 10:03:12 AM
-ferdinandsalis        $50.00      Feb 22, 2014 11:10:41 AM
-dgc                   $50.00      Feb 21, 2014 6:28:26  PM
-yko                   $20.00      Feb 22, 2014 12:43:13 PM
-orangain              $20.00      Feb 22, 2014 12:47:47 PM
-sthysel               $20.00      Feb 22, 2014 1:31:43  AM
-indrekj               $20.00      Feb 22, 2014 12:58:14 PM
-Jjh                   $50.00      Feb 22, 2014 9:38:41  AM
-bgrohman              $20.00      Feb 22, 2014 1:08:06  PM
-tmcw                  $25.00      Feb 22, 2014 1:49:20  PM
-ibash                 $35.00      Feb 22, 2014 2:51:26  PM
-pjrt                  $100.00     Feb 22, 2014 3:04:00  PM
-kad3nce               $20.00      Feb 22, 2014 3:16:42  PM
-brynedwards           $50.00      Feb 22, 2014 3:26:50  PM
-manveru               $20.00      Feb 22, 2014 3:27:27  PM
-patrickberkeley       $20.00      Feb 22, 2014 3:40:53  PM
-slowkow               $20.00      Feb 22, 2014 3:47:41  PM
-derKha                $50.00      Feb 22, 2014 4:09:04  PM
-terite                $20.00      Feb 22, 2014 6:10:36  PM
-zhaoz                 $100.00     Feb 22, 2014 6:52:28  PM
-pmitoraj              $20.00      Feb 22, 2014 6:58:40  PM
-levibrown             $20.00      Feb 22, 2014 7:01:09  PM
-bheesham              $20.00      Feb 22, 2014 7:16:41  PM
-smathson              $20.00      Feb 22, 2014 7:19:01  PM
-beefsack              $20.00      Feb 22, 2014 8:00:21  PM
-flugsio               $20.00      Feb 22, 2014 8:29:52  PM
-antoviaque            $20.00      Feb 22, 2014 8:31:32  PM
-brandonliu            $20.00      Feb 22, 2014 10:59:09 PM
-mikkeloscar           $20.00      Feb 22, 2014 11:00:05 PM
-ericfode              $250.00     Feb 22, 2014 11:05:41 PM
-quark                 $20.00      Feb 22, 2014 9:50:51  AM
-erszcz                $20.00      Feb 22, 2014 3:35:14  PM
-Tarrant               $50.00      Feb 22, 2014 7:38:30  AM
-JackStouffer          $20.00      Feb 22, 2014 4:36:49  PM
-demizer               $35.00      Feb 22, 2014 4:57:05  PM
-jojojames             $20.00      Feb 22, 2014 5:07:52  PM
-khamer                $20.00      Feb 22, 2014 6:18:09  PM
-cdelahousse           $20.00      Feb 22, 2014 6:42:41  PM
-terinjokes            $20.00      Feb 22, 2014 6:44:56  PM
-sidoh                 $20.00      Feb 22, 2014 7:31:36  PM
-ggustafsson           $20.00      Feb 22, 2014 8:19:15  PM
-juanolon              $20.00      Feb 22, 2014 4:37:09  PM
-vovik                 $20.00      Feb 22, 2014 5:04:05  PM
-ivar                  $20.00      Feb 22, 2014 9:40:30  PM
-DAddYE                $20.00      Feb 22, 2014 3:49:12  PM
-cazador481            $20.00      Feb 22, 2014 6:05:43  PM
-(unknown)             $40.00      Feb 22, 2014 2:48:24  PM
-julianchurchill       $20.00      Feb 22, 2014 4:50:54  PM
-nathan.straz          $20.00      Mar 22, 2014 11:46:31 PM
-drasch                $20.00      Feb 22, 2014 11:43:10 PM
-czertbytes            $20.00      Mar 17, 2014 11:45:47 AM
-zbstof                $20.00      Mar 12, 2014 5:49:43  AM
-dmjb                  $20.00      Mar 12, 2014 12:16:26 PM
-Morsicus              $20.00      Mar 12, 2014 4:20:39  PM
-kevgo                 $20.00      Mar 13, 2014 11:41:41 AM
-bradenbru             $20.00      Mar 13, 2014 4:35:38  PM
-danielsdesk           $20.00      Mar 13, 2014 4:41:42  PM
-embe                  $123.00     Mar 13, 2014 7:20:30  PM
-plukevdh              $20.00      Mar 14, 2014 10:28:25 AM
-Anonymous             $20.00      Mar 14, 2014 3:59:06  PM
-jcsims                $20.00      Mar 14, 2014 5:13:44  PM
-Bountysource          $20.00      Mar 14, 2014 6:10:30  PM
-shakerlxxv            $20.00      Mar 15, 2014 9:11:08  PM
-andreyvit             $20.00      Mar 16, 2014 11:29:55 AM
-bilalq                $20.00      Mar 16, 2014 11:38:56 AM
-theEndBeta            $20.00      Mar 16, 2014 12:12:54 PM
-gokhan.caglar         $20.00      Mar 16, 2014 5:13:04  PM
-kazuoteramoto         $20.00      Mar 16, 2014 9:13:13  PM
-seanbell              $20.00      Mar 17, 2014 7:44:25  AM
-mrinterweb            $20.00      Mar 18, 2014 12:56:15 AM
-sebastiangeiger       $20.00      Mar 18, 2014 1:23:44  AM
-szerated              $20.00      Mar 18, 2014 2:49:46  AM
-artworx               $20.00      Mar 18, 2014 6:24:52  AM
-mortenaa              $20.00      Mar 18, 2014 8:11:03  AM
-cursork               $20.00      Feb 23, 2014 5:34:19  PM
-evant                 $20.00      Feb 23, 2014 8:49:33  PM
-AngelLeliel           $20.00      Feb 23, 2014 10:44:15 PM
-Dewdrops              $20.00      Feb 24, 2014 1:35:59  AM
-DanEEStar             $20.00      Feb 24, 2014 3:00:52  AM
-danielepolencic       $20.00      Feb 23, 2014 4:29:11  PM
-objectiveryan         $20.00      Feb 24, 2014 5:22:18  PM
-icholy                $20.00      Feb 24, 2014 7:15:33  PM
-maxamillion           $20.00      Feb 24, 2014 8:37:07  PM
-mcmire                $20.00      Feb 24, 2014 9:20:51  PM
-deffi420              $20.00      Feb 24, 2014 9:40:43  PM
-BenBergman            $20.00      Mar 18, 2014 10:29:26 AM
-nfrade                $20.00      Mar 18, 2014 12:20:38 PM
-gufo                  $20.00      Mar 18, 2014 12:44:03 PM
-LeszekSwirski         $20.00      Mar 18, 2014 1:56:00  PM
-joeblow1102           $20.00      Mar 18, 2014 2:15:17  PM
-queria                $20.00      Mar 18, 2014 2:46:01  PM
-timanema              $50.00      Mar 18, 2014 6:46:38  PM
-jktravis              $20.00      Mar 19, 2014 12:17:18 AM
-tpanning              $30.00      Mar 19, 2014 11:12:23 AM
-fission1110           $20.00      Mar 19, 2014 6:07:12  PM
-jgosting              $20.00      Mar 19, 2014 8:33:55  PM
-romaninsh             $20.00      Mar 19, 2014 10:04:00 PM
-Corey Farwell         $20.00      Mar 20, 2014 1:36:42  AM
-opitzs                $50.00      Mar 20, 2014 8:04:58  AM
-janko-m               $20.00      Mar 20, 2014 9:05:57  AM
-archambf              $20.00      Mar 20, 2014 9:30:26  AM
-andrefsp              $30.00      Mar 20, 2014 9:47:51  AM
-jwhitley              $50.00      Mar 20, 2014 3:51:31  PM
-matleh                $35.00      Mar 20, 2014 5:50:31  PM
-Anonymous             $20.00      Mar 20, 2014 7:44:13  PM
-etandel               $20.00      Mar 20, 2014 9:03:50  PM
-perlguy9              $20.00      Mar 20, 2014 9:11:44  PM
-iambenbryant          $20.00      Mar 20, 2014 9:28:12  PM
-dragonfax             $20.00      Mar 20, 2014 10:06:20 PM
-kil9                  $20.00      Mar 20, 2014 10:17:37 PM
-voltagex              $20.00      Mar 21, 2014 12:07:02 AM
-5thWall               $20.00      Mar 21, 2014 1:49:47  AM
-mntnoe                $20.00      Mar 21, 2014 4:13:25  AM
-hermo                 $35.00      Mar 21, 2014 6:44:53  AM
-tim-m89               $20.00      Mar 21, 2014 6:54:16  AM
-lobachevsky           $20.00      Mar 21, 2014 9:24:06  AM
-Tovrleaf              $35.00      Mar 21, 2014 9:49:47  AM
-heryandi              $20.00      Mar 21, 2014 10:58:37 AM
-jouko                 $20.00      Feb 27, 2014 5:16:00  AM
-forbesmyester         $20.00      Mar 21, 2014 11:19:02 AM
-andrefs               $20.00      Mar 21, 2014 11:39:15 AM
-killtheliterate       $20.00      Mar 21, 2014 12:29:49 PM
-rustedgrail           $20.00      Mar 21, 2014 1:01:21  PM
-kad                   $50.00      Mar 21, 2014 1:08:42  PM
-thpani                $20.00      Mar 21, 2014 1:10:59  PM
-kaldrenon             $20.00      Mar 21, 2014 2:04:55  PM
-mdlerch               $20.00      Mar 21, 2014 3:13:26  PM
-Anonymous             $50.00      Mar 21, 2014 3:34:30  PM
-MikeDillion           $20.00      Mar 21, 2014 3:44:43  PM
-zim44                 $20.00      Mar 21, 2014 4:01:27  PM
-shmup                 $20.00      Mar 21, 2014 4:06:30  PM
-robmiller             $20.00      Mar 21, 2014 4:51:22  PM
-Allan Hudgins         $20.00      Mar 21, 2014 5:57:27  PM
-Peter                 $20.00      Mar 21, 2014 6:09:03  PM
-kadamski              $20.00      Mar 21, 2014 6:14:41  PM
-m42e                  $20.00      Mar 21, 2014 7:08:10  PM
-cewood                $20.00      Mar 21, 2014 7:46:23  PM
-SakuyaIzayoi          $20.00      Mar 21, 2014 10:27:07 PM
-lucasts               $20.00      Mar 21, 2014 11:08:00 PM
-dtinth                $20.00      Mar 22, 2014 1:01:01  AM
-thelibrarian          $20.00      Mar 22, 2014 1:22:37  AM
-samstokes             $20.00      Mar 22, 2014 1:40:40  AM
-aflatter              $20.00      Mar 22, 2014 2:00:19  AM
-lluisYasT             $20.00      Mar 22, 2014 4:48:53  AM
-majutsushi            $35.00      Mar 22, 2014 5:43:34  AM
-jjmurre               $20.00      Mar 22, 2014 8:56:55  AM
-edlandm               $20.00      Mar 22, 2014 10:37:36 AM
-jstemmer              $20.00      Mar 22, 2014 10:49:16 AM
-alappe                $20.00      Mar 22, 2014 11:16:10 AM
-Soulou                $20.00      Mar 22, 2014 11:28:34 AM
-TechDonald            $20.00      Mar 22, 2014 11:29:46 AM
-turtleman             $20.00      Mar 22, 2014 11:33:03 AM
-Fredrik Rambris       $50.00      Mar 22, 2014 11:39:27 AM
-swebb                 $20.00      Mar 22, 2014 11:48:01 AM
-alindeman             $20.00      Mar 22, 2014 11:50:05 AM
-Anonymous             $20.00      Mar 22, 2014 11:51:14 AM
-pbf                   $20.00      Mar 22, 2014 11:54:52 AM
-shemerey              $20.00      Feb 27, 2014 5:17:21  AM
-Anonymous             $20.00      Mar 22, 2014 12:01:52 PM
-projedi               $20.00      Mar 22, 2014 12:25:44 PM
-erchn                 $35.00      Mar 22, 2014 12:31:53 PM
-bigfatgreg            $20.00      Mar 22, 2014 12:50:34 PM
-imathis               $20.00      Mar 22, 2014 12:54:02 PM
-ypeussa               $20.00      Mar 22, 2014 1:02:05  PM
-ckromero              $20.00      Mar 22, 2014 1:28:20  PM
-cdcooperuk            $50.00      Mar 22, 2014 1:32:48  PM
-chrisporter           $20.00      Mar 22, 2014 1:33:37  PM
-welle                 $20.00      Mar 22, 2014 1:57:45  PM
-cicloid               $35.00      Mar 22, 2014 2:12:30  PM
-zerowidth             $35.00      Mar 22, 2014 2:14:19  PM
-rustushki             $20.00      Mar 22, 2014 2:40:30  PM
-huftis                $20.00      Mar 22, 2014 2:42:23  PM
-awoerndle             $20.00      Mar 22, 2014 2:46:26  PM
-Jasu                  $20.00      Mar 22, 2014 2:56:28  PM
-bojanz                $20.00      Mar 22, 2014 3:46:57  PM
-AstroJetson           $25.00      Mar 22, 2014 3:47:00  PM
-warrenv               $20.00      Mar 22, 2014 4:18:45  PM
-achayun               $35.00      Mar 22, 2014 6:14:41  PM
-Griffon26             $100.00     Mar 22, 2014 6:56:08  PM
-levente               $25.00      Mar 22, 2014 6:41:07  PM
-robbevan              $20.00      Mar 22, 2014 7:11:48  PM
-evindor               $20.00      Mar 22, 2014 8:31:18  PM
-dmartz                $20.00      Mar 22, 2014 9:35:17  PM
-Tolstyak              $20.00      Mar 22, 2014 10:32:15 PM
-kryft                 $20.00      Mar 22, 2014 11:05:44 PM
-paran01d              $35.00      Mar 22, 2014 11:29:08 PM
-Drazcmd               $20.00      Mar 23, 2014 1:21:45  AM
-smegthelight          $20.00      Mar 23, 2014 1:45:49  AM
-wberrier              $20.00      Mar 23, 2014 3:18:29  AM
-satyrius              $20.00      Mar 23, 2014 5:12:50  AM
-linfir                $20.00      Mar 23, 2014 6:28:00  AM
-JoKoT3                $20.00      Mar 23, 2014 7:27:54  AM
-Rostepher             $20.00      Mar 8,  2014 1:36:50  AM
-daqscott              $20.00      Mar 23, 2014 8:47:03  AM
-Aketzu                $20.00      Mar 23, 2014 8:56:15  AM
-mrjones69             $20.00      Mar 23, 2014 10:07:46 AM
-katzmopolitan         $20.00      Mar 23, 2014 1:04:29  PM
-Dick Seabrook         $20.00      Mar 23, 2014 1:18:28  PM
-633squadron           $20.00      Mar 23, 2014 1:45:53  PM
-RichiH                $20.00      Mar 23, 2014 4:32:10  PM
-GByrd                 $20.00      Mar 23, 2014 4:43:17  PM
-tbrock                $20.00      Feb 23, 2014 2:08:33  AM
-ojw                   $20.00      Feb 23, 2014 2:27:15  AM
-BarryKay              $20.00      Feb 23, 2014 3:11:06  AM
-gkalas                $20.00      Feb 23, 2014 4:05:50  AM
-Edan Maor             $20.00      Feb 23, 2014 5:30:34  AM
-linduxed              $20.00      Feb 23, 2014 6:48:09  AM
-r0t0r-r0t0r           $20.00      Feb 23, 2014 7:05:04  AM
-orestis               $20.00      Feb 23, 2014 8:12:39  AM
-cpfaff                $20.00      Feb 23, 2014 8:45:12  AM
-poxar                 $20.00      Feb 23, 2014 9:31:37  AM
-bobbaluba             $20.00      Feb 23, 2014 9:37:27  AM
-Drasill               $20.00      Feb 23, 2014 9:42:35  AM
-Shugyousha            $20.00      Feb 23, 2014 9:56:28  AM
-whateverhuis          $20.00      Feb 23, 2014 9:56:32  AM
-dyuri                 $20.00      Feb 23, 2014 9:58:38  AM
-runar                 $20.00      Feb 23, 2014 10:15:03 AM
-jonthn                $40.00      Feb 23, 2014 10:25:00 AM
-cohalz                $20.00      Feb 23, 2014 10:47:13 AM
-josemarluedke         $20.00      Feb 23, 2014 11:53:02 AM
-fd0                   $20.00      Feb 23, 2014 12:36:22 PM
-naseer                $35.00      Feb 23, 2014 2:10:21  PM
-uskanda               $20.00      Feb 23, 2014 2:23:35  PM
-lpil                  $20.00      Feb 23, 2014 4:06:03  PM
-tmandry               $20.00      Mar 7,  2014 1:55:01  AM
-riccieri              $35.00      Mar 7,  2014 2:54:29  PM
-pmodin                $20.00      Mar 2,  2014 1:29:36  PM
-Paul Alexander        $20.00      Mar 2,  2014 3:20:46  PM
-bjorntipling          $20.00      Mar 2,  2014 11:49:42 PM
-thomasthune           $20.00      Mar 3,  2014 3:05:32  AM
-cyrill62              $20.00      Feb 27, 2014 6:18:44  AM
-jabbrwcky             $20.00      Feb 27, 2014 9:34:19  AM
-nakuldhotre           $20.00      Feb 27, 2014 4:55:37  PM
-weisserd              $20.00      Feb 28, 2014 9:50:49  AM
-nosami                $20.00      Feb 28, 2014 10:32:30 AM
-diguliu               $20.00      Feb 28, 2014 12:53:15 PM
-justinforce           $20.00      Feb 28, 2014 4:16:55  PM
-bjorn                 $20.00      Feb 28, 2014 6:15:42  PM
-calin-iorgulescu      $20.00      Feb 28, 2014 7:12:11  PM
-christopher-l         $20.00      Mar 1,  2014 7:27:07  PM
-michaelkebe           $20.00      Mar 3,  2014 3:26:40  PM
-Jess                  $20.00      Mar 23, 2014 3:29:22  PM
-xinity                $20.00      Feb 28, 2014 11:54:08 AM
-ikdysfm               $20.00      Mar 3,  2014 7:02:58  AM
-johnkpaul             $20.00      Mar 3,  2014 10:24:14 AM
-hupili                $20.00      Mar 3,  2014 10:51:30 AM
-nmeans                $20.00      Mar 3,  2014 11:50:12 AM
-bbinet                $20.00      Mar 3,  2014 12:05:03 PM
-ajh                   $20.00      Mar 3,  2014 12:38:48 PM
-thameera              $20.00      Mar 3,  2014 12:46:24 PM
-ciwchris              $35.00      Mar 3,  2014 1:53:27  PM
-mdi                   $20.00      Mar 3,  2014 2:45:18  PM
-mapclyps              $20.00      Mar 3,  2014 2:54:14  PM
-srabbelier            $20.00      Mar 3,  2014 3:16:44  PM
-claytron              $50.00      Mar 3,  2014 3:36:46  PM
-jc00ke                $20.00      Mar 3,  2014 4:19:57  PM
-jmurty                $30.00      Mar 3,  2014 6:01:30  PM
-d1eg0                 $20.00      Mar 3,  2014 7:09:32  PM
-MrBri                 $20.00      Mar 3,  2014 8:10:33  PM
-copenhas              $20.00      Mar 3,  2014 9:52:24  PM
-Anonymous             $20.00      Mar 3,  2014 11:06:08 PM
-shawndumas            $20.00      Mar 4,  2014 2:47:10  AM
-mogren                $20.00      Mar 4,  2014 6:08:52  AM
-ajc                   $20.00      Mar 4,  2014 11:55:34 AM
-tfnico                $20.00      Mar 4,  2014 12:16:18 PM
-nop00                 $128.00     Mar 4,  2014 1:38:29  PM
-msalvadores           $20.00      Mar 4,  2014 2:19:28  PM
-lanceulmer            $20.00      Mar 4,  2014 4:08:25  PM
-ulf                   $20.00      Mar 4,  2014 6:08:55  PM
-jezallan              $20.00      Mar 5,  2014 6:06:42  AM
-vvakame               $20.00      Mar 5,  2014 10:49:07 AM
-foca                  $35.00      Mar 5,  2014 11:01:36 AM
-ndj                   $20.00      Mar 5,  2014 11:42:00 AM
-sogajapan             $20.00      Mar 5,  2014 12:46:33 PM
-dirn                  $20.00      Mar 5,  2014 1:49:30  PM
-alandyer              $20.00      Mar 5,  2014 4:50:44  PM
-luislee818            $20.00      Mar 5,  2014 6:29:43  PM
-magicpat              $20.00      Mar 6,  2014 6:55:15  AM
-enriclluelles         $20.00      Mar 6,  2014 7:53:47  AM
-therealbitkid         $20.00      Mar 6,  2014 8:53:57  AM
-xsb                   $20.00      Mar 6,  2014 8:57:30  AM
-elimirks              $20.00      Mar 6,  2014 11:12:07 AM
-Dan Riti              $20.00      Mar 6,  2014 1:04:27  PM
-rphillips             $20.00      Mar 3,  2014 3:32:03  PM
-SwiftOne              $20.00      Mar 7,  2014 1:46:36  AM
-fusyo                 $20.00      Mar 7,  2014 2:51:14  AM
-mds5000               $20.00      Mar 7,  2014 2:57:26  AM
-jor                   $20.00      Mar 7,  2014 8:37:10  AM
-eriknordlund          $20.00      Mar 7,  2014 2:00:02  PM
-Netherdrake           $20.00      Mar 7,  2014 5:19:20  PM
-songgao               $20.00      Mar 7,  2014 5:52:17  PM
-miguelsm              $20.00      Mar 8,  2014 7:22:23  AM
-geonik                $20.00      Mar 8,  2014 7:27:23  AM
-schallm               $20.00      Mar 8,  2014 10:36:28 PM
-jkinred               $20.00      Mar 8,  2014 11:29:59 PM
-teasp00n              $20.00      Mar 9,  2014 6:19:24  AM
-alexanderjeurissen    $20.00      Mar 9,  2014 6:23:30  AM
-tonyo112              $20.00      Mar 9,  2014 3:17:36  PM
-MovEaxEsp             $20.00      Mar 9,  2014 3:28:19  PM
-NiñoScript            $20.00      Mar 9,  2014 4:51:59  PM
-somemetricprefix      $20.00      Mar 9,  2014 5:45:53  PM
-andreamichi           $20.00      Mar 9,  2014 7:36:49  PM
-fibbs                 $20.00      Mar 9,  2014 7:47:23  PM
-Tourniquet            $20.00      Mar 10, 2014 12:43:56 PM
-apazzolini            $20.00      Mar 10, 2014 6:10:40  PM
-henry4k               $20.00      Mar 11, 2014 5:20:08  AM
-RageZBla              $20.00      Mar 11, 2014 9:58:55  AM
-awebster              $20.00      Mar 11, 2014 4:48:18  PM
+- DigitalOcean          $1,000.00
+- Ryan Durk             $500.00
+- Bountysource          $500.00
+- superjer              $500.00
+- takac                 $50.00
+- koehr                 $50.00
+- signedupforneovim     $50.00
+- openstandards         $50.00
+- ernstla               $50.00
+- hoop33                $50.00
+- JusRussell            $50.00
+- Anonymous             $256.00
+- ggreer                $50.00
+- mdp                   $50.00
+- iauns                 $50.00
+- jonaias               $50.00
+- cinaeco               $50.00
+- jpk                   $100.00
+- Anonymous             $50.00
+- valberg               $100.00
+- alind                 $50.00
+- nb                    $50.00
+- simendsjo             $100.00
+- grmpyprogrammer       $50.00
+- Tae                   $50.00
+- jaredly               $50.00
+- wezm                  $50.00
+- foxxtrot              $50.00
+- oysteinkrog           $50.00
+- drodger               $50.00
+- zeekay                $50.00
+- KevinSjoberg          $50.00
+- petems                $50.00
+- adri                  $50.00
+- woahdae               $100.00
+- sickill               $100.00
+- jasoncodes            $50.00
+- John W. Long          $50.00
+- mindtheft             $50.00
+- polymetis             $50.00
+- Steven Myint          $100.00
+- stefanpenner          $50.00
+- justinmk              $100.00
+- thomascannon          $50.00
+- segphault             $100.00
+- timoxley              $100.00
+- niclasnilsson         $50.00
+- mitechie              $100.00
+- jmorrell              $50.00
+- grod                  $50.00
+- mikker                $50.00
+- hollow                $50.00
+- gabrielelana          $100.00
+- adammclain            $100.00
+- joebadmo              $50.00
+- jasonpeacock          $250.00
+- pgdouyon              $50.00
+- reedes                $100.00
+- So8res                $50.00
+- Sean-Der              $100.00
+- jyurek                $100.00
+- mrallen1              $50.00
+- jimhester             $50.00
+- Anonymous             $50.00
+- thejspr               $50.00
+- pablobm               $100.00
+- jceb                  $50.00
+- kopischke             $50.00
+- tiziano88             $101.00
+- Daniel Collin         $50.00
+- RobertMeta            $250.00
+- awwaiid               $50.00
+- duckpunch             $50.00
+- Darshan Sawardekar    $50.00
+- asgeo1                $200.00
+- emilh                 $50.00
+- Myshov                $50.00
+- Valloric              $100.00
+- benichu               $50.00
+- ahri                  $50.00
+- esiegel               $50.00
+- ansdell               $60.00
+- beloglazov            $50.00
+- cweagans              $50.00
+- jeremyjh              $100.00
+- Matt Greer            $100.00
+- toban                 $200.00
+- svermeulen            $100.00
+- alxndr                $50.00
+- jdavis                $50.00
+- msprev                $100.00
+- masukomi              $50.00
+- jfelchner             $100.00
+- jjmaestro             $50.00
+- Futile                $50.00
+- christofferholmstedt  $50.00
+- terabyte              $50.00
+- reardencode           $50.00
+- shurane               $50.00
+- Andrew M. Farrell     $50.00
+- ciarand               $50.00
+- Kevin Sumner          $50.00
+- svermeulen            $50.00
+- Anonymous             $50.00
+- jiuka                 $100.00
+- Jlevesque             $100.00
+- in4mer                $64.00
+- slashfoo              $50.00
+- Frew                  $50.00
+- Ethan Schoonover      $100.00
+- sebastien             $50.00
+- mikaelj               $50.00
+- mmai                  $50.00
+- TristramShandy        $50.00
+- metaxis               $50.00
+- alex.dabija           $50.00
+- dipti                 $50.00
+- jakesjews             $51.00
+- timoxley              $100.00
+- ppi                   $50.00
+- jamestomasino         $50.00
+- Happy-Dude            $50.00
+- saggim                $50.00
+- prateekrungta         $50.00
+- Gavinguy              $50.00
+- Slava                 $50.00
+- afh                   $100.00
+- jsiei97               $50.00
+- modal                 $50.00
+- gstrauss              $50.00
+- the-isz               $50.00
+- mikl                  $100.00
+- wirrbel               $50.00
+- nikush                $50.00
+- Loa                   $50.00
+- brennen               $50.00
+- lightblade            $50.00
+- darrenli              $50.00
+- carlosalvesuy         $50.00
+- emning                $50.00
+- bfredl                $80.00
+- bobbrez               $50.00
+- jamesaoverton         $100.00
+- jdahm                 $50.00
+- b2c                   $50.00
+- (unknown)             $50.00
+- danpansa              $50.00
+- saamalik              $100.00
+- brandonmwang          $50.00
+- dsummersl             $100.00
+- R4zzM                 $50.00
+- tobiassjosten         $50.00
+- chernesk              $50.00
+- xuhdev                $50.00
+- jszakmeister          $250.00
+- neektza               $50.00
+- timuruski             $50.00
+- elbaschid             $50.00
+- schmee                $20.00
+- zsoltika              $20.00
+- pablasso              $20.00
+- Ipsquiggle            $20.00
+- houqp                 $20.00
+- erik.goldman          $20.00
+- juancampa             $20.00
+- hoschi                $40.00
+- szymzet               $20.00
+- voy                   $20.00
+- mlitwiniuk            $20.00
+- elkatwork             $20.00
+- gaveen                $20.00
+- stefanwienert         $20.00
+- berkes                $20.00
+- jtmkrueger            $20.00
+- mean-old-man          $20.00
+- pdf                   $20.00
+- Anonymous             $20.00
+- iterion               $20.00
+- LarryRiedel           $20.00
+- JoelPM                $20.00
+- jonathanj             $20.00
+- Deraen                $20.00
+- xytis                 $20.00
+- JoshuaBrookover       $20.00
+- MrException           $20.00
+- philipefarias         $20.00
+- oryband               $30.00
+- jkt                   $20.00
+- machuga               $20.00
+- saxman7000            $20.00
+- jamesoff              $20.00
+- ewgarci               $20.00
+- Silanus               $20.00
+- fuzz.dk               $20.00
+- michael.iles          $20.00
+- evraamsdonk           $20.00
+- taketwo               $20.00
+- avetisk               $20.00
+- kioopi                $20.00
+- jherdman              $20.00
+- gramic                $20.00
+- Anonymous             $20.00
+- grmarcil              $20.00
+- Wavey                 $20.00
+- tomwadley             $20.00
+- ticviking             $20.00
+- apsoto                $20.00
+- lucaswerkmeister      $20.00
+- terminalmage          $20.00
+- calin.don             $20.00
+- werebus               $20.00
+- goodgravy             $20.00
+- dritter               $100.00
+- hencjo                $20.00
+- lsc                   $20.00
+- ajtakrajta            $20.00
+- bozz                  $20.00
+- fdv                   $20.00
+- xpayn                 $20.00
+- Anonymous             $50.00
+- adriand               $20.00
+- jfrazelle             $20.00
+- davits                $20.00
+- mpendse               $20.00
+- bart9h                $20.00
+- TypedLambda           $20.00
+- jasonlong             $20.00
+- sanpi                 $20.00
+- px0                   $20.00
+- sirgeoo               $20.00
+- a13xb                 $20.00
+- jschornick            $20.00
+- shazow                $20.00
+- jhbabon               $20.00
+- Wolfy87               $20.00
+- jaywilliams           $20.00
+- Anonymous             $40.00
+- mdobler               $20.00
+- cablehead             $20.00
+- dvidsilva             $20.00
+- amitbeka              $20.00
+- andruby               $20.00
+- grota                 $25.00
+- RanaExMachina         $20.00
+- nicksloan             $20.00
+- mlotze                $25.00
+- bengt                 $20.00
+- mikewadsten           $20.00
+- muff1nman             $20.00
+- ah-                   $20.00
+- hg                    $20.00
+- metellius             $50.00
+- Heeton                $20.00
+- hkupty                $45.00
+- Anonymous             $20.00
+- Anonymous             $35.00
+- sc68cal               $15.00
+- santiycr              $30.00
+- aleproscia            $20.00
+- Anonymous             $25.00
+- burningTyger          $20.00
+- Rio                   $20.00
+- milesfrain            $20.00
+- ravipinto             $20.00
+- henning               $35.00
+- rahenri               $20.00
+- JorisM                $20.00
+- MrTango               $20.00
+- trumanellis           $35.00
+- tbelaire              $20.00
+- adonm                 $100.00
+- rschmitt              $35.00
+- georgebashi           $100.00
+- nfm                   $20.00
+- iliis                 $20.00
+- harry.glaser          $50.00
+- lhl                   $25.00
+- treppo                $20.00
+- gokhan                $20.00
+- euoia                 $20.00
+- sumpfgottheit         $20.00
+- flubba                $20.00
+- yuvallanger           $20.00
+- prithvi               $20.00
+- joeytrapp             $20.00
+- ssloss                $35.00
+- federicogalassi       $20.00
+- degeberg              $20.00
+- dccollie              $20.00
+- webgefrickel          $20.00
+- soney                 $20.00
+- marcusm               $35.00
+- Luke Sampson          $25.00
+- quasarj               $25.00
+- msanders              $20.00
+- So8res                $20.00
+- corytheboyd           $20.00
+- nzjames               $20.00
+- kevinw                $20.00
+- arvinddeshpande       $20.00
+- ShaneDelmore          $20.00
+- simonratner           $100.00
+- defrex                $20.00
+- rekab                 $20.00
+- nelsonjchen           $20.00
+- asdf                  $20.00
+- dpc                   $20.00
+- rolisz                $20.00
+- Cwiiis                $20.00
+- jqln-0                $35.00
+- damacus               $20.00
+- stegtmeyer            $35.00
+- aocenas               $20.00
+- Mat Moore             $20.00
+- arnoo                 $20.00
+- passy                 $20.00
+- richard.mihalovic     $20.00
+- javaguirre            $20.00
+- weitzjan              $20.00
+- meryn                 $20.00
+- deanmorin             $20.00
+- wbinnssmith           $20.00
+- haarts                $20.00
+- alepane               $20.00
+- ryz                   $20.00
+- macat                 $20.00
+- Tranquility           $20.00
+- tv                    $20.00
+- robodwyer             $20.00
+- joedicastro           $20.00
+- rradonic              $20.00
+- ferdinandsalis        $50.00
+- dgc                   $50.00
+- yko                   $20.00
+- orangain              $20.00
+- sthysel               $20.00
+- indrekj               $20.00
+- Jjh                   $50.00
+- bgrohman              $20.00
+- tmcw                  $25.00
+- ibash                 $35.00
+- pjrt                  $100.00
+- kad3nce               $20.00
+- brynedwards           $50.00
+- manveru               $20.00
+- patrickberkeley       $20.00
+- slowkow               $20.00
+- derKha                $50.00
+- terite                $20.00
+- zhaoz                 $100.00
+- pmitoraj              $20.00
+- levibrown             $20.00
+- bheesham              $20.00
+- smathson              $20.00
+- beefsack              $20.00
+- flugsio               $20.00
+- antoviaque            $20.00
+- brandonliu            $20.00
+- mikkeloscar           $20.00
+- ericfode              $250.00
+- quark                 $20.00
+- erszcz                $20.00
+- Tarrant               $50.00
+- JackStouffer          $20.00
+- demizer               $35.00
+- jojojames             $20.00
+- khamer                $20.00
+- cdelahousse           $20.00
+- terinjokes            $20.00
+- sidoh                 $20.00
+- ggustafsson           $20.00
+- juanolon              $20.00
+- vovik                 $20.00
+- ivar                  $20.00
+- DAddYE                $20.00
+- cazador481            $20.00
+- (unknown)             $40.00
+- julianchurchill       $20.00
+- nathan.straz          $20.00
+- drasch                $20.00
+- czertbytes            $20.00
+- zbstof                $20.00
+- dmjb                  $20.00
+- Morsicus              $20.00
+- kevgo                 $20.00
+- bradenbru             $20.00
+- danielsdesk           $20.00
+- embe                  $123.00
+- plukevdh              $20.00
+- Anonymous             $20.00
+- jcsims                $20.00
+- Bountysource          $20.00
+- shakerlxxv            $20.00
+- andreyvit             $20.00
+- bilalq                $20.00
+- theEndBeta            $20.00
+- gokhan.caglar         $20.00
+- kazuoteramoto         $20.00
+- seanbell              $20.00
+- mrinterweb            $20.00
+- sebastiangeiger       $20.00
+- szerated              $20.00
+- artworx               $20.00
+- mortenaa              $20.00
+- cursork               $20.00
+- evant                 $20.00
+- AngelLeliel           $20.00
+- Dewdrops              $20.00
+- DanEEStar             $20.00
+- danielepolencic       $20.00
+- objectiveryan         $20.00
+- icholy                $20.00
+- maxamillion           $20.00
+- mcmire                $20.00
+- deffi420              $20.00
+- BenBergman            $20.00
+- nfrade                $20.00
+- gufo                  $20.00
+- LeszekSwirski         $20.00
+- joeblow1102           $20.00
+- queria                $20.00
+- timanema              $50.00
+- jktravis              $20.00
+- tpanning              $30.00
+- fission1110           $20.00
+- jgosting              $20.00
+- romaninsh             $20.00
+- Corey Farwell         $20.00
+- opitzs                $50.00
+- janko-m               $20.00
+- archambf              $20.00
+- andrefsp              $30.00
+- jwhitley              $50.00
+- matleh                $35.00
+- Anonymous             $20.00
+- etandel               $20.00
+- perlguy9              $20.00
+- iambenbryant          $20.00
+- dragonfax             $20.00
+- kil9                  $20.00
+- voltagex              $20.00
+- 5thWall               $20.00
+- mntnoe                $20.00
+- hermo                 $35.00
+- tim-m89               $20.00
+- lobachevsky           $20.00
+- Tovrleaf              $35.00
+- heryandi              $20.00
+- jouko                 $20.00
+- forbesmyester         $20.00
+- andrefs               $20.00
+- killtheliterate       $20.00
+- rustedgrail           $20.00
+- kad                   $50.00
+- thpani                $20.00
+- kaldrenon             $20.00
+- mdlerch               $20.00
+- Anonymous             $50.00
+- MikeDillion           $20.00
+- zim44                 $20.00
+- shmup                 $20.00
+- robmiller             $20.00
+- Allan Hudgins         $20.00
+- Peter                 $20.00
+- kadamski              $20.00
+- m42e                  $20.00
+- cewood                $20.00
+- SakuyaIzayoi          $20.00
+- lucasts               $20.00
+- dtinth                $20.00
+- thelibrarian          $20.00
+- samstokes             $20.00
+- aflatter              $20.00
+- lluisYasT             $20.00
+- majutsushi            $35.00
+- jjmurre               $20.00
+- edlandm               $20.00
+- jstemmer              $20.00
+- alappe                $20.00
+- Soulou                $20.00
+- TechDonald            $20.00
+- turtleman             $20.00
+- Fredrik Rambris       $50.00
+- swebb                 $20.00
+- alindeman             $20.00
+- Anonymous             $20.00
+- pbf                   $20.00
+- shemerey              $20.00
+- Anonymous             $20.00
+- projedi               $20.00
+- erchn                 $35.00
+- bigfatgreg            $20.00
+- imathis               $20.00
+- ypeussa               $20.00
+- ckromero              $20.00
+- cdcooperuk            $50.00
+- chrisporter           $20.00
+- welle                 $20.00
+- cicloid               $35.00
+- zerowidth             $35.00
+- rustushki             $20.00
+- huftis                $20.00
+- awoerndle             $20.00
+- Jasu                  $20.00
+- bojanz                $20.00
+- AstroJetson           $25.00
+- warrenv               $20.00
+- achayun               $35.00
+- Griffon26             $100.00
+- levente               $25.00
+- robbevan              $20.00
+- evindor               $20.00
+- dmartz                $20.00
+- Tolstyak              $20.00
+- kryft                 $20.00
+- paran01d              $35.00
+- Drazcmd               $20.00
+- smegthelight          $20.00
+- wberrier              $20.00
+- satyrius              $20.00
+- linfir                $20.00
+- JoKoT3                $20.00
+- Rostepher             $20.00
+- daqscott              $20.00
+- Aketzu                $20.00
+- mrjones69             $20.00
+- katzmopolitan         $20.00
+- Dick Seabrook         $20.00
+- 633squadron           $20.00
+- RichiH                $20.00
+- GByrd                 $20.00
+- tbrock                $20.00
+- ojw                   $20.00
+- BarryKay              $20.00
+- gkalas                $20.00
+- Edan Maor             $20.00
+- linduxed              $20.00
+- r0t0r-r0t0r           $20.00
+- orestis               $20.00
+- cpfaff                $20.00
+- poxar                 $20.00
+- bobbaluba             $20.00
+- Drasill               $20.00
+- Shugyousha            $20.00
+- whateverhuis          $20.00
+- dyuri                 $20.00
+- runar                 $20.00
+- jonthn                $40.00
+- cohalz                $20.00
+- josemarluedke         $20.00
+- fd0                   $20.00
+- naseer                $35.00
+- uskanda               $20.00
+- lpil                  $20.00
+- tmandry               $20.00
+- riccieri              $35.00
+- pmodin                $20.00
+- Paul Alexander        $20.00
+- bjorntipling          $20.00
+- thomasthune           $20.00
+- cyrill62              $20.00
+- jabbrwcky             $20.00
+- nakuldhotre           $20.00
+- weisserd              $20.00
+- nosami                $20.00
+- diguliu               $20.00
+- justinforce           $20.00
+- bjorn                 $20.00
+- calin-iorgulescu      $20.00
+- christopher-l         $20.00
+- michaelkebe           $20.00
+- Jess                  $20.00
+- xinity                $20.00
+- ikdysfm               $20.00
+- johnkpaul             $20.00
+- hupili                $20.00
+- nmeans                $20.00
+- bbinet                $20.00
+- ajh                   $20.00
+- thameera              $20.00
+- ciwchris              $35.00
+- mdi                   $20.00
+- mapclyps              $20.00
+- srabbelier            $20.00
+- claytron              $50.00
+- jc00ke                $20.00
+- jmurty                $30.00
+- d1eg0                 $20.00
+- MrBri                 $20.00
+- copenhas              $20.00
+- Anonymous             $20.00
+- shawndumas            $20.00
+- mogren                $20.00
+- ajc                   $20.00
+- tfnico                $20.00
+- nop00                 $128.00
+- msalvadores           $20.00
+- lanceulmer            $20.00
+- ulf                   $20.00
+- jezallan              $20.00
+- vvakame               $20.00
+- foca                  $35.00
+- ndj                   $20.00
+- sogajapan             $20.00
+- dirn                  $20.00
+- alandyer              $20.00
+- luislee818            $20.00
+- magicpat              $20.00
+- enriclluelles         $20.00
+- therealbitkid         $20.00
+- xsb                   $20.00
+- elimirks              $20.00
+- Dan Riti              $20.00
+- rphillips             $20.00
+- SwiftOne              $20.00
+- fusyo                 $20.00
+- mds5000               $20.00
+- jor                   $20.00
+- eriknordlund          $20.00
+- Netherdrake           $20.00
+- songgao               $20.00
+- miguelsm              $20.00
+- geonik                $20.00
+- schallm               $20.00
+- jkinred               $20.00
+- teasp00n              $20.00
+- alexanderjeurissen    $20.00
+- tonyo112              $20.00
+- MovEaxEsp             $20.00
+- NiñoScript            $20.00
+- somemetricprefix      $20.00
+- andreamichi           $20.00
+- fibbs                 $20.00
+- Tourniquet            $20.00
+- apazzolini            $20.00
+- henry4k               $20.00
+- RageZBla              $20.00
+- awebster              $20.00
