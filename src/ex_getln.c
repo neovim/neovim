@@ -56,6 +56,7 @@
 #include "window.h"
 #include "ui.h"
 #include "os/os.h"
+#include "os/event.h"
 
 /*
  * Variables shared between getcmdline(), redrawcmdline() and others.
@@ -788,6 +789,11 @@ getcmdline (
      * Big switch for a typed command line character.
      */
     switch (c) {
+    case K_EVENT:
+      event_process();
+      // Force a redraw even though the command line didn't change
+      shell_resized();
+      goto cmdline_not_changed;
     case K_BS:
     case Ctrl_H:
     case K_DEL:
@@ -1904,9 +1910,12 @@ redraw:
         continue;
       }
 
-      /* Ignore special key codes: mouse movement, K_IGNORE, etc. */
-      if (IS_SPECIAL(c1))
+      if (IS_SPECIAL(c1)) {
+        // Process pending events
+        event_process();
+        // Ignore other special key codes
         continue;
+      }
     }
 
     if (IS_SPECIAL(c1))

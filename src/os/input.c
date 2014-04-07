@@ -145,9 +145,18 @@ int os_inchar(char_u *buf, int maxlen, int32_t ms, int tb_change_cnt)
     }
   }
 
+  // If there are pending events, return the keys directly
+  if (maxlen >= 3 && event_is_pending()) {
+    buf[0] = K_SPECIAL;
+    buf[1] = KS_EXTRA;
+    buf[2] = KE_EVENT;
+    return 3;
+  }
+
   // If input was put directly in typeahead buffer bail out here.
-  if (typebuf_changed(tb_change_cnt))
+  if (typebuf_changed(tb_change_cnt)) {
     return 0;
+  }
 
   if (result == kInputEof) {
     read_error_exit();
@@ -174,15 +183,12 @@ void os_breakcheck()
 // This is a replacement for the old `WaitForChar` function in os_unix.c
 static InbufPollResult inbuf_poll(int32_t ms)
 {
-  if (input_available())
+  if (input_available()) {
     return kInputAvail;
+  }
 
   if (event_poll(ms)) {
-    if (!got_int && rbuffer.rpos == rbuffer.wpos && eof) {
-      return kInputEof;
-    }
-
-    return kInputAvail;
+    return eof && rbuffer.rpos == rbuffer.wpos ? kInputEof : kInputAvail;
   }
 
   return kInputNone;

@@ -228,7 +228,6 @@ void job_handle(Event event)
                job->length,
                job->lock == kBufferLockStdout);
 
-  shell_resized();
   // restart reading
   job->lock = kBufferLockNone;
   uv_read_start((uv_stream_t *)&job->proc_stdout, alloc_cb, read_cb);
