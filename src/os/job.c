@@ -103,8 +103,6 @@ void job_teardown()
 
     // Still alive
     while (is_alive(job) && remaining_tries--) {
-      // Since this is the first time we're checking, wait 300ms so
-      // every job has a chance to exit normally
       os_delay(50, 0);
       // Acknowledge child exits
       uv_run(uv_default_loop(), UV_RUN_NOWAIT);
