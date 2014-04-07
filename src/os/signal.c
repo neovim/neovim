@@ -11,6 +11,7 @@
 #include "memory.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "os/event_defs.h"
 #include "os/event.h"
 #include "os/signal.h"
 

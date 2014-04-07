@@ -1009,6 +1009,9 @@ EXTERN char_u e_invexpr2[] INIT(= N_("E15: Invalid expression: %s"));
 EXTERN char_u e_invrange[] INIT(= N_("E16: Invalid range"));
 EXTERN char_u e_invcmd[] INIT(= N_("E476: Invalid command"));
 EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
+EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
+EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
+EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
 #ifdef FEAT_LIBCALL
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
 #endif

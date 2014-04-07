@@ -56,6 +56,7 @@
 #include "os/input.h"
 #include "os/shell.h"
 #include "os/signal.h"
+#include "os/job.h"
 
 #include "os_unixx.h"       /* unix includes for os_unix.c only */
 
@@ -589,6 +590,7 @@ void mch_exit(int r)
 {
   exiting = TRUE;
 
+  job_teardown();
 
   {
     settmode(TMODE_COOK);
