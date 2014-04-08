@@ -7,6 +7,9 @@
 #include "misc2.h"
 #include "path.h"
 
+static bool is_executable(const char_u *name);
+static bool is_executable_in_path(const char_u *name);
+
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
 
@@ -43,6 +46,82 @@ bool os_isdir(const char_u *name)
   }
 
   return true;
+}
+
+bool os_can_exe(const char_u *name)
+{
+  // If it's an absolute or relative path don't need to use $PATH.
+  if (path_is_absolute_path(name) ||
+     (name[0] == '.' && (name[1] == '/' ||
+                        (name[1] == '.' && name[2] == '/')))) {
+    return is_executable(name);
+  }
+
+  return is_executable_in_path(name);
+}
+
+// Return true if "name" is an executable file, false if not or it doesn't
+// exist.
+static bool is_executable(const char_u *name)
+{
+  int32_t mode = os_getperm(name);
+
+  if (mode < 0) {
+    return false;
+  }
+
+  if (S_ISREG(mode) && (S_IEXEC & mode)) {
+    return true;
+  }
+
+  return false;
+}
+
+/// Check if a file is inside the $PATH and is executable.
+///
+/// @return `true` if `name` is an executable inside $PATH.
+static bool is_executable_in_path(const char_u *name)
+{
+  const char *path = getenv("PATH");
+  // PATH environment variable does not exist or is empty.
+  if (path == NULL || *path == NUL) {
+    return false;
+  }
+
+  int buf_len = STRLEN(name) + STRLEN(path) + 2;
+  char_u *buf = alloc((unsigned)(buf_len));
+
+  // Walk through all entries in $PATH to check if "name" exists there and
+  // is an executable file.
+  for (;; ) {
+    const char *e = strchr(path, ':');
+    if (e == NULL) {
+      e = path + STRLEN(path);
+    }
+
+    // Glue together the given directory from $PATH with name and save into
+    // buf.
+    vim_strncpy(buf, (char_u *) path, e - path);
+    append_path((char *) buf, (const char *) name, buf_len);
+
+    if (is_executable(buf)) {
+      // Found our executable. Free buf and return.
+      vim_free(buf);
+      return true;
+    }
+
+    if (*e != ':') {
+      // End of $PATH without finding any executable called name.
+      vim_free(buf);
+      return false;
+    }
+
+    path = e + 1;
+  }
+
+  // We should never get to this point.
+  assert(false);
+  return false;
 }
 
 int os_stat(const char_u *name, uv_stat_t *statbuf)
@@ -123,4 +202,3 @@ int os_rename(const char_u *path, const char_u *new_path)
 
   return FAIL;
 }
-

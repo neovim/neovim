@@ -11,16 +11,12 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 char_u *path_tail(char_u *fname);
 char_u *path_tail_with_sep(char_u *fname);
 char_u *path_next_component(char_u *fname);
-int is_executable(char_u *name);
-int path_can_exe(char_u *name);
 ]]
-
 
 -- import constants parsed by ffi
 {:kEqualFiles, :kDifferentFiles, :kBothFilesMissing, :kOneFileMissing, :kEqualFileNames} = path
 NULL = ffi.cast 'void*', 0
 {:OK, :FAIL} = path
-{:TRUE, :FALSE} = path
 
 describe 'path function', ->
   describe 'path_full_compare', ->
@@ -264,26 +260,3 @@ describe 'more path function', ->
 
     it 'returns false if filename starts not with slash nor tilde', ->
       eq FAIL, path_is_absolute_path 'not/in/my/home~/directory'
-
-  describe 'path_can_exe', ->
-    path_can_exe = (name) ->
-      path.path_can_exe (to_cstr name)
-
-    it 'returns false when given a directory', ->
-      eq FALSE, (path_can_exe './unit-test-directory')
-
-    it 'returns false when given a regular file without executable bit set', ->
-      eq FALSE, (path_can_exe 'unit-test-directory/test.file')
-
-    it 'returns false when the given file does not exists', ->
-      eq FALSE, (path_can_exe 'does-not-exist.file')
-
-    it 'returns true when given an executable inside $PATH', ->
-      eq TRUE, (path_can_exe executable_name)
-
-    it 'returns true when given an executable relative to the current dir', ->
-      old_dir = lfs.currentdir!
-      lfs.chdir directory
-      relative_executable = './' .. executable_name
-      eq TRUE, (path_can_exe relative_executable)
-      lfs.chdir old_dir

@@ -30,9 +30,7 @@
 #define URL_SLASH       1               /* path_is_url() has found "://" */
 #define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
-static int os_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
-static bool is_executable(const char_u *name);
-static bool is_executable_in_path(const char_u *name);
+static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
 
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
 {
@@ -1229,7 +1227,7 @@ addfile (
     return;
 
   /* If the file isn't executable, may not add it.  Do accept directories. */
-  if (!isdir && (flags & EW_EXEC) && !path_can_exe(f))
+  if (!isdir && (flags & EW_EXEC) && !os_can_exe(f))
     return;
 
   /* Make room for another item in the file list. */
@@ -1943,10 +1941,6 @@ int match_suffix(char_u *fname)
   return setsuflen != 0;
 }
 
-/// Get the absolute name of the given relative directory.
-///
-/// @param directory Directory name, relative to current directory.
-/// @return `FAIL` for failure, `OK` for success.
 int path_full_dir_name(char *directory, char *buffer, int len)
 {
   int SUCCESS = 0;
@@ -2061,80 +2055,3 @@ int path_is_absolute_path(const char_u *fname)
 {
   return *fname == '/' || *fname == '~';
 }
-
-bool os_can_exe(const char_u *name)
-{
-  // If it's an absolute or relative path don't need to use $PATH.
-  if (path_is_absolute_path(name) ||
-     (name[0] == '.' && (name[1] == '/' ||
-                        (name[1] == '.' && name[2] == '/')))) {
-    return is_executable(name);
-  }
-
-  return is_executable_in_path(name);
-}
-
-// Return true if "name" is an executable file, false if not or it doesn't
-// exist.
-static bool is_executable(const char_u *name)
-{
-  int32_t mode = os_getperm(name);
-
-  if (mode < 0) {
-    return false;
-  }
-
-  if (S_ISREG(mode) && (S_IEXEC & mode)) {
-    return true;
-  }
-
-  return false;
-}
-
-/// Check if a file is inside the $PATH and is executable.
-///
-/// @return `true` if `name` is an executable inside $PATH.
-static bool is_executable_in_path(const char_u *name)
-{
-  const char *path = getenv("PATH");
-  // PATH environment variable does not exist or is empty.
-  if (path == NULL || *path == NUL) {
-    return false;
-  }
-
-  int buf_len = STRLEN(name) + STRLEN(path) + 2;
-  char_u *buf = alloc((unsigned)(buf_len));
-
-  // Walk through all entries in $PATH to check if "name" exists there and
-  // is an executable file.
-  for (;; ) {
-    const char *e = strchr(path, ':');
-    if (e == NULL) {
-      e = path + STRLEN(path);
-    }
-
-    // Glue together the given directory from $PATH with name and save into
-    // buf.
-    vim_strncpy(buf, (char_u *) path, e - path);
-    append_path((char *) buf, (const char *) name, buf_len);
-
-    if (is_executable(buf)) {
-      // Found our executable. Free buf and return.
-      vim_free(buf);
-      return true;
-    }
-
-    if (*e != ':') {
-      // End of $PATH without finding any executable called name.
-      vim_free(buf);
-      return false;
-    }
-
-    path = e + 1;
-  }
-
-  // We should never get to this point.
-  assert(false);
-  return false;
-}
-

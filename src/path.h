@@ -103,14 +103,4 @@ int append_path(char *path, const char *to_append, int max_len);
 /// @return `TRUE` if "fname" is absolute.
 int path_is_absolute_path(const char_u *fname);
 
-/// Check if the given path represents an executable file.
-///
-/// @return `TRUE` if `name` is executable and
-///   - can be found in $PATH,
-///   - is relative to current dir or
-///   - is absolute.
-///
-/// @return `FALSE` otherwise.
-int path_can_exe(const char_u *name);
-
 #endif

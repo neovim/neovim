@@ -1418,7 +1418,7 @@ int flags;                      /* EW_* flags */
       continue;
 
     /* Skip files that are not executable if we check for that. */
-    if (!dir && (flags & EW_EXEC) && !path_can_exe((*file)[i]))
+    if (!dir && (flags & EW_EXEC) && !os_can_exe((*file)[i]))
       continue;
 
     p = alloc((unsigned)(STRLEN((*file)[i]) + 1 + dir));
