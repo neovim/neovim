@@ -500,8 +500,7 @@ void sort_strings(char_u **files, int count)
   qsort((void *)files, (size_t)count, sizeof(char_u *), sort_compare);
 }
 
-#if (defined(FEAT_MBYTE) && defined(FEAT_QUICKFIX)) \
-  || defined(FEAT_SPELL) || defined(PROTO)
+#if defined(FEAT_QUICKFIX) || defined(FEAT_SPELL) || defined(PROTO)
 /*
  * Return TRUE if string "s" contains a non-ASCII character (128 or higher).
  * When "s" is NULL FALSE is returned.
