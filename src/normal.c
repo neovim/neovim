@@ -62,7 +62,7 @@
 static int resel_VIsual_mode = NUL;             /* 'v', 'V', or Ctrl-V */
 static linenr_T resel_VIsual_line_count;        /* number of lines */
 static colnr_T resel_VIsual_vcol;               /* nr of cols or end col */
-static int VIsual_mode_orig = NUL;              /* type of Visual mode, that user entered */
+static int VIsual_mode_orig = NUL;              /* saved Visual mode */
 
 static int restart_VIsual_select = 0;
 
@@ -4804,8 +4804,15 @@ static void nv_left(cmdarg_T *cap)
         if (       (cap->oap->op_type == OP_DELETE
                     || cap->oap->op_type == OP_CHANGE)
                    && !lineempty(curwin->w_cursor.lnum)) {
-          if (*ml_get_cursor() != NUL)
-            ++curwin->w_cursor.col;
+          char_u *cp = ml_get_cursor();
+
+          if (*cp != NUL) {
+            if (has_mbyte) {
+              curwin->w_cursor.col += (*mb_ptr2len)(cp);
+            } else {
+              curwin->w_cursor.col++;
+            }
+          }
           cap->retval |= CA_NO_ADJ_OP_END;
         }
         continue;

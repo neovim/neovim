@@ -155,6 +155,16 @@ ra test
 ａａb
 
 STARTTEST
+:set whichwrap+=h
+/^x
+dh
+:set whichwrap-=h
+ENDTEST
+
+á
+x
+
+STARTTEST
 :let a = '.é.' " one char of two bytes
 :let b = '.é.' " normal e with composing char
 /^byteidx
