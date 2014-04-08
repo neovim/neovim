@@ -1378,8 +1378,6 @@ void ins_bytes(char_u *p)
   ins_bytes_len(p, (int)STRLEN(p));
 }
 
-#if defined(FEAT_VREPLACE) || defined(FEAT_INS_EXPAND) \
-  || defined(FEAT_COMMENTS) || defined(FEAT_MBYTE) || defined(PROTO)
 /*
  * Insert string "p" with length "len" at the cursor position.
  * Handles Replace mode and multi-byte characters.
@@ -1402,7 +1400,6 @@ void ins_bytes_len(char_u *p, int len)
     for (i = 0; i < len; ++i)
       ins_char(p[i]);
 }
-#endif
 
 /*
  * Insert or replace a single character at the cursor position.

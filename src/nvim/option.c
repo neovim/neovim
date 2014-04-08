@@ -7561,9 +7561,8 @@ static int wc_use_keyname(char_u *varp, long *wcp)
  *
  * langmap_mapchar[] maps any of 256 chars to an ASCII char used for Vim
  * commands.
- * When FEAT_MBYTE is defined langmap_mapga.ga_data is a sorted table of
- * langmap_entry_T.  This does the same as langmap_mapchar[] for characters >=
- * 256.
+ * langmap_mapga.ga_data is a sorted table of langmap_entry_T. 
+ * This does the same as langmap_mapchar[] for characters >= 256.
  */
 /*
  * With multi-byte support use growarray for 'langmap' chars >= 256

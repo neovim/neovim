@@ -133,7 +133,6 @@
 #define FEAT_LISP
 #define FEAT_LISTCMDS
 #define FEAT_LOCALMAP
-#define FEAT_MBYTE
 #define FEAT_MENU
 #define FEAT_MODIFY_FNAME
 #define FEAT_MOUSE
