@@ -2300,11 +2300,7 @@ win_line (
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
   int need_showbreak = FALSE;
-#if defined(FEAT_SIGNS) || defined(FEAT_QUICKFIX) \
-  || defined(FEAT_SYN_HL) || defined(FEAT_DIFF)
-# define LINE_ATTR
   int line_attr = 0;                    /* attribute for the whole line */
-#endif
   matchitem_T *cur;                     /* points to the match list */
   match_T     *shl;                     /* points to search_hl or a match */
   int shl_flag;                         /* flag to indicate whether search_hl
@@ -2314,9 +2310,7 @@ win_line (
                                            of the matches */
   int prev_c = 0;                       /* previous Arabic character */
   int prev_c1 = 0;                      /* first composing char for prev_c */
-#if defined(LINE_ATTR)
   int did_line_attr = 0;
-#endif
 
   /* draw_state: items that are drawn in sequence: */
 #define WL_START        0               /* nothing done yet */
@@ -2517,7 +2511,6 @@ win_line (
     filler_lines = wp->w_topfill;
   filler_todo = filler_lines;
 
-#ifdef LINE_ATTR
   /* If this line has a sign with line highlighting set line_attr. */
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
   if (v != 0)
@@ -2528,7 +2521,6 @@ win_line (
     line_attr = hl_attr(HLF_L);
   if (line_attr != 0)
     area_highlighting = TRUE;
-#endif
 
   line = ml_get_buf(wp->w_buffer, lnum, FALSE);
   ptr = line;
@@ -3035,14 +3027,12 @@ win_line (
         char_attr = area_attr;
       else if (search_attr != 0)
         char_attr = search_attr;
-#ifdef LINE_ATTR
       /* Use line_attr when not in the Visual or 'incsearch' area
        * (area_attr may be 0 when "noinvcur" is set). */
       else if (line_attr != 0 && ((fromcol == -10 && tocol == MAXCOL)
                                   || vcol < fromcol || vcol_prev < fromcol_prev
                                   || vcol >= tocol))
         char_attr = line_attr;
-#endif
       else {
         attr_pri = FALSE;
         if (has_syntax)
@@ -3508,15 +3498,7 @@ win_line (
            * character if the line break is included. */
           /* For a diff line the highlighting continues after the
            * "$". */
-          if (
-            diff_hlf == (hlf_T)0
-#  ifdef LINE_ATTR
-            &&
-#  endif
-# ifdef LINE_ATTR
-            line_attr == 0
-# endif
-            ) {
+          if (diff_hlf == (hlf_T)0 && line_attr == 0) {
             /* In virtualedit, visual selections may extend
              * beyond end of line. */
             if (area_highlighting && virtual_active()
@@ -3569,9 +3551,7 @@ win_line (
                      (col < W_WIDTH(wp)))) {
           c = ' ';
           --ptr;                    /* put it back at the NUL */
-        }
-#if defined(LINE_ATTR)
-        else if ((
+        } else if ((
                    diff_hlf != (hlf_T)0 ||
                    line_attr != 0
                    ) && (
@@ -3595,7 +3575,6 @@ win_line (
               char_attr = hl_attr(diff_hlf);
           }
         }
-#endif
       }
 
       if (   wp->w_p_cole > 0
@@ -3704,11 +3683,7 @@ win_line (
     /*
      * At end of the text line or just after the last character.
      */
-    if (c == NUL
-#if defined(LINE_ATTR)
-        || did_line_attr == 1
-#endif
-        ) {
+    if (c == NUL || did_line_attr == 1) {
       long prevcol = (long)(ptr - line) - (c == NUL);
 
       /* we're not really at that column when skipping some text */
@@ -3739,11 +3714,7 @@ win_line (
                    || lnum == curwin->w_cursor.lnum)
                && c == NUL)
               /* highlight 'hlsearch' match at end of line */
-              || (prevcol_hl_flag == TRUE
-# if defined(LINE_ATTR)
-                  && did_line_attr <= 1
-# endif
-                  )
+              || (prevcol_hl_flag == TRUE && did_line_attr <= 1)
               )) {
         int n = 0;
 
