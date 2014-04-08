@@ -2301,7 +2301,7 @@ win_line (
   int change_end = -1;                  /* last col of changed area */
   colnr_T trailcol = MAXCOL;            /* start of trailing spaces */
   int need_showbreak = FALSE;
-#if defined(FEAT_SIGNS) || (defined(FEAT_QUICKFIX) && defined(FEAT_WINDOWS)) \
+#if defined(FEAT_SIGNS) || defined(FEAT_QUICKFIX) \
   || defined(FEAT_SYN_HL) || defined(FEAT_DIFF)
 # define LINE_ATTR
   int line_attr = 0;                    /* attribute for the whole line */

@@ -2782,8 +2782,7 @@ void win_alloc_aucmd_win(void)
 /*
  * Allocate the first window or the first window in a new tab page.
  * When "oldwin" is NULL create an empty buffer for it.
- * When "oldwin" is not NULL copy info from it to the new window (only with
- * FEAT_WINDOWS).
+ * When "oldwin" is not NULL copy info from it to the new window.
  * Return FAIL when something goes wrong (out of memory).
  */
 static int win_alloc_firstwin(win_T *oldwin)

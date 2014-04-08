@@ -363,9 +363,7 @@ int get_real_state(void)
 }
 
 #if defined(FEAT_SESSION) || defined(MSWIN) || defined(FEAT_GUI_MAC) \
-  || ((defined(FEAT_GUI_GTK)) \
-  && ( defined(FEAT_WINDOWS) || defined(FEAT_DND)) ) \
-  || defined(PROTO)
+  || defined(FEAT_GUI_GTK) || defined(PROTO)
 /*
  * Change to a file's directory.
  * Caller must call shorten_fnames()!
