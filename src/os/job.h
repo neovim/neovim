@@ -47,7 +47,7 @@ int job_start(char **argv, void *data, job_read_cb cb);
 
 /// Terminates a job. This is a non-blocking operation, but if the job exists
 /// it's guaranteed to succeed(SIGKILL will eventually be sent)
-/// 
+///
 /// @param id The job id
 /// @return true if the stop request was successfully sent, false if the job
 ///              id is invalid(probably because it has already stopped)

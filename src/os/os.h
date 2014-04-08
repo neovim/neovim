@@ -86,7 +86,7 @@ char *os_getenvname_at_index(size_t index);
 /// Get the process ID of the Neovim process.
 ///
 /// @return the process ID.
-long os_get_pid(void);
+int64_t os_get_pid(void);
 
 /// Get the hostname of the machine runing Neovim.
 ///

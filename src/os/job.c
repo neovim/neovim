@@ -3,8 +3,8 @@
 
 #include <uv.h>
 
-#include "os/job_defs.h"
 #include "os/job.h"
+#include "os/job_defs.h"
 #include "os/time.h"
 #include "os/shell.h"
 #include "vim.h"
@@ -17,13 +17,13 @@
 
 /// Possible lock states of the job buffer
 typedef enum {
-  kBufferLockNone = 0, ///< No data was read
-  kBufferLockStdout,   ///< Data read from stdout
-  kBufferLockStderr    ///< Data read from stderr
+  kBufferLockNone = 0,  ///< No data was read
+  kBufferLockStdout,    ///< Data read from stdout
+  kBufferLockStderr     ///< Data read from stderr
 } BufferLock;
 
-struct _Job {
-  // Job id the index in the job table plus one. 
+struct job {
+  // Job id the index in the job table plus one.
   int id;
   // Number of polls after a SIGTERM that will trigger a SIGKILL
   int exit_timeout;
@@ -83,7 +83,7 @@ void job_teardown()
       uv_process_kill(&job->proc, SIGTERM);
     }
   }
-  
+
   if (all_dead) {
     return;
   }
@@ -120,7 +120,7 @@ int job_start(char **argv, void *data, job_read_cb cb)
 {
   int i;
   Job *job;
- 
+
   // Search for a free slot in the table
   for (i = 0; i < MAX_RUNNING_JOBS; i++) {
     if (table[i] == NULL) {
@@ -133,7 +133,7 @@ int job_start(char **argv, void *data, job_read_cb cb)
     return 0;
   }
 
-  job = xmalloc(sizeof(Job)); 
+  job = xmalloc(sizeof(Job));
   // Initialize
   job->id = i + 1;
   job->data = data;
@@ -245,7 +245,7 @@ static Job * find_job(int id)
   if (id <= 0 || id > MAX_RUNNING_JOBS) {
     return NULL;
   }
-   
+
   return table[id - 1];
 }
 
@@ -269,7 +269,7 @@ static void job_prepare_cb(uv_prepare_t *handle, int status)
     if ((job = table[i]) == NULL || !job->stopped) {
       continue;
     }
-  
+
     if ((job->exit_timeout--) == EXIT_TIMEOUT) {
       // Job was just stopped, close all stdio handles and send SIGTERM
       uv_process_kill(&job->proc, SIGTERM);

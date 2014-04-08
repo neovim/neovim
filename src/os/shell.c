@@ -103,7 +103,7 @@ void shell_free_argv(char **argv)
   }
 
   while (*p != NULL) {
-    // Free each argument 
+    // Free each argument
     free(*p);
     p++;
   }
@@ -138,9 +138,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   signal_reject_deadly();
 
   // Create argv for `uv_spawn`
-  // TODO we can use a static buffer for small argument vectors. 1024 bytes
-  // should be enough for most of the commands and if more is necessary we can
-  // allocate a another buffer
+  // TODO(tarruda): we can use a static buffer for small argument vectors. 1024
+  // bytes should be enough for most of the commands and if more is necessary
+  // we can allocate a another buffer
   proc_opts.args = shell_build_argv(cmd, extra_shell_arg);
   proc_opts.file = proc_opts.args[0];
   proc_opts.exit_cb = exit_cb;
@@ -219,8 +219,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
     if (got_int) {
       // Forward SIGINT to the shell
-      // TODO for now this is only needed if the terminal is in raw mode, but
-      // when the UI is externalized we'll also need it, so leave it here
+      // TODO(tarruda): for now this is only needed if the terminal is in raw
+      // mode, but when the UI is externalized we'll also need it, so leave it
+      // here
       uv_process_kill(&proc, SIGINT);
       got_int = false;
     }
@@ -232,8 +233,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
       append_ga_line(&pdata.ga);
       // remember that the NL was missing
       curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-    } else
+    } else {
       curbuf->b_no_eol_lnum = 0;
+    }
     ga_clear(&pdata.ga);
   }
 
@@ -296,9 +298,9 @@ static int word_length(char_u *str)
 static void write_selection(uv_write_t *req)
 {
   ProcessData *pdata = (ProcessData *)req->data;
-  // TODO use a static buffer for up to a limit(BUFFER_LENGTH) and only after
-  // filled we should start allocating memory(skip unnecessary allocations for
-  // small writes)
+  // TODO(tarruda): use a static buffer for up to a limit(BUFFER_LENGTH) and
+  // only after filled we should start allocating memory(skip unnecessary
+  // allocations for small writes)
   int buflen = BUFFER_LENGTH;
   pdata->wbuffer = (char *)xmalloc(buflen);
   uv_buf_t uvbuf;
@@ -356,8 +358,9 @@ static void write_selection(uv_write_t *req)
       }
       lp = ml_get(lnum);
       written = 0;
-    } else if (len > 0)
+    } else if (len > 0) {
       written += len;
+    }
   }
 
   uvbuf.base = pdata->wbuffer;
@@ -384,8 +387,8 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 
 static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 {
-  // TODO avoid using a growable array for this, refactor the algorithm
-  // to call `ml_append` directly(skip unecessary copies/resizes)
+  // TODO(tarruda): avoid using a growable array for this, refactor the
+  // algorithm to call `ml_append` directly(skip unecessary copies/resizes)
   int i;
   ProcessData *pdata = (ProcessData *)stream->data;
 
@@ -429,12 +432,11 @@ static int proc_cleanup_exit(ProcessData *proc_data,
                              uv_process_options_t *proc_opts,
                              int shellopts)
 {
-
   if (proc_data->exited) {
     if (!emsg_silent && proc_data->exit_status != 0 &&
         !(shellopts & kShellOptSilent)) {
       MSG_PUTS(_("\nshell returned "));
-      msg_outnum((long)proc_data->exit_status);
+      msg_outnum((int64_t)proc_data->exit_status);
       msg_putchar('\n');
     }
   }

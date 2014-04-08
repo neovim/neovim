@@ -16,4 +16,4 @@ typedef struct {
   } data;
 } Event;
 
-#endif  // NEOVIM_OS_EVENT_H
+#endif  // NEOVIM_OS_EVENT_DEFS_H

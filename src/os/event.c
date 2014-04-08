@@ -60,7 +60,7 @@ bool event_poll(int32_t ms)
 
     if (ms > 0) {
       // Calculate remaining time in milliseconds
-      remaining = (end - uv_hrtime()) / 1e6; 
+      remaining = (end - uv_hrtime()) / 1e6;
     }
 
     if (input_ready() || got_int) {
@@ -69,7 +69,7 @@ bool event_poll(int32_t ms)
     }
 
     if (!result || (ms >= 0 && remaining <= 0)) {
-      // Or if we timed out  
+      // Or if we timed out
       return false;
     }
   }
@@ -133,11 +133,10 @@ static bool poll_uv_loop(int32_t ms)
     uv_run(uv_default_loop(), run_mode);
   } while (
       // Continue running if ...
-      !input_ready() && // we have no input
-      kl_empty(event_queue) && // no events are waiting to be processed
-      run_mode != UV_RUN_NOWAIT && // ms != 0
-      !timed_out  // we didn't get a timeout
-      );
+      !input_ready() &&   // we have no input
+      kl_empty(event_queue) &&   // no events are waiting to be processed
+      run_mode != UV_RUN_NOWAIT &&   // ms != 0
+      !timed_out);  // we didn't get a timeout
 
   input_stop();
 
