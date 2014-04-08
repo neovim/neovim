@@ -30,8 +30,6 @@
 # include <sys/param.h>     /* defines BSD, if it's a BSD system */
 #endif
 
-#define vim_mkdir(x, y) os_mkdir((char *)(x), (y))
-
 /* The number of arguments to a signal handler is configured here. */
 /* It used to be a long list of almost all systems. Any system that doesn't
  * have an argument??? */
