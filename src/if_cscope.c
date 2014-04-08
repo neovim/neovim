@@ -1120,7 +1120,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
         qf_jump(qi, 0, 0, forceit);
       }
     }
-    mch_remove(tmp);
+    os_remove((char *)tmp);
     vim_free(tmp);
     vim_free(nummatches);
     return TRUE;

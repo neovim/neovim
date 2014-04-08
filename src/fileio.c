@@ -870,7 +870,7 @@ retry:
       }
     }
     if (tmpname != NULL) {
-      mch_remove(tmpname);                      /* delete converted file */
+      os_remove((char *)tmpname);  // delete converted file
       vim_free(tmpname);
       tmpname = NULL;
     }
@@ -1786,7 +1786,7 @@ failed:
 #endif
 
   if (tmpname != NULL) {
-    mch_remove(tmpname);                /* delete converted file */
+    os_remove((char *)tmpname);  // delete converted file
     vim_free(tmpname);
   }
   --no_wait_return;                     /* may wait for return now */
@@ -2203,7 +2203,7 @@ readfile_charconvert (
      * another type of conversion might still work. */
     MSG(errmsg);
     if (tmpname != NULL) {
-      mch_remove(tmpname);              /* delete converted file */
+      os_remove((char *)tmpname);  // delete converted file
       vim_free(tmpname);
       tmpname = NULL;
     }
@@ -2972,7 +2972,7 @@ buf_write (
           /* Close the file before removing it, on MS-Windows we
            * can't delete an open file. */
           close(fd);
-          mch_remove(IObuff);
+          os_remove((char *)IObuff);
         }
       }
     }
@@ -3140,7 +3140,7 @@ buf_write (
          */
         if (backup != NULL) {
           /* remove old backup, if present */
-          mch_remove(backup);
+          os_remove((char *)backup);
           /* Open with O_EXCL to avoid the file being created while
            * we were sleeping (symlink hacker attack?) */
           bfd = mch_open((char *)backup,
@@ -3457,7 +3457,7 @@ nobackup:
     /*
      * A forced write will try to create a new file if the old one is
      * still readonly. This may also happen when the directory is
-     * read-only. In that case the mch_remove() will fail.
+     * read-only. In that case the os_remove() will fail.
      */
     if (errmsg == NULL) {
 #ifdef UNIX
@@ -3485,7 +3485,7 @@ nobackup:
             perm &= 0777;
 #endif
           if (!append)                      /* don't remove when appending */
-            mch_remove(wfname);
+            os_remove((char *)wfname);
           continue;
         }
       }
@@ -3513,7 +3513,7 @@ restore_backup:
             vim_rename(backup, fname);
           /* if original file does exist throw away the copy */
           if (mch_stat((char *)fname, &st) >= 0)
-            mch_remove(backup);
+            os_remove((char *)backup);
         } else {
           /* try to put the original file back */
           vim_rename(backup, fname);
@@ -3750,7 +3750,7 @@ restore_backup:
         end = 0;
       }
     }
-    mch_remove(wfname);
+    os_remove((char *)wfname);
     vim_free(wfname);
   }
 
@@ -3951,7 +3951,7 @@ restore_backup:
   /*
    * Remove the backup unless 'backup' option is set
    */
-  if (!p_bk && backup != NULL && mch_remove(backup) != 0)
+  if (!p_bk && backup != NULL && os_remove((char *)backup) != 0)
     EMSG(_("E207: Can't delete backup file"));
 
 
@@ -5036,7 +5036,7 @@ int vim_rename(char_u *from, char_u *to)
    * two files when the os_rename() fails.
    */
 
-  mch_remove(to);
+  os_remove((char *)to);
 
   /*
    * First try a normal rename, return if it works.
@@ -5109,7 +5109,7 @@ int vim_rename(char_u *from, char_u *to)
     EMSG2(errmsg, to);
     return -1;
   }
-  mch_remove(from);
+  os_remove((char *)from);
   return 0;
 }
 
@@ -5618,7 +5618,7 @@ void vim_deltempdir(void)
     if (gen_expand_wildcards(1, &NameBuff, &file_count, &files,
             EW_DIR|EW_FILE|EW_SILENT) == OK) {
       for (i = 0; i < file_count; ++i)
-        mch_remove(files[i]);
+        os_remove((char *)files[i]);
       FreeWild(file_count, files);
     }
     path_tail(NameBuff)[-1] = NUL;

@@ -1207,9 +1207,9 @@ filterend:
     EMSG(_("E135: *Filter* Autocommands must not change current buffer"));
   }
   if (itmp != NULL)
-    mch_remove(itmp);
+    os_remove((char *)itmp);
   if (otmp != NULL)
-    mch_remove(otmp);
+    os_remove((char *)otmp);
   vim_free(itmp);
   vim_free(otmp);
 }
@@ -1712,9 +1712,9 @@ void write_viminfo(char_u *file, int forceit)
      * In case of an error keep the original viminfo file.
      * Otherwise rename the newly written file.
      */
-    if (viminfo_errcnt || vim_rename(tempname, fname) == -1)
-      mch_remove(tempname);
-
+    if (viminfo_errcnt || vim_rename(tempname, fname) == -1) {
+      os_remove((char *)tempname);
+    }
   }
 
 end:

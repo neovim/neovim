@@ -4228,9 +4228,9 @@ void spell_delete_wordlist(void)
   char_u fname[MAXPATHL];
 
   if (int_wordlist != NULL) {
-    mch_remove(int_wordlist);
+    os_remove((char *)int_wordlist);
     int_wordlist_spl(fname);
-    mch_remove(fname);
+    os_remove((char *)fname);
     vim_free(int_wordlist);
     int_wordlist = NULL;
   }

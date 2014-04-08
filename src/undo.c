@@ -1189,7 +1189,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
         }
       }
     }
-    mch_remove(file_name);
+    os_remove((char *)file_name);
   }
 
   /* If there is no undo information at all, quit here after deleting any
@@ -1242,7 +1242,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   if (fp == NULL) {
     EMSG2(_(e_not_open), file_name);
     close(fd);
-    mch_remove(file_name);
+    os_remove((char *)file_name);
     goto theend;
   }
 

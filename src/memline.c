@@ -3727,11 +3727,12 @@ findswapname (
               same = TRUE;
             close(f2);
             if (created2)
-              mch_remove(fname2);
+              os_remove((char *)fname2);
           }
           close(f1);
-          if (created1)
-            mch_remove(fname);
+          if (created1) {
+            os_remove((char *)fname);
+          }
         }
         vim_free(fname2);
         if (same) {
@@ -3867,7 +3868,7 @@ findswapname (
           if (dummyfd != NULL) {
             fclose(dummyfd);
             dummyfd = NULL;
-            mch_remove(buf_fname);
+            os_remove(buf_fname);
             did_use_dummy = TRUE;
           }
 #endif
@@ -3941,7 +3942,7 @@ findswapname (
               swap_exists_action = SEA_RECOVER;
               break;
             case 4:
-              mch_remove(fname);
+              os_remove((char *)fname);
               break;
             case 5:
               swap_exists_action = SEA_QUIT;
@@ -3996,7 +3997,7 @@ findswapname (
 #ifdef CREATE_DUMMY_FILE
   if (dummyfd != NULL) {        /* file has been created temporarily */
     fclose(dummyfd);
-    mch_remove(buf_fname);
+    os_remove(buf_fname);
   }
 #endif
   return fname;

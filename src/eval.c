@@ -1187,7 +1187,7 @@ int eval_printexpr(char_u *fname, char_u *args)
   set_vim_var_string(VV_CMDARG, NULL, -1);
 
   if (err) {
-    mch_remove(fname);
+    os_remove((char *)fname);
     return FAIL;
   }
   return OK;
@@ -8413,7 +8413,7 @@ static void f_delete(typval_T *argvars, typval_T *rettv)
   if (check_restricted() || check_secure())
     rettv->vval.v_number = -1;
   else
-    rettv->vval.v_number = mch_remove(get_tv_string(&argvars[0]));
+    rettv->vval.v_number = os_remove((char *)get_tv_string(&argvars[0]));
 }
 
 /*
@@ -14702,7 +14702,7 @@ static void f_system(typval_T *argvars, typval_T *rettv)
 
 done:
   if (infile != NULL) {
-    mch_remove(infile);
+    os_remove((char *)infile);
     vim_free(infile);
   }
   rettv->v_type = VAR_STRING;

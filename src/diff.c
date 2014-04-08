@@ -728,10 +728,10 @@ void ex_diffupdate(exarg_T *eap)
           }
           fclose(fd);
         }
-        mch_remove(tmp_diff);
-        mch_remove(tmp_new);
+        os_remove((char *)tmp_diff);
+        os_remove((char *)tmp_new);
       }
-      mch_remove(tmp_orig);
+      os_remove((char *)tmp_orig);
     }
 
     // When using 'diffexpr' break here.
@@ -790,10 +790,10 @@ void ex_diffupdate(exarg_T *eap)
 
     // Read the diff output and add each entry to the diff list.
     diff_read(idx_orig, idx_new, tmp_diff);
-    mch_remove(tmp_diff);
-    mch_remove(tmp_new);
+    os_remove((char *)tmp_diff);
+    os_remove((char *)tmp_new);
   }
-  mch_remove(tmp_orig);
+  os_remove((char *)tmp_orig);
 
   // force updating cursor position on screen
   curwin->w_valid_cursor.lnum = 0;
@@ -959,10 +959,10 @@ void ex_diffpatch(exarg_T *eap)
   // Delete any .orig or .rej file created.
   STRCPY(buf, tmp_new);
   STRCAT(buf, ".orig");
-  mch_remove(buf);
+  os_remove((char *)buf);
   STRCPY(buf, tmp_new);
   STRCAT(buf, ".rej");
-  mch_remove(buf);
+  os_remove((char *)buf);
 
   // Only continue if the output file was created.
   if ((mch_stat((char *)tmp_new, &st) < 0) || (st.st_size == 0)) {
@@ -1008,12 +1008,12 @@ void ex_diffpatch(exarg_T *eap)
 
 theend:
   if (tmp_orig != NULL) {
-    mch_remove(tmp_orig);
+    os_remove((char *)tmp_orig);
   }
   vim_free(tmp_orig);
 
   if (tmp_new != NULL) {
-    mch_remove(tmp_new);
+    os_remove((char *)tmp_new);
   }
   vim_free(tmp_new);
   vim_free(newname);
