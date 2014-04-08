@@ -154,7 +154,7 @@ int os_inchar(char_u *buf, int maxlen, int32_t ms, int tb_change_cnt)
     return 0;
   }
 
-  return read_from_input_buf(buf, (long)maxlen);
+  return read_from_input_buf(buf, (int64_t)maxlen);
 }
 
 // Check if a character is available for reading
@@ -168,7 +168,7 @@ bool os_char_avail()
 void os_breakcheck()
 {
   if (curr_tmode == TMODE_RAW && event_poll(0))
-    fill_input_buf(FALSE);
+    fill_input_buf(false);
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c

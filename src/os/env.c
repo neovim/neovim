@@ -55,12 +55,12 @@ char *os_getenvname_at_index(size_t index)
 }
 
 
-long os_get_pid()
+int64_t os_get_pid()
 {
 #ifdef _WIN32
-  return (long)GetCurrentProcessId();
+  return (int64_t)GetCurrentProcessId();
 #else
-  return (long)getpid();
+  return (int64_t)getpid();
 #endif
 }
 
@@ -76,7 +76,8 @@ void os_get_hostname(char *hostname, size_t len)
     hostname[len - 1] = '\0';
   }
 #else
-  // TODO: Implement this for windows. See the implementation used in vim:
+  // TODO(unknown): Implement this for windows.
+  // See the implementation used in vim:
   // https://code.google.com/p/vim/source/browse/src/os_win32.c?r=6b69d8dde19e32909f4ee3a6337e6a2ecfbb6f72#2899
   *hostname = '\0';
 #endif

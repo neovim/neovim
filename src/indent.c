@@ -31,7 +31,7 @@ int get_indent_lnum(linenr_T lnum)
 // "buf".
 int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
-  return get_indent_str(ml_get_buf(buf, lnum, FALSE), (int)buf->b_p_ts);
+  return get_indent_str(ml_get_buf(buf, lnum, false), (int)buf->b_p_ts);
 }
 
 
@@ -64,7 +64,7 @@ int get_indent_str(char_u *ptr, int ts)
 //  SIN_INSERT: insert the indent in front of the line.
 //  SIN_UNDO:   save line for undo before changing it.
 //  @param size measured in spaces
-// Returns TRUE if the line was changed.
+// Returns true if the line was changed.
 int set_indent(int size, int flags)
 {
   char_u *p;
@@ -74,10 +74,10 @@ int set_indent(int size, int flags)
   int todo;
   int ind_len;  // Measured in characters.
   int line_len;
-  int doit = FALSE;
+  int doit = false;
   int ind_done = 0;  // Measured in spaces.
   int tab_pad;
-  int retval = FALSE;
+  int retval = false;
 
   // Number of initial whitespace chars when 'et' and 'pi' are both set.
   int orig_char_len = -1;
@@ -129,7 +129,7 @@ int set_indent(int size, int flags)
       tab_pad = (int)curbuf->b_p_ts - (ind_done % (int)curbuf->b_p_ts);
 
       if ((todo >= tab_pad) && (orig_char_len == -1)) {
-        doit = TRUE;
+        doit = true;
         todo -= tab_pad;
         ind_len++;
 
@@ -140,7 +140,7 @@ int set_indent(int size, int flags)
     // Count tabs required for indent.
     while (todo >= (int)curbuf->b_p_ts) {
       if (*p != TAB) {
-        doit = TRUE;
+        doit = true;
       } else {
         p++;
       }
@@ -154,7 +154,7 @@ int set_indent(int size, int flags)
   // Count spaces required for indent.
   while (todo > 0) {
     if (*p != ' ') {
-      doit = TRUE;
+      doit = true;
     } else {
       p++;
     }
@@ -166,7 +166,7 @@ int set_indent(int size, int flags)
 
   // Return if the indent is OK already.
   if (!doit && !vim_iswhite(*p) && !(flags & SIN_INSERT)) {
-    return FALSE;
+    return false;
   }
 
   // Allocate memory for the new line.
@@ -256,7 +256,7 @@ int set_indent(int size, int flags)
 
   // Replace the line (unless undo fails).
   if (!(flags & SIN_UNDO) || (u_savesub(curwin->w_cursor.lnum) == OK)) {
-    ml_replace(curwin->w_cursor.lnum, newline, FALSE);
+    ml_replace(curwin->w_cursor.lnum, newline, false);
 
     if (flags & SIN_CHANGED) {
       changed_bytes(curwin->w_cursor.lnum, 0);
@@ -275,7 +275,7 @@ int set_indent(int size, int flags)
         saved_cursor.col = (colnr_T)(s - newline);
       }
     }
-    retval = TRUE;
+    retval = true;
   } else {
     vim_free(newline);
   }
@@ -286,7 +286,7 @@ int set_indent(int size, int flags)
 
 // Copy the indent from ptr to the current line (and fill to size).
 // Leaves the cursor on the first non-blank in the line.
-// @return TRUE if the line was changed.
+// @return true if the line was changed.
 int copy_indent(int size, char_u *src)
 {
   char_u *p = NULL;
@@ -376,11 +376,11 @@ int copy_indent(int size, char_u *src)
   memmove(p, ml_get_curline(), (size_t)line_len);
 
   // Replace the line
-  ml_replace(curwin->w_cursor.lnum, line, FALSE);
+  ml_replace(curwin->w_cursor.lnum, line, false);
 
   // Put the cursor after the indent.
   curwin->w_cursor.col = ind_len;
-  return TRUE;
+  return true;
 }
 
 
@@ -401,12 +401,12 @@ int get_number_indent(linenr_T lnum)
 
   // In format_lines() (i.e. not insert mode), fo+=q is needed too...
   if ((State & INSERT) || has_format_option(FO_Q_COMS)) {
-    lead_len = get_leader_len(ml_get(lnum), NULL, FALSE, TRUE);
+    lead_len = get_leader_len(ml_get(lnum), NULL, false, true);
   }
   regmatch.regprog = vim_regcomp(curbuf->b_p_flp, RE_MAGIC);
 
   if (regmatch.regprog != NULL) {
-    regmatch.rm_ic = FALSE;
+    regmatch.rm_ic = false;
 
     // vim_regexec() expects a pointer to a line.  This lets us
     // start matching for the flp beyond any comment leader...
@@ -426,9 +426,9 @@ int get_number_indent(linenr_T lnum)
 }
 
 
-// When extra == 0: Return TRUE if the cursor is before or on the first
+// When extra == 0: Return true if the cursor is before or on the first
 // non-blank in the line.
-// When extra == 1: Return TRUE if the cursor is before the first non-blank in
+// When extra == 1: Return true if the cursor is before the first non-blank in
 // the line.
 int inindent(int extra)
 {
@@ -440,9 +440,9 @@ int inindent(int extra)
   }
 
   if (col >= curwin->w_cursor.col + extra) {
-    return TRUE;
+    return true;
   } else {
-    return FALSE;
+    return false;
   }
 }
 
@@ -500,7 +500,7 @@ int get_expr_indent(void)
 // code in lisp-like languages than the traditional one; it's still
 // mostly heuristics however -- Dirk van Deun, dirk@rave.org
 
-// TODO:
+// TODO(unknown):
 // Findmatch() should be adapted for lisp, also to make showmatch
 // work correctly: now (v5.3) it seems all C/C++ oriented:
 // - it does not recognize the #\( and #\) notations as character literals
@@ -637,11 +637,9 @@ int get_lisp_indent(void)
 
             if (vi_lisp || ((*that != '"') && (*that != '\'')
                 && (*that != '#') && ((*that < '0') || (*that > '9')))) {
-
               while (*that && (!vim_iswhite(*that) || quotecount || parencount)
                      && (!((*that == '(' || *that == '[')
                      && !quotecount && !parencount && vi_lisp))) {
-
                 if (*that == '"') {
                   quotecount = !quotecount;
                 }
@@ -691,8 +689,8 @@ static int lisp_match(char_u *p)
     len = (int)STRLEN(buf);
 
     if ((STRNCMP(buf, p, len) == 0) && (p[len] == ' ')) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }

@@ -11,4 +11,4 @@ int get_number_indent(linenr_T lnum);
 int inindent(int extra);
 int get_expr_indent(void);
 int get_lisp_indent(void);
-#endif
+#endif  // NEOVIM_INDENT_H

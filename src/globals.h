@@ -741,7 +741,7 @@ EXTERN int swap_exists_action INIT(= SEA_NONE);
 EXTERN int swap_exists_did_quit INIT(= FALSE);
 /* Selected "quit" at the dialog. */
 
-EXTERN char_u   *IObuff;                /* sprintf's are done in this buffer,
+EXTERN char_u   IObuff[IOSIZE];         /* sprintf's are done in this buffer,
                                            size is IOSIZE */
 EXTERN char_u   *NameBuff;              /* file names are expanded in this
                                          * buffer, size is MAXPATHL */

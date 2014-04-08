@@ -369,7 +369,6 @@ void free_all_mem(void)
 
   clear_hl_tables();
 
-  vim_free(IObuff);
   vim_free(NameBuff);
 }
 

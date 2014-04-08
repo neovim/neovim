@@ -80,7 +80,7 @@ void signal_handle(Event event)
     case SIGPWR:
       // Signal of a power failure(eg batteries low), flush the swap files to
       // be safe
-      ml_sync_all(FALSE, FALSE);
+      ml_sync_all(false, false);
       break;
 #endif
     case SIGPIPE:
@@ -136,7 +136,7 @@ static void deadly_signal(int signum)
   // Set the v:dying variable.
   set_vim_var_nr(VV_DYING, 1);
 
-  sprintf((char *)IObuff, "Vim: Caught deadly signal '%s'\n",
+  snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\n",
       signal_name(signum));
 
   // Preserve files and exit.  This sets the really_exiting flag to prevent
@@ -152,7 +152,7 @@ static void signal_cb(uv_signal_t *handle, int signum)
     }
 
     return;
-  } 
+  }
 
   Event event = {
     .type = kEventSignal,

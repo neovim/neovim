@@ -1516,7 +1516,6 @@ static void init_startuptime(mparm_T *paramp)
  */
 static void allocate_generic_buffers(void)
 {
-  IObuff = alloc(IOSIZE);
   NameBuff = alloc(MAXPATHL);
   TIME_MSG("Allocated generic buffers");
 }
