@@ -304,7 +304,7 @@ struct loop_cookie {
 };
 
 static char_u   *get_loop_line(int c, void *cookie, int indent);
-static int store_loop_line(garray_T *gap, char_u *line);
+static void store_loop_line(garray_T *gap, char_u *line);
 static void free_cmdlines(garray_T *gap);
 
 /* Struct to save a few things while debugging.  Used in do_cmdline() only. */
@@ -739,10 +739,7 @@ int flags;
      */
     if (current_line == lines_ga.ga_len
         && (cstack.cs_looplevel || has_loop_cmd(next_cmdline))) {
-      if (store_loop_line(&lines_ga, next_cmdline) == FAIL) {
-        retval = FAIL;
-        break;
-      }
+      store_loop_line(&lines_ga, next_cmdline);
     }
     did_endif = FALSE;
 
@@ -1161,8 +1158,10 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
       line = getcmdline(c, 0L, indent);
     else
       line = cp->getline(c, cp->cookie, indent);
-    if (line != NULL && store_loop_line(cp->lines_gap, line) == OK)
+    if (line != NULL) {
+      store_loop_line(cp->lines_gap, line);
       ++cp->current_line;
+    }
 
     return line;
   }
@@ -1177,13 +1176,12 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
 /*
  * Store a line in "gap" so that a ":while" loop can execute it again.
  */
-static int store_loop_line(garray_T *gap, char_u *line)
+static void store_loop_line(garray_T *gap, char_u *line)
 {
   ga_grow(gap, 1);
   ((wcmd_T *)(gap->ga_data))[gap->ga_len].line = vim_strsave(line);
   ((wcmd_T *)(gap->ga_data))[gap->ga_len].lnum = sourcing_lnum;
   ++gap->ga_len;
-  return OK;
 }
 
 /*
