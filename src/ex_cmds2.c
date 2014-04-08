@@ -1539,7 +1539,7 @@ static char_u *do_one_arg(char_u *str)
  * Separate the arguments in "str" and return a list of pointers in the
  * growarray "gap".
  */
-int get_arglist(garray_T *gap, char_u *str)
+void get_arglist(garray_T *gap, char_u *str)
 {
   ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
@@ -1549,7 +1549,6 @@ int get_arglist(garray_T *gap, char_u *str)
     /* Isolate one argument, change it in-place, put a NUL after it. */
     str = do_one_arg(str);
   }
-  return OK;
 }
 
 /*
@@ -1562,8 +1561,8 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, int wig)
   garray_T ga;
   int i;
 
-  if (get_arglist(&ga, str) == FAIL)
-    return FAIL;
+  get_arglist(&ga, str);
+
   if (wig == TRUE)
     i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
         fcountp, fnamesp, EW_FILE|EW_NOTFOUND);
@@ -1600,8 +1599,7 @@ do_arglist (
   /*
    * Collect all file name arguments in "new_ga".
    */
-  if (get_arglist(&new_ga, str) == FAIL)
-    return FAIL;
+  get_arglist(&new_ga, str);
 
   if (what == AL_DEL) {
     regmatch_T regmatch;
@@ -1934,7 +1932,6 @@ void ex_argedit(exarg_T *eap)
       return;
     i = alist_add_list(1, &s,
         eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1);
-
     curwin->w_arg_idx = i;
   }
 
