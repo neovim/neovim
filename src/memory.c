@@ -73,22 +73,6 @@ char_u *alloc_clear(unsigned size)
 }
 
 /*
- * alloc() with check for maximum line length
- */
-char_u *alloc_check(unsigned size)
-{
-#if !defined(UNIX) && !defined(__EMX__)
-  if (sizeof(int) == 2 && size > 0x7fff) {
-    /* Don't hide this message */
-    emsg_silent = 0;
-    EMSG(_("E340: Line is becoming too long"));
-    return NULL;
-  }
-#endif
-  return lalloc((long_u)size, TRUE);
-}
-
-/*
  * Allocate memory like lalloc() and set all bytes to zero.
  */
 char_u *lalloc_clear(long_u size, int message)
