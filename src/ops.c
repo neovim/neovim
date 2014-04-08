@@ -383,9 +383,7 @@ static void shift_block(oparg_T *oap, int amount)
     /* if we're splitting a TAB, allow for it */
     bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
     len = (int)STRLEN(bd.textstart) + 1;
-    newp = alloc_check((unsigned)(bd.textcol + i + j + len));
-    if (newp == NULL)
-      return;
+    newp = (char_u *) xmalloc((size_t)(bd.textcol + i + j + len));
     memset(newp, NUL, (size_t)(bd.textcol + i + j + len));
     memmove(newp, oldp, (size_t)bd.textcol);
     copy_chars(newp + bd.textcol, (size_t)i, TAB);
@@ -469,9 +467,7 @@ static void shift_block(oparg_T *oap, int amount)
                    + fill
                    + (unsigned)STRLEN(non_white) + 1;
 
-    newp = alloc_check(new_line_len);
-    if (newp == NULL)
-      return;
+    newp = (char_u *) xmalloc((size_t)(new_line_len));
     memmove(newp, oldp, (size_t)(verbatim_copy_end - oldp));
     copy_spaces(newp + (verbatim_copy_end - oldp), (size_t)fill);
     STRMOVE(newp + (verbatim_copy_end - oldp) + fill, non_white);
@@ -531,9 +527,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       }
     }
 
-    newp = alloc_check((unsigned)(STRLEN(oldp)) + s_len + count + 1);
-    if (newp == NULL)
-      continue;
+    newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + s_len + count + 1));
 
     /* copy up to shifted part */
     memmove(newp, oldp, (size_t)(offset));
@@ -1496,9 +1490,7 @@ int op_delete(oparg_T *oap)
        */
       n = bd.textlen - bd.startspaces - bd.endspaces;
       oldp = ml_get(lnum);
-      newp = alloc_check((unsigned)STRLEN(oldp) + 1 - n);
-      if (newp == NULL)
-        continue;
+      newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + 1 - n));
       /* copy up to deleted part */
       memmove(newp, oldp, (size_t)bd.textcol);
       /* insert spaces */
@@ -1778,9 +1770,7 @@ int op_replace(oparg_T *oap, int c)
 
       oldp = ml_get_curline();
       oldlen = STRLEN(oldp);
-      newp = alloc_check((unsigned)oldlen + 1 + n);
-      if (newp == NULL)
-        continue;
+      newp = (char_u *) xmalloc((size_t)(oldlen + 1 + n));
       memset(newp, NUL, (size_t)(oldlen + 1 + n));
       /* copy up to deleted part */
       memmove(newp, oldp, (size_t)bd.textcol);
@@ -1804,10 +1794,8 @@ int op_replace(oparg_T *oap, int c)
         }
       } else {
         /* Replacing with \r or \n means splitting the line. */
-        after_p = alloc_check(
-            (unsigned)(oldlen + 1 + n - STRLEN(newp)));
-        if (after_p != NULL)
-          STRMOVE(after_p, oldp);
+        after_p = (char_u *) xmalloc((size_t)(oldlen + 1 + n - STRLEN(newp)));
+        STRMOVE(after_p, oldp);
       }
       /* replace the line */
       ml_replace(curwin->w_cursor.lnum, newp, FALSE);
@@ -2279,43 +2267,37 @@ int op_change(oparg_T *oap)
     if (ins_len > 0) {
       /* Subsequent calls to ml_get() flush the firstline data - take a
        * copy of the inserted text.  */
-      if ((ins_text = alloc_check((unsigned)(ins_len + 1))) != NULL) {
-        vim_strncpy(ins_text, firstline + bd.textcol, (size_t)ins_len);
-        for (linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
-             linenr++) {
-          block_prep(oap, &bd, linenr, TRUE);
-          if (!bd.is_short || virtual_op) {
-            pos_T vpos;
+      ins_text = (char_u *) xmalloc((size_t)(ins_len + 1));
+      vim_strncpy(ins_text, firstline + bd.textcol, (size_t)ins_len);
+      for (linenr = oap->start.lnum + 1; linenr <= oap->end.lnum;
+           linenr++) {
+        block_prep(oap, &bd, linenr, TRUE);
+        if (!bd.is_short || virtual_op) {
+          pos_T vpos;
 
-            /* If the block starts in virtual space, count the
-             * initial coladd offset as part of "startspaces" */
-            if (bd.is_short) {
-              vpos.lnum = linenr;
-              (void)getvpos(&vpos, oap->start_vcol);
-            } else
-              vpos.coladd = 0;
-            oldp = ml_get(linenr);
-            newp = alloc_check((unsigned)(STRLEN(oldp)
-                                          + vpos.coladd
-                                          + ins_len + 1));
-            if (newp == NULL)
-              continue;
-            /* copy up to block start */
-            memmove(newp, oldp, (size_t)bd.textcol);
-            offset = bd.textcol;
-            copy_spaces(newp + offset, (size_t)vpos.coladd);
-            offset += vpos.coladd;
-            memmove(newp + offset, ins_text, (size_t)ins_len);
-            offset += ins_len;
-            oldp += bd.textcol;
-            STRMOVE(newp + offset, oldp);
-            ml_replace(linenr, newp, FALSE);
-          }
+          /* If the block starts in virtual space, count the
+           * initial coladd offset as part of "startspaces" */
+          if (bd.is_short) {
+            vpos.lnum = linenr;
+            (void)getvpos(&vpos, oap->start_vcol);
+          } else
+            vpos.coladd = 0;
+          oldp = ml_get(linenr);
+          newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + vpos.coladd + ins_len + 1));
+          /* copy up to block start */
+          memmove(newp, oldp, (size_t)bd.textcol);
+          offset = bd.textcol;
+          copy_spaces(newp + offset, (size_t)vpos.coladd);
+          offset += vpos.coladd;
+          memmove(newp + offset, ins_text, (size_t)ins_len);
+          offset += ins_len;
+          oldp += bd.textcol;
+          STRMOVE(newp + offset, oldp);
+          ml_replace(linenr, newp, FALSE);
         }
-        check_cursor();
-
-        changed_lines(oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L);
       }
+      check_cursor();
+      changed_lines(oap->start.lnum + 1, 0, oap->end.lnum + 1, 0L);
       vim_free(ins_text);
     }
   }
@@ -2920,9 +2902,7 @@ do_put (
 
       /* insert the new text */
       totlen = count * (yanklen + spaces) + bd.startspaces + bd.endspaces;
-      newp = alloc_check((unsigned)totlen + oldlen + 1);
-      if (newp == NULL)
-        break;
+      newp = (char_u *) xmalloc((size_t)(totlen + oldlen + 1));
       /* copy part up to cursor to new line */
       ptr = newp;
       memmove(ptr, oldp, (size_t)bd.textcol);
@@ -3018,9 +2998,7 @@ do_put (
         totlen = count * yanklen;
         if (totlen > 0) {
           oldp = ml_get(lnum);
-          newp = alloc_check((unsigned)(STRLEN(oldp) + totlen + 1));
-          if (newp == NULL)
-            goto end;                   /* alloc() gave an error message */
+          newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + totlen + 1));
           memmove(newp, oldp, (size_t)col);
           ptr = newp + col;
           for (i = 0; i < count; ++i) {
@@ -3063,9 +3041,7 @@ do_put (
           lnum = new_cursor.lnum;
           ptr = ml_get(lnum) + col;
           totlen = (int)STRLEN(y_array[y_size - 1]);
-          newp = alloc_check((unsigned)(STRLEN(ptr) + totlen + 1));
-          if (newp == NULL)
-            goto error;
+          newp = (char_u *) xmalloc((size_t)(STRLEN(ptr) + totlen + 1));
           STRCPY(newp, y_array[y_size - 1]);
           STRCAT(newp, ptr);
           /* insert second line */
@@ -3073,9 +3049,7 @@ do_put (
           vim_free(newp);
 
           oldp = ml_get(lnum);
-          newp = alloc_check((unsigned)(col + yanklen + 1));
-          if (newp == NULL)
-            goto error;
+          newp = (char_u *) xmalloc((size_t)(col + yanklen + 1));
           /* copy first part of line */
           memmove(newp, oldp, (size_t)col);
           /* append to first line */
@@ -3569,7 +3543,7 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
   col = sumsize - currsize - spaces[count - 1];
 
   /* allocate the space for the new line */
-  newp = alloc_check((unsigned)(sumsize + 1));
+  newp = (char_u *) xmalloc((size_t)(sumsize + 1));
   cend = newp + sumsize;
   *cend = 0;
 
