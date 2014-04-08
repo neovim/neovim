@@ -239,7 +239,7 @@ void mf_close(memfile_T *mfp, int del_file)
       EMSG(_(e_swapclose));
   }
   if (del_file && mfp->mf_fname != NULL)
-    mch_remove(mfp->mf_fname);
+    os_remove((char *)mfp->mf_fname);
   /* free entries in used list */
   for (hp = mfp->mf_used_first; hp != NULL; hp = nextp) {
     total_mem_used -= hp->bh_page_count * mfp->mf_page_size;
@@ -285,7 +285,7 @@ mf_close_file (
   mfp->mf_fd = -1;
 
   if (mfp->mf_fname != NULL) {
-    mch_remove(mfp->mf_fname);                  /* delete the swap file */
+    os_remove((char *)mfp->mf_fname);  // delete the swap file
     vim_free(mfp->mf_fname);
     vim_free(mfp->mf_ffname);
     mfp->mf_fname = NULL;

@@ -3535,7 +3535,7 @@ get_cmd_output (
   buffer = alloc(len + 1);
   i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
   fclose(fd);
-  mch_remove(tempname);
+  os_remove((char *)tempname);
   if (buffer == NULL)
     goto done;
   if (i != len) {

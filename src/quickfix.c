@@ -2509,7 +2509,7 @@ void ex_make(exarg_T *eap)
   fname = get_mef_name();
   if (fname == NULL)
     return;
-  mch_remove(fname);        /* in case it's not unique */
+  os_remove((char *)fname);  // in case it's not unique
 
   /*
    * If 'shellpipe' empty: don't redirect to 'errorfile'.
@@ -2554,7 +2554,7 @@ void ex_make(exarg_T *eap)
   if (res > 0 && !eap->forceit)
     qf_jump(qi, 0, 0, FALSE);                   /* display first error */
 
-  mch_remove(fname);
+  os_remove((char *)fname);
   vim_free(fname);
   vim_free(cmd);
 }

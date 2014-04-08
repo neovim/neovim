@@ -1256,7 +1256,7 @@ int flags;                      /* EW_* flags */
   vim_free(command);
 
   if (i != 0) {                         /* mch_call_shell() failed */
-    mch_remove(tempname);
+    os_remove((char *)tempname);
     vim_free(tempname);
     /*
      * With interactive completion, the error message is not printed.
@@ -1296,7 +1296,7 @@ int flags;                      /* EW_* flags */
   buffer = alloc(len + 1);
   i = fread((char *)buffer, 1, len, fd);
   fclose(fd);
-  mch_remove(tempname);
+  os_remove((char *)tempname);
   if (i != (int)len) {
     /* unexpected read error */
     EMSG2(_(e_notread), tempname);
