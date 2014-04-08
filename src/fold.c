@@ -1891,7 +1891,7 @@ static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
                                       linenr_T startlnum, fline_T *flp,
                                       void (*getlevel)(fline_T *), linenr_T bot,
                                       int topflags);
-static int foldInsert(garray_T *gap, int i);
+static void foldInsert(garray_T *gap, int i);
 static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot);
 static void foldRemove(garray_T *gap, linenr_T top, linenr_T bot);
 static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2);
@@ -2324,8 +2324,7 @@ int topflags;                   /* flags used by containing fold */
           /* Insert new fold.  Careful: ga_data may be NULL and it
            * may change! */
           i = (int)(fp - (fold_T *)gap->ga_data);
-          if (foldInsert(gap, i) != OK)
-            return bot;
+          foldInsert(gap, i);
           fp = (fold_T *)gap->ga_data + i;
           /* The new fold continues until bot, unless we find the
            * end earlier. */
@@ -2508,9 +2507,8 @@ int topflags;                   /* flags used by containing fold */
 /* foldInsert() {{{2 */
 /*
  * Insert a new fold in "gap" at position "i".
- * Returns OK for success, FAIL for failure.
  */
-static int foldInsert(garray_T *gap, int i)
+static void foldInsert(garray_T *gap, int i)
 {
   fold_T      *fp;
 
@@ -2521,7 +2519,6 @@ static int foldInsert(garray_T *gap, int i)
     memmove(fp + 1, fp, sizeof(fold_T) * (gap->ga_len - i));
   ++gap->ga_len;
   ga_init(&fp->fd_nested, (int)sizeof(fold_T), 10);
-  return OK;
 }
 
 /* foldSplit() {{{2 */
@@ -2542,8 +2539,8 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
   int len;
 
   /* The fold continues below bot, need to split it. */
-  if (foldInsert(gap, i + 1) == FAIL)
-    return;
+  foldInsert(gap, i + 1);
+
   fp = (fold_T *)gap->ga_data + i;
   fp[1].fd_top = bot + 1;
   fp[1].fd_len = fp->fd_len - (fp[1].fd_top - fp->fd_top);
