@@ -165,8 +165,6 @@ int vim_ispathlistsep(int c)
 #endif
 }
 
-#if defined(FEAT_GUI_TABLINE) || defined(FEAT_WINDOWS) \
-  || defined(FEAT_EVAL) || defined(PROTO)
 /*
  * Shorten the path of a file from "~/foo/../.bar/fname" to "~/f/../.b/fname"
  * It's done in-place.
@@ -199,7 +197,6 @@ void shorten_dir(char_u *str)
     }
   }
 }
-#endif
 
 /*
  * Return TRUE if the directory of "fname" exists, FALSE otherwise.

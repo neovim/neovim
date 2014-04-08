@@ -3137,7 +3137,7 @@ static void switch_to_8bit(void)
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
 #endif
-#if (defined(FEAT_WINDOWS) && defined(CHECK_DOUBLE_CLICK)) || defined(PROTO)
+#if defined(CHECK_DOUBLE_CLICK) || defined(PROTO)
 /*
  * Checking for double clicks ourselves.
  * "orig_topline" is used to avoid detecting a double-click when the window

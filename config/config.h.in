@@ -176,7 +176,6 @@
 #define FEAT_WAK
 #define FEAT_WILDIGN
 #define FEAT_WILDMENU
-#define FEAT_WINDOWS
 #define FEAT_WRITEBACK
 #define FEAT_HUGE
 #define FEAT_BIG
