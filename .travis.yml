@@ -3,6 +3,7 @@ compiler:
   - clang
   - gcc
 before_install:
+  - ./scripts/clint.sh
   - sudo ./scripts/travis-setup.sh 
 script:
   - ./scripts/travis.sh
