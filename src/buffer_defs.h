@@ -492,6 +492,7 @@ struct file_buffer {
    * start and end of an operator, also used for '[ and ']
    */
   pos_T b_op_start;
+  pos_T b_op_start_orig;  // used for Insstart_orig
   pos_T b_op_end;
 
   int b_marks_read;             /* Have we read viminfo marks yet? */
