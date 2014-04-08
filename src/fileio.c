@@ -5622,7 +5622,7 @@ void vim_deltempdir(void)
       FreeWild(file_count, files);
     }
     path_tail(NameBuff)[-1] = NUL;
-    (void)mch_rmdir(NameBuff);
+    os_rmdir((char *)NameBuff);
 
     vim_free(vim_tempdir);
     vim_tempdir = NULL;

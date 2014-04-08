@@ -31,7 +31,6 @@
 #endif
 
 #define vim_mkdir(x, y) os_mkdir((char *)(x), (y))
-#define mch_rmdir(x)    os_rmdir((char *)(x))
 
 /* The number of arguments to a signal handler is configured here. */
 /* It used to be a long list of almost all systems. Any system that doesn't
