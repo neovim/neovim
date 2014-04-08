@@ -665,9 +665,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       simplify_filename(buf);
     }
 
-    if (ga_grow(gap, 1) == FAIL)
-      break;
-
+    ga_grow(gap, 1);
 
     p = vim_strsave(buf);
     if (p == NULL)
@@ -1231,8 +1229,7 @@ addfile (
     return;
 
   /* Make room for another item in the file list. */
-  if (ga_grow(gap, 1) == FAIL)
-    return;
+  ga_grow(gap, 1);
 
   p = alloc((unsigned)(STRLEN(f) + 1 + isdir));
 

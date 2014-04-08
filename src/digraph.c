@@ -1618,13 +1618,12 @@ void putdigraph(char_u *str)
 
     // Add a new digraph to the table.
     if (i == user_digraphs.ga_len) {
-      if (ga_grow(&user_digraphs, 1) == OK) {
-        dp = (digr_T *)user_digraphs.ga_data + user_digraphs.ga_len;
-        dp->char1 = char1;
-        dp->char2 = char2;
-        dp->result = n;
-        ++user_digraphs.ga_len;
-      }
+      ga_grow(&user_digraphs, 1);
+      dp = (digr_T *)user_digraphs.ga_data + user_digraphs.ga_len;
+      dp->char1 = char1;
+      dp->char2 = char2;
+      dp->result = n;
+      ++user_digraphs.ga_len;
     }
   }
 }
@@ -1809,9 +1808,8 @@ void ex_loadkeymap(exarg_T *eap)
 
     p = skipwhite(line);
 
-    if ((*p != '"')
-        && (*p != NUL)
-        && (ga_grow(&curbuf->b_kmap_ga, 1) == OK)) {
+    if ((*p != '"') && (*p != NUL)) {
+      ga_grow(&curbuf->b_kmap_ga, 1);
       kp = (kmap_T *)curbuf->b_kmap_ga.ga_data + curbuf->b_kmap_ga.ga_len;
       s = skiptowhite(p);
       kp->from = vim_strnsave(p, (int)(s - p));

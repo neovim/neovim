@@ -413,8 +413,8 @@ dbg_parsearg (
   struct debuggy *bp;
   int here = FALSE;
 
-  if (ga_grow(gap, 1) == FAIL)
-    return FAIL;
+  ga_grow(gap, 1);
+
   bp = &DEBUGGY(gap, gap->ga_len);
 
   /* Find "func" or "file". */
@@ -1543,10 +1543,7 @@ int get_arglist(garray_T *gap, char_u *str)
 {
   ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
-    if (ga_grow(gap, 1) == FAIL) {
-      ga_clear(gap);
-      return FAIL;
-    }
+    ga_grow(gap, 1);
     ((char_u **)gap->ga_data)[gap->ga_len++] = str;
 
     /* Isolate one argument, change it in-place, put a NUL after it. */
@@ -1771,15 +1768,15 @@ void ex_args(exarg_T *eap)
     /*
      * ":argslocal": make a local copy of the global argument list.
      */
-    if (ga_grow(gap, GARGCOUNT) == OK)
-      for (i = 0; i < GARGCOUNT; ++i)
-        if (GARGLIST[i].ae_fname != NULL) {
-          AARGLIST(curwin->w_alist)[gap->ga_len].ae_fname =
-            vim_strsave(GARGLIST[i].ae_fname);
-          AARGLIST(curwin->w_alist)[gap->ga_len].ae_fnum =
-            GARGLIST[i].ae_fnum;
-          ++gap->ga_len;
-        }
+    ga_grow(gap, GARGCOUNT);
+    for (i = 0; i < GARGCOUNT; ++i)
+      if (GARGLIST[i].ae_fname != NULL) {
+        AARGLIST(curwin->w_alist)[gap->ga_len].ae_fname =
+          vim_strsave(GARGLIST[i].ae_fname);
+        AARGLIST(curwin->w_alist)[gap->ga_len].ae_fnum =
+          GARGLIST[i].ae_fnum;
+        ++gap->ga_len;
+      }
   }
 }
 
@@ -2120,7 +2117,7 @@ void ex_listdo(exarg_T *eap)
  * Add files[count] to the arglist of the current window after arg "after".
  * The file names in files[count] must have been allocated and are taken over.
  * Files[] itself is not taken over.
- * Returns index of first added argument.  Returns -1 when failed (out of mem).
+ * Returns index of first added argument.
  */
 static int 
 alist_add_list (
@@ -2131,7 +2128,8 @@ alist_add_list (
 {
   int i;
 
-  if (ga_grow(&ALIST(curwin)->al_ga, count) == OK) {
+  ga_grow(&ALIST(curwin)->al_ga, count);
+  {
     if (after < 0)
       after = 0;
     if (after > ARGCOUNT)
@@ -2148,10 +2146,6 @@ alist_add_list (
       ++curwin->w_arg_idx;
     return after;
   }
-
-  for (i = 0; i < count; ++i)
-    vim_free(files[i]);
-  return -1;
 }
 
 
@@ -2661,9 +2655,7 @@ do_source (
   }
   if (current_SID == 0) {
     current_SID = ++last_current_SID;
-    if (ga_grow(&script_items, (int)(current_SID - script_items.ga_len))
-        == FAIL)
-      goto almosttheend;
+    ga_grow(&script_items, (int)(current_SID - script_items.ga_len));
     while (script_items.ga_len < current_SID) {
       ++script_items.ga_len;
       SCRIPT_ITEM(script_items.ga_len).sn_name = NULL;
@@ -2746,7 +2738,6 @@ do_source (
       && debug_break_level == ex_nesting_level)
     ++debug_break_level;
 
-almosttheend:
   current_SID = save_current_SID;
   restore_funccal(save_funccalp);
   if (do_profiling == PROF_YES)
@@ -2993,8 +2984,7 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
   sourcing_lnum++;
   for (;; ) {
     /* make room to read at least 120 (more) characters */
-    if (ga_grow(&ga, 120) == FAIL)
-      break;
+    ga_grow(&ga, 120);
     buf = (char_u *)ga.ga_data;
 
 #ifdef USE_CR
@@ -3528,8 +3518,7 @@ static char_u **find_locales(void)
   loc = (char_u *)strtok((char *)locale_a, "\n");
 
   while (loc != NULL) {
-    if (ga_grow(&locales_ga, 1) == FAIL)
-      break;
+    ga_grow(&locales_ga, 1);
     loc = vim_strsave(loc);
     if (loc == NULL)
       break;
@@ -3538,10 +3527,7 @@ static char_u **find_locales(void)
     loc = (char_u *)strtok(NULL, "\n");
   }
   vim_free(locale_a);
-  if (ga_grow(&locales_ga, 1) == FAIL) {
-    ga_clear(&locales_ga);
-    return NULL;
-  }
+  ga_grow(&locales_ga, 1);
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return (char_u **)locales_ga.ga_data;
 }

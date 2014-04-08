@@ -4285,14 +4285,11 @@ regmatch (
               break;
           if (i == backpos.ga_len) {
             /* First time at this BACK, make room to store the pos. */
-            if (ga_grow(&backpos, 1) == FAIL)
-              status = RA_FAIL;
-            else {
-              /* get "ga_data" again, it may have changed */
-              bp = (backpos_T *)backpos.ga_data;
-              bp[i].bp_scan = scan;
-              ++backpos.ga_len;
-            }
+            ga_grow(&backpos, 1);
+            /* get "ga_data" again, it may have changed */
+            bp = (backpos_T *)backpos.ga_data;
+            bp[i].bp_scan = scan;
+            ++backpos.ga_len;
           } else if (reg_save_equal(&bp[i].bp_pos))
             /* Still at same position as last time, fail. */
             status = RA_NOMATCH;
@@ -4632,9 +4629,8 @@ regmatch (
             if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
               EMSG(_(e_maxmempat));
               status = RA_FAIL;
-            } else if (ga_grow(&regstack, sizeof(regstar_T)) == FAIL)
-              status = RA_FAIL;
-            else {
+            } else {
+              ga_grow(&regstack, sizeof(regstar_T));
               regstack.ga_len += sizeof(regstar_T);
               rp = regstack_push(rst.minval <= rst.maxval
                   ? RS_STAR_LONG : RS_STAR_SHORT, scan);
@@ -4671,9 +4667,8 @@ regmatch (
           if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
             EMSG(_(e_maxmempat));
             status = RA_FAIL;
-          } else if (ga_grow(&regstack, sizeof(regbehind_T)) == FAIL)
-            status = RA_FAIL;
-          else {
+          } else {
+            ga_grow(&regstack, sizeof(regbehind_T));
             regstack.ga_len += sizeof(regbehind_T);
             rp = regstack_push(RS_BEHIND1, scan);
             if (rp == NULL)
@@ -5094,8 +5089,7 @@ static regitem_T *regstack_push(regstate_T state, char_u *scan)
     EMSG(_(e_maxmempat));
     return NULL;
   }
-  if (ga_grow(&regstack, sizeof(regitem_T)) == FAIL)
-    return NULL;
+  ga_grow(&regstack, sizeof(regitem_T));
 
   rp = (regitem_T *)((char *)regstack.ga_data + regstack.ga_len);
   rp->rs_state = state;

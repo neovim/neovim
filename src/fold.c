@@ -1,4 +1,4 @@
-/* vim:set ts=8 sts=4 sw=4:
+/* vim:set ts=2 sts=2 sw=2:
  * vim600:fdm=marker fdl=1 fdc=3:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
@@ -606,7 +606,8 @@ void foldCreate(linenr_T start, linenr_T end)
   }
 
   i = (int)(fp - (fold_T *)gap->ga_data);
-  if (ga_grow(gap, 1) == OK) {
+  ga_grow(gap, 1);
+  {
     fp = (fold_T *)gap->ga_data + i;
     ga_init(&fold_ga, (int)sizeof(fold_T), 10);
 
@@ -614,7 +615,8 @@ void foldCreate(linenr_T start, linenr_T end)
     for (cont = 0; i + cont < gap->ga_len; ++cont)
       if (fp[cont].fd_top > end_rel)
         break;
-    if (cont > 0 && ga_grow(&fold_ga, cont) == OK) {
+    if (cont > 0) {
+      ga_grow(&fold_ga, cont);
       /* If the first fold starts before the new fold, let the new fold
        * start there.  Otherwise the existing fold would change. */
       if (start_rel > fp->fd_top)
@@ -659,6 +661,7 @@ void foldCreate(linenr_T start, linenr_T end)
     changed_window_setting();
   }
 }
+
 
 /* deleteFold() {{{2 */
 /*
@@ -1001,8 +1004,6 @@ void foldAdjustCursor(void)
 /* cloneFoldGrowArray() {{{2 */
 /*
  * Will "clone" (i.e deep copy) a garray_T of folds.
- *
- * Return FAIL if the operation cannot be completed, otherwise OK.
  */
 void cloneFoldGrowArray(garray_T *from, garray_T *to)
 {
@@ -1011,8 +1012,11 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
   fold_T      *to_p;
 
   ga_init(to, from->ga_itemsize, from->ga_growsize);
-  if (from->ga_len == 0 || ga_grow(to, from->ga_len) == FAIL)
+
+  if (from->ga_len == 0)
     return;
+
+  ga_grow(to, from->ga_len);
 
   from_p = (fold_T *)from->ga_data;
   to_p = (fold_T *)to->ga_data;
@@ -1308,7 +1312,8 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
     /* Move nested folds one level up, to overwrite the fold that is
      * deleted. */
     moved = fp->fd_nested.ga_len;
-    if (ga_grow(gap, (int)(moved - 1)) == OK) {
+    ga_grow(gap, (int)(moved - 1));
+    {
       /* Get "fp" again, the array may have been reallocated. */
       fp = (fold_T *)gap->ga_data + idx;
 
@@ -2509,8 +2514,8 @@ static int foldInsert(garray_T *gap, int i)
 {
   fold_T      *fp;
 
-  if (ga_grow(gap, 1) != OK)
-    return FAIL;
+  ga_grow(gap, 1);
+
   fp = (fold_T *)gap->ga_data + i;
   if (i < gap->ga_len)
     memmove(fp + 1, fp, sizeof(fold_T) * (gap->ga_len - i));
@@ -2552,7 +2557,8 @@ static void foldSplit(garray_T *gap, int i, linenr_T top, linenr_T bot)
   gap2 = &fp[1].fd_nested;
   (void)(foldFind(gap1, bot + 1 - fp->fd_top, &fp2));
   len = (int)((fold_T *)gap1->ga_data + gap1->ga_len - fp2);
-  if (len > 0 && ga_grow(gap2, len) == OK) {
+  if (len > 0) {
+    ga_grow(gap2, len);
     for (idx = 0; idx < len; ++idx) {
       ((fold_T *)gap2->ga_data)[idx] = fp2[idx];
       ((fold_T *)gap2->ga_data)[idx].fd_top
@@ -2652,7 +2658,8 @@ static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
     foldMerge(fp3, gap2, fp4);
 
   /* Move nested folds in fp2 to the end of fp1. */
-  if (gap2->ga_len > 0 && ga_grow(gap1, gap2->ga_len) == OK) {
+  if (gap2->ga_len > 0) {
+    ga_grow(gap1, gap2->ga_len);
     for (idx = 0; idx < gap2->ga_len; ++idx) {
       ((fold_T *)gap1->ga_data)[gap1->ga_len]
         = ((fold_T *)gap2->ga_data)[idx];

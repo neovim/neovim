@@ -423,9 +423,7 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   if (buf == NULL) {
     ga_init(&ga, 1, 10);
 
-    if (ga_grow(&ga, len + 1) == FAIL) {
-      return NULL;
-    }
+    ga_grow(&ga, len + 1);
     memmove(ga.ga_data, str, (size_t)len);
     ga.ga_len = len;
   } else {
@@ -461,12 +459,14 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
           // characters forward or backward.
           if (olen != nlen) {
             if (nlen > olen) {
-              if ((buf == NULL)
-                  ? (ga_grow(&ga, nlen - olen + 1) == FAIL)
-                  : (len + nlen - olen >= buflen)) {
-                // out of memory, keep old char
-                lc = c;
-                nlen = olen;
+              if (buf == NULL) {
+                ga_grow(&ga, nlen - olen + 1);
+              } else {
+                if (len + nlen - olen >= buflen) {
+                  // out of memory, keep old char
+                  lc = c;
+                  nlen = olen;
+                }
               }
             }
 

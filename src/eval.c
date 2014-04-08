@@ -1116,11 +1116,9 @@ void var_redir_str(char_u *value, int value_len)
   else
     len = value_len;                    /* Append only "value_len" characters */
 
-  if (ga_grow(&redir_ga, len) == OK) {
-    memmove((char *)redir_ga.ga_data + redir_ga.ga_len, value, len);
-    redir_ga.ga_len += len;
-  } else
-    var_redir_stop();
+  ga_grow(&redir_ga, len);
+  memmove((char *)redir_ga.ga_data + redir_ga.ga_len, value, len);
+  redir_ga.ga_len += len;
 }
 
 /*
@@ -5834,8 +5832,7 @@ list_join_inner (
    * multiple copy operations.  Add 2 for a tailing ']' and NUL. */
   if (join_gap->ga_len >= 2)
     sumlen += (int)STRLEN(sep) * (join_gap->ga_len - 1);
-  if (ga_grow(gap, sumlen + 2) == FAIL)
-    return FAIL;
+  ga_grow(gap, sumlen + 2);
 
   for (i = 0; i < join_gap->ga_len && !got_int; ++i) {
     if (first)
@@ -10813,13 +10810,10 @@ static void f_inputrestore(typval_T *argvars, typval_T *rettv)
 static void f_inputsave(typval_T *argvars, typval_T *rettv)
 {
   /* Add an entry to the stack of typeahead storage. */
-  if (ga_grow(&ga_userinput, 1) == OK) {
-    save_typeahead((tasave_T *)(ga_userinput.ga_data)
-        + ga_userinput.ga_len);
-    ++ga_userinput.ga_len;
-    /* default return is zero == OK */
-  } else
-    rettv->vval.v_number = 1;     /* Failed */
+  ga_grow(&ga_userinput, 1);
+  save_typeahead((tasave_T *)(ga_userinput.ga_data)
+          + ga_userinput.ga_len);
+  ++ga_userinput.ga_len;
 }
 
 /*
@@ -16537,7 +16531,8 @@ void new_script_vars(scid_T id)
   hashtab_T   *ht;
   scriptvar_T *sv;
 
-  if (ga_grow(&ga_scripts, (int)(id - ga_scripts.ga_len)) == OK) {
+  ga_grow(&ga_scripts, (int)(id - ga_scripts.ga_len));
+  {
     /* Re-allocating ga_data means that an ht_array pointing to
      * ht_smallarray becomes invalid.  We can recognize this: ht_mask is
      * at its init value.  Also reset "v_dict", it's always the same. */
@@ -17148,11 +17143,7 @@ void ex_execute(exarg_T *eap)
     if (!eap->skip) {
       p = get_tv_string(&rettv);
       len = (int)STRLEN(p);
-      if (ga_grow(&ga, len + 2) == FAIL) {
-        clear_tv(&rettv);
-        ret = FAIL;
-        break;
-      }
+      ga_grow(&ga, len + 2);
       if (ga.ga_len)
         ((char_u *)(ga.ga_data))[ga.ga_len++] = ' ';
       STRCPY((char_u *)(ga.ga_data) + ga.ga_len, p);
@@ -17440,8 +17431,7 @@ void ex_function(exarg_T *eap)
           EMSG2(_("E125: Illegal argument: %s"), arg);
         break;
       }
-      if (ga_grow(&newargs, 1) == FAIL)
-        goto erret;
+      ga_grow(&newargs, 1);
       c = *p;
       *p = NUL;
       arg = vim_strsave(arg);
@@ -17631,11 +17621,7 @@ void ex_function(exarg_T *eap)
     }
 
     /* Add the line to the function. */
-    if (ga_grow(&newlines, 1 + sourcing_lnum_off) == FAIL) {
-      if (line_arg == NULL)
-        vim_free(theline);
-      goto erret;
-    }
+    ga_grow(&newlines, 1 + sourcing_lnum_off);
 
     /* Copy the line to newly allocated memory.  get_one_sourceline()
      * allocates 250 bytes per line, this saves 80% on average.  The cost
@@ -18320,7 +18306,8 @@ script_autoload (
     ret = FALSE;            /* was loaded already */
   else {
     /* Remember the name if it wasn't loaded already. */
-    if (i == ga_loaded.ga_len && ga_grow(&ga_loaded, 1) == OK) {
+    if (i == ga_loaded.ga_len) {
+      ga_grow(&ga_loaded, 1);
       ((char_u **)ga_loaded.ga_data)[ga_loaded.ga_len++] = scriptname;
       tofree = NULL;
     }
@@ -19715,12 +19702,8 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
        * - The text after the match.
        */
       sublen = vim_regsub(&regmatch, sub, tail, FALSE, TRUE, FALSE);
-      if (ga_grow(&ga, (int)(STRLEN(tail) + sublen -
-                             (regmatch.endp[0] - regmatch.startp[0]))) ==
-          FAIL) {
-        ga_clear(&ga);
-        break;
-      }
+      ga_grow(&ga, (int)(STRLEN(tail) + sublen -
+                     (regmatch.endp[0] - regmatch.startp[0])));
 
       /* copy the text up to where the match is */
       i = (int)(regmatch.startp[0] - tail);

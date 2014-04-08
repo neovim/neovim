@@ -1512,26 +1512,25 @@ void ex_menutranslate(exarg_T *eap)
     if (arg == to)
       EMSG(_(e_invarg));
     else {
-      if (ga_grow(&menutrans_ga, 1) == OK) {
-        tp = (menutrans_T *)menutrans_ga.ga_data;
-        from = vim_strsave(from);
-        if (from != NULL) {
-          from_noamp = menu_text(from, NULL, NULL);
-          to = vim_strnsave(to, (int)(arg - to));
-          if (from_noamp != NULL && to != NULL) {
-            menu_translate_tab_and_shift(from);
-            menu_translate_tab_and_shift(to);
-            menu_unescape_name(from);
-            menu_unescape_name(to);
-            tp[menutrans_ga.ga_len].from = from;
-            tp[menutrans_ga.ga_len].from_noamp = from_noamp;
-            tp[menutrans_ga.ga_len].to = to;
-            ++menutrans_ga.ga_len;
-          } else {
-            vim_free(from);
-            vim_free(from_noamp);
-            vim_free(to);
-          }
+      ga_grow(&menutrans_ga, 1);
+      tp = (menutrans_T *)menutrans_ga.ga_data;
+      from = vim_strsave(from);
+      if (from != NULL) {
+        from_noamp = menu_text(from, NULL, NULL);
+        to = vim_strnsave(to, (int)(arg - to));
+        if (from_noamp != NULL && to != NULL) {
+          menu_translate_tab_and_shift(from);
+          menu_translate_tab_and_shift(to);
+          menu_unescape_name(from);
+          menu_unescape_name(to);
+          tp[menutrans_ga.ga_len].from = from;
+          tp[menutrans_ga.ga_len].from_noamp = from_noamp;
+          tp[menutrans_ga.ga_len].to = to;
+          ++menutrans_ga.ga_len;
+        } else {
+          vim_free(from);
+          vim_free(from_noamp);
+          vim_free(to);
         }
       }
     }
