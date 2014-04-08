@@ -386,7 +386,7 @@ static short *copy_id_list(short *list);
 static int in_id_list(stateitem_T *item, short *cont_list,
                       struct sp_syn *ssp,
                       int contained);
-static int push_current_state(int idx);
+static void push_current_state(int idx);
 static void pop_current_state(void);
 static void syn_clear_time(syn_time_T *tt);
 static void syntime_clear(void);
@@ -763,8 +763,8 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
             == syn_block->b_syn_sync_id
             && SYN_ITEMS(syn_block)[idx].sp_type == SPTYPE_START) {
           validate_current_state();
-          if (push_current_state(idx) == OK)
-            update_si_attr(current_state.ga_len - 1);
+          push_current_state(idx);
+          update_si_attr(current_state.ga_len - 1);
           break;
         }
     }
@@ -878,9 +878,10 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
          * state stack empty.
          */
         clear_current_state();
-        if (found_match_idx >= 0
-            && push_current_state(found_match_idx) == OK)
+        if (found_match_idx >= 0) {
+          push_current_state(found_match_idx);
           update_si_attr(current_state.ga_len - 1);
+        }
 
         /*
          * When using "grouphere", continue from the sync point
@@ -1818,7 +1819,8 @@ syn_current_attr (
               &endcol, &flags, &next_list, cur_si,
               &cchar);
           if (syn_id != 0) {
-            if (push_current_state(KEYWORD_IDX) == OK) {
+            push_current_state(KEYWORD_IDX);
+            {
               cur_si = &CUR_STATE(current_state.ga_len - 1);
               cur_si->si_m_startcol = current_col;
               cur_si->si_h_startpos.lnum = current_lnum;
@@ -1853,8 +1855,7 @@ syn_current_attr (
               cur_si->si_cont_list = NULL;
               cur_si->si_next_list = next_list;
               check_keepend();
-            } else
-              vim_free(next_list);
+            }
           }
         }
       }
@@ -2250,7 +2251,8 @@ static stateitem_T *push_next_match(stateitem_T *cur_si)
   /*
    * Push the item in current_state stack;
    */
-  if (push_current_state(next_match_idx) == OK) {
+  push_current_state(next_match_idx);
+  {
     /*
      * If it's a start-skip-end type that crosses lines, figure out how
      * much it continues in this line.  Otherwise just fill in the length.
@@ -2289,9 +2291,8 @@ static stateitem_T *push_next_match(stateitem_T *cur_si)
      * If the start pattern has another highlight group, push another item
      * on the stack for the start pattern.
      */
-    if (       spp->sp_type == SPTYPE_START
-               && spp->sp_syn_match_id != 0
-               && push_current_state(next_match_idx) == OK) {
+    if (spp->sp_type == SPTYPE_START && spp->sp_syn_match_id != 0) {
+      push_current_state(next_match_idx);
       cur_si = &CUR_STATE(current_state.ga_len - 1);
       cur_si->si_h_startpos = next_match_h_startpos;
       cur_si->si_m_startcol = current_col;
@@ -2577,15 +2578,13 @@ update_si_end (
 /*
  * Add a new state to the current state stack.
  * It is cleared and the index set to "idx".
- * Return FAIL if it's not possible (out of memory).
  */
-static int push_current_state(int idx)
+static void push_current_state(int idx)
 {
   ga_grow(&current_state, 1);
   memset(&CUR_STATE(current_state.ga_len), 0, sizeof(stateitem_T));
   CUR_STATE(current_state.ga_len).si_idx = idx;
   ++current_state.ga_len;
-  return OK;
 }
 
 /*
