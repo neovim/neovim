@@ -172,7 +172,7 @@ describe 'fs function', ->
       it 'returns -1 when the given file does not exist', ->
         eq -1, (os_getperm 'non-existing-file')
 
-      it 'returns a perm > 0 when given an existing file', -> 
+      it 'returns a perm > 0 when given an existing file', ->
         assert.is_true (os_getperm 'unit-test-directory') > 0
 
       it 'returns S_IRUSR when the file is readable', ->

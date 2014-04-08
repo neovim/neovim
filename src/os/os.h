@@ -21,6 +21,16 @@ int os_dirname(char_u *buf, size_t len);
 /// @return `true` if `fname` is a directory.
 bool os_isdir(const char_u *name);
 
+/// Check if the given path represents an executable file.
+///
+/// @return `true` if `name` is executable and
+///   - can be found in $PATH,
+///   - is relative to current dir or
+///   - is absolute.
+///
+/// @return `false` otherwise.
+bool os_can_exe(const char_u *name);
+
 /// Get the file permissions for a given file.
 ///
 /// @return `-1` when `name` doesn't exist.
