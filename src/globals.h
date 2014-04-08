@@ -585,6 +585,12 @@ EXTERN pos_T saved_cursor               /* w_cursor before formatting text. */
  */
 EXTERN pos_T Insstart;                  /* This is where the latest
                                          * insert/append mode started. */
+
+// This is where the latest insert/append mode started. In contrast to
+// Insstart, this won't be reset by certain keys and is needed for
+// op_insert(), to detect correctly where inserting by the user started.
+EXTERN pos_T Insstart_orig;
+
 /*
  * Stuff for VREPLACE mode.
  */
