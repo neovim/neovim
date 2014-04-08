@@ -3861,10 +3861,6 @@ void do_sub(exarg_T *eap)
 
         if (sub_firstline == NULL) {
           sub_firstline = vim_strsave(ml_get(sub_firstlnum));
-          if (sub_firstline == NULL) {
-            vim_free(new_start);
-            goto outofmem;
-          }
         }
 
         /* Save the line number of the last change for the final
@@ -4154,8 +4150,7 @@ void do_sub(exarg_T *eap)
            * too many calls to alloc()/free()).
            */
           new_start_len = needed_len + 50;
-          if ((new_start = alloc_check(new_start_len)) == NULL)
-            goto outofmem;
+          new_start = (char_u *)xmalloc((size_t)new_start_len);
           *new_start = NUL;
           new_end = new_start;
         } else {
@@ -4168,10 +4163,7 @@ void do_sub(exarg_T *eap)
           needed_len += len;
           if (needed_len > (int)new_start_len) {
             new_start_len = needed_len + 50;
-            if ((p1 = alloc_check(new_start_len)) == NULL) {
-              vim_free(new_start);
-              goto outofmem;
-            }
+            p1 = (char_u *) xmalloc((size_t)new_start_len);
             memmove(p1, new_start, (size_t)(len + 1));
             vim_free(new_start);
             new_start = p1;
@@ -4388,7 +4380,6 @@ skip:
     changed_lines(first_line, 0, last_line - i, i);
   }
 
-outofmem:
   vim_free(sub_firstline);   /* may have to free allocated copy of the line */
 
   /* ":s/pat//n" doesn't move the cursor */
