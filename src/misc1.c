@@ -1510,9 +1510,7 @@ void ins_char_bytes(char_u *buf, int charlen)
     }
   }
 
-  newp = alloc_check((unsigned)(linelen + newlen - oldlen));
-  if (newp == NULL)
-    return;
+  newp = (char_u *) xmalloc((size_t)(linelen + newlen - oldlen));
 
   /* Copy bytes before the cursor. */
   if (col > 0)
@@ -1580,9 +1578,7 @@ void ins_str(char_u *s)
   oldp = ml_get(lnum);
   oldlen = (int)STRLEN(oldp);
 
-  newp = alloc_check((unsigned)(oldlen + newlen + 1));
-  if (newp == NULL)
-    return;
+  newp = (char_u *) xmalloc((size_t)(oldlen + newlen + 1));
   if (col > 0)
     memmove(newp, oldp, (size_t)col);
   memmove(newp + col, s, (size_t)newlen);
