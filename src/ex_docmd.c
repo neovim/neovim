@@ -1,4 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
+/* vi:set ts=2 sts=2 sw=2:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -1179,8 +1179,7 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
  */
 static int store_loop_line(garray_T *gap, char_u *line)
 {
-  if (ga_grow(gap, 1) == FAIL)
-    return FAIL;
+  ga_grow(gap, 1);
   ((wcmd_T *)(gap->ga_data))[gap->ga_len].line = vim_strsave(line);
   ((wcmd_T *)(gap->ga_data))[gap->ga_len].lnum = sourcing_lnum;
   ++gap->ga_len;
@@ -4361,8 +4360,8 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
 
   /* Extend the array unless we're replacing an existing command */
   if (cmp != 0) {
-    if (ga_grow(gap, 1) != OK)
-      goto fail;
+    ga_grow(gap, 1);
+
     if ((p = vim_strnsave(name, (int)name_len)) == NULL)
       goto fail;
 
@@ -5868,7 +5867,8 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
   int i;
 
   alist_clear(al);
-  if (ga_grow(&al->al_ga, count) == OK) {
+  ga_grow(&al->al_ga, count);
+  {
     for (i = 0; i < count; ++i) {
       if (got_int) {
         /* When adding many buffers this can take a long time.  Allow
@@ -5887,8 +5887,8 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
       ui_breakcheck();
     }
     vim_free(files);
-  } else
-    FreeWild(count, files);
+  }
+
   if (al == &global_alist)
     arg_had_last = FALSE;
 }

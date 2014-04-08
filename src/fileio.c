@@ -1,4 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
+/* vi:set ts=2 sts=2 sw=2:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -6216,8 +6216,9 @@ static int au_new_group(char_u *name)
     for (i = 0; i < augroups.ga_len; ++i)
       if (AUGROUP_NAME(i) == NULL)
         break;
-    if (i == augroups.ga_len && ga_grow(&augroups, 1) == FAIL)
-      return AUGROUP_ERROR;
+    if (i == augroups.ga_len) {
+      ga_grow(&augroups, 1);
+    }
 
     AUGROUP_NAME(i) = vim_strsave(name);
     if (AUGROUP_NAME(i) == NULL)

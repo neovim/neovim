@@ -1,4 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
+/* vi:set ts=2 sts=2 sw=2:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -2899,8 +2899,7 @@ static int read_rep_section(FILE *fd, garray_T *gap, short *first)
   if (cnt < 0)
     return SP_TRUNCERROR;
 
-  if (ga_grow(gap, cnt) == FAIL)
-    return SP_OTHERERROR;
+  ga_grow(gap, cnt);
 
   /* <rep> : <repfromlen> <repfrom> <reptolen> <repto> */
   for (; gap->ga_len < cnt; ++gap->ga_len) {
@@ -2960,8 +2959,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
 
   gap = &slang->sl_sal;
   ga_init(gap, sizeof(salitem_T), 10);
-  if (ga_grow(gap, cnt + 1) == FAIL)
-    return SP_OTHERERROR;
+  ga_grow(gap, cnt + 1);
 
   /* <sal> : <salfromlen> <salfrom> <saltolen> <salto> */
   for (; gap->ga_len < cnt; ++gap->ga_len) {
@@ -3259,15 +3257,15 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
     c = get2c(fd);                                      /* <comppatcount> */
     todo -= 2;
     ga_init(gap, sizeof(char_u *), c);
-    if (ga_grow(gap, c) == OK)
-      while (--c >= 0) {
-        ((char_u **)(gap->ga_data))[gap->ga_len++] =
-          read_cnt_string(fd, 1, &cnt);
-        /* <comppatlen> <comppattext> */
-        if (cnt < 0)
-          return cnt;
-        todo -= cnt + 1;
-      }
+    ga_grow(gap, c);
+    while (--c >= 0) {
+      ((char_u **)(gap->ga_data))[gap->ga_len++] =
+        read_cnt_string(fd, 1, &cnt);
+      /* <comppatlen> <comppattext> */
+      if (cnt < 0)
+        return cnt;
+      todo -= cnt + 1;
+    }
   }
   if (todo < 0)
     return SP_FORMERROR;
@@ -3419,8 +3417,7 @@ static int init_syl_tab(slang_T *slang)
       l = (int)(p - s);
     if (l >= SY_MAXLEN)
       return SP_FORMERROR;
-    if (ga_grow(&slang->sl_syl_items, 1) == FAIL)
-      return SP_OTHERERROR;
+    ga_grow(&slang->sl_syl_items, 1);
     syl = ((syl_item_T *)slang->sl_syl_items.ga_data)
           + slang->sl_syl_items.ga_len++;
     vim_strncpy(syl->sy_chars, s, l);
@@ -3502,8 +3499,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
      * sl_sal_first[] is used for latin1 "from" characters. */
     gap = &lp->sl_sal;
     ga_init(gap, sizeof(int *), 1);
-    if (ga_grow(gap, 256) == FAIL)
-      return SP_OTHERERROR;
+    ga_grow(gap, 256);
     memset(gap->ga_data, 0, sizeof(int *) * 256);
     gap->ga_len = 256;
 
@@ -3929,11 +3925,7 @@ char_u *did_set_spelllang(win_T *wp)
         }
 
         if (region_mask != 0) {
-          if (ga_grow(&ga, 1) == FAIL) {
-            ga_clear(&ga);
-            ret_msg = e_outofmem;
-            goto theend;
-          }
+          ga_grow(&ga, 1);
           LANGP_ENTRY(ga, ga.ga_len)->lp_slang = slang;
           LANGP_ENTRY(ga, ga.ga_len)->lp_region = region_mask;
           ++ga.ga_len;
@@ -3993,7 +3985,8 @@ char_u *did_set_spelllang(win_T *wp)
       if (slang != NULL && nobreak)
         slang->sl_nobreak = TRUE;
     }
-    if (slang != NULL && ga_grow(&ga, 1) == OK) {
+    if (slang != NULL) {
+      ga_grow(&ga, 1);
       region_mask = REGION_ALL;
       if (use_region != NULL && !dont_use_region) {
         /* find region in sl_regions */
@@ -5014,7 +5007,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
               && STRCMP(((char_u **)(gap->ga_data))[i + 1],
                   items[2]) == 0)
             break;
-        if (i >= gap->ga_len && ga_grow(gap, 2) == OK) {
+        if (i >= gap->ga_len) {
+          ga_grow(gap, 2);
           ((char_u **)(gap->ga_data))[gap->ga_len++]
             = getroom_save(spin, items[1]);
           ((char_u **)(gap->ga_data))[gap->ga_len++]
@@ -5245,7 +5239,8 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                 if (str_equal(p, aff_entry->ae_cond))
                   break;
               }
-              if (idx < 0 && ga_grow(&spin->si_prefcond, 1) == OK) {
+              if (idx < 0) {
+                ga_grow(&spin->si_prefcond, 1);
                 /* Not found, add a new condition. */
                 idx = spin->si_prefcond.ga_len++;
                 pp = ((char_u **)spin->si_prefcond.ga_data)
@@ -5753,14 +5748,13 @@ static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from, char_u *t
   fromto_T    *ftp;
   char_u word[MAXWLEN];
 
-  if (ga_grow(gap, 1) == OK) {
-    ftp = ((fromto_T *)gap->ga_data) + gap->ga_len;
-    (void)spell_casefold(from, (int)STRLEN(from), word, MAXWLEN);
-    ftp->ft_from = getroom_save(spin, word);
-    (void)spell_casefold(to, (int)STRLEN(to), word, MAXWLEN);
-    ftp->ft_to = getroom_save(spin, word);
-    ++gap->ga_len;
-  }
+  ga_grow(gap, 1);
+  ftp = ((fromto_T *)gap->ga_data) + gap->ga_len;
+  (void)spell_casefold(from, (int)STRLEN(from), word, MAXWLEN);
+  ftp->ft_from = getroom_save(spin, word);
+  (void)spell_casefold(to, (int)STRLEN(to), word, MAXWLEN);
+  ftp->ft_to = getroom_save(spin, word);
+  ++gap->ga_len;
 }
 
 /*
@@ -7865,8 +7859,7 @@ sug_filltable (
       gap->ga_len = 0;
       prev_nr = 0;
       for (np = p; np != NULL && np->wn_byte == NUL; np = np->wn_sibling) {
-        if (ga_grow(gap, 10) == FAIL)
-          return -1;
+        ga_grow(gap, 10);
 
         nr = (np->wn_flags << 16) + (np->wn_region & 0xffff);
         /* Compute the offset from the previous nr and store the
@@ -9367,18 +9360,17 @@ spell_suggest_list (
 
   /* Make room in "gap". */
   ga_init(gap, sizeof(char_u *), sug.su_ga.ga_len + 1);
-  if (ga_grow(gap, sug.su_ga.ga_len) == OK) {
-    for (i = 0; i < sug.su_ga.ga_len; ++i) {
-      stp = &SUG(sug.su_ga, i);
+  ga_grow(gap, sug.su_ga.ga_len);
+  for (i = 0; i < sug.su_ga.ga_len; ++i) {
+    stp = &SUG(sug.su_ga, i);
 
-      /* The suggested word may replace only part of "word", add the not
-       * replaced part. */
-      wcopy = alloc(stp->st_wordlen
-          + (unsigned)STRLEN(sug.su_badptr + stp->st_orglen) + 1);
-      STRCPY(wcopy, stp->st_word);
-      STRCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
-      ((char_u **)gap->ga_data)[gap->ga_len++] = wcopy;
-    }
+    /* The suggested word may replace only part of "word", add the not
+     * replaced part. */
+    wcopy = alloc(stp->st_wordlen
+        + (unsigned)STRLEN(sug.su_badptr + stp->st_orglen) + 1);
+    STRCPY(wcopy, stp->st_word);
+    STRCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
+    ((char_u **)gap->ga_data)[gap->ga_len++] = wcopy;
   }
 
   spell_find_cleanup(&sug);
@@ -9779,8 +9771,10 @@ someerror:
         ga.ga_len = 0;
         for (;; ) {
           c = getc(fd);                                     /* <sugline> */
-          if (c < 0 || ga_grow(&ga, 1) == FAIL)
+          if (c < 0) {
             goto someerror;
+          }
+          ga_grow(&ga, 1);
           ((char_u *)ga.ga_data)[ga.ga_len++] = c;
           if (c == NUL)
             break;
@@ -11494,8 +11488,7 @@ static void score_comp_sal(suginfo_T *su)
   int score;
   int lpi;
 
-  if (ga_grow(&su->su_sga, su->su_ga.ga_len) == FAIL)
-    return;
+  ga_grow(&su->su_sga, su->su_ga.ga_len);
 
   /*	Use the sound-folding of the first language that supports it. */
   for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
@@ -11594,8 +11587,7 @@ static void score_combine(suginfo_T *su)
   (void)cleanup_suggestions(&su->su_sga, su->su_maxscore, su->su_maxcount);
 
   ga_init(&ga, (int)sizeof(suginfo_T), 1);
-  if (ga_grow(&ga, su->su_ga.ga_len + su->su_sga.ga_len) == FAIL)
-    return;
+  ga_grow(&ga, su->su_ga.ga_len + su->su_sga.ga_len);
 
   stp = &SUG(ga, 0);
   for (i = 0; i < su->su_ga.ga_len || i < su->su_sga.ga_len; ++i) {
@@ -12248,7 +12240,8 @@ add_suggestion (
       }
   }
 
-  if (i < 0 && ga_grow(gap, 1) == OK) {
+  if (i < 0) {
+    ga_grow(gap, 1);
     /* Add a suggestion. */
     stp = &SUG(*gap, gap->ga_len);
     stp->st_word = vim_strnsave(goodword, goodlen);

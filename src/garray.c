@@ -55,9 +55,7 @@ void ga_init(garray_T *gap, int itemsize, int growsize)
 ///
 /// @param gap
 /// @param n
-///
-/// @return FAIL for failure, OK otherwise.
-int ga_grow(garray_T *gap, int n)
+void ga_grow(garray_T *gap, int n)
 {
   size_t old_len;
   size_t new_len;
@@ -72,15 +70,11 @@ int ga_grow(garray_T *gap, int n)
          ? alloc((unsigned)new_len)
          : xrealloc(gap->ga_data, new_len);
 
-    if (pp == NULL) {
-      return FAIL;
-    }
     old_len = gap->ga_itemsize * gap->ga_maxlen;
     memset(pp + old_len, 0, new_len - old_len);
     gap->ga_maxlen = gap->ga_len + n;
     gap->ga_data = pp;
   }
-  return OK;
 }
 
 /// Sort "gap" and remove duplicate entries.  "gap" is expected to contain a
@@ -140,10 +134,9 @@ char_u* ga_concat_strings(garray_T *gap)
 void ga_concat(garray_T *gap, char_u *s)
 {
   int len = (int)STRLEN(s);
-  if (ga_grow(gap, len) == OK) {
-    memmove((char *)gap->ga_data + gap->ga_len, s, (size_t)len);
-    gap->ga_len += len;
-  }
+  ga_grow(gap, len);
+  memmove((char *)gap->ga_data + gap->ga_len, s, (size_t)len);
+  gap->ga_len += len;
 }
 
 /// Append one byte to a growarray which contains bytes.
@@ -152,10 +145,9 @@ void ga_concat(garray_T *gap, char_u *s)
 /// @param c
 void ga_append(garray_T *gap, int c)
 {
-  if (ga_grow(gap, 1) == OK) {
-    *((char *) gap->ga_data + gap->ga_len) = c;
-    ++gap->ga_len;
-  }
+  ga_grow(gap, 1);
+  *((char *) gap->ga_data + gap->ga_len) = c;
+  ++gap->ga_len;
 }
 
 #if defined(UNIX) || defined(WIN3264)

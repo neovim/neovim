@@ -1812,7 +1812,8 @@ parse_line:
            * Store the info we need later, which depends on the kind of
            * tags we are dealing with.
            */
-          if (ga_grow(&ga_match[mtt], 1) == OK) {
+          ga_grow(&ga_match[mtt], 1);
+          {
             int len;
 
             if (help_only) {
@@ -1922,10 +1923,6 @@ parse_line:
               } else
                 vim_free(mfp);
             }
-          } else {    /* Out of memory! Just forget about the rest. */
-            retval = OK;
-            stop_searching = TRUE;
-            break;
           }
         }
         if (use_cscope && eof)
@@ -2035,9 +2032,8 @@ static void found_tagfile_cb(char_u *fname, void *cookie);
  */
 static void found_tagfile_cb(char_u *fname, void *cookie)
 {
-  if (ga_grow(&tag_fnames, 1) == OK)
-    ((char_u **)(tag_fnames.ga_data))[tag_fnames.ga_len++] =
-      vim_strsave(fname);
+  ga_grow(&tag_fnames, 1);
+  ((char_u **)(tag_fnames.ga_data))[tag_fnames.ga_len++] = vim_strsave(fname);
 }
 
 #if defined(EXITFREE) || defined(PROTO)

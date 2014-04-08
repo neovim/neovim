@@ -5426,8 +5426,7 @@ void ex_helptags(exarg_T *eap)
           break;
       if (j == ga.ga_len) {
         /* New language, add it. */
-        if (ga_grow(&ga, 2) == FAIL)
-          break;
+        ga_grow(&ga, 2);
         ((char_u *)ga.ga_data)[ga.ga_len++] = lang[0];
         ((char_u *)ga.ga_data)[ga.ga_len++] = lang[1];
       }
@@ -5520,18 +5519,11 @@ helptags_one (
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
           dir, FALSE) == kEqualFiles) {
-    if (ga_grow(&ga, 1) == FAIL)
-      got_int = TRUE;
-    else {
-      s = alloc(18 + (unsigned)STRLEN(tagfname));
-      if (s == NULL)
-        got_int = TRUE;
-      else {
-        sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
-        ((char_u **)ga.ga_data)[ga.ga_len] = s;
-        ++ga.ga_len;
-      }
-    }
+    ga_grow(&ga, 1);
+    s = alloc(18 + (unsigned)STRLEN(tagfname));
+    sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
+    ((char_u **)ga.ga_data)[ga.ga_len] = s;
+    ++ga.ga_len;
   }
 
   /*
@@ -5598,10 +5590,7 @@ helptags_one (
                   || s[1] == '\0')) {
             *p2 = '\0';
             ++p1;
-            if (ga_grow(&ga, 1) == FAIL) {
-              got_int = TRUE;
-              break;
-            }
+            ga_grow(&ga, 1);
             s = alloc((unsigned)(p2 - p1 + STRLEN(fname) + 2));
             if (s == NULL) {
               got_int = TRUE;

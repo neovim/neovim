@@ -2293,26 +2293,25 @@ void mch_errmsg(char *str)
     error_ga.ga_growsize = 80;
     error_ga.ga_itemsize = 1;
   }
-  if (ga_grow(&error_ga, len) == OK) {
-    memmove((char_u *)error_ga.ga_data + error_ga.ga_len,
-        (char_u *)str, len);
+  ga_grow(&error_ga, len);
+  memmove((char_u *)error_ga.ga_data + error_ga.ga_len,
+      (char_u *)str, len);
 #ifdef UNIX
-    /* remove CR characters, they are displayed */
-    {
-      char_u      *p;
+  /* remove CR characters, they are displayed */
+  {
+    char_u      *p;
 
-      p = (char_u *)error_ga.ga_data + error_ga.ga_len;
-      for (;; ) {
-        p = vim_strchr(p, '\r');
-        if (p == NULL)
-          break;
-        *p = ' ';
-      }
+    p = (char_u *)error_ga.ga_data + error_ga.ga_len;
+    for (;; ) {
+      p = vim_strchr(p, '\r');
+      if (p == NULL)
+        break;
+      *p = ' ';
     }
-#endif
-    --len;              /* don't count the NUL at the end */
-    error_ga.ga_len += len;
   }
+#endif
+  --len;              /* don't count the NUL at the end */
+  error_ga.ga_len += len;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
+/* vi:set ts=2 sts=2 sw=2:
  *
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -1388,10 +1388,8 @@ static synstate_T *store_current_state(void)
       /* Need to clear it, might be something remaining from when the
        * length was less than SST_FIX_STATES. */
       ga_init(&sp->sst_union.sst_ga, (int)sizeof(bufstate_T), 1);
-      if (ga_grow(&sp->sst_union.sst_ga, current_state.ga_len) == FAIL)
-        sp->sst_stacksize = 0;
-      else
-        sp->sst_union.sst_ga.ga_len = current_state.ga_len;
+      ga_grow(&sp->sst_union.sst_ga, current_state.ga_len);
+      sp->sst_union.sst_ga.ga_len = current_state.ga_len;
       bp = SYN_STATE_P(&(sp->sst_union.sst_ga));
     } else
       bp = sp->sst_union.sst_stack;
@@ -1422,8 +1420,8 @@ static void load_current_state(synstate_T *from)
   clear_current_state();
   validate_current_state();
   keepend_level = -1;
-  if (from->sst_stacksize
-      && ga_grow(&current_state, from->sst_stacksize) != FAIL) {
+  if (from->sst_stacksize) {
+    ga_grow(&current_state, from->sst_stacksize);
     if (from->sst_stacksize > SST_FIX_STATES)
       bp = SYN_STATE_P(&(from->sst_union.sst_ga));
     else
@@ -2060,10 +2058,9 @@ syn_current_attr (
             /* Add the index to a list, so that we can check
              * later that we don't match it again (and cause an
              * endless loop). */
-            if (ga_grow(&zero_width_next_ga, 1) == OK) {
-              ((int *)(zero_width_next_ga.ga_data))
-              [zero_width_next_ga.ga_len++] = next_match_idx;
-            }
+            ga_grow(&zero_width_next_ga, 1);
+            ((int *)(zero_width_next_ga.ga_data))
+            [zero_width_next_ga.ga_len++] = next_match_idx;
             next_match_idx = -1;
           } else
             cur_si = push_next_match(cur_si);
@@ -2584,8 +2581,7 @@ update_si_end (
  */
 static int push_current_state(int idx)
 {
-  if (ga_grow(&current_state, 1) == FAIL)
-    return FAIL;
+  ga_grow(&current_state, 1);
   memset(&CUR_STATE(current_state.ga_len), 0, sizeof(stateitem_T));
   CUR_STATE(current_state.ga_len).si_idx = idx;
   ++current_state.ga_len;
@@ -4387,39 +4383,40 @@ syn_cmd_match (
     eap->nextcmd = check_nextcmd(rest);
     if (!ends_excmd(*rest) || eap->skip)
       rest = NULL;
-    else if (ga_grow(&curwin->w_s->b_syn_patterns, 1) != FAIL
-             && (syn_id = syn_check_group(arg,
-                     (int)(group_name_end - arg))) != 0) {
-      syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-      /*
-       * Store the pattern in the syn_items list
-       */
-      idx = curwin->w_s->b_syn_patterns.ga_len;
-      SYN_ITEMS(curwin->w_s)[idx] = item;
-      SYN_ITEMS(curwin->w_s)[idx].sp_syncing = syncing;
-      SYN_ITEMS(curwin->w_s)[idx].sp_type = SPTYPE_MATCH;
-      SYN_ITEMS(curwin->w_s)[idx].sp_syn.id = syn_id;
-      SYN_ITEMS(curwin->w_s)[idx].sp_syn.inc_tag = current_syn_inc_tag;
-      SYN_ITEMS(curwin->w_s)[idx].sp_flags = syn_opt_arg.flags;
-      SYN_ITEMS(curwin->w_s)[idx].sp_sync_idx = sync_idx;
-      SYN_ITEMS(curwin->w_s)[idx].sp_cont_list = syn_opt_arg.cont_list;
-      SYN_ITEMS(curwin->w_s)[idx].sp_syn.cont_in_list =
-        syn_opt_arg.cont_in_list;
-      SYN_ITEMS(curwin->w_s)[idx].sp_cchar = conceal_char;
-      if (syn_opt_arg.cont_in_list != NULL)
-        curwin->w_s->b_syn_containedin = TRUE;
-      SYN_ITEMS(curwin->w_s)[idx].sp_next_list = syn_opt_arg.next_list;
-      ++curwin->w_s->b_syn_patterns.ga_len;
+    else {
+      ga_grow(&curwin->w_s->b_syn_patterns, 1);
+      if ((syn_id = syn_check_group(arg, (int)(group_name_end - arg))) != 0) {
+        syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
+        /*
+         * Store the pattern in the syn_items list
+         */
+        idx = curwin->w_s->b_syn_patterns.ga_len;
+        SYN_ITEMS(curwin->w_s)[idx] = item;
+        SYN_ITEMS(curwin->w_s)[idx].sp_syncing = syncing;
+        SYN_ITEMS(curwin->w_s)[idx].sp_type = SPTYPE_MATCH;
+        SYN_ITEMS(curwin->w_s)[idx].sp_syn.id = syn_id;
+        SYN_ITEMS(curwin->w_s)[idx].sp_syn.inc_tag = current_syn_inc_tag;
+        SYN_ITEMS(curwin->w_s)[idx].sp_flags = syn_opt_arg.flags;
+        SYN_ITEMS(curwin->w_s)[idx].sp_sync_idx = sync_idx;
+        SYN_ITEMS(curwin->w_s)[idx].sp_cont_list = syn_opt_arg.cont_list;
+        SYN_ITEMS(curwin->w_s)[idx].sp_syn.cont_in_list =
+          syn_opt_arg.cont_in_list;
+        SYN_ITEMS(curwin->w_s)[idx].sp_cchar = conceal_char;
+        if (syn_opt_arg.cont_in_list != NULL)
+          curwin->w_s->b_syn_containedin = TRUE;
+        SYN_ITEMS(curwin->w_s)[idx].sp_next_list = syn_opt_arg.next_list;
+        ++curwin->w_s->b_syn_patterns.ga_len;
 
-      /* remember that we found a match for syncing on */
-      if (syn_opt_arg.flags & (HL_SYNC_HERE|HL_SYNC_THERE))
-        curwin->w_s->b_syn_sync_flags |= SF_MATCH;
-      if (syn_opt_arg.flags & HL_FOLD)
-        ++curwin->w_s->b_syn_folditems;
+        /* remember that we found a match for syncing on */
+        if (syn_opt_arg.flags & (HL_SYNC_HERE|HL_SYNC_THERE))
+          curwin->w_s->b_syn_sync_flags |= SF_MATCH;
+        if (syn_opt_arg.flags & HL_FOLD)
+          ++curwin->w_s->b_syn_folditems;
 
-      redraw_curbuf_later(SOME_VALID);
-      syn_stack_free_all(curwin->w_s);          /* Need to recompute all syntax. */
-      return;           /* don't free the progs and patterns now */
+        redraw_curbuf_later(SOME_VALID);
+        syn_stack_free_all(curwin->w_s);          /* Need to recompute all syntax. */
+        return;           /* don't free the progs and patterns now */
+      }
     }
   }
 
@@ -4598,48 +4595,49 @@ syn_cmd_region (
     eap->nextcmd = check_nextcmd(rest);
     if (!ends_excmd(*rest) || eap->skip)
       rest = NULL;
-    else if (ga_grow(&(curwin->w_s->b_syn_patterns), pat_count) != FAIL
-             && (syn_id = syn_check_group(arg,
-                     (int)(group_name_end - arg))) != 0) {
-      syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
-      /*
-       * Store the start/skip/end in the syn_items list
-       */
-      idx = curwin->w_s->b_syn_patterns.ga_len;
-      for (item = ITEM_START; item <= ITEM_END; ++item) {
-        for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp->pp_next) {
-          SYN_ITEMS(curwin->w_s)[idx] = *(ppp->pp_synp);
-          SYN_ITEMS(curwin->w_s)[idx].sp_syncing = syncing;
-          SYN_ITEMS(curwin->w_s)[idx].sp_type =
-            (item == ITEM_START) ? SPTYPE_START :
-            (item == ITEM_SKIP) ? SPTYPE_SKIP : SPTYPE_END;
-          SYN_ITEMS(curwin->w_s)[idx].sp_flags |= syn_opt_arg.flags;
-          SYN_ITEMS(curwin->w_s)[idx].sp_syn.id = syn_id;
-          SYN_ITEMS(curwin->w_s)[idx].sp_syn.inc_tag =
-            current_syn_inc_tag;
-          SYN_ITEMS(curwin->w_s)[idx].sp_syn_match_id =
-            ppp->pp_matchgroup_id;
-          SYN_ITEMS(curwin->w_s)[idx].sp_cchar = conceal_char;
-          if (item == ITEM_START) {
-            SYN_ITEMS(curwin->w_s)[idx].sp_cont_list =
-              syn_opt_arg.cont_list;
-            SYN_ITEMS(curwin->w_s)[idx].sp_syn.cont_in_list =
-              syn_opt_arg.cont_in_list;
-            if (syn_opt_arg.cont_in_list != NULL)
-              curwin->w_s->b_syn_containedin = TRUE;
-            SYN_ITEMS(curwin->w_s)[idx].sp_next_list =
-              syn_opt_arg.next_list;
+    else {
+      ga_grow(&(curwin->w_s->b_syn_patterns), pat_count);
+      if ((syn_id = syn_check_group(arg, (int)(group_name_end - arg))) != 0) {
+        syn_incl_toplevel(syn_id, &syn_opt_arg.flags);
+        /*
+         * Store the start/skip/end in the syn_items list
+         */
+        idx = curwin->w_s->b_syn_patterns.ga_len;
+        for (item = ITEM_START; item <= ITEM_END; ++item) {
+          for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp->pp_next) {
+            SYN_ITEMS(curwin->w_s)[idx] = *(ppp->pp_synp);
+            SYN_ITEMS(curwin->w_s)[idx].sp_syncing = syncing;
+            SYN_ITEMS(curwin->w_s)[idx].sp_type =
+              (item == ITEM_START) ? SPTYPE_START :
+              (item == ITEM_SKIP) ? SPTYPE_SKIP : SPTYPE_END;
+            SYN_ITEMS(curwin->w_s)[idx].sp_flags |= syn_opt_arg.flags;
+            SYN_ITEMS(curwin->w_s)[idx].sp_syn.id = syn_id;
+            SYN_ITEMS(curwin->w_s)[idx].sp_syn.inc_tag =
+              current_syn_inc_tag;
+            SYN_ITEMS(curwin->w_s)[idx].sp_syn_match_id =
+              ppp->pp_matchgroup_id;
+            SYN_ITEMS(curwin->w_s)[idx].sp_cchar = conceal_char;
+            if (item == ITEM_START) {
+              SYN_ITEMS(curwin->w_s)[idx].sp_cont_list =
+                syn_opt_arg.cont_list;
+              SYN_ITEMS(curwin->w_s)[idx].sp_syn.cont_in_list =
+                syn_opt_arg.cont_in_list;
+              if (syn_opt_arg.cont_in_list != NULL)
+                curwin->w_s->b_syn_containedin = TRUE;
+              SYN_ITEMS(curwin->w_s)[idx].sp_next_list =
+                syn_opt_arg.next_list;
+            }
+            ++curwin->w_s->b_syn_patterns.ga_len;
+            ++idx;
+            if (syn_opt_arg.flags & HL_FOLD)
+              ++curwin->w_s->b_syn_folditems;
           }
-          ++curwin->w_s->b_syn_patterns.ga_len;
-          ++idx;
-          if (syn_opt_arg.flags & HL_FOLD)
-            ++curwin->w_s->b_syn_folditems;
         }
-      }
 
-      redraw_curbuf_later(SOME_VALID);
-      syn_stack_free_all(curwin->w_s);          /* Need to recompute all syntax. */
-      success = TRUE;               /* don't free the progs and patterns now */
+        redraw_curbuf_later(SOME_VALID);
+        syn_stack_free_all(curwin->w_s);          /* Need to recompute all syntax. */
+        success = TRUE;               /* don't free the progs and patterns now */
+      }
     }
   }
 
@@ -4880,10 +4878,7 @@ static int syn_add_cluster(char_u *name)
   /*
    * Make room for at least one other cluster entry.
    */
-  if (ga_grow(&curwin->w_s->b_syn_clusters, 1) == FAIL) {
-    vim_free(name);
-    return 0;
-  }
+  ga_grow(&curwin->w_s->b_syn_clusters, 1);
 
   memset(&(SYN_CLSTR(curwin->w_s)[len]), 0, sizeof(syn_cluster_T));
   SYN_CLSTR(curwin->w_s)[len].scl_name = name;
@@ -6898,7 +6893,7 @@ static garray_T cterm_attr_table = {0, 0, 0, 0, NULL};
  * Return the attr number for a set of colors and font.
  * Add a new entry to the term_attr_table, cterm_attr_table or gui_attr_table
  * if the combination is new.
- * Return 0 for error (no more room).
+ * Return 0 for error.
  */
 static int get_attr_entry(garray_T *table, attrentry_T *aep)
 {
@@ -6965,8 +6960,7 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
   /*
    * This is a new combination of colors and font, add an entry.
    */
-  if (ga_grow(table, 1) == FAIL)
-    return 0;
+  ga_grow(table, 1);
 
   taep = &(((attrentry_T *)table->ga_data)[table->ga_len]);
   memset(taep, 0, sizeof(attrentry_T));
@@ -7513,10 +7507,7 @@ static int syn_add_group(char_u *name)
   /*
    * Make room for at least one other syntax_highlight entry.
    */
-  if (ga_grow(&highlight_ga, 1) == FAIL) {
-    vim_free(name);
-    return 0;
-  }
+  ga_grow(&highlight_ga, 1);
 
   memset(&(HL_TABLE()[highlight_ga.ga_len]), 0, sizeof(struct hl_group));
   HL_TABLE()[highlight_ga.ga_len].sg_name = name;
@@ -7696,8 +7687,7 @@ int highlight_changed(void)
    * Temporarily  utilize 10 more hl entries.  Have to be in there
    * simultaneously in case of table overflows in get_attr_entry()
    */
-  if (ga_grow(&highlight_ga, 10) == FAIL)
-    return FAIL;
+  ga_grow(&highlight_ga, 10);
   hlcnt = highlight_ga.ga_len;
   if (id_S == 0) {  /* Make sure id_S is always valid to simplify code below */
     memset(&HL_TABLE()[hlcnt + 9], 0, sizeof(struct hl_group));

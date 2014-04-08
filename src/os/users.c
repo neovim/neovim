@@ -26,9 +26,7 @@ int os_get_usernames(garray_T *users)
   while ((pw = getpwent()) != NULL) {
     // pw->pw_name shouldn't be NULL but just in case...
     if (pw->pw_name != NULL) {
-      if (ga_grow(users, 1) == FAIL) {
-        return FAIL;
-      }
+      ga_grow(users, 1);
       user = (char *)vim_strsave((char_u*)pw->pw_name);
       if (user == NULL) {
         return FAIL;
