@@ -5733,7 +5733,7 @@ vim_tempname (
            * "repl" has been reported to use "177". */
           umask_save = umask(077);
 #  endif
-          r = vim_mkdir(itmp, 0700);
+          r = os_mkdir((char *)itmp, 0700);
 #  if defined(UNIX) || defined(VMS)
           (void)umask(umask_save);
 #  endif

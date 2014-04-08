@@ -7237,12 +7237,10 @@ static void ex_mkrc(exarg_T *eap)
   else
     fname = (char_u *)EXRC_FILE;
 
-
-#if defined(FEAT_SESSION) && defined(vim_mkdir)
   /* When using 'viewdir' may have to create the directory. */
-  if (using_vdir && !os_isdir(p_vdir))
+  if (using_vdir && !os_isdir(p_vdir)) {
     vim_mkdir_emsg(p_vdir, 0755);
-#endif
+  }
 
   fd = open_exfile(fname, eap->forceit, WRITEBIN);
   if (fd != NULL) {
@@ -7360,17 +7358,14 @@ static void ex_mkrc(exarg_T *eap)
   vim_free(viewFile);
 }
 
-#if ((defined(FEAT_SESSION) || defined(FEAT_EVAL)) && defined(vim_mkdir)) \
-  || defined(PROTO)
 int vim_mkdir_emsg(char_u *name, int prot)
 {
-  if (vim_mkdir(name, prot) != 0) {
+  if (os_mkdir((char *)name, prot) != 0) {
     EMSG2(_("E739: Cannot create directory: %s"), name);
     return FAIL;
   }
   return OK;
 }
-#endif
 
 /*
  * Open a file for writing for an Ex command, with some checks.

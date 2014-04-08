@@ -8473,7 +8473,7 @@ spell_add_word (
         /* The directory doesn't exist.  Try creating it and opening
          * the file again. */
         *p = NUL;
-        vim_mkdir(fname, 0755);
+        os_mkdir((char *)fname, 0755);
         *p = c;
         fd = mch_fopen((char *)fname, "a");
       }
@@ -8553,8 +8553,9 @@ static void init_spellfile(void)
           /* Create the "spell" directory if it doesn't exist yet. */
           l = (int)STRLEN(buf);
           vim_snprintf((char *)buf + l, MAXPATHL - l, "/spell");
-          if (os_file_is_writable((char *)buf) != 2)
-            vim_mkdir(buf, 0755);
+          if (os_file_is_writable((char *)buf) != 2) {
+            os_mkdir((char *)buf, 0755);
+          }
 
           l = (int)STRLEN(buf);
           vim_snprintf((char *)buf + l, MAXPATHL - l,
