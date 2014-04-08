@@ -35,6 +35,7 @@
 #include "term.h"
 #include "ui.h"
 #include "os/os.h"
+#include "os/event.h"
 
 #if defined(FEAT_FLOAT)
 # include <math.h>
@@ -2094,6 +2095,9 @@ static int do_more_prompt(int typed_char)
 
     toscroll = 0;
     switch (c) {
+    case K_EVENT:
+      event_process();
+      break;
     case BS:                    /* scroll one line back */
     case K_BS:
     case 'k':

@@ -52,6 +52,7 @@
 #include "ui.h"
 #include "undo.h"
 #include "window.h"
+#include "os/event.h"
 
 /*
  * definitions used for CTRL-X submode
@@ -1025,7 +1026,9 @@ doESCkey:
       did_cursorhold = TRUE;
       break;
 
-
+    case K_EVENT:
+      event_process();
+      break;
 
     case K_HOME:        /* <Home> */
     case K_KHOME:

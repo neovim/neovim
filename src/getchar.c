@@ -164,6 +164,7 @@ static void map_free(mapblock_T **);
 static void validate_maphash(void);
 static void showmap(mapblock_T *mp, int local);
 static char_u   *eval_map_expr(char_u *str, int c);
+static bool is_user_input(int k);
 
 /*
  * Free and clear a buffer.
@@ -2552,11 +2553,10 @@ fix_input_buffer (
    * Don't replace K_SPECIAL when reading a script file.
    */
   for (i = len; --i >= 0; ++p) {
-    if (p[0] == NUL || (p[0] == K_SPECIAL && !script
-                        /* timeout may generate K_CURSORHOLD */
-                        && (i < 2 || p[1] != KS_EXTRA || p[2] !=
-                            (int)KE_CURSORHOLD)
-                        )) {
+    if (p[0] == NUL
+        || (p[0] == K_SPECIAL
+          && !script
+          && (i < 2 || p[1] != KS_EXTRA || is_user_input(p[2])))) {
       memmove(p + 3, p + 1, (size_t)i);
       p[2] = K_THIRD(p[0]);
       p[1] = K_SECOND(p[0]);
@@ -3814,6 +3814,11 @@ eval_map_expr (
   vim_free(p);
 
   return res;
+}
+
+static bool is_user_input(int k)
+{
+  return k != (int)KE_EVENT && k != (int)KE_CURSORHOLD;
 }
 
 /*

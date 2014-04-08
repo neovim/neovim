@@ -103,8 +103,6 @@ void job_teardown()
 
     // Still alive
     while (is_alive(job) && remaining_tries--) {
-      // Since this is the first time we're checking, wait 300ms so
-      // every job has a chance to exit normally
       os_delay(50, 0);
       // Acknowledge child exits
       uv_run(uv_default_loop(), UV_RUN_NOWAIT);
@@ -228,7 +226,6 @@ void job_handle(Event event)
                job->length,
                job->lock == kBufferLockStdout);
 
-  shell_resized();
   // restart reading
   job->lock = kBufferLockNone;
   uv_read_start((uv_stream_t *)&job->proc_stdout, alloc_cb, read_cb);
