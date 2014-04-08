@@ -1,638 +1,638 @@
-- DigitalOcean          $1,000.00
-- Ryan Durk             $500.00
-- Bountysource          $500.00
-- superjer              $500.00
-- takac                 $50.00
-- koehr                 $50.00
-- signedupforneovim     $50.00
-- openstandards         $50.00
-- ernstla               $50.00
-- hoop33                $50.00
-- JusRussell            $50.00
-- Anonymous             $256.00
-- ggreer                $50.00
-- mdp                   $50.00
-- iauns                 $50.00
-- jonaias               $50.00
-- cinaeco               $50.00
-- jpk                   $100.00
-- Anonymous             $50.00
-- valberg               $100.00
-- alind                 $50.00
-- nb                    $50.00
-- simendsjo             $100.00
-- grmpyprogrammer       $50.00
-- Tae                   $50.00
-- jaredly               $50.00
-- wezm                  $50.00
-- foxxtrot              $50.00
-- oysteinkrog           $50.00
-- drodger               $50.00
-- zeekay                $50.00
-- KevinSjoberg          $50.00
-- petems                $50.00
-- adri                  $50.00
-- woahdae               $100.00
-- sickill               $100.00
-- jasoncodes            $50.00
-- John W. Long          $50.00
-- mindtheft             $50.00
-- polymetis             $50.00
-- Steven Myint          $100.00
-- stefanpenner          $50.00
-- justinmk              $100.00
-- thomascannon          $50.00
-- segphault             $100.00
-- timoxley              $100.00
-- niclasnilsson         $50.00
-- mitechie              $100.00
-- jmorrell              $50.00
-- grod                  $50.00
-- mikker                $50.00
-- hollow                $50.00
-- gabrielelana          $100.00
-- adammclain            $100.00
-- joebadmo              $50.00
-- jasonpeacock          $250.00
-- pgdouyon              $50.00
-- reedes                $100.00
-- So8res                $50.00
-- Sean-Der              $100.00
-- jyurek                $100.00
-- mrallen1              $50.00
-- jimhester             $50.00
-- Anonymous             $50.00
-- thejspr               $50.00
-- pablobm               $100.00
-- jceb                  $50.00
-- kopischke             $50.00
-- tiziano88             $101.00
-- Daniel Collin         $50.00
-- RobertMeta            $250.00
-- awwaiid               $50.00
-- duckpunch             $50.00
-- Darshan Sawardekar    $50.00
-- asgeo1                $200.00
-- emilh                 $50.00
-- Myshov                $50.00
-- Valloric              $100.00
-- benichu               $50.00
-- ahri                  $50.00
-- esiegel               $50.00
-- ansdell               $60.00
-- beloglazov            $50.00
-- cweagans              $50.00
-- jeremyjh              $100.00
-- Matt Greer            $100.00
-- toban                 $200.00
-- svermeulen            $100.00
-- alxndr                $50.00
-- jdavis                $50.00
-- msprev                $100.00
-- masukomi              $50.00
-- jfelchner             $100.00
-- jjmaestro             $50.00
-- Futile                $50.00
-- christofferholmstedt  $50.00
-- terabyte              $50.00
-- reardencode           $50.00
-- shurane               $50.00
-- Andrew M. Farrell     $50.00
-- ciarand               $50.00
-- Kevin Sumner          $50.00
-- svermeulen            $50.00
-- Anonymous             $50.00
-- jiuka                 $100.00
-- Jlevesque             $100.00
-- in4mer                $64.00
-- slashfoo              $50.00
-- Frew                  $50.00
-- Ethan Schoonover      $100.00
-- sebastien             $50.00
-- mikaelj               $50.00
-- mmai                  $50.00
-- TristramShandy        $50.00
-- metaxis               $50.00
-- alex.dabija           $50.00
-- dipti                 $50.00
-- jakesjews             $51.00
-- timoxley              $100.00
-- ppi                   $50.00
-- jamestomasino         $50.00
-- Happy-Dude            $50.00
-- saggim                $50.00
-- prateekrungta         $50.00
-- Gavinguy              $50.00
-- Slava                 $50.00
-- afh                   $100.00
-- jsiei97               $50.00
-- modal                 $50.00
-- gstrauss              $50.00
-- the-isz               $50.00
-- mikl                  $100.00
-- wirrbel               $50.00
-- nikush                $50.00
-- Loa                   $50.00
-- brennen               $50.00
-- lightblade            $50.00
-- darrenli              $50.00
-- carlosalvesuy         $50.00
-- emning                $50.00
-- bfredl                $80.00
-- bobbrez               $50.00
-- jamesaoverton         $100.00
-- jdahm                 $50.00
-- b2c                   $50.00
-- (unknown)             $50.00
-- danpansa              $50.00
-- saamalik              $100.00
-- brandonmwang          $50.00
-- dsummersl             $100.00
-- R4zzM                 $50.00
-- tobiassjosten         $50.00
-- chernesk              $50.00
-- xuhdev                $50.00
-- jszakmeister          $250.00
-- neektza               $50.00
-- timuruski             $50.00
-- elbaschid             $50.00
-- schmee                $20.00
-- zsoltika              $20.00
-- pablasso              $20.00
-- Ipsquiggle            $20.00
-- houqp                 $20.00
-- erik.goldman          $20.00
-- juancampa             $20.00
-- hoschi                $40.00
-- szymzet               $20.00
-- voy                   $20.00
-- mlitwiniuk            $20.00
-- elkatwork             $20.00
-- gaveen                $20.00
-- stefanwienert         $20.00
-- berkes                $20.00
-- jtmkrueger            $20.00
-- mean-old-man          $20.00
-- pdf                   $20.00
-- Anonymous             $20.00
-- iterion               $20.00
-- LarryRiedel           $20.00
-- JoelPM                $20.00
-- jonathanj             $20.00
-- Deraen                $20.00
-- xytis                 $20.00
-- JoshuaBrookover       $20.00
-- MrException           $20.00
-- philipefarias         $20.00
-- oryband               $30.00
-- jkt                   $20.00
-- machuga               $20.00
-- saxman7000            $20.00
-- jamesoff              $20.00
-- ewgarci               $20.00
-- Silanus               $20.00
-- fuzz.dk               $20.00
-- michael.iles          $20.00
-- evraamsdonk           $20.00
-- taketwo               $20.00
-- avetisk               $20.00
-- kioopi                $20.00
-- jherdman              $20.00
-- gramic                $20.00
-- Anonymous             $20.00
-- grmarcil              $20.00
-- Wavey                 $20.00
-- tomwadley             $20.00
-- ticviking             $20.00
-- apsoto                $20.00
-- lucaswerkmeister      $20.00
-- terminalmage          $20.00
-- calin.don             $20.00
-- werebus               $20.00
-- goodgravy             $20.00
-- dritter               $100.00
-- hencjo                $20.00
-- lsc                   $20.00
-- ajtakrajta            $20.00
-- bozz                  $20.00
-- fdv                   $20.00
-- xpayn                 $20.00
-- Anonymous             $50.00
-- adriand               $20.00
-- jfrazelle             $20.00
-- davits                $20.00
-- mpendse               $20.00
-- bart9h                $20.00
-- TypedLambda           $20.00
-- jasonlong             $20.00
-- sanpi                 $20.00
-- px0                   $20.00
-- sirgeoo               $20.00
-- a13xb                 $20.00
-- jschornick            $20.00
-- shazow                $20.00
-- jhbabon               $20.00
-- Wolfy87               $20.00
-- jaywilliams           $20.00
-- Anonymous             $40.00
-- mdobler               $20.00
-- cablehead             $20.00
-- dvidsilva             $20.00
-- amitbeka              $20.00
-- andruby               $20.00
-- grota                 $25.00
-- RanaExMachina         $20.00
-- nicksloan             $20.00
-- mlotze                $25.00
-- bengt                 $20.00
-- mikewadsten           $20.00
-- muff1nman             $20.00
-- ah-                   $20.00
-- hg                    $20.00
-- metellius             $50.00
-- Heeton                $20.00
-- hkupty                $45.00
-- Anonymous             $20.00
-- Anonymous             $35.00
-- sc68cal               $15.00
-- santiycr              $30.00
-- aleproscia            $20.00
-- Anonymous             $25.00
-- burningTyger          $20.00
-- Rio                   $20.00
-- milesfrain            $20.00
-- ravipinto             $20.00
-- henning               $35.00
-- rahenri               $20.00
-- JorisM                $20.00
-- MrTango               $20.00
-- trumanellis           $35.00
-- tbelaire              $20.00
-- adonm                 $100.00
-- rschmitt              $35.00
-- georgebashi           $100.00
-- nfm                   $20.00
-- iliis                 $20.00
-- harry.glaser          $50.00
-- lhl                   $25.00
-- treppo                $20.00
-- gokhan                $20.00
-- euoia                 $20.00
-- sumpfgottheit         $20.00
-- flubba                $20.00
-- yuvallanger           $20.00
-- prithvi               $20.00
-- joeytrapp             $20.00
-- ssloss                $35.00
-- federicogalassi       $20.00
-- degeberg              $20.00
-- dccollie              $20.00
-- webgefrickel          $20.00
-- soney                 $20.00
-- marcusm               $35.00
-- Luke Sampson          $25.00
-- quasarj               $25.00
-- msanders              $20.00
-- So8res                $20.00
-- corytheboyd           $20.00
-- nzjames               $20.00
-- kevinw                $20.00
-- arvinddeshpande       $20.00
-- ShaneDelmore          $20.00
-- simonratner           $100.00
-- defrex                $20.00
-- rekab                 $20.00
-- nelsonjchen           $20.00
-- asdf                  $20.00
-- dpc                   $20.00
-- rolisz                $20.00
-- Cwiiis                $20.00
-- jqln-0                $35.00
-- damacus               $20.00
-- stegtmeyer            $35.00
-- aocenas               $20.00
-- Mat Moore             $20.00
-- arnoo                 $20.00
-- passy                 $20.00
-- richard.mihalovic     $20.00
-- javaguirre            $20.00
-- weitzjan              $20.00
-- meryn                 $20.00
-- deanmorin             $20.00
-- wbinnssmith           $20.00
-- haarts                $20.00
-- alepane               $20.00
-- ryz                   $20.00
-- macat                 $20.00
-- Tranquility           $20.00
-- tv                    $20.00
-- robodwyer             $20.00
-- joedicastro           $20.00
-- rradonic              $20.00
-- ferdinandsalis        $50.00
-- dgc                   $50.00
-- yko                   $20.00
-- orangain              $20.00
-- sthysel               $20.00
-- indrekj               $20.00
-- Jjh                   $50.00
-- bgrohman              $20.00
-- tmcw                  $25.00
-- ibash                 $35.00
-- pjrt                  $100.00
-- kad3nce               $20.00
-- brynedwards           $50.00
-- manveru               $20.00
-- patrickberkeley       $20.00
-- slowkow               $20.00
-- derKha                $50.00
-- terite                $20.00
-- zhaoz                 $100.00
-- pmitoraj              $20.00
-- levibrown             $20.00
-- bheesham              $20.00
-- smathson              $20.00
-- beefsack              $20.00
-- flugsio               $20.00
-- antoviaque            $20.00
-- brandonliu            $20.00
-- mikkeloscar           $20.00
-- ericfode              $250.00
-- quark                 $20.00
-- erszcz                $20.00
-- Tarrant               $50.00
-- JackStouffer          $20.00
-- demizer               $35.00
-- jojojames             $20.00
-- khamer                $20.00
-- cdelahousse           $20.00
-- terinjokes            $20.00
-- sidoh                 $20.00
-- ggustafsson           $20.00
-- juanolon              $20.00
-- vovik                 $20.00
-- ivar                  $20.00
-- DAddYE                $20.00
-- cazador481            $20.00
-- (unknown)             $40.00
-- julianchurchill       $20.00
-- nathan.straz          $20.00
-- drasch                $20.00
-- czertbytes            $20.00
-- zbstof                $20.00
-- dmjb                  $20.00
-- Morsicus              $20.00
-- kevgo                 $20.00
-- bradenbru             $20.00
-- danielsdesk           $20.00
-- embe                  $123.00
-- plukevdh              $20.00
-- Anonymous             $20.00
-- jcsims                $20.00
-- Bountysource          $20.00
-- shakerlxxv            $20.00
-- andreyvit             $20.00
-- bilalq                $20.00
-- theEndBeta            $20.00
-- gokhan.caglar         $20.00
-- kazuoteramoto         $20.00
-- seanbell              $20.00
-- mrinterweb            $20.00
-- sebastiangeiger       $20.00
-- szerated              $20.00
-- artworx               $20.00
-- mortenaa              $20.00
-- cursork               $20.00
-- evant                 $20.00
-- AngelLeliel           $20.00
-- Dewdrops              $20.00
-- DanEEStar             $20.00
-- danielepolencic       $20.00
-- objectiveryan         $20.00
-- icholy                $20.00
-- maxamillion           $20.00
-- mcmire                $20.00
-- deffi420              $20.00
-- BenBergman            $20.00
-- nfrade                $20.00
-- gufo                  $20.00
-- LeszekSwirski         $20.00
-- joeblow1102           $20.00
-- queria                $20.00
-- timanema              $50.00
-- jktravis              $20.00
-- tpanning              $30.00
-- fission1110           $20.00
-- jgosting              $20.00
-- romaninsh             $20.00
-- Corey Farwell         $20.00
-- opitzs                $50.00
-- janko-m               $20.00
-- archambf              $20.00
-- andrefsp              $30.00
-- jwhitley              $50.00
-- matleh                $35.00
-- Anonymous             $20.00
-- etandel               $20.00
-- perlguy9              $20.00
-- iambenbryant          $20.00
-- dragonfax             $20.00
-- kil9                  $20.00
-- voltagex              $20.00
-- 5thWall               $20.00
-- mntnoe                $20.00
-- hermo                 $35.00
-- tim-m89               $20.00
-- lobachevsky           $20.00
-- Tovrleaf              $35.00
-- heryandi              $20.00
-- jouko                 $20.00
-- forbesmyester         $20.00
-- andrefs               $20.00
-- killtheliterate       $20.00
-- rustedgrail           $20.00
-- kad                   $50.00
-- thpani                $20.00
-- kaldrenon             $20.00
-- mdlerch               $20.00
-- Anonymous             $50.00
-- MikeDillion           $20.00
-- zim44                 $20.00
-- shmup                 $20.00
-- robmiller             $20.00
-- Allan Hudgins         $20.00
-- Peter                 $20.00
-- kadamski              $20.00
-- m42e                  $20.00
-- cewood                $20.00
-- SakuyaIzayoi          $20.00
-- lucasts               $20.00
-- dtinth                $20.00
-- thelibrarian          $20.00
-- samstokes             $20.00
-- aflatter              $20.00
-- lluisYasT             $20.00
-- majutsushi            $35.00
-- jjmurre               $20.00
-- edlandm               $20.00
-- jstemmer              $20.00
-- alappe                $20.00
-- Soulou                $20.00
-- TechDonald            $20.00
-- turtleman             $20.00
-- Fredrik Rambris       $50.00
-- swebb                 $20.00
-- alindeman             $20.00
-- Anonymous             $20.00
-- pbf                   $20.00
-- shemerey              $20.00
-- Anonymous             $20.00
-- projedi               $20.00
-- erchn                 $35.00
-- bigfatgreg            $20.00
-- imathis               $20.00
-- ypeussa               $20.00
-- ckromero              $20.00
-- cdcooperuk            $50.00
-- chrisporter           $20.00
-- welle                 $20.00
-- cicloid               $35.00
-- zerowidth             $35.00
-- rustushki             $20.00
-- huftis                $20.00
-- awoerndle             $20.00
-- Jasu                  $20.00
-- bojanz                $20.00
-- AstroJetson           $25.00
-- warrenv               $20.00
-- achayun               $35.00
-- Griffon26             $100.00
-- levente               $25.00
-- robbevan              $20.00
-- evindor               $20.00
-- dmartz                $20.00
-- Tolstyak              $20.00
-- kryft                 $20.00
-- paran01d              $35.00
-- Drazcmd               $20.00
-- smegthelight          $20.00
-- wberrier              $20.00
-- satyrius              $20.00
-- linfir                $20.00
-- JoKoT3                $20.00
-- Rostepher             $20.00
-- daqscott              $20.00
-- Aketzu                $20.00
-- mrjones69             $20.00
-- katzmopolitan         $20.00
-- Dick Seabrook         $20.00
-- 633squadron           $20.00
-- RichiH                $20.00
-- GByrd                 $20.00
-- tbrock                $20.00
-- ojw                   $20.00
-- BarryKay              $20.00
-- gkalas                $20.00
-- Edan Maor             $20.00
-- linduxed              $20.00
-- r0t0r-r0t0r           $20.00
-- orestis               $20.00
-- cpfaff                $20.00
-- poxar                 $20.00
-- bobbaluba             $20.00
-- Drasill               $20.00
-- Shugyousha            $20.00
-- whateverhuis          $20.00
-- dyuri                 $20.00
-- runar                 $20.00
-- jonthn                $40.00
-- cohalz                $20.00
-- josemarluedke         $20.00
-- fd0                   $20.00
-- naseer                $35.00
-- uskanda               $20.00
-- lpil                  $20.00
-- tmandry               $20.00
-- riccieri              $35.00
-- pmodin                $20.00
-- Paul Alexander        $20.00
-- bjorntipling          $20.00
-- thomasthune           $20.00
-- cyrill62              $20.00
-- jabbrwcky             $20.00
-- nakuldhotre           $20.00
-- weisserd              $20.00
-- nosami                $20.00
-- diguliu               $20.00
-- justinforce           $20.00
-- bjorn                 $20.00
-- calin-iorgulescu      $20.00
-- christopher-l         $20.00
-- michaelkebe           $20.00
-- Jess                  $20.00
-- xinity                $20.00
-- ikdysfm               $20.00
-- johnkpaul             $20.00
-- hupili                $20.00
-- nmeans                $20.00
-- bbinet                $20.00
-- ajh                   $20.00
-- thameera              $20.00
-- ciwchris              $35.00
-- mdi                   $20.00
-- mapclyps              $20.00
-- srabbelier            $20.00
-- claytron              $50.00
-- jc00ke                $20.00
-- jmurty                $30.00
-- d1eg0                 $20.00
-- MrBri                 $20.00
-- copenhas              $20.00
-- Anonymous             $20.00
-- shawndumas            $20.00
-- mogren                $20.00
-- ajc                   $20.00
-- tfnico                $20.00
-- nop00                 $128.00
-- msalvadores           $20.00
-- lanceulmer            $20.00
-- ulf                   $20.00
-- jezallan              $20.00
-- vvakame               $20.00
-- foca                  $35.00
-- ndj                   $20.00
-- sogajapan             $20.00
-- dirn                  $20.00
-- alandyer              $20.00
-- luislee818            $20.00
-- magicpat              $20.00
-- enriclluelles         $20.00
-- therealbitkid         $20.00
-- xsb                   $20.00
-- elimirks              $20.00
-- Dan Riti              $20.00
-- rphillips             $20.00
-- SwiftOne              $20.00
-- fusyo                 $20.00
-- mds5000               $20.00
-- jor                   $20.00
-- eriknordlund          $20.00
-- Netherdrake           $20.00
-- songgao               $20.00
-- miguelsm              $20.00
-- geonik                $20.00
-- schallm               $20.00
-- jkinred               $20.00
-- teasp00n              $20.00
-- alexanderjeurissen    $20.00
-- tonyo112              $20.00
-- MovEaxEsp             $20.00
-- NiñoScript            $20.00
-- somemetricprefix      $20.00
-- andreamichi           $20.00
-- fibbs                 $20.00
-- Tourniquet            $20.00
-- apazzolini            $20.00
-- henry4k               $20.00
-- RageZBla              $20.00
-- awebster              $20.00
+- DigitalOcean
+- Ryan Durk
+- Bountysource
+- superjer
+- takac
+- koehr
+- signedupforneovim
+- openstandards
+- ernstla
+- hoop33
+- JusRussell
+- Anonymous
+- ggreer
+- mdp
+- iauns
+- jonaias
+- cinaeco
+- jpk
+- Anonymous
+- valberg
+- alind
+- nb
+- simendsjo
+- grmpyprogrammer
+- Tae
+- jaredly
+- wezm
+- foxxtrot
+- oysteinkrog
+- drodger
+- zeekay
+- KevinSjoberg
+- petems
+- adri
+- woahdae
+- sickill
+- jasoncodes
+- John W. Long
+- mindtheft
+- polymetis
+- Steven Myint
+- stefanpenner
+- justinmk
+- thomascannon
+- segphault
+- timoxley
+- niclasnilsson
+- mitechie
+- jmorrell
+- grod
+- mikker
+- hollow
+- gabrielelana
+- adammclain
+- joebadmo
+- jasonpeacock
+- pgdouyon
+- reedes
+- So8res
+- Sean-Der
+- jyurek
+- mrallen1
+- jimhester
+- Anonymous
+- thejspr
+- pablobm
+- jceb
+- kopischke
+- tiziano88
+- Daniel Collin
+- RobertMeta
+- awwaiid
+- duckpunch
+- Darshan Sawardekar
+- asgeo1
+- emilh
+- Myshov
+- Valloric
+- benichu
+- ahri
+- esiegel
+- ansdell
+- beloglazov
+- cweagans
+- jeremyjh
+- Matt Greer
+- toban
+- svermeulen
+- alxndr
+- jdavis
+- msprev
+- masukomi
+- jfelchner
+- jjmaestro
+- Futile
+- christofferholmstedt
+- terabyte
+- reardencode
+- shurane
+- Andrew M. Farrell
+- ciarand
+- Kevin Sumner
+- svermeulen
+- Anonymous
+- jiuka
+- Jlevesque
+- in4mer
+- slashfoo
+- Frew
+- Ethan Schoonover
+- sebastien
+- mikaelj
+- mmai
+- TristramShandy
+- metaxis
+- alex.dabija
+- dipti
+- jakesjews
+- timoxley
+- ppi
+- jamestomasino
+- Happy-Dude
+- saggim
+- prateekrungta
+- Gavinguy
+- Slava
+- afh
+- jsiei97
+- modal
+- gstrauss
+- the-isz
+- mikl
+- wirrbel
+- nikush
+- Loa
+- brennen
+- lightblade
+- darrenli
+- carlosalvesuy
+- emning
+- bfredl
+- bobbrez
+- jamesaoverton
+- jdahm
+- b2c
+- (unknown)
+- danpansa
+- saamalik
+- brandonmwang
+- dsummersl
+- R4zzM
+- tobiassjosten
+- chernesk
+- xuhdev
+- jszakmeister
+- neektza
+- timuruski
+- elbaschid
+- schmee
+- zsoltika
+- pablasso
+- Ipsquiggle
+- houqp
+- erik.goldman
+- juancampa
+- hoschi
+- szymzet
+- voy
+- mlitwiniuk
+- elkatwork
+- gaveen
+- stefanwienert
+- berkes
+- jtmkrueger
+- mean-old-man
+- pdf
+- Anonymous
+- iterion
+- LarryRiedel
+- JoelPM
+- jonathanj
+- Deraen
+- xytis
+- JoshuaBrookover
+- MrException
+- philipefarias
+- oryband
+- jkt
+- machuga
+- saxman7000
+- jamesoff
+- ewgarci
+- Silanus
+- fuzz.dk
+- michael.iles
+- evraamsdonk
+- taketwo
+- avetisk
+- kioopi
+- jherdman
+- gramic
+- Anonymous
+- grmarcil
+- Wavey
+- tomwadley
+- ticviking
+- apsoto
+- lucaswerkmeister
+- terminalmage
+- calin.don
+- werebus
+- goodgravy
+- dritter
+- hencjo
+- lsc
+- ajtakrajta
+- bozz
+- fdv
+- xpayn
+- Anonymous
+- adriand
+- jfrazelle
+- davits
+- mpendse
+- bart9h
+- TypedLambda
+- jasonlong
+- sanpi
+- px0
+- sirgeoo
+- a13xb
+- jschornick
+- shazow
+- jhbabon
+- Wolfy87
+- jaywilliams
+- Anonymous
+- mdobler
+- cablehead
+- dvidsilva
+- amitbeka
+- andruby
+- grota
+- RanaExMachina
+- nicksloan
+- mlotze
+- bengt
+- mikewadsten
+- muff1nman
+- ah-
+- hg
+- metellius
+- Heeton
+- hkupty
+- Anonymous
+- Anonymous
+- sc68cal
+- santiycr
+- aleproscia
+- Anonymous
+- burningTyger
+- Rio
+- milesfrain
+- ravipinto
+- henning
+- rahenri
+- JorisM
+- MrTango
+- trumanellis
+- tbelaire
+- adonm
+- rschmitt
+- georgebashi
+- nfm
+- iliis
+- harry.glaser
+- lhl
+- treppo
+- gokhan
+- euoia
+- sumpfgottheit
+- flubba
+- yuvallanger
+- prithvi
+- joeytrapp
+- ssloss
+- federicogalassi
+- degeberg
+- dccollie
+- webgefrickel
+- soney
+- marcusm
+- Luke Sampson
+- quasarj
+- msanders
+- So8res
+- corytheboyd
+- nzjames
+- kevinw
+- arvinddeshpande
+- ShaneDelmore
+- simonratner
+- defrex
+- rekab
+- nelsonjchen
+- asdf
+- dpc
+- rolisz
+- Cwiiis
+- jqln-0
+- damacus
+- stegtmeyer
+- aocenas
+- Mat Moore
+- arnoo
+- passy
+- richard.mihalovic
+- javaguirre
+- weitzjan
+- meryn
+- deanmorin
+- wbinnssmith
+- haarts
+- alepane
+- ryz
+- macat
+- Tranquility
+- tv
+- robodwyer
+- joedicastro
+- rradonic
+- ferdinandsalis
+- dgc
+- yko
+- orangain
+- sthysel
+- indrekj
+- Jjh
+- bgrohman
+- tmcw
+- ibash
+- pjrt
+- kad3nce
+- brynedwards
+- manveru
+- patrickberkeley
+- slowkow
+- derKha
+- terite
+- zhaoz
+- pmitoraj
+- levibrown
+- bheesham
+- smathson
+- beefsack
+- flugsio
+- antoviaque
+- brandonliu
+- mikkeloscar
+- ericfode
+- quark
+- erszcz
+- Tarrant
+- JackStouffer
+- demizer
+- jojojames
+- khamer
+- cdelahousse
+- terinjokes
+- sidoh
+- ggustafsson
+- juanolon
+- vovik
+- ivar
+- DAddYE
+- cazador481
+- (unknown)
+- julianchurchill
+- nathan.straz
+- drasch
+- czertbytes
+- zbstof
+- dmjb
+- Morsicus
+- kevgo
+- bradenbru
+- danielsdesk
+- embe
+- plukevdh
+- Anonymous
+- jcsims
+- Bountysource
+- shakerlxxv
+- andreyvit
+- bilalq
+- theEndBeta
+- gokhan.caglar
+- kazuoteramoto
+- seanbell
+- mrinterweb
+- sebastiangeiger
+- szerated
+- artworx
+- mortenaa
+- cursork
+- evant
+- AngelLeliel
+- Dewdrops
+- DanEEStar
+- danielepolencic
+- objectiveryan
+- icholy
+- maxamillion
+- mcmire
+- deffi420
+- BenBergman
+- nfrade
+- gufo
+- LeszekSwirski
+- joeblow1102
+- queria
+- timanema
+- jktravis
+- tpanning
+- fission1110
+- jgosting
+- romaninsh
+- Corey Farwell
+- opitzs
+- janko-m
+- archambf
+- andrefsp
+- jwhitley
+- matleh
+- Anonymous
+- etandel
+- perlguy9
+- iambenbryant
+- dragonfax
+- kil9
+- voltagex
+- 5thWall
+- mntnoe
+- hermo
+- tim-m89
+- lobachevsky
+- Tovrleaf
+- heryandi
+- jouko
+- forbesmyester
+- andrefs
+- killtheliterate
+- rustedgrail
+- kad
+- thpani
+- kaldrenon
+- mdlerch
+- Anonymous
+- MikeDillion
+- zim44
+- shmup
+- robmiller
+- Allan Hudgins
+- Peter
+- kadamski
+- m42e
+- cewood
+- SakuyaIzayoi
+- lucasts
+- dtinth
+- thelibrarian
+- samstokes
+- aflatter
+- lluisYasT
+- majutsushi
+- jjmurre
+- edlandm
+- jstemmer
+- alappe
+- Soulou
+- TechDonald
+- turtleman
+- Fredrik Rambris
+- swebb
+- alindeman
+- Anonymous
+- pbf
+- shemerey
+- Anonymous
+- projedi
+- erchn
+- bigfatgreg
+- imathis
+- ypeussa
+- ckromero
+- cdcooperuk
+- chrisporter
+- welle
+- cicloid
+- zerowidth
+- rustushki
+- huftis
+- awoerndle
+- Jasu
+- bojanz
+- AstroJetson
+- warrenv
+- achayun
+- Griffon26
+- levente
+- robbevan
+- evindor
+- dmartz
+- Tolstyak
+- kryft
+- paran01d
+- Drazcmd
+- smegthelight
+- wberrier
+- satyrius
+- linfir
+- JoKoT3
+- Rostepher
+- daqscott
+- Aketzu
+- mrjones69
+- katzmopolitan
+- Dick Seabrook
+- 633squadron
+- RichiH
+- GByrd
+- tbrock
+- ojw
+- BarryKay
+- gkalas
+- Edan Maor
+- linduxed
+- r0t0r-r0t0r
+- orestis
+- cpfaff
+- poxar
+- bobbaluba
+- Drasill
+- Shugyousha
+- whateverhuis
+- dyuri
+- runar
+- jonthn
+- cohalz
+- josemarluedke
+- fd0
+- naseer
+- uskanda
+- lpil
+- tmandry
+- riccieri
+- pmodin
+- Paul Alexander
+- bjorntipling
+- thomasthune
+- cyrill62
+- jabbrwcky
+- nakuldhotre
+- weisserd
+- nosami
+- diguliu
+- justinforce
+- bjorn
+- calin-iorgulescu
+- christopher-l
+- michaelkebe
+- Jess
+- xinity
+- ikdysfm
+- johnkpaul
+- hupili
+- nmeans
+- bbinet
+- ajh
+- thameera
+- ciwchris
+- mdi
+- mapclyps
+- srabbelier
+- claytron
+- jc00ke
+- jmurty
+- d1eg0
+- MrBri
+- copenhas
+- Anonymous
+- shawndumas
+- mogren
+- ajc
+- tfnico
+- nop00
+- msalvadores
+- lanceulmer
+- ulf
+- jezallan
+- vvakame
+- foca
+- ndj
+- sogajapan
+- dirn
+- alandyer
+- luislee818
+- magicpat
+- enriclluelles
+- therealbitkid
+- xsb
+- elimirks
+- Dan Riti
+- rphillips
+- SwiftOne
+- fusyo
+- mds5000
+- jor
+- eriknordlund
+- Netherdrake
+- songgao
+- miguelsm
+- geonik
+- schallm
+- jkinred
+- teasp00n
+- alexanderjeurissen
+- tonyo112
+- MovEaxEsp
+- NiñoScript
+- somemetricprefix
+- andreamichi
+- fibbs
+- Tourniquet
+- apazzolini
+- henry4k
+- RageZBla
+- awebster
