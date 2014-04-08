@@ -202,3 +202,28 @@ int os_rename(const char_u *path, const char_u *new_path)
 
   return FAIL;
 }
+
+int os_mkdir(const char *path, int32_t mode)
+{
+  uv_fs_t request;
+  int result = uv_fs_mkdir(uv_default_loop(), &request, path, mode, NULL);
+  uv_fs_req_cleanup(&request);
+  return result;
+}
+
+int os_rmdir(const char *path)
+{
+  uv_fs_t request;
+  int result = uv_fs_rmdir(uv_default_loop(), &request, path, NULL);
+  uv_fs_req_cleanup(&request);
+  return result;
+}
+
+int os_remove(const char *path)
+{
+  uv_fs_t request;
+  int result = uv_fs_unlink(uv_default_loop(), &request, path, NULL);
+  uv_fs_req_cleanup(&request);
+  return result;
+}
+

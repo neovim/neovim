@@ -24,6 +24,7 @@
 #include "tag.h"
 #include "ui.h"
 #include "window.h"
+#include "os/os.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -63,6 +63,21 @@ int os_file_is_writable(const char *name);
 /// @return `OK` for success, `FAIL` for failure.
 int os_rename(const char_u *path, const char_u *new_path);
 
+/// Make a directory.
+///
+/// @return `0` for success, non-zero for failure.
+int os_mkdir(const char *path, int32_t mode);
+
+/// Remove a directory.
+///
+/// @return `0` for success, non-zero for failure.
+int os_rmdir(const char *path);
+
+/// Remove a file.
+///
+/// @return `0` for success, non-zero for failure.
+int os_remove(const char *path);
+
 long_u os_total_mem(int special);
 const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int overwrite);
