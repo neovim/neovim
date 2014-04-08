@@ -69,7 +69,6 @@
 - bobbrez
 - bojanz
 - Bountysource
-- Bountysource
 - bozz
 - bradenbru
 - brandonliu
@@ -468,6 +467,7 @@
 - robodwyer
 - rolisz
 - romaninsh
+- Roshan George
 - Rostepher
 - rphillips
 - rradonic
@@ -490,6 +490,7 @@
 - schmee
 - seanbell
 - Sean-Der
+- Sean M. Collins / sc68cal
 - sebastiangeiger
 - sebastien
 - segphault
@@ -514,7 +515,6 @@
 - smathson
 - smegthelight
 - So8res
-- So8res
 - sogajapan
 - somemetricprefix
 - soney
@@ -529,7 +529,6 @@
 - sthysel
 - sumpfgottheit
 - superjer
-- svermeulen
 - svermeulen
 - swebb
 - SwiftOne
@@ -561,7 +560,6 @@
 - timanema
 - tim-m89
 - timoxley
-- timoxley
 - timuruski
 - tiziano88
 - tmandry
@@ -582,7 +580,6 @@
 - tv
 - TypedLambda
 - ulf
-- (unknown)
 - (unknown)
 - uskanda
 - valberg
