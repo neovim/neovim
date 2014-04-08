@@ -19,6 +19,9 @@ bool os_file_exists(const char_u *name);
 bool os_file_is_readonly(char *fname);
 int os_file_is_writable(const char *name);
 int os_rename(const char_u *path, const char_u *new_path);
+int os_mkdir(const char *path, int32_t mode);
+int os_rmdir(const char *path);
+int os_remove(const char *path);
 ]]
 
 -- import constants parsed by ffi
@@ -94,10 +97,10 @@ describe 'fs function', ->
       eq lfs.currentdir! .. '/unit-test-directory', (ffi.string buffer)
       eq OK, result
 
-  describe 'os_isdir', ->
-    os_isdir = (name) ->
-      fs.os_isdir (to_cstr name)
+  os_isdir = (name) ->
+    fs.os_isdir (to_cstr name)
 
+  describe 'os_isdir', ->
     it 'returns false if an empty string is given', ->
       eq false, (os_isdir '')
 
@@ -237,6 +240,9 @@ describe 'fs function', ->
     os_rename = (path, new_path) ->
       fs.os_rename (to_cstr path), (to_cstr new_path)
 
+    os_remove = (path) ->
+      fs.os_remove (to_cstr path)
+
     describe 'os_file_exists', ->
       it 'returns false when given a non-existing file', ->
         eq false, (os_file_exists 'non-existing-file')
@@ -270,3 +276,41 @@ describe 'fs function', ->
         file = io.open test, 'r'
         eq 'other', (file\read '*all')
         file\close!
+
+    describe 'os_remove', ->
+      it 'returns non-zero when given a non-existing file', ->
+        neq 0, (os_remove 'non-existing-file')
+
+      it 'removes the given file and returns 0', ->
+        eq true, (os_file_exists 'unit-test-directory/test.file')
+        eq 0, (os_remove 'unit-test-directory/test.file')
+        eq false, (os_file_exists 'unit-test-directory/test.file')
+
+  describe 'folder operations', ->
+    os_mkdir = (path, mode) ->
+      fs.os_mkdir (to_cstr path), mode
+
+    os_rmdir = (path) ->
+      fs.os_rmdir (to_cstr path)
+
+    describe 'os_mkdir', ->
+      it 'returns non-zero when given a already existing directory', ->
+        mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        neq 0, (os_mkdir 'unit-test-directory', mode)
+
+      it 'creates a directory and returns 0', ->
+        mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
+        eq false, (os_isdir 'unit-test-directory/new-dir')
+        eq 0, (os_mkdir 'unit-test-directory/new-dir', mode)
+        eq true, (os_isdir 'unit-test-directory/new-dir')
+        lfs.rmdir 'unit-test-directory/new-dir'
+
+    describe 'os_rmdir', ->
+      it 'returns non_zero when given a non-existing directory', ->
+        neq 0, (os_rmdir 'non-existing-directory')
+
+      it 'removes the given directory and returns 0', ->
+        lfs.mkdir 'unit-test-directory/new-dir'
+        eq 0, (os_rmdir 'unit-test-directory/new-dir', mode)
+        eq false, (os_isdir 'unit-test-directory/new-dir')
+

@@ -45,6 +45,7 @@
 #include "os_unix.h"
 #include "path.h"
 #include "ui.h"
+#include "os/os.h"
 
 /*
  * Some systems have the page size in statfs.f_bsize, some in stat.st_blksize
