@@ -1934,8 +1934,7 @@ void ex_argedit(exarg_T *eap)
       return;
     i = alist_add_list(1, &s,
         eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1);
-    if (i < 0)
-      return;
+
     curwin->w_arg_idx = i;
   }
 
