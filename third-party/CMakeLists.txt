@@ -44,8 +44,8 @@ endif()
 
 include(ExternalProject)
 
-set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.22.tar.gz)
-set(LIBUV_MD5 d0cb0fea847afa35333ccbda56ed16d4)
+set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.23.tar.gz)
+set(LIBUV_MD5 e02a3da9fba9ebe72a84e4abd312ee4d)
 
 set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-0.5.8/msgpack-0.5.8.tar.gz)
 set(MSGPACK_MD5 ea0bee0939d2980c0df91f0e4843ccc4)

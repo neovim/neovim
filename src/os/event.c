@@ -20,8 +20,8 @@ KLIST_INIT(Event, Event, _destroy_event)
 static klist_t(Event) *event_queue;
 static uv_timer_t timer;
 static uv_prepare_t timer_prepare;
-static void timer_cb(uv_timer_t *handle, int);
-static void timer_prepare_cb(uv_prepare_t *, int);
+static void timer_cb(uv_timer_t *handle);
+static void timer_prepare_cb(uv_prepare_t *);
 
 void event_init()
 {
@@ -119,12 +119,12 @@ void event_process()
 }
 
 // Set a flag in the `event_poll` loop for signaling of a timeout
-static void timer_cb(uv_timer_t *handle, int status)
+static void timer_cb(uv_timer_t *handle)
 {
   *((bool *)handle->data) = true;
 }
 
-static void timer_prepare_cb(uv_prepare_t *handle, int status)
+static void timer_prepare_cb(uv_prepare_t *handle)
 {
   uv_timer_start(&timer, timer_cb, *(uint32_t *)timer_prepare.data, 0);
   uv_prepare_stop(&timer_prepare);
