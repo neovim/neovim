@@ -16,7 +16,8 @@ char_u *path_next_component(char_u *fname);
 -- import constants parsed by ffi
 {:kEqualFiles, :kDifferentFiles, :kBothFilesMissing, :kOneFileMissing, :kEqualFileNames} = path
 NULL = ffi.cast 'void*', 0
-{:OK, :FAIL} = path
+OK = 1
+FAIL = 0
 
 describe 'path function', ->
   describe 'path_full_compare', ->
