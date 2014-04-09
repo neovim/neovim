@@ -104,7 +104,6 @@
 #define FEAT_BROWSE
 #define FEAT_BROWSE_CMD
 #define FEAT_BYTEOFF
-#define FEAT_CINDENT
 #define FEAT_CMDHIST
 #define FEAT_CMDL_COMPL
 #define FEAT_CMDL_INFO
