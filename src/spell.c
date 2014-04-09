@@ -10666,7 +10666,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
         /* Normal byte, go one level deeper.  If it's not equal to the
          * byte in the bad word adjust the score.  But don't even try
          * when the byte was already changed.  And don't try when we
-         * just deleted this byte, accepting it is always cheaper then
+         * just deleted this byte, accepting it is always cheaper than
          * delete + substitute. */
         if (c == fword[sp->ts_fidx]
             || (sp->ts_tcharlen > 0 && sp->ts_isdiff != DIFF_NONE)
