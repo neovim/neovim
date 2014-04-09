@@ -101,7 +101,6 @@
 
 #define FEAT_ARABIC
 #define FEAT_AUTOCHDIR
-#define FEAT_AUTOCMD
 #define FEAT_BROWSE
 #define FEAT_BROWSE_CMD
 #define FEAT_BYTEOFF

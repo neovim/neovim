@@ -6,7 +6,7 @@
 
 /*
  * Struct to save values in before executing autocommands for a buffer that is
- * not the current buffer.  Without FEAT_AUTOCMD only "curbuf" is remembered.
+ * not the current buffer.
  */
 typedef struct {
   buf_T       *save_curbuf;     /* saved curbuf */
