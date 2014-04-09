@@ -3941,8 +3941,6 @@ static int is_one_char(char_u *pattern)
   return result;
 }
 
-#if defined(FEAT_LISP) || defined(FEAT_CINDENT) || defined(FEAT_TEXTOBJ) \
-  || defined(PROTO)
 /*
  * return TRUE if line 'lnum' is empty or has white chars only.
  */
@@ -3953,7 +3951,6 @@ int linewhite(linenr_T lnum)
   p = skipwhite(ml_get(lnum));
   return *p == NUL;
 }
-#endif
 
 /*
  * Find identifiers or defines in included files.

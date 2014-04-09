@@ -102,10 +102,7 @@ open_line (
   char_u      *lead_flags;      /* position in 'comments' for comment leader */
   char_u      *leader = NULL;           /* copy of comment leader */
   char_u      *allocated = NULL;        /* allocated memory */
-#if defined(FEAT_SMARTINDENT) || defined(FEAT_VREPLACE) || defined(FEAT_LISP) \
-  || defined(FEAT_CINDENT) || defined(FEAT_COMMENTS)
   char_u      *p;
-#endif
   int saved_char = NUL;                 /* init for GCC */
   pos_T       *pos;
   int do_si = (!p_paste && curbuf->b_p_si
