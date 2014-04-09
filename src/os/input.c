@@ -42,7 +42,7 @@ static InbufPollResult inbuf_poll(int32_t ms);
 static void stderr_switch(void);
 static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
 static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
-static void fread_idle_cb(uv_idle_t *, int);
+static void fread_idle_cb(uv_idle_t *);
 
 void input_init()
 {
@@ -246,7 +246,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
-static void fread_idle_cb(uv_idle_t *handle, int status)
+static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
 

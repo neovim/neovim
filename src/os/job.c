@@ -55,7 +55,7 @@ static Job * find_job(int id);
 static void free_job(Job *job);
 
 // Callbacks for libuv
-static void job_prepare_cb(uv_prepare_t *handle, int status);
+static void job_prepare_cb(uv_prepare_t *handle);
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf);
 static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf);
 static void write_cb(uv_write_t *req, int status);
@@ -257,7 +257,7 @@ static void free_job(Job *job)
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
 /// that didn't die from SIGTERM after a while(exit_timeout is 0).
-static void job_prepare_cb(uv_prepare_t *handle, int status)
+static void job_prepare_cb(uv_prepare_t *handle)
 {
   Job *job;
   int i;
