@@ -701,15 +701,6 @@ int re_multiline(regprog_T *prog)
 }
 
 /*
- * Return TRUE if compiled regular expression "prog" looks before the start
- * position (pattern contains "\@<=" or "\@<!").
- */
-int re_lookbehind(regprog_T *prog)
-{
-  return prog->regflags & RF_LOOKBH;
-}
-
-/*
  * Check for an equivalence class name "[=a=]".  "pp" points to the '['.
  * Returns a character representing the class. Zero means that no item was
  * recognized.  Otherwise "pp" is advanced to after the item.
