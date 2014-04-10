@@ -2029,7 +2029,7 @@ void set_init_1(void)
     {
 #ifdef HAVE_TOTAL_MEM
       /* Use amount of memory available to Vim. */
-      n = (os_total_mem(FALSE) >> 1);
+      n = (os_get_total_mem_kib() >> 1);
 #else
       n = (0x7fffffff >> 11);
 #endif
