@@ -353,12 +353,6 @@ void add_to_input_buf_csi(char_u *str, int len)          {
 
 #endif
 
-void push_raw_key(char_u *s, int len)
-{
-  while (len--)
-    inbuf[inbufcount++] = *s++;
-}
-
 #if defined(FEAT_GUI) || defined(FEAT_EVAL) || defined(FEAT_EX_EXTRA) \
   || defined(PROTO)
 /* Remove everything from the input buffer.  Called when ^C is found */

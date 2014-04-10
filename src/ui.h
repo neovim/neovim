@@ -15,7 +15,6 @@ char_u *get_input_buf(void);
 void set_input_buf(char_u *p);
 void add_to_input_buf(char_u *s, int len);
 void add_to_input_buf_csi(char_u *str, int len);
-void push_raw_key(char_u *s, int len);
 void trash_input_buf(void);
 int read_from_input_buf(char_u *buf, long maxlen);
 void fill_input_buf(int exit_on_error);
