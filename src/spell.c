@@ -3658,11 +3658,11 @@ spell_read_tree (
     return SP_TRUNCERROR;
   if (len > 0) {
     /* Allocate the byte array. */
-    bp = lalloc((long_u)len, TRUE);
+    bp = lalloc((long_u)len);
     *bytsp = bp;
 
     /* Allocate the index array. */
-    ip = (idx_T *)lalloc_clear((long_u)(len * sizeof(int)), TRUE);
+    ip = (idx_T *)lalloc_clear((long_u)(len * sizeof(int)));
     *idxsp = ip;
 
     /* Recursively read the tree and store it in the array. */
@@ -13320,8 +13320,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
 
   /* We use "cnt" as an array: CNT(badword_idx, goodword_idx). */
 #define CNT(a, b)   cnt[(a) + (b) * (badlen + 1)]
-  cnt = (int *)lalloc((long_u)(sizeof(int) * (badlen + 1) * (goodlen + 1)),
-      TRUE);
+  cnt = (int *)lalloc((long_u)(sizeof(int) * (badlen + 1) * (goodlen + 1)));
 
   CNT(0, 0) = 0;
   for (j = 1; j <= goodlen; ++j)

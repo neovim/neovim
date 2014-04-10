@@ -6295,7 +6295,7 @@ replace_push (
     return;
   if (replace_stack_len <= replace_stack_nr) {
     replace_stack_len += 50;
-    p = lalloc(sizeof(char_u) * replace_stack_len, TRUE);
+    p = lalloc(sizeof(char_u) * replace_stack_len);
     if (replace_stack != NULL) {
       memmove(p, replace_stack,
           (size_t)(replace_stack_nr * sizeof(char_u)));

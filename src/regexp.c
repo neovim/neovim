@@ -1221,7 +1221,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 #endif
 
   /* Allocate space. */
-  r = (bt_regprog_T *)lalloc(sizeof(bt_regprog_T) + regsize, TRUE);
+  r = (bt_regprog_T *)lalloc(sizeof(bt_regprog_T) + regsize);
 
   /*
    * Second pass: emit code.
@@ -6918,7 +6918,7 @@ char_u *reg_submatch(int no)
       }
 
       if (retval == NULL) {
-        retval = lalloc((long_u)len, TRUE);
+        retval = lalloc((long_u)len);
       }
     }
   } else {

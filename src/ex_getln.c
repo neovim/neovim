@@ -2957,7 +2957,7 @@ ExpandOne (
     len = 0;
     for (i = 0; i < xp->xp_numfiles; ++i)
       len += (long_u)STRLEN(xp->xp_files[i]) + 1;
-    ss = lalloc(len, TRUE);
+    ss = lalloc(len);
     if (ss != NULL) {
       *ss = NUL;
       for (i = 0; i < xp->xp_numfiles; ++i) {
@@ -4362,8 +4362,7 @@ void init_history(void)
   if (newlen != hislen) {                       /* history length changed */
     for (type = 0; type < HIST_COUNT; ++type) {     /* adjust the tables */
       if (newlen) {
-        temp = (histentry_T *)lalloc(
-            (long_u)(newlen * sizeof(histentry_T)), TRUE);
+        temp = (histentry_T *)lalloc((long_u)(newlen * sizeof(histentry_T)));
         if (temp == NULL) {         /* out of memory! */
           if (type == 0) {          /* first one: just keep the old length */
             newlen = hislen;
@@ -5013,7 +5012,7 @@ void prepare_viminfo_history(int asklen, int writing)
       viminfo_history[type] = NULL;
     else
       viminfo_history[type] =
-        (char_u **)lalloc((long_u)(len * sizeof(char_u *)), FALSE);
+        (char_u **)lalloc((long_u)(len * sizeof(char_u *)));
     if (viminfo_history[type] == NULL)
       len = 0;
     viminfo_hislen[type] = len;
@@ -5042,7 +5041,7 @@ int read_viminfo_history(vir_T *virp, int writing)
               viminfo_add_at_front, sep, writing)) {
         /* Need to re-allocate to append the separator byte. */
         len = STRLEN(val);
-        p = lalloc(len + 2, TRUE);
+        p = lalloc(len + 2);
         if (p != NULL) {
           if (type == HIST_SEARCH) {
             /* Search entry: Move the separator from the first

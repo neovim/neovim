@@ -135,7 +135,7 @@ static void serialize_visualinfo(visualinfo_T *info, FILE *fp);
 static void unserialize_visualinfo(visualinfo_T *info, FILE *fp);
 static void put_header_ptr(FILE *fp, u_header_T *uhp);
 
-#define U_ALLOC_LINE(size) lalloc((long_u)(size), FALSE)
+#define U_ALLOC_LINE(size) lalloc((long_u)(size));
 static char_u *u_save_line(linenr_T);
 
 /* used in undo_end() to report number of added and deleted lines */
@@ -769,7 +769,7 @@ static size_t fwrite_crypt(buf_T *buf, char_u *ptr, size_t len, FILE *fp)
   if (len < 100)
     copy = small_buf;      /* no malloc()/free() for short strings */
   else {
-    copy = lalloc(len, FALSE);
+    copy = lalloc(len);
   }
   crypt_encode(ptr, len, copy);
   i = fwrite(copy, len, (size_t)1, fp);

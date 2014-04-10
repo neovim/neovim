@@ -351,7 +351,7 @@ nfa_regcomp_start (
   /* Size for postfix representation of expr. */
   postfix_size = sizeof(int) * nstate_max;
 
-  post_start = (int *)lalloc(postfix_size, TRUE);
+  post_start = (int *)lalloc(postfix_size);
   if (post_start == NULL)
     return FAIL;
   post_ptr = post_start;
@@ -548,7 +548,7 @@ static int realloc_post_list(void)
   int   *new_start;
   int   *old_start;
 
-  new_start = (int *)lalloc(new_max * sizeof(int), TRUE);
+  new_start = (int *)lalloc(new_max * sizeof(int));
   if (new_start == NULL)
     return FAIL;
   memmove(new_start, post_start, nstate_max * sizeof(int));
@@ -2890,7 +2890,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
   if (nfa_calc_size == FALSE) {
     /* Allocate space for the stack. Max states on the stack : nstate */
-    stack = (Frag_T *)lalloc((nstate + 1) * sizeof(Frag_T), TRUE);
+    stack = (Frag_T *)lalloc((nstate + 1) * sizeof(Frag_T));
     stackp = stack;
     stack_end = stack + (nstate + 1);
   }
@@ -4546,7 +4546,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     /* Already calling nfa_regmatch() recursively.  Save the lastlist[1]
      * values and clear them. */
     if (*listids == NULL) {
-      *listids = (int *)lalloc(sizeof(int) * nstate, TRUE);
+      *listids = (int *)lalloc(sizeof(int) * nstate);
     }
     nfa_save_listids(prog, *listids);
     need_restore = TRUE;
@@ -4874,9 +4874,9 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
   /* Allocate memory for the lists of nodes. */
   size = (nstate + 1) * sizeof(nfa_thread_T);
-  list[0].t = (nfa_thread_T *)lalloc(size, TRUE);
+  list[0].t = (nfa_thread_T *)lalloc(size);
   list[0].len = nstate + 1;
-  list[1].t = (nfa_thread_T *)lalloc(size, TRUE);
+  list[1].t = (nfa_thread_T *)lalloc(size);
   list[1].len = nstate + 1;
 
 #ifdef ENABLE_LOG
@@ -6303,7 +6303,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 
   /* allocate the regprog with space for the compiled regexp */
   prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (nstate - 1);
-  prog = (nfa_regprog_T *)lalloc(prog_size, TRUE);
+  prog = (nfa_regprog_T *)lalloc(prog_size);
   state_ptr = prog->state;
 
   /*

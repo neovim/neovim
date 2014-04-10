@@ -929,7 +929,7 @@ static int stuff_yank(int regname, char_u *p)
   get_yank_register(regname, TRUE);
   if (y_append && y_current->y_array != NULL) {
     pp = &(y_current->y_array[y_current->y_size - 1]);
-    lp = lalloc((long_u)(STRLEN(*pp) + STRLEN(p) + 1), TRUE);
+    lp = lalloc((long_u)(STRLEN(*pp) + STRLEN(p) + 1));
     STRCPY(lp, *pp);
     STRCAT(lp, p);
     vim_free(p);
@@ -2428,11 +2428,11 @@ int op_yank(oparg_T *oap, int deleting, int mess)
     --yanklines;
   }
 
-  y_current->y_size = yanklines;
-  y_current->y_type = yanktype;     /* set the yank register type */
+  y_current->y_size  = yanklines;
+  y_current->y_type  = yanktype;     /* set the yank register type */
   y_current->y_width = 0;
-  y_current->y_array = (char_u **)lalloc_clear((long_u)(sizeof(char_u *) *
-                                                        yanklines), TRUE);
+  y_current->y_array =
+      (char_u **)lalloc_clear((long_u)(sizeof(char_u *) * yanklines));
 
   y_idx = 0;
   lnum = oap->start.lnum;
@@ -2528,9 +2528,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
 
   if (curr != y_current) {      /* append the new block to the old block */
     new_ptr = (char_u **)lalloc(
-        (long_u)(sizeof(char_u *) *
-                 (curr->y_size + y_current->y_size)),
-        TRUE);
+        (long_u)(sizeof(char_u *) * (curr->y_size + y_current->y_size)));
     for (j = 0; j < curr->y_size; ++j)
       new_ptr[j] = curr->y_array[j];
     vim_free(curr->y_array);
@@ -2543,7 +2541,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
      * the new block, unless being Vi compatible. */
     if (curr->y_type == MCHAR && vim_strchr(p_cpo, CPO_REGAPPEND) == NULL) {
       pnew = lalloc((long_u)(STRLEN(curr->y_array[curr->y_size - 1])
-                             + STRLEN(y_current->y_array[0]) + 1), TRUE);
+                             + STRLEN(y_current->y_array[0]) + 1));
       STRCPY(pnew, curr->y_array[--j]);
       STRCAT(pnew, y_current->y_array[0]);
       vim_free(curr->y_array[j]);
@@ -3489,9 +3487,9 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
   /* Allocate an array to store the number of spaces inserted before each
    * line.  We will use it to pre-compute the length of the new line and the
    * proper placement of each original line in the new one. */
-  spaces = lalloc_clear((long_u)count, TRUE);
+  spaces = lalloc_clear((long_u)count);
   if (remove_comments) {
-    comments = (int *)lalloc_clear((long_u)count * sizeof(int), TRUE);
+    comments = (int *)lalloc_clear((long_u)count * sizeof(int));
   }
 
   /*
@@ -4774,7 +4772,7 @@ get_reg_contents (
       ++len;
   }
 
-  retval = lalloc(len + 1, TRUE);
+  retval = lalloc(len + 1);
 
   /*
    * Copy the lines of the yank register into the string.
@@ -4922,8 +4920,7 @@ str_to_reg (
    * Allocate an array to hold the pointers to the new register lines.
    * If the register was not empty, move the existing lines to the new array.
    */
-  pp = (char_u **)lalloc_clear((y_ptr->y_size + newlines)
-      * sizeof(char_u *), TRUE);
+  pp = (char_u **)lalloc_clear((y_ptr->y_size + newlines) * sizeof(char_u *));
   for (lnum = 0; lnum < y_ptr->y_size; ++lnum)
     pp[lnum] = y_ptr->y_array[lnum];
   vim_free(y_ptr->y_array);
