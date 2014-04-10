@@ -1854,9 +1854,12 @@ static int vgetorpeek(int advance)
 
                 /* Don't allow mapping the first byte(s) of a
                  * multi-byte char.  Happens when mapping
-                 * <M-a> and then changing 'encoding'. */
-                if (has_mbyte && MB_BYTE2LEN(c1)
-                    > (*mb_ptr2len)(mp->m_keys))
+                 * <M-a> and then changing 'encoding'. Beware
+                 * that 0x80 is escaped. */
+                char_u *p1 = mp->m_keys;
+                char_u *p2 = mb_unescape(&p1);
+
+                if (has_mbyte && p2 != NULL && MB_BYTE2LEN(c1) > MB_PTR2LEN(p2))
                   mlen = 0;
                 /*
                  * Check an entry whether it matches.
