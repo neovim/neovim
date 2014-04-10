@@ -26,7 +26,6 @@ int do_execreg(int regname, int colon, int addcr, int silent);
 int insert_reg(int regname, int literally);
 int get_spec_reg(int regname, char_u **argp, int *allocated, int errmsg);
 int cmdline_paste_reg(int regname, int literally, int remcr);
-void adjust_clip_reg(int *rp);
 int op_delete(oparg_T *oap);
 int op_replace(oparg_T *oap, int c);
 void op_tilde(oparg_T *oap);
