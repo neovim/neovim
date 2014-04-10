@@ -1,5 +1,27 @@
 include(CheckLibraryExists)
 
+if(DEFINED ENV{LUA_BINARY})
+  set(LUA_BIN $ENV{LUA_BINARY})
+else()
+  set(LUA_BIN ${DEPS_BIN_DIR}/luajit)
+endif()
+
+set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/auto)
+set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
+set(API_HEADER ${PROJECT_SOURCE_DIR}/src/api.h)
+set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/msgpack_rpc.h)
+set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
+
+file(MAKE_DIRECTORY ${GENERATED_DIR})
+
+add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
+  COMMAND ${LUA_BIN} ${DISPATCH_GENERATOR} ${API_HEADER} ${MSGPACK_DISPATCH}
+  DEPENDS
+    ${API_HEADER}
+    ${MSGPACK_RPC_HEADER}
+    ${DISPATCH_GENERATOR}
+    )
+
 file( GLOB NEOVIM_SOURCES *.c )
 
 foreach(sfile ${NEOVIM_SOURCES})
@@ -11,6 +33,7 @@ endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
+list(APPEND NEOVIM_SOURCES "${MSGPACK_DISPATCH}")
 
 file( GLOB OS_SOURCES os/*.c )
 
