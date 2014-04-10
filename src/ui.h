@@ -11,7 +11,6 @@ void ui_set_shellsize(int mustset);
 void ui_breakcheck(void);
 int vim_is_input_buf_full(void);
 int vim_is_input_buf_empty(void);
-int vim_free_in_input_buf(void);
 char_u *get_input_buf(void);
 void set_input_buf(char_u *p);
 void add_to_input_buf(char_u *s, int len);

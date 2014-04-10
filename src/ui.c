@@ -266,13 +266,6 @@ int vim_is_input_buf_empty(void)
   return inbufcount == 0;
 }
 
-#ifdef PROTO
-int vim_free_in_input_buf(void) {
-  return INBUFLEN - inbufcount;
-}
-#endif
-
-
 /*
  * Return the current contents of the input buffer and make it empty.
  * The returned pointer must be passed to set_input_buf() later.
