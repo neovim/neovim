@@ -6,7 +6,6 @@ int ui_inchar(char_u *buf, int maxlen, long wtime, int tb_change_cnt);
 int ui_char_avail(void);
 void ui_delay(long msec, int ignoreinput);
 void ui_suspend(void);
-void suspend_shell(void);
 int ui_get_shellsize(void);
 void ui_set_shellsize(int mustset);
 void ui_breakcheck(void);

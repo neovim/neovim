@@ -177,8 +177,6 @@ void mch_suspend()
   settmode(TMODE_RAW);
   need_check_timestamps = TRUE;
   did_check_timestamps = FALSE;
-#else
-  suspend_shell();
 #endif
 }
 
