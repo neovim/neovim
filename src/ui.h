@@ -25,6 +25,5 @@ int check_row(int row);
 int jump_to_mouse(int flags, int *inclusive, int which_button);
 int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump);
 win_T *mouse_find_win(int *rowp, int *colp);
-int vcol2col(win_T *wp, linenr_T lnum, int vcol);
 void im_save_status(long *psave);
 #endif /* NEOVIM_UI_H */

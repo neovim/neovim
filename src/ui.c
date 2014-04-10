@@ -938,32 +938,6 @@ win_T *mouse_find_win(int *rowp, int *colp)
   return fp->fr_win;
 }
 
-#if defined(FEAT_GUI_MOTIF) || defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MAC) \
-  || defined(FEAT_GUI_ATHENA) || defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_PHOTON) || defined(PROTO)
-
-/*
- * Convert a virtual (screen) column to a character column.
- * The first column is one.
- */
-int vcol2col(win_T *wp, linenr_T lnum, int vcol)
-{
-  /* try to advance to the specified column */
-  int count = 0;
-  char_u      *ptr;
-  char_u      *start;
-
-  start = ptr = ml_get_buf(wp->w_buffer, lnum, FALSE);
-  while (count < vcol && *ptr != NUL) {
-    count += win_lbr_chartabsize(wp, ptr, count, NULL);
-    mb_ptr_adv(ptr);
-  }
-  return (int)(ptr - start);
-}
-#endif
-
-
-
 #if defined(USE_IM_CONTROL) || defined(PROTO)
 /*
  * Save current Input Method status to specified place.
