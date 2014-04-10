@@ -26,7 +26,6 @@ void set_file_options(int set_options, exarg_T *eap);
 void set_forced_fenc(exarg_T *eap);
 int prepare_crypt_read(FILE *fp);
 char_u *prepare_crypt_write(buf_T *buf, int *lenp);
-int check_file_readonly(char_u *fname, int perm);
 int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start,
               linenr_T end, exarg_T *eap, int append, int forceit,
               int reset_changed,

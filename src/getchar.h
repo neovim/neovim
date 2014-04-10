@@ -72,7 +72,6 @@ void check_map_keycodes(void);
 char_u *check_map(char_u *keys, int mode, int exact, int ign_mod,
                   int abbr, mapblock_T **mp_ptr,
                   int *local_ptr);
-void init_mappings(void);
 void add_map(char_u *map, int mode);
 
 #endif /* NEOVIM_GETCHAR_H */

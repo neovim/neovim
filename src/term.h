@@ -7,12 +7,10 @@ void del_mouse_termcode(int n);
 void getlinecol(long *cp, long *rp);
 int add_termcap_entry(char_u *name, int force);
 int term_is_8bit(char_u *name);
-int term_is_gui(char_u *name);
 char_u *tltoa(unsigned long i);
 void termcapinit(char_u *name);
 void out_flush(void);
 void out_flush_check(void);
-void out_trash(void);
 void out_char(unsigned c);
 void out_str_nf(char_u *s);
 void out_str(char_u *s);
@@ -63,5 +61,4 @@ int find_term_bykeys(char_u *src);
 void show_termcodes(void);
 int show_one_termcode(char_u *name, char_u *code, int printit);
 char_u *translate_mapping(char_u *str, int expmap);
-void update_tcap(int attr);
 #endif /* NEOVIM_TERM_H */

@@ -39,7 +39,6 @@ int prof_def_func(void);
 int autowrite(buf_T *buf, int forceit);
 void autowrite_all(void);
 int check_changed(buf_T *buf, int flags);
-void browse_save_fname(buf_T *buf);
 void dialog_changed(buf_T *buf, int checkall);
 int can_abandon(buf_T *buf, int forceit);
 int check_changed_any(int hidden);
@@ -48,7 +47,6 @@ int buf_write_all(buf_T *buf, int forceit);
 void get_arglist(garray_T *gap, char_u *str);
 int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp,
                     int wig);
-void set_arglist(char_u *str);
 void check_arg_idx(win_T *win);
 void ex_args(exarg_T *eap);
 void ex_previous(exarg_T *eap);

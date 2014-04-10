@@ -69,8 +69,6 @@ int buf_getsigntype(buf_T *buf, linenr_T lnum, int type);
 linenr_T buf_delsign(buf_T *buf, int id);
 int buf_findsign(buf_T *buf, int id);
 int buf_findsign_id(buf_T *buf, linenr_T lnum);
-int buf_findsigntype_id(buf_T *buf, linenr_T lnum, int typenr);
-int buf_signcount(buf_T *buf, linenr_T lnum);
 void buf_delete_signs(buf_T *buf);
 void buf_delete_all_signs(void);
 void sign_list_placed(buf_T *rbuf);
