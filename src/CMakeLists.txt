@@ -44,6 +44,7 @@ endif()
 # Put these last on the link line, since multiple things may depend on them.
 list(APPEND NVIM_LINK_LIBRARIES
     ${LIBUV_LIBRARIES}
+    ${MSGPACK_LIBRARIES}
     ${LUAJIT_LIBRARIES}
     m
     ${CMAKE_THREAD_LIBS_INIT})
