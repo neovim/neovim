@@ -26,9 +26,6 @@ char_u *check_colorcolumn(win_T *wp);
 char_u *check_stl_option(char_u *s);
 int get_option_value(char_u *name, long *numval, char_u **stringval,
                              int opt_flags);
-int get_option_value_strict(char_u *name, long *numval, char_u *
-                                    *stringval, int opt_type,
-                                    void *from);
 char_u *option_iter_next(void **option, int opt_type);
 char_u *set_option_value(char_u *name, long number, char_u *string,
                                  int opt_flags);
