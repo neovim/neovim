@@ -1995,8 +1995,7 @@ findtag_end:
     match_count = 0;
 
   if (match_count > 0)
-    matches = (char_u **)lalloc((long_u)(match_count * sizeof(char_u *)),
-        TRUE);
+    matches = (char_u **)lalloc((long_u)(match_count * sizeof(char_u *)));
   else
     matches = NULL;
   match_count = 0;

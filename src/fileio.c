@@ -1004,8 +1004,7 @@ retry:
 #endif
 
         for (; size >= 10; size = (long)((long_u)size >> 1)) {
-          if ((new_buffer = lalloc((long_u)(size + linerest + 1),
-                   FALSE)) != NULL)
+          if ((new_buffer = lalloc((long_u)(size + linerest + 1))) != NULL)
               break;
         }
         if (linerest)           /* copy characters from the previous buffer */
@@ -3387,8 +3386,7 @@ nobackup:
         write_info.bw_conv_buflen = bufsize * 2;
       else       /* FIO_UCS4 */
         write_info.bw_conv_buflen = bufsize * 4;
-      write_info.bw_conv_buf
-        = lalloc((long_u)write_info.bw_conv_buflen, TRUE);
+      write_info.bw_conv_buf = lalloc((long_u)write_info.bw_conv_buflen);
     }
   }
 
@@ -3405,9 +3403,8 @@ nobackup:
     if (write_info.bw_iconv_fd != (iconv_t)-1) {
       /* We're going to use iconv(), allocate a buffer to convert in. */
       write_info.bw_conv_buflen = bufsize * ICONV_MULT;
-      write_info.bw_conv_buf
-        = lalloc((long_u)write_info.bw_conv_buflen, TRUE);
-      write_info.bw_first = TRUE;
+      write_info.bw_conv_buf    = lalloc((long_u)write_info.bw_conv_buflen);
+      write_info.bw_first       = TRUE;
     } else
 #  endif
 

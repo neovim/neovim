@@ -272,14 +272,13 @@ open_buffer (
 /*
  * Return TRUE if "buf" points to a valid buffer (in the buffer list).
  */
-int buf_valid(buf_T *buf)
+bool buf_valid(const buf_T *buf)
 {
-  buf_T       *bp;
-
-  for (bp = firstbuf; bp != NULL; bp = bp->b_next)
+  for (buf_T *bp = firstbuf; bp != NULL; bp = bp->b_next)
     if (bp == buf)
-      return TRUE;
-  return FALSE;
+      return true;
+
+  return false;
 }
 
 /*
@@ -4364,7 +4363,7 @@ static void insert_sign(
 {
     signlist_T	*newsign;
 
-    newsign = (signlist_T *)lalloc((long_u)sizeof(signlist_T), FALSE);
+    newsign = (signlist_T *)lalloc((long_u)sizeof(signlist_T));
     newsign->id = id;
     newsign->lnum = lnum;
     newsign->typenr = typenr;

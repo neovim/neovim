@@ -554,7 +554,7 @@ void mch_early_init()
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void mch_free_mem()          {
+void mch_free_mem() {
   vim_free(oldtitle);
   vim_free(oldicon);
 }
