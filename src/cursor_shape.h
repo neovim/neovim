@@ -48,6 +48,5 @@ typedef struct cursor_entry {
 } cursorentry_T;
 
 char_u *parse_shape_opt(int what);
-int get_shape_idx(int mouse);
 
 #endif /* NEOVIM_CURSOR_SHAPE_H */

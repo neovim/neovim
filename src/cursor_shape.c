@@ -207,35 +207,3 @@ char_u *parse_shape_opt(int what)
 
   return NULL;
 }
-
-/*
- * Return the index into shape_table[] for the current mode.
- * When "mouse" is TRUE, consider indexes valid for the mouse pointer.
- */
-int get_shape_idx(int mouse)
-{
-  if (!mouse && State == SHOWMATCH)
-    return SHAPE_IDX_SM;
-  if (State & VREPLACE_FLAG)
-    return SHAPE_IDX_R;
-  if (State & REPLACE_FLAG)
-    return SHAPE_IDX_R;
-  if (State & INSERT)
-    return SHAPE_IDX_I;
-  if (State & CMDLINE) {
-    if (cmdline_at_end())
-      return SHAPE_IDX_C;
-    if (cmdline_overstrike())
-      return SHAPE_IDX_CR;
-    return SHAPE_IDX_CI;
-  }
-  if (finish_op)
-    return SHAPE_IDX_O;
-  if (VIsual_active) {
-    if (*p_sel == 'e')
-      return SHAPE_IDX_VE;
-    else
-      return SHAPE_IDX_V;
-  }
-  return SHAPE_IDX_N;
-}
