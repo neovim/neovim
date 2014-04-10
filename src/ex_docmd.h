@@ -35,7 +35,6 @@ void not_exiting(void);
 void tabpage_close(int forceit);
 void tabpage_close_other(tabpage_T *tp, int forceit);
 void ex_all(exarg_T *eap);
-void handle_drop(int filec, char_u **filev, int split);
 void alist_clear(alist_T *al);
 void alist_init(alist_T *al);
 void alist_unlink(alist_T *al);
