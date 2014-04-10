@@ -44,7 +44,6 @@ attrentry_T *syn_term_attr2entry(int attr);
 attrentry_T *syn_cterm_attr2entry(int attr);
 char_u *highlight_has_attr(int id, int flag, int modec);
 char_u *highlight_color(int id, char_u *what, int modec);
-long_u highlight_gui_color_rgb(int id, int fg);
 int syn_name2id(char_u *name);
 int highlight_exists(char_u *name);
 char_u *syn_id2name(int id);
