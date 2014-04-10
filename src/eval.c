@@ -17436,6 +17436,7 @@ void ex_function(exarg_T *eap)
       for (i = 0; i < newargs.ga_len; ++i)
         if (STRCMP(((char_u **)(newargs.ga_data))[i], arg) == 0) {
           EMSG2(_("E853: Duplicate argument name: %s"), arg);
+          vim_free(arg);
           goto erret;
         }
 
