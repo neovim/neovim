@@ -50,8 +50,6 @@ int paragraph_start(linenr_T lnum);
 int do_addsub(int command, linenr_T Prenum1);
 int read_viminfo_register(vir_T *virp, int force);
 void write_viminfo_registers(FILE *fp);
-void clip_yank_selection(int type, char_u *str, long len,
-                         VimClipboard *cbd);
 char_u get_reg_type(int regname, long *reglen);
 char_u *get_reg_contents(int regname, int allowexpr, int expr_src);
 void write_reg_contents(int name, char_u *str, int maxlen,
