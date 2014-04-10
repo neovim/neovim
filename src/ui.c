@@ -61,37 +61,6 @@ void ui_write(char_u *s, int len)
 #endif
 }
 
-#if defined(UNIX) || defined(PROTO) || defined(WIN3264)
-/*
- * When executing an external program, there may be some typed characters that
- * are not consumed by it.  Give them back to ui_inchar() and they are stored
- * here for the next call.
- */
-static char_u *ta_str = NULL;
-static int ta_off;      /* offset for next char to use when ta_str != NULL */
-static int ta_len;      /* length of ta_str when it's not NULL*/
-
-void ui_inchar_undo(char_u *s, int len)
-{
-  char_u  *new;
-  int newlen;
-
-  newlen = len;
-  if (ta_str != NULL)
-    newlen += ta_len - ta_off;
-  new = alloc(newlen);
-  if (ta_str != NULL) {
-    memmove(new, ta_str + ta_off, (size_t)(ta_len - ta_off));
-    memmove(new + ta_len - ta_off, s, (size_t)len);
-    vim_free(ta_str);
-  } else
-    memmove(new, s, (size_t)len);
-  ta_str = new;
-  ta_len = newlen;
-  ta_off = 0;
-}
-#endif
-
 /*
  * ui_inchar(): low level input function.
  * Get characters from the keyboard.
