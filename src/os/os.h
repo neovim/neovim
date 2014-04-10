@@ -78,7 +78,8 @@ int os_rmdir(const char *path);
 /// @return `0` for success, non-zero for failure.
 int os_remove(const char *path);
 
-long_u os_total_mem(int special);
+/// Get the total system physical memory in KiB.
+long_u os_get_total_mem_kib(void);
 const char *os_getenv(const char *name);
 int os_setenv(const char *name, const char *value, int overwrite);
 char *os_getenvname_at_index(size_t index);
