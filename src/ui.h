@@ -22,7 +22,6 @@ void read_error_exit(void);
 void ui_cursor_shape(void);
 int check_col(int col);
 int check_row(int row);
-void yank_cut_buffer0(Display *dpy, VimClipboard *cbd);
 int jump_to_mouse(int flags, int *inclusive, int which_button);
 int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump);
 win_T *mouse_find_win(int *rowp, int *colp);

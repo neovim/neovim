@@ -522,50 +522,9 @@ int check_row(int row)
 }
 #endif
 
-#if defined(FEAT_XCLIPBOARD) || defined(FEAT_GUI_X11) \
-  || defined(FEAT_GUI_GTK) || defined(PROTO)
 /*
- * Get the contents of the X CUT_BUFFER0 and put it in "cbd".
+ * Stuff for the X clipboard.  Shared between VMS and Unix.
  */
-void yank_cut_buffer0(Display *dpy, VimClipboard *cbd)
-{
-  int nbytes = 0;
-  char_u      *buffer = (char_u *)XFetchBuffer(dpy, &nbytes, 0);
-
-  if (nbytes > 0) {
-    int done = FALSE;
-
-    /* CUT_BUFFER0 is supposed to be always latin1.  Convert to 'enc' when
-     * using a multi-byte encoding.  Conversion between two 8-bit
-     * character sets usually fails and the text might actually be in
-     * 'enc' anyway. */
-    if (has_mbyte) {
-      char_u      *conv_buf;
-      vimconv_T vc;
-
-      vc.vc_type = CONV_NONE;
-      if (convert_setup(&vc, (char_u *)"latin1", p_enc) == OK) {
-        conv_buf = string_convert(&vc, buffer, &nbytes);
-        if (conv_buf != NULL) {
-          clip_yank_selection(MCHAR, conv_buf, (long)nbytes, cbd);
-          vim_free(conv_buf);
-          done = TRUE;
-        }
-        convert_setup(&vc, NULL, NULL);
-      }
-    }
-    if (!done)      /* use the text without conversion */
-      clip_yank_selection(MCHAR, buffer, (long)nbytes, cbd);
-    XFree((void *)buffer);
-    if (p_verbose > 0) {
-      verbose_enter();
-      verb_msg((char_u *)_("Used CUT_BUFFER0 instead of empty selection"));
-      verbose_leave();
-    }
-  }
-}
-#endif
-
 
 /*
  * Move the cursor to the specified row and column on the screen.
