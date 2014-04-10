@@ -7428,11 +7428,6 @@ void unblock_autocmds(void)
     apply_autocmds(EVENT_TERMRESPONSE, NULL, NULL, FALSE, curbuf);
 }
 
-int is_autocmd_blocked(void)
-{
-  return autocmd_blocked != 0;
-}
-
 /*
  * Find next autocommand pattern that matches.
  */

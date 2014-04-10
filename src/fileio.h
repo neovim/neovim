@@ -73,7 +73,6 @@ int has_textchangedI(void);
 int has_insertcharpre(void);
 void block_autocmds(void);
 void unblock_autocmds(void);
-int is_autocmd_blocked(void);
 char_u *getnextac(int c, void *cookie, int indent);
 int has_autocmd(event_T event, char_u *sfname, buf_T *buf);
 char_u *get_augroup_name(expand_T *xp, int idx);
