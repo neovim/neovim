@@ -20,7 +20,6 @@ int valid_yank_reg(int regname, int writing);
 void get_yank_register(int regname, int writing);
 void *get_register(int name, int copy) FUNC_ATTR_NONNULL_RET;
 void put_register(int name, void *reg);
-void free_register(void *reg);
 int yank_register_mline(int regname);
 int do_record(int c);
 int do_execreg(int regname, int colon, int addcr, int silent);

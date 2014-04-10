@@ -811,17 +811,6 @@ void put_register(int name, void *reg)
 
 }
 
-void free_register(void *reg)
-{
-  struct yankreg tmp;
-
-  tmp = *y_current;
-  *y_current = *(struct yankreg *)reg;
-  free_yank_all();
-  vim_free(reg);
-  *y_current = tmp;
-}
-
 /*
  * return TRUE if the current yank register has type MLINE
  */
