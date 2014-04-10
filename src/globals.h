@@ -811,7 +811,7 @@ EXTERN reg_extmatch_T *re_extmatch_in INIT(= NULL); /* Used by vim_regexec():
 EXTERN reg_extmatch_T *re_extmatch_out INIT(= NULL); /* Set by vim_regexec()
                                                       * to store \z\(...\) matches */
 
-EXTERN int did_outofmem_msg INIT(= FALSE);
+EXTERN bool did_outofmem_msg INIT(= false);
 /* set after out of memory msg */
 EXTERN int did_swapwrite_msg INIT(= FALSE);
 /* set after swap write error msg */
