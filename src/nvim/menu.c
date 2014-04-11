@@ -1273,8 +1273,6 @@ static int menu_is_hidden(char_u *name)
   return (name[0] == ']') || (menu_is_popup(name) && name[5] != NUL);
 }
 
-#if defined(FEAT_CMDL_COMPL) \
-  || (defined(FEAT_GUI_W32) && defined(FEAT_TEAROFF))
 /*
  * Return TRUE if the menu is the tearoff menu.
  */
@@ -1282,7 +1280,6 @@ static int menu_is_tearoff(char_u *name)
 {
   return FALSE;
 }
-#endif
 
 
 

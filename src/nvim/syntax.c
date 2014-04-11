@@ -7756,8 +7756,6 @@ static void highlight_list_two(int cnt, int attr)
 }
 
 
-#if defined(FEAT_CMDL_COMPL) || (defined(FEAT_SYN_HL) && defined(FEAT_EVAL)) \
-  || defined(FEAT_SIGNS) || defined(PROTO)
 /*
  * Function given to ExpandGeneric() to obtain the list of group names.
  * Also used for synIDattr() function.
@@ -7779,7 +7777,6 @@ char_u *get_highlight_name(expand_T *xp, int idx)
     return NULL;
   return HL_TABLE()[idx].sg_name;
 }
-#endif
 
 
 /**************************************
