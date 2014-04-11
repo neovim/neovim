@@ -9,10 +9,12 @@ endif()
 
 set(DEPS_INSTALL_DIR "${DEPS_DIR}/usr")
 set(DEPS_BIN_DIR "${DEPS_DIR}/usr/bin")
+set(DEPS_LIB_DIR "${DEPS_DIR}/usr/lib")
 set(DEPS_BUILD_DIR "${DEPS_DIR}/build")
 set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 
 option(USE_BUNDLED_LIBUV "Use the bundled libuv." ON)
+option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ON)
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ON)
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ON)
 
@@ -45,6 +47,9 @@ include(ExternalProject)
 set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.22.tar.gz)
 set(LIBUV_MD5 d0cb0fea847afa35333ccbda56ed16d4)
 
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-0.5.8/msgpack-0.5.8.tar.gz)
+set(MSGPACK_MD5 ea0bee0939d2980c0df91f0e4843ccc4)
+
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.2.tar.gz)
 set(LUAJIT_MD5 112dfb82548b03377fbefbba2e0e3a5b)
 
@@ -69,6 +74,25 @@ if(USE_BUNDLED_LIBUV)
         --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} install)
   list(APPEND THIRD_PARTY_DEPS libuv)
+endif()
+
+if(USE_BUNDLED_MSGPACK)
+  ExternalProject_Add(msgpack
+    PREFIX ${DEPS_BUILD_DIR}
+    URL ${MSGPACK_URL}
+    URL_MD5 ${MSGPACK_MD5}
+    DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/msgpack
+    DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+      -DPREFIX=${DEPS_BUILD_DIR}
+      -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/msgpack
+      -DURL=${MSGPACK_URL}
+      -DEXPECTED_MD5=${MSGPACK_MD5}
+      -DTARGET=msgpack
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+    CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/msgpack/configure --disable-shared
+       --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
+    INSTALL_COMMAND ${MAKE_PRG} install)
+  list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()
 
 if(USE_BUNDLED_LUAJIT)
@@ -139,7 +163,16 @@ if(USE_BUNDLED_LUAROCKS)
     DEPENDS moonscript)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
-  list(APPEND THIRD_PARTY_DEPS moonscript busted)
+
+  # Like busted dependency on moonscript, we add a dependency on busted
+  # to serialize the install
+  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lua-cmsgpack
+    DEPENDS busted)
+  add_custom_target(lua-cmsgpack
+    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack)
+
+  list(APPEND THIRD_PARTY_DEPS moonscript busted lua-cmsgpack)
 endif()
 
 add_custom_target(third-party ALL

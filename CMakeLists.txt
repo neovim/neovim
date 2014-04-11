@@ -46,6 +46,9 @@ include(CheckLibraryExists)
 find_package(LibUV REQUIRED)
 include_directories(${LIBUV_INCLUDE_DIRS})
 
+find_package(Msgpack REQUIRED)
+include_directories(${MSGPACK_INCLUDE_DIRS})
+
 find_package(LuaJit REQUIRED)
 include_directories(${LUAJIT_INCLUDE_DIRS})
 
