@@ -250,7 +250,7 @@ int u_save(linenr_T top, linenr_T bot)
     return OK;
 
   if (top > curbuf->b_ml.ml_line_count
-      || top >= bot
+      // || top >= bot
       || bot > curbuf->b_ml.ml_line_count + 1)
     return FALSE;       /* rely on caller to do error messages */
 
