@@ -140,7 +140,6 @@
 #define FEAT_SEARCH_EXTRA
 #define FEAT_SMARTINDENT
 #define FEAT_SPELL
-#define FEAT_STL_OPT
 #define FEAT_SYN_HL
 #define FEAT_TAG_BINS
 #define FEAT_TAG_OLDSTATIC
