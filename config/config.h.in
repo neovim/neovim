@@ -104,7 +104,6 @@
 #define FEAT_BROWSE
 #define FEAT_BROWSE_CMD
 #define FEAT_CMDHIST
-#define FEAT_COMMENTS
 #define FEAT_COMPL_FUNC
 #define FEAT_CONCEAL
 #define FEAT_CON_DIALOG
