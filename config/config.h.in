@@ -106,7 +106,6 @@
 #define FEAT_CMDHIST
 #define FEAT_CONCEAL
 #define FEAT_CSCOPE
-#define FEAT_CURSORBIND
 #define FEAT_DIGRAPHS
 #define FEAT_EVAL
 #define FEAT_EX_EXTRA
