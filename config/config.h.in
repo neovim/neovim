@@ -107,7 +107,6 @@
 #define FEAT_CONCEAL
 #define FEAT_CSCOPE
 #define FEAT_DIGRAPHS
-#define FEAT_EX_EXTRA
 #define FEAT_FIND_ID
 #define FEAT_FKMAP
 #define FEAT_FLOAT
