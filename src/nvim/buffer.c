@@ -3510,8 +3510,6 @@ build_stl_str_hl (
   return width;
 }
 
-#if defined(FEAT_STL_OPT) || defined(FEAT_CMDL_INFO) \
-  || defined(FEAT_GUI_TABLINE) || defined(PROTO)
 /*
  * Get relative cursor position in window into "buf[buflen]", in the form 99%,
  * using "Top", "Bot" or "All" when appropriate.
@@ -3534,7 +3532,6 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
         ? (int)(above / ((above + below) / 100L))
         : (int)(above * 100L / (above + below)));
 }
-#endif
 
 /*
  * Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
