@@ -7086,8 +7086,6 @@ vim_regexec (
   return rmp->regprog->engine->regexec_nl(rmp, line, col, false);
 }
 
-#if defined(FEAT_MODIFY_FNAME) || defined(FEAT_EVAL) \
-  || defined(FIND_REPLACE_DIALOG) || defined(PROTO)
 /*
  * Like vim_regexec(), but consider a "\n" in "line" to be a line break.
  */
@@ -7095,7 +7093,6 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return rmp->regprog->engine->regexec_nl(rmp, line, col, true);
 }
-#endif
 
 /*
  * Match a regexp against multiple lines.
