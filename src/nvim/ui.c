@@ -329,8 +329,7 @@ void add_to_input_buf(char_u *s, int len)
   || defined(FEAT_GUI_MSWIN) \
   || defined(FEAT_GUI_MAC) \
   || defined(FEAT_MBYTE_IME) \
-  || (defined(FEAT_GUI) && (!defined(USE_ON_FLY_SCROLL) \
-  || defined(FEAT_MENU))) \
+  || defined(FEAT_GUI) \
   || defined(PROTO)
 /*
  * Add "str[len]" to the input buffer while escaping CSI bytes.

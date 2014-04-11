@@ -2324,8 +2324,7 @@ void ttest(int pairs)
   t_colors = atoi((char *)T_CCO);
 }
 
-#if (defined(FEAT_GUI) && (defined(FEAT_MENU) || !defined(USE_ON_FLY_SCROLL))) \
-  || defined(PROTO)
+#if defined(FEAT_GUI) || defined(PROTO)
 static int get_long_from_buf(char_u *buf, long_u *val);
 
 /*

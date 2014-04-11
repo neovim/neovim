@@ -120,7 +120,6 @@
 #define FEAT_LINEBREAK
 #define FEAT_LISP
 #define FEAT_LOCALMAP
-#define FEAT_MENU
 #define FEAT_MODIFY_FNAME
 #define FEAT_MOUSE
 #define FEAT_MOUSE_DEC
