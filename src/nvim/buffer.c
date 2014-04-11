@@ -1111,11 +1111,9 @@ do_buffer (
   /* Go to the other buffer. */
   set_curbuf(buf, action);
 
-#ifdef FEAT_LISTCMDS
   if (action == DOBUF_SPLIT) {
     RESET_BINDING(curwin);      /* reset 'scrollbind' and 'cursorbind' */
   }
-#endif
 
   if (aborting())           /* autocmds may abort script processing */
     return FAIL;

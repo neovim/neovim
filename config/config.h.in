@@ -119,7 +119,6 @@
 #define FEAT_LANGMAP
 #define FEAT_LINEBREAK
 #define FEAT_LISP
-#define FEAT_LISTCMDS
 #define FEAT_LOCALMAP
 #define FEAT_MENU
 #define FEAT_MODIFY_FNAME
