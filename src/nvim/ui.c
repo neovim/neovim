@@ -352,15 +352,11 @@ void add_to_input_buf_csi(char_u *str, int len)          {
 
 #endif
 
-#if defined(FEAT_GUI) || defined(FEAT_EVAL) || defined(FEAT_EX_EXTRA) \
-  || defined(PROTO)
 /* Remove everything from the input buffer.  Called when ^C is found */
 void trash_input_buf(void)
 {
   inbufcount = 0;
 }
-
-#endif
 
 /*
  * Read as much data from the input buffer as possible up to maxlen, and store

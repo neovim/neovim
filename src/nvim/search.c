@@ -449,7 +449,7 @@ void last_pat_prog(regmmatch_T *regmatch)
  * if (options & SEARCH_PEEK) check for typed char, cancel search
  *
  * Return FAIL (zero) for failure, non-zero for success.
- * When FEAT_EVAL is defined, returns the index of the first matching
+ * Returns the index of the first matching
  * subpattern plus one; one if there was none.
  */
 int searchit(win, buf, pos, dir, pat, count, options, pat_use, stop_lnum, tm)

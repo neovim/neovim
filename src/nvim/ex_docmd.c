@@ -4182,8 +4182,6 @@ int ends_excmd(int c)
   return c == NUL || c == '|' || c == '"' || c == '\n';
 }
 
-#if defined(FEAT_SYN_HL) || defined(FEAT_SEARCH_EXTRA) || defined(FEAT_EVAL) \
-  || defined(PROTO)
 /*
  * Return the next command, after the first '|' or '\n'.
  * Return NULL if not found.
@@ -4197,7 +4195,6 @@ char_u *find_nextcmd(char_u *p)
   }
   return p + 1;
 }
-#endif
 
 /*
  * Check if *p is a separator between Ex commands.

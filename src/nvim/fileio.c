@@ -1493,7 +1493,7 @@ retry:
           /* Detected a UTF-8 error. */
 rewind_retry:
           /* Retry reading with another conversion. */
-# if defined(FEAT_EVAL) && defined(USE_ICONV)
+# ifdef USE_ICONV
           if (*p_ccv != NUL && iconv_fd != (iconv_t)-1)
             /* iconv() failed, try 'charconvert' */
             did_iconv = TRUE;

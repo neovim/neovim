@@ -321,11 +321,6 @@ void trans_characters(char_u *buf, int bufsize)
   }
 }
 
-#if defined(FEAT_EVAL) \
-  || defined(FEAT_TITLE) \
-  || defined(FEAT_INS_EXPAND) \
-  || defined(PROTO)
-
 /// Translate a string into allocated memory, replacing special chars with
 /// printable chars.  Returns NULL when out of memory.
 ///
@@ -393,9 +388,6 @@ char_u *transstr(char_u *s)
 
   return res;
 }
-
-#endif // if defined(FEAT_EVAL) || defined(FEAT_TITLE)
-       //    || defined(FEAT_INS_EXPAND) || defined(PROTO)
 
 /// Convert the string "str[orglen]" to do ignore-case comparing.  Uses the
 /// current locale.
