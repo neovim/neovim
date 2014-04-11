@@ -1554,8 +1554,7 @@ call_func_retnr (
   return retval;
 }
 
-#if (defined(FEAT_USR_CMDS) && defined(FEAT_CMDL_COMPL)) \
-  || defined(FEAT_COMPL_FUNC) || defined(PROTO)
+#if defined(FEAT_USR_CMDS) || defined(FEAT_COMPL_FUNC) || defined(PROTO)
 
 /*
  * Call vimL function "func" and return the result as a string.
