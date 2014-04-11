@@ -60,7 +60,7 @@ bool event_poll(int32_t ms)
     // We only start the timer after the loop is running, for that we
     // use an prepare handle(pass the interval as data to it)
     timer_prepare.data = &ms;
-    uv_prepare_start(&timer_prepare, timer_prepare_cb);
+    uv_prepare_start(&timer_prepare, (uv_prepare_cb)timer_prepare_cb);
   } else if (ms == 0) {
     // For ms == 0, we need to do a non-blocking event poll by
     // setting the run mode to UV_RUN_NOWAIT.
@@ -126,6 +126,6 @@ static void timer_cb(uv_timer_t *handle, int status)
 
 static void timer_prepare_cb(uv_prepare_t *handle, int status)
 {
-  uv_timer_start(&timer, timer_cb, *(uint32_t *)timer_prepare.data, 0);
+  uv_timer_start(&timer, (uv_timer_cb)timer_cb, *(uint32_t *)timer_prepare.data, 0);
   uv_prepare_stop(&timer_prepare);
 }

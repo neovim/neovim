@@ -74,7 +74,7 @@ void input_start()
 
   if (read_channel_type == UV_FILE) {
     // Just invoke the `fread_idle_cb` as soon as the loop starts
-    uv_idle_start(&fread_idle, fread_idle_cb);
+    uv_idle_start(&fread_idle, (uv_idle_cb)fread_idle_cb);
   } else {
     // Start reading
     rbuffer.reading = false;

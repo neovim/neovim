@@ -65,7 +65,7 @@ void job_init()
 {
   uv_disable_stdio_inheritance();
   uv_prepare_init(uv_default_loop(), &job_prepare);
-  uv_prepare_start(&job_prepare, job_prepare_cb);
+  uv_prepare_start(&job_prepare, (uv_prepare_cb)job_prepare_cb);
 }
 
 void job_teardown()
