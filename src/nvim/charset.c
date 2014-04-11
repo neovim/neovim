@@ -748,18 +748,10 @@ int vim_strnsize(char_u *s, int len)
     return ptr2cells(p); \
   }
 
-#if defined(FEAT_VREPLACE) \
-  || defined(FEAT_EX_EXTRA) \
-  || defined(FEAT_GUI) \
-  || defined(FEAT_VIRTUALEDIT) \
-  || defined(PROTO)
 int chartabsize(char_u *p, colnr_T col)
 {
   RET_WIN_BUF_CHARTABSIZE(curwin, curbuf, p, col)
 }
-
-#endif /* if defined(FEAT_VREPLACE) || defined(FEAT_EX_EXTRA) ||
-         defined(FEAT_GUI) || defined(FEAT_VIRTUALEDIT) || defined(PROTO) */
 
 static int win_chartabsize(win_T *wp, char_u *p, colnr_T col)
 {
