@@ -1,4 +1,9 @@
-# Neovim ([bountysource fundraiser](https://www.bountysource.com/fundraisers/539-neovim-first-iteration))
+![Neovim](https://raw.githubusercontent.com/neovim/neovim.github.io/master/logos/neovim-logo.png)
+
+[Website](http://neovim.org) |
+[Google Group](https://groups.google.com/forum/#!forum/neovim) |
+[Twitter](http://twitter.com/Neovim) |
+[Bountysource](https://www.bountysource.com/teams/neovim)
 
 [![Build Status](https://travis-ci.org/neovim/neovim.png?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
