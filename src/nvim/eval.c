@@ -1554,8 +1554,6 @@ call_func_retnr (
   return retval;
 }
 
-#if defined(FEAT_USR_CMDS) || defined(FEAT_COMPL_FUNC) || defined(PROTO)
-
 /*
  * Call vimL function "func" and return the result as a string.
  * Returns NULL when calling the function fails.
@@ -1607,7 +1605,6 @@ call_func_retlist (
 
   return rettv.vval.v_list;
 }
-#endif
 
 /*
  * Save the current function call pointer, and set it to NULL.
