@@ -1501,7 +1501,7 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
 }
 #endif
 
-#if defined(UNIX) && (defined(FEAT_GUI_DIALOG) || defined(FEAT_CON_DIALOG))
+#ifdef UNIX
 static int process_still_running;
 #endif
 
@@ -3405,7 +3405,7 @@ findswapname (
           int choice = 0;
 #endif
 
-#if defined(UNIX) && (defined(FEAT_GUI_DIALOG) || defined(FEAT_CON_DIALOG))
+#ifdef UNIX
           process_still_running = FALSE;
 #endif
           /*
