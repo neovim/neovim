@@ -380,8 +380,7 @@ int vim_chdirfile(char_u *fname)
 #endif
 
 /*
- * Change directory to "new_dir".  If FEAT_SEARCHPATH is defined, search
- * 'cdpath' for relative directory names, otherwise just os_chdir().
+ * Change directory to "new_dir". Search 'cdpath' for relative directory names.
  */
 int vim_chdir(char_u *new_dir)
 {
