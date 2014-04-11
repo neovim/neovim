@@ -4269,7 +4269,6 @@ check_map (
 }
 
 
-#if defined(MSWIN) || defined(FEAT_CMDWIN) || defined(MACOS) || defined(PROTO)
 /*
  * Add a mapping "map" for mode "mode".
  * Need to put string in allocated memory, because do_map() will modify it.
@@ -4285,4 +4284,3 @@ void add_map(char_u *map, int mode)
   free(s);
   p_cpo = cpo_save;
 }
-#endif
