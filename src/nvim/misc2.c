@@ -362,8 +362,6 @@ int get_real_state(void)
   return State;
 }
 
-#if defined(FEAT_SESSION) || defined(MSWIN) || defined(FEAT_GUI_MAC) \
-  || defined(FEAT_GUI_GTK) || defined(PROTO)
 /*
  * Change to a file's directory.
  * Caller must call shorten_fnames()!
@@ -377,7 +375,6 @@ int vim_chdirfile(char_u *fname)
   *path_tail_with_sep(dir) = NUL;
   return os_chdir((char *)dir) == 0 ? OK : FAIL;
 }
-#endif
 
 /*
  * Change directory to "new_dir". Search 'cdpath' for relative directory names.

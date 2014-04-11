@@ -7065,7 +7065,7 @@ static void close_redir(void)
   }
 }
 
-#if defined(FEAT_SESSION) && defined(USE_CRNL)
+#ifdef USE_CRNL
 # define MKSESSION_NL
 static int mksession_nl = FALSE;    /* use NL only in put_eol() */
 #endif
