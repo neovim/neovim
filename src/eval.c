@@ -13715,7 +13715,7 @@ static void f_sha256(typval_T *argvars, typval_T *rettv)
 static void f_shellescape(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_string = vim_strsave_shellescape(
-      get_tv_string(&argvars[0]), non_zero_arg(&argvars[1]));
+    get_tv_string(&argvars[0]), non_zero_arg(&argvars[1]), true);
   rettv->v_type = VAR_STRING;
 }
 
@@ -19643,6 +19643,14 @@ repeat:
       if (didit)
         goto repeat;
     }
+  }
+
+  if (src[*usedlen] == ':' && src[*usedlen + 1] == 'S') {
+    p = vim_strsave_shellescape(*fnamep, false, false);
+    vim_free(*bufp);
+    *bufp = *fnamep = p;
+    *fnamelen = (int)STRLEN(p);
+    *usedlen += 2;
   }
 
   return valid;

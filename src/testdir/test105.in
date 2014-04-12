@@ -1,0 +1,45 @@
+Test filename modifiers     vim: set ft=vim :
+
+STARTTEST
+:source small.vim
+:%delete _
+:set shell=sh
+:set shellslash
+:let tab="\t"
+:command -nargs=1 Put :let expr=<q-args> | $put =expr.tab.strtrans(string(eval(expr)))
+:let $HOME=fnamemodify('.', ':p:h:h:h')
+:Put fnamemodify('.',              ':p'      )[-1:]
+:Put fnamemodify('.',              ':p:h'    )[-1:]
+:Put fnamemodify('test.out',       ':p'      )[-1:]
+:Put fnamemodify('test.out',       ':.'      )
+:Put fnamemodify('../testdir/a',   ':.'      )
+:Put fnamemodify('test.out',       ':~'      )
+:Put fnamemodify('../testdir/a',   ':~'      )
+:Put fnamemodify('../testdir/a',   ':t'      )
+:Put fnamemodify('.',              ':p:t'    )
+:Put fnamemodify('test.out',       ':p:t'    )
+:Put fnamemodify('test.out',       ':p:e'    )
+:Put fnamemodify('test.out',       ':p:t:e'  )
+:Put fnamemodify('abc.fb2.tar.gz', ':r'      )
+:Put fnamemodify('abc.fb2.tar.gz', ':r:r'    )
+:Put fnamemodify('abc.fb2.tar.gz', ':r:r:r'  )
+:Put substitute(fnamemodify('abc.fb2.tar.gz', ':p:r:r'), '.*\(src/testdir/.*\)', '\1', '')
+:Put fnamemodify('abc.fb2.tar.gz', ':e'      )
+:Put fnamemodify('abc.fb2.tar.gz', ':e:e'    )
+:Put fnamemodify('abc.fb2.tar.gz', ':e:e:e'  )
+:Put fnamemodify('abc.fb2.tar.gz', ':e:e:e:e')
+:Put fnamemodify('abc.fb2.tar.gz', ':e:e:r'  )
+:Put fnamemodify('abc def',        ':S'      )
+:Put fnamemodify('abc" "def',      ':S'      )
+:Put fnamemodify('abc"%"def',      ':S'      )
+:Put fnamemodify('abc'' ''def',    ':S'      )
+:Put fnamemodify('abc''%''def',    ':S'      )
+:Put fnamemodify("abc\ndef",       ':S'      )
+:set shell=tcsh
+:Put fnamemodify("abc\ndef",       ':S'      )
+:$put ='vim: ts=8'
+:1 delete _
+:w! test.out
+:qa!
+ENDTEST
+
