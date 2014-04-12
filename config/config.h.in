@@ -110,7 +110,6 @@
 #define FEAT_FIND_ID
 #define FEAT_FKMAP
 #define FEAT_FOLDING
-#define FEAT_GETTEXT
 #define FEAT_HANGULIN
 #define FEAT_INS_EXPAND
 #define FEAT_JUMPLIST
