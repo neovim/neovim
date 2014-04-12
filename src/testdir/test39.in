@@ -35,6 +35,12 @@ G$khhhhhkkcmno
 /^C23$/
 :exe ":norm! l\<C-V>j$hhAab\<Esc>"
 :.,/^$/w >> test.out
+:" Test for Visual block insert when virtualedit=all
+:set ve=all
+:/\t\tline
+:exe ":norm! 07l\<C-V>jjIx\<Esc>"
+:set ve=
+:.,/^$/w >> test.out
 :" gUe must uppercase a whole word, also when ß changes to SS
 Gothe youtußeuu endYpk0wgUe
 :" gUfx must uppercase until x, inclusive.
@@ -61,6 +67,10 @@ G3o987652k02l2jr
 :/^the/,$w >> test.out
 :qa!
 ENDTEST
+
+		line1
+		line2
+		line3
 
 aaaaaa
 bbbbbb

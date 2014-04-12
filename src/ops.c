@@ -2132,13 +2132,16 @@ void op_insert(oparg_T *oap, long count1)
      * to adjust the block for that. */
     if (oap->start.lnum == curbuf->b_op_start_orig.lnum && !bd.is_MAX) {
       if (oap->op_type == OP_INSERT
-          && oap->start.col != curbuf->b_op_start_orig.col) {
+          && oap->start.col + oap->start.coladd
+             != curbuf->b_op_start_orig.col + curbuf->b_op_start_orig.coladd) {
         oap->start.col = curbuf->b_op_start_orig.col;
         pre_textlen -= getviscol2(oap->start.col, oap->start.coladd)
                        - oap->start_vcol;
         oap->start_vcol = getviscol2(oap->start.col, oap->start.coladd);
       } else if (oap->op_type == OP_APPEND
-		 && oap->end.col >= curbuf->b_op_start_orig.col) {
+                 && oap->end.col + oap->end.coladd
+                    >= curbuf->b_op_start_orig.col
+                       + curbuf->b_op_start_orig.coladd) {
         oap->start.col = curbuf->b_op_start_orig.col;
         /* reset pre_textlen to the value of OP_INSERT */
         pre_textlen += bd.textlen;
