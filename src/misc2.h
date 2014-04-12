@@ -31,7 +31,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars,
                                 int cc,
                                 int bsl);
 int csh_like_shell(void);
-char_u *vim_strsave_shellescape(char_u *string, int do_special);
+char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline);
 char_u *vim_strsave_up(char_u *string);
 char_u *vim_strnsave_up(char_u *string, int len);
 void vim_strup(char_u *p);
