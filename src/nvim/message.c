@@ -13,6 +13,7 @@
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
 #include <string.h>
+#include <math.h>
 
 #include "nvim/vim.h"
 #include "nvim/message.h"
@@ -36,10 +37,6 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/event.h"
-
-#if defined(FEAT_FLOAT)
-# include <math.h>
-#endif
 
 static int other_sourcing_name(void);
 static char_u *get_emsg_source(void);

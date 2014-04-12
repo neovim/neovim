@@ -3394,7 +3394,7 @@ void ex_language(exarg_T *eap)
 #endif
     {
       loc = setlocale(what, (char *)name);
-#if defined(FEAT_FLOAT) && defined(LC_NUMERIC)
+#ifdef LC_NUMERIC
       /* Make sure strtod() uses a decimal point, not a comma. */
       setlocale(LC_NUMERIC, "C");
 #endif
