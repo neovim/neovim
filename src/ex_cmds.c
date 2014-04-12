@@ -930,8 +930,14 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
   vim_free(prevcmd);
   prevcmd = newcmd;
 
-  if (bangredo) {           /* put cmd in redo buffer for ! command */
-    AppendToRedobuffLit(prevcmd, -1);
+  if (bangredo) { /* put cmd in redo buffer for ! command */
+    /* If % or # appears in the command, it must have been escaped.
+     * Reescape them, so that redoing them does not substitute them by the
+     * buffername. */
+    char_u *cmd = vim_strsave_escaped(prevcmd, (char_u *)"%#");
+
+    AppendToRedobuffLit(cmd, -1);
+    vim_free(cmd);
     AppendToRedobuff((char_u *)"\n");
     bangredo = FALSE;
   }
