@@ -3414,9 +3414,7 @@ void ex_language(exarg_T *eap)
 
       if (what != LC_TIME) {
         /* Tell gettext() what to translate to.  It apparently doesn't
-         * use the currently effective locale.  Also do this when
-         * FEAT_GETTEXT isn't defined, so that shell commands use this
-         * value. */
+         * use the currently effective locale. */
         if (what == LC_ALL) {
           vim_setenv((char_u *)"LANG", name);
 
