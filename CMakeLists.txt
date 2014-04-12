@@ -68,12 +68,24 @@ endif(NOT CMAKE_USE_PTHREADS_INIT)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+find_program(LUA_PRG luajit)
+
+# Need a lua interpreter for running the msgapck metadata/dispatch generator
+if(NOT EXISTS ${LUA_PRG})
+  find_program(LUA_PRG lua)
+endif()
+
+if(EXISTS ${LUA_PRG})
+  message(STATUS "Using the lua interpreter ${LUA_PRG}")
+else()
+  message(FATAL_ERROR "A lua interpreter is required for building the Neovim")
+endif()
+
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(test/includes)
 
 find_program(BUSTED_PRG busted)
-find_program(LUAJIT_PRG luajit)
 
 find_program(MAKE_PRG NAMES gmake make)
 if(MAKE_PRG)
