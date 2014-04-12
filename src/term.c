@@ -2757,7 +2757,8 @@ void may_req_ambiguous_char_width(void)
     out_str(buf);
     out_str(T_U7);
     u7_status = U7_SENT;
-    term_windgoto(0, 0);
+    out_flush();
+    term_windgoto(1, 0);
     out_str((char_u *)"  ");
     term_windgoto(0, 0);
     /* check for the characters now, otherwise they might be eaten by
@@ -3423,33 +3424,43 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           && ((tp[0] == ESC && tp[1] == '[' && len >= 3)
               || (tp[0] == CSI && len >= 2))
           && (VIM_ISDIGIT(*p) || *p == '>' || *p == '?')) {
+        int col;
+        int row_char;
         j = 0;
         extra = 0;
         for (i = 2 + (tp[0] != CSI); i < len
              && !(tp[i] >= '{' && tp[i] <= '~')
              && !ASCII_ISALPHA(tp[i]); ++i)
-          if (tp[i] == ';' && ++j == 1)
+          if (tp[i] == ';' && ++j == 1) {
             extra = i + 1;
+            row_char = tp[i - 1];
+          }
         if (i == len) {
           LOG_TR("Not enough characters for CRV");
           return -1;
         }
+        if (extra > 0) {
+          col = atoi((char *)tp + extra);
+        } else {
+          col = 0;
+        }
 
-        /* Eat it when it has 2 arguments and ends in 'R'. Ignore it
-         * when u7_status is not "sent", <S-F3> sends something
-         * similar. */
-        if (j == 1 && tp[i] == 'R' && u7_status == U7_SENT) {
+        /* Eat it when it has 2 arguments and ends in 'R'. Also when
+         * u7_status is not "sent", it may be from a previous Vim that
+         * just exited.  But not for <S-F3>, it sends something
+         * similar, check for row and column to make sense. */
+        if (j == 1 && tp[i] == 'R' && row_char == '2' && col >= 2) {
           char *aw = NULL;
 
           LOG_TR("Received U7 status");
           u7_status = U7_GOT;
           did_cursorhold = TRUE;
-          if (extra > 0)
-            extra = atoi((char *)tp + extra);
-          if (extra == 2)
+          if (col == 2) {
             aw = "single";
-          else if (extra == 3)
+          } else if (col == 3) {
             aw = "double";
+          }
+
           if (aw != NULL && STRCMP(aw, p_ambw) != 0) {
             /* Setting the option causes a screen redraw. Do that
              * right away if possible, keeping any messages. */
