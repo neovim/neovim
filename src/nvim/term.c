@@ -2082,8 +2082,6 @@ static void out_char_nf(unsigned c)
     out_flush();
 }
 
-#if defined(FEAT_TITLE) || defined(FEAT_MOUSE_TTY) || defined(FEAT_GUI) \
-  || defined(FEAT_TERMRESPONSE) || defined(PROTO)
 /*
  * A never-padding out_str.
  * use this whenever you don't want to run the string through tputs.
@@ -2104,7 +2102,6 @@ void out_str_nf(char_u *s)
   if (p_wd)
     out_flush();
 }
-#endif
 
 /*
  * out_str(s): Put a character string a byte at a time into the output buffer.
@@ -2219,8 +2216,7 @@ static void term_color(char_u *s, int n)
     OUT_STR(tgoto((char *)s, 0, n));
 }
 
-#if (defined(FEAT_TITLE) && (defined(UNIX) || \
-  defined(MACOS_X))) || defined(PROTO)
+#if defined(UNIX) || defined(MACOS_X) || defined(PROTO)
 /*
  * Generic function to set window title, using t_ts and t_fs.
  */
