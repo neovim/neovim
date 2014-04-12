@@ -12,6 +12,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "nvim/vim.h"
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
@@ -68,10 +69,6 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
-
-#if defined(FEAT_FLOAT)
-# include <math.h>
-#endif
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 

@@ -109,7 +109,6 @@
 #define FEAT_DIGRAPHS
 #define FEAT_FIND_ID
 #define FEAT_FKMAP
-#define FEAT_FLOAT
 #define FEAT_FOLDING
 #define FEAT_GETTEXT
 #define FEAT_HANGULIN
