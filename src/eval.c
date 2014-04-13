@@ -19553,7 +19553,7 @@ repeat:
     if (p != NULL) {
       if (c == '.') {
         os_dirname(dirname, MAXPATHL);
-        s = shorten_fname(p, dirname);
+        s = path_shorten_fname(p, dirname);
         if (s != NULL) {
           *fnamep = s;
           if (pbuf != NULL) {

@@ -92,6 +92,48 @@ describe 'path function', ->
     it 'returns empty string if given file contains no seperator', ->
       eq '', path_next_component 'file.txt'
 
+  describe 'path_shorten_fname', ->
+    it 'returns NULL if `full_path` is NULL', ->
+      dir = to_cstr 'some/directory/file.txt'
+      eq NULL, (path.path_shorten_fname NULL, dir)
+
+    it 'returns NULL if the path and dir does not match', ->
+      dir = to_cstr 'not/the/same'
+      full = to_cstr 'as/this.txt'
+      eq NULL, (path.path_shorten_fname full, dir)
+
+    it 'returns NULL if the path is not separated properly', ->
+      dir = to_cstr 'some/very/long/'
+      full = to_cstr 'some/very/long/directory/file.txt'
+      eq NULL, (path.path_shorten_fname full, dir)
+
+    it 'shortens the filename if `dir_name` is the start of `full_path`', ->
+      full = to_cstr 'some/very/long/directory/file.txt'
+      dir = to_cstr 'some/very/long'
+      eq 'directory/file.txt', (ffi.string path.path_shorten_fname full, dir)
+
+describe 'path_shorten_fname_if_possible', ->
+  before_each ->
+      lfs.mkdir 'ut_directory'
+  after_each ->
+      lfs.chdir '..'
+      lfs.rmdir 'ut_directory'
+
+  describe 'path_shorten_fname_if_possible', ->
+    it 'returns shortened path if possible', ->
+      lfs.chdir 'ut_directory'
+      full = to_cstr lfs.currentdir! .. '/subdir/file.txt'
+      eq 'subdir/file.txt', (ffi.string path.path_shorten_fname_if_possible full)
+
+    it 'returns `full_path` if a shorter version is not possible', ->
+      old = lfs.currentdir!
+      lfs.chdir 'ut_directory'
+      full = old .. '/subdir/file.txt'
+      eq full, (ffi.string path.path_shorten_fname_if_possible to_cstr full)
+
+    it 'returns NULL if `full_path` is NULL', ->
+      eq NULL, (path.path_shorten_fname_if_possible NULL)
+
 describe 'more path function', ->
   setup ->
     lfs.mkdir 'unit-test-directory'

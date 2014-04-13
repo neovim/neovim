@@ -2859,7 +2859,7 @@ void ex_vimgrep(exarg_T *eap)
 
   seconds = (time_t)0;
   for (fi = 0; fi < fcount && !got_int && tomatch > 0; ++fi) {
-    fname = shorten_fname1(fnames[fi]);
+    fname = path_shorten_fname_if_possible(fnames[fi]);
     if (time(NULL) > seconds) {
       /* Display the file name every second or so, show the user we are
        * working on it. */

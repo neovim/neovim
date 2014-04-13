@@ -796,7 +796,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
        *	    /file.txt		  /		/file.txt
        *	    c:\file.txt		  c:\		.\file.txt
        */
-      short_name = shorten_fname(path, curdir);
+      short_name = path_shorten_fname(path, curdir);
       if (short_name != NULL && short_name > path + 1
           ) {
         STRCPY(path, ".");
@@ -817,7 +817,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
     /* If the {filename} is not unique, change it to ./{filename}.
      * Else reduce it to {filename} */
-    short_name = shorten_fname(path, curdir);
+    short_name = path_shorten_fname(path, curdir);
     if (short_name == NULL)
       short_name = path;
     if (is_unique(short_name, gap, i)) {
@@ -1708,54 +1708,37 @@ int flags;                      /* EW_* flags */
 }
 #endif
 
-#if defined(FEAT_VIMINFO) || defined(FEAT_BROWSE) || \
-  defined(FEAT_QUICKFIX) || defined(FEAT_AUTOCMD) || defined(PROTO)
-/*
- * Try to find a shortname by comparing the fullname with the current
- * directory.
- * Returns "full_path" or pointer into "full_path" if shortened.
- */
-char_u *shorten_fname1(char_u *full_path)
+char_u *path_shorten_fname_if_possible(char_u *full_path)
 {
-  char_u      *dirname;
-  char_u      *p = full_path;
+  char_u *dirname = xmalloc(MAXPATHL);
+  char_u *p = full_path;
 
-  dirname = alloc(MAXPATHL);
   if (os_dirname(dirname, MAXPATHL) == OK) {
-    p = shorten_fname(full_path, dirname);
-    if (p == NULL || *p == NUL)
+    p = path_shorten_fname(full_path, dirname);
+    if (p == NULL || *p == NUL) {
       p = full_path;
+    }
   }
   vim_free(dirname);
   return p;
 }
-#endif
 
-/*
- * Try to find a shortname by comparing the fullname with the current
- * directory.
- * Returns NULL if not shorter name possible, pointer into "full_path"
- * otherwise.
- */
-char_u *shorten_fname(char_u *full_path, char_u *dir_name)
+char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 {
-  int len;
-  char_u      *p;
-
-  if (full_path == NULL)
+  if (full_path == NULL) {
     return NULL;
-  len = (int)STRLEN(dir_name);
-  if (fnamencmp(dir_name, full_path, len) == 0) {
-    p = full_path + len;
-    {
-      if (vim_ispathsep(*p))
-        ++p;
-      else
-        p = NULL;
-    }
-  } else
-    p = NULL;
-  return p;
+  }
+
+  assert(dir_name != NULL);
+  size_t len = strlen((char *)dir_name);
+  char_u *p = full_path + len;
+
+  if (fnamencmp(dir_name, full_path, len) != 0
+      || !vim_ispathsep(*p)) {
+    return NULL;
+  }
+
+  return p + 1;
 }
 
 /*
