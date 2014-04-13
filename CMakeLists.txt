@@ -81,6 +81,24 @@ else()
   message(FATAL_ERROR "A lua interpreter is required for building the Neovim")
 endif()
 
+execute_process(COMMAND ${LUA_PRG} -e "require('lpeg')"
+                RESULT_VARIABLE LUA_LPEG_MISSING
+                ERROR_QUIET)
+
+if(${LUA_LPEG_MISSING})
+  message(FATAL_ERROR
+          "The 'lpeg' lua package is required for building Neovim")
+endif()
+
+execute_process(COMMAND ${LUA_PRG} -e "require('cmsgpack')"
+                RESULT_VARIABLE LUA_MSGPACK_MISSING
+                ERROR_QUIET)
+
+if(${LUA_MSGPACK_MISSING})
+  message(FATAL_ERROR
+         "The 'cmsgpack' lua package is required for building Neovim")
+endif()
+
 add_subdirectory(config)
 add_subdirectory(src)
 add_subdirectory(test/includes)
