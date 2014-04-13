@@ -8254,9 +8254,10 @@ makeopens (
   }
 
   /* the global argument list */
-  if (ses_arglist(fd, "args", &global_alist.al_ga,
-          !(ssop_flags & SSOP_CURDIR), &ssop_flags) == FAIL)
+  if (ses_arglist(fd, "argglobal", &global_alist.al_ga,
+                  !(ssop_flags & SSOP_CURDIR), &ssop_flags) == FAIL) {
     return FAIL;
+  }
 
   if (ssop_flags & SSOP_RESIZE) {
     /* Note: after the restore we still check it worked!*/
@@ -8755,10 +8756,12 @@ ses_arglist (
   char_u      *buf = NULL;
   char_u      *s;
 
-  if (gap->ga_len == 0)
-    return put_line(fd, "silent! argdel *");
-  if (fputs(cmd, fd) < 0)
+  if (fputs(cmd, fd) < 0 || put_eol(fd) == FAIL) {
     return FAIL;
+  }
+  if (put_line(fd, "silent! argdel *") == FAIL) {
+    return FAIL;
+  }
   for (i = 0; i < gap->ga_len; ++i) {
     /* NULL file names are skipped (only happens when out of memory). */
     s = alist_name(&((aentry_T *)gap->ga_data)[i]);
@@ -8770,14 +8773,15 @@ ses_arglist (
           s = buf;
         }
       }
-      if (fputs(" ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL) {
+      if (fputs("argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
+          || put_eol(fd) == FAIL) {
         vim_free(buf);
         return FAIL;
       }
       vim_free(buf);
     }
   }
-  return put_eol(fd);
+  return OK;
 }
 
 /*
