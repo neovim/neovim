@@ -172,7 +172,16 @@ if(USE_BUNDLED_LUAROCKS)
   add_custom_target(lua-cmsgpack
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack)
 
-  list(APPEND THIRD_PARTY_DEPS moonscript busted lua-cmsgpack)
+  # lpeg is a moonscript dependency, but since it is also required for
+  # normal compilation(even without unit testing) we better add it explicitly.
+  # Like before, depend on cmsgpack to ensure serialization of install commands
+  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lpeg
+    DEPENDS lua-cmsgpack)
+  add_custom_target(lpeg
+    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
+
+  list(APPEND THIRD_PARTY_DEPS moonscript busted lua-cmsgpack lpeg)
 endif()
 
 add_custom_target(third-party ALL
