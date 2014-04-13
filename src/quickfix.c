@@ -2093,9 +2093,20 @@ void ex_copen(exarg_T *eap)
    */
   win = qf_find_win(qi);
 
-  if (win != NULL && cmdmod.tab == 0)
+  if (win != NULL && cmdmod.tab == 0) {
     win_goto(win);
-  else {
+    if (eap->addr_count != 0) {
+      if (cmdmod.split & WSP_VERT) {
+        if (height != W_WIDTH(win)) {
+          win_setwidth(height);
+        }
+      } else {
+        if (height != win->w_height) {
+          win_setheight(height);
+        }
+      }
+    }
+  } else {
     qf_buf = qf_find_buf(qi);
 
     /* The current window becomes the previous window afterwards. */
