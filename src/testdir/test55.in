@@ -323,13 +323,15 @@ let l = [0, 1, 2, 3]
 :  $put ='caught ' . v:exception
 :endtry
 :"
-:" reverse() and sort()
-:let l = ['-0', 'A11', 2, 'xaaa', 4, 'foo', 'foo6', [0, 1, 2], 'x8']
+:" reverse(), sort(), uniq()
+:let l = ['-0', 'A11', 2, 2, 'xaaa', 4, 'foo', 'foo6', 'foo', [0, 1, 2], 'x8', [0, 1, 2], 1.5]
+:$put =string(uniq(copy(l)))
 :$put =string(reverse(l))
 :$put =string(reverse(reverse(l)))
 :$put =string(sort(l))
 :$put =string(reverse(sort(l)))
 :$put =string(sort(reverse(sort(l))))
+:$put =string(uniq(sort(l)))
 :"
 :" splitting a string to a List
 :$put =string(split('  aa  bb '))

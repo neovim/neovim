@@ -758,6 +758,7 @@ static void f_trunc(typval_T *argvars, typval_T *rettv);
 static void f_type(typval_T *argvars, typval_T *rettv);
 static void f_undofile(typval_T *argvars, typval_T *rettv);
 static void f_undotree(typval_T *argvars, typval_T *rettv);
+static void f_uniq(typval_T *argvars, typval_T *rettv);
 static void f_values(typval_T *argvars, typval_T *rettv);
 static void f_virtcol(typval_T *argvars, typval_T *rettv);
 static void f_visualmode(typval_T *argvars, typval_T *rettv);
@@ -7074,6 +7075,7 @@ static struct fst {
   {"type",            1, 1, f_type},
   {"undofile",        1, 1, f_undofile},
   {"undotree",        0, 0, f_undotree},
+  {"uniq",            1, 3, f_uniq},
   {"values",          1, 1, f_values},
   {"virtcol",         1, 1, f_virtcol},
   {"visualmode",      0, 1, f_visualmode},
@@ -13777,10 +13779,11 @@ static int item_compare_ic;
 static char_u   *item_compare_func;
 static dict_T   *item_compare_selfdict;
 static int item_compare_func_err;
+static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort);
 #define ITEM_COMPARE_FAIL 999
 
 /*
- * Compare functions for f_sort() below.
+ * Compare functions for f_sort() and f_uniq() below.
  */
 static int item_compare(const void *s1, const void *s2)
 {
@@ -13841,7 +13844,7 @@ static int item_compare2(const void *s1, const void *s2)
 /*
  * "sort({list})" function
  */
-static void f_sort(typval_T *argvars, typval_T *rettv)
+static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 {
   list_T      *l;
   listitem_T  *li;
@@ -13849,13 +13852,14 @@ static void f_sort(typval_T *argvars, typval_T *rettv)
   long len;
   long i;
 
-  if (argvars[0].v_type != VAR_LIST)
-    EMSG2(_(e_listarg), "sort()");
-  else {
+  if (argvars[0].v_type != VAR_LIST) {
+    EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
+  } else {
     l = argvars[0].vval.v_list;
     if (l == NULL || tv_check_lock(l->lv_lock,
-            (char_u *)_("sort() argument")))
+        (char_u *)(sort ? _("sort() argument") : _("uniq() argument")))) {
       return;
+    }
     rettv->vval.v_list = l;
     rettv->v_type = VAR_LIST;
     ++l->lv_refcount;
@@ -13867,11 +13871,12 @@ static void f_sort(typval_T *argvars, typval_T *rettv)
     item_compare_ic = FALSE;
     item_compare_func = NULL;
     item_compare_selfdict = NULL;
+
     if (argvars[1].v_type != VAR_UNKNOWN) {
       /* optional second argument: {func} */
-      if (argvars[1].v_type == VAR_FUNC)
+      if (argvars[1].v_type == VAR_FUNC) {
         item_compare_func = argvars[1].vval.v_string;
-      else {
+      } else {
         int error = FALSE;
 
         i = get_tv_number_chk(&argvars[1], &error);
@@ -13894,35 +13899,84 @@ static void f_sort(typval_T *argvars, typval_T *rettv)
     }
 
     /* Make an array with each entry pointing to an item in the List. */
-    ptrs = (listitem_T **)alloc((int)(len * sizeof(listitem_T *)));
-    if (ptrs == NULL)
-      return;
-    i = 0;
-    for (li = l->lv_first; li != NULL; li = li->li_next)
-      ptrs[i++] = li;
+    ptrs = xmalloc((size_t)(len * sizeof (listitem_T *)));
 
-    item_compare_func_err = FALSE;
-    /* test the compare function */
-    if (item_compare_func != NULL
-        && item_compare2((void *)&ptrs[0], (void *)&ptrs[1])
-        == ITEM_COMPARE_FAIL)
-      EMSG(_("E702: Sort compare function failed"));
-    else {
-      /* Sort the array with item pointers. */
-      qsort((void *)ptrs, (size_t)len, sizeof(listitem_T *),
-          item_compare_func == NULL ? item_compare : item_compare2);
+    i = 0;
+    if (sort) {
+      // sort(): ptrs will be the list to sort.
+      for (li = l->lv_first; li != NULL; li = li->li_next) {
+        ptrs[i++] = li;
+      }
+
+      item_compare_func_err = FALSE;
+      // Test the compare function.
+      if (item_compare_func != NULL
+          && item_compare2(&ptrs[0], &ptrs[1]) == ITEM_COMPARE_FAIL) {
+        EMSG(_("E702: Sort compare function failed"));
+      } else {
+        // Sort the array with item pointers.
+        qsort(ptrs, (size_t)len, sizeof (listitem_T *),
+              item_compare_func == NULL ? item_compare : item_compare2);
+
+        if (!item_compare_func_err) {
+          // Clear the list and append the items in the sorted order.
+          l->lv_first    = NULL;
+          l->lv_last     = NULL;
+          l->lv_idx_item = NULL;
+          l->lv_len      = 0;
+
+          for (i = 0; i < len; i++) {
+            list_append(l, ptrs[i]);
+          }
+        }
+      }
+    } else {
+      int (*item_compare_func_ptr)(const void *, const void *);
+
+      // f_uniq(): ptrs will be a stack of items to remove.
+      item_compare_func_err = FALSE;
+      item_compare_func_ptr = item_compare_func ? item_compare2 : item_compare;
+
+      for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
+        if (item_compare_func_ptr(&li, &li->li_next) == 0) {
+          ptrs[i++] = li;
+        }
+        if (item_compare_func_err) {
+          EMSG(_("E882: Uniq compare function failed"));
+          break;
+        }
+      }
 
       if (!item_compare_func_err) {
-        /* Clear the List and append the items in the sorted order. */
-        l->lv_first = l->lv_last = l->lv_idx_item = NULL;
-        l->lv_len = 0;
-        for (i = 0; i < len; ++i)
-          list_append(l, ptrs[i]);
+        while (--i >= 0) {
+          li = ptrs[i]->li_next;
+          ptrs[i]->li_next = li->li_next;
+          if (li->li_next != NULL) {
+            li->li_next->li_prev = ptrs[i];
+          } else {
+            l->lv_last = ptrs[i];
+          }
+          list_fix_watch(l, li);
+          listitem_free(li);
+          l->lv_len--;
+        }
       }
     }
 
     vim_free(ptrs);
   }
+}
+
+/// "sort"({list})" function
+static void f_sort(typval_T *argvars, typval_T *rettv)
+{
+  do_sort_uniq(argvars, rettv, true);
+}
+
+/// "uniq({list})" function
+static void f_uniq(typval_T *argvars, typval_T *rettv)
+{
+  do_sort_uniq(argvars, rettv, false);
 }
 
 /*
