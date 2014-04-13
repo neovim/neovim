@@ -869,7 +869,7 @@ char_u *vim_findfile(void *search_ctx_arg)
                   simplify_filename(file_path);
                 if (os_dirname(ff_expand_buffer, MAXPATHL)
                     == OK) {
-                  p = shorten_fname(file_path,
+                  p = path_shorten_fname(file_path,
                       ff_expand_buffer);
                   if (p != NULL)
                     STRMOVE(file_path, p);

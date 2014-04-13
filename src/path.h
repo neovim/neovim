@@ -83,8 +83,26 @@ int after_pathsep(char_u *b, char_u *p);
 int same_directory(char_u *f1, char_u *f2);
 int pathcmp(const char *p, const char *q, int maxlen);
 int mch_expandpath(garray_T *gap, char_u *path, int flags);
-char_u *shorten_fname1(char_u *full_path);
-char_u *shorten_fname(char_u *full_path, char_u *dir_name);
+
+/// Try to find a shortname by comparing the fullname with the current
+/// directory.
+///
+/// @param full_path The full path of the file.
+/// @return
+///   - Pointer into `full_path` if shortened.
+///   - `full_path` unchanged if no shorter name is possible.
+///   - NULL if `full_path` is NULL.
+char_u *path_shorten_fname_if_possible(char_u *full_path);
+
+/// Try to find a shortname by comparing the fullname with `dir_name`.
+///
+/// @param full_path The full path of the file.
+/// @param dir_name The directory to shorten relative to.
+/// @return
+///   - Pointer into `full_path` if shortened.
+///   - NULL if no shorter name is possible.
+char_u *path_shorten_fname(char_u *full_path, char_u *dir_name);
+
 int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
                           int flags);
 int expand_wildcards(int num_pat, char_u **pat, int *num_file, char_u *

@@ -4255,7 +4255,7 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
     /* Expand "~/" in the file name at "line + 1" to a full path.
      * Then try shortening it by comparing with the current directory */
     expand_env(xline, NameBuff, MAXPATHL);
-    sfname = shorten_fname1(NameBuff);
+    sfname = path_shorten_fname_if_possible(NameBuff);
 
     buf = buflist_new(NameBuff, sfname, (linenr_T)0, BLN_LISTED);
     if (buf != NULL) {          /* just in case... */

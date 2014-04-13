@@ -482,7 +482,7 @@ static void fname2fnum(xfmark_T *fm)
 
     /* Try to shorten the file name. */
     os_dirname(IObuff, IOSIZE);
-    p = shorten_fname(NameBuff, IObuff);
+    p = path_shorten_fname(NameBuff, IObuff);
 
     /* buflist_new() will call fmarks_check_names() */
     (void)buflist_new(NameBuff, p, (linenr_T)1, 0);

@@ -7965,7 +7965,7 @@ eval_vars (
             "E495: no autocommand file name to substitute for \"<afile>\"");
         return NULL;
       }
-      result = shorten_fname1(result);
+      result = path_shorten_fname_if_possible(result);
       break;
 
     case SPEC_ABUF:             /* buffer number for autocommand */

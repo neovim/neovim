@@ -4654,7 +4654,7 @@ void shorten_fnames(int force)
             || path_is_absolute_path(buf->b_sfname))) {
       vim_free(buf->b_sfname);
       buf->b_sfname = NULL;
-      p = shorten_fname(buf->b_ffname, dirname);
+      p = path_shorten_fname(buf->b_ffname, dirname);
       if (p != NULL) {
         buf->b_sfname = vim_strsave(p);
         buf->b_fname = buf->b_sfname;
