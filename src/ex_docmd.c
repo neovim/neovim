@@ -6364,6 +6364,8 @@ do_exedit (
             ? ECMD_ONE : eap->do_ecmd_lnum,
             (P_HID(curbuf) ? ECMD_HIDE : 0)
             + (eap->forceit ? ECMD_FORCEIT : 0)
+            // After a split we can use an existing buffer.
+            + (old_curwin != NULL ? ECMD_OLDBUF : 0)
             + (eap->cmdidx == CMD_badd ? ECMD_ADDBUF : 0 )
             , old_curwin == NULL ? curwin : NULL) == FAIL) {
       /* Editing the file failed.  If the window was split, close it. */
