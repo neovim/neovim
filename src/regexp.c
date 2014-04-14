@@ -3665,11 +3665,14 @@ static long regtry(bt_regprog_T *prog, colnr_T col)
       if (REG_MULTI) {
         /* Only accept single line matches. */
         if (reg_startzpos[i].lnum >= 0
-            && reg_endzpos[i].lnum == reg_startzpos[i].lnum)
+            && reg_endzpos[i].lnum == reg_startzpos[i].lnum
+            && reg_endzpos[i].col >= reg_startzpos[i].col) {
           re_extmatch_out->matches[i] =
             vim_strnsave(reg_getline(reg_startzpos[i].lnum)
-                + reg_startzpos[i].col,
-                reg_endzpos[i].col - reg_startzpos[i].col);
+                         + reg_startzpos[i].col,
+                         reg_endzpos[i].col
+                         - reg_startzpos[i].col);
+        }
       } else {
         if (reg_startzp[i] != NULL && reg_endzp[i] != NULL)
           re_extmatch_out->matches[i] =
