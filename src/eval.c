@@ -1751,11 +1751,10 @@ void ex_let(exarg_T *eap)
     return;
   if (argend > arg && argend[-1] == '.')    /* for var.='str' */
     --argend;
-  expr = vim_strchr(argend, '=');
-  if (expr == NULL) {
-    /*
-     * ":let" without "=": list variables
-     */
+  expr = skipwhite(argend);
+  if (*expr != '=' && !(vim_strchr((char_u *)"+-.", *expr) != NULL
+                        && expr[1] == '=')) {
+    // ":let" without "=": list variables
     if (*arg == '[')
       EMSG(_(e_invarg));
     else if (!ends_excmd(*arg))
@@ -1775,11 +1774,14 @@ void ex_let(exarg_T *eap)
   } else {
     op[0] = '=';
     op[1] = NUL;
-    if (expr > argend) {
-      if (vim_strchr((char_u *)"+-.", expr[-1]) != NULL)
-        op[0] = expr[-1];           /* +=, -= or .= */
+    if (*expr != '=') {
+      if (vim_strchr((char_u *)"+-.", *expr) != NULL) {
+        op[0] = *expr;  // +=, -=, .=
+      }
+      expr = skipwhite(expr + 2);
+    } else {
+      expr = skipwhite(expr + 1);
     }
-    expr = skipwhite(expr + 1);
 
     if (eap->skip)
       ++emsg_skip;

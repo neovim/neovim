@@ -1,4 +1,4 @@
-Tests for autoload.  vim: set ft=vim ts=8 :
+Tests for :let.  vim: set ft=vim ts=8 :
 
 STARTTEST
 :so small.vim
@@ -10,6 +10,20 @@ STARTTEST
 :catch
 :  $put ='FAIL: ' . v:exception
 :endtry
+:let a = 1
+:let b = 2
+:for letargs in ['a b', '{0 == 1 ? "a" : "b"}', '{0 == 1 ? "a" : "b"} a', 'a {0 == 1 ? "a" : "b"}']
+:  try
+:    redir => messages
+:    execute 'let' letargs
+:    redir END
+:    $put ='OK:'
+:    $put =split(substitute(messages, '\n', '\0  ', 'g'), '\n')
+:  catch
+:    $put ='FAIL: ' . v:exception
+:    redir END
+:  endtry
+:endfor
 :/^Results/,$wq! test.out
 ENDTEST
 
