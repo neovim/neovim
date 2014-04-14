@@ -645,9 +645,11 @@ do_tag (
               break;
             msg_advance(15);
 
-            /* skip backslash used for escaping command char */
-            if (*p == '\\' && *(p + 1) == *tagp.command)
+            // Skip backslash used for escaping a command char or a backslash.
+            if (*p == '\\' && (*(p + 1) == *tagp.command
+                               || *(p + 1) == '\\')) {
               ++p;
+            }
 
             if (*p == TAB) {
               msg_putchar(' ');
