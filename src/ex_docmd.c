@@ -3924,7 +3924,7 @@ static char_u *getargcmd(char_u **argp)
 
   if (*arg == '+') {        /* +[command] */
     ++arg;
-    if (vim_isspace(*arg))
+    if (vim_isspace(*arg) || *arg == '\0')
       command = dollar_command;
     else {
       command = arg;
