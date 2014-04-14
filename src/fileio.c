@@ -7525,14 +7525,17 @@ apply_autocmds_group (
   vim_free(sfname);
   --nesting;            /* see matching increment above */
 
-  /*
-   * When stopping to execute autocommands, restore the search patterns and
-   * the redo buffer.
-   */
+  // When stopping to execute autocommands, restore the search patterns and
+  // the redo buffer.  Free buffers in the au_pending_free_buf list.
   if (!autocmd_busy) {
     restore_search_patterns();
     restoreRedobuff();
     did_filetype = FALSE;
+    while (au_pending_free_buf != NULL) {
+      buf_T *b = au_pending_free_buf->b_next;
+      vim_free(au_pending_free_buf);
+      au_pending_free_buf = b;
+    }
   }
 
   /*
