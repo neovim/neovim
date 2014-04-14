@@ -1305,6 +1305,7 @@ enum {
     VV_HLSEARCH,
     VV_OLDFILES,
     VV_WINDOWID,
+    VV_PROGPATH,
     VV_JOB_DATA,
     VV_LEN, /* number of v: vars */
 };
