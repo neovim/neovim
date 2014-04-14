@@ -158,7 +158,7 @@ if(USE_BUNDLED_LUAROCKS)
   # instances running in parallel.  So we depend on moonscript to force it
   # to be serialized.
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install busted
+    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install busted 1.10.0
             --server=http://rocks.moonscript.org
     DEPENDS moonscript)
   add_custom_target(busted
