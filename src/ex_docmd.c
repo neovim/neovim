@@ -3704,21 +3704,13 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 
     /* For a shell command a '!' must be escaped. */
     if ((eap->usefilter || eap->cmdidx == CMD_bang)
-        && vim_strpbrk(repl, (char_u *)"!&;()<>") != NULL) {
+        && vim_strpbrk(repl, (char_u *)"!") != NULL) {
       char_u      *l;
 
-      l = vim_strsave_escaped(repl, (char_u *)"!&;()<>");
+      l = vim_strsave_escaped(repl, (char_u *)"!");
       if (l != NULL) {
         vim_free(repl);
         repl = l;
-        /* For a sh-like shell escape "!" another time. */
-        if (strstr((char *)p_sh, "sh") != NULL) {
-          l = vim_strsave_escaped(repl, (char_u *)"!");
-          if (l != NULL) {
-            vim_free(repl);
-            repl = l;
-          }
-        }
       }
     }
 
