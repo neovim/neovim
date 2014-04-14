@@ -1,3 +1,5 @@
+// vim: set et sts=2 sw=2
+
 /// @file garray.c
 ///
 /// Functions for handling growing arrays.

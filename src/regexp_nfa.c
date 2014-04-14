@@ -1,5 +1,5 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
+// vim: set et sts=2 sw=2
+/*
  * NFA regular expression implementation.
  *
  * This file is included in "regexp.c".

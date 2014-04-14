@@ -1,3 +1,5 @@
+// vim: set et sts=2 sw=2
+
 #include "indent.h"
 #include "eval.h"
 #include "charset.h"

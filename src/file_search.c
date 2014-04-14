@@ -1,3 +1,4 @@
+// vim: set et sts=2 sw=2
 /* TODO: make some #ifdef for this */
 /*--------[ file searching ]-------------------------------------------------*/
 /*

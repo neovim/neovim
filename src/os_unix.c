@@ -1,5 +1,5 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
+// vim: set et sts=2 sw=2
+/*
  * VIM - Vi IMproved	by Bram Moolenaar
  *	      OS/2 port by Paul Slootman
  *	      VMS merge by Zoltan Arpadffy

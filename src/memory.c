@@ -1,4 +1,5 @@
- // Various routines dealing with allocation and deallocation of memory.
+// vim: set et sts=2 sw=2
+// Various routines dealing with allocation and deallocation of memory.
 
 #include <stdlib.h>
 #include <string.h>

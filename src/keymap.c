@@ -1,3 +1,5 @@
+// vim: set et sts=2 sw=2
+
 /************************************************************************
  * functions that use lookup tables for various things, generally to do with
  * special key codes.
