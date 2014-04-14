@@ -6121,12 +6121,14 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
       if (REG_MULTI) {
         struct multipos *mpos = &subs.synt.list.multi[i];
 
-        /* Only accept single line matches. */
-        if (mpos->start.lnum >= 0 && mpos->start.lnum == mpos->end.lnum)
+        // Only accept single line matches that are valid.
+        if (mpos->start.lnum >= 0
+            && mpos->start.lnum == mpos->end.lnum
+            && mpos->end.col >= mpos->start.col) {
           re_extmatch_out->matches[i] =
-            vim_strnsave(reg_getline(mpos->start.lnum)
-                + mpos->start.col,
-                mpos->end.col - mpos->start.col);
+            vim_strnsave(reg_getline(mpos->start.lnum) + mpos->start.col,
+                         mpos->end.col - mpos->start.col);
+        }
       } else {
         struct linepos *lpos = &subs.synt.list.line[i];
 
