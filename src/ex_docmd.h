@@ -23,6 +23,7 @@ char_u *find_nextcmd(char_u *p);
 char_u *check_nextcmd(char_u *p);
 char_u *get_command_name(expand_T *xp, int idx);
 void ex_comclear(exarg_T *eap);
+void ex_may_print(exarg_T *eap);
 void uc_clear(garray_T *gap);
 char_u *get_user_commands(expand_T *xp, int idx);
 char_u *get_user_cmd_flags(expand_T *xp, int idx);

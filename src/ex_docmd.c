@@ -182,7 +182,6 @@ static void ex_winpos(exarg_T *eap);
 static void ex_operators(exarg_T *eap);
 static void ex_put(exarg_T *eap);
 static void ex_copymove(exarg_T *eap);
-static void ex_may_print(exarg_T *eap);
 static void ex_submagic(exarg_T *eap);
 static void ex_join(exarg_T *eap);
 static void ex_at(exarg_T *eap);
@@ -6906,7 +6905,7 @@ static void ex_copymove(exarg_T *eap)
 /*
  * Print the current line if flags were given to the Ex command.
  */
-static void ex_may_print(exarg_T *eap)
+void ex_may_print(exarg_T *eap)
 {
   if (eap->flags != 0) {
     print_line(curwin->w_cursor.lnum, (eap->flags & EXFLAG_NR),
