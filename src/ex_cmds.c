@@ -3653,6 +3653,35 @@ void do_sub(exarg_T *eap)
     endcolumn = (curwin->w_curswant == MAXCOL);
   }
 
+  // Recognize ":%s/\n//" and turn it into a join command, which is much
+  // more efficient.
+  // TODO: find a generic solution to make line-joining operations more
+  // efficient, avoid allocating a string that grows in size.
+  if (strcmp((const char *)pat, "\\n") == 0
+      && strlen((const char *)pat) == 2
+      && *sub == NUL
+      && (*cmd == NUL || (cmd[1] == NUL
+                          && (*cmd == 'g'
+                              || *cmd == 'l'
+                              || *cmd == 'p'
+                              || *cmd == '#')))) {
+    curwin->w_cursor.lnum = eap->line1;
+    if (*cmd == 'l') {
+      eap->flags = EXFLAG_LIST;
+    } else if (*cmd == '#') {
+      eap->flags = EXFLAG_NR;
+    } else if (*cmd == 'p') {
+      eap->flags = EXFLAG_PRINT;
+    }
+
+    do_join(eap->line2 - eap->line1 + 1, FALSE, TRUE, FALSE);
+    sub_nlines = sub_nsubs = eap->line2 - eap->line1 + 1;
+    do_sub_msg(FALSE);
+    ex_may_print(eap);
+
+    return;
+  }
+
   /*
    * Find trailing options.  When '&' is used, keep old options.
    */
