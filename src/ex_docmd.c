@@ -1400,15 +1400,21 @@ void                *cookie;                    /*argument for fgetline() */
       cmdmod.split |= WSP_ABOVE;
       continue;
 
-    case 'n':   if (!checkforcmd(&ea.cmd, "noautocmd", 3))
-        break;
-      if (cmdmod.save_ei == NULL) {
-        /* Set 'eventignore' to "all". Restore the
-         * existing option value later. */
-        cmdmod.save_ei = vim_strsave(p_ei);
-        set_string_option_direct((char_u *)"ei", -1,
-            (char_u *)"all", OPT_FREE, SID_NONE);
+    case 'n':
+      if (checkforcmd(&ea.cmd, "noautocmd", 3)) {
+        if (cmdmod.save_ei == NULL) {
+          /* Set 'eventignore' to "all". Restore the
+           * existing option value later. */
+          cmdmod.save_ei = vim_strsave(p_ei);
+          set_string_option_direct(
+            (char_u *)"ei", -1, (char_u *)"all", OPT_FREE, SID_NONE);
+        }
+        continue;
       }
+      if (!checkforcmd(&ea.cmd, "noswapfile", 6)) {
+        break;
+      }
+      cmdmod.noswapfile = true;
       continue;
 
     case 'r':   if (!checkforcmd(&ea.cmd, "rightbelow", 6))
@@ -1991,6 +1997,8 @@ void                *cookie;                    /*argument for fgetline() */
     case CMD_let:
     case CMD_lockmarks:
     case CMD_match:
+    case CMD_noautocmd:
+    case CMD_noswapfile:
     case CMD_psearch:
     case CMD_return:
     case CMD_rightbelow:
@@ -2414,6 +2422,7 @@ static struct cmdmod {
   {"leftabove", 5, FALSE},
   {"lockmarks", 3, FALSE},
   {"noautocmd", 3, FALSE},
+  {"noswapfile", 3, FALSE},
   {"rightbelow", 6, FALSE},
   {"sandbox", 3, FALSE},
   {"silent", 3, FALSE},
@@ -2851,6 +2860,8 @@ set_one_cmd_context (
   case CMD_keeppatterns:
   case CMD_leftabove:
   case CMD_lockmarks:
+  case CMD_noautocmd:
+  case CMD_noswapfile:
   case CMD_rightbelow:
   case CMD_sandbox:
   case CMD_silent:
