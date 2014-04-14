@@ -550,7 +550,14 @@ static void free_buffer(buf_T *buf)
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
-  vim_free(buf);
+  if (autocmd_busy) {
+    // Do not free the buffer structure while autocommands are executing,
+    // it's still needed. Free it when autocmd_busy is reset.
+    buf->b_next = au_pending_free_buf;
+    au_pending_free_buf = buf;
+  } else {
+    vim_free(buf);
+  }
 }
 
 /*
@@ -1332,8 +1339,12 @@ buflist_new (
     buf_copy_options(buf, 0);
     if ((flags & BLN_LISTED) && !buf->b_p_bl) {
       buf->b_p_bl = TRUE;
-      if (!(flags & BLN_DUMMY))
+      if (!(flags & BLN_DUMMY)) {
         apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
+        if (!buf_valid(buf)) {
+          return NULL;
+        }
+      }
     }
     return buf;
   }
@@ -1469,8 +1480,15 @@ buflist_new (
   buf->b_p_bl = (flags & BLN_LISTED) ? TRUE : FALSE;    /* init 'buflisted' */
   if (!(flags & BLN_DUMMY)) {
     apply_autocmds(EVENT_BUFNEW, NULL, NULL, FALSE, buf);
-    if (flags & BLN_LISTED)
+    if (!buf_valid(buf)) {
+      return NULL;
+    }
+    if (flags & BLN_LISTED) {
       apply_autocmds(EVENT_BUFADD, NULL, NULL, FALSE, buf);
+      if (!buf_valid(buf)) {
+        return NULL;
+      }
+    }
     if (aborting())             /* autocmds may abort script processing */
       return NULL;
   }

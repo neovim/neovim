@@ -352,6 +352,11 @@ EXTERN int keep_filetype INIT(= FALSE);         /* value for did_filetype when
  * which one is preferred, au_new_curbuf is set to it */
 EXTERN buf_T    *au_new_curbuf INIT(= NULL);
 
+// When deleting the buffer and autocmd_busy is TRUE, do not free the buffer
+// but link it in the list starting with au_pending_free_buf, using b_next.
+// Free the buffer when autocmd_busy is set to FALSE.
+EXTERN buf_T *au_pending_free_buf INIT(= NULL);
+
 /*
  * Mouse coordinates, set by check_termcode()
  */
