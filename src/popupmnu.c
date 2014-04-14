@@ -1,3 +1,4 @@
+// vim: set et sts=2 sw=2
 /// @file popupmnu.c
 ///
 /// Popup menu (PUM)

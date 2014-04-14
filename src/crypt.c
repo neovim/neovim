@@ -1,3 +1,4 @@
+// vim: set et sts=2 sw=2
 /*
  * Optional encryption support.
  * Mohsin Ahmed, mosh@sasi.com, 98-09-24

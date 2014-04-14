@@ -1,3 +1,5 @@
+// vim: set et sts=2 sw=2
+
 /// @file farsi.c
 ///
 /// Functions for Farsi language

@@ -1,3 +1,4 @@
+// vim: set et sts=2 sw=2
 /// @file hashtab.c
 ///
 /// Handling of a hashtable with Vim-specific properties.

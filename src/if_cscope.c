@@ -1,5 +1,5 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
+// vim: set et sts=2 sw=2
+/*
  * CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
  * Ported to Win32 by Sergey Khorev <sergey.khorev@gmail.com>
  *

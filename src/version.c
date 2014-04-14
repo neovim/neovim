@@ -1,3 +1,5 @@
+// vim: set et sts=2 sw=2
+
 /// @file version.c
 ///
 /// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred)

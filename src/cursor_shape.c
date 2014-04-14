@@ -1,3 +1,5 @@
+// vim: set et sts=2 sw=2
+
 #include "vim.h"
 #include "cursor_shape.h"
 #include "misc2.h"

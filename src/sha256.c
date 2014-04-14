@@ -1,3 +1,4 @@
+// vim: set et sts=2 sw=2
 /// @file sha256.c
 ///
 /// FIPS-180-2 compliant SHA-256 implementation

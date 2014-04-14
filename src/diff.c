@@ -1,3 +1,4 @@
+// vim: set et sts=2 sw=2
 /// @file diff.c
 ///
 /// Code for diff'ing two, three or four buffers.
