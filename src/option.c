@@ -165,7 +165,6 @@
 #define PV_TAGS         OPT_BOTH(OPT_BUF(BV_TAGS))
 #define PV_TS           OPT_BUF(BV_TS)
 #define PV_TW           OPT_BUF(BV_TW)
-#define PV_TX           OPT_BUF(BV_TX)
 # define PV_UDF         OPT_BUF(BV_UDF)
 #define PV_WM           OPT_BUF(BV_WM)
 
@@ -280,7 +279,6 @@ static char_u   *p_spf;
 static char_u   *p_spl;
 static long p_ts;
 static long p_tw;
-static int p_tx;
 static int p_udf;
 static long p_wm;
 static char_u   *p_keymap;
@@ -1587,16 +1585,6 @@ static struct vimoption
    (char_u *)&p_ta, PV_NONE,
    {(char_u *)DFLT_TEXTAUTO, (char_u *)TRUE}
    SCRIPTID_INIT},
-  {"textmode",    "tx",   P_BOOL|P_VI_DEF|P_NO_MKRC,
-   (char_u *)&p_tx, PV_TX,
-   {
-#ifdef USE_CRNL
-     (char_u *)TRUE,
-#else
-     (char_u *)FALSE,
-#endif
-     (char_u *)0L
-   } SCRIPTID_INIT},
   {"textwidth",   "tw",   P_NUM|P_VI_DEF|P_VIM|P_RBUF,
    (char_u *)&p_tw, PV_TW,
    {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
@@ -4157,11 +4145,6 @@ did_set_string_option (
     else if (check_opt_strings(*varp, p_ff_values, FALSE) != OK)
       errmsg = e_invarg;
     else {
-      /* may also change 'textmode' */
-      if (get_fileformat(curbuf) == EOL_DOS)
-        curbuf->b_p_tx = TRUE;
-      else
-        curbuf->b_p_tx = FALSE;
       redraw_titles();
       /* update flag in swap file */
       ml_setflags(curbuf);
@@ -5272,16 +5255,14 @@ set_bool_option (
           return (char_u *)N_("E590: A preview window already exists");
         }
     }
+  // When 'textauto' is set or reset also change 'fileformats'.
+  } else if ((int *)varp == &p_ta) {
+    set_string_option_direct((char_u *)"ffs",
+                             -1,
+                             p_ta ? (char_u *)DFLT_FFS_VIM : (char_u *)"",
+                             OPT_FREE | opt_flags,
+                             0);
   }
-  /* when 'textmode' is set or reset also change 'fileformat' */
-  else if ((int *)varp == &curbuf->b_p_tx) {
-    set_fileformat(curbuf->b_p_tx ? EOL_DOS : EOL_UNIX, opt_flags);
-  }
-  /* when 'textauto' is set or reset also change 'fileformats' */
-  else if ((int *)varp == &p_ta)
-    set_string_option_direct((char_u *)"ffs", -1,
-        p_ta ? (char_u *)DFLT_FFS_VIM : (char_u *)"",
-        OPT_FREE | opt_flags, 0);
 
   /*
    * When 'lisp' option changes include/exclude '-' in
@@ -6844,7 +6825,6 @@ static char_u *get_varp(struct vimoption *p)
   case PV_SW:     return (char_u *)&(curbuf->b_p_sw);
   case PV_TS:     return (char_u *)&(curbuf->b_p_ts);
   case PV_TW:     return (char_u *)&(curbuf->b_p_tw);
-  case PV_TX:     return (char_u *)&(curbuf->b_p_tx);
   case PV_UDF:    return (char_u *)&(curbuf->b_p_udf);
   case PV_WM:     return (char_u *)&(curbuf->b_p_wm);
   case PV_KMAP:   return (char_u *)&(curbuf->b_p_keymap);
@@ -7030,7 +7010,6 @@ void buf_copy_options(buf_T *buf, int flags)
       if (!buf->b_p_initialized) {
         free_buf_options(buf, TRUE);
         buf->b_p_ro = FALSE;                    /* don't copy readonly */
-        buf->b_p_tx = p_tx;
         buf->b_p_fenc = vim_strsave(p_fenc);
         buf->b_p_ff = vim_strsave(p_ff);
         buf->b_p_bh = empty_option;
