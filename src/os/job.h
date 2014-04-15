@@ -12,21 +12,6 @@
 
 #include "os/event.h"
 
-/// Function called when the job reads data
-///
-/// @param id The job is
-/// @param data Some data associated with the job by the caller
-/// @param buffer Buffer containing the data read. It must be copied
-///        immediately.
-/// @param len Amount of bytes that must be read from `buffer`
-/// @param from_stdout This is true if data was read from the job's stdout,
-///        false if it came from stderr.
-typedef void (*job_read_cb)(int id,
-                            void *data,
-                            char *buffer,
-                            uint32_t len,
-                            bool from_stdout);
-
 /// Initializes job control resources
 void job_init(void);
 

@@ -65,6 +65,8 @@
 #include "os/os.h"
 #include "os/job.h"
 #include "os/shell.h"
+#include "os/rstream.h"
+#include "os/rstream_defs.h"
 
 #if defined(FEAT_FLOAT)
 # include <math.h>
@@ -406,8 +408,7 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 
 static void apply_job_autocmds(int id,
                                void *data,
-                               char *buffer,
-                               uint32_t len,
+                               RStream *target,
                                bool from_stdout);
 static void prepare_vimvar(int idx, typval_T *save_tv);
 static void restore_vimvar(int idx, typval_T *save_tv);
@@ -19798,18 +19799,29 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 
 static void apply_job_autocmds(int id,
                                void *data,
-                               char *buffer,
-                               uint32_t len,
+                               RStream *target,
                                bool from_stdout)
 {
   list_T *list;
+  char *str;
+  listitem_T *str_slot = listitem_alloc();
+  uint32_t read_count = rstream_available(target);
 
-  // Call JobActivity autocommands
+  // Prepare the list item containing the data read
+  str = xmalloc(read_count + 1);
+  rstream_read(target, str, read_count);
+  str[read_count] = NUL;
+  str_slot->li_tv.v_type = VAR_STRING;
+  str_slot->li_tv.v_lock = 0;
+  str_slot->li_tv.vval.v_string = (char_u *)str;
+  // Create the list which will be set to v:job_data
   list = list_alloc();
   list_append_number(list, id);
-  list_append_string(list, (char_u *)buffer, len);
+  list_append(list, str_slot);
   list_append_string(list, (char_u *)(from_stdout ? "out" : "err"), 3);
+  // Update v:job_data for the autocommands
   set_vim_var_list(VV_JOB_DATA, list);
+  // Call JobActivity autocommands
   apply_autocmds(EVENT_JOBACTIVITY, (char_u *)data, NULL, TRUE, NULL);
 }
 
