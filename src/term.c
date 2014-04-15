@@ -3425,7 +3425,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
               || (tp[0] == CSI && len >= 2))
           && (VIM_ISDIGIT(*p) || *p == '>' || *p == '?')) {
         int col;
-        int row_char;
+        int row_char = 0;
         j = 0;
         extra = 0;
         for (i = 2 + (tp[0] != CSI); i < len
