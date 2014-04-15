@@ -607,7 +607,6 @@ struct file_buffer {
   long b_p_smc;                 /* 'synmaxcol' */
   char_u      *b_p_syn;         /* 'syntax' */
   long b_p_ts;                  /* 'tabstop' */
-  int b_p_tx;                   /* 'textmode' */
   long b_p_tw;                  /* 'textwidth' */
   long b_p_tw_nobin;            /* b_p_tw saved for binary mode */
   long b_p_tw_nopaste;          /* b_p_tw saved for paste mode */

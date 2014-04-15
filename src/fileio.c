@@ -1608,9 +1608,10 @@ rewind_retry:
         if (fileformat == EOL_UNKNOWN)
           fileformat = default_fileformat();
 
-        /* if editing a new file: may set p_tx and p_ff */
-        if (set_options)
+        // May set 'p_ff' if editing a new file.
+        if (set_options) {
           set_fileformat(fileformat, OPT_LOCAL);
+        }
       }
     }
 
