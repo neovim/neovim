@@ -9,13 +9,10 @@
 #include "os/rstream_defs.h"
 #include "os/rstream.h"
 #include "vim.h"
-#include "globals.h"
 #include "ui.h"
-#include "types.h"
 #include "fileio.h"
 #include "getchar.h"
 #include "term.h"
-#include "misc2.h"
 
 #define READ_BUFFER_SIZE 256
 
@@ -31,6 +28,9 @@ static bool eof = false, started_reading = false;
 static InbufPollResult inbuf_poll(int32_t ms);
 static void stderr_switch(void);
 static void read_cb(RStream *rstream, void *data, bool eof);
+// Helper function used to push bytes from the 'event' key sequence partially
+// between calls to os_inchar when maxlen < 3
+static int push_event_key(uint8_t *buf, int maxlen);
 
 void input_init()
 {
@@ -64,9 +64,14 @@ uint32_t input_read(char *buf, uint32_t count)
 
 
 // Low level input function.
-int os_inchar(char_u *buf, int maxlen, int32_t ms, int tb_change_cnt)
+int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
 {
   InbufPollResult result;
+
+  if (event_is_pending()) {
+    // Return pending event bytes
+    return push_event_key(buf, maxlen);
+  }
 
   if (ms >= 0) {
     if ((result = inbuf_poll(ms)) == kInputNone) {
@@ -88,11 +93,8 @@ int os_inchar(char_u *buf, int maxlen, int32_t ms, int tb_change_cnt)
   }
 
   // If there are pending events, return the keys directly
-  if (maxlen >= 3 && event_is_pending()) {
-    buf[0] = K_SPECIAL;
-    buf[1] = KS_EXTRA;
-    buf[2] = KE_EVENT;
-    return 3;
+  if (event_is_pending()) {
+    return push_event_key(buf, maxlen);
   }
 
   // If input was put directly in typeahead buffer bail out here.
@@ -171,4 +173,18 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
   }
 
   started_reading = true;
+}
+
+static int push_event_key(uint8_t *buf, int maxlen)
+{
+  static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };
+  static int key_idx = 0;
+  int buf_idx = 0;
+
+  do {
+    buf[buf_idx++] = key[key_idx++];
+    key_idx %= 3;
+  } while (key_idx > 0 && buf_idx < maxlen);
+
+  return buf_idx;
 }
