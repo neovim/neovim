@@ -1,5 +1,4 @@
-/* vi:set ts=8 sts=4 sw=4:
- *
+/*
  * Handling of regular expressions: vim_regcomp(), vim_regexec(), vim_regsub()
  *
  * NOTICE:
