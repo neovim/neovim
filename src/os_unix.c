@@ -182,16 +182,6 @@ void mch_init()
   event_init();
 }
 
-/*
- * Return TRUE if the input comes from a terminal, FALSE otherwise.
- */
-int mch_input_isatty()
-{
-  if (isatty(read_cmd_fd))
-    return TRUE;
-  return FALSE;
-}
-
 static int get_x11_title(int test_only)
 {
   return FALSE;
