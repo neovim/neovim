@@ -8,6 +8,7 @@
 
 #define EXTERN
 #include <string.h>
+#include <stdbool.h>
 
 #include "vim.h"
 #include "main.h"
@@ -1624,9 +1625,8 @@ static void handle_tag(char_u *tagname)
  */
 static void check_tty(mparm_T *parmp)
 {
-  int input_isatty;                     /* is active input a terminal? */
-
-  input_isatty = mch_input_isatty();
+  // is active input a terminal?
+  bool input_isatty = os_isatty(read_cmd_fd);
   if (exmode_active) {
     if (!input_isatty)
       silent_mode = TRUE;

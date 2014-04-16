@@ -7,7 +7,6 @@
 void mch_write(char_u *s, int len);
 void mch_suspend(void);
 void mch_init(void);
-int mch_input_isatty(void);
 int mch_can_restore_title(void);
 int mch_can_restore_icon(void);
 void mch_settitle(char_u *title, char_u *icon);
