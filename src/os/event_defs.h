@@ -2,6 +2,7 @@
 #define NEOVIM_OS_EVENT_DEFS_H
 
 #include "os/job_defs.h"
+#include "os/rstream_defs.h"
 
 typedef enum {
   kEventSignal,
@@ -12,7 +13,11 @@ typedef struct {
   EventType type;
   union {
     int signum;
-    Job *job;
+    struct {
+      Job *ptr;
+      RStream *target;
+      bool from_stdout;
+    } job;
   } data;
 } Event;
 

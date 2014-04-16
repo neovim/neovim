@@ -6,6 +6,9 @@ src/os/event_defs.h
 src/os/event.h
 src/os/input.c
 src/os/input.h
+src/os/rstream.c
+src/os/rstream_defs.h
+src/os/rstream.h
 src/os/job.c
 src/os/job_defs.h
 src/os/job.h
