@@ -124,6 +124,11 @@ void os_breakcheck()
     fill_input_buf(false);
 }
 
+bool os_isatty(int fd)
+{
+    return uv_guess_handle(fd) == UV_TTY;
+}
+
 // This is a replacement for the old `WaitForChar` function in os_unix.c
 static InbufPollResult inbuf_poll(int32_t ms)
 {
