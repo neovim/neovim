@@ -17,6 +17,12 @@ check_and_report() {
 	)
 }
 
+# setup environment for using the /opt/neovim-deps prefix
+export PATH="/opt/neovim-deps/bin:$PATH"
+export PKG_CONFIG_PATH="/opt/neovim-deps/lib/pkgconfig"
+export DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_MSGPACK=OFF -DUSE_BUNDLED_LUAROCKS=OFF"
+eval $(/opt/neovim-deps/bin/luarocks path)
+
 # Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
 # what we really have available.  According to their documentation, it only has
 # 1.5 virtual cores.
