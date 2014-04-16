@@ -183,16 +183,6 @@ void mch_init()
 }
 
 /*
- * Check_win checks whether we have an interactive stdout.
- */
-int mch_check_win(int argc, char **argv)
-{
-  if (isatty(1))
-    return OK;
-  return FAIL;
-}
-
-/*
  * Return TRUE if the input comes from a terminal, FALSE otherwise.
  */
 int mch_input_isatty()
