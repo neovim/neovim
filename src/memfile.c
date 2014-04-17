@@ -1264,7 +1264,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
   size_t size;
 
   size = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR * sizeof(void *);
-  buckets = (mf_hashitem_T **)lalloc_clear(size, FALSE);
+  buckets = xcalloc(1, size);
 
   shift = 0;
   while ((mht->mht_mask >> shift) != 0)

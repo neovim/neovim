@@ -2415,8 +2415,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
   y_current->y_size = yanklines;
   y_current->y_type = yanktype;     /* set the yank register type */
   y_current->y_width = 0;
-  y_current->y_array = (char_u **)lalloc_clear((long_u)(sizeof(char_u *) *
-                                                        yanklines), TRUE);
+  y_current->y_array = xcalloc(yanklines, sizeof(char_u *));
 
   y_idx = 0;
   lnum = oap->start.lnum;
@@ -3465,9 +3464,9 @@ int do_join(long count, int insert_space, int save_undo, int use_formatoptions)
   /* Allocate an array to store the number of spaces inserted before each
    * line.  We will use it to pre-compute the length of the new line and the
    * proper placement of each original line in the new one. */
-  spaces = lalloc_clear((long_u)count, TRUE);
+  spaces = xcalloc(count, 1);
   if (remove_comments) {
-    comments = (int *)lalloc_clear((long_u)count * sizeof(int), TRUE);
+    comments = xcalloc(count, sizeof(*comments));
   }
 
   /*
@@ -4862,7 +4861,7 @@ str_to_reg (
   long start;
   long i;
   int extra;
-  int newlines;                         /* number of lines added */
+  size_t newlines;                         /* number of lines added */
   int extraline = 0;                    /* extra line at the end */
   int append = FALSE;                   /* append to last line in register */
   char_u      *s;
@@ -4898,8 +4897,7 @@ str_to_reg (
    * Allocate an array to hold the pointers to the new register lines.
    * If the register was not empty, move the existing lines to the new array.
    */
-  pp = (char_u **)lalloc_clear((y_ptr->y_size + newlines)
-      * sizeof(char_u *), TRUE);
+  pp = xcalloc((y_ptr->y_size + newlines), sizeof(char_u *));
   for (lnum = 0; lnum < y_ptr->y_size; ++lnum)
     pp[lnum] = y_ptr->y_array[lnum];
   vim_free(y_ptr->y_array);
