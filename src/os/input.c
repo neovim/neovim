@@ -167,7 +167,7 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
   if (at_eof) {
     if (!started_reading
         && rstream_is_regular_file(rstream)
-        && uv_guess_handle(2) == UV_TTY) {
+        && os_isatty(STDERR_FILENO)) {
       // Read error. Since stderr is a tty we switch to reading from it. This
       // is for handling for cases like "foo | xargs vim" because xargs
       // redirects stdin from /dev/null. Previously, this was done in ui.c
