@@ -30,6 +30,7 @@
 #include "screen.h"
 
 static void comp_botline(win_T *wp);
+static void redraw_for_cursorline(win_T *wp);
 static int scrolljump_value(void);
 static int check_top_offset(void);
 static void curs_rows(win_T *wp, int do_botline);
@@ -89,6 +90,7 @@ static void comp_botline(win_T *wp)
       wp->w_cline_row = done;
       wp->w_cline_height = n;
       wp->w_cline_folded = folded;
+      redraw_for_cursorline(wp);
       wp->w_valid |= (VALID_CROW|VALID_CHEIGHT);
     }
     if (done + n > wp->w_height)
@@ -102,6 +104,19 @@ static void comp_botline(win_T *wp)
   wp->w_valid |= VALID_BOTLINE|VALID_BOTLINE_AP;
 
   set_empty_rows(wp, done);
+}
+
+/*
+* Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is
+* set.
+*/
+static void redraw_for_cursorline(win_T *wp)
+{
+  if ((wp->w_p_rnu || wp->w_p_cul)
+      && (wp->w_valid & VALID_CROW) == 0
+      && !pum_visible()) {
+    redraw_win_later(wp, SOME_VALID);
+  }
 }
 
 /*
@@ -589,14 +604,7 @@ curs_rows (
     }
   }
 
-  /* Redraw when w_cline_row changes and 'relativenumber' or 'cursorline' is
-   * set. */
-  if ((curwin->w_p_rnu || curwin->w_p_cul)
-      && (curwin->w_valid & VALID_CROW) == 0
-      && !pum_visible()) {
-    redraw_later(SOME_VALID);
-  }
-
+  redraw_for_cursorline(curwin);
   wp->w_valid |= VALID_CROW|VALID_CHEIGHT;
 
   /* validate botline too, if update_screen doesn't do it */
@@ -1911,8 +1919,8 @@ int onepage(int dir, long count)
           }
           comp_botline(curwin);
           curwin->w_cursor.lnum = curwin->w_botline - 1;
-          curwin->w_valid &= ~(VALID_WCOL|VALID_CHEIGHT|
-                               VALID_WROW|VALID_CROW);
+          curwin->w_valid &=
+            ~(VALID_WCOL | VALID_CHEIGHT | VALID_WROW | VALID_CROW);
         } else {
           curwin->w_topline = loff.lnum;
           curwin->w_topfill = loff.fill;
