@@ -28,6 +28,7 @@ struct rstream {
 static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
 static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
 static void fread_idle_cb(uv_idle_t *);
+static void close_cb(uv_handle_t *handle);
 static void emit_read_event(RStream *rstream, bool eof);
 
 RStream * rstream_new(rstream_cb cb,
@@ -53,11 +54,9 @@ void rstream_free(RStream *rstream)
 {
   if (rstream->free_handle) {
     if (rstream->fread_idle != NULL) {
-      uv_close((uv_handle_t *)rstream->fread_idle, NULL);
-      free(rstream->fread_idle);
+      uv_close((uv_handle_t *)rstream->fread_idle, close_cb);
     } else {
-      uv_close((uv_handle_t *)rstream->stream, NULL);
-      free(rstream->stream);
+      uv_close((uv_handle_t *)rstream->stream, close_cb);
     }
   }
 
@@ -79,11 +78,9 @@ void rstream_set_file(RStream *rstream, uv_file file)
     // If this is the second time we're calling this function, free the
     // previously allocated memory
     if (rstream->fread_idle != NULL) {
-      uv_close((uv_handle_t *)rstream->fread_idle, NULL);
-      free(rstream->fread_idle);
+      uv_close((uv_handle_t *)rstream->fread_idle, close_cb);
     } else {
-      uv_close((uv_handle_t *)rstream->stream, NULL);
-      free(rstream->stream);
+      uv_close((uv_handle_t *)rstream->stream, close_cb);
     }
   }
 
@@ -259,6 +256,11 @@ static void fread_idle_cb(uv_idle_t *handle)
   }
 
   emit_read_event(rstream, false);
+}
+
+static void close_cb(uv_handle_t *handle)
+{
+  free(handle);
 }
 
 static void emit_read_event(RStream *rstream, bool eof)

@@ -28,6 +28,9 @@ struct job {
   // We use this reference count to ensure the JobExit event is only emitted
   // when stdout/stderr are drained
   int pending_refs;
+  // Same as above, but for freeing the job memory which contains
+  // libuv handles. Only after all are closed the job can be safely freed.
+  int pending_closes;
   // If the job was already stopped
   bool stopped;
   // Data associated with the job
@@ -57,6 +60,7 @@ static void job_prepare_cb(uv_prepare_t *handle);
 static void write_cb(uv_write_t *req, int status);
 static void read_cb(RStream *rstream, void *data, bool eof);
 static void exit_cb(uv_process_t *proc, int64_t status, int term_signal);
+static void close_cb(uv_handle_t *handle);
 static void emit_exit_event(Job *job);
 
 void job_init()
@@ -137,6 +141,7 @@ int job_start(char **argv,
   // Initialize
   job->id = i + 1;
   job->pending_refs = 3;
+  job->pending_closes = 4;
   job->data = data;
   job->stdout_cb = stdout_cb;
   job->stderr_cb = stderr_cb;
@@ -261,13 +266,13 @@ static Job * find_job(int id)
 
 static void free_job(Job *job)
 {
-  uv_close((uv_handle_t *)&job->proc_stdout, NULL);
-  uv_close((uv_handle_t *)&job->proc_stdin, NULL);
-  uv_close((uv_handle_t *)&job->proc_stderr, NULL);
-  uv_close((uv_handle_t *)&job->proc, NULL);
+  uv_close((uv_handle_t *)&job->proc_stdout, close_cb);
+  uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+  uv_close((uv_handle_t *)&job->proc_stderr, close_cb);
+  uv_close((uv_handle_t *)&job->proc, close_cb);
   rstream_free(job->out);
   rstream_free(job->err);
-  free(job);
+  wstream_free(job->in);
 }
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
@@ -332,3 +337,13 @@ static void emit_exit_event(Job *job)
   event_push(event);
 }
 
+static void close_cb(uv_handle_t *handle)
+{
+  Job *job = handle->data;
+
+  if (--job->pending_closes == 0) {
+    // Only free the job memory after all the associated handles are properly
+    // closed by libuv
+    free(job);
+  }
+}
