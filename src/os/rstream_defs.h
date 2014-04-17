@@ -3,7 +3,7 @@
 
 typedef struct rstream RStream;
 
-/// Function called when the RStream receives data
+/// Type of function called when the RStream receives data
 ///
 /// @param rstream The RStream instance
 /// @param data State associated with the RStream instance

@@ -36,12 +36,6 @@ void rstream_free(RStream *rstream);
 /// @param stream The new `uv_stream_t` instance
 void rstream_set_stream(RStream *rstream, uv_stream_t *stream);
 
-/// Sets the underlying `uv_file_t` instance
-///
-/// @param rstream The `RStream` instance
-/// @param stream The new `uv_stream_t` instance
-void rstream_set_stream(RStream *rstream, uv_stream_t *stream);
-
 /// Sets the underlying file descriptor that will be read from. Only pipes
 /// and regular files are supported for now.
 ///
