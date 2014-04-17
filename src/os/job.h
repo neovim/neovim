@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "os/event_defs.h"
 #include "os/event.h"
 
 /// Initializes job control resources

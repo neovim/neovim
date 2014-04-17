@@ -159,8 +159,8 @@ int job_start(char **argv, void *data, job_read_cb cb)
   }
 
   // Start the readable streams
-  job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job);
-  job->err = rstream_new(read_cb, JOB_BUFFER_SIZE, job);
+  job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job, false);
+  job->err = rstream_new(read_cb, JOB_BUFFER_SIZE, job, false);
   rstream_set_stream(job->out, (uv_stream_t *)&job->proc_stdout);
   rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
   rstream_start(job->out);

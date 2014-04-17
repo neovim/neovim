@@ -6,6 +6,8 @@
 
 #include "os/rstream_defs.h"
 #include "os/rstream.h"
+#include "os/event_defs.h"
+#include "os/event.h"
 #include "vim.h"
 #include "memory.h"
 
@@ -19,20 +21,25 @@ struct rstream {
   uv_file fd;
   rstream_cb cb;
   uint32_t buffer_size, rpos, wpos, fpos;
-  bool reading, free_handle;
+  bool reading, free_handle, async;
 };
 
 // Callbacks used by libuv
 static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
 static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
 static void fread_idle_cb(uv_idle_t *);
+static void emit_read_event(RStream *rstream, bool eof);
 
-RStream * rstream_new(rstream_cb cb, uint32_t buffer_size, void *data)
+RStream * rstream_new(rstream_cb cb,
+                      uint32_t buffer_size,
+                      void *data,
+                      bool async)
 {
   RStream *rv = xmalloc(sizeof(RStream));
   rv->buffer = xmalloc(buffer_size);
   rv->buffer_size = buffer_size;
   rv->data = data;
+  rv->async = async;
   rv->cb = cb;
   rv->rpos = rv->wpos = rv->fpos = 0;
   rv->stream = NULL;
@@ -162,6 +169,13 @@ uint32_t rstream_available(RStream *rstream)
   return rstream->wpos - rstream->rpos;
 }
 
+void rstream_read_event(Event event)
+{
+  RStream *rstream = event.data.rstream.ptr;
+
+  rstream->cb(rstream, rstream->data, event.data.rstream.eof);
+}
+
 // Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
@@ -191,7 +205,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(stream);
-      rstream->cb(rstream, rstream->data, true);
+      emit_read_event(rstream, true);
     }
     return;
   }
@@ -205,11 +219,8 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     rstream_stop(rstream);
   }
 
-  // Invoke the callback passing in the number of bytes available and data
-  // associated with the stream
-  rstream->cb(rstream, rstream->data, false);
   rstream->reading = false;
-
+  emit_read_event(rstream, false);
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
@@ -235,7 +246,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   if (req.result <= 0) {
     uv_idle_stop(rstream->fread_idle);
-    rstream->cb(rstream, rstream->data, true);
+    emit_read_event(rstream, true);
     return;
   }
 
@@ -247,5 +258,21 @@ static void fread_idle_cb(uv_idle_t *handle)
     rstream_stop(rstream);
   }
 
-  rstream->cb(rstream, rstream->data, false);
+  emit_read_event(rstream, false);
+}
+
+static void emit_read_event(RStream *rstream, bool eof)
+{
+  if (rstream->async) {
+    Event event;
+
+    event.type = kEventRStreamData;
+    event.data.rstream.ptr = rstream;
+    event.data.rstream.eof = eof;
+    event_push(event);
+  } else {
+    // Invoke the callback passing in the number of bytes available and data
+    // associated with the stream
+    rstream->cb(rstream, rstream->data, eof);
+  }
 }

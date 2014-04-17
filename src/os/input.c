@@ -34,7 +34,7 @@ static int push_event_key(uint8_t *buf, int maxlen);
 
 void input_init()
 {
-  read_stream = rstream_new(read_cb, READ_BUFFER_SIZE, NULL);
+  read_stream = rstream_new(read_cb, READ_BUFFER_SIZE, NULL, false);
   rstream_set_file(read_stream, read_cmd_fd);
 }
 

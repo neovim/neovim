@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <uv.h>
 
+#include "os/event_defs.h"
 #include "os/rstream_defs.h"
 
 /// Creates a new RStream instance. A RStream encapsulates all the boilerplate
@@ -14,8 +15,15 @@
 ///        for reading with `rstream_read`
 /// @param buffer_size Size in bytes of the internal buffer.
 /// @param data Some state to associate with the `RStream` instance
+/// @param async Flag that specifies if the callback should only be called
+///        outside libuv event loop(When processing async events with
+///        KE_EVENT). Only the RStream instance reading user input should set
+///        this to false
 /// @return The newly-allocated `RStream` instance
-RStream * rstream_new(rstream_cb cb, uint32_t buffer_size, void *data);
+RStream * rstream_new(rstream_cb cb,
+                      uint32_t buffer_size,
+                      void *data,
+                      bool async);
 
 /// Frees all memory allocated for a RStream instance
 ///
@@ -70,6 +78,11 @@ uint32_t rstream_read(RStream *rstream, char *buffer, uint32_t count);
 /// @param rstream The `RStream` instance
 /// @return The number of bytes available
 uint32_t rstream_available(RStream *rstream);
+
+/// Runs the read callback associated with the rstream
+///
+/// @param event Object containing data necessary to invoke the callback
+void rstream_read_event(Event event);
 
 #endif  // NEOVIM_OS_RSTREAM_H
 

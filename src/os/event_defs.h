@@ -6,13 +6,18 @@
 
 typedef enum {
   kEventSignal,
-  kEventJobActivity
+  kEventJobActivity,
+  kEventRStreamData
 } EventType;
 
 typedef struct {
   EventType type;
   union {
     int signum;
+    struct {
+      RStream *ptr;
+      bool eof;
+    } rstream;
     struct {
       Job *ptr;
       RStream *target;

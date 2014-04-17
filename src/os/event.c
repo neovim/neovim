@@ -8,6 +8,7 @@
 #include "os/event.h"
 #include "os/input.h"
 #include "os/signal.h"
+#include "os/rstream.h"
 #include "os/job.h"
 #include "vim.h"
 #include "memory.h"
@@ -111,6 +112,9 @@ void event_process()
         break;
       case kEventJobActivity:
         job_handle(event);
+        break;
+      case kEventRStreamData:
+        rstream_read_event(event);
         break;
       default:
         abort();
