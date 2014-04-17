@@ -405,10 +405,11 @@ static struct vimvar {
 static dictitem_T vimvars_var;                  /* variable used for v: */
 #define vimvarht  vimvardict.dv_hashtab
 
-static void apply_job_autocmds(int id,
-                               void *data,
-                               RStream *target,
-                               bool from_stdout);
+static void on_job_stdout(RStream *rstream, void *data, bool eof);
+static void on_job_stderr(RStream *rstream, void *data, bool eof);
+static void on_job_exit(Job *job, void *data);
+static void on_job_data(RStream *rstream, void *data, bool eof, char *type);
+static void apply_job_autocmds(Job *job, char *name, char *type, char *str);
 static void prepare_vimvar(int idx, typval_T *save_tv);
 static void restore_vimvar(int idx, typval_T *save_tv);
 static int ex_let_vars(char_u *arg, typval_T *tv, int copy,
@@ -11073,7 +11074,9 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
 
   rettv->vval.v_number = job_start(argv,
                                    xstrdup((char *)argvars[0].vval.v_string),
-                                   apply_job_autocmds);
+                                   on_job_stdout,
+                                   on_job_stderr,
+                                   on_job_exit);
 
   if (rettv->vval.v_number <= 0) {
     if (rettv->vval.v_number == 0) {
@@ -19796,31 +19799,56 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   return ret;
 }
 
-static void apply_job_autocmds(int id,
-                               void *data,
-                               RStream *target,
-                               bool from_stdout)
+static void on_job_stdout(RStream *rstream, void *data, bool eof)
+{
+  if (!eof) {
+    on_job_data(rstream, data, eof, "stdout");
+  }
+}
+
+static void on_job_stderr(RStream *rstream, void *data, bool eof)
+{
+  if (!eof) {
+    on_job_data(rstream, data, eof, "stderr");
+  }
+}
+
+static void on_job_exit(Job *job, void *data)
+{
+  apply_job_autocmds(job, data, "exit", NULL);
+}
+
+static void on_job_data(RStream *rstream, void *data, bool eof, char *type)
+{
+  Job *job = data;
+  uint32_t read_count = rstream_available(rstream);
+  char *str = xmalloc(read_count + 1);
+
+  rstream_read(rstream, str, read_count);
+  str[read_count] = NUL;
+  apply_job_autocmds(job, job_data(job), type, str);
+}
+
+static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
 {
   list_T *list;
-  char *str;
-  listitem_T *str_slot = listitem_alloc();
-  uint32_t read_count = rstream_available(target);
 
-  // Prepare the list item containing the data read
-  str = xmalloc(read_count + 1);
-  rstream_read(target, str, read_count);
-  str[read_count] = NUL;
-  str_slot->li_tv.v_type = VAR_STRING;
-  str_slot->li_tv.v_lock = 0;
-  str_slot->li_tv.vval.v_string = (char_u *)str;
   // Create the list which will be set to v:job_data
   list = list_alloc();
-  list_append_number(list, id);
-  list_append(list, str_slot);
-  list_append_string(list, (char_u *)(from_stdout ? "out" : "err"), 3);
+  list_append_number(list, job_id(job));
+  list_append_string(list, (uint8_t *)type, -1);
+
+  if (str) {
+    listitem_T *str_slot = listitem_alloc();
+    str_slot->li_tv.v_type = VAR_STRING;
+    str_slot->li_tv.v_lock = 0;
+    str_slot->li_tv.vval.v_string = (uint8_t *)str;
+    list_append(list, str_slot);
+  }
+
   // Update v:job_data for the autocommands
   set_vim_var_list(VV_JOB_DATA, list);
   // Call JobActivity autocommands
-  apply_autocmds(EVENT_JOBACTIVITY, (char_u *)data, NULL, TRUE, NULL);
+  apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
 }
 

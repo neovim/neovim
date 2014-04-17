@@ -110,11 +110,11 @@ void event_process()
       case kEventSignal:
         signal_handle(event);
         break;
-      case kEventJobActivity:
-        job_handle(event);
-        break;
       case kEventRStreamData:
         rstream_read_event(event);
+        break;
+      case kEventJobExit:
+        job_exit_event(event);
         break;
       default:
         abort();

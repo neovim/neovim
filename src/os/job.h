@@ -11,7 +11,7 @@
 #include <stdbool.h>
 
 #include "os/event_defs.h"
-#include "os/event.h"
+#include "os/rstream_defs.h"
 
 /// Initializes job control resources
 void job_init(void);
@@ -24,12 +24,19 @@ void job_teardown(void);
 /// @param argv Argument vector for the process. The first item is the
 ///        executable to run.
 /// @param data Caller data that will be associated with the job
-/// @param cb Callback that will be invoked everytime data is available in
-///        the job's stdout/stderr
+/// @param stdout_cb Callback that will be invoked when data is available
+///        on stdout
+/// @param stderr_cb Callback that will be invoked when data is available
+///        on stderr
+/// @param exit_cb Callback that will be invoked when the job exits
 /// @return The job id if the job started successfully. If the the first item /
 ///         of `argv`(the program) could not be executed, -1 will be returned.
 //          0 will be returned if the job table is full.
-int job_start(char **argv, void *data, job_read_cb cb);
+int job_start(char **argv,
+              void *data,
+              rstream_cb stdout_cb,
+              rstream_cb stderr_cb,
+              job_exit_cb exit_cb);
 
 /// Terminates a job. This is a non-blocking operation, but if the job exists
 /// it's guaranteed to succeed(SIGKILL will eventually be sent)
@@ -49,10 +56,22 @@ bool job_stop(int id);
 ///              id is invalid(probably because it has already stopped)
 bool job_write(int id, char *data, uint32_t len);
 
-/// Runs the read callback associated with the job/event
+/// Runs the read callback associated with the job exit event
 ///
 /// @param event Object containing data necessary to invoke the callback
-void job_handle(Event event);
+void job_exit_event(Event event);
+
+/// Get the job id
+///
+/// @param job A pointer to the job
+/// @return The job id
+int job_id(Job *job);
+
+/// Get data associated with a job
+///
+/// @param job A pointer to the job
+/// @return The job data
+void *job_data(Job *job);
 
 #endif  // NEOVIM_OS_JOB_H
 
