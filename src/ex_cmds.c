@@ -3661,8 +3661,8 @@ void do_sub(exarg_T *eap)
   // more efficient.
   // TODO: find a generic solution to make line-joining operations more
   // efficient, avoid allocating a string that grows in size.
-  if (strcmp((const char *)pat, "\\n") == 0
-      && strlen((const char *)pat) == 2
+  if (pat != NULL
+      && strcmp((const char *)pat, "\\n") == 0
       && *sub == NUL
       && (*cmd == NUL || (cmd[1] == NUL
                           && (*cmd == 'g'
