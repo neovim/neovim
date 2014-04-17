@@ -4057,8 +4057,7 @@ find_pattern_in_path (
       goto fpip_end;
     def_regmatch.rm_ic = FALSE;         /* don't ignore case in define pat. */
   }
-  files = (SearchedFile *)lalloc_clear((long_u)
-      (max_path_depth * sizeof(SearchedFile)), TRUE);
+  files = xcalloc(max_path_depth, sizeof(SearchedFile));
   if (files == NULL)
     goto fpip_end;
   old_files = max_path_depth;

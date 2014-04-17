@@ -3657,7 +3657,7 @@ spell_read_tree (
     *bytsp = bp;
 
     /* Allocate the index array. */
-    ip = (idx_T *)lalloc_clear((long_u)(len * sizeof(int)), TRUE);
+    ip = xcalloc(len, sizeof(*ip));
     *idxsp = ip;
 
     /* Recursively read the tree and store it in the array. */

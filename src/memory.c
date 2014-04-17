@@ -72,14 +72,6 @@ char_u *alloc_clear(unsigned size)
   return (char_u *)xcalloc(1, (size_t)size);
 }
 
-/*
- * Allocate memory like lalloc() and set all bytes to zero.
- */
-char_u *lalloc_clear(long_u size, int message)
-{
-  return (char_u *)xcalloc(1, (size_t)size);
-}
-
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
 static void try_to_free_memory()

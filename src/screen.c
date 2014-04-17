@@ -6265,8 +6265,7 @@ retry:
     new_ScreenLinesUC = (u8char_T *)lalloc((long_u)(
           (Rows + 1) * Columns * sizeof(u8char_T)), FALSE);
     for (i = 0; i < p_mco; ++i)
-      new_ScreenLinesC[i] = (u8char_T *)lalloc_clear((long_u)(
-            (Rows + 1) * Columns * sizeof(u8char_T)), FALSE);
+      new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
   }
   if (enc_dbcs == DBCS_JPNU)
     new_ScreenLines2 = (schar_T *)lalloc((long_u)(
