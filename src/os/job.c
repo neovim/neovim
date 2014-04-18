@@ -212,8 +212,6 @@ bool job_stop(int id)
     return false;
   }
 
-  uv_read_stop((uv_stream_t *)&job->proc_stdout);
-  uv_read_stop((uv_stream_t *)&job->proc_stderr);
   job->stopped = true;
 
   return true;
