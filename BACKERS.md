@@ -459,7 +459,7 @@
 - rekab
 - riccieri
 - richard.mihalovic
-- RichiH
+- Richard "RichiH" Hartmann
 - Rio
 - robbevan
 - RobertMeta
