@@ -356,6 +356,7 @@ static void close_cb(uv_handle_t *handle)
     rstream_free(job->out);
     rstream_free(job->err);
     wstream_free(job->in);
+    free(job->data);
     free(job);
   }
 }
