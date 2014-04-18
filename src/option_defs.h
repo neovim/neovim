@@ -26,18 +26,15 @@
 # define DFLT_FF        "dos"
 # define DFLT_FFS_VIM   "dos,unix"
 # define DFLT_FFS_VI    "dos,unix"      /* also autodetect in compatible mode */
-# define DFLT_TEXTAUTO  TRUE
 #else
 # ifdef USE_CR
 #  define DFLT_FF       "mac"
 #  define DFLT_FFS_VIM  "mac,unix,dos"
 #  define DFLT_FFS_VI   "mac,unix,dos"
-#  define DFLT_TEXTAUTO TRUE
 # else
 #  define DFLT_FF       "unix"
 #  define DFLT_FFS_VIM  "unix,dos"
 #   define DFLT_FFS_VI  ""
-#   define DFLT_TEXTAUTO FALSE
 # endif
 #endif
 
@@ -550,7 +547,6 @@ EXTERN int p_tgst;              /* 'tagstack' */
 EXTERN int p_tbidi;             /* 'termbidi' */
 EXTERN char_u   *p_tenc;        /* 'termencoding' */
 EXTERN int p_terse;             /* 'terse' */
-EXTERN int p_ta;                /* 'textauto' */
 EXTERN int p_to;                /* 'tildeop' */
 EXTERN int p_timeout;           /* 'timeout' */
 EXTERN long p_tm;               /* 'timeoutlen' */

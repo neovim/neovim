@@ -1581,10 +1581,6 @@ static struct vimoption
   {"terse",       NULL,   P_BOOL|P_VI_DEF,
    (char_u *)&p_terse, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
-  {"textauto",    "ta",   P_BOOL|P_VIM,
-   (char_u *)&p_ta, PV_NONE,
-   {(char_u *)DFLT_TEXTAUTO, (char_u *)TRUE}
-   SCRIPTID_INIT},
   {"textwidth",   "tw",   P_NUM|P_VI_DEF|P_VIM|P_RBUF,
    (char_u *)&p_tw, PV_TW,
    {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
@@ -4156,14 +4152,8 @@ did_set_string_option (
   }
   /* 'fileformats' */
   else if (varp == &p_ffs) {
-    if (check_opt_strings(p_ffs, p_ff_values, TRUE) != OK)
+    if (check_opt_strings(p_ffs, p_ff_values, TRUE) != OK) {
       errmsg = e_invarg;
-    else {
-      /* also change 'textauto' */
-      if (*p_ffs == NUL)
-        p_ta = FALSE;
-      else
-        p_ta = TRUE;
     }
   }
   /* 'cryptkey' */
@@ -5249,19 +5239,13 @@ set_bool_option (
     if (curwin->w_p_pvw) {
       win_T       *win;
 
-      for (win = firstwin; win != NULL; win = win->w_next)
+      for (win = firstwin; win != NULL; win = win->w_next) {
         if (win->w_p_pvw && win != curwin) {
           curwin->w_p_pvw = FALSE;
           return (char_u *)N_("E590: A preview window already exists");
         }
+      }
     }
-  // When 'textauto' is set or reset also change 'fileformats'.
-  } else if ((int *)varp == &p_ta) {
-    set_string_option_direct((char_u *)"ffs",
-                             -1,
-                             p_ta ? (char_u *)DFLT_FFS_VIM : (char_u *)"",
-                             OPT_FREE | opt_flags,
-                             0);
   }
 
   /*
