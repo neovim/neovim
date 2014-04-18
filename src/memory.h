@@ -36,6 +36,23 @@ void *xcalloc(size_t count, size_t size)
 void *xrealloc(void *ptr, size_t size)
   FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET;
 
+/// xmalloc() wrapper that allocates size + 1 bytes and zeroes the last byte
+///
+/// @see {xmalloc}
+/// @param size
+/// @return pointer to allocated space. Never NULL
+void *xmallocz(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET;
+
+/// Allocates (len + 1) bytes of memory, duplicates `len` bytes of
+/// `data` to the allocated memory, zero terminates the allocated memory,
+/// and returns a pointer to the allocated memory. If the allocation fails,
+/// the program dies.
+///
+/// @see {xmalloc}
+/// @param data Pointer to the data that will be copied
+/// @param len number of bytes that will be copied
+void *xmemdupz(const void *data, size_t len);
+
 /// strdup() wrapper
 ///
 /// @see {xmalloc}

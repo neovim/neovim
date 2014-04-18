@@ -8048,7 +8048,7 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
  * If FEAT_OSFILETYPE defined then pass initial <type> through unchanged. Eg:
  * '<html>myfile' becomes '<html>^myfile$' -- leonard.
  *
- * Returns NULL when out of memory.
+ * Returns NULL on failure.
  */
 char_u *
 file_pat_to_reg_pat (
@@ -8058,7 +8058,7 @@ file_pat_to_reg_pat (
     int no_bslash             /* Don't use a backward slash as pathsep */
 )
 {
-  int size;
+  size_t size;
   char_u      *endp;
   char_u      *reg_pat;
   char_u      *p;
@@ -8085,9 +8085,7 @@ file_pat_to_reg_pat (
       check_length = p - pat + 1;
       if (p + 1 >= pat_end) {
         /* The 'pattern' is a filetype check ONLY */
-        reg_pat = (char_u *)alloc(check_length + 1);
-        memmove(reg_pat, pat, (size_t)check_length);
-        reg_pat[check_length] = NUL;
+        reg_pat = xmemdupz(pat, (size_t)check_length);
         return reg_pat;
       }
     }
@@ -8095,7 +8093,7 @@ file_pat_to_reg_pat (
 
   }
   pat += check_length;
-  size = 2 + check_length;
+  size = 2 + (size_t)check_length;
 #else
   size = 2;             /* '^' at start, '$' at end */
 #endif
@@ -8125,9 +8123,7 @@ file_pat_to_reg_pat (
       break;
     }
   }
-  reg_pat = alloc(size + 1);
-  if (reg_pat == NULL)
-    return NULL;
+  reg_pat = xmalloc(size + 1);
 
 #ifdef FEAT_OSFILETYPE
   /* Copy the type check in to the start. */
