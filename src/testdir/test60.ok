@@ -204,3 +204,8 @@ OK
  g:footest#x = 1
    footest#F() 0
 UndefFun() 0
+has patch 6.9.999: 1
+has patch 7.1.999: 1
+has patch 7.4.123: 1
+has patch 9.1.0: 0
+has patch 9.9.1: 0

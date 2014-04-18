@@ -10363,18 +10363,36 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     }
 
   if (n == FALSE) {
-    if (STRNICMP(name, "patch", 5) == 0)
-      n = has_patch(atoi((char *)name + 5));
-    else if (STRICMP(name, "vim_starting") == 0)
+    if (STRNICMP(name, "patch", 5) == 0) {
+      if (name[5] == '-'
+          && STRLEN(name) > 11
+          && vim_isdigit(name[6])
+          && vim_isdigit(name[8])
+          && vim_isdigit(name[10])) {
+        int major = atoi((char *)name + 6);
+        int minor = atoi((char *)name + 8);
+        int patch = atoi((char *)name + 10);
+
+        // Expect "patch-9.9.01234".
+        n = (major < VIM_VERSION_MAJOR
+             || (major == VIM_VERSION_MAJOR
+                 && (minor < VIM_VERSION_MINOR
+                     || (minor == VIM_VERSION_MINOR
+                         && patch <= highest_patch()))));
+      } else {
+        n = has_patch(atoi((char *)name + 5));
+      }
+    } else if (STRICMP(name, "vim_starting") == 0) {
       n = (starting != 0);
-    else if (STRICMP(name, "multi_byte_encoding") == 0)
+    } else if (STRICMP(name, "multi_byte_encoding") == 0) {
       n = has_mbyte;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
-    else if (STRICMP(name, "iconv") == 0)
+    } else if (STRICMP(name, "iconv") == 0) {
       n = iconv_enabled(FALSE);
 #endif
-    else if (STRICMP(name, "syntax_items") == 0)
+    } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
+    }
   }
 
   rettv->vval.v_number = n;
