@@ -1,618 +1,646 @@
-- 5thWall
-- 633squadron
-- a13xb
-- achayun
-- adammclain
-- adonm
-- adri
-- adriand
-- afh
-- aflatter
-- ah-
-- ahri
-- ajc
-- ajh
-- ajtakrajta
+# Bountysource Backers
+
+Thank you to everyone who backed our [Bountysource fundraiser](https://www.bountysource.com/teams/neovim/fundraiser)!
+
+### Your name and URL in BACKERS.md.
+
+- [Bob Breznak](http://brez.io)
+- [Tim Uruski](http://timuruski.net)
+- @mikker (http://brnbw.com)
+- Aaron J. [@metaxis](http://twitter.com/metaxis) Peterson
+- Adam George http://www.adamgeorge.com
+- Adam Lindberg (http://alind.io)
+- Adam McLain http://twitter.com/adammclain
+- Adam Piper http://ahri.net
+- Adrian Philipp http://adrian-philipp.com
+- Alexander Quine
+- Alexandru Dabija
+- Alexis Hildebrandt http://surryhill.net
+- Andrew M. Farrell http://amfarrell.com
+- Anton Beloglazov http://beloglazov.info/
+- Arthur Axel fREW Schmidt - https://blog.afoolishmanifesto.com
+- Ben Thouret http://benjamin.thouret.com
+- Benedikt Böhm http://bb.xnull.de
+- bfredl, http://bfredl.github.io
+- Brandon Smith, http://reardencode.com
+- Brandon Wang, http://brandonwang.me
+- Brennen Bearnes http://p1k3.com
+- Brock Wilcox (awwaiid) http://thelackthereof.org/
+- Cameron Eagans http://cweagans.net
+- Carl Myers http://cmyers.org/
+- Carlos Alves http://www.carlosalves.info
+- Chris Chernesky, http://www.tinderglow.com
+- Chris Hartjes
+- Christoffer Holmstedt (http://www.christofferholmstedt.se)
+- Ciaran Downey <http://ciarand.me>
+- Craig Bane http://standardizedways.co.uk
+- Dane Summers http://pinedesk.biz
+- Daniel Collin https://twitter.com/daniel_collin
+- Daniel Rogers http://remotecodelist.com
+- Darshan Sawardekar http://pressing-matters.io
+- David Gabriel http://wiki.dest-unreachable.net
+- Deepak Kumar www.kreatio.com
+- Derek Rodger http://devslant.com
+- ebene fünf GmbH www.ebenefuenf.de
+- Ehtesh Choudhury
+- Emil Hernvall http://emilhernvall.github.io/
+- Eric Siegel https://github.com/esiegel
+- Ethan Schoonover http://ethanschoonover.com
+- FFunction http://ffctn.com
+- Frank http://duckpun.ch
+- Gabriele Lana http://github.com/gabrielelana
+- Gavin Rogers http://praxeology.co.uk
+- Geoff Greer https://floobits.com/
+- Glenn Strauss https://github.com/gstrauss/
+- Gustav Buchholtz http://grod.se
+- Henri Bourcereau http://bourcereau.fr
+- http://jaredforsyth.com
+- http://www.1bsyl.com
+- Johann Dahm (http://johanndahm.com)
+- Ian Farmer http://farmernet.net
+- iauns - http://www.noobtube.com
+- Jacob Jewell www.immersiveapplications.com
+- James A. Overton http://james.overton.ca
+- James Tomasino - http://jamestomasino.com
+- Jamiel Almeida http://slashfoo.com
+- Jan Christoph Ebersbach http://www.e-jc.de/
+- Jason Peacock http://jasonpeacock.com
+- Jason Weathered http://jasoncodes.com/
+- Javier Maestro
+- Jeff Craig http://blog.foxxtrot.net/
+- Jeremy Huffman http://jeremyhuffman.com
+- Jeremy Morrell http://rathercurio.us
+- Jesper Kjeldgaard (thejspr) - http://thejspr.com
+- Jim Hester (http://jimhester.com)
+- Joe Moon http://joe.xoxomoon.com
+- Johan Simonsson, http://fun-tech.se
+- John P. Kiffmeyer (http://jpk.is)
+- John Szakmeister http://www.szakmeister.net/
+- John W. Long http://wiseheartdesign.com Twitter: @johnwlong GitHub: @jlong
+- Jon Yurek http://thoughtbot.com
+- jonaias http://jonaias.info
+- Josh Davis, http://joshldavis.com
+- Joshua Levesque (www.jandyco.com)
+- Justin M. Keyes https://github.com/justinmk
+- Justin Russell http://jrussell.me
+- kbussell
+- Kevin Sjöberg, http://kevinsjoberg.com
+- Kevin Sumner http://kevinsumner.com
+- Kevin Wu http://kevinformatics.com
+- Ley Missailidis, http://polymet.is
+- Loa https://github.com/loa
+- Marcello Barnaba http://sindro.me/
+- Marcin Kulik - http://ku1ik.com
+- Marius Rieder http://www.durchmesser.ch/
+- Mark Allen [@bytemeorg](http://twitter.com/bytemeorg)
+- Mark Percival http://markpercival.us
+- Mark Sprevak
+- Martin Ansdell-Smith https://ansdell.net/
+- Martin Kopischke http://martin.kopischke.net
+- masukomi http://masukomi.org
+- Matt Greer -- http://mattgreer.org
+- MetaCosm | #Vim on Freenode
+- Michael Ulm www.mulm.at
+- Mikael Jansson http://mikaelj.se
+- Mikkel Høgh http://mikkel.hoegh.org/
+- Ming Liu http://www.codingupfengshui.io
+- Holger Peters http://www.holger-peters.de
+- Alexander Myshov http://myshov.com/
+- Darren Cheng http://sanguinerane.com/
+- Felix Rath www.0fx.eu
+- Hong Xu http://www.topbug.net
+- Slava Kim https://www.meteor.com
+- Nate Soares (So8res) http://so8r.es
+- neektza http://pltconfusion.com
+- Niclas Nilsson, http://niclasnilsson.se
+- Nikolay Bachiyski http://extrapolate.me/
+- Nikush Patel http://nikush.co.uk
+- Norman Köhring https://koehr.in
+- Osamu Komagata
+- Øystein E. Krog https://github.com/oysteinkrog
+- Pablo Brasero Moreno http://pablobm.com
+- Peter Souter http://www.petersouter.co.uk
+- Phil Levchenko (http://philslair.com)
+- Pierre Douyon https://github.com/pgdouyon
+- Prateek Rungta
+- Przemysław Pietrzkiewicz, http://ppi.sh
+- Rasmus Mattsson http://zzm.se
+- Reed Esau https://github.com/reedes
+- Richard Harding https://bmark.us
+- Rob Warner http://grailbox.com
+- Runar Balstad Jensen, http://stdout.no/
+- Ryan Paul http://seg.phault.net
+- Saad Malik - https://github.com/saamalik
+- Saggi Malachi - http://sagg.im
+- Scott Wessels (http://www.usgn.net)
+- Sean DuBois (Sean-Der) http://siobud.com
+- Sebastian Vetter (http://www.roadside-developer.com)
+- Simen Endsjø, http://simendsjo.me
+- Stanley Chan (Happy-Dude)
+- Stefan Penner
+- Steve Vermeulen https://github.com/svermeulen
+- Steve Vermeulen https://github.com/svermeulen
+- Steven Myint (https://github.com/myint)
+- Tae Sandoval Murgan <taecilla.github.io>
+- The Kompanee http://thekompanee.com
+- Thomas Cannon <http://thomascannon.net>
+- Tim Oxley http://campjs.com
+- Tim Oxley http://campjs.com/
+- Timo Schmiade
+- Timothy Dahlin
+- Tiziano Santoro
+- Toban Wiebe http://tobanwiebe.com
+- Tobias Sjösten http://vvv.tobiassjosten.net/
+- Tom Cammann http://github.com/takac
+- Val Markovic http://val.markovic.io/
+- Víðir Valberg Guðmundsson http://rabotnik.coop
+- Weiyi Lou http://parlseygardens.net
+- Wesley Moore http://wezm.net/
+- Woody Peterson, http://www.bitsofsignal.com
+- Zach Kelling, http://zeekay.io
+
+### Your name in BACKERS.md.
+
+- @a13xb
+- @d1eg0
+- @derkha
+- @georgebashi
+- @tmcw
+- @xpayn
+- Adam Baxter (voltagex)
+- Adam Miller (maxamillion)
+- Adam Sunderland/iterion
+- Adon Metcalfe (adonm)
+- Adrian Duyzer
+- Aidan Stein
+- ak47
 - Aketzu
-- alandyer
-- alappe
-- alepane
-- aleproscia
-- alexanderjeurissen
-- alex.dabija
-- alind
-- alindeman
+- Alessandro Gangemi
+- Alessandro Pagnin
+- Alessandro Proscia
+- Alex Genco (alexgenco)
+- Alex Heeton
+- Alex Roper
+- Alex Soto (apsoto@gmail.com)
+- Alexander Flatter
+- Alexander Jeurissen
+- Alexander Shabalin
+- Alexander Woerndle
+- Alexandru Keszeg
 - Allan Hudgins
-- alxndr
-- amitbeka
-- andreamichi
-- andrefs
-- andrefsp
-- Andrew M. Farrell
-- andreyvit
-- andruby
+- Ami Chayun
+- Amit Beka
+- Anders Fuzz
+- Andre Azzolini
+- Andre da Palma
+- André Santos/andrefs
+- Andrea Michi
+- Andreas Heider
+- Andreas Lappe
+- andrej ocenas / aocenas
+- Andrew Arminio @5thWall
+- Andrew DeMaria ~ muff1nman
+- Andrew Fallows
+- Andrew Fecheyr (@andruby)
+- Andrew Hartford
+- Andrey Tarantsov
+- Andrey Yurovsky
+- Andy Dirnberger
+- Andy Gayton
+- Andy Lindeman
+- Andy Webster
 - AngelLeliel
-- ansdell
-- antoviaque
-- aocenas
-- apazzolini
-- apsoto
-- archambf
-- arnoo
-- artworx
-- arvinddeshpande
-- asdf
-- asgeo1
-- AstroJetson
-- avetisk
-- awebster
-- awoerndle
-- awwaiid
-- b2c
+- Anton Egorov / satyrius
+- Anton Shemerey
+- Arnaud Bétrémieux
+- Arne Ehrlich
+- Arseny Zarechnev
+- Arvind Deshpande
+- Astro Jetson Jr
+- Attila Maczak
+- Avétis KAZARIAN (avetisk)
 - BarryKay
-- bart9h
 - bbinet
-- beefsack
-- beloglazov
 - BenBergman
-- bengt
-- benichu
-- berkes
-- bfredl
-- bgrohman
-- bheesham
-- bigfatgreg
-- bilalq
-- bjorn
-- bjorntipling
-- bobbaluba
-- bobbrez
-- bojanz
-- Bountysource
-- bozz
-- bradenbru
-- brandonliu
-- brandonmwang
-- brennen
-- brynedwards
-- burningTyger
-- cablehead
-- calin.don
-- calin-iorgulescu
-- carlosalvesuy
-- cazador481
-- cdcooperuk
-- cdelahousse
-- cewood
-- chernesk
-- chrisporter
-- christofferholmstedt
-- christopher-l
-- ciarand
-- cicloid
-- cinaeco
-- ciwchris
+- Bengt Lüers
+- Benjamin Bryant
+- Bèr 'berkes' Kessels
+- Bernd Homuth
+- Bheesham Persaud
+- Bilal Quadri
+- Bjorn Tipling
+- Bojan Zivanovic
+- Boris Searles
+- Braden Bruington
+- Brandon Liu/thenovices
+- Brandon Mathis - @imathis
+- Brett Ritter
+- Brian Shaver (shakerlxxv)
+- Bryan Grohman
+- Bryn Edwards
+- Calin Iorgulescu
+- calind
+- Cameron Wood / cewood
+- Chris Lopes
+- Chris Lord
+- Chris Porter
+- Chris Sims (@jcsims)
+- Christian Anton / fibbs
+- Christian Delahousse cdelahousse
+- Christian Lange
+- Christian Wellenbrock
+- Christophe Badoit
+- Christopher Lübbemeier
+- Christopher Mullins
+- Chungha Kim
 - ckromero
+- Claas-Thido Pfaff
+- Claes Mogren
+- Clayton Drazner
 - claytron
-- cohalz
-- copenhas
-- Corey Farwell
+- Colin Cooper
 - corytheboyd
-- cpfaff
-- cursork
-- cweagans
-- Cwiiis
-- cyrill62
-- czertbytes
-- d1eg0
-- DAddYE
-- damacus
-- DanEEStar
-- Daniel Collin
-- danielepolencic
-- danielsdesk
-- danpansa
-- Dan Riti
-- daqscott
-- darrenli
-- Darshan Sawardekar
-- davits
-- dccollie
-- deanmorin
+- Cristián Alberto Arenas Ulloa / NiñoScript
+- Cyril LEPAGNOT/cyrill62
+- D3 Designs
+- DAddYE (github: DAddYE)
+- Dan Webb
+- Daniel C. Henning / danielsdesk
+- Daniel Egeberg
+- Daniel Egger
+- Daniel Hodan/czertbytes
+- Daniel Latzer
+- Daniel Riti
+- Daniel Weisser
+- Daniele Polencic
+- Dave Dixon
+- David Collie
+- David Galeano
+- David Newell
+- David Rappo, Bountysource.com
+- David Rasch
+- David Stensland - terite
+- Davit Samvelyan
+- Dean Morin
 - deffi420
 - defrex
-- degeberg
-- demizer
 - Deraen
-- derKha
 - Dewdrops
-- dgc
 - Dick Seabrook
-- DigitalOcean
-- diguliu
-- dipti
-- dirn
-- dmartz
-- dmjb
+- Dominik Ritter
+- Don Browne
+- Donald Walker
+- Donna Martz
 - dpc
-- dragonfax
-- drasch
-- Drasill
-- Drazcmd
-- dritter
-- drodger
-- dsummersl
-- dtinth
-- duckpunch
+- dperson
 - dvidsilva
-- dyuri
 - Edan Maor
-- edlandm
-- elbaschid
-- elimirks
-- elkatwork
-- embe
-- emilh
-- emning
-- enriclluelles
-- erchn
-- ericfode
-- erik.goldman
-- eriknordlund
-- ernstla
-- erszcz
-- esiegel
-- etandel
-- Ethan Schoonover
-- euoia
-- evant
-- evindor
-- evraamsdonk
-- ewgarci
+- Eddy Garcia
+- Edward Ash/cazador481
+- Elias Tandel Barrionovo
+- Elijah Mirecki
+- Elliot Winkler (github: mcmire)
+- Enric Lluelles
+- Eric Fode
+- Erik Goldman
+- Erik Johnson Github: terminalmage Twitter: @terminalmage
+- Erik Nordlund
+- Ethan Erchinger/erchn
+- Evan Tatarka
+- Ewoud van Raamsdonk
 - fd0
-- fdv
-- federicogalassi
-- ferdinandsalis
-- fibbs
-- fission1110
-- flubba
-- flugsio
+- Federico Galassi
+- Félix Archambault
+- Ferdinand Salis-Samaden
+- Florian Bartels
+- Florian Sachs
 - foca
 - forbesmyester
-- foxxtrot
+- Frédéric de Villamil
 - Fredrik Rambris
-- Frew
-- fusyo
-- Futile
-- fuzz.dk
-- gabrielelana
-- gaveen
-- Gavinguy
-- GByrd
-- geonik
-- georgebashi
-- ggreer
-- ggustafsson
+- Dapeng Li (luislee818)
+- Janko Marohnić (janko-m)
+- Jun Wu
+- Maurice van der Pot (Griffon26)
+- Ory Band (oryband)
+- Garrett Dawson
+- Gaveen Prabhasara
+- George Nikolopoulos
+- github username "alandyer"
+- Giuseppe Rota
 - gkalas
-- gokhan
-- gokhan.caglar
+- Gökhan Kocak
 - goodgravy
-- gramic
-- Griffon26
-- grmarcil
-- grmpyprogrammer
-- grod
-- grota
-- gstrauss
-- gufo
-- haarts
-- Happy-Dude
-- harry.glaser
-- Heeton
+- Göran Gustafsson (GLEG)
+- Graham Jans
+- Greg Marcil
+- Gregory Byrd/GByrd
+- Gustavo Barron / Cicloid
+- Gyuri Horák
+- Harald Hvaal
+- Harm Aarts
+- Harry Glaser
+- Håvard Grimelid
 - hencjo
-- henning
+- Henning Hasemann
+- Henry "Ingvij" Kupty
 - henry4k
-- hermo
-- heryandi
-- hg
-- hkupty
-- hollow
-- hoop33
-- hoschi
-- houqp
-- huftis
-- hupili
-- iambenbryant
-- iauns
-- ibash
-- icholy
-- ikdysfm
+- Heryandi
+- Hontvári József Levente
+- IKEDA, Yoshifumi
+- Ilia Choly
 - iliis
-- imathis
-- in4mer
-- indrekj
-- Ipsquiggle
-- iterion
-- ivar
-- jabbrwcky
-- JackStouffer
-- jakesjews
-- jamesaoverton
-- jamesoff
-- jamestomasino
-- janko-m
-- jaredly
-- jasoncodes
-- jasonlong
-- jasonpeacock
+- Ilya Katz
+- Indrek Juhkam / indrekj
+- irwand
+- Islam Sharabash / ibash
+- Ivar Vasara
+- Jack Stouffer
+- Jacqueline Leykam
+- Jakob Landbo
+- James Herdman
+- James Magness
+- James Murty / jmurty
+- James Nguyen
+- James Orr
+- James Pickard
+- James Seward
+- Jamie Hillman
+- Jan Larres
+- Jan Weitz
+- Janko Luin
+- Jannik Nielsen / bitkid
+- Jared Tyler Miller
+- Jason Imison
+- Jason Long / @jasonlong
+- Jason Stillwell/dragonfax
 - Jasu
 - javaguirre
-- jaywilliams
-- jc00ke
-- jceb
-- jcsims
-- jdahm
-- jdavis
-- jeremyjh
-- Jess
-- jezallan
-- jfelchner
-- jfrazelle
-- jgosting
-- jhbabon
-- jherdman
-- jimhester
-- jiuka
-- Jjh
-- jjmaestro
-- jjmurre
-- jkinred
-- jkt
-- jktravis
-- Jlevesque
-- jmorrell
-- jmurty
-- joebadmo
-- joeblow1102
-- joedicastro
-- JoelPM
-- joeytrapp
-- johnkpaul
-- John W. Long
-- jojojames
-- JoKoT3
-- jonaias
-- jonathanj
-- jonthn
-- jor
-- JorisM
-- josemarluedke
-- JoshuaBrookover
-- jouko
-- jpk
-- jqln-0
-- jschornick
-- jsiei97
+- Jedidiah Hurt
+- Jeff Schornick
+- Jen Patrick
+- Jens Hausherr
+- Jess Brown / Jess
+- Jesse Cooke/@jc00ke
+- Jessica Frazelle/ jfrazelle
+- Jesus Alvarez
+- Jez Allan
+- Jimmie Elvenmark
+- Jiří Koten
+- JJ Murre
+- joe di castro
+- Joe Malin/633squadron
+- Joel Meyer
+- Joey Trapp
+- Johan Klokkhammer Helsing
+- John Cant
+- John K. Paul
+- John Krueger
+- John Netherdrake
+- John Schmidt / schmee
+- John Whitley/@jwhitley
+- Jon Anhold
+- Jon Gosting
+- Jonas Rollsby
+- Jonathan Buschmann
+- Jonathan Gibert
+- Jonathan Jacobs
+- Jonathan Kinred
+- Jorge Gallegos (kad)
+- Joris Morger
+- Josemar Luedke
+- Joshua Brookover
+- Joshua Travis
+- Jouko Karvonen
 - jstemmer
-- jszakmeister
-- jtmkrueger
-- juancampa
+- Juan Campa
+- Juan Hernández Babón / jhbabon
 - juanolon
-- julianchurchill
-- JusRussell
-- justinforce
-- justinmk
-- jwhitley
-- jyurek
-- kad
-- kad3nce
-- kadamski
-- kaldrenon
-- katzmopolitan
-- kazuoteramoto
-- kevgo
-- KevinSjoberg
-- Kevin Sumner
-- kevinw
-- khamer
-- kil9
-- killtheliterate
-- kioopi
-- koehr
-- kopischke
+- Justin Carter Moy
+- Justin Force
+- Kamil Slowikowski
+- Karl Ove Hufthammer
+- Kazuo Teramoto
+- Kevin Goslar
+- Kevin Hamer
+- Kevin Watters
+- Kevin Zimmerman / zim44
 - kryft
-- lanceulmer
-- LarryRiedel
-- LeszekSwirski
-- levente
-- levibrown
+- Krzysztof Adamski
+- Lachlan Brad Easton
+- Lance Ulmer
+- Larry Riedel (Larry@Riedel.org)
+- Lasse Immonen (lasse.immonen@gmail.com)
+- Léo Unbekandt / Soulou
+- Leszek Swirski
+- Levi Brown
 - lhl
-- lightblade
 - linduxed
-- linfir
-- lluisYasT
-- Loa
+- Lluis Satorre Gonzalez
 - lobachevsky
-- lpil
-- lsc
-- lucasts
-- lucaswerkmeister
-- luislee818
+- Louis Pilfold
+- Lowe Schmidt
+- Lucas Stephanou/lucasts
+- Lucas Werkmeister
 - Luke Sampson
-- m42e
-- macat
-- machuga
-- magicpat
-- majutsushi
-- manveru
-- mapclyps
-- marcusm
-- masukomi
-- matleh
+- Luke van der Hoeven / @plukevdh
+- Maciej Litwiniuk (@mlitwiniuk)
+- Mads Navntoft Noe
+- Maik Derstappen / MrTango
+- Manuel Salvadores
+- Marcus Huntemann/mapclyps
+- Marcus Martin/nymaen
+- Markus Dobler
 - Mat Moore
-- Matt Greer
-- maxamillion
-- mcmire
-- mdi
-- mdlerch
-- mdobler
-- mdp
-- mds5000
-- mean-old-man
-- meryn
-- metaxis
-- metellius
-- michael.iles
-- michaelkebe
-- miguelsm
-- mikaelj
-- MikeDillion
-- mikewadsten
-- mikkeloscar
-- mikker
-- mikl
-- milesfrain
-- mindtheft
-- mitechie
-- mlitwiniuk
-- mlotze
-- mmai
-- mntnoe
-- modal
-- mogren
-- Morsicus
-- mortenaa
-- MovEaxEsp
-- mpendse
-- mrallen1
-- MrBri
+- Mate Nagy
+- Mathias Fußenegger
+- Matt Moretti
+- Matthew Machuga
+- Matthew Sunderland
+- Matthias Bilger
+- Matthias Lehmann
+- Maximilian Gerlach
+- Meryn Stol
+- Michael 'manveru' Fellinger
+- Michael "beefsack" Alexander
+- Michael Iles
+- Michael Irwin/mdi
+- Michael Kebe
+- Michael Lerch
+- Michael R. Jones
+- Michael Sanders/msanders
+- Michael Schall / schallm
+- Michail Denchev
+- Michał Bartoszkiewicz
+- Mickaël FORTUNATO
+- Miguel Santesmases
+- Mihir Pendse
+- Mike Bissett/paran01d
+- Mike Sergio
+- Mike Wadsten
+- mikedillion
+- Mikkel Oscar Lyderik Larsen
+- Miles Edland / edlandm
+- Miles Frain
+- Mirko Grönroos
+- Moritz Lotze
+- Morten Nygaard Åsnes
 - MrException
-- mrinterweb
-- mrjones69
-- MrTango
-- msalvadores
-- msanders
-- msprev
-- muff1nman
-- Myshov
-- nakuldhotre
-- naseer
-- nathan.straz
-- nb
-- ndj
-- neektza
-- nelsonjchen
-- Netherdrake
-- nfm
-- nfrade
-- nicksloan
-- niclasnilsson
-- nikush
-- NiñoScript
-- nmeans
-- nop00
-- nosami
-- nzjames
-- objectiveryan
-- ojw
-- openstandards
-- opitzs
+- Julian Churchill (julianchurchill)
+- Nakul Dhotre
+- Corey Farwell (frewsxcv)
+- Tarrant Rollins (tarrant)
+- Naseer Ahmed
+- Nate Jones
+- Nate Soares (So8res)
+- Nate Straz
+- Neil Kirsopp
+- Nelson Chen/nelsonjchen
+- Nicholas Firth-McCoy (nfm)
+- Nick Sloan
+- Nickolas Means
+- Nicolai Ruckel
+- Niko Kivelä
+- nop
+- Nuno Frade
+- Olaf Heinemann
+- Ole Reifschneider
+- Oliver Caldwell
+- Olivier Lechevalier
 - orangain
 - orestis
-- oryband
-- oysteinkrog
 - pablasso
-- pablobm
-- paran01d
-- passy
-- patrickberkeley
-- Paul Alexander
-- pbf
-- pdf
-- perlguy9
-- petems
-- Peter
-- pgdouyon
-- philipefarias
-- pjrt
-- plukevdh
-- pmitoraj
-- pmodin
-- polymetis
-- poxar
-- ppi
-- prateekrungta
-- prithvi
-- projedi
-- px0
-- quark
-- quasarj
+- Pascal Hartig
+- Patrick Berkeley
+- Patrick Bihan-Faou, TeamBox SARL
+- Patrick Stapfer
+- Paul R Alexander
+- Pavel Afanasyev
+- Pawel Grzech
+- Paweł Nowak
+- Pedro Rodriguez T
+- Per Modin
+- Peter Edge
+- Peter Fern
+- Philipe Farias/philipefarias
+- Philipp Millar
+- Piotr Mitoraj
+- Prithvi Prabhu (prithvi)
+- Qingping Hou / houqp
+- Quasar Jarosz
 - queria
-- r0t0r-r0t0r
-- R4zzM
-- RageZBla
-- rahenri
-- RanaExMachina
-- ravipinto
-- reardencode
-- reedes
+- Rachid Zarouali / Xinity
+- Radek Szymczyszyn
+- Randy Topliffe / Taar
+- Ranko Radonić
+- Raphael Henrique Ribas
+- Ravi Joseph Pinto
 - rekab
-- riccieri
-- richard.mihalovic
+- Renato Zannon
 - Richard "RichiH" Hartmann
-- Rio
-- robbevan
-- RobertMeta
-- robmiller
-- robodwyer
-- rolisz
-- romaninsh
-- Roshan George
+- Richard Mihalovič
+- Richard Sotarsh Clark
+- Rio Kierkels
+- rob allen
+- Rob Bevan
+- Rob Miller @robmil
+- Rob O'Dwyer
+- Rodolfo Borges (aka bart9h)
+- Rodrigo Souto
+- Roland Szabo
+- Romans Malinovskis
 - Rostepher
-- rphillips
-- rradonic
-- rschmitt
 - runar
-- rustedgrail
-- rustushki
-- Ryan Durk
-- ryz
-- saamalik
-- saggim
-- SakuyaIzayoi
-- samstokes
-- sanpi
-- santiycr
-- satyrius
+- Russ Adams / rustushki
+- Ryan Phillips
+- Ryan Pierce/ fission1110
+- Ryan Schmitt
+- Ryan Tarpine
+- Sadik Gokhan Caglar
+- Sam Stokes
+- Sanpi
+- Santiago Suarez Ordoñez
 - saxman7000
-- sc68cal
-- schallm
-- schmee
+- Scott D'Aquila
+- Scott Mathson
+- Sean Copenhaver (@copenhas)
+- Sean McCleary
+- Sean Tegtmeyer
 - seanbell
-- Sean-Der
-- Sean M. Collins / sc68cal
-- sebastiangeiger
-- sebastien
-- segphault
-- shakerlxxv
-- ShaneDelmore
+- Sebastian Geiger
+- Sergey Alexandrov
+- Shane Delmore
 - shawndumas
 - shazow
-- shemerey
-- shmup
-- Shugyousha
-- shurane
-- sickill
-- sidoh
-- signedupforneovim
-- Silanus
-- simendsjo
-- simonratner
-- sirgeoo
-- slashfoo
-- Slava
-- slowkow
-- smathson
-- smegthelight
-- So8res
-- sogajapan
-- somemetricprefix
-- soney
-- songgao
-- Soulou
-- srabbelier
-- ssloss
-- stefanpenner
-- stefanwienert
-- stegtmeyer
-- Steven Myint
-- sthysel
-- sumpfgottheit
-- superjer
-- svermeulen
-- swebb
-- SwiftOne
-- szerated
-- szymzet
-- Tae
-- takac
-- taketwo
-- Tarrant
-- tbelaire
-- tbrock
-- teasp00n
-- TechDonald
-- terabyte
-- terinjokes
-- terite
-- terminalmage
-- tfnico
-- thameera
-- theEndBeta
-- the-isz
-- thejspr
-- thelibrarian
-- therealbitkid
-- thomascannon
-- thomasthune
-- thpani
-- ticviking
-- timanema
-- tim-m89
-- timoxley
-- timuruski
-- tiziano88
-- tmandry
-- tmcw
-- toban
-- tobiassjosten
+- Silvan Jegen
+- Simon Ratner (simonratner)
+- Song Gao
+- Stanimir Angelov Mladenov
+- Stanislav B. - zbstof
+- Stefan Gojan (hoschi)
+- Stefan Hoffmann / stefan991
+- Stefan Wienert
+- Steffen Rademacker
+- Stephen Oney/soney
+- Steve "ryz" Haßenpflug
+- Steven Daniel Webb
+- Steven Sloss
+- Sven Opitz
+- Sverre Rabbelier
+- Szymon Ząbkiewicz
+- Taichi Nakamura
+- Takayuki Soga
+- Teasp00n
+- Terin Stock - @terinjokes
+- Thai Pangsakulyanont (dtinth)
+- Thameera Senanayaka
+- Theo Belaire
+- Thomas Ferris Nicolaisen
+- Thomas Hirsch
+- Thomas Maffia/Szerated
+- Thomas Pani
+- Thomas Thune Hansen
+- Thorbjørn Lindeijer
+- Thunder Hu
+- Thys Meintjes
+- Tim Anema
+- Tim Matthews
+- Timo Kröger
 - Tolstyak
-- tomwadley
+- Tom Panning
+- Tom Wadley
+- Tony Kemp
 - tonyo112
-- Tourniquet
-- Tovrleaf
-- tpanning
-- Tranquility
+- Tori "TicViking" Hamblin
 - treppo
-- TristramShandy
-- trumanellis
-- turtleman
-- tv
-- TypedLambda
-- ulf
-- (unknown)
-- uskanda
-- valberg
-- Valloric
-- voltagex
-- vovik
-- voy
+- Truman Ellis
+- Tuomas Vähänen
+- Tyler Briles/MrBri
+- Tyler Brock
+- Tyler Mandry
+- Ulf Fischer/ulf
+- Vangelis Tsoumenis
+- Vítězslav Homolka
+- Vladimir Chernis
+- Vojtech Jasny
 - vvakame
+- Vytis Valentinavičius
+- Wade Berrier
 - warrenv
-- Wavey
-- wberrier
-- wbinnssmith
-- webgefrickel
-- weisserd
-- weitzjan
-- welle
-- werebus
-- wezm
 - whateverhuis
-- wirrbel
-- woahdae
-- Wolfy87
-- xinity
-- xpayn
+- Will Binns-Smith
+- Xavier Antoviaque (xavier@antoviaque.org)
 - xsb
-- xuhdev
-- xytis
+- Yann Villessuzanne
 - yko
-- ypeussa
-- yuvallanger
-- zbstof
-- zeekay
+- Youta Harada(cohalz)
+- Yrjö Peussa
+- Yusuke Kanda(@uskanda)
+- Yuval Langer
 - zerowidth
-- zhaoz
-- zim44
-- zsoltika
+- Ziling Zhao
+- Zsolt Botykai
+
+### Anonymous Supporters
+
+There were also 307 other people who didn't claim any level of reward but contributed to the fundraiser. Thank you all for the support!
