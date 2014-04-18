@@ -190,7 +190,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
 /*
  * Read lines from file "fname" into the buffer after line "from".
  *
- * 1. We allocate blocks with lalloc, as big as possible.
+ * 1. We allocate blocks with try_malloc, as big as possible.
  * 2. Each block is filled with characters from the file with a single read().
  * 3. The lines are inserted in the buffer with ml_append().
  *
@@ -987,10 +987,15 @@ retry:
       if (!skip_read) {
         size = 0x10000L;                            /* use buffer >= 64K */
 
-        for (; size >= 10; size = (long)((long_u)size >> 1)) {
-          if ((new_buffer = lalloc((long_u)(size + linerest + 1),
-                   FALSE)) != NULL)
-              break;
+        for (; size >= 10; size /= 2) {
+          new_buffer = verbose_try_malloc((size_t)size + (size_t)linerest + 1);
+          if (new_buffer) {
+            break;
+          }
+        }
+        if (new_buffer == NULL) {
+          error = TRUE;
+          break;
         }
         if (linerest)           /* copy characters from the previous buffer */
           memmove(new_buffer, ptr - linerest, (size_t)linerest);
@@ -2763,10 +2768,7 @@ buf_write (
         (char_u *)"", 0);               /* show that we are busy */
   msg_scroll = FALSE;               /* always overwrite the file message now */
 
-  buffer = alloc(BUFSIZE);
-  // TODO: decide how to handle this now that alloc never returns NULL. The fact
-  // that the OOM handling code calls this should be considered.
-  //
+  buffer = verbose_try_malloc(BUFSIZE);
   // can't allocate big buffer, use small one (to be able to write when out of
   // memory)
   if (buffer == NULL) {
@@ -3006,7 +3008,12 @@ buf_write (
       int did_set_shortname;
 #endif
 
-      copybuf = alloc(BUFSIZE + 1);
+      copybuf = verbose_try_malloc(BUFSIZE + 1);
+      if (copybuf == NULL) {
+        // out of memory
+        some_error = TRUE;
+        goto nobackup;
+      }
 
       /*
        * Try to make the backup in each directory in the 'bdir' option.
@@ -3372,8 +3379,10 @@ nobackup:
         write_info.bw_conv_buflen = bufsize * 2;
       else       /* FIO_UCS4 */
         write_info.bw_conv_buflen = bufsize * 4;
-      write_info.bw_conv_buf
-        = lalloc((long_u)write_info.bw_conv_buflen, TRUE);
+      write_info.bw_conv_buf = verbose_try_malloc(write_info.bw_conv_buflen);
+      if (!write_info.bw_conv_buf) {
+        end = 0;
+      }
     }
   }
 
@@ -3390,8 +3399,10 @@ nobackup:
     if (write_info.bw_iconv_fd != (iconv_t)-1) {
       /* We're going to use iconv(), allocate a buffer to convert in. */
       write_info.bw_conv_buflen = bufsize * ICONV_MULT;
-      write_info.bw_conv_buf
-        = lalloc((long_u)write_info.bw_conv_buflen, TRUE);
+      write_info.bw_conv_buf = verbose_try_malloc(write_info.bw_conv_buflen);
+      if (!write_info.bw_conv_buf) {
+        end = 0;
+      }
       write_info.bw_first = TRUE;
     } else
 #  endif
@@ -5048,7 +5059,9 @@ int vim_rename(char_u *from, char_u *to)
     return -1;
   }
 
-  buffer = (char *)alloc(BUFSIZE);
+  // Avoid xmalloc() here as vim_rename() is called by buf_write() when neovim
+  // is `preserve_exit()`ing.
+  buffer = try_malloc(BUFSIZE);
   if (buffer == NULL) {
     close(fd_out);
     close(fd_in);
@@ -5616,14 +5629,14 @@ void vim_deltempdir(void)
  */
 static void vim_settempdir(char_u *tempdir)
 {
-  char_u      *buf;
-
-  buf = alloc((unsigned)MAXPATHL + 2);
-  if (vim_FullName(tempdir, buf, MAXPATHL, FALSE) == FAIL)
-    STRCPY(buf, tempdir);
-  add_pathsep(buf);
-  vim_tempdir = vim_strsave(buf);
-  vim_free(buf);
+  char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
+  if (buf) {
+    if (vim_FullName(tempdir, buf, MAXPATHL, FALSE) == FAIL)
+      STRCPY(buf, tempdir);
+    add_pathsep(buf);
+    vim_tempdir = vim_strsave(buf);
+    vim_free(buf);
+  }
 }
 #endif
 

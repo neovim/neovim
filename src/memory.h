@@ -10,6 +10,24 @@ char_u *alloc_clear(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
 
 /// malloc() wrapper
 ///
+/// try_malloc() is a malloc() wrapper that tries to free some memory before
+/// trying again.
+///
+/// @see {try_to_free_memory}
+/// @param size
+/// @return pointer to allocated space. NULL if out of memory
+void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+
+/// try_malloc() wrapper that shows an out-of-memory error message to the user
+/// before returning NULL
+///
+/// @see {try_malloc}
+/// @param size
+/// @return pointer to allocated space. NULL if out of memory
+void *verbose_try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+
+/// malloc() wrapper that never returns NULL
+///
 /// xmalloc() succeeds or gracefully aborts when out of memory.
 /// Before aborting try to free some memory and call malloc again.
 ///
@@ -51,7 +69,7 @@ void *xmallocz(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET;
 /// @see {xmalloc}
 /// @param data Pointer to the data that will be copied
 /// @param len number of bytes that will be copied
-void *xmemdupz(const void *data, size_t len);
+void *xmemdupz(const void *data, size_t len) FUNC_ATTR_NONNULL_RET;
 
 /// strdup() wrapper
 ///

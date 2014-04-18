@@ -81,24 +81,40 @@ static void try_to_free_memory()
   trying_to_free = false;
 }
 
-void *xmalloc(size_t size)
+void *try_malloc(size_t size)
 {
   void *ret = malloc(size);
 
-  if (!ret && !size)
+  if (!ret && !size) {
     ret = malloc(1);
-
+  }
   if (!ret) {
     try_to_free_memory();
     ret = malloc(size);
-    if (!ret && !size)
+    if (!ret && !size) {
       ret = malloc(1);
-    if (!ret) {
-      OUT_STR("Vim: Error: Out of memory.\n");
-      preserve_exit();
     }
   }
+  return ret;
+}
 
+void *verbose_try_malloc(size_t size)
+{
+  void *ret = try_malloc(size);
+  if (!ret) {
+    do_outofmem_msg((long_u)size);
+  }
+  return ret;
+}
+
+void *xmalloc(size_t size)
+{
+  void *ret = try_malloc(size);
+
+  if (!ret) {
+    OUT_STR("Vim: Error: Out of memory.\n");
+    preserve_exit();
+  }
   return ret;
 }
 
