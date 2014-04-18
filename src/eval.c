@@ -63,7 +63,6 @@
 #include "window.h"
 #include "os/os.h"
 #include "os/job.h"
-#include "os/shell.h"
 #include "os/rstream.h"
 #include "os/rstream_defs.h"
 
@@ -11023,7 +11022,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = 0;
 
   if (check_restricted() || check_secure()) {
-    goto cleanup;
+    return;
   }
 
   if (argvars[0].v_type != VAR_STRING
@@ -11032,7 +11031,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
       && argvars[2].v_type != VAR_UNKNOWN)) {
     // Wrong argument types
     EMSG(_(e_invarg));
-    goto cleanup;
+    return;
   }
 
   argsl = 0;
@@ -11043,7 +11042,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
     for (arg = args->lv_first; arg != NULL; arg = arg->li_next) {
       if (arg->li_tv.v_type != VAR_STRING) {
         EMSG(_(e_invarg));
-        goto cleanup;
+        return;
       }
     }
   }
@@ -11051,7 +11050,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
   if (!os_can_exe(get_tv_string(&argvars[1]))) {
     // String is not executable
     EMSG2(e_jobexe, get_tv_string(&argvars[1]));
-    goto cleanup;
+    return;
   }
 
   // Allocate extra memory for the argument vector and the NULL pointer
@@ -11085,14 +11084,6 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
       EMSG(_(e_jobexe));
     }
   }
-
-cleanup:
-  if (rettv->vval.v_number > 0) {
-    // Success
-    return;
-  }
-  // Cleanup argv memory in case the `job_start` call failed
-  shell_free_argv(argv);
 }
 
 // "jobstop()" function

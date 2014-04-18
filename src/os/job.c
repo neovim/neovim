@@ -248,7 +248,6 @@ void job_exit_event(Event event)
   job->exit_cb(job, job->data);
 
   // Free the job resources
-  shell_free_argv(job->proc_opts.args);
   free_job(job);
 
   // Stop polling job status if this was the last
@@ -356,6 +355,7 @@ static void close_cb(uv_handle_t *handle)
     rstream_free(job->out);
     rstream_free(job->err);
     wstream_free(job->in);
+    shell_free_argv(job->proc_opts.args);
     free(job->data);
     free(job);
   }
