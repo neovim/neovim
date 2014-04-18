@@ -1,4 +1,4 @@
-Tests for the exists() function.  vim: set ft=vim ts=8 :
+Tests for the exists() and has() functions.  vim: set ft=vim ts=8 sw=2 :
 
 STARTTEST
 :so small.vim
@@ -588,6 +588,16 @@ endfunction
     redir END
 endfunction
 :call TestExists()
+:"
+:function TestHas()
+  redir >> test.out
+  for pl in ['6.9.999', '7.1.999', '7.4.123', '9.1.0', '9.9.1']
+    echo 'has patch ' . pl . ': ' . has('patch-' . pl)
+  endfor
+  redir END
+endfunc
+:call TestHas()
+:"
 :delfunc TestExists
 :delfunc RunTest
 :delfunc TestFuncArg
