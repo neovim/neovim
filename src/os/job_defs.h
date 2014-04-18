@@ -9,13 +9,7 @@ typedef struct job Job;
 ///
 /// @param id The job id
 /// @param data Some data associated with the job by the caller
-/// @param target The `RStream` instance containing data to be read
-/// @param from_stdout This is true if data was read from the job's stdout,
-///        false if it came from stderr.
-typedef void (*job_read_cb)(int id,
-                            void *data,
-                            RStream *target,
-                            bool from_stdout);
+typedef void (*job_exit_cb)(Job *job, void *data);
 
 #endif  // NEOVIM_OS_JOB_DEFS_H
 
