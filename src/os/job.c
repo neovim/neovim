@@ -53,6 +53,7 @@ struct job {
 };
 
 static Job *table[MAX_RUNNING_JOBS] = {NULL};
+static uint32_t job_count = 0;
 static uv_prepare_t job_prepare;
 
 // Some helpers shared in this module
@@ -71,7 +72,6 @@ void job_init()
 {
   uv_disable_stdio_inheritance();
   uv_prepare_init(uv_default_loop(), &job_prepare);
-  uv_prepare_start(&job_prepare, job_prepare_cb);
 }
 
 void job_teardown()
@@ -195,6 +195,12 @@ int job_start(char **argv,
   // Save the job to the table
   table[i] = job;
 
+  // Start polling job status if this is the first
+  if (job_count == 0) {
+    uv_prepare_start(&job_prepare, job_prepare_cb);
+  }
+  job_count++;
+
   return job->id;
 }
 
@@ -234,13 +240,22 @@ void job_exit_event(Event event)
 {
   Job *job = event.data.job;
 
+  // Free the slot now, 'exit_cb' may want to start another job to replace
+  // this one
+  table[job->id - 1] = NULL;
+
   // Invoke the exit callback
   job->exit_cb(job, job->data);
 
   // Free the job resources
-  table[job->id - 1] = NULL;
   shell_free_argv(job->proc_opts.args);
   free_job(job);
+
+  // Stop polling job status if this was the last
+  job_count--;
+  if (job_count == 0) {
+    uv_prepare_stop(&job_prepare);
+  }
 }
 
 int job_id(Job *job)
