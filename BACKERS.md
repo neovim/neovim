@@ -549,6 +549,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Rodrigo Souto
 - Roland Szabo
 - Romans Malinovskis
+- Roshan George
 - Rostepher
 - runar
 - Russ Adams / rustushki
@@ -565,6 +566,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Scott Mathson
 - Sean Copenhaver (@copenhas)
 - Sean McCleary
+- Sean M. Collins (sc68cal)
 - Sean Tegtmeyer
 - seanbell
 - Sebastian Geiger
