@@ -308,7 +308,7 @@ static void add_num_buff(buffheader_T *buf, long n)
 {
   char_u number[32];
 
-  sprintf((char *)number, "%ld", n);
+  sprintf((char *)number, "%" PRId64, (int64_t)n);
   add_buff(buf, number, -1L);
 }
 

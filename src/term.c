@@ -4249,7 +4249,7 @@ replace_termcodes (
           result[dlen++] = K_SPECIAL;
           result[dlen++] = (int)KS_EXTRA;
           result[dlen++] = (int)KE_SNR;
-          sprintf((char *)result + dlen, "%ld", (long)current_SID);
+          sprintf((char *)result + dlen, "%" PRId64, (int64_t)current_SID);
           dlen += (int)STRLEN(result + dlen);
           result[dlen++] = '_';
           continue;

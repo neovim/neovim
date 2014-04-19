@@ -1074,7 +1074,7 @@ proftime_T      *tm;            /* timeout limit or NULL */
           if (spats[0].off.off > 0 || spats[0].off.line)
             *p++ = '+';
           if (spats[0].off.off != 0 || spats[0].off.line)
-            sprintf((char *)p, "%ld", spats[0].off.off);
+            sprintf((char *)p, "%" PRId64, (int64_t)spats[0].off.off);
           else
             *p = NUL;
         }

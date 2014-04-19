@@ -1064,7 +1064,7 @@ void msg_outnum(long n)
 {
   char_u buf[20];
 
-  sprintf((char *)buf, "%ld", n);
+  sprintf((char *)buf, "%" PRId64, (int64_t)n);
   msg_puts(buf);
 }
 
