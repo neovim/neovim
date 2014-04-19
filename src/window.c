@@ -753,10 +753,6 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       return FAIL;
 
     new_frame(wp);
-    if (wp->w_frame == NULL) {
-      win_free(wp, NULL);
-      return FAIL;
-    }
 
     /* make the contents of the new window the same as the current one */
     win_init(wp, curwin, flags);
@@ -2755,7 +2751,8 @@ void win_init_empty(win_T *wp)
 /*
  * Allocate the first window and put an empty buffer in it.
  * Called from main().
- * Return FAIL when something goes wrong (out of memory).
+ *
+ * Return FAIL when something goes wrong.
  */
 int win_alloc_first(void)
 {
@@ -2763,8 +2760,6 @@ int win_alloc_first(void)
     return FAIL;
 
   first_tabpage = alloc_tabpage();
-  if (first_tabpage == NULL)
-    return FAIL;
   first_tabpage->tp_topframe = topframe;
   curtab = first_tabpage;
 
@@ -2778,11 +2773,9 @@ int win_alloc_first(void)
 void win_alloc_aucmd_win(void)
 {
   aucmd_win = win_alloc(NULL, TRUE);
-  if (aucmd_win != NULL) {
-    win_init_some(aucmd_win, curwin);
-    RESET_BINDING(aucmd_win);
-    new_frame(aucmd_win);
-  }
+  win_init_some(aucmd_win, curwin);
+  RESET_BINDING(aucmd_win);
+  new_frame(aucmd_win);
 }
 
 /*
@@ -2799,7 +2792,7 @@ static int win_alloc_firstwin(win_T *oldwin)
     /* Very first window, need to create an empty buffer for it and
      * initialize from scratch. */
     curbuf = buflist_new(NULL, NULL, 1L, BLN_LISTED);
-    if (curwin == NULL || curbuf == NULL)
+    if (curbuf == NULL)
       return FAIL;
     curwin->w_buffer = curbuf;
     curwin->w_s = &(curbuf->b_s);
@@ -2815,8 +2808,6 @@ static int win_alloc_firstwin(win_T *oldwin)
   }
 
   new_frame(curwin);
-  if (curwin->w_frame == NULL)
-    return FAIL;
   topframe = curwin->w_frame;
   topframe->fr_width = Columns;
   topframe->fr_height = Rows - p_ch;
@@ -2830,7 +2821,7 @@ static int win_alloc_firstwin(win_T *oldwin)
  */
 static void new_frame(win_T *wp)
 {
-  frame_T *frp = (frame_T *)alloc_clear((unsigned)sizeof(frame_T));
+  frame_T *frp = xcalloc(1, sizeof(frame_T));
 
   wp->w_frame = frp;
   frp->fr_layout = FR_LEAF;
@@ -2850,21 +2841,13 @@ void win_init_size(void)
 
 /*
  * Allocate a new tabpage_T and init the values.
- * Returns NULL when out of memory.
  */
 static tabpage_T *alloc_tabpage(void)
 {
-  tabpage_T   *tp;
-
-
-  tp = (tabpage_T *)alloc_clear((unsigned)sizeof(tabpage_T));
+  tabpage_T *tp = xcalloc(1, sizeof(tabpage_T));
 
   /* init t: variables */
   tp->tp_vars = dict_alloc();
-  if (tp->tp_vars == NULL) {
-    vim_free(tp);
-    return NULL;
-  }
   init_var_dict(tp->tp_vars, &tp->tp_winvar, VAR_SCOPE);
 
   tp->tp_diff_invalid = TRUE;
@@ -2903,8 +2886,6 @@ int win_new_tabpage(int after)
   int n;
 
   newtp = alloc_tabpage();
-  if (newtp == NULL)
-    return FAIL;
 
   /* Remember the current windows in this Tab page. */
   if (leave_tabpage(curbuf, TRUE) == FAIL) {
@@ -3585,25 +3566,14 @@ win_T *buf_jump_open_tab(buf_T *buf)
  */
 static win_T *win_alloc(win_T *after, int hidden)
 {
-  win_T       *new_wp;
-
   /*
    * allocate window structure and linesizes arrays
    */
-  new_wp = (win_T *)alloc_clear((unsigned)sizeof(win_T));
-
-  if (win_alloc_lines(new_wp) == FAIL) {
-    vim_free(new_wp);
-    return NULL;
-  }
+  win_T *new_wp = xcalloc(1, sizeof(win_T));
+  win_alloc_lines(new_wp);
 
   /* init w: variables */
   new_wp->w_vars = dict_alloc();
-  if (new_wp->w_vars == NULL) {
-    win_free_lsize(new_wp);
-    vim_free(new_wp);
-    return NULL;
-  }
   init_var_dict(new_wp->w_vars, &new_wp->w_winvar, VAR_SCOPE);
 
   /* Don't execute autocommands while the window is not properly
@@ -3794,15 +3764,11 @@ static void frame_remove(frame_T *frp)
 
 /*
  * Allocate w_lines[] for window "wp".
- * Return FAIL for failure, OK for success.
  */
-int win_alloc_lines(win_T *wp)
+void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
-  wp->w_lines = (wline_T *)alloc_clear((unsigned)(Rows * sizeof(wline_T)));
-  if (wp->w_lines == NULL)
-    return FAIL;
-  return OK;
+  wp->w_lines = xcalloc(Rows, sizeof(wline_T));
 }
 
 /*
