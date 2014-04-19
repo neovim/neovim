@@ -2062,15 +2062,10 @@ readfile_linenr (
 /*
  * Fill "*eap" to force the 'fileencoding', 'fileformat' and 'binary to be
  * equal to the buffer "buf".  Used for calling readfile().
- * Returns OK or FAIL.
  */
-int prep_exarg(exarg_T *eap, buf_T *buf)
+void prep_exarg(exarg_T *eap, buf_T *buf)
 {
-  eap->cmd = alloc((unsigned)(STRLEN(buf->b_p_ff)
-                              + STRLEN(buf->b_p_fenc)
-                              + 15));
-  if (eap->cmd == NULL)
-    return FAIL;
+  eap->cmd = xmalloc(STRLEN(buf->b_p_ff) + STRLEN(buf->b_p_fenc) + 15);
 
   sprintf((char *)eap->cmd, "e ++ff=%s ++enc=%s", buf->b_p_ff, buf->b_p_fenc);
   eap->force_enc = 14 + (int)STRLEN(buf->b_p_ff);
@@ -2080,7 +2075,6 @@ int prep_exarg(exarg_T *eap, buf_T *buf)
   eap->force_bin = buf->b_p_bin ? FORCE_BIN : FORCE_NOBIN;
   eap->read_edit = FALSE;
   eap->forceit = FALSE;
-  return OK;
 }
 
 /*
@@ -5456,114 +5450,114 @@ void buf_reload(buf_T *buf, int orig_mode)
   /* set curwin/curbuf for "buf" and save some things */
   aucmd_prepbuf(&aco, buf);
 
-  /* We only want to read the text from the file, not reset the syntax
-   * highlighting, clear marks, diff status, etc.  Force the fileformat
-   * and encoding to be the same. */
-  if (prep_exarg(&ea, buf) == OK) {
-    old_cursor = curwin->w_cursor;
-    old_topline = curwin->w_topline;
+  // We only want to read the text from the file, not reset the syntax
+  // highlighting, clear marks, diff status, etc.  Force the fileformat and
+  // encoding to be the same.
 
-    if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
-      /* Save all the text, so that the reload can be undone.
-       * Sync first so that this is a separate undo-able action. */
-      u_sync(FALSE);
-      saved = u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, TRUE);
-      flags |= READ_KEEP_UNDO;
-    }
+  prep_exarg(&ea, buf);
+  old_cursor = curwin->w_cursor;
+  old_topline = curwin->w_topline;
 
-    /*
-     * To behave like when a new file is edited (matters for
-     * BufReadPost autocommands) we first need to delete the current
-     * buffer contents.  But if reading the file fails we should keep
-     * the old contents.  Can't use memory only, the file might be
-     * too big.  Use a hidden buffer to move the buffer contents to.
-     */
-    if (bufempty() || saved == FAIL)
-      savebuf = NULL;
-    else {
-      /* Allocate a buffer without putting it in the buffer list. */
-      savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
-      if (savebuf != NULL && buf == curbuf) {
-        /* Open the memline. */
-        curbuf = savebuf;
-        curwin->w_buffer = savebuf;
-        saved = ml_open(curbuf);
-        curbuf = buf;
-        curwin->w_buffer = buf;
-      }
-      if (savebuf == NULL || saved == FAIL || buf != curbuf
-          || move_lines(buf, savebuf) == FAIL) {
-        EMSG2(_("E462: Could not prepare for reloading \"%s\""),
-            buf->b_fname);
-        saved = FAIL;
-      }
-    }
-
-    if (saved == OK) {
-      curbuf->b_flags |= BF_CHECK_RO;           /* check for RO again */
-      keep_filetype = TRUE;                     /* don't detect 'filetype' */
-      if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0,
-              (linenr_T)0,
-              (linenr_T)MAXLNUM, &ea, flags) == FAIL) {
-        if (!aborting())
-          EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
-        if (savebuf != NULL && buf_valid(savebuf) && buf == curbuf) {
-          /* Put the text back from the save buffer.  First
-           * delete any lines that readfile() added. */
-          while (!bufempty())
-            if (ml_delete(buf->b_ml.ml_line_count, FALSE) == FAIL)
-              break;
-          (void)move_lines(savebuf, buf);
-        }
-      } else if (buf == curbuf) {  /* "buf" still valid */
-        /* Mark the buffer as unmodified and free undo info. */
-        unchanged(buf, TRUE);
-        if ((flags & READ_KEEP_UNDO) == 0) {
-          u_blockfree(buf);
-          u_clearall(buf);
-        } else {
-          /* Mark all undo states as changed. */
-          u_unchanged(curbuf);
-        }
-      }
-    }
-    vim_free(ea.cmd);
-
-    if (savebuf != NULL && buf_valid(savebuf))
-      wipe_buffer(savebuf, FALSE);
-
-    /* Invalidate diff info if necessary. */
-    diff_invalidate(curbuf);
-
-    /* Restore the topline and cursor position and check it (lines may
-     * have been removed). */
-    if (old_topline > curbuf->b_ml.ml_line_count)
-      curwin->w_topline = curbuf->b_ml.ml_line_count;
-    else
-      curwin->w_topline = old_topline;
-    curwin->w_cursor = old_cursor;
-    check_cursor();
-    update_topline();
-    keep_filetype = FALSE;
-    {
-      win_T       *wp;
-      tabpage_T   *tp;
-
-      /* Update folds unless they are defined manually. */
-      FOR_ALL_TAB_WINDOWS(tp, wp)
-      if (wp->w_buffer == curwin->w_buffer
-          && !foldmethodIsManual(wp))
-        foldUpdateAll(wp);
-    }
-    /* If the mode didn't change and 'readonly' was set, keep the old
-     * value; the user probably used the ":view" command.  But don't
-     * reset it, might have had a read error. */
-    if (orig_mode == curbuf->b_orig_mode)
-      curbuf->b_p_ro |= old_ro;
-
-    /* Modelines must override settings done by autocommands. */
-    do_modelines(0);
+  if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
+    /* Save all the text, so that the reload can be undone.
+     * Sync first so that this is a separate undo-able action. */
+    u_sync(FALSE);
+    saved = u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, TRUE);
+    flags |= READ_KEEP_UNDO;
   }
+
+  /*
+   * To behave like when a new file is edited (matters for
+   * BufReadPost autocommands) we first need to delete the current
+   * buffer contents.  But if reading the file fails we should keep
+   * the old contents.  Can't use memory only, the file might be
+   * too big.  Use a hidden buffer to move the buffer contents to.
+   */
+  if (bufempty() || saved == FAIL)
+    savebuf = NULL;
+  else {
+    /* Allocate a buffer without putting it in the buffer list. */
+    savebuf = buflist_new(NULL, NULL, (linenr_T)1, BLN_DUMMY);
+    if (savebuf != NULL && buf == curbuf) {
+      /* Open the memline. */
+      curbuf = savebuf;
+      curwin->w_buffer = savebuf;
+      saved = ml_open(curbuf);
+      curbuf = buf;
+      curwin->w_buffer = buf;
+    }
+    if (savebuf == NULL || saved == FAIL || buf != curbuf
+        || move_lines(buf, savebuf) == FAIL) {
+      EMSG2(_("E462: Could not prepare for reloading \"%s\""),
+          buf->b_fname);
+      saved = FAIL;
+    }
+  }
+
+  if (saved == OK) {
+    curbuf->b_flags |= BF_CHECK_RO;           /* check for RO again */
+    keep_filetype = TRUE;                     /* don't detect 'filetype' */
+    if (readfile(buf->b_ffname, buf->b_fname, (linenr_T)0,
+            (linenr_T)0,
+            (linenr_T)MAXLNUM, &ea, flags) == FAIL) {
+      if (!aborting())
+        EMSG2(_("E321: Could not reload \"%s\""), buf->b_fname);
+      if (savebuf != NULL && buf_valid(savebuf) && buf == curbuf) {
+        /* Put the text back from the save buffer.  First
+         * delete any lines that readfile() added. */
+        while (!bufempty())
+          if (ml_delete(buf->b_ml.ml_line_count, FALSE) == FAIL)
+            break;
+        (void)move_lines(savebuf, buf);
+      }
+    } else if (buf == curbuf) {  /* "buf" still valid */
+      /* Mark the buffer as unmodified and free undo info. */
+      unchanged(buf, TRUE);
+      if ((flags & READ_KEEP_UNDO) == 0) {
+        u_blockfree(buf);
+        u_clearall(buf);
+      } else {
+        /* Mark all undo states as changed. */
+        u_unchanged(curbuf);
+      }
+    }
+  }
+  vim_free(ea.cmd);
+
+  if (savebuf != NULL && buf_valid(savebuf))
+    wipe_buffer(savebuf, FALSE);
+
+  /* Invalidate diff info if necessary. */
+  diff_invalidate(curbuf);
+
+  /* Restore the topline and cursor position and check it (lines may
+   * have been removed). */
+  if (old_topline > curbuf->b_ml.ml_line_count)
+    curwin->w_topline = curbuf->b_ml.ml_line_count;
+  else
+    curwin->w_topline = old_topline;
+  curwin->w_cursor = old_cursor;
+  check_cursor();
+  update_topline();
+  keep_filetype = FALSE;
+  {
+    win_T       *wp;
+    tabpage_T   *tp;
+
+    /* Update folds unless they are defined manually. */
+    FOR_ALL_TAB_WINDOWS(tp, wp)
+    if (wp->w_buffer == curwin->w_buffer
+        && !foldmethodIsManual(wp))
+      foldUpdateAll(wp);
+  }
+  /* If the mode didn't change and 'readonly' was set, keep the old
+   * value; the user probably used the ":view" command.  But don't
+   * reset it, might have had a read error. */
+  if (orig_mode == curbuf->b_orig_mode)
+    curbuf->b_p_ro |= old_ro;
+
+  /* Modelines must override settings done by autocommands. */
+  do_modelines(0);
 
   /* restore curwin/curbuf and a few other things */
   aucmd_restbuf(&aco);
