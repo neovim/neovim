@@ -1806,8 +1806,8 @@ msgid "1 character"
 msgstr "1 merkki"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld merkkiä"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> merkkiä"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format

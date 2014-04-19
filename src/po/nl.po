@@ -1771,8 +1771,8 @@ msgid "1 character"
 msgstr "1 teken"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld tekens"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> tekens"
 
 #, c-format
 msgid "%ld characters"

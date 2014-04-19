@@ -1859,8 +1859,8 @@ msgid "1 character"
 msgstr "1 carattere"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld caratteri"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> caratteri"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format
