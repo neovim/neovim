@@ -141,7 +141,7 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
     // count a "miss" for hashtab lookup
     hash_count_perturb++;
 #endif  // ifdef HT_DEBUG
-    idx = (unsigned)((idx << 2U) + idx + perturb + 1U);
+    idx = 5 * idx + perturb + 1;
     hi = &ht->ht_array[idx & ht->ht_mask];
 
     if (hi->hi_key == NULL) {
@@ -378,7 +378,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
       newitem = &newarray[newi];
       if (newitem->hi_key != NULL) {
         for (perturb = olditem->hi_hash;; perturb >>= PERTURB_SHIFT) {
-          newi = (unsigned)((newi << 2U) + newi + perturb + 1U);
+          newi = 5 * newi + perturb + 1;
           newitem = &newarray[newi & newmask];
           if (newitem->hi_key == NULL) {
             break;

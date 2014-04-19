@@ -7162,7 +7162,7 @@ find_internal_func (
    * Find the function name in the table. Binary search.
    */
   while (first <= last) {
-    x = first + ((unsigned)(last - first) >> 1);
+    x = first + (last - first) / 2;
     cmp = STRCMP(name, functions[x].f_name);
     if (cmp < 0)
       last = x - 1;

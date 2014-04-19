@@ -2042,8 +2042,8 @@ void set_init_1(void)
     /* Initialize the 'cdpath' option's default value. */
     cdpath = vim_getenv((char_u *)"CDPATH", &mustfree);
     if (cdpath != NULL) {
-      buf = alloc((unsigned)((STRLEN(cdpath) << 1) + 2));
-      if (buf != NULL) {
+      buf = xmalloc(2 * STRLEN(cdpath) + 2);
+      {
         buf[0] = ',';               /* start with ",", current dir first */
         j = 1;
         for (i = 0; cdpath[i] != NUL; ++i) {
@@ -2376,7 +2376,7 @@ void set_init_2(void)
    * 'scroll' defaults to half the window height. Note that this default is
    * wrong when the window height changes.
    */
-  set_number_default("scroll", (long)((long_u)Rows >> 1));
+  set_number_default("scroll", Rows / 2);
   idx = findoption((char_u *)"scroll");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET))
     set_option_default(idx, OPT_LOCAL, p_cp);
