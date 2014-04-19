@@ -90,8 +90,8 @@ static int did_set_icon = FALSE;
 static int have_wildcard(int, char_u **);
 static int have_dollars(int, char_u **);
 
-static int save_patterns(int num_pat, char_u **pat, int *num_file,
-                         char_u ***file);
+static void save_patterns(int num_pat, char_u **pat, int *num_file,
+                          char_u ***file);
 
 /*
  * Write s[len] to the screen.
@@ -1067,8 +1067,10 @@ int flags;                      /* EW_* flags */
    * If there are no wildcards, just copy the names to allocated memory.
    * Saves a lot of time, because we don't have to start a new shell.
    */
-  if (!have_wildcard(num_pat, pat))
-    return save_patterns(num_pat, pat, num_file, file);
+  if (!have_wildcard(num_pat, pat)) {
+    save_patterns(num_pat, pat, num_file, file);
+    return OK;
+  }
 
 # ifdef HAVE_SANDBOX
   /* Don't allow any shell command in the sandbox. */
@@ -1433,14 +1435,16 @@ int flags;                      /* EW_* flags */
   return OK;
 
 notfound:
-  if (flags & EW_NOTFOUND)
-    return save_patterns(num_pat, pat, num_file, file);
+  if (flags & EW_NOTFOUND) {
+    save_patterns(num_pat, pat, num_file, file);
+    return OK;
+  }
   return FAIL;
 
 }
 
 
-static int save_patterns(num_pat, pat, num_file, file)
+static void save_patterns(num_pat, pat, num_file, file)
 int num_pat;
 char_u      **pat;
 int         *num_file;
@@ -1449,9 +1453,8 @@ char_u      ***file;
   int i;
   char_u      *s;
 
-  *file = (char_u **)alloc(num_pat * sizeof(char_u *));
-  if (*file == NULL)
-    return FAIL;
+  *file = xmalloc((size_t)num_pat * sizeof(char_u *));
+
   for (i = 0; i < num_pat; i++) {
     s = vim_strsave(pat[i]);
     if (s != NULL)
@@ -1461,7 +1464,6 @@ char_u      ***file;
     (*file)[i] = s;
   }
   *num_file = num_pat;
-  return OK;
 }
 
 /*
