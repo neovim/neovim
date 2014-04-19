@@ -4148,7 +4148,7 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
     *p++ = ' ';
   if (shortmess(SHM_LINES)) {
 #ifdef LONG_LONG_OFF_T
-     sprintf((char *)p, "%ldL, %lldC", lnum, nchars);
+     sprintf((char *)p, "%ldL, %" PRId64 "C", lnum, (int64_t)nchars);
 #else
      /* Explicit typecast avoids warning on Mac OS X 10.6 */
      sprintf((char *)p, "%ldL, %ldC", lnum, (long)nchars);
