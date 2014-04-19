@@ -6105,23 +6105,21 @@ void set_ref_in_item(typval_T *tv, int copyID)
  */
 dict_T *dict_alloc(void)
 {
-  dict_T *d;
+  dict_T *d = xmalloc(sizeof(dict_T));
 
-  d = (dict_T *)alloc(sizeof(dict_T));
-  if (d != NULL) {
-    /* Add the dict to the list of dicts for garbage collection. */
-    if (first_dict != NULL)
-      first_dict->dv_used_prev = d;
-    d->dv_used_next = first_dict;
-    d->dv_used_prev = NULL;
-    first_dict = d;
+  /* Add the dict to the list of dicts for garbage collection. */
+  if (first_dict != NULL)
+    first_dict->dv_used_prev = d;
+  d->dv_used_next = first_dict;
+  d->dv_used_prev = NULL;
+  first_dict = d;
 
-    hash_init(&d->dv_hashtab);
-    d->dv_lock = 0;
-    d->dv_scope = 0;
-    d->dv_refcount = 0;
-    d->dv_copyID = 0;
-  }
+  hash_init(&d->dv_hashtab);
+  d->dv_lock = 0;
+  d->dv_scope = 0;
+  d->dv_refcount = 0;
+  d->dv_copyID = 0;
+
   return d;
 }
 

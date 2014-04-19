@@ -6279,15 +6279,11 @@ retry:
 
   FOR_ALL_TAB_WINDOWS(tp, wp)
   {
-    if (win_alloc_lines(wp) == FAIL) {
-      outofmem = TRUE;
-      goto give_up;
-    }
+    win_alloc_lines(wp);
   }
-  if (aucmd_win != NULL && aucmd_win->w_lines == NULL
-      && win_alloc_lines(aucmd_win) == FAIL)
-    outofmem = TRUE;
-give_up:
+  if (aucmd_win != NULL && aucmd_win->w_lines == NULL) {
+    win_alloc_lines(aucmd_win);
+  }
 
   for (i = 0; i < p_mco; ++i)
     if (new_ScreenLinesC[i] == NULL)

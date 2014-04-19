@@ -41,7 +41,7 @@ win_T *buf_jump_open_win(buf_T *buf);
 win_T *buf_jump_open_tab(buf_T *buf);
 void win_append(win_T *after, win_T *wp);
 void win_remove(win_T *wp, tabpage_T *tp);
-int win_alloc_lines(win_T *wp);
+void win_alloc_lines(win_T *wp);
 void win_free_lsize(win_T *wp);
 void shell_new_rows(void);
 void shell_new_columns(void);
