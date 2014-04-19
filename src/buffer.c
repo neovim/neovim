@@ -4659,10 +4659,7 @@ int buf_contents_changed(buf_T *buf)
     return TRUE;
 
   /* Force the 'fileencoding' and 'fileformat' to be equal. */
-  if (prep_exarg(&ea, buf) == FAIL) {
-    wipe_buffer(newbuf, FALSE);
-    return TRUE;
-  }
+  prep_exarg(&ea, buf);
 
   /* set curwin/curbuf to buf and save a few things */
   aucmd_prepbuf(&aco, newbuf);
