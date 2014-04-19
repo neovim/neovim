@@ -1456,19 +1456,16 @@ static char *cs_make_vim_style_matches(char *fname, char *slno, char *search, ch
    * by new ones on the tag stack.
    */
   char *buf;
-  int amt;
+  size_t amt;
 
   if (search != NULL) {
-    amt =
-      (int)(strlen(fname) + strlen(slno) + strlen(tagstr) + strlen(search)+6);
-    if ((buf = (char *)alloc(amt)) == NULL)
-      return NULL;
+    amt = strlen(fname) + strlen(slno) + strlen(tagstr) + strlen(search) + 6;
+    buf = xmalloc(amt);
 
     (void)sprintf(buf, "%s\t%s\t%s;\"\t%s", tagstr, fname, slno, search);
   } else {
-    amt = (int)(strlen(fname) + strlen(slno) + strlen(tagstr) + 5);
-    if ((buf = (char *)alloc(amt)) == NULL)
-      return NULL;
+    amt = strlen(fname) + strlen(slno) + strlen(tagstr) + 5;
+    buf = xmalloc(amt);
 
     (void)sprintf(buf, "%s\t%s\t%s;\"", tagstr, fname, slno);
   }
@@ -1669,10 +1666,9 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
 
   assert(totmatches > 0);
 
-  buf = (char *)alloc(CSREAD_BUFSIZE);
-
-  matches = (char **)alloc(sizeof(char *) * totmatches);
-  cntxts = (char **)alloc(sizeof(char *) * totmatches);
+  buf = xmalloc(CSREAD_BUFSIZE);
+  matches = xmalloc(sizeof(char *) * totmatches);
+  cntxts = xmalloc(sizeof(char *) * totmatches);
 
   for (i = 0; i < csinfo_size; i++) {
     if (nummatches_a[i] < 1)
@@ -1683,21 +1679,21 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
                &slno, &search)) == NULL)
         continue;
 
-      matches[totsofar] = cs_make_vim_style_matches(fullname, slno,
-          search, tagstr);
+      matches[totsofar] = cs_make_vim_style_matches(fullname, slno, search,
+                                                    tagstr);
 
       vim_free(fullname);
 
       if (strcmp(cntx, "<global>") == 0)
         cntxts[totsofar] = NULL;
-      else
+      else {
         /* note: if vim_strsave returns NULL, then the context
          * will be "<global>", which is misleading.
          */
         cntxts[totsofar] = (char *)vim_strsave((char_u *)cntx);
+      }
 
-      if (matches[totsofar] != NULL)
-        totsofar++;
+      totsofar++;
 
     }     /* for all matches */
 
@@ -2080,9 +2076,9 @@ static int cs_reset(exarg_T *eap)
     return CSCOPE_SUCCESS;
 
   /* malloc our db and ppath list */
-  dblist = (char **)alloc(csinfo_size * sizeof(char *));
-  pplist = (char **)alloc(csinfo_size * sizeof(char *));
-  fllist = (char **)alloc(csinfo_size * sizeof(char *));
+  dblist = xmalloc(csinfo_size * sizeof(char *));
+  pplist = xmalloc(csinfo_size * sizeof(char *));
+  fllist = xmalloc(csinfo_size * sizeof(char *));
 
   for (i = 0; i < csinfo_size; i++) {
     dblist[i] = csinfo[i].fname;
