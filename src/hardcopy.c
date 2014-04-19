@@ -439,7 +439,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
   if (prt_use_number())
     width += PRINT_NUMBER_WIDTH;
 
-  tbuf = alloc(width + IOSIZE);
+  tbuf = xmalloc(width + IOSIZE);
 
   if (*p_header != NUL) {
     linenr_T tmp_lnum, tmp_topline, tmp_botline;
@@ -1271,7 +1271,7 @@ static int prt_resfile_strncmp(int offset, char *string, int len);
 static int prt_resfile_skip_nonws(int offset);
 static int prt_resfile_skip_ws(int offset);
 static int prt_next_dsc(struct prt_dsc_line_S *p_dsc_line);
-static int prt_build_cid_fontname(int font, char_u *name, int name_len);
+static void prt_build_cid_fontname(int font, char_u *name, int name_len);
 static void prt_def_cidfont(char *new_name, int height, char *cidfont);
 static void prt_dup_cidfont(char *original_name, char *new_name);
 static int prt_match_encoding(char *p_encoding,
@@ -1594,7 +1594,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   char_u      *buffer;
   int retval;
 
-  buffer = alloc(MAXPATHL + 1);
+  buffer = xmallocz(MAXPATHL);
 
   vim_strncpy(resource->name, (char_u *)name, 63);
   /* Look for named resource file in runtimepath */
@@ -2084,17 +2084,10 @@ static int prt_get_cpl(void)
   return (int)((prt_right_margin - prt_left_margin) / prt_char_width);
 }
 
-static int prt_build_cid_fontname(int font, char_u *name, int name_len)
+static void prt_build_cid_fontname(int font, char_u *name, int name_len)
 {
-  char    *fontname;
-
-  fontname = (char *)alloc(name_len + 1);
-  if (fontname == NULL)
-    return FALSE;
-  vim_strncpy((char_u *)fontname, name, name_len);
+  char *fontname = xstrndup((char *)name, name_len);
   prt_ps_mb_font.ps_fontname[font] = fontname;
-
-  return TRUE;
 }
 
 /*
@@ -2262,25 +2255,25 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     }
 
     /* Derive CID font names with fallbacks if not defined */
-    if (!prt_build_cid_fontname(PRT_PS_FONT_ROMAN,
-            mbfont_opts[OPT_MBFONT_REGULAR].string,
-            mbfont_opts[OPT_MBFONT_REGULAR].strlen))
-      return FALSE;
-    if (mbfont_opts[OPT_MBFONT_BOLD].present)
-      if (!prt_build_cid_fontname(PRT_PS_FONT_BOLD,
-              mbfont_opts[OPT_MBFONT_BOLD].string,
-              mbfont_opts[OPT_MBFONT_BOLD].strlen))
-        return FALSE;
-    if (mbfont_opts[OPT_MBFONT_OBLIQUE].present)
-      if (!prt_build_cid_fontname(PRT_PS_FONT_OBLIQUE,
-              mbfont_opts[OPT_MBFONT_OBLIQUE].string,
-              mbfont_opts[OPT_MBFONT_OBLIQUE].strlen))
-        return FALSE;
-    if (mbfont_opts[OPT_MBFONT_BOLDOBLIQUE].present)
-      if (!prt_build_cid_fontname(PRT_PS_FONT_BOLDOBLIQUE,
-              mbfont_opts[OPT_MBFONT_BOLDOBLIQUE].string,
-              mbfont_opts[OPT_MBFONT_BOLDOBLIQUE].strlen))
-        return FALSE;
+    prt_build_cid_fontname(PRT_PS_FONT_ROMAN,
+                           mbfont_opts[OPT_MBFONT_REGULAR].string,
+                           mbfont_opts[OPT_MBFONT_REGULAR].strlen);
+    if (mbfont_opts[OPT_MBFONT_BOLD].present) {
+      prt_build_cid_fontname(PRT_PS_FONT_BOLD,
+                             mbfont_opts[OPT_MBFONT_BOLD].string,
+                             mbfont_opts[OPT_MBFONT_BOLD].strlen);
+
+    }
+    if (mbfont_opts[OPT_MBFONT_OBLIQUE].present) {
+      prt_build_cid_fontname(PRT_PS_FONT_OBLIQUE,
+                             mbfont_opts[OPT_MBFONT_OBLIQUE].string,
+                             mbfont_opts[OPT_MBFONT_OBLIQUE].strlen);
+    }
+    if (mbfont_opts[OPT_MBFONT_BOLDOBLIQUE].present) {
+      prt_build_cid_fontname(PRT_PS_FONT_BOLDOBLIQUE,
+                             mbfont_opts[OPT_MBFONT_BOLDOBLIQUE].string,
+                             mbfont_opts[OPT_MBFONT_BOLDOBLIQUE].strlen);
+    }
 
     /* Check if need to use Courier for ASCII code range, and if so pick up
      * the encoding to use */
@@ -2513,14 +2506,10 @@ int mch_print_begin(prt_settings_T *psettings)
   struct prt_ps_resource_S *res_cmap;
   int retval = FALSE;
 
-  res_prolog = (struct prt_ps_resource_S *)
-               alloc(sizeof(struct prt_ps_resource_S));
-  res_encoding = (struct prt_ps_resource_S *)
-                 alloc(sizeof(struct prt_ps_resource_S));
-  res_cidfont = (struct prt_ps_resource_S *)
-                alloc(sizeof(struct prt_ps_resource_S));
-  res_cmap = (struct prt_ps_resource_S *)
-             alloc(sizeof(struct prt_ps_resource_S));
+  res_prolog = xmalloc(sizeof(struct prt_ps_resource_S));
+  res_encoding = xmalloc(sizeof(struct prt_ps_resource_S));
+  res_cidfont = xmalloc(sizeof(struct prt_ps_resource_S));
+  res_cmap = xmalloc(sizeof(struct prt_ps_resource_S));
 
   /*
    * PS DSC Header comments - no PS code!
