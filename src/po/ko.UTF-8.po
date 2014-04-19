@@ -1780,8 +1780,8 @@ msgid "1 character"
 msgstr "1 글자"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld 글자"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> 글자"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format

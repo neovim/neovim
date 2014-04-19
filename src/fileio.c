@@ -4164,7 +4164,7 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
       STRCPY(p, _("1 character"));
     else {
 #ifdef LONG_LONG_OFF_T
-      sprintf((char *)p, _("%lld characters"), nchars);
+      sprintf((char *)p, _("%" PRId64 " characters"), nchars);
 #else
       sprintf((char *)p, _("%ld characters"), (long)nchars);
 #endif
