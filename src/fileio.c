@@ -4147,7 +4147,8 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
   if (insert_space)
     *p++ = ' ';
   if (shortmess(SHM_LINES)) {
-     sprintf((char *)p, "%ldL, %" PRId64 "C", lnum, (int64_t)nchars);
+     sprintf((char *)p, "%" PRId64 "L, %" PRId64 "C",
+             (int64_t)lnum, (int64_t)nchars);
   }
   else {
     if (lnum == 1)
@@ -5696,7 +5697,7 @@ vim_tempname (
           mode_t umask_save;
 #  endif
 
-          sprintf((char *)itmp + itmplen, "v%ld", nr + off);
+          sprintf((char *)itmp + itmplen, "v%" PRId64, (int64_t)nr + off);
 #  ifndef EEXIST
           /* If mkdir() does not set errno to EEXIST, check for
            * existing file here.  There is a race condition then,
@@ -5735,7 +5736,7 @@ vim_tempname (
   if (vim_tempdir != NULL) {
     /* There is no need to check if the file exists, because we own the
      * directory and nobody else creates a file in it. */
-    sprintf((char *)itmp, "%s%ld", vim_tempdir, temp_count++);
+    sprintf((char *)itmp, "%s%" PRId64, vim_tempdir, (int64_t)temp_count++);
     return vim_strsave(itmp);
   }
 

@@ -470,9 +470,9 @@ wingotofile:
      * cursor in a new window.
      */
     if (bt_quickfix(curbuf)) {
-      sprintf((char *)cbuf, "split +%ld%s",
-          (long)curwin->w_cursor.lnum,
-          (curwin->w_llist_ref == NULL) ? "cc" : "ll");
+      sprintf((char *)cbuf, "split +%" PRId64 "%s",
+              (int64_t)curwin->w_cursor.lnum,
+              (curwin->w_llist_ref == NULL) ? "cc" : "ll");
       do_cmdline_cmd(cbuf);
     }
     break;

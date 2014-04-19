@@ -6112,7 +6112,8 @@ void ex_sign(exarg_T *eap)
 		    cmd = alloc((unsigned)STRLEN(buf->b_fname) + 25);
 		    if (cmd == NULL)
 			return;
-		    sprintf((char *)cmd, "e +%ld %s", (long)lnum, buf->b_fname);
+		    sprintf((char *)cmd, "e +%" PRId64 " %s",
+                    (int64_t)lnum, buf->b_fname);
 		    do_cmdline_cmd(cmd);
 		    vim_free(cmd);
 		}

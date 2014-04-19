@@ -1984,7 +1984,7 @@ static void list_buf_vars(int *first)
   list_hashtable_vars(&curbuf->b_vars->dv_hashtab, (char_u *)"b:",
       TRUE, first);
 
-  sprintf((char *)numbuf, "%ld", (long)curbuf->b_changedtick);
+  sprintf((char *)numbuf, "%" PRId64, (int64_t)curbuf->b_changedtick);
   list_one_var_a((char_u *)"b:", (char_u *)"changedtick", VAR_NUMBER,
       numbuf, first);
 }
@@ -7320,7 +7320,7 @@ call_func (
       if (current_SID <= 0)
         error = ERROR_SCRIPT;
       else {
-        sprintf((char *)fname_buf + 3, "%ld_", (long)current_SID);
+        sprintf((char *)fname_buf + 3, "%" PRId64 "_", (int64_t)current_SID);
         i = (int)STRLEN(fname_buf);
       }
     }
@@ -9360,7 +9360,7 @@ static void f_function(typval_T *argvars, typval_T *rettv)
        * also be called from another script. Using trans_function_name()
        * would also work, but some plugins depend on the name being
        * printable text. */
-      sprintf(sid_buf, "<SNR>%ld_", (long)current_SID);
+      sprintf(sid_buf, "<SNR>%" PRId64 "_", (int64_t)current_SID);
       rettv->vval.v_string =
         alloc((int)(STRLEN(sid_buf) + STRLEN(s + off) + 1));
       if (rettv->vval.v_string != NULL) {
@@ -9992,7 +9992,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
   case MCHAR: buf[0] = 'v'; break;
   case MBLOCK:
     buf[0] = Ctrl_V;
-    sprintf((char *)buf + 1, "%ld", reglen + 1);
+    sprintf((char *)buf + 1, "%" PRId64, (int64_t)reglen + 1);
     break;
   }
   rettv->v_type = VAR_STRING;
@@ -16431,7 +16431,7 @@ static char_u *get_tv_string_buf_chk(typval_T *varp, char_u *buf)
 {
   switch (varp->v_type) {
   case VAR_NUMBER:
-    sprintf((char *)buf, "%ld", (long)varp->vval.v_number);
+    sprintf((char *)buf, "%" PRId64, (int64_t)varp->vval.v_number);
     return buf;
   case VAR_FUNC:
     EMSG(_("E729: using Funcref as a String"));
@@ -17998,7 +17998,7 @@ trans_function_name (
         EMSG(_(e_usingsid));
         goto theend;
       }
-      sprintf((char *)sid_buf, "%ld_", (long)current_SID);
+      sprintf((char *)sid_buf, "%" PRId64 "_", (int64_t)current_SID);
       lead += (int)STRLEN(sid_buf);
     }
   } else if (!(flags & TFN_INT) && builtin_function(lv.ll_name)) {

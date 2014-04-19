@@ -4493,13 +4493,13 @@ static void uc_list(char_u *name, size_t name_len)
       if (a & (RANGE|COUNT)) {
         if (a & COUNT) {
           /* -count=N */
-          sprintf((char *)IObuff + len, "%ldc", cmd->uc_def);
+          sprintf((char *)IObuff + len, "%" PRId64 "c", (int64_t)cmd->uc_def);
           len += (int)STRLEN(IObuff + len);
         } else if (a & DFLALL)
           IObuff[len++] = '%';
         else if (cmd->uc_def >= 0) {
           /* -range=N */
-          sprintf((char *)IObuff + len, "%ld", cmd->uc_def);
+          sprintf((char *)IObuff + len, "%" PRId64 "", (int64_t)cmd->uc_def);
           len += (int)STRLEN(IObuff + len);
         } else
           IObuff[len++] = '.';
@@ -4999,7 +4999,7 @@ uc_check_code (
                (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
     size_t num_len;
 
-    sprintf(num_buf, "%ld", num);
+    sprintf(num_buf, "%" PRId64, (int64_t)num);
     num_len = STRLEN(num_buf);
     result = num_len;
 
@@ -8003,7 +8003,7 @@ eval_vars (
         *errormsg = (char_u *)_("E842: no line number to use for \"<slnum>\"");
         return NULL;
       }
-      sprintf((char *)strbuf, "%ld", (long)sourcing_lnum);
+      sprintf((char *)strbuf, "%" PRId64, (int64_t)sourcing_lnum);
       result = strbuf;
       break;
     }

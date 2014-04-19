@@ -1802,10 +1802,10 @@ void qf_list(exarg_T *eap)
       if (qfp->qf_lnum == 0)
         IObuff[0] = NUL;
       else if (qfp->qf_col == 0)
-        sprintf((char *)IObuff, ":%ld", qfp->qf_lnum);
+        sprintf((char *)IObuff, ":%" PRId64, (int64_t)qfp->qf_lnum);
       else
-        sprintf((char *)IObuff, ":%ld col %d",
-            qfp->qf_lnum, qfp->qf_col);
+        sprintf((char *)IObuff, ":%" PRId64 " col %d",
+                (int64_t)qfp->qf_lnum, qfp->qf_col);
       sprintf((char *)IObuff + STRLEN(IObuff), "%s:",
           (char *)qf_types(qfp->qf_type, qfp->qf_nr));
       msg_puts_attr(IObuff, hl_attr(HLF_N));
@@ -2357,7 +2357,7 @@ static void qf_fill_buffer(qf_info_T *qi)
       IObuff[len++] = '|';
 
       if (qfp->qf_lnum > 0) {
-        sprintf((char *)IObuff + len, "%ld", qfp->qf_lnum);
+        sprintf((char *)IObuff + len, "%" PRId64, (int64_t)qfp->qf_lnum);
         len += (int)STRLEN(IObuff + len);
 
         if (qfp->qf_col > 0) {

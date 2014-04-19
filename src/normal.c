@@ -3024,10 +3024,10 @@ void clear_showcmd(void)
       p_sbr = empty_option;
       getvcols(curwin, &curwin->w_cursor, &VIsual, &leftcol, &rightcol);
       p_sbr = saved_sbr;
-      sprintf((char *)showcmd_buf, "%ldx%ld", lines,
-          (long)(rightcol - leftcol + 1));
+      sprintf((char *)showcmd_buf, "%" PRId64 "x%" PRId64,
+              (int64_t)lines, (int64_t)(rightcol - leftcol + 1));
     } else if (VIsual_mode == 'V' || VIsual.lnum != curwin->w_cursor.lnum)
-      sprintf((char *)showcmd_buf, "%ld", lines);
+      sprintf((char *)showcmd_buf, "%" PRId64, (int64_t)lines);
     else {
       char_u  *s, *e;
       int l;
@@ -4451,7 +4451,7 @@ static void nv_ident(cmdarg_T *cap)
       isman = (STRCMP(kp, "man") == 0);
       isman_s = (STRCMP(kp, "man -s") == 0);
       if (cap->count0 != 0 && !(isman || isman_s))
-        sprintf((char *)buf, ".,.+%ld", cap->count0 - 1);
+        sprintf((char *)buf, ".,.+%" PRId64, (int64_t)cap->count0 - 1);
 
       STRCAT(buf, "! ");
       if (cap->count0 == 0 && isman_s)
@@ -4460,7 +4460,7 @@ static void nv_ident(cmdarg_T *cap)
         STRCAT(buf, kp);
       STRCAT(buf, " ");
       if (cap->count0 != 0 && (isman || isman_s)) {
-        sprintf((char *)buf + STRLEN(buf), "%ld", cap->count0);
+        sprintf((char *)buf + STRLEN(buf), "%" PRId64, (int64_t)cap->count0);
         STRCAT(buf, " ");
       }
     }
@@ -4482,7 +4482,7 @@ static void nv_ident(cmdarg_T *cap)
       if (g_cmd)
         STRCPY(buf, "tj ");
       else
-        sprintf((char *)buf, "%ldta ", cap->count0);
+        sprintf((char *)buf, "%" PRId64 "ta ", (int64_t)cap->count0);
     }
   }
 

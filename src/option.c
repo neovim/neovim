@@ -7535,7 +7535,7 @@ option_value2string (
     else if (wc != 0)
       STRCPY(NameBuff, transchar((int)wc));
     else
-      sprintf((char *)NameBuff, "%ld", *(long *)varp);
+      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(long *)varp);
   } else { /* P_STRING */
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */
