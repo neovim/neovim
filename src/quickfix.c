@@ -1119,8 +1119,8 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
       slash_adjust(directory);
     slash_adjust(fname);
 #endif
-    if (directory != NULL && !vim_isAbsName(fname)
-        && (ptr = concat_fnames(directory, fname, TRUE)) != NULL) {
+    if (directory != NULL && !vim_isAbsName(fname)) {
+      ptr = concat_fnames(directory, fname, TRUE);
       /*
        * Here we check if the file really exists.
        * This should normally be true, but if make works without
@@ -1280,10 +1280,7 @@ static char_u *qf_guess_filepath(char_u *filename)
     vim_free(fullname);
     fullname = concat_fnames(ds_ptr->dirname, filename, TRUE);
 
-    /* If concat_fnames failed, just go on. The worst thing that can happen
-     * is that we delete the entire stack.
-     */
-    if (fullname != NULL && os_file_exists(fullname))
+    if (os_file_exists(fullname))
       break;
 
     ds_ptr = ds_ptr->next;

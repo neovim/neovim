@@ -272,32 +272,26 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
  */
 char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
 {
-  char_u  *dest;
+  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
 
-  dest = alloc((unsigned)(STRLEN(fname1) + STRLEN(fname2) + 3));
-  if (dest != NULL) {
-    STRCPY(dest, fname1);
-    if (sep)
-      add_pathsep(dest);
-    STRCAT(dest, fname2);
+  STRCPY(dest, fname1);
+  if (sep) {
+    add_pathsep(dest);
   }
+  STRCAT(dest, fname2);
+
   return dest;
 }
 
 /*
  * Concatenate two strings and return the result in allocated memory.
- * Returns NULL when out of memory.
  */
 char_u *concat_str(char_u *str1, char_u *str2)
 {
-  char_u  *dest;
   size_t l = STRLEN(str1);
-
-  dest = alloc((unsigned)(l + STRLEN(str2) + 1L));
-  if (dest != NULL) {
-    STRCPY(dest, str1);
-    STRCPY(dest + l, str2);
-  }
+  char_u *dest = xmalloc(l + STRLEN(str2) + 1);
+  STRCPY(dest, str1);
+  STRCPY(dest + l, str2);
   return dest;
 }
 
@@ -916,8 +910,6 @@ expand_in_path (
 
   paths = ga_concat_strings(&path_ga);
   ga_clear_strings(&path_ga);
-  if (paths == NULL)
-    return 0;
 
   files = globpath(paths, pattern, (flags & EW_ICASE) ? WILD_ICASE : 0);
   vim_free(paths);

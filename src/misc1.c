@@ -3125,11 +3125,11 @@ static char_u *vim_version_dir(char_u *vimdir)
   if (vimdir == NULL || *vimdir == NUL)
     return NULL;
   p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
-  if (p != NULL && os_isdir(p))
+  if (os_isdir(p))
     return p;
   vim_free(p);
   p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, TRUE);
-  if (p != NULL && os_isdir(p))
+  if (os_isdir(p))
     return p;
   vim_free(p);
   return NULL;
@@ -3163,11 +3163,8 @@ void vim_setenv(char_u *name, char_u *val)
    */
   if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
     char_u  *buf = concat_str(val, (char_u *)"/lang");
-
-    if (buf != NULL) {
-      bindtextdomain(VIMPACKAGE, (char *)buf);
-      vim_free(buf);
-    }
+    bindtextdomain(VIMPACKAGE, (char *)buf);
+    vim_free(buf);
   }
 }
 

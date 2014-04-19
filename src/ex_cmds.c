@@ -4020,22 +4020,14 @@ void do_sub(exarg_T *eap)
                 orig_line = vim_strsave(ml_get(lnum));
                 if (orig_line != NULL) {
                   char_u *new_line = concat_str(new_start,
-                      sub_firstline + copycol);
+                                                sub_firstline + copycol);
 
-                  if (new_line == NULL) {
-                    vim_free(orig_line);
-                    orig_line = NULL;
-                  } else {
-                    /* Position the cursor relative to the
-                     * end of the line, the previous
-                     * substitute may have inserted or
-                     * deleted characters before the
-                     * cursor. */
-                    len_change = (int)STRLEN(new_line)
-                                 - (int)STRLEN(orig_line);
-                    curwin->w_cursor.col += len_change;
-                    ml_replace(lnum, new_line, FALSE);
-                  }
+                  // Position the cursor relative to the end of the line, the
+                  // previous substitute may have inserted or deleted characters
+                  // before the cursor.
+                  len_change = (int)STRLEN(new_line) - (int)STRLEN(orig_line);
+                  curwin->w_cursor.col += len_change;
+                  ml_replace(lnum, new_line, FALSE);
                 }
               }
 
