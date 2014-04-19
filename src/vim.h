@@ -94,16 +94,6 @@ typedef          long __w64 long_i;
 #define PRINTF_DECIMAL_LONG_U SCANF_DECIMAL_LONG_U
 
 /*
- * Only systems which use configure will have SIZEOF_OFF_T and SIZEOF_LONG
- * defined, which is ok since those are the same systems which can have
- * varying sizes for off_t.  The other systems will continue to use "%ld" to
- * print off_t since off_t is simply a typedef to long for them.
- */
-#if defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > SIZEOF_LONG)
-# define LONG_LONG_OFF_T
-#endif
-
-/*
  * The characters and attributes cached for the screen.
  */
 typedef char_u schar_T;

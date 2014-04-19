@@ -4147,12 +4147,7 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
   if (insert_space)
     *p++ = ' ';
   if (shortmess(SHM_LINES)) {
-#ifdef LONG_LONG_OFF_T
      sprintf((char *)p, "%ldL, %" PRId64 "C", lnum, (int64_t)nchars);
-#else
-     /* Explicit typecast avoids warning on Mac OS X 10.6 */
-     sprintf((char *)p, "%ldL, %ldC", lnum, (long)nchars);
-#endif
   }
   else {
     if (lnum == 1)
@@ -4163,11 +4158,7 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
     if (nchars == 1)
       STRCPY(p, _("1 character"));
     else {
-#ifdef LONG_LONG_OFF_T
       sprintf((char *)p, _("%" PRId64 " characters"), nchars);
-#else
-      sprintf((char *)p, _("%ld characters"), (long)nchars);
-#endif
     }
   }
 }
