@@ -2353,9 +2353,8 @@ static void int_wordlist_spl(char_u *fname)
  */
 static slang_T *slang_alloc(char_u *lang)
 {
-  slang_T *lp;
+  slang_T *lp = xcalloc(1, sizeof(slang_T));
 
-  lp = (slang_T *)alloc_clear(sizeof(slang_T));
   if (lang != NULL)
     lp->sl_name = vim_strsave(lang);
   ga_init(&lp->sl_rep, sizeof(fromto_T), 10);
@@ -2563,8 +2562,6 @@ spell_load_file (
 
   if (old_lp == NULL) {
     lp = slang_alloc(lang);
-    if (lp == NULL)
-      goto endFAIL;
 
     /* Remember the file name, used to reload the file when it's updated. */
     lp->sl_fname = vim_strsave(fname);
@@ -3018,16 +3015,6 @@ static int read_sal_section(FILE *fd, slang_T *slang)
         smp->sm_to_w = NULL;
       else
         smp->sm_to_w = mb_str2wide(smp->sm_to);
-      if (smp->sm_lead_w == NULL
-          || (smp->sm_oneof_w == NULL && smp->sm_oneof != NULL)
-          || (smp->sm_to_w == NULL && smp->sm_to != NULL)) {
-        vim_free(smp->sm_lead);
-        vim_free(smp->sm_to);
-        vim_free(smp->sm_lead_w);
-        vim_free(smp->sm_oneof_w);
-        vim_free(smp->sm_to_w);
-        return SP_OTHERERROR;
-      }
     }
   }
 
@@ -3605,20 +3592,17 @@ static void set_sal_first(slang_T *lp)
 
 /*
  * Turn a multi-byte string into a wide character string.
- * Return it in allocated memory (NULL for out-of-memory)
+ * Return it in allocated memory.
  */
 static int *mb_str2wide(char_u *s)
 {
-  int         *res;
-  char_u      *p;
   int i = 0;
 
-  res = (int *)alloc(sizeof(int) * (mb_charlen(s) + 1));
-  if (res != NULL) {
-    for (p = s; *p != NUL; )
-      res[i++] = mb_ptr2char_adv(&p);
-    res[i] = NUL;
-  }
+  int *res = xmalloc((mb_charlen(s) + 1) * sizeof(int));
+  for (char_u *p = s; *p != NUL; )
+    res[i++] = mb_ptr2char_adv(&p);
+  res[i] = NUL;
+
   return res;
 }
 
@@ -7816,8 +7800,6 @@ static int sug_maketable(spellinfo_T *spin)
   /* Allocate a buffer, open a memline for it and create the swap file
    * (uses a temp file, not a .swp file). */
   spin->si_spellbuf = open_spellbuf();
-  if (spin->si_spellbuf == NULL)
-    return FAIL;
 
   /* Use a buffer to store the line info, avoids allocating many small
    * pieces of memory. */
@@ -8059,20 +8041,17 @@ theend:
  * use.
  * Most other fields are invalid!  Esp. watch out for string options being
  * NULL and there is no undo info.
- * Returns NULL when out of memory.
  */
 static buf_T *open_spellbuf(void)
 {
-  buf_T       *buf;
+  buf_T *buf = xcalloc(1, sizeof(buf_T));
 
-  buf = (buf_T *)alloc_clear(sizeof(buf_T));
-  if (buf != NULL) {
-    buf->b_spell = TRUE;
-    buf->b_p_swf = TRUE;        /* may create a swap file */
-    buf->b_p_key = empty_option;
-    ml_open(buf);
-    ml_open_file(buf);          /* create swap file now */
-  }
+  buf->b_spell = TRUE;
+  buf->b_p_swf = TRUE;        /* may create a swap file */
+  buf->b_p_key = empty_option;
+  ml_open(buf);
+  ml_open_file(buf);          /* create swap file now */
+
   return buf;
 }
 
@@ -9753,8 +9732,7 @@ someerror:
        * possible to swap the info and save on memory use.
        */
       slang->sl_sugbuf = open_spellbuf();
-      if (slang->sl_sugbuf == NULL)
-        goto someerror;
+
       /* <sugwcount> */
       wcount = get4c(fd);
       if (wcount < 0)
