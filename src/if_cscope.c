@@ -2161,7 +2161,7 @@ static char *cs_resolve_file(int i, char *name)
       && (strncmp(name, csinfo[i].ppath, strlen(csinfo[i].ppath)) != 0)
       && (name[0] != '/')
       ) {
-    fullname = (char *)alloc(len);
+    fullname = xmalloc(len);
     (void)sprintf(fullname, "%s/%s", csinfo[i].ppath, name);
   } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != NUL) {
     /* Check for csdir to be non empty to avoid empty path concatenated to

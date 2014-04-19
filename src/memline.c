@@ -1586,16 +1586,10 @@ recover_names (
           tail = make_percent_swname(dir_name, fname_res);
         } else
 #endif
-        {
-          tail = path_tail(fname_res);
-          tail = concat_fnames(dir_name, tail, TRUE);
-        }
-        if (tail == NULL)
-          num_names = 0;
-        else {
-          num_names = recov_file_names(names, tail, FALSE);
-          vim_free(tail);
-        }
+        tail = path_tail(fname_res);
+        tail = concat_fnames(dir_name, tail, TRUE);
+        num_names = recov_file_names(names, tail, FALSE);
+        vim_free(tail);
       }
     }
 
@@ -1709,8 +1703,7 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
   f = fix_fname(name != NULL ? name : (char_u *) "");
   d = NULL;
   if (f != NULL) {
-    s = alloc((unsigned)(STRLEN(f) + 1));
-    STRCPY(s, f);
+    s = (char_u *)xstrdup((char *)f);
     for (d = s; *d != NUL; mb_ptr_adv(d))
       if (vim_ispathsep(*d))
         *d = '%';
@@ -1855,12 +1848,8 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
     ++num_names;
   }
 
-  /*
-   * Form the normal swap file name pattern by appending ".sw?".
-   */
+  // Form the normal swap file name pattern by appending ".sw?".
   names[num_names] = concat_fnames(path, (char_u *)".sw?", FALSE);
-  if (names[num_names] == NULL)
-    goto end;
   if (num_names >= 1) {     /* check if we have the same name twice */
     p = names[num_names - 1];
     i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
@@ -3497,16 +3486,12 @@ get_file_in_dir (
       *tail = NUL;
       t = concat_fnames(fname, dname + 2, TRUE);
       *tail = save_char;
-      if (t == NULL)                /* out of memory */
-        retval = NULL;
-      else {
-        retval = concat_fnames(t, tail, TRUE);
-        vim_free(t);
-      }
+      retval = concat_fnames(t, tail, TRUE);
+      vim_free(t);
     }
-  } else
+  } else {
     retval = concat_fnames(dname, tail, TRUE);
-
+  }
 
   return retval;
 }

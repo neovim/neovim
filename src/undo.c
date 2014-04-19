@@ -721,11 +721,11 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       }
     }
 
-    /* When reading check if the file exists. */
-    if (undo_file_name != NULL && (!reading
-                                   || mch_stat((char *)undo_file_name,
-                                       &st) >= 0))
+    // When reading check if the file exists.
+    if (undo_file_name != NULL &&
+        (!reading || mch_stat((char *)undo_file_name, &st) >= 0)) {
       break;
+    }
     vim_free(undo_file_name);
     undo_file_name = NULL;
   }

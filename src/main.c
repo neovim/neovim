@@ -1433,10 +1433,8 @@ scripterror:
         char_u      *r;
 
         r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), TRUE);
-        if (r != NULL) {
-          vim_free(p);
-          p = r;
-        }
+        vim_free(p);
+        p = r;
       }
 
 #ifdef USE_FNAME_CASE
