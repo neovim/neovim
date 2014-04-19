@@ -192,7 +192,7 @@ memfile_T *mf_open(char_u *fname, int flags)
     unsigned page_size = mfp->mf_page_size;
 
     while (shift > 0 && (page_size & 1) == 0) {
-      page_size = page_size >> 1;
+      page_size /= 2;
       --shift;
     }
     mfp->mf_used_count_max = (p_mm << shift) / page_size;

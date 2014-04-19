@@ -1520,8 +1520,7 @@ win_equal_rec (
         if (totwincount == 0)
           new_size = room;
         else
-          new_size = (wincount * room + ((unsigned)totwincount >> 1))
-                     / totwincount;
+          new_size = (wincount * room + (totwincount / 2)) / totwincount;
         if (hnc) {                  /* add next_curwin size */
           next_curwin_size -= p_wiw - (m - n);
           new_size += next_curwin_size;
@@ -1642,8 +1641,7 @@ win_equal_rec (
         if (totwincount == 0)
           new_size = room;
         else
-          new_size = (wincount * room + ((unsigned)totwincount >> 1))
-                     / totwincount;
+          new_size = (wincount * room + (totwincount / 2)) / totwincount;
         if (hnc) {                  /* add next_curwin size */
           next_curwin_size -= p_wh - (m - n);
           new_size += next_curwin_size;
@@ -4678,7 +4676,7 @@ void win_new_width(win_T *wp, int width)
 
 void win_comp_scroll(win_T *wp)
 {
-  wp->w_p_scr = ((unsigned)wp->w_height >> 1);
+  wp->w_p_scr = wp->w_height / 2;
   if (wp->w_p_scr == 0)
     wp->w_p_scr = 1;
 }
