@@ -117,13 +117,9 @@ typedef unsigned short sattr_T;
  * memory.
  */
 # ifdef UNICODE16
-typedef unsigned short u8char_T;    /* short should be 16 bits */
+typedef uint16_t u8char_T;
 # else
-#  if SIZEOF_INT >= 4
-typedef unsigned int u8char_T;      /* int is 32 bits */
-#  else
-typedef unsigned long u8char_T;     /* long should be 32 bits or more */
-#  endif
+typedef uint32_t u8char_T;
 # endif
 
 #include "ascii.h"
