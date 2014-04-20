@@ -8401,7 +8401,7 @@ spell_add_word (
       if (i == idx)
         break;
       if (*spf == NUL) {
-        EMSGN(_("E765: 'spellfile' does not have %ld entries"), idx);
+        EMSGN(_("E765: 'spellfile' does not have %" PRId64 " entries"), idx);
         vim_free(fnamebuf);
         return;
       }

@@ -3386,7 +3386,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL)) {
       if (!did_bufnr_emsg) {
         did_bufnr_emsg = TRUE;
-        EMSGN(_("E92: Buffer %ld not found"), bufnum);
+        EMSGN(_("E92: Buffer %" PRId64 " not found"), bufnum);
       }
       valid = FALSE;
       bufnum = 0;

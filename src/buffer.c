@@ -916,7 +916,7 @@ do_buffer (
     if (start == DOBUF_FIRST) {
       /* don't warn when deleting */
       if (!unload)
-        EMSGN(_("E86: Buffer %ld does not exist"), count);
+        EMSGN(_("E86: Buffer %" PRId64 " does not exist"), count);
     } else if (dir == FORWARD)
       EMSG(_("E87: Cannot go beyond last buffer"));
     else
@@ -948,9 +948,9 @@ do_buffer (
         if (bufIsChanged(buf))
           return FAIL;
       } else {
-        EMSGN(_(
-                "E89: No write since last change for buffer %ld (add ! to override)"),
-            buf->b_fnum);
+        EMSGN(_("E89: No write since last change for buffer %" PRId64
+                " (add ! to override)"),
+              buf->b_fnum);
         return FAIL;
       }
     }
@@ -1575,7 +1575,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     if ((options & GETF_ALT) && n == 0)
       EMSG(_(e_noalt));
     else
-      EMSGN(_("E92: Buffer %ld not found"), n);
+      EMSGN(_("E92: Buffer %" PRId64 " not found"), n);
     return FAIL;
   }
 
