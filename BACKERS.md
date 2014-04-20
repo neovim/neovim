@@ -89,6 +89,7 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Kevin Wu http://kevinformatics.com
 - Ley Missailidis, http://polymet.is
 - Loa https://github.com/loa
+- Lowe Schmidt http://loweschmidt.se
 - Marcello Barnaba http://sindro.me/
 - Marcin Kulik - http://ku1ik.com
 - Marius Rieder http://www.durchmesser.ch/
@@ -439,7 +440,6 @@ Thank you to everyone who backed our [Bountysource fundraiser](https://www.bount
 - Lluis Satorre Gonzalez
 - lobachevsky
 - Louis Pilfold
-- Lowe Schmidt
 - Lucas Stephanou/lucasts
 - Lucas Werkmeister
 - Luke Sampson
