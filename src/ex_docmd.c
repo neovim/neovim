@@ -8249,8 +8249,10 @@ makeopens (
         && !(buf->b_help && !(ssop_flags & SSOP_HELP))
         && buf->b_fname != NULL
         && buf->b_p_bl) {
-      if (fprintf(fd, "badd +%ld ", buf->b_wininfo == NULL ? 1L
-              : buf->b_wininfo->wi_fpos.lnum) < 0
+      if (fprintf(fd, "badd +%" PRId64 " ",
+                  buf->b_wininfo == NULL ?
+                    (int64_t)1L :
+                    (int64_t)buf->b_wininfo->wi_fpos.lnum) < 0
           || ses_fname(fd, buf, &ssop_flags) == FAIL)
         return FAIL;
     }
@@ -8264,7 +8266,8 @@ makeopens (
 
   if (ssop_flags & SSOP_RESIZE) {
     /* Note: after the restore we still check it worked!*/
-    if (fprintf(fd, "set lines=%ld columns=%ld", Rows, Columns) < 0
+    if (fprintf(fd, "set lines=%" PRId64 " columns=%" PRId64,
+                (int64_t)Rows, (int64_t)Columns) < 0
         || put_eol(fd) == FAIL)
       return FAIL;
   }
@@ -8422,8 +8425,9 @@ makeopens (
     return FAIL;
 
   /* Re-apply 'winheight', 'winwidth' and 'shortmess'. */
-  if (fprintf(fd, "set winheight=%ld winwidth=%ld shortmess=%s",
-          p_wh, p_wiw, p_shm) < 0 || put_eol(fd) == FAIL)
+  if (fprintf(fd, "set winheight=%" PRId64 " winwidth=%" PRId64 " shortmess=%s",
+          (int64_t)p_wh, (int64_t)p_wiw, p_shm) < 0
+      || put_eol(fd) == FAIL)
     return FAIL;
 
   /*
@@ -8452,17 +8456,20 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       /* restore height when not full height */
       if (wp->w_height + wp->w_status_height < topframe->fr_height
           && (fprintf(fd,
-                  "exe '%dresize ' . ((&lines * %ld + %ld) / %ld)",
-                  n, (long)wp->w_height, Rows / 2, Rows) < 0
+                  "exe '%dresize ' . ((&lines * %" PRId64
+                  " + %" PRId64 ") / %" PRId64 ")",
+                  n, (int64_t)wp->w_height,
+                  (int64_t)Rows / 2, (int64_t)Rows) < 0
               || put_eol(fd) == FAIL))
         return FAIL;
 
       /* restore width when not full width */
-      if (wp->w_width < Columns && (fprintf(fd,
-                                        "exe 'vert %dresize ' . ((&columns * %ld + %ld) / %ld)",
-                                        n, (long)wp->w_width, Columns / 2,
-                                        Columns) < 0
-                                    || put_eol(fd) == FAIL))
+      if (wp->w_width < Columns
+          && (fprintf(fd, "exe 'vert %dresize ' . ((&columns * %" PRId64
+                          " + %" PRId64 ") / %" PRId64 ")",
+                      n, (int64_t)wp->w_width, (int64_t)Columns / 2,
+                      (int64_t)Columns) < 0
+              || put_eol(fd) == FAIL))
         return FAIL;
     }
   } else {
@@ -8605,7 +8612,7 @@ put_view (
    * arguments may have been deleted, check if the index is valid. */
   if (wp->w_arg_idx != current_arg_idx && wp->w_arg_idx < WARGCOUNT(wp)
       && flagp == &ssop_flags) {
-    if (fprintf(fd, "%ldargu", (long)wp->w_arg_idx + 1) < 0
+    if (fprintf(fd, "%" PRId64 "argu", (int64_t)wp->w_arg_idx + 1) < 0
         || put_eol(fd) == FAIL)
       return FAIL;
     did_next = TRUE;
@@ -8687,15 +8694,18 @@ put_view (
 
     /* Restore the cursor line in the file and relatively in the
      * window.  Don't use "G", it changes the jumplist. */
-    if (fprintf(fd, "let s:l = %ld - ((%ld * winheight(0) + %ld) / %ld)",
-            (long)wp->w_cursor.lnum,
-            (long)(wp->w_cursor.lnum - wp->w_topline),
-            (long)wp->w_height / 2, (long)wp->w_height) < 0
+    if (fprintf(fd,
+                "let s:l = %" PRId64 " - ((%" PRId64
+                " * winheight(0) + %" PRId64 ") / %" PRId64 ")",
+                (int64_t)wp->w_cursor.lnum,
+                (int64_t)(wp->w_cursor.lnum - wp->w_topline),
+                (int64_t)wp->w_height / 2,
+                (int64_t)wp->w_height) < 0
         || put_eol(fd) == FAIL
         || put_line(fd, "if s:l < 1 | let s:l = 1 | endif") == FAIL
         || put_line(fd, "exe s:l") == FAIL
         || put_line(fd, "normal! zt") == FAIL
-        || fprintf(fd, "%ld", (long)wp->w_cursor.lnum) < 0
+        || fprintf(fd, "%" PRId64, (int64_t)wp->w_cursor.lnum) < 0
         || put_eol(fd) == FAIL)
       return FAIL;
     /* Restore the cursor column and left offset when not wrapping. */
@@ -8704,16 +8714,16 @@ put_view (
         return FAIL;
     } else {
       if (!wp->w_p_wrap && wp->w_leftcol > 0 && wp->w_width > 0) {
-        if (fprintf(fd,
-                "let s:c = %ld - ((%ld * winwidth(0) + %ld) / %ld)",
-                (long)wp->w_virtcol + 1,
-                (long)(wp->w_virtcol - wp->w_leftcol),
-                (long)wp->w_width / 2, (long)wp->w_width) < 0
+        if (fprintf(fd, "let s:c = %" PRId64 " - ((%" PRId64
+                        " * winwidth(0) + %" PRId64 ") / %" PRId64 ")",
+                    (int64_t)wp->w_virtcol + 1,
+                    (int64_t)(wp->w_virtcol - wp->w_leftcol),
+                    (int64_t)wp->w_width / 2,
+                    (int64_t)wp->w_width) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "if s:c > 0") == FAIL
-            || fprintf(fd,
-                "  exe 'normal! ' . s:c . '|zs' . %ld . '|'",
-                (long)wp->w_virtcol + 1) < 0
+            || fprintf(fd, "  exe 'normal! ' . s:c . '|zs' . %" PRId64 " . '|'",
+                (int64_t)wp->w_virtcol + 1) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "else") == FAIL
             || fprintf(fd, "  normal! 0%d|", wp->w_virtcol + 1) < 0

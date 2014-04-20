@@ -4702,12 +4702,12 @@ wvsp_one (
   if (spats[idx].pat != NULL) {
     fprintf(fp, _("\n# Last %sSearch Pattern:\n~"), s);
     /* off.dir is not stored, it's reset to forward */
-    fprintf(fp, "%c%c%c%c%ld%s%c",
+    fprintf(fp, "%c%c%c%c%" PRId64 "%s%c",
         spats[idx].magic    ? 'M' : 'm',                /* magic */
         spats[idx].no_scs   ? 's' : 'S',                /* smartcase */
         spats[idx].off.line ? 'L' : 'l',                /* line offset */
         spats[idx].off.end  ? 'E' : 'e',                /* offset from end */
-        spats[idx].off.off,                             /* offset */
+        (int64_t)spats[idx].off.off,                    /* offset */
         last_idx == idx     ? "~" : "",                 /* last used pat */
         sc);
     viminfo_writestring(fp, spats[idx].pat);
