@@ -1076,25 +1076,7 @@ typedef int colnr_T;                    /* column number type */
 typedef unsigned short disptick_T;      /* display tick type */
 
 #define MAXLNUM (0x7fffffffL)           /* maximum (invalid) line number */
-
-/*
- * Well, you won't believe it, but some S/390 machines ("host", now also known
- * as zServer) use 31 bit pointers. There are also some newer machines, that
- * use 64 bit pointers. I don't know how to distinguish between 31 and 64 bit
- * machines, so the best way is to assume 31 bits whenever we detect OS/390
- * Unix.
- * With this we restrict the maximum line length to 1073741823. I guess this is
- * not a real problem. BTW:  Longer lines are split.
- */
-#if SIZEOF_INT >= 4
-# ifdef __MVS__
-#  define MAXCOL (0x3fffffffL)          /* maximum column number, 30 bits */
-# else
-#  define MAXCOL (0x7fffffffL)          /* maximum column number, 31 bits */
-# endif
-#else
-# define MAXCOL (0x7fff)                /* maximum column number, 15 bits */
-#endif
+#define MAXCOL (0x7fffffffL)          /* maximum column number, 31 bits */
 
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */

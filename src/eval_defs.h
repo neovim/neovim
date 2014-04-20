@@ -3,11 +3,7 @@
 
 #include "hashtab.h"
 
-#if SIZEOF_INT <= 3             /* use long if int is smaller than 32 bits */
-typedef long varnumber_T;
-#else
 typedef int varnumber_T;
-#endif
 typedef double float_T;
 
 typedef struct listvar_S list_T;
