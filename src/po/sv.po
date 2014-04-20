@@ -1232,9 +1232,6 @@ msgstr "E186: Ingen tidigare katalog"
 msgid "E187: Unknown"
 msgstr "E187: Okänt"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize kräver två sifferargument"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Fönsterposition: X %d, Y %d"

@@ -1377,9 +1377,6 @@ msgstr "E186: Neniu antaŭa dosierujo"
 msgid "E187: Unknown"
 msgstr "E187: Nekonata"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: \":winsize\" bezonas du numerajn argumentojn"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Pozicio de fenestro: X %d, Y %d"

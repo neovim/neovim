@@ -1306,9 +1306,6 @@ msgstr "E186: Níl aon chomhadlann roimhe seo"
 msgid "E187: Unknown"
 msgstr "E187: Anaithnid"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: ní foláir dhá argóint uimhriúla le :winsize"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Ionad na fuinneoige: X %d, Y %d"

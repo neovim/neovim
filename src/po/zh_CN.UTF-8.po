@@ -1215,9 +1215,6 @@ msgstr "E186: 前一个目录不存在"
 msgid "E187: Unknown"
 msgstr "E187: 未知"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize 需要两个数字参数"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "窗口位置: X %d, Y %d"

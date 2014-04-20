@@ -171,7 +171,6 @@ static void ex_pwd(exarg_T *eap);
 static void ex_equal(exarg_T *eap);
 static void ex_sleep(exarg_T *eap);
 static void do_exmap(exarg_T *eap, int isabbrev);
-static void ex_winsize(exarg_T *eap);
 static void ex_wincmd(exarg_T *eap);
 #if defined(FEAT_GUI) || defined(UNIX) || defined(VMS) || defined(MSWIN)
 static void ex_winpos(exarg_T *eap);
@@ -6717,25 +6716,6 @@ static void do_exmap(exarg_T *eap, int isabbrev)
   case 2: EMSG(isabbrev ? _(e_noabbr) : _(e_nomap));
     break;
   }
-}
-
-/*
- * ":winsize" command (obsolete).
- */
-static void ex_winsize(exarg_T *eap)
-{
-  int w, h;
-  char_u      *arg = eap->arg;
-  char_u      *p;
-
-  w = getdigits(&arg);
-  arg = skipwhite(arg);
-  p = arg;
-  h = getdigits(&arg);
-  if (*p != NUL && *arg == NUL)
-    set_shellsize(w, h, TRUE);
-  else
-    EMSG(_("E465: :winsize requires two number arguments"));
 }
 
 static void ex_wincmd(exarg_T *eap)

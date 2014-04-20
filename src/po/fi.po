@@ -1328,9 +1328,6 @@ msgstr "E186: Ei edellistä hakemistoa"
 msgid "E187: Unknown"
 msgstr "E187: Tuntematon"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize vaatii kaksi numeroargumenttia"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Ikkunan sijainti: X %d, Y %d"

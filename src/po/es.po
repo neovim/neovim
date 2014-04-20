@@ -1690,9 +1690,6 @@ msgid "E187: Unknown"
 msgstr "E187: Desconocido"
 
 #: ex_docmd.c:8084
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: \":winsize\" requiere de dos argumentos numéricos"
-
 #: ex_docmd.c:8146
 #, c-format
 msgid "Window position: X %d, Y %d"

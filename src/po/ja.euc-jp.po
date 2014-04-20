@@ -1367,9 +1367,6 @@ msgstr "E186: 前のディレクトリはありません"
 msgid "E187: Unknown"
 msgstr "E187: 未知"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize には2つの数値の引数が必要です"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "ウィンドウ位置: X %d, Y %d"

@@ -1372,9 +1372,6 @@ msgstr "E186: Non c'è una directory precedente"
 msgid "E187: Unknown"
 msgstr "E187: Sconosciuto"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize richiede due argomenti numerici"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Posizione finestra: X %d, Y %d"
