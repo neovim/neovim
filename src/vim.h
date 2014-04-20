@@ -840,7 +840,6 @@ typedef enum {
                        don't really exist in the text */
   , HLF_D           /* directories in CTRL-D listing */
   , HLF_E           /* error messages */
-  , HLF_H           /* obsolete, ignored */
   , HLF_I           /* incremental search */
   , HLF_L           /* last search string */
   , HLF_M           /* "--More--" message */
@@ -883,11 +882,10 @@ typedef enum {
 
 /* The HL_FLAGS must be in the same order as the HLF_ enums!
  * When changing this also adjust the default for 'highlight'. */
-#define HL_FLAGS {'8', '@', 'd', 'e', 'h', 'i', 'l', 'm', 'M', \
-                  'n', 'N', 'r', 's', 'S', 'c', 't', 'v', 'V', 'w', 'W', \
-                  'f', 'F', 'A', 'C', 'D', 'T', '-', '>', \
-                  'B', 'P', 'R', 'L', \
-                  '+', '=', 'x', 'X', '*', '#', '_', '!', '.', 'o'}
+#define HL_FLAGS {'8', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', 'N', 'r', 's', \
+                  'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', 'A', 'C', 'D', \
+                  'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', 'x', 'X', '*', \
+                  '#', '_', '!', '.', 'o'}
 
 /*
  * Boolean constants
