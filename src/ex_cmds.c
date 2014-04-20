@@ -1190,7 +1190,7 @@ do_filter (
     if (linecount > p_report) {
       if (do_in) {
         vim_snprintf((char *)msg_buf, sizeof(msg_buf),
-            _("%ld lines filtered"), (long)linecount);
+            _("%" PRId64 " lines filtered"), (int64_t)linecount);
         if (msg(msg_buf) && !msg_scroll)
           /* save message to display it after redraw */
           set_keep_msg(msg_buf, 0);

@@ -602,8 +602,8 @@ static void catch_exception(except_T *excp)
   set_vim_var_string(VV_EXCEPTION, excp->value, -1);
   if (*excp->throw_name != NUL) {
     if (excp->throw_lnum != 0)
-      vim_snprintf((char *)IObuff, IOSIZE, _("%s, line %ld"),
-          excp->throw_name, (long)excp->throw_lnum);
+      vim_snprintf((char *)IObuff, IOSIZE, _("%s, line %" PRId64),
+          excp->throw_name, (int64_t)excp->throw_lnum);
     else
       vim_snprintf((char *)IObuff, IOSIZE, "%s", excp->throw_name);
     set_vim_var_string(VV_THROWPOINT, IObuff, -1);
@@ -648,8 +648,8 @@ static void finish_exception(except_T *excp)
     if (*caught_stack->throw_name != NUL) {
       if (caught_stack->throw_lnum != 0)
         vim_snprintf((char *)IObuff, IOSIZE,
-            _("%s, line %ld"), caught_stack->throw_name,
-            (long)caught_stack->throw_lnum);
+            _("%s, line %" PRId64), caught_stack->throw_name,
+            (int64_t)caught_stack->throw_lnum);
       else
         vim_snprintf((char *)IObuff, IOSIZE, "%s",
             caught_stack->throw_name);

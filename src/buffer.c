@@ -2184,8 +2184,8 @@ void buflist_list(exarg_T *eap)
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
     vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len),
-        _("line %ld"), buf == curbuf ? curwin->w_cursor.lnum
-        : (long)buflist_findlnum(buf));
+        _("line %" PRId64), buf == curbuf ? (int64_t)curwin->w_cursor.lnum
+        : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
     out_flush();            /* output one line at a time */
     ui_breakcheck();
@@ -2574,8 +2574,8 @@ fileinfo (
     if (curbuf->b_ml.ml_line_count == 1)
       vim_snprintf_add((char *)buffer, IOSIZE, _("1 line --%d%%--"), n);
     else
-      vim_snprintf_add((char *)buffer, IOSIZE, _("%ld lines --%d%%--"),
-          (long)curbuf->b_ml.ml_line_count, n);
+      vim_snprintf_add((char *)buffer, IOSIZE, _("%" PRId64 " lines --%d%%--"),
+          (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
         _("line %ld of %ld --%d%%-- col "),
@@ -4595,8 +4595,8 @@ void sign_list_placed(buf_T *rbuf)
             msg_putchar('\n');
         }
         for (p = buf->b_signlist; p != NULL && !got_int; p = p->next) {
-            vim_snprintf(lbuf, BUFSIZ, _("    line=%ld  id=%d  name=%s"),
-                    (long)p->lnum, p->id, sign_typenr2name(p->typenr));
+            vim_snprintf(lbuf, BUFSIZ, _("    line=%" PRId64 "  id=%d  name=%s"),
+                    (int64_t)p->lnum, p->id, sign_typenr2name(p->typenr));
             MSG_PUTS(lbuf);
             msg_putchar('\n');
         }

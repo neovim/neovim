@@ -2604,10 +2604,10 @@ void msgmore(long n)
     } else {
       if (n > 0)
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-            _("%ld more lines"), pn);
+            _("%" PRId64 " more lines"), (int64_t)pn);
       else
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
-            _("%ld fewer lines"), pn);
+            _("%" PRId64 " fewer lines"), (int64_t)pn);
     }
     if (got_int)
       vim_strcat(msg_buf, (char_u *)_(" (Interrupted)"), MSG_BUF_LEN);

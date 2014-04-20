@@ -1813,8 +1813,8 @@ static void inc_msg_scrolled(void)
     else {
       len = (int)STRLEN(p) + 40;
       tofree = alloc(len);
-      vim_snprintf((char *)tofree, len, _("%s line %ld"),
-          p, (long)sourcing_lnum);
+      vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
+          p, (int64_t)sourcing_lnum);
       p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);
