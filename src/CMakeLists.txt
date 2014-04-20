@@ -31,6 +31,22 @@ list(APPEND NEOVIM_SOURCES "${MSGPACK_DISPATCH}")
 
 file( GLOB OS_SOURCES os/*.c )
 
+set(CONV_SRCS
+  api.c
+  arabic.c
+  memory.c
+  os/env.c
+  os/event.c
+  os/job.c
+  os/mem.c
+  os/signal.c
+  os/users.c
+  os/wstream.c
+  )
+
+set_source_files_properties(
+  ${CONV_SRCS} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wconversion")
+
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   if(DEFINED ENV{SANITIZE})
     message(STATUS "Enabling the sanitizers")
