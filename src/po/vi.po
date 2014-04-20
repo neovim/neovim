@@ -1044,9 +1044,6 @@ msgstr "E186: Không có thư mục trước"
 msgid "E187: Unknown"
 msgstr "E187: Không rõ"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: câu lệnh :winsize yêu cầu hai tham số bằng số"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Vị trí cửa sổ: X %d, Y %d"

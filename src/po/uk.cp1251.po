@@ -1402,9 +1402,6 @@ msgstr "E186: Це вже найперший каталог"
 msgid "E187: Unknown"
 msgstr "E187: Невідомо"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize вимагає два числових аргументи"
-
 # msgstr "E187: "
 #, c-format
 msgid "Window position: X %d, Y %d"

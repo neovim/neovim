@@ -1564,9 +1564,6 @@ msgstr "E186: Pas de répertoire précédent"
 msgid "E187: Unknown"
 msgstr "E187: Inconnu"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize requiert deux arguments numériques"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Position de la fenêtre : X %d, Y %d"

@@ -1379,9 +1379,6 @@ msgstr "E186: Нет предыдущего каталога"
 msgid "E187: Unknown"
 msgstr "E187: Неизвестно"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: Команда :winsize требует указания двух числовых параметров"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Положение окна: X %d, Y %d"

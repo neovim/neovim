@@ -1137,9 +1137,6 @@ msgstr "E186: ®iadny predchádzajúci adresár"
 msgid "E187: Unknown"
 msgstr "E187: Neznámy"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize (veµkos» okna) vy¾aduje dva argumenty"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Pozícia okna: X %d, Y %d"

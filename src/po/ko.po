@@ -1313,9 +1313,6 @@ msgstr "E186: 이전 디렉토리가 없습니다"
 msgid "E187: Unknown"
 msgstr "E187: 모름"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize는 두개의 인자가 필요합니다"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "창 위치: X %d, Y %d"

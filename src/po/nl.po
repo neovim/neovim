@@ -1309,9 +1309,6 @@ msgstr "E186: geen voorgaande map"
 msgid "E187: Unknown"
 msgstr "E187: onbekend"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize vereist twee getallen als argument"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Vensterpositie: X %d, Y %d"

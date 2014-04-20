@@ -1289,9 +1289,6 @@ msgstr "E186: Não há diretório anterior"
 msgid "E187: Unknown"
 msgstr "E187: Desconhecido"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: :winsize requer dois argumentos numéricos"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Posição da janela: X %d, Y %d"

@@ -1018,8 +1018,6 @@ enum CMD_index
       BANG|TRLBAR|CMDWIN),
   EX(CMD_while,           "while",        ex_while,
       EXTRA|NOTRLCOM|SBOXOK|CMDWIN),
-  EX(CMD_winsize,         "winsize",      ex_winsize,
-      EXTRA|NEEDARG|TRLBAR),
   EX(CMD_wincmd,          "wincmd",       ex_wincmd,
       NEEDARG|WORD1|RANGE|NOTADR),
   EX(CMD_windo,           "windo",        ex_listdo,

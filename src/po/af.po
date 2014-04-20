@@ -1049,9 +1049,6 @@ msgstr "E186: Geen vorige gids nie"
 msgid "E187: Unknown"
 msgstr "E187: Onbekend"
 
-msgid "E465: :winsize requires two number arguments"
-msgstr "E465: ':winsize' benodig twee nommer parameters"
-
 #, c-format
 msgid "Window position: X %d, Y %d"
 msgstr "Vensterposisie: X %d, Y %d"
