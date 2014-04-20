@@ -133,7 +133,7 @@ typedef struct lval_S {
 
 
 static char *e_letunexp = N_("E18: Unexpected characters in :let");
-static char *e_listidx = N_("E684: list index out of range: %ld");
+static char *e_listidx = N_("E684: list index out of range: %" PRId64);
 static char *e_undefvar = N_("E121: Undefined variable: %s");
 static char *e_missbrac = N_("E111: Missing ']'");
 static char *e_listarg = N_("E686: Argument of %s must be a List");

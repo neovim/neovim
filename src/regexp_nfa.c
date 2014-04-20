@@ -240,7 +240,7 @@ static char_u e_nul_found[] = N_(
     "E865: (NFA) Regexp end encountered prematurely");
 static char_u e_misplaced[] = N_("E866: (NFA regexp) Misplaced %c");
 static char_u e_ill_char_class[] = N_(
-    "E877: (NFA regexp) Invalid character class: %ld");
+    "E877: (NFA regexp) Invalid character class: %" PRId64);
 
 /* NFA regexp \ze operator encountered. */
 static int nfa_has_zend;
