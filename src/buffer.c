@@ -2578,9 +2578,9 @@ fileinfo (
           (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
-        _("line %ld of %ld --%d%%-- col "),
-        (long)curwin->w_cursor.lnum,
-        (long)curbuf->b_ml.ml_line_count,
+        _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
+        (int64_t)curwin->w_cursor.lnum,
+        (int64_t)curbuf->b_ml.ml_line_count,
         n);
     validate_virtcol();
     len = STRLEN(buffer);
