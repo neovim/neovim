@@ -5263,14 +5263,16 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
   if (*grp == NUL || *pat == NUL)
     return -1;
   if (id < -1 || id == 0) {
-    EMSGN("E799: Invalid ID: %ld (must be greater than or equal to 1)", id);
+    EMSGN("E799: Invalid ID: %" PRId64
+          " (must be greater than or equal to 1)",
+          id);
     return -1;
   }
   if (id != -1) {
     cur = wp->w_match_head;
     while (cur != NULL) {
       if (cur->id == id) {
-        EMSGN("E801: ID already taken: %ld", id);
+        EMSGN("E801: ID already taken: %" PRId64, id);
         return -1;
       }
       cur = cur->next;
@@ -5334,8 +5336,9 @@ int match_delete(win_T *wp, int id, int perr)
 
   if (id < 1) {
     if (perr == TRUE)
-      EMSGN("E802: Invalid ID: %ld (must be greater than or equal to 1)",
-          id);
+      EMSGN("E802: Invalid ID: %" PRId64
+            " (must be greater than or equal to 1)",
+            id);
     return -1;
   }
   while (cur != NULL && cur->id != id) {
@@ -5344,7 +5347,7 @@ int match_delete(win_T *wp, int id, int perr)
   }
   if (cur == NULL) {
     if (perr == TRUE)
-      EMSGN("E803: ID not found: %ld", id);
+      EMSGN("E803: ID not found: %" PRId64, id);
     return -1;
   }
   if (cur == prev)

@@ -1291,8 +1291,8 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
     write_ok = TRUE;
 #ifdef U_DEBUG
   if (headers_written != buf->b_u_numhead) {
-    EMSGN("Written %ld headers, ...", headers_written);
-    EMSGN("... but numhead is %ld", buf->b_u_numhead);
+    EMSGN("Written %" PRId64 " headers, ...", headers_written);
+    EMSGN("... but numhead is %" PRId64, buf->b_u_numhead);
   }
 #endif
 
@@ -1593,7 +1593,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 #ifdef U_DEBUG
   for (i = 0; i < num_head; ++i)
     if (uhp_table_used[i] == 0)
-      EMSGN("uhp_table entry %ld not used, leaking memory", i);
+      EMSGN("uhp_table entry %" PRId64 " not used, leaking memory", i);
   vim_free(uhp_table_used);
   u_check(TRUE);
 #endif

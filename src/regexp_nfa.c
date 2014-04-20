@@ -1156,7 +1156,7 @@ static int nfa_regatom(void)
         rc_did_emsg = TRUE;
         return FAIL;
       }
-      EMSGN("INTERNAL: Unknown character class char: %ld", c);
+      EMSGN("INTERNAL: Unknown character class char: %" PRId64, c);
       return FAIL;
     }
     /* When '.' is followed by a composing char ignore the dot, so that
@@ -5823,7 +5823,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
 #ifdef REGEXP_DEBUG
         if (c < 0)
-          EMSGN("INTERNAL: Negative state char: %ld", c);
+          EMSGN("INTERNAL: Negative state char: %" PRId64, c);
 #endif
         result = (c == curc);
 
@@ -6272,8 +6272,9 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   if (postfix == NULL) {
     /* TODO: only give this error for debugging? */
     if (post_ptr >= post_end)
-      EMSGN("Internal error: estimated max number of states insufficient: %ld",
-          post_end - post_start);
+      EMSGN("Internal error: estimated max number "
+            "of states insufficient: %" PRId64,
+            post_end - post_start);
     goto fail;              /* Cascaded (syntax?) error */
   }
 
