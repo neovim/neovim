@@ -11660,7 +11660,7 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv)
   if (error == TRUE)
     return;
   if (id >= 1 && id <= 3) {
-    EMSGN("E798: ID is reserved for \":match\": %ld", id);
+    EMSGN("E798: ID is reserved for \":match\": %" PRId64, id);
     return;
   }
 
