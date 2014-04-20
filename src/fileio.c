@@ -3749,9 +3749,9 @@ restore_backup:
           errmsg_allocated = TRUE;
           errmsg = alloc(300);
           vim_snprintf((char *)errmsg, 300,
-              _(
-                  "E513: write error, conversion failed in line %ld (make 'fenc' empty to override)"),
-              (long)write_info.bw_conv_error_lnum);
+              _("E513: write error, conversion failed in line %" PRId64
+                " (make 'fenc' empty to override)"),
+              (int64_t)write_info.bw_conv_error_lnum);
         }
       } else if (got_int)
         errmsg = (char_u *)_(e_interr);
@@ -3817,8 +3817,8 @@ restore_backup:
       STRCAT(IObuff, _(" CONVERSION ERROR"));
       c = TRUE;
       if (write_info.bw_conv_error_lnum != 0)
-        vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %ld;"),
-            (long)write_info.bw_conv_error_lnum);
+        vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %" PRId64 ";"),
+            (int64_t)write_info.bw_conv_error_lnum);
     } else if (notconverted) {
       STRCAT(IObuff, _("[NOT converted]"));
       c = TRUE;

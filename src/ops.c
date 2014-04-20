@@ -5141,28 +5141,30 @@ void cursor_pos_info(void)
       if (VIsual_mode == Ctrl_V && curwin->w_curswant < MAXCOL) {
         getvcols(curwin, &min_pos, &max_pos, &min_pos.col,
             &max_pos.col);
-        vim_snprintf((char *)buf1, sizeof(buf1), _("%ld Cols; "),
-            (long)(oparg.end_vcol - oparg.start_vcol + 1));
+        vim_snprintf((char *)buf1, sizeof(buf1), _("%" PRId64 " Cols; "),
+            (int64_t)(oparg.end_vcol - oparg.start_vcol + 1));
       } else
         buf1[0] = NUL;
 
       if (char_count_cursor == byte_count_cursor
           && char_count == byte_count)
         vim_snprintf((char *)IObuff, IOSIZE,
-            _("Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"),
-            buf1, line_count_selected,
-            (long)curbuf->b_ml.ml_line_count,
-            word_count_cursor, word_count,
-            byte_count_cursor, byte_count);
+            _("Selected %s%" PRId64 " of %" PRId64 " Lines; %" PRId64
+              " of %" PRId64 " Words; %" PRId64 " of %" PRId64 " Bytes"),
+            buf1, (int64_t)line_count_selected,
+            (int64_t)curbuf->b_ml.ml_line_count,
+            (int64_t)word_count_cursor, (int64_t)word_count,
+            (int64_t)byte_count_cursor, (int64_t)byte_count);
       else
         vim_snprintf((char *)IObuff, IOSIZE,
-            _(
-                "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld Bytes"),
-            buf1, line_count_selected,
-            (long)curbuf->b_ml.ml_line_count,
-            word_count_cursor, word_count,
-            char_count_cursor, char_count,
-            byte_count_cursor, byte_count);
+            _("Selected %s%" PRId64 " of %" PRId64 " Lines; %" PRId64
+              " of %" PRId64 " Words; %" PRId64 " of %" PRId64
+              " Chars; %" PRId64 " of %" PRId64 " Bytes"),
+            buf1, (int64_t)line_count_selected,
+            (int64_t)curbuf->b_ml.ml_line_count,
+            (int64_t)word_count_cursor, (int64_t)word_count,
+            (int64_t)char_count_cursor, (int64_t)char_count,
+            (int64_t)byte_count_cursor, (int64_t)byte_count);
     } else {
       p = ml_get_curline();
       validate_virtcol();
@@ -5173,22 +5175,25 @@ void cursor_pos_info(void)
       if (char_count_cursor == byte_count_cursor
           && char_count == byte_count)
         vim_snprintf((char *)IObuff, IOSIZE,
-            _("Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"),
+            _("Col %s of %s; Line %" PRId64 " of %" PRId64 "; Word %" PRId64
+              " of %" PRId64 "; Byte %" PRId64 " of %" PRId64 ""),
             (char *)buf1, (char *)buf2,
-            (long)curwin->w_cursor.lnum,
-            (long)curbuf->b_ml.ml_line_count,
-            word_count_cursor, word_count,
-            byte_count_cursor, byte_count);
+            (int64_t)curwin->w_cursor.lnum,
+            (int64_t)curbuf->b_ml.ml_line_count,
+            (int64_t)word_count_cursor, (int64_t)word_count,
+            (int64_t)byte_count_cursor, (int64_t)byte_count);
       else
         vim_snprintf((char *)IObuff, IOSIZE,
             _(
-                "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of %ld"),
+                "Col %s of %s; Line %" PRId64 " of %" PRId64 "; Word %" PRId64
+                " of %" PRId64 "; Char %" PRId64 " of %" PRId64
+                "; Byte %" PRId64 " of %" PRId64 ""),
             (char *)buf1, (char *)buf2,
-            (long)curwin->w_cursor.lnum,
-            (long)curbuf->b_ml.ml_line_count,
-            word_count_cursor, word_count,
-            char_count_cursor, char_count,
-            byte_count_cursor, byte_count);
+            (int64_t)curwin->w_cursor.lnum,
+            (int64_t)curbuf->b_ml.ml_line_count,
+            (int64_t)word_count_cursor, (int64_t)word_count,
+            (int64_t)char_count_cursor, (int64_t)char_count,
+            (int64_t)byte_count_cursor, (int64_t)byte_count);
     }
 
     byte_count = bomb_size();

@@ -2465,8 +2465,8 @@ static void u_add_time(char_u *buf, size_t buflen, time_t tt)
       /* longer ago */
       (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", curtime);
   } else
-  vim_snprintf((char *)buf, buflen, _("%ld seconds ago"),
-      (long)(time(NULL) - tt));
+  vim_snprintf((char *)buf, buflen, _("%" PRId64 " seconds ago"),
+      (int64_t)(time(NULL) - tt));
 }
 
 /*
