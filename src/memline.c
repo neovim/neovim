@@ -4263,12 +4263,13 @@ static void ml_crypt_prepare(memfile_T *mfp, off_t offset, int reading)
 
   use_crypt_method = method;    /* select pkzip or blowfish */
   if (method == 0) {
-    vim_snprintf((char *)salt, sizeof(salt), "%s%ld", key, (long)offset);
+    vim_snprintf((char *)salt, sizeof(salt), "%s%" PRId64 "",
+                 key, (int64_t)offset);
     crypt_init_keys(salt);
   } else {
     /* Using blowfish, add salt and seed. We use the byte offset of the
      * block for the salt. */
-    vim_snprintf((char *)salt, sizeof(salt), "%ld", (long)offset);
+    vim_snprintf((char *)salt, sizeof(salt), "%" PRId64, (int64_t)offset);
     bf_key_init(key, salt, (int)STRLEN(salt));
     bf_cfb_init(seed, MF_SEED_LEN);
   }

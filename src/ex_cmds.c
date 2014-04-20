@@ -2738,7 +2738,7 @@ do_ecmd (
       if (command != NULL)
         vim_snprintf((char *)p, len, ":%s\r", command);
       else
-        vim_snprintf((char *)p, len, "%ldG", (long)newlnum);
+        vim_snprintf((char *)p, len, "%" PRId64 "G", (int64_t)newlnum);
       set_vim_var_string(VV_SWAPCOMMAND, p, -1);
       did_set_swapcommand = TRUE;
       vim_free(p);

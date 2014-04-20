@@ -4306,8 +4306,8 @@ void write_viminfo_bufferlist(FILE *fp)
       break;
     putc('%', fp);
     home_replace(NULL, buf->b_ffname, line, MAXPATHL, TRUE);
-    vim_snprintf_add((char *)line, LINE_BUF_LEN, "\t%ld\t%d",
-        (long)buf->b_last_cursor.lnum,
+    vim_snprintf_add((char *)line, LINE_BUF_LEN, "\t%" PRId64 "\t%d",
+        (int64_t)buf->b_last_cursor.lnum,
         buf->b_last_cursor.col);
     viminfo_writestring(fp, line);
   }
