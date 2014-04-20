@@ -763,8 +763,8 @@ int flags;
       ++no_wait_return;
       verbose_enter_scroll();
 
-      smsg((char_u *)_("line %ld: %s"),
-          (long)sourcing_lnum, cmdline_copy);
+      smsg((char_u *)_("line %" PRId64 ": %s"),
+          (int64_t)sourcing_lnum, cmdline_copy);
       if (msg_silent == 0)
         msg_puts((char_u *)"\n");           /* don't overwrite this */
 

@@ -141,7 +141,7 @@ void do_debug(char_u *cmd)
   if (sourcing_name != NULL)
     msg(sourcing_name);
   if (sourcing_lnum != 0)
-    smsg((char_u *)_("line %ld: %s"), (long)sourcing_lnum, cmd);
+    smsg((char_u *)_("line %" PRId64 ": %s"), (int64_t)sourcing_lnum, cmd);
   else
     smsg((char_u *)_("cmd: %s"), cmd);
 
@@ -320,10 +320,10 @@ void dbg_check_breakpoint(exarg_T *eap)
         p = (char_u *)"<SNR>";
       else
         p = (char_u *)"";
-      smsg((char_u *)_("Breakpoint in \"%s%s\" line %ld"),
+      smsg((char_u *)_("Breakpoint in \"%s%s\" line %" PRId64),
           p,
           debug_breakpoint_name + (*p == NUL ? 0 : 3),
-          (long)debug_breakpoint_lnum);
+          (int64_t)debug_breakpoint_lnum);
       debug_breakpoint_name = NULL;
       do_debug(eap->cmd);
     } else {
@@ -615,11 +615,11 @@ void ex_breaklist(exarg_T *eap)
       bp = &BREAKP(i);
       if (bp->dbg_type == DBG_FILE)
         home_replace(NULL, bp->dbg_name, NameBuff, MAXPATHL, TRUE);
-      smsg((char_u *)_("%3d  %s %s  line %ld"),
+      smsg((char_u *)_("%3d  %s %s  line %" PRId64),
           bp->dbg_nr,
           bp->dbg_type == DBG_FUNC ? "func" : "file",
           bp->dbg_type == DBG_FUNC ? bp->dbg_name : NameBuff,
-          (long)bp->dbg_lnum);
+          (int64_t)bp->dbg_lnum);
     }
 }
 
@@ -2532,8 +2532,8 @@ do_source (
       if (sourcing_name == NULL)
         smsg((char_u *)_("could not source \"%s\""), fname);
       else
-        smsg((char_u *)_("line %ld: could not source \"%s\""),
-            sourcing_lnum, fname);
+        smsg((char_u *)_("line %" PRId64 ": could not source \"%s\""),
+            (int64_t)sourcing_lnum, fname);
       verbose_leave();
     }
     goto theend;
@@ -2549,8 +2549,8 @@ do_source (
     if (sourcing_name == NULL)
       smsg((char_u *)_("sourcing \"%s\""), fname);
     else
-      smsg((char_u *)_("line %ld: sourcing \"%s\""),
-          sourcing_lnum, fname);
+      smsg((char_u *)_("line %" PRId64 ": sourcing \"%s\""),
+          (int64_t)sourcing_lnum, fname);
     verbose_leave();
   }
   if (is_vimrc == DOSO_VIMRC)

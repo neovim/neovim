@@ -18819,8 +18819,8 @@ call_user_func (
     if (aborting())
       smsg((char_u *)_("%s aborted"), sourcing_name);
     else if (fc->rettv->v_type == VAR_NUMBER)
-      smsg((char_u *)_("%s returning #%ld"), sourcing_name,
-          (long)fc->rettv->vval.v_number);
+      smsg((char_u *)_("%s returning #%" PRId64 ""),
+           sourcing_name, (int64_t)fc->rettv->vval.v_number);
     else {
       char_u buf[MSG_BUF_LEN];
       char_u numbuf2[NUMBUFLEN];

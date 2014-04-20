@@ -2330,11 +2330,11 @@ u_undo_end (
     }
   }
 
-  smsg((char_u *)_("%ld %s; %s #%ld  %s"),
-      u_oldcount < 0 ? -u_oldcount : u_oldcount,
+  smsg((char_u *)_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+      u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
       _(msgstr),
       did_undo ? _("before") : _("after"),
-      uhp == NULL ? 0L : uhp->uh_seq,
+      uhp == NULL ? (int64_t)0L : (int64_t)uhp->uh_seq,
       msgbuf);
 }
 

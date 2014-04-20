@@ -756,7 +756,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (num_lines == 1)
       MSG(_("1 line moved"));
     else
-      smsg((char_u *)_("%ld lines moved"), num_lines);
+      smsg((char_u *)_("%" PRId64 " lines moved"), (int64_t)num_lines);
   }
 
   /*

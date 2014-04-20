@@ -7680,8 +7680,8 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
   if (sug_maketable(spin) == FAIL)
     goto theend;
 
-  smsg((char_u *)_("Number of words after soundfolding: %ld"),
-      (long)spin->si_spellbuf->b_ml.ml_line_count);
+  smsg((char_u *)_("Number of words after soundfolding: %" PRId64),
+      (int64_t)spin->si_spellbuf->b_ml.ml_line_count);
 
   /*
    * Compress the soundfold trie.
@@ -9084,8 +9084,8 @@ void spell_suggest(int count)
     MSG(_("Sorry, no suggestions"));
   else if (count > 0) {
     if (count > sug.su_ga.ga_len)
-      smsg((char_u *)_("Sorry, only %ld suggestions"),
-          (long)sug.su_ga.ga_len);
+      smsg((char_u *)_("Sorry, only %" PRId64 " suggestions"),
+          (int64_t)sug.su_ga.ga_len);
   } else {
     vim_free(repl_from);
     repl_from = NULL;
