@@ -255,11 +255,11 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
         sprintf((char *)IObuff, _("1 line %sed %d times"), s, amount);
     } else {
       if (amount == 1)
-        sprintf((char *)IObuff, _("%ld lines %sed 1 time"),
-            oap->line_count, s);
+        sprintf((char *)IObuff, _("%" PRId64 " lines %sed 1 time"),
+            (int64_t)oap->line_count, s);
       else
-        sprintf((char *)IObuff, _("%ld lines %sed %d times"),
-            oap->line_count, s, amount);
+        sprintf((char *)IObuff, _("%" PRId64 " lines %sed %d times"),
+            (int64_t)oap->line_count, s, amount);
     }
     msg(IObuff);
   }
@@ -5192,8 +5192,8 @@ void cursor_pos_info(void)
 
     byte_count = bomb_size();
     if (byte_count > 0)
-      sprintf((char *)IObuff + STRLEN(IObuff), _("(+%ld for BOM)"),
-          byte_count);
+      sprintf((char *)IObuff + STRLEN(IObuff), _("(+%" PRId64 " for BOM)"),
+          (int64_t)byte_count);
     /* Don't shorten this message, the user asked for it. */
     p = p_shm;
     p_shm = (char_u *)"";

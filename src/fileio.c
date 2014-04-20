@@ -1884,11 +1884,11 @@ failed:
       }
       if (conv_error != 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
-            _("[CONVERSION ERROR in line %ld]"), (long)conv_error);
+            _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
         c = TRUE;
       } else if (illegal_byte > 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
-            _("[ILLEGAL BYTE in line %ld]"), (long)illegal_byte);
+            _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = TRUE;
       } else if (error)  {
         STRCAT(IObuff, _("[READ ERRORS]"));
@@ -4154,12 +4154,12 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
     if (lnum == 1)
       STRCPY(p, _("1 line, "));
     else
-      sprintf((char *)p, _("%ld lines, "), lnum);
+      sprintf((char *)p, _("%" PRId64 " lines, "), (int64_t)lnum);
     p += STRLEN(p);
     if (nchars == 1)
       STRCPY(p, _("1 character"));
     else {
-      sprintf((char *)p, _("%" PRId64 " characters"), nchars);
+      sprintf((char *)p, _("%" PRId64 " characters"), (int64_t)nchars);
     }
   }
 }
