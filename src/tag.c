@@ -1933,7 +1933,7 @@ parse_line:
       if (line_error) {
         EMSG2(_("E431: Format error in tags file \"%s\""), tag_fname);
         if (!use_cscope)
-          EMSGN(_("Before byte %ld"), (long)ftell(fp));
+          EMSGN(_("Before byte %" PRId64), ftell(fp));
         stop_searching = TRUE;
         line_error = FALSE;
       }

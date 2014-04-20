@@ -2460,7 +2460,7 @@ void do_wqall(exarg_T *eap)
         break;
       }
       if (buf->b_ffname == NULL) {
-        EMSGN(_("E141: No file name for buffer %ld"), (long)buf->b_fnum);
+        EMSGN(_("E141: No file name for buffer %" PRId64), buf->b_fnum);
         ++error;
       } else if (check_readonly(&eap->forceit, buf)
                  || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
@@ -6123,7 +6123,7 @@ void ex_sign(exarg_T *eap)
 		foldOpenCursor();
 	    }
 	    else
-		EMSGN(_("E157: Invalid sign ID: %ld"), id);
+		EMSGN(_("E157: Invalid sign ID: %" PRId64), id);
 	}
 	else if (idx == SIGNCMD_UNPLACE)
 	{

@@ -1910,7 +1910,7 @@ void undo_time(long step, int sec, int file, int absolute)
       break;
 
     if (absolute) {
-      EMSGN(_("E830: Undo number %ld not found"), step);
+      EMSGN(_("E830: Undo number %" PRId64 " not found"), step);
       return;
     }
 

@@ -4267,7 +4267,7 @@ check_more (
       if (n == 1)
         EMSG(_("E173: 1 more file to edit"));
       else
-        EMSGN(_("E173: %ld more files to edit"), n);
+        EMSGN(_("E173: %" PRId64 " more files to edit"), n);
       quitmore = 2;                 /* next try to quit is allowed */
     }
     return FAIL;
