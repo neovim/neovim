@@ -4488,14 +4488,16 @@ do_sub_msg (
           "%s", count_only ? _("1 match") : _("1 substitution"));
     else
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
-          count_only ? _("%ld matches") : _("%ld substitutions"),
-          sub_nsubs);
+          count_only ?
+          _("%" PRId64 " matches") :
+          _("%" PRId64 " substitutions"),
+          (int64_t)sub_nsubs);
     if (sub_nlines == 1)
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
           "%s", _(" on 1 line"));
     else
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
-          _(" on %ld lines"), (long)sub_nlines);
+          _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
     if (msg(msg_buf))
       /* save message to display it after redraw */
       set_keep_msg(msg_buf, 0);
