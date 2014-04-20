@@ -219,8 +219,8 @@ static void u_check(int newhead_may_be_NULL)                 {
     EMSGN("b_u_curhead invalid: 0x%x", curbuf->b_u_curhead);
   if (header_count != curbuf->b_u_numhead) {
     EMSG("b_u_numhead invalid");
-    smsg((char_u *)"expected: %ld, actual: %ld",
-        (long)header_count, (long)curbuf->b_u_numhead);
+    smsg((char_u *)"expected: %" PRId64 ", actual: %" PRId64,
+        (int64_t)header_count, (int64_t)curbuf->b_u_numhead);
   }
 }
 

@@ -6663,7 +6663,7 @@ static void ex_pwd(exarg_T *eap)
  */
 static void ex_equal(exarg_T *eap)
 {
-  smsg((char_u *)"%ld", (long)eap->line2);
+  smsg((char_u *)"%" PRId64, (int64_t)eap->line2);
   ex_may_print(eap);
 }
 
