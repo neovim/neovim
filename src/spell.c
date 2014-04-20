@@ -341,11 +341,7 @@
 
 /* Type used for indexes in the word tree need to be at least 4 bytes.  If int
  * is 8 bytes we could use something smaller, but what? */
-#if SIZEOF_INT > 3
 typedef int idx_T;
-#else
-typedef long idx_T;
-#endif
 
 # define SPL_FNAME_TMPL  "%s.%s.spl"
 # define SPL_FNAME_ADD   ".add."
