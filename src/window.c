@@ -172,7 +172,7 @@ do_window (
     STRCPY(cbuf, "split #");
     if (Prenum)
       vim_snprintf((char *)cbuf + 7, sizeof(cbuf) - 7,
-          "%ld", Prenum);
+          "%" PRId64, (int64_t)Prenum);
     do_cmdline_cmd(cbuf);
     break;
 
@@ -183,7 +183,7 @@ do_window (
 newwindow:
     if (Prenum)
       /* window height */
-      vim_snprintf((char *)cbuf, sizeof(cbuf) - 5, "%ld", Prenum);
+      vim_snprintf((char *)cbuf, sizeof(cbuf) - 5, "%" PRId64, (int64_t)Prenum);
     else
       cbuf[0] = NUL;
     if (nchar == 'v' || nchar == Ctrl_V)
