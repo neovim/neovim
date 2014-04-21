@@ -3290,9 +3290,8 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       if (*p == 'h' || *p == 'l') {
         length_modifier = *p;
         p++;
-        if (length_modifier == 'l' && *p == 'l') {
-          /* double l = long long */
-          length_modifier = 'l';                /* treat it as a single 'l' */
+        if (length_modifier == 'l' && *p == 'l') { /* double l = long long */
+          length_modifier = '2';                   /* double l encoded as '2' */
           p++;
         }
       }
@@ -3310,8 +3309,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
 
       /* get parameter value, do initial processing */
       switch (fmt_spec) {
-      /* '%' and 'c' behave similar to 's' regarding flags and field
-       * widths */
+      /* '%' and 'c' behave similar to 's' regarding flags and field widths */
       case '%':
       case 'c':
       case 's':
@@ -3400,6 +3398,10 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         long int long_arg = 0;
         unsigned long int ulong_arg = 0;
 
+        /* only defined for length modifier ll */
+        long long int long_long_arg = 0;
+        unsigned long long int ulong_long_arg = 0;
+
         /* pointer argument value -only defined for p
          * conversion */
         void *ptr_arg = NULL;
@@ -3430,6 +3432,14 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             else if (long_arg < 0)
               arg_sign = -1;
             break;
+          case '2':
+            long_long_arg = tvs != NULL ? tv_nr(tvs, &arg_idx)
+                                        : va_arg(ap, long long int);
+            if (long_long_arg > 0)
+              arg_sign =  1;
+            else if (long_long_arg < 0)
+              arg_sign = -1;
+            break;
           }
         } else {
           /* unsigned */
@@ -3446,6 +3456,12 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
                                     : va_arg(ap, unsigned long int);
             if (ulong_arg != 0)
               arg_sign = 1;
+            break;
+          case '2':
+            ulong_long_arg = tvs != NULL ?
+              (unsigned long long)tv_nr(tvs, &arg_idx) :
+              va_arg(ap, unsigned long long int);
+            if (ulong_long_arg) arg_sign = 1;
             break;
           }
         }
@@ -3511,6 +3527,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             case 'l': str_arg_l += sprintf(
                   tmp + str_arg_l, f, long_arg);
               break;
+            case '2': str_arg_l += sprintf(
+                  tmp + str_arg_l, f, long_long_arg);
+              break;
             }
           } else {
             /* unsigned */
@@ -3521,6 +3540,9 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
               break;
             case 'l': str_arg_l += sprintf(
                   tmp + str_arg_l, f, ulong_arg);
+              break;
+            case '2': str_arg_l += sprintf(
+                  tmp + str_arg_l, f, ulong_long_arg);
               break;
             }
           }
