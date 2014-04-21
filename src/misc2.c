@@ -1234,19 +1234,17 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
         if (ecmd == NULL)
           ecmd = cmd;
       }
-      ncmd = alloc((unsigned)(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1));
-      if (ncmd != NULL) {
-        STRCPY(ncmd, p_sxq);
-        STRCAT(ncmd, ecmd);
-        /* When 'shellxquote' is ( append ).
-         * When 'shellxquote' is "( append )". */
-        STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
-            : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
-            : p_sxq);
-        retval = os_call_shell(ncmd, opts, extra_shell_arg);
-        vim_free(ncmd);
-      } else
-        retval = -1;
+      ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
+      STRCPY(ncmd, p_sxq);
+      STRCAT(ncmd, ecmd);
+      /* When 'shellxquote' is ( append ).
+       * When 'shellxquote' is "( append )". */
+      STRCAT(ncmd, STRCMP(p_sxq, "(") == 0 ? (char_u *)")"
+          : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
+          : p_sxq);
+      retval = os_call_shell(ncmd, opts, extra_shell_arg);
+      vim_free(ncmd);
+
       if (ecmd != cmd)
         vim_free(ecmd);
     }
@@ -1432,16 +1430,14 @@ time_t get8ctime(FILE *fd)
 
 /*
  * Read a string of length "cnt" from "fd" into allocated memory.
- * Returns NULL when out of memory or unable to read that many bytes.
+ * Returns NULL when unable to read that many bytes.
  */
 char_u *read_string(FILE *fd, int cnt)
 {
-  char_u      *str;
   int i;
   int c;
 
-  /* allocate memory */
-  str = alloc((unsigned)cnt + 1);
+  char_u *str = xmallocz(cnt);
   /* Read the string.  Quit when running into the EOF. */
   for (i = 0; i < cnt; ++i) {
     c = getc(fd);
