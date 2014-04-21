@@ -57,7 +57,22 @@
 #include "os/signal.h"
 #include "os/job.h"
 
-#include "os_unixx.h"       /* unix includes for os_unix.c only */
+#if defined(HAVE_SYS_IOCTL_H)
+# include <sys/ioctl.h>
+#endif
+
+#ifdef HAVE_STROPTS_H
+# include <stropts.h>
+#endif
+
+#if defined(HAVE_TERMIOS_H)
+# include <termios.h>
+#endif
+
+/* shared library access */
+#if defined(HAVE_DLFCN_H) && defined(USE_DLOPEN)
+# include <dlfcn.h>
+#endif
 
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
