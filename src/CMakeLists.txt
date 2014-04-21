@@ -42,6 +42,7 @@ set(CONV_SRCS
   os/signal.c
   os/users.c
   os/wstream.c
+  os/rstream.c
   )
 
 set_source_files_properties(

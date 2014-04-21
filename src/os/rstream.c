@@ -20,7 +20,7 @@ struct rstream {
   uv_handle_type file_type;
   uv_file fd;
   rstream_cb cb;
-  uint32_t buffer_size, rpos, wpos, fpos;
+  size_t buffer_size, rpos, wpos, fpos;
   bool reading, free_handle, async;
 };
 
@@ -129,9 +129,9 @@ void rstream_stop(RStream *rstream)
   }
 }
 
-uint32_t rstream_read(RStream *rstream, char *buf, uint32_t count)
+size_t rstream_read(RStream *rstream, char *buf, uint32_t count)
 {
-  uint32_t read_count = rstream->wpos - rstream->rpos;
+  size_t read_count = rstream->wpos - rstream->rpos;
 
   if (count < read_count) {
     read_count = count;
@@ -161,7 +161,7 @@ uint32_t rstream_read(RStream *rstream, char *buf, uint32_t count)
   return read_count;
 }
 
-uint32_t rstream_available(RStream *rstream)
+size_t rstream_available(RStream *rstream)
 {
   return rstream->wpos - rstream->rpos;
 }
@@ -207,9 +207,12 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     return;
   }
 
+  // at this point we're sure that cnt is positive, no error occurred
+  size_t nread = (size_t) cnt;
+
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
-  rstream->wpos += cnt;
+  rstream->wpos += nread;
 
   if (rstream->wpos == rstream->buffer_size) {
     // The last read filled the buffer, stop reading for now
@@ -229,6 +232,10 @@ static void fread_idle_cb(uv_idle_t *handle)
   rstream->uvbuf.base = rstream->buffer + rstream->wpos;
   rstream->uvbuf.len = rstream->buffer_size - rstream->wpos;
 
+  // the offset argument to uv_fs_read is int64_t, could someone really try
+  // to read more than 9 quintillion (9e18) bytes?
+  assert(rstream->fpos <= INT64_MAX);
+
   // Synchronous read
   uv_fs_read(
       uv_default_loop(),
@@ -236,7 +243,7 @@ static void fread_idle_cb(uv_idle_t *handle)
       rstream->fd,
       &rstream->uvbuf,
       1,
-      rstream->fpos,
+      (int64_t) rstream->fpos,
       NULL);
 
   uv_fs_req_cleanup(&req);
@@ -247,8 +254,11 @@ static void fread_idle_cb(uv_idle_t *handle)
     return;
   }
 
-  rstream->wpos += req.result;
-  rstream->fpos += req.result;
+  // no errors (req.result (ssize_t) is positive), it's safe to cast.
+  size_t nread = (size_t) req.result;
+
+  rstream->wpos += nread;
+  rstream->fpos += nread;
 
   if (rstream->wpos == rstream->buffer_size) {
     // The last read filled the buffer, stop reading for now
