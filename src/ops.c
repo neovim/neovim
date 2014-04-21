@@ -105,7 +105,7 @@ static void stuffescaped(char_u *arg, int literally);
 static void mb_adjust_opend(oparg_T *oap);
 static void free_yank(long);
 static void free_yank_all(void);
-static int yank_copy_line(struct block_def *bd, long y_idx);
+static void yank_copy_line(struct block_def *bd, long y_idx);
 static void dis_msg(char_u *p, int skip_esc);
 static char_u   *skip_comment(char_u *line, int process,
                               int include_space,
@@ -786,23 +786,18 @@ get_register (
     int copy               /* make a copy, if FALSE make register empty. */
 )
 {
-  struct yankreg      *reg;
-  int i;
-
-
   get_yank_register(name, 0);
-  reg = (struct yankreg *)alloc((unsigned)sizeof(struct yankreg));
+
+  struct yankreg *reg = xmalloc(sizeof(struct yankreg));
   *reg = *y_current;
   if (copy) {
-    /* If we run out of memory some or all of the lines are empty. */
-    if (reg->y_size == 0)
+    if (reg->y_size == 0) {
       reg->y_array = NULL;
-    else
-      reg->y_array = (char_u **)alloc((unsigned)(sizeof(char_u *)
-                                                 * reg->y_size));
-    if (reg->y_array != NULL) {
-      for (i = 0; i < reg->y_size; ++i)
+    } else
+      reg->y_array = xmalloc(reg->y_size * sizeof(char_u *));
+      for (linenr_T i = 0; i < reg->y_size; ++i) {
         reg->y_array[i] = vim_strsave(y_current->y_array[i]);
+      }
     }
   } else
     y_current->y_array = NULL;
@@ -2433,8 +2428,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
     switch (y_current->y_type) {
     case MBLOCK:
       block_prep(oap, &bd, lnum, FALSE);
-      if (yank_copy_line(&bd, y_idx) == FAIL)
-        goto fail;
+      yank_copy_line(&bd, y_idx);
       break;
 
     case MLINE:
@@ -2501,8 +2495,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
         bd.textlen = endcol - startcol + oap->inclusive;
       }
       bd.textstart = p + startcol;
-      if (yank_copy_line(&bd, y_idx) == FAIL)
-        goto fail;
+      yank_copy_line(&bd, y_idx);
       break;
     }
       /* NOTREACHED */
@@ -2584,13 +2577,10 @@ fail:           /* free the allocated lines */
   return FAIL;
 }
 
-static int yank_copy_line(struct block_def *bd, long y_idx)
+static void yank_copy_line(struct block_def *bd, long y_idx)
 {
-  char_u      *pnew;
+  char_u *pnew = xmallocz(bd->startspaces + bd->endspaces + bd->textlen);
 
-  if ((pnew = alloc(bd->startspaces + bd->endspaces + bd->textlen + 1))
-      == NULL)
-    return FAIL;
   y_current->y_array[y_idx] = pnew;
   copy_spaces(pnew, (size_t)bd->startspaces);
   pnew += bd->startspaces;
@@ -2599,7 +2589,6 @@ static int yank_copy_line(struct block_def *bd, long y_idx)
   copy_spaces(pnew, (size_t)bd->endspaces);
   pnew += bd->endspaces;
   *pnew = NUL;
-  return OK;
 }
 
 
