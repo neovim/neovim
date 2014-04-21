@@ -1,5 +1,9 @@
 #ifndef NEOVIM_OPS_H
 #define NEOVIM_OPS_H
+
+#include "func_attr.h"
+#include "types.h"
+
 /* ops.c */
 int get_op_type(int char1, int char2);
 int op_on_lines(int op);
@@ -15,7 +19,7 @@ char_u *get_expr_line_src(void);
 int valid_yank_reg(int regname, int writing);
 void get_yank_register(int regname, int writing);
 int may_get_selection(int regname);
-void *get_register(int name, int copy);
+void *get_register(int name, int copy) FUNC_ATTR_NONNULL_RET;
 void put_register(int name, void *reg);
 void free_register(void *reg);
 int yank_register_mline(int regname);
