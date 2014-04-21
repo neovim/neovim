@@ -17,7 +17,7 @@ configure_file (
 find_program(WHOAMI_PROG whoami)
 find_program(HOSTNAME_PROG hostname)
 
-if (EXISTS ${WHOAMI_PROG})
+if (NOT DEFINED USERNAME AND EXISTS ${WHOAMI_PROG})
   execute_process(COMMAND ${WHOAMI_PROG}
     OUTPUT_STRIP_TRAILING_WHITESPACE
     OUTPUT_VARIABLE USERNAME)
