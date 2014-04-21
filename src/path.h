@@ -1,6 +1,9 @@
 #ifndef NEOVIM_PATH_H
 #define NEOVIM_PATH_H
 
+#include "func_attr.h"
+#include "types.h"
+
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {
   kEqualFiles = 1,        ///< Both exist and are the same file.
@@ -54,7 +57,8 @@ void shorten_dir(char_u *str);
 int dir_of_file_exists(char_u *fname);
 int vim_fnamecmp(char_u *x, char_u *y);
 int vim_fnamencmp(char_u *x, char_u *y, size_t len);
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep);
+char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
+  FUNC_ATTR_NONNULL_RET;
 int unix_expandpath(garray_T *gap, char_u *path, int wildoff, int flags,
                     int didstar);
 int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
@@ -62,7 +66,7 @@ int gen_expand_wildcards(int num_pat, char_u **pat, int *num_file,
                          int flags);
 void addfile(garray_T *gap, char_u *f, int flags);
 char_u *get_past_head(char_u *path);
-char_u *concat_str(char_u *str1, char_u *str2);
+char_u *concat_str(char_u *str1, char_u *str2) FUNC_ATTR_NONNULL_RET;
 void add_pathsep(char_u *p);
 char_u *FullName_save(char_u *fname, int force);
 void simplify_filename(char_u *filename);

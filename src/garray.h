@@ -1,6 +1,8 @@
 #ifndef NEOVIM_GARRAY_H
 #define NEOVIM_GARRAY_H
 
+#include "func_attr.h"
+
 /// Structure used for growing arrays.
 /// This is used to store information that only grows, is deleted all at
 /// once, and needs to be accessed by index.  See ga_clear() and ga_grow().
@@ -18,7 +20,7 @@ void ga_clear(garray_T *gap);
 void ga_clear_strings(garray_T *gap);
 void ga_init(garray_T *gap, int itemsize, int growsize);
 void ga_grow(garray_T *gap, int n);
-char_u *ga_concat_strings(garray_T *gap);
+char_u *ga_concat_strings(garray_T *gap) FUNC_ATTR_NONNULL_RET;
 void ga_remove_duplicate_strings(garray_T *gap);
 void ga_concat(garray_T *gap, char_u *s);
 void ga_append(garray_T *gap, int c);
