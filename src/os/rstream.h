@@ -65,13 +65,13 @@ void rstream_stop(RStream *rstream);
 /// @param buffer The buffer which will receive the data
 /// @param count Number of bytes that `buffer` can accept
 /// @return The number of bytes copied into `buffer`
-uint32_t rstream_read(RStream *rstream, char *buffer, uint32_t count);
+size_t rstream_read(RStream *rstream, char *buffer, uint32_t count);
 
 /// Returns the number of bytes available for reading from `rstream`
 ///
 /// @param rstream The `RStream` instance
 /// @return The number of bytes available
-uint32_t rstream_available(RStream *rstream);
+size_t rstream_available(RStream *rstream);
 
 /// Runs the read callback associated with the rstream
 ///
