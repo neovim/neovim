@@ -200,8 +200,6 @@ qf_init (
 
   if (wp != NULL) {
     qi = ll_get_or_alloc_list(wp);
-    if (qi == NULL)
-      return FAIL;
   }
 
   return qf_init_ext(qi, efile, curbuf, NULL, errorformat, newlist,
@@ -977,10 +975,7 @@ qf_add_entry (
  */
 static qf_info_T *ll_new_list(void)
 {
-  qf_info_T *qi;
-
-  qi = (qf_info_T *)alloc((unsigned)sizeof(qf_info_T));
-  memset(qi, 0, (size_t)(sizeof(qf_info_T)));
+  qf_info_T *qi = xcalloc(1, sizeof(qf_info_T));
   qi->qf_refcount++;
 
   return qi;
@@ -1030,8 +1025,7 @@ void copy_loclist(win_T *from, win_T *to)
     return;
 
   /* allocate a new location list */
-  if ((to->w_llist = ll_new_list()) == NULL)
-    return;
+  to->w_llist = ll_new_list();
 
   to->w_llist->qf_listcount = qi->qf_listcount;
 
@@ -2797,8 +2791,6 @@ void ex_vimgrep(exarg_T *eap)
       || eap->cmdidx == CMD_lgrepadd
       || eap->cmdidx == CMD_lvimgrepadd) {
     qi = ll_get_or_alloc_list(curwin);
-    if (qi == NULL)
-      return;
   }
 
   if (eap->addr_count > 0)
@@ -3339,8 +3331,6 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
 
   if (wp != NULL) {
     qi = ll_get_or_alloc_list(wp);
-    if (qi == NULL)
-      return FAIL;
   }
 
   if (action == ' ' || qi->qf_curlist == qi->qf_listcount)
@@ -3442,8 +3432,6 @@ void ex_cbuffer(exarg_T *eap)
   if (eap->cmdidx == CMD_lbuffer || eap->cmdidx == CMD_lgetbuffer
       || eap->cmdidx == CMD_laddbuffer) {
     qi = ll_get_or_alloc_list(curwin);
-    if (qi == NULL)
-      return;
   }
 
   if (*eap->arg == NUL)
@@ -3495,8 +3483,6 @@ void ex_cexpr(exarg_T *eap)
   if (eap->cmdidx == CMD_lexpr || eap->cmdidx == CMD_lgetexpr
       || eap->cmdidx == CMD_laddexpr) {
     qi = ll_get_or_alloc_list(curwin);
-    if (qi == NULL)
-      return;
   }
 
   /* Evaluate the expression.  When the result is a string or a list we can
@@ -3570,8 +3556,7 @@ void ex_helpgrep(exarg_T *eap)
 
     if (qi == NULL) {
       /* Allocate a new location list for help text matches */
-      if ((qi = ll_new_list()) == NULL)
-        return;
+      qi = ll_new_list();
       new_qi = TRUE;
     }
   }
