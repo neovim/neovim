@@ -398,9 +398,8 @@ aucmd_abort:
     win->w_buffer = NULL;      /* make sure we don't use the buffer now */
 
   /* Autocommands may have deleted the buffer. */
-  if (!buf_valid(buf))
-    return;
-  if (aborting())           /* autocmds may abort script processing */
+  /* autocmds may abort script processing */
+  if (!buf_valid(buf) || aborting())
     return;
 
   /* Autocommands may have opened or closed windows for this buffer.
