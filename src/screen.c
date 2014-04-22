@@ -2232,7 +2232,7 @@ win_line (
   int row;                              /* row in the window, excl w_winrow */
   int screen_row;                       /* row on the screen, incl w_winrow */
 
-  char_u extra[18];                     /* "%ld" and 'fdc' must fit in here */
+  char_u extra[18];                     /* line number and 'fdc' must fit in here */
   int n_extra = 0;                      /* number of extra chars */
   char_u      *p_extra = NULL;          /* string of extra chars, plus NUL */
   int c_extra = NUL;                    /* extra chars, all the same */
