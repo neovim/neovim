@@ -88,10 +88,6 @@ Error: configure did not run properly.Check auto/config.log.
 #  define __w64
 typedef unsigned long __w64 long_u;
 typedef          long __w64 long_i;
-# define SCANF_HEX_LONG_U       "%lx"
-# define SCANF_DECIMAL_LONG_U   "%lu"
-# define PRINTF_HEX_LONG_U      "0x%lx"
-#define PRINTF_DECIMAL_LONG_U SCANF_DECIMAL_LONG_U
 
 /*
  * The characters and attributes cached for the screen.
