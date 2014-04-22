@@ -317,15 +317,21 @@ close_buffer (
    * The caller must take care of NOT deleting/freeing when 'bufhidden' is
    * "hide" (otherwise we could never free or delete a buffer).
    */
-  if (buf->b_p_bh[0] == 'd') {          /* 'bufhidden' == "delete" */
-    del_buf = TRUE;
-    unload_buf = TRUE;
-  } else if (buf->b_p_bh[0] == 'w') { /* 'bufhidden' == "wipe" */
-    del_buf = TRUE;
-    unload_buf = TRUE;
+  switch (buf->b_p_bh[0])
+  {
+  case 'w': /* 'bufhidden' == "wipe" */
     wipe_buf = TRUE;
-  } else if (buf->b_p_bh[0] == 'u')     /* 'bufhidden' == "unload" */
+    /* fallthrough */
+
+  case 'd': /* 'bufhidden' == "delete" */
+    del_bug = TRUE;
+    /* fallthrough */
+
+  case 'u': /* 'bufhidden' == "unload" */
     unload_buf = TRUE;
+    /* fallthrough */
+
+  }
 
   if (win != NULL) {
     /* Set b_last_cursor when closing the last window for the buffer.
