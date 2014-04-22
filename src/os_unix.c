@@ -890,17 +890,6 @@ void check_mouse_termcode()
 }
 
 /*
- * set screen mode, always fails.
- */
-int mch_screenmode(arg)
-char_u   *arg;
-{
-  EMSG(_(e_screenmode));
-  return FAIL;
-}
-
-
-/*
  * Try to get the current window size:
  * 1. with an ioctl(), most accurate method
  * 2. from the environment variables LINES and COLUMNS

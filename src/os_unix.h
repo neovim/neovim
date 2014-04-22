@@ -32,7 +32,6 @@ void mch_settmode(int tmode);
 void get_stty(void);
 void mch_setmouse(int on);
 void check_mouse_termcode(void);
-int mch_screenmode(char_u *arg);
 int mch_get_shellsize(void);
 void mch_set_shellsize(void);
 int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,

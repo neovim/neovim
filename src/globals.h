@@ -1080,11 +1080,8 @@ EXTERN char_u e_readerrf[] INIT(= N_("E47: Error while reading errorfile"));
 EXTERN char_u e_sandbox[] INIT(= N_("E48: Not allowed in sandbox"));
 #endif
 EXTERN char_u e_secure[] INIT(= N_("E523: Not allowed here"));
-#if defined(AMIGA) || defined(MACOS) || defined(MSWIN)  \
-  || defined(UNIX) || defined(VMS) || defined(OS2)
 EXTERN char_u e_screenmode[] INIT(= N_(
         "E359: Screen mode setting not supported"));
-#endif
 EXTERN char_u e_scroll[] INIT(= N_("E49: Invalid scroll size"));
 EXTERN char_u e_shellempty[] INIT(= N_("E91: 'shell' option is empty"));
 EXTERN char_u e_signdata[] INIT(= N_("E255: Couldn't read in sign data!"));
