@@ -85,6 +85,8 @@ static void free_buffer(buf_T *);
 static void free_buffer_stuff(buf_T *buf, int free_options);
 static void clear_wininfo(buf_T *buf);
 static void decide_bufferaction(char, int*, int*, int*);
+static void rm_buffer_from_list(int wipe, int del, buf_T *buf, buf_T *first,
+        buf_T *lastbuf);
 
 #ifdef UNIX
 # define dev_T dev_t
@@ -422,34 +424,7 @@ aucmd_abort:
   /*
    * Remove the buffer from the list.
    */
-  if (wipe_buf) {
-    vim_free(buf->b_ffname);
-    vim_free(buf->b_sfname);
-    if (buf->b_prev == NULL)
-      firstbuf = buf->b_next;
-    else
-      buf->b_prev->b_next = buf->b_next;
-    if (buf->b_next == NULL)
-      lastbuf = buf->b_prev;
-    else
-      buf->b_next->b_prev = buf->b_prev;
-    free_buffer(buf);
-  } else {
-    if (del_buf) {
-      /* Free all internal variables and reset option values, to make
-       * ":bdel" compatible with Vim 5.7. */
-      free_buffer_stuff(buf, TRUE);
-
-      /* Make it look like a new buffer. */
-      buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
-
-      /* Init the options when loaded again. */
-      buf->b_p_initialized = FALSE;
-    }
-    buf_clear_file(buf);
-    if (del_buf)
-      buf->b_p_bl = FALSE;
-  }
+  rm_buffer_from_list(wipe_buf, del_buf, buf, &firstbuf, &lastbuf);
 }
 
 /*
@@ -613,6 +588,40 @@ decide_bufferaction(char act, int *wipe, int *del, int *unload)
 
   }
 
+}
+
+static void
+rm_buffer_from_list(int wipe_buf, int del_buf, buf_T *buf, buf_T *firstbuf,
+        buf_T *lastbuf)
+{
+  if (wipe_buf) {
+    vim_free(buf->b_ffname);
+    vim_free(buf->b_sfname);
+    if (buf->b_prev == NULL)
+      firstbuf = buf->b_next;
+    else
+      buf->b_prev->b_next = buf->b_next;
+    if (buf->b_next == NULL)
+      lastbuf = buf->b_prev;
+    else
+      buf->b_next->b_prev = buf->b_prev;
+    free_buffer(buf);
+  } else {
+    if (del_buf) {
+      /* Free all internal variables and reset option values, to make
+       * ":bdel" compatible with Vim 5.7. */
+      free_buffer_stuff(buf, TRUE);
+
+      /* Make it look like a new buffer. */
+      buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
+
+      /* Init the options when loaded again. */
+      buf->b_p_initialized = FALSE;
+    }
+    buf_clear_file(buf);
+    if (del_buf)
+      buf->b_p_bl = FALSE;
+  }
 }
 
 /*
