@@ -3432,12 +3432,12 @@ msgstr "biep!"
 #, c-format
 #~ msgid ""
 #~ "\n"
-#~ "[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+#~ "[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 #~ msgstr ""
 
 #, c-format
 #~ msgid ""
-#~ "[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+#~ "[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 #~ "\n"
 #~ msgstr ""
 
@@ -3449,7 +3449,7 @@ msgstr "biep!"
 #~ msgstr ""
 
 #, c-format
-#~ msgid "E342: Out of memory!  (allocating %lu bytes)"
+#~ msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
 #~ msgstr ""
 
 #, c-format

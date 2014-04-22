@@ -3918,12 +3918,12 @@ msgstr "에러: "
 #, c-format
 #~ msgid ""
 #~ "\n"
-#~ "[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+#~ "[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 #~ msgstr ""
 
 #, c-format
 #~ msgid ""
-#~ "[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+#~ "[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 #~ "\n"
 #~ msgstr ""
 
@@ -3935,8 +3935,8 @@ msgid "E341: Internal error: lalloc(%<PRId64>, )"
 msgstr "E341: 내부 에러: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: 메모리 부족!  (%lu 바이트를 할당)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: 메모리 부족!  (%<PRIu64> 바이트를 할당)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""

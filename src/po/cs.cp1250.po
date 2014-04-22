@@ -3062,18 +3062,18 @@ msgstr "CHYBA: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[bajtù] celkem uvolnìno-alokováno %lu-%lu, využito %lu, maximální využití "
-"%lu\n"
+"[bajtù] celkem uvolnìno-alokováno %<PRIu64>-%<PRIu64>, využito %<PRIu64>, maximální využití "
+"%<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[volání] celkem re/malloc(): %lu, celkem free() %lu\n"
+"[volání] celkem re/malloc(): %<PRIu64>, celkem free() %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
@@ -3084,8 +3084,8 @@ msgid "E341: Internal error: lalloc(%<PRId64>, )"
 msgstr "E341: Vnitøní chyba: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Nedostatek pamìti! (potøebuji alokovat bajtù: %lu)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Nedostatek pamìti! (potøebuji alokovat bajtù: %<PRIu64>)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""

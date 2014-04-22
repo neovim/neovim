@@ -3734,17 +3734,17 @@ msgstr "错误: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[字节] 总共 alloc-free %lu-%lu，使用中 %lu，高峰使用 %lu\n"
+"[字节] 总共 alloc-free %<PRIu64>-%<PRIu64>，使用中 %<PRIu64>，高峰使用 %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[调用] 总共 re/malloc(): %lu，总共 free()': %lu\n"
+"[调用] 总共 re/malloc(): %<PRIu64>，总共 free()': %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
@@ -3755,8 +3755,8 @@ msgid "E341: Internal error: lalloc(%<PRId64>, )"
 msgstr "E341: 内部错误: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: 内存不足！(分配 %lu 字节)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: 内存不足！(分配 %<PRIu64> 字节)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""

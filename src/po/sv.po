@@ -3807,18 +3807,18 @@ msgstr "FEL: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[byte] sammanlagd allok-frigjord %lu-%lu, i användning %lu, toppanvändning %"
+"[byte] sammanlagd allok-frigjord %<PRIu64>-%<PRIu64>, i användning %<PRIu64>, toppanvändning %"
 "lu\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[anrop] sammanlagda om/malloc()'s %lu, sammanlagda free()'s %lu\n"
+"[anrop] sammanlagda om/malloc()'s %<PRIu64>, sammanlagda free()'s %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
@@ -3829,8 +3829,8 @@ msgid "E341: Internal error: lalloc(%<PRId64>, )"
 msgstr "E341: Internt fel: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Slut på minne!  (allokerar %lu byte)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Slut på minne!  (allokerar %<PRIu64> byte)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
