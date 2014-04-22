@@ -6159,15 +6159,16 @@ static void ex_tabs(exarg_T *eap)
 
 
 /*
- * ":mode": Set screen mode.
- * If no argument given, just get the screen size and redraw.
+ * ":mode":
+ * If no argument given, get the screen size and redraw.
  */
 static void ex_mode(exarg_T *eap)
 {
-  if (*eap->arg == NUL)
+  if (*eap->arg == NUL) {
     shell_resized();
-  else
-    mch_screenmode(eap->arg);
+  } else {
+    EMSG(_(e_screenmode));
+  }
 }
 
 /*
