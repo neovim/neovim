@@ -341,7 +341,6 @@ close_buffer (
 
     if (!buf_valid(buf)) {
       /* Autocommands deleted the buffer. */
-aucmd_abort:
       EMSG(_(e_auabort));
       return;
     }
@@ -350,7 +349,8 @@ aucmd_abort:
 
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
-      goto aucmd_abort;
+      EMSG(_(e_auabort));
+      return;
     }
 
     /* When the buffer becomes hidden, but is not unloaded, trigger
@@ -361,14 +361,16 @@ aucmd_abort:
 
       if (!buf_valid(buf)) {
         /* Autocommands deleted the buffer. */
-        goto aucmd_abort;
+        EMSG(_(e_auabort));
+        return;
       }
 
       buf->b_closing = FALSE;
 
       if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
-        goto aucmd_abort;
+        EMSG(_(e_auabort));
+        return;
       }
     }
     if (aborting())         /* autocmds may abort script processing */
