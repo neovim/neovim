@@ -2011,8 +2011,11 @@ void set_init_1(void)
 #endif
     {
 #ifdef HAVE_TOTAL_MEM
-      /* Use amount of memory available to Vim. */
-      n = (os_get_total_mem_kib() >> 1);
+      /* Use half of amount of memory available to Vim. */
+      /* If too much to fit in long_u, get long_u max */
+      uint64_t available_kib = os_get_total_mem_kib();
+      n = available_kib / 2 > ULONG_MAX ? ULONG_MAX
+                                        : (long_u)(available_kib /2);
 #else
       n = (0x7fffffff >> 11);
 #endif
