@@ -1428,7 +1428,7 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
   not standard C++.  Warning about these in lint is one way to ease the
   transition to new compilers.
   - put storage class first (e.g. "static const" instead of "const static").
-  - "%lld" instead of %qd" in printf-type functions.
+  - "%" PRId64 instead of %qd" in printf-type functions.
   - "%1$d" is non-standard in printf-type functions.
   - "\%" is an undefined character escape sequence.
   - text after #endif is not allowed.
@@ -1454,7 +1454,7 @@ def CheckForNonStandardConstructs(filename, clean_lines, linenum,
 
   if Search(r'printf\s*\(.*".*%[-+ ]?\d*q', line):
     error(filename, linenum, 'runtime/printf_format', 3,
-          '%q in format strings is deprecated.  Use %ll instead.')
+          '"%q" in format strings is deprecated.  Use "%" PRId64 instead.')
 
   if Search(r'printf\s*\(.*".*%\d+\$', line):
     error(filename, linenum, 'runtime/printf_format', 2,
