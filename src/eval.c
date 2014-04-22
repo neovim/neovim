@@ -7155,15 +7155,13 @@ find_internal_func (
 {
   int first = 0;
   int last = (int)(sizeof(functions) / sizeof(struct fst)) - 1;
-  int cmp;
-  int x;
 
   /*
    * Find the function name in the table. Binary search.
    */
   while (first <= last) {
-    x = first + (last - first) / 2;
-    cmp = STRCMP(name, functions[x].f_name);
+    int x = first + ((unsigned)(last - first)) / 2;
+    int cmp = STRCMP(name, functions[x].f_name);
     if (cmp < 0)
       last = x - 1;
     else if (cmp > 0)
