@@ -1286,7 +1286,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, struct stat
        * be enough for most users.  If more is needed, csinfo will be
        * reallocated. */
       csinfo_size = 1;
-      csinfo = (csinfo_T *)alloc_clear(sizeof(csinfo_T));
+      csinfo = xcalloc(1, sizeof(csinfo_T));
     } else {
       /* Reallocate space for more connections. */
       csinfo_size *= 2;

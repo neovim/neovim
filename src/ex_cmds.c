@@ -5829,9 +5829,7 @@ void ex_sign(exarg_T *eap)
 		    int		start = next_sign_typenr;
 
 		    /* Allocate a new sign. */
-		    sp = (sign_T *)alloc_clear((unsigned)sizeof(sign_T));
-		    if (sp == NULL)
-			return;
+		    sp = xcalloc(1, sizeof(sign_T));
 
 		    /* Check that next_sign_typenr is not already being used.
 		     * This only happens after wrapping around.  Hopefully

@@ -3586,9 +3586,7 @@ static reg_extmatch_T *make_extmatch(void);
  */
 static reg_extmatch_T *make_extmatch(void)
 {
-  reg_extmatch_T      *em;
-
-  em = (reg_extmatch_T *)alloc_clear((unsigned)sizeof(reg_extmatch_T));
+  reg_extmatch_T *em = xcalloc(1, sizeof(reg_extmatch_T));
   em->refcnt = 1;
   return em;
 }

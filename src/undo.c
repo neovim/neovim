@@ -1509,8 +1509,9 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   }
 
 #ifdef U_DEBUG
-  uhp_table_used = (int *)alloc_clear(
-      (unsigned)(sizeof(int) * num_head + 1));
+  size_t amount = num_head * sizeof(int) + 1;
+  uhp_table_used = xmalloc(amount);
+  memset(uhp_table_used, 0, amount);
 # define SET_FLAG(j) ++ uhp_table_used[j]
 #else
 # define SET_FLAG(j)

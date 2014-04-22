@@ -784,7 +784,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   }
   if (curfrp->fr_parent == NULL || curfrp->fr_parent->fr_layout != layout) {
     /* Need to create a new frame in the tree to make a branch. */
-    frp = (frame_T *)alloc_clear((unsigned)sizeof(frame_T));
+    frp = xcalloc(1, sizeof(frame_T));
     *frp = *curfrp;
     curfrp->fr_layout = layout;
     frp->fr_parent = curfrp;
@@ -2847,7 +2847,6 @@ static tabpage_T *alloc_tabpage(void)
   /* init t: variables */
   tp->tp_vars = dict_alloc();
   init_var_dict(tp->tp_vars, &tp->tp_winvar, VAR_SCOPE);
-
   tp->tp_diff_invalid = TRUE;
   tp->tp_ch_used = p_ch;
 
@@ -3766,6 +3765,7 @@ static void frame_remove(frame_T *frp)
 void win_alloc_lines(win_T *wp)
 {
   wp->w_lines_valid = 0;
+  assert(Rows >= 0);
   wp->w_lines = xcalloc(Rows, sizeof(wline_T));
 }
 
@@ -5019,7 +5019,7 @@ void make_snapshot(int idx)
 
 static void make_snapshot_rec(frame_T *fr, frame_T **frp)
 {
-  *frp = (frame_T *)alloc_clear((unsigned)sizeof(frame_T));
+  *frp = xcalloc(1, sizeof(frame_T));
   (*frp)->fr_layout = fr->fr_layout;
   (*frp)->fr_width = fr->fr_width;
   (*frp)->fr_height = fr->fr_height;

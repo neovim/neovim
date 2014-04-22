@@ -1378,14 +1378,9 @@ buflist_new (
     }
   }
   if (buf != curbuf || curbuf == NULL) {
-    buf = (buf_T *)alloc_clear((unsigned)sizeof(buf_T));
+    buf = xcalloc(1, sizeof(buf_T));
     /* init b: variables */
     buf->b_vars = dict_alloc();
-    if (buf->b_vars == NULL) {
-      vim_free(ffname);
-      vim_free(buf);
-      return NULL;
-    }
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
   }
 
@@ -1395,7 +1390,7 @@ buflist_new (
   }
 
   clear_wininfo(buf);
-  buf->b_wininfo = (wininfo_T *)alloc_clear((unsigned)sizeof(wininfo_T));
+  buf->b_wininfo = xcalloc(1, sizeof(wininfo_T));
 
   if (ffname != NULL && (buf->b_ffname == NULL || buf->b_sfname == NULL)) {
     vim_free(buf->b_ffname);
@@ -2004,7 +1999,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
       break;
   if (wip == NULL) {
     /* allocate a new entry */
-    wip = (wininfo_T *)alloc_clear((unsigned)sizeof(wininfo_T));
+    wip = xcalloc(1, sizeof(wininfo_T));
     wip->wi_win = win;
     if (lnum == 0)              /* set lnum even when it's 0 */
       lnum = 1;
@@ -3699,7 +3694,7 @@ do_arg_all (
   setpcmark();
 
   opened_len = ARGCOUNT;
-  opened = alloc_clear((unsigned)opened_len);
+  opened = xcalloc(opened_len, 1);
 
   /* Autocommands may do anything to the argument list.  Make sure it's not
    * freed while we are working here by "locking" it.  We still have to

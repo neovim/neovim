@@ -754,7 +754,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
-  in_curdir = (char_u **)alloc_clear(gap->ga_len * sizeof(char_u *));
+  in_curdir = xcalloc(gap->ga_len, sizeof(char_u *));
 
   for (i = 0; i < gap->ga_len && !got_int; i++) {
     char_u      *path = fnames[i];

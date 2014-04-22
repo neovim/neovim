@@ -326,7 +326,7 @@ qf_init_ext (
     /*
      * Allocate a new eformat structure and put it at the end of the list
      */
-    fmt_ptr = (efm_T *)alloc_clear((unsigned)sizeof(efm_T));
+    fmt_ptr = xcalloc(1, sizeof(efm_T));
     if (fmt_first == NULL)          /* first one */
       fmt_first = fmt_ptr;
     else

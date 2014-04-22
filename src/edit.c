@@ -2125,7 +2125,7 @@ ins_compl_add (
    * Allocate a new match structure.
    * Copy the values to the new match structure.
    */
-  match = (compl_T *)alloc_clear((unsigned)sizeof(compl_T));
+  match = xcalloc(1, sizeof(compl_T));
   match->cp_number = -1;
   if (flags & ORIGINAL_TEXT)
     match->cp_number = 0;
@@ -2460,9 +2460,9 @@ void ins_compl_show_pum(void)
     } while (compl != NULL && compl != compl_first_match);
     if (compl_match_arraysize == 0)
       return;
-    compl_match_array = (pumitem_T *)alloc_clear(
-        (unsigned)(sizeof(pumitem_T)
-                   * compl_match_arraysize));
+
+    assert(compl_match_arraysize >= 0);
+    compl_match_array = xcalloc(compl_match_arraysize, sizeof(pumitem_T));
     /* If the current match is the original text don't find the first
      * match after it, don't highlight anything. */
     if (compl_shown_match->cp_flags & ORIGINAL_TEXT)
