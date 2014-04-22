@@ -334,24 +334,25 @@ close_buffer (
         win->w_cursor.col, TRUE);
   }
 
+#define __emsg_and_return_on(x) do {  \
+      if ((x)) {                      \
+        EMSG(_(e_auabort));           \
+        return;                       \
+      }                               \
+    } while (0)
+
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
     buf->b_closing = TRUE;
     apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, FALSE, buf);
 
-    if (!buf_valid(buf)) {
-      /* Autocommands deleted the buffer. */
-      EMSG(_(e_auabort));
-      return;
-    }
+    /* If autocommands deleted the buffer */
+    __emsg_and_return_on(!buf_valid(buf));
 
     buf->b_closing = FALSE;
 
-    if (abort_if_last && one_window()) {
-      /* Autocommands made this the only window. */
-      EMSG(_(e_auabort));
-      return;
-    }
+    /* If autocommands made this the only window. */
+    __emsg_and_return_on(abort_if_last && one_window());
 
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
@@ -359,24 +360,20 @@ close_buffer (
       buf->b_closing = TRUE;
       apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, FALSE, buf);
 
-      if (!buf_valid(buf)) {
-        /* Autocommands deleted the buffer. */
-        EMSG(_(e_auabort));
-        return;
-      }
+      /* If autocommands deleted the buffer. */
+      __emsg_and_return_on(!buf_valid(buf));
 
       buf->b_closing = FALSE;
 
-      if (abort_if_last && one_window()) {
-        /* Autocommands made this the only window. */
-        EMSG(_(e_auabort));
-        return;
-      }
+      /* If autocommands made this the only window. */
+      __emsg_and_return_on(abort_if_last && one_window());
     }
     if (aborting())         /* autocmds may abort script processing */
       return;
   }
   nwindows = buf->b_nwindows;
+
+#undef __emsg_and_return_on
 
   /* decrease the link count from windows (unless not in any window) */
   if (buf->b_nwindows > 0)
