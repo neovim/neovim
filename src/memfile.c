@@ -948,8 +948,6 @@ static int mf_write_block(memfile_T *mfp, bhdr_T *hp, off_t offset, unsigned siz
   /* Encrypt if 'key' is set and this is a data block. */
   if (*mfp->mf_buffer->b_p_key != NUL) {
     data = ml_encrypt_data(mfp, data, offset, size);
-    if (data == NULL)
-      return FAIL;
   }
 
   if ((unsigned)write_eintr(mfp->mf_fd, data, size) != size)
