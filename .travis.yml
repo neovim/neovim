@@ -1,11 +1,8 @@
 language: c
-compiler:
-  - clang
-  - gcc
-before_install:
-  - ./scripts/clint.sh
-  - sudo ./scripts/travis-setup.sh 
+env:
+  - TRAVIS_BUILD_TYPE=clang/asan
+  - TRAVIS_BUILD_TYPE=gcc/ia32
+  - TRAVIS_BUILD_TYPE=gcc/unittest
+  - TRAVIS_BUILD_TYPE=clint
 script:
   - ./scripts/travis.sh
-after_success:
-  - coveralls --encoding iso-8859-1

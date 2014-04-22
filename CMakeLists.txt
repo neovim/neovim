@@ -1,6 +1,11 @@
 cmake_minimum_required (VERSION 2.8.7)
 project (NEOVIM)
 
+set(CMAKE_SYSTEM_PROCESSOR i386)
+set(CMAKE_SYSTEM_LIBRARY_PATH /lib32 /usr/lib32 /usr/local/lib32)
+set(FIND_LIBRARY_USE_LIB64_PATHS OFF)
+set(CMAKE_IGNORE_PATH /lib /usr/lib /usr/local/lib)
+
 # Point CMake at any custom modules we may ship
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
