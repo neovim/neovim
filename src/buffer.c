@@ -337,32 +337,39 @@ close_buffer (
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
     buf->b_closing = TRUE;
-    apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname,
-        FALSE, buf);
+    apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, FALSE, buf);
+
     if (!buf_valid(buf)) {
       /* Autocommands deleted the buffer. */
 aucmd_abort:
       EMSG(_(e_auabort));
       return;
     }
+
     buf->b_closing = FALSE;
-    if (abort_if_last && one_window())
+
+    if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
       goto aucmd_abort;
+    }
 
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
       buf->b_closing = TRUE;
-      apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
-          FALSE, buf);
-      if (!buf_valid(buf))
+      apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, FALSE, buf);
+
+      if (!buf_valid(buf)) {
         /* Autocommands deleted the buffer. */
         goto aucmd_abort;
+      }
+
       buf->b_closing = FALSE;
-      if (abort_if_last && one_window())
+
+      if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
         goto aucmd_abort;
+      }
     }
     if (aborting())         /* autocmds may abort script processing */
       return;
