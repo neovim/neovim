@@ -4451,13 +4451,13 @@ int do_addsub(int command, linenr_T Prenum1)
      * Put the number characters in buf2[].
      */
     if (hex == 0)
-      sprintf((char *)buf2, "%lu", n);
+      sprintf((char *)buf2, "%" PRIu64, (uint64_t)n);
     else if (hex == '0')
-      sprintf((char *)buf2, "%lo", n);
+      sprintf((char *)buf2, "%" PRIo64, (uint64_t)n);
     else if (hex && hexupper)
-      sprintf((char *)buf2, "%lX", n);
+      sprintf((char *)buf2, "%" PRIX64, (uint64_t)n);
     else
-      sprintf((char *)buf2, "%lx", n);
+      sprintf((char *)buf2, "%" PRIx64, (uint64_t)n);
     length -= (int)STRLEN(buf2);
 
     /*
