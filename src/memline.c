@@ -508,10 +508,7 @@ void ml_set_crypt_key(buf_T *buf, char_u *old_key, int old_cm)
 
             /* going one block deeper in the tree, new entry in
              * stack */
-            if ((top = ml_add_stack(buf)) < 0) {
-              ++error;
-              break;                                /* out of memory */
-            }
+            top = ml_add_stack(buf);
             ip = &(buf->b_ml.ml_stack[top]);
             ip->ip_bnum = bnum;
             ip->ip_index = idx;
@@ -1310,10 +1307,7 @@ void ml_recover(void)
           /*
            * going one block deeper in the tree
            */
-          if ((top = ml_add_stack(buf)) < 0) {          /* new entry in stack */
-            ++error;
-            break;                          /* out of memory */
-          }
+          top = ml_add_stack(buf);  // new entry in stack
           ip = &(buf->b_ml.ml_stack[top]);
           ip->ip_bnum = bnum;
           ip->ip_index = idx;
@@ -3190,8 +3184,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
       goto error_block;
     }
 
-    if ((top = ml_add_stack(buf)) < 0)          /* add new entry to stack */
-      goto error_block;
+    top = ml_add_stack(buf);  // add new entry to stack
     ip = &(buf->b_ml.ml_stack[top]);
     ip->ip_bnum = bnum;
     ip->ip_low = low;
@@ -3262,25 +3255,19 @@ error_noblock:
 /*
  * add an entry to the info pointer stack
  *
- * return -1 for failure, number of the new entry otherwise
+ * return number of the new entry
  */
 static int ml_add_stack(buf_T *buf)
 {
-  int top;
-  infoptr_T   *newstack;
-
-  top = buf->b_ml.ml_stack_top;
+  int top = buf->b_ml.ml_stack_top;
 
   /* may have to increase the stack size */
   if (top == buf->b_ml.ml_stack_size) {
     CHECK(top > 0, _("Stack size increases"));     /* more than 5 levels??? */
 
-    newstack = (infoptr_T *)alloc((unsigned)sizeof(infoptr_T) *
-        (buf->b_ml.ml_stack_size + STACK_INCR));
-    if (newstack == NULL)
-      return -1;
-    memmove(newstack, buf->b_ml.ml_stack,
-        (size_t)top * sizeof(infoptr_T));
+    infoptr_T *newstack = xmalloc(sizeof(infoptr_T) *
+                                    (buf->b_ml.ml_stack_size + STACK_INCR));
+    memmove(newstack, buf->b_ml.ml_stack, (size_t)top * sizeof(infoptr_T));
     vim_free(buf->b_ml.ml_stack);
     buf->b_ml.ml_stack = newstack;
     buf->b_ml.ml_stack_size += STACK_INCR;
@@ -4160,8 +4147,7 @@ void ml_setflags(buf_T *buf)
 
 /*
  * If "data" points to a data block encrypt the text in it and return a copy
- * in allocated memory.  Return NULL when out of memory.
- * Otherwise return "data".
+ * in allocated memory.
  */
 char_u *ml_encrypt_data(memfile_T *mfp, char_u *data, off_t offset, unsigned size)
 {
@@ -4174,9 +4160,7 @@ char_u *ml_encrypt_data(memfile_T *mfp, char_u *data, off_t offset, unsigned siz
   if (dp->db_id != DATA_ID)
     return data;
 
-  new_data = (char_u *)alloc(size);
-  if (new_data == NULL)
-    return NULL;
+  new_data = xmalloc(size);
   head_end = (char_u *)(&dp->db_index[dp->db_line_count]);
   text_start = (char_u *)dp + dp->db_txt_start;
   text_len = size - dp->db_txt_start;
@@ -4291,12 +4275,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
   if (buf->b_ml.ml_usedchunks == -1 || len == 0)
     return;
   if (buf->b_ml.ml_chunksize == NULL) {
-    buf->b_ml.ml_chunksize = (chunksize_T *)
-                             alloc((unsigned)sizeof(chunksize_T) * 100);
-    if (buf->b_ml.ml_chunksize == NULL) {
-      buf->b_ml.ml_usedchunks = -1;
-      return;
-    }
+    buf->b_ml.ml_chunksize = xmalloc(sizeof(chunksize_T) * 100);
     buf->b_ml.ml_numchunks = 100;
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;

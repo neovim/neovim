@@ -793,7 +793,7 @@ get_register (
   if (copy) {
     if (reg->y_size == 0) {
       reg->y_array = NULL;
-    } else
+    } else {
       reg->y_array = xmalloc(reg->y_size * sizeof(char_u *));
       for (linenr_T i = 0; i < reg->y_size; ++i) {
         reg->y_array[i] = vim_strsave(y_current->y_array[i]);
