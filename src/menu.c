@@ -905,9 +905,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
 
     menu = root_menu;
     if (after_dot != arg) {
-      path_name = alloc((unsigned)(after_dot - arg));
-      if (path_name == NULL)
-        return NULL;
+      path_name = xmalloc(after_dot - arg);
       vim_strncpy(path_name, arg, after_dot - arg - 1);
     }
     name = path_name;
