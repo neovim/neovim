@@ -2361,14 +2361,13 @@ int prepare_crypt_read(FILE *fp)
  */
 char_u *prepare_crypt_write(buf_T *buf, int *lenp)
 {
-  char_u  *header;
+  char_u  *header = xcalloc(1, CRYPT_MAGIC_LEN + CRYPT_SALT_LEN_MAX
+                   + CRYPT_SEED_LEN_MAX + 2);
   int seed_len = crypt_seed_len[get_crypt_method(buf)];
   int salt_len = crypt_salt_len[get_crypt_method(buf)];
   char_u  *salt;
   char_u  *seed;
 
-  header = alloc_clear(CRYPT_MAGIC_LEN + CRYPT_SALT_LEN_MAX
-      + CRYPT_SEED_LEN_MAX + 2);
   crypt_push_state();
   use_crypt_method = get_crypt_method(buf);      /* select zip or blowfish */
   vim_strncpy(header, (char_u *)crypt_magic[use_crypt_method],

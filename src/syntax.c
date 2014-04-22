@@ -1123,7 +1123,8 @@ static void syn_stack_alloc(void)
         len = syn_block->b_sst_len - syn_block->b_sst_freecount + 2;
     }
 
-    sstp = (synstate_T *)alloc_clear((unsigned)(len * sizeof(synstate_T)));
+    assert(len >= 0);
+    sstp = xcalloc(len, sizeof(synstate_T));
 
     to = sstp - 1;
     if (syn_block->b_sst_array != NULL) {
@@ -4553,7 +4554,7 @@ syn_cmd_region (
       ppp = (struct pat_ptr *)alloc((unsigned)sizeof(struct pat_ptr));
       ppp->pp_next = pat_ptrs[item];
       pat_ptrs[item] = ppp;
-      ppp->pp_synp = (synpat_T *)alloc_clear((unsigned)sizeof(synpat_T));
+      ppp->pp_synp = xcalloc(1, sizeof(synpat_T));
 
       /*
        * Get the syntax pattern and the following offset(s).

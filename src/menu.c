@@ -373,7 +373,7 @@ add_menu_path (
       }
 
       /* Not already there, so lets add it */
-      menu = (vimmenu_T *)alloc_clear((unsigned)sizeof(vimmenu_T));
+      menu = xcalloc(1, sizeof(vimmenu_T));
 
       menu->modes = modes;
       menu->enabled = MENU_ALL_MODES;

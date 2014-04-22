@@ -2853,8 +2853,7 @@ static int read_prefcond_section(FILE *fd, slang_T *lp)
   if (cnt <= 0)
     return SP_FORMERROR;
 
-  lp->sl_prefprog = (regprog_T **)alloc_clear(
-      (unsigned)sizeof(regprog_T *) * cnt);
+  lp->sl_prefprog = xcalloc(cnt, sizeof(regprog_T *));
   lp->sl_prefixcnt = cnt;
 
   for (i = 0; i < cnt; ++i) {
@@ -6523,15 +6522,7 @@ getroom (
       bl = NULL;
     else
       /* Allocate a block of memory. It is not freed until much later. */
-      bl = (sblock_T *)alloc_clear(
-          (unsigned)(sizeof(sblock_T) + SBLOCKSIZE));
-    if (bl == NULL) {
-      if (!spin->si_did_emsg) {
-        EMSG(_("E845: Insufficient memory, word list will be incomplete"));
-        spin->si_did_emsg = TRUE;
-      }
-      return NULL;
-    }
+      bl = xcalloc(1, (sizeof(sblock_T) + SBLOCKSIZE));
     bl->sb_next = spin->si_blocks;
     spin->si_blocks = bl;
     bl->sb_used = 0;

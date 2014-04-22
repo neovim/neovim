@@ -799,8 +799,6 @@ static int get_var_tv(char_u *name, int len, typval_T *rettv,
                       int no_autoload);
 static int handle_subscript(char_u **arg, typval_T *rettv, int evaluate,
                             int verbose);
-static typval_T *alloc_tv(void);
-static typval_T *alloc_string_tv(char_u *string);
 static void init_tv(typval_T *varp);
 static long get_tv_number(typval_T *varp);
 static linenr_T get_tv_lnum(typval_T *argvars);
@@ -1005,17 +1003,13 @@ int current_func_returned(void)
  */
 void set_internal_string_var(char_u *name, char_u *value)
 {
-  char_u      *val;
-  typval_T    *tvp;
+  char_u *val = vim_strsave(value);
+  typval_T *tvp = xcalloc(1, sizeof(typval_T));
 
-  val = vim_strsave(value);
-  if (val != NULL) {
-    tvp = alloc_string_tv(val);
-    if (tvp != NULL) {
-      set_var(name, tvp, FALSE);
-      free_tv(tvp);
-    }
-  }
+  tvp->v_type = VAR_STRING;
+  tvp->vval.v_string = val;
+  set_var(name, tvp, FALSE);
+  free_tv(tvp);
 }
 
 static lval_T   *redir_lval = NULL;
@@ -1048,11 +1042,7 @@ var_redir_start (
   if (redir_varname == NULL)
     return FAIL;
 
-  redir_lval = (lval_T *)alloc_clear((unsigned)sizeof(lval_T));
-  if (redir_lval == NULL) {
-    var_redir_stop();
-    return FAIL;
-  }
+  redir_lval = xcalloc(1, sizeof(lval_T));
 
   /* The output is stored in growarray "redir_ga" until redirection ends. */
   ga_init(&redir_ga, (int)sizeof(char), 500);
@@ -2871,16 +2861,12 @@ static void list_fix_watch(list_T *l, listitem_T *item)
  */
 void *eval_for_line(char_u *arg, int *errp, char_u **nextcmdp, int skip)
 {
-  forinfo_T   *fi;
+  forinfo_T   *fi = xcalloc(1, sizeof(forinfo_T));
   char_u      *expr;
   typval_T tv;
   list_T      *l;
 
   *errp = TRUE;         /* default: there is an error */
-
-  fi = (forinfo_T *)alloc_clear(sizeof(forinfo_T));
-  if (fi == NULL)
-    return NULL;
 
   expr = skip_var_list(arg, &fi->fi_varcount, &fi->fi_semicolon);
   if (expr == NULL)
@@ -5143,18 +5129,15 @@ failret:
  */
 list_T *list_alloc(void)
 {
-  list_T  *l;
+  list_T *list = xcalloc(1, sizeof(list_T));
 
-  l = (list_T *)alloc_clear(sizeof(list_T));
-  if (l != NULL) {
-    /* Prepend the list to the list of lists for garbage collection. */
-    if (first_list != NULL)
-      first_list->lv_used_prev = l;
-    l->lv_used_prev = NULL;
-    l->lv_used_next = first_list;
-    first_list = l;
-  }
-  return l;
+  /* Prepend the list to the list of lists for garbage collection. */
+  if (first_list != NULL)
+    first_list->lv_used_prev = list;
+  list->lv_used_prev = NULL;
+  list->lv_used_next = first_list;
+  first_list = list;
+  return list;
 }
 
 /*
@@ -16203,33 +16186,6 @@ handle_subscript (
 }
 
 /*
- * Allocate memory for a variable type-value, and make it empty (0 or NULL
- * value).
- */
-static typval_T *alloc_tv(void)
-{
-  return (typval_T *)alloc_clear((unsigned)sizeof(typval_T));
-}
-
-/*
- * Allocate memory for a variable type-value, and assign a string to it.
- * The string "s" must have been allocated, it is consumed.
- * Return NULL for out of memory, the variable otherwise.
- */
-static typval_T *alloc_string_tv(char_u *s)
-{
-  typval_T    *rettv;
-
-  rettv = alloc_tv();
-  if (rettv != NULL) {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = s;
-  } else
-    vim_free(s);
-  return rettv;
-}
-
-/*
  * Free the memory for a variable type-value.
  */
 void free_tv(typval_T *varp)
@@ -16603,8 +16559,7 @@ void new_script_vars(scid_T id)
     }
 
     while (ga_scripts.ga_len < id) {
-      sv = SCRIPT_SV(ga_scripts.ga_len + 1) =
-             (scriptvar_T *)alloc_clear(sizeof(scriptvar_T));
+      sv = SCRIPT_SV(ga_scripts.ga_len + 1) = xcalloc(1, sizeof(scriptvar_T));
       init_var_dict(&sv->sv_dict, &sv->sv_var, VAR_SCOPE);
       ++ga_scripts.ga_len;
     }
@@ -18195,14 +18150,19 @@ static void func_do_profile(ufunc_T *fp)
   fp->uf_tm_count = 0;
   profile_zero(&fp->uf_tm_self);
   profile_zero(&fp->uf_tm_total);
-  if (fp->uf_tml_count == NULL)
-    fp->uf_tml_count = (int *)alloc_clear((unsigned) (sizeof(int) * len));
-  if (fp->uf_tml_total == NULL)
-    fp->uf_tml_total = (proftime_T *)alloc_clear((unsigned)
-        (sizeof(proftime_T) * len));
-  if (fp->uf_tml_self == NULL)
-    fp->uf_tml_self = (proftime_T *)alloc_clear((unsigned)
-        (sizeof(proftime_T) * len));
+
+  if (fp->uf_tml_count == NULL) {
+    fp->uf_tml_count = xcalloc(len, sizeof(int));
+  }
+
+  if (fp->uf_tml_total == NULL) {
+    fp->uf_tml_total = xcalloc(len, sizeof(proftime_T));
+  }
+
+  if (fp->uf_tml_self == NULL) {
+    fp->uf_tml_self = xcalloc(len, sizeof(proftime_T));
+  }
+
   fp->uf_tml_idx = -1;
   if (fp->uf_tml_count == NULL || fp->uf_tml_total == NULL
       || fp->uf_tml_self == NULL)
@@ -19048,10 +19008,8 @@ int do_return(exarg_T *eap, int reanimate, int is_cmd, void *rettv)
 
       if (rettv != NULL) {
         /* Store the value of the pending return. */
-        if ((cstack->cs_rettv[idx] = alloc_tv()) != NULL)
-          *(typval_T *)cstack->cs_rettv[idx] = *(typval_T *)rettv;
-        else
-          EMSG(_(e_outofmem));
+        cstack->cs_rettv[idx] = xcalloc(1, sizeof(typval_T));
+        *(typval_T *)cstack->cs_rettv[idx] = *(typval_T *)rettv;
       } else
         cstack->cs_rettv[idx] = NULL;
 
