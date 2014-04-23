@@ -1155,7 +1155,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   if (os_file_exists(file_name)) {
     if (name == NULL || !forceit) {
       /* Check we can read it and it's an undo file. */
-      fd = mch_open((char *)file_name, O_RDONLY|O_EXTRA, 0);
+      fd = mch_open((char *)file_name, O_RDONLY, 0);
       if (fd < 0) {
         if (name != NULL || p_verbose > 0) {
           if (name == NULL)
@@ -1200,7 +1200,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   }
 
   fd = mch_open((char *)file_name,
-      O_CREAT|O_EXTRA|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
+      O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
   if (fd < 0) {
     EMSG2(_(e_not_open), file_name);
     goto theend;

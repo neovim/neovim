@@ -1656,12 +1656,12 @@ void write_viminfo(char_u *file, int forceit)
 # ifdef UNIX
       umask_save = umask(0);
       fd = mch_open((char *)tempname,
-          O_CREAT|O_EXTRA|O_EXCL|O_WRONLY|O_NOFOLLOW,
+          O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW,
           (int)((st_old.st_mode & 0777) | 0600));
       (void)umask(umask_save);
 # else
       fd = mch_open((char *)tempname,
-          O_CREAT|O_EXTRA|O_EXCL|O_WRONLY|O_NOFOLLOW, 0600);
+          O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, 0600);
 # endif
       if (fd < 0)
         fp_out = NULL;

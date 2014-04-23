@@ -34,12 +34,6 @@
 # if (SIZEOF_INT == 0)
 Error: configure did not run properly.Check auto/config.log.
 # endif
-
-/*
- * Cygwin may have fchdir() in a newer release, but in most versions it
- * doesn't work well and avoiding it keeps the binary backward compatible.
- */
-
 #endif
 
 /* user ID of root is usually zero, but not for everybody */
@@ -977,12 +971,6 @@ typedef enum {
 # define READBIN    "r"
 # define APPENDBIN  "a"
 #endif
-
-/*
- * EMX doesn't have a global way of making open() use binary I/O.
- * Use O_BINARY for all open() calls.
- */
-# define O_EXTRA    0
 
 #ifndef O_NOFOLLOW
 # define O_NOFOLLOW 0
