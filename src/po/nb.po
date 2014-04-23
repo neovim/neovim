@@ -78,8 +78,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: Det finnes ingen listede buffere"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Bufferen %ld finnes ikke"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Bufferen %<PRId64> finnes ikke"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Kan ikke gå forbi siste buffer"
@@ -88,9 +88,9 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Kan ikke gå forbi første buffer"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: Ikke lagret siden forrige forandring av bufferen %ld (legg til ! for å "
+"E89: Ikke lagret siden forrige forandring av bufferen %<PRId64> (legg til ! for å "
 "overstyre)"
 
 msgid "E90: Cannot unload last buffer"
@@ -100,8 +100,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Advarsel: Listen med filnavn er overfylt"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: Fant ikke bufferen %ld"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: Fant ikke bufferen %<PRId64>"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -112,8 +112,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: Ingen samsvarende buffer for %s"
 
 #, c-format
-msgid "line %ld"
-msgstr "linje %ld"
+msgid "line %<PRId64>"
+msgstr "linje %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: En buffer med dette navnet finnes allerede"
@@ -138,12 +138,12 @@ msgid "1 line --%d%%--"
 msgstr "1 linje --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld linjer --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> linjer --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "linje %ld av %ld --%d%%-- kol "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "linje %<PRId64> av %<PRId64> --%d%%-- kol "
 
 msgid "[No Name]"
 msgstr "[Uten navn]"
@@ -193,12 +193,12 @@ msgid "Signs for %s:"
 msgstr "Skilt for %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    linje=%ld  id=%d  navn=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    linje=%<PRId64>  id=%d  navn=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Kan ikke sammenligne flere enn %ld buffere"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Kan ikke sammenligne flere enn %<PRId64> buffere"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: Kan ikke lage differansefiler"
@@ -348,8 +348,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: Uventede tegn i :let"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: Listeindeks utenfor område: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: Listeindeks utenfor område: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -698,8 +698,8 @@ msgid "%s aborted"
 msgstr "%s avbrutt"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s returnerer #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s returnerer #%<PRId64>"
 
 #, c-format
 msgid "%s returning %s"
@@ -746,12 +746,12 @@ msgid "1 line moved"
 msgstr "1 linje flyttet"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld linjer flyttet"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> linjer flyttet"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld linjer filtrert"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> linjer filtrert"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Filter* Autokommandoer må ikke forandre nåværende buffer"
@@ -834,8 +834,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: Swapfilen finnes: %s (:silent! overstyrer)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: Mangler filnavn for buffer %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: Mangler filnavn for buffer %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Filen ble ikke lagret: Lagring er deaktivert med 'write'-valget"
@@ -878,19 +878,19 @@ msgid "1 substitution"
 msgstr "1 erstatning"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld treff"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> treff"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld erstatninger"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> erstatninger"
 
 msgid " on 1 line"
 msgstr " i 1 linje"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " i %ld linjer"
+msgid " on %<PRId64> lines"
+msgstr " i %<PRId64> linjer"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: Kan ikke gjøre :global rekursiv"
@@ -973,8 +973,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Ugyldig buffernavn: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: Ulovlig skilt-ID: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: Ulovlig skilt-ID: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (IKKE FUNNET)"
@@ -989,16 +989,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Går inn i debuggingsmodus. Skriv \"cont\" for å fortsette."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "linje %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "linje %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "kommando: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Stoppunkt i \"%s%s\" linje %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Stoppunkt i \"%s%s\" linje %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -1008,8 +1008,8 @@ msgid "No breakpoints defined"
 msgstr "Ingen stoppunkt definert"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  linje %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  linje %<PRId64>"
 
 msgid "E750: First use :profile start <fname>"
 msgstr "E750: Bruk først :profile start <filnavn>"
@@ -1065,16 +1065,16 @@ msgid "could not source \"%s\""
 msgstr "kunne ikke kjøre \"%s\""
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "linje %ld: Kunne ikke kjøre \"%s\""
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "linje %<PRId64>: Kunne ikke kjøre \"%s\""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "kjører \"%s\""
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "linje %ld: kjører \"%s\""
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "linje %<PRId64>: kjører \"%s\""
 
 #, c-format
 msgid "finished sourcing %s"
@@ -1166,8 +1166,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: 1 annen fil å redigere"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: %ld andre filer å redigere"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: %<PRId64> andre filer å redigere"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Kommandoen finnes allerede: Legg til ! for å erstatte den"
@@ -1355,8 +1355,8 @@ msgid "Exception discarded: %s"
 msgstr "Unntak forkastet: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, linje %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, linje %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1554,12 +1554,12 @@ msgid "[crypted]"
 msgstr "[kryptert]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[KONVERTERINGSFEIL i linje %ld]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[KONVERTERINGSFEIL i linje %<PRId64>]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[ULOVLIG BYTE i linje %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[ULOVLIG BYTE i linje %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[LESEFEIL]"
@@ -1703,15 +1703,15 @@ msgid "1 line, "
 msgstr "1 linje, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld linjer, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> linjer, "
 
 msgid "1 character"
 msgstr "1 tegn"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld tegn"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> tegn"
 
 msgid "[noeol]"
 msgstr "[ingenlinjeslutt]"
@@ -2128,19 +2128,19 @@ msgid "Font1: %s\n"
 msgstr "Font1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "Font%ld-bredde er ikke to ganger bredden av font0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "Font%<PRId64>-bredde er ikke to ganger bredden av font0\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Font0-bredde: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Font0-bredde: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Font1-bredde: %ld\n"
+"Font1-bredde: %<PRId64>\n"
 "\n"
 
 msgid "Invalid font specification"
@@ -2317,8 +2317,8 @@ msgid "Added cscope database %s"
 msgstr "La til cscope-database %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: Feil under lesing av cscope-forbindelse %ld"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: Feil under lesing av cscope-forbindelse %<PRId64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: Ukjent cscope-søketype"
@@ -3508,12 +3508,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: Bevaring feilet"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: Ugyldig lnum: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: Ugyldig lnum: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: Kan ikke finne linje %ld"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: Kan ikke finne linje %<PRId64>"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: Pekerblokk-id feil 3"
@@ -3531,8 +3531,8 @@ msgid "deleted block 1?"
 msgstr "slettet blokk 1?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Kan ikke finne linje %ld"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Kan ikke finne linje %<PRId64>"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: Pekerblokk-id feil"
@@ -3541,12 +3541,12 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count er null"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: Linjenummer utenfor område: %ld forbi slutten"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: Linjenummer utenfor område: %<PRId64> forbi slutten"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: Linjeantall feil i blokk %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: Linjeantall feil i blokk %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "Stackstørrelse øker"
@@ -3735,8 +3735,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "Trykk ENTER eller skriv kommando for å fortsette"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s linje %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s linje %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- Mer --"
@@ -3802,12 +3802,12 @@ msgid "1 line less"
 msgstr "1 linje fjernet"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld linjer lagt til"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> linjer lagt til"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld linjer fjernet"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> linjer fjernet"
 
 msgid " (Interrupted)"
 msgstr " (Avbrutt)"
@@ -3829,29 +3829,29 @@ msgstr "FEIL: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[bytes] totalt alloc-frigjort %lu-%lu, i bruk %lu, topp-bruk %lu\n"
+"[bytes] totalt alloc-frigjort %<PRIu64>-%<PRIu64>, i bruk %<PRIu64>, topp-bruk %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[kall] totale \"re/malloc()\"-er %lu, totale \"free()\"-er %lu\n"
+"[kall] totale \"re/malloc()\"-er %<PRIu64>, totale \"free()\"-er %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: Linjen blir for lang"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Intern feil: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Intern feil: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Ikke mer ledig hukommelse! (Reserverer %lu bytes)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Ikke mer ledig hukommelse! (Reserverer %<PRIu64> bytes)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -3921,8 +3921,8 @@ msgid "read from Netbeans socket"
 msgstr "les fra Netbeans-socket"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: Mistet NetBeans-forbindelse for buffer %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Mistet NetBeans-forbindelse for buffer %<PRId64>"
 
 msgid "E505: "
 msgstr "E505: "
@@ -3966,23 +3966,23 @@ msgid "1 line %sed %d times"
 msgstr "1 linje \"%s\"-et %d ganger"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld linjer \"%s\"-et 1 gang"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> linjer \"%s\"-et 1 gang"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld linjer \"%s\"-et %d ganger"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> linjer \"%s\"-et %d ganger"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld linjer å rykke inn ... "
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> linjer å rykke inn ... "
 
 msgid "1 line indented "
 msgstr "1 linje rykket inn "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld linjer rykket inn "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> linjer rykket inn "
 
 msgid "E748: No previously used register"
 msgstr "E748: Register ikke tidligere brukt"
@@ -3995,12 +3995,12 @@ msgid "1 line changed"
 msgstr "1 linje forandret"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld linjer forandret"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> linjer forandret"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "frigjør %ld linjer"
+msgid "freeing %<PRId64> lines"
+msgstr "frigjør %<PRId64> linjer"
 
 msgid "block of 1 line yanked"
 msgstr "blokk med 1 linje kopiert til utklippstavlen"
@@ -4009,12 +4009,12 @@ msgid "1 line yanked"
 msgstr "1 linje kopiert til utklippstavlen"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "blokk med %ld linjer kopiert til utklippstavlen"
+msgid "block of %<PRId64> lines yanked"
+msgstr "blokk med %<PRId64> linjer kopiert til utklippstavlen"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld linjer kopiert til utklippstavlen"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> linjer kopiert til utklippstavlen"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4044,35 +4044,35 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: Ukjent registertype %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Kol; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Kol; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Valgte %s%ld av %ld linjer; %ld av %ld ord; %ld av %ld bytes"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Valgte %s%<PRId64> av %<PRId64> linjer; %<PRId64> av %<PRId64> ord; %<PRId64> av %<PRId64> bytes"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
 msgstr ""
-"Valgte %s%ld av %ld linjer; %ld av %ld ord; %ld av %ld tegn; %ld av %ld bytes"
+"Valgte %s%<PRId64> av %<PRId64> linjer; %<PRId64> av %<PRId64> ord; %<PRId64> av %<PRId64> tegn; %<PRId64> av %<PRId64> bytes"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Kol %s av %s; Linje %ld av %ld; Ord %ld av %ld; Byte %ld av %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Kol %s av %s; Linje %<PRId64> av %<PRId64>; Ord %<PRId64> av %<PRId64>; Byte %<PRId64> av %<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"Kol %s av %s; linje %ld av %ld; ord %ld av %ld; tegn %ld av %ld; byte %ld av "
-"%ld"
+"Kol %s av %s; linje %<PRId64> av %<PRId64>; ord %<PRId64> av %<PRId64>; tegn %<PRId64> av %<PRId64>; byte %<PRId64> av "
+"%<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld for BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> for BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Side %N"
@@ -4238,8 +4238,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Trenger Amigados versjon 2.04 eller nyere\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Trenger %s versjon %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Trenger %s versjon %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Kan ikke åpne NIL:\n"
@@ -4321,8 +4321,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: Mottok dødelig signal\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Åpning av X-display tok %ld millisekunder"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Åpning av X-display tok %<PRId64> millisekunder"
 
 msgid ""
 "\n"
@@ -4979,7 +4979,7 @@ msgstr "Pakket %d av %d noder; %d (%d%%) igjen"
 #~ msgstr ""
 
 #, c-format
-#~ msgid "Number of words after soundfolding: %ld"
+#~ msgid "Number of words after soundfolding: %<PRId64>"
 #~ msgstr ""
 
 #, c-format
@@ -5015,8 +5015,8 @@ msgid "Done!"
 msgstr "Ferdig!"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' har ikke %ld poster"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' har ikke %<PRId64> poster"
 
 #, c-format
 msgid "Word removed from %s"
@@ -5033,8 +5033,8 @@ msgid "Sorry, no suggestions"
 msgstr "Dessverre, ingen forslag"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Dessverre bare %ld forslag"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Dessverre bare %<PRId64> forslag"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5335,8 +5335,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Formatfeil i tagfil \"%s\""
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Før byte %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Før byte %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5399,8 +5399,8 @@ msgid "Already at newest change"
 msgstr "Allerede ved nyeste forandring"
 
 #, c-format
-msgid "Undo number %ld not found"
-msgstr "Angrenummer %ld ikke funnet"
+msgid "Undo number %<PRId64> not found"
+msgstr "Angrenummer %<PRId64> ikke funnet"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: Gale linjenummer"
@@ -5424,8 +5424,8 @@ msgid "changes"
 msgstr "forandringer"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "før"
@@ -5440,8 +5440,8 @@ msgid "number changes  time"
 msgstr "nummer forandringer tidspunkt"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "%ld sekunder siden"
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> sekunder siden"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: undojoin er ikke tillatt etter undo"

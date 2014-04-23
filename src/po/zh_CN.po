@@ -67,8 +67,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: 没有可列出的缓冲区"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: 缓冲区 %ld 不存在"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: 缓冲区 %<PRId64> 不存在"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: 无法切换，已是最后一个缓冲区"
@@ -77,8 +77,8 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: 无法切换，已是第一个缓冲区"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
-msgstr "E89: 缓冲区 %ld 已修改但尚未保存 (请加 ! 强制执行)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: 缓冲区 %<PRId64> 已修改但尚未保存 (请加 ! 强制执行)"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: 无法释放最后一个缓冲区"
@@ -87,8 +87,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: 警告: 文件名过多"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: 找不到缓冲区 %ld"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: 找不到缓冲区 %<PRId64>"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -99,8 +99,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: 没有匹配的缓冲区 %s"
 
 #, c-format
-msgid "line %ld"
-msgstr "第 %ld 行"
+msgid "line %<PRId64>"
+msgstr "第 %<PRId64> 行"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: 已有缓冲区使用该名称"
@@ -125,12 +125,12 @@ msgid "1 line --%d%%--"
 msgstr "1 行 --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld 行 --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> 行 --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "行 %ld / %ld --%d%%-- 列 "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "行 %<PRId64> / %<PRId64> --%d%%-- 列 "
 
 msgid "[No Name]"
 msgstr "[未命名]"
@@ -180,12 +180,12 @@ msgid "Signs for %s:"
 msgstr "%s 的 Signs:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    行=%ld  id=%d  名称=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    行=%<PRId64>  id=%d  名称=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: 不能比较(diff) %ld 个以上的缓冲区"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: 不能比较(diff) %<PRId64> 个以上的缓冲区"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: 无法创建 diff"
@@ -327,8 +327,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: :let 中出现异常字符"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: List 索引超出范围: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: List 索引超出范围: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -657,8 +657,8 @@ msgid "%s aborted"
 msgstr "%s 已中止"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s 返回 #%ld "
+msgid "%s returning #%<PRId64>"
+msgstr "%s 返回 #%<PRId64> "
 
 #, c-format
 msgid "%s returning %s"
@@ -705,12 +705,12 @@ msgid "1 line moved"
 msgstr "移动了 1 行"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "移动了 %ld 行"
+msgid "%<PRId64> lines moved"
+msgstr "移动了 %<PRId64> 行"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "过滤了 %ld 行"
+msgid "%<PRId64> lines filtered"
+msgstr "过滤了 %<PRId64> 行"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Filter* 自动命令不可以改变当前缓冲区"
@@ -796,8 +796,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: 交换文件已存在: %s (:silent! 强制执行)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: 缓冲区 %ld 没有文件名"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: 缓冲区 %<PRId64> 没有文件名"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: 文件未写入: 写入被 'write' 选项禁用"
@@ -840,19 +840,19 @@ msgid "1 substitution"
 msgstr "1 次替换，"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld 个匹配，"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> 个匹配，"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld 次替换，"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> 次替换，"
 
 msgid " on 1 line"
 msgstr "共 1 行"
 
 #, c-format
-msgid " on %ld lines"
-msgstr "共 %ld 行"
+msgid " on %<PRId64> lines"
+msgstr "共 %<PRId64> 行"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: :global 不能递归执行"
@@ -936,8 +936,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: 无效的缓冲区名: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: 无效的 sign ID: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: 无效的 sign ID: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (找不到)"
@@ -952,16 +952,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "进入调试模式。输入 \"cont\" 继续运行。"
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "第 %ld 行: %s"
+msgid "line %<PRId64>: %s"
+msgstr "第 %<PRId64> 行: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "命令: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "断点 \"%s%s\" 第 %ld 行"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "断点 \"%s%s\" 第 %<PRId64> 行"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -971,8 +971,8 @@ msgid "No breakpoints defined"
 msgstr "没有定义断点"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  第 %ld 行"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  第 %<PRId64> 行"
 
 msgid "E750: First use :profile start <fname>"
 msgstr "E750: 请先使用 :profile start <fname>"
@@ -1028,16 +1028,16 @@ msgid "could not source \"%s\""
 msgstr "不能执行 \"%s\""
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "第 %ld 行: 不能执行 \"%s\""
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "第 %<PRId64> 行: 不能执行 \"%s\""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "执行 \"%s\""
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "第 %ld 行: 执行 \"%s\""
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "第 %<PRId64> 行: 执行 \"%s\""
 
 #, c-format
 msgid "finished sourcing %s"
@@ -1126,8 +1126,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: 还有 1 个文件未编辑"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: 还有 %ld 个文件未编辑"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: 还有 %<PRId64> 个文件未编辑"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: 命令已存在: 请加 ! 强制替换"
@@ -1305,8 +1305,8 @@ msgid "Exception discarded: %s"
 msgstr "丢弃异常: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s，第 %ld 行"
+msgid "%s, line %<PRId64>"
+msgstr "%s，第 %<PRId64> 行"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1510,12 +1510,12 @@ msgid "[crypted]"
 msgstr "[已加密]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[第 %ld 行转换错误]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[第 %<PRId64> 行转换错误]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[第 %ld 行无效字符]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[第 %<PRId64> 行无效字符]"
 
 msgid "[READ ERRORS]"
 msgstr "[读错误]"
@@ -1654,15 +1654,15 @@ msgid "1 line, "
 msgstr "1 行，"
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld 行，"
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> 行，"
 
 msgid "1 character"
 msgstr "1 个字符"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld 个字符"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> 个字符"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -2074,19 +2074,19 @@ msgid "Font1: %s\n"
 msgstr "字体1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "字体%ld的宽度不是字体0的两倍\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "字体%<PRId64>的宽度不是字体0的两倍\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "字体0的宽度：%ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "字体0的宽度：%<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"字体1的宽度: %ld\n"
+"字体1的宽度: %<PRId64>\n"
 "\n"
 
 msgid "Invalid font specification"
@@ -2263,8 +2263,8 @@ msgid "Added cscope database %s"
 msgstr "添加了 cscope 数据库 %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: 读取 cscope 连接 %ld 出错"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: 读取 cscope 连接 %<PRId64> 出错"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: 未知的 cscope 查找类型"
@@ -3419,12 +3419,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: 保留失败"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: 无效的 lnum: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: 无效的 lnum: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: 找不到第 %ld 行"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: 找不到第 %<PRId64> 行"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: 指针块 id 错误 3"
@@ -3442,8 +3442,8 @@ msgid "deleted block 1?"
 msgstr "删除了块 1？"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: 找不到第 %ld 行"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: 找不到第 %<PRId64> 行"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: 指针块 id 错误"
@@ -3452,12 +3452,12 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count 为零"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: 行号超出范围: %ld 超出结尾"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: 行号超出范围: %<PRId64> 超出结尾"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: 块 %ld 行数错误"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: 块 %<PRId64> 行数错误"
 
 msgid "Stack size increases"
 msgstr "堆栈大小增加"
@@ -3641,8 +3641,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "请按 ENTER 或其它命令继续"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s 第 %ld 行"
+msgid "%s line %<PRId64>"
+msgstr "%s 第 %<PRId64> 行"
 
 msgid "-- More --"
 msgstr "-- 更多 --"
@@ -3708,12 +3708,12 @@ msgid "1 line less"
 msgstr "少了 1 行"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "多了 %ld 行"
+msgid "%<PRId64> more lines"
+msgstr "多了 %<PRId64> 行"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "少了 %ld 行"
+msgid "%<PRId64> fewer lines"
+msgstr "少了 %<PRId64> 行"
 
 msgid " (Interrupted)"
 msgstr " (已中断)"
@@ -3735,29 +3735,29 @@ msgstr "错误: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[字节] 总共 alloc-free %lu-%lu，使用中 %lu，高峰使用 %lu\n"
+"[字节] 总共 alloc-free %<PRIu64>-%<PRIu64>，使用中 %<PRIu64>，高峰使用 %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[调用] 总共 re/malloc(): %lu，总共 free()': %lu\n"
+"[调用] 总共 re/malloc(): %<PRIu64>，总共 free()': %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: 此行过长"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: 内部错误: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: 内部错误: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: 内存不足！(分配 %lu 字节)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: 内存不足！(分配 %<PRIu64> 字节)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -3824,8 +3824,8 @@ msgid "read from Netbeans socket"
 msgstr "从 Netbeans 套接字读取"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: 缓冲区 %ld 丢失 NetBeans 连接"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: 缓冲区 %<PRId64> 丢失 NetBeans 连接"
 
 msgid "E505: "
 msgstr "E505: "
@@ -3869,23 +3869,23 @@ msgid "1 line %sed %d times"
 msgstr "1 行 %s 了 %d 次"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld 行 %s 了 1 次"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> 行 %s 了 1 次"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld 行 %s 了 %d 次"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> 行 %s 了 %d 次"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "缩进 %ld 行…… "
+msgid "%<PRId64> lines to indent... "
+msgstr "缩进 %<PRId64> 行…… "
 
 msgid "1 line indented "
 msgstr "缩进了 1 行 "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "缩进了 %ld 行 "
+msgid "%<PRId64> lines indented "
+msgstr "缩进了 %<PRId64> 行 "
 
 msgid "E748: No previously used register"
 msgstr "E748: 没有前一个使用的寄存器"
@@ -3898,12 +3898,12 @@ msgid "1 line changed"
 msgstr "改变了 1 行"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "改变了 %ld 行"
+msgid "%<PRId64> lines changed"
+msgstr "改变了 %<PRId64> 行"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "释放了 %ld 行"
+msgid "freeing %<PRId64> lines"
+msgstr "释放了 %<PRId64> 行"
 
 msgid "block of 1 line yanked"
 msgstr "复制了 1 行的块"
@@ -3912,12 +3912,12 @@ msgid "1 line yanked"
 msgstr "复制了 1 行"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "复制了 %ld 行的块"
+msgid "block of %<PRId64> lines yanked"
+msgstr "复制了 %<PRId64> 行的块"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "复制了 %ld 行"
+msgid "%<PRId64> lines yanked"
+msgstr "复制了 %<PRId64> 行"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -3947,33 +3947,33 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: 未知的寄存器类型 %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld 列; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> 列; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "选择了 %s%ld/%ld 行; %ld/%ld 个词; %ld/%ld 个字节"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "选择了 %s%<PRId64>/%<PRId64> 行; %<PRId64>/%<PRId64> 个词; %<PRId64>/%<PRId64> 个字节"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
-msgstr "选择了 %s%ld/%ld 行; %ld/%ld 个词; %ld/%ld 个字符; %ld/%ld 个字节"
+msgstr "选择了 %s%<PRId64>/%<PRId64> 行; %<PRId64>/%<PRId64> 个词; %<PRId64>/%<PRId64> 个字符; %<PRId64>/%<PRId64> 个字节"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "第 %s/%s 列; 第 %ld/%ld 行; 第 %ld/%ld 个词; 第 %ld/%ld 个字节"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "第 %s/%s 列; 第 %<PRId64>/%<PRId64> 行; 第 %<PRId64>/%<PRId64> 个词; 第 %<PRId64>/%<PRId64> 个字节"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"第 %s/%s 列; 第 %ld/%ld 行; 第 %ld/%ld 个词; 第 %ld/%ld 个字符; 第 %ld/%ld 个"
+"第 %s/%s 列; 第 %<PRId64>/%<PRId64> 行; 第 %<PRId64>/%<PRId64> 个词; 第 %<PRId64>/%<PRId64> 个字符; 第 %<PRId64>/%<PRId64> 个"
 "字节"
 
 #, c-format
-#~ msgid "(+%ld for BOM)"
+#~ msgid "(+%<PRId64> for BOM)"
 #~ msgstr ""
 
 #~ msgid "%<%f%h%m%=Page %N"
@@ -4140,8 +4140,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "需要 Amigados 版本 2.04 以上\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "需要 %s 版本 %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "需要 %s 版本 %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "不能打开 NIL:\n"
@@ -4223,8 +4223,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: 拦截到致命信号(deadly signal)\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "打开 X display 用时 %ld 秒"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "打开 X display 用时 %<PRId64> 秒"
 
 msgid ""
 "\n"
@@ -4873,8 +4873,8 @@ msgid "Performing soundfolding..."
 msgstr "正在 soundfolding……"
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "soundfolding 后的单词数: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "soundfolding 后的单词数: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -4909,8 +4909,8 @@ msgid "Done!"
 msgstr "完成！"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' 没有 %ld 项"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' 没有 %<PRId64> 项"
 
 #, c-format
 msgid "Word removed from %s"
@@ -4927,8 +4927,8 @@ msgid "Sorry, no suggestions"
 msgstr "抱歉，没有建议"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "抱歉，只有 %ld 条建议"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "抱歉，只有 %<PRId64> 条建议"
 
 #. avoid more prompt
 #, c-format
@@ -5229,8 +5229,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Tag 文件 \"%s\" 格式错误"
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "在第 %ld 字节之前"
+msgid "Before byte %<PRId64>"
+msgstr "在第 %<PRId64> 字节之前"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5293,8 +5293,8 @@ msgid "Already at newest change"
 msgstr "已位于最新的改变"
 
 #, c-format
-msgid "Undo number %ld not found"
-msgstr "找不到撤销号 %ld"
+msgid "Undo number %<PRId64> not found"
+msgstr "找不到撤销号 %<PRId64>"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: 行号错误"
@@ -5318,8 +5318,8 @@ msgid "changes"
 msgstr "行发生改变"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s；%s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s；%s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "before"

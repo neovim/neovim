@@ -91,8 +91,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: Luetteloitua puskuria ei ole"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Puskuria %ld ei ole"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Puskuria %<PRId64> ei ole"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Viimeisen puskurin ohi ei voi edetä"
@@ -101,9 +101,9 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Ensimmäisen puskurin ohi ei voi edetä"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: Puskurin %ld muutoksia ei ole tallennettu (lisää komentoon ! "
+"E89: Puskurin %<PRId64> muutoksia ei ole tallennettu (lisää komentoon ! "
 "ohittaaksesi)"
 
 msgid "E90: Cannot unload last buffer"
@@ -113,8 +113,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Varoitus: Tiedostonimiluettelon ylivuoto"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: Puskuria %ld ei löydy"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: Puskuria %<PRId64> ei löydy"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -125,8 +125,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: %s ei täsmää yhteenkään puskuriin"
 
 #, c-format
-msgid "line %ld"
-msgstr "rivi %ld"
+msgid "line %<PRId64>"
+msgstr "rivi %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Samanniminen puskuri on jo olemassa"
@@ -151,12 +151,12 @@ msgid "1 line --%d%%--"
 msgstr "1 rivi --%d %%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld riviä --%d %%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> riviä --%d %%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "rivi %ld/%ld --%d %%-- sarake "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "rivi %<PRId64>/%<PRId64> --%d %%-- sarake "
 
 msgid "[No Name]"
 msgstr "[Nimetön]"
@@ -205,12 +205,12 @@ msgid "Signs for %s:"
 msgstr "Merkit kohteelle %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    rivi=%ld  id=%d  nimi=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    rivi=%<PRId64>  id=%d  nimi=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Ei voi diffata enempää kuin %ld puskuria"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Ei voi diffata enempää kuin %<PRId64> puskuria"
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: Ei voi lukea tai kirjoittaa väliaikaistiedostoja"
@@ -362,8 +362,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: Odottamattomia merkkejä komennossa :let"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: Indeksi %ld luettelon rajojen ulkopuolella"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: Indeksi %<PRId64> luettelon rajojen ulkopuolella"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -747,8 +747,8 @@ msgid "%s aborted"
 msgstr "%s keskeytettiin"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s palaa kohdassa #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s palaa kohdassa #%<PRId64>"
 
 #, c-format
 msgid "%s returning %s"
@@ -782,16 +782,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Siirrytään vianetsintätilaan, kirjoita cont jatkaaksesi."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "rivi %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "rivi %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "kmnt: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Katkaisukohta %s%s rivillä %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Katkaisukohta %s%s rivillä %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -801,8 +801,8 @@ msgid "No breakpoints defined"
 msgstr "Ei katkaisukohtia"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  rivi %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  rivi %<PRId64>"
 
 msgid "E750: First use \":profile start {fname}\""
 msgstr "E750: Aloita käskyllä :profile start {fname}"
@@ -861,16 +861,16 @@ msgid "could not source \"%s\""
 msgstr "ei voitu ladata %s"
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "rivi %ld: ei voitu ladata %s"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "rivi %<PRId64>: ei voitu ladata %s"
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "ladataan %s"
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "rivi %ld: ladataan %s"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "rivi %<PRId64>: ladataan %s"
 
 #, c-format
 msgid "finished sourcing %s"
@@ -928,12 +928,12 @@ msgid "1 line moved"
 msgstr "1 rivi siirretty"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld riviä siirretty"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> riviä siirretty"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld riviä suodatettu"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> riviä suodatettu"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Filter*-autocommand ei voi vaihtaa puskuria"
@@ -1016,8 +1016,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: Swap-tiedosto on jo olemassa: %s (komento :silent! ohittaa)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: Ei tiedostonimeä puskurille %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: Ei tiedostonimeä puskurille %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr ""
@@ -1075,19 +1075,19 @@ msgid "1 substitution"
 msgstr "1 korvaus"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld täsmäystä"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> täsmäystä"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld korvausta"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> korvausta"
 
 msgid " on 1 line"
 msgstr " 1 rivillä"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " %ld rivillä"
+msgid " on %<PRId64> lines"
+msgstr " %<PRId64> rivillä"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: :globalia ei voi suorittaa rekursiivisesti"
@@ -1170,8 +1170,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Virheellinen puskurin nimi: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: Virheellinen merkin tunnus: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: Virheellinen merkin tunnus: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (EI LÖYTYNYT)"
@@ -1233,8 +1233,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: vielä 1 tiedosto muokattavana"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: vielä %ld tiedostoa muokattavana"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: vielä %<PRId64> tiedostoa muokattavana"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Komento on jo olemassa, käytä !:ä korvataksesi"
@@ -1420,8 +1420,8 @@ msgid "Exception discarded: %s"
 msgstr "Poikkeus poistettu: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, rivi %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, rivi %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1627,12 +1627,12 @@ msgid "[crypted]"
 msgstr "[salattu]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[MUUNNOSVIRHE rivillä %ld]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[MUUNNOSVIRHE rivillä %<PRId64>]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[VIRHEELLINEN OKTETTI rivillä %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[VIRHEELLINEN OKTETTI rivillä %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[LUKUVIRHEITÄ]"
@@ -1725,9 +1725,9 @@ msgstr "E513: kirjoitusvirhe, muunnos epäonnistui (tyhjää fenc ohittaaksesi)"
 
 #, c-format
 msgid ""
-"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
-msgstr "E513: kirjoitusvirhe, muunnos epäonnistui rivillä %ld"
+msgstr "E513: kirjoitusvirhe, muunnos epäonnistui rivillä %<PRId64>"
 "(tyhjää fenc ohittaaksesi)"
 
 msgid "E514: write error (file system full?)"
@@ -1737,8 +1737,8 @@ msgid " CONVERSION ERROR"
 msgstr " MUUNNOSVIRHE"
 
 #, c-format
-msgid " in line %ld;"
-msgstr " rivillä %ld"
+msgid " in line %<PRId64>;"
+msgstr " rivillä %<PRId64>"
 
 msgid "[Device]"
 msgstr "[Laite]"
@@ -1799,20 +1799,20 @@ msgid "1 line, "
 msgstr "1 rivi, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld riviä, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> riviä, "
 
 msgid "1 character"
 msgstr "1 merkki"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld merkkiä"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> merkkiä"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format
-msgid "%ld characters"
-msgstr "%ld merkkiä"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> merkkiä"
 
 # ei rivinvaihtoja
 msgid "[noeol]"
@@ -2227,19 +2227,19 @@ msgid "Font1: %s\n"
 msgstr "Fontti1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "Fontti%ld:n leveys ei ole kaksi kertaa fontti0:n\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "Fontti%<PRId64>:n leveys ei ole kaksi kertaa fontti0:n\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Fontti0:n leveys: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Fontti0:n leveys: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Fontti1:n leveys: %ld\n"
+"Fontti1:n leveys: %<PRId64>\n"
 "\n"
 
 msgid "Invalid font specification"
@@ -2416,8 +2416,8 @@ msgid "Added cscope database %s"
 msgstr "Lisätty cscope-tietokanta %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: Virhe luettaessa cscope-yhteyttä %ld"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: Virhe luettaessa cscope-yhteyttä %<PRId64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: tuntematon cscope-hakutyyppi"
@@ -3638,12 +3638,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: Säilyttäminen epäonnistui"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: virheellinen lnum: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: virheellinen lnum: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: riviä %ld ei löydy"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: riviä %<PRId64> ei löydy"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: osoitinlohkon tunnus väärä 3"
@@ -3661,8 +3661,8 @@ msgid "deleted block 1?"
 msgstr "poistettu lohko 1?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Riviä %ld ei löydy"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Riviä %<PRId64> ei löydy"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: osoitinlohkon tunnus väärä"
@@ -3671,12 +3671,12 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count on nolla"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: rivinumero arvoalueen ulkopuoleta: %ld on loppua suurempi"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: rivinumero arvoalueen ulkopuoleta: %<PRId64> on loppua suurempi"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: rivimäärä väärin lohkossa %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: rivimäärä väärin lohkossa %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "Pinon koko kasvaa"
@@ -3864,8 +3864,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "Paina enteriä tai kirjoita komento aloittaaksesi "
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s rivi %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s rivi %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- Lisää --"
@@ -3934,12 +3934,12 @@ msgid "1 line less"
 msgstr "1 rivi vähemmän"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld riviä lisää"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> riviä lisää"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld riviä vähemmän"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> riviä vähemmän"
 
 msgid " (Interrupted)"
 msgstr " (Keskeytetty)"
@@ -3961,29 +3961,29 @@ msgstr "VIRHE: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[tavua] yht. alloc-free %lu-%lu, käytössä %lu, käyttöhuippu %lu\n"
+"[tavua] yht. alloc-free %<PRIu64>-%<PRIu64>, käytössä %<PRIu64>, käyttöhuippu %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[kutsut] yht. re/malloc() %lu, yht. free() %lu\n"
+"[kutsut] yht. re/malloc() %<PRIu64>, yht. free() %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: Rivistä tulee liian pitkä"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Sisäinen virhe: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Sisäinen virhe: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Muisti loppui! (varattaessa %lu tavua)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Muisti loppui! (varattaessa %<PRIu64> tavua)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -4051,8 +4051,8 @@ msgid "read from Netbeans socket"
 msgstr "luettu Netbeans-soketista"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: NetBeans-yhteys katkesi puskurille %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: NetBeans-yhteys katkesi puskurille %<PRId64>"
 
 msgid "E511: netbeans already connected"
 msgstr "E511: netbeans on yhdistetty jo"
@@ -4099,23 +4099,23 @@ msgid "1 line %sed %d times"
 msgstr "1 riviä %s %d kertaa"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld riviä %s kerran"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> riviä %s kerran"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld riviä %s %d kertaa"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> riviä %s %d kertaa"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld riviä sisennettävänä..."
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> riviä sisennettävänä..."
 
 msgid "1 line indented "
 msgstr "1 rivi sisennetty "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld riviä sisennetty "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> riviä sisennetty "
 
 msgid "E748: No previously used register"
 msgstr "E748: Ei aiemmin käytettyjä rekisterejä"
@@ -4128,12 +4128,12 @@ msgid "1 line changed"
 msgstr "1 rivi muuttui"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld riviä muuttui"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> riviä muuttui"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "vapautetaan %ld riviä"
+msgid "freeing %<PRId64> lines"
+msgstr "vapautetaan %<PRId64> riviä"
 
 msgid "block of 1 line yanked"
 msgstr "1 rivin lohko kopioitu"
@@ -4142,12 +4142,12 @@ msgid "1 line yanked"
 msgstr "1 rivi kopioitu"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "lohko %ld riviltä kopioitu"
+msgid "block of %<PRId64> lines yanked"
+msgstr "lohko %<PRId64> riviltä kopioitu"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld riviä kopioitu"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> riviä kopioitu"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4176,33 +4176,33 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: Tuntematon rekisterityyppi %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld saraketta, "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> saraketta, "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Valittu %s%ld/%ld riviä, %ld/%ld sanaa, %ld/%ld tavua"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Valittu %s%<PRId64>/%<PRId64> riviä, %<PRId64>/%<PRId64> sanaa, %<PRId64>/%<PRId64> tavua"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
-msgstr "Valittu %s%ld/%ld riviä, %ld/%ld sanaa, %ld/%ld merkkiä, %ld/%ld tavua"
+msgstr "Valittu %s%<PRId64>/%<PRId64> riviä, %<PRId64>/%<PRId64> sanaa, %<PRId64>/%<PRId64> merkkiä, %<PRId64>/%<PRId64> tavua"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Sarake %s/%s, Rivi %ld/%ld, sana %ld/%ld, tavu %ld/%ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Sarake %s/%s, Rivi %<PRId64>/%<PRId64>, sana %<PRId64>/%<PRId64>, tavu %<PRId64>/%<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
-msgstr "Sarake %s/%s, rivi %ld/%ld, sana %ld/%ld, merkki %ld/%ld, tavu %ld/%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
+msgstr "Sarake %s/%s, rivi %<PRId64>/%<PRId64>, sana %<PRId64>/%<PRId64>, merkki %<PRId64>/%<PRId64>, tavu %<PRId64>/%<PRId64>"
 
 # Unicode Byte Order Mark
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld BOMista)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> BOMista)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Sivu %N"
@@ -4381,8 +4381,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Amigados 2.04 tai uudempi tarvitaan\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Tarvitaan %s versio %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Tarvitaan %s versio %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Ei voi avata NILiä:\n"
@@ -4464,8 +4464,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: Tappava signaali\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "X-näytön avaus vei %ld millisekuntia"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "X-näytön avaus vei %<PRId64> millisekuntia"
 
 msgid ""
 "\n"
@@ -5154,8 +5154,8 @@ msgid "Performing soundfolding..."
 msgstr "Ääntämyksen mukaan yhdistellään..."
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "Sanoja ääntämysyhdistelyn jälkeen: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "Sanoja ääntämysyhdistelyn jälkeen: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -5190,8 +5190,8 @@ msgid "Done!"
 msgstr "Valmista."
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: spellfile ei sisällä %ld kohtaa"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: spellfile ei sisällä %<PRId64> kohtaa"
 
 #, c-format
 msgid "Word removed from %s"
@@ -5208,8 +5208,8 @@ msgid "Sorry, no suggestions"
 msgstr "Sori, ei ehdotuksia"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Sori, vain %ld ehdotusta"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Sori, vain %<PRId64> ehdotusta"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5506,8 +5506,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Muotovirh tägitiedostossa %s"
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Ennen tavua %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Ennen tavua %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5655,8 +5655,8 @@ msgid "Already at newest change"
 msgstr "Nuorimmassa muutoksessa"
 
 #, c-format
-msgid "E830: Undo number %ld not found"
-msgstr "E830: Kumouslukua %ld ei löydy"
+msgid "E830: Undo number %<PRId64> not found"
+msgstr "E830: Kumouslukua %<PRId64> ei löydy"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: väärät rivinumerot"
@@ -5681,8 +5681,8 @@ msgstr "muutosta"
 
 # eka %s yläpuolelta, toka %s alapuolelta, kolmas %s aika
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s, %s #%ld %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s, %s #%<PRId64> %s"
 
 msgid "before"
 msgstr "ennen muutosta"
@@ -5697,8 +5697,8 @@ msgid "number changes  time            saved"
 msgstr "muutoksia       aika            tallennettu"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "%ld sekuntia sitten"
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> sekuntia sitten"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: undojoin ei toimi undon jälkeen"

@@ -58,8 +58,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: Không có bộ đệm được liệt kê"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Bộ đệm %ld không tồn tại"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Bộ đệm %<PRId64> không tồn tại"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Đây là bộ đệm cuối cùng"
@@ -68,9 +68,9 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Đây là bộ đệm đầu tiên"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: Thay đổi trong bộ đệm %ld chưa được ghi lại (thêm ! để thoát ra bằng "
+"E89: Thay đổi trong bộ đệm %<PRId64> chưa được ghi lại (thêm ! để thoát ra bằng "
 "mọi giá)"
 
 msgid "E90: Cannot unload last buffer"
@@ -80,8 +80,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Cảnh báo: Danh sách tên tập tin quá đầy"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: Bộ đệm %ld không được tìm thấy"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: Bộ đệm %<PRId64> không được tìm thấy"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -92,8 +92,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: Không có bộ đệm tương ứng với %s"
 
 #, c-format
-msgid "line %ld"
-msgstr "dòng %ld"
+msgid "line %<PRId64>"
+msgstr "dòng %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Đã có bộ đệm với tên như vậy"
@@ -118,12 +118,12 @@ msgid "1 line --%d%%--"
 msgstr "1 dòng --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld dòng --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> dòng --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "dòng %ld của %ld --%d%%-- cột "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "dòng %<PRId64> của %<PRId64> --%d%%-- cột "
 
 msgid "[No file]"
 msgstr "[Không có tập tin]"
@@ -172,12 +172,12 @@ msgid "Signs for %s:"
 msgstr "Ký hiệu cho %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    dòng=%ld  id=%d  tên=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    dòng=%<PRId64>  id=%d  tên=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Chỉ có thể theo dõi sự khác nhau trong nhiều nhất %ld bộ đệm"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Chỉ có thể theo dõi sự khác nhau trong nhiều nhất %<PRId64> bộ đệm"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: Không thể tạo tập tin khác biệt (diff)"
@@ -463,8 +463,8 @@ msgid "%s aborted"
 msgstr "%s dừng"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s trả lại #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s trả lại #%<PRId64>"
 
 #, c-format
 msgid "%s returning \"%s\""
@@ -489,16 +489,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Bật chế độ sửa lỗi (Debug). Gõ \"cont\" để tiếp tục."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "dòng %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "dòng %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "câu lệnh: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Điểm dừng trên \"%s%s\" dòng %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Điểm dừng trên \"%s%s\" dòng %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -508,8 +508,8 @@ msgid "No breakpoints defined"
 msgstr "Điểm dừng không được xác định"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s dòng %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s dòng %<PRId64>"
 
 msgid "Save As"
 msgstr "Ghi nhớ như"
@@ -567,16 +567,16 @@ msgid "could not source \"%s\""
 msgstr "không thực hiện được \"%s\""
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "dòng %ld: không thực hiện được \"%s\""
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "dòng %<PRId64>: không thực hiện được \"%s\""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "thực hiện \"%s\""
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "dòng %ld: thực hiện \"%s\""
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "dòng %<PRId64>: thực hiện \"%s\""
 
 #, c-format
 msgid "finished sourcing %s"
@@ -690,12 +690,12 @@ msgid "1 line moved"
 msgstr "Đã di chuyển 1 dòng"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "Đã di chuyển %ld dòng"
+msgid "%<PRId64> lines moved"
+msgstr "Đã di chuyển %<PRId64> dòng"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "Đã lọc %ld dòng"
+msgid "%<PRId64> lines filtered"
+msgstr "Đã lọc %<PRId64> dòng"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: Các lệnh tự động *Filter* không được thay đổi bộ đệm hiện thời"
@@ -769,8 +769,8 @@ msgid "Overwrite existing file \"%.*s\"?"
 msgstr "Ghi đè lên tập tin đã có \"%.*s\"?"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: Không có tên tập tin cho bộ đệm %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: Không có tên tập tin cho bộ đệm %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Tập tin chưa được ghi nhớ: Ghi nhớ bị tắt bởi tùy chọn 'write'"
@@ -810,15 +810,15 @@ msgid "1 substitution"
 msgstr "1 thay thế"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld thay thế"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> thay thế"
 
 msgid " on 1 line"
 msgstr " trên 1 dòng"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " trên %ld dòng"
+msgid " on %<PRId64> lines"
+msgstr " trên %<PRId64> dòng"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: Không thực hiện được lệnh :global đệ qui"
@@ -901,8 +901,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Tên bộ đệm không đúng: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: ID của ký hiệu không đúng: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: ID của ký hiệu không đúng: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (KHÔNG TÌM THẤY)"
@@ -966,8 +966,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: 1 tập tin nữa chờ soạn thảo."
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: %ld tập tin nữa chưa soạn thảo."
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: %<PRId64> tập tin nữa chưa soạn thảo."
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Đã có câu lệnh: Thêm ! để thay thế"
@@ -1131,8 +1131,8 @@ msgid "Exception discarded: %s"
 msgstr "Trường hợp ngoại lệ bị bỏ qua: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, dòng %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, dòng %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1316,8 +1316,8 @@ msgid "[CONVERSION ERROR]"
 msgstr "[LỖI CHUYỂN BẢNG MÃ]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[BYTE KHÔNG CHO PHÉP trên dòng %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[BYTE KHÔNG CHO PHÉP trên dòng %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[LỖI ĐỌC]"
@@ -1461,15 +1461,15 @@ msgid "1 line, "
 msgstr "1 dòng, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld dòng, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> dòng, "
 
 msgid "1 character"
 msgstr "1 ký tự"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld ký tự"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> ký tự"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -1831,20 +1831,20 @@ msgid "Font1: %s\n"
 msgstr "Font1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
 msgstr ""
-"Chiều rộng phông chữ font%ld phải lớn hơn hai lần so với chiều rộng font0\n"
+"Chiều rộng phông chữ font%<PRId64> phải lớn hơn hai lần so với chiều rộng font0\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Chiều rộng font0: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Chiều rộng font0: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Chiều rộng font1: %ld\n"
+"Chiều rộng font1: %<PRId64>\n"
 "\n"
 
 msgid "E256: Hangul automata ERROR"
@@ -1898,8 +1898,8 @@ msgid "Added cscope database %s"
 msgstr "Đã thêm cơ sở dữ liệu cscope %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: lỗi lấy thông tin từ kết nối cscope %ld"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: lỗi lấy thông tin từ kết nối cscope %<PRId64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: không rõ loại tìm kiếm cscope"
@@ -3017,12 +3017,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: Cập nhật không thành công"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: giá trị lnum không đúng: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: giá trị lnum không đúng: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: không tìm được dòng %ld"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: không tìm được dòng %<PRId64>"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: Giá trị của pointer khối số 3 không đúng"
@@ -3040,8 +3040,8 @@ msgid "deleted block 1?"
 msgstr "đã xóa khối số 1?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Không tìm được dòng %ld"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Không tìm được dòng %<PRId64>"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: giá trị của pointer khối không đúng"
@@ -3050,12 +3050,12 @@ msgid "pe_line_count is zero"
 msgstr "giá trị pe_line_count bằng không"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: số thứ tự dòng vượt quá giới hạn : %ld"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: số thứ tự dòng vượt quá giới hạn : %<PRId64>"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: giá trị đếm dòng không đúng trong khối %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: giá trị đếm dòng không đúng trong khối %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "Kích thước của đống tăng lên"
@@ -3293,12 +3293,12 @@ msgid "1 line less"
 msgstr "Bớt 1 dòng"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "Thêm %ld dòng"
+msgid "%<PRId64> more lines"
+msgstr "Thêm %<PRId64> dòng"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "Bớt %ld dòng"
+msgid "%<PRId64> fewer lines"
+msgstr "Bớt %<PRId64> dòng"
 
 msgid " (Interrupted)"
 msgstr " (Bị gián đoạn)"
@@ -3316,29 +3316,29 @@ msgstr "LỖI: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[byte] tổng phân phối-còn trống %lu-%lu, sử dụng %lu, píc sử dụng %lu\n"
+"[byte] tổng phân phối-còn trống %<PRIu64>-%<PRIu64>, sử dụng %<PRIu64>, píc sử dụng %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[gọi] tổng re/malloc() %lu, tổng free() %lu\n"
+"[gọi] tổng re/malloc() %<PRIu64>, tổng free() %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: Dòng đang trở thành quá dài"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Lỗi nội bộ: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Lỗi nội bộ: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Không đủ bộ nhớ! (phân chia %lu byte)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Không đủ bộ nhớ! (phân chia %<PRIu64> byte)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -3417,8 +3417,8 @@ msgid "read from Netbeans socket"
 msgstr "đọc từ socket NetBeans"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: Bị mất liên kết với NetBeans cho bộ đệm %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Bị mất liên kết với NetBeans cho bộ đệm %<PRId64>"
 
 msgid "Warning: terminal cannot highlight"
 msgstr "Cảnh báo: terminal không thực hiện được sự chiếu sáng"
@@ -3455,23 +3455,23 @@ msgid "1 line %sed %d times"
 msgstr "Trên 1 dòng %s %d lần"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "Trên %ld dòng %s 1 lần"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "Trên %<PRId64> dòng %s 1 lần"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "Trên %ld dòng %s %d lần"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "Trên %<PRId64> dòng %s %d lần"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "Thụt đầu %ld dòng..."
+msgid "%<PRId64> lines to indent... "
+msgstr "Thụt đầu %<PRId64> dòng..."
 
 msgid "1 line indented "
 msgstr "Đã thụt đầu 1 dòng"
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld dòng đã thụt đầu"
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> dòng đã thụt đầu"
 
 #. must display the prompt
 msgid "cannot yank; delete anyway"
@@ -3481,19 +3481,19 @@ msgid "1 line changed"
 msgstr "1 dòng đã thay đổi"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld đã thay đổi"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> đã thay đổi"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "đã làm sạch %ld dòng"
+msgid "freeing %<PRId64> lines"
+msgstr "đã làm sạch %<PRId64> dòng"
 
 msgid "1 line yanked"
 msgstr "đã sao chép 1 dòng"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "đã sao chép %ld dòng"
+msgid "%<PRId64> lines yanked"
+msgstr "đã sao chép %<PRId64> dòng"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -3526,20 +3526,20 @@ msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Tên sổ đăng ký không cho phép: '%s'"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Cột; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Cột; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Chọn %s%ld của %ld Dòng; %ld của %ld Từ; %ld của %ld Byte"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Chọn %s%<PRId64> của %<PRId64> Dòng; %<PRId64> của %<PRId64> Từ; %<PRId64> của %<PRId64> Byte"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Cột %s của %s;  Dòng %ld của %ld; Từ %ld của %ld; Byte %ld của %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Cột %s của %s;  Dòng %<PRId64> của %<PRId64>; Từ %<PRId64> của %<PRId64>; Byte %<PRId64> của %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld cho BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> cho BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Trang %N"
@@ -3712,8 +3712,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Cần Amigados phiên bản 2.04 hoặc mới hơn\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Cần %s phiên bản %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Cần %s phiên bản %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Không mở được NIL:\n"
@@ -3797,8 +3797,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: Nhận được tín hiệu chết\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Mở màn hình X mất %ld mili giây"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Mở màn hình X mất %<PRId64> mili giây"
 
 msgid ""
 "\n"
@@ -4449,8 +4449,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Lỗi định dạng trong tập tin thẻ ghi \"%s\""
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Trước byte %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Trước byte %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -4513,8 +4513,8 @@ msgid "1 change"
 msgstr "duy nhất 1 thay đổi"
 
 #, c-format
-msgid "%ld changes"
-msgstr "%ld thay đổi"
+msgid "%<PRId64> changes"
+msgstr "%<PRId64> thay đổi"
 
 msgid "E439: undo list corrupt"
 msgstr "E439: danh sách hủy thao tác (undo) bị hỏng"

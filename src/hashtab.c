@@ -167,10 +167,12 @@ void hash_debug_results(void)
 {
 #ifdef HT_DEBUG
   fprintf(stderr, "\r\n\r\n\r\n\r\n");
-  fprintf(stderr, "Number of hashtable lookups: %ld\r\n", hash_count_lookup);
-  fprintf(stderr, "Number of perturb loops: %ld\r\n", hash_count_perturb);
-  fprintf(stderr, "Percentage of perturb loops: %ld%%\r\n",
-          hash_count_perturb * 100 / hash_count_lookup);
+  fprintf(stderr, "Number of hashtable lookups: %" PRId64 "\r\n",
+          (int64_t)hash_count_lookup);
+  fprintf(stderr, "Number of perturb loops: %" PRId64 "\r\n",
+          (int64_t)hash_count_perturb);
+  fprintf(stderr, "Percentage of perturb loops: %" PRId64 "%%\r\n",
+          (int64_t)hash_count_perturb * 100 / hash_count_lookup);
 #endif  // ifdef HT_DEBUG
 }
 

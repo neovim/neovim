@@ -79,8 +79,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: 나열된 버퍼가 없습니다"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: 버퍼 %ld이(가) 존재하지 않습니다"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: 버퍼 %<PRId64>이(가) 존재하지 않습니다"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: 마지막 버퍼입니다"
@@ -89,9 +89,9 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: 첫 번째 버퍼입니다"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: 버퍼 %ld을(를) 마지막으로 고친 뒤 저장하지 않았습니다 (덮어쓰려면 ! 더하"
+"E89: 버퍼 %<PRId64>을(를) 마지막으로 고친 뒤 저장하지 않았습니다 (덮어쓰려면 ! 더하"
 "기)"
 
 msgid "E90: Cannot unload last buffer"
@@ -101,8 +101,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: 경고: 파일 이름 목록이 넘쳤습니다"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: 버퍼 %ld을(를) 찾을 수 없습니다"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: 버퍼 %<PRId64>을(를) 찾을 수 없습니다"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -113,8 +113,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: %s와 맞는 버퍼가 없습니다"
 
 #, c-format
-msgid "line %ld"
-msgstr "%ld 줄"
+msgid "line %<PRId64>"
+msgstr "%<PRId64> 줄"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: 이 이름을 가진 버퍼가 이미 있습니다"
@@ -139,12 +139,12 @@ msgid "1 line --%d%%--"
 msgstr "1 줄 --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld 줄 --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> 줄 --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "%ld / %ld 줄 --%d%%-- 칸 "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "%<PRId64> / %<PRId64> 줄 --%d%%-- 칸 "
 
 msgid "[No Name]"
 msgstr "[이름 없음]"
@@ -190,12 +190,12 @@ msgid "Signs for %s:"
 msgstr "%s에 대한 기호:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    줄=%ld  id=%d  이름=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    줄=%<PRId64>  id=%d  이름=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: %ld개 이상의 버퍼에 대해서는 diff를 할 수 없습니다"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: %<PRId64>개 이상의 버퍼에 대해서는 diff를 할 수 없습니다"
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: 임시 파일을 읽거나 쓸 수 없습니다"
@@ -354,8 +354,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: ':let'에 모르는 글자"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: 목록 번호가 범위를 벗어남: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: 목록 번호가 범위를 벗어남: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -736,8 +736,8 @@ msgid "%s aborted"
 msgstr "%s이(가) 중지되었습니다"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s이(가) #%ld을(를) 돌려주었습니다"
+msgid "%s returning #%<PRId64>"
+msgstr "%s이(가) #%<PRId64>을(를) 돌려주었습니다"
 
 #, c-format
 msgid "%s returning %s"
@@ -786,12 +786,12 @@ msgid "1 line moved"
 msgstr "1 줄 옮겨졌습니다"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld 줄 옮겨졌습니다"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> 줄 옮겨졌습니다"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld 줄을 걸렀습니다"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> 줄을 걸렀습니다"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Filter* 자동명령은 현재 버퍼를 바꾸어서는 안 됩니다"
@@ -875,8 +875,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: 스왑 파일 있음: %s (덮어쓰려면 :silent! 사용)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: 버퍼 %ld의 파일 이름이 없습니다"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: 버퍼 %<PRId64>의 파일 이름이 없습니다"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: 파일이 써지지 않음: 'write' 옵션에 의해 쓸 수가 없습니다"
@@ -933,19 +933,19 @@ msgid "1 substitution"
 msgstr "1개 바꿨음"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld개 찾아짐"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64>개 찾아짐"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld개 바꿨음"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64>개 바꿨음"
 
 msgid " on 1 line"
 msgstr " 한 줄에서"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " %ld 줄에서"
+msgid " on %<PRId64> lines"
+msgstr " %<PRId64> 줄에서"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: :global은 재귀 호출 될 수 없습니다"
@@ -1027,8 +1027,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: 잘못된 버퍼 이름: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: 잘못된 sign ID: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: 잘못된 sign ID: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (못 찾았음)"
@@ -1043,16 +1043,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "디버그 상태로 들어감.  계속하려면 \"cont\"를 입력하십시오."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "%ld 줄: %s"
+msgid "line %<PRId64>: %s"
+msgstr "%<PRId64> 줄: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "명령: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "중지점: \"%s%s\" %ld 줄"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "중지점: \"%s%s\" %<PRId64> 줄"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -1062,8 +1062,8 @@ msgid "No breakpoints defined"
 msgstr "중지점이 정의되어 있지 않습니다"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  %ld 줄"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  %<PRId64> 줄"
 
 msgid "E750: First use \":profile start {fname}\""
 msgstr "E750: 먼저 \":profile start {fname}\"을 사용하세요"
@@ -1119,16 +1119,16 @@ msgid "could not source \"%s\""
 msgstr "\"%s\"을(를) 불러 들일 수 없습니다"
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "%ld 줄: \"%s\"을(를) 불러 들일 수 없습니다"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "%<PRId64> 줄: \"%s\"을(를) 불러 들일 수 없습니다"
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "\"%s\"을(를) 불러들이는 중"
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "%ld 줄: \"%s\" 불러들이는 중"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "%<PRId64> 줄: \"%s\" 불러들이는 중"
 
 #, c-format
 msgid "finished sourcing %s"
@@ -1217,8 +1217,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: 고칠 파일이 한 개 더 있습니다"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: 고칠 파일이 %ld 개 더 있습니다"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: 고칠 파일이 %<PRId64> 개 더 있습니다"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: 명령이 이미 존재합니다: 바꾸려면 !을 더하세요"
@@ -1408,8 +1408,8 @@ msgid "Exception discarded: %s"
 msgstr "예외 버려짐: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, %ld 줄"
+msgid "%s, line %<PRId64>"
+msgstr "%s, %<PRId64> 줄"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1613,12 +1613,12 @@ msgid "[crypted]"
 msgstr "[암호화 되었습니다]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[%ld 줄에서 변환 에러]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[%<PRId64> 줄에서 변환 에러]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[%ld 줄에 잘못된 바이트]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[%<PRId64> 줄에 잘못된 바이트]"
 
 msgid "[READ ERRORS]"
 msgstr "[읽기 에러]"
@@ -1700,9 +1700,9 @@ msgstr "E513: 쓰기 에러, 변환 실패 (무시하려면 'fenc'를 비우면 됨)"
 
 #, c-format
 msgid ""
-"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
-msgstr "E513: 쓰기 에러, %ld 줄에서 변환 실패 (무시하려면 'fenc'를 비우면 됨)"
+msgstr "E513: 쓰기 에러, %<PRId64> 줄에서 변환 실패 (무시하려면 'fenc'를 비우면 됨)"
 
 msgid "E514: write error (file system full?)"
 msgstr "E514: 쓰기 에러 (파일 시스템이 꽉찼나요?)"
@@ -1711,8 +1711,8 @@ msgid " CONVERSION ERROR"
 msgstr " 변환 에러"
 
 #, c-format
-msgid " in line %ld;"
-msgstr "%ld 줄에서;"
+msgid " in line %<PRId64>;"
+msgstr "%<PRId64> 줄에서;"
 
 msgid "[Device]"
 msgstr "[장치]"
@@ -1773,20 +1773,20 @@ msgid "1 line, "
 msgstr "1 줄, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld 줄, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> 줄, "
 
 msgid "1 character"
 msgstr "1 글자"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld 글자"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> 글자"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format
-msgid "%ld characters"
-msgstr "%ld 글자"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> 글자"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -2194,19 +2194,19 @@ msgid "Font1: %s\n"
 msgstr "글꼴1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "글꼴%ld 너비가 글꼴0의 두배가 아닙니다\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "글꼴%<PRId64> 너비가 글꼴0의 두배가 아닙니다\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "글꼴0 너비: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "글꼴0 너비: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"글꼴1 너비: %ld\n"
+"글꼴1 너비: %<PRId64>\n"
 "\n"
 
 #~ msgid "Invalid font specification"
@@ -2383,8 +2383,8 @@ msgid "Added cscope database %s"
 msgstr "cscope 데이터베이스 %s에 더했습니다."
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: cscope 연결 %ld 읽기 에러"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: cscope 연결 %<PRId64> 읽기 에러"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: 모르는 cscope 찾기 형식"
@@ -3596,12 +3596,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: 파일 보존을 실패했습니다"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: 잘못된 lnum: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: 잘못된 lnum: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: %ld 줄을 찾을 수 없습니다"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: %<PRId64> 줄을 찾을 수 없습니다"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: 잘못된 포인터 구역 id 3"
@@ -3619,8 +3619,8 @@ msgid "deleted block 1?"
 msgstr "구역 1이 지워졌나요?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: %ld 줄을 찾을 수 없습니다"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: %<PRId64> 줄을 찾을 수 없습니다"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: 잘못된 포인터 구역 id"
@@ -3629,12 +3629,12 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count가 0입니다"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: 줄 번호가 범위를 벗어났습니다: 마지막에서 %ld 만큼"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: 줄 번호가 범위를 벗어났습니다: 마지막에서 %<PRId64> 만큼"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: 구역 %ld의 줄 갯수가 틀렸습니다"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: 구역 %<PRId64>의 줄 갯수가 틀렸습니다"
 
 msgid "Stack size increases"
 msgstr "스택 크기 증가"
@@ -3822,8 +3822,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "계속하려면 엔터 혹은 명령을 입력하십시오"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s 줄 %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s 줄 %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- 더 --"
@@ -3892,12 +3892,12 @@ msgid "1 line less"
 msgstr "한 줄 이하"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld 보다 많은 줄"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> 보다 많은 줄"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld 보다 적은 줄"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> 보다 적은 줄"
 
 msgid " (Interrupted)"
 msgstr " (중단되었습니다)"
@@ -3918,12 +3918,12 @@ msgstr "에러: "
 #, c-format
 #~ msgid ""
 #~ "\n"
-#~ "[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+#~ "[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 #~ msgstr ""
 
 #, c-format
 #~ msgid ""
-#~ "[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+#~ "[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 #~ "\n"
 #~ msgstr ""
 
@@ -3931,12 +3931,12 @@ msgid "E340: Line is becoming too long"
 msgstr "E340: 줄이 너무 길어졌습니다"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: 내부 에러: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: 내부 에러: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: 메모리 부족!  (%lu 바이트를 할당)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: 메모리 부족!  (%<PRIu64> 바이트를 할당)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -4004,8 +4004,8 @@ msgid "read from Netbeans socket"
 msgstr "Netbeans 소켓에서 읽기"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: 버퍼 %ld에 대한 NetBeans 연결을 잃어버렸습니다"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: 버퍼 %<PRId64>에 대한 NetBeans 연결을 잃어버렸습니다"
 
 msgid "E838: netbeans is not supported with this GUI"
 msgstr "E838: 이 GUI는 netbeans를 지원하지 않습니다"
@@ -4055,23 +4055,23 @@ msgid "1 line %sed %d times"
 msgstr "1 line %sed %d times"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld lines %sed 1 time"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> lines %sed 1 time"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld lines %sed %d times"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> lines %sed %d times"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld lines to indent... "
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> lines to indent... "
 
 msgid "1 line indented "
 msgstr "1 line indented "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld lines indented "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> lines indented "
 
 #~ msgid "E748: No previously used register"
 #~ msgstr ""
@@ -4084,12 +4084,12 @@ msgid "1 line changed"
 msgstr "1 line changed"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld lines changed"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> lines changed"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "freeing %ld lines"
+msgid "freeing %<PRId64> lines"
+msgstr "freeing %<PRId64> lines"
 
 msgid "block of 1 line yanked"
 msgstr "block of 1 line yanked"
@@ -4098,12 +4098,12 @@ msgid "1 line yanked"
 msgstr "1 line yanked"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "block of %ld lines yanked"
+msgid "block of %<PRId64> lines yanked"
+msgstr "block of %<PRId64> lines yanked"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld lines yanked"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> lines yanked"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4132,36 +4132,36 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: 모르는 레지스터 형식 %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld 열; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> 열; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Selected %s%ld of %ld 라인; %ld of %ld 단어; %ld of %ld 바이트"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Selected %s%<PRId64> of %<PRId64> 라인; %<PRId64> of %<PRId64> 단어; %<PRId64> of %<PRId64> 바이트"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
 msgstr ""
-"Selected %s%ld of %ld 라인; %ld of %ld 단어; %ld of %ld 문자; %ld of %ld 바이"
+"Selected %s%<PRId64> of %<PRId64> 라인; %<PRId64> of %<PRId64> 단어; %<PRId64> of %<PRId64> 문자; %<PRId64> of %<PRId64> 바이"
 "트"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Col %s of %s; 라인 %ld of %ld; 단어 %ld of %ld; 바이트 %ld of %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Col %s of %s; 라인 %<PRId64> of %<PRId64>; 단어 %<PRId64> of %<PRId64>; 바이트 %<PRId64> of %<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"Col %s of %s; 라인 %ld of %ld; 단어 %ld of %ld; 문자 %ld of %ld; 바이트 %ld "
-"of %ld"
+"Col %s of %s; 라인 %<PRId64> of %<PRId64>; 단어 %<PRId64> of %<PRId64>; 문자 %<PRId64> of %<PRId64>; 바이트 %<PRId64> "
+"of %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld for BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> for BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=페이지 %N"
@@ -4340,8 +4340,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "아미가도스 2.04나 더 높은 판이 필요합니다\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Need %s version %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Need %s version %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "NIL을 열 수 없음:\n"
@@ -4423,8 +4423,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "빔: 죽을 시그널을 잡았습니다\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "X 디스플레이를 여는 데 %ld msec이 걸렸습니다"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "X 디스플레이를 여는 데 %<PRId64> msec이 걸렸습니다"
 
 msgid ""
 "\n"
@@ -5117,8 +5117,8 @@ msgid "Performing soundfolding..."
 msgstr "soundfold 수행중..."
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "soundfold 수행 후의 단어 수: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "soundfold 수행 후의 단어 수: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -5153,8 +5153,8 @@ msgid "Done!"
 msgstr "끝!"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile'에 %ld 항목이 없습니다"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile'에 %<PRId64> 항목이 없습니다"
 
 #, c-format
 msgid "Word removed from %s"
@@ -5171,8 +5171,8 @@ msgid "Sorry, no suggestions"
 msgstr "죄송, 제안할 게 없습니다"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "죄송, %ld개만 제안"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "죄송, %<PRId64>개만 제안"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5472,8 +5472,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: 태그 파일 \"%s\"에 형식 에러가 있습니다"
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Before byte %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Before byte %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5620,8 +5620,8 @@ msgid "Already at newest change"
 msgstr "더 이상의 수정은 없었습니다"
 
 #, c-format
-msgid "E830: Undo number %ld not found"
-msgstr "E830: Undo 번호 %ld를 찾을 수 없습니다"
+msgid "E830: Undo number %<PRId64> not found"
+msgstr "E830: Undo 번호 %<PRId64>를 찾을 수 없습니다"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: 잘못된 줄 번호"
@@ -5645,8 +5645,8 @@ msgid "changes"
 msgstr "changes"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "before"
@@ -5661,8 +5661,8 @@ msgstr "취소할 게 없습니다"
 #~ msgstr ""
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "%ld seconds ago"
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> seconds ago"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: undo 뒤에 undojoin은 할 수 없습니다"

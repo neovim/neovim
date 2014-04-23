@@ -623,7 +623,7 @@ cs_reading_emsg (
     int idx        /* connection index */
 )
 {
-  EMSGN(_("E262: error reading cscope connection %ld"), idx);
+  EMSGN(_("E262: error reading cscope connection %" PRId64), idx);
 }
 
 #define CSREAD_BUFSIZE  2048

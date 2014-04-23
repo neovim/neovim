@@ -78,8 +78,8 @@ msgstr "E85: No hay búfers en la lista"
 
 #: buffer.c:1016
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: El búfer %ld no existe"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: El búfer %<PRId64> no existe"
 
 #: buffer.c:1019
 msgid "E87: Cannot go beyond last buffer"
@@ -91,9 +91,9 @@ msgstr "E88: No se pudo regresar antes del primer búfer"
 
 #: buffer.c:1063
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: No se guardó el archivo desde el último cambio del búfer %ld (añada \"!"
+"E89: No se guardó el archivo desde el último cambio del búfer %<PRId64> (añada \"!"
 "\" para forzar)"
 
 #: buffer.c:1080
@@ -106,8 +106,8 @@ msgstr "W14: Advertencia: La lista de nombres de archivos es muy larga"
 
 #: buffer.c:1850 quickfix.c:3632
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: No se encontró el búfer %ld"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: No se encontró el búfer %<PRId64>"
 
 #: buffer.c:2125
 #, c-format
@@ -121,8 +121,8 @@ msgstr "E94: No hay un búfer que coincida con %s"
 
 #: buffer.c:2579
 #, c-format
-msgid "line %ld"
-msgstr "línea %ld"
+msgid "line %<PRId64>"
+msgstr "línea %<PRId64>"
 
 #: buffer.c:2666
 msgid "E95: Buffer with this name already exists"
@@ -155,13 +155,13 @@ msgstr "1 línea --%d%%--"
 
 #: buffer.c:3032
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld líneas --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> líneas --%d%%--"
 
 #: buffer.c:3039
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "línea %ld de %ld --%d%%-- col "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "línea %<PRId64> de %<PRId64> --%d%%-- col "
 
 #: buffer.c:3160 buffer.c:5126 memline.c:1727
 msgid "[No Name]"
@@ -229,13 +229,13 @@ msgstr "Signos para %s:"
 
 #: buffer.c:5455
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    línea=%ld id=%d nombre=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    línea=%<PRId64> id=%d nombre=%s"
 
 #: diff.c:141
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: No se puede usar \"diff\" con más de %ld búfers"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: No se puede usar \"diff\" con más de %<PRId64> búfers"
 
 #: diff.c:777
 msgid "E810: Cannot read or write temp files"
@@ -441,8 +441,8 @@ msgstr "E18: Caracteres inesperados en :let"
 
 #: eval.c:97
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: índice de lista fuera de rango: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: índice de lista fuera de rango: %<PRId64>"
 
 #: eval.c:98
 #, c-format
@@ -939,8 +939,8 @@ msgstr "Abortada la ejecución de %s"
 
 #: eval.c:21337
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s devuelve #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s devuelve #%<PRId64>"
 
 #: eval.c:21353
 #, c-format
@@ -1003,13 +1003,13 @@ msgstr "1 línea movida"
 
 #: ex_cmds.c:810
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld líneas movidas"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> líneas movidas"
 
 #: ex_cmds.c:1305
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld líneas filtradas"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> líneas filtradas"
 
 #: ex_cmds.c:1329
 msgid "E135: *Filter* Autocommands must not change current buffer"
@@ -1120,8 +1120,8 @@ msgstr ""
 
 #: ex_cmds.c:2901
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: No existe un nombre de archivo para el búfer %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: No existe un nombre de archivo para el búfer %<PRId64>"
 
 #: ex_cmds.c:2940
 msgid "E142: File not written: Writing is disabled by 'write' option"
@@ -1194,13 +1194,13 @@ msgstr "Una (1) sustitución"
 
 #: ex_cmds.c:5174
 #, c-format
-msgid "%ld matches"
-msgstr "%ld coincidencias"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> coincidencias"
 
 #: ex_cmds.c:5174
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld sustituciones"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> sustituciones"
 
 #: ex_cmds.c:5179
 msgid " on 1 line"
@@ -1208,8 +1208,8 @@ msgstr " en una (1) línea"
 
 #: ex_cmds.c:5182
 #, c-format
-msgid " on %ld lines"
-msgstr " en %ld líneas"
+msgid " on %<PRId64> lines"
+msgstr " en %<PRId64> líneas"
 
 #: ex_cmds.c:5229
 msgid "E147: Cannot do :global recursive"
@@ -1314,8 +1314,8 @@ msgstr "E158: El nombre del búfer no es válido: %s"
 
 #: ex_cmds.c:6926
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: La identificación del signo no es válida: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: La identificación del signo no es válida: %<PRId64>"
 
 #: ex_cmds.c:6996
 msgid " (NOT FOUND)"
@@ -1335,8 +1335,8 @@ msgstr "Iniciando modo de depuración. Escriba \"cont\" para continuar."
 
 #: ex_cmds2.c:142 ex_docmd.c:1081
 #, c-format
-msgid "line %ld: %s"
-msgstr "línea %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "línea %<PRId64>: %s"
 
 #: ex_cmds2.c:144
 #, c-format
@@ -1345,8 +1345,8 @@ msgstr "cmd: %s"
 
 #: ex_cmds2.c:344
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "\"Breakpoint\" en \"%s%s\" línea %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "\"Breakpoint\" en \"%s%s\" línea %<PRId64>"
 
 #: ex_cmds2.c:656
 #, c-format
@@ -1359,8 +1359,8 @@ msgstr "No se han definido \"breakpoints\""
 
 #: ex_cmds2.c:697
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  línea %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  línea %<PRId64>"
 
 #: ex_cmds2.c:1095
 msgid "E750: First use :profile start <fname>"
@@ -1434,8 +1434,8 @@ msgstr "No pude ejecutar %s"
 
 #: ex_cmds2.c:2934
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "línea %ld: no se pudo ejecutar %s"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "línea %<PRId64>: no se pudo ejecutar %s"
 
 #: ex_cmds2.c:2950
 #, c-format
@@ -1444,8 +1444,8 @@ msgstr "ejecutando %s"
 
 #: ex_cmds2.c:2952
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "línea %ld: ejecutando %s"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "línea %<PRId64>: ejecutando %s"
 
 #: ex_cmds2.c:3143
 #, c-format
@@ -1566,8 +1566,8 @@ msgstr "E173: Un (1) archivo más para editar"
 
 #: ex_docmd.c:5048
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: Hay %ld archivos en edición"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: Hay %<PRId64> archivos en edición"
 
 #: ex_docmd.c:5142
 msgid "E174: Command already exists: add ! to replace it"
@@ -1822,8 +1822,8 @@ msgstr "Excepción descartada: %s"
 
 #: ex_eval.c:635 ex_eval.c:687
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, en la línea %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, en la línea %<PRId64>"
 
 # always scroll up, don't overwrite
 #. always scroll up, don't overwrite
@@ -2096,13 +2096,13 @@ msgstr "[cifrado]"
 
 #: fileio.c:2432
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[ERROR DE CONVERSIÓN en línea %ld]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[ERROR DE CONVERSIÓN en línea %<PRId64>]"
 
 #: fileio.c:2438
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[BYTE ILEGAL en la línea %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[BYTE ILEGAL en la línea %<PRId64>]"
 
 #: fileio.c:2445
 msgid "[READ ERRORS]"
@@ -2226,10 +2226,10 @@ msgstr ""
 #: fileio.c:4501
 #, c-format
 msgid ""
-"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
 msgstr ""
-"E513: Error de escritura, la conversión falló en la línea %ld(vacíe 'fenc' "
+"E513: Error de escritura, la conversión falló en la línea %<PRId64>(vacíe 'fenc' "
 "para forzar)"
 
 #: fileio.c:4510
@@ -2242,8 +2242,8 @@ msgstr " ERROR DE CONVERSIÓN"
 
 #: fileio.c:4583
 #, c-format
-msgid " in line %ld;"
-msgstr "en la línea %ld"
+msgid " in line %<PRId64>;"
+msgstr "en la línea %<PRId64>"
 
 #: fileio.c:4600
 msgid "[Device]"
@@ -2323,8 +2323,8 @@ msgstr "1 línea, "
 
 #: fileio.c:4975
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld líneas, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> líneas, "
 
 #: fileio.c:4978
 msgid "1 character"
@@ -2332,8 +2332,8 @@ msgstr "1 carácter"
 
 #: fileio.c:4980
 #, c-format
-msgid "%ld characters"
-msgstr "%ld caracteres"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> caracteres"
 
 #: fileio.c:4990 netbeans.c:3637
 msgid "[noeol]"
@@ -2886,23 +2886,23 @@ msgstr "Tipo de letra de impresión 1: %s\n"
 
 #: gui_x11.c:2204
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
 msgstr ""
-"La anchura del tipo de letra de impresión %ld no es el doble de la \n"
+"La anchura del tipo de letra de impresión %<PRId64> no es el doble de la \n"
 "de la tipografía de impresión 0\n"
 
 #: gui_x11.c:2205
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Anchura del tipo de letra de impresión 0: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Anchura del tipo de letra de impresión 0: %<PRId64>\n"
 
 #: gui_x11.c:2206
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Anchura del tipo de letra de impresión 1: %ld\n"
+"Anchura del tipo de letra de impresión 1: %<PRId64>\n"
 "\n"
 
 #: gui_xmdlg.c:690 gui_xmdlg.c:809
@@ -3135,8 +3135,8 @@ msgstr "Se ha añadido la base de datos \"cscope\" %s"
 
 #: if_cscope.c:695
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: Error al leer la conexión %ld con \"cscope\""
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: Error al leer la conexión %<PRId64> con \"cscope\""
 
 #: if_cscope.c:802
 msgid "E561: unknown cscope search type"
@@ -4761,13 +4761,13 @@ msgstr "E314: Falló la preservación del archivo"
 
 #: memline.c:2103
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: \"ml_get\": número de línea no válido: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: \"ml_get\": número de línea no válido: %<PRId64>"
 
 #: memline.c:2138
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: \"ml_get\": no se pudo encontrar la línea %ld"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: \"ml_get\": no se pudo encontrar la línea %<PRId64>"
 
 #: memline.c:2552
 msgid "E317: pointer block id wrong 3"
@@ -4791,8 +4791,8 @@ msgstr "¿bloque 1 suprimido?"
 
 #: memline.c:3101
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: No se pudo encontrar la línea %ld"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: No se pudo encontrar la línea %<PRId64>"
 
 #: memline.c:3347
 msgid "E317: pointer block id wrong"
@@ -4804,13 +4804,13 @@ msgstr "\"pe_line_count\" es cero"
 
 #: memline.c:3392
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: número de línea fuera de rango: %ld más allá del final"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: número de línea fuera de rango: %<PRId64> más allá del final"
 
 #: memline.c:3396
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: recuento de líneas erróneo en el bloque %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: recuento de líneas erróneo en el bloque %<PRId64>"
 
 #: memline.c:3445
 msgid "Stack size increases"
@@ -5045,8 +5045,8 @@ msgstr "Pulse INTRO o escriba una orden para continuar"
 
 #: message.c:2139
 #, c-format
-msgid "%s line %ld"
-msgstr "%s, en la línea %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s, en la línea %<PRId64>"
 
 #: message.c:2839
 msgid "-- More --"
@@ -5134,13 +5134,13 @@ msgstr "1 línea menos"
 
 #: misc1.c:3330
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld líneas más"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> líneas más"
 
 #: misc1.c:3332
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld líneas menos"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> líneas menos"
 
 #: misc1.c:3335
 msgid " (Interrupted)"
@@ -5169,18 +5169,18 @@ msgstr "ERROR: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[bytes] total liberados por alloc: %lu-%lu, en uso: %lu, uso máximo: %lu\n"
+"[bytes] total liberados por alloc: %<PRIu64>-%<PRIu64>, en uso: %<PRIu64>, uso máximo: %<PRIu64>\n"
 
 #: misc2.c:740
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[llamadas] total re/malloc(): %lu, total free(): %lu\n"
+"[llamadas] total re/malloc(): %<PRIu64>, total free(): %<PRIu64>\n"
 "\n"
 
 #: misc2.c:795
@@ -5189,13 +5189,13 @@ msgstr "E340: La línea se está haciendo demasiado larga"
 
 #: misc2.c:839
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Error interno: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Error interno: lalloc(%<PRId64>, )"
 
 #: misc2.c:953
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: ¡Memoria agotada! (al asignar %lu bytes)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: ¡Memoria agotada! (al asignar %<PRIu64> bytes)"
 
 #: misc2.c:3033
 #, c-format
@@ -5284,8 +5284,8 @@ msgstr "leído del socket NetBeans"
 
 #: netbeans.c:1872
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: Se perdió la conexión NetBeans para el búfer %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Se perdió la conexión NetBeans para el búfer %<PRId64>"
 
 #: netbeans.c:3692
 msgid "E505: "
@@ -5343,18 +5343,18 @@ msgstr "1 línea %sed %d veces"
 
 #: ops.c:300
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld líneas %sed 1 vez"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> líneas %sed 1 vez"
 
 #: ops.c:303
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld líneas %sed %d veces"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> líneas %sed %d veces"
 
 #: ops.c:691
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld líneas por sangrar..."
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> líneas por sangrar..."
 
 #: ops.c:742
 msgid "1 line indented "
@@ -5362,8 +5362,8 @@ msgstr "1 línea sangrada"
 
 #: ops.c:744
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld líneas sangradas"
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> líneas sangradas"
 
 #: ops.c:1170
 msgid "E748: No previously used register"
@@ -5381,13 +5381,13 @@ msgstr "1 línea cambiada"
 
 #: ops.c:2333
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld líneas cambiadas"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> líneas cambiadas"
 
 #: ops.c:2788
 #, c-format
-msgid "freeing %ld lines"
-msgstr "liberando %ld líneas"
+msgid "freeing %<PRId64> lines"
+msgstr "liberando %<PRId64> líneas"
 
 #: ops.c:3073
 msgid "block of 1 line yanked"
@@ -5399,13 +5399,13 @@ msgstr "1 línea copiada"
 
 #: ops.c:3080
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "bloque de %ld líneas copiadas"
+msgid "block of %<PRId64> lines yanked"
+msgstr "bloque de %<PRId64> líneas copiadas"
 
 #: ops.c:3083
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld líneas copiadas"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> líneas copiadas"
 
 #: ops.c:3378
 #, c-format
@@ -5442,42 +5442,42 @@ msgstr "E574: Registro desconocido de tipo %d"
 
 #: ops.c:6435
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Cols; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Cols; "
 
 #: ops.c:6444
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
 msgstr ""
-"Selección %s%ld de %ld Líneas; %ld de %ld Palabras; %ld de %ld Caracteres"
+"Selección %s%<PRId64> de %<PRId64> Líneas; %<PRId64> de %<PRId64> Palabras; %<PRId64> de %<PRId64> Caracteres"
 
 #: ops.c:6451
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
 msgstr ""
-"Selección %s%ld de %ld Líneas; %ld de %ld Palabras; %ld de %ld Caracteres; %"
-"ld de %ld Bytes"
+"Selección %s%<PRId64> de %<PRId64> Líneas; %<PRId64> de %<PRId64> Palabras; %<PRId64> de %<PRId64> Caracteres; %"
+"ld de %<PRId64> Bytes"
 
 #: ops.c:6470
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Col %s de %s; Línea %ld de %ld; Palabra %ld de %ld; Byte %ld de %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Col %s de %s; Línea %<PRId64> de %<PRId64>; Palabra %<PRId64> de %<PRId64>; Byte %<PRId64> de %<PRId64>"
 
 #: ops.c:6478
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"Col %s de %s; Línea %ld de %ld; Palabra %ld de %ld; Carácter %ld de %ld Byte "
-"%ld de %ld"
+"Col %s de %s; Línea %<PRId64> de %<PRId64>; Palabra %<PRId64> de %<PRId64>; Carácter %<PRId64> de %<PRId64> Byte "
+"%<PRId64> de %<PRId64>"
 
 #: ops.c:6490
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld para BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> para BOM)"
 
 #: option.c:1953
 msgid "%<%f%h%m%=Page %N"
@@ -5700,8 +5700,8 @@ msgstr "Necesito Amigados 2.04 o una versión posterior\n"
 
 #: os_amiga.c:346
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Necesito %s versión %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Necesito %s versión %<PRId64>\n"
 
 #: os_amiga.c:419
 msgid "Cannot open NIL:\n"
@@ -5812,8 +5812,8 @@ msgstr "Vim: Capté una señal mortal\n"
 
 #: os_unix.c:1412
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Abrir la pantalla X tomó %ld mseg"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Abrir la pantalla X tomó %<PRId64> mseg"
 
 #: os_unix.c:1439
 msgid ""
@@ -6683,8 +6683,8 @@ msgstr "Ejecutando compresión fonética"
 
 #: spell.c:8754
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "Número de palabras después de la compresión fonética: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "Número de palabras después de la compresión fonética: %<PRId64>"
 
 #: spell.c:8879
 #, c-format
@@ -6730,8 +6730,8 @@ msgstr "¡Listo!"
 
 #: spell.c:9543
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' no tiene entradas %ld"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' no tiene entradas %<PRId64>"
 
 #: spell.c:9588
 #, c-format
@@ -6754,8 +6754,8 @@ msgstr "Lo siento, no hay sugerencias"
 
 #: spell.c:10325
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Lo siento, solo hay %ld sugerencias"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Lo siento, solo hay %<PRId64> sugerencias"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -7141,8 +7141,8 @@ msgstr "E431: Error de formato en el archivo de etiquetas \"%s\""
 
 #: tag.c:2392
 #, c-format
-msgid "Before byte %ld"
-msgstr "Adelante del byte %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Adelante del byte %<PRId64>"
 
 #: tag.c:2425
 #, c-format
@@ -7234,8 +7234,8 @@ msgstr "Este es el cambio más nuevo"
 
 #: undo.c:930
 #, c-format
-msgid "Undo number %ld not found"
-msgstr "No se encontró el número de \"deshacer\" %ld"
+msgid "Undo number %<PRId64> not found"
+msgstr "No se encontró el número de \"deshacer\" %<PRId64>"
 
 #: undo.c:1100
 msgid "E438: u_undo: line numbers wrong"
@@ -7267,8 +7267,8 @@ msgstr "cambios"
 
 #: undo.c:1375
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 #: undo.c:1378
 msgid "before"
@@ -7288,8 +7288,8 @@ msgstr "el número modifica el tiempo"
 
 #: undo.c:1525
 #, c-format
-msgid "%ld seconds ago"
-msgstr "hace %ld segundos"
+msgid "%<PRId64> seconds ago"
+msgstr "hace %<PRId64> segundos"
 
 #: undo.c:1541
 msgid "E790: undojoin is not allowed after undo"

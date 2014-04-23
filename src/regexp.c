@@ -5770,15 +5770,16 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
       end = next;
     if (op == BRACE_LIMITS) {
       /* Two ints */
-      fprintf(f, " minval %ld, maxval %ld", OPERAND_MIN(s), OPERAND_MAX(s));
+      fprintf(f, " minval %" PRId64 ", maxval %" PRId64,
+              (int64_t)OPERAND_MIN(s), (int64_t)OPERAND_MAX(s));
       s += 8;
     } else if (op == BEHIND || op == NOBEHIND) {
       /* one int */
-      fprintf(f, " count %ld", OPERAND_MIN(s));
+      fprintf(f, " count %" PRId64, (int64_t)OPERAND_MIN(s));
       s += 4;
     } else if (op == RE_LNUM || op == RE_COL || op == RE_VCOL) {
       /* one int plus comperator */
-      fprintf(f, " count %ld", OPERAND_MIN(s));
+      fprintf(f, " count %" PRId64, (int64_t)OPERAND_MIN(s));
       s += 5;
     }
     s += 3;

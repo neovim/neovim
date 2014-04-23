@@ -58,8 +58,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: Níl aon mhaolán liostaithe ann"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Níl a leithéid de mhaolán %ld"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Níl a leithéid de mhaolán %<PRId64>"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Ní féidir a dhul thar an maolán deireanach"
@@ -68,9 +68,9 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Ní féidir a dhul roimh an chéad mhaolán"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: Athraíodh maolán %ld ach nach bhfuil sé sábháilte ó shin (cuir ! leis "
+"E89: Athraíodh maolán %<PRId64> ach nach bhfuil sé sábháilte ó shin (cuir ! leis "
 "an ordú chun sárú)"
 
 msgid "E90: Cannot unload last buffer"
@@ -80,8 +80,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Rabhadh: Liosta ainmneacha comhaid thar maoil"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: Maolán %ld gan aimsiú"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: Maolán %<PRId64> gan aimsiú"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -92,8 +92,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: Níl aon mhaolán comhoiriúnaithe le %s"
 
 #, c-format
-msgid "line %ld"
-msgstr "líne %ld:"
+msgid "line %<PRId64>"
+msgstr "líne %<PRId64>:"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Tá maolán ann leis an ainm seo cheana"
@@ -118,12 +118,12 @@ msgid "1 line --%d%%--"
 msgstr "1 líne --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld líne --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> líne --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "líne %ld de %ld --%d%%-- col "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "líne %<PRId64> de %<PRId64> --%d%%-- col "
 
 msgid "[No Name]"
 msgstr "[Gan Ainm]"
@@ -176,12 +176,12 @@ msgid "Signs for %s:"
 msgstr "Comharthaí do %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    líne=%ld  id=%d  ainm=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    líne=%<PRId64>  id=%d  ainm=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Ní féidir diff a dhéanamh ar níos mó ná %ld maolán"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Ní féidir diff a dhéanamh ar níos mó ná %<PRId64> maolán"
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: Ní féidir comhaid shealadacha a léamh nó a scríobh"
@@ -335,8 +335,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: Carachtair gan choinne i :let"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: innéacs liosta as raon: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: innéacs liosta as raon: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -720,8 +720,8 @@ msgid "%s aborted"
 msgstr "%s tobscortha"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s ag aisfhilleadh #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s ag aisfhilleadh #%<PRId64>"
 
 #, c-format
 msgid "%s returning %s"
@@ -771,12 +771,12 @@ msgid "1 line moved"
 msgstr "Bogadh líne amháin"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "Bogadh %ld líne"
+msgid "%<PRId64> lines moved"
+msgstr "Bogadh %<PRId64> líne"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "Scagadh %ld líne"
+msgid "%<PRId64> lines filtered"
+msgstr "Scagadh %<PRId64> líne"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr ""
@@ -864,8 +864,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: Tá comhad babhtála ann cheana: %s (úsáid :silent! chun sárú)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: Níl aon ainm ar mhaolán %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: Níl aon ainm ar mhaolán %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Níor scríobhadh an comhad: díchumasaithe leis an rogha 'write'"
@@ -923,19 +923,19 @@ msgid "1 substitution"
 msgstr "1 ionadaíocht"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld rud comhoiriúnach"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> rud comhoiriúnach"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld ionadaíocht"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> ionadaíocht"
 
 msgid " on 1 line"
 msgstr " ar líne amháin"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " ar %ld líne"
+msgid " on %<PRId64> lines"
+msgstr " ar %<PRId64> líne"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: Ní cheadaítear :global go hathchúrsach"
@@ -1019,8 +1019,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Ainm maoláin neamhbhailí: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: ID neamhbhailí comhartha: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: ID neamhbhailí comhartha: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (AR IARRAIDH)"
@@ -1035,16 +1035,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Mód dífhabhtaithe á thosú.  Clóscríobh \"cont\" chun leanúint."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "líne %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "líne %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "ordú: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Brisphointe i \"%s%s\" líne %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Brisphointe i \"%s%s\" líne %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -1054,8 +1054,8 @@ msgid "No breakpoints defined"
 msgstr "Níl aon bhrisphointe socraithe"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  líne %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  líne %<PRId64>"
 
 msgid "E750: First use \":profile start {fname}\""
 msgstr "E750: Úsáid \":profile start {ainm}\" ar dtús"
@@ -1111,16 +1111,16 @@ msgid "could not source \"%s\""
 msgstr "níorbh fhéidir \"%s\" a léamh"
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "líne %ld: níorbh fhéidir \"%s\" a fhoinsiú"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "líne %<PRId64>: níorbh fhéidir \"%s\" a fhoinsiú"
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "\"%s\" á fhoinsiú"
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "líne %ld: \"%s\" á fhoinsiú"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "líne %<PRId64>: \"%s\" á fhoinsiú"
 
 #, c-format
 msgid "finished sourcing %s"
@@ -1211,8 +1211,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: 1 chomhad le heagrú fós"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: %ld comhad le cur in eagar"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: %<PRId64> comhad le cur in eagar"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Tá an t-ordú ann cheana: cuir ! leis chun sárú"
@@ -1401,8 +1401,8 @@ msgid "Exception discarded: %s"
 msgstr "Eisceacht curtha i leataobh: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, líne %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, líne %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1610,12 +1610,12 @@ msgid "[crypted]"
 msgstr "[criptithe]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[EARRÁID TIONTAITHE i líne %ld]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[EARRÁID TIONTAITHE i líne %<PRId64>]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[BEART NEAMHCHEADAITHE i líne %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[BEART NEAMHCHEADAITHE i líne %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[EARRÁIDÍ LÉIMH]"
@@ -1701,10 +1701,10 @@ msgstr ""
 
 #, c-format
 msgid ""
-"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
 msgstr ""
-"E513: earráid le linn scríofa, theip ar thiontú ar líne %ld (úsáid 'fenc' folamh le "
+"E513: earráid le linn scríofa, theip ar thiontú ar líne %<PRId64> (úsáid 'fenc' folamh le "
 "sárú)"
 
 msgid "E514: write error (file system full?)"
@@ -1714,8 +1714,8 @@ msgid " CONVERSION ERROR"
 msgstr " EARRÁID TIONTAITHE"
 
 #, c-format
-msgid " in line %ld;"
-msgstr " ar líne %ld;"
+msgid " in line %<PRId64>;"
+msgstr " ar líne %<PRId64>;"
 
 msgid "[Device]"
 msgstr "[Gléas]"
@@ -1776,15 +1776,15 @@ msgid "1 line, "
 msgstr "1 líne, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld líne, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> líne, "
 
 msgid "1 character"
 msgstr "1 carachtar"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld carachtar"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> carachtar"
 
 msgid "[noeol]"
 msgstr "[ganEOL]"
@@ -2202,19 +2202,19 @@ msgid "Font1: %s\n"
 msgstr "Cló1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "Níl Cló%ld níos leithne faoi dhó ná cló0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "Níl Cló%<PRId64> níos leithne faoi dhó ná cló0\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Leithead Cló0: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Leithead Cló0: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Leithead Cló1: %ld\n"
+"Leithead Cló1: %<PRId64>\n"
 "\n"
 
 msgid "Invalid font specification"
@@ -2392,8 +2392,8 @@ msgid "Added cscope database %s"
 msgstr "Bunachar sonraí nua cscope: %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: earráid agus an nasc cscope %ld á léamh"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: earráid agus an nasc cscope %<PRId64> á léamh"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: cineál anaithnid cuardaigh cscope"
@@ -3636,12 +3636,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: Theip ar chaomhnú"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: lnum neamhbhailí: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: lnum neamhbhailí: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: líne %ld gan aimsiú"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: líne %<PRId64> gan aimsiú"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: aitheantas mícheart ar an mbloc pointeora 3"
@@ -3659,8 +3659,8 @@ msgid "deleted block 1?"
 msgstr "bloc a haon scriosta?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Líne %ld gan aimsiú"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Líne %<PRId64> gan aimsiú"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: aitheantas mícheart ar an mbloc pointeora"
@@ -3669,12 +3669,12 @@ msgid "pe_line_count is zero"
 msgstr "is 0 pe_line_count\""
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: líne-uimhir as raon: %ld thar dheireadh"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: líne-uimhir as raon: %<PRId64> thar dheireadh"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: líon mícheart na línte i mbloc %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: líon mícheart na línte i mbloc %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "Méadaíonn an chruach"
@@ -3866,8 +3866,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "Brúigh ENTER nó iontráil ordú le leanúint"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s líne %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s líne %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- Tuilleadh --"
@@ -3938,12 +3938,12 @@ msgid "1 line less"
 msgstr "1 líne níos lú"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld líne eile"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> líne eile"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld líne níos lú"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> líne níos lú"
 
 msgid " (Interrupted)"
 msgstr " (Idirbhriste)"
@@ -3965,29 +3965,29 @@ msgstr "EARRÁID: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[beart] iomlán dáilte-saor %lu-%lu, in úsáid %lu, buaic %lu\n"
+"[beart] iomlán dáilte-saor %<PRIu64>-%<PRIu64>, in úsáid %<PRIu64>, buaic %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[glaonna] re/malloc(): %lu, free(): %lu\n"
+"[glaonna] re/malloc(): %<PRIu64>, free(): %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: Tá an líne ag éirí rófhada"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Earráid inmheánach: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Earráid inmheánach: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Cuimhne ídithe!  (%lu beart á ndáileadh)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Cuimhne ídithe!  (%<PRIu64> beart á ndáileadh)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -4055,8 +4055,8 @@ msgid "read from Netbeans socket"
 msgstr "léadh ó shoicéad Netbeans"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: Cailleadh nasc NetBeans le haghaidh maoláin %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Cailleadh nasc NetBeans le haghaidh maoláin %<PRId64>"
 
 msgid "E505: "
 msgstr "E505: "
@@ -4103,24 +4103,24 @@ msgstr "1 líne %s %d uair"
 
 # ouch - English -ed ?
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld líne %sed uair amháin"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> líne %sed uair amháin"
 
 # ouch - English -ed ?
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld líne %sed %d uair"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> líne %sed %d uair"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld líne le heangú... "
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> líne le heangú... "
 
 msgid "1 line indented "
 msgstr "eangaíodh líne amháin "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld líne eangaithe "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> líne eangaithe "
 
 msgid "E748: No previously used register"
 msgstr "E748: Níl aon tabhall úsáidte roimhe seo"
@@ -4133,12 +4133,12 @@ msgid "1 line changed"
 msgstr "athraíodh líne amháin"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "athraíodh %ld líne"
+msgid "%<PRId64> lines changed"
+msgstr "athraíodh %<PRId64> líne"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "%ld líne á saoradh"
+msgid "freeing %<PRId64> lines"
+msgstr "%<PRId64> líne á saoradh"
 
 msgid "block of 1 line yanked"
 msgstr "sracadh bloc de líne amháin"
@@ -4147,12 +4147,12 @@ msgid "1 line yanked"
 msgstr "sracadh líne amháin"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "sracadh bloc de %ld líne"
+msgid "block of %<PRId64> lines yanked"
+msgstr "sracadh bloc de %<PRId64> líne"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld líne sractha"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> líne sractha"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4182,36 +4182,36 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: Cineál anaithnid tabhaill %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Colún; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Colún; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Roghnaíodh %s%ld as %ld Líne; %ld as %ld Focal; %ld as %ld Beart"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Roghnaíodh %s%<PRId64> as %<PRId64> Líne; %<PRId64> as %<PRId64> Focal; %<PRId64> as %<PRId64> Beart"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
 msgstr ""
-"Roghnaíodh %s%ld as %ld Líne; %ld as %ld Focal; %ld as %ld Carachtar; %ld as "
-"%ld Beart"
+"Roghnaíodh %s%<PRId64> as %<PRId64> Líne; %<PRId64> as %<PRId64> Focal; %<PRId64> as %<PRId64> Carachtar; %<PRId64> as "
+"%<PRId64> Beart"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Col %s as %s; Líne %ld as %ld; Focal %ld as %ld; Beart %ld as %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Col %s as %s; Líne %<PRId64> as %<PRId64>; Focal %<PRId64> as %<PRId64>; Beart %<PRId64> as %<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"Col %s as %s; Líne %ld as %ld; Focal %ld as %ld; Carachtar %ld as %ld; Beart "
-"%ld as %ld"
+"Col %s as %s; Líne %<PRId64> as %<PRId64>; Focal %<PRId64> as %<PRId64>; Carachtar %<PRId64> as %<PRId64>; Beart "
+"%<PRId64> as %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld do BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> do BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Leathanach %N"
@@ -4388,8 +4388,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Tá gá le Amigados leagan 2.04 nó níos déanaí\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Tá gá le %s, leagan %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Tá gá le %s, leagan %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Ní féidir NIL a oscailt:\n"
@@ -4473,8 +4473,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: Fuarthas comhartha marfach\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Thóg %ld ms chun an scáileán X a oscailt"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Thóg %<PRId64> ms chun an scáileán X a oscailt"
 
 msgid ""
 "\n"
@@ -5161,8 +5161,8 @@ msgid "Performing soundfolding..."
 msgstr "Fuaimfhilleadh..."
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "Líon na bhfocal tar éis fuaimfhillte: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "Líon na bhfocal tar éis fuaimfhillte: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -5197,8 +5197,8 @@ msgid "Done!"
 msgstr "Críochnaithe!"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: níl %ld iontráil i 'spellfile'"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: níl %<PRId64> iontráil i 'spellfile'"
 
 #, c-format
 msgid "Word removed from %s"
@@ -5215,8 +5215,8 @@ msgid "Sorry, no suggestions"
 msgstr "Tá brón orm, níl aon mholadh ann"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Tá brón orm, níl ach %ld moladh ann"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Tá brón orm, níl ach %<PRId64> moladh ann"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5517,8 +5517,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Earráid fhormáide i gcomhad clibeanna \"%s\""
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Roimh bheart %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Roimh bheart %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5587,8 +5587,8 @@ msgid "Already at newest change"
 msgstr "Ag an athrú is nuaí cheana"
 
 #, c-format
-msgid "Undo number %ld not found"
-msgstr "Níor aimsíodh cealú uimhir a %ld"
+msgid "Undo number %<PRId64> not found"
+msgstr "Níor aimsíodh cealú uimhir a %<PRId64>"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: líne-uimhreacha míchearta"
@@ -5612,8 +5612,8 @@ msgid "changes"
 msgstr "athrú"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "roimh"
@@ -5629,8 +5629,8 @@ msgid "number changes  time"
 msgstr "uimhir athruithe  am"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "%ld soicind ó shin"
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> soicind ó shin"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: ní cheadaítear \"undojoin\" tar éis \"undo\""
@@ -6454,8 +6454,8 @@ msgstr "Buaileadh an BUN le linn an chuardaigh, ag leanúint ag an BHARR"
 #~ msgstr ""
 #~ "Ní mór do charachtar a úsáidtear ar SLASH a bheith ASCII; i %s líne %d: %s"
 
-#~ msgid "%ld changes"
-#~ msgstr "%ld athrú"
+#~ msgid "%<PRId64> changes"
+#~ msgstr "%<PRId64> athrú"
 
 #~ msgid "with KDE GUI."
 #~ msgstr "le GUI KDE."

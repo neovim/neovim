@@ -1365,10 +1365,10 @@ int emsg3(char_u *s, char_u *a1, char_u *a2)
 }
 
 /*
- * Print an error message with one "%ld" and one long int argument.
+ * Print an error message with one "%" PRId64 and one (int64_t) argument.
  * This is not in message.c to avoid a warning for prototypes.
  */
-int emsgn(char_u *s, long n)
+int emsgn(char_u *s, int64_t n)
 {
   if (emsg_not_now())
     return TRUE;                /* no error messages at the moment */

@@ -77,8 +77,8 @@ msgstr "E84: Geen veranderde buffer gevind nie"
 msgid "E85: There is no listed buffer"
 msgstr "E85: Daar is geen gelyste buffer nie"
 
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Buffer %ld bestaan nie"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Buffer %<PRId64> bestaan nie"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Kan nie verby laaste buffer gaan nie"
@@ -86,8 +86,8 @@ msgstr "E87: Kan nie verby laaste buffer gaan nie"
 msgid "E88: Cannot go before first buffer"
 msgstr "E88: Kan nie vóór eerste buffer gaan nie"
 
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
-msgstr "E89: Buffer %ld nog ongestoor sedert vorige wysiging (gebruik ! om te dwing)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: Buffer %<PRId64> nog ongestoor sedert vorige wysiging (gebruik ! om te dwing)"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: Kan nie laaste buffer uitlaai nie"
@@ -96,8 +96,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Waarskuwing: Lêerlys loop oor"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: buffer %ld kon nie gevind word nie"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: buffer %<PRId64> kon nie gevind word nie"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -108,8 +108,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: Geen buffer wat by %s pas nie"
 
 #, c-format
-msgid "line %ld"
-msgstr "reël %ld"
+msgid "line %<PRId64>"
+msgstr "reël %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Buffer met hierdie naam bestaan alreeds"
@@ -134,12 +134,12 @@ msgid "1 line --%d%%--"
 msgstr "1 reël --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld reëls --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> reëls --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "reël %ld van %ld --%d%%-- kolom "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "reël %<PRId64> van %<PRId64> --%d%%-- kolom "
 
 msgid "[No file]"
 msgstr "[Geen lêer]"
@@ -189,12 +189,12 @@ msgid "Signs for %s:"
 msgstr "Tekens vir %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    reël=%ld  id=%d  naam=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    reël=%<PRId64>  id=%d  naam=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Kan nie meer as %ld buffers 'diff' nie"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Kan nie meer as %<PRId64> buffers 'diff' nie"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: Kan nie 'diffs' skep nie "
@@ -479,8 +479,8 @@ msgid "%s aborted"
 msgstr "%s gekanselleer"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s lewer #%ld op"
+msgid "%s returning #%<PRId64>"
+msgstr "%s lewer #%<PRId64> op"
 
 #, c-format
 msgid "%s returning \"%s\""
@@ -506,16 +506,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Ontfoutmodus begin nou.  Tik \"cont\" om te verlaat."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "reël %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "reël %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "cmd: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Inspeksiepunt in \"%s%s\" reël %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Inspeksiepunt in \"%s%s\" reël %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -525,8 +525,8 @@ msgid "No breakpoints defined"
 msgstr "Geen inspeksiepunte gedefinieer nie"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  reël %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  reël %<PRId64>"
 
 msgid "Save As"
 msgstr "Stoor As"
@@ -581,16 +581,16 @@ msgid "could not source \"%s\""
 msgstr "kon nie \"%s\" uitvoer nie"
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "reël %ld: kon nie \"%s\" uitvoer nie"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "reël %<PRId64>: kon nie \"%s\" uitvoer nie"
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "besig om \"%s\" uit te voer"
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "reël %ld: voer nou \"%s\" uit"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "reël %<PRId64>: voer nou \"%s\" uit"
 
 #, c-format
 msgid "finished sourcing %s"
@@ -699,12 +699,12 @@ msgid "1 line moved"
 msgstr "1 reël geskuif"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld reëls geskuif"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> reëls geskuif"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld reëls filtreer"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> reëls filtreer"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *Filter* Outobevele mag nie die huidige buffer verander nie"
@@ -779,8 +779,8 @@ msgid "Overwrite existing file \"%.*s\"?"
 msgstr "Oorskryf bestaande lêer \"%.*s\"?"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: Geen lêernaam vir buffer %ld nie"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: Geen lêernaam vir buffer %<PRId64> nie"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Lêer nie gestoor nie: Stoor is afgeskakel deur die 'write' opsie"
@@ -820,15 +820,15 @@ msgid "1 substitution"
 msgstr "1 vervanging"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld vervangings"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> vervangings"
 
 msgid " on 1 line"
 msgstr " op 1 reël"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " op %ld reëls"
+msgid " on %<PRId64> lines"
+msgstr " op %<PRId64> reëls"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: Kan nie :global rekursief doen nie "
@@ -909,8 +909,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Ongeldige buffernaam: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: Ongeldige teken ID: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: Ongeldige teken ID: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (NIE GEVIND NIE)"
@@ -972,8 +972,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: Nog 1 lêer om te bewerk"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: Nog %ld lêers om te bewerk"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: Nog %<PRId64> lêers om te bewerk"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Bevel bestaan alreeds: gebruik ! om te herdefinieer"
@@ -1134,8 +1134,8 @@ msgstr "Uitsondering het klaar gemaak: %s"
 msgid "Exception discarded: %s"
 msgstr "Uitsondering weg gegooi: %s"
 
-msgid "%s, line %ld"
-msgstr "%s, reël %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, reël %<PRId64>"
 
 #. always scroll up, don't overwrite
 msgid "Exception caught: %s"
@@ -1316,8 +1316,8 @@ msgid "[CONVERSION ERROR]"
 msgstr "[OMSETTINGSFOUT]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[ONWETTIGE GREEP in reël %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[ONWETTIGE GREEP in reël %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[LEESFOUTE]"
@@ -1453,15 +1453,15 @@ msgid "1 line, "
 msgstr "1 reël, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld reëls, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> reëls, "
 
 msgid "1 character"
 msgstr "1 karakter"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld karakters"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> karakters"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -1814,19 +1814,19 @@ msgstr "Font0: %s\n"
 msgid "Font1: %s\n"
 msgstr "Font1: %s\n"
 
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "Font%ld wydte is nie twee keer díe van font0 nie\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "Font%<PRId64> wydte is nie twee keer díe van font0 nie\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Font0 wydte: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Font0 wydte: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Font1 wydte: %ld\n"
+"Font1 wydte: %<PRId64>\n"
 "\n"
 
 msgid "E256: Hangul automata ERROR"
@@ -1876,8 +1876,8 @@ msgstr "E564: %s is nie 'n gids of 'n geldige 'cscope' databasis nie"
 msgid "Added cscope database %s"
 msgstr "'cscope' databasis %s bygevoeg"
 
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: 'cscope' verbinding %ld kon nie gelees word nie"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: 'cscope' verbinding %<PRId64> kon nie gelees word nie"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: onbekende 'cscope' soektipe"
@@ -2985,12 +2985,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: Kon nie bewaar nie"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: 'ml_get': ongeldige 'lnum': %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: 'ml_get': ongeldige 'lnum': %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: 'ml_get': kan reël %ld nie vind nie"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: 'ml_get': kan reël %<PRId64> nie vind nie"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: wyser blok id verkeerd 3"
@@ -3008,8 +3008,8 @@ msgid "deleted block 1?"
 msgstr "verwyder blok 1?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Kan nie reël %ld vind nie"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Kan nie reël %<PRId64> vind nie"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: wyser blok id verkeerd"
@@ -3018,12 +3018,12 @@ msgid "pe_line_count is zero"
 msgstr "'pe_line_count' is nul"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: reëlnommer buite perke: %ld verby die einde"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: reëlnommer buite perke: %<PRId64> verby die einde"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: reëltelling mag verkeerd wees in blok %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: reëltelling mag verkeerd wees in blok %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "Stapel grootte verhoog"
@@ -3255,12 +3255,12 @@ msgid "1 line less"
 msgstr "1 reël minder"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld meer reëls"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> meer reëls"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld minder reëls"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> minder reëls"
 
 msgid " (Interrupted)"
 msgstr " (Onderbreek)"
@@ -3279,29 +3279,29 @@ msgstr "FOUT: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[grepe] totaal 'alloc'-vrygelaat %lu-%lu, in gebruik %lu, piekgebruik %lu\n"
+"[grepe] totaal 'alloc'-vrygelaat %<PRIu64>-%<PRIu64>, in gebruik %<PRIu64>, piekgebruik %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[roepe] totaal re/malloc()'s %lu, totale free()'s %lu\n"
+"[roepe] totaal re/malloc()'s %<PRIu64>, totale free()'s %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: Rëel word te lank"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Interne fout: 'lalloc(%ld, )'"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Interne fout: 'lalloc(%<PRId64>, )'"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Geheue is op! (ken %lu grepe toe)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Geheue is op! (ken %<PRIu64> grepe toe)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -3378,8 +3378,8 @@ msgstr "E668: Verkeerde toegangsmodue vir NetBeans konneksie inligtingslêer: \"%
 msgid "read from Netbeans socket"
 msgstr "lees vanaf Netbeans 'socket'"
 
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: NetBeans konneksie vir buffer %ld verloor"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: NetBeans konneksie vir buffer %<PRId64> verloor"
 
 msgid "Warning: terminal cannot highlight"
 msgstr "Waarskuwing: terminaal kan nie teks uitlig nie"
@@ -3415,23 +3415,23 @@ msgid "1 line %sed %d times"
 msgstr "1 reël ge-%s %d keer"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld reëls 1 keer ge-%s"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> reëls 1 keer ge-%s"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld reëls ge-%s %d keer"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> reëls ge-%s %d keer"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld reëls om in te keep..."
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> reëls om in te keep..."
 
 msgid "1 line indented "
 msgstr "1 reël ingekeep "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld reëls ingekeep "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> reëls ingekeep "
 
 #. must display the prompt
 msgid "cannot yank; delete anyway"
@@ -3440,19 +3440,19 @@ msgstr "kan nie pluk nie: verwyder in elk geval"
 msgid "1 line changed"
 msgstr "1 reël verander"
 
-msgid "%ld lines changed"
-msgstr "%ld reëls verander"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> reëls verander"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "laat %ld reëls gaan"
+msgid "freeing %<PRId64> lines"
+msgstr "laat %<PRId64> reëls gaan"
 
 msgid "1 line yanked"
 msgstr "1 reël gepluk"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld reëls gepluk"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> reëls gepluk"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -3485,21 +3485,21 @@ msgid "E354: Invalid register name: '%s'"
 msgstr "E354: Ongeldige registernaam: '%s'"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Kolomme; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Kolomme; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "%s%ld van %ld reëls gekies; %ld van %ld Woorde; %ld van %ld Grepe"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "%s%<PRId64> van %<PRId64> reëls gekies; %<PRId64> van %<PRId64> Woorde; %<PRId64> van %<PRId64> Grepe"
 
 # njj: Karakters kan meerdere grepe wees, sien ':h multibyte'
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Kol %s van %s; Reël %ld van %ld; Woord %ld van %ld; Greep %ld van %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Kol %s van %s; Reël %<PRId64> van %<PRId64>; Woord %<PRId64> van %<PRId64>; Greep %<PRId64> van %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld vir 'BOM')"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> vir 'BOM')"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Bladsy %N"
@@ -3666,8 +3666,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Benodig Amigados weergawe 2.04 of later\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Benodig %s weergawe %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Benodig %s weergawe %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Kan nie NIL: oopmaak nie\n"
@@ -3751,8 +3751,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: Het dodelike sein gevang\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Om die X-vertoonskerm oop te maak het %ld msek gevat"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Om die X-vertoonskerm oop te maak het %<PRId64> msek gevat"
 
 msgid ""
 "\n"
@@ -4393,8 +4393,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Formaatfout in etiketlêer \"%s\""
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Voor greep %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Voor greep %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -4457,8 +4457,8 @@ msgid "1 change"
 msgstr "1 verandering"
 
 #, c-format
-msgid "%ld changes"
-msgstr "%ld veranderinge"
+msgid "%<PRId64> changes"
+msgstr "%<PRId64> veranderinge"
 
 msgid "E439: undo list corrupt"
 msgstr "E439: herstellys korrup"
@@ -5175,8 +5175,8 @@ msgstr "E463: Omgewing is onder bewaking, kan nie verander nie"
 #~ msgid "1 line ~ed"
 #~ msgstr "1 reël ge-~"
 
-#~ msgid "%ld lines ~ed"
-#~ msgstr "%ld reëls ge-~"
+#~ msgid "%<PRId64> lines ~ed"
+#~ msgstr "%<PRId64> reëls ge-~"
 
 #~ msgid " BLOCK"
 #~ msgstr " BLOK"
@@ -5202,14 +5202,14 @@ msgstr "E463: Omgewing is onder bewaking, kan nie verander nie"
 #~ msgid "Missing filename"
 #~ msgstr "Ontbrekende lêernaam"
 
-#~ msgid "Invalid line number: %ld"
-#~ msgstr "Ongeldige reëlnommer: %ld"
+#~ msgid "Invalid line number: %<PRId64>"
+#~ msgstr "Ongeldige reëlnommer: %<PRId64>"
 
 #~ msgid "Cannot use :normal from event handler"
 #~ msgstr "Kan ':normal' nie vanuit gebeurtenishanteerder gebruik nie"
 
-#~ msgid "%ldL, %ldC"
-#~ msgstr "%ldR, %ldK"
+#~ msgid "%<PRId64>L, %<PRId64>C"
+#~ msgstr "%<PRId64>R, %<PRId64>K"
 
 #~ msgid "VIM - Help on..."
 #~ msgstr "VIM - Hulp met.."
@@ -5350,8 +5350,8 @@ msgstr "E463: Omgewing is onder bewaking, kan nie verander nie"
 #~ msgid "Security error: new viminfo file is a symbolic link"
 #~ msgstr "Sekuriteitsfout: nuwe viminfo lêer is a simboliese skakel"
 
-#~ msgid "line ~%ld: %s"
-#~ msgstr "reël ~%ld: %s"
+#~ msgid "line ~%<PRId64>: %s"
+#~ msgstr "reël ~%<PRId64>: %s"
 
 #~ msgid "makeef option not set"
 #~ msgstr "'makeef' opsie nie aan nie"

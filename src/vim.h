@@ -88,20 +88,6 @@ Error: configure did not run properly.Check auto/config.log.
 #  define __w64
 typedef unsigned long __w64 long_u;
 typedef          long __w64 long_i;
-# define SCANF_HEX_LONG_U       "%lx"
-# define SCANF_DECIMAL_LONG_U   "%lu"
-# define PRINTF_HEX_LONG_U      "0x%lx"
-#define PRINTF_DECIMAL_LONG_U SCANF_DECIMAL_LONG_U
-
-/*
- * Only systems which use configure will have SIZEOF_OFF_T and SIZEOF_LONG
- * defined, which is ok since those are the same systems which can have
- * varying sizes for off_t.  The other systems will continue to use "%ld" to
- * print off_t since off_t is simply a typedef to long for them.
- */
-#if defined(SIZEOF_OFF_T) && (SIZEOF_OFF_T > SIZEOF_LONG)
-# define LONG_LONG_OFF_T
-#endif
 
 /*
  * The characters and attributes cached for the screen.
@@ -1056,7 +1042,7 @@ typedef enum {
 #define EMSG2(s, p)                 emsg2((char_u *)(s), (char_u *)(p))
 #define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
     (char_u *)(q))
-#define EMSGN(s, n)                 emsgn((char_u *)(s), (long)(n))
+#define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))
 #define EMSGU(s, n)                 emsgu((char_u *)(s), (long_u)(n))
 #define OUT_STR(s)                  out_str((char_u *)(s))
 #define OUT_STR_NF(s)               out_str_nf((char_u *)(s))

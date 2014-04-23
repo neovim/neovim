@@ -1294,8 +1294,8 @@ static void write_one_filemark(FILE *fp, xfmark_T *fm, int c1, int c2)
   else
     name = fm->fname;                   /* use name from .viminfo */
   if (name != NULL && *name != NUL) {
-    fprintf(fp, "%c%c  %ld  %ld  ", c1, c2, (long)fm->fmark.mark.lnum,
-        (long)fm->fmark.mark.col);
+    fprintf(fp, "%c%c  %" PRId64 "  %" PRId64 "  ",
+            c1, c2, (int64_t)fm->fmark.mark.lnum, (int64_t)fm->fmark.mark.col);
     viminfo_writestring(fp, name);
   }
 
@@ -1393,7 +1393,8 @@ int write_viminfo_marks(FILE *fp_out)
 static void write_one_mark(FILE *fp_out, int c, pos_T *pos)
 {
   if (pos->lnum != 0)
-    fprintf(fp_out, "\t%c\t%ld\t%d\n", c, (long)pos->lnum, (int)pos->col);
+    fprintf(fp_out, "\t%c\t%" PRId64 "\t%d\n", c,
+            (int64_t)pos->lnum, (int)pos->col);
 }
 
 /*

@@ -59,8 +59,8 @@ msgstr "E84: Nebol nájdený ¾iadny zmenený buffer"
 msgid "E85: There is no listed buffer"
 msgstr "E85: Nena¹iel som ¾iadny buffer"
 
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Buffer %ld neexistuje"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Buffer %<PRId64> neexistuje"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Za posledný buffer sa nedá preskoèi»"
@@ -68,8 +68,8 @@ msgstr "E87: Za posledný buffer sa nedá preskoèi»"
 msgid "E88: Cannot go before first buffer"
 msgstr "E88: Pred prvý buffer sa nedá preskoèi»"
 
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
-msgstr "E89: Zmeny v bufferi %ld neboli ulo¾ené (! pre vynútenie)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: Zmeny v bufferi %<PRId64> neboli ulo¾ené (! pre vynútenie)"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: Posledný buffer sa nedá odstráni»"
@@ -78,8 +78,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Varovanie: preteèenie zoznamu s názvami súborov"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: buffer %ld nenájdený"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: buffer %<PRId64> nenájdený"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -90,8 +90,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: Vzoru %s nevyhovuje ¾iadny buffer"
 
 #, c-format
-msgid "line %ld"
-msgstr "riadok %ld"
+msgid "line %<PRId64>"
+msgstr "riadok %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Buffer takéhoto mena u¾ existuje"
@@ -116,12 +116,12 @@ msgid "1 line --%d%%--"
 msgstr "1 riadok --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld riadkov --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> riadkov --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "riadok %ld z %ld --%d%%-- ståpec"
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "riadok %<PRId64> z %<PRId64> --%d%%-- ståpec"
 
 msgid "[No Name]"
 msgstr "[Bez mena]"
@@ -168,12 +168,12 @@ msgid "Signs for %s:"
 msgstr "Znaky pre %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    riadok=%ld  id=%d  meno=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    riadok=%<PRId64>  id=%d  meno=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Nemô¾em porovna» viac ako %ld bufferov"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Nemô¾em porovna» viac ako %<PRId64> bufferov"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: Nedajú sa vytvori» porovnania"
@@ -311,8 +311,8 @@ msgstr "zhoda %d"
 msgid "E18: Unexpected characters in :let"
 msgstr "E18: Neoèekávané znaky v :let"
 
-msgid "E684: list index out of range: %ld"
-msgstr "E684: index v zozname je mimo rozsah: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: index v zozname je mimo rozsah: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -620,8 +620,8 @@ msgid "%s aborted"
 msgstr "%s zru¹ený"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s vrátilo #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s vrátilo #%<PRId64>"
 
 msgid "%s returning %s"
 msgstr "%s vrátilo %s"
@@ -665,12 +665,12 @@ msgid "1 line moved"
 msgstr "1 riadok presunutý"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld riadkov presunutých"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> riadkov presunutých"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld riadkov filtrovaných"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> riadkov filtrovaných"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: Automatické príkazy *Filter* nesmú meni» aktuálny buffer"
@@ -749,8 +749,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: Odkladací súbor existuje: %s (pou¾ite :silent! pre prepísanie)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: ®iadny názov súboru pre buffer %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: ®iadny názov súboru pre buffer %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Súbor nebol ulo¾ený: ukladanie je zakázané voµbou 'write'"
@@ -791,19 +791,19 @@ msgstr "1 zhoda"
 msgid "1 substitution"
 msgstr "1 nahradenie"
 
-msgid "%ld matches"
-msgstr "%ld zhôd"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> zhôd"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld nahradení"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> nahradení"
 
 msgid " on 1 line"
 msgstr " na 1 riadku"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " na %ld riadkov"
+msgid " on %<PRId64> lines"
+msgstr " na %<PRId64> riadkov"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: :global sa nedá vola» rekurzívne"
@@ -884,8 +884,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Chybné meno bufferu: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: Chybné ID znaèky: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: Chybné ID znaèky: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (NENÁJDENÉ)"
@@ -900,16 +900,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Spú¹»am re¾im ladenia. Pre ukonèenie napí¹te \"cont\"."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "riadok %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "riadok %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "príkaz: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Bod preru¹enia v \"%s%s\" na riadku %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Bod preru¹enia v \"%s%s\" na riadku %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -919,8 +919,8 @@ msgid "No breakpoints defined"
 msgstr "Neboli definovné ¾iadne body preru¹enia"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  riadok %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  riadok %<PRId64>"
 
 msgid "E750: First use :profile start <fname>"
 msgstr "E750: Najprv pou¾ite príkaz :profile start <meno_suboru>"
@@ -975,16 +975,16 @@ msgid "could not source \"%s\""
 msgstr "nedá sa interpretova» \"%s\""
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "riadok %ld: nemô¾no interpretova» \"%s\""
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "riadok %<PRId64>: nemô¾no interpretova» \"%s\""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "interpretujem \"%s\""
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "riadok %ld: interpretujem \"%s\""
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "riadok %<PRId64>: interpretujem \"%s\""
 
 #, c-format
 msgid "finished sourcing %s"
@@ -1057,8 +1057,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: E¹te zostáva 1 súbor k úprave."
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: E¹te zostáva %ld súborov k úprave."
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: E¹te zostáva %<PRId64> súborov k úprave."
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Príkaz u¾ existuje: pou¾ite ! pre predefinovanie"
@@ -1225,8 +1225,8 @@ msgstr "Výnimka ukonèená: %s"
 msgid "Exception discarded: %s"
 msgstr "Výnimka zahodená: %s"
 
-msgid "%s, line %ld"
-msgstr "%s, riadok %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, riadok %<PRId64>"
 
 #. always scroll up, don't overwrite
 msgid "Exception caught: %s"
@@ -1413,8 +1413,8 @@ msgid "[CONVERSION ERROR]"
 msgstr "[CHYBA PREVODU]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[NEPRÍPUSTNÝ BAJT na riadku %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[NEPRÍPUSTNÝ BAJT na riadku %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[CHYBY ÈÍTANIA]"
@@ -1556,15 +1556,15 @@ msgid "1 line, "
 msgstr "1 riadok, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld riadkov, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> riadkov, "
 
 msgid "1 character"
 msgstr "1 znak"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld znakov"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> znakov"
 
 msgid "[noeol]"
 msgstr "[bez znaku konca riadku]"
@@ -1964,19 +1964,19 @@ msgstr "Písmo0: %s\n"
 msgid "Font1: %s\n"
 msgstr "Písmo1: %s\n"
 
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "Písmo%ld nie je dvakrát ¹ir¹ie ako písmo0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "Písmo%<PRId64> nie je dvakrát ¹ir¹ie ako písmo0\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "©írka písma0: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "©írka písma0: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"©írka písma1: %ld\n"
+"©írka písma1: %<PRId64>\n"
 "\n"
 
 msgid "Invalid font specification"
@@ -2145,8 +2145,8 @@ msgstr "E564: %s nie je ani adresárom ani správnou cscope databázou"
 msgid "Added cscope database %s"
 msgstr "Pridaná cscope databáza %s"
 
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: chyba pri èítaní cscope spojenia %ld"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: chyba pri èítaní cscope spojenia %<PRId64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: neznámy typ cscope hµadania"
@@ -3308,12 +3308,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: Uchovanie sa nepodarilo"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: chybné èíslo riadku: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: chybné èíslo riadku: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: nedá sa nájs» riadok %ld"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: nedá sa nájs» riadok %<PRId64>"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: chybné èíslo ukazovateµa na blok 3"
@@ -3331,8 +3331,8 @@ msgid "deleted block 1?"
 msgstr "vymazaný blok 1?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Nedá sa nájs» riadok %ld"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Nedá sa nájs» riadok %<PRId64>"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: chybné èíslo ukazovateµa na blok"
@@ -3341,12 +3341,12 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count má nulovú hodnotu"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: èíslo riadku je mimo rozsah: %ld (za koncom)"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: èíslo riadku je mimo rozsah: %<PRId64> (za koncom)"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: chybný poèet riadkov v bloku %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: chybný poèet riadkov v bloku %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "Nárast veµkosti zásobníku"
@@ -3589,12 +3589,12 @@ msgid "1 line less"
 msgstr "1 vymazaný riadok"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld nových riadkov"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> nových riadkov"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld vymazaných riadkov"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> vymazaných riadkov"
 
 msgid " (Interrupted)"
 msgstr " (Preru¹ené)"
@@ -3616,29 +3616,29 @@ msgstr "CHYBA: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[bajtov] celkom uvolnené-alokované %lu-%lu, vyu¾ité %lu, maximálne vyu¾itie %lu\n"
+"[bajtov] celkom uvolnené-alokované %<PRIu64>-%<PRIu64>, vyu¾ité %<PRIu64>, maximálne vyu¾itie %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[volanie] celkom re/malloc(): %lu, celkom free() %lu\n"
+"[volanie] celkom re/malloc(): %<PRIu64>, celkom free() %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: Riadok sa stáva príli¹ dlhým"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Vnútorná chyba: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Vnútorná chyba: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Nedostatok pamäte! (alokujem %lu bajtov)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Nedostatok pamäte! (alokujem %<PRIu64> bajtov)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -3706,8 +3706,8 @@ msgstr "E668: Zlé prístupové práva pre súbor s informáciami pre NetBeans spojeni
 msgid "read from Netbeans socket"
 msgstr "èítanie z Netbeans soketu"
 
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: Stratené NetBeans spojenie pre buffer %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Stratené NetBeans spojenie pre buffer %<PRId64>"
 
 msgid "E505: "
 msgstr "E505: "
@@ -3745,23 +3745,23 @@ msgid "1 line %sed %d times"
 msgstr "1 riadok upravený pomocou %s %d krát"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld riadkov upravených naraz pomocou %s"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> riadkov upravených naraz pomocou %s"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld riadkov upravených pomocou %s %d krát"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> riadkov upravených pomocou %s %d krát"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld riadkov pre odsadenie..."
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> riadkov pre odsadenie..."
 
 msgid "1 line indented "
 msgstr "1 riadok odsadený "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld riadkov odsadených "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> riadkov odsadených "
 
 msgid "E748: No previously used register"
 msgstr "E748: ®iadny predtým pou¾ívaný register"
@@ -3774,12 +3774,12 @@ msgid "1 line changed"
 msgstr "1 riadok zmenený"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld zmenených riadkov"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> zmenených riadkov"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "uvolòujem %ld riadkov"
+msgid "freeing %<PRId64> lines"
+msgstr "uvolòujem %<PRId64> riadkov"
 
 msgid "block of 1 line yanked"
 msgstr "skopírovaný blok 1 riadku"
@@ -3787,12 +3787,12 @@ msgstr "skopírovaný blok 1 riadku"
 msgid "1 line yanked"
 msgstr "1 riadok skopírovaný"
 
-msgid "block of %ld lines yanked"
-msgstr "skopírovaný blok %ld riadkov"
+msgid "block of %<PRId64> lines yanked"
+msgstr "skopírovaný blok %<PRId64> riadkov"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld skopírovaných riadkov"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> skopírovaných riadkov"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -3821,31 +3821,31 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: Neznámy typ registra %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Ståpcov; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Ståpcov; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Vybraných %s%ld z %ld Riadkov; %ld zo %ld Slov; %ld z %ld Bajtov"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Vybraných %s%<PRId64> z %<PRId64> Riadkov; %<PRId64> zo %<PRId64> Slov; %<PRId64> z %<PRId64> Bajtov"
 
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
-msgstr "Vybraných %s%ld z %ld Riadkov; %ld zo %ld Slov; %ld z %ld Znakov; %ld z %ld Bajtov"
+msgstr "Vybraných %s%<PRId64> z %<PRId64> Riadkov; %<PRId64> zo %<PRId64> Slov; %<PRId64> z %<PRId64> Znakov; %<PRId64> z %<PRId64> Bajtov"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Ståpec %s z %s; Riadok %ld z %ld; Slovo %ld z %ld; Bajt %ld z %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Ståpec %s z %s; Riadok %<PRId64> z %<PRId64>; Slovo %<PRId64> z %<PRId64>; Bajt %<PRId64> z %<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
-msgstr "Ståpec %s z %s; Riadok %ld z %ld; Slovo %ld z %ld; Znak %ld z %ld; Bajt %ld z %ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
+msgstr "Ståpec %s z %s; Riadok %<PRId64> z %<PRId64>; Slovo %<PRId64> z %<PRId64>; Znak %<PRId64> z %<PRId64>; Bajt %<PRId64> z %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld pre BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> pre BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Strana %N"
@@ -4011,8 +4011,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Je potrebná Amigados verzia 2.04 alebo nov¹ia\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Potrebná %s verzia %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Potrebná %s verzia %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Nedá sa otvori» NIL:\n"
@@ -4094,8 +4094,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: Zachytený smrtiaci signál\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Otvorenie X displej zabralo %ld msec"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Otvorenie X displej zabralo %<PRId64> msec"
 
 #. KDE sometimes produces X error that we want to ignore
 msgid ""
@@ -4744,8 +4744,8 @@ msgid "Estimated runtime memory use: %d bytes"
 msgstr "Veµkos» pou¾ívanej pamäte: %d bajtov"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' nemá %ld polo¾iek"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' nemá %<PRId64> polo¾iek"
 
 msgid "E763: Word characters differ between spell files"
 msgstr "E763: Znaky slov sa odli¹ujú medzi slovníkovými súbormi"
@@ -4754,8 +4754,8 @@ msgid "Sorry, no suggestions"
 msgstr "Prepáète, ¾iadne návrhy"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Prepáète, iba %ld návrhov"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Prepáète, iba %<PRId64> návrhov"
 
 #. avoid more prompt
 #, c-format
@@ -5034,8 +5034,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Chyba formátovania v súbore tagov \"%s\""
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Pred bajtom %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Pred bajtom %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5098,8 +5098,8 @@ msgid "1 change"
 msgstr "1 zmena"
 
 #, c-format
-msgid "%ld changes"
-msgstr "%ld zmien"
+msgid "%<PRId64> changes"
+msgstr "%<PRId64> zmien"
 
 msgid "E439: undo list corrupt"
 msgstr "E439: záznam o zmenách po¹kodený"

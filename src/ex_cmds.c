@@ -756,7 +756,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     if (num_lines == 1)
       MSG(_("1 line moved"));
     else
-      smsg((char_u *)_("%ld lines moved"), num_lines);
+      smsg((char_u *)_("%" PRId64 " lines moved"), (int64_t)num_lines);
   }
 
   /*
@@ -1190,7 +1190,7 @@ do_filter (
     if (linecount > p_report) {
       if (do_in) {
         vim_snprintf((char *)msg_buf, sizeof(msg_buf),
-            _("%ld lines filtered"), (long)linecount);
+            _("%" PRId64 " lines filtered"), (int64_t)linecount);
         if (msg(msg_buf) && !msg_scroll)
           /* save message to display it after redraw */
           set_keep_msg(msg_buf, 0);
@@ -2460,7 +2460,7 @@ void do_wqall(exarg_T *eap)
         break;
       }
       if (buf->b_ffname == NULL) {
-        EMSGN(_("E141: No file name for buffer %ld"), (long)buf->b_fnum);
+        EMSGN(_("E141: No file name for buffer %" PRId64), buf->b_fnum);
         ++error;
       } else if (check_readonly(&eap->forceit, buf)
                  || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
@@ -2738,7 +2738,7 @@ do_ecmd (
       if (command != NULL)
         vim_snprintf((char *)p, len, ":%s\r", command);
       else
-        vim_snprintf((char *)p, len, "%ldG", (long)newlnum);
+        vim_snprintf((char *)p, len, "%" PRId64 "G", (int64_t)newlnum);
       set_vim_var_string(VV_SWAPCOMMAND, p, -1);
       did_set_swapcommand = TRUE;
       vim_free(p);
@@ -4488,14 +4488,16 @@ do_sub_msg (
           "%s", count_only ? _("1 match") : _("1 substitution"));
     else
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
-          count_only ? _("%ld matches") : _("%ld substitutions"),
-          sub_nsubs);
+          count_only ?
+          _("%" PRId64 " matches") :
+          _("%" PRId64 " substitutions"),
+          (int64_t)sub_nsubs);
     if (sub_nlines == 1)
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
           "%s", _(" on 1 line"));
     else
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
-          _(" on %ld lines"), (long)sub_nlines);
+          _(" on %" PRId64 " lines"), (int64_t)sub_nlines);
     if (msg(msg_buf))
       /* save message to display it after redraw */
       set_keep_msg(msg_buf, 0);
@@ -6112,7 +6114,8 @@ void ex_sign(exarg_T *eap)
 		    cmd = alloc((unsigned)STRLEN(buf->b_fname) + 25);
 		    if (cmd == NULL)
 			return;
-		    sprintf((char *)cmd, "e +%ld %s", (long)lnum, buf->b_fname);
+		    sprintf((char *)cmd, "e +%" PRId64 " %s",
+                    (int64_t)lnum, buf->b_fname);
 		    do_cmdline_cmd(cmd);
 		    vim_free(cmd);
 		}
@@ -6120,7 +6123,7 @@ void ex_sign(exarg_T *eap)
 		foldOpenCursor();
 	    }
 	    else
-		EMSGN(_("E157: Invalid sign ID: %ld"), id);
+		EMSGN(_("E157: Invalid sign ID: %" PRId64), id);
 	}
 	else if (idx == SIGNCMD_UNPLACE)
 	{

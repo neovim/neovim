@@ -219,8 +219,8 @@ static void u_check(int newhead_may_be_NULL)                 {
     EMSGN("b_u_curhead invalid: 0x%x", curbuf->b_u_curhead);
   if (header_count != curbuf->b_u_numhead) {
     EMSG("b_u_numhead invalid");
-    smsg((char_u *)"expected: %ld, actual: %ld",
-        (long)header_count, (long)curbuf->b_u_numhead);
+    smsg((char_u *)"expected: %" PRId64 ", actual: %" PRId64,
+        (int64_t)header_count, (int64_t)curbuf->b_u_numhead);
   }
 }
 
@@ -1291,8 +1291,8 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
     write_ok = TRUE;
 #ifdef U_DEBUG
   if (headers_written != buf->b_u_numhead) {
-    EMSGN("Written %ld headers, ...", headers_written);
-    EMSGN("... but numhead is %ld", buf->b_u_numhead);
+    EMSGN("Written %" PRId64 " headers, ...", headers_written);
+    EMSGN("... but numhead is %" PRId64, buf->b_u_numhead);
   }
 #endif
 
@@ -1593,7 +1593,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 #ifdef U_DEBUG
   for (i = 0; i < num_head; ++i)
     if (uhp_table_used[i] == 0)
-      EMSGN("uhp_table entry %ld not used, leaking memory", i);
+      EMSGN("uhp_table entry %" PRId64 " not used, leaking memory", i);
   vim_free(uhp_table_used);
   u_check(TRUE);
 #endif
@@ -1910,7 +1910,7 @@ void undo_time(long step, int sec, int file, int absolute)
       break;
 
     if (absolute) {
-      EMSGN(_("E830: Undo number %ld not found"), step);
+      EMSGN(_("E830: Undo number %" PRId64 " not found"), step);
       return;
     }
 
@@ -2330,11 +2330,11 @@ u_undo_end (
     }
   }
 
-  smsg((char_u *)_("%ld %s; %s #%ld  %s"),
-      u_oldcount < 0 ? -u_oldcount : u_oldcount,
+  smsg((char_u *)_("%" PRId64 " %s; %s #%" PRId64 "  %s"),
+      u_oldcount < 0 ? (int64_t)-u_oldcount : (int64_t)u_oldcount,
       _(msgstr),
       did_undo ? _("before") : _("after"),
-      uhp == NULL ? 0L : uhp->uh_seq,
+      uhp == NULL ? (int64_t)0L : (int64_t)uhp->uh_seq,
       msgbuf);
 }
 
@@ -2465,8 +2465,8 @@ static void u_add_time(char_u *buf, size_t buflen, time_t tt)
       /* longer ago */
       (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", curtime);
   } else
-  vim_snprintf((char *)buf, buflen, _("%ld seconds ago"),
-      (long)(time(NULL) - tt));
+  vim_snprintf((char *)buf, buflen, _("%" PRId64 " seconds ago"),
+      (int64_t)(time(NULL) - tt));
 }
 
 /*

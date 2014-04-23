@@ -26,8 +26,8 @@ msgstr ""
 "Content-Transfer-Encoding: 7bit\n"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Cannot diff more than %ld buffers"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Cannot diff more than %<PRId64> buffers"
 
 msgid "E101: More than two buffers in diff mode, don't know which one to use"
 msgstr "E101: More than two buffers in diff mode, do not know which one to use"

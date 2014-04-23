@@ -61,8 +61,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: No hi ha cap buffer a la llista"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: El buffer %ld no existeix"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: El buffer %<PRId64> no existeix"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: No es pot anar més enllà de l'últim buffer"
@@ -71,8 +71,8 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: No es pot anar més enllà del primer buffer"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
-msgstr "E89: No s'ha desat el buffer %ld (afegiu ! per confirmar)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: No s'ha desat el buffer %<PRId64> (afegiu ! per confirmar)"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: No es pot alliberar l'últim buffer"
@@ -81,8 +81,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Atenció: S'ha desbordat la llista de noms de fitxers"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: No s'ha trobat el buffer %ld"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: No s'ha trobat el buffer %<PRId64>"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -93,8 +93,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: No hi ha cap coincidència per a %s"
 
 #, c-format
-msgid "line %ld"
-msgstr "línia %ld"
+msgid "line %<PRId64>"
+msgstr "línia %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Ja existeix un buffer amb aquest nom"
@@ -119,12 +119,12 @@ msgid "1 line --%d%%--"
 msgstr "1 línia --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld línies --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> línies --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "línia %ld de %ld --%d%%-- col "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "línia %<PRId64> de %<PRId64> --%d%%-- col "
 
 msgid "[No Name]"
 msgstr "[Sense nom]"
@@ -174,12 +174,12 @@ msgid "Signs for %s:"
 msgstr "Senyals per a %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    línia=%ld  id=%d  nom=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    línia=%<PRId64>  id=%d  nom=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: No es poden mostrar diferències amb més de %ld buffers"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: No es poden mostrar diferències amb més de %<PRId64> buffers"
 
 msgid "E97: Cannot create diffs"
 msgstr "E97: No s'han pogut mostrar les diferències"
@@ -340,8 +340,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: Caràcters inesperats :let"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: índex de llista fora d'abast: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: índex de llista fora d'abast: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -692,8 +692,8 @@ msgid "%s aborted"
 msgstr "s'ha avortat %s"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s ha retornat #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s ha retornat #%<PRId64>"
 
 #, c-format
 msgid "%s returning %s"
@@ -725,16 +725,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Entrant en mode de depuració. Escriviu \"cont\" per a continuar."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "línia %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "línia %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "ordre: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Punt de ruptura a \"%s%s\" línia %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Punt de ruptura a \"%s%s\" línia %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -744,8 +744,8 @@ msgid "No breakpoints defined"
 msgstr "No s'han definit punts de ruptura"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  línia %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  línia %<PRId64>"
 
 msgid "E750: First use :profile start <fname>"
 msgstr "E750: Primer useu :profile start <nomfitxer>"
@@ -807,16 +807,16 @@ msgid "could not source \"%s\""
 msgstr "no s'ha pogut interpretar \"%s\""
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "línia %ld: no s'ha pogut interpretar \"%s\""
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "línia %<PRId64>: no s'ha pogut interpretar \"%s\""
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "interpretant \"%s\""
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "línia %ld: interpretant \"%s\""
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "línia %<PRId64>: interpretant \"%s\""
 
 #, c-format
 msgid "finished sourcing %s"
@@ -879,12 +879,12 @@ msgid "1 line moved"
 msgstr "1 línia desplaçada"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld línies desplaçades"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> línies desplaçades"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld línies filtrades"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> línies filtrades"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: Les auto-ordres *Filter* no poden canviar el buffer actual"
@@ -965,8 +965,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: El fitxer d'intercanvi existeix: %s (:silent! per a confirmar)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: No hi ha nom de fitxer per al buffer %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: No hi ha nom de fitxer per al buffer %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: No s'ha escrit el fitxer: L'opció 'write' ho impedeix"
@@ -1011,19 +1011,19 @@ msgid "1 substitution"
 msgstr "1 substitució"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld coincidències"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> coincidències"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld substitucions"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> substitucions"
 
 msgid " on 1 line"
 msgstr " en 1 línia"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " en %ld línies"
+msgid " on %<PRId64> lines"
+msgstr " en %<PRId64> línies"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: No es pot executar una ordre global de forma recursiva"
@@ -1106,8 +1106,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: El nom del buffer no és vàlid: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: L'ID del senyal no és vàlida: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: L'ID del senyal no és vàlida: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (NO TROBAT)"
@@ -1170,8 +1170,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: Queda 1 fitxer per editar"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: Queden %ld fitxers per editar"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: Queden %<PRId64> fitxers per editar"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: L'ordre ja existeix: afegiu ! per substituir-la"
@@ -1359,8 +1359,8 @@ msgid "Exception discarded: %s"
 msgstr "Exepció descartada: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, línia %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, línia %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1562,12 +1562,12 @@ msgid "[crypted]"
 msgstr "[xifrat]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[ERROR DE CONVERSIÓ a la línia %ld]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[ERROR DE CONVERSIÓ a la línia %<PRId64>]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[OCTET IL·LEGAL a la línia %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[OCTET IL·LEGAL a la línia %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[ERRORS DE LECTURA]"
@@ -1710,15 +1710,15 @@ msgid "1 line, "
 msgstr "1 línia, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld línies, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> línies, "
 
 msgid "1 character"
 msgstr "1 caràcter"
 
 #, c-format
-msgid "%ld characters"
-msgstr "%ld caràcters"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> caràcters"
 
 # «no final de línia»  eac
 msgid "[noeol]"
@@ -2133,19 +2133,19 @@ msgid "Font1: %s\n"
 msgstr "Fosa1: %s\n"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0\n"
-msgstr "L'amplada de la fosa%ld no és el doble que la de la fosa0\n"
+msgid "Font%<PRId64> width is not twice that of font0\n"
+msgstr "L'amplada de la fosa%<PRId64> no és el doble que la de la fosa0\n"
 
 #, c-format
-msgid "Font0 width: %ld\n"
-msgstr "Amplada de de la Fosa0: %ld\n"
+msgid "Font0 width: %<PRId64>\n"
+msgstr "Amplada de de la Fosa0: %<PRId64>\n"
 
 #, c-format
 msgid ""
-"Font1 width: %ld\n"
+"Font1 width: %<PRId64>\n"
 "\n"
 msgstr ""
-"Amplada de la Fosa1: %ld\n"
+"Amplada de la Fosa1: %<PRId64>\n"
 "\n"
 
 msgid "Invalid font specification"
@@ -2322,8 +2322,8 @@ msgid "Added cscope database %s"
 msgstr "S'ha afegit la base de dades cscope %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: Error en llegir la connexió cscope %ld"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: Error en llegir la connexió cscope %<PRId64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: Tipus de cerca cscope desconeguda"
@@ -3475,12 +3475,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: La preservació ha fallat"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: lnum no vàlid: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: lnum no vàlid: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: no s'ha trobat la línia %ld"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: no s'ha trobat la línia %<PRId64>"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: Punter a la id d'un bloc incorrecte 3"
@@ -3498,8 +3498,8 @@ msgid "deleted block 1?"
 msgstr "s'ha eliminat el bloc 1?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: No s'ha trobat la línia %ld"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: No s'ha trobat la línia %<PRId64>"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: Punter a la id d'un bloc incorrecte"
@@ -3508,12 +3508,12 @@ msgid "pe_line_count is zero"
 msgstr "po_line_count és zero"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: Nombre de línia fora d'abast: %ld passat el final"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: Nombre de línia fora d'abast: %<PRId64> passat el final"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: Comptador de línia incorrecte al bloc %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: Comptador de línia incorrecte al bloc %<PRId64>"
 
 msgid "Stack size increases"
 msgstr "La mida de la pila s'incrementa"
@@ -3701,8 +3701,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "Premeu ENTRAR o introduïu una ordre per a continuar"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s línia %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s línia %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- Més --"
@@ -3768,12 +3768,12 @@ msgid "1 line less"
 msgstr "1 línia menys"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld línies més"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> línies més"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld línies menys"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> línies menys"
 
 msgid " (Interrupted)"
 msgstr " (Interromput)"
@@ -3795,29 +3795,29 @@ msgstr "ERROR: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[octets] total assignat-alliberat %lu-%lu, en ús %lu, màxim ús %lu\n"
+"[octets] total assignat-alliberat %<PRIu64>-%<PRIu64>, en ús %<PRIu64>, màxim ús %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[crides] total re/malloc() %lu, total free() %lu\n"
+"[crides] total re/malloc() %<PRIu64>, total free() %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: La línia s'està tornant massa llarga"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Error intern: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Error intern: lalloc(%<PRId64>, )"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Memòria exhaurida! (assignant %lu octets)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Memòria exhaurida! (assignant %<PRIu64> octets)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -3882,8 +3882,8 @@ msgid "read from Netbeans socket"
 msgstr "lectura d'un socket Netbeans"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: S'ha perdut la connexió NetBeans per al buffer %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: S'ha perdut la connexió NetBeans per al buffer %<PRId64>"
 
 msgid "E505: "
 msgstr "E505:"
@@ -3928,23 +3928,23 @@ msgid "1 line %sed %d times"
 msgstr "1 línia %sada %d vegades"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld línies %sades 1 vegada"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> línies %sades 1 vegada"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld línies %sades %d vegades"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> línies %sades %d vegades"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld línies a sagnar... "
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> línies a sagnar... "
 
 msgid "1 line indented "
 msgstr "1 línia sagnada "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld línies sagnades "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> línies sagnades "
 
 msgid "E748: No previously used register"
 msgstr "E748: No hi ha cap registre usat amb anterioritat"
@@ -3957,12 +3957,12 @@ msgid "1 line changed"
 msgstr "1 línia canviada"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld línies canviades"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> línies canviades"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "alliberant %ld línies"
+msgid "freeing %<PRId64> lines"
+msgstr "alliberant %<PRId64> línies"
 
 msgid "block of 1 line yanked"
 msgstr "bloc d'1 línia copiat"
@@ -3971,12 +3971,12 @@ msgid "1 line yanked"
 msgstr "1 línia copiada"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "bloc de %ld línies copiat"
+msgid "block of %<PRId64> lines yanked"
+msgstr "bloc de %<PRId64> línies copiat"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld línies copiades"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> línies copiades"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4006,28 +4006,28 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: El tipus de registre %d és desconegut"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld Cols; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> Cols; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Selecció %s%ld de %ld Línies; %ld de %ld Paraules; %ld de %ld Octets"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Selecció %s%<PRId64> de %<PRId64> Línies; %<PRId64> de %<PRId64> Paraules; %<PRId64> de %<PRId64> Octets"
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld Bytes"
-msgstr "Selecció %s%ld de %ld Línies; %ld de %ld Paraules; %ld de %ld Caràcters; %ld de %ld Octets"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> Bytes"
+msgstr "Selecció %s%<PRId64> de %<PRId64> Línies; %<PRId64> de %<PRId64> Paraules; %<PRId64> de %<PRId64> Caràcters; %<PRId64> de %<PRId64> Octets"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Col %s de %s; Línia %ld de %ld; Paraula %ld de %ld; Octet %ld de %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Col %s de %s; Línia %<PRId64> de %<PRId64>; Paraula %<PRId64> de %<PRId64>; Octet %<PRId64> de %<PRId64>"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of %ld"
-msgstr "Col %s de %s; Línia %ld de %ld; Paraula %ld de %ld; Caràcter %ld de %ld; Octet %ld de %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Col %s de %s; Línia %<PRId64> de %<PRId64>; Paraula %<PRId64> de %<PRId64>; Caràcter %<PRId64> de %<PRId64>; Octet %<PRId64> de %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld per la BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> per la BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Pàgina %N"
@@ -4193,8 +4193,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Es requereix Amigados versió 2.04 o posterior\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Es requereix %s versió %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Es requereix %s versió %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "No s'ha pogut obrir NIL:\n"
@@ -4278,8 +4278,8 @@ msgstr "Vim: S'ha rebut un senyal letal\n"
 
 # display
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "S'ha trigat %ld mseg en obrir el display X"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "S'ha trigat %<PRId64> mseg en obrir el display X"
 
 msgid ""
 "\n"
@@ -4934,8 +4934,8 @@ msgid "Performing soundfolding..."
 msgstr "Efectuant expansió per similitud fonètica..."
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "Nombre de paraules després de l'expansió per similitud fonètica: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "Nombre de paraules després de l'expansió per similitud fonètica: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -4970,8 +4970,8 @@ msgid "Done!"
 msgstr "Fet!"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' no té %ld entrades"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' no té %<PRId64> entrades"
 
 #, c-format
 msgid "Word removed from %s"
@@ -4988,8 +4988,8 @@ msgid "Sorry, no suggestions"
 msgstr "Cap suggeriment"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Llàstima, només %ld suggeriments"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Llàstima, només %<PRId64> suggeriments"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5292,8 +5292,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: Error de format en el fitxer d'etiquetes \"%s\""
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "Abans de l'octet %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Abans de l'octet %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5357,8 +5357,8 @@ msgid "Already at newest change"
 msgstr "Ja sou en el canvi més recent"
 
 #, c-format
-msgid "Undo number %ld not found"
-msgstr "Línia de desfer número %ld no trobada"
+msgid "Undo number %<PRId64> not found"
+msgstr "Línia de desfer número %<PRId64> no trobada"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: els nombres de línia no són correctes"
@@ -5382,8 +5382,8 @@ msgid "changes"
 msgstr "canvis"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "abans"
@@ -5398,8 +5398,8 @@ msgid "number changes  time"
 msgstr "número canvis   hora"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "fa %ld segons"
+msgid "%<PRId64> seconds ago"
+msgstr "fa %<PRId64> segons"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: undojoin no està permès després de undo"

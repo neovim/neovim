@@ -91,8 +91,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: リスト表\示されるバッファはありません"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: バッファ %ld はありません"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: バッファ %<PRId64> はありません"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: 最後のバッファを越えて移動はできません"
@@ -101,8 +101,8 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: 最初のバッファより前へは移動できません"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
-msgstr "E89: バッファ %ld の変更は保存されていません (! で変更を破棄)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: バッファ %<PRId64> の変更は保存されていません (! で変更を破棄)"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: 最後のバッファは解放できません"
@@ -111,8 +111,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: 警告: ファイル名のリストが長過ぎます"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: バッファ %ld が見つかりません"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: バッファ %<PRId64> が見つかりません"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -123,8 +123,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: %s に該当するバッファはありませんでした"
 
 #, c-format
-msgid "line %ld"
-msgstr "行 %ld"
+msgid "line %<PRId64>"
+msgstr "行 %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: この名前のバッファは既にあります"
@@ -152,12 +152,12 @@ msgid "1 line --%d%%--"
 msgstr "1 行 --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld 行 --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> 行 --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "行 %ld (全体 %ld) --%d%%-- col "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "行 %<PRId64> (全体 %<PRId64>) --%d%%-- col "
 
 msgid "[No Name]"
 msgstr "[無名]"
@@ -203,12 +203,12 @@ msgid "Signs for %s:"
 msgstr "%s のサイン:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    行=%ld  識別子=%d  名前=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    行=%<PRId64>  識別子=%d  名前=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: %ld 以上のバッファはdiffできません"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: %<PRId64> 以上のバッファはdiffできません"
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: 一時ファイルの読込もしくは書込ができません"
@@ -367,8 +367,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: 予\期せぬ文字が :let にありました"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: リストのインデックスが範囲外です: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: リストのインデックスが範囲外です: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -782,8 +782,8 @@ msgid "%s aborted"
 msgstr "%s が中断されました"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s が #%ld を返しました"
+msgid "%s returning #%<PRId64>"
+msgstr "%s が #%<PRId64> を返しました"
 
 #, c-format
 msgid "%s returning %s"
@@ -832,12 +832,12 @@ msgid "1 line moved"
 msgstr "1 行が移動されました"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "%ld 行が移動されました"
+msgid "%<PRId64> lines moved"
+msgstr "%<PRId64> 行が移動されました"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "%ld 行がフィルタ処理されました"
+msgid "%<PRId64> lines filtered"
+msgstr "%<PRId64> 行がフィルタ処理されました"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: *フィルタ* autocommandは現在のバッファを変更してはいけません"
@@ -921,8 +921,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: スワップファイルが存在します: %s (:silent! を追加で上書)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: バッファ %ld には名前がありません"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: バッファ %<PRId64> には名前がありません"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: ファイルは保存されませんでした: 'write' オプションにより無効です"
@@ -979,19 +979,19 @@ msgid "1 substitution"
 msgstr "1 箇所置換しました"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld 箇所該当しました"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> 箇所該当しました"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld 箇所置換しました"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> 箇所置換しました"
 
 msgid " on 1 line"
 msgstr " (計 1 行内)"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " (計 %ld 行内)"
+msgid " on %<PRId64> lines"
+msgstr " (計 %<PRId64> 行内)"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: :global を再帰的には使えません"
@@ -1078,8 +1078,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: 無効なバッファ名です: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: 無効なsign識別子です: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: 無効なsign識別子です: %<PRId64>"
 
 # Added at 27-Jan-2004.
 msgid " (NOT FOUND)"
@@ -1095,16 +1095,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "デバッグモードに入ります. 続けるには \"cont\" と入力してください."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "行 %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "行 %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "コマンド: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "ブレークポイント \"%s%s\" 行 %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "ブレークポイント \"%s%s\" 行 %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -1114,8 +1114,8 @@ msgid "No breakpoints defined"
 msgstr "ブレークポイントが定義されていません"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d  %s %s  行 %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d  %s %s  行 %<PRId64>"
 
 msgid "E750: First use \":profile start {fname}\""
 msgstr "E750: 初めに \":profile start {fname}\" を実行してください"
@@ -1171,16 +1171,16 @@ msgid "could not source \"%s\""
 msgstr "\"%s\" を取込めません"
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "行 %ld: \"%s\" を取込めません"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "行 %<PRId64>: \"%s\" を取込めません"
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "\"%s\" を取込中"
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "行 %ld: %s を取込中"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "行 %<PRId64>: %s を取込中"
 
 #, c-format
 msgid "finished sourcing %s"
@@ -1269,8 +1269,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: 編集すべきファイルが 1 個あります"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: 編集すべきファイルがあと %ld 個あります"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: 編集すべきファイルがあと %<PRId64> 個あります"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: コマンドが既にあります: 再定義するには ! を追加してください"
@@ -1464,8 +1464,8 @@ msgid "Exception discarded: %s"
 msgstr "例外が破棄されました: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, 行 %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, 行 %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1669,12 +1669,12 @@ msgid "[crypted]"
 msgstr "[暗号化]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[%ld 行目で変換エラー]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[%<PRId64> 行目で変換エラー]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[%ld 行目の不正なバイト]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[%<PRId64> 行目の不正なバイト]"
 
 msgid "[READ ERRORS]"
 msgstr "[読込エラー]"
@@ -1758,10 +1758,10 @@ msgstr "E513: 書込みエラー, 変換失敗 (上書するには 'fenc' を空にしてください)"
 
 #, c-format
 msgid ""
-"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
 msgstr ""
-"E513: 書込みエラー, 変換失敗, 行数 %ld (上書するには 'fenc' を空にしてくださ"
+"E513: 書込みエラー, 変換失敗, 行数 %<PRId64> (上書するには 'fenc' を空にしてくださ"
 "い)"
 
 msgid "E514: write error (file system full?)"
@@ -1771,8 +1771,8 @@ msgid " CONVERSION ERROR"
 msgstr " 変換エラー"
 
 #, c-format
-msgid " in line %ld;"
-msgstr "行 %ld;"
+msgid " in line %<PRId64>;"
+msgstr "行 %<PRId64>;"
 
 msgid "[Device]"
 msgstr "[デバイス]"
@@ -1833,20 +1833,20 @@ msgid "1 line, "
 msgstr "1 行, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld 行, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> 行, "
 
 msgid "1 character"
 msgstr "1 文字"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld 文字"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> 文字"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format
-msgid "%ld characters"
-msgstr "%ld 文字"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> 文字"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -2258,16 +2258,16 @@ msgid "Font1: %s"
 msgstr "フォント1: %s"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0"
-msgstr "フォント%ld の幅がフォント0の2倍ではありません"
+msgid "Font%<PRId64> width is not twice that of font0"
+msgstr "フォント%<PRId64> の幅がフォント0の2倍ではありません"
 
 #, c-format
-msgid "Font0 width: %ld"
-msgstr "フォント0の幅: %ld"
+msgid "Font0 width: %<PRId64>"
+msgstr "フォント0の幅: %<PRId64>"
 
 #, c-format
-msgid "Font1 width: %ld"
-msgstr "フォント1の幅: %ld"
+msgid "Font1 width: %<PRId64>"
+msgstr "フォント1の幅: %<PRId64>"
 
 msgid "Invalid font specification"
 msgstr "無効なフォント指定です"
@@ -2444,8 +2444,8 @@ msgid "Added cscope database %s"
 msgstr "cscopeデータベース %s を追加"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: cscopeの接続 %ld を読込み中のエラーです"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: cscopeの接続 %<PRId64> を読込み中のエラーです"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: 未知のcscope検索型です"
@@ -3661,12 +3661,12 @@ msgid "E314: Preserve failed"
 msgstr "E314: 維持に失敗しました"
 
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: 無効なlnumです: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: 無効なlnumです: %<PRId64>"
 
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: 行 %ld を見つけられません"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: 行 %<PRId64> を見つけられません"
 
 msgid "E317: pointer block id wrong 3"
 msgstr "E317: ポインタブロックのIDが間違っています 3"
@@ -3684,8 +3684,8 @@ msgid "deleted block 1?"
 msgstr "ブロック 1 は消された?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: 行 %ld が見つかりません"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: 行 %<PRId64> が見つかりません"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: ポインタブロックのIDが間違っています"
@@ -3694,12 +3694,12 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count がゼロです"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: 行番号が範囲外です: %ld 超えています"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: 行番号が範囲外です: %<PRId64> 超えています"
 
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: ブロック %ld の行カウントが間違っています"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: ブロック %<PRId64> の行カウントが間違っています"
 
 msgid "Stack size increases"
 msgstr "スタックサイズが増えます"
@@ -3883,8 +3883,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "続けるにはENTERを押すかコマンドを入力してください"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s 行 %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s 行 %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- 継続 --"
@@ -3954,12 +3954,12 @@ msgid "1 line less"
 msgstr "1 行 削除しました"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "%ld 行 追加しました"
+msgid "%<PRId64> more lines"
+msgstr "%<PRId64> 行 追加しました"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "%ld 行 削除しました"
+msgid "%<PRId64> fewer lines"
+msgstr "%<PRId64> 行 削除しました"
 
 msgid " (Interrupted)"
 msgstr " (割込まれました)"
@@ -3980,29 +3980,29 @@ msgstr "エラー: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[メモリ(バイト)] 総割当-解放量 %lu-%lu, 使用量 %lu, ピーク時 %lu\n"
+"[メモリ(バイト)] 総割当-解放量 %<PRIu64>-%<PRIu64>, 使用量 %<PRIu64>, ピーク時 %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[呼出] 総 re/malloc() 回数 %lu, 総 free() 回数 %lu\n"
+"[呼出] 総 re/malloc() 回数 %<PRIu64>, 総 free() 回数 %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
 msgstr "E340: 行が長くなり過ぎました"
 
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: 内部エラー: lalloc(%ld,)"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: 内部エラー: lalloc(%<PRId64>,)"
 
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: メモリが足りません!  (%lu バイトを割当要求)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: メモリが足りません!  (%<PRIu64> バイトを割当要求)"
 
 #, c-format
 msgid "Calling shell to execute: \"%s\""
@@ -4074,8 +4074,8 @@ msgid "read from Netbeans socket"
 msgstr "Netbeans のソ\ケットを読込み"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: バッファ %ld の NetBeans 接続が失われました"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: バッファ %<PRId64> の NetBeans 接続が失われました"
 
 msgid "E838: netbeans is not supported with this GUI"
 msgstr "E838: NetBeansはこのGUIには対応していません"
@@ -4126,23 +4126,23 @@ msgid "1 line %sed %d times"
 msgstr "1 行が %s で %d 回処理されました"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld 行が %s で 1 回処理されました"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> 行が %s で 1 回処理されました"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld 行が %s で %d 回処理されました"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> 行が %s で %d 回処理されました"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "%ld 行がインデントされます... "
+msgid "%<PRId64> lines to indent... "
+msgstr "%<PRId64> 行がインデントされます... "
 
 msgid "1 line indented "
 msgstr "1 行をインデントしました "
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "%ld 行をインデントしました "
+msgid "%<PRId64> lines indented "
+msgstr "%<PRId64> 行をインデントしました "
 
 msgid "E748: No previously used register"
 msgstr "E748: まだレジスタを使用していません"
@@ -4155,12 +4155,12 @@ msgid "1 line changed"
 msgstr "1 行が変更されました"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "%ld 行が変更されました"
+msgid "%<PRId64> lines changed"
+msgstr "%<PRId64> 行が変更されました"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "%ld 行を解放中"
+msgid "freeing %<PRId64> lines"
+msgstr "%<PRId64> 行を解放中"
 
 msgid "block of 1 line yanked"
 msgstr "1 行のブロックがヤンクされました"
@@ -4169,12 +4169,12 @@ msgid "1 line yanked"
 msgstr "1 行がヤンクされました"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "%ld 行のブロックがヤンクされました"
+msgid "block of %<PRId64> lines yanked"
+msgstr "%<PRId64> 行のブロックがヤンクされました"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "%ld 行がヤンクされました"
+msgid "%<PRId64> lines yanked"
+msgstr "%<PRId64> 行がヤンクされました"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4203,33 +4203,33 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: 未知のレジスタ型 %d です"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "%ld 列; "
+msgid "%<PRId64> Cols; "
+msgstr "%<PRId64> 列; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "選択 %s%ld / %ld 行; %ld / %ld 単語; %ld / %ld バイト"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "選択 %s%<PRId64> / %<PRId64> 行; %<PRId64> / %<PRId64> 単語; %<PRId64> / %<PRId64> バイト"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
-msgstr "選択 %s%ld / %ld 行; %ld / %ld 単語; %ld / %ld 文字; %ld / %ld バイト"
+msgstr "選択 %s%<PRId64> / %<PRId64> 行; %<PRId64> / %<PRId64> 単語; %<PRId64> / %<PRId64> 文字; %<PRId64> / %<PRId64> バイト"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "列 %s / %s; 行 %ld of %ld; 単語 %ld / %ld; バイト %ld / %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "列 %s / %s; 行 %<PRId64> of %<PRId64>; 単語 %<PRId64> / %<PRId64>; バイト %<PRId64> / %<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"列 %s / %s; 行 %ld / %ld; 単語 %ld / %ld; 文字 %ld / %ld; バイト %ld of %ld"
+"列 %s / %s; 行 %<PRId64> / %<PRId64>; 単語 %<PRId64> / %<PRId64>; 文字 %<PRId64> / %<PRId64>; バイト %<PRId64> of %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld for BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> for BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=%N ページ"
@@ -4412,8 +4412,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Amigadosのバージョン 2.04かそれ以降が必要です\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "%s のバージョン %ld が必要です\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "%s のバージョン %<PRId64> が必要です\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "NILを開けません:\n"
@@ -4495,8 +4495,8 @@ msgid "Vim: Caught deadly signal\n"
 msgstr "Vim: 致命的シグナルを検知しました\n"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "Xサーバへの接続に %ld ミリ秒かかりました"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "Xサーバへの接続に %<PRId64> ミリ秒かかりました"
 
 msgid ""
 "\n"
@@ -5277,8 +5277,8 @@ msgid "Performing soundfolding..."
 msgstr "音声畳込みを実行中..."
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "音声畳込み後の総単語数: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "音声畳込み後の総単語数: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -5313,8 +5313,8 @@ msgid "Done!"
 msgstr "実行しました!"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' には %ld 個のエントリはありません"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' には %<PRId64> 個のエントリはありません"
 
 #, c-format
 msgid "Word removed from %s"
@@ -5331,8 +5331,8 @@ msgid "Sorry, no suggestions"
 msgstr "残念ですが, 修正候補はありません"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "残念ですが, 修正候補は %ld 個しかありません"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "残念ですが, 修正候補は %<PRId64> 個しかありません"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5649,8 +5649,8 @@ msgid "E431: Format error in tags file \"%s\""
 msgstr "E431: タグファイル \"%s\" のフォーマットにエラーがあります"
 
 #, c-format
-msgid "Before byte %ld"
-msgstr "直前の %ld バイト"
+msgid "Before byte %<PRId64>"
+msgstr "直前の %<PRId64> バイト"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5794,8 +5794,8 @@ msgid "Already at newest change"
 msgstr "既に一番新しい変更です"
 
 #, c-format
-msgid "E830: Undo number %ld not found"
-msgstr "E830: アンドゥ番号 %ld は見つかりません"
+msgid "E830: Undo number %<PRId64> not found"
+msgstr "E830: アンドゥ番号 %<PRId64> は見つかりません"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: 行番号が間違っています"
@@ -5819,8 +5819,8 @@ msgid "changes"
 msgstr "箇所変更しました"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "前方"
@@ -5835,8 +5835,8 @@ msgid "number changes  when               saved"
 msgstr "通番   変更数   変更時期           保存済"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "%ld 秒経過しています"
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> 秒経過しています"
 
 msgid "E790: undojoin is not allowed after undo"
 msgstr "E790: undo の直後に undojoin はできません"

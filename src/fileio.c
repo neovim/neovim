@@ -1884,11 +1884,11 @@ failed:
       }
       if (conv_error != 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
-            _("[CONVERSION ERROR in line %ld]"), (long)conv_error);
+            _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
         c = TRUE;
       } else if (illegal_byte > 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
-            _("[ILLEGAL BYTE in line %ld]"), (long)illegal_byte);
+            _("[ILLEGAL BYTE in line %" PRId64 "]"), (int64_t)illegal_byte);
         c = TRUE;
       } else if (error)  {
         STRCAT(IObuff, _("[READ ERRORS]"));
@@ -3749,9 +3749,9 @@ restore_backup:
           errmsg_allocated = TRUE;
           errmsg = alloc(300);
           vim_snprintf((char *)errmsg, 300,
-              _(
-                  "E513: write error, conversion failed in line %ld (make 'fenc' empty to override)"),
-              (long)write_info.bw_conv_error_lnum);
+              _("E513: write error, conversion failed in line %" PRId64
+                " (make 'fenc' empty to override)"),
+              (int64_t)write_info.bw_conv_error_lnum);
         }
       } else if (got_int)
         errmsg = (char_u *)_(e_interr);
@@ -3817,8 +3817,8 @@ restore_backup:
       STRCAT(IObuff, _(" CONVERSION ERROR"));
       c = TRUE;
       if (write_info.bw_conv_error_lnum != 0)
-        vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %ld;"),
-            (long)write_info.bw_conv_error_lnum);
+        vim_snprintf_add((char *)IObuff, IOSIZE, _(" in line %" PRId64 ";"),
+            (int64_t)write_info.bw_conv_error_lnum);
     } else if (notconverted) {
       STRCAT(IObuff, _("[NOT converted]"));
       c = TRUE;
@@ -4147,27 +4147,19 @@ void msg_add_lines(int insert_space, long lnum, off_t nchars)
   if (insert_space)
     *p++ = ' ';
   if (shortmess(SHM_LINES)) {
-#ifdef LONG_LONG_OFF_T
-     sprintf((char *)p, "%ldL, %lldC", lnum, nchars);
-#else
-     /* Explicit typecast avoids warning on Mac OS X 10.6 */
-     sprintf((char *)p, "%ldL, %ldC", lnum, (long)nchars);
-#endif
+     sprintf((char *)p, "%" PRId64 "L, %" PRId64 "C",
+             (int64_t)lnum, (int64_t)nchars);
   }
   else {
     if (lnum == 1)
       STRCPY(p, _("1 line, "));
     else
-      sprintf((char *)p, _("%ld lines, "), lnum);
+      sprintf((char *)p, _("%" PRId64 " lines, "), (int64_t)lnum);
     p += STRLEN(p);
     if (nchars == 1)
       STRCPY(p, _("1 character"));
     else {
-#ifdef LONG_LONG_OFF_T
-      sprintf((char *)p, _("%lld characters"), nchars);
-#else
-      sprintf((char *)p, _("%ld characters"), (long)nchars);
-#endif
+      sprintf((char *)p, _("%" PRId64 " characters"), (int64_t)nchars);
     }
   }
 }
@@ -5705,7 +5697,7 @@ vim_tempname (
           mode_t umask_save;
 #  endif
 
-          sprintf((char *)itmp + itmplen, "v%ld", nr + off);
+          sprintf((char *)itmp + itmplen, "v%" PRId64, (int64_t)nr + off);
 #  ifndef EEXIST
           /* If mkdir() does not set errno to EEXIST, check for
            * existing file here.  There is a race condition then,
@@ -5744,7 +5736,7 @@ vim_tempname (
   if (vim_tempdir != NULL) {
     /* There is no need to check if the file exists, because we own the
      * directory and nobody else creates a file in it. */
-    sprintf((char *)itmp, "%s%ld", vim_tempdir, temp_count++);
+    sprintf((char *)itmp, "%s%" PRId64, vim_tempdir, (int64_t)temp_count++);
     return vim_strsave(itmp);
   }
 

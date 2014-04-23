@@ -6447,7 +6447,7 @@ static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
     /* print 'wildchar' and 'wildcharm' as a key name */
     if (fputs((char *)get_special_key_name((int)wc, 0), fd) < 0)
       return FAIL;
-  } else if (fprintf(fd, "%ld", *valuep) < 0)
+  } else if (fprintf(fd, "%" PRId64, (int64_t)*valuep) < 0)
     return FAIL;
   if (put_eol(fd) < 0)
     return FAIL;
@@ -7535,7 +7535,7 @@ option_value2string (
     else if (wc != 0)
       STRCPY(NameBuff, transchar((int)wc));
     else
-      sprintf((char *)NameBuff, "%ld", *(long *)varp);
+      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(long *)varp);
   } else { /* P_STRING */
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */

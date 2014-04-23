@@ -89,8 +89,8 @@ msgid "E85: There is no listed buffer"
 msgstr "E85: У списку немає буферів"
 
 #, c-format
-msgid "E86: Buffer %ld does not exist"
-msgstr "E86: Буфера %ld немає"
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr "E86: Буфера %<PRId64> немає"
 
 msgid "E87: Cannot go beyond last buffer"
 msgstr "E87: Це вже останній буфер"
@@ -99,8 +99,8 @@ msgid "E88: Cannot go before first buffer"
 msgstr "E88: Це вже найперший буфер"
 
 #, c-format
-msgid "E89: No write since last change for buffer %ld (add ! to override)"
-msgstr "E89: Буфер %ld має зміни (! щоб не зважати)"
+msgid "E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E89: Буфер %<PRId64> має зміни (! щоб не зважати)"
 
 msgid "E90: Cannot unload last buffer"
 msgstr "E90: Не можу вивантажити останній буфер"
@@ -109,8 +109,8 @@ msgid "W14: Warning: List of file names overflow"
 msgstr "W14: Обережно: Список назв файлів переповнено"
 
 #, c-format
-msgid "E92: Buffer %ld not found"
-msgstr "E92: Буфер %ld не знайдено"
+msgid "E92: Buffer %<PRId64> not found"
+msgstr "E92: Буфер %<PRId64> не знайдено"
 
 #, c-format
 msgid "E93: More than one match for %s"
@@ -121,8 +121,8 @@ msgid "E94: No matching buffer for %s"
 msgstr "E94: Не знайдено буфер, схожий на %s"
 
 #, c-format
-msgid "line %ld"
-msgstr "рядок %ld"
+msgid "line %<PRId64>"
+msgstr "рядок %<PRId64>"
 
 msgid "E95: Buffer with this name already exists"
 msgstr "E95: Буфер з такою назвою вже існує"
@@ -150,12 +150,12 @@ msgid "1 line --%d%%--"
 msgstr "один рядок --%d%%--"
 
 #, c-format
-msgid "%ld lines --%d%%--"
-msgstr "%ld рядки(ів) --%d%%--"
+msgid "%<PRId64> lines --%d%%--"
+msgstr "%<PRId64> рядки(ів) --%d%%--"
 
 #, c-format
-msgid "line %ld of %ld --%d%%-- col "
-msgstr "рядок %ld з %ld --%d%%-- колонка "
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr "рядок %<PRId64> з %<PRId64> --%d%%-- колонка "
 
 msgid "[No Name]"
 msgstr "[Без назви]"
@@ -201,12 +201,12 @@ msgid "Signs for %s:"
 msgstr "Позначки для %s:"
 
 #, c-format
-msgid "    line=%ld  id=%d  name=%s"
-msgstr "    рядок=%ld  id=%d назва=%s"
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr "    рядок=%<PRId64>  id=%d назва=%s"
 
 #, c-format
-msgid "E96: Can not diff more than %ld buffers"
-msgstr "E96: Не можна порівнювати понад %ld буфери(ів)"
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Не можна порівнювати понад %<PRId64> буфери(ів)"
 
 msgid "E810: Cannot read or write temp files"
 msgstr "E810: Не можна читати чи записувати тимчасові файли"
@@ -368,8 +368,8 @@ msgid "E18: Unexpected characters in :let"
 msgstr "E18: Неочікувані символи у :let"
 
 #, c-format
-msgid "E684: list index out of range: %ld"
-msgstr "E684: Індекс списку поза межами: %ld"
+msgid "E684: list index out of range: %<PRId64>"
+msgstr "E684: Індекс списку поза межами: %<PRId64>"
 
 #, c-format
 msgid "E121: Undefined variable: %s"
@@ -803,8 +803,8 @@ msgid "%s aborted"
 msgstr "%s припинено"
 
 #, c-format
-msgid "%s returning #%ld"
-msgstr "%s повертає #%ld"
+msgid "%s returning #%<PRId64>"
+msgstr "%s повертає #%<PRId64>"
 
 #, c-format
 msgid "%s returning %s"
@@ -838,16 +838,16 @@ msgid "Entering Debug mode.  Type \"cont\" to continue."
 msgstr "Режим налагодження.  Щоб продовжити введіть «cont»."
 
 #, c-format
-msgid "line %ld: %s"
-msgstr "рядок %ld: %s"
+msgid "line %<PRId64>: %s"
+msgstr "рядок %<PRId64>: %s"
 
 #, c-format
 msgid "cmd: %s"
 msgstr "команда: %s"
 
 #, c-format
-msgid "Breakpoint in \"%s%s\" line %ld"
-msgstr "Точка зупинки в «%s%s» рядок %ld"
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr "Точка зупинки в «%s%s» рядок %<PRId64>"
 
 #, c-format
 msgid "E161: Breakpoint not found: %s"
@@ -857,8 +857,8 @@ msgid "No breakpoints defined"
 msgstr "Не визначено жодної точки зупинки"
 
 #, c-format
-msgid "%3d  %s %s  line %ld"
-msgstr "%3d %s %s   рядок %ld"
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr "%3d %s %s   рядок %<PRId64>"
 
 msgid "E750: First use \":profile start {fname}\""
 msgstr "E750: Спочатку зробіть «:profile start {файл}»"
@@ -919,16 +919,16 @@ msgid "could not source \"%s\""
 msgstr "Не вдалося виконати «%s»"
 
 #, c-format
-msgid "line %ld: could not source \"%s\""
-msgstr "рядок %ld: не вдалося виконати «%s»"
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr "рядок %<PRId64>: не вдалося виконати «%s»"
 
 #, c-format
 msgid "sourcing \"%s\""
 msgstr "виконується «%s»"
 
 #, c-format
-msgid "line %ld: sourcing \"%s\""
-msgstr "рядок %ld: виконується «%s»"
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr "рядок %<PRId64>: виконується «%s»"
 
 #, c-format
 msgid "finished sourcing %s"
@@ -987,12 +987,12 @@ msgid "1 line moved"
 msgstr "Переміщено один рядок"
 
 #, c-format
-msgid "%ld lines moved"
-msgstr "Переміщено %ld рядки(ів)"
+msgid "%<PRId64> lines moved"
+msgstr "Переміщено %<PRId64> рядки(ів)"
 
 #, c-format
-msgid "%ld lines filtered"
-msgstr "Відфільтровано %ld рядки(ів)"
+msgid "%<PRId64> lines filtered"
+msgstr "Відфільтровано %<PRId64> рядки(ів)"
 
 msgid "E135: *Filter* Autocommands must not change current buffer"
 msgstr "E135: Автокоманди *Filter* не повинні змінювати поточний буфер"
@@ -1073,8 +1073,8 @@ msgid "E768: Swap file exists: %s (:silent! overrides)"
 msgstr "E768: Файл обміну існує: %s (:silent! переважує)"
 
 #, c-format
-msgid "E141: No file name for buffer %ld"
-msgstr "E141: Немає вхідного файлу для буфера %ld"
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr "E141: Немає вхідного файлу для буфера %<PRId64>"
 
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr "E142: Файл не записано: запис заборонено опцією 'write'"
@@ -1132,19 +1132,19 @@ msgid "1 substitution"
 msgstr "Одна заміна"
 
 #, c-format
-msgid "%ld matches"
-msgstr "%ld збіги(ів)"
+msgid "%<PRId64> matches"
+msgstr "%<PRId64> збіги(ів)"
 
 #, c-format
-msgid "%ld substitutions"
-msgstr "%ld замін(и)"
+msgid "%<PRId64> substitutions"
+msgstr "%<PRId64> замін(и)"
 
 msgid " on 1 line"
 msgstr " в одному рядку"
 
 #, c-format
-msgid " on %ld lines"
-msgstr " в %ld рядках"
+msgid " on %<PRId64> lines"
+msgstr " в %<PRId64> рядках"
 
 msgid "E147: Cannot do :global recursive"
 msgstr "E147: :global не можна вживати рекурсивно"
@@ -1230,8 +1230,8 @@ msgid "E158: Invalid buffer name: %s"
 msgstr "E158: Некоректна назва буфера: %s"
 
 #, c-format
-msgid "E157: Invalid sign ID: %ld"
-msgstr "E157: Неправильний ID надпису: %ld"
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr "E157: Неправильний ID надпису: %<PRId64>"
 
 msgid " (NOT FOUND)"
 msgstr " (НЕ ЗНАЙДЕНО)"
@@ -1293,8 +1293,8 @@ msgid "E173: 1 more file to edit"
 msgstr "E173: Залишилося відредагувати ще один файл"
 
 #, c-format
-msgid "E173: %ld more files to edit"
-msgstr "E173: Залишилося %ld не редагованих файлів"
+msgid "E173: %<PRId64> more files to edit"
+msgstr "E173: Залишилося %<PRId64> не редагованих файлів"
 
 msgid "E174: Command already exists: add ! to replace it"
 msgstr "E174: Команда вже існує, ! щоб замінити її"
@@ -1503,8 +1503,8 @@ msgid "Exception discarded: %s"
 msgstr "Виняток скинуто: %s"
 
 #, c-format
-msgid "%s, line %ld"
-msgstr "%s, рядок %ld"
+msgid "%s, line %<PRId64>"
+msgstr "%s, рядок %<PRId64>"
 
 #. always scroll up, don't overwrite
 #, c-format
@@ -1714,12 +1714,12 @@ msgid "[crypted]"
 msgstr "[зашифровано]"
 
 #, c-format
-msgid "[CONVERSION ERROR in line %ld]"
-msgstr "[ПОМИЛКА КОНВЕРТАЦІЇ у рядку %ld]"
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr "[ПОМИЛКА КОНВЕРТАЦІЇ у рядку %<PRId64>]"
 
 #, c-format
-msgid "[ILLEGAL BYTE in line %ld]"
-msgstr "[НЕКОРЕКТНИЙ БАЙТ у рядку %ld]"
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr "[НЕКОРЕКТНИЙ БАЙТ у рядку %<PRId64>]"
 
 msgid "[READ ERRORS]"
 msgstr "[ПОМИЛКА ЧИТАННЯ]"
@@ -1805,10 +1805,10 @@ msgstr "E513: Помилка запису, конвертація не вдал�
 
 #, c-format
 msgid ""
-"E513: write error, conversion failed in line %ld (make 'fenc' empty to "
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
 msgstr ""
-"E513: Помилка запису, конвертація не вдалася у рядку %ld (скиньте 'fenc')"
+"E513: Помилка запису, конвертація не вдалася у рядку %<PRId64> (скиньте 'fenc')"
 
 msgid "E514: write error (file system full?)"
 msgstr "E514: Помилка запису (скінчилось вільне місце?)"
@@ -1817,8 +1817,8 @@ msgid " CONVERSION ERROR"
 msgstr " ПОМИЛКА КОНВЕРТАЦІЇ"
 
 #, c-format
-msgid " in line %ld;"
-msgstr " у рядку %ld;"
+msgid " in line %<PRId64>;"
+msgstr " у рядку %<PRId64>;"
 
 msgid "[Device]"
 msgstr "[Пристрій]"
@@ -1879,20 +1879,20 @@ msgid "1 line, "
 msgstr "один рядок, "
 
 #, c-format
-msgid "%ld lines, "
-msgstr "%ld рядків, "
+msgid "%<PRId64> lines, "
+msgstr "%<PRId64> рядків, "
 
 msgid "1 character"
 msgstr "один символ"
 
 #, c-format
-msgid "%lld characters"
-msgstr "%lld символів"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> символів"
 
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format
-msgid "%ld characters"
-msgstr "%ld символів"
+msgid "%<PRId64> characters"
+msgstr "%<PRId64> символів"
 
 msgid "[noeol]"
 msgstr "[noeol]"
@@ -2325,16 +2325,16 @@ msgid "Font1: %s"
 msgstr "Шрифт1: %s"
 
 #, c-format
-msgid "Font%ld width is not twice that of font0"
-msgstr "Ширина шрифту%ld не більша удвічі за ширину шрифту0"
+msgid "Font%<PRId64> width is not twice that of font0"
+msgstr "Ширина шрифту%<PRId64> не більша удвічі за ширину шрифту0"
 
 #, c-format
-msgid "Font0 width: %ld"
-msgstr "Ширина шрифту0: %ld"
+msgid "Font0 width: %<PRId64>"
+msgstr "Ширина шрифту0: %<PRId64>"
 
 #, c-format
-msgid "Font1 width: %ld"
-msgstr "Ширина шрифту1: %ld"
+msgid "Font1 width: %<PRId64>"
+msgstr "Ширина шрифту1: %<PRId64>"
 
 msgid "Invalid font specification"
 msgstr "Некоректна специфікація шрифту"
@@ -2515,8 +2515,8 @@ msgid "Added cscope database %s"
 msgstr "Додано базу даних cscope %s"
 
 #, c-format
-msgid "E262: error reading cscope connection %ld"
-msgstr "E262: Помилка читання зі з'єднання cscope %ld"
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr "E262: Помилка читання зі з'єднання cscope %<PRId64>"
 
 msgid "E561: unknown cscope search type"
 msgstr "E561: Невідомий тип пошуку cscope"
@@ -3752,13 +3752,13 @@ msgstr "E314: Збереження не вдалося"
 
 # msgstr "E314: "
 #, c-format
-msgid "E315: ml_get: invalid lnum: %ld"
-msgstr "E315: ml_get: неправильний lnum: %ld"
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr "E315: ml_get: неправильний lnum: %<PRId64>"
 
 # msgstr "E315: "
 #, c-format
-msgid "E316: ml_get: cannot find line %ld"
-msgstr "E316: ml_get: не знайшов рядок %ld"
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr "E316: ml_get: не знайшов рядок %<PRId64>"
 
 # msgstr "E316: "
 msgid "E317: pointer block id wrong 3"
@@ -3778,8 +3778,8 @@ msgid "deleted block 1?"
 msgstr "блок 1 знищено?"
 
 #, c-format
-msgid "E320: Cannot find line %ld"
-msgstr "E320: Не вдалося знайти рядок %ld"
+msgid "E320: Cannot find line %<PRId64>"
+msgstr "E320: Не вдалося знайти рядок %<PRId64>"
 
 msgid "E317: pointer block id wrong"
 msgstr "E317: Вказівник блоку помилковий"
@@ -3789,13 +3789,13 @@ msgid "pe_line_count is zero"
 msgstr "pe_line_count дорівнює 0"
 
 #, c-format
-msgid "E322: line number out of range: %ld past the end"
-msgstr "E322: Номер рядка вийшов за межі: %ld за кінцем"
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr "E322: Номер рядка вийшов за межі: %<PRId64> за кінцем"
 
 # msgstr "E322: "
 #, c-format
-msgid "E323: line count wrong in block %ld"
-msgstr "E323: Кількість рядків у блоці %ld"
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr "E323: Кількість рядків у блоці %<PRId64>"
 
 # msgstr "E323: "
 msgid "Stack size increases"
@@ -3994,8 +3994,8 @@ msgid "Press ENTER or type command to continue"
 msgstr "Натисніть ENTER або введіть команду для продовження"
 
 #, c-format
-msgid "%s line %ld"
-msgstr "%s рядок %ld"
+msgid "%s line %<PRId64>"
+msgstr "%s рядок %<PRId64>"
 
 msgid "-- More --"
 msgstr "-- Ще --"
@@ -4065,12 +4065,12 @@ msgid "1 line less"
 msgstr "знищено один рядок"
 
 #, c-format
-msgid "%ld more lines"
-msgstr "додано рядків: %ld"
+msgid "%<PRId64> more lines"
+msgstr "додано рядків: %<PRId64>"
 
 #, c-format
-msgid "%ld fewer lines"
-msgstr "знищено рядків: %ld"
+msgid "%<PRId64> fewer lines"
+msgstr "знищено рядків: %<PRId64>"
 
 msgid " (Interrupted)"
 msgstr " (Перервано)"
@@ -4084,17 +4084,17 @@ msgstr "ПОМИЛКА: "
 #, c-format
 msgid ""
 "\n"
-"[bytes] total alloc-freed %lu-%lu, in use %lu, peak use %lu\n"
+"[bytes] total alloc-freed %<PRIu64>-%<PRIu64>, in use %<PRIu64>, peak use %<PRIu64>\n"
 msgstr ""
 "\n"
-"[байт]  всього розм/знищ. %lu/%lu, викор. %lu, макс. %lu\n"
+"[байт]  всього розм/знищ. %<PRIu64>/%<PRIu64>, викор. %<PRIu64>, макс. %<PRIu64>\n"
 
 #, c-format
 msgid ""
-"[calls] total re/malloc()'s %lu, total free()'s %lu\n"
+"[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
 "\n"
 msgstr ""
-"[виклики] усього re/malloc() - %lu, усього free() - %lu\n"
+"[виклики] усього re/malloc() - %<PRIu64>, усього free() - %<PRIu64>\n"
 "\n"
 
 msgid "E340: Line is becoming too long"
@@ -4102,13 +4102,13 @@ msgstr "E340: Рядок стає занадто довгим"
 
 # msgstr "E340: "
 #, c-format
-msgid "E341: Internal error: lalloc(%ld, )"
-msgstr "E341: Внутрішня помилка: lalloc(%ld, )"
+msgid "E341: Internal error: lalloc(%<PRId64>, )"
+msgstr "E341: Внутрішня помилка: lalloc(%<PRId64>, )"
 
 # msgstr "E341: "
 #, c-format
-msgid "E342: Out of memory!  (allocating %lu bytes)"
-msgstr "E342: Забракло пам'яті!  (потрібно було %lu байтів)"
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr "E342: Забракло пам'яті!  (потрібно було %<PRIu64> байтів)"
 
 # msgstr "E342: "
 #, c-format
@@ -4186,8 +4186,8 @@ msgid "read from Netbeans socket"
 msgstr "читається з сокета Netbeans"
 
 #, c-format
-msgid "E658: NetBeans connection lost for buffer %ld"
-msgstr "E658: Втрачено зв'язок із NetBeans для буфера %ld"
+msgid "E658: NetBeans connection lost for buffer %<PRId64>"
+msgstr "E658: Втрачено зв'язок із NetBeans для буфера %<PRId64>"
 
 msgid "E838: netbeans is not supported with this GUI"
 msgstr "E838: netbeans не підтримується з цим GUI"
@@ -4239,23 +4239,23 @@ msgid "1 line %sed %d times"
 msgstr "Один рядок %s-но %d разів"
 
 #, c-format
-msgid "%ld lines %sed 1 time"
-msgstr "%ld рядків %s-но"
+msgid "%<PRId64> lines %sed 1 time"
+msgstr "%<PRId64> рядків %s-но"
 
 #, c-format
-msgid "%ld lines %sed %d times"
-msgstr "%ld рядків %s-но %d разів"
+msgid "%<PRId64> lines %sed %d times"
+msgstr "%<PRId64> рядків %s-но %d разів"
 
 #, c-format
-msgid "%ld lines to indent... "
-msgstr "Залишилося вирівняти %ld рядків..."
+msgid "%<PRId64> lines to indent... "
+msgstr "Залишилося вирівняти %<PRId64> рядків..."
 
 msgid "1 line indented "
 msgstr "Вирівняно один рядок"
 
 #, c-format
-msgid "%ld lines indented "
-msgstr "Вирівняно рядків: %ld"
+msgid "%<PRId64> lines indented "
+msgstr "Вирівняно рядків: %<PRId64>"
 
 msgid "E748: No previously used register"
 msgstr "E748: Регістри перед цим не вживались"
@@ -4268,12 +4268,12 @@ msgid "1 line changed"
 msgstr "Один рядок змінено"
 
 #, c-format
-msgid "%ld lines changed"
-msgstr "Змінено рядків: %ld"
+msgid "%<PRId64> lines changed"
+msgstr "Змінено рядків: %<PRId64>"
 
 #, c-format
-msgid "freeing %ld lines"
-msgstr "Звільнено рядків: %ld"
+msgid "freeing %<PRId64> lines"
+msgstr "Звільнено рядків: %<PRId64>"
 
 msgid "block of 1 line yanked"
 msgstr "Запам'ятав блок з одного рядка"
@@ -4282,12 +4282,12 @@ msgid "1 line yanked"
 msgstr "Запам'ятав один рядок"
 
 #, c-format
-msgid "block of %ld lines yanked"
-msgstr "Запам'ятав блок із %ld рядків"
+msgid "block of %<PRId64> lines yanked"
+msgstr "Запам'ятав блок із %<PRId64> рядків"
 
 #, c-format
-msgid "%ld lines yanked"
-msgstr "Запам'ятав рядків: %ld"
+msgid "%<PRId64> lines yanked"
+msgstr "Запам'ятав рядків: %<PRId64>"
 
 #, c-format
 msgid "E353: Nothing in register %s"
@@ -4317,36 +4317,36 @@ msgid "E574: Unknown register type %d"
 msgstr "E574: Невідомий тип регістру %d"
 
 #, c-format
-msgid "%ld Cols; "
-msgstr "довж.: %ld; "
+msgid "%<PRId64> Cols; "
+msgstr "довж.: %<PRId64>; "
 
 #, c-format
-msgid "Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Bytes"
-msgstr "Вибрано %s%ld з %ld рядків; %ld з %ld слів; %ld з %ld байтів"
+msgid "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Bytes"
+msgstr "Вибрано %s%<PRId64> з %<PRId64> рядків; %<PRId64> з %<PRId64> слів; %<PRId64> з %<PRId64> байтів"
 
 #, c-format
 msgid ""
-"Selected %s%ld of %ld Lines; %ld of %ld Words; %ld of %ld Chars; %ld of %ld "
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; %<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> "
 "Bytes"
 msgstr ""
-"Вибрано %s%ld з %ld рядків; %ld з %ld слів; %ld of %ld символів; %ld з %ld "
+"Вибрано %s%<PRId64> з %<PRId64> рядків; %<PRId64> з %<PRId64> слів; %<PRId64> of %<PRId64> символів; %<PRId64> з %<PRId64> "
 "байтів"
 
 #, c-format
-msgid "Col %s of %s; Line %ld of %ld; Word %ld of %ld; Byte %ld of %ld"
-msgstr "Колонка %s з %s; рядок %ld з %ld; слово %ld з %ld; байт %ld з %ld"
+msgid "Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr "Колонка %s з %s; рядок %<PRId64> з %<PRId64>; слово %<PRId64> з %<PRId64>; байт %<PRId64> з %<PRId64>"
 
 #, c-format
 msgid ""
-"Col %s of %s; Line %ld of %ld; Word %ld of %ld; Char %ld of %ld; Byte %ld of "
-"%ld"
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char %<PRId64> of %<PRId64>; Byte %<PRId64> of "
+"%<PRId64>"
 msgstr ""
-"Колонка %s з %s; рядок %ld з %ld; слово %ld з %ld; символ %ld of %ld; байт "
-"%ld з %ld"
+"Колонка %s з %s; рядок %<PRId64> з %<PRId64>; слово %<PRId64> з %<PRId64>; символ %<PRId64> of %<PRId64>; байт "
+"%<PRId64> з %<PRId64>"
 
 #, c-format
-msgid "(+%ld for BOM)"
-msgstr "(+%ld для BOM)"
+msgid "(+%<PRId64> for BOM)"
+msgstr "(+%<PRId64> для BOM)"
 
 msgid "%<%f%h%m%=Page %N"
 msgstr "%<%f%h%m%=Стор. %N"
@@ -4533,8 +4533,8 @@ msgid "Need Amigados version 2.04 or later\n"
 msgstr "Потрібна Amigados 2.04 або пізніша\n"
 
 #, c-format
-msgid "Need %s version %ld\n"
-msgstr "Потрібно %s версії %ld\n"
+msgid "Need %s version %<PRId64>\n"
+msgstr "Потрібно %s версії %<PRId64>\n"
 
 msgid "Cannot open NIL:\n"
 msgstr "Не вдалося відкрити NIL:\n"
@@ -4608,8 +4608,8 @@ msgid "E245: Illegal char '%c' in font name \"%s\""
 msgstr "E245: Помилковий символ %c в назві шрифту «%s»"
 
 #, c-format
-msgid "Opening the X display took %ld msec"
-msgstr "На відкриття дисплею X пішло %ld мілісекунд"
+msgid "Opening the X display took %<PRId64> msec"
+msgstr "На відкриття дисплею X пішло %<PRId64> мілісекунд"
 
 msgid ""
 "\n"
@@ -5399,8 +5399,8 @@ msgid "Performing soundfolding..."
 msgstr "Виконується згортання звуків..."
 
 #, c-format
-msgid "Number of words after soundfolding: %ld"
-msgstr "Кількість слів після згортання звуків: %ld"
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr "Кількість слів після згортання звуків: %<PRId64>"
 
 #, c-format
 msgid "Total number of words: %d"
@@ -5435,8 +5435,8 @@ msgid "Done!"
 msgstr "Зроблено!"
 
 #, c-format
-msgid "E765: 'spellfile' does not have %ld entries"
-msgstr "E765: 'spellfile' не містить %ld елементів"
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr "E765: 'spellfile' не містить %<PRId64> елементів"
 
 #, c-format
 msgid "Word '%.*s' removed from %s"
@@ -5453,8 +5453,8 @@ msgid "Sorry, no suggestions"
 msgstr "Пробачте, немає пропозицій"
 
 #, c-format
-msgid "Sorry, only %ld suggestions"
-msgstr "Пробачте, тільки %ld пропозицій"
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr "Пробачте, тільки %<PRId64> пропозицій"
 
 #. for when 'cmdheight' > 1
 #. avoid more prompt
@@ -5804,8 +5804,8 @@ msgstr "E431: Помилка формату у файлі теґів «%s»"
 
 # msgstr "E431: "
 #, c-format
-msgid "Before byte %ld"
-msgstr "Перед байтом %ld"
+msgid "Before byte %<PRId64>"
+msgstr "Перед байтом %<PRId64>"
 
 #, c-format
 msgid "E432: Tags file not sorted: %s"
@@ -5955,8 +5955,8 @@ msgid "Already at newest change"
 msgstr "Вже на найновішій зміні"
 
 #, c-format
-msgid "E830: Undo number %ld not found"
-msgstr "E830: Зміну %ld не знайдено в історії"
+msgid "E830: Undo number %<PRId64> not found"
+msgstr "E830: Зміну %<PRId64> не знайдено в історії"
 
 msgid "E438: u_undo: line numbers wrong"
 msgstr "E438: u_undo: неправильні номери рядків"
@@ -5982,8 +5982,8 @@ msgid "changes"
 msgstr "змін"
 
 #, c-format
-msgid "%ld %s; %s #%ld  %s"
-msgstr "%ld %s; %s #%ld  %s"
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr "%<PRId64> %s; %s #%<PRId64>  %s"
 
 msgid "before"
 msgstr "перед"
@@ -5998,8 +5998,8 @@ msgid "number changes  when               saved"
 msgstr "номер  зміни    час             збережено"
 
 #, c-format
-msgid "%ld seconds ago"
-msgstr "%ld секунд тому"
+msgid "%<PRId64> seconds ago"
+msgstr "%<PRId64> секунд тому"
 
 # msgstr "E406: "
 msgid "E790: undojoin is not allowed after undo"

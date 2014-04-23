@@ -916,7 +916,7 @@ do_buffer (
     if (start == DOBUF_FIRST) {
       /* don't warn when deleting */
       if (!unload)
-        EMSGN(_("E86: Buffer %ld does not exist"), count);
+        EMSGN(_("E86: Buffer %" PRId64 " does not exist"), count);
     } else if (dir == FORWARD)
       EMSG(_("E87: Cannot go beyond last buffer"));
     else
@@ -948,9 +948,9 @@ do_buffer (
         if (bufIsChanged(buf))
           return FAIL;
       } else {
-        EMSGN(_(
-                "E89: No write since last change for buffer %ld (add ! to override)"),
-            buf->b_fnum);
+        EMSGN(_("E89: No write since last change for buffer %" PRId64
+                " (add ! to override)"),
+              buf->b_fnum);
         return FAIL;
       }
     }
@@ -1575,7 +1575,7 @@ int buflist_getfile(int n, linenr_T lnum, int options, int forceit)
     if ((options & GETF_ALT) && n == 0)
       EMSG(_(e_noalt));
     else
-      EMSGN(_("E92: Buffer %ld not found"), n);
+      EMSGN(_("E92: Buffer %" PRId64 " not found"), n);
     return FAIL;
   }
 
@@ -2184,8 +2184,8 @@ void buflist_list(exarg_T *eap)
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
     vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len),
-        _("line %ld"), buf == curbuf ? curwin->w_cursor.lnum
-        : (long)buflist_findlnum(buf));
+        _("line %" PRId64), buf == curbuf ? (int64_t)curwin->w_cursor.lnum
+        : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
     out_flush();            /* output one line at a time */
     ui_breakcheck();
@@ -2574,13 +2574,13 @@ fileinfo (
     if (curbuf->b_ml.ml_line_count == 1)
       vim_snprintf_add((char *)buffer, IOSIZE, _("1 line --%d%%--"), n);
     else
-      vim_snprintf_add((char *)buffer, IOSIZE, _("%ld lines --%d%%--"),
-          (long)curbuf->b_ml.ml_line_count, n);
+      vim_snprintf_add((char *)buffer, IOSIZE, _("%" PRId64 " lines --%d%%--"),
+          (int64_t)curbuf->b_ml.ml_line_count, n);
   } else {
     vim_snprintf_add((char *)buffer, IOSIZE,
-        _("line %ld of %ld --%d%%-- col "),
-        (long)curwin->w_cursor.lnum,
-        (long)curbuf->b_ml.ml_line_count,
+        _("line %" PRId64 " of %" PRId64 " --%d%%-- col "),
+        (int64_t)curwin->w_cursor.lnum,
+        (int64_t)curbuf->b_ml.ml_line_count,
         n);
     validate_virtcol();
     len = STRLEN(buffer);
@@ -4306,8 +4306,8 @@ void write_viminfo_bufferlist(FILE *fp)
       break;
     putc('%', fp);
     home_replace(NULL, buf->b_ffname, line, MAXPATHL, TRUE);
-    vim_snprintf_add((char *)line, LINE_BUF_LEN, "\t%ld\t%d",
-        (long)buf->b_last_cursor.lnum,
+    vim_snprintf_add((char *)line, LINE_BUF_LEN, "\t%" PRId64 "\t%d",
+        (int64_t)buf->b_last_cursor.lnum,
         buf->b_last_cursor.col);
     viminfo_writestring(fp, line);
   }
@@ -4595,8 +4595,8 @@ void sign_list_placed(buf_T *rbuf)
             msg_putchar('\n');
         }
         for (p = buf->b_signlist; p != NULL && !got_int; p = p->next) {
-            vim_snprintf(lbuf, BUFSIZ, _("    line=%ld  id=%d  name=%s"),
-                    (long)p->lnum, p->id, sign_typenr2name(p->typenr));
+            vim_snprintf(lbuf, BUFSIZ, _("    line=%" PRId64 "  id=%d  name=%s"),
+                    (int64_t)p->lnum, p->id, sign_typenr2name(p->typenr));
             MSG_PUTS(lbuf);
             msg_putchar('\n');
         }
