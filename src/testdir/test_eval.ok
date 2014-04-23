@@ -1,0 +1,2 @@
+Vim(function):E128: Function name must start with a capital or "s:": g:test()
+Vim(function):E128: Function name must start with a capital or "s:": test2() "#
