@@ -418,9 +418,6 @@ close_buffer (
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
-  /*
-   * Remove the buffer from the list.
-   */
   wipe_or_delete_buffer(wipe_buf, del_buf, buf, &firstbuf, &lastbuf);
   return;
 
@@ -591,6 +588,9 @@ decide_bufferaction(char act, int *wipe, int *del, int *unload)
 
 }
 
+/*
+ * Remove the buffer from the list.
+ */
 static void
 wipe_or_delete_buffer(int wipe_buf, int del_buf, buf_T *buf, buf_T *firstbuf,
         buf_T *lastbuf)
