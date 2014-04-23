@@ -396,8 +396,9 @@ close_buffer (
     win->w_buffer = NULL;      /* make sure we don't use the buffer now */
 
   /* Autocommands may have deleted the buffer. */
-  /* autocmds may abort script processing */
-  if (!buf_valid(buf) || aborting())
+  if (!buf_valid(buf))
+    return;
+  if (aborting())           /* autocmds may abort script processing */
     return;
 
   /* Autocommands may have opened or closed windows for this buffer.
