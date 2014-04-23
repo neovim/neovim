@@ -16,18 +16,18 @@
  * The 'scrolloff' option makes this a bit complicated.
  */
 
-#include "vim.h"
-#include "move.h"
-#include "charset.h"
-#include "diff.h"
-#include "edit.h"
-#include "fold.h"
-#include "mbyte.h"
-#include "memline.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "popupmnu.h"
-#include "screen.h"
+#include "neovim/vim.h"
+#include "neovim/move.h"
+#include "neovim/charset.h"
+#include "neovim/diff.h"
+#include "neovim/edit.h"
+#include "neovim/fold.h"
+#include "neovim/mbyte.h"
+#include "neovim/memline.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/popupmnu.h"
+#include "neovim/screen.h"
 
 static void comp_botline(win_T *wp);
 static void redraw_for_cursorline(win_T *wp);

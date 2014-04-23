@@ -1,11 +1,11 @@
 // fs.c -- filesystem access
 
-#include "os/os.h"
-#include "memory.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "path.h"
+#include "neovim/os/os.h"
+#include "neovim/memory.h"
+#include "neovim/message.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/path.h"
 
 static bool is_executable(const char_u *name);
 static bool is_executable_in_path(const char_u *name);

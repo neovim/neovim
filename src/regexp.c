@@ -45,18 +45,18 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "regexp.h"
-#include "charset.h"
-#include "eval.h"
-#include "ex_cmds2.h"
-#include "mark.h"
-#include "memline.h"
-#include "memory.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "garray.h"
+#include "neovim/vim.h"
+#include "neovim/regexp.h"
+#include "neovim/charset.h"
+#include "neovim/eval.h"
+#include "neovim/ex_cmds2.h"
+#include "neovim/mark.h"
+#include "neovim/memline.h"
+#include "neovim/memory.h"
+#include "neovim/message.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/garray.h"
 
 #ifdef REGEXP_DEBUG
 /* show/save debugging data when BT engine is used */

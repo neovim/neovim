@@ -4,18 +4,18 @@
 ///
 
 
-#include "edit.h"
-#include "ex_docmd.h"
-#include "ex_eval.h"
-#include "ex_getln.h"
-#include "farsi.h"
-#include "getchar.h"
-#include "memline.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "screen.h"
-#include "vim.h"
+#include "neovim/edit.h"
+#include "neovim/ex_docmd.h"
+#include "neovim/ex_eval.h"
+#include "neovim/ex_getln.h"
+#include "neovim/farsi.h"
+#include "neovim/getchar.h"
+#include "neovim/memline.h"
+#include "neovim/message.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/screen.h"
+#include "neovim/vim.h"
 
 
 #define SRC_EDT 0

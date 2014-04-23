@@ -4,19 +4,19 @@
 
 #include <uv.h>
 
-#include "os/shell.h"
-#include "os/signal.h"
-#include "types.h"
-#include "vim.h"
-#include "message.h"
-#include "ascii.h"
-#include "memory.h"
-#include "term.h"
-#include "misc2.h"
-#include "screen.h"
-#include "memline.h"
-#include "option_defs.h"
-#include "charset.h"
+#include "neovim/os/shell.h"
+#include "neovim/os/signal.h"
+#include "neovim/types.h"
+#include "neovim/vim.h"
+#include "neovim/message.h"
+#include "neovim/ascii.h"
+#include "neovim/memory.h"
+#include "neovim/term.h"
+#include "neovim/misc2.h"
+#include "neovim/screen.h"
+#include "neovim/memline.h"
+#include "neovim/option_defs.h"
+#include "neovim/charset.h"
 
 #define BUFFER_LENGTH 1024
 

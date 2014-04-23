@@ -12,10 +12,10 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "blowfish.h"
-#include "message.h"
-#include "sha256.h"
+#include "neovim/vim.h"
+#include "neovim/blowfish.h"
+#include "neovim/message.h"
+#include "neovim/sha256.h"
 
 #define ARRAY_LENGTH(A) (sizeof(A) / sizeof(A[0]))
 

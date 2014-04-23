@@ -3,9 +3,9 @@
 
 #include <uv.h>
 
-#include "os/time.h"
-#include "vim.h"
-#include "term.h"
+#include "neovim/os/time.h"
+#include "neovim/vim.h"
+#include "neovim/term.h"
 
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
