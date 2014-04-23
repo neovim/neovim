@@ -1,0 +1,24 @@
+STARTTEST
+:" function name includes a colon
+:try
+:  func! g:test()
+:    echo "test"
+:  endfunc
+:catch
+:  let @a = v:exception
+:endtry
+:" function name folowed by #
+:try
+:  func! test2() "#
+:    echo "test2"
+:  endfunc
+:catch
+:  let @b = v:exception
+:endtry
+:%d
+:pu a
+:pu b
+:1d
+:wq! test.out
+ENDTEST
+start:
