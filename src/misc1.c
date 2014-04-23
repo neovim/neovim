@@ -2801,7 +2801,7 @@ expand_env_esc (
           }
         }
 
-#if defined(MSDOS) || defined(MSWIN) || defined(OS2) || defined(UNIX)
+#if defined(MSWIN) || defined(UNIX)
 # ifdef UNIX
         if (src[1] == '{' && *tail != '}')
 # else
@@ -2818,7 +2818,7 @@ expand_env_esc (
 #endif
         *var = NUL;
         var = vim_getenv(dst, &mustfree);
-#if defined(MSDOS) || defined(MSWIN) || defined(OS2) || defined(UNIX)
+#if defined(MSWIN) || defined(UNIX)
       }
 #endif
       }
@@ -2829,7 +2829,7 @@ expand_env_esc (
         var = homedir;
         tail = src + 1;
       } else {                                        /* user directory */
-#if defined(UNIX) || (defined(VMS) && defined(USER_HOME))
+#if defined(UNIX)
         /*
          * Copy ~user to dst[], so we can put a NUL after it.
          */
@@ -2842,7 +2842,6 @@ expand_env_esc (
                    && !vim_ispathsep(*tail))
           *var++ = *tail++;
         *var = NUL;
-# ifdef UNIX
         /*
          * Use os_get_user_directory() to get the user directory.
          * If this function fails, the shell is used to
@@ -2861,41 +2860,11 @@ expand_env_esc (
               WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
           mustfree = TRUE;
         }
-
-# else  /* !UNIX, thus VMS */
-        /*
-         * USER_HOME is a comma-separated list of
-         * directories to search for the user account in.
-         */
-        {
-          char_u test[MAXPATHL], paths[MAXPATHL];
-          char_u      *path, *next_path, *ptr;
-          struct stat st;
-
-          STRCPY(paths, USER_HOME);
-          next_path = paths;
-          while (*next_path) {
-            for (path = next_path; *next_path && *next_path != ',';
-                 next_path++) ;
-            if (*next_path)
-              *next_path++ = NUL;
-            STRCPY(test, path);
-            STRCAT(test, "/");
-            STRCAT(test, dst + 1);
-            if (mch_stat(test, &st) == 0) {
-              var = alloc(STRLEN(test) + 1);
-              STRCPY(var, test);
-              mustfree = TRUE;
-              break;
-            }
-          }
-        }
-# endif /* UNIX */
 #else
         /* cannot expand user's home directory, so don't try */
         var = NULL;
         tail = (char_u *)"";            /* for gcc */
-#endif /* UNIX || VMS */
+#endif /* UNIX */
       }
 
 #ifdef BACKSLASH_IN_FILENAME

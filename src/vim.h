@@ -1067,7 +1067,7 @@ typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#if defined(UNIX) || defined(FEAT_GUI) || defined(OS2) || defined(VMS)
+#if defined(UNIX) || defined(FEAT_GUI)
 # define USE_INPUT_BUF
 #endif
 
@@ -1283,27 +1283,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
 #include "globals.h"        /* global variables and messages */
-
-
-
-/*
- * If console dialog not supported, but GUI dialog is, use the GUI one.
- */
-
-/*
- * Default filters for gui_mch_browse().
- * The filters are almost system independent.  Except for the difference
- * between "*" and "*.*" for MSDOS-like systems.
- * NOTE: Motif only uses the very first pattern.  Therefore
- * BROWSE_FILTER_DEFAULT should start with a "*" pattern.
- */
-
-/* stop using fastcall for Borland */
-
-
-/*
- * The following macros stop display/event loop nesting at the wrong time.
- */
 
 /*
  * Return byte length of character that starts with byte "b".

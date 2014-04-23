@@ -25,10 +25,6 @@ int os_setenv(const char *name, const char *value, int overwrite)
 
 char *os_getenvname_at_index(size_t index)
 {
-# if defined(AMIGA) || defined(__MRC__) || defined(__SC__)
-  // No environ[] on the Amiga and on the Mac (using MPW).
-  return NULL;
-# else
 # if defined(HAVE__NSGETENVIRON)
   char **environ = *_NSGetEnviron();
 # elif !defined(__WIN32__)
@@ -51,7 +47,6 @@ char *os_getenvname_at_index(size_t index)
   }
   char *name = (char *)vim_strnsave((char_u *)str, namesize);
   return name;
-# endif
 }
 
 

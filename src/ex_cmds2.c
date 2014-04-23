@@ -2810,19 +2810,6 @@ void free_scriptnames(void)
 
 
 #if defined(USE_CR) || defined(PROTO)
-
-# if defined(__MSL__) && (__MSL__ >= 22)
-/*
- * Newer version of the Metrowerks library handle DOS and UNIX files
- * without help.
- * Test with earlier versions, MSL 2.2 is the library supplied with
- * Codewarrior Pro 2.
- */
-char *fgets_cr(char *s, int n, FILE *stream)
-{
-  return fgets(s, n, stream);
-}
-# else
 /*
  * Version of fgets() which also works for lines ending in a <CR> only
  * (Macintosh format).
@@ -2855,7 +2842,6 @@ char *fgets_cr(char *s, int n, FILE *stream)
 
   return s;
 }
-# endif
 #endif
 
 /*

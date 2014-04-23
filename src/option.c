@@ -1003,9 +1003,7 @@ static struct vimoption
   {"isprint",     "isp",  P_STRING|P_VI_DEF|P_RALL|P_COMMA|P_NODUP,
    (char_u *)&p_isp, PV_NONE,
    {
-#if defined(MSDOS) || defined(MSWIN) || defined(OS2) \
-     || (defined(MACOS) && !defined(MACOS_X)) \
-     || defined(VMS)
+#if defined(MSWIN)
      (char_u *)"@,~-255",
 #else
      ISP_LATIN1,
@@ -1359,11 +1357,7 @@ static struct vimoption
   {"shell",       "sh",   P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
    (char_u *)&p_sh, PV_NONE,
    {
-#     if defined(ARCHIE)
-     (char_u *)"gos",
-#     else
      (char_u *)"sh",
-#     endif
      (char_u *)0L
    } SCRIPTID_INIT},
   {"shellcmdflag","shcf", P_STRING|P_VI_DEF|P_SECURE,
@@ -1375,12 +1369,8 @@ static struct vimoption
   {"shellpipe",   "sp",   P_STRING|P_VI_DEF|P_SECURE,
    (char_u *)&p_sp, PV_NONE,
    {
-#if defined(UNIX) || defined(OS2)
-# ifdef ARCHIE
-     (char_u *)"2>",
-# else
+#if defined(UNIX)
      (char_u *)"| tee",
-# endif
 #else
      (char_u *)">",
 #endif
@@ -1623,7 +1613,7 @@ static struct vimoption
    (char_u *)&p_tf, PV_NONE,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"ttymouse",    "ttym", P_STRING|P_NODEFAULT|P_NO_MKRC|P_VI_DEF,
-#if defined(FEAT_MOUSE) && (defined(UNIX) || defined(VMS))
+#if defined(FEAT_MOUSE) && defined(UNIX)
    (char_u *)&p_ttym, PV_NONE,
 #else
    (char_u *)NULL, PV_NONE,
@@ -1646,7 +1636,7 @@ static struct vimoption
   {"undolevels",  "ul",   P_NUM|P_VI_DEF,
    (char_u *)&p_ul, PV_UL,
    {
-#if defined(UNIX) || defined(WIN3264) || defined(OS2) || defined(VMS)
+#if defined(UNIX) || defined(WIN3264)
      (char_u *)1000L,
 #else
      (char_u *)100L,
@@ -2068,8 +2058,8 @@ void set_init_1(void)
     }
   }
 
-#if defined(FEAT_POSTSCRIPT) && (defined(MSWIN) || defined(OS2) || \
-  defined(VMS) || defined(EBCDIC) || defined(MAC) || defined(hpux))
+#if defined(FEAT_POSTSCRIPT) && (defined(MSWIN) || \
+  defined(EBCDIC) || defined(MAC))
   /* Set print encoding on platforms that don't default to latin1 */
   set_string_default("penc",
       (char_u *)"hp-roman8"
@@ -2186,8 +2176,7 @@ void set_init_1(void)
         options[opt_idx].flags |= P_DEF_ALLOCED;
       }
 
-#if defined(MSDOS) || defined(MSWIN) || defined(OS2) || defined(MACOS) \
-      || defined(VMS)
+#if defined(MSWIN) || defined(MACOS)
       if (STRCMP(p_enc, "latin1") == 0
           || enc_utf8
           ) {
@@ -2442,7 +2431,7 @@ static char_u *term_bg_default(void)
  */
 void set_init_3(void)
 {
-#if defined(UNIX) || defined(OS2) || defined(WIN3264)
+#if defined(UNIX) || defined(WIN3264)
   /*
    * Set 'shellpipe' and 'shellredir', depending on the 'shell' option.
    * This is done after other initializations, where 'shell' might have been
@@ -3117,7 +3106,7 @@ do_set (
 
               /*
                * Copy the string, skip over escaped chars.
-               * For MS-DOS and WIN32 backslashes before normal
+               * For WIN32 backslashes before normal
                * file name characters are not removed, and keep
                * backslash at start, for "\\machine\path", but
                * do remove it for "\\\\machine\\path".
@@ -3584,7 +3573,7 @@ static void didset_options(void)
   (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, TRUE);
   (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, TRUE);
   (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, TRUE);
-#if defined(FEAT_MOUSE) && (defined(UNIX) || defined(VMS))
+#if defined(FEAT_MOUSE) && defined(UNIX)
   (void)opt_strings_flags(p_ttym, p_ttym_values, &ttym_flags, FALSE);
 #endif
   (void)spell_check_msm();
@@ -4403,7 +4392,7 @@ did_set_string_option (
 
 
 
-#if defined(FEAT_MOUSE_TTY) && (defined(UNIX) || defined(VMS))
+#if defined(FEAT_MOUSE_TTY) && defined(UNIX)
   /* 'ttymouse' */
   else if (varp == &p_ttym) {
     /* Switch the mouse off before changing the escape sequences used for

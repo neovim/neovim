@@ -4316,8 +4316,7 @@ check_map (
 }
 
 
-#if defined(MSDOS) || defined(MSWIN) || defined(OS2) \
-  || defined(FEAT_CMDWIN) || defined(MACOS) || defined(PROTO)
+#if defined(MSWIN) || defined(FEAT_CMDWIN) || defined(MACOS) || defined(PROTO)
 /*
  * Add a mapping "map" for mode "mode".
  * Need to put string in allocated memory, because do_map() will modify it.

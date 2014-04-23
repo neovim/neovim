@@ -3814,8 +3814,7 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
   return OK;
 }
 
-#if defined(FEAT_GUI) || defined(WIN3264) \
-  || defined(MSDOS) || defined(PROTO)
+#if defined(FEAT_GUI) || defined(WIN3264) || defined(PROTO)
 /*
  * Do conversion on typed input characters in-place.
  * The input and output are not NUL terminated!

@@ -173,7 +173,7 @@ static void ex_sleep(exarg_T *eap);
 static void do_exmap(exarg_T *eap, int isabbrev);
 static void ex_winsize(exarg_T *eap);
 static void ex_wincmd(exarg_T *eap);
-#if defined(FEAT_GUI) || defined(UNIX) || defined(VMS) || defined(MSWIN)
+#if defined(FEAT_GUI) || defined(UNIX) || defined(MSWIN)
 static void ex_winpos(exarg_T *eap);
 #else
 # define ex_winpos          ex_ni
@@ -3754,10 +3754,10 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 
         /*
          * Halve the number of backslashes (this is Vi compatible).
-         * For Unix and OS/2, when wildcards are expanded, this is
+         * For Unix, when wildcards are expanded, this is
          * done by ExpandOne() below.
          */
-#if defined(UNIX) || defined(OS2)
+#if defined(UNIX)
         if (!has_wildcards)
 #endif
         backslash_halve(eap->arg);
@@ -5702,11 +5702,7 @@ static void ex_goto(exarg_T *eap)
  * list. This function takes over responsibility for freeing the list.
  *
  * XXX The list is made into the argument list. This is freed using
- * FreeWild(), which does a series of vim_free() calls, unless the two defines
- * __EMX__ and __ALWAYS_HAS_TRAILING_NUL_POINTER are set. In this case, a
- * routine _fnexplodefree() is used. This may cause problems, but as the drop
- * file functionality is (currently) not in EMX this is not presently a
- * problem.
+ * FreeWild(), which does a series of vim_free() calls.
  */
 void 
 handle_drop (
@@ -5820,7 +5816,7 @@ void alist_new(void)
   }
 }
 
-#if (!defined(UNIX) && !defined(__EMX__)) || defined(ARCHIE) || defined(PROTO)
+#if !defined(UNIX) || defined(PROTO)
 /*
  * Expand the file names in the global argument list.
  * If "fnum_list" is not NULL, use "fnum_list[fnum_len]" as a list of buffer
@@ -6592,7 +6588,7 @@ void ex_cd(exarg_T *eap)
   char_u              *tofree;
 
   new_dir = eap->arg;
-#if !defined(UNIX) && !defined(VMS)
+#if !defined(UNIX)
   /* for non-UNIX ":cd" means: print current directory */
   if (*new_dir == NUL)
     ex_pwd(NULL);
@@ -6624,7 +6620,7 @@ void ex_cd(exarg_T *eap)
     else
       prev_dir = NULL;
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
     /* for UNIX ":cd" means: go to home directory */
     if (*new_dir == NUL) {
       /* use NameBuff for home directory name */
@@ -6769,7 +6765,7 @@ static void ex_wincmd(exarg_T *eap)
   }
 }
 
-#if defined(FEAT_GUI) || defined(UNIX) || defined(VMS) || defined(MSWIN)
+#if defined(FEAT_GUI) || defined(UNIX) || defined(MSWIN)
 /*
  * ":winpos".
  */
@@ -8915,7 +8911,7 @@ static char_u *get_view_file(int c)
         *s++ = '=';
       } else if (vim_ispathsep(*p)) {
         *s++ = '=';
-#if defined(BACKSLASH_IN_FILENAME) || defined(VMS)
+#if defined(BACKSLASH_IN_FILENAME)
         if (*p == ':')
           *s++ = '-';
         else

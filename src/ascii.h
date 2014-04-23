@@ -85,9 +85,6 @@
 
 /*
  * Character that separates dir names in a path.
- * For MS-DOS, WIN32 and OS/2 we use a backslash.  A slash mostly works
- * fine, but there are places where it doesn't (e.g. in a command name).
- * For Acorn we use a dot.
  */
 #ifdef BACKSLASH_IN_FILENAME
 # define PATHSEP        psepc

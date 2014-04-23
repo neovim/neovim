@@ -9,7 +9,7 @@
  *
  * term.c: functions for controlling the terminal
  *
- * primitive termcap support for Amiga, MSDOS, and Win32 included
+ * primitive termcap support for Win32 included
  *
  * NOTE: padding and variable substitution is not performed,
  * when compiling without HAVE_TGETENT, we use tputs() and tgoto() dummies.
@@ -165,7 +165,7 @@ static struct builtin_term builtin_termcaps[] =
 
 #ifndef NO_BUILTIN_TCAPS
 
-# if defined(AMIGA) || defined(ALL_BUILTIN_TCAPS)
+# if defined(ALL_BUILTIN_TCAPS)
   /*
    * Amiga console window, default for Amiga
    */
@@ -196,17 +196,6 @@ static struct builtin_term builtin_termcaps[] =
   {(int)KS_UE,        "\033[0m"},
   {(int)KS_CZH,       "\033[3m"},
   {(int)KS_CZR,       "\033[0m"},
-#if defined(__MORPHOS__) || defined(__AROS__)
-  {(int)KS_CCO,       "8"},             /* allow 8 colors */
-#  ifdef TERMINFO
-  {(int)KS_CAB,       "\033[4%p1%dm"},  /* set background color */
-  {(int)KS_CAF,       "\033[3%p1%dm"},  /* set foreground color */
-#  else
-  {(int)KS_CAB,       "\033[4%dm"},     /* set background color */
-  {(int)KS_CAF,       "\033[3%dm"},     /* set foreground color */
-#  endif
-  {(int)KS_OP,        "\033[m"},        /* reset colors */
-#endif
   {(int)KS_MS,        "y"},
   {(int)KS_UT,        "y"},             /* guessed */
   {(int)KS_LE,        "\b"},
@@ -215,9 +204,6 @@ static struct builtin_term builtin_termcaps[] =
 #  else
   {(int)KS_CM,        "\033[%i%d;%dH"},
 #  endif
-#if defined(__MORPHOS__)
-  {(int)KS_SR,        "\033M"},
-#endif
 #  ifdef TERMINFO
   {(int)KS_CRI,       "\033[%p1%dC"},
 #  else
@@ -338,8 +324,7 @@ static struct builtin_term builtin_termcaps[] =
   {K_RIGHT,           "\033[C"},
 # endif
 
-# if defined(UNIX) || defined(ALL_BUILTIN_TCAPS) || \
-  defined(SOME_BUILTIN_TCAPS) || defined(__EMX__)
+# if defined(UNIX) || defined(ALL_BUILTIN_TCAPS) || defined(SOME_BUILTIN_TCAPS)
   /*
    * standard ANSI terminal, default for unix
    */
@@ -375,7 +360,7 @@ static struct builtin_term builtin_termcaps[] =
 #  endif
 # endif
 
-# if defined(MSDOS) || defined(ALL_BUILTIN_TCAPS) || defined(__EMX__)
+# if defined(ALL_BUILTIN_TCAPS)
   /*
    * These codes are valid when nansi.sys or equivalent has been installed.
    * Function keys on a PC are preceded with a NUL. These are converted into
@@ -457,7 +442,7 @@ static struct builtin_term builtin_termcaps[] =
 # endif
 
 
-# if defined(WIN3264) || defined(ALL_BUILTIN_TCAPS) || defined(__EMX__)
+# if defined(WIN3264) || defined(ALL_BUILTIN_TCAPS)
   /*
    * These codes are valid for the Win32 Console .  The entries that start with
    * ESC | are translated into console calls in os_win32.c.  The function keys
@@ -577,7 +562,7 @@ static struct builtin_term builtin_termcaps[] =
   {K_K9,              "\316\376"},
 # endif
 
-# if defined(VMS) || defined(ALL_BUILTIN_TCAPS)
+# if defined(ALL_BUILTIN_TCAPS)
   /*
    * VT320 is working as an ANSI terminal compatible DEC terminal.
    * (it covers VT1x0, VT2x0 and VT3x0 up to VT320 on VMS as well)
@@ -683,8 +668,7 @@ static struct builtin_term builtin_termcaps[] =
   {(int)KS_MS,        "y"},
 # endif
 
-# if defined(UNIX) || defined(ALL_BUILTIN_TCAPS) || \
-  defined(SOME_BUILTIN_TCAPS) || defined(__EMX__)
+# if defined(UNIX) || defined(ALL_BUILTIN_TCAPS) || defined(SOME_BUILTIN_TCAPS)
   {(int)KS_NAME,      "xterm"},
   {(int)KS_CE,        IF_EB("\033[K", ESC_STR "[K")},
   {(int)KS_AL,        IF_EB("\033[L", ESC_STR "[L")},
@@ -1258,9 +1242,6 @@ static char *(key_names[]) =
   /* Do this one first, it may cause a screen redraw. */
   "Co",
   "ku", "kd", "kr", "kl",
-# ifdef ARCHIE
-  "su", "sd",           /* Termcap code made up! */
-# endif
   "#2", "#4", "%i", "*7",
   "k1", "k2", "k3", "k4", "k5", "k6",
   "k7", "k8", "k9", "k;", "F1", "F2",
@@ -1413,13 +1394,11 @@ int set_termname(char_u *term)
             || term_str(KS_CCO) == empty_option)
           set_color_count(tgetnum("Co"));
 
-# ifndef hpux
         BC = (char *)TGETSTR("bc", &tp);
         UP = (char *)TGETSTR("up", &tp);
         p = TGETSTR("pc", &tp);
         if (p)
           PC = *p;
-# endif /* hpux */
       }
     } else          /* try == 0 || try == 2 */
 #endif /* HAVE_TGETENT */
@@ -1548,11 +1527,11 @@ int set_termname(char_u *term)
       add_termcode((char_u *)"kD", (char_u *)DEL_STR, FALSE);
   }
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   term_is_xterm = vim_is_xterm(term);
 #endif
 
-# if defined(UNIX) || defined(VMS)
+# if defined(UNIX)
   /*
    * For Unix, set the 'ttymouse' option to the type of mouse to be used.
    * The termcode for the mouse is added as a side effect in option.c.
@@ -1591,7 +1570,7 @@ int set_termname(char_u *term)
   }
 #endif
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   /*
    * 'ttyfast' is default on for xterm, iris-ansi and a few others.
    */
@@ -1699,8 +1678,7 @@ set_mouse_termcode (
     has_mouse_termcode |= HMT_NORMAL;
 }
 
-# if ((defined(UNIX) || defined(VMS) || defined(OS2)) \
-  && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
+# if (defined(UNIX) && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
 void 
 del_mouse_termcode (
     int n                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
@@ -1778,8 +1756,7 @@ static char_u *vim_tgetstr(char *s, char_u **pp)
 }
 #endif /* HAVE_TGETENT */
 
-#if defined(HAVE_TGETENT) && (defined(UNIX) || defined(__EMX__) || \
-  defined(VMS) || defined(MACOS_X))
+#if defined(HAVE_TGETENT) && (defined(UNIX) || defined(MACOS_X))
 /*
  * Get Columns and Rows from the termcap. Used after a window signal if the
  * ioctl() fails. It doesn't make sense to call tgetent each time if the "co"
@@ -1939,7 +1916,7 @@ static int term_7to8bit(char_u *p)
 }
 
 
-#if !defined(HAVE_TGETENT) || defined(AMIGA) || defined(PROTO)
+#if !defined(HAVE_TGETENT) || defined(PROTO)
 
 char_u *tltoa(unsigned long i)
 {
@@ -2076,7 +2053,7 @@ void out_flush_check(void)
  */
 void out_char(unsigned c)
 {
-#if defined(UNIX) || defined(VMS) || defined(AMIGA) || defined(MACOS_X_UNIX)
+#if defined(UNIX) || defined(MACOS_X_UNIX)
   if (c == '\n')        /* turn LF into CR-LF (CRMOD doesn't seem to do this) */
     out_char('\r');
 #endif
@@ -2095,7 +2072,7 @@ static void out_char_nf(unsigned);
  */
 static void out_char_nf(unsigned c)
 {
-#if defined(UNIX) || defined(VMS) || defined(AMIGA) || defined(MACOS_X_UNIX)
+#if defined(UNIX) || defined(MACOS_X_UNIX)
   if (c == '\n')        /* turn LF into CR-LF (CRMOD doesn't seem to do this) */
     out_char_nf('\r');
 #endif
@@ -2243,7 +2220,7 @@ static void term_color(char_u *s, int n)
     OUT_STR(tgoto((char *)s, 0, n));
 }
 
-#if (defined(FEAT_TITLE) && (defined(UNIX) || defined(OS2) || defined(VMS) || \
+#if (defined(FEAT_TITLE) && (defined(UNIX) || \
   defined(MACOS_X))) || defined(PROTO)
 /*
  * Generic function to set window title, using t_ts and t_fs.
@@ -3579,7 +3556,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE)
       if (key_name[0] == (int)KS_MOUSE) {
         /*
-         * For xterm and MSDOS we get "<t_mouse>scr", where
+         * For xterm we get "<t_mouse>scr", where
          *  s == encoded button state:
          *	   0x20 = left button down
          *	   0x21 = middle button down
@@ -3707,7 +3684,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         /*
          * Handle mouse events.
          * Recognize the xterm mouse wheel, but not in the GUI, the
-         * Linux console with GPM and the MS-DOS or Win32 console
+         * Linux console with GPM and the Win32 console
          * (multi-clicks use >= 0x60).
          */
         if (mouse_code >= MOUSEWHEEL_LOW
