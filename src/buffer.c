@@ -85,7 +85,7 @@ static void free_buffer(buf_T *);
 static void free_buffer_stuff(buf_T *buf, int free_options);
 static void clear_wininfo(buf_T *buf);
 static void decide_bufferaction(char, int*, int*, int*);
-static void rm_buffer_from_list(int wipe, int del, buf_T *buf, buf_T *first,
+static void wipe_or_delete_buffer(int wipe, int del, buf_T *buf, buf_T *first,
         buf_T *lastbuf);
 
 #ifdef UNIX
@@ -421,7 +421,7 @@ close_buffer (
   /*
    * Remove the buffer from the list.
    */
-  rm_buffer_from_list(wipe_buf, del_buf, buf, &firstbuf, &lastbuf);
+  wipe_or_delete_buffer(wipe_buf, del_buf, buf, &firstbuf, &lastbuf);
   return;
 
 aucmd_abort:
@@ -592,7 +592,7 @@ decide_bufferaction(char act, int *wipe, int *del, int *unload)
 }
 
 static void
-rm_buffer_from_list(int wipe_buf, int del_buf, buf_T *buf, buf_T *firstbuf,
+wipe_or_delete_buffer(int wipe_buf, int del_buf, buf_T *buf, buf_T *firstbuf,
         buf_T *lastbuf)
 {
   if (wipe_buf) {
