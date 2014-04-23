@@ -4,15 +4,15 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "ascii.h"
-#include "misc2.h"
-#include "memory.h"
-#include "path.h"
-#include "garray.h"
+#include "neovim/vim.h"
+#include "neovim/ascii.h"
+#include "neovim/misc2.h"
+#include "neovim/memory.h"
+#include "neovim/path.h"
+#include "neovim/garray.h"
 
-// #include "globals.h"
-#include "memline.h"
+// #include "neovim/globals.h"
+#include "neovim/memline.h"
 
 /// Clear an allocated growing array.
 void ga_clear(garray_T *gap)

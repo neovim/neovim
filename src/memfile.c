@@ -33,18 +33,18 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "memfile.h"
-#include "fileio.h"
-#include "memline.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "memory.h"
-#include "os_unix.h"
-#include "path.h"
-#include "ui.h"
-#include "os/os.h"
+#include "neovim/vim.h"
+#include "neovim/memfile.h"
+#include "neovim/fileio.h"
+#include "neovim/memline.h"
+#include "neovim/message.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/memory.h"
+#include "neovim/os_unix.h"
+#include "neovim/path.h"
+#include "neovim/ui.h"
+#include "neovim/os/os.h"
 
 /*
  * Some systems have the page size in statfs.f_bsize, some in stat.st_blksize

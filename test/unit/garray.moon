@@ -1,6 +1,6 @@
 {:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 
-garray = cimport './src/garray.h'
+garray = cimport './include/neovim/garray.h'
 
 -- handy constants
 NULL = ffi.cast 'void*', 0

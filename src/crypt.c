@@ -11,12 +11,12 @@
 // Based on blowfish by Bruce Schneier (http://www.schneier.com/blowfish.html)
 // and sha256 by Christophe Devine.
 
-#include "vim.h"
-#include "misc2.h"
-#include "blowfish.h"
-#include "ex_getln.h"
-#include "message.h"
-#include "option.h"
+#include "neovim/vim.h"
+#include "neovim/misc2.h"
+#include "neovim/blowfish.h"
+#include "neovim/ex_getln.h"
+#include "neovim/message.h"
+#include "neovim/option.h"
 
 static void make_crc_tab(void);
 

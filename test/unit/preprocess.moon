@@ -64,8 +64,8 @@ parse_make_deps = (deps) ->
 --
 -- headerize({"vim.h", "memory.h", false}
 -- produces:
--- #include "vim.h"
--- #include "memory.h"
+-- #include "neovim/vim.h"
+-- #include "neovim/memory.h"
 headerize = (headers, global) ->
   pre = '"'
   post = pre

@@ -1,8 +1,8 @@
 #include <msgpack.h>
 
-#include "msgpack_rpc.h"
-#include "vim.h"
-#include "memory.h"
+#include "neovim/msgpack_rpc.h"
+#include "neovim/vim.h"
+#include "neovim/memory.h"
 
 
 bool msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)

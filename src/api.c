@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "api.h"
+#include "neovim/api.h"
 
 void api_push_keys(char *str)
 {

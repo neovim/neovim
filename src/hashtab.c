@@ -20,11 +20,11 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "hashtab.h"
-#include "message.h"
-#include "memory.h"
-#include "misc2.h"
+#include "neovim/vim.h"
+#include "neovim/hashtab.h"
+#include "neovim/message.h"
+#include "neovim/memory.h"
+#include "neovim/misc2.h"
 
 // Magic value for algorithm that walks through the array.
 #define PERTURB_SHIFT 5

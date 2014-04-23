@@ -639,7 +639,10 @@ class FileInfo:
         root_dir = os.path.dirname(root_dir)
 
       if os.path.exists(os.path.join(root_dir, ".git")):
-        root_dir = os.path.join(root_dir, "src")
+	if fullname.endswith('.h'):
+	  root_dir = os.path.join(root_dir, "include", "neovim")
+	else:
+	  root_dir = os.path.join(root_dir, "src")
         prefix = os.path.commonprefix([root_dir, project_dir])
         return fullname[len(prefix) + 1:]
 
