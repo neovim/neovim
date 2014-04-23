@@ -334,25 +334,18 @@ close_buffer (
         win->w_cursor.col, TRUE);
   }
 
-#define __emsg_and_return_on(x) do {  \
-      if ((x)) {                      \
-        EMSG(_(e_auabort));           \
-        return;                       \
-      }                               \
-    } while (0)
-
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
     buf->b_closing = TRUE;
     apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, FALSE, buf);
 
-    /* If autocommands deleted the buffer */
-    __emsg_and_return_on(!buf_valid(buf));
+    if (!buf_valid(buf)) /* If autocommands deleted the buffer */
+      goto aucmd_abort;
 
     buf->b_closing = FALSE;
 
-    /* If autocommands made this the only window. */
-    __emsg_and_return_on(abort_if_last && one_window());
+    if (abort_if_last && one_window()) /* If autocommands made this the only window. */
+      goto aucmd_abort;
 
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
@@ -361,19 +354,18 @@ close_buffer (
       apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, FALSE, buf);
 
       /* If autocommands deleted the buffer. */
-      __emsg_and_return_on(!buf_valid(buf));
+      if (!buf_valid(buf))
+        goto aucmd_abort;
 
       buf->b_closing = FALSE;
 
-      /* If autocommands made this the only window. */
-      __emsg_and_return_on(abort_if_last && one_window());
+      if (abort_if_last && one_window()) /* If autocommands made this the only window. */
+        goto aucmd_abort;
     }
     if (aborting())         /* autocmds may abort script processing */
       return;
   }
   nwindows = buf->b_nwindows;
-
-#undef __emsg_and_return_on
 
   /* decrease the link count from windows (unless not in any window) */
   if (buf->b_nwindows > 0)
@@ -430,6 +422,10 @@ close_buffer (
    * Remove the buffer from the list.
    */
   rm_buffer_from_list(wipe_buf, del_buf, buf, &firstbuf, &lastbuf);
+  return;
+
+aucmd_abort:
+  EMSG(_(e_auabort));
 }
 
 /*
