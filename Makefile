@@ -19,6 +19,15 @@ ifeq (,$(BUILD_TOOL))
   endif
 endif
 
+ifneq ($(VERBOSE),)
+    # Only need to handle Ninja here.  Make will inherit the VERBOSE variable.
+    ifeq ($(BUILD_TYPE),Ninja)
+        VERBOSE_FLAG := -v
+    endif
+endif
+
+BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
+
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
 DEPS_CMAKE_FLAGS ?=
@@ -30,7 +39,7 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 all: nvim
 
 nvim: build/.ran-cmake deps
-	+$(BUILD_TOOL) -C build
+	+$(BUILD_CMD) -C build
 
 cmake:
 	touch CMakeLists.txt
@@ -42,7 +51,7 @@ build/.ran-cmake: | deps
 	touch $@
 
 deps: | .deps/build/third-party/.ran-cmake
-	+$(BUILD_TOOL) -C .deps/build/third-party
+	+$(BUILD_CMD) -C .deps/build/third-party
 
 .deps/build/third-party/.ran-cmake:
 	mkdir -p .deps/build/third-party
@@ -54,16 +63,16 @@ test: | nvim
 	+$(SINGLE_MAKE) -C src/testdir
 
 unittest: | nvim
-	+$(BUILD_TOOL) -C build unittest
+	+$(BUILD_CMD) -C build unittest
 
 clean:
-	+test -d build && $(BUILD_TOOL) -C build clean || true
+	+test -d build && $(BUILD_CMD) -C build clean || true
 	$(MAKE) -C src/testdir clean
 
 distclean: clean
 	rm -rf .deps build
 
 install: | nvim
-	+$(BUILD_TOOL) -C build install
+	+$(BUILD_CMD) -C build install
 
 .PHONY: test unittest clean distclean nvim cmake deps install
