@@ -609,7 +609,7 @@ void ml_setname(buf_T *buf)
   }
 
   if (mfp->mf_fd == -1) {           /* need to (re)open the swap file */
-    mfp->mf_fd = mch_open((char *)mfp->mf_fname, O_RDWR | O_EXTRA, 0);
+    mfp->mf_fd = mch_open((char *)mfp->mf_fname, O_RDWR, 0);
     if (mfp->mf_fd < 0) {
       /* could not (re)open the swap file, what can we do???? */
       EMSG(_("E301: Oops, lost the swap file!!!"));
@@ -1751,7 +1751,7 @@ static time_t swapfile_info(char_u *fname)
   /*
    * print the original file name
    */
-  fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
+  fd = mch_open((char *)fname, O_RDONLY, 0);
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (STRNCMP(b0.b0_version, "VIM 3.0", 7) == 0) {
@@ -3679,17 +3679,17 @@ findswapname (
         /*
          * may need to create the files to be able to use mch_stat()
          */
-        f1 = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
+        f1 = mch_open((char *)fname, O_RDONLY, 0);
         if (f1 < 0) {
           f1 = mch_open_rw((char *)fname,
-              O_RDWR|O_CREAT|O_EXCL|O_EXTRA);
+              O_RDWR|O_CREAT|O_EXCL);
           created1 = TRUE;
         }
         if (f1 >= 0) {
-          f2 = mch_open((char *)fname2, O_RDONLY | O_EXTRA, 0);
+          f2 = mch_open((char *)fname2, O_RDONLY, 0);
           if (f2 < 0) {
             f2 = mch_open_rw((char *)fname2,
-                O_RDWR|O_CREAT|O_EXCL|O_EXTRA);
+                O_RDWR|O_CREAT|O_EXCL);
             created2 = TRUE;
           }
           if (f2 >= 0) {
@@ -3787,7 +3787,7 @@ findswapname (
          * Try to read block 0 from the swap file to get the original
          * file name (and inode number).
          */
-        fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
+        fd = mch_open((char *)fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
             /*

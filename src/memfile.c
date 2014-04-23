@@ -1111,7 +1111,7 @@ mf_do_open (
     /*
      * try to open the file
      */
-    flags |= O_EXTRA | O_NOFOLLOW;
+    flags |= O_NOFOLLOW;
     mfp->mf_fd = mch_open_rw((char *)mfp->mf_fname, flags);
   }
 

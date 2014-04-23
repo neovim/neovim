@@ -478,13 +478,13 @@ readfile (
   if (!read_buffer && !read_stdin) {
     if (!newfile || readonlymode) {
       file_readonly = TRUE;
-    } else if ((fd = mch_open((char *)fname, O_RDWR | O_EXTRA, 0)) < 0) {
+    } else if ((fd = mch_open((char *)fname, O_RDWR, 0)) < 0) {
       // opening in readwrite mode failed => file is readonly
       file_readonly = TRUE;
     }
     if (file_readonly == TRUE) {
       // try to open readonly
-      fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
+      fd = mch_open((char *)fname, O_RDONLY, 0);
     }
   }
 
@@ -668,7 +668,7 @@ readfile (
                         || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
                         || (using_b_fname && (old_b_fname != curbuf->b_fname))
                         || (fd =
-                              mch_open((char *)fname, O_RDONLY | O_EXTRA,
+                              mch_open((char *)fname, O_RDONLY,
                                   0)) < 0)) {
       --no_wait_return;
       msg_scroll = msg_save;
@@ -2178,7 +2178,7 @@ readfile_charconvert (
             fname, tmpname) == FAIL)
       errmsg = (char_u *)_("Conversion with 'charconvert' failed");
     if (errmsg == NULL && (*fdp = mch_open((char *)tmpname,
-                               O_RDONLY | O_EXTRA, 0)) < 0)
+                               O_RDONLY, 0)) < 0)
       errmsg = (char_u *)_("can't read output of 'charconvert'");
   }
 
@@ -2195,7 +2195,7 @@ readfile_charconvert (
 
   /* If the input file is closed, open it (caller should check for error). */
   if (*fdp < 0)
-    *fdp = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0);
+    *fdp = mch_open((char *)fname, O_RDONLY, 0);
 
   return tmpname;
 }
@@ -2991,7 +2991,7 @@ buf_write (
       backup_ext = p_bex;
 
     if (backup_copy
-        && (fd = mch_open((char *)fname, O_RDONLY | O_EXTRA, 0)) >= 0) {
+        && (fd = mch_open((char *)fname, O_RDONLY, 0)) >= 0) {
       int bfd;
       char_u      *copybuf, *wp;
       int some_error = FALSE;
@@ -3130,7 +3130,7 @@ buf_write (
           /* Open with O_EXCL to avoid the file being created while
            * we were sleeping (symlink hacker attack?) */
           bfd = mch_open((char *)backup,
-              O_WRONLY|O_CREAT|O_EXTRA|O_EXCL|O_NOFOLLOW,
+              O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,
               perm & 0777);
           if (bfd < 0) {
             vim_free(backup);
@@ -3436,7 +3436,7 @@ nobackup:
    * (this may happen when the user reached his quotum for number of files).
    * Appending will fail if the file does not exist and forceit is FALSE.
    */
-  while ((fd = mch_open((char *)wfname, O_WRONLY | O_EXTRA | (append
+  while ((fd = mch_open((char *)wfname, O_WRONLY | (append
                                                               ? (forceit ? (
                                                                    O_APPEND |
                                                                    O_CREAT) :
@@ -3781,9 +3781,9 @@ restore_backup:
           MSG(_(e_interr));
           out_flush();
         }
-        if ((fd = mch_open((char *)backup, O_RDONLY | O_EXTRA, 0)) >= 0) {
+        if ((fd = mch_open((char *)backup, O_RDONLY, 0)) >= 0) {
           if ((write_info.bw_fd = mch_open((char *)fname,
-                   O_WRONLY | O_CREAT | O_TRUNC | O_EXTRA,
+                   O_WRONLY | O_CREAT | O_TRUNC,
                    perm & 0777)) >= 0) {
             /* copy the file. */
             write_info.bw_buf = smallbuf;
@@ -3926,7 +3926,7 @@ restore_backup:
 
       if (org == NULL
           || (empty_fd = mch_open(org,
-                  O_CREAT | O_EXTRA | O_EXCL | O_NOFOLLOW,
+                  O_CREAT | O_EXCL | O_NOFOLLOW,
                   perm < 0 ? 0666 : (perm & 0777))) < 0)
         EMSG(_("E206: patchmode: can't touch empty original file"));
       else
@@ -5034,7 +5034,7 @@ int vim_rename(char_u *from, char_u *to)
   /* For systems that support ACL: get the ACL from the original file. */
   acl = mch_get_acl(from);
 #endif
-  fd_in = mch_open((char *)from, O_RDONLY|O_EXTRA, 0);
+  fd_in = mch_open((char *)from, O_RDONLY, 0);
   if (fd_in == -1) {
 #ifdef HAVE_ACL
     mch_free_acl(acl);
@@ -5044,7 +5044,7 @@ int vim_rename(char_u *from, char_u *to)
 
   /* Create the new file with same permissions as the original. */
   fd_out = mch_open((char *)to,
-      O_CREAT|O_EXCL|O_WRONLY|O_EXTRA|O_NOFOLLOW, (int)perm);
+      O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
   if (fd_out == -1) {
     close(fd_in);
 #ifdef HAVE_ACL
