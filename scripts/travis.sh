@@ -107,9 +107,19 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	set_environment /opt/neovim-deps/32
 	sudo apt-get update
-	sudo apt-get install gcc-multilib g++-multilib libncurses5:i386
-	sudo ln -s /lib/i386-linux-gnu/libtinfo.so.5  /lib/i386-linux-gnu/libtinfo.so
-	sudo ln -s /lib/i386-linux-gnu/libncurses.so.5.9  /lib/i386-linux-gnu/libcurses.so
+
+	# Need this to keep apt-get from removing gcc when installing libncurses
+	# below.
+	sudo apt-get install libc6-dev libc6-dev:i386
+
+	# Do this separately so that things get configured correctly, otherwise
+	# libncurses fails to install.
+	sudo apt-get install gcc-multilib g++-multilib
+
+	# Install the dev version to get the pkg-config and symlinks installed
+	# correctly.
+	sudo apt-get install libncurses5-dev:i386
+
 	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake" unittest
 	$MAKE_CMD test
 elif [ "$TRAVIS_BUILD_TYPE" = "clint" ]; then
