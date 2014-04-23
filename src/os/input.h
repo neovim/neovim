@@ -14,7 +14,7 @@ bool os_char_avail(void);
 void os_breakcheck(void);
 
 /// Test whether a file descriptor refers to a terminal.
-/// 
+///
 /// @param fd File descriptor.
 /// @return `true` if file descriptor refers to a terminal.
 bool os_isatty(int fd);
