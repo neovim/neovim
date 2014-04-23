@@ -10,7 +10,6 @@
 
 /*
  * os_unix.c -- code for all flavors of Unix (BSD, SYSV, SVR4, POSIX, ...)
- *	     Also for OS/2, using the excellent EMX package!!!
  *	     Also for BeOS and Atari MiNT.
  *
  * A lot of this file was originally written by Juergen Weigert and later
@@ -904,10 +903,6 @@ int mch_get_shellsize()
   char_u      *p;
 
   /*
-   * For OS/2 use _scrsize().
-   */
-
-  /*
    * 1. try using an ioctl. It is the most accurate method.
    *
    * Try using TIOCGWINSZ first, some systems that have it also define
@@ -1027,9 +1022,6 @@ int flags;                      /* EW_* flags */
   bool dir;
   char_u *extra_shell_arg = NULL;
   ShellOpts shellopts = kShellOptExpand | kShellOptSilent;
-  /*
-   * This is the non-OS/2 implementation (really Unix).
-   */
   int j;
   char_u      *tempname;
   char_u      *command;

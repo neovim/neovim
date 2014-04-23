@@ -473,17 +473,6 @@ void mf_free(memfile_T *mfp, bhdr_T *hp)
     mf_ins_free(mfp, hp);       /* put *hp in the free list */
 }
 
-#if defined(__MORPHOS__) && defined(__libnix__)
-/* function is missing in MorphOS libnix version */
-extern unsigned long *__stdfiledes;
-
-static unsigned long fdtofh(int filedescriptor)
-{
-  return __stdfiledes[filedescriptor];
-}
-
-#endif
-
 /*
  * Sync the memory file *mfp to disk.
  * Flags:
@@ -501,7 +490,7 @@ int mf_sync(memfile_T *mfp, int flags)
 {
   int status;
   bhdr_T      *hp;
-#if defined(SYNC_DUP_CLOSE) && !defined(MSDOS)
+#if defined(SYNC_DUP_CLOSE)
   int fd;
 #endif
   int got_int_save = got_int;
@@ -554,15 +543,6 @@ int mf_sync(memfile_T *mfp, int flags)
   if ((flags & MFS_FLUSH) && *p_sws != NUL) {
 #if defined(UNIX)
 # ifdef HAVE_FSYNC
-    /*
-     * most Unixes have the very useful fsync() function, just what we need.
-     * However, with OS/2 and EMX it is also available, but there are
-     * reports of bad problems with it (a bug in HPFS.IFS).
-     * So we disable use of it here in case someone tries to be smart
-     * and changes os_os2_cfg.h... (even though there is no __EMX__ test
-     * in the #if, as __EMX__ does not have sync(); we hope for a timely
-     * sync from the system itself).
-     */
     if (STRCMP(p_sws, "fsync") == 0) {
       if (fsync(mfp->mf_fd))
         status = FAIL;

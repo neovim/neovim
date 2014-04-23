@@ -113,7 +113,7 @@ static char *(features[]) = {
   "+mouse",
   "-mouseshape",
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   "+mouse_dec",
   "-mouse_gpm",
 # ifdef FEAT_MOUSE_JSB
@@ -122,15 +122,15 @@ static char *(features[]) = {
   "-mouse_jsbterm",
 # endif  // ifdef FEAT_MOUSE_JSB
   "+mouse_netterm",
-#endif  // if defined(UNIX) || defined(VMS)
+#endif  // if defined(UNIX)
 
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   "+mouse_sgr",
   "-mouse_sysmouse",
   "+mouse_urxvt",
   "+mouse_xterm",
-#endif  // if defined(UNIX) || defined(VMS)
+#endif  // if defined(UNIX)
 
   "+multi_byte",
   "+multi_lang",
@@ -159,9 +159,9 @@ static char *(features[]) = {
 #else  // ifdef FEAT_TAG_ANYWHITE
   "-tag_any_white",
 #endif  // ifdef FEAT_TAG_ANYWHITE
-#if defined(UNIX) || defined(__EMX__)
+#if defined(UNIX)
 
-  // only Unix (or OS/2 with EMX!) can have terminfo instead of termcap
+  // only Unix can have terminfo instead of termcap
 # ifdef TERMINFO
   "+terminfo",
 # else // ifdef TERMINFO
@@ -173,7 +173,7 @@ static char *(features[]) = {
 # else  // ifdef HAVE_TGETENT
   "-tgetent",
 # endif  // ifdef HAVE_TGETENT
-#endif  // if defined(UNIX) || defined(__EMX__)
+#endif  // if defined(UNIX)
   "+termresponse",
   "+textobjects",
   "+title",
@@ -189,14 +189,14 @@ static char *(features[]) = {
   "+wildmenu",
   "+windows",
   "+writebackup",
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   "-X11",
-#endif  // if defined(UNIX) || defined(VMS)
+#endif  // if defined(UNIX)
   "-xfontset",
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   "-xsmp",
   "-xterm_clipboard",
-#endif  // if defined(UNIX) || defined(VMS)
+#endif  // if defined(UNIX)
   NULL
 };
 

@@ -1349,7 +1349,7 @@ make_filter_cmd (
   if (buf == NULL)
     return NULL;
 
-#if (defined(UNIX) && !defined(ARCHIE)) || defined(OS2)
+#if defined(UNIX)
   /*
    * Put braces around the command (for concatenated commands) when
    * redirecting input and/or output.
@@ -1515,7 +1515,7 @@ void write_viminfo(char_u *file, int forceit)
   char_u      *tempname = NULL;         /* name of temp viminfo file */
   struct stat st_new;           /* mch_stat() of potential new file */
   char_u      *wp;
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   mode_t umask_save;
 #endif
 #ifdef UNIX
@@ -1535,7 +1535,7 @@ void write_viminfo(char_u *file, int forceit)
     /* if it does exist, but we can't read it, don't try writing */
     if (mch_stat((char *)fname, &st_new) == 0)
       goto end;
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
     /*
      * For Unix we create the .viminfo non-accessible for others,
      * because it may contain text from non-accessible documents.
@@ -1543,7 +1543,7 @@ void write_viminfo(char_u *file, int forceit)
     umask_save = umask(077);
 #endif
     fp_out = mch_fopen((char *)fname, WRITEBIN);
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
     (void)umask(umask_save);
 #endif
   } else {

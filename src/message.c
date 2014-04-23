@@ -916,7 +916,7 @@ void wait_return(int redraw)
   setmouse();
   msg_check();
 
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
   /*
    * When switching screens, we need to output an extra newline on exit.
    */

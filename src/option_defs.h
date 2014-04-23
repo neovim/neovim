@@ -560,7 +560,7 @@ EXTERN long p_ttm;              /* 'ttimeoutlen' */
 EXTERN int p_tbi;               /* 'ttybuiltin' */
 EXTERN int p_tf;                /* 'ttyfast' */
 EXTERN long p_ttyscroll;        /* 'ttyscroll' */
-#if defined(FEAT_MOUSE) && (defined(UNIX) || defined(VMS))
+#if defined(FEAT_MOUSE) && defined(UNIX)
 EXTERN char_u   *p_ttym;        /* 'ttymouse' */
 EXTERN unsigned ttym_flags;
 # ifdef IN_OPTION_C

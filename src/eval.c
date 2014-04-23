@@ -10269,7 +10269,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "mksession",
     "modify_fname",
     "mouse",
-#if defined(UNIX) || defined(VMS)
+#if defined(UNIX)
     "mouse_dec",
 # ifdef FEAT_MOUSE_JSB
     "mouse_jsbterm",
@@ -19461,9 +19461,9 @@ repeat:
     valid |= VALID_PATH;
     *usedlen += 2;
 
-    /* Expand "~/path" for all systems and "~user/path" for Unix and VMS */
+    /* Expand "~/path" for all systems and "~user/path" for Unix */
     if ((*fnamep)[0] == '~'
-#if !defined(UNIX) && !(defined(VMS) && defined(USER_HOME))
+#if !defined(UNIX)
         && ((*fnamep)[1] == '/'
 # ifdef BACKSLASH_IN_FILENAME
             || (*fnamep)[1] == '\\'

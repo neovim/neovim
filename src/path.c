@@ -339,8 +339,7 @@ static int vim_backtick(char_u *p);
 static int expand_backtick(garray_T *gap, char_u *pat, int flags);
 
 
-#if (defined(UNIX) && !defined(VMS)) || defined(USE_UNIXFILENAME) \
-  || defined(PROTO)
+#if defined(UNIX) || defined(USE_UNIXFILENAME) || defined(PROTO)
 /*
  * Unix style wildcard expansion code.
  * It's here because it's used both for Unix and Mac.

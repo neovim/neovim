@@ -688,7 +688,7 @@ int csh_like_shell(void)
 /*
  * Escape "string" for use as a shell argument with system().
  * This uses single quotes, except when we know we need to use double quotes
- * (MS-DOS and MS-Windows without 'shellslash' set).
+ * (MS-Windows without 'shellslash' set).
  * Escape a newline, depending on the 'shell' option.
  * When "do_special" is true also replace "!", "%", "#" and things starting
  * with "<" like "<cfile>".

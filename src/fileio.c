@@ -347,7 +347,7 @@ readfile (
    */
   if (sfname == NULL)
     sfname = fname;
-#if defined(UNIX) || defined(__EMX__)
+#if defined(UNIX)
   fname = sfname;
 #endif
 
@@ -492,7 +492,7 @@ readfile (
     msg_scroll = msg_save;
 #ifndef UNIX
     /*
-     * On MSDOS and Amiga we can't open a directory, check here.
+     * On non-unix systems we can't open a directory, check here.
      */
     perm = os_getperm(fname);      /* check if the file exists */
     if (os_isdir(fname)) {
@@ -2478,7 +2478,7 @@ buf_write (
   bool file_readonly = false;               /* overwritten file is read-only */
   static char     *err_readonly =
     "is read-only (cannot override: \"W\" in 'cpoptions')";
-#if defined(UNIX) || defined(__EMX__XX)     /*XXX fix me sometime? */
+#if defined(UNIX)
   int made_writable = FALSE;                /* 'w' bit has been set */
 #endif
   /* writing everything */
@@ -2773,7 +2773,7 @@ buf_write (
   /*
    * Get information about original file (if there is one).
    */
-#if defined(UNIX) && !defined(ARCHIE)
+#if defined(UNIX)
   st_old.st_dev = 0;
   st_old.st_ino = 0;
   perm = -1;
@@ -3302,7 +3302,7 @@ nobackup:
     }
   }
 
-#if defined(UNIX) && !defined(ARCHIE)
+#if defined(UNIX)
   /* When using ":w!" and the file was read-only: make it writable */
   if (forceit && perm >= 0 && !(perm & 0200) && st_old.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
@@ -3811,7 +3811,7 @@ restore_backup:
   lnum -= start;            /* compute number of written lines */
   --no_wait_return;         /* may wait for return now */
 
-#if !(defined(UNIX) || defined(VMS))
+#if !defined(UNIX)
   fname = sfname;           /* use shortname now, for the messages */
 #endif
   if (!filtering) {
@@ -4201,7 +4201,7 @@ static int check_mtime(buf_T *buf, struct stat *st)
 
 static int time_differs(long t1, long t2)
 {
-#if defined(__linux__) || defined(MSDOS) || defined(MSWIN)
+#if defined(__linux__) || defined(MSWIN)
   /* On a FAT filesystem, esp. under Linux, there are only 5 bits to store
    * the seconds.  Since the roundoff is done when flushing the inode, the
    * time may change unexpectedly by one second!!! */
@@ -4673,7 +4673,7 @@ void shorten_fnames(int force)
 
 /*
  * add extension to file name - change path/fo.o.h to path/fo.o.h.ext or
- * fo_o_h.ext for MSDOS or when shortname option set.
+ * fo_o_h.ext when shortname option set.
  *
  * Assumed that fname is a valid name found in the filesystem we assure that
  * the return value is a different name and ends in 'ext'.
@@ -4740,9 +4740,8 @@ buf_modname (
 
   /*
    * search backwards until we hit a '/', '\' or ':' replacing all '.'
-   * by '_' for MSDOS or when shortname option set and ext starts with a dot.
-   * Then truncate what is after the '/', '\' or ':' to 8 characters for
-   * MSDOS and 26 characters for AMIGA, a lot more for UNIX.
+   * by '_' when shortname option set and ext starts with a dot.
+   * Then truncate what is after the '/', '\' or ':'.
    */
   for (ptr = retval + fnamelen; ptr > retval; mb_ptr_back(retval, ptr)) {
     if (*ext == '.'
@@ -4814,7 +4813,7 @@ buf_modname (
     else if ((int)STRLEN(e) + extlen > 4)
       s = e + 4 - extlen;
   }
-#if defined(OS2) || defined(USE_LONG_FNAME) || defined(WIN3264)
+#if defined(USE_LONG_FNAME) || defined(WIN3264)
   /*
    * If there is no file name, and the extension starts with '.', put a
    * '_' before the dot, because just ".ext" may be invalid if it's on a
@@ -5699,7 +5698,7 @@ vim_tempname (
          * doesn't exist. */
         for (off = 0; off < 10000L; ++off) {
           int r;
-#  if defined(UNIX) || defined(VMS)
+#  if defined(UNIX)
           mode_t umask_save;
 #  endif
 
@@ -5711,13 +5710,13 @@ vim_tempname (
           if (mch_stat((char *)itmp, &st) >= 0)
             continue;
 #  endif
-#  if defined(UNIX) || defined(VMS)
+#  if defined(UNIX)
           /* Make sure the umask doesn't remove the executable bit.
            * "repl" has been reported to use "177". */
           umask_save = umask(077);
 #  endif
           r = os_mkdir((char *)itmp, 0700);
-#  if defined(UNIX) || defined(VMS)
+#  if defined(UNIX)
           (void)umask(umask_save);
 #  endif
           if (r == 0) {
@@ -5761,27 +5760,11 @@ vim_tempname (
 #  else
   char_u      *p;
 
-#   ifdef VMS_TEMPNAM
-  /* mktemp() is not working on VMS.  It seems to be
-   * a do-nothing function. Therefore we use tempnam().
-   */
-  sprintf((char *)itmp, "VIM%c", extra_char);
-  p = (char_u *)tempnam("tmp:", (char *)itmp);
-  if (p != NULL) {
-    /* VMS will use '.LOG' if we don't explicitly specify an extension,
-     * and VIM will then be unable to find the file later */
-    STRCPY(itmp, p);
-    STRCAT(itmp, ".txt");
-    free(p);
-  } else
-    return NULL;
-#   else
   STRCPY(itmp, TEMPNAME);
   if ((p = vim_strchr(itmp, '?')) != NULL)
     *p = extra_char;
   if (mktemp((char *)itmp) == NULL)
     return NULL;
-#   endif
 #  endif
 
   return vim_strsave(itmp);

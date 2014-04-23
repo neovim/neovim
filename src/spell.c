@@ -2568,7 +2568,7 @@ spell_load_file (
     if (lp->sl_fname == NULL)
       goto endFAIL;
 
-    /* Check for .add.spl (_add.spl for VMS). */
+    /* Check for .add.spl. */
     lp->sl_add = strstr((char *)path_tail(fname), SPL_FNAME_ADD) != NULL;
   } else
     lp = old_lp;

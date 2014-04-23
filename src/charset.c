@@ -1860,7 +1860,7 @@ int hexhex2nr(char_u *p)
        //    && defined(FEAT_WINDOWS)) || defined(PROTO)
 
 /// Return TRUE if "str" starts with a backslash that should be removed.
-/// For MS-DOS, WIN32 and OS/2 this is only done when the character after the
+/// For WIN32 this is only done when the character after the
 /// backslash is not a normal file name character.
 /// '$' is a valid file name character, we don't remove the backslash before
 /// it.  This means it is not possible to use an environment variable after a
@@ -1891,8 +1891,6 @@ int rem_backslash(char_u *str)
 }
 
 /// Halve the number of backslashes in a file name argument.
-/// For MS-DOS we only do this if the character after the backslash
-/// is not a normal file character.
 ///
 /// @param p
 void backslash_halve(char_u *p)
