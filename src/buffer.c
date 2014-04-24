@@ -318,20 +318,21 @@ close_buffer (
    * The caller must take care of NOT deleting/freeing when 'bufhidden' is
    * "hide" (otherwise we could never free or delete a buffer).
    */
-  switch (buf->b_p_bh[0])
-  {
-  case 'w': /* 'bufhidden' == "wipe" */
+  switch (buf->b_p_bh[0]) {
+  // 'bufhidden' == "wipe"
+  case 'w':
     wipe_buf = TRUE;
     /* fallthrough */
 
-  case 'd': /* 'bufhidden' == "delete" */
+  // 'bufhidden' == "delete"
+  case 'd':
     del_bug = TRUE;
     /* fallthrough */
 
-  case 'u': /* 'bufhidden' == "unload" */
+  // 'bufhidden' == "unload"
+  case 'u':
     unload_buf = TRUE;
     /* fallthrough */
-
   }
 
   if (win != NULL) {
