@@ -85,8 +85,7 @@ static void free_buffer(buf_T *);
 static void free_buffer_stuff(buf_T *buf, int free_options);
 static void clear_wininfo(buf_T *buf);
 static void decide_bufferaction(char, int*, int*, int*);
-static void wipe_or_delete_buffer(int wipe, int del, buf_T *buf, buf_T *first,
-        buf_T *lastbuf);
+static void wipe_or_delete_buffer(int wipe, int del, buf_T *buf);
 
 #ifdef UNIX
 # define dev_T dev_t
@@ -419,7 +418,7 @@ close_buffer (
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
-  wipe_or_delete_buffer(wipe_buf, del_buf, buf, &firstbuf, &lastbuf);
+  wipe_or_delete_buffer(wipe_buf, del_buf, buf);
   return;
 
 aucmd_abort:
@@ -593,8 +592,7 @@ decide_bufferaction(char act, int *wipe, int *del, int *unload)
  * Remove the buffer from the list.
  */
 static void
-wipe_or_delete_buffer(int wipe_buf, int del_buf, buf_T *buf, buf_T *firstbuf,
-        buf_T *lastbuf)
+wipe_or_delete_buffer(int wipe_buf, int del_buf, buf_T *buf)
 {
   if (wipe_buf) {
     vim_free(buf->b_ffname);
