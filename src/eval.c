@@ -471,7 +471,7 @@ static int dict_equal(dict_T *d1, dict_T *d2, int ic, int recursive);
 static int tv_equal(typval_T *tv1, typval_T *tv2, int ic, int recursive);
 static long list_find_nr(list_T *l, long idx, int *errorp);
 static long list_idx_of_item(list_T *l, listitem_T *item);
-static int list_append_number(list_T *l, varnumber_T n);
+static void list_append_number(list_T *l, varnumber_T n);
 static int list_extend(list_T   *l1, list_T *l2, listitem_T *bef);
 static int list_concat(list_T *l1, list_T *l2, typval_T *tv);
 static list_T *list_copy(list_T *orig, int deep, int copyID);
@@ -2672,10 +2672,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
         break;
       if (lp->ll_li->li_next == NULL) {
         /* Need to add an empty item. */
-        if (list_append_number(lp->ll_list, 0) == FAIL) {
-          ri = NULL;
-          break;
-        }
+        list_append_number(lp->ll_list, 0);
       }
       lp->ll_li = lp->ll_li->li_next;
       ++lp->ll_n1;
@@ -5569,20 +5566,14 @@ void list_append_string(list_T *l, char_u *str, int len)
 
 /*
  * Append "n" to list "l".
- * Returns FAIL when out of memory.
  */
-static int list_append_number(list_T *l, varnumber_T n)
+static void list_append_number(list_T *l, varnumber_T n)
 {
-  listitem_T  *li;
-
-  li = listitem_alloc();
-  if (li == NULL)
-    return FAIL;
+  listitem_T *li = listitem_alloc();
   li->li_tv.v_type = VAR_NUMBER;
   li->li_tv.v_lock = 0;
   li->li_tv.vval.v_number = n;
   list_append(l, li);
-  return OK;
 }
 
 /*
@@ -12059,10 +12050,9 @@ static void f_range(typval_T *argvars, typval_T *rettv)
     EMSG(_("E727: Start past end"));
   else {
     if (rettv_list_alloc(rettv) == OK)
-      for (i = start; stride > 0 ? i <= end : i >= end; i += stride)
-        if (list_append_number(rettv->vval.v_list,
-                (varnumber_T)i) == FAIL)
-          break;
+      for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
+        list_append_number(rettv->vval.v_list, (varnumber_T)i);
+      }
   }
 }
 
@@ -14658,8 +14648,6 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
 {
   long lnum;
   long col;
-  int i;
-  int id;
 
   rettv->v_type = VAR_LIST;
   rettv->vval.v_list = NULL;
@@ -14671,12 +14659,11 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
       && col >= 0 && col <= (long)STRLEN(ml_get(lnum))
       && rettv_list_alloc(rettv) != FAIL) {
     (void)syn_get_id(curwin, lnum, (colnr_T)col, FALSE, NULL, TRUE);
-    for (i = 0;; ++i) {
-      id = syn_get_stack_item(i);
-      if (id < 0)
-        break;
-      if (list_append_number(rettv->vval.v_list, id) == FAIL)
-        break;
+
+    int id;
+    int i = 0;
+    while ((id = syn_get_stack_item(i++)) >= 0) {
+      list_append_number(rettv->vval.v_list, id);
     }
   }
 }
@@ -14781,10 +14768,9 @@ static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv)
       wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
   }
   if (wp != NULL && rettv_list_alloc(rettv) != FAIL) {
-    for (; wp != NULL; wp = wp->w_next)
-      if (list_append_number(rettv->vval.v_list,
-              wp->w_buffer->b_fnum) == FAIL)
-        break;
+    for (; wp != NULL; wp = wp->w_next) {
+      list_append_number(rettv->vval.v_list, wp->w_buffer->b_fnum);
+    }
   }
 }
 
