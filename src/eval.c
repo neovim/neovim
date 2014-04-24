@@ -5550,23 +5550,21 @@ void list_append_dict(list_T *list, dict_T *dict)
 /*
  * Make a copy of "str" and append it as an item to list "l".
  * When "len" >= 0 use "str[len]".
- * Returns FAIL when out of memory.
  */
-int list_append_string(list_T *l, char_u *str, int len)
+void list_append_string(list_T *l, char_u *str, int len)
 {
   listitem_T *li = listitem_alloc();
 
-  if (li == NULL)
-    return FAIL;
   list_append(l, li);
   li->li_tv.v_type = VAR_STRING;
   li->li_tv.v_lock = 0;
-  if (str == NULL)
+
+  if (str == NULL) {
     li->li_tv.vval.v_string = NULL;
-  else if ((li->li_tv.vval.v_string = (len >= 0 ? vim_strnsave(str, len)
-                                       : vim_strsave(str))) == NULL)
-    return FAIL;
-  return OK;
+  } else {
+    li->li_tv.vval.v_string = (len >= 0) ? vim_strnsave(str, len)
+                                         : vim_strsave(str);
+  }
 }
 
 /*
@@ -9432,10 +9430,10 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
       start = 1;
     if (end > buf->b_ml.ml_line_count)
       end = buf->b_ml.ml_line_count;
-    while (start <= end)
-      if (list_append_string(rettv->vval.v_list,
-              ml_get_buf(buf, start++, FALSE), -1) == FAIL)
-        break;
+    while (start <= end) {
+      list_append_string(
+        rettv->vval.v_list, ml_get_buf(buf, start++, FALSE), -1);
+    }
   }
 }
 
@@ -11566,14 +11564,12 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
         /* return list with matched string and submatches */
         for (i = 0; i < NSUBEXP; ++i) {
           if (regmatch.endp[i] == NULL) {
-            if (list_append_string(rettv->vval.v_list,
-                    (char_u *)"", 0) == FAIL)
-              break;
-          } else if (list_append_string(rettv->vval.v_list,
-                         regmatch.startp[i],
-                         (int)(regmatch.endp[i] - regmatch.startp[i]))
-                     == FAIL)
-            break;
+            list_append_string(rettv->vval.v_list, (char_u *)"", 0);
+          } else {
+            list_append_string(rettv->vval.v_list,
+                               regmatch.startp[i],
+                               (int)(regmatch.endp[i] - regmatch.startp[i]));
+          }
         }
       } else if (type == 2) {
         /* return matched string */
@@ -14120,9 +14116,7 @@ static void f_split(typval_T *argvars, typval_T *rettv)
       if (keepempty || end > str || (rettv->vval.v_list->lv_len > 0
                                      && *str != NUL && match && end <
                                      regmatch.endp[0])) {
-        if (list_append_string(rettv->vval.v_list, str,
-                (int)(end - str)) == FAIL)
-          break;
+        list_append_string(rettv->vval.v_list, str, (int)(end - str));
       }
       if (!match)
         break;
@@ -14859,7 +14853,6 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv)
 {
   char_u      *fname;
   tagname_T tn;
-  int first;
 
   if (rettv_list_alloc(rettv) == FAIL)
     return;
@@ -14867,10 +14860,12 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv)
   if (fname == NULL)
     return;
 
-  for (first = TRUE;; first = FALSE)
-    if (get_tagfname(&tn, first, fname) == FAIL
-        || list_append_string(rettv->vval.v_list, fname, -1) == FAIL)
-      break;
+  int first = TRUE;
+  while (get_tagfname(&tn, first, fname) == OK) {
+    list_append_string(rettv->vval.v_list, fname, -1);
+    first = FALSE;
+  }
+
   tagname_free(&tn);
   vim_free(fname);
 }
