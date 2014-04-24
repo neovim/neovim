@@ -84,7 +84,6 @@ static int append_arg_number(win_T *wp, char_u *buf, int buflen, int add_file);
 static void free_buffer(buf_T *);
 static void free_buffer_stuff(buf_T *buf, int free_options);
 static void clear_wininfo(buf_T *buf);
-static void decide_bufferaction(char, int*, int*, int*);
 static void wipe_or_delete_buffer(int wipe, int del, buf_T *buf);
 
 #ifdef UNIX
@@ -319,7 +318,21 @@ close_buffer (
    * The caller must take care of NOT deleting/freeing when 'bufhidden' is
    * "hide" (otherwise we could never free or delete a buffer).
    */
-  decide_bufferaction(buf->b_p_bh[0], &wipe_buf, &del_bug, &unload_buf);
+  switch (buf->b_p_bh[0])
+  {
+  case 'w': /* 'bufhidden' == "wipe" */
+    wipe_buf = TRUE;
+    /* fallthrough */
+
+  case 'd': /* 'bufhidden' == "delete" */
+    del_bug = TRUE;
+    /* fallthrough */
+
+  case 'u': /* 'bufhidden' == "unload" */
+    unload_buf = TRUE;
+    /* fallthrough */
+
+  }
 
   if (win != NULL) {
     /* Set b_last_cursor when closing the last window for the buffer.
@@ -565,27 +578,6 @@ static void clear_wininfo(buf_T *buf)
     }
     vim_free(wip);
   }
-}
-
-static void
-decide_bufferaction(char act, int *wipe, int *del, int *unload)
-{
-  switch (act)
-  {
-  case 'w': /* 'bufhidden' == "wipe" */
-    *wipe = TRUE;
-    /* fallthrough */
-
-  case 'd': /* 'bufhidden' == "delete" */
-    *del = TRUE;
-    /* fallthrough */
-
-  case 'u': /* 'bufhidden' == "unload" */
-    *unload = TRUE;
-    /* fallthrough */
-
-  }
-
 }
 
 /*
