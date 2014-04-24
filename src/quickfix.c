@@ -312,7 +312,7 @@ qf_init_ext (
   /*
    * Get some space to modify the format string into.
    */
-  i = (FMT_PATTERNS * 3) + ((int)STRLEN(efm) << 2);
+  i = 3 * FMT_PATTERNS + 4 * (int)STRLEN(efm);
   for (round = FMT_PATTERNS; round > 0; )
     i += (int)STRLEN(fmt_pat[--round].pattern);
 #ifdef COLON_IN_FILENAME
