@@ -3287,8 +3287,7 @@ int get_errorlist(win_T *wp, list_T *list)
 
     if ((dict = dict_alloc()) == NULL)
       return FAIL;
-    if (list_append_dict(list, dict) == FAIL)
-      return FAIL;
+    list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;
     buf[1] = NUL;
