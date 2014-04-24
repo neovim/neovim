@@ -1568,12 +1568,8 @@ char_u *fix_fname(char_u *fname)
   fname = vim_strsave(fname);
 
 # ifdef USE_FNAME_CASE
-#  ifdef USE_LONG_FNAME
-  if (USE_LONG_FNAME)
-#  endif
-  {
-    if (fname != NULL)
-      fname_case(fname, 0);             /* set correct case for file name */
+  if (fname != NULL) {
+    fname_case(fname, 0);             /* set correct case for file name */
   }
 # endif
 
