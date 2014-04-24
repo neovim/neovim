@@ -789,10 +789,7 @@ do_tag (
 
           if ((dict = dict_alloc()) == NULL)
             continue;
-          if (list_append_dict(list, dict) == FAIL) {
-            vim_free(dict);
-            continue;
-          }
+          list_append_dict(list, dict);
 
           dict_add_nr_str(dict, "text", 0L, tag_name);
           dict_add_nr_str(dict, "filename", 0L, fname);
@@ -2878,8 +2875,7 @@ int get_tags(list_T *list, char_u *pat)
 
       if ((dict = dict_alloc()) == NULL)
         ret = FAIL;
-      if (list_append_dict(list, dict) == FAIL)
-        ret = FAIL;
+      list_append_dict(list, dict);
 
       full_fname = tag_full_fname(&tp);
       if (add_tag_field(dict, "name", tp.tagname, tp.tagname_end) == FAIL

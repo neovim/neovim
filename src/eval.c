@@ -5535,20 +5535,16 @@ int list_append_tv(list_T *l, typval_T *tv)
 
 /*
  * Add a dictionary to a list.  Used by getqflist().
- * Return FAIL when out of memory.
  */
-int list_append_dict(list_T *list, dict_T *dict)
+void list_append_dict(list_T *list, dict_T *dict)
 {
   listitem_T  *li = listitem_alloc();
 
-  if (li == NULL)
-    return FAIL;
   li->li_tv.v_type = VAR_DICT;
   li->li_tv.v_lock = 0;
   li->li_tv.vval.v_dict = dict;
   list_append(list, li);
   ++dict->dv_refcount;
-  return OK;
 }
 
 /*

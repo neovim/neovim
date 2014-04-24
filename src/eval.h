@@ -64,7 +64,7 @@ listitem_T *list_find(list_T *l, long n);
 char_u *list_find_str(list_T *l, long idx);
 void list_append(list_T *l, listitem_T *item);
 int list_append_tv(list_T *l, typval_T *tv);
-int list_append_dict(list_T *list, dict_T *dict);
+void list_append_dict(list_T *list, dict_T *dict);
 int list_append_string(list_T *l, char_u *str, int len);
 int list_insert_tv(list_T *l, typval_T *tv, listitem_T *item);
 void list_remove(list_T *l, listitem_T *item, listitem_T *item2);
