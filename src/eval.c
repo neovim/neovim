@@ -464,7 +464,7 @@ static int get_option_tv(char_u **arg, typval_T *rettv, int evaluate);
 static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate);
 static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate);
 static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate);
-static int rettv_list_alloc(typval_T *rettv);
+static void rettv_list_alloc(typval_T *rettv);
 static long list_len(list_T *l);
 static int list_equal(list_T *l1, list_T *l2, int ic, int recursive);
 static int dict_equal(dict_T *d1, dict_T *d2, int ic, int recursive);
@@ -5136,19 +5136,13 @@ list_T *list_alloc(void)
 
 /*
  * Allocate an empty list for a return value.
- * Returns OK or FAIL.
  */
-static int rettv_list_alloc(typval_T *rettv)
+static void rettv_list_alloc(typval_T *rettv)
 {
-  list_T      *l = list_alloc();
-
-  if (l == NULL)
-    return FAIL;
-
+  list_T *l = list_alloc();
   rettv->vval.v_list = l;
   rettv->v_type = VAR_LIST;
   ++l->lv_refcount;
-  return OK;
 }
 
 /*
@@ -7628,10 +7622,12 @@ static void f_argv(typval_T *argvars, typval_T *rettv)
     else
       rettv->vval.v_string = NULL;
     rettv->v_type = VAR_STRING;
-  } else if (rettv_list_alloc(rettv) == OK)
-    for (idx = 0; idx < ARGCOUNT; ++idx)
-      list_append_string(rettv->vval.v_list,
-          alist_name(&ARGLIST[idx]), -1);
+  } else {
+    rettv_list_alloc(rettv);
+    for (idx = 0; idx < ARGCOUNT; ++idx) {
+      list_append_string(rettv->vval.v_list, alist_name(&ARGLIST[idx]), -1);
+    }
+  }
 }
 
 /*
@@ -8630,10 +8626,12 @@ static void f_expand(typval_T *argvars, typval_T *rettv)
     result = eval_vars(s, s, &len, NULL, &errormsg, NULL);
     --emsg_off;
     if (rettv->v_type == VAR_LIST) {
-      if (rettv_list_alloc(rettv) != FAIL && result != NULL)
+      rettv_list_alloc(rettv);
+      if (result != NULL) {
         list_append_string(rettv->vval.v_list, result, -1);
-      else
+      } else {
         vim_free(result);
+      }
     } else
       rettv->vval.v_string = result;
   } else {
@@ -8650,12 +8648,12 @@ static void f_expand(typval_T *argvars, typval_T *rettv)
       if (rettv->v_type == VAR_STRING)
         rettv->vval.v_string = ExpandOne(&xpc, s, NULL,
             options, WILD_ALL);
-      else if (rettv_list_alloc(rettv) != FAIL) {
-        int i;
-
+      else {
+        rettv_list_alloc(rettv);
         ExpandOne(&xpc, s, NULL, options, WILD_ALL_KEEP);
-        for (i = 0; i < xpc.xp_numfiles; i++)
+        for (int i = 0; i < xpc.xp_numfiles; i++) {
           list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
+        }
         ExpandCleanup(&xpc);
       }
     } else
@@ -8888,8 +8886,9 @@ static void findfilendir(typval_T *argvars, typval_T *rettv, int find_what)
     }
   }
 
-  if (count < 0 && rettv_list_alloc(rettv) == FAIL)
-    error = TRUE;
+  if (count < 0) {
+    rettv_list_alloc(rettv);
+  }
 
   if (*fname != NUL && !error) {
     do {
@@ -9400,8 +9399,9 @@ static void get_buffer_lines(buf_T *buf, linenr_T start, linenr_T end, int retli
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  if (retlist && rettv_list_alloc(rettv) == FAIL)
-    return;
+  if (retlist) {
+    rettv_list_alloc(rettv);
+  }
 
   if (buf == NULL || buf->b_ml.ml_mfp == NULL || start < 0)
     return;
@@ -9824,21 +9824,17 @@ static void f_getline(typval_T *argvars, typval_T *rettv)
  */
 static void f_getmatches(typval_T *argvars, typval_T *rettv)
 {
-  dict_T      *dict;
   matchitem_T *cur = curwin->w_match_head;
 
-  if (rettv_list_alloc(rettv) == OK) {
-    while (cur != NULL) {
-      dict = dict_alloc();
-      if (dict == NULL)
-        return;
-      dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
-      dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
-      dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
-      dict_add_nr_str(dict, "id", (long)cur->id, NULL);
-      list_append_dict(rettv->vval.v_list, dict);
-      cur = cur->next;
-    }
+  rettv_list_alloc(rettv);
+  while (cur != NULL) {
+    dict_T *dict = dict_alloc();
+    dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
+    dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
+    dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
+    dict_add_nr_str(dict, "id", (long)cur->id, NULL);
+    list_append_dict(rettv->vval.v_list, dict);
+    cur = cur->next;
   }
 }
 
@@ -9855,27 +9851,21 @@ static void f_getpid(typval_T *argvars, typval_T *rettv)
  */
 static void f_getpos(typval_T *argvars, typval_T *rettv)
 {
-  pos_T       *fp;
-  list_T      *l;
+  pos_T *fp;
+  list_T *l;
   int fnum = -1;
 
-  if (rettv_list_alloc(rettv) == OK) {
-    l = rettv->vval.v_list;
-    fp = var2fpos(&argvars[0], TRUE, &fnum);
-    if (fnum != -1)
-      list_append_number(l, (varnumber_T)fnum);
-    else
-      list_append_number(l, (varnumber_T)0);
-    list_append_number(l, (fp != NULL) ? (varnumber_T)fp->lnum
-        : (varnumber_T)0);
-    list_append_number(l, (fp != NULL)
-        ? (varnumber_T)(fp->col == MAXCOL ? MAXCOL : fp->col + 1)
-        : (varnumber_T)0);
-    list_append_number(l,
-        (fp != NULL) ? (varnumber_T)fp->coladd :
-        (varnumber_T)0);
-  } else
-    rettv->vval.v_number = FALSE;
+  rettv_list_alloc(rettv);
+  l = rettv->vval.v_list;
+  fp = var2fpos(&argvars[0], TRUE, &fnum);
+  list_append_number(l, (fnum != -1) ? (varnumber_T)fnum : (varnumber_T)0);
+  list_append_number(l, (fp != NULL) ? (varnumber_T)fp->lnum : (varnumber_T)0);
+  list_append_number(l,
+                     (fp != NULL)
+                       ? (varnumber_T)(fp->col == MAXCOL ? MAXCOL : fp->col + 1)
+                       : (varnumber_T)0);
+  list_append_number(l,
+                     (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
 }
 
 /*
@@ -9883,18 +9873,15 @@ static void f_getpos(typval_T *argvars, typval_T *rettv)
  */
 static void f_getqflist(typval_T *argvars, typval_T *rettv)
 {
-  win_T       *wp;
-
-  if (rettv_list_alloc(rettv) == OK) {
-    wp = NULL;
-    if (argvars[0].v_type != VAR_UNKNOWN) {     /* getloclist() */
-      wp = find_win_by_nr(&argvars[0], NULL);
-      if (wp == NULL)
-        return;
+  rettv_list_alloc(rettv);
+  win_T *wp = NULL;
+  if (argvars[0].v_type != VAR_UNKNOWN) { /* getloclist() */
+    wp = find_win_by_nr(&argvars[0], NULL);
+    if (wp == NULL) {
+      return;
     }
-
-    (void)get_errorlist(wp, rettv->vval.v_list);
   }
+  (void)get_errorlist(wp, rettv->vval.v_list);
 }
 
 /*
@@ -10134,14 +10121,12 @@ static void f_glob(typval_T *argvars, typval_T *rettv)
     if (rettv->v_type == VAR_STRING)
       rettv->vval.v_string = ExpandOne(&xpc, get_tv_string(&argvars[0]),
           NULL, options, WILD_ALL);
-    else if (rettv_list_alloc(rettv) != FAIL) {
-      int i;
-
-      ExpandOne(&xpc, get_tv_string(&argvars[0]),
-          NULL, options, WILD_ALL_KEEP);
-      for (i = 0; i < xpc.xp_numfiles; i++)
+    else {
+      rettv_list_alloc(rettv);
+      ExpandOne(&xpc, get_tv_string(&argvars[0]), NULL, options, WILD_ALL_KEEP);
+      for (int i = 0; i < xpc.xp_numfiles; i++) {
         list_append_string(rettv->vval.v_list, xpc.xp_files[i], -1);
-
+      }
       ExpandCleanup(&xpc);
     }
   } else
@@ -10932,8 +10917,7 @@ static void dict_list(typval_T *argvars, typval_T *rettv, int what)
   if ((d = argvars[0].vval.v_dict) == NULL)
     return;
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
 
   todo = (int)d->dv_hashtab.ht_used;
   for (hi = d->dv_hashtab.ht_array; todo > 0; ++hi) {
@@ -11457,8 +11441,7 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
   rettv->vval.v_number = -1;
   if (type == 3) {
     /* return empty list when there are no matches */
-    if (rettv_list_alloc(rettv) == FAIL)
-      goto theend;
+    rettv_list_alloc(rettv);
   } else if (type == 2) {
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = NULL;
@@ -11632,19 +11615,18 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv)
  */
 static void f_matcharg(typval_T *argvars, typval_T *rettv)
 {
-  if (rettv_list_alloc(rettv) == OK) {
-    int id = get_tv_number(&argvars[0]);
-    matchitem_T *m;
+  rettv_list_alloc(rettv);
 
-    if (id >= 1 && id <= 3) {
-      if ((m = (matchitem_T *)get_match(curwin, id)) != NULL) {
-        list_append_string(rettv->vval.v_list,
-            syn_id2name(m->hlg_id), -1);
-        list_append_string(rettv->vval.v_list, m->pattern, -1);
-      } else {
-        list_append_string(rettv->vval.v_list, NULL, -1);
-        list_append_string(rettv->vval.v_list, NULL, -1);
-      }
+  int id = get_tv_number(&argvars[0]);
+  matchitem_T *m;
+
+  if (id >= 1 && id <= 3) {
+    if ((m = (matchitem_T *)get_match(curwin, id)) != NULL) {
+      list_append_string(rettv->vval.v_list, syn_id2name(m->hlg_id), -1);
+      list_append_string(rettv->vval.v_list, m->pattern, -1);
+    } else {
+      list_append_string(rettv->vval.v_list, NULL, -1);
+      list_append_string(rettv->vval.v_list, NULL, -1);
     }
   }
 }
@@ -12042,10 +12024,10 @@ static void f_range(typval_T *argvars, typval_T *rettv)
   else if (stride > 0 ? end + 1 < start : end - 1 > start)
     EMSG(_("E727: Start past end"));
   else {
-    if (rettv_list_alloc(rettv) == OK)
-      for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
-        list_append_number(rettv->vval.v_list, (varnumber_T)i);
-      }
+    rettv_list_alloc(rettv);
+    for (i = start; stride > 0 ? i <= end : i >= end; i += stride) {
+      list_append_number(rettv->vval.v_list, (varnumber_T)i);
+    }
   }
 }
 
@@ -12076,8 +12058,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
       maxline = get_tv_number(&argvars[2]);
   }
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
 
   /* Always open the file in binary mode, library functions have a mind of
    * their own about CR-LF conversion. */
@@ -12282,15 +12263,11 @@ static void f_reltime(typval_T *argvars, typval_T *rettv)
       return;
     profile_sub(&res, &start);
   }
-
-  if (rettv_list_alloc(rettv) == OK) {
-    long n1, n2;
-
-    n1 = res.tv_sec;
-    n2 = res.tv_usec;
-    list_append_number(rettv->vval.v_list, (varnumber_T)n1);
-    list_append_number(rettv->vval.v_list, (varnumber_T)n2);
-  }
+  rettv_list_alloc(rettv);
+  long n1 = res.tv_sec;
+  long n2 = res.tv_usec;
+  list_append_number(rettv->vval.v_list, (varnumber_T)n1);
+  list_append_number(rettv->vval.v_list, (varnumber_T)n2);
 }
 
 /*
@@ -12414,14 +12391,13 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
             EMSG(_(e_invrange));
           else {
             list_remove(l, item, item2);
-            if (rettv_list_alloc(rettv) == OK) {
-              l = rettv->vval.v_list;
-              l->lv_first = item;
-              l->lv_last = item2;
-              item->li_prev = NULL;
-              item2->li_next = NULL;
-              l->lv_len = cnt;
-            }
+            rettv_list_alloc(rettv);
+            l = rettv->vval.v_list;
+            l->lv_first = item;
+            l->lv_last = item2;
+            item->li_prev = NULL;
+            item2->li_next = NULL;
+            l->lv_len = cnt;
           }
         }
       }
@@ -12457,11 +12433,15 @@ static void f_repeat(typval_T *argvars, typval_T *rettv)
 
   n = get_tv_number(&argvars[1]);
   if (argvars[0].v_type == VAR_LIST) {
-    if (rettv_list_alloc(rettv) == OK && argvars[0].vval.v_list != NULL)
-      while (n-- > 0)
-        if (list_extend(rettv->vval.v_list,
-                argvars[0].vval.v_list, NULL) == FAIL)
+    rettv_list_alloc(rettv);
+    if (argvars[0].vval.v_list != NULL) {
+      while (n-- > 0) {
+        if (list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL)
+            == FAIL) {
           break;
+        }
+      }
+    }
   } else {
     p = get_tv_string(&argvars[0]);
     rettv->v_type = VAR_STRING;
@@ -13044,8 +13024,7 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv)
   int lnum = 0;
   int col = 0;
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
 
   if (searchpair_cmn(argvars, &match_pos) > 0) {
     lnum = match_pos.lnum;
@@ -13215,8 +13194,7 @@ static void f_searchpos(typval_T *argvars, typval_T *rettv)
   int n;
   int flags = 0;
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
 
   n = search_cmn(argvars, &match_pos, &flags);
   if (n > 0) {
@@ -13974,8 +13952,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv)
   hlf_T attr = HLF_COUNT;
   int len = 0;
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
 
   if (argvars[0].v_type == VAR_UNKNOWN) {
     /* Find the start and length of the badly spelled word. */
@@ -14021,8 +13998,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
   listitem_T  *li;
   int need_capital = FALSE;
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
 
   if (curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL) {
     str = get_tv_string(&argvars[0]);
@@ -14085,8 +14061,8 @@ static void f_split(typval_T *argvars, typval_T *rettv)
   if (pat == NULL || *pat == NUL)
     pat = (char_u *)"[\\x01- ]\\+";
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
+
   if (typeerr)
     return;
 
@@ -14605,33 +14581,30 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
 
   memset(str, NUL, sizeof(str));
 
-  if (rettv_list_alloc(rettv) != FAIL) {
-    if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-        && col >= 0 && col <= (long)STRLEN(ml_get(lnum))
-        && curwin->w_p_cole > 0) {
-      (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
-      syntax_flags = get_syntax_info(&matchid);
+  rettv_list_alloc(rettv);
+  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
+      && col <= (long)STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
+    (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
+    syntax_flags = get_syntax_info(&matchid);
 
-      /* get the conceal character */
-      if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
-        cchar = syn_get_sub_char();
-        if (cchar == NUL && curwin->w_p_cole == 1 && lcs_conceal != NUL)
-          cchar = lcs_conceal;
-        if (cchar != NUL) {
-          if (has_mbyte)
-            (*mb_char2bytes)(cchar, str);
-          else
-            str[0] = cchar;
-        }
+    /* get the conceal character */
+    if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
+      cchar = syn_get_sub_char();
+      if (cchar == NUL && curwin->w_p_cole == 1 && lcs_conceal != NUL)
+        cchar = lcs_conceal;
+      if (cchar != NUL) {
+        if (has_mbyte)
+          (*mb_char2bytes)(cchar, str);
+        else
+          str[0] = cchar;
       }
     }
-
-    list_append_number(rettv->vval.v_list,
-        (syntax_flags & HL_CONCEAL) != 0);
-    /* -1 to auto-determine strlen */
-    list_append_string(rettv->vval.v_list, str, -1);
-    list_append_number(rettv->vval.v_list, matchid);
   }
+
+  list_append_number(rettv->vval.v_list, (syntax_flags & HL_CONCEAL) != 0);
+  /* -1 to auto-determine strlen */
+  list_append_string(rettv->vval.v_list, str, -1);
+  list_append_number(rettv->vval.v_list, matchid);
 }
 
 /*
@@ -14648,9 +14621,11 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   lnum = get_tv_lnum(argvars);                  /* -1 on type error */
   col = get_tv_number(&argvars[1]) - 1;         /* -1 on type error */
 
-  if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0 && col <= (long)STRLEN(ml_get(lnum))
-      && rettv_list_alloc(rettv) != FAIL) {
+  if (lnum >= 1
+      && lnum <= curbuf->b_ml.ml_line_count
+      && col >= 0
+      && col <= (long)STRLEN(ml_get(lnum))) {
+    rettv_list_alloc(rettv);
     (void)syn_get_id(curwin, lnum, (colnr_T)col, FALSE, NULL, TRUE);
 
     int id;
@@ -14760,9 +14735,11 @@ static void f_tabpagebuflist(typval_T *argvars, typval_T *rettv)
     if (tp != NULL)
       wp = (tp == curtab) ? firstwin : tp->tp_firstwin;
   }
-  if (wp != NULL && rettv_list_alloc(rettv) != FAIL) {
-    for (; wp != NULL; wp = wp->w_next) {
+  if (wp != NULL) {
+    rettv_list_alloc(rettv);
+    while (wp != NULL) {
       list_append_number(rettv->vval.v_list, wp->w_buffer->b_fnum);
+      wp = wp->w_next;
     }
   }
 }
@@ -14858,11 +14835,8 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv)
   char_u      *fname;
   tagname_T tn;
 
-  if (rettv_list_alloc(rettv) == FAIL)
-    return;
+  rettv_list_alloc(rettv);
   fname = alloc(MAXPATHL);
-  if (fname == NULL)
-    return;
 
   int first = TRUE;
   while (get_tagfname(&tn, first, fname) == OK) {
@@ -14887,8 +14861,8 @@ static void f_taglist(typval_T *argvars, typval_T *rettv)
   if (*tag_pattern == NUL)
     return;
 
-  if (rettv_list_alloc(rettv) == OK)
-    (void)get_tags(rettv->vval.v_list, tag_pattern);
+  rettv_list_alloc(rettv);
+  (void)get_tags(rettv->vval.v_list, tag_pattern);
 }
 
 /*
