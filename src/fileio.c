@@ -2997,7 +2997,7 @@ buf_write (
       struct stat st_new;
       char_u      *dirp;
       char_u      *rootname;
-#if defined(UNIX) && !defined(SHORT_FNAME)
+#if defined(UNIX)
       int did_set_shortname;
 #endif
 
@@ -3038,7 +3038,7 @@ buf_write (
           goto nobackup;
         }
 
-#if defined(UNIX) && !defined(SHORT_FNAME)
+#if defined(UNIX)
         did_set_shortname = FALSE;
 #endif
 
@@ -3050,11 +3050,7 @@ buf_write (
            * Make backup file name.
            */
           backup = buf_modname(
-#ifdef SHORT_FNAME
-              TRUE,
-#else
               (buf->b_p_sn || buf->b_shortname),
-#endif
               rootname, backup_ext, FALSE);
           if (backup == NULL) {
             vim_free(rootname);
@@ -3078,7 +3074,6 @@ buf_write (
                 && st_new.st_ino == st_old.st_ino) {
               vim_free(backup);
               backup = NULL;                    /* no backup file to delete */
-# ifndef SHORT_FNAME
               /*
                * may try again with 'shortname' set
                */
@@ -3090,7 +3085,6 @@ buf_write (
               /* setting shortname didn't help */
               if (did_set_shortname)
                 buf->b_shortname = FALSE;
-# endif
               break;
             }
 #endif
@@ -3248,11 +3242,7 @@ nobackup:
           backup = NULL;
         else {
           backup = buf_modname(
-#ifdef SHORT_FNAME
-              TRUE,
-#else
               (buf->b_p_sn || buf->b_shortname),
-#endif
               rootname, backup_ext, FALSE);
           vim_free(rootname);
         }
@@ -3891,11 +3881,7 @@ restore_backup:
    */
   if (*p_pm && dobackup) {
     char *org = (char *)buf_modname(
-#ifdef SHORT_FNAME
-        TRUE,
-#else
         (buf->b_p_sn || buf->b_shortname),
-#endif
         fname, p_pm, FALSE);
 
     if (backup != NULL) {
@@ -4690,11 +4676,7 @@ modname (
 )
 {
   return buf_modname(
-#ifdef SHORT_FNAME
-      TRUE,
-#else
       (curbuf->b_p_sn || curbuf->b_shortname),
-#endif
       fname, ext, prepend_dot);
 }
 
@@ -4729,9 +4711,7 @@ buf_modname (
       retval[fnamelen++] = PATHSEP;
       retval[fnamelen] = NUL;
     }
-#ifndef SHORT_FNAME
     prepend_dot = FALSE;            /* nothing to prepend a dot to */
-#endif
   } else {
     fnamelen = (int)STRLEN(fname);
     retval = alloc((unsigned)(fnamelen + extlen + 3));
@@ -4745,13 +4725,7 @@ buf_modname (
    */
   for (ptr = retval + fnamelen; ptr > retval; mb_ptr_back(retval, ptr)) {
     if (*ext == '.'
-#ifdef USE_LONG_FNAME
-        && (!USE_LONG_FNAME || shortname)
-#else
-# ifndef SHORT_FNAME
         && shortname
-# endif
-#endif
         )
       if (*ptr == '.')          /* replace '.' by '_' */
         *ptr = '_';
@@ -4762,23 +4736,15 @@ buf_modname (
   }
 
   /* the file name has at most BASENAMELEN characters. */
-#ifndef SHORT_FNAME
   if (STRLEN(ptr) > (unsigned)BASENAMELEN)
     ptr[BASENAMELEN] = '\0';
-#endif
 
   s = ptr + STRLEN(ptr);
 
   /*
    * For 8.3 file names we may have to reduce the length.
    */
-#ifdef USE_LONG_FNAME
-  if (!USE_LONG_FNAME || shortname)
-#else
-# ifndef SHORT_FNAME
   if (shortname)
-# endif
-#endif
   {
     /*
      * If there is no file name, or the file name ends in '/', and the
@@ -4813,7 +4779,7 @@ buf_modname (
     else if ((int)STRLEN(e) + extlen > 4)
       s = e + 4 - extlen;
   }
-#if defined(USE_LONG_FNAME) || defined(WIN3264)
+#if defined(WIN3264)
   /*
    * If there is no file name, and the extension starts with '.', put a
    * '_' before the dot, because just ".ext" may be invalid if it's on a
@@ -4829,19 +4795,14 @@ buf_modname (
    */
   STRCPY(s, ext);
 
-#ifndef SHORT_FNAME
   /*
    * Prepend the dot.
    */
   if (prepend_dot && !shortname && *(e = path_tail(retval)) != '.'
-#ifdef USE_LONG_FNAME
-      && USE_LONG_FNAME
-#endif
       ) {
     STRMOVE(e + 1, e);
     *e = '.';
   }
-#endif
 
   /*
    * Check that, after appending the extension, the file name is really
