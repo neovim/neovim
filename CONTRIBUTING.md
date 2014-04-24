@@ -40,18 +40,11 @@ someone else doesn't duplicate the work.
 
 ### Coding style
 
-All code changes should follow the [Google C++ style guide](http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml)
-with the following exceptions:
-
- * Function names should be `lower_case` separated by underscores.
- * Struct and enum names that are not typedef-ed are `struct lower_case` and
-   `enum lower_case`.
- * The opening brace for function declarations should appear on the next line.
- * All control structures must always use braces.
+All code changes should follow the [neovim style guide](http://neovim.org/development-wiki/style-guide/style-guide.xml).
 
 Please run `clint.py` to detect style errors. `clint.py` is Google's
 [`cpplint.py`](http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#cpplint)
-script modified with the above style guidelines. It is not perfect and may
+script modified with the neovim style guidelines. It is not perfect and may
 have false positives and negatives, but is still a valuable tool. To have
 `clint.py` ignore certain special cases, put `// NOLINT` at the end of the
 line.
