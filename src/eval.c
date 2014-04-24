@@ -4759,12 +4759,9 @@ eval_index (
         l = list_alloc();
         if (l == NULL)
           return FAIL;
-        for (item = list_find(rettv->vval.v_list, n1);
-             n1 <= n2; ++n1) {
-          if (list_append_tv(l, &item->li_tv) == FAIL) {
-            list_free(l, TRUE);
-            return FAIL;
-          }
+        item = list_find(rettv->vval.v_list, n1);
+        while (n1++ <= n2) {
+          list_append_tv(l, &item->li_tv);
           item = item->li_next;
         }
         clear_tv(rettv);
@@ -5517,17 +5514,12 @@ void list_append(list_T *l, listitem_T *item)
 
 /*
  * Append typval_T "tv" to the end of list "l".
- * Return FAIL when out of memory.
  */
-int list_append_tv(list_T *l, typval_T *tv)
+void list_append_tv(list_T *l, typval_T *tv)
 {
   listitem_T  *li = listitem_alloc();
-
-  if (li == NULL)
-    return FAIL;
   copy_tv(tv, &li->li_tv);
   list_append(l, li);
-  return OK;
 }
 
 /*
@@ -7534,9 +7526,10 @@ static void f_add(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = 1;   /* Default: Failed */
   if (argvars[0].v_type == VAR_LIST) {
     if ((l = argvars[0].vval.v_list) != NULL
-        && !tv_check_lock(l->lv_lock, (char_u *)_("add() argument"))
-        && list_append_tv(l, &argvars[1]) == OK)
+        && !tv_check_lock(l->lv_lock, (char_u *)_("add() argument"))) {
+      list_append_tv(l, &argvars[1]);
       copy_tv(&argvars[0], rettv);
+    }
   } else
     EMSG(_(e_listreq));
 }
