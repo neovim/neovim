@@ -332,7 +332,7 @@ close_buffer (
   // 'bufhidden' == "unload"
   case 'u':
     unload_buf = TRUE;
-    /* fallthrough */
+    break;
   }
 
   if (win != NULL) {
