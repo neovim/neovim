@@ -234,9 +234,9 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   // the offset argument to uv_fs_read is int64_t, could someone really try
   // to read more than 9 quintillion (9e18) bytes?
-  // DISABLED TO FIX BROKEN BUILD ON 32bit
-  // TODO(elmart): Review types to allow assertion
-  // assert(rstream->fpos <= INT64_MAX);
+  // upcast is meant to avoid tautological condition warning on 32 bits
+  uintmax_t fpos_intmax = rstream->fpos;
+  assert(fpos_intmax <= INT64_MAX);
 
   // Synchronous read
   uv_fs_read(
