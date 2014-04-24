@@ -466,9 +466,7 @@ void buf_clear_file(buf_T *buf)
 {
   buf->b_ml.ml_line_count = 1;
   unchanged(buf, TRUE);
-#ifndef SHORT_FNAME
   buf->b_shortname = FALSE;
-#endif
   buf->b_p_eol = TRUE;
   buf->b_start_eol = TRUE;
   buf->b_p_bomb = FALSE;
@@ -2277,9 +2275,6 @@ setfname (
       return FAIL;
     }
 #ifdef USE_FNAME_CASE
-# ifdef USE_LONG_FNAME
-    if (USE_LONG_FNAME)
-# endif
     fname_case(sfname, 0);            /* set correct case for short file name */
 #endif
     vim_free(buf->b_ffname);
@@ -2298,9 +2293,7 @@ setfname (
   }
 #endif
 
-#ifndef SHORT_FNAME
   buf->b_shortname = FALSE;
-#endif
 
   buf_name_changed(buf);
   return OK;
