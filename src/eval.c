@@ -835,7 +835,7 @@ static int eval_fname_sid(char_u *p);
 static void list_func_head(ufunc_T *fp, int indent);
 static ufunc_T *find_func(char_u *name);
 static int function_exists(char_u *name);
-static int builtin_function(char_u *name);
+static bool builtin_function(char_u *name, int len);
 static void func_do_profile(ufunc_T *fp);
 static void prof_sort_list(FILE *fd, ufunc_T **sorttab, int st_len,
                            char *title,
@@ -7344,7 +7344,7 @@ call_func (
     rettv->vval.v_number = 0;
     error = ERROR_UNKNOWN;
 
-    if (!builtin_function(fname)) {
+    if (!builtin_function(fname, -1)) {
       /*
        * User defined function.
        */
@@ -17353,20 +17353,19 @@ void ex_function(exarg_T *eap)
     return;
   }
 
-  /*
-   * Get the function name.  There are these situations:
-   * func	    normal function name
-   *		    "name" == func, "fudi.fd_dict" == NULL
-   * dict.func    new dictionary entry
-   *		    "name" == NULL, "fudi.fd_dict" set,
-   *		    "fudi.fd_di" == NULL, "fudi.fd_newkey" == func
-   * dict.func    existing dict entry with a Funcref
-   *		    "name" == func, "fudi.fd_dict" set,
-   *		    "fudi.fd_di" set, "fudi.fd_newkey" == NULL
-   * dict.func    existing dict entry that's not a Funcref
-   *		    "name" == NULL, "fudi.fd_dict" set,
-   *		    "fudi.fd_di" set, "fudi.fd_newkey" == NULL
-   */
+  // Get the function name.  There are these situations:
+  // func        function name
+  //             "name" == func, "fudi.fd_dict" == NULL
+  // s:func      script-local function name
+  // dict.func   new dictionary entry
+  //             "name" == NULL, "fudi.fd_dict" set,
+  //             "fudi.fd_di" == NULL, "fudi.fd_newkey" == func
+  // dict.func   existing dict entry with a Funcref
+  //             "name" == func, "fudi.fd_dict" set,
+  //             "fudi.fd_di" set, "fudi.fd_newkey" == NULL
+  // dict.func   existing dict entry that's not a Funcref
+  //             "name" == NULL, "fudi.fd_dict" set,
+  //             "fudi.fd_di" set, "fudi.fd_newkey" == NULL
   p = eap->arg;
   name = trans_function_name(&p, eap->skip, 0, &fudi);
   paren = (vim_strchr(p, '(') != NULL);
@@ -17996,12 +17995,22 @@ trans_function_name (
       sprintf((char *)sid_buf, "%" PRId64 "_", (int64_t)current_SID);
       lead += (int)STRLEN(sid_buf);
     }
-  } else if (!(flags & TFN_INT) && builtin_function(lv.ll_name)) {
+  } else if (!(flags & TFN_INT) && builtin_function(lv.ll_name, len)) {
     EMSG2(_(
-            "E128: Function name must start with a capital or contain a colon: %s"),
-        lv.ll_name);
+            "E128: Function name must start with a capital or \"s:\": %s"),
+          lv.ll_name);
     goto theend;
   }
+
+  if (!skip) {
+    char_u *cp = vim_strchr(lv.ll_name, ':');
+
+    if (cp != NULL && cp < end) {
+      EMSG2(_("E884: Function name cannot contain a colon: %s"), lv.ll_name);
+      goto theend;
+    }
+  }
+
   name = alloc((unsigned)(len + lead + 1));
   if (name != NULL) {
     if (lead > 0) {
@@ -18012,7 +18021,7 @@ trans_function_name (
         STRCPY(name + 3, sid_buf);
     }
     memmove(name + lead, lv.ll_name, (size_t)len);
-    name[len + lead] = NUL;
+    name[lead + len] = NUL;
   }
   *pp = end;
 
@@ -18117,8 +18126,9 @@ void free_all_functions(void)
 
 int translated_function_exists(char_u *name)
 {
-  if (builtin_function(name))
+  if (builtin_function(name, -1)) {
     return find_internal_func(name) >= 0;
+  }
   return find_func(name) != NULL;
 }
 
@@ -18158,14 +18168,19 @@ char_u *get_expanded_name(char_u *name, int check)
   return NULL;
 }
 
-/*
- * Return TRUE if "name" looks like a builtin function name: starts with a
- * lower case letter and doesn't contain a ':' or AUTOLOAD_CHAR.
- */
-static int builtin_function(char_u *name)
+/// Return TRUE if "name" looks like a builtin function name: starts with a
+/// lower case letter and doesn't contain AUTOLOAD_CHAR.
+/// "len" is the length of "name", or -1 for NUL terminated.
+static bool builtin_function(char_u *name, int len)
 {
-  return ASCII_ISLOWER(name[0]) && vim_strchr(name, ':') == NULL
-         && vim_strchr(name, AUTOLOAD_CHAR) == NULL;
+  if (!ASCII_ISLOWER(name[0])) {
+    return FALSE;
+  }
+
+  char_u *p = vim_strchr(name, AUTOLOAD_CHAR);
+
+  return p == NULL
+         || (len > 0 && p > name + len);
 }
 
 /*
