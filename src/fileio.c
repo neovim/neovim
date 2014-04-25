@@ -3444,8 +3444,6 @@ nobackup:
 
 restore_backup:
     {
-      struct stat st;
-
       /*
        * If we failed to open the file, we don't need a backup. Throw it
        * away.  If we moved or removed the original file try to put the
@@ -3460,11 +3458,13 @@ restore_backup:
            * In that case we leave the copy around.
            */
           /* If file does not exist, put the copy in its place */
-          if (mch_stat((char *)fname, &st) < 0)
+          if (!os_file_exists(fname)) {
             vim_rename(backup, fname);
+          }
           /* if original file does exist throw away the copy */
-          if (mch_stat((char *)fname, &st) >= 0)
+          if (os_file_exists(fname)) {
             os_remove((char *)backup);
+          }
         } else {
           /* try to put the original file back */
           vim_rename(backup, fname);
@@ -3472,8 +3472,9 @@ restore_backup:
       }
 
       /* if original file no longer exists give an extra warning */
-      if (!newfile && mch_stat((char *)fname, &st) < 0)
+      if (!newfile && !os_file_exists(fname)) {
         end = 0;
+      }
     }
 
     if (wfname != fname)
@@ -3855,15 +3856,13 @@ restore_backup:
     char *org = (char *)modname(fname, p_pm, FALSE);
 
     if (backup != NULL) {
-      struct stat st;
-
       /*
        * If the original file does not exist yet
        * the current backup file becomes the original file
        */
       if (org == NULL)
         EMSG(_("E205: Patchmode: can't save original file"));
-      else if (mch_stat(org, &st) < 0) {
+      else if (!os_file_exists((char_u *)org)) {
         vim_rename(backup, (char_u *)org);
         free(backup);                   /* don't delete the file */
         backup = NULL;
@@ -5527,9 +5526,6 @@ vim_tempname (
 #ifdef TEMPDIRNAMES
   static char *(tempdirs[]) = {TEMPDIRNAMES};
   int i;
-# ifndef EEXIST
-  struct stat st;
-# endif
 
   /*
    * This will create a directory for private use by this instance of Vim.
@@ -5580,7 +5576,7 @@ vim_tempname (
           /* If mkdir() does not set errno to EEXIST, check for
            * existing file here.  There is a race condition then,
            * although it's fail-safe. */
-          if (mch_stat((char *)itmp, &st) >= 0)
+          if (os_file_exists(itmp))
             continue;
 #  endif
 #  if defined(UNIX)

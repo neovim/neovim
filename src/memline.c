@@ -1607,12 +1607,9 @@ recover_names (
      * Try finding a swap file by simply adding ".swp" to the file name.
      */
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
-      struct stat st;
-      char_u          *swapname;
-
-      swapname = modname(fname_res, (char_u *)".swp", TRUE);
+      char_u *swapname = modname(fname_res, (char_u *)".swp", TRUE);
       if (swapname != NULL) {
-        if (mch_stat((char *)swapname, &st) != -1) {                /* It exists! */
+        if (os_file_exists(swapname)) {
           files = (char_u **)alloc((unsigned)sizeof(char_u *));
           files[0] = swapname;
           swapname = NULL;

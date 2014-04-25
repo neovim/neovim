@@ -675,7 +675,6 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
   char_u      *undo_file_name = NULL;
   int dir_len;
   char_u      *p;
-  struct stat st;
   char_u      *ffname = buf_ffname;
 #ifdef HAVE_READLINK
   char_u fname_buf[MAXPATHL];
@@ -723,7 +722,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
 
     // When reading check if the file exists.
     if (undo_file_name != NULL &&
-        (!reading || mch_stat((char *)undo_file_name, &st) >= 0)) {
+        (!reading || os_file_exists(undo_file_name))) {
       break;
     }
     free(undo_file_name);
@@ -1108,7 +1107,6 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   int perm;
   int write_ok = FALSE;
 #ifdef UNIX
-  int st_old_valid = FALSE;
   struct stat st_old;
   struct stat st_new;
 #endif
@@ -1135,16 +1133,10 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
    */
   perm = 0600;
   if (buf->b_ffname != NULL) {
-#ifdef UNIX
-    if (mch_stat((char *)buf->b_ffname, &st_old) >= 0) {
-      perm = st_old.st_mode;
-      st_old_valid = TRUE;
-    }
-#else
     perm = os_getperm(buf->b_ffname);
-    if (perm < 0)
+    if (perm < 0) {
       perm = 0600;
-#endif
+    }
   }
 
   /* strip any s-bit */
@@ -1223,7 +1215,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
    * this fails, set the protection bits for the group same as the
    * protection bits for others.
    */
-  if (st_old_valid
+  if (mch_stat((char *)buf->b_ffname, &st_old) >= 0
       && mch_stat((char *)file_name, &st_new) >= 0
       && st_new.st_gid != st_old.st_gid
 # ifdef HAVE_FCHOWN  /* sequent-ptx lacks fchown() */

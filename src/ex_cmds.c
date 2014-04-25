@@ -1492,7 +1492,6 @@ void write_viminfo(char_u *file, int forceit)
   FILE        *fp_in = NULL;    /* input viminfo file, if any */
   FILE        *fp_out = NULL;   /* output viminfo file */
   char_u      *tempname = NULL;         /* name of temp viminfo file */
-  struct stat st_new;           /* mch_stat() of potential new file */
   char_u      *wp;
 #if defined(UNIX)
   mode_t umask_save;
@@ -1511,7 +1510,7 @@ void write_viminfo(char_u *file, int forceit)
   fp_in = mch_fopen((char *)fname, READBIN);
   if (fp_in == NULL) {
     /* if it does exist, but we can't read it, don't try writing */
-    if (mch_stat((char *)fname, &st_new) == 0)
+    if (os_file_exists(fname))
       goto end;
 #if defined(UNIX)
     /*
@@ -1563,7 +1562,7 @@ void write_viminfo(char_u *file, int forceit)
        * Check if tempfile already exists.  Never overwrite an
        * existing file!
        */
-      if (mch_stat((char *)tempname, &st_new) == 0) {
+      if (os_file_exists(tempname)) {
         /*
          * Try another name.  Change one character, just before
          * the extension.
@@ -1571,8 +1570,7 @@ void write_viminfo(char_u *file, int forceit)
         wp = tempname + STRLEN(tempname) - 5;
         if (wp < path_tail(tempname))                 /* empty file name? */
           wp = path_tail(tempname);
-        for (*wp = 'z'; mch_stat((char *)tempname, &st_new) == 0;
-             --*wp) {
+        for (*wp = 'z'; os_file_exists(tempname); --*wp) {
           /*
            * They all exist?  Must be something wrong! Don't
            * write the viminfo file then.
