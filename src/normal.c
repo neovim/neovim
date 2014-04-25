@@ -4451,7 +4451,7 @@ static void nv_ident(cmdarg_T *cap)
       isman = (STRCMP(kp, "man") == 0);
       isman_s = (STRCMP(kp, "man -s") == 0);
       if (cap->count0 != 0 && !(isman || isman_s))
-        sprintf((char *)buf, ".,.+%" PRId64, (int64_t)cap->count0 - 1);
+        sprintf((char *)buf, ".,.+%" PRId64, (int64_t)(cap->count0 - 1));
 
       STRCAT(buf, "! ");
       if (cap->count0 == 0 && isman_s)

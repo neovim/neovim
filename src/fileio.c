@@ -5702,7 +5702,7 @@ vim_tempname (
           mode_t umask_save;
 #  endif
 
-          sprintf((char *)itmp + itmplen, "v%" PRId64, (int64_t)nr + off);
+          sprintf((char *)itmp + itmplen, "v%" PRId64, (int64_t)(nr + off));
 #  ifndef EEXIST
           /* If mkdir() does not set errno to EEXIST, check for
            * existing file here.  There is a race condition then,

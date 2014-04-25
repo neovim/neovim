@@ -7899,7 +7899,7 @@ static void win_redr_ruler(win_T *wp, int always)
     vim_snprintf((char *)buffer, RULER_BUF_LEN, "%" PRId64 ",",
         (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
         ? (int64_t)0L
-        : (int64_t)(wp->w_cursor.lnum));
+        : (int64_t)wp->w_cursor.lnum);
     len = STRLEN(buffer);
     col_print(buffer + len, RULER_BUF_LEN - len,
         empty_line ? 0 : (int)wp->w_cursor.col + 1,

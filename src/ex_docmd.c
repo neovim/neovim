@@ -8456,7 +8456,7 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
                   "exe '%dresize ' . ((&lines * %" PRId64
                   " + %" PRId64 ") / %" PRId64 ")",
                   n, (int64_t)wp->w_height,
-                  (int64_t)Rows / 2, (int64_t)Rows) < 0
+                  (int64_t)(Rows / 2), (int64_t)Rows) < 0
               || put_eol(fd) == FAIL))
         return FAIL;
 
@@ -8464,7 +8464,7 @@ static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin)
       if (wp->w_width < Columns
           && (fprintf(fd, "exe 'vert %dresize ' . ((&columns * %" PRId64
                           " + %" PRId64 ") / %" PRId64 ")",
-                      n, (int64_t)wp->w_width, (int64_t)Columns / 2,
+                      n, (int64_t)wp->w_width, (int64_t)(Columns / 2),
                       (int64_t)Columns) < 0
               || put_eol(fd) == FAIL))
         return FAIL;
@@ -8609,7 +8609,7 @@ put_view (
    * arguments may have been deleted, check if the index is valid. */
   if (wp->w_arg_idx != current_arg_idx && wp->w_arg_idx < WARGCOUNT(wp)
       && flagp == &ssop_flags) {
-    if (fprintf(fd, "%" PRId64 "argu", (int64_t)wp->w_arg_idx + 1) < 0
+    if (fprintf(fd, "%" PRId64 "argu", (int64_t)(wp->w_arg_idx + 1)) < 0
         || put_eol(fd) == FAIL)
       return FAIL;
     did_next = TRUE;
@@ -8696,7 +8696,7 @@ put_view (
                 " * winheight(0) + %" PRId64 ") / %" PRId64 ")",
                 (int64_t)wp->w_cursor.lnum,
                 (int64_t)(wp->w_cursor.lnum - wp->w_topline),
-                (int64_t)wp->w_height / 2,
+                (int64_t)(wp->w_height / 2),
                 (int64_t)wp->w_height) < 0
         || put_eol(fd) == FAIL
         || put_line(fd, "if s:l < 1 | let s:l = 1 | endif") == FAIL
@@ -8713,14 +8713,14 @@ put_view (
       if (!wp->w_p_wrap && wp->w_leftcol > 0 && wp->w_width > 0) {
         if (fprintf(fd, "let s:c = %" PRId64 " - ((%" PRId64
                         " * winwidth(0) + %" PRId64 ") / %" PRId64 ")",
-                    (int64_t)wp->w_virtcol + 1,
+                    (int64_t)(wp->w_virtcol + 1),
                     (int64_t)(wp->w_virtcol - wp->w_leftcol),
-                    (int64_t)wp->w_width / 2,
+                    (int64_t)(wp->w_width / 2),
                     (int64_t)wp->w_width) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "if s:c > 0") == FAIL
             || fprintf(fd, "  exe 'normal! ' . s:c . '|zs' . %" PRId64 " . '|'",
-                (int64_t)wp->w_virtcol + 1) < 0
+                (int64_t)(wp->w_virtcol + 1)) < 0
             || put_eol(fd) == FAIL
             || put_line(fd, "else") == FAIL
             || fprintf(fd, "  normal! 0%d|", wp->w_virtcol + 1) < 0

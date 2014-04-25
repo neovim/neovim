@@ -9965,7 +9965,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
   case MCHAR: buf[0] = 'v'; break;
   case MBLOCK:
     buf[0] = Ctrl_V;
-    sprintf((char *)buf + 1, "%" PRId64, (int64_t)reglen + 1);
+    sprintf((char *)buf + 1, "%" PRId64, (int64_t)(reglen + 1));
     break;
   }
   rettv->v_type = VAR_STRING;
