@@ -10,5 +10,4 @@ void bf_crypt_save(void);
 void bf_crypt_restore(void);
 int blowfish_self_test(void);
 
-// vim: set ft=c:
 #endif  // NEOVIM_BLOWFISH_H

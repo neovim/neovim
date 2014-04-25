@@ -21,5 +21,5 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr);
 void mf_set_ffname(memfile_T *mfp);
 void mf_fullname(memfile_T *mfp);
 int mf_need_trans(memfile_T *mfp);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MEMFILE_H */

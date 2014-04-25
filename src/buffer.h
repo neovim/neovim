@@ -79,5 +79,5 @@ void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount,
 void set_buflisted(int on);
 int buf_contents_changed(buf_T *buf);
 void wipe_buffer(buf_T *buf, int aucmd);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_BUFFER_H */

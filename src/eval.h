@@ -148,5 +148,5 @@ int modify_fname(char_u *src, int *usedlen, char_u **fnamep,
                  int *fnamelen);
 char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
                       char_u *flags);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_EVAL_H */

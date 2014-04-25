@@ -64,5 +64,4 @@ void backslash_halve(char_u *p);
 char_u *backslash_halve_save(char_u *p);
 void ebcdic2ascii(char_u *buffer, int len);
 
-// vim: set ft=c:
 #endif  // NEOVIM_CHARSET_H

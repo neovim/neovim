@@ -24,5 +24,5 @@ void tagname_free(tagname_T *tnp);
 int expand_tags(int tagnames, char_u *pat, int *num_file,
                 char_u ***file);
 int get_tags(list_T *list, char_u *pat);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_TAG_H */

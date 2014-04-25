@@ -70,5 +70,5 @@ void fast_breakcheck(void);
 char_u *get_cmd_output(char_u *cmd, char_u *infile, int flags);
 void FreeWild(int count, char_u **files);
 int goto_im(void);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MISC1_H */

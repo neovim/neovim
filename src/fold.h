@@ -61,5 +61,5 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
                      char_u *buf);
 void foldtext_cleanup(char_u *str);
 int put_folds(FILE *fd, win_T *wp);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_FOLD_H */

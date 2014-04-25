@@ -62,5 +62,5 @@ int highlight_changed(void);
 void set_context_in_highlight_cmd(expand_T *xp, char_u *arg);
 char_u *get_highlight_name(expand_T *xp, int idx);
 void free_highlight_fonts(void);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_SYNTAX_H */

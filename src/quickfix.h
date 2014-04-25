@@ -32,5 +32,5 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title);
 void ex_cbuffer(exarg_T *eap);
 void ex_cexpr(exarg_T *eap);
 void ex_helpgrep(exarg_T *eap);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_QUICKFIX_H */

@@ -70,5 +70,5 @@ char_u *read_string(FILE *fd, int cnt);
 int put_bytes(FILE *fd, long_u nr, int len);
 void put_time(FILE *fd, time_t the_time);
 int has_non_ascii(char_u *s);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MISC2_H */

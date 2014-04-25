@@ -48,5 +48,5 @@ void find_pattern_in_path(char_u *ptr, int dir, int len, int whole,
                           linenr_T end_lnum);
 int read_viminfo_search_pattern(vir_T *virp, int force);
 void write_viminfo_search_pattern(FILE *fp);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_SEARCH_H */

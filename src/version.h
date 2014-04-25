@@ -10,5 +10,4 @@ void maybe_intro_message(void);
 void intro_message(int colon);
 void ex_intro(exarg_T *eap);
 
-// vim: set ft=c:
 #endif  // NEOVIM_VERSION_H

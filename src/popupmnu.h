@@ -16,5 +16,4 @@ void pum_clear(void);
 int pum_visible(void);
 int pum_get_height(void);
 
-// vim: set ft=c:
 #endif  // NEOVIM_POPUPMNU_H

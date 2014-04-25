@@ -40,5 +40,5 @@ void cursor_correct(void);
 int onepage(int dir, long count);
 void halfpage(int flag, linenr_T Prenum);
 void do_check_cursorbind(void);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MOVE_H */

@@ -12,5 +12,5 @@ void cs_free_tags(void);
 void cs_print_tags(void);
 int cs_connection(int num, char_u *dbpath, char_u *ppath);
 void cs_end(void);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_IF_CSCOPE_H */

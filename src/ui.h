@@ -65,5 +65,4 @@ int get_fpos_of_mouse(pos_T *mpos);
 int vcol2col(win_T *wp, linenr_T lnum, int vcol);
 void ui_focus_change(int in_focus);
 void im_save_status(long *psave);
-/* vim: set ft=c : */
 #endif /* NEOVIM_UI_H */

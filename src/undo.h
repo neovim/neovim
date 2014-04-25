@@ -33,5 +33,4 @@ void u_blockfree(buf_T *buf);
 int bufIsChanged(buf_T *buf);
 int curbufIsChanged(void);
 void u_eval_tree(u_header_T *first_uhp, list_T *list);
-/* vim: set ft=c : */
 #endif /* NEOVIM_UNDO_H */

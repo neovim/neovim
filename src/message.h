@@ -81,5 +81,5 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message,
 char_u *do_browse(int flags, char_u *title, char_u *dflt, char_u *ext,
                   char_u *initdir, char_u *filter,
                   buf_T *buf);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MESSAGE_H */

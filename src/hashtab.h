@@ -52,5 +52,5 @@ void hash_remove(hashtab_T *ht, hashitem_T *hi);
 void hash_lock(hashtab_T *ht);
 void hash_unlock(hashtab_T *ht);
 hash_T hash_hash(char_u *key);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_HASHTAB_H */
