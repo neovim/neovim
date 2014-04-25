@@ -172,7 +172,7 @@ void hash_debug_results(void)
   fprintf(stderr, "Number of perturb loops: %" PRId64 "\r\n",
           (int64_t)hash_count_perturb);
   fprintf(stderr, "Percentage of perturb loops: %" PRId64 "%%\r\n",
-          (int64_t)hash_count_perturb * 100 / hash_count_lookup);
+          (int64_t)(hash_count_perturb * 100 / hash_count_lookup));
 #endif  // ifdef HT_DEBUG
 }
 
