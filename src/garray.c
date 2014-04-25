@@ -57,20 +57,16 @@ void ga_init(garray_T *gap, int itemsize, int growsize)
 /// @param n
 void ga_grow(garray_T *gap, int n)
 {
-  size_t old_len;
-  size_t new_len;
-  char_u *pp;
-
   if (gap->ga_maxlen - gap->ga_len < n) {
     if (n < gap->ga_growsize) {
       n = gap->ga_growsize;
     }
-    new_len = gap->ga_itemsize * (gap->ga_len + n);
-    pp = (gap->ga_data == NULL)
-         ? alloc((unsigned)new_len)
-         : xrealloc(gap->ga_data, new_len);
+    size_t new_len = (size_t)(gap->ga_itemsize * (gap->ga_len + n));
+    char_u *pp = (gap->ga_data == NULL)
+                 ? alloc((unsigned)new_len)
+                 : xrealloc(gap->ga_data, new_len);
 
-    old_len = gap->ga_itemsize * gap->ga_maxlen;
+    size_t old_len = (size_t)(gap->ga_itemsize * gap->ga_maxlen);
     memset(pp + old_len, 0, new_len - old_len);
     gap->ga_maxlen = gap->ga_len + n;
     gap->ga_data = pp;
@@ -141,10 +137,10 @@ void ga_concat(garray_T *gap, char_u *s)
 ///
 /// @param gap
 /// @param c
-void ga_append(garray_T *gap, int c)
+void ga_append(garray_T *gap, char c)
 {
   ga_grow(gap, 1);
-  *((char *) gap->ga_data + gap->ga_len) = c;
+  *((char *)gap->ga_data + gap->ga_len) = c;
   ++gap->ga_len;
 }
 
