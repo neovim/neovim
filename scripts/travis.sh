@@ -49,7 +49,7 @@ if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 		unxz -c | tar xf - --strip-components=1 -C /usr/local/clang-3.4
 		EOF
 	fi
-	sudo pip install cpp-coveralls --use-mirrors
+	sudo pip install cpp-coveralls
 
 	export CC=clang
 	set_environment /opt/neovim-deps
@@ -98,7 +98,7 @@ if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 	coveralls --encoding iso-8859-1
 	$MAKE_CMD install
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
-	sudo pip install cpp-coveralls --use-mirrors
+	sudo pip install cpp-coveralls
 	export CC=gcc
 	set_environment /opt/neovim-deps
 	export SKIP_EXEC=1
