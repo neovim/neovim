@@ -9664,24 +9664,21 @@ static void f_getfontname(typval_T *argvars, typval_T *rettv)
  */
 static void f_getfperm(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *fname;
-  struct stat st;
-  char_u      *perm = NULL;
+  char_u *perm = NULL;
   char_u flags[] = "rwx";
-  int i;
 
-  fname = get_tv_string(&argvars[0]);
-
-  rettv->v_type = VAR_STRING;
-  if (mch_stat((char *)fname, &st) >= 0) {
+  char_u *filename = get_tv_string(&argvars[0]);
+  int32_t file_perm = os_getperm(filename);
+  if (file_perm >= 0) {
     perm = vim_strsave((char_u *)"---------");
     if (perm != NULL) {
-      for (i = 0; i < 9; i++) {
-        if (st.st_mode & (1 << (8 - i)))
+      for (int i = 0; i < 9; i++) {
+        if (file_perm & (1 << (8 - i)))
           perm[i] = flags[i % 3];
       }
     }
   }
+  rettv->v_type = VAR_STRING;
   rettv->vval.v_string = perm;
 }
 
