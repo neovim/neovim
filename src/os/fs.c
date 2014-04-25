@@ -189,6 +189,16 @@ int os_file_is_writable(const char *name)
   return 0;
 }
 
+bool os_get_file_size(const char *name, off_t *size)
+{
+  uv_stat_t statbuf;
+  if (os_stat((char_u *)name, &statbuf) == OK) {
+    *size = statbuf.st_size;
+    return true;
+  }
+  return false;
+}
+
 int os_rename(const char_u *path, const char_u *new_path)
 {
   uv_fs_t request;

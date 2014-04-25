@@ -863,8 +863,6 @@ void ex_diffpatch(exarg_T *eap)
   char_u dirbuf[MAXPATHL];
   char_u *fullname = NULL;
 #endif  // ifdef UNIX
-  struct stat st;
-
   // We need two temp file names.
   // Name of original temp file.
   char_u *tmp_orig = vim_tempname('o');
@@ -965,7 +963,9 @@ void ex_diffpatch(exarg_T *eap)
   os_remove((char *)buf);
 
   // Only continue if the output file was created.
-  if ((mch_stat((char *)tmp_new, &st) < 0) || (st.st_size == 0)) {
+  off_t file_size;
+  bool file_size_success = os_get_file_size((char *)tmp_new, &file_size);
+  if (!file_size_success || file_size == 0) {
     EMSG(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {

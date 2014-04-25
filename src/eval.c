@@ -9687,25 +9687,25 @@ static void f_getfperm(typval_T *argvars, typval_T *rettv)
  */
 static void f_getfsize(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *fname;
-  struct stat st;
-
-  fname = get_tv_string(&argvars[0]);
+  char *fname = (char *)get_tv_string(&argvars[0]);
 
   rettv->v_type = VAR_NUMBER;
 
-  if (mch_stat((char *)fname, &st) >= 0) {
-    if (os_isdir(fname))
+  off_t file_size;
+  if (os_get_file_size(fname, &file_size)) {
+    if (os_isdir((char_u *)fname))
       rettv->vval.v_number = 0;
     else {
-      rettv->vval.v_number = (varnumber_T)st.st_size;
+      rettv->vval.v_number = (varnumber_T)file_size;
 
       /* non-perfect check for overflow */
-      if ((off_t)rettv->vval.v_number != (off_t)st.st_size)
+      if ((off_t)rettv->vval.v_number != file_size) {
         rettv->vval.v_number = -2;
+      }
     }
-  } else
+  } else {
     rettv->vval.v_number = -1;
+  }
 }
 
 /*

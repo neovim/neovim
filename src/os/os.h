@@ -58,6 +58,12 @@ bool os_file_is_readonly(const char *name);
 /// @return `2` for a directory which we have rights to write into.
 int os_file_is_writable(const char *name);
 
+/// Get the size of a file in bytes.
+///
+/// @param[out] size pointer to an off_t to put the size into.
+/// @return `true` for success, `false` for failure.
+bool os_get_file_size(const char *name, off_t *size);
+
 /// Rename a file or directory.
 ///
 /// @return `OK` for success, `FAIL` for failure.
