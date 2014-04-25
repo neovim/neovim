@@ -4480,9 +4480,8 @@ do_sub_msg (
           "%s", count_only ? _("1 match") : _("1 substitution"));
     else
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
-          count_only ?
-          _("%" PRId64 " matches") :
-          _("%" PRId64 " substitutions"),
+          count_only ? _("%" PRId64 " matches")
+                     : _("%" PRId64 " substitutions"),
           (int64_t)sub_nsubs);
     if (sub_nlines == 1)
       vim_snprintf_add((char *)msg_buf, sizeof(msg_buf),
