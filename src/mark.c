@@ -1493,9 +1493,12 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     while (!(eof = viminfo_readline(virp)) && line[0] == TAB) {
       if (load_marks) {
         if (line[1] != NUL) {
+          int64_t lnum_64;
           unsigned u;
-
-          sscanf((char *)line + 2, "%ld %u", &pos.lnum, &u);
+          sscanf((char *)line + 2, "%" SCNd64 "%u", &lnum_64, &u);
+          // safely downcast to linenr_T (long); remove when linenr_T refactored
+          assert(lnum_64 <= LONG_MAX); 
+          pos.lnum = (linenr_T)lnum_64;
           pos.col = u;
           switch (line[1]) {
           case '"': curbuf->b_last_cursor = pos; break;
