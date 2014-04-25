@@ -34,15 +34,16 @@ file( GLOB OS_SOURCES os/*.c )
 set(CONV_SRCS
   api.c
   arabic.c
+  garray.c
   memory.c
   os/env.c
   os/event.c
   os/job.c
   os/mem.c
+  os/rstream.c
   os/signal.c
   os/users.c
   os/wstream.c
-  os/rstream.c
   )
 
 set_source_files_properties(
