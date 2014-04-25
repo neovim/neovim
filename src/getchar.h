@@ -74,5 +74,5 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod,
                   int *local_ptr);
 void init_mappings(void);
 void add_map(char_u *map, int mode);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_GETCHAR_H */

@@ -155,5 +155,5 @@ void rewind_conditionals(struct condstack *cstack, int idx,
                          int *cond_level);
 void ex_endfunction(exarg_T *eap);
 int has_loop_cmd(char_u *p);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_EX_EVAL_H */

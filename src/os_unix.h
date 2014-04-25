@@ -42,5 +42,5 @@ int mch_has_wildcard(char_u *p);
 int mch_libcall(char_u *libname, char_u *funcname, char_u *argstring,
                 int argint, char_u **string_result,
                 int *number_result);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_OS_UNIX_H */

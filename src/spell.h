@@ -29,5 +29,5 @@ char_u *spell_to_word_end(char_u *start, win_T *win);
 int spell_word_start(int startcol);
 void spell_expand_check_cap(colnr_T col);
 int expand_spelling(linenr_T lnum, char_u *pat, char_u ***matchp);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_SPELL_H */

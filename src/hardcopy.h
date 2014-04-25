@@ -89,5 +89,5 @@ int mch_print_text_out(char_u *p, int len);
 void mch_print_set_font(int iBold, int iItalic, int iUnderline);
 void mch_print_set_bg(long_u bgcol);
 void mch_print_set_fg(long_u fgcol);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_HARDCOPY_H */

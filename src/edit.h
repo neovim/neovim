@@ -56,5 +56,5 @@ int hkmap(int c);
 void ins_scroll(void);
 void ins_horscroll(void);
 int ins_copychar(linenr_T lnum);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_EDIT_H */

@@ -99,5 +99,5 @@ int convert_input_safe(char_u *ptr, int len, int maxlen, char_u **restp,
 char_u *string_convert(vimconv_T *vcp, char_u *ptr, int *lenp);
 char_u *string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
                            int *unconvlenp);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MBYTE_H */

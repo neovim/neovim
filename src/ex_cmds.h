@@ -72,5 +72,5 @@ void free_signs(void);
 char_u *get_sign_name(expand_T *xp, int idx);
 void set_context_in_sign_cmd(expand_T *xp, char_u *arg);
 void ex_drop(exarg_T *eap);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_EX_CMDS_H */

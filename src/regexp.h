@@ -23,5 +23,5 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col);
 long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                                linenr_T lnum, colnr_T col,
                                proftime_T *tm);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_REGEXP_H */

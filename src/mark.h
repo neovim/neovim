@@ -38,5 +38,5 @@ int removable(char_u *name);
 int write_viminfo_marks(FILE *fp_out);
 void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof,
                         int flags);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MARK_H */

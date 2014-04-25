@@ -93,5 +93,5 @@ void ex_language(exarg_T *eap);
 void free_locales(void);
 char_u *get_lang_arg(expand_T *xp, int idx);
 char_u *get_locales(expand_T *xp, int idx);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_EX_CMDS2_H */

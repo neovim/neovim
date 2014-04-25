@@ -43,5 +43,5 @@ void ml_decrypt_data(memfile_T *mfp, char_u *data, off_t offset,
                      unsigned size);
 long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp);
 void goto_byte(long cnt);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MEMLINE_H */

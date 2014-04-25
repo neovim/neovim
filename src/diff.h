@@ -30,5 +30,4 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1,
                                      linenr_T lnum3);
 linenr_T diff_lnum_win(linenr_T lnum, win_T *wp);
 
-// vim: set ft=c:
 #endif  // NEOVIM_DIFF_H

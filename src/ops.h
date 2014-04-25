@@ -69,5 +69,5 @@ void write_reg_contents_ex(int name, char_u *str, int maxlen,
                            long block_len);
 void clear_oparg(oparg_T *oap);
 void cursor_pos_info(void);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_OPS_H */

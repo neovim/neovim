@@ -69,5 +69,5 @@ void gui_mch_toggle_tearoffs(int enable);
 void ex_emenu(exarg_T *eap);
 vimmenu_T *gui_find_menu(char_u *path_name);
 void ex_menutranslate(exarg_T *eap);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_MENU_H */

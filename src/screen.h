@@ -65,5 +65,5 @@ void showruler(int always);
 int number_width(win_T *wp);
 int screen_screencol(void);
 int screen_screenrow(void);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_SCREEN_H */

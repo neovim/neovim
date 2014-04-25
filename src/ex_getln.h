@@ -65,5 +65,5 @@ void write_viminfo_history(FILE *fp, int merge);
 void cmd_pchar(int c, int offset);
 int cmd_gchar(int offset);
 char_u *script_get(exarg_T *eap, char_u *cmd);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_EX_GETLN_H */

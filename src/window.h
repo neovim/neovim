@@ -86,5 +86,4 @@ void clear_matches(win_T *wp);
 matchitem_T *get_match(win_T *wp, int id);
 int get_win_number(win_T *wp, win_T *first_win);
 int get_tab_number(tabpage_T *tp);
-/* vim: set ft=c : */
 #endif /* NEOVIM_WINDOW_H */

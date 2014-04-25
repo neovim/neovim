@@ -9,5 +9,4 @@ void listdigraphs(void);
 char_u *keymap_init(void);
 void ex_loadkeymap(exarg_T *eap);
 
-// vim: set ft=c:
 #endif  // NEOVIM_DIGRAPH_H

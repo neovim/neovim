@@ -73,5 +73,5 @@ long get_sw_value(buf_T *buf);
 long get_sts_value(void);
 void find_mps_values(int *initc, int *findc, int *backwards,
                              int switchit);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_OPTION_H */

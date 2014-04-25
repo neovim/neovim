@@ -93,5 +93,5 @@ char_u *file_pat_to_reg_pat(char_u *pat, char_u *pat_end,
                             int no_bslash);
 long read_eintr(int fd, void *buf, size_t bufsize);
 long write_eintr(int fd, void *buf, size_t bufsize);
-/* vim: set ft=c : */
+
 #endif /* NEOVIM_FILEIO_H */
