@@ -2179,8 +2179,9 @@ void buflist_list(exarg_T *eap)
       IObuff[len++] = ' ';
     } while (--i > 0 && len < IOSIZE - 18);
     vim_snprintf((char *)IObuff + len, (size_t)(IOSIZE - len),
-        _("line %" PRId64), buf == curbuf ? (int64_t)curwin->w_cursor.lnum
-        : (int64_t)buflist_findlnum(buf));
+        _("line %" PRId64),
+        buf == curbuf ? (int64_t)curwin->w_cursor.lnum
+                      : (int64_t)buflist_findlnum(buf));
     msg_outtrans(IObuff);
     out_flush();            /* output one line at a time */
     ui_breakcheck();
