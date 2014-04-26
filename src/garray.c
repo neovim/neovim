@@ -136,7 +136,7 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
 /// @param gap
 ///
 /// @returns the concatenated strings
-char_u* ga_concat_strings(garray_T *gap)
+char_u* ga_concat_strings(const garray_T *gap)
 {
   return ga_concat_strings_sep(gap, ",");
 }
