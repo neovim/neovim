@@ -1810,19 +1810,11 @@ static time_t swapfile_info(char_u *fname)
 static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
 {
   int num_names;
-
-#ifdef SHORT_FNAME
   /*
-   * (MS-DOS) always short names
+   * (Win32 and Win64) never short names, but do prepend a dot.
+   * (Not MS-DOS or Win32 or Win64) maybe short name, maybe not: Try both.
+   * Only use the short name if it is different.
    */
-  names[0] = modname(path, (char_u *)".sw?", FALSE);
-  num_names = 1;
-#else /* !SHORT_FNAME */
-      /*
-       * (Win32 and Win64) never short names, but do prepend a dot.
-       * (Not MS-DOS or Win32 or Win64) maybe short name, maybe not: Try both.
-       * Only use the short name if it is different.
-       */
   char_u      *p;
   int i;
   int shortname = curbuf->b_shortname;
@@ -1880,7 +1872,6 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
 end:
   curbuf->b_shortname = shortname;
 
-#endif /* !SHORT_FNAME */
 
   return num_names;
 }
@@ -3415,20 +3406,12 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #endif
 
   r = buf_modname(
-#ifdef SHORT_FNAME
-      TRUE,
-#else
       (buf->b_p_sn || buf->b_shortname),
-#endif
       fname_res,
       (char_u *)
       ".swp",
-#ifdef SHORT_FNAME              /* always 8.3 file name */
-      FALSE
-#else
       /* Prepend a '.' to the swap file name for the current directory. */
       dir_name[0] == '.' && dir_name[1] == NUL
-#endif
       );
   if (r == NULL)            /* out of memory */
     return NULL;
@@ -3593,13 +3576,10 @@ findswapname (
   char_u      *fname;
   int n;
   char_u      *dir_name;
-#ifndef SHORT_FNAME
   int r;
-#endif
   char_u      *buf_fname = buf->b_fname;
 
-#if !defined(SHORT_FNAME) \
-  && ((!defined(UNIX) && !defined(OS2)) || defined(ARCHIE))
+#if (!defined(UNIX) && !defined(OS2)) || defined(ARCHIE)
 # define CREATE_DUMMY_FILE
   FILE        *dummyfd = NULL;
 
@@ -3639,7 +3619,7 @@ findswapname (
       fname = NULL;
       break;
     }
-#if (defined(UNIX) || defined(OS2)) && !defined(ARCHIE) && !defined(SHORT_FNAME)
+#if (defined(UNIX) || defined(OS2)) && !defined(ARCHIE)
     /*
      * Some systems have a MS-DOS compatible filesystem that use 8.3 character
      * file names. If this is the first try and the swap file name does not fit in
@@ -3749,7 +3729,6 @@ findswapname (
      * get here when file already exists
      */
     if (fname[n - 2] == 'w' && fname[n - 1] == 'p') {   /* first try */
-#ifndef SHORT_FNAME
       /*
        * on MS-DOS compatible filesystems (e.g. messydos) file.doc.swp
        * and file.doc are the same file. To guess if this problem is
@@ -3770,7 +3749,6 @@ findswapname (
           continue;                 /* try again with '.' replaced with '_' */
         }
       }
-#endif
       /*
        * If we get here the ".swp" file really exists.
        * Give an error message, unless recovering, no file name, we are
