@@ -86,6 +86,47 @@ char * xstrdup(const char *str)
 char * xstrndup(const char *str, size_t len)
  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET;
 
+/// The xstpcpy() function shall copy the string pointed to by src (including
+/// the terminating NUL character) into the array pointed to by dst.
+///
+/// The xstpcpy() function shall return a pointer to the terminating NUL
+/// character copied into the dst buffer. This is the only difference with
+/// strcpy(), which returns dst.
+///
+/// WARNING: If copying takes place between objects that overlap, the behavior is
+/// undefined.
+///
+/// This is the Neovim version of stpcpy(3) as defined in POSIX 2008. We
+/// don't require that supported platforms implement POSIX 2008, so we
+/// implement our own version.
+///
+/// @param dst
+/// @param src
+char *xstpcpy(char *restrict dst, const char *restrict src);
+
+/// The xstpncpy() function shall copy not more than n bytes (bytes that follow
+/// a NUL character are not copied) from the array pointed to by src to the
+/// array pointed to by dst.
+///
+/// If a NUL character is written to the destination, the xstpncpy() function
+/// shall return the address of the first such NUL character. Otherwise, it
+/// shall return &dst[maxlen].
+///
+/// WARNING: If copying takes place between objects that overlap, the behavior is
+/// undefined.
+///
+/// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
+/// maxlen, zeroes will be written to the remaining bytes.
+///
+/// TODO(aktau): I don't see a good reason to have this last behaviour, and
+/// it is potentially wasteful. Could we perhaps deviate from the standard
+/// and not zero the rest of the buffer?
+///
+/// @param dst
+/// @param src
+/// @param maxlen
+char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen);
+
 /// Old low level memory allocation function.
 ///
 /// @deprecated use xmalloc() directly instead
