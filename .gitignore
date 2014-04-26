@@ -58,6 +58,7 @@ local.mk
 /documentation/
 
 # cmake generated content
+Makefile
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
