@@ -55,6 +55,8 @@ ga_append = (garr, b) ->
     garray.ga_append(garr, b)
 ga_concat_strings = (garr) ->
   internalize(garray.ga_concat_strings(garr))
+ga_concat_strings_sep = (garr, sep) ->
+  internalize(garray.ga_concat_strings_sep(garr, to_cstr(sep)))
 ga_remove_duplicate_strings = (garr) ->
   garray.ga_remove_duplicate_strings(garr)
 
@@ -236,16 +238,26 @@ describe 'garray', ->
       result = ffi.string(ga_data_as_bytes(garr))
       eq string.rep(str, loop), result
 
+  test_concat_fn = (input, fn, sep) ->
+    garr = new_string_garray()
+    ga_append_strings(garr, unpack(input))
+    if sep == nil
+      eq table.concat(input, ','), fn(garr)
+    else
+      eq table.concat(input, sep), fn(garr, sep)
+
   describe 'ga_concat_strings', ->
     it 'returns an empty string when concatenating an empty array', ->
-      garr = new_string_garray()
-      eq '', ga_concat_strings(garr)
-
+      test_concat_fn({}, ga_concat_strings)
     it 'can concatenate a non-empty array', ->
-      garr = new_string_garray()
-      input = {'oh', 'my', 'neovim'}
-      ga_append_strings(garr, unpack(input))
-      eq table.concat(input, ','), ga_concat_strings(garr)
+      test_concat_fn({'oh', 'my', 'neovim'}, ga_concat_strings)
+
+  describe 'ga_concat_strings_sep', ->
+    it 'returns an empty string when concatenating an empty array', ->
+      test_concat_fn({}, ga_concat_strings_sep, '---')
+    it 'can concatenate a non-empty array', ->
+      sep = '-●●-'
+      test_concat_fn({'oh', 'my', 'neovim'}, ga_concat_strings_sep, sep)
 
   describe 'ga_remove_duplicate_strings', ->
     it 'sorts and removes duplicate strings', ->
