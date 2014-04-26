@@ -237,3 +237,41 @@ int os_remove(const char *path)
   return result;
 }
 
+bool os_get_file_info(const char *path, FileInfo *file_info)
+{
+  if (os_stat((char_u *)path, &(file_info->stat)) == OK) {
+    return true;
+  }
+  return false;
+}
+
+bool os_get_file_info_link(const char *path, FileInfo *file_info)
+{
+  uv_fs_t request;
+  int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
+  file_info->stat = request.statbuf;
+  uv_fs_req_cleanup(&request);
+  if (result == kLibuvSuccess) {
+    return true;
+  }
+  return false;
+}
+
+bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
+{
+  uv_fs_t request;
+  int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
+  file_info->stat = request.statbuf;
+  uv_fs_req_cleanup(&request);
+  if (result == kLibuvSuccess) {
+    return true;
+  }
+  return false;
+}
+
+bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2)
+{
+  return file_info_1->stat.st_ino == file_info_2->stat.st_ino
+         && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
+}
+

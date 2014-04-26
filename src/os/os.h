@@ -111,4 +111,36 @@ char *os_get_user_directory(const char *name);
 /// @return OK on success, FAIL if an failure occured.
 int os_stat(const char_u *name, uv_stat_t *statbuf);
 
+/// Struct which encapsulates stat information.
+typedef struct {
+  // TODO(stefan991): make stat private
+  uv_stat_t stat;
+} FileInfo;
+
+/// Get the file information for a given path
+///
+/// @param file_descriptor File descriptor of the file.
+/// @param[out] file_info Pointer to a FileInfo to put the information in.
+/// @return `true` on sucess, `false` for failure.
+bool os_get_file_info(const char *path, FileInfo *file_info);
+
+/// Get the file information for a given path without following links
+///
+/// @param path Path to the file.
+/// @param[out] file_info Pointer to a FileInfo to put the information in.
+/// @return `true` on sucess, `false` for failure.
+bool os_get_file_info_link(const char *path, FileInfo *file_info);
+
+/// Get the file information for a given file descriptor
+///
+/// @param file_descriptor File descriptor of the file.
+/// @param[out] file_info Pointer to a FileInfo to put the information in.
+/// @return `true` on sucess, `false` for failure.
+bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info);
+
+/// Compare the inodes of two FileInfos
+///
+/// @return `true` if the two FileInfos represent the same file.
+bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2);
+
 #endif  // NEOVIM_OS_OS_H
