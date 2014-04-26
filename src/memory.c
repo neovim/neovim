@@ -173,6 +173,26 @@ void *xmemdupz(const void *data, size_t len)
   return memcpy(xmallocz(len), data, len);
 }
 
+char *xstpcpy(char *restrict dst, const char *restrict src)
+{
+  const size_t len = strlen(src);
+  return (char *)memcpy(dst, src, len + 1) + len;
+}
+
+char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
+{
+    const char *p = memchr(src, '\0', maxlen);
+    if (p) {
+        size_t srclen = (size_t)(p - src);
+        memcpy(dst, src, srclen);
+        memset(dst + srclen, 0, maxlen - srclen);
+        return dst + srclen;
+    } else {
+        memcpy(dst, src, maxlen);
+        return dst + maxlen;
+    }
+}
+
 char * xstrdup(const char *str)
 {
   char *ret = strdup(str);
