@@ -97,6 +97,40 @@ void ga_remove_duplicate_strings(garray_T *gap)
 }
 
 /// For a growing array that contains a list of strings: concatenate all the
+/// strings with sep as separator.
+///
+/// @param gap
+///
+/// @returns the concatenated strings
+char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
+{
+  const size_t nelem = (size_t) gap->ga_len;
+  const char **strings = gap->ga_data;
+
+  if (nelem == 0) {
+    return (char_u *) xstrdup("");
+  }
+
+  size_t len = 0;
+  for (size_t i = 0; i < nelem; i++) {
+    len += strlen(strings[i]);
+  }
+
+  // add some space for the (num - 1) separators
+  len += (nelem - 1) * strlen(sep);
+  char *const ret = xmallocz(len);
+
+  char *s = ret;
+  for (size_t i = 0; i < nelem - 1; i++) {
+    s = xstpcpy(s, strings[i]);
+    s = xstpcpy(s, sep);
+  }
+  s = xstpcpy(s, strings[nelem - 1]);
+
+  return (char_u *) ret;
+}
+
+/// For a growing array that contains a list of strings: concatenate all the
 /// strings with a separating comma.
 ///
 /// @param gap
@@ -104,26 +138,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 /// @returns the concatenated strings
 char_u* ga_concat_strings(garray_T *gap)
 {
-  const int nelem = gap->ga_len;
-  const char **data = gap->ga_data;
-
-  size_t len = 0;
-  for (int i = 0; i < nelem; ++i) {
-    len += strlen(data[i]) + 1;
-  }
-
-  char *const ret = xmallocz(len);
-
-  char *s = ret;
-  *s = NUL;
-  for (int i = 0; i < nelem; ++i) {
-    s = xstpcpy(s, data[i]);
-    if (i < nelem - 1) {
-      s = xstpcpy(s, ",");
-    }
-  }
-
-  return (char_u *) ret;
+  return ga_concat_strings_sep(gap, ",");
 }
 
 /// Concatenate a string to a growarray which contains characters.
