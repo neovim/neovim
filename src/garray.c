@@ -104,23 +104,26 @@ void ga_remove_duplicate_strings(garray_T *gap)
 /// @returns the concatenated strings
 char_u* ga_concat_strings(garray_T *gap)
 {
+  const int nelem = gap->ga_len;
+  const char **data = gap->ga_data;
+
   size_t len = 0;
-
-  for (int i = 0; i < gap->ga_len; ++i) {
-    len += strlen(((char **)(gap->ga_data))[i]) + 1;
+  for (int i = 0; i < nelem; ++i) {
+    len += strlen(data[i]) + 1;
   }
 
-  char *s = xmallocz(len);
+  char *const ret = xmallocz(len);
 
+  char *s = ret;
   *s = NUL;
-  for (int i = 0; i < gap->ga_len; ++i) {
-    if (*s != NUL) {
-      strcat(s, ",");
+  for (int i = 0; i < nelem; ++i) {
+    s = xstpcpy(s, data[i]);
+    if (i < nelem - 1) {
+      s = xstpcpy(s, ",");
     }
-    strcat(s, ((char **)(gap->ga_data))[i]);
   }
 
-  return (char_u *)s;
+  return (char_u *) ret;
 }
 
 /// Concatenate a string to a growarray which contains characters.
