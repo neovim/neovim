@@ -363,7 +363,7 @@ struct vimoption {
 /* The 16 bit MS-DOS version is low on space, make the string as short as
  * possible when compiling with few features. */
 #if defined(FEAT_DIFF) || defined(FEAT_FOLDING) || defined(FEAT_SPELL) \
-  || defined(FEAT_VERTSPLIT) || defined(FEAT_CLIPBOARD) \
+  || defined(FEAT_VERTSPLIT) \
   || defined(FEAT_INS_EXPAND) || defined(FEAT_SYN_HL) || defined(FEAT_CONCEAL)
 # define HIGHLIGHT_INIT \
   "8:SpecialKey,@:NonText,d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr,N:CursorLineNr,r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title,v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn,A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal,B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel,x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill,!:CursorColumn,.:CursorLine,o:ColorColumn"
