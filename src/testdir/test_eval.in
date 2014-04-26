@@ -1,5 +1,5 @@
 STARTTEST
-:" function name includes a colon
+:" function name not starting with a capital
 :try
 :  func! g:test()
 :    echo "test"
@@ -15,9 +15,28 @@ STARTTEST
 :catch
 :  let @b = v:exception
 :endtry
+:" function name includes a colon
+:try
+:  func! b:test()
+:    echo "test"
+:  endfunc
+:catch
+:  let @c = v:exception
+:endtry
+:" function name starting with/without "g:", buffer-local funcref.
+:function! g:Foo()
+:  let @d = 'called Foo()'
+:endfunction
+:let b:my_func = function('Foo')
+:let @d = 'xxx'
+:call b:my_func()
+:endfunction
+:" clean up
 :%d
 :pu a
 :pu b
+:pu c
+:pu d
 :1d
 :wq! test.out
 ENDTEST
