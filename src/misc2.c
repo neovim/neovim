@@ -634,16 +634,14 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
   return len;
 }
 
-/*
- * Replacement for free() that ignores NULL pointers.
- * Also skip free() when exiting for sure, this helps when we caught a deadly
- * signal that was caused by a crash in free().
- */
+///
+/// Replacement for free().
+///
+/// @deprecated Use free() instead
+///
 void vim_free(void *x)
 {
-  if (x != NULL && !really_exiting) {
-    free(x);
-  }
+  free(x);
 }
 
 /*
