@@ -56,3 +56,21 @@ local.mk
 
 # Doxygen output
 /documentation/
+
+# cmake generated content
+Makefile
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+config/CMakeFiles/
+config/Makefile
+config/auto/
+config/cmake_install.cmake
+src/CMakeFiles/
+src/Makefile
+src/cmake_install.cmake
+test/includes/CMakeFiles/
+test/includes/Makefile
+test/includes/cmake_install.cmake
+
