@@ -1569,44 +1569,14 @@ void write_viminfo(char_u *file, int forceit)
     }
 #endif
 
-    /*
-     * Make tempname.
-     * May try twice: Once normal and once with shortname set, just in
-     * case somebody puts his viminfo file in an 8.3 filesystem.
-     */
-    for (;; ) {
-      tempname = buf_modname(
-#ifdef UNIX
-          shortname,
-#else
-          FALSE,
-#endif
-          fname,
-          (char_u *)".tmp",
-          FALSE);
-      if (tempname == NULL)                     /* out of memory */
-        break;
-
+    // Make tempname
+    tempname = buf_modname(FALSE, fname, (char_u *)".tmp", FALSE);
+    if (tempname != NULL) {
       /*
        * Check if tempfile already exists.  Never overwrite an
        * existing file!
        */
       if (mch_stat((char *)tempname, &st_new) == 0) {
-#ifdef UNIX
-        /*
-         * Check if tempfile is same as original file.  May happen
-         * when modname() gave the same file back.  E.g.  silly
-         * link, or file name-length reached.  Try again with
-         * shortname set.
-         */
-        if (!shortname && st_new.st_dev == st_old.st_dev
-            && st_new.st_ino == st_old.st_ino) {
-          vim_free(tempname);
-          tempname = NULL;
-          shortname = TRUE;
-          continue;
-        }
-#endif
         /*
          * Try another name.  Change one character, just before
          * the extension.  This should also work for an 8.3
@@ -1629,7 +1599,6 @@ void write_viminfo(char_u *file, int forceit)
           }
         }
       }
-      break;
     }
 
     if (tempname != NULL) {
