@@ -272,13 +272,12 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
  */
 char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
 {
-  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
+  char_u *dest = xstrdup(fname1);
 
-  STRCPY(dest, fname1);
-  if (sep) {
-    add_pathsep(dest);
+  if (sep && *dest != NUL && !after_pathsep(dest, dest + STRLEN(dest))) {
+    dest = concat_str(dest, PATHSEPSTR);
   }
-  STRCAT(dest, fname2);
+  dest = concat_str(dest, fname2);
 
   return dest;
 }
