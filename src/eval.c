@@ -9713,15 +9713,14 @@ static void f_getfsize(typval_T *argvars, typval_T *rettv)
  */
 static void f_getftime(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *fname;
-  struct stat st;
+  char *fname = (char *)get_tv_string(&argvars[0]);
 
-  fname = get_tv_string(&argvars[0]);
-
-  if (mch_stat((char *)fname, &st) >= 0)
-    rettv->vval.v_number = (varnumber_T)st.st_mtime;
-  else
+  FileInfo file_info;
+  if (os_get_file_info(fname, &file_info)) {
+    rettv->vval.v_number = (varnumber_T)file_info.stat.st_mtim.tv_sec;
+  } else {
     rettv->vval.v_number = -1;
+  }
 }
 
 /*

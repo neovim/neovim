@@ -1106,10 +1106,6 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   FILE        *fp = NULL;
   int perm;
   int write_ok = FALSE;
-#ifdef UNIX
-  struct stat st_old;
-  struct stat st_new;
-#endif
   int do_crypt = FALSE;
 
   if (name == NULL) {
@@ -1215,14 +1211,17 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
    * this fails, set the protection bits for the group same as the
    * protection bits for others.
    */
-  if (mch_stat((char *)buf->b_ffname, &st_old) >= 0
-      && mch_stat((char *)file_name, &st_new) >= 0
-      && st_new.st_gid != st_old.st_gid
+  FileInfo file_info_old;
+  FileInfo file_info_new;
+  if (os_get_file_info((char *)buf->b_ffname, &file_info_old)
+      && os_get_file_info((char *)file_name, &file_info_new)
+      && file_info_old.stat.st_gid != file_info_new.stat.st_gid
 # ifdef HAVE_FCHOWN  /* sequent-ptx lacks fchown() */
-      && fchown(fd, (uid_t)-1, st_old.st_gid) != 0
+      && fchown(fd, (uid_t)-1, file_info_old.stat.st_gid) != 0
 # endif
-      )
+      ) {
     os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
+  }
 # ifdef HAVE_SELINUX
   if (buf->b_ffname != NULL)
     mch_copy_sec(buf->b_ffname, file_name);
@@ -1343,10 +1342,6 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 #ifdef U_DEBUG
   int         *uhp_table_used;
 #endif
-#ifdef UNIX
-  struct stat st_orig;
-  struct stat st_undo;
-#endif
   int do_decrypt = FALSE;
 
   if (name == NULL) {
@@ -1357,10 +1352,12 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 #ifdef UNIX
     /* For safety we only read an undo file if the owner is equal to the
      * owner of the text file or equal to the current user. */
-    if (mch_stat((char *)orig_name, &st_orig) >= 0
-        && mch_stat((char *)file_name, &st_undo) >= 0
-        && st_orig.st_uid != st_undo.st_uid
-        && st_undo.st_uid != getuid()) {
+    FileInfo file_info_orig;
+    FileInfo file_info_undo;
+    if (os_get_file_info((char *)orig_name, &file_info_orig)
+        && os_get_file_info((char *)file_name, &file_info_undo)
+        && file_info_orig.stat.st_uid != file_info_undo.stat.st_uid
+        && file_info_undo.stat.st_uid != getuid()) {
       if (p_verbose > 0) {
         verbose_enter();
         smsg((char_u *)_("Not reading undo file, owner differs: %s"),

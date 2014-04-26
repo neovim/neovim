@@ -4813,12 +4813,11 @@ int vim_rename(char_u *from, char_u *to)
   int n;
   char        *errmsg = NULL;
   char        *buffer;
-  struct stat st;
   long perm;
 #ifdef HAVE_ACL
   vim_acl_T acl;                /* ACL from original file */
 #endif
-  int use_tmp_file = FALSE;
+  bool use_tmp_file = false;
 
   /*
    * When the names are identical, there is nothing to do.  When they refer
@@ -4827,30 +4826,25 @@ int vim_rename(char_u *from, char_u *to)
    */
   if (fnamecmp(from, to) == 0) {
     if (p_fic && STRCMP(path_tail(from), path_tail(to)) != 0)
-      use_tmp_file = TRUE;
+      use_tmp_file = true;
     else
       return 0;
   }
 
-  /*
-   * Fail if the "from" file doesn't exist.  Avoids that "to" is deleted.
-   */
-  if (mch_stat((char *)from, &st) < 0)
+  // Fail if the "from" file doesn't exist. Avoids that "to" is deleted.
+  FileInfo from_info;
+  if (!os_get_file_info((char *)from, &from_info)) {
     return -1;
-
-#ifdef UNIX
-  {
-    struct stat st_to;
-
-    /* It's possible for the source and destination to be the same file.
-     * This happens when "from" and "to" differ in case and are on a FAT32
-     * filesystem.  In that case go through a temp file name. */
-    if (mch_stat((char *)to, &st_to) >= 0
-        && st.st_dev == st_to.st_dev
-        && st.st_ino == st_to.st_ino)
-      use_tmp_file = TRUE;
   }
-#endif
+
+  // It's possible for the source and destination to be the same file.
+  // This happens when "from" and "to" differ in case and are on a FAT32
+  // filesystem. In that case go through a temp file name.
+  FileInfo to_info;
+  if (os_get_file_info((char *)to, &to_info)
+      && os_file_info_id_equal(&from_info,  &to_info)) {
+    use_tmp_file = true;
+  }
 
   if (use_tmp_file) {
     char_u tempname[MAXPATHL + 1];
