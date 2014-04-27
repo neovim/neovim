@@ -173,7 +173,13 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	# correctly.
 	sudo apt-get install libncurses5-dev:i386
 
-	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake" unittest
+	CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=TAP \
+		-DCMAKE_SYSTEM_PROCESSOR=i386 \
+		-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32 \
+		-DFIND_LIBRARY_USE_LIB64_PATHS=OFF \
+		-DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib \
+		-DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake"
+	$MAKE_CMD CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" unittest
 	$MAKE_CMD test
 elif [ "$TRAVIS_BUILD_TYPE" = "clint" ]; then
 	./scripts/clint.sh
