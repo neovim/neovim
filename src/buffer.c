@@ -326,7 +326,7 @@ close_buffer (
 
   // 'bufhidden' == "delete"
   case 'd':
-    del_bug = TRUE;
+    del_buf = TRUE;
     /* fallthrough */
 
   // 'bufhidden' == "unload"
