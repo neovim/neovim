@@ -106,6 +106,11 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
 	coveralls --encoding iso-8859-1
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	set_environment /opt/neovim-deps/32
+
+	# Pins the version of the java package installed on the Travis VMs
+	# and avoids a lengthy upgrade process for them.
+	sudo apt-mark hold oracle-java7-installer oracle-java8-installer
+
 	sudo apt-get update
 
 	# Need this to keep apt-get from removing gcc when installing libncurses
