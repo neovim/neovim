@@ -138,11 +138,7 @@ typedef struct {
 struct regengine {
   regprog_T   *(*regcomp)(char_u*, int);
   void (*regfree)(regprog_T *);
-  int (*regexec)(regmatch_T*, char_u*, colnr_T);
-#if defined(FEAT_MODIFY_FNAME) || defined(FEAT_EVAL) \
-  || defined(FIND_REPLACE_DIALOG) || defined(PROTO)
-  int (*regexec_nl)(regmatch_T*, char_u*, colnr_T);
-#endif
+  int (*regexec_nl)(regmatch_T*, char_u*, colnr_T, bool);
   long (*regexec_multi)(regmmatch_T*, win_T*, buf_T*, linenr_T, colnr_T,
       proftime_T*);
 #ifdef DEBUG

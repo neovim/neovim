@@ -311,7 +311,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col);
 static long nfa_regexec_both(char_u *line, colnr_T col);
 static regprog_T *nfa_regcomp(char_u *expr, int re_flags);
 static void nfa_regfree(regprog_T *prog);
-static int nfa_regexec(regmatch_T *rmp, char_u *line, colnr_T col);
+static int nfa_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr);
 static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                               linenr_T lnum, colnr_T col,
                               proftime_T *tm);
@@ -6356,47 +6356,22 @@ static void nfa_regfree(regprog_T *prog)
  * Match a regexp against a string.
  * "rmp->regprog" is a compiled regexp as returned by nfa_regcomp().
  * Uses curbuf for line count and 'iskeyword'.
+ * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
  * Return TRUE if there is a match, FALSE if not.
- */
-static int 
-nfa_regexec (
-    regmatch_T *rmp,
-    char_u *line,      /* string to match against */
-    colnr_T col            /* column to start looking for match */
-)
-{
-  reg_match = rmp;
-  reg_mmatch = NULL;
-  reg_maxline = 0;
-  reg_line_lbr = FALSE;
-  reg_buf = curbuf;
-  reg_win = NULL;
-  ireg_ic = rmp->rm_ic;
-  ireg_icombine = FALSE;
-  ireg_maxcol = 0;
-  return nfa_regexec_both(line, col) != 0;
-}
-
-#if defined(FEAT_MODIFY_FNAME) || defined(FEAT_EVAL) \
-  || defined(FIND_REPLACE_DIALOG) || defined(PROTO)
-
-static int nfa_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col);
-
-/*
- * Like nfa_regexec(), but consider a "\n" in "line" to be a line break.
  */
 static int 
 nfa_regexec_nl (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */
-    colnr_T col            /* column to start looking for match */
+    colnr_T col,       /* column to start looking for match */
+    bool line_lbr
 )
 {
   reg_match = rmp;
   reg_mmatch = NULL;
   reg_maxline = 0;
-  reg_line_lbr = TRUE;
+  reg_line_lbr = line_lbr;
   reg_buf = curbuf;
   reg_win = NULL;
   ireg_ic = rmp->rm_ic;
@@ -6404,8 +6379,6 @@ nfa_regexec_nl (
   ireg_maxcol = 0;
   return nfa_regexec_both(line, col) != 0;
 }
-#endif
-
 
 /*
  * Match a regexp against multiple lines.
