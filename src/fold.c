@@ -1,5 +1,4 @@
-/* vim: set fdm=marker fdl=1 fdc=3
- *
+/*
  * VIM - Vi IMproved	by Bram Moolenaar
  *
  * Do ":help uganda"  in Vim to read copying and usage conditions.
