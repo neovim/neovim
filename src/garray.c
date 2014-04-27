@@ -76,24 +76,30 @@ void ga_grow(garray_T *gap, int n)
   gap->ga_data = pp;
 }
 
-/// Sort "gap" and remove duplicate entries.  "gap" is expected to contain a
+/// Sort "gap" and remove duplicate entries. "gap" is expected to contain a
 /// list of file names in allocated memory.
 ///
 /// @param gap
 void ga_remove_duplicate_strings(garray_T *gap)
 {
-  int i;
-  int j;
-  char_u  **fnames = (char_u **)gap->ga_data;
+  char_u **fnames = gap->ga_data;
 
+  // sort the growing array, which puts duplicates next to each other
   sort_strings(fnames, gap->ga_len);
-  for (i = gap->ga_len - 1; i > 0; --i)
+
+  // loop over the growing array in reverse
+  for (int i = gap->ga_len - 1; i > 0; i--) {
     if (fnamecmp(fnames[i - 1], fnames[i]) == 0) {
       vim_free(fnames[i]);
-      for (j = i + 1; j < gap->ga_len; ++j)
+
+      // close the gap (move all strings one slot lower)
+      for (int j = i + 1; j < gap->ga_len; j++) {
         fnames[j - 1] = fnames[j];
+      }
+
       --gap->ga_len;
     }
+  }
 }
 
 /// For a growing array that contains a list of strings: concatenate all the
@@ -165,8 +171,9 @@ void ga_concat(garray_T *gap, const char_u *restrict s)
 void ga_append(garray_T *gap, char c)
 {
   ga_grow(gap, 1);
-  *((char *)gap->ga_data + gap->ga_len) = c;
-  ++gap->ga_len;
+  char *str = gap->ga_data;
+  str[gap->ga_len] = c;
+  gap->ga_len++;
 }
 
 #if defined(UNIX) || defined(WIN3264)
