@@ -3569,9 +3569,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
       while ((pos = (char_u *)strstr((char *)pos + 2, "$*")) != NULL)
         ++i;
       len = (int)STRLEN(p);
-      new_cmdline = alloc((int)(STRLEN(program) + i * (len - 2) + 1));
-      if (new_cmdline == NULL)
-        return NULL;                            /* out of memory */
+      new_cmdline = xmalloc(STRLEN(program) + i * (len - 2) + 1);
       ptr = new_cmdline;
       while ((pos = (char_u *)strstr((char *)program, "$*")) != NULL) {
         i = (int)(pos - program);
@@ -3582,9 +3580,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
       }
       STRCPY(ptr, program);
     } else {
-      new_cmdline = alloc((int)(STRLEN(program) + STRLEN(p) + 2));
-      if (new_cmdline == NULL)
-        return NULL;                            /* out of memory */
+      new_cmdline = xmalloc(STRLEN(program) + STRLEN(p) + 2);
       STRCPY(new_cmdline, program);
       STRCAT(new_cmdline, " ");
       STRCAT(new_cmdline, p);
@@ -3715,8 +3711,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 
     p = repl_cmdline(eap, p, srclen, repl, cmdlinep);
     vim_free(repl);
-    if (p == NULL)
-      return FAIL;
   }
 
   /*
@@ -3811,7 +3805,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
  * "src" points to the part that is to be replaced, of length "srclen".
  * "repl" is the replacement string.
  * Returns a pointer to the character after the replaced string.
- * Returns NULL for failure.
  */
 static char_u *repl_cmdline(exarg_T *eap, char_u *src, int srclen, char_u *repl, char_u **cmdlinep)
 {
@@ -3828,8 +3821,7 @@ static char_u *repl_cmdline(exarg_T *eap, char_u *src, int srclen, char_u *repl,
   i = (int)(src - *cmdlinep) + (int)STRLEN(src + srclen) + len + 3;
   if (eap->nextcmd != NULL)
     i += (int)STRLEN(eap->nextcmd);    /* add space for next command */
-  if ((new_cmdline = alloc((unsigned)i)) == NULL)
-    return NULL;                        /* out of memory! */
+  new_cmdline = xmalloc(i);
 
   /*
    * Copy the stuff before the expanded part.
@@ -4823,11 +4815,7 @@ static char_u *uc_split_args(char_u *arg, size_t *lenp)
     }
   }
 
-  buf = alloc(len + 1);
-  if (buf == NULL) {
-    *lenp = 0;
-    return buf;
-  }
+  buf = xmalloc(len + 1);
 
   p = arg;
   q = buf;
@@ -5142,11 +5130,7 @@ static void do_ucmd(exarg_T *eap)
     }
 
     totlen += STRLEN(p);            /* Add on the trailing characters */
-    buf = alloc((unsigned)(totlen + 1));
-    if (buf == NULL) {
-      vim_free(split_buf);
-      return;
-    }
+    buf = xmalloc(totlen + 1);
   }
 
   current_SID = cmd->uc_scriptID;
@@ -5698,7 +5682,7 @@ static void ex_goto(exarg_T *eap)
  * code is very similar to :args and hence needs access to a lot of the static
  * functions in this file.
  *
- * The list should be allocated using alloc(), as should each item in the
+ * The list should be allocated using xmalloc(), as should each item in the
  * list. This function takes over responsibility for freeing the list.
  *
  * XXX The list is made into the argument list. This is freed using
@@ -5806,14 +5790,9 @@ void alist_unlink(alist_T *al)
  */
 void alist_new(void)
 {
-  curwin->w_alist = (alist_T *)alloc((unsigned)sizeof(alist_T));
-  if (curwin->w_alist == NULL) {
-    curwin->w_alist = &global_alist;
-    ++global_alist.al_refcount;
-  } else {
-    curwin->w_alist->al_refcount = 1;
-    alist_init(curwin->w_alist);
-  }
+  curwin->w_alist = xmalloc(sizeof(*curwin->w_alist));
+  curwin->w_alist->al_refcount = 1;
+  alist_init(curwin->w_alist);
 }
 
 #if !defined(UNIX) || defined(PROTO)
@@ -5835,19 +5814,17 @@ void alist_expand(int *fnum_list, int fnum_len)
    * expansion.  Also, the vimrc file isn't read yet, thus the user
    * can't set the options. */
   p_su = empty_option;
-  old_arg_files = (char_u **)alloc((unsigned)(sizeof(char_u *) * GARGCOUNT));
-  if (old_arg_files != NULL) {
-    for (i = 0; i < GARGCOUNT; ++i)
-      old_arg_files[i] = vim_strsave(GARGLIST[i].ae_fname);
-    old_arg_count = GARGCOUNT;
-    if (expand_wildcards(old_arg_count, old_arg_files,
-            &new_arg_file_count, &new_arg_files,
-            EW_FILE|EW_NOTFOUND|EW_ADDSLASH|EW_NOERROR) == OK
-        && new_arg_file_count > 0) {
-      alist_set(&global_alist, new_arg_file_count, new_arg_files,
-          TRUE, fnum_list, fnum_len);
-      FreeWild(old_arg_count, old_arg_files);
-    }
+  old_arg_files = xmalloc(sizeof(*old_arg_files) * GARGCOUNT);
+  for (i = 0; i < GARGCOUNT; ++i)
+    old_arg_files[i] = vim_strsave(GARGLIST[i].ae_fname);
+  old_arg_count = GARGCOUNT;
+  if (expand_wildcards(old_arg_count, old_arg_files,
+          &new_arg_file_count, &new_arg_files,
+          EW_FILE|EW_NOTFOUND|EW_ADDSLASH|EW_NOERROR) == OK
+      && new_arg_file_count > 0) {
+    alist_set(&global_alist, new_arg_file_count, new_arg_files,
+        TRUE, fnum_list, fnum_len);
+    FreeWild(old_arg_count, old_arg_files);
   }
   p_su = save_p_su;
 }
@@ -7287,37 +7264,33 @@ static void ex_mkrc(exarg_T *eap)
       if (eap->cmdidx == CMD_mksession) {
         char_u *dirnow;          /* current directory */
 
-        dirnow = alloc(MAXPATHL);
-        if (dirnow == NULL)
-          failed = TRUE;
-        else {
-          /*
-           * Change to session file's dir.
-           */
-          if (os_dirname(dirnow, MAXPATHL) == FAIL
-              || os_chdir((char *)dirnow) != 0)
-            *dirnow = NUL;
-          if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
-            if (vim_chdirfile(fname) == OK)
-              shorten_fnames(TRUE);
-          } else if (*dirnow != NUL
-                     && (ssop_flags & SSOP_CURDIR) && globaldir != NULL) {
-            if (os_chdir((char *)globaldir) == 0)
-              shorten_fnames(TRUE);
-          }
-
-          failed |= (makeopens(fd, dirnow) == FAIL);
-
-          /* restore original dir */
-          if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
-                                 || ((ssop_flags & SSOP_CURDIR) && globaldir !=
-                                     NULL))) {
-            if (os_chdir((char *)dirnow) != 0)
-              EMSG(_(e_prev_dir));
+        dirnow = xmalloc(MAXPATHL);
+        /*
+         * Change to session file's dir.
+         */
+        if (os_dirname(dirnow, MAXPATHL) == FAIL
+            || os_chdir((char *)dirnow) != 0)
+          *dirnow = NUL;
+        if (*dirnow != NUL && (ssop_flags & SSOP_SESDIR)) {
+          if (vim_chdirfile(fname) == OK)
             shorten_fnames(TRUE);
-          }
-          vim_free(dirnow);
+        } else if (*dirnow != NUL
+                   && (ssop_flags & SSOP_CURDIR) && globaldir != NULL) {
+          if (os_chdir((char *)globaldir) == 0)
+            shorten_fnames(TRUE);
         }
+
+        failed |= (makeopens(fd, dirnow) == FAIL);
+
+        /* restore original dir */
+        if (*dirnow != NUL && ((ssop_flags & SSOP_SESDIR)
+                               || ((ssop_flags & SSOP_CURDIR) && globaldir !=
+                                   NULL))) {
+          if (os_chdir((char *)dirnow) != 0)
+            EMSG(_(e_prev_dir));
+          shorten_fnames(TRUE);
+        }
+        vim_free(dirnow);
       } else {
         failed |= (put_view(fd, curwin, !using_vdir, flagp,
                        -1) == FAIL);
@@ -7343,12 +7316,10 @@ static void ex_mkrc(exarg_T *eap)
       /* successful session write - set this_session var */
       char_u      *tbuf;
 
-      tbuf = alloc(MAXPATHL);
-      if (tbuf != NULL) {
-        if (vim_FullName(fname, tbuf, MAXPATHL, FALSE) == OK)
-          set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
-        vim_free(tbuf);
-      }
+      tbuf = xmalloc(MAXPATHL);
+      if (vim_FullName(fname, tbuf, MAXPATHL, FALSE) == OK)
+        set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
+      vim_free(tbuf);
     }
 #ifdef MKSESSION_NL
     mksession_nl = FALSE;
@@ -7478,20 +7449,18 @@ static void ex_normal(exarg_T *eap)
           len += 2;
     }
     if (len > 0) {
-      arg = alloc((unsigned)(STRLEN(eap->arg) + len + 1));
-      if (arg != NULL) {
-        len = 0;
-        for (p = eap->arg; *p != NUL; ++p) {
-          arg[len++] = *p;
-          for (l = (*mb_ptr2len)(p) - 1; l > 0; --l) {
-            arg[len++] = *++p;
-            if (*p == K_SPECIAL) {
-              arg[len++] = KS_SPECIAL;
-              arg[len++] = KE_FILLER;
-            }
+      arg = xmalloc(STRLEN(eap->arg) + len + 1);
+      len = 0;
+      for (p = eap->arg; *p != NUL; ++p) {
+        arg[len++] = *p;
+        for (l = (*mb_ptr2len)(p) - 1; l > 0; --l) {
+          arg[len++] = *++p;
+          if (*p == K_SPECIAL) {
+            arg[len++] = KS_SPECIAL;
+            arg[len++] = KE_FILLER;
           }
-          arg[len] = NUL;
         }
+        arg[len] = NUL;
       }
     }
   }
@@ -8038,7 +8007,6 @@ eval_vars (
  * Concatenate all files in the argument list, separated by spaces, and return
  * it in one allocated string.
  * Spaces and backslashes in the file names are escaped with a backslash.
- * Returns NULL when out of memory.
  */
 static char_u *arg_all(void)
 {
@@ -8084,9 +8052,7 @@ static char_u *arg_all(void)
     }
 
     /* allocate memory */
-    retval = alloc((unsigned)len + 1);
-    if (retval == NULL)
-      break;
+    retval = xmalloc(len + 1);
   }
 
   return retval;
@@ -8128,12 +8094,7 @@ char_u *expand_sfile(char_u *arg)
         continue;
       }
       len = (int)STRLEN(result) - srclen + (int)STRLEN(repl) + 1;
-      newres = alloc(len);
-      if (newres == NULL) {
-        vim_free(repl);
-        vim_free(result);
-        return NULL;
-      }
+      newres = xmalloc(len);
       memmove(newres, result, (size_t)(p - result));
       STRCPY(newres + (p - result), repl);
       len = (int)STRLEN(newres);
@@ -8777,11 +8738,9 @@ ses_arglist (
     s = alist_name(&((aentry_T *)gap->ga_data)[i]);
     if (s != NULL) {
       if (fullname) {
-        buf = alloc(MAXPATHL);
-        if (buf != NULL) {
-          (void)vim_FullName(s, buf, MAXPATHL, FALSE);
-          s = buf;
-        }
+        buf = xmalloc(MAXPATHL);
+        (void)vim_FullName(s, buf, MAXPATHL, FALSE);
+        s = buf;
       }
       if (fputs("argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
           || put_eol(fd) == FAIL) {
@@ -8900,30 +8859,28 @@ static char_u *get_view_file(int c)
   for (p = sname; *p; ++p)
     if (*p == '=' || vim_ispathsep(*p))
       ++len;
-  retval = alloc((unsigned)(STRLEN(sname) + len + STRLEN(p_vdir) + 9));
-  if (retval != NULL) {
-    STRCPY(retval, p_vdir);
-    add_pathsep(retval);
-    s = retval + STRLEN(retval);
-    for (p = sname; *p; ++p) {
-      if (*p == '=') {
-        *s++ = '=';
-        *s++ = '=';
-      } else if (vim_ispathsep(*p)) {
-        *s++ = '=';
+  retval = xmalloc(STRLEN(sname) + len + STRLEN(p_vdir) + 9);
+  STRCPY(retval, p_vdir);
+  add_pathsep(retval);
+  s = retval + STRLEN(retval);
+  for (p = sname; *p; ++p) {
+    if (*p == '=') {
+      *s++ = '=';
+      *s++ = '=';
+    } else if (vim_ispathsep(*p)) {
+      *s++ = '=';
 #if defined(BACKSLASH_IN_FILENAME)
-        if (*p == ':')
-          *s++ = '-';
-        else
+      if (*p == ':')
+        *s++ = '-';
+      else
 #endif
-        *s++ = '+';
-      } else
-        *s++ = *p;
-    }
-    *s++ = '=';
-    *s++ = c;
-    STRCPY(s, ".vim");
+      *s++ = '+';
+    } else
+      *s++ = *p;
   }
+  *s++ = '=';
+  *s++ = c;
+  STRCPY(s, ".vim");
 
   vim_free(sname);
   return retval;

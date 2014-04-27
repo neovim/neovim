@@ -1843,7 +1843,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 
   /* Make a copy of "pat" and change "^" to "\(^\|[\/]\)". */
   if (*pat == '^') {
-    patc = alloc((unsigned)STRLEN(pat) + 11);
+    patc = xmalloc(STRLEN(pat) + 11);
     STRCPY(patc, "\\(^\\|[\\/]\\)");
     STRCPY(patc + 11, pat + 1);
   } else
@@ -1888,7 +1888,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       if (count == 0)           /* no match found, break here */
         break;
       if (round == 1) {
-        *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
+        *file = xmalloc(count * sizeof(**file));
       }
     }
     vim_regfree(prog);
@@ -2520,7 +2520,7 @@ fileinfo (
   char_u      *buffer;
   size_t len;
 
-  buffer = alloc(IOSIZE);
+  buffer = xmalloc(IOSIZE);
 
   if (fullname > 1) {       /* 2 CTRL-G: include buffer number */
     vim_snprintf((char *)buffer, IOSIZE, "buf %d: ", curbuf->b_fnum);
@@ -4285,7 +4285,7 @@ void write_viminfo_bufferlist(FILE *fp)
 
   /* Allocate room for the file name, lnum and col. */
 #define LINE_BUF_LEN (MAXPATHL + 40)
-  line = alloc(LINE_BUF_LEN);
+  line = xmalloc(LINE_BUF_LEN);
 
   FOR_ALL_TAB_WINDOWS(tp, win)
   set_last_cursor(win);

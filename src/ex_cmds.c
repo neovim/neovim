@@ -489,12 +489,8 @@ void ex_sort(exarg_T *eap)
   }
 
   /* Allocate a buffer that can hold the longest line. */
-  sortbuf1 = alloc((unsigned)maxlen + 1);
-  if (sortbuf1 == NULL)
-    goto sortend;
-  sortbuf2 = alloc((unsigned)maxlen + 1);
-  if (sortbuf2 == NULL)
-    goto sortend;
+  sortbuf1 = xmalloc(maxlen + 1);
+  sortbuf2 = xmalloc(maxlen + 1);
 
   /* Sort the array of line numbers.  Note: can't be interrupted! */
   qsort((void *)nrs, count, sizeof(sorti_T), sort_compare);
@@ -892,10 +888,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
       }
       len += (int)STRLEN(prevcmd);
     }
-    if ((t = alloc((unsigned)len)) == NULL) {
-      vim_free(newcmd);
-      return;
-    }
+    t = xmalloc(len);
     *t = NUL;
     if (newcmd != NULL)
       STRCAT(t, newcmd);
@@ -944,9 +937,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
    * Add quotes around the command, for shells that need them.
    */
   if (*p_shq != NUL) {
-    newcmd = alloc((unsigned)(STRLEN(prevcmd) + 2 * STRLEN(p_shq) + 1));
-    if (newcmd == NULL)
-      return;
+    newcmd = xmalloc(STRLEN(prevcmd) + 2 * STRLEN(p_shq) + 1);
     STRCPY(newcmd, p_shq);
     STRCAT(newcmd, prevcmd);
     STRCAT(newcmd, p_shq);
@@ -1770,8 +1761,7 @@ static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags)
   vir_T vir;
   int merge = FALSE;
 
-  if ((vir.vir_line = alloc(LSIZE)) == NULL)
-    return;
+  vir.vir_line = xmalloc(LSIZE);
   vir.vir_fd = fp_in;
   vir.vir_conv.vc_type = CONV_NONE;
 
@@ -2378,14 +2368,10 @@ check_overwrite (
        * Use 'shortname' of the current buffer, since there is no buffer
        * for the written file. */
       if (*p_dir == NUL) {
-        dir = alloc(5);
-        if (dir == NULL)
-          return FAIL;
+        dir = xmalloc(5);
         STRCPY(dir, ".");
       } else {
-        dir = alloc(MAXPATHL);
-        if (dir == NULL)
-          return FAIL;
+        dir = xmalloc(MAXPATHL);
         p = p_dir;
         copy_option_part(&p, dir, MAXPATHL, ",");
       }
@@ -2725,24 +2711,19 @@ do_ecmd (
 
   if ((command != NULL || newlnum > (linenr_T)0)
       && *get_vim_var_str(VV_SWAPCOMMAND) == NUL) {
-    int len;
     char_u  *p;
 
     /* Set v:swapcommand for the SwapExists autocommands. */
-    if (command != NULL)
-      len = (int)STRLEN(command) + 3;
-    else
-      len = 30;
-    p = alloc((unsigned)len);
-    if (p != NULL) {
-      if (command != NULL)
-        vim_snprintf((char *)p, len, ":%s\r", command);
-      else
-        vim_snprintf((char *)p, len, "%" PRId64 "G", (int64_t)newlnum);
-      set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-      did_set_swapcommand = TRUE;
-      vim_free(p);
+    size_t len = (command != NULL) ? STRLEN(command) + 3 : 30;
+    p = xmalloc(len);
+    if (command != NULL) {
+      vim_snprintf((char *)p, len, ":%s\r", command);
+    } else {
+      vim_snprintf((char *)p, len, "%" PRId64 "G", (int64_t)newlnum);
     }
+    set_vim_var_string(VV_SWAPCOMMAND, p, -1);
+    did_set_swapcommand = TRUE;
+    vim_free(p);
   }
 
   /*
@@ -3861,7 +3842,7 @@ void do_sub(exarg_T *eap)
        *   accordingly.
        *
        * The new text is built up in new_start[].  It has some extra
-       * room to avoid using alloc()/free() too often.  new_start_len is
+       * room to avoid using xmalloc()/free() too often.  new_start_len is
        * the length of the allocated memory at new_start.
        *
        * Make a copy of the old line, so it won't be taken away when
@@ -4178,26 +4159,23 @@ void do_sub(exarg_T *eap)
           /*
            * Get some space for a temporary buffer to do the
            * substitution into (and some extra space to avoid
-           * too many calls to alloc()/free()).
+           * too many calls to xmalloc()/free()).
            */
           new_start_len = needed_len + 50;
-          new_start = (char_u *)xmalloc((size_t)new_start_len);
+          new_start = xmalloc(new_start_len);
           *new_start = NUL;
           new_end = new_start;
         } else {
           /*
            * Check if the temporary buffer is long enough to do the
            * substitution into.  If not, make it larger (with a bit
-           * extra to avoid too many calls to alloc()/free()).
+           * extra to avoid too many calls to xmalloc()/free()).
            */
           len = (unsigned)STRLEN(new_start);
           needed_len += len;
           if (needed_len > (int)new_start_len) {
             new_start_len = needed_len + 50;
-            p1 = (char_u *) xmalloc((size_t)new_start_len);
-            memmove(p1, new_start, (size_t)(len + 1));
-            vim_free(new_start);
-            new_start = p1;
+            new_start = xrealloc(new_start, new_start_len);
           }
           new_end = new_start + len;
         }
@@ -5552,7 +5530,7 @@ helptags_one (
   if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
           dir, FALSE) == kEqualFiles) {
     ga_grow(&ga, 1);
-    s = alloc(18 + (unsigned)STRLEN(tagfname));
+    s = xmalloc(18 + STRLEN(tagfname));
     sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
     ((char_u **)ga.ga_data)[ga.ga_len] = s;
     ++ga.ga_len;
@@ -5623,11 +5601,7 @@ helptags_one (
             *p2 = '\0';
             ++p1;
             ga_grow(&ga, 1);
-            s = alloc((unsigned)(p2 - p1 + STRLEN(fname) + 2));
-            if (s == NULL) {
-              got_int = TRUE;
-              break;
-            }
+            s = xmalloc((p2 - p1) + STRLEN(fname) + 2);
             ((char_u **)ga.ga_data)[ga.ga_len] = s;
             ++ga.ga_len;
             sprintf((char *)s, "%s\t%s", p1, fname);
@@ -6100,9 +6074,7 @@ void ex_sign(exarg_T *eap)
 		{			/* ... not currently in a window */
 		    char_u	*cmd;
 
-		    cmd = alloc((unsigned)STRLEN(buf->b_fname) + 25);
-		    if (cmd == NULL)
-			return;
+		    cmd = xmalloc(STRLEN(buf->b_fname) + 25);
 		    sprintf((char *)cmd, "e +%" PRId64 " %s",
                     (int64_t)lnum, buf->b_fname);
 		    do_cmdline_cmd(cmd);

@@ -1652,11 +1652,9 @@ change_indent (
     if (vcol != (int)curwin->w_virtcol) {
       curwin->w_cursor.col = (colnr_T)new_cursor_col;
       i = (int)curwin->w_virtcol - vcol;
-      ptr = alloc((unsigned)(i + 1));
+      ptr = xmallocz(i);
+      memset(ptr, ' ', i);
       new_cursor_col += i;
-      ptr[i] = NUL;
-      while (--i >= 0)
-        ptr[i] = ' ';
       ins_str(ptr);
       vim_free(ptr);
     }
@@ -1994,7 +1992,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
               ? actual_len : actual_compl_length;
 
     /* Allocate wide character array for the completion and fill it. */
-    wca = (int *)alloc((unsigned)(actual_len * sizeof(int)));
+    wca = xmalloc(actual_len * sizeof(*wca));
     p = str;
     for (i = 0; i < actual_len; ++i)
       if (has_mbyte)
@@ -2080,8 +2078,8 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
 /*
  * Add a match to the list of matches.
  * If the given string is already in the list of completions, then return
- * NOTDONE, otherwise add it to the list and return OK.  If there is an error,
- * maybe because alloc() returns NULL, then FAIL is returned.
+ * NOTDONE, otherwise add it to the list and return OK.  If there is an error
+ * then FAIL is returned.
  */
 static int 
 ins_compl_add (
@@ -2576,7 +2574,7 @@ ins_compl_dictionaries (
       return;
   }
 
-  buf = alloc(LSIZE);
+  buf = xmalloc(LSIZE);
   regmatch.regprog = NULL;      /* so that we can goto theend */
 
   /* If 'infercase' is set, don't use 'smartcase' here */
@@ -2589,12 +2587,11 @@ ins_compl_dictionaries (
    * pattern. Also need to double backslashes. */
   if (ctrl_x_mode == CTRL_X_WHOLE_LINE) {
     char_u *pat_esc = vim_strsave_escaped(pat, (char_u *)"\\");
-    size_t len;
 
     if (pat_esc == NULL)
       goto theend;
-    len = STRLEN(pat_esc) + 10;
-    ptr = alloc((unsigned)len);
+    size_t len = STRLEN(pat_esc) + 10;
+    ptr = xmalloc(len);
     vim_snprintf((char *)ptr, len, "^\\s*\\zs\\V%s", pat_esc);
     regmatch.regprog = vim_regcomp(ptr, RE_MAGIC);
     vim_free(pat_esc);
@@ -3475,8 +3472,8 @@ static void ins_compl_add_dict(dict_T *dict)
 /*
  * Add a match to the list of matches from a typeval_T.
  * If the given string is already in the list of completions, then return
- * NOTDONE, otherwise add it to the list and return OK.  If there is an error,
- * maybe because alloc() returns NULL, then FAIL is returned.
+ * NOTDONE, otherwise add it to the list and return OK.  If there is an error
+ * then FAIL is returned.
  */
 int ins_compl_add_tv(typval_T *tv, int dir)
 {
@@ -4342,7 +4339,7 @@ static int ins_complete(int c)
         char_u      *prefix = (char_u *)"\\<";
 
         /* we need up to 2 extra chars for the prefix */
-        compl_pattern = alloc(quote_meta(NULL, line + compl_col,
+        compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
                 compl_length) + 2);
         if (!vim_iswordp(line + compl_col)
             || (compl_col > 0
@@ -4386,14 +4383,14 @@ static int ins_complete(int c)
         if (compl_length == 1) {
           /* Only match word with at least two chars -- webb
            * there's no need to call quote_meta,
-           * alloc(7) is enough  -- Acevedo
+           * xmalloc(7) is enough  -- Acevedo
            */
-          compl_pattern = alloc(7);
+          compl_pattern = xmalloc(7);
           STRCPY((char *)compl_pattern, "\\<");
           (void)quote_meta(compl_pattern + 2, line + compl_col, 1);
           STRCAT((char *)compl_pattern, "\\k");
         } else {
-          compl_pattern = alloc(quote_meta(NULL, line + compl_col,
+          compl_pattern = xmalloc(quote_meta(NULL, line + compl_col,
                   compl_length) + 2);
           STRCPY((char *)compl_pattern, "\\<");
           (void)quote_meta(compl_pattern + 2, line + compl_col,
@@ -5875,7 +5872,7 @@ void set_last_insert(int c)
   char_u      *s;
 
   vim_free(last_insert);
-  last_insert = alloc(MB_MAXBYTES * 3 + 5);
+  last_insert = xmalloc(MB_MAXBYTES * 3 + 5);
   s = last_insert;
   /* Use the CTRL-V only when entering a special char */
   if (c < ' ' || c == DEL)

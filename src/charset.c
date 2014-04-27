@@ -335,13 +335,13 @@ char_u *transstr(char_u *s)
 {
   char_u *res;
   char_u *p;
-  int l, len, c;
+  int l, c;
   char_u hexbuf[11];
 
   if (has_mbyte) {
     // Compute the length of the result, taking account of unprintable
     // multi-byte characters.
-    len = 0;
+    size_t len = 0;
     p = s;
 
     while (*p != NUL) {
@@ -353,7 +353,7 @@ char_u *transstr(char_u *s)
           len += l;
         } else {
           transchar_hex(hexbuf, c);
-          len += (int)STRLEN(hexbuf);
+          len += STRLEN(hexbuf);
         }
       } else {
         l = byte2cells(*p++);
@@ -366,9 +366,9 @@ char_u *transstr(char_u *s)
         }
       }
     }
-    res = alloc((unsigned)(len + 1));
+    res = xmallocz(len);
   } else {
-    res = alloc((unsigned)(vim_strsize(s) + 1));
+    res = xmallocz(vim_strsize(s));
   }
 
   *res = NUL;
