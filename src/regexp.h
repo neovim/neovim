@@ -16,6 +16,7 @@ int vim_regsub_multi(regmmatch_T *rmp, linenr_T lnum, char_u *source,
                              char_u *dest, int copy, int magic,
                              int backslash);
 char_u *reg_submatch(int no);
+list_T *reg_submatch_list(int no);
 regprog_T *vim_regcomp(char_u *expr_arg, int re_flags);
 void vim_regfree(regprog_T *prog);
 int vim_regexec(regmatch_T *rmp, char_u *line, colnr_T col);

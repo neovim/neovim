@@ -117,6 +117,7 @@ STARTTEST
 :set cpo&
 :$put =\"\n\nTEST_5:\"
 :$put =substitute('A123456789', 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\=submatch(0) . submatch(9) . submatch(8) . submatch(7) . submatch(6) . submatch(5) . submatch(4) . submatch(3) . submatch(2) . submatch(1)', '')
+:$put =substitute('A123456789', 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\=string([submatch(0, 1), submatch(9, 1), submatch(8, 1), submatch(7, 1), submatch(6, 1), submatch(5, 1), submatch(4, 1), submatch(3, 1), submatch(2, 1), submatch(1, 1)])', '')
 /^TEST_6
 ENDTEST
 
@@ -142,6 +143,7 @@ STARTTEST
 :$put =\"\n\nTEST_7:\"
 :$put =substitute('AA', 'A.', '\=submatch(0)', '')
 :$put =substitute(\"B\nB\", 'B.', '\=submatch(0)', '')
+:$put =substitute(\"B\nB\", 'B.', '\=string(submatch(0, 1))', '')
 :$put =substitute('-bb', '\zeb', 'a', 'g')
 :$put =substitute('-bb', '\ze', 'c', 'g')
 /^TEST_8
