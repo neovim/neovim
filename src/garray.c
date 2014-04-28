@@ -142,15 +142,19 @@ char_u* ga_concat_strings(const garray_T *gap)
 }
 
 /// Concatenate a string to a growarray which contains characters.
-/// Note: Does NOT copy the NUL at the end!
+///
+/// WARNING:
+/// - Does NOT copy the NUL at the end!
+/// - The parameter may not overlap with the growing array
 ///
 /// @param gap
 /// @param s
-void ga_concat(garray_T *gap, char_u *s)
+void ga_concat(garray_T *gap, const char_u *restrict s)
 {
-  int len = (int)STRLEN(s);
+  int len = (int)strlen((char *) s);
   ga_grow(gap, len);
-  memmove((char *)gap->ga_data + gap->ga_len, s, (size_t)len);
+  char *data = gap->ga_data;
+  memcpy(data + gap->ga_len, s, (size_t) len);
   gap->ga_len += len;
 }
 
