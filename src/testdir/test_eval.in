@@ -24,18 +24,20 @@ STARTTEST
 :  let @c = v:exception
 :endtry
 :" function name starting with/without "g:", buffer-local funcref.
-:function! g:Foo()
-:  let @d = 'called Foo()'
+:function! g:Foo(n)
+:  let @d = 'called Foo(' . a:n . ')'
 :endfunction
 :let b:my_func = function('Foo')
-:let @d = 'xxx'
-:call b:my_func()
-:endfunction
 :" clean up
 :%d
 :pu a
 :pu b
 :pu c
+:call b:my_func(1)
+:pu d
+:echo g:Foo(2)
+:pu d
+:echo Foo(3)
 :pu d
 :1d
 :wq! test.out
