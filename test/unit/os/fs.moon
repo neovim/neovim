@@ -2,30 +2,11 @@
 require 'lfs'
 require 'bit'
 
--- fs = cimport './src/os/os.h'
--- remove these statements once 'cimport' is working properly for misc1.h
-fs = lib
-ffi.cdef [[
-enum OKFAIL {
-  OK = 1, FAIL = 0
-};
-int os_dirname(char_u *buf, int len);
-bool os_isdir(char_u * name);
-bool is_executable(char_u *name);
-bool os_can_exe(char_u *name);
-int32_t os_getperm(char_u *name);
-int os_setperm(char_u *name, long perm);
-bool os_file_exists(const char_u *name);
-bool os_file_is_readonly(char *fname);
-int os_file_is_writable(const char *name);
-int os_rename(const char_u *path, const char_u *new_path);
-int os_mkdir(const char *path, int32_t mode);
-int os_rmdir(const char *path);
-int os_remove(const char *path);
-]]
+fs = cimport './src/os/os.h'
 
--- import constants parsed by ffi
-{:OK, :FAIL} = lib
+-- TODO(aktau): define these constants "better"
+FAIL = 0
+OK = 1
 
 cppimport 'sys/stat.h'
 
@@ -65,8 +46,6 @@ describe 'fs function', ->
       eq FAIL, (os_dirname buf, (len-1))
 
   describe 'path_full_dir_name', ->
-    ffi.cdef 'int path_full_dir_name(char *directory, char *buffer, int len);'
-
     path_full_dir_name = (directory, buffer, len) ->
       directory = to_cstr directory
       fs.path_full_dir_name directory, buffer, len
@@ -262,7 +241,7 @@ describe 'fs function', ->
 
       it 'fail if source file does not exist', ->
         eq FAIL, (os_rename not_exist, test)
-  
+
       it 'can overwrite destination file if it exists', ->
         other = 'unit-test-directory/other.file'
         file = io.open other, 'w'

@@ -1,17 +1,7 @@
 {:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 require 'lfs'
 
-path = lib
-
-ffi.cdef [[
-typedef enum file_comparison {
-  kEqualFiles = 1, kDifferentFiles = 2, kBothFilesMissing = 4, kOneFileMissing = 6, kEqualFileNames = 7
-} FileComparison;
-FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
-char_u *path_tail(char_u *fname);
-char_u *path_tail_with_sep(char_u *fname);
-char_u *path_next_component(char_u *fname);
-]]
+path = cimport './src/path.h'
 
 -- import constants parsed by ffi
 {:kEqualFiles, :kDifferentFiles, :kBothFilesMissing, :kOneFileMissing, :kEqualFileNames} = path
@@ -120,8 +110,6 @@ describe 'more path function', ->
     lfs.rmdir 'unit-test-directory'
 
   describe 'vim_FullName', ->
-    ffi.cdef 'int vim_FullName(char *fname, char *buf, int len, int force);'
-
     vim_FullName = (filename, buffer, length, force) ->
       filename = to_cstr filename
       path.vim_FullName filename, buffer, length, force
@@ -209,8 +197,6 @@ describe 'more path function', ->
       eq OK, result
 
   describe 'append_path', ->
-    ffi.cdef 'int append_path(char *path, char *to_append, int max_len);'
-
     it 'joins given paths with a slash', ->
      path1 = cstr 100, 'path1'
      to_append = to_cstr 'path2'
@@ -247,8 +233,6 @@ describe 'more path function', ->
       eq '/path2', (ffi.string path1)
 
   describe 'path_is_absolute_path', ->
-    ffi.cdef 'int path_is_absolute_path(char *fname);'
-
     path_is_absolute_path = (filename) ->
       filename = to_cstr filename
       path.path_is_absolute_path filename
