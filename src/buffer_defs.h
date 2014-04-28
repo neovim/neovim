@@ -596,7 +596,6 @@ struct file_buffer {
   char_u      *b_p_qe;          /* 'quoteescape' */
   int b_p_ro;                   /* 'readonly' */
   long b_p_sw;                  /* 'shiftwidth' */
-  int b_p_sn;                   /* 'shortname' */
   int b_p_si;                   /* 'smartindent' */
   long b_p_sts;                 /* 'softtabstop' */
   long b_p_sts_nopaste;          /* b_p_sts saved for paste mode */
@@ -697,8 +696,6 @@ struct file_buffer {
   int b_spell;                  /* TRUE for a spell file buffer, most fields
                                    are not used!  Use the B_SPELL macro to
                                    access b_spell without #ifdef. */
-
-  int b_shortname;              /* this file has an 8.3 file name */
 
   synblock_T b_s;               /* Info related to syntax highlighting.  w_s
                                  * normally points to this, but some windows

@@ -150,7 +150,6 @@
 # define PV_QE          OPT_BUF(BV_QE)
 #define PV_RO           OPT_BUF(BV_RO)
 # define PV_SI          OPT_BUF(BV_SI)
-# define PV_SN          OPT_BUF(BV_SN)
 # define PV_SMC         OPT_BUF(BV_SMC)
 # define PV_SYN         OPT_BUF(BV_SYN)
 # define PV_SPC         OPT_BUF(BV_SPC)
@@ -263,7 +262,6 @@ static int p_pi;
 static char_u   *p_qe;
 static int p_ro;
 static int p_si;
-static int p_sn;
 static long p_sts;
 static char_u   *p_sua;
 static long p_sw;
@@ -1414,9 +1412,6 @@ static struct vimoption
    (char_u *)&p_shm, PV_NONE,
    {(char_u *)"", (char_u *)"filnxtToO"}
    SCRIPTID_INIT},
-  {"shortname",   "sn",   P_BOOL|P_VI_DEF,
-   (char_u *)&p_sn, PV_SN,
-   {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"showbreak",   "sbr",  P_STRING|P_VI_DEF|P_RALL,
    (char_u *)&p_sbr, PV_NONE,
    {(char_u *)"", (char_u *)0L} SCRIPTID_INIT},
@@ -6777,7 +6772,6 @@ static char_u *get_varp(struct vimoption *p)
   case PV_QE:     return (char_u *)&(curbuf->b_p_qe);
   case PV_RO:     return (char_u *)&(curbuf->b_p_ro);
   case PV_SI:     return (char_u *)&(curbuf->b_p_si);
-  case PV_SN:     return (char_u *)&(curbuf->b_p_sn);
   case PV_STS:    return (char_u *)&(curbuf->b_p_sts);
   case PV_SUA:    return (char_u *)&(curbuf->b_p_sua);
   case PV_SWF:    return (char_u *)&(curbuf->b_p_swf);
@@ -7003,7 +6997,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_ofu = vim_strsave(p_ofu);
       buf->b_p_sts = p_sts;
       buf->b_p_sts_nopaste = p_sts_nopaste;
-      buf->b_p_sn = p_sn;
       buf->b_p_com = vim_strsave(p_com);
       buf->b_p_cms = vim_strsave(p_cms);
       buf->b_p_fo = vim_strsave(p_fo);

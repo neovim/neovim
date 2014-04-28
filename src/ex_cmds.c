@@ -1510,7 +1510,6 @@ void write_viminfo(char_u *file, int forceit)
   mode_t umask_save;
 #endif
 #ifdef UNIX
-  int shortname = FALSE;                /* use 8.3 file name */
   struct stat st_old;           /* mch_stat() of existing viminfo file */
 #endif
 
@@ -1579,9 +1578,7 @@ void write_viminfo(char_u *file, int forceit)
       if (mch_stat((char *)tempname, &st_new) == 0) {
         /*
          * Try another name.  Change one character, just before
-         * the extension.  This should also work for an 8.3
-         * file name, when after adding the extension it still is
-         * the same file as the original.
+         * the extension.
          */
         wp = tempname + STRLEN(tempname) - 5;
         if (wp < path_tail(tempname))                 /* empty file name? */
