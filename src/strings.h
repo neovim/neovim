@@ -23,4 +23,5 @@ char_u *vim_strbyte(char_u *string, int c);
 char_u *vim_strrchr(char_u *string, int c);
 int vim_isspace(int x);
 void sort_strings(char_u **files, int count);
+char_u *concat_str(char_u *str1, char_u *str2);
 #endif

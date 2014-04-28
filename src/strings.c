@@ -534,3 +534,17 @@ int has_non_ascii(char_u *s)
   return FALSE;
 }
 #endif
+
+/*
+ * Concatenate two strings and return the result in allocated memory.
+ * Returns NULL when out of memory.
+ */
+char_u *concat_str(char_u *str1, char_u *str2)
+{
+  size_t l = STRLEN(str1);
+  char_u *dest = xmalloc(l + STRLEN(str2) + 1);
+  STRCPY(dest, str1);
+  STRCPY(dest + l, str2);
+  return dest;
+}
+
