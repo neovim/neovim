@@ -6929,6 +6929,58 @@ char_u *reg_submatch(int no)
   return retval;
 }
 
+// Used for the submatch() function with the optional non-zero argument: get
+// the list of strings from the n'th submatch in allocated memory with NULs
+// represented in NLs.
+// Returns a list of allocated strings.  Returns NULL when not in a ":s"
+// command, for a non-existing submatch and for any error.
+list_T *reg_submatch_list(int no)
+{
+  if (!can_f_submatch || no < 0) {
+    return NULL;
+  }
+
+  linenr_T slnum;
+  linenr_T elnum;
+  list_T *list;
+  char_u *s;
+
+  if (submatch_match == NULL) {
+    slnum = submatch_mmatch->startpos[no].lnum;
+    elnum = submatch_mmatch->endpos[no].lnum;
+    if (slnum < 0 || elnum < 0) {
+      return NULL;
+    }
+
+    colnr_T scol = submatch_mmatch->startpos[no].col;
+    colnr_T ecol = submatch_mmatch->endpos[no].col;
+
+    list = list_alloc();
+
+    s = reg_getline_submatch(slnum) + scol;
+    if (slnum == elnum) {
+      list_append_string(list, s, ecol - scol);
+    } else {
+      list_append_string(list, s, -1);
+      for (int i = 1; i < elnum - slnum; i++) {
+        s = reg_getline_submatch(slnum + i);
+        list_append_string(list, s, -1);
+      }
+      s = reg_getline_submatch(elnum);
+      list_append_string(list, s, ecol);
+    }
+  } else {
+    s = submatch_match->startp[no];
+    if (s == NULL || submatch_match->endp[no] == NULL) {
+      return NULL;
+    }
+    list = list_alloc();
+    list_append_string(list, s, (int)(submatch_match->endp[no] - s));
+  }
+
+  return list;
+}
+
 static regengine_T bt_regengine =
 {
   bt_regcomp,
