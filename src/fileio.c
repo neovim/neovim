@@ -3039,7 +3039,7 @@ buf_write (
           /*
            * Make backup file name.
            */
-          backup = buf_modname(FALSE, rootname, backup_ext, FALSE);
+          backup = buf_modname(rootname, backup_ext, FALSE);
           if (backup == NULL) {
             vim_free(rootname);
             some_error = TRUE;                          /* out of memory */
@@ -3215,7 +3215,7 @@ nobackup:
         if (rootname == NULL)
           backup = NULL;
         else {
-          backup = buf_modname(FALSE, rootname, backup_ext, FALSE);
+          backup = buf_modname(rootname, backup_ext, FALSE);
           vim_free(rootname);
         }
 
@@ -3852,7 +3852,7 @@ restore_backup:
    * the backup file our 'original' file.
    */
   if (*p_pm && dobackup) {
-    char *org = (char *)buf_modname(FALSE, fname, p_pm, FALSE);
+    char *org = (char *)buf_modname(fname, p_pm, FALSE);
 
     if (backup != NULL) {
       struct stat st;
@@ -4644,12 +4644,11 @@ modname (
     int prepend_dot                /* may prepend a '.' to file name */
 )
 {
-  return buf_modname(FALSE, fname, ext, prepend_dot);
+  return buf_modname(fname, ext, prepend_dot);
 }
 
 char_u *
 buf_modname (
-    int shortname,           // use 8.3 file name, should always be FALSE now
     char_u *fname,
     char_u *ext,
     int prepend_dot                /* may prepend a '.' to file name */
@@ -4662,8 +4661,6 @@ buf_modname (
   int fnamelen, extlen;
 
   extlen = (int)STRLEN(ext);
-
-  assert(!shortname);
 
   /*
    * If there is no file name we must get the name of the current directory

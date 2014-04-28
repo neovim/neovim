@@ -3371,14 +3371,9 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     fname_res = fname_buf;
 #endif
 
-  r = buf_modname(
-      FALSE,
-      fname_res,
-      (char_u *)
-      ".swp",
-      /* Prepend a '.' to the swap file name for the current directory. */
-      dir_name[0] == '.' && dir_name[1] == NUL
-      );
+  // Prepend a '.' to the swap file name for the current directory.
+  r = buf_modname(fname_res, (char_u *)".swp",
+                  dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL)            /* out of memory */
     return NULL;
 
