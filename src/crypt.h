@@ -12,4 +12,4 @@ void crypt_init_keys(char_u *passwd);
 void free_crypt_key(char_u *key);
 char_u *get_crypt_key(int store, int twice);
 
-#endif /* NEOVIM_CRYPT_H */
+#endif // NEOVIM_CRYPT_H
