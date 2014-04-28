@@ -3605,7 +3605,6 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
   char_u      *repl;
   int srclen;
   char_u      *p;
-  int n;
   int escaped;
 
   /* Skip a regexp pattern for ":vimgrep[add] pat file..." */
@@ -3718,81 +3717,77 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
    * Don't do this with ":r !command" or ":w !command".
    */
   if ((eap->argt & NOSPC) && !eap->usefilter) {
-    /*
-     * May do this twice:
-     * 1. Replace environment variables.
-     * 2. Replace any other wildcards, remove backslashes.
-     */
-    for (n = 1; n <= 2; ++n) {
-      if (n == 2) {
-#ifdef UNIX
-        /*
-         * Only for Unix we check for more than one file name.
-         * For other systems spaces are considered to be part
-         * of the file name.
-         * Only check here if there is no wildcard, otherwise
-         * ExpandOne() will check for errors. This allows
-         * ":e `ls ve*.c`" on Unix.
-         */
-        if (!has_wildcards)
-          for (p = eap->arg; *p; ++p) {
-            /* skip escaped characters */
-            if (p[1] && (*p == '\\' || *p == Ctrl_V))
-              ++p;
-            else if (vim_iswhite(*p)) {
-              *errormsgp = (char_u *)_("E172: Only one file name allowed");
-              return FAIL;
-            }
-          }
-#endif
-
-        /*
-         * Halve the number of backslashes (this is Vi compatible).
-         * For Unix, when wildcards are expanded, this is
-         * done by ExpandOne() below.
-         */
-#if defined(UNIX)
-        if (!has_wildcards)
-#endif
-        backslash_halve(eap->arg);
+    // Replace environment variables.
+    if (has_wildcards) {
+      /*
+       * May expand environment variables.  This
+       * can be done much faster with expand_env() than with
+       * something else (e.g., calling a shell).
+       * After expanding environment variables, check again
+       * if there are still wildcards present.
+       */
+      if (vim_strchr(eap->arg, '$') != NULL
+          || vim_strchr(eap->arg, '~') != NULL) {
+        expand_env_esc(eap->arg, NameBuff, MAXPATHL,
+            TRUE, TRUE, NULL);
+        has_wildcards = mch_has_wildcard(NameBuff);
+        p = NameBuff;
+      } else
+        p = NULL;
+      if (p != NULL) {
+        (void)repl_cmdline(eap, eap->arg, (int)STRLEN(eap->arg),
+            p, cmdlinep);
       }
+    }
 
-      if (has_wildcards) {
-        if (n == 1) {
-          /*
-           * First loop: May expand environment variables.  This
-           * can be done much faster with expand_env() than with
-           * something else (e.g., calling a shell).
-           * After expanding environment variables, check again
-           * if there are still wildcards present.
-           */
-          if (vim_strchr(eap->arg, '$') != NULL
-              || vim_strchr(eap->arg, '~') != NULL) {
-            expand_env_esc(eap->arg, NameBuff, MAXPATHL,
-                TRUE, TRUE, NULL);
-            has_wildcards = mch_has_wildcard(NameBuff);
-            p = NameBuff;
-          } else
-            p = NULL;
-        } else {   /* n == 2 */
-          expand_T xpc;
-          int options = WILD_LIST_NOTFOUND|WILD_ADD_SLASH;
+    // Replace any other wildcards, remove backslashes.
+#ifdef UNIX
+    /*
+     * Only for Unix we check for more than one file name.
+     * For other systems spaces are considered to be part
+     * of the file name.
+     * Only check here if there is no wildcard, otherwise
+     * ExpandOne() will check for errors. This allows
+     * ":e `ls ve*.c`" on Unix.
+     */
+    if (!has_wildcards)
+      for (p = eap->arg; *p; ++p) {
+        /* skip escaped characters */
+        if (p[1] && (*p == '\\' || *p == Ctrl_V))
+          ++p;
+        else if (vim_iswhite(*p)) {
+          *errormsgp = (char_u *)_("E172: Only one file name allowed");
+          return FAIL;
+        }
+      }
+#endif
 
-          ExpandInit(&xpc);
-          xpc.xp_context = EXPAND_FILES;
-          if (p_wic)
-            options += WILD_ICASE;
-          p = ExpandOne(&xpc, eap->arg, NULL,
-              options, WILD_EXPAND_FREE);
-          if (p == NULL)
-            return FAIL;
-        }
-        if (p != NULL) {
-          (void)repl_cmdline(eap, eap->arg, (int)STRLEN(eap->arg),
-              p, cmdlinep);
-          if (n == 2)           /* p came from ExpandOne() */
-            vim_free(p);
-        }
+    /*
+     * Halve the number of backslashes (this is Vi compatible).
+     * For Unix, when wildcards are expanded, this is
+     * done by ExpandOne() below.
+     */
+#ifdef UNIX
+    if (!has_wildcards)
+#endif
+    backslash_halve(eap->arg);
+
+    if (has_wildcards) {
+      expand_T xpc;
+      int options = WILD_LIST_NOTFOUND|WILD_ADD_SLASH;
+
+      ExpandInit(&xpc);
+      xpc.xp_context = EXPAND_FILES;
+      if (p_wic)
+        options += WILD_ICASE;
+      p = ExpandOne(&xpc, eap->arg, NULL,
+          options, WILD_EXPAND_FREE);
+      if (p == NULL)
+        return FAIL;
+      if (p != NULL) {
+        (void)repl_cmdline(eap, eap->arg, (int)STRLEN(eap->arg),
+            p, cmdlinep);
+        vim_free(p);
       }
     }
   }
