@@ -3039,7 +3039,7 @@ buf_write (
           /*
            * Make backup file name.
            */
-          backup = buf_modname(rootname, backup_ext, FALSE);
+          backup = modname(rootname, backup_ext, FALSE);
           if (backup == NULL) {
             vim_free(rootname);
             some_error = TRUE;                          /* out of memory */
@@ -3215,7 +3215,7 @@ nobackup:
         if (rootname == NULL)
           backup = NULL;
         else {
-          backup = buf_modname(rootname, backup_ext, FALSE);
+          backup = modname(rootname, backup_ext, FALSE);
           vim_free(rootname);
         }
 
@@ -3852,7 +3852,7 @@ restore_backup:
    * the backup file our 'original' file.
    */
   if (*p_pm && dobackup) {
-    char *org = (char *)buf_modname(fname, p_pm, FALSE);
+    char *org = (char *)modname(fname, p_pm, FALSE);
 
     if (backup != NULL) {
       struct stat st;
@@ -4639,16 +4639,6 @@ void shorten_fnames(int force)
  */
 char_u *
 modname (
-    char_u *fname,
-    char_u *ext,
-    int prepend_dot                /* may prepend a '.' to file name */
-)
-{
-  return buf_modname(fname, ext, prepend_dot);
-}
-
-char_u *
-buf_modname (
     char_u *fname,
     char_u *ext,
     int prepend_dot                /* may prepend a '.' to file name */

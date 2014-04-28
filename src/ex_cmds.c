@@ -1569,7 +1569,7 @@ void write_viminfo(char_u *file, int forceit)
 #endif
 
     // Make tempname
-    tempname = buf_modname(fname, (char_u *)".tmp", FALSE);
+    tempname = modname(fname, (char_u *)".tmp", FALSE);
     if (tempname != NULL) {
       /*
        * Check if tempfile already exists.  Never overwrite an

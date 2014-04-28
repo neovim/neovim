@@ -1610,9 +1610,7 @@ recover_names (
       struct stat st;
       char_u          *swapname;
 
-      swapname = modname(fname_res,
-          (char_u *)".swp", TRUE
-          );
+      swapname = modname(fname_res, (char_u *)".swp", TRUE);
       if (swapname != NULL) {
         if (mch_stat((char *)swapname, &st) != -1) {                /* It exists! */
           files = (char_u **)alloc((unsigned)sizeof(char_u *));
@@ -3372,8 +3370,8 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #endif
 
   // Prepend a '.' to the swap file name for the current directory.
-  r = buf_modname(fname_res, (char_u *)".swp",
-                  dir_name[0] == '.' && dir_name[1] == NUL);
+  r = modname(fname_res, (char_u *)".swp",
+              dir_name[0] == '.' && dir_name[1] == NUL);
   if (r == NULL)            /* out of memory */
     return NULL;
 
