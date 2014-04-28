@@ -30,9 +30,15 @@ For lots more details, see
 - Formatted entire source with [uncrustify]
 - Replaced autotools build system with [CMake]
 - Implemented [continuous integration] and [test coverage]
-- Wrote 60+ new unit tests
+- Wrote 100+ new unit tests
 - Split large, monolithic files (`misc1.c`) into logical units
   (`path.c`, `indent.c`, `garray.c`, `keymap.c`, ...)
+- [Implemented](https://github.com/neovim/neovim/pull/475) job control ("async")
+- Reworked out-of-memory handling resulting in greatly simplified control flow
+- Merged 50+ upstream patches (nearly caught up with upstream)
+- [Removed](https://github.com/neovim/neovim/pull/635) 8.3 filename support
+- [Changed](https://github.com/neovim/neovim/pull/574) to portable format 
+  specifiers (first step towards building on Windows)
 
 [unifdef]: http://freecode.com/projects/unifdef
 [uncrustify]: http://uncrustify.sourceforge.net/
@@ -46,6 +52,7 @@ For lots more details, see
 - Lots of refactoring
 - A VimL => Lua transpiler
 - Formatting with `clint.py`
+- msg-pack remote API
 
 ### How do I get it?
 
