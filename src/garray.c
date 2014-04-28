@@ -57,20 +57,23 @@ void ga_init(garray_T *gap, int itemsize, int growsize)
 /// @param n
 void ga_grow(garray_T *gap, int n)
 {
-  if (gap->ga_maxlen - gap->ga_len < n) {
-    if (n < gap->ga_growsize) {
-      n = gap->ga_growsize;
-    }
-    size_t new_len = (size_t)(gap->ga_itemsize * (gap->ga_len + n));
-    char_u *pp = (gap->ga_data == NULL)
-                 ? alloc((unsigned)new_len)
-                 : xrealloc(gap->ga_data, new_len);
-
-    size_t old_len = (size_t)(gap->ga_itemsize * gap->ga_maxlen);
-    memset(pp + old_len, 0, new_len - old_len);
-    gap->ga_maxlen = gap->ga_len + n;
-    gap->ga_data = pp;
+  if (gap->ga_maxlen - gap->ga_len >= n) {
+    // the garray still has enough space, do nothing
+    return;
   }
+
+  // the garray grows by at least growsize (do we have a MIN macro somewhere?)
+  n = (n < gap->ga_growsize) ? gap->ga_growsize : n;
+
+  size_t new_size = (size_t)(gap->ga_itemsize * (gap->ga_len + n));
+  size_t old_size = (size_t)(gap->ga_itemsize * gap->ga_maxlen);
+
+  // reallocate and clear the new memory
+  char_u *pp = xrealloc(gap->ga_data, new_size);
+  memset(pp + old_size, 0, new_size - old_size);
+
+  gap->ga_maxlen = gap->ga_len + n;
+  gap->ga_data = pp;
 }
 
 /// Sort "gap" and remove duplicate entries.  "gap" is expected to contain a
