@@ -7317,28 +7317,34 @@ call_func (
 
   /* execute the function if no errors detected and executing */
   if (evaluate && error == ERROR_NONE) {
+    char_u *rfname = fname;
+
+    /* Ignore "g:" before a function name. */
+    if (fname[0] == 'g' && fname[1] == ':') {
+      rfname = fname + 2;
+    }
+
     rettv->v_type = VAR_NUMBER;         /* default rettv is number zero */
     rettv->vval.v_number = 0;
     error = ERROR_UNKNOWN;
 
-    if (!builtin_function(fname, -1)) {
+    if (!builtin_function(rfname, -1)) {
       /*
        * User defined function.
        */
-      fp = find_func(fname);
+      fp = find_func(rfname);
 
       /* Trigger FuncUndefined event, may load the function. */
       if (fp == NULL
-          && apply_autocmds(EVENT_FUNCUNDEFINED,
-              fname, fname, TRUE, NULL)
+          && apply_autocmds(EVENT_FUNCUNDEFINED, rfname, rfname, TRUE, NULL)
           && !aborting()) {
         /* executed an autocommand, search for the function again */
-        fp = find_func(fname);
+        fp = find_func(rfname);
       }
       /* Try loading a package. */
-      if (fp == NULL && script_autoload(fname, TRUE) && !aborting()) {
+      if (fp == NULL && script_autoload(rfname, TRUE) && !aborting()) {
         /* loaded a package, search for the function again */
-        fp = find_func(fname);
+        fp = find_func(rfname);
       }
 
       if (fp != NULL) {
