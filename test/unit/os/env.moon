@@ -1,16 +1,7 @@
 {:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 require 'lfs'
 
--- fs = cimport './src/os/os.h'
--- remove these statements once 'cimport' is working properly for misc1.h
-env = lib
-ffi.cdef [[
-const char *os_getenv(const char *name);
-int os_setenv(const char *name, const char *value, int override);
-char *os_getenvname_at_index(size_t index);
-long os_get_pid(void);
-void os_get_hostname(char *hostname, size_t len);
-]]
+env = cimport './src/os/os.h'
 
 NULL = ffi.cast 'void*', 0
 
@@ -86,7 +77,7 @@ describe 'env function', ->
       eq NULL, env.os_getenvname_at_index huge
       eq NULL, env.os_getenvname_at_index maxuint32
       if ffi.abi '64bit'
-        -- couldn't use a bigger number because it gets converted to 
+        -- couldn't use a bigger number because it gets converted to
         -- double somewere, should be big enough anyway
         -- maxuint64 = ffi.new 'size_t', 18446744073709551615
         maxuint64 = ffi.new 'size_t', 18446744073709000000

@@ -1,22 +1,6 @@
 {:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
 
--- fs = cimport './src/os/os.h'
--- remove these statements once 'cimport' is working properly for misc1.h
-users = lib
-ffi.cdef [[
-typedef struct growarray {
-  int ga_len;
-  int ga_maxlen;
-  int ga_itemsize;
-  int ga_growsize;
-  void    *ga_data;
-} garray_T;
-int os_get_usernames(garray_T *usernames);
-int os_get_user_name(char *s, size_t len);
-int os_get_uname(int uid, char *s, size_t len);
-char *os_get_user_directory(const char *name);
-int getuid(void);
-]]
+users = cimport './src/os/os.h', 'unistd.h'
 
 NULL = ffi.cast 'void*', 0
 OK = 1
