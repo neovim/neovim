@@ -1808,16 +1808,8 @@ static time_t swapfile_info(char_u *fname)
 static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
 {
   int num_names;
-  /*
-   * (Win32 and Win64) never short names, but do prepend a dot.
-   * (Not MS-DOS or Win32 or Win64) maybe short name, maybe not: Try both.
-   * Only use the short name if it is different.
-   */
   char_u      *p;
   int i;
-  int shortname = curbuf->b_shortname;
-
-  curbuf->b_shortname = FALSE;
 
   num_names = 0;
 
@@ -1828,7 +1820,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   if (prepend_dot) {
     names[num_names] = modname(path, (char_u *)".sw?", TRUE);
     if (names[num_names] == NULL)
-      goto end;
+      return num_names;
     ++num_names;
   }
 
@@ -1846,30 +1838,6 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
       vim_free(names[num_names]);
   } else
     ++num_names;
-
-  /*
-   * Also try with 'shortname' set, in case the file is on a DOS filesystem.
-   */
-  curbuf->b_shortname = TRUE;
-  names[num_names] = modname(path, (char_u *)".sw?", FALSE);
-  if (names[num_names] == NULL)
-    goto end;
-
-  /*
-   * Remove the one from 'shortname', if it's the same as with 'noshortname'.
-   */
-  p = names[num_names];
-  i = STRLEN(names[num_names]) - STRLEN(names[num_names - 1]);
-  if (i > 0)
-    p += i;             /* file name has been expanded to full path */
-  if (STRCMP(names[num_names - 1], p) == 0)
-    vim_free(names[num_names]);
-  else
-    ++num_names;
-
-end:
-  curbuf->b_shortname = shortname;
-
 
   return num_names;
 }
@@ -3404,7 +3372,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
 #endif
 
   r = buf_modname(
-      (buf->b_p_sn || buf->b_shortname),
+      FALSE,
       fname_res,
       (char_u *)
       ".swp",
@@ -3574,25 +3542,7 @@ findswapname (
   char_u      *fname;
   int n;
   char_u      *dir_name;
-  int r;
   char_u      *buf_fname = buf->b_fname;
-
-#if !defined(UNIX)
-# define CREATE_DUMMY_FILE
-  FILE        *dummyfd = NULL;
-
-
-  /*
-   * If we start editing a new file, e.g. "test.doc", which resides on an
-   * MSDOS compatible filesystem, it is possible that the file
-   * "test.doc.swp" which we create will be exactly the same file. To avoid
-   * this problem we temporarily create "test.doc".  Don't do this when the
-   * check below for a 8.3 file name is used.
-   */
-  if (!(buf->b_p_sn || buf->b_shortname) && buf_fname != NULL
-      && !os_file_exists(buf_fname))
-    dummyfd = mch_fopen((char *)buf_fname, "w");
-#endif
 
   /*
    * Isolate a directory name from *dirp and put it in dir_name.
@@ -3617,89 +3567,6 @@ findswapname (
       fname = NULL;
       break;
     }
-#if defined(UNIX)
-    /*
-     * Some systems have a MS-DOS compatible filesystem that use 8.3 character
-     * file names. If this is the first try and the swap file name does not fit in
-     * 8.3, detect if this is the case, set shortname and try again.
-     */
-    if (fname[n - 2] == 'w' && fname[n - 1] == 'p'
-        && !(buf->b_p_sn || buf->b_shortname)) {
-      char_u          *tail;
-      char_u          *fname2;
-      struct stat s1, s2;
-      int f1, f2;
-      int created1 = FALSE, created2 = FALSE;
-      int same = FALSE;
-
-      /*
-       * Check if swapfile name does not fit in 8.3:
-       * It either contains two dots, is longer than 8 chars, or starts
-       * with a dot.
-       */
-      tail = path_tail(buf_fname);
-      if (       vim_strchr(tail, '.') != NULL
-                 || STRLEN(tail) > (size_t)8
-                 || *path_tail(fname) == '.') {
-        fname2 = alloc(n + 2);
-        STRCPY(fname2, fname);
-        /* if fname == "xx.xx.swp",	    fname2 = "xx.xx.swx"
-         * if fname == ".xx.swp",	    fname2 = ".xx.swpx"
-         * if fname == "123456789.swp", fname2 = "12345678x.swp"
-         */
-        if (vim_strchr(tail, '.') != NULL)
-          fname2[n - 1] = 'x';
-        else if (*path_tail(fname) == '.') {
-          fname2[n] = 'x';
-          fname2[n + 1] = NUL;
-        } else
-          fname2[n - 5] += 1;
-        /*
-         * may need to create the files to be able to use mch_stat()
-         */
-        f1 = mch_open((char *)fname, O_RDONLY, 0);
-        if (f1 < 0) {
-          f1 = mch_open_rw((char *)fname,
-              O_RDWR|O_CREAT|O_EXCL);
-          created1 = TRUE;
-        }
-        if (f1 >= 0) {
-          f2 = mch_open((char *)fname2, O_RDONLY, 0);
-          if (f2 < 0) {
-            f2 = mch_open_rw((char *)fname2,
-                O_RDWR|O_CREAT|O_EXCL);
-            created2 = TRUE;
-          }
-          if (f2 >= 0) {
-            /*
-             * Both files exist now. If mch_stat() returns the
-             * same device and inode they are the same file.
-             */
-            if (mch_fstat(f1, &s1) != -1
-                && mch_fstat(f2, &s2) != -1
-                && s1.st_dev == s2.st_dev
-                && s1.st_ino == s2.st_ino)
-              same = TRUE;
-            close(f2);
-            if (created2)
-              os_remove((char *)fname2);
-          }
-          close(f1);
-          if (created1) {
-            os_remove((char *)fname);
-          }
-        }
-        vim_free(fname2);
-        if (same) {
-          buf->b_shortname = TRUE;
-          vim_free(fname);
-          fname = makeswapname(buf_fname, buf->b_ffname,
-              buf, dir_name);
-          continue;                   /* try again with b_shortname set */
-        }
-      }
-    }
-#endif
     /*
      * check if the swapfile already exists
      */
@@ -3727,26 +3594,6 @@ findswapname (
      * get here when file already exists
      */
     if (fname[n - 2] == 'w' && fname[n - 1] == 'p') {   /* first try */
-      /*
-       * on MS-DOS compatible filesystems (e.g. messydos) file.doc.swp
-       * and file.doc are the same file. To guess if this problem is
-       * present try if file.doc.swx exists. If it does, we set
-       * buf->b_shortname and try file_doc.swp (dots replaced by
-       * underscores for this file), and try again. If it doesn't we
-       * assume that "file.doc.swp" already exists.
-       */
-      if (!(buf->b_p_sn || buf->b_shortname)) {         /* not tried yet */
-        fname[n - 1] = 'x';
-        r = os_getperm(fname);                 /* try "file.swx" */
-        fname[n - 1] = 'p';
-        if (r >= 0) {                       /* "file.swx" seems to exist */
-          buf->b_shortname = TRUE;
-          vim_free(fname);
-          fname = makeswapname(buf_fname, buf->b_ffname,
-              buf, dir_name);
-          continue;                 /* try again with '.' replaced with '_' */
-        }
-      }
       /*
        * If we get here the ".swp" file really exists.
        * Give an error message, unless recovering, no file name, we are
@@ -3810,20 +3657,6 @@ findswapname (
             && vim_strchr(p_shm, SHM_ATTENTION) == NULL) {
 #if defined(HAS_SWAP_EXISTS_ACTION)
           int choice = 0;
-#endif
-#ifdef CREATE_DUMMY_FILE
-          int did_use_dummy = FALSE;
-
-          /* Avoid getting a warning for the file being created
-           * outside of Vim, it was created at the start of this
-           * function.  Delete the file now, because Vim might exit
-           * here if the window is closed. */
-          if (dummyfd != NULL) {
-            fclose(dummyfd);
-            dummyfd = NULL;
-            os_remove(buf_fname);
-            did_use_dummy = TRUE;
-          }
 #endif
 
 #if defined(UNIX) && (defined(FEAT_GUI_DIALOG) || defined(FEAT_CON_DIALOG))
@@ -3917,11 +3750,6 @@ findswapname (
               need_wait_return = TRUE;
           }
 
-#ifdef CREATE_DUMMY_FILE
-          /* Going to try another name, need the dummy file again. */
-          if (did_use_dummy)
-            dummyfd = mch_fopen((char *)buf_fname, "w");
-#endif
         }
       }
     }
@@ -3946,12 +3774,6 @@ findswapname (
   }
 
   vim_free(dir_name);
-#ifdef CREATE_DUMMY_FILE
-  if (dummyfd != NULL) {        /* file has been created temporarily */
-    fclose(dummyfd);
-    os_remove(buf_fname);
-  }
-#endif
   return fname;
 }
 

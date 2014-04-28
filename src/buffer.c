@@ -466,7 +466,6 @@ void buf_clear_file(buf_T *buf)
 {
   buf->b_ml.ml_line_count = 1;
   unchanged(buf, TRUE);
-  buf->b_shortname = FALSE;
   buf->b_p_eol = TRUE;
   buf->b_start_eol = TRUE;
   buf->b_p_bomb = FALSE;
@@ -2288,8 +2287,6 @@ setfname (
     buf->b_ino = st.st_ino;
   }
 #endif
-
-  buf->b_shortname = FALSE;
 
   buf_name_changed(buf);
   return OK;
