@@ -8629,8 +8629,6 @@ static void f_expand(typval_T *argvars, typval_T *rettv)
       rettv_list_alloc(rettv);
       if (result != NULL) {
         list_append_string(rettv->vval.v_list, result, -1);
-      } else {
-        vim_free(result);
       }
     } else
       rettv->vval.v_string = result;
@@ -11618,9 +11616,10 @@ static void f_matcharg(typval_T *argvars, typval_T *rettv)
   rettv_list_alloc(rettv);
 
   int id = get_tv_number(&argvars[0]);
-  matchitem_T *m;
 
   if (id >= 1 && id <= 3) {
+    matchitem_T *m;
+
     if ((m = (matchitem_T *)get_match(curwin, id)) != NULL) {
       list_append_string(rettv->vval.v_list, syn_id2name(m->hlg_id), -1);
       list_append_string(rettv->vval.v_list, m->pattern, -1);
@@ -12263,6 +12262,7 @@ static void f_reltime(typval_T *argvars, typval_T *rettv)
       return;
     profile_sub(&res, &start);
   }
+
   rettv_list_alloc(rettv);
   long n1 = res.tv_sec;
   long n2 = res.tv_usec;
@@ -14587,11 +14587,12 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
     (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
     syntax_flags = get_syntax_info(&matchid);
 
-    /* get the conceal character */
+    // get the conceal character
     if ((syntax_flags & HL_CONCEAL) && curwin->w_p_cole < 3) {
       cchar = syn_get_sub_char();
-      if (cchar == NUL && curwin->w_p_cole == 1 && lcs_conceal != NUL)
+      if (cchar == NUL && curwin->w_p_cole == 1 && lcs_conceal != NUL) {
         cchar = lcs_conceal;
+      }
       if (cchar != NUL) {
         if (has_mbyte)
           (*mb_char2bytes)(cchar, str);
@@ -14602,7 +14603,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
   }
 
   list_append_number(rettv->vval.v_list, (syntax_flags & HL_CONCEAL) != 0);
-  /* -1 to auto-determine strlen */
+  // -1 to auto-determine strlen
   list_append_string(rettv->vval.v_list, str, -1);
   list_append_number(rettv->vval.v_list, matchid);
 }
