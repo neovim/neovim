@@ -25,7 +25,6 @@
  */
 #ifdef REGEXP_DEBUG
 # define NFA_REGEXP_ERROR_LOG   "nfa_regexp_error.log"
-# define ENABLE_LOG
 # define NFA_REGEXP_DUMP_LOG    "nfa_regexp_dump.log"
 # define NFA_REGEXP_RUN_LOG     "nfa_regexp_run.log"
 # define NFA_REGEXP_DEBUG_LOG   "nfa_regexp_debug.log"
@@ -2304,7 +2303,7 @@ static void nfa_set_code(int c)
 
 }
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
 static FILE *log_fd;
 
 /*
@@ -2424,7 +2423,7 @@ static void nfa_dump(nfa_regprog_T *prog)
     fclose(debugf);
   }
 }
-#endif      /* ENABLE_LOG */
+#endif      /* REGEXP_DEBUG */
 #endif      /* REGEXP_DEBUG */
 
 /*
@@ -3433,7 +3432,7 @@ typedef struct {
   int has_pim;                  /* TRUE when any state has a PIM */
 } nfa_list_T;
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
 static void log_subsexpr(regsubs_T *subs);
 static void log_subexpr(regsub_T *sub);
 static char *pim_info(nfa_pim_T *pim);
@@ -3632,7 +3631,7 @@ static int sub_equal(regsub_T *sub1, regsub_T *sub2)
   return TRUE;
 }
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
 static void report_state(char *action,
     regsub_T *sub,
     nfa_state_T *state,
@@ -3835,7 +3834,7 @@ addstate (
   regsub_T            *sub;
   regsubs_T           *subs = subs_arg;
   static regsubs_T temp_subs;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   int did_print = FALSE;
 #endif
 
@@ -3914,7 +3913,7 @@ addstate (
        * when there is a PIM. */
       if (!nfa_has_backref && pim == NULL && !l->has_pim) {
 skip_add:
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
         nfa_set_code(state->c);
         fprintf(log_fd, "> Not adding state %d to list %d. char %d: %s\n",
             abs(state->id), l->id, state->c, code);
@@ -3959,13 +3958,13 @@ skip_add:
     copy_sub(&thread->subs.norm, &subs->norm);
     if (nfa_has_zsubexpr)
       copy_sub(&thread->subs.synt, &subs->synt);
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
     report_state("Adding", &thread->subs.norm, state, l->id, pim);
     did_print = TRUE;
 #endif
   }
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   if (!did_print)
     report_state("Processing", &subs->norm, state, l->id, pim);
 #endif
@@ -4515,7 +4514,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     }
   }
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   if (log_fd != stderr)
     fclose(log_fd);
   log_fd = NULL;
@@ -4561,7 +4560,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
   nfa_endp = save_nfa_endp;
   nfa_listid = save_nfa_listid;
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   log_fd = fopen(NFA_REGEXP_RUN_LOG, "a");
   if (log_fd != NULL) {
     fprintf(log_fd, "****************************\n");
@@ -4859,7 +4858,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   list[1].t = (nfa_thread_T *)lalloc(size, TRUE);
   list[1].len = nstate + 1;
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   log_fd = fopen(NFA_REGEXP_RUN_LOG, "a");
   if (log_fd != NULL) {
     fprintf(log_fd, "**********************************\n");
@@ -4880,7 +4879,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   nextlist = &list[1];
   nextlist->n = 0;
   nextlist->has_pim = FALSE;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   fprintf(log_fd, "(---) STARTSTATE first\n");
 #endif
   thislist->id = nfa_listid + 1;
@@ -4932,7 +4931,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     thislist->id = nfa_listid;
     nextlist->id = nfa_listid + 1;
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
     fprintf(log_fd, "------------------------------------------\n");
     fprintf(log_fd, ">>> Reginput is \"%s\"\n", reginput);
     fprintf(log_fd,
@@ -4965,7 +4964,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       nfa_set_code(t->state->c);
       fprintf(debug, "%s, ", code);
 #endif
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
       {
         int col;
 
@@ -4996,7 +4995,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         copy_sub(&submatch->norm, &t->subs.norm);
         if (nfa_has_zsubexpr)
           copy_sub(&submatch->synt, &t->subs.synt);
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
         log_subsexpr(&t->subs);
 #endif
         /* Found the left-most longest match, do not look at any other
@@ -5022,7 +5021,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
          * in the position in "nfa_endp".
          * Submatches are stored in *m, and used in the parent call.
          */
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
         if (nfa_endp != NULL) {
           if (REG_MULTI)
             fprintf(
@@ -5053,7 +5052,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           if (nfa_has_zsubexpr)
             copy_sub(&m->synt, &t->subs.synt);
         }
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
         fprintf(log_fd, "Match found:\n");
         log_subsexpr(m);
 #endif
@@ -5072,7 +5071,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_START_INVISIBLE_BEFORE_NEG:
       case NFA_START_INVISIBLE_BEFORE_NEG_FIRST:
       {
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
         fprintf(log_fd, "Failure chance invisible: %d, what follows: %d\n",
             failure_chance(t->state->out, 0),
             failure_chance(t->state->out1->out, 0));
@@ -5153,7 +5152,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_START_PATTERN:
       {
         nfa_state_T *skip = NULL;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
         int skip_lid = 0;
 #endif
 
@@ -5161,24 +5160,24 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
          * output state is not going to be added to the list. */
         if (state_in_list(nextlist, t->state->out1->out, &t->subs)) {
           skip = t->state->out1->out;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
           skip_lid = nextlist->id;
 #endif
         } else if (state_in_list(nextlist,
                        t->state->out1->out->out, &t->subs)) {
           skip = t->state->out1->out->out;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
           skip_lid = nextlist->id;
 #endif
         } else if (state_in_list(thislist,
                        t->state->out1->out->out, &t->subs)) {
           skip = t->state->out1->out->out;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
           skip_lid = thislist->id;
 #endif
         }
         if (skip != NULL) {
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
           nfa_set_code(skip->c);
           fprintf(
               log_fd,
@@ -5199,7 +5198,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         if (result) {
           int bytelen;
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
           fprintf(log_fd, "NFA_START_PATTERN matches:\n");
           log_subsexpr(m);
 #endif
@@ -5216,7 +5215,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
           else
             bytelen = (int)(m->norm.list.line[0].end - reginput);
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
           fprintf(log_fd, "NFA_START_PATTERN length: %d\n", bytelen);
 #endif
           if (bytelen == 0) {
@@ -5424,7 +5423,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             c1 = state->val;
             state = state->out;             /* advance to NFA_RANGE_MAX */
             c2 = state->val;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
             fprintf(log_fd, "NFA_RANGE_MIN curc=%d c1=%d c2=%d\n",
                 curc, c1, c2);
 #endif
@@ -5835,7 +5834,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
          * without advancing and before the end of the line. */
         if (pim != NULL && (clen == 0 || match_follows(add_state, 0))) {
           if (pim->result == NFA_PIM_TODO) {
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
             fprintf(log_fd, "\n");
             fprintf(log_fd, "==================================\n");
             fprintf(log_fd, "Postponed recursive nfa_regmatch()\n");
@@ -5859,7 +5858,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             }
           } else {
             result = (pim->result == NFA_PIM_MATCH);
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
             fprintf(log_fd, "\n");
             fprintf(
                 log_fd,
@@ -5930,7 +5929,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
                            && (int)(reginput - regline)
                            < nfa_endp->se_u.pos.col))
                     : reginput < nfa_endp->se_u.ptr)))) {
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
       fprintf(log_fd, "(---) STARTSTATE\n");
 #endif
       /* Inline optimized code for addstate() if we know the state is
@@ -5947,7 +5946,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
              * character that must appear at the start. */
             if (skip_to_start(prog->regstart, &col) == FAIL)
               break;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
             fprintf(log_fd, "  Skipping ahead %d bytes to regstart\n",
                 col - ((colnr_T)(reginput - regline) + clen));
 #endif
@@ -5958,7 +5957,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
             c = PTR2CHAR(reginput + clen);
             if (c != prog->regstart && (!ireg_ic || vim_tolower(c)
                                         != vim_tolower(prog->regstart))) {
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
               fprintf(log_fd,
                   "  Skipping start state, regstart does not match\n");
 #endif
@@ -5979,7 +5978,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         addstate(nextlist, start, m, NULL, clen);
     }
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
     fprintf(log_fd, ">>> Thislist had %d states available: ", thislist->n);
     {
       int i;
@@ -6002,7 +6001,7 @@ nextchar:
       break;
   }
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   if (log_fd != stderr)
     fclose(log_fd);
   log_fd = NULL;
@@ -6029,13 +6028,13 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
   int i;
   regsubs_T subs, m;
   nfa_state_T *start = prog->start;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   FILE        *f;
 #endif
 
   reginput = regline + col;
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   f = fopen(NFA_REGEXP_RUN_LOG, "a");
   if (f != NULL) {
     fprintf(f,
@@ -6263,7 +6262,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
    * 1. first pass to count size (so we can allocate space)
    * 2. second to emit code
    */
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   {
     FILE *f = fopen(NFA_REGEXP_RUN_LOG, "a");
 
@@ -6309,7 +6308,7 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   prog->regstart = nfa_get_regstart(prog->start, 0);
   prog->match_text = nfa_get_match_text(prog->start);
 
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   nfa_postfix_dump(expr, OK);
   nfa_dump(prog);
 #endif
@@ -6329,7 +6328,7 @@ out:
 fail:
   vim_free(prog);
   prog = NULL;
-#ifdef ENABLE_LOG
+#ifdef REGEXP_DEBUG
   nfa_postfix_dump(expr, FAIL);
 #endif
 #ifdef REGEXP_DEBUG
@@ -6426,7 +6425,3 @@ proftime_T  *tm;         /* timeout limit or NULL */
 
   return nfa_regexec_both(NULL, col);
 }
-
-#ifdef REGEXP_DEBUG
-# undef ENABLE_LOG
-#endif
