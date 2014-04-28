@@ -3862,48 +3862,48 @@ int escaped;
 {
   int i;
   int count = 0;
-  int round;
   char_u      *str;
 
-  /* do this loop twice:
-   * round == 0: count the number of matching names
-   * round == 1: copy the matching names into allocated memory
-   */
-  for (round = 0; round <= 1; ++round) {
-    for (i = 0;; ++i) {
-      str = (*func)(xp, i);
-      if (str == NULL)              /* end of list */
-        break;
-      if (*str == NUL)              /* skip empty strings */
-        continue;
-
-      if (vim_regexec(regmatch, str, (colnr_T)0)) {
-        if (round) {
-          if (escaped)
-            str = vim_strsave_escaped(str, (char_u *)" \t\\.");
-          else
-            str = vim_strsave(str);
-          (*file)[count] = str;
-          if (func == get_menu_names && str != NULL) {
-            /* test for separator added by get_menu_names() */
-            str += STRLEN(str) - 1;
-            if (*str == '\001')
-              *str = '.';
-          }
-        }
-        ++count;
-      }
+  // count the number of matching names
+  for (i = 0;; ++i) {
+    str = (*func)(xp, i);
+    if (str == NULL) // end of list
+      break;
+    if (*str == NUL) // skip empty strings
+      continue;
+    if (vim_regexec(regmatch, str, (colnr_T)0)) {
+      ++count;
     }
-    if (round == 0) {
-      if (count == 0)
-        return OK;
-      *num_file = count;
-      *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
-      if (*file == NULL) {
-        *file = (char_u **)"";
-        return FAIL;
+  }
+  if (count == 0)
+    return OK;
+  *num_file = count;
+  *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
+  if (*file == NULL) {
+    *file = (char_u **)"";
+    return FAIL;
+  }
+
+  // copy the matching names into allocated memory
+  count = 0;
+  for (i = 0;; ++i) {
+    str = (*func)(xp, i);
+    if (str == NULL) // end of list
+      break;
+    if (*str == NUL) // skip empty strings
+      continue;
+    if (vim_regexec(regmatch, str, (colnr_T)0)) {
+      if (escaped)
+        str = vim_strsave_escaped(str, (char_u *)" \t\\.");
+      else
+        str = vim_strsave(str);
+      (*file)[count++] = str;
+      if (func == get_menu_names && str != NULL) {
+        /* test for separator added by get_menu_names() */
+        str += STRLEN(str) - 1;
+        if (*str == '\001')
+          *str = '.';
       }
-      count = 0;
     }
   }
 
