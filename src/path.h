@@ -3,6 +3,7 @@
 
 #include "func_attr.h"
 #include "types.h"
+#include "garray.h"
 
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {
@@ -23,7 +24,7 @@ typedef enum file_comparison {
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname);
 
 /// Get the tail of a path: the file name.
-/// 
+///
 /// @param fname A file path.
 /// @return
 ///   - Empty string, if fname is NULL.
@@ -47,7 +48,7 @@ char_u *path_tail_with_sep(char_u *fname);
 ///
 /// @param fname A file path. (Must be != NULL.)
 /// @return Pointer to first found path separator + 1.
-/// An empty string, if `fname` doesn't contain a path separator, 
+/// An empty string, if `fname` doesn't contain a path separator,
 char_u *path_next_component(char_u *fname);
 
 int vim_ispathsep(int c);
