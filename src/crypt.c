@@ -68,31 +68,22 @@ static int crypt_busy = 0;
 static unsigned long saved_keys[3];
 static int saved_crypt_method;
 
-// Returns int value for crypt method string:
-// 0 for "zip", the old method. Also for any non-valid value.
-// 1 for "blowfish".
 int crypt_method_from_string(char_u *s)
 {
   return *s == 'b' ? 1 : 0;
 }
 
-// Returns the crypt method for buffer "buf" as a number.
 int get_crypt_method(buf_T *buf)
 {
   return crypt_method_from_string(*buf->b_p_cm == NUL ? p_cm : buf->b_p_cm);
 }
 
-// Sets the crypt method for buffer "buf" to "method" using the int value as
-// returned by crypt_method_from_string().
 void set_crypt_method(buf_T *buf, int method)
 {
   free_string_option(buf->b_p_cm);
   buf->b_p_cm = vim_strsave((char_u *)(method == 0 ? "zip" : "blowfish"));
 }
 
-// Prepares for initializing the encryption. If already doing encryption then
-// save the state.
-// Must always be called symmetrically with crypt_pop_state().
 void crypt_push_state(void)
 {
   if (crypt_busy == 1) {
@@ -111,9 +102,6 @@ void crypt_push_state(void)
   crypt_busy++;
 }
 
-// Ends encryption. If doing encryption before crypt_push_state() then restore
-// the saved state.
-// Must always be called symmetrically with crypt_push_state().
 void crypt_pop_state(void)
 {
   crypt_busy--;
@@ -131,8 +119,6 @@ void crypt_pop_state(void)
   }
 }
 
-// Encrypts "from[len]" into "to[len]".
-// "from" and "to" can be equal to encrypt in place.
 void crypt_encode(char_u *from, size_t len, char_u *to)
 {
   size_t i;
@@ -151,7 +137,6 @@ void crypt_encode(char_u *from, size_t len, char_u *to)
   }
 }
 
-// Decrypts "ptr[len]" in place.
 void crypt_decode(char_u *ptr, long len)
 {
   char_u *p;
@@ -169,10 +154,6 @@ void crypt_decode(char_u *ptr, long len)
   }
 }
 
-// Initializes the encryption keys and the random header according to
-// the given password.
-// If "passwd" is NULL or empty, don't do anything.
-// in: "passwd" password string with which to modify keys
 void crypt_init_keys(char_u *passwd)
 {
   if ((passwd != NULL) && (*passwd != NUL)) {
@@ -193,8 +174,6 @@ void crypt_init_keys(char_u *passwd)
   }
 }
 
-// Frees an allocated crypt key. Clears the text to make sure it doesn't stay
-// in memory anywhere.
 void free_crypt_key(char_u *key)
 {
   char_u *p;
@@ -207,12 +186,6 @@ void free_crypt_key(char_u *key)
   }
 }
 
-// Asks the user for a crypt key.
-// When "store" is TRUE, the new key is stored in the 'key' option, and the
-// 'key' option value is returned: Don't free it.
-// When "store" is FALSE, the typed key is returned in allocated memory.
-// in: "twice" Ask for the key twice.
-// Returns NULL on failure.
 char_u *get_crypt_key(int store, int twice)
 {
   char_u *p1;
