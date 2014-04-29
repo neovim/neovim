@@ -20,14 +20,14 @@
 
 static void make_crc_tab(void);
 
-static unsigned long crc_32_tab[256];
+static uint32_t crc_32_tab[256];
 
 // Fills the CRC table.
 static void make_crc_tab(void)
 {
-  unsigned long s;
-  unsigned long t;
-  unsigned long v;
+  uint32_t s;
+  uint32_t t;
+  uint32_t v;
   static bool done = false;
 
   if (done) {
@@ -38,7 +38,7 @@ static void make_crc_tab(void)
     v = t;
 
     for (s = 0; s < 8; s++) {
-      v = (v >> 1) ^ ((v & 1) * (unsigned long)0xedb88320L);
+      v = (v >> 1) ^ ((v & 1) * (uint32_t)0xedb88320L);
     }
     crc_32_tab[t] = v;
   }
@@ -47,12 +47,12 @@ static void make_crc_tab(void)
 
 #define CRC32(c, b) (crc_32_tab[((int)(c) ^ (b)) & 0xff] ^ ((c) >> 8))
 
-static unsigned long keys[3]; // keys defining the pseudo-random sequence
+static uint32_t keys[3]; // keys defining the pseudo-random sequence
 
 // Returns the next byte in the pseudo-random sequence.
 #define DECRYPT_BYTE_ZIP(t) { \
-  unsigned short temp; \
-  temp = (unsigned short)keys[2] | 2; \
+  uint16_t temp; \
+  temp = (uint16_t)keys[2] | 2; \
   t = (int)(((unsigned)(temp * (temp ^ 1U)) >> 8) & 0xff); \
 }
 
@@ -65,7 +65,7 @@ static unsigned long keys[3]; // keys defining the pseudo-random sequence
 }
 
 static int crypt_busy = 0;
-static unsigned long saved_keys[3];
+static uint32_t saved_keys[3];
 static int saved_crypt_method;
 
 int crypt_method_from_string(char_u *s)
@@ -143,9 +143,9 @@ void crypt_decode(char_u *ptr, long len)
 
   if (use_crypt_method == 0) {
     for (p = ptr; p < ptr + len; p++) {
-      unsigned short temp;
+      uint16_t temp;
 
-      temp = (unsigned short)keys[2] | 2;
+      temp = (uint16_t)keys[2] | 2;
       temp = (int)(((unsigned)(temp * (temp ^ 1U)) >> 8) & 0xff);
       UPDATE_KEYS_ZIP(*p ^= temp);
     }
