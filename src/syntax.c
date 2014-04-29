@@ -416,6 +416,8 @@ static int check_keyword_id(char_u *line, int startcol, int *endcol,
                             long *flags, short **next_list,
                             stateitem_T *cur_si,
                             int *ccharp);
+static keyentry_T *match_keyword(char_u *keyword, hashtab_T *ht,
+                                 stateitem_T *cur_si);
 static void syn_cmd_case(exarg_T *eap, int syncing);
 static void syn_cmd_spell(exarg_T *eap, int syncing);
 static void syntax_sync_clear(void);
@@ -2988,13 +2990,9 @@ check_keyword_id (
     int *ccharp     /* conceal substitution char */
 )
 {
-  keyentry_T  *kp;
   char_u      *kwp;
-  int round;
   int kwlen;
   char_u keyword[MAXKEYWLEN + 1];        /* assume max. keyword len is 80 */
-  hashtab_T   *ht;
-  hashitem_T  *hi;
 
   /* Find first character after the keyword.  First character was already
    * checked. */
@@ -3016,43 +3014,51 @@ check_keyword_id (
    */
   vim_strncpy(keyword, kwp, kwlen);
 
-  /*
-   * Try twice:
-   * 1. matching case
-   * 2. ignoring case
-   */
-  for (round = 1; round <= 2; ++round) {
-    ht = round == 1 ? &syn_block->b_keywtab : &syn_block->b_keywtab_ic;
-    if (ht->ht_used == 0)
-      continue;
-    if (round == 2)     /* ignore case */
-      (void)str_foldcase(kwp, kwlen, keyword, MAXKEYWLEN + 1);
+  keyentry_T *kp = NULL;
 
-    /*
-     * Find keywords that match.  There can be several with different
-     * attributes.
-     * When current_next_list is non-zero accept only that group, otherwise:
-     *  Accept a not-contained keyword at toplevel.
-     *  Accept a keyword at other levels only if it is in the contains list.
-     */
-    hi = hash_find(ht, keyword);
-    if (!HASHITEM_EMPTY(hi))
-      for (kp = HI2KE(hi); kp != NULL; kp = kp->ke_next) {
-        if (current_next_list != 0
-            ? in_id_list(NULL, current_next_list, &kp->k_syn, 0)
-            : (cur_si == NULL
-               ? !(kp->flags & HL_CONTAINED)
-               : in_id_list(cur_si, cur_si->si_cont_list,
-                   &kp->k_syn, kp->flags & HL_CONTAINED))) {
-          *endcolp = startcol + kwlen;
-          *flagsp = kp->flags;
-          *next_listp = kp->next_list;
-          *ccharp = kp->k_char;
-          return kp->k_syn.id;
-        }
-      }
+  // matching case
+  if (syn_block->b_keywtab.ht_used != 0) {
+    kp = match_keyword(keyword, &syn_block->b_keywtab, cur_si);
   }
+
+  // ignoring case
+  if (kp == NULL && syn_block->b_keywtab_ic.ht_used != 0) {
+    str_foldcase(kwp, kwlen, keyword, MAXKEYWLEN + 1);
+    kp = match_keyword(keyword, &syn_block->b_keywtab_ic, cur_si);
+  }
+
+  if (kp != NULL) {
+    *endcolp = startcol + kwlen;
+    *flagsp = kp->flags;
+    *next_listp = kp->next_list;
+    *ccharp = kp->k_char;
+    return kp->k_syn.id;
+  }
+
   return 0;
+}
+
+/// Find keywords that match.  There can be several with different
+/// attributes.
+/// When current_next_list is non-zero accept only that group, otherwise:
+///  Accept a not-contained keyword at toplevel.
+///  Accept a keyword at other levels only if it is in the contains list.
+static keyentry_T *match_keyword(char_u *keyword, hashtab_T *ht,
+                                 stateitem_T *cur_si)
+{
+  hashitem_T *hi = hash_find(ht, keyword);
+  if (!HASHITEM_EMPTY(hi))
+    for (keyentry_T *kp = HI2KE(hi); kp != NULL; kp = kp->ke_next) {
+      if (current_next_list != 0
+          ? in_id_list(NULL, current_next_list, &kp->k_syn, 0)
+          : (cur_si == NULL
+            ? !(kp->flags & HL_CONTAINED)
+            : in_id_list(cur_si, cur_si->si_cont_list,
+                         &kp->k_syn, kp->flags & HL_CONTAINED))) {
+        return kp;
+      }
+    }
+  return NULL;
 }
 
 /*
