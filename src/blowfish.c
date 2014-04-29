@@ -567,7 +567,7 @@ void bf_crypt_decode(char_u *ptr, long len)
 void bf_crypt_init_keys(char_u *passwd)
 {
   char_u *p;
-  for (p = passwd; *p != NUL; p++) {
+  for (p = passwd; *p != '\0'; p++) {
     BF_CFB_UPDATE(*p);
   }
 }

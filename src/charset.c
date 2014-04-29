@@ -169,7 +169,7 @@ int buf_init_chartab(buf_T *buf, int global)
       tilde = FALSE;
       do_isalpha = FALSE;
 
-      if ((*p == '^') && (p[1] != NUL)) {
+      if ((*p == '^') && (p[1] != '\0')) {
         tilde = TRUE;
         ++p;
       }
@@ -183,7 +183,7 @@ int buf_init_chartab(buf_T *buf, int global)
       }
       c2 = -1;
 
-      if ((*p == '-') && (p[1] != NUL)) {
+      if ((*p == '-') && (p[1] != '\0')) {
         ++p;
 
         if (VIM_ISDIGIT(*p)) {
@@ -199,7 +199,7 @@ int buf_init_chartab(buf_T *buf, int global)
           || (c >= 256)
           || ((c2 < c) && (c2 != -1))
           || (c2 >= 256)
-          || !((*p == NUL) || (*p == ','))) {
+          || !((*p == '\0') || (*p == ','))) {
         return FAIL;
       }
 
@@ -271,7 +271,7 @@ int buf_init_chartab(buf_T *buf, int global)
       c = *p;
       p = skip_to_option_part(p);
 
-      if ((c == ',') && (*p == NUL)) {
+      if ((c == ',') && (*p == '\0')) {
         // Trailing comma is not allowed.
         return FAIL;
       }
@@ -344,7 +344,7 @@ char_u *transstr(char_u *s)
     len = 0;
     p = s;
 
-    while (*p != NUL) {
+    while (*p != '\0') {
       if ((l = (*mb_ptr2len)(p)) > 1) {
         c = (*mb_ptr2char)(p);
         p += l;
@@ -371,10 +371,10 @@ char_u *transstr(char_u *s)
     res = alloc((unsigned)(vim_strsize(s) + 1));
   }
 
-  *res = NUL;
+  *res = '\0';
   p = s;
 
-  while (*p != NUL) {
+  while (*p != '\0') {
     if (has_mbyte && ((l = (*mb_ptr2len)(p)) > 1)) {
       c = (*mb_ptr2char)(p);
 
@@ -435,14 +435,14 @@ char_u* str_foldcase(char_u *str, int orglen, char_u *buf, int buflen)
   }
 
   if (buf == NULL) {
-    GA_CHAR(len) = NUL;
+    GA_CHAR(len) = '\0';
   } else {
-    buf[len] = NUL;
+    buf[len] = '\0';
   }
 
   // Make each character lower case.
   i = 0;
-  while (STR_CHAR(i) != NUL) {
+  while (STR_CHAR(i) != '\0') {
     if (enc_utf8 || (has_mbyte && (MB_BYTE2LEN(STR_CHAR(i)) > 1))) {
       if (enc_utf8) {
         int c = utf_ptr2char(STR_PTR(i));
@@ -530,7 +530,7 @@ char_u* transchar(int c)
       || ((c < 256) && vim_isprintc_strict(c))) {
     // printable character
     transchar_buf[i] = c;
-    transchar_buf[i + 1] = NUL;
+    transchar_buf[i + 1] = '\0';
   } else {
     transchar_nonprint(transchar_buf + i, c);
   }
@@ -562,7 +562,7 @@ void transchar_nonprint(char_u *buf, int c)
 {
   if (c == NL) {
     // we use newline in place of a NUL
-    c = NUL;
+    c = '\0';
   } else if ((c == CAR) && (get_fileformat(curbuf) == EOL_MAC)) {
     // we use CR in place of  NL in this case
     c = NL;
@@ -577,14 +577,14 @@ void transchar_nonprint(char_u *buf, int c)
     // DEL displayed as ^?
     buf[1] = c ^ 0x40;
 
-    buf[2] = NUL;
+    buf[2] = '\0';
   } else if (enc_utf8 && (c >= 0x80)) {
     transchar_hex(buf, c);
   } else if ((c >= ' ' + 0x80) && (c <= '~' + 0x80)) {
     // 0xa0 - 0xfe
     buf[0] = '|';
     buf[1] = c - 0x80;
-    buf[2] = NUL;
+    buf[2] = '\0';
   } else {
     // 0x80 - 0x9f and 0xff
     // TODO: EBCDIC I don't know what to do with this chars, so I display
@@ -592,7 +592,7 @@ void transchar_nonprint(char_u *buf, int c)
     buf[0] = '~';
     buf[1] = (c - 0x80) ^ 0x40;
     // 0xff displayed as ~?
-    buf[2] = NUL;
+    buf[2] = '\0';
   }
 }
 
@@ -612,7 +612,7 @@ void transchar_hex(char_u *buf, int c)
   buf[++i] = nr2hex((unsigned)c >> 4);
   buf[++i] = nr2hex((unsigned)c);
   buf[++i] = '>';
-  buf[++i] = NUL;
+  buf[++i] = '\0';
 }
 
 /// Convert the lower 4 bits of byte "c" to its hex character.
@@ -724,7 +724,7 @@ int vim_strnsize(char_u *s, int len)
 {
   assert(s != NULL);
   int size = 0;
-  while (*s != NUL && --len >= 0) {
+  while (*s != '\0' && --len >= 0) {
     if (has_mbyte) {
       int l = (*mb_ptr2len)(s);
       size += ptr2cells(s);
@@ -794,7 +794,7 @@ int linetabsize_col(int startcol, char_u *s)
 {
   colnr_T col = startcol;
 
-  while (*s != NUL) {
+  while (*s != '\0') {
     col += lbr_chartabsize_adv(&s, col);
   }
   return (int)col;
@@ -812,7 +812,7 @@ int win_linetabsize(win_T *wp, char_u *p, colnr_T len)
   colnr_T col = 0;
   char_u *s;
 
-  for (s = p; *s != NUL && (len == MAXCOL || s < p + len); mb_ptr_adv(s)) {
+  for (s = p; *s != '\0' && (len == MAXCOL || s < p + len); mb_ptr_adv(s)) {
     col += win_lbr_chartabsize(wp, s, col, NULL);
   }
   return (int)col;
@@ -901,7 +901,7 @@ int vim_isfilec_or_wc(int c)
 {
   char_u buf[2];
   buf[0] = (char_u)c;
-  buf[1] = NUL;
+  buf[1] = '\0';
   return vim_isfilec(c) || c == ']' || mch_has_wildcard(buf);
 }
 
@@ -946,7 +946,7 @@ int vim_isprintc_strict(int c)
 /// @return The number of characters taken up on the screen.
 int lbr_chartabsize(unsigned char *s, colnr_T col)
 {
-  if (!curwin->w_p_lbr && (*p_sbr == NUL)) {
+  if (!curwin->w_p_lbr && (*p_sbr == '\0')) {
     if (curwin->w_p_wrap) {
       return win_nolbr_chartabsize(curwin, s, col, NULL);
     }
@@ -994,7 +994,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   int n;
 
   // No 'linebreak' and 'showbreak': return quickly.
-  if (!wp->w_p_lbr && (*p_sbr == NUL)) {
+  if (!wp->w_p_lbr && (*p_sbr == '\0')) {
     if (wp->w_p_wrap) {
       return win_nolbr_chartabsize(wp, s, col, headp);
     }
@@ -1032,7 +1032,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
       mb_ptr_adv(s);
       c = *s;
 
-      if (!((c != NUL)
+      if (!((c != '\0')
             && (vim_isbreak(c)
                 || (!vim_isbreak(c)
                     && ((col2 == col) || !vim_isbreak(*ps)))))) {
@@ -1061,7 +1061,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
   // Set *headp to the size of what we add.
   added = 0;
 
-  if ((*p_sbr != NUL) && wp->w_p_wrap && (col != 0)) {
+  if ((*p_sbr != '\0') && wp->w_p_wrap && (col != 0)) {
     numberextra = win_col_off(wp);
     col += numberextra + mb_added;
 
@@ -1193,15 +1193,15 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
   // This function is used very often, do some speed optimizations.
   // When 'list', 'linebreak' and 'showbreak' are not set use a simple loop.
    // Also use this when 'list' is set but tabs take their normal size.
-  if ((!wp->w_p_list || (lcs_tab1 != NUL))
+  if ((!wp->w_p_list || (lcs_tab1 != '\0'))
       && !wp->w_p_lbr
-      && (*p_sbr == NUL)) {
+      && (*p_sbr == '\0')) {
     for (;;) {
       head = 0;
       c = *ptr;
 
       // make sure we don't go past the end of the line
-      if (c == NUL) {
+      if (c == '\0') {
         // NUL at end of line only takes one column
         incr = 1;
         break;
@@ -1250,7 +1250,7 @@ void getvcol(win_T *wp, pos_T *pos, colnr_T *start, colnr_T *cursor,
       incr = win_lbr_chartabsize(wp, ptr, vcol, &head);
 
       // make sure we don't go past the end of the line
-      if (*ptr == NUL) {
+      if (*ptr == '\0') {
         // NUL at end of line only takes one column
         incr = 1;
         break;
@@ -1455,7 +1455,7 @@ char_u* skiphex(char_u *q)
 char_u* skiptodigit(char_u *q)
 {
   char_u *p = q;
-  while (*p != NUL && !VIM_ISDIGIT(*p)) {
+  while (*p != '\0' && !VIM_ISDIGIT(*p)) {
     // skip to next digit
     p++;
   }
@@ -1470,7 +1470,7 @@ char_u* skiptodigit(char_u *q)
 char_u* skiptohex(char_u *q)
 {
   char_u *p = q;
-  while (*p != NUL && !vim_isxdigit(*p)) {
+  while (*p != '\0' && !vim_isxdigit(*p)) {
     // skip to next digit
     p++;
   }
@@ -1654,7 +1654,7 @@ int vim_tolower(int c)
 /// @return Pointer to the next whitespace or NUL character.
 char_u* skiptowhite(char_u *p)
 {
-  while (*p != ' ' && *p != '\t' && *p != NUL) {
+  while (*p != ' ' && *p != '\t' && *p != '\0') {
     p++;
   }
   return p;
@@ -1666,8 +1666,8 @@ char_u* skiptowhite(char_u *p)
 ///
 /// @return Pointer to the next whitespace character.
 char_u* skiptowhite_esc(char_u *p) {
-  while (*p != ' ' && *p != '\t' && *p != NUL) {
-    if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != NUL)) {
+  while (*p != ' ' && *p != '\t' && *p != '\0') {
+    if (((*p == '\\') || (*p == Ctrl_V)) && (*(p + 1) != '\0')) {
       ++p;
     }
     ++p;
@@ -1705,7 +1705,7 @@ long getdigits(char_u **pp)
 int vim_isblankline(char_u *lbuf)
 {
   char_u *p = skipwhite(lbuf);
-  return *p == NUL || *p == '\r' || *p == '\n';
+  return *p == '\0' || *p == '\r' || *p == '\n';
 }
 
 /// Convert a string into a long and/or unsigned long, taking care of
@@ -1880,13 +1880,13 @@ int rem_backslash(char_u *str)
   return str[0] == '\\'
          && str[1] < 0x80
          && (str[1] == ' '
-             || (str[1] != NUL
+             || (str[1] != '\0'
                  && str[1] != '*'
                  && str[1] != '?'
                  && !vim_isfilec(str[1])));
 
 #else  // ifdef BACKSLASH_IN_FILENAME
-  return str[0] == '\\' && str[1] != NUL;
+  return str[0] == '\\' && str[1] != '\0';
 #endif  // ifdef BACKSLASH_IN_FILENAME
 }
 

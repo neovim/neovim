@@ -29,7 +29,7 @@ static struct modmasktable {
   {MOD_MASK_MULTI_CLICK,      MOD_MASK_4CLICK,        (char_u)'4'},
   /* 'A' must be the last one */
   {MOD_MASK_ALT,              MOD_MASK_ALT,           (char_u)'A'},
-  {0, 0, NUL}
+  {0, 0, '\0'}
 };
 
 /*
@@ -125,7 +125,7 @@ static char_u modifier_keys_table[] =
   /* TAB pseudo code*/
   MOD_MASK_SHIFT, 'k', 'B',                   KS_EXTRA, (int)KE_TAB,
 
-  NUL
+  '\0'
 };
 
 static struct key_name_entry {
@@ -349,7 +349,7 @@ int simplify_key(int key, int *modifiers)
     }
     key0 = KEY2TERMCAP0(key);
     key1 = KEY2TERMCAP1(key);
-    for (i = 0; modifier_keys_table[i] != NUL; i += MOD_KEYS_ENTRY_SIZE)
+    for (i = 0; modifier_keys_table[i] != '\0'; i += MOD_KEYS_ENTRY_SIZE)
       if (key0 == modifier_keys_table[i + 3]
           && key1 == modifier_keys_table[i + 4]
           && (*modifiers & modifier_keys_table[i])) {
@@ -477,7 +477,7 @@ char_u *get_special_key_name(int c, int modifiers)
     idx = (int)STRLEN(string);
   }
   string[idx++] = '>';
-  string[idx] = NUL;
+  string[idx] = '\0';
   return string;
 }
 
@@ -555,7 +555,7 @@ find_special_key (
   for (bp = src + 1; *bp == '-' || vim_isIDc(*bp); bp++) {
     if (*bp == '-') {
       last_dash = bp;
-      if (bp[1] != NUL) {
+      if (bp[1] != '\0') {
         if (has_mbyte)
           l = mb_ptr2len(bp + 1);
         else
@@ -617,7 +617,7 @@ find_special_key (
        * get_special_key_code() may return NUL for invalid
        * special key name.
        */
-      if (key != NUL) {
+      if (key != '\0') {
         /*
          * Only use a modifier when there is no special key code that
          * includes the modifier.
@@ -711,19 +711,19 @@ int get_special_key_code(char_u *name)
   /*
    * If it's <t_xx> we get the code for xx from the termcap
    */
-  if (name[0] == 't' && name[1] == '_' && name[2] != NUL && name[3] != NUL) {
+  if (name[0] == 't' && name[1] == '_' && name[2] != '\0' && name[3] != '\0') {
     string[0] = name[2];
     string[1] = name[3];
-    string[2] = NUL;
+    string[2] = '\0';
     if (add_termcap_entry(string, FALSE) == OK)
       return TERMCAP2KEY(name[2], name[3]);
   } else
     for (i = 0; key_names_table[i].name != NULL; i++) {
       table_name = key_names_table[i].name;
-      for (j = 0; vim_isIDc(name[j]) && table_name[j] != NUL; j++)
+      for (j = 0; vim_isIDc(name[j]) && table_name[j] != '\0'; j++)
         if (TOLOWER_ASC(table_name[j]) != TOLOWER_ASC(name[j]))
           break;
-      if (!vim_isIDc(name[j]) && table_name[j] == NUL)
+      if (!vim_isIDc(name[j]) && table_name[j] == '\0')
         return key_names_table[i].key;
     }
   return 0;

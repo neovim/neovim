@@ -333,13 +333,13 @@ void pum_redraw(void)
           }
           w = ptr2cells(p);
 
-          if ((*p == NUL) || (*p == TAB) || (totwidth + w > pum_width)) {
+          if ((*p == '\0') || (*p == TAB) || (totwidth + w > pum_width)) {
             // Display the text that fits or comes before a Tab.
             // First convert it to printable characters.
             char_u *st;
             int saved = *p;
 
-            *p = NUL;
+            *p = '\0';
             st = transstr(s);
             *p = saved;
 
@@ -573,13 +573,13 @@ static int pum_set_selected(int n, int repeat)
           char_u *p, *e;
           linenr_T lnum = 0;
 
-          for (p = pum_array[pum_selected].pum_info; *p != NUL;) {
+          for (p = pum_array[pum_selected].pum_info; *p != '\0';) {
             e = vim_strchr(p, '\n');
             if (e == NULL) {
               ml_append(lnum++, p, 0, FALSE);
               break;
             } else {
-              *e = NUL;
+              *e = '\0';
               ml_append(lnum++, p, (int)(e - p + 1), FALSE);
               *e = '\n';
               p = e + 1;

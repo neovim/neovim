@@ -747,7 +747,7 @@ do_bufdel (
           break;
       } else {    /* addr_count == 1 */
         arg = skipwhite(arg);
-        if (*arg == NUL)
+        if (*arg == '\0')
           break;
         if (!VIM_ISDIGIT(*arg)) {
           p = skiptowhite_esc(arg);
@@ -1232,7 +1232,7 @@ void enter_buffer(buf_T *buf)
     /* If there is no filetype, allow for detecting one.  Esp. useful for
      * ":ball" used in a autocommand.  If there already is a filetype we
      * might prefer to keep it. */
-    if (*curbuf->b_p_ft == NUL)
+    if (*curbuf->b_p_ft == '\0')
       did_filetype = FALSE;
 
     open_buffer(FALSE, NULL, 0);
@@ -1265,7 +1265,7 @@ void enter_buffer(buf_T *buf)
     (void)keymap_init();
   /* May need to set the spell language.  Can only do this after the buffer
    * has been properly setup. */
-  if (!curbuf->b_help && curwin->w_p_spell && *curwin->w_s->b_p_spl != NUL)
+  if (!curbuf->b_help && curwin->w_p_spell && *curwin->w_s->b_p_spl != '\0')
     (void)did_set_spelllang(curwin);
 
   redraw_later(NOT_VALID);
@@ -1768,7 +1768,7 @@ buflist_findpat (
       for (attempt = 0; attempt <= 3; ++attempt) {
         /* may add '^' and '$' */
         if (toggledollar)
-          *patend = (attempt < 2) ? NUL : '$';           /* add/remove '$' */
+          *patend = (attempt < 2) ? '\0' : '$';           /* add/remove '$' */
         p = pat;
         if (*p == '^' && !(attempt & 1))                 /* add/remove '^' */
           ++p;
@@ -2227,7 +2227,7 @@ setfname (
   struct stat st;
 #endif
 
-  if (ffname == NULL || *ffname == NUL) {
+  if (ffname == NULL || *ffname == '\0') {
     /* Removing the name. */
     vim_free(buf->b_ffname);
     vim_free(buf->b_sfname);
@@ -2443,7 +2443,7 @@ static int otherfile_buf(buf_T *buf, char_u *ffname
 )
 {
   /* no name is different */
-  if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL)
+  if (ffname == NULL || *ffname == '\0' || buf->b_ffname == NULL)
     return TRUE;
   if (fnamecmp(ffname, buf->b_ffname) == 0)
     return FALSE;
@@ -2653,7 +2653,7 @@ void maketitle(void)
     }
 
     t_str = buf;
-    if (*p_titlestring != NUL) {
+    if (*p_titlestring != '\0') {
       if (stl_syntax & STL_IN_TITLE) {
         int use_sandbox = FALSE;
         int save_called_emsg = called_emsg;
@@ -2714,7 +2714,7 @@ void maketitle(void)
           vim_strncpy(buf + off, (char_u *)_("help"),
               (size_t)(SPACE_FOR_DIR - off - 1));
         else
-          *p = NUL;
+          *p = '\0';
 
         /* Translate unprintable chars and concatenate.  Keep some
          * room for the server name.  When there is no room (very long
@@ -2745,7 +2745,7 @@ void maketitle(void)
 
   if (p_icon) {
     i_str = buf;
-    if (*p_iconstring != NUL) {
+    if (*p_iconstring != '\0') {
       if (stl_syntax & STL_IN_ICON) {
         int use_sandbox = FALSE;
         int save_called_emsg = called_emsg;
@@ -2766,7 +2766,7 @@ void maketitle(void)
         i_name = buf_spname(curbuf);
       else                          /* use file name only in icon */
         i_name = path_tail(curbuf->b_ffname);
-      *i_str = NUL;
+      *i_str = '\0';
       /* Truncate name at 100 bytes. */
       len = (int)STRLEN(i_name);
       if (len > 100) {
@@ -2914,7 +2914,7 @@ build_stl_str_hl (
   /* Get line & check if empty (cursorpos will show "0-1").  Note that
    * p will become invalid when getting another buffer line. */
   p = ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE);
-  empty_line = (*p == NUL);
+  empty_line = (*p == '\0');
 
   /* Get the byte value now, in case we need it below. This is more
    * efficient than making a copy of the line. */
@@ -2939,22 +2939,22 @@ build_stl_str_hl (
       break;
     }
 
-    if (*s != NUL && *s != '%')
+    if (*s != '\0' && *s != '%')
       prevchar_isflag = prevchar_isitem = FALSE;
 
     /*
      * Handle up to the next '%' or the end.
      */
-    while (*s != NUL && *s != '%' && p + 1 < out + outlen)
+    while (*s != '\0' && *s != '%' && p + 1 < out + outlen)
       *p++ = *s++;
-    if (*s == NUL || p + 1 >= out + outlen)
+    if (*s == '\0' || p + 1 >= out + outlen)
       break;
 
     /*
      * Handle one '%' item.
      */
     s++;
-    if (*s == NUL)      /* ignore trailing % */
+    if (*s == '\0')      /* ignore trailing % */
       break;
     if (*s == '%') {
       if (p + 1 >= out + outlen)
@@ -2984,7 +2984,7 @@ build_stl_str_hl (
       groupdepth--;
 
       t = item[groupitem[groupdepth]].start;
-      *p = NUL;
+      *p = '\0';
       l = vim_strsize(t);
       if (curitem > groupitem[groupdepth] + 1
           && item[groupitem[groupdepth]].minwid == 0) {
@@ -3144,7 +3144,7 @@ build_stl_str_hl (
     case STL_VIM_EXPR:     /* '{' */
       itemisflag = TRUE;
       t = p;
-      while (*s != '}' && *s != NUL && p + 1 < out + outlen)
+      while (*s != '}' && *s != '\0' && p + 1 < out + outlen)
         *p++ = *s++;
       if (*s != '}')            /* missing '}' or out of space */
         break;
@@ -3167,7 +3167,7 @@ build_stl_str_hl (
       do_unlet((char_u *)"g:actual_curbuf", TRUE);
 
       if (str != NULL && *str != 0) {
-        if (*skipdigits(str) == NUL) {
+        if (*skipdigits(str) == '\0') {
           num = atoi((char *)str);
           vim_free(str);
           str = NULL;
@@ -3194,7 +3194,7 @@ build_stl_str_hl (
     case STL_VIRTCOL_ALT:
       /* In list mode virtcol needs to be recomputed */
       virtcol = wp->w_virtcol;
-      if (wp->w_p_list && lcs_tab1 == NUL) {
+      if (wp->w_p_list && lcs_tab1 == '\0') {
         wp->w_p_list = FALSE;
         getvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
         wp->w_p_list = TRUE;
@@ -3273,7 +3273,7 @@ build_stl_str_hl (
       break;
 
     case STL_FILETYPE:
-      if (*wp->w_buffer->b_p_ft != NUL
+      if (*wp->w_buffer->b_p_ft != '\0'
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 3) {
         vim_snprintf((char *)tmp, sizeof(tmp), "[%s]",
             wp->w_buffer->b_p_ft);
@@ -3283,7 +3283,7 @@ build_stl_str_hl (
 
     case STL_FILETYPE_ALT:
       itemisflag = TRUE;
-      if (*wp->w_buffer->b_p_ft != NUL
+      if (*wp->w_buffer->b_p_ft != '\0'
           && STRLEN(wp->w_buffer->b_p_ft) < TMPLEN - 2) {
         vim_snprintf((char *)tmp, sizeof(tmp), ",%s",
             wp->w_buffer->b_p_ft);
@@ -3325,7 +3325,7 @@ build_stl_str_hl (
 
     case STL_HIGHLIGHT:
       t = s;
-      while (*s != '#' && *s != NUL)
+      while (*s != '#' && *s != '\0')
         ++s;
       if (*s == '#') {
         item[curitem].type = Highlight;
@@ -3333,7 +3333,7 @@ build_stl_str_hl (
         item[curitem].minwid = -syn_namen2id(t, (int)(s - t));
         curitem++;
       }
-      if (*s != NUL)
+      if (*s != '\0')
         ++s;
       continue;
     }
@@ -3432,7 +3432,7 @@ build_stl_str_hl (
       prevchar_isflag = FALSE;              /* Item not NULL, but not a flag */
     curitem++;
   }
-  *p = NUL;
+  *p = '\0';
   itemcnt = curitem;
 
   if (usefmt != fmt)
@@ -3497,7 +3497,7 @@ build_stl_str_hl (
       while (++width < maxwidth) {
         s = s + STRLEN(s);
         *s++ = fillchar;
-        *s = NUL;
+        *s = '\0';
       }
 
       --n;              /* count the '<' */
@@ -4131,7 +4131,7 @@ chk_modeline (
   scid_T save_SID;
 
   prev = -1;
-  for (s = ml_get(lnum); *s != NUL; ++s) {
+  for (s = ml_get(lnum); *s != '\0'; ++s) {
     if (prev == -1 || vim_isspace(prev)) {
       if ((prev != -1 && STRNCMP(s, "ex:", (size_t)3) == 0)
           || STRNCMP(s, "vi:", (size_t)3) == 0)
@@ -4174,17 +4174,17 @@ chk_modeline (
     end = FALSE;
     while (end == FALSE) {
       s = skipwhite(s);
-      if (*s == NUL)
+      if (*s == '\0')
         break;
 
       /*
        * Find end of set command: ':' or end of line.
        * Skip over "\:", replacing it with ":".
        */
-      for (e = s; *e != ':' && *e != NUL; ++e)
+      for (e = s; *e != ':' && *e != '\0'; ++e)
         if (e[0] == '\\' && e[1] == ':')
           STRMOVE(e, e + 1);
-      if (*e == NUL)
+      if (*e == '\0')
         end = TRUE;
 
       /*
@@ -4201,9 +4201,9 @@ chk_modeline (
         end = TRUE;
         s = vim_strchr(s, ' ') + 1;
       }
-      *e = NUL;                         /* truncate the set command */
+      *e = '\0';                         /* truncate the set command */
 
-      if (*s != NUL) {                  /* skip over an empty "::" */
+      if (*s != '\0') {                  /* skip over an empty "::" */
         save_SID = current_SID;
         current_SID = SID_MODELINE;
         retval = do_set(s, OPT_MODELINE | OPT_LOCAL | flags);

@@ -517,7 +517,7 @@ int has_patch(int n)
 void ex_version(exarg_T *eap)
 {
   // Ignore a ":version 9.99" command.
-  if (*eap->arg == NUL) {
+  if (*eap->arg == '\0') {
     msg_putchar('\n');
     list_version();
   }
@@ -639,15 +639,15 @@ void list_version(void)
 
 #ifdef HAVE_PATHDEF
 
-  if ((*compiled_user != NUL) || (*compiled_sys != NUL)) {
+  if ((*compiled_user != '\0') || (*compiled_sys != '\0')) {
     MSG_PUTS(_("\nCompiled "));
 
-    if (*compiled_user != NUL) {
+    if (*compiled_user != '\0') {
       MSG_PUTS(_("by "));
       MSG_PUTS(compiled_user);
     }
 
-    if (*compiled_sys != NUL) {
+    if (*compiled_sys != '\0') {
       MSG_PUTS("@");
       MSG_PUTS(compiled_sys);
     }
@@ -692,13 +692,13 @@ void list_version(void)
 #endif  // ifdef USR_EXRC_FILE2
 #ifdef HAVE_PATHDEF
 
-  if (*default_vim_dir != NUL) {
+  if (*default_vim_dir != '\0') {
     version_msg(_("  fall-back for $VIM: \""));
     version_msg((char *)default_vim_dir);
     version_msg("\"\n");
   }
 
-  if (*default_vimruntime_dir != NUL) {
+  if (*default_vimruntime_dir != '\0') {
     version_msg(_(" f-b for $VIMRUNTIME: \""));
     version_msg((char *)default_vimruntime_dir);
     version_msg("\"\n");
@@ -832,7 +832,7 @@ void intro_message(int colon)
         }
       }
 
-      if (*p != NUL) {
+      if (*p != '\0') {
         do_intro_line(row, (char_u *)_(p), i == 2, 0);
       }
       row++;
@@ -890,10 +890,10 @@ static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
   }
 
   // Split up in parts to highlight <> items differently.
-  for (p = mesg; *p != NUL; p += l) {
+  for (p = mesg; *p != '\0'; p += l) {
     clen = 0;
 
-    for (l = 0; p[l] != NUL
+    for (l = 0; p[l] != '\0'
          && (l == 0 || (p[l] != '<' && p[l - 1] != '>')); ++l) {
       if (has_mbyte) {
         clen += ptr2cells(p + l);

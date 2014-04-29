@@ -61,7 +61,7 @@ char_u *parse_shape_opt(int what)
      * Repeat for all comma separated parts.
      */
     modep = p_guicursor;
-    while (*modep != NUL) {
+    while (*modep != '\0') {
       colonp = vim_strchr(modep, ':');
       if (colonp == NULL)
         return (char_u *)N_("E545: Missing colon");

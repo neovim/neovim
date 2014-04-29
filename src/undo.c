@@ -694,7 +694,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
   /* Loop over 'undodir'.  When reading find the first file that exists.
    * When not reading use the first directory that exists or ".". */
   dirp = p_udir;
-  while (*dirp != NUL) {
+  while (*dirp != '\0') {
     dir_len = copy_option_part(&dirp, dir_name, IOSIZE, ",");
     if (dir_len == 1 && dir_name[0] == '.') {
       /* Use same directory as the ffname,
@@ -707,13 +707,13 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       *p = '.';
       STRCAT(p, ".un~");
     } else {
-      dir_name[dir_len] = NUL;
+      dir_name[dir_len] = '\0';
       if (os_isdir(dir_name)) {
         if (munged_name == NULL) {
           munged_name = vim_strsave(ffname);
           if (munged_name == NULL)
             return NULL;
-          for (p = munged_name; *p != NUL; mb_ptr_adv(p))
+          for (p = munged_name; *p != '\0'; mb_ptr_adv(p))
             if (vim_ispathsep(*p))
               *p = '%';
         }
@@ -763,7 +763,7 @@ static size_t fwrite_crypt(buf_T *buf, char_u *ptr, size_t len, FILE *fp)
   char_u small_buf[100];
   size_t i;
 
-  if (*buf->b_p_key == NUL)
+  if (*buf->b_p_key == '\0')
     return fwrite(ptr, len, (size_t)1, fp);
   if (len < 100)
     copy = small_buf;      /* no malloc()/free() for short strings */
@@ -786,7 +786,7 @@ static char_u *read_string_decrypt(buf_T *buf, FILE *fd, int len)
   char_u  *ptr;
 
   ptr = read_string(fd, len);
-  if (ptr != NULL && *buf->b_p_key != NUL)
+  if (ptr != NULL && *buf->b_p_key != '\0')
     crypt_decode(ptr, len);
   return ptr;
 }
@@ -801,7 +801,7 @@ static int serialize_header(FILE *fp, buf_T *buf, char_u *hash)
 
   /* If the buffer is encrypted then all text bytes following will be
    * encrypted.  Numbers and other info is not crypted. */
-  if (*buf->b_p_key != NUL) {
+  if (*buf->b_p_key != '\0') {
     char_u *header;
     int header_len;
 
@@ -1253,7 +1253,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
    */
   if (serialize_header(fp, buf, hash) == FAIL)
     goto write_error;
-  if (*buf->b_p_key != NUL)
+  if (*buf->b_p_key != '\0')
     do_crypt = TRUE;
 
   /*
@@ -1404,7 +1404,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   }
   version = get2c(fp);
   if (version == UF_VERSION_CRYPT) {
-    if (*curbuf->b_p_key == NUL) {
+    if (*curbuf->b_p_key == '\0') {
       EMSG2(_("E832: Non-encrypted file has encrypted undo file: %s"),
           file_name);
       goto error;
@@ -2317,7 +2317,7 @@ u_undo_end (
     uhp = curbuf->b_u_newhead;
 
   if (uhp == NULL)
-    *msgbuf = NUL;
+    *msgbuf = '\0';
   else
     u_add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
 

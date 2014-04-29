@@ -84,7 +84,7 @@ static bool is_executable_in_path(const char_u *name)
 {
   const char *path = getenv("PATH");
   // PATH environment variable does not exist or is empty.
-  if (path == NULL || *path == NUL) {
+  if (path == NULL || *path == '\0') {
     return false;
   }
 

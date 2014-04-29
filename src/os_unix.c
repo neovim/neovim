@@ -250,22 +250,22 @@ void mch_settitle(char_u *title, char_u *icon)
    * Note: if "t_ts" is set, title is set with escape sequence rather
    *	     than x11 calls, because the x11 calls don't always work
    */
-  if ((type || *T_TS != NUL) && title != NULL) {
+  if ((type || *T_TS != '\0') && title != NULL) {
     if (oldtitle == NULL
         )                       /* first call but not in GUI, save title */
       (void)get_x11_title(FALSE);
 
-    if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
+    if (*T_TS != '\0')                   /* it's OK if t_fs is empty */
       term_settitle(title);
     did_set_title = TRUE;
   }
 
-  if ((type || *T_CIS != NUL) && icon != NULL) {
+  if ((type || *T_CIS != '\0') && icon != NULL) {
     if (oldicon == NULL
         )                       /* first call, save icon */
       get_x11_icon(FALSE);
 
-    if (*T_CIS != NUL) {
+    if (*T_CIS != '\0') {
       out_str(T_CIS);                           /* set icon start */
       out_str_nf(icon);
       out_str(T_CIE);                           /* set icon end */
@@ -396,7 +396,7 @@ int len;              /* buffer size, only used when name gets longer */
       dirp = opendir(".");
       tail = name;
     } else {
-      *slash = NUL;
+      *slash = '\0';
       dirp = opendir((char *)name);
       *slash = '/';
       tail = slash + 1;
@@ -757,7 +757,7 @@ void get_stty()
     buf[0] = keys.sg_erase;
     intr_char = keys.sg_kill;
 #endif
-    buf[1] = NUL;
+    buf[1] = '\0';
     add_termcode((char_u *)"kb", buf, FALSE);
 
     /*
@@ -832,7 +832,7 @@ void check_mouse_termcode()
     set_mouse_termcode(KS_MOUSE, (char_u *)(term_is_8bit(T_NAME)
                                             ? IF_EB("\233M", CSI_STR "M")
                                             : IF_EB("\033[M", ESC_STR "[M")));
-    if (*p_mouse != NUL) {
+    if (*p_mouse != '\0') {
       /* force mouse off and maybe on to send possibly new mouse
        * activation sequence to the xterm, with(out) drag tracing. */
       mch_setmouse(FALSE);
@@ -867,7 +867,7 @@ void check_mouse_termcode()
                                                   ? IF_EB("\233", CSI_STR)
                                                   : IF_EB("\033[", ESC_STR "[")));
 
-    if (*p_mouse != NUL) {
+    if (*p_mouse != '\0') {
       mch_setmouse(FALSE);
       setmouse();
     }
@@ -880,7 +880,7 @@ void check_mouse_termcode()
                                                 ? IF_EB("\233<", CSI_STR "<")
                                                 : IF_EB("\033[<", ESC_STR "[<")));
 
-    if (*p_mouse != NUL) {
+    if (*p_mouse != '\0') {
       mch_setmouse(FALSE);
       setmouse();
     }
@@ -1115,7 +1115,7 @@ int flags;                      /* EW_* flags */
     /* Count the length of the patterns in the same way as they are put in
      * "command" below. */
     ++len;                              /* add space */
-    for (j = 0; pat[i][j] != NUL; ++j) {
+    for (j = 0; pat[i][j] != '\0'; ++j) {
       if (vim_strchr(SHELL_SPECIAL, pat[i][j]) != NULL)
         ++len;                  /* may add a backslash */
       ++len;
@@ -1169,10 +1169,10 @@ int flags;                      /* EW_* flags */
 
       p = command + STRLEN(command);
       *p++ = ' ';
-      for (j = 0; pat[i][j] != NUL; ++j) {
+      for (j = 0; pat[i][j] != '\0'; ++j) {
         if (pat[i][j] == '`')
           intick = !intick;
-        else if (pat[i][j] == '\\' && pat[i][j + 1] != NUL) {
+        else if (pat[i][j] == '\\' && pat[i][j + 1] != '\0') {
           /* Remove a backslash, take char literally.  But keep
            * backslash inside backticks, before a special character
            * and before a backtick. */
@@ -1190,7 +1190,7 @@ int flags;                      /* EW_* flags */
         /* Copy one character. */
         *p++ = pat[i][j];
       }
-      *p = NUL;
+      *p = '\0';
     }
 
   if (flags & EW_SILENT) {
@@ -1297,12 +1297,12 @@ int flags;                      /* EW_* flags */
   }
   /* file names are separated with NL */
   else if (shell_style == STYLE_BT || shell_style == STYLE_VIMGLOB) {
-    buffer[len] = NUL;                  /* make sure the buffer ends in NUL */
+    buffer[len] = '\0';                  /* make sure the buffer ends in NUL */
     p = buffer;
-    for (i = 0; *p != NUL; ++i) {       /* count number of entries */
-      while (*p != '\n' && *p != NUL)
+    for (i = 0; *p != '\0'; ++i) {       /* count number of entries */
+      while (*p != '\n' && *p != '\0')
         ++p;
-      if (*p != NUL)
+      if (*p != '\0')
         ++p;
       p = skipwhite(p);                 /* skip leading white space */
     }
@@ -1320,7 +1320,7 @@ int flags;                      /* EW_* flags */
     check_spaces = FALSE;
     if (shell_style == STYLE_PRINT && !did_find_nul) {
       /* If there is a NUL, set did_find_nul, else set check_spaces */
-      buffer[len] = NUL;
+      buffer[len] = '\0';
       if (len && (int)STRLEN(buffer) < (int)len)
         did_find_nul = TRUE;
       else
@@ -1331,15 +1331,15 @@ int flags;                      /* EW_* flags */
      * Make sure the buffer ends with a NUL.  For STYLE_PRINT there
      * already is one, for STYLE_GLOB it needs to be added.
      */
-    if (len && buffer[len - 1] == NUL)
+    if (len && buffer[len - 1] == '\0')
       --len;
     else
-      buffer[len] = NUL;
+      buffer[len] = '\0';
     i = 0;
     for (p = buffer; p < buffer + len; ++p)
-      if (*p == NUL || (*p == ' ' && check_spaces)) {       /* count entry */
+      if (*p == '\0' || (*p == ' ' && check_spaces)) {       /* count entry */
         ++i;
-        *p = NUL;
+        *p = '\0';
       }
     if (len)
       ++i;                              /* count last entry */
@@ -1366,12 +1366,12 @@ int flags;                      /* EW_* flags */
     if (shell_style == STYLE_ECHO || shell_style == STYLE_BT
         || shell_style == STYLE_VIMGLOB) {
       while (!(shell_style == STYLE_ECHO && *p == ' ')
-             && *p != '\n' && *p != NUL)
+             && *p != '\n' && *p != '\0')
         ++p;
       if (p == buffer + len)                    /* last entry */
-        *p = NUL;
+        *p = '\0';
       else {
-        *p++ = NUL;
+        *p++ = '\0';
         p = skipwhite(p);                       /* skip to next entry */
       }
     } else {          /* NUL separates */
@@ -1455,7 +1455,7 @@ int mch_has_exp_wildcard(p)
 char_u  *p;
 {
   for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
+    if (*p == '\\' && p[1] != '\0')
       ++p;
     else if (vim_strchr((char_u *)
                  "*?[{'"
@@ -1473,12 +1473,12 @@ int mch_has_wildcard(p)
 char_u  *p;
 {
   for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
+    if (*p == '\\' && p[1] != '\0')
       ++p;
     else if (vim_strchr((char_u *)
                  "*?[{`'$"
                  , *p) != NULL
-             || (*p == '~' && p[1] != NUL))
+             || (*p == '~' && p[1] != '\0'))
       return TRUE;
   }
   return FALSE;

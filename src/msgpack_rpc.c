@@ -93,7 +93,7 @@ char *msgpack_rpc_raw_argument(msgpack_object *obj)
 {
   char *rv = xmalloc(obj->via.raw.size + 1);
   memcpy(rv, obj->via.raw.ptr, obj->via.raw.size);
-  rv[obj->via.raw.size] = NUL;
+  rv[obj->via.raw.size] = '\0';
 
   return rv;
 }

@@ -294,7 +294,7 @@ char_u *sha256_bytes(char_u *buf, int buf_len, char_u *salt, int salt_len)
 char_u* sha256_key(char_u *buf, char_u *salt, int salt_len)
 {
   // No passwd means don't encrypt
-  if ((buf == NULL) || (*buf == NUL)) {
+  if ((buf == NULL) || (*buf == '\0')) {
     return (char_u *)"";
   }
 

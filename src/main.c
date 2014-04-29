@@ -375,7 +375,7 @@ static char *(main_errors[]) =
    * Read in registers, history etc, but not marks, from the viminfo file.
    * This is where v:oldfiles gets filled.
    */
-  if (*p_viminfo != NUL) {
+  if (*p_viminfo != '\0') {
     read_viminfo(NULL, VIF_WANT_INFO | VIF_GET_OLDFILES);
     TIME_MSG("reading viminfo");
   }
@@ -413,7 +413,7 @@ static char *(main_errors[]) =
 #if defined(UNIX)
   /* When switching screens and something caused a message from a vimrc
    * script, need to output an extra newline on exit. */
-  if ((did_emsg || msg_didout) && *T_TI != NUL)
+  if ((did_emsg || msg_didout) && *T_TI != '\0')
     newline_on_exit = TRUE;
 #endif
 
@@ -830,7 +830,7 @@ void getout(int exitval)
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
   }
 
-  if (p_viminfo && *p_viminfo != NUL)
+  if (p_viminfo && *p_viminfo != '\0')
     /* Write out the registers, history, marks etc, to the viminfo file */
     write_viminfo(NULL, FALSE);
 
@@ -899,7 +899,7 @@ static void init_locale(void)
     /* expand_env() doesn't work yet, because chartab[] is not initialized
      * yet, call vim_getenv() directly */
     p = vim_getenv((char_u *)"VIMRUNTIME", &mustfree);
-    if (p != NULL && *p != NUL) {
+    if (p != NULL && *p != '\0') {
       vim_snprintf((char *)NameBuff, MAXPATHL, "%s/lang", p);
       bindtextdomain(VIMPACKAGE, (char *)NameBuff);
     }
@@ -1012,7 +1012,7 @@ static void command_line_scan(mparm_T *parmp)
       if (parmp->n_commands >= MAX_ARG_CMDS)
         mainerr(ME_EXTRA_CMD, NULL);
       argv_idx = -1;                /* skip to next argument */
-      if (argv[0][1] == NUL)
+      if (argv[0][1] == '\0')
         parmp->commands[parmp->n_commands++] = (char_u *)"$";
       else
         parmp->commands[parmp->n_commands++] = (char_u *)&(argv[0][1]);
@@ -1024,7 +1024,7 @@ static void command_line_scan(mparm_T *parmp)
       want_argument = FALSE;
       c = argv[0][argv_idx++];
       switch (c) {
-        case NUL:                 /* "vim -"  read from stdin */
+        case '\0':                 /* "vim -"  read from stdin */
           /* "ex -" silent mode */
           if (exmode_active)
             silent_mode = TRUE;
@@ -1226,7 +1226,7 @@ static void command_line_scan(mparm_T *parmp)
         case 'V':                 /* "-V{N}"	Verbose level */
           /* default is 10: a little bit verbose */
           p_verbose = get_number_arg((char_u *)argv[0], &argv_idx, 10);
-          if (argv[0][argv_idx] != NUL) {
+          if (argv[0][argv_idx] != '\0') {
             set_option_value((char_u *)"verbosefile", 0L,
                 (char_u *)argv[0] + argv_idx, 0);
             argv_idx = (int)STRLEN(argv[0]);
@@ -1260,7 +1260,7 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'c':                 /* "-c{command}" or "-c {command}" execute
                                      command */
-          if (argv[0][argv_idx] != NUL) {
+          if (argv[0][argv_idx] != '\0') {
             if (parmp->n_commands >= MAX_ARG_CMDS)
               mainerr(ME_EXTRA_CMD, NULL);
             parmp->commands[parmp->n_commands++] = (char_u *)argv[0]
@@ -1289,7 +1289,7 @@ static void command_line_scan(mparm_T *parmp)
         /*
          * Check for garbage immediately after the option letter.
          */
-        if (argv[0][argv_idx] != NUL)
+        if (argv[0][argv_idx] != '\0')
           mainerr(ME_GARBAGE, (char_u *)argv[0]);
 
         --argc;
@@ -1456,7 +1456,7 @@ scripterror:
      * argument.  argv_idx is set to -1 when the current argument is to be
      * skipped.
      */
-    if (argv_idx <= 0 || argv[0][argv_idx] == NUL) {
+    if (argv_idx <= 0 || argv[0][argv_idx] == '\0') {
       --argc;
       ++argv;
       argv_idx = 1;
@@ -2102,7 +2102,7 @@ process_env (
   scid_T save_sid;
 
   initstr = (char_u *)os_getenv((char *)env);
-  if (initstr != NULL && *initstr != NUL) {
+  if (initstr != NULL && *initstr != '\0') {
     if (is_viminit)
       vimrc_found(NULL, NULL);
     save_sourcing_name = sourcing_name;
