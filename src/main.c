@@ -705,7 +705,7 @@ main_loop (
         p = keep_msg;
         keep_msg = NULL;
         msg_attr(p, keep_msg_attr);
-        vim_free(p);
+        free(p);
       }
       if (need_fileinfo) {              /* show file info after redraw */
         fileinfo(FALSE, TRUE, FALSE);
@@ -904,7 +904,7 @@ static void init_locale(void)
       bindtextdomain(VIMPACKAGE, (char *)NameBuff);
     }
     if (mustfree)
-      vim_free(p);
+      free(p);
     textdomain(VIMPACKAGE);
   }
   TIME_MSG("locale set");
@@ -1432,7 +1432,7 @@ scripterror:
         char_u      *r;
 
         r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), TRUE);
-        vim_free(p);
+        free(p);
         p = r;
       }
 
@@ -1469,7 +1469,7 @@ scripterror:
     p = alloc((unsigned)STRLEN(parmp->commands[0]) + 3);
     sprintf((char *)p, ":%s\r", parmp->commands[0]);
     set_vim_var_string(VV_SWAPCOMMAND, p, -1);
-    vim_free(p);
+    free(p);
   }
   TIME_MSG("parsing arguments");
 }
@@ -1929,7 +1929,7 @@ static void exe_commands(mparm_T *parmp)
   for (i = 0; i < parmp->n_commands; ++i) {
     do_cmdline_cmd(parmp->commands[i]);
     if (parmp->cmds_tofree[i])
-      vim_free(parmp->commands[i]);
+      free(parmp->commands[i]);
   }
   sourcing_name = NULL;
   current_SID = 0;

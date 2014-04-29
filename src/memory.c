@@ -312,8 +312,8 @@ void free_all_mem(void)
   clear_sb_text();            /* free any scrollback text */
 
   /* Free some global vars. */
-  vim_free(last_cmdline);
-  vim_free(new_last_cmdline);
+  free(last_cmdline);
+  free(new_last_cmdline);
   set_keep_msg(NULL, 0);
 
   /* Clear cmdline history. */
@@ -383,7 +383,7 @@ void free_all_mem(void)
 
   clear_hl_tables();
 
-  vim_free(NameBuff);
+  free(NameBuff);
 }
 
 #endif

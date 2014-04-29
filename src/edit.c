@@ -569,7 +569,7 @@ edit (
     new_insert_skip = 0;
   else {
     new_insert_skip = (int)STRLEN(ptr);
-    vim_free(ptr);
+    free(ptr);
   }
 
   old_indent = 0;
@@ -734,7 +734,7 @@ edit (
           if (str != NULL) {
             for (p = str; *p != NUL; mb_ptr_adv(p))
               ins_compl_addleader(PTR2CHAR(p));
-            vim_free(str);
+            free(str);
           } else
             ins_compl_addleader(c);
           continue;
@@ -1239,7 +1239,7 @@ normalchar:
             }
             AppendToRedobuffLit(str, -1);
           }
-          vim_free(str);
+          free(str);
           c = NUL;
         }
 
@@ -1658,7 +1658,7 @@ change_indent (
       while (--i >= 0)
         ptr[i] = ' ';
       ins_str(ptr);
-      vim_free(ptr);
+      free(ptr);
     }
 
     /*
@@ -1744,7 +1744,7 @@ change_indent (
     /* Insert new stuff into line again */
     ins_bytes(new_line);
 
-    vim_free(new_line);
+    free(new_line);
   }
 }
 
@@ -2069,7 +2069,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
         *(p++) = wca[i++];
     *p = NUL;
 
-    vim_free(wca);
+    free(wca);
 
     return ins_compl_add(IObuff, len, icase, fname, NULL, dir,
         flags, FALSE);
@@ -2130,7 +2130,7 @@ ins_compl_add (
   if (flags & ORIGINAL_TEXT)
     match->cp_number = 0;
   if ((match->cp_str = vim_strnsave(str, len)) == NULL) {
-    vim_free(match);
+    free(match);
     return FAIL;
   }
   match->cp_icase = icase;
@@ -2375,7 +2375,7 @@ static void ins_compl_del_pum(void)
 {
   if (compl_match_array != NULL) {
     pum_undisplay();
-    vim_free(compl_match_array);
+    free(compl_match_array);
     compl_match_array = NULL;
   }
 }
@@ -2597,8 +2597,8 @@ ins_compl_dictionaries (
     ptr = alloc((unsigned)len);
     vim_snprintf((char *)ptr, len, "^\\s*\\zs\\V%s", pat_esc);
     regmatch.regprog = vim_regcomp(ptr, RE_MAGIC);
-    vim_free(pat_esc);
-    vim_free(ptr);
+    free(pat_esc);
+    free(ptr);
   } else {
     regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog == NULL)
@@ -2646,7 +2646,7 @@ ins_compl_dictionaries (
 theend:
   p_scs = save_p_scs;
   vim_regfree(regmatch.regprog);
-  vim_free(buf);
+  free(buf);
 }
 
 static void ins_compl_files(int count, char_u **files, int thesaurus, int flags, regmatch_T *regmatch, char_u *buf, int *dir)
@@ -2795,9 +2795,9 @@ static void ins_compl_free(void)
   compl_T *match;
   int i;
 
-  vim_free(compl_pattern);
+  free(compl_pattern);
   compl_pattern = NULL;
-  vim_free(compl_leader);
+  free(compl_leader);
   compl_leader = NULL;
 
   if (compl_first_match == NULL)
@@ -2810,13 +2810,13 @@ static void ins_compl_free(void)
   do {
     match = compl_curr_match;
     compl_curr_match = compl_curr_match->cp_next;
-    vim_free(match->cp_str);
+    free(match->cp_str);
     /* several entries may use the same fname, free it just once. */
     if (match->cp_flags & FREE_FNAME)
-      vim_free(match->cp_fname);
+      free(match->cp_fname);
     for (i = 0; i < CPT_COUNT; ++i)
-      vim_free(match->cp_text[i]);
-    vim_free(match);
+      free(match->cp_text[i]);
+    free(match);
   } while (compl_curr_match != NULL && compl_curr_match != compl_first_match);
   compl_first_match = compl_curr_match = NULL;
   compl_shown_match = NULL;
@@ -2827,12 +2827,12 @@ static void ins_compl_clear(void)
   compl_cont_status = 0;
   compl_started = FALSE;
   compl_matches = 0;
-  vim_free(compl_pattern);
+  free(compl_pattern);
   compl_pattern = NULL;
-  vim_free(compl_leader);
+  free(compl_leader);
   compl_leader = NULL;
   edit_submode_extra = NULL;
-  vim_free(compl_orig_text);
+  free(compl_orig_text);
   compl_orig_text = NULL;
   compl_enter_selects = FALSE;
 }
@@ -2873,7 +2873,7 @@ static int ins_compl_bs(void)
       || ins_compl_need_restart())
     ins_compl_restart();
 
-  vim_free(compl_leader);
+  free(compl_leader);
   compl_leader = vim_strnsave(line + compl_col, (int)(p - line) - compl_col);
   if (compl_leader != NULL) {
     ins_compl_new_leader();
@@ -2979,7 +2979,7 @@ static void ins_compl_addleader(int c)
    * cursor doesn't point original position, changing compl_leader would
    * break redo. */
   if (!compl_opt_refresh_always) {
-    vim_free(compl_leader);
+    free(compl_leader);
     compl_leader = vim_strnsave(ml_get_curline() + compl_col,
         (int)(curwin->w_cursor.col - compl_col));
     if (compl_leader != NULL)
@@ -3011,7 +3011,7 @@ static void ins_compl_set_original_text(char_u *str)
   if (compl_first_match->cp_flags & ORIGINAL_TEXT) {    /* safety check */
     p = vim_strsave(str);
     if (p != NULL) {
-      vim_free(compl_first_match->cp_str);
+      free(compl_first_match->cp_str);
       compl_first_match->cp_str = p;
     }
   }
@@ -4568,13 +4568,13 @@ static int ins_complete(int c)
     ins_compl_fixRedoBufForLeader(NULL);
 
     /* Always add completion for the original text. */
-    vim_free(compl_orig_text);
+    free(compl_orig_text);
     compl_orig_text = vim_strnsave(line + compl_col, compl_length);
     if (compl_orig_text == NULL || ins_compl_add(compl_orig_text,
             -1, p_ic, NULL, NULL, 0, ORIGINAL_TEXT, FALSE) != OK) {
-      vim_free(compl_pattern);
+      free(compl_pattern);
       compl_pattern = NULL;
-      vim_free(compl_orig_text);
+      free(compl_orig_text);
       compl_orig_text = NULL;
       return FAIL;
     }
@@ -5444,7 +5444,7 @@ internal_format (
        * moved, now we re-insert it into the new line.
        */
       ins_bytes(saved_text);
-      vim_free(saved_text);
+      free(saved_text);
     } else {
       /*
        * Check if cursor is not past the NUL off the line, cindent
@@ -5771,11 +5771,11 @@ stop_insert (
   ptr = get_inserted();
   if (did_restart_edit == 0 || (ptr != NULL
                                 && (int)STRLEN(ptr) > new_insert_skip)) {
-    vim_free(last_insert);
+    free(last_insert);
     last_insert = ptr;
     last_insert_skip = new_insert_skip;
   } else
-    vim_free(ptr);
+    free(ptr);
 
   if (!arrow_used && end_insert_pos != NULL) {
     /* Auto-format now.  It may seem strange to do this when stopping an
@@ -5874,7 +5874,7 @@ void set_last_insert(int c)
 {
   char_u      *s;
 
-  vim_free(last_insert);
+  free(last_insert);
   last_insert = alloc(MB_MAXBYTES * 3 + 5);
   s = last_insert;
   /* Use the CTRL-V only when entering a special char */
@@ -5889,9 +5889,9 @@ void set_last_insert(int c)
 #if defined(EXITFREE) || defined(PROTO)
 void free_last_insert(void)
 {
-  vim_free(last_insert);
+  free(last_insert);
   last_insert = NULL;
-  vim_free(compl_orig_text);
+  free(compl_orig_text);
   compl_orig_text = NULL;
 }
 
@@ -6292,7 +6292,7 @@ replace_push (
     if (replace_stack != NULL) {
       memmove(p, replace_stack,
           (size_t)(replace_stack_nr * sizeof(char_u)));
-      vim_free(replace_stack);
+      free(replace_stack);
     }
     replace_stack = p;
   }
@@ -6418,7 +6418,7 @@ static void mb_replace_pop_ins(int cc)
  */
 static void replace_flush(void)
 {
-  vim_free(replace_stack);
+  free(replace_stack);
   replace_stack = NULL;
   replace_stack_len = 0;
   replace_stack_nr = 0;
@@ -8105,7 +8105,7 @@ static int ins_tab(void)
     }
 
     if (State & VREPLACE_FLAG)
-      vim_free(saved_line);
+      free(saved_line);
     curwin->w_p_list = save_list;
   }
 

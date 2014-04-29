@@ -441,7 +441,7 @@ wingotofile:
           beginline(BL_SOL | BL_FIX);
         }
       }
-      vim_free(ptr);
+      free(ptr);
     }
     break;
 
@@ -2024,7 +2024,7 @@ win_free_mem (
   /* Remove the window and its frame from the tree of frames. */
   frp = win->w_frame;
   wp = winframe_remove(win, dirp, tp);
-  vim_free(frp);
+  free(frp);
   win_free(win, tp);
 
   /* When deleting the current window of another tab page select a new
@@ -2164,7 +2164,7 @@ winframe_remove (
     if (frp2->fr_win != NULL)
       frp2->fr_win->w_frame = frp2->fr_parent;
     frp = frp2->fr_parent;
-    vim_free(frp2);
+    free(frp2);
 
     frp2 = frp->fr_parent;
     if (frp2 != NULL && frp2->fr_layout == frp->fr_layout) {
@@ -2184,7 +2184,7 @@ winframe_remove (
           break;
         }
       }
-      vim_free(frp);
+      free(frp);
     }
   }
 
@@ -2866,7 +2866,7 @@ void free_tabpage(tabpage_T *tp)
 
 
 
-  vim_free(tp);
+  free(tp);
 }
 
 /*
@@ -2886,7 +2886,7 @@ int win_new_tabpage(int after)
 
   /* Remember the current windows in this Tab page. */
   if (leave_tabpage(curbuf, TRUE) == FAIL) {
-    vim_free(newtp);
+    free(newtp);
     return FAIL;
   }
   curtab = newtp;
@@ -3476,7 +3476,7 @@ static void win_enter_ext(win_T *wp, int undo_sync, int curwin_invalid, int trig
     /* Window doesn't have a local directory and we are not in the global
      * directory: Change to the global directory. */
     ignored = os_chdir((char *)globaldir);
-    vim_free(globaldir);
+    free(globaldir);
     globaldir = NULL;
     shorten_fnames(TRUE);
   }
@@ -3645,9 +3645,9 @@ win_free (
   win_free_lsize(wp);
 
   for (i = 0; i < wp->w_tagstacklen; ++i)
-    vim_free(wp->w_tagstack[i].tagname);
+    free(wp->w_tagstack[i].tagname);
 
-  vim_free(wp->w_localdir);
+  free(wp->w_localdir);
 
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */
@@ -3663,11 +3663,11 @@ win_free (
   qf_free_all(wp);
 
 
-  vim_free(wp->w_p_cc_cols);
+  free(wp->w_p_cc_cols);
 
   if (wp != aucmd_win)
     win_remove(wp, tp);
-  vim_free(wp);
+  free(wp);
 
   unblock_autocmds();
 }
@@ -3774,7 +3774,7 @@ void win_alloc_lines(win_T *wp)
  */
 void win_free_lsize(win_T *wp)
 {
-  vim_free(wp->w_lines);
+  free(wp->w_lines);
   wp->w_lines = NULL;
 }
 
@@ -5045,7 +5045,7 @@ static void clear_snapshot_rec(frame_T *fr)
   if (fr != NULL) {
     clear_snapshot_rec(fr->fr_next);
     clear_snapshot_rec(fr->fr_child);
-    vim_free(fr);
+    free(fr);
   }
 }
 
@@ -5319,8 +5319,8 @@ int match_delete(win_T *wp, int id, int perr)
   else
     prev->next = cur->next;
   vim_regfree(cur->match.regprog);
-  vim_free(cur->pattern);
-  vim_free(cur);
+  free(cur->pattern);
+  free(cur);
   redraw_later(SOME_VALID);
   return 0;
 }
@@ -5335,8 +5335,8 @@ void clear_matches(win_T *wp)
   while (wp->w_match_head != NULL) {
     m = wp->w_match_head->next;
     vim_regfree(wp->w_match_head->match.regprog);
-    vim_free(wp->w_match_head->pattern);
-    vim_free(wp->w_match_head);
+    free(wp->w_match_head->pattern);
+    free(wp->w_match_head);
     wp->w_match_head = m;
   }
   redraw_later(SOME_VALID);

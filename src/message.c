@@ -198,7 +198,7 @@ msg_attr_keep (
       * Columns + sc_col)
     set_keep_msg(s, 0);
 
-  vim_free(buf);
+  free(buf);
   --entered;
   return retval;
 }
@@ -362,7 +362,7 @@ static char_u   *last_sourcing_name = NULL;
  */
 void reset_last_sourcing(void)
 {
-  vim_free(last_sourcing_name);
+  free(last_sourcing_name);
   last_sourcing_name = NULL;
   last_sourcing_lnum = 0;
 }
@@ -433,18 +433,18 @@ void msg_source(int attr)
   p = get_emsg_source();
   if (p != NULL) {
     msg_attr(p, attr);
-    vim_free(p);
+    free(p);
   }
   p = get_emsg_lnum();
   if (p != NULL) {
     msg_attr(p, hl_attr(HLF_N));
-    vim_free(p);
+    free(p);
     last_sourcing_lnum = sourcing_lnum;      /* only once for each line */
   }
 
   /* remember the last sourcing name printed, also when it's empty */
   if (sourcing_name == NULL || other_sourcing_name()) {
-    vim_free(last_sourcing_name);
+    free(last_sourcing_name);
     if (sourcing_name == NULL)
       last_sourcing_name = NULL;
     else
@@ -525,13 +525,13 @@ int emsg(char_u *s)
       if (p != NULL) {
         STRCAT(p, "\n");
         redir_write(p, -1);
-        vim_free(p);
+        free(p);
       }
       p = get_emsg_lnum();
       if (p != NULL) {
         STRCAT(p, "\n");
         redir_write(p, -1);
-        vim_free(p);
+        free(p);
       }
       redir_write(s, -1);
       return TRUE;
@@ -695,8 +695,8 @@ int delete_first_msg(void)
   first_msg_hist = p->next;
   if (first_msg_hist == NULL)
     last_msg_hist = NULL;      /* history is empty */
-  vim_free(p->msg);
-  vim_free(p);
+  free(p->msg);
+  free(p);
   --msg_hist_len;
   return OK;
 }
@@ -930,7 +930,7 @@ void wait_return(int redraw)
   reset_last_sourcing();
   if (keep_msg != NULL && vim_strsize(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
-    vim_free(keep_msg);
+    free(keep_msg);
     keep_msg = NULL;                /* don't redisplay message, it's too long */
   }
 
@@ -968,7 +968,7 @@ static void hit_return_msg(void)
  */
 void set_keep_msg(char_u *s, int attr)
 {
-  vim_free(keep_msg);
+  free(keep_msg);
   if (s != NULL && msg_silent == 0)
     keep_msg = vim_strsave(s);
   else
@@ -996,7 +996,7 @@ void msg_start(void)
   int did_return = FALSE;
 
   if (!msg_silent) {
-    vim_free(keep_msg);
+    free(keep_msg);
     keep_msg = NULL;                    /* don't display old message now */
   }
 
@@ -1084,7 +1084,7 @@ static void msg_home_replace_attr(char_u *fname, int attr)
   name = home_replace_save(NULL, fname);
   if (name != NULL)
     msg_outtrans_attr(name, attr);
-  vim_free(name);
+  free(name);
 }
 
 /*
@@ -1817,7 +1817,7 @@ static void inc_msg_scrolled(void)
       p = tofree;
     }
     set_vim_var_string(VV_SCROLLSTART, p, -1);
-    vim_free(tofree);
+    free(tofree);
   }
   ++msg_scrolled;
 }
@@ -1903,7 +1903,7 @@ void clear_sb_text(void)
 
   while (last_msgchunk != NULL) {
     mp = last_msgchunk->sb_prev;
-    vim_free(last_msgchunk);
+    free(last_msgchunk);
     last_msgchunk = mp;
   }
 }
@@ -2652,7 +2652,7 @@ void give_warning(char_u *message, int hl)
   ++no_wait_return;
 
   set_vim_var_string(VV_WARNINGMSG, message, -1);
-  vim_free(keep_msg);
+  free(keep_msg);
   keep_msg = NULL;
   if (hl)
     keep_msg_attr = hl_attr(HLF_W);
@@ -2783,7 +2783,7 @@ do_dialog (
       break;
     }
 
-    vim_free(hotkeys);
+    free(hotkeys);
   }
 
   State = oldState;
@@ -2936,7 +2936,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
       /*
        * Now allocate and load the strings
        */
-      vim_free(confirm_msg);
+      free(confirm_msg);
       confirm_msg = alloc(len);
       *confirm_msg = NUL;
       hotk = alloc(lenhotkey);

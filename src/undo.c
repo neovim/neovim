@@ -726,11 +726,11 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
         (!reading || mch_stat((char *)undo_file_name, &st) >= 0)) {
       break;
     }
-    vim_free(undo_file_name);
+    free(undo_file_name);
     undo_file_name = NULL;
   }
 
-  vim_free(munged_name);
+  free(munged_name);
   return undo_file_name;
 }
 
@@ -750,7 +750,7 @@ static void u_free_uhp(u_header_T *uhp)
     u_freeentry(uep, uep->ue_size);
     uep = nuep;
   }
-  vim_free(uhp);
+  free(uhp);
 }
 
 /*
@@ -773,7 +773,7 @@ static size_t fwrite_crypt(buf_T *buf, char_u *ptr, size_t len, FILE *fp)
   crypt_encode(ptr, len, copy);
   i = fwrite(copy, len, (size_t)1, fp);
   if (copy != small_buf)
-    vim_free(copy);
+    free(copy);
   return i;
 }
 
@@ -810,7 +810,7 @@ static int serialize_header(FILE *fp, buf_T *buf, char_u *hash)
     if (header == NULL)
       return FAIL;
     len = (int)fwrite(header, (size_t)header_len, (size_t)1, fp);
-    vim_free(header);
+    free(header);
     if (len != 1) {
       crypt_pop_state();
       return FAIL;
@@ -912,7 +912,7 @@ static u_header_T *unserialize_uhp(FILE *fp, char_u *file_name)
   uhp->uh_seq = get4c(fp);
   if (uhp->uh_seq <= 0) {
     corruption_error("uh_seq", file_name);
-    vim_free(uhp);
+    free(uhp);
     return NULL;
   }
   unserialize_pos(&uhp->uh_cursor, fp);
@@ -1316,7 +1316,7 @@ theend:
   if (do_crypt)
     crypt_pop_state();
   if (file_name != name)
-    vim_free(file_name);
+    free(file_name);
 }
 
 /*
@@ -1589,13 +1589,13 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   curbuf->b_u_save_nr_cur = last_save_nr;
 
   curbuf->b_u_synced = TRUE;
-  vim_free(uhp_table);
+  free(uhp_table);
 
 #ifdef U_DEBUG
   for (i = 0; i < num_head; ++i)
     if (uhp_table_used[i] == 0)
       EMSGN("uhp_table entry %" PRId64 " not used, leaking memory", i);
-  vim_free(uhp_table_used);
+  free(uhp_table_used);
   u_check(TRUE);
 #endif
 
@@ -1604,12 +1604,12 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   goto theend;
 
 error:
-  vim_free(line_ptr);
+  free(line_ptr);
   if (uhp_table != NULL) {
     for (i = 0; i < num_read_uhps; i++)
       if (uhp_table[i] != NULL)
         u_free_uhp(uhp_table[i]);
-    vim_free(uhp_table);
+    free(uhp_table);
   }
 
 theend:
@@ -1618,7 +1618,7 @@ theend:
   if (fp != NULL)
     fclose(fp);
   if (file_name != name)
-    vim_free(file_name);
+    free(file_name);
   return;
 }
 
@@ -2147,9 +2147,9 @@ static void u_undoredo(int undo)
           ml_replace((linenr_T)1, uep->ue_array[i], TRUE);
         else
           ml_append(lnum, uep->ue_array[i], (colnr_T)0, FALSE);
-        vim_free(uep->ue_array[i]);
+        free(uep->ue_array[i]);
       }
-      vim_free((char_u *)uep->ue_array);
+      free((char_u *)uep->ue_array);
     }
 
     /* adjust marks */
@@ -2712,7 +2712,7 @@ u_freeentries (
 #ifdef U_DEBUG
   uhp->uh_magic = 0;
 #endif
-  vim_free((char_u *)uhp);
+  free((char_u *)uhp);
   --buf->b_u_numhead;
 }
 
@@ -2722,12 +2722,12 @@ u_freeentries (
 static void u_freeentry(u_entry_T *uep, long n)
 {
   while (n > 0)
-    vim_free(uep->ue_array[--n]);
-  vim_free((char_u *)uep->ue_array);
+    free(uep->ue_array[--n]);
+  free((char_u *)uep->ue_array);
 #ifdef U_DEBUG
   uep->ue_magic = 0;
 #endif
-  vim_free((char_u *)uep);
+  free((char_u *)uep);
 }
 
 /*
@@ -2768,7 +2768,7 @@ void u_saveline(linenr_T lnum)
 void u_clearline(void)
 {
   if (curbuf->b_u_line_ptr != NULL) {
-    vim_free(curbuf->b_u_line_ptr);
+    free(curbuf->b_u_line_ptr);
     curbuf->b_u_line_ptr = NULL;
     curbuf->b_u_line_lnum = 0;
   }
@@ -2805,7 +2805,7 @@ void u_undoline(void)
   }
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, TRUE);
   changed_bytes(curbuf->b_u_line_lnum, 0);
-  vim_free(curbuf->b_u_line_ptr);
+  free(curbuf->b_u_line_ptr);
   curbuf->b_u_line_ptr = oldp;
 
   t = curbuf->b_u_line_colnr;
@@ -2823,7 +2823,7 @@ void u_blockfree(buf_T *buf)
 {
   while (buf->b_u_oldhead != NULL)
     u_freeheader(buf, buf->b_u_oldhead, NULL);
-  vim_free(buf->b_u_line_ptr);
+  free(buf->b_u_line_ptr);
 }
 
 /*

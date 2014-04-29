@@ -230,7 +230,7 @@ void free_crypt_key(char_u *key)
     for (p = key; *p != NUL; ++p) {
       *p = 0;
     }
-    vim_free(key);
+    free(key);
   }
 }
 

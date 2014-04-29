@@ -3311,7 +3311,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
   ret = e.start;
 
 theend:
-  vim_free(stack);
+  free(stack);
   return ret;
 
 #undef POP1
@@ -4207,7 +4207,7 @@ addstate_here (
       memmove(&(newl[listidx + count]),
           &(l->t[listidx + 1]),
           sizeof(nfa_thread_T) * (l->n - count - listidx - 1));
-      vim_free(l->t);
+      free(l->t);
       l->t = newl;
     } else {
       /* make space for new states, then move them from the
@@ -6009,9 +6009,9 @@ nextchar:
 #endif
 
   /* Free memory */
-  vim_free(list[0].t);
-  vim_free(list[1].t);
-  vim_free(listids);
+  free(list[0].t);
+  free(list[1].t);
+  free(listids);
 #undef ADD_STATE_IF_MATCH
 #ifdef NFA_REGEXP_DEBUG_LOG
   fclose(debug);
@@ -6321,13 +6321,13 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 #endif
 
 out:
-  vim_free(post_start);
+  free(post_start);
   post_start = post_ptr = post_end = NULL;
   state_ptr = NULL;
   return (regprog_T *)prog;
 
 fail:
-  vim_free(prog);
+  free(prog);
   prog = NULL;
 #ifdef ENABLE_LOG
   nfa_postfix_dump(expr, FAIL);
@@ -6344,11 +6344,11 @@ fail:
 static void nfa_regfree(regprog_T *prog)
 {
   if (prog != NULL) {
-    vim_free(((nfa_regprog_T *)prog)->match_text);
+    free(((nfa_regprog_T *)prog)->match_text);
 #ifdef REGEXP_DEBUG
-    vim_free(((nfa_regprog_T *)prog)->pattern);
+    free(((nfa_regprog_T *)prog)->pattern);
 #endif
-    vim_free(prog);
+    free(prog);
   }
 }
 

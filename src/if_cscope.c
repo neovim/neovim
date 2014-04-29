@@ -463,7 +463,7 @@ static void cs_stat_emsg(char *fname)
 
   (void)sprintf(buf, stat_emsg, fname, errno);
   (void)EMSG(buf);
-  vim_free(buf);
+  free(buf);
 }
 
 
@@ -502,7 +502,7 @@ cs_add_common (
   if (fname == NULL)
     goto add_err;
   fname = (char *)vim_strnsave((char_u *)fname, len);
-  vim_free(fbuf);
+  free(fbuf);
   ret = stat(fname, &statbuf);
   if (ret < 0) {
 staterr:
@@ -578,15 +578,15 @@ staterr:
     }
   }
 
-  vim_free(fname);
-  vim_free(fname2);
-  vim_free(ppath);
+  free(fname);
+  free(fname2);
+  free(ppath);
   return CSCOPE_SUCCESS;
 
 add_err:
-  vim_free(fname2);
-  vim_free(fname);
-  vim_free(ppath);
+  free(fname2);
+  free(fname);
+  free(ppath);
   return CSCOPE_FAILURE;
 } /* cs_add_common */
 
@@ -646,7 +646,7 @@ static int cs_cnt_matches(int idx)
 
       cs_reading_emsg(idx);
 
-      vim_free(buf);
+      free(buf);
       return -1;
     }
 
@@ -677,7 +677,7 @@ static int cs_cnt_matches(int idx)
     break;
   }
 
-  vim_free(buf);
+  free(buf);
   return nlines;
 } /* cs_cnt_matches */
 
@@ -846,9 +846,9 @@ err_closing:
     }
 # ifdef UNIX
     /* on Win32 we still need prog */
-    vim_free(prog);
+    free(prog);
 # endif
-    vim_free(ppath);
+    free(ppath);
 
 #if defined(UNIX)
 # if defined(HAVE_SETSID) || defined(HAVE_SETPGID)
@@ -893,8 +893,8 @@ err_closing:
     si.hStdInput  = stdin_rd;
     created = CreateProcess(NULL, cmd, NULL, NULL, TRUE, CREATE_NEW_CONSOLE,
         NULL, NULL, &si, &pi);
-    vim_free(prog);
-    vim_free(cmd);
+    free(prog);
+    free(cmd);
 
     if (!created) {
       PERROR(_("cs_create_connection exec failed"));
@@ -1023,7 +1023,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
 
       sprintf(buf, nf, *qfpos, *(qfpos-1));
       (void)EMSG(buf);
-      vim_free(buf);
+      free(buf);
       return FALSE;
     }
 
@@ -1063,22 +1063,22 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     if (nummatches[i] == 0)
       (void)cs_read_prompt(i);
   }
-  vim_free(cmd);
+  free(cmd);
 
   if (totmatches == 0) {
     char *nf = _("E259: no matches found for cscope query %s of %s");
     char *buf;
 
     if (!verbose) {
-      vim_free(nummatches);
+      free(nummatches);
       return FALSE;
     }
 
     buf = (char *)alloc((unsigned)(strlen(opt) + strlen(pat) + strlen(nf)));
     sprintf(buf, nf, opt, pat);
     (void)EMSG(buf);
-    vim_free(buf);
-    vim_free(nummatches);
+    free(buf);
+    free(nummatches);
     return FALSE;
   }
 
@@ -1120,8 +1120,8 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
       }
     }
     os_remove((char *)tmp);
-    vim_free(tmp);
-    vim_free(nummatches);
+    free(tmp);
+    free(nummatches);
     return TRUE;
   } else {
     char **matches = NULL, **contexts = NULL;
@@ -1130,7 +1130,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     /* read output */
     cs_fill_results((char *)pat, totmatches, nummatches, &matches,
         &contexts, &matched);
-    vim_free(nummatches);
+    free(nummatches);
     if (matches == NULL)
       return FALSE;
 
@@ -1522,12 +1522,12 @@ static char *cs_manage_matches(char **matches, char **contexts, int totmatches, 
     if (mp != NULL) {
       if (cnt > 0)
         while (cnt--) {
-          vim_free(mp[cnt]);
+          free(mp[cnt]);
           if (cp != NULL)
-            vim_free(cp[cnt]);
+            free(cp[cnt]);
         }
-      vim_free(mp);
-      vim_free(cp);
+      free(mp);
+      free(cp);
     }
     mp = NULL;
     cp = NULL;
@@ -1636,14 +1636,14 @@ static void cs_file_results(FILE *f, int *nummatches_a)
       else
         fprintf(f, "%s\t%s\t%s %s\n", fullname, slno, context, search);
 
-      vim_free(context);
-      vim_free(fullname);
+      free(context);
+      free(fullname);
     }     /* for all matches */
 
     (void)cs_read_prompt(i);
 
   }   /* for all cscope connections */
-  vim_free(buf);
+  free(buf);
 }
 
 /*
@@ -1682,7 +1682,7 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
       matches[totsofar] = cs_make_vim_style_matches(fullname, slno, search,
                                                     tagstr);
 
-      vim_free(fullname);
+      free(fullname);
 
       if (strcmp(cntx, "<global>") == 0)
         cntxts[totsofar] = NULL;
@@ -1703,16 +1703,16 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
 
   if (totsofar == 0) {
     /* No matches, free the arrays and return NULL in "*matches_p". */
-    vim_free(matches);
+    free(matches);
     matches = NULL;
-    vim_free(cntxts);
+    free(cntxts);
     cntxts = NULL;
   }
   *matched = totsofar;
   *matches_p = matches;
   *cntxts_p = cntxts;
 
-  vim_free(buf);
+  free(buf);
 } /* cs_fill_results */
 
 
@@ -1768,7 +1768,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
   (void)sprintf(buf, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
 
-  vim_free(tbuf);
+  free(tbuf);
 
   MSG_PUTS_ATTR(_("\n   #   line"), hl_attr(HLF_T));      /* strlen is 7 */
   msg_advance(msg_col + 2);
@@ -1834,7 +1834,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
       MSG_PUTS_LONG(extra);
     }
 
-    vim_free(tbuf);     /* only after printing extra due to strtok use */
+    free(tbuf);     /* only after printing extra due to strtok use */
 
     if (msg_col)
       msg_putchar('\n');
@@ -1848,7 +1848,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     num++;
   }   /* for all matches */
 
-  vim_free(buf);
+  free(buf);
 } /* cs_print_tags_priv */
 
 
@@ -1911,7 +1911,7 @@ static int cs_read_prompt(int i)
         else if (p_csverbose)
           cs_reading_emsg(i);           /* don't have additional information */
         cs_release_csp(i, TRUE);
-        vim_free(buf);
+        free(buf);
         return CSCOPE_FAILURE;
       }
 
@@ -1926,7 +1926,7 @@ static int cs_read_prompt(int i)
     break;                  /* did find the prompt */
   }
 
-  vim_free(buf);
+  free(buf);
   return CSCOPE_SUCCESS;
 }
 
@@ -2052,9 +2052,9 @@ static void cs_release_csp(int i, int freefnpp)
     (void)fclose(csinfo[i].to_fp);
 
   if (freefnpp) {
-    vim_free(csinfo[i].fname);
-    vim_free(csinfo[i].ppath);
-    vim_free(csinfo[i].flags);
+    free(csinfo[i].fname);
+    free(csinfo[i].ppath);
+    free(csinfo[i].flags);
   }
 
   clear_csinfo(i);
@@ -2101,13 +2101,13 @@ static int cs_reset(exarg_T *eap)
         MSG_PUTS_ATTR(buf, hl_attr(HLF_R));
       }
     }
-    vim_free(dblist[i]);
-    vim_free(pplist[i]);
-    vim_free(fllist[i]);
+    free(dblist[i]);
+    free(pplist[i]);
+    free(fllist[i]);
   }
-  vim_free(dblist);
-  vim_free(pplist);
-  vim_free(fllist);
+  free(dblist);
+  free(pplist);
+  free(fllist);
 
   if (p_csverbose)
     MSG_ATTR(_("All cscope databases reset"), hl_attr(HLF_R) | MSG_HIST);
@@ -2167,7 +2167,7 @@ static char *cs_resolve_file(int i, char *name)
     fullname = (char *)vim_strsave((char_u *)name);
   }
 
-  vim_free(csdir);
+  free(csdir);
   return fullname;
 }
 
@@ -2215,7 +2215,7 @@ void cs_end(void)
 
   for (i = 0; i < csinfo_size; i++)
     cs_release_csp(i, TRUE);
-  vim_free(csinfo);
+  free(csinfo);
   csinfo_size = 0;
 }
 
