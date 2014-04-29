@@ -539,7 +539,7 @@ void ui_cursor_shape(void)
   conceal_check_cursur_line();
 }
 
-#if defined(FEAT_CLIPBOARD) || defined(FEAT_GUI) || defined(FEAT_RIGHTLEFT) \
+#if defined(FEAT_GUI) || defined(FEAT_RIGHTLEFT) \
   || defined(FEAT_MBYTE) || defined(PROTO)
 /*
  * Check bounds for column number

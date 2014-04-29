@@ -1118,10 +1118,6 @@ EXTERN char bot_top_msg[] INIT(= N_("search hit BOTTOM, continuing at TOP"));
 
 EXTERN char need_key_msg[] INIT(= N_("Need encryption key for \"%s\""));
 
-/*
- * Comms. with the session manager (XSMP)
- */
-
 /* For undo we need to know the lowest time possible. */
 EXTERN time_t starttime;
 

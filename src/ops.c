@@ -44,20 +44,14 @@
 #include "window.h"
 
 /*
- * Number of registers.
- *	0 = unnamed register, for normal yanks and puts
+ * Registers:
+ *      0 = unnamed register, for normal yanks and puts
  *   1..9 = registers '1' to '9', for deletes
  * 10..35 = registers 'a' to 'z'
  *     36 = delete register '-'
- *     37 = Selection register '*'. Only if FEAT_CLIPBOARD defined
- *     38 = Clipboard register '+'. Only if FEAT_CLIPBOARD and FEAT_X11 defined
  */
-/*
- * Symbolic names for some registers.
- */
-#define DELETION_REGISTER       36
-
-# define NUM_REGISTERS          37
+#define NUM_REGISTERS 37
+#define DELETION_REGISTER 36
 
 /*
  * Each yank register is an array of pointers to lines.

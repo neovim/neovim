@@ -126,8 +126,7 @@ int msg(char_u *s)
   return msg_attr_keep(s, 0, FALSE);
 }
 
-#if defined(FEAT_EVAL) || defined(FEAT_X11) || defined(USE_XSMP) \
-  || defined(FEAT_GUI_GTK) || defined(PROTO)
+#if defined(FEAT_EVAL) || defined(FEAT_GUI_GTK) || defined(PROTO)
 /*
  * Like msg() but keep it silent when 'verbosefile' is set.
  */
