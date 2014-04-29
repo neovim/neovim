@@ -957,16 +957,6 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
   return len;
 }
 
-///
-/// Replacement for free().
-///
-/// @deprecated Use free() instead
-///
-void vim_free(void *x)
-{
-  free(x);
-}
-
 #if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP)) || defined(PROTO)
 /*
  * Compare two strings, ignoring case, using current locale.

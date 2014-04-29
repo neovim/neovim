@@ -43,7 +43,6 @@ void vim_strncpy(char_u *to, char_u *from, size_t len);
 void vim_strcat(char_u *to, char_u *from, size_t tosize);
 int copy_option_part(char_u **option, char_u *buf, int maxlen,
                      char *sep_chars);
-void vim_free(void *x);
 int vim_stricmp(char *s1, char *s2);
 int vim_strnicmp(char *s1, char *s2, size_t len);
 char_u *vim_strchr(char_u *string, int c);
