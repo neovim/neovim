@@ -568,7 +568,7 @@ typedef struct langp_S {
 static char_u   *int_wordlist = NULL;
 
 typedef struct wordcount_S {
-  short_u wc_count;                 // nr of times word was seen
+  uint16_t wc_count;                // nr of times word was seen
   char_u wc_word[1];                // word, actually longer
 } wordcount_T;
 
@@ -4252,7 +4252,7 @@ struct wordnode_S {
   // In the soundfolded word tree "wn_flags" has the MSW of the wordnr and
   // "wn_region" the LSW of the wordnr.
   char_u wn_affixID;            // supported/required prefix ID or 0
-  short_u wn_flags;             // WF_ flags
+  uint16_t wn_flags;            // WF_ flags
   short wn_region;              // region mask
 
 #ifdef SPELL_PRINTTREE
@@ -7236,7 +7236,7 @@ put_node (
           // associated condition nr (stored in wn_region).  The
           // byte value is misused to store the "rare" and "not
           // combining" flags
-          if (np->wn_flags == (short_u)PFX_FLAGS)
+          if (np->wn_flags == (uint16_t)PFX_FLAGS)
             putc(BY_NOFLAGS, fd);                       // <byte>
           else {
             putc(BY_FLAGS, fd);                         // <byte>

@@ -218,7 +218,7 @@ typedef void (*nv_func_T)(cmdarg_T *cap);
 static const struct nv_cmd {
   int cmd_char;                 /* (first) command character */
   nv_func_T cmd_func;           /* function for this command */
-  short_u cmd_flags;            /* NV_ flags */
+  uint16_t cmd_flags;           /* NV_ flags */
   short cmd_arg;                /* value for ca.arg */
 } nv_cmds[] =
 {

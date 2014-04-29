@@ -378,7 +378,7 @@ typedef struct {
   synstate_T  *b_sst_firstfree;
   int b_sst_freecount;
   linenr_T b_sst_check_lnum;
-  short_u b_sst_lasttick;       /* last display tick */
+  uint16_t b_sst_lasttick;      /* last display tick */
 
   /* for spell checking */
   garray_T b_langp;             /* list of pointers to slang_T, see spell.c */
@@ -774,7 +774,7 @@ struct tabpage_S {
  */
 typedef struct w_line {
   linenr_T wl_lnum;             /* buffer line number for logical line */
-  short_u wl_size;              /* height in screen lines */
+  uint16_t wl_size;             /* height in screen lines */
   char wl_valid;                /* TRUE values are valid for text in buffer */
   char wl_folded;               /* TRUE when this is a range of folded lines */
   linenr_T wl_lastlnum;         /* last buffer line number for logical line */

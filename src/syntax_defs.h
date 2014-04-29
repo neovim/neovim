@@ -69,8 +69,8 @@ typedef struct attr_entry {
     } term;
     struct {
       /* These colors need to be > 8 bits to hold 256. */
-      short_u fg_color;                 /* foreground color number */
-      short_u bg_color;                 /* background color number */
+      uint16_t fg_color;                /* foreground color number */
+      uint16_t bg_color;                /* background color number */
     } cterm;
   } ae_u;
 } attrentry_T;
