@@ -362,15 +362,15 @@ int redraw_asap(int type)
     ret = 4;
   }
 
-  vim_free(screenline);
-  vim_free(screenattr);
+  free(screenline);
+  free(screenattr);
   if (enc_utf8) {
-    vim_free(screenlineUC);
+    free(screenlineUC);
     for (i = 0; i < p_mco; ++i)
-      vim_free(screenlineC[i]);
+      free(screenlineC[i]);
   }
   if (enc_dbcs == DBCS_JPNU)
-    vim_free(screenline2);
+    free(screenline2);
 
   /* Show the intro message when appropriate. */
   maybe_intro_message();
@@ -2068,7 +2068,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   }
 
   if (text != buf)
-    vim_free(text);
+    free(text);
 
   /*
    * 6. set highlighting for the Visual area an other text.
@@ -4836,7 +4836,7 @@ win_redr_status_matches (
   }
 
   win_redraw_last_status(topframe);
-  vim_free(buf);
+  free(buf);
 }
 
 /*
@@ -5051,7 +5051,7 @@ get_keymap_str (
       sprintf((char *)buf, "<%s>", p);
     else
       buf[0] = NUL;
-    vim_free(s);
+    free(s);
   }
   return buf[0] != NUL;
 }
@@ -5157,13 +5157,13 @@ win_redr_custom (
   width = build_stl_str_hl(ewp, buf, sizeof(buf),
       stl, use_sandbox,
       fillchar, maxwidth, hltab, tabtab);
-  vim_free(stl);
+  free(stl);
   ewp->w_p_crb = p_crb_save;
 
   /* Make all characters printable. */
   p = transstr(buf);
   vim_strncpy(buf, p, sizeof(buf) - 1);
-  vim_free(p);
+  free(p);
 
   /* fill up with "fillchar" */
   len = (int)STRLEN(buf);
@@ -6304,23 +6304,23 @@ retry:
        * and over again. */
       done_outofmem_msg = TRUE;
     }
-    vim_free(new_ScreenLines);
+    free(new_ScreenLines);
     new_ScreenLines = NULL;
-    vim_free(new_ScreenLinesUC);
+    free(new_ScreenLinesUC);
     new_ScreenLinesUC = NULL;
     for (i = 0; i < p_mco; ++i) {
-      vim_free(new_ScreenLinesC[i]);
+      free(new_ScreenLinesC[i]);
       new_ScreenLinesC[i] = NULL;
     }
-    vim_free(new_ScreenLines2);
+    free(new_ScreenLines2);
     new_ScreenLines2 = NULL;
-    vim_free(new_ScreenAttrs);
+    free(new_ScreenAttrs);
     new_ScreenAttrs = NULL;
-    vim_free(new_LineOffset);
+    free(new_LineOffset);
     new_LineOffset = NULL;
-    vim_free(new_LineWraps);
+    free(new_LineWraps);
     new_LineWraps = NULL;
-    vim_free(new_TabPageIdxs);
+    free(new_TabPageIdxs);
     new_TabPageIdxs = NULL;
   } else {
     done_outofmem_msg = FALSE;
@@ -6431,15 +6431,15 @@ void free_screenlines(void)
 {
   int i;
 
-  vim_free(ScreenLinesUC);
+  free(ScreenLinesUC);
   for (i = 0; i < Screen_mco; ++i)
-    vim_free(ScreenLinesC[i]);
-  vim_free(ScreenLines2);
-  vim_free(ScreenLines);
-  vim_free(ScreenAttrs);
-  vim_free(LineOffset);
-  vim_free(LineWraps);
-  vim_free(TabPageIdxs);
+    free(ScreenLinesC[i]);
+  free(ScreenLines2);
+  free(ScreenLines);
+  free(ScreenAttrs);
+  free(LineOffset);
+  free(LineWraps);
+  free(TabPageIdxs);
 }
 
 void screenclear(void)

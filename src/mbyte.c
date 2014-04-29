@@ -513,7 +513,7 @@ char_u * mb_init()
       convert_setup(&vimconv, p_enc, (char_u *)"utf-8");
       vimconv.vc_fail = TRUE;
     }
-    vim_free(p);
+    free(p);
   }
 #endif
 
@@ -539,7 +539,7 @@ char_u * mb_init()
            */
           p = string_convert(&vimconv, (char_u *)buf, NULL);
           if (p != NULL) {
-            vim_free(p);
+            free(p);
             n = 1;
           } else
             n = 2;
@@ -3097,7 +3097,7 @@ void utf_find_illegal()
   for (;; ) {
     p = ml_get_cursor();
     if (vimconv.vc_type != CONV_NONE) {
-      vim_free(tofree);
+      free(tofree);
       tofree = string_convert(&vimconv, p, NULL);
       if (tofree == NULL)
         break;
@@ -3136,7 +3136,7 @@ void utf_find_illegal()
   beep_flush();
 
 theend:
-  vim_free(tofree);
+  free(tofree);
   convert_setup(&vimconv, NULL, NULL);
 }
 
@@ -3372,7 +3372,7 @@ char_u * enc_canonize(char_u *enc)
       STRMOVE(r, p);
   } else if ((i = enc_alias_search(p)) >= 0) {
     /* alias recognized, get canonical name */
-    vim_free(r);
+    free(r);
     r = vim_strsave((char_u *)enc_canon_table[i].name);
   }
   return r;
@@ -3536,7 +3536,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       p = alloc((unsigned)len);
       if (done > 0)
         memmove(p, result, done);
-      vim_free(result);
+      free(result);
       result = p;
       if (result == NULL)       /* out of memory */
         break;
@@ -3584,7 +3584,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       fromlen -= l;
     } else if (ICONV_ERRNO != ICONV_E2BIG) {
       /* conversion failed */
-      vim_free(result);
+      free(result);
       result = NULL;
       break;
     }
@@ -3860,7 +3860,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
       /* result is too long, keep the unconverted text (the caller must
        * have done something wrong!) */
       dlen = len;
-    vim_free(d);
+    free(d);
   }
   return dlen;
 }
@@ -3958,7 +3958,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
 
           if (l_w == 0) {
             /* Illegal utf-8 byte cannot be converted */
-            vim_free(retval);
+            free(retval);
             return NULL;
           }
           if (unconvlenp != NULL && l_w > len - i) {
@@ -3992,7 +3992,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
             if (c < 0x100)
               *d++ = c;
             else if (vcp->vc_fail) {
-              vim_free(retval);
+              free(retval);
               return NULL;
             } else {
               *d++ = 0xbf;

@@ -181,7 +181,7 @@ search_regcomp (
     add_to_history(HIST_SEARCH, pat, TRUE, NUL);
 
   if (mr_pattern_alloced) {
-    vim_free(mr_pattern);
+    free(mr_pattern);
     mr_pattern_alloced = FALSE;
   }
 
@@ -264,7 +264,7 @@ char_u *reverse_text(char_u *s)
 static void save_re_pat(int idx, char_u *pat, int magic)
 {
   if (spats[idx].pat != pat) {
-    vim_free(spats[idx].pat);
+    free(spats[idx].pat);
     spats[idx].pat = vim_strsave(pat);
     spats[idx].magic = magic;
     spats[idx].no_scs = no_smartcase;
@@ -299,10 +299,10 @@ void save_search_patterns(void)
 void restore_search_patterns(void)
 {
   if (--save_level == 0) {
-    vim_free(spats[0].pat);
+    free(spats[0].pat);
     spats[0] = saved_spats[0];
     set_vv_searchforward();
-    vim_free(spats[1].pat);
+    free(spats[1].pat);
     spats[1] = saved_spats[1];
     last_idx = saved_last_idx;
     SET_NO_HLSEARCH(saved_no_hlsearch);
@@ -312,11 +312,11 @@ void restore_search_patterns(void)
 #if defined(EXITFREE) || defined(PROTO)
 void free_search_patterns(void)
 {
-  vim_free(spats[0].pat);
-  vim_free(spats[1].pat);
+  free(spats[0].pat);
+  free(spats[1].pat);
 
   if (mr_pattern_alloced) {
-    vim_free(mr_pattern);
+    free(mr_pattern);
     mr_pattern_alloced = FALSE;
     mr_pattern = NULL;
   }
@@ -392,7 +392,7 @@ void reset_search_dir(void)
  */
 void set_last_search_pat(char_u *s, int idx, int magic, int setlast)
 {
-  vim_free(spats[idx].pat);
+  free(spats[idx].pat);
   /* An empty string means that nothing should be matched. */
   if (*s == NUL)
     spats[idx].pat = NULL;
@@ -408,7 +408,7 @@ void set_last_search_pat(char_u *s, int idx, int magic, int setlast)
   if (setlast)
     last_idx = idx;
   if (save_level) {
-    vim_free(saved_spats[idx].pat);
+    free(saved_spats[idx].pat);
     saved_spats[idx] = spats[0];
     if (spats[idx].pat == NULL)
       saved_spats[idx].pat = NULL;
@@ -1091,18 +1091,18 @@ proftime_T      *tm;            /* timeout limit or NULL */
 
           r = reverse_text(trunc != NULL ? trunc : msgbuf);
           if (r != NULL) {
-            vim_free(trunc);
+            free(trunc);
             trunc = r;
           }
         }
         if (trunc != NULL) {
           msg_outtrans(trunc);
-          vim_free(trunc);
+          free(trunc);
         } else
           msg_outtrans(msgbuf);
         msg_clr_eos();
         msg_check();
-        vim_free(msgbuf);
+        free(msgbuf);
 
         gotocmdline(FALSE);
         out_flush();
@@ -1220,7 +1220,7 @@ proftime_T      *tm;            /* timeout limit or NULL */
 end_do_search:
   if ((options & SEARCH_KEEP) || cmdmod.keeppatterns)
     spats[0].off = old_off;
-  vim_free(strcopy);
+  free(strcopy);
 
   return retval;
 }
@@ -3259,8 +3259,8 @@ again:
   spat = alloc(len + 31);
   epat = alloc(len + 9);
   if (spat == NULL || epat == NULL) {
-    vim_free(spat);
-    vim_free(epat);
+    free(spat);
+    free(epat);
     curwin->w_cursor = old_pos;
     goto theend;
   }
@@ -3270,8 +3270,8 @@ again:
   r = do_searchpair(spat, (char_u *)"", epat, FORWARD, (char_u *)"",
       0, NULL, (linenr_T)0, 0L);
 
-  vim_free(spat);
-  vim_free(epat);
+  free(spat);
+  free(epat);
 
   if (r < 1 || lt(curwin->w_cursor, old_end)) {
     /* Can't find other end or it's before the previous end.  Could be a
@@ -4039,7 +4039,7 @@ find_pattern_in_path (
     /* ignore case according to p_ic, p_scs and pat */
     regmatch.rm_ic = ignorecase(pat);
     regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
-    vim_free(pat);
+    free(pat);
     if (regmatch.regprog == NULL)
       goto fpip_end;
   }
@@ -4105,7 +4105,7 @@ find_pattern_in_path (
                 prev_fname = NULL;
               }
             }
-            vim_free(new_fname);
+            free(new_fname);
             new_fname = NULL;
             already_searched = TRUE;
             break;
@@ -4209,19 +4209,19 @@ find_pattern_in_path (
             bigger[i + max_path_depth] = files[i];
           old_files += max_path_depth;
           max_path_depth *= 2;
-          vim_free(files);
+          free(files);
           files = bigger;
         }
         if ((files[depth + 1].fp = mch_fopen((char *)new_fname, "r"))
             == NULL)
-          vim_free(new_fname);
+          free(new_fname);
         else {
           if (++depth == old_files) {
             /*
              * lalloc() for 'bigger' must have failed above.  We
              * will forget one of our already visited files now.
              */
-            vim_free(files[old_files].name);
+            free(files[old_files].name);
             ++old_files;
           }
           files[depth].name = curr_fname = new_fname;
@@ -4527,11 +4527,11 @@ exit_matched:
   /* Close any files that are still open. */
   for (i = 0; i <= depth; i++) {
     fclose(files[i].fp);
-    vim_free(files[i].name);
+    free(files[i].name);
   }
   for (i = old_files; i < max_path_depth; i++)
-    vim_free(files[i].name);
-  vim_free(files);
+    free(files[i].name);
+  free(files);
 
   if (type == CHECK_PATH) {
     if (!did_show) {
@@ -4554,7 +4554,7 @@ exit_matched:
     msg_end();
 
 fpip_end:
-  vim_free(file_line);
+  free(file_line);
   vim_regfree(regmatch.regprog);
   vim_regfree(incl_regmatch.regprog);
   vim_regfree(def_regmatch.regprog);
@@ -4667,7 +4667,7 @@ int read_viminfo_search_pattern(vir_T *virp, int force)
           TRUE);
       if (val != NULL) {
         set_last_search_pat(val, idx, magic, setlast);
-        vim_free(val);
+        free(val);
         spats[idx].no_scs = no_scs;
         spats[idx].off.line = off_line;
         spats[idx].off.end = off_end;

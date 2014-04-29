@@ -842,7 +842,7 @@ char_u *strup_save(char_u *orig)
           memmove(s, res, p - res);
           STRCPY(s + (p - res) + newl, p + l);
           p = s + (p - res);
-          vim_free(res);
+          free(res);
           res = s;
         }
 
@@ -955,18 +955,6 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
 
   *option = p;
   return len;
-}
-
-/*
- * Replacement for free() that ignores NULL pointers.
- * Also skip free() when exiting for sure, this helps when we caught a deadly
- * signal that was caused by a crash in free().
- */
-void vim_free(void *x)
-{
-  if (x != NULL && !really_exiting) {
-    free(x);
-  }
 }
 
 #if (!defined(HAVE_STRCASECMP) && !defined(HAVE_STRICMP)) || defined(PROTO)
@@ -1243,10 +1231,10 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
           : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
           : p_sxq);
       retval = os_call_shell(ncmd, opts, extra_shell_arg);
-      vim_free(ncmd);
+      free(ncmd);
 
       if (ecmd != cmd)
-        vim_free(ecmd);
+        free(ecmd);
     }
     /*
      * Check the window size, in case it changed while executing the
@@ -1330,7 +1318,7 @@ int vim_chdir(char_u *new_dir)
   if (dir_name == NULL)
     return -1;
   r = os_chdir((char *)dir_name);
-  vim_free(dir_name);
+  free(dir_name);
   return r;
 }
 
@@ -1442,7 +1430,7 @@ char_u *read_string(FILE *fd, int cnt)
   for (i = 0; i < cnt; ++i) {
     c = getc(fd);
     if (c == EOF) {
-      vim_free(str);
+      free(str);
       return NULL;
     }
     str[i] = c;

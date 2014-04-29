@@ -56,7 +56,7 @@ void ui_write(char_u *s, int len)
     mch_write(s, len);
 
     if (output_conv.vc_type != CONV_NONE)
-      vim_free(tofree);
+      free(tofree);
   }
 #endif
 }
@@ -83,7 +83,7 @@ void ui_inchar_undo(char_u *s, int len)
   if (ta_str != NULL) {
     memmove(new, ta_str + ta_off, (size_t)(ta_len - ta_off));
     memmove(new + ta_len - ta_off, s, (size_t)len);
-    vim_free(ta_str);
+    free(ta_str);
   } else
     memmove(new, s, (size_t)len);
   ta_str = new;
@@ -298,7 +298,7 @@ int vim_is_input_buf_empty(void)
 }
 
 #ifdef PROTO
-int vim_free_in_input_buf(void) {
+int free_in_input_buf(void) {
   return INBUFLEN - inbufcount;
 }
 #endif
@@ -336,9 +336,9 @@ void set_input_buf(char_u *p)
     if (gap->ga_data != NULL) {
       memmove(inbuf, gap->ga_data, gap->ga_len);
       inbufcount = gap->ga_len;
-      vim_free(gap->ga_data);
+      free(gap->ga_data);
     }
-    vim_free(gap);
+    free(gap);
   }
 }
 
@@ -455,7 +455,7 @@ void fill_input_buf(int exit_on_error)
       unconverted = restlen;
     memmove(inbuf + inbufcount, rest, unconverted);
     if (unconverted == restlen) {
-      vim_free(rest);
+      free(rest);
       rest = NULL;
     } else {
       restlen -= unconverted;
@@ -592,7 +592,7 @@ void yank_cut_buffer0(Display *dpy, VimClipboard *cbd)
         conv_buf = string_convert(&vc, buffer, &nbytes);
         if (conv_buf != NULL) {
           clip_yank_selection(MCHAR, conv_buf, (long)nbytes, cbd);
-          vim_free(conv_buf);
+          free(conv_buf);
           done = TRUE;
         }
         convert_setup(&vc, NULL, NULL);

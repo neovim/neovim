@@ -614,7 +614,7 @@ int flags;
     if (cstack.cs_looplevel > 0 && current_line < lines_ga.ga_len) {
       /* Each '|' separated command is stored separately in lines_ga, to
        * be able to jump to it.  Don't use next_cmdline now. */
-      vim_free(cmdline_copy);
+      free(cmdline_copy);
       cmdline_copy = NULL;
 
       /* Check if a function has returned or, unless it has an unclosed
@@ -710,7 +710,7 @@ int flags;
        * Keep the first typed line.  Clear it when more lines are typed.
        */
       if (flags & DOCMD_KEEPLINE) {
-        vim_free(repeat_cmdline);
+        free(repeat_cmdline);
         if (count == 0)
           repeat_cmdline = vim_strsave(next_cmdline);
         else
@@ -789,7 +789,7 @@ int flags;
       current_line = cmd_loop_cookie.current_line;
 
     if (next_cmdline == NULL) {
-      vim_free(cmdline_copy);
+      free(cmdline_copy);
       cmdline_copy = NULL;
       /*
        * If the command was typed, remember it for the ':' register.
@@ -797,7 +797,7 @@ int flags;
        */
       if (getline_equal(fgetline, cookie, getexline)
           && new_last_cmdline != NULL) {
-        vim_free(last_cmdline);
+        free(last_cmdline);
         last_cmdline = new_last_cmdline;
         new_last_cmdline = NULL;
       }
@@ -939,7 +939,7 @@ int flags;
              || cstack.cs_idx >= 0
              || (flags & DOCMD_REPEAT)));
 
-  vim_free(cmdline_copy);
+  free(cmdline_copy);
   did_emsg_syntax = FALSE;
   free_cmdlines(&lines_ga);
   ga_clear(&lines_ga);
@@ -1038,15 +1038,15 @@ int flags;
         do {
           next = messages->next;
           emsg(messages->msg);
-          vim_free(messages->msg);
-          vim_free(messages);
+          free(messages->msg);
+          free(messages);
           messages = next;
         } while (messages != NULL);
       } else if (p != NULL) {
         emsg(p);
-        vim_free(p);
+        free(p);
       }
-      vim_free(sourcing_name);
+      free(sourcing_name);
       sourcing_name = saved_sourcing_name;
       sourcing_lnum = saved_sourcing_lnum;
     }
@@ -1188,7 +1188,7 @@ static void store_loop_line(garray_T *gap, char_u *line)
 static void free_cmdlines(garray_T *gap)
 {
   while (gap->ga_len > 0) {
-    vim_free(((wcmd_T *)(gap->ga_data))[gap->ga_len - 1].line);
+    free(((wcmd_T *)(gap->ga_data))[gap->ga_len - 1].line);
     --gap->ga_len;
   }
 }
@@ -3471,7 +3471,7 @@ static void ex_script_ni(exarg_T *eap)
   if (!eap->skip)
     ex_ni(eap);
   else
-    vim_free(script_get(eap, eap->arg));
+    free(script_get(eap, eap->arg));
 }
 #endif
 
@@ -3592,7 +3592,7 @@ static char_u *replace_makeprg(exarg_T *eap, char_u *p, char_u **cmdlinep)
     msg_make(p);
 
     /* 'eap->cmd' is not set here, because it is not used at CMD_make */
-    vim_free(*cmdlinep);
+    free(*cmdlinep);
     *cmdlinep = new_cmdline;
     p = new_cmdline;
   }
@@ -3657,7 +3657,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       char_u *l = repl;
 
       repl = expand_env_save(repl);
-      vim_free(l);
+      free(l);
     }
 
     /* Need to escape white space et al. with a backslash.
@@ -3694,7 +3694,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
         if (vim_strchr(ESCAPE_CHARS, *l) != NULL) {
           l = vim_strsave_escaped(repl, ESCAPE_CHARS);
           if (l != NULL) {
-            vim_free(repl);
+            free(repl);
             repl = l;
           }
           break;
@@ -3708,13 +3708,13 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
 
       l = vim_strsave_escaped(repl, (char_u *)"!");
       if (l != NULL) {
-        vim_free(repl);
+        free(repl);
         repl = l;
       }
     }
 
     p = repl_cmdline(eap, p, srclen, repl, cmdlinep);
-    vim_free(repl);
+    free(repl);
     if (p == NULL)
       return FAIL;
   }
@@ -3797,7 +3797,7 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
           (void)repl_cmdline(eap, eap->arg, (int)STRLEN(eap->arg),
               p, cmdlinep);
           if (n == 2)           /* p came from ExpandOne() */
-            vim_free(p);
+            free(p);
         }
       }
     }
@@ -3854,7 +3854,7 @@ static char_u *repl_cmdline(exarg_T *eap, char_u *src, int srclen, char_u *repl,
   eap->arg = new_cmdline + (eap->arg - *cmdlinep);
   if (eap->do_ecmd_cmd != NULL && eap->do_ecmd_cmd != dollar_command)
     eap->do_ecmd_cmd = new_cmdline + (eap->do_ecmd_cmd - *cmdlinep);
-  vim_free(*cmdlinep);
+  free(*cmdlinep);
   *cmdlinep = new_cmdline;
 
   return src;
@@ -4345,9 +4345,9 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
         goto fail;
       }
 
-      vim_free(cmd->uc_rep);
+      free(cmd->uc_rep);
       cmd->uc_rep = NULL;
-      vim_free(cmd->uc_compl_arg);
+      free(cmd->uc_compl_arg);
       cmd->uc_compl_arg = NULL;
       break;
     }
@@ -4382,8 +4382,8 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
   return OK;
 
 fail:
-  vim_free(rep_buf);
-  vim_free(compl_arg);
+  free(rep_buf);
+  free(compl_arg);
   return FAIL;
 }
 
@@ -4745,9 +4745,9 @@ void uc_clear(garray_T *gap)
 
   for (i = 0; i < gap->ga_len; ++i) {
     cmd = USER_CMD_GA(gap, i);
-    vim_free(cmd->uc_name);
-    vim_free(cmd->uc_rep);
-    vim_free(cmd->uc_compl_arg);
+    free(cmd->uc_name);
+    free(cmd->uc_rep);
+    free(cmd->uc_compl_arg);
   }
   ga_clear(gap);
 }
@@ -4777,9 +4777,9 @@ static void ex_delcommand(exarg_T *eap)
     return;
   }
 
-  vim_free(cmd->uc_name);
-  vim_free(cmd->uc_rep);
-  vim_free(cmd->uc_compl_arg);
+  free(cmd->uc_name);
+  free(cmd->uc_rep);
+  free(cmd->uc_compl_arg);
 
   --gap->ga_len;
 
@@ -5144,7 +5144,7 @@ static void do_ucmd(exarg_T *eap)
     totlen += STRLEN(p);            /* Add on the trailing characters */
     buf = alloc((unsigned)(totlen + 1));
     if (buf == NULL) {
-      vim_free(split_buf);
+      free(split_buf);
       return;
     }
   }
@@ -5153,8 +5153,8 @@ static void do_ucmd(exarg_T *eap)
   (void)do_cmdline(buf, eap->getline, eap->cookie,
       DOCMD_VERBOSE|DOCMD_NOWAIT|DOCMD_KEYTYPED);
   current_SID = save_current_SID;
-  vim_free(buf);
-  vim_free(split_buf);
+  free(buf);
+  free(split_buf);
 }
 
 static char_u *get_user_command_name(int idx)
@@ -5280,11 +5280,11 @@ static void ex_colorscheme(exarg_T *eap)
       ++emsg_off;
       p = eval_to_string(expr, NULL, FALSE);
       --emsg_off;
-      vim_free(expr);
+      free(expr);
     }
     if (p != NULL) {
       MSG(p);
-      vim_free(p);
+      free(p);
     } else
       MSG("default");
   } else if (load_colors(eap->arg) == FAIL)
@@ -5702,7 +5702,7 @@ static void ex_goto(exarg_T *eap)
  * list. This function takes over responsibility for freeing the list.
  *
  * XXX The list is made into the argument list. This is freed using
- * FreeWild(), which does a series of vim_free() calls.
+ * FreeWild(), which does a series of free() calls.
  */
 void 
 handle_drop (
@@ -5775,7 +5775,7 @@ handle_drop (
 void alist_clear(alist_T *al)
 {
   while (--al->al_ga.ga_len >= 0)
-    vim_free(AARGLIST(al)[al->al_ga.ga_len].ae_fname);
+    free(AARGLIST(al)[al->al_ga.ga_len].ae_fname);
   ga_clear(&al->al_ga);
 }
 
@@ -5797,7 +5797,7 @@ void alist_unlink(alist_T *al)
 {
   if (al != &global_alist && --al->al_refcount <= 0) {
     alist_clear(al);
-    vim_free(al);
+    free(al);
   }
 }
 
@@ -5869,7 +5869,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
         /* When adding many buffers this can take a long time.  Allow
          * interrupting here. */
         while (i < count)
-          vim_free(files[i++]);
+          free(files[i++]);
         break;
       }
 
@@ -5881,7 +5881,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
       alist_add(al, files[i], use_curbuf ? 2 : 1);
       ui_breakcheck();
     }
-    vim_free(files);
+    free(files);
   }
 
   if (al == &global_alist)
@@ -6037,7 +6037,7 @@ void ex_splitview(exarg_T *eap)
 
 
 theend:
-  vim_free(fname);
+  free(fname);
 }
 
 /*
@@ -6213,7 +6213,7 @@ static void ex_find(exarg_T *eap)
      * appears several times in the path. */
     count = eap->line2;
     while (fname != NULL && --count > 0) {
-      vim_free(fname);
+      free(fname);
       fname = find_file_in_path(NULL, 0, FNAME_MESS,
           FALSE, curbuf->b_ffname);
     }
@@ -6222,7 +6222,7 @@ static void ex_find(exarg_T *eap)
   if (fname != NULL) {
     eap->arg = fname;
     do_exedit(eap, NULL);
-    vim_free(fname);
+    free(fname);
   }
 }
 
@@ -6543,10 +6543,10 @@ static char_u   *prev_dir = NULL;
 #if defined(EXITFREE) || defined(PROTO)
 void free_cd_dir(void)
 {
-  vim_free(prev_dir);
+  free(prev_dir);
   prev_dir = NULL;
 
-  vim_free(globaldir);
+  free(globaldir);
   globaldir = NULL;
 }
 
@@ -6558,7 +6558,7 @@ void free_cd_dir(void)
  */
 void post_chdir(int local)
 {
-  vim_free(curwin->w_localdir);
+  free(curwin->w_localdir);
   curwin->w_localdir = NULL;
   if (local) {
     /* If still in global directory, need to remember current
@@ -6571,7 +6571,7 @@ void post_chdir(int local)
   } else {
     /* We are now in the global directory, no need to remember its
      * name. */
-    vim_free(globaldir);
+    free(globaldir);
     globaldir = NULL;
   }
 
@@ -6637,7 +6637,7 @@ void ex_cd(exarg_T *eap)
       if (KeyTyped || p_verbose >= 5)
         ex_pwd(eap);
     }
-    vim_free(tofree);
+    free(tofree);
   }
 }
 
@@ -7075,7 +7075,7 @@ static void ex_redir(exarg_T *eap)
         return;
 
       redir_fd = open_exfile(fname, eap->forceit, mode);
-      vim_free(fname);
+      free(fname);
     } else if (*arg == '@') {
       /* redirect to a register a-z (resp. A-Z for appending) */
       close_redir();
@@ -7316,7 +7316,7 @@ static void ex_mkrc(exarg_T *eap)
               EMSG(_(e_prev_dir));
             shorten_fnames(TRUE);
           }
-          vim_free(dirnow);
+          free(dirnow);
         }
       } else {
         failed |= (put_view(fd, curwin, !using_vdir, flagp,
@@ -7347,7 +7347,7 @@ static void ex_mkrc(exarg_T *eap)
       if (tbuf != NULL) {
         if (vim_FullName(fname, tbuf, MAXPATHL, FALSE) == OK)
           set_vim_var_string(VV_THIS_SESSION, tbuf, -1);
-        vim_free(tbuf);
+        free(tbuf);
       }
     }
 #ifdef MKSESSION_NL
@@ -7355,7 +7355,7 @@ static void ex_mkrc(exarg_T *eap)
 #endif
   }
 
-  vim_free(viewFile);
+  free(viewFile);
 }
 
 int vim_mkdir_emsg(char_u *name, int prot)
@@ -7537,7 +7537,7 @@ static void ex_normal(exarg_T *eap)
   /* Restore the state (needed when called from a function executed for
    * 'indentexpr'). */
   State = save_State;
-  vim_free(arg);
+  free(arg);
 }
 
 /*
@@ -7957,7 +7957,7 @@ eval_vars (
          * postponed to avoid a delay when <afile> is not used. */
         autocmd_fname_full = TRUE;
         result = FullName_save(autocmd_fname, FALSE);
-        vim_free(autocmd_fname);
+        free(autocmd_fname);
         autocmd_fname = result;
       }
       if (result == NULL) {
@@ -8030,7 +8030,7 @@ eval_vars (
     result = NULL;
   } else
     result = vim_strnsave(result, resultlen);
-  vim_free(resultbuf);
+  free(resultbuf);
   return result;
 }
 
@@ -8120,7 +8120,7 @@ char_u *expand_sfile(char_u *arg)
       if (errormsg != NULL) {
         if (*errormsg)
           emsg(errormsg);
-        vim_free(result);
+        free(result);
         return NULL;
       }
       if (repl == NULL) {               /* no match (cannot happen) */
@@ -8130,16 +8130,16 @@ char_u *expand_sfile(char_u *arg)
       len = (int)STRLEN(result) - srclen + (int)STRLEN(repl) + 1;
       newres = alloc(len);
       if (newres == NULL) {
-        vim_free(repl);
-        vim_free(result);
+        free(repl);
+        free(result);
         return NULL;
       }
       memmove(newres, result, (size_t)(p - result));
       STRCPY(newres + (p - result), repl);
       len = (int)STRLEN(newres);
       STRCAT(newres, p + srclen);
-      vim_free(repl);
-      vim_free(result);
+      free(repl);
+      free(result);
       result = newres;
       p = newres + len;                 /* continue after the match */
     }
@@ -8214,10 +8214,10 @@ makeopens (
         || fputs("cd ", fd) < 0
         || ses_put_fname(fd, sname, &ssop_flags) == FAIL
         || put_eol(fd) == FAIL) {
-      vim_free(sname);
+      free(sname);
       return FAIL;
     }
-    vim_free(sname);
+    free(sname);
   }
 
   /*
@@ -8785,10 +8785,10 @@ ses_arglist (
       }
       if (fputs("argadd ", fd) < 0 || ses_put_fname(fd, s, flagp) == FAIL
           || put_eol(fd) == FAIL) {
-        vim_free(buf);
+        free(buf);
         return FAIL;
       }
-      vim_free(buf);
+      free(buf);
     }
   }
   return OK;
@@ -8846,7 +8846,7 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
 
   /* escape special characters */
   p = vim_strsave_fnameescape(sname, FALSE);
-  vim_free(sname);
+  free(sname);
   if (p == NULL)
     return FAIL;
 
@@ -8854,7 +8854,7 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
   if (fputs((char *)p, fd) < 0)
     retval = FAIL;
 
-  vim_free(p);
+  free(p);
   return retval;
 }
 
@@ -8868,7 +8868,7 @@ static void ex_loadview(exarg_T *eap)
   fname = get_view_file(*eap->arg);
   if (fname != NULL) {
     do_source(fname, FALSE, DOSO_NONE);
-    vim_free(fname);
+    free(fname);
   }
 }
 
@@ -8925,7 +8925,7 @@ static char_u *get_view_file(int c)
     STRCPY(s, ".vim");
   }
 
-  vim_free(sname);
+  free(sname);
   return retval;
 }
 
@@ -9190,7 +9190,7 @@ static void ex_match(exarg_T *eap)
       c = *end;
       *end = NUL;
       match_add(curwin, g, p + 1, 10, id);
-      vim_free(g);
+      free(g);
       *end = c;
     }
   }

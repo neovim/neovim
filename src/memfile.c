@@ -142,7 +142,7 @@ memfile_T *mf_open(char_u *fname, int flags)
 
     /* if the file cannot be opened, return here */
     if (mfp->mf_fd < 0) {
-      vim_free(mfp);
+      free(mfp);
       return NULL;
     }
   }
@@ -246,12 +246,12 @@ void mf_close(memfile_T *mfp, int del_file)
     mf_free_bhdr(hp);
   }
   while (mfp->mf_free_first != NULL)        /* free entries in free list */
-    vim_free(mf_rem_free(mfp));
+    free(mf_rem_free(mfp));
   mf_hash_free(&mfp->mf_hash);
   mf_hash_free_all(&mfp->mf_trans);         /* free hashtable and its items */
-  vim_free(mfp->mf_fname);
-  vim_free(mfp->mf_ffname);
-  vim_free(mfp);
+  free(mfp->mf_fname);
+  free(mfp->mf_ffname);
+  free(mfp);
 }
 
 /*
@@ -285,8 +285,8 @@ mf_close_file (
 
   if (mfp->mf_fname != NULL) {
     os_remove((char *)mfp->mf_fname);  // delete the swap file
-    vim_free(mfp->mf_fname);
-    vim_free(mfp->mf_ffname);
+    free(mfp->mf_fname);
+    free(mfp->mf_ffname);
     mfp->mf_fname = NULL;
     mfp->mf_ffname = NULL;
   }
@@ -353,7 +353,7 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
     } else {              /* use the number, remove entry from free list */
       freep = mf_rem_free(mfp);
       hp->bh_bnum = freep->bh_bnum;
-      vim_free(freep);
+      free(freep);
     }
   } else {    /* get a new number */
     if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
@@ -463,11 +463,11 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, int dirty, int infile)
  */
 void mf_free(memfile_T *mfp, bhdr_T *hp)
 {
-  vim_free(hp->bh_data);        /* free the memory */
+  free(hp->bh_data);        /* free the memory */
   mf_rem_hash(mfp, hp);         /* get *hp out of the hash list */
   mf_rem_used(mfp, hp);         /* get *hp out of the used list */
   if (hp->bh_bnum < 0) {
-    vim_free(hp);               /* don't want negative numbers in free list */
+    free(hp);               /* don't want negative numbers in free list */
     mfp->mf_neg_count--;
   } else
     mf_ins_free(mfp, hp);       /* put *hp in the free list */
@@ -712,9 +712,9 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
    * right
    */
   if (hp->bh_page_count != page_count) {
-    vim_free(hp->bh_data);
+    free(hp->bh_data);
     if ((hp->bh_data = alloc(mfp->mf_page_size * page_count)) == NULL) {
-      vim_free(hp);
+      free(hp);
       return NULL;
     }
     hp->bh_page_count = page_count;
@@ -772,7 +772,7 @@ static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, int page_count)
   if ((hp = (bhdr_T *)alloc((unsigned)sizeof(bhdr_T))) != NULL) {
     if ((hp->bh_data = (char_u *)alloc(mfp->mf_page_size * page_count))
         == NULL) {
-      vim_free(hp);                 /* not enough memory */
+      free(hp);                 /* not enough memory */
       return NULL;
     }
     hp->bh_page_count = page_count;
@@ -785,8 +785,8 @@ static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, int page_count)
  */
 static void mf_free_bhdr(bhdr_T *hp)
 {
-  vim_free(hp->bh_data);
-  vim_free(hp);
+  free(hp->bh_data);
+  free(hp);
 }
 
 /*
@@ -934,7 +934,7 @@ static int mf_write_block(memfile_T *mfp, bhdr_T *hp, off_t offset, unsigned siz
     result = FAIL;
 
   if (data != hp->bh_data)
-    vim_free(data);
+    free(data);
 
   return result;
 }
@@ -975,7 +975,7 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
       freep->bh_page_count -= page_count;
     } else {
       freep = mf_rem_free(mfp);
-      vim_free(freep);
+      free(freep);
     }
   } else {
     new_bnum = mfp->mf_blocknr_max;
@@ -1016,7 +1016,7 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
   /* remove entry from the trans list */
   mf_hash_rem_item(&mfp->mf_trans, (mf_hashitem_T *)np);
 
-  vim_free(np);
+  free(np);
 
   return new_bnum;
 }
@@ -1038,7 +1038,7 @@ void mf_set_ffname(memfile_T *mfp)
 void mf_fullname(memfile_T *mfp)
 {
   if (mfp != NULL && mfp->mf_fname != NULL && mfp->mf_ffname != NULL) {
-    vim_free(mfp->mf_fname);
+    free(mfp->mf_fname);
     mfp->mf_fname = mfp->mf_ffname;
     mfp->mf_ffname = NULL;
   }
@@ -1099,8 +1099,8 @@ mf_do_open (
    * If the file cannot be opened, use memory only
    */
   if (mfp->mf_fd < 0) {
-    vim_free(mfp->mf_fname);
-    vim_free(mfp->mf_ffname);
+    free(mfp->mf_fname);
+    free(mfp->mf_ffname);
     mfp->mf_fname = NULL;
     mfp->mf_ffname = NULL;
   } else {
@@ -1145,7 +1145,7 @@ static void mf_hash_init(mf_hashtab_T *mht)
 static void mf_hash_free(mf_hashtab_T *mht)
 {
   if (mht->mht_buckets != mht->mht_small_buckets)
-    vim_free(mht->mht_buckets);
+    free(mht->mht_buckets);
 }
 
 /*
@@ -1160,7 +1160,7 @@ static void mf_hash_free_all(mf_hashtab_T *mht)
   for (idx = 0; idx <= mht->mht_mask; idx++)
     for (mhi = mht->mht_buckets[idx]; mhi != NULL; mhi = next) {
       next = mhi->mhi_next;
-      vim_free(mhi);
+      free(mhi);
     }
 
   mf_hash_free(mht);
@@ -1281,7 +1281,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
   }
 
   if (mht->mht_buckets != mht->mht_small_buckets)
-    vim_free(mht->mht_buckets);
+    free(mht->mht_buckets);
 
   mht->mht_buckets = buckets;
   mht->mht_mask = (mht->mht_mask + 1) * MHT_GROWTH_FACTOR - 1;

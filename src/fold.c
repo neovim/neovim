@@ -1332,7 +1332,7 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
             sizeof(fold_T) * (gap->ga_len - (idx + 1)));
       /* move the contained folds one level up */
       memmove(fp, nfp, (size_t)(sizeof(fold_T) * moved));
-      vim_free(nfp);
+      free(nfp);
       gap->ga_len += moved - 1;
     }
   }
@@ -1774,7 +1774,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
       }
       if (*p != NUL) {
         p = transstr(text);
-        vim_free(text);
+        free(text);
         text = p;
       }
     }

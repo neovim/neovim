@@ -128,7 +128,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
     i = c - 'A';
     namedfm[i].fmark.mark = *pos;
     namedfm[i].fmark.fnum = fnum;
-    vim_free(namedfm[i].fname);
+    free(namedfm[i].fname);
     namedfm[i].fname = NULL;
     return OK;
   }
@@ -174,7 +174,7 @@ void setpcmark(void)
   /* If jumplist is full: remove oldest entry */
   if (++curwin->w_jumplistlen > JUMPLISTSIZE) {
     curwin->w_jumplistlen = JUMPLISTSIZE;
-    vim_free(curwin->w_jumplist[0].fname);
+    free(curwin->w_jumplist[0].fname);
     for (i = 1; i < JUMPLISTSIZE; ++i)
       curwin->w_jumplist[i - 1] = curwin->w_jumplist[i];
   }
@@ -516,7 +516,7 @@ void fmarks_check_names(buf_T *buf)
       fmarks_check_one(&wp->w_jumplist[i], name, buf);
   }
 
-  vim_free(name);
+  free(name);
 }
 
 static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
@@ -525,7 +525,7 @@ static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf)
       && fm->fname != NULL
       && fnamecmp(name, fm->fname) == 0) {
     fm->fmark.fnum = buf->b_fnum;
-    vim_free(fm->fname);
+    free(fm->fname);
     fm->fname = NULL;
   }
 }
@@ -643,7 +643,7 @@ void do_marks(exarg_T *eap)
           arg, &namedfm[i].fmark.mark, name,
           namedfm[i].fmark.fnum == curbuf->b_fnum);
       if (namedfm[i].fmark.fnum != 0)
-        vim_free(name);
+        free(name);
     }
   }
   show_one_mark('"', arg, &curbuf->b_last_cursor, NULL, TRUE);
@@ -698,7 +698,7 @@ show_one_mark (
       if (name != NULL) {
         msg_outtrans_attr(name, current ? hl_attr(HLF_D) : 0);
         if (mustfree)
-          vim_free(name);
+          free(name);
       }
     }
     out_flush();                    /* show one line at a time */
@@ -755,7 +755,7 @@ void ex_delmarks(exarg_T *eap)
             else
               n = i - 'A';
             namedfm[n].fmark.mark.lnum = 0;
-            vim_free(namedfm[n].fname);
+            free(namedfm[n].fname);
             namedfm[n].fname = NULL;
           }
         }
@@ -797,7 +797,7 @@ void ex_jumps(exarg_T *eap)
 
       msg_putchar('\n');
       if (got_int) {
-        vim_free(name);
+        free(name);
         break;
       }
       sprintf((char *)IObuff, "%c %2d %5ld %4d ",
@@ -810,7 +810,7 @@ void ex_jumps(exarg_T *eap)
       msg_outtrans_attr(name,
           curwin->w_jumplist[i].fmark.fnum == curbuf->b_fnum
           ? hl_attr(HLF_D) : 0);
-      vim_free(name);
+      free(name);
       ui_breakcheck();
     }
     out_flush();
@@ -846,7 +846,7 @@ void ex_changes(exarg_T *eap)
       if (name == NULL)
         break;
       msg_outtrans_attr(name, hl_attr(HLF_D));
-      vim_free(name);
+      free(name);
       ui_breakcheck();
     }
     out_flush();
@@ -1129,7 +1129,7 @@ static void cleanup_jumplist(void)
     if (i >= curwin->w_jumplistlen)         /* no duplicate */
       curwin->w_jumplist[to++] = curwin->w_jumplist[from];
     else
-      vim_free(curwin->w_jumplist[from].fname);
+      free(curwin->w_jumplist[from].fname);
   }
   if (curwin->w_jumplistidx == curwin->w_jumplistlen)
     curwin->w_jumplistidx = to;
@@ -1160,7 +1160,7 @@ void free_jumplist(win_T *wp)
   int i;
 
   for (i = 0; i < wp->w_jumplistlen; ++i)
-    vim_free(wp->w_jumplist[i].fname);
+    free(wp->w_jumplist[i].fname);
 }
 
 void set_last_cursor(win_T *win)
@@ -1176,7 +1176,7 @@ void free_all_marks(void)
 
   for (i = 0; i < NMARKS + EXTRA_MARKS; i++)
     if (namedfm[i].fmark.mark.lnum != 0)
-      vim_free(namedfm[i].fname);
+      free(namedfm[i].fname);
 }
 
 #endif
@@ -1219,7 +1219,7 @@ int read_viminfo_filemark(vir_T *virp, int force)
       fm->fmark.mark.coladd = 0;
       fm->fmark.fnum = 0;
       str = skipwhite(str);
-      vim_free(fm->fname);
+      free(fm->fname);
       fm->fname = viminfo_readstring(virp, (int)(str - virp->vir_line),
           FALSE);
     }
@@ -1254,9 +1254,9 @@ void write_viminfo_filemarks(FILE *fp)
               : (name != NULL
                  && STRCMP(name, namedfm[i].fname) == 0)))
         break;
-    vim_free(name);
+    free(name);
 
-    vim_free(namedfm[i].fname);
+    free(namedfm[i].fname);
     for (; i > NMARKS; --i)
       namedfm[i] = namedfm[i - 1];
     namedfm[NMARKS].fmark.mark = curwin->w_cursor;
@@ -1300,7 +1300,7 @@ static void write_one_filemark(FILE *fp, xfmark_T *fm, int c1, int c2)
   }
 
   if (fm->fmark.fnum != 0)
-    vim_free(name);
+    free(name);
 }
 
 /*
@@ -1325,7 +1325,7 @@ int removable(char_u *name)
         }
       }
     }
-    vim_free(name);
+    free(name);
   }
   return retval;
 }
@@ -1487,7 +1487,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
         count++;
       }
     }
-    vim_free(str);
+    free(str);
 
     pos.coladd = 0;
     while (!(eof = viminfo_readline(virp)) && line[0] == TAB) {
@@ -1535,5 +1535,5 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
       break;
     }
   }
-  vim_free(name_buf);
+  free(name_buf);
 }

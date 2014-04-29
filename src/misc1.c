@@ -927,16 +927,16 @@ open_line (
     curwin->w_cursor.col = 0;
     curwin->w_cursor.coladd = 0;
     ins_bytes(p_extra);         /* will call changed_bytes() */
-    vim_free(p_extra);
+    free(p_extra);
     next_line = NULL;
   }
 
   retval = TRUE;                /* success! */
 theend:
   curbuf->b_p_pi = saved_pi;
-  vim_free(saved_line);
-  vim_free(next_line);
-  vim_free(allocated);
+  free(saved_line);
+  free(next_line);
+  free(allocated);
   return retval;
 }
 
@@ -2470,7 +2470,7 @@ int get_keystroke(void)
 #endif
     break;
   }
-  vim_free(buf);
+  free(buf);
 
   mapped_ctrl_c = save_mapped_ctrl_c;
   return n;
@@ -2667,7 +2667,7 @@ void init_homedir(void)
   char_u  *var;
 
   /* In case we are called a second time (when 'encoding' changes). */
-  vim_free(homedir);
+  free(homedir);
   homedir = NULL;
 
   var = (char_u *)os_getenv("HOME");
@@ -2697,7 +2697,7 @@ void init_homedir(void)
 #if defined(EXITFREE) || defined(PROTO)
 void free_homedir(void)
 {
-  vim_free(homedir);
+  free(homedir);
 }
 
 void free_users(void)
@@ -2875,7 +2875,7 @@ expand_env_esc (
 
         if (p != NULL) {
           if (mustfree)
-            vim_free(var);
+            free(var);
           var = p;
           mustfree = TRUE;
           forward_slash(var);
@@ -2890,7 +2890,7 @@ expand_env_esc (
 
         if (p != NULL) {
           if (mustfree)
-            vim_free(var);
+            free(var);
           var = p;
           mustfree = TRUE;
         }
@@ -2914,7 +2914,7 @@ expand_env_esc (
         copy_char = FALSE;
       }
       if (mustfree)
-        vim_free(var);
+        free(var);
     }
 
     if (copy_char) {        /* copy at least one char */
@@ -3033,13 +3033,13 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       p = vim_strnsave(p, (int)(pend - p));
 
       if (p != NULL && !os_isdir(p)) {
-        vim_free(p);
+        free(p);
         p = NULL;
       } else {
 #ifdef USE_EXE_NAME
         /* may add "/vim54" or "/runtime" if it exists */
         if (vimruntime && (pend = vim_version_dir(p)) != NULL) {
-          vim_free(p);
+          free(p);
           p = pend;
         }
 #endif
@@ -3096,11 +3096,11 @@ static char_u *vim_version_dir(char_u *vimdir)
   p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
   if (os_isdir(p))
     return p;
-  vim_free(p);
+  free(p);
   p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, TRUE);
   if (os_isdir(p))
     return p;
-  vim_free(p);
+  free(p);
   return NULL;
 }
 
@@ -3133,7 +3133,7 @@ void vim_setenv(char_u *name, char_u *val)
   if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
     char_u  *buf = concat_str(val, (char_u *)"/lang");
     bindtextdomain(VIMPACKAGE, (char *)buf);
-    vim_free(buf);
+    free(buf);
   }
 }
 
@@ -3149,7 +3149,7 @@ char_u *get_env_name(expand_T *xp, int idx)
   char *envname = os_getenvname_at_index(idx);
   if (envname) {
     vim_strncpy(name, (char_u *)envname, ENVNAMELEN - 1);
-    vim_free(envname);
+    free(envname);
     return name;
   } else {
     return NULL;
@@ -3317,7 +3317,7 @@ home_replace (
   *dst = NUL;
 
   if (homedir_env != homedir_env_orig)
-    vim_free(homedir_env);
+    free(homedir_env);
 }
 
 /*
@@ -3481,7 +3481,7 @@ get_cmd_output (
   call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL);
   --no_check_timestamps;
 
-  vim_free(command);
+  free(command);
 
   /*
    * read the names from the file into memory
@@ -3505,7 +3505,7 @@ get_cmd_output (
     goto done;
   if (i != len) {
     EMSG2(_(e_notread), tempname);
-    vim_free(buffer);
+    free(buffer);
     buffer = NULL;
   } else {
     /* Change NUL into SOH, otherwise the string is truncated. */
@@ -3517,7 +3517,7 @@ get_cmd_output (
   }
 
 done:
-  vim_free(tempname);
+  free(tempname);
   return buffer;
 }
 
@@ -3530,8 +3530,8 @@ void FreeWild(int count, char_u **files)
   if (count <= 0 || files == NULL)
     return;
   while (count--)
-    vim_free(files[count]);
-  vim_free(files);
+    free(files[count]);
+  free(files);
 }
 
 /*

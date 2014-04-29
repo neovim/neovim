@@ -326,7 +326,7 @@ struct vimoption {
                                    never be used for local or hidden options! */
 #define P_NODEFAULT     0x40    /* don't set to default value */
 #define P_DEF_ALLOCED   0x80    /* default value is in allocated memory, must
-                                    use vim_free() when assigning new value */
+                                    use free() when assigning new value */
 #define P_WAS_SET       0x100   /* option has been set/reset */
 #define P_NO_MKRC       0x200   /* don't include in :mkvimrc output */
 #define P_VI_DEF        0x400   /* Use Vi default for Vim */
@@ -1983,11 +1983,11 @@ void set_init_1(void)
         ga.ga_len += len;
       }
       if (mustfree)
-        vim_free(p);
+        free(p);
     }
     if (ga.ga_data != NULL) {
       set_string_default("bsk", ga.ga_data);
-      vim_free(ga.ga_data);
+      free(ga.ga_data);
     }
   }
 
@@ -2051,10 +2051,10 @@ void set_init_1(void)
           options[opt_idx].def_val[VI_DEFAULT] = buf;
           options[opt_idx].flags |= P_DEF_ALLOCED;
         } else
-          vim_free(buf);           /* cannot happen */
+          free(buf);           /* cannot happen */
       }
       if (mustfree)
-        vim_free(cdpath);
+        free(cdpath);
     }
   }
 
@@ -2121,7 +2121,7 @@ void set_init_1(void)
        * split P_DEF_ALLOCED in two.
        */
       if (options[opt_idx].flags & P_DEF_ALLOCED)
-        vim_free(options[opt_idx].def_val[VI_DEFAULT]);
+        free(options[opt_idx].def_val[VI_DEFAULT]);
       options[opt_idx].def_val[VI_DEFAULT] = p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
@@ -2167,7 +2167,7 @@ void set_init_1(void)
        * for practical purposes, thus use that.  It's not an alias to
        * still support conversion between gb18030 and utf-8. */
       p_enc = vim_strsave((char_u *)"cp936");
-      vim_free(p);
+      free(p);
     }
     if (mb_init() == NULL) {
       opt_idx = findoption((char_u *)"encoding");
@@ -2198,7 +2198,7 @@ void set_init_1(void)
 #endif
 
     } else {
-      vim_free(p_enc);
+      free(p_enc);
       p_enc = save_enc;
     }
   }
@@ -2308,7 +2308,7 @@ void set_string_default(char *name, char_u *val)
     opt_idx = findoption((char_u *)name);
     if (opt_idx >= 0) {
       if (options[opt_idx].flags & P_DEF_ALLOCED)
-        vim_free(options[opt_idx].def_val[VI_DEFAULT]);
+        free(options[opt_idx].def_val[VI_DEFAULT]);
       options[opt_idx].def_val[VI_DEFAULT] = p;
       options[opt_idx].flags |= P_DEF_ALLOCED;
     }
@@ -2509,7 +2509,7 @@ void set_init_3(void)
         options[idx_srr].def_val[VI_DEFAULT] = p_srr;
       }
     }
-    vim_free(p);
+    free(p);
   }
 #endif
 
@@ -3046,7 +3046,7 @@ do_set (
                       (char_u *)"indent,eol,start");
                   break;
                 }
-                vim_free(oldval);
+                free(oldval);
                 oldval = *(char_u **)varp;
               }
               /*
@@ -3143,7 +3143,7 @@ do_set (
                   || (flags & P_COMMA)) {
                 s = option_expand(opt_idx, newval);
                 if (s != NULL) {
-                  vim_free(newval);
+                  free(newval);
                   newlen = (unsigned)STRLEN(s) + 1;
                   if (adding || prepending || removing)
                     newlen += (unsigned)STRLEN(origval) + 1;
@@ -3655,13 +3655,13 @@ void check_buf_options(buf_T *buf)
 void free_string_option(char_u *p)
 {
   if (p != empty_option)
-    vim_free(p);
+    free(p);
 }
 
 void clear_string_option(char_u **pp)
 {
   if (*pp != empty_option)
-    vim_free(*pp);
+    free(*pp);
   *pp = empty_option;
 }
 
@@ -4062,7 +4062,7 @@ did_set_string_option (
       /* canonize the value, so that STRCMP() can be used on it */
       p = enc_canonize(*varp);
       if (p != NULL) {
-        vim_free(*varp);
+        free(*varp);
         *varp = p;
       }
       if (varp == &p_enc) {
@@ -4091,7 +4091,7 @@ did_set_string_option (
     /* Canonize printencoding if VIM standard one */
     p = enc_canonize(p_penc);
     if (p != NULL) {
-      vim_free(p_penc);
+      free(p_penc);
       p_penc = p;
     } else {
       /* Ensure lower case and '-' for '_' */
@@ -4338,7 +4338,7 @@ did_set_string_option (
         t_colors = colors;
         if (t_colors <= 1) {
           if (new_value_alloced)
-            vim_free(T_CCO);
+            free(T_CCO);
           T_CCO = empty_option;
         }
         /* We now have a different color setup, initialize it again. */
@@ -4844,7 +4844,7 @@ skip:
       return e_invarg;        /* illegal trailing comma as in "set cc=80," */
   }
 
-  vim_free(wp->w_p_cc_cols);
+  free(wp->w_p_cc_cols);
   if (count == 0)
     wp->w_p_cc_cols = NULL;
   else {
@@ -5038,7 +5038,7 @@ static char_u *compile_cap_prog(synblock_T *synblock)
     /* Prepend a ^ so that we only match at one column */
     re = concat_str((char_u *)"^", synblock->b_p_spc);
     synblock->b_cap_prog = vim_regcomp(re, RE_MAGIC);
-    vim_free(re);
+    free(re);
     if (synblock->b_cap_prog == NULL) {
       synblock->b_cap_prog = rp;         /* restore the previous program */
       return e_invarg;
@@ -6188,7 +6188,7 @@ showoptions (
       ui_breakcheck();
     }
   }
-  vim_free(items);
+  free(items);
 }
 
 /*
@@ -6412,10 +6412,10 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
       buf = alloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, FALSE);
       if (put_escstr(fd, buf, 2) == FAIL) {
-        vim_free(buf);
+        free(buf);
         return FAIL;
       }
-      vim_free(buf);
+      free(buf);
     } else if (put_escstr(fd, *valuep, 2) == FAIL)
       return FAIL;
   }
@@ -7478,7 +7478,7 @@ int ExpandOldSetting(int *num_file, char_u ***file)
   buf = vim_strsave_escaped(var, escape_chars);
 
   if (buf == NULL) {
-    vim_free(*file);
+    free(*file);
     *file = NULL;
     return FAIL;
   }
@@ -7870,10 +7870,10 @@ void vimrc_found(char_u *fname, char_u *envname)
       p = FullName_save(fname, FALSE);
       if (p != NULL) {
         vim_setenv(envname, p);
-        vim_free(p);
+        free(p);
       }
     } else if (dofree)
-      vim_free(p);
+      free(p);
   }
 }
 
@@ -8087,7 +8087,7 @@ void save_file_ff(buf_T *buf)
   /* Only use free/alloc when necessary, they take time. */
   if (buf->b_start_fenc == NULL
       || STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0) {
-    vim_free(buf->b_start_fenc);
+    free(buf->b_start_fenc);
     buf->b_start_fenc = vim_strsave(buf->b_p_fenc);
   }
 }
