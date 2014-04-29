@@ -2,6 +2,7 @@ Tests for tab pages
 
 STARTTEST
 :so small.vim
+:lang C
 :" Simple test for opening and closing a tab page
 :tabnew
 :let nr = tabpagenr()
