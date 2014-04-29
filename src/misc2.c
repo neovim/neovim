@@ -781,10 +781,10 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
           : STRCMP(p_sxq, "\"(") == 0 ? (char_u *)")\""
           : p_sxq);
       retval = os_call_shell(ncmd, opts, extra_shell_arg);
-      vim_free(ncmd);
+      free(ncmd);
 
       if (ecmd != cmd)
-        vim_free(ecmd);
+        free(ecmd);
     }
     /*
      * Check the window size, in case it changed while executing the
@@ -868,7 +868,7 @@ int vim_chdir(char_u *new_dir)
   if (dir_name == NULL)
     return -1;
   r = os_chdir((char *)dir_name);
-  vim_free(dir_name);
+  free(dir_name);
   return r;
 }
 
@@ -976,7 +976,7 @@ char_u *read_string(FILE *fd, int cnt)
   for (i = 0; i < cnt; ++i) {
     c = getc(fd);
     if (c == EOF) {
-      vim_free(str);
+      free(str);
       return NULL;
     }
     str[i] = c;

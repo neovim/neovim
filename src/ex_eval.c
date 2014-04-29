@@ -250,7 +250,7 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
       } else {
         elem->msg = vim_strsave(mesg);
         if (elem->msg == NULL) {
-          vim_free(elem);
+          free(elem);
           suppress_errthrow = TRUE;
           EMSG(_(e_outofmem));
         } else {
@@ -289,8 +289,8 @@ static void free_msglist(struct msglist *l)
   messages = l;
   while (messages != NULL) {
     next = messages->next;
-    vim_free(messages->msg);
-    vim_free(messages);
+    free(messages->msg);
+    free(messages);
     messages = next;
   }
 }
@@ -494,7 +494,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
       ? (char_u *)"" : sourcing_name);
   if (excp->throw_name == NULL) {
     if (should_free)
-      vim_free(excp->value);
+      free(excp->value);
     goto nomem;
   }
   excp->throw_lnum = sourcing_lnum;
@@ -526,7 +526,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
   return OK;
 
 nomem:
-  vim_free(excp);
+  free(excp);
   suppress_errthrow = TRUE;
   EMSG(_(e_outofmem));
 fail:
@@ -571,14 +571,14 @@ static void discard_exception(except_T *excp, int was_finished)
     else
       verbose_leave();
     STRCPY(IObuff, saved_IObuff);
-    vim_free(saved_IObuff);
+    free(saved_IObuff);
   }
   if (excp->type != ET_INTERRUPT)
-    vim_free(excp->value);
+    free(excp->value);
   if (excp->type == ET_ERROR)
     free_msglist(excp->messages);
-  vim_free(excp->throw_name);
-  vim_free(excp);
+  free(excp->throw_name);
+  free(excp);
 }
 
 /*
@@ -747,9 +747,9 @@ static void report_pending(int action, int pending, void *value)
     msg_silent = save_msg_silent;
 
   if (pending == CSTP_RETURN)
-    vim_free(s);
+    free(s);
   else if (pending & CSTP_THROW)
-    vim_free(mesg);
+    free(mesg);
 }
 
 /*
@@ -1184,7 +1184,7 @@ void ex_throw(exarg_T *eap)
    * not throw. */
   if (!eap->skip && value != NULL) {
     if (throw_exception(value, ET_USER, NULL) == FAIL)
-      vim_free(value);
+      free(value);
     else
       do_throw(eap->cstack);
   }
@@ -2001,7 +2001,7 @@ int cleanup_conditionals(struct condstack *cstack, int searched_cond, int inclus
       elem = cstack->cs_emsg_silent_list;
       cstack->cs_emsg_silent_list = elem->next;
       emsg_silent = elem->saved_emsg_silent;
-      vim_free(elem);
+      free(elem);
       cstack->cs_flags[idx] &= ~CSF_SILENT;
     }
     if (stop)

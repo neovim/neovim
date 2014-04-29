@@ -721,7 +721,7 @@ restofline:
           len = (int)STRLEN(qfprev->qf_text);
           ptr = alloc((unsigned)(len + STRLEN(errmsg) + 2));
           STRCPY(ptr, qfprev->qf_text);
-          vim_free(qfprev->qf_text);
+          free(qfprev->qf_text);
           qfprev->qf_text = ptr;
           *(ptr += len) = '\n';
           STRCPY(++ptr, errmsg);
@@ -812,15 +812,15 @@ qf_init_ok:
   for (fmt_ptr = fmt_first; fmt_ptr != NULL; fmt_ptr = fmt_first) {
     fmt_first = fmt_ptr->next;
     vim_regfree(fmt_ptr->prog);
-    vim_free(fmt_ptr);
+    free(fmt_ptr);
   }
   qf_clean_dir_stack(&dir_stack);
   qf_clean_dir_stack(&file_stack);
 qf_init_end:
-  vim_free(namebuf);
-  vim_free(errmsg);
-  vim_free(pattern);
-  vim_free(fmtstr);
+  free(namebuf);
+  free(errmsg);
+  free(pattern);
+  free(fmtstr);
 
   qf_update_buffer(qi);
 
@@ -880,7 +880,7 @@ static void ll_free_all(qf_info_T **pqi)
     /* No references to this location list */
     for (i = 0; i < qi->qf_listcount; ++i)
       qf_free(qi, i);
-    vim_free(qi);
+    free(qi);
   }
 }
 
@@ -929,7 +929,7 @@ qf_add_entry (
   else
     qfp->qf_fnum = qf_get_fnum(dir, fname);
   if ((qfp->qf_text = vim_strsave(mesg)) == NULL) {
-    vim_free(qfp);
+    free(qfp);
     return FAIL;
   }
   qfp->qf_lnum = lnum;
@@ -938,8 +938,8 @@ qf_add_entry (
   if (pattern == NULL || *pattern == NUL)
     qfp->qf_pattern = NULL;
   else if ((qfp->qf_pattern = vim_strsave(pattern)) == NULL) {
-    vim_free(qfp->qf_text);
-    vim_free(qfp);
+    free(qfp->qf_text);
+    free(qfp);
     return FAIL;
   }
   qfp->qf_nr = nr;
@@ -1122,7 +1122,7 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
        * directory change.
        */
       if (!os_file_exists(ptr)) {
-        vim_free(ptr);
+        free(ptr);
         directory = qf_guess_filepath(fname);
         if (directory)
           ptr = concat_fnames(directory, fname, TRUE);
@@ -1131,7 +1131,7 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
       }
       /* Use concatenated directory name and file name */
       fnum = buflist_add(ptr, 0);
-      vim_free(ptr);
+      free(ptr);
       return fnum;
     }
     return buflist_add(fname, 0);
@@ -1166,7 +1166,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
     ds_new = (*stackptr)->next;
     (*stackptr)->dirname = NULL;
     while (ds_new) {
-      vim_free((*stackptr)->dirname);
+      free((*stackptr)->dirname);
       (*stackptr)->dirname = concat_fnames(ds_new->dirname, dirbuf,
           TRUE);
       if (os_isdir((*stackptr)->dirname))
@@ -1179,13 +1179,13 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
     while ((*stackptr)->next != ds_new) {
       ds_ptr = (*stackptr)->next;
       (*stackptr)->next = (*stackptr)->next->next;
-      vim_free(ds_ptr->dirname);
-      vim_free(ds_ptr);
+      free(ds_ptr->dirname);
+      free(ds_ptr);
     }
 
     /* Nothing found -> it must be on top level */
     if (ds_new == NULL) {
-      vim_free((*stackptr)->dirname);
+      free((*stackptr)->dirname);
       (*stackptr)->dirname = vim_strsave(dirbuf);
     }
   }
@@ -1195,7 +1195,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
   else {
     ds_ptr = *stackptr;
     *stackptr = (*stackptr)->next;
-    vim_free(ds_ptr);
+    free(ds_ptr);
     return NULL;
   }
 }
@@ -1216,8 +1216,8 @@ static char_u *qf_pop_dir(struct dir_stack_T **stackptr)
   if (*stackptr != NULL) {
     ds_ptr = *stackptr;
     *stackptr = (*stackptr)->next;
-    vim_free(ds_ptr->dirname);
-    vim_free(ds_ptr);
+    free(ds_ptr->dirname);
+    free(ds_ptr);
   }
 
   /* return NEW top element as current dir or NULL if stack is empty*/
@@ -1233,8 +1233,8 @@ static void qf_clean_dir_stack(struct dir_stack_T **stackptr)
 
   while ((ds_ptr = *stackptr) != NULL) {
     *stackptr = (*stackptr)->next;
-    vim_free(ds_ptr->dirname);
-    vim_free(ds_ptr);
+    free(ds_ptr->dirname);
+    free(ds_ptr);
   }
 }
 
@@ -1271,7 +1271,7 @@ static char_u *qf_guess_filepath(char_u *filename)
   ds_ptr = dir_stack->next;
   fullname = NULL;
   while (ds_ptr) {
-    vim_free(fullname);
+    free(fullname);
     fullname = concat_fnames(ds_ptr->dirname, filename, TRUE);
 
     if (os_file_exists(fullname))
@@ -1280,14 +1280,14 @@ static char_u *qf_guess_filepath(char_u *filename)
     ds_ptr = ds_ptr->next;
   }
 
-  vim_free(fullname);
+  free(fullname);
 
   /* clean up all dirs we already left */
   while (dir_stack->next != ds_ptr) {
     ds_tmp = dir_stack->next;
     dir_stack->next = dir_stack->next->next;
-    vim_free(ds_tmp->dirname);
-    vim_free(ds_tmp);
+    free(ds_tmp->dirname);
+    free(ds_tmp);
   }
 
   return ds_ptr==NULL ? NULL : ds_ptr->dirname;
@@ -1904,10 +1904,10 @@ static void qf_free(qf_info_T *qi, int idx)
   while (qi->qf_lists[idx].qf_count) {
     qfp = qi->qf_lists[idx].qf_start->qf_next;
     if (qi->qf_lists[idx].qf_title != NULL && !stop) {
-      vim_free(qi->qf_lists[idx].qf_start->qf_text);
+      free(qi->qf_lists[idx].qf_start->qf_text);
       stop = (qi->qf_lists[idx].qf_start == qfp);
-      vim_free(qi->qf_lists[idx].qf_start->qf_pattern);
-      vim_free(qi->qf_lists[idx].qf_start);
+      free(qi->qf_lists[idx].qf_start->qf_pattern);
+      free(qi->qf_lists[idx].qf_start);
       if (stop)
         /* Somehow qf_count may have an incorrect value, set it to 1
          * to avoid crashing when it's wrong.
@@ -1917,7 +1917,7 @@ static void qf_free(qf_info_T *qi, int idx)
     qi->qf_lists[idx].qf_start = qfp;
     --qi->qf_lists[idx].qf_count;
   }
-  vim_free(qi->qf_lists[idx].qf_title);
+  free(qi->qf_lists[idx].qf_title);
   qi->qf_lists[idx].qf_title = NULL;
 }
 
@@ -2558,8 +2558,8 @@ void ex_make(exarg_T *eap)
     qf_jump(qi, 0, 0, FALSE);                   /* display first error */
 
   os_remove((char *)fname);
-  vim_free(fname);
-  vim_free(cmd);
+  free(fname);
+  free(cmd);
 }
 
 /*
@@ -2609,7 +2609,7 @@ static char_u *get_mef_name(void)
 #endif
         )
       break;
-    vim_free(name);
+    free(name);
   }
   return name;
 }
@@ -2870,7 +2870,7 @@ void ex_vimgrep(exarg_T *eap)
         msg_outtrans(fname);
       else {
         msg_outtrans(p);
-        vim_free(p);
+        free(p);
       }
       msg_clr_eos();
       msg_didout = FALSE;           /* overwrite this message */
@@ -3057,9 +3057,9 @@ void ex_vimgrep(exarg_T *eap)
   }
 
 theend:
-  vim_free(dirname_now);
-  vim_free(dirname_start);
-  vim_free(target_dir);
+  free(dirname_now);
+  free(dirname_start);
+  free(target_dir);
   vim_regfree(regmatch.regprog);
 }
 
@@ -3127,7 +3127,7 @@ static void restore_start_dir(char_u *dirname_start)
     ea.cmdidx = (curwin->w_localdir == NULL) ? CMD_cd : CMD_lcd;
     ex_cd(&ea);
   }
-  vim_free(dirname_now);
+  free(dirname_now);
 }
 
 /*
@@ -3391,10 +3391,10 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
         type == NULL ? NUL : *type,
         valid);
 
-    vim_free(filename);
-    vim_free(pattern);
-    vim_free(text);
-    vim_free(type);
+    free(filename);
+    free(pattern);
+    free(text);
+    free(type);
 
     if (status == FAIL) {
       retval = FAIL;
@@ -3631,12 +3631,12 @@ void ex_helpgrep(exarg_T *eap)
                         ) == FAIL) {
                   got_int = TRUE;
                   if (line != IObuff)
-                    vim_free(line);
+                    free(line);
                   break;
                 }
               }
               if (line != IObuff)
-                vim_free(line);
+                free(line);
               ++lnum;
               line_breakcheck();
             }

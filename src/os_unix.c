@@ -172,7 +172,7 @@ void mch_suspend()
   /*
    * Set oldtitle to NULL, so the current title is obtained again.
    */
-  vim_free(oldtitle);
+  free(oldtitle);
   oldtitle = NULL;
   settmode(TMODE_RAW);
   need_check_timestamps = TRUE;
@@ -546,8 +546,8 @@ void mch_early_init()
 
 #if defined(EXITFREE) || defined(PROTO)
 void mch_free_mem()          {
-  vim_free(oldtitle);
-  vim_free(oldicon);
+  free(oldtitle);
+  free(oldicon);
 }
 
 #endif
@@ -1228,11 +1228,11 @@ int flags;                      /* EW_* flags */
   if (ampersent)
     os_delay(10L, TRUE);
 
-  vim_free(command);
+  free(command);
 
   if (i != 0) {                         /* mch_call_shell() failed */
     os_remove((char *)tempname);
-    vim_free(tempname);
+    free(tempname);
     /*
      * With interactive completion, the error message is not printed.
      */
@@ -1262,7 +1262,7 @@ int flags;                      /* EW_* flags */
       MSG(_(e_wildexpand));
       msg_start();                      /* don't overwrite this message */
     }
-    vim_free(tempname);
+    free(tempname);
     goto notfound;
   }
   fseek(fd, 0L, SEEK_END);
@@ -1275,11 +1275,11 @@ int flags;                      /* EW_* flags */
   if (i != (int)len) {
     /* unexpected read error */
     EMSG2(_(e_notread), tempname);
-    vim_free(tempname);
-    vim_free(buffer);
+    free(tempname);
+    free(buffer);
     return FAIL;
   }
-  vim_free(tempname);
+  free(tempname);
 
 
 
@@ -1348,7 +1348,7 @@ int flags;                      /* EW_* flags */
      * /bin/sh will happily expand it to nothing rather than returning an
      * error; and hey, it's good to check anyway -- webb.
      */
-    vim_free(buffer);
+    free(buffer);
     goto notfound;
   }
   *num_file = i;
@@ -1402,11 +1402,11 @@ int flags;                      /* EW_* flags */
       add_pathsep(p);             /* add '/' to a directory name */
     (*file)[j++] = p;
   }
-  vim_free(buffer);
+  free(buffer);
   *num_file = j;
 
   if (*num_file == 0) {     /* rejected all entries */
-    vim_free(*file);
+    free(*file);
     *file = NULL;
     goto notfound;
   }

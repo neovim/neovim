@@ -56,7 +56,7 @@ void ui_write(char_u *s, int len)
     mch_write(s, len);
 
     if (output_conv.vc_type != CONV_NONE)
-      vim_free(tofree);
+      free(tofree);
   }
 #endif
 }
@@ -298,9 +298,9 @@ void set_input_buf(char_u *p)
     if (gap->ga_data != NULL) {
       memmove(inbuf, gap->ga_data, gap->ga_len);
       inbufcount = gap->ga_len;
-      vim_free(gap->ga_data);
+      free(gap->ga_data);
     }
-    vim_free(gap);
+    free(gap);
   }
 }
 
@@ -411,7 +411,7 @@ void fill_input_buf(int exit_on_error)
       unconverted = restlen;
     memmove(inbuf + inbufcount, rest, unconverted);
     if (unconverted == restlen) {
-      vim_free(rest);
+      free(rest);
       rest = NULL;
     } else {
       restlen -= unconverted;

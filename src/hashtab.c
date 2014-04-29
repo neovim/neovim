@@ -50,7 +50,7 @@ void hash_init(hashtab_T *ht)
 void hash_clear(hashtab_T *ht)
 {
   if (ht->ht_array != ht->ht_smallarray) {
-    vim_free(ht->ht_array);
+    free(ht->ht_array);
   }
 }
 
@@ -69,7 +69,7 @@ void hash_clear_all(hashtab_T *ht, int off)
 
   for (hi = ht->ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
-      vim_free(hi->hi_key - off);
+      free(hi->hi_key - off);
       todo--;
     }
   }
@@ -391,7 +391,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
   }
 
   if (ht->ht_array != ht->ht_smallarray) {
-    vim_free(ht->ht_array);
+    free(ht->ht_array);
   }
   ht->ht_array = newarray;
   ht->ht_mask = newmask;

@@ -480,7 +480,7 @@ void ml_set_crypt_key(buf_T *buf, char_u *old_key, int old_cm)
     idx = 0;                    /* start with first index in block 1 */
     error = 0;
     buf->b_ml.ml_stack_top = 0;
-    vim_free(buf->b_ml.ml_stack);
+    free(buf->b_ml.ml_stack);
     buf->b_ml.ml_stack = NULL;
     buf->b_ml.ml_stack_size = 0;        /* no stack yet */
 
@@ -585,7 +585,7 @@ void ml_setname(buf_T *buf)
 
     /* if the file name is the same we don't have to do anything */
     if (fnamecmp(fname, mfp->mf_fname) == 0) {
-      vim_free(fname);
+      free(fname);
       success = TRUE;
       break;
     }
@@ -598,14 +598,14 @@ void ml_setname(buf_T *buf)
     /* try to rename the swap file */
     if (vim_rename(mfp->mf_fname, fname) == 0) {
       success = TRUE;
-      vim_free(mfp->mf_fname);
+      free(mfp->mf_fname);
       mfp->mf_fname = fname;
-      vim_free(mfp->mf_ffname);
+      free(mfp->mf_ffname);
       mf_set_ffname(mfp);
       ml_upd_block0(buf, UB_SAME_DIR);
       break;
     }
-    vim_free(fname);                /* this fname didn't work, try another */
+    free(fname);                /* this fname didn't work, try another */
   }
 
   if (mfp->mf_fd == -1) {           /* need to (re)open the swap file */
@@ -733,9 +733,9 @@ void ml_close(buf_T *buf, int del_file)
     return;
   mf_close(buf->b_ml.ml_mfp, del_file);         /* close the .swp file */
   if (buf->b_ml.ml_line_lnum != 0 && (buf->b_ml.ml_flags & ML_LINE_DIRTY))
-    vim_free(buf->b_ml.ml_line_ptr);
-  vim_free(buf->b_ml.ml_stack);
-  vim_free(buf->b_ml.ml_chunksize);
+    free(buf->b_ml.ml_line_ptr);
+  free(buf->b_ml.ml_stack);
+  free(buf->b_ml.ml_chunksize);
   buf->b_ml.ml_chunksize = NULL;
   buf->b_ml.ml_mfp = NULL;
 
@@ -1128,7 +1128,7 @@ void ml_recover(void)
     /* need to reallocate the memory used to store the data */
     p = alloc(mfp->mf_page_size);
     memmove(p, hp->bh_data, previous_page_size);
-    vim_free(hp->bh_data);
+    free(hp->bh_data);
     hp->bh_data = p;
     b0p = (ZERO_BL *)(hp->bh_data);
   }
@@ -1214,7 +1214,7 @@ void ml_recover(void)
     if (buf->b_p_key == NULL)
       buf->b_p_key = curbuf->b_p_key;
     else if (*buf->b_p_key == NUL) {
-      vim_free(buf->b_p_key);
+      free(buf->b_p_key);
       buf->b_p_key = curbuf->b_p_key;
     }
     if (buf->b_p_key == NULL)
@@ -1226,7 +1226,7 @@ void ml_recover(void)
     set_fileformat(b0_ff - 1, OPT_LOCAL);
   if (b0_fenc != NULL) {
     set_option_value((char_u *)"fenc", 0L, b0_fenc, OPT_LOCAL);
-    vim_free(b0_fenc);
+    free(b0_fenc);
   }
   unchanged(curbuf, TRUE);
 
@@ -1412,7 +1412,7 @@ void ml_recover(void)
       /* Need to copy one line, fetching the other one may flush it. */
       p = vim_strsave(ml_get(idx));
       i = STRCMP(p, ml_get(idx + lnum));
-      vim_free(p);
+      free(p);
       if (i != 0) {
         changed_int();
         ++curbuf->b_changedtick;
@@ -1459,19 +1459,19 @@ void ml_recover(void)
   redraw_curbuf_later(NOT_VALID);
 
 theend:
-  vim_free(fname_used);
+  free(fname_used);
   recoverymode = FALSE;
   if (mfp != NULL) {
     if (hp != NULL)
       mf_put(mfp, hp, FALSE, FALSE);
-    mf_close(mfp, FALSE);           /* will also vim_free(mfp->mf_fname) */
+    mf_close(mfp, FALSE);           /* will also free(mfp->mf_fname) */
   }
   if (buf != NULL) {
     if (buf->b_p_key != curbuf->b_p_key)
       free_string_option(buf->b_p_key);
     free_string_option(buf->b_p_cm);
-    vim_free(buf->b_ml.ml_stack);
-    vim_free(buf);
+    free(buf->b_ml.ml_stack);
+    free(buf);
   }
   if (serious_error && called_from_main)
     ml_close(curbuf, TRUE);
@@ -1583,7 +1583,7 @@ recover_names (
         tail = path_tail(fname_res);
         tail = concat_fnames(dir_name, tail, TRUE);
         num_names = recov_file_names(names, tail, FALSE);
-        vim_free(tail);
+        free(tail);
       }
     }
 
@@ -1591,7 +1591,7 @@ recover_names (
     for (i = 0; i < num_names; ++i) {
       if (names[i] == NULL) {
         for (i = 0; i < num_names; ++i)
-          vim_free(names[i]);
+          free(names[i]);
         num_names = 0;
       }
     }
@@ -1618,7 +1618,7 @@ recover_names (
           swapname = NULL;
           num_files = 1;
         }
-        vim_free(swapname);
+        free(swapname);
       }
     }
 
@@ -1632,9 +1632,9 @@ recover_names (
           /* Remove the name from files[i].  Move further entries
            * down.  When the array becomes empty free it here, since
            * FreeWild() won't be called below. */
-          vim_free(files[i]);
+          free(files[i]);
           if (--num_files == 0)
-            vim_free(files);
+            free(files);
           else
             for (; i < num_files; ++i)
               files[i] = files[i + 1];
@@ -1675,11 +1675,11 @@ recover_names (
       file_count += num_files;
 
     for (i = 0; i < num_names; ++i)
-      vim_free(names[i]);
+      free(names[i]);
     if (num_files > 0)
       FreeWild(num_files, files);
   }
-  vim_free(dir_name);
+  free(dir_name);
   return file_count;
 }
 
@@ -1700,8 +1700,8 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
       if (vim_ispathsep(*d))
         *d = '%';
     d = concat_fnames(dir, s, TRUE);
-    vim_free(s);
-    vim_free(f);
+    free(s);
+    free(f);
   }
   return d;
 }
@@ -1833,7 +1833,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
     if (STRCMP(p, names[num_names]) != 0)
       ++num_names;
     else
-      vim_free(names[num_names]);
+      free(names[num_names]);
   } else
     ++num_names;
 
@@ -2613,7 +2613,7 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
   if (curbuf->b_ml.ml_line_lnum != lnum)            /* other line buffered */
     ml_flush_line(curbuf);                          /* flush it */
   else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY)   /* same line allocated */
-    vim_free(curbuf->b_ml.ml_line_ptr);             /* free it */
+    free(curbuf->b_ml.ml_line_ptr);             /* free it */
   curbuf->b_ml.ml_line_ptr = line;
   curbuf->b_ml.ml_line_lnum = lnum;
   curbuf->b_ml.ml_flags = (curbuf->b_ml.ml_flags | ML_LINE_DIRTY) & ~ML_EMPTY;
@@ -2969,7 +2969,7 @@ static void ml_flush_line(buf_T *buf)
         (void)ml_delete_int(buf, lnum, FALSE);
       }
     }
-    vim_free(new_line);
+    free(new_line);
 
     entered = FALSE;
   }
@@ -3222,7 +3222,7 @@ static int ml_add_stack(buf_T *buf)
     infoptr_T *newstack = xmalloc(sizeof(infoptr_T) *
                                     (buf->b_ml.ml_stack_size + STACK_INCR));
     memmove(newstack, buf->b_ml.ml_stack, (size_t)top * sizeof(infoptr_T));
-    vim_free(buf->b_ml.ml_stack);
+    free(buf->b_ml.ml_stack);
     buf->b_ml.ml_stack = newstack;
     buf->b_ml.ml_stack_size += STACK_INCR;
   }
@@ -3355,7 +3355,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     r = NULL;
     if ((s = make_percent_swname(dir_name, fname)) != NULL) {
       r = modname(s, (char_u *)".swp", FALSE);
-      vim_free(s);
+      free(s);
     }
     return r;
   }
@@ -3375,7 +3375,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
     return NULL;
 
   s = get_file_in_dir(r, dir_name);
-  vim_free(r);
+  free(r);
   return s;
 }
 
@@ -3415,7 +3415,7 @@ get_file_in_dir (
       t = concat_fnames(fname, dname + 2, TRUE);
       *tail = save_char;
       retval = concat_fnames(t, tail, TRUE);
-      vim_free(t);
+      free(t);
     }
   } else {
     retval = concat_fnames(dname, tail, TRUE);
@@ -3555,7 +3555,7 @@ findswapname (
     if (fname == NULL)          /* must be out of memory */
       break;
     if ((n = (int)STRLEN(fname)) == 0) {        /* safety check */
-      vim_free(fname);
+      free(fname);
       fname = NULL;
       break;
     }
@@ -3700,7 +3700,7 @@ findswapname (
             if (process_still_running && choice >= 4)
               choice++;                 /* Skip missing "Delete it" button */
 # endif
-            vim_free(name);
+            free(name);
 
             /* pretend screen didn't scroll, need redraw anyway */
             msg_scrolled = 0;
@@ -3755,7 +3755,7 @@ findswapname (
     if (fname[n - 1] == 'a') {          /* ".s?a" */
       if (fname[n - 2] == 'a') {        /* ".saa": tried enough, give up */
         EMSG(_("E326: Too many swap files found"));
-        vim_free(fname);
+        free(fname);
         fname = NULL;
         break;
       }
@@ -3765,7 +3765,7 @@ findswapname (
     --fname[n - 1];                     /* ".swo", ".swn", etc. */
   }
 
-  vim_free(dir_name);
+  free(dir_name);
   return fname;
 }
 

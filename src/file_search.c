@@ -514,19 +514,19 @@ vim_findfile_init (
       }
 
       if (temp == NULL || wc_path == NULL) {
-        vim_free(buf);
-        vim_free(temp);
-        vim_free(wc_path);
+        free(buf);
+        free(temp);
+        free(wc_path);
         goto error_return;
       }
 
       STRCPY(temp, search_ctx->ffsc_fix_path + len);
       STRCAT(temp, search_ctx->ffsc_wc_path);
-      vim_free(search_ctx->ffsc_wc_path);
-      vim_free(wc_path);
+      free(search_ctx->ffsc_wc_path);
+      free(wc_path);
       search_ctx->ffsc_wc_path = temp;
     }
-    vim_free(buf);
+    free(buf);
   }
 
   sptr = ff_create_stack_element(ff_expand_buffer,
@@ -588,7 +588,7 @@ void vim_findfile_cleanup(void *ctx)
 
   vim_findfile_free_visited(ctx);
   ff_clear(ctx);
-  vim_free(ctx);
+  free(ctx);
 }
 
 /*
@@ -977,7 +977,7 @@ char_u *vim_findfile(void *search_ctx_arg)
       break;
   }
 
-  vim_free(file_path);
+  free(file_path);
   return NULL;
 }
 
@@ -1005,8 +1005,8 @@ static void vim_findfile_free_visited_list(ff_visited_list_hdr_T **list_headp)
     vp = (*list_headp)->ffvl_next;
     ff_free_visited_list((*list_headp)->ffvl_visited_list);
 
-    vim_free((*list_headp)->ffvl_filename);
-    vim_free(*list_headp);
+    free((*list_headp)->ffvl_filename);
+    free(*list_headp);
     *list_headp = vp;
   }
   *list_headp = NULL;
@@ -1018,8 +1018,8 @@ static void ff_free_visited_list(ff_visited_T *vl)
 
   while (vl != NULL) {
     vp = vl->ffv_next;
-    vim_free(vl->ffv_wc_path);
-    vim_free(vl);
+    free(vl->ffv_wc_path);
+    free(vl);
     vl = vp;
   }
   vl = NULL;
@@ -1072,7 +1072,7 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
   retptr->ffvl_visited_list = NULL;
   retptr->ffvl_filename = vim_strsave(filename);
   if (retptr->ffvl_filename == NULL) {
-    vim_free(retptr);
+    free(retptr);
     return NULL;
   }
   retptr->ffvl_next = *list_headp;
@@ -1265,14 +1265,14 @@ static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
  */
 static void ff_free_stack_element(ff_stack_T *stack_ptr)
 {
-  /* vim_free handles possible NULL pointers */
-  vim_free(stack_ptr->ffs_fix_path);
-  vim_free(stack_ptr->ffs_wc_path);
+  /* free handles possible NULL pointers */
+  free(stack_ptr->ffs_fix_path);
+  free(stack_ptr->ffs_wc_path);
 
   if (stack_ptr->ffs_filearray != NULL)
     FreeWild(stack_ptr->ffs_filearray_size, stack_ptr->ffs_filearray);
 
-  vim_free(stack_ptr);
+  free(stack_ptr);
 }
 
 /*
@@ -1286,19 +1286,19 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
   while ((sptr = ff_pop(search_ctx)) != NULL)
     ff_free_stack_element(sptr);
 
-  vim_free(search_ctx->ffsc_file_to_search);
-  vim_free(search_ctx->ffsc_start_dir);
-  vim_free(search_ctx->ffsc_fix_path);
-  vim_free(search_ctx->ffsc_wc_path);
+  free(search_ctx->ffsc_file_to_search);
+  free(search_ctx->ffsc_start_dir);
+  free(search_ctx->ffsc_fix_path);
+  free(search_ctx->ffsc_wc_path);
 
   if (search_ctx->ffsc_stopdirs_v != NULL) {
     int i = 0;
 
     while (search_ctx->ffsc_stopdirs_v[i] != NULL) {
-      vim_free(search_ctx->ffsc_stopdirs_v[i]);
+      free(search_ctx->ffsc_stopdirs_v[i]);
       i++;
     }
-    vim_free(search_ctx->ffsc_stopdirs_v);
+    free(search_ctx->ffsc_stopdirs_v);
   }
   search_ctx->ffsc_stopdirs_v = NULL;
 
@@ -1388,9 +1388,9 @@ static void     *fdip_search_ctx = NULL;
 #if defined(EXITFREE)
 void free_findfile(void)
 {
-  vim_free(ff_file_to_find);
+  free(ff_file_to_find);
   vim_findfile_cleanup(fdip_search_ctx);
-  vim_free(ff_expand_buffer);
+  free(ff_expand_buffer);
 }
 
 #endif
@@ -1443,7 +1443,7 @@ find_file_in_path_option (
     expand_env(ptr, NameBuff, MAXPATHL);
     ptr[len] = save_char;
 
-    vim_free(ff_file_to_find);
+    free(ff_file_to_find);
     ff_file_to_find = vim_strsave(NameBuff);
     if (ff_file_to_find == NULL) {      /* out of memory */
       file_name = NULL;
@@ -1554,7 +1554,7 @@ find_file_in_path_option (
             fdip_search_ctx, FALSE, rel_fname);
         if (fdip_search_ctx != NULL)
           did_findfile_init = TRUE;
-        vim_free(buf);
+        free(buf);
       }
     }
   }

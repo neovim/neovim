@@ -284,7 +284,7 @@ char_u *strup_save(char_u *orig)
           memmove(s, res, p - res);
           STRCPY(s + (p - res) + newl, p + l);
           p = s + (p - res);
-          vim_free(res);
+          free(res);
           res = s;
         }
 

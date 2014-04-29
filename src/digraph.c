@@ -1527,7 +1527,7 @@ static int getexactdigraph(int char1, int char2, int meta_char)
 
       if (to != NULL) {
         retval = (*mb_ptr2char)(to);
-        vim_free(to);
+        free(to);
       }
       (void)convert_setup(&vc, NULL, NULL);
     }
@@ -1759,11 +1759,11 @@ char_u* keymap_init(void)
                    curbuf->b_p_keymap);
 
       if (source_runtime(buf, FALSE) == FAIL) {
-        vim_free(buf);
+        free(buf);
         return (char_u *)N_("E544: Keymap file not found");
       }
     }
-    vim_free(buf);
+    free(buf);
   }
 
   return NULL;
@@ -1825,13 +1825,13 @@ void ex_loadkeymap(exarg_T *eap)
         if ((kp->to != NULL) && (*kp->to == NUL)) {
           EMSG(_("E791: Empty keymap entry"));
         }
-        vim_free(kp->from);
-        vim_free(kp->to);
+        free(kp->from);
+        free(kp->to);
       } else {
         ++curbuf->b_kmap_ga.ga_len;
       }
     }
-    vim_free(line);
+    free(line);
   }
 
   // setup ":lnoremap" to map the keys
@@ -1869,8 +1869,8 @@ static void keymap_unload(void)
   for (i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);
     (void)do_map(1, buf, LANGMAP, FALSE);
-    vim_free(kp[i].from);
-    vim_free(kp[i].to);
+    free(kp[i].from);
+    free(kp[i].to);
   }
 
   p_cpo = save_cpo;

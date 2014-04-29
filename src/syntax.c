@@ -1065,7 +1065,7 @@ static void syn_stack_free_block(synblock_T *block)
   if (block->b_sst_array != NULL) {
     for (p = block->b_sst_first; p != NULL; p = p->sst_next)
       clear_syn_state(p);
-    vim_free(block->b_sst_array);
+    free(block->b_sst_array);
     block->b_sst_array = NULL;
     block->b_sst_len = 0;
   }
@@ -1153,7 +1153,7 @@ static void syn_stack_alloc(void)
       to->sst_next = to + 1;
     (sstp + len - 1)->sst_next = NULL;
 
-    vim_free(syn_block->b_sst_array);
+    free(syn_block->b_sst_array);
     syn_block->b_sst_array = sstp;
     syn_block->b_sst_len = len;
   }
@@ -3161,7 +3161,7 @@ void syntax_clear(synblock_T *block)
 
   vim_regfree(block->b_syn_linecont_prog);
   block->b_syn_linecont_prog = NULL;
-  vim_free(block->b_syn_linecont_pat);
+  free(block->b_syn_linecont_pat);
   block->b_syn_linecont_pat = NULL;
   block->b_syn_folditems = 0;
 
@@ -3180,7 +3180,7 @@ void reset_synblock(win_T *wp)
 {
   if (wp->w_s != &wp->w_buffer->b_s) {
     syntax_clear(wp->w_s);
-    vim_free(wp->w_s);
+    free(wp->w_s);
     wp->w_s = &wp->w_buffer->b_s;
   }
 }
@@ -3204,7 +3204,7 @@ static void syntax_sync_clear(void)
 
   vim_regfree(curwin->w_s->b_syn_linecont_prog);
   curwin->w_s->b_syn_linecont_prog = NULL;
-  vim_free(curwin->w_s->b_syn_linecont_pat);
+  free(curwin->w_s->b_syn_linecont_pat);
   curwin->w_s->b_syn_linecont_pat = NULL;
 
   syn_stack_free_all(curwin->w_s);              /* Need to recompute all syntax. */
@@ -3232,13 +3232,13 @@ static void syn_remove_pattern(synblock_T *block, int idx)
  */
 static void syn_clear_pattern(synblock_T *block, int i)
 {
-  vim_free(SYN_ITEMS(block)[i].sp_pattern);
+  free(SYN_ITEMS(block)[i].sp_pattern);
   vim_regfree(SYN_ITEMS(block)[i].sp_prog);
   /* Only free sp_cont_list and sp_next_list of first start pattern */
   if (i == 0 || SYN_ITEMS(block)[i - 1].sp_type != SPTYPE_START) {
-    vim_free(SYN_ITEMS(block)[i].sp_cont_list);
-    vim_free(SYN_ITEMS(block)[i].sp_next_list);
-    vim_free(SYN_ITEMS(block)[i].sp_syn.cont_in_list);
+    free(SYN_ITEMS(block)[i].sp_cont_list);
+    free(SYN_ITEMS(block)[i].sp_next_list);
+    free(SYN_ITEMS(block)[i].sp_syn.cont_in_list);
   }
 }
 
@@ -3247,9 +3247,9 @@ static void syn_clear_pattern(synblock_T *block, int i)
  */
 static void syn_clear_cluster(synblock_T *block, int i)
 {
-  vim_free(SYN_CLSTR(block)[i].scl_name);
-  vim_free(SYN_CLSTR(block)[i].scl_name_u);
-  vim_free(SYN_CLSTR(block)[i].scl_list);
+  free(SYN_CLSTR(block)[i].scl_name);
+  free(SYN_CLSTR(block)[i].scl_name_u);
+  free(SYN_CLSTR(block)[i].scl_list);
 }
 
 /*
@@ -3305,7 +3305,7 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
            */
           short scl_id = id - SYNID_CLUSTER;
 
-          vim_free(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
+          free(SYN_CLSTR(curwin->w_s)[scl_id].scl_list);
           SYN_CLSTR(curwin->w_s)[scl_id].scl_list = NULL;
         }
       } else {
@@ -3870,9 +3870,9 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
               hi->hi_key = KE2HIKEY(kp_next);
           } else
             kp_prev->ke_next = kp_next;
-          vim_free(kp->next_list);
-          vim_free(kp->k_syn.cont_in_list);
-          vim_free(kp);
+          free(kp->next_list);
+          free(kp->k_syn.cont_in_list);
+          free(kp);
           kp = kp_next;
         } else {
           kp_prev = kp;
@@ -3900,9 +3900,9 @@ static void clear_keywtab(hashtab_T *ht)
       --todo;
       for (kp = HI2KE(hi); kp != NULL; kp = kp_next) {
         kp_next = kp->ke_next;
-        vim_free(kp->next_list);
-        vim_free(kp->k_syn.cont_in_list);
-        vim_free(kp);
+        free(kp->next_list);
+        free(kp->k_syn.cont_in_list);
+        free(kp);
       }
     }
   }
@@ -4126,12 +4126,12 @@ get_syn_options (
             }
           if (i < 0) {
             EMSG2(_("E394: Didn't find region item for %s"), gname);
-            vim_free(gname);
+            free(gname);
             return NULL;
           }
         }
 
-        vim_free(gname);
+        free(gname);
         arg = skipwhite(arg);
       } else if (flagtab[fidx].flags == HL_FOLD
                  && foldmethodIsSyntax(curwin))
@@ -4323,9 +4323,9 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       }
     }
 
-    vim_free(keyword_copy);
-    vim_free(syn_opt_arg.cont_in_list);
-    vim_free(syn_opt_arg.next_list);
+    free(keyword_copy);
+    free(syn_opt_arg.cont_in_list);
+    free(syn_opt_arg.next_list);
   }
 
   if (rest != NULL)
@@ -4429,10 +4429,10 @@ syn_cmd_match (
    * Something failed, free the allocated memory.
    */
   vim_regfree(item.sp_prog);
-  vim_free(item.sp_pattern);
-  vim_free(syn_opt_arg.cont_list);
-  vim_free(syn_opt_arg.cont_in_list);
-  vim_free(syn_opt_arg.next_list);
+  free(item.sp_pattern);
+  free(syn_opt_arg.cont_list);
+  free(syn_opt_arg.cont_in_list);
+  free(syn_opt_arg.next_list);
 
   if (rest == NULL)
     EMSG2(_(e_invarg2), arg);
@@ -4507,7 +4507,7 @@ syn_cmd_region (
     key_end = rest;
     while (*key_end && !vim_iswhite(*key_end) && *key_end != '=')
       ++key_end;
-    vim_free(key);
+    free(key);
     key = vim_strnsave_up(rest, (int)(key_end - rest));
     if (key == NULL) {                          /* out of memory */
       rest = NULL;
@@ -4579,7 +4579,7 @@ syn_cmd_region (
       ++pat_count;
     }
   }
-  vim_free(key);
+  free(key);
   if (illegal || not_enough)
     rest = NULL;
 
@@ -4653,17 +4653,17 @@ syn_cmd_region (
     for (ppp = pat_ptrs[item]; ppp != NULL; ppp = ppp_next) {
       if (!success) {
         vim_regfree(ppp->pp_synp->sp_prog);
-        vim_free(ppp->pp_synp->sp_pattern);
+        free(ppp->pp_synp->sp_pattern);
       }
-      vim_free(ppp->pp_synp);
+      free(ppp->pp_synp);
       ppp_next = ppp->pp_next;
-      vim_free(ppp);
+      free(ppp);
     }
 
   if (!success) {
-    vim_free(syn_opt_arg.cont_list);
-    vim_free(syn_opt_arg.cont_in_list);
-    vim_free(syn_opt_arg.next_list);
+    free(syn_opt_arg.cont_list);
+    free(syn_opt_arg.cont_in_list);
+    free(syn_opt_arg.next_list);
     if (not_enough)
       EMSG2(_("E399: Not enough arguments: syntax region %s"), arg);
     else if (illegal || rest == NULL)
@@ -4703,11 +4703,11 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
     return;
   if (*clstr1 == NULL || list_op == CLUSTER_REPLACE) {
     if (list_op == CLUSTER_REPLACE)
-      vim_free(*clstr1);
+      free(*clstr1);
     if (list_op == CLUSTER_REPLACE || list_op == CLUSTER_ADD)
       *clstr1 = *clstr2;
     else
-      vim_free(*clstr2);
+      free(*clstr2);
     return;
   }
 
@@ -4791,8 +4791,8 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
   /*
    * Finally, put the new list in place.
    */
-  vim_free(*clstr1);
-  vim_free(*clstr2);
+  free(*clstr1);
+  free(*clstr2);
   *clstr1 = clstr;
 }
 
@@ -4813,7 +4813,7 @@ static int syn_scl_name2id(char_u *name)
     if (SYN_CLSTR(curwin->w_s)[i].scl_name_u != NULL
         && STRCMP(name_u, SYN_CLSTR(curwin->w_s)[i].scl_name_u) == 0)
       break;
-  vim_free(name_u);
+  free(name_u);
   return i < 0 ? 0 : i + SYNID_CLUSTER;
 }
 
@@ -4828,7 +4828,7 @@ static int syn_scl_namen2id(char_u *linep, int len)
   name = vim_strnsave(linep, len);
   if (name != NULL) {
     id = syn_scl_name2id(name);
-    vim_free(name);
+    free(name);
   }
   return id;
 }
@@ -4852,7 +4852,7 @@ static int syn_check_cluster(char_u *pp, int len)
   if (id == 0)                          /* doesn't exist yet */
     id = syn_add_cluster(name);
   else
-    vim_free(name);
+    free(name);
   return id;
 }
 
@@ -4876,7 +4876,7 @@ static int syn_add_cluster(char_u *name)
   len = curwin->w_s->b_syn_clusters.ga_len;
   if (len >= MAX_CLUSTER_ID) {
     EMSG((char_u *)_("E848: Too many syntax clusters"));
-    vim_free(name);
+    free(name);
     return 0;
   }
 
@@ -5083,7 +5083,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   while (!ends_excmd(*arg_start)) {
     arg_end = skiptowhite(arg_start);
     next_arg = skipwhite(arg_end);
-    vim_free(key);
+    free(key);
     key = vim_strnsave_up(arg_start, (int)(arg_end - arg_start));
     if (STRCMP(key, "CCOMMENT") == 0) {
       if (!eap->skip)
@@ -5154,7 +5154,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
         syn_clear_time(&curwin->w_s->b_syn_linecont_time);
 
         if (curwin->w_s->b_syn_linecont_prog == NULL) {
-          vim_free(curwin->w_s->b_syn_linecont_pat);
+          free(curwin->w_s->b_syn_linecont_pat);
           curwin->w_s->b_syn_linecont_pat = NULL;
           finished = TRUE;
           break;
@@ -5176,7 +5176,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
     }
     arg_start = next_arg;
   }
-  vim_free(key);
+  free(key);
   if (illegal)
     EMSG2(_("E404: Illegal arguments: %s"), arg_start);
   else if (!finished) {
@@ -5251,13 +5251,13 @@ get_id_list (
         if (TOUPPER_ASC(**arg) != 'C') {
           EMSG2(_("E407: %s not allowed here"), name + 1);
           failed = TRUE;
-          vim_free(name);
+          free(name);
           break;
         }
         if (count != 0) {
           EMSG2(_("E408: %s must be first in contains list"), name + 1);
           failed = TRUE;
-          vim_free(name);
+          free(name);
           break;
         }
         if (name[1] == 'A')
@@ -5284,7 +5284,7 @@ get_id_list (
           regmatch.regprog = vim_regcomp(name, RE_MAGIC);
           if (regmatch.regprog == NULL) {
             failed = TRUE;
-            vim_free(name);
+            free(name);
             break;
           }
 
@@ -5299,7 +5299,7 @@ get_id_list (
                  * "contains=a.*b,axb".
                  * Go back to first round */
                 if (count >= total_count) {
-                  vim_free(retval);
+                  free(retval);
                   round = 1;
                 } else
                   retval[count] = i + 1;
@@ -5311,7 +5311,7 @@ get_id_list (
           vim_regfree(regmatch.regprog);
         }
       }
-      vim_free(name);
+      free(name);
       if (id == 0) {
         EMSG2(_("E409: Unknown group name: %s"), p);
         failed = TRUE;
@@ -5321,7 +5321,7 @@ get_id_list (
         if (round == 2) {
           /* Got more items than expected, go back to first round */
           if (count >= total_count) {
-            vim_free(retval);
+            free(retval);
             round = 1;
           } else
             retval[count] = id;
@@ -5344,14 +5344,14 @@ get_id_list (
 
   *arg = p;
   if (failed || retval == NULL) {
-    vim_free(retval);
+    free(retval);
     return FAIL;
   }
 
   if (*list == NULL)
     *list = retval;
   else
-    vim_free(retval);           /* list already found, don't overwrite it */
+    free(retval);           /* list already found, don't overwrite it */
 
   return OK;
 }
@@ -5531,7 +5531,7 @@ void ex_syntax(exarg_T *eap)
         break;
       }
     }
-    vim_free(subcmd_name);
+    free(subcmd_name);
     if (eap->skip)
       --emsg_skip;
   }
@@ -5572,7 +5572,7 @@ void ex_ownsyntax(exarg_T *eap)
     do_unlet((char_u *)"b:current_syntax", TRUE);
   else {
     set_internal_string_var((char_u *)"b:current_syntax", old_value);
-    vim_free(old_value);
+    free(old_value);
   }
 }
 
@@ -6186,7 +6186,7 @@ int load_colors(char_u *name)
   buf = alloc((unsigned)(STRLEN(name) + 12));
   sprintf((char *)buf, "colors/%s.vim", name);
   retval = source_runtime(buf, FALSE);
-  vim_free(buf);
+  free(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
   recursive = FALSE;
@@ -6389,7 +6389,7 @@ do_highlight (
        */
       while (*linep && !vim_iswhite(*linep) && *linep != '=')
         ++linep;
-      vim_free(key);
+      free(key);
       key = vim_strnsave_up(key_start, (int)(linep - key_start));
       if (key == NULL) {
         error = TRUE;
@@ -6437,7 +6437,7 @@ do_highlight (
         error = TRUE;
         break;
       }
-      vim_free(arg);
+      free(arg);
       arg = vim_strnsave(arg_start, (int)(linep - arg_start));
       if (arg == NULL) {
         error = TRUE;
@@ -6676,7 +6676,7 @@ do_highlight (
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
-          vim_free(HL_TABLE()[idx].sg_gui_fg_name);
+          free(HL_TABLE()[idx].sg_gui_fg_name);
           if (STRCMP(arg, "NONE"))
             HL_TABLE()[idx].sg_gui_fg_name = vim_strsave(arg);
           else
@@ -6687,7 +6687,7 @@ do_highlight (
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
-          vim_free(HL_TABLE()[idx].sg_gui_bg_name);
+          free(HL_TABLE()[idx].sg_gui_bg_name);
           if (STRCMP(arg, "NONE") != 0)
             HL_TABLE()[idx].sg_gui_bg_name = vim_strsave(arg);
           else
@@ -6698,7 +6698,7 @@ do_highlight (
           if (!init)
             HL_TABLE()[idx].sg_set |= SG_GUI;
 
-          vim_free(HL_TABLE()[idx].sg_gui_sp_name);
+          free(HL_TABLE()[idx].sg_gui_sp_name);
           if (STRCMP(arg, "NONE") != 0)
             HL_TABLE()[idx].sg_gui_sp_name = vim_strsave(arg);
           else
@@ -6730,7 +6730,7 @@ do_highlight (
             }
             /* lookup the escape sequence for the item */
             p = get_term_code(tname);
-            vim_free(tname);
+            free(tname);
             if (p == NULL)                  /* ignore non-existing things */
               p = (char_u *)"";
 
@@ -6768,10 +6768,10 @@ do_highlight (
         else
           p = vim_strsave(buf);
         if (key[2] == 'A') {
-          vim_free(HL_TABLE()[idx].sg_start);
+          free(HL_TABLE()[idx].sg_start);
           HL_TABLE()[idx].sg_start = p;
         } else {
-          vim_free(HL_TABLE()[idx].sg_stop);
+          free(HL_TABLE()[idx].sg_stop);
           HL_TABLE()[idx].sg_stop = p;
         }
       } else {
@@ -6806,8 +6806,8 @@ do_highlight (
     HL_TABLE()[idx].sg_scriptID = current_SID;
     redraw_all_later(NOT_VALID);
   }
-  vim_free(key);
-  vim_free(arg);
+  free(key);
+  free(arg);
 
   /* Only call highlight_changed() once, after sourcing a syntax file */
   need_highlight_changed = TRUE;
@@ -6820,8 +6820,8 @@ void free_highlight(void)
 
   for (i = 0; i < highlight_ga.ga_len; ++i) {
     highlight_clear(i);
-    vim_free(HL_TABLE()[i].sg_name);
-    vim_free(HL_TABLE()[i].sg_name_u);
+    free(HL_TABLE()[i].sg_name);
+    free(HL_TABLE()[i].sg_name_u);
   }
   ga_clear(&highlight_ga);
 }
@@ -6856,9 +6856,9 @@ static int hl_has_settings(int idx, int check_link)
 static void highlight_clear(int idx)
 {
   HL_TABLE()[idx].sg_term = 0;
-  vim_free(HL_TABLE()[idx].sg_start);
+  free(HL_TABLE()[idx].sg_start);
   HL_TABLE()[idx].sg_start = NULL;
-  vim_free(HL_TABLE()[idx].sg_stop);
+  free(HL_TABLE()[idx].sg_stop);
   HL_TABLE()[idx].sg_stop = NULL;
   HL_TABLE()[idx].sg_term_attr = 0;
   HL_TABLE()[idx].sg_cterm = 0;
@@ -6867,11 +6867,11 @@ static void highlight_clear(int idx)
   HL_TABLE()[idx].sg_cterm_bg = 0;
   HL_TABLE()[idx].sg_cterm_attr = 0;
   HL_TABLE()[idx].sg_gui = 0;
-  vim_free(HL_TABLE()[idx].sg_gui_fg_name);
+  free(HL_TABLE()[idx].sg_gui_fg_name);
   HL_TABLE()[idx].sg_gui_fg_name = NULL;
-  vim_free(HL_TABLE()[idx].sg_gui_bg_name);
+  free(HL_TABLE()[idx].sg_gui_bg_name);
   HL_TABLE()[idx].sg_gui_bg_name = NULL;
-  vim_free(HL_TABLE()[idx].sg_gui_sp_name);
+  free(HL_TABLE()[idx].sg_gui_sp_name);
   HL_TABLE()[idx].sg_gui_sp_name = NULL;
   /* Clear the script ID only when there is no link, since that is not
    * cleared. */
@@ -6997,8 +6997,8 @@ void clear_hl_tables(void)
 
   for (i = 0; i < term_attr_table.ga_len; ++i) {
     taep = &(((attrentry_T *)term_attr_table.ga_data)[i]);
-    vim_free(taep->ae_u.term.start);
-    vim_free(taep->ae_u.term.stop);
+    free(taep->ae_u.term.start);
+    free(taep->ae_u.term.stop);
   }
   ga_clear(&term_attr_table);
   ga_clear(&cterm_attr_table);
@@ -7415,7 +7415,7 @@ int syn_namen2id(char_u *linep, int len)
   name = vim_strnsave(linep, len);
   if (name != NULL) {
     id = syn_name2id(name);
-    vim_free(name);
+    free(name);
   }
   return id;
 }
@@ -7439,7 +7439,7 @@ int syn_check_group(char_u *pp, int len)
   if (id == 0)                          /* doesn't exist yet */
     id = syn_add_group(name);
   else
-    vim_free(name);
+    free(name);
   return id;
 }
 
@@ -7456,7 +7456,7 @@ static int syn_add_group(char_u *name)
   for (p = name; *p != NUL; ++p) {
     if (!vim_isprintc(*p)) {
       EMSG(_("E669: Unprintable character in group name"));
-      vim_free(name);
+      free(name);
       return 0;
     } else if (!ASCII_ISALNUM(*p) && *p != '_')   {
       /* This is an error, but since there previously was no check only
@@ -7477,7 +7477,7 @@ static int syn_add_group(char_u *name)
 
   if (highlight_ga.ga_len >= MAX_HL_ID) {
     EMSG(_("E849: Too many highlight and syntax groups"));
-    vim_free(name);
+    free(name);
     return 0;
   }
 
@@ -7501,8 +7501,8 @@ static int syn_add_group(char_u *name)
 static void syn_unadd_group(void)
 {
   --highlight_ga.ga_len;
-  vim_free(HL_TABLE()[highlight_ga.ga_len].sg_name);
-  vim_free(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
+  free(HL_TABLE()[highlight_ga.ga_len].sg_name);
+  free(HL_TABLE()[highlight_ga.ga_len].sg_name_u);
 }
 
 /*

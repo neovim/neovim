@@ -131,7 +131,7 @@ int cin_is_cinword(char_u *line)
       break;
     }
   }
-  vim_free(cinw_buf);
+  free(cinw_buf);
 
   return retval;
 }
@@ -3195,7 +3195,7 @@ theend:
   /* put the cursor back where it belongs */
   curwin->w_cursor = cur_curpos;
 
-  vim_free(linecopy);
+  free(linecopy);
 
   if (amount < 0)
     return 0;

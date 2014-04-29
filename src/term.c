@@ -2933,8 +2933,8 @@ static int termcode_star(char_u *code, int len);
 void clear_termcodes(void)
 {
   while (tc_len > 0)
-    vim_free(termcodes[--tc_len].code);
-  vim_free(termcodes);
+    free(termcodes[--tc_len].code);
+  free(termcodes);
   termcodes = NULL;
   tc_max_len = 0;
 
@@ -2990,7 +2990,7 @@ void add_termcode(char_u *name, char_u *string, int flags)
         (unsigned)(tc_max_len * sizeof(struct termcode)));
     for (i = 0; i < tc_len; ++i)
       new_tc[i] = termcodes[i];
-    vim_free(termcodes);
+    free(termcodes);
     termcodes = new_tc;
   }
 
@@ -3019,12 +3019,12 @@ void add_termcode(char_u *name, char_u *string, int flags)
               && s[len - 1]
               == termcodes[i].code[termcodes[i].len - 1]) {
             /* They are equal but for the ";*": don't add it. */
-            vim_free(s);
+            free(s);
             return;
           }
         } else {
           /* Replace old code. */
-          vim_free(termcodes[i].code);
+          free(termcodes[i].code);
           --tc_len;
           break;
         }
@@ -3107,7 +3107,7 @@ static void del_termcode_idx(int idx)
 {
   int i;
 
-  vim_free(termcodes[idx].code);
+  free(termcodes[idx].code);
   --tc_len;
   for (i = idx; i < tc_len; ++i)
     termcodes[i] = termcodes[i + 1];
@@ -4314,7 +4314,7 @@ replace_termcodes (
    */
   if ((*bufp = vim_strsave(result)) != NULL)
     from = *bufp;
-  vim_free(result);
+  free(result);
   return from;
 }
 
@@ -4432,7 +4432,7 @@ void show_termcodes(void)
       ui_breakcheck();
     }
   }
-  vim_free(items);
+  free(items);
 }
 
 /*

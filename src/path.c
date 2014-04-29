@@ -316,7 +316,7 @@ FullName_save (
       new_fname = vim_strsave(buf);
     else
       new_fname = vim_strsave(fname);
-    vim_free(buf);
+    free(buf);
   }
   return new_fname;
 }
@@ -434,7 +434,7 @@ unix_expandpath (
   starts_with_dot = (*s == '.');
   pat = file_pat_to_reg_pat(s, e, NULL, FALSE);
   if (pat == NULL) {
-    vim_free(buf);
+    free(buf);
     return 0;
   }
 
@@ -448,10 +448,10 @@ unix_expandpath (
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC);
   if (flags & (EW_NOERROR | EW_NOTWILD))
     --emsg_silent;
-  vim_free(pat);
+  free(pat);
 
   if (regmatch.regprog == NULL && (flags & EW_NOTWILD) == 0) {
-    vim_free(buf);
+    free(buf);
     return 0;
   }
 
@@ -511,7 +511,7 @@ unix_expandpath (
 
             if (precomp_buf) {
               memmove(buf, precomp_buf, precomp_len);
-              vim_free(precomp_buf);
+              free(precomp_buf);
             }
 #endif
             addfile(gap, buf, flags);
@@ -523,7 +523,7 @@ unix_expandpath (
     closedir(dirp);
   }
 
-  vim_free(buf);
+  free(buf);
   vim_regfree(regmatch.regprog);
 
   matches = gap->ga_len - start_len;
@@ -654,7 +654,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     ((char_u **)gap->ga_data)[gap->ga_len++] = p;
   }
 
-  vim_free(buf);
+  free(buf);
 }
 
 /*
@@ -727,13 +727,13 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
   pat = file_pat_to_reg_pat(file_pattern, NULL, NULL, TRUE);
-  vim_free(file_pattern);
+  free(file_pattern);
   if (pat == NULL)
     return;
 
   regmatch.rm_ic = TRUE;                /* always ignore case */
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC + RE_STRING);
-  vim_free(pat);
+  free(pat);
   if (regmatch.regprog == NULL)
     return;
 
@@ -818,17 +818,17 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
     add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
 
-    vim_free(fnames[i]);
+    free(fnames[i]);
     fnames[i] = rel_path;
     sort_again = TRUE;
     ui_breakcheck();
   }
 
-  vim_free(curdir);
+  free(curdir);
   if (in_curdir != NULL) {
     for (i = 0; i < gap->ga_len; i++)
-      vim_free(in_curdir[i]);
-    vim_free(in_curdir);
+      free(in_curdir[i]);
+    free(in_curdir);
   }
   ga_clear_strings(&path_ga);
   vim_regfree(regmatch.regprog);
@@ -891,7 +891,7 @@ expand_in_path (
 
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option(curdir, &path_ga);
-  vim_free(curdir);
+  free(curdir);
   if (path_ga.ga_len == 0)
     return 0;
 
@@ -899,7 +899,7 @@ expand_in_path (
   ga_clear_strings(&path_ga);
 
   files = globpath(paths, pattern, (flags & EW_ICASE) ? WILD_ICASE : 0);
-  vim_free(paths);
+  free(paths);
   if (files == NULL)
     return 0;
 
@@ -919,7 +919,7 @@ expand_in_path (
       s = e;
     }
   }
-  vim_free(files);
+  free(files);
 
   return gap->ga_len;
 }
@@ -1046,7 +1046,7 @@ gen_expand_wildcards (
          * found file names and start all over again.
          */
         else if (has_env_var(p) || *p == '~') {
-          vim_free(p);
+          free(p);
           ga_clear_strings(&ga);
           i = mch_expand_wildcards(num_pat, pat, num_file, file,
               flags);
@@ -1090,13 +1090,13 @@ gen_expand_wildcards (
         addfile(&ga, t, flags | EW_DIR | EW_FILE);
       else if (os_file_exists(t))
         addfile(&ga, t, flags);
-      vim_free(t);
+      free(t);
     }
 
     if (did_expand_in_path && ga.ga_len > 0 && (flags & EW_PATH))
       uniquefy_paths(&ga, p);
     if (p != pat[i])
-      vim_free(p);
+      free(p);
   }
 
   *num_file = ga.ga_len;
@@ -1144,7 +1144,7 @@ expand_backtick (
   else
     buffer = get_cmd_output(cmd, NULL,
         (flags & EW_SILENT) ? kShellOptSilent : 0);
-  vim_free(cmd);
+  free(cmd);
   if (buffer == NULL)
     return 0;
 
@@ -1167,7 +1167,7 @@ expand_backtick (
       ++cmd;
   }
 
-  vim_free(buffer);
+  free(buffer);
   return cnt;
 }
 
@@ -1462,13 +1462,13 @@ find_file_name_in_path (
     /* Repeat finding the file "count" times.  This matters when it
      * appears several times in the path. */
     while (file_name != NULL && --count > 0) {
-      vim_free(file_name);
+      free(file_name);
       file_name = find_file_in_path(ptr, len, options, FALSE, rel_fname);
     }
   } else
     file_name = vim_strnsave(ptr, len);
 
-  vim_free(tofree);
+  free(tofree);
 
   return file_name;
 }
@@ -1703,7 +1703,7 @@ char_u *path_shorten_fname_if_possible(char_u *full_path)
       p = full_path;
     }
   }
-  vim_free(dirname);
+  free(dirname);
   return p;
 }
 
@@ -1757,8 +1757,8 @@ expand_wildcards_eval (
     ret = expand_wildcards(1, &exp_pat, num_file, file, flags);
 
   if (eval_pat != NULL) {
-    vim_free(exp_pat);
-    vim_free(eval_pat);
+    free(exp_pat);
+    free(eval_pat);
   }
 
   return ret;
@@ -1802,13 +1802,13 @@ expand_wildcards (
         break;
       if (match_file_list(p_wig, (*file)[i], ffname)) {
         /* remove this matching file from the list */
-        vim_free((*file)[i]);
+        free((*file)[i]);
         for (j = i; j + 1 < *num_file; ++j)
           (*file)[j] = (*file)[j + 1];
         --*num_file;
         --i;
       }
-      vim_free(ffname);
+      free(ffname);
     }
   }
 

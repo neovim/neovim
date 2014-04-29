@@ -490,7 +490,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
     p += l;
   }
 
-  vim_free(tbuf);
+  free(tbuf);
 
   if (psettings->do_syntax)
     /* Set colors for next character. */
@@ -1606,7 +1606,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   retval = (do_in_runtimepath(buffer, FALSE, prt_resource_name,
                 resource->filename)
             && resource->filename[0] != NUL);
-  vim_free(buffer);
+  free(buffer);
   return retval;
 }
 
@@ -1998,7 +1998,7 @@ void mch_print_cleanup(void)
      */
     for (i = PRT_PS_FONT_ROMAN; i <= PRT_PS_FONT_BOLDOBLIQUE; i++) {
       if (prt_ps_mb_font.ps_fontname[i] != NULL)
-        vim_free(prt_ps_mb_font.ps_fontname[i]);
+        free(prt_ps_mb_font.ps_fontname[i]);
       prt_ps_mb_font.ps_fontname[i] = NULL;
     }
   }
@@ -2013,7 +2013,7 @@ void mch_print_cleanup(void)
     prt_file_error = FALSE;
   }
   if (prt_ps_file_name != NULL) {
-    vim_free(prt_ps_file_name);
+    free(prt_ps_file_name);
     prt_ps_file_name = NULL;
   }
 }
@@ -2418,7 +2418,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
     p = expand_env_save(psettings->outfile);
     if (p != NULL) {
       prt_ps_fd = mch_fopen((char *)p, WRITEBIN);
-      vim_free(p);
+      free(p);
     }
   }
   if (prt_ps_fd == NULL) {
@@ -2843,10 +2843,10 @@ int mch_print_begin(prt_settings_T *psettings)
   /* Fail if any problems writing out to the PS file */
   retval = !prt_file_error;
 
-  vim_free(res_prolog);
-  vim_free(res_encoding);
-  vim_free(res_cidfont);
-  vim_free(res_cmap);
+  free(res_prolog);
+  free(res_encoding);
+  free(res_cidfont);
+  free(res_cmap);
 
   return retval;
 }
@@ -3120,7 +3120,7 @@ int mch_print_text_out(char_u *p, int len)
 
   /* Need to free any translated characters */
   if (prt_do_conv && (*p != NUL))
-    vim_free(p);
+    free(p);
 
   prt_text_run += char_width;
   prt_pos_x += char_width;

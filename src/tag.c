@@ -234,7 +234,7 @@ do_tag (
           cur_match = ptag_entry.cur_match;
           cur_fnum = ptag_entry.cur_fnum;
         } else {
-          vim_free(ptag_entry.tagname);
+          free(ptag_entry.tagname);
           if ((ptag_entry.tagname = vim_strsave(tag)) == NULL)
             goto end_do_tag;
         }
@@ -244,12 +244,12 @@ do_tag (
          * stack entries above it.
          */
         while (tagstackidx < tagstacklen)
-          vim_free(tagstack[--tagstacklen].tagname);
+          free(tagstack[--tagstacklen].tagname);
 
         /* if the tagstack is full: remove oldest entry */
         if (++tagstacklen > TAGSTACKSIZE) {
           tagstacklen = TAGSTACKSIZE;
-          vim_free(tagstack[0].tagname);
+          free(tagstack[0].tagname);
           for (i = 1; i < tagstacklen; ++i)
             tagstack[i - 1] = tagstack[i];
           --tagstackidx;
@@ -443,7 +443,7 @@ do_tag (
         || (cur_match >= num_matches && max_num_matches != MAXCOL)
         || other_name) {
       if (other_name) {
-        vim_free(tagmatchname);
+        free(tagmatchname);
         tagmatchname = vim_strsave(name);
       }
 
@@ -563,7 +563,7 @@ do_tag (
           p = tag_full_fname(&tagp);
           if (p != NULL) {
             msg_puts_long_attr(p, hl_attr(HLF_D));
-            vim_free(p);
+            free(p);
           }
           if (msg_col > 0)
             msg_putchar('\n');
@@ -706,7 +706,7 @@ do_tag (
           if (p == NULL)
             continue;
           vim_strncpy(fname, p, MAXPATHL);
-          vim_free(p);
+          free(p);
 
           /*
            * Get the line number or the search pattern used to locate
@@ -802,8 +802,8 @@ do_tag (
         set_errorlist(curwin, list, ' ', IObuff);
 
         list_free(list, TRUE);
-        vim_free(fname);
-        vim_free(cmd);
+        free(fname);
+        free(cmd);
 
         cur_match = 0;                  /* Jump to the first tag */
       }
@@ -939,7 +939,7 @@ end_do_tag:
  */
 void tag_freematch(void)
 {
-  vim_free(tagmatchname);
+  free(tagmatchname);
   tagmatchname = NULL;
 }
 
@@ -981,7 +981,7 @@ void do_tags(exarg_T *eap)
       msg_outtrans(IObuff);
       msg_outtrans_attr(name, tagstack[i].fmark.fnum == curbuf->b_fnum
           ? hl_attr(HLF_D) : 0);
-      vim_free(name);
+      free(name);
     }
     out_flush();                    /* show one line at a time */
   }
@@ -1431,12 +1431,12 @@ line_read_in:
             /* Copy or swap lbuf and conv_line. */
             len = (int)STRLEN(conv_line) + 1;
             if (len > lbuf_size) {
-              vim_free(lbuf);
+              free(lbuf);
               lbuf = conv_line;
               lbuf_size = len;
             } else {
               STRCPY(lbuf, conv_line);
-              vim_free(conv_line);
+              free(conv_line);
             }
           }
         }
@@ -1919,7 +1919,7 @@ parse_line:
                 [ga_match[mtt].ga_len++] = mfp;
                 ++match_count;
               } else
-                vim_free(mfp);
+                free(mfp);
             }
           }
         }
@@ -1978,9 +1978,9 @@ parse_line:
   }
 
 findtag_end:
-  vim_free(lbuf);
+  free(lbuf);
   vim_regfree(orgpat.regmatch.regprog);
-  vim_free(tag_fname);
+  free(tag_fname);
 
   /*
    * Move the matches from the ga_match[] arrays into one list of
@@ -1999,7 +1999,7 @@ findtag_end:
     for (i = 0; i < ga_match[mtt].ga_len; ++i) {
       mfp = ((struct match_found **)(ga_match[mtt].ga_data))[i];
       if (matches == NULL)
-        vim_free(mfp);
+        free(mfp);
       else {
         /* To avoid allocating memory again we turn the struct
          * match_found into a string.  For help the priority was not
@@ -2016,7 +2016,7 @@ findtag_end:
   *num_matches = match_count;
 
   curbuf->b_help = help_save;
-  vim_free(saved_pat);
+  free(saved_pat);
 
   return retval;
 }
@@ -2042,7 +2042,7 @@ void free_tag_stuff(void)
   tag_freematch();
 
   if (ptag_entry.tagname) {
-    vim_free(ptag_entry.tagname);
+    free(ptag_entry.tagname);
     ptag_entry.tagname = NULL;
   }
 }
@@ -2153,7 +2153,7 @@ get_tagfname (
   }
 
   STRCPY(buf, fname);
-  vim_free(fname);
+  free(fname);
   return OK;
 }
 
@@ -2162,7 +2162,7 @@ get_tagfname (
  */
 void tagname_free(tagname_T *tnp)
 {
-  vim_free(tnp->tn_tags);
+  free(tnp->tn_tags);
   vim_findfile_cleanup(tnp->tn_search_ctx);
   tnp->tn_search_ctx = NULL;
   ga_clear_strings(&tag_fnames);
@@ -2435,7 +2435,7 @@ jumpto_tag (
       && !has_autocmd(EVENT_BUFREADCMD, fname, NULL)
       ) {
     retval = NOTAGFILE;
-    vim_free(nofile_fname);
+    free(nofile_fname);
     nofile_fname = vim_strsave(fname);
     if (nofile_fname == NULL)
       nofile_fname = empty_option;
@@ -2644,9 +2644,9 @@ erret:
   g_do_tagpreview = 0;   /* For next time */
   if (tagp.fname_end != NULL)
     *tagp.fname_end = csave;
-  vim_free(pbuf);
-  vim_free(tofree_fname);
-  vim_free(full_fname);
+  free(pbuf);
+  free(tofree_fname);
+  free(full_fname);
 
   return retval;
 }
@@ -2690,7 +2690,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
   } else
     retval = vim_strsave(fname);
 
-  vim_free(expanded_fname);
+  free(expanded_fname);
 
   return retval;
 }
@@ -2715,7 +2715,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
     if (fullname != NULL) {
       retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
-      vim_free(fullname);
+      free(fullname);
     }
     *fname_end = c;
   }
@@ -2845,7 +2845,7 @@ add_tag_field (
   }
   buf[len] = NUL;
   retval = dict_add_nr_str(dict, field_name, 0L, buf);
-  vim_free(buf);
+  free(buf);
   return retval;
 }
 
@@ -2888,7 +2888,7 @@ int get_tags(list_T *list, char_u *pat)
           || dict_add_nr_str(dict, "static", is_static, NULL) == FAIL)
         ret = FAIL;
 
-      vim_free(full_fname);
+      free(full_fname);
 
       if (tp.command_end != NULL) {
         for (p = tp.command_end + 3;
@@ -2928,9 +2928,9 @@ int get_tags(list_T *list, char_u *pat)
         }
       }
 
-      vim_free(matches[i]);
+      free(matches[i]);
     }
-    vim_free(matches);
+    free(matches);
   }
   return ret;
 }

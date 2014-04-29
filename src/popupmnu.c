@@ -368,15 +368,15 @@ void pum_redraw(void)
                 }
                 screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1,
                                 attr);
-                vim_free(rt_start);
+                free(rt_start);
               }
-              vim_free(st);
+              free(st);
 
               col -= width;
             } else {
               if (st != NULL) {
                 screen_puts_len(st, (int)STRLEN(st), row, col, attr);
-                vim_free(st);
+                free(st);
               }
               col += width;
             }
