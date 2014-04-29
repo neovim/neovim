@@ -62,6 +62,15 @@ if (condition) // Remove the next comment leader! OK, I will.
     action();
 }
 
+1 this shouldn't be deleted
+2 this shouldn't be deleted
+3 this shouldn't be deleted
+4 this should be deleted3
+
+6 this shouldn't be deleted vim5
+7 this shouldn't be deleted vim6
+8 this shouldn't be deleted (not touched yet) vim7
+
 
 {
 /* Make sure the previous comment leader is not removed.  */
