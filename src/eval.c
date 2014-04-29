@@ -6718,45 +6718,50 @@ string2float (
   return (int)((char_u *)s - text);
 }
 
-/*
- * Get the value of an environment variable.
- * "arg" is pointing to the '$'.  It is advanced to after the name.
- * If the environment variable was not set, silently assume it is empty.
- * Always return OK.
- */
+/// Get the value of an environment variable.
+///
+/// If the environment variable was not set, silently assume it is empty.
+///
+/// @param arg Points to the '$'.  It is advanced to after the name.
+/// @return FAIL if the name is invalid.
+///
 static int get_env_tv(char_u **arg, typval_T *rettv, int evaluate)
 {
-  char_u      *string = NULL;
-  int len;
-  int cc;
-  char_u      *name;
-  int mustfree = FALSE;
+  char_u *name;
+  char_u *string = NULL;
+  int     mustfree = FALSE;
+  int     len;
+  int     cc;
 
   ++*arg;
   name = *arg;
   len = get_env_len(arg);
-  if (evaluate) {
-    if (len != 0) {
-      cc = name[len];
-      name[len] = '\0';
-      /* first try vim_getenv(), fast for normal environment vars */
-      string = vim_getenv(name, &mustfree);
-      if (string != NULL && *string != '\0') {
-        if (!mustfree)
-          string = vim_strsave(string);
-      } else {
-        if (mustfree)
-          vim_free(string);
 
-        /* next try expanding things like $VIM and ${HOME} */
-        string = expand_env_save(name - 1);
-        if (string != NULL && *string == '$') {
-          vim_free(string);
-          string = NULL;
-        }
-      }
-      name[len] = cc;
+  if (evaluate) {
+    if (len == 0) {
+      return FAIL;  // Can't be an environment variable.
     }
+    cc = name[len];
+    name[len] = '\0';
+    // First try vim_getenv(), fast for normal environment vars.
+    string = vim_getenv(name, &mustfree);
+    if (string != NULL && *string != '\0') {
+      if (!mustfree) {
+        string = vim_strsave(string);
+      }
+    } else {
+      if (mustfree) {
+        vim_free(string);
+      }
+
+      // Next try expanding things like $VIM and ${HOME}.
+      string = expand_env_save(name - 1);
+      if (string != NULL && *string == '$') {
+        vim_free(string);
+        string = NULL;
+      }
+    }
+    name[len] = cc;
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = string;
   }
