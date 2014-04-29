@@ -66,17 +66,17 @@
 
 #define MINIMAL_SIZE 20                 /* minimal size for b_str */
 
-static buffheader_T redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T save_old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
-static buffheader_T recordbuff = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T redobuff = {{NULL, {'\0'}}, NULL, 0, 0};
+static buffheader_T old_redobuff = {{NULL, {'\0'}}, NULL, 0, 0};
+static buffheader_T save_redobuff = {{NULL, {'\0'}}, NULL, 0, 0};
+static buffheader_T save_old_redobuff = {{NULL, {'\0'}}, NULL, 0, 0};
+static buffheader_T recordbuff = {{NULL, {'\0'}}, NULL, 0, 0};
 
 // First read ahead buffer. Used for translated commands.
-static buffheader_T readbuf1 = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T readbuf1 = {{NULL, {'\0'}}, NULL, 0, 0};
 
 // Second read ahead buffer. Used for redo.
-static buffheader_T readbuf2 = {{NULL, {NUL}}, NULL, 0, 0};
+static buffheader_T readbuf2 = {{NULL, {'\0'}}, NULL, 0, 0};
 
 static int typeahead_char = 0;          /* typeahead char that's not flushed */
 
@@ -203,7 +203,7 @@ static char_u *get_buffcont(buffheader_T *buffer,
     for (bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
       for (str = bp->b_str; *str; )
         *p2++ = *str++;
-    *p2 = NUL;
+    *p2 = '\0';
   }
   return p;
 }
@@ -228,7 +228,7 @@ char_u *get_recorded(void)
   len = STRLEN(p);
   if ((int)len >= last_recorded_len) {
     len -= last_recorded_len;
-    p[len] = NUL;
+    p[len] = '\0';
   }
 
   /*
@@ -236,7 +236,7 @@ char_u *get_recorded(void)
    * CTRL-O.
    */
   if (len > 0 && restart_edit != 0 && p[len - 1] == Ctrl_O)
-    p[len - 1] = NUL;
+    p[len - 1] = '\0';
 
   return p;
 }
@@ -331,15 +331,15 @@ static void add_char_buff(buffheader_T *buf, int c)
     if (!IS_SPECIAL(c))
       c = bytes[i];
 
-    if (IS_SPECIAL(c) || c == K_SPECIAL || c == NUL) {
+    if (IS_SPECIAL(c) || c == K_SPECIAL || c == '\0') {
       /* translate special key code into three byte sequence */
       temp[0] = K_SPECIAL;
       temp[1] = K_SECOND(c);
       temp[2] = K_THIRD(c);
-      temp[3] = NUL;
+      temp[3] = '\0';
     } else {
       temp[0] = c;
-      temp[1] = NUL;
+      temp[1] = '\0';
     }
     add_buff(buf, temp, -1L);
   }
@@ -356,7 +356,7 @@ static int read_readbuffers(int advance)
   int c;
 
   c = read_readbuf(&readbuf1, advance);
-  if (c == NUL)
+  if (c == '\0')
     c = read_readbuf(&readbuf2, advance);
   return c;
 }
@@ -367,13 +367,13 @@ static int read_readbuf(buffheader_T *buf, int advance)
   buffblock_T *curr;
 
   if (buf->bh_first.b_next == NULL) /* buffer is empty */
-    return NUL;
+    return '\0';
 
   curr = buf->bh_first.b_next;
   c = curr->b_str[buf->bh_index];
 
   if (advance) {
-    if (curr->b_str[++buf->bh_index] == NUL) {
+    if (curr->b_str[++buf->bh_index] == '\0') {
       buf->bh_first.b_next = curr->b_next;
       vim_free(curr);
       buf->bh_index = 0;
@@ -432,7 +432,7 @@ void flush_buffers(int flush_typeahead)
   init_typebuf();
 
   start_stuff();
-  while (read_readbuffers(TRUE) != NUL) {
+  while (read_readbuffers(TRUE) != '\0') {
   }
 
   if (flush_typeahead) {            /* remove all typeahead */
@@ -480,7 +480,7 @@ void CancelRedo(void)
     redobuff = old_redobuff;
     old_redobuff.bh_first.b_next = NULL;
     start_stuff();
-    while (read_readbuffers(TRUE) != NUL) {
+    while (read_readbuffers(TRUE) != '\0') {
     }
   }
 }
@@ -551,7 +551,7 @@ AppendToRedobuffLit (
   if (block_redo)
     return;
 
-  while (len < 0 ? *s != NUL : s - str < len) {
+  while (len < 0 ? *s != '\0' : s - str < len) {
     /* Put a string of normal characters in the redo buffer (that's
      * faster). */
     start = s;
@@ -562,12 +562,12 @@ AppendToRedobuffLit (
 
     /* Don't put '0' or '^' as last character, just in case a CTRL-D is
      * typed next. */
-    if (*s == NUL && (s[-1] == '0' || s[-1] == '^'))
+    if (*s == '\0' && (s[-1] == '0' || s[-1] == '^'))
       --s;
     if (s > start)
       add_buff(&redobuff, start, (long)(s - start));
 
-    if (*s == NUL || (len >= 0 && s - str >= len))
+    if (*s == '\0' || (len >= 0 && s - str >= len))
       break;
 
     /* Handle a special or multibyte character. */
@@ -576,11 +576,11 @@ AppendToRedobuffLit (
       c = mb_cptr2char_adv(&s);
     else
       c = *s++;
-    if (c < ' ' || c == DEL || (*s == NUL && (c == '0' || c == '^')))
+    if (c < ' ' || c == DEL || (*s == '\0' && (c == '0' || c == '^')))
       add_char_buff(&redobuff, Ctrl_V);
 
     /* CTRL-V '0' must be inserted as CTRL-V 048 (EBCDIC: xf0) */
-    if (*s == NUL && c == '0')
+    if (*s == '\0' && c == '0')
       add_buff(&redobuff, (char_u *)"048", 3L);
     else
       add_char_buff(&redobuff, c);
@@ -629,8 +629,8 @@ void stuffReadbuffSpec(char_u *s)
 {
   int c;
 
-  while (*s != NUL) {
-    if (*s == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+  while (*s != '\0') {
+    if (*s == K_SPECIAL && s[1] != '\0' && s[2] != '\0') {
       /* Insert special key literally. */
       stuffReadbuffLen(s, 3L);
       s += 3;
@@ -687,7 +687,7 @@ static int read_redo(int init, int old_redo)
     p = bp->b_str;
     return OK;
   }
-  if ((c = *p) != NUL) {
+  if ((c = *p) != '\0') {
     /* Reverse the conversion done by add_char_buff() */
     /* For a multi-byte character get all the bytes and return the
      * converted character. */
@@ -700,7 +700,7 @@ static int read_redo(int init, int old_redo)
         c = TO_SPECIAL(p[1], p[2]);
         p += 2;
       }
-      if (*++p == NUL && bp->b_next != NULL) {
+      if (*++p == '\0' && bp->b_next != NULL) {
         bp = bp->b_next;
         p = bp->b_str;
       }
@@ -711,7 +711,7 @@ static int read_redo(int init, int old_redo)
         break;
       }
       c = *p;
-      if (c == NUL)             /* cannot happen? */
+      if (c == '\0')             /* cannot happen? */
         break;
     }
   }
@@ -728,7 +728,7 @@ static void copy_redo(int old_redo)
 {
   int c;
 
-  while ((c = read_redo(FALSE, old_redo)) != NUL) {
+  while ((c = read_redo(FALSE, old_redo)) != '\0') {
     add_char_buff(&readbuf2, c);
   }
 }
@@ -800,7 +800,7 @@ int start_redo_ins(void)
   start_stuff();
 
   /* skip the count and the command character */
-  while ((c = read_redo(FALSE, FALSE)) != NUL) {
+  while ((c = read_redo(FALSE, FALSE)) != '\0') {
     if (vim_strchr((char_u *)"AaIiRrOo", c) != NULL) {
       if (c == 'O' || c == 'o') {
         add_buff(&readbuf2, NL_STR, -1L);
@@ -984,9 +984,9 @@ void ins_char_typebuf(int c)
     buf[0] = K_SPECIAL;
     buf[1] = K_SECOND(c);
     buf[2] = K_THIRD(c);
-    buf[3] = NUL;
+    buf[3] = '\0';
   } else {
-    buf[(*mb_char2bytes)(c, buf)] = NUL;
+    buf[(*mb_char2bytes)(c, buf)] = '\0';
   }
   (void)ins_typebuf(buf, KeyNoremap, 0, !KeyTyped, cmd_silent);
 }
@@ -1111,7 +1111,7 @@ static void gotchars(char_u *chars, int len)
   if (Recording)
     last_recorded_len += len;
 
-  buf[1] = NUL;
+  buf[1] = '\0';
   while (todo--) {
     /* Handle one byte at a time; no translation to be done. */
     c = *s++;
@@ -1543,7 +1543,7 @@ int safe_vgetc(void)
   int c;
 
   c = vgetc();
-  if (c == NUL)
+  if (c == '\0')
     c = get_keystroke();
   return c;
 }
@@ -1600,7 +1600,7 @@ int vpeekc_any(void)
   int c;
 
   c = vpeekc();
-  if (c == NUL && typebuf.tb_len > 0)
+  if (c == '\0' && typebuf.tb_len > 0)
     c = ESC;
   return c;
 }
@@ -1616,7 +1616,7 @@ int char_avail(void)
   ++no_mapping;
   retval = vpeekc();
   --no_mapping;
-  return retval != NUL;
+  return retval != '\0';
 }
 
 void 
@@ -1690,7 +1690,7 @@ static int vgetorpeek(int advance)
   if (vgetc_busy > 0
       && ex_normal_busy == 0
       )
-    return NUL;
+    return '\0';
 
   local_State = get_real_state();
 
@@ -1714,7 +1714,7 @@ static int vgetorpeek(int advance)
     } else {
       c = read_readbuffers(advance);
     }
-    if (c != NUL && !got_int) {
+    if (c != '\0' && !got_int) {
       if (advance) {
         /* KeyTyped = FALSE;  When the command that stuffed something
          * was typed, behave like the stuffed command was typed.
@@ -1920,13 +1920,13 @@ static int vgetorpeek(int advance)
           }
 
           /* Check for match with 'pastetoggle' */
-          if (*p_pt != NUL && mp == NULL && (State & (INSERT|NORMAL))) {
+          if (*p_pt != '\0' && mp == NULL && (State & (INSERT|NORMAL))) {
             for (mlen = 0; mlen < typebuf.tb_len && p_pt[mlen];
                  ++mlen)
               if (p_pt[mlen] != typebuf.tb_buf[typebuf.tb_off
                                                + mlen])
                 break;
-            if (p_pt[mlen] == NUL) {            /* match */
+            if (p_pt[mlen] == '\0') {            /* match */
               /* write chars to script file(s) */
               if (mlen > typebuf.tb_maplen)
                 gotchars(typebuf.tb_buf + typebuf.tb_off
@@ -2103,7 +2103,7 @@ static int vgetorpeek(int advance)
               vgetc_busy = 0;
               save_m_keys = vim_strsave(mp->m_keys);
               save_m_str = vim_strsave(mp->m_str);
-              s = eval_map_expr(save_m_str, NUL);
+              s = eval_map_expr(save_m_str, '\0');
               vgetc_busy = save_vgetc_busy;
             } else
               s = mp->m_str;
@@ -2362,7 +2362,7 @@ static int vgetorpeek(int advance)
 
         if (c < 0)
           continue;                     /* end of input script reached */
-        if (c == NUL) {                 /* no character available */
+        if (c == '\0') {                 /* no character available */
           if (!advance)
             break;
           if (wait_tb_len > 0) {                /* timed out */
@@ -2371,7 +2371,7 @@ static int vgetorpeek(int advance)
           }
         } else {          /* allow mapping for just typed characters */
           while (typebuf.tb_buf[typebuf.tb_off
-                                + typebuf.tb_len] != NUL)
+                                + typebuf.tb_len] != '\0')
             typebuf.tb_noremap[typebuf.tb_off
                                + typebuf.tb_len++] = RM_YES;
 #ifdef USE_IM_CONTROL
@@ -2384,7 +2384,7 @@ static int vgetorpeek(int advance)
     }           /* if (!character from stuffbuf) */
 
     /* if advance is FALSE don't loop on NULs */
-  } while (c < 0 || (advance && c == NUL));
+  } while (c < 0 || (advance && c == '\0'));
 
   /*
    * The "INSERT" message is taken care of here:
@@ -2555,7 +2555,7 @@ fix_input_buffer (
    * Don't replace K_SPECIAL when reading a script file.
    */
   for (i = len; --i >= 0; ++p) {
-    if (p[0] == NUL
+    if (p[0] == '\0'
         || (p[0] == K_SPECIAL
           && !script
           && (i < 2 || p[1] != KS_EXTRA || is_user_input(p[2])))) {
@@ -2567,7 +2567,7 @@ fix_input_buffer (
       len += 2;
     }
   }
-  *p = NUL;             /* add trailing NUL */
+  *p = '\0';             /* add trailing NUL */
   return len;
 }
 
@@ -2750,17 +2750,17 @@ do_map (
   do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
   while (*p && (maptype == 1 || !vim_iswhite(*p))) {
     if ((p[0] == Ctrl_V || (do_backslash && p[0] == '\\')) &&
-        p[1] != NUL)
+        p[1] != '\0')
       ++p;                      /* skip CTRL-V or backslash */
     ++p;
   }
-  if (*p != NUL)
-    *p++ = NUL;
+  if (*p != '\0')
+    *p++ = '\0';
 
   p = skipwhite(p);
   rhs = p;
-  hasarg = (*rhs != NUL);
-  haskey = (*keys != NUL);
+  hasarg = (*rhs != '\0');
+  haskey = (*keys != '\0');
 
   /* check for :unmap without argument */
   if (maptype == 1 && !haskey) {
@@ -2955,7 +2955,7 @@ do_map (
                * "lhs", since an abbreviation can't have
                * trailing space. */
               if (n != len && (!abbrev || round || n > len
-                               || *skipwhite(keys + n) != NUL)) {
+                               || *skipwhite(keys + n) != '\0')) {
                 mpp = &(mp->m_next);
                 continue;
               }
@@ -3168,7 +3168,7 @@ void map_clear(char_u *cmdp, char_u *arg, int forceit, int abbr)
   int local;
 
   local = (STRCMP(arg, "<buffer>") == 0);
-  if (!local && *arg != NUL) {
+  if (!local && *arg != '\0') {
     EMSG(_(e_invarg));
     return;
   }
@@ -3275,7 +3275,7 @@ char_u *map_mode_to_chars(int mode)
     }
   }
 
-  ga_append(&mapmode, NUL);
+  ga_append(&mapmode, '\0');
   return (char_u *)mapmode.ga_data;
 }
 
@@ -3325,7 +3325,7 @@ showmap (
 
   /* Use FALSE below if we only want things like <Up> to show up as such on
    * the rhs, and not M-x etc, TRUE gets both -- webb */
-  if (*mp->m_str == NUL)
+  if (*mp->m_str == '\0')
     msg_puts_attr((char_u *)"<Nop>", hl_attr(HLF_8));
   else {
     /* Remove escaping of CSI, because "m_str" is in a format to be used
@@ -3731,7 +3731,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
           } else
             tb[j++] = c;
         }
-        tb[j] = NUL;
+        tb[j] = '\0';
         /* insert the last typed char */
         (void)ins_typebuf(tb, 1, 0, TRUE, mp->m_silent);
       }
@@ -3749,7 +3749,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
       }
 
       tb[0] = Ctrl_H;
-      tb[1] = NUL;
+      tb[1] = '\0';
       if (has_mbyte)
         len = clen;             /* Delete characters instead of bytes */
       while (len-- > 0)                 /* delete the from string */
@@ -3836,8 +3836,8 @@ char_u *vim_strsave_escape_csi(char_u *p)
   /* Need a buffer to hold up to three times as much. */
   res = alloc((unsigned)(STRLEN(p) * 3) + 1);
   d = res;
-  for (s = p; *s != NUL; ) {
-    if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
+  for (s = p; *s != '\0'; ) {
+    if (s[0] == K_SPECIAL && s[1] != '\0' && s[2] != '\0') {
       /* Copy special key unmodified. */
       *d++ = *s++;
       *d++ = *s++;
@@ -3856,7 +3856,7 @@ char_u *vim_strsave_escape_csi(char_u *p)
       mb_ptr_adv(s);
     }
   }
-  *d = NUL;
+  *d = '\0';
 
   return res;
 }
@@ -3869,7 +3869,7 @@ void vim_unescape_csi(char_u *p)
 {
   char_u      *s = p, *d = p;
 
-  while (*s != NUL) {
+  while (*s != '\0') {
     if (s[0] == K_SPECIAL && s[1] == KS_SPECIAL && s[2] == KE_FILLER) {
       *d++ = K_SPECIAL;
       s += 3;
@@ -3880,7 +3880,7 @@ void vim_unescape_csi(char_u *p)
     } else
       *d++ = *s++;
   }
-  *d = NUL;
+  *d = '\0';
 }
 
 /*
@@ -3931,19 +3931,19 @@ makemap (
 
         /* skip mappings that contain a <SNR> (script-local thing),
          * they probably don't work when loaded again */
-        for (p = mp->m_str; *p != NUL; ++p)
+        for (p = mp->m_str; *p != '\0'; ++p)
           if (p[0] == K_SPECIAL && p[1] == KS_EXTRA
               && p[2] == (int)KE_SNR)
             break;
-        if (*p != NUL)
+        if (*p != '\0')
           continue;
 
         /* It's possible to create a mapping and then ":unmap" certain
          * modes.  We recreate this here by mapping the individual
          * modes, which requires up to three of them. */
-        c1 = NUL;
-        c2 = NUL;
-        c3 = NUL;
+        c1 = '\0';
+        c2 = '\0';
+        c3 = '\0';
         if (abbr)
           cmd = "abbr";
         else
@@ -4025,7 +4025,7 @@ makemap (
           /* When outputting <> form, need to make sure that 'cpo'
            * is set to the Vim default. */
           if (!did_cpo) {
-            if (*mp->m_str == NUL)                      /* will use <Nop> */
+            if (*mp->m_str == '\0')                      /* will use <Nop> */
               did_cpo = TRUE;
             else
               for (i = 0; i < 2; ++i)
@@ -4066,8 +4066,8 @@ makemap (
             return FAIL;
           c1 = c2;
           c2 = c3;
-          c3 = NUL;
-        } while (c1 != NUL);
+          c3 = '\0';
+        } while (c1 != '\0');
       }
     }
 
@@ -4093,20 +4093,20 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
   int modifiers;
 
   /* :map xx <Nop> */
-  if (*str == NUL && what == 1) {
+  if (*str == '\0' && what == 1) {
     if (fprintf(fd, "<Nop>") < 0)
       return FAIL;
     return OK;
   }
 
-  for (; *str != NUL; ++str) {
+  for (; *str != '\0'; ++str) {
     char_u  *p;
 
     /* Check for a multi-byte character, which may contain escaped
      * K_SPECIAL and CSI bytes */
     p = mb_unescape(&str);
     if (p != NULL) {
-      while (*p != NUL)
+      while (*p != '\0')
         if (fputc(*p++, fd) < 0)
           return FAIL;
       --str;
@@ -4231,7 +4231,7 @@ void check_map_keycodes(void)
                 if (*p < 128) {                 /* for "normal" tcap entries */
                   buf[0] = p[0];
                   buf[1] = p[1];
-                  buf[2] = NUL;
+                  buf[2] = '\0';
                   (void)add_termcap_entry(buf, FALSE);
                 }
                 ++p;
@@ -4296,7 +4296,7 @@ check_map (
             minlen = len;
           s = mp->m_keys;
           if (ign_mod && s[0] == K_SPECIAL && s[1] == KS_MODIFIER
-              && s[2] != NUL) {
+              && s[2] != '\0') {
             s += 3;
             if (len > mp->m_keylen - 3)
               minlen = mp->m_keylen - 3;

@@ -418,7 +418,7 @@ int get_number_indent(linenr_T lnum)
     vim_regfree(regmatch.regprog);
   }
 
-  if ((pos.lnum == 0) || (*ml_get_pos(&pos) == NUL)) {
+  if ((pos.lnum == 0) || (*ml_get_pos(&pos) == '\0')) {
     return -1;
   }
   getvcol(curwin, &pos, &col, NULL, NULL);
@@ -548,29 +548,29 @@ int get_lisp_indent(void)
         continue;
       }
 
-      for (that = ml_get_curline(); *that != NUL; ++that) {
+      for (that = ml_get_curline(); *that != '\0'; ++that) {
         if (*that == ';') {
-          while (*(that + 1) != NUL) {
+          while (*(that + 1) != '\0') {
             that++;
           }
           continue;
         }
 
         if (*that == '\\') {
-          if (*(that + 1) != NUL) {
+          if (*(that + 1) != '\0') {
             that++;
           }
           continue;
         }
 
-        if ((*that == '"') && (*(that + 1) != NUL)) {
+        if ((*that == '"') && (*(that + 1) != '\0')) {
           while (*++that && *that != '"') {
             // Skipping escaped characters in the string
             if (*that == '\\') {
-              if (*++that == NUL) {
+              if (*++that == '\0') {
                 break;
               }
-              if (that[1] == NUL) {
+              if (that[1] == '\0') {
                 that++;
                 break;
               }
@@ -649,7 +649,7 @@ int get_lisp_indent(void)
                 if (((*that == ')') || (*that == ']')) && !quotecount) {
                   parencount--;
                 }
-                if ((*that == '\\') && (*(that + 1) != NUL)) {
+                if ((*that == '\\') && (*(that + 1) != '\0')) {
                   amount += lbr_chartabsize_adv(&that, (colnr_T)amount);
                 }
 
@@ -684,7 +684,7 @@ static int lisp_match(char_u *p)
   int len;
   char_u *word = p_lispwords;
 
-  while (*word != NUL) {
+  while (*word != '\0') {
     (void)copy_option_part(&word, buf, LSIZE, ",");
     len = (int)STRLEN(buf);
 

@@ -1944,7 +1944,7 @@ void set_init_1(void)
    * Find default value for 'shell' option.
    * Don't use it if it is empty.
    */
-  if (((p = (char_u *)os_getenv("SHELL")) != NULL && *p != NUL)
+  if (((p = (char_u *)os_getenv("SHELL")) != NULL && *p != '\0')
       )
     set_string_default("sh", p);
 
@@ -1966,12 +1966,12 @@ void set_init_1(void)
     for (n = 0; n < (long)(sizeof(names) / sizeof(char *)); ++n) {
       mustfree = FALSE;
 # ifdef UNIX
-      if (*names[n] == NUL)
+      if (*names[n] == '\0')
         p = (char_u *)"/tmp";
       else
 # endif
       p = vim_getenv((char_u *)names[n], &mustfree);
-      if (p != NULL && *p != NUL) {
+      if (p != NULL && *p != '\0') {
         /* First time count the NUL, otherwise count the ','. */
         len = (int)STRLEN(p) + 3;
         ga_grow(&ga, len);
@@ -2036,7 +2036,7 @@ void set_init_1(void)
       {
         buf[0] = ',';               /* start with ",", current dir first */
         j = 1;
-        for (i = 0; cdpath[i] != NUL; ++i) {
+        for (i = 0; cdpath[i] != '\0'; ++i) {
           if (vim_ispathlistsep(cdpath[i]))
             buf[j++] = ',';
           else {
@@ -2045,7 +2045,7 @@ void set_init_1(void)
             buf[j++] = cdpath[i];
           }
         }
-        buf[j] = NUL;
+        buf[j] = '\0';
         opt_idx = findoption((char_u *)"cdpath");
         if (opt_idx >= 0) {
           options[opt_idx].def_val[VI_DEFAULT] = buf;
@@ -2421,7 +2421,7 @@ static char_u *term_bg_default(void)
       || ((p = (char_u *)os_getenv("COLORFGBG")) != NULL
           && (p = vim_strrchr(p, ';')) != NULL
           && ((p[1] >= '0' && p[1] <= '6') || p[1] == '8')
-          && p[2] == NUL))
+          && p[2] == '\0'))
     return (char_u *)"dark";
   return (char_u *)"light";
 }
@@ -2463,7 +2463,7 @@ void set_init_3(void)
    * But don't do that for Windows, it's common to have a space in the path.
    */
   p = skiptowhite(p_sh);
-  if (*p == NUL) {
+  if (*p == '\0') {
     /* No white space, use the tail. */
     p = vim_strsave(path_tail(p_sh));
   } else {
@@ -2540,7 +2540,7 @@ void set_helplang_default(char_u *lang)
         p_hlg[0] = TOLOWER_ASC(p_hlg[3]);
         p_hlg[1] = TOLOWER_ASC(p_hlg[4]);
       }
-      p_hlg[2] = NUL;
+      p_hlg[2] = '\0';
     }
     options[idx].flags |= P_ALLOCED;
   }
@@ -2619,13 +2619,13 @@ do_set (
   int cp_val = 0;
   char_u key_name[2];
 
-  if (*arg == NUL) {
+  if (*arg == '\0') {
     showoptions(0, opt_flags);
     did_show = TRUE;
     goto theend;
   }
 
-  while (*arg != NUL) {         /* loop to process all options */
+  while (*arg != '\0') {         /* loop to process all options */
     errmsg = NULL;
     startarg = arg;             /* remember for error message */
 
@@ -2670,14 +2670,14 @@ do_set (
           len = 5;
         else {
           len = 1;
-          while (arg[len] != NUL && arg[len] != '>')
+          while (arg[len] != '\0' && arg[len] != '>')
             ++len;
         }
         if (arg[len] != '>') {
           errmsg = e_invarg;
           goto skip;
         }
-        arg[len] = NUL;                             /* put NUL after name */
+        arg[len] = '\0';                             /* put NUL after name */
         if (arg[1] == 't' && arg[2] == '_')         /* could be term code */
           opt_idx = findoption(arg + 1);
         arg[len++] = '>';                           /* restore '>' */
@@ -2694,7 +2694,7 @@ do_set (
           while (ASCII_ISALNUM(arg[len]) || arg[len] == '_')
             ++len;
         nextchar = arg[len];
-        arg[len] = NUL;                             /* put NUL after name */
+        arg[len] = '\0';                             /* put NUL after name */
         opt_idx = findoption(arg);
         arg[len] = nextchar;                        /* restore nextchar */
         if (opt_idx == -1)
@@ -2711,7 +2711,7 @@ do_set (
       adding = FALSE;
       prepending = FALSE;
       removing = FALSE;
-      if (arg[len] != NUL && arg[len + 1] == '=') {
+      if (arg[len] != '\0' && arg[len + 1] == '=') {
         if (arg[len] == '+') {
           adding = TRUE;                        /* "+=" */
           ++len;
@@ -2802,7 +2802,7 @@ do_set (
           }
         }
         if (vim_strchr((char_u *)"?!&<", nextchar) != NULL
-            && arg[1] != NUL && !vim_iswhite(arg[1])) {
+            && arg[1] != '\0' && !vim_iswhite(arg[1])) {
           errmsg = e_trailing;
           goto skip;
         }
@@ -2849,7 +2849,7 @@ do_set (
             (void)show_one_termcode(key_name, p, TRUE);
         }
         if (nextchar != '?'
-            && nextchar != NUL && !vim_iswhite(afterchar))
+            && nextchar != '\0' && !vim_iswhite(afterchar))
           errmsg = e_trailing;
       } else {
         if (flags & P_BOOL) {                       /* boolean */
@@ -2882,7 +2882,7 @@ do_set (
              * ":set invopt": invert
              * ":set opt" or ":set noopt": set or reset
              */
-            if (nextchar != NUL && !vim_iswhite(afterchar)) {
+            if (nextchar != '\0' && !vim_iswhite(afterchar)) {
               errmsg = e_trailing;
               goto skip;
             }
@@ -2947,7 +2947,7 @@ do_set (
                 i += 2;
               while (VIM_ISDIGIT(arg[i]))
                 ++i;
-              if (arg[i] != NUL && !vim_iswhite(arg[i])) {
+              if (arg[i] != '\0' && !vim_iswhite(arg[i])) {
                 errmsg = e_invarg;
                 goto skip;
               }
@@ -3021,7 +3021,7 @@ do_set (
                * Misuse errbuf[] for the resulting string.
                */
               if (varp == (char_u *)&p_kp
-                  && (*arg == NUL || *arg == ' ')) {
+                  && (*arg == '\0' || *arg == ' ')) {
                 STRCPY(errbuf, ":help");
                 save_arg = arg;
                 arg = errbuf;
@@ -3056,7 +3056,7 @@ do_set (
                */
               else if (varp == (char_u *)&p_ww
                        && VIM_ISDIGIT(*arg)) {
-                *errbuf = NUL;
+                *errbuf = '\0';
                 i = getdigits(&arg);
                 if (i & 1)
                   STRCAT(errbuf, "b,");
@@ -3068,8 +3068,8 @@ do_set (
                   STRCAT(errbuf, "<,>,");
                 if (i & 16)
                   STRCAT(errbuf, "[,],");
-                if (*errbuf != NUL)                     /* remove trailing , */
-                  errbuf[STRLEN(errbuf) - 1] = NUL;
+                if (*errbuf != '\0')                     /* remove trailing , */
+                  errbuf[STRLEN(errbuf) - 1] = '\0';
                 save_arg = arg;
                 arg = errbuf;
               }
@@ -3113,7 +3113,7 @@ do_set (
                * The reverse is found in ExpandOldSetting().
                */
               while (*arg && !vim_iswhite(*arg)) {
-                if (*arg == '\\' && arg[1] != NUL
+                if (*arg == '\\' && arg[1] != '\0'
 #ifdef BACKSLASH_IN_FILENAME
                     && !((flags & P_EXPAND)
                          && vim_isfilec(arg[1])
@@ -3132,7 +3132,7 @@ do_set (
                 } else
                   *s++ = *arg++;
               }
-              *s = NUL;
+              *s = '\0';
 
               /*
                * Expand environment variables and ~.
@@ -3165,7 +3165,7 @@ do_set (
                       && STRNCMP(s, newval, i) == 0
                       && (!(flags & P_COMMA)
                           || s[i] == ','
-                          || s[i] == NUL))
+                          || s[i] == '\0'))
                     break;
                   /* Count backslashes.  Only a comma with an
                    * even number of backslashes before it is
@@ -3187,8 +3187,8 @@ do_set (
               /* concatenate the two strings; add a ',' if
                * needed */
               if (adding || prepending) {
-                comma = ((flags & P_COMMA) && *origval != NUL
-                         && *newval != NUL);
+                comma = ((flags & P_COMMA) && *origval != '\0'
+                         && *newval != '\0');
                 if (adding) {
                   i = (int)STRLEN(origval);
                   memmove(newval + i + comma, newval,
@@ -3258,10 +3258,10 @@ do_set (
             } else {
               ++arg;               /* jump to after the '=' or ':' */
               for (p = arg; *p && !vim_iswhite(*p); ++p)
-                if (*p == '\\' && p[1] != NUL)
+                if (*p == '\\' && p[1] != '\0')
                   ++p;
               nextchar = *p;
-              *p = NUL;
+              *p = '\0';
               add_termcode(key_name, arg, FALSE);
               *p = nextchar;
             }
@@ -3284,8 +3284,8 @@ skip:
        * - skip one "=val" argument (for hidden options ":set gfn =xx")
        */
       for (i = 0; i < 2; ++i) {
-        while (*arg != NUL && !vim_iswhite(*arg))
-          if (*arg++ == '\\' && *arg != NUL)
+        while (*arg != '\0' && !vim_iswhite(*arg))
+          if (*arg++ == '\\' && *arg != '\0')
             ++arg;
         arg = skipwhite(arg);
         if (*arg != '=')
@@ -3300,7 +3300,7 @@ skip:
         /* append the argument with the error */
         STRCAT(IObuff, ": ");
         memmove(IObuff + i, startarg, (arg - startarg));
-        IObuff[i + (arg - startarg)] = NUL;
+        IObuff[i + (arg - startarg)] = '\0';
       }
       /* make sure all characters are printable */
       trans_characters(IObuff, IOSIZE);
@@ -3389,7 +3389,7 @@ static char_u *check_cedit(void)
 {
   int n;
 
-  if (*p_cedit == NUL)
+  if (*p_cedit == '\0')
     cedit_key = -1;
   else {
     n = string_to_key(p_cedit);
@@ -3893,7 +3893,7 @@ did_set_string_option (
   }
   /* 'term' */
   else if (varp == &T_NAME) {
-    if (T_NAME[0] == NUL)
+    if (T_NAME[0] == '\0')
       errmsg = (char_u *)N_("E529: Cannot set 'term' to empty string");
     else if (set_termname(T_NAME) == FAIL)
       errmsg = (char_u *)N_("E522: Not found in termcap");
@@ -3952,12 +3952,12 @@ did_set_string_option (
   /* 'helplang' */
   else if (varp == &p_hlg) {
     /* Check for "", "ab", "ab,cd", etc. */
-    for (s = p_hlg; *s != NUL; s += 3) {
-      if (s[1] == NUL || ((s[2] != ',' || s[3] == NUL) && s[2] != NUL)) {
+    for (s = p_hlg; *s != '\0'; s += 3) {
+      if (s[1] == '\0' || ((s[2] != ',' || s[3] == '\0') && s[2] != '\0')) {
         errmsg = e_invarg;
         break;
       }
-      if (s[2] == NUL)
+      if (s[2] == '\0')
         break;
     }
   }
@@ -4033,7 +4033,7 @@ did_set_string_option (
   }
   /* 'winaltkeys' */
   else if (varp == &p_wak) {
-    if (*p_wak == NUL
+    if (*p_wak == '\0'
         || check_opt_strings(p_wak, p_wak_values, FALSE) != OK)
       errmsg = e_invarg;
   }
@@ -4075,13 +4075,13 @@ did_set_string_option (
     if (errmsg == NULL) {
       /* When 'keymap' is used and 'encoding' changes, reload the keymap
        * (with another encoding). */
-      if (varp == &p_enc && *curbuf->b_p_keymap != NUL)
+      if (varp == &p_enc && *curbuf->b_p_keymap != '\0')
         (void)keymap_init();
 
       /* When 'termencoding' is not empty and 'encoding' changes or when
        * 'termencoding' changes, need to setup for keyboard input and
        * display output conversion. */
-      if (((varp == &p_enc && *p_tenc != NUL) || varp == &p_tenc)) {
+      if (((varp == &p_enc && *p_tenc != '\0') || varp == &p_tenc)) {
         convert_setup(&input_conv, p_tenc, p_enc);
         convert_setup(&output_conv, p_enc, p_tenc);
       }
@@ -4095,7 +4095,7 @@ did_set_string_option (
       p_penc = p;
     } else {
       /* Ensure lower case and '-' for '_' */
-      for (s = p_penc; *s != NUL; s++) {
+      for (s = p_penc; *s != '\0'; s++) {
         if (*s == '_')
           *s = '-';
         else
@@ -4107,7 +4107,7 @@ did_set_string_option (
     errmsg = keymap_init();
 
     if (errmsg == NULL) {
-      if (*curbuf->b_p_keymap != NUL) {
+      if (*curbuf->b_p_keymap != '\0') {
         /* Installed a new keymap, switch on using it. */
         curbuf->b_p_iminsert = B_IMODE_LMAP;
         if (curbuf->b_p_imsearch != B_IMODE_USE_INSERT)
@@ -4167,7 +4167,7 @@ did_set_string_option (
       errmsg = e_invarg;
     else {
       /* When setting the global value to empty, make it "zip". */
-      if (*p_cm == NUL) {
+      if (*p_cm == '\0') {
         if (new_value_alloced)
           free_string_option(p_cm);
         p_cm = vim_strsave((char_u *)"zip");
@@ -4177,11 +4177,11 @@ did_set_string_option (
       /* Need to update the swapfile when the effective method changed.
        * Set "s" to the effective old value, "p" to the effective new
        * method and compare. */
-      if ((opt_flags & OPT_LOCAL) && *oldval == NUL)
+      if ((opt_flags & OPT_LOCAL) && *oldval == '\0')
         s = p_cm;          /* was previously using the global value */
       else
         s = oldval;
-      if (*curbuf->b_p_cm == NUL)
+      if (*curbuf->b_p_cm == '\0')
         p = p_cm;          /* is now using the global value */
       else
         p = curbuf->b_p_cm;
@@ -4195,7 +4195,7 @@ did_set_string_option (
         buf_T   *buf;
 
         for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-          if (buf != curbuf && *buf->b_p_cm == NUL)
+          if (buf != curbuf && *buf->b_p_cm == '\0')
             ml_set_crypt_key(buf, buf->b_p_key,
                 crypt_method_from_string(oldval));
       }
@@ -4204,33 +4204,33 @@ did_set_string_option (
   /* 'matchpairs' */
   else if (gvarp == &p_mps) {
     if (has_mbyte) {
-      for (p = *varp; *p != NUL; ++p) {
+      for (p = *varp; *p != '\0'; ++p) {
         int x2 = -1;
         int x3 = -1;
 
-        if (*p != NUL)
+        if (*p != '\0')
           p += mb_ptr2len(p);
-        if (*p != NUL)
+        if (*p != '\0')
           x2 = *p++;
-        if (*p != NUL) {
+        if (*p != '\0') {
           x3 = mb_ptr2char(p);
           p += mb_ptr2len(p);
         }
-        if (x2 != ':' || x3 == -1 || (*p != NUL && *p != ',')) {
+        if (x2 != ':' || x3 == -1 || (*p != '\0' && *p != ',')) {
           errmsg = e_invarg;
           break;
         }
-        if (*p == NUL)
+        if (*p == '\0')
           break;
       }
     } else {
       /* Check for "x:y,x:y" */
-      for (p = *varp; *p != NUL; p += 4) {
-        if (p[1] != ':' || p[2] == NUL || (p[3] != NUL && p[3] != ',')) {
+      for (p = *varp; *p != '\0'; p += 4) {
+        if (p[1] != ':' || p[2] == '\0' || (p[3] != '\0' && p[3] != ',')) {
           errmsg = e_invarg;
           break;
         }
-        if (p[3] == NUL)
+        if (p[3] == '\0')
           break;
       }
     }
@@ -4246,14 +4246,14 @@ did_set_string_option (
         }
         ++s;
       }
-      if (*s++ == NUL)
+      if (*s++ == '\0')
         errmsg = (char_u *)N_("E524: Missing colon");
-      else if (*s == ',' || *s == NUL)
+      else if (*s == ',' || *s == '\0')
         errmsg = (char_u *)N_("E525: Zero length string");
       if (errmsg != NULL)
         break;
       while (*s && *s != ',') {
-        if (*s == '\\' && s[1] != NUL)
+        if (*s == '\\' && s[1] != '\0')
           ++s;
         ++s;
       }
@@ -4275,7 +4275,7 @@ did_set_string_option (
   /* 'verbosefile' */
   else if (varp == &p_vfile) {
     verbose_stop();
-    if (*p_vfile != NUL && verbose_open() == FAIL)
+    if (*p_vfile != '\0' && verbose_open() == FAIL)
       errmsg = e_invarg;
   }
   /* 'viminfo' */
@@ -4409,7 +4409,7 @@ did_set_string_option (
 
   /* 'selection' */
   else if (varp == &p_sel) {
-    if (*p_sel == NUL
+    if (*p_sel == '\0'
         || check_opt_strings(p_sel, p_sel_values, FALSE) != OK)
       errmsg = e_invarg;
   }
@@ -4542,7 +4542,7 @@ did_set_string_option (
         errmsg = illegal_char(errbuf, *s);
         break;
       }
-      if (*++s != NUL && *s != ',' && *s != ' ') {
+      if (*++s != '\0' && *s != ',' && *s != ' ') {
         if (s[-1] == 'k' || s[-1] == 's') {
           /* skip optional filename after 'k' and 's' */
           while (*s && *s != ',' && *s != ' ') {
@@ -4583,7 +4583,7 @@ did_set_string_option (
   /* 'backspace' */
   else if (varp == &p_bs) {
     if (VIM_ISDIGIT(*p_bs)) {
-      if (*p_bs >'2' || p_bs[1] != NUL)
+      if (*p_bs >'2' || p_bs[1] != '\0')
         errmsg = e_invarg;
     } else if (check_opt_strings(p_bs, p_bs_values, TRUE) != OK)
       errmsg = e_invarg;
@@ -4601,7 +4601,7 @@ did_set_string_option (
   /* 'foldmethod' */
   else if (gvarp == &curwin->w_allbuf_opt.wo_fdm) {
     if (check_opt_strings(*varp, p_fdm_values, FALSE) != OK
-        || *curwin->w_p_fdm == NUL)
+        || *curwin->w_p_fdm == '\0')
       errmsg = e_invarg;
     else {
       foldUpdateAll(curwin);
@@ -4619,14 +4619,14 @@ did_set_string_option (
     p = vim_strchr(*varp, ',');
     if (p == NULL)
       errmsg = (char_u *)N_("E536: comma required");
-    else if (p == *varp || p[1] == NUL)
+    else if (p == *varp || p[1] == '\0')
       errmsg = e_invarg;
     else if (foldmethodIsMarker(curwin))
       foldUpdateAll(curwin);
   }
   /* 'commentstring' */
   else if (gvarp == &p_cms) {
-    if (**varp != NUL && strstr((char *)*varp, "%s") == NULL)
+    if (**varp != '\0' && strstr((char *)*varp, "%s") == NULL)
       errmsg = (char_u *)N_("E537: 'commentstring' must be empty or contain %s");
   }
   /* 'foldopen' */
@@ -4657,14 +4657,14 @@ did_set_string_option (
   } else if (varp == &p_csqf) {
     if (p_csqf != NULL) {
       p = p_csqf;
-      while (*p != NUL) {
+      while (*p != '\0') {
         if (vim_strchr((char_u *)CSQF_CMDS, *p) == NULL
-            || p[1] == NUL
+            || p[1] == '\0'
             || vim_strchr((char_u *)CSQF_FLAGS, p[1]) == NULL
-            || (p[2] != NUL && p[2] != ',')) {
+            || (p[2] != '\0' && p[2] != ',')) {
           errmsg = e_invarg;
           break;
-        } else if (p[2] == NUL)
+        } else if (p[2] == '\0')
           break;
         else
           p += 3;
@@ -4769,7 +4769,7 @@ did_set_string_option (
        * Use the first name in 'spelllang' up to '_region' or
        * '.encoding'.
        */
-      for (p = q; *p != NUL; ++p)
+      for (p = q; *p != '\0'; ++p)
         if (vim_strchr((char_u *)"_.,", *p) != NULL)
           break;
       vim_snprintf((char *)fname, 200, "spell/%.*s.vim", (int)(p - q), q);
@@ -4778,7 +4778,7 @@ did_set_string_option (
   }
 
   if (varp == &p_mouse) {
-    if (*p_mouse == NUL)
+    if (*p_mouse == '\0')
       mch_setmouse(FALSE);          /* switch mouse off */
     else
       setmouse();                   /* in case 'mouse' changed */
@@ -4817,7 +4817,7 @@ char_u *check_colorcolumn(win_T *wp)
   if (wp->w_buffer == NULL)
     return NULL;      /* buffer was closed */
 
-  for (s = wp->w_p_cc; *s != NUL && count < 255; ) {
+  for (s = wp->w_p_cc; *s != '\0' && count < 255; ) {
     if (*s == '-' || *s == '+') {
       /* -N and +N: add to 'textwidth' */
       col = (*s == '-') ? -1 : 1;
@@ -4836,11 +4836,11 @@ char_u *check_colorcolumn(win_T *wp)
       return e_invarg;
     color_cols[count++] = col - 1;      /* 1-based to 0-based */
 skip:
-    if (*s == NUL)
+    if (*s == '\0')
       break;
     if (*s != ',')
       return e_invarg;
-    if (*++s == NUL)
+    if (*++s == '\0')
       return e_invarg;        /* illegal trailing comma as in "set cc=80," */
   }
 
@@ -4911,9 +4911,9 @@ static char_u *set_chars_option(char_u **varp)
        * 'fillchars', NUL for 'listchars' */
       for (i = 0; i < entries; ++i)
         if (tab[i].cp != NULL)
-          *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
+          *(tab[i].cp) = (varp == &p_lcs ? '\0' : ' ');
       if (varp == &p_lcs)
-        lcs_tab1 = NUL;
+        lcs_tab1 = '\0';
       else
         fill_diff = '-';
     }
@@ -4923,19 +4923,19 @@ static char_u *set_chars_option(char_u **varp)
         len = (int)STRLEN(tab[i].name);
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
-            && p[len + 1] != NUL) {
+            && p[len + 1] != '\0') {
           s = p + len + 1;
           c1 = mb_ptr2char_adv(&s);
           if (mb_char2cells(c1) > 1)
             continue;
           if (tab[i].cp == &lcs_tab2) {
-            if (*s == NUL)
+            if (*s == '\0')
               continue;
             c2 = mb_ptr2char_adv(&s);
             if (mb_char2cells(c2) > 1)
               continue;
           }
-          if (*s == ',' || *s == NUL) {
+          if (*s == ',' || *s == '\0') {
             if (round) {
               if (tab[i].cp == &lcs_tab2) {
                 lcs_tab1 = c1;
@@ -5032,7 +5032,7 @@ static char_u *compile_cap_prog(synblock_T *synblock)
   regprog_T   *rp = synblock->b_cap_prog;
   char_u      *re;
 
-  if (*synblock->b_p_spc == NUL)
+  if (*synblock->b_p_spc == '\0')
     synblock->b_cap_prog = NULL;
   else {
     /* Prepend a ^ so that we only match at one column */
@@ -5292,7 +5292,7 @@ set_bool_option (
       T_XS = (char_u *)"y";
     else if (!p_wiv && old_value)
       T_XS = empty_option;
-    p_wiv = (*T_XS != NUL);
+    p_wiv = (*T_XS != '\0');
   } else if ((int *)varp == &p_acd) {
     /* Change directories when the 'acd' option is set now. */
     do_autochdir();
@@ -5938,7 +5938,7 @@ get_option_value (
     if (stringval != NULL) {
       /* never return the value of the crypt key */
       if ((char_u **)varp == &curbuf->b_p_key
-          && **(char_u **)(varp) != NUL)
+          && **(char_u **)(varp) != '\0')
         *stringval = vim_strsave((char_u *)"*****");
       else
         *stringval = vim_strsave(*(char_u **)(varp));
@@ -6004,7 +6004,7 @@ set_option_value (
            * to zero. */
           for (idx = 0; string[idx] == '0'; ++idx)
             ;
-          if (string[idx] != NUL || idx == 0) {
+          if (string[idx] != '\0' || idx == 0) {
             /* There's another character after zeros or the string
              * is empty.  In both cases, we are trying to set a
              * num option using a string. */
@@ -6036,7 +6036,7 @@ char_u *get_term_code(char_u *tname)
   char_u  *varp;
 
   if (tname[0] != 't' || tname[1] != '_' ||
-      tname[2] == NUL || tname[3] == NUL)
+      tname[2] == '\0' || tname[3] == '\0')
     return NULL;
   if ((opt_idx = findoption(tname)) >= 0) {
     varp = get_varp(&(options[opt_idx]));
@@ -6405,7 +6405,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
      * CTRL-V or backslash */
     if (valuep == &p_pt) {
       s = *valuep;
-      while (*s != NUL)
+      while (*s != '\0')
         if (put_escstr(fd, str2special(&s, FALSE), 2) == FAIL)
           return FAIL;
     } else if (expand) {
@@ -6679,33 +6679,33 @@ static char_u *get_varp(struct vimoption *p)
   case PV_NONE:   return p->var;
 
   /* global option with local value: use local value if it's been set */
-  case PV_EP:     return *curbuf->b_p_ep != NUL
+  case PV_EP:     return *curbuf->b_p_ep != '\0'
            ? (char_u *)&curbuf->b_p_ep : p->var;
-  case PV_KP:     return *curbuf->b_p_kp != NUL
+  case PV_KP:     return *curbuf->b_p_kp != '\0'
            ? (char_u *)&curbuf->b_p_kp : p->var;
-  case PV_PATH:   return *curbuf->b_p_path != NUL
+  case PV_PATH:   return *curbuf->b_p_path != '\0'
            ? (char_u *)&(curbuf->b_p_path) : p->var;
   case PV_AR:     return curbuf->b_p_ar >= 0
            ? (char_u *)&(curbuf->b_p_ar) : p->var;
-  case PV_TAGS:   return *curbuf->b_p_tags != NUL
+  case PV_TAGS:   return *curbuf->b_p_tags != '\0'
            ? (char_u *)&(curbuf->b_p_tags) : p->var;
-  case PV_DEF:    return *curbuf->b_p_def != NUL
+  case PV_DEF:    return *curbuf->b_p_def != '\0'
            ? (char_u *)&(curbuf->b_p_def) : p->var;
-  case PV_INC:    return *curbuf->b_p_inc != NUL
+  case PV_INC:    return *curbuf->b_p_inc != '\0'
            ? (char_u *)&(curbuf->b_p_inc) : p->var;
-  case PV_DICT:   return *curbuf->b_p_dict != NUL
+  case PV_DICT:   return *curbuf->b_p_dict != '\0'
            ? (char_u *)&(curbuf->b_p_dict) : p->var;
-  case PV_TSR:    return *curbuf->b_p_tsr != NUL
+  case PV_TSR:    return *curbuf->b_p_tsr != '\0'
            ? (char_u *)&(curbuf->b_p_tsr) : p->var;
-  case PV_EFM:    return *curbuf->b_p_efm != NUL
+  case PV_EFM:    return *curbuf->b_p_efm != '\0'
            ? (char_u *)&(curbuf->b_p_efm) : p->var;
-  case PV_GP:     return *curbuf->b_p_gp != NUL
+  case PV_GP:     return *curbuf->b_p_gp != '\0'
            ? (char_u *)&(curbuf->b_p_gp) : p->var;
-  case PV_MP:     return *curbuf->b_p_mp != NUL
+  case PV_MP:     return *curbuf->b_p_mp != '\0'
            ? (char_u *)&(curbuf->b_p_mp) : p->var;
-  case PV_CM:     return *curbuf->b_p_cm != NUL
+  case PV_CM:     return *curbuf->b_p_cm != '\0'
            ? (char_u *)&(curbuf->b_p_cm) : p->var;
-  case PV_STL:    return *curwin->w_p_stl != NUL
+  case PV_STL:    return *curwin->w_p_stl != '\0'
            ? (char_u *)&(curwin->w_p_stl) : p->var;
   case PV_UL:     return curbuf->b_p_ul != NO_LOCAL_UNDOLEVEL
            ? (char_u *)&(curbuf->b_p_ul) : p->var;
@@ -6813,7 +6813,7 @@ static char_u *get_varp(struct vimoption *p)
  */
 char_u *get_equalprg(void)
 {
-  if (*curbuf->b_p_ep == NUL)
+  if (*curbuf->b_p_ep == '\0')
     return p_ep;
   return curbuf->b_p_ep;
 }
@@ -7134,7 +7134,7 @@ void set_imsearch_global(void)
 }
 
 static int expand_option_idx = -1;
-static char_u expand_option_name[5] = {'t', '_', NUL, NUL, NUL};
+static char_u expand_option_name[5] = {'t', '_', '\0', '\0', '\0'};
 static int expand_option_flags = 0;
 
 void 
@@ -7155,7 +7155,7 @@ set_context_in_set_cmd (
   expand_option_flags = opt_flags;
 
   xp->xp_context = EXPAND_SETTINGS;
-  if (*arg == NUL) {
+  if (*arg == '\0') {
     xp->xp_pattern = arg;
     return;
   }
@@ -7189,7 +7189,7 @@ set_context_in_set_cmd (
   xp->xp_pattern = arg = p;
   if (*arg == '<') {
     while (*p != '>')
-      if (*p++ == NUL)              /* expand terminal option name */
+      if (*p++ == '\0')              /* expand terminal option name */
         return;
     key = get_special_key_code(arg + 1);
     if (key == 0) {                 /* unknown name */
@@ -7203,9 +7203,9 @@ set_context_in_set_cmd (
   } else {
     if (p[0] == 't' && p[1] == '_') {
       p += 2;
-      if (*p != NUL)
+      if (*p != '\0')
         ++p;
-      if (*p == NUL)
+      if (*p == '\0')
         return;                 /* expand option name */
       nextchar = *++p;
       is_term_option = TRUE;
@@ -7215,10 +7215,10 @@ set_context_in_set_cmd (
       /* Allow * wildcard */
       while (ASCII_ISALNUM(*p) || *p == '_' || *p == '*')
         p++;
-      if (*p == NUL)
+      if (*p == '\0')
         return;
       nextchar = *p;
-      *p = NUL;
+      *p = '\0';
       opt_idx = findoption(arg);
       *p = nextchar;
       if (opt_idx == -1 || options[opt_idx].var == NULL) {
@@ -7242,7 +7242,7 @@ set_context_in_set_cmd (
     xp->xp_context = EXPAND_UNSUCCESSFUL;
     return;
   }
-  if (xp->xp_context != EXPAND_BOOL_SETTINGS && p[1] == NUL) {
+  if (xp->xp_context != EXPAND_BOOL_SETTINGS && p[1] == '\0') {
     xp->xp_context = EXPAND_OLD_SETTING;
     if (is_term_option)
       expand_option_idx = -1;
@@ -7362,7 +7362,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
         name_buf[3] = str[2];
         name_buf[4] = str[3];
         name_buf[5] = '>';
-        name_buf[6] = NUL;
+        name_buf[6] = '\0';
         if (vim_regexec(regmatch, name_buf, (colnr_T)0)) {
           match = TRUE;
           str = name_buf;
@@ -7390,7 +7390,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
         name_buf[1] = '_';
         name_buf[2] = str[0];
         name_buf[3] = str[1];
-        name_buf[4] = NUL;
+        name_buf[4] = '\0';
 
         match = FALSE;
         if (vim_regexec(regmatch, name_buf, (colnr_T)0))
@@ -7402,7 +7402,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
           name_buf[3] = str[0];
           name_buf[4] = str[1];
           name_buf[5] = '>';
-          name_buf[6] = NUL;
+          name_buf[6] = '\0';
 
           if (vim_regexec(regmatch, name_buf, (colnr_T)0))
             match = TRUE;
@@ -7486,7 +7486,7 @@ int ExpandOldSetting(int *num_file, char_u ***file)
 #ifdef BACKSLASH_IN_FILENAME
   /* For MS-Windows et al. we don't double backslashes at the start and
    * before a file name character. */
-  for (var = buf; *var != NUL; mb_ptr_adv(var))
+  for (var = buf; *var != '\0'; mb_ptr_adv(var))
     if (var[0] == '\\' && var[1] == '\\'
         && expand_option_idx >= 0
         && (options[expand_option_idx].flags & P_EXPAND)
@@ -7526,7 +7526,7 @@ option_value2string (
   } else { /* P_STRING */
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */
-      NameBuff[0] = NUL;
+      NameBuff[0] = '\0';
     /* don't show the actual value of 'key', only that it's set */
     else if (opp->var == (char_u *)&p_key && *varp)
       STRCPY(NameBuff, "*****");
@@ -7660,10 +7660,10 @@ static void langmap_set(void)
   ga_clear(&langmap_mapga);                 /* clear the previous map first */
   langmap_init();                           /* back to one-to-one map */
 
-  for (p = p_langmap; p[0] != NUL; ) {
-    for (p2 = p; p2[0] != NUL && p2[0] != ',' && p2[0] != ';';
+  for (p = p_langmap; p[0] != '\0'; ) {
+    for (p2 = p; p2[0] != '\0' && p2[0] != ',' && p2[0] != ';';
          mb_ptr_adv(p2)) {
-      if (p2[0] == '\\' && p2[1] != NUL)
+      if (p2[0] == '\\' && p2[1] != '\0')
         ++p2;
     }
     if (p2[0] == ';')
@@ -7675,10 +7675,10 @@ static void langmap_set(void)
         ++p;
         break;
       }
-      if (p[0] == '\\' && p[1] != NUL)
+      if (p[0] == '\\' && p[1] != '\0')
         ++p;
       from = (*mb_ptr2char)(p);
-      to = NUL;
+      to = '\0';
       if (p2 == NULL) {
         mb_ptr_adv(p);
         if (p[0] != ',') {
@@ -7693,7 +7693,7 @@ static void langmap_set(void)
           to = (*mb_ptr2char)(p2);
         }
       }
-      if (to == NUL) {
+      if (to == '\0') {
         EMSG2(_("E357: 'langmap': Matching character missing for %s"),
             transchar(from));
         return;
@@ -7710,7 +7710,7 @@ static void langmap_set(void)
         mb_ptr_adv(p2);
         if (*p == ';') {
           p = p2;
-          if (p[0] != NUL) {
+          if (p[0] != '\0') {
             if (p[0] != ',') {
               EMSG2(_(
                       "E358: 'langmap': Extra characters after semicolon: %s"),
@@ -7997,7 +7997,7 @@ opt_strings_flags (
 
       len = (int)STRLEN(values[i]);
       if (STRNCMP(values[i], val, len) == 0
-          && ((list && val[len] == ',') || val[len] == NUL)) {
+          && ((list && val[len] == ',') || val[len] == '\0')) {
         val += len + (val[len] == ',');
         new_flags |= (1 << i);
         break;                  /* check next item in val list */
@@ -8026,7 +8026,7 @@ static int check_opt_wim(void)
   for (p = p_wim; *p; ++p) {
     for (i = 0; ASCII_ISALPHA(p[i]); ++i)
       ;
-    if (p[i] != NUL && p[i] != ',' && p[i] != ':')
+    if (p[i] != '\0' && p[i] != ',' && p[i] != ':')
       return FAIL;
     if (i == 7 && STRNCMP(p, "longest", 7) == 0)
       new_wim_flags[idx] |= WIM_LONGEST;
@@ -8037,7 +8037,7 @@ static int check_opt_wim(void)
     else
       return FAIL;
     p += i;
-    if (*p == NUL)
+    if (*p == '\0')
       break;
     if (*p == ',') {
       if (idx == 3)
@@ -8108,7 +8108,7 @@ int file_ff_differs(buf_T *buf, int ignore_empty)
   if (ignore_empty
       && (buf->b_flags & BF_NEW)
       && buf->b_ml.ml_line_count == 1
-      && *ml_get_buf(buf, (linenr_T)1, FALSE) == NUL)
+      && *ml_get_buf(buf, (linenr_T)1, FALSE) == '\0')
     return FALSE;
   if (buf->b_start_ffc != *buf->b_p_ff)
     return TRUE;
@@ -8117,7 +8117,7 @@ int file_ff_differs(buf_T *buf, int ignore_empty)
   if (!buf->b_p_bin && buf->b_start_bomb != buf->b_p_bomb)
     return TRUE;
   if (buf->b_start_fenc == NULL)
-    return *buf->b_p_fenc != NUL;
+    return *buf->b_p_fenc != '\0';
   return STRCMP(buf->b_start_fenc, buf->b_p_fenc) != 0;
 }
 
@@ -8158,7 +8158,7 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
   char_u      *ptr;
 
   ptr = curbuf->b_p_mps;
-  while (*ptr != NUL) {
+  while (*ptr != '\0') {
     if (has_mbyte) {
       char_u *prev;
 

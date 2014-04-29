@@ -208,7 +208,7 @@ getcmdline (
   struct cmdline_info save_ccline;
 
   if (firstc == -1) {
-    firstc = NUL;
+    firstc = '\0';
     break_ctrl_c = TRUE;
   }
   /* start without Hebrew mapping for a command line */
@@ -234,12 +234,12 @@ getcmdline (
   if (ccline.cmdbuff == NULL)
     return NULL;                            /* out of memory */
   ccline.cmdlen = ccline.cmdpos = 0;
-  ccline.cmdbuff[0] = NUL;
+  ccline.cmdbuff[0] = '\0';
 
   /* autoindent for :insert and :append */
   if (firstc <= 0) {
     copy_spaces(ccline.cmdbuff, indent);
-    ccline.cmdbuff[indent] = NUL;
+    ccline.cmdbuff[indent] = '\0';
     ccline.cmdpos = indent;
     ccline.cmdspos = indent;
     ccline.cmdlen = indent;
@@ -492,7 +492,7 @@ getcmdline (
       upseg[1] = '.';
       upseg[2] = '.';
       upseg[3] = PATHSEP;
-      upseg[4] = NUL;
+      upseg[4] = '\0';
 
       if (c == K_DOWN
           && ccline.cmdpos > 0
@@ -779,7 +779,7 @@ getcmdline (
         goto cmdline_changed;
     }
 
-    if (c == NUL || c == K_ZERO)            /* NUL is stored as NL */
+    if (c == '\0' || c == K_ZERO)            /* NUL is stored as NL */
       c = NL;
 
     do_abbr = TRUE;             /* default: check for abbreviation */
@@ -844,7 +844,7 @@ getcmdline (
           ccline.cmdbuff[i++] = ccline.cmdbuff[j++];
 
         /* Truncate at the end, required for multi-byte chars. */
-        ccline.cmdbuff[ccline.cmdlen] = NUL;
+        ccline.cmdbuff[ccline.cmdlen] = '\0';
         redrawcmd();
       } else if (ccline.cmdlen == 0 && c != Ctrl_W
                  && ccline.cmdprompt == NULL && indent == 0) {
@@ -931,7 +931,7 @@ getcmdline (
       while (i < ccline.cmdlen)
         ccline.cmdbuff[i++] = ccline.cmdbuff[j++];
       /* Truncate at the end, required for multi-byte chars. */
-      ccline.cmdbuff[ccline.cmdlen] = NUL;
+      ccline.cmdbuff[ccline.cmdlen] = '\0';
       redrawcmd();
       goto cmdline_changed;
 
@@ -1152,7 +1152,7 @@ getcmdline (
            * the character to lowercase */
           if (p_ic && p_scs && !pat_has_uppercase(ccline.cmdbuff))
             c = vim_tolower(c);
-          if (c != NUL) {
+          if (c != '\0') {
             if (c == firstc || vim_strchr((char_u *)(
                       p_magic ? "\\^$.*[" : "\\^$"), c)
                 != NULL) {
@@ -1188,7 +1188,7 @@ getcmdline (
     case K_KPAGEUP:
     case K_PAGEDOWN:
     case K_KPAGEDOWN:
-      if (hislen == 0 || firstc == NUL)                 /* no history */
+      if (hislen == 0 || firstc == '\0')                 /* no history */
         goto cmdline_not_changed;
 
       i = hiscnt;
@@ -1197,7 +1197,7 @@ getcmdline (
       if (lookfor == NULL) {
         if ((lookfor = vim_strsave(ccline.cmdbuff)) == NULL)
           goto cmdline_not_changed;
-        lookfor[ccline.cmdpos] = NUL;
+        lookfor[ccline.cmdpos] = '\0';
       }
 
       j = (int)STRLEN(lookfor);
@@ -1262,7 +1262,7 @@ getcmdline (
            * Second loop: copy the characters. */
           for (i = 0; i <= 1; ++i) {
             len = 0;
-            for (j = 0; p[j] != NUL; ++j) {
+            for (j = 0; p[j] != '\0'; ++j) {
               /* Replace old sep with new sep, unless it is
                * escaped. */
               if (p[j] == old_firstc
@@ -1289,7 +1289,7 @@ getcmdline (
                 goto returncmd;
             }
           }
-          ccline.cmdbuff[len] = NUL;
+          ccline.cmdbuff[len] = '\0';
         } else {
           alloc_cmdbuff((int)STRLEN(p));
           if (ccline.cmdbuff == NULL)
@@ -1325,7 +1325,7 @@ getcmdline (
       dont_scroll = TRUE;                   /* disallow scrolling here */
 #endif
       c = get_digraph(TRUE);
-      if (c != NUL)
+      if (c != '\0')
         break;
 
       redrawcmd();
@@ -1383,7 +1383,7 @@ getcmdline (
     else {
       if (has_mbyte) {
         j = (*mb_char2bytes)(c, IObuff);
-        IObuff[j] = NUL;                /* exclude composing chars */
+        IObuff[j] = '\0';                /* exclude composing chars */
         put_on_cmdline(IObuff, j, TRUE);
       } else {
         IObuff[0] = c;
@@ -1501,7 +1501,7 @@ cmdline_changed:
        * right-left typing.  Not efficient, but it works.
        * Do it only when there are no characters left to read
        * to avoid useless intermediate redraws. */
-      if (vpeekc() == NUL)
+      if (vpeekc() == '\0')
         redrawcmd();
   }
 
@@ -1530,10 +1530,10 @@ returncmd:
     /*
      * Put line in history buffer (":" and "=" only when it was typed).
      */
-    if (ccline.cmdlen && firstc != NUL
+    if (ccline.cmdlen && firstc != '\0'
         && (some_key_typed || histype == HIST_SEARCH)) {
       add_to_history(histype, ccline.cmdbuff, TRUE,
-          histype == HIST_SEARCH ? firstc : NUL);
+          histype == HIST_SEARCH ? firstc : '\0');
       if (firstc == ':') {
         vim_free(new_last_cmdline);
         new_last_cmdline = vim_strsave(ccline.cmdbuff);
@@ -1679,7 +1679,7 @@ static int cmdline_charsize(int idx)
  */
 static void set_cmdspos(void)
 {
-  if (ccline.cmdfirstc != NUL)
+  if (ccline.cmdfirstc != '\0')
     ccline.cmdspos = 1 + ccline.cmdindent;
   else
     ccline.cmdspos = 0 + ccline.cmdindent;
@@ -1848,7 +1848,7 @@ getexmodeline (
         long sw = get_sw_value(curbuf);
 
         p = (char_u *)line_ga.ga_data;
-        p[line_ga.ga_len] = NUL;
+        p[line_ga.ga_len] = '\0';
         indent = get_indent_str(p, 8);
         indent += sw - indent % sw;
 add_indent:
@@ -1887,9 +1887,9 @@ redraw:
           if (prev_char == '^')
             ex_keep_indent = TRUE;
           indent = 0;
-          p[--line_ga.ga_len] = NUL;
+          p[--line_ga.ga_len] = '\0';
         } else {
-          p[line_ga.ga_len] = NUL;
+          p[line_ga.ga_len] = '\0';
           indent = get_indent_str(p, 8);
           --indent;
           indent -= indent % get_sw_value(curbuf);
@@ -1956,7 +1956,7 @@ redraw:
       if ((bcount & 1) == 0) {
         --line_ga.ga_len;
         --pend;
-        *pend = NUL;
+        *pend = '\0';
         break;
       }
     }
@@ -2033,7 +2033,7 @@ static int realloc_cmdbuff(int len)
   /* There isn't always a NUL after the command, but it may need to be
    * there, thus copy up to the NUL and add a NUL. */
   memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
-  ccline.cmdbuff[ccline.cmdlen] = NUL;
+  ccline.cmdbuff[ccline.cmdlen] = '\0';
   vim_free(p);
 
   if (ccline.xpc != NULL
@@ -2120,13 +2120,13 @@ static void draw_cmdline(int start, int len)
           pc1 = prev_c1;
           prev_c1 = u8cc[0];
           if (j + mb_l >= start + len)
-            nc = NUL;
+            nc = '\0';
           else
             nc = utf_ptr2char(p + mb_l);
         } else {
           /* displaying from left to right */
           if (j + mb_l >= start + len)
-            pc = NUL;
+            pc = '\0';
           else {
             int pcc[MAX_MCO];
 
@@ -2245,7 +2245,7 @@ int put_on_cmdline(char_u *str, int len, int redraw)
         ccline.cmdlen = ccline.cmdpos + len;
     }
     memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
-    ccline.cmdbuff[ccline.cmdlen] = NUL;
+    ccline.cmdbuff[ccline.cmdlen] = '\0';
 
     if (enc_utf8) {
       /* When the inserted text starts with a composing character,
@@ -2480,7 +2480,7 @@ void cmdline_paste_str(char_u *s, int literally)
   if (literally)
     put_on_cmdline(s, -1, TRUE);
   else
-    while (*s != NUL) {
+    while (*s != '\0') {
       cv = *s;
       if (cv == Ctrl_V && s[1])
         ++s;
@@ -2531,13 +2531,13 @@ static void redrawcmdprompt(void)
 
   if (cmd_silent)
     return;
-  if (ccline.cmdfirstc != NUL)
+  if (ccline.cmdfirstc != '\0')
     msg_putchar(ccline.cmdfirstc);
   if (ccline.cmdprompt != NULL) {
     msg_puts_attr(ccline.cmdprompt, ccline.cmdattr);
     ccline.cmdindent = msg_col + (msg_row - cmdline_row) * Columns;
     /* do the reverse of set_cmdspos() */
-    if (ccline.cmdfirstc != NUL)
+    if (ccline.cmdfirstc != '\0')
       --ccline.cmdindent;
   } else
     for (i = ccline.cmdindent; i > 0; --i)
@@ -2957,7 +2957,7 @@ ExpandOne (
       len += (long_u)STRLEN(xp->xp_files[i]) + 1;
     ss = lalloc(len, TRUE);
     if (ss != NULL) {
-      *ss = NUL;
+      *ss = '\0';
       for (i = 0; i < xp->xp_numfiles; ++i) {
         STRCAT(ss, xp->xp_files[i]);
         if (i != xp->xp_numfiles - 1)
@@ -3091,10 +3091,10 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
   int j = 0;
 
   /* Don't escape '[', '{' and '!' if they are in 'isfname'. */
-  for (p = PATH_ESC_CHARS; *p != NUL; ++p)
+  for (p = PATH_ESC_CHARS; *p != '\0'; ++p)
     if ((*p != '[' && *p != '{' && *p != '!') || !vim_isfilec(*p))
       buf[j++] = *p;
-  buf[j] = NUL;
+  buf[j] = '\0';
   p = vim_strsave_escaped(fname, buf);
 #else
   p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
@@ -3111,7 +3111,7 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
 
   /* '>' and '+' are special at the start of some commands, e.g. ":edit" and
    * ":write".  "cd -" has a special meaning. */
-  if (p != NULL && (*p == '>' || *p == '+' || (*p == '-' && p[1] == NUL)))
+  if (p != NULL && (*p == '>' || *p == '+' || (*p == '-' && p[1] == '\0')))
     escape_fname(&p);
 
   return p;
@@ -3318,7 +3318,7 @@ char_u *sm_gettail(char_u *s)
   char_u      *t = s;
   int had_sep = FALSE;
 
-  for (p = s; *p != NUL; ) {
+  for (p = s; *p != '\0'; ) {
     if (vim_ispathsep(*p)
 #ifdef BACKSLASH_IN_FILENAME
         && !rem_backslash(p)
@@ -3451,7 +3451,7 @@ addstar (
           }
           retval[j] = fname[i];
         }
-        retval[j] = NUL;
+        retval[j] = '\0';
       }
     }
   } else {
@@ -3483,7 +3483,7 @@ addstar (
         retval[len++] = '*';
       else if (len > 0 && retval[len - 1] == '$')
         --len;
-      retval[len] = NUL;
+      retval[len] = '\0';
     }
   }
   return retval;
@@ -3553,7 +3553,7 @@ set_cmd_context (
     int col                    /* position of cursor */
 )
 {
-  int old_char = NUL;
+  int old_char = '\0';
   char_u      *nextcomm;
 
   /*
@@ -3562,7 +3562,7 @@ set_cmd_context (
    */
   if (col < len)
     old_char = str[col];
-  str[col] = NUL;
+  str[col] = '\0';
   nextcomm = str;
 
   if (ccline.cmdfirstc == '=') {
@@ -3656,7 +3656,7 @@ static void cleanup_help_tags(int num_file, char_u **file)
             && STRNCMP(file[i], file[j], len + 1) == 0)
           break;
       if (j == num_file)
-        file[i][len] = NUL;
+        file[i][len] = '\0';
     }
   }
 }
@@ -3735,7 +3735,7 @@ ExpandFromContext (
   if (xp->xp_context == EXPAND_HELP) {
     /* With an empty argument we would get all the help tags, which is
      * very slow.  Get matches for "help" instead. */
-    if (find_help_tags(*pat == NUL ? (char_u *)"help" : pat,
+    if (find_help_tags(*pat == '\0' ? (char_u *)"help" : pat,
             num_file, file, FALSE) == OK) {
       cleanup_help_tags(*num_file, *file);
       return OK;
@@ -3874,7 +3874,7 @@ int escaped;
       str = (*func)(xp, i);
       if (str == NULL)              /* end of list */
         break;
-      if (*str == NUL)              /* skip empty strings */
+      if (*str == '\0')              /* skip empty strings */
         continue;
 
       if (vim_regexec(regmatch, str, (colnr_T)0)) {
@@ -3978,7 +3978,7 @@ expand_shellcmd (
    * collect them in "ga".
    */
   ga_init(&ga, (int)sizeof(char *), 10);
-  for (s = path; *s != NUL; s = e) {
+  for (s = path; *s != '\0'; s = e) {
     if (*s == ' ')
       ++s;              /* Skip space used for absolute path name. */
 
@@ -4011,7 +4011,7 @@ expand_shellcmd (
         vim_free(*file);
       }
     }
-    if (*e != NUL)
+    if (*e != '\0')
       ++e;
   }
   *file = ga.ga_data;
@@ -4094,7 +4094,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
     return FAIL;
 
   ga_init(&ga, (int)sizeof(char *), 3);
-  for (s = retstr; *s != NUL; s = e) {
+  for (s = retstr; *s != '\0'; s = e) {
     e = vim_strchr(s, '\n');
     if (e == NULL)
       e = s + STRLEN(s);
@@ -4103,7 +4103,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
 
     if (xp->xp_pattern[0] && vim_regexec(regmatch, s, (colnr_T)0) == 0) {
       *e = keep;
-      if (*e != NUL)
+      if (*e != '\0')
         ++e;
       continue;
     }
@@ -4114,7 +4114,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
     ++ga.ga_len;
 
     *e = keep;
-    if (*e != NUL)
+    if (*e != '\0')
       ++e;
   }
   vim_free(retstr);
@@ -4186,7 +4186,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
     if (matches == NULL)
       continue;
 
-    for (s = matches; *s != NUL; s = e) {
+    for (s = matches; *s != '\0'; s = e) {
       e = vim_strchr(s, '\n');
       if (e == NULL)
         e = s + STRLEN(s);
@@ -4200,7 +4200,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
           vim_strnsave(s, (int)(e - s - 4));
         ++ga.ga_len;
       }
-      if (*e != NUL)
+      if (*e != '\0')
         ++e;
     }
     vim_free(matches);
@@ -4244,7 +4244,7 @@ char_u *globpath(char_u *path, char_u *file, int expand_options)
   ga_init(&ga, 1, 100);
 
   /* Loop over all entries in {path}. */
-  while (*path != NUL) {
+  while (*path != '\0') {
     /* Copy one item of the path to buf[] and concatenate the file name. */
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
@@ -4321,7 +4321,7 @@ static char *(history_names[]) =
  */
 static char_u *get_history_arg(expand_T *xp, int idx)
 {
-  static char_u compl[2] = { NUL, NUL };
+  static char_u compl[2] = { '\0', '\0' };
   char *short_names = ":=@>?/";
   int short_names_count = (int)STRLEN(short_names);
   int history_name_count = sizeof(history_names) / sizeof(char *) - 1;
@@ -4485,7 +4485,7 @@ int get_histtype(char_u *name)
     if (STRNICMP(name, history_names[i], len) == 0)
       return i;
 
-  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && name[1] == NUL)
+  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && name[1] == '\0')
     return hist_char2type(name[0]);
 
   return -1;
@@ -4643,8 +4643,8 @@ int get_cmdline_type(void)
   struct cmdline_info *p = get_ccline_ptr();
 
   if (p == NULL)
-    return NUL;
-  if (p->cmdfirstc == NUL)
+    return '\0';
+  if (p->cmdfirstc == '\0')
     return (p->input_fn) ? '@' : '-';
   return p->cmdfirstc;
 }
@@ -4739,7 +4739,7 @@ int del_history_entry(int histype, char_u *str)
   if (hislen != 0
       && histype >= 0
       && histype < HIST_COUNT
-      && *str != NUL
+      && *str != '\0'
       && (idx = hisidx[histype]) >= 0
       && (regmatch.regprog = vim_regcomp(str, RE_MAGIC + RE_STRING))
       != NULL) {
@@ -4889,7 +4889,7 @@ void ex_history(exarg_T *eap)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)
       end++;
     i = *end;
-    *end = NUL;
+    *end = '\0';
     histype1 = get_histtype(arg);
     if (histype1 == -1) {
       if (STRNICMP(arg, "all", STRLEN(arg)) == 0) {
@@ -4905,7 +4905,7 @@ void ex_history(exarg_T *eap)
     *end = i;
   } else
     end = arg;
-  if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
+  if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != '\0') {
     EMSG(_(e_trailing));
     return;
   }
@@ -5029,8 +5029,8 @@ int read_viminfo_history(vir_T *virp, int writing)
   type = hist_char2type(virp->vir_line[0]);
   if (viminfo_hisidx[type] < viminfo_hislen[type]) {
     val = viminfo_readstring(virp, 1, TRUE);
-    if (val != NULL && *val != NUL) {
-      int sep = (*val == ' ' ? NUL : *val);
+    if (val != NULL && *val != '\0') {
+      int sep = (*val == ' ' ? '\0' : *val);
 
       if (!in_history(type, val + (type == HIST_SEARCH),
               viminfo_add_at_front, sep, writing)) {
@@ -5047,7 +5047,7 @@ int read_viminfo_history(vir_T *virp, int writing)
             /* Not a search entry: No separator in the viminfo
              * file, add a NUL separator. */
             memmove(p, val, (size_t)len + 1);
-            p[len + 1] = NUL;
+            p[len + 1] = '\0';
           }
           viminfo_history[type][viminfo_hisidx[type]++] = p;
         }
@@ -5171,7 +5171,7 @@ void write_viminfo_history(FILE *fp, int merge)
             * second column; use a space if there isn't one. */
             if (type == HIST_SEARCH) {
               c = p[STRLEN(p) + 1];
-              putc(c == NUL ? ' ' : c, fp);
+              putc(c == '\0' ? ' ' : c, fp);
             }
             viminfo_writestring(fp, p);
           }
@@ -5208,14 +5208,14 @@ void cmd_pchar(int c, int offset)
     return;
   }
   ccline.cmdbuff[ccline.cmdpos + offset] = (char_u)c;
-  ccline.cmdbuff[ccline.cmdlen] = NUL;
+  ccline.cmdbuff[ccline.cmdlen] = '\0';
 }
 
 int cmd_gchar(int offset)
 {
   if (ccline.cmdpos + offset >= ccline.cmdlen || ccline.cmdpos + offset < 0) {
     /*  EMSG(_("cmd_gchar beyond the command length")); */
-    return NUL;
+    return '\0';
   }
   return (int)ccline.cmdbuff[ccline.cmdpos + offset];
 }
@@ -5337,7 +5337,7 @@ static int ex_window(void)
 
   /* Trigger CmdwinEnter autocommands. */
   typestr[0] = cmdwin_type;
-  typestr[1] = NUL;
+  typestr[1] = '\0';
   apply_autocmds(EVENT_CMDWINENTER, typestr, typestr, FALSE, curbuf);
   if (restart_edit != 0)        /* autocmd with ":startinsert" */
     stuffcharReadbuff(K_NOP);
@@ -5457,7 +5457,7 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
 
   ga_init(&ga, 1, 0x400);
 
-  if (cmd[2] != NUL)
+  if (cmd[2] != '\0')
     end_pattern = (char *)skipwhite(cmd + 2);
   else
     end_pattern = dot;
@@ -5465,7 +5465,7 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
   for (;; ) {
     theline = eap->getline(
         eap->cstack->cs_looplevel > 0 ? -1 :
-        NUL, eap->cookie, 0);
+        '\0', eap->cookie, 0);
 
     if (theline == NULL || STRCMP(end_pattern, theline) == 0) {
       vim_free(theline);
@@ -5476,7 +5476,7 @@ char_u *script_get(exarg_T *eap, char_u *cmd)
     ga_append(&ga, '\n');
     vim_free(theline);
   }
-  ga_append(&ga, NUL);
+  ga_append(&ga, '\0');
 
   return (char_u *)ga.ga_data;
 }

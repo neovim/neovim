@@ -56,7 +56,7 @@ int os_get_uname(uid_t uid, char *s, size_t len)
   struct passwd *pw;
 
   if ((pw = getpwuid(uid)) != NULL
-      && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
+      && pw->pw_name != NULL && *(pw->pw_name) != '\0') {
     vim_strncpy((char_u *)s, (char_u *)pw->pw_name, len - 1);
     return OK;
   }

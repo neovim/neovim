@@ -1232,7 +1232,7 @@ static void set_color_count(int nr)
   if (t_colors > 1)
     sprintf((char *)nr_colors, "%d", t_colors);
   else
-    *nr_colors = NUL;
+    *nr_colors = '\0';
   set_string_option_direct((char_u *)"t_Co", -1, nr_colors, OPT_FREE, 0);
 }
 
@@ -1520,9 +1520,9 @@ int set_termname(char_u *term)
   {
     bs_p = find_termcode((char_u *)"kb");
     del_p = find_termcode((char_u *)"kD");
-    if (bs_p == NULL || *bs_p == NUL)
+    if (bs_p == NULL || *bs_p == '\0')
       add_termcode((char_u *)"kb", (bs_p = (char_u *)CTRL_H_STR), FALSE);
-    if ((del_p == NULL || *del_p == NUL) &&
+    if ((del_p == NULL || *del_p == '\0') &&
         (bs_p == NULL || *bs_p != DEL))
       add_termcode((char_u *)"kD", (char_u *)DEL_STR, FALSE);
   }
@@ -1771,7 +1771,7 @@ getlinecol (
 {
   char_u tbuf[TBUFSZ];
 
-  if (T_NAME != NULL && *T_NAME != NUL &&
+  if (T_NAME != NULL && *T_NAME != '\0' &&
       tgetent_error(tbuf, T_NAME) == NULL) {
     if (*cp == 0)
       *cp = tgetnum("co");
@@ -1812,7 +1812,7 @@ int add_termcap_entry(char_u *name, int force)
     return OK;
 
   term = T_NAME;
-  if (term == NULL || *term == NUL)         /* 'term' not defined yet */
+  if (term == NULL || *term == '\0')         /* 'term' not defined yet */
     return FAIL;
 
   if (term_is_builtin(term)) {              /* name starts with "builtin_" */
@@ -1861,7 +1861,7 @@ int add_termcap_entry(char_u *name, int force)
     error_msg = tgetent_error(tbuf, term);
     if (error_msg == NULL) {
       string = TGETSTR((char *)name, &tp);
-      if (string != NULL && *string != NUL) {
+      if (string != NULL && *string != '\0') {
         add_termcode(name, string, FALSE);
         return OK;
       }
@@ -1992,13 +1992,13 @@ void termcapinit(char_u *name)
 {
   char_u      *term;
 
-  if (name != NULL && *name == NUL)
+  if (name != NULL && *name == '\0')
     name = NULL;            /* empty name is equal to no name */
   term = name;
 
   if (term == NULL)
     term = (char_u *)os_getenv("TERM");
-  if (term == NULL || *term == NUL)
+  if (term == NULL || *term == '\0')
     term = DEFAULT_TERM;
   set_string_option_direct((char_u *)"term", -1, term, OPT_FREE, 0);
 
@@ -2200,7 +2200,7 @@ static void term_color(char_u *s, int n)
   /* Also accept CSI instead of <Esc>[ */
   if (n >= 8 && t_colors >= 16
       && ((s[0] == ESC && s[1] == '[') || (s[0] == CSI && (i = 1) == 1))
-      && s[i] != NUL
+      && s[i] != '\0'
       && (STRCMP(s + i + 1, "%p1%dm") == 0
           || STRCMP(s + i + 1, "%dm") == 0)
       && (s[i] == '3' || s[i] == '4')) {
@@ -2246,13 +2246,13 @@ void ttest(int pairs)
   /*
    * MUST have "cm": cursor motion.
    */
-  if (*T_CM == NUL)
+  if (*T_CM == '\0')
     EMSG(_("E437: terminal capability \"cm\" required"));
 
   /*
    * if "cs" defined, use a scroll region, it's faster.
    */
-  if (*T_CS != NUL)
+  if (*T_CS != '\0')
     scroll_region = TRUE;
   else
     scroll_region = FALSE;
@@ -2262,62 +2262,62 @@ void ttest(int pairs)
      * optional pairs
      */
     /* TP goes to normal mode for TI (invert) and TB (bold) */
-    if (*T_ME == NUL)
+    if (*T_ME == '\0')
       T_ME = T_MR = T_MD = T_MB = empty_option;
-    if (*T_SO == NUL || *T_SE == NUL)
+    if (*T_SO == '\0' || *T_SE == '\0')
       T_SO = T_SE = empty_option;
-    if (*T_US == NUL || *T_UE == NUL)
+    if (*T_US == '\0' || *T_UE == '\0')
       T_US = T_UE = empty_option;
-    if (*T_CZH == NUL || *T_CZR == NUL)
+    if (*T_CZH == '\0' || *T_CZR == '\0')
       T_CZH = T_CZR = empty_option;
 
     /* T_VE is needed even though T_VI is not defined */
-    if (*T_VE == NUL)
+    if (*T_VE == '\0')
       T_VI = empty_option;
 
     /* if 'mr' or 'me' is not defined use 'so' and 'se' */
-    if (*T_ME == NUL) {
+    if (*T_ME == '\0') {
       T_ME = T_SE;
       T_MR = T_SO;
       T_MD = T_SO;
     }
 
     /* if 'so' or 'se' is not defined use 'mr' and 'me' */
-    if (*T_SO == NUL) {
+    if (*T_SO == '\0') {
       T_SE = T_ME;
-      if (*T_MR == NUL)
+      if (*T_MR == '\0')
         T_SO = T_MD;
       else
         T_SO = T_MR;
     }
 
     /* if 'ZH' or 'ZR' is not defined use 'mr' and 'me' */
-    if (*T_CZH == NUL) {
+    if (*T_CZH == '\0') {
       T_CZR = T_ME;
-      if (*T_MR == NUL)
+      if (*T_MR == '\0')
         T_CZH = T_MD;
       else
         T_CZH = T_MR;
     }
 
     /* "Sb" and "Sf" come in pairs */
-    if (*T_CSB == NUL || *T_CSF == NUL) {
+    if (*T_CSB == '\0' || *T_CSF == '\0') {
       T_CSB = empty_option;
       T_CSF = empty_option;
     }
 
     /* "AB" and "AF" come in pairs */
-    if (*T_CAB == NUL || *T_CAF == NUL) {
+    if (*T_CAB == '\0' || *T_CAF == '\0') {
       T_CAB = empty_option;
       T_CAF = empty_option;
     }
 
     /* if 'Sb' and 'AB' are not defined, reset "Co" */
-    if (*T_CSB == NUL && *T_CAB == NUL)
+    if (*T_CSB == '\0' && *T_CAB == '\0')
       free_one_termoption(T_CCO);
 
     /* Set 'weirdinvert' according to value of 't_xs' */
-    p_wiv = (*T_XS != NUL);
+    p_wiv = (*T_XS != '\0');
   }
   need_gather = TRUE;
 
@@ -2387,13 +2387,13 @@ static int get_bytes_from_buf(char_u *buf, char_u *bytes, int num_bytes)
   char_u c;
 
   for (i = 0; i < num_bytes; i++) {
-    if ((c = buf[len++]) == NUL)
+    if ((c = buf[len++]) == '\0')
       return -1;
     if (c == K_SPECIAL) {
-      if (buf[len] == NUL || buf[len + 1] == NUL)           /* cannot happen? */
+      if (buf[len] == '\0' || buf[len + 1] == '\0')           /* cannot happen? */
         return -1;
       if (buf[len++] == (int)KS_ZERO)
-        c = NUL;
+        c = '\0';
       /* else it should be KS_SPECIAL; when followed by KE_FILLER c is
        * K_SPECIAL, or followed by KE_CSI and c must be CSI. */
       if (buf[len++] == (int)KE_CSI)
@@ -2691,7 +2691,7 @@ void may_req_termresponse(void)
       && isatty(1)
       && isatty(read_cmd_fd)
 # endif
-      && *T_CRV != NUL) {
+      && *T_CRV != '\0') {
     LOG_TR("Sending CRV");
     out_str(T_CRV);
     crv_status = CRV_SENT;
@@ -2721,7 +2721,7 @@ void may_req_ambiguous_char_width(void)
       && isatty(1)
       && isatty(read_cmd_fd)
 #  endif
-      && *T_U7 != NUL
+      && *T_U7 != '\0'
       && !option_was_set((char_u *)"ambiwidth")) {
     char_u buf[16];
 
@@ -2770,7 +2770,7 @@ static void log_tr(char *msg)                 {
  */
 int swapping_screen(void)
 {
-  return full_screen && *T_TI != NUL;
+  return full_screen && *T_TI != '\0';
 }
 
 /*
@@ -2782,7 +2782,7 @@ void setmouse(void)
 
 
   /* be quick when mouse is off */
-  if (*p_mouse == NUL || has_mouse_termcode == 0)
+  if (*p_mouse == '\0' || has_mouse_termcode == 0)
     return;
 
   /* don't switch mouse on when not in raw mode (Ex mode) */
@@ -2849,7 +2849,7 @@ int mouse_model_popup(void)
  */
 void scroll_start(void)
 {
-  if (*T_VS != NUL) {
+  if (*T_VS != '\0') {
     out_str(T_VS);
     out_str(T_VE);
     screen_start();                     /* don't know where cursor is now */
@@ -2888,7 +2888,7 @@ void term_cursor_shape(void)
 {
   static int showing_insert_mode = MAYBE;
 
-  if (!full_screen || *T_CSI == NUL || *T_CEI == NUL)
+  if (!full_screen || *T_CSI == '\0' || *T_CEI == '\0')
     return;
 
   if (State & INSERT) {
@@ -2912,7 +2912,7 @@ void scroll_region_set(win_T *wp, int off)
 {
   OUT_STR(tgoto((char *)T_CS, W_WINROW(wp) + wp->w_height - 1,
           W_WINROW(wp) + off));
-  if (*T_CSV != NUL && wp->w_width != Columns)
+  if (*T_CSV != '\0' && wp->w_width != Columns)
     OUT_STR(tgoto((char *)T_CSV, W_WINCOL(wp) + wp->w_width - 1,
             W_WINCOL(wp)));
   screen_start();                   /* don't know where cursor is now */
@@ -2924,7 +2924,7 @@ void scroll_region_set(win_T *wp, int off)
 void scroll_region_reset(void)
 {
   OUT_STR(tgoto((char *)T_CS, (int)Rows - 1, 0));
-  if (*T_CSV != NUL)
+  if (*T_CSV != '\0')
     OUT_STR(tgoto((char *)T_CSV, (int)Columns - 1, 0));
   screen_start();                   /* don't know where cursor is now */
 }
@@ -2956,7 +2956,7 @@ void clear_termcodes(void)
 #ifdef HAVE_TGETENT
   BC = (char *)empty_option;
   UP = (char *)empty_option;
-  PC = NUL;                     /* set pad character to NUL */
+  PC = '\0';                     /* set pad character to NUL */
   ospeed = 0;
 #endif
 
@@ -2978,7 +2978,7 @@ void add_termcode(char_u *name, char_u *string, int flags)
   char_u          *s;
   int len;
 
-  if (string == NULL || *string == NUL) {
+  if (string == NULL || *string == '\0') {
     del_termcode(name);
     return;
   }
@@ -3271,7 +3271,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
     i = *tp;
     for (p = termleader; *p && *p != i; ++p)
       ;
-    if (*p == NUL)
+    if (*p == '\0')
       continue;
 
     /*
@@ -3281,8 +3281,8 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
     if (*tp == ESC && !p_ek && (State & INSERT))
       continue;
 
-    key_name[0] = NUL;          /* no key name found yet */
-    key_name[1] = NUL;          /* no key name found yet */
+    key_name[0] = '\0';          /* no key name found yet */
+    key_name[1] = '\0';          /* no key name found yet */
     modifiers = 0;              /* no modifiers yet */
 
     {
@@ -3377,7 +3377,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       }
     }
 
-    if (key_name[0] == NUL
+    if (key_name[0] == '\0'
         /* URXVT mouse uses <ESC>[#;#;#M, but we are matching <ESC>[ */
         || key_name[0] == KS_URXVT_MOUSE
         || u7_status == U7_SENT
@@ -3396,7 +3396,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
        *   ambiguous-width character state.
        */
       p = tp[0] == CSI ? tp + 1 : tp + 2;
-      if ((*T_CRV != NUL || *T_U7 != NUL)
+      if ((*T_CRV != '\0' || *T_U7 != '\0')
           && ((tp[0] == ESC && tp[1] == '[' && len >= 3)
               || (tp[0] == CSI && len >= 2))
           && (VIM_ISDIGIT(*p) || *p == '>' || *p == '?')) {
@@ -3459,7 +3459,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           slen = i + 1;
         } else
         /* eat it when at least one digit and ending in 'c' */
-        if (*T_CRV != NUL && i > 2 + (tp[0] != CSI) && tp[i] == 'c') {
+        if (*T_CRV != '\0' && i > 2 + (tp[0] != CSI) && tp[i] == 'c') {
           LOG_TR("Received CRV");
           crv_status = CRV_GOT;
           did_cursorhold = TRUE;
@@ -3533,7 +3533,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       }
     }
 
-    if (key_name[0] == NUL)
+    if (key_name[0] == '\0')
       continue;             /* No match at this position, try next one */
 
     /* We only get here when we have a complete termcode match */
@@ -3592,8 +3592,8 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           j = termcodes[idx].len;
           if (STRNCMP(tp, tp + slen, (size_t)j) == 0
               && tp[slen + j] == mouse_code
-              && tp[slen + j + 1] != NUL
-              && tp[slen + j + 2] != NUL
+              && tp[slen + j + 1] != '\0'
+              && tp[slen + j + 2] != '\0'
               )
             slen += j;
           else
@@ -4103,7 +4103,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       string[new_slen++] = key_name[0];
       string[new_slen++] = key_name[1];
     }
-    string[new_slen] = NUL;
+    string[new_slen] = '\0';
     extra = new_slen - slen;
     if (buf == NULL) {
       if (extra < 0)
@@ -4208,7 +4208,7 @@ replace_termcodes (
   /*
    * Copy each byte from *from to result[dlen]
    */
-  while (*src != NUL) {
+  while (*src != '\0') {
     /*
      * If 'cpoptions' does not contain '<', check for special key codes,
      * like "<C-S-LeftMouse>"
@@ -4278,11 +4278,11 @@ replace_termcodes (
       }
       if (len != 0) {
         /* Allow up to 8 * 6 characters for "mapleader". */
-        if (p == NULL || *p == NUL || STRLEN(p) > 8 * 6)
+        if (p == NULL || *p == '\0' || STRLEN(p) > 8 * 6)
           s = (char_u *)"\\";
         else
           s = p;
-        while (*s != NUL)
+        while (*s != '\0')
           result[dlen++] = *s++;
         src += len;
         continue;
@@ -4298,7 +4298,7 @@ replace_termcodes (
     key = *src;
     if (key == Ctrl_V || (do_backslash && key == '\\')) {
       ++src;                                    /* skip CTRL-V or backslash */
-      if (*src == NUL) {
+      if (*src == '\0') {
         if (from_part)
           result[dlen++] = key;
         break;
@@ -4321,7 +4321,7 @@ replace_termcodes (
       ++src;
     }
   }
-  result[dlen] = NUL;
+  result[dlen] = '\0';
 
   /*
    * Copy the new string to allocated memory.
@@ -4362,12 +4362,12 @@ static void gather_termleader(void)
   if (check_for_codes)
     termleader[len++] = DCS;        /* the termcode response starts with DCS
                                        in 8-bit mode */
-  termleader[len] = NUL;
+  termleader[len] = '\0';
 
   for (i = 0; i < tc_len; ++i)
     if (vim_strchr(termleader, termcodes[i].code[0]) == NULL) {
       termleader[len++] = termcodes[i].code[0];
-      termleader[len] = NUL;
+      termleader[len] = '\0';
     }
 
   need_gather = FALSE;
@@ -4476,12 +4476,12 @@ int show_one_termcode(char_u *name, char_u *code, int printit)
   if (p[1] != 't')
     STRCPY(IObuff + 5, p);
   else
-    IObuff[5] = NUL;
+    IObuff[5] = '\0';
   len = (int)STRLEN(IObuff);
   do
     IObuff[len++] = ' ';
   while (len < 17);
-  IObuff[len] = NUL;
+  IObuff[len] = '\0';
   if (code == NULL)
     len += 4;
   else
@@ -4564,7 +4564,7 @@ static void got_code_from_term(char_u *code, int len)
     /* Get the name from the response and find it in the table. */
     name[0] = hexhex2nr(code + 3);
     name[1] = hexhex2nr(code + 5);
-    name[2] = NUL;
+    name[2] = '\0';
     for (i = 0; key_names[i] != NULL; ++i) {
       if (STRCMP(key_names[i], name) == 0) {
         xt_index_in = i;
@@ -4582,7 +4582,7 @@ static void got_code_from_term(char_u *code, int len)
     if (key_names[i] != NULL) {
       for (i = 8; (c = hexhex2nr(code + i)) >= 0; i += 2)
         str[j++] = c;
-      str[j] = NUL;
+      str[j] = '\0';
       if (name[0] == 'C' && name[1] == 'o') {
         /* Color count is not a key code. */
         i = atoi((char *)str);
@@ -4641,7 +4641,7 @@ static void check_for_codes_from_term(void)
   ++allow_keys;
   for (;; ) {
     c = vpeekc();
-    if (c == NUL)           /* nothing available */
+    if (c == '\0')           /* nothing available */
       break;
 
     /* If a response is recognized it's replaced with K_IGNORE, must read
@@ -4695,7 +4695,7 @@ translate_mapping (
 
   for (; *str; ++str) {
     c = *str;
-    if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
+    if (c == K_SPECIAL && str[1] != '\0' && str[2] != '\0') {
       modifiers = 0;
       if (str[1] == KS_MODIFIER) {
         str++;
@@ -4716,14 +4716,14 @@ translate_mapping (
           continue;           /* for (str) */
         }
       }
-      if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
+      if (c == K_SPECIAL && str[1] != '\0' && str[2] != '\0') {
         if (expmap && cpo_special) {
           ga_clear(&ga);
           return NULL;
         }
         c = TO_SPECIAL(str[1], str[2]);
         if (c == K_ZERO)                /* display <Nul> as ^@ */
-          c = NUL;
+          c = '\0';
         str += 2;
       }
       if (IS_SPECIAL(c) || modifiers) {         /* special key */
@@ -4741,7 +4741,7 @@ translate_mapping (
     if (c)
       ga_append(&ga, c);
   }
-  ga_append(&ga, NUL);
+  ga_append(&ga, '\0');
   return (char_u *)(ga.ga_data);
 }
 
