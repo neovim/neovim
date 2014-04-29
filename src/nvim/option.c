@@ -5012,7 +5012,7 @@ set_bool_option (
         NULL, NULL, TRUE, curbuf);
   }
   /* when 'swf' is set, create swapfile, when reset remove swapfile */
-  else if ((int *)varp == &curbuf->b_p_swf) {
+  else if ((int *)varp == (int *)&curbuf->b_p_swf) {
     if (curbuf->b_p_swf && p_uc)
       ml_open_file(curbuf);                     /* create the swap file */
     else

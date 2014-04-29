@@ -1523,7 +1523,7 @@ static int getexactdigraph(int char1, int char2, int meta_char)
     vc.vc_type = CONV_NONE;
 
     if (convert_setup(&vc, (char_u *)"utf-8", p_enc) == OK) {
-      vc.vc_fail = TRUE;
+      vc.vc_fail = true;
       to = string_convert(&vc, buf, &i);
 
       if (to != NULL) {

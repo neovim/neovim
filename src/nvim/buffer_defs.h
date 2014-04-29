@@ -314,7 +314,7 @@ typedef struct {
 # ifdef USE_ICONV
   iconv_t vc_fd;                /* for CONV_ICONV */
 # endif
-  int vc_fail;                  /* fail for invalid char, don't use '?' */
+  bool vc_fail;                 /* fail for invalid char, don't use '?' */
 } vimconv_T;
 
 /*
@@ -432,7 +432,7 @@ typedef struct {
 
   /* for spell checking */
   garray_T b_langp;             /* list of pointers to slang_T, see spell.c */
-  char_u b_spell_ismw[256];       /* flags: is midword char */
+  bool b_spell_ismw[256];       /* flags: is midword char */
   char_u      *b_spell_ismw_mb;   /* multi-byte midword chars */
   char_u      *b_p_spc;         /* 'spellcapcheck' */
   regprog_T   *b_cap_prog;      /* program for 'spellcapcheck' */
@@ -645,9 +645,9 @@ struct file_buffer {
   long b_p_sw;                  /* 'shiftwidth' */
   int b_p_si;                   /* 'smartindent' */
   long b_p_sts;                 /* 'softtabstop' */
-  long b_p_sts_nopaste;          /* b_p_sts saved for paste mode */
+  long b_p_sts_nopaste;         /* b_p_sts saved for paste mode */
   char_u      *b_p_sua;         /* 'suffixesadd' */
-  int b_p_swf;                  /* 'swapfile' */
+  bool b_p_swf;                 /* 'swapfile' */
   long b_p_smc;                 /* 'synmaxcol' */
   char_u      *b_p_syn;         /* 'syntax' */
   long b_p_ts;                  /* 'tabstop' */
@@ -738,7 +738,7 @@ struct file_buffer {
    */
   int b_help;                   /* TRUE for help file buffer (when set b_p_bt
                                    is "help") */
-  int b_spell;                  /* TRUE for a spell file buffer, most fields
+  bool b_spell;                 /* True for a spell file buffer, most fields
                                    are not used!  Use the B_SPELL macro to
                                    access b_spell without #ifdef. */
 

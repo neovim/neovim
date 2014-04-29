@@ -795,7 +795,7 @@ int searchit(
         lnum = 1;
       if (!shortmess(SHM_SEARCH) && (options & SEARCH_MSG))
         give_warning((char_u *)_(dir == BACKWARD
-                ? top_bot_msg : bot_top_msg), TRUE);
+                ? top_bot_msg : bot_top_msg), true);
     }
     if (got_int || called_emsg
         || break_loop
@@ -1225,7 +1225,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
       if (p_ws) {
         pos->lnum = buf->b_ml.ml_line_count;
         if (!shortmess(SHM_SEARCH))
-          give_warning((char_u *)_(top_bot_msg), TRUE);
+          give_warning((char_u *)_(top_bot_msg), true);
       } else {
         pos->lnum = 1;
         break;
@@ -1234,7 +1234,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
       if (p_ws) {
         pos->lnum = 1;
         if (!shortmess(SHM_SEARCH))
-          give_warning((char_u *)_(bot_top_msg), TRUE);
+          give_warning((char_u *)_(bot_top_msg), true);
       } else {
         pos->lnum = 1;
         break;
@@ -3162,10 +3162,10 @@ current_tagblock (
   int len;
   int r;
   int do_include = include;
-  int save_p_ws = p_ws;
+  bool save_p_ws = p_ws;
   int retval = FAIL;
 
-  p_ws = FALSE;
+  p_ws = false;
 
   old_pos = curwin->w_cursor;
   old_end = curwin->w_cursor;               /* remember where we started */
@@ -3764,13 +3764,13 @@ current_search (
   int i;
   int dir;
   int result;                   /* result of various function calls */
-  char_u old_p_ws = p_ws;
+  bool old_p_ws = p_ws;
   int flags = 0;
   pos_T save_VIsual = VIsual;
   int one_char;
 
   /* wrapping should not occur */
-  p_ws = FALSE;
+  p_ws = false;
 
   /* Correct cursor when 'selection' is exclusive */
   if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor))

@@ -777,7 +777,7 @@ void wait_return(int redraw)
   } else {
     /* Make sure the hit-return prompt is on screen when 'guioptions' was
      * just changed. */
-    screenalloc(FALSE);
+    screenalloc(false);
 
     State = HITRETURN;
     setmouse();
@@ -2612,7 +2612,7 @@ int verbose_open(void)
  * Give a warning message (for searching).
  * Use 'w' highlighting and may repeat the message after redrawing
  */
-void give_warning(char_u *message, int hl)
+void give_warning(char_u *message, bool hl)
 {
   /* Don't do this for ":silent". */
   if (msg_silent != 0)

@@ -2516,7 +2516,7 @@ void set_shellsize(int width, int height, int mustset)
      */
     if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
         || exmode_active) {
-      screenalloc(FALSE);
+      screenalloc(false);
       repeat_message();
     } else {
       if (curwin->w_p_scb)

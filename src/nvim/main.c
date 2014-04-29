@@ -288,7 +288,7 @@ int main(int argc, char **argv)
 
   cmdline_row = Rows - p_ch;
   msg_row = cmdline_row;
-  screenalloc(FALSE);           /* allocate screen buffers */
+  screenalloc(false);           /* allocate screen buffers */
   set_init_2();
   TIME_MSG("inits 2");
 
