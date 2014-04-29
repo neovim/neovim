@@ -27,7 +27,6 @@ int leftcol_changed(void);
 int csh_like_shell(void);
 int copy_option_part(char_u **option, char_u *buf, int maxlen,
                      char *sep_chars);
-void vim_free(void *x);
 int get_fileformat(buf_T *buf);
 int get_fileformat_force(buf_T *buf, exarg_T *eap);
 void set_fileformat(int t, int opt_flags);

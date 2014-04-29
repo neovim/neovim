@@ -634,16 +634,6 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
   return len;
 }
 
-///
-/// Replacement for free().
-///
-/// @deprecated Use free() instead
-///
-void vim_free(void *x)
-{
-  free(x);
-}
-
 /*
  * Return the current end-of-line type: EOL_DOS, EOL_UNIX or EOL_MAC.
  */
