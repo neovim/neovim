@@ -1301,7 +1301,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
       if (name == NULL)
         verbose_enter();
       give_warning((char_u *)
-          _("File contents changed, cannot use undo info"), TRUE);
+          _("File contents changed, cannot use undo info"), true);
       if (name == NULL)
         verbose_leave();
     }

@@ -9,7 +9,6 @@
 /// Medial      - unicode form-B middle   char denoted with  a_m_*
 /// Final       - unicode form-B final    char denoted with  a_f_*
 /// Stand-Alone - unicode form-B isolated char denoted with  a_s_* (NOT USED)
-///
 
 #include "nvim/vim.h"
 #include "nvim/arabic.h"
@@ -245,7 +244,7 @@
 # include "arabic.c.generated.h"
 #endif
 // Returns True if c is an ISO-8859-6 shaped ARABIC letter (user entered).
-static int A_is_a(int cur_c)
+static bool A_is_a(int cur_c)
 {
   switch (cur_c) {
     case a_HAMZA:
@@ -285,14 +284,14 @@ static int A_is_a(int cur_c)
     case a_WAW:
     case a_ALEF_MAKSURA:
     case a_YEH:
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 // Returns True if c is an Isolated Form-B ARABIC letter
-static int A_is_s(int cur_c)
+static bool A_is_s(int cur_c)
 {
   switch (cur_c) {
     case a_s_HAMZA:
@@ -331,14 +330,14 @@ static int A_is_s(int cur_c)
     case a_s_WAW:
     case a_s_ALEF_MAKSURA:
     case a_s_YEH:
-      return TRUE;
+      return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 // Returns True if c is a Final shape of an ARABIC letter
-static int A_is_f(int cur_c)
+static bool A_is_f(int cur_c)
 {
   switch (cur_c) {
     case a_f_ALEF_MADDA:
@@ -380,9 +379,9 @@ static int A_is_f(int cur_c)
     case a_f_LAM_ALEF_HAMZA_ABOVE:
     case a_f_LAM_ALEF_HAMZA_BELOW:
     case a_f_LAM_ALEF:
-      return TRUE;
+      return true;
   }
-  return FALSE;
+  return false;
 }
 
 // Change shape - from ISO-8859-6/Isolated to Form-B Isolated
@@ -1423,17 +1422,17 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
 ///
 /// @param one First character.
 /// @param two Character just after "one".
-int arabic_combine(int one, int two)
+bool arabic_combine(int one, int two)
 {
   if (one == a_LAM) {
     return arabic_maycombine(two);
   }
-  return FALSE;
+  return false;
 }
 
 /// Check whether we are dealing with a character that could be regarded as an
 /// Arabic combining character, need to check the character before this.
-int arabic_maycombine(int two)
+bool arabic_maycombine(int two)
 {
   if (p_arshape && !p_tbidi) {
     return two == a_ALEF_MADDA
@@ -1441,7 +1440,7 @@ int arabic_maycombine(int two)
       || two == a_ALEF_HAMZA_BELOW
       || two == a_ALEF;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -1461,7 +1460,7 @@ static int A_firstc_laa(int c, int c1)
  * A_is_harakat returns TRUE if 'c' is an Arabic Harakat character
  *		(harakat/tanween)
  */
-static int A_is_harakat(int c)
+static bool A_is_harakat(int c)
 {
   return c >= a_FATHATAN && c <= a_SUKUN;
 }
@@ -1470,7 +1469,7 @@ static int A_is_harakat(int c)
  * A_is_iso returns TRUE if 'c' is an Arabic ISO-8859-6 character
  *		(alphabet/number/punctuation)
  */
-static int A_is_iso(int c)
+static bool A_is_iso(int c)
 {
   return (c >= a_HAMZA && c <= a_GHAIN) ||
          (c >= a_TATWEEL && c <= a_HAMZA_BELOW) ||
@@ -1481,7 +1480,7 @@ static int A_is_iso(int c)
  * A_is_formb returns TRUE if 'c' is an Arabic 10646-1 FormB character
  *		(alphabet/number/punctuation)
  */
-static int A_is_formb(int c)
+static bool A_is_formb(int c)
 {
   return (c >= a_s_FATHATAN && c <= a_s_DAMMATAN) ||
          c == a_s_KASRATAN ||
@@ -1492,7 +1491,7 @@ static int A_is_formb(int c)
 /*
  * A_is_ok returns TRUE if 'c' is an Arabic 10646 (8859-6 or Form-B)
  */
-static int A_is_ok(int c)
+static bool A_is_ok(int c)
 {
   return A_is_iso(c) || A_is_formb(c);
 }
@@ -1501,7 +1500,7 @@ static int A_is_ok(int c)
  * A_is_valid returns TRUE if 'c' is an Arabic 10646 (8859-6 or Form-B)
  *		with some exceptions/exclusions
  */
-static int A_is_valid(int c)
+static bool A_is_valid(int c)
 {
   return A_is_ok(c) && !A_is_special(c);
 }
@@ -1510,7 +1509,7 @@ static int A_is_valid(int c)
  * A_is_special returns TRUE if 'c' is not a special Arabic character.
  *		Specials don't adhere to most of the rules.
  */
-static int A_is_special(int c)
+static bool A_is_special(int c)
 {
   return c == a_HAMZA || c == a_s_HAMZA;
 }

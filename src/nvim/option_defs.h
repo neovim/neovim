@@ -623,7 +623,7 @@ EXTERN long p_wh;               /* 'winheight' */
 EXTERN long p_wmh;              /* 'winminheight' */
 EXTERN long p_wmw;              /* 'winminwidth' */
 EXTERN long p_wiw;              /* 'winwidth' */
-EXTERN int p_ws;                /* 'wrapscan' */
+EXTERN bool p_ws;               /* 'wrapscan' */
 EXTERN int p_write;             /* 'write' */
 EXTERN int p_wa;                /* 'writeany' */
 EXTERN int p_wb;                /* 'writebackup' */

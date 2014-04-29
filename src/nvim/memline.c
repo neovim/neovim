@@ -264,7 +264,7 @@ int ml_open(buf_T *buf)
   buf->b_ml.ml_chunksize = NULL;
 
   if (cmdmod.noswapfile) {
-    buf->b_p_swf = FALSE;
+    buf->b_p_swf = false;
   }
 
   /*

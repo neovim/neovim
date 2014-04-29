@@ -2793,7 +2793,7 @@ void ex_vimgrep(exarg_T *eap)
       ;
 
   /* parse the list of arguments */
-  if (get_arglist_exp(p, &fcount, &fnames, TRUE) == FAIL)
+  if (get_arglist_exp(p, &fcount, &fnames, true) == FAIL)
     goto theend;
   if (fcount == 0) {
     EMSG(_(e_nomatch));

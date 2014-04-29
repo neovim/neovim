@@ -2325,7 +2325,8 @@ jumpto_tag (
 {
   int save_secure;
   int save_magic;
-  int save_p_ws, save_p_scs, save_p_ic;
+  bool save_p_ws;
+  int save_p_scs, save_p_ic;
   linenr_T save_lnum;
   int csave = 0;
   char_u      *str;
@@ -2476,7 +2477,7 @@ jumpto_tag (
       save_p_ws = p_ws;
       save_p_ic = p_ic;
       save_p_scs = p_scs;
-      p_ws = TRUE;              /* need 'wrapscan' for backward searches */
+      p_ws = true;              /* need 'wrapscan' for backward searches */
       p_ic = FALSE;             /* don't ignore case now */
       p_scs = FALSE;
       save_lnum = curwin->w_cursor.lnum;

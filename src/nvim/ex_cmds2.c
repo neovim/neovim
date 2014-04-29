@@ -1534,17 +1534,17 @@ void get_arglist(garray_T *gap, char_u *str)
 
 /*
  * Parse a list of arguments (file names), expand them and return in
- * "fnames[fcountp]".  When "wig" is TRUE, removes files matching 'wildignore'.
+ * "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
  * Return FAIL or OK.
  */
-int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, int wig)
+int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 {
   garray_T ga;
   int i;
 
   get_arglist(&ga, str);
 
-  if (wig == TRUE)
+  if (wig)
     i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
         fcountp, fnamesp, EW_FILE|EW_NOTFOUND);
   else

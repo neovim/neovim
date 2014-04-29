@@ -3273,7 +3273,7 @@ find_decl (
   pos_T par_pos;
   pos_T found_pos;
   int t;
-  int save_p_ws;
+  bool save_p_ws;
   int save_p_scs;
   int retval = OK;
   int incll;
@@ -3287,7 +3287,7 @@ find_decl (
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;
   save_p_scs = p_scs;
-  p_ws = FALSE;         /* don't wrap around end of file now */
+  p_ws = false;         /* don't wrap around end of file now */
   p_scs = FALSE;        /* don't switch ignorecase off now */
 
   /*

@@ -9779,7 +9779,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
       n = has_mbyte;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
     } else if (STRICMP(name, "iconv") == 0) {
-      n = iconv_enabled(FALSE);
+      n = iconv_enabled(false);
 #endif
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
@@ -12054,8 +12054,8 @@ static int get_search_arg(typval_T *varp, int *flagsp)
     while (*flags != NUL) {
       switch (*flags) {
       case 'b': dir = BACKWARD; break;
-      case 'w': p_ws = TRUE; break;
-      case 'W': p_ws = FALSE; break;
+      case 'w': p_ws = true; break;
+      case 'W': p_ws = false; break;
       default:  mask = 0;
         if (flagsp != NULL)
           switch (*flags) {
@@ -12090,7 +12090,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   char_u      *pat;
   pos_T pos;
   pos_T save_cursor;
-  int save_p_ws = p_ws;
+  bool save_p_ws = p_ws;
   int dir;
   int retval = 0;               /* default: FAIL */
   long lnum_stop = 0;
@@ -12293,7 +12293,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
 {
   char_u      *spat, *mpat, *epat;
   char_u      *skip;
-  int save_p_ws = p_ws;
+  bool save_p_ws = p_ws;
   int dir;
   int flags = 0;
   char_u nbuf1[NUMBUFLEN];
@@ -12326,7 +12326,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
 
   /* Using 'r' implies 'W', otherwise it doesn't work. */
   if (flags & SP_REPEAT)
-    p_ws = FALSE;
+    p_ws = false;
 
   /* Optional fifth argument: skip expression */
   if (argvars[3].v_type == VAR_UNKNOWN
@@ -13343,7 +13343,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv)
     if (str != NULL) {
       /* Check the argument for spelling. */
       while (*str != NUL) {
-        len = spell_check(curwin, str, &attr, &capcol, FALSE);
+        len = spell_check(curwin, str, &attr, &capcol, false);
         if (attr != HLF_COUNT) {
           word = str;
           break;
@@ -13372,7 +13372,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
   int maxcount;
   garray_T ga;
   listitem_T  *li;
-  int need_capital = FALSE;
+  bool need_capital = false;
 
   rettv_list_alloc(rettv);
 
@@ -13390,7 +13390,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
     } else
       maxcount = 25;
 
-    spell_suggest_list(&ga, str, maxcount, need_capital, FALSE);
+    spell_suggest_list(&ga, str, maxcount, need_capital, false);
 
     for (int i = 0; i < ga.ga_len; ++i) {
       str = ((char_u **)ga.ga_data)[i];

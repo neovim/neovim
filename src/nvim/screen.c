@@ -620,7 +620,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
         init_search_hl(wp);
         start_search_hl();
         prepare_search_hl(wp, lnum);
-        win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, FALSE);
+        win_line(wp, lnum, row, row + wp->w_lines[j].wl_size, false);
         end_search_hl();
         break;
       }
@@ -2176,7 +2176,7 @@ win_line (
     linenr_T lnum,
     int startrow,
     int endrow,
-    int nochange                    /* not updating for changed text */
+    bool nochange                    /* not updating for changed text */
 )
 {
   int col;                              /* visual column on screen */
@@ -2234,7 +2234,7 @@ win_line (
   int eol_hl_off = 0;                   /* 1 if highlighted char after EOL */
   int draw_color_col = FALSE;           /* highlight colorcolumn */
   int         *color_cols = NULL;       /* pointer to according columns array */
-  int has_spell = FALSE;                /* this buffer has spell checking */
+  bool has_spell = false;               /* this buffer has spell checking */
 # define SPWORDLEN 150
   char_u nextline[SPWORDLEN * 2];       /* text with start of the next line */
   int nextlinecol = 0;                  /* column where nextline[] starts */
@@ -2338,7 +2338,7 @@ win_line (
       && !GA_EMPTY(&wp->w_s->b_langp)
       && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
     /* Prepare for spell checking. */
-    has_spell = TRUE;
+    has_spell = true;
     extra_check = TRUE;
 
     /* Get the start of the next line, so that words that wrap to the next
@@ -3258,7 +3258,7 @@ win_line (
       }
 
       if (extra_check) {
-        int can_spell = TRUE;
+        bool can_spell = true;
 
         /* Get syntax attribute, unless still at the start of the line
          * (double-wide char that doesn't fit). */
@@ -6109,7 +6109,7 @@ int screen_valid(int doclear)
  * in ScreenLines[].  Use Rows and Columns for positioning text etc. where the
  * final size of the shell is needed.
  */
-void screenalloc(int doclear)
+void screenalloc(bool doclear)
 {
   int new_row, old_row;
   win_T           *wp;
@@ -6366,7 +6366,7 @@ void free_screenlines(void)
 void screenclear(void)
 {
   check_for_delay(FALSE);
-  screenalloc(FALSE);       /* allocate screen buffers if size changed */
+  screenalloc(false);       /* allocate screen buffers if size changed */
   screenclear2();           /* clear the screen */
 }
 

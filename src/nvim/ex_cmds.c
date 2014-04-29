@@ -3445,7 +3445,7 @@ void do_sub(exarg_T *eap)
   regmmatch_T regmatch;
   static int do_all = FALSE;            /* do multiple substitutions per line */
   static int do_ask = FALSE;            /* ask for confirmation */
-  static int do_count = FALSE;          /* count only */
+  static bool do_count = false;         /* count only */
   static int do_error = TRUE;           /* if false, ignore errors */
   static int do_print = FALSE;          /* print last line with subs. */
   static int do_list = FALSE;           /* list last line with subs. */
@@ -3584,7 +3584,7 @@ void do_sub(exarg_T *eap)
 
     do_join(eap->line2 - eap->line1 + 1, FALSE, TRUE, FALSE, true);
     sub_nlines = sub_nsubs = eap->line2 - eap->line1 + 1;
-    do_sub_msg(FALSE);
+    do_sub_msg(false);
     ex_may_print(eap);
 
     return;
@@ -3605,7 +3605,7 @@ void do_sub(exarg_T *eap)
     }
     do_error = TRUE;
     do_print = FALSE;
-    do_count = FALSE;
+    do_count = false;
     do_number = FALSE;
     do_ic = 0;
   }
@@ -3619,7 +3619,7 @@ void do_sub(exarg_T *eap)
     else if (*cmd == 'c')
       do_ask = !do_ask;
     else if (*cmd == 'n')
-      do_count = TRUE;
+      do_count = true;
     else if (*cmd == 'e')
       do_error = !do_error;
     else if (*cmd == 'r')           /* use last used regexp */
@@ -4355,9 +4355,9 @@ skip:
  * Can also be used after a ":global" command.
  * Return TRUE if a message was given.
  */
-int 
+bool
 do_sub_msg (
-    int count_only                 /* used 'n' flag for ":s" */
+    bool count_only                /* used 'n' flag for ":s" */
 )
 {
   /*
@@ -4390,13 +4390,13 @@ do_sub_msg (
     if (msg(msg_buf))
       /* save message to display it after redraw */
       set_keep_msg(msg_buf, 0);
-    return TRUE;
+    return true;
   }
   if (got_int) {
     EMSG(_(e_interr));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -4562,7 +4562,7 @@ void global_exe(char_u *cmd)
    * number of extra or deleted lines.
    * Don't report extra or deleted lines in the edge case where the buffer
    * we are in after execution is different from the buffer we started in. */
-  if (!do_sub_msg(FALSE) && curbuf == old_buf)
+  if (!do_sub_msg(false) && curbuf == old_buf)
     msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 }
 

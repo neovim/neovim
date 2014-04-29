@@ -1557,7 +1557,7 @@ syn_finish_line (
 int 
 get_syntax_attr (
     colnr_T col,
-    int *can_spell,
+    bool *can_spell,
     int keep_state                 /* keep state of char at "col" */
 )
 {
@@ -1604,9 +1604,9 @@ get_syntax_attr (
  */
 static int 
 syn_current_attr (
-    int syncing,                            /* When 1: called for syncing */
-    int displaying,                         /* result will be displayed */
-    int *can_spell,                 /* return: do spell checking */
+    int syncing,                           /* When 1: called for syncing */
+    int displaying,                        /* result will be displayed */
+    bool *can_spell,                       /* return: do spell checking */
     int keep_state                         /* keep syntax stack afterwards */
 )
 {
@@ -2069,7 +2069,7 @@ syn_current_attr (
           if (syn_block->b_nospell_cluster_id != 0) {
             sps.id = syn_block->b_nospell_cluster_id;
             if (in_id_list(sip, sip->si_cont_list, &sps, 0))
-              *can_spell = FALSE;
+              *can_spell = false;
           }
         }
       }
@@ -5527,8 +5527,8 @@ syn_get_id (
     win_T *wp,
     long lnum,
     colnr_T col,
-    int trans,                   /* remove transparency */
-    int *spellp,         /* return: can do spell checking */
+    int trans,                  /* remove transparency */
+    bool *spellp,               /* return: can do spell checking */
     int keep_state              /* keep state of char at "col" */
 )
 {
