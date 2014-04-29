@@ -4,3 +4,7 @@ Vim(function):E128: Function name must start with a capital or "s:": b:test()
 called Foo(1)
 called Foo(2)
 called Foo(3)
+s:Testje exists: 0
+func s:Testje exists: 1
+Bar exists: 1
+func Bar exists: 1
