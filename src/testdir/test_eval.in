@@ -39,7 +39,14 @@ STARTTEST
 :" script-local function used in Funcref must exist.
 :so test_eval_func.vim
 
-:$-9,$w! test.out
+:" using $ instead of '$' must give an error
+:try
+:  call append($, 'foobar')
+:catch
+:  $put =v:exception
+:endtry
+
+:$-10,$w! test.out
 :q!
 
 ENDTEST
