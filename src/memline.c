@@ -100,9 +100,9 @@ struct pointer_entry {
  * A pointer block contains a list of branches in the tree.
  */
 struct pointer_block {
-  short_u pb_id;                /* ID for pointer block: PTR_ID */
-  short_u pb_count;             /* number of pointers in this block */
-  short_u pb_count_max;         /* maximum value for pb_count */
+  uint16_t pb_id;               /* ID for pointer block: PTR_ID */
+  uint16_t pb_count;            /* number of pointers in this block */
+  uint16_t pb_count_max;        /* maximum value for pb_count */
   PTR_EN pb_pointer[1];         /* list of pointers to blocks (actually longer)
                                  * followed by empty space until end of page */
 };
@@ -115,7 +115,7 @@ struct pointer_block {
  * etc. Thus the order of the lines is the opposite of the line number.
  */
 struct data_block {
-  short_u db_id;                /* ID for data block: DATA_ID */
+  uint16_t db_id;               /* ID for data block: DATA_ID */
   unsigned db_free;             /* free space available */
   unsigned db_txt_start;        /* byte where text starts */
   unsigned db_txt_end;          /* byte just after data block */
@@ -3011,8 +3011,7 @@ static bhdr_T *ml_new_ptr(memfile_T *mfp)
   pp = (PTR_BL *)(hp->bh_data);
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
-  pp->pb_count_max = (short_u)((mfp->mf_page_size - sizeof(PTR_BL))
-                               / sizeof(PTR_EN) + 1);
+  pp->pb_count_max = (mfp->mf_page_size - sizeof(PTR_BL)) / sizeof(PTR_EN) + 1;
 
   return hp;
 }
