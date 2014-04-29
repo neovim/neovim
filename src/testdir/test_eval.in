@@ -36,7 +36,10 @@ STARTTEST
 :echo g:Foo(2)
 :echo Foo(3)
 
-:$-5,$w! test.out
+:" script-local function used in Funcref must exist.
+:so test_eval_func.vim
+
+:$-9,$w! test.out
 :q!
 
 ENDTEST

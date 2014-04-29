@@ -17883,6 +17883,13 @@ trans_function_name (
   if (name != NULL) {
     name = vim_strsave(name);
     *pp = end;
+    if (strncmp((char *)name, "<SNR>", 5) == 0) {
+      // Change "<SNR>" to the byte sequence.
+      name[0] = K_SPECIAL;
+      name[1] = KS_EXTRA;
+      name[2] = (int)KE_SNR;
+      memmove(name + 3, name + 5, strlen((char *)name + 5) + 1);
+    }
     goto theend;
   }
 
