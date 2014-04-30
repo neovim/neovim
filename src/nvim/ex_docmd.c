@@ -6411,7 +6411,7 @@ void do_sleep(long msec)
   cursor_on();
   out_flush();
   for (done = 0; !got_int && done < msec; done += 1000L) {
-    ui_delay(msec - done > 1000L ? 1000L : msec - done, TRUE);
+    ui_delay(msec - done > 1000L ? 1000L : msec - done, true);
     ui_breakcheck();
   }
 }
@@ -7405,7 +7405,7 @@ static void ex_pedit(exarg_T *eap)
   win_T       *curwin_save = curwin;
 
   g_do_tagpreview = p_pvh;
-  prepare_tagpreview(TRUE);
+  prepare_tagpreview(true);
   keep_help_flag = curwin_save->w_buffer->b_help;
   do_exedit(eap, NULL);
   keep_help_flag = FALSE;
@@ -7413,7 +7413,7 @@ static void ex_pedit(exarg_T *eap)
     /* Return cursor to where we were */
     validate_cursor();
     redraw_later(VALID);
-    win_enter(curwin_save, TRUE);
+    win_enter(curwin_save, true);
   }
   g_do_tagpreview = 0;
 }

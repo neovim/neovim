@@ -14667,7 +14667,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv)
       curwin->w_topline = 1;
     if (curwin->w_topline > curbuf->b_ml.ml_line_count)
       curwin->w_topline = curbuf->b_ml.ml_line_count;
-    check_topfill(curwin, TRUE);
+    check_topfill(curwin, true);
   }
 }
 

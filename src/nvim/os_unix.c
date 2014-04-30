@@ -129,7 +129,7 @@ void mch_suspend()
     long wait_time;
     for (wait_time = 0; !sigcont_received && wait_time <= 3L; wait_time++)
       /* Loop is not entered most of the time */
-      os_delay(wait_time, FALSE);
+      os_delay(wait_time, false);
   }
 # endif
 
@@ -1186,7 +1186,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   /* When running in the background, give it some time to create the temp
    * file, but don't wait for it to finish. */
   if (ampersent)
-    os_delay(10L, TRUE);
+    os_delay(10L, true);
 
   free(command);
 

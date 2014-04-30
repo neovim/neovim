@@ -4595,9 +4595,9 @@ void free_old_sub(void)
  * Set up for a tagpreview.
  * Return TRUE when it was created.
  */
-int 
+bool
 prepare_tagpreview (
-    int undo_sync                  /* sync undo when leaving the window */
+    bool undo_sync                  /* sync undo when leaving the window */
 )
 {
   win_T       *wp;
@@ -4618,17 +4618,17 @@ prepare_tagpreview (
        */
       if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
           == FAIL)
-        return FALSE;
+        return false;
       curwin->w_p_pvw = TRUE;
       curwin->w_p_wfh = TRUE;
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
       curwin->w_p_diff = FALSE;             /* no 'diff' */
       curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -4735,7 +4735,7 @@ void ex_help(exarg_T *eap)
         if (wp->w_buffer != NULL && wp->w_buffer->b_help)
           break;
     if (wp != NULL && wp->w_buffer->b_nwindows > 0)
-      win_enter(wp, TRUE);
+      win_enter(wp, true);
     else {
       /*
        * There is no help window yet.

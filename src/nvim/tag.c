@@ -876,7 +876,7 @@ do_tag (
           give_warning(IObuff, ic);
         if (ic && !msg_scrolled && msg_silent == 0) {
           out_flush();
-          ui_delay(1000L, TRUE);
+          ui_delay(1000L, true);
         }
       }
 
@@ -2414,7 +2414,7 @@ jumpto_tag (
        * Make the preview window the current window.
        * Open a preview window when needed.
        */
-      prepare_tagpreview(TRUE);
+      prepare_tagpreview(true);
     }
   }
 
@@ -2525,7 +2525,7 @@ jumpto_tag (
             MSG(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               out_flush();
-              ui_delay(1000L, TRUE);
+              ui_delay(1000L, true);
             }
           }
           retval = OK;
@@ -2580,7 +2580,7 @@ jumpto_tag (
       /* Return cursor to where we were */
       validate_cursor();
       redraw_later(VALID);
-      win_enter(curwin_save, TRUE);
+      win_enter(curwin_save, true);
     }
 
     --RedrawingDisabled;

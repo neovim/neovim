@@ -1405,7 +1405,7 @@ buflist_new (
       EMSG(_("W14: Warning: List of file names overflow"));
       if (emsg_silent == 0) {
         out_flush();
-        ui_delay(3000L, TRUE);          /* make sure it is noticed */
+        ui_delay(3000L, true);          /* make sure it is noticed */
       }
       top_file_num = 1;
     }
@@ -3734,7 +3734,7 @@ do_arg_all (
   ++autocmd_no_leave;
   last_curwin = curwin;
   last_curtab = curtab;
-  win_enter(lastwin, FALSE);
+  win_enter(lastwin, false);
   /* ":drop all" should re-use an empty window to avoid "--remote-tab"
    * leaving an empty tab page when executed locally. */
   if (keep_tabs && bufempty() && curbuf->b_nwindows == 1
@@ -3802,13 +3802,13 @@ do_arg_all (
     if (valid_tabpage(last_curtab))
       goto_tabpage_tp(last_curtab, TRUE, TRUE);
     if (win_valid(last_curwin))
-      win_enter(last_curwin, FALSE);
+      win_enter(last_curwin, false);
   }
   /* to window with first arg */
   if (valid_tabpage(new_curtab))
     goto_tabpage_tp(new_curtab, TRUE, TRUE);
   if (win_valid(new_curwin))
-    win_enter(new_curwin, FALSE);
+    win_enter(new_curwin, false);
 
   --autocmd_no_leave;
   free(opened);
@@ -3883,7 +3883,7 @@ void ex_buffer_all(exarg_T *eap)
    */
   /* Don't execute Win/Buf Enter/Leave autocommands here. */
   ++autocmd_no_enter;
-  win_enter(lastwin, FALSE);
+  win_enter(lastwin, false);
   ++autocmd_no_leave;
   for (buf = firstbuf; buf != NULL && open_wins < count; buf = buf->b_next) {
     /* Check if this buffer needs a window */
@@ -3963,7 +3963,7 @@ void ex_buffer_all(exarg_T *eap)
       cmdmod.tab = 9999;
   }
   --autocmd_no_enter;
-  win_enter(firstwin, FALSE);           /* back to first window */
+  win_enter(firstwin, false);           /* back to first window */
   --autocmd_no_leave;
 
   /*

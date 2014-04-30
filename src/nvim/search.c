@@ -2049,9 +2049,9 @@ showmatch (
        * available.
        */
       if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL)
-        ui_delay(p_mat * 100L, TRUE);
+        ui_delay(p_mat * 100L, true);
       else if (!char_avail())
-        ui_delay(p_mat * 100L, FALSE);
+        ui_delay(p_mat * 100L, false);
       curwin->w_cursor = save_cursor;           /* restore cursor position */
       p_so = save_so;
       p_siso = save_siso;
@@ -2183,7 +2183,7 @@ found:
  */
 int 
 findpar (
-    int *pincl,         /* Return: TRUE if last char is to be included */
+    int *pincl,             /* Return: TRUE if last char is to be included */
     int dir,
     long count,
     int what,
@@ -4389,7 +4389,7 @@ search_line:
           /* ":psearch" uses the preview window */
           if (g_do_tagpreview != 0) {
             curwin_save = curwin;
-            prepare_tagpreview(TRUE);
+            prepare_tagpreview(true);
           }
           if (action == ACTION_SPLIT) {
             if (win_split(0, 0) == FAIL)
@@ -4424,7 +4424,7 @@ search_line:
           /* Return cursor to where we were */
           validate_cursor();
           redraw_later(VALID);
-          win_enter(curwin_save, TRUE);
+          win_enter(curwin_save, true);
         }
         break;
       }

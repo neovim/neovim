@@ -119,7 +119,7 @@ ui_inchar (
     /* ... there is no need for CTRL-C to interrupt something, don't let
      * it set got_int when it was mapped. */
     if (mapped_ctrl_c)
-      ctrl_c_interrupts = FALSE;
+      ctrl_c_interrupts = false;
   }
 
 #ifndef NO_CONSOLE
@@ -132,7 +132,7 @@ ui_inchar (
     /* block SIGHUP et al. */
     signal_reject_deadly();
 
-  ctrl_c_interrupts = TRUE;
+  ctrl_c_interrupts = true;
 
 #ifdef NO_CONSOLE_INPUT
 theend:
@@ -162,7 +162,7 @@ int ui_char_avail(void)
  * Delay for the given number of milliseconds.	If ignoreinput is FALSE then we
  * cancel the delay if a key is hit.
  */
-void ui_delay(long msec, int ignoreinput)
+void ui_delay(long msec, bool ignoreinput)
 {
   os_delay(msec, ignoreinput);
 }
@@ -365,7 +365,7 @@ void trash_input_buf(void)
 int read_from_input_buf(char_u *buf, long maxlen)
 {
   if (inbufcount == 0)          /* if the buffer is empty, fill it */
-    fill_input_buf(TRUE);
+    fill_input_buf(true);
   if (maxlen > inbufcount)
     maxlen = inbufcount;
   memmove(buf, inbuf, (size_t)maxlen);
@@ -375,7 +375,7 @@ int read_from_input_buf(char_u *buf, long maxlen)
   return (int)maxlen;
 }
 
-void fill_input_buf(int exit_on_error)
+void fill_input_buf(bool exit_on_error)
 {
 #if defined(UNIX) || defined(MACOS_X_UNIX)
   int len;
@@ -560,13 +560,13 @@ jump_to_mouse (
   win_T       *wp, *old_curwin;
   pos_T old_cursor;
   int count;
-  int first;
+  bool first;
   int row = mouse_row;
   int col = mouse_col;
   int mouse_char;
 
-  mouse_past_bottom = FALSE;
-  mouse_past_eol = FALSE;
+  mouse_past_bottom = false;
+  mouse_past_eol = false;
 
   if (flags & MOUSE_RELEASED) {
     /* On button release we may change window focus if positioned on a
@@ -669,7 +669,7 @@ retnomove:
      * status line.  Do change focus when releasing the mouse button
      * (MOUSE_FOCUS was set above if we dragged first). */
     if (dragwin == NULL || (flags & MOUSE_RELEASED))
-      win_enter(wp, TRUE);                      /* can make wp invalid! */
+      win_enter(wp, true);                      /* can make wp invalid! */
 # ifdef CHECK_DOUBLE_CLICK
     /* set topline, to be able to check for double click ourselves */
     if (curwin != old_curwin)
@@ -726,14 +726,14 @@ retnomove:
      */
     if (row < 0) {
       count = 0;
-      for (first = TRUE; curwin->w_topline > 1; ) {
+      for (first = true; curwin->w_topline > 1; ) {
         if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
           ++count;
         else
           count += plines(curwin->w_topline - 1);
         if (!first && count > -row)
           break;
-        first = FALSE;
+        first = false;
         hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
         if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
           ++curwin->w_topfill;
@@ -742,21 +742,21 @@ retnomove:
           curwin->w_topfill = 0;
         }
       }
-      check_topfill(curwin, FALSE);
+      check_topfill(curwin, false);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
       redraw_later(VALID);
       row = 0;
     } else if (row >= curwin->w_height)   {
       count = 0;
-      for (first = TRUE; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
+      for (first = true; curwin->w_topline < curbuf->b_ml.ml_line_count; ) {
         if (curwin->w_topfill > 0)
           ++count;
         else
           count += plines(curwin->w_topline);
         if (!first && count > row - curwin->w_height + 1)
           break;
-        first = FALSE;
+        first = false;
         if (hasFolding(curwin->w_topline, NULL, &curwin->w_topline)
             && curwin->w_topline == curbuf->b_ml.ml_line_count)
           break;
@@ -768,7 +768,7 @@ retnomove:
             diff_check_fill(curwin, curwin->w_topline);
         }
       }
-      check_topfill(curwin, FALSE);
+      check_topfill(curwin, false);
       redraw_later(VALID);
       curwin->w_valid &=
         ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
@@ -795,7 +795,7 @@ retnomove:
 
   /* compute the position in the buffer line from the posn on the screen */
   if (mouse_comp_pos(curwin, &row, &col, &curwin->w_cursor.lnum))
-    mouse_past_bottom = TRUE;
+    mouse_past_bottom = true;
 
   /* Start Visual mode before coladvance(), for when 'sel' != "old" */
   if ((flags & MOUSE_MAY_VIS) && !VIsual_active) {
@@ -815,7 +815,7 @@ retnomove:
   if (coladvance(col) == FAIL) {        /* Mouse click beyond end of line */
     if (inclusive != NULL)
       *inclusive = TRUE;
-    mouse_past_eol = TRUE;
+    mouse_past_eol = true;
   } else if (inclusive != NULL)
     *inclusive = FALSE;
 
@@ -837,12 +837,12 @@ retnomove:
  * window "win".
  * Returns TRUE if the position is below the last line.
  */
-int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
+bool mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
 {
   int col = *colp;
   int row = *rowp;
   linenr_T lnum;
-  int retval = FALSE;
+  bool retval = false;
   int off;
   int count;
 
@@ -867,7 +867,7 @@ int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
       break;            /* Position is in this buffer line. */
     (void)hasFoldingWin(win, lnum, NULL, &lnum, TRUE, NULL);
     if (lnum == win->w_buffer->b_ml.ml_line_count) {
-      retval = TRUE;
+      retval = true;
       break;                    /* past end of file */
     }
     row -= count;

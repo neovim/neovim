@@ -359,8 +359,8 @@ EXTERN buf_T *au_pending_free_buf INIT(= NULL);
  */
 EXTERN int mouse_row;
 EXTERN int mouse_col;
-EXTERN int mouse_past_bottom INIT(= FALSE);     /* mouse below last line */
-EXTERN int mouse_past_eol INIT(= FALSE);        /* mouse right of line */
+EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
+EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
 /*
@@ -720,7 +720,7 @@ EXTERN char_u   *exe_name;              /* the name of the executable */
 EXTERN int dont_scroll INIT(= FALSE);     /* don't use scrollbars when TRUE */
 #endif
 EXTERN int mapped_ctrl_c INIT(= FALSE);      /* CTRL-C is mapped */
-EXTERN int ctrl_c_interrupts INIT(= TRUE);      /* CTRL-C sets got_int */
+EXTERN bool ctrl_c_interrupts INIT(= true);  /* CTRL-C sets got_int */
 
 EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 

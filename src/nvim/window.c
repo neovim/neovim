@@ -892,7 +892,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   /*
    * make the new window the current window
    */
-  win_enter(wp, FALSE);
+  win_enter(wp, false);
   if (flags & WSP_VERT)
     p_wiw = i;
   else
@@ -1146,7 +1146,7 @@ static void win_exchange(long Prenum)
 
   (void)win_comp_pos();                 /* recompute window positions */
 
-  win_enter(wp, TRUE);
+  win_enter(wp, true);
   redraw_later(CLEAR);
 }
 
@@ -1302,7 +1302,7 @@ void win_move_after(win_T *win1, win_T *win2)
     (void)win_comp_pos();       /* recompute w_winrow for all windows */
     redraw_later(NOT_VALID);
   }
-  win_enter(win1, FALSE);
+  win_enter(win1, false);
 }
 
 /*
@@ -1876,7 +1876,7 @@ int win_close(win_T *win, int free_buf)
   else
     win_comp_pos();
   if (close_curwin) {
-    win_enter_ext(wp, FALSE, TRUE, TRUE, TRUE);
+    win_enter_ext(wp, false, TRUE, TRUE, TRUE);
     if (other_buffer)
       /* careful: after this wp and win may be invalid! */
       apply_autocmds(EVENT_BUFENTER, NULL, NULL, FALSE, curbuf);
@@ -3022,7 +3022,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   /* We would like doing the TabEnter event first, but we don't have a
    * valid current window yet, which may break some commands.
    * This triggers autocommands, thus may make "tp" invalid. */
-  win_enter_ext(tp->tp_curwin, FALSE, TRUE,
+  win_enter_ext(tp->tp_curwin, false, TRUE,
       trigger_enter_autocmds, trigger_leave_autocmds);
   prevwin = next_prevwin;
 
@@ -3143,7 +3143,7 @@ void goto_tabpage_win(tabpage_T *tp, win_T *wp)
 {
   goto_tabpage_tp(tp, TRUE, TRUE);
   if (curtab == tp && win_valid(wp)) {
-    win_enter(wp, TRUE);
+    win_enter(wp, true);
   }
 }
 
@@ -3210,7 +3210,7 @@ void win_goto(win_T *wp)
   else if (VIsual_active)
     wp->w_cursor = curwin->w_cursor;
 
-  win_enter(wp, TRUE);
+  win_enter(wp, true);
 
   /* Conceal cursor line in previous window, unconceal in current window. */
   if (win_valid(owp) && owp->w_p_cole > 0 && !msg_scrolled)
@@ -3357,7 +3357,7 @@ end:
 /*
  * Make window "wp" the current window.
  */
-void win_enter(win_T *wp, int undo_sync)
+void win_enter(win_T *wp, bool undo_sync)
 {
   win_enter_ext(wp, undo_sync, FALSE, TRUE, TRUE);
 }
@@ -3367,7 +3367,7 @@ void win_enter(win_T *wp, int undo_sync)
  * Can be called with "curwin_invalid" TRUE, which means that curwin has just
  * been closed and isn't valid.
  */
-static void win_enter_ext(win_T *wp, int undo_sync, int curwin_invalid, int trigger_enter_autocmds, int trigger_leave_autocmds)
+static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int trigger_enter_autocmds, int trigger_leave_autocmds)
 {
   int other_buffer = FALSE;
 
@@ -3471,7 +3471,7 @@ win_T *buf_jump_open_win(buf_T *buf)
     if (wp->w_buffer == buf)
       break;
   if (wp != NULL)
-    win_enter(wp, FALSE);
+    win_enter(wp, false);
   return wp;
 }
 

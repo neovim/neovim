@@ -4966,7 +4966,7 @@ buf_check_timestamp (
           if (emsg_silent == 0) {
             out_flush();
             /* give the user some time to think about it */
-            ui_delay(1000L, TRUE);
+            ui_delay(1000L, true);
 
             /* don't redraw and erase the message */
             redraw_cmdline = FALSE;

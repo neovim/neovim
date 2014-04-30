@@ -1762,7 +1762,7 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   invalidate_botline_win(towin);
   changed_line_abv_curs_win(towin);
 
-  check_topfill(towin, FALSE);
+  check_topfill(towin, false);
   (void)hasFoldingWin(towin, towin->w_topline, &towin->w_topline,
                       NULL, TRUE, NULL);
 }
