@@ -139,8 +139,7 @@ static void deadly_signal(int signum)
   snprintf((char *)IObuff, sizeof(IObuff), "Vim: Caught deadly signal '%s'\n",
       signal_name(signum));
 
-  // Preserve files and exit.  This sets the really_exiting flag to prevent
-  // calling free().
+  // Preserve files and exit.
   preserve_exit();
 }
 
