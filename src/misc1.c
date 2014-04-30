@@ -3373,11 +3373,14 @@ void preserve_exit(void)
 {
   buf_T       *buf;
 
-  prepare_to_exit();
+  // Prevent repeated calls into this method.
+  if (really_exiting) {
+    exit(2);
+  }
 
-  /* Setting this will prevent free() calls.  That avoids calling free()
-   * recursively when free() was invoked with a bad pointer. */
   really_exiting = TRUE;
+
+  prepare_to_exit();
 
   out_str(IObuff);
   screen_start();                   /* don't know where cursor is now */
