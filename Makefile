@@ -1,6 +1,6 @@
 -include local.mk
 
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=.deps/usr
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
