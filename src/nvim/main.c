@@ -1602,7 +1602,7 @@ static void check_tty(mparm_T *parmp)
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
     out_flush();
     if (scriptin[0] == NULL)
-      ui_delay(2000L, TRUE);
+      ui_delay(2000L, true);
     TIME_MSG("Warning delay");
   }
 }
@@ -1793,7 +1793,7 @@ static void edit_buffers(mparm_T *parmp)
       } else {
         if (curwin->w_next == NULL)             /* just checking */
           break;
-        win_enter(curwin->w_next, FALSE);
+        win_enter(curwin->w_next, false);
       }
     }
     advance = TRUE;
@@ -1847,7 +1847,7 @@ static void edit_buffers(mparm_T *parmp)
       break;
     }
   }
-  win_enter(win, FALSE);
+  win_enter(win, false);
 
   --autocmd_no_leave;
   TIME_MSG("editing files in windows");

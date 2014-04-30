@@ -1383,7 +1383,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
         if (wp->w_buffer != NULL && wp->w_buffer->b_help)
           break;
     if (wp != NULL && wp->w_buffer->b_nwindows > 0)
-      win_enter(wp, TRUE);
+      win_enter(wp, true);
     else {
       /*
        * Split off help window; put it at far top if no position

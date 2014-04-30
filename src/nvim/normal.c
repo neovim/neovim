@@ -992,8 +992,8 @@ getcount:
     cursor_on();
     out_flush();
     if (msg_scroll || emsg_on_display)
-      ui_delay(1000L, TRUE);            /* wait at least one second */
-    ui_delay(3000L, FALSE);             /* wait up to three seconds */
+      ui_delay(1000L, true);            /* wait at least one second */
+    ui_delay(3000L, false);             /* wait up to three seconds */
     State = save_State;
 
     msg_scroll = FALSE;
@@ -6709,7 +6709,7 @@ static void nv_bck_word(cmdarg_T *cap)
 static void nv_wordcmd(cmdarg_T *cap)
 {
   int n;
-  int word_end;
+  bool word_end;
   int flag = FALSE;
   pos_T startpos = curwin->w_cursor;
 
@@ -6717,9 +6717,9 @@ static void nv_wordcmd(cmdarg_T *cap)
    * Set inclusive for the "E" and "e" command.
    */
   if (cap->cmdchar == 'e' || cap->cmdchar == 'E')
-    word_end = TRUE;
+    word_end = true;
   else
-    word_end = FALSE;
+    word_end = false;
   cap->oap->inclusive = word_end;
 
   /*
@@ -6753,7 +6753,7 @@ static void nv_wordcmd(cmdarg_T *cap)
          * flag.
          */
         cap->oap->inclusive = TRUE;
-        word_end = TRUE;
+        word_end = true;
         flag = TRUE;
       }
     }

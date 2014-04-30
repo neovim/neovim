@@ -536,7 +536,7 @@ static int pum_set_selected(int n, int repeat)
       if ((p_pvh > 0) && (p_pvh < g_do_tagpreview)) {
         g_do_tagpreview = p_pvh;
       }
-      resized = prepare_tagpreview(FALSE);
+      resized = prepare_tagpreview(false);
       g_do_tagpreview = 0;
 
       if (curwin->w_p_pvw) {
@@ -612,7 +612,7 @@ static int pum_set_selected(int n, int repeat)
             // the window when needed, otherwise it will always be
             // redraw.
             if (resized) {
-              win_enter(curwin_save, TRUE);
+              win_enter(curwin_save, true);
               update_topline();
             }
 
@@ -623,7 +623,7 @@ static int pum_set_selected(int n, int repeat)
             pum_do_redraw = FALSE;
 
             if (!resized && win_valid(curwin_save)) {
-              win_enter(curwin_save, TRUE);
+              win_enter(curwin_save, true);
             }
 
             // May need to update the screen again when there are

@@ -986,7 +986,7 @@ scrolldown (
 
   if (curwin->w_cursor.lnum == curwin->w_topline)
     curwin->w_cline_row = 0;
-  check_topfill(curwin, TRUE);
+  check_topfill(curwin, true);
 
   /*
    * Compute the row number of the last row of the cursor line
@@ -1064,7 +1064,7 @@ scrollup (
   if (curwin->w_botline > curbuf->b_ml.ml_line_count + 1)
     curwin->w_botline = curbuf->b_ml.ml_line_count + 1;
 
-  check_topfill(curwin, FALSE);
+  check_topfill(curwin, false);
 
   if (hasAnyFolding(curwin))
     /* Make sure w_topline is at the first of a sequence of folded lines. */
@@ -1085,7 +1085,7 @@ scrollup (
 void 
 check_topfill (
     win_T *wp,
-    int down               /* when TRUE scroll down when not enough space */
+    bool down              /* when TRUE scroll down when not enough space */
 )
 {
   int n;
@@ -1161,7 +1161,7 @@ void scrolldown_clamp(void)
   if (end_row < curwin->w_height - p_so) {
     if (can_fill) {
       ++curwin->w_topfill;
-      check_topfill(curwin, TRUE);
+      check_topfill(curwin, true);
     } else {
       --curwin->w_topline;
       curwin->w_topfill = 0;
@@ -1395,7 +1395,7 @@ void scroll_cursor_top(int min_scroll, int always)
       if (curwin->w_topfill < 0)
         curwin->w_topfill = 0;
     }
-    check_topfill(curwin, FALSE);
+    check_topfill(curwin, false);
     if (curwin->w_topline != old_topline
         || curwin->w_topfill != old_topfill
         )
@@ -1658,7 +1658,7 @@ void scroll_cursor_halfway(int atend)
   curwin->w_topfill = topfill;
   if (old_topline > curwin->w_topline + curwin->w_height)
     curwin->w_botfill = FALSE;
-  check_topfill(curwin, FALSE);
+  check_topfill(curwin, false);
   curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
   curwin->w_valid |= VALID_TOPLINE;
 }
@@ -1829,7 +1829,7 @@ int onepage(int dir, long count)
         get_scroll_overlap(&loff, -1);
         curwin->w_topline = loff.lnum;
         curwin->w_topfill = loff.fill;
-        check_topfill(curwin, FALSE);
+        check_topfill(curwin, false);
         curwin->w_cursor.lnum = curwin->w_topline;
         curwin->w_valid &= ~(VALID_WCOL|VALID_CHEIGHT|VALID_WROW|
                              VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
@@ -1916,7 +1916,7 @@ int onepage(int dir, long count)
         } else {
           curwin->w_topline = loff.lnum;
           curwin->w_topfill = loff.fill;
-          check_topfill(curwin, FALSE);
+          check_topfill(curwin, false);
           curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE);
         }
       }
@@ -2011,7 +2011,7 @@ static void get_scroll_overlap(lineoff_T *lp, int dir)
 /*
  * Scroll 'scroll' lines up or down.
  */
-void halfpage(int flag, linenr_T Prenum)
+void halfpage(bool flag, linenr_T Prenum)
 {
   long scrolled = 0;
   int i;

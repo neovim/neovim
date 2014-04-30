@@ -1752,7 +1752,7 @@ static int has_compl_option(int dict_opt)
       vim_beep();
       setcursor();
       out_flush();
-      ui_delay(2000L, FALSE);
+      ui_delay(2000L, false);
     }
     return FALSE;
   }
