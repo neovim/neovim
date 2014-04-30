@@ -71,17 +71,10 @@ Error: configure did not run properly.Check auto/config.log.
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
-/* Make sure long_u is big enough to hold a pointer.
- * On Win64, longs are 32 bits and pointers are 64 bits.
- * For printf() and scanf(), we need to take care of long_u specifically. */
-/* Microsoft-specific. The __w64 keyword should be specified on any typedefs
- * that change size between 32-bit and 64-bit platforms.  For any such type,
- * __w64 should appear only on the 32-bit definition of the typedef.
- * Define __w64 as an empty token for everything but MSVC 7.x or later.
- */
-#  define __w64
-typedef unsigned long __w64 long_u;
-typedef          long __w64 long_i;
+// Make sure long_u is big enough to hold a pointer.
+// On Win64, longs are 32 bits and pointers are 64 bits.
+// For printf() and scanf(), we need to take care of long_u specifically.
+typedef unsigned long long_u;
 
 /*
  * The characters and attributes cached for the screen.

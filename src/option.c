@@ -2231,16 +2231,14 @@ set_option_default (
       if (options[opt_idx].indir == PV_SCROLL)
         win_comp_scroll(curwin);
       else {
-        *(long *)varp = (long)(long_i)options[opt_idx].def_val[dvi];
+        *(long *)varp = (long)options[opt_idx].def_val[dvi];
         /* May also set global value for local option. */
         if (both)
           *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
             *(long *)varp;
       }
     } else {  /* P_BOOL */
-      /* the cast to long is required for Manx C, long_i is needed for
-       * MSVC */
-      *(int *)varp = (int)(long)(long_i)options[opt_idx].def_val[dvi];
+      *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
 #ifdef UNIX
       /* 'modeline' defaults to off for root */
       if (options[opt_idx].indir == PV_ML && getuid() == ROOT_UID)
@@ -2312,7 +2310,7 @@ void set_number_default(char *name, long val)
 
   opt_idx = findoption((char_u *)name);
   if (opt_idx >= 0)
-    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)(long_i)val;
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *)val;
 }
 
 #if defined(EXITFREE) || defined(PROTO)
@@ -2554,13 +2552,13 @@ void set_title_defaults(void)
   idx1 = findoption((char_u *)"title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     val = mch_can_restore_title();
-    options[idx1].def_val[VI_DEFAULT] = (char_u *)(long_i)val;
+    options[idx1].def_val[VI_DEFAULT] = (char_u *)val;
     p_title = val;
   }
   idx1 = findoption((char_u *)"icon");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
     val = mch_can_restore_icon();
-    options[idx1].def_val[VI_DEFAULT] = (char_u *)(long_i)val;
+    options[idx1].def_val[VI_DEFAULT] = (char_u *)val;
     p_icon = val;
   }
 }
@@ -2853,7 +2851,7 @@ do_set (
           if (nextchar == '!')
             value = *(int *)(varp) ^ 1;
           else if (nextchar == '&')
-            value = (int)(long)(long_i)options[opt_idx].def_val[
+            value = (int)(intptr_t)options[opt_idx].def_val[
               ((flags & P_VI_DEF) || cp_val)
               ?  VI_DEFAULT : VIM_DEFAULT];
           else if (nextchar == '<') {
@@ -2900,7 +2898,7 @@ do_set (
              */
             ++arg;
             if (nextchar == '&')
-              value = (long)(long_i)options[opt_idx].def_val[
+              value = (long)options[opt_idx].def_val[
                 ((flags & P_VI_DEF) || cp_val)
                 ?  VI_DEFAULT : VIM_DEFAULT];
             else if (nextchar == '<') {
@@ -6189,11 +6187,9 @@ static int optval_default(struct vimoption *p, char_u *varp)
     return TRUE;            /* hidden option is always at default */
   dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
   if (p->flags & P_NUM)
-    return *(long *)varp == (long)(long_i)p->def_val[dvi];
+    return *(long *)varp == (long)p->def_val[dvi];
   if (p->flags & P_BOOL)
-    /* the cast to long is required for Manx C, long_i is
-     * needed for MSVC */
-    return *(int *)varp == (int)(long)(long_i)p->def_val[dvi];
+    return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   /* P_STRING */
   return STRCMP(*(char_u **)varp, p->def_val[dvi]) == 0;
 }
