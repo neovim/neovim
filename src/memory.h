@@ -127,12 +127,7 @@ char *xstpcpy(char *restrict dst, const char *restrict src);
 /// @param maxlen
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen);
 
-/// Old low level memory allocation function.
-///
-/// @deprecated use xmalloc() directly instead
-/// @param size
-/// @return pointer to allocated space. Never NULL
-char_u *lalloc(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
 void do_outofmem_msg(long_u size);
 void free_all_mem(void);
+
 #endif

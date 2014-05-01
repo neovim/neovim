@@ -46,11 +46,10 @@ static void try_to_free_memory();
 
 /*
  * Note: if unsigned is 16 bits we can only allocate up to 64K with alloc().
- * Use lalloc for larger blocks.
  */
 char_u *alloc(unsigned size)
 {
-  return lalloc((long_u)size, TRUE);
+  return xmalloc(size);
 }
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
@@ -215,11 +214,6 @@ char *xstrndup(const char *str, size_t len)
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 
-
-char_u *lalloc(long_u size, int message)
-{
-  return (char_u *)xmalloc((size_t)size);
-}
 
 /*
  * Avoid repeating the error message many times (they take 1 second each).
