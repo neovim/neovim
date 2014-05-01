@@ -397,7 +397,7 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
   if (type == ET_ERROR) {
     *should_free = FALSE;
     mesg = ((struct msglist *)value)->throw_msg;
-    if (cmdname != NULL && *cmdname != '\0') {
+    if (cmdname != NULL && *cmdname != NUL) {
       cmdlen = (int)STRLEN(cmdname);
       ret = vim_strnsave((char_u *)"Vim(",
           4 + cmdlen + 2 + (int)STRLEN(mesg));
@@ -417,7 +417,7 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
      * name in quotes.  In the exception value, put the file name in
      * parentheses and move it to the end. */
     for (p = mesg;; p++) {
-      if (*p == '\0'
+      if (*p == NUL
           || (*p == 'E'
               && VIM_ISDIGIT(p[1])
               && (p[2] == ':'
@@ -425,7 +425,7 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
                       && (p[3] == ':'
                           || (VIM_ISDIGIT(p[3])
                               && p[4] == ':')))))) {
-        if (*p == '\0' || p == mesg)
+        if (*p == NUL || p == mesg)
           STRCAT(val, mesg);            /* 'E123' missing or at beginning */
         else {
           /* '"filename" E123: message text' */
@@ -435,7 +435,7 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
             continue;
 
           STRCAT(val, p);
-          p[-2] = '\0';
+          p[-2] = NUL;
           sprintf((char *)(val + STRLEN(p)), " (%s)", &mesg[1]);
           p[-2] = '"';
         }
@@ -469,7 +469,7 @@ static int throw_exception(void *value, int type, char_u *cmdname)
    */
   if (type == ET_USER) {
     if (STRNCMP((char_u *)value, "Vim", 3) == 0
-        && (((char_u *)value)[3] == '\0' || ((char_u *)value)[3] == ':'
+        && (((char_u *)value)[3] == NUL || ((char_u *)value)[3] == ':'
             || ((char_u *)value)[3] == '(')) {
       EMSG(_("E608: Cannot :throw exceptions with 'Vim' prefix"));
       goto fail;
@@ -507,13 +507,13 @@ static int throw_exception(void *value, int type, char_u *cmdname)
     else
       verbose_enter();
     ++no_wait_return;
-    if (debug_break_level > 0 || *p_vfile == '\0')
+    if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
     smsg((char_u *)_("Exception thrown: %s"), excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
-    if (debug_break_level > 0 || *p_vfile == '\0')
+    if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
     --no_wait_return;
     if (debug_break_level > 0)
@@ -556,14 +556,14 @@ static void discard_exception(except_T *excp, int was_finished)
     else
       verbose_enter();
     ++no_wait_return;
-    if (debug_break_level > 0 || *p_vfile == '\0')
+    if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
     smsg(was_finished
         ? (char_u *)_("Exception finished: %s")
         : (char_u *)_("Exception discarded: %s"),
         excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
-    if (debug_break_level > 0 || *p_vfile == '\0')
+    if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
     --no_wait_return;
     if (debug_break_level > 0)
@@ -600,7 +600,7 @@ static void catch_exception(except_T *excp)
   excp->caught = caught_stack;
   caught_stack = excp;
   set_vim_var_string(VV_EXCEPTION, excp->value, -1);
-  if (*excp->throw_name != '\0') {
+  if (*excp->throw_name != NUL) {
     if (excp->throw_lnum != 0)
       vim_snprintf((char *)IObuff, IOSIZE, _("%s, line %" PRId64),
           excp->throw_name, (int64_t)excp->throw_lnum);
@@ -619,13 +619,13 @@ static void catch_exception(except_T *excp)
     else
       verbose_enter();
     ++no_wait_return;
-    if (debug_break_level > 0 || *p_vfile == '\0')
+    if (debug_break_level > 0 || *p_vfile == NUL)
       msg_scroll = TRUE;            /* always scroll up, don't overwrite */
 
     smsg((char_u *)_("Exception caught: %s"), excp->value);
     msg_puts((char_u *)"\n");       /* don't overwrite this either */
 
-    if (debug_break_level > 0 || *p_vfile == '\0')
+    if (debug_break_level > 0 || *p_vfile == NUL)
       cmdline_row = msg_row;
     --no_wait_return;
     if (debug_break_level > 0)
@@ -645,7 +645,7 @@ static void finish_exception(except_T *excp)
   caught_stack = caught_stack->caught;
   if (caught_stack != NULL) {
     set_vim_var_string(VV_EXCEPTION, caught_stack->value, -1);
-    if (*caught_stack->throw_name != '\0') {
+    if (*caught_stack->throw_name != NUL) {
       if (caught_stack->throw_lnum != 0)
         vim_snprintf((char *)IObuff, IOSIZE,
             _("%s, line %" PRId64), caught_stack->throw_name,
@@ -1173,7 +1173,7 @@ void ex_throw(exarg_T *eap)
   char_u      *arg = eap->arg;
   char_u      *value;
 
-  if (*arg != '\0' && *arg != '|' && *arg != '\n')
+  if (*arg != NUL && *arg != '|' && *arg != '\n')
     value = eval_to_string_skip(arg, &eap->nextcmd, eap->skip);
   else {
     EMSG(_(e_argreq));
@@ -1384,7 +1384,7 @@ void ex_catch(exarg_T *eap)
      */
     if (!skip && (cstack->cs_flags[idx] & CSF_THROWN)
         && !(cstack->cs_flags[idx] & CSF_CAUGHT)) {
-      if (end != NULL && *end != '\0' && !ends_excmd(*skipwhite(end + 1))) {
+      if (end != NULL && *end != NUL && !ends_excmd(*skipwhite(end + 1))) {
         EMSG(_(e_trailing));
         return;
       }
@@ -1401,7 +1401,7 @@ void ex_catch(exarg_T *eap)
          * while compiling it. */
         if (end != NULL) {
           save_char = *end;
-          *end = '\0';
+          *end = NUL;
         }
         save_cpo  = p_cpo;
         p_cpo = (char_u *)"";

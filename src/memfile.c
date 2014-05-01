@@ -540,7 +540,7 @@ int mf_sync(memfile_T *mfp, int flags)
   if (hp == NULL || status == FAIL)
     mfp->mf_dirty = FALSE;
 
-  if ((flags & MFS_FLUSH) && *p_sws != '\0') {
+  if ((flags & MFS_FLUSH) && *p_sws != NUL) {
 #if defined(UNIX)
 # ifdef HAVE_FSYNC
     if (STRCMP(p_sws, "fsync") == 0) {
@@ -838,7 +838,7 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
   }
 
   /* Decrypt if 'key' is set and this is a data block. */
-  if (*mfp->mf_buffer->b_p_key != '\0')
+  if (*mfp->mf_buffer->b_p_key != NUL)
     ml_decrypt_data(mfp, hp->bh_data, offset, size);
 
   return OK;
@@ -926,7 +926,7 @@ static int mf_write_block(memfile_T *mfp, bhdr_T *hp, off_t offset, unsigned siz
   int result = OK;
 
   /* Encrypt if 'key' is set and this is a data block. */
-  if (*mfp->mf_buffer->b_p_key != '\0') {
+  if (*mfp->mf_buffer->b_p_key != NUL) {
     data = ml_encrypt_data(mfp, data, offset, size);
   }
 

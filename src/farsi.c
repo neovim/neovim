@@ -952,7 +952,7 @@ int fkmap(int c)
                     || gchar_cursor() == F_DIVIDE
                     || gchar_cursor() == F_PERCENT
                     || gchar_cursor() == F_EQUALS))
-                && gchar_cursor() != '\0') {
+                && gchar_cursor() != NUL) {
           curwin->w_cursor.col++;
         }
       } else {
@@ -2413,7 +2413,7 @@ static void lrswapbuf(char_u *buf, int len)
 /// @return The buffer with the characters swapped.
 char_u* lrswap(char_u *ibuf)
 {
-  if ((ibuf != NULL) && (*ibuf != '\0')) {
+  if ((ibuf != NULL) && (*ibuf != NUL)) {
     lrswapbuf(ibuf, (int)STRLEN(ibuf));
   }
   return ibuf;

@@ -423,7 +423,7 @@ hash_T hash_hash(char_u *key)
 
   // A simplistic algorithm that appears to do very well.
   // Suggested by George Reilly.
-  while (*p != '\0') {
+  while (*p != NUL) {
     hash = hash * 101 + *p++;
   }
 

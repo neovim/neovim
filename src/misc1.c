@@ -104,13 +104,13 @@ open_line (
   || defined(FEAT_CINDENT) || defined(FEAT_COMMENTS)
   char_u      *p;
 #endif
-  int saved_char = '\0';                 /* init for GCC */
+  int saved_char = NUL;                 /* init for GCC */
   pos_T       *pos;
   int do_si = (!p_paste && curbuf->b_p_si
                && !curbuf->b_p_cin
                );
   int no_si = FALSE;                    /* reset did_si afterwards */
-  int first_char = '\0';                 /* init for GCC */
+  int first_char = NUL;                 /* init for GCC */
   int vreplace_mode;
   int did_append;                       /* appended a new line */
   int saved_pi = curbuf->b_p_pi;           /* copy of preserveindent setting */
@@ -146,16 +146,16 @@ open_line (
      * might be replaced at the start of the next line (due to autoindent
      * etc) a bit later.
      */
-    replace_push('\0');      /* Call twice because BS over NL expects it */
-    replace_push('\0');
+    replace_push(NUL);      /* Call twice because BS over NL expects it */
+    replace_push(NUL);
     p = saved_line + curwin->w_cursor.col;
-    while (*p != '\0') {
+    while (*p != NUL) {
       if (has_mbyte)
         p += replace_push_mb(p);
       else
         replace_push(*p++);
     }
-    saved_line[curwin->w_cursor.col] = '\0';
+    saved_line[curwin->w_cursor.col] = NUL;
   }
 
   if ((State & INSERT)
@@ -168,7 +168,7 @@ open_line (
     }
     extra_len = (int)STRLEN(p_extra);
     saved_char = *p_extra;
-    *p_extra = '\0';
+    *p_extra = NUL;
   }
 
   u_clearline();                /* cannot do "U" command when adding lines */
@@ -204,7 +204,7 @@ open_line (
      * don't add an indent. Fixes inserting a NL before '{' in line
      *	"if (condition) {"
      */
-    if (!trunc_line && do_si && *saved_line != '\0'
+    if (!trunc_line && do_si && *saved_line != NUL
         && (p_extra == NULL || first_char != '{')) {
       char_u  *ptr;
       char_u last_char;
@@ -252,7 +252,7 @@ open_line (
                  * the comment
                  */
                 curwin->w_cursor.col = (colnr_T)(p - ptr);
-                if ((pos = findmatch(NULL, '\0')) != NULL) {
+                if ((pos = findmatch(NULL, NUL)) != NULL) {
                   curwin->w_cursor.lnum = pos->lnum;
                   newindent = get_indent();
                 }
@@ -349,7 +349,7 @@ open_line (
    * Find out if the current line starts with a comment leader.
    * This may then be inserted in front of the new line.
    */
-  end_comment_pending = '\0';
+  end_comment_pending = NUL;
   if (flags & OPENLINE_DO_COM)
     lead_len = get_leader_len(saved_line, &lead_flags, dir == BACKWARD, TRUE);
   else
@@ -442,7 +442,7 @@ open_line (
               && ((p_extra != NULL
                    && (int)curwin->w_cursor.col == lead_len)
                   || (p_extra == NULL
-                      && saved_line[lead_len] == '\0')
+                      && saved_line[lead_len] == NUL)
                   || require_blank))
             extra_space = TRUE;
         }
@@ -517,7 +517,7 @@ open_line (
         int c = 0;
         int off = 0;
 
-        for (p = lead_flags; *p != '\0' && *p != ':'; ) {
+        for (p = lead_flags; *p != NUL && *p != ':'; ) {
           if (*p == COM_RIGHT || *p == COM_LEFT)
             c = *p++;
           else if (VIM_ISDIGIT(*p) || *p == '-')
@@ -553,7 +553,7 @@ open_line (
           }
           memmove(p, lead_repl, (size_t)lead_repl_len);
           if (p + lead_repl_len > leader + lead_len)
-            p[lead_repl_len] = '\0';
+            p[lead_repl_len] = NUL;
 
           /* blank-out any other chars from the old leader. */
           while (--p >= leader) {
@@ -583,7 +583,7 @@ open_line (
             int i;
             int l;
 
-            for (i = 0; p[i] != '\0' && i < lead_len; i += l) {
+            for (i = 0; p[i] != NUL && i < lead_len; i += l) {
               l = (*mb_ptr2len)(p + i);
               if (vim_strnsize(p, i + l) > repl_size)
                 break;
@@ -623,7 +623,7 @@ open_line (
                 *p = ' ';
               }
             }
-          *p = '\0';
+          *p = NUL;
         }
 
         /* Recompute the indent, it may have changed. */
@@ -654,12 +654,12 @@ open_line (
          * extra space */
         if (lead_len > 0 && vim_iswhite(leader[lead_len - 1]))
           extra_space = FALSE;
-        leader[lead_len] = '\0';
+        leader[lead_len] = NUL;
       }
 
       if (extra_space) {
         leader[lead_len++] = ' ';
-        leader[lead_len] = '\0';
+        leader[lead_len] = NUL;
       }
 
       newcol = lead_len;
@@ -692,7 +692,7 @@ open_line (
           )) {
         old_cursor = curwin->w_cursor;
         curwin->w_cursor.col = (colnr_T)(comment_end - saved_line);
-        if ((pos = findmatch(NULL, '\0')) != NULL) {
+        if ((pos = findmatch(NULL, NUL)) != NULL) {
           curwin->w_cursor.lnum = pos->lnum;
           newindent = get_indent();
         }
@@ -713,7 +713,7 @@ open_line (
      * preceded by a NUL, so they can be put back when a BS is entered.
      */
     if (REPLACE_NORMAL(State))
-      replace_push('\0');            /* end of extra blanks */
+      replace_push(NUL);            /* end of extra blanks */
     if (curbuf->b_p_ai || (flags & OPENLINE_DELSPACES)) {
       while ((*p_extra == ' ' || *p_extra == '\t')
              && (!enc_utf8
@@ -725,7 +725,7 @@ open_line (
         ++less_cols_off;
       }
     }
-    if (*p_extra != '\0')
+    if (*p_extra != NUL)
       did_ai = FALSE;               /* append some text, don't truncate now */
 
     /* columns for marks adjusted for removed columns */
@@ -756,7 +756,7 @@ open_line (
     did_ai = TRUE;          /* So truncating blanks works with comments */
     less_cols -= lead_len;
   } else
-    end_comment_pending = '\0';      /* turns out there was no leader */
+    end_comment_pending = NUL;      /* turns out there was no leader */
 
   old_cursor = curwin->w_cursor;
   if (dir == BACKWARD)
@@ -820,7 +820,7 @@ open_line (
      */
     if (REPLACE_NORMAL(State))
       for (n = 0; n < (int)curwin->w_cursor.col; ++n)
-        replace_push('\0');
+        replace_push(NUL);
     newcol += curwin->w_cursor.col;
     if (no_si)
       did_si = FALSE;
@@ -832,14 +832,14 @@ open_line (
    */
   if (REPLACE_NORMAL(State))
     while (lead_len-- > 0)
-      replace_push('\0');
+      replace_push(NUL);
 
   curwin->w_cursor = old_cursor;
 
   if (dir == FORWARD) {
     if (trunc_line || (State & INSERT)) {
       /* truncate current line at cursor */
-      saved_line[curwin->w_cursor.col] = '\0';
+      saved_line[curwin->w_cursor.col] = NUL;
       /* Remove trailing white space, unless OPENLINE_KEEPTRAIL used. */
       if (trunc_line && !(flags & OPENLINE_KEEPTRAIL))
         truncate_spaces(saved_line);
@@ -897,7 +897,7 @@ open_line (
    */
   if (!p_paste
       && (curbuf->b_p_cin
-          || *curbuf->b_p_inde != '\0'
+          || *curbuf->b_p_inde != NUL
           )
       && in_cinkeys(dir == FORWARD
           ? KEY_OPEN_FORW
@@ -970,7 +970,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
   /*
    * Repeat to match several nested comment strings.
    */
-  while (line[i] != '\0') {
+  while (line[i] != NUL) {
     /*
      * scan through the 'comments' option for a match
      */
@@ -985,7 +985,7 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
       string = vim_strchr(part_buf, ':');
       if (string == NULL)           /* missing ':', ignore this part */
         continue;
-      *string++ = '\0';              /* isolate flags from string */
+      *string++ = NUL;              /* isolate flags from string */
 
       /* If we found a middle match previously, use that match when this
        * is not a middle or end. */
@@ -1013,15 +1013,15 @@ int get_leader_len(char_u *line, char_u **flags, int backward, int include_space
         while (vim_iswhite(string[0]))
           ++string;
       }
-      for (j = 0; string[j] != '\0' && string[j] == line[i + j]; ++j)
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
         ;
-      if (string[j] != '\0')
+      if (string[j] != NUL)
         continue;          /* string doesn't match */
 
       /* When 'b' flag used, there must be white space or an
        * end-of-line after the string in the line. */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !vim_iswhite(line[i + j]) && line[i + j] != '\0')
+          && !vim_iswhite(line[i + j]) && line[i + j] != NUL)
         continue;
 
       /* We have found a match, stop searching unless this is a middle
@@ -1118,7 +1118,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
                                  * happen. */
         continue;
       }
-      *string++ = '\0';          /* Isolate flags from string. */
+      *string++ = NUL;          /* Isolate flags from string. */
       com_leader = string;
 
       /*
@@ -1133,9 +1133,9 @@ int get_last_leader_offset(char_u *line, char_u **flags)
         while (vim_iswhite(string[0]))
           ++string;
       }
-      for (j = 0; string[j] != '\0' && string[j] == line[i + j]; ++j)
+      for (j = 0; string[j] != NUL && string[j] == line[i + j]; ++j)
         /* do nothing */;
-      if (string[j] != '\0')
+      if (string[j] != NUL)
         continue;
 
       /*
@@ -1143,7 +1143,7 @@ int get_last_leader_offset(char_u *line, char_u **flags)
        * end-of-line after the string in the line.
        */
       if (vim_strchr(part_buf, COM_BLANK) != NULL
-          && !vim_iswhite(line[i + j]) && line[i + j] != '\0') {
+          && !vim_iswhite(line[i + j]) && line[i + j] != NUL) {
         continue;
       }
 
@@ -1273,7 +1273,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
-  if (*s == '\0')                /* empty line */
+  if (*s == NUL)                /* empty line */
     return 1;
   col = win_linetabsize(wp, s, (colnr_T)MAXCOL);
 
@@ -1281,7 +1281,7 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
    * If list mode is on, then the '$' at the end of the line may take up one
    * extra column.
    */
-  if (wp->w_p_list && lcs_eol != '\0')
+  if (wp->w_p_list && lcs_eol != NUL)
     col += 1;
 
   /*
@@ -1321,7 +1321,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
 
   col = 0;
-  while (*s != '\0' && --column >= 0) {
+  while (*s != NUL && --column >= 0) {
     col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL);
     mb_ptr_adv(s);
   }
@@ -1478,7 +1478,7 @@ void ins_char_bytes(char_u *buf, int charlen)
        */
       getvcol(curwin, &curwin->w_cursor, NULL, &vcol, NULL);
       new_vcol = vcol + chartabsize(buf, vcol);
-      while (oldp[col + oldlen] != '\0' && vcol < new_vcol) {
+      while (oldp[col + oldlen] != NUL && vcol < new_vcol) {
         vcol += chartabsize(oldp + col + oldlen, vcol);
         /* Don't need to remove a TAB that takes us to the right
          * position. */
@@ -1490,7 +1490,7 @@ void ins_char_bytes(char_u *buf, int charlen)
           newlen += vcol - new_vcol;
       }
       curwin->w_p_list = old_list;
-    } else if (oldp[col] != '\0')  {
+    } else if (oldp[col] != NUL)  {
       /* normal replace */
       oldlen = (*mb_ptr2len)(oldp + col);
     }
@@ -1500,7 +1500,7 @@ void ins_char_bytes(char_u *buf, int charlen)
      * put back when BS is used.  The bytes of a multi-byte character are
      * done the other way around, so that the first byte is popped off
      * first (it tells the byte length of the character). */
-    replace_push('\0');
+    replace_push(NUL);
     for (i = 0; i < oldlen; ++i) {
       if (has_mbyte)
         i += replace_push_mb(oldp + col + i) - 1;
@@ -1599,7 +1599,7 @@ int del_char(int fixpos)
   if (has_mbyte) {
     /* Make sure the cursor is at the start of a character. */
     mb_adjust_cursor();
-    if (*ml_get_cursor() == '\0')
+    if (*ml_get_cursor() == NUL)
       return FAIL;
     return del_chars(1L, fixpos);
   }
@@ -1617,7 +1617,7 @@ int del_chars(long count, int fixpos)
   int l;
 
   p = ml_get_cursor();
-  for (i = 0; i < count && *p != '\0'; ++i) {
+  for (i = 0; i < count && *p != NUL; ++i) {
     l = (*mb_ptr2len)(p);
     bytes += l;
     p += l;
@@ -1664,7 +1664,7 @@ del_bytes (
     int n;
 
     (void)utfc_ptr2char(oldp + col, cc);
-    if (cc[0] != '\0') {
+    if (cc[0] != NUL) {
       /* Find the last composing char, there can be several. */
       n = col;
       do {
@@ -2461,7 +2461,7 @@ int get_keystroke(void)
     if (has_mbyte) {
       if (MB_BYTE2LEN(n) > len)
         continue;               /* more bytes to get */
-      buf[len >= buflen ? buflen - 1 : len] = '\0';
+      buf[len >= buflen ? buflen - 1 : len] = NUL;
       n = (*mb_ptr2char)(buf);
     }
 #ifdef UNIX
@@ -2672,7 +2672,7 @@ void init_homedir(void)
 
   var = (char_u *)os_getenv("HOME");
 
-  if (var != NULL && *var == '\0')       /* empty is same as not set */
+  if (var != NULL && *var == NUL)       /* empty is same as not set */
     var = NULL;
 
 
@@ -2795,7 +2795,7 @@ expand_env_esc (
         } else
 #endif
         {
-          while (c-- > 0 && *tail != '\0' && ((vim_isIDc(*tail))
+          while (c-- > 0 && *tail != NUL && ((vim_isIDc(*tail))
                                              )) {
             *var++ = *tail++;
           }
@@ -2816,14 +2816,14 @@ expand_env_esc (
 #endif
             ++tail;
 #endif
-        *var = '\0';
+        *var = NUL;
         var = vim_getenv(dst, &mustfree);
 #if defined(MSWIN) || defined(UNIX)
       }
 #endif
       }
       /* home directory */
-      else if (  src[1] == '\0'
+      else if (  src[1] == NUL
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
         var = homedir;
@@ -2841,7 +2841,7 @@ expand_env_esc (
                    && vim_isfilec(*tail)
                    && !vim_ispathsep(*tail))
           *var++ = *tail++;
-        *var = '\0';
+        *var = NUL;
         /*
          * Use os_get_user_directory() to get the user directory.
          * If this function fails, the shell is used to
@@ -2896,14 +2896,14 @@ expand_env_esc (
         }
       }
 
-      if (var != NULL && *var != '\0'
+      if (var != NULL && *var != NUL
           && (STRLEN(var) + STRLEN(tail) + 1 < (unsigned)dstlen)) {
         STRCPY(dst, var);
         dstlen -= (int)STRLEN(var);
         c = (int)STRLEN(var);
         /* if var[] ends in a path separator and tail[] starts
          * with it, skip a character */
-        if (*var != '\0' && after_pathsep(dst, dst + c)
+        if (*var != NUL && after_pathsep(dst, dst + c)
 #if defined(BACKSLASH_IN_FILENAME)
             && dst[-1] != ':'
 #endif
@@ -2924,7 +2924,7 @@ expand_env_esc (
        * ":edit foo ~ foo".
        */
       at_start = FALSE;
-      if (src[0] == '\\' && src[1] != '\0') {
+      if (src[0] == '\\' && src[1] != NUL) {
         *dst++ = *src++;
         --dstlen;
       } else if ((src[0] == ' ' || src[0] == ',') && !one)
@@ -2937,7 +2937,7 @@ expand_env_esc (
         at_start = TRUE;
     }
   }
-  *dst = '\0';
+  *dst = NUL;
 }
 
 /*
@@ -2955,7 +2955,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
 
 
   p = (char_u *)os_getenv((char *)name);
-  if (p != NULL && *p == '\0')       /* empty is the same as not set */
+  if (p != NULL && *p == NUL)       /* empty is the same as not set */
     p = NULL;
 
   if (p != NULL) {
@@ -2972,11 +2972,11 @@ char_u *vim_getenv(char_u *name, int *mustfree)
    */
   if (vimruntime
 #ifdef HAVE_PATHDEF
-      && *default_vimruntime_dir == '\0'
+      && *default_vimruntime_dir == NUL
 #endif
       ) {
     p = (char_u *)os_getenv("VIM");
-    if (p != NULL && *p == '\0')             /* empty is the same as not set */
+    if (p != NULL && *p == NUL)             /* empty is the same as not set */
       p = NULL;
     if (p != NULL) {
       p = vim_version_dir(p);
@@ -3053,10 +3053,10 @@ char_u *vim_getenv(char_u *name, int *mustfree)
    * default_vimruntime_dir */
   if (p == NULL) {
     /* Only use default_vimruntime_dir when it is not empty */
-    if (vimruntime && *default_vimruntime_dir != '\0') {
+    if (vimruntime && *default_vimruntime_dir != NUL) {
       p = default_vimruntime_dir;
       *mustfree = FALSE;
-    } else if (*default_vim_dir != '\0') {
+    } else if (*default_vim_dir != NUL) {
       if (vimruntime && (p = vim_version_dir(default_vim_dir)) != NULL)
         *mustfree = TRUE;
       else {
@@ -3091,7 +3091,7 @@ static char_u *vim_version_dir(char_u *vimdir)
 {
   char_u      *p;
 
-  if (vimdir == NULL || *vimdir == '\0')
+  if (vimdir == NULL || *vimdir == NUL)
     return NULL;
   p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
   if (os_isdir(p))
@@ -3130,7 +3130,7 @@ void vim_setenv(char_u *name, char_u *val)
    * When setting $VIMRUNTIME adjust the directory to find message
    * translations to $VIMRUNTIME/lang.
    */
-  if (*val != '\0' && STRICMP(name, "VIMRUNTIME") == 0) {
+  if (*val != NUL && STRICMP(name, "VIMRUNTIME") == 0) {
     char_u  *buf = concat_str(val, (char_u *)"/lang");
     bindtextdomain(VIMPACKAGE, (char *)buf);
     vim_free(buf);
@@ -3227,7 +3227,7 @@ home_replace (
   char_u      *p;
 
   if (src == NULL) {
-    *dst = '\0';
+    *dst = NUL;
     return;
   }
 
@@ -3248,7 +3248,7 @@ home_replace (
 
   homedir_env_orig = homedir_env = (char_u *)os_getenv("HOME");
   /* Empty is the same as not set. */
-  if (homedir_env != NULL && *homedir_env == '\0')
+  if (homedir_env != NULL && *homedir_env == NUL)
     homedir_env = NULL;
 
   if (homedir_env != NULL && vim_strchr(homedir_env, '~') != NULL) {
@@ -3262,7 +3262,7 @@ home_replace (
     flen = (int)STRLEN(homedir_env);
     if (flen > 0 && vim_ispathsep(homedir_env[flen - 1]))
       /* Remove the trailing / that is added to a directory. */
-      homedir_env[flen - 1] = '\0';
+      homedir_env[flen - 1] = NUL;
   }
 
   if (homedir_env != NULL)
@@ -3287,7 +3287,7 @@ home_replace (
              && fnamencmp(src, p, len) == 0
              && (vim_ispathsep(src[len])
                  || (!one && (src[len] == ',' || src[len] == ' '))
-                 || src[len] == '\0')) {
+                 || src[len] == NUL)) {
         src += len;
         if (--dstlen > 0)
           *dst++ = '~';
@@ -3314,7 +3314,7 @@ home_replace (
   }
   /* if (dstlen == 0) out of space, what to do??? */
 
-  *dst = '\0';
+  *dst = NUL;
 
   if (homedir_env != homedir_env_orig)
     vim_free(homedir_env);
@@ -3510,10 +3510,10 @@ get_cmd_output (
   } else {
     /* Change NUL into SOH, otherwise the string is truncated. */
     for (i = 0; i < len; ++i)
-      if (buffer[i] == '\0')
+      if (buffer[i] == NUL)
         buffer[i] = 1;
 
-    buffer[len] = '\0';          /* make sure the buffer is terminated */
+    buffer[len] = NUL;          /* make sure the buffer is terminated */
   }
 
 done:

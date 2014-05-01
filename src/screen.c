@@ -620,7 +620,7 @@ int conceal_cursor_line(win_T *wp)
 {
   int c;
 
-  if (*wp->w_p_cocu == '\0')
+  if (*wp->w_p_cocu == NUL)
     return FALSE;
   if (get_real_state() & VISUAL)
     c = 'v';
@@ -1974,7 +1974,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       idx = off + col;
 
     /* Store multibyte characters in ScreenLines[] et al. correctly. */
-    for (p = text; *p != '\0'; ) {
+    for (p = text; *p != NUL; ) {
       cells = (*mb_ptr2cells)(p);
       c_len = (*mb_ptr2len)(p);
       if (col + cells > W_WIDTH(wp)
@@ -2235,7 +2235,7 @@ win_line (
   char_u extra[18];                     /* line number and 'fdc' must fit in here */
   int n_extra = 0;                      /* number of extra chars */
   char_u      *p_extra = NULL;          /* string of extra chars, plus NUL */
-  int c_extra = '\0';                    /* extra chars, all the same */
+  int c_extra = NUL;                    /* extra chars, all the same */
   int extra_attr = 0;                   /* attributes when n_extra != 0 */
   static char_u *at_end_str = (char_u *)"";   /* used for p_extra when
                                                  displaying lcs_eol at end-of-line */
@@ -2383,7 +2383,7 @@ win_line (
     draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
 
   if (wp->w_p_spell
-      && *wp->w_s->b_p_spl != '\0'
+      && *wp->w_s->b_p_spl != NUL
       && wp->w_s->b_langp.ga_len > 0
       && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
     /* Prepare for spell checking. */
@@ -2393,7 +2393,7 @@ win_line (
     /* Get the start of the next line, so that words that wrap to the next
      * line are found too: "et<line-break>al.".
      * Trick: skip a few chars for C/shell/Vim comments */
-    nextline[SPWORDLEN] = '\0';
+    nextline[SPWORDLEN] = NUL;
     if (lnum < wp->w_buffer->b_ml.ml_line_count) {
       line = ml_get_buf(wp->w_buffer, lnum + 1, FALSE);
       spell_cat_line(nextline + SPWORDLEN, line, SPWORDLEN);
@@ -2443,7 +2443,7 @@ win_line (
           fromcol = 0;
         else {
           getvvcol(wp, top, (colnr_T *)&fromcol, NULL, NULL);
-          if (gchar_pos(top) == '\0')
+          if (gchar_pos(top) == NUL)
             tocol = fromcol + 1;
         }
       }
@@ -2545,7 +2545,7 @@ win_line (
     /* To be able to spell-check over line boundaries copy the end of the
      * current line into nextline[].  Above the start of the next line was
      * copied to nextline[SPWORDLEN]. */
-    if (nextline[SPWORDLEN] == '\0') {
+    if (nextline[SPWORDLEN] == NUL) {
       /* No next line or it is empty. */
       nextlinecol = MAXCOL;
       nextline_idx = 0;
@@ -2586,7 +2586,7 @@ win_line (
     v = wp->w_leftcol;
   if (v > 0) {
     char_u  *prev_ptr = ptr;
-    while (vcol < v && *ptr != '\0') {
+    while (vcol < v && *ptr != NUL) {
       c = win_lbr_chartabsize(wp, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
@@ -2723,7 +2723,7 @@ win_line (
           shl->endcol = MAXCOL;
         /* Highlight one character for an empty match. */
         if (shl->startcol == shl->endcol) {
-          if (has_mbyte && line[shl->endcol] != '\0')
+          if (has_mbyte && line[shl->endcol] != NUL)
             shl->endcol += (*mb_ptr2len)(line + shl->endcol);
           else
             ++shl->endcol;
@@ -2781,8 +2781,8 @@ win_line (
           fill_foldcolumn(extra, wp, FALSE, lnum);
           n_extra = wp->w_p_fdc;
           p_extra = extra;
-          p_extra[n_extra] = '\0';
-          c_extra = '\0';
+          p_extra[n_extra] = NUL;
+          c_extra = NUL;
           char_attr = hl_attr(HLF_FC);
         }
       }
@@ -2804,7 +2804,7 @@ win_line (
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
                       if (p_extra != NULL) {
-                          c_extra = '\0';
+                          c_extra = NUL;
                           n_extra = (int)STRLEN(p_extra);
                       }
                       char_attr = sign_get_attr(text_sign, FALSE);
@@ -2849,7 +2849,7 @@ win_line (
             if (wp->w_p_rl)                         /* reverse line numbers */
               rl_mirror(extra);
             p_extra = extra;
-            c_extra = '\0';
+            c_extra = NUL;
           } else
             c_extra = ' ';
           n_extra = number_width(wp) + 1;
@@ -2878,10 +2878,10 @@ win_line (
             n_extra = W_WIDTH(wp) - col;
           char_attr = hl_attr(HLF_DED);
         }
-        if (*p_sbr != '\0' && need_showbreak) {
+        if (*p_sbr != NUL && need_showbreak) {
           /* Draw 'showbreak' at the start of each broken line. */
           p_extra = p_sbr;
-          c_extra = '\0';
+          c_extra = NUL;
           n_extra = (int)STRLEN(p_sbr);
           char_attr = hl_attr(HLF_AT);
           need_showbreak = FALSE;
@@ -3068,7 +3068,7 @@ win_line (
      * For the '$' of the 'list' option, n_extra == 1, p_extra == "".
      */
     if (n_extra > 0) {
-      if (c_extra != '\0') {
+      if (c_extra != NUL) {
         c = c_extra;
         mb_c = c;               /* doesn't handle non-utf-8 multi-byte! */
         if (enc_utf8 && (*mb_char2len)(c) > 1) {
@@ -3191,7 +3191,7 @@ win_line (
             mb_c = mb_ptr2char_adv(&p_extra);
             mb_utf8 = (c >= 0x80);
             n_extra = (int)STRLEN(p_extra);
-            c_extra = '\0';
+            c_extra = NUL;
             if (area_attr == 0 && search_attr == 0) {
               n_attr = n_extra + 1;
               extra_attr = hl_attr(HLF_8);
@@ -3232,7 +3232,7 @@ win_line (
             if (ptr[1] >= 32)
               mb_c = (c << 8) + ptr[1];
             else {
-              if (ptr[1] == '\0') {
+              if (ptr[1] == NUL) {
                 /* head byte at end of line */
                 mb_l = 1;
                 transchar_nonprint(extra, c);
@@ -3243,7 +3243,7 @@ win_line (
               }
               p_extra = extra;
               n_extra = (int)STRLEN(extra) - 1;
-              c_extra = '\0';
+              c_extra = NUL;
               c = *p_extra++;
               if (area_attr == 0 && search_attr == 0) {
                 n_attr = n_extra + 1;
@@ -3269,7 +3269,7 @@ win_line (
           /* Put pointer back so that the character will be
            * displayed at the start of the next line. */
           --ptr;
-        } else if (*ptr != '\0')
+        } else if (*ptr != NUL)
           ptr += mb_l - 1;
 
         /* If a double-width char doesn't fit at the left side display
@@ -3344,7 +3344,7 @@ win_line (
             char_attr = hl_combine_attr(syntax_attr, char_attr);
           /* no concealing past the end of the line, it interferes
            * with line highlighting */
-          if (c == '\0')
+          if (c == NUL)
             syntax_flags = 0;
           else
             syntax_flags = get_syntax_info(&syntax_seqnr);
@@ -3496,7 +3496,7 @@ win_line (
             c_extra = ' ';
             c = ' ';
           }
-        } else if (c == '\0'
+        } else if (c == NUL
                    && ((wp->w_p_list && lcs_eol > 0)
                        || ((fromcol >= 0 || fromcol_prev >= 0)
                            && tocol > vcol
@@ -3529,7 +3529,7 @@ win_line (
             else {
               p_extra = at_end_str;
               n_extra = 1;
-              c_extra = '\0';
+              c_extra = NUL;
             }
           }
           if (wp->w_p_list)
@@ -3549,12 +3549,12 @@ win_line (
             c = 0xc0;
           } else
             mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
-        } else if (c != '\0') {
+        } else if (c != NUL) {
           p_extra = transchar(c);
           if ((dy_flags & DY_UHEX) && wp->w_p_rl)
             rl_mirror(p_extra);                 /* reverse "<12>" */
           n_extra = byte2cells(c) - 1;
-          c_extra = '\0';
+          c_extra = NUL;
           c = *p_extra++;
           if (!attr_pri) {
             n_attr = n_extra + 1;
@@ -3610,13 +3610,13 @@ win_line (
                   && vim_strchr(wp->w_p_cocu, 'v') == NULL)) {
         char_attr = conceal_attr;
         if (prev_syntax_id != syntax_seqnr
-            && (syn_get_sub_char() != '\0' || wp->w_p_cole == 1)
+            && (syn_get_sub_char() != NUL || wp->w_p_cole == 1)
             && wp->w_p_cole != 3) {
           /* First time at this concealed item: display one
            * character. */
-          if (syn_get_sub_char() != '\0')
+          if (syn_get_sub_char() != NUL)
             c = syn_get_sub_char();
-          else if (lcs_conceal != '\0')
+          else if (lcs_conceal != NUL)
             c = lcs_conceal;
           else
             c = ' ';
@@ -3676,13 +3676,13 @@ win_line (
      * character of the line and the user wants us to show us a
      * special character (via 'listchars' option "precedes:<char>".
      */
-    if (lcs_prec_todo != '\0'
+    if (lcs_prec_todo != NUL
         && (wp->w_p_wrap ? wp->w_skipcol > 0 : wp->w_leftcol > 0)
         && filler_todo <= 0
         && draw_state > WL_NR
-        && c != '\0') {
+        && c != NUL) {
       c = lcs_prec;
-      lcs_prec_todo = '\0';
+      lcs_prec_todo = NUL;
       if (has_mbyte && (*mb_char2cells)(mb_c) > 1) {
         /* Double-width character being overwritten by the "precedes"
          * character, need to fill up half the character. */
@@ -3708,12 +3708,12 @@ win_line (
     /*
      * At end of the text line or just after the last character.
      */
-    if (c == '\0'
+    if (c == NUL
 #if defined(LINE_ATTR)
         || did_line_attr == 1
 #endif
         ) {
-      long prevcol = (long)(ptr - line) - (c == '\0');
+      long prevcol = (long)(ptr - line) - (c == NUL);
 
       /* we're not really at that column when skipping some text */
       if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
@@ -3741,7 +3741,7 @@ win_line (
                && (VIsual_mode != Ctrl_V
                    || lnum == VIsual.lnum
                    || lnum == curwin->w_cursor.lnum)
-               && c == '\0')
+               && c == NUL)
               /* highlight 'hlsearch' match at end of line */
               || (prevcol_hl_flag == TRUE
 # if defined(LINE_ATTR)
@@ -3806,7 +3806,7 @@ win_line (
     /*
      * At end of the text line.
      */
-    if (c == '\0') {
+    if (c == NUL) {
       if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
           && lnum == wp->w_cursor.lnum) {
         /* highlight last char after line */
@@ -3899,9 +3899,9 @@ win_line (
         && (
           wp->w_p_rl ? col == 0 :
           col == W_WIDTH(wp) - 1)
-        && (*ptr != '\0'
+        && (*ptr != NUL
             || (wp->w_p_list && lcs_eol_one > 0)
-            || (n_extra && (c_extra != '\0' || *p_extra != '\0')))) {
+            || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
       c = lcs_ext;
       char_attr = hl_attr(HLF_AT);
       mb_c = c;
@@ -4088,10 +4088,10 @@ win_line (
     if ((
           wp->w_p_rl ? (col < 0) :
           (col >= W_WIDTH(wp)))
-        && (*ptr != '\0'
+        && (*ptr != NUL
             || filler_todo > 0
-            || (wp->w_p_list && lcs_eol != '\0' && p_extra != at_end_str)
-            || (n_extra != 0 && (c_extra != '\0' || *p_extra != '\0')))
+            || (wp->w_p_list && lcs_eol != NUL && p_extra != at_end_str)
+            || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
       SCREEN_LINE(screen_row, W_WINCOL(wp), col - boguscols,
           (int)W_WIDTH(wp), wp->w_p_rl);
@@ -4200,7 +4200,7 @@ win_line (
   }     /* for every character in the line */
 
   /* After an empty line check first word for capital. */
-  if (*skipwhite(line) == '\0') {
+  if (*skipwhite(line) == NUL) {
     capcol_lnum = lnum + 1;
     cap_col = 0;
   }
@@ -4629,7 +4629,7 @@ static int status_match_len(expand_T *xp, char_u *s)
   if (emenu && menu_is_separator(s))
     return 1;
 
-  while (*s != '\0') {
+  while (*s != NUL) {
     s += skip_status_match_char(xp, s);
     len += ptr2cells(s);
     mb_ptr_adv(s);
@@ -4647,7 +4647,7 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
   if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
       || ((xp->xp_context == EXPAND_MENUS
            || xp->xp_context == EXPAND_MENUNAMES)
-          && (s[0] == '\t' || (s[0] == '\\' && s[1] != '\0')))
+          && (s[0] == '\t' || (s[0] == '\\' && s[1] != NUL)))
       ) {
 #ifndef BACKSLASH_IN_FILENAME
     if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!')
@@ -4743,7 +4743,7 @@ win_redr_status_matches (
   fillchar = fillchar_status(&attr, TRUE);
 
   if (first_match == 0) {
-    *buf = '\0';
+    *buf = NUL;
     len = 0;
   } else {
     STRCPY(buf, "< ");
@@ -4768,7 +4768,7 @@ win_redr_status_matches (
       len += l;
       clen += l;
     } else
-      for (; *s != '\0'; ++s) {
+      for (; *s != NUL; ++s) {
         s += skip_status_match_char(xp, s);
         clen += ptr2cells(s);
         if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1) {
@@ -4795,7 +4795,7 @@ win_redr_status_matches (
     ++clen;
   }
 
-  buf[len] = '\0';
+  buf[len] = NUL;
 
   row = cmdline_row - 1;
   if (row >= 0) {
@@ -4828,7 +4828,7 @@ win_redr_status_matches (
 
     screen_puts(buf, row, 0, attr);
     if (selstart != NULL && highlight) {
-      *selend = '\0';
+      *selend = NUL;
       screen_puts(selstart, row, selstart_col, hl_attr(HLF_WM));
     }
 
@@ -4871,7 +4871,7 @@ void win_redr_status(win_T *wp)
              ) {
     /* Don't redraw right now, do it later. */
     wp->w_redr_status = TRUE;
-  } else if (*p_stl != '\0' || *wp->w_p_stl != '\0') {
+  } else if (*p_stl != NUL || *wp->w_p_stl != NUL) {
     /* redraw custom status line */
     redraw_custom_statusline(wp);
   } else {
@@ -4917,7 +4917,7 @@ void win_redr_status(win_T *wp)
 
       /* Find first character that will fit.
        * Going from start to end is much faster for DBCS. */
-      for (i = 0; p[i] != '\0' && clen >= this_ru_col - 1;
+      for (i = 0; p[i] != NUL && clen >= this_ru_col - 1;
            i += (*mb_ptr2len)(p + i))
         clen -= (*mb_ptr2cells)(p + i);
       len = clen;
@@ -4982,7 +4982,7 @@ static void redraw_custom_statusline(win_T *wp)
      * display is messed up with errors and a redraw triggers the problem
      * again and again. */
     set_string_option_direct((char_u *)"statusline", -1,
-        (char_u *)"", OPT_FREE | (*wp->w_p_stl != '\0'
+        (char_u *)"", OPT_FREE | (*wp->w_p_stl != NUL
                                   ? OPT_LOCAL : OPT_GLOBAL), SID_ERROR);
   }
   called_emsg |= save_called_emsg;
@@ -5041,7 +5041,7 @@ get_keymap_str (
     --emsg_skip;
     curbuf = old_curbuf;
     curwin = old_curwin;
-    if (p == NULL || *p == '\0') {
+    if (p == NULL || *p == NUL) {
       if (wp->w_buffer->b_kmap_state & KEYMAP_LOADED)
         p = wp->w_buffer->b_p_keymap;
       else
@@ -5050,10 +5050,10 @@ get_keymap_str (
     if ((int)(STRLEN(p) + 3) < len)
       sprintf((char *)buf, "<%s>", p);
     else
-      buf[0] = '\0';
+      buf[0] = NUL;
     vim_free(s);
   }
-  return buf[0] != '\0';
+  return buf[0] != NUL;
 }
 
 /*
@@ -5131,12 +5131,12 @@ win_redr_custom (
 
       use_sandbox = was_set_insecurely((char_u *)"rulerformat", 0);
     } else {
-      if (*wp->w_p_stl != '\0')
+      if (*wp->w_p_stl != NUL)
         stl = wp->w_p_stl;
       else
         stl = p_stl;
       use_sandbox = was_set_insecurely((char_u *)"statusline",
-          *wp->w_p_stl == '\0' ? 0 : OPT_LOCAL);
+          *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
     col += W_WINCOL(wp);
@@ -5171,7 +5171,7 @@ win_redr_custom (
     len += (*mb_char2bytes)(fillchar, buf + len);
     ++width;
   }
-  buf[len] = '\0';
+  buf[len] = NUL;
 
   /*
    * Draw each snippet with the specified highlighting.
@@ -5225,10 +5225,10 @@ void screen_putchar(int c, int row, int col, int attr)
   char_u buf[MB_MAXBYTES + 1];
 
   if (has_mbyte)
-    buf[(*mb_char2bytes)(c, buf)] = '\0';
+    buf[(*mb_char2bytes)(c, buf)] = NUL;
   else {
     buf[0] = c;
-    buf[1] = '\0';
+    buf[1] = NUL;
   }
   screen_puts(buf, row, col, attr);
 }
@@ -5246,17 +5246,17 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
     off = LineOffset[row] + col;
     *attrp = ScreenAttrs[off];
     bytes[0] = ScreenLines[off];
-    bytes[1] = '\0';
+    bytes[1] = NUL;
 
     if (enc_utf8 && ScreenLinesUC[off] != 0)
-      bytes[utfc_char2bytes(off, bytes)] = '\0';
+      bytes[utfc_char2bytes(off, bytes)] = NUL;
     else if (enc_dbcs == DBCS_JPNU && ScreenLines[off] == 0x8e) {
       bytes[0] = ScreenLines[off];
       bytes[1] = ScreenLines2[off];
-      bytes[2] = '\0';
+      bytes[2] = NUL;
     } else if (enc_dbcs && MB_BYTE2LEN(bytes[0]) > 1) {
       bytes[1] = ScreenLines[off + 1];
-      bytes[2] = '\0';
+      bytes[2] = NUL;
     }
   }
 }
@@ -5337,7 +5337,7 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
   max_off = LineOffset[row] + screen_Columns;
   while (col < screen_Columns
          && (len < 0 || (int)(ptr - text) < len)
-         && *ptr != '\0') {
+         && *ptr != NUL) {
     c = *ptr;
     /* check if this is the first byte of a multibyte */
     if (has_mbyte) {
@@ -5368,8 +5368,8 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
           /* Do Arabic shaping. */
           if (len >= 0 && (int)(ptr - text) + mbyte_blen >= len) {
             /* Past end of string to be displayed. */
-            nc = '\0';
-            nc1 = '\0';
+            nc = NUL;
+            nc1 = NUL;
           } else {
             nc = utfc_ptr2char_len(ptr + mbyte_blen, pcc,
                 (int)((text + len) - ptr - mbyte_blen));
@@ -5435,7 +5435,7 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
       if (clear_next_cell)
         clear_next_cell = FALSE;
       else if (has_mbyte
-               && (len < 0 ? ptr[mbyte_blen] == '\0'
+               && (len < 0 ? ptr[mbyte_blen] == NUL
                    : ptr + mbyte_blen >= text + len)
                && ((mbyte_cells == 1 && (*mb_off2cells)(off, max_off) > 1)
                    || (mbyte_cells == 2
@@ -5669,7 +5669,7 @@ next_search_hl (
 
       matchcol = shl->rm.startpos[0].col;
       ml = ml_get_buf(shl->buf, lnum, FALSE) + matchcol;
-      if (*ml == '\0') {
+      if (*ml == NUL) {
         ++matchcol;
         shl->lnum = 0;
         break;
@@ -5899,7 +5899,7 @@ static void screen_char(unsigned off, int row, int col)
 
     /* Convert UTF-8 character to bytes and write it. */
 
-    buf[utfc_char2bytes(off, buf)] = '\0';
+    buf[utfc_char2bytes(off, buf)] = NUL;
 
     out_str(buf);
     if (utf_char2cells(ScreenLinesUC[off]) > 1)
@@ -6547,8 +6547,8 @@ static void linecopy(int to, int from, win_T *wp)
  */
 int can_clear(char_u *p)
 {
-  return *p != '\0' && (t_colors <= 1
-                       || cterm_normal_bg_color == 0 || *T_UT != '\0');
+  return *p != NUL && (t_colors <= 1
+                       || cterm_normal_bg_color == 0 || *T_UT != NUL);
 }
 
 /*
@@ -6599,7 +6599,7 @@ void windgoto(int row, int col)
       col = screen_Columns - 1;
 
     /* check if no cursor movement is allowed in highlight mode */
-    if (screen_attr && *T_MS == '\0')
+    if (screen_attr && *T_MS == NUL)
       noinvcurs = HIGHL_COST;
     else
       noinvcurs = 0;
@@ -6739,7 +6739,7 @@ void windgoto(int row, int col)
            * removing a line of pixels from the last bold char, when
            * using the bold trick in the GUI.
            */
-          if (T_ND[0] != '\0' && T_ND[1] == '\0') {
+          if (T_ND[0] != NUL && T_ND[1] == NUL) {
             while (i-- > 0)
               out_char(*T_ND);
           } else {
@@ -6766,7 +6766,7 @@ void windgoto(int row, int col)
       if (noinvcurs)
         screen_stop_highlight();
       if (row == screen_cur_row && (col > screen_cur_col) &&
-          *T_CRI != '\0')
+          *T_CRI != NUL)
         term_cursor_right(col - screen_cur_col);
       else
         term_windgoto(row, col);
@@ -6958,7 +6958,7 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
   if (scroll_region
       || W_WIDTH(wp) != Columns
       ) {
-    if (scroll_region && (wp->w_width == Columns || *T_CSV != '\0'))
+    if (scroll_region && (wp->w_width == Columns || *T_CSV != NUL))
       scroll_region_set(wp, row);
     if (del)
       retval = screen_del_lines(W_WINROW(wp) + row, 0, line_count,
@@ -6966,7 +6966,7 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
     else
       retval = screen_ins_lines(W_WINROW(wp) + row, 0, line_count,
           wp->w_height - row, wp);
-    if (scroll_region && (wp->w_width == Columns || *T_CSV != '\0'))
+    if (scroll_region && (wp->w_width == Columns || *T_CSV != NUL))
       scroll_region_reset();
     return retval;
   }
@@ -7074,21 +7074,21 @@ screen_ins_lines (
    * exists.
    */
   result_empty = (row + line_count >= end);
-  if (wp != NULL && wp->w_width != Columns && *T_CSV == '\0')
+  if (wp != NULL && wp->w_width != Columns && *T_CSV == NUL)
     type = USE_REDRAW;
   else if (can_clear(T_CD) && result_empty)
     type = USE_T_CD;
-  else if (*T_CAL != '\0' && (line_count > 1 || *T_AL == '\0'))
+  else if (*T_CAL != NUL && (line_count > 1 || *T_AL == NUL))
     type = USE_T_CAL;
-  else if (*T_CDL != '\0' && result_empty && (line_count > 1 || !can_ce))
+  else if (*T_CDL != NUL && result_empty && (line_count > 1 || !can_ce))
     type = USE_T_CDL;
-  else if (*T_AL != '\0')
+  else if (*T_AL != NUL)
     type = USE_T_AL;
   else if (can_ce && result_empty)
     type = USE_T_CE;
-  else if (*T_DL != '\0' && result_empty)
+  else if (*T_DL != NUL && result_empty)
     type = USE_T_DL;
-  else if (*T_SR != '\0' && row == 0 && (*T_DA == '\0' || can_ce))
+  else if (*T_SR != NUL && row == 0 && (*T_DA == NUL || can_ce))
     type = USE_T_SR;
   else
     return FAIL;
@@ -7111,7 +7111,7 @@ screen_ins_lines (
 
 
 
-  if (*T_CCS != '\0')       /* cursor relative to region */
+  if (*T_CCS != NUL)       /* cursor relative to region */
     cursor_row = row;
   else
     cursor_row = row + off;
@@ -7233,7 +7233,7 @@ screen_del_lines (
    * We can delete lines only when 'db' flag not set or when 'ce' option
    * available.
    */
-  can_delete = (*T_DB == '\0' || can_clear(T_CE));
+  can_delete = (*T_DB == NUL || can_clear(T_CE));
 
   /*
    * There are six ways to delete lines:
@@ -7247,7 +7247,7 @@ screen_del_lines (
    * 5. Use T_DL (delete line) if it exists.
    * 6. redraw the characters from ScreenLines[].
    */
-  if (wp != NULL && wp->w_width != Columns && *T_CSV == '\0')
+  if (wp != NULL && wp->w_width != Columns && *T_CSV == NUL)
     type = USE_REDRAW;
   else if (can_clear(T_CD) && result_empty)
     type = USE_T_CD;
@@ -7255,24 +7255,24 @@ screen_del_lines (
              /* On the Amiga, somehow '\n' on the last line doesn't always scroll
               * up, so use delete-line command */
              line_count == 1 ||
-             *T_CDL == '\0'))
+             *T_CDL == NUL))
     type = USE_NL;
-  else if (*T_CDL != '\0' && line_count > 1 && can_delete)
+  else if (*T_CDL != NUL && line_count > 1 && can_delete)
     type = USE_T_CDL;
   else if (can_clear(T_CE) && result_empty
            && (wp == NULL || wp->w_width == Columns)
            )
     type = USE_T_CE;
-  else if (*T_DL != '\0' && can_delete)
+  else if (*T_DL != NUL && can_delete)
     type = USE_T_DL;
-  else if (*T_CDL != '\0' && can_delete)
+  else if (*T_CDL != NUL && can_delete)
     type = USE_T_CDL;
   else
     return FAIL;
 
 
 
-  if (*T_CCS != '\0') {      /* cursor relative to region */
+  if (*T_CCS != NUL) {      /* cursor relative to region */
     cursor_row = row;
     cursor_end = end;
   } else {
@@ -7590,7 +7590,7 @@ static void draw_tabline(void)
     TabPageIdxs[scol] = 0;
 
   /* Use the 'tabline' option if it's set. */
-  if (*p_tal != '\0') {
+  if (*p_tal != NUL) {
     int save_called_emsg = called_emsg;
 
     /* Check for an error.  If there is one we would loop in redrawing the
@@ -7784,7 +7784,7 @@ void showruler(int always)
     curwin->w_redr_status = TRUE;
     return;
   }
-  if ((*p_stl != '\0' || *curwin->w_p_stl != '\0') && curwin->w_status_height) {
+  if ((*p_stl != NUL || *curwin->w_p_stl != NUL) && curwin->w_status_height) {
     redraw_custom_statusline(curwin);
   } else
     win_redr_ruler(curwin, always);
@@ -7853,7 +7853,7 @@ static void win_redr_ruler(win_T *wp, int always)
    * Check if not in Insert mode and the line is empty (will show "0-1").
    */
   if (!(State & INSERT)
-      && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE) == '\0')
+      && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE) == NUL)
     empty_line = TRUE;
 
   /*
@@ -7886,7 +7886,7 @@ static void win_redr_ruler(win_T *wp, int always)
 
     /* In list mode virtcol needs to be recomputed */
     virtcol = wp->w_virtcol;
-    if (wp->w_p_list && lcs_tab1 == '\0') {
+    if (wp->w_p_list && lcs_tab1 == NUL) {
       wp->w_p_list = FALSE;
       getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
       wp->w_p_list = TRUE;
@@ -7934,15 +7934,15 @@ static void win_redr_ruler(win_T *wp, int always)
     /* Truncate at window boundary. */
     if (has_mbyte) {
       o = 0;
-      for (i = 0; buffer[i] != '\0'; i += (*mb_ptr2len)(buffer + i)) {
+      for (i = 0; buffer[i] != NUL; i += (*mb_ptr2len)(buffer + i)) {
         o += (*mb_ptr2cells)(buffer + i);
         if (this_ru_col + o > WITH_WIDTH(width)) {
-          buffer[i] = '\0';
+          buffer[i] = NUL;
           break;
         }
       }
     } else if (this_ru_col + (int)STRLEN(buffer) > WITH_WIDTH(width))
-      buffer[WITH_WIDTH(width) - this_ru_col] = '\0';
+      buffer[WITH_WIDTH(width) - this_ru_col] = NUL;
 
     screen_puts(buffer, row, this_ru_col + WITH_OFF(off), attr);
     i = redraw_cmdline;

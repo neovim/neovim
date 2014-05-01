@@ -527,7 +527,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
       *s++ = p->c;
     p = p->out;
   }
-  *s = '\0';
+  *s = NUL;
 
   return ret;
 }
@@ -1060,7 +1060,7 @@ static int nfa_regatom(void)
 
   c = getchr();
   switch (c) {
-  case '\0':
+  case NUL:
     EMSG_RET_FAIL(_(e_nul_found));
 
   case Magic('^'):
@@ -1082,7 +1082,7 @@ static int nfa_regatom(void)
 
   case Magic('_'):
     c = no_Magic(getchr());
-    if (c == '\0')
+    if (c == NUL)
       EMSG_RET_FAIL(_(e_nul_found));
 
     if (c == '^') {             /* "\_^" is start-of-line */
@@ -1201,7 +1201,7 @@ static int nfa_regatom(void)
       EMSG(_(e_nopresub));
       return FAIL;
     }
-    for (lp = reg_prev_sub; *lp != '\0'; mb_cptr_adv(lp)) {
+    for (lp = reg_prev_sub; *lp != NUL; mb_cptr_adv(lp)) {
       EMIT(PTR2CHAR(lp));
       if (lp != reg_prev_sub)
         EMIT(NFA_CONCAT);
@@ -1326,7 +1326,7 @@ static int nfa_regatom(void)
 
       /* \%[abc] */
       for (n = 0; (c = peekchr()) != ']'; ++n) {
-        if (c == '\0')
+        if (c == NUL)
           EMSG2_RET_FAIL(_(e_missing_sb),
               reg_magic == MAGIC_ALL);
         /* recursive call! */
@@ -1915,7 +1915,7 @@ static int nfa_regconcat(void)
 
   while (cont) {
     switch (peekchr()) {
-    case '\0':
+    case NUL:
     case Magic('|'):
     case Magic('&'):
     case Magic(')'):
@@ -2060,7 +2060,7 @@ nfa_reg (
       EMSG2_RET_FAIL(_(e_unmatchedpp), reg_magic == MAGIC_ALL);
     else
       EMSG2_RET_FAIL(_(e_unmatchedp), reg_magic == MAGIC_ALL);
-  } else if (paren == REG_NOPAREN && peekchr() != '\0') {
+  } else if (paren == REG_NOPAREN && peekchr() != NUL) {
     if (peekchr() == Magic(')'))
       EMSG2_RET_FAIL(_(e_unmatchedpar), reg_magic == MAGIC_ALL);
     else
@@ -2415,7 +2415,7 @@ static void nfa_dump(nfa_regprog_T *prog)
 
     if (prog->reganch)
       fprintf(debugf, "reganch: %d\n", prog->reganch);
-    if (prog->regstart != '\0')
+    if (prog->regstart != NUL)
       fprintf(debugf, "regstart: %c (decimal: %d)\n",
           prog->regstart, prog->regstart);
     if (prog->match_text != NULL)
@@ -3473,7 +3473,7 @@ static char *pim_info(nfa_pim_T *pim)
   static char buf[30];
 
   if (pim == NULL || pim->result == NFA_PIM_UNUSED)
-    buf[0] = '\0';
+    buf[0] = NUL;
   else {
     sprintf(buf, " PIM col %d", REG_MULTI ? (int)pim->end.pos.col
         : (int)(pim->end.ptr - reginput));
@@ -3875,7 +3875,7 @@ addstate (
      * Except when at the end of the line, or when we are going to the
      * next line for a look-behind match. */
     if (reginput > regline
-        && *reginput != '\0'
+        && *reginput != NUL
         && (nfa_endp == NULL
             || !REG_MULTI
             || reglnum == nfa_endp->se_u.pos.lnum))
@@ -4773,7 +4773,7 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
   for (;; ) {
     match = TRUE;
     len2 = MB_CHAR2LEN(regstart);     /* skip regstart */
-    for (len1 = 0; match_text[len1] != '\0'; len1 += MB_CHAR2LEN(c1)) {
+    for (len1 = 0; match_text[len1] != NUL; len1 += MB_CHAR2LEN(c1)) {
       c1 = PTR2CHAR(match_text + len1);
       c2 = PTR2CHAR(regline + col + len2);
       if (c1 != c2 && (!ireg_ic || vim_tolower(c1) != vim_tolower(c2))) {
@@ -4918,7 +4918,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       curc = *reginput;
       clen = 1;
     }
-    if (curc == '\0') {
+    if (curc == NUL) {
       clen = 0;
       go_to_nextline = FALSE;
     }
@@ -5249,7 +5249,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_EOL:
-        if (curc == '\0') {
+        if (curc == NUL) {
           add_here = TRUE;
           add_state = t->state->out;
         }
@@ -5258,7 +5258,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_BOW:
         result = TRUE;
 
-        if (curc == '\0')
+        if (curc == NUL)
           result = FALSE;
         else if (has_mbyte) {
           int this_class;
@@ -5293,7 +5293,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
               || prev_class == 0 || prev_class == 1)
             result = FALSE;
         } else if (!vim_iswordc_buf(reginput[-1], reg_buf)
-                   || (reginput[0] != '\0'
+                   || (reginput[0] != NUL
                        && vim_iswordc_buf(curc, reg_buf)))
           result = FALSE;
         if (result) {
@@ -5311,7 +5311,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_EOF:
-        if (reglnum == reg_maxline && curc == '\0') {
+        if (reglnum == reg_maxline && curc == NUL) {
           add_here = TRUE;
           add_state = t->state->out;
         }
@@ -5385,7 +5385,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       }
 
       case NFA_NEWL:
-        if (curc == '\0' && !reg_line_lbr && REG_MULTI
+        if (curc == NUL && !reg_line_lbr && REG_MULTI
             && reglnum <= reg_maxline) {
           go_to_nextline = TRUE;
           /* Pass -1 for the offset, which means taking the position
@@ -5410,7 +5410,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
 
         /* Never match EOL. If it's part of the collection it is added
          * as a separate state with an OR. */
-        if (curc == '\0')
+        if (curc == NUL)
           break;
 
         state = t->state->out;
@@ -5521,7 +5521,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NWHITE:          /*  \S	*/
-        result = curc != '\0' && !vim_iswhite(curc);
+        result = curc != NUL && !vim_iswhite(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5531,7 +5531,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NDIGIT:          /*  \D	*/
-        result = curc != '\0' && !ri_digit(curc);
+        result = curc != NUL && !ri_digit(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5541,7 +5541,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NHEX:            /*  \X	*/
-        result = curc != '\0' && !ri_hex(curc);
+        result = curc != NUL && !ri_hex(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5551,7 +5551,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NOCTAL:          /*  \O	*/
-        result = curc != '\0' && !ri_octal(curc);
+        result = curc != NUL && !ri_octal(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5561,7 +5561,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NWORD:           /*  \W	*/
-        result = curc != '\0' && !ri_word(curc);
+        result = curc != NUL && !ri_word(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5571,7 +5571,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NHEAD:           /*  \H	*/
-        result = curc != '\0' && !ri_head(curc);
+        result = curc != NUL && !ri_head(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5581,7 +5581,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NALPHA:          /*  \A	*/
-        result = curc != '\0' && !ri_alpha(curc);
+        result = curc != NUL && !ri_alpha(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5591,7 +5591,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NLOWER:          /*  \L	*/
-        result = curc != '\0' && !ri_lower(curc);
+        result = curc != NUL && !ri_lower(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5601,7 +5601,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NUPPER:          /* \U	*/
-        result = curc != '\0' && !ri_upper(curc);
+        result = curc != NUL && !ri_upper(curc);
         ADD_STATE_IF_MATCH(t->state);
         break;
 
@@ -5611,7 +5611,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NLOWER_IC:       /* [^a-z] */
-        result = curc != '\0'
+        result = curc != NUL
                  && !(ri_lower(curc) || (ireg_ic && ri_upper(curc)));
         ADD_STATE_IF_MATCH(t->state);
         break;
@@ -5622,7 +5622,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         break;
 
       case NFA_NUPPER_IC:       /* ^[A-Z] */
-        result = curc != '\0'
+        result = curc != NUL
                  && !(ri_upper(curc) || (ireg_ic && ri_lower(curc)));
         ADD_STATE_IF_MATCH(t->state);
         break;
@@ -5939,7 +5939,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
         int add = TRUE;
         int c;
 
-        if (prog->regstart != '\0' && clen != 0) {
+        if (prog->regstart != NUL && clen != 0) {
           if (nextlist->n == 0) {
             colnr_T col = (colnr_T)(reginput - regline) + clen;
 
@@ -6190,7 +6190,7 @@ nfa_regexec_both (
   } else
     nfa_has_zsubexpr = FALSE;
 
-  if (prog->regstart != '\0') {
+  if (prog->regstart != NUL) {
     /* Skip ahead until a character we know the match must start with.
      * When there is none there is no match. */
     if (skip_to_start(prog->regstart, &col) == FAIL)

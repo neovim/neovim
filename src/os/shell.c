@@ -251,14 +251,14 @@ static int tokenize(char_u *str, char **argv)
   int argc = 0, len;
   char_u *p = str;
 
-  while (*p != '\0') {
+  while (*p != NUL) {
     len = word_length(p);
 
     if (argv != NULL) {
       // Fill the slot
       argv[argc] = xmalloc(len + 1);
       memcpy(argv[argc], p, len);
-      argv[argc][len] = '\0';
+      argv[argc][len] = NUL;
     }
 
     argc++;
@@ -323,7 +323,7 @@ static void write_selection(uv_write_t *req)
         buflen *= 2;
         pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
       }
-      pdata->wbuffer[off++] = '\0';
+      pdata->wbuffer[off++] = NUL;
     } else {
       char_u  *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : s - (lp + written);
@@ -405,7 +405,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     if (pdata->rbuffer[i] == NL) {
       // Insert the line
       append_ga_line(&pdata->ga);
-    } else if (pdata->rbuffer[i] == '\0') {
+    } else if (pdata->rbuffer[i] == NUL) {
       // Translate NUL to NL
       ga_append(&pdata->ga, NL);
     } else {

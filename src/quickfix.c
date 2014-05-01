@@ -305,7 +305,7 @@ qf_init_ext (
    * regex prog.  Only a few % characters are allowed.
    */
   /* Use the local value of 'errorformat' if it's set. */
-  if (errorformat == p_efm && tv == NULL && *buf->b_p_efm != '\0')
+  if (errorformat == p_efm && tv == NULL && *buf->b_p_efm != NUL)
     efm = buf->b_p_efm;
   else
     efm = errorformat;
@@ -322,7 +322,7 @@ qf_init_ext (
 #endif
   fmtstr = alloc(i);
 
-  while (efm[0] != '\0') {
+  while (efm[0] != NUL) {
     /*
      * Allocate a new eformat structure and put it at the end of the list
      */
@@ -336,8 +336,8 @@ qf_init_ext (
     /*
      * Isolate one part in the 'errorformat' option
      */
-    for (len = 0; efm[len] != '\0' && efm[len] != ','; ++len)
-      if (efm[len] == '\\' && efm[len + 1] != '\0')
+    for (len = 0; efm[len] != NUL && efm[len] != ','; ++len)
+      if (efm[len] == '\\' && efm[len + 1] != NUL)
         ++len;
 
     /*
@@ -383,7 +383,7 @@ qf_init_ext (
             ptr += 10;
           }
 #endif
-          if (*efmp == 'f' && efmp[1] != '\0') {
+          if (*efmp == 'f' && efmp[1] != NUL) {
             if (efmp[1] != '\\' && efmp[1] != '%') {
               /* A file name may contain spaces, but this isn't
                * in "\f".  For "%f:%l:%m" there may be a ":" in
@@ -400,7 +400,7 @@ qf_init_ext (
             }
           } else {
             srcptr = (char_u *)fmt_pat[idx].pattern;
-            while ((*ptr = *srcptr++) != '\0')
+            while ((*ptr = *srcptr++) != NUL)
               ++ptr;
           }
           *ptr++ = '\\';
@@ -464,7 +464,7 @@ qf_init_ext (
       }
     }
     *ptr++ = '$';
-    *ptr = '\0';
+    *ptr = NUL;
     if ((fmt_ptr->prog = vim_regcomp(fmtstr, RE_MAGIC + RE_STRING)) == NULL)
       goto error2;
     /*
@@ -546,14 +546,14 @@ qf_init_ext (
     } else if (fgets((char *)IObuff, CMDBUFFSIZE - 2, fd) == NULL)
       break;
 
-    IObuff[CMDBUFFSIZE - 2] = '\0';      /* for very long lines */
+    IObuff[CMDBUFFSIZE - 2] = NUL;      /* for very long lines */
     remove_bom(IObuff);
 
     if ((efmp = vim_strrchr(IObuff, '\n')) != NULL)
-      *efmp = '\0';
+      *efmp = NUL;
 #ifdef USE_CRNL
     if ((efmp = vim_strrchr(IObuff, '\r')) != NULL)
-      *efmp = '\0';
+      *efmp = NUL;
 #endif
 
     /* If there was no %> item start at the first pattern */
@@ -574,10 +574,10 @@ restofline:
       idx = fmt_ptr->prefix;
       if (multiscan && vim_strchr((char_u *)"OPQ", idx) == NULL)
         continue;
-      namebuf[0] = '\0';
-      pattern[0] = '\0';
+      namebuf[0] = NUL;
+      pattern[0] = NUL;
       if (!multiscan)
-        errmsg[0] = '\0';
+        errmsg[0] = NUL;
       lnum = 0;
       col = 0;
       use_viscol = FALSE;
@@ -606,7 +606,7 @@ restofline:
 
           /* Expand ~/file and $HOME/file to full path. */
           c = *regmatch.endp[i];
-          *regmatch.endp[i] = '\0';
+          *regmatch.endp[i] = NUL;
           expand_env(regmatch.startp[i], namebuf, CMDBUFFSIZE);
           *regmatch.endp[i] = c;
 
@@ -680,7 +680,7 @@ restofline:
           STRNCAT(pattern, regmatch.startp[i], len);
           pattern[len + 3] = '\\';
           pattern[len + 4] = '$';
-          pattern[len + 5] = '\0';
+          pattern[len + 5] = NUL;
         }
         break;
       }
@@ -690,7 +690,7 @@ restofline:
     if (fmt_ptr == NULL || idx == 'D' || idx == 'X') {
       if (fmt_ptr != NULL) {
         if (idx == 'D') {                               /* enter directory */
-          if (*namebuf == '\0') {
+          if (*namebuf == NUL) {
             EMSG(_("E379: Missing or empty directory name"));
             goto error2;
           }
@@ -699,7 +699,7 @@ restofline:
         } else if (idx == 'X')                          /* leave directory */
           directory = qf_pop_dir(&dir_stack);
       }
-      namebuf[0] = '\0';                 /* no match found, remove file name */
+      namebuf[0] = NUL;                 /* no match found, remove file name */
       lnum = 0;                         /* don't jump to this line */
       valid = FALSE;
       STRCPY(errmsg, IObuff);           /* copy whole line to error message */
@@ -746,12 +746,12 @@ restofline:
       } else if (vim_strchr((char_u *)"OPQ", idx) != NULL) {
         /* global file names */
         valid = FALSE;
-        if (*namebuf == '\0' || os_file_exists(namebuf)) {
+        if (*namebuf == NUL || os_file_exists(namebuf)) {
           if (*namebuf && idx == 'P')
             currfile = qf_push_dir(namebuf, &file_stack);
           else if (idx == 'Q')
             currfile = qf_pop_dir(&file_stack);
-          *namebuf = '\0';
+          *namebuf = NUL;
           if (tail && *tail) {
             STRMOVE(IObuff, skipwhite(tail));
             multiscan = TRUE;
@@ -935,7 +935,7 @@ qf_add_entry (
   qfp->qf_lnum = lnum;
   qfp->qf_col = col;
   qfp->qf_viscol = vis_col;
-  if (pattern == NULL || *pattern == '\0')
+  if (pattern == NULL || *pattern == NUL)
     qfp->qf_pattern = NULL;
   else if ((qfp->qf_pattern = vim_strsave(pattern)) == NULL) {
     vim_free(qfp->qf_text);
@@ -1102,7 +1102,7 @@ void copy_loclist(win_T *from, win_T *to)
  */
 static int qf_get_fnum(char_u *directory, char_u *fname)
 {
-  if (fname == NULL || *fname == '\0')           /* no file name */
+  if (fname == NULL || *fname == NUL)           /* no file name */
     return 0;
   {
     char_u      *ptr;
@@ -1487,7 +1487,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     if (!usable_win) {
       /* Locate a window showing a normal buffer */
       FOR_ALL_WINDOWS(win)
-      if (win->w_buffer->b_p_bt[0] == '\0') {
+      if (win->w_buffer->b_p_bt[0] == NUL) {
         usable_win = 1;
         break;
       }
@@ -1545,7 +1545,7 @@ win_found:
             /* Find a previous usable window */
             win = curwin;
             do {
-              if (win->w_buffer->b_p_bt[0] == '\0')
+              if (win->w_buffer->b_p_bt[0] == NUL)
                 break;
               if (win->w_prev == NULL)
                 win = lastwin;                  /* wrap around the top */
@@ -1592,7 +1592,7 @@ win_found:
 
           /* Remember a usable window. */
           if (altwin == NULL && !win->w_p_pvw
-              && win->w_buffer->b_p_bt[0] == '\0')
+              && win->w_buffer->b_p_bt[0] == NUL)
             altwin = win;
         }
 
@@ -1651,7 +1651,7 @@ win_found:
           line = ml_get_curline();
           screen_col = 0;
           for (char_col = 0; char_col < curwin->w_cursor.col; ++char_col) {
-            if (*line == '\0')
+            if (*line == NUL)
               break;
             if (*line++ == '\t') {
               curwin->w_cursor.col -= 7 - (screen_col % 8);
@@ -1757,7 +1757,7 @@ void qf_list(exarg_T *eap)
     EMSG(_(e_quickfix));
     return;
   }
-  if (!get_list_range(&arg, &idx1, &idx2) || *arg != '\0') {
+  if (!get_list_range(&arg, &idx1, &idx2) || *arg != NUL) {
     EMSG(_(e_trailing));
     return;
   }
@@ -1791,7 +1791,7 @@ void qf_list(exarg_T *eap)
       msg_outtrans_attr(IObuff, i == qi->qf_lists[qi->qf_curlist].qf_index
           ? hl_attr(HLF_L) : hl_attr(HLF_D));
       if (qfp->qf_lnum == 0)
-        IObuff[0] = '\0';
+        IObuff[0] = NUL;
       else if (qfp->qf_col == 0)
         sprintf((char *)IObuff, ":%" PRId64, (int64_t)qfp->qf_lnum);
       else
@@ -1832,16 +1832,16 @@ static void qf_fmt_text(char_u *text, char_u *buf, int bufsize)
   int i;
   char_u      *p = text;
 
-  for (i = 0; *p != '\0' && i < bufsize - 1; ++i) {
+  for (i = 0; *p != NUL && i < bufsize - 1; ++i) {
     if (*p == '\n') {
       buf[i] = ' ';
-      while (*++p != '\0')
+      while (*++p != NUL)
         if (!vim_iswhite(*p) && *p != '\n')
           break;
     } else
       buf[i] = *p++;
   }
-  buf[i] = '\0';
+  buf[i] = NUL;
 }
 
 /*
@@ -1984,7 +1984,7 @@ static char_u *qf_types(int c, int nr)
   else {
     cc[0] = ' ';
     cc[1] = c;
-    cc[2] = '\0';
+    cc[2] = NUL;
     p = cc;
   }
 
@@ -2466,7 +2466,7 @@ int grep_internal(cmdidx_T cmdidx)
           || cmdidx == CMD_grepadd
           || cmdidx == CMD_lgrepadd)
          && STRCMP("internal",
-      *curbuf->b_p_gp == '\0' ? p_gp : curbuf->b_p_gp) == 0;
+      *curbuf->b_p_gp == NUL ? p_gp : curbuf->b_p_gp) == 0;
 }
 
 /*
@@ -2518,12 +2518,12 @@ void ex_make(exarg_T *eap)
    * If 'shellpipe' empty: don't redirect to 'errorfile'.
    */
   len = (unsigned)STRLEN(p_shq) * 2 + (unsigned)STRLEN(eap->arg) + 1;
-  if (*p_sp != '\0')
+  if (*p_sp != NUL)
     len += (unsigned)STRLEN(p_sp) + (unsigned)STRLEN(fname) + 3;
   cmd = alloc(len);
   sprintf((char *)cmd, "%s%s%s", (char *)p_shq, (char *)eap->arg,
       (char *)p_shq);
-  if (*p_sp != '\0')
+  if (*p_sp != NUL)
     append_redir(cmd, len, p_sp, fname);
   /*
    * Output a newline if there's something else than the :make command that
@@ -2536,7 +2536,7 @@ void ex_make(exarg_T *eap)
   msg_outtrans(cmd);            /* show what we are doing */
 
   /* let the shell know if we are redirecting output or not */
-  do_shell(cmd, *p_sp != '\0' ? kShellOptDoOut : 0);
+  do_shell(cmd, *p_sp != NUL ? kShellOptDoOut : 0);
 
 
   res = qf_init(wp, fname, (eap->cmdidx != CMD_make
@@ -2577,7 +2577,7 @@ static char_u *get_mef_name(void)
   struct stat sb;
 #endif
 
-  if (*p_mef == '\0') {
+  if (*p_mef == NUL) {
     name = vim_tempname('e');
     if (name == NULL)
       EMSG(_(e_notmp));
@@ -2588,7 +2588,7 @@ static char_u *get_mef_name(void)
     if (p[0] == '#' && p[1] == '#')
       break;
 
-  if (*p == '\0')
+  if (*p == NUL)
     return vim_strsave(p_mef);
 
   /* Keep trying until the name doesn't exist yet. */
@@ -2702,7 +2702,7 @@ void ex_cfile(exarg_T *eap)
   }
   if (au_name != NULL)
     apply_autocmds(EVENT_QUICKFIXCMDPRE, au_name, NULL, FALSE, curbuf);
-  if (*eap->arg != '\0')
+  if (*eap->arg != NUL)
     set_string_option_direct((char_u *)"ef", -1, eap->arg, OPT_FREE, 0);
 
   /*
@@ -2806,7 +2806,7 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  if (s != NULL && *s == '\0') {
+  if (s != NULL && *s == NUL) {
     /* Pattern is empty, use last search pattern. */
     if (last_search_pat() == NULL) {
       EMSG(_(e_noprevre));
@@ -2822,7 +2822,7 @@ void ex_vimgrep(exarg_T *eap)
   regmatch.rmm_maxcol = 0;
 
   p = skipwhite(p);
-  if (*p == '\0') {
+  if (*p == NUL) {
     EMSG(_("E683: File name missing or invalid pattern"));
     goto theend;
   }
@@ -3079,8 +3079,8 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
     if (s != NULL)
       *s = p;
     p = skiptowhite(p);
-    if (s != NULL && *p != '\0')
-      *p++ = '\0';
+    if (s != NULL && *p != NUL)
+      *p++ = NUL;
   } else {
     /* ":vimgrep /pattern/[g][j] fname" */
     if (s != NULL)
@@ -3092,7 +3092,7 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
 
     /* Truncate the pattern. */
     if (s != NULL)
-      *p = '\0';
+      *p = NUL;
     ++p;
 
     /* Find the flags */
@@ -3290,7 +3290,7 @@ int get_errorlist(win_T *wp, list_T *list)
     list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;
-    buf[1] = '\0';
+    buf[1] = NUL;
     if ( dict_add_nr_str(dict, "bufnr", (long)bufnum, NULL) == FAIL
          || dict_add_nr_str(dict, "lnum",  (long)qfp->qf_lnum, NULL) == FAIL
          || dict_add_nr_str(dict, "col",   (long)qfp->qf_col, NULL) == FAIL
@@ -3388,7 +3388,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
         vcol,                               /* vis_col */
         pattern,                            /* search pattern */
         nr,
-        type == NULL ? '\0' : *type,
+        type == NULL ? NUL : *type,
         valid);
 
     vim_free(filename);
@@ -3433,9 +3433,9 @@ void ex_cbuffer(exarg_T *eap)
     qi = ll_get_or_alloc_list(curwin);
   }
 
-  if (*eap->arg == '\0')
+  if (*eap->arg == NUL)
     buf = curbuf;
-  else if (*skipwhite(skipdigits(eap->arg)) == '\0')
+  else if (*skipwhite(skipdigits(eap->arg)) == NUL)
     buf = buflist_findnr(atoi((char *)eap->arg));
   if (buf == NULL)
     EMSG(_(e_invarg));
@@ -3576,7 +3576,7 @@ void ex_helpgrep(exarg_T *eap)
 
     /* Go through all directories in 'runtimepath' */
     p = p_rtp;
-    while (*p != '\0' && !got_int) {
+    while (*p != NUL && !got_int) {
       copy_option_part(&p, NameBuff, MAXPATHL, ",");
 
       /* Find all "*.txt" and "*.??x" files in the "doc" directory. */
@@ -3613,7 +3613,7 @@ void ex_helpgrep(exarg_T *eap)
 
                 /* remove trailing CR, LF, spaces, etc. */
                 while (l > 0 && line[l - 1] <= ' ')
-                  line[--l] = '\0';
+                  line[--l] = NUL;
 
                 if (qf_add_entry(qi, &prevp,
                         NULL,                           /* dir */

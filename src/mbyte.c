@@ -526,7 +526,7 @@ char_u * mb_init()
       n = 1;
     else {
       char buf[MB_MAXBYTES + 1];
-      if (i == '\0')             /* just in case mblen() can't handle "" */
+      if (i == NUL)             /* just in case mblen() can't handle "" */
         n = 1;
       else {
         buf[0] = i;
@@ -608,7 +608,7 @@ int bomb_size()
   int n = 0;
 
   if (curbuf->b_p_bomb && !curbuf->b_p_bin) {
-    if (*curbuf->b_p_fenc == '\0') {
+    if (*curbuf->b_p_fenc == NUL) {
       if (enc_utf8) {
         if (enc_unicode != 0)
           n = enc_unicode;
@@ -658,13 +658,13 @@ int mb_get_class(char_u *p)
 int mb_get_class_buf(char_u *p, buf_T *buf)
 {
   if (MB_BYTE2LEN(p[0]) == 1) {
-    if (p[0] == '\0' || vim_iswhite(p[0]))
+    if (p[0] == NUL || vim_iswhite(p[0]))
       return 0;
     if (vim_iswordc_buf(p[0], buf))
       return 2;
     return 1;
   }
-  if (enc_dbcs != 0 && p[0] != '\0' && p[1] != '\0')
+  if (enc_dbcs != 0 && p[0] != NUL && p[1] != NUL)
     return dbcs_class(p[0], p[1]);
   if (enc_utf8)
     return utf_class(utf_ptr2char(p));
@@ -849,7 +849,7 @@ static int dbcs_char2bytes(int c, char_u *buf)
     buf[1] = c;
     /* Never use a NUL byte, it causes lots of trouble.  It's an invalid
      * character anyway. */
-    if (buf[1] == '\0')
+    if (buf[1] == NUL)
       buf[1] = '\n';
     return 2;
   }
@@ -874,7 +874,7 @@ static int dbcs_ptr2len(char_u *p)
 
   /* Check if second byte is not missing. */
   len = MB_BYTE2LEN(*p);
-  if (len == 2 && p[1] == '\0')
+  if (len == 2 && p[1] == NUL)
     len = 1;
   return len;
 }
@@ -887,7 +887,7 @@ static int dbcs_ptr2len(char_u *p)
  */
 int latin_ptr2len_len(char_u *p, int size)
 {
-  if (size < 1 || *p == '\0')
+  if (size < 1 || *p == NUL)
     return 0;
   return 1;
 }
@@ -896,13 +896,13 @@ static int dbcs_ptr2len_len(char_u *p, int size)
 {
   int len;
 
-  if (size < 1 || *p == '\0')
+  if (size < 1 || *p == NUL)
     return 0;
   if (size == 1)
     return 1;
   /* Check that second byte is not missing. */
   len = MB_BYTE2LEN(*p);
-  if (len == 2 && p[1] == '\0')
+  if (len == 2 && p[1] == NUL)
     len = 1;
   return len;
 }
@@ -1225,7 +1225,7 @@ int utf_ptr2cells(char_u *p)
   if (*p >= 0x80) {
     c = utf_ptr2char(p);
     /* An illegal byte is displayed as <xx>. */
-    if (utf_ptr2len(p) == 1 || c == '\0')
+    if (utf_ptr2len(p) == 1 || c == NUL)
       return 4;
     /* If the char is ASCII it must be an overlong sequence. */
     if (c < 0x80)
@@ -1264,7 +1264,7 @@ static int utf_ptr2cells_len(char_u *p, int size)
       return 1;        /* truncated */
     c = utf_ptr2char(p);
     /* An illegal byte is displayed as <xx>. */
-    if (utf_ptr2len(p) == 1 || c == '\0')
+    if (utf_ptr2len(p) == 1 || c == NUL)
       return 4;
     /* If the char is ASCII it must be an overlong sequence. */
     if (c < 0x80)
@@ -1312,7 +1312,7 @@ int mb_string2cells(char_u *p, int len)
   int i;
   int clen = 0;
 
-  for (i = 0; (len < 0 || i < len) && p[i] != '\0'; i += (*mb_ptr2len)(p + i))
+  for (i = 0; (len < 0 || i < len) && p[i] != NUL; i += (*mb_ptr2len)(p + i))
     clen += (*mb_ptr2cells)(p + i);
   return clen;
 }
@@ -1356,7 +1356,7 @@ int latin_ptr2char(char_u *p)
 
 static int dbcs_ptr2char(char_u *p)
 {
-  if (MB_BYTE2LEN(*p) > 1 && p[1] != '\0')
+  if (MB_BYTE2LEN(*p) > 1 && p[1] != NUL)
     return (p[0] << 8) + p[1];
   return *p;
 }
@@ -1614,7 +1614,7 @@ int utf_ptr2len(char_u *p)
   int len;
   int i;
 
-  if (*p == '\0')
+  if (*p == NUL)
     return 0;
   len = utf8len_tab[*p];
   for (i = 1; i < len; ++i)
@@ -1670,7 +1670,7 @@ int utfc_ptr2len(char_u *p)
   int b0 = *p;
   int prevlen;
 
-  if (b0 == '\0')
+  if (b0 == NUL)
     return 0;
   if (b0 < 0x80 && p[1] < 0x80)         /* be quick for ASCII */
     return 1;
@@ -1708,7 +1708,7 @@ int utfc_ptr2len_len(char_u *p, int size)
   int len;
   int prevlen;
 
-  if (size < 1 || *p == '\0')
+  if (size < 1 || *p == NUL)
     return 0;
   if (p[0] < 0x80 && (size == 1 || p[1] < 0x80))   /* be quick for ASCII */
     return 1;
@@ -2132,7 +2132,7 @@ int utf_class(int c)
 
   /* First quick check for Latin1 characters, use 'iskeyword'. */
   if (c < 0x100) {
-    if (c == ' ' || c == '\t' || c == '\0' || c == 0xa0)
+    if (c == ' ' || c == '\t' || c == NUL || c == 0xa0)
       return 0;             /* blank */
     if (vim_iswordc(c))
       return 2;             /* word character */
@@ -2781,7 +2781,7 @@ static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
     s2 = buffer;
   }
 
-  while (n1 > 0 && n2 > 0 && *s1 != '\0' && *s2 != '\0') {
+  while (n1 > 0 && n2 > 0 && *s1 != NUL && *s2 != NUL) {
     cdiff = (int)(*s1) - (int)(*s2);
     if (cdiff != 0)
       return cdiff;
@@ -2792,9 +2792,9 @@ static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2)
     n2--;
   }
 
-  if (n1 > 0 && *s1 == '\0')
+  if (n1 > 0 && *s1 == NUL)
     n1 = 0;
-  if (n2 > 0 && *s2 == '\0')
+  if (n2 > 0 && *s2 == NUL)
     n2 = 0;
 
   if (n1 == 0 && n2 == 0)
@@ -2820,7 +2820,7 @@ int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
     return utf_strnicmp(s1, s2, nn, nn);
   } else {
     for (i = 0; i < n; i += l) {
-      if (s1[i] == '\0' && s2[i] == '\0')         /* both strings end */
+      if (s1[i] == NUL && s2[i] == NUL)         /* both strings end */
         return 0;
 
       l = (*mb_ptr2len)(s1 + i);
@@ -2861,7 +2861,7 @@ void show_utf8()
   line = ml_get_cursor();
   len = utfc_ptr2len(line);
   if (len == 0) {
-    MSG("'\0'");
+    MSG("NUL");
     return;
   }
 
@@ -2876,7 +2876,7 @@ void show_utf8()
       clen = utf_ptr2len(line + i);
     }
     sprintf((char *)IObuff + rlen, "%02x ",
-        (line[i] == NL) ? '\0' : line[i]);          /* NUL is stored as NL */
+        (line[i] == NL) ? NUL : line[i]);          /* NUL is stored as NL */
     --clen;
     rlen += (int)STRLEN(IObuff + rlen);
     if (rlen > IOSIZE - 20)
@@ -2903,7 +2903,7 @@ int dbcs_head_off(char_u *base, char_u *p)
 
   /* It can't be a trailing byte when not using DBCS, at the start of the
    * string or the previous byte can't start a double-byte. */
-  if (p <= base || MB_BYTE2LEN(p[-1]) == 1 || *p == '\0')
+  if (p <= base || MB_BYTE2LEN(p[-1]) == 1 || *p == NUL)
     return 0;
 
   /* This is slow: need to start at the base and go forward until the
@@ -2929,7 +2929,7 @@ int dbcs_screen_head_off(char_u *base, char_u *p)
   if (p <= base
       || (enc_dbcs == DBCS_JPNU && p[-1] == 0x8e)
       || MB_BYTE2LEN(p[-1]) == 1
-      || *p == '\0')
+      || *p == NUL)
     return 0;
 
   /* This is slow: need to start at the base and go forward until the
@@ -3049,7 +3049,7 @@ int mb_tail_off(char_u *base, char_u *p)
   int i;
   int j;
 
-  if (*p == '\0')
+  if (*p == NUL)
     return 0;
 
   if (enc_utf8) {
@@ -3067,7 +3067,7 @@ int mb_tail_off(char_u *base, char_u *p)
 
   /* It can't be the first byte if a double-byte when not using DBCS, at the
    * end of the string or the byte can't start a double-byte. */
-  if (enc_dbcs == 0 || p[1] == '\0' || MB_BYTE2LEN(*p) == 1)
+  if (enc_dbcs == 0 || p[1] == NUL || MB_BYTE2LEN(*p) == 1)
     return 0;
 
   /* Return 1 when on the lead byte, 0 when on the tail byte. */
@@ -3104,7 +3104,7 @@ void utf_find_illegal()
       p = tofree;
     }
 
-    while (*p != '\0') {
+    while (*p != NUL) {
       /* Illegal means that there are not enough trail bytes (checked by
        * utf_ptr2len()) or too many of them (overlong sequence). */
       len = utf_ptr2len(p);
@@ -3116,7 +3116,7 @@ void utf_find_illegal()
           int l;
 
           len = (int)(p - tofree);
-          for (p = ml_get_cursor(); *p != '\0' && len-- > 0; p += l) {
+          for (p = ml_get_cursor(); *p != NUL && len-- > 0; p += l) {
             l = utf_ptr2len(p);
             curwin->w_cursor.col += l;
           }
@@ -3198,7 +3198,7 @@ int mb_charlen(char_u *str)
   if (p == NULL)
     return 0;
 
-  for (count = 0; *p != '\0'; count++)
+  for (count = 0; *p != NUL; count++)
     p += (*mb_ptr2len)(p);
 
   return count;
@@ -3212,7 +3212,7 @@ int mb_charlen_len(char_u *str, int len)
   char_u      *p = str;
   int count;
 
-  for (count = 0; *p != '\0' && p < str + len; count++)
+  for (count = 0; *p != NUL && p < str + len; count++)
     p += (*mb_ptr2len)(p);
 
   return count;
@@ -3235,7 +3235,7 @@ char_u * mb_unescape(char_u **pp)
   /* Must translate K_SPECIAL KS_SPECIAL KE_FILLER to K_SPECIAL and CSI
    * KS_EXTRA KE_CSI to CSI.
    * Maximum length of a utf-8 character is 4 bytes. */
-  for (n = 0; str[n] != '\0' && m < 4; ++n) {
+  for (n = 0; str[n] != NUL && m < 4; ++n) {
     if (str[n] == K_SPECIAL
         && str[n + 1] == KS_SPECIAL
         && str[n + 2] == KE_FILLER) {
@@ -3252,7 +3252,7 @@ char_u * mb_unescape(char_u **pp)
       break;                    /* a special key can't be a multibyte char */
     else
       buf[m++] = str[n];
-    buf[m] = '\0';
+    buf[m] = NUL;
 
     /* Return a multi-byte character if it's found.  An illegal sequence
      * will result in a 1 here. */
@@ -3289,7 +3289,7 @@ int mb_fix_col(int col, int row)
   row = check_row(row);
   if (has_mbyte && ScreenLines != NULL && col > 0
       && ((enc_dbcs
-          && ScreenLines[LineOffset[row] + col] != '\0'
+          && ScreenLines[LineOffset[row] + col] != NUL
           && dbcs_screen_head_off(ScreenLines + LineOffset[row],
             ScreenLines + LineOffset[row] + col))
         || (enc_utf8 && ScreenLines[LineOffset[row] + col] == 0)))
@@ -3335,13 +3335,13 @@ char_u * enc_canonize(char_u *enc)
   r = alloc((unsigned)(STRLEN(enc) + 3));
   /* Make it all lower case and replace '_' with '-'. */
   p = r;
-  for (s = enc; *s != '\0'; ++s) {
+  for (s = enc; *s != NUL; ++s) {
     if (*s == '_')
       *p++ = '-';
     else
       *p++ = TOLOWER_ASC(*s);
   }
-  *p = '\0';
+  *p = NUL;
 
   /* Skip "2byte-" and "8bit-". */
   p = enc_skip(r);
@@ -3408,16 +3408,16 @@ char_u * enc_locale()
   int i;
   char buf[50];
 # ifdef HAVE_NL_LANGINFO_CODESET
-  if ((s = nl_langinfo(CODESET)) == NULL || *s == '\0')
+  if ((s = nl_langinfo(CODESET)) == NULL || *s == NUL)
 # endif
 #  if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-    if ((s = setlocale(LC_CTYPE, NULL)) == NULL || *s == '\0')
+    if ((s = setlocale(LC_CTYPE, NULL)) == NULL || *s == NUL)
 #  endif
-      if ((s = (char *)os_getenv("LC_ALL")) == NULL || *s == '\0')
-        if ((s = (char *)os_getenv("LC_CTYPE")) == NULL || *s == '\0')
+      if ((s = (char *)os_getenv("LC_ALL")) == NULL || *s == NUL)
+        if ((s = (char *)os_getenv("LC_CTYPE")) == NULL || *s == NUL)
           s = (char *)os_getenv("LANG");
 
-  if (s == NULL || *s == '\0')
+  if (s == NULL || *s == NUL)
     return FAIL;
 
   /* The most generic locale format is:
@@ -3440,7 +3440,7 @@ char_u * enc_locale()
     } else
       s = p + 1;
   }
-  for (i = 0; s[i] != '\0' && i < (int)sizeof(buf) - 1; ++i) {
+  for (i = 0; s[i] != NUL && i < (int)sizeof(buf) - 1; ++i) {
     if (s[i] == '_' || s[i] == '-')
       buf[i] = '-';
     else if (isalnum((int)s[i]))
@@ -3448,7 +3448,7 @@ char_u * enc_locale()
     else
       break;
   }
-  buf[i] = '\0';
+  buf[i] = NUL;
 
   return enc_canonize((char_u *)buf);
 }
@@ -3549,7 +3549,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
     if (iconv(vcp->vc_fd, (void *)&from, &fromlen, &to, &tolen)
         != (size_t)-1) {
       /* Finished, append a NUL. */
-      *to = '\0';
+      *to = NUL;
       break;
     }
 
@@ -3558,7 +3558,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
     if (!vcp->vc_fail && unconvlenp != NULL
         && (ICONV_ERRNO == ICONV_EINVAL || ICONV_ERRNO == EINVAL)) {
       /* Handle an incomplete sequence at the end. */
-      *to = '\0';
+      *to = NUL;
       *unconvlenp = (int)fromlen;
       break;
     }
@@ -3766,7 +3766,7 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
   vcp->vc_fail = FALSE;
 
   /* No conversion when one of the names is empty or they are equal. */
-  if (from == NULL || *from == '\0' || to == NULL || *to == '\0'
+  if (from == NULL || *from == NUL || to == NULL || *to == NUL
       || STRCMP(from, to) == 0)
     return OK;
 
@@ -3918,7 +3918,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
           *d++ = 0x80 + (c & 0x3f);
         }
       }
-      *d = '\0';
+      *d = NUL;
       if (lenp != NULL)
         *lenp = (int)(d - retval);
       break;
@@ -3940,7 +3940,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
         }
         d += utf_char2bytes(c, d);
       }
-      *d = '\0';
+      *d = NUL;
       if (lenp != NULL)
         *lenp = (int)(d - retval);
       break;
@@ -3952,7 +3952,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
       for (i = 0; i < len; ++i) {
         l = utf_ptr2len_len(ptr + i, len - i);
         if (l == 0)
-          *d++ = '\0';
+          *d++ = NUL;
         else if (l == 1) {
           int l_w = utf8len_tab_zero[ptr[i]];
 
@@ -4003,7 +4003,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
           i += l - 1;
         }
       }
-      *d = '\0';
+      *d = NUL;
       if (lenp != NULL)
         *lenp = (int)(d - retval);
       break;

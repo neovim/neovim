@@ -31,13 +31,13 @@
 /*
  * lineempty() - return TRUE if the line is empty
  */
-#define lineempty(p) (*ml_get(p) == '\0')
+#define lineempty(p) (*ml_get(p) == NUL)
 
 /*
  * bufempty() - return TRUE if the current buffer is empty
  */
 #define bufempty() (curbuf->b_ml.ml_line_count == 1 && *ml_get((linenr_T)1) == \
-                    '\0')
+                    NUL)
 
 /*
  * toupper() and tolower() that use the current locale.

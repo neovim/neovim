@@ -110,7 +110,7 @@ int setmark_pos(int c, pos_T *pos, int fnum)
       curbuf->b_visual.vi_start = *pos;
     else
       curbuf->b_visual.vi_end = *pos;
-    if (curbuf->b_visual.vi_mode == '\0')
+    if (curbuf->b_visual.vi_mode == NUL)
       /* Visual_mode has not yet been set, use a sane default. */
       curbuf->b_visual.vi_mode = 'v';
     return OK;
@@ -336,7 +336,7 @@ pos_T *getmark_buf_fnum(buf_T *buf, int c, int changefile, int *fnum)
     pos = curwin->w_cursor;
     listcmd_busy = TRUE;            /* avoid that '' is changed */
     if (findpar(&oa.inclusive,
-            c == '}' ? FORWARD : BACKWARD, 1L, '\0', FALSE)) {
+            c == '}' ? FORWARD : BACKWARD, 1L, NUL, FALSE)) {
       pos_copy = curwin->w_cursor;
       posp = &pos_copy;
     }
@@ -609,12 +609,12 @@ static char_u *mark_line(pos_T *mp, int lead_len)
     return NULL;
   /* Truncate the line to fit it in the window */
   len = 0;
-  for (p = s; *p != '\0'; mb_ptr_adv(p)) {
+  for (p = s; *p != NUL; mb_ptr_adv(p)) {
     len += ptr2cells(p);
     if (len >= Columns - lead_len)
       break;
   }
-  *p = '\0';
+  *p = NUL;
   return s;
 }
 
@@ -627,7 +627,7 @@ void do_marks(exarg_T *eap)
   int i;
   char_u      *name;
 
-  if (arg != NULL && *arg == '\0')
+  if (arg != NULL && *arg == NUL)
     arg = NULL;
 
   show_one_mark('\'', arg, &curwin->w_pcmark, NULL, TRUE);
@@ -717,16 +717,16 @@ void ex_delmarks(exarg_T *eap)
   int digit;
   int n;
 
-  if (*eap->arg == '\0' && eap->forceit)
+  if (*eap->arg == NUL && eap->forceit)
     /* clear all marks */
     clrallmarks(curbuf);
   else if (eap->forceit)
     EMSG(_(e_invarg));
-  else if (*eap->arg == '\0')
+  else if (*eap->arg == NUL)
     EMSG(_(e_argreq));
   else {
     /* clear specified marks only */
-    for (p = eap->arg; *p != '\0'; ++p) {
+    for (p = eap->arg; *p != NUL; ++p) {
       lower = ASCII_ISLOWER(*p);
       digit = VIM_ISDIGIT(*p);
       if (lower || digit || ASCII_ISUPPER(*p)) {
@@ -1293,7 +1293,7 @@ static void write_one_filemark(FILE *fp, xfmark_T *fm, int c1, int c2)
     name = buflist_nr2name(fm->fmark.fnum, TRUE, FALSE);
   else
     name = fm->fname;                   /* use name from .viminfo */
-  if (name != NULL && *name != '\0') {
+  if (name != NULL && *name != NUL) {
     fprintf(fp, "%c%c  %" PRId64 "  %" PRId64 "  ",
             c1, c2, (int64_t)fm->fmark.mark.lnum, (int64_t)fm->fmark.mark.col);
     viminfo_writestring(fp, name);
@@ -1370,7 +1370,7 @@ int write_viminfo_marks(FILE *fp_out)
           }
       }
       if (is_mark_set && buf->b_ffname != NULL
-          && buf->b_ffname[0] != '\0' && !removable(buf->b_ffname)) {
+          && buf->b_ffname[0] != NUL && !removable(buf->b_ffname)) {
         home_replace(NULL, buf->b_ffname, IObuff, IOSIZE, TRUE);
         fprintf(fp_out, "\n> ");
         viminfo_writestring(fp_out, IObuff);
@@ -1418,7 +1418,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
   list_T      *list = NULL;
 
   name_buf = alloc(LSIZE);
-  *name_buf = '\0';
+  *name_buf = NUL;
 
   if (fp_out == NULL && (flags & (VIF_GET_OLDFILES | VIF_FORCEIT))) {
     list = list_alloc();
@@ -1447,11 +1447,11 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     if (str == NULL)
       continue;
     p = str + STRLEN(str);
-    while (p != str && (*p == '\0' || vim_isspace(*p)))
+    while (p != str && (*p == NUL || vim_isspace(*p)))
       p--;
     if (*p)
       p++;
-    *p = '\0';
+    *p = NUL;
 
     if (list != NULL)
       list_append_string(list, str, -1);
@@ -1463,7 +1463,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     load_marks = copy_marks_out = FALSE;
     if (fp_out == NULL) {
       if ((flags & VIF_WANT_MARKS) && curbuf->b_ffname != NULL) {
-        if (*name_buf == '\0')               /* only need to do this once */
+        if (*name_buf == NUL)               /* only need to do this once */
           home_replace(NULL, curbuf->b_ffname, name_buf, LSIZE, TRUE);
         if (fnamecmp(str, name_buf) == 0)
           load_marks = TRUE;
@@ -1492,7 +1492,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     pos.coladd = 0;
     while (!(eof = viminfo_readline(virp)) && line[0] == TAB) {
       if (load_marks) {
-        if (line[1] != '\0') {
+        if (line[1] != NUL) {
           int64_t lnum_64;
           unsigned u;
           sscanf((char *)line + 2, "%" SCNd64 "%u", &lnum_64, &u);

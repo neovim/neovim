@@ -347,11 +347,11 @@ int ml_open(buf_T *buf)
     b0p->b0_flags = get_fileformat(buf) + 1;
     set_b0_fname(b0p, buf);
     (void)os_get_user_name((char *)b0p->b0_uname, B0_UNAME_SIZE);
-    b0p->b0_uname[B0_UNAME_SIZE - 1] = '\0';
+    b0p->b0_uname[B0_UNAME_SIZE - 1] = NUL;
     os_get_hostname((char *)b0p->b0_hname, B0_HNAME_SIZE);
-    b0p->b0_hname[B0_HNAME_SIZE - 1] = '\0';
+    b0p->b0_hname[B0_HNAME_SIZE - 1] = NUL;
     long_to_char(os_get_pid(), b0p->b0_pid);
-    if (*buf->b_p_key != '\0')
+    if (*buf->b_p_key != NUL)
       ml_set_b0_crypt(buf, b0p);
   }
 
@@ -397,7 +397,7 @@ int ml_open(buf_T *buf)
   dp->db_index[0] = --dp->db_txt_start;         /* at end of block */
   dp->db_free -= 1 + INDEX_SIZE;
   dp->db_line_count = 1;
-  *((char_u *)dp + dp->db_txt_start) = '\0';     /* empty line */
+  *((char_u *)dp + dp->db_txt_start) = NUL;     /* empty line */
 
   return OK;
 
@@ -416,7 +416,7 @@ error:
  */
 static void ml_set_b0_crypt(buf_T *buf, ZERO_BL *b0p)
 {
-  if (*buf->b_p_key == '\0')
+  if (*buf->b_p_key == NUL)
     b0p->b0_id[1] = BLOCK0_ID1;
   else {
     if (get_crypt_method(buf) == 0)
@@ -574,7 +574,7 @@ void ml_setname(buf_T *buf)
    */
   dirp = p_dir;
   for (;; ) {
-    if (*dirp == '\0')               /* tried all directories, fail */
+    if (*dirp == NUL)               /* tried all directories, fail */
       break;
     fname = findswapname(buf, &dirp, mfp->mf_fname);
     /* alloc's fname */
@@ -671,7 +671,7 @@ void ml_open_file(buf_T *buf)
    */
   dirp = p_dir;
   for (;; ) {
-    if (*dirp == '\0')
+    if (*dirp == NUL)
       break;
     /* There is a small chance that between choosing the swap file name
      * and creating it, another Vim creates the file.  In that case the
@@ -835,7 +835,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
   struct stat st;
 
   if (buf->b_ffname == NULL)
-    b0p->b0_fname[0] = '\0';
+    b0p->b0_fname[0] = NUL;
   else {
     char uname[B0_UNAME_SIZE];
 
@@ -909,7 +909,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   /* Without encryption use the same offset as in Vim 7.2 to be compatible.
    * With encryption it's OK to move elsewhere, the swap file is not
    * compatible anyway. */
-  if (*buf->b_p_key != '\0')
+  if (*buf->b_p_key != NUL)
     size = B0_FNAME_SIZE_CRYPT;
 
   n = (int)STRLEN(buf->b_p_fenc);
@@ -918,7 +918,7 @@ static void add_b0_fenc(ZERO_BL *b0p, buf_T *buf)
   else {
     memmove((char *)b0p->b0_fname + size - n,
         (char *)buf->b_p_fenc, (size_t)n);
-    *(b0p->b0_fname + size - n - 1) = '\0';
+    *(b0p->b0_fname + size - n - 1) = NUL;
     b0p->b0_flags |= B0_HAS_FENC;
   }
 }
@@ -1087,7 +1087,7 @@ void ml_recover(void)
         attr | MSG_HIST);
     MSG_PUTS_ATTR(_("The file was created on "), attr | MSG_HIST);
     /* avoid going past the end of a corrupted hostname */
-    b0p->b0_fname[0] = '\0';
+    b0p->b0_fname[0] = NUL;
     MSG_PUTS_ATTR(b0p->b0_hname, attr | MSG_HIST);
     MSG_PUTS_ATTR(_(",\nor the file has been damaged."), attr | MSG_HIST);
     msg_end();
@@ -1173,7 +1173,7 @@ void ml_recover(void)
     /* Use the same size as in add_b0_fenc(). */
     if (b0p->b0_id[1] != BLOCK0_ID1)
       fnsize = B0_FNAME_SIZE_CRYPT;
-    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != '\0'; --p)
+    for (p = b0p->b0_fname + fnsize; p > b0p->b0_fname && p[-1] != NUL; --p)
       ;
     b0_fenc = vim_strnsave(p, (int)(b0p->b0_fname + fnsize - p));
   }
@@ -1200,7 +1200,7 @@ void ml_recover(void)
   if (b0_cm >= 0) {
     /* Need to ask the user for the crypt key.  If this fails we continue
      * without a key, will probably get garbage text. */
-    if (*curbuf->b_p_key != '\0') {
+    if (*curbuf->b_p_key != NUL) {
       smsg((char_u *)_("Swap file is encrypted: \"%s\""), fname_used);
       MSG_PUTS(_(
               "\nIf you entered a new crypt key but did not write the text file,"));
@@ -1213,7 +1213,7 @@ void ml_recover(void)
     buf->b_p_key = get_crypt_key(FALSE, FALSE);
     if (buf->b_p_key == NULL)
       buf->b_p_key = curbuf->b_p_key;
-    else if (*buf->b_p_key == '\0') {
+    else if (*buf->b_p_key == NUL) {
       vim_free(buf->b_p_key);
       buf->b_p_key = curbuf->b_p_key;
     }
@@ -1349,7 +1349,7 @@ void ml_recover(void)
           }
 
           /* make sure there is a NUL at the end of the block */
-          *((char_u *)dp + dp->db_txt_end - 1) = '\0';
+          *((char_u *)dp + dp->db_txt_end - 1) = NUL;
 
           /*
            * check number of lines in block
@@ -1403,7 +1403,7 @@ void ml_recover(void)
   if (orig_file_status != OK || curbuf->b_ml.ml_line_count != lnum * 2 + 1) {
     /* Recovering an empty file results in two lines and the first line is
      * empty.  Don't set the modified flag then. */
-    if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == '\0')) {
+    if (!(curbuf->b_ml.ml_line_count == 2 && *ml_get(1) == NUL)) {
       changed_int();
       ++curbuf->b_changedtick;
     }
@@ -1452,7 +1452,7 @@ void ml_recover(void)
     MSG_PUTS(_("\nYou may want to delete the .swp file now.\n\n"));
     cmdline_row = msg_row;
   }
-  if (*buf->b_p_key != '\0' && STRCMP(curbuf->b_p_key, buf->b_p_key) != 0) {
+  if (*buf->b_p_key != NUL && STRCMP(curbuf->b_p_key, buf->b_p_key) != 0) {
     MSG_PUTS(_("Using crypt key from swap file for the text file.\n"));
     set_option_value((char_u *)"key", 0L, buf->b_p_key, OPT_LOCAL);
   }
@@ -1546,7 +1546,7 @@ recover_names (
      */
     (void)copy_option_part(&dirp, dir_name, 31000, ",");
 
-    if (dir_name[0] == '.' && dir_name[1] == '\0') {     /* check current dir */
+    if (dir_name[0] == '.' && dir_name[1] == NUL) {     /* check current dir */
       if (fname == NULL) {
         names[0] = vim_strsave((char_u *)"*.sw?");
 #if defined(UNIX) || defined(WIN3264)
@@ -1606,7 +1606,7 @@ recover_names (
      * not able to execute the shell).
      * Try finding a swap file by simply adding ".swp" to the file name.
      */
-    if (*dirp == '\0' && file_count + num_files == 0 && fname != NULL) {
+    if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
       struct stat st;
       char_u          *swapname;
 
@@ -1650,7 +1650,7 @@ recover_names (
         dirp = (char_u *)"";                        /* stop searching */
       }
     } else if (list) {
-      if (dir_name[0] == '.' && dir_name[1] == '\0') {
+      if (dir_name[0] == '.' && dir_name[1] == NUL) {
         if (fname == NULL)
           MSG_PUTS(_("   In current directory:\n"));
         else
@@ -1698,7 +1698,7 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
   d = NULL;
   if (f != NULL) {
     s = (char_u *)xstrdup((char *)f);
-    for (d = s; *d != '\0'; mb_ptr_adv(d))
+    for (d = s; *d != NUL; mb_ptr_adv(d))
       if (vim_ispathsep(*d))
         *d = '%';
     d = concat_fnames(dir, s, TRUE);
@@ -1759,7 +1759,7 @@ static time_t swapfile_info(char_u *fname)
         MSG_PUTS(_("         [does not look like a Vim swap file]"));
       } else {
         MSG_PUTS(_("         file name: "));
-        if (b0.b0_fname[0] == '\0')
+        if (b0.b0_fname[0] == NUL)
           MSG_PUTS(_("[No Name]"));
         else
           msg_outtrans(b0.b0_fname);
@@ -1767,13 +1767,13 @@ static time_t swapfile_info(char_u *fname)
         MSG_PUTS(_("\n          modified: "));
         MSG_PUTS(b0.b0_dirty ? _("YES") : _("no"));
 
-        if (*(b0.b0_uname) != '\0') {
+        if (*(b0.b0_uname) != NUL) {
           MSG_PUTS(_("\n         user name: "));
           msg_outtrans(b0.b0_uname);
         }
 
-        if (*(b0.b0_hname) != '\0') {
-          if (*(b0.b0_uname) != '\0')
+        if (*(b0.b0_hname) != NUL) {
+          if (*(b0.b0_uname) != NUL)
             MSG_PUTS(_("   host name: "));
           else
             MSG_PUTS(_("\n         host name: "));
@@ -3349,7 +3349,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
       /* There must be some error reading links, use original name. */
       return FAIL;
     }
-    buf[ret] = '\0';
+    buf[ret] = NUL;
 
     /*
      * Check whether the symlink is relative or absolute.
@@ -3422,7 +3422,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
       FALSE
 #else
       /* Prepend a '.' to the swap file name for the current directory. */
-      dir_name[0] == '.' && dir_name[1] == '\0'
+      dir_name[0] == '.' && dir_name[1] == NUL
 #endif
       );
   if (r == NULL)            /* out of memory */
@@ -3458,14 +3458,14 @@ get_file_in_dir (
 
   tail = path_tail(fname);
 
-  if (dname[0] == '.' && dname[1] == '\0')
+  if (dname[0] == '.' && dname[1] == NUL)
     retval = vim_strsave(fname);
   else if (dname[0] == '.' && vim_ispathsep(dname[1])) {
     if (tail == fname)              /* no path before file name */
       retval = concat_fnames(dname + 2, tail, TRUE);
     else {
       save_char = *tail;
-      *tail = '\0';
+      *tail = NUL;
       t = concat_fnames(fname, dname + 2, TRUE);
       *tail = save_char;
       retval = concat_fnames(t, tail, TRUE);
@@ -3667,7 +3667,7 @@ findswapname (
           fname2[n - 1] = 'x';
         else if (*path_tail(fname) == '.') {
           fname2[n] = 'x';
-          fname2[n + 1] = '\0';
+          fname2[n + 1] = NUL;
         } else
           fname2[n - 5] += 1;
         /*

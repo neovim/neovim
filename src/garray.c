@@ -189,7 +189,7 @@ void append_ga_line(garray_T *gap)
       && (((char_u *)gap->ga_data)[gap->ga_len - 1] == CAR)) {
     gap->ga_len--;
   }
-  ga_append(gap, '\0');
+  ga_append(gap, NUL);
   ml_append(curwin->w_cursor.lnum++, gap->ga_data, 0, FALSE);
   gap->ga_len = 0;
 }

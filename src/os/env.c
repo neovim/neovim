@@ -42,7 +42,7 @@ char *os_getenvname_at_index(size_t index)
     return NULL;
   }
   int namesize = 0;
-  while (str[namesize] != '=' && str[namesize] != '\0') {
+  while (str[namesize] != '=' && str[namesize] != NUL) {
     namesize++;
   }
   char *name = (char *)vim_strnsave((char_u *)str, namesize);

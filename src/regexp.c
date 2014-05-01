@@ -1092,12 +1092,12 @@ static char_u *skip_anyof(char_u *p)
     ++p;
   if (*p == ']' || *p == '-')
     ++p;
-  while (*p != '\0' && *p != ']') {
+  while (*p != NUL && *p != ']') {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
       p += l;
     else if (*p == '-')  {
       ++p;
-      if (*p != ']' && *p != '\0')
+      if (*p != ']' && *p != NUL)
         mb_ptr_adv(p);
     } else if (*p == '\\'
                && !reg_cpo_bsl
@@ -1136,15 +1136,15 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
     mymagic = MAGIC_OFF;
   get_cpo_flags();
 
-  for (; p[0] != '\0'; mb_ptr_adv(p)) {
+  for (; p[0] != NUL; mb_ptr_adv(p)) {
     if (p[0] == dirc)           /* found end of regexp */
       break;
     if ((p[0] == '[' && mymagic >= MAGIC_ON)
         || (p[0] == '\\' && p[1] == '[' && mymagic <= MAGIC_OFF)) {
       p = skip_anyof(p + 1);
-      if (p[0] == '\0')
+      if (p[0] == NUL)
         break;
-    } else if (p[0] == '\\' && p[1] != '\0')   {
+    } else if (p[0] == '\\' && p[1] != NUL)   {
       if (dirc == '?' && newp != NULL && p[1] == '?') {
         /* change "\?" to "?", make a copy first. */
         if (*newp == NULL) {
@@ -1236,7 +1236,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   }
 
   /* Dig out information for optimizations. */
-  r->regstart = '\0';            /* Worst-case defaults. */
+  r->regstart = NUL;            /* Worst-case defaults. */
   r->reganch = 0;
   r->regmust = NULL;
   r->regmlen = 0;
@@ -1439,7 +1439,7 @@ reg (
       EMSG2_RET_NULL(_(e_unmatchedpp), reg_magic == MAGIC_ALL);
     else
       EMSG2_RET_NULL(_(e_unmatchedp), reg_magic == MAGIC_ALL);
-  } else if (paren == REG_NOPAREN && peekchr() != '\0') {
+  } else if (paren == REG_NOPAREN && peekchr() != NUL) {
     if (curchr == Magic(')'))
       EMSG2_RET_NULL(_(e_unmatchedpar), reg_magic == MAGIC_ALL);
     else
@@ -1511,7 +1511,7 @@ static char_u *regconcat(int *flagp)
 
   while (cont) {
     switch (peekchr()) {
-    case '\0':
+    case NUL:
     case Magic('|'):
     case Magic('&'):
     case Magic(')'):
@@ -1823,7 +1823,7 @@ static char_u *regatom(int *flagp)
       /* In a string "\n" matches a newline character. */
       ret = regnode(EXACTLY);
       regc(NL);
-      regc('\0');
+      regc(NUL);
       *flagp |= HASWIDTH | SIMPLE;
     } else {
       /* In buffer text "\n" matches the end of a line. */
@@ -1841,7 +1841,7 @@ static char_u *regatom(int *flagp)
     *flagp |= flags & (HASWIDTH | SPSTART | HASNL | HASLOOKBH);
     break;
 
-  case '\0':
+  case NUL:
   case Magic('|'):
   case Magic('&'):
   case Magic(')'):
@@ -1869,10 +1869,10 @@ static char_u *regatom(int *flagp)
 
       ret = regnode(EXACTLY);
       lp = reg_prev_sub;
-      while (*lp != '\0')
+      while (*lp != NUL)
         regc(*lp++);
-      regc('\0');
-      if (*reg_prev_sub != '\0') {
+      regc(NUL);
+      if (*reg_prev_sub != NUL) {
         *flagp |= HASWIDTH;
         if ((lp - reg_prev_sub) == 1)
           *flagp |= SIMPLE;
@@ -1904,11 +1904,11 @@ static char_u *regatom(int *flagp)
     if (!had_endbrace[refnum]) {
       /* Trick: check if "@<=" or "@<!" follows, in which case
        * the \1 can appear before the referenced match. */
-      for (p = regparse; *p != '\0'; ++p)
+      for (p = regparse; *p != NUL; ++p)
         if (p[0] == '@' && p[1] == '<'
             && (p[2] == '!' || p[2] == '='))
           break;
-      if (*p == '\0')
+      if (*p == NUL)
         EMSG_RET_NULL(_("E65: Illegal back reference"));
     }
     ret = regnode(BACKREF + refnum);
@@ -1999,7 +1999,7 @@ static char_u *regatom(int *flagp)
 
         ret = NULL;
         while ((c = getchr()) != ']') {
-          if (c == '\0')
+          if (c == NUL)
             EMSG2_RET_NULL(_(e_missing_sb),
                 reg_magic == MAGIC_ALL);
           br = regnode(BRANCH);
@@ -2066,7 +2066,7 @@ static char_u *regatom(int *flagp)
         regc(0x0a);
       else
         regmbc(i);
-      regc('\0');
+      regc(NUL);
       *flagp |= HASWIDTH;
       break;
     }
@@ -2150,12 +2150,12 @@ collection:
           regc(*regparse++);
         }
 
-        while (*regparse != '\0' && *regparse != ']') {
+        while (*regparse != NUL && *regparse != ']') {
           if (*regparse == '-') {
             ++regparse;
             /* The '-' is not used for a range at the end and
              * after or before a '\n'. */
-            if (*regparse == ']' || *regparse == '\0'
+            if (*regparse == ']' || *regparse == NUL
                 || startc == -1
                 || (regparse[0] == '\\' && regparse[1] == 'n')) {
               regc('-');
@@ -2345,7 +2345,7 @@ collection:
             }
           }
         }
-        regc('\0');
+        regc(NUL);
         prevchr_len = 1;                /* last char was the ']' */
         if (*regparse != ']')
           EMSG_RET_NULL(_(e_toomsbra));                 /* Cannot happen? */
@@ -2382,7 +2382,7 @@ do_multibyte:
      * But always emit at least one character.  Might be a Multi,
      * e.g., a "[" without matching "]".
      */
-    for (len = 0; c != '\0' && (len == 0
+    for (len = 0; c != NUL && (len == 0
                                || (re_multi_type(peekchr()) == NOT_MULTI
                                    && !one_exactly
                                    && !is_Magic(c))); ++len) {
@@ -2407,7 +2407,7 @@ do_multibyte:
     }
     ungetchr();
 
-    regc('\0');
+    regc(NUL);
     *flagp |= HASWIDTH;
     if (len == 1)
       *flagp |= SIMPLE;
@@ -2442,8 +2442,8 @@ static char_u *regnode(int op)
     regsize += 3;
   else {
     *regcode++ = op;
-    *regcode++ = '\0';                   /* Null "next" pointer. */
-    *regcode++ = '\0';
+    *regcode++ = NUL;                   /* Null "next" pointer. */
+    *regcode++ = NUL;
   }
   return ret;
 }
@@ -2495,8 +2495,8 @@ static void reginsert(int op, char_u *opnd)
 
   place = opnd;                 /* Op node, where operand used to be. */
   *place++ = op;
-  *place++ = '\0';
-  *place = '\0';
+  *place++ = NUL;
+  *place = NUL;
 }
 
 /*
@@ -2521,8 +2521,8 @@ static void reginsert_nr(int op, long val, char_u *opnd)
 
   place = opnd;                 /* Op node, where operand used to be. */
   *place++ = op;
-  *place++ = '\0';
-  *place++ = '\0';
+  *place++ = NUL;
+  *place++ = NUL;
   re_put_long(place, (long_u)val);
 }
 
@@ -2550,8 +2550,8 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 
   place = opnd;                 /* Op node, where operand used to be. */
   *place++ = op;
-  *place++ = '\0';
-  *place++ = '\0';
+  *place++ = NUL;
+  *place++ = NUL;
   place = re_put_long(place, (long_u)minval);
   place = re_put_long(place, (long_u)maxval);
   regtail(opnd, place);
@@ -2753,7 +2753,7 @@ static int peekchr(void)
         while (p[0] == '\\' && (p[1] == 'c' || p[1] == 'C'
                                 || p[1] == 'm' || p[1] == 'M' || p[1] == 'Z'))
           p += 2;
-        if (p[0] == '\0'
+        if (p[0] == NUL
             || (p[0] == '\\'
                 && (p[1] == '|' || p[1] == '&' || p[1] == ')'
                     || p[1] == 'n'))
@@ -2765,7 +2765,7 @@ static int peekchr(void)
     {
       int c = regparse[1];
 
-      if (c == '\0')
+      if (c == NUL)
         curchr = '\\';                  /* trailing '\' */
       else if (
         c <= '~' && META_flags[c]
@@ -2825,7 +2825,7 @@ static void skipchr(void)
     prevchr_len = 1;
   else
     prevchr_len = 0;
-  if (regparse[prevchr_len] != '\0') {
+  if (regparse[prevchr_len] != NUL) {
     if (enc_utf8)
       /* exclude composing chars that mb_ptr2len does include */
       prevchr_len += utf_ptr2len(regparse + prevchr_len);
@@ -3479,7 +3479,7 @@ proftime_T  *tm;         /* timeout limit or NULL */
       c = (*mb_ptr2char)(regline + col);
     else
       c = regline[col];
-    if (prog->regstart == '\0'
+    if (prog->regstart == NUL
         || prog->regstart == c
         || (ireg_ic && ((
                           (enc_utf8 && utf_fold(prog->regstart) == utf_fold(c)))
@@ -3492,7 +3492,7 @@ proftime_T  *tm;         /* timeout limit or NULL */
     int tm_count = 0;
     /* Messy cases:  unanchored match. */
     while (!got_int) {
-      if (prog->regstart != '\0') {
+      if (prog->regstart != NUL) {
         /* Skip until the char we know it must start with.
          * Used often, do some work to avoid call overhead. */
         if (!ireg_ic
@@ -3523,7 +3523,7 @@ proftime_T  *tm;         /* timeout limit or NULL */
         reglnum = 0;
         regline = reg_getline((linenr_T)0);
       }
-      if (regline[col] == '\0')
+      if (regline[col] == NUL)
         break;
       if (has_mbyte)
         col += (*mb_ptr2len)(regline + col);
@@ -3827,7 +3827,7 @@ regmatch (
       op = OP(scan);
       /* Check for character class with NL added. */
       if (!reg_line_lbr && WITH_NL(op) && REG_MULTI
-          && *reginput == '\0' && reglnum <= reg_maxline) {
+          && *reginput == NUL && reglnum <= reg_maxline) {
         reg_nextline();
       } else if (reg_line_lbr && WITH_NL(op) && *reginput == '\n') {
         ADVANCE_REGINPUT();
@@ -3845,7 +3845,7 @@ regmatch (
           break;
 
         case EOL:
-          if (c != '\0')
+          if (c != NUL)
             status = RA_NOMATCH;
           break;
 
@@ -3859,7 +3859,7 @@ regmatch (
           break;
 
         case RE_EOF:
-          if (reglnum != reg_maxline || c != '\0')
+          if (reglnum != reg_maxline || c != NUL)
             status = RA_NOMATCH;
           break;
 
@@ -3919,7 +3919,7 @@ regmatch (
           break;
 
         case BOW:       /* \<word; reginput points to w */
-          if (c == '\0')         /* Can't match at end of line */
+          if (c == NUL)         /* Can't match at end of line */
             status = RA_NOMATCH;
           else if (has_mbyte) {
             int this_class;
@@ -3952,14 +3952,14 @@ regmatch (
               status = RA_NOMATCH;
           } else {
             if (!vim_iswordc_buf(reginput[-1], reg_buf)
-                || (reginput[0] != '\0' && vim_iswordc_buf(c, reg_buf)))
+                || (reginput[0] != NUL && vim_iswordc_buf(c, reg_buf)))
               status = RA_NOMATCH;
           }
           break;   /* Matched with EOW */
 
         case ANY:
           /* ANY does not match new lines. */
-          if (c == '\0')
+          if (c == NUL)
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4029,7 +4029,7 @@ regmatch (
           break;
 
         case NWHITE:
-          if (c == '\0' || vim_iswhite(c))
+          if (c == NUL || vim_iswhite(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4043,7 +4043,7 @@ regmatch (
           break;
 
         case NDIGIT:
-          if (c == '\0' || ri_digit(c))
+          if (c == NUL || ri_digit(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4057,7 +4057,7 @@ regmatch (
           break;
 
         case NHEX:
-          if (c == '\0' || ri_hex(c))
+          if (c == NUL || ri_hex(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4071,7 +4071,7 @@ regmatch (
           break;
 
         case NOCTAL:
-          if (c == '\0' || ri_octal(c))
+          if (c == NUL || ri_octal(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4085,7 +4085,7 @@ regmatch (
           break;
 
         case NWORD:
-          if (c == '\0' || ri_word(c))
+          if (c == NUL || ri_word(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4099,7 +4099,7 @@ regmatch (
           break;
 
         case NHEAD:
-          if (c == '\0' || ri_head(c))
+          if (c == NUL || ri_head(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4113,7 +4113,7 @@ regmatch (
           break;
 
         case NALPHA:
-          if (c == '\0' || ri_alpha(c))
+          if (c == NUL || ri_alpha(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4127,7 +4127,7 @@ regmatch (
           break;
 
         case NLOWER:
-          if (c == '\0' || ri_lower(c))
+          if (c == NUL || ri_lower(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4141,7 +4141,7 @@ regmatch (
           break;
 
         case NUPPER:
-          if (c == '\0' || ri_upper(c))
+          if (c == NUL || ri_upper(c))
             status = RA_NOMATCH;
           else
             ADVANCE_REGINPUT();
@@ -4159,10 +4159,10 @@ regmatch (
                     !enc_utf8 &&
                     vim_tolower(*opnd) != vim_tolower(*reginput))))
             status = RA_NOMATCH;
-          else if (*opnd == '\0') {
+          else if (*opnd == NUL) {
             /* match empty string always works; happens when "~" is
              * empty. */
-          } else if (opnd[1] == '\0'
+          } else if (opnd[1] == NUL
                      && !(enc_utf8 && ireg_ic)
                      )
             ++reginput;                 /* matched a single char */
@@ -4187,7 +4187,7 @@ regmatch (
 
         case ANYOF:
         case ANYBUT:
-          if (c == '\0')
+          if (c == NUL)
             status = RA_NOMATCH;
           else if ((cstrchr(OPERAND(scan), c) == NULL) == (op == ANYOF))
             status = RA_NOMATCH;
@@ -4214,7 +4214,7 @@ regmatch (
               /* When only a composing char is given match at any
                * position where that composing char appears. */
               status = RA_NOMATCH;
-              for (i = 0; reginput[i] != '\0'; i += utf_char2len(inpc)) {
+              for (i = 0; reginput[i] != NUL; i += utf_char2len(inpc)) {
                 inpc = mb_ptr2char(reginput + i);
                 if (!utf_iscomposing(inpc)) {
                   if (i > 0)
@@ -4573,8 +4573,8 @@ regmatch (
             } else
               rst.nextb_ic = rst.nextb;
           } else {
-            rst.nextb = '\0';
-            rst.nextb_ic = '\0';
+            rst.nextb = NUL;
+            rst.nextb_ic = NUL;
           }
           if (op != BRACE_SIMPLE) {
             rst.minval = (op == STAR) ? 0 : 1;
@@ -4670,7 +4670,7 @@ regmatch (
           break;
 
         case NEWL:
-          if ((c != '\0' || !REG_MULTI || reglnum > reg_maxline
+          if ((c != NUL || !REG_MULTI || reglnum > reg_maxline
                || reg_line_lbr) && (c != '\n' || !reg_line_lbr))
             status = RA_NOMATCH;
           else if (reg_line_lbr)
@@ -4998,7 +4998,7 @@ regmatch (
             status = RA_NOMATCH;
 
           /* If it could match, try it. */
-          if (rst->nextb == '\0' || *reginput == rst->nextb
+          if (rst->nextb == NUL || *reginput == rst->nextb
               || *reginput == rst->nextb_ic) {
             reg_save(&rp->rs_un.regsave, &backpos);
             scan = regnext(rp->rs_scan);
@@ -5110,7 +5110,7 @@ regrepeat (
     while (count < maxcount) {
       /* Matching anything means we continue until end-of-line (or
        * end-of-file for ANY + ADD_NL), only limited by maxcount. */
-      while (*scan != '\0' && count < maxcount) {
+      while (*scan != NUL && count < maxcount) {
         ++count;
         mb_ptr_adv(scan);
       }
@@ -5134,7 +5134,7 @@ regrepeat (
     while (count < maxcount) {
       if (vim_isIDc(PTR2CHAR(scan)) && (testval || !VIM_ISDIGIT(*scan))) {
         mb_ptr_adv(scan);
-      } else if (*scan == '\0') {
+      } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
             || reg_line_lbr)
           break;
@@ -5160,7 +5160,7 @@ regrepeat (
       if (vim_iswordp_buf(scan, reg_buf)
           && (testval || !VIM_ISDIGIT(*scan))) {
         mb_ptr_adv(scan);
-      } else if (*scan == '\0') {
+      } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
             || reg_line_lbr)
           break;
@@ -5185,7 +5185,7 @@ regrepeat (
     while (count < maxcount) {
       if (vim_isfilec(PTR2CHAR(scan)) && (testval || !VIM_ISDIGIT(*scan))) {
         mb_ptr_adv(scan);
-      } else if (*scan == '\0') {
+      } else if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
             || reg_line_lbr)
           break;
@@ -5208,7 +5208,7 @@ regrepeat (
   case SPRINT:
   case SPRINT + ADD_NL:
     while (count < maxcount) {
-      if (*scan == '\0') {
+      if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
             || reg_line_lbr)
           break;
@@ -5233,7 +5233,7 @@ regrepeat (
 do_class:
     while (count < maxcount) {
       int l;
-      if (*scan == '\0') {
+      if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
             || reg_line_lbr)
           break;
@@ -5380,7 +5380,7 @@ do_class:
   case ANYBUT + ADD_NL:
     while (count < maxcount) {
       int len;
-      if (*scan == '\0') {
+      if (*scan == NUL) {
         if (!REG_MULTI || !WITH_NL(OP(p)) || reglnum > reg_maxline
             || reg_line_lbr)
           break;
@@ -5405,7 +5405,7 @@ do_class:
 
   case NEWL:
     while (count < maxcount
-           && ((*scan == '\0' && reglnum <= reg_maxline && !reg_line_lbr
+           && ((*scan == NUL && reglnum <= reg_maxline && !reg_line_lbr
                 && REG_MULTI) || (*scan == '\n' && reg_line_lbr))) {
       count++;
       if (reg_line_lbr)
@@ -5760,7 +5760,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
         || op == EXACTLY) {
       /* Literal string, where present. */
       fprintf(f, "\nxxxxxxxxx\n");
-      while (*s != '\0')
+      while (*s != NUL)
         fprintf(f, "%c", *s++);
       fprintf(f, "\nxxxxxxxxx\n");
       s++;
@@ -5769,7 +5769,7 @@ static void regdump(char_u *pattern, bt_regprog_T *r)
   }
 
   /* Header fields of interest. */
-  if (r->regstart != '\0')
+  if (r->regstart != NUL)
     fprintf(f, "start `%s' 0x%x; ", r->regstart < 256
         ? (char *)transchar(r->regstart)
         : "multibyte", r->regstart);
@@ -6314,7 +6314,7 @@ static char_u *cstrchr(char_u *s, int c)
     return vim_strchr(s, c);
 
   if (has_mbyte) {
-    for (p = s; *p != '\0'; p += (*mb_ptr2len)(p)) {
+    for (p = s; *p != NUL; p += (*mb_ptr2len)(p)) {
       if (enc_utf8 && c > 0x80) {
         if (utf_fold(utf_ptr2char(p)) == cc)
           return p;
@@ -6323,7 +6323,7 @@ static char_u *cstrchr(char_u *s, int c)
     }
   } else
     /* Faster version for when there are no multi-byte characters. */
-    for (p = s; *p != '\0'; ++p)
+    for (p = s; *p != NUL; ++p)
       if (*p == c || *p == cc)
         return p;
 
@@ -6564,13 +6564,13 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       if (eval_result != NULL) {
         int had_backslash = FALSE;
 
-        for (s = eval_result; *s != '\0'; mb_ptr_adv(s)) {
+        for (s = eval_result; *s != NUL; mb_ptr_adv(s)) {
           /* Change NL to CR, so that it becomes a line break,
            * unless called from vim_regexec_nl().
            * Skip over a backslashed character. */
           if (*s == NL && !submatch_line_lbr)
             *s = CAR;
-          else if (*s == '\\' && s[1] != '\0') {
+          else if (*s == '\\' && s[1] != NUL) {
             ++s;
             /* Change NL to CR here too, so that this works:
              * :s/abc\\\ndef/\="aaa\\\nbbb"/  on text:
@@ -6605,10 +6605,10 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       can_f_submatch = FALSE;
     }
   } else
-    while ((c = *src++) != '\0') {
+    while ((c = *src++) != NUL) {
       if (c == '&' && magic)
         no = 0;
-      else if (c == '\\' && *src != '\0') {
+      else if (c == '\\' && *src != NUL) {
         if (*src == '&' && !magic) {
           ++src;
           no = 0;
@@ -6631,7 +6631,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
         }
       }
       if (no < 0) {           /* Ordinary character. */
-        if (c == K_SPECIAL && src[0] != '\0' && src[1] != '\0') {
+        if (c == K_SPECIAL && src[0] != NUL && src[1] != NUL) {
           /* Copy a special key as-is. */
           if (copy) {
             *dst++ = c;
@@ -6644,7 +6644,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
           continue;
         }
 
-        if (c == '\\' && *src != '\0') {
+        if (c == '\\' && *src != NUL) {
           /* Check for abbreviations -- webb */
           switch (*src) {
           case 'r':   c = CAR;        ++src;  break;
@@ -6734,7 +6734,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
                   len = (int)STRLEN(s);
               } else
                 break;
-            } else if (*s == '\0') {   /* we hit NUL. */
+            } else if (*s == NUL) {   /* we hit NUL. */
               if (copy)
                 EMSG(_(e_re_damg));
               goto exit;
@@ -6795,7 +6795,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       }
     }
   if (copy)
-    *dst = '\0';
+    *dst = NUL;
 
 exit:
   return (int)((dst - dest) + 1);
@@ -6884,7 +6884,7 @@ char_u *reg_submatch(int no)
               submatch_mmatch->endpos[no].col);
         len += submatch_mmatch->endpos[no].col;
         if (round == 2)
-          retval[len] = '\0';
+          retval[len] = NUL;
         ++len;
       }
 
