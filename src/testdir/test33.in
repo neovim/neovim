@@ -3,6 +3,8 @@ If the lisp feature is not enabled, this will fail!
 
 STARTTEST
 :so small.vim
+:set nocp
+:set cpo=p
 :set lisp
 /^(defun
 =G:/^(defun/,$w! test.out
