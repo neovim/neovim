@@ -1,3 +1,6 @@
+#ifndef NEOVIM_TERM_DEFS_H
+#define NEOVIM_TERM_DEFS_H
+
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -153,3 +156,5 @@ extern char_u *(term_strings[]);    /* current terminal strings */
 #define TMODE_COOK  0   /* terminal mode for external cmds and Ex mode */
 #define TMODE_SLEEP 1   /* terminal mode for sleeping (cooked but no echo) */
 #define TMODE_RAW   2   /* terminal mode for Normal and Insert mode */
+
+#endif  // NEOVIM_TERM_DEFS_H

@@ -1,3 +1,6 @@
+#ifndef NEOVIM_MACROS_H
+#define NEOVIM_MACROS_H
+
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -159,3 +162,5 @@
 # define PTR2CHAR(p)        (has_mbyte ? mb_ptr2char(p) : (int)*(p))
 
 # define RESET_BINDING(wp)  (wp)->w_p_scb = FALSE; (wp)->w_p_crb = FALSE
+
+#endif  // NEOVIM_MACROS_H

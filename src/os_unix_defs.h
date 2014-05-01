@@ -1,3 +1,6 @@
+#ifndef NEOVIM_OS_UNIX_DEFS_H
+#define NEOVIM_OS_UNIX_DEFS_H
+
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
  *
@@ -277,3 +280,5 @@
 
 /* We have three kinds of ACL support. */
 #define HAVE_ACL (HAVE_POSIX_ACL || HAVE_SOLARIS_ACL || HAVE_AIX_ACL)
+
+#endif  // NEOVIM_OS_UNIX_DEFS_H
