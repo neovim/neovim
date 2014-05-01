@@ -21,7 +21,7 @@ int clip_isautosel_plus(void);
 void clip_modeless(int button, int is_click, int is_drag);
 void clip_start_selection(int col, int row, int repeated_click);
 void clip_process_selection(int button, int col, int row,
-                            int_u repeated_click);
+                            uint32_t repeated_click);
 void clip_may_redraw_selection(int row, int col, int len);
 void clip_clear_selection(VimClipboard *cbd);
 void clip_may_clear_selection(int row1, int row2);

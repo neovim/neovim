@@ -15,6 +15,5 @@
  * already defined, so we use char_u to avoid trouble.
  */
 typedef unsigned char char_u;
-typedef unsigned int int_u;
 
 #endif /* NEOVIM_TYPES_H */
