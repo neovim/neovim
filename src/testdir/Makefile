@@ -50,7 +50,7 @@ ifdef USE_VALGRIND
 	                 --error-exitcode=123                \
 	                 --log-file=valgrind.\%p.$*          \
 	                 $(VGDB)                             \
-	                 --trace-children=yes                \
+	                 --trace-children=yes
 else
 	ifdef USE_GDB
 		TOOL = gdb --args
