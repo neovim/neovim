@@ -4195,8 +4195,7 @@ find_pattern_in_path (
       if (new_fname != NULL) {
         /* Push the new file onto the file stack */
         if (depth + 1 == old_files) {
-          bigger = (SearchedFile *)lalloc((long_u)(
-                max_path_depth * 2 * sizeof(SearchedFile)), TRUE);
+          bigger = xmalloc(max_path_depth * 2 * sizeof(SearchedFile));
           for (i = 0; i <= depth; i++)
             bigger[i] = files[i];
           for (i = depth + 1; i < old_files + max_path_depth; i++) {
@@ -4217,10 +4216,8 @@ find_pattern_in_path (
           free(new_fname);
         else {
           if (++depth == old_files) {
-            /*
-             * lalloc() for 'bigger' must have failed above.  We
-             * will forget one of our already visited files now.
-             */
+            // Something wrong. We will forget one of our already visited files
+            // now.
             free(files[old_files].name);
             ++old_files;
           }

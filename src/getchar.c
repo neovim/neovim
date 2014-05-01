@@ -187,20 +187,19 @@ static char_u *get_buffcont(buffheader_T *buffer,
                             int dozero  // count == zero is not an error
                             )
 {
-  long_u count = 0;
+  size_t count = 0;
   char_u          *p = NULL;
   char_u          *p2;
   char_u          *str;
-  buffblock_T *bp;
 
   /* compute the total length of the string */
-  for (bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
-    count += (long_u)STRLEN(bp->b_str);
+  for (buffblock_T *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
+    count += STRLEN(bp->b_str);
 
   if (count || dozero) {
-    p = lalloc(count + 1, TRUE);
+    p = xmalloc(count + 1);
     p2 = p;
-    for (bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
+    for (buffblock_T *bp = buffer->bh_first.b_next; bp != NULL; bp = bp->b_next)
       for (str = bp->b_str; *str; )
         *p2++ = *str++;
     *p2 = NUL;
@@ -261,9 +260,6 @@ add_buff (
     long slen                      /* length of "s" or -1 */
 )
 {
-  buffblock_T *p;
-  long_u len;
-
   if (slen < 0)
     slen = (long)STRLEN(s);
   if (slen == 0)                                /* don't add empty strings */
@@ -281,8 +277,9 @@ add_buff (
         STRLEN(buf->bh_first.b_next->b_str + buf->bh_index) + 1);
   buf->bh_index = 0;
 
+  ssize_t len;
   if (buf->bh_space >= (int)slen) {
-    len = (long_u)STRLEN(buf->bh_curr->b_str);
+    len = STRLEN(buf->bh_curr->b_str);
     vim_strncpy(buf->bh_curr->b_str + len, s, (size_t)slen);
     buf->bh_space -= slen;
   } else {
@@ -290,7 +287,7 @@ add_buff (
       len = MINIMAL_SIZE;
     else
       len = slen;
-    p = (buffblock_T *)lalloc((long_u)(sizeof(buffblock_T) + len), TRUE);
+    buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
     buf->bh_space = (int)(len - slen);
     vim_strncpy(p->b_str, s, (size_t)slen);
 

@@ -135,7 +135,6 @@ static void serialize_visualinfo(visualinfo_T *info, FILE *fp);
 static void unserialize_visualinfo(visualinfo_T *info, FILE *fp);
 static void put_header_ptr(FILE *fp, u_header_T *uhp);
 
-#define U_ALLOC_LINE(size) lalloc((long_u)(size), FALSE)
 static char_u *u_save_line(linenr_T);
 
 /* used in undo_end() to report number of added and deleted lines */
@@ -403,7 +402,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
        * Make a new header entry.  Do this first so that we don't mess
        * up the undo info when out of memory.
        */
-      uhp = (u_header_T *)U_ALLOC_LINE(sizeof(u_header_T));
+      uhp = xmalloc(sizeof(u_header_T));
 #ifdef U_DEBUG
       uhp->uh_magic = UH_MAGIC;
 #endif
@@ -569,7 +568,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   /*
    * add lines in front of entry list
    */
-  uep = (u_entry_T *)U_ALLOC_LINE(sizeof(u_entry_T));
+  uep = xmalloc(sizeof(u_entry_T));
   memset(uep, 0, sizeof(u_entry_T));
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
@@ -591,7 +590,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   }
 
   if (size > 0) {
-    uep->ue_array = (char_u **)U_ALLOC_LINE(sizeof(char_u *) * size);
+    uep->ue_array = xmalloc(sizeof(char_u *) * size);
     for (i = 0, lnum = top + 1; i < size; ++i) {
       fast_breakcheck();
       if (got_int) {
@@ -769,7 +768,7 @@ static size_t fwrite_crypt(buf_T *buf, char_u *ptr, size_t len, FILE *fp)
   if (len < 100)
     copy = small_buf;      /* no malloc()/free() for short strings */
   else {
-    copy = lalloc(len, FALSE);
+    copy = xmalloc(len);
   }
   crypt_encode(ptr, len, copy);
   i = fwrite(copy, len, (size_t)1, fp);
@@ -901,7 +900,7 @@ static u_header_T *unserialize_uhp(FILE *fp, char_u *file_name)
   int c;
   int error;
 
-  uhp = (u_header_T *)U_ALLOC_LINE(sizeof(u_header_T));
+  uhp = xmalloc(sizeof(u_header_T));
   memset(uhp, 0, sizeof(u_header_T));
 #ifdef U_DEBUG
   uhp->uh_magic = UH_MAGIC;
@@ -997,7 +996,7 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   char_u      *line;
   int line_len;
 
-  uep = (u_entry_T *)U_ALLOC_LINE(sizeof(u_entry_T));
+  uep = xmalloc(sizeof(u_entry_T));
   memset(uep, 0, sizeof(u_entry_T));
 #ifdef U_DEBUG
   uep->ue_magic = UE_MAGIC;
@@ -1007,7 +1006,7 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   uep->ue_lcount = get4c(fp);
   uep->ue_size = get4c(fp);
   if (uep->ue_size > 0) {
-    array = (char_u **)U_ALLOC_LINE(sizeof(char_u *) * uep->ue_size);
+    array = xmalloc(sizeof(char_u *) * uep->ue_size);
     memset(array, 0, sizeof(char_u *) * uep->ue_size);
   } else
     array = NULL;
@@ -1484,8 +1483,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
    * sequence numbers of the headers.
    * When there are no headers uhp_table is NULL. */
   if (num_head > 0) {
-    uhp_table = (u_header_T **)U_ALLOC_LINE(
-        num_head * sizeof(u_header_T *));
+    uhp_table = xmalloc(num_head * sizeof(u_header_T *));
   }
 
   while ((c = get2c(fp)) == UF_HEADER_MAGIC) {
@@ -2122,7 +2120,7 @@ static void u_undoredo(int undo)
 
     /* delete the lines between top and bot and save them in newarray */
     if (oldsize > 0) {
-      newarray = (char_u **)U_ALLOC_LINE(sizeof(char_u *) * oldsize);
+      newarray = xmalloc(sizeof(char_u *) * oldsize);
       /* delete backwards, it goes faster in most cases */
       for (lnum = bot - 1, i = oldsize; --i >= 0; --lnum) {
         /* what can we do when we run out of memory? */

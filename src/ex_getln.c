@@ -2791,7 +2791,6 @@ ExpandOne (
   static char_u *orig_save = NULL;      /* kept value of orig */
   int orig_saved = FALSE;
   int i;
-  long_u len;
   int non_suf_match;                    /* number without matching suffix */
 
   /*
@@ -2910,6 +2909,7 @@ ExpandOne (
 
   /* Find longest common part */
   if (mode == WILD_LONGEST && xp->xp_numfiles > 0) {
+    size_t len;
     for (len = 0; xp->xp_files[0][len]; ++len) {
       for (i = 0; i < xp->xp_numfiles; ++i) {
         if (p_fic && (xp->xp_context == EXPAND_DIRECTORIES
@@ -2928,25 +2928,22 @@ ExpandOne (
         break;
       }
     }
-    ss = alloc((unsigned)len + 1);
-    if (ss)
-      vim_strncpy(ss, xp->xp_files[0], (size_t)len);
+    ss = (char_u *)xstrndup((char *)xp->xp_files[0], len);
     findex = -1;                            /* next p_wc gets first one */
   }
 
-  /* Concatenate all matching names */
+  // Concatenate all matching names
+  // TODO(philix): use xstpcpy instead of strcat in a loop (ExpandOne)
   if (mode == WILD_ALL && xp->xp_numfiles > 0) {
-    len = 0;
+    size_t len = 0;
     for (i = 0; i < xp->xp_numfiles; ++i)
-      len += (long_u)STRLEN(xp->xp_files[i]) + 1;
-    ss = lalloc(len, TRUE);
-    if (ss != NULL) {
-      *ss = NUL;
-      for (i = 0; i < xp->xp_numfiles; ++i) {
-        STRCAT(ss, xp->xp_files[i]);
-        if (i != xp->xp_numfiles - 1)
-          STRCAT(ss, (options & WILD_USE_NL) ? "\n" : " ");
-      }
+      len += STRLEN(xp->xp_files[i]) + 1;
+    ss = xmalloc(len);
+    *ss = NUL;
+    for (i = 0; i < xp->xp_numfiles; ++i) {
+      STRCAT(ss, xp->xp_files[i]);
+      if (i != xp->xp_numfiles - 1)
+        STRCAT(ss, (options & WILD_USE_NL) ? "\n" : " ");
     }
   }
 
@@ -4327,32 +4324,19 @@ static char_u *get_history_arg(expand_T *xp, int idx)
  */
 void init_history(void)
 {
-  int newlen;               /* new length of history table */
-  histentry_T *temp;
-  int i;
-  int j;
-  int type;
-
   /*
    * If size of history table changed, reallocate it
    */
-  newlen = (int)p_hi;
-  if (newlen != hislen) {                       /* history length changed */
-    for (type = 0; type < HIST_COUNT; ++type) {     /* adjust the tables */
+  ssize_t newlen = p_hi;
+  if (newlen != hislen) {
+    histentry_T *temp;
+    ssize_t i;
+    ssize_t j;
+
+    // adjust the tables
+    for (int type = 0; type < HIST_COUNT; ++type) {
       if (newlen) {
-        temp = (histentry_T *)lalloc(
-            (long_u)(newlen * sizeof(histentry_T)), TRUE);
-        if (temp == NULL) {         /* out of memory! */
-          if (type == 0) {          /* first one: just keep the old length */
-            newlen = hislen;
-            break;
-          }
-          /* Already changed one table, now we can only have zero
-           * length for all tables. */
-          newlen = 0;
-          type = -1;
-          continue;
-        }
+        temp = xmalloc(newlen * sizeof(*temp));
       } else
         temp = NULL;
       if (newlen == 0 || temp != NULL) {
@@ -4969,29 +4953,26 @@ void prepare_viminfo_history(int asklen, int writing)
 {
   int i;
   int num;
-  int type;
-  int len;
 
   init_history();
   viminfo_add_at_front = (asklen != 0 && !writing);
   if (asklen > hislen)
     asklen = hislen;
 
-  for (type = 0; type < HIST_COUNT; ++type) {
+  for (int type = 0; type < HIST_COUNT; ++type) {
     /* Count the number of empty spaces in the history list.  Entries read
      * from viminfo previously are also considered empty.  If there are
      * more spaces available than we request, then fill them up. */
     for (i = 0, num = 0; i < hislen; i++)
       if (history[type][i].hisstr == NULL || history[type][i].viminfo)
         num++;
-    len = asklen;
+    int len = asklen;
     if (num > len)
       len = num;
     if (len <= 0)
       viminfo_history[type] = NULL;
     else
-      viminfo_history[type] =
-        (char_u **)lalloc((long_u)(len * sizeof(char_u *)), FALSE);
+      viminfo_history[type] = xmalloc(len * sizeof(char_u *));
     if (viminfo_history[type] == NULL)
       len = 0;
     viminfo_hislen[type] = len;
@@ -5006,9 +4987,7 @@ void prepare_viminfo_history(int asklen, int writing)
 int read_viminfo_history(vir_T *virp, int writing)
 {
   int type;
-  long_u len;
   char_u      *val;
-  char_u      *p;
 
   type = hist_char2type(virp->vir_line[0]);
   if (viminfo_hisidx[type] < viminfo_hislen[type]) {
@@ -5019,22 +4998,20 @@ int read_viminfo_history(vir_T *virp, int writing)
       if (!in_history(type, val + (type == HIST_SEARCH),
               viminfo_add_at_front, sep, writing)) {
         /* Need to re-allocate to append the separator byte. */
-        len = STRLEN(val);
-        p = lalloc(len + 2, TRUE);
-        if (p != NULL) {
-          if (type == HIST_SEARCH) {
-            /* Search entry: Move the separator from the first
-             * column to after the NUL. */
-            memmove(p, val + 1, (size_t)len);
-            p[len] = sep;
-          } else {
-            /* Not a search entry: No separator in the viminfo
-             * file, add a NUL separator. */
-            memmove(p, val, (size_t)len + 1);
-            p[len + 1] = NUL;
-          }
-          viminfo_history[type][viminfo_hisidx[type]++] = p;
+        size_t len = STRLEN(val);
+        char_u *p = xmalloc(len + 2);
+        if (type == HIST_SEARCH) {
+          /* Search entry: Move the separator from the first
+           * column to after the NUL. */
+          memmove(p, val + 1, len);
+          p[len] = sep;
+        } else {
+          /* Not a search entry: No separator in the viminfo
+           * file, add a NUL separator. */
+          memmove(p, val, len + 1);
+          p[len + 1] = NUL;
         }
+        viminfo_history[type][viminfo_hisidx[type]++] = p;
       }
     }
     free(val);

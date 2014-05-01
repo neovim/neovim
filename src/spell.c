@@ -3493,19 +3493,18 @@ spell_read_tree (
     int prefixcnt                  // when "prefixtree" is TRUE: prefix count
 )
 {
-  int len;
   int idx;
   char_u      *bp;
   idx_T       *ip;
 
   // The tree size was computed when writing the file, so that we can
   // allocate it as one long block. <nodecount>
-  len = get4c(fd);
+  int len = get4c(fd);
   if (len < 0)
     return SP_TRUNCERROR;
   if (len > 0) {
     // Allocate the byte array.
-    bp = lalloc((long_u)len, TRUE);
+    bp = xmalloc(len);
     *bytsp = bp;
 
     // Allocate the index array.
@@ -12762,8 +12761,7 @@ static int spell_edit_score(slang_T *slang, char_u *badword, char_u *goodword)
 
   // We use "cnt" as an array: CNT(badword_idx, goodword_idx).
 #define CNT(a, b)   cnt[(a) + (b) * (badlen + 1)]
-  cnt = (int *)lalloc((long_u)(sizeof(int) * (badlen + 1) * (goodlen + 1)),
-      TRUE);
+  cnt = xmalloc(sizeof(int) * (badlen + 1) * (goodlen + 1));
 
   CNT(0, 0) = 0;
   for (j = 1; j <= goodlen; ++j)

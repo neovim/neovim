@@ -1184,7 +1184,6 @@ static void bt_regfree(regprog_T *prog);
  */
 static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 {
-  bt_regprog_T    *r;
   char_u      *scan;
   char_u      *longest;
   int len;
@@ -1211,7 +1210,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
 #endif
 
   /* Allocate space. */
-  r = (bt_regprog_T *)lalloc(sizeof(bt_regprog_T) + regsize, TRUE);
+  bt_regprog_T *r = xmalloc(sizeof(bt_regprog_T) + regsize);
 
   /*
    * Second pass: emit code.
@@ -6824,7 +6823,6 @@ char_u *reg_submatch(int no)
 {
   char_u      *retval = NULL;
   char_u      *s;
-  int len;
   int round;
   linenr_T lnum;
 
@@ -6832,6 +6830,8 @@ char_u *reg_submatch(int no)
     return NULL;
 
   if (submatch_match == NULL) {
+    ssize_t len;
+
     /*
      * First round: compute the length and allocate memory.
      * Second round: copy the text.
@@ -6854,7 +6854,7 @@ char_u *reg_submatch(int no)
       } else {
         /* Multiple lines: take start line from start col, middle
          * lines completely and end line up to end col. */
-        len = (int)STRLEN(s);
+        len = STRLEN(s);
         if (round == 2) {
           STRCPY(retval, s);
           retval[len] = '\n';
@@ -6865,7 +6865,7 @@ char_u *reg_submatch(int no)
           s = reg_getline_submatch(lnum++);
           if (round == 2)
             STRCPY(retval + len, s);
-          len += (int)STRLEN(s);
+          len += STRLEN(s);
           if (round == 2)
             retval[len] = '\n';
           ++len;
@@ -6880,7 +6880,7 @@ char_u *reg_submatch(int no)
       }
 
       if (retval == NULL) {
-        retval = lalloc((long_u)len, TRUE);
+        retval = xmalloc(len);
       }
     }
   } else {
