@@ -3473,8 +3473,6 @@ get_cmd_output (
 
   /* Add the redirection stuff */
   command = make_filter_cmd(cmd, infile, tempname);
-  if (command == NULL)
-    goto done;
 
   /*
    * Call the shell to execute the command (errors are ignored).

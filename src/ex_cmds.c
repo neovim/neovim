@@ -1062,8 +1062,6 @@ do_filter (
 
   /* Create the shell command in allocated memory. */
   cmd_buf = make_filter_cmd(cmd, itmp, otmp);
-  if (cmd_buf == NULL)
-    goto filterend;
 
   windgoto((int)Rows - 1, 0);
   cursor_on();
@@ -1314,7 +1312,7 @@ do_shell (
 /*
  * Create a shell command from a command string, input redirection file and
  * output redirection file.
- * Returns an allocated string with the shell command, or NULL for failure.
+ * Returns an allocated string with the shell command.
  */
 char_u *
 make_filter_cmd (
@@ -1323,17 +1321,12 @@ make_filter_cmd (
     char_u *otmp              /* NULL or name of output file */
 )
 {
-  char_u      *buf;
-  long_u len;
-
-  len = (long_u)STRLEN(cmd) + 3;                        /* "()" + NUL */
+  size_t len = STRLEN(cmd) + 3;                        /* "()" + NUL */
   if (itmp != NULL)
-    len += (long_u)STRLEN(itmp) + 9;                    /* " { < " + " } " */
+    len += STRLEN(itmp) + 9;                    /* " { < " + " } " */
   if (otmp != NULL)
-    len += (long_u)STRLEN(otmp) + (long_u)STRLEN(p_srr) + 2;     /* "  " */
-  buf = lalloc(len, TRUE);
-  if (buf == NULL)
-    return NULL;
+    len += STRLEN(otmp) + STRLEN(p_srr) + 2;     /* "  " */
+  char_u *buf = xmalloc(len);
 
 #if defined(UNIX)
   /*
