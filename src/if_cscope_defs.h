@@ -1,3 +1,6 @@
+#ifndef NEOVIM_IF_CSCOPE_DEFS_H
+#define NEOVIM_IF_CSCOPE_DEFS_H
+
 /*
  * CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
  * Ported to Win32 by Sergey Khorev <sergey.khorev@gmail.com>
@@ -66,6 +69,4 @@ typedef enum {
   Print
 } mcmd_e;
 
-
-
-/* the end */
+#endif  // NEOVIM_IF_CSCOPE_DEFS_H
