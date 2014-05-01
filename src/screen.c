@@ -288,23 +288,18 @@ int redraw_asap(int type)
 
   /* Allocate space to save the text displayed in the command line area. */
   rows = Rows - cmdline_row;
-  screenline = (schar_T *)lalloc(
-      (long_u)(rows * Columns * sizeof(schar_T)), FALSE);
-  screenattr = (sattr_T *)lalloc(
-      (long_u)(rows * Columns * sizeof(sattr_T)), FALSE);
+  screenline = xmalloc((size_t)(rows * Columns * sizeof(schar_T)));
+  screenattr = xmalloc((size_t)(rows * Columns * sizeof(sattr_T)));
 
   if (enc_utf8) {
-    screenlineUC = (u8char_T *)lalloc(
-        (long_u)(rows * Columns * sizeof(u8char_T)), FALSE);
+    screenlineUC = xmalloc((size_t)(rows * Columns * sizeof(u8char_T)));
 
     for (i = 0; i < p_mco; ++i) {
-      screenlineC[i] = (u8char_T *)lalloc(
-          (long_u)(rows * Columns * sizeof(u8char_T)), FALSE);
+      screenlineC[i] = xmalloc((size_t)(rows * Columns * sizeof(u8char_T)));
     }
   }
   if (enc_dbcs == DBCS_JPNU) {
-    screenline2 = (schar_T *)lalloc(
-        (long_u)(rows * Columns * sizeof(schar_T)), FALSE);
+    screenline2 = xmalloc((size_t)(rows * Columns * sizeof(schar_T)));
   }
 
   /* Save the text displayed in the command line area. */
@@ -6258,24 +6253,21 @@ retry:
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
-  new_ScreenLines = (schar_T *)lalloc((long_u)(
-        (Rows + 1) * Columns * sizeof(schar_T)), FALSE);
+  new_ScreenLines = xmalloc((size_t)((Rows + 1) * Columns * sizeof(schar_T)));
   memset(new_ScreenLinesC, 0, sizeof(u8char_T *) * MAX_MCO);
   if (enc_utf8) {
-    new_ScreenLinesUC = (u8char_T *)lalloc((long_u)(
-          (Rows + 1) * Columns * sizeof(u8char_T)), FALSE);
+    new_ScreenLinesUC = xmalloc(
+        (size_t)((Rows + 1) * Columns * sizeof(u8char_T)));
     for (i = 0; i < p_mco; ++i)
       new_ScreenLinesC[i] = xcalloc((Rows + 1) * Columns, sizeof(u8char_T));
   }
   if (enc_dbcs == DBCS_JPNU)
-    new_ScreenLines2 = (schar_T *)lalloc((long_u)(
-          (Rows + 1) * Columns * sizeof(schar_T)), FALSE);
-  new_ScreenAttrs = (sattr_T *)lalloc((long_u)(
-        (Rows + 1) * Columns * sizeof(sattr_T)), FALSE);
-  new_LineOffset = (unsigned *)lalloc((long_u)(
-        Rows * sizeof(unsigned)), FALSE);
-  new_LineWraps = (char_u *)lalloc((long_u)(Rows * sizeof(char_u)), FALSE);
-  new_TabPageIdxs = (short *)lalloc((long_u)(Columns * sizeof(short)), FALSE);
+    new_ScreenLines2 = xmalloc(
+        (size_t)((Rows + 1) * Columns * sizeof(schar_T)));
+  new_ScreenAttrs = xmalloc((size_t)((Rows + 1) * Columns * sizeof(sattr_T)));
+  new_LineOffset = xmalloc((size_t)(Rows * sizeof(unsigned)));
+  new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
+  new_TabPageIdxs = xmalloc((size_t)(Columns * sizeof(short)));
 
   FOR_ALL_TAB_WINDOWS(tp, wp)
   {

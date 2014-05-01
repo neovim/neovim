@@ -4359,9 +4359,7 @@ static void insert_sign(
     int typenr              /* typenr of sign we are adding */
     )
 {
-    signlist_T	*newsign;
-
-    newsign = (signlist_T *)lalloc((long_u)sizeof(signlist_T), FALSE);
+    signlist_T *newsign = xmalloc(sizeof(signlist_T));
     newsign->id = id;
     newsign->lnum = lnum;
     newsign->typenr = typenr;

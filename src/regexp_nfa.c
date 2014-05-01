@@ -2870,7 +2870,7 @@ static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size)
 
   if (nfa_calc_size == FALSE) {
     /* Allocate space for the stack. Max states on the stack : nstate */
-    stack = (Frag_T *)lalloc((nstate + 1) * sizeof(Frag_T), TRUE);
+    stack = xmalloc((nstate + 1) * sizeof(Frag_T));
     stackp = stack;
     stack_end = stack + (nstate + 1);
   }
@@ -4526,7 +4526,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
     /* Already calling nfa_regmatch() recursively.  Save the lastlist[1]
      * values and clear them. */
     if (*listids == NULL) {
-      *listids = (int *)lalloc(sizeof(int) * nstate, TRUE);
+      *listids = xmalloc(sizeof(**listids) * nstate);
     }
     nfa_save_listids(prog, *listids);
     need_restore = TRUE;
@@ -4822,7 +4822,6 @@ static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *submatch, regsubs_T *m)
 {
   int result;
-  int size = 0;
   int flag = 0;
   int go_to_nextline = FALSE;
   nfa_thread_T *t;
@@ -4853,10 +4852,10 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
   nfa_match = FALSE;
 
   /* Allocate memory for the lists of nodes. */
-  size = (nstate + 1) * sizeof(nfa_thread_T);
-  list[0].t = (nfa_thread_T *)lalloc(size, TRUE);
+  size_t size = (nstate + 1) * sizeof(nfa_thread_T);
+  list[0].t = xmalloc(size);
   list[0].len = nstate + 1;
-  list[1].t = (nfa_thread_T *)lalloc(size, TRUE);
+  list[1].t = xmalloc(size);
   list[1].len = nstate + 1;
 
 #ifdef ENABLE_LOG
@@ -6232,7 +6231,6 @@ theend:
 static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
 {
   nfa_regprog_T       *prog = NULL;
-  size_t prog_size;
   int                 *postfix;
 
   if (expr == NULL)
@@ -6284,8 +6282,8 @@ static regprog_T *nfa_regcomp(char_u *expr, int re_flags)
   post2nfa(postfix, post_ptr, TRUE);
 
   /* allocate the regprog with space for the compiled regexp */
-  prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (nstate - 1);
-  prog = (nfa_regprog_T *)lalloc(prog_size, TRUE);
+  size_t prog_size = sizeof(nfa_regprog_T) + sizeof(nfa_state_T) * (nstate - 1);
+  prog = xmalloc(prog_size);
   state_ptr = prog->state;
 
   /*

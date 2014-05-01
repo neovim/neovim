@@ -6271,32 +6271,31 @@ static int echeck_abbr(int c)
  */
 
 static char_u   *replace_stack = NULL;
-static long replace_stack_nr = 0;           /* next entry in replace stack */
-static long replace_stack_len = 0;          /* max. number of entries */
+static ssize_t replace_stack_nr = 0;           /* next entry in replace stack */
+static ssize_t replace_stack_len = 0;          /* max. number of entries */
 
 void 
 replace_push (
     int c              /* character that is replaced (NUL is none) */
 )
 {
-  char_u  *p;
-
   if (replace_stack_nr < replace_offset)        /* nothing to do */
     return;
+
+  // TODO(philix): use xrealloc in replace_push()
   if (replace_stack_len <= replace_stack_nr) {
     replace_stack_len += 50;
-    p = lalloc(sizeof(char_u) * replace_stack_len, TRUE);
+    void *aux = xmalloc(replace_stack_len);
     if (replace_stack != NULL) {
-      memmove(p, replace_stack,
-          (size_t)(replace_stack_nr * sizeof(char_u)));
+      memmove(aux, replace_stack, replace_stack_nr);
       free(replace_stack);
     }
-    replace_stack = p;
+    replace_stack = aux;
   }
-  p = replace_stack + replace_stack_nr - replace_offset;
+  char_u *p = replace_stack + replace_stack_nr - replace_offset;
   if (replace_offset)
-    memmove(p + 1, p, (size_t)(replace_offset * sizeof(char_u)));
-  *p = c;
+    memmove(p + 1, p, replace_offset);
+  *p = (char_u)c;
   ++replace_stack_nr;
 }
 
