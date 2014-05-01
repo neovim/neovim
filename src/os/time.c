@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <sys/time.h>
 
 #include <uv.h>
 
@@ -58,4 +59,28 @@ static void microdelay(uint64_t microseconds)
   }
 
   uv_mutex_unlock(&delay_mutex);
+}
+
+struct tm *os_localtime_r(const time_t *clock, struct tm *result)
+{
+#ifdef UNIX
+  // POSIX provides localtime_r() as a thread-safe version of localtime().
+  return localtime_r(clock, result);
+#else
+  // Windows version of localtime() is thread-safe.
+  // See http://msdn.microsoft.com/en-us/library/bf12f0hc%28VS.80%29.aspx
+  struct tm *local_time = localtime(clock);  // NOLINT
+  *result = *local_time;
+return result;
+#endif
+}
+
+struct tm *os_get_localtime(struct tm *result)
+{
+  struct timeval tv;
+  if (gettimeofday(&tv, NULL) < 0) {
+    return NULL;
+  }
+
+  return os_localtime_r(&tv.tv_sec, result);
 }

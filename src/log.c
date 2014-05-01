@@ -11,6 +11,7 @@
 #include "misc1.h"
 #include "types.h"
 #include "os/os.h"
+#include "os/time.h"
 
 #define USR_LOG_FILE "$HOME/.nvimlog"
 
@@ -117,23 +118,13 @@ static bool v_do_log_to_file(FILE *log_file, int log_level,
   assert(log_level >= DEBUG_LOG_LEVEL && log_level <= ERROR_LOG_LEVEL);
 
   // format current timestamp in local time
-  struct timeval tv;
-  if (gettimeofday(&tv, NULL) < 0) {
+  struct tm local_time;
+  if (os_get_localtime(&local_time) == NULL) {
     return false;
   }
-#ifdef UNIX
-  // localtime() is not thread-safe. POSIX provides localtime_r() as a
-  // thread-safe version.
-  struct tm local_time_allocated;
-  struct tm *local_time = localtime_r(&tv.tv_sec, &local_time_allocated);
-#else
-  // Windows version of localtime() is thread-safe.
-  // See http://msdn.microsoft.com/en-us/library/bf12f0hc%28VS.80%29.aspx
-  struct tm *local_time = localtime(&tv.tv_sec);  // NOLINT
-#endif
   char date_time[20];
   if (strftime(date_time, sizeof(date_time), "%Y/%m/%d %H:%M:%S",
-               local_time) == 0) {
+               &local_time) == 0) {
     return false;
   }
 
