@@ -462,7 +462,7 @@ static void diff_mark_adjust_tp(tabpage_T *tp, int idx, linenr_T line1,
 /// @return The new diff block.
 static diff_T* diff_alloc_new(tabpage_T *tp, diff_T *dprev, diff_T *dp)
 {
-  diff_T *dnew = (diff_T *)alloc((unsigned)sizeof(diff_T));
+  diff_T *dnew = xmalloc(sizeof(*dnew));
 
   dnew->df_next = dp;
   if (dprev == NULL) {
@@ -819,7 +819,7 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
   } else {
     size_t len = STRLEN(tmp_orig) + STRLEN(tmp_new) + STRLEN(tmp_diff)
         + STRLEN(p_srr) + 27;
-    char_u *cmd = alloc((unsigned)len);
+    char_u *cmd = xmalloc(len);
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
     if (os_getenv("DIFF_OPTIONS")) {
@@ -895,7 +895,7 @@ void ex_diffpatch(exarg_T *eap)
   size_t buflen = STRLEN(tmp_orig) + (STRLEN(eap->arg)) + STRLEN(tmp_new) + 16;
 #endif  // ifdef UNIX
 
-  buf = alloc((unsigned)buflen);
+  buf = xmalloc(buflen);
 
 #ifdef UNIX
 

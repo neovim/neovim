@@ -676,13 +676,9 @@ debuggy_find (
 
   /* Replace K_SNR in function name with "<SNR>". */
   if (!file && fname[0] == K_SPECIAL) {
-    name = alloc((unsigned)STRLEN(fname) + 3);
-    if (name == NULL)
-      name = fname;
-    else {
-      STRCPY(name, "<SNR>");
-      STRCPY(name + 5, fname + 3);
-    }
+    name = xmalloc(STRLEN(fname) + 3);
+    STRCPY(name, "<SNR>");
+    STRCPY(name + 5, fname + 3);
   }
 
   for (i = 0; i < gap->ga_len; ++i) {
@@ -1373,9 +1369,7 @@ check_changed_any (
   if (bufcount == 0)
     return FALSE;
 
-  bufnrs = (int *)alloc(sizeof(int) * bufcount);
-  if (bufnrs == NULL)
-    return FALSE;
+  bufnrs = xmalloc(sizeof(*bufnrs) * bufcount);
 
   /* curbuf */
   bufnrs[bufnum++] = curbuf->b_fnum;
@@ -2158,49 +2152,47 @@ void ex_compiler(exarg_T *eap)
     do_cmdline_cmd((char_u *)"echo globpath(&rtp, 'compiler/*.vim')");
     /* ) keep the indenter happy... */
   } else {
-    buf = alloc((unsigned)(STRLEN(eap->arg) + 14));
-    if (buf != NULL) {
-      if (eap->forceit) {
-        /* ":compiler! {name}" sets global options */
-        do_cmdline_cmd((char_u *)
-            "command -nargs=* CompilerSet set <args>");
-      } else {
-        /* ":compiler! {name}" sets local options.
-         * To remain backwards compatible "current_compiler" is always
-         * used.  A user's compiler plugin may set it, the distributed
-         * plugin will then skip the settings.  Afterwards set
-         * "b:current_compiler" and restore "current_compiler".
-         * Explicitly prepend "g:" to make it work in a function. */
-        old_cur_comp = get_var_value((char_u *)"g:current_compiler");
-        if (old_cur_comp != NULL)
-          old_cur_comp = vim_strsave(old_cur_comp);
-        do_cmdline_cmd((char_u *)
-            "command -nargs=* CompilerSet setlocal <args>");
-      }
-      do_unlet((char_u *)"g:current_compiler", TRUE);
-      do_unlet((char_u *)"b:current_compiler", TRUE);
+    buf = xmalloc(STRLEN(eap->arg) + 14);
+    if (eap->forceit) {
+      /* ":compiler! {name}" sets global options */
+      do_cmdline_cmd((char_u *)
+          "command -nargs=* CompilerSet set <args>");
+    } else {
+      /* ":compiler! {name}" sets local options.
+       * To remain backwards compatible "current_compiler" is always
+       * used.  A user's compiler plugin may set it, the distributed
+       * plugin will then skip the settings.  Afterwards set
+       * "b:current_compiler" and restore "current_compiler".
+       * Explicitly prepend "g:" to make it work in a function. */
+      old_cur_comp = get_var_value((char_u *)"g:current_compiler");
+      if (old_cur_comp != NULL)
+        old_cur_comp = vim_strsave(old_cur_comp);
+      do_cmdline_cmd((char_u *)
+          "command -nargs=* CompilerSet setlocal <args>");
+    }
+    do_unlet((char_u *)"g:current_compiler", TRUE);
+    do_unlet((char_u *)"b:current_compiler", TRUE);
 
-      sprintf((char *)buf, "compiler/%s.vim", eap->arg);
-      if (source_runtime(buf, TRUE) == FAIL)
-        EMSG2(_("E666: compiler not supported: %s"), eap->arg);
-      vim_free(buf);
+    sprintf((char *)buf, "compiler/%s.vim", eap->arg);
+    if (source_runtime(buf, TRUE) == FAIL)
+      EMSG2(_("E666: compiler not supported: %s"), eap->arg);
+    vim_free(buf);
 
-      do_cmdline_cmd((char_u *)":delcommand CompilerSet");
+    do_cmdline_cmd((char_u *)":delcommand CompilerSet");
 
-      /* Set "b:current_compiler" from "current_compiler". */
-      p = get_var_value((char_u *)"g:current_compiler");
-      if (p != NULL)
-        set_internal_string_var((char_u *)"b:current_compiler", p);
+    /* Set "b:current_compiler" from "current_compiler". */
+    p = get_var_value((char_u *)"g:current_compiler");
+    if (p != NULL)
+      set_internal_string_var((char_u *)"b:current_compiler", p);
 
-      /* Restore "current_compiler" for ":compiler {name}". */
-      if (!eap->forceit) {
-        if (old_cur_comp != NULL) {
-          set_internal_string_var((char_u *)"g:current_compiler",
-              old_cur_comp);
-          vim_free(old_cur_comp);
-        } else
-          do_unlet((char_u *)"g:current_compiler", TRUE);
-      }
+    /* Restore "current_compiler" for ":compiler {name}". */
+    if (!eap->forceit) {
+      if (old_cur_comp != NULL) {
+        set_internal_string_var((char_u *)"g:current_compiler",
+            old_cur_comp);
+        vim_free(old_cur_comp);
+      } else
+        do_unlet((char_u *)"g:current_compiler", TRUE);
     }
   }
 }
@@ -2261,8 +2253,8 @@ void        *cookie;
   /* Make a copy of 'runtimepath'.  Invoking the callback may change the
    * value. */
   rtp_copy = vim_strsave(p_rtp);
-  buf = alloc(MAXPATHL);
-  if (buf != NULL && rtp_copy != NULL) {
+  buf = xmalloc(MAXPATHL);
+  if (rtp_copy != NULL) {
     if (p_verbose > 1 && name != NULL) {
       verbose_enter();
       smsg((char_u *)_("Searching for \"%s\" in \"%s\""),
