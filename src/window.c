@@ -185,7 +185,7 @@ newwindow:
       /* window height */
       vim_snprintf((char *)cbuf, sizeof(cbuf) - 5, "%" PRId64, (int64_t)Prenum);
     else
-      cbuf[0] = '\0';
+      cbuf[0] = NUL;
     if (nchar == 'v' || nchar == Ctrl_V)
       STRCAT(cbuf, "v");
     STRCAT(cbuf, "new");
@@ -418,7 +418,7 @@ newwindow:
 
     /* Execute the command right here, required when
      * "wincmd ]" was used in a function. */
-    do_nv_ident(Ctrl_RSB, '\0');
+    do_nv_ident(Ctrl_RSB, NUL);
     break;
 
   /* edit file name under cursor in a new window */
@@ -487,7 +487,7 @@ wingotofile:
 #endif
     ++ no_mapping;
     ++allow_keys;               /* no mapping for xchar, but allow key codes */
-    if (xchar == '\0')
+    if (xchar == NUL)
       xchar = plain_vgetc();
     LANGMAP_ADJUST(xchar, TRUE);
     --no_mapping;
@@ -4791,9 +4791,9 @@ file_name_in_line (
    * search forward for what could be the start of a file name
    */
   ptr = line + col;
-  while (*ptr != '\0' && !vim_isfilec(*ptr))
+  while (*ptr != NUL && !vim_isfilec(*ptr))
     mb_ptr_adv(ptr);
-  if (*ptr == '\0') {            /* nothing found */
+  if (*ptr == NUL) {            /* nothing found */
     if (options & FNAME_MESS)
       EMSG(_("E446: No file name under cursor"));
     return NULL;
@@ -4839,7 +4839,7 @@ file_name_in_line (
     /* Get the number after the file name and a separator character */
     p = ptr + len;
     p = skipwhite(p);
-    if (*p != '\0') {
+    if (*p != NUL) {
       if (!isdigit(*p))
         ++p;                        /* skip the separator */
       p = skipwhite(p);
@@ -5224,7 +5224,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
   int hlg_id;
   regprog_T   *regprog;
 
-  if (*grp == '\0' || *pat == '\0')
+  if (*grp == NUL || *pat == NUL)
     return -1;
   if (id < -1 || id == 0) {
     EMSGN("E799: Invalid ID: %" PRId64

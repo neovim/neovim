@@ -735,7 +735,7 @@ void ex_diffupdate(exarg_T *eap)
     }
 
     // When using 'diffexpr' break here.
-    if (*p_dex != '\0') {
+    if (*p_dex != NUL) {
       break;
     }
 
@@ -813,7 +813,7 @@ theend:
 /// @param tmp_diff
 static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
 {
-  if (*p_dex != '\0') {
+  if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
     eval_diff(tmp_orig, tmp_new, tmp_diff);
   } else {
@@ -906,7 +906,7 @@ void ex_diffpatch(exarg_T *eap)
   // return to the current.
   if ((os_dirname(dirbuf, MAXPATHL) != OK)
       || (os_chdir((char *)dirbuf) != 0)) {
-    dirbuf[0] = '\0';
+    dirbuf[0] = NUL;
   } else {
 # ifdef TEMPDIRNAMES
     if (vim_tempdir != NULL) {
@@ -921,7 +921,7 @@ void ex_diffpatch(exarg_T *eap)
   }
 #endif  // ifdef UNIX
 
-  if (*p_pex != '\0') {
+  if (*p_pex != NUL) {
     // Use 'patchexpr' to generate the new file.
 #ifdef UNIX
     eval_patch(tmp_orig, fullname != NULL ? fullname : eap->arg, tmp_new);
@@ -945,7 +945,7 @@ void ex_diffpatch(exarg_T *eap)
   }
 
 #ifdef UNIX
-  if (dirbuf[0] != '\0') {
+  if (dirbuf[0] != NUL) {
     if (os_chdir((char *)dirbuf) != 0) {
       EMSG(_(e_prev_dir));
     }
@@ -1614,7 +1614,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   char_u *p1 = s1;
   char_u *p2 = s2;
 
-  while (*p1 != '\0' && *p2 != '\0') {
+  while (*p1 != NUL && *p2 != NUL) {
     if (vim_iswhite(*p1) && vim_iswhite(*p2)) {
       p1 = skipwhite(p1);
       p2 = skipwhite(p2);
@@ -1650,7 +1650,7 @@ static int diff_cmp(char_u *s1, char_u *s2)
   p1 = skipwhite(p1);
   p2 = skipwhite(p2);
 
-  if ((*p1 != '\0') || (*p2 != '\0')) {
+  if ((*p1 != NUL) || (*p2 != NUL)) {
     return 1;
   }
   return 0;
@@ -1802,7 +1802,7 @@ int diffopt_changed(void)
   int diff_foldcolumn_new = 2;
 
   char_u *p = p_dip;
-  while (*p != '\0') {
+  while (*p != NUL) {
     if (STRNCMP(p, "filler", 6) == 0) {
       p += 6;
       diff_flags_new |= DIFF_FILLER;
@@ -1826,7 +1826,7 @@ int diffopt_changed(void)
       diff_foldcolumn_new = getdigits(&p);
     }
 
-    if ((*p != ',') && (*p != '\0')) {
+    if ((*p != ',') && (*p != NUL)) {
       return FAIL;
     }
 
@@ -1924,7 +1924,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       // Search for start of difference
       si_org = si_new = 0;
 
-      while (line_org[si_org] != '\0') {
+      while (line_org[si_org] != NUL) {
         if ((diff_flags & DIFF_IWHITE)
             && vim_iswhite(line_org[si_org])
             && vim_iswhite(line_new[si_new])) {
@@ -1951,7 +1951,7 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
       }
 
       // Search for end of difference, if any.
-      if ((line_org[si_org] != '\0') || (line_new[si_new] != '\0')) {
+      if ((line_org[si_org] != NUL) || (line_new[si_new] != NUL)) {
         ei_org = (int)STRLEN(line_org);
         ei_new = (int)STRLEN(line_new);
 
@@ -2094,7 +2094,7 @@ void ex_diffgetput(exarg_T *eap)
     return;
   }
 
-  if (*eap->arg == '\0') {
+  if (*eap->arg == NUL) {
     // No argument: Find the other buffer in the list of diff buffers.
     for (idx_other = 0; idx_other < DB_COUNT; ++idx_other) {
       if ((curtab->tp_diffbuf[idx_other] != curbuf)

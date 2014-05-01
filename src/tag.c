@@ -211,7 +211,7 @@ do_tag (
   /*
    * Don't add a tag to the tagstack if 'tagstack' has been reset.
    */
-  if ((!p_tgst && *tag != '\0')) {
+  if ((!p_tgst && *tag != NUL)) {
     use_tagstack = FALSE;
     new_tag = TRUE;
   } else {
@@ -221,7 +221,7 @@ do_tag (
       use_tagstack = TRUE;
 
     /* new pattern, add to the tag stack */
-    if (*tag != '\0'
+    if (*tag != NUL
         && (type == DT_TAG || type == DT_SELECT || type == DT_JUMP
             || type == DT_LTAG
             || type == DT_CSCOPE
@@ -451,7 +451,7 @@ do_tag (
        * If a count is supplied to the ":tag <name>" command, then
        * jump to count'th matching tag.
        */
-      if (type == DT_TAG && *tag != '\0' && count > 0)
+      if (type == DT_TAG && *tag != NUL && count > 0)
         cur_match = count - 1;
 
       if (type == DT_SELECT || type == DT_JUMP
@@ -699,7 +699,7 @@ do_tag (
           if (len > 128)
             len = 128;
           vim_strncpy(tag_name, tagp.tagname, len);
-          tag_name[len] = '\0';
+          tag_name[len] = NUL;
 
           /* Save the tag file name */
           p = tag_full_fname(&tagp);
@@ -749,7 +749,7 @@ do_tag (
               cmd_end--;
 
             len = 0;
-            cmd[0] = '\0';
+            cmd[0] = NUL;
 
             /*
              * If "^" is present in the tag search pattern, then
@@ -784,7 +784,7 @@ do_tag (
               len++;
             }
 
-            cmd[len] = '\0';
+            cmd[len] = NUL;
           }
 
           if ((dict = dict_alloc()) == NULL)
@@ -1012,7 +1012,7 @@ static int tag_strnicmp(char_u *s1, char_u *s2, size_t len)
     i = (int)TOUPPER_ASC(*s1) - (int)TOUPPER_ASC(*s2);
     if (i != 0)
       return i;                         /* this character different */
-    if (*s1 == '\0')
+    if (*s1 == NUL)
       break;                            /* strings match until NUL */
     ++s1;
     ++s2;
@@ -1051,7 +1051,7 @@ static void prepare_pats(pat_T *pats, int has_re)
     if (pats->head == pats->pat)
       pats->headlen = 0;
     else
-      for (pats->headlen = 0; pats->head[pats->headlen] != '\0';
+      for (pats->headlen = 0; pats->head[pats->headlen] != NUL;
            ++pats->headlen)
         if (vim_strchr((char_u *)(p_magic ? ".[~*\\$" : "\\$"),
                 pats->head[pats->headlen]) != NULL)
@@ -1118,7 +1118,7 @@ find_tags (
   char_u      *p;
   char_u      *s;
   int i;
-  int tag_file_sorted = '\0';            /* !_TAG_FILE_SORTED value */
+  int tag_file_sorted = NUL;            /* !_TAG_FILE_SORTED value */
   struct tag_search_info        /* Binary search file offsets */
   {
     off_t low_offset;           /* offset for first char of first line that
@@ -1287,14 +1287,14 @@ find_tags (
             help_pri = 0;
           else {
             help_pri = 1;
-            for (s = p_hlg; *s != '\0'; ++s) {
+            for (s = p_hlg; *s != NUL; ++s) {
               if (STRNICMP(s, help_lang, 2) == 0)
                 break;
               ++help_pri;
               if ((s = vim_strchr(s, ',')) == NULL)
                 break;
             }
-            if (s == NULL || *s == '\0') {
+            if (s == NULL || *s == NUL) {
               /* Language not in 'helplang': use last, prefer English,
                * unless found already. */
               ++help_pri;
@@ -1467,7 +1467,7 @@ line_read_in:
                * encoding to 'encoding'. */
               for (p = lbuf + 20; *p > ' ' && *p < 127; ++p)
                 ;
-              *p = '\0';
+              *p = NUL;
               convert_setup(&vimconv, lbuf + 20, p_enc);
             }
 
@@ -1488,7 +1488,7 @@ line_read_in:
            */
           if (linear || use_cscope)
             state = TS_LINEAR;
-          else if (tag_file_sorted == '\0')
+          else if (tag_file_sorted == NUL)
             state = TS_BINARY;
           else if (tag_file_sorted == '1')
             state = TS_BINARY;
@@ -1542,7 +1542,7 @@ parse_line:
           tagp.tagname = lbuf;
 #ifdef FEAT_TAG_ANYWHITE
           tagp.tagname_end = skiptowhite(lbuf);
-          if (*tagp.tagname_end == '\0')
+          if (*tagp.tagname_end == NUL)
 #else
           tagp.tagname_end = vim_strchr(lbuf, TAB);
           if (tagp.tagname_end == NULL)
@@ -1707,7 +1707,7 @@ parse_line:
 #ifdef FEAT_TAG_ANYWHITE
           tagp.fname_end = skiptowhite(tagp.fname);
           tagp.command = skipwhite(tagp.fname_end);
-          if (*tagp.command == '\0')
+          if (*tagp.command == NUL)
 #else
           tagp.fname_end = vim_strchr(tagp.fname, TAB);
           tagp.command = tagp.fname_end + 1;
@@ -1752,7 +1752,7 @@ parse_line:
           int cc;
 
           cc = *tagp.tagname_end;
-          *tagp.tagname_end = '\0';
+          *tagp.tagname_end = NUL;
           match = vim_regexec(&orgpat.regmatch, tagp.tagname, (colnr_T)0);
           if (match) {
             matchoff = (int)(orgpat.regmatch.startp[0] - tagp.tagname);
@@ -1820,7 +1820,7 @@ parse_line:
                * Append the help-heuristic number after the
                * tagname, for sorting it later.
                */
-              *tagp.tagname_end = '\0';
+              *tagp.tagname_end = NUL;
               len = (int)(tagp.tagname_end - tagp.tagname);
               mfp = (struct match_found *)
                     alloc((int)sizeof(struct match_found) + len
@@ -1940,7 +1940,7 @@ parse_line:
       if (vimconv.vc_type != CONV_NONE)
         convert_setup(&vimconv, NULL, NULL);
 
-      tag_file_sorted = '\0';
+      tag_file_sorted = NUL;
       if (sort_error) {
         EMSG2(_("E432: Tags file not sorted: %s"), tag_fname);
         sort_error = FALSE;
@@ -2085,7 +2085,7 @@ get_tagfname (
     if (tnp->tn_hf_idx >= tag_fnames.ga_len) {
       /* Not found in 'runtimepath', use 'helpfile', if it exists and
        * wasn't used yet, replacing "help.txt" with "tags". */
-      if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == '\0')
+      if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == NUL)
         return FAIL;
       ++tnp->tn_hf_idx;
       STRCPY(buf, p_hf);
@@ -2099,7 +2099,7 @@ get_tagfname (
   if (first) {
     /* Init.  We make a copy of 'tags', because autocommands may change
      * the value without notifying us. */
-    tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != '\0')
+    tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL)
         ? curbuf->b_p_tags : p_tags);
     if (tnp->tn_tags == NULL)
       return FAIL;
@@ -2123,7 +2123,7 @@ get_tagfname (
       char_u  *filename = NULL;
 
       /* Stop when used all parts of 'tags'. */
-      if (*tnp->tn_np == '\0') {
+      if (*tnp->tn_np == NUL) {
         vim_findfile_cleanup(tnp->tn_search_ctx);
         tnp->tn_search_ctx = NULL;
         return FAIL;
@@ -2132,7 +2132,7 @@ get_tagfname (
       /*
        * Copy next file name into buf.
        */
-      buf[0] = '\0';
+      buf[0] = NUL;
       (void)copy_option_part(&tnp->tn_np, buf, MAXPATHL - 1, " ,");
 
       r_ptr = vim_findfile_stopdir(buf);
@@ -2140,7 +2140,7 @@ get_tagfname (
        * filepath with a NUL */
       filename = path_tail(buf);
       STRMOVE(filename + 1, filename);
-      *filename++ = '\0';
+      *filename++ = NUL;
 
       tnp->tn_search_ctx = vim_findfile_init(buf, filename,
           r_ptr, 100,
@@ -2199,7 +2199,7 @@ parse_tag_line (
 #ifdef FEAT_TAG_ANYWHITE
   p = skipwhite(p);
 #else
-  if (*p != '\0')
+  if (*p != NUL)
     ++p;
 #endif
   tagp->fname = p;
@@ -2216,10 +2216,10 @@ parse_tag_line (
 #ifdef FEAT_TAG_ANYWHITE
   p = skipwhite(p);
 #else
-  if (*p != '\0')
+  if (*p != NUL)
     ++p;
 #endif
-  if (*p == '\0')
+  if (*p == NUL)
     return FAIL;
   tagp->command = p;
 
@@ -2346,7 +2346,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
 
   {
     c = *tagp->fname_end;
-    *tagp->fname_end = '\0';
+    *tagp->fname_end = NUL;
   }
   fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
 
@@ -2396,7 +2396,7 @@ jumpto_tag (
 
   /* truncate the file name, so it can be used as a string */
   csave = *tagp.fname_end;
-  *tagp.fname_end = '\0';
+  *tagp.fname_end = NUL;
   fname = tagp.fname;
 
   /* copy the command to pbuf[], remove trailing CR/NL */
@@ -2404,7 +2404,7 @@ jumpto_tag (
   for (pbuf_end = pbuf; *str && *str != '\n' && *str != '\r'; ) {
     *pbuf_end++ = *str++;
   }
-  *pbuf_end = '\0';
+  *pbuf_end = NUL;
 
   {
     /*
@@ -2413,7 +2413,7 @@ jumpto_tag (
     str = pbuf;
     if (find_extra(&str) == OK) {
       pbuf_end = str;
-      *pbuf_end = '\0';
+      *pbuf_end = NUL;
     }
   }
 
@@ -2548,7 +2548,7 @@ jumpto_tag (
           found = 2;
           (void)test_for_static(&tagp);
           cc = *tagp.tagname_end;
-          *tagp.tagname_end = '\0';
+          *tagp.tagname_end = NUL;
           sprintf((char *)pbuf, "^%s\\s\\*(", tagp.tagname);
           if (!do_search(NULL, '/', pbuf, (long)1,
                   search_options, NULL)) {
@@ -2710,7 +2710,7 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
   if (buf_ffname != NULL) {     /* if the buffer has a name */
     {
       c = *fname_end;
-      *fname_end = '\0';
+      *fname_end = NUL;
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
     if (fullname != NULL) {
@@ -2843,7 +2843,7 @@ add_tag_field (
       len = MAXPATHL - 1;
     vim_strncpy(buf, start, len);
   }
-  buf[len] = '\0';
+  buf[len] = NUL;
   retval = dict_add_nr_str(dict, field_name, 0L, buf);
   vim_free(buf);
   return retval;
@@ -2892,7 +2892,7 @@ int get_tags(list_T *list, char_u *pat)
 
       if (tp.command_end != NULL) {
         for (p = tp.command_end + 3;
-             *p != '\0' && *p != '\n' && *p != '\r'; ++p) {
+             *p != NUL && *p != '\n' && *p != '\r'; ++p) {
           if (p == tp.tagkind || (p + 5 == tp.tagkind
                                   && STRNCMP(p, "kind:", 5) == 0))
             /* skip "kind:<kind>" and "<kind>" */
@@ -2907,22 +2907,22 @@ int get_tags(list_T *list, char_u *pat)
             /* Add extra field as a dict entry.  Fields are
              * separated by Tabs. */
             n = p;
-            while (*p != '\0' && *p >= ' ' && *p < 127 && *p != ':')
+            while (*p != NUL && *p >= ' ' && *p < 127 && *p != ':')
               ++p;
             len = (int)(p - n);
             if (*p == ':' && len > 0) {
               s = ++p;
-              while (*p != '\0' && *p >= ' ')
+              while (*p != NUL && *p >= ' ')
                 ++p;
-              n[len] = '\0';
+              n[len] = NUL;
               if (add_tag_field(dict, (char *)n, s, p) == FAIL)
                 ret = FAIL;
               n[len] = ':';
             } else
               /* Skip field without colon. */
-              while (*p != '\0' && *p >= ' ')
+              while (*p != NUL && *p >= ' ')
                 ++p;
-            if (*p == '\0')
+            if (*p == NUL)
               break;
           }
         }

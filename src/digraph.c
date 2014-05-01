@@ -1400,7 +1400,7 @@ static digr_T digraphdefault[] =
   { 'u', '^', 251 },  // û
   { 'y', '"', 255 },  // x XX
 
-  { '\0', '\0', '\0' }
+  { NUL, NUL, NUL }
 };
 
 /// handle digraphs after typing a character
@@ -1469,7 +1469,7 @@ int get_digraph(int cmdline)
       return getdigraph(c, cc, TRUE);
     }
   }
-  return '\0';
+  return NUL;
 }
 
 /// Lookup the pair "char1", "char2" in the digraph tables.
@@ -1579,10 +1579,10 @@ void putdigraph(char_u *str)
   int i;
   digr_T *dp;
 
-  while (*str != '\0') {
+  while (*str != NUL) {
     str = skipwhite(str);
 
-    if (*str == '\0') {
+    if (*str == NUL) {
       return;
     }
     char1 = *str++;
@@ -1637,7 +1637,7 @@ void listdigraphs(void)
 
   dp = digraphdefault;
 
-  for (i = 0; dp->char1 != '\0' && !got_int; ++i) {
+  for (i = 0; dp->char1 != NUL && !got_int; ++i) {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1731,7 +1731,7 @@ char_u* keymap_init(void)
 {
   curbuf->b_kmap_state &= ~KEYMAP_INIT;
 
-  if (*curbuf->b_p_keymap == '\0') {
+  if (*curbuf->b_p_keymap == NUL) {
     // Stop any active keymap and clear the table.  Also remove
     // b:keymap_name, as no keymap is active now.
     keymap_unload();
@@ -1808,7 +1808,7 @@ void ex_loadkeymap(exarg_T *eap)
 
     p = skipwhite(line);
 
-    if ((*p != '"') && (*p != '\0')) {
+    if ((*p != '"') && (*p != NUL)) {
       ga_grow(&curbuf->b_kmap_ga, 1);
       kp = (kmap_T *)curbuf->b_kmap_ga.ga_data + curbuf->b_kmap_ga.ga_len;
       s = skiptowhite(p);
@@ -1820,9 +1820,9 @@ void ex_loadkeymap(exarg_T *eap)
       if ((kp->from == NULL)
           || (kp->to == NULL)
           || (STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
-          || (*kp->from == '\0')
-          || (*kp->to == '\0')) {
-        if ((kp->to != NULL) && (*kp->to == '\0')) {
+          || (*kp->from == NUL)
+          || (*kp->to == NUL)) {
+        if ((kp->to != NULL) && (*kp->to == NUL)) {
           EMSG(_("E791: Empty keymap entry"));
         }
         vim_free(kp->from);

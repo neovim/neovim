@@ -75,7 +75,7 @@ int crypt_method_from_string(char_u *s)
 
 int get_crypt_method(buf_T *buf)
 {
-  return crypt_method_from_string(*buf->b_p_cm == '\0' ? p_cm : buf->b_p_cm);
+  return crypt_method_from_string(*buf->b_p_cm == NUL ? p_cm : buf->b_p_cm);
 }
 
 void set_crypt_method(buf_T *buf, int method)
@@ -156,7 +156,7 @@ void crypt_decode(char_u *ptr, long len)
 
 void crypt_init_keys(char_u *passwd)
 {
-  if ((passwd != NULL) && (*passwd != '\0')) {
+  if ((passwd != NULL) && (*passwd != NUL)) {
     if (use_crypt_method == 0) {
       char_u *p;
 
@@ -165,7 +165,7 @@ void crypt_init_keys(char_u *passwd)
       keys[1] = 591751049L;
       keys[2] = 878082192L;
 
-      for (p = passwd; *p != '\0'; ++p) {
+      for (p = passwd; *p != NUL; p++) {
         UPDATE_KEYS_ZIP((int)*p);
       }
     } else {
@@ -179,7 +179,7 @@ void free_crypt_key(char_u *key)
   char_u *p;
 
   if (key != NULL) {
-    for (p = key; *p != '\0'; ++p) {
+    for (p = key; *p != NUL; p++) {
       *p = 0;
     }
     free(key);
@@ -198,7 +198,7 @@ char_u *get_crypt_key(int store, int twice)
     char_u *prompt = (round == 0)
         ? (char_u *) _("Enter encryption key: ")
         : (char_u *) _("Enter same key again: ");
-    p1 = getcmdline_prompt('\0', prompt, 0, EXPAND_NOTHING, NULL);
+    p1 = getcmdline_prompt(NUL, prompt, 0, EXPAND_NOTHING, NULL);
     cmdline_star = FALSE;
     if (p1 == NULL) {
       break;

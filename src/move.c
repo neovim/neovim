@@ -796,7 +796,7 @@ curs_columns (
       /* When cursor wraps to first char of next line in Insert
        * mode, the 'showbreak' string isn't shown, backup to first
        * column */
-      if (*p_sbr && *ml_get_cursor() == '\0'
+      if (*p_sbr && *ml_get_cursor() == NUL
           && curwin->w_wcol == (int)vim_strsize(p_sbr))
         curwin->w_wcol = 0;
     }

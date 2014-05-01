@@ -550,7 +550,7 @@ EXTERN colnr_T ai_col INIT(= 0);
  * the "end" comment leader when the COM_AUTO_END flag is given for that
  * comment end in 'comments'.  It is only valid when did_ai is TRUE.
  */
-EXTERN int end_comment_pending INIT(= '\0');
+EXTERN int end_comment_pending INIT(= NUL);
 
 /*
  * This flag is set after a ":syncbind" to let the check_scrollbind() function
@@ -900,12 +900,12 @@ EXTERN char_u   *globaldir INIT(= NULL);
 
 /* Characters from 'listchars' option */
 EXTERN int lcs_eol INIT(= '$');
-EXTERN int lcs_ext INIT(= '\0');
-EXTERN int lcs_prec INIT(= '\0');
-EXTERN int lcs_nbsp INIT(= '\0');
-EXTERN int lcs_tab1 INIT(= '\0');
-EXTERN int lcs_tab2 INIT(= '\0');
-EXTERN int lcs_trail INIT(= '\0');
+EXTERN int lcs_ext INIT(= NUL);
+EXTERN int lcs_prec INIT(= NUL);
+EXTERN int lcs_nbsp INIT(= NUL);
+EXTERN int lcs_tab1 INIT(= NUL);
+EXTERN int lcs_tab2 INIT(= NUL);
+EXTERN int lcs_trail INIT(= NUL);
 EXTERN int lcs_conceal INIT(= '-');
 
 /* Characters from 'fillchars' option */

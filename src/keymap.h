@@ -131,10 +131,10 @@
  * get second or third byte when translating special key code into three bytes
  */
 #define K_SECOND(c)     ((c) == K_SPECIAL ? KS_SPECIAL : (c) == \
-                         '\0' ? KS_ZERO : KEY2TERMCAP0(c))
+                         NUL ? KS_ZERO : KEY2TERMCAP0(c))
 
 #define K_THIRD(c)      (((c) == K_SPECIAL || (c) == \
-                          '\0') ? KE_FILLER : KEY2TERMCAP1(c))
+                          NUL) ? KE_FILLER : KEY2TERMCAP1(c))
 
 /*
  * get single int code from second byte after K_SPECIAL

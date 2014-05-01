@@ -262,9 +262,9 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
 
   /* First part: Start of the string. */
   for (e = 0; len < half && e < buflen; ++e) {
-    if (s[e] == '\0') {
+    if (s[e] == NUL) {
       /* text fits without truncating! */
-      buf[e] = '\0';
+      buf[e] = NUL;
       return;
     }
     n = ptr2cells(s + e);
@@ -316,9 +316,9 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
     if (len >= buflen - e - 3)
       len = buflen - e - 3 - 1;
     memmove(buf + e + 3, s + i, len);
-    buf[e + 3 + len - 1] = '\0';
+    buf[e + 3 + len - 1] = NUL;
   } else {
-    buf[e - 1] = '\0';      /* make sure it is truncated */
+    buf[e - 1] = NUL;      /* make sure it is truncated */
   }
 }
 
@@ -712,7 +712,7 @@ void ex_messages(exarg_T *eap)
   msg_hist_off = TRUE;
 
   s = os_getenv("LANG");
-  if (s != NULL && *s != '\0')
+  if (s != NULL && *s != NUL)
     msg_attr((char_u *)
         _("Messages maintainer: Bram Moolenaar <Bram@vim.org>"),
         hl_attr(HLF_T));
@@ -1052,9 +1052,9 @@ void msg_putchar_attr(int c, int attr)
     buf[0] = K_SPECIAL;
     buf[1] = K_SECOND(c);
     buf[2] = K_THIRD(c);
-    buf[3] = '\0';
+    buf[3] = NUL;
   } else {
-    buf[(*mb_char2bytes)(c, buf)] = '\0';
+    buf[(*mb_char2bytes)(c, buf)] = NUL;
   }
   msg_puts_attr(buf, attr);
 }
@@ -1175,7 +1175,7 @@ int msg_outtrans_len_attr(char_u *msgstr, int len, int attr)
       str += mb_l;
     } else {
       s = transchar_byte(*str);
-      if (s[1] != '\0') {
+      if (s[1] != NUL) {
         /* unprintable char: print the printable chars so far and the
          * translation of the unprintable char. */
         if (str > plain_start)
@@ -1240,9 +1240,9 @@ msg_outtrans_special (
   int len;
 
   attr = hl_attr(HLF_8);
-  while (*str != '\0') {
+  while (*str != NUL) {
     /* Leading and trailing spaces need to be displayed in <> form. */
-    if ((str == strstart || str[1] == '\0') && *str == ' ') {
+    if ((str == strstart || str[1] == NUL) && *str == ' ') {
       string = (char_u *)"<Space>";
       ++str;
     } else
@@ -1271,9 +1271,9 @@ str2special_save (
   char_u      *p = str;
 
   ga_init(&ga, 1, 40);
-  while (*p != '\0')
+  while (*p != NUL)
     ga_concat(&ga, str2special(&p, is_lhs));
-  ga_append(&ga, '\0');
+  ga_append(&ga, NUL);
   return (char_u *)ga.ga_data;
 }
 
@@ -1305,17 +1305,17 @@ str2special (
   }
 
   c = *str;
-  if (c == K_SPECIAL && str[1] != '\0' && str[2] != '\0') {
+  if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
     if (str[1] == KS_MODIFIER) {
       modifiers = str[2];
       str += 3;
       c = *str;
     }
-    if (c == K_SPECIAL && str[1] != '\0' && str[2] != '\0') {
+    if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
       c = TO_SPECIAL(str[1], str[2]);
       str += 2;
       if (c == KS_ZERO)         /* display <Nul> as ^@ or <Nul> */
-        c = '\0';
+        c = NUL;
     }
     if (IS_SPECIAL(c) || modifiers)     /* special key */
       special = TRUE;
@@ -1342,7 +1342,7 @@ str2special (
   if (special || char2cells(c) > 1 || (from && c == ' '))
     return get_special_key_name(c, modifiers);
   buf[0] = c;
-  buf[1] = '\0';
+  buf[1] = NUL;
   return buf;
 }
 
@@ -1353,7 +1353,7 @@ void str2specialbuf(char_u *sp, char_u *buf, int len)
 {
   char_u      *s;
 
-  *buf = '\0';
+  *buf = NUL;
   while (*sp) {
     s = str2special(&sp, FALSE);
     if ((int)(STRLEN(s) + STRLEN(buf)) < len)
@@ -1389,7 +1389,7 @@ void msg_prt_line(char_u *s, int list)
 
   /* output a space for an empty line, otherwise the line will be
    * overwritten */
-  if (*s == '\0' && !(list && lcs_eol != '\0'))
+  if (*s == NUL && !(list && lcs_eol != NUL))
     msg_putchar(' ');
 
   while (!got_int) {
@@ -1401,12 +1401,12 @@ void msg_prt_line(char_u *s, int list)
         c = *p_extra++;
     } else if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1) {
       col += (*mb_ptr2cells)(s);
-      if (lcs_nbsp != '\0' && list && mb_ptr2char(s) == 160) {
+      if (lcs_nbsp != NUL && list && mb_ptr2char(s) == 160) {
         mb_char2bytes(lcs_nbsp, buf);
-        buf[(*mb_ptr2len)(buf)] = '\0';
+        buf[(*mb_ptr2len)(buf)] = NUL;
       } else {
         memmove(buf, s, (size_t)l);
-        buf[l] = '\0';
+        buf[l] = NUL;
       }
       msg_puts(buf);
       s += l;
@@ -1425,20 +1425,20 @@ void msg_prt_line(char_u *s, int list)
           c_extra = lcs_tab2;
           attr = hl_attr(HLF_8);
         }
-      } else if (c == 160 && list && lcs_nbsp != '\0') {
+      } else if (c == 160 && list && lcs_nbsp != NUL) {
         c = lcs_nbsp;
         attr = hl_attr(HLF_8);
-      } else if (c == '\0' && list && lcs_eol != '\0') {
+      } else if (c == NUL && list && lcs_eol != NUL) {
         p_extra = (char_u *)"";
-        c_extra = '\0';
+        c_extra = NUL;
         n_extra = 1;
         c = lcs_eol;
         attr = hl_attr(HLF_AT);
         --s;
-      } else if (c != '\0' && (n = byte2cells(c)) > 1) {
+      } else if (c != NUL && (n = byte2cells(c)) > 1) {
         n_extra = n - 1;
         p_extra = transchar_byte(c);
-        c_extra = '\0';
+        c_extra = NUL;
         c = *p_extra++;
         /* Use special coloring to be able to distinguish <hex> from
          * the same in plain text. */
@@ -1449,7 +1449,7 @@ void msg_prt_line(char_u *s, int list)
       }
     }
 
-    if (c == '\0')
+    if (c == NUL)
       break;
 
     msg_putchar_attr(c, attr);
@@ -1603,7 +1603,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
   int did_last_char;
 
   did_wait_return = FALSE;
-  while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != '\0') {
+  while ((maxlen < 0 || (int)(s - str) < maxlen) && *s != NUL) {
     /*
      * We are at the end of the screen line when:
      * - When outputting a newline.
@@ -1684,7 +1684,7 @@ static void msg_puts_display(char_u *str, int maxlen, int attr, int recurse)
         --lines_left;
       if (p_more && lines_left == 0 && State != HITRETURN
           && !msg_no_more && !exmode_active) {
-        if (do_more_prompt('\0'))
+        if (do_more_prompt(NUL))
           s = confirm_msg_tail;
         if (quit_more)
           return;
@@ -1800,7 +1800,7 @@ static void msg_scroll_up(void)
  */
 static void inc_msg_scrolled(void)
 {
-  if (*get_vim_var_str(VV_SCROLLSTART) == '\0') {
+  if (*get_vim_var_str(VV_SCROLLSTART) == NUL) {
     char_u      *p = sourcing_name;
     char_u      *tofree = NULL;
     int len;
@@ -2014,7 +2014,7 @@ static void msg_puts_printf(char_u *str, int maxlen)
   char_u buf[4];
   char_u      *p;
 
-  while (*s != '\0' && (maxlen < 0 || (int)(s - str) < maxlen)) {
+  while (*s != NUL && (maxlen < 0 || (int)(s - str) < maxlen)) {
     if (!(silent_mode && p_verbose == 0)) {
       /* NL --> CR NL translation (for Unix, not for "--version") */
       /* NL --> CR translation (for Mac) */
@@ -2078,15 +2078,15 @@ static int do_more_prompt(int typed_char)
 
   State = ASKMORE;
   setmouse();
-  if (typed_char == '\0')
+  if (typed_char == NUL)
     msg_moremsg(FALSE);
   for (;; ) {
     /*
      * Get a typed character directly from the user.
      */
-    if (used_typed_char != '\0') {
+    if (used_typed_char != NUL) {
       c = used_typed_char;              /* was typed at hit-enter prompt */
-      used_typed_char = '\0';
+      used_typed_char = NUL;
     } else
       c = get_keystroke();
 
@@ -2510,7 +2510,7 @@ static void redir_write(char_u *str, int maxlen)
     return;
 
   /* If 'verbosefile' is set prepare for writing in that file. */
-  if (*p_vfile != '\0' && verbose_fd == NULL)
+  if (*p_vfile != NUL && verbose_fd == NULL)
     verbose_open();
 
   if (redirecting()) {
@@ -2535,7 +2535,7 @@ static void redir_write(char_u *str, int maxlen)
       var_redir_str(s, maxlen);
 
     /* Write and adjust the current column. */
-    while (*s != '\0' && (maxlen < 0 || (int)(s - str) < maxlen)) {
+    while (*s != NUL && (maxlen < 0 || (int)(s - str) < maxlen)) {
       if (!redir_reg && !redir_vname)
         if (redir_fd != NULL)
           putc(*s, redir_fd);
@@ -2557,7 +2557,7 @@ static void redir_write(char_u *str, int maxlen)
 
 int redirecting(void)
 {
-  return redir_fd != NULL || *p_vfile != '\0'
+  return redir_fd != NULL || *p_vfile != NUL
          || redir_reg || redir_vname
   ;
 }
@@ -2568,7 +2568,7 @@ int redirecting(void)
  */
 void verbose_enter(void)
 {
-  if (*p_vfile != '\0')
+  if (*p_vfile != NUL)
     ++msg_silent;
 }
 
@@ -2578,7 +2578,7 @@ void verbose_enter(void)
  */
 void verbose_leave(void)
 {
-  if (*p_vfile != '\0')
+  if (*p_vfile != NUL)
     if (--msg_silent < 0)
       msg_silent = 0;
 }
@@ -2588,7 +2588,7 @@ void verbose_leave(void)
  */
 void verbose_enter_scroll(void)
 {
-  if (*p_vfile != '\0')
+  if (*p_vfile != NUL)
     ++msg_silent;
   else
     /* always scroll up, don't overwrite */
@@ -2600,7 +2600,7 @@ void verbose_enter_scroll(void)
  */
 void verbose_leave_scroll(void)
 {
-  if (*p_vfile != '\0') {
+  if (*p_vfile != NUL) {
     if (--msg_silent < 0)
       msg_silent = 0;
   } else
@@ -2872,7 +2872,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
             hotkp += STRLEN(hotkp);
           else
             ++hotkp;
-          hotkp[copy_char(r + 1, hotkp, TRUE)] = '\0';
+          hotkp[copy_char(r + 1, hotkp, TRUE)] = NUL;
           if (dfltbutton)
             --dfltbutton;
 
@@ -2899,7 +2899,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
             *msgp++ = (dfltbutton == 1) ? ']' : ')';
 
             /* redefine hotkey */
-            hotkp[copy_char(r, hotkp, TRUE)] = '\0';
+            hotkp[copy_char(r, hotkp, TRUE)] = NUL;
           }
         } else {
           ++len;                    /* '&a' -> '[a]' */
@@ -2919,7 +2919,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
     if (copy) {
       *msgp++ = ':';
       *msgp++ = ' ';
-      *msgp = '\0';
+      *msgp = NUL;
     } else {
       len += (int)(STRLEN(message)
                    + 2                          /* for the NL's */
@@ -2938,7 +2938,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
        */
       vim_free(confirm_msg);
       confirm_msg = alloc(len);
-      *confirm_msg = '\0';
+      *confirm_msg = NUL;
       hotk = alloc(lenhotkey);
 
       *confirm_msg = '\n';
@@ -2949,7 +2949,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
 
       /* Define first default hotkey.  Keep the hotkey string NUL
        * terminated to avoid reading past the end. */
-      hotkp[copy_char(buttons, hotkp, TRUE)] = '\0';
+      hotkp[copy_char(buttons, hotkp, TRUE)] = NUL;
 
       /* Remember where the choices start, displaying starts here when
        * "hotkp" typed at the more prompt. */
@@ -3163,7 +3163,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
 
   if (p == NULL)
     p = "";
-  while (*p != '\0') {
+  while (*p != NUL) {
     if (*p != '%') {
       char    *q = strchr(p + 1, '%');
       size_t n = (q == NULL) ? STRLEN(p) : (size_t)(q - p);
@@ -3646,7 +3646,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             l += sprintf(format + 1, ".%d", (int)precision);
           }
           format[l] = fmt_spec;
-          format[l + 1] = '\0';
+          format[l + 1] = NUL;
           str_arg_l = sprintf(tmp, format, f);
 
           if (remove_trailing_zeroes) {
@@ -3719,13 +3719,13 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
          * the unrecognized conversion character	  */
         str_arg = p;
         str_arg_l = 0;
-        if (*p != '\0')
+        if (*p != NUL)
           str_arg_l++;            /* include invalid conversion specifier
                                      unchanged if not at end-of-string */
         break;
       }
 
-      if (*p != '\0')
+      if (*p != NUL)
         p++;             /* step over the just processed conversion specifier */
 
       /* insert padding to the left as requested by min_field_width;

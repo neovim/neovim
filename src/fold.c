@@ -499,7 +499,7 @@ static void newFoldLevelWin(win_T *wp)
  */
 void foldCheckClose(void)
 {
-  if (*p_fcl != '\0') {  /* can only be "all" right now */
+  if (*p_fcl != NUL) {  /* can only be "all" right now */
     checkupdate(curwin);
     if (checkCloseRec(&curwin->w_folds, curwin->w_cursor.lnum,
             (int)curwin->w_p_fdl))
@@ -1662,13 +1662,13 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
   char_u      *cms2;
 
   line = ml_get(lnum);
-  for (p = line; *p != '\0'; ++p)
+  for (p = line; *p != NUL; ++p)
     if (STRNCMP(p, marker, markerlen) == 0) {
       /* Found the marker, include a digit if it's there. */
       len = markerlen;
       if (VIM_ISDIGIT(p[len]))
         ++len;
-      if (*cms != '\0') {
+      if (*cms != NUL) {
         /* Also delete 'commentstring' if it matches. */
         cms2 = (char_u *)strstr((char *)cms, "%s");
         if (p - line >= cms2 - cms
@@ -1713,7 +1713,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
     /* a previous error should not abort evaluating 'foldexpr' */
     did_emsg = FALSE;
 
-  if (*wp->w_p_fdt != '\0') {
+  if (*wp->w_p_fdt != NUL) {
     char_u dashes[MAX_LEVEL + 2];
     win_T   *save_curwin;
     int level;
@@ -1729,7 +1729,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
     if (level > (int)sizeof(dashes) - 1)
       level = (int)sizeof(dashes) - 1;
     memset(dashes, '-', (size_t)level);
-    dashes[level] = '\0';
+    dashes[level] = NUL;
     set_vim_var_string(VV_FOLDDASHES, dashes, -1);
     set_vim_var_nr(VV_FOLDLEVEL, (long)level);
 
@@ -1760,7 +1760,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
     if (text != NULL) {
       /* Replace unprintable characters, if there are any.  But
        * replace a TAB with a space. */
-      for (p = text; *p != '\0'; ++p) {
+      for (p = text; *p != NUL; ++p) {
         int len;
 
         if (has_mbyte && (len = (*mb_ptr2len)(p)) > 1) {
@@ -1772,7 +1772,7 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume, foldinfo_T *foldi
         else if (ptr2cells(p) > 1)
           break;
       }
-      if (*p != '\0') {
+      if (*p != NUL) {
         p = transstr(text);
         vim_free(text);
         text = p;
@@ -1826,7 +1826,7 @@ void foldtext_cleanup(char_u *str)
   }
   parseMarker(curwin);
 
-  for (s = str; *s != '\0'; ) {
+  for (s = str; *s != NUL; ) {
     len = 0;
     if (STRNCMP(s, curwin->w_p_fmr, foldstartmarkerlen) == 0)
       len = foldstartmarkerlen;
@@ -2687,7 +2687,7 @@ static void foldlevelIndent(fline_T *flp)
 
   /* empty line or lines starting with a character in 'foldignore': level
    * depends on surrounding lines */
-  if (*s == '\0' || vim_strchr(flp->wp->w_p_fdi, *s) != NULL) {
+  if (*s == NUL || vim_strchr(flp->wp->w_p_fdi, *s) != NULL) {
     /* first and last line can't be undefined, use level 0 */
     if (lnum == 1 || lnum == buf->b_ml.ml_line_count)
       flp->lvl = 0;

@@ -163,7 +163,7 @@ coladvance2 (
   int head = 0;
 
   one_more = (State & INSERT)
-             || restart_edit != '\0'
+             || restart_edit != NUL
              || (VIsual_active && *p_sel != 'o')
              || ((ve_flags & VE_ONEMORE) && wcol < MAXCOL)
   ;
@@ -200,7 +200,7 @@ coladvance2 (
     }
 
     ptr = line;
-    while (col <= wcol && *ptr != '\0') {
+    while (col <= wcol && *ptr != NUL) {
       /* Count a tab for what it's worth (if list mode not on) */
       csize = win_lbr_chartabsize(curwin, ptr, col, &head);
       mb_ptr_adv(ptr);
@@ -226,7 +226,7 @@ coladvance2 (
       /* 'virtualedit' is set: The difference between wcol and col is
        * filled with spaces. */
 
-      if (line[idx] == '\0') {
+      if (line[idx] == NUL) {
         /* Append spaces */
         int correct = wcol - col;
         char_u  *newline = alloc(idx + correct + 1);
@@ -238,7 +238,7 @@ coladvance2 (
         for (t = 0; t < correct; ++t)
           newline[t + idx] = ' ';
 
-        newline[idx + correct] = '\0';
+        newline[idx + correct] = NUL;
 
         ml_replace(pos->lnum, newline, FALSE);
         changed_bytes(pos->lnum, (colnr_T)idx);
@@ -265,7 +265,7 @@ coladvance2 (
               newline[s++] = ' ';
         }
 
-        newline[linelen + csize - 1] = '\0';
+        newline[linelen + csize - 1] = NUL;
 
         ml_replace(pos->lnum, newline, FALSE);
         changed_bytes(pos->lnum, idx);
@@ -330,16 +330,16 @@ int inc(pos_T *lp)
 {
   char_u  *p = ml_get_pos(lp);
 
-  if (*p != '\0') {      /* still within line, move to next char (may be NUL) */
+  if (*p != NUL) {      /* still within line, move to next char (may be NUL) */
     if (has_mbyte) {
       int l = (*mb_ptr2len)(p);
 
       lp->col += l;
-      return (p[l] != '\0') ? 0 : 2;
+      return (p[l] != NUL) ? 0 : 2;
     }
     lp->col++;
     lp->coladd = 0;
-    return (p[1] != '\0') ? 0 : 2;
+    return (p[1] != NUL) ? 0 : 2;
   }
   if (lp->lnum != curbuf->b_ml.ml_line_count) {     /* there is a next line */
     lp->col = 0;
@@ -538,7 +538,7 @@ void adjust_cursor_col(void)
 {
   if (curwin->w_cursor.col > 0
       && (!VIsual_active || *p_sel == 'o')
-      && gchar_cursor() == '\0')
+      && gchar_cursor() == NUL)
     --curwin->w_cursor.col;
 }
 
@@ -618,7 +618,7 @@ char_u *vim_strnsave(char_u *string, int len)
 
   p = alloc((unsigned)(len + 1));
   STRNCPY(p, string, len);
-  p[len] = '\0';
+  p[len] = NUL;
   return p;
 }
 
@@ -672,7 +672,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
       *p2++ = cc;
     *p2++ = *p;
   }
-  *p2 = '\0';
+  *p2 = NUL;
 
   return escaped_string;
 }
@@ -712,7 +712,7 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
 
   /* First count the number of extra bytes required. */
   length = (unsigned)STRLEN(string) + 3;    /* two quotes and a trailing NUL */
-  for (p = string; *p != '\0'; mb_ptr_adv(p)) {
+  for (p = string; *p != NUL; mb_ptr_adv(p)) {
     if (*p == '\'')
       length += 3;                      /* ' => '\'' */
     if ((*p == '\n' && (csh_like || do_newline))
@@ -734,7 +734,7 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
   /* add opening quote */
   *d++ = '\'';
 
-  for (p = string; *p != '\0'; ) {
+  for (p = string; *p != NUL; ) {
     if (*p == '\'') {
       *d++ = '\'';
       *d++ = '\\';
@@ -763,7 +763,7 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
 
   /* add terminating quote and finish with a NUL */
   *d++ = '\'';
-  *d = '\0';
+  *d = NUL;
 
   return escaped_string;
 }
@@ -804,7 +804,7 @@ void vim_strup(char_u *p)
 
   if (p != NULL) {
     p2 = p;
-    while ((c = *p2) != '\0')
+    while ((c = *p2) != NUL)
       *p2++ = (c < 'a' || c > 'z') ? c : (c - 0x20);
   }
 }
@@ -822,7 +822,7 @@ char_u *strup_save(char_u *orig)
   res = p = vim_strsave(orig);
 
   if (res != NULL)
-    while (*p != '\0') {
+    while (*p != NUL) {
       int l;
 
       if (enc_utf8) {
@@ -893,7 +893,7 @@ void del_trailing_spaces(char_u *ptr)
 
   q = ptr + STRLEN(ptr);
   while (--q > ptr && vim_iswhite(q[0]) && q[-1] != '\\' && q[-1] != Ctrl_V)
-    *q = '\0';
+    *q = NUL;
 }
 
 /*
@@ -903,7 +903,7 @@ void del_trailing_spaces(char_u *ptr)
 void vim_strncpy(char_u *to, char_u *from, size_t len)
 {
   STRNCPY(to, from, len);
-  to[len] = '\0';
+  to[len] = NUL;
 }
 
 /*
@@ -917,7 +917,7 @@ void vim_strcat(char_u *to, char_u *from, size_t tosize)
 
   if (tolen + fromlen + 1 > tosize) {
     memmove(to + tolen, from, tosize - tolen - 1);
-    to[tosize - 1] = '\0';
+    to[tosize - 1] = NUL;
   } else
     STRCPY(to + tolen, from);
 }
@@ -937,7 +937,7 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
   /* skip '.' at start of option part, for 'suffixes' */
   if (*p == '.')
     buf[len++] = *p++;
-  while (*p != '\0' && vim_strchr((char_u *)sep_chars, *p) == NULL) {
+  while (*p != NUL && vim_strchr((char_u *)sep_chars, *p) == NULL) {
     /*
      * Skip backslash before a separator character and space.
      */
@@ -947,9 +947,9 @@ int copy_option_part(char_u **option, char_u *buf, int maxlen, char *sep_chars)
       buf[len++] = *p;
     ++p;
   }
-  buf[len] = '\0';
+  buf[len] = NUL;
 
-  if (*p != '\0' && *p != ',')   /* skip non-standard separator */
+  if (*p != NUL && *p != ',')   /* skip non-standard separator */
     ++p;
   p = skip_to_option_part(p);   /* p points to next file name */
 
@@ -983,7 +983,7 @@ int vim_stricmp(char *s1, char *s2)
     i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
     if (i != 0)
       return i;                             /* this character different */
-    if (*s1 == '\0')
+    if (*s1 == NUL)
       break;                                /* strings match until NUL */
     ++s1;
     ++s2;
@@ -1006,7 +1006,7 @@ int vim_strnicmp(char *s1, char *s2, size_t len)
     i = (int)TOLOWER_LOC(*s1) - (int)TOLOWER_LOC(*s2);
     if (i != 0)
       return i;                             /* this character different */
-    if (*s1 == '\0')
+    if (*s1 == NUL)
       break;                                /* strings match until NUL */
     ++s1;
     ++s2;
@@ -1028,7 +1028,7 @@ char_u *vim_strchr(char_u *string, int c)
 
   p = string;
   if (enc_utf8 && c >= 0x80) {
-    while (*p != '\0') {
+    while (*p != NUL) {
       if (utf_ptr2char(p) == c)
         return p;
       p += (*mb_ptr2len)(p);
@@ -1039,7 +1039,7 @@ char_u *vim_strchr(char_u *string, int c)
     int n2 = c & 0xff;
 
     c = ((unsigned)c >> 8) & 0xff;
-    while ((b = *p) != '\0') {
+    while ((b = *p) != NUL) {
       if (b == c && p[1] == n2)
         return p;
       p += (*mb_ptr2len)(p);
@@ -1047,14 +1047,14 @@ char_u *vim_strchr(char_u *string, int c)
     return NULL;
   }
   if (has_mbyte) {
-    while ((b = *p) != '\0') {
+    while ((b = *p) != NUL) {
       if (b == c)
         return p;
       p += (*mb_ptr2len)(p);
     }
     return NULL;
   }
-  while ((b = *p) != '\0') {
+  while ((b = *p) != NUL) {
     if (b == c)
       return p;
     ++p;
@@ -1071,7 +1071,7 @@ char_u *vim_strbyte(char_u *string, int c)
 {
   char_u      *p = string;
 
-  while (*p != '\0') {
+  while (*p != NUL) {
     if (*p == c)
       return p;
     ++p;
@@ -1217,19 +1217,19 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   if (do_profiling == PROF_YES)
     prof_child_enter(&wait_time);
 
-  if (*p_sh == '\0') {
+  if (*p_sh == NUL) {
     EMSG(_(e_shellempty));
     retval = -1;
   } else {
     /* The external command may update a tags file, clear cached tags. */
     tag_freematch();
 
-    if (cmd == NULL || *p_sxq == '\0')
+    if (cmd == NULL || *p_sxq == NUL)
       retval = os_call_shell(cmd, opts, extra_shell_arg);
     else {
       char_u *ecmd = cmd;
 
-      if (*p_sxe != '\0' && STRCMP(p_sxq, "(") == 0) {
+      if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
         ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', FALSE);
         if (ecmd == NULL)
           ecmd = cmd;
@@ -1293,7 +1293,7 @@ int vim_chdirfile(char_u *fname)
   char_u dir[MAXPATHL];
 
   vim_strncpy(dir, fname, MAXPATHL - 1);
-  *path_tail_with_sep(dir) = '\0';
+  *path_tail_with_sep(dir) = NUL;
   return os_chdir((char *)dir) == 0 ? OK : FAIL;
 }
 #endif
@@ -1306,7 +1306,7 @@ int vim_chdirfile(char_u *fname)
  */
 int illegal_slash(char *name)
 {
-  if (name[0] == '\0')
+  if (name[0] == NUL)
     return FALSE;           /* no file name is not illegal */
   if (name[strlen(name) - 1] != '/')
     return FALSE;           /* no trailing slash */
@@ -1447,7 +1447,7 @@ char_u *read_string(FILE *fd, int cnt)
     }
     str[i] = c;
   }
-  str[i] = '\0';
+  str[i] = NUL;
 
   return str;
 }
@@ -1510,7 +1510,7 @@ int has_non_ascii(char_u *s)
   char_u      *p;
 
   if (s != NULL)
-    for (p = s; *p != '\0'; ++p)
+    for (p = s; *p != NUL; ++p)
       if (*p >= 128)
         return TRUE;
   return FALSE;

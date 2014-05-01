@@ -1418,7 +1418,7 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
 
   /* Sanity check -- curr_c should, in the future, never be 0.
    * We should, in the future, insert a fatal error here. */
-  if (curr_c == '\0') {
+  if (curr_c == NUL) {
     curr_c = c;
   }
 
@@ -1467,7 +1467,7 @@ int arabic_maycombine(int two)
  */
 static int A_firstc_laa(int c, int c1)
 {
-  if ((c1 != '\0') && (c == a_LAM) && !A_is_harakat(c1)) {
+  if ((c1 != NUL) && (c == a_LAM) && !A_is_harakat(c1)) {
     return c1;
   }
   return 0;

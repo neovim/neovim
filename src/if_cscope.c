@@ -181,11 +181,11 @@ void set_context_in_cscope_cmd(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
                 ? EXP_SCSCOPE_SUBCMD : EXP_CSCOPE_SUBCMD;
 
   /* (part of) subcommand already typed */
-  if (*arg != '\0') {
+  if (*arg != NUL) {
     p = skiptowhite(arg);
-    if (*p != '\0') {                /* past first word */
+    if (*p != NUL) {                /* past first word */
       xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != '\0')
+      if (*skiptowhite(xp->xp_pattern) != NUL)
         xp->xp_context = EXPAND_NOTHING;
       else if (STRNICMP(arg, "add", p - arg) == 0)
         xp->xp_context = EXPAND_FILES;
@@ -262,7 +262,7 @@ void do_cstag(exarg_T *eap)
 {
   int ret = FALSE;
 
-  if (*eap->arg == '\0') {
+  if (*eap->arg == NUL) {
     (void)EMSG(_("E562: Usage: cstag <ident>"));
     return;
   }
@@ -598,7 +598,7 @@ static int cs_check_for_connections(void)
 
 static int cs_check_for_tags(void)
 {
-  return p_tags[0] != '\0' && curbuf->b_p_tags != NULL;
+  return p_tags[0] != NUL && curbuf->b_p_tags != NULL;
 } /* cs_check_for_tags */
 
 /*
@@ -960,7 +960,7 @@ static int cs_find(exarg_T *eap)
    * spaces to correctly display the quickfix/location list window's title.
    */
   for (i = 0; i < eap_arg_len; ++i)
-    if ('\0' == eap->arg[i])
+    if (NUL == eap->arg[i])
       eap->arg[i] = ' ';
 
   return cs_find_common(opt, pat, eap->forceit, TRUE,
@@ -1881,11 +1881,11 @@ static int cs_read_prompt(int i)
         if (buf != NULL) {
           /* append character to the message */
           buf[bufpos++] = ch;
-          buf[bufpos] = '\0';
+          buf[bufpos] = NUL;
           if (bufpos >= epromptlen
               && strcmp(&buf[bufpos - epromptlen], eprompt) == 0) {
             /* remove eprompt from buf */
-            buf[bufpos - epromptlen] = '\0';
+            buf[bufpos - epromptlen] = NUL;
 
             /* print message to user */
             (void)EMSG2(cs_emsg, buf);
@@ -1896,7 +1896,7 @@ static int cs_read_prompt(int i)
 
             /* clear buf */
             bufpos = 0;
-            buf[bufpos] = '\0';
+            buf[bufpos] = NUL;
           }
         }
       }
@@ -1906,7 +1906,7 @@ static int cs_read_prompt(int i)
         ch = getc(csinfo[i].fr_fp);
       if (ch == EOF) {
         PERROR("cs_read_prompt EOF");
-        if (buf != NULL && buf[0] != '\0')
+        if (buf != NULL && buf[0] != NUL)
           (void)EMSG2(cs_emsg, buf);
         else if (p_csverbose)
           cs_reading_emsg(i);           /* don't have additional information */
@@ -2159,7 +2159,7 @@ static char *cs_resolve_file(int i, char *name)
       ) {
     fullname = xmalloc(len);
     (void)sprintf(fullname, "%s/%s", csinfo[i].ppath, name);
-  } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != '\0') {
+  } else if (csdir != NULL && csinfo[i].fname != NULL && *csdir != NUL) {
     /* Check for csdir to be non empty to avoid empty path concatenated to
      * cscope output. */
     fullname = (char *)concat_fnames(csdir, (char_u *)name, TRUE);

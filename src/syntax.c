@@ -485,7 +485,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
   int dist;
   static int changedtick = 0;           /* remember the last change ID */
 
-  current_sub_char = '\0';
+  current_sub_char = NUL;
 
   /*
    * After switching buffers, invalidate current_state.
@@ -741,7 +741,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
      */
     for (; start_lnum > 1; --start_lnum) {
       line = ml_get(start_lnum - 1);
-      if (*line == '\0' || *(line + STRLEN(line) - 1) != '\\')
+      if (*line == NUL || *(line + STRLEN(line) - 1) != '\\')
         break;
     }
     current_lnum = start_lnum;
@@ -858,7 +858,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
              * an item that ends here, need to do that now.  Be
              * careful not to go past the NUL. */
             prev_current_col = current_col;
-            if (syn_getcurline()[current_col] != '\0')
+            if (syn_getcurline()[current_col] != NUL)
               ++current_col;
             check_state_ends();
             current_col = prev_current_col;
@@ -1629,7 +1629,7 @@ syn_finish_line (
          * that ends here, need to do that now.  Be careful not to go
          * past the NUL. */
         prev_current_col = current_col;
-        if (syn_getcurline()[current_col] != '\0')
+        if (syn_getcurline()[current_col] != NUL)
           ++current_col;
         check_state_ends();
         current_col = prev_current_col;
@@ -1740,7 +1740,7 @@ syn_current_attr (
    * Do try matching with an empty line (could be the start of a region).
    */
   line = syn_getcurline();
-  if (line[current_col] == '\0' && current_col != 0) {
+  if (line[current_col] == NUL && current_col != 0) {
     /*
      * If we found a match after the last column, use it.
      */
@@ -1754,7 +1754,7 @@ syn_current_attr (
   }
 
   /* if the current or next character is NUL, we will finish the line now */
-  if (line[current_col] == '\0' || line[current_col + 1] == '\0') {
+  if (line[current_col] == NUL || line[current_col + 1] == NUL) {
     current_finished = TRUE;
     current_state_stored = FALSE;
   }
@@ -2084,7 +2084,7 @@ syn_current_attr (
         if (((current_next_flags & HL_SKIPWHITE)
              && vim_iswhite(line[current_col]))
             || ((current_next_flags & HL_SKIPEMPTY)
-                && *line == '\0'))
+                && *line == NUL))
           break;
       }
 
@@ -2185,7 +2185,7 @@ syn_current_attr (
     if (!syncing && !keep_state) {
       check_state_ends();
       if (current_state.ga_len > 0
-          && syn_getcurline()[current_col] != '\0') {
+          && syn_getcurline()[current_col] != NUL) {
         ++current_col;
         check_state_ends();
         --current_col;
@@ -2200,7 +2200,7 @@ syn_current_attr (
 
   /* nextgroup ends at end of line, unless "skipnl" or "skipempty" present */
   if (current_next_list != NULL
-      && syn_getcurline()[current_col + 1] == '\0'
+      && syn_getcurline()[current_col + 1] == NUL
       && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY)))
     current_next_list = NULL;
 
@@ -2364,7 +2364,7 @@ static void check_state_ends(void)
         current_next_list = cur_si->si_next_list;
         current_next_flags = cur_si->si_flags;
         if (!(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY))
-            && syn_getcurline()[current_col] == '\0')
+            && syn_getcurline()[current_col] == NUL)
           current_next_list = NULL;
 
         /* When the ended item has "extend", another item with
@@ -2401,7 +2401,7 @@ static void check_state_ends(void)
           check_keepend();
           if ((current_next_flags & HL_HAS_EOL)
               && keepend_level < 0
-              && syn_getcurline()[current_col] == '\0')
+              && syn_getcurline()[current_col] == NUL)
             break;
         }
       }
@@ -2744,12 +2744,12 @@ find_endpos (
         else
           /* Be careful not to jump over the NUL at the end-of-line */
           for (matchcol = regmatch.endpos[0].col;
-               line[matchcol] != '\0' && matchcol < pos.col;
+               line[matchcol] != NUL && matchcol < pos.col;
                ++matchcol)
             ;
 
         /* if the skip pattern includes end-of-line, break here */
-        if (line[matchcol] == '\0')
+        if (line[matchcol] == NUL)
           break;
 
         continue;                   /* start with first end pattern again */
@@ -2873,7 +2873,7 @@ syn_add_end_off (
     base = ml_get_buf(syn_buf, result->lnum, FALSE);
     p = base + col;
     if (off > 0) {
-      while (off-- > 0 && *p != '\0')
+      while (off-- > 0 && *p != NUL)
         mb_ptr_adv(p);
     } else if (off < 0)   {
       while (off++ < 0 && base < p)
@@ -2920,7 +2920,7 @@ syn_add_start_off (
     base = ml_get_buf(syn_buf, result->lnum, FALSE);
     p = base + col;
     if (off > 0) {
-      while (off-- && *p != '\0')
+      while (off-- && *p != NUL)
         mb_ptr_adv(p);
     } else if (off < 0)   {
       while (off++ && base < p)
@@ -3715,7 +3715,7 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
 
   /* output the pattern, in between a char that is not in the pattern */
   for (i = 0; vim_strchr(spp->sp_pattern, sepchars[i]) != NULL; )
-    if (sepchars[++i] == '\0') {
+    if (sepchars[++i] == NUL) {
       i = 0;            /* no good char found, just use the first one */
       break;
     }
@@ -3978,7 +3978,7 @@ get_group_name (
    * Check if there are enough arguments.  The first argument may be a
    * pattern, where '|' is allowed, so only check for NUL.
    */
-  if (ends_excmd(*arg) || *rest == '\0')
+  if (ends_excmd(*arg) || *rest == NUL)
     return NULL;
   return rest;
 }
@@ -4046,10 +4046,10 @@ get_syn_options (
 
     for (fidx = sizeof(flagtab) / sizeof(struct flag); --fidx >= 0; ) {
       p = flagtab[fidx].name;
-      for (i = 0, len = 0; p[i] != '\0'; i += 2, ++len)
+      for (i = 0, len = 0; p[i] != NUL; i += 2, ++len)
         if (arg[len] != p[i] && arg[len] != p[i + 1])
           break;
-      if (p[i] == '\0' && (vim_iswhite(arg[len])
+      if (p[i] == NUL && (vim_iswhite(arg[len])
                           || (flagtab[fidx].argtype > 0
                               ? arg[len] == '='
                               : ends_excmd(arg[len])))) {
@@ -4242,7 +4242,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
   char_u      *kw;
   syn_opt_arg_T syn_opt_arg;
   int cnt;
-  int conceal_char = '\0';
+  int conceal_char = NUL;
 
   rest = get_group_name(arg, &group_name_end);
 
@@ -4270,12 +4270,12 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       if (rest == NULL || ends_excmd(*rest))
         break;
       /* Copy the keyword, removing backslashes, and add a NUL. */
-      while (*rest != '\0' && !vim_iswhite(*rest)) {
-        if (*rest == '\\' && rest[1] != '\0')
+      while (*rest != NUL && !vim_iswhite(*rest)) {
+        if (*rest == '\\' && rest[1] != NUL)
           ++rest;
         *p++ = *rest++;
       }
-      *p++ = '\0';
+      *p++ = NUL;
       ++cnt;
     }
 
@@ -4289,13 +4289,13 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
       for (kw = keyword_copy; --cnt >= 0; kw += STRLEN(kw) + 1) {
         for (p = vim_strchr(kw, '[');; ) {
           if (p != NULL)
-            *p = '\0';
+            *p = NUL;
           add_keyword(kw, syn_id, syn_opt_arg.flags,
               syn_opt_arg.cont_in_list,
               syn_opt_arg.next_list, conceal_char);
           if (p == NULL)
             break;
-          if (p[1] == '\0') {
+          if (p[1] == NUL) {
             EMSG2(_("E789: Missing ']': %s"), kw);
             kw = p + 2;                       /* skip over the NUL */
             break;
@@ -4350,7 +4350,7 @@ syn_cmd_match (
   int idx;
   syn_opt_arg_T syn_opt_arg;
   int sync_idx = 0;
-  int conceal_char = '\0';
+  int conceal_char = NUL;
 
   /* Isolate the group name, check for validity */
   rest = get_group_name(arg, &group_name_end);
@@ -4469,7 +4469,7 @@ syn_cmd_region (
   int success = FALSE;
   int idx;
   syn_opt_arg_T syn_opt_arg;
-  int conceal_char = '\0';
+  int conceal_char = NUL;
 
   /* Isolate the group name, check for validity */
   rest = get_group_name(arg, &group_name_end);
@@ -4528,7 +4528,7 @@ syn_cmd_region (
       break;
     }
     rest = skipwhite(rest + 1);
-    if (*rest == '\0') {
+    if (*rest == NUL) {
       not_enough = TRUE;
       break;
     }
@@ -4980,7 +4980,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
   char_u      *cpo_save;
 
   /* need at least three chars */
-  if (arg == NULL || arg[1] == '\0' || arg[2] == '\0')
+  if (arg == NULL || arg[1] == NUL || arg[2] == NUL)
     return NULL;
 
   end = skip_regexp(arg + 1, *arg, TRUE, NULL);
@@ -5619,11 +5619,11 @@ void set_context_in_syntax_cmd(expand_T *xp, char_u *arg)
   include_default = 0;
 
   /* (part of) subcommand already typed */
-  if (*arg != '\0') {
+  if (*arg != NUL) {
     p = skiptowhite(arg);
-    if (*p != '\0') {                /* past first word */
+    if (*p != NUL) {                /* past first word */
       xp->xp_pattern = skipwhite(p);
-      if (*skiptowhite(xp->xp_pattern) != '\0')
+      if (*skiptowhite(xp->xp_pattern) != NUL)
         xp->xp_context = EXPAND_NOTHING;
       else if (STRNICMP(arg, "case", p - arg) == 0)
         expand_what = EXP_CASE;
@@ -6448,7 +6448,7 @@ do_highlight (
             || STRCMP(key, "GUI") == 0) {
         attr = 0;
         off = 0;
-        while (arg[off] != '\0') {
+        while (arg[off] != NUL) {
           for (i = sizeof(hl_attr_table) / sizeof(int); --i >= 0; ) {
             len = (int)STRLEN(hl_name_table[i]);
             if (STRNICMP(arg + off, hl_name_table[i], len) == 0) {
@@ -6609,11 +6609,11 @@ do_highlight (
                  * probably an xterm-like terminal.  Use the changed
                  * order for colors.
                  */
-                if (*T_CAF != '\0')
+                if (*T_CAF != NUL)
                   p = T_CAF;
                 else
                   p = T_CSF;
-                if (*p != '\0' && *(p + STRLEN(p) - 1) == 'm')
+                if (*p != NUL && *(p + STRLEN(p) - 1) == 'm')
                   switch (t_colors) {
                   case 16:
                     color = color_numbers_8[i];
@@ -6712,7 +6712,7 @@ do_highlight (
         if (STRNCMP(arg, "t_", 2) == 0) {
           off = 0;
           buf[0] = 0;
-          while (arg[off] != '\0') {
+          while (arg[off] != NUL) {
             /* Isolate one termcap name */
             for (len = 0; arg[off + len] &&
                  arg[off + len] != ','; ++len)
@@ -6752,7 +6752,7 @@ do_highlight (
             else                            /* copy as normal char */
               buf[off++] = *p++;
           }
-          buf[off] = '\0';
+          buf[off] = NUL;
         }
         if (error)
           break;
@@ -7168,10 +7168,10 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
     else if (type == LIST_STRING)
       ts = sarg;
     else {   /* type == LIST_ATTR */
-      buf[0] = '\0';
+      buf[0] = NUL;
       for (i = 0; hl_attr_table[i] != 0; ++i) {
         if (iarg & hl_attr_table[i]) {
-          if (buf[0] != '\0')
+          if (buf[0] != NUL)
             vim_strcat(buf, (char_u *)",", 100);
           vim_strcat(buf, (char_u *)hl_name_table[i], 100);
           iarg &= ~hl_attr_table[i];                /* don't want "inverse" */
@@ -7183,7 +7183,7 @@ static int highlight_list_arg(int id, int didh, int type, int iarg, char_u *sarg
         (int)(vim_strsize(ts) + STRLEN(name) + 1), id);
     didh = TRUE;
     if (!got_int) {
-      if (*name != '\0') {
+      if (*name != NUL) {
         MSG_PUTS_ATTR(name, hl_attr(HLF_D));
         MSG_PUTS_ATTR("=", hl_attr(HLF_D));
       }
@@ -7475,7 +7475,7 @@ static int syn_add_group(char_u *name)
   char_u      *p;
 
   /* Check that the name is ASCII letters, digits and underscore. */
-  for (p = name; *p != '\0'; ++p) {
+  for (p = name; *p != NUL; ++p) {
     if (!vim_isprintc(*p)) {
       EMSG(_("E669: Unprintable character in group name"));
       vim_free(name);
@@ -7622,7 +7622,7 @@ int highlight_changed(void)
         if (hl_flags[hlf] == *p)
           break;
       ++p;
-      if (hlf == (int)HLF_COUNT || *p == '\0')
+      if (hlf == (int)HLF_COUNT || *p == NUL)
         return FAIL;
 
       /*
@@ -7654,7 +7654,7 @@ int highlight_changed(void)
         case 'c':   attr |= HL_UNDERCURL;
           break;
         case ':':   ++p;                            /* highlight group name */
-          if (attr || *p == '\0')                         /* no combinations */
+          if (attr || *p == NUL)                         /* no combinations */
             return FAIL;
           end = vim_strchr(p, ',');
           if (end == NULL)
@@ -7758,16 +7758,16 @@ void set_context_in_highlight_cmd(expand_T *xp, char_u *arg)
   include_default = 1;
 
   /* (part of) subcommand already typed */
-  if (*arg != '\0') {
+  if (*arg != NUL) {
     p = skiptowhite(arg);
-    if (*p != '\0') {                    /* past "default" or group name */
+    if (*p != NUL) {                    /* past "default" or group name */
       include_default = 0;
       if (STRNCMP("default", arg, p - arg) == 0) {
         arg = skipwhite(p);
         xp->xp_pattern = arg;
         p = skiptowhite(arg);
       }
-      if (*p != '\0') {                          /* past group name */
+      if (*p != NUL) {                          /* past group name */
         include_link = 0;
         if (arg[1] == 'i' && arg[0] == 'N')
           highlight_list();
@@ -7775,12 +7775,12 @@ void set_context_in_highlight_cmd(expand_T *xp, char_u *arg)
             || STRNCMP("clear", arg, p - arg) == 0) {
           xp->xp_pattern = skipwhite(p);
           p = skiptowhite(xp->xp_pattern);
-          if (*p != '\0') {                      /* past first group name */
+          if (*p != NUL) {                      /* past first group name */
             xp->xp_pattern = skipwhite(p);
             p = skiptowhite(xp->xp_pattern);
           }
         }
-        if (*p != '\0')                          /* past group name(s) */
+        if (*p != NUL)                          /* past group name(s) */
           xp->xp_context = EXPAND_NOTHING;
       }
     }

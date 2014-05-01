@@ -22,6 +22,7 @@
 #define CharOrdUp(x)    ((x) - 'A')
 #define ROT13(c, a)     (((((c) - (a)) + 13) % 26) + (a))
 
+#define NUL             '\000'
 #define BELL            '\007'
 #define BS              '\010'
 #define TAB             '\011'
