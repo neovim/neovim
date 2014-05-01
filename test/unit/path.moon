@@ -113,10 +113,11 @@ describe 'path function', ->
       eq 'directory/file.txt', (ffi.string path.path_shorten_fname full, dir)
 
 describe 'path_shorten_fname_if_possible', ->
+  cwd = lfs.currentdir!
   before_each ->
       lfs.mkdir 'ut_directory'
   after_each ->
-      lfs.chdir '..'
+      lfs.chdir cwd
       lfs.rmdir 'ut_directory'
 
   describe 'path_shorten_fname_if_possible', ->
