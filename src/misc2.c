@@ -900,6 +900,17 @@ int emsgn(char_u *s, int64_t n)
 }
 
 /*
+ * Print an error message with one "%" PRIu64 and one (uint64_t) argument.
+ */
+int emsgu(char_u *s, uint64_t n)
+{
+  if (emsg_not_now())
+    return TRUE;                /* no error messages at the moment */
+  vim_snprintf((char *)IObuff, IOSIZE, (char *)s, n);
+  return emsg(IObuff);
+}
+
+/*
  * Read 2 bytes from "fd" and turn them into an int, MSB first.
  */
 int get2c(FILE *fd)
