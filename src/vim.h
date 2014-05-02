@@ -1024,7 +1024,7 @@ typedef enum {
 #define EMSG3(s, p, q)              emsg3((char_u *)(s), (char_u *)(p), \
     (char_u *)(q))
 #define EMSGN(s, n)                 emsgn((char_u *)(s), (int64_t)(n))
-#define EMSGU(s, n)                 emsgu((char_u *)(s), (long_u)(n))
+#define EMSGU(s, n)                 emsgu((char_u *)(s), (uint64_t)(n))
 #define OUT_STR(s)                  out_str((char_u *)(s))
 #define OUT_STR_NF(s)               out_str_nf((char_u *)(s))
 #define MSG_PUTS(s)                 msg_puts((char_u *)(s))
