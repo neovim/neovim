@@ -84,6 +84,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/undo.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/fileio.h"

@@ -18,6 +18,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/digraph.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"

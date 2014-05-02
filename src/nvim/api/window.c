@@ -6,6 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
+#include "nvim/cursor.h"
 #include "nvim/window.h"
 #include "nvim/screen.h"
 #include "nvim/misc2.h"

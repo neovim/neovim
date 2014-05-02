@@ -1,6 +1,7 @@
 #include "nvim/vim.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/indent.h"
 #include "nvim/indent_c.h"

@@ -82,6 +82,7 @@
 #include "nvim/vim.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/fileio.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"

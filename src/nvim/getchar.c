@@ -20,6 +20,7 @@
 #include "nvim/vim.h"
 #include "nvim/getchar.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"

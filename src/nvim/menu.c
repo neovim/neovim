@@ -16,6 +16,7 @@
 #include "nvim/vim.h"
 #include "nvim/menu.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/getchar.h"
