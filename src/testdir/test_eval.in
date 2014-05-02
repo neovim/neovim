@@ -1,5 +1,8 @@
 STARTTEST
 
+:e test.out
+:%d
+
 :" function name not starting with a capital
 :try
 :  func! g:test()
@@ -46,8 +49,9 @@ STARTTEST
 :  $put =v:exception
 :endtry
 
-:$-10,$w! test.out
-:q!
+:1d
+:w
+:qa!
 
 ENDTEST
 
