@@ -423,11 +423,9 @@ struct file_buffer {
   char_u      *b_sfname;        /* short file name */
   char_u      *b_fname;         /* current file name */
 
-#ifdef UNIX
   int b_dev_valid;              /* TRUE when b_dev has a valid number */
-  dev_t b_dev;                  /* device number */
-  ino_t b_ino;                  /* inode number */
-#endif
+  uint64_t b_dev;                  /* device number */
+  uint64_t b_ino;                  /* inode number */
 
   int b_fnum;                   /* buffer number for this file. */
 
