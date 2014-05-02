@@ -5118,6 +5118,7 @@ buf_check_timestamp (
              && buf->b_mtime != 0
              && ((stat_res = mch_stat((char *)buf->b_ffname, &st)) < 0
                  || time_differs((long)st.st_mtime, buf->b_mtime)
+                 || st.st_size != buf->b_orig_size
 #ifdef HAVE_ST_MODE
                  || (int)st.st_mode != buf->b_orig_mode
 #else
