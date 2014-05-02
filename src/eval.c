@@ -9729,44 +9729,45 @@ static void f_getftime(typval_T *argvars, typval_T *rettv)
 static void f_getftype(typval_T *argvars, typval_T *rettv)
 {
   char_u      *fname;
-  struct stat st;
   char_u      *type = NULL;
   char        *t;
 
   fname = get_tv_string(&argvars[0]);
 
   rettv->v_type = VAR_STRING;
-  if (mch_lstat((char *)fname, &st) >= 0) {
+  FileInfo file_info;
+  if (os_get_file_info_link((char *)fname, &file_info)) {
+    uint64_t mode = file_info.stat.st_mode;
 #ifdef S_ISREG
-    if (S_ISREG(st.st_mode))
+    if (S_ISREG(mode))
       t = "file";
-    else if (S_ISDIR(st.st_mode))
+    else if (S_ISDIR(mode))
       t = "dir";
 # ifdef S_ISLNK
-    else if (S_ISLNK(st.st_mode))
+    else if (S_ISLNK(mode))
       t = "link";
 # endif
 # ifdef S_ISBLK
-    else if (S_ISBLK(st.st_mode))
+    else if (S_ISBLK(mode))
       t = "bdev";
 # endif
 # ifdef S_ISCHR
-    else if (S_ISCHR(st.st_mode))
+    else if (S_ISCHR(mode))
       t = "cdev";
 # endif
 # ifdef S_ISFIFO
-    else if (S_ISFIFO(st.st_mode))
+    else if (S_ISFIFO(mode))
       t = "fifo";
 # endif
 # ifdef S_ISSOCK
-    else if (S_ISSOCK(st.st_mode))
+    else if (S_ISSOCK(mode))
       t = "fifo";
 # endif
     else
       t = "other";
 #else
 # ifdef S_IFMT
-    switch (st.st_mode & S_IFMT) {
+    switch (mode & S_IFMT) {
     case S_IFREG: t = "file"; break;
     case S_IFDIR: t = "dir"; break;
 #  ifdef S_IFLNK

@@ -2573,9 +2573,6 @@ static char_u *get_mef_name(void)
   char_u      *name;
   static int start = -1;
   static int off = 0;
-#ifdef HAVE_LSTAT
-  struct stat sb;
-#endif
 
   if (*p_mef == NUL) {
     name = vim_tempname('e');
@@ -2602,13 +2599,12 @@ static char_u *get_mef_name(void)
     STRCPY(name, p_mef);
     sprintf((char *)name + (p - p_mef), "%d%d", start, off);
     STRCAT(name, p + 2);
-    if (!os_file_exists(name)
-#ifdef HAVE_LSTAT
-        /* Don't accept a symbolic link, its a security risk. */
-        && mch_lstat((char *)name, &sb) < 0
-#endif
-        )
+    // Don't accept a symbolic link, its a security risk.
+    FileInfo file_info;
+    bool file_or_link_found = os_get_file_info_link((char *)name, &file_info);
+    if (!file_or_link_found) {
       break;
+    }
     free(name);
   }
   return name;

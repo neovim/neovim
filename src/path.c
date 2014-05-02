@@ -1285,7 +1285,6 @@ void simplify_filename(char_u *filename)
       if (components > 0) {             /* strip one preceding component */
         int do_strip = FALSE;
         char_u saved_char;
-        struct stat st;
 
         /* Don't strip for an erroneous file name. */
         if (!stripping_disabled) {
@@ -1294,12 +1293,10 @@ void simplify_filename(char_u *filename)
            * link that refers to a non-existent file. */
           saved_char = p[-1];
           p[-1] = NUL;
-#ifdef UNIX
-          if (mch_lstat((char *)filename, &st) < 0)
-#else
-          if (mch_stat((char *)filename, &st) < 0)
-#endif
+          FileInfo file_info;
+          if (!os_get_file_info_link((char *)filename, &file_info)) {
             do_strip = TRUE;
+          }
           p[-1] = saved_char;
 
           --p;
@@ -1320,40 +1317,37 @@ void simplify_filename(char_u *filename)
              * components. */
             saved_char = *tail;
             *tail = NUL;
-            if (mch_stat((char *)filename, &st) >= 0)
+            if (os_get_file_info((char *)filename, &file_info)) {
               do_strip = TRUE;
+            }
             else
               stripping_disabled = TRUE;
             *tail = saved_char;
-#ifdef UNIX
             if (do_strip) {
-              struct stat new_st;
-
-              /* On Unix, the check for the unstripped file name
+              /* The check for the unstripped file name
                * above works also for a symbolic link pointing to
                * a searchable directory.  But then the parent of
                * the directory pointed to by the link must be the
                * same as the stripped file name.  (The latter
                * exists in the file system since it is the
                * component's parent directory.) */
-              if (p == start && relative)
-                (void)mch_stat(".", &new_st);
-              else {
+              FileInfo new_file_info;
+              if (p == start && relative) {
+                os_get_file_info(".", &new_file_info);
+              } else {
                 saved_char = *p;
                 *p = NUL;
-                (void)mch_stat((char *)filename, &new_st);
+                os_get_file_info((char *)filename, &new_file_info);
                 *p = saved_char;
               }
 
-              if (new_st.st_ino != st.st_ino ||
-                  new_st.st_dev != st.st_dev) {
+              if (!os_file_info_id_equal(&file_info, &new_file_info)) {
                 do_strip = FALSE;
                 /* We don't disable stripping of later
                  * components since the unstripped path name is
                  * still valid. */
               }
             }
-#endif
           }
         }
 
