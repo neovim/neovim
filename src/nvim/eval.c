@@ -16,6 +16,7 @@
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/ex_cmds.h"

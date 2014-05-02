@@ -19,8 +19,6 @@ void ml_sync_all(int check_file, int check_char);
 void ml_preserve(buf_T *buf, int message);
 char_u *ml_get(linenr_T lnum);
 char_u *ml_get_pos(pos_T *pos);
-char_u *ml_get_curline(void);
-char_u *ml_get_cursor(void);
 char_u *ml_get_buf(buf_T *buf, linenr_T lnum, int will_change);
 int ml_line_alloced(void);
 int ml_append(linenr_T lnum, char_u *line, colnr_T len, int newfile);

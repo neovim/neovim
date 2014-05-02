@@ -16,6 +16,7 @@
 #include "nvim/version_defs.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
@@ -1793,23 +1794,6 @@ int gchar_pos(pos_T *pos)
   if (has_mbyte)
     return (*mb_ptr2char)(ptr);
   return (int)*ptr;
-}
-
-int gchar_cursor(void)
-{
-  if (has_mbyte)
-    return (*mb_ptr2char)(ml_get_cursor());
-  return (int)*ml_get_cursor();
-}
-
-/*
- * Write a character at the current cursor position.
- * It is directly written into the block.
- */
-void pchar_cursor(int c)
-{
-  *(ml_get_buf(curbuf, curwin->w_cursor.lnum, TRUE)
-    + curwin->w_cursor.col) = c;
 }
 
 /*
