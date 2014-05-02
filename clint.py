@@ -2802,7 +2802,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension,
             "('k' followed by CamelCase) compile-time constant for the size.")
 
   # Detect TRUE and FALSE.
-  match = Search(r'(TRUE|FALSE)', line)
+  match = Search(r'\b(TRUE|FALSE)\b', line)
   if match:
     token = match.group(1)
     error(filename, linenum, 'readability/bool', 4,
