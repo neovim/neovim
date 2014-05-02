@@ -39,6 +39,7 @@ int illegal_slash(char *name);
 int vim_chdir(char_u *new_dir);
 int emsg3(char_u *s, char_u *a1, char_u *a2);
 int emsgn(char_u *s, int64_t n);
+int emsgu(char_u *s, uint64_t n);
 int get2c(FILE *fd);
 int get3c(FILE *fd);
 int get4c(FILE *fd);
