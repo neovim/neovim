@@ -1868,7 +1868,6 @@ static int store_buf_match(char_u ***file, regprog_T *prog, int options)
 int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 {
   int count = 0;
-  int attempt;
   regprog_T   *prog;
   char_u      *patc;
 
@@ -1883,17 +1882,25 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   } else
     patc = pat;
 
-  /*
-   * attempt == 0: try match with    '\<', match at start of word
-   * attempt == 1: try match without '\<', match anywhere
-   */
-  for (attempt = 0; attempt <= 1; ++attempt) {
-    if (attempt > 0 && patc == pat)
-      break;            /* there was no anchor, no need to try again */
-    prog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
+  /* try match with '\<', match at start of word */
+  prog = vim_regcomp(patc, RE_MAGIC);
+  if (prog == NULL) {
+    if (patc != pat)
+      vim_free(patc);
+    return FAIL;
+  }
+
+  /* Count the matches & allocate space for storing them */
+  count = store_buf_match(file, prog, options);
+
+  vim_regfree(prog);
+
+  /* If above matching resulted in count=0, then
+   * try match without '\<', match anywhere */
+  if (count == 0 && patc != pat) {
+    prog = vim_regcomp(patc + 11, RE_MAGIC);
     if (prog == NULL) {
-      if (patc != pat)
-        vim_free(patc);
+      vim_free(patc);
       return FAIL;
     }
 
@@ -1901,8 +1908,6 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
     count = store_buf_match(file, prog, options);
 
     vim_regfree(prog);
-    if (count)                  /* match(es) found, break here */
-      break;
   }
 
   if (patc != pat)
