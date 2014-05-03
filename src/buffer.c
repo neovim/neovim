@@ -67,6 +67,7 @@
 #include "window.h"
 
 static char_u   *buflist_match(regprog_T *prog, buf_T *buf);
+static int store_buf_match(char_u ***file, regprog_T *prog, int options);
 # define HAVE_BUFLIST_MATCH
 static char_u   *fname_match(regprog_T *prog, char_u *name);
 static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum,
@@ -1819,6 +1820,45 @@ buflist_findpat (
   return match;
 }
 
+/*
+ * Find the matches & store the matches in (*file) array.
+ * Return the count of matches found.
+ */
+static int store_buf_match(char_u ***file, regprog_T *prog, int options)
+{
+  buf_T       *buf;
+  char_u      *p;
+  int count = 0;
+
+  /* Count the matches */
+  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    if (!buf->b_p_bl)               /* skip unlisted buffers */
+      continue;
+    if (buflist_match(prog, buf) != NULL)
+      ++count;
+  }
+
+  /* Allocate space for storing the matches */
+  *file = xmalloc(count * sizeof(**file));
+
+  /* If matches found, build the array to keep the matches */
+  if (count) {
+    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+      if (!buf->b_p_bl)               /* skip unlisted buffers */
+        continue;
+      p = buflist_match(prog, buf);
+      if (p != NULL) {
+        if (options & WILD_HOME_REPLACE)
+          p = home_replace_save(buf, p);
+        else
+          p = vim_strsave(p);
+        (*file)[count++] = p;
+      }
+    }
+  }
+
+  return count;
+}
 
 /*
  * Find all buffer names that match.
@@ -1828,10 +1868,6 @@ buflist_findpat (
 int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 {
   int count = 0;
-  buf_T       *buf;
-  int round;
-  char_u      *p;
-  int attempt;
   regprog_T   *prog;
   char_u      *patc;
 
@@ -1846,51 +1882,32 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
   } else
     patc = pat;
 
-  /*
-   * attempt == 0: try match with    '\<', match at start of word
-   * attempt == 1: try match without '\<', match anywhere
-   */
-  for (attempt = 0; attempt <= 1; ++attempt) {
-    if (attempt > 0 && patc == pat)
-      break;            /* there was no anchor, no need to try again */
-    prog = vim_regcomp(patc + attempt * 11, RE_MAGIC);
+  /* try match with '\<', match at start of word */
+  prog = vim_regcomp(patc, RE_MAGIC);
+  if (prog == NULL) {
+    if (patc != pat)
+      vim_free(patc);
+    return FAIL;
+  }
+
+  /* Count the matches & allocate space for storing them */
+  count = store_buf_match(file, prog, options);
+
+  vim_regfree(prog);
+
+  /* If above matching resulted in count=0, then
+   * try match without '\<', match anywhere */
+  if (count == 0 && patc != pat) {
+    prog = vim_regcomp(patc + 11, RE_MAGIC);
     if (prog == NULL) {
-      if (patc != pat)
-        vim_free(patc);
+      vim_free(patc);
       return FAIL;
     }
 
-    /*
-     * round == 1: Count the matches.
-     * round == 2: Build the array to keep the matches.
-     */
-    for (round = 1; round <= 2; ++round) {
-      count = 0;
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
-        if (!buf->b_p_bl)               /* skip unlisted buffers */
-          continue;
-        p = buflist_match(prog, buf);
-        if (p != NULL) {
-          if (round == 1)
-            ++count;
-          else {
-            if (options & WILD_HOME_REPLACE)
-              p = home_replace_save(buf, p);
-            else
-              p = vim_strsave(p);
-            (*file)[count++] = p;
-          }
-        }
-      }
-      if (count == 0)           /* no match found, break here */
-        break;
-      if (round == 1) {
-        *file = xmalloc(count * sizeof(**file));
-      }
-    }
+    /* Count the matches & allocate space for storing them */
+    count = store_buf_match(file, prog, options);
+
     vim_regfree(prog);
-    if (count)                  /* match(es) found, break here */
-      break;
   }
 
   if (patc != pat)
