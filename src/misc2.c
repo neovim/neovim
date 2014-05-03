@@ -826,24 +826,6 @@ int vim_chdirfile(char_u *fname)
 }
 #endif
 
-#if defined(STAT_IGNORES_SLASH) || defined(PROTO)
-/*
- * Check if "name" ends in a slash and is not a directory.
- * Used for systems where stat() ignores a trailing slash on a file name.
- * The Vim code assumes a trailing slash is only ignored for a directory.
- */
-int illegal_slash(char *name)
-{
-  if (name[0] == NUL)
-    return FALSE;           /* no file name is not illegal */
-  if (name[strlen(name) - 1] != '/')
-    return FALSE;           /* no trailing slash */
-  if (os_isdir((char_u *)name))
-    return FALSE;           /* trailing slash for a directory */
-  return TRUE;
-}
-#endif
-
 /*
  * Change directory to "new_dir".  If FEAT_SEARCHPATH is defined, search
  * 'cdpath' for relative directory names, otherwise just os_chdir().

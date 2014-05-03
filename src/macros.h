@@ -98,20 +98,6 @@
 #define vim_isbreak(c) (breakat_flags[(char_u)(c)])
 
 #  define mch_fopen(n, p)       fopen((n), (p))
-#  ifdef STAT_IGNORES_SLASH
-/* On Solaris stat() accepts "file/" as if it was "file".  Return -1 if
- * the name ends in "/" and it's not a directory. */
-#   define mch_stat(n, p)       (illegal_slash(n) ? -1 : stat((n), (p)))
-#  else
-#   define mch_stat(n, p)       stat((n), (p))
-#  endif
-
-#ifdef HAVE_LSTAT
-# define mch_lstat(n, p)        lstat((n), (p))
-#else
-# define mch_lstat(n, p)        mch_stat((n), (p))
-#endif
-
 #   define mch_open(n, m, p)    open((n), (m), (p))
 
 /* mch_open_rw(): invoke mch_open() with third argument for user R/W. */
