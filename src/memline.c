@@ -832,8 +832,6 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
  */
 static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 {
-  struct stat st;
-
   if (buf->b_ffname == NULL)
     b0p->b0_fname[0] = NUL;
   else {
@@ -861,12 +859,13 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
         memmove(b0p->b0_fname + 1, uname, ulen);
       }
     }
-    if (mch_stat((char *)buf->b_ffname, &st) >= 0) {
-      long_to_char((long)st.st_mtime, b0p->b0_mtime);
+    FileInfo file_info;
+    if (os_get_file_info((char *)buf->b_ffname, &file_info)) {
+      long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
 #ifdef CHECK_INODE
-      long_to_char((long)st.st_ino, b0p->b0_ino);
+      long_to_char((long)file_info.stat.st_ino, b0p->b0_ino);
 #endif
-      buf_store_time(buf, &st, buf->b_ffname);
+      buf_store_file_info(buf, &file_info, buf->b_ffname);
       buf->b_mtime_read = buf->b_mtime;
     } else {
       long_to_char(0L, b0p->b0_mtime);
@@ -943,7 +942,6 @@ void ml_recover(void)
   infoptr_T   *ip;
   blocknr_T bnum;
   int page_count;
-  struct stat org_stat, swp_stat;
   int len;
   int directly;
   linenr_T lnum;
@@ -1155,12 +1153,15 @@ void ml_recover(void)
   /*
    * check date of swap file and original file
    */
+  FileInfo org_file_info;
+  FileInfo swp_file_info;
   mtime = char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
-      && mch_stat((char *)curbuf->b_ffname, &org_stat) != -1
-      && ((mch_stat((char *)mfp->mf_fname, &swp_stat) != -1
-           && org_stat.st_mtime > swp_stat.st_mtime)
-          || org_stat.st_mtime != mtime)) {
+      && os_get_file_info((char *)curbuf->b_ffname, &org_file_info)
+      && ((os_get_file_info((char *)mfp->mf_fname, &swp_file_info)
+           && org_file_info.stat.st_mtim.tv_sec
+              > swp_file_info.stat.st_mtim.tv_sec)
+          || org_file_info.stat.st_mtim.tv_sec != mtime)) {
     EMSG(_("E308: Warning: Original file may have been changed"));
   }
   out_flush();
@@ -1714,7 +1715,6 @@ static int process_still_running;
  */
 static time_t swapfile_info(char_u *fname)
 {
-  struct stat st;
   int fd;
   struct block0 b0;
   time_t x = (time_t)0;
@@ -1724,18 +1724,19 @@ static time_t swapfile_info(char_u *fname)
 #endif
 
   /* print the swap file date */
-  if (mch_stat((char *)fname, &st) != -1) {
+  FileInfo file_info;
+  if (os_get_file_info((char *)fname, &file_info)) {
 #ifdef UNIX
     /* print name of owner of the file */
-    if (os_get_uname(st.st_uid, uname, B0_UNAME_SIZE) == OK) {
+    if (os_get_uname(file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
       MSG_PUTS(_("          owned by: "));
       msg_outtrans((char_u *)uname);
       MSG_PUTS(_("   dated: "));
     } else
 #endif
     MSG_PUTS(_("             dated: "));
-    x = st.st_mtime;                        /* Manx C can't do &st.st_mtime */
-    p = ctime(&x);                          /* includes '\n' */
+    x = file_info.stat.st_mtim.tv_sec;
+    p = ctime(&x);  // includes '\n'
     if (p == NULL)
       MSG_PUTS("(invalid)\n");
     else
@@ -1847,7 +1848,6 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
 void ml_sync_all(int check_file, int check_char)
 {
   buf_T               *buf;
-  struct stat st;
 
   for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
@@ -1862,9 +1862,10 @@ void ml_sync_all(int check_file, int check_char)
        * If the original file does not exist anymore or has been changed
        * call ml_preserve() to get rid of all negative numbered blocks.
        */
-      if (mch_stat((char *)buf->b_ffname, &st) == -1
-          || st.st_mtime != buf->b_mtime_read
-          || st.st_size != buf->b_orig_size) {
+      FileInfo file_info;
+      if (!os_get_file_info((char *)buf->b_ffname, &file_info)
+          || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
+          || (off_t)file_info.stat.st_size != buf->b_orig_size) {
         ml_preserve(buf, FALSE);
         did_check_timestamps = FALSE;
         need_check_timestamps = TRUE;           /* give message later */
@@ -3432,7 +3433,6 @@ attention_message (
     char_u *fname         /* swap file name */
 )
 {
-  struct stat st;
   time_t x, sx;
   char        *p;
 
@@ -3445,10 +3445,11 @@ attention_message (
   MSG_PUTS(_("While opening file \""));
   msg_outtrans(buf->b_fname);
   MSG_PUTS("\"\n");
-  if (mch_stat((char *)buf->b_fname, &st) != -1) {
+  FileInfo file_info;
+  if (os_get_file_info((char *)buf->b_fname, &file_info)) {
     MSG_PUTS(_("             dated: "));
-    x = st.st_mtime;        /* Manx C can't do &st.st_mtime */
-    p = ctime(&x);                          /* includes '\n' */
+    x = file_info.stat.st_mtim.tv_sec;
+    p = ctime(&x);  // includes '\n'
     if (p == NULL)
       MSG_PUTS("(invalid)\n");
     else
@@ -3556,21 +3557,13 @@ findswapname (
       fname = NULL;
       break;
     }
-    /*
-     * check if the swapfile already exists
-     */
-    if (!os_file_exists(fname)) {       /* it does not exist */
-#ifdef HAVE_LSTAT
-      struct stat sb;
-
-      /*
-       * Extra security check: When a swap file is a symbolic link, this
-       * is most likely a symlink attack.
-       */
-      if (mch_lstat((char *)fname, &sb) < 0)
-#else
-#endif
-        break;
+    // check if the swapfile already exists
+    // Extra security check: When a swap file is a symbolic link, this
+    // is most likely a symlink attack.
+    FileInfo file_info;
+    bool file_or_link_found = os_get_file_info_link((char *)fname, &file_info);
+    if (!file_or_link_found) {
+      break;
     }
 
     /*
@@ -3831,7 +3824,6 @@ fnamecmp_ino (
     long ino_block0
 )
 {
-  struct stat st;
   ino_t ino_c = 0;                  /* ino of current file */
   ino_t ino_s;                      /* ino of file from swap file */
   char_u buf_c[MAXPATHL];           /* full path of fname_c */
@@ -3839,18 +3831,21 @@ fnamecmp_ino (
   int retval_c;                     /* flag: buf_c valid */
   int retval_s;                     /* flag: buf_s valid */
 
-  if (mch_stat((char *)fname_c, &st) == 0)
-    ino_c = (ino_t)st.st_ino;
+  FileInfo file_info;
+  if (os_get_file_info((char *)fname_c, &file_info)) {
+    ino_c = (ino_t)file_info.stat.st_ino;
+  }
 
   /*
    * First we try to get the inode from the file name, because the inode in
    * the swap file may be outdated.  If that fails (e.g. this path is not
    * valid on this machine), use the inode from block 0.
    */
-  if (mch_stat((char *)fname_s, &st) == 0)
-    ino_s = (ino_t)st.st_ino;
-  else
+  if (os_get_file_info((char *)fname_s, &file_info)) {
+    ino_s = (ino_t)file_info.stat.st_ino;
+  } else {
     ino_s = (ino_t)ino_block0;
+  }
 
   if (ino_c && ino_s)
     return ino_c != ino_s;
