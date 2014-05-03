@@ -3,24 +3,14 @@ lpeg = require 'lpeg'
 formatc = require 'test.unit.formatc'
 Set = require 'test.unit.set'
 Preprocess = require 'test.unit.preprocess'
+Paths = require 'test.config.paths'
 
 -- add some standard header locations
--- TODO(aktau, jszakmeister): optionally pass more header locations via env
-Preprocess.add_to_include_path('./src')
-Preprocess.add_to_include_path('./.deps/usr/include')
-Preprocess.add_to_include_path('./build/config')
-
-if ffi.abi('32bit')
-  Preprocess.add_to_include_path('/opt/neovim-deps/32/include')
-else
-  Preprocess.add_to_include_path('/opt/neovim-deps/include')
+for i,p in ipairs(Paths.include_paths)
+  Preprocess.add_to_include_path(p)
 
 -- load neovim shared library
-testlib = os.getenv 'NVIM_TEST_LIB'
-unless testlib
-    testlib = './build/src/libnvim-test.so'
-
-libnvim = ffi.load testlib
+libnvim = ffi.load Paths.test_libnvim_path
 
 trim = (s) ->
   s\match'^%s*(.*%S)' or ''
@@ -91,12 +81,8 @@ cimport = (...) ->
 
   return libnvim
 
-testinc = os.getenv 'TEST_INCLUDES'
-unless testinc
-    testinc = './build/test/includes/post'
-
 cppimport = (path) ->
-  return cimport testinc .. '/' .. path
+  return cimport Paths.test_include_path .. '/' .. path
 
 cimport './src/types.h'
 

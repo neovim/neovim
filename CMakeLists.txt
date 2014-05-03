@@ -136,16 +136,22 @@ if(NOT BUSTED_OUTPUT_TYPE)
 endif()
 
 if(BUSTED_PRG)
-  get_target_property(NVIM_TEST_LIB nvim-test LOCATION)
+  get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    PROPERTY INCLUDE_DIRECTORIES)
+  get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
+
+  configure_file(
+    test/config/paths.lua.in
+    ${CMAKE_BINARY_DIR}/test/config/paths.lua)
+
   add_custom_target(unittest
     COMMAND ${CMAKE_COMMAND}
       -DBUSTED_PRG=${BUSTED_PRG}
       -DLUA_PRG=${LUA_PRG}
       -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
-      -DNVIM_TEST_LIB=${NVIM_TEST_LIB}
       -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
-      -DTEST_INCLUDES=${CMAKE_BINARY_DIR}/test/includes/post
+      -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -P ${CMAKE_MODULE_PATH}/RunUnittests.cmake
     DEPENDS nvim-test unittest-headers)
 endif()
