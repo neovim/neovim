@@ -7276,34 +7276,6 @@ highlight_color (
   return NULL;
 }
 
-#if (defined(FEAT_SYN_HL) && defined(FEAT_GUI) && defined(FEAT_PRINTER)) \
-  || defined(PROTO)
-/*
- * Return color name of highlight group "id" as RGB value.
- */
-long_u 
-highlight_gui_color_rgb (
-    int id,
-    int fg                 /* TRUE = fg, FALSE = bg */
-)
-{
-  guicolor_T color;
-
-  if (id <= 0 || id > highlight_ga.ga_len)
-    return 0L;
-
-  if (fg)
-    color = HL_TABLE()[id - 1].sg_gui_fg;
-  else
-    color = HL_TABLE()[id - 1].sg_gui_bg;
-
-  if (color == INVALCOLOR)
-    return 0L;
-
-  return gui_mch_get_rgb(color);
-}
-#endif
-
 /*
  * Output the syntax list header.
  * Return TRUE when started a new line.

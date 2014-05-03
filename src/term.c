@@ -2327,21 +2327,6 @@ void ttest(int pairs)
 
 #if (defined(FEAT_GUI) && (defined(FEAT_MENU) || !defined(USE_ON_FLY_SCROLL))) \
   || defined(PROTO)
-/*
- * Represent the given long_u as individual bytes, with the most significant
- * byte first, and store them in dst.
- */
-void add_long_to_buf(long_u val, char_u *dst)
-{
-  int i;
-  int shift;
-
-  for (i = 1; i <= (int)sizeof(long_u); i++) {
-    shift = 8 * (sizeof(long_u) - i);
-    dst[i - 1] = (char_u) ((val >> shift) & 0xff);
-  }
-}
-
 static int get_long_from_buf(char_u *buf, long_u *val);
 
 /*

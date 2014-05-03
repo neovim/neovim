@@ -6555,68 +6555,6 @@ void comp_col(void)
 }
 
 /*
- * Unset local option value, similar to ":set opt<".
- */
-void unset_global_local_option(char_u *name, void *from)
-{
-  struct vimoption *p;
-  int opt_idx;
-  buf_T       *buf = (buf_T *)from;
-
-  opt_idx = findoption(name);
-  p = &(options[opt_idx]);
-
-  switch ((int)p->indir) {
-  /* global option with local value: use local value if it's been set */
-  case PV_EP:
-    clear_string_option(&buf->b_p_ep);
-    break;
-  case PV_KP:
-    clear_string_option(&buf->b_p_kp);
-    break;
-  case PV_PATH:
-    clear_string_option(&buf->b_p_path);
-    break;
-  case PV_AR:
-    buf->b_p_ar = -1;
-    break;
-  case PV_TAGS:
-    clear_string_option(&buf->b_p_tags);
-    break;
-  case PV_DEF:
-    clear_string_option(&buf->b_p_def);
-    break;
-  case PV_INC:
-    clear_string_option(&buf->b_p_inc);
-    break;
-  case PV_DICT:
-    clear_string_option(&buf->b_p_dict);
-    break;
-  case PV_TSR:
-    clear_string_option(&buf->b_p_tsr);
-    break;
-  case PV_EFM:
-    clear_string_option(&buf->b_p_efm);
-    break;
-  case PV_GP:
-    clear_string_option(&buf->b_p_gp);
-    break;
-  case PV_MP:
-    clear_string_option(&buf->b_p_mp);
-    break;
-  case PV_CM:
-    clear_string_option(&buf->b_p_cm);
-    break;
-  case PV_STL:
-    clear_string_option(&((win_T *)from)->w_p_stl);
-    break;
-  case PV_UL:
-    buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
-    break;
-  }
-}
-
-/*
  * Get pointer to option variable, depending on local or global scope.
  */
 static char_u *get_varp_scope(struct vimoption *p, int opt_flags)

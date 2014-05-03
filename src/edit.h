@@ -53,8 +53,6 @@ void fixthisline(int (*get_the_indent)(void));
 void fix_indent(void);
 int in_cinkeys(int keytyped, int when, int line_is_empty);
 int hkmap(int c);
-void ins_scroll(void);
-void ins_horscroll(void);
 int ins_copychar(linenr_T lnum);
 
 #endif /* NEOVIM_EDIT_H */

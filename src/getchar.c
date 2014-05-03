@@ -2574,9 +2574,8 @@ fix_input_buffer (
 #if defined(USE_INPUT_BUF) || defined(PROTO)
 /*
  * Return TRUE when bytes are in the input buffer or in the typeahead buffer.
- * Normally the input buffer would be sufficient, but the server_to_input_buf()
- * or feedkeys() may insert characters in the typeahead buffer while we are
- * waiting for input to arrive.
+ * Normally the input buffer would be sufficient, but feedkeys() may insert
+ * characters in the typeahead buffer while we are waiting for input to arrive.
  */
 int input_available(void)
 {

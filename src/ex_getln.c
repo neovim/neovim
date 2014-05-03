@@ -1979,22 +1979,6 @@ redraw:
 }
 
 /*
- * Return TRUE if ccline.overstrike is on.
- */
-int cmdline_overstrike(void)
-{
-  return ccline.overstrike;
-}
-
-/*
- * Return TRUE if the cursor is at the end of the cmdline.
- */
-int cmdline_at_end(void)
-{
-  return ccline.cmdpos >= ccline.cmdlen;
-}
-
-/*
  * Allocate a new command line buffer.
  * Assigns the new buffer to ccline.cmdbuff and ccline.cmdbufflen.
  * Returns the new value of ccline.cmdbuff and ccline.cmdbufflen.

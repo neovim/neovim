@@ -79,11 +79,8 @@ void restore_win(win_T *save_curwin, tabpage_T *save_curtab,
                  int no_display);
 void switch_buffer(buf_T **save_curbuf, buf_T *buf);
 void restore_buffer(buf_T *save_curbuf);
-int win_hasvertsplit(void);
 int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id);
 int match_delete(win_T *wp, int id, int perr);
 void clear_matches(win_T *wp);
 matchitem_T *get_match(win_T *wp, int id);
-int get_win_number(win_T *wp, win_T *first_win);
-int get_tab_number(tabpage_T *tp);
 #endif /* NEOVIM_WINDOW_H */

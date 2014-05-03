@@ -78,7 +78,6 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff);
 int find_decl(char_u *ptr, int len, int locally, int thisblock,
               int searchflags);
 void scroll_redraw(int up, long count);
-void handle_tabmenu(void);
 void do_nv_ident(int c1, int c2);
 int get_visual_text(cmdarg_T *cap, char_u **pp, int *lenp);
 void start_selection(void);

@@ -8,7 +8,6 @@ void free_all_options(void);
 void set_init_2(void);
 void set_init_3(void);
 void set_helplang_default(char_u *lang);
-void init_gui_options(void);
 void set_title_defaults(void);
 int do_set(char_u *arg, int opt_flags);
 void set_options_bin(int oldval, int newval, int opt_flags);
@@ -27,9 +26,6 @@ char_u *check_colorcolumn(win_T *wp);
 char_u *check_stl_option(char_u *s);
 int get_option_value(char_u *name, long *numval, char_u **stringval,
                              int opt_flags);
-int get_option_value_strict(char_u *name, long *numval, char_u *
-                                    *stringval, int opt_type,
-                                    void *from);
 char_u *option_iter_next(void **option, int opt_type);
 char_u *set_option_value(char_u *name, long number, char_u *string,
                                  int opt_flags);
@@ -43,7 +39,6 @@ void free_termoptions(void);
 void free_one_termoption(char_u *var);
 void set_term_defaults(void);
 void comp_col(void);
-void unset_global_local_option(char_u *name, void *from);
 char_u *get_equalprg(void);
 void win_copy_options(win_T *wp_from, win_T *wp_to);
 void copy_winopt(winopt_T *from, winopt_T *to);

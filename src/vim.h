@@ -1382,15 +1382,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 #define FILEINFO_READ_FAIL   2  /* CreateFile() failed */
 #define FILEINFO_INFO_FAIL   3  /* GetFileInformationByHandle() failed */
 
-/* Return value from get_option_value_strict */
-#define SOPT_BOOL       0x01    /* Boolean option */
-#define SOPT_NUM        0x02    /* Number option */
-#define SOPT_STRING     0x04    /* String option */
-#define SOPT_GLOBAL     0x08    /* Option has global value */
-#define SOPT_WIN        0x10    /* Option has window-local value */
-#define SOPT_BUF        0x20    /* Option has buffer-local value */
-#define SOPT_UNSET      0x40    /* Option does not have local value set */
-
 /* Option types for various functions in option.c */
 #define SREQ_GLOBAL     0       /* Request global option */
 #define SREQ_WIN        1       /* Request window-local option */
