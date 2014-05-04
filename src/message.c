@@ -61,6 +61,34 @@ static int do_more_prompt(int typed_char);
 static void msg_screen_putchar(int c, int attr);
 static int msg_check_screen(void);
 static void redir_write(char_u *s, int maxlen);
+
+/// Allocates memory for dialog string & for storing hotkeys
+///
+/// Finds the size of memory required for the confirm_msg & for storing hotkeys
+/// and then allocates the memory for them.
+/// has_hotkey array is also filled-up.
+///
+/// @param message Message which will be part of the confirm_msg
+/// @param buttons String containing button names
+/// @param has_hotkey A element in this array is TRUE if corresponding button
+///                   has a hotkey
+///
+/// @return Pointer to memory allocated for storing hotkeys
+static char_u * console_dialog_alloc(const char_u *message,
+                                     char_u *buttons,
+                                     char_u has_hotkey[]);
+
+/// Copies hotkeys & dialog message into the memory allocated for it
+///
+/// @param message Message which will be part of the confirm_msg
+/// @param buttons String containing button names
+/// @param dfltbutton Number of default button
+/// @param hotkp Pointer to the memory location where hotkeys will be copied
+/// @param has_hotkey A element in this array is TRUE if corresponding button
+///                   has a hotkey
+static void cpy_hotkeys_and_msg(const char_u *message, char_u *buttons,
+                            int dfltbutton, char_u *hotkp, const char_u has_hotkey[]);
+
 static char_u *msg_show_console_dialog(char_u *message, char_u *buttons,
                                        int dfltbutton);
 static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
@@ -2828,44 +2856,29 @@ copy_char (
   }
 }
 
-/*
- * Format the dialog string, and display it at the bottom of
- * the screen. Return a string of hotkey chars (if defined) for
- * each 'button'. If a button has no hotkey defined, the first character of
- * the button is used.
- * The hotkeys can be multi-byte characters, but without combining chars.
- *
- * Returns an allocated string with hotkeys, or NULL for error.
- */
-static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfltbutton)
-{
-  int len = 0;
-# define HOTK_LEN (has_mbyte ? MB_MAXBYTES : 1)
-  int lenhotkey = HOTK_LEN;             /* count first button */
-  char_u      *hotk = NULL;
-  char_u      *msgp = NULL;
-  char_u      *hotkp = NULL;
-  char_u      *r;
 #define HAS_HOTKEY_LEN 30
-  char_u has_hotkey[HAS_HOTKEY_LEN];
-  int first_hotkey = FALSE;             /* first char of button is hotkey */
-  int idx;
+#define HOTK_LEN (has_mbyte ? MB_MAXBYTES : 1)
+
+static char_u * console_dialog_alloc(const char_u *message,
+                                     char_u *buttons,
+                                     char_u has_hotkey[])
+{
+  int lenhotkey = HOTK_LEN;             /* count first button */
 
   has_hotkey[0] = FALSE;
 
   // Compute the size of memory to allocate.
-  r = buttons;
-  idx = 0;
+  int len = 0;
+  int idx = 0;
+  char_u *r = buttons;
   while (*r) {
     if (*r == DLG_BUTTON_SEP) {
       len += 3;                         /* '\n' -> ', '; 'x' -> '(x)' */
       lenhotkey += HOTK_LEN;            /* each button needs a hotkey */
       if (idx < HAS_HOTKEY_LEN - 1)
         has_hotkey[++idx] = FALSE;
-    } else if (*r == DLG_HOTKEY_CHAR || first_hotkey) {
-      if (*r == DLG_HOTKEY_CHAR)
-        ++r;
-      first_hotkey = FALSE;
+    } else if (*r == DLG_HOTKEY_CHAR) {
+      ++r;
       ++len;                    /* '&a' -> '[a]' */
       if (idx < HAS_HOTKEY_LEN - 1)
         has_hotkey[idx] = TRUE;
@@ -2883,23 +2896,46 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
 
   /* If no hotkey is specified first char is used. */
   if (!has_hotkey[0]) {
-    first_hotkey = TRUE;
     len += 2;                       /* "x" -> "[x]" */
   }
 
   /*
-   * Now allocate and load the strings
+   * Now allocate space for the strings
    */
   free(confirm_msg);
   confirm_msg = alloc(len);
   *confirm_msg = NUL;
-  hotk = alloc(lenhotkey);
 
+  return alloc(lenhotkey);
+}
+
+/*
+ * Format the dialog string, and display it at the bottom of
+ * the screen. Return a string of hotkey chars (if defined) for
+ * each 'button'. If a button has no hotkey defined, the first character of
+ * the button is used.
+ * The hotkeys can be multi-byte characters, but without combining chars.
+ *
+ * Returns an allocated string with hotkeys, or NULL for error.
+ */
+static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfltbutton)
+{
+  char_u has_hotkey[HAS_HOTKEY_LEN];
+  char_u *hotk = console_dialog_alloc(message, buttons, has_hotkey);
+
+  cpy_hotkeys_and_msg(message, buttons, dfltbutton, hotk, has_hotkey);
+
+  display_confirm_msg();
+  return hotk;
+}
+
+static void cpy_hotkeys_and_msg(const char_u *message, char_u *buttons,
+                            int dfltbutton, char_u *hotkp, const char_u has_hotkey[])
+{
   *confirm_msg = '\n';
   STRCPY(confirm_msg + 1, message);
 
-  msgp = confirm_msg + 1 + STRLEN(message);
-  hotkp = hotk;
+  char_u *msgp = confirm_msg + 1 + STRLEN(message);
 
   /* Define first default hotkey.  Keep the hotkey string NUL
    * terminated to avoid reading past the end. */
@@ -2910,9 +2946,13 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
   confirm_msg_tail = msgp;
   *msgp++ = '\n';
 
-  // Copy to the allocated memory.
-  r = buttons;
-  idx = 0;
+  int first_hotkey = FALSE;  /* Is the first char of button a hotkey */
+  if (!has_hotkey[0]) {
+    first_hotkey = TRUE;     /* If no hotkey is specified, first char is used */
+  }
+
+  int idx = 0;
+  char_u *r = buttons;
   while (*r) {
     if (*r == DLG_BUTTON_SEP) {
       *msgp++ = ',';
@@ -2957,9 +2997,6 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
   *msgp++ = ':';
   *msgp++ = ' ';
   *msgp = NUL;
-
-  display_confirm_msg();
-  return hotk;
 }
 
 /*
