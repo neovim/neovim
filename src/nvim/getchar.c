@@ -4109,7 +4109,6 @@ check_map (
   int hash;
   int len, minlen;
   mapblock_T  *mp;
-  char_u      *s;
   int local;
 
   validate_maphash();
@@ -4133,17 +4132,14 @@ check_map (
         /* skip entries with wrong mode, wrong length and not matching
          * ones */
         if ((mp->m_mode & mode) && (!exact || mp->m_keylen == len)) {
-          if (len > mp->m_keylen)
-            minlen = mp->m_keylen;
-          else
-            minlen = len;
-          s = mp->m_keys;
-          if (ign_mod && s[0] == K_SPECIAL && s[1] == KS_MODIFIER
-              && s[2] != NUL) {
+          char_u *s = mp->m_keys;
+          int keylen = mp->m_keylen;
+          if (ign_mod && keylen >= 3
+              && s[0] == K_SPECIAL && s[1] == KS_MODIFIER) {
             s += 3;
-            if (len > mp->m_keylen - 3)
-              minlen = mp->m_keylen - 3;
+            keylen -= 3;
           }
+          minlen = keylen < len ? keylen : len;
           if (STRNCMP(s, keys, minlen) == 0) {
             if (mp_ptr != NULL)
               *mp_ptr = mp;
