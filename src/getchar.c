@@ -4206,11 +4206,7 @@ static void add_normal_tcap_entries(char_u *s)
  */
 void check_map_keycodes(void)
 {
-  mapblock_T  *mp;
   char_u      *save_name;
-  int abbr;
-  int hash;
-  buf_T       *bp;
 
   validate_maphash();
   save_name = sourcing_name;
@@ -4218,31 +4214,25 @@ void check_map_keycodes(void)
 
   /* This this once for each buffer, and then once for global
    * mappings/abbreviations with bp == NULL */
-  for (bp = firstbuf;; bp = bp->b_next) {
-    /*
-     * Do the loop twice: Once for mappings, once for abbreviations.
-     * Then loop over all map hash lists.
-     */
-    for (abbr = 0; abbr <= 1; ++abbr)
-      for (hash = 0; hash < 256; ++hash) {
-        if (abbr) {
-          if (hash)                 /* there is only one abbr list */
-            break;
-          if (bp != NULL)
-            mp = bp->b_first_abbr;
-          else
-            mp = first_abbr;
-        } else {
-          if (bp != NULL)
-            mp = bp->b_maphash[hash];
-          else
-            mp = maphash[hash];
-        }
-        for (; mp != NULL; mp = mp->m_next) {
-          add_normal_tcap_entries(mp->m_keys);  // For the "mapped from" part
-          add_normal_tcap_entries(mp->m_str);   // For the "mapped to" part
-        }
+  for (buf_T *bp = firstbuf; ; bp = bp->b_next) {
+    // Check in mappings
+    for (int hash = 0; hash < 256; hash++) {
+      mapblock_T  *mp;
+      mp = (bp != NULL) ? bp->b_maphash[hash]: maphash[hash];
+      for (; mp != NULL; mp = mp->m_next) {
+        add_normal_tcap_entries(mp->m_keys);  // For the "mapped from" part
+        add_normal_tcap_entries(mp->m_str);   // For the "mapped to" part
       }
+    }
+
+    // Check in abbreviation
+    mapblock_T  *mp;
+    mp = (bp != NULL) ? bp->b_first_abbr : first_abbr;
+    for (; mp != NULL; mp = mp->m_next) {
+      add_normal_tcap_entries(mp->m_keys);  // For the "mapped from" part
+      add_normal_tcap_entries(mp->m_str);   // For the "mapped to" part
+    }
+
     if (bp == NULL)
       break;
   }
