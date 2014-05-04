@@ -84,6 +84,7 @@ static int append_arg_number(win_T *wp, char_u *buf, int buflen, int add_file);
 static void free_buffer(buf_T *);
 static void free_buffer_stuff(buf_T *buf, int free_options);
 static void clear_wininfo(buf_T *buf);
+static void wipe_or_delete_buffer(int wipe, int del, buf_T *buf);
 
 #ifdef UNIX
 # define dev_T dev_t
@@ -317,15 +318,22 @@ close_buffer (
    * The caller must take care of NOT deleting/freeing when 'bufhidden' is
    * "hide" (otherwise we could never free or delete a buffer).
    */
-  if (buf->b_p_bh[0] == 'd') {          /* 'bufhidden' == "delete" */
-    del_buf = TRUE;
-    unload_buf = TRUE;
-  } else if (buf->b_p_bh[0] == 'w') { /* 'bufhidden' == "wipe" */
-    del_buf = TRUE;
-    unload_buf = TRUE;
+  switch (buf->b_p_bh[0]) {
+  // 'bufhidden' == "wipe"
+  case 'w':
     wipe_buf = TRUE;
-  } else if (buf->b_p_bh[0] == 'u')     /* 'bufhidden' == "unload" */
+    /* fallthrough */
+
+  // 'bufhidden' == "delete"
+  case 'd':
+    del_buf = TRUE;
+    /* fallthrough */
+
+  // 'bufhidden' == "unload"
+  case 'u':
     unload_buf = TRUE;
+    break;
+  }
 
   if (win != NULL) {
     /* Set b_last_cursor when closing the last window for the buffer.
@@ -342,31 +350,29 @@ close_buffer (
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
     buf->b_closing = TRUE;
-    apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname,
-        FALSE, buf);
-    if (!buf_valid(buf)) {
-      /* Autocommands deleted the buffer. */
-aucmd_abort:
-      EMSG(_(e_auabort));
-      return;
-    }
+    apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname, FALSE, buf);
+
+    if (!buf_valid(buf)) /* If autocommands deleted the buffer */
+      goto aucmd_abort;
+
     buf->b_closing = FALSE;
-    if (abort_if_last && one_window())
-      /* Autocommands made this the only window. */
+
+    if (abort_if_last && one_window()) /* If autocommands made this the only window. */
       goto aucmd_abort;
 
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
       buf->b_closing = TRUE;
-      apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
-          FALSE, buf);
+      apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname, FALSE, buf);
+
+      /* If autocommands deleted the buffer. */
       if (!buf_valid(buf))
-        /* Autocommands deleted the buffer. */
         goto aucmd_abort;
+
       buf->b_closing = FALSE;
-      if (abort_if_last && one_window())
-        /* Autocommands made this the only window. */
+
+      if (abort_if_last && one_window()) /* If autocommands made this the only window. */
         goto aucmd_abort;
     }
     if (aborting())         /* autocmds may abort script processing */
@@ -426,37 +432,11 @@ aucmd_abort:
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
 
-  /*
-   * Remove the buffer from the list.
-   */
-  if (wipe_buf) {
-    vim_free(buf->b_ffname);
-    vim_free(buf->b_sfname);
-    if (buf->b_prev == NULL)
-      firstbuf = buf->b_next;
-    else
-      buf->b_prev->b_next = buf->b_next;
-    if (buf->b_next == NULL)
-      lastbuf = buf->b_prev;
-    else
-      buf->b_next->b_prev = buf->b_prev;
-    free_buffer(buf);
-  } else {
-    if (del_buf) {
-      /* Free all internal variables and reset option values, to make
-       * ":bdel" compatible with Vim 5.7. */
-      free_buffer_stuff(buf, TRUE);
+  wipe_or_delete_buffer(wipe_buf, del_buf, buf);
+  return;
 
-      /* Make it look like a new buffer. */
-      buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
-
-      /* Init the options when loaded again. */
-      buf->b_p_initialized = FALSE;
-    }
-    buf_clear_file(buf);
-    if (del_buf)
-      buf->b_p_bl = FALSE;
-  }
+aucmd_abort:
+  EMSG(_(e_auabort));
 }
 
 /*
@@ -595,6 +575,42 @@ static void clear_wininfo(buf_T *buf)
       deleteFoldRecurse(&wip->wi_folds);
     }
     vim_free(wip);
+  }
+}
+
+/*
+ * Remove the buffer from the list.
+ */
+static void
+wipe_or_delete_buffer(int wipe_buf, int del_buf, buf_T *buf)
+{
+  if (wipe_buf) {
+    vim_free(buf->b_ffname);
+    vim_free(buf->b_sfname);
+    if (buf->b_prev == NULL)
+      firstbuf = buf->b_next;
+    else
+      buf->b_prev->b_next = buf->b_next;
+    if (buf->b_next == NULL)
+      lastbuf = buf->b_prev;
+    else
+      buf->b_next->b_prev = buf->b_prev;
+    free_buffer(buf);
+  } else {
+    if (del_buf) {
+      /* Free all internal variables and reset option values, to make
+       * ":bdel" compatible with Vim 5.7. */
+      free_buffer_stuff(buf, TRUE);
+
+      /* Make it look like a new buffer. */
+      buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
+
+      /* Init the options when loaded again. */
+      buf->b_p_initialized = FALSE;
+    }
+    buf_clear_file(buf);
+    if (del_buf)
+      buf->b_p_bl = FALSE;
   }
 }
 
