@@ -79,20 +79,20 @@
 #include <string.h>
 # include <wchar.h>
 
-#include "vim.h"
-#include "mbyte.h"
-#include "charset.h"
-#include "fileio.h"
-#include "memline.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "memory.h"
-#include "option.h"
-#include "screen.h"
-#include "spell.h"
-#include "ui.h"
-#include "os/os.h"
+#include "neovim/vim.h"
+#include "neovim/mbyte.h"
+#include "neovim/charset.h"
+#include "neovim/fileio.h"
+#include "neovim/memline.h"
+#include "neovim/message.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/memory.h"
+#include "neovim/option.h"
+#include "neovim/screen.h"
+#include "neovim/spell.h"
+#include "neovim/ui.h"
+#include "neovim/os/os.h"
 
 # define WINBYTE BYTE
 

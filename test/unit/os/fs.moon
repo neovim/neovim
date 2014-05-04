@@ -2,7 +2,7 @@
 require 'lfs'
 require 'bit'
 
-fs = cimport './src/os/os.h'
+fs = cimport './include/neovim/os/os.h'
 
 -- TODO(aktau): define these constants "better"
 FAIL = 0

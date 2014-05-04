@@ -2,8 +2,8 @@ include(CheckLibraryExists)
 
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
-set(API_HEADER ${PROJECT_SOURCE_DIR}/src/api.h)
-set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/msgpack_rpc.h)
+set(API_HEADER ${PROJECT_SOURCE_DIR}/include/neovim/api.h)
+set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/include/neovim/msgpack_rpc.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})

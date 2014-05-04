@@ -2,17 +2,17 @@
 ///
 /// Popup menu (PUM)
 //
-#include "vim.h"
-#include "popupmnu.h"
-#include "charset.h"
-#include "ex_cmds.h"
-#include "memline.h"
-#include "misc2.h"
-#include "move.h"
-#include "option.h"
-#include "screen.h"
-#include "search.h"
-#include "window.h"
+#include "neovim/vim.h"
+#include "neovim/popupmnu.h"
+#include "neovim/charset.h"
+#include "neovim/ex_cmds.h"
+#include "neovim/memline.h"
+#include "neovim/misc2.h"
+#include "neovim/move.h"
+#include "neovim/option.h"
+#include "neovim/screen.h"
+#include "neovim/search.h"
+#include "neovim/window.h"
 
 static pumitem_T *pum_array = NULL; // items of displayed pum
 static int pum_size;                // nr of items in "pum_array"

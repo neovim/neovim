@@ -4,12 +4,12 @@
 
 #include <uv.h>
 
-#include "os/rstream_defs.h"
-#include "os/rstream.h"
-#include "os/event_defs.h"
-#include "os/event.h"
-#include "vim.h"
-#include "memory.h"
+#include "neovim/os/rstream_defs.h"
+#include "neovim/os/rstream.h"
+#include "neovim/os/event_defs.h"
+#include "neovim/os/event.h"
+#include "neovim/vim.h"
+#include "neovim/memory.h"
 
 struct rstream {
   uv_buf_t uvbuf;

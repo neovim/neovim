@@ -43,7 +43,7 @@ if(USE_GCOV)
 endif()
 
 include_directories("${PROJECT_BINARY_DIR}/config")
-include_directories("${PROJECT_SOURCE_DIR}/src")
+include_directories("${PROJECT_SOURCE_DIR}/include")
 
 # Modules used by platform auto-detection
 include(CheckLibraryExists)

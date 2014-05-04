@@ -53,8 +53,8 @@ output:write([[
 #include <stdint.h>
 #include <msgpack.h>
 
-#include "api.h"
-#include "msgpack_rpc.h"
+#include "neovim/api.h"
+#include "neovim/msgpack_rpc.h"
 
 static const uint8_t msgpack_metadata[] = {
 

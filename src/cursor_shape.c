@@ -1,9 +1,9 @@
-#include "vim.h"
-#include "cursor_shape.h"
-#include "misc2.h"
-#include "ex_getln.h"
-#include "charset.h"
-#include "syntax.h"
+#include "neovim/vim.h"
+#include "neovim/cursor_shape.h"
+#include "neovim/misc2.h"
+#include "neovim/ex_getln.h"
+#include "neovim/charset.h"
+#include "neovim/syntax.h"
 
 /*
  * Handling of cursor and mouse pointer shapes in various modes.

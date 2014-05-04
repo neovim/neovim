@@ -1,6 +1,6 @@
 {:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
 
-users = cimport './src/os/os.h', 'unistd.h'
+users = cimport './include/neovim/os/os.h', 'unistd.h'
 
 NULL = ffi.cast 'void*', 0
 OK = 1

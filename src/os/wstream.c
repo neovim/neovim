@@ -3,10 +3,10 @@
 
 #include <uv.h>
 
-#include "os/wstream.h"
-#include "os/wstream_defs.h"
-#include "vim.h"
-#include "memory.h"
+#include "neovim/os/wstream.h"
+#include "neovim/os/wstream_defs.h"
+#include "neovim/vim.h"
+#include "neovim/memory.h"
 
 struct wstream {
   uv_stream_t *stream;

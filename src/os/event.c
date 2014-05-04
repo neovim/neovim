@@ -4,15 +4,15 @@
 
 #include <uv.h>
 
-#include "lib/klist.h"
-#include "os/event.h"
-#include "os/input.h"
-#include "os/signal.h"
-#include "os/rstream.h"
-#include "os/job.h"
-#include "vim.h"
-#include "memory.h"
-#include "misc2.h"
+#include "neovim/lib/klist.h"
+#include "neovim/os/event.h"
+#include "neovim/os/input.h"
+#include "neovim/os/signal.h"
+#include "neovim/os/rstream.h"
+#include "neovim/os/job.h"
+#include "neovim/vim.h"
+#include "neovim/memory.h"
+#include "neovim/misc2.h"
 
 // event will be cleaned up after it gets processed
 #define _destroy_event(x)  // do nothing

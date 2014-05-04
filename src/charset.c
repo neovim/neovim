@@ -6,18 +6,18 @@
 #include <wctype.h>
 #include <wchar.h>  // for towupper() and towlower()
 
-#include "vim.h"
-#include "charset.h"
-#include "farsi.h"
-#include "main.h"
-#include "mbyte.h"
-#include "memline.h"
-#include "memory.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "garray.h"
-#include "move.h"
-#include "os_unix.h"
+#include "neovim/vim.h"
+#include "neovim/charset.h"
+#include "neovim/farsi.h"
+#include "neovim/main.h"
+#include "neovim/mbyte.h"
+#include "neovim/memline.h"
+#include "neovim/memory.h"
+#include "neovim/misc1.h"
+#include "neovim/misc2.h"
+#include "neovim/garray.h"
+#include "neovim/move.h"
+#include "neovim/os_unix.h"
 
 static int win_chartabsize(win_T *wp, char_u *p, colnr_T col);
 
