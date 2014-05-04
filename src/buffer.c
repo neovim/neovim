@@ -67,6 +67,19 @@
 #include "window.h"
 
 static char_u   *buflist_match(regprog_T *prog, buf_T *buf);
+
+/// Finds the number of matches & stores the matches
+///
+/// Allocates memory for array for storing matches in file. This must be freed
+/// using FreeWild() when no longer needed
+///
+/// @param file In the array pointed by it, matches will be stored.
+/// @param prog Regular expression program got from vim_regcomp()
+/// @param options Wildcard expansion options & flags
+///
+/// @return The count of matches found
+static int store_buf_match(char_u ***file, regprog_T *prog, int options);
+
 # define HAVE_BUFLIST_MATCH
 static char_u   *fname_match(regprog_T *prog, char_u *name);
 static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum,
@@ -1820,6 +1833,47 @@ buflist_findpat (
 }
 
 
+static int store_buf_match(char_u ***file, regprog_T *prog, int options)
+{
+  // Count the matches
+  int count = 0;
+  for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    // skip unlisted buffers
+    if (!buf->b_p_bl) {
+      continue;
+    }
+
+    if (buflist_match(prog, buf) != NULL) {
+      count++;
+    }
+  }
+
+  if (count == 0) {
+    return 0;
+  }
+
+  *file = xmalloc(count * sizeof(**file));  // Space for storing the matches
+
+  // Build the array to keep the matches
+  for (buf_T *buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    // skip unlisted buffers
+    if (!buf->b_p_bl) {
+      continue;
+    }
+
+    char_u *p;
+    p = buflist_match(prog, buf);
+    if (p == NULL) {
+      continue;
+    }
+
+    p = (options & WILD_HOME_REPLACE) ? home_replace_save(buf, p) : vim_strsave(p);
+    (*file)[count++] = p;
+  }
+
+  return count;
+}
+
 /*
  * Find all buffer names that match.
  * For command line expansion of ":buf" and ":sbuf".
@@ -1828,9 +1882,6 @@ buflist_findpat (
 int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 {
   int count = 0;
-  buf_T       *buf;
-  int round;
-  char_u      *p;
   int attempt;
   regprog_T   *prog;
   char_u      *patc;
@@ -1860,34 +1911,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
       return FAIL;
     }
 
-    /*
-     * round == 1: Count the matches.
-     * round == 2: Build the array to keep the matches.
-     */
-    for (round = 1; round <= 2; ++round) {
-      count = 0;
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
-        if (!buf->b_p_bl)               /* skip unlisted buffers */
-          continue;
-        p = buflist_match(prog, buf);
-        if (p != NULL) {
-          if (round == 1)
-            ++count;
-          else {
-            if (options & WILD_HOME_REPLACE)
-              p = home_replace_save(buf, p);
-            else
-              p = vim_strsave(p);
-            (*file)[count++] = p;
-          }
-        }
-      }
-      if (count == 0)           /* no match found, break here */
-        break;
-      if (round == 1) {
-        *file = xmalloc(count * sizeof(**file));
-      }
-    }
+    count = store_buf_match(file, prog, options);  // Count & store matches
     vim_regfree(prog);
     if (count)                  /* match(es) found, break here */
       break;
