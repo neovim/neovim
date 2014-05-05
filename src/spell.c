@@ -802,6 +802,13 @@ typedef struct trystate_S {
 
 static slang_T *slang_alloc(char_u *lang);
 static void slang_free(slang_T *lp);
+
+/// Frees the garray and each of its fromto elements
+///
+/// @param gap the garray to be freed
+///
+static void free_fromtos(garray_T *gap);
+
 static void slang_clear(slang_T *lp);
 static void slang_clear_sug(slang_T *lp);
 static void find_word(matchinf_T *mip, int mode);
@@ -2298,11 +2305,21 @@ static void slang_free(slang_T *lp)
   vim_free(lp);
 }
 
+static void free_fromtos(garray_T *gap){
+  fromto_T *ftp;
+  while (gap->ga_len > 0) {
+    gap->ga_len--;
+    ftp = &((fromto_T *)gap->ga_data)[gap->ga_len];
+    vim_free(ftp->ft_from);
+    vim_free(ftp->ft_to);
+  }
+  ga_clear(gap);
+}
+
 // Clear an slang_T so that the file can be reloaded.
 static void slang_clear(slang_T *lp)
 {
   garray_T    *gap;
-  fromto_T    *ftp;
   salitem_T   *smp;
   int i;
   int round;
@@ -2321,15 +2338,8 @@ static void slang_clear(slang_T *lp)
   vim_free(lp->sl_pidxs);
   lp->sl_pidxs = NULL;
 
-  for (round = 1; round <= 2; ++round) {
-    gap = round == 1 ? &lp->sl_rep : &lp->sl_repsal;
-    while (gap->ga_len > 0) {
-      ftp = &((fromto_T *)gap->ga_data)[--gap->ga_len];
-      vim_free(ftp->ft_from);
-      vim_free(ftp->ft_to);
-    }
-    ga_clear(gap);
-  }
+  free_fromtos(&lp->sl_rep);
+  free_fromtos(&lp->sl_repsal);
 
   gap = &lp->sl_sal;
   if (lp->sl_sofo) {
