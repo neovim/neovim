@@ -58,7 +58,7 @@ void shorten_dir(char_u *str);
 int dir_of_file_exists(char_u *fname);
 int vim_fnamecmp(char_u *x, char_u *y);
 int vim_fnamencmp(char_u *x, char_u *y, size_t len);
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
+char_u *concat_fnames(char_u *fname1, char_u *fname2, bool sep)
   FUNC_ATTR_NONNULL_RET;
 int unix_expandpath(garray_T *gap, char_u *path, int wildoff, int flags,
                     int didstar);

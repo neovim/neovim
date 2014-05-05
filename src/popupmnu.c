@@ -28,9 +28,9 @@ static int pum_scrollbar;           // TRUE when scrollbar present
 static int pum_row;                 // top row of pum
 static int pum_col;                 // left column of pum
 
-static int pum_do_redraw = FALSE;   // do redraw anyway
+static bool pum_do_redraw = false;  // do redraw anyway
 
-static int pum_set_selected(int n, int repeat);
+static bool pum_set_selected(int n, int repeat);
 
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
@@ -466,9 +466,9 @@ void pum_redraw(void)
 ///
 /// @returns TRUE when the window was resized and the location of the popup
 /// menu must be recomputed.
-static int pum_set_selected(int n, int repeat)
+static bool pum_set_selected(int n, int repeat)
 {
-  int resized = FALSE;
+  bool resized = false;
   int context = pum_height / 2;
 
   pum_selected = n;
@@ -595,7 +595,7 @@ static int pum_set_selected(int n, int repeat)
 
             if (curwin->w_height < lnum) {
               win_setheight((int)lnum);
-              resized = TRUE;
+              resized = true;
             }
           }
 
@@ -620,9 +620,9 @@ static int pum_set_selected(int n, int repeat)
 
             // Update the screen before drawing the popup menu.
             // Enable updating the status lines.
-            pum_do_redraw = TRUE;
+            pum_do_redraw = true;
             update_screen(0);
-            pum_do_redraw = FALSE;
+            pum_do_redraw = false;
 
             if (!resized && win_valid(curwin_save)) {
               win_enter(curwin_save, TRUE);
@@ -630,9 +630,9 @@ static int pum_set_selected(int n, int repeat)
 
             // May need to update the screen again when there are
             // autocommands involved.
-            pum_do_redraw = TRUE;
+            pum_do_redraw = true;
             update_screen(0);
-            pum_do_redraw = FALSE;
+            pum_do_redraw = false;
           }
         }
       }
@@ -664,7 +664,7 @@ void pum_clear(void)
 
 /// Overruled when "pum_do_redraw" is set, used to redraw the status lines.
 ///
-/// @return TRUE if the popup menu is displayed.
+/// @return true if the popup menu is displayed.
 int pum_visible(void)
 {
   return !pum_do_redraw && pum_array != NULL;

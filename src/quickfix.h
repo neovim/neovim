@@ -1,7 +1,7 @@
 #ifndef NEOVIM_QUICKFIX_H
 #define NEOVIM_QUICKFIX_H
 /* quickfix.c */
-int qf_init(win_T *wp, char_u *efile, char_u *errorformat, int newlist,
+int qf_init(win_T *wp, char_u *efile, char_u *errorformat, bool newlist,
             char_u *qf_title);
 void qf_free_all(win_T *wp);
 void copy_loclist(win_T *from, win_T *to);
@@ -15,12 +15,12 @@ void ex_cwindow(exarg_T *eap);
 void ex_cclose(exarg_T *eap);
 void ex_copen(exarg_T *eap);
 linenr_T qf_current_entry(win_T *wp);
-int bt_quickfix(buf_T *buf);
-int bt_nofile(buf_T *buf);
-int bt_dontwrite(buf_T *buf);
-int bt_dontwrite_msg(buf_T *buf);
-int buf_hide(buf_T *buf);
-int grep_internal(cmdidx_T cmdidx);
+bool bt_quickfix(buf_T *buf);
+bool bt_nofile(buf_T *buf);
+bool bt_dontwrite(buf_T *buf);
+bool bt_dontwrite_msg(buf_T *buf);
+bool buf_hide(buf_T *buf);
+bool grep_internal(cmdidx_T cmdidx);
 void ex_make(exarg_T *eap);
 void ex_cc(exarg_T *eap);
 void ex_cnext(exarg_T *eap);
@@ -33,4 +33,4 @@ void ex_cbuffer(exarg_T *eap);
 void ex_cexpr(exarg_T *eap);
 void ex_helpgrep(exarg_T *eap);
 
-#endif /* NEOVIM_QUICKFIX_H */
+#endif  // NEOVIM_QUICKFIX_H
