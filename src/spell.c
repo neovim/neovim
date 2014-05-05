@@ -2322,7 +2322,6 @@ static void slang_clear(slang_T *lp)
   garray_T    *gap;
   salitem_T   *smp;
   int i;
-  int round;
 
   vim_free(lp->sl_fbyts);
   lp->sl_fbyts = NULL;
