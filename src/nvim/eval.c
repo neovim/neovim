@@ -2979,10 +2979,6 @@ static char_u *cat_prefix_varname(int prefix, char_u *name)
     free(varnamebuf);
     len += 10;                          /* some additional space */
     varnamebuf = xmalloc(len);
-    if (varnamebuf == NULL) {
-      varnamebuflen = 0;
-      return NULL;
-    }
     varnamebuflen = len;
   }
   *varnamebuf = prefix;
