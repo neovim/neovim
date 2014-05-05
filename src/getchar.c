@@ -894,13 +894,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
       return FAIL;
     }
     s1 = alloc(newlen);
-    if (s1 == NULL)                 /* out of memory */
-      return FAIL;
     s2 = alloc(newlen);
-    if (s2 == NULL) {               /* out of memory */
-      vim_free(s1);
-      return FAIL;
-    }
     typebuf.tb_buflen = newlen;
 
     /* copy the old chars, before the insertion point */

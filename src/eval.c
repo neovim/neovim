@@ -3442,10 +3442,6 @@ static char_u *cat_prefix_varname(int prefix, char_u *name)
     vim_free(varnamebuf);
     len += 10;                          /* some additional space */
     varnamebuf = alloc(len);
-    if (varnamebuf == NULL) {
-      varnamebuflen = 0;
-      return NULL;
-    }
     varnamebuflen = len;
   }
   *varnamebuf = prefix;
@@ -4924,8 +4920,6 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
    * characters.
    */
   name = alloc((unsigned)(p - *arg + extra));
-  if (name == NULL)
-    return FAIL;
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = name;
 
@@ -5041,8 +5035,6 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
    * Copy the string into allocated memory, handling '' to ' reduction.
    */
   str = alloc((unsigned)((p - *arg) - reduce));
-  if (str == NULL)
-    return FAIL;
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = str;
 
@@ -12521,8 +12513,6 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
     }
 
     buf = alloc(MAXPATHL + 1);
-    if (buf == NULL)
-      goto fail;
 
     for (;; ) {
       for (;; ) {
@@ -16008,8 +15998,6 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
     len += 7 + 4;      /* " ++bad=" + "keep" or "drop" */
 
   newval = alloc(len + 1);
-  if (newval == NULL)
-    return NULL;
 
   if (eap->force_bin == FORCE_BIN)
     sprintf((char *)newval, " ++bin");
@@ -18350,8 +18338,6 @@ static char_u *autoload_name(char_u *name)
 
   /* Get the script file name: replace '#' with '/', append ".vim". */
   scriptname = alloc((unsigned)(STRLEN(name) + 14));
-  if (scriptname == NULL)
-    return FALSE;
   STRCPY(scriptname, "autoload/");
   STRCAT(scriptname, name);
   *vim_strrchr(scriptname, AUTOLOAD_CHAR) = NUL;

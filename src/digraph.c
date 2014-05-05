@@ -1745,10 +1745,6 @@ char_u* keymap_init(void)
     buflen = STRLEN(curbuf->b_p_keymap) + STRLEN(p_enc) + 14;
     buf = alloc((unsigned)buflen);
 
-    if (buf == NULL) {
-      return e_outofmem;
-    }
-
     // try finding "keymap/'keymap'_'encoding'.vim"  in 'runtimepath'
     vim_snprintf((char *)buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);

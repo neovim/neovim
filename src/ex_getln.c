@@ -2082,8 +2082,6 @@ static void draw_cmdline(int start, int len)
       vim_free(arshape_buf);
       buflen = len * 2 + 2;
       arshape_buf = alloc(buflen);
-      if (arshape_buf == NULL)
-        return;         /* out of memory */
     }
 
     if (utf_iscomposing(utf_ptr2char(ccline.cmdbuff + start))) {
@@ -4160,10 +4158,6 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 
   for (i = 0; dirnames[i] != NULL; ++i) {
     s = alloc((unsigned)(STRLEN(dirnames[i]) + pat_len + 7));
-    if (s == NULL) {
-      ga_clear_strings(&ga);
-      return FAIL;
-    }
     sprintf((char *)s, "%s/%s*.vim", dirnames[i], pat);
     matches = globpath(p_rtp, s, 0);
     vim_free(s);
@@ -4219,8 +4213,6 @@ char_u *globpath(char_u *path, char_u *file, int expand_options)
   char_u      *cur = NULL;
 
   buf = alloc(MAXPATHL);
-  if (buf == NULL)
-    return NULL;
 
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;

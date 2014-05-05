@@ -623,8 +623,6 @@ void ex_retab(exarg_T *eap)
             old_len = (long)STRLEN(ptr);
             new_line = lalloc(old_len - col + start_col + len + 1,
                 TRUE);
-            if (new_line == NULL)
-              break;
             if (start_col > 0)
               memmove(new_line, ptr, (size_t)start_col);
             memmove(new_line + start_col + len,
@@ -1337,8 +1335,6 @@ make_filter_cmd (
   if (otmp != NULL)
     len += (long_u)STRLEN(otmp) + (long_u)STRLEN(p_srr) + 2;     /* "  " */
   buf = lalloc(len, TRUE);
-  if (buf == NULL)
-    return NULL;
 
 #if defined(UNIX)
   /*
@@ -1898,11 +1894,6 @@ viminfo_readstring (
   if (virp->vir_line[off] == Ctrl_V && vim_isdigit(virp->vir_line[off + 1])) {
     len = atol((char *)virp->vir_line + off + 1);
     retval = lalloc(len, TRUE);
-    if (retval == NULL) {
-      /* Line too long?  File messed up?  Skip next line. */
-      (void)vim_fgets(virp->vir_line, 10, virp->vir_fd);
-      return NULL;
-    }
     (void)vim_fgets(retval, (int)len, virp->vir_fd);
     s = retval + 1;         /* Skip the leading '<' */
   } else {
