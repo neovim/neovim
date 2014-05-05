@@ -4024,8 +4024,6 @@ find_pattern_in_path (
   def_regmatch.regprog = NULL;
 
   file_line = alloc(LSIZE);
-  if (file_line == NULL)
-    return;
 
   if (type != CHECK_PATH && type != FIND_DEFINE
       /* when CONT_SOL is set compare "ptr" with the beginning of the line
@@ -4033,8 +4031,6 @@ find_pattern_in_path (
       && !(compl_cont_status & CONT_SOL)
       ) {
     pat = alloc(len + 5);
-    if (pat == NULL)
-      goto fpip_end;
     sprintf((char *)pat, whole ? "\\<%.*s\\>" : "%.*s", len, ptr);
     /* ignore case according to p_ic, p_scs and pat */
     regmatch.rm_ic = ignorecase(pat);

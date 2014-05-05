@@ -1708,8 +1708,6 @@ del_bytes (
     newp = oldp;                            /* use same allocated memory */
   else {                                    /* need to allocate a new line */
     newp = alloc((unsigned)(oldlen + 1 - count));
-    if (newp == NULL)
-      return FAIL;
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
