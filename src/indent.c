@@ -64,8 +64,8 @@ int get_indent_str(char_u *ptr, int ts)
 //  SIN_INSERT: insert the indent in front of the line.
 //  SIN_UNDO:   save line for undo before changing it.
 //  @param size measured in spaces
-// Returns true if the line was changed.
-int set_indent(int size, int flags)
+//  @return true if the line was changed.
+bool set_indent(int size, int flags)
 {
   char_u *p;
   char_u *newline;
@@ -74,10 +74,10 @@ int set_indent(int size, int flags)
   int todo;
   int ind_len;  // Measured in characters.
   int line_len;
-  int doit = false;
+  bool doit = false;
   int ind_done = 0;  // Measured in spaces.
   int tab_pad;
-  int retval = false;
+  bool retval = false;
 
   // Number of initial whitespace chars when 'et' and 'pi' are both set.
   int orig_char_len = -1;

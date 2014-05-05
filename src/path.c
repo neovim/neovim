@@ -268,9 +268,9 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 
 /*
  * Concatenate file names fname1 and fname2 into allocated memory.
- * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
+ * Only add a '/' or '\\' when 'sep' is true and it is necessary.
  */
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
+char_u *concat_fnames(char_u *fname1, char_u *fname2, bool sep)
 {
   char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
 

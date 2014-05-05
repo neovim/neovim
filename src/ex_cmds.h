@@ -52,7 +52,7 @@ void global_exe(char_u *cmd);
 int read_viminfo_sub_string(vir_T *virp, int force);
 void write_viminfo_sub_string(FILE *fp);
 void free_old_sub(void);
-int prepare_tagpreview(int undo_sync);
+bool prepare_tagpreview(int undo_sync);
 void ex_help(exarg_T *eap);
 char_u *check_help_lang(char_u *arg);
 int help_heuristic(char_u *matched_string, int offset, int wrong_case);
