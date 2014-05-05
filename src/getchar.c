@@ -165,6 +165,11 @@ static void showmap(mapblock_T *mp, int local);
 static char_u   *eval_map_expr(char_u *str, int c);
 static bool is_user_input(int k);
 
+/// Searches for special key codes & adds normal termcap entries
+///
+/// @param s String which is searched for special key codes
+static void add_normal_tcap_entries(char_u *s);
+
 /*
  * Free and clear a buffer.
  */
@@ -4177,20 +4182,31 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
   return OK;
 }
 
+static void add_normal_tcap_entries(char_u *s)
+{
+  while (*s) {
+    if (*s == K_SPECIAL) {  // Is a special key code
+      s++;
+      if (*s < 128) {       // Is a "normal" tcap entry
+        char_u buf[3];
+        buf[0] = s[0];
+        buf[1] = s[1];
+        buf[2] = NUL;
+        (void)add_termcap_entry(buf, FALSE);
+      }
+      s++;
+    }
+    s++;
+  }
+}
+
 /*
  * Check all mappings for the presence of special key codes.
  * Used after ":set term=xxx".
  */
 void check_map_keycodes(void)
 {
-  mapblock_T  *mp;
-  char_u      *p;
-  int i;
-  char_u buf[3];
   char_u      *save_name;
-  int abbr;
-  int hash;
-  buf_T       *bp;
 
   validate_maphash();
   save_name = sourcing_name;
@@ -4198,48 +4214,25 @@ void check_map_keycodes(void)
 
   /* This this once for each buffer, and then once for global
    * mappings/abbreviations with bp == NULL */
-  for (bp = firstbuf;; bp = bp->b_next) {
-    /*
-     * Do the loop twice: Once for mappings, once for abbreviations.
-     * Then loop over all map hash lists.
-     */
-    for (abbr = 0; abbr <= 1; ++abbr)
-      for (hash = 0; hash < 256; ++hash) {
-        if (abbr) {
-          if (hash)                 /* there is only one abbr list */
-            break;
-          if (bp != NULL)
-            mp = bp->b_first_abbr;
-          else
-            mp = first_abbr;
-        } else {
-          if (bp != NULL)
-            mp = bp->b_maphash[hash];
-          else
-            mp = maphash[hash];
-        }
-        for (; mp != NULL; mp = mp->m_next) {
-          for (i = 0; i <= 1; ++i) {            /* do this twice */
-            if (i == 0)
-              p = mp->m_keys;                   /* once for the "from" part */
-            else
-              p = mp->m_str;                    /* and once for the "to" part */
-            while (*p) {
-              if (*p == K_SPECIAL) {
-                ++p;
-                if (*p < 128) {                 /* for "normal" tcap entries */
-                  buf[0] = p[0];
-                  buf[1] = p[1];
-                  buf[2] = NUL;
-                  (void)add_termcap_entry(buf, FALSE);
-                }
-                ++p;
-              }
-              ++p;
-            }
-          }
-        }
+  for (buf_T *bp = firstbuf; ; bp = bp->b_next) {
+    // Check in mappings
+    for (int hash = 0; hash < 256; hash++) {
+      mapblock_T  *mp;
+      mp = (bp != NULL) ? bp->b_maphash[hash]: maphash[hash];
+      for (; mp != NULL; mp = mp->m_next) {
+        add_normal_tcap_entries(mp->m_keys);  // For the "mapped from" part
+        add_normal_tcap_entries(mp->m_str);   // For the "mapped to" part
       }
+    }
+
+    // Check in abbreviation
+    mapblock_T  *mp;
+    mp = (bp != NULL) ? bp->b_first_abbr : first_abbr;
+    for (; mp != NULL; mp = mp->m_next) {
+      add_normal_tcap_entries(mp->m_keys);  // For the "mapped from" part
+      add_normal_tcap_entries(mp->m_str);   // For the "mapped to" part
+    }
+
     if (bp == NULL)
       break;
   }
