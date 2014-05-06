@@ -30,7 +30,7 @@ STARTTEST
 /^{/+1
 :set tw=3 fo=t
 gqgqo
-a 
+a 
 ENDTEST
 
 {
@@ -99,7 +99,7 @@ ENDTEST
 STARTTEST
 /^{/+2
 :set tw& fo=a
-I^^
+I^^
 ENDTEST
 
 {

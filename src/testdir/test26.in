@@ -2,7 +2,7 @@ Test for :execute, :while and :if
 
 STARTTEST
 :so small.vim
-mt:let i = 0
+jmt:let i = 0
 :while i < 12
 :  let i = i + 1
 :  if has("ebcdic")

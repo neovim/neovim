@@ -3,21 +3,21 @@
 
 (defmacro page (name title &rest body)
   (let ((ti (gensym)))
-       `(with-open-file (*standard-output*
-			 (html-file ,name)
-			 :direction :output
-			 :if-exists :supersede)
-			(let ((,ti ,title))
-			     (as title ,ti)
-			     (with center 
-				   (as h2 (string-upcase ,ti)))
-			     (brs 3)
-			     ,@body))))
+    `(with-open-file (*standard-output*
+		       (html-file ,name)
+		       :direction :output
+		       :if-exists :supersede)
+       (let ((,ti ,title))
+	 (as title ,ti)
+	 (with center 
+	       (as h2 (string-upcase ,ti)))
+	 (brs 3)
+	 ,@body))))
 
 ;;; Utilities for generating links
 
 (defmacro with-link (dest &rest body)
   `(progn
-    (format t "<a href=\"~A\">" (html-file ,dest))
-    ,@body
-    (princ "</a>")))
+     (format t "<a href=\"~A\">" (html-file ,dest))
+     ,@body
+     (princ "</a>")))
