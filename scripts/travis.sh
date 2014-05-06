@@ -95,7 +95,7 @@ if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 		exit 1
 	fi
 	check_and_report
-	coveralls --encoding iso-8859-1
+	coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
 	$MAKE_CMD install
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
 	sudo pip install cpp-coveralls
@@ -103,7 +103,7 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
 	set_environment /opt/neovim-deps
 	export SKIP_EXEC=1
 	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP -DUSE_GCOV=ON" unittest
-	coveralls --encoding iso-8859-1
+	coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	set_environment /opt/neovim-deps/32
 
