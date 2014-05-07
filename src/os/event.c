@@ -41,6 +41,11 @@ void event_init()
   uv_prepare_init(uv_default_loop(), &timer_prepare);
 }
 
+void event_teardown()
+{
+  job_teardown();
+}
+
 // Wait for some event
 bool event_poll(int32_t ms)
 {
