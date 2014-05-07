@@ -38,8 +38,8 @@
 #define VIM_VERSION_NODOT       "vim74"
 #define VIM_VERSION_SHORT       "7.4"
 #define VIM_VERSION_MEDIUM      "7.4"
-#define VIM_VERSION_LONG        "VIM - Vi IMproved 7.4 (2014)"
-#define VIM_VERSION_LONG_DATE   "VIM - Vi IMproved 7.4 (2014, compiled "
+#define VIM_VERSION_LONG        "NEOVIM - Neo Vi IMproved 7.4 (2014)"
+#define VIM_VERSION_LONG_DATE   "NEOVIM - Neo Vi IMproved 7.4 (2014, compiled "
 
 /* Displayed on splash screen. */
 #define MODIFIED_BY "the Neovim contributors."
