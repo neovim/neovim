@@ -65,6 +65,7 @@
 #include "os/job.h"
 #include "os/rstream.h"
 #include "os/rstream_defs.h"
+#include "os/time.h"
 
 #if defined(FEAT_FLOAT)
 # include <math.h>
@@ -14163,7 +14164,6 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv)
 static void f_strftime(typval_T *argvars, typval_T *rettv)
 {
   char_u result_buf[256];
-  struct tm   *curtime;
   time_t seconds;
   char_u      *p;
 
@@ -14174,9 +14174,11 @@ static void f_strftime(typval_T *argvars, typval_T *rettv)
     seconds = time(NULL);
   else
     seconds = (time_t)get_tv_number(&argvars[1]);
-  curtime = localtime(&seconds);
+
+  struct tm curtime;
+  struct tm *curtime_ptr = os_localtime_r(&seconds, &curtime);
   /* MSVC returns NULL for an invalid value of seconds. */
-  if (curtime == NULL)
+  if (curtime_ptr == NULL)
     rettv->vval.v_string = vim_strsave((char_u *)_("(Invalid)"));
   else {
     vimconv_T conv;
@@ -14189,7 +14191,7 @@ static void f_strftime(typval_T *argvars, typval_T *rettv)
       p = string_convert(&conv, p, NULL);
     if (p != NULL)
       (void)strftime((char *)result_buf, sizeof(result_buf),
-          (char *)p, curtime);
+          (char *)p, curtime_ptr);
     else
       result_buf[0] = NUL;
 

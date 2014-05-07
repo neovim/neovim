@@ -1,5 +1,7 @@
 src/indent.c
 src/indent.h
+src/log.c
+src/log.h
 src/os/env.c
 src/os/event.c
 src/os/event_defs.h

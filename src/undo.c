@@ -103,6 +103,7 @@
 #include "screen.h"
 #include "sha256.h"
 #include "os/os.h"
+#include "os/time.h"
 
 static long get_undolevel(void);
 static void u_unch_branch(u_header_T *uhp);
@@ -2455,16 +2456,16 @@ void ex_undolist(exarg_T *eap)
  */
 static void u_add_time(char_u *buf, size_t buflen, time_t tt)
 {
-  struct tm   *curtime;
+  struct tm curtime;
 
   if (time(NULL) - tt >= 100) {
-    curtime = localtime(&tt);
+    os_localtime_r(&tt, &curtime);
     if (time(NULL) - tt < (60L * 60L * 12L))
       /* within 12 hours */
-      (void)strftime((char *)buf, buflen, "%H:%M:%S", curtime);
+      (void)strftime((char *)buf, buflen, "%H:%M:%S", &curtime);
     else
       /* longer ago */
-      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", curtime);
+      (void)strftime((char *)buf, buflen, "%Y/%m/%d %H:%M:%S", &curtime);
   } else
   vim_snprintf((char *)buf, buflen, _("%" PRId64 " seconds ago"),
       (int64_t)(time(NULL) - tt));

@@ -33,6 +33,7 @@
 #include "misc2.h"
 #include "crypt.h"
 #include "garray.h"
+#include "log.h"
 #include "memory.h"
 #include "move.h"
 #include "normal.h"
@@ -578,6 +579,7 @@ main_loop (
   linenr_T conceal_new_cursor_line = 0;
   int conceal_update_lines = FALSE;
 
+  ILOG("Starting Neovim main loop.");
 
   clear_oparg(&oa);
   while (!cmdwin
