@@ -10050,7 +10050,7 @@ getwinvar (
   char_u      *varname;
   dictitem_T  *v;
   tabpage_T   *tp = NULL;
-  tabpage_T   *oldtabpage;
+  tabpage_T   *oldtabpage = NULL;
   int done = FALSE;
 
   if (off == 1)

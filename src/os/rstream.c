@@ -47,6 +47,7 @@ RStream * rstream_new(rstream_cb cb,
   rv->stream = NULL;
   rv->fread_idle = NULL;
   rv->free_handle = false;
+  rv->file_type = UV_UNKNOWN_HANDLE;
 
   return rv;
 }
