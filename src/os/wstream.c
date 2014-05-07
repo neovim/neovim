@@ -106,7 +106,8 @@ static void write_cb(uv_write_t *req, int status)
     data->wstream->curmem -= data->length;
   }
 
-  if (data->wstream->freed && --data->wstream->pending_reqs == 0) {
+  data->wstream->pending_reqs--;
+  if (data->wstream->freed && data->wstream->pending_reqs == 0) {
     // Last pending write, free the wstream;
     free(data->wstream);
   }
