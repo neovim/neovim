@@ -1,8 +1,25 @@
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "api/vim.h"
 #include "api/defs.h"
+#include "../vim.h"
+#include "types.h"
+#include "ascii.h"
+#include "ex_docmd.h"
+#include "screen.h"
+#include "memory.h"
+
+/// Start block that may cause vimscript exceptions
+static void try_start(void);
+
+/// End try block, set the error message if any and return true if an error
+/// occurred.
+///
+/// @param err Pointer to the stack-allocated error object
+/// @return true if an error occurred
+static bool try_end(Error *err);
 
 void vim_push_keys(String str)
 {
@@ -11,7 +28,15 @@ void vim_push_keys(String str)
 
 void vim_command(String str, Error *err)
 {
-  abort();
+  // We still use 0-terminated strings, so we must convert.
+  char cmd_str[str.size + 1];
+  memcpy(cmd_str, str.data, str.size);
+  cmd_str[str.size] = NUL;
+  // Run the command
+  try_start();
+  do_cmdline_cmd((char_u *)cmd_str);
+  update_screen(VALID);
+  try_end(err);
 }
 
 Object vim_eval(String str, Error *err)
@@ -137,4 +162,50 @@ Tabpage vim_get_current_tabpage(void)
 void vim_set_current_tabpage(Tabpage tabpage)
 {
   abort();
+}
+
+static void try_start()
+{
+  ++trylevel;
+}
+
+static bool try_end(Error *err)
+{
+  --trylevel;
+
+  // Without this it stops processing all subsequent VimL commands and
+  // generates strange error messages if I e.g. try calling Test() in a
+  // cycle
+  did_emsg = false;
+
+  if (got_int) {
+    const char msg[] = "Keyboard interrupt";
+
+    if (did_throw) {
+      // If we got an interrupt, discard the current exception 
+      discard_current_exception();
+    }
+
+    strncpy(err->msg, msg, sizeof(err->msg));
+    err->set = true;
+    got_int = false;
+  } else if (msg_list != NULL && *msg_list != NULL) {
+    int should_free;
+    char *msg = (char *)get_exception_string(*msg_list,
+                                             ET_ERROR,
+                                             NULL,
+                                             &should_free);
+    strncpy(err->msg, msg, sizeof(err->msg));
+    err->set = true;
+    free_global_msglist();
+
+    if (should_free) {
+      free(msg);
+    }
+  } else if (did_throw) {
+    strncpy(err->msg, (char *)current_exception->value, sizeof(err->msg));
+    err->set = true;
+  }
+
+  return err->set;
 }
