@@ -54,7 +54,6 @@ static char *(features[]) = {
   "+cmdline_info",
   "+comments",
   "+conceal",
-  "+cryptv",
   "+cscope",
   "+cursorbind",
 #ifdef CURSOR_SHAPE

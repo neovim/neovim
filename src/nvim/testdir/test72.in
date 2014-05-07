@@ -57,52 +57,6 @@ i
 u:e! Xtestfile
 :set undofile ul=100
 uuuuuu:w >>test.out
-:" And now with encryption, cryptmethod=zip
-:e! Xtestfile
-:set undofile cm=zip
-ggdGimonday
-tuesday
-wednesday
-thursday
-friday:set ul=100
-kkkdd:set ul=100
-dd:set ul=100
-dd:set ul=100
-:X
-foobar
-foobar
-:w!
-:bwipe!
-:e Xtestfile
-foobar
-:set key=
-uu:w >>test.out
-:"
-:"
-:" With encryption, cryptmethod=blowfish
-:e! Xtestfile
-:set undofile cm=blowfish
-ggdGijan
-feb
-mar
-apr
-jun:set ul=100
-kk0ifoo :set ul=100
-dd:set ul=100
-ibar :set ul=100
-:X
-foobar
-foobar
-:w!
-:bwipe!
-:e Xtestfile
-foobar
-:set key=
-/bar
-:.w >>test.out
-u:.w >>test.out
-u:.w >>test.out
-u:.w >>test.out
 :"
 :" Rename the undo file so that it gets cleaned up.
 :call rename(".Xtestfile.un~", "Xtestundo")

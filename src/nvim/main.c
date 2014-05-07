@@ -12,7 +12,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/main.h"
-#include "nvim/blowfish.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/diff.h"
@@ -31,7 +30,6 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
-#include "nvim/crypt.h"
 #include "nvim/garray.h"
 #include "nvim/log.h"
 #include "nvim/memory.h"
@@ -82,7 +80,6 @@ typedef struct {
   int want_full_screen;
   bool stdout_isatty;                   /* is stdout a terminal? */
   char_u      *term;                    /* specified terminal name */
-  int ask_for_key;                      /* -x argument */
   int no_swap_file;                     /* "-n" argument used */
   int use_debug_break_level;
   int window_count;                     /* number of windows to use */
@@ -452,12 +449,6 @@ static char *(main_errors[]) =
   else {
     screenclear();                        /* clear screen */
     TIME_MSG("clearing screen");
-  }
-
-  if (params.ask_for_key) {
-    (void)blowfish_self_test();
-    (void)get_crypt_key(TRUE, TRUE);
-    TIME_MSG("getting crypt key");
   }
 
   no_wait_return = TRUE;
@@ -1248,10 +1239,6 @@ static void command_line_scan(mparm_T *parmp)
             break;
           }
           want_argument = TRUE;
-          break;
-
-        case 'x':                 /* "-x"  encrypted reading/writing of files */
-          parmp->ask_for_key = TRUE;
           break;
 
         case 'X':                 /* "-X"  don't connect to X server */
@@ -2250,7 +2237,6 @@ static void usage(void)
   main_msg(_("-s <scriptin>\tRead Normal mode commands from file <scriptin>"));
   main_msg(_("-w <scriptout>\tAppend all typed commands to file <scriptout>"));
   main_msg(_("-W <scriptout>\tWrite all typed commands to file <scriptout>"));
-  main_msg(_("-x\t\t\tEdit encrypted files"));
 #ifdef STARTUPTIME
   main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
 #endif

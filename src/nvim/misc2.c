@@ -14,7 +14,6 @@
 #include "nvim/vim.h"
 #include "nvim/misc2.h"
 #include "nvim/file_search.h"
-#include "nvim/blowfish.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/diff.h"
