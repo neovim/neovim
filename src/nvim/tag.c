@@ -2019,7 +2019,7 @@ findtag_end:
   return retval;
 }
 
-static garray_T tag_fnames = GA_EMPTY;
+static garray_T tag_fnames = GA_EMPTY_INIT_VALUE;
 static void found_tagfile_cb(char_u *fname, void *cookie);
 
 /*
