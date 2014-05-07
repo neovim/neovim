@@ -250,8 +250,10 @@ void job_exit_event(Event event)
   // this one
   table[job->id - 1] = NULL;
 
-  // Invoke the exit callback
-  job->exit_cb(job, job->data);
+  if (job->exit_cb) {
+    // Invoke the exit callback
+    job->exit_cb(job, job->data);
+  }
 
   // Free the job resources
   free_job(job);
