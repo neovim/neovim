@@ -2,16 +2,16 @@ include(CheckLibraryExists)
 
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
-set(API_HEADER ${PROJECT_SOURCE_DIR}/src/api.h)
-set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/msgpack_rpc.h)
+file(GLOB API_HEADERS api/*.h)
+set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/os/msgpack_rpc.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 
 add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
-  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADER} ${MSGPACK_DISPATCH}
+  COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${MSGPACK_DISPATCH}
   DEPENDS
-    ${API_HEADER}
+    ${API_HEADERS}
     ${MSGPACK_RPC_HEADER}
     ${DISPATCH_GENERATOR}
     )
@@ -30,6 +30,7 @@ list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
 list(APPEND NEOVIM_SOURCES "${MSGPACK_DISPATCH}")
 
 file( GLOB OS_SOURCES os/*.c )
+file( GLOB API_SOURCES api/*.c )
 
 set(CONV_SRCS
   api.c
@@ -90,7 +91,7 @@ list(APPEND NVIM_LINK_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT})
 
 if(NOT DEFINED ENV{SKIP_EXEC})
-  add_executable(nvim ${NEOVIM_SOURCES} ${OS_SOURCES})
+  add_executable(nvim ${NEOVIM_SOURCES} ${OS_SOURCES} ${API_SOURCES})
   target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
   install(TARGETS nvim RUNTIME DESTINATION bin)
 endif()

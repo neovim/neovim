@@ -1,0 +1,46 @@
+#ifndef NEOVIM_API_TABPAGE_H
+#define NEOVIM_API_TABPAGE_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "api/defs.h"
+
+/// Gets the number of windows in a tabpage
+///
+/// @param tabpage The tabpage
+/// @param[out] err Details of an error that may have occurred
+/// @return The number of windows in `tabpage`
+int64_t tabpage_get_window_count(Tabpage tabpage, Error *err);
+
+/// Gets a tabpage variable
+///
+/// @param tabpage The tab page handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The variable value
+Object tabpage_get_var(Tabpage tabpage, String name, Error *err);
+
+/// Sets a tabpage variable
+///
+/// @param tabpage andle
+/// @param name The variable name
+/// @param value The variable value
+/// @param[out] err Details of an error that may have occurred
+void tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err);
+
+/// Gets the current window in a tab page
+///
+/// @param tabpage The tab page handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The Window handle
+Window tabpage_get_buffer(Tabpage tabpage, Error *err);
+
+/// Checks if a tab page is valid
+///
+/// @param tabpage The tab page handle
+/// @return true if the tab page is valid, false otherwise
+bool tabpage_is_valid(Tabpage tabpage);
+
+#endif // NEOVIM_API_TABPAGE_H
+
