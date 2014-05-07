@@ -16,6 +16,25 @@ typedef struct growarray {
 
 #define GA_EMPTY { 0, 0, 0, 0, NULL }
 
+/// free garry of specific type using customized free function.
+/// items in array as well as array itself will be freed.
+///
+/// @param gap the array to be freed
+///
+/// @param item_type type of the item in array
+///
+/// @param free_item_fn free function that takes (*item_type) as parameter
+///
+/// @return nothing
+///
+#define GA_DEEP_CLEAR(gap, item_type, free_item_fn) \
+  while ((gap)->ga_len > 0) {  \
+    (gap)->ga_len--;
+    item_type *item = &((item_type *)(gap)->ga_data)[(gap)->ga_len]; \
+    free_item_fn(item);  \
+  }  \
+  ga_clear(gap)
+
 void ga_clear(garray_T *gap);
 void ga_clear_strings(garray_T *gap);
 void ga_init(garray_T *gap, int itemsize, int growsize);

@@ -802,6 +802,19 @@ typedef struct trystate_S {
 
 static slang_T *slang_alloc(char_u *lang);
 static void slang_free(slang_T *lp);
+
+///
+/// clear the content in salitem
+///
+/// @param ftp ptr to salitem_T to be cleared
+///
+static void salitem_clear(salitem_T *smp);
+///
+/// clear the content in fromto_T
+///
+/// @param ftp ptr to fromto_T to be cleared
+///
+static void fromto_clear(fromto_T *ftp);
 static void slang_clear(slang_T *lp);
 static void slang_clear_sug(slang_T *lp);
 static void find_word(matchinf_T *mip, int mode);
@@ -2298,11 +2311,24 @@ static void slang_free(slang_T *lp)
   free(lp);
 }
 
+static void salitem_clear(salitem_T *smp) {
+  free(smp->sm_lead);
+  // Don't free sm_oneof and sm_rules, they point into sm_lead.
+  free(smp->sm_to);
+  free(smp->sm_lead_w);
+  free(smp->sm_oneof_w);
+  free(smp->sm_to_w);
+}
+
+static void fromto_clear(fromto_T *ftp) {
+  free(ftp->ft_from);
+  free(ftp->ft_to);
+}
+
 // Clear an slang_T so that the file can be reloaded.
 static void slang_clear(slang_T *lp)
 {
   garray_T    *gap;
-  fromto_T    *ftp;
   salitem_T   *smp;
   int i;
   int round;
@@ -2321,35 +2347,20 @@ static void slang_clear(slang_T *lp)
   free(lp->sl_pidxs);
   lp->sl_pidxs = NULL;
 
-  for (round = 1; round <= 2; ++round) {
-    gap = round == 1 ? &lp->sl_rep : &lp->sl_repsal;
-    while (gap->ga_len > 0) {
-      ftp = &((fromto_T *)gap->ga_data)[--gap->ga_len];
-      free(ftp->ft_from);
-      free(ftp->ft_to);
-    }
-    ga_clear(gap);
-  }
+  gap = &lp->sl_rep;
+  GA_DEEP_CLEAR(gap, fromto_T, fromto_clear);
+  gap = &lp->sl_repsal;
+  GA_DEEP_CLEAR(gap, fromto_T, fromto_clear);
 
   gap = &lp->sl_sal;
   if (lp->sl_sofo) {
     // "ga_len" is set to 1 without adding an item for latin1
-    if (gap->ga_data != NULL)
-      // SOFOFROM and SOFOTO items: free lists of wide characters.
-      for (i = 0; i < gap->ga_len; ++i)
-        free(((int **)gap->ga_data)[i]);
-  } else
-    // SAL items: free salitem_T items
-    while (gap->ga_len > 0) {
-      smp = &((salitem_T *)gap->ga_data)[--gap->ga_len];
-      free(smp->sm_lead);
-      // Don't free sm_oneof and sm_rules, they point into sm_lead.
-      free(smp->sm_to);
-      free(smp->sm_lead_w);
-      free(smp->sm_oneof_w);
-      free(smp->sm_to_w);
-    }
-  ga_clear(gap);
+    // SOFOFROM and SOFOTO items: free lists of wide characters.
+    GA_DEEP_CLEAR(gap,int*,free);
+  } else {
+  // SAL items: free salitem_T items
+    GA_DEEP_CLEAR(gap,salitem_T, salitem_clear);
+  }
 
   for (i = 0; i < lp->sl_prefixcnt; ++i)
     vim_regfree(lp->sl_prefprog[i]);
