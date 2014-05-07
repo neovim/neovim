@@ -132,7 +132,6 @@ memfile_T *mf_open(char_u *fname, int flags)
   mf_hash_init(&mfp->mf_hash);
   mf_hash_init(&mfp->mf_trans);
   mfp->mf_page_size = MEMFILE_PAGE_SIZE;
-  mfp->mf_old_key = NULL;
 
   /*
    * Try to set the page size equal to the block size of the device.
@@ -814,10 +813,6 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
     return FAIL;
   }
 
-  /* Decrypt if 'key' is set and this is a data block. */
-  if (*mfp->mf_buffer->b_p_key != NUL)
-    ml_decrypt_data(mfp, hp->bh_data, offset, size);
-
   return OK;
 }
 
@@ -894,7 +889,6 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
 
 /*
  * Write block "hp" with data size "size" to file "mfp->mf_fd".
- * Takes care of encryption.
  * Return FAIL or OK.
  */
 static int mf_write_block(memfile_T *mfp, bhdr_T *hp, off_t offset, unsigned size)
@@ -902,16 +896,8 @@ static int mf_write_block(memfile_T *mfp, bhdr_T *hp, off_t offset, unsigned siz
   char_u      *data = hp->bh_data;
   int result = OK;
 
-  /* Encrypt if 'key' is set and this is a data block. */
-  if (*mfp->mf_buffer->b_p_key != NUL) {
-    data = ml_encrypt_data(mfp, data, offset, size);
-  }
-
   if ((unsigned)write_eintr(mfp->mf_fd, data, size) != size)
     result = FAIL;
-
-  if (data != hp->bh_data)
-    free(data);
 
   return result;
 }

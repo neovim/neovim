@@ -1084,8 +1084,6 @@ enum CMD_index
       EXTRA|RANGE|NOTADR|COUNT|BANG|EDITCMD|ARGOPT|TRLBAR),
   EX(CMD_Print,           "Print",        ex_print,
       RANGE|WHOLEFOLD|COUNT|EXFLAGS|TRLBAR|CMDWIN),
-  EX(CMD_X,               "X",            ex_X,
-      TRLBAR),
   EX(CMD_tilde,           "~",            do_sub,
       RANGE|WHOLEFOLD|EXTRA|CMDWIN|MODIFY),
 
