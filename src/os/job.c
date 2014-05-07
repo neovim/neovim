@@ -3,6 +3,7 @@
 
 #include <uv.h>
 
+#include "os/uv_helpers.h"
 #include "os/job.h"
 #include "os/job_defs.h"
 #include "os/rstream.h"
@@ -160,10 +161,13 @@ int job_start(char **argv,
   job->proc_opts.exit_cb = exit_cb;
   job->proc_opts.cwd = NULL;
   job->proc_opts.env = NULL;
+  job->proc.data = NULL;
+  job->proc_stdin.data = NULL;
+  job->proc_stdout.data = NULL;
+  job->proc_stderr.data = NULL;
 
   // Initialize the job std{in,out,err}
   uv_pipe_init(uv_default_loop(), &job->proc_stdin, 0);
-  job->proc_stdin.data = job;
   job->stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
   job->stdio[0].data.stream = (uv_stream_t *)&job->proc_stdin;
 
@@ -181,6 +185,12 @@ int job_start(char **argv,
     return -1;
   }
 
+  // Give all handles a reference to the job
+  handle_set_job((uv_handle_t *)&job->proc, job);
+  handle_set_job((uv_handle_t *)&job->proc_stdin, job);
+  handle_set_job((uv_handle_t *)&job->proc_stdout, job);
+  handle_set_job((uv_handle_t *)&job->proc_stderr, job);
+
   job->in = wstream_new(JOB_WRITE_MAXMEM);
   wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
   // Start the readable streams
@@ -190,8 +200,6 @@ int job_start(char **argv,
   rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
   rstream_start(job->out);
   rstream_start(job->err);
-  // Give the callback a reference to the job
-  job->proc.data = job;
   // Save the job to the table
   table[i] = job;
 
@@ -328,7 +336,7 @@ static void read_cb(RStream *rstream, void *data, bool eof)
 // Emits a JobExit event if both rstreams are closed
 static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 {
-  Job *job = proc->data;
+  Job *job = handle_get_job((uv_handle_t *)proc);
 
   if (--job->pending_refs == 0) {
     emit_exit_event(job);
@@ -345,7 +353,7 @@ static void emit_exit_event(Job *job)
 
 static void close_cb(uv_handle_t *handle)
 {
-  Job *job = handle->data;
+  Job *job = handle_get_job(handle);
 
   if (--job->pending_closes == 0) {
     // Only free the job memory after all the associated handles are properly

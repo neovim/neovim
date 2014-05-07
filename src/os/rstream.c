@@ -4,6 +4,7 @@
 
 #include <uv.h>
 
+#include "os/uv_helpers.h"
 #include "os/rstream_defs.h"
 #include "os/rstream.h"
 #include "os/event_defs.h"
@@ -66,7 +67,7 @@ void rstream_free(RStream *rstream)
 
 void rstream_set_stream(RStream *rstream, uv_stream_t *stream)
 {
-  stream->data = rstream;
+  handle_set_rstream((uv_handle_t *)stream, rstream);
   rstream->stream = stream;
 }
 
@@ -90,7 +91,8 @@ void rstream_set_file(RStream *rstream, uv_file file)
     // be processed between reads.
     rstream->fread_idle = xmalloc(sizeof(uv_idle_t));
     uv_idle_init(uv_default_loop(), rstream->fread_idle);
-    rstream->fread_idle->data = rstream;
+    rstream->fread_idle->data = NULL;
+    handle_set_rstream((uv_handle_t *)rstream->fread_idle, rstream);
   } else {
     // Only pipes are supported for now
     assert(rstream->file_type == UV_NAMED_PIPE
@@ -98,7 +100,8 @@ void rstream_set_file(RStream *rstream, uv_file file)
     rstream->stream = xmalloc(sizeof(uv_pipe_t));
     uv_pipe_init(uv_default_loop(), (uv_pipe_t *)rstream->stream, 0);
     uv_pipe_open((uv_pipe_t *)rstream->stream, file);
-    rstream->stream->data = rstream;
+    rstream->stream->data = NULL;
+    handle_set_rstream((uv_handle_t *)rstream->stream, rstream);
   }
 
   rstream->fd = file;
@@ -176,7 +179,7 @@ void rstream_read_event(Event event)
 // Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
-  RStream *rstream = handle->data;
+  RStream *rstream = handle_get_rstream(handle);
 
   if (rstream->reading) {
     buf->len = 0;
@@ -195,7 +198,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 // 0-length buffer.
 static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 {
-  RStream *rstream = stream->data;
+  RStream *rstream = handle_get_rstream((uv_handle_t *)stream);
 
   if (cnt <= 0) {
     if (cnt != UV_ENOBUFS) {
@@ -227,7 +230,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 static void fread_idle_cb(uv_idle_t *handle)
 {
   uv_fs_t req;
-  RStream *rstream = handle->data;
+  RStream *rstream = handle_get_rstream((uv_handle_t *)handle);
 
   rstream->uvbuf.base = rstream->buffer + rstream->wpos;
   rstream->uvbuf.len = rstream->buffer_size - rstream->wpos;
@@ -272,6 +275,7 @@ static void fread_idle_cb(uv_idle_t *handle)
 
 static void close_cb(uv_handle_t *handle)
 {
+  free(handle->data);
   free(handle);
 }
 

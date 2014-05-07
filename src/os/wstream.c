@@ -3,6 +3,7 @@
 
 #include <uv.h>
 
+#include "os/uv_helpers.h"
 #include "os/wstream.h"
 #include "os/wstream_defs.h"
 #include "vim.h"
@@ -54,7 +55,7 @@ void wstream_free(WStream *wstream)
 
 void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 {
-  stream->data = wstream;
+  handle_set_wstream((uv_handle_t *)stream, wstream);
   wstream->stream = stream;
 }
 
@@ -112,3 +113,4 @@ static void write_cb(uv_write_t *req, int status)
 
   free(data);
 }
+
