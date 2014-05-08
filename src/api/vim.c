@@ -83,7 +83,7 @@ Object vim_eval(String str, Error *err)
 
 int64_t vim_strwidth(String str)
 {
-  abort();
+  return mb_string2cells((char_u *)str.data, str.size);
 }
 
 StringArray vim_list_runtime_paths(void)
