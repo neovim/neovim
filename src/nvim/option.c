@@ -1964,7 +1964,7 @@ void set_init_1(void)
         /* First time count the NUL, otherwise count the ','. */
         len = (int)STRLEN(p) + 3;
         ga_grow(&ga, len);
-        if (ga.ga_len > 0)
+        if (!GA_EMPTY(&ga))
           STRCAT(ga.ga_data, ",");
         STRCAT(ga.ga_data, p);
         add_pathsep(ga.ga_data);

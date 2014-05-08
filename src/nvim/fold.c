@@ -138,7 +138,7 @@ int hasAnyFolding(win_T *win)
 {
   /* very simple now, but can become more complex later */
   return win->w_p_fen
-         && (!foldmethodIsManual(win) || win->w_folds.ga_len > 0);
+         && (!foldmethodIsManual(win) || !GA_EMPTY(&win->w_folds));
 }
 
 /* hasFolding() {{{2 */
@@ -2655,7 +2655,7 @@ static void foldMerge(fold_T *fp1, garray_T *gap, fold_T *fp2)
     foldMerge(fp3, gap2, fp4);
 
   /* Move nested folds in fp2 to the end of fp1. */
-  if (gap2->ga_len > 0) {
+  if (!GA_EMPTY(gap2)) {
     ga_grow(gap1, gap2->ga_len);
     for (idx = 0; idx < gap2->ga_len; ++idx) {
       ((fold_T *)gap1->ga_data)[gap1->ga_len]
@@ -2982,7 +2982,7 @@ static int put_foldopen_recurse(FILE *fd, win_T *wp, garray_T *gap, linenr_T off
   fp = (fold_T *)gap->ga_data;
   for (i = 0; i < gap->ga_len; i++) {
     if (fp->fd_flags != FD_LEVEL) {
-      if (fp->fd_nested.ga_len > 0) {
+      if (!GA_EMPTY(&fp->fd_nested)) {
         /* open nested folds while this fold is open */
         if (fprintf(fd, "%" PRId64, (int64_t)(fp->fd_top + off)) < 0
             || put_eol(fd) == FAIL

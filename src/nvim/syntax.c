@@ -951,7 +951,7 @@ static void syn_start_line(void)
    * Need to update the end of a start/skip/end that continues from the
    * previous line and regions that have "keepend".
    */
-  if (current_state.ga_len > 0) {
+  if (!GA_EMPTY(&current_state)) {
     syn_update_ends(TRUE);
     check_state_ends();
   }
@@ -2187,7 +2187,7 @@ syn_current_attr (
      */
     if (!syncing && !keep_state) {
       check_state_ends();
-      if (current_state.ga_len > 0
+      if (!GA_EMPTY(&current_state)
           && syn_getcurline()[current_col] != NUL) {
         ++current_col;
         check_state_ends();
@@ -2207,7 +2207,7 @@ syn_current_attr (
       && !(current_next_flags & (HL_SKIPNL | HL_SKIPEMPTY)))
     current_next_list = NULL;
 
-  if (zero_width_next_ga.ga_len > 0)
+  if (!GA_EMPTY(&zero_width_next_ga))
     ga_clear(&zero_width_next_ga);
 
   /* No longer need external matches.  But keep next_match_extmatch. */

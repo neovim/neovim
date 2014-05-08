@@ -2380,7 +2380,7 @@ win_line (
 
   if (wp->w_p_spell
       && *wp->w_s->b_p_spl != NUL
-      && wp->w_s->b_langp.ga_len > 0
+      && !GA_EMPTY(&wp->w_s->b_langp)
       && *(char **)(wp->w_s->b_langp.ga_data) != NULL) {
     /* Prepare for spell checking. */
     has_spell = TRUE;

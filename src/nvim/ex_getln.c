@@ -1831,7 +1831,7 @@ getexmodeline (
 
       if (c1 == BS || c1 == K_BS
           || c1 == DEL || c1 == K_DEL || c1 == K_KDEL) {
-        if (line_ga.ga_len > 0) {
+        if (!GA_EMPTY(&line_ga)) {
           --line_ga.ga_len;
           goto redraw;
         }
@@ -1940,7 +1940,7 @@ redraw:
 
     /* We are done when a NL is entered, but not when it comes after an
      * odd number of backslashes, that results in a NUL. */
-    if (line_ga.ga_len > 0 && pend[-1] == '\n') {
+    if (!GA_EMPTY(&line_ga) && pend[-1] == '\n') {
       int bcount = 0;
 
       while (line_ga.ga_len - 2 >= bcount && pend[-2 - bcount] == '\\')

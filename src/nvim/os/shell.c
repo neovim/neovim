@@ -229,7 +229,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   }
 
   if (opts & kShellOptRead) {
-    if (pdata.ga.ga_len > 0) {
+    if (!GA_EMPTY(&pdata.ga)) {
       // If there's an unfinished line in the growable array, append it now.
       append_ga_line(&pdata.ga);
       // remember that the NL was missing

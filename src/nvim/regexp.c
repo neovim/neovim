@@ -4697,7 +4697,7 @@ regmatch (
      * If there is something on the regstack execute the code for the state.
      * If the state is popped then loop and use the older state.
      */
-    while (regstack.ga_len > 0 && status != RA_FAIL) {
+    while (!GA_EMPTY(&regstack) && status != RA_FAIL) {
       rp = (regitem_T *)((char *)regstack.ga_data + regstack.ga_len) - 1;
       switch (rp->rs_state) {
       case RS_NOPEN:
