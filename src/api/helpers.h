@@ -4,6 +4,7 @@
 #include <stdbool.h>
 
 #include "api/defs.h"
+#include "../vim.h"
 
 #define set_api_error(message, err)                \
   do {                                             \
@@ -20,6 +21,13 @@ void try_start(void);
 /// @param err Pointer to the stack-allocated error object
 /// @return true if an error occurred
 bool try_end(Error *err);
+
+/// Convert a vim object to an `Object` instance, recursively expanding
+/// Arrays/Dictionaries.
+///
+/// @param obj The source object
+/// @return The converted value
+Object vim_to_object(typval_T *obj);
 
 #endif /* NEOVIM_API_HELPERS_H */
 
