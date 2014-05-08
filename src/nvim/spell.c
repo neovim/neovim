@@ -2324,7 +2324,7 @@ static void slang_clear(slang_T *lp)
 
   for (round = 1; round <= 2; ++round) {
     gap = round == 1 ? &lp->sl_rep : &lp->sl_repsal;
-    while (gap->ga_len > 0) {
+    while (!GA_EMPTY(gap)) {
       ftp = &((fromto_T *)gap->ga_data)[--gap->ga_len];
       free(ftp->ft_from);
       free(ftp->ft_to);
@@ -2341,7 +2341,7 @@ static void slang_clear(slang_T *lp)
         free(((int **)gap->ga_data)[i]);
   } else
     // SAL items: free salitem_T items
-    while (gap->ga_len > 0) {
+    while (!GA_EMPTY(gap)) {
       smp = &((salitem_T *)gap->ga_data)[--gap->ga_len];
       free(smp->sm_lead);
       // Don't free sm_oneof and sm_rules, they point into sm_lead.
@@ -2915,7 +2915,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     }
   }
 
-  if (gap->ga_len > 0) {
+  if (!GA_EMPTY(gap)) {
     // Add one extra entry to mark the end with an empty sm_lead.  Avoids
     // that we need to check the index every time.
     smp = &((salitem_T *)gap->ga_data)[gap->ga_len];
@@ -3865,14 +3865,14 @@ char_u *did_set_spelllang(win_T *wp)
     lp = LANGP_ENTRY(ga, i);
 
     // sound folding
-    if (lp->lp_slang->sl_sal.ga_len > 0)
+    if (!GA_EMPTY(&lp->lp_slang->sl_sal))
       // language does sound folding itself
       lp->lp_sallang = lp->lp_slang;
     else
       // find first similar language that does sound folding
       for (j = 0; j < ga.ga_len; ++j) {
         lp2 = LANGP_ENTRY(ga, j);
-        if (lp2->lp_slang->sl_sal.ga_len > 0
+        if (!GA_EMPTY(&lp2->lp_slang->sl_sal)
             && STRNCMP(lp->lp_slang->sl_name,
                 lp2->lp_slang->sl_name, 2) == 0) {
           lp->lp_sallang = lp2->lp_slang;
@@ -3881,14 +3881,14 @@ char_u *did_set_spelllang(win_T *wp)
       }
 
     // REP items
-    if (lp->lp_slang->sl_rep.ga_len > 0)
+    if (!GA_EMPTY(&lp->lp_slang->sl_rep))
       // language has REP items itself
       lp->lp_replang = lp->lp_slang;
     else
       // find first similar language that has REP items
       for (j = 0; j < ga.ga_len; ++j) {
         lp2 = LANGP_ENTRY(ga, j);
-        if (lp2->lp_slang->sl_rep.ga_len > 0
+        if (!GA_EMPTY(&lp2->lp_slang->sl_rep)
             && STRNCMP(lp->lp_slang->sl_name,
                 lp2->lp_slang->sl_name, 2) == 0) {
           lp->lp_replang = lp2->lp_slang;
@@ -5131,7 +5131,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           // Check that every character appears only once.
           for (p = items[1]; *p != NUL; ) {
             c = mb_ptr2char_adv(&p);
-            if ((spin->si_map.ga_len > 0
+            if ((!GA_EMPTY(&spin->si_map)
                  && vim_strchr(spin->si_map.ga_data, c)
                  != NULL)
                 || vim_strchr(p, c) != NULL)
@@ -5257,7 +5257,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
     if (sofofrom == NULL || sofoto == NULL)
       smsg((char_u *)_("Missing SOFO%s line in %s"),
           sofofrom == NULL ? "FROM" : "TO", fname);
-    else if (spin->si_sal.ga_len > 0)
+    else if (!GA_EMPTY(&spin->si_sal))
       smsg((char_u *)_("Both SAL and SOFO lines in %s"), fname);
     else {
       aff_check_string(spin->si_sofofr, sofofrom, "SOFOFROM");
@@ -6909,7 +6909,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
   }
 
   // SN_PREFCOND: <prefcondcnt> <prefcond> ...
-  if (spin->si_prefcond.ga_len > 0) {
+  if (!GA_EMPTY(&spin->si_prefcond)) {
     putc(SN_PREFCOND, fd);                              // <sectionID>
     putc(SNF_REQUIRED, fd);                             // <sectionflags>
 
@@ -7037,7 +7037,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
 
   // SN_MAP: <mapstr>
   // This is for making suggestions, section is not required.
-  if (spin->si_map.ga_len > 0) {
+  if (!GA_EMPTY(&spin->si_map)) {
     putc(SN_MAP, fd);                                   // <sectionID>
     putc(0, fd);                                        // <sectionflags>
     l = spin->si_map.ga_len;
@@ -7052,7 +7052,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
   // with this .spl file.  That's because the word numbers must be exactly
   // right.
   if (!spin->si_nosugfile
-      && (spin->si_sal.ga_len > 0
+      && (!GA_EMPTY(&spin->si_sal)
           || (spin->si_sofofr != NULL && spin->si_sofoto != NULL))) {
     putc(SN_SUGFILE, fd);                               // <sectionID>
     putc(0, fd);                                        // <sectionflags>
@@ -8151,7 +8151,7 @@ static void init_spellfile(void)
   int aspath = FALSE;
   char_u      *lstart = curbuf->b_s.b_p_spl;
 
-  if (*curwin->w_s->b_p_spl != NUL && curwin->w_s->b_langp.ga_len > 0) {
+  if (*curwin->w_s->b_p_spl != NUL && !GA_EMPTY(&curwin->w_s->b_langp)) {
     buf = alloc(MAXPATHL);
 
     // Find the end of the language name.  Exclude the region.  If there
@@ -11011,7 +11011,7 @@ static void score_comp_sal(suginfo_T *su)
   // Use the sound-folding of the first language that supports it.
   for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-    if (lp->lp_slang->sl_sal.ga_len > 0) {
+    if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
       // soundfold the bad word
       spell_soundfold(lp->lp_slang, su->su_fbadword, TRUE, badsound);
 
@@ -11058,7 +11058,7 @@ static void score_combine(suginfo_T *su)
   // Add the alternate score to su_ga.
   for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-    if (lp->lp_slang->sl_sal.ga_len > 0) {
+    if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
       // soundfold the bad word
       slang = lp->lp_slang;
       spell_soundfold(slang, su->su_fbadword, TRUE, badsound);
@@ -11216,7 +11216,7 @@ static void suggest_try_soundalike_prep(void)
   for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     slang = lp->lp_slang;
-    if (slang->sl_sal.ga_len > 0 && slang->sl_sbyts != NULL)
+    if (!GA_EMPTY(&slang->sl_sal) && slang->sl_sbyts != NULL)
       // prepare the hashtable used by add_sound_suggest()
       hash_init(&slang->sl_sounddone);
   }
@@ -11236,7 +11236,7 @@ static void suggest_try_soundalike(suginfo_T *su)
   for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     slang = lp->lp_slang;
-    if (slang->sl_sal.ga_len > 0 && slang->sl_sbyts != NULL) {
+    if (!GA_EMPTY(&slang->sl_sal) && slang->sl_sbyts != NULL) {
       // soundfold the bad word
       spell_soundfold(slang, su->su_fbadword, TRUE, salword);
 
@@ -11262,7 +11262,7 @@ static void suggest_try_soundalike_finish(void)
   for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
     lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
     slang = lp->lp_slang;
-    if (slang->sl_sal.ga_len > 0 && slang->sl_sbyts != NULL) {
+    if (!GA_EMPTY(&slang->sl_sal) && slang->sl_sbyts != NULL) {
       // Free the info about handled words.
       todo = (int)slang->sl_sounddone.ht_used;
       for (hi = slang->sl_sounddone.ht_array; todo > 0; ++hi)
@@ -11825,7 +11825,7 @@ static void rescore_one(suginfo_T *su, suggest_T *stp)
 
   // Only rescore suggestions that have no sal score yet and do have a
   // language.
-  if (slang != NULL && slang->sl_sal.ga_len > 0 && !stp->st_had_bonus) {
+  if (slang != NULL && !GA_EMPTY(&slang->sl_sal) && !stp->st_had_bonus) {
     if (slang == su->su_sallang)
       p = su->su_sal_badword;
     else {
@@ -11899,7 +11899,7 @@ char_u *eval_soundfold(char_u *word)
     // Use the sound-folding of the first language that supports it.
     for (lpi = 0; lpi < curwin->w_s->b_langp.ga_len; ++lpi) {
       lp = LANGP_ENTRY(curwin->w_s->b_langp, lpi);
-      if (lp->lp_slang->sl_sal.ga_len > 0) {
+      if (!GA_EMPTY(&lp->lp_slang->sl_sal)) {
         // soundfold the word
         spell_soundfold(lp->lp_slang, word, FALSE, sound);
         return vim_strsave(sound);

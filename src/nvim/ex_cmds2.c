@@ -580,7 +580,7 @@ void ex_breakdel(exarg_T *eap)
   if (todel < 0)
     EMSG2(_("E161: Breakpoint not found: %s"), eap->arg);
   else {
-    while (gap->ga_len > 0) {
+    while (!GA_EMPTY(gap)) {
       free(DEBUGGY(gap, todel).dbg_name);
       vim_regfree(DEBUGGY(gap, todel).dbg_prog);
       --gap->ga_len;

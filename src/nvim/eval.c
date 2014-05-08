@@ -10766,7 +10766,7 @@ static garray_T ga_userinput = {0, 0, sizeof(tasave_T), 4, NULL};
  */
 static void f_inputrestore(typval_T *argvars, typval_T *rettv)
 {
-  if (ga_userinput.ga_len > 0) {
+  if (!GA_EMPTY(&ga_userinput)) {
     --ga_userinput.ga_len;
     restore_typeahead((tasave_T *)(ga_userinput.ga_data)
         + ga_userinput.ga_len);

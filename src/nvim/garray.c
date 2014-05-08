@@ -185,7 +185,7 @@ void ga_append(garray_T *gap, char c)
 void append_ga_line(garray_T *gap)
 {
   // Remove trailing CR.
-  if ((gap->ga_len > 0)
+  if (!GA_EMPTY(gap)
       && !curbuf->b_p_bin
       && (((char_u *)gap->ga_data)[gap->ga_len - 1] == CAR)) {
     gap->ga_len--;

@@ -1094,7 +1094,7 @@ gen_expand_wildcards (
       free(t);
     }
 
-    if (did_expand_in_path && ga.ga_len > 0 && (flags & EW_PATH))
+    if (did_expand_in_path && !GA_EMPTY(&ga) && (flags & EW_PATH))
       uniquefy_paths(&ga, p);
     if (p != pat[i])
       free(p);

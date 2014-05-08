@@ -872,7 +872,7 @@ int flags;
      * When not inside any ":while" loop, clear remembered lines.
      */
     if (cstack.cs_looplevel == 0) {
-      if (lines_ga.ga_len > 0) {
+      if (!GA_EMPTY(&lines_ga)) {
         sourcing_lnum =
           ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
         free_cmdlines(&lines_ga);
@@ -1188,7 +1188,7 @@ static void store_loop_line(garray_T *gap, char_u *line)
  */
 static void free_cmdlines(garray_T *gap)
 {
-  while (gap->ga_len > 0) {
+  while (!GA_EMPTY(gap)) {
     free(((wcmd_T *)(gap->ga_data))[gap->ga_len - 1].line);
     --gap->ga_len;
   }

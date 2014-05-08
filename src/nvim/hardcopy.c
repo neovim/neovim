@@ -1513,7 +1513,7 @@ static void prt_def_var(char *name, double value, int prec)
 
 static void prt_flush_buffer(void)
 {
-  if (prt_ps_buffer.ga_len > 0) {
+  if (!GA_EMPTY(&prt_ps_buffer)) {
     /* Any background color must be drawn first */
     if (prt_do_bgcol && (prt_new_bgcol != PRCOLOR_WHITE)) {
       int r, g, b;
