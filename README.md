@@ -3,6 +3,7 @@
 [Website](http://neovim.org) |
 [Google Group](https://groups.google.com/forum/#!forum/neovim) |
 [Twitter](http://twitter.com/Neovim) |
+[Reddit](http://www.reddit.com/r/neovim) |
 [Bountysource](https://www.bountysource.com/teams/neovim)
 
 [![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
