@@ -5261,6 +5261,11 @@ dictitem_T *dict_lookup(hashitem_T *hi)
 }
 #endif
 
+dictitem_T * dict_lookup(hashitem_T *hi)
+{
+    return HI2DI(hi);
+}
+
 /*
  * Return TRUE when two dictionaries have exactly the same key/values.
  */
