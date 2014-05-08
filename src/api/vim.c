@@ -5,6 +5,7 @@
 
 #include "api/vim.h"
 #include "api/defs.h"
+#include "api/helpers.h"
 #include "../vim.h"
 #include "types.h"
 #include "ascii.h"
@@ -17,16 +18,6 @@
 #include "lib/khash.h"
 
 KHASH_SET_INIT_INT64(Lookup)
-
-/// Start block that may cause vimscript exceptions
-static void try_start(void);
-
-/// End try block, set the error message if any and return true if an error
-/// occurred.
-///
-/// @param err Pointer to the stack-allocated error object
-/// @return true if an error occurred
-static bool try_end(Error *err);
 
 /// Convert a vim object to an `Object` instance, recursively expanding
 /// Arrays/Dictionaries.
@@ -249,52 +240,6 @@ Tabpage vim_get_current_tabpage(void)
 void vim_set_current_tabpage(Tabpage tabpage)
 {
   abort();
-}
-
-static void try_start()
-{
-  ++trylevel;
-}
-
-static bool try_end(Error *err)
-{
-  --trylevel;
-
-  // Without this it stops processing all subsequent VimL commands and
-  // generates strange error messages if I e.g. try calling Test() in a
-  // cycle
-  did_emsg = false;
-
-  if (got_int) {
-    const char msg[] = "Keyboard interrupt";
-
-    if (did_throw) {
-      // If we got an interrupt, discard the current exception 
-      discard_current_exception();
-    }
-
-    strncpy(err->msg, msg, sizeof(err->msg));
-    err->set = true;
-    got_int = false;
-  } else if (msg_list != NULL && *msg_list != NULL) {
-    int should_free;
-    char *msg = (char *)get_exception_string(*msg_list,
-                                             ET_ERROR,
-                                             NULL,
-                                             &should_free);
-    strncpy(err->msg, msg, sizeof(err->msg));
-    err->set = true;
-    free_global_msglist();
-
-    if (should_free) {
-      free(msg);
-    }
-  } else if (did_throw) {
-    strncpy(err->msg, (char *)current_exception->value, sizeof(err->msg));
-    err->set = true;
-  }
-
-  return err->set;
 }
 
 static Object vim_to_object(typval_T *obj)

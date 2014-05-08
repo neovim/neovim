@@ -6,6 +6,17 @@ file(GLOB API_HEADERS api/*.h)
 set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/os/msgpack_rpc.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 
+# Remove helpers.h from API_HEADERS since it doesn't contain public API
+# functions
+foreach(sfile ${API_HEADERS})
+  get_filename_component(f ${sfile} NAME)
+  if(${f} MATCHES "^(helpers.h)$")
+    list(APPEND to_remove ${sfile})
+  endif()
+endforeach()
+list(REMOVE_ITEM API_HEADERS ${to_remove})
+set(to_remove)
+
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 
 add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
