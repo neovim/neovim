@@ -11,6 +11,7 @@
 #include "ex_docmd.h"
 #include "screen.h"
 #include "eval.h"
+#include "misc2.h"
 #include "memory.h"
 
 #include "lib/khash.h"
@@ -88,7 +89,40 @@ int64_t vim_strwidth(String str)
 
 StringArray vim_list_runtime_paths(void)
 {
-  abort();
+  StringArray rv = {.size = 0};
+  uint8_t *rtp = p_rtp;
+
+  if (*rtp == NUL) {
+    // No paths
+    return rv;
+  }
+
+  // Count the number of paths in rtp
+  while (*rtp != NUL) {
+    if (*rtp == ',') {
+      rv.size++;
+    }
+    rtp++;
+  }
+
+  // index
+  uint32_t i = 0;
+  // Allocate memory for the copies
+  rv.items = xmalloc(sizeof(String) * rv.size);
+  // reset the position
+  rtp = p_rtp;
+  // Start copying
+  while (*rtp != NUL) {
+    rv.items[i].data = xmalloc(MAXPATHL);
+    // Copy the path from 'runtimepath' to rv.items[i]
+    rv.items[i].size = copy_option_part(&rtp,
+                                       (char_u *)rv.items[i].data,
+                                       MAXPATHL,
+                                       ",");
+    i++;
+  }
+
+  return rv;
 }
 
 void vim_change_directory(String dir)
