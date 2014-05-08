@@ -125,9 +125,25 @@ StringArray vim_list_runtime_paths(void)
   return rv;
 }
 
-void vim_change_directory(String dir)
+void vim_change_directory(String dir, Error *err)
 {
-  abort();
+  char string[dir.size + 1];
+  memcpy(string, dir.data, dir.size);
+  string[dir.size] = NUL;
+
+  try_start();
+
+  if (vim_chdir((char_u *)string)) {
+    if (!try_end(err)) {
+      char msg[] = "failed to change directory";
+      strncpy(err->msg, msg, sizeof(err->msg));
+      err->set = true;
+    }
+    return;
+  }
+
+  post_chdir(FALSE);
+  try_end(err);
 }
 
 String vim_get_current_line(void)

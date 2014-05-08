@@ -44,7 +44,8 @@ StringArray vim_list_runtime_paths(void);
 /// Changes vim working directory
 ///
 /// @param dir The new working directory
-void vim_change_directory(String dir);
+/// @param[out] err Details of an error that may have occurred
+void vim_change_directory(String dir, Error *err);
 
 /// Return the current line
 ///
