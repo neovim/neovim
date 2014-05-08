@@ -594,7 +594,7 @@ void ex_breakdel(exarg_T *eap)
     }
 
     /* If all breakpoints were removed clear the array. */
-    if (gap->ga_len == 0)
+    if (GA_EMPTY(gap))
       ga_clear(gap);
   }
 }
@@ -607,7 +607,7 @@ void ex_breaklist(exarg_T *eap)
   struct debuggy *bp;
   int i;
 
-  if (dbg_breakp.ga_len == 0)
+  if (GA_EMPTY(&dbg_breakp))
     MSG(_("No breakpoints defined"));
   else
     for (i = 0; i < dbg_breakp.ga_len; ++i) {
@@ -670,7 +670,7 @@ debuggy_find (
   int prev_got_int;
 
   /* Return quickly when there are no breakpoints. */
-  if (gap->ga_len == 0)
+  if (GA_EMPTY(gap))
     return (linenr_T)0;
 
   /* Replace K_SNR in function name with "<SNR>". */

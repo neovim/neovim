@@ -893,7 +893,7 @@ expand_in_path (
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
   expand_path_option(curdir, &path_ga);
   free(curdir);
-  if (path_ga.ga_len == 0)
+  if (GA_EMPTY(&path_ga))
     return 0;
 
   paths = ga_concat_strings(&path_ga);

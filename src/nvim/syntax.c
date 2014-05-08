@@ -2376,12 +2376,12 @@ static void check_state_ends(void)
 
         pop_current_state();
 
-        if (current_state.ga_len == 0)
+        if (GA_EMPTY(&current_state))
           break;
 
         if (had_extend && keepend_level >= 0) {
           syn_update_ends(FALSE);
-          if (current_state.ga_len == 0)
+          if (GA_EMPTY(&current_state))
             break;
         }
 

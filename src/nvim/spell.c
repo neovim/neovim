@@ -997,7 +997,7 @@ spell_check (
     return 1;
 
   // Return here when loading language files failed.
-  if (wp->w_s->b_langp.ga_len == 0)
+  if (GA_EMPTY(&wp->w_s->b_langp))
     return 1;
 
   memset(&mi, 0, sizeof(matchinf_T));
@@ -1947,7 +1947,7 @@ spell_valid_case (
 static int no_spell_checking(win_T *wp)
 {
   if (!wp->w_p_spell || *wp->w_s->b_p_spl == NUL
-      || wp->w_s->b_langp.ga_len == 0) {
+      || GA_EMPTY(&wp->w_s->b_langp)) {
     EMSG(_("E756: Spell checking is not enabled"));
     return TRUE;
   }
@@ -4557,16 +4557,16 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
   spell_message(spin, IObuff);
 
   // Only do REP lines when not done in another .aff file already.
-  do_rep = spin->si_rep.ga_len == 0;
+  do_rep = GA_EMPTY(&spin->si_rep);
 
   // Only do REPSAL lines when not done in another .aff file already.
-  do_repsal = spin->si_repsal.ga_len == 0;
+  do_repsal = GA_EMPTY(&spin->si_repsal);
 
   // Only do SAL lines when not done in another .aff file already.
-  do_sal = spin->si_sal.ga_len == 0;
+  do_sal = GA_EMPTY(&spin->si_sal);
 
   // Only do MAP lines when not done in another .aff file already.
-  do_mapline = spin->si_map.ga_len == 0;
+  do_mapline = GA_EMPTY(&spin->si_map);
 
   // Allocate and init the afffile_T structure.
   aff = (afffile_T *)getroom(spin, sizeof(afffile_T), TRUE);
@@ -6938,7 +6938,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       gap = &spin->si_repsal;
 
     // Don't write the section if there are no items.
-    if (gap->ga_len == 0)
+    if (GA_EMPTY(gap))
       continue;
 
     // Sort the REP/REPSAL items.
@@ -8691,7 +8691,7 @@ void spell_suggest(int count)
   spell_find_suggest(line + curwin->w_cursor.col, badlen, &sug, limit,
       TRUE, need_cap, TRUE);
 
-  if (sug.su_ga.ga_len == 0)
+  if (GA_EMPTY(&sug.su_ga))
     MSG(_("Sorry, no suggestions"));
   else if (count > 0) {
     if (count > sug.su_ga.ga_len)
@@ -11680,7 +11680,7 @@ add_suggestion (
     // the first "the" to itself.
     return;
 
-  if (gap->ga_len == 0)
+  if (GA_EMPTY(gap))
     i = -1;
   else {
     // Check if the word is already there.  Also check the length that is

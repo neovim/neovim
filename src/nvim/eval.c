@@ -18397,7 +18397,7 @@ char_u *get_user_func_name(expand_T *xp, int idx)
     cat_func_name(IObuff, fp);
     if (xp->xp_context != EXPAND_USER_FUNC) {
       STRCAT(IObuff, "(");
-      if (!fp->uf_varargs && fp->uf_args.ga_len == 0)
+      if (!fp->uf_varargs && GA_EMPTY(&fp->uf_args))
         STRCAT(IObuff, ")");
     }
     return IObuff;

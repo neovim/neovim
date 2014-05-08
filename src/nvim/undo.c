@@ -2419,7 +2419,7 @@ void ex_undolist(exarg_T *eap)
     }
   }
 
-  if (ga.ga_len == 0)
+  if (GA_EMPTY(&ga))
     MSG(_("Nothing to undo"));
   else {
     sort_strings((char_u **)ga.ga_data, ga.ga_len);
