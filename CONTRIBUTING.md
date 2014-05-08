@@ -1,11 +1,16 @@
 # Contributing to Neovim
 
-## Thank you
+If you need additional support see [the wiki][wiki].
 
-Thanks for considering contributing to Neovim.
-To make the process as smooth as possible we would ask you to follow
-the guidelines below.
-If you need support see [the wiki](https://github.com/neovim/neovim/wiki/Contributing).
+## Getting started contributing
+
+- Look for the [`entry-level`][entry] Issue Label. It marks easier issues.
+- Take a look at [Waffle][waffle]. It'll show who is working on what isssues.
+
+### What not to do
+
+Please avoid broad cosmetic/style changes which increase merge conflicts and add
+excessive noise to `git blame`.
 
 ## Issues
 
@@ -17,8 +22,7 @@ If you need support see [the wiki](https://github.com/neovim/neovim/wiki/Contrib
 
 ### For all PRs
 
-- Make it clear in the issue tracker what you are working on, so that
-  someone else doesn't duplicate the work.
+- Make it clear in the issue tracker what you are working on.
 - Be descriptive in your PR message: what is it for, why is it needed, etc.
 - Don't make cosmetic changes to unrelated files in the same PR.
 
@@ -31,13 +35,8 @@ When submitting pull requests, include one of the following 'tags' in the title:
 * `[RFC]` - Request For Comment. The request needs reviewing and/or comments.
 * `[RDY]` - The request is ready to be merged. The request must have been
   reviewed by at least one person and have no outstanding issues.
-
-This lets people quickly see the status of the PR, and reduces the risk of
-merging requests that are not yet ready or reviewed.  By tagging, you'll also
-save reviewers and mergers some work.
-
-If a pull request doesn't have a tag, it's considered `WIP` as long as there are
-no comments indicating it's `RFC` or `RDY`.
+* Default label is assumed to be `[WIP]` as long as there's no indication
+  otherwise.
 
 #### Branching & history
 
@@ -58,11 +57,29 @@ no comments indicating it's `RFC` or `RDY`.
 
 #### Coding style
 
-All code changes should follow the [Neovim style guide](http://neovim.org/development-wiki/style-guide/style-guide.xml).
+All code changes should follow the [Neovim style guide][style].
 
-Please run `clint.py` to detect style errors. `clint.py` is Google's
-[`cpplint.py`](http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml#cpplint)
-script modified with the neovim style guidelines. It is not perfect and may
-have false positives and negatives, but is still a valuable tool. To have
-`clint.py` ignore certain special cases, put `// NOLINT` at the end of the
-line.
+Please run [`clint.py`][clint] to detect style errors. It is not perfect and may
+have false positives and negatives. To have `clint.py` ignore certain special
+cases, put `// NOLINT` at the end of the line.
+
+#### Commit messages
+
+Follow the [Tim Pope Convention][commit] (@tpope) for commit messages. Most
+importantly, do the following:
+
+- Keep the first line a summary of 50 characters or less.
+- Write the summary in the [imperative mood][imperative].
+- Write a more detailed explanation (after a blank line) that explains more in
+  depth (only if necessary).
+
+Take a look at @elmart's [commits on Neovim][elmart] for examples.
+
+[clint]: clint.py
+[commit]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[entry]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
+[elmart]: https://github.com/neovim/neovim/commits?author=elmart
+[imperative]: http://en.wikipedia.org/wiki/Imperative_mood
+[style]: http://neovim.org/development-wiki/style-guide/style-guide.xml
+[waffle]: https://waffle.io/neovim/neovim
+[wiki]: https://github.com/neovim/neovim/wiki/Contributing
