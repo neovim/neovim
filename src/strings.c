@@ -41,32 +41,22 @@
 #include "os/os.h"
 #include "os/shell.h"
 
-/*
- * Copy "string" into newly allocated memory.
- */
+// TODO(elmart): Refactor this function to return void *,
+//               and its callers to remove checks for NULL.
 char_u *vim_strsave(char_u *string)
 {
-  char_u      *p;
-  unsigned len;
-
-  len = (unsigned)STRLEN(string) + 1;
-  p = alloc(len);
-  if (p != NULL)
-    memmove(p, string, (size_t)len);
+  size_t len = STRLEN(string) + 1;
+  char_u *p = xmalloc(len);
+  memmove(p, string, len);
   return p;
 }
 
-/*
- * Copy up to "len" bytes of "string" into newly allocated memory and
- * terminate with a NUL.
- * The allocated memory always has size "len + 1", also when "string" is
- * shorter.
- */
+// TODO(elmart): Refactor this function to have size_t 'len' parameter and
+//               to return void *.
+//               Refactor its callers to remove checks for NULL.
 char_u *vim_strnsave(char_u *string, int len)
 {
-  char_u      *p;
-
-  p = alloc((unsigned)(len + 1));
+  char_u *p = xmalloc(len + 1);
   STRNCPY(p, string, len);
   p[len] = NUL;
   return p;
