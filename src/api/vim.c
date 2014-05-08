@@ -127,14 +127,16 @@ void vim_set_current_line(Object line, Error *err)
   buffer_set_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, line, err);
 }
 
-Object vim_get_var(bool special, String name, Error *err)
+Object vim_get_var(bool special, String name, bool pop, Error *err)
 {
-  abort();
+  return dict_get_value(special ? &vimvardict : &globvardict, name,
+                        special ? false : pop,
+                        err);
 }
 
-void vim_set_var(bool special, String name, Object value, Error *err)
+Object vim_set_var(String name, Object value, Error *err)
 {
-  abort();
+  return dict_set_value(&globvardict, name, value, err);
 }
 
 String vim_get_option(String name, Error *err)

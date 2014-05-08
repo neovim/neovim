@@ -20,6 +20,8 @@ KHASH_SET_INIT_INT64(Lookup)
 /// @return The converted value
 static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup);
 
+static bool object_to_vim(Object obj, typval_T *tv, Error *err);
+
 void try_start()
 {
   ++trylevel;
@@ -62,6 +64,76 @@ bool try_end(Error *err)
   return err->set;
 }
 
+Object dict_get_value(dict_T *dict, String key, bool pop, Error *err)
+{
+  Object rv;
+  hashitem_T *hi;
+  dictitem_T *di;
+  char k[key.size + 1];
+  // Convert the key
+  memcpy(k, key.data, key.size);
+  k[key.size] = NUL;
+  hi = hash_find(&dict->dv_hashtab, (uint8_t *)k);
+
+  if (HASHITEM_EMPTY(hi)) {
+    set_api_error("Key not found", err);
+    return rv;
+  }
+
+  di = dict_lookup(hi);
+  rv = vim_to_object(&di->di_tv);
+
+  if (pop) {
+    if (dict->dv_lock) {
+      set_api_error("Dictionary is locked", err);
+      return rv;
+    }
+
+    hash_remove(&dict->dv_hashtab, hi);
+    dictitem_free(di);
+  }
+
+  return rv;
+}
+
+Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
+{
+  Object rv = {.type = kObjectTypeNil};
+
+  if (dict->dv_lock) {
+    set_api_error("Dictionary is locked", err);
+    return rv;
+  }
+
+  if (key.size == 0) {
+    set_api_error("Empty dictionary keys aren't allowed", err);
+    return rv;
+  }
+
+  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, key.size);
+  typval_T tv;
+
+  if (!object_to_vim(value, &tv, err)) {
+    return rv;
+  }
+
+  if (di == NULL) {
+    uint8_t k[key.size + 1];
+    memcpy(k, key.data, key.size);
+    k[key.size] = NUL;
+    di = dictitem_alloc(k);
+    dict_add(dict, di);
+  } else {
+    rv = vim_to_object(&di->di_tv);
+    clear_tv(&di->di_tv);
+  }
+
+  copy_tv(&tv, &di->di_tv);
+  clear_tv(&tv);
+
+  return rv;
+}
+
 Object vim_to_object(typval_T *obj)
 {
   Object rv;
@@ -71,6 +143,94 @@ Object vim_to_object(typval_T *obj)
   // Free the table
   kh_destroy(Lookup, lookup);
   return rv;
+}
+
+static bool object_to_vim(Object obj, typval_T *tv, Error *err)
+{
+  tv->v_type = VAR_UNKNOWN;
+  tv->v_lock = 0;
+
+  switch (obj.type) {
+    case kObjectTypeNil:
+      tv->v_type = VAR_NUMBER;
+      tv->vval.v_number = 0;
+      break;
+
+    case kObjectTypeBool:
+      tv->v_type = VAR_NUMBER;
+      tv->vval.v_number = obj.data.boolean;
+      break;
+
+    case kObjectTypeInt:
+      tv->v_type = VAR_NUMBER;
+      tv->vval.v_number = obj.data.integer;
+      break;
+
+    case kObjectTypeFloat:
+      tv->v_type = VAR_FLOAT;
+      tv->vval.v_float = obj.data.floating_point;
+      break;
+
+    case kObjectTypeString:
+      tv->v_type = VAR_STRING;
+      tv->vval.v_string = (uint8_t *)xstrndup(obj.data.string.data,
+                                              obj.data.string.size);
+      break;
+
+    case kObjectTypeArray:
+      tv->v_type = VAR_LIST;
+      tv->vval.v_list = list_alloc();
+
+      for (uint32_t i = 0; i < obj.data.array.size; i++) {
+        Object item = obj.data.array.items[i];
+        listitem_T *li = listitem_alloc();
+
+        if (!object_to_vim(item, &li->li_tv, err)) {
+          // cleanup
+          listitem_free(li);
+          list_free(tv->vval.v_list, true);
+          return false;
+        }
+
+        list_append(tv->vval.v_list, li);
+      }
+      tv->vval.v_list->lv_refcount++;
+      break;
+
+    case kObjectTypeDictionary:
+      tv->v_type = VAR_DICT;
+      tv->vval.v_dict = dict_alloc();
+
+      for (uint32_t i = 0; i < obj.data.dictionary.size; i++) {
+        KeyValuePair item = obj.data.dictionary.items[i];
+        String key = item.key;
+
+        if (key.size == 0) {
+          set_api_error("Empty dictionary keys aren't allowed", err);
+          // cleanup
+          dict_free(tv->vval.v_dict, true);
+          return false;
+        }
+
+        char k[key.size + 1];
+        memcpy(k, key.data, key.size);
+        k[key.size] = NUL;
+        dictitem_T *di = dictitem_alloc((uint8_t *)k);
+
+        if (!object_to_vim(item.value, &di->di_tv, err)) {
+          // cleanup
+          dictitem_free(di);
+          dict_free(tv->vval.v_dict, true);
+          return false;
+        }
+
+        dict_add(tv->vval.v_dict, di);
+      }
+      tv->vval.v_dict->dv_refcount++;
+      break;
+  }
+
+  return true;
 }
 
 static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)

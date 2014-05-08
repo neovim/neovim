@@ -62,15 +62,15 @@ void vim_set_current_line(Object line, Error *err);
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
 /// @return The variable value
-Object vim_get_var(bool special, String name, Error *err);
+Object vim_get_var(bool special, String name, bool pop, Error *err);
 
-/// Sets a global or special variable
+/// Sets a global variable
 ///
-/// @param special If it's a special(:v) variable
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-void vim_set_var(bool special, String name, Object value, Error *err);
+/// @return the old value if any
+Object vim_set_var(String name, Object value, Error *err);
 
 /// Get an option value string
 ///
