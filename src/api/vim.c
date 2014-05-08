@@ -4,8 +4,9 @@
 #include <string.h>
 
 #include "api/vim.h"
-#include "api/defs.h"
 #include "api/helpers.h"
+#include "api/defs.h"
+#include "api/buffer.h"
 #include "../vim.h"
 #include "types.h"
 #include "ascii.h"
@@ -139,7 +140,8 @@ void vim_change_directory(String dir, Error *err)
 
 String vim_get_current_line(void)
 {
-  abort();
+  Error stub;
+  return buffer_get_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, &stub);
 }
 
 void vim_set_current_line(String line)
