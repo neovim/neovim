@@ -808,7 +808,10 @@ static void slang_free(slang_T *lp);
 ///
 /// @param ftp ptr to salitem_T to be cleared
 ///
+/// @warming salitem_T will no longer have valid empty data
+///
 static void salitem_clear(salitem_T *smp);
+
 ///
 /// clear the content in fromto_T
 ///
