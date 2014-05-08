@@ -5021,7 +5021,7 @@ regmatch (
     /*
      * If the regstack is empty or something failed we are done.
      */
-    if (regstack.ga_len == 0 || status == RA_FAIL) {
+    if (GA_EMPTY(&regstack) || status == RA_FAIL) {
       if (scan == NULL) {
         /*
          * We get here only if there's trouble -- normally "case END" is

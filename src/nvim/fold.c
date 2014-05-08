@@ -1013,7 +1013,7 @@ void cloneFoldGrowArray(garray_T *from, garray_T *to)
 
   ga_init(to, from->ga_itemsize, from->ga_growsize);
 
-  if (from->ga_len == 0)
+  if (GA_EMPTY(from))
     return;
 
   ga_grow(to, from->ga_len);
@@ -1302,7 +1302,7 @@ static void deleteFoldEntry(garray_T *gap, int idx, int recursive)
   fold_T      *nfp;
 
   fp = (fold_T *)gap->ga_data + idx;
-  if (recursive || fp->fd_nested.ga_len == 0) {
+  if (recursive || GA_EMPTY(&fp->fd_nested)) {
     /* recursively delete the contained folds */
     deleteFoldRecurse(&fp->fd_nested);
     --gap->ga_len;

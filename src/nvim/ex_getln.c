@@ -4187,7 +4187,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
     }
     free(matches);
   }
-  if (ga.ga_len == 0)
+  if (GA_EMPTY(&ga))
     return FAIL;
 
   /* Sort and remove duplicates which can happen when specifying multiple
