@@ -68,9 +68,7 @@ void buffer_set_line(Buffer buffer, int64_t index, Object line, Error *err)
   }
 
   if (line.type != kObjectTypeNil && line.type != kObjectTypeString) {
-    char msg[] = "Invalid line";
-    strncpy(err->msg, msg, sizeof(err->msg));
-    err->set = true;
+    set_api_error("Invalid line", err);
     return;
   }
 
@@ -86,14 +84,10 @@ void buffer_set_line(Buffer buffer, int64_t index, Object line, Error *err)
 
     if (u_savedel(index, 1L) == FAIL) {
       // Failed to save undo
-      char msg[] = "Cannot save undo information";
-      strncpy(err->msg, msg, sizeof(err->msg));
-      err->set = true;
+      set_api_error("Cannot save undo information", err);
     } else if (ml_delete(index, FALSE) == FAIL) {
       // Failed to delete
-      char msg[] = "Cannot delete the line";
-      strncpy(err->msg, msg, sizeof(err->msg));
-      err->set = true;
+      set_api_error("Cannot delete the line", err);
     } else {
       restore_win_for_buf(save_curwin, save_curtab, save_curbuf);
       // Success
@@ -117,14 +111,10 @@ void buffer_set_line(Buffer buffer, int64_t index, Object line, Error *err)
 
     if (u_savesub(index) == FAIL) {
       // Failed to save undo
-      char msg[] = "Cannot save undo information";
-      strncpy(err->msg, msg, sizeof(err->msg));
-      err->set = true;
+      set_api_error("Cannot save undo information", err);
     } else if (ml_replace(index, (char_u *)string, FALSE) == FAIL) {
       // Failed to replace
-      char msg[] = "Cannot replace line";
-      strncpy(err->msg, msg, sizeof(err->msg));
-      err->set = true;
+      set_api_error("Cannot replace line", err);
       free(string);
     } else {
       // Success
@@ -213,9 +203,7 @@ static buf_T *find_buffer(Buffer buffer, Error *err)
   buf_T *buf = buflist_findnr(buffer);
 
   if (buf == NULL) {
-    char msg[] = "Invalid buffer id";
-    strncpy(err->msg, msg, sizeof(err->msg));
-    err->set = true;
+    set_api_error("Invalid buffer id", err);
   }
 
   return buf;

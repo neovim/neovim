@@ -21,15 +21,12 @@ bool try_end(Error *err)
   did_emsg = false;
 
   if (got_int) {
-    const char msg[] = "Keyboard interrupt";
-
     if (did_throw) {
       // If we got an interrupt, discard the current exception 
       discard_current_exception();
     }
 
-    strncpy(err->msg, msg, sizeof(err->msg));
-    err->set = true;
+    set_api_error("Keyboard interrupt", err);
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
@@ -45,8 +42,7 @@ bool try_end(Error *err)
       free(msg);
     }
   } else if (did_throw) {
-    strncpy(err->msg, (char *)current_exception->value, sizeof(err->msg));
-    err->set = true;
+    set_api_error((char *)current_exception->value, err);
   }
 
   return err->set;

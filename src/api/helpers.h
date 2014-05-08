@@ -5,6 +5,12 @@
 
 #include "api/defs.h"
 
+#define set_api_error(message, err)                \
+  do {                                             \
+    strncpy(err->msg, message, sizeof(err->msg));  \
+    err->set = true;                               \
+  } while (0)
+
 /// Start block that may cause vimscript exceptions
 void try_start(void);
 

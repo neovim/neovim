@@ -127,9 +127,7 @@ void vim_change_directory(String dir, Error *err)
 
   if (vim_chdir((char_u *)string)) {
     if (!try_end(err)) {
-      char msg[] = "failed to change directory";
-      strncpy(err->msg, msg, sizeof(err->msg));
-      err->set = true;
+      set_api_error("failed to change directory", err);
     }
     return;
   }
