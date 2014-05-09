@@ -2479,8 +2479,6 @@ spell_load_file (
 
     // Remember the file name, used to reload the file when it's updated.
     lp->sl_fname = vim_strsave(fname);
-    if (lp->sl_fname == NULL)
-      goto endFAIL;
 
     // Check for .add.spl.
     lp->sl_add = strstr((char *)path_tail(fname), SPL_FNAME_ADD) != NULL;
@@ -3669,8 +3667,6 @@ char_u *did_set_spelllang(win_T *wp)
   // Make a copy of 'spelllang', the SpellFileMissing autocommands may change
   // it under our fingers.
   spl_copy = vim_strsave(wp->w_s->b_p_spl);
-  if (spl_copy == NULL)
-    goto theend;
 
   wp->w_s->b_cjk = 0;
 
@@ -3936,11 +3932,9 @@ static void use_midword(slang_T *lp, win_T *wp)
         // Append multi-byte chars to "b_spell_ismw_mb".
         n = (int)STRLEN(wp->w_s->b_spell_ismw_mb);
         bp = vim_strnsave(wp->w_s->b_spell_ismw_mb, n + l);
-        if (bp != NULL) {
-          free(wp->w_s->b_spell_ismw_mb);
-          wp->w_s->b_spell_ismw_mb = bp;
-          vim_strncpy(bp + n, p, l);
-        }
+        free(wp->w_s->b_spell_ismw_mb);
+        wp->w_s->b_spell_ismw_mb = bp;
+        vim_strncpy(bp + n, p, l);
       }
       p += l;
     } else
@@ -5175,8 +5169,6 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
           if (HASHITEM_EMPTY(hash_find(&spin->si_commonwords,
                       items[i]))) {
             p = vim_strsave(items[i]);
-            if (p == NULL)
-              break;
             hash_add(&spin->si_commonwords, p);
           }
         }
@@ -8679,8 +8671,6 @@ void spell_suggest(int count)
 
   // Make a copy of current line since autocommands may free the line.
   line = vim_strsave(ml_get_curline());
-  if (line == NULL)
-    goto skip;
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
@@ -8819,8 +8809,6 @@ void spell_suggest(int count)
     curwin->w_cursor = prev_cursor;
 
   spell_find_cleanup(&sug);
-skip:
-  free(line);
 }
 
 // Check if the word at line "lnum" column "col" is required to start with a
@@ -9064,8 +9052,6 @@ spell_find_suggest (
 
   // Make a copy of 'spellsuggest', because the expression may change it.
   sps_copy = vim_strsave(p_sps);
-  if (sps_copy == NULL)
-    return;
 
   // Loop over the items in 'spellsuggest'.
   for (p = sps_copy; *p != NUL; ) {
@@ -11025,13 +11011,11 @@ static void score_comp_sal(suginfo_T *su)
           // Add the suggestion.
           sstp = &SUG(su->su_sga, su->su_sga.ga_len);
           sstp->st_word = vim_strsave(stp->st_word);
-          if (sstp->st_word != NULL) {
-            sstp->st_wordlen = stp->st_wordlen;
-            sstp->st_score = score;
-            sstp->st_altscore = 0;
-            sstp->st_orglen = stp->st_orglen;
-            ++su->su_sga.ga_len;
-          }
+          sstp->st_wordlen = stp->st_wordlen;
+          sstp->st_score = score;
+          sstp->st_altscore = 0;
+          sstp->st_orglen = stp->st_orglen;
+          ++su->su_sga.ga_len;
         }
       }
       break;
@@ -11731,25 +11715,23 @@ add_suggestion (
     // Add a suggestion.
     stp = &SUG(*gap, gap->ga_len);
     stp->st_word = vim_strnsave(goodword, goodlen);
-    if (stp->st_word != NULL) {
-      stp->st_wordlen = goodlen;
-      stp->st_score = score;
-      stp->st_altscore = altscore;
-      stp->st_had_bonus = had_bonus;
-      stp->st_orglen = badlen;
-      stp->st_slang = slang;
-      ++gap->ga_len;
+    stp->st_wordlen = goodlen;
+    stp->st_score = score;
+    stp->st_altscore = altscore;
+    stp->st_had_bonus = had_bonus;
+    stp->st_orglen = badlen;
+    stp->st_slang = slang;
+    ++gap->ga_len;
 
-      // If we have too many suggestions now, sort the list and keep
-      // the best suggestions.
-      if (gap->ga_len > SUG_MAX_COUNT(su)) {
-        if (maxsf)
-          su->su_sfmaxscore = cleanup_suggestions(gap,
-              su->su_sfmaxscore, SUG_CLEAN_COUNT(su));
-        else
-          su->su_maxscore = cleanup_suggestions(gap,
-              su->su_maxscore, SUG_CLEAN_COUNT(su));
-      }
+    // If we have too many suggestions now, sort the list and keep
+    // the best suggestions.
+    if (gap->ga_len > SUG_MAX_COUNT(su)) {
+      if (maxsf)
+        su->su_sfmaxscore = cleanup_suggestions(gap,
+            su->su_sfmaxscore, SUG_CLEAN_COUNT(su));
+      else
+        su->su_maxscore = cleanup_suggestions(gap,
+            su->su_maxscore, SUG_CLEAN_COUNT(su));
     }
   }
 }
@@ -11800,8 +11782,7 @@ static void add_banned(suginfo_T *su, char_u *word)
   hi = hash_lookup(&su->su_banned, word, hash);
   if (HASHITEM_EMPTY(hi)) {
     s = vim_strsave(word);
-    if (s != NULL)
-      hash_add_item(&su->su_banned, hi, s, hash);
+    hash_add_item(&su->su_banned, hi, s, hash);
   }
 }
 

@@ -2237,9 +2237,8 @@ setfname (
       close_buffer(NULL, obuf, DOBUF_WIPE, FALSE);
     }
     sfname = vim_strsave(sfname);
-    if (ffname == NULL || sfname == NULL) {
+    if (ffname == NULL) {
       free(sfname);
-      free(ffname);
       return FAIL;
     }
 #ifdef USE_FNAME_CASE
@@ -4116,8 +4115,6 @@ chk_modeline (
     while (s[-1] != ':');
 
     s = linecopy = vim_strsave(s);      /* copy the line, it will change */
-    if (linecopy == NULL)
-      return FAIL;
 
     save_sourcing_lnum = sourcing_lnum;
     save_sourcing_name = sourcing_name;

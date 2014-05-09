@@ -1196,8 +1196,7 @@ getcmdline (
 
       /* save current command string so it can be restored later */
       if (lookfor == NULL) {
-        if ((lookfor = vim_strsave(ccline.cmdbuff)) == NULL)
-          goto cmdline_not_changed;
+        lookfor = vim_strsave(ccline.cmdbuff);
         lookfor[ccline.cmdpos] = NUL;
       }
 
@@ -4510,8 +4509,7 @@ add_to_history (
     /* Store the separator after the NUL of the string. */
     len = (int)STRLEN(new_entry);
     hisptr->hisstr = vim_strnsave(new_entry, len + 2);
-    if (hisptr->hisstr != NULL)
-      hisptr->hisstr[len + 1] = sep;
+    hisptr->hisstr[len + 1] = sep;
 
     hisptr->hisnum = ++hisnum[histype];
     hisptr->viminfo = FALSE;

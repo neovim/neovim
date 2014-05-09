@@ -2607,8 +2607,8 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
   if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
     return FAIL;
 
-  if (copy && (line = vim_strsave(line)) == NULL)   /* allocate memory */
-    return FAIL;
+  if (copy)
+    line = vim_strsave(line);
   if (curbuf->b_ml.ml_line_lnum != lnum)            /* other line buffered */
     ml_flush_line(curbuf);                          /* flush it */
   else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY)   /* same line allocated */

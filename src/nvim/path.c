@@ -296,7 +296,7 @@ void add_pathsep(char_u *p)
 
 /*
  * FullName_save - Make an allocated copy of a full file name.
- * Returns NULL when out of memory.
+ * Returns NULL when fname is NULL.
  */
 char_u *
 FullName_save (
@@ -305,20 +305,19 @@ FullName_save (
                                  * like a full path name */
 )
 {
-  char_u      *buf;
   char_u      *new_fname = NULL;
 
   if (fname == NULL)
     return NULL;
 
-  buf = alloc((unsigned)MAXPATHL);
-  if (buf != NULL) {
-    if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL)
-      new_fname = vim_strsave(buf);
-    else
-      new_fname = vim_strsave(fname);
-    free(buf);
-  }
+  char_u *buf = xmalloc(MAXPATHL);
+
+  if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL)
+    new_fname = vim_strsave(buf);
+  else
+    new_fname = vim_strsave(fname);
+  free(buf);
+
   return new_fname;
 }
 
@@ -650,8 +649,6 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     ga_grow(gap, 1);
 
     p = vim_strsave(buf);
-    if (p == NULL)
-      break;
     ((char_u **)gap->ga_data)[gap->ga_len++] = p;
   }
 
@@ -1137,8 +1134,6 @@ expand_backtick (
 
   /* Create the command: lop off the backticks. */
   cmd = vim_strnsave(pat + 1, (int)STRLEN(pat) - 2);
-  if (cmd == NULL)
-    return 0;
 
   if (*cmd == '=')          /* `={expr}`: Expand expression */
     buffer = eval_to_string(cmd + 1, &p, TRUE);
@@ -1563,9 +1558,7 @@ char_u *fix_fname(char_u *fname)
   fname = vim_strsave(fname);
 
 # ifdef USE_FNAME_CASE
-  if (fname != NULL) {
-    fname_case(fname, 0);             /* set correct case for file name */
-  }
+  fname_case(fname, 0);  // set correct case for file name
 # endif
 
   return fname;

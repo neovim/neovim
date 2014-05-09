@@ -192,7 +192,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     }
 }
 
-char * xstrdup(const char *str)
+char *xstrdup(const char *str)
 {
   char *ret = strdup(str);
 

@@ -250,11 +250,7 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
         EMSG(_(e_outofmem));
       } else {
         elem->msg = vim_strsave(mesg);
-        if (elem->msg == NULL) {
-          free(elem);
-          suppress_errthrow = TRUE;
-          EMSG(_(e_outofmem));
-        } else {
+        {
           elem->next = NULL;
           elem->throw_msg = NULL;
           *plist = elem;
@@ -402,15 +398,11 @@ char_u *get_exception_string(void *value, int type, char_u *cmdname, int *should
       cmdlen = (int)STRLEN(cmdname);
       ret = vim_strnsave((char_u *)"Vim(",
           4 + cmdlen + 2 + (int)STRLEN(mesg));
-      if (ret == NULL)
-        return ret;
       STRCPY(&ret[4], cmdname);
       STRCPY(&ret[4 + cmdlen], "):");
       val = ret + 4 + cmdlen + 2;
     } else {
       ret = vim_strnsave((char_u *)"Vim:", 4 + (int)STRLEN(mesg));
-      if (ret == NULL)
-        return ret;
       val = ret + 4;
     }
 
@@ -493,11 +485,6 @@ static int throw_exception(void *value, int type, char_u *cmdname)
   excp->type = type;
   excp->throw_name = vim_strsave(sourcing_name == NULL
       ? (char_u *)"" : sourcing_name);
-  if (excp->throw_name == NULL) {
-    if (should_free)
-      free(excp->value);
-    goto nomem;
-  }
   excp->throw_lnum = sourcing_lnum;
 
   if (p_verbose >= 13 || debug_break_level > 0) {

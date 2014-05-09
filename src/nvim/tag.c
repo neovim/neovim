@@ -236,8 +236,7 @@ do_tag (
           cur_fnum = ptag_entry.cur_fnum;
         } else {
           free(ptag_entry.tagname);
-          if ((ptag_entry.tagname = vim_strsave(tag)) == NULL)
-            goto end_do_tag;
+          ptag_entry.tagname = vim_strsave(tag);
         }
       } else {
         /*
@@ -256,13 +255,9 @@ do_tag (
           --tagstackidx;
         }
 
-        /*
-         * put the tag name in the tag stack
-         */
-        if ((tagstack[tagstackidx].tagname = vim_strsave(tag)) == NULL) {
-          curwin->w_tagstacklen = tagstacklen - 1;
-          goto end_do_tag;
-        }
+        // put the tag name in the tag stack
+        tagstack[tagstackidx].tagname = vim_strsave(tag);
+
         curwin->w_tagstacklen = tagstacklen;
 
         save_pos = TRUE;                /* save the cursor position below */
@@ -1211,11 +1206,9 @@ find_tags (
         && ASCII_ISALPHA(pat[orgpat.len - 2])
         && ASCII_ISALPHA(pat[orgpat.len - 1])) {
       saved_pat = vim_strnsave(pat, orgpat.len - 3);
-      if (saved_pat != NULL) {
-        help_lang_find = &pat[orgpat.len - 2];
-        orgpat.pat = saved_pat;
-        orgpat.len -= 3;
-      }
+      help_lang_find = &pat[orgpat.len - 2];
+      orgpat.pat = saved_pat;
+      orgpat.len -= 3;
     }
   }
   if (p_tl != 0 && orgpat.len > p_tl)           /* adjust for 'taglength' */
@@ -2099,8 +2092,6 @@ get_tagfname (
      * the value without notifying us. */
     tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL)
         ? curbuf->b_p_tags : p_tags);
-    if (tnp->tn_tags == NULL)
-      return FAIL;
     tnp->tn_np = tnp->tn_tags;
   }
 
@@ -2435,8 +2426,6 @@ jumpto_tag (
     retval = NOTAGFILE;
     free(nofile_fname);
     nofile_fname = vim_strsave(fname);
-    if (nofile_fname == NULL)
-      nofile_fname = empty_option;
     goto erret;
   }
 

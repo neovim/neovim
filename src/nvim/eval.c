@@ -1041,8 +1041,6 @@ var_redir_start (
 
   /* Make a copy of the name, it is used in redir_lval until redir ends. */
   redir_varname = vim_strsave(name);
-  if (redir_varname == NULL)
-    return FAIL;
 
   redir_lval = xcalloc(1, sizeof(lval_T));
 
@@ -2542,8 +2540,6 @@ get_lval (
           lp->ll_newkey = vim_strnsave(key, len);
         if (len == -1)
           clear_tv(&var1);
-        if (lp->ll_newkey == NULL)
-          p = NULL;
         break;
       }
       /* existing variable, need to check if it can be changed */
@@ -6353,8 +6349,6 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
     akey = key;
   else if (len >= AKEYLEN) {
     tofree = akey = vim_strnsave(key, len);
-    if (akey == NULL)
-      return NULL;
   } else {
     /* Avoid a malloc/free by using buf[]. */
     vim_strncpy(buf, key, len);
@@ -7264,8 +7258,6 @@ call_func (
   /* Make a copy of the name, if it comes from a funcref variable it could
    * be changed or deleted in the called function. */
   name = vim_strnsave(funcname, len);
-  if (name == NULL)
-    return ret;
 
   /*
    * In a script change <SID>name() and s:name() to K_SNR 123_name().
@@ -9677,11 +9669,9 @@ static void f_getfperm(typval_T *argvars, typval_T *rettv)
   int32_t file_perm = os_getperm(filename);
   if (file_perm >= 0) {
     perm = vim_strsave((char_u *)"---------");
-    if (perm != NULL) {
-      for (int i = 0; i < 9; i++) {
-        if (file_perm & (1 << (8 - i)))
-          perm[i] = flags[i % 3];
-      }
+    for (int i = 0; i < 9; i++) {
+      if (file_perm & (1 << (8 - i)))
+        perm[i] = flags[i % 3];
     }
   }
   rettv->v_type = VAR_STRING;
@@ -11761,8 +11751,6 @@ static int mkdir_recurse(char_u *dir, int prot)
 
   /* If the directory exists we're done.  Otherwise: create it.*/
   updir = vim_strnsave(dir, (int)(p - dir));
-  if (updir == NULL)
-    return FAIL;
   if (os_isdir(updir))
     r = OK;
   else if (mkdir_recurse(updir, prot) == OK)
@@ -12107,17 +12095,11 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           /* Change "prev" buffer to be the right size.  This way
            * the bytes are only copied once, and very long lines are
            * allocated only once.  */
-          if ((s = xrealloc(prev, prevlen + len + 1)) != NULL) {
-            memmove(s + prevlen, start, len);
-            s[prevlen + len] = NUL;
-            prev = NULL;             /* the list will own the string */
-            prevlen = prevsize = 0;
-          }
-        }
-        if (s == NULL) {
-          do_outofmem_msg((long_u) prevlen + len + 1);
-          failed = TRUE;
-          break;
+          s = xrealloc(prev, prevlen + len + 1);
+          memcpy(s + prevlen, start, len);
+          s[prevlen + len] = NUL;
+          prev = NULL;             /* the list will own the string */
+          prevlen = prevsize = 0;
         }
 
         if ((li = listitem_alloc()) == NULL) {
@@ -12592,11 +12574,10 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
       q = path_next_component(remain + 1);
       len = q - remain - (*q != NUL);
       cpy = vim_strnsave(p, STRLEN(p) + len);
-      if (cpy != NULL) {
-        STRNCAT(cpy, remain, len);
-        free(p);
-        p = cpy;
-      }
+      STRNCAT(cpy, remain, len);
+      free(p);
+      p = cpy;
+
       /* Shorten "remain". */
       if (*q != NUL)
         STRMOVE(remain, q - 1);
@@ -14940,33 +14921,30 @@ static void f_tanh(typval_T *argvars, typval_T *rettv)
  */
 static void f_tolower(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *p;
-
-  p = vim_strsave(get_tv_string(&argvars[0]));
+  char_u *p = vim_strsave(get_tv_string(&argvars[0]));
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = p;
 
-  if (p != NULL)
-    while (*p != NUL) {
-      int l;
+  while (*p != NUL) {
+    int l;
 
-      if (enc_utf8) {
-        int c, lc;
+    if (enc_utf8) {
+      int c, lc;
 
-        c = utf_ptr2char(p);
-        lc = utf_tolower(c);
-        l = utf_ptr2len(p);
-        /* TODO: reallocate string when byte count changes. */
-        if (utf_char2len(lc) == l)
-          utf_char2bytes(lc, p);
-        p += l;
-      } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
-        p += l;                 /* skip multi-byte character */
-      else {
-        *p = TOLOWER_LOC(*p);         /* note that tolower() can be a macro */
-        ++p;
-      }
+      c = utf_ptr2char(p);
+      lc = utf_tolower(c);
+      l = utf_ptr2len(p);
+      /* TODO: reallocate string when byte count changes. */
+      if (utf_char2len(lc) == l)
+        utf_char2bytes(lc, p);
+      p += l;
+    } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
+      p += l;                 /* skip multi-byte character */
+    else {
+      *p = TOLOWER_LOC(*p);         /* note that tolower() can be a macro */
+      ++p;
     }
+  }
 }
 
 /*
@@ -17428,8 +17406,6 @@ void ex_function(exarg_T *eap)
       c = *p;
       *p = NUL;
       arg = vim_strsave(arg);
-      if (arg == NULL)
-        goto erret;
 
       /* Check for duplicate argument name. */
       for (i = 0; i < newargs.ga_len; ++i)
@@ -17621,11 +17597,9 @@ void ex_function(exarg_T *eap)
      * allocates 250 bytes per line, this saves 80% on average.  The cost
      * is an extra alloc/free. */
     p = vim_strsave(theline);
-    if (p != NULL) {
-      if (line_arg == NULL)
-        free(theline);
-      theline = p;
-    }
+    if (line_arg == NULL)
+      free(theline);
+    theline = p;
 
     ((char_u **)(newlines.ga_data))[newlines.ga_len++] = theline;
 
@@ -17694,8 +17668,6 @@ void ex_function(exarg_T *eap)
     free(name);
     sprintf(numbuf, "%d", ++func_nr);
     name = vim_strsave((char_u *)numbuf);
-    if (name == NULL)
-      goto erret;
   }
 
   if (fp == NULL) {
@@ -19538,11 +19510,9 @@ repeat:
         /* Only replace it when it starts with '~' */
         if (*dirname == '~') {
           s = vim_strsave(dirname);
-          if (s != NULL) {
-            *fnamep = s;
-            free(*bufp);
-            *bufp = s;
-          }
+          *fnamep = s;
+          free(*bufp);
+          *bufp = s;
         }
       }
       free(pbuf);
@@ -19563,11 +19533,8 @@ repeat:
     *fnamelen = (int)(tail - *fnamep);
     if (*fnamelen == 0) {
       /* Result is empty.  Turn it into "." to make ":cd %:h" work. */
-      p = vim_strsave((char_u *)".");
-      if (p == NULL)
-        return -1;
       free(*bufp);
-      *bufp = *fnamep = tail = p;
+      *bufp = *fnamep = tail = vim_strsave((char_u *)".");
       *fnamelen = 1;
     } else {
       while (tail > s && !after_pathsep(s, tail))
@@ -19645,23 +19612,19 @@ repeat:
           s = p + 1;
           /* find end of substitution */
           p = vim_strchr(s, sep);
-          if (p != NULL) {
-            sub = vim_strnsave(s, (int)(p - s));
-            str = vim_strnsave(*fnamep, *fnamelen);
-            if (sub != NULL && str != NULL) {
-              *usedlen = (int)(p + 1 - src);
-              s = do_string_sub(str, pat, sub, flags);
-              if (s != NULL) {
-                *fnamep = s;
-                *fnamelen = (int)STRLEN(s);
-                free(*bufp);
-                *bufp = s;
-                didit = TRUE;
-              }
-            }
-            free(sub);
-            free(str);
+          sub = vim_strnsave(s, (int)(p - s));
+          str = vim_strnsave(*fnamep, *fnamelen);
+          *usedlen = (int)(p + 1 - src);
+          s = do_string_sub(str, pat, sub, flags);
+          if (s != NULL) {
+            *fnamep = s;
+            *fnamelen = (int)STRLEN(s);
+            free(*bufp);
+            *bufp = s;
+            didit = TRUE;
           }
+          free(sub);
+          free(str);
           free(pat);
         }
       }

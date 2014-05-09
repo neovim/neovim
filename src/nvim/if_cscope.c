@@ -1633,10 +1633,7 @@ static void cs_fill_results(char *tagstr, int totmatches, int *nummatches_a, cha
       if (strcmp(cntx, "<global>") == 0)
         cntxts[totsofar] = NULL;
       else {
-        /* note: if vim_strsave returns NULL, then the context
-         * will be "<global>", which is misleading.
-         */
-        cntxts[totsofar] = (char *)vim_strsave((char_u *)cntx);
+        cntxts[totsofar] = xstrdup(cntx);
       }
 
       totsofar++;
@@ -2110,7 +2107,7 @@ static char *cs_resolve_file(int i, char *name)
      * cscope output. */
     fullname = (char *)concat_fnames(csdir, (char_u *)name, TRUE);
   } else {
-    fullname = (char *)vim_strsave((char_u *)name);
+    fullname = xstrdup(name);
   }
 
   free(csdir);

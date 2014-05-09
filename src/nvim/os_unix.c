@@ -1437,10 +1437,9 @@ char_u      ***file;
 
   for (i = 0; i < num_pat; i++) {
     s = vim_strsave(pat[i]);
-    if (s != NULL)
-      /* Be compatible with expand_filename(): halve the number of
-       * backslashes. */
-      backslash_halve(s);
+    /* Be compatible with expand_filename(): halve the number of
+     * backslashes. */
+    backslash_halve(s);
     (*file)[i] = s;
   }
   *num_file = num_pat;

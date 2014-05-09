@@ -700,8 +700,6 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       /* Use same directory as the ffname,
        * "dir/name" -> "dir/.name.un~" */
       undo_file_name = vim_strnsave(ffname, (int)(STRLEN(ffname) + 5));
-      if (undo_file_name == NULL)
-        break;
       p = path_tail(undo_file_name);
       memmove(p + 1, p, STRLEN(p) + 1);
       *p = '.';
@@ -711,8 +709,6 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
       if (os_isdir(dir_name)) {
         if (munged_name == NULL) {
           munged_name = vim_strsave(ffname);
-          if (munged_name == NULL)
-            return NULL;
           for (p = munged_name; *p != NUL; mb_ptr_adv(p))
             if (vim_ispathsep(*p))
               *p = '%';

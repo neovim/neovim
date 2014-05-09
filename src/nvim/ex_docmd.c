@@ -721,11 +721,6 @@ int flags;
     /* 3. Make a copy of the command so we can mess with it. */
     else if (cmdline_copy == NULL) {
       next_cmdline = vim_strsave(next_cmdline);
-      if (next_cmdline == NULL) {
-        EMSG(_(e_outofmem));
-        retval = FAIL;
-        break;
-      }
     }
     cmdline_copy = next_cmdline;
 
@@ -4299,10 +4294,6 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
   if (rep_buf == NULL) {
     /* Can't replace termcodes - try using the string as is */
     rep_buf = vim_strsave(rep);
-
-    /* Give up if out of memory */
-    if (rep_buf == NULL)
-      return FAIL;
   }
 
   /* get address of growarray: global or in curbuf */
@@ -4349,8 +4340,7 @@ static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt,
   if (cmp != 0) {
     ga_grow(gap, 1);
 
-    if ((p = vim_strnsave(name, (int)name_len)) == NULL)
-      goto fail;
+    p = vim_strnsave(name, (int)name_len);
 
     cmd = USER_CMD_GA(gap, i);
     memmove(cmd + 1, cmd, (gap->ga_len - i) * sizeof(ucmd_T));
@@ -5256,12 +5246,11 @@ static void ex_colorscheme(exarg_T *eap)
     char_u *expr = vim_strsave((char_u *)"g:colors_name");
     char_u *p = NULL;
 
-    if (expr != NULL) {
-      ++emsg_off;
-      p = eval_to_string(expr, NULL, FALSE);
-      --emsg_off;
-      free(expr);
-    }
+    ++emsg_off;
+    p = eval_to_string(expr, NULL, FALSE);
+    --emsg_off;
+    free(expr);
+
     if (p != NULL) {
       MSG(p);
       free(p);
@@ -7994,8 +7983,6 @@ char_u *expand_sfile(char_u *arg)
   char_u      *p;
 
   result = vim_strsave(arg);
-  if (result == NULL)
-    return NULL;
 
   for (p = result; *p; ) {
     if (STRNCMP(p, "<sfile>", 7) != 0)

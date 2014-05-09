@@ -2636,7 +2636,6 @@ do_map (
   char_u      *p;
   int n;
   int len = 0;                  /* init for GCC */
-  char_u      *newstr;
   int hasarg;
   int haskey;
   int did_it = FALSE;
@@ -2979,13 +2978,8 @@ do_map (
             } else {                          /* new rhs for existing entry */
               mp->m_mode &= ~mode;                      /* remove mode bits */
               if (mp->m_mode == 0 && !did_it) {             /* reuse entry */
-                newstr = vim_strsave(rhs);
-                if (newstr == NULL) {
-                  retval = 4;                           /* no mem */
-                  goto theend;
-                }
                 free(mp->m_str);
-                mp->m_str = newstr;
+                mp->m_str = vim_strsave(rhs);
                 free(mp->m_orig_str);
                 mp->m_orig_str = vim_strsave(orig_rhs);
                 mp->m_noremap = noremap;
@@ -3057,14 +3051,6 @@ do_map (
   mp->m_keys = vim_strsave(keys);
   mp->m_str = vim_strsave(rhs);
   mp->m_orig_str = vim_strsave(orig_rhs);
-  if (mp->m_keys == NULL || mp->m_str == NULL) {
-    free(mp->m_keys);
-    free(mp->m_str);
-    free(mp->m_orig_str);
-    free(mp);
-    retval = 4;         /* no mem */
-    goto theend;
-  }
   mp->m_keylen = (int)STRLEN(mp->m_keys);
   mp->m_noremap = noremap;
   mp->m_nowait = nowait;
@@ -3328,11 +3314,9 @@ showmap (
     /* Remove escaping of CSI, because "m_str" is in a format to be used
      * as typeahead. */
     char_u *s = vim_strsave(mp->m_str);
-    if (s != NULL) {
-      vim_unescape_csi(s);
-      msg_outtrans_special(s, FALSE);
-      free(s);
-    }
+    vim_unescape_csi(s);
+    msg_outtrans_special(s, FALSE);
+    free(s);
   }
   if (p_verbose > 0)
     last_set_msg(mp->m_script_ID);
@@ -3778,8 +3762,6 @@ eval_map_expr (
   /* Remove escaping of CSI, because "str" is in a format to be used as
    * typeahead. */
   expr = vim_strsave(str);
-  if (expr == NULL)
-    return NULL;
   vim_unescape_csi(expr);
 
   save_cmd = save_cmdline_alloc();
@@ -4325,10 +4307,8 @@ void add_map(char_u *map, int mode)
 
   p_cpo = (char_u *)"";         /* Allow <> notation */
   s = vim_strsave(map);
-  if (s != NULL) {
-    (void)do_map(0, s, mode, FALSE);
-    free(s);
-  }
+  (void)do_map(0, s, mode, FALSE);
+  free(s);
   p_cpo = cpo_save;
 }
 #endif

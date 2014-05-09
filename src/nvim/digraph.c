@@ -1818,12 +1818,10 @@ void ex_loadkeymap(exarg_T *eap)
       s = skiptowhite(p);
       kp->to = vim_strnsave(p, (int)(s - p));
 
-      if ((kp->from == NULL)
-          || (kp->to == NULL)
-          || (STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
+      if ((STRLEN(kp->from) + STRLEN(kp->to) >= KMAP_LLEN)
           || (*kp->from == NUL)
           || (*kp->to == NUL)) {
-        if ((kp->to != NULL) && (*kp->to == NUL)) {
+        if (*kp->to == NUL) {
           EMSG(_("E791: Empty keymap entry"));
         }
         free(kp->from);

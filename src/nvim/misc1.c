@@ -120,8 +120,6 @@ open_line (
    * make a copy of the current line so we can mess with it
    */
   saved_line = vim_strsave(ml_get_curline());
-  if (saved_line == NULL)           /* out of memory! */
-    return FALSE;
 
   if (State & VREPLACE_FLAG) {
     /*
@@ -137,8 +135,6 @@ open_line (
       next_line = vim_strsave(ml_get(curwin->w_cursor.lnum + 1));
     else
       next_line = vim_strsave((char_u *)"");
-    if (next_line == NULL)          /* out of memory! */
-      goto theend;
 
     /*
      * In VREPLACE mode, a NL replaces the rest of the line, and starts
@@ -918,8 +914,6 @@ open_line (
   if (State & VREPLACE_FLAG) {
     /* Put new line in p_extra */
     p_extra = vim_strsave(ml_get_curline());
-    if (p_extra == NULL)
-      goto theend;
 
     /* Put back original line */
     ml_replace(curwin->w_cursor.lnum, next_line, FALSE);
@@ -1742,9 +1736,6 @@ truncate_line (
     newp = vim_strsave((char_u *)"");
   else
     newp = vim_strnsave(ml_get(lnum), col);
-
-  if (newp == NULL)
-    return FAIL;
 
   ml_replace(lnum, newp, FALSE);
 
@@ -2874,13 +2865,11 @@ expand_env_esc (
       if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
         char_u  *p = vim_strsave(var);
 
-        if (p != NULL) {
-          if (mustfree)
-            free(var);
-          var = p;
-          mustfree = TRUE;
-          forward_slash(var);
-        }
+        if (mustfree)
+          free(var);
+        var = p;
+        mustfree = TRUE;
+        forward_slash(var);
       }
 #endif
 
@@ -3033,7 +3022,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       /* check that the result is a directory name */
       p = vim_strnsave(p, (int)(pend - p));
 
-      if (p != NULL && !os_isdir(p)) {
+      if (!os_isdir(p)) {
         free(p);
         p = NULL;
       } else {

@@ -929,19 +929,14 @@ qf_add_entry (
     qfp->qf_fnum = bufnum;
   else
     qfp->qf_fnum = qf_get_fnum(dir, fname);
-  if ((qfp->qf_text = vim_strsave(mesg)) == NULL) {
-    free(qfp);
-    return FAIL;
-  }
+  qfp->qf_text = vim_strsave(mesg);
   qfp->qf_lnum = lnum;
   qfp->qf_col = col;
   qfp->qf_viscol = vis_col;
-  if (pattern == NULL || *pattern == NUL)
+  if (pattern == NULL || *pattern == NUL) {
     qfp->qf_pattern = NULL;
-  else if ((qfp->qf_pattern = vim_strsave(pattern)) == NULL) {
-    free(qfp->qf_text);
-    free(qfp);
-    return FAIL;
+  } else {
+    qfp->qf_pattern = vim_strsave(pattern);
   }
   qfp->qf_nr = nr;
   if (type != 1 && !vim_isprintc(type))   /* only printable chars allowed */

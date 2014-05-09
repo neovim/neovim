@@ -322,8 +322,6 @@ vim_findfile_init (
       search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, FALSE);
     } else
       search_ctx->ffsc_start_dir = vim_strnsave(rel_fname, len);
-    if (search_ctx->ffsc_start_dir == NULL)
-      goto error_return;
     if (*++path != NUL)
       ++path;
   } else if (*path == NUL || !vim_isAbsName(path)) {
@@ -344,8 +342,6 @@ vim_findfile_init (
       goto error_return;
 
     search_ctx->ffsc_start_dir = vim_strsave(ff_expand_buffer);
-    if (search_ctx->ffsc_start_dir == NULL)
-      goto error_return;
 
 #ifdef BACKSLASH_IN_FILENAME
     /* A path that starts with "/dir" is relative to the drive, not to the
@@ -458,9 +454,6 @@ vim_findfile_init (
     }
     ff_expand_buffer[len] = NUL;
     search_ctx->ffsc_wc_path = vim_strsave(ff_expand_buffer);
-
-    if (search_ctx->ffsc_wc_path == NULL)
-      goto error_return;
   } else
     search_ctx->ffsc_fix_path = vim_strsave(path);
 
@@ -469,8 +462,6 @@ vim_findfile_init (
      * This is needed if the parameter path is fully qualified.
      */
     search_ctx->ffsc_start_dir = vim_strsave(search_ctx->ffsc_fix_path);
-    if (search_ctx->ffsc_start_dir == NULL)
-      goto error_return;
     search_ctx->ffsc_fix_path[0] = NUL;
   }
 
@@ -536,11 +527,7 @@ vim_findfile_init (
     goto error_return;
 
   ff_push(search_ctx, sptr);
-
   search_ctx->ffsc_file_to_search = vim_strsave(filename);
-  if (search_ctx->ffsc_file_to_search == NULL)
-    goto error_return;
-
   return search_ctx;
 
 error_return:
@@ -1070,10 +1057,6 @@ static ff_visited_list_hdr_T *ff_get_visited_list(char_u *filename, ff_visited_l
 
   retptr->ffvl_visited_list = NULL;
   retptr->ffvl_filename = vim_strsave(filename);
-  if (retptr->ffvl_filename == NULL) {
-    free(retptr);
-    return NULL;
-  }
   retptr->ffvl_next = *list_headp;
   *list_headp = retptr;
 
@@ -1185,9 +1168,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
  */
 static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, int level, int star_star_empty)
 {
-  ff_stack_T  *new;
-
-  new = (ff_stack_T *)alloc((unsigned)sizeof(ff_stack_T));
+  ff_stack_T *new = xmalloc(sizeof(ff_stack_T));
 
   new->ffs_prev          = NULL;
   new->ffs_filearray     = NULL;
@@ -1205,13 +1186,6 @@ static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, in
   if (wc_part == NULL)
     wc_part  = (char_u *)"";
   new->ffs_wc_path = vim_strsave(wc_part);
-
-  if (new->ffs_fix_path == NULL
-      || new->ffs_wc_path == NULL
-      ) {
-    ff_free_stack_element(new);
-    new = NULL;
-  }
 
   return new;
 }
@@ -1429,10 +1403,6 @@ find_file_in_path_option (
 
     free(ff_file_to_find);
     ff_file_to_find = vim_strsave(NameBuff);
-    if (ff_file_to_find == NULL) {      /* out of memory */
-      file_name = NULL;
-      goto theend;
-    }
   }
 
   rel_to_curdir = (ff_file_to_find[0] == '.'

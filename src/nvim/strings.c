@@ -242,49 +242,45 @@ void vim_strup(char_u *p)
 /*
  * Make string "s" all upper-case and return it in allocated memory.
  * Handles multi-byte characters as well as possible.
- * Returns NULL when out of memory.
  */
 char_u *strup_save(char_u *orig)
 {
-  char_u      *p;
-  char_u      *res;
+  char_u *res = vim_strsave(orig);
 
-  res = p = vim_strsave(orig);
+  char_u *p = res;
+  while (*p != NUL) {
+    int l;
 
-  if (res != NULL)
-    while (*p != NUL) {
-      int l;
+    if (enc_utf8) {
+      int c, uc;
+      int newl;
+      char_u  *s;
 
-      if (enc_utf8) {
-        int c, uc;
-        int newl;
-        char_u  *s;
+      c = utf_ptr2char(p);
+      uc = utf_toupper(c);
 
-        c = utf_ptr2char(p);
-        uc = utf_toupper(c);
-
-        /* Reallocate string when byte count changes.  This is rare,
-         * thus it's OK to do another malloc()/free(). */
-        l = utf_ptr2len(p);
-        newl = utf_char2len(uc);
-        if (newl != l) {
-          s = alloc((unsigned)STRLEN(res) + 1 + newl - l);
-          memmove(s, res, p - res);
-          STRCPY(s + (p - res) + newl, p + l);
-          p = s + (p - res);
-          free(res);
-          res = s;
-        }
-
-        utf_char2bytes(uc, p);
-        p += newl;
-      } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
-        p += l;                 /* skip multi-byte character */
-      else {
-        *p = TOUPPER_LOC(*p);         /* note that toupper() can be a macro */
-        p++;
+      /* Reallocate string when byte count changes.  This is rare,
+       * thus it's OK to do another malloc()/free(). */
+      l = utf_ptr2len(p);
+      newl = utf_char2len(uc);
+      if (newl != l) {
+        s = alloc((unsigned)STRLEN(res) + 1 + newl - l);
+        memmove(s, res, p - res);
+        STRCPY(s + (p - res) + newl, p + l);
+        p = s + (p - res);
+        free(res);
+        res = s;
       }
+
+      utf_char2bytes(uc, p);
+      p += newl;
+    } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
+      p += l;                 /* skip multi-byte character */
+    else {
+      *p = TOUPPER_LOC(*p);         /* note that toupper() can be a macro */
+      p++;
     }
+  }
 
   return res;
 }

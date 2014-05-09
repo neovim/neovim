@@ -1141,8 +1141,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
         /* change "\?" to "?", make a copy first. */
         if (*newp == NULL) {
           *newp = vim_strsave(startp);
-          if (*newp != NULL)
-            p = *newp + (p - startp);
+          p = *newp + (p - startp);
         }
         if (*newp != NULL)
           STRMOVE(p, p + 1);

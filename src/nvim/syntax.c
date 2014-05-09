@@ -4113,8 +4113,6 @@ get_syn_options (
         if (gname_start == arg)
           return NULL;
         gname = vim_strnsave(gname_start, (int)(arg - gname_start));
-        if (gname == NULL)
-          return NULL;
         if (STRCMP(gname, "NONE") == 0)
           *opt->sync_idx = NONE_IDX;
         else {
@@ -4823,14 +4821,10 @@ static int syn_scl_name2id(char_u *name)
  */
 static int syn_scl_namen2id(char_u *linep, int len)
 {
-  char_u  *name;
-  int id = 0;
+  char_u *name = vim_strnsave(linep, len);
+  int id = syn_scl_name2id(name);
+  free(name);
 
-  name = vim_strnsave(linep, len);
-  if (name != NULL) {
-    id = syn_scl_name2id(name);
-    free(name);
-  }
   return id;
 }
 
@@ -4846,8 +4840,6 @@ static int syn_check_cluster(char_u *pp, int len)
   char_u      *name;
 
   name = vim_strnsave(pp, len);
-  if (name == NULL)
-    return 0;
 
   id = syn_scl_name2id(name);
   if (id == 0)                          /* doesn't exist yet */
@@ -4996,8 +4988,7 @@ static char_u *get_syn_pattern(char_u *arg, synpat_T *ci)
     return NULL;
   }
   /* store the pattern and compiled regexp program */
-  if ((ci->sp_pattern = vim_strnsave(arg + 1, (int)(end - arg - 1))) == NULL)
-    return NULL;
+  ci->sp_pattern = vim_strnsave(arg + 1, (int)(end - arg - 1));
 
   /* Make 'cpoptions' empty, to avoid the 'l' flag */
   cpo_save = p_cpo;
@@ -5139,11 +5130,8 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
 
       if (!eap->skip) {
         /* store the pattern and compiled regexp program */
-        if ((curwin->w_s->b_syn_linecont_pat = vim_strnsave(next_arg + 1,
-                 (int)(arg_end - next_arg - 1))) == NULL) {
-          finished = TRUE;
-          break;
-        }
+        curwin->w_s->b_syn_linecont_pat =
+          vim_strnsave(next_arg + 1, (int)(arg_end - next_arg - 1));
         curwin->w_s->b_syn_linecont_ic = curwin->w_s->b_syn_ic;
 
         /* Make 'cpoptions' empty, to avoid the 'l' flag */
@@ -5518,24 +5506,22 @@ void ex_syntax(exarg_T *eap)
   for (subcmd_end = arg; ASCII_ISALPHA(*subcmd_end); ++subcmd_end)
     ;
   subcmd_name = vim_strnsave(arg, (int)(subcmd_end - arg));
-  if (subcmd_name != NULL) {
-    if (eap->skip)              /* skip error messages for all subcommands */
-      ++emsg_skip;
-    for (i = 0;; ++i) {
-      if (subcommands[i].name == NULL) {
-        EMSG2(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
-        break;
-      }
-      if (STRCMP(subcmd_name, (char_u *)subcommands[i].name) == 0) {
-        eap->arg = skipwhite(subcmd_end);
-        (subcommands[i].func)(eap, FALSE);
-        break;
-      }
+  if (eap->skip)              /* skip error messages for all subcommands */
+    ++emsg_skip;
+  for (i = 0;; ++i) {
+    if (subcommands[i].name == NULL) {
+      EMSG2(_("E410: Invalid :syntax subcommand: %s"), subcmd_name);
+      break;
     }
-    free(subcmd_name);
-    if (eap->skip)
-      --emsg_skip;
+    if (STRCMP(subcmd_name, (char_u *)subcommands[i].name) == 0) {
+      eap->arg = skipwhite(subcmd_end);
+      (subcommands[i].func)(eap, FALSE);
+      break;
+    }
   }
+  free(subcmd_name);
+  if (eap->skip)
+    --emsg_skip;
 }
 
 void ex_ownsyntax(exarg_T *eap)
@@ -6392,10 +6378,6 @@ do_highlight (
         ++linep;
       free(key);
       key = vim_strnsave_up(key_start, (int)(linep - key_start));
-      if (key == NULL) {
-        error = TRUE;
-        break;
-      }
       linep = skipwhite(linep);
 
       if (STRCMP(key, "NONE") == 0) {
@@ -6440,10 +6422,7 @@ do_highlight (
       }
       free(arg);
       arg = vim_strnsave(arg_start, (int)(linep - arg_start));
-      if (arg == NULL) {
-        error = TRUE;
-        break;
-      }
+
       if (*linep == '\'')
         ++linep;
 
@@ -6725,10 +6704,6 @@ do_highlight (
                  arg[off + len] != ','; ++len)
               ;
             tname = vim_strnsave(arg + off, len);
-            if (tname == NULL) {                /* out of memory */
-              error = TRUE;
-              break;
-            }
             /* lookup the escape sequence for the item */
             p = get_term_code(tname);
             free(tname);
@@ -7410,14 +7385,10 @@ char_u *syn_id2name(int id)
  */
 int syn_namen2id(char_u *linep, int len)
 {
-  char_u  *name;
-  int id = 0;
+  char_u *name = vim_strnsave(linep, len);
+  int id = syn_name2id(name);
+  free(name);
 
-  name = vim_strnsave(linep, len);
-  if (name != NULL) {
-    id = syn_name2id(name);
-    free(name);
-  }
   return id;
 }
 
@@ -7433,8 +7404,6 @@ int syn_check_group(char_u *pp, int len)
   char_u  *name;
 
   name = vim_strnsave(pp, len);
-  if (name == NULL)
-    return 0;
 
   id = syn_name2id(name);
   if (id == 0)                          /* doesn't exist yet */

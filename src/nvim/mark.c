@@ -606,8 +606,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count)
     return vim_strsave((char_u *)"-invalid-");
   s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (int)Columns);
-  if (s == NULL)
-    return NULL;
+
   /* Truncate the line to fit it in the window */
   len = 0;
   for (p = s; *p != NUL; mb_ptr_adv(p)) {

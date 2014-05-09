@@ -1428,8 +1428,8 @@ scripterror:
 
       /* Add the file to the global argument list. */
       ga_grow(&global_alist.al_ga, 1);
-      if ((p = vim_strsave((char_u *)argv[0])) == NULL)
-        mch_exit(2);
+      p = vim_strsave((char_u *)argv[0]);
+
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
         char_u      *r;

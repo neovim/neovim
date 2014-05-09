@@ -1198,15 +1198,13 @@ static void parse_builtin_tcap(char_u *term)
           char_u  *s, *t;
 
           s = vim_strsave((char_u *)p->bt_string);
-          if (s != NULL) {
-            for (t = s; *t; ++t)
-              if (term_7to8bit(t)) {
-                *t = term_7to8bit(t);
-                STRCPY(t + 1, t + 2);
-              }
-            term_strings[p->bt_entry] = s;
-            set_term_option_alloced(&term_strings[p->bt_entry]);
-          }
+          for (t = s; *t; ++t)
+            if (term_7to8bit(t)) {
+              *t = term_7to8bit(t);
+              STRCPY(t + 1, t + 2);
+            }
+          term_strings[p->bt_entry] = s;
+          set_term_option_alloced(&term_strings[p->bt_entry]);
         } else
           term_strings[p->bt_entry] = (char_u *)p->bt_string;
       }
@@ -2970,8 +2968,6 @@ void add_termcode(char_u *name, char_u *string, int flags)
   }
 
   s = vim_strsave(string);
-  if (s == NULL)
-    return;
 
   /* Change leading <Esc>[ to CSI, change <Esc>O to <M-O>. */
   if (flags != 0 && flags != ATC_FROM_TERM && term_7to8bit(string) != 0) {
@@ -4313,8 +4309,8 @@ replace_termcodes (
    * Copy the new string to allocated memory.
    * If this fails, just return from.
    */
-  if ((*bufp = vim_strsave(result)) != NULL)
-    from = *bufp;
+  *bufp = vim_strsave(result);
+  from = *bufp;
   free(result);
   return from;
 }

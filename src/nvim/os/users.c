@@ -28,10 +28,7 @@ int os_get_usernames(garray_T *users)
     // pw->pw_name shouldn't be NULL but just in case...
     if (pw->pw_name != NULL) {
       ga_grow(users, 1);
-      user = (char *)vim_strsave((char_u*)pw->pw_name);
-      if (user == NULL) {
-        return FAIL;
-      }
+      user = xstrdup(pw->pw_name);
       ((char **)(users->ga_data))[users->ga_len++] = user;
     }
   }
@@ -79,8 +76,7 @@ char *os_get_user_directory(const char *name)
   pw = getpwnam(name);
   if (pw != NULL) {
     // save the string from the static passwd entry into malloced memory
-    char *user_directory = (char *)vim_strsave((char_u *)pw->pw_dir);
-    return user_directory;
+    return vim_strsave(pw->pw_dir);
   }
 #endif
   return NULL;
