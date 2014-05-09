@@ -29,7 +29,7 @@ typedef struct growarray {
 ///
 #define GA_DEEP_CLEAR(gap, item_type, free_item_fn) \
   while ((gap)->ga_len > 0) {  \
-    (gap)->ga_len--;
+    (gap)->ga_len--; \
     item_type *item = &((item_type *)(gap)->ga_data)[(gap)->ga_len]; \
     free_item_fn(item);  \
   }  \
