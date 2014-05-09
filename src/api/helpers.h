@@ -66,5 +66,19 @@ void set_option_to(void *to, int type, String name, Object value, Error *err);
 /// @return The converted value
 Object vim_to_object(typval_T *obj);
 
+/// Finds the pointer for a window number
+///
+/// @param window the window number
+/// @param[out] err Details of an error that may have occurred
+/// @return the window pointer
+buf_T *find_buffer(Buffer buffer, Error *err);
+
+/// Finds the pointer for a window number
+///
+/// @param window the window number
+/// @param[out] err Details of an error that may have occurred
+/// @return the window pointer
+win_T * find_window(Window window, Error *err);
+
 #endif /* NEOVIM_API_HELPERS_H */
 

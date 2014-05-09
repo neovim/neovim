@@ -9,6 +9,7 @@
 #include "api/buffer.h"
 #include "../vim.h"
 #include "../buffer.h"
+#include "../window.h"
 #include "types.h"
 #include "ascii.h"
 #include "ex_docmd.h"
@@ -209,42 +210,87 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
 
 int64_t vim_get_window_count(void)
 {
-  abort();
-}
+  tabpage_T *tp;
+  win_T *wp;
+  uint64_t rv = 0;
 
-Window vim_get_window(int64_t num, Error *err)
-{
-  abort();
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    rv++;
+  }
+
+  return rv;
 }
 
 Window vim_get_current_window(void)
 {
+  tabpage_T *tp;
+  win_T *wp;
+  Window rv = 1;
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp == curwin) {
+      return rv;
+    }
+
+    rv++;
+  }
+
+  // There should always be a current window
   abort();
 }
 
-void vim_set_current_window(Window window)
+void vim_set_current_window(Window window, Error *err)
 {
-  abort();
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  try_start();
+  win_goto(win);
+
+  if (win != curwin) {
+    if (try_end(err)) {
+      return;
+    }
+    set_api_error("did not switch to the specified window", err);
+    return;
+  }
+
+  try_end(err);
 }
 
 int64_t vim_get_tabpage_count(void)
 {
-  abort();
-}
+  tabpage_T *tp = first_tabpage;
+  uint64_t rv = 0;
 
-Tabpage vim_get_tabpage(int64_t num, Error *err)
-{
-  abort();
+  while (tp != NULL) {
+    tp = tp->tp_next;
+    rv++;
+  }
+
+  return rv;
 }
 
 Tabpage vim_get_current_tabpage(void)
 {
-  abort();
+  Tabpage rv = 1;
+  tabpage_T *t;
+
+  for (t = first_tabpage; t != NULL && t != curtab; t = t->tp_next) {
+    rv++;
+  }
+
+  return rv;
 }
 
-void vim_set_current_tabpage(Tabpage tabpage)
+void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 {
-  abort();
+  try_start();
+  goto_tabpage(tabpage);
+  try_end(err);
 }
 
 static void write_msg(String message, bool to_err)

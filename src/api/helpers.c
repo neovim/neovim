@@ -5,6 +5,7 @@
 #include "api/helpers.h"
 #include "api/defs.h"
 #include "../vim.h"
+#include "../buffer.h"
 #include "../window.h"
 #include "memory.h"
 #include "eval.h"
@@ -264,6 +265,32 @@ Object vim_to_object(typval_T *obj)
   // Free the table
   kh_destroy(Lookup, lookup);
   return rv;
+}
+
+buf_T *find_buffer(Buffer buffer, Error *err)
+{
+  buf_T *buf = buflist_findnr(buffer);
+
+  if (buf == NULL) {
+    set_api_error("Invalid buffer id", err);
+  }
+
+  return buf;
+}
+
+win_T * find_window(Window window, Error *err)
+{
+  tabpage_T *tp;
+  win_T *wp;
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (!--window) {
+      return wp;
+    }
+  }
+
+  set_api_error("Invalid window id", err);
+  return NULL;
 }
 
 static bool object_to_vim(Object obj, typval_T *tv, Error *err)

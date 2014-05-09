@@ -117,13 +117,6 @@ void vim_set_current_buffer(Buffer buffer, Error *err);
 /// @return The number of windows
 int64_t vim_get_window_count(void);
 
-/// Gets a window by index
-///
-/// @param num The window number
-/// @param[out] err Details of an error that may have occurred
-/// @return The window handle
-Window vim_get_window(int64_t num, Error *err);
-
 /// Return the current window
 ///
 /// @return The window handle
@@ -132,19 +125,12 @@ Window vim_get_current_window(void);
 /// Sets the current window
 ///
 /// @param handle The window handle
-void vim_set_current_window(Window window);
+void vim_set_current_window(Window window, Error *err);
 
 /// Gets the number of tab pages
 ///
 /// @return The number of tab pages
 int64_t vim_get_tabpage_count(void);
-
-/// Gets a tab page by index
-///
-/// @param num The tabpage number
-/// @param[out] err Details of an error that may have occurred
-/// @return The tab page handle
-Tabpage vim_get_tabpage(int64_t num, Error *err);
 
 /// Return the current tab page
 ///
@@ -154,7 +140,8 @@ Tabpage vim_get_current_tabpage(void);
 /// Sets the current tab page
 ///
 /// @param handle The tab page handle
-void vim_set_current_tabpage(Tabpage tabpage);
+/// @param[out] err Details of an error that may have occurred
+void vim_set_current_tabpage(Tabpage tabpage, Error *err);
 
 #endif // NEOVIM_API_VIM_H
 

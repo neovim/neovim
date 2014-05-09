@@ -14,8 +14,6 @@
 #include "../window.h"
 #include "undo.h"
 
-static buf_T *find_buffer(Buffer buffer, Error *err);
-
 // Find a window that contains "buf" and switch to it.
 // If there is no such window, use the current window and change "curbuf".
 // Caller must initialize save_curbuf to NULL.
@@ -196,17 +194,6 @@ void buffer_insert(Buffer buffer, StringArray lines, int64_t lnum, Error *err)
 Position buffer_mark(Buffer buffer, String name, Error *err)
 {
   abort();
-}
-
-static buf_T *find_buffer(Buffer buffer, Error *err)
-{
-  buf_T *buf = buflist_findnr(buffer);
-
-  if (buf == NULL) {
-    set_api_error("Invalid buffer id", err);
-  }
-
-  return buf;
 }
 
 static void switch_to_win_for_buf(buf_T *buf,
