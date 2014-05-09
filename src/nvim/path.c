@@ -33,6 +33,13 @@
 
 static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
 
+/// Compare two file names.
+///
+/// @param s1 First file name. Environment variables in this name will be
+///   expanded.
+/// @param s2 Second file name.
+/// @param checkname When both files don't exist, only compare their names.
+/// @return Enum of type FileComparison. @see FileComparison.
 FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
 {
   assert(s1 && s2);
@@ -64,6 +71,14 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   return kDifferentFiles;
 }
 
+/// Get the tail of a path: the file name.
+///
+/// @param fname A file path.
+/// @return
+///   - Empty string, if fname is NULL.
+///   - The position of the last path separator + 1. (i.e. empty string, if
+///   fname ends in a slash).
+///   - Never NULL.
 char_u *path_tail(char_u *fname)
 {
   if (fname == NULL) {
@@ -82,6 +97,15 @@ char_u *path_tail(char_u *fname)
   return tail;
 }
 
+/// Get pointer to tail of "fname", including path separators.
+///
+/// Takes care of "c:/" and "//". That means `path_tail_with_sep("dir///file.txt")`
+/// will return a pointer to `"///file.txt"`.
+/// @param fname A file path. (Must be != NULL.)
+/// @return
+///   - Pointer to the last path separator of `fname`, if there is any.
+///   - `fname` if it contains no path separator.
+///   - Never NULL.
 char_u *path_tail_with_sep(char_u *fname)
 {
   assert(fname != NULL);
@@ -95,6 +119,11 @@ char_u *path_tail_with_sep(char_u *fname)
   return tail;
 }
 
+/// Get the next path component of a path name.
+///
+/// @param fname A file path. (Must be != NULL.)
+/// @return Pointer to first found path separator + 1.
+/// An empty string, if `fname` doesn't contain a path separator,
 char_u *path_next_component(char_u *fname)
 {
   assert(fname != NULL);
@@ -1678,6 +1707,14 @@ int flags;                      /* EW_* flags */
 }
 #endif
 
+/// Try to find a shortname by comparing the fullname with the current
+/// directory.
+///
+/// @param full_path The full path of the file.
+/// @return
+///   - Pointer into `full_path` if shortened.
+///   - `full_path` unchanged if no shorter name is possible.
+///   - NULL if `full_path` is NULL.
 char_u *path_shorten_fname_if_possible(char_u *full_path)
 {
   char_u *dirname = xmalloc(MAXPATHL);
@@ -1693,6 +1730,13 @@ char_u *path_shorten_fname_if_possible(char_u *full_path)
   return p;
 }
 
+/// Try to find a shortname by comparing the fullname with `dir_name`.
+///
+/// @param full_path The full path of the file.
+/// @param dir_name The directory to shorten relative to.
+/// @return
+///   - Pointer into `full_path` if shortened.
+///   - NULL if no shorter name is possible.
 char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 {
   if (full_path == NULL) {
@@ -1711,18 +1755,18 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
   return p + 1;
 }
 
-/*
- * Invoke expand_wildcards() for one pattern.
- * Expand items like "%:h" before the expansion.
- * Returns OK or FAIL.
- */
-int 
-expand_wildcards_eval (
-    char_u **pat,             /* pointer to input pattern */
-    int *num_file,        /* resulting number of files */
-    char_u ***file,            /* array of resulting files */
-    int flags                      /* EW_DIR, etc. */
-)
+/// Invoke expand_wildcards() for one pattern
+///
+/// One should expand items like "%:h" before the expansion.
+///
+/// @param[in]   pat       Pointer to the input pattern.
+/// @param[out]  num_file  Resulting number of files.
+/// @param[out]  file      Array of resulting files.
+/// @param[in]   flags     Flags passed to expand_wildcards().
+///
+/// @return OK or FAIL.
+int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
+                          int flags)
 {
   int ret = FAIL;
   char_u      *eval_pat = NULL;
@@ -1853,6 +1897,10 @@ int match_suffix(char_u *fname)
   return setsuflen != 0;
 }
 
+/// Get the absolute name of the given relative directory.
+///
+/// @param directory Directory name, relative to current directory.
+/// @return `FAIL` for failure, `OK` for success.
 int path_full_dir_name(char *directory, char *buffer, int len)
 {
   int SUCCESS = 0;
@@ -1893,6 +1941,7 @@ int path_full_dir_name(char *directory, char *buffer, int len)
   return retval;
 }
 
+// Append to_append to path with a slash in between.
 // Append to_append to path with a slash in between.
 int append_path(char *path, const char *to_append, int max_len)
 {
@@ -1963,6 +2012,10 @@ static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force
   return append_path((char *) buf, (char *) end_of_path, len);
 }
 
+/// Check if the given file is absolute.
+///
+/// This just checks if the file name starts with '/' or '~'.
+/// @return `TRUE` if "fname" is absolute.
 int path_is_absolute_path(const char_u *fname)
 {
   return *fname == '/' || *fname == '~';
