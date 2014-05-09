@@ -25,16 +25,14 @@ void ga_clear(garray_T *gap)
   gap->ga_len = 0;
 }
 
+#define FREE_PTR(ptr) free(*ptr)
+
 /// Clear a growing array that contains a list of strings.
 ///
 /// @param gap
 void ga_clear_strings(garray_T *gap)
 {
-  int i;
-  for (i = 0; i < gap->ga_len; ++i) {
-    free(((char_u **)(gap->ga_data))[i]);
-  }
-  ga_clear(gap);
+  GA_DEEP_CLEAR(gap, void*, FREE_PTR);
 }
 
 /// Initialize a growing array.
