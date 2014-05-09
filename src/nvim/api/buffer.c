@@ -20,10 +20,6 @@
 #include "nvim/window.h"
 #include "nvim/undo.h"
 
-// Find a window that contains "buf" and switch to it.
-// If there is no such window, use the current window and change "curbuf".
-// Caller must initialize save_curbuf to NULL.
-// restore_win_for_buf() MUST be called later!
 static void switch_to_win_for_buf(buf_T *buf,
                                   win_T **save_curwinp,
                                   tabpage_T **save_curtabp,
@@ -33,14 +29,15 @@ static void restore_win_for_buf(win_T *save_curwin,
                                 tabpage_T *save_curtab,
                                 buf_T *save_curbuf);
 
-// Check if deleting lines made the cursor position invalid.
-// Changed the lines from "lo" to "hi" and added "extra" lines (negative if
-// deleted).
 static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra);
 
-// Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index);
 
+/// Gets the buffer line count
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The line count
 Integer buffer_get_length(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
@@ -52,6 +49,12 @@ Integer buffer_get_length(Buffer buffer, Error *err)
   return buf->b_ml.ml_line_count;
 }
 
+/// Gets a buffer line
+///
+/// @param buffer The buffer handle
+/// @param index The line index
+/// @param[out] err Details of an error that may have occurred
+/// @return The line string
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
 {
   String rv = {.size = 0};
@@ -66,18 +69,38 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   return rv;
 }
 
+/// Sets a buffer line
+///
+/// @param buffer The buffer handle
+/// @param index The line index
+/// @param line The new line.
+/// @param[out] err Details of an error that may have occurred
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 {
   StringArray array = {.items = &line, .size = 1};
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
+/// Deletes a buffer line
+///
+/// @param buffer The buffer handle
+/// @param index The line index
+/// @param[out] err Details of an error that may have occurred
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
   StringArray array = ARRAY_DICT_INIT;
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
+/// Retrieves a line range from the buffer
+///
+/// @param buffer The buffer handle
+/// @param start The first line index
+/// @param end The last line index
+/// @param include_start True if the slice includes the `start` parameter
+/// @param include_end True if the slice includes the `end` parameter
+/// @param[out] err Details of an error that may have occurred
+/// @return An array of lines
 StringArray buffer_get_slice(Buffer buffer,
                              Integer start,
                              Integer end,
@@ -128,6 +151,16 @@ end:
   return rv;
 }
 
+/// Replaces a line range on the buffer
+///
+/// @param buffer The buffer handle
+/// @param start The first line index
+/// @param end The last line index
+/// @param include_start True if the slice includes the `start` parameter
+/// @param include_end True if the slice includes the `end` parameter
+/// @param lines An array of lines to use as replacement(A 0-length array
+///        will simply delete the line range)
+/// @param[out] err Details of an error that may have occurred
 void buffer_set_slice(Buffer buffer,
                       Integer start,
                       Integer end,
@@ -251,6 +284,12 @@ end:
   try_end(err);
 }
 
+/// Gets a buffer variable
+///
+/// @param buffer The buffer handle
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The variable value
 Object buffer_get_var(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
@@ -262,6 +301,13 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
   return dict_get_value(buf->b_vars, name, err);
 }
 
+/// Sets a buffer variable. Passing 'nil' as value deletes the variable.
+///
+/// @param buffer The buffer handle
+/// @param name The variable name
+/// @param value The variable value
+/// @param[out] err Details of an error that may have occurred
+/// @return The old value
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
@@ -273,6 +319,12 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
   return dict_set_value(buf->b_vars, name, value, err);
 }
 
+/// Gets a buffer option value
+///
+/// @param buffer The buffer handle
+/// @param name The option name
+/// @param[out] err Details of an error that may have occurred
+/// @return The option value
 Object buffer_get_option(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
@@ -284,6 +336,13 @@ Object buffer_get_option(Buffer buffer, String name, Error *err)
   return get_option_from(buf, SREQ_BUF, name, err);
 }
 
+/// Sets a buffer option value. Passing 'nil' as value deletes the option(only
+/// works if there's a global fallback)
+///
+/// @param buffer The buffer handle
+/// @param name The option name
+/// @param value The option value
+/// @param[out] err Details of an error that may have occurred
 void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
@@ -295,6 +354,11 @@ void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
   set_option_to(buf, SREQ_BUF, name, value, err);
 }
 
+/// Gets the buffer number
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The buffer number
 Integer buffer_get_number(Buffer buffer, Error *err)
 {
   Integer rv = 0;
@@ -307,6 +371,11 @@ Integer buffer_get_number(Buffer buffer, Error *err)
   return buf->b_fnum;
 }
 
+/// Gets the full file name for the buffer
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The buffer name
 String buffer_get_name(Buffer buffer, Error *err)
 {
   String rv = STRING_INIT;
@@ -319,6 +388,11 @@ String buffer_get_name(Buffer buffer, Error *err)
   return cstr_to_string((char *)buf->b_ffname);
 }
 
+/// Sets the full file name for a buffer
+///
+/// @param buffer The buffer handle
+/// @param name The buffer name
+/// @param[out] err Details of an error that may have occurred
 void buffer_set_name(Buffer buffer, String name, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
@@ -347,17 +421,34 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
   }
 }
 
+/// Checks if a buffer is valid
+///
+/// @param buffer The buffer handle
+/// @return true if the buffer is valid, false otherwise
 Boolean buffer_is_valid(Buffer buffer)
 {
   Error stub = {.set = false};
   return find_buffer(buffer, &stub) != NULL;
 }
 
+/// Inserts a sequence of lines to a buffer at a certain index
+///
+/// @param buffer The buffer handle
+/// @param lnum Insert the lines after `lnum`. If negative, it will append
+///        to the end of the buffer.
+/// @param lines An array of lines
+/// @param[out] err Details of an error that may have occurred
 void buffer_insert(Buffer buffer, Integer lnum, StringArray lines, Error *err)
 {
   buffer_set_slice(buffer, lnum, lnum, false, true, lines, err);
 }
 
+/// Return a tuple (row,col) representing the position of the named mark
+///
+/// @param buffer The buffer handle
+/// @param name The mark's name
+/// @param[out] err Details of an error that may have occurred
+/// @return The (row, col) tuple
 Position buffer_get_mark(Buffer buffer, String name, Error *err)
 {
   Position rv = POSITION_INIT;
@@ -395,6 +486,10 @@ Position buffer_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
+// Find a window that contains "buf" and switch to it.
+// If there is no such window, use the current window and change "curbuf".
+// Caller must initialize save_curbuf to NULL.
+// restore_win_for_buf() MUST be called later!
 static void switch_to_win_for_buf(buf_T *buf,
                                   win_T **save_curwinp,
                                   tabpage_T **save_curtabp,
@@ -419,6 +514,9 @@ static void restore_win_for_buf(win_T *save_curwin,
   }
 }
 
+// Check if deleting lines made the cursor position invalid.
+// Changed the lines from "lo" to "hi" and added "extra" lines (negative if
+// deleted).
 static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 {
   if (curwin->w_cursor.lnum >= lo) {
@@ -438,6 +536,7 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
   invalidate_botline();
 }
 
+// Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index)
 {
   // Fix if < 0

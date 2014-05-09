@@ -15,12 +15,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 
-/// Recursion helper for the `vim_to_object`. This uses a pointer table
-/// to avoid infinite recursion due to cyclic references
-///
-/// @param obj The source object
-/// @param lookup Lookup table containing pointers to all processed objects
-/// @return The converted value
 static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup);
 
 static bool object_to_vim(Object obj, typval_T *tv, Error *err);
@@ -39,11 +33,17 @@ static void set_option_value_err(char *key,
                                  int opt_flags,
                                  Error *err);
 
+/// Start block that may cause vimscript exceptions
 void try_start()
 {
   ++trylevel;
 }
 
+/// End try block, set the error message if any and return true if an error
+/// occurred.
+///
+/// @param err Pointer to the stack-allocated error object
+/// @return true if an error occurred
 bool try_end(Error *err)
 {
   --trylevel;
@@ -81,6 +81,11 @@ bool try_end(Error *err)
   return err->set;
 }
 
+/// Recursively expands a vimscript value in a dict
+///
+/// @param dict The vimscript dict
+/// @param key The key
+/// @param[out] err Details of an error that may have occurred
 Object dict_get_value(dict_T *dict, String key, Error *err)
 {
   Object rv = OBJECT_INIT;
@@ -101,6 +106,14 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   return rv;
 }
 
+/// Set a value in a dict. Objects are recursively expanded into their
+/// vimscript equivalents. Passing 'nil' as value deletes the key.
+///
+/// @param dict The vimscript dict
+/// @param key The key
+/// @param value The new value
+/// @param[out] err Details of an error that may have occurred
+/// @return the old value, if any
 Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
 {
   Object rv = OBJECT_INIT;
@@ -164,6 +177,14 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
   return rv;
 }
 
+/// Gets the value of a global or local(buffer, window) option.
+///
+/// @param from If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
+///        to the window or buffer.
+/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
+/// @param name The option name
+/// @param[out] err Details of an error that may have occurred
+/// @return the option value
 Object get_option_from(void *from, int type, String name, Error *err)
 {
   Object rv = OBJECT_INIT;
@@ -207,6 +228,13 @@ Object get_option_from(void *from, int type, String name, Error *err)
   return rv;
 }
 
+/// Sets the value of a global or local(buffer, window) option.
+///
+/// @param to If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
+///        to the window or buffer.
+/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
+/// @param name The option name
+/// @param[out] err Details of an error that may have occurred
 void set_option_to(void *to, int type, String name, Object value, Error *err)
 {
   if (name.size == 0) {
@@ -274,6 +302,11 @@ cleanup:
   free(key);
 }
 
+/// Convert a vim object to an `Object` instance, recursively expanding
+/// Arrays/Dictionaries.
+///
+/// @param obj The source object
+/// @return The converted value
 Object vim_to_object(typval_T *obj)
 {
   Object rv;
@@ -285,6 +318,11 @@ Object vim_to_object(typval_T *obj)
   return rv;
 }
 
+/// Finds the pointer for a window number
+///
+/// @param window the window number
+/// @param[out] err Details of an error that may have occurred
+/// @return the window pointer
 buf_T *find_buffer(Buffer buffer, Error *err)
 {
   buf_T *rv = handle_get_buffer(buffer);
@@ -296,6 +334,11 @@ buf_T *find_buffer(Buffer buffer, Error *err)
   return rv;
 }
 
+/// Finds the pointer for a window number
+///
+/// @param window the window number
+/// @param[out] err Details of an error that may have occurred
+/// @return the window pointer
 win_T * find_window(Window window, Error *err)
 {
   win_T *rv = handle_get_window(window);
@@ -307,6 +350,11 @@ win_T * find_window(Window window, Error *err)
   return rv;
 }
 
+/// Finds the pointer for a tabpage number
+///
+/// @param tabpage the tabpage number
+/// @param[out] err Details of an error that may have occurred
+/// @return the tabpage pointer
 tabpage_T * find_tab(Tabpage tabpage, Error *err)
 {
   tabpage_T *rv = handle_get_tabpage(tabpage);
@@ -422,6 +470,12 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
   return true;
 }
 
+/// Recursion helper for the `vim_to_object`. This uses a pointer table
+/// to avoid infinite recursion due to cyclic references
+///
+/// @param obj The source object
+/// @param lookup Lookup table containing pointers to all processed objects
+/// @return The converted value
 static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
 {
   Object rv = OBJECT_INIT;

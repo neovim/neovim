@@ -49,6 +49,7 @@ static void close_cb(uv_handle_t *handle);
 static WBuffer *serialize_event(char *type, typval_T *data);
 static Channel *register_channel(void);
 
+/// Initializes the module
 void channel_init()
 {
   channels = pmap_new(uint64_t)();
@@ -56,6 +57,7 @@ void channel_init()
   msgpack_sbuffer_init(&msgpack_event_buffer);
 }
 
+/// Teardown the module
 void channel_teardown()
 {
   if (!channels) {
@@ -69,6 +71,10 @@ void channel_teardown()
   });
 }
 
+/// Creates an API channel by starting a job and connecting to its
+/// stdin/stdout. stderr is forwarded to the editor error stream.
+///
+/// @param argv The argument vector for the process
 void channel_from_job(char **argv)
 {
   Channel *channel = register_channel();
@@ -76,6 +82,10 @@ void channel_from_job(char **argv)
   channel->data.job_id = job_start(argv, channel, job_out, job_err, NULL);
 }
 
+/// Creates an API channel from a libuv stream representing a tcp or
+/// pipe/socket client connection
+///
+/// @param stream The established connection
 void channel_from_stream(uv_stream_t *stream)
 {
   Channel *channel = register_channel();
@@ -91,6 +101,13 @@ void channel_from_stream(uv_stream_t *stream)
   channel->data.streams.uv = stream;
 }
 
+/// Sends event/data to channel
+///
+/// @param id The channel id. If 0, the event will be sent to all
+///        channels that have subscribed to the event type
+/// @param type The event type, an arbitrary string
+/// @param obj The event data
+/// @return True if the data was sent successfully, false otherwise.
 bool channel_send_event(uint64_t id, char *type, typval_T *data)
 {
   Channel *channel = NULL;
@@ -107,6 +124,10 @@ bool channel_send_event(uint64_t id, char *type, typval_T *data)
   return true;
 }
 
+/// Subscribes to event broadcasts
+///
+/// @param id The channel id
+/// @param event The event type string
 void channel_subscribe(uint64_t id, char *event)
 {
   Channel *channel;
@@ -125,6 +146,10 @@ void channel_subscribe(uint64_t id, char *event)
   pmap_put(cstr_t)(channel->subscribed_events, event_string, event_string);
 }
 
+/// Unsubscribes to event broadcasts
+///
+/// @param id The channel id
+/// @param event The event type string
 void channel_unsubscribe(uint64_t id, char *event)
 {
   Channel *channel;
