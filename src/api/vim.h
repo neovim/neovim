@@ -77,20 +77,14 @@ Object vim_set_var(String name, Object value, Error *err);
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
 /// @return The option value
-String vim_get_option(String name, Error *err);
+Object vim_get_option(String name, Error *err);
 
 /// Sets an option value
 ///
 /// @param name The option name
 /// @param value The new option value
 /// @param[out] err Details of an error that may have occurred
-void vim_set_option(String name, String value, Error *err);
-
-/// Deletes an option, falling back to the default value
-///
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-void vim_del_option(String name, Error *err);
+void vim_set_option(String name, Object value, Error *err);
 
 /// Write a message to vim output buffer
 ///

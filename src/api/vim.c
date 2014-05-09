@@ -139,19 +139,14 @@ Object vim_set_var(String name, Object value, Error *err)
   return dict_set_value(&globvardict, name, value, err);
 }
 
-String vim_get_option(String name, Error *err)
+Object vim_get_option(String name, Error *err)
 {
-  abort();
+  return get_option_from(NULL, SREQ_GLOBAL, name, err);
 }
 
-void vim_set_option(String name, String value, Error *err)
+void vim_set_option(String name, Object value, Error *err)
 {
-  abort();
-}
-
-void vim_del_option(String name, Error *err)
-{
-  abort();
+  set_option_to(NULL, SREQ_GLOBAL, name, value, err);
 }
 
 void vim_out_write(String str)

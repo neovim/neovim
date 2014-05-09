@@ -40,6 +40,25 @@ Object dict_get_value(dict_T *dict, String key, bool pop, Error *err);
 /// @return the old value, if any
 Object dict_set_value(dict_T *dict, String key, Object value, Error *err);
 
+/// Gets the value of a global or local(buffer, window) option.
+///
+/// @param from If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
+///        to the window or buffer.
+/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
+/// @param name The option name
+/// @param[out] err Details of an error that may have occurred
+/// @return the option value
+Object get_option_from(void *from, int type, String name, Error *err);
+
+/// Sets the value of a global or local(buffer, window) option.
+///
+/// @param to If `type` is `SREQ_WIN` or `SREQ_BUF`, this must be a pointer
+///        to the window or buffer.
+/// @param type One of `SREQ_GLOBAL`, `SREQ_WIN` or `SREQ_BUF`
+/// @param name The option name
+/// @param[out] err Details of an error that may have occurred
+void set_option_to(void *to, int type, String name, Object value, Error *err);
+
 /// Convert a vim object to an `Object` instance, recursively expanding
 /// Arrays/Dictionaries.
 ///

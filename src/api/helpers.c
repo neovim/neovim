@@ -5,8 +5,11 @@
 #include "api/helpers.h"
 #include "api/defs.h"
 #include "../vim.h"
+#include "../window.h"
 #include "memory.h"
 #include "eval.h"
+#include "option.h"
+#include "option_defs.h"
 
 #include "lib/khash.h"
 
@@ -21,6 +24,20 @@ KHASH_SET_INIT_INT64(Lookup)
 static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup);
 
 static bool object_to_vim(Object obj, typval_T *tv, Error *err);
+
+static void set_option_value_for(char *key,
+                                 int numval,
+                                 char *stringval,
+                                 int opt_flags,
+                                 int opt_type,
+                                 void *from,
+                                 Error *err);
+
+static void set_option_value_err(char *key,
+                                 int numval,
+                                 char *stringval,
+                                 int opt_flags,
+                                 Error *err);
 
 void try_start()
 {
@@ -132,6 +149,110 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
   clear_tv(&tv);
 
   return rv;
+}
+
+Object get_option_from(void *from, int type, String name, Error *err)
+{
+  Object rv = {.type = kObjectTypeNil};
+
+  if (name.size == 0) {
+    set_api_error("Empty option name", err);
+    return rv;
+  }
+
+  // Return values
+  long numval;
+  char *stringval = NULL;
+  //
+  char key[name.size + 1];
+  memcpy(key, name.data, name.size);
+  key[name.size] = NUL;
+  int flags = get_option_value_strict(key, &numval, &stringval, type, from); 
+
+  if (!flags) {
+    set_api_error("invalid option name", err);
+    return rv;
+  }
+
+  if (flags & SOPT_BOOL) {
+    rv.type = kObjectTypeBool;
+    rv.data.boolean = numval ? true : false;
+  } else if (flags & SOPT_NUM) {
+    rv.type = kObjectTypeInt;
+    rv.data.integer = numval;
+  } else if (flags & SOPT_STRING) {
+    if (stringval) {
+      rv.type = kObjectTypeString;
+      rv.data.string.data = stringval;
+      rv.data.string.size = strlen(stringval);
+    } else {
+      set_api_error(N_("Unable to get option value"), err);
+    }
+  } else {
+    set_api_error(N_("internal error: unknown option type"), err);
+  }
+
+  return rv;
+}
+
+void set_option_to(void *to, int type, String name, Object value, Error *err)
+{
+  if (name.size == 0) {
+    set_api_error("Empty option name", err);
+    return;
+  }
+
+  char key[name.size + 1];
+  memcpy(key, name.data, name.size);
+  key[name.size] = NUL;
+  int flags = get_option_value_strict(key, NULL, NULL, type, to);
+
+  if (flags == 0) {
+    set_api_error("invalid option name", err);
+    return;
+  }
+
+  if (value.type == kObjectTypeNil) {
+    if (type == SREQ_GLOBAL) {
+      set_api_error("unable to unset option", err);
+      return;
+    } else if (!(flags & SOPT_GLOBAL)) {
+      set_api_error("cannot unset option that doesn't have a global value",
+                     err);
+      return;
+    } else {
+      unset_global_local_option(key, to);
+      return;
+    }
+  }
+
+  int opt_flags = (type ? OPT_LOCAL : OPT_GLOBAL);
+
+  if (flags & SOPT_BOOL) {
+    if (value.type != kObjectTypeBool) {
+      set_api_error("option requires a boolean value", err);
+      return;
+    }
+    bool val = value.data.boolean;
+    set_option_value_for(key, val, NULL, opt_flags, type, to, err);
+
+  } else if (flags & SOPT_NUM) {
+    if (value.type != kObjectTypeInt) {
+      set_api_error("option requires an integer value", err);
+      return;
+    }
+
+    int val = value.data.integer;
+    set_option_value_for(key, val, NULL, opt_flags, type, to, err);
+  } else {
+    if (value.type != kObjectTypeString) {
+      set_api_error("option requires a string value", err);
+      return;
+    }
+
+    char *val = xstrndup(value.data.string.data, value.data.string.size);
+    set_option_value_for(key, 0, val, opt_flags, type, to, err);
+  }
 }
 
 Object vim_to_object(typval_T *obj)
@@ -335,4 +456,72 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
   }
 
   return rv;
+}
+
+
+static void set_option_value_for(char *key,
+                                 int numval,
+                                 char *stringval,
+                                 int opt_flags,
+                                 int opt_type,
+                                 void *from,
+                                 Error *err)
+{
+  win_T *save_curwin = NULL;
+  tabpage_T *save_curtab = NULL;
+  buf_T *save_curbuf = NULL;
+
+  try_start();
+  switch (opt_type)
+  {
+    case SREQ_WIN:
+      if (switch_win(&save_curwin, &save_curtab, (win_T *)from,
+            win_find_tabpage((win_T *)from), FALSE) == FAIL)
+      {
+        if (try_end(err)) {
+          return;
+        }
+        set_api_error("problem while switching windows", err);
+        return;
+      }
+      set_option_value_err(key, numval, stringval, opt_flags, err);
+      restore_win(save_curwin, save_curtab, TRUE);
+      break;
+    case SREQ_BUF:
+      switch_buffer(&save_curbuf, (buf_T *)from);
+      set_option_value_err(key, numval, stringval, opt_flags, err);
+      restore_buffer(save_curbuf);
+      break;
+    case SREQ_GLOBAL:
+      set_option_value_err(key, numval, stringval, opt_flags, err);
+      break;
+  }
+
+  if (err->set) {
+    return;
+  }
+
+  try_end(err);
+}
+
+
+static void set_option_value_err(char *key,
+                                 int numval,
+                                 char *stringval,
+                                 int opt_flags,
+                                 Error *err)
+{
+  char *errmsg;
+
+  if ((errmsg = (char *)set_option_value((uint8_t *)key,
+                                         numval,
+                                         (uint8_t *)stringval,
+                                         opt_flags)))
+  {
+    if (try_end(err)) {
+      return;
+    }
+
+    set_api_error(errmsg, err);
+  }
 }
