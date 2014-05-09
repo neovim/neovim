@@ -173,7 +173,15 @@ void vim_err_write(String str)
 
 int64_t vim_get_buffer_count(void)
 {
-  abort();
+  buf_T *b = firstbuf;
+  uint64_t n = 0;
+
+  while (b) {
+    n++;
+    b = b->b_next;
+  }
+
+  return n;
 }
 
 Buffer vim_get_buffer(int64_t num, Error *err)
