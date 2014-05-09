@@ -459,7 +459,7 @@ static int cs_add(exarg_T *eap)
 static void cs_stat_emsg(char *fname)
 {
   char *stat_emsg = _("E563: stat(%s) error: %d");
-  char *buf = (char *)alloc((unsigned)strlen(stat_emsg) + MAXPATHL + 10);
+  char *buf = xmalloc(strlen(stat_emsg) + MAXPATHL + 10);
 
   (void)sprintf(buf, stat_emsg, fname, errno);
   (void)EMSG(buf);
@@ -490,7 +490,7 @@ cs_add_common (
   char_u      *fbuf = NULL;
 
   /* get the filename (arg1), expand it, and try to stat it */
-  fname = (char *)alloc(MAXPATHL + 1);
+  fname = xmalloc(MAXPATHL + 1);
 
   expand_env((char_u *)arg1, (char_u *)fname, MAXPATHL);
   len = (int)STRLEN(fname);
@@ -512,7 +512,7 @@ staterr:
 
   // get the prepend path (arg2), expand it, and see if it exists
   if (arg2 != NULL) {
-    ppath = (char *)alloc(MAXPATHL + 1);
+    ppath = xmalloc(MAXPATHL + 1);
     expand_env((char_u *)arg2, (char_u *)ppath, MAXPATHL);
     if (!os_file_exists((char_u *)ppath))
       goto staterr;
@@ -520,7 +520,7 @@ staterr:
 
   /* if filename is a directory, append the cscope database name to it */
   if ((file_info.stat.st_mode & S_IFMT) == S_IFDIR) {
-    fname2 = (char *)alloc((unsigned)(strlen(CSCOPE_DBFILE) + strlen(fname) + 2));
+    fname2 = (char *)xmalloc(strlen(CSCOPE_DBFILE) + strlen(fname) + 2);
 
     while (fname[strlen(fname)-1] == '/'
            ) {
@@ -625,10 +625,9 @@ cs_reading_emsg (
 static int cs_cnt_matches(int idx)
 {
   char *stok;
-  char *buf;
   int nlines;
 
-  buf = (char *)alloc(CSREAD_BUFSIZE);
+  char *buf = xmalloc(CSREAD_BUFSIZE);
   for (;; ) {
     if (!fgets(buf, CSREAD_BUFSIZE, csinfo[idx].fr_fp)) {
       if (feof(csinfo[idx].fr_fp))
@@ -721,7 +720,7 @@ static char *cs_create_cmd(char *csoption, char *pattern)
     while (vim_iswhite(*pat))
       ++pat;
 
-  cmd = (char *)alloc((unsigned)(strlen(pat) + 2));
+  cmd = xmalloc(strlen(pat) + 2);
 
   (void)sprintf(cmd, "%d%s", search, pat);
 
@@ -801,14 +800,14 @@ err_closing:
   }
 #endif
     /* expand the cscope exec for env var's */
-    prog = (char *)alloc(MAXPATHL + 1);
+    prog = xmalloc(MAXPATHL + 1);
     expand_env((char_u *)p_csprg, (char_u *)prog, MAXPATHL);
 
     /* alloc space to hold the cscope command */
     len = (int)(strlen(prog) + strlen(csinfo[i].fname) + 32);
     if (csinfo[i].ppath) {
       /* expand the prepend path for env var's */
-      ppath = (char *)alloc(MAXPATHL + 1);
+      ppath = xmalloc(MAXPATHL + 1);
       expand_env((char_u *)csinfo[i].ppath, (char_u *)ppath, MAXPATHL);
 
       len += (int)strlen(ppath);
@@ -817,7 +816,7 @@ err_closing:
     if (csinfo[i].flags)
       len += (int)strlen(csinfo[i].flags);
 
-    cmd = (char *)alloc(len);
+    cmd = xmalloc(len);
 
     /* run the cscope command; is there execl for non-unix systems? */
 #if defined(UNIX)
@@ -1009,7 +1008,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     if (strchr(CSQF_FLAGS, *qfpos) == NULL) {
       char *nf = _("E469: invalid cscopequickfix flag %c for %c");
       /* strlen will be enough because we use chars */
-      char *buf = (char *)alloc((unsigned)strlen(nf));
+      char *buf = xmalloc(strlen(nf));
 
       sprintf(buf, nf, *qfpos, *(qfpos-1));
       (void)EMSG(buf);
@@ -1030,7 +1029,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
   if (cmd == NULL)
     return FALSE;
 
-  nummatches = (int *)alloc(sizeof(int)*csinfo_size);
+  nummatches = xmalloc(sizeof(int) * csinfo_size);
 
   /* Send query to all open connections, then count the total number
    * of matches so we can alloc all in one swell foop. */
@@ -1064,7 +1063,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
       return FALSE;
     }
 
-    buf = (char *)alloc((unsigned)(strlen(opt) + strlen(pat) + strlen(nf)));
+    buf = xmalloc(strlen(opt) + strlen(pat) + strlen(nf));
     sprintf(buf, nf, opt, pat);
     (void)EMSG(buf);
     free(buf);
@@ -1249,18 +1248,18 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
       clear_csinfo(j);
   }
 
-  csinfo[i].fname = (char *)alloc((unsigned)strlen(fname)+1);
+  csinfo[i].fname = xmalloc(strlen(fname) + 1);
 
   (void)strcpy(csinfo[i].fname, (const char *)fname);
 
   if (ppath != NULL) {
-    csinfo[i].ppath = (char *)alloc((unsigned)strlen(ppath) + 1);
+    csinfo[i].ppath = xmalloc(strlen(ppath) + 1);
     (void)strcpy(csinfo[i].ppath, (const char *)ppath);
   } else
     csinfo[i].ppath = NULL;
 
   if (flags != NULL) {
-    csinfo[i].flags = (char *)alloc((unsigned)strlen(flags) + 1);
+    csinfo[i].flags = xmalloc(strlen(flags) + 1);
     (void)strcpy(csinfo[i].flags, (const char *)flags);
   } else
     csinfo[i].flags = NULL;
@@ -1553,13 +1552,12 @@ static char *cs_parse_results(int cnumber, char *buf, int bufsize, char **contex
 static void cs_file_results(FILE *f, int *nummatches_a)
 {
   int i, j;
-  char *buf;
   char *search, *slno;
   char *fullname;
   char *cntx;
   char *context;
 
-  buf = (char *)alloc(CSREAD_BUFSIZE);
+  char *buf = xmalloc(CSREAD_BUFSIZE);
 
   for (i = 0; i < csinfo_size; i++) {
     if (nummatches_a[i] < 1)
@@ -1570,7 +1568,7 @@ static void cs_file_results(FILE *f, int *nummatches_a)
                &slno, &search)) == NULL)
         continue;
 
-      context = (char *)alloc((unsigned)strlen(cntx)+5);
+      context = xmalloc(strlen(cntx) + 5);
 
       if (strcmp(cntx, "<global>")==0)
         strcpy(context, "<<global>>");
@@ -1686,9 +1684,6 @@ static char *cs_pathcomponents(char *path)
  */
 static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
 {
-  char        *buf = NULL;
-  int bufsize = 0;           /* Track available bufsize */
-  int newsize = 0;
   char        *ptag;
   char        *fname, *lno, *extra, *tbuf;
   int i, idx, num;
@@ -1700,14 +1695,14 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
 
   assert (num_matches > 0);
 
-  tbuf = (char *)alloc((unsigned)strlen(matches[0]) + 1);
+  tbuf = xmalloc(strlen(matches[0]) + 1);
 
   strcpy(tbuf, matches[0]);
   ptag = strtok(tbuf, "\t");
 
-  newsize = (int)(strlen(cstag_msg) + strlen(ptag));
-  buf = (char *)alloc(newsize);
-  bufsize = newsize;
+  size_t newsize = strlen(cstag_msg) + strlen(ptag);
+  char *buf = xmalloc(newsize);
+  size_t bufsize = newsize;  // Track available bufsize
   (void)sprintf(buf, cstag_msg, ptag);
   MSG_PUTS_ATTR(buf, hl_attr(HLF_T));
 
@@ -1725,7 +1720,7 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
      * by parsing matches[i] on the fly and placing stuff into buf
      * directly, but that's too much of a hassle
      */
-    tbuf = (char *)alloc((unsigned)strlen(matches[idx]) + 1);
+    tbuf = xmalloc(strlen(matches[idx]) + 1);
     (void)strcpy(tbuf, matches[idx]);
 
     if (strtok(tbuf, (const char *)"\t") == NULL)
@@ -1739,9 +1734,9 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
     lno[strlen(lno)-2] = '\0';      /* ignore ;" at the end */
 
     /* hopefully 'num' (num of matches) will be less than 10^16 */
-    newsize = (int)(strlen(csfmt_str) + 16 + strlen(lno));
+    newsize = strlen(csfmt_str) + 16 + strlen(lno);
     if (bufsize < newsize) {
-      buf = (char *)xrealloc(buf, newsize);
+      buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
     if (buf != NULL) {
@@ -1756,10 +1751,10 @@ static void cs_print_tags_priv(char **matches, char **cntxts, int num_matches)
       context = cntxts[idx];
     else
       context = globalcntx;
-    newsize = (int)(strlen(context) + strlen(cntxformat));
+    newsize = strlen(context) + strlen(cntxformat);
 
     if (bufsize < newsize) {
-      buf = (char *)xrealloc(buf, newsize);
+      buf = xrealloc(buf, newsize);
       bufsize = newsize;
     }
     if (buf != NULL) {
@@ -1819,9 +1814,11 @@ static int cs_read_prompt(int i)
     while ((ch = getc(csinfo[i].fr_fp)) != EOF && ch != CSCOPE_PROMPT[0])
       /* if there is room and char is printable */
       if (bufpos < maxlen - 1 && vim_isprintc(ch)) {
-        if (buf == NULL)         /* lazy buffer allocation */
-          buf = (char *)alloc(maxlen);
-        if (buf != NULL) {
+        // lazy buffer allocation
+        if (buf == NULL) {
+          buf = xmalloc(maxlen);
+        }
+        {
           /* append character to the message */
           buf[bufpos++] = ch;
           buf[bufpos] = NUL;
@@ -2072,7 +2069,6 @@ static int cs_reset(exarg_T *eap)
 static char *cs_resolve_file(int i, char *name)
 {
   char        *fullname;
-  int len;
   char_u      *csdir = NULL;
 
   /*
@@ -2080,17 +2076,17 @@ static char *cs_resolve_file(int i, char *name)
    * Fullname is freed after cs_make_vim_style_matches, after it's been
    * copied into the tag buffer used by Vim.
    */
-  len = (int)(strlen(name) + 2);
+  size_t len = strlen(name) + 2;
   if (csinfo[i].ppath != NULL)
-    len += (int)strlen(csinfo[i].ppath);
+    len += strlen(csinfo[i].ppath);
   else if (p_csre && csinfo[i].fname != NULL) {
     /* If 'cscoperelative' is set and ppath is not set, use cscope.out
      * path in path resolution. */
-    csdir = alloc(MAXPATHL);
+    csdir = xmalloc(MAXPATHL);
     vim_strncpy(csdir, (char_u *)csinfo[i].fname,
         path_tail((char_u *)csinfo[i].fname)
         - (char_u *)csinfo[i].fname);
-    len += (int)STRLEN(csdir);
+    len += STRLEN(csdir);
   }
 
   /* Note/example: this won't work if the cscope output already starts

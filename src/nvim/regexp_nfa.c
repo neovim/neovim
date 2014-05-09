@@ -516,7 +516,7 @@ static char_u *nfa_get_match_text(nfa_state_T *start)
   if (p->c != NFA_MCLOSE || p->out->c != NFA_MATCH)
     return NULL;
 
-  ret = alloc(len);
+  ret = xmalloc(len);
   p = start->out->out;     /* skip first char, it goes into regstart */
   s = ret;
   while (p->c > 0) {
@@ -4193,10 +4193,9 @@ addstate_here (
     if (l->n + count - 1 >= l->len) {
       /* not enough space to move the new states, reallocate the list
        * and move the states to the right position */
-      nfa_thread_T *newl;
 
       l->len = l->len * 3 / 2 + 50;
-      newl = (nfa_thread_T *)alloc(l->len * sizeof(nfa_thread_T));
+      nfa_thread_T *newl = xmalloc(l->len * sizeof(nfa_thread_T));
       memmove(&(newl[0]),
           &(l->t[0]),
           sizeof(nfa_thread_T) * listidx);

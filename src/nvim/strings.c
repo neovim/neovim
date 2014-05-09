@@ -97,7 +97,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
       ++length;                         /* count a backslash */
     ++length;                           /* count an ordinary char */
   }
-  escaped_string = alloc(length);
+  escaped_string = xmalloc(length);
   p2 = escaped_string;
   for (p = string; *p; p++) {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
@@ -158,7 +158,7 @@ char_u *vim_strsave_shellescape(char_u *string, bool do_special, bool do_newline
   }
 
   /* Allocate memory for the result and fill it. */
-  escaped_string = alloc(length);
+  escaped_string = xmalloc(length);
   d = escaped_string;
 
   /* add opening quote */
@@ -264,7 +264,7 @@ char_u *strup_save(char_u *orig)
       l = utf_ptr2len(p);
       newl = utf_char2len(uc);
       if (newl != l) {
-        s = alloc((unsigned)STRLEN(res) + 1 + newl - l);
+        s = xmalloc(STRLEN(res) + 1 + newl - l);
         memmove(s, res, p - res);
         STRCPY(s + (p - res) + newl, p + l);
         p = s + (p - res);

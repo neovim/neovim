@@ -4692,9 +4692,9 @@ win_redr_status_matches (
     return;
 
   if (has_mbyte)
-    buf = alloc((unsigned)Columns * MB_MAXBYTES + 1);
+    buf = xmalloc(Columns * MB_MAXBYTES + 1);
   else
-    buf = alloc((unsigned)Columns + 1);
+    buf = xmalloc(Columns + 1);
 
   if (match == -1) {    /* don't show match but original text */
     match = 0;

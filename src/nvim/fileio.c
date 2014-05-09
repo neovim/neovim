@@ -3704,7 +3704,7 @@ restore_backup:
               "E513: write error, conversion failed (make 'fenc' empty to override)");
         else {
           errmsg_allocated = TRUE;
-          errmsg = alloc(300);
+          errmsg = xmalloc(300);
           vim_snprintf((char *)errmsg, 300,
               _("E513: write error, conversion failed in line %" PRId64
                 " (make 'fenc' empty to override)"),
@@ -4649,7 +4649,7 @@ modname (
    * (we need the full path in case :cd is used).
    */
   if (fname == NULL || *fname == NUL) {
-    retval = alloc((unsigned)(MAXPATHL + extlen + 3));
+    retval = xmalloc(MAXPATHL + extlen + 3);
     if (os_dirname(retval, MAXPATHL) == FAIL ||
         (fnamelen = (int)STRLEN(retval)) == 0) {
       free(retval);
@@ -4662,7 +4662,7 @@ modname (
     prepend_dot = FALSE;            /* nothing to prepend a dot to */
   } else {
     fnamelen = (int)STRLEN(fname);
-    retval = alloc((unsigned)(fnamelen + extlen + 3));
+    retval = xmalloc(fnamelen + extlen + 3);
     STRCPY(retval, fname);
   }
 
@@ -5212,8 +5212,7 @@ buf_check_timestamp (
     if (path != NULL) {
       if (!helpmesg)
         mesg2 = "";
-      tbuf = alloc((unsigned)(STRLEN(path) + STRLEN(mesg)
-                              + STRLEN(mesg2) + 2));
+      tbuf = xmalloc(STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2);
       sprintf((char *)tbuf, mesg, path);
       /* Set warningmsg here, before the unimportant and output-specific
        * mesg2 has been appended. */
@@ -6574,7 +6573,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
           return FAIL;
         }
 
-        ap = (AutoPat *)alloc((unsigned)sizeof(AutoPat));
+        ap = xmalloc(sizeof(AutoPat));
         ap->pat = vim_strnsave(pat, patlen);
         ap->patlen = patlen;
 
@@ -6611,7 +6610,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
       prev_ac = &(ap->cmds);
       while ((ac = *prev_ac) != NULL)
         prev_ac = &ac->next;
-      ac = (AutoCmd *)alloc((unsigned)sizeof(AutoCmd));
+      ac = xmalloc(sizeof(AutoCmd));
       ac->cmd = vim_strsave(cmd);
       ac->scriptID = current_SID;
       ac->next = NULL;
@@ -7420,8 +7419,7 @@ auto_next_pat (
           : ap->buflocal_nr == apc->arg_bufnr) {
         name = event_nr2name(apc->event);
         s = _("%s Auto commands for \"%s\"");
-        sourcing_name = alloc((unsigned)(STRLEN(s)
-                                         + STRLEN(name) + ap->patlen + 1));
+        sourcing_name = xmalloc(STRLEN(s) + STRLEN(name) + ap->patlen + 1);
         sprintf((char *)sourcing_name, s,
             (char *)name, (char *)ap->pat);
         if (p_verbose >= 8) {

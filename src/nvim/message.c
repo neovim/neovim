@@ -267,7 +267,7 @@ msg_strtrunc (
         len = (room + 2) * 2;
       else
         len = room + 2;
-      buf = alloc(len);
+      buf = xmalloc(len);
       trunc_string(s, buf, room, len);
     }
   }
@@ -421,7 +421,7 @@ static char_u *get_emsg_source(void)
 
   if (sourcing_name != NULL && other_sourcing_name()) {
     p = (char_u *)_("Error detected while processing %s:");
-    Buf = alloc((unsigned)(STRLEN(sourcing_name) + STRLEN(p)));
+    Buf = xmalloc(STRLEN(sourcing_name) + STRLEN(p));
     sprintf((char *)Buf, (char *)p, sourcing_name);
     return Buf;
   }
@@ -443,7 +443,7 @@ static char_u *get_emsg_lnum(void)
       && (other_sourcing_name() || sourcing_lnum != last_sourcing_lnum)
       && sourcing_lnum != 0) {
     p = (char_u *)_("line %4ld:");
-    Buf = alloc((unsigned)(STRLEN(p) + 20));
+    Buf = xmalloc(STRLEN(p) + 20);
     sprintf((char *)Buf, (char *)p, (long)sourcing_lnum);
     return Buf;
   }
@@ -680,8 +680,6 @@ add_msg_hist (
     int attr
 )
 {
-  struct msg_hist *p;
-
   if (msg_hist_off || msg_silent != 0)
     return;
 
@@ -690,7 +688,7 @@ add_msg_hist (
     (void)delete_first_msg();
 
   /* allocate an entry and add the message at the end of the history */
-  p = (struct msg_hist *)alloc((int)sizeof(struct msg_hist));
+  struct msg_hist *p = xmalloc(sizeof(struct msg_hist));
   if (len < 0)
     len = (int)STRLEN(s);
   /* remove leading and trailing newlines */
@@ -1841,7 +1839,7 @@ static void inc_msg_scrolled(void)
       p = (char_u *)_("Unknown");
     else {
       len = (int)STRLEN(p) + 40;
-      tofree = alloc(len);
+      tofree = xmalloc(len);
       vim_snprintf((char *)tofree, len, _("%s line %" PRId64),
           p, (int64_t)sourcing_lnum);
       p = tofree;
@@ -1893,7 +1891,7 @@ store_sb_text (
   }
 
   if (s > *sb_str) {
-    mp = (msgchunk_T *)alloc((int)(sizeof(msgchunk_T) + (s - *sb_str)));
+    mp = xmalloc((sizeof(msgchunk_T) + (s - *sb_str)));
     mp->sb_eol = finish;
     mp->sb_msg_col = *sb_col;
     mp->sb_attr = attr;

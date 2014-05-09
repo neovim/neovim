@@ -1993,7 +1993,7 @@ static void alloc_cmdbuff(int len)
   else
     len += 20;
 
-  ccline.cmdbuff = alloc(len);      /* caller should check for out-of-memory */
+  ccline.cmdbuff = xmalloc(len);      /* caller should check for out-of-memory */
   ccline.cmdbufflen = len;
 }
 
@@ -2081,9 +2081,7 @@ static void draw_cmdline(int start, int len)
        * alloc()/free() calls. */
       free(arshape_buf);
       buflen = len * 2 + 2;
-      arshape_buf = alloc(buflen);
-      if (arshape_buf == NULL)
-        return;         /* out of memory */
+      arshape_buf = xmalloc(buflen);
     }
 
     if (utf_iscomposing(utf_ptr2char(ccline.cmdbuff + start))) {
@@ -2347,15 +2345,11 @@ static void restore_cmdline(struct cmdline_info *ccp)
 /*
  * Save the command line into allocated memory.  Returns a pointer to be
  * passed to restore_cmdline_alloc() later.
- * Returns NULL when failed.
  */
 char_u *save_cmdline_alloc(void)
 {
-  struct cmdline_info *p;
-
-  p = (struct cmdline_info *)alloc((unsigned)sizeof(struct cmdline_info));
-  if (p != NULL)
-    save_cmdline(p);
+  struct cmdline_info *p = xmalloc(sizeof(struct cmdline_info));
+  save_cmdline(p);
   return (char_u *)p;
 }
 
@@ -3103,15 +3097,11 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
  */
 static void escape_fname(char_u **pp)
 {
-  char_u      *p;
-
-  p = alloc((unsigned)(STRLEN(*pp) + 2));
-  if (p != NULL) {
-    p[0] = '\\';
-    STRCPY(p + 1, *pp);
-    free(*pp);
-    *pp = p;
-  }
+  char_u *p = xmalloc(STRLEN(*pp) + 2);
+  p[0] = '\\';
+  STRCPY(p + 1, *pp);
+  free(*pp);
+  *pp = p;
 }
 
 /*
@@ -3402,8 +3392,8 @@ addstar (
              || context == EXPAND_USER_LIST) && fname[i] == '\\')
           new_len++;                    /* '\' becomes "\\" */
       }
-      retval = alloc(new_len);
-      if (retval != NULL) {
+      retval = xmalloc(new_len);
+      {
         retval[0] = '^';
         j = 1;
         for (i = 0; i < len; i++, j++) {
@@ -3436,7 +3426,7 @@ addstar (
       }
     }
   } else {
-    retval = alloc(len + 4);
+    retval = xmalloc(len + 4);
     if (retval != NULL) {
       vim_strncpy(retval, fname, len);
 
@@ -3830,7 +3820,7 @@ ExpandFromContext (
  * obtain strings, one by one.	The strings are matched against a regexp
  * program.  Matching strings are copied into an array, which is returned.
  *
- * Returns OK when no problems encountered, FAIL for error (out of memory).
+ * Returns OK when no problems encountered, FAIL for error.
  */
 int ExpandGeneric(xp, regmatch, num_file, file, func, escaped)
 expand_T    *xp;
@@ -3859,11 +3849,7 @@ int escaped;
   if (count == 0)
     return OK;
   *num_file = count;
-  *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
-  if (*file == NULL) {
-    *file = (char_u **)"";
-    return FAIL;
-  }
+  *file = (char_u **)xmalloc(count * sizeof(char_u *));
 
   // copy the matching names into allocated memory
   count = 0;
@@ -3924,14 +3910,11 @@ expand_shellcmd (
   char_u      *path;
   int mustfree = FALSE;
   garray_T ga;
-  char_u      *buf = alloc(MAXPATHL);
+  char_u *buf = xmalloc(MAXPATHL);
   size_t l;
   char_u      *s, *e;
   int flags = flagsarg;
   int ret;
-
-  if (buf == NULL)
-    return FAIL;
 
   /* for ":set path=" and ":set tags=" halve backslashes for escaped
    * space */
@@ -4156,11 +4139,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
   ga_init(&ga, (int)sizeof(char *), 10);
 
   for (i = 0; dirnames[i] != NULL; ++i) {
-    s = alloc((unsigned)(STRLEN(dirnames[i]) + pat_len + 7));
-    if (s == NULL) {
-      ga_clear_strings(&ga);
-      return FAIL;
-    }
+    s = xmalloc(STRLEN(dirnames[i]) + pat_len + 7);
     sprintf((char *)s, "%s/%s*.vim", dirnames[i], pat);
     matches = globpath(p_rtp, s, 0);
     free(s);
@@ -4207,7 +4186,6 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 char_u *globpath(char_u *path, char_u *file, int expand_options)
 {
   expand_T xpc;
-  char_u      *buf;
   garray_T ga;
   int i;
   int len;
@@ -4215,9 +4193,7 @@ char_u *globpath(char_u *path, char_u *file, int expand_options)
   char_u      **p;
   char_u      *cur = NULL;
 
-  buf = alloc(MAXPATHL);
-  if (buf == NULL)
-    return NULL;
+  char_u *buf = xmalloc(MAXPATHL);
 
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;

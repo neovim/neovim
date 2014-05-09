@@ -5,8 +5,6 @@
 #include "nvim/types.h"
 #include "nvim/vim.h"
 
-char_u *alloc(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
-
 /// malloc() wrapper
 ///
 /// try_malloc() is a malloc() wrapper that tries to free some memory before

@@ -905,7 +905,7 @@ static int stuff_yank(int regname, char_u *p)
     *pp = lp;
   } else {
     free_yank_all();
-    y_current->y_array = (char_u **)alloc((unsigned)sizeof(char_u *));
+    y_current->y_array = (char_u **)xmalloc(sizeof(char_u *));
     y_current->y_array[0] = p;
     y_current->y_size = 1;
     y_current->y_type = MCHAR;      /* used to be MLINE, why? */
@@ -2664,8 +2664,7 @@ do_put (
         }
         if (y_array != NULL)
           break;
-        y_array = (char_u **)alloc((unsigned)
-            (y_size * sizeof(char_u *)));
+        y_array = (char_u **)xmalloc(y_size * sizeof(char_u *));
       }
     } else {
       y_size = 1;               /* use fake one-line yank register */
@@ -4384,7 +4383,7 @@ int do_addsub(int command, linenr_T Prenum1)
      * When there are many leading zeros it could be very long.  Allocate
      * a bit too much.
      */
-    buf1 = alloc((unsigned)length + NUMBUFLEN);
+    buf1 = xmalloc(length + NUMBUFLEN);
     ptr = buf1;
     if (negative) {
       *ptr++ = '-';
@@ -4474,7 +4473,7 @@ int read_viminfo_register(vir_T *virp, int force)
       y_previous = y_current;
     free(y_current->y_array);
     array = y_current->y_array =
-              (char_u **)alloc((unsigned)(limit * sizeof(char_u *)));
+              (char_u **)xmalloc(limit * sizeof(char_u *));
     str = skipwhite(skiptowhite(str));
     if (STRNCMP(str, "CHAR", 4) == 0)
       y_current->y_type = MCHAR;
@@ -4491,8 +4490,7 @@ int read_viminfo_register(vir_T *virp, int force)
          && (virp->vir_line[0] == TAB || virp->vir_line[0] == '<')) {
     if (do_it) {
       if (size >= limit) {
-        y_current->y_array = (char_u **)
-                             alloc((unsigned)(limit * 2 * sizeof(char_u *)));
+        y_current->y_array = (char_u **)xmalloc(limit * 2 * sizeof(char_u *));
         for (i = 0; i < limit; i++)
           y_current->y_array[i] = array[i];
         free(array);
@@ -4512,7 +4510,7 @@ int read_viminfo_register(vir_T *virp, int force)
       y_current->y_array = NULL;
     } else if (size < limit) {
       y_current->y_array =
-        (char_u **)alloc((unsigned)(size * sizeof(char_u *)));
+        (char_u **)xmalloc(size * sizeof(char_u *));
       for (i = 0; i < size; i++)
         y_current->y_array[i] = array[i];
       free(array);
@@ -4867,7 +4865,7 @@ str_to_reg (
       extra = (int)STRLEN(y_ptr->y_array[lnum]);
     } else
       extra = 0;
-    s = alloc((unsigned)(i + extra + 1));
+    s = xmalloc(i + extra + 1);
     if (extra)
       memmove(s, y_ptr->y_array[lnum], (size_t)extra);
     if (append)

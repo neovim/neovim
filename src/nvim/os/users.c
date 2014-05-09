@@ -4,6 +4,7 @@
 
 #include "nvim/os/os.h"
 #include "nvim/garray.h"
+#include "nvim/memory.h"
 #include "nvim/misc2.h"
 #include "nvim/strings.h"
 #ifdef HAVE_PWD_H
@@ -76,7 +77,7 @@ char *os_get_user_directory(const char *name)
   pw = getpwnam(name);
   if (pw != NULL) {
     // save the string from the static passwd entry into malloced memory
-    return vim_strsave(pw->pw_dir);
+    return xstrdup(pw->pw_dir);
   }
 #endif
   return NULL;

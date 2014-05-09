@@ -1456,12 +1456,11 @@ int get_spellword(list_T *list, char_u **pp)
  */
 typval_T *eval_expr(char_u *arg, char_u **nextcmd)
 {
-  typval_T    *tv;
+  typval_T *tv = xmalloc(sizeof(typval_T));
 
-  tv = (typval_T *)alloc(sizeof(typval_T));
-  if (tv != NULL && eval0(arg, tv, nextcmd, TRUE) == FAIL) {
+  if (eval0(arg, tv, nextcmd, TRUE) == FAIL) {
     free(tv);
-    tv = NULL;
+    return NULL;
   }
 
   return tv;
@@ -1484,7 +1483,6 @@ call_vim_function (
     typval_T *rettv
 )
 {
-  typval_T    *argvars;
   long n;
   int len;
   int i;
@@ -1492,9 +1490,7 @@ call_vim_function (
   void        *save_funccalp = NULL;
   int ret;
 
-  argvars = (typval_T *)alloc((unsigned)((argc + 1) * sizeof(typval_T)));
-  if (argvars == NULL)
-    return FAIL;
+  typval_T *argvars = xmalloc((argc + 1) * sizeof(typval_T));
 
   for (i = 0; i < argc; i++) {
     /* Pass a NULL or empty argument as an empty string */
@@ -3426,20 +3422,19 @@ void del_menutrans_vars(void)
 static char_u *cat_prefix_varname(int prefix, char_u *name);
 
 static char_u   *varnamebuf = NULL;
-static int varnamebuflen = 0;
+static size_t varnamebuflen = 0;
 
 /*
  * Function to concatenate a prefix and a variable name.
  */
 static char_u *cat_prefix_varname(int prefix, char_u *name)
 {
-  int len;
+  size_t len = STRLEN(name) + 3;
 
-  len = (int)STRLEN(name) + 3;
   if (len > varnamebuflen) {
     free(varnamebuf);
     len += 10;                          /* some additional space */
-    varnamebuf = alloc(len);
+    varnamebuf = xmalloc(len);
     if (varnamebuf == NULL) {
       varnamebuflen = 0;
       return NULL;
@@ -4921,9 +4916,7 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
    * Copy the string into allocated memory, handling backslashed
    * characters.
    */
-  name = alloc((unsigned)(p - *arg + extra));
-  if (name == NULL)
-    return FAIL;
+  name = xmalloc(p - *arg + extra);
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = name;
 
@@ -5038,9 +5031,7 @@ static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate)
   /*
    * Copy the string into allocated memory, handling '' to ' reduction.
    */
-  str = alloc((unsigned)((p - *arg) - reduce));
-  if (str == NULL)
-    return FAIL;
+  str = xmalloc((p - *arg) - reduce);
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = str;
 
@@ -5189,7 +5180,7 @@ list_free (
  */
 listitem_T *listitem_alloc(void)
 {
-  return (listitem_T *)alloc(sizeof(listitem_T));
+  return xmalloc(sizeof(listitem_T));
 }
 
 /*
@@ -6154,17 +6145,12 @@ dict_free (
  * Allocate a Dictionary item.
  * The "key" is copied to the new item.
  * Note that the value of the item "di_tv" still needs to be initialized!
- * Returns NULL when out of memory.
  */
 dictitem_T *dictitem_alloc(char_u *key)
 {
-  dictitem_T *di;
-
-  di = (dictitem_T *)alloc((unsigned)(sizeof(dictitem_T) + STRLEN(key)));
-  if (di != NULL) {
-    STRCPY(di->di_key, key);
-    di->di_flags = 0;
-  }
+  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
+  STRCPY(di->di_key, key);
+  di->di_flags = 0;
   return di;
 }
 
@@ -6173,15 +6159,12 @@ dictitem_T *dictitem_alloc(char_u *key)
  */
 static dictitem_T *dictitem_copy(dictitem_T *org)
 {
-  dictitem_T *di;
+  dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(org->di_key));
 
-  di = (dictitem_T *)alloc((unsigned)(sizeof(dictitem_T)
-                                      + STRLEN(org->di_key)));
-  if (di != NULL) {
-    STRCPY(di->di_key, org->di_key);
-    di->di_flags = 0;
-    copy_tv(&org->di_tv, &di->di_tv);
-  }
+  STRCPY(di->di_key, org->di_key);
+  di->di_flags = 0;
+  copy_tv(&org->di_tv, &di->di_tv);
+
   return di;
 }
 
@@ -6668,34 +6651,33 @@ static char_u *tv2string(typval_T *tv, char_u **tofree, char_u *numbuf, int copy
  */
 static char_u *string_quote(char_u *str, int function)
 {
-  unsigned len;
   char_u      *p, *r, *s;
 
-  len = (function ? 13 : 3);
+  size_t len = (function ? 13 : 3);
   if (str != NULL) {
-    len += (unsigned)STRLEN(str);
+    len += STRLEN(str);
     for (p = str; *p != NUL; mb_ptr_adv(p))
       if (*p == '\'')
         ++len;
   }
-  s = r = alloc(len);
-  if (r != NULL) {
-    if (function) {
-      STRCPY(r, "function('");
-      r += 10;
-    } else
-      *r++ = '\'';
-    if (str != NULL)
-      for (p = str; *p != NUL; ) {
-        if (*p == '\'')
-          *r++ = '\'';
-        MB_COPY_CHAR(p, r);
-      }
+  s = r = xmalloc(len);
+
+  if (function) {
+    STRCPY(r, "function('");
+    r += 10;
+  } else
     *r++ = '\'';
-    if (function)
-      *r++ = ')';
-    *r++ = NUL;
-  }
+  if (str != NULL)
+    for (p = str; *p != NUL; ) {
+      if (*p == '\'')
+        *r++ = '\'';
+      MB_COPY_CHAR(p, r);
+    }
+  *r++ = '\'';
+  if (function)
+    *r++ = ')';
+  *r++ = NUL;
+
   return s;
 }
 
@@ -7282,13 +7264,9 @@ call_func (
       STRCPY(fname_buf + i, name + llen);
       fname = fname_buf;
     } else {
-      fname = alloc((unsigned)(i + STRLEN(name + llen) + 1));
-      if (fname == NULL)
-        error = ERROR_OTHER;
-      else {
-        memmove(fname, fname_buf, (size_t)i);
-        STRCPY(fname + i, name + llen);
-      }
+      fname = xmalloc(i + STRLEN(name + llen) + 1);
+      memmove(fname, fname_buf, (size_t)i);
+      STRCPY(fname + i, name + llen);
     }
   } else
     fname = name;
@@ -9251,20 +9229,18 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv)
       }
     }
     txt = _("+-%s%3ld lines: ");
-    r = alloc((unsigned)(STRLEN(txt)
-                         + STRLEN(vimvars[VV_FOLDDASHES].vv_str) /* for %s */
-                         + 20                               /* for %3ld */
-                         + STRLEN(s)));                     /* concatenated */
-    if (r != NULL) {
-      sprintf((char *)r, txt, vimvars[VV_FOLDDASHES].vv_str,
-          (long)((linenr_T)vimvars[VV_FOLDEND].vv_nr
-                 - (linenr_T)vimvars[VV_FOLDSTART].vv_nr + 1));
-      len = (int)STRLEN(r);
-      STRCAT(r, s);
-      /* remove 'foldmarker' and 'commentstring' */
-      foldtext_cleanup(r + len);
-      rettv->vval.v_string = r;
-    }
+    r = xmalloc(STRLEN(txt)
+                + STRLEN(vimvars[VV_FOLDDASHES].vv_str) // for %s
+                + 20                                    // for %3ld
+                + STRLEN(s));                           // concatenated
+    sprintf((char *)r, txt, vimvars[VV_FOLDDASHES].vv_str,
+        (long)((linenr_T)vimvars[VV_FOLDEND].vv_nr
+               - (linenr_T)vimvars[VV_FOLDSTART].vv_nr + 1));
+    len = (int)STRLEN(r);
+    STRCAT(r, s);
+    /* remove 'foldmarker' and 'commentstring' */
+    foldtext_cleanup(r + len);
+    rettv->vval.v_string = r;
   }
 }
 
@@ -9325,12 +9301,9 @@ static void f_function(typval_T *argvars, typval_T *rettv)
        * would also work, but some plugins depend on the name being
        * printable text. */
       sprintf(sid_buf, "<SNR>%" PRId64 "_", (int64_t)current_SID);
-      rettv->vval.v_string =
-        alloc((int)(STRLEN(sid_buf) + STRLEN(s + off) + 1));
-      if (rettv->vval.v_string != NULL) {
-        STRCPY(rettv->vval.v_string, sid_buf);
-        STRCAT(rettv->vval.v_string, s + off);
-      }
+      rettv->vval.v_string = xmalloc(STRLEN(sid_buf) + STRLEN(s + off) + 1);
+      STRCPY(rettv->vval.v_string, sid_buf);
+      STRCAT(rettv->vval.v_string, s + off);
     } else
       rettv->vval.v_string = vim_strsave(s);
     rettv->v_type = VAR_FUNC;
@@ -9619,11 +9592,9 @@ static void f_getcmdpos(typval_T *argvars, typval_T *rettv)
 static void f_getcmdtype(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = alloc(2);
-  if (rettv->vval.v_string != NULL) {
-    rettv->vval.v_string[0] = get_cmdline_type();
-    rettv->vval.v_string[1] = NUL;
-  }
+  rettv->vval.v_string = xmalloc(2);
+  rettv->vval.v_string[0] = get_cmdline_type();
+  rettv->vval.v_string[1] = NUL;
 }
 
 /*
@@ -9635,17 +9606,14 @@ static void f_getcwd(typval_T *argvars, typval_T *rettv)
 
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
-  cwd = alloc(MAXPATHL);
-  if (cwd != NULL) {
-    if (os_dirname(cwd, MAXPATHL) != FAIL) {
-      rettv->vval.v_string = vim_strsave(cwd);
+  cwd = xmalloc(MAXPATHL);
+  if (os_dirname(cwd, MAXPATHL) != FAIL) {
+    rettv->vval.v_string = vim_strsave(cwd);
 #ifdef BACKSLASH_IN_FILENAME
-      if (rettv->vval.v_string != NULL)
-        slash_adjust(rettv->vval.v_string);
+    slash_adjust(rettv->vval.v_string);
 #endif
-    }
-    free(cwd);
   }
+  free(cwd);
 }
 
 /*
@@ -11962,7 +11930,6 @@ static void f_printf(typval_T *argvars, typval_T *rettv)
   {
     char_u buf[NUMBUFLEN];
     int len;
-    char_u  *s;
     int saved_did_emsg = did_emsg;
     char    *fmt;
 
@@ -11971,11 +11938,9 @@ static void f_printf(typval_T *argvars, typval_T *rettv)
     fmt = (char *)get_tv_string_buf(&argvars[0], buf);
     len = vim_vsnprintf(NULL, 0, fmt, ap, argvars + 1);
     if (!did_emsg) {
-      s = alloc(len + 1);
-      if (s != NULL) {
-        rettv->vval.v_string = s;
-        (void)vim_vsnprintf((char *)s, len + 1, fmt, ap, argvars + 1);
-      }
+      char *s = xmalloc(len + 1);
+      rettv->vval.v_string = (char_u *)s;
+      (void)vim_vsnprintf(s, len + 1, fmt, ap, argvars + 1);
     }
     did_emsg |= saved_did_emsg;
   }
@@ -12173,13 +12138,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           long growmin  = (long)((p - start) * 2 + prevlen);
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
-        newprev = prev == NULL ? alloc(prevsize)
-                  : xrealloc(prev, prevsize);
-        if (newprev == NULL) {
-          do_outofmem_msg((long_u)prevsize);
-          failed = TRUE;
-          break;
-        }
+        newprev = (prev == NULL) ? xmalloc(prevsize) : xrealloc(prev, prevsize);
         prev = newprev;
       }
       /* Add the line part to end of "prev". */
@@ -12417,10 +12376,6 @@ static void f_repeat(typval_T *argvars, typval_T *rettv)
 {
   char_u      *p;
   int n;
-  int slen;
-  int len;
-  char_u      *r;
-  int i;
 
   n = get_tv_number(&argvars[1]);
   if (argvars[0].v_type == VAR_LIST) {
@@ -12438,17 +12393,15 @@ static void f_repeat(typval_T *argvars, typval_T *rettv)
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = NULL;
 
-    slen = (int)STRLEN(p);
-    len = slen * n;
+    int slen = (int)STRLEN(p);
+    int len = slen * n;
     if (len <= 0)
       return;
 
-    r = alloc(len + 1);
-    if (r != NULL) {
-      for (i = 0; i < n; i++)
-        memmove(r + i * slen, p, (size_t)slen);
-      r[len] = NUL;
-    }
+    char_u *r = xmalloc(len + 1);
+    for (int i = 0; i < n; i++)
+      memmove(r + i * slen, p, (size_t)slen);
+    r[len] = NUL;
 
     rettv->vval.v_string = r;
   }
@@ -12506,9 +12459,7 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
       q[-1] = NUL;
     }
 
-    buf = alloc(MAXPATHL + 1);
-    if (buf == NULL)
-      goto fail;
+    buf = xmallocz(MAXPATHL);
 
     for (;; ) {
       for (;; ) {
@@ -12554,13 +12505,11 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
         }
         if (q > p && !path_is_absolute_path(buf)) {
           /* symlink is relative to directory of argument */
-          cpy = alloc((unsigned)(STRLEN(p) + STRLEN(buf) + 1));
-          if (cpy != NULL) {
-            STRCPY(cpy, p);
-            STRCPY(path_tail(cpy), buf);
-            free(p);
-            p = cpy;
-          }
+          cpy = xmalloc(STRLEN(p) + STRLEN(buf) + 1);
+          STRCPY(cpy, p);
+          STRCPY(path_tail(cpy), buf);
+          free(p);
+          p = cpy;
         } else {
           free(p);
           p = vim_strsave(buf);
@@ -13067,10 +13016,8 @@ do_searchpair (
 
   /* Make two search patterns: start/end (pat2, for in nested pairs) and
    * start/middle/end (pat3, for the top pair). */
-  pat2 = alloc((unsigned)(STRLEN(spat) + STRLEN(epat) + 15));
-  pat3 = alloc((unsigned)(STRLEN(spat) + STRLEN(mpat) + STRLEN(epat) + 23));
-  if (pat2 == NULL || pat3 == NULL)
-    goto theend;
+  pat2 = xmalloc(STRLEN(spat) + STRLEN(epat) + 15);
+  pat3 = xmalloc(STRLEN(spat) + STRLEN(mpat) + STRLEN(epat) + 23);
   sprintf((char *)pat2, "\\(%s\\m\\)\\|\\(%s\\m\\)", spat, epat);
   if (*mpat == NUL)
     STRCPY(pat3, pat2);
@@ -13161,7 +13108,6 @@ do_searchpair (
   if ((flags & SP_NOMOVE) || retval == 0)
     curwin->w_cursor = save_cursor;
 
-theend:
   free(pat2);
   free(pat3);
   if (p_cpo == empty_option)
@@ -13245,13 +13191,11 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv)
       if (!error && strval != NULL)
         set_option_value(varname, numval, strval, OPT_LOCAL);
     } else {
-      bufvarname = alloc((unsigned)STRLEN(varname) + 3);
-      if (bufvarname != NULL) {
-        STRCPY(bufvarname, "b:");
-        STRCPY(bufvarname + 2, varname);
-        set_var(bufvarname, varp, TRUE);
-        free(bufvarname);
-      }
+      bufvarname = xmalloc(STRLEN(varname) + 3);
+      STRCPY(bufvarname, "b:");
+      STRCPY(bufvarname + 2, varname);
+      set_var(bufvarname, varp, TRUE);
+      free(bufvarname);
     }
 
     /* reset notion of buffer */
@@ -13557,13 +13501,11 @@ static void f_settabvar(typval_T *argvars, typval_T *rettv)
     save_curtab = curtab;
     goto_tabpage_tp(tp, FALSE, FALSE);
 
-    tabvarname = alloc((unsigned)STRLEN(varname) + 3);
-    if (tabvarname != NULL) {
-      STRCPY(tabvarname, "t:");
-      STRCPY(tabvarname + 2, varname);
-      set_var(tabvarname, varp, TRUE);
-      free(tabvarname);
-    }
+    tabvarname = xmalloc(STRLEN(varname) + 3);
+    STRCPY(tabvarname, "t:");
+    STRCPY(tabvarname + 2, varname);
+    set_var(tabvarname, varp, TRUE);
+    free(tabvarname);
 
     /* Restore current tabpage */
     if (valid_tabpage(save_curtab))
@@ -13627,13 +13569,11 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
       if (!error && strval != NULL)
         set_option_value(varname, numval, strval, OPT_LOCAL);
     } else {
-      winvarname = alloc((unsigned)STRLEN(varname) + 3);
-      if (winvarname != NULL) {
-        STRCPY(winvarname, "w:");
-        STRCPY(winvarname + 2, varname);
-        set_var(winvarname, varp, TRUE);
-        free(winvarname);
-      }
+      winvarname = xmalloc(STRLEN(varname) + 3);
+      STRCPY(winvarname, "w:");
+      STRCPY(winvarname + 2, varname);
+      set_var(winvarname, varp, TRUE);
+      free(winvarname);
     }
 
     restore_win(save_curwin, save_curtab, TRUE);
@@ -14828,7 +14768,7 @@ static void f_tagfiles(typval_T *argvars, typval_T *rettv)
   tagname_T tn;
 
   rettv_list_alloc(rettv);
-  fname = alloc(MAXPATHL);
+  fname = xmalloc(MAXPATHL);
 
   int first = TRUE;
   while (get_tagfname(&tn, first, fname) == OK) {
@@ -15767,13 +15707,11 @@ static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *
 
   temp_result = eval_to_string(expr_start + 1, &nextcmd, FALSE);
   if (temp_result != NULL && nextcmd == NULL) {
-    retval = alloc((unsigned)(STRLEN(temp_result) + (expr_start - in_start)
-                              + (in_end - expr_end) + 1));
-    if (retval != NULL) {
-      STRCPY(retval, in_start);
-      STRCAT(retval, temp_result);
-      STRCAT(retval, expr_end + 1);
-    }
+    retval = xmalloc(STRLEN(temp_result) + (expr_start - in_start)
+                              + (in_end - expr_end) + 1);
+    STRCPY(retval, in_start);
+    STRCAT(retval, temp_result);
+    STRCAT(retval, expr_end + 1);
   }
   free(temp_result);
 
@@ -15964,7 +15902,6 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
 {
   char_u      *oldval;
   char_u      *newval;
-  unsigned len;
 
   oldval = vimvars[VV_CMDARG].vv_str;
   if (eap == NULL) {
@@ -15973,26 +15910,23 @@ char_u *set_cmdarg(exarg_T *eap, char_u *oldarg)
     return NULL;
   }
 
+  size_t len = 0;
   if (eap->force_bin == FORCE_BIN)
     len = 6;
   else if (eap->force_bin == FORCE_NOBIN)
     len = 8;
-  else
-    len = 0;
 
   if (eap->read_edit)
     len += 7;
 
   if (eap->force_ff != 0)
-    len += (unsigned)STRLEN(eap->cmd + eap->force_ff) + 6;
+    len += STRLEN(eap->cmd + eap->force_ff) + 6;
   if (eap->force_enc != 0)
-    len += (unsigned)STRLEN(eap->cmd + eap->force_enc) + 7;
+    len += STRLEN(eap->cmd + eap->force_enc) + 7;
   if (eap->bad_char != 0)
     len += 7 + 4;      /* " ++bad=" + "keep" or "drop" */
 
-  newval = alloc(len + 1);
-  if (newval == NULL)
-    return NULL;
+  newval = xmalloc(len + 1);
 
   if (eap->force_bin == FORCE_BIN)
     sprintf((char *)newval, " ++bin");
@@ -16747,10 +16681,7 @@ set_var (
     if (!valid_varname(varname))
       return;
 
-    v = (dictitem_T *)alloc((unsigned)(sizeof(dictitem_T)
-                                       + STRLEN(varname)));
-    if (v == NULL)
-      return;
+    v = xmalloc(sizeof(dictitem_T) + STRLEN(varname));
     STRCPY(v->di_key, varname);
     if (hash_add(ht, DI2HIKEY(v)) == FAIL) {
       free(v);
@@ -17697,9 +17628,7 @@ void ex_function(exarg_T *eap)
       }
     }
 
-    fp = (ufunc_T *)alloc((unsigned)(sizeof(ufunc_T) + STRLEN(name)));
-    if (fp == NULL)
-      goto erret;
+    fp = xmalloc(sizeof(ufunc_T) + STRLEN(name));
 
     if (fudi.fd_dict != NULL) {
       if (fudi.fd_di == NULL) {
@@ -17927,18 +17856,16 @@ trans_function_name (
     }
   }
 
-  name = alloc((unsigned)(len + lead + 1));
-  if (name != NULL) {
-    if (lead > 0) {
-      name[0] = K_SPECIAL;
-      name[1] = KS_EXTRA;
-      name[2] = (int)KE_SNR;
-      if (lead > 3)             /* If it's "<SID>" */
-        STRCPY(name + 3, sid_buf);
-    }
-    memmove(name + lead, lv.ll_name, (size_t)len);
-    name[lead + len] = NUL;
+  name = xmalloc(len + lead + 1);
+  if (lead > 0){
+    name[0] = K_SPECIAL;
+    name[1] = KS_EXTRA;
+    name[2] = (int)KE_SNR;
+    if (lead > 3)             /* If it's "<SID>" */
+      STRCPY(name + 3, sid_buf);
   }
+  memmove(name + lead, lv.ll_name, (size_t)len);
+  name[lead + len] = NUL;
   *pp = end;
 
 theend:
@@ -18148,7 +18075,7 @@ void func_dump_profile(FILE *fd)
   if (todo == 0)
     return;         /* nothing to dump */
 
-  sorttab = (ufunc_T **)alloc((unsigned)(sizeof(ufunc_T) * todo));
+  sorttab = xmalloc(sizeof(ufunc_T) * todo);
 
   for (hi = func_hashtab.ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
@@ -18326,9 +18253,7 @@ static char_u *autoload_name(char_u *name)
   char_u      *scriptname;
 
   /* Get the script file name: replace '#' with '/', append ".vim". */
-  scriptname = alloc((unsigned)(STRLEN(name) + 14));
-  if (scriptname == NULL)
-    return FALSE;
+  scriptname = xmalloc(STRLEN(name) + 14);
   STRCPY(scriptname, "autoload/");
   STRCAT(scriptname, name);
   *vim_strrchr(scriptname, AUTOLOAD_CHAR) = NUL;
@@ -18543,7 +18468,7 @@ call_user_func (
 
   line_breakcheck();            /* check for CTRL-C hit */
 
-  fc = (funccall_T *)alloc(sizeof(funccall_T));
+  fc = xmalloc(sizeof(funccall_T));
   fc->caller = current_funccal;
   current_funccal = fc;
   fc->func = fp;
@@ -18624,10 +18549,7 @@ call_user_func (
       v = &fc->fixvar[fixvar_idx++].var;
       v->di_flags = DI_FLAGS_RO | DI_FLAGS_FIX;
     } else {
-      v = (dictitem_T *)alloc((unsigned)(sizeof(dictitem_T)
-                                         + STRLEN(name)));
-      if (v == NULL)
-        break;
+      v = xmalloc(sizeof(dictitem_T) + STRLEN(name));
       v->di_flags = DI_FLAGS_RO;
     }
     STRCPY(v->di_key, name);
@@ -18650,10 +18572,9 @@ call_user_func (
   save_sourcing_name = sourcing_name;
   save_sourcing_lnum = sourcing_lnum;
   sourcing_lnum = 1;
-  sourcing_name = alloc((unsigned)((save_sourcing_name == NULL ? 0
-                                    : STRLEN(save_sourcing_name)) +
-                                   STRLEN(fp->uf_name) + 13));
-  if (sourcing_name != NULL) {
+  sourcing_name = xmalloc((save_sourcing_name == NULL ? 0 : STRLEN(save_sourcing_name))
+                          + STRLEN(fp->uf_name) + 13);
+  {
     if (save_sourcing_name != NULL
         && STRNCMP(save_sourcing_name, "function ", 9) == 0)
       sprintf((char *)sourcing_name, "%s..", save_sourcing_name);
@@ -19612,19 +19533,21 @@ repeat:
           s = p + 1;
           /* find end of substitution */
           p = vim_strchr(s, sep);
-          sub = vim_strnsave(s, (int)(p - s));
-          str = vim_strnsave(*fnamep, *fnamelen);
-          *usedlen = (int)(p + 1 - src);
-          s = do_string_sub(str, pat, sub, flags);
-          if (s != NULL) {
-            *fnamep = s;
-            *fnamelen = (int)STRLEN(s);
-            free(*bufp);
-            *bufp = s;
-            didit = TRUE;
+          if (p != NULL) {
+            sub = vim_strnsave(s, (int)(p - s));
+            str = vim_strnsave(*fnamep, *fnamelen);
+            *usedlen = (int)(p + 1 - src);
+            s = do_string_sub(str, pat, sub, flags);
+            if (s != NULL) {
+              *fnamep = s;
+              *fnamelen = (int)STRLEN(s);
+              free(*bufp);
+              *bufp = s;
+              didit = TRUE;
+            }
+            free(sub);
+            free(str);
           }
-          free(sub);
-          free(str);
           free(pat);
         }
       }

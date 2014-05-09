@@ -1738,28 +1738,24 @@ char_u* keymap_init(void)
     keymap_unload();
     do_cmdline_cmd((char_u *)"unlet! b:keymap_name");
   } else {
-    char_u  *buf;
+    char *buf;
     size_t buflen;
 
     // Source the keymap file.  It will contain a ":loadkeymap" command
     // which will call ex_loadkeymap() below.
     buflen = STRLEN(curbuf->b_p_keymap) + STRLEN(p_enc) + 14;
-    buf = alloc((unsigned)buflen);
-
-    if (buf == NULL) {
-      return e_outofmem;
-    }
+    buf = xmalloc(buflen);
 
     // try finding "keymap/'keymap'_'encoding'.vim"  in 'runtimepath'
-    vim_snprintf((char *)buf, buflen, "keymap/%s_%s.vim",
+    vim_snprintf(buf, buflen, "keymap/%s_%s.vim",
                  curbuf->b_p_keymap, p_enc);
 
-    if (source_runtime(buf, FALSE) == FAIL) {
+    if (source_runtime((char_u *)buf, FALSE) == FAIL) {
       // try finding "keymap/'keymap'.vim" in 'runtimepath'
-      vim_snprintf((char *)buf, buflen, "keymap/%s.vim",
+      vim_snprintf(buf, buflen, "keymap/%s.vim",
                    curbuf->b_p_keymap);
 
-      if (source_runtime(buf, FALSE) == FAIL) {
+      if (source_runtime((char_u *)buf, FALSE) == FAIL) {
         free(buf);
         return (char_u *)N_("E544: Keymap file not found");
       }

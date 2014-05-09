@@ -1321,7 +1321,7 @@ static void command_line_scan(mparm_T *parmp)
                 --argv;
               } else
                 a = argv[0];
-              p = alloc((unsigned)(STRLEN(a) + 4));
+              p = xmalloc(STRLEN(a) + 4);
               sprintf((char *)p, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = TRUE;
               parmp->commands[parmp->n_commands++] = p;
@@ -1469,7 +1469,7 @@ scripterror:
   /* If there is a "+123" or "-c" command, set v:swapcommand to the first
    * one. */
   if (parmp->n_commands > 0) {
-    p = alloc((unsigned)STRLEN(parmp->commands[0]) + 3);
+    p = xmalloc(STRLEN(parmp->commands[0]) + 3);
     sprintf((char *)p, ":%s\r", parmp->commands[0]);
     set_vim_var_string(VV_SWAPCOMMAND, p, -1);
     free(p);
@@ -1515,7 +1515,7 @@ static void init_startuptime(mparm_T *paramp)
  */
 static void allocate_generic_buffers(void)
 {
-  NameBuff = alloc(MAXPATHL);
+  NameBuff = xmalloc(MAXPATHL);
   TIME_MSG("Allocated generic buffers");
 }
 

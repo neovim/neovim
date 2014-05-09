@@ -283,9 +283,9 @@ qf_init_ext (
     {'s', ".\\+"}
   };
 
-  namebuf = alloc(CMDBUFFSIZE + 1);
-  errmsg = alloc(CMDBUFFSIZE + 1);
-  pattern = alloc(CMDBUFFSIZE + 1);
+  namebuf = xmalloc(CMDBUFFSIZE + 1);
+  errmsg = xmalloc(CMDBUFFSIZE + 1);
+  pattern = xmalloc(CMDBUFFSIZE + 1);
 
   if (efile != NULL && (fd = mch_fopen((char *)efile, "r")) == NULL) {
     EMSG2(_(e_openerrf), efile);
@@ -321,7 +321,7 @@ qf_init_ext (
 #else
   i += 2;   /* "%f" can become two chars longer */
 #endif
-  fmtstr = alloc(i);
+  fmtstr = xmalloc(i);
 
   while (efm[0] != NUL) {
     /*
@@ -720,7 +720,7 @@ restofline:
           goto error2;
         if (*errmsg && !multiignore) {
           len = (int)STRLEN(qfprev->qf_text);
-          ptr = alloc((unsigned)(len + STRLEN(errmsg) + 2));
+          ptr = xmalloc(len + STRLEN(errmsg) + 2);
           STRCPY(ptr, qfprev->qf_text);
           free(qfprev->qf_text);
           qfprev->qf_text = ptr;
@@ -856,7 +856,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
     qi->qf_curlist = qi->qf_listcount++;
   memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
   if (qf_title != NULL) {
-    char_u *p = alloc((int)STRLEN(qf_title) + 2);
+    char_u *p = xmalloc(STRLEN(qf_title) + 2);
 
     qi->qf_lists[qi->qf_curlist].qf_title = p;
     sprintf((char *)p, ":%s", (char *)qf_title);
@@ -921,9 +921,7 @@ qf_add_entry (
     int valid                      /* valid entry */
 )
 {
-  qfline_T    *qfp;
-
-  qfp = (qfline_T *)alloc((unsigned)sizeof(qfline_T));
+  qfline_T *qfp = xmalloc(sizeof(qfline_T));
 
   if (bufnum != 0)
     qfp->qf_fnum = bufnum;
@@ -1140,11 +1138,10 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
  */
 static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
 {
-  struct dir_stack_T  *ds_new;
   struct dir_stack_T  *ds_ptr;
 
   /* allocate new stack element and hook it in */
-  ds_new = (struct dir_stack_T *)alloc((unsigned)sizeof(struct dir_stack_T));
+  struct dir_stack_T *ds_new = xmalloc(sizeof(struct dir_stack_T));
 
   ds_new->next = *stackptr;
   *stackptr = ds_new;
@@ -2516,7 +2513,7 @@ void ex_make(exarg_T *eap)
   len = (unsigned)STRLEN(p_shq) * 2 + (unsigned)STRLEN(eap->arg) + 1;
   if (*p_sp != NUL)
     len += (unsigned)STRLEN(p_sp) + (unsigned)STRLEN(fname) + 3;
-  cmd = alloc(len);
+  cmd = xmalloc(len);
   sprintf((char *)cmd, "%s%s%s", (char *)p_shq, (char *)eap->arg,
       (char *)p_shq);
   if (*p_sp != NUL)
@@ -2591,7 +2588,7 @@ static char_u *get_mef_name(void)
     else
       off += 19;
 
-    name = alloc((unsigned)STRLEN(p_mef) + 30);
+    name = xmalloc(STRLEN(p_mef) + 30);
     STRCPY(name, p_mef);
     sprintf((char *)name + (p - p_mef), "%d%d", start, off);
     STRCAT(name, p + 2);
@@ -2838,8 +2835,8 @@ void ex_vimgrep(exarg_T *eap)
     goto theend;
   }
 
-  dirname_start = alloc(MAXPATHL);
-  dirname_now = alloc(MAXPATHL);
+  dirname_start = xmalloc(MAXPATHL);
+  dirname_now = xmalloc(MAXPATHL);
 
   /* Remember the current directory, because a BufRead autocommand that does
    * ":lcd %:p:h" changes the meaning of short path names. */
@@ -3107,7 +3104,7 @@ char_u *skip_vimgrep_pat(char_u *p, char_u **s, int *flags)
  */
 static void restore_start_dir(char_u *dirname_start)
 {
-  char_u *dirname_now = alloc(MAXPATHL);
+  char_u *dirname_now = xmalloc(MAXPATHL);
 
   os_dirname(dirname_now, MAXPATHL);
   if (STRCMP(dirname_start, dirname_now) != 0) {

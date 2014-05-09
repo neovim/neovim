@@ -2010,7 +2010,7 @@ spell_move_to (
     if (buflen < len + MAXWLEN + 2) {
       free(buf);
       buflen = len + MAXWLEN + 2;
-      buf = alloc(buflen);
+      buf = xmalloc(buflen);
     }
 
     // In first line check first word for Capital.
@@ -2854,7 +2854,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     ccnt = getc(fd);                            // <salfromlen>
     if (ccnt < 0)
       return SP_TRUNCERROR;
-    p = alloc(ccnt + 2);
+    p = xmalloc(ccnt + 2);
     smp->sm_lead = p;
 
     // Read up to the first special char into sm_lead.
@@ -2917,7 +2917,7 @@ static int read_sal_section(FILE *fd, slang_T *slang)
     // Add one extra entry to mark the end with an empty sm_lead.  Avoids
     // that we need to check the index every time.
     smp = &((salitem_T *)gap->ga_data)[gap->ga_len];
-    p = alloc(1);
+    p = xmalloc(1);
     p[0] = NUL;
     smp->sm_lead = p;
     smp->sm_leadlen = 0;
@@ -2994,7 +2994,7 @@ count_common_word (
   hash = hash_hash(p);
   hi = hash_lookup(&lp->sl_wordcount, p, hash);
   if (HASHITEM_EMPTY(hi)) {
-    wc = (wordcount_T *)alloc((unsigned)(sizeof(wordcount_T) + STRLEN(p)));
+    wc = xmalloc(sizeof(wordcount_T) + STRLEN(p));
     STRCPY(wc->wc_word, p);
     wc->wc_count = count;
     hash_add_item(&lp->sl_wordcount, hi, wc->wc_word, hash);
@@ -3144,22 +3144,22 @@ static int read_compound(FILE *fd, slang_T *slang, int len)
   c = todo * 2 + 7;
   if (enc_utf8)
     c += todo * 2;
-  pat = alloc((unsigned)c);
+  pat = xmalloc(c);
 
   // We also need a list of all flags that can appear at the start and one
   // for all flags.
-  cp = alloc(todo + 1);
+  cp = xmalloc(todo + 1);
   slang->sl_compstartflags = cp;
   *cp = NUL;
 
-  ap = alloc(todo + 1);
+  ap = xmalloc(todo + 1);
   slang->sl_compallflags = ap;
   *ap = NUL;
 
   // And a list of all patterns in their original form, for checking whether
   // compounding may work in match_compoundrule().  This is freed when we
   // encounter a wildcard, the check doesn't work then.
-  crp = alloc(todo + 1);
+  crp = xmalloc(todo + 1);
   slang->sl_comprules = crp;
 
   pp = pat;
@@ -3376,7 +3376,7 @@ static int set_sofo(slang_T *lp, char_u *from, char_u *to)
     // Allocate the lists.
     for (i = 0; i < 256; ++i)
       if (lp->sl_sal_first[i] > 0) {
-        p = alloc(sizeof(int) * (lp->sl_sal_first[i] * 2 + 1));
+        p = xmalloc(sizeof(int) * (lp->sl_sal_first[i] * 2 + 1));
         ((int **)gap->ga_data)[i] = (int *)p;
         *(int *)p = 0;
       }
@@ -7374,7 +7374,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
 
   // Write the .sug file.
   // Make the file name by changing ".spl" to ".sug".
-  fname = alloc(MAXPATHL);
+  fname = xmalloc(MAXPATHL);
   vim_strncpy(fname, wfname, MAXPATHL - 1);
   len = (int)STRLEN(fname);
   fname[len - 2] = 'u';
@@ -7782,7 +7782,7 @@ mkspell (
   innames = &fnames[1];
   incount = fcount - 1;
 
-  wfname = alloc(MAXPATHL);
+  wfname = xmalloc(MAXPATHL);
 
   if (fcount >= 1) {
     len = (int)STRLEN(fnames[0]);
@@ -7833,7 +7833,7 @@ mkspell (
       goto theend;
     }
 
-    fname = alloc(MAXPATHL);
+    fname = xmalloc(MAXPATHL);
 
     // Init the aff and dic pointers.
     // Get the region names if there are more than 2 arguments.
@@ -8025,7 +8025,7 @@ spell_add_word (
       EMSG2(_(e_notset), "spellfile");
       return;
     }
-    fnamebuf = alloc(MAXPATHL);
+    fnamebuf = xmalloc(MAXPATHL);
 
     for (spf = curwin->w_s->b_p_spf, i = 1; *spf != NUL; ++i) {
       copy_option_part(&spf, fnamebuf, MAXPATHL, ",");
@@ -8144,7 +8144,7 @@ static void init_spellfile(void)
   char_u      *lstart = curbuf->b_s.b_p_spl;
 
   if (*curwin->w_s->b_p_spl != NUL && !GA_EMPTY(&curwin->w_s->b_langp)) {
-    buf = alloc(MAXPATHL);
+    buf = xmalloc(MAXPATHL);
 
     // Find the end of the language name.  Exclude the region.  If there
     // is a path separator remember the start of the tail.
@@ -8787,8 +8787,7 @@ void spell_suggest(int count)
     }
 
     // Replace the word.
-    p = alloc((unsigned)STRLEN(line) - stp->st_orglen
-        + stp->st_wordlen + 1);
+    p = xmalloc(STRLEN(line) - stp->st_orglen + stp->st_wordlen + 1);
     c = (int)(sug.su_badptr - line);
     memmove(p, line, c);
     STRCPY(p + c, stp->st_word);
@@ -8886,7 +8885,7 @@ void ex_spellrepall(exarg_T *eap)
   }
   addlen = (int)(STRLEN(repl_to) - STRLEN(repl_from));
 
-  frompat = alloc((unsigned)STRLEN(repl_from) + 7);
+  frompat = xmalloc(STRLEN(repl_from) + 7);
   sprintf((char *)frompat, "\\V\\<%s\\>", repl_from);
   p_ws = FALSE;
 
@@ -8903,7 +8902,7 @@ void ex_spellrepall(exarg_T *eap)
     line = ml_get_curline();
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
             repl_to, STRLEN(repl_to)) != 0) {
-      p = alloc((unsigned)STRLEN(line) + addlen + 1);
+      p = xmalloc(STRLEN(line) + addlen + 1);
       memmove(p, line, curwin->w_cursor.col);
       STRCPY(p + curwin->w_cursor.col, repl_to);
       STRCAT(p, line + curwin->w_cursor.col + STRLEN(repl_from));
@@ -8955,8 +8954,8 @@ spell_suggest_list (
 
     // The suggested word may replace only part of "word", add the not
     // replaced part.
-    wcopy = alloc(stp->st_wordlen
-        + (unsigned)STRLEN(sug.su_badptr + stp->st_orglen) + 1);
+    wcopy = xmalloc(stp->st_wordlen
+                    + STRLEN(sug.su_badptr + stp->st_orglen) + 1);
     STRCPY(wcopy, stp->st_word);
     STRCPY(wcopy + stp->st_wordlen, sug.su_badptr + stp->st_orglen);
     ((char_u **)gap->ga_data)[gap->ga_len++] = wcopy;
@@ -11298,8 +11297,7 @@ add_sound_suggest (
   hash = hash_hash(goodword);
   hi = hash_lookup(&slang->sl_sounddone, goodword, hash);
   if (HASHITEM_EMPTY(hi)) {
-    sft = (sftword_T *)alloc((unsigned)(sizeof(sftword_T)
-                                        + STRLEN(goodword)));
+    sft = xmalloc(sizeof(sftword_T) + STRLEN(goodword));
     sft->sft_score = score;
     STRCPY(sft->sft_word, goodword);
     hash_add_item(&slang->sl_sounddone, hi, sft->sft_word, hash);
@@ -11563,7 +11561,7 @@ static void set_map_str(slang_T *lp, char_u *map)
         hash_T hash;
         hashitem_T  *hi;
 
-        b = alloc((unsigned)(cl + headcl + 2));
+        b = xmalloc(cl + headcl + 2);
         mb_char2bytes(c, b);
         b[cl] = NUL;
         mb_char2bytes(headc, b + cl + 1);

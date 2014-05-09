@@ -3083,7 +3083,7 @@ do_set (
               newlen = (unsigned)STRLEN(arg) + 1;
               if (adding || prepending || removing)
                 newlen += (unsigned)STRLEN(origval) + 1;
-              newval = alloc(newlen);
+              newval = xmalloc(newlen);
               s = newval;
 
               /*
@@ -3129,7 +3129,7 @@ do_set (
                   newlen = (unsigned)STRLEN(s) + 1;
                   if (adding || prepending || removing)
                     newlen += (unsigned)STRLEN(origval) + 1;
-                  newval = alloc(newlen);
+                  newval = xmalloc(newlen);
                   STRCPY(newval, s);
                 }
               }
@@ -4828,7 +4828,7 @@ skip:
   if (count == 0)
     wp->w_p_cc_cols = NULL;
   else {
-    wp->w_p_cc_cols = (int *)alloc((unsigned)sizeof(int) * (count + 1));
+    wp->w_p_cc_cols = xmalloc(sizeof(int) * (count + 1));
     /* sort the columns for faster usage on screen redraw inside
      * win_line() */
     qsort(color_cols, count, sizeof(int), int_cmp);
@@ -6204,7 +6204,6 @@ showoptions (
   int col;
   int isterm;
   char_u              *varp;
-  struct vimoption    **items;
   int item_count;
   int run;
   int row, rows;
@@ -6215,8 +6214,7 @@ showoptions (
 #define INC 20
 #define GAP 3
 
-  items = (struct vimoption **)alloc((unsigned)(sizeof(struct vimoption *) *
-                                                PARAM_COUNT));
+  struct vimoption **items = xmalloc(sizeof(struct vimoption *) * PARAM_COUNT);
 
   /* Highlight title */
   if (all == 2)
@@ -6505,7 +6503,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
         if (put_escstr(fd, str2special(&s, FALSE), 2) == FAIL)
           return FAIL;
     } else if (expand) {
-      buf = alloc(MAXPATHL);
+      buf = xmalloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, FALSE);
       if (put_escstr(fd, buf, 2) == FAIL) {
         free(buf);
@@ -7525,11 +7523,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
         *num_file = num_term;
       else
         return OK;
-      *file = (char_u **)alloc((unsigned)(*num_file * sizeof(char_u *)));
-      if (*file == NULL) {
-        *file = (char_u **)"";
-        return FAIL;
-      }
+      *file = (char_u **)xmalloc(*num_file * sizeof(char_u *));
     }
   }
   return OK;
@@ -7541,7 +7535,7 @@ int ExpandOldSetting(int *num_file, char_u ***file)
   char_u  *buf;
 
   *num_file = 0;
-  *file = (char_u **)alloc((unsigned)sizeof(char_u *));
+  *file = (char_u **)xmalloc(sizeof(char_u *));
 
   /*
    * For a terminal key code expand_option_idx is < 0.

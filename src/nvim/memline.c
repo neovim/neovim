@@ -1015,7 +1015,7 @@ void ml_recover(void)
    * Allocate a buffer structure for the swap file that is used for recovery.
    * Only the memline and crypt information in it are really used.
    */
-  buf = (buf_T *)alloc((unsigned)sizeof(buf_T));
+  buf = xmalloc(sizeof(buf_T));
 
   /*
    * init fields in memline struct
@@ -1125,7 +1125,7 @@ void ml_recover(void)
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
     /* need to reallocate the memory used to store the data */
-    p = alloc(mfp->mf_page_size);
+    p = xmalloc(mfp->mf_page_size);
     memmove(p, hp->bh_data, previous_page_size);
     free(hp->bh_data);
     hp->bh_data = p;
@@ -1538,7 +1538,7 @@ recover_names (
    * Do the loop for every directory in 'directory'.
    * First allocate some memory to put the directory name in.
    */
-  dir_name = alloc((unsigned)STRLEN(p_dir) + 1);
+  dir_name = xmalloc(STRLEN(p_dir) + 1);
   dirp = p_dir;
   while (dir_name != NULL && *dirp) {
     /*
@@ -1612,7 +1612,7 @@ recover_names (
       char_u *swapname = modname(fname_res, (char_u *)".swp", TRUE);
       if (swapname != NULL) {
         if (os_file_exists(swapname)) {
-          files = (char_u **)alloc((unsigned)sizeof(char_u *));
+          files = (char_u **)xmalloc(sizeof(char_u *));
           files[0] = swapname;
           swapname = NULL;
           num_files = 1;
@@ -2607,8 +2607,9 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
   if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
     return FAIL;
 
-  if (copy)
+  if (copy) {
     line = vim_strsave(line);
+  }
   if (curbuf->b_ml.ml_line_lnum != lnum)            /* other line buffered */
     ml_flush_line(curbuf);                          /* flush it */
   else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY)   /* same line allocated */
@@ -3539,7 +3540,7 @@ findswapname (
    * Isolate a directory name from *dirp and put it in dir_name.
    * First allocate some memory to put the directory name in.
    */
-  dir_name = alloc((unsigned)STRLEN(*dirp) + 1);
+  dir_name = xmalloc(STRLEN(*dirp) + 1);
   (void)copy_option_part(dirp, dir_name, 31000, ",");
 
   /*
@@ -3666,9 +3667,9 @@ findswapname (
           if (swap_exists_action != SEA_NONE && choice == 0) {
             char_u  *name;
 
-            name = alloc((unsigned)(STRLEN(fname)
-                                    + STRLEN(_("Swap file \""))
-                                    + STRLEN(_("\" already exists!")) + 5));
+            name = xmalloc(STRLEN(fname)
+                           + STRLEN(_("Swap file \""))
+                           + STRLEN(_("\" already exists!")) + 5);
             STRCPY(name, _("Swap file \""));
             home_replace(NULL, fname, name + STRLEN(name),
                 1000, TRUE);

@@ -1120,7 +1120,7 @@ int flags;                      /* EW_* flags */
       ++len;
     }
   }
-  command = alloc(len);
+  command = xmalloc(len);
 
   /*
    * Build the shell command:
@@ -1269,7 +1269,7 @@ int flags;                      /* EW_* flags */
   fseek(fd, 0L, SEEK_END);
   len = ftell(fd);                      /* get size of temp file */
   fseek(fd, 0L, SEEK_SET);
-  buffer = alloc(len + 1);
+  buffer = xmalloc(len + 1);
   i = fread((char *)buffer, 1, len, fd);
   fclose(fd);
   os_remove((char *)tempname);
@@ -1353,7 +1353,7 @@ int flags;                      /* EW_* flags */
     goto notfound;
   }
   *num_file = i;
-  *file = (char_u **)alloc(sizeof(char_u *) * i);
+  *file = (char_u **)xmalloc(sizeof(char_u *) * i);
 
   /*
    * Isolate the individual file names.
@@ -1397,7 +1397,7 @@ int flags;                      /* EW_* flags */
     if (!dir && (flags & EW_EXEC) && !os_can_exe((*file)[i]))
       continue;
 
-    p = alloc((unsigned)(STRLEN((*file)[i]) + 1 + dir));
+    p = xmalloc(STRLEN((*file)[i]) + 1 + dir);
     STRCPY(p, (*file)[i]);
     if (dir)
       add_pathsep(p);             /* add '/' to a directory name */

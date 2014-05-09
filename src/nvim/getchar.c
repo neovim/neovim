@@ -891,14 +891,8 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
       setcursor();
       return FAIL;
     }
-    s1 = alloc(newlen);
-    if (s1 == NULL)                 /* out of memory */
-      return FAIL;
-    s2 = alloc(newlen);
-    if (s2 == NULL) {               /* out of memory */
-      free(s1);
-      return FAIL;
-    }
+    s1 = xmalloc(newlen);
+    s2 = xmalloc(newlen);
     typebuf.tb_buflen = newlen;
 
     /* copy the old chars, before the insertion point */
@@ -1147,16 +1141,11 @@ static void may_sync_undo(void)
 
 /*
  * Make "typebuf" empty and allocate new buffers.
- * Returns FAIL when out of memory.
  */
 int alloc_typebuf(void)
 {
-  typebuf.tb_buf = alloc(TYPELEN_INIT);
-  typebuf.tb_noremap = alloc(TYPELEN_INIT);
-  if (typebuf.tb_buf == NULL || typebuf.tb_noremap == NULL) {
-    free_typebuf();
-    return FAIL;
-  }
+  typebuf.tb_buf = xmalloc(TYPELEN_INIT);
+  typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
   typebuf.tb_buflen = TYPELEN_INIT;
   typebuf.tb_off = 0;
   typebuf.tb_len = 0;
@@ -3038,11 +3027,7 @@ do_map (
   /*
    * Get here when adding a new entry to the maphash[] list or abbrlist.
    */
-  mp = (mapblock_T *)alloc((unsigned)sizeof(mapblock_T));
-  if (mp == NULL) {
-    retval = 4;             /* no mem */
-    goto theend;
-  }
+  mp = xmalloc(sizeof(mapblock_T));
 
   /* If CTRL-C has been mapped, don't always use it for Interrupting */
   if (*keys == Ctrl_C)
@@ -3548,9 +3533,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
       break;       /* for (round) */
 
     if (round == 1) {
-      *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
-      if (*file == NULL)
-        return FAIL;
+      *file = (char_u **)xmalloc(count * sizeof(char_u *));
     }
   }   /* for (round) */
 
@@ -3813,7 +3796,7 @@ char_u *vim_strsave_escape_csi(char_u *p)
   char_u      *s, *d;
 
   /* Need a buffer to hold up to three times as much. */
-  res = alloc((unsigned)(STRLEN(p) * 3) + 1);
+  res = xmalloc(STRLEN(p) * 3 + 1);
   d = res;
   for (s = p; *s != NUL; ) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {

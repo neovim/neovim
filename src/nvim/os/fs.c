@@ -89,8 +89,8 @@ static bool is_executable_in_path(const char_u *name)
     return false;
   }
 
-  int buf_len = STRLEN(name) + STRLEN(path) + 2;
-  char_u *buf = alloc((unsigned)(buf_len));
+  size_t buf_len = STRLEN(name) + STRLEN(path) + 2;
+  char_u *buf = xmalloc(buf_len);
 
   // Walk through all entries in $PATH to check if "name" exists there and
   // is an executable file.
@@ -103,7 +103,7 @@ static bool is_executable_in_path(const char_u *name)
     // Glue together the given directory from $PATH with name and save into
     // buf.
     vim_strncpy(buf, (char_u *) path, e - path);
-    append_path((char *) buf, (const char *) name, buf_len);
+    append_path((char *) buf, (const char *) name, (int)buf_len);
 
     if (is_executable(buf)) {
       // Found our executable. Free buf and return.
