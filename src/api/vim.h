@@ -101,13 +101,6 @@ void vim_err_write(String str);
 /// @return The number of buffers
 int64_t vim_get_buffer_count(void);
 
-/// Gets a buffer by index
-///
-/// @param num The buffer number
-/// @param[out] err Details of an error that may have occurred
-/// @return The buffer handle
-Buffer vim_get_buffer(int64_t num, Error *err);
-
 /// Return the current buffer
 ///
 /// @reqturn The buffer handle
@@ -116,7 +109,8 @@ Buffer vim_get_current_buffer(void);
 /// Sets the current buffer
 ///
 /// @param id The buffer handle
-void vim_set_current_buffer(Buffer buffer);
+/// @param[out] err Details of an error that may have occurred
+void vim_set_current_buffer(Buffer buffer, Error *err);
 
 /// Gets the number of windows
 ///

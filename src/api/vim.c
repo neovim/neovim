@@ -8,6 +8,7 @@
 #include "api/defs.h"
 #include "api/buffer.h"
 #include "../vim.h"
+#include "../buffer.h"
 #include "types.h"
 #include "ascii.h"
 #include "ex_docmd.h"
@@ -184,19 +185,26 @@ int64_t vim_get_buffer_count(void)
   return n;
 }
 
-Buffer vim_get_buffer(int64_t num, Error *err)
-{
-  abort();
-}
-
 Buffer vim_get_current_buffer(void)
 {
-  abort();
+  return curbuf->b_fnum;
 }
 
-void vim_set_current_buffer(Buffer buffer)
+void vim_set_current_buffer(Buffer buffer, Error *err)
 {
-  abort();
+  try_start();
+  if (do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buffer, 0) == FAIL) {
+    if (try_end(err)) {
+      return;
+    }
+
+    char msg[256];
+    snprintf(msg, sizeof(msg), "failed to switch to buffer %d", (int)buffer);
+    set_api_error(msg, err);
+    return;
+  }
+
+  try_end(err);
 }
 
 int64_t vim_get_window_count(void)
