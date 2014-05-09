@@ -1492,13 +1492,9 @@ void write_viminfo(char_u *file, int forceit)
   FILE        *fp_in = NULL;    /* input viminfo file, if any */
   FILE        *fp_out = NULL;   /* output viminfo file */
   char_u      *tempname = NULL;         /* name of temp viminfo file */
-  struct stat st_new;           /* mch_stat() of potential new file */
   char_u      *wp;
 #if defined(UNIX)
   mode_t umask_save;
-#endif
-#ifdef UNIX
-  struct stat st_old;           /* mch_stat() of existing viminfo file */
 #endif
 
   if (no_viminfo())
@@ -1511,7 +1507,7 @@ void write_viminfo(char_u *file, int forceit)
   fp_in = mch_fopen((char *)fname, READBIN);
   if (fp_in == NULL) {
     /* if it does exist, but we can't read it, don't try writing */
-    if (mch_stat((char *)fname, &st_new) == 0)
+    if (os_file_exists(fname))
       goto end;
 #if defined(UNIX)
     /*
@@ -1536,16 +1532,15 @@ void write_viminfo(char_u *file, int forceit)
      * overwrite a user's viminfo file after a "su root", with a
      * viminfo file that the user can't read.
      */
-    st_old.st_dev = (dev_t)0;
-    st_old.st_ino = 0;
-    st_old.st_mode = 0600;
-    if (mch_stat((char *)fname, &st_old) == 0
+
+    FileInfo old_info;  // FileInfo of existing viminfo file
+    if (os_get_file_info((char *)fname, &old_info)
         && getuid() != ROOT_UID
-        && !(st_old.st_uid == getuid()
-             ? (st_old.st_mode & 0200)
-             : (st_old.st_gid == getgid()
-                ? (st_old.st_mode & 0020)
-                : (st_old.st_mode & 0002)))) {
+        && !(old_info.stat.st_uid == getuid()
+             ? (old_info.stat.st_mode & 0200)
+             : (old_info.stat.st_gid == getgid()
+                ? (old_info.stat.st_mode & 0020)
+                : (old_info.stat.st_mode & 0002)))) {
       int tt = msg_didany;
 
       /* avoid a wait_return for this message, it's annoying */
@@ -1563,7 +1558,7 @@ void write_viminfo(char_u *file, int forceit)
        * Check if tempfile already exists.  Never overwrite an
        * existing file!
        */
-      if (mch_stat((char *)tempname, &st_new) == 0) {
+      if (os_file_exists(tempname)) {
         /*
          * Try another name.  Change one character, just before
          * the extension.
@@ -1571,8 +1566,7 @@ void write_viminfo(char_u *file, int forceit)
         wp = tempname + STRLEN(tempname) - 5;
         if (wp < path_tail(tempname))                 /* empty file name? */
           wp = path_tail(tempname);
-        for (*wp = 'z'; mch_stat((char *)tempname, &st_new) == 0;
-             --*wp) {
+        for (*wp = 'z'; os_file_exists(tempname); --*wp) {
           /*
            * They all exist?  Must be something wrong! Don't
            * write the viminfo file then.
@@ -1598,7 +1592,7 @@ void write_viminfo(char_u *file, int forceit)
       umask_save = umask(0);
       fd = mch_open((char *)tempname,
           O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW,
-          (int)((st_old.st_mode & 0777) | 0600));
+          (int)((old_info.stat.st_mode & 0777) | 0600));
       (void)umask(umask_save);
 # else
       fd = mch_open((char *)tempname,
@@ -1624,8 +1618,9 @@ void write_viminfo(char_u *file, int forceit)
        * Make sure the owner can read/write it.  This only works for
        * root.
        */
-      if (fp_out != NULL)
-        ignored = fchown(fileno(fp_out), st_old.st_uid, st_old.st_gid);
+      if (fp_out != NULL) {
+        fchown(fileno(fp_out), old_info.stat.st_uid, old_info.stat.st_gid);
+      }
 #endif
     }
   }

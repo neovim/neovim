@@ -46,25 +46,6 @@
 #include "ui.h"
 #include "os/os.h"
 
-/*
- * Some systems have the page size in statfs.f_bsize, some in stat.st_blksize
- */
-#ifdef HAVE_ST_BLKSIZE
-# define STATFS stat
-# define F_BSIZE st_blksize
-# define fstatfs(fd, buf, len, nul) mch_fstat((fd), (buf))
-#else
-# ifdef HAVE_SYS_STATFS_H
-#  include <sys/statfs.h>
-#  define STATFS statfs
-#  define F_BSIZE f_bsize
-# endif
-#endif
-
-/*
- * for Amiga Dos 2.0x we use Flush
- */
-
 #define MEMFILE_PAGE_SIZE 4096          /* default page size */
 
 static long_u total_mem_used = 0;       /* total memory used for memfiles */
@@ -125,10 +106,6 @@ memfile_T *mf_open(char_u *fname, int flags)
 {
   memfile_T           *mfp;
   off_t size;
-#if defined(STATFS) && defined(UNIX) && !defined(__QNX__) && !defined(__minix)
-# define USE_FSTATFS
-  struct STATFS stf;
-#endif
 
   if ((mfp = (memfile_T *)alloc((unsigned)sizeof(memfile_T))) == NULL)
     return NULL;
@@ -157,7 +134,6 @@ memfile_T *mf_open(char_u *fname, int flags)
   mfp->mf_page_size = MEMFILE_PAGE_SIZE;
   mfp->mf_old_key = NULL;
 
-#ifdef USE_FSTATFS
   /*
    * Try to set the page size equal to the block size of the device.
    * Speeds up I/O a lot.
@@ -165,12 +141,13 @@ memfile_T *mf_open(char_u *fname, int flags)
    * in ml_recover().  The size used here may be wrong, therefore
    * mf_blocknr_max must be rounded up.
    */
+  FileInfo file_info;
   if (mfp->mf_fd >= 0
-      && fstatfs(mfp->mf_fd, &stf, sizeof(struct statfs), 0) == 0
-      && stf.F_BSIZE >= MIN_SWAP_PAGE_SIZE
-      && stf.F_BSIZE <= MAX_SWAP_PAGE_SIZE)
-    mfp->mf_page_size = stf.F_BSIZE;
-#endif
+      && os_get_file_info_fd(mfp->mf_fd, &file_info)
+      && file_info.stat.st_blksize >= MIN_SWAP_PAGE_SIZE
+      && file_info.stat.st_blksize <= MAX_SWAP_PAGE_SIZE) {
+    mfp->mf_page_size = file_info.stat.st_blksize;
+  }
 
   if (mfp->mf_fd < 0 || (flags & (O_TRUNC|O_EXCL))
       || (size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0)
@@ -1064,10 +1041,6 @@ mf_do_open (
     int flags                      /* flags for open() */
 )
 {
-#ifdef HAVE_LSTAT
-  struct stat sb;
-#endif
-
   mfp->mf_fname = fname;
 
   /*
@@ -1077,17 +1050,16 @@ mf_do_open (
    */
   mf_set_ffname(mfp);
 
-#ifdef HAVE_LSTAT
   /*
    * Extra security check: When creating a swap file it really shouldn't
    * exist yet.  If there is a symbolic link, this is most likely an attack.
    */
-  if ((flags & O_CREAT) && mch_lstat((char *)mfp->mf_fname, &sb) >= 0) {
+  FileInfo file_info;
+  if ((flags & O_CREAT)
+      && os_get_file_info_link((char *)mfp->mf_fname, &file_info)) {
     mfp->mf_fd = -1;
     EMSG(_("E300: Swap file already exists (symlink attack?)"));
-  } else
-#endif
-  {
+  } else {
     /*
      * try to open the file
      */

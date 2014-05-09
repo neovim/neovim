@@ -86,7 +86,7 @@ static void set_file_time(char_u *fname, time_t atime, time_t mtime);
 static int set_rw_fname(char_u *fname, char_u *sfname);
 static int msg_add_fileformat(int eol_type);
 static void msg_add_eol(void);
-static int check_mtime(buf_T *buf, struct stat *s);
+static int check_mtime(buf_T *buf, FileInfo *file_info);
 static int time_differs(long t1, long t2);
 static int apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io,
                                 int force, buf_T *buf,
@@ -262,7 +262,6 @@ readfile (
 #endif
   int fileformat = 0;                   /* end-of-line format */
   int keep_fileformat = FALSE;
-  struct stat st;
   int file_readonly;
   linenr_T skip_count = 0;
   linenr_T read_count = 0;
@@ -441,8 +440,9 @@ readfile (
 
   if (newfile && !read_stdin && !read_buffer) {
     /* Remember time of file. */
-    if (mch_stat((char *)fname, &st) >= 0) {
-      buf_store_time(curbuf, &st, fname);
+    FileInfo file_info;
+    if (os_get_file_info((char *)fname, &file_info)) {
+      buf_store_file_info(curbuf, &file_info, fname);
       curbuf->b_mtime_read = curbuf->b_mtime;
 #ifdef UNIX
       /*
@@ -456,7 +456,7 @@ readfile (
        * not be able to write to the file ourselves.
        * Setting the bits is done below, after creating the swap file.
        */
-      swap_mode = (st.st_mode & 0644) | 0600;
+      swap_mode = (file_info.stat.st_mode & 0644) | 0600;
 #endif
     } else {
       curbuf->b_mtime = 0;
@@ -2473,7 +2473,6 @@ buf_write (
   int overwriting;                          /* TRUE if writing over original */
   int no_eol = FALSE;                       /* no end-of-line written */
   int device = FALSE;                       /* writing to a device */
-  struct stat st_old;
   int prev_got_int = got_int;
   bool file_readonly = false;               /* overwritten file is read-only */
   static char     *err_readonly =
@@ -2774,15 +2773,14 @@ buf_write (
    * Get information about original file (if there is one).
    */
 #if defined(UNIX)
-  st_old.st_dev = 0;
-  st_old.st_ino = 0;
   perm = -1;
-  if (mch_stat((char *)fname, &st_old) < 0)
+  FileInfo file_info_old;
+  if (!os_get_file_info((char *)fname, &file_info_old)) {
     newfile = TRUE;
-  else {
-    perm = st_old.st_mode;
-    if (!S_ISREG(st_old.st_mode)) {             /* not a file */
-      if (S_ISDIR(st_old.st_mode)) {
+  } else {
+    perm = file_info_old.stat.st_mode;
+    if (!S_ISREG(file_info_old.stat.st_mode)) {             /* not a file */
+      if (S_ISDIR(file_info_old.stat.st_mode)) {
         errnum = (char_u *)"E502: ";
         errmsg = (char_u *)_("is a directory");
         goto fail;
@@ -2822,8 +2820,10 @@ buf_write (
       errmsg = (char_u *)_("is a directory");
       goto fail;
     }
-    if (overwriting)
-      (void)mch_stat((char *)fname, &st_old);
+    if (overwriting) {
+      os_get_file_info((char *)fname, &file_info_old);
+    }
+
   }
 #endif /* !UNIX */
 
@@ -2849,7 +2849,7 @@ buf_write (
      * Check if the timestamp hasn't changed since reading the file.
      */
     if (overwriting) {
-      retval = check_mtime(buf, &st_old);
+      retval = check_mtime(buf, &file_info_old);
       if (retval == FAIL)
         goto fail;
     }
@@ -2890,14 +2890,11 @@ buf_write (
    * off.  This helps when editing large files on almost-full disks.
    */
   if (!(append && *p_pm == NUL) && !filtering && perm >= 0 && dobackup) {
-#if defined(UNIX) || defined(WIN32)
-    struct stat st;
-#endif
+    FileInfo file_info;
 
-    if ((bkc_flags & BKC_YES) || append)        /* "yes" */
+    if ((bkc_flags & BKC_YES) || append) {       /* "yes" */
       backup_copy = TRUE;
-#if defined(UNIX) || defined(WIN32)
-    else if ((bkc_flags & BKC_AUTO)) {          /* "auto" */
+    } else if ((bkc_flags & BKC_AUTO)) {          /* "auto" */
       int i;
 
 # ifdef UNIX
@@ -2908,18 +2905,16 @@ buf_write (
        * - we don't have write permission in the directory
        * - we can't set the owner/group of the new file
        */
-      if (st_old.st_nlink > 1
-          || mch_lstat((char *)fname, &st) < 0
-          || st.st_dev != st_old.st_dev
-          || st.st_ino != st_old.st_ino
+      if (file_info_old.stat.st_nlink > 1
+          || !os_get_file_info_link((char *)fname, &file_info)
+          || !os_file_info_id_equal(&file_info, &file_info_old)
 #  ifndef HAVE_FCHOWN
-          || st.st_uid != st_old.st_uid
-          || st.st_gid != st_old.st_gid
+          || file_info.stat.st_uid != file_info_old.stat.st_uid
+          || file_info.stat.st_gid != file_info_old.stat.st_gid
 #  endif
-          )
+          ) {
         backup_copy = TRUE;
-      else
-# else
+      } else
 # endif
       {
         /*
@@ -2931,8 +2926,9 @@ buf_write (
         STRCPY(IObuff, fname);
         for (i = 4913;; i += 123) {
           sprintf((char *)path_tail(IObuff), "%d", i);
-          if (mch_lstat((char *)IObuff, &st) < 0)
+          if (!os_get_file_info_link((char *)IObuff, &file_info)) {
             break;
+          }
         }
         fd = mch_open((char *)IObuff,
             O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
@@ -2941,13 +2937,14 @@ buf_write (
         else {
 # ifdef UNIX
 #  ifdef HAVE_FCHOWN
-          ignored = fchown(fd, st_old.st_uid, st_old.st_gid);
+          fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
 #  endif
-          if (mch_stat((char *)IObuff, &st) < 0
-              || st.st_uid != st_old.st_uid
-              || st.st_gid != st_old.st_gid
-              || (long)st.st_mode != perm)
+          if (!os_get_file_info((char *)IObuff, &file_info)
+              || file_info.stat.st_uid != file_info_old.stat.st_uid
+              || file_info.stat.st_gid != file_info_old.stat.st_gid
+              || (long)file_info.stat.st_mode != perm) {
             backup_copy = TRUE;
+          }
 # endif
           /* Close the file before removing it, on MS-Windows we
            * can't delete an open file. */
@@ -2962,26 +2959,24 @@ buf_write (
      */
     if ((bkc_flags & BKC_BREAKSYMLINK) || (bkc_flags & BKC_BREAKHARDLINK)) {
 # ifdef UNIX
-      int lstat_res;
-
-      lstat_res = mch_lstat((char *)fname, &st);
+      bool file_info_link_ok = os_get_file_info_link((char *)fname, &file_info);
 
       /* Symlinks. */
       if ((bkc_flags & BKC_BREAKSYMLINK)
-          && lstat_res == 0
-          && st.st_ino != st_old.st_ino)
+          && file_info_link_ok
+          && !os_file_info_id_equal(&file_info, &file_info_old)) {
         backup_copy = FALSE;
+      }
 
       /* Hardlinks. */
       if ((bkc_flags & BKC_BREAKHARDLINK)
-          && st_old.st_nlink > 1
-          && (lstat_res != 0 || st.st_ino == st_old.st_ino))
+          && file_info_old.stat.st_nlink > 1
+          && (!file_info_link_ok
+              || os_file_info_id_equal(&file_info, &file_info_old))) {
         backup_copy = FALSE;
-# else
+      }
 # endif
     }
-
-#endif
 
     /* make sure we have a valid backup extension to use */
     if (*p_bex == NUL)
@@ -2994,7 +2989,6 @@ buf_write (
       int bfd;
       char_u      *copybuf, *wp;
       int some_error = FALSE;
-      struct stat st_new;
       char_u      *dirp;
       char_u      *rootname;
 
@@ -3019,12 +3013,6 @@ buf_write (
        */
       dirp = p_bdir;
       while (*dirp) {
-#ifdef UNIX
-        st_new.st_ino = 0;
-        st_new.st_dev = 0;
-        st_new.st_gid = 0;
-#endif
-
         /*
          * Isolate one directory name, using an entry in 'bdir'.
          */
@@ -3035,6 +3023,7 @@ buf_write (
           goto nobackup;
         }
 
+        FileInfo file_info_new;
         {
           /*
            * Make backup file name.
@@ -3049,20 +3038,17 @@ buf_write (
           /*
            * Check if backup file already exists.
            */
-          if (mch_stat((char *)backup, &st_new) >= 0) {
-#ifdef UNIX
+          if (os_get_file_info((char *)backup, &file_info_new)) {
             /*
              * Check if backup file is same as original file.
              * May happen when modname() gave the same file back (e.g. silly
              * link). If we don't check here, we either ruin the file when
              * copying or erase it after writing.
              */
-            if (st_new.st_dev == st_old.st_dev
-                && st_new.st_ino == st_old.st_ino) {
+            if (os_file_info_id_equal(&file_info_new, &file_info_old)) {
               free(backup);
               backup = NULL;                    /* no backup file to delete */
             }
-#endif
 
             /*
              * If we are not going to keep the backup file, don't
@@ -3076,8 +3062,9 @@ buf_write (
                 wp = backup;
               *wp = 'z';
               while (*wp > 'a'
-                     && mch_stat((char *)backup, &st_new) >= 0)
+                     && os_get_file_info((char *)backup, &file_info_new)) {
                 --*wp;
+              }
               /* They all exist??? Must be something wrong. */
               if (*wp == 'a') {
                 free(backup);
@@ -3114,13 +3101,13 @@ buf_write (
              * bits for the group same as the protection bits for
              * others.
              */
-            if (st_new.st_gid != st_old.st_gid
+            if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
 # ifdef HAVE_FCHOWN  /* sequent-ptx lacks fchown() */
-                && fchown(bfd, (uid_t)-1, st_old.st_gid) != 0
+                && fchown(bfd, (uid_t)-1, file_info_old.stat.st_gid) != 0
 # endif
-                )
-              os_setperm(backup,
-                  (perm & 0707) | ((perm & 07) << 3));
+                ) {
+              os_setperm(backup, (perm & 0707) | ((perm & 07) << 3));
+            }
 # ifdef HAVE_SELINUX
             mch_copy_sec(fname, backup);
 # endif
@@ -3155,7 +3142,9 @@ buf_write (
               errmsg = (char_u *)_(
                   "E508: Can't read file for backup (add ! to override)");
 #ifdef UNIX
-            set_file_time(backup, st_old.st_atime, st_old.st_mtime);
+            set_file_time(backup,
+                          file_info_old.stat.st_atim.tv_sec,
+                          file_info_old.stat.st_mtim.tv_sec);
 #endif
 #ifdef HAVE_ACL
             mch_set_acl(backup, acl);
@@ -3266,7 +3255,8 @@ nobackup:
 
 #if defined(UNIX)
   /* When using ":w!" and the file was read-only: make it writable */
-  if (forceit && perm >= 0 && !(perm & 0200) && st_old.st_uid == getuid()
+  if (forceit && perm >= 0 && !(perm & 0200)
+      && file_info_old.stat.st_uid == getuid()
       && vim_strchr(p_cpo, CPO_FWRITE) == NULL) {
     perm |= 0200;
     (void)os_setperm(fname, perm);
@@ -3412,15 +3402,14 @@ nobackup:
      */
     if (errmsg == NULL) {
 #ifdef UNIX
-      struct stat st;
+      FileInfo file_info;
 
       /* Don't delete the file when it's a hard or symbolic link. */
-      if ((!newfile && st_old.st_nlink > 1)
-          || (mch_lstat((char *)fname, &st) == 0
-              && (st.st_dev != st_old.st_dev
-                  || st.st_ino != st_old.st_ino)))
+      if ((!newfile && file_info_old.stat.st_nlink > 1)
+          || (os_get_file_info_link((char *)fname, &file_info)
+              && !os_file_info_id_equal(&file_info, &file_info_old))) {
         errmsg = (char_u *)_("E166: Can't open linked file for writing");
-      else
+      } else
 #endif
       {
         errmsg = (char_u *)_("E212: Can't open file for writing");
@@ -3432,8 +3421,10 @@ nobackup:
           if (!(perm & 0200))
             made_writable = TRUE;
           perm |= 0200;
-          if (st_old.st_uid != getuid() || st_old.st_gid != getgid())
+          if (file_info_old.stat.st_uid != getuid()
+              || file_info_old.stat.st_gid != getgid()) {
             perm &= 0777;
+          }
 #endif
           if (!append)                      /* don't remove when appending */
             os_remove((char *)wfname);
@@ -3444,8 +3435,6 @@ nobackup:
 
 restore_backup:
     {
-      struct stat st;
-
       /*
        * If we failed to open the file, we don't need a backup. Throw it
        * away.  If we moved or removed the original file try to put the
@@ -3460,11 +3449,13 @@ restore_backup:
            * In that case we leave the copy around.
            */
           /* If file does not exist, put the copy in its place */
-          if (mch_stat((char *)fname, &st) < 0)
+          if (!os_file_exists(fname)) {
             vim_rename(backup, fname);
+          }
           /* if original file does exist throw away the copy */
-          if (mch_stat((char *)fname, &st) >= 0)
+          if (os_file_exists(fname)) {
             os_remove((char *)backup);
+          }
         } else {
           /* try to put the original file back */
           vim_rename(backup, fname);
@@ -3472,8 +3463,9 @@ restore_backup:
       }
 
       /* if original file no longer exists give an extra warning */
-      if (!newfile && mch_stat((char *)fname, &st) < 0)
+      if (!newfile && !os_file_exists(fname)) {
         end = 0;
+      }
     }
 
     if (wfname != fname)
@@ -3649,14 +3641,14 @@ restore_backup:
    * file.  Get the new device and inode number. */
   if (backup != NULL && !backup_copy) {
 # ifdef HAVE_FCHOWN
-    struct stat st;
 
     /* don't change the owner when it's already OK, some systems remove
      * permission or ACL stuff */
-    if (mch_stat((char *)wfname, &st) < 0
-        || st.st_uid != st_old.st_uid
-        || st.st_gid != st_old.st_gid) {
-      ignored = fchown(fd, st_old.st_uid, st_old.st_gid);
+    FileInfo file_info;
+    if (!os_get_file_info((char *)wfname, &file_info)
+        || file_info.stat.st_uid != file_info_old.stat.st_uid
+        || file_info.stat.st_gid != file_info_old.stat.st_gid) {
+      fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
       if (perm >= 0)            /* set permission again, may have changed */
         (void)os_setperm(wfname, perm);
     }
@@ -3855,20 +3847,20 @@ restore_backup:
     char *org = (char *)modname(fname, p_pm, FALSE);
 
     if (backup != NULL) {
-      struct stat st;
-
       /*
        * If the original file does not exist yet
        * the current backup file becomes the original file
        */
       if (org == NULL)
         EMSG(_("E205: Patchmode: can't save original file"));
-      else if (mch_stat(org, &st) < 0) {
+      else if (!os_file_exists((char_u *)org)) {
         vim_rename(backup, (char_u *)org);
         free(backup);                   /* don't delete the file */
         backup = NULL;
 #ifdef UNIX
-        set_file_time((char_u *)org, st_old.st_atime, st_old.st_mtime);
+        set_file_time((char_u *)org,
+                      file_info_old.stat.st_atim.tv_sec,
+                      file_info_old.stat.st_mtim.tv_sec);
 #endif
       }
     }
@@ -3961,8 +3953,8 @@ nofail:
 
       /* Update the timestamp to avoid an "overwrite changed file"
        * prompt when writing again. */
-      if (mch_stat((char *)fname, &st_old) >= 0) {
-        buf_store_time(buf, &st_old, fname);
+      if (os_get_file_info((char *)fname, &file_info_old)) {
+        buf_store_file_info(buf, &file_info_old, fname);
         buf->b_mtime_read = buf->b_mtime;
       }
     }
@@ -4138,10 +4130,11 @@ static void msg_add_eol(void)
  * The size isn't checked, because using a tool like "gzip" takes care of
  * using the same timestamp but can't set the size.
  */
-static int check_mtime(buf_T *buf, struct stat *st)
+static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
-      && time_differs((long)st->st_mtime, buf->b_mtime_read)) {
+      && time_differs((long)file_info->stat.st_mtim.tv_sec,
+                      buf->b_mtime_read)) {
     msg_scroll = TRUE;              /* don't overwrite messages here */
     msg_silent = 0;                 /* must give this prompt */
     /* don't use emsg() here, don't want to flush the buffers */
@@ -4814,12 +4807,11 @@ int vim_rename(char_u *from, char_u *to)
   int n;
   char        *errmsg = NULL;
   char        *buffer;
-  struct stat st;
   long perm;
 #ifdef HAVE_ACL
   vim_acl_T acl;                /* ACL from original file */
 #endif
-  int use_tmp_file = FALSE;
+  bool use_tmp_file = false;
 
   /*
    * When the names are identical, there is nothing to do.  When they refer
@@ -4828,30 +4820,25 @@ int vim_rename(char_u *from, char_u *to)
    */
   if (fnamecmp(from, to) == 0) {
     if (p_fic && STRCMP(path_tail(from), path_tail(to)) != 0)
-      use_tmp_file = TRUE;
+      use_tmp_file = true;
     else
       return 0;
   }
 
-  /*
-   * Fail if the "from" file doesn't exist.  Avoids that "to" is deleted.
-   */
-  if (mch_stat((char *)from, &st) < 0)
+  // Fail if the "from" file doesn't exist. Avoids that "to" is deleted.
+  FileInfo from_info;
+  if (!os_get_file_info((char *)from, &from_info)) {
     return -1;
-
-#ifdef UNIX
-  {
-    struct stat st_to;
-
-    /* It's possible for the source and destination to be the same file.
-     * This happens when "from" and "to" differ in case and are on a FAT32
-     * filesystem.  In that case go through a temp file name. */
-    if (mch_stat((char *)to, &st_to) >= 0
-        && st.st_dev == st_to.st_dev
-        && st.st_ino == st_to.st_ino)
-      use_tmp_file = TRUE;
   }
-#endif
+
+  // It's possible for the source and destination to be the same file.
+  // This happens when "from" and "to" differ in case and are on a FAT32
+  // filesystem. In that case go through a temp file name.
+  FileInfo to_info;
+  if (os_get_file_info((char *)to, &to_info)
+      && os_file_info_id_equal(&from_info,  &to_info)) {
+    use_tmp_file = true;
+  }
 
   if (use_tmp_file) {
     char_u tempname[MAXPATHL + 1];
@@ -5086,8 +5073,6 @@ buf_check_timestamp (
     int focus               /* called for GUI focus event */
 )
 {
-  struct stat st;
-  int stat_res;
   int retval = 0;
   char_u      *path;
   char_u      *tbuf;
@@ -5114,27 +5099,25 @@ buf_check_timestamp (
       )
     return 0;
 
-  if (       !(buf->b_flags & BF_NOTEDITED)
-             && buf->b_mtime != 0
-             && ((stat_res = mch_stat((char *)buf->b_ffname, &st)) < 0
-                 || time_differs((long)st.st_mtime, buf->b_mtime)
-                 || st.st_size != buf->b_orig_size
-#ifdef HAVE_ST_MODE
-                 || (int)st.st_mode != buf->b_orig_mode
-#else
-                 || os_getperm(buf->b_ffname) != buf->b_orig_mode
-#endif
-                 )) {
+  FileInfo file_info;
+  bool file_info_ok;
+  if (!(buf->b_flags & BF_NOTEDITED)
+      && buf->b_mtime != 0
+      && (!(file_info_ok = os_get_file_info((char *)buf->b_ffname, &file_info))
+          || time_differs((long)file_info.stat.st_mtim.tv_sec, buf->b_mtime)
+          || (int)file_info.stat.st_mode != buf->b_orig_mode
+          )) {
     retval = 1;
 
     /* set b_mtime to stop further warnings (e.g., when executing
      * FileChangedShell autocmd) */
-    if (stat_res < 0) {
+    if (!file_info_ok) {
       buf->b_mtime = 0;
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
-    } else
-      buf_store_time(buf, &st, buf->b_ffname);
+    } else {
+      buf_store_file_info(buf, &file_info, buf->b_ffname);
+    }
 
     /* Don't do anything for a directory.  Might contain the file
      * explorer. */
@@ -5147,10 +5130,10 @@ buf_check_timestamp (
      * was set, the global option value otherwise.
      */
     else if ((buf->b_p_ar >= 0 ? buf->b_p_ar : p_ar)
-             && !bufIsChanged(buf) && stat_res >= 0)
+             && !bufIsChanged(buf) && file_info_ok)
       reload = TRUE;
     else {
-      if (stat_res < 0)
+      if (!file_info_ok)
         reason = "deleted";
       else if (bufIsChanged(buf))
         reason = "conflict";
@@ -5435,15 +5418,12 @@ void buf_reload(buf_T *buf, int orig_mode)
   /* Careful: autocommands may have made "buf" invalid! */
 }
 
-void buf_store_time(buf_T *buf, struct stat *st, char_u *fname)
+// TODO(stefan991): remove unused parameter fname
+void buf_store_file_info(buf_T *buf, FileInfo *file_info, char_u *fname)
 {
-  buf->b_mtime = (long)st->st_mtime;
-  buf->b_orig_size = st->st_size;
-#ifdef HAVE_ST_MODE
-  buf->b_orig_mode = (int)st->st_mode;
-#else
-  buf->b_orig_mode = os_getperm(fname);
-#endif
+  buf->b_mtime = (long)file_info->stat.st_mtim.tv_sec;
+  buf->b_orig_size = file_info->stat.st_size;
+  buf->b_orig_mode = (int)file_info->stat.st_mode;
 }
 
 /*
@@ -5527,9 +5507,6 @@ vim_tempname (
 #ifdef TEMPDIRNAMES
   static char *(tempdirs[]) = {TEMPDIRNAMES};
   int i;
-# ifndef EEXIST
-  struct stat st;
-# endif
 
   /*
    * This will create a directory for private use by this instance of Vim.
@@ -5580,7 +5557,7 @@ vim_tempname (
           /* If mkdir() does not set errno to EEXIST, check for
            * existing file here.  There is a race condition then,
            * although it's fail-safe. */
-          if (mch_stat((char *)itmp, &st) >= 0)
+          if (os_file_exists(itmp))
             continue;
 #  endif
 #  if defined(UNIX)

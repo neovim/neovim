@@ -189,6 +189,16 @@ int os_file_is_writable(const char *name)
   return 0;
 }
 
+bool os_get_file_size(const char *name, off_t *size)
+{
+  uv_stat_t statbuf;
+  if (os_stat((char_u *)name, &statbuf) == OK) {
+    *size = statbuf.st_size;
+    return true;
+  }
+  return false;
+}
+
 int os_rename(const char_u *path, const char_u *new_path)
 {
   uv_fs_t request;
@@ -225,5 +235,43 @@ int os_remove(const char *path)
   int result = uv_fs_unlink(uv_default_loop(), &request, path, NULL);
   uv_fs_req_cleanup(&request);
   return result;
+}
+
+bool os_get_file_info(const char *path, FileInfo *file_info)
+{
+  if (os_stat((char_u *)path, &(file_info->stat)) == OK) {
+    return true;
+  }
+  return false;
+}
+
+bool os_get_file_info_link(const char *path, FileInfo *file_info)
+{
+  uv_fs_t request;
+  int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
+  file_info->stat = request.statbuf;
+  uv_fs_req_cleanup(&request);
+  if (result == kLibuvSuccess) {
+    return true;
+  }
+  return false;
+}
+
+bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
+{
+  uv_fs_t request;
+  int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
+  file_info->stat = request.statbuf;
+  uv_fs_req_cleanup(&request);
+  if (result == kLibuvSuccess) {
+    return true;
+  }
+  return false;
+}
+
+bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2)
+{
+  return file_info_1->stat.st_ino == file_info_2->stat.st_ino
+         && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
 }
 

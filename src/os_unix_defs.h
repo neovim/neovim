@@ -229,6 +229,7 @@
 # define MAXPATHL       1024
 #endif
 
+// TODO(stefan991): remove macro
 #define CHECK_INODE             /* used when checking if a swap file already
                                     exists for a file */
 # ifndef DFLT_MAXMEM
@@ -276,7 +277,6 @@
 #endif
 
 #define HAVE_DUP                /* have dup() */
-#define HAVE_ST_MODE            /* have stat.st_mode */
 
 /* We have three kinds of ACL support. */
 #define HAVE_ACL (HAVE_POSIX_ACL || HAVE_SOLARIS_ACL || HAVE_AIX_ACL)

@@ -2,6 +2,7 @@
 #define NEOVIM_FILEIO_H
 
 #include "buffer_defs.h"
+#include "os/os.h"
 
 /*
  * Struct to save values in before executing autocommands for a buffer that is
@@ -40,7 +41,7 @@ int vim_rename(char_u *from, char_u *to);
 int check_timestamps(int focus);
 int buf_check_timestamp(buf_T *buf, int focus);
 void buf_reload(buf_T *buf, int orig_mode);
-void buf_store_time(buf_T *buf, struct stat *st, char_u *fname);
+void buf_store_file_info(buf_T *buf, FileInfo *file_info, char_u *fname);
 void write_lnum_adjust(linenr_T offset);
 void vim_deltempdir(void);
 char_u *vim_tempname(int extra_char);

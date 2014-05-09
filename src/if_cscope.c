@@ -52,8 +52,7 @@ static int cs_find_common(char *opt, char *pat, int, int, int,
                                   char_u *cmdline);
 static int cs_help(exarg_T *eap);
 static void clear_csinfo(int i);
-static int cs_insert_filelist(char *, char *, char *,
-                                      struct stat *);
+static int cs_insert_filelist(char *, char *, char *, FileInfo *file_info);
 static int cs_kill(exarg_T *eap);
 static void cs_kill_execute(int, char *);
 static cscmd_T *    cs_lookup_cmd(exarg_T *eap);
@@ -481,8 +480,6 @@ cs_add_common (
     char *flags
 )
 {
-  struct stat statbuf;
-  int ret;
   char        *fname = NULL;
   char        *fname2 = NULL;
   char        *ppath = NULL;
@@ -503,28 +500,25 @@ cs_add_common (
     goto add_err;
   fname = (char *)vim_strnsave((char_u *)fname, len);
   free(fbuf);
-  ret = stat(fname, &statbuf);
-  if (ret < 0) {
+  FileInfo file_info;
+  bool file_info_ok  = os_get_file_info(fname, &file_info);
+  if (!file_info_ok) {
 staterr:
     if (p_csverbose)
       cs_stat_emsg(fname);
     goto add_err;
   }
 
-  /* get the prepend path (arg2), expand it, and try to stat it */
+  // get the prepend path (arg2), expand it, and see if it exists
   if (arg2 != NULL) {
-    struct stat statbuf2;
-
     ppath = (char *)alloc(MAXPATHL + 1);
-
     expand_env((char_u *)arg2, (char_u *)ppath, MAXPATHL);
-    ret = stat(ppath, &statbuf2);
-    if (ret < 0)
+    if (!os_file_exists((char_u *)ppath))
       goto staterr;
   }
 
   /* if filename is a directory, append the cscope database name to it */
-  if ((statbuf.st_mode & S_IFMT) == S_IFDIR) {
+  if ((file_info.stat.st_mode & S_IFMT) == S_IFDIR) {
     fname2 = (char *)alloc((unsigned)(strlen(CSCOPE_DBFILE) + strlen(fname) + 2));
 
     while (fname[strlen(fname)-1] == '/'
@@ -538,23 +532,18 @@ staterr:
     else
       (void)sprintf(fname2, "%s/%s", fname, CSCOPE_DBFILE);
 
-    ret = stat(fname2, &statbuf);
-    if (ret < 0) {
+    file_info_ok = os_get_file_info(fname2, &file_info);
+    if (!file_info_ok) {
       if (p_csverbose)
         cs_stat_emsg(fname2);
       goto add_err;
     }
 
-    i = cs_insert_filelist(fname2, ppath, flags, &statbuf);
+    i = cs_insert_filelist(fname2, ppath, flags, &file_info);
   }
-#if defined(UNIX)
-  else if (S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode))
-#else
-  /* WIN32 - substitute define S_ISREG from os_unix_defs.h */
-  else if (((statbuf.st_mode) & S_IFMT) == S_IFREG)
-#endif
+  else if (S_ISREG(file_info.stat.st_mode) || S_ISLNK(file_info.stat.st_mode))
   {
-    i = cs_insert_filelist(fname, ppath, flags, &statbuf);
+    i = cs_insert_filelist(fname, ppath, flags, &file_info);
   } else {
     if (p_csverbose)
       (void)EMSG2(
@@ -1223,53 +1212,16 @@ static char *GetWin32Error(void)
  *
  * insert a new cscope database filename into the filelist
  */
-static int cs_insert_filelist(char *fname, char *ppath, char *flags, struct stat *sb)
+static int cs_insert_filelist(char *fname, char *ppath, char *flags,
+                              FileInfo *file_info)
 {
   short i, j;
-#ifndef UNIX
-  BY_HANDLE_FILE_INFORMATION bhfi;
-
-  /* On windows 9x GetFileInformationByHandle doesn't work, so skip it */
-  if (!mch_windows95()) {
-    switch (win32_fileinfo(fname, &bhfi)) {
-    case FILEINFO_ENC_FAIL:             /* enc_to_utf16() failed */
-    case FILEINFO_READ_FAIL:            /* CreateFile() failed */
-      if (p_csverbose) {
-        char *cant_msg = _("E625: cannot open cscope database: %s");
-        char *winmsg = GetWin32Error();
-
-        if (winmsg != NULL) {
-          (void)EMSG2(cant_msg, winmsg);
-          LocalFree(winmsg);
-        } else
-          /* subst filename if can't get error text */
-          (void)EMSG2(cant_msg, fname);
-      }
-      return -1;
-
-    case FILEINFO_INFO_FAIL:        /* GetFileInformationByHandle() failed */
-      if (p_csverbose)
-        (void)EMSG(_("E626: cannot get cscope database information"));
-      return -1;
-    }
-  }
-#endif
 
   i = -1;   /* can be set to the index of an empty item in csinfo */
   for (j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
-#if defined(UNIX)
-        && csinfo[j].st_dev == sb->st_dev && csinfo[j].st_ino == sb->st_ino
-#else
-        /* compare pathnames first */
-        && ((path_full_compare(csinfo[j].fname, fname, FALSE) & kEqualFiles)
-            /* if not Windows 9x, test index file attributes too */
-            || (!mch_windows95()
-                && csinfo[j].nVolume == bhfi.dwVolumeSerialNumber
-                && csinfo[j].nIndexHigh == bhfi.nFileIndexHigh
-                && csinfo[j].nIndexLow == bhfi.nFileIndexLow))
-#endif
-        ) {
+        && csinfo[j].st_dev == file_info->stat.st_dev
+        && csinfo[j].st_ino == file_info->stat.st_ino) {
       if (p_csverbose)
         (void)EMSG(_("E568: duplicate cscope database not added"));
       return -1;
@@ -1312,15 +1264,8 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags, struct stat
   } else
     csinfo[i].flags = NULL;
 
-#if defined(UNIX)
-  csinfo[i].st_dev = sb->st_dev;
-  csinfo[i].st_ino = sb->st_ino;
-
-#else
-  csinfo[i].nVolume = bhfi.dwVolumeSerialNumber;
-  csinfo[i].nIndexLow = bhfi.nFileIndexLow;
-  csinfo[i].nIndexHigh = bhfi.nFileIndexHigh;
-#endif
+  csinfo[i].st_dev = file_info->stat.st_dev;
+  csinfo[i].st_ino = file_info->stat.st_ino;
   return i;
 } /* cs_insert_filelist */
 

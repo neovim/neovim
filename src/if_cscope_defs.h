@@ -51,10 +51,9 @@ typedef struct csi {
   char *          flags;        /* additional cscope flags/options (e.g, -p2) */
 #if defined(UNIX)
   pid_t pid;                    /* PID of the connected cscope process. */
-  dev_t st_dev;                 /* ID of dev containing cscope db */
-  ino_t st_ino;                 /* inode number of cscope db */
-#else
 #endif
+  uint64_t st_dev;                 /* ID of dev containing cscope db */
+  uint64_t st_ino;                 /* inode number of cscope db */
 
   FILE *          fr_fp;        /* from cscope: FILE. */
   FILE *          to_fp;        /* to cscope: FILE. */

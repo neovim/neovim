@@ -110,11 +110,9 @@ typedef struct ff_visited {
   /* for unix use inode etc for comparison (needed because of links), else
    * use filename.
    */
-#ifdef UNIX
   int ffv_dev_valid;                    /* ffv_dev and ffv_ino were set */
-  dev_t ffv_dev;                        /* device number */
-  ino_t ffv_ino;                        /* inode number */
-#endif
+  uint64_t ffv_dev;                        /* device number */
+  uint64_t ffv_ino;                        /* inode number */
   /* The memory for this struct is allocated according to the length of
    * ffv_fname.
    */
@@ -1126,38 +1124,27 @@ static int ff_wc_equal(char_u *s1, char_u *s2)
 static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *wc_path)
 {
   ff_visited_T        *vp;
-#ifdef UNIX
-  struct stat st;
-  int url = FALSE;
-#endif
+  bool url = false;
 
-  /* For an URL we only compare the name, otherwise we compare the
-   * device/inode (unix) or the full path name (not Unix). */
+  FileInfo file_info;
+  // For an URL we only compare the name, otherwise we compare the
+  // device/inode.
   if (path_with_url(fname)) {
     vim_strncpy(ff_expand_buffer, fname, MAXPATHL - 1);
-#ifdef UNIX
-    url = TRUE;
-#endif
+    url = true;
   } else {
     ff_expand_buffer[0] = NUL;
-#ifdef UNIX
-    if (mch_stat((char *)fname, &st) < 0)
-#else
-    if (vim_FullName(fname, ff_expand_buffer, MAXPATHL, TRUE) == FAIL)
-#endif
+    if (!os_get_file_info((char *)fname, &file_info)) {
       return FAIL;
+    }
   }
 
   /* check against list of already visited files */
   for (vp = *visited_list; vp != NULL; vp = vp->ffv_next) {
-    if (
-#ifdef UNIX
-      !url ? (vp->ffv_dev_valid && vp->ffv_dev == st.st_dev
-              && vp->ffv_ino == st.st_ino)
-      :
-#endif
-      fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0
-      ) {
+    if ((url && fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0)
+        || (!url && vp->ffv_dev_valid
+            && vp->ffv_dev == file_info.stat.st_dev
+            && vp->ffv_ino == file_info.stat.st_ino)) {
       /* are the wildcard parts equal */
       if (ff_wc_equal(vp->ffv_wc_path, wc_path) == TRUE)
         /* already visited */
@@ -1171,19 +1158,15 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   vp = (ff_visited_T *)alloc((unsigned)(sizeof(ff_visited_T)
                                         + STRLEN(ff_expand_buffer)));
 
-#ifdef UNIX
   if (!url) {
     vp->ffv_dev_valid = TRUE;
-    vp->ffv_ino = st.st_ino;
-    vp->ffv_dev = st.st_dev;
+    vp->ffv_ino = file_info.stat.st_ino;
+    vp->ffv_dev = file_info.stat.st_dev;
     vp->ffv_fname[0] = NUL;
   } else {
     vp->ffv_dev_valid = FALSE;
     STRCPY(vp->ffv_fname, ff_expand_buffer);
   }
-#else
-  STRCPY(vp->ffv_fname, ff_expand_buffer);
-#endif
 
   if (wc_path != NULL)
     vp->ffv_wc_path = vim_strsave(wc_path);

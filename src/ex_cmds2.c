@@ -48,15 +48,13 @@
 static void cmd_source(char_u *fname, exarg_T *eap);
 
 /* Growarray to store info about already sourced scripts.
- * For Unix also store the dev/ino, so that we don't have to stat() each
+ * Also store the dev/ino, so that we don't have to stat() each
  * script when going through the list. */
 typedef struct scriptitem_S {
   char_u      *sn_name;
-# ifdef UNIX
   int sn_dev_valid;
-  dev_t sn_dev;
-  ino_t sn_ino;
-# endif
+  uint64_t sn_dev;
+  uint64_t sn_ino;
   int sn_prof_on;               /* TRUE when script is/was profiled */
   int sn_pr_force;              /* forceit: profile functions in this script */
   proftime_T sn_pr_child;       /* time set when going into first child */
@@ -2458,10 +2456,6 @@ do_source (
   void                    *save_funccalp;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
-# ifdef UNIX
-  struct stat st;
-  int stat_ok;
-# endif
 #ifdef STARTUPTIME
   struct timeval tv_rel;
   struct timeval tv_start;
@@ -2622,23 +2616,19 @@ do_source (
    * If it's new, generate a new SID.
    */
   save_current_SID = current_SID;
-# ifdef UNIX
-  stat_ok = (mch_stat((char *)fname_exp, &st) >= 0);
-# endif
+  FileInfo file_info;
+  bool file_info_ok = os_get_file_info((char *)fname_exp, &file_info);
   for (current_SID = script_items.ga_len; current_SID > 0; --current_SID) {
     si = &SCRIPT_ITEM(current_SID);
+    // Compare dev/ino when possible, it catches symbolic links.
+    // Also compare file names, the inode may change when the file was edited.
+    bool file_id_equal = file_info_ok && si->sn_dev_valid
+                         && si->sn_dev == file_info.stat.st_dev
+                         && si->sn_ino == file_info.stat.st_ino;
     if (si->sn_name != NULL
-        && (
-# ifdef UNIX
-          /* Compare dev/ino when possible, it catches symbolic
-           * links.  Also compare file names, the inode may change
-           * when the file was edited. */
-          ((stat_ok && si->sn_dev_valid)
-           && (si->sn_dev == st.st_dev
-               && si->sn_ino == st.st_ino)) ||
-# endif
-          fnamecmp(si->sn_name, fname_exp) == 0))
+        && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
       break;
+    }
   }
   if (current_SID == 0) {
     current_SID = ++last_current_SID;
@@ -2651,14 +2641,13 @@ do_source (
     si = &SCRIPT_ITEM(current_SID);
     si->sn_name = fname_exp;
     fname_exp = NULL;
-# ifdef UNIX
-    if (stat_ok) {
+    if (file_info_ok) {
       si->sn_dev_valid = TRUE;
-      si->sn_dev = st.st_dev;
-      si->sn_ino = st.st_ino;
-    } else
+      si->sn_dev = file_info.stat.st_dev;
+      si->sn_ino = file_info.stat.st_ino;
+    } else {
       si->sn_dev_valid = FALSE;
-# endif
+    }
 
     /* Allocate the local script variables to use for this script. */
     new_script_vars(current_SID);

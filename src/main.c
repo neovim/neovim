@@ -2130,14 +2130,13 @@ process_env (
  */
 static int file_owned(char *fname)
 {
-  struct stat s;
   uid_t uid = getuid();
-
-  return !(mch_stat(fname, &s) != 0 || s.st_uid != uid
-# ifdef HAVE_LSTAT
-      || mch_lstat(fname, &s) != 0 || s.st_uid != uid
-# endif
-      );
+  FileInfo file_info;
+  bool file_owned = os_get_file_info(fname, &file_info)
+                    && file_info.stat.st_uid == uid;
+  bool link_owned = os_get_file_info_link(fname, &file_info)
+                    && file_info.stat.st_uid == uid;
+  return file_owned && link_owned;
 }
 #endif
 
