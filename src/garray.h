@@ -35,7 +35,7 @@ typedef struct growarray {
   }  \
   ga_clear(gap)
 
-#define GA_DEEP_CEAR_PTR(gap) ga_clear_strings(gap)
+#define GA_DEEP_CLEAR_PTR(gap) ga_clear_strings(gap)
 
 
 void ga_clear(garray_T *gap);
