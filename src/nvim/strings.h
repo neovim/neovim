@@ -1,7 +1,10 @@
 #ifndef NVIM_STRINGS_H
 #define NVIM_STRINGS_H
-char_u *vim_strsave(char_u *string);
-char_u *vim_strnsave(char_u *string, int len);
+
+#include "func_attr.h"
+
+char_u *vim_strsave(char_u *string) FUNC_ATTR_NONNULL_RET;
+char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET;
 char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars);
 char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars,
                                 int cc,

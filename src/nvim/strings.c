@@ -46,14 +46,7 @@
  */
 char_u *vim_strsave(char_u *string)
 {
-  char_u      *p;
-  unsigned len;
-
-  len = (unsigned)STRLEN(string) + 1;
-  p = alloc(len);
-  if (p != NULL)
-    memmove(p, string, (size_t)len);
-  return p;
+  return (char_u *)xstrdup((char *)string);
 }
 
 /*
@@ -64,12 +57,7 @@ char_u *vim_strsave(char_u *string)
  */
 char_u *vim_strnsave(char_u *string, int len)
 {
-  char_u      *p;
-
-  p = alloc((unsigned)(len + 1));
-  STRNCPY(p, string, len);
-  p[len] = NUL;
-  return p;
+  return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }
 
 /*
