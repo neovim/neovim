@@ -13,8 +13,20 @@
 #include "ex_docmd.h"
 #include "screen.h"
 #include "memory.h"
+#include "message.h"
 #include "eval.h"
 #include "misc2.h"
+
+#define LINE_BUFFER_SIZE 4096
+
+/// Writes a message to vim output or error buffer. The string is split
+/// and flushed after each newline. Incomplete lines are kept for writing
+/// later.
+///
+/// @param message The message to write
+/// @param to_err True if it should be treated as an error message(use
+///        `emsg` instead of `msg` to print each line)
+static void write_msg(String message, bool to_err);
 
 void vim_push_keys(String str)
 {
@@ -151,12 +163,12 @@ void vim_set_option(String name, Object value, Error *err)
 
 void vim_out_write(String str)
 {
-  abort();
+  write_msg(str, false);
 }
 
 void vim_err_write(String str)
 {
-  abort();
+  write_msg(str, true);
 }
 
 int64_t vim_get_buffer_count(void)
@@ -217,4 +229,27 @@ Tabpage vim_get_current_tabpage(void)
 void vim_set_current_tabpage(Tabpage tabpage)
 {
   abort();
+}
+
+static void write_msg(String message, bool to_err)
+{
+  static int pos = 0;
+  static char line_buf[LINE_BUFFER_SIZE];
+
+  for (uint32_t i = 0; i < message.size; i++) {
+    if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) {
+      // Flush line
+      line_buf[pos] = NUL;
+      if (to_err) {
+        emsg((uint8_t *)line_buf);
+      } else {
+        msg((uint8_t *)line_buf);
+      }
+
+      pos = 0;
+      continue;
+    }
+    
+    line_buf[pos++] = message.data[i];
+  }
 }
