@@ -303,7 +303,6 @@ struct loop_cookie {
 
 static char_u   *get_loop_line(int c, void *cookie, int indent);
 static void store_loop_line(garray_T *gap, char_u *line);
-
 ///
 /// clear the content in wcmd_T
 ///
@@ -1189,10 +1188,8 @@ static void store_loop_line(garray_T *gap, char_u *line)
   ++gap->ga_len;
 }
 
-/*
- * Free the lines stored for a ":while" or ":for" loop.
- */
-static void wcmd_clear(wcmd_T *wdp){
+static void wcmd_clear(wcmd_T *wdp)
+{
   free(wdp->line);
 }
 

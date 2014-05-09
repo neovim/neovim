@@ -802,7 +802,6 @@ typedef struct trystate_S {
 
 static slang_T *slang_alloc(char_u *lang);
 static void slang_free(slang_T *lp);
-
 ///
 /// clear the content in salitem
 ///
@@ -811,7 +810,6 @@ static void slang_free(slang_T *lp);
 /// @warming salitem_T will no longer have valid empty data
 ///
 static void salitem_clear(salitem_T *smp);
-
 ///
 /// clear the content in fromto_T
 ///
@@ -2314,7 +2312,8 @@ static void slang_free(slang_T *lp)
   free(lp);
 }
 
-static void salitem_clear(salitem_T *smp) {
+static void salitem_clear(salitem_T *smp)
+{
   free(smp->sm_lead);
   // Don't free sm_oneof and sm_rules, they point into sm_lead.
   free(smp->sm_to);
@@ -2323,7 +2322,8 @@ static void salitem_clear(salitem_T *smp) {
   free(smp->sm_to_w);
 }
 
-static void fromto_clear(fromto_T *ftp) {
+static void fromto_clear(fromto_T *ftp)
+{
   free(ftp->ft_from);
   free(ftp->ft_to);
 }
@@ -2348,16 +2348,16 @@ static void slang_clear(slang_T *lp)
   free(lp->sl_pidxs);
   lp->sl_pidxs = NULL;
 
-  gap = &lp->sl_rep;
-  GA_DEEP_CLEAR(gap, fromto_T, fromto_clear);
-  gap = &lp->sl_repsal;
-  GA_DEEP_CLEAR(gap, fromto_T, fromto_clear);
+  GA_DEEP_CLEAR(&lp->sl_rep, fromto_T, fromto_clear);
+  GA_DEEP_CLEAR(&lp->sl_repsal, fromto_T, fromto_clear);
 
   gap = &lp->sl_sal;
   if (lp->sl_sofo) {
     // "ga_len" is set to 1 without adding an item for latin1
-    // SOFOFROM and SOFOTO items: free lists of wide characters.
-    GA_DEEP_CLEAR(gap,int*,free);
+    if(gap->ga_data != NULL) {
+      // SOFOFROM and SOFOTO items: free lists of wide characters.
+      GA_DEEP_CLEAR(gap, int*, free);
+    }
   } else {
   // SAL items: free salitem_T items
     GA_DEEP_CLEAR(gap,salitem_T, salitem_clear);
