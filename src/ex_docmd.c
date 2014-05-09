@@ -1193,7 +1193,7 @@ static void store_loop_line(garray_T *gap, char_u *line)
  * Free the lines stored for a ":while" or ":for" loop.
  */
 static void wcmd_clear(wcmd_T *wdp){
-  free(wpd->line);
+  free(wdp->line);
 }
 
 /*
