@@ -307,7 +307,7 @@ static void store_loop_line(garray_T *gap, char_u *line);
 ///
 /// clear the content in wcmd_T
 ///
-/// @param wdp ptr to wmcd_T to be cleared
+/// @param wdp ptr to wcmd_T to be cleared
 ///
 /// @warming wcmd_T will no longer have valid empty data
 ///
@@ -882,7 +882,7 @@ int flags;
       if (lines_ga.ga_len > 0) {
         sourcing_lnum =
           ((wcmd_T *)lines_ga.ga_data)[lines_ga.ga_len - 1].lnum;
-        GA_DEEP_CLEAR(&lines_ga, wcmd_T, wmcd_clear);
+        GA_DEEP_CLEAR(&lines_ga, wcmd_T, wcmd_clear);
       }
       current_line = 0;
     }
