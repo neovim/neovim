@@ -865,7 +865,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
 #ifdef CHECK_INODE
       long_to_char((long)file_info.stat.st_ino, b0p->b0_ino);
 #endif
-      buf_store_file_info(buf, &file_info, buf->b_ffname);
+      buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
     } else {
       long_to_char(0L, b0p->b0_mtime);
