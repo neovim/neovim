@@ -29,12 +29,15 @@ typedef struct growarray {
 /// @return nothing
 ///
 #define GA_DEEP_CLEAR(gap, item_type, free_item_fn) \
-  while ((gap)->ga_len > 0) {  \
-    (gap)->ga_len--; \
-    item_type *item = &((item_type *)(gap)->ga_data)[(gap)->ga_len]; \
-    free_item_fn(item);  \
-  }  \
-  ga_clear(gap)
+  { \
+    garray_T* _gap = (gap); \
+    while (_gap->ga_len > 0) {  \
+      _gap->ga_len--; \
+      item_type *_item = &((item_type *)_gap->ga_data)[_gap->ga_len]; \
+      free_item_fn(_item);  \
+    }  \
+    ga_clear(_gap); \
+  }
 
 #define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void*, FREE_PTR)
 
