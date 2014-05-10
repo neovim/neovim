@@ -118,7 +118,7 @@ static void set_cmdspos(void);
 static void set_cmdspos_cursor(void);
 static void correct_cmdspos(int idx, int cells);
 static void alloc_cmdbuff(int len);
-static int realloc_cmdbuff(int len);
+static void realloc_cmdbuff(int len);
 static void draw_cmdline(int start, int len);
 static void save_cmdline(struct cmdline_info *ccp);
 static void restore_cmdline(struct cmdline_info *ccp);
@@ -614,22 +614,21 @@ getcmdline (
 
           if (p != NULL) {
             len = (int)STRLEN(p);
-            if (realloc_cmdbuff(len + 1) == OK) {
-              ccline.cmdlen = len;
-              STRCPY(ccline.cmdbuff, p);
-              free(p);
+            realloc_cmdbuff(len + 1);
+            ccline.cmdlen = len;
+            STRCPY(ccline.cmdbuff, p);
+            free(p);
 
-              /* Restore the cursor or use the position set with
-               * set_cmdline_pos(). */
-              if (new_cmdpos > ccline.cmdlen)
-                ccline.cmdpos = ccline.cmdlen;
-              else
-                ccline.cmdpos = new_cmdpos;
+            /* Restore the cursor or use the position set with
+             * set_cmdline_pos(). */
+            if (new_cmdpos > ccline.cmdlen)
+              ccline.cmdpos = ccline.cmdlen;
+            else
+              ccline.cmdpos = new_cmdpos;
 
-              KeyTyped = FALSE;                 /* Don't do p_wc completion. */
-              redrawcmd();
-              goto cmdline_changed;
-            }
+            KeyTyped = FALSE;                 /* Don't do p_wc completion. */
+            redrawcmd();
+            goto cmdline_changed;
           }
         }
         beep_flush();
@@ -1994,14 +1993,13 @@ static void alloc_cmdbuff(int len)
 /*
  * Re-allocate the command line to length len + something extra.
  */
-static int realloc_cmdbuff(int len)
+static void realloc_cmdbuff(int len)
 {
-  char_u      *p;
+  if (len < ccline.cmdbufflen) {
+    return;  // no need to resize
+  }
 
-  if (len < ccline.cmdbufflen)
-    return OK;                          /* no need to resize */
-
-  p = ccline.cmdbuff;
+  char_u *p = ccline.cmdbuff;
   alloc_cmdbuff(len);                   /* will get some more */
   /* There isn't always a NUL after the command, but it may need to be
    * there, thus copy up to the NUL and add a NUL. */
@@ -2020,8 +2018,6 @@ static int realloc_cmdbuff(int len)
     if (i >= 0 && i <= ccline.cmdlen)
       ccline.xpc->xp_pattern = ccline.cmdbuff + i;
   }
-
-  return OK;
 }
 
 static char_u   *arshape_buf = NULL;
@@ -2174,9 +2170,8 @@ void unputcmdline(void)
  * twice in a row, then 'redraw' should be FALSE and redrawcmd() should be
  * called afterwards.
  */
-int put_on_cmdline(char_u *str, int len, int redraw)
+void put_on_cmdline(char_u *str, int len, int redraw)
 {
-  int retval;
   int i;
   int m;
   int c;
@@ -2185,120 +2180,118 @@ int put_on_cmdline(char_u *str, int len, int redraw)
     len = (int)STRLEN(str);
 
   /* Check if ccline.cmdbuff needs to be longer */
-  if (ccline.cmdlen + len + 1 >= ccline.cmdbufflen)
-    retval = realloc_cmdbuff(ccline.cmdlen + len + 1);
-  else
-    retval = OK;
-  if (retval == OK) {
-    if (!ccline.overstrike) {
-      memmove(ccline.cmdbuff + ccline.cmdpos + len,
-          ccline.cmdbuff + ccline.cmdpos,
-          (size_t)(ccline.cmdlen - ccline.cmdpos));
-      ccline.cmdlen += len;
-    } else {
-      if (has_mbyte) {
-        /* Count nr of characters in the new string. */
-        m = 0;
-        for (i = 0; i < len; i += (*mb_ptr2len)(str + i))
-          ++m;
-        /* Count nr of bytes in cmdline that are overwritten by these
-         * characters. */
-        for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
-             i += (*mb_ptr2len)(ccline.cmdbuff + i))
-          --m;
-        if (i < ccline.cmdlen) {
-          memmove(ccline.cmdbuff + ccline.cmdpos + len,
-              ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
-          ccline.cmdlen += ccline.cmdpos + len - i;
-        } else
-          ccline.cmdlen = ccline.cmdpos + len;
-      } else if (ccline.cmdpos + len > ccline.cmdlen)
-        ccline.cmdlen = ccline.cmdpos + len;
-    }
-    memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
-    ccline.cmdbuff[ccline.cmdlen] = NUL;
+  if (ccline.cmdlen + len + 1 >= ccline.cmdbufflen) {
+    realloc_cmdbuff(ccline.cmdlen + len + 1);
+  }
 
-    if (enc_utf8) {
-      /* When the inserted text starts with a composing character,
-       * backup to the character before it.  There could be two of them.
-       */
-      i = 0;
+  if (!ccline.overstrike) {
+    memmove(ccline.cmdbuff + ccline.cmdpos + len,
+        ccline.cmdbuff + ccline.cmdpos,
+        (size_t)(ccline.cmdlen - ccline.cmdpos));
+    ccline.cmdlen += len;
+  } else {
+    if (has_mbyte) {
+      /* Count nr of characters in the new string. */
+      m = 0;
+      for (i = 0; i < len; i += (*mb_ptr2len)(str + i))
+        ++m;
+      /* Count nr of bytes in cmdline that are overwritten by these
+       * characters. */
+      for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
+           i += (*mb_ptr2len)(ccline.cmdbuff + i))
+        --m;
+      if (i < ccline.cmdlen) {
+        memmove(ccline.cmdbuff + ccline.cmdpos + len,
+            ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
+        ccline.cmdlen += ccline.cmdpos + len - i;
+      } else
+        ccline.cmdlen = ccline.cmdpos + len;
+    } else if (ccline.cmdpos + len > ccline.cmdlen)
+      ccline.cmdlen = ccline.cmdpos + len;
+  }
+  memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
+  ccline.cmdbuff[ccline.cmdlen] = NUL;
+
+  if (enc_utf8) {
+    /* When the inserted text starts with a composing character,
+     * backup to the character before it.  There could be two of them.
+     */
+    i = 0;
+    c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
+    while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
+      i = (*mb_head_off)(ccline.cmdbuff,
+                         ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      ccline.cmdpos -= i;
+      len += i;
       c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-      while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
-        i = (*mb_head_off)(ccline.cmdbuff,
-                           ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+    }
+    if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
+      /* Check the previous character for Arabic combining pair. */
+      i = (*mb_head_off)(ccline.cmdbuff,
+                         ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      if (arabic_combine(utf_ptr2char(ccline.cmdbuff
+                  + ccline.cmdpos - i), c)) {
         ccline.cmdpos -= i;
         len += i;
-        c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-      }
-      if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
-        /* Check the previous character for Arabic combining pair. */
-        i = (*mb_head_off)(ccline.cmdbuff,
-                           ccline.cmdbuff + ccline.cmdpos - 1) + 1;
-        if (arabic_combine(utf_ptr2char(ccline.cmdbuff
-                    + ccline.cmdpos - i), c)) {
-          ccline.cmdpos -= i;
-          len += i;
-        } else
-          i = 0;
-      }
-      if (i != 0) {
-        /* Also backup the cursor position. */
-        i = ptr2cells(ccline.cmdbuff + ccline.cmdpos);
-        ccline.cmdspos -= i;
-        msg_col -= i;
-        if (msg_col < 0) {
-          msg_col += Columns;
-          --msg_row;
-        }
-      }
-    }
-
-    if (redraw && !cmd_silent) {
-      msg_no_more = TRUE;
-      i = cmdline_row;
-      cursorcmd();
-      draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-      /* Avoid clearing the rest of the line too often. */
-      if (cmdline_row != i || ccline.overstrike)
-        msg_clr_eos();
-      msg_no_more = FALSE;
-    }
-    /*
-     * If we are in Farsi command mode, the character input must be in
-     * Insert mode. So do not advance the cmdpos.
-     */
-    if (!cmd_fkmap) {
-      if (KeyTyped) {
-        m = Columns * Rows;
-        if (m < 0)              /* overflow, Columns or Rows at weird value */
-          m = MAXCOL;
       } else
-        m = MAXCOL;
-      for (i = 0; i < len; ++i) {
-        c = cmdline_charsize(ccline.cmdpos);
-        /* count ">" for a double-wide char that doesn't fit. */
-        if (has_mbyte)
-          correct_cmdspos(ccline.cmdpos, c);
-        /* Stop cursor at the end of the screen, but do increment the
-         * insert position, so that entering a very long command
-         * works, even though you can't see it. */
-        if (ccline.cmdspos + c < m)
-          ccline.cmdspos += c;
-        if (has_mbyte) {
-          c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
-          if (c > len - i - 1)
-            c = len - i - 1;
-          ccline.cmdpos += c;
-          i += c;
-        }
-        ++ccline.cmdpos;
+        i = 0;
+    }
+    if (i != 0) {
+      /* Also backup the cursor position. */
+      i = ptr2cells(ccline.cmdbuff + ccline.cmdpos);
+      ccline.cmdspos -= i;
+      msg_col -= i;
+      if (msg_col < 0) {
+        msg_col += Columns;
+        --msg_row;
       }
     }
   }
+
+  if (redraw && !cmd_silent) {
+    msg_no_more = TRUE;
+    i = cmdline_row;
+    cursorcmd();
+    draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
+    /* Avoid clearing the rest of the line too often. */
+    if (cmdline_row != i || ccline.overstrike)
+      msg_clr_eos();
+    msg_no_more = FALSE;
+  }
+  /*
+   * If we are in Farsi command mode, the character input must be in
+   * Insert mode. So do not advance the cmdpos.
+   */
+  if (!cmd_fkmap) {
+    if (KeyTyped) {
+      m = Columns * Rows;
+      if (m < 0)              /* overflow, Columns or Rows at weird value */
+        m = MAXCOL;
+    } else
+      m = MAXCOL;
+    for (i = 0; i < len; ++i) {
+      c = cmdline_charsize(ccline.cmdpos);
+      /* count ">" for a double-wide char that doesn't fit. */
+      if (has_mbyte)
+        correct_cmdspos(ccline.cmdpos, c);
+      /* Stop cursor at the end of the screen, but do increment the
+       * insert position, so that entering a very long command
+       * works, even though you can't see it. */
+      if (ccline.cmdspos + c < m)
+        ccline.cmdspos += c;
+      if (has_mbyte) {
+        c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
+        if (c > len - i - 1)
+          c = len - i - 1;
+        ccline.cmdpos += c;
+        i += c;
+      }
+      ++ccline.cmdpos;
+    }
+  }
+
   if (redraw)
     msg_check();
-  return retval;
 }
 
 static struct cmdline_info prev_ccline;
@@ -2631,7 +2624,6 @@ nextwild (
   char_u      *p1;
   char_u      *p2;
   int difflen;
-  int v;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -2694,18 +2686,15 @@ nextwild (
   if (p2 != NULL && !got_int) {
     difflen = (int)STRLEN(p2) - xp->xp_pattern_len;
     if (ccline.cmdlen + difflen + 4 > ccline.cmdbufflen) {
-      v = realloc_cmdbuff(ccline.cmdlen + difflen + 4);
+      realloc_cmdbuff(ccline.cmdlen + difflen + 4);
       xp->xp_pattern = ccline.cmdbuff + i;
-    } else
-      v = OK;
-    if (v == OK) {
-      memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
-          &ccline.cmdbuff[ccline.cmdpos],
-          (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
-      memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
-      ccline.cmdlen += difflen;
-      ccline.cmdpos += difflen;
     }
+    memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
+        &ccline.cmdbuff[ccline.cmdpos],
+        (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
+    memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
+    ccline.cmdlen += difflen;
+    ccline.cmdpos += difflen;
   }
   free(p2);
 
