@@ -325,8 +325,7 @@ int ml_open(buf_T *buf)
   /*
    * fill block0 struct and write page 0
    */
-  if ((hp = mf_new(mfp, FALSE, 1)) == NULL)
-    goto error;
+  hp = mf_new(mfp, FALSE, 1);
   if (hp->bh_bnum != 0) {
     EMSG(_("E298: Didn't get block nr 0?"));
     goto error;
@@ -2982,13 +2981,8 @@ static void ml_flush_line(buf_T *buf)
  */
 static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
 {
-  bhdr_T      *hp;
-  DATA_BL     *dp;
-
-  if ((hp = mf_new(mfp, negative, page_count)) == NULL)
-    return NULL;
-
-  dp = (DATA_BL *)(hp->bh_data);
+  bhdr_T *hp = mf_new(mfp, negative, page_count);
+  DATA_BL *dp = (DATA_BL *)(hp->bh_data);
   dp->db_id = DATA_ID;
   dp->db_txt_start = dp->db_txt_end = page_count * mfp->mf_page_size;
   dp->db_free = dp->db_txt_start - HEADER_SIZE;
@@ -3002,13 +2996,8 @@ static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
  */
 static bhdr_T *ml_new_ptr(memfile_T *mfp)
 {
-  bhdr_T      *hp;
-  PTR_BL      *pp;
-
-  if ((hp = mf_new(mfp, FALSE, 1)) == NULL)
-    return NULL;
-
-  pp = (PTR_BL *)(hp->bh_data);
+  bhdr_T *hp = mf_new(mfp, FALSE, 1);
+  PTR_BL *pp = (PTR_BL *)(hp->bh_data);
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
   pp->pb_count_max = (mfp->mf_page_size - sizeof(PTR_BL)) / sizeof(PTR_EN) + 1;
