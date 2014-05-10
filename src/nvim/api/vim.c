@@ -22,13 +22,6 @@
 
 #define LINE_BUFFER_SIZE 4096
 
-/// Writes a message to vim output or error buffer. The string is split
-/// and flushed after each newline. Incomplete lines are kept for writing
-/// later.
-///
-/// @param message The message to write
-/// @param to_err True if it should be treated as an error message(use
-///        `emsg` instead of `msg` to print each line)
 static void write_msg(String message, bool to_err);
 
 /// Send keys to vim input buffer, simulating user input.
@@ -453,6 +446,13 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
+/// Writes a message to vim output or error buffer. The string is split
+/// and flushed after each newline. Incomplete lines are kept for writing
+/// later.
+///
+/// @param message The message to write
+/// @param to_err True if it should be treated as an error message(use
+///        `emsg` instead of `msg` to print each line)
 static void write_msg(String message, bool to_err)
 {
   static int pos = 0;

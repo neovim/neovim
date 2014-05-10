@@ -15,12 +15,6 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 
-/// Recursion helper for the `vim_to_object`. This uses a pointer table
-/// to avoid infinite recursion due to cyclic references
-///
-/// @param obj The source object
-/// @param lookup Lookup table containing pointers to all processed objects
-/// @return The converted value
 static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup);
 
 static bool object_to_vim(Object obj, typval_T *tv, Error *err);
@@ -476,6 +470,12 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
   return true;
 }
 
+/// Recursion helper for the `vim_to_object`. This uses a pointer table
+/// to avoid infinite recursion due to cyclic references
+///
+/// @param obj The source object
+/// @param lookup Lookup table containing pointers to all processed objects
+/// @return The converted value
 static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
 {
   Object rv = OBJECT_INIT;

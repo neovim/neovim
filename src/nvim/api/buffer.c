@@ -20,10 +20,6 @@
 #include "nvim/window.h"
 #include "nvim/undo.h"
 
-// Find a window that contains "buf" and switch to it.
-// If there is no such window, use the current window and change "curbuf".
-// Caller must initialize save_curbuf to NULL.
-// restore_win_for_buf() MUST be called later!
 static void switch_to_win_for_buf(buf_T *buf,
                                   win_T **save_curwinp,
                                   tabpage_T **save_curtabp,
@@ -33,12 +29,8 @@ static void restore_win_for_buf(win_T *save_curwin,
                                 tabpage_T *save_curtab,
                                 buf_T *save_curbuf);
 
-// Check if deleting lines made the cursor position invalid.
-// Changed the lines from "lo" to "hi" and added "extra" lines (negative if
-// deleted).
 static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra);
 
-// Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index);
 
 /// Gets the buffer line count
@@ -494,6 +486,10 @@ Position buffer_get_mark(Buffer buffer, String name, Error *err)
   return rv;
 }
 
+// Find a window that contains "buf" and switch to it.
+// If there is no such window, use the current window and change "curbuf".
+// Caller must initialize save_curbuf to NULL.
+// restore_win_for_buf() MUST be called later!
 static void switch_to_win_for_buf(buf_T *buf,
                                   win_T **save_curwinp,
                                   tabpage_T **save_curtabp,
@@ -518,6 +514,9 @@ static void restore_win_for_buf(win_T *save_curwin,
   }
 }
 
+// Check if deleting lines made the cursor position invalid.
+// Changed the lines from "lo" to "hi" and added "extra" lines (negative if
+// deleted).
 static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
 {
   if (curwin->w_cursor.lnum >= lo) {
@@ -537,6 +536,7 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
   invalidate_botline();
 }
 
+// Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index)
 {
   // Fix if < 0

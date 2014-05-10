@@ -31,33 +31,12 @@ typedef struct {
   garray_T ga;
 } ProcessData;
 
-/// Parses a command string into a sequence of words, taking quotes into
-/// consideration.
-///
-/// @param str The command string to be parsed
-/// @param argv The vector that will be filled with copies of the parsed
-///        words. It can be NULL if the caller only needs to count words.
-/// @return The number of words parsed.
 static int tokenize(char_u *str, char **argv);
 
-/// Calculates the length of a shell word.
-///
-/// @param str A pointer to the first character of the word
-/// @return The offset from `str` at which the word ends.
 static int word_length(char_u *command);
 
-/// Queues selected range for writing to the child process stdin.
-///
-/// @param req The structure containing information to peform the write
 static void write_selection(uv_write_t *req);
 
-/// Cleanup memory and restore state modified by `os_call_shell`.
-///
-/// @param data State shared by all functions collaborating with
-///        `os_call_shell`.
-/// @param opts Process spawning options, containing some allocated memory
-/// @param shellopts Options passed to `os_call_shell`. Used for deciding
-///        if/which messages are displayed.
 static int proc_cleanup_exit(ProcessData *data,
                              uv_process_options_t *opts,
                              int shellopts);
@@ -265,6 +244,13 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   return proc_cleanup_exit(&pdata, &proc_opts, opts);
 }
 
+/// Parses a command string into a sequence of words, taking quotes into
+/// consideration.
+///
+/// @param str The command string to be parsed
+/// @param argv The vector that will be filled with copies of the parsed
+///        words. It can be NULL if the caller only needs to count words.
+/// @return The number of words parsed.
 static int tokenize(char_u *str, char **argv)
 {
   int argc = 0, len;
@@ -288,6 +274,10 @@ static int tokenize(char_u *str, char **argv)
   return argc;
 }
 
+/// Calculates the length of a shell word.
+///
+/// @param str A pointer to the first character of the word
+/// @return The offset from `str` at which the word ends.
 static int word_length(char_u *str)
 {
   char_u *p = str;
@@ -314,6 +304,9 @@ static int word_length(char_u *str)
 /// event loop starts. If we don't(by writing in chunks returned by `ml_get`)
 /// the buffer being modified might get modified by reading from the process
 /// before we finish writing.
+/// Queues selected range for writing to the child process stdin.
+///
+/// @param req The structure containing information to peform the write
 static void write_selection(uv_write_t *req)
 {
   ProcessData *pdata = (ProcessData *)req->data;
@@ -447,6 +440,13 @@ static void write_cb(uv_write_t *req, int status)
   pdata->exited++;
 }
 
+/// Cleanup memory and restore state modified by `os_call_shell`.
+///
+/// @param data State shared by all functions collaborating with
+///        `os_call_shell`.
+/// @param opts Process spawning options, containing some allocated memory
+/// @param shellopts Options passed to `os_call_shell`. Used for deciding
+///        if/which messages are displayed.
 static int proc_cleanup_exit(ProcessData *proc_data,
                              uv_process_options_t *proc_opts,
                              int shellopts)
