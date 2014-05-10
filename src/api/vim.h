@@ -18,10 +18,7 @@ void vim_push_keys(String str);
 void vim_command(String str, Error *err);
 
 /// Evaluates the expression str using the vim internal expression
-/// evaluator (see |expression|).  Returns the expression result as:
-/// - a string if the Vim expression evaluates to a string or number
-/// - a list if the Vim expression evaluates to a Vim list
-/// - a dictionary if the Vim expression evaluates to a Vim dictionary
+/// evaluator (see |expression|).
 /// Dictionaries and lists are recursively expanded.
 ///
 /// @param str The expression str
@@ -49,13 +46,15 @@ void vim_change_directory(String dir, Error *err);
 
 /// Return the current line
 ///
+/// @param[out] err Details of an error that may have occurred
 /// @return The current line string
-String vim_get_current_line(void);
+String vim_get_current_line(Error *err);
 
 /// Sets the current line
 ///
 /// @param line The line contents
-void vim_set_current_line(String line);
+/// @param[out] err Details of an error that may have occurred
+void vim_set_current_line(Object line, Error *err);
 
 /// Gets a global or special variable
 ///

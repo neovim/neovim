@@ -136,15 +136,14 @@ void vim_change_directory(String dir, Error *err)
   try_end(err);
 }
 
-String vim_get_current_line(void)
+String vim_get_current_line(Error *err)
 {
-  Error stub;
-  return buffer_get_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, &stub);
+  return buffer_get_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
 }
 
-void vim_set_current_line(String line)
+void vim_set_current_line(Object line, Error *err)
 {
-  abort();
+  buffer_set_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, line, err);
 }
 
 Object vim_get_var(bool special, String name, Error *err)
