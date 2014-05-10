@@ -37,7 +37,13 @@ static int64_t normalize_index(buf_T *buf, int64_t index);
 
 int64_t buffer_get_length(Buffer buffer, Error *err)
 {
-  abort();
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return 0;
+  }
+
+  return buf->b_ml.ml_line_count;
 }
 
 String buffer_get_line(Buffer buffer, int64_t index, Error *err)
