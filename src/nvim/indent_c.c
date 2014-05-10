@@ -13,9 +13,10 @@
 #include "nvim/strings.h"
 
 
-static char_u   *skip_string(char_u *p);
-static pos_T *ind_find_start_comment(void);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "indent_c.c.generated.h"
+#endif
 /*
  * Find the start of a comment, not knowing if we are in a comment right now.
  * Search starts at w_cursor.lnum and goes backwards.
@@ -109,7 +110,6 @@ static char_u *skip_string(char_u *p)
  * Below "XXX" means that this function may unlock the current line.
  */
 
-int cin_is_cinword(char_u *line);
 
 /*
  * Return TRUE if the string "line" starts with a word from 'cinwords'.
@@ -139,41 +139,6 @@ int cin_is_cinword(char_u *line)
 }
 
 
-static char_u   *cin_skipcomment(char_u *);
-static int cin_nocode(char_u *);
-static pos_T    *find_line_comment(void);
-static int cin_islabel_skip(char_u **);
-static int cin_isdefault(char_u *);
-static char_u   *after_label(char_u *l);
-static int get_indent_nolabel(linenr_T lnum);
-static int skip_label(linenr_T, char_u **pp);
-static int cin_first_id_amount(void);
-static int cin_get_equal_amount(linenr_T lnum);
-static int cin_ispreproc(char_u *);
-static int cin_ispreproc_cont(char_u **pp, linenr_T *lnump);
-static int cin_iscomment(char_u *);
-static int cin_islinecomment(char_u *);
-static int cin_isterminated(char_u *, int, int);
-static int cin_isinit(void);
-static int cin_isfuncdecl(char_u **, linenr_T, linenr_T);
-static int cin_isif(char_u *);
-static int cin_iselse(char_u *);
-static int cin_isdo(char_u *);
-static int cin_iswhileofdo(char_u *, linenr_T);
-static int cin_is_if_for_while_before_offset(char_u *line, int *poffset);
-static int cin_iswhileofdo_end(int terminated);
-static int cin_isbreak(char_u *);
-static int cin_is_cpp_baseclass(colnr_T *col);
-static int get_baseclass_amount(int col);
-static int cin_ends_in(char_u *, char_u *, char_u *);
-static int cin_starts_with(char_u *s, char *word);
-static int cin_skip2pos(pos_T *trypos);
-static pos_T    *find_start_brace(void);
-static pos_T    *find_match_paren(int);
-static int corr_ind_maxparen(pos_T *startpos);
-static int find_last_paren(char_u *l, int start, int end);
-static int find_match(int lookfor, linenr_T ourscope);
-static int cin_is_cpp_namespace(char_u *);
 
 /*
  * Skip over white space and C comments within the line.

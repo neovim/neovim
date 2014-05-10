@@ -46,8 +46,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 
-static void cmd_source(char_u *fname, exarg_T *eap);
-
 /* Growarray to store info about already sourced scripts.
  * Also store the dev/ino, so that we don't have to stat() each
  * script when going through the list. */
@@ -85,7 +83,32 @@ typedef struct sn_prl_S {
   proftime_T sn_prl_self;       /* time spent in a line itself */
 } sn_prl_T;
 
+/*
+ * Structure used to store info for each sourced file.
+ * It is shared between do_source() and getsourceline().
+ * This is required, because it needs to be handed to do_cmdline() and
+ * sourcing can be done recursively.
+ */
+struct source_cookie {
+  FILE        *fp;              /* opened file for sourcing */
+  char_u      *nextline;        /* if not NULL: line that was read ahead */
+  int finished;                 /* ":finish" used */
+#if defined(USE_CRNL) || defined(USE_CR)
+  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
+  int error;                    /* TRUE if LF found after CR-LF */
+#endif
+  linenr_T breakpoint;          /* next line with breakpoint or zero */
+  char_u      *fname;           /* name of sourced file */
+  int dbg_tick;                 /* debug_tick when breakpoint was set */
+  int level;                    /* top nesting level of sourced file */
+  vimconv_T conv;               /* type of conversion */
+};
+
 #  define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_cmds2.c.generated.h"
+#endif
 
 static int debug_greedy = FALSE;        /* batch mode debugging: don't save
                                            and restore typeahead. */
@@ -389,10 +412,6 @@ static garray_T prof_ga = {0, 0, sizeof(struct debuggy), 4, NULL};
 #define DBG_FUNC        1
 #define DBG_FILE        2
 
-static int dbg_parsearg(char_u *arg, garray_T *gap);
-static linenr_T debuggy_find(int file,char_u *fname, linenr_T after,
-                             garray_T *gap,
-                             int *fp);
 
 /*
  * Parse the arguments of ":profile", ":breakadd" or ":breakdel" and put them
@@ -724,8 +743,7 @@ void dbg_breakpoint(char_u *name, linenr_T lnum)
 /*
  * Store the current time in "tm".
  */
-void profile_start(tm)
-proftime_T *tm;
+void profile_start(proftime_T *tm)
 {
   gettimeofday(tm, NULL);
 }
@@ -733,8 +751,7 @@ proftime_T *tm;
 /*
  * Compute the elapsed time from "tm" till now and store in "tm".
  */
-void profile_end(tm)
-proftime_T *tm;
+void profile_end(proftime_T *tm)
 {
   proftime_T now;
 
@@ -750,8 +767,7 @@ proftime_T *tm;
 /*
  * Subtract the time "tm2" from "tm".
  */
-void profile_sub(tm, tm2)
-proftime_T *tm, *tm2;
+void profile_sub(proftime_T *tm, proftime_T *tm2)
 {
   tm->tv_usec -= tm2->tv_usec;
   tm->tv_sec -= tm2->tv_sec;
@@ -765,8 +781,7 @@ proftime_T *tm, *tm2;
  * Return a string that represents the time in "tm".
  * Uses a static buffer!
  */
-char * profile_msg(tm)
-proftime_T *tm;
+char * profile_msg(proftime_T *tm)
 {
   static char buf[50];
 
@@ -777,9 +792,7 @@ proftime_T *tm;
 /*
  * Put the time "msec" past now in "tm".
  */
-void profile_setlimit(msec, tm)
-long msec;
-proftime_T  *tm;
+void profile_setlimit(long msec, proftime_T *tm)
 {
   if (msec <= 0)     /* no limit */
     profile_zero(tm);
@@ -796,8 +809,7 @@ proftime_T  *tm;
 /*
  * Return TRUE if the current time is past "tm".
  */
-int profile_passed_limit(tm)
-proftime_T  *tm;
+int profile_passed_limit(proftime_T *tm)
 {
   proftime_T now;
 
@@ -811,8 +823,7 @@ proftime_T  *tm;
 /*
  * Set the time in "tm" to zero.
  */
-void profile_zero(tm)
-proftime_T *tm;
+void profile_zero(proftime_T *tm)
 {
   tm->tv_usec = 0;
   tm->tv_sec = 0;
@@ -824,10 +835,7 @@ proftime_T *tm;
 /*
  * Divide the time "tm" by "count" and store in "tm2".
  */
-void profile_divide(tm, count, tm2)
-proftime_T  *tm;
-proftime_T  *tm2;
-int count;
+void profile_divide(proftime_T *tm, int count, proftime_T *tm2)
 {
   if (count == 0)
     profile_zero(tm2);
@@ -842,15 +850,12 @@ int count;
 /*
  * Functions for profiling.
  */
-static void script_do_profile(scriptitem_T *si);
-static void script_dump_profile(FILE *fd);
 static proftime_T prof_wait_time;
 
 /*
  * Add the time "tm2" to "tm".
  */
-void profile_add(tm, tm2)
-proftime_T *tm, *tm2;
+void profile_add(proftime_T *tm, proftime_T *tm2)
 {
   tm->tv_usec += tm2->tv_usec;
   tm->tv_sec += tm2->tv_sec;
@@ -863,8 +868,7 @@ proftime_T *tm, *tm2;
 /*
  * Add the "self" time from the total time and the children's time.
  */
-void profile_self(self, total, children)
-proftime_T *self, *total, *children;
+void profile_self(proftime_T *self, proftime_T *total, proftime_T *children)
 {
   /* Check that the result won't be negative.  Can happen with recursive
    * calls. */
@@ -879,8 +883,7 @@ proftime_T *self, *total, *children;
 /*
  * Get the current waittime.
  */
-void profile_get_wait(tm)
-proftime_T *tm;
+void profile_get_wait(proftime_T *tm)
 {
   *tm = prof_wait_time;
 }
@@ -888,8 +891,7 @@ proftime_T *tm;
 /*
  * Subtract the passed waittime since "tm" from "tma".
  */
-void profile_sub_wait(tm, tma)
-proftime_T *tm, *tma;
+void profile_sub_wait(proftime_T *tm, proftime_T *tma)
 {
   proftime_T tm3 = prof_wait_time;
 
@@ -900,8 +902,7 @@ proftime_T *tm, *tma;
 /*
  * Return TRUE if "tm1" and "tm2" are equal.
  */
-int profile_equal(tm1, tm2)
-proftime_T *tm1, *tm2;
+int profile_equal(proftime_T *tm1, proftime_T *tm2)
 {
   return tm1->tv_usec == tm2->tv_usec && tm1->tv_sec == tm2->tv_sec;
 }
@@ -909,8 +910,7 @@ proftime_T *tm1, *tm2;
 /*
  * Return <0, 0 or >0 if "tm1" < "tm2", "tm1" == "tm2" or "tm1" > "tm2"
  */
-int profile_cmp(tm1, tm2)
-const proftime_T *tm1, *tm2;
+int profile_cmp(const proftime_T *tm1, const proftime_T *tm2)
 {
   if (tm1->tv_sec == tm2->tv_sec)
     return tm2->tv_usec - tm1->tv_usec;
@@ -1055,8 +1055,9 @@ static void script_do_profile(scriptitem_T *si)
 /*
  * save time when starting to invoke another script or function.
  */
-void script_prof_save(tm)
-proftime_T  *tm;            /* place to store wait time */
+void script_prof_save(
+    proftime_T  *tm             /* place to store wait time */
+    )
 {
   scriptitem_T    *si;
 
@@ -1071,8 +1072,7 @@ proftime_T  *tm;            /* place to store wait time */
 /*
  * Count time spent in children after invoking another script or function.
  */
-void script_prof_restore(tm)
-proftime_T  *tm;
+void script_prof_restore(proftime_T *tm)
 {
   scriptitem_T    *si;
 
@@ -1327,7 +1327,6 @@ int can_abandon(buf_T *buf, int forceit)
          || forceit;
 }
 
-static void add_bufnum(int *bufnrs, int *bufnump, int nr);
 
 /*
  * Add a buffer number to "bufnrs", unless it's already there.
@@ -1486,11 +1485,6 @@ int buf_write_all(buf_T *buf, int forceit)
  * Code to handle the argument list.
  */
 
-static char_u   *do_one_arg(char_u *str);
-static int do_arglist(char_u *str, int what, int after);
-static void alist_check_arg_idx(void);
-static int editing_arg_idx(win_T *win);
-static int alist_add_list(int count, char_u **files, int after);
 #define AL_SET  1
 #define AL_ADD  2
 #define AL_DEL  3
@@ -2202,7 +2196,6 @@ void ex_runtime(exarg_T *eap)
   source_runtime(eap->arg, eap->forceit);
 }
 
-static void source_callback(char_u *fname, void *cookie);
 
 static void source_callback(char_u *fname, void *cookie)
 {
@@ -2231,11 +2224,8 @@ int source_runtime(char_u *name, int all)
  * passed by reference in this case, setting it to NULL indicates that callback
  * has done its job.
  */
-int do_in_runtimepath(name, all, callback, cookie)
-char_u      *name;
-int all;
-void        (*callback)(char_u *fname, void *ck);
-void        *cookie;
+int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
+                      void *cookie)
 {
   char_u      *rtp;
   char_u      *np;
@@ -2354,26 +2344,6 @@ static void cmd_source(char_u *fname, exarg_T *eap)
 /*
  * ":source" and associated commands.
  */
-/*
- * Structure used to store info for each sourced file.
- * It is shared between do_source() and getsourceline().
- * This is required, because it needs to be handed to do_cmdline() and
- * sourcing can be done recursively.
- */
-struct source_cookie {
-  FILE        *fp;              /* opened file for sourcing */
-  char_u      *nextline;        /* if not NULL: line that was read ahead */
-  int finished;                 /* ":finish" used */
-#if defined(USE_CRNL) || defined(USE_CR)
-  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
-  int error;                    /* TRUE if LF found after CR-LF */
-#endif
-  linenr_T breakpoint;          /* next line with breakpoint or zero */
-  char_u      *fname;           /* name of sourced file */
-  int dbg_tick;                 /* debug_tick when breakpoint was set */
-  int level;                    /* top nesting level of sourced file */
-  vimconv_T conv;               /* type of conversion */
-};
 
 /*
  * Return the address holding the next breakpoint line for a source cookie.
@@ -2399,7 +2369,6 @@ int source_level(void *cookie)
   return ((struct source_cookie *)cookie)->level;
 }
 
-static char_u *get_one_sourceline(struct source_cookie *sp);
 
 #if (defined(WIN32) && defined(FEAT_CSCOPE)) || defined(HAVE_FD_CLOEXEC)
 # define USE_FOPEN_NOINH
@@ -3200,9 +3169,7 @@ void do_finish(exarg_T *eap, int reanimate)
  * message for missing ":endif".
  * Return FALSE when not sourcing a file.
  */
-int source_finished(fgetline, cookie)
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;
+int source_finished(LineGetter fgetline, void *cookie)
 {
   return getline_equal(fgetline, cookie, getsourceline)
          && ((struct source_cookie *)getline_cookie(
@@ -3230,7 +3197,6 @@ void ex_checktime(exarg_T *eap)
 
 #if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
 # define HAVE_GET_LOCALE_VAL
-static char *get_locale_val(int what);
 
 static char *get_locale_val(int what)
 {

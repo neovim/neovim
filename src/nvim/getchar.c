@@ -147,25 +147,9 @@ static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 
 static int last_recorded_len = 0;       /* number of last recorded chars */
 
-static char_u *get_buffcont(buffheader_T *, int);
-static void add_buff(buffheader_T *, char_u *, long n);
-static void add_num_buff(buffheader_T *, long);
-static void add_char_buff(buffheader_T *, int);
-static int read_readbuffers(int advance);
-static int read_readbuf(buffheader_T *buf, int advance);
-static void start_stuff(void);
-static int read_redo(int, int);
-static void copy_redo(int);
-static void init_typebuf(void);
-static void gotchars(char_u *, int);
-static void may_sync_undo(void);
-static void closescript(void);
-static int vgetorpeek(int);
-static void map_free(mapblock_T **);
-static void validate_maphash(void);
-static void showmap(mapblock_T *mp, int local);
-static char_u   *eval_map_expr(char_u *str, int c);
-static bool is_user_input(int k);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "getchar.c.generated.h"
+#endif
 
 /*
  * Free and clear a buffer.

@@ -43,7 +43,7 @@
 /*
  * Copy "string" into newly allocated memory.
  */
-char_u *vim_strsave(char_u *string)
+char_u *vim_strsave(char_u *string) FUNC_ATTR_NONNULL_RET
 {
   return (char_u *)xstrdup((char *)string);
 }
@@ -54,7 +54,7 @@ char_u *vim_strsave(char_u *string)
  * The allocated memory always has size "len + 1", also when "string" is
  * shorter.
  */
-char_u *vim_strnsave(char_u *string, int len)
+char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
 {
   return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }
@@ -487,9 +487,10 @@ int vim_isspace(int x)
 /*
  * Sort an array of strings.
  */
-static int
-sort_compare(const void *s1, const void *s2);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "strings.c.generated.h"
+#endif
 static int sort_compare(const void *s1, const void *s2)
 {
   return STRCMP(*(char **)s1, *(char **)s2);
@@ -519,7 +520,7 @@ int has_non_ascii(char_u *s)
  * Concatenate two strings and return the result in allocated memory.
  * Returns NULL when out of memory.
  */
-char_u *concat_str(char_u *str1, char_u *str2)
+char_u *concat_str(char_u *str1, char_u *str2) FUNC_ATTR_NONNULL_RET
 {
   size_t l = STRLEN(str1);
   char_u *dest = xmalloc(l + STRLEN(str2) + 1);

@@ -8,8 +8,9 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
-static bool is_executable(const char_u *name);
-static bool is_executable_in_path(const char_u *name);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/fs.c.generated.h"
+#endif
 
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
@@ -349,4 +350,3 @@ bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2)
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
          && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
 }
-

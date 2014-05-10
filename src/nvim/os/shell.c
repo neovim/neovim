@@ -31,20 +31,13 @@ typedef struct {
   garray_T ga;
 } ProcessData;
 
-static int tokenize(char_u *str, char **argv);
 
-static int word_length(char_u *command);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/shell.c.generated.h"
+#endif
 
-static void write_selection(uv_write_t *req);
 
-static int proc_cleanup_exit(ProcessData *data,
-                             uv_process_options_t *opts,
-                             int shellopts);
 // Callbacks for libuv
-static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf);
-static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf);
-static void write_cb(uv_write_t *req, int status);
-static void exit_cb(uv_process_t *proc, int64_t status, int term_signal);
 
 /// Builds the argument vector for running the shell configured in `sh`
 /// ('shell' option), optionally with a command that will be passed with `shcf`

@@ -51,13 +51,10 @@
 #define EXTRA_MARKS 10                                  /* marks 0-9 */
 static xfmark_T namedfm[NMARKS + EXTRA_MARKS];          /* marks with file nr */
 
-static void fname2fnum(xfmark_T *fm);
-static void fmarks_check_one(xfmark_T *fm, char_u *name, buf_T *buf);
-static char_u *mark_line(pos_T *mp, int lead_len);
-static void show_one_mark(int, char_u *, pos_T *, char_u *, int current);
-static void cleanup_jumplist(void);
-static void write_one_filemark(FILE *fp, xfmark_T *fm, int c1, int c2);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "mark.c.generated.h"
+#endif
 /*
  * Set named mark "c" at current cursor position.
  * Returns OK on success, FAIL if bad name given.
@@ -1328,7 +1325,6 @@ int removable(char_u *name)
   return retval;
 }
 
-static void write_one_mark(FILE *fp_out, int c, pos_T *pos);
 
 /*
  * Write all the named marks for all buffers.

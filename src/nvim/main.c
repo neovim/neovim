@@ -99,39 +99,15 @@ typedef struct {
 #define EDIT_QF     4       /* start in quickfix mode */
 
 #if defined(UNIX) && !defined(NO_VIM_MAIN)
-static int file_owned(char *fname);
 #endif
-static void mainerr(int, char_u *);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "main.c.generated.h"
+#endif
 #ifndef NO_VIM_MAIN
-static void main_msg(char *s);
-static void usage(void);
-static int get_number_arg(char_u *p, int *idx, int def);
 # if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
 static void init_locale(void);
 # endif
-static void parse_command_name(mparm_T *parmp);
-static bool parse_char_i(char_u **input, char val);
-static bool parse_string(char_u **input, char* val, int len);
-static void command_line_scan(mparm_T *parmp);
-static void init_params(mparm_T *parmp, int argc, char **argv);
-static void init_startuptime(mparm_T *parmp);
-static void allocate_generic_buffers(void);
-static void check_and_set_isatty(mparm_T *parmp);
-static char_u* get_fname(mparm_T *parmp);
-static void set_window_layout(mparm_T *parmp);
-static void load_plugins(void);
-static void handle_quickfix(mparm_T *parmp);
-static void handle_tag(char_u *tagname);
-static void check_tty(mparm_T *parmp);
-static void read_stdin(void);
-static void create_windows(mparm_T *parmp);
-static void edit_buffers(mparm_T *parmp);
-static void exe_pre_commands(mparm_T *parmp);
-static void exe_commands(mparm_T *parmp);
-static void source_startup_scripts(mparm_T *parmp);
-static void main_start_gui(void);
 # if defined(HAS_SWAP_EXISTS_ACTION)
-static void check_swap_exists_action(void);
 # endif
 #endif /* NO_VIM_MAIN */
 
@@ -971,10 +947,7 @@ static bool parse_char_i(char_u **input, char val)
   return false;
 }
 
-static bool parse_string(input, val, len)
-  char_u      **input;
-  char        *val;
-  int len;
+static bool parse_string(char_u **input, char *val, int len)
 {
   if (STRNICMP(*input, val, len) == 0) {
     *input += len;
@@ -2273,7 +2246,6 @@ static void check_swap_exists_action(void)
 #endif
 
 #if defined(STARTUPTIME) || defined(PROTO)
-static void time_diff(struct timeval *then, struct timeval *now);
 
 static struct timeval prev_timeval;
 

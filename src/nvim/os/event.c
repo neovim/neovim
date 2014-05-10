@@ -20,11 +20,12 @@
 #define _destroy_event(x)  // do nothing
 KLIST_INIT(Event, Event, _destroy_event)
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/event.c.generated.h"
+#endif
 static klist_t(Event) *event_queue;
 static uv_timer_t timer;
 static uv_prepare_t timer_prepare;
-static void timer_cb(uv_timer_t *handle);
-static void timer_prepare_cb(uv_prepare_t *);
 
 void event_init()
 {

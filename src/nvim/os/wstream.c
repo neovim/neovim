@@ -30,8 +30,10 @@ typedef struct {
   WBuffer *buffer;
 } WriteData;
 
-static void write_cb(uv_write_t *req, int status);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/wstream.c.generated.h"
+#endif
 /// Creates a new WStream instance. A WStream encapsulates all the boilerplate
 /// necessary for writing to a libuv stream.
 ///

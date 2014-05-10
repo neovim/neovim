@@ -9,11 +9,8 @@ typedef struct {
   char_u *pum_info;        // extra info
 } pumitem_T;
 
-void pum_display(pumitem_T *array, int size, int selected);
-void pum_redraw(void);
-void pum_undisplay(void);
-void pum_clear(void);
-int pum_visible(void);
-int pum_get_height(void);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "popupmnu.h.generated.h"
+#endif
 #endif  // NVIM_POPUPMNU_H

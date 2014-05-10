@@ -1,12 +1,9 @@
 #ifndef NVIM_INDENT_C_H
 #define NVIM_INDENT_C_H
+
 #include "nvim/vim.h"
-int cin_islabel(void);
-int cin_iscase(char_u *s, int strict);
-int cin_isscopedecl(char_u *s);
-int cin_is_cinword(char_u *line);
-int get_c_indent(void);
-void do_c_expr_indent(void);
-void parse_cino(buf_T *buf);
-pos_T * find_start_comment(int ind_maxcomment);
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "indent_c.h.generated.h"
 #endif
+#endif  // NVIM_INDENT_C_H

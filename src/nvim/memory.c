@@ -41,7 +41,9 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
-static void try_to_free_memory();
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "memory.c.generated.h"
+#endif
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
@@ -71,7 +73,7 @@ static void try_to_free_memory()
 /// @see {try_to_free_memory}
 /// @param size
 /// @return pointer to allocated space. NULL if out of memory
-void *try_malloc(size_t size)
+void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
   void *ret = malloc(size);
 
@@ -94,7 +96,7 @@ void *try_malloc(size_t size)
 /// @see {try_malloc}
 /// @param size
 /// @return pointer to allocated space. NULL if out of memory
-void *verbose_try_malloc(size_t size)
+void *verbose_try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
   void *ret = try_malloc(size);
   if (!ret) {
@@ -112,6 +114,7 @@ void *verbose_try_malloc(size_t size)
 /// @param size
 /// @return pointer to allocated space. Never NULL
 void *xmalloc(size_t size)
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET
 {
   void *ret = try_malloc(size);
 
@@ -129,6 +132,7 @@ void *xmalloc(size_t size)
 /// @param size
 /// @return pointer to allocated space. Never NULL
 void *xcalloc(size_t count, size_t size)
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
   void *ret = calloc(count, size);
 
@@ -155,6 +159,7 @@ void *xcalloc(size_t count, size_t size)
 /// @param size
 /// @return pointer to reallocated space. Never NULL
 void *xrealloc(void *ptr, size_t size)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
   void *ret = realloc(ptr, size);
 
@@ -296,6 +301,7 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 /// @param str 0-terminated string that will be copied
 /// @return pointer to a copy of the string
 char *xstrdup(const char *str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   char *ret = strdup(str);
 
@@ -317,6 +323,7 @@ char *xstrdup(const char *str)
 /// @param str 0-terminated string that will be copied
 /// @return pointer to a copy of the string
 char *xstrndup(const char *str, size_t len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);

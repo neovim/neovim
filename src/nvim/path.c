@@ -31,7 +31,13 @@
 #define URL_SLASH       1               /* path_is_url() has found "://" */
 #define URL_BACKSLASH   2               /* path_is_url() has found ":\\" */
 
-static int path_get_absolute_path(char_u *fname, char_u *buf, int len, int force);
+#ifdef gen_expand_wildcards
+# undef gen_expand_wildcards
+#endif
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "path.c.generated.h"
+#endif
 
 /// Compare two file names.
 ///
@@ -298,6 +304,7 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
  * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
  */
 char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
+  FUNC_ATTR_NONNULL_RET
 {
   char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
 
@@ -350,17 +357,11 @@ FullName_save (
 
 #if !defined(NO_EXPANDPATH) || defined(PROTO)
 
-static int vim_backtick(char_u *p);
-static int expand_backtick(garray_T *gap, char_u *pat, int flags);
-
-
 #if defined(UNIX) || defined(USE_UNIXFILENAME) || defined(PROTO)
 /*
  * Unix style wildcard expansion code.
  * It's here because it's used both for Unix and Mac.
  */
-static int pstrcmp(const void *, const void *);
-
 static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
@@ -561,13 +562,6 @@ unix_expandpath (
 }
 #endif
 
-static int find_previous_pathsep(char_u *path, char_u **psep);
-static int is_unique(char_u *maybe_unique, garray_T *gap, int i);
-static void expand_path_option(char_u *curdir, garray_T *gap);
-static char_u *get_path_cutoff(char_u *fname, garray_T *gap);
-static void uniquefy_paths(garray_T *gap, char_u *pattern);
-static int expand_in_path(garray_T *gap, char_u *pattern, int flags);
-
 /*
  * Moves "*psep" back to the previous path separator in "path".
  * Returns FAIL is "*psep" ends up at the beginning of "path".
@@ -716,8 +710,6 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
 
   return cutoff;
 }
-
-static char_u *gettail_dir(char_u *fname);
 
 /*
  * Sorts, removes duplicates and modifies all the fullpath names in "gap" so
@@ -950,8 +942,6 @@ expand_in_path (
 }
 
 
-static int has_env_var(char_u *p);
-
 /*
  * Return TRUE if "p" contains what looks like an environment variable.
  * Allowing for escaping.
@@ -970,8 +960,6 @@ static int has_env_var(char_u *p)
 }
 
 #ifdef SPECIAL_WILDCHAR
-static int has_special_wildchar(char_u *p);
-
 /*
  * Return TRUE if "p" contains a special wildcard character.
  * Allowing for escaping.
@@ -1413,8 +1401,6 @@ void simplify_filename(char_u *filename)
   } while (*p != NUL);
 }
 
-static char_u *eval_includeexpr(char_u *ptr, int len);
-
 static char_u *eval_includeexpr(char_u *ptr, int len)
 {
   char_u      *res;
@@ -1697,11 +1683,10 @@ int pathcmp(const char *p, const char *q, int maxlen)
  * "?", "[a-z]", "**", etc.
  * "path" has backslashes before chars that are not to be expanded.
  * Returns the number of matches found.
+ *
+ * Uses EW_* flags
  */
-int mch_expandpath(gap, path, flags)
-garray_T    *gap;
-char_u      *path;
-int flags;                      /* EW_* flags */
+int mch_expandpath(garray_T *gap, char_u *path, int flags)
 {
   return unix_expandpath(gap, path, 0, flags, FALSE);
 }

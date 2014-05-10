@@ -27,12 +27,9 @@ struct rstream {
   bool reading, free_handle, async;
 };
 
-// Callbacks used by libuv
-static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
-static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
-static void fread_idle_cb(uv_idle_t *);
-static void close_cb(uv_handle_t *handle);
-static void emit_read_event(RStream *rstream, bool eof);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/rstream.c.generated.h"
+#endif
 
 /// Creates a new RStream instance. A RStream encapsulates all the boilerplate
 /// necessary for reading from a libuv stream.
@@ -225,6 +222,8 @@ void rstream_read_event(Event event)
 
   rstream->cb(rstream, rstream->data, event.data.rstream.eof);
 }
+
+// Callbacks used by libuv
 
 // Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)

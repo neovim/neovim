@@ -38,16 +38,9 @@ static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer msgpack_event_buffer;
 
-static void job_out(RStream *rstream, void *data, bool eof);
-static void job_err(RStream *rstream, void *data, bool eof);
-static void parse_msgpack(RStream *rstream, void *data, bool eof);
-static void send_event(Channel *channel, char *type, typval_T *data);
-static void broadcast_event(char *type, typval_T *data);
-static void unsubscribe(Channel *channel, char *event);
-static void close_channel(Channel *channel);
-static void close_cb(uv_handle_t *handle);
-static WBuffer *serialize_event(char *type, typval_T *data);
-static Channel *register_channel(void);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/channel.c.generated.h"
+#endif
 
 /// Initializes the module
 void channel_init()
