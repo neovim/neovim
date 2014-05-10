@@ -34,25 +34,34 @@ void buffer_set_line(Buffer buffer, int64_t index, Object line, Error *err);
 ///
 /// @param buffer The buffer handle
 /// @param start The first line index
-/// @param end The last line index(exclusive)
+/// @param end The last line index
+/// @param include_start True if the slice includes the `start` parameter
+/// @param include_end True if the slice includes the `end` parameter
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
 StringArray buffer_get_slice(Buffer buffer,
                              int64_t start,
                              int64_t end,
+                             bool include_start,
+                             bool include_end,
                              Error *err);
 
 /// Replaces a line range on the buffer
 ///
 /// @param buffer The buffer handle
 /// @param start The first line index
-/// @param end The last line index(exclusive)
-/// @param lines An array of lines to use as replacement
+/// @param end The last line index
+/// @param include_start True if the slice includes the `start` parameter
+/// @param include_end True if the slice includes the `end` parameter
+/// @param lines An array of lines to use as replacement(A 0-length array
+///        will simply delete the line range)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_slice(Buffer buffer,
                       int64_t start,
                       int64_t end,
-                      StringArray lines,
+                      bool include_start,
+                      bool include_end,
+                      StringArray replacement,
                       Error *err);
 
 /// Gets a buffer variable
