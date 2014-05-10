@@ -232,8 +232,6 @@ getcmdline (
 
   /* alloc initial ccline.cmdbuff */
   alloc_cmdbuff(exmode_active ? 250 : indent + 1);
-  if (ccline.cmdbuff == NULL)
-    return NULL;                            /* out of memory */
   ccline.cmdlen = ccline.cmdpos = 0;
   ccline.cmdbuff[0] = NUL;
 
@@ -1285,15 +1283,11 @@ getcmdline (
             }
             if (i == 0) {
               alloc_cmdbuff(len);
-              if (ccline.cmdbuff == NULL)
-                goto returncmd;
             }
           }
           ccline.cmdbuff[len] = NUL;
         } else {
           alloc_cmdbuff((int)STRLEN(p));
-          if (ccline.cmdbuff == NULL)
-            goto returncmd;
           STRCPY(ccline.cmdbuff, p);
         }
 
@@ -1999,7 +1993,6 @@ static void alloc_cmdbuff(int len)
 
 /*
  * Re-allocate the command line to length len + something extra.
- * return FAIL for failure, OK otherwise
  */
 static int realloc_cmdbuff(int len)
 {
@@ -2010,10 +2003,6 @@ static int realloc_cmdbuff(int len)
 
   p = ccline.cmdbuff;
   alloc_cmdbuff(len);                   /* will get some more */
-  if (ccline.cmdbuff == NULL) {         /* out of memory */
-    ccline.cmdbuff = p;                 /* keep the old one */
-    return FAIL;
-  }
   /* There isn't always a NUL after the command, but it may need to be
    * there, thus copy up to the NUL and add a NUL. */
   memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
