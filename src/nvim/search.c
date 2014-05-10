@@ -230,7 +230,9 @@ char_u *get_search_pat(void)
 
 /*
  * Reverse text into allocated memory.
- * Returns the allocated string, NULL when out of memory.
+ * Returns the allocated string.
+ *
+ * TODO(philix): move reverse_text() to strings.c
  */
 char_u *reverse_text(char_u *s)
 {
@@ -1080,13 +1082,9 @@ proftime_T      *tm;            /* timeout limit or NULL */
          * it would be blanked out again very soon.  Show it on the
          * left, but do reverse the text. */
         if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-          char_u *r;
-
-          r = reverse_text(trunc != NULL ? trunc : msgbuf);
-          if (r != NULL) {
-            free(trunc);
-            trunc = r;
-          }
+          char_u *r = reverse_text(trunc != NULL ? trunc : msgbuf);
+          free(trunc);
+          trunc = r;
         }
         if (trunc != NULL) {
           msg_outtrans(trunc);
