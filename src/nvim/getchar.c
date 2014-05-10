@@ -1177,12 +1177,11 @@ void free_typebuf(void)
  */
 static typebuf_T saved_typebuf[NSCRIPT];
 
-int save_typebuf(void)
+void save_typebuf(void)
 {
   init_typebuf();
   saved_typebuf[curscript] = typebuf;
   alloc_typebuf();
-  return OK;
 }
 
 static int old_char = -1;       /* character put back by vungetc() */
@@ -1262,8 +1261,7 @@ openscript (
       --curscript;
     return;
   }
-  if (save_typebuf() == FAIL)
-    return;
+  save_typebuf();
 
   /*
    * Execute the commands from the file right now when using ":source!"

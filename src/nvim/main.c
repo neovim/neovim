@@ -1365,8 +1365,7 @@ scripterror:
               mch_errmsg("\"\n");
               mch_exit(2);
             }
-            if (save_typebuf() == FAIL)
-              mch_exit(2);                /* out of memory */
+            save_typebuf();
             break;
 
           case 't':               /* "-t {tag}" */
