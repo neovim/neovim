@@ -106,34 +106,9 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-static long get_undolevel(void);
-static void u_unch_branch(u_header_T *uhp);
-static u_entry_T *u_get_headentry(void);
-static void u_getbot(void);
-static void u_doit(int count);
-static void u_undoredo(int undo);
-static void u_undo_end(int did_undo, int absolute);
-static void u_add_time(char_u *buf, size_t buflen, time_t tt);
-static void u_freeheader(buf_T *buf, u_header_T *uhp, u_header_T **uhpp);
-static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp);
-static void u_freeentries(buf_T *buf, u_header_T *uhp,
-                          u_header_T **uhpp);
-static void u_freeentry(u_entry_T *, long);
-static void corruption_error(char *mesg, char_u *file_name);
-static void u_free_uhp(u_header_T *uhp);
-static int serialize_header(FILE *fp, buf_T *buf, char_u *hash);
-static int serialize_uhp(FILE *fp, buf_T *buf, u_header_T *uhp);
-static u_header_T *unserialize_uhp(FILE *fp, char_u *file_name);
-static int serialize_uep(FILE *fp, buf_T *buf, u_entry_T *uep);
-static u_entry_T *unserialize_uep(FILE *fp, int *error,
-                                  char_u *file_name);
-static void serialize_pos(pos_T pos, FILE *fp);
-static void unserialize_pos(pos_T *pos, FILE *fp);
-static void serialize_visualinfo(visualinfo_T *info, FILE *fp);
-static void unserialize_visualinfo(visualinfo_T *info, FILE *fp);
-static void put_header_ptr(FILE *fp, u_header_T *uhp);
-
-static char_u *u_save_line(linenr_T);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "undo.c.generated.h"
+#endif
 
 /* used in undo_end() to report number of added and deleted lines */
 static long u_newcount, u_oldcount;

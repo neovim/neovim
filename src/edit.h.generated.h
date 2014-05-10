@@ -1,0 +1,42 @@
+int ins_copychar(linenr_T lnum);
+int hkmap(int c);
+int in_cinkeys(int keytyped, int when, int line_is_empty);
+void fix_indent(void);
+void fixthisline(int (*get_the_indent)(void));
+int replace_push_mb(char_u *p);
+void replace_push(int c);
+char_u *get_last_insert_save(void);
+char_u *get_last_insert(void);
+int stuff_inserted(int c, long count, int no_esc);
+int cursor_down(long n, int upd_topline);
+int cursor_up(long n, int upd_topline);
+int oneleft(void);
+int oneright(void);
+void beginline(int flags);
+char_u *add_char2buf(int c, char_u *s);
+void set_last_insert(int c);
+int stop_arrow(void);
+int comp_textwidth(int ff);
+void auto_format(int trailblank, int prev_line);
+void insertchar(int c, int flags, int second_indent);
+int get_literal(void);
+void ins_compl_check_keys(int frequency);
+int ins_compl_add_tv(typval_T *tv, int dir);
+int ins_compl_active(void);
+char_u *find_word_end(char_u *ptr);
+char_u *find_word_start(char_u *ptr);
+void ins_compl_show_pum(void);
+void set_completion(colnr_T startcol, list_T *list);
+int ins_compl_add_infercase(char_u *str, int len, int icase,
+                            char_u *fname, int dir,
+                            int flags);
+int vim_is_ctrl_x_key(int c);
+void truncate_spaces(char_u *line);
+void change_indent(int type, int amount, int round, int replaced,
+                   int call_changed_bytes);
+void display_dollar(colnr_T col);
+void edit_unputchar(void);
+void edit_putchar(int c, int highlight);
+int edit(int cmdchar, int startln, long count);
+void free_last_insert(void);
+void backspace_until_column(int col);

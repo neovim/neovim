@@ -30,7 +30,9 @@
 // Magic value for algorithm that walks through the array.
 #define PERTURB_SHIFT 5
 
-static int hash_may_resize(hashtab_T *ht, size_t minitems);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "hashtab.c.generated.h"
+#endif
 
 /// Initialize an empty hash table.
 void hash_init(hashtab_T *ht)

@@ -80,19 +80,16 @@
 static int selinux_enabled = -1;
 #endif
 
-static int get_x11_title(int);
-static int get_x11_icon(int);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os_unix.c.generated.h"
+#endif
 static char_u   *oldtitle = NULL;
 static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
 
-static int have_wildcard(int, char_u **);
-static int have_dollars(int, char_u **);
 
-static void save_patterns(int num_pat, char_u **pat, int *num_file,
-                          char_u ***file);
 
 /*
  * Write s[len] to the screen.
@@ -555,7 +552,6 @@ void mch_free_mem()          {
 
 #endif
 
-static void exit_scroll(void);
 
 /*
  * Output a newline when exiting.

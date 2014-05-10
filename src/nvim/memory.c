@@ -41,7 +41,9 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
-static void try_to_free_memory();
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "memory.c.generated.h"
+#endif
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}

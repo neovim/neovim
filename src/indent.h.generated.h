@@ -1,0 +1,10 @@
+int get_lisp_indent(void);
+int get_expr_indent(void);
+int inindent(int extra);
+int get_number_indent(linenr_T lnum);
+int copy_indent(int size, char_u *src);
+int set_indent(int size, int flags);
+int get_indent_str(char_u *ptr, int ts);
+int get_indent_buf(buf_T *buf, linenr_T lnum);
+int get_indent_lnum(linenr_T lnum);
+int get_indent(void);

@@ -62,19 +62,15 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 
-static int linelen(int *has_tab);
-static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap,
-                      char_u *cmd, int do_in,
-                      int do_out);
-static char_u *viminfo_filename(char_u  *);
-static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags);
-static int viminfo_encoding(vir_T *virp);
-static int read_viminfo_up_to_marks(vir_T *virp, int forceit,
-                                    int writing);
+/*
+ * Struct to hold the sign properties.
+ */
+typedef struct sign sign_T;
 
-static int check_readonly(int *forceit, buf_T *buf);
-static void delbuf_msg(char_u *name);
-static int help_compare(const void *s1, const void *s2);
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_cmds.c.generated.h"
+#endif
 
 /*
  * ":ascii" and "ga".
@@ -293,8 +289,6 @@ typedef struct {
   long end_col_nr;                      /* ending column number */
 } sorti_T;
 
-static int
-sort_compare(const void *s1, const void *s2);
 
 static int sort_compare(const void *s1, const void *s2)
 {
@@ -1407,7 +1401,6 @@ void append_redir(char_u *buf, int buflen, char_u *opt, char_u *fname)
 }
 
 
-static int no_viminfo(void);
 static int viminfo_errcnt;
 
 static int no_viminfo(void)
@@ -5290,8 +5283,6 @@ void ex_viusage(exarg_T *eap)
   do_cmdline_cmd((char_u *)"help normal-index");
 }
 
-static void helptags_one(char_u *dir, char_u *ext, char_u *lang,
-                         int add_help_tags);
 
 /*
  * ":helptags"
@@ -5606,11 +5597,6 @@ helptags_one (
   fclose(fd_tags);          /* there is no check for an error... */
 }
 
-/*
- * Struct to hold the sign properties.
- */
-typedef struct sign sign_T;
-
 struct sign
 {
     sign_T      *sn_next;       /* next sign in list */
@@ -5625,9 +5611,6 @@ struct sign
 static sign_T   *first_sign = NULL;
 static int      next_sign_typenr = 1;
 
-static int sign_cmd_idx (char_u *begin_cmd, char_u *end_cmd);
-static void sign_list_defined (sign_T *sp);
-static void sign_undefine (sign_T *sp, sign_T *sp_prev);
 
 static char *cmds[] = {
 			"define",

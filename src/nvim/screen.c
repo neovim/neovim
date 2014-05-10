@@ -152,53 +152,13 @@ static foldinfo_T win_foldinfo; /* info for 'foldcolumn' */
  */
 static schar_T  *current_ScreenLine;
 
-static void win_update(win_T *wp);
-static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow,
-                         hlf_T hl);
-static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo,
-                      linenr_T lnum,
-                      int row);
-static void fill_foldcolumn(char_u *p, win_T *wp, int closed,
-                            linenr_T lnum);
-static void copy_text_attr(int off, char_u *buf, int len, int attr);
-static int win_line(win_T *, linenr_T, int, int, int nochange);
-static int char_needs_redraw(int off_from, int off_to, int cols);
-static void screen_line(int row, int coloff, int endcol,
-                        int clear_width,
-                        int rlflag);
 # define SCREEN_LINE(r, o, e, c, rl)    screen_line((r), (o), (e), (c), (rl))
-static void draw_vsep_win(win_T *wp, int row);
-static void redraw_custom_statusline(win_T *wp);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "screen.c.generated.h"
+#endif
 #define SEARCH_HL_PRIORITY 0
-static void start_search_hl(void);
-static void end_search_hl(void);
-static void init_search_hl(win_T *wp);
-static void prepare_search_hl(win_T *wp, linenr_T lnum);
-static void next_search_hl(win_T *win, match_T *shl, linenr_T lnum,
-                           colnr_T mincol);
-static void screen_start_highlight(int attr);
-static void screen_char(unsigned off, int row, int col);
-static void screen_char_2(unsigned off, int row, int col);
-static void screenclear2(void);
-static void lineclear(unsigned off, int width);
-static void lineinvalid(unsigned off, int width);
-static void linecopy(int to, int from, win_T *wp);
-static void redraw_block(int row, int end, win_T *wp);
-static int win_do_lines(win_T *wp, int row, int line_count,
-                        int mayclear,
-                        int del);
-static void win_rest_invalid(win_T *wp);
-static void msg_pos_mode(void);
-static void draw_tabline(void);
-static int fillchar_status(int *attr, int is_curwin);
-static int fillchar_vsep(int *attr);
-static void win_redr_custom(win_T *wp, int draw_ruler);
-static void win_redr_ruler(win_T *wp, int always);
 
 //signs column
-static void update_prepare(void);
-static void update_finish(void);
-static int draw_signcolumn (win_T *wp);
 
 /* Ugly global: overrule attribute used by screen_char() */
 static int screen_char_attr = 0;
@@ -1811,7 +1771,6 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
   set_empty_rows(wp, row);
 }
 
-static int advance_color_col(int vcol, int **color_cols);
 
 /*
  * Advance **color_cols and return TRUE when there are columns to draw.
@@ -4176,7 +4135,6 @@ win_line (
   return row;
 }
 
-static int comp_char_differs(int, int);
 
 /*
  * Return if the composing characters at "off_from" and "off_to" differ.
@@ -4580,8 +4538,6 @@ static void draw_vsep_win(win_T *wp, int row)
   }
 }
 
-static int status_match_len(expand_T *xp, char_u *s);
-static int skip_status_match_char(expand_T *xp, char_u *s);
 
 /*
  * Get the length of an item as it will be shown in the status line.
@@ -5226,7 +5182,6 @@ void screen_getbytes(int row, int col, char_u *bytes, int *attrp)
   }
 }
 
-static int screen_comp_differs(int, int*);
 
 /*
  * Return TRUE if composing characters for screen posn "off" differs from

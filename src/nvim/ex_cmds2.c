@@ -46,7 +46,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 
-static void cmd_source(char_u *fname, exarg_T *eap);
 
 /* Growarray to store info about already sourced scripts.
  * Also store the dev/ino, so that we don't have to stat() each
@@ -85,7 +84,32 @@ typedef struct sn_prl_S {
   proftime_T sn_prl_self;       /* time spent in a line itself */
 } sn_prl_T;
 
+/*
+ * Structure used to store info for each sourced file.
+ * It is shared between do_source() and getsourceline().
+ * This is required, because it needs to be handed to do_cmdline() and
+ * sourcing can be done recursively.
+ */
+struct source_cookie {
+  FILE        *fp;              /* opened file for sourcing */
+  char_u      *nextline;        /* if not NULL: line that was read ahead */
+  int finished;                 /* ":finish" used */
+#if defined(USE_CRNL) || defined(USE_CR)
+  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
+  int error;                    /* TRUE if LF found after CR-LF */
+#endif
+  linenr_T breakpoint;          /* next line with breakpoint or zero */
+  char_u      *fname;           /* name of sourced file */
+  int dbg_tick;                 /* debug_tick when breakpoint was set */
+  int level;                    /* top nesting level of sourced file */
+  vimconv_T conv;               /* type of conversion */
+};
+
 #  define PRL_ITEM(si, idx)     (((sn_prl_T *)(si)->sn_prl_ga.ga_data)[(idx)])
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_cmds2.c.generated.h"
+#endif
 
 static int debug_greedy = FALSE;        /* batch mode debugging: don't save
                                            and restore typeahead. */
@@ -389,10 +413,6 @@ static garray_T prof_ga = {0, 0, sizeof(struct debuggy), 4, NULL};
 #define DBG_FUNC        1
 #define DBG_FILE        2
 
-static int dbg_parsearg(char_u *arg, garray_T *gap);
-static linenr_T debuggy_find(int file,char_u *fname, linenr_T after,
-                             garray_T *gap,
-                             int *fp);
 
 /*
  * Parse the arguments of ":profile", ":breakadd" or ":breakdel" and put them
@@ -842,8 +862,6 @@ int count;
 /*
  * Functions for profiling.
  */
-static void script_do_profile(scriptitem_T *si);
-static void script_dump_profile(FILE *fd);
 static proftime_T prof_wait_time;
 
 /*
@@ -1327,7 +1345,6 @@ int can_abandon(buf_T *buf, int forceit)
          || forceit;
 }
 
-static void add_bufnum(int *bufnrs, int *bufnump, int nr);
 
 /*
  * Add a buffer number to "bufnrs", unless it's already there.
@@ -1486,11 +1503,6 @@ int buf_write_all(buf_T *buf, int forceit)
  * Code to handle the argument list.
  */
 
-static char_u   *do_one_arg(char_u *str);
-static int do_arglist(char_u *str, int what, int after);
-static void alist_check_arg_idx(void);
-static int editing_arg_idx(win_T *win);
-static int alist_add_list(int count, char_u **files, int after);
 #define AL_SET  1
 #define AL_ADD  2
 #define AL_DEL  3
@@ -2202,7 +2214,6 @@ void ex_runtime(exarg_T *eap)
   source_runtime(eap->arg, eap->forceit);
 }
 
-static void source_callback(char_u *fname, void *cookie);
 
 static void source_callback(char_u *fname, void *cookie)
 {
@@ -2354,26 +2365,6 @@ static void cmd_source(char_u *fname, exarg_T *eap)
 /*
  * ":source" and associated commands.
  */
-/*
- * Structure used to store info for each sourced file.
- * It is shared between do_source() and getsourceline().
- * This is required, because it needs to be handed to do_cmdline() and
- * sourcing can be done recursively.
- */
-struct source_cookie {
-  FILE        *fp;              /* opened file for sourcing */
-  char_u      *nextline;        /* if not NULL: line that was read ahead */
-  int finished;                 /* ":finish" used */
-#if defined(USE_CRNL) || defined(USE_CR)
-  int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
-  int error;                    /* TRUE if LF found after CR-LF */
-#endif
-  linenr_T breakpoint;          /* next line with breakpoint or zero */
-  char_u      *fname;           /* name of sourced file */
-  int dbg_tick;                 /* debug_tick when breakpoint was set */
-  int level;                    /* top nesting level of sourced file */
-  vimconv_T conv;               /* type of conversion */
-};
 
 /*
  * Return the address holding the next breakpoint line for a source cookie.
@@ -2399,7 +2390,6 @@ int source_level(void *cookie)
   return ((struct source_cookie *)cookie)->level;
 }
 
-static char_u *get_one_sourceline(struct source_cookie *sp);
 
 #if (defined(WIN32) && defined(FEAT_CSCOPE)) || defined(HAVE_FD_CLOEXEC)
 # define USE_FOPEN_NOINH

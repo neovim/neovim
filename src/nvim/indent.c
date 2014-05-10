@@ -12,8 +12,10 @@
 #include "nvim/strings.h"
 #include "nvim/undo.h"
 
-static int lisp_match(char_u *p);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "indent.c.generated.h"
+#endif
 
 // Count the size (in window cells) of the indent in the current line.
 int get_indent(void)

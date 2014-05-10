@@ -25,9 +25,10 @@ static char *mediumVersion = VIM_VERSION_MEDIUM;
 
 char *longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
 
-static void list_features(void);
-static void version_msg(char *s);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "version.c.generated.h"
+#endif
 static char *(features[]) = {
 #ifdef HAVE_ACL
   "+acl",
@@ -749,7 +750,6 @@ static void version_msg(char *s)
   }
 }
 
-static void do_intro_line(int row, char_u *mesg, int add_version, int attr);
 
 /// Show the intro message when not editing a file.
 void maybe_intro_message(void)

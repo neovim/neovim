@@ -16,13 +16,9 @@
 #define USR_LOG_FILE "$HOME/.nvimlog"
 
 
-static FILE *open_log_file(void);
-static bool do_log_to_file(FILE *log_file, int log_level,
-                           const char *func_name, int line_num,
-                           const char* fmt, ...);
-static bool v_do_log_to_file(FILE *log_file, int log_level,
-                             const char *func_name, int line_num,
-                             const char* fmt, va_list args);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "log.c.generated.h"
+#endif
 
 bool do_log(int log_level, const char *func_name, int line_num,
             const char* fmt, ...)

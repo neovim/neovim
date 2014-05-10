@@ -52,10 +52,10 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
-static char_u *vim_version_dir(char_u *vimdir);
-static char_u *remove_tail(char_u *p, char_u *pend, char_u *name);
-static void init_users(void);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "misc1.c.generated.h"
+#endif
 /* All user names (for ~user completion as done by shell). */
 static garray_T ga_users;
 
@@ -1855,11 +1855,6 @@ void changed_int(void)
   need_maketitle = TRUE;            /* set window title later */
 }
 
-static void changedOneline(buf_T *buf, linenr_T lnum);
-static void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume,
-                              long xtra);
-static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
-                           long xtra);
 
 /*
  * Changed bytes within a single line for the current buffer.

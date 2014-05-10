@@ -1,0 +1,82 @@
+matchitem_T *get_match(win_T *wp, int id);
+void clear_matches(win_T *wp);
+int match_delete(win_T *wp, int id, int perr);
+int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id);
+void restore_buffer(buf_T *save_curbuf);
+void switch_buffer(buf_T **save_curbuf, buf_T *buf);
+void restore_win(win_T *save_curwin, tabpage_T *save_curtab,
+                 int no_display);
+int switch_win(win_T **save_curwin, tabpage_T **save_curtab, win_T *win,
+               tabpage_T *tp,
+               int no_display);
+void restore_snapshot(int idx, int close_curwin);
+void make_snapshot(int idx);
+void check_lnums(int do_curwin);
+int only_one_window(void);
+int min_rows(void);
+int tabline_height(void);
+void last_status(int morewin);
+char_u *file_name_in_line(char_u *line, int col, int options,
+                          long count, char_u *rel_fname,
+                          linenr_T *file_lnum);
+char_u *file_name_at_cursor(int options, long count,
+                            linenr_T *file_lnum);
+char_u *grab_file_name(long count, linenr_T *file_lnum);
+void command_height(void);
+void win_comp_scroll(win_T *wp);
+void win_new_width(win_T *wp, int width);
+void win_new_height(win_T *wp, int height);
+void win_drag_vsep_line(win_T *dragwin, int offset);
+void win_drag_status_line(win_T *dragwin, int offset);
+void win_setminheight(void);
+void win_setwidth_win(int width, win_T *wp);
+void win_setwidth(int width);
+void win_setheight_win(int height, win_T *win);
+void win_setheight(int height);
+int win_comp_pos(void);
+void win_size_restore(garray_T *gap);
+void win_size_save(garray_T *gap);
+void shell_new_columns(void);
+void shell_new_rows(void);
+void win_free_lsize(win_T *wp);
+void win_alloc_lines(win_T *wp);
+void win_remove(win_T *wp, tabpage_T *tp);
+void win_append(win_T *after, win_T *wp);
+win_T *buf_jump_open_tab(buf_T *buf);
+win_T *buf_jump_open_win(buf_T *buf);
+void win_enter(win_T *wp, int undo_sync);
+tabpage_T *win_find_tabpage(win_T *win);
+void win_goto(win_T *wp);
+void tabpage_move(int nr);
+void goto_tabpage_win(tabpage_T *tp, win_T *wp);
+void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds,
+                     int trigger_leave_autocmds);
+void goto_tabpage(int n);
+int tabpage_index(tabpage_T *ftp);
+tabpage_T *find_tabpage(int n);
+int valid_tabpage(tabpage_T *tpc);
+int make_tabpages(int maxcount);
+int may_open_tabpage(void);
+int win_new_tabpage(int after);
+void free_tabpage(tabpage_T *tp);
+void win_init_size(void);
+void win_alloc_aucmd_win(void);
+int win_alloc_first(void);
+void win_init_empty(win_T *wp);
+void curwin_init(void);
+void close_others(int message, int forceit);
+win_T *winframe_remove(win_T *win, int *dirp, tabpage_T *tp);
+void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp);
+int win_close(win_T *win, int free_buf);
+int one_window(void);
+void close_windows(buf_T *buf, int keep_curwin);
+void win_equal(win_T *next_curwin, int current, int dir);
+void win_move_after(win_T *win1, win_T *win2);
+int make_windows(int count, int vertical);
+int win_count(void);
+int win_valid(win_T *win);
+int win_split_ins(int size, int flags, win_T *new_wp, int dir);
+int win_split(int size, int flags);
+void do_window(int nchar, long Prenum, int xchar);
+void win_free_all(void);
+win_T *win_find_nr(int winnr);

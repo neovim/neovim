@@ -1,0 +1,54 @@
+void cursor_pos_info(void);
+void clear_oparg(oparg_T *oap);
+void write_reg_contents_ex(int name, char_u *str, int maxlen,
+                           int must_append, int yank_type,
+                           long block_len);
+void write_reg_contents(int name, char_u *str, int maxlen,
+                        int must_append);
+char_u *get_reg_contents(int regname, int allowexpr, int expr_src);
+char_u get_reg_type(int regname, long *reglen);
+void write_viminfo_registers(FILE *fp);
+int read_viminfo_register(vir_T *virp, int force);
+int do_addsub(int command, linenr_T Prenum1);
+int paragraph_start(linenr_T lnum);
+void format_lines(linenr_T line_count, int avoid_fex);
+int fex_format(linenr_T lnum, long count, int c);
+void op_formatexpr(oparg_T *oap);
+void op_format(oparg_T *oap, int keep_cursor);
+int do_join(long count, int insert_space, int save_undo,
+            int use_formatoptions);
+void ex_display(exarg_T *eap);
+int get_register_name(int num);
+int preprocs_left(void);
+void adjust_cursor_eol(void);
+void do_put(int regname, int dir, long count, int flags);
+int op_yank(oparg_T *oap, int deleting, int mess);
+void init_yank(void);
+int op_change(oparg_T *oap);
+void op_insert(oparg_T *oap, long count1);
+int swapchar(int op_type, pos_T *pos);
+void op_tilde(oparg_T *oap);
+int op_replace(oparg_T *oap, int c);
+int op_delete(oparg_T *oap);
+int cmdline_paste_reg(int regname, int literally, int remcr);
+int get_spec_reg(int regname, char_u **argp, int *allocated, int errmsg);
+int insert_reg(int regname, int literally);
+int do_execreg(int regname, int colon, int addcr, int silent);
+int do_record(int c);
+int yank_register_mline(int regname);
+void put_register(int name, void *reg);
+void *get_register(int name, int copy) FUNC_ATTR_NONNULL_RET;
+void get_yank_register(int regname, int writing);
+int valid_yank_reg(int regname, int writing);
+char_u *get_expr_line_src(void);
+char_u *get_expr_line(void);
+void set_expr_line(char_u *new_line);
+int get_expr_register(void);
+void op_reindent(oparg_T *oap, int (*how)(void));
+void shift_line(int left, int round, int amount, int call_changed_bytes);
+void op_shift(oparg_T *oap, int curs_top, int amount);
+int get_extra_op_char(int optype);
+int get_op_char(int optype);
+int op_on_lines(int op);
+int get_op_type(int char1, int char2);
+void clear_registers(void);
