@@ -127,7 +127,7 @@ char *xstpcpy(char *restrict dst, const char *restrict src);
 /// @param maxlen
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen);
 
-void do_outofmem_msg(long_u size);
+void do_outofmem_msg(size_t size);
 void free_all_mem(void);
 
 #endif

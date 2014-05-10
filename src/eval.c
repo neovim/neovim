@@ -12101,17 +12101,11 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           /* Change "prev" buffer to be the right size.  This way
            * the bytes are only copied once, and very long lines are
            * allocated only once.  */
-          if ((s = xrealloc(prev, prevlen + len + 1)) != NULL) {
-            memmove(s + prevlen, start, len);
-            s[prevlen + len] = NUL;
-            prev = NULL;             /* the list will own the string */
-            prevlen = prevsize = 0;
-          }
-        }
-        if (s == NULL) {
-          do_outofmem_msg((long_u) prevlen + len + 1);
-          failed = TRUE;
-          break;
+          s = xrealloc(prev, prevlen + len + 1);
+          memmove(s + prevlen, start, len);
+          s[prevlen + len] = NUL;
+          prev = NULL;               /* the list will own the string */
+          prevlen = prevsize = 0;
         }
 
         if ((li = listitem_alloc()) == NULL) {
@@ -12171,10 +12165,8 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
     if (start < p) {
       /* There's part of a line in buf, store it in "prev". */
       if (p - start + prevlen >= prevsize) {
-        /* need bigger "prev" buffer */
-        char_u *newprev;
-
-        /* A common use case is ordinary text files and "prev" gets a
+        /* Need bigger "prev" buffer.
+         * A common use case is ordinary text files and "prev" gets a
          * fragment of a line, so the first allocation is made
          * small, to avoid repeatedly 'allocing' large and
          * 'reallocing' small. */
@@ -12185,14 +12177,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           long growmin  = (long)((p - start) * 2 + prevlen);
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
-        newprev = prev == NULL ? alloc(prevsize)
-                  : xrealloc(prev, prevsize);
-        if (newprev == NULL) {
-          do_outofmem_msg((long_u)prevsize);
-          failed = TRUE;
-          break;
-        }
-        prev = newprev;
+        prev = prev == NULL ? xmalloc(prevsize) : xrealloc(prev, prevsize);
       }
       /* Add the line part to end of "prev". */
       memmove(prev + prevlen, start, p - start);

@@ -1,7 +1,29 @@
 #ifndef NEOVIM_STRINGS_H
 #define NEOVIM_STRINGS_H
-char_u *vim_strsave(char_u *string);
-char_u *vim_strnsave(char_u *string, int len);
+
+#include "func_attr.h"
+
+/// Copy "string" into newly allocated memory.
+/// 
+/// Never return null. Succeed or gracefully abort when out of memory.
+///
+/// @param string The string to be copied.
+/// @return pointer to newly allocated space. Never NULL.
+char_u *vim_strsave(char_u *string) FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_RET;
+
+/// Copy up to "len" bytes of "string" into newly allocated memory and
+/// terminate with a NUL.
+///
+/// Allocated memory always has size "len + 1", also when "string" is
+/// shorter.
+/// Never return null. Succeed or gracefully abort when out of memory.
+/// 
+/// @param string The string to be copied.
+/// @param len The maximum number of bytes to be copied.
+/// @return pointer to newly allocated space. Never NULL.
+char_u *vim_strnsave(char_u *string, int len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET;
+
 char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars);
 char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars,
                                 int cc,
