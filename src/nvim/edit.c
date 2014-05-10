@@ -175,113 +175,16 @@ static expand_T compl_xp;
 
 static int compl_opt_refresh_always = FALSE;
 
-static void ins_ctrl_x(void);
-static int has_compl_option(int dict_opt);
-static int ins_compl_accept_char(int c);
-static int ins_compl_add(char_u *str, int len, int icase, char_u *fname,
-                         char_u **cptext, int cdir, int flags,
-                         int adup);
-static int ins_compl_equal(compl_T *match, char_u *str, int len);
-static void ins_compl_longest_match(compl_T *match);
-static void ins_compl_add_matches(int num_matches, char_u **matches,
-                                  int icase);
-static int ins_compl_make_cyclic(void);
-static void ins_compl_upd_pum(void);
-static void ins_compl_del_pum(void);
-static int pum_wanted(void);
-static int pum_enough_matches(void);
-static void ins_compl_dictionaries(char_u *dict, char_u *pat, int flags,
-                                   int thesaurus);
-static void ins_compl_files(int count, char_u **files, int thesaurus,
-                            int flags, regmatch_T *regmatch, char_u *
-                            buf,
-                            int *dir);
-static char_u *find_line_end(char_u *ptr);
-static void ins_compl_free(void);
-static void ins_compl_clear(void);
-static int ins_compl_bs(void);
-static int ins_compl_need_restart(void);
-static void ins_compl_new_leader(void);
-static void ins_compl_addleader(int c);
-static int ins_compl_len(void);
-static void ins_compl_restart(void);
-static void ins_compl_set_original_text(char_u *str);
-static void ins_compl_addfrommatch(void);
-static int ins_compl_prep(int c);
-static void ins_compl_fixRedoBufForLeader(char_u *ptr_arg);
-static buf_T *ins_compl_next_buf(buf_T *buf, int flag);
-static void ins_compl_add_list(list_T *list);
-static void ins_compl_add_dict(dict_T *dict);
-static int ins_compl_get_exp(pos_T *ini);
-static void ins_compl_delete(void);
-static void ins_compl_insert(void);
-static int ins_compl_next(int allow_get_expansion, int count,
-                          int insert_match);
-static int ins_compl_key2dir(int c);
-static int ins_compl_pum_key(int c);
-static int ins_compl_key2count(int c);
-static int ins_compl_use_match(int c);
-static int ins_complete(int c);
-static unsigned quote_meta(char_u *dest, char_u *str, int len);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "edit.c.generated.h"
+#endif
 #define BACKSPACE_CHAR              1
 #define BACKSPACE_WORD              2
 #define BACKSPACE_WORD_NOT_SPACE    3
 #define BACKSPACE_LINE              4
 
-static void ins_redraw(int ready);
-static void ins_ctrl_v(void);
-static void undisplay_dollar(void);
-static void insert_special(int, int, int);
-static void internal_format(int textwidth, int second_indent, int flags,
-                            int format_only,
-                            int c);
-static void check_auto_format(int);
-static void redo_literal(int c);
-static void start_arrow(pos_T *end_insert_pos);
-static void check_spell_redraw(void);
-static void spell_back_to_badword(void);
 static int spell_bad_len = 0;   /* length of located bad word */
-static void stop_insert(pos_T *end_insert_pos, int esc, int nomove);
-static int echeck_abbr(int);
-static int replace_pop(void);
-static void replace_join(int off);
-static void replace_pop_ins(void);
-static void mb_replace_pop_ins(int cc);
-static void replace_flush(void);
-static void replace_do_bs(int limit_col);
-static int del_char_after_col(int limit_col);
-static int cindent_on(void);
-static void ins_reg(void);
-static void ins_ctrl_g(void);
-static void ins_ctrl_hat(void);
-static int ins_esc(long *count, int cmdchar, int nomove);
-static void ins_ctrl_(void);
-static int ins_start_select(int c);
-static void ins_insert(int replaceState);
-static void ins_ctrl_o(void);
-static void ins_shift(int c, int lastc);
-static void ins_del(void);
-static int ins_bs(int c, int mode, int *inserted_space_p);
-static void ins_mouse(int c);
-static void ins_mousescroll(int dir);
-static void ins_left(void);
-static void ins_home(int c);
-static void ins_end(int c);
-static void ins_s_left(void);
-static void ins_right(void);
-static void ins_s_right(void);
-static void ins_up(int startcol);
-static void ins_pageup(void);
-static void ins_down(int startcol);
-static void ins_pagedown(void);
-static int ins_tab(void);
-static int ins_eol(int c);
-static int ins_digraph(void);
-static int ins_ctrl_ey(int tc);
-static void ins_try_si(int c);
-static colnr_T get_nolist_virtcol(void);
-static char_u *do_insert_char_pre(int c);
 
 static colnr_T Insstart_textlen;        /* length of line when insert started */
 static colnr_T Insstart_blank_vcol;     /* vcol for first inserted blank */
@@ -3341,7 +3244,6 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   return buf;
 }
 
-static void expand_by_function(int type, char_u *base);
 
 /*
  * Execute user defined complete function 'completefunc' or 'omnifunc', and
@@ -6472,9 +6374,7 @@ static int cindent_on(void) {
  * confused what all the part that handles Control-T is doing that I'm not.
  * "get_the_indent" should be get_c_indent, get_expr_indent or get_lisp_indent.
  */
-
-void fixthisline(get_the_indent)
-int (*get_the_indent)(void);
+void fixthisline(IndentGetter get_the_indent)
 {
   change_indent(INDENT_SET, get_the_indent(), FALSE, 0, TRUE);
   if (linewhite(curwin->w_cursor.lnum))
@@ -7259,7 +7159,6 @@ static void ins_del(void)
   AppendCharToRedobuff(K_DEL);
 }
 
-static void ins_bs_one(colnr_T *vcolp);
 
 /*
  * Delete one character for ins_bs().

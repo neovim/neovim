@@ -85,7 +85,8 @@ class Gcc
    '-D "__asm(ARGS)="',
    '-D "__asm__(ARGS)="',
    '-D "__inline__="',
-   '-D_GNU_SOURCE'
+   '-D_GNU_SOURCE',
+   '-DINCLUDE_GENERATED_DECLARATIONS'
   }
 
   new: (path) =>

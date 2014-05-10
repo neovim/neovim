@@ -17,11 +17,11 @@ typedef enum {
   kShellOptHideMess = 128,  ///< previously a global variable from os_unix.c
 } ShellOpts;
 
-char ** shell_build_argv(char_u *cmd, char_u *extra_shell_arg);
 
-void shell_free_argv(char **argv);
 
-int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/shell.h.generated.h"
+#endif
 #endif  // NVIM_OS_SHELL_H
 

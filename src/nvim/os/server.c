@@ -42,9 +42,9 @@ typedef struct {
 
 static PMap(cstr_t) *servers = NULL;
 
-static void connection_cb(uv_stream_t *server, int status);
-static void free_client(uv_handle_t *handle);
-static void free_server(uv_handle_t *handle);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/server.c.generated.h"
+#endif
 
 /// Initializes the module
 void server_init()

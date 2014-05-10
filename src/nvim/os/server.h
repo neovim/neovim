@@ -1,13 +1,7 @@
 #ifndef NVIM_OS_SERVER_H
 #define NVIM_OS_SERVER_H
 
-void server_init();
-
-void server_teardown();
-
-void server_start(char *endpoint);
-
-void server_stop(char *endpoint);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/server.h.generated.h"
+#endif
 #endif  // NVIM_OS_SERVER_H
-

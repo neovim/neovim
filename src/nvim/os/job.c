@@ -58,16 +58,11 @@ static uint32_t job_count = 0;
 static uv_prepare_t job_prepare;
 
 // Some helpers shared in this module
-static bool is_alive(Job *job);
-static Job * find_job(int id);
-static void free_job(Job *job);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/job.c.generated.h"
+#endif
 // Callbacks for libuv
-static void job_prepare_cb(uv_prepare_t *handle);
-static void read_cb(RStream *rstream, void *data, bool eof);
-static void exit_cb(uv_process_t *proc, int64_t status, int term_signal);
-static void close_cb(uv_handle_t *handle);
-static void emit_exit_event(Job *job);
 
 /// Initializes job control resources
 void job_init()

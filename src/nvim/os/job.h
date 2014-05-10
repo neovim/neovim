@@ -13,25 +13,7 @@
 #include "nvim/os/event_defs.h"
 #include "nvim/os/rstream_defs.h"
 
-void job_init(void);
-
-void job_teardown(void);
-
-int job_start(char **argv,
-              void *data,
-              rstream_cb stdout_cb,
-              rstream_cb stderr_cb,
-              job_exit_cb exit_cb);
-
-bool job_stop(int id);
-
-bool job_write(int id, char *data, uint32_t len);
-
-void job_exit_event(Event event);
-
-int job_id(Job *job);
-
-void *job_data(Job *job);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/job.h.generated.h"
+#endif
 #endif  // NVIM_OS_JOB_H
-

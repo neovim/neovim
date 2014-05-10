@@ -173,23 +173,79 @@ typedef struct {
   int ff;                           /* seen form feed character */
 } prt_pos_T;
 
-static char_u *parse_list_options(char_u *option_str,
-                                  option_table_T *table,
-                                  int table_size);
+struct prt_mediasize_S {
+  char        *name;
+  float width;                  /* width and height in points for portrait */
+  float height;
+};
 
-static long_u darken_rgb(long_u rgb);
-static long_u prt_get_term_color(int colorindex);
-static void prt_set_fg(long_u fg);
-static void prt_set_bg(long_u bg);
-static void prt_set_font(int bold, int italic, int underline);
-static void prt_line_number(prt_settings_T *psettings, int page_line,
-                            linenr_T lnum);
-static void prt_header(prt_settings_T *psettings, int pagenum,
-                       linenr_T lnum);
-static void prt_message(char_u *s);
-static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line,
-                             prt_pos_T *ppos);
-static void prt_get_attr(int hl_id, prt_text_attr_T* pattr, int modec);
+/* PS font names, must be in Roman, Bold, Italic, Bold-Italic order */
+struct prt_ps_font_S {
+  int wx;
+  int uline_offset;
+  int uline_width;
+  int bbox_min_y;
+  int bbox_max_y;
+  char        *(ps_fontname[4]);
+};
+
+/* Structures to map user named encoding and mapping to PS equivalents for
+ * building CID font name */
+struct prt_ps_encoding_S {
+  char        *encoding;
+  char        *cmap_encoding;
+  int needs_charset;
+};
+
+struct prt_ps_charset_S {
+  char        *charset;
+  char        *cmap_charset;
+  int has_charset;
+};
+
+/* Collections of encodings and charsets for multi-byte printing */
+struct prt_ps_mbfont_S {
+  int num_encodings;
+  struct prt_ps_encoding_S    *encodings;
+  int num_charsets;
+  struct prt_ps_charset_S     *charsets;
+  char                        *ascii_enc;
+  char                        *defcs;
+};
+
+struct prt_ps_resource_S {
+  char_u name[64];
+  char_u filename[MAXPATHL + 1];
+  int type;
+  char_u title[256];
+  char_u version[256];
+};
+
+struct prt_dsc_comment_S {
+  char        *string;
+  int len;
+  int type;
+};
+
+struct prt_dsc_line_S {
+  int type;
+  char_u      *string;
+  int len;
+};
+
+/* Static buffer to read initial comments in a resource file, some can have a
+ * couple of KB of comments! */
+#define PRT_FILE_BUFFER_LEN (2048)
+struct prt_resfile_buffer_S {
+  char_u buffer[PRT_FILE_BUFFER_LEN];
+  int len;
+  int line_start;
+  int line_end;
+};
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "hardcopy.c.generated.h"
+#endif
 
 /*
  * Parse 'printoptions' and set the flags in "printer_opts".
@@ -888,12 +944,6 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
 #define PRT_PS_DEFAULT_FONTSIZE     (10)
 #define PRT_PS_DEFAULT_BUFFER_SIZE  (80)
 
-struct prt_mediasize_S {
-  char        *name;
-  float width;                  /* width and height in points for portrait */
-  float height;
-};
-
 #define PRT_MEDIASIZE_LEN  (sizeof(prt_mediasize) / \
                             sizeof(struct prt_mediasize_S))
 
@@ -913,16 +963,6 @@ static struct prt_mediasize_S prt_mediasize[] =
   {"quarto",          610.0,  780.0},
   {"statement",       396.0,  612.0},
   {"tabloid",         792.0, 1224.0}
-};
-
-/* PS font names, must be in Roman, Bold, Italic, Bold-Italic order */
-struct prt_ps_font_S {
-  int wx;
-  int uline_offset;
-  int uline_width;
-  int bbox_min_y;
-  int bbox_max_y;
-  char        *(ps_fontname[4]);
 };
 
 #define PRT_PS_FONT_ROMAN       (0)
@@ -950,20 +990,6 @@ static struct prt_ps_font_S prt_ps_mb_font =
 
 /* Pointer to current font set being used */
 static struct prt_ps_font_S* prt_ps_font;
-
-/* Structures to map user named encoding and mapping to PS equivalents for
- * building CID font name */
-struct prt_ps_encoding_S {
-  char        *encoding;
-  char        *cmap_encoding;
-  int needs_charset;
-};
-
-struct prt_ps_charset_S {
-  char        *charset;
-  char        *cmap_charset;
-  int has_charset;
-};
 
 
 #define CS_JIS_C_1978   (0x01)
@@ -1103,16 +1129,6 @@ static struct prt_ps_charset_S k_charsets[] =
   {"ISO10646",    "UniKS",    CS_KR_ISO10646}
 };
 
-/* Collections of encodings and charsets for multi-byte printing */
-struct prt_ps_mbfont_S {
-  int num_encodings;
-  struct prt_ps_encoding_S    *encodings;
-  int num_charsets;
-  struct prt_ps_charset_S     *charsets;
-  char                        *ascii_enc;
-  char                        *defcs;
-};
-
 static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
 {
   {
@@ -1147,14 +1163,6 @@ static struct prt_ps_mbfont_S prt_ps_mbfonts[] =
     "ks_roman",
     "KS_X_1992"
   }
-};
-
-struct prt_ps_resource_S {
-  char_u name[64];
-  char_u filename[MAXPATHL + 1];
-  int type;
-  char_u title[256];
-  char_u version[256];
 };
 
 /* Types of PS resource file currently used */
@@ -1204,18 +1212,6 @@ static char *prt_resource_types[] =
 #define PRT_DSC_VERSION             "%%Version:"
 #define PRT_DSC_ENDCOMMENTS         "%%EndComments:"
 
-struct prt_dsc_comment_S {
-  char        *string;
-  int len;
-  int type;
-};
-
-struct prt_dsc_line_S {
-  int type;
-  char_u      *string;
-  int len;
-};
-
 
 #define SIZEOF_CSTR(s)      (sizeof(s) - 1)
 static struct prt_dsc_comment_S prt_dsc_table[] =
@@ -1227,60 +1223,6 @@ static struct prt_dsc_comment_S prt_dsc_table[] =
    PRT_DSC_ENDCOMMENTS_TYPE}
 };
 
-static void prt_write_file_raw_len(char_u *buffer, int bytes);
-static void prt_write_file(char_u *buffer);
-static void prt_write_file_len(char_u *buffer, int bytes);
-static void prt_write_string(char *s);
-static void prt_write_int(int i);
-static void prt_write_boolean(int b);
-static void prt_def_font(char *new_name, char *encoding, int height,
-                         char *font);
-static void prt_real_bits(double real, int precision, int *pinteger,
-                          int *pfraction);
-static void prt_write_real(double val, int prec);
-static void prt_def_var(char *name, double value, int prec);
-static void prt_flush_buffer(void);
-static void prt_resource_name(char_u *filename, void *cookie);
-static int prt_find_resource(char *name, struct prt_ps_resource_S *resource);
-static int prt_open_resource(struct prt_ps_resource_S *resource);
-static int prt_check_resource(struct prt_ps_resource_S *resource,
-                              char_u *version);
-static void prt_dsc_start(void);
-static void prt_dsc_noarg(char *comment);
-static void prt_dsc_textline(char *comment, char *text);
-static void prt_dsc_text(char *comment, char *text);
-static void prt_dsc_ints(char *comment, int count, int *ints);
-static void prt_dsc_requirements(int duplex, int tumble, int collate,
-                                 int color,
-                                 int num_copies);
-static void prt_dsc_docmedia(char *paper_name, double width,
-                             double height, double weight, char *colour,
-                             char *type);
-static void prt_dsc_resources(char *comment, char *type, char *strings);
-static void prt_dsc_font_resource(char *resource,
-                                  struct prt_ps_font_S *ps_font);
-static float to_device_units(int idx, double physsize, int def_number);
-static void prt_page_margins(double width, double height, double *left,
-                             double *right, double *top,
-                             double *bottom);
-static void prt_font_metrics(int font_scale);
-static int prt_get_cpl(void);
-static int prt_get_lpp(void);
-static int prt_add_resource(struct prt_ps_resource_S *resource);
-static int prt_resfile_next_line(void);
-static int prt_resfile_strncmp(int offset, char *string, int len);
-static int prt_resfile_skip_nonws(int offset);
-static int prt_resfile_skip_ws(int offset);
-static int prt_next_dsc(struct prt_dsc_line_S *p_dsc_line);
-static void prt_build_cid_fontname(int font, char_u *name, int name_len);
-static void prt_def_cidfont(char *new_name, int height, char *cidfont);
-static void prt_dup_cidfont(char *original_name, char *new_name);
-static int prt_match_encoding(char *p_encoding,
-                              struct prt_ps_mbfont_S *p_cmap,
-                              struct prt_ps_encoding_S **pp_mbenc);
-static int prt_match_charset(char *p_charset,
-                             struct prt_ps_mbfont_S *p_cmap,
-                             struct prt_ps_charset_S **pp_mbchar);
 
 /*
  * Variables for the output PostScript file.
@@ -1614,16 +1556,6 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
 /* PS CR and LF characters have platform independent values */
 #define PSLF  (0x0a)
 #define PSCR  (0x0d)
-
-/* Static buffer to read initial comments in a resource file, some can have a
- * couple of KB of comments! */
-#define PRT_FILE_BUFFER_LEN (2048)
-struct prt_resfile_buffer_S {
-  char_u buffer[PRT_FILE_BUFFER_LEN];
-  int len;
-  int line_start;
-  int line_end;
-};
 
 static struct prt_resfile_buffer_S prt_resfile;
 

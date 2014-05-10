@@ -62,19 +62,15 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 
-static int linelen(int *has_tab);
-static void do_filter(linenr_T line1, linenr_T line2, exarg_T *eap,
-                      char_u *cmd, int do_in,
-                      int do_out);
-static char_u *viminfo_filename(char_u  *);
-static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags);
-static int viminfo_encoding(vir_T *virp);
-static int read_viminfo_up_to_marks(vir_T *virp, int forceit,
-                                    int writing);
+/*
+ * Struct to hold the sign properties.
+ */
+typedef struct sign sign_T;
 
-static int check_readonly(int *forceit, buf_T *buf);
-static void delbuf_msg(char_u *name);
-static int help_compare(const void *s1, const void *s2);
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_cmds.c.generated.h"
+#endif
 
 /*
  * ":ascii" and "ga".
@@ -293,8 +289,6 @@ typedef struct {
   long end_col_nr;                      /* ending column number */
 } sorti_T;
 
-static int
-sort_compare(const void *s1, const void *s2);
 
 static int sort_compare(const void *s1, const void *s2)
 {
@@ -1407,7 +1401,6 @@ void append_redir(char_u *buf, int buflen, char_u *opt, char_u *fname)
 }
 
 
-static int no_viminfo(void);
 static int viminfo_errcnt;
 
 static int no_viminfo(void)
@@ -5290,8 +5283,6 @@ void ex_viusage(exarg_T *eap)
   do_cmdline_cmd((char_u *)"help normal-index");
 }
 
-static void helptags_one(char_u *dir, char_u *ext, char_u *lang,
-                         int add_help_tags);
 
 /*
  * ":helptags"
@@ -5606,11 +5597,6 @@ helptags_one (
   fclose(fd_tags);          /* there is no check for an error... */
 }
 
-/*
- * Struct to hold the sign properties.
- */
-typedef struct sign sign_T;
-
 struct sign
 {
     sign_T      *sn_next;       /* next sign in list */
@@ -5625,9 +5611,6 @@ struct sign
 static sign_T   *first_sign = NULL;
 static int      next_sign_typenr = 1;
 
-static int sign_cmd_idx (char_u *begin_cmd, char_u *end_cmd);
-static void sign_list_defined (sign_T *sp);
-static void sign_undefine (sign_T *sp, sign_T *sp_prev);
 
 static char *cmds[] = {
 			"define",
@@ -6053,104 +6036,86 @@ void ex_sign(exarg_T *eap)
 /*
  * List one sign.
  */
-    static void
-sign_list_defined(sp)
-    sign_T	*sp;
+static void sign_list_defined(sign_T *sp)
 {
-    char_u	*p;
+  char_u  *p;
 
-    smsg((char_u *)"sign %s", sp->sn_name);
-    if (sp->sn_icon != NULL)
-    {
-	MSG_PUTS(" icon=");
-	msg_outtrans(sp->sn_icon);
-	MSG_PUTS(_(" (not supported)"));
-    }
-    if (sp->sn_text != NULL)
-    {
-	MSG_PUTS(" text=");
-	msg_outtrans(sp->sn_text);
-    }
-    if (sp->sn_line_hl > 0)
-    {
-	MSG_PUTS(" linehl=");
-	p = get_highlight_name(NULL, sp->sn_line_hl - 1);
-	if (p == NULL)
-	    MSG_PUTS("NONE");
-	else
-	    msg_puts(p);
-    }
-    if (sp->sn_text_hl > 0)
-    {
-	MSG_PUTS(" texthl=");
-	p = get_highlight_name(NULL, sp->sn_text_hl - 1);
-	if (p == NULL)
-	    MSG_PUTS("NONE");
-	else
-	    msg_puts(p);
-    }
+  smsg((char_u *)"sign %s", sp->sn_name);
+  if (sp->sn_icon != NULL) {
+    MSG_PUTS(" icon=");
+    msg_outtrans(sp->sn_icon);
+    MSG_PUTS(_(" (not supported)"));
+  }
+  if (sp->sn_text != NULL) {
+    MSG_PUTS(" text=");
+    msg_outtrans(sp->sn_text);
+  }
+  if (sp->sn_line_hl > 0) {
+    MSG_PUTS(" linehl=");
+    p = get_highlight_name(NULL, sp->sn_line_hl - 1);
+    if (p == NULL)
+      MSG_PUTS("NONE");
+    else
+      msg_puts(p);
+  }
+  if (sp->sn_text_hl > 0) {
+    MSG_PUTS(" texthl=");
+    p = get_highlight_name(NULL, sp->sn_text_hl - 1);
+    if (p == NULL)
+      MSG_PUTS("NONE");
+    else
+      msg_puts(p);
+  }
 }
 
 /*
  * Undefine a sign and free its memory.
  */
-    static void
-sign_undefine(sp, sp_prev)
-    sign_T	*sp;
-    sign_T	*sp_prev;
+static void sign_undefine(sign_T *sp, sign_T *sp_prev)
 {
-    free(sp->sn_name);
-    free(sp->sn_icon);
-    free(sp->sn_text);
-    if (sp_prev == NULL)
-	first_sign = sp->sn_next;
-    else
-	sp_prev->sn_next = sp->sn_next;
-    free(sp);
+  free(sp->sn_name);
+  free(sp->sn_icon);
+  free(sp->sn_text);
+  if (sp_prev == NULL)
+    first_sign = sp->sn_next;
+  else
+    sp_prev->sn_next = sp->sn_next;
+  free(sp);
 }
 
 /*
  * Get highlighting attribute for sign "typenr".
  * If "line" is TRUE: line highl, if FALSE: text highl.
  */
-    int
-sign_get_attr(typenr, line)
-    int		typenr;
-    int		line;
+int sign_get_attr(int typenr, int line)
 {
-    sign_T	*sp;
+  sign_T  *sp;
 
-    for (sp = first_sign; sp != NULL; sp = sp->sn_next)
-	if (sp->sn_typenr == typenr)
-	{
-	    if (line)
-	    {
-		if (sp->sn_line_hl > 0)
-		    return syn_id2attr(sp->sn_line_hl);
-	    }
-	    else
-	    {
-		if (sp->sn_text_hl > 0)
-		    return syn_id2attr(sp->sn_text_hl);
-	    }
-	    break;
-	}
-    return 0;
+  for (sp = first_sign; sp != NULL; sp = sp->sn_next)
+    if (sp->sn_typenr == typenr) {
+      if (line) {
+        if (sp->sn_line_hl > 0)
+          return syn_id2attr(sp->sn_line_hl);
+      } else {
+        if (sp->sn_text_hl > 0)
+          return syn_id2attr(sp->sn_text_hl);
+      }
+      break;
+    }
+  return 0;
 }
 
 /*
  * Get text mark for sign "typenr".
  * Returns NULL if there isn't one.
  */
-    char_u *
-sign_get_text(typenr)
-    int		typenr;
+char_u * sign_get_text(int typenr)
 {
-    sign_T	*sp;
+    sign_T  *sp;
 
     for (sp = first_sign; sp != NULL; sp = sp->sn_next)
-	if (sp->sn_typenr == typenr)
-	    return sp->sn_text;
+      if (sp->sn_typenr == typenr)
+        return sp->sn_text;
     return NULL;
 }
 
@@ -6158,27 +6123,24 @@ sign_get_text(typenr)
 /*
  * Get the name of a sign by its typenr.
  */
-    char_u *
-sign_typenr2name(typenr)
-    int		typenr;
+char_u * sign_typenr2name(int typenr)
 {
-    sign_T	*sp;
+  sign_T  *sp;
 
-    for (sp = first_sign; sp != NULL; sp = sp->sn_next)
-	if (sp->sn_typenr == typenr)
-	    return sp->sn_name;
-    return (char_u *)_("[Deleted]");
+  for (sp = first_sign; sp != NULL; sp = sp->sn_next)
+    if (sp->sn_typenr == typenr)
+      return sp->sn_name;
+  return (char_u *)_("[Deleted]");
 }
 
 #if defined(EXITFREE) || defined(PROTO)
 /*
  * Undefine/free all signs.
  */
-    void
-free_signs()
+void free_signs()
 {
-    while (first_sign != NULL)
-	sign_undefine(first_sign, NULL);
+  while (first_sign != NULL)
+    sign_undefine(first_sign, NULL);
 }
 #endif
 
@@ -6240,120 +6202,117 @@ char_u * get_sign_name(expand_T *xp, int idx)
 /*
  * Handle command line completion for :sign command.
  */
-    void
-set_context_in_sign_cmd(xp, arg)
-    expand_T	*xp;
-    char_u	*arg;
+void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 {
-    char_u	*p;
-    char_u	*end_subcmd;
-    char_u	*last;
-    int		cmd_idx;
-    char_u	*begin_subcmd_args;
+  char_u  *p;
+  char_u  *end_subcmd;
+  char_u  *last;
+  int    cmd_idx;
+  char_u  *begin_subcmd_args;
 
-    /* Default: expand subcommands. */
-    xp->xp_context = EXPAND_SIGN;
-    expand_what = EXP_SUBCMD;
-    xp->xp_pattern = arg;
+  /* Default: expand subcommands. */
+  xp->xp_context = EXPAND_SIGN;
+  expand_what = EXP_SUBCMD;
+  xp->xp_pattern = arg;
 
-    end_subcmd = skiptowhite(arg);
-    if (*end_subcmd == NUL)
-	/* expand subcmd name
-	 * :sign {subcmd}<CTRL-D>*/
-	return;
+  end_subcmd = skiptowhite(arg);
+  if (*end_subcmd == NUL)
+    /* expand subcmd name
+     * :sign {subcmd}<CTRL-D>*/
+    return;
 
-    cmd_idx = sign_cmd_idx(arg, end_subcmd);
+  cmd_idx = sign_cmd_idx(arg, end_subcmd);
 
-    /* :sign {subcmd} {subcmd_args}
-     *		      |
-     *		      begin_subcmd_args */
-    begin_subcmd_args = skipwhite(end_subcmd);
-    p = skiptowhite(begin_subcmd_args);
-    if (*p == NUL)
+  /* :sign {subcmd} {subcmd_args}
+   *          |
+   *          begin_subcmd_args */
+  begin_subcmd_args = skipwhite(end_subcmd);
+  p = skiptowhite(begin_subcmd_args);
+  if (*p == NUL)
+  {
+    /*
+     * Expand first argument of subcmd when possible.
+     * For ":jump {id}" and ":unplace {id}", we could
+     * possibly expand the ids of all signs already placed.
+     */
+    xp->xp_pattern = begin_subcmd_args;
+    switch (cmd_idx)
     {
-	/*
-	 * Expand first argument of subcmd when possible.
-	 * For ":jump {id}" and ":unplace {id}", we could
-	 * possibly expand the ids of all signs already placed.
-	 */
-	xp->xp_pattern = begin_subcmd_args;
-	switch (cmd_idx)
-	{
-	    case SIGNCMD_LIST:
-	    case SIGNCMD_UNDEFINE:
-		/* :sign list <CTRL-D>
-		 * :sign undefine <CTRL-D> */
-		expand_what = EXP_SIGN_NAMES;
-		break;
-	    default:
-		xp->xp_context = EXPAND_NOTHING;
-	}
-	return;
+      case SIGNCMD_LIST:
+      case SIGNCMD_UNDEFINE:
+        /* :sign list <CTRL-D>
+         * :sign undefine <CTRL-D> */
+        expand_what = EXP_SIGN_NAMES;
+        break;
+      default:
+        xp->xp_context = EXPAND_NOTHING;
     }
+    return;
+  }
 
-    /* expand last argument of subcmd */
+  /* expand last argument of subcmd */
 
-    /* :sign define {name} {args}...
-     *		    |
-     *		    p */
+  /* :sign define {name} {args}...
+   *        |
+   *        p */
 
-    /* Loop until reaching last argument. */
-    do
+  /* Loop until reaching last argument. */
+  do
+  {
+    p = skipwhite(p);
+    last = p;
+    p = skiptowhite(p);
+  } while (*p != NUL);
+
+  p = vim_strchr(last, '=');
+
+  /* :sign define {name} {args}... {last}=
+   *             |     |
+   *          last     p */
+  if (p == NUL)
+  {
+    /* Expand last argument name (before equal sign). */
+    xp->xp_pattern = last;
+    switch (cmd_idx)
     {
-	p = skipwhite(p);
-	last = p;
-	p = skiptowhite(p);
-    } while (*p != NUL);
-
-    p = vim_strchr(last, '=');
-
-    /* :sign define {name} {args}... {last}=
-     *				     |	   |
-     *				  last	   p */
-    if (p == NUL)
-    {
-        /* Expand last argument name (before equal sign). */
-        xp->xp_pattern = last;
-        switch (cmd_idx)
-        {
-            case SIGNCMD_DEFINE:
-                expand_what = EXP_DEFINE;
-                break;
-            case SIGNCMD_PLACE:
-                expand_what = EXP_PLACE;
-                break;
-            case SIGNCMD_JUMP:
-            case SIGNCMD_UNPLACE:
-                expand_what = EXP_UNPLACE;
-                break;
-            default:
-                xp->xp_context = EXPAND_NOTHING;
-        }
+      case SIGNCMD_DEFINE:
+        expand_what = EXP_DEFINE;
+        break;
+      case SIGNCMD_PLACE:
+        expand_what = EXP_PLACE;
+        break;
+      case SIGNCMD_JUMP:
+      case SIGNCMD_UNPLACE:
+        expand_what = EXP_UNPLACE;
+        break;
+      default:
+        xp->xp_context = EXPAND_NOTHING;
     }
-    else
+  }
+  else
+  {
+    /* Expand last argument value (after equal sign). */
+    xp->xp_pattern = p + 1;
+    switch (cmd_idx)
     {
-        /* Expand last argument value (after equal sign). */
-        xp->xp_pattern = p + 1;
-        switch (cmd_idx)
-        {
-            case SIGNCMD_DEFINE:
-                if (STRNCMP(last, "texthl", p - last) == 0 ||
-                        STRNCMP(last, "linehl", p - last) == 0)
-                    xp->xp_context = EXPAND_HIGHLIGHT;
-                else if (STRNCMP(last, "icon", p - last) == 0)
-                    xp->xp_context = EXPAND_FILES;
-                else
-                    xp->xp_context = EXPAND_NOTHING;
-                break;
-            case SIGNCMD_PLACE:
-                if (STRNCMP(last, "name", p - last) == 0)
-                    expand_what = EXP_SIGN_NAMES;
-                else
-                    xp->xp_context = EXPAND_NOTHING;
-                break;
-            default:
-                xp->xp_context = EXPAND_NOTHING;
-        }
+      case SIGNCMD_DEFINE:
+        if (STRNCMP(last, "texthl", p - last) == 0 ||
+            STRNCMP(last, "linehl", p - last) == 0)
+          xp->xp_context = EXPAND_HIGHLIGHT;
+        else if (STRNCMP(last, "icon", p - last) == 0)
+          xp->xp_context = EXPAND_FILES;
+        else
+          xp->xp_context = EXPAND_NOTHING;
+        break;
+      case SIGNCMD_PLACE:
+        if (STRNCMP(last, "name", p - last) == 0)
+          expand_what = EXP_SIGN_NAMES;
+        else
+          xp->xp_context = EXPAND_NOTHING;
+        break;
+      default:
+        xp->xp_context = EXPAND_NOTHING;
     }
+  }
 }
 

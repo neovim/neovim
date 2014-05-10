@@ -44,4 +44,3 @@ MAP_DECLS(uint64_t, ptr_t)
   kh_foreach_value(map->table, value, block)
 
 #endif  // NVIM_MAP_H
-

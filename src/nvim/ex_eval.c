@@ -23,10 +23,10 @@
 #include "nvim/strings.h"
 
 
-static void free_msglist(struct msglist *l);
-static int throw_exception(void *, int, char_u *);
-static char_u   *get_end_emsg(struct condstack *cstack);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_eval.c.generated.h"
+#endif
 /*
  * Exception handling terms:
  *
@@ -66,10 +66,6 @@ static char_u   *get_end_emsg(struct condstack *cstack);
 # define THROW_ON_INTERRUPT     TRUE
 # define THROW_ON_INTERRUPT_TRUE
 
-static void catch_exception(except_T *excp);
-static void finish_exception(except_T *excp);
-static void discard_exception(except_T *excp, int was_finished);
-static void report_pending(int action, int pending, void *value);
 
 /*
  * When several errors appear in a row, setting "force_abort" is delayed until

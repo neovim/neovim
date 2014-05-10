@@ -17,8 +17,10 @@
 #include "nvim/vim.h"
 #include "nvim/sha256.h"
 
-static void sha256_process(context_sha256_T *ctx, char_u data[64]);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "sha256.c.generated.h"
+#endif
 #define GET_UINT32(n, b, i) { \
   (n) = ((uint32_t)(b)[(i)] << 24) \
         | ((uint32_t)(b)[(i) + 1] << 16) \
@@ -248,7 +250,6 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[32])
   PUT_UINT32(ctx->state[7], digest, 28);
 }
 
-static unsigned int get_some_time(void);
 
 /// Gets the hex digest of the buffer.
 ///

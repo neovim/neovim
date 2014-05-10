@@ -22,7 +22,9 @@
 
 #define LINE_BUFFER_SIZE 4096
 
-static void write_msg(String message, bool to_err);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/vim.c.generated.h"
+#endif
 
 /// Send keys to vim input buffer, simulating user input.
 ///

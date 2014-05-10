@@ -15,23 +15,9 @@
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
 
-static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup);
-
-static bool object_to_vim(Object obj, typval_T *tv, Error *err);
-
-static void set_option_value_for(char *key,
-                                 int numval,
-                                 char *stringval,
-                                 int opt_flags,
-                                 int opt_type,
-                                 void *from,
-                                 Error *err);
-
-static void set_option_value_err(char *key,
-                                 int numval,
-                                 char *stringval,
-                                 int opt_flags,
-                                 Error *err);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/private/helpers.c.generated.h"
+#endif
 
 /// Start block that may cause vimscript exceptions
 void try_start()
@@ -366,6 +352,11 @@ tabpage_T * find_tab(Tabpage tabpage, Error *err)
   return rv;
 }
 
+/// Copies a C string into a String (binary safe string, characters + length)
+///
+/// @param str the C string to copy
+/// @return the resulting String, if the input string was NULL, then an
+///         empty String is returned
 String cstr_to_string(const char *str) {
     if (str == NULL) {
         return (String) STRING_INIT;
