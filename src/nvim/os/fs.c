@@ -345,8 +345,69 @@ bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
 /// Compare the inodes of two FileInfos
 ///
 /// @return `true` if the two FileInfos represent the same file.
-bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2)
+bool os_file_info_id_equal(const FileInfo *file_info_1,
+                           const FileInfo *file_info_2)
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
          && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
 }
+
+/// Get the `FileID` of a `FileInfo`
+///
+/// @param file_info Pointer to the `FileInfo`
+/// @param[out] file_id Pointer to a `FileID`
+void os_file_info_get_id(const FileInfo *file_info, FileID *file_id)
+{
+  file_id->inode = file_info->stat.st_ino;
+  file_id->device_id = file_info->stat.st_dev;
+}
+
+/// Get the inode of a `FileInfo`
+///
+/// @deprecated Use `FileID` instead, this function is only needed in memline.c
+/// @param file_info Pointer to the `FileInfo`
+/// @return the inode number
+uint64_t os_file_info_get_inode(const FileInfo *file_info)
+{
+  return file_info->stat.st_ino;
+}
+
+/// Get the `FileID` for a given path
+///
+/// @param path Path to the file.
+/// @param[out] file_info Pointer to a `FileID` to fill in.
+/// @return `true` on sucess, `false` for failure.
+bool os_get_file_id(const char *path, FileID *file_id)
+{
+  uv_stat_t statbuf;
+  if (os_stat((char_u *)path, &statbuf) == OK) {
+    file_id->inode = statbuf.st_ino;
+    file_id->device_id = statbuf.st_dev;
+    return true;
+  }
+  return false;
+}
+
+/// Check if two `FileID`s are equal
+///
+/// @param file_id_1 Pointer to first `FileID`
+/// @param file_id_2 Pointer to second `FileID`
+/// @return `true` if the two `FileID`s represent te same file.
+bool os_file_id_equal(const FileID *file_id_1, const FileID *file_id_2)
+{
+  return file_id_1->inode == file_id_2->inode
+         && file_id_1->device_id == file_id_2->device_id;
+}
+
+/// Check if a `FileID` is equal to a `FileInfo`
+///
+/// @param file_id Pointer to a `FileID`
+/// @param file_info Pointer to a `FileInfo`
+/// @return `true` if the `FileID` and the `FileInfo` represent te same file.
+bool os_file_id_equal_file_info(const FileID *file_id,
+                                const FileInfo *file_info)
+{
+  return file_id->inode == file_info->stat.st_ino
+         && file_id->device_id == file_info->stat.st_dev;
+}
+
