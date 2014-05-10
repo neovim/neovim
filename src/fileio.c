@@ -442,7 +442,7 @@ readfile (
     /* Remember time of file. */
     FileInfo file_info;
     if (os_get_file_info((char *)fname, &file_info)) {
-      buf_store_file_info(curbuf, &file_info, fname);
+      buf_store_file_info(curbuf, &file_info);
       curbuf->b_mtime_read = curbuf->b_mtime;
 #ifdef UNIX
       /*
@@ -3954,7 +3954,7 @@ nofail:
       /* Update the timestamp to avoid an "overwrite changed file"
        * prompt when writing again. */
       if (os_get_file_info((char *)fname, &file_info_old)) {
-        buf_store_file_info(buf, &file_info_old, fname);
+        buf_store_file_info(buf, &file_info_old);
         buf->b_mtime_read = buf->b_mtime;
       }
     }
@@ -5116,7 +5116,7 @@ buf_check_timestamp (
       buf->b_orig_size = 0;
       buf->b_orig_mode = 0;
     } else {
-      buf_store_file_info(buf, &file_info, buf->b_ffname);
+      buf_store_file_info(buf, &file_info);
     }
 
     /* Don't do anything for a directory.  Might contain the file
@@ -5418,8 +5418,7 @@ void buf_reload(buf_T *buf, int orig_mode)
   /* Careful: autocommands may have made "buf" invalid! */
 }
 
-// TODO(stefan991): remove unused parameter fname
-void buf_store_file_info(buf_T *buf, FileInfo *file_info, char_u *fname)
+void buf_store_file_info(buf_T *buf, FileInfo *file_info)
 {
   buf->b_mtime = (long)file_info->stat.st_mtim.tv_sec;
   buf->b_orig_size = file_info->stat.st_size;
