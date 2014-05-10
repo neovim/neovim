@@ -315,8 +315,9 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
      * just use the number and free the bhdr_T from the free list
      */
     if (freep->bh_page_count > page_count) {
-      if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
-        return NULL;
+      if (hp == NULL) {
+        hp = mf_alloc_bhdr(mfp, page_count);
+      }
       hp->bh_bnum = freep->bh_bnum;
       freep->bh_bnum += page_count;
       freep->bh_page_count -= page_count;
@@ -330,8 +331,9 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
       free(freep);
     }
   } else {    /* get a new number */
-    if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
-      return NULL;
+    if (hp == NULL) {
+      hp = mf_alloc_bhdr(mfp, page_count);
+    }
     if (negative) {
       hp->bh_bnum = mfp->mf_blocknr_min--;
       mfp->mf_neg_count++;
@@ -384,8 +386,9 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, int page_count)
      * If not, allocate a new block.
      */
     hp = mf_release(mfp, page_count);
-    if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
-      return NULL;
+    if (hp == NULL) {
+      hp = mf_alloc_bhdr(mfp, page_count);
+    }
 
     hp->bh_bnum = nr;
     hp->bh_flags = 0;
