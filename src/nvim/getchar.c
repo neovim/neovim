@@ -1142,7 +1142,7 @@ static void may_sync_undo(void)
 /*
  * Make "typebuf" empty and allocate new buffers.
  */
-int alloc_typebuf(void)
+void alloc_typebuf(void)
 {
   typebuf.tb_buf = xmalloc(TYPELEN_INIT);
   typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
@@ -1154,7 +1154,6 @@ int alloc_typebuf(void)
   typebuf.tb_no_abbr_cnt = 0;
   if (++typebuf.tb_change_cnt == 0)
     typebuf.tb_change_cnt = 1;
-  return OK;
 }
 
 /*
@@ -1182,11 +1181,7 @@ int save_typebuf(void)
 {
   init_typebuf();
   saved_typebuf[curscript] = typebuf;
-  /* If out of memory: restore typebuf and close file. */
-  if (alloc_typebuf() == FAIL) {
-    closescript();
-    return FAIL;
-  }
+  alloc_typebuf();
   return OK;
 }
 
@@ -1202,10 +1197,8 @@ static int old_mouse_col;       /* mouse_col related to old_char */
 void save_typeahead(tasave_T *tp)
 {
   tp->save_typebuf = typebuf;
-  tp->typebuf_valid = (alloc_typebuf() == OK);
-  if (!tp->typebuf_valid)
-    typebuf = tp->save_typebuf;
-
+  alloc_typebuf();
+  tp->typebuf_valid = TRUE;
   tp->old_char = old_char;
   tp->old_mod_mask = old_mod_mask;
   old_char = -1;

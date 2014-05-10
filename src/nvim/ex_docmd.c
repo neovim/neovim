@@ -7380,6 +7380,7 @@ static void ex_normal(exarg_T *eap)
    * ends with half a command.
    */
   save_typeahead(&tabuf);
+  // TODO(philix): after save_typeahead() this is always TRUE
   if (tabuf.typebuf_valid) {
     /*
      * Repeat the :normal command for each line in the range.  When no
