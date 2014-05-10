@@ -386,8 +386,7 @@ int ml_open(buf_T *buf)
   /*
    * Allocate first data block and create an empty line 1.
    */
-  if ((hp = ml_new_data(mfp, FALSE, 1)) == NULL)
-    goto error;
+  hp = ml_new_data(mfp, FALSE, 1);
   if (hp->bh_bnum != 2) {
     EMSG(_("E298: Didn't get block nr 2?"));
     goto error;
@@ -2321,12 +2320,7 @@ ml_append_int (
     }
 
     page_count = ((space_needed + HEADER_SIZE) + page_size - 1) / page_size;
-    if ((hp_new = ml_new_data(mfp, newfile, page_count)) == NULL) {
-      /* correct line counts in pointer blocks */
-      --(buf->b_ml.ml_locked_lineadd);
-      --(buf->b_ml.ml_locked_high);
-      return FAIL;
-    }
+    hp_new = ml_new_data(mfp, newfile, page_count);
     if (db_idx < 0) {           /* left block is new */
       hp_left = hp_new;
       hp_right = hp;
