@@ -321,9 +321,41 @@ void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err)
   buffer_set_slice(buffer, index, index, false, true, lines, err);
 }
 
-Position buffer_mark(Buffer buffer, String name, Error *err)
+Position buffer_get_mark(Buffer buffer, String name, Error *err)
 {
-  abort();
+  Position rv;
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  if (name.size != 0) {
+    set_api_error("mark name must be a single character", err);
+    return rv;
+  }
+
+  pos_T *posp;
+  buf_T *savebuf;
+  char mark = *name.data;
+
+  try_start();
+  switch_buffer(&savebuf, buf);
+  posp = getmark(mark, false);
+  restore_buffer(savebuf);
+
+  if (try_end(err)) {
+    return rv;
+  }
+
+  if (posp == NULL) {
+    set_api_error("invalid mark name", err);
+    return rv;
+  }
+
+  rv.row = posp->lnum;
+  rv.col = posp->col;
+  return rv;
 }
 
 static void switch_to_win_for_buf(buf_T *buf,

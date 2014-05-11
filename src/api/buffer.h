@@ -133,14 +133,13 @@ bool buffer_is_valid(Buffer buffer);
 /// @param[out] err Details of an error that may have occurred
 void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err);
 
-/// Creates a mark in the buffer and returns a tuple(row, col) representing 
-/// the position of the named mark
+/// Return a tuple (row,col) representing the position of the named mark
 ///
 /// @param buffer The buffer handle
 /// @param name The mark's name
 /// @param[out] err Details of an error that may have occurred
 /// @return The (row, col) tuple
-Position buffer_mark(Buffer buffer, String name, Error *err);
+Position buffer_get_mark(Buffer buffer, String name, Error *err);
 
 #endif // NEOVIM_API_BUFFER_H
 
