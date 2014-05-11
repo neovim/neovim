@@ -35,7 +35,7 @@ Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err);
 /// @param tabpage The tab page handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The Window handle
-Window tabpage_get_buffer(Tabpage tabpage, Error *err);
+Window tabpage_get_window(Tabpage tabpage, Error *err);
 
 /// Checks if a tab page is valid
 ///
