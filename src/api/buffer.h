@@ -127,11 +127,11 @@ bool buffer_is_valid(Buffer buffer);
 /// Inserts a sequence of lines to a buffer at a certain index
 ///
 /// @param buffer The buffer handle
-/// @param lines An array of lines
 /// @param lnum Insert the lines before `lnum`. If negative, it will append
 ///        to the end of the buffer.
+/// @param lines An array of lines
 /// @param[out] err Details of an error that may have occurred
-void buffer_insert(Buffer buffer, StringArray lines, int64_t lnum, Error *err);
+void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err);
 
 /// Creates a mark in the buffer and returns a tuple(row, col) representing 
 /// the position of the named mark

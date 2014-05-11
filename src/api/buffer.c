@@ -315,9 +315,9 @@ bool buffer_is_valid(Buffer buffer)
   abort();
 }
 
-void buffer_insert(Buffer buffer, StringArray lines, int64_t lnum, Error *err)
+void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err)
 {
-  abort();
+  buffer_set_slice(buffer, index, index, false, true, lines, err);
 }
 
 Position buffer_mark(Buffer buffer, String name, Error *err)
