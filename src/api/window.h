@@ -96,7 +96,7 @@ void window_set_option(Window window, String name, Object value, Error *err);
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The (row, col) tuple with the window position
-Position window_get_pos(Window window, Error *err);
+Position window_get_position(Window window, Error *err);
 
 /// Gets the window tab page
 ///

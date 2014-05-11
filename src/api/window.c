@@ -157,9 +157,17 @@ void window_set_option(Window window, String name, Object value, Error *err)
   set_option_to(win, SREQ_WIN, name, value, err);
 }
 
-Position window_get_pos(Window window, Error *err)
+Position window_get_position(Window window, Error *err)
 {
-  abort();
+  Position rv;
+  win_T *win = find_window(window, err);
+
+  if (win) {
+    rv.col = win->w_wincol;
+    rv.row = win->w_winrow;
+  }
+
+  return rv;
 }
 
 Tabpage window_get_tabpage(Window window, Error *err)
