@@ -12,7 +12,9 @@
 #include "memory.h"
 #include "misc1.h"
 #include "misc2.h"
+#include "ex_cmds.h"
 #include "mark.h"
+#include "fileio.h"
 #include "move.h"
 #include "../window.h"
 #include "undo.h"
@@ -269,12 +271,43 @@ void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
 
 String buffer_get_name(Buffer buffer, Error *err)
 {
-  abort();
+  String rv = {.size = 0, .data = ""};
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf || buf->b_ffname == NULL) {
+    return rv;
+  }
+
+  rv.data = xstrdup((char *)buf->b_ffname);
+  rv.size = strlen(rv.data);
+  return rv;
 }
 
 void buffer_set_name(Buffer buffer, String name, Error *err)
 {
-  abort();
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return;
+  }
+
+  aco_save_T aco;
+  int ren_ret;
+  char *val = xstrndup(name.data, name.size);
+
+  try_start();
+  // Using aucmd_*: autocommands will be executed by rename_buffer
+  aucmd_prepbuf(&aco, buf);
+  ren_ret = rename_buffer((char_u *)val);
+  aucmd_restbuf(&aco);
+
+  if (try_end(err)) {
+    return;
+  }
+
+  if (ren_ret == FAIL) {
+    set_api_error("failed to rename buffer", err);
+  }
 }
 
 bool buffer_is_valid(Buffer buffer)
