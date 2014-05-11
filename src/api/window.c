@@ -4,11 +4,18 @@
 
 #include "api/window.h"
 #include "api/defs.h"
+#include "api/helpers.h"
 
 
 Buffer window_get_buffer(Window window, Error *err)
 {
-  abort();
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return 0;
+  }
+
+  return win->w_buffer->b_fnum;
 }
 
 Position window_get_cursor(Window window, Error *err)
