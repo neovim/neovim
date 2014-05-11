@@ -6,6 +6,7 @@
 #include "api/defs.h"
 #include "api/helpers.h"
 #include "../vim.h"
+#include "../window.h"
 #include "screen.h"
 #include "misc2.h"
 
@@ -57,17 +58,56 @@ void window_set_cursor(Window window, Position pos, Error *err)
 
 int64_t window_get_height(Window window, Error *err)
 {
-  abort();
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return 0;
+  }
+
+  return win->w_height;
 }
 
 void window_set_height(Window window, int64_t height, Error *err)
 {
-  abort();
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  win_T *savewin = curwin;
+  curwin = win;
+  try_start();
+  win_setheight(height);
+  curwin = savewin;
+  try_end(err);
 }
 
 int64_t window_get_width(Window window, Error *err)
 {
-  abort();
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return 0;
+  }
+
+  return win->w_width;
+}
+
+void window_set_width(Window window, int64_t width, Error *err)
+{
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  win_T *savewin = curwin;
+  curwin = win;
+  try_start();
+  win_setwidth(width);
+  curwin = savewin;
+  try_end(err);
 }
 
 Object window_get_var(Window window, String name, Error *err)

@@ -49,6 +49,14 @@ void window_set_height(Window window, int64_t height, Error *err);
 /// @return the width in columns
 int64_t window_get_width(Window window, Error *err);
 
+/// Sets the window width. This will only succeed if the screen is split
+/// vertically.
+///
+/// @param window The window handle
+/// @param width the new width in columns
+/// @param[out] err Details of an error that may have occurred
+void window_set_width(Window window, int64_t width, Error *err);
+
 /// Gets a window variable
 ///
 /// @param window The window handle
