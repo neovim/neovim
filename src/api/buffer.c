@@ -244,19 +244,27 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
   return dict_set_value(buf->b_vars, name, value, err);
 }
 
-String buffer_get_option(Buffer buffer, String name, Error *err)
+Object buffer_get_option(Buffer buffer, String name, Error *err)
 {
-  abort();
+  Object rv;
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  return get_option_from(buf, SREQ_BUF, name, err);
 }
 
-void buffer_set_option(Buffer buffer, String name, String value, Error *err)
+void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
 {
-  abort();
-}
+  buf_T *buf = find_buffer(buffer, err);
 
-void buffer_del_option(Buffer buffer, String name, Error *err)
-{
-  abort();
+  if (!buf) {
+    return;
+  }
+
+  set_option_to(buf, SREQ_BUF, name, value, err);
 }
 
 String buffer_get_name(Buffer buffer, Error *err)

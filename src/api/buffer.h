@@ -93,22 +93,16 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err);
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
 /// @return The option value
-String buffer_get_option(Buffer buffer, String name, Error *err);
+Object buffer_get_option(Buffer buffer, String name, Error *err);
 
-/// Sets a buffer option value
+/// Sets a buffer option value. Passing 'nil' as value deletes the option(only
+/// works if there's a global fallback)
 ///
 /// @param buffer The buffer handle
 /// @param name The option name
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
-void buffer_set_option(Buffer buffer, String name, String value, Error *err);
-
-/// Deletes a buffer option(falls back to the global value if available)
-///
-/// @param buffer The buffer handle
-/// @param name The option name
-/// @param[out] err Details of an error that may have occurred
-void buffer_del_option(Buffer buffer, String name, Error *err);
+void buffer_set_option(Buffer buffer, String name, Object value, Error *err);
 
 /// Gets the full file name for the buffer
 ///
