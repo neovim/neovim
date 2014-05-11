@@ -9,8 +9,24 @@
 
 int64_t tabpage_get_window_count(Tabpage tabpage, Error *err)
 {
-  set_api_error("Not implemented", err);
-  return 0;
+  uint64_t rv = 0;
+  tabpage_T *tab = find_tab(tabpage, err);
+
+  if (!tab) {
+    return rv;
+  }
+
+  tabpage_T *tp;
+  win_T *wp;
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (tp != tab) {
+      break;
+    }
+    rv++;
+  }
+
+  return rv;
 }
 
 Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
