@@ -66,6 +66,7 @@ Window tabpage_get_window(Tabpage tabpage, Error *err)
 
 bool tabpage_is_valid(Tabpage tabpage)
 {
-  abort();
+  Error stub = {.set = false};
+  return find_tab(tabpage, &stub) != NULL;
 }
 
