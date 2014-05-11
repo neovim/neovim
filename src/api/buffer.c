@@ -312,7 +312,8 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
 
 bool buffer_is_valid(Buffer buffer)
 {
-  abort();
+  Error stub;
+  return find_buffer(buffer, &stub) != NULL;
 }
 
 void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err)
