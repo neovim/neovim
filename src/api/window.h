@@ -71,7 +71,8 @@ Object window_get_var(Window window, String name, Error *err);
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-void window_set_var(Window window, String name, Object value, Error *err);
+/// @return The old value
+Object window_set_var(Window window, String name, Object value, Error *err);
 
 /// Gets a window option value
 ///

@@ -112,12 +112,26 @@ void window_set_width(Window window, int64_t width, Error *err)
 
 Object window_get_var(Window window, String name, Error *err)
 {
-  abort();
+  Object rv;
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return rv;
+  }
+
+  return dict_get_value(win->w_vars, name, false, err);
 }
 
-void window_set_var(Window window, String name, Object value, Error *err)
+Object window_set_var(Window window, String name, Object value, Error *err)
 {
-  abort();
+  Object rv;
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return rv;
+  }
+
+  return dict_set_value(win->w_vars, name, value, err);
 }
 
 String window_get_option(Window window, String name, Error *err)
