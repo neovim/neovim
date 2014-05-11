@@ -80,15 +80,16 @@ Object window_set_var(Window window, String name, Object value, Error *err);
 /// @param name The option name
 /// @param[out] err Details of an error that may have occurred
 /// @return The option value
-String window_get_option(Window window, String name, Error *err);
+Object window_get_option(Window window, String name, Error *err);
 
-/// Sets a window option value
+/// Sets a window option value. Passing 'nil' as value deletes the option(only
+/// works if there's a global fallback)
 ///
 /// @param window The window handle
 /// @param name The option name
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
-void window_set_option(Window window, String name, String value, Error *err);
+void window_set_option(Window window, String name, Object value, Error *err);
 
 /// Gets the window position in display cells. First position is zero.
 ///

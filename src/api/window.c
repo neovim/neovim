@@ -134,14 +134,27 @@ Object window_set_var(Window window, String name, Object value, Error *err)
   return dict_set_value(win->w_vars, name, value, err);
 }
 
-String window_get_option(Window window, String name, Error *err)
+Object window_get_option(Window window, String name, Error *err)
 {
-  abort();
+  Object rv;
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return rv;
+  }
+
+  return get_option_from(win, SREQ_WIN, name, err);
 }
 
-void window_set_option(Window window, String name, String value, Error *err)
+void window_set_option(Window window, String name, Object value, Error *err)
 {
-  abort();
+  win_T *win = find_window(window, err);
+
+  if (!win) {
+    return;
+  }
+
+  set_option_to(win, SREQ_WIN, name, value, err);
 }
 
 Position window_get_pos(Window window, Error *err)
