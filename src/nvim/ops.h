@@ -4,6 +4,8 @@
 #include "nvim/func_attr.h"
 #include "nvim/types.h"
 
+typedef int (*Indenter)(void);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ops.h.generated.h"
 #endif

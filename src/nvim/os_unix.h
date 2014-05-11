@@ -3,9 +3,7 @@
 
 #include "nvim/os/shell.h"
 
-/* os_unix.c */
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os_unix.h.generated.h"
 #endif
-
-#endif /* NVIM_OS_UNIX_H */
+#endif  // NVIM_OS_UNIX_H

@@ -3721,10 +3721,7 @@ void iconv_end()
  * Afterwards invoke with "from" and "to" equal to NULL to cleanup.
  * Return FAIL when conversion is not supported, OK otherwise.
  */
-int convert_setup(vcp, from, to)
-  vimconv_T   *vcp;
-  char_u      *from;
-  char_u      *to;
+int convert_setup(vimconv_T *vcp, char_u *from, char_u *to)
 {
   return convert_setup_ext(vcp, from, TRUE, to, TRUE);
 }
@@ -3733,12 +3730,8 @@ int convert_setup(vcp, from, to)
  * As convert_setup(), but only when from_unicode_is_utf8 is TRUE will all
  * "from" unicode charsets be considered utf-8.  Same for "to".
  */
-int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
-  vimconv_T   *vcp;
-  char_u      *from;
-  int from_unicode_is_utf8;
-  char_u      *to;
-  int to_unicode_is_utf8;
+int convert_setup_ext(vimconv_T *vcp, char_u *from, int from_unicode_is_utf8,
+                      char_u *to, int to_unicode_is_utf8)
 {
   int from_prop;
   int to_prop;
@@ -3809,10 +3802,7 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
  * The input and output are not NUL terminated!
  * Returns the length after conversion.
  */
-int convert_input(ptr, len, maxlen)
-  char_u      *ptr;
-  int len;
-  int maxlen;
+int convert_input(char_u *ptr, int len, int maxlen)
 {
   return convert_input_safe(ptr, len, maxlen, NULL, NULL);
 }
@@ -3823,12 +3813,8 @@ int convert_input(ptr, len, maxlen)
  * end return that as an allocated string in "restp" and set "*restlenp" to
  * the length.  If "restp" is NULL it is not used.
  */
-int convert_input_safe(ptr, len, maxlen, restp, restlenp)
-  char_u      *ptr;
-  int len;
-  int maxlen;
-  char_u      **restp;
-  int         *restlenp;
+int convert_input_safe(char_u *ptr, int len, int maxlen, char_u **restp,
+                       int *restlenp)
 {
   char_u      *d;
   int dlen = len;
@@ -3861,10 +3847,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
  * Illegal chars are often changed to "?", unless vcp->vc_fail is set.
  * When something goes wrong, NULL is returned and "*lenp" is unchanged.
  */
-char_u * string_convert(vcp, ptr, lenp)
-  vimconv_T   *vcp;
-  char_u      *ptr;
-  int         *lenp;
+char_u * string_convert(vimconv_T *vcp, char_u *ptr, int *lenp)
 {
   return string_convert_ext(vcp, ptr, lenp, NULL);
 }
@@ -3874,11 +3857,8 @@ char_u * string_convert(vcp, ptr, lenp)
  * an incomplete sequence at the end it is not converted and "*unconvlenp" is
  * set to the number of remaining bytes.
  */
-char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
-  vimconv_T   *vcp;
-  char_u      *ptr;
-  int         *lenp;
-  int         *unconvlenp;
+char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
+                            int *unconvlenp)
 {
   char_u      *retval = NULL;
   char_u      *d;

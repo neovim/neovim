@@ -334,11 +334,9 @@ int do_cmdline_cmd(char_u *cmd)
  *
  * return FAIL if cmdline could not be executed, OK otherwise
  */
-int do_cmdline(cmdline, fgetline, cookie, flags)
-char_u      *cmdline;
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;                    /* argument for fgetline() */
-int flags;
+int do_cmdline(char_u *cmdline, LineGetter fgetline,
+               void *cookie, /* argument for fgetline() */
+               int flags)
 {
   char_u      *next_cmdline;            /* next cmd to execute */
   char_u      *cmdline_copy = NULL;     /* copy of cmd line */
@@ -1060,12 +1058,11 @@ static void free_cmdlines(garray_T *gap)
  * If "fgetline" is get_loop_line(), return TRUE if the getline it uses equals
  * "func".  * Otherwise return TRUE when "fgetline" equals "func".
  */
-int getline_equal(fgetline, cookie, func)
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;             /* argument for fgetline() */
-char_u      *(*func)(int, void *, int);
+int getline_equal(LineGetter fgetline,
+                  void *cookie, /* argument for fgetline() */
+                  LineGetter func)
 {
-  char_u              *(*gp)(int, void *, int);
+  LineGetter gp;
   struct loop_cookie *cp;
 
   /* When "fgetline" is "get_loop_line()" use the "cookie" to find the
@@ -1084,11 +1081,11 @@ char_u      *(*func)(int, void *, int);
  * If "fgetline" is get_loop_line(), return the cookie used by the original
  * getline function.  Otherwise return "cookie".
  */
-void * getline_cookie(fgetline, cookie)
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;                    /* argument for fgetline() */
+void * getline_cookie(LineGetter fgetline,
+                      void *cookie /* argument for fgetline() */
+                      )
 {
-  char_u              *(*gp)(int, void *, int);
+  LineGetter gp;
   struct loop_cookie *cp;
 
   /* When "fgetline" is "get_loop_line()" use the "cookie" to find the
@@ -1119,14 +1116,12 @@ void        *cookie;                    /* argument for fgetline() */
  *
  * This function may be called recursively!
  */
-static char_u * do_one_cmd(cmdlinep, sourcing,
-    cstack,
-    fgetline, cookie)
-char_u              **cmdlinep;
-int sourcing;
-struct condstack    *cstack;
-char_u              *(*fgetline)(int, void *, int);
-void                *cookie;                    /*argument for fgetline() */
+static char_u * do_one_cmd(char_u **cmdlinep,
+                           int sourcing,
+                           struct condstack *cstack,
+                           LineGetter fgetline,
+                           void *cookie /* argument for fgetline() */
+                           )
 {
   char_u              *p;
   linenr_T lnum;
@@ -6498,8 +6493,7 @@ static void ex_wincmd(exarg_T *eap)
 /*
  * ":winpos".
  */
-static void ex_winpos(eap)
-exarg_T     *eap;
+static void ex_winpos(exarg_T *eap)
 {
   int x, y;
   char_u      *arg = eap->arg;

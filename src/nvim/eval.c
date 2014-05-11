@@ -1194,8 +1194,8 @@ void restore_funccal(void *vfc)
  * counted for the script/function itself.
  * Should always be called in pair with prof_child_exit().
  */
-void prof_child_enter(tm)
-proftime_T *tm;         /* place to store waittime */
+void prof_child_enter(proftime_T *tm /* place to store waittime */
+                      )
 {
   funccall_T *fc = current_funccal;
 
@@ -1208,8 +1208,8 @@ proftime_T *tm;         /* place to store waittime */
  * Take care of time spent in a child.
  * Should always be called after prof_child_enter().
  */
-void prof_child_exit(tm)
-proftime_T *tm;         /* where waittime was stored */
+void prof_child_exit(proftime_T *tm /* where waittime was stored */
+                     )
 {
   funccall_T *fc = current_funccal;
 
@@ -17624,12 +17624,13 @@ prof_sort_list (
 /*
  * Print the count and times for one function or function line.
  */
-static void prof_func_line(fd, count, total, self, prefer_self)
-FILE        *fd;
-int count;
-proftime_T  *total;
-proftime_T  *self;
-int prefer_self;                /* when equal print only self time */
+static void prof_func_line(
+    FILE        *fd,
+    int count,
+    proftime_T  *total,
+    proftime_T  *self,
+    int prefer_self                 /* when equal print only self time */
+    )
 {
   if (count > 0) {
     fprintf(fd, "%5d ", count);

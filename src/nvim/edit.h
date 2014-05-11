@@ -12,6 +12,8 @@
 #define CPT_INFO    3   /* "info" */
 #define CPT_COUNT   4   /* Number of entries */
 
+typedef int (*IndentGetter)(void);
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "edit.h.generated.h"

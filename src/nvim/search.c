@@ -441,18 +441,19 @@ void last_pat_prog(regmmatch_T *regmatch)
  * Returns the index of the first matching
  * subpattern plus one; one if there was none.
  */
-int searchit(win, buf, pos, dir, pat, count, options, pat_use, stop_lnum, tm)
-win_T       *win;               /* window to search in; can be NULL for a
-                                   buffer without a window! */
-buf_T       *buf;
-pos_T       *pos;
-int dir;
-char_u      *pat;
-long count;
-int options;
-int pat_use;                    /* which pattern to use when "pat" is empty */
-linenr_T stop_lnum;             /* stop after this line number when != 0 */
-proftime_T  *tm;         /* timeout limit or NULL */
+int searchit(
+    win_T       *win,               /* window to search in, can be NULL for a
+                                       buffer without a window! */
+    buf_T       *buf,
+    pos_T       *pos,
+    int dir,
+    char_u      *pat,
+    long count,
+    int options,
+    int pat_use,                    /* which pattern to use when "pat" is empty */
+    linenr_T stop_lnum,             /* stop after this line number when != 0 */
+    proftime_T  *tm          /* timeout limit or NULL */
+)
 {
   int found;
   linenr_T lnum;                /* no init to shut up Apollo cc */
@@ -888,13 +889,14 @@ static int first_submatch(regmmatch_T *rp)
  *
  * return 0 for failure, 1 for found, 2 for found and line offset added
  */
-int do_search(oap, dirc, pat, count, options, tm)
-oparg_T         *oap;           /* can be NULL */
-int dirc;                       /* '/' or '?' */
-char_u          *pat;
-long count;
-int options;
-proftime_T      *tm;            /* timeout limit or NULL */
+int do_search(
+    oparg_T         *oap,           /* can be NULL */
+    int dirc,                       /* '/' or '?' */
+    char_u          *pat,
+    long count,
+    int options,
+    proftime_T      *tm             /* timeout limit or NULL */
+)
 {
   pos_T pos;                    /* position of the last match */
   char_u          *searchstr;

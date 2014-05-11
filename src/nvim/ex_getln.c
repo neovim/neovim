@@ -3766,14 +3766,14 @@ ExpandFromContext (
  *
  * Returns OK when no problems encountered, FAIL for error.
  */
-int ExpandGeneric(xp, regmatch, num_file, file, func, escaped)
-expand_T    *xp;
-regmatch_T  *regmatch;
-int         *num_file;
-char_u      ***file;
-char_u      *((*func)(expand_T *, int));
-/* returns a string from the list */
-int escaped;
+int ExpandGeneric(
+    expand_T    *xp,
+    regmatch_T  *regmatch,
+    int         *num_file,
+    char_u      ***file,
+    CompleteListItemGetter func, /* returns a string from the list */
+    int escaped
+    )
 {
   int i;
   int count = 0;

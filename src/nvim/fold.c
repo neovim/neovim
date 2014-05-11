@@ -79,6 +79,9 @@ typedef struct {
 /* Flag is set when redrawing is needed. */
 static int fold_changed;
 
+/* Function used by foldUpdateIEMSRecurse */
+typedef void (*LevelGetter)(fline_T *);
+
 /* static functions {{{2 */
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -2098,15 +2101,12 @@ static void foldUpdateIEMS(win_T *wp, linenr_T top, linenr_T bot)
  * Returns bot, which may have been increased for lines that also need to be
  * updated as a result of a detected change in the fold.
  */
-static linenr_T foldUpdateIEMSRecurse(gap, level, startlnum, flp, getlevel, bot,
-    topflags)
-garray_T    *gap;
-int level;
-linenr_T startlnum;
-fline_T     *flp;
-void        (*getlevel)(fline_T *);
-linenr_T bot;
-int topflags;                   /* flags used by containing fold */
+static linenr_T foldUpdateIEMSRecurse(garray_T *gap, int level,
+                                      linenr_T startlnum, fline_T *flp,
+                                      LevelGetter getlevel,
+                                      linenr_T bot,
+                                      int topflags /* flags used by containing fold */
+                                      )
 {
   linenr_T ll;
   fold_T      *fp = NULL;

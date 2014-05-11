@@ -2222,7 +2222,7 @@ static int do_more_prompt(int typed_char)
   return retval;
 }
 
-#if defined(USE_MCH_ERRMSG) || defined(PROTO)
+#if defined(USE_MCH_ERRMSG)
 
 #ifdef mch_errmsg
 # undef mch_errmsg

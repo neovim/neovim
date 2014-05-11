@@ -546,9 +546,7 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
 /*
  * op_reindent - handle reindenting a block of lines.
  */
-void op_reindent(oap, how)
-oparg_T     *oap;
-int         (*how)(void);
+void op_reindent(oparg_T *oap, Indenter how)
 {
   long i;
   char_u      *l;
@@ -758,7 +756,7 @@ void *
 get_register (
     int name,
     int copy               /* make a copy, if FALSE make register empty. */
-)
+) FUNC_ATTR_NONNULL_RET
 {
   get_yank_register(name, 0);
 

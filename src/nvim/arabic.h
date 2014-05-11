@@ -8,7 +8,6 @@ static inline int arabic_char(int c)
     return c >= 0x0621 && c <= 0x0670;
 }
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "arabic.h.generated.h"
 #endif

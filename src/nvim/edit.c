@@ -6374,9 +6374,7 @@ static int cindent_on(void) {
  * confused what all the part that handles Control-T is doing that I'm not.
  * "get_the_indent" should be get_c_indent, get_expr_indent or get_lisp_indent.
  */
-
-void fixthisline(get_the_indent)
-int (*get_the_indent)(void);
+void fixthisline(IndentGetter get_the_indent)
 {
   change_indent(INDENT_SET, get_the_indent(), FALSE, 0, TRUE);
   if (linewhite(curwin->w_cursor.lnum))

@@ -15,6 +15,10 @@
 // #include "nvim/globals.h"
 #include "nvim/memline.h"
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "garray.c.generated.h"
+#endif
+
 /// Clear an allocated growing array.
 void ga_clear(garray_T *gap)
 {
@@ -110,6 +114,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 ///
 /// @returns the concatenated strings
 char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
+  FUNC_ATTR_NONNULL_RET
 {
   const size_t nelem = (size_t) gap->ga_len;
   const char **strings = gap->ga_data;
@@ -143,7 +148,7 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
 /// @param gap
 ///
 /// @returns the concatenated strings
-char_u* ga_concat_strings(const garray_T *gap)
+char_u* ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET
 {
   return ga_concat_strings_sep(gap, ",");
 }
@@ -177,7 +182,7 @@ void ga_append(garray_T *gap, char c)
   gap->ga_len++;
 }
 
-#if defined(UNIX) || defined(WIN3264)
+#if defined(UNIX) || defined(WIN3264) || defined(PROTO)
 
 /// Append the text in "gap" below the cursor line and clear "gap".
 ///

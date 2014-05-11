@@ -945,10 +945,7 @@ static bool parse_char_i(char_u **input, char val)
   return false;
 }
 
-static bool parse_string(input, val, len)
-  char_u      **input;
-  char        *val;
-  int len;
+static bool parse_string(char_u **input, char *val, int len)
 {
   if (STRNICMP(*input, val, len) == 0) {
     *input += len;

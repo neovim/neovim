@@ -1239,8 +1239,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
  *
  * find cscope command in command table
  */
-static cscmd_T * cs_lookup_cmd(eap)
-exarg_T *eap;
+static cscmd_T * cs_lookup_cmd(exarg_T *eap)
 {
   cscmd_T *cmdp;
   char *stok;

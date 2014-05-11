@@ -1,5 +1,11 @@
+#ifndef DEFINE_FUNC_ATTRIBUTES
+# define DEFINE_FUNC_ATTRIBUTES
+#endif
+#include "func_attr.h"
+#undef DEFINE_FUNC_ATTRIBUTES
+void signal_init();
+void signal_stop();
+void signal_reject_deadly();
+void signal_accept_deadly();
 void signal_handle(Event event);
-void signal_reject_deadly(void);
-void signal_accept_deadly(void);
-void signal_stop(void);
-void signal_init(void);
+#include "func_attr.h"

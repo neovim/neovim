@@ -7763,10 +7763,7 @@ file_pat_to_reg_pat (
  * Version of read() that retries when interrupted by EINTR (possibly
  * by a SIGWINCH).
  */
-long read_eintr(fd, buf, bufsize)
-int fd;
-void    *buf;
-size_t bufsize;
+long read_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret;
 
@@ -7782,10 +7779,7 @@ size_t bufsize;
  * Version of write() that retries when interrupted by EINTR (possibly
  * by a SIGWINCH).
  */
-long write_eintr(fd, buf, bufsize)
-int fd;
-void    *buf;
-size_t bufsize;
+long write_eintr(int fd, void *buf, size_t bufsize)
 {
   long ret = 0;
   long wlen;

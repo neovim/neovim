@@ -18,6 +18,7 @@
 
 // event will be cleaned up after it gets processed
 #define _destroy_event(x)  // do nothing
+KLIST_INIT(Event, Event, _destroy_event)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/event.c.generated.h"

@@ -3301,10 +3301,10 @@ proftime_T  *tm;                /* timeout limit or NULL */
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
  */
-static long bt_regexec_both(line, col, tm)
-char_u      *line;
-colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm;         /* timeout limit or NULL */
+static long bt_regexec_both(char_u *line,
+                            colnr_T col, /* column to start looking for match */
+                            proftime_T *tm /* timeout limit or NULL */
+                            )
 {
   bt_regprog_T        *prog;
   char_u      *s;
@@ -6881,7 +6881,10 @@ static regengine_T bt_regengine =
 };
 
 
-#include "nvim/regexp_nfa.c"
+// XXX Do not allow headers generator to catch definitions from regexp_nfa.c
+#ifndef DO_NOT_DEFINE_EMPTY_ATTRIBUTES
+# include "nvim/regexp_nfa.c"
+#endif
 
 static regengine_T nfa_regengine =
 {
@@ -7022,13 +7025,14 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
  * Return zero if there is no match.  Return number of lines contained in the
  * match otherwise.
  */
-long vim_regexec_multi(rmp, win, buf, lnum, col, tm)
-regmmatch_T *rmp;
-win_T       *win;               /* window in which to search or NULL */
-buf_T       *buf;               /* buffer in which to search */
-linenr_T lnum;                  /* nr of line to start looking for match */
-colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm;                /* timeout limit or NULL */
+long vim_regexec_multi(
+  regmmatch_T *rmp,
+  win_T       *win,               /* window in which to search or NULL */
+  buf_T       *buf,               /* buffer in which to search */
+  linenr_T lnum,                  /* nr of line to start looking for match */
+  colnr_T col,                    /* column to start looking for match */
+  proftime_T  *tm                 /* timeout limit or NULL */
+)
 {
   return rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm);
 }
