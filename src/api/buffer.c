@@ -312,7 +312,7 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
 
 bool buffer_is_valid(Buffer buffer)
 {
-  Error stub;
+  Error stub = {.set = false};
   return find_buffer(buffer, &stub) != NULL;
 }
 

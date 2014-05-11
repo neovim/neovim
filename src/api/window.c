@@ -172,11 +172,13 @@ Position window_get_position(Window window, Error *err)
 
 Tabpage window_get_tabpage(Window window, Error *err)
 {
-  abort();
+  set_api_error("Not implemented", err);
+  return 0;
 }
 
 bool window_is_valid(Window window)
 {
-  abort();
+  Error stub = {.set = false};
+  return find_window(window, &stub) != NULL;
 }
 
