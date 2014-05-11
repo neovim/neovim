@@ -29,6 +29,13 @@ String buffer_get_line(Buffer buffer, int64_t index, Error *err);
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_line(Buffer buffer, int64_t index, String line, Error *err);
 
+/// Deletes a buffer line
+///
+/// @param buffer The buffer handle
+/// @param index The line index
+/// @param[out] err Details of an error that may have occurred
+void buffer_del_line(Buffer buffer, int64_t index, Error *err);
+
 /// Retrieves a line range from the buffer
 ///
 /// @param buffer The buffer handle

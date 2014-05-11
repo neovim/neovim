@@ -67,6 +67,12 @@ void buffer_set_line(Buffer buffer, int64_t index, String line, Error *err)
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
+void buffer_del_line(Buffer buffer, int64_t index, Error *err)
+{
+  StringArray array = {.size = 0};
+  buffer_set_slice(buffer, index, index, true, true, array, err);
+}
+
 StringArray buffer_get_slice(Buffer buffer,
                              int64_t start,
                              int64_t end,

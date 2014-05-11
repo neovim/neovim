@@ -50,6 +50,11 @@ void vim_change_directory(String dir, Error *err);
 /// @return The current line string
 String vim_get_current_line(Error *err);
 
+/// Delete the current line
+///
+/// @param[out] err Details of an error that may have occurred
+void vim_del_current_line(Error *err);
+
 /// Sets the current line
 ///
 /// @param line The line contents

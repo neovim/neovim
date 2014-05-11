@@ -141,6 +141,11 @@ void vim_set_current_line(String line, Error *err)
   buffer_set_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, line, err);
 }
 
+void vim_del_current_line(Error *err)
+{
+  buffer_del_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
+}
+
 Object vim_get_var(bool special, String name, bool pop, Error *err)
 {
   return dict_get_value(special ? &vimvardict : &globvardict, name,
