@@ -22,3 +22,16 @@ src/os/signal.c
 src/os/signal.h
 src/os/time.c
 src/os/time.h
+src/os/msgpack_rpc.h
+src/os/msgpack_rpc.c
+src/api/defs.h
+src/api/buffer.h
+src/api/buffer.c
+src/api/helpers.h
+src/api/helpers.c
+src/api/tabpage.h
+src/api/tabpage.c
+src/api/window.h
+src/api/window.c
+src/api/vim.h
+src/api/vim.c

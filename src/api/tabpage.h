@@ -42,5 +42,5 @@ Window tabpage_get_buffer(Tabpage tabpage, Error *err);
 /// @return true if the tab page is valid, false otherwise
 bool tabpage_is_valid(Tabpage tabpage);
 
-#endif // NEOVIM_API_TABPAGE_H
+#endif  // NEOVIM_API_TABPAGE_H
 

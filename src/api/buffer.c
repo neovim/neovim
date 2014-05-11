@@ -101,7 +101,7 @@ StringArray buffer_get_slice(Buffer buffer,
   rv.items = xmalloc(sizeof(String) * rv.size);
 
   for (uint32_t i = 0; i < rv.size; i++) {
-    rv.items[i].data = xstrdup((char *)ml_get_buf(buf, start + i, FALSE));
+    rv.items[i].data = xstrdup((char *)ml_get_buf(buf, start + i, false));
     rv.items[i].size = strlen(rv.items[i].data);
   }
 
@@ -136,7 +136,7 @@ void buffer_set_slice(Buffer buffer,
   uint32_t new_len = replacement.size;
   uint32_t old_len = end - start;
   uint32_t i;
-  int32_t extra = 0; // lines added to text, can be negative
+  int32_t extra = 0;  // lines added to text, can be negative
   char **lines;
 
   if (new_len == 0) {
@@ -367,7 +367,7 @@ static void switch_to_win_for_buf(buf_T *buf,
   tabpage_T *tp;
 
   if (find_win_for_buf(buf, &wp, &tp) == FAIL
-      || switch_win(save_curwinp, save_curtabp, wp, tp, TRUE) == FAIL)
+      || switch_win(save_curwinp, save_curtabp, wp, tp, true) == FAIL)
     switch_buffer(save_curbufp, buf);
 }
 
@@ -376,7 +376,7 @@ static void restore_win_for_buf(win_T *save_curwin,
                                 buf_T *save_curbuf)
 {
   if (save_curbuf == NULL) {
-    restore_win(save_curwin, save_curtab, TRUE);
+    restore_win(save_curwin, save_curtab, true);
   } else {
     restore_buffer(save_curbuf);
   }
@@ -390,8 +390,7 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra)
     if (curwin->w_cursor.lnum >= hi) {
       curwin->w_cursor.lnum += extra;
       check_cursor_col();
-    }
-    else if (extra < 0) {
+    } else if (extra < 0) {
       curwin->w_cursor.lnum = lo;
       check_cursor();
     } else {

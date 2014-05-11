@@ -17,13 +17,13 @@ void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
 
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
-    msgpack_pack_int(res, 0); // no message id yet
+    msgpack_pack_int(res, 0);  // no message id yet
     msgpack_rpc_error("Request is not an array", res);
     return;
   }
 
   if (req->via.array.size != 4) {
-    msgpack_pack_int(res, 0); // no message id yet
+    msgpack_pack_int(res, 0);  // no message id yet
     char error_msg[256];
     snprintf(error_msg,
              sizeof(error_msg),
@@ -33,7 +33,7 @@ void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
   }
 
   if (req->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    msgpack_pack_int(res, 0); // no message id yet
+    msgpack_pack_int(res, 0);  // no message id yet
     msgpack_rpc_error("Id must be a positive integer", res);
   }
 
@@ -278,7 +278,6 @@ void msgpack_rpc_from_tabpage(Tabpage result, msgpack_packer *res)
 
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
 {
-  
   switch (result.type) {
     case kObjectTypeNil:
       msgpack_pack_nil(res);

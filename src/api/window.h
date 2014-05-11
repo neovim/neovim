@@ -89,7 +89,7 @@ void window_set_option(Window window, String name, String value, Error *err);
 Position window_get_pos(Window window, Error *err);
 
 /// Gets the window tab page
-/// 
+///
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The tab page that contains the window
@@ -101,5 +101,5 @@ Tabpage window_get_tabpage(Window window, Error *err);
 /// @return true if the window is valid, false otherwise
 bool window_is_valid(Window window);
 
-#endif // NEOVIM_API_WINDOW_H
+#endif  // NEOVIM_API_WINDOW_H
 

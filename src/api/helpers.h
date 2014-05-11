@@ -80,5 +80,5 @@ buf_T *find_buffer(Buffer buffer, Error *err);
 /// @return the window pointer
 win_T * find_window(Window window, Error *err);
 
-#endif /* NEOVIM_API_HELPERS_H */
+#endif  // NEOVIM_API_HELPERS_H
 

@@ -38,12 +38,11 @@ void vim_push_keys(String str)
 void vim_command(String str, Error *err)
 {
   // We still use 0-terminated strings, so we must convert.
-  char cmd_str[str.size + 1];
-  memcpy(cmd_str, str.data, str.size);
-  cmd_str[str.size] = NUL;
+  char *cmd_str = xstrndup(str.data, str.size);
   // Run the command
   try_start();
   do_cmdline_cmd((char_u *)cmd_str);
+  free(cmd_str);
   update_screen(VALID);
   try_end(err);
 }
@@ -51,13 +50,11 @@ void vim_command(String str, Error *err)
 Object vim_eval(String str, Error *err)
 {
   Object rv;
-
-  char expr_str[str.size + 1];
-  memcpy(expr_str, str.data, str.size);
-  expr_str[str.size] = NUL;
+  char *expr_str = xstrndup(str.data, str.size);
   // Evaluate the expression
   try_start();
   typval_T *expr_result = eval_expr((char_u *)expr_str, NULL);
+  free(expr_str);
 
   if (!try_end(err)) {
     // No errors, convert the result
@@ -114,9 +111,8 @@ StringArray vim_list_runtime_paths(void)
 
 void vim_change_directory(String dir, Error *err)
 {
-  char string[dir.size + 1];
-  memcpy(string, dir.data, dir.size);
-  string[dir.size] = NUL;
+  char string[MAXPATHL];
+  strncpy(string, dir.data, dir.size);
 
   try_start();
 
@@ -127,7 +123,7 @@ void vim_change_directory(String dir, Error *err)
     return;
   }
 
-  post_chdir(FALSE);
+  post_chdir(false);
   try_end(err);
 }
 
@@ -316,7 +312,7 @@ static void write_msg(String message, bool to_err)
       pos = 0;
       continue;
     }
-    
+
     line_buf[pos++] = message.data[i];
   }
 }

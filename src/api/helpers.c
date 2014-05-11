@@ -56,7 +56,7 @@ bool try_end(Error *err)
 
   if (got_int) {
     if (did_throw) {
-      // If we got an interrupt, discard the current exception 
+      // If we got an interrupt, discard the current exception
       discard_current_exception();
     }
 
@@ -87,11 +87,9 @@ Object dict_get_value(dict_T *dict, String key, bool pop, Error *err)
   Object rv;
   hashitem_T *hi;
   dictitem_T *di;
-  char k[key.size + 1];
-  // Convert the key
-  memcpy(k, key.data, key.size);
-  k[key.size] = NUL;
+  char *k = xstrndup(key.data, key.size);
   hi = hash_find(&dict->dv_hashtab, (uint8_t *)k);
+  free(k);
 
   if (HASHITEM_EMPTY(hi)) {
     set_api_error("Key not found", err);
@@ -136,10 +134,9 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
   }
 
   if (di == NULL) {
-    uint8_t k[key.size + 1];
-    memcpy(k, key.data, key.size);
-    k[key.size] = NUL;
-    di = dictitem_alloc(k);
+    char *k = xstrndup(key.data, key.size);
+    di = dictitem_alloc((uint8_t *)k);
+    free(k);
     dict_add(dict, di);
   } else {
     rv = vim_to_object(&di->di_tv);
@@ -162,13 +159,12 @@ Object get_option_from(void *from, int type, String name, Error *err)
   }
 
   // Return values
-  long numval;
+  int64_t numval;
   char *stringval = NULL;
-  //
-  char key[name.size + 1];
-  memcpy(key, name.data, name.size);
-  key[name.size] = NUL;
-  int flags = get_option_value_strict(key, &numval, &stringval, type, from); 
+  // copy the option name into 0-delimited string
+  char *key = xstrndup(name.data, name.size);
+  int flags = get_option_value_strict(key, &numval, &stringval, type, from);
+  free(key);
 
   if (!flags) {
     set_api_error("invalid option name", err);
@@ -203,27 +199,25 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     return;
   }
 
-  char key[name.size + 1];
-  memcpy(key, name.data, name.size);
-  key[name.size] = NUL;
+  char *key = xstrndup(name.data, name.size);
   int flags = get_option_value_strict(key, NULL, NULL, type, to);
 
   if (flags == 0) {
     set_api_error("invalid option name", err);
-    return;
+    goto cleanup;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
       set_api_error("unable to unset option", err);
-      return;
+      goto cleanup;
     } else if (!(flags & SOPT_GLOBAL)) {
       set_api_error("cannot unset option that doesn't have a global value",
                      err);
-      return;
+      goto cleanup;
     } else {
       unset_global_local_option(key, to);
-      return;
+      goto cleanup;
     }
   }
 
@@ -232,7 +226,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBool) {
       set_api_error("option requires a boolean value", err);
-      return;
+      goto cleanup;
     }
     bool val = value.data.boolean;
     set_option_value_for(key, val, NULL, opt_flags, type, to, err);
@@ -240,7 +234,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInt) {
       set_api_error("option requires an integer value", err);
-      return;
+      goto cleanup;
     }
 
     int val = value.data.integer;
@@ -248,18 +242,21 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   } else {
     if (value.type != kObjectTypeString) {
       set_api_error("option requires a string value", err);
-      return;
+      goto cleanup;
     }
 
     char *val = xstrndup(value.data.string.data, value.data.string.size);
     set_option_value_for(key, 0, val, opt_flags, type, to, err);
   }
+
+cleanup:
+  free(key);
 }
 
 Object vim_to_object(typval_T *obj)
 {
   Object rv;
-  // We use a lookup table to break out of cyclic references 
+  // We use a lookup table to break out of cyclic references
   khash_t(Lookup) *lookup = kh_init(Lookup);
   rv = vim_to_object_rec(obj, lookup);
   // Free the table
@@ -360,10 +357,9 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
           return false;
         }
 
-        char k[key.size + 1];
-        memcpy(k, key.data, key.size);
-        k[key.size] = NUL;
+        char *k = xstrndup(key.data, key.size);
         dictitem_T *di = dictitem_alloc((uint8_t *)k);
+        free(k);
 
         if (!object_to_vim(item.value, &di->di_tv, err)) {
           // cleanup
@@ -503,7 +499,7 @@ static void set_option_value_for(char *key,
   {
     case SREQ_WIN:
       if (switch_win(&save_curwin, &save_curtab, (win_T *)from,
-            win_find_tabpage((win_T *)from), FALSE) == FAIL)
+            win_find_tabpage((win_T *)from), false) == FAIL)
       {
         if (try_end(err)) {
           return;
@@ -512,7 +508,7 @@ static void set_option_value_for(char *key,
         return;
       }
       set_option_value_err(key, numval, stringval, opt_flags, err);
-      restore_win(save_curwin, save_curtab, TRUE);
+      restore_win(save_curwin, save_curtab, true);
       break;
     case SREQ_BUF:
       switch_buffer(&save_curbuf, (buf_T *)from);

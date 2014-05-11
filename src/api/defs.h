@@ -70,5 +70,5 @@ struct key_value_pair {
 };
 
 
-#endif // NEOVIM_API_DEFS_H
+#endif  // NEOVIM_API_DEFS_H
 

@@ -34,7 +34,7 @@ Object vim_eval(String str, Error *err);
 int64_t vim_strwidth(String str);
 
 /// Returns a list of paths contained in 'runtimepath'
-/// 
+///
 /// @return The list of paths
 StringArray vim_list_runtime_paths(void);
 
@@ -148,5 +148,5 @@ Tabpage vim_get_current_tabpage(void);
 /// @param[out] err Details of an error that may have occurred
 void vim_set_current_tabpage(Tabpage tabpage, Error *err);
 
-#endif // NEOVIM_API_VIM_H
+#endif  // NEOVIM_API_VIM_H
 
