@@ -54,7 +54,7 @@ String vim_get_current_line(Error *err);
 ///
 /// @param line The line contents
 /// @param[out] err Details of an error that may have occurred
-void vim_set_current_line(Object line, Error *err);
+void vim_set_current_line(String line, Error *err);
 
 /// Gets a global or special variable
 ///

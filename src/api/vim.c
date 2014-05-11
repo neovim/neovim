@@ -136,7 +136,7 @@ String vim_get_current_line(Error *err)
   return buffer_get_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
 }
 
-void vim_set_current_line(Object line, Error *err)
+void vim_set_current_line(String line, Error *err)
 {
   buffer_set_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, line, err);
 }

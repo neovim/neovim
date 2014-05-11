@@ -25,10 +25,9 @@ String buffer_get_line(Buffer buffer, int64_t index, Error *err);
 ///
 /// @param buffer The buffer handle
 /// @param index The line index
-/// @param line The new line. This can can be a String(replacement) or
-///        Nil(delete). Anything else is an error.
+/// @param line The new line.
 /// @param[out] err Details of an error that may have occurred
-void buffer_set_line(Buffer buffer, int64_t index, Object line, Error *err);
+void buffer_set_line(Buffer buffer, int64_t index, String line, Error *err);
 
 /// Retrieves a line range from the buffer
 ///

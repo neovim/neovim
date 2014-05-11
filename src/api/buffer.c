@@ -51,91 +51,20 @@ int64_t buffer_get_length(Buffer buffer, Error *err)
 
 String buffer_get_line(Buffer buffer, int64_t index, Error *err)
 {
-  String rv;
-  buf_T *buf = find_buffer(buffer, err);
+  String rv = {.size = 0};
+  StringArray slice = buffer_get_slice(buffer, index, index, true, true, err);
 
-  if (!buf) {
-    return rv;
+  if (slice.size) {
+    rv = slice.items[0];
   }
 
-  index = normalize_index(buf, index);
-  char *line = (char *)ml_get_buf(buf, index, false);
-  rv.size = strlen(line);
-  rv.data = xmalloc(rv.size);
-  memcpy(rv.data, line, rv.size);
   return rv;
 }
 
-void buffer_set_line(Buffer buffer, int64_t index, Object line, Error *err)
+void buffer_set_line(Buffer buffer, int64_t index, String line, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
-
-  if (!buf) {
-    return;
-  }
-
-  if (line.type != kObjectTypeNil && line.type != kObjectTypeString) {
-    set_api_error("Invalid line", err);
-    return;
-  }
-
-  index = normalize_index(buf, index);
-  buf_T *save_curbuf = NULL;
-  win_T *save_curwin = NULL;
-  tabpage_T *save_curtab = NULL;
-  try_start();
-  switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
-
-  if (line.type == kObjectTypeNil) {
-    // Delete the line
-
-    if (u_savedel(index, 1L) == FAIL) {
-      // Failed to save undo
-      set_api_error("Cannot save undo information", err);
-    } else if (ml_delete(index, FALSE) == FAIL) {
-      // Failed to delete
-      set_api_error("Cannot delete the line", err);
-    } else {
-      restore_win_for_buf(save_curwin, save_curtab, save_curbuf);
-      // Success
-      if (buf == curbuf) {
-        // fix the cursor if it's the current buffer
-        fix_cursor(index, index + 1, -1);
-      }
-
-      if (save_curbuf == NULL) {
-        // Only adjust marks if we managed to switch to a window that
-        // holds the buffer, otherwise line numbers will be invalid.
-        deleted_lines_mark(index, 1L);
-      }
-    }
-
-  } else if (line.type == kObjectTypeString) {
-    // Replace line
-    char *string = xmalloc(line.data.string.size + 1);
-    memcpy(string, line.data.string.data, line.data.string.size);
-    string[line.data.string.size] = NUL;
-
-    if (u_savesub(index) == FAIL) {
-      // Failed to save undo
-      set_api_error("Cannot save undo information", err);
-    } else if (ml_replace(index, (char_u *)string, FALSE) == FAIL) {
-      // Failed to replace
-      set_api_error("Cannot replace line", err);
-      free(string);
-    } else {
-      // Success
-      changed_bytes(index, 0);
-      restore_win_for_buf(save_curwin, save_curtab, save_curbuf);
-
-      // Check that the cursor is not beyond the end of the line now.
-      if (buf == curbuf) {
-        check_cursor_col();
-      }
-    }
-  }
-
-  try_end(err);
+  StringArray array = {.items = &line, .size = 1};
+  buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
 StringArray buffer_get_slice(Buffer buffer,
