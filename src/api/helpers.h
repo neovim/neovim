@@ -80,5 +80,12 @@ buf_T *find_buffer(Buffer buffer, Error *err);
 /// @return the window pointer
 win_T * find_window(Window window, Error *err);
 
+/// Finds the pointer for a tabpage number
+///
+/// @param tabpage the tabpage number
+/// @param[out] err Details of an error that may have occurred
+/// @return the tabpage pointer
+tabpage_T * find_tab(Tabpage tabpage, Error *err);
+
 #endif  // NEOVIM_API_HELPERS_H
 

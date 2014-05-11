@@ -23,11 +23,12 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err);
 
 /// Sets a tabpage variable
 ///
-/// @param tabpage andle
+/// @param tabpage handle
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-void tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err);
+/// @return The tab page handle
+Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err);
 
 /// Gets the current window in a tab page
 ///

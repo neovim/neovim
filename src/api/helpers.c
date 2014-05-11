@@ -290,6 +290,17 @@ win_T * find_window(Window window, Error *err)
   return NULL;
 }
 
+tabpage_T * find_tab(Tabpage tabpage, Error *err)
+{
+  tabpage_T *rv = find_tabpage(tabpage);
+
+  if (!rv) {
+    set_api_error("Invalid tabpage id", err);
+  }
+
+  return rv;
+}
+
 static bool object_to_vim(Object obj, typval_T *tv, Error *err)
 {
   tv->v_type = VAR_UNKNOWN;
