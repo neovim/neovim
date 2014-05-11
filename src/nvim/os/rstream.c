@@ -11,6 +11,8 @@
 #include "nvim/os/event.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+#include "nvim/log.h"
+#include "nvim/misc1.h"
 
 struct rstream {
   uv_buf_t uvbuf;
@@ -240,7 +242,10 @@ static void fread_idle_cb(uv_idle_t *handle)
   // to read more than 9 quintillion (9e18) bytes?
   // upcast is meant to avoid tautological condition warning on 32 bits
   uintmax_t fpos_intmax = rstream->fpos;
-  assert(fpos_intmax <= INT64_MAX);
+  if (fpos_intmax > INT64_MAX) {
+    ELOG("stream offset overflow");
+    preserve_exit();
+  }
 
   // Synchronous read
   uv_fs_read(
