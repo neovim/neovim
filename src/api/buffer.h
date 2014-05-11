@@ -84,7 +84,8 @@ Object buffer_get_var(Buffer buffer, String name, Error *err);
 /// @param name The variable name
 /// @param value The variable value
 /// @param[out] err Details of an error that may have occurred
-void buffer_set_var(Buffer buffer, String name, Object value, Error *err);
+/// @return The old value
+Object buffer_set_var(Buffer buffer, String name, Object value, Error *err);
 
 /// Gets a buffer option value
 ///

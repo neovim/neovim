@@ -222,12 +222,26 @@ cleanup:
 
 Object buffer_get_var(Buffer buffer, String name, Error *err)
 {
-  abort();
+  Object rv;
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  return dict_get_value(buf->b_vars, name, false, err);
 }
 
-void buffer_set_var(Buffer buffer, String name, Object value, Error *err)
+Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 {
-  abort();
+  Object rv;
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  return dict_set_value(buf->b_vars, name, value, err);
 }
 
 String buffer_get_option(Buffer buffer, String name, Error *err)
