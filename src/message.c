@@ -61,6 +61,35 @@ static int do_more_prompt(int typed_char);
 static void msg_screen_putchar(int c, int attr);
 static int msg_check_screen(void);
 static void redir_write(char_u *s, int maxlen);
+
+/// Allocates memory for dialog string & for storing hotkeys
+///
+/// Finds the size of memory required for the confirm_msg & for storing hotkeys
+/// and then allocates the memory for them.
+/// has_hotkey array is also filled-up.
+///
+/// @param message Message which will be part of the confirm_msg
+/// @param buttons String containing button names
+/// @param[out] has_hotkey A element in this array is set to true if
+///                        corresponding button has a hotkey
+///
+/// @return Pointer to memory allocated for storing hotkeys
+static char_u * console_dialog_alloc(const char_u *message,
+                                     char_u *buttons,
+                                     bool has_hotkey[]);
+
+/// Copies hotkeys & dialog message into the memory allocated for it
+///
+/// @param message Message which will be part of the confirm_msg
+/// @param buttons String containing button names
+/// @param default_button_idx Number of default button
+/// @param has_hotkey A element in this array is true if corresponding button
+///                   has a hotkey
+/// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
+static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
+                                 int default_button_idx, const bool has_hotkey[],
+                                 char_u *hotkeys_ptr);
+
 static char_u *msg_show_console_dialog(char_u *message, char_u *buttons,
                                        int dfltbutton);
 static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
@@ -2828,6 +2857,59 @@ copy_char (
   }
 }
 
+#define HAS_HOTKEY_LEN 30
+#define HOTK_LEN (has_mbyte ? MB_MAXBYTES : 1)
+
+static char_u * console_dialog_alloc(const char_u *message,
+                                     char_u *buttons,
+                                     bool has_hotkey[])
+{
+  int lenhotkey = HOTK_LEN;  // count first button
+  has_hotkey[0] = false;
+
+  // Compute the size of memory to allocate.
+  int len = 0;
+  int idx = 0;
+  char_u *r = buttons;
+  while (*r) {
+    if (*r == DLG_BUTTON_SEP) {
+      len += 3;                         // '\n' -> ', '; 'x' -> '(x)'
+      lenhotkey += HOTK_LEN;            // each button needs a hotkey
+      if (idx < HAS_HOTKEY_LEN - 1) {
+        has_hotkey[++idx] = false;
+      }
+    } else if (*r == DLG_HOTKEY_CHAR) {
+      r++;
+      len++;                    // '&a' -> '[a]'
+      if (idx < HAS_HOTKEY_LEN - 1) {
+        has_hotkey[idx] = true;
+      }
+    }
+
+    // Advance to the next character
+    mb_ptr_adv(r);
+  }
+
+  len += (int)(STRLEN(message)
+                + 2                          // for the NL's
+                + STRLEN(buttons)
+                + 3);                        // for the ": " and NUL
+  lenhotkey++;                               // for the NUL
+
+  // If no hotkey is specified, first char is used.
+  if (!has_hotkey[0]) {
+    len += 2;                                // "x" -> "[x]"
+  }
+
+
+  // Now allocate space for the strings
+  free(confirm_msg);
+  confirm_msg = xmalloc(len);
+  *confirm_msg = NUL;
+
+  return xmalloc(lenhotkey);
+}
+
 /*
  * Format the dialog string, and display it at the bottom of
  * the screen. Return a string of hotkey chars (if defined) for
@@ -2839,127 +2921,87 @@ copy_char (
  */
 static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfltbutton)
 {
-  int len = 0;
-# define HOTK_LEN (has_mbyte ? MB_MAXBYTES : 1)
-  int lenhotkey = HOTK_LEN;             /* count first button */
-  char_u      *hotk = NULL;
-  char_u      *msgp = NULL;
-  char_u      *hotkp = NULL;
-  char_u      *r;
-  int copy;
-#define HAS_HOTKEY_LEN 30
-  char_u has_hotkey[HAS_HOTKEY_LEN];
-  int first_hotkey = FALSE;             /* first char of button is hotkey */
-  int idx;
+  bool has_hotkey[HAS_HOTKEY_LEN];
+  char_u *hotk = console_dialog_alloc(message, buttons, has_hotkey);
 
-  has_hotkey[0] = FALSE;
-
-  /*
-   * First loop: compute the size of memory to allocate.
-   * Second loop: copy to the allocated memory.
-   */
-  for (copy = 0; copy <= 1; ++copy) {
-    r = buttons;
-    idx = 0;
-    while (*r) {
-      if (*r == DLG_BUTTON_SEP) {
-        if (copy) {
-          *msgp++ = ',';
-          *msgp++ = ' ';                    /* '\n' -> ', ' */
-
-          /* advance to next hotkey and set default hotkey */
-          if (has_mbyte)
-            hotkp += STRLEN(hotkp);
-          else
-            ++hotkp;
-          hotkp[copy_char(r + 1, hotkp, TRUE)] = NUL;
-          if (dfltbutton)
-            --dfltbutton;
-
-          /* If no hotkey is specified first char is used. */
-          if (idx < HAS_HOTKEY_LEN - 1 && !has_hotkey[++idx])
-            first_hotkey = TRUE;
-        } else {
-          len += 3;                         /* '\n' -> ', '; 'x' -> '(x)' */
-          lenhotkey += HOTK_LEN;            /* each button needs a hotkey */
-          if (idx < HAS_HOTKEY_LEN - 1)
-            has_hotkey[++idx] = FALSE;
-        }
-      } else if (*r == DLG_HOTKEY_CHAR || first_hotkey) {
-        if (*r == DLG_HOTKEY_CHAR)
-          ++r;
-        first_hotkey = FALSE;
-        if (copy) {
-          if (*r == DLG_HOTKEY_CHAR)                    /* '&&a' -> '&a' */
-            *msgp++ = *r;
-          else {
-            /* '&a' -> '[a]' */
-            *msgp++ = (dfltbutton == 1) ? '[' : '(';
-            msgp += copy_char(r, msgp, FALSE);
-            *msgp++ = (dfltbutton == 1) ? ']' : ')';
-
-            /* redefine hotkey */
-            hotkp[copy_char(r, hotkp, TRUE)] = NUL;
-          }
-        } else {
-          ++len;                    /* '&a' -> '[a]' */
-          if (idx < HAS_HOTKEY_LEN - 1)
-            has_hotkey[idx] = TRUE;
-        }
-      } else {
-        /* everything else copy literally */
-        if (copy)
-          msgp += copy_char(r, msgp, FALSE);
-      }
-
-      /* advance to the next character */
-      mb_ptr_adv(r);
-    }
-
-    if (copy) {
-      *msgp++ = ':';
-      *msgp++ = ' ';
-      *msgp = NUL;
-    } else {
-      len += (int)(STRLEN(message)
-                   + 2                          /* for the NL's */
-                   + STRLEN(buttons)
-                   + 3);                        /* for the ": " and NUL */
-      lenhotkey++;                              /* for the NUL */
-
-      /* If no hotkey is specified first char is used. */
-      if (!has_hotkey[0]) {
-        first_hotkey = TRUE;
-        len += 2;                       /* "x" -> "[x]" */
-      }
-
-      /*
-       * Now allocate and load the strings
-       */
-      free(confirm_msg);
-      confirm_msg = alloc(len);
-      *confirm_msg = NUL;
-      hotk = alloc(lenhotkey);
-
-      *confirm_msg = '\n';
-      STRCPY(confirm_msg + 1, message);
-
-      msgp = confirm_msg + 1 + STRLEN(message);
-      hotkp = hotk;
-
-      /* Define first default hotkey.  Keep the hotkey string NUL
-       * terminated to avoid reading past the end. */
-      hotkp[copy_char(buttons, hotkp, TRUE)] = NUL;
-
-      /* Remember where the choices start, displaying starts here when
-       * "hotkp" typed at the more prompt. */
-      confirm_msg_tail = msgp;
-      *msgp++ = '\n';
-    }
-  }
+  copy_hotkeys_and_msg(message, buttons, dfltbutton, has_hotkey, hotk);
 
   display_confirm_msg();
   return hotk;
+}
+
+static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
+                                 int default_button_idx, const bool has_hotkey[],
+                                 char_u *hotkeys_ptr)
+{
+  *confirm_msg = '\n';
+  STRCPY(confirm_msg + 1, message);
+
+  char_u *msgp = confirm_msg + 1 + STRLEN(message);
+
+  // Define first default hotkey. Keep the hotkey string NUL
+  // terminated to avoid reading past the end.
+  hotkeys_ptr[copy_char(buttons, hotkeys_ptr, TRUE)] = NUL;
+
+  // Remember where the choices start, displaying starts here when
+  // "hotkeys_ptr" typed at the more prompt.
+  confirm_msg_tail = msgp;
+  *msgp++ = '\n';
+
+  bool first_hotkey = false;  // Is the first char of button a hotkey
+  if (!has_hotkey[0]) {
+    first_hotkey = true;     // If no hotkey is specified, first char is used
+  }
+
+  int idx = 0;
+  char_u *r = buttons;
+  while (*r) {
+    if (*r == DLG_BUTTON_SEP) {
+      *msgp++ = ',';
+      *msgp++ = ' ';                    // '\n' -> ', '
+
+      // Advance to next hotkey and set default hotkey
+      hotkeys_ptr += (has_mbyte) ? STRLEN(hotkeys_ptr): 1;
+      hotkeys_ptr[copy_char(r + 1, hotkeys_ptr, TRUE)] = NUL;
+
+      if (default_button_idx) {
+        default_button_idx--;
+      }
+
+      // If no hotkey is specified, first char is used.
+      if (idx < HAS_HOTKEY_LEN - 1 && !has_hotkey[++idx]) {
+        first_hotkey = true;
+      }
+
+    } else if (*r == DLG_HOTKEY_CHAR || first_hotkey) {
+      if (*r == DLG_HOTKEY_CHAR) {
+        ++r;
+      }
+
+      first_hotkey = false;
+      if (*r == DLG_HOTKEY_CHAR) {                 // '&&a' -> '&a'
+        *msgp++ = *r;
+      } else {
+        // '&a' -> '[a]'
+        *msgp++ = (default_button_idx == 1) ? '[' : '(';
+        msgp += copy_char(r, msgp, FALSE);
+        *msgp++ = (default_button_idx == 1) ? ']' : ')';
+
+        // redefine hotkey
+        hotkeys_ptr[copy_char(r, hotkeys_ptr, TRUE)] = NUL;
+      }
+    } else {
+      // everything else copy literally
+      msgp += copy_char(r, msgp, FALSE);
+    }
+
+    // advance to the next character
+    mb_ptr_adv(r);
+  }
+
+  *msgp++ = ':';
+  *msgp++ = ' ';
+  *msgp = NUL;
 }
 
 /*
