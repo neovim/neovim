@@ -557,10 +557,9 @@ do_tag (
           /* Find out the actual file name. If it is long, truncate
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
-          if (p != NULL) {
-            msg_puts_long_attr(p, hl_attr(HLF_D));
-            free(p);
-          }
+          msg_puts_long_attr(p, hl_attr(HLF_D));
+          free(p);
+
           if (msg_col > 0)
             msg_putchar('\n');
           if (got_int)
@@ -699,8 +698,6 @@ do_tag (
 
           /* Save the tag file name */
           p = tag_full_fname(&tagp);
-          if (p == NULL)
-            continue;
           vim_strncpy(fname, p, MAXPATHL);
           free(p);
 
@@ -2321,19 +2318,13 @@ parse_match (
 /*
  * Find out the actual file name of a tag.  Concatenate the tags file name
  * with the matching tag file name.
- * Returns an allocated string or NULL (out of memory).
+ * Returns an allocated string.
  */
 static char_u *tag_full_fname(tagptrs_T *tagp)
 {
-  char_u      *fullname;
-  int c;
-
-  {
-    c = *tagp->fname_end;
-    *tagp->fname_end = NUL;
-  }
-  fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
-
+  int c = *tagp->fname_end;
+  *tagp->fname_end = NUL;
+  char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
   *tagp->fname_end = c;
 
   return fullname;
@@ -2406,8 +2397,6 @@ jumpto_tag (
    * If 'tagrelative' option set, may change file name.
    */
   fname = expand_tag_fname(fname, tagp.tag_fname, TRUE);
-  if (fname == NULL)
-    goto erret;
   tofree_fname = fname;         /* free() it later */
 
   /*
@@ -2642,7 +2631,6 @@ erret:
 static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
 {
   char_u      *p;
-  char_u      *retval;
   char_u      *expanded_fname = NULL;
   expand_T xpc;
 
@@ -2658,6 +2646,7 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
       fname = expanded_fname;
   }
 
+  char_u *retval;
   if ((p_tr || curbuf->b_help)
       && !vim_isAbsName(fname)
       && (p = path_tail(tag_fname)) != tag_fname) {
@@ -2695,10 +2684,8 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
       *fname_end = NUL;
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
-    if (fullname != NULL) {
-      retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
-      free(fullname);
-    }
+    retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
+    free(fullname);
     *fname_end = c;
   }
 
