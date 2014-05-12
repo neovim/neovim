@@ -1,5 +1,5 @@
-#ifndef NEOVIM_UI_H
-#define NEOVIM_UI_H
+#ifndef NVIM_UI_H
+#define NVIM_UI_H
 /* ui.c */
 void ui_write(char_u *s, int len);
 int ui_inchar(char_u *buf, int maxlen, long wtime, int tb_change_cnt);
@@ -26,4 +26,4 @@ int jump_to_mouse(int flags, int *inclusive, int which_button);
 int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump);
 win_T *mouse_find_win(int *rowp, int *colp);
 void im_save_status(long *psave);
-#endif /* NEOVIM_UI_H */
+#endif /* NVIM_UI_H */

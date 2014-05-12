@@ -5,8 +5,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef NEOVIM_GLOBALS_H
-#define NEOVIM_GLOBALS_H
+#ifndef NVIM_GLOBALS_H
+#define NVIM_GLOBALS_H
 
 #include <stdbool.h>
 
@@ -1137,4 +1137,4 @@ EXTERN char *ignoredp;
  * os_unix.c */
 EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 
-#endif /* NEOVIM_GLOBALS_H */
+#endif /* NVIM_GLOBALS_H */

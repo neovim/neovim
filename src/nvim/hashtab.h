@@ -1,5 +1,5 @@
-#ifndef NEOVIM_HASHTAB_H
-#define NEOVIM_HASHTAB_H
+#ifndef NVIM_HASHTAB_H
+#define NVIM_HASHTAB_H
 
 /* Item for a hashtable.  "hi_key" can be one of three values:
  * NULL:	   Never been used
@@ -53,4 +53,4 @@ void hash_lock(hashtab_T *ht);
 void hash_unlock(hashtab_T *ht);
 hash_T hash_hash(char_u *key);
 
-#endif /* NEOVIM_HASHTAB_H */
+#endif /* NVIM_HASHTAB_H */

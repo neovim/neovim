@@ -1,5 +1,5 @@
-#ifndef NEOVIM_CHARSET_H
-#define NEOVIM_CHARSET_H
+#ifndef NVIM_CHARSET_H
+#define NVIM_CHARSET_H
 
 int init_chartab(void);
 int buf_init_chartab(buf_T *buf, int global);
@@ -63,4 +63,4 @@ int rem_backslash(char_u *str);
 void backslash_halve(char_u *p);
 char_u *backslash_halve_save(char_u *p);
 
-#endif  // NEOVIM_CHARSET_H
+#endif  // NVIM_CHARSET_H

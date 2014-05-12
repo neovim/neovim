@@ -1,5 +1,5 @@
-#ifndef NEOVIM_UNDO_DEFS_H
-#define NEOVIM_UNDO_DEFS_H
+#ifndef NVIM_UNDO_DEFS_H
+#define NVIM_UNDO_DEFS_H
 
 #include "nvim/pos.h"
 
@@ -65,4 +65,4 @@ struct u_header {
 #define UH_CHANGED  0x01        /* b_changed flag before undo/after redo */
 #define UH_EMPTYBUF 0x02        /* buffer was empty */
 
-#endif // NEOVIM_UNDO_DEFS_H
+#endif // NVIM_UNDO_DEFS_H

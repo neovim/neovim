@@ -1,5 +1,5 @@
-#ifndef NEOVIM_DIFF_H
-#define NEOVIM_DIFF_H
+#ifndef NVIM_DIFF_H
+#define NVIM_DIFF_H
 
 void diff_buf_delete(buf_T *buf);
 void diff_buf_adjust(win_T *win);
@@ -30,4 +30,4 @@ linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1,
                                      linenr_T lnum3);
 linenr_T diff_lnum_win(linenr_T lnum, win_T *wp);
 
-#endif  // NEOVIM_DIFF_H
+#endif  // NVIM_DIFF_H

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_INDENT_H
-#define NEOVIM_INDENT_H
+#ifndef NVIM_INDENT_H
+#define NVIM_INDENT_H
 #include "nvim/vim.h"
 int get_indent(void);
 int get_indent_lnum(linenr_T lnum);
@@ -11,4 +11,4 @@ int get_number_indent(linenr_T lnum);
 int inindent(int extra);
 int get_expr_indent(void);
 int get_lisp_indent(void);
-#endif  // NEOVIM_INDENT_H
+#endif  // NVIM_INDENT_H

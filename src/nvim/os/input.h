@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_INPUT_H
-#define NEOVIM_OS_INPUT_H
+#ifndef NVIM_OS_INPUT_H
+#define NVIM_OS_INPUT_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -19,5 +19,5 @@ void os_breakcheck(void);
 /// @return `true` if file descriptor refers to a terminal.
 bool os_isatty(int fd);
 
-#endif  // NEOVIM_OS_INPUT_H
+#endif  // NVIM_OS_INPUT_H
 

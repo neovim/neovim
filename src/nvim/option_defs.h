@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OPTION_DEFS_H
-#define NEOVIM_OPTION_DEFS_H
+#ifndef NVIM_OPTION_DEFS_H
+#define NVIM_OPTION_DEFS_H
 
 #include "nvim/types.h"
 
@@ -767,4 +767,4 @@ enum {
 /* Value for b_p_ul indicating the global value must be used. */
 #define NO_LOCAL_UNDOLEVEL -123456
 
-#endif // NEOVIM_OPTION_DEFS_H
+#endif // NVIM_OPTION_DEFS_H

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_FUNC_ATTR_H
-#define NEOVIM_FUNC_ATTR_H
+#ifndef NVIM_FUNC_ATTR_H
+#define NVIM_FUNC_ATTR_H
 
 // gcc and clang expose their version as follows:
 //
@@ -107,4 +107,4 @@
   #define FUNC_ATTR_NONNULL_RET
 #endif
 
-#endif // NEOVIM_FUNC_ATTR_H
+#endif // NVIM_FUNC_ATTR_H

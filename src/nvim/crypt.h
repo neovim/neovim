@@ -1,5 +1,5 @@
-#ifndef NEOVIM_CRYPT_H
-#define NEOVIM_CRYPT_H
+#ifndef NVIM_CRYPT_H
+#define NVIM_CRYPT_H
 
 /// Returns the crypt method string as a number.
 ///
@@ -79,4 +79,4 @@ void free_crypt_key(char_u *key);
 /// @return The crypt key. On failure, NULL is returned.
 char_u *get_crypt_key(int store, int twice);
 
-#endif // NEOVIM_CRYPT_H
+#endif // NVIM_CRYPT_H

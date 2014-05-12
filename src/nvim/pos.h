@@ -1,5 +1,5 @@
-#ifndef NEOVIM_POS_H
-#define NEOVIM_POS_H
+#ifndef NVIM_POS_H
+#define NVIM_POS_H
 
 /*
  * position in file or buffer
@@ -20,4 +20,4 @@ typedef struct {
   colnr_T col;          /* column number */
 } lpos_T;
 
-#endif /* NEOVIM_POS_H */
+#endif /* NVIM_POS_H */

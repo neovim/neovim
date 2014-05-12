@@ -1,5 +1,5 @@
-#ifndef NEOVIM_BUFFER_DEFS_H
-#define NEOVIM_BUFFER_DEFS_H
+#ifndef NVIM_BUFFER_DEFS_H
+#define NVIM_BUFFER_DEFS_H
 
 // for garray_T
 #include "nvim/garray.h"
@@ -1078,4 +1078,4 @@ struct window_S {
   qf_info_T   *w_llist_ref;
 };
 
-#endif // NEOVIM_BUFFER_DEFS_H
+#endif // NVIM_BUFFER_DEFS_H

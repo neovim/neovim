@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EVAL_DEFS_H
-#define NEOVIM_EVAL_DEFS_H
+#ifndef NVIM_EVAL_DEFS_H
+#define NVIM_EVAL_DEFS_H
 
 #include "nvim/hashtab.h"
 
@@ -113,4 +113,4 @@ struct dictvar_S {
   dict_T      *dv_used_prev;    /* previous dict in used dicts list */
 };
 
-#endif // NEOVIM_EVAL_DEFS_H
+#endif // NVIM_EVAL_DEFS_H

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MARK_DEFS_H
-#define NEOVIM_MARK_DEFS_H
+#ifndef NVIM_MARK_DEFS_H
+#define NVIM_MARK_DEFS_H
 
 #include "nvim/pos.h"
 
@@ -26,4 +26,4 @@ typedef struct xfilemark {
   char_u      *fname;           /* file name, used when fnum == 0 */
 } xfmark_T;
 
-#endif // NEOVIM_MARK_DEFS_H
+#endif // NVIM_MARK_DEFS_H

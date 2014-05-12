@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_TIME_H
-#define NEOVIM_OS_TIME_H
+#ifndef NVIM_OS_TIME_H
+#define NVIM_OS_TIME_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,5 +31,5 @@ struct tm *os_localtime_r(const time_t *clock, struct tm *result);
 ///         argument) or NULL in case of error
 struct tm *os_get_localtime(struct tm *result);
 
-#endif  // NEOVIM_OS_TIME_H
+#endif  // NVIM_OS_TIME_H
 

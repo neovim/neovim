@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EX_CMDS_H
-#define NEOVIM_EX_CMDS_H
+#ifndef NVIM_EX_CMDS_H
+#define NVIM_EX_CMDS_H
 /* ex_cmds.c */
 
 void do_ascii(exarg_T *eap);
@@ -72,4 +72,4 @@ char_u *get_sign_name(expand_T *xp, int idx);
 void set_context_in_sign_cmd(expand_T *xp, char_u *arg);
 void ex_drop(exarg_T *eap);
 
-#endif /* NEOVIM_EX_CMDS_H */
+#endif /* NVIM_EX_CMDS_H */

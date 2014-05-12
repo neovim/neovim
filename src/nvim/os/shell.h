@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_SHELL_H
-#define NEOVIM_OS_SHELL_H
+#ifndef NVIM_OS_SHELL_H
+#define NVIM_OS_SHELL_H
 
 #include <stdbool.h>
 
@@ -41,5 +41,5 @@ void shell_free_argv(char **argv);
 /// @param extra_shell_arg Extra argument to be passed to the shell
 int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg);
 
-#endif  // NEOVIM_OS_SHELL_H
+#endif  // NVIM_OS_SHELL_H
 

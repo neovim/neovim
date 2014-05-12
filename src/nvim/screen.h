@@ -1,5 +1,5 @@
-#ifndef NEOVIM_SCREEN_H
-#define NEOVIM_SCREEN_H
+#ifndef NVIM_SCREEN_H
+#define NVIM_SCREEN_H
 /* screen.c */
 void redraw_later(int type);
 void redraw_win_later(win_T *wp, int type);
@@ -65,4 +65,4 @@ int number_width(win_T *wp);
 int screen_screencol(void);
 int screen_screenrow(void);
 
-#endif /* NEOVIM_SCREEN_H */
+#endif /* NVIM_SCREEN_H */

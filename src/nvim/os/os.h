@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_OS_H
-#define NEOVIM_OS_OS_H
+#ifndef NVIM_OS_OS_H
+#define NVIM_OS_OS_H
 #include <uv.h>
 
 #include "nvim/vim.h"
@@ -143,4 +143,4 @@ bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info);
 /// @return `true` if the two FileInfos represent the same file.
 bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2);
 
-#endif  // NEOVIM_OS_OS_H
+#endif  // NVIM_OS_OS_H

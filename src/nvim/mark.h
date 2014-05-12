@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MARK_H
-#define NEOVIM_MARK_H
+#ifndef NVIM_MARK_H
+#define NVIM_MARK_H
 
 #include "nvim/buffer_defs.h"
 #include "nvim/mark_defs.h"
@@ -39,4 +39,4 @@ int write_viminfo_marks(FILE *fp_out);
 void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof,
                         int flags);
 
-#endif /* NEOVIM_MARK_H */
+#endif /* NVIM_MARK_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_API_BUFFER_H
-#define NEOVIM_API_BUFFER_H
+#ifndef NVIM_API_BUFFER_H
+#define NVIM_API_BUFFER_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -141,5 +141,5 @@ void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err);
 /// @return The (row, col) tuple
 Position buffer_get_mark(Buffer buffer, String name, Error *err);
 
-#endif  // NEOVIM_API_BUFFER_H
+#endif  // NVIM_API_BUFFER_H
 

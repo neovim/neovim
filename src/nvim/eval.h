@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EVAL_H
-#define NEOVIM_EVAL_H
+#ifndef NVIM_EVAL_H
+#define NVIM_EVAL_H
 /* eval.c */
 void eval_init(void);
 void eval_clear(void);
@@ -149,4 +149,4 @@ int modify_fname(char_u *src, int *usedlen, char_u **fnamep,
 char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub,
                       char_u *flags);
 
-#endif /* NEOVIM_EVAL_H */
+#endif /* NVIM_EVAL_H */

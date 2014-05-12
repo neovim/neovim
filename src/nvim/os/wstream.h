@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_WSTREAM_H
-#define NEOVIM_OS_WSTREAM_H
+#ifndef NVIM_OS_WSTREAM_H
+#define NVIM_OS_WSTREAM_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -36,5 +36,5 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream);
 /// @return true if the data was successfully queued, false otherwise.
 bool wstream_write(WStream *wstream, char *buffer, uint32_t length, bool free);
 
-#endif  // NEOVIM_OS_WSTREAM_H
+#endif  // NVIM_OS_WSTREAM_H
 

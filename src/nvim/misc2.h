@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MISC2_H
-#define NEOVIM_MISC2_H
+#ifndef NVIM_MISC2_H
+#define NVIM_MISC2_H
 
 #include "nvim/func_attr.h"
 #include "nvim/os/shell.h"
@@ -48,4 +48,4 @@ int put_bytes(FILE *fd, long_u nr, int len);
 void put_time(FILE *fd, time_t the_time);
 int has_non_ascii(char_u *s);
 
-#endif /* NEOVIM_MISC2_H */
+#endif /* NVIM_MISC2_H */

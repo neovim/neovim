@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MAIN_H
-#define NEOVIM_MAIN_H
+#ifndef NVIM_MAIN_H
+#define NVIM_MAIN_H
 
 #include "nvim/normal.h"
 
@@ -13,4 +13,4 @@ void time_msg(char *mesg, void *tv_start);
 char_u *eval_client_expr_to_string(char_u *expr);
 char_u *serverConvert(char_u *client_enc, char_u *data, char_u **tofree);
 
-#endif /* NEOVIM_MAIN_H */
+#endif /* NVIM_MAIN_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MOVE_H
-#define NEOVIM_MOVE_H
+#ifndef NVIM_MOVE_H
+#define NVIM_MOVE_H
 /* move.c */
 void update_topline_redraw(void);
 void update_topline(void);
@@ -40,4 +40,4 @@ int onepage(int dir, long count);
 void halfpage(int flag, linenr_T Prenum);
 void do_check_cursorbind(void);
 
-#endif /* NEOVIM_MOVE_H */
+#endif /* NVIM_MOVE_H */

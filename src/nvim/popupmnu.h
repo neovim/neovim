@@ -1,5 +1,5 @@
-#ifndef NEOVIM_POPUPMNU_H
-#define NEOVIM_POPUPMNU_H
+#ifndef NVIM_POPUPMNU_H
+#define NVIM_POPUPMNU_H
 
 /// Used for popup menu items.
 typedef struct {
@@ -16,4 +16,4 @@ void pum_clear(void);
 int pum_visible(void);
 int pum_get_height(void);
 
-#endif  // NEOVIM_POPUPMNU_H
+#endif  // NVIM_POPUPMNU_H

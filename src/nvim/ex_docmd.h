@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EX_DOCMD_H
-#define NEOVIM_EX_DOCMD_H
+#ifndef NVIM_EX_DOCMD_H
+#define NVIM_EX_DOCMD_H
 /* ex_docmd.c */
 void do_exmode(int improved);
 int do_cmdline_cmd(char_u *cmd);
@@ -66,4 +66,4 @@ int put_line(FILE *fd, char *s);
 void dialog_msg(char_u *buff, char *format, char_u *fname);
 char_u *get_behave_arg(expand_T *xp, int idx);
 
-#endif /* NEOVIM_EX_DOCMD_H */
+#endif /* NVIM_EX_DOCMD_H */

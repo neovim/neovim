@@ -1038,7 +1038,7 @@ def GetHeaderGuardCPPVariable(filename):
 
   fileinfo = FileInfo(filename)
   file_path_from_root = fileinfo.RelativePath()
-  return 'NEOVIM_' + re.sub(r'[-./\s]', '_', file_path_from_root).upper()
+  return 'NVIM_' + re.sub(r'[-./\s]', '_', file_path_from_root).upper()
 
 
 def CheckForHeaderGuard(filename, lines, error):

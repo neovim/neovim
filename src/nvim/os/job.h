@@ -4,8 +4,8 @@
 // the job's std{in,out,err}. They are more like bash/zsh co-processes than the
 // usual shell background job. The name 'Job' was chosen because it applies to
 // the concept while being significantly shorter.
-#ifndef NEOVIM_OS_JOB_H
-#define NEOVIM_OS_JOB_H
+#ifndef NVIM_OS_JOB_H
+#define NVIM_OS_JOB_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -74,5 +74,5 @@ int job_id(Job *job);
 /// @return The job data
 void *job_data(Job *job);
 
-#endif  // NEOVIM_OS_JOB_H
+#endif  // NVIM_OS_JOB_H
 

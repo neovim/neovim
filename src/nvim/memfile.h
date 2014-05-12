@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MEMFILE_H
-#define NEOVIM_MEMFILE_H
+#ifndef NVIM_MEMFILE_H
+#define NVIM_MEMFILE_H
 
 #include "nvim/buffer_defs.h"
 #include "nvim/memfile_defs.h"
@@ -22,4 +22,4 @@ void mf_set_ffname(memfile_T *mfp);
 void mf_fullname(memfile_T *mfp);
 int mf_need_trans(memfile_T *mfp);
 
-#endif /* NEOVIM_MEMFILE_H */
+#endif /* NVIM_MEMFILE_H */

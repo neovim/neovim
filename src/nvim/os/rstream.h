@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_RSTREAM_H
-#define NEOVIM_OS_RSTREAM_H
+#ifndef NVIM_OS_RSTREAM_H
+#define NVIM_OS_RSTREAM_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -78,5 +78,5 @@ size_t rstream_available(RStream *rstream);
 /// @param event Object containing data necessary to invoke the callback
 void rstream_read_event(Event event);
 
-#endif  // NEOVIM_OS_RSTREAM_H
+#endif  // NVIM_OS_RSTREAM_H
 

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_EVENT_H
-#define NEOVIM_OS_EVENT_H
+#ifndef NVIM_OS_EVENT_H
+#define NVIM_OS_EVENT_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -14,5 +14,5 @@ bool event_is_pending(void);
 void event_push(Event event);
 void event_process(void);
 
-#endif  // NEOVIM_OS_EVENT_H
+#endif  // NVIM_OS_EVENT_H
 

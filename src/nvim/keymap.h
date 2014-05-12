@@ -5,8 +5,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef NEOVIM_KEYMAP_H
-#define NEOVIM_KEYMAP_H
+#ifndef NVIM_KEYMAP_H
+#define NVIM_KEYMAP_H
 
 /*
  * Keycode definitions for special keys.
@@ -512,4 +512,4 @@ char_u *get_key_name(int i);
 int get_mouse_button(int code, int *is_click, int *is_drag);
 int get_pseudo_mouse_code(int button, int is_click, int is_drag);
 
-#endif /* NEOVIM_KEYMAP_H */
+#endif /* NVIM_KEYMAP_H */

@@ -5,8 +5,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef NEOVIM_TYPES_H
-#define NEOVIM_TYPES_H
+#ifndef NVIM_TYPES_H
+#define NVIM_TYPES_H
 
 #include <stdint.h>
 
@@ -16,4 +16,4 @@
  */
 typedef unsigned char char_u;
 
-#endif /* NEOVIM_TYPES_H */
+#endif /* NVIM_TYPES_H */

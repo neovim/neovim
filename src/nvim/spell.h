@@ -1,5 +1,5 @@
-#ifndef NEOVIM_SPELL_H
-#define NEOVIM_SPELL_H
+#ifndef NVIM_SPELL_H
+#define NVIM_SPELL_H
 
 int spell_check(win_T *wp, char_u *ptr, hlf_T *attrp, int *capcol,
                 int docount);
@@ -30,4 +30,4 @@ int spell_word_start(int startcol);
 void spell_expand_check_cap(colnr_T col);
 int expand_spelling(linenr_T lnum, char_u *pat, char_u ***matchp);
 
-#endif // NEOVIM_SPELL_H
+#endif // NVIM_SPELL_H

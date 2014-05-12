@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MESSAGE_H
-#define NEOVIM_MESSAGE_H
+#ifndef NVIM_MESSAGE_H
+#define NVIM_MESSAGE_H
 /* message.c */
 int msg(char_u *s);
 int verb_msg(char_u *s);
@@ -82,4 +82,4 @@ char_u *do_browse(int flags, char_u *title, char_u *dflt, char_u *ext,
                   char_u *initdir, char_u *filter,
                   buf_T *buf);
 
-#endif /* NEOVIM_MESSAGE_H */
+#endif /* NVIM_MESSAGE_H */

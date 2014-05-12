@@ -1,5 +1,5 @@
-#ifndef NEOVIM_GARRAY_H
-#define NEOVIM_GARRAY_H
+#ifndef NVIM_GARRAY_H
+#define NVIM_GARRAY_H
 
 #include "nvim/func_attr.h"
 
@@ -28,4 +28,4 @@ void ga_concat(garray_T *gap, const char_u *restrict s);
 void ga_append(garray_T *gap, char c);
 void append_ga_line(garray_T *gap);
 
-#endif  // NEOVIM_GARRAY_H
+#endif  // NVIM_GARRAY_H

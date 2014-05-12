@@ -1,5 +1,5 @@
-#ifndef NEOVIM_SYNTAX_DEFS_H
-#define NEOVIM_SYNTAX_DEFS_H
+#ifndef NVIM_SYNTAX_DEFS_H
+#define NVIM_SYNTAX_DEFS_H
 
 #include "nvim/regexp_defs.h"
 
@@ -75,4 +75,4 @@ typedef struct attr_entry {
   } ae_u;
 } attrentry_T;
 
-#endif // NEOVIM_SYNTAX_DEFS_H
+#endif // NVIM_SYNTAX_DEFS_H

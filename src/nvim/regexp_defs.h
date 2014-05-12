@@ -9,8 +9,8 @@
  * NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE
  */
 
-#ifndef NEOVIM_REGEXP_DEFS_H
-#define NEOVIM_REGEXP_DEFS_H
+#ifndef NVIM_REGEXP_DEFS_H
+#define NVIM_REGEXP_DEFS_H
 
 #include "nvim/pos.h"
 
@@ -146,4 +146,4 @@ struct regengine {
 #endif
 };
 
-#endif  // NEOVIM_REGEXP_DEFS_H
+#endif  // NVIM_REGEXP_DEFS_H

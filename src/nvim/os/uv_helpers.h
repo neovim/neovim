@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_UV_HELPERS_H
-#define NEOVIM_OS_UV_HELPERS_H
+#ifndef NVIM_OS_UV_HELPERS_H
+#define NVIM_OS_UV_HELPERS_H
 
 #include <uv.h>
 
@@ -43,5 +43,5 @@ Job *handle_get_job(uv_handle_t *handle);
 /// @param job the Job pointer
 void handle_set_job(uv_handle_t *handle, Job *job);
 
-#endif  // NEOVIM_OS_UV_HELPERS_H
+#endif  // NVIM_OS_UV_HELPERS_H
 

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_UNIX_H
-#define NEOVIM_OS_UNIX_H
+#ifndef NVIM_OS_UNIX_H
+#define NVIM_OS_UNIX_H
 
 #include "nvim/os/shell.h"
 
@@ -43,4 +43,4 @@ int mch_libcall(char_u *libname, char_u *funcname, char_u *argstring,
                 int argint, char_u **string_result,
                 int *number_result);
 
-#endif /* NEOVIM_OS_UNIX_H */
+#endif /* NVIM_OS_UNIX_H */

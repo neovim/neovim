@@ -1,5 +1,5 @@
-#ifndef NEOVIM_VERSION_H
-#define NEOVIM_VERSION_H
+#ifndef NVIM_VERSION_H
+#define NVIM_VERSION_H
 
 int highest_patch(void);
 int has_patch(int n);
@@ -9,4 +9,4 @@ void maybe_intro_message(void);
 void intro_message(int colon);
 void ex_intro(exarg_T *eap);
 
-#endif  // NEOVIM_VERSION_H
+#endif  // NVIM_VERSION_H

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MEMFILE_DEFS_H
-#define NEOVIM_MEMFILE_DEFS_H
+#ifndef NVIM_MEMFILE_DEFS_H
+#define NVIM_MEMFILE_DEFS_H
 
 typedef struct block_hdr bhdr_T;
 typedef long blocknr_T;
@@ -104,4 +104,4 @@ struct memfile {
   char_u mf_old_seed[MF_SEED_LEN];
 };
 
-#endif // NEOVIM_MEMFILE_DEFS_H
+#endif // NVIM_MEMFILE_DEFS_H

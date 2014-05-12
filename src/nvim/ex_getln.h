@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EX_GETLN_H
-#define NEOVIM_EX_GETLN_H
+#ifndef NVIM_EX_GETLN_H
+#define NVIM_EX_GETLN_H
 /* ex_getln.c */
 char_u *getcmdline(int firstc, long count, int indent);
 char_u *getcmdline_prompt(int firstc, char_u *prompt, int attr,
@@ -63,4 +63,4 @@ void cmd_pchar(int c, int offset);
 int cmd_gchar(int offset);
 char_u *script_get(exarg_T *eap, char_u *cmd);
 
-#endif /* NEOVIM_EX_GETLN_H */
+#endif /* NVIM_EX_GETLN_H */

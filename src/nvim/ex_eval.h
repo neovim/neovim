@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EX_EVAL_H
-#define NEOVIM_EX_EVAL_H
+#ifndef NVIM_EX_EVAL_H
+#define NVIM_EX_EVAL_H
 
 /*
  * A list used for saving values of "emsg_silent".  Used by ex_try() to save the
@@ -156,4 +156,4 @@ void rewind_conditionals(struct condstack *cstack, int idx,
 void ex_endfunction(exarg_T *eap);
 int has_loop_cmd(char_u *p);
 
-#endif /* NEOVIM_EX_EVAL_H */
+#endif /* NVIM_EX_EVAL_H */

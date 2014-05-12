@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OPS_H
-#define NEOVIM_OPS_H
+#ifndef NVIM_OPS_H
+#define NVIM_OPS_H
 
 #include "nvim/func_attr.h"
 #include "nvim/types.h"
@@ -60,4 +60,4 @@ void write_reg_contents_ex(int name, char_u *str, int maxlen,
 void clear_oparg(oparg_T *oap);
 void cursor_pos_info(void);
 
-#endif /* NEOVIM_OPS_H */
+#endif /* NVIM_OPS_H */

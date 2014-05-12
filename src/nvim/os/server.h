@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_SERVER_H
-#define NEOVIM_OS_SERVER_H
+#ifndef NVIM_OS_SERVER_H
+#define NVIM_OS_SERVER_H
 
 #include "nvim/os/channel_defs.h"
 
@@ -26,5 +26,5 @@ void server_start(char *endpoint, ChannelProtocol prot);
 /// @param endpoint Address of the server.
 void server_stop(char *endpoint);
 
-#endif  // NEOVIM_OS_SERVER_H
+#endif  // NVIM_OS_SERVER_H
 

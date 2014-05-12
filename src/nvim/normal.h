@@ -1,5 +1,5 @@
-#ifndef NEOVIM_NORMAL_H
-#define NEOVIM_NORMAL_H
+#ifndef NVIM_NORMAL_H
+#define NVIM_NORMAL_H
 
 #include "nvim/pos.h"
 
@@ -83,4 +83,4 @@ int get_visual_text(cmdarg_T *cap, char_u **pp, int *lenp);
 void start_selection(void);
 void may_start_select(int c);
 
-#endif /* NEOVIM_NORMAL_H */
+#endif /* NVIM_NORMAL_H */

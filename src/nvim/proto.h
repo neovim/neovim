@@ -1,5 +1,5 @@
-#ifndef NEOVIM_PROTO_H
-#define NEOVIM_PROTO_H
+#ifndef NVIM_PROTO_H
+#define NVIM_PROTO_H
 
 /*
  * VIM - Vi IMproved	by Bram Moolenaar
@@ -46,4 +46,4 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
 
 #endif /* !PROTO && !NOPROTO */
 
-#endif  // NEOVIM_PROTO_H
+#endif  // NVIM_PROTO_H

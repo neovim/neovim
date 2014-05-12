@@ -1,5 +1,5 @@
-#ifndef NEOVIM_ARABIC_H
-#define NEOVIM_ARABIC_H
+#ifndef NVIM_ARABIC_H
+#define NVIM_ARABIC_H
 
 /// Whether c belongs to the range of Arabic characters that might be shaped.
 static inline int arabic_char(int c)
@@ -13,4 +13,4 @@ int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
 int arabic_combine(int one, int two);
 int arabic_maycombine(int two);
 
-#endif  // NEOVIM_ARABIC_H
+#endif  // NVIM_ARABIC_H

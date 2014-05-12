@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_MSGPACK_RPC_H
-#define NEOVIM_OS_MSGPACK_RPC_H
+#ifndef NVIM_OS_MSGPACK_RPC_H
+#define NVIM_OS_MSGPACK_RPC_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -103,5 +103,5 @@ void msgpack_rpc_free_array(Array value);
 void msgpack_rpc_free_dictionary(Dictionary value);
 
 
-#endif  // NEOVIM_OS_MSGPACK_RPC_H
+#endif  // NVIM_OS_MSGPACK_RPC_H
 

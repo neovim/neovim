@@ -1,5 +1,5 @@
-#ifndef NEOVIM_API_VIM_H
-#define NEOVIM_API_VIM_H
+#ifndef NVIM_API_VIM_H
+#define NVIM_API_VIM_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -154,5 +154,5 @@ Tabpage vim_get_current_tabpage(void);
 /// @param[out] err Details of an error that may have occurred
 void vim_set_current_tabpage(Tabpage tabpage, Error *err);
 
-#endif  // NEOVIM_API_VIM_H
+#endif  // NVIM_API_VIM_H
 

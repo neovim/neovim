@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_CHANNEL_H
-#define NEOVIM_OS_CHANNEL_H
+#ifndef NVIM_OS_CHANNEL_H
+#define NVIM_OS_CHANNEL_H
 
 #include <uv.h>
 
@@ -25,5 +25,5 @@ void channel_from_stream(uv_stream_t *stream, ChannelProtocol prot);
 /// @param prot The rpc protocol used
 void channel_from_job(char **argv, ChannelProtocol prot);
 
-#endif  // NEOVIM_OS_CHANNEL_H
+#endif  // NVIM_OS_CHANNEL_H
 

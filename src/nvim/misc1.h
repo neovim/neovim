@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MISC1_H
-#define NEOVIM_MISC1_H
+#ifndef NVIM_MISC1_H
+#define NVIM_MISC1_H
 
 #include "nvim/vim.h"
 
@@ -73,4 +73,4 @@ char_u *get_cmd_output(char_u *cmd, char_u *infile, int flags);
 void FreeWild(int count, char_u **files);
 int goto_im(void);
 
-#endif /* NEOVIM_MISC1_H */
+#endif /* NVIM_MISC1_H */

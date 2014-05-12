@@ -1,5 +1,5 @@
-#ifndef NEOVIM_API_HELPERS_H
-#define NEOVIM_API_HELPERS_H
+#ifndef NVIM_API_HELPERS_H
+#define NVIM_API_HELPERS_H
 
 #include <stdbool.h>
 
@@ -86,5 +86,5 @@ win_T * find_window(Window window, Error *err);
 /// @return the tabpage pointer
 tabpage_T * find_tab(Tabpage tabpage, Error *err);
 
-#endif  // NEOVIM_API_HELPERS_H
+#endif  // NVIM_API_HELPERS_H
 

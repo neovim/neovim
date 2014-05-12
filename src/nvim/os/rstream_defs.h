@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_RSTREAM_DEFS_H
-#define NEOVIM_OS_RSTREAM_DEFS_H
+#ifndef NVIM_OS_RSTREAM_DEFS_H
+#define NVIM_OS_RSTREAM_DEFS_H
 
 #include <stdbool.h>
 
@@ -12,5 +12,5 @@ typedef struct rstream RStream;
 /// @param eof If the stream reached EOF.
 typedef void (*rstream_cb)(RStream *rstream, void *data, bool eof);
 
-#endif  // NEOVIM_OS_RSTREAM_DEFS_H
+#endif  // NVIM_OS_RSTREAM_DEFS_H
 

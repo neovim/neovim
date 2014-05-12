@@ -1,5 +1,5 @@
-#ifndef NEOVIM_QUICKFIX_H
-#define NEOVIM_QUICKFIX_H
+#ifndef NVIM_QUICKFIX_H
+#define NVIM_QUICKFIX_H
 /* quickfix.c */
 int qf_init(win_T *wp, char_u *efile, char_u *errorformat, int newlist,
             char_u *qf_title);
@@ -33,4 +33,4 @@ void ex_cbuffer(exarg_T *eap);
 void ex_cexpr(exarg_T *eap);
 void ex_helpgrep(exarg_T *eap);
 
-#endif /* NEOVIM_QUICKFIX_H */
+#endif /* NVIM_QUICKFIX_H */

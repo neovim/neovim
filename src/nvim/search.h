@@ -1,5 +1,5 @@
-#ifndef NEOVIM_SEARCH_H
-#define NEOVIM_SEARCH_H
+#ifndef NVIM_SEARCH_H
+#define NVIM_SEARCH_H
 /* search.c */
 int search_regcomp(char_u *pat, int pat_save, int pat_use, int options,
                    regmmatch_T *regmatch);
@@ -49,4 +49,4 @@ void find_pattern_in_path(char_u *ptr, int dir, int len, int whole,
 int read_viminfo_search_pattern(vir_T *virp, int force);
 void write_viminfo_search_pattern(FILE *fp);
 
-#endif /* NEOVIM_SEARCH_H */
+#endif /* NVIM_SEARCH_H */

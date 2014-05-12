@@ -1,5 +1,5 @@
-#ifndef NEOVIM_API_WINDOW_H
-#define NEOVIM_API_WINDOW_H
+#ifndef NVIM_API_WINDOW_H
+#define NVIM_API_WINDOW_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -111,5 +111,5 @@ Tabpage window_get_tabpage(Window window, Error *err);
 /// @return true if the window is valid, false otherwise
 bool window_is_valid(Window window);
 
-#endif  // NEOVIM_API_WINDOW_H
+#endif  // NVIM_API_WINDOW_H
 

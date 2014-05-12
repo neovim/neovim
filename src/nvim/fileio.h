@@ -1,5 +1,5 @@
-#ifndef NEOVIM_FILEIO_H
-#define NEOVIM_FILEIO_H
+#ifndef NVIM_FILEIO_H
+#define NVIM_FILEIO_H
 
 #include "nvim/buffer_defs.h"
 #include "nvim/os/os.h"
@@ -91,4 +91,4 @@ char_u *file_pat_to_reg_pat(char_u *pat, char_u *pat_end,
 long read_eintr(int fd, void *buf, size_t bufsize);
 long write_eintr(int fd, void *buf, size_t bufsize);
 
-#endif /* NEOVIM_FILEIO_H */
+#endif /* NVIM_FILEIO_H */

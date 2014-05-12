@@ -1,5 +1,5 @@
-#ifndef NEOVIM_STRINGS_H
-#define NEOVIM_STRINGS_H
+#ifndef NVIM_STRINGS_H
+#define NVIM_STRINGS_H
 char_u *vim_strsave(char_u *string);
 char_u *vim_strnsave(char_u *string, int len);
 char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars);

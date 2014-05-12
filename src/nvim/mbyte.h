@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MBYTE_H
-#define NEOVIM_MBYTE_H
+#ifndef NVIM_MBYTE_H
+#define NVIM_MBYTE_H
 /* mbyte.c */
 int enc_canon_props(char_u *name);
 char_u *mb_init(void);
@@ -84,4 +84,4 @@ char_u *string_convert(vimconv_T *vcp, char_u *ptr, int *lenp);
 char_u *string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
                            int *unconvlenp);
 
-#endif /* NEOVIM_MBYTE_H */
+#endif /* NVIM_MBYTE_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_TAG_H
-#define NEOVIM_TAG_H
+#ifndef NVIM_TAG_H
+#define NVIM_TAG_H
 
 /*
  * Structure used for get_tagfname().
@@ -25,4 +25,4 @@ int expand_tags(int tagnames, char_u *pat, int *num_file,
                 char_u ***file);
 int get_tags(list_T *list, char_u *pat);
 
-#endif /* NEOVIM_TAG_H */
+#endif /* NVIM_TAG_H */

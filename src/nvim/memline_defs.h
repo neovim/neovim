@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MEMLINE_DEFS_H
-#define NEOVIM_MEMLINE_DEFS_H
+#ifndef NVIM_MEMLINE_DEFS_H
+#define NVIM_MEMLINE_DEFS_H
 
 #include "nvim/memfile_defs.h"
 
@@ -56,4 +56,4 @@ typedef struct memline {
   int ml_usedchunks;
 } memline_T;
 
-#endif // NEOVIM_MEMLINE_DEFS_H
+#endif // NVIM_MEMLINE_DEFS_H

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_UNDO_H
-#define NEOVIM_UNDO_H
+#ifndef NVIM_UNDO_H
+#define NVIM_UNDO_H
 
 #include "nvim/undo_defs.h"
 
@@ -33,4 +33,4 @@ void u_blockfree(buf_T *buf);
 int bufIsChanged(buf_T *buf);
 int curbufIsChanged(void);
 void u_eval_tree(u_header_T *first_uhp, list_T *list);
-#endif /* NEOVIM_UNDO_H */
+#endif /* NVIM_UNDO_H */

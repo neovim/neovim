@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MEMLINE_H
-#define NEOVIM_MEMLINE_H
+#ifndef NVIM_MEMLINE_H
+#define NVIM_MEMLINE_H
 
 #include "nvim/types.h"
 #include "nvim/func_attr.h"
@@ -44,4 +44,4 @@ void ml_decrypt_data(memfile_T *mfp, char_u *data, off_t offset,
 long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp);
 void goto_byte(long cnt);
 
-#endif /* NEOVIM_MEMLINE_H */
+#endif /* NVIM_MEMLINE_H */

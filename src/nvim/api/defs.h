@@ -1,5 +1,5 @@
-#ifndef NEOVIM_API_DEFS_H
-#define NEOVIM_API_DEFS_H
+#ifndef NVIM_API_DEFS_H
+#define NVIM_API_DEFS_H
 
 #include <stdint.h>
 #include <string.h>
@@ -70,5 +70,5 @@ struct key_value_pair {
 };
 
 
-#endif  // NEOVIM_API_DEFS_H
+#endif  // NVIM_API_DEFS_H
 

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_INDENT_C_H
-#define NEOVIM_INDENT_C_H
+#ifndef NVIM_INDENT_C_H
+#define NVIM_INDENT_C_H
 #include "nvim/vim.h"
 int cin_islabel(void);
 int cin_iscase(char_u *s, int strict);

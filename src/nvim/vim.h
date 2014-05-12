@@ -5,8 +5,8 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#ifndef NEOVIM_VIM_H
-# define NEOVIM_VIM_H
+#ifndef NVIM_VIM_H
+# define NVIM_VIM_H
 
 #include "nvim/types.h"
 
@@ -1388,4 +1388,4 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
     VV_HLSEARCH, !no_hlsearch)
 
-#endif /* NEOVIM_VIM_H */
+#endif /* NVIM_VIM_H */

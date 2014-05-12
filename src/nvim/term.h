@@ -1,5 +1,5 @@
-#ifndef NEOVIM_TERM_H
-#define NEOVIM_TERM_H
+#ifndef NVIM_TERM_H
+#define NVIM_TERM_H
 /* term.c */
 int set_termname(char_u *term);
 void set_mouse_termcode(int n, char_u *s);
@@ -60,4 +60,4 @@ int find_term_bykeys(char_u *src);
 void show_termcodes(void);
 int show_one_termcode(char_u *name, char_u *code, int printit);
 char_u *translate_mapping(char_u *str, int expmap);
-#endif /* NEOVIM_TERM_H */
+#endif /* NVIM_TERM_H */

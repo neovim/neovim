@@ -1,5 +1,5 @@
-#ifndef NEOVIM_SIGN_DEFS_H
-#define NEOVIM_SIGN_DEFS_H
+#ifndef NVIM_SIGN_DEFS_H
+#define NVIM_SIGN_DEFS_H
 
 // signs: line annotations
 
@@ -21,4 +21,4 @@ struct signlist
 
 
 
-#endif // NEOVIM_SIGN_DEFS_H
+#endif // NVIM_SIGN_DEFS_H

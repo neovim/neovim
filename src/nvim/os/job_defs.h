@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OS_JOB_DEFS_H
-#define NEOVIM_OS_JOB_DEFS_H
+#ifndef NVIM_OS_JOB_DEFS_H
+#define NVIM_OS_JOB_DEFS_H
 
 #include "nvim/os/rstream_defs.h"
 
@@ -11,5 +11,5 @@ typedef struct job Job;
 /// @param data Some data associated with the job by the caller
 typedef void (*job_exit_cb)(Job *job, void *data);
 
-#endif  // NEOVIM_OS_JOB_DEFS_H
+#endif  // NVIM_OS_JOB_DEFS_H
 

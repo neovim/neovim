@@ -1,5 +1,5 @@
-#ifndef NEOVIM_REGEXP_H
-#define NEOVIM_REGEXP_H
+#ifndef NVIM_REGEXP_H
+#define NVIM_REGEXP_H
 /* regexp.c */
 int re_multiline(regprog_T *prog);
 char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp);
@@ -24,4 +24,4 @@ long vim_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                                linenr_T lnum, colnr_T col,
                                proftime_T *tm);
 
-#endif /* NEOVIM_REGEXP_H */
+#endif /* NVIM_REGEXP_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_IF_CSCOPE_H
-#define NEOVIM_IF_CSCOPE_H
+#ifndef NVIM_IF_CSCOPE_H
+#define NVIM_IF_CSCOPE_H
 /* if_cscope.c */
 char_u *get_cscope_name(expand_T *xp, int idx);
 void set_context_in_cscope_cmd(expand_T *xp, char_u *arg,
@@ -13,4 +13,4 @@ void cs_print_tags(void);
 int cs_connection(int num, char_u *dbpath, char_u *ppath);
 void cs_end(void);
 
-#endif /* NEOVIM_IF_CSCOPE_H */
+#endif /* NVIM_IF_CSCOPE_H */

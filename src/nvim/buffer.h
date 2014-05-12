@@ -1,5 +1,5 @@
-#ifndef NEOVIM_BUFFER_H
-#define NEOVIM_BUFFER_H
+#ifndef NVIM_BUFFER_H
+#define NVIM_BUFFER_H
 /* buffer.c */
 int open_buffer(int read_stdin, exarg_T *eap, int flags);
 int buf_valid(buf_T *buf);
@@ -78,4 +78,4 @@ void set_buflisted(int on);
 int buf_contents_changed(buf_T *buf);
 void wipe_buffer(buf_T *buf, int aucmd);
 
-#endif /* NEOVIM_BUFFER_H */
+#endif /* NVIM_BUFFER_H */

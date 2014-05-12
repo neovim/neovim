@@ -1,5 +1,5 @@
-#ifndef NEOVIM_PATH_H
-#define NEOVIM_PATH_H
+#ifndef NVIM_PATH_H
+#define NVIM_PATH_H
 
 #include "nvim/func_attr.h"
 #include "nvim/types.h"

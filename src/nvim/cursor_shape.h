@@ -1,5 +1,5 @@
-#ifndef NEOVIM_CURSOR_SHAPE_H
-#define NEOVIM_CURSOR_SHAPE_H
+#ifndef NVIM_CURSOR_SHAPE_H
+#define NVIM_CURSOR_SHAPE_H
 
 /*
  * struct to store values from 'guicursor' and 'mouseshape'
@@ -49,4 +49,4 @@ typedef struct cursor_entry {
 
 char_u *parse_shape_opt(int what);
 
-#endif /* NEOVIM_CURSOR_SHAPE_H */
+#endif /* NVIM_CURSOR_SHAPE_H */

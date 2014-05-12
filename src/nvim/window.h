@@ -1,5 +1,5 @@
-#ifndef NEOVIM_WINDOW_H
-#define NEOVIM_WINDOW_H
+#ifndef NVIM_WINDOW_H
+#define NVIM_WINDOW_H
 /* window.c */
 void do_window(int nchar, long Prenum, int xchar);
 int win_split(int size, int flags);
@@ -82,4 +82,4 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id);
 int match_delete(win_T *wp, int id, int perr);
 void clear_matches(win_T *wp);
 matchitem_T *get_match(win_T *wp, int id);
-#endif /* NEOVIM_WINDOW_H */
+#endif /* NVIM_WINDOW_H */

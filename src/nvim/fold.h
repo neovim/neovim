@@ -1,5 +1,5 @@
-#ifndef NEOVIM_FOLD_H
-#define NEOVIM_FOLD_H
+#ifndef NVIM_FOLD_H
+#define NVIM_FOLD_H
 
 /*
  * Info used to pass info about a fold from the fold-detection code to the
@@ -62,4 +62,4 @@ char_u *get_foldtext(win_T *wp, linenr_T lnum, linenr_T lnume,
 void foldtext_cleanup(char_u *str);
 int put_folds(FILE *fd, win_T *wp);
 
-#endif /* NEOVIM_FOLD_H */
+#endif /* NVIM_FOLD_H */

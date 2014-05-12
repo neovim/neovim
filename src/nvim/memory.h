@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MEMORY_H
-#define NEOVIM_MEMORY_H
+#ifndef NVIM_MEMORY_H
+#define NVIM_MEMORY_H
 
 #include "nvim/func_attr.h"
 #include "nvim/types.h"

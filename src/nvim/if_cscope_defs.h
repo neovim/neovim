@@ -1,5 +1,5 @@
-#ifndef NEOVIM_IF_CSCOPE_DEFS_H
-#define NEOVIM_IF_CSCOPE_DEFS_H
+#ifndef NVIM_IF_CSCOPE_DEFS_H
+#define NVIM_IF_CSCOPE_DEFS_H
 
 /*
  * CSCOPE support for Vim added by Andy Kahn <kahn@zk3.dec.com>
@@ -68,4 +68,4 @@ typedef enum {
   Print
 } mcmd_e;
 
-#endif  // NEOVIM_IF_CSCOPE_DEFS_H
+#endif  // NVIM_IF_CSCOPE_DEFS_H

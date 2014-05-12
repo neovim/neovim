@@ -1,5 +1,5 @@
-#ifndef NEOVIM_OPTION_H
-#define NEOVIM_OPTION_H
+#ifndef NVIM_OPTION_H
+#define NVIM_OPTION_H
 
 #include <stdint.h>
 
@@ -78,4 +78,4 @@ long get_sts_value(void);
 void find_mps_values(int *initc, int *findc, int *backwards,
                              int switchit);
 
-#endif /* NEOVIM_OPTION_H */
+#endif /* NVIM_OPTION_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_SYNTAX_H
-#define NEOVIM_SYNTAX_H
+#ifndef NVIM_SYNTAX_H
+#define NVIM_SYNTAX_H
 
 #include "nvim/buffer_defs.h"
 
@@ -55,4 +55,4 @@ int highlight_changed(void);
 void set_context_in_highlight_cmd(expand_T *xp, char_u *arg);
 char_u *get_highlight_name(expand_T *xp, int idx);
 
-#endif /* NEOVIM_SYNTAX_H */
+#endif /* NVIM_SYNTAX_H */

@@ -1,6 +1,6 @@
 // General-purpose string->pointer associative array with a simple API
-#ifndef NEOVIM_MAP_H
-#define NEOVIM_MAP_H
+#ifndef NVIM_MAP_H
+#define NVIM_MAP_H
 
 #include <stdbool.h>
 
@@ -53,5 +53,5 @@ void *map_del(Map *map, const char *key);
 /// @param cb A function that will be called for each key/value
 void map_foreach(Map *map, key_value_cb cb);
 
-#endif /* NEOVIM_MAP_H */
+#endif /* NVIM_MAP_H */
 

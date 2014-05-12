@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EDIT_H
-#define NEOVIM_EDIT_H
+#ifndef NVIM_EDIT_H
+#define NVIM_EDIT_H
 
 #include "nvim/vim.h"
 
@@ -55,4 +55,4 @@ int in_cinkeys(int keytyped, int when, int line_is_empty);
 int hkmap(int c);
 int ins_copychar(linenr_T lnum);
 
-#endif /* NEOVIM_EDIT_H */
+#endif /* NVIM_EDIT_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_HARDCOPY_H
-#define NEOVIM_HARDCOPY_H
+#ifndef NVIM_HARDCOPY_H
+#define NVIM_HARDCOPY_H
 
 /*
  * Structure to hold printing color and font attributes.
@@ -90,4 +90,4 @@ void mch_print_set_font(int iBold, int iItalic, int iUnderline);
 void mch_print_set_bg(long_u bgcol);
 void mch_print_set_fg(long_u fgcol);
 
-#endif /* NEOVIM_HARDCOPY_H */
+#endif /* NVIM_HARDCOPY_H */

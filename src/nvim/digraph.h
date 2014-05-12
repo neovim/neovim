@@ -1,5 +1,5 @@
-#ifndef NEOVIM_DIGRAPH_H
-#define NEOVIM_DIGRAPH_H
+#ifndef NVIM_DIGRAPH_H
+#define NVIM_DIGRAPH_H
 
 int do_digraph(int c);
 int get_digraph(int cmdline);
@@ -9,4 +9,4 @@ void listdigraphs(void);
 char_u *keymap_init(void);
 void ex_loadkeymap(exarg_T *eap);
 
-#endif  // NEOVIM_DIGRAPH_H
+#endif  // NVIM_DIGRAPH_H

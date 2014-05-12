@@ -1,5 +1,5 @@
-#ifndef NEOVIM_EX_CMDS2_H
-#define NEOVIM_EX_CMDS2_H
+#ifndef NVIM_EX_CMDS2_H
+#define NVIM_EX_CMDS2_H
 /* ex_cmds2.c */
 void do_debug(char_u *cmd);
 void ex_debug(exarg_T *eap);
@@ -92,4 +92,4 @@ void free_locales(void);
 char_u *get_lang_arg(expand_T *xp, int idx);
 char_u *get_locales(expand_T *xp, int idx);
 
-#endif /* NEOVIM_EX_CMDS2_H */
+#endif /* NVIM_EX_CMDS2_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_GETCHAR_H
-#define NEOVIM_GETCHAR_H
+#ifndef NVIM_GETCHAR_H
+#define NVIM_GETCHAR_H
 /* getchar.c */
 void free_buff(buffheader_T *buf);
 char_u *get_recorded(void);
@@ -74,4 +74,4 @@ char_u *check_map(char_u *keys, int mode, int exact, int ign_mod,
                   int *local_ptr);
 void add_map(char_u *map, int mode);
 
-#endif /* NEOVIM_GETCHAR_H */
+#endif /* NVIM_GETCHAR_H */

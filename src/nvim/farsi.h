@@ -8,8 +8,8 @@
 /// TyD  (for types that look like _X_  e.g. _AYN_)
 /// TyE  (for types that look like X  e.g. RE)
 
-#ifndef NEOVIM_FARSI_H
-#define NEOVIM_FARSI_H
+#ifndef NVIM_FARSI_H
+#define NVIM_FARSI_H
 
 #include "nvim/normal.h"
 #include "nvim/types.h"
@@ -180,4 +180,4 @@ int F_isdigit(int c);
 int F_ischar(int c);
 void farsi_fkey(cmdarg_T *cap);
 
-#endif  // NEOVIM_FARSI_H
+#endif  // NVIM_FARSI_H

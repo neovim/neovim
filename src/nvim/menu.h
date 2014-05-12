@@ -1,5 +1,5 @@
-#ifndef NEOVIM_MENU_H
-#define NEOVIM_MENU_H
+#ifndef NVIM_MENU_H
+#define NVIM_MENU_H
 
 /* Indices into vimmenu_T->strings[] and vimmenu_T->noremap[] for each mode */
 #define MENU_INDEX_INVALID      -1
@@ -62,4 +62,4 @@ void ex_emenu(exarg_T *eap);
 vimmenu_T *gui_find_menu(char_u *path_name);
 void ex_menutranslate(exarg_T *eap);
 
-#endif /* NEOVIM_MENU_H */
+#endif /* NVIM_MENU_H */

@@ -1,5 +1,5 @@
-#ifndef NEOVIM_VERSION_DEFS_H
-#define NEOVIM_VERSION_DEFS_H
+#ifndef NVIM_VERSION_DEFS_H
+#define NVIM_VERSION_DEFS_H
 
 /*
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -44,4 +44,4 @@
 /* Displayed on splash screen. */
 #define MODIFIED_BY "the Neovim contributors."
 
-#endif  // NEOVIM_VERSION_DEFS_H
+#endif  // NVIM_VERSION_DEFS_H

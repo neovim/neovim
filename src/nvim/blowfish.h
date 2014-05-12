@@ -1,5 +1,5 @@
-#ifndef NEOVIM_BLOWFISH_H
-#define NEOVIM_BLOWFISH_H
+#ifndef NVIM_BLOWFISH_H
+#define NVIM_BLOWFISH_H
 
 void bf_key_init(char_u *password, char_u *salt, int salt_len);
 void bf_cfb_init(char_u *iv, int iv_len);
@@ -10,4 +10,4 @@ void bf_crypt_save(void);
 void bf_crypt_restore(void);
 int blowfish_self_test(void);
 
-#endif  // NEOVIM_BLOWFISH_H
+#endif  // NVIM_BLOWFISH_H
