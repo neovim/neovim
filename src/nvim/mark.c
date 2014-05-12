@@ -843,8 +843,6 @@ void ex_changes(exarg_T *eap)
           curbuf->b_changelist[i].col);
       msg_outtrans(IObuff);
       name = mark_line(&curbuf->b_changelist[i], 17);
-      if (name == NULL)
-        break;
       msg_outtrans_attr(name, hl_attr(HLF_D));
       free(name);
       ui_breakcheck();
