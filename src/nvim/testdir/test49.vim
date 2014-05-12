@@ -17,11 +17,11 @@
 "
 "    :let test49_set_env = 1 | source test49.vim
 "
-" To get them always (from src/testdir), put a line
+" To get them always (from src/nvim/testdir), put a line
 "
 "    au! BufRead test49.vim let test49_set_env = 1 | source test49.vim
 "
-" into the local .vimrc file in the src/testdir directory.
+" into the local .vimrc file in the src/nvim/testdir directory.
 "
 if exists("test49_set_env") && test49_set_env
 
@@ -456,7 +456,7 @@ function! ExtraVim(...)
     " messing up the user's viminfo file.
     let redirect = a:0 ?
 	\ " -c 'au VimLeave * redir END' -c 'redir\\! >" . a:1 . "'" : ""
-    exec "!echo '" . debug_quits . "q' | ../../build/bin/nvim -u NONE -N -Xes" . redirect .
+    exec "!echo '" . debug_quits . "q' | ../../../build/bin/nvim -u NONE -N -Xes" . redirect .
 	\ " -c 'debuggreedy|set viminfo+=nviminfo'" .
 	\ " -c 'let ExtraVimBegin = " . extra_begin . "'" .
 	\ " -c 'let ExtraVimResult = \"" . resultfile . "\"'" . breakpoints .

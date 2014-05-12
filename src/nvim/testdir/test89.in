@@ -59,7 +59,7 @@ STARTTEST
 :$put ='Testing findfile'
 :$put =''
 :set ssl
-:$put =findfile('test19.in','src/test*')
+:$put =findfile('test19.in','src/nvim/test*')
 :exe "cd" cwd
 :cd ..
 :$put =findfile('test19.in','test*')

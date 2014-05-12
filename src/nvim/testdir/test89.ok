@@ -23,6 +23,6 @@ results:
 
 Testing findfile
 
-src/testdir/test19.in
+src/nvim/testdir/test19.in
 testdir/test19.in
 testdir/test19.in

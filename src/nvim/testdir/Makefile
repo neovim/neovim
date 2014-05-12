@@ -4,7 +4,7 @@
 
 export SHELL := sh
 
-VIMPROG := ../../build/bin/nvim
+VIMPROG := ../../../build/bin/nvim
 
 SCRIPTS := test_eval.out                                               \
            test1.out   test2.out   test3.out   test4.out   test5.out   \
