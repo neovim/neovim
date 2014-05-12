@@ -3213,8 +3213,7 @@ static int showmatches(expand_T *xp, int wildmenu)
             exp_path = expand_env_save_opt(files_found[k], TRUE);
             halved_slash = backslash_halve_save(
                 exp_path != NULL ? exp_path : files_found[k]);
-            j = os_isdir(halved_slash != NULL ? halved_slash
-                : files_found[k]);
+            j = os_isdir(halved_slash);
             free(exp_path);
             free(halved_slash);
           } else

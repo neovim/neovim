@@ -1910,6 +1910,7 @@ void backslash_halve(char_u *p)
 /// @return String with the number of backslashes halved.
 char_u* backslash_halve_save(char_u *p)
 {
+  // TODO(philix): simplify and improve backslash_halve_save algorithm
   char_u *res = vim_strsave(p);
   backslash_halve(res);
   return res;
