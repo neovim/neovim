@@ -3,21 +3,21 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "api/buffer.h"
-#include "api/helpers.h"
-#include "api/defs.h"
-#include "vim.h"
-#include "buffer.h"
-#include "memline.h"
-#include "memory.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "ex_cmds.h"
-#include "mark.h"
-#include "fileio.h"
-#include "move.h"
-#include "window.h"
-#include "undo.h"
+#include "nvim/api/buffer.h"
+#include "nvim/api/helpers.h"
+#include "nvim/api/defs.h"
+#include "nvim/vim.h"
+#include "nvim/buffer.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/ex_cmds.h"
+#include "nvim/mark.h"
+#include "nvim/fileio.h"
+#include "nvim/move.h"
+#include "nvim/window.h"
+#include "nvim/undo.h"
 
 // Find a window that contains "buf" and switch to it.
 // If there is no such window, use the current window and change "curbuf".

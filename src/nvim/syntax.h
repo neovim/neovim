@@ -1,7 +1,7 @@
 #ifndef NEOVIM_SYNTAX_H
 #define NEOVIM_SYNTAX_H
 
-#include "buffer_defs.h"
+#include "nvim/buffer_defs.h"
 
 typedef int guicolor_T;
 

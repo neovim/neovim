@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "types.h"
+#include "nvim/types.h"
 
 // Flags for mch_call_shell() second argument
 typedef enum {

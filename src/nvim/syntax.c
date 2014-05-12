@@ -13,32 +13,32 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "vim.h"
-#include "syntax.h"
-#include "charset.h"
-#include "eval.h"
-#include "ex_cmds2.h"
-#include "ex_docmd.h"
-#include "fileio.h"
-#include "fold.h"
-#include "hashtab.h"
-#include "indent_c.h"
-#include "mbyte.h"
-#include "memline.h"
-#include "memory.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "keymap.h"
-#include "garray.h"
-#include "option.h"
-#include "os_unix.h"
-#include "path.h"
-#include "regexp.h"
-#include "screen.h"
-#include "term.h"
-#include "ui.h"
-#include "os/os.h"
+#include "nvim/vim.h"
+#include "nvim/syntax.h"
+#include "nvim/charset.h"
+#include "nvim/eval.h"
+#include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/fileio.h"
+#include "nvim/fold.h"
+#include "nvim/hashtab.h"
+#include "nvim/indent_c.h"
+#include "nvim/mbyte.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/keymap.h"
+#include "nvim/garray.h"
+#include "nvim/option.h"
+#include "nvim/os_unix.h"
+#include "nvim/path.h"
+#include "nvim/regexp.h"
+#include "nvim/screen.h"
+#include "nvim/term.h"
+#include "nvim/ui.h"
+#include "nvim/os/os.h"
 
 /*
  * Structure that stores information about a highlight group.
@@ -81,9 +81,9 @@ static garray_T highlight_ga;   /* highlight groups for 'highlight' option */
 #define MAX_HL_ID       20000   /* maximum value for a highlight ID. */
 
 /* Flags to indicate an additional string for highlight name completion. */
-static int include_none = 0;    /* when 1 include "None" */
-static int include_default = 0; /* when 1 include "default" */
-static int include_link = 0;    /* when 2 include "link" and "clear" */
+static int include_none = 0;    /* when 1 include "nvim/None" */
+static int include_default = 0; /* when 1 include "nvim/default" */
+static int include_link = 0;    /* when 2 include "nvim/link" and "clear" */
 
 /*
  * The "term", "cterm" and "gui" arguments can be any combination of the

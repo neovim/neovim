@@ -6,7 +6,7 @@
 
 #include <msgpack.h>
 
-#include "api/defs.h"
+#include "nvim/api/defs.h"
 
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.

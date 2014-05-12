@@ -29,8 +29,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "func_attr.h"
-#include "memory.h"
+#include "nvim/func_attr.h"
+#include "nvim/memory.h"
 
 #define KMEMPOOL_INIT(name, kmptype_t, kmpfree_f)                       \
     typedef struct {                                                    \

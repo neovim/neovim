@@ -8,7 +8,7 @@
 #ifndef NEOVIM_VIM_H
 # define NEOVIM_VIM_H
 
-#include "types.h"
+#include "nvim/types.h"
 
 /* Included when ported to cmake */
 /* This is needed to replace TRUE/FALSE macros by true/false from c99 */
@@ -45,7 +45,7 @@ Error: configure did not run properly.Check auto/config.log.
 # define VIMPACKAGE     "vim"
 #endif
 
-#include "os_unix_defs.h"       /* bring lots of system header files */
+#include "nvim/os_unix_defs.h"       /* bring lots of system header files */
 
 # ifdef HAVE_LOCALE_H
 #  include <locale.h>
@@ -95,10 +95,10 @@ typedef uint16_t u8char_T;
 typedef uint32_t u8char_T;
 # endif
 
-#include "ascii.h"
-#include "keymap.h"
-#include "term_defs.h"
-#include "macros.h"
+#include "nvim/ascii.h"
+#include "nvim/keymap.h"
+#include "nvim/term_defs.h"
+#include "nvim/macros.h"
 
 #include <errno.h>
 
@@ -419,7 +419,7 @@ enum {
 /* Values for find_ident_under_cursor() */
 #define FIND_IDENT      1       /* find identifier (word) */
 #define FIND_STRING     2       /* find any string (WORD) */
-#define FIND_EVAL       4       /* include "->", "[]" and "." */
+#define FIND_EVAL       4       /* include "nvim/->", "[]" and "." */
 
 /* Values for file_name_in_line() */
 #define FNAME_MESS      1       /* give error message */
@@ -1255,9 +1255,9 @@ enum {
 typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
-#include "buffer_defs.h"         /* buffer and windows */
-#include "ex_cmds_defs.h"        /* Ex command defines */
-#include "proto.h"          /* function prototypes */
+#include "nvim/buffer_defs.h"         /* buffer and windows */
+#include "nvim/ex_cmds_defs.h"        /* Ex command defines */
+#include "nvim/proto.h"          /* function prototypes */
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
  * functions of these names. The declarations would break if the defines had
@@ -1275,7 +1275,7 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
 
-#include "globals.h"        /* global variables and messages */
+#include "nvim/globals.h"        /* global variables and messages */
 
 /*
  * Return byte length of character that starts with byte "b".

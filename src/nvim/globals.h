@@ -10,9 +10,9 @@
 
 #include <stdbool.h>
 
-#include "ex_eval.h"
-#include "mbyte.h"
-#include "menu.h"
+#include "nvim/ex_eval.h"
+#include "nvim/mbyte.h"
+#include "nvim/menu.h"
 
 /*
  * definition of global variables

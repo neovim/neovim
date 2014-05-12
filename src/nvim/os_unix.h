@@ -1,7 +1,7 @@
 #ifndef NEOVIM_OS_UNIX_H
 #define NEOVIM_OS_UNIX_H
 
-#include "os/shell.h"
+#include "nvim/os/shell.h"
 
 /* os_unix.c */
 void mch_write(char_u *s, int len);

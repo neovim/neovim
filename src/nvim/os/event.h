@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "os/event_defs.h"
-#include "os/job_defs.h"
+#include "nvim/os/event_defs.h"
+#include "nvim/os/job_defs.h"
 
 void event_init(void);
 void event_teardown(void);

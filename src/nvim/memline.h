@@ -1,8 +1,8 @@
 #ifndef NEOVIM_MEMLINE_H
 #define NEOVIM_MEMLINE_H
 
-#include "types.h"
-#include "func_attr.h"
+#include "nvim/types.h"
+#include "nvim/func_attr.h"
 
 int ml_open(buf_T *buf);
 void ml_set_crypt_key(buf_T *buf, char_u *old_key, int old_cm);

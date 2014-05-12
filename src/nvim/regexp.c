@@ -45,18 +45,18 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "regexp.h"
-#include "charset.h"
-#include "eval.h"
-#include "ex_cmds2.h"
-#include "mark.h"
-#include "memline.h"
-#include "memory.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "garray.h"
+#include "nvim/vim.h"
+#include "nvim/regexp.h"
+#include "nvim/charset.h"
+#include "nvim/eval.h"
+#include "nvim/ex_cmds2.h"
+#include "nvim/mark.h"
+#include "nvim/memline.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/garray.h"
 
 #ifdef REGEXP_DEBUG
 /* show/save debugging data when BT engine is used */
@@ -6961,7 +6961,7 @@ static regengine_T bt_regengine =
 };
 
 
-#include "regexp_nfa.c"
+#include "nvim/regexp_nfa.c"
 
 static regengine_T nfa_regengine =
 {

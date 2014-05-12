@@ -1,8 +1,8 @@
 #ifndef NEOVIM_FILEIO_H
 #define NEOVIM_FILEIO_H
 
-#include "buffer_defs.h"
-#include "os/os.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/os/os.h"
 
 /*
  * Struct to save values in before executing autocommands for a buffer that is

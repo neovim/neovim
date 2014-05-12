@@ -3,20 +3,20 @@
 
 #include <uv.h>
 
-#include "os/uv_helpers.h"
-#include "os/job.h"
-#include "os/job_defs.h"
-#include "os/rstream.h"
-#include "os/rstream_defs.h"
-#include "os/wstream.h"
-#include "os/wstream_defs.h"
-#include "os/event.h"
-#include "os/event_defs.h"
-#include "os/time.h"
-#include "os/shell.h"
-#include "vim.h"
-#include "memory.h"
-#include "term.h"
+#include "nvim/os/uv_helpers.h"
+#include "nvim/os/job.h"
+#include "nvim/os/job_defs.h"
+#include "nvim/os/rstream.h"
+#include "nvim/os/rstream_defs.h"
+#include "nvim/os/wstream.h"
+#include "nvim/os/wstream_defs.h"
+#include "nvim/os/event.h"
+#include "nvim/os/event_defs.h"
+#include "nvim/os/time.h"
+#include "nvim/os/shell.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
+#include "nvim/term.h"
 
 #define EXIT_TIMEOUT 25
 #define MAX_RUNNING_JOBS 100

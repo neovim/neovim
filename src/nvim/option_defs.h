@@ -1,7 +1,7 @@
 #ifndef NEOVIM_OPTION_DEFS_H
 #define NEOVIM_OPTION_DEFS_H
 
-#include "types.h"
+#include "nvim/types.h"
 
 // option_defs.h: definition of global variables for settable options
 

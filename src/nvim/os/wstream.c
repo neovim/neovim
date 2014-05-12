@@ -3,11 +3,11 @@
 
 #include <uv.h>
 
-#include "os/uv_helpers.h"
-#include "os/wstream.h"
-#include "os/wstream_defs.h"
-#include "vim.h"
-#include "memory.h"
+#include "nvim/os/uv_helpers.h"
+#include "nvim/os/wstream.h"
+#include "nvim/os/wstream_defs.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
 
 struct wstream {
   uv_stream_t *stream;

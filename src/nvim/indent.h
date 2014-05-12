@@ -1,6 +1,6 @@
 #ifndef NEOVIM_INDENT_H
 #define NEOVIM_INDENT_H
-#include "vim.h"
+#include "nvim/vim.h"
 int get_indent(void);
 int get_indent_lnum(linenr_T lnum);
 int get_indent_buf(buf_T *buf, linenr_T lnum);

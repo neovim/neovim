@@ -1,7 +1,7 @@
 #ifndef NEOVIM_EDIT_H
 #define NEOVIM_EDIT_H
 
-#include "vim.h"
+#include "nvim/vim.h"
 
 /*
  * Array indexes used for cptext argument of ins_compl_add().

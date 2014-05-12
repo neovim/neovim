@@ -5,7 +5,7 @@
  * Do ":help credits" in Vim to see a list of people who contributed.
  */
 
-#include "normal.h"
+#include "nvim/normal.h"
 
 /*
  * This file defines the Ex commands.

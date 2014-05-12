@@ -1,9 +1,9 @@
 #ifndef NEOVIM_PATH_H
 #define NEOVIM_PATH_H
 
-#include "func_attr.h"
-#include "types.h"
-#include "garray.h"
+#include "nvim/func_attr.h"
+#include "nvim/types.h"
+#include "nvim/garray.h"
 
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {

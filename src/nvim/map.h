@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 
-#include "map_defs.h"
+#include "nvim/map_defs.h"
 
 /// Creates a new `Map` instance
 ///

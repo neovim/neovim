@@ -4,15 +4,15 @@
 
 #include <uv.h>
 
-#include "os/input.h"
-#include "os/event.h"
-#include "os/rstream_defs.h"
-#include "os/rstream.h"
-#include "vim.h"
-#include "ui.h"
-#include "fileio.h"
-#include "getchar.h"
-#include "term.h"
+#include "nvim/os/input.h"
+#include "nvim/os/event.h"
+#include "nvim/os/rstream_defs.h"
+#include "nvim/os/rstream.h"
+#include "nvim/vim.h"
+#include "nvim/ui.h"
+#include "nvim/fileio.h"
+#include "nvim/getchar.h"
+#include "nvim/term.h"
 
 #define READ_BUFFER_SIZE 256
 

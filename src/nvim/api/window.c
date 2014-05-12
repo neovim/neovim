@@ -2,13 +2,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "api/window.h"
-#include "api/defs.h"
-#include "api/helpers.h"
-#include "vim.h"
-#include "window.h"
-#include "screen.h"
-#include "misc2.h"
+#include "nvim/api/window.h"
+#include "nvim/api/defs.h"
+#include "nvim/api/helpers.h"
+#include "nvim/vim.h"
+#include "nvim/window.h"
+#include "nvim/screen.h"
+#include "nvim/misc2.h"
 
 
 Buffer window_get_buffer(Window window, Error *err)

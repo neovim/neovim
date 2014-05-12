@@ -1,8 +1,8 @@
 #ifndef NEOVIM_MISC2_H
 #define NEOVIM_MISC2_H
 
-#include "func_attr.h"
-#include "os/shell.h"
+#include "nvim/func_attr.h"
+#include "nvim/os/shell.h"
 
 /* misc2.c */
 int virtual_active(void);

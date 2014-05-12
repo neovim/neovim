@@ -8,29 +8,29 @@
  * See README.txt for an overview of the Vim source code.
  */
 
-#include "vim.h"
-#include "if_cscope.h"
-#include "charset.h"
-#include "eval.h"
-#include "fileio.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "memory.h"
-#include "os/time.h"
-#include "path.h"
-#include "quickfix.h"
-#include "tag.h"
-#include "ui.h"
-#include "window.h"
-#include "os/os.h"
+#include "nvim/vim.h"
+#include "nvim/if_cscope.h"
+#include "nvim/charset.h"
+#include "nvim/eval.h"
+#include "nvim/fileio.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/memory.h"
+#include "nvim/os/time.h"
+#include "nvim/path.h"
+#include "nvim/quickfix.h"
+#include "nvim/tag.h"
+#include "nvim/ui.h"
+#include "nvim/window.h"
+#include "nvim/os/os.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #if defined(UNIX)
 # include <sys/wait.h>
 #endif
-#include "if_cscope_defs.h"
+#include "nvim/if_cscope_defs.h"
 
 static void cs_usage_msg(csid_e x);
 static int cs_add(exarg_T *eap);

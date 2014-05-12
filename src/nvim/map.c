@@ -1,12 +1,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include "map.h"
-#include "map_defs.h"
-#include "vim.h"
-#include "memory.h"
+#include "nvim/map.h"
+#include "nvim/map_defs.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
 
-#include "lib/khash.h"
+#include "nvim/lib/khash.h"
 
 typedef struct {
   void *ptr;

@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <uv.h>
 
-#include "os/event_defs.h"
-#include "os/rstream_defs.h"
+#include "nvim/os/event_defs.h"
+#include "nvim/os/rstream_defs.h"
 
 /// Creates a new RStream instance. A RStream encapsulates all the boilerplate
 /// necessary for reading from a libuv stream.

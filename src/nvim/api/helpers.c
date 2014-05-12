@@ -2,17 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "api/helpers.h"
-#include "api/defs.h"
-#include "vim.h"
-#include "buffer.h"
-#include "window.h"
-#include "memory.h"
-#include "eval.h"
-#include "option.h"
-#include "option_defs.h"
+#include "nvim/api/helpers.h"
+#include "nvim/api/defs.h"
+#include "nvim/vim.h"
+#include "nvim/buffer.h"
+#include "nvim/window.h"
+#include "nvim/memory.h"
+#include "nvim/eval.h"
+#include "nvim/option.h"
+#include "nvim/option_defs.h"
 
-#include "lib/khash.h"
+#include "nvim/lib/khash.h"
 
 #if defined(ARCH_64)
 typedef uint64_t ptr_int_t;

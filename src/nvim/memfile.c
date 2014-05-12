@@ -33,18 +33,18 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "memfile.h"
-#include "fileio.h"
-#include "memline.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "memory.h"
-#include "os_unix.h"
-#include "path.h"
-#include "ui.h"
-#include "os/os.h"
+#include "nvim/vim.h"
+#include "nvim/memfile.h"
+#include "nvim/fileio.h"
+#include "nvim/memline.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/memory.h"
+#include "nvim/os_unix.h"
+#include "nvim/path.h"
+#include "nvim/ui.h"
+#include "nvim/os/os.h"
 
 #define MEMFILE_PAGE_SIZE 4096          /* default page size */
 

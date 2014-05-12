@@ -2,19 +2,19 @@
 #define NEOVIM_BUFFER_DEFS_H
 
 // for garray_T
-#include "garray.h"
+#include "nvim/garray.h"
 // for pos_T and lpos_T
-#include "pos.h"
+#include "nvim/pos.h"
 // for the number window-local and buffer-local options
-#include "option_defs.h"
+#include "nvim/option_defs.h"
 // for jump list and tag stack sizes in a buffer and mark types
-#include "mark_defs.h"
+#include "nvim/mark_defs.h"
 // for u_header_T
-#include "undo_defs.h"
+#include "nvim/undo_defs.h"
 // for hashtab_T
-#include "hashtab.h"
+#include "nvim/hashtab.h"
 // for dict_T
-#include "eval_defs.h"
+#include "nvim/eval_defs.h"
 
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
@@ -24,22 +24,22 @@ typedef struct file_buffer buf_T;       /* forward declaration */
 typedef struct memfile memfile_T;
 
 // for struct memline (it needs memfile_T)
-#include "memline_defs.h"
+#include "nvim/memline_defs.h"
 
 // for struct memfile, bhdr_T, blocknr_T... (it needs buf_T)
-#include "memfile_defs.h"
+#include "nvim/memfile_defs.h"
 
 /*
  * This is here because regexp_defs.h needs win_T and buf_T. regprog_T is
  * used below.
  */
-#include "regexp_defs.h"
+#include "nvim/regexp_defs.h"
 
 // for  synstate_T (needs reg_extmatch_T, win_T and buf_T)
-#include "syntax_defs.h"
+#include "nvim/syntax_defs.h"
 
 // for signlist_T
-#include "sign_defs.h"
+#include "nvim/sign_defs.h"
 
 /*
  * The taggy struct is used to store the information about a :tag command.

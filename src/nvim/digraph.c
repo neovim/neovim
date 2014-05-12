@@ -2,21 +2,21 @@
 ///
 /// code for digraphs
 
-#include "vim.h"
-#include "digraph.h"
-#include "charset.h"
-#include "ex_cmds2.h"
-#include "ex_docmd.h"
-#include "ex_getln.h"
-#include "getchar.h"
-#include "mbyte.h"
-#include "message.h"
-#include "misc2.h"
-#include "memory.h"
-#include "garray.h"
-#include "normal.h"
-#include "screen.h"
-#include "ui.h"
+#include "nvim/vim.h"
+#include "nvim/digraph.h"
+#include "nvim/charset.h"
+#include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/ex_getln.h"
+#include "nvim/getchar.h"
+#include "nvim/mbyte.h"
+#include "nvim/message.h"
+#include "nvim/misc2.h"
+#include "nvim/memory.h"
+#include "nvim/garray.h"
+#include "nvim/normal.h"
+#include "nvim/screen.h"
+#include "nvim/ui.h"
 
 typedef int result_T;
 

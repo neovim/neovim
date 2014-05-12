@@ -3,9 +3,9 @@
 
 #include <uv.h>
 
-#include "os/wstream_defs.h"
-#include "os/rstream_defs.h"
-#include "os/job_defs.h"
+#include "nvim/os/wstream_defs.h"
+#include "nvim/os/rstream_defs.h"
+#include "nvim/os/job_defs.h"
 
 /// Gets the RStream instance associated with a libuv handle
 ///

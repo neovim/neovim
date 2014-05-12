@@ -1,8 +1,8 @@
 #include <uv.h>
 
-#include "os/uv_helpers.h"
-#include "vim.h"
-#include "memory.h"
+#include "nvim/os/uv_helpers.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
 
 /// Common structure that will always be assigned to the `data` field of
 /// libuv handles. It has fields for many types of pointers, and allow a single

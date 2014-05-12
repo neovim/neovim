@@ -4,8 +4,8 @@
  * This file is included in "regexp.c".
  */
 
-#include "misc2.h"
-#include "garray.h"
+#include "nvim/misc2.h"
+#include "nvim/garray.h"
 
 /*
  * Logging of NFA engine.

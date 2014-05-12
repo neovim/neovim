@@ -2,7 +2,7 @@
 #define NEOVIM_OS_OS_H
 #include <uv.h>
 
-#include "vim.h"
+#include "nvim/vim.h"
 
 /// Change to the given directory.
 ///

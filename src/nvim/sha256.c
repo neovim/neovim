@@ -15,8 +15,8 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "sha256.h"
+#include "nvim/vim.h"
+#include "nvim/sha256.h"
 
 static void sha256_process(context_sha256_T *ctx, char_u data[64]);
 

@@ -1,7 +1,7 @@
 #ifndef NEOVIM_MAIN_H
 #define NEOVIM_MAIN_H
 
-#include "normal.h"
+#include "nvim/normal.h"
 
 void main_loop(int cmdwin, int noexmode);
 void getout(int exitval);

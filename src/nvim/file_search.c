@@ -46,20 +46,20 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "file_search.h"
-#include "charset.h"
-#include "fileio.h"
-#include "memory.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "os_unix.h"
-#include "path.h"
-#include "tag.h"
-#include "ui.h"
-#include "window.h"
-#include "os/os.h"
+#include "nvim/vim.h"
+#include "nvim/file_search.h"
+#include "nvim/charset.h"
+#include "nvim/fileio.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/os_unix.h"
+#include "nvim/path.h"
+#include "nvim/tag.h"
+#include "nvim/ui.h"
+#include "nvim/window.h"
+#include "nvim/os/os.h"
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
 

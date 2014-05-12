@@ -3,11 +3,11 @@
  * special key codes.
  */
 
-#include "vim.h"
-#include "keymap.h"
-#include "charset.h"
-#include "edit.h"
-#include "term.h"
+#include "nvim/vim.h"
+#include "nvim/keymap.h"
+#include "nvim/charset.h"
+#include "nvim/edit.h"
+#include "nvim/term.h"
 
 
 /*

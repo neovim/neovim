@@ -1,7 +1,7 @@
 #ifndef NEOVIM_OS_JOB_DEFS_H
 #define NEOVIM_OS_JOB_DEFS_H
 
-#include "os/rstream_defs.h"
+#include "nvim/os/rstream_defs.h"
 
 typedef struct job Job;
 

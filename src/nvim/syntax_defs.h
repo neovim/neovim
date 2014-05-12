@@ -1,7 +1,7 @@
 #ifndef NEOVIM_SYNTAX_DEFS_H
 #define NEOVIM_SYNTAX_DEFS_H
 
-#include "regexp_defs.h"
+#include "nvim/regexp_defs.h"
 
 /* struct passed to in_id_list() */
 struct sp_syn {

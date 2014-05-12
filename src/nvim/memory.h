@@ -1,9 +1,9 @@
 #ifndef NEOVIM_MEMORY_H
 #define NEOVIM_MEMORY_H
 
-#include "func_attr.h"
-#include "types.h"
-#include "vim.h"
+#include "nvim/func_attr.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
 
 char_u *alloc(unsigned size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
 

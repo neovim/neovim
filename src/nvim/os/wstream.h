@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <uv.h>
 
-#include "os/wstream_defs.h"
+#include "nvim/os/wstream_defs.h"
 
 /// Creates a new WStream instance. A WStream encapsulates all the boilerplate
 /// necessary for writing to a libuv stream.

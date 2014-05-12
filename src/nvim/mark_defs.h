@@ -1,7 +1,7 @@
 #ifndef NEOVIM_MARK_DEFS_H
 #define NEOVIM_MARK_DEFS_H
 
-#include "pos.h"
+#include "nvim/pos.h"
 
 /*
  * marks: positions in a file

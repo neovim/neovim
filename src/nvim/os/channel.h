@@ -3,7 +3,7 @@
 
 #include <uv.h>
 
-#include "os/channel_defs.h"
+#include "nvim/os/channel_defs.h"
 
 /// Initializes the module
 void channel_init(void);

@@ -3,18 +3,18 @@
 #include <uv.h>
 #include <msgpack.h>
 
-#include "lib/klist.h"
-#include "os/channel.h"
-#include "os/channel_defs.h"
-#include "os/rstream.h"
-#include "os/rstream_defs.h"
-#include "os/wstream.h"
-#include "os/wstream_defs.h"
-#include "os/job.h"
-#include "os/job_defs.h"
-#include "os/msgpack_rpc.h"
-#include "vim.h"
-#include "memory.h"
+#include "nvim/lib/klist.h"
+#include "nvim/os/channel.h"
+#include "nvim/os/channel_defs.h"
+#include "nvim/os/rstream.h"
+#include "nvim/os/rstream_defs.h"
+#include "nvim/os/wstream.h"
+#include "nvim/os/wstream_defs.h"
+#include "nvim/os/job.h"
+#include "nvim/os/job_defs.h"
+#include "nvim/os/msgpack_rpc.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
 
 typedef struct {
   ChannelProtocol protocol;

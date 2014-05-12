@@ -10,15 +10,15 @@
 /// All the remarks about older versions have been removed, they are not very
 /// interesting.
 
-#include "vim.h"
-#include "version.h"
-#include "charset.h"
-#include "memline.h"
-#include "message.h"
-#include "misc2.h"
-#include "screen.h"
+#include "nvim/vim.h"
+#include "nvim/version.h"
+#include "nvim/charset.h"
+#include "nvim/memline.h"
+#include "nvim/message.h"
+#include "nvim/misc2.h"
+#include "nvim/screen.h"
 
-#include "version_defs.h"
+#include "nvim/version_defs.h"
 
 char *Version = VIM_VERSION_SHORT;
 static char *mediumVersion = VIM_VERSION_MEDIUM;

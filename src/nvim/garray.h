@@ -1,7 +1,7 @@
 #ifndef NEOVIM_GARRAY_H
 #define NEOVIM_GARRAY_H
 
-#include "func_attr.h"
+#include "nvim/func_attr.h"
 
 /// Structure used for growing arrays.
 /// This is used to store information that only grows, is deleted all at

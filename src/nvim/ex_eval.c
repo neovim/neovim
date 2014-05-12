@@ -10,16 +10,16 @@
  * ex_eval.c: functions for Ex command line for the +eval feature.
  */
 
-#include "vim.h"
-#include "ex_eval.h"
-#include "charset.h"
-#include "eval.h"
-#include "ex_cmds2.h"
-#include "ex_docmd.h"
-#include "message.h"
-#include "misc2.h"
-#include "memory.h"
-#include "regexp.h"
+#include "nvim/vim.h"
+#include "nvim/ex_eval.h"
+#include "nvim/charset.h"
+#include "nvim/eval.h"
+#include "nvim/ex_cmds2.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/message.h"
+#include "nvim/misc2.h"
+#include "nvim/memory.h"
+#include "nvim/regexp.h"
 
 
 static void free_msglist(struct msglist *l);

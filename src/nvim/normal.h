@@ -1,7 +1,7 @@
 #ifndef NEOVIM_NORMAL_H
 #define NEOVIM_NORMAL_H
 
-#include "pos.h"
+#include "nvim/pos.h"
 
 /*
  * Arguments for operators.

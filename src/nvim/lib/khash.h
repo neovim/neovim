@@ -26,7 +26,7 @@
 /*
   An example:
 
-#include "khash.h"
+#include "nvim/khash.h"
 KHASH_MAP_INIT_INT(32, char)
 int main() {
 	int ret, is_missing;
@@ -129,8 +129,8 @@ int main() {
 #include <string.h>
 #include <limits.h>
 
-#include "func_attr.h"
-#include "memory.h"
+#include "nvim/func_attr.h"
+#include "nvim/memory.h"
 
 /* compiler specific configuration */
 

@@ -13,19 +13,19 @@
 
 #include <string.h>
 
-#include "vim.h"
-#include "menu.h"
-#include "charset.h"
-#include "eval.h"
-#include "ex_docmd.h"
-#include "getchar.h"
-#include "memory.h"
-#include "message.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "keymap.h"
-#include "garray.h"
-#include "term.h"
+#include "nvim/vim.h"
+#include "nvim/menu.h"
+#include "nvim/charset.h"
+#include "nvim/eval.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/getchar.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/keymap.h"
+#include "nvim/garray.h"
+#include "nvim/term.h"
 
 
 #define MENUDEPTH   10          /* maximum depth of menus */

@@ -1,6 +1,6 @@
 #ifndef NEOVIM_INDENT_C_H
 #define NEOVIM_INDENT_C_H
-#include "vim.h"
+#include "nvim/vim.h"
 int cin_islabel(void);
 int cin_iscase(char_u *s, int strict);
 int cin_isscopedecl(char_u *s);

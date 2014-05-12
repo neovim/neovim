@@ -2,9 +2,9 @@
 
 #include <uv.h>
 
-#include "os/os.h"
-#include "garray.h"
-#include "misc2.h"
+#include "nvim/os/os.h"
+#include "nvim/garray.h"
+#include "nvim/misc2.h"
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif

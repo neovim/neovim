@@ -1,8 +1,8 @@
 #ifndef NEOVIM_OS_EVENT_DEFS_H
 #define NEOVIM_OS_EVENT_DEFS_H
 
-#include "os/job_defs.h"
-#include "os/rstream_defs.h"
+#include "nvim/os/job_defs.h"
+#include "nvim/os/rstream_defs.h"
 
 typedef enum {
   kEventSignal,

@@ -1,7 +1,7 @@
 #ifndef NEOVIM_EVAL_DEFS_H
 #define NEOVIM_EVAL_DEFS_H
 
-#include "hashtab.h"
+#include "nvim/hashtab.h"
 
 typedef int varnumber_T;
 typedef double float_T;

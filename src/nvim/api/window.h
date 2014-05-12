@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "api/defs.h"
+#include "nvim/api/defs.h"
 
 /// Gets the current buffer in a window
 ///

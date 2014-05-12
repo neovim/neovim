@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "func_attr.h"
+#include "nvim/func_attr.h"
 
 #define DEBUG_LOG_LEVEL 0
 #define INFO_LOG_LEVEL 1

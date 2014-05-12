@@ -1,9 +1,9 @@
 #ifndef NEOVIM_MARK_H
 #define NEOVIM_MARK_H
 
-#include "buffer_defs.h"
-#include "mark_defs.h"
-#include "pos.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/mark_defs.h"
+#include "nvim/pos.h"
 
 /* mark.c */
 int setmark(int c);

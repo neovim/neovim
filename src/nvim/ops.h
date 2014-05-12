@@ -1,8 +1,8 @@
 #ifndef NEOVIM_OPS_H
 #define NEOVIM_OPS_H
 
-#include "func_attr.h"
-#include "types.h"
+#include "nvim/func_attr.h"
+#include "nvim/types.h"
 
 /* ops.c */
 int get_op_type(int char1, int char2);

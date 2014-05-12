@@ -7,11 +7,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "log.h"
-#include "misc1.h"
-#include "types.h"
-#include "os/os.h"
-#include "os/time.h"
+#include "nvim/log.h"
+#include "nvim/misc1.h"
+#include "nvim/types.h"
+#include "nvim/os/os.h"
+#include "nvim/os/time.h"
 
 #define USR_LOG_FILE "$HOME/.nvimlog"
 

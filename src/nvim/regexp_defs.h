@@ -12,7 +12,7 @@
 #ifndef NEOVIM_REGEXP_DEFS_H
 #define NEOVIM_REGEXP_DEFS_H
 
-#include "pos.h"
+#include "nvim/pos.h"
 
 /*
  * The number of sub-matches is limited to 10.

@@ -2,18 +2,18 @@
 
 #include <uv.h>
 
-#include "types.h"
-#include "vim.h"
-#include "globals.h"
-#include "memline.h"
-#include "eval.h"
-#include "term.h"
-#include "memory.h"
-#include "misc1.h"
-#include "misc2.h"
-#include "os/event_defs.h"
-#include "os/event.h"
-#include "os/signal.h"
+#include "nvim/types.h"
+#include "nvim/vim.h"
+#include "nvim/globals.h"
+#include "nvim/memline.h"
+#include "nvim/eval.h"
+#include "nvim/term.h"
+#include "nvim/memory.h"
+#include "nvim/misc1.h"
+#include "nvim/misc2.h"
+#include "nvim/os/event_defs.h"
+#include "nvim/os/event.h"
+#include "nvim/os/signal.h"
 
 static uv_signal_t sint, spipe, shup, squit, sterm, swinch;
 #ifdef SIGPWR

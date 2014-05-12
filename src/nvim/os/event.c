@@ -4,17 +4,17 @@
 
 #include <uv.h>
 
-#include "lib/klist.h"
-#include "os/event.h"
-#include "os/input.h"
-#include "os/channel.h"
-#include "os/server.h"
-#include "os/signal.h"
-#include "os/rstream.h"
-#include "os/job.h"
-#include "vim.h"
-#include "memory.h"
-#include "misc2.h"
+#include "nvim/lib/klist.h"
+#include "nvim/os/event.h"
+#include "nvim/os/input.h"
+#include "nvim/os/channel.h"
+#include "nvim/os/server.h"
+#include "nvim/os/signal.h"
+#include "nvim/os/rstream.h"
+#include "nvim/os/job.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
+#include "nvim/misc2.h"
 
 // event will be cleaned up after it gets processed
 #define _destroy_event(x)  // do nothing

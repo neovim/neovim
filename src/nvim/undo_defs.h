@@ -1,7 +1,7 @@
 #ifndef NEOVIM_UNDO_DEFS_H
 #define NEOVIM_UNDO_DEFS_H
 
-#include "pos.h"
+#include "nvim/pos.h"
 
 /* Structure to store info about the Visual area. */
 typedef struct {

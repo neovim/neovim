@@ -1,8 +1,8 @@
 #include <msgpack.h>
 
-#include "os/msgpack_rpc.h"
-#include "vim.h"
-#include "memory.h"
+#include "nvim/os/msgpack_rpc.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
 
 static bool msgpack_rpc_to_uint16_t(msgpack_object *obj, uint16_t *arg);
 

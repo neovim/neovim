@@ -1,7 +1,7 @@
 #ifndef NEOVIM_MEMLINE_DEFS_H
 #define NEOVIM_MEMLINE_DEFS_H
 
-#include "memfile_defs.h"
+#include "nvim/memfile_defs.h"
 
 /*
  * When searching for a specific line, we remember what blocks in the tree

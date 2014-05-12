@@ -2,10 +2,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "api/tabpage.h"
-#include "api/vim.h"
-#include "api/defs.h"
-#include "api/helpers.h"
+#include "nvim/api/tabpage.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/defs.h"
+#include "nvim/api/helpers.h"
 
 int64_t tabpage_get_window_count(Tabpage tabpage, Error *err)
 {

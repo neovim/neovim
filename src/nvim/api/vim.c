@@ -3,21 +3,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "api/vim.h"
-#include "api/helpers.h"
-#include "api/defs.h"
-#include "api/buffer.h"
-#include "vim.h"
-#include "buffer.h"
-#include "window.h"
-#include "types.h"
-#include "ascii.h"
-#include "ex_docmd.h"
-#include "screen.h"
-#include "memory.h"
-#include "message.h"
-#include "eval.h"
-#include "misc2.h"
+#include "nvim/api/vim.h"
+#include "nvim/api/helpers.h"
+#include "nvim/api/defs.h"
+#include "nvim/api/buffer.h"
+#include "nvim/vim.h"
+#include "nvim/buffer.h"
+#include "nvim/window.h"
+#include "nvim/types.h"
+#include "nvim/ascii.h"
+#include "nvim/ex_docmd.h"
+#include "nvim/screen.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/eval.h"
+#include "nvim/misc2.h"
 
 #define LINE_BUFFER_SIZE 4096
 

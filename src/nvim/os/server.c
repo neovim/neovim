@@ -5,15 +5,15 @@
 
 #include <uv.h>
 
-#include "os/channel_defs.h"
-#include "os/channel.h"
-#include "os/server.h"
-#include "os/os.h"
-#include "vim.h"
-#include "memory.h"
-#include "message.h"
-#include "fileio.h"
-#include "map.h"
+#include "nvim/os/channel_defs.h"
+#include "nvim/os/channel.h"
+#include "nvim/os/server.h"
+#include "nvim/os/os.h"
+#include "nvim/vim.h"
+#include "nvim/memory.h"
+#include "nvim/message.h"
+#include "nvim/fileio.h"
+#include "nvim/map.h"
 
 #define MAX_CONNECTIONS 32
 #define ADDRESS_MAX_SIZE 256

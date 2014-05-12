@@ -10,8 +10,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "os/event_defs.h"
-#include "os/rstream_defs.h"
+#include "nvim/os/event_defs.h"
+#include "nvim/os/rstream_defs.h"
 
 /// Initializes job control resources
 void job_init(void);

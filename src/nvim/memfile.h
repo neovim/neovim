@@ -1,8 +1,8 @@
 #ifndef NEOVIM_MEMFILE_H
 #define NEOVIM_MEMFILE_H
 
-#include "buffer_defs.h"
-#include "memfile_defs.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/memfile_defs.h"
 
 /* memfile.c */
 memfile_T *mf_open(char_u *fname, int flags);

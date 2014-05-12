@@ -11,8 +11,8 @@
 #ifndef NEOVIM_FARSI_H
 #define NEOVIM_FARSI_H
 
-#include "normal.h"
-#include "types.h"
+#include "nvim/normal.h"
+#include "nvim/types.h"
 
 // Farsi character set definition
 

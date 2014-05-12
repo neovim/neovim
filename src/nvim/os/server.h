@@ -1,7 +1,7 @@
 #ifndef NEOVIM_OS_SERVER_H
 #define NEOVIM_OS_SERVER_H
 
-#include "os/channel_defs.h"
+#include "nvim/os/channel_defs.h"
 
 /// Initializes the module
 void server_init();
