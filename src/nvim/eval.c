@@ -19529,27 +19529,23 @@ repeat:
       p = vim_strchr(s, sep);
       if (p != NULL) {
         pat = vim_strnsave(s, (int)(p - s));
-        if (pat != NULL) {
-          s = p + 1;
-          /* find end of substitution */
-          p = vim_strchr(s, sep);
-          if (p != NULL) {
-            sub = vim_strnsave(s, (int)(p - s));
-            str = vim_strnsave(*fnamep, *fnamelen);
-            *usedlen = (int)(p + 1 - src);
-            s = do_string_sub(str, pat, sub, flags);
-            if (s != NULL) {
-              *fnamep = s;
-              *fnamelen = (int)STRLEN(s);
-              free(*bufp);
-              *bufp = s;
-              didit = TRUE;
-            }
-            free(sub);
-            free(str);
-          }
-          free(pat);
+        s = p + 1;
+        /* find end of substitution */
+        p = vim_strchr(s, sep);
+        if (p != NULL) {
+          sub = vim_strnsave(s, (int)(p - s));
+          str = vim_strnsave(*fnamep, *fnamelen);
+          *usedlen = (int)(p + 1 - src);
+          s = do_string_sub(str, pat, sub, flags);
+          *fnamep = s;
+          *fnamelen = (int)STRLEN(s);
+          free(*bufp);
+          *bufp = s;
+          didit = TRUE;
+          free(sub);
+          free(str);
         }
+        free(pat);
       }
       /* after using ":s", repeat all the modifiers */
       if (didit)
@@ -19581,7 +19577,6 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   int do_all;
   char_u      *tail;
   garray_T ga;
-  char_u      *ret;
   char_u      *save_cpo;
   char_u      *zero_width = NULL;
 
@@ -19640,7 +19635,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
     vim_regfree(regmatch.regprog);
   }
 
-  ret = vim_strsave(ga.ga_data == NULL ? str : (char_u *)ga.ga_data);
+  char_u *ret = vim_strsave(ga.ga_data == NULL ? str : (char_u *)ga.ga_data);
   ga_clear(&ga);
   if (p_cpo == empty_option)
     p_cpo = save_cpo;
