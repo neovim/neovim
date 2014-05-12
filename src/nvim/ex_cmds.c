@@ -1451,8 +1451,6 @@ read_viminfo (
     return FAIL;
 
   fname = viminfo_filename(file);       /* get file name in allocated buffer */
-  if (fname == NULL)
-    return FAIL;
   fp = mch_fopen((char *)fname, READBIN);
 
   if (p_verbose > 0) {
@@ -1499,8 +1497,6 @@ void write_viminfo(char_u *file, int forceit)
     return;
 
   fname = viminfo_filename(file);       /* may set to default if NULL */
-  if (fname == NULL)
-    return;
 
   fp_in = mch_fopen((char *)fname, READBIN);
   if (fp_in == NULL) {
@@ -1667,7 +1663,7 @@ end:
  * cmdline functions).
  * Otherwise use "-i file_name", value from 'viminfo' or the default, and
  * expand environment variables.
- * Returns an allocated string.  NULL when out of memory.
+ * Returns an allocated string.
  */
 static char_u *viminfo_filename(char_u *file)
 {
