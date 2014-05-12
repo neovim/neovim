@@ -111,7 +111,7 @@ if(${LUA_MSGPACK_MISSING})
 endif()
 
 add_subdirectory(config)
-add_subdirectory(src)
+add_subdirectory(src/nvim)
 add_subdirectory(test/includes)
 
 find_program(BUSTED_PRG busted)
@@ -168,5 +168,5 @@ endif()
 # well with the legacy tests.  I have a branch that converts them to run under
 # CTest, but it needs a little more work.
 # add_custom_target(test
-#   COMMAND ${MAKE_PRG} -C ${CMAKE_CURRENT_SOURCE_DIR}/src/testdir
+#   COMMAND ${MAKE_PRG} -C ${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/testdir
 #     VIMPROG=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nvim)

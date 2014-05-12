@@ -1,9 +1,9 @@
 include(CheckLibraryExists)
 
-set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/auto)
+set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
 file(GLOB API_HEADERS api/*.h)
-set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/os/msgpack_rpc.h)
+set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/nvim/os/msgpack_rpc.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 
 # Remove helpers.h from API_HEADERS since it doesn't contain public API
