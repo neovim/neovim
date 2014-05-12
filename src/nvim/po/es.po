@@ -1,4 +1,4 @@
-# Vim7/src/po/vim.pot translation to Spanish.
+# Spanish translation for Vim
 #
 # Translation project homepage:
 # vim-doc-es http://www.assembla.com/wiki/show/vim-doc-es
