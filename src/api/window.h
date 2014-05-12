@@ -65,7 +65,7 @@ void window_set_width(Window window, int64_t width, Error *err);
 /// @return The variable value
 Object window_get_var(Window window, String name, Error *err);
 
-/// Sets a window variable
+/// Sets a window variable. Passing 'nil' as value deletes the variable.
 ///
 /// @param window The window handle
 /// @param name The variable name

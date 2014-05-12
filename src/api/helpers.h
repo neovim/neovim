@@ -26,12 +26,11 @@ bool try_end(Error *err);
 ///
 /// @param dict The vimscript dict
 /// @param key The key
-/// @param bool If true it will pop the value from the dict
 /// @param[out] err Details of an error that may have occurred
-Object dict_get_value(dict_T *dict, String key, bool pop, Error *err);
+Object dict_get_value(dict_T *dict, String key, Error *err);
 
 /// Set a value in a dict. Objects are recursively expanded into their
-/// vimscript equivalents.
+/// vimscript equivalents. Passing 'nil' as value deletes the key.
 ///
 /// @param dict The vimscript dict
 /// @param key The key

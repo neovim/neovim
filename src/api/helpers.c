@@ -82,7 +82,7 @@ bool try_end(Error *err)
   return err->set;
 }
 
-Object dict_get_value(dict_T *dict, String key, bool pop, Error *err)
+Object dict_get_value(dict_T *dict, String key, Error *err)
 {
   Object rv;
   hashitem_T *hi;
@@ -98,16 +98,6 @@ Object dict_get_value(dict_T *dict, String key, bool pop, Error *err)
 
   di = dict_lookup(hi);
   rv = vim_to_object(&di->di_tv);
-
-  if (pop) {
-    if (dict->dv_lock) {
-      set_api_error("Dictionary is locked", err);
-      return rv;
-    }
-
-    hash_remove(&dict->dv_hashtab, hi);
-    dictitem_free(di);
-  }
 
   return rv;
 }
@@ -127,24 +117,45 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
   }
 
   dictitem_T *di = dict_find(dict, (uint8_t *)key.data, key.size);
-  typval_T tv;
 
-  if (!object_to_vim(value, &tv, err)) {
-    return rv;
-  }
-
-  if (di == NULL) {
-    char *k = xstrndup(key.data, key.size);
-    di = dictitem_alloc((uint8_t *)k);
-    free(k);
-    dict_add(dict, di);
+  if (value.type == kObjectTypeNil) {
+    // Delete the key
+    if (di == NULL) {
+      // Doesn't exist, fail
+      set_api_error("Key doesn't exist", err);
+    } else {
+      // Return the old value
+      rv = vim_to_object(&di->di_tv);
+      // Delete the entry
+      hashitem_T *hi = hash_find(&dict->dv_hashtab, di->di_key);
+      hash_remove(&dict->dv_hashtab, hi);
+      dictitem_free(di);
+    }
   } else {
-    rv = vim_to_object(&di->di_tv);
-    clear_tv(&di->di_tv);
-  }
+    // Update the key
+    typval_T tv;
 
-  copy_tv(&tv, &di->di_tv);
-  clear_tv(&tv);
+    // Convert the object to a vimscript type in the temporary variable
+    if (!object_to_vim(value, &tv, err)) {
+      return rv;
+    }
+
+    if (di == NULL) {
+      // Need to create an entry
+      char *k = xstrndup(key.data, key.size);
+      di = dictitem_alloc((uint8_t *)k);
+      free(k);
+      dict_add(dict, di);
+    } else {
+      // Return the old value
+      clear_tv(&di->di_tv);
+    }
+
+    // Update the value
+    copy_tv(&tv, &di->di_tv);
+    // Clear the temporary variable
+    clear_tv(&tv);
+  }
 
   return rv;
 }

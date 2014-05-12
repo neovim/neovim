@@ -119,7 +119,7 @@ Object window_get_var(Window window, String name, Error *err)
     return rv;
   }
 
-  return dict_get_value(win->w_vars, name, false, err);
+  return dict_get_value(win->w_vars, name, err);
 }
 
 Object window_set_var(Window window, String name, Object value, Error *err)

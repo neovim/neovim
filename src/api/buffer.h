@@ -78,7 +78,7 @@ void buffer_set_slice(Buffer buffer,
 /// @return The variable value
 Object buffer_get_var(Buffer buffer, String name, Error *err);
 
-/// Sets a buffer variable
+/// Sets a buffer variable. Passing 'nil' as value deletes the variable.
 ///
 /// @param buffer The buffer handle
 /// @param name The variable name

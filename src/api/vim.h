@@ -61,15 +61,14 @@ void vim_del_current_line(Error *err);
 /// @param[out] err Details of an error that may have occurred
 void vim_set_current_line(String line, Error *err);
 
-/// Gets a global or special variable
+/// Gets a global variable
 ///
-/// @param special If it's a special(:v) variable
 /// @param name The variable name
 /// @param[out] err Details of an error that may have occurred
 /// @return The variable value
-Object vim_get_var(bool special, String name, bool pop, Error *err);
+Object vim_get_var(String name, Error *err);
 
-/// Sets a global variable
+/// Sets a global variable. Passing 'nil' as value deletes the variable.
 ///
 /// @param name The variable name
 /// @param value The variable value

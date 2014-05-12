@@ -231,7 +231,7 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
     return rv;
   }
 
-  return dict_get_value(buf->b_vars, name, false, err);
+  return dict_get_value(buf->b_vars, name, err);
 }
 
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)

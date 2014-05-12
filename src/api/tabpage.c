@@ -38,7 +38,7 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
     return rv;
   }
 
-  return dict_get_value(tab->tp_vars, name, false, err);
+  return dict_get_value(tab->tp_vars, name, err);
 }
 
 Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)

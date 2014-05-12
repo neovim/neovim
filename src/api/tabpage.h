@@ -21,7 +21,7 @@ int64_t tabpage_get_window_count(Tabpage tabpage, Error *err);
 /// @return The variable value
 Object tabpage_get_var(Tabpage tabpage, String name, Error *err);
 
-/// Sets a tabpage variable
+/// Sets a tabpage variable. Passing 'nil' as value deletes the variable.
 ///
 /// @param tabpage handle
 /// @param name The variable name
