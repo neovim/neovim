@@ -598,10 +598,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
         u_freeentry(uep, i);
         return FAIL;
       }
-      if ((uep->ue_array[i] = u_save_line(lnum++)) == NULL) {
-        u_freeentry(uep, i);
-        goto nomem;
-      }
+      uep->ue_array[i] = u_save_line(lnum++);
     }
   } else
     uep->ue_array = NULL;
@@ -614,16 +611,6 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
   u_check(FALSE);
 #endif
   return OK;
-
-nomem:
-  msg_silent = 0;       /* must display the prompt */
-  if (ask_yesno((char_u *)_("No undo possible; continue anyway"), TRUE)
-      == 'y') {
-    undo_off = TRUE;                /* will be reset when character typed */
-    return OK;
-  }
-  do_outofmem_msg((long_u)0);
-  return FAIL;
 }
 
 
@@ -2110,8 +2097,7 @@ static void u_undoredo(int undo)
       /* delete backwards, it goes faster in most cases */
       for (lnum = bot - 1, i = oldsize; --i >= 0; --lnum) {
         /* what can we do when we run out of memory? */
-        if ((newarray[i] = u_save_line(lnum)) == NULL)
-          do_outofmem_msg((long_u)0);
+        newarray[i] = u_save_line(lnum);
         /* remember we deleted the last line in the buffer, and a
          * dummy empty line will be inserted */
         if (curbuf->b_ml.ml_line_count == 1)
@@ -2742,8 +2728,7 @@ void u_saveline(linenr_T lnum)
     curbuf->b_u_line_colnr = curwin->w_cursor.col;
   else
     curbuf->b_u_line_colnr = 0;
-  if ((curbuf->b_u_line_ptr = u_save_line(lnum)) == NULL)
-    do_outofmem_msg((long_u)0);
+  curbuf->b_u_line_ptr = u_save_line(lnum);
 }
 
 /*
@@ -2784,10 +2769,6 @@ void u_undoline(void)
           curbuf->b_u_line_lnum + 1, (linenr_T)0, FALSE) == FAIL)
     return;
   oldp = u_save_line(curbuf->b_u_line_lnum);
-  if (oldp == NULL) {
-    do_outofmem_msg((long_u)0);
-    return;
-  }
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, TRUE);
   changed_bytes(curbuf->b_u_line_lnum, 0);
   free(curbuf->b_u_line_ptr);
@@ -2813,7 +2794,6 @@ void u_blockfree(buf_T *buf)
 
 /*
  * u_save_line(): allocate memory and copy line 'lnum' into it.
- * Returns NULL when out of memory.
  */
 static char_u *u_save_line(linenr_T lnum)
 {
