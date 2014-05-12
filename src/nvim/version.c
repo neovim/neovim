@@ -17,7 +17,7 @@
 #include "nvim/message.h"
 #include "nvim/misc2.h"
 #include "nvim/screen.h"
-
+#include "nvim/strings.h"
 #include "nvim/version_defs.h"
 
 char *Version = VIM_VERSION_SHORT;

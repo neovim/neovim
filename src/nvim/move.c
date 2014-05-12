@@ -28,6 +28,7 @@
 #include "nvim/misc2.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 
 static void comp_botline(win_T *wp);
 static void redraw_for_cursorline(win_T *wp);

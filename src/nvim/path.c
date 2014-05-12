@@ -22,6 +22,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/types.h"
 #include "nvim/ui.h"

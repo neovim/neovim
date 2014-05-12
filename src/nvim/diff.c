@@ -23,6 +23,7 @@
 #include "nvim/option.h"
 #include "nvim/path.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"

@@ -18,6 +18,7 @@
 #include "nvim/garray.h"
 #include "nvim/move.h"
 #include "nvim/os_unix.h"
+#include "nvim/strings.h"
 
 static int win_chartabsize(win_T *wp, char_u *p, colnr_T col);
 

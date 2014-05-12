@@ -120,6 +120,7 @@
 #include "nvim/regexp.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"

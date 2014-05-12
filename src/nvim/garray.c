@@ -10,6 +10,7 @@
 #include "nvim/memory.h"
 #include "nvim/path.h"
 #include "nvim/garray.h"
+#include "nvim/strings.h"
 
 // #include "nvim/globals.h"
 #include "nvim/memline.h"

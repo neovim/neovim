@@ -25,6 +25,7 @@
 #include "nvim/misc2.h"
 #include "nvim/keymap.h"
 #include "nvim/garray.h"
+#include "nvim/strings.h"
 #include "nvim/term.h"
 
 

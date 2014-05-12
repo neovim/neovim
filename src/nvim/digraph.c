@@ -16,6 +16,7 @@
 #include "nvim/garray.h"
 #include "nvim/normal.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/ui.h"
 
 typedef int result_T;

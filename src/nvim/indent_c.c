@@ -9,6 +9,7 @@
 #include "nvim/misc2.h"
 #include "nvim/option.h"
 #include "nvim/search.h"
+#include "nvim/strings.h"
 
 
 static char_u   *skip_string(char_u *p);

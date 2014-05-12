@@ -20,6 +20,7 @@
 #include "nvim/os/time.h"
 #include "nvim/path.h"
 #include "nvim/quickfix.h"
+#include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"

@@ -91,6 +91,7 @@
 #include "nvim/option.h"
 #include "nvim/screen.h"
 #include "nvim/spell.h"
+#include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 

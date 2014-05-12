@@ -12,6 +12,7 @@
 #include "nvim/option.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
+#include "nvim/strings.h"
 #include "nvim/window.h"
 
 static pumitem_T *pum_array = NULL; // items of displayed pum

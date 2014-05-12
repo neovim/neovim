@@ -20,6 +20,7 @@
 #include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/regexp.h"
+#include "nvim/strings.h"
 
 
 static void free_msglist(struct msglist *l);

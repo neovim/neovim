@@ -8,6 +8,7 @@
 #include "nvim/option.h"
 #include "nvim/regexp.h"
 #include "nvim/search.h"
+#include "nvim/strings.h"
 #include "nvim/undo.h"
 
 static int lisp_match(char_u *p);

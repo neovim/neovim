@@ -15,6 +15,7 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/vim.h"
 
 

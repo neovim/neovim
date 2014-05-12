@@ -41,6 +41,7 @@
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
 #include "nvim/search.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
 #include "nvim/undo.h"

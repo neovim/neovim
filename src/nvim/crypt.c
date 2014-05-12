@@ -17,6 +17,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/message.h"
 #include "nvim/option.h"
+#include "nvim/strings.h"
 
 static void make_crc_tab(void);
 

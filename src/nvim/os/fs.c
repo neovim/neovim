@@ -6,6 +6,7 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/path.h"
+#include "nvim/strings.h"
 
 static bool is_executable(const char_u *name);
 static bool is_executable_in_path(const char_u *name);

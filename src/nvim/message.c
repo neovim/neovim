@@ -31,6 +31,7 @@
 #include "nvim/option.h"
 #include "nvim/normal.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"

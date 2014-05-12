@@ -30,6 +30,7 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
 

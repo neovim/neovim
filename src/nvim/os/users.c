@@ -5,6 +5,7 @@
 #include "nvim/os/os.h"
 #include "nvim/garray.h"
 #include "nvim/misc2.h"
+#include "nvim/strings.h"
 #ifdef HAVE_PWD_H
 # include <pwd.h>
 #endif

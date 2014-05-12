@@ -3,6 +3,7 @@
 #include "nvim/misc2.h"
 #include "nvim/ex_getln.h"
 #include "nvim/charset.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 
 /*

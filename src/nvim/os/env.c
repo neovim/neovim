@@ -4,6 +4,7 @@
 
 #include "nvim/os/os.h"
 #include "nvim/misc2.h"
+#include "nvim/strings.h"
 
 #ifdef HAVE__NSGETENVIRON
 #include <crt_externs.h>

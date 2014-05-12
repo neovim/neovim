@@ -57,6 +57,7 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
+#include "nvim/strings.h"
 
 #ifdef REGEXP_DEBUG
 /* show/save debugging data when BT engine is used */

@@ -17,6 +17,7 @@
 #include "nvim/memline.h"
 #include "nvim/option_defs.h"
 #include "nvim/charset.h"
+#include "nvim/strings.h"
 
 #define BUFFER_LENGTH 1024
 

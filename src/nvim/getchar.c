@@ -40,6 +40,7 @@
 #include "nvim/option.h"
 #include "nvim/regexp.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"

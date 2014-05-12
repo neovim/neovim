@@ -44,6 +44,7 @@
 #include "nvim/os_unix.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
+#include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
