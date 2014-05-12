@@ -520,9 +520,6 @@ vim_findfile_init (
       search_ctx->ffsc_wc_path,
       level, 0);
 
-  if (sptr == NULL)
-    goto error_return;
-
   ff_push(search_ctx, sptr);
   search_ctx->ffsc_file_to_search = vim_strsave(filename);
   return search_ctx;
@@ -949,8 +946,6 @@ char_u *vim_findfile(void *search_ctx_arg)
       /* create a new stack entry */
       sptr = ff_create_stack_element(file_path,
           search_ctx->ffsc_wc_path, search_ctx->ffsc_level, 0);
-      if (sptr == NULL)
-        break;
       ff_push(search_ctx, sptr);
     } else
       break;
