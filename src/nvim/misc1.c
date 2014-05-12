@@ -1718,10 +1718,8 @@ del_bytes (
 /*
  * Delete from cursor to end of line.
  * Caller must have prepared for undo.
- *
- * return FAIL for failure, OK otherwise
  */
-int 
+void
 truncate_line (
     int fixpos                 /* if TRUE fix the cursor position when done */
 )
@@ -1745,8 +1743,6 @@ truncate_line (
    */
   if (fixpos && curwin->w_cursor.col > 0)
     --curwin->w_cursor.col;
-
-  return OK;
 }
 
 /*

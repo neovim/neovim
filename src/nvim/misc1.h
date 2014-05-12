@@ -22,7 +22,7 @@ void ins_str(char_u *s);
 int del_char(int fixpos);
 int del_chars(long count, int fixpos);
 int del_bytes(long count, int fixpos_arg, int use_delcombine);
-int truncate_line(int fixpos);
+void truncate_line(int fixpos);
 void del_lines(long nlines, int undo);
 int gchar_pos(pos_T *pos);
 int gchar_cursor(void);
