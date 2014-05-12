@@ -719,13 +719,10 @@ restofline:
         if (qfprev == NULL)
           goto error2;
         if (*errmsg && !multiignore) {
-          len = (int)STRLEN(qfprev->qf_text);
-          ptr = xmalloc(len + STRLEN(errmsg) + 2);
-          STRCPY(ptr, qfprev->qf_text);
-          free(qfprev->qf_text);
-          qfprev->qf_text = ptr;
-          *(ptr += len) = '\n';
-          STRCPY(++ptr, errmsg);
+          size_t len = STRLEN(qfprev->qf_text);
+          qfprev->qf_text = xrealloc(qfprev->qf_text, len + STRLEN(errmsg) + 2);
+          qfprev->qf_text[len] = '\n';
+          STRCPY(qfprev->qf_text + len + 1, errmsg);
         }
         if (qfprev->qf_nr == -1)
           qfprev->qf_nr = enr;

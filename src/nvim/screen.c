@@ -4691,10 +4691,7 @@ win_redr_status_matches (
   if (matches == NULL)          /* interrupted completion? */
     return;
 
-  if (has_mbyte)
-    buf = xmalloc(Columns * MB_MAXBYTES + 1);
-  else
-    buf = xmalloc(Columns + 1);
+  buf = xmalloc(has_mbyte ? Columns * MB_MAXBYTES + 1 : Columns + 1);
 
   if (match == -1) {    /* don't show match but original text */
     match = 0;

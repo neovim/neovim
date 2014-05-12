@@ -4304,14 +4304,9 @@ replace_termcodes (
   }
   result[dlen] = NUL;
 
-  /*
-   * Copy the new string to allocated memory.
-   * If this fails, just return from.
-   */
-  *bufp = vim_strsave(result);
-  from = *bufp;
-  free(result);
-  return from;
+  *bufp = xrealloc(result, dlen + 1);
+
+  return *bufp;
 }
 
 /*

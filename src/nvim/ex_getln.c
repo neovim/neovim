@@ -1986,7 +1986,7 @@ static void alloc_cmdbuff(int len)
   else
     len += 20;
 
-  ccline.cmdbuff = xmalloc(len);      /* caller should check for out-of-memory */
+  ccline.cmdbuff = xmalloc(len);
   ccline.cmdbufflen = len;
 }
 
@@ -2179,10 +2179,7 @@ void put_on_cmdline(char_u *str, int len, int redraw)
   if (len < 0)
     len = (int)STRLEN(str);
 
-  /* Check if ccline.cmdbuff needs to be longer */
-  if (ccline.cmdlen + len + 1 >= ccline.cmdbufflen) {
-    realloc_cmdbuff(ccline.cmdlen + len + 1);
-  }
+  realloc_cmdbuff(ccline.cmdlen + len + 1);
 
   if (!ccline.overstrike) {
     memmove(ccline.cmdbuff + ccline.cmdpos + len,

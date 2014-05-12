@@ -9592,9 +9592,8 @@ static void f_getcmdpos(typval_T *argvars, typval_T *rettv)
 static void f_getcmdtype(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = xmalloc(2);
+  rettv->vval.v_string = xmallocz(1);
   rettv->vval.v_string[0] = get_cmdline_type();
-  rettv->vval.v_string[1] = NUL;
 }
 
 /*
@@ -12124,8 +12123,6 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
     if (start < p) {
       /* There's part of a line in buf, store it in "prev". */
       if (p - start + prevlen >= prevsize) {
-        /* need bigger "prev" buffer */
-        char_u *newprev;
 
         /* A common use case is ordinary text files and "prev" gets a
          * fragment of a line, so the first allocation is made
@@ -12138,8 +12135,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           long growmin  = (long)((p - start) * 2 + prevlen);
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
-        newprev = (prev == NULL) ? xmalloc(prevsize) : xrealloc(prev, prevsize);
-        prev = newprev;
+        prev = xrealloc(prev, prevsize);
       }
       /* Add the line part to end of "prev". */
       memmove(prev + prevlen, start, p - start);
@@ -12398,10 +12394,9 @@ static void f_repeat(typval_T *argvars, typval_T *rettv)
     if (len <= 0)
       return;
 
-    char_u *r = xmalloc(len + 1);
+    char_u *r = xmallocz(len);
     for (int i = 0; i < n; i++)
       memmove(r + i * slen, p, (size_t)slen);
-    r[len] = NUL;
 
     rettv->vval.v_string = r;
   }
@@ -15708,7 +15703,7 @@ static char_u *make_expanded_name(char_u *in_start, char_u *expr_start, char_u *
   temp_result = eval_to_string(expr_start + 1, &nextcmd, FALSE);
   if (temp_result != NULL && nextcmd == NULL) {
     retval = xmalloc(STRLEN(temp_result) + (expr_start - in_start)
-                              + (in_end - expr_end) + 1);
+                     + (in_end - expr_end) + 1);
     STRCPY(retval, in_start);
     STRCAT(retval, temp_result);
     STRCAT(retval, expr_end + 1);
