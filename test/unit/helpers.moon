@@ -84,7 +84,7 @@ cimport = (...) ->
 cppimport = (path) ->
   return cimport Paths.test_include_path .. '/' .. path
 
-cimport './src/types.h'
+cimport './src/nvim/types.h'
 
 -- take a pointer to a C-allocated string and return an interned
 -- version while also freeing the memory
