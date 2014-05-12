@@ -152,6 +152,11 @@ Object vim_set_var(String name, Object value, Error *err)
   return dict_set_value(&globvardict, name, value, err);
 }
 
+Object vim_get_vvar(String name, Error *err)
+{
+  return dict_get_value(&vimvardict, name, err);
+}
+
 Object vim_get_option(String name, Error *err)
 {
   return get_option_from(NULL, SREQ_GLOBAL, name, err);

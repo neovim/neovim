@@ -76,6 +76,13 @@ Object vim_get_var(String name, Error *err);
 /// @return the old value if any
 Object vim_set_var(String name, Object value, Error *err);
 
+/// Gets a vim variable
+///
+/// @param name The variable name
+/// @param[out] err Details of an error that may have occurred
+/// @return The variable value
+Object vim_get_vvar(String name, Error *err);
+
 /// Get an option value string
 ///
 /// @param name The option name
