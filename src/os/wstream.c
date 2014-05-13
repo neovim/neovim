@@ -3,6 +3,7 @@
 
 #include <uv.h>
 
+#include "os/uv_helpers.h"
 #include "os/wstream.h"
 #include "os/wstream_defs.h"
 #include "vim.h"
@@ -54,7 +55,7 @@ void wstream_free(WStream *wstream)
 
 void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 {
-  stream->data = wstream;
+  handle_set_wstream((uv_handle_t *)stream, wstream);
   wstream->stream = stream;
 }
 
@@ -105,10 +106,12 @@ static void write_cb(uv_write_t *req, int status)
     data->wstream->curmem -= data->length;
   }
 
-  if (data->wstream->freed && --data->wstream->pending_reqs == 0) {
+  data->wstream->pending_reqs--;
+  if (data->wstream->freed && data->wstream->pending_reqs == 0) {
     // Last pending write, free the wstream;
     free(data->wstream);
   }
 
   free(data);
 }
+

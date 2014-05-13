@@ -90,7 +90,7 @@ if(USE_BUNDLED_MSGPACK)
       -DTARGET=msgpack
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/msgpack/configure --disable-shared
-       --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
+       --with-pic --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} install)
   list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()

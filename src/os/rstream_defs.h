@@ -1,6 +1,8 @@
 #ifndef NEOVIM_OS_RSTREAM_DEFS_H
 #define NEOVIM_OS_RSTREAM_DEFS_H
 
+#include <stdbool.h>
+
 typedef struct rstream RStream;
 
 /// Type of function called when the RStream receives data

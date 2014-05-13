@@ -581,7 +581,7 @@ void mch_exit(int r)
 {
   exiting = TRUE;
 
-  job_teardown();
+  event_teardown();
 
   {
     settmode(TMODE_COOK);

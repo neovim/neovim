@@ -1,6 +1,9 @@
 lpeg = require('lpeg')
 msgpack = require('cmsgpack')
 
+-- lpeg grammar for building api metadata from a set of header files. It
+-- ignores comments and preprocessor commands and parses a very small subset
+-- of C prototypes with a limited set of types
 P, R, S = lpeg.P, lpeg.R, lpeg.S
 C, Ct, Cc, Cg = lpeg.C, lpeg.Ct, lpeg.Cc, lpeg.Cg
 
@@ -15,37 +18,76 @@ c_comment = P('//') * (not_nl ^ 0)
 c_preproc = P('#') * (not_nl ^ 0)
 c_id = letter * (alpha ^ 0)
 c_void = P('void')
-c_raw = P('char') * fill * P('*')
-c_int = P('uint32_t')
-c_array = c_raw * fill * P('*') * Cc('array')
 c_param_type = (
-  (c_array  * Cc('array') * fill) +
-  (c_raw * Cc('raw') * fill) +
-  (c_int * Cc('integer') * (ws ^ 1))
+  ((P('Error') * fill * P('*') * fill) * Cc('error')) +
+  (C(P('bool')) * (ws ^ 1)) +
+  (C(P('int64_t')) * (ws ^ 1)) +
+  (C(P('double')) * (ws ^ 1)) +
+  (C(P('StringArray')) * (ws ^ 1)) +
+  (C(P('String')) * (ws ^ 1)) +
+  (C(P('Buffer')) * (ws ^ 1)) +
+  (C(P('Window')) * (ws ^ 1)) +
+  (C(P('Tabpage')) * (ws ^ 1)) +
+  (C(P('Object')) * (ws ^ 1)) +
+  (C(P('Position')) * (ws ^ 1)) +
+  (C(P('Array')) * (ws ^ 1)) +
+  (C(P('Dictionary')) * (ws ^ 1))
   )
-c_type = (c_void * Cc('none') * (ws ^ 1)) + c_param_type
+c_type = (C(c_void) * (ws ^ 1)) + c_param_type
 c_param = Ct(c_param_type * C(c_id))
 c_param_list = c_param * (fill * (P(',') * fill * c_param) ^ 0)
 c_params = Ct(c_void + c_param_list)
 c_proto = Ct(
-  Cg(c_type, 'rtype') * Cg(c_id, 'fname') *
-  fill * P('(') * fill * Cg(c_params, 'params') * fill * P(')') *
+  Cg(c_type, 'return_type') * Cg(c_id, 'name') *
+  fill * P('(') * fill * Cg(c_params, 'parameters') * fill * P(')') *
   fill * P(';')
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
-inputf = assert(arg[1])
-outputf = assert(arg[2])
+-- we need at least 2 arguments since the last one is the output file
+assert(#arg >= 1)
+-- api metadata
+api = {
+  functions = {},
+  -- Helpers for object-oriented languages
+  classes = {'Buffer', 'Window', 'Tabpage'}
+}
+-- names of all headers relative to the source root(for inclusion in the
+-- generated file)
+headers = {}
+-- output file(dispatch function + metadata serialized with msgpack)
+outputf = arg[#arg]
 
-input = io.open(inputf, 'rb')
-api = grammar:match(input:read('*all'))
-input:close()
+-- read each input file, parse and append to the api metadata
+for i = 1, #arg - 1 do
+  local full_path = arg[i]
+  local parts = {}
+  for part in string.gmatch(full_path, '[^/]+') do
+    parts[#parts + 1] = part
+  end
+  headers[#headers + 1] = parts[#parts - 1]..'/'..parts[#parts]
 
--- assign a unique integer id for each api function
-for i = 1, #api do
-  api[i].id = i
+  local input = io.open(full_path, 'rb')
+  local tmp = grammar:match(input:read('*all'))
+  for i = 1, #tmp do
+    api.functions[#api.functions + 1] = tmp[i]
+    local fn_id = #api.functions
+    local fn = api.functions[fn_id]
+    if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
+      -- function can fail if the last parameter type is 'Error'
+      fn.can_fail = true
+      -- remove the error parameter, msgpack has it's own special field
+      -- for specifying errors
+      fn.parameters[#fn.parameters] = nil
+    end
+    -- assign a unique integer id for each api function
+    fn.id = fn_id
+  end
+  input:close()
 end
 
+
+-- start building the output
 output = io.open(outputf, 'wb')
 
 output:write([[
@@ -53,12 +95,21 @@ output:write([[
 #include <stdint.h>
 #include <msgpack.h>
 
-#include "api.h"
-#include "msgpack_rpc.h"
+#include "os/msgpack_rpc.h"
+]])
+
+for i = 1, #headers do
+  output:write('\n#include "'..headers[i]..'"')
+end
+
+output:write([[
+
 
 static const uint8_t msgpack_metadata[] = {
 
 ]])
+-- serialize the API metadata using msgpack and embed into the resulting
+-- binary for easy querying by clients 
 packed = msgpack.pack(api)
 for i = 1, #packed do
   output:write(string.byte(packed, i)..', ')
@@ -66,69 +117,114 @@ for i = 1, #packed do
     output:write('\n  ')
   end
 end
+-- start the dispatch function. number 0 is reserved for querying the metadata,
+-- usually it is the first function called by clients.
 output:write([[
 };
 
-bool msgpack_rpc_dispatch(msgpack_object *req, msgpack_packer *res)
+void msgpack_rpc_dispatch(msgpack_object *req, msgpack_packer *res)
 {
-  uint32_t method_id = (uint32_t)req->via.u64;
+  Error error = { .set = false };
+  uint64_t method_id = (uint32_t)req->via.array.ptr[2].via.u64;
 
   switch (method_id) {
     case 0:
-      msgpack_rpc_response(req, res);
       msgpack_pack_nil(res);
       // The result is the `msgpack_metadata` byte array
       msgpack_pack_raw(res, sizeof(msgpack_metadata));
       msgpack_pack_raw_body(res, msgpack_metadata, sizeof(msgpack_metadata));
-      return true;
+      return;
 ]])
 
-for i = 1, #api do
-  local fn
+-- Visit each function metadata to build the case label with code generated
+-- for validating arguments and calling to the real API
+for i = 1, #api.functions do
+  local fn = api.functions[i]
   local args = {}
-  fn = api[i]
-  output:write('\n    case '..fn.id..':')
-  for j = 1, #fn.params do
-    local expected, convert, param
-    local idx = tostring(j - 1)
-    param = fn.params[j]
-    ref = '(req->via.array.ptr[3].via.array.ptr + '..idx..')'
-    -- decide which validation/conversion to use for this argument
-    if param[1] == 'array' then
-      expected = 'MSGPACK_OBJECT_ARRAY'
-      convert = 'msgpack_rpc_array_argument'
-    elseif param[1] == 'raw' then
-      expected = 'MSGPACK_OBJECT_RAW'
-      convert = 'msgpack_rpc_raw_argument'
-    elseif param[1] == 'integer' then
-      expected = 'MSGPACK_OBJECT_POSITIVE_INTEGER'
-      convert = 'msgpack_rpc_integer_argument'
-    end
-    output:write('\n      if ('..ref..'->type != '..expected..') {')
-    output:write('\n        return msgpack_rpc_error(req, res, "Wrong argument types");')
-    output:write('\n      }')
-    table.insert(args, convert..'('..ref..')')
+  local cleanup_label = 'cleanup_'..i
+  output:write('\n    case '..fn.id..': {')
+
+  output:write('\n      if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
+  output:write('\n        snprintf(error.msg, sizeof(error.msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %u", req->via.array.ptr[3].via.array.size);')
+  output:write('\n        msgpack_rpc_error(error.msg, res);')
+  output:write('\n        goto '..cleanup_label..';')
+  output:write('\n      }\n')
+  -- Declare/initialize variables that will hold converted arguments
+  for j = 1, #fn.parameters do
+    local param = fn.parameters[j]
+    local converted = 'arg_'..j
+    output:write('\n      '..param[1]..' '..converted..' msgpack_rpc_init_'..string.lower(param[1])..';')
   end
+  output:write('\n')
+  -- Validation/conversion for each argument
+  for j = 1, #fn.parameters do
+    local converted, convert_arg, param, arg
+    param = fn.parameters[j]
+    arg = '(req->via.array.ptr[3].via.array.ptr + '..(j - 1)..')'
+    converted = 'arg_'..j
+    convert_arg = 'msgpack_rpc_to_'..string.lower(param[1])
+    output:write('\n      if (!'..convert_arg..'('..arg..', &'..converted..')) {')
+    output:write('\n        msgpack_rpc_error("Wrong type for argument '..j..', expecting '..param[1]..'", res);')
+    output:write('\n        goto '..cleanup_label..';')
+    output:write('\n      }\n')
+    args[#args + 1] = converted
+  end
+  
+  -- function call
   local call_args = table.concat(args, ', ')
-  -- convert the result back to msgpack
-  if fn.rtype == 'none' then
-    output:write('\n      '..fn.fname..'('..call_args..');')
-    output:write('\n      return msgpack_rpc_void_result(req, res);\n')
-  else
-    if fn.rtype == 'array' then
-      convert = 'msgpack_rpc_array_result'
-    elseif fn.rtype == 'raw' then
-      convert = 'msgpack_rpc_raw_result'
-    elseif fn.rtype == 'integer' then
-      convert = 'msgpack_rpc_integer_result'
-    end
-    output:write('\n      return '..convert..'('..fn.fname..'('..call_args..'), req, res);\n')
+  output:write('\n      ')
+  if fn.return_type ~= 'void' then
+    -- has a return value, prefix the call with a declaration
+    output:write(fn.return_type..' rv = ')
   end
+
+  -- write the call without the closing parenthesis
+  output:write(fn.name..'('..call_args)
+
+  if fn.can_fail then
+    -- if the function can fail, also pass a pointer to the local error object
+    if #args > 0 then
+      output:write(', &error);\n')
+    else
+      output:write('&error);\n')
+    end
+    -- and check for the error
+    output:write('\n      if (error.set) {')
+    output:write('\n        msgpack_rpc_error(error.msg, res);')
+    output:write('\n        goto '..cleanup_label..';')
+    output:write('\n      }\n')
+  else
+    output:write(');\n')
+  end
+
+  -- nil error
+  output:write('\n      msgpack_pack_nil(res);');
+
+  if fn.return_type == 'void' then
+    output:write('\n      msgpack_pack_nil(res);');
+  else
+    output:write('\n      msgpack_rpc_from_'..string.lower(fn.return_type)..'(rv, res);')
+    -- free the return value
+    output:write('\n      msgpack_rpc_free_'..string.lower(fn.return_type)..'(rv);')
+  end
+  -- Now generate the cleanup label for freeing memory allocated for the
+  -- arguments
+  output:write('\n\n'..cleanup_label..':');
+
+  for j = 1, #fn.parameters do
+    local param = fn.parameters[j]
+    output:write('\n      msgpack_rpc_free_'..string.lower(param[1])..'(arg_'..j..');')
+  end
+  output:write('\n      return;');
+  output:write('\n    };\n');
+
 end
+
 output:write([[
+
+
     default:
-      abort();
-      return false;
+      msgpack_rpc_error("Invalid function id", res);
   }
 }
 ]])

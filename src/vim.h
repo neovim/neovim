@@ -1382,11 +1382,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 #define FILEINFO_READ_FAIL   2  /* CreateFile() failed */
 #define FILEINFO_INFO_FAIL   3  /* GetFileInformationByHandle() failed */
 
-/* Option types for various functions in option.c */
-#define SREQ_GLOBAL     0       /* Request global option */
-#define SREQ_WIN        1       /* Request window-local option */
-#define SREQ_BUF        2       /* Request buffer-local option */
-
 /* Character used as separated in autoload function/variable names. */
 #define AUTOLOAD_CHAR '#'
 

@@ -1,5 +1,8 @@
 #ifndef NEOVIM_OPTION_H
 #define NEOVIM_OPTION_H
+
+#include <stdint.h>
+
 /* option.c */
 void set_init_1(void);
 void set_string_default(char *name, char_u *val);
@@ -26,6 +29,11 @@ char_u *check_colorcolumn(win_T *wp);
 char_u *check_stl_option(char_u *s);
 int get_option_value(char_u *name, long *numval, char_u **stringval,
                              int opt_flags);
+int get_option_value_strict(char *name,
+                            int64_t *numval,
+                            char **stringval,
+                            int opt_type,
+                            void *from);
 char_u *option_iter_next(void **option, int opt_type);
 char_u *set_option_value(char_u *name, long number, char_u *string,
                                  int opt_flags);
@@ -39,6 +47,7 @@ void free_termoptions(void);
 void free_one_termoption(char_u *var);
 void set_term_defaults(void);
 void comp_col(void);
+void unset_global_local_option(char *name, void *from);
 char_u *get_equalprg(void);
 void win_copy_options(win_T *wp_from, win_T *wp_to);
 void copy_winopt(winopt_T *from, winopt_T *to);

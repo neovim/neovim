@@ -34,7 +34,6 @@ void goto_tabpage_tp(tabpage_T *tp, int trigger_enter_autocmds,
 void goto_tabpage_win(tabpage_T *tp, win_T *wp);
 void tabpage_move(int nr);
 void win_goto(win_T *wp);
-win_T *win_find_nr(int winnr);
 tabpage_T *win_find_tabpage(win_T *win);
 void win_enter(win_T *wp, int undo_sync);
 win_T *buf_jump_open_win(buf_T *buf);

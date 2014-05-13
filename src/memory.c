@@ -214,6 +214,10 @@ char *xstrndup(const char *str, size_t len)
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 
+char *xmemdup(const char *data, size_t len)
+{
+  return memcpy(xmalloc(len), data, len);
+}
 
 /*
  * Avoid repeating the error message many times (they take 1 second each).

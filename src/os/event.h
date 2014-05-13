@@ -8,6 +8,7 @@
 #include "os/job_defs.h"
 
 void event_init(void);
+void event_teardown(void);
 bool event_poll(int32_t ms);
 bool event_is_pending(void);
 void event_push(Event event);

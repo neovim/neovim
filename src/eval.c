@@ -5261,6 +5261,11 @@ dictitem_T *dict_lookup(hashitem_T *hi)
 }
 #endif
 
+dictitem_T * dict_lookup(hashitem_T *hi)
+{
+    return HI2DI(hi);
+}
+
 /*
  * Return TRUE when two dictionaries have exactly the same key/values.
  */
@@ -10050,7 +10055,7 @@ getwinvar (
   char_u      *varname;
   dictitem_T  *v;
   tabpage_T   *tp = NULL;
-  tabpage_T   *oldtabpage;
+  tabpage_T   *oldtabpage = NULL;
   int done = FALSE;
 
   if (off == 1)

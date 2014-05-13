@@ -7,6 +7,8 @@
 #include "lib/klist.h"
 #include "os/event.h"
 #include "os/input.h"
+#include "os/channel.h"
+#include "os/server.h"
 #include "os/signal.h"
 #include "os/rstream.h"
 #include "os/job.h"
@@ -36,9 +38,20 @@ void event_init()
   signal_init();
   // Jobs
   job_init();
+  // Channels
+  channel_init();
+  // Servers
+  server_init();
   uv_timer_init(uv_default_loop(), &timer);
   // This prepare handle that actually starts the timer
   uv_prepare_init(uv_default_loop(), &timer_prepare);
+}
+
+void event_teardown()
+{
+  channel_teardown();
+  job_teardown();
+  server_teardown();
 }
 
 // Wait for some event

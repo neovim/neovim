@@ -28,7 +28,8 @@ void job_teardown(void);
 ///        on stdout
 /// @param stderr_cb Callback that will be invoked when data is available
 ///        on stderr
-/// @param exit_cb Callback that will be invoked when the job exits
+/// @param exit_cb Callback that will be invoked when the job exits. This is
+///        optional.
 /// @return The job id if the job started successfully. If the the first item /
 ///         of `argv`(the program) could not be executed, -1 will be returned.
 //          0 will be returned if the job table is full.
