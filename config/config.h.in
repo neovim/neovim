@@ -11,6 +11,12 @@
 #define SIZEOF_TIME_T @SIZEOF_TIME_T@
 #define SIZEOF_OFF_T @SIZEOF_OFF_T@
 
+#if @SIZEOF_VOID_PTR@ == 8
+#define ARCH_64
+#elif @SIZEOF_VOID_PTR@ == 4
+#define ARCH_32
+#endif
+
 #define _FILE_OFFSET_BITS 64
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_CRT_EXTERNS_H
