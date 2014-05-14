@@ -4,9 +4,9 @@
 
 #include "api/helpers.h"
 #include "api/defs.h"
-#include "../vim.h"
-#include "../buffer.h"
-#include "../window.h"
+#include "vim.h"
+#include "buffer.h"
+#include "window.h"
 #include "memory.h"
 #include "eval.h"
 #include "option.h"

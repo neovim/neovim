@@ -5,8 +5,8 @@
 #include "api/window.h"
 #include "api/defs.h"
 #include "api/helpers.h"
-#include "../vim.h"
-#include "../window.h"
+#include "vim.h"
+#include "window.h"
 #include "screen.h"
 #include "misc2.h"
 

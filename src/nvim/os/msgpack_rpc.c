@@ -1,6 +1,6 @@
 #include <msgpack.h>
 
-#include "msgpack_rpc.h"
+#include "os/msgpack_rpc.h"
 #include "vim.h"
 #include "memory.h"
 

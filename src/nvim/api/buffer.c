@@ -6,8 +6,8 @@
 #include "api/buffer.h"
 #include "api/helpers.h"
 #include "api/defs.h"
-#include "../vim.h"
-#include "../buffer.h"
+#include "vim.h"
+#include "buffer.h"
 #include "memline.h"
 #include "memory.h"
 #include "misc1.h"
@@ -16,7 +16,7 @@
 #include "mark.h"
 #include "fileio.h"
 #include "move.h"
-#include "../window.h"
+#include "window.h"
 #include "undo.h"
 
 // Find a window that contains "buf" and switch to it.

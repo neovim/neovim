@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #include "api/defs.h"
-#include "../vim.h"
+#include "vim.h"
 
 #define set_api_error(message, err)                \
   do {                                             \
