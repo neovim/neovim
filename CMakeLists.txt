@@ -23,7 +23,15 @@ set(NEOVIM_VERSION_PATCH 0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_definitions(-Werror -Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)
+add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)
+
+option(
+  TRAVIS_CI_BUILD "Travis CI build.  Extra compilation flags will be set." OFF)
+
+if(TRAVIS_CI_BUILD)
+  message(STATUS "Travis CI build enabled.")
+  add_definitions(-Werror)
+endif()
 
 add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)

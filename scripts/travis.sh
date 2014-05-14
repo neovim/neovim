@@ -121,7 +121,7 @@ if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 	export SKIP_UNITTEST=1
 	export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
-	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
+	$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
 	$MAKE_CMD
 	if ! $MAKE_CMD test; then
 		reset
@@ -136,7 +136,7 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
 	export CC=gcc
 	set_environment /opt/neovim-deps
 	export SKIP_EXEC=1
-	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP -DUSE_GCOV=ON" unittest
+	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=TAP -DUSE_GCOV=ON" unittest
 	coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	set_environment /opt/neovim-deps/32
@@ -159,7 +159,7 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	# correctly.
 	sudo apt-get install libncurses5-dev:i386
 
-	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake" unittest
+	$MAKE_CMD CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=TAP -DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake" unittest
 	$MAKE_CMD test
 elif [ "$TRAVIS_BUILD_TYPE" = "clint" ]; then
 	./scripts/clint.sh
