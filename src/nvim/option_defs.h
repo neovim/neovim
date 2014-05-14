@@ -616,12 +616,7 @@ extern char_u   *p_vfile;       /* 'verbosefile' */
 EXTERN int p_warn;              /* 'warn' */
 EXTERN char_u   *p_wop;         /* 'wildoptions' */
 EXTERN long p_window;           /* 'window' */
-#if defined(FEAT_GUI_MSWIN) || defined(FEAT_GUI_MOTIF) || defined(LINT) \
-  || defined (FEAT_GUI_GTK) || defined(FEAT_GUI_PHOTON)
-#define FEAT_WAK
 EXTERN char_u   *p_wak;         /* 'winaltkeys' */
-#endif
-EXTERN char_u *p_wak;
 EXTERN char_u   *p_wig;         /* 'wildignore' */
 EXTERN int p_wiv;               /* 'weirdinvert' */
 EXTERN char_u   *p_ww;          /* 'whichwrap' */

@@ -99,26 +99,8 @@
 #define USEMAN_S 1
 #define USEMEMMOVE 1
 
-#define FEAT_ARABIC
-#define FEAT_AUTOCHDIR
 #define FEAT_BROWSE
-#define FEAT_BROWSE_CMD
-#define FEAT_CMDHIST
-#define FEAT_CONCEAL
 #define FEAT_CSCOPE
-#define FEAT_DIGRAPHS
-#define FEAT_FIND_ID
-#define FEAT_FKMAP
-#define FEAT_FOLDING
-#define FEAT_HANGULIN
-#define FEAT_INS_EXPAND
-#define FEAT_JUMPLIST
-#define FEAT_KEYMAP
-#define FEAT_LANGMAP
-#define FEAT_LINEBREAK
-#define FEAT_LISP
-#define FEAT_LOCALMAP
-#define FEAT_MODIFY_FNAME
 #define FEAT_MOUSE
 #define FEAT_MOUSE_DEC
 #define FEAT_MOUSE_NET
@@ -126,37 +108,4 @@
 #define FEAT_MOUSE_TTY
 #define FEAT_MOUSE_URXVT
 #define FEAT_MOUSE_XTERM
-#define FEAT_MULTI_LANG
-#define FEAT_PATH_EXTRA
-#define FEAT_PERSISTENT_UNDO
-#define FEAT_PRINTER
-#define FEAT_PROFILE
-#define FEAT_RELTIME
-#define FEAT_RIGHTLEFT
-#define FEAT_SCROLLBIND
-#define FEAT_SEARCH_EXTRA
-#define FEAT_SMARTINDENT
-#define FEAT_SPELL
-#define FEAT_SYN_HL
-#define FEAT_TAG_BINS
-#define FEAT_TAG_OLDSTATIC
 #define FEAT_TERMRESPONSE
-#define FEAT_TEXTOBJ
-#define FEAT_USR_CMDS
-#define FEAT_VERTSPLIT
-#define FEAT_VIMINFO
-#define FEAT_VIRTUALEDIT
-#define FEAT_VISUAL
-#define FEAT_VISUALEXTRA
-#define FEAT_VREPLACE
-#define FEAT_WAK
-#define FEAT_WILDIGN
-#define FEAT_WILDMENU
-#define FEAT_WRITEBACK
-#define FEAT_HUGE
-#define FEAT_BIG
-#define FEAT_NORMAL
-#define FEAT_SMALL
-#define FEAT_TINY
-#define FEAT_WRITEBACKUP
-#define VIM_BACKTICK           /* internal backtick expansion */
