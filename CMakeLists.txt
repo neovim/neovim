@@ -55,17 +55,17 @@ include_directories("${PROJECT_SOURCE_DIR}/src")
 include(CheckLibraryExists)
 
 find_package(LibUV REQUIRED)
-include_directories(${LIBUV_INCLUDE_DIRS})
+include_directories(SYSTEM ${LIBUV_INCLUDE_DIRS})
 
 find_package(Msgpack REQUIRED)
-include_directories(${MSGPACK_INCLUDE_DIRS})
+include_directories(SYSTEM ${MSGPACK_INCLUDE_DIRS})
 
 find_package(LuaJit REQUIRED)
-include_directories(${LUAJIT_INCLUDE_DIRS})
+include_directories(SYSTEM ${LUAJIT_INCLUDE_DIRS})
 
 find_package(LibIntl)
 if(LibIntl_FOUND)
-  include_directories(${LibIntl_INCLUDE_DIR})
+  include_directories(SYSTEM ${LibIntl_INCLUDE_DIR})
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
