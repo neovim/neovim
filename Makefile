@@ -60,14 +60,14 @@ deps: | .deps/build/third-party/.ran-cmake
 	touch $@
 
 test: | nvim
-	+$(SINGLE_MAKE) -C src/testdir
+	+$(SINGLE_MAKE) -C src/nvim/testdir
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
 
 clean:
 	+test -d build && $(BUILD_CMD) -C build clean || true
-	$(MAKE) -C src/testdir clean
+	$(MAKE) -C src/nvim/testdir clean
 
 distclean: clean
 	rm -rf .deps build

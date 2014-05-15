@@ -1,0 +1,94 @@
+#ifndef NVIM_FILEIO_H
+#define NVIM_FILEIO_H
+
+#include "nvim/buffer_defs.h"
+#include "nvim/os/os.h"
+
+/*
+ * Struct to save values in before executing autocommands for a buffer that is
+ * not the current buffer.  Without FEAT_AUTOCMD only "curbuf" is remembered.
+ */
+typedef struct {
+  buf_T       *save_curbuf;     /* saved curbuf */
+  int use_aucmd_win;            /* using aucmd_win */
+  win_T       *save_curwin;     /* saved curwin */
+  win_T       *new_curwin;      /* new curwin */
+  buf_T       *new_curbuf;      /* new curbuf */
+  char_u      *globaldir;       /* saved value of globaldir */
+} aco_save_T;
+
+/* fileio.c */
+void filemess(buf_T *buf, char_u *name, char_u *s, int attr);
+int readfile(char_u *fname, char_u *sfname, linenr_T from,
+             linenr_T lines_to_skip, linenr_T lines_to_read, exarg_T *eap,
+             int flags);
+void prep_exarg(exarg_T *eap, buf_T *buf);
+void set_file_options(int set_options, exarg_T *eap);
+void set_forced_fenc(exarg_T *eap);
+int prepare_crypt_read(FILE *fp);
+char_u *prepare_crypt_write(buf_T *buf, int *lenp);
+int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start,
+              linenr_T end, exarg_T *eap, int append, int forceit,
+              int reset_changed,
+              int filtering);
+void msg_add_fname(buf_T *buf, char_u *fname);
+void msg_add_lines(int insert_space, long lnum, off_t nchars);
+void shorten_fnames(int force);
+char_u *modname(char_u *fname, char_u *ext, int prepend_dot);
+int vim_fgets(char_u *buf, int size, FILE *fp);
+int tag_fgets(char_u *buf, int size, FILE *fp);
+int vim_rename(char_u *from, char_u *to);
+int check_timestamps(int focus);
+int buf_check_timestamp(buf_T *buf, int focus);
+void buf_reload(buf_T *buf, int orig_mode);
+void buf_store_file_info(buf_T *buf, FileInfo *file_info);
+void write_lnum_adjust(linenr_T offset);
+void vim_deltempdir(void);
+char_u *vim_tempname(int extra_char);
+void forward_slash(char_u *fname);
+void aubuflocal_remove(buf_T *buf);
+int au_has_group(char_u *name);
+void do_augroup(char_u *arg, int del_group);
+void free_all_autocmds(void);
+int check_ei(void);
+char_u *au_event_disable(char *what);
+void au_event_restore(char_u *old_ei);
+void do_autocmd(char_u *arg, int forceit);
+int do_doautocmd(char_u *arg, int do_msg);
+void ex_doautoall(exarg_T *eap);
+int check_nomodeline(char_u **argp);
+void aucmd_prepbuf(aco_save_T *aco, buf_T *buf);
+void aucmd_restbuf(aco_save_T *aco);
+int apply_autocmds(event_T event, char_u *fname, char_u *fname_io,
+                   int force,
+                   buf_T *buf);
+int apply_autocmds_retval(event_T event, char_u *fname, char_u *fname_io,
+                          int force, buf_T *buf,
+                          int *retval);
+int has_cursorhold(void);
+int trigger_cursorhold(void);
+int has_cursormoved(void);
+int has_cursormovedI(void);
+int has_textchanged(void);
+int has_textchangedI(void);
+int has_insertcharpre(void);
+void block_autocmds(void);
+void unblock_autocmds(void);
+char_u *getnextac(int c, void *cookie, int indent);
+int has_autocmd(event_T event, char_u *sfname, buf_T *buf);
+char_u *get_augroup_name(expand_T *xp, int idx);
+char_u *set_context_in_autocmd(expand_T *xp, char_u *arg, int doautocmd);
+char_u *get_event_name(expand_T *xp, int idx);
+int autocmd_supported(char_u *name);
+int au_exists(char_u *arg);
+int match_file_pat(char_u *pattern, regprog_T *prog, char_u *fname,
+                   char_u *sfname, char_u *tail,
+                   int allow_dirs);
+int match_file_list(char_u *list, char_u *sfname, char_u *ffname);
+char_u *file_pat_to_reg_pat(char_u *pat, char_u *pat_end,
+                            char *allow_dirs,
+                            int no_bslash);
+long read_eintr(int fd, void *buf, size_t bufsize);
+long write_eintr(int fd, void *buf, size_t bufsize);
+
+#endif /* NVIM_FILEIO_H */

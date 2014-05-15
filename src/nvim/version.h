@@ -1,0 +1,12 @@
+#ifndef NVIM_VERSION_H
+#define NVIM_VERSION_H
+
+int highest_patch(void);
+int has_patch(int n);
+void ex_version(exarg_T *eap);
+void list_version(void);
+void maybe_intro_message(void);
+void intro_message(int colon);
+void ex_intro(exarg_T *eap);
+
+#endif  // NVIM_VERSION_H

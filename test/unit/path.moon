@@ -1,7 +1,7 @@
 {:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
 require 'lfs'
 
-path = cimport './src/path.h'
+path = cimport './src/nvim/path.h'
 
 -- import constants parsed by ffi
 {:kEqualFiles, :kDifferentFiles, :kBothFilesMissing, :kOneFileMissing, :kEqualFileNames} = path

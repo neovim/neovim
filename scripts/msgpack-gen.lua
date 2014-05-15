@@ -95,11 +95,11 @@ output:write([[
 #include <stdint.h>
 #include <msgpack.h>
 
-#include "os/msgpack_rpc.h"
+#include "nvim/os/msgpack_rpc.h"
 ]])
 
 for i = 1, #headers do
-  output:write('\n#include "'..headers[i]..'"')
+  output:write('\n#include "nvim/'..headers[i]..'"')
 end
 
 output:write([[
