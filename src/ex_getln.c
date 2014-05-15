@@ -1243,7 +1243,6 @@ getcmdline (
 
       if (hiscnt != i) {                /* jumped to other entry */
         char_u      *p;
-        int len;
         int old_firstc;
 
         free(ccline.cmdbuff);
@@ -1256,39 +1255,45 @@ getcmdline (
         if (histype == HIST_SEARCH
             && p != lookfor
             && (old_firstc = p[STRLEN(p) + 1]) != firstc) {
-          /* Correct for the separator character used when
-           * adding the history entry vs the one used now.
-           * First loop: count length.
-           * Second loop: copy the characters. */
-          for (i = 0; i <= 1; ++i) {
-            len = 0;
-            for (j = 0; p[j] != NUL; ++j) {
-              /* Replace old sep with new sep, unless it is
-               * escaped. */
-              if (p[j] == old_firstc
-                  && (j == 0 || p[j - 1] != '\\')) {
-                if (i > 0)
-                  ccline.cmdbuff[len] = firstc;
-              } else {
-                /* Escape new sep, unless it is already
-                 * escaped. */
-                if (p[j] == firstc
-                    && (j == 0 || p[j - 1] != '\\')) {
-                  if (i > 0)
-                    ccline.cmdbuff[len] = '\\';
-                  ++len;
-                }
-                if (i > 0)
-                  ccline.cmdbuff[len] = p[j];
-              }
-              ++len;
+
+          // Correct the separator character. Replace the one used
+          // when adding the history entry with the one used now.
+
+          // Count the length & then allocate appropriate memory
+          int len = 0;
+          for (j = 0; p[j] != NUL; j++) {
+            // Escape the new sep if not already escaped
+            if (p[j] == firstc && (j == 0 || p[j - 1] != '\\')) {
+              len++;  // To escape the new sep
             }
-            if (i == 0) {
-              alloc_cmdbuff(len);
-              if (ccline.cmdbuff == NULL)
-                goto returncmd;
-            }
+            len++;
           }
+
+          alloc_cmdbuff(len);
+          if (ccline.cmdbuff == NULL) {
+            goto returncmd;
+          }
+
+          // Copy the characters
+          len = 0;
+          for (j = 0; p[j] != NUL; j++) {
+            if (j == 0 || p[j - 1] != '\\') {  // Not escaped
+              if (p[j] == old_firstc) {
+                ccline.cmdbuff[len] = firstc;  // Replace old sep with new sep
+                len++;
+                continue;
+              }
+
+              if (p[j] == firstc) {
+                ccline.cmdbuff[len] = '\\'; // Escape the new sep
+                len++;
+              }
+            }
+
+            ccline.cmdbuff[len] = p[j];
+            len++;
+          }
+
           ccline.cmdbuff[len] = NUL;
         } else {
           alloc_cmdbuff((int)STRLEN(p));
