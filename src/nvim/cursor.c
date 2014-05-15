@@ -161,16 +161,9 @@ coladvance2 (
       if (line[idx] == NUL) {
         /* Append spaces */
         int correct = wcol - col;
-        char_u  *newline = xmalloc(idx + correct + 1);
-        int t;
-
-        for (t = 0; t < idx; ++t)
-          newline[t] = line[t];
-
-        for (t = 0; t < correct; ++t)
-          newline[t + idx] = ' ';
-
-        newline[idx + correct] = NUL;
+        char_u *newline = xmallocz((size_t)(idx + correct));
+        memcpy(newline, line, (size_t)idx);
+        memset(newline + idx, ' ', (size_t)correct);
 
         ml_replace(pos->lnum, newline, FALSE);
         changed_bytes(pos->lnum, (colnr_T)idx);
@@ -181,23 +174,18 @@ coladvance2 (
         int linelen = (int)STRLEN(line);
         int correct = wcol - col - csize + 1;             /* negative!! */
         char_u  *newline;
-        int t, s = 0;
-        int v;
 
         if (-correct > csize)
           return FAIL;
 
-        newline = xmalloc(linelen + csize);
-
-        for (t = 0; t < linelen; t++) {
-          if (t != idx)
-            newline[s++] = line[t];
-          else
-            for (v = 0; v < csize; v++)
-              newline[s++] = ' ';
-        }
-
-        newline[linelen + csize - 1] = NUL;
+        newline = xmallocz((size_t)(linelen - 1 + csize));
+        // Copy first idx chars
+        memcpy(newline, line, (size_t)idx);
+        // Replace idx'th char with csize spaces
+        memset(newline + idx, ' ', (size_t)csize);
+        // Copy the rest of the line
+        memcpy(newline + idx + csize, line + idx + 1,
+               (size_t)(linelen - idx - 1));
 
         ml_replace(pos->lnum, newline, FALSE);
         changed_bytes(pos->lnum, idx);
@@ -464,7 +452,7 @@ int gchar_cursor(void)
  * Write a character at the current cursor position.
  * It is directly written into the block.
  */
-void pchar_cursor(int c)
+void pchar_cursor(char_u c)
 {
   *(ml_get_buf(curbuf, curwin->w_cursor.lnum, TRUE)
     + curwin->w_cursor.col) = c;
