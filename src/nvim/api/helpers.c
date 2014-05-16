@@ -14,13 +14,14 @@
 
 #include "nvim/lib/khash.h"
 
+
 #if defined(ARCH_64)
-typedef uint64_t ptr_int_t;
-KHASH_SET_INIT_INT64(Lookup)
+#define ptr_hash_func(key) kh_int64_hash_func(key)
 #elif defined(ARCH_32)
-typedef uint32_t ptr_int_t;
-KHASH_SET_INIT_INT(Lookup)
+#define ptr_hash_func(key) kh_int_hash_func(key)
 #endif
+
+KHASH_INIT(Lookup, uintptr_t, char, 0, ptr_hash_func, kh_int_hash_equal)
 
 /// Recursion helper for the `vim_to_object`. This uses a pointer table
 /// to avoid infinite recursion due to cyclic references
@@ -412,7 +413,7 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
   if (obj->v_type == VAR_LIST || obj->v_type == VAR_DICT) {
     int ret;
     // Container object, add it to the lookup table
-    kh_put(Lookup, lookup, (ptr_int_t)obj, &ret);
+    kh_put(Lookup, lookup, (uintptr_t)obj, &ret);
     if (!ret) {
       // It's already present, meaning we alredy processed it so just return
       // nil instead.
