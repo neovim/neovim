@@ -20,8 +20,8 @@ void adjust_cursor_col(void);
 int leftcol_changed(void);
 int gchar_cursor(void);
 void pchar_cursor(char_u c);
-char_u *ml_get_curline(void);
-char_u *ml_get_cursor(void);
+char_u *get_cursor_line_ptr(void);
+char_u *get_cursor_pos_ptr(void);
 
 #endif  // NVIM_CURSOR_H
 

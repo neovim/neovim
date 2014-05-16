@@ -6780,7 +6780,7 @@ void setcursor(void)
            * character, position it on the leftmost column. */
           curwin->w_p_rl ? ((int)W_WIDTH(curwin) - curwin->w_wcol - (
                               (has_mbyte
-                               && (*mb_ptr2cells)(ml_get_cursor()) == 2
+                               && (*mb_ptr2cells)(get_cursor_pos_ptr()) == 2
                                && vim_isprintc(gchar_cursor())) ? 2 :
                               1)) :
           curwin->w_wcol));

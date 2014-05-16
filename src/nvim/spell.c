@@ -8648,7 +8648,7 @@ void spell_suggest(int count)
     // No bad word or it starts after the cursor: use the word under the
     // cursor.
     curwin->w_cursor = prev_cursor;
-    line = ml_get_curline();
+    line = get_cursor_line_ptr();
     p = line + curwin->w_cursor.col;
     // Backup to before start of word.
     while (p > line && spell_iswordp_nmw(p, curwin))
@@ -8670,7 +8670,7 @@ void spell_suggest(int count)
   need_cap = check_need_cap(curwin->w_cursor.lnum, curwin->w_cursor.col);
 
   // Make a copy of current line since autocommands may free the line.
-  line = vim_strsave(ml_get_curline());
+  line = vim_strsave(get_cursor_line_ptr());
 
   // Get the list of suggestions.  Limit to 'lines' - 2 or the number in
   // 'spellsuggest', whatever is smaller.
@@ -8824,7 +8824,7 @@ static int check_need_cap(linenr_T lnum, colnr_T col)
   if (curwin->w_s->b_cap_prog == NULL)
     return FALSE;
 
-  line = ml_get_curline();
+  line = get_cursor_line_ptr();
   endcol = 0;
   if ((int)(skipwhite(line) - line) >= (int)col) {
     // At start of line, check if previous line is empty or sentence
@@ -8899,7 +8899,7 @@ void ex_spellrepall(exarg_T *eap)
 
     // Only replace when the right word isn't there yet.  This happens
     // when changing "etc" to "etc.".
-    line = ml_get_curline();
+    line = get_cursor_line_ptr();
     if (addlen <= 0 || STRNCMP(line + curwin->w_cursor.col,
             repl_to, STRLEN(repl_to)) != 0) {
       p = xmalloc(STRLEN(line) + addlen + 1);
@@ -13548,7 +13548,7 @@ int spell_word_start(int startcol)
     return startcol;
 
   // Find a word character before "startcol".
-  line = ml_get_curline();
+  line = get_cursor_line_ptr();
   for (p = line + startcol; p > line; ) {
     mb_ptr_back(line, p);
     if (spell_iswordp_nmw(p, curwin))

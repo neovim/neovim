@@ -5306,7 +5306,7 @@ static int ex_window(void)
        * and don't modify the cmd window. */
       ccline.cmdbuff = NULL;
     } else
-      ccline.cmdbuff = vim_strsave(ml_get_curline());
+      ccline.cmdbuff = vim_strsave(get_cursor_line_ptr());
     if (ccline.cmdbuff == NULL)
       cmdwin_result = Ctrl_C;
     else {

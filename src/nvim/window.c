@@ -4773,7 +4773,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
  */
 char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
 {
-  return file_name_in_line(ml_get_curline(),
+  return file_name_in_line(get_cursor_line_ptr(),
       curwin->w_cursor.col, options, count, curbuf->b_ffname,
       file_lnum);
 }
