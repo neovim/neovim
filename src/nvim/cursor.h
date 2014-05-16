@@ -1,6 +1,8 @@
 #ifndef NVIM_CURSOR_H
 #define NVIM_CURSOR_H
 
+#include <stdbool.h>
+
 #include "nvim/vim.h"
 #include "nvim/misc2.h"
 
@@ -17,7 +19,7 @@ void check_cursor_col(void);
 void check_cursor_col_win(win_T *win);
 void check_cursor(void);
 void adjust_cursor_col(void);
-int leftcol_changed(void);
+bool leftcol_changed(void);
 int gchar_cursor(void);
 void pchar_cursor(char_u c);
 char_u *get_cursor_line_ptr(void);
