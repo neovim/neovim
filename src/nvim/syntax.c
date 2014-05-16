@@ -892,7 +892,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
          * For "groupthere" the parsing starts at start_lnum.
          */
         if (found_flags & HL_SYNC_HERE) {
-          if (current_state.ga_len) {
+          if (!GA_EMPTY(&current_state)) {
             cur_si = &CUR_STATE(current_state.ga_len - 1);
             cur_si->si_h_startpos.lnum = found_current_lnum;
             cur_si->si_h_startpos.col = found_current_col;
@@ -2595,7 +2595,7 @@ static void push_current_state(int idx)
  */
 static void pop_current_state(void)
 {
-  if (current_state.ga_len) {
+  if (!GA_EMPTY(&current_state)) {
     unref_extmatch(CUR_STATE(current_state.ga_len - 1).si_extmatch);
     --current_state.ga_len;
   }
