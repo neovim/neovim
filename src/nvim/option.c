@@ -1916,7 +1916,7 @@ void set_init_1(void)
 {
   char_u      *p;
   int opt_idx;
-  uint64_t n;
+  uintptr_t n;
 
   langmap_init();
 
