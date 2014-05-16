@@ -612,11 +612,11 @@ void list_version(void)
       if ((i == 0) || (included_patches[i - 1] != included_patches[i] + 1)) {
         MSG_PUTS(s);
         s = ", ";
-        msg_outnum((long)first);
+        msg_outnum((int64_t)first);
 
         if (first != included_patches[i]) {
           MSG_PUTS("-");
-          msg_outnum((long)included_patches[i]);
+          msg_outnum((int64_t)included_patches[i]);
         }
         first = -1;
       }
@@ -720,7 +720,7 @@ void list_version(void)
 }
 
 /// Output a string for the version message.  If it's going to wrap, output a
-/// newline, unless the message is too long to fit on the screen anyway.
+/// newline, unless the message is too int64_t to fit on the screen anyway.
 ///
 /// @param s
 static void version_msg(char *s)

@@ -549,7 +549,7 @@ void adjust_cursor_col(void)
  */
 int leftcol_changed(void)
 {
-  long lastcol;
+  int64_t lastcol;
   colnr_T s, e;
   int retval = FALSE;
 
@@ -784,7 +784,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     shell_resized_check();
   }
 
-  set_vim_var_nr(VV_SHELL_ERROR, (long)retval);
+  set_vim_var_nr(VV_SHELL_ERROR, (int64_t)retval);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);
 

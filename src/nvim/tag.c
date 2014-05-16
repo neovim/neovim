@@ -107,8 +107,8 @@ static char_u *topmsg = (char_u *)N_("E556: at top of tag stack");
 static char_u   *tagmatchname = NULL;   /* name of last used tag */
 
 /*
- * We use ftello() here, if available.  It returns off_t instead of long,
- * which helps if long is 32 bit and off_t is 64 bit.
+ * We use ftello() here, if available.  It returns off_t instead of int64_t,
+ * which helps if int64_t is 32 bit and off_t is 64 bit.
  * We assume that when fseeko() is available then ftello() is too.
  */
 #ifdef HAVE_FSEEKO
@@ -518,7 +518,7 @@ do_tag (
                  (type == DT_JUMP && num_matches > 1))        {
         /*
          * List all the matching tags.
-         * Assume that the first match indicates how long the tags can
+         * Assume that the first match indicates how int64_t the tags can
          * be, and align the file names to that.
          */
         parse_match(matches[0], &tagp);
@@ -559,7 +559,7 @@ do_tag (
           msg_putchar(' ');
           taglen_advance(taglen);
 
-          /* Find out the actual file name. If it is long, truncate
+          /* Find out the actual file name. If it is int64_t, truncate
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
           if (p != NULL) {
@@ -690,7 +690,7 @@ do_tag (
 
         for (i = 0; i < num_matches; ++i) {
           int len, cmd_len;
-          long lnum;
+          int64_t lnum;
           dict_T  *dict;
 
           parse_match(matches[i], &tagp);
@@ -1371,7 +1371,7 @@ find_tags (
 #ifdef HAVE_FSEEKO
           fseeko(fp, search_info.curr_offset, SEEK_SET);
 #else
-          fseek(fp, (long)search_info.curr_offset, SEEK_SET);
+          fseek(fp, (int64_t)search_info.curr_offset, SEEK_SET);
 #endif
           eof = tag_fgets(lbuf, LSIZE, fp);
           if (!eof && search_info.curr_offset != 0) {
@@ -1383,7 +1383,7 @@ find_tags (
 #ifdef HAVE_FSEEKO
               fseeko(fp, search_info.low_offset, SEEK_SET);
 #else
-              fseek(fp, (long)search_info.low_offset, SEEK_SET);
+              fseek(fp, (int64_t)search_info.low_offset, SEEK_SET);
 #endif
               search_info.curr_offset = search_info.low_offset;
             }
@@ -1549,10 +1549,10 @@ parse_line:
           {
             if (vim_strchr(lbuf, NL) == NULL) {
               /* Truncated line, ignore it.  Has been reported for
-               * Mozilla JS with extremely long names. */
+               * Mozilla JS with extremely int64_t names. */
               if (p_verbose >= 5) {
                 verbose_enter();
-                MSG(_("Ignoring long line in tags file"));
+                MSG(_("Ignoring int64_t line in tags file"));
                 verbose_leave();
               }
               if (state != TS_LINEAR) {
@@ -1562,7 +1562,7 @@ parse_line:
 # ifdef HAVE_FSEEKO
                 fseeko(fp, search_info.low_offset, SEEK_SET);
 # else
-                fseek(fp, (long)search_info.low_offset, SEEK_SET);
+                fseek(fp, (int64_t)search_info.low_offset, SEEK_SET);
 # endif
               }
               continue;
@@ -1679,7 +1679,7 @@ parse_line:
               state = TS_STEP_FORWARD;
             else
               /* Have to skip back more.  Restore the curr_offset
-               * used, otherwise we get stuck at a long line. */
+               * used, otherwise we get stuck at a int64_t line. */
               search_info.curr_offset = search_info.curr_offset_used;
             continue;
           } else if (state == TS_STEP_FORWARD)   {
@@ -1867,7 +1867,7 @@ parse_line:
                 p = mfp->match;
                 vim_strncpy(p, tagp.tagname, len);
 
-                /* if wanted, re-read line to get long form too */
+                /* if wanted, re-read line to get int64_t form too */
                 if (State & INSERT)
                   get_it_again = p_sft;
               }
@@ -2527,7 +2527,7 @@ jumpto_tag (
       p_scs = FALSE;
       save_lnum = curwin->w_cursor.lnum;
       curwin->w_cursor.lnum = 0;        /* start search before first line */
-      if (do_search(NULL, pbuf[0], pbuf + 1, (long)1,
+      if (do_search(NULL, pbuf[0], pbuf + 1, (int64_t)1,
               search_options, NULL))
         retval = OK;
       else {
@@ -2538,7 +2538,7 @@ jumpto_tag (
          * try again, ignore case now
          */
         p_ic = TRUE;
-        if (!do_search(NULL, pbuf[0], pbuf + 1, (long)1,
+        if (!do_search(NULL, pbuf[0], pbuf + 1, (int64_t)1,
                 search_options, NULL)) {
           /*
            * Failed to find pattern, take a guess: "^func  ("
@@ -2548,12 +2548,12 @@ jumpto_tag (
           cc = *tagp.tagname_end;
           *tagp.tagname_end = NUL;
           sprintf((char *)pbuf, "^%s\\s\\*(", tagp.tagname);
-          if (!do_search(NULL, '/', pbuf, (long)1,
+          if (!do_search(NULL, '/', pbuf, (int64_t)1,
                   search_options, NULL)) {
             /* Guess again: "^char * \<func  (" */
             sprintf((char *)pbuf, "^\\[#a-zA-Z_]\\.\\*\\<%s\\s\\*(",
                 tagp.tagname);
-            if (!do_search(NULL, '/', pbuf, (long)1,
+            if (!do_search(NULL, '/', pbuf, (int64_t)1,
                     search_options, NULL))
               found = 0;
           }
@@ -2858,7 +2858,7 @@ int get_tags(list_T *list, char_u *pat)
   char_u      *full_fname;
   dict_T      *dict;
   tagptrs_T tp;
-  long is_static;
+  int64_t is_static;
 
   ret = find_tags(pat, &num_matches, &matches,
       TAG_REGEXP | TAG_NOIC, (int)MAXCOL, NULL);

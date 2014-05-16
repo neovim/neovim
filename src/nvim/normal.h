@@ -21,7 +21,7 @@ typedef struct oparg_S {
   pos_T end;                    /* end of the operator */
   pos_T cursor_start;           /* cursor position before motion for "gw" */
 
-  long line_count;              /* number of lines from op_start to op_end
+  int64_t line_count;              /* number of lines from op_start to op_end
                                    (inclusive) */
   int empty;                    /* op_start and op_end the same (only used by
                                    do_change()) */
@@ -29,8 +29,8 @@ typedef struct oparg_S {
   int block_mode;               /* current operator is Visual block mode */
   colnr_T start_vcol;           /* start col for block mode operator */
   colnr_T end_vcol;             /* end col for block mode operator */
-  long prev_opcount;            /* ca.opcount saved for K_CURSORHOLD */
-  long prev_count0;             /* ca.count0 saved for K_CURSORHOLD */
+  int64_t prev_opcount;            /* ca.opcount saved for K_CURSORHOLD */
+  int64_t prev_count0;             /* ca.count0 saved for K_CURSORHOLD */
 } oparg_T;
 
 /*
@@ -44,9 +44,9 @@ typedef struct cmdarg_S {
   int ncharC1;                  /* first composing character (optional) */
   int ncharC2;                  /* second composing character (optional) */
   int extra_char;               /* yet another character (optional) */
-  long opcount;                 /* count before an operator */
-  long count0;                  /* count before command, default 0 */
-  long count1;                  /* count before command, default 1 */
+  int64_t opcount;                 /* count before an operator */
+  int64_t count0;                  /* count before command, default 0 */
+  int64_t count1;                  /* count before command, default 1 */
   int arg;                      /* extra argument from nv_cmds[] */
   int retval;                   /* return: CA_* values */
   char_u      *searchbuf;       /* return: pointer to search pattern or NULL */
@@ -59,7 +59,7 @@ typedef struct cmdarg_S {
 void init_normal_cmds(void);
 void normal_cmd(oparg_T *oap, int toplevel);
 void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank);
-int do_mouse(oparg_T *oap, int c, int dir, long count, int fixindent);
+int do_mouse(oparg_T *oap, int c, int dir, int64_t count, int fixindent);
 void check_visual_highlight(void);
 void end_visual_mode(void);
 void reset_VIsual_and_resel(void);
@@ -74,10 +74,10 @@ void add_to_showcmd_c(int c);
 void push_showcmd(void);
 void pop_showcmd(void);
 void do_check_scrollbind(int check);
-void check_scrollbind(linenr_T topline_diff, long leftcol_diff);
+void check_scrollbind(linenr_T topline_diff, int64_t leftcol_diff);
 int find_decl(char_u *ptr, int len, int locally, int thisblock,
               int searchflags);
-void scroll_redraw(int up, long count);
+void scroll_redraw(int up, int64_t count);
 void do_nv_ident(int c1, int c2);
 int get_visual_text(cmdarg_T *cap, char_u **pp, int *lenp);
 void start_selection(void);

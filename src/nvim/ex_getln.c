@@ -171,7 +171,7 @@ static int sort_func_compare(const void *s1, const void *s2);
 char_u *
 getcmdline (
     int firstc,
-    long count,              /* only used for incremental search */
+    int64_t count,              /* only used for incremental search */
     int indent                     /* indent for inside conditionals */
 )
 {
@@ -202,7 +202,7 @@ getcmdline (
   int ignore_drag_release = TRUE;
   int break_ctrl_c = FALSE;
   expand_T xpc;
-  long        *b_im_ptr = NULL;
+  int64_t        *b_im_ptr = NULL;
   /* Everything that may work recursively should save and restore the
    * current command line in save_ccline.  That includes update_screen(), a
    * custom status line may invoke ":normal". */
@@ -1553,7 +1553,7 @@ returncmd:
 
   /*
    * If the screen was shifted up, redraw the whole screen (later).
-   * If the line is too long, clear it, so ruler and shown command do
+   * If the line is too int64_t, clear it, so ruler and shown command do
    * not get printed in the middle of it.
    */
   msg_check();
@@ -1846,7 +1846,7 @@ getexmodeline (
       }
 
       if (c1 == Ctrl_T) {
-        long sw = get_sw_value(curbuf);
+        int64_t sw = get_sw_value(curbuf);
 
         p = (char_u *)line_ga.ga_data;
         p[line_ga.ga_len] = NUL;
@@ -2295,7 +2295,7 @@ int put_on_cmdline(char_u *str, int len, int redraw)
         if (has_mbyte)
           correct_cmdspos(ccline.cmdpos, c);
         /* Stop cursor at the end of the screen, but do increment the
-         * insert position, so that entering a very long command
+         * insert position, so that entering a very int64_t command
          * works, even though you can't see it. */
         if (ccline.cmdspos + c < m)
           ccline.cmdspos += c;
@@ -2386,7 +2386,7 @@ cmdline_paste (
     int remcr              /* remove trailing CR */
 )
 {
-  long i;
+  int64_t i;
   char_u              *arg;
   char_u              *p;
   int allocated;
@@ -3374,7 +3374,7 @@ addstar (
     /*
      * Matching will be done internally (on something other than files).
      * So we convert the file-matching-type wildcards into our kind for
-     * use with vim_regcomp().  First work out how long it will be:
+     * use with vim_regcomp().  First work out how int64_t it will be:
      */
 
     /* For help tags the translation is done in find_help_tags().
@@ -4809,7 +4809,7 @@ int get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
   int first = FALSE;
-  long num;
+  int64_t num;
 
   *str = skipwhite(*str);
   if (**str == '-' || vim_isdigit(**str)) {  /* parse "from" part of range */

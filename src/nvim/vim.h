@@ -52,8 +52,8 @@ Error: configure did not run properly.Check auto/config.log.
 # endif
 
 /*
- * Maximum length of a path (for non-unix systems) Make it a bit long, to stay
- * on the safe side.  But not too long to put on the stack.
+ * Maximum length of a path (for non-unix systems) Make it a bit int64_t, to stay
+ * on the safe side.  But not too int64_t to put on the stack.
  */
 #ifndef MAXPATHL
 # ifdef MAXPATHLEN
@@ -864,7 +864,7 @@ typedef enum {
  * Boolean constants
  */
 #ifndef TRUE
-# define FALSE  0           /* note: this is an int, not a long! */
+# define FALSE  0           /* note: this is an int, not a int64_t! */
 # define TRUE   1
 #endif
 
@@ -1038,7 +1038,7 @@ typedef enum {
 #define PERROR(msg) \
   (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
 
-typedef long linenr_T;                  /* line number type */
+typedef int64_t linenr_T;                  /* line number type */
 typedef int colnr_T;                    /* column number type */
 typedef uint16_t disptick_T;      /* display tick type */
 

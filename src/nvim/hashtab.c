@@ -62,10 +62,10 @@ void hash_clear(hashtab_T *ht)
 /// @param off
 void hash_clear_all(hashtab_T *ht, int off)
 {
-  long todo;
+  int64_t todo;
   hashitem_T *hi;
 
-  todo = (long)ht->ht_used;
+  todo = (int64_t)ht->ht_used;
 
   for (hi = ht->ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {

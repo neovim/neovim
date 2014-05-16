@@ -50,7 +50,7 @@ void crypt_encode(char_u *from, size_t len, char_u *to);
 ///
 /// @param ptr Pointer to the string.
 /// @param len Length of the string.
-void crypt_decode(char_u *ptr, long len);
+void crypt_decode(char_u *ptr, int64_t len);
 
 /// Initializes the encryption keys and the random header according to
 /// the given password.

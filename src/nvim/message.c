@@ -444,7 +444,7 @@ static char_u *get_emsg_lnum(void)
       && sourcing_lnum != 0) {
     p = (char_u *)_("line %4ld:");
     Buf = alloc((unsigned)(STRLEN(p) + 20));
-    sprintf((char *)Buf, (char *)p, (long)sourcing_lnum);
+    sprintf((char *)Buf, (char *)p, (int64_t)sourcing_lnum);
     return Buf;
   }
   return NULL;
@@ -961,7 +961,7 @@ void wait_return(int redraw)
   if (keep_msg != NULL && vim_strsize(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
     free(keep_msg);
-    keep_msg = NULL;                /* don't redisplay message, it's too long */
+    keep_msg = NULL;                /* don't redisplay message, it's too int64_t */
   }
 
   if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
@@ -1089,7 +1089,7 @@ void msg_putchar_attr(int c, int attr)
   msg_puts_attr(buf, attr);
 }
 
-void msg_outnum(long n)
+void msg_outnum(int64_t n)
 {
   char_u buf[20];
 
@@ -3059,17 +3059,17 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt
 #if defined(FEAT_EVAL)
 static char *e_printf = N_("E766: Insufficient arguments for printf()");
 
-static long tv_nr(typval_T *tvs, int *idxp);
+static int64_t tv_nr(typval_T *tvs, int *idxp);
 static char *tv_str(typval_T *tvs, int *idxp);
 static double tv_float(typval_T *tvs, int *idxp);
 
 /*
  * Get number argument from "idxp" entry in "tvs".  First entry is 1.
  */
-static long tv_nr(typval_T *tvs, int *idxp)
+static int64_t tv_nr(typval_T *tvs, int *idxp)
 {
   int idx = *idxp - 1;
-  long n = 0;
+  int64_t n = 0;
   int err = FALSE;
 
   if (tvs[idx].v_type == VAR_UNKNOWN)

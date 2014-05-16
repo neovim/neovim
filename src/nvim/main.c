@@ -1002,7 +1002,7 @@ static void command_line_scan(mparm_T *parmp)
   int want_argument;                    /* option argument with argument */
   int c;
   char_u      *p = NULL;
-  long n;
+  int64_t n;
 
   --argc;
   ++argv;
@@ -2325,8 +2325,8 @@ time_pop (
 
 static void time_diff(struct timeval *then, struct timeval *now)
 {
-  long usec;
-  long msec;
+  int64_t usec;
+  int64_t msec;
 
   usec = now->tv_usec - then->tv_usec;
   msec = (now->tv_sec - then->tv_sec) * 1000L + usec / 1000L,

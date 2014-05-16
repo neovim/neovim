@@ -331,8 +331,8 @@ static int toggle_Magic(int x)
 #define NEXT(p)         (((*((p) + 1) & 0377) << 8) + (*((p) + 2) & 0377))
 #define OPERAND(p)      ((p) + 3)
 /* Obtain an operand that was stored as four bytes, MSB first. */
-#define OPERAND_MIN(p)  (((long)(p)[3] << 24) + ((long)(p)[4] << 16) \
-                         + ((long)(p)[5] << 8) + (long)(p)[6])
+#define OPERAND_MIN(p)  (((int64_t)(p)[3] << 24) + ((int64_t)(p)[4] << 16) \
+                         + ((int64_t)(p)[5] << 8) + (int64_t)(p)[6])
 /* Obtain a second operand stored as four bytes. */
 #define OPERAND_MAX(p)  OPERAND_MIN((p) + 4)
 /* Obtain a second single-byte operand stored after a four bytes operand. */
@@ -585,12 +585,12 @@ static int regnpar;             /* () count. */
 static int regnzpar;            /* \z() count. */
 static int re_has_z;            /* \z item detected */
 static char_u   *regcode;       /* Code-emit pointer, or JUST_CALC_SIZE */
-static long regsize;            /* Code size. */
+static int64_t regsize;            /* Code size. */
 static int reg_toolong;         /* TRUE when offset out of range */
 static char_u had_endbrace[NSUBEXP];    /* flags, TRUE if end of () found */
 static unsigned regflags;       /* RF_ flags for prog */
-static long brace_min[10];      /* Minimums for complex brace repeats */
-static long brace_max[10];      /* Maximums for complex brace repeats */
+static int64_t brace_min[10];      /* Minimums for complex brace repeats */
+static int64_t brace_max[10];      /* Maximums for complex brace repeats */
 static int brace_count[10];      /* Current counts for complex brace repeats */
 static int had_eol;             /* TRUE when EOL found by vim_regcomp() */
 static int one_exactly = FALSE;         /* only do one char for EXACTLY */
@@ -683,10 +683,10 @@ static void regmbc(int c);
 # define REGMBC(x) regmbc(x);
 # define CASEMBC(x) case x:
 static void reginsert(int, char_u *);
-static void reginsert_nr(int op, long val, char_u *opnd);
-static void reginsert_limits(int, long, long, char_u *);
+static void reginsert_nr(int op, int64_t val, char_u *opnd);
+static void reginsert_limits(int, int64_t, int64_t, char_u *);
 static char_u   *re_put_long(char_u *pr, uint64_t val);
-static int read_limits(long *, long *);
+static int read_limits(int64_t *, int64_t *);
 static void regtail(char_u *, char_u *);
 static void regoptail(char_u *, char_u *);
 
@@ -1207,7 +1207,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   /* Small enough for pointer-storage convention? */
 #ifdef SMALL_MALLOC             /* 16 bit storage allocation */
   if (regsize >= 65536L - 256L)
-    EMSG_RET_NULL(_("E339: Pattern too long"));
+    EMSG_RET_NULL(_("E339: Pattern too int64_t"));
 #endif
 
   /* Allocate space. */
@@ -1222,7 +1222,7 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
   if (reg(REG_NOPAREN, &flags) == NULL || reg_toolong) {
     free(r);
     if (reg_toolong)
-      EMSG_RET_NULL(_("E339: Pattern too long"));
+      EMSG_RET_NULL(_("E339: Pattern too int64_t"));
     return NULL;
   }
 
@@ -1575,8 +1575,8 @@ static char_u *regpiece(int *flagp)
   int op;
   char_u          *next;
   int flags;
-  long minval;
-  long maxval;
+  int64_t minval;
+  int64_t maxval;
 
   ret = regatom(&flags);
   if (ret == NULL)
@@ -2365,7 +2365,7 @@ do_multibyte:
     ret = regnode(EXACTLY);
 
     /*
-     * Append characters as long as:
+     * Append characters as int64_t as:
      * - there is no following multi, we then need the character in
      *   front of it as a single character operand
      * - not running into a Magic character
@@ -2494,7 +2494,7 @@ static void reginsert(int op, char_u *opnd)
  * Insert an operator in front of already-emitted operand.
  * Add a number to the operator.
  */
-static void reginsert_nr(int op, long val, char_u *opnd)
+static void reginsert_nr(int op, int64_t val, char_u *opnd)
 {
   char_u      *src;
   char_u      *dst;
@@ -2523,7 +2523,7 @@ static void reginsert_nr(int op, long val, char_u *opnd)
  *
  * Means relocating the operand.
  */
-static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
+static void reginsert_limits(int op, int64_t minval, int64_t maxval, char_u *opnd)
 {
   char_u      *src;
   char_u      *dst;
@@ -2549,7 +2549,7 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
 }
 
 /*
- * Write a long as four bytes at "p" and return pointer to the next char.
+ * Write a int64_t as four bytes at "p" and return pointer to the next char.
  */
 static char_u *re_put_long(char_u *p, uint64_t val)
 {
@@ -2990,11 +2990,11 @@ static int coll_get_char(void)
  * Should end with 'end'.  If minval is missing, zero is default, if maxval is
  * missing, a very big number is the default.
  */
-static int read_limits(long *minval, long *maxval)
+static int read_limits(int64_t *minval, int64_t *maxval)
 {
   int reverse = FALSE;
   char_u      *first_char;
-  long tmp;
+  int64_t tmp;
 
   if (*regparse == '-') {
     /* Starts with '-', so reverse the range later */
@@ -3082,8 +3082,8 @@ typedef struct regbehind_S {
 } regbehind_T;
 
 static char_u   *reg_getline(linenr_T lnum);
-static long bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm);
-static long regtry(bt_regprog_T *prog, colnr_T col);
+static int64_t bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm);
+static int64_t regtry(bt_regprog_T *prog, colnr_T col);
 static void cleanup_subexpr(void);
 static void cleanup_zsubexpr(void);
 static void save_subexpr(regbehind_T *bp);
@@ -3111,7 +3111,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col,
                               linenr_T end_lnum, colnr_T end_col,
                               int *bytelen);
 static int regmatch(char_u *prog);
-static int regrepeat(char_u *p, long maxcount);
+static int regrepeat(char_u *p, int64_t maxcount);
 
 #ifdef REGEXP_DEBUG
 int regnarrate = 0;
@@ -3214,9 +3214,9 @@ static void regstack_pop(char_u **scan);
 typedef struct regstar_S {
   int nextb;                    /* next byte */
   int nextb_ic;                 /* next byte reverse case */
-  long count;
-  long minval;
-  long maxval;
+  int64_t count;
+  int64_t minval;
+  int64_t maxval;
 } regstar_T;
 
 /* used to store input position when a BACK was encountered, so that we now if
@@ -3316,7 +3316,7 @@ bt_regexec_nl (
   return bt_regexec_both(line, col, NULL) != 0;
 }
 
-static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
+static int64_t bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                              linenr_T lnum, colnr_T col,
                              proftime_T *tm);
 
@@ -3328,7 +3328,7 @@ static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
  * Return zero if there is no match.  Return number of lines contained in the
  * match otherwise.
  */
-static long bt_regexec_multi(rmp, win, buf, lnum, col, tm)
+static int64_t bt_regexec_multi(rmp, win, buf, lnum, col, tm)
 regmmatch_T *rmp;
 win_T       *win;               /* window in which to search or NULL */
 buf_T       *buf;               /* buffer in which to search */
@@ -3336,7 +3336,7 @@ linenr_T lnum;                  /* nr of line to start looking for match */
 colnr_T col;                    /* column to start looking for match */
 proftime_T  *tm;                /* timeout limit or NULL */
 {
-  long r;
+  int64_t r;
 
   reg_match = NULL;
   reg_mmatch = rmp;
@@ -3358,14 +3358,14 @@ proftime_T  *tm;                /* timeout limit or NULL */
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
  */
-static long bt_regexec_both(line, col, tm)
+static int64_t bt_regexec_both(line, col, tm)
 char_u      *line;
 colnr_T col;                    /* column to start looking for match */
 proftime_T  *tm;         /* timeout limit or NULL */
 {
   bt_regprog_T        *prog;
   char_u      *s;
-  long retval = 0L;
+  int64_t retval = 0L;
 
   /* Create "regstack" and "backpos" if they are not allocated yet.
    * We allocate *_INITIAL amount of bytes first and then set the grow size
@@ -3585,7 +3585,7 @@ void unref_extmatch(reg_extmatch_T *em)
  * regtry - try match of "prog" with at regline["col"].
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long regtry(bt_regprog_T *prog, colnr_T col)
+static int64_t regtry(bt_regprog_T *prog, colnr_T col)
 {
   reginput = regline + col;
   need_clear_subexpr = TRUE;
@@ -3730,8 +3730,8 @@ static int reg_match_visual(void)
  * to regmatch(), but they are here to reduce the amount of stack space used
  * (it can be called recursively many times).
  */
-static long bl_minval;
-static long bl_maxval;
+static int64_t bl_minval;
+static int64_t bl_maxval;
 
 /*
  * regmatch - main matching routine
@@ -3774,7 +3774,7 @@ regmatch (
    * Repeat until "regstack" is empty.
    */
   for (;; ) {
-    /* Some patterns may take a long time to match, e.g., "\([a-z]\+\)\+Q".
+    /* Some patterns may take a int64_t time to match, e.g., "\([a-z]\+\)\+Q".
      * Allow interrupting them with CTRL-C. */
     fast_breakcheck();
 
@@ -4591,7 +4591,7 @@ regmatch (
             /* It could match.  Prepare for trying to match what
              * follows.  The code is below.  Parameters are stored in
              * a regstar_T on the regstack. */
-            if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
+            if ((int64_t)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
               EMSG(_(e_maxmempat));
               status = RA_FAIL;
             } else {
@@ -4629,7 +4629,7 @@ regmatch (
         case BEHIND:
         case NOBEHIND:
           /* Need a bit of room to store extra positions. */
-          if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
+          if ((int64_t)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
             EMSG(_(e_maxmempat));
             status = RA_FAIL;
           } else {
@@ -4861,7 +4861,7 @@ regmatch (
           regstack_pop(&scan);
           regstack.ga_len -= sizeof(regbehind_T);
         } else {
-          long limit;
+          int64_t limit;
 
           /* No match or a match that doesn't end where we want it: Go
            * back one character.  May go to previous line once. */
@@ -4900,7 +4900,7 @@ regmatch (
               no = FAIL;
             else {
               mb_ptr_back(regline, rp->rs_un.regsave.rs_u.ptr);
-              if (limit > 0 && (long)(behind_pos.rs_u.ptr
+              if (limit > 0 && (int64_t)(behind_pos.rs_u.ptr
                                       - rp->rs_un.regsave.rs_u.ptr) > limit)
                 no = FAIL;
             }
@@ -5050,7 +5050,7 @@ static regitem_T *regstack_push(regstate_T state, char_u *scan)
 {
   regitem_T   *rp;
 
-  if ((long)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
+  if ((int64_t)((unsigned)regstack.ga_len >> 10) >= p_mmp) {
     EMSG(_(e_maxmempat));
     return NULL;
   }
@@ -5084,10 +5084,10 @@ static void regstack_pop(char_u **scan)
 static int 
 regrepeat (
     char_u *p,
-    long maxcount              /* maximum number of matches allowed */
+    int64_t maxcount              /* maximum number of matches allowed */
 )
 {
-  long count = 0;
+  int64_t count = 0;
   char_u      *scan;
   char_u      *opnd;
   int mask;
@@ -7106,7 +7106,7 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
  * Return zero if there is no match.  Return number of lines contained in the
  * match otherwise.
  */
-long vim_regexec_multi(rmp, win, buf, lnum, col, tm)
+int64_t vim_regexec_multi(rmp, win, buf, lnum, col, tm)
 regmmatch_T *rmp;
 win_T       *win;               /* window in which to search or NULL */
 buf_T       *buf;               /* buffer in which to search */

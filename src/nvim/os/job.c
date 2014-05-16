@@ -313,7 +313,7 @@ static void job_prepare_cb(uv_prepare_t *handle)
       // Job was just stopped, close all stdio handles and send SIGTERM
       uv_process_kill(&job->proc, SIGTERM);
     } else if (job->exit_timeout == 0) {
-      // We've waited long enough, send SIGKILL
+      // We've waited int64_t enough, send SIGKILL
       uv_process_kill(&job->proc, SIGKILL);
     }
   }

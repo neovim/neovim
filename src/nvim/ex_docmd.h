@@ -29,7 +29,7 @@ char_u *get_user_commands(expand_T *xp, int idx);
 char_u *get_user_cmd_flags(expand_T *xp, int idx);
 char_u *get_user_cmd_nargs(expand_T *xp, int idx);
 char_u *get_user_cmd_complete(expand_T *xp, int idx);
-int parse_compl_arg(char_u *value, int vallen, int *complp, long *argt,
+int parse_compl_arg(char_u *value, int vallen, int *complp, int64_t *argt,
                     char_u **compl_arg);
 void not_exiting(void);
 void tabpage_close(int forceit);
@@ -51,7 +51,7 @@ void do_exedit(exarg_T *eap, win_T *old_curwin);
 void free_cd_dir(void);
 void post_chdir(int local);
 void ex_cd(exarg_T *eap);
-void do_sleep(long msec);
+void do_sleep(int64_t msec);
 int vim_mkdir_emsg(char_u *name, int prot);
 FILE *open_exfile(char_u *fname, int forceit, char *mode);
 void update_topline_cursor(void);

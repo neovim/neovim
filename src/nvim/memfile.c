@@ -19,11 +19,11 @@
  * negative to positive numbers.
  *
  * The size of a block is a multiple of a page size, normally the page size of
- * the device the file is on. Most blocks are 1 page long. A Block of multiple
+ * the device the file is on. Most blocks are 1 page int64_t. A Block of multiple
  * pages is used for a line that does not fit in a single page.
  *
  * Each block can be in memory and/or in a file. The block stays in memory
- * as long as it is locked. If it is no longer locked it can be swapped out to
+ * as int64_t as it is locked. If it is no longer locked it can be swapped out to
  * the file. It is only written to the file if it has been changed.
  *
  * Under normal operation the file is created when opening the memory file and

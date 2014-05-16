@@ -106,7 +106,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 
-static long get_undolevel(void);
+static int64_t get_undolevel(void);
 static void u_unch_branch(u_header_T *uhp);
 static u_entry_T *u_get_headentry(void);
 static void u_getbot(void);
@@ -118,7 +118,7 @@ static void u_freeheader(buf_T *buf, u_header_T *uhp, u_header_T **uhpp);
 static void u_freebranch(buf_T *buf, u_header_T *uhp, u_header_T **uhpp);
 static void u_freeentries(buf_T *buf, u_header_T *uhp,
                           u_header_T **uhpp);
-static void u_freeentry(u_entry_T *, long);
+static void u_freeentry(u_entry_T *, int64_t);
 static void corruption_error(char *mesg, char_u *file_name);
 static void u_free_uhp(u_header_T *uhp);
 static size_t fwrite_crypt(buf_T *buf, char_u *ptr, size_t len,
@@ -139,7 +139,7 @@ static void put_header_ptr(FILE *fp, u_header_T *uhp);
 static char_u *u_save_line(linenr_T);
 
 /* used in undo_end() to report number of added and deleted lines */
-static long u_newcount, u_oldcount;
+static int64_t u_newcount, u_oldcount;
 
 /*
  * When 'u' flag included in 'cpoptions', we behave like vi.  Need to remember
@@ -295,7 +295,7 @@ int u_inssub(linenr_T lnum)
  * Careful: may trigger autocommands that reload the buffer.
  * Returns FAIL when lines could not be saved, OK otherwise.
  */
-int u_savedel(linenr_T lnum, long nlines)
+int u_savedel(linenr_T lnum, int64_t nlines)
 {
   if (undo_off)
     return OK;
@@ -337,7 +337,7 @@ int undo_allowed(void)
 /*
  * Get the undolevle value for the current buffer.
  */
-static long get_undolevel(void)
+static int64_t get_undolevel(void)
 {
   if (curbuf->b_p_ul == NO_LOCAL_UNDOLEVEL)
     return p_ul;
@@ -356,12 +356,12 @@ static long get_undolevel(void)
 int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
 {
   linenr_T lnum;
-  long i;
+  int64_t i;
   u_header_T  *uhp;
   u_header_T  *old_curhead;
   u_entry_T   *uep;
   u_entry_T   *prev_uep;
-  long size;
+  int64_t size;
 
   if (!reload) {
     /* When making changes is not allowed return FAIL.  It's a crude way
@@ -504,7 +504,7 @@ int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot, int reload)
      * This is only possible if the previous change didn't increase or
      * decrease the number of lines.
      * Check the ten last changes.  More doesn't make sense and takes too
-     * long.
+     * int64_t.
      */
     if (size == 1) {
       uep = u_get_headentry();
@@ -1322,17 +1322,17 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
 {
   char_u      *file_name;
   FILE        *fp;
-  long version, str_len;
+  int64_t version, str_len;
   char_u      *line_ptr = NULL;
   linenr_T line_lnum;
   colnr_T line_colnr;
   linenr_T line_count;
   int num_head = 0;
-  long old_header_seq, new_header_seq, cur_header_seq;
-  long seq_last, seq_cur;
-  long last_save_nr = 0;
+  int64_t old_header_seq, new_header_seq, cur_header_seq;
+  int64_t seq_last, seq_cur;
+  int64_t last_save_nr = 0;
   short old_idx = -1, new_idx = -1, cur_idx = -1;
-  long num_read_uhps = 0;
+  int64_t num_read_uhps = 0;
   time_t seq_time;
   int i, j;
   int c;
@@ -1718,13 +1718,13 @@ static void u_doit(int startcount)
  * When "absolute" is TRUE use "step" as the sequence number to jump to.
  * "sec" must be FALSE then.
  */
-void undo_time(long step, int sec, int file, int absolute)
+void undo_time(int64_t step, int sec, int file, int absolute)
 {
-  long target;
-  long closest;
-  long closest_start;
-  long closest_seq = 0;
-  long val;
+  int64_t target;
+  int64_t closest;
+  int64_t closest_start;
+  int64_t closest_seq = 0;
+  int64_t val;
   u_header_T      *uhp;
   u_header_T      *last;
   int mark;
@@ -1751,9 +1751,9 @@ void undo_time(long step, int sec, int file, int absolute)
     closest = -1;
   } else {
     /* When doing computations with time_t subtract starttime, because
-     * time_t converted to a long may result in a wrong number. */
+     * time_t converted to a int64_t may result in a wrong number. */
     if (dosec)
-      target = (long)(curbuf->b_u_time_cur - starttime) + step;
+      target = (int64_t)(curbuf->b_u_time_cur - starttime) + step;
     else if (dofile) {
       if (step < 0) {
         /* Going back to a previous write. If there were changes after
@@ -1793,7 +1793,7 @@ void undo_time(long step, int sec, int file, int absolute)
       closest = -1;
     } else {
       if (dosec)
-        closest = (long)(time(NULL) - starttime + 1);
+        closest = (int64_t)(time(NULL) - starttime + 1);
       else if (dofile)
         closest = curbuf->b_u_save_nr_last + 2;
       else
@@ -1829,7 +1829,7 @@ void undo_time(long step, int sec, int file, int absolute)
     while (uhp != NULL) {
       uhp->uh_walk = mark;
       if (dosec)
-        val = (long)(uhp->uh_time - starttime);
+        val = (int64_t)(uhp->uh_time - starttime);
       else if (dofile)
         val = uhp->uh_save_nr;
       else
@@ -2033,7 +2033,7 @@ static void u_undoredo(int undo)
   linenr_T top, bot;
   linenr_T lnum;
   linenr_T newlnum = MAXLNUM;
-  long i;
+  int64_t i;
   u_entry_T   *uep, *nuep;
   u_entry_T   *newlist = NULL;
   int old_flags;
@@ -2143,8 +2143,8 @@ static void u_undoredo(int undo)
 
     /* adjust marks */
     if (oldsize != newsize) {
-      mark_adjust(top + 1, top + oldsize, (long)MAXLNUM,
-          (long)newsize - (long)oldsize);
+      mark_adjust(top + 1, top + oldsize, (int64_t)MAXLNUM,
+          (int64_t)newsize - (int64_t)oldsize);
       if (curbuf->b_op_start.lnum > top + oldsize)
         curbuf->b_op_start.lnum += newsize - oldsize;
       if (curbuf->b_op_end.lnum > top + oldsize)
@@ -2708,7 +2708,7 @@ u_freeentries (
 /*
  * free entry 'uep' and 'n' lines in uep->ue_array[]
  */
-static void u_freeentry(u_entry_T *uep, long n)
+static void u_freeentry(u_entry_T *uep, int64_t n)
 {
   while (n > 0)
     free(uep->ue_array[--n]);
@@ -2857,7 +2857,7 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
     if (dict == NULL)
       return;
     dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
-    dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
+    dict_add_nr_str(dict, "time", (int64_t)uhp->uh_time, NULL);
     if (uhp == curbuf->b_u_newhead)
       dict_add_nr_str(dict, "newhead", 1, NULL);
     if (uhp == curbuf->b_u_curhead)

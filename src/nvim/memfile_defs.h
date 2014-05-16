@@ -2,7 +2,7 @@
 #define NVIM_MEMFILE_DEFS_H
 
 typedef struct block_hdr bhdr_T;
-typedef long blocknr_T;
+typedef int64_t blocknr_T;
 
 /*
  * mf_hashtab_T is a chained hashtable with blocknr_T key and arbitrary

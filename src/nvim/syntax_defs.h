@@ -46,7 +46,7 @@ struct syn_state {
   linenr_T sst_lnum;            /* line number for this state */
   union {
     bufstate_T sst_stack[SST_FIX_STATES];          /* short state stack */
-    garray_T sst_ga;            /* growarray for long state stack */
+    garray_T sst_ga;            /* growarray for int64_t state stack */
   } sst_union;
   int sst_next_flags;           /* flags for sst_next_list */
   int sst_stacksize;            /* number of states on the stack */

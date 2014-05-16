@@ -25,7 +25,7 @@ void msg_start(void);
 void msg_starthere(void);
 void msg_putchar(int c);
 void msg_putchar_attr(int c, int attr);
-void msg_outnum(long n);
+void msg_outnum(int64_t n);
 void msg_home_replace(char_u *fname);
 void msg_home_replace_hl(char_u *fname);
 int msg_outtrans(char_u *str);

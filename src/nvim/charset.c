@@ -1683,10 +1683,10 @@ char_u* skiptowhite_esc(char_u *p) {
 /// @param pp
 ///
 /// @return Number from the string.
-long getdigits(char_u **pp)
+int64_t getdigits(char_u **pp)
 {
   char_u *p = *pp;
-  long retval = atol((char *)p);
+  int64_t retval = atol((char *)p);
 
   if (*p == '-') {
     // skip negative sign
@@ -1709,7 +1709,7 @@ int vim_isblankline(char_u *lbuf)
   return *p == NUL || *p == '\r' || *p == '\n';
 }
 
-/// Convert a string into a long and/or uint64_t, taking care of
+/// Convert a string into a int64_t and/or uint64_t, taking care of
 /// hexadecimal and octal numbers.  Accepts a '-' sign.
 /// If "hexp" is not NULL, returns a flag to indicate the type of the number:
 ///   0      decimal
@@ -1733,7 +1733,7 @@ int vim_isblankline(char_u *lbuf)
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
-                long *nptr, uint64_t *unptr)
+                int64_t *nptr, uint64_t *unptr)
 {
   char_u *ptr = start;
   int hex = 0; // default is decimal
@@ -1809,9 +1809,9 @@ void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
   if (nptr != NULL) {
     if (negative) {
       // account for leading '-' for decimal numbers
-      *nptr = -(long)un;
+      *nptr = -(int64_t)un;
     } else {
-      *nptr = (long)un;
+      *nptr = (int64_t)un;
     }
   }
 

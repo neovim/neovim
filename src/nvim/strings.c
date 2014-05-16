@@ -340,7 +340,7 @@ void del_trailing_spaces(char_u *ptr)
 
 /*
  * Like strncpy(), but always terminate the result with one NUL.
- * "to" must be "len + 1" long!
+ * "to" must be "len + 1" int64_t!
  */
 void vim_strncpy(char_u *to, char_u *from, size_t len)
 {

@@ -8,7 +8,7 @@ int u_save_cursor(void);
 int u_save(linenr_T top, linenr_T bot);
 int u_savesub(linenr_T lnum);
 int u_inssub(linenr_T lnum);
-int u_savedel(linenr_T lnum, long nlines);
+int u_savedel(linenr_T lnum, int64_t nlines);
 int undo_allowed(void);
 int u_savecommon(linenr_T top, linenr_T bot, linenr_T newbot,
                  int reload);
@@ -18,7 +18,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash);
 void u_read_undo(char_u *name, char_u *hash, char_u *orig_name);
 void u_undo(int count);
 void u_redo(int count);
-void undo_time(long step, int sec, int file, int absolute);
+void undo_time(int64_t step, int sec, int file, int absolute);
 void u_sync(int force);
 void ex_undolist(exarg_T *eap);
 void ex_undojoin(exarg_T *eap);

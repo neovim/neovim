@@ -4,7 +4,7 @@
 int set_termname(char_u *term);
 void set_mouse_termcode(int n, char_u *s);
 void del_mouse_termcode(int n);
-void getlinecol(long *cp, long *rp);
+void getlinecol(int64_t *cp, int64_t *rp);
 int add_termcap_entry(char_u *name, int force);
 int term_is_8bit(char_u *name);
 char_u *tltoa(uint64_t i);

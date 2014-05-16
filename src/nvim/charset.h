@@ -52,10 +52,10 @@ int vim_toupper(int c);
 int vim_tolower(int c);
 char_u *skiptowhite(char_u *p);
 char_u *skiptowhite_esc(char_u *p);
-long getdigits(char_u **pp);
+int64_t getdigits(char_u **pp);
 int vim_isblankline(char_u *lbuf);
 void vim_str2nr(char_u *start, int *hexp, int *len, int dooct,
-                int dohex, long *nptr,
+                int dohex, int64_t *nptr,
                 uint64_t *unptr);
 int hex2nr(int c);
 int hexhex2nr(char_u *p);

@@ -24,7 +24,7 @@
  * 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
  * 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
  * 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
- *    long name of the command.
+ *    int64_t name of the command.
  */
 
 #define RANGE           0x001   /* allow a linespecs */
@@ -1110,7 +1110,7 @@ struct exarg {
   char_u      *cmd;             /* the name of the command (except for :make) */
   char_u      **cmdlinep;       /* pointer to pointer of allocated cmdline */
   cmdidx_T cmdidx;              /* the index for the command */
-  long argt;                    /* flags for the command */
+  int64_t argt;                    /* flags for the command */
   int skip;                     /* don't execute the command, only parse it */
   int forceit;                  /* TRUE if ! present */
   int addr_count;               /* the number of addresses given */

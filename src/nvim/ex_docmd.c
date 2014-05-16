@@ -71,7 +71,7 @@ typedef struct ucmd {
   char_u      *uc_name;         /* The command name */
   uint64_t uc_argt;               /* The argument type */
   char_u      *uc_rep;          /* The command's replacement string */
-  long uc_def;                  /* The default value for a range/count */
+  int64_t uc_def;                  /* The default value for a range/count */
   int uc_compl;                 /* completion type */
   scid_T uc_scriptID;           /* SID where the command was defined */
   char_u      *uc_compl_arg;    /* completion argument if any */
@@ -1268,10 +1268,10 @@ void                *cookie;                    /*argument for fgetline() */
 {
   char_u              *p;
   linenr_T lnum;
-  long n;
+  int64_t n;
   char_u              *errormsg = NULL;         /* error message */
   exarg_T ea;                                   /* Ex command arguments */
-  long verbose_save = -1;
+  int64_t verbose_save = -1;
   int save_msg_scroll = msg_scroll;
   int save_msg_silent = -1;
   int did_esilent = 0;
@@ -1673,7 +1673,7 @@ void                *cookie;                    /*argument for fgetline() */
    * 5. parse arguments
    */
   if (!USER_CMDIDX(ea.cmdidx))
-    ea.argt = (long)cmdnames[(int)ea.cmdidx].cmd_argt;
+    ea.argt = (int64_t)cmdnames[(int)ea.cmdidx].cmd_argt;
 
   if (!ea.skip) {
 #ifdef HAVE_SANDBOX
@@ -2361,7 +2361,7 @@ find_ucmd (
             eap->cmdidx = CMD_USER;
           else
             eap->cmdidx = CMD_USER_BUF;
-          eap->argt = (long)uc->uc_argt;
+          eap->argt = (int64_t)uc->uc_argt;
           eap->useridx = j;
 
           if (compl != NULL)
@@ -2627,7 +2627,7 @@ set_one_cmd_context (
    * 5. parse arguments
    */
   if (!USER_CMDIDX(ea.cmdidx))
-    ea.argt = (long)cmdnames[(int)ea.cmdidx].cmd_argt;
+    ea.argt = (int64_t)cmdnames[(int)ea.cmdidx].cmd_argt;
 
   arg = skipwhite(p);
 
@@ -3276,7 +3276,7 @@ get_address (
 {
   int c;
   int i;
-  long n;
+  int64_t n;
   char_u      *cmd;
   pos_T pos;
   pos_T       *fp;
@@ -4274,11 +4274,11 @@ char_u *get_command_name(expand_T *xp, int idx)
 }
 
 static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
-                                  long argt, long def, int flags, int compl,
+                                  int64_t argt, int64_t def, int flags, int compl,
                                   char_u *compl_arg,
                                   int force);
 static void uc_list(char_u *name, size_t name_len);
-static int uc_scan_attr(char_u *attr, size_t len, long *argt, long *def,
+static int uc_scan_attr(char_u *attr, size_t len, int64_t *argt, int64_t *def,
                         int *flags, int *compl,
                         char_u **compl_arg);
 static char_u   *uc_split_args(char_u *arg, size_t *lenp);
@@ -4286,7 +4286,7 @@ static size_t uc_check_code(char_u *code, size_t len, char_u *buf,
                             ucmd_T *cmd, exarg_T *eap, char_u **split_buf,
                             size_t *split_len);
 
-static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt, long def, int flags, int compl, char_u *compl_arg, int force)
+static int uc_add_command(char_u *name, size_t name_len, char_u *rep, int64_t argt, int64_t def, int flags, int compl, char_u *compl_arg, int force)
 {
   ucmd_T      *cmd = NULL;
   char_u      *p;
@@ -4427,14 +4427,14 @@ static void uc_list(char_u *name, size_t name_len)
   int found = FALSE;
   ucmd_T      *cmd;
   int len;
-  long a;
+  int64_t a;
   garray_T    *gap;
 
   gap = &curbuf->b_ucmds;
   for (;; ) {
     for (i = 0; i < gap->ga_len; ++i) {
       cmd = USER_CMD_GA(gap, i);
-      a = (long)cmd->uc_argt;
+      a = (int64_t)cmd->uc_argt;
 
       /* Skip commands which don't match the requested prefix */
       if (STRNCMP(name, cmd->uc_name, name_len) != 0)
@@ -4543,7 +4543,7 @@ static char_u *uc_fun_cmd(void)
   return IObuff;
 }
 
-static int uc_scan_attr(char_u *attr, size_t len, long *argt, long *def, int *flags, int *compl, char_u **compl_arg)
+static int uc_scan_attr(char_u *attr, size_t len, int64_t *argt, int64_t *def, int *flags, int *compl, char_u **compl_arg)
 {
   char_u      *p;
 
@@ -4662,8 +4662,8 @@ static void ex_command(exarg_T *eap)
   char_u  *name;
   char_u  *end;
   char_u  *p;
-  long argt = 0;
-  long def = -1;
+  int64_t argt = 0;
+  int64_t def = -1;
   int flags = 0;
   int     compl = EXPAND_NOTHING;
   char_u  *compl_arg = NULL;
@@ -4978,7 +4978,7 @@ uc_check_code (
   case ct_COUNT:
   {
     char num_buf[20];
-    long num = (type == ct_LINE1) ? eap->line1 :
+    int64_t num = (type == ct_LINE1) ? eap->line1 :
                (type == ct_LINE2) ? eap->line2 :
                (eap->addr_count > 0) ? eap->line2 : cmd->uc_def;
     size_t num_len;
@@ -5198,7 +5198,7 @@ char_u *get_user_cmd_complete(expand_T *xp, int idx)
  * copied to allocated memory and stored in "*compl_arg".
  * Returns FAIL if something is wrong.
  */
-int parse_compl_arg(char_u *value, int vallen, int *complp, long *argt, char_u **compl_arg)
+int parse_compl_arg(char_u *value, int vallen, int *complp, int64_t *argt, char_u **compl_arg)
 {
   char_u      *arg = NULL;
   size_t arglen = 0;
@@ -5755,7 +5755,7 @@ void alist_set(alist_T *al, int count, char_u **files, int use_curbuf, int *fnum
   {
     for (i = 0; i < count; ++i) {
       if (got_int) {
-        /* When adding many buffers this can take a long time.  Allow
+        /* When adding many buffers this can take a int64_t time.  Allow
          * interrupting here. */
         while (i < count)
           free(files[i++]);
@@ -6321,8 +6321,8 @@ static void ex_syncbind(exarg_T *eap)
   win_T       *wp;
   win_T       *save_curwin = curwin;
   buf_T       *save_curbuf = curbuf;
-  long topline;
-  long y;
+  int64_t topline;
+  int64_t y;
   linenr_T old_linenr = curwin->w_cursor.lnum;
 
   setpcmark();
@@ -6556,7 +6556,7 @@ static void ex_equal(exarg_T *eap)
 static void ex_sleep(exarg_T *eap)
 {
   int n;
-  long len;
+  int64_t len;
 
   if (cursor_valid()) {
     n = W_WINROW(curwin) + curwin->w_wrow - msg_scrolled;
@@ -6576,9 +6576,9 @@ static void ex_sleep(exarg_T *eap)
 /*
  * Sleep for "msec" milliseconds, but keep checking for a CTRL-C every second.
  */
-void do_sleep(long msec)
+void do_sleep(int64_t msec)
 {
-  long done;
+  int64_t done;
 
   cursor_on();
   out_flush();
@@ -6752,7 +6752,7 @@ static void ex_put(exarg_T *eap)
  */
 static void ex_copymove(exarg_T *eap)
 {
-  long n;
+  int64_t n;
 
   n = get_address(&eap->arg, FALSE, FALSE);
   if (eap->arg == NULL) {           /* error detected */
@@ -6910,7 +6910,7 @@ static void ex_redo(exarg_T *eap)
  */
 static void ex_later(exarg_T *eap)
 {
-  long count = 0;
+  int64_t count = 0;
   int sec = FALSE;
   int file = FALSE;
   char_u      *p = eap->arg;
@@ -7510,7 +7510,7 @@ static void ex_psearch(exarg_T *eap)
 static void ex_findpat(exarg_T *eap)
 {
   int whole = TRUE;
-  long n;
+  int64_t n;
   char_u      *p;
   int action;
 
@@ -7808,7 +7808,7 @@ eval_vars (
           return NULL;
         }
         result = list_find_str(get_vim_var_list(VV_OLDFILES),
-            (long)i);
+            (int64_t)i);
         if (result == NULL) {
           *errormsg = (char_u *)"";
           return NULL;

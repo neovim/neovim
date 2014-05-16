@@ -50,7 +50,7 @@ char_u *parse_shape_opt(int what)
   int all_idx;
   int len;
   int i;
-  long n;
+  int64_t n;
   int found_ve = FALSE;                 /* found "ve" flag */
   int round;
 

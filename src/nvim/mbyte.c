@@ -909,8 +909,8 @@ static int dbcs_ptr2len_len(char_u *p, int size)
 }
 
 struct interval {
-  long first;
-  long last;
+  int64_t first;
+  int64_t last;
 };
 static int intable(struct interval *table, size_t size, int c);
 
@@ -3785,11 +3785,11 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
   if ((from_prop & ENC_LATIN1) && to_is_utf8) {
     /* Internal latin1 -> utf-8 conversion. */
     vcp->vc_type = CONV_TO_UTF8;
-    vcp->vc_factor = 2;         /* up to twice as long */
+    vcp->vc_factor = 2;         /* up to twice as int64_t */
   } else if ((from_prop & ENC_LATIN9) && to_is_utf8) {
     /* Internal latin9 -> utf-8 conversion. */
     vcp->vc_type = CONV_9_TO_UTF8;
-    vcp->vc_factor = 3;         /* up to three as long (euro sign) */
+    vcp->vc_factor = 3;         /* up to three as int64_t (euro sign) */
   } else if (from_is_utf8 && (to_prop & ENC_LATIN1)) {
     /* Internal utf-8 -> latin1 conversion. */
     vcp->vc_type = CONV_TO_LATIN1;
@@ -3858,7 +3858,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
       }
       memmove(ptr, d, dlen);
     } else
-      /* result is too long, keep the unconverted text (the caller must
+      /* result is too int64_t, keep the unconverted text (the caller must
        * have done something wrong!) */
       dlen = len;
     free(d);

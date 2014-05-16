@@ -306,12 +306,12 @@ static int check_char_class(int class, int c);
 static void nfa_save_listids(nfa_regprog_T *prog, int *list);
 static void nfa_restore_listids(nfa_regprog_T *prog, int *list);
 static int nfa_re_num_cmp(uint64_t val, int op, uint64_t pos);
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col);
-static long nfa_regexec_both(char_u *line, colnr_T col);
+static int64_t nfa_regtry(nfa_regprog_T *prog, colnr_T col);
+static int64_t nfa_regexec_both(char_u *line, colnr_T col);
 static regprog_T *nfa_regcomp(char_u *expr, int re_flags);
 static void nfa_regfree(regprog_T *prog);
 static int nfa_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr);
-static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
+static int64_t nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
                               linenr_T lnum, colnr_T col,
                               proftime_T *tm);
 static int match_follows(nfa_state_T *startstate, int depth);
@@ -1029,7 +1029,7 @@ static void nfa_emit_equi_class(int c)
 /*
  * Parse the lowest level.
  *
- * An atom can be one of a long list of items.  Many atoms match one character
+ * An atom can be one of a int64_t list of items.  Many atoms match one character
  * in the text.  It is often an ordinary character or a character class.
  * Braces can be used to make a pattern into an atom.  The "\z(\)" construct
  * is only for syntax highlighting.
@@ -1720,7 +1720,7 @@ static int nfa_regpiece(void)
   int i;
   int op;
   int ret;
-  long minval, maxval;
+  int64_t minval, maxval;
   int greedy = TRUE;                /* Braces are prefixed with '-' ? */
   parse_state_T old_state;
   parse_state_T new_state;
@@ -4578,7 +4578,7 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
 }
 
 static int skip_to_start(int c, colnr_T *colp);
-static long find_match_text(colnr_T startcol, int regstart,
+static int64_t find_match_text(colnr_T startcol, int regstart,
                             char_u *match_text);
 
 /*
@@ -4762,7 +4762,7 @@ static int skip_to_start(int c, colnr_T *colp)
  * Called after skip_to_start() has found regstart.
  * Returns zero for no match, 1 for a match.
  */
-static long find_match_text(colnr_T startcol, int regstart, char_u *match_text)
+static int64_t find_match_text(colnr_T startcol, int regstart, char_u *match_text)
 {
   colnr_T col = startcol;
   int c1, c2;
@@ -4842,7 +4842,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
     return FALSE;
   }
 #endif
-  /* Some patterns may take a long time to match, especially when using
+  /* Some patterns may take a int64_t time to match, especially when using
    * recursive_regmatch(). Allow interrupting them with CTRL-C. */
   fast_breakcheck();
   if (got_int)
@@ -6022,7 +6022,7 @@ nextchar:
  * Try match of "prog" with at regline["col"].
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
+static int64_t nfa_regtry(nfa_regprog_T *prog, colnr_T col)
 {
   int i;
   regsubs_T subs, m;
@@ -6127,14 +6127,14 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
  *
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long 
+static int64_t 
 nfa_regexec_both (
     char_u *line,
     colnr_T startcol               /* column to start looking for match */
 )
 {
   nfa_regprog_T   *prog;
-  long retval = 0L;
+  int64_t retval = 0L;
   int i;
   colnr_T col = startcol;
 
@@ -6402,7 +6402,7 @@ nfa_regexec_nl (
  *
  * FIXME if this behavior is not compatible.
  */
-static long nfa_regexec_multi(rmp, win, buf, lnum, col, tm)
+static int64_t nfa_regexec_multi(rmp, win, buf, lnum, col, tm)
 regmmatch_T *rmp;
 win_T       *win;               /* window in which to search or NULL */
 buf_T       *buf;               /* buffer in which to search */

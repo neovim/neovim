@@ -12,7 +12,7 @@
 #define CPT_INFO    3   /* "info" */
 #define CPT_COUNT   4   /* Number of entries */
 
-int edit(int cmdchar, int startln, long count);
+int edit(int cmdchar, int startln, int64_t count);
 void edit_putchar(int c, int highlight);
 void edit_unputchar(void);
 void display_dollar(colnr_T col);
@@ -42,9 +42,9 @@ char_u *add_char2buf(int c, char_u *s);
 void beginline(int flags);
 int oneright(void);
 int oneleft(void);
-int cursor_up(long n, int upd_topline);
-int cursor_down(long n, int upd_topline);
-int stuff_inserted(int c, long count, int no_esc);
+int cursor_up(int64_t n, int upd_topline);
+int cursor_down(int64_t n, int upd_topline);
+int stuff_inserted(int c, int64_t count, int no_esc);
 char_u *get_last_insert(void);
 char_u *get_last_insert_save(void);
 void replace_push(int c);

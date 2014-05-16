@@ -1,7 +1,7 @@
 #ifndef NVIM_WINDOW_H
 #define NVIM_WINDOW_H
 /* window.c */
-void do_window(int nchar, long Prenum, int xchar);
+void do_window(int nchar, int64_t Prenum, int xchar);
 int win_split(int size, int flags);
 int win_split_ins(int size, int flags, win_T *new_wp, int dir);
 int win_valid(win_T *win);
@@ -58,11 +58,11 @@ void win_new_height(win_T *wp, int height);
 void win_new_width(win_T *wp, int width);
 void win_comp_scroll(win_T *wp);
 void command_height(void);
-char_u *grab_file_name(long count, linenr_T *file_lnum);
-char_u *file_name_at_cursor(int options, long count,
+char_u *grab_file_name(int64_t count, linenr_T *file_lnum);
+char_u *file_name_at_cursor(int options, int64_t count,
                             linenr_T *file_lnum);
 char_u *file_name_in_line(char_u *line, int col, int options,
-                          long count, char_u *rel_fname,
+                          int64_t count, char_u *rel_fname,
                           linenr_T *file_lnum);
 void last_status(int morewin);
 int tabline_height(void);

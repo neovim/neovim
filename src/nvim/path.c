@@ -372,7 +372,7 @@ unix_expandpath (
   DIR         *dirp;
   struct dirent *dp;
 
-  /* Expanding "**" may take a long time, check for CTRL-C. */
+  /* Expanding "**" may take a int64_t time, check for CTRL-C. */
   if (stardepth > 0) {
     ui_breakcheck();
     if (got_int)
@@ -1413,7 +1413,7 @@ find_file_name_in_path (
     char_u *ptr,
     int len,
     int options,
-    long count,
+    int64_t count,
     char_u *rel_fname         /* file we are searching relative to */
 )
 {
@@ -1528,7 +1528,7 @@ vim_FullName (
   if (!url)
     retval = path_get_absolute_path(fname, buf, len, force);
   if (url || retval == FAIL) {
-    /* something failed; use the file name (truncate when too long) */
+    /* something failed; use the file name (truncate when too int64_t) */
     vim_strncpy(buf, fname, len - 1);
   }
   return retval;

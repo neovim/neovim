@@ -372,7 +372,7 @@ static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T l
 
   /* Leave two spaces between the number and the text; depends on
    * PRINT_NUMBER_WIDTH. */
-  sprintf((char *)tbuf, "%6ld", (long)lnum);
+  sprintf((char *)tbuf, "%6ld", (int64_t)lnum);
   for (i = 0; i < 6; i++)
     (void)mch_print_text_out(&tbuf[i], 1);
 
@@ -448,7 +448,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
 
     /*
      * Need to (temporarily) set current line number and first/last line
-     * number on the 'window'.  Since we don't know how long the page is,
+     * number on the 'window'.  Since we don't know how int64_t the page is,
      * set the first and current line number to the top line, and guess
      * that the page length is 64.
      */
@@ -2390,7 +2390,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
   /*
    * Set up printer duplex and tumble based on Duplex option setting - default
-   * is long sided duplex printing (i.e. no tumble).
+   * is int64_t sided duplex printing (i.e. no tumble).
    */
   prt_duplex = TRUE;
   prt_tumble = FALSE;

@@ -139,7 +139,7 @@ struct regengine {
   regprog_T   *(*regcomp)(char_u*, int);
   void (*regfree)(regprog_T *);
   int (*regexec_nl)(regmatch_T*, char_u*, colnr_T, bool);
-  long (*regexec_multi)(regmmatch_T*, win_T*, buf_T*, linenr_T, colnr_T,
+  int64_t (*regexec_multi)(regmmatch_T*, win_T*, buf_T*, linenr_T, colnr_T,
       proftime_T*);
 #ifdef DEBUG
   char_u      *expr;

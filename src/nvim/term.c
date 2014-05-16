@@ -136,7 +136,7 @@ static int u7_status = U7_GET;
  * Autoconf checks if these variables should be declared extern (not all
  * systems have them).
  * Some versions define ospeed to be speed_t, but that is incompatible with
- * BSD, where ospeed is short and speed_t is long.
+ * BSD, where ospeed is short and speed_t is int64_t.
  */
 # ifndef HAVE_OSPEED
 #  ifdef OSPEED_EXTERN
@@ -1766,8 +1766,8 @@ static char_u *vim_tgetstr(char *s, char_u **pp)
  */
 void 
 getlinecol (
-    long *cp,        /* pointer to columns */
-    long *rp        /* pointer to rows */
+    int64_t *cp,        /* pointer to columns */
+    int64_t *rp        /* pointer to rows */
 )
 {
   char_u tbuf[TBUFSZ];
@@ -2331,7 +2331,7 @@ void ttest(int pairs)
 static int get_long_from_buf(char_u *buf, uint64_t *val);
 
 /*
- * Interpret the next string of bytes in buf as a long integer, with the most
+ * Interpret the next string of bytes in buf as a int64_t integer, with the most
  * significant byte first.  Note that it is assumed that buf has been through
  * inchar(), so that NUL and K_SPECIAL will be represented as three bytes each.
  * Puts result in val, and returns the number of bytes read from buf
@@ -3207,7 +3207,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
   static struct timeval orig_mouse_time = {0, 0};
   /* time of previous mouse click */
   struct timeval mouse_time;            /* time of current mouse click */
-  long timediff;                        /* elapsed time in msec */
+  int64_t timediff;                        /* elapsed time in msec */
 # endif
   int cpo_koffset;
 
@@ -3224,7 +3224,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
    * Check at several positions in typebuf.tb_buf[], to catch something like
    * "x<Up>" that can be mapped. Stop at max_offset, because characters
    * after that cannot be used for mapping, and with @r commands
-   * typebuf.tb_buf[] can become very long.
+   * typebuf.tb_buf[] can become very int64_t.
    * This is used often, KEEP IT FAST!
    */
   for (offset = 0; offset < max_offset; ++offset) {
@@ -4389,7 +4389,7 @@ void show_termcodes(void)
    * do the loop two times:
    * 1. display the short items (non-strings and short strings)
    * 2. display the medium items (medium length strings)
-   * 3. display the long items (remaining strings)
+   * 3. display the int64_t items (remaining strings)
    */
   for (run = 1; run <= 3 && !got_int; ++run) {
     /*
@@ -4486,7 +4486,7 @@ int show_one_termcode(char_u *name, char_u *code, int printit)
 /*
  * For Xterm >= 140 compiled with OPT_TCAP_QUERY: Obtain the actually used
  * termcap codes from the terminal itself.
- * We get them one by one to avoid a very long response string.
+ * We get them one by one to avoid a very int64_t response string.
  */
 static int xt_index_in = 0;
 static int xt_index_out = 0;

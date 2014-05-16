@@ -254,7 +254,7 @@ static int cindent_on(void);
 static void ins_reg(void);
 static void ins_ctrl_g(void);
 static void ins_ctrl_hat(void);
-static int ins_esc(long *count, int cmdchar, int nomove);
+static int ins_esc(int64_t *count, int cmdchar, int nomove);
 static void ins_ctrl_(void);
 static int ins_start_select(int c);
 static void ins_insert(int replaceState);
@@ -330,7 +330,7 @@ int
 edit (
     int cmdchar,
     int startln,                    /* if set, insert at start of line */
-    long count
+    int64_t count
 )
 {
   int c = 0;
@@ -1807,7 +1807,7 @@ static int del_char_after_col(int limit_col)
     }
     if (*ml_get_cursor() == NUL || curwin->w_cursor.col == ecol)
       return FALSE;
-    del_bytes((long)((int)ecol - curwin->w_cursor.col), FALSE, TRUE);
+    del_bytes((int64_t)((int)ecol - curwin->w_cursor.col), FALSE, TRUE);
   } else
     (void)del_char(FALSE);
   return TRUE;
@@ -3216,7 +3216,7 @@ static int ins_compl_prep(int c)
       want_cindent = (can_cindent && cindent_on());
       /*
        * When completing whole lines: fix indent for 'cindent'.
-       * Otherwise, break line if it's too long.
+       * Otherwise, break line if it's too int64_t.
        */
       if (compl_cont_mode == CTRL_X_WHOLE_LINE) {
         /* re-indent the current line */
@@ -4978,7 +4978,7 @@ insertchar (
    *	 - Don't do this if an existing character is being replaced, unless
    *	   we're in VREPLACE mode.
    *	 - Do this if the cursor is not on the line where insert started
-   *	 or - 'formatoptions' doesn't have 'l' or the line was not too long
+   *	 or - 'formatoptions' doesn't have 'l' or the line was not too int64_t
    *	       before the insert.
    *	    - 'formatoptions' doesn't have 'b' or a blank was inserted at or
    *	      before 'textwidth'
@@ -5192,7 +5192,7 @@ internal_format (
   }
 
   /*
-   * Repeat breaking lines, until the current line is not too long.
+   * Repeat breaking lines, until the current line is not too int64_t.
    */
   while (!got_int) {
     int startcol;                       /* Cursor column at entry */
@@ -6047,7 +6047,7 @@ int oneleft(void)
 
 int 
 cursor_up (
-    long n,
+    int64_t n,
     int upd_topline                    /* When TRUE: update topline */
 )
 {
@@ -6100,7 +6100,7 @@ cursor_up (
  */
 int 
 cursor_down (
-    long n,
+    int64_t n,
     int upd_topline                    /* When TRUE: update topline */
 )
 {
@@ -6154,7 +6154,7 @@ cursor_down (
 int 
 stuff_inserted (
     int c,                  /* Command character to be inserted */
-    long count,             /* Repeat this many times */
+    int64_t count,             /* Repeat this many times */
     int no_esc             /* Don't add an ESC at the end */
 )
 {
@@ -6996,7 +6996,7 @@ static void ins_ctrl_hat(void)
  */
 static int 
 ins_esc (
-    long *count,
+    int64_t *count,
     int cmdchar,
     int nomove                 /* don't move cursor */
 )
@@ -7021,7 +7021,7 @@ ins_esc (
       AppendToRedobuff(p_im ? (char_u *)"\014" : ESC_STR);
 
     /*
-     * Repeating insert may take a long time.  Check for
+     * Repeating insert may take a int64_t time.  Check for
      * interrupt now and then.
      */
     if (*count > 0) {
@@ -7681,7 +7681,7 @@ static void ins_mousescroll(int dir)
     if (dir == MSCR_DOWN || dir == MSCR_UP) {
       if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL))
         scroll_redraw(dir,
-            (long)(curwin->w_botline - curwin->w_topline));
+            (int64_t)(curwin->w_botline - curwin->w_topline));
       else
         scroll_redraw(dir, 3L);
     }
@@ -8289,7 +8289,7 @@ static int ins_ctrl_ey(int tc)
   } else {
     c = ins_copychar(curwin->w_cursor.lnum + (c == Ctrl_Y ? -1 : 1));
     if (c != NUL) {
-      long tw_save;
+      int64_t tw_save;
 
       /* The character must be taken literally, insert like it
        * was typed after a CTRL-V, and pretend 'textwidth'

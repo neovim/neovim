@@ -951,7 +951,7 @@ static void close_spellbuf(buf_T *buf);
 static char *e_format = N_("E759: Format error in spell file");
 static char *e_spell_trunc = N_("E758: Truncated spell file");
 static char *e_afftrailing = N_("Trailing text in %s line %d: %s");
-static char *e_affname = N_("Affix name too long in %s line %d: %s");
+static char *e_affname = N_("Affix name too int64_t in %s line %d: %s");
 static char *e_affform = N_("E761: Format error in affix file FOL, LOW or UPP");
 static char *e_affrange = N_(
     "E762: Character in FOL, LOW or UPP is out of range");
@@ -3499,7 +3499,7 @@ spell_read_tree (
   idx_T       *ip;
 
   // The tree size was computed when writing the file, so that we can
-  // allocate it as one long block. <nodecount>
+  // allocate it as one int64_t block. <nodecount>
   int len = get4c(fd);
   if (len < 0)
     return SP_TRUNCERROR;
@@ -4267,24 +4267,24 @@ struct wordnode_S {
 // Info used while reading the spell files.
 typedef struct spellinfo_S {
   wordnode_T  *si_foldroot;     // tree with case-folded words
-  long si_foldwcount;           // nr of words in si_foldroot
+  int64_t si_foldwcount;           // nr of words in si_foldroot
 
   wordnode_T  *si_keeproot;     // tree with keep-case words
-  long si_keepwcount;           // nr of words in si_keeproot
+  int64_t si_keepwcount;           // nr of words in si_keeproot
 
   wordnode_T  *si_prefroot;     // tree with postponed prefixes
 
-  long si_sugtree;              // creating the soundfolding trie
+  int64_t si_sugtree;              // creating the soundfolding trie
 
   sblock_T    *si_blocks;       // memory blocks used
-  long si_blocks_cnt;           // memory blocks allocated
+  int64_t si_blocks_cnt;           // memory blocks allocated
   int si_did_emsg;              // TRUE when ran out of memory
 
-  long si_compress_cnt;         // words to add before lowering
+  int64_t si_compress_cnt;         // words to add before lowering
                                 // compression limit
   wordnode_T  *si_first_free;   // List of nodes that have been freed during
                                 // compression, linked by "wn_child" field.
-  long si_free_count;           // number of nodes in si_first_free
+  int64_t si_free_count;           // number of nodes in si_first_free
 #ifdef SPELL_PRINTTREE
   int si_wordnode_nr;           // sequence nr for nodes
 #endif
@@ -4415,9 +4415,9 @@ static void init_spellfile(void);
 #define CONDIT_AFF      8       // word already has an affix
 
 // Tunable parameters for when the tree is compressed.  See 'mkspellmem'.
-static long compress_start = 30000;     // memory / SBLOCKSIZE
-static long compress_inc = 100;         // memory / SBLOCKSIZE
-static long compress_added = 500000;    // word count
+static int64_t compress_start = 30000;     // memory / SBLOCKSIZE
+static int64_t compress_inc = 100;         // memory / SBLOCKSIZE
+static int64_t compress_added = 500000;    // word count
 
 #ifdef SPELL_PRINTTREE
 // For debugging the tree code: print the current tree in a (more or less)
@@ -4638,7 +4638,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         spin->si_conv.vc_fail = true;
       } else if (is_aff_rule(items, itemcnt, "FLAG", 2)
                  && aff->af_flagtype == AFT_CHAR) {
-        if (STRCMP(items[1], "long") == 0)
+        if (STRCMP(items[1], "int64_t") == 0)
           aff->af_flagtype = AFT_LONG;
         else if (STRCMP(items[1], "num") == 0)
           aff->af_flagtype = AFT_NUM;
@@ -6101,7 +6101,7 @@ store_aff_word (
 static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 {
   FILE        *fd;
-  long lnum = 0;
+  int64_t lnum = 0;
   char_u rline[MAXLINELEN];
   char_u      *line;
   char_u      *pc = NULL;
@@ -6269,7 +6269,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
   return retval;
 }
 
-// Get part of an sblock_T, "len" bytes long.
+// Get part of an sblock_T, "len" bytes int64_t.
 // This avoids calling free() for every little struct we use (and keeping
 // track of them).
 // The memory is cleared to all zeros.
@@ -6552,9 +6552,9 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
 int spell_check_msm(void)
 {
   char_u      *p = p_msm;
-  long start = 0;
-  long incr = 0;
-  long added = 0;
+  int64_t start = 0;
+  int64_t incr = 0;
+  int64_t added = 0;
 
   if (!VIM_ISDIGIT(*p))
     return FAIL;
@@ -8011,7 +8011,7 @@ spell_add_word (
   char_u      *fname;
   char_u      *fnamebuf = NULL;
   char_u line[MAXWLEN * 2];
-  long fpos, fpos_next = 0;
+  int64_t fpos, fpos_next = 0;
   int i;
   char_u      *spf;
 
@@ -9872,7 +9872,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
       else {
         // Include badflags: If the badword is onecap or allcap
         // use that for the goodword too.  But if the badword is
-        // allcap and it's only one char long use onecap.
+        // allcap and it's only one char int64_t use onecap.
         c = su->su_badflags;
         if ((c & WF_ALLCAP)
             && su->su_badlen == (*mb_ptr2len)(su->su_badptr)
@@ -10920,7 +10920,7 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
         return;
       }
 
-      // kword is getting too long, continue one level up
+      // kword is getting too int64_t, continue one level up
       --depth;
     } else if (++round[depth] > 2)   {
       // tried both fold-case and upper-case character, continue one
@@ -12851,7 +12851,7 @@ static int spell_edit_score_limit(slang_T *slang, char_u *badword, char_u *goodw
   if (has_mbyte)
     return spell_edit_score_limit_w(slang, badword, goodword, limit);
 
-  // The idea is to go from start to end over the words.  So long as
+  // The idea is to go from start to end over the words.  So int64_t as
   // characters are equal just continue, this always gives the lowest score.
   // When there is a difference try several alternatives.  Each alternative
   // increases "score" for the edit distance.  Some of the alternatives are
@@ -13007,7 +13007,7 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
     wgoodword[gi++] = mb_cptr2char_adv(&p);
   wgoodword[gi++] = 0;
 
-  // The idea is to go from start to end over the words.  So long as
+  // The idea is to go from start to end over the words.  So int64_t as
   // characters are equal just continue, this always gives the lowest score.
   // When there is a difference try several alternatives.  Each alternative
   // increases "score" for the edit distance.  Some of the alternatives are
@@ -13171,7 +13171,7 @@ void ex_spellinfo(exarg_T *eap)
 void ex_spelldump(exarg_T *eap)
 {
   char_u  *spl;
-  long dummy;
+  int64_t dummy;
 
   if (no_spell_checking(curwin))
     return;

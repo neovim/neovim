@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
   const char  *name;
   int hasnum;
-  long number;
+  int64_t number;
   char_u      *string;          /* points into option string */
   int strlen;
   int present;

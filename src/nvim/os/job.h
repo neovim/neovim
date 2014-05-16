@@ -1,5 +1,5 @@
 // Job is a short name we use to refer to child processes that run in parallel
-// with the editor, probably executing long-running tasks and sending updates
+// with the editor, probably executing int64_t-running tasks and sending updates
 // asynchronously. Communication happens through anonymous pipes connected to
 // the job's std{in,out,err}. They are more like bash/zsh co-processes than the
 // usual shell background job. The name 'Job' was chosen because it applies to

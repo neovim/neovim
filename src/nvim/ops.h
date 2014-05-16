@@ -30,33 +30,33 @@ int op_delete(oparg_T *oap);
 int op_replace(oparg_T *oap, int c);
 void op_tilde(oparg_T *oap);
 int swapchar(int op_type, pos_T *pos);
-void op_insert(oparg_T *oap, long count1);
+void op_insert(oparg_T *oap, int64_t count1);
 int op_change(oparg_T *oap);
 void init_yank(void);
 void clear_registers(void);
 int op_yank(oparg_T *oap, int deleting, int mess);
-void do_put(int regname, int dir, long count, int flags);
+void do_put(int regname, int dir, int64_t count, int flags);
 void adjust_cursor_eol(void);
 int preprocs_left(void);
 int get_register_name(int num);
 void ex_display(exarg_T *eap);
-int do_join(long count, int insert_space, int save_undo,
+int do_join(int64_t count, int insert_space, int save_undo,
             int use_formatoptions);
 void op_format(oparg_T *oap, int keep_cursor);
 void op_formatexpr(oparg_T *oap);
-int fex_format(linenr_T lnum, long count, int c);
+int fex_format(linenr_T lnum, int64_t count, int c);
 void format_lines(linenr_T line_count, int avoid_fex);
 int paragraph_start(linenr_T lnum);
 int do_addsub(int command, linenr_T Prenum1);
 int read_viminfo_register(vir_T *virp, int force);
 void write_viminfo_registers(FILE *fp);
-char_u get_reg_type(int regname, long *reglen);
+char_u get_reg_type(int regname, int64_t *reglen);
 char_u *get_reg_contents(int regname, int allowexpr, int expr_src);
 void write_reg_contents(int name, char_u *str, int maxlen,
                         int must_append);
 void write_reg_contents_ex(int name, char_u *str, int maxlen,
                            int must_append, int yank_type,
-                           long block_len);
+                           int64_t block_len);
 void clear_oparg(oparg_T *oap);
 void cursor_pos_info(void);
 

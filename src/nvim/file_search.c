@@ -28,7 +28,7 @@
  *
  * When you are done call vim_findfile_cleanup() to free the search context.
  *
- * The function vim_findfile_init() has a long comment, which describes the
+ * The function vim_findfile_init() has a int64_t comment, which describes the
  * needed parameters.
  *
  *
@@ -200,7 +200,7 @@ static void ff_free_stack_element(ff_stack_T *stack_ptr);
 static ff_stack_T *ff_create_stack_element(char_u *, char_u *, int, int);
 static int ff_path_in_stoplist(char_u *, int, char_u **);
 
-static char_u e_pathtoolong[] = N_("E854: path too long for completion");
+static char_u e_pathtoolong[] = N_("E854: path too int64_t for completion");
 
 
 /*

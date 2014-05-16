@@ -163,7 +163,7 @@ void mch_suspend()
    * to happen).
    */
   {
-    long wait_time;
+    int64_t wait_time;
     for (wait_time = 0; !sigcont_received && wait_time <= 3L; wait_time++)
       /* Loop is not entered most of the time */
       os_delay(wait_time, FALSE);
@@ -897,8 +897,8 @@ void check_mouse_termcode()
  */
 int mch_get_shellsize()
 {
-  long rows = 0;
-  long columns = 0;
+  int64_t rows = 0;
+  int64_t columns = 0;
   char_u      *p;
 
   /*

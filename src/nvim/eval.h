@@ -31,7 +31,7 @@ typval_T *eval_expr(char_u *arg, char_u **nextcmd);
 int call_vim_function(char_u *func, int argc, char_u **argv, int safe,
                       int str_arg_only,
                       typval_T *rettv);
-long call_func_retnr(char_u *func, int argc, char_u **argv, int safe);
+int64_t call_func_retnr(char_u *func, int argc, char_u **argv, int safe);
 void *call_func_retstr(char_u *func, int argc, char_u **argv, int safe);
 void *call_func_retlist(char_u *func, int argc, char_u **argv, int safe);
 void *save_funccal(void);
@@ -60,8 +60,8 @@ listitem_T *listitem_alloc(void);
 void listitem_free(listitem_T *item);
 void listitem_remove(list_T *l, listitem_T *item);
 dictitem_T *dict_lookup(hashitem_T *hi);
-listitem_T *list_find(list_T *l, long n);
-char_u *list_find_str(list_T *l, long idx);
+listitem_T *list_find(list_T *l, int64_t n);
+char_u *list_find_str(list_T *l, int64_t idx);
 void list_append(list_T *l, listitem_T *item);
 void list_append_tv(list_T *l, typval_T *tv);
 void list_append_dict(list_T *list, dict_T *dict);
@@ -79,27 +79,27 @@ void dict_free(dict_T *d, int recurse);
 dictitem_T *dictitem_alloc(char_u *key);
 void dictitem_free(dictitem_T *item);
 int dict_add(dict_T *d, dictitem_T *item);
-int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str);
+int dict_add_nr_str(dict_T *d, char *key, int64_t nr, char_u *str);
 int dict_add_list(dict_T *d, char *key, list_T *list);
 dictitem_T *dict_find(dict_T *d, char_u *key, int len);
 char_u *get_dict_string(dict_T *d, char_u *key, int save);
-long get_dict_number(dict_T *d, char_u *key);
+int64_t get_dict_number(dict_T *d, char_u *key);
 char_u *get_function_name(expand_T *xp, int idx);
 char_u *get_expr_name(expand_T *xp, int idx);
 int func_call(char_u *name, typval_T *args, dict_T *selfdict,
               typval_T *rettv);
 void dict_extend(dict_T *d1, dict_T *d2, char_u *action);
 float_T vim_round(float_T f);
-long do_searchpair(char_u *spat, char_u *mpat, char_u *epat, int dir,
+int64_t do_searchpair(char_u *spat, char_u *mpat, char_u *epat, int dir,
                    char_u *skip, int flags, pos_T *match_pos,
                    linenr_T lnum_stop,
-                   long time_limit);
-void set_vim_var_nr(int idx, long val);
-long get_vim_var_nr(int idx);
+                   int64_t time_limit);
+void set_vim_var_nr(int idx, int64_t val);
+int64_t get_vim_var_nr(int idx);
 char_u *get_vim_var_str(int idx);
 list_T *get_vim_var_list(int idx);
 void set_vim_var_char(int c);
-void set_vcount(long count, long count1, int set_prevcount);
+void set_vcount(int64_t count, int64_t count1, int set_prevcount);
 void set_vim_var_string(int idx, char_u *val, int len);
 void set_vim_var_list(int idx, list_T *val);
 void set_reg_var(int c);
@@ -108,7 +108,7 @@ char_u *v_throwpoint(char_u *oldval);
 char_u *set_cmdarg(exarg_T *eap, char_u *oldarg);
 void free_tv(typval_T *varp);
 void clear_tv(typval_T *varp);
-long get_tv_number_chk(typval_T *varp, int *denote);
+int64_t get_tv_number_chk(typval_T *varp, int *denote);
 char_u *get_tv_string_chk(typval_T *varp);
 char_u *get_var_value(char_u *name);
 void new_script_vars(scid_T id);

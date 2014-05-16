@@ -78,7 +78,7 @@ static char_u *readfile_charconvert(char_u *fname, char_u *fenc,
 static void check_marks_read(void);
 static int crypt_method_from_magic(char *ptr, int len);
 static char_u *check_for_cryptkey(char_u *cryptkey, char_u *ptr,
-                                  long *sizep, off_t *filesizep,
+                                  int64_t *sizep, off_t *filesizep,
                                   int newfile, char_u *fname,
                                   int *did_ask);
 #ifdef UNIX
@@ -88,7 +88,7 @@ static int set_rw_fname(char_u *fname, char_u *sfname);
 static int msg_add_fileformat(int eol_type);
 static void msg_add_eol(void);
 static int check_mtime(buf_T *buf, FileInfo *file_info);
-static int time_differs(long t1, long t2);
+static int time_differs(int64_t t1, int64_t t2);
 static int apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io,
                                 int force, buf_T *buf,
                                 exarg_T *eap);
@@ -148,7 +148,7 @@ static linenr_T readfile_linenr(linenr_T linecnt, char_u *p,
 static int ucs2bytes(unsigned c, char_u **pp, int flags);
 static int need_conversion(char_u *fenc);
 static int get_fio_flags(char_u *ptr);
-static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags);
+static char_u *check_for_bom(char_u *p, int64_t size, int *lenp, int flags);
 static int make_bom(char_u *buf, char_u *name);
 static int move_lines(buf_T *frombuf, buf_T *tobuf);
 #ifdef TEMPDIRNAMES
@@ -164,7 +164,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
   if (msg_silent != 0)
     return;
   msg_add_fname(buf, name);         /* put file name in IObuff with quotes */
-  /* If it's extremely long, truncate it. */
+  /* If it's extremely int64_t, truncate it. */
   if (STRLEN(IObuff) > IOSIZE - 80)
     IObuff[IOSIZE - 80] = NUL;
   STRCAT(IObuff, s);
@@ -241,7 +241,7 @@ readfile (
   char_u      *line_start = NULL;       /* init to shut up gcc */
   int wasempty;                         /* buffer was empty before reading */
   colnr_T len;
-  long size = 0;
+  int64_t size = 0;
   char_u      *p;
   off_t filesize = 0;
   int skip_read = FALSE;
@@ -254,7 +254,7 @@ readfile (
   linenr_T linecnt;
   int error = FALSE;                    /* errors encountered */
   int ff_error = EOL_UNKNOWN;           /* file format with errors */
-  long linerest = 0;                    /* remaining chars in line */
+  int64_t linerest = 0;                    /* remaining chars in line */
 #ifdef UNIX
   int perm = 0;
   int swap_mode = -1;                   /* protection bits for swap file */
@@ -287,7 +287,7 @@ readfile (
   int fenc_alloced;                     /* fenc_next is in allocated memory */
   char_u      *fenc_next = NULL;        /* next item in 'fencs' or NULL */
   int advance_fenc = FALSE;
-  long real_size = 0;
+  int64_t real_size = 0;
 # ifdef USE_ICONV
   iconv_t iconv_fd = (iconv_t)-1;       /* descriptor for iconv() or -1 */
   int did_iconv = FALSE;                /* TRUE when iconv() failed and trying
@@ -384,7 +384,7 @@ readfile (
    * If the name ends in a path separator, we can't open it.  Check here,
    * because reading the file may actually work, but then creating the swap
    * file may destroy it!  Reported on MS-DOS and Win 95.
-   * If the name is too long we might crash further on, quit here.
+   * If the name is too int64_t we might crash further on, quit here.
    */
   if (fname != NULL && *fname != NUL) {
     p = fname + STRLEN(fname);
@@ -599,7 +599,7 @@ readfile (
     /* Set swap file protection bits after creating it. */
     if (swap_mode > 0 && curbuf->b_ml.ml_mfp != NULL
         && curbuf->b_ml.ml_mfp->mf_fname != NULL)
-      (void)os_setperm(curbuf->b_ml.ml_mfp->mf_fname, (long)swap_mode);
+      (void)os_setperm(curbuf->b_ml.ml_mfp->mf_fname, (int64_t)swap_mode);
 #endif
   }
 
@@ -1046,7 +1046,7 @@ retry:
             size = 0;
           else {
             int n, ni;
-            long tlen;
+            int64_t tlen;
 
             tlen = 0;
             for (;; ) {
@@ -1281,7 +1281,7 @@ retry:
         /* move the linerest to before the converted characters */
         line_start = ptr - linerest;
         memmove(line_start, buffer, (size_t)linerest);
-        size = (long)((char_u *)top - ptr);
+        size = (int64_t)((char_u *)top - ptr);
       }
 # endif
 
@@ -1473,7 +1473,7 @@ retry:
         /* move the linerest to before the converted characters */
         line_start = dest - linerest;
         memmove(line_start, buffer, (size_t)linerest);
-        size = (long)((ptr + real_size) - dest);
+        size = (int64_t)((ptr + real_size) - dest);
         ptr = dest;
       } else if (enc_utf8 && !curbuf->b_p_bin) {
         int incomplete_tail = FALSE;
@@ -1696,7 +1696,7 @@ rewind_retry:
         }
       }
     }
-    linerest = (long)(ptr - line_start);
+    linerest = (int64_t)(ptr - line_start);
     ui_breakcheck();
   }
 
@@ -1871,7 +1871,7 @@ failed:
         c = TRUE;
       }
       if (split) {
-        STRCAT(IObuff, _("[long lines split]"));
+        STRCAT(IObuff, _("[int64_t lines split]"));
         c = TRUE;
       }
       if (notconverted) {
@@ -1903,12 +1903,12 @@ failed:
       if (msg_add_fileformat(fileformat))
         c = TRUE;
       if (cryptkey != NULL)
-        msg_add_lines(c, (long)linecnt, filesize
+        msg_add_lines(c, (int64_t)linecnt, filesize
             - CRYPT_MAGIC_LEN
             - crypt_salt_len[use_crypt_method]
             - crypt_seed_len[use_crypt_method]);
       else
-        msg_add_lines(c, (long)linecnt, filesize);
+        msg_add_lines(c, (int64_t)linecnt, filesize);
 
       free(keep_msg);
       keep_msg = NULL;
@@ -2250,7 +2250,7 @@ static char_u *
 check_for_cryptkey (
     char_u *cryptkey,          /* previous encryption key or NULL */
     char_u *ptr,               /* pointer to read bytes */
-    long *sizep,             /* length of read bytes */
+    int64_t *sizep,             /* length of read bytes */
     off_t *filesizep,         /* nr of bytes used from file */
     int newfile,                    /* editing a new buffer */
     char_u *fname,             /* file name to display */
@@ -2459,7 +2459,7 @@ buf_write (
   char_u c;
   int len;
   linenr_T lnum;
-  long nchars;
+  int64_t nchars;
   char_u          *errmsg = NULL;
   int errmsg_allocated = FALSE;
   char_u          *errnum = NULL;
@@ -2467,7 +2467,7 @@ buf_write (
   char_u smallbuf[SMBUFSIZE];
   char_u          *backup_ext;
   int bufsize;
-  long perm;                                /* file permissions */
+  int64_t perm;                                /* file permissions */
   int retval = OK;
   int newfile = FALSE;                      /* TRUE if file doesn't exist yet */
   int msg_save = msg_scroll;
@@ -2519,7 +2519,7 @@ buf_write (
   if (check_secure())
     return FAIL;
 
-  /* Avoid a crash for a long name. */
+  /* Avoid a crash for a int64_t name. */
   if (STRLEN(fname) >= MAXPATHL) {
     EMSG(_(e_longname));
     return FAIL;
@@ -2943,7 +2943,7 @@ buf_write (
           if (!os_get_file_info((char *)IObuff, &file_info)
               || file_info.stat.st_uid != file_info_old.stat.st_uid
               || file_info.stat.st_gid != file_info_old.stat.st_gid
-              || (long)file_info.stat.st_mode != perm) {
+              || (int64_t)file_info.stat.st_mode != perm) {
             backup_copy = TRUE;
           }
 # endif
@@ -3806,7 +3806,7 @@ restore_backup:
         STRCAT(IObuff, _("[crypted]"));
       c = TRUE;
     }
-    msg_add_lines(c, (long)lnum, nchars);       /* add line/char count */
+    msg_add_lines(c, (int64_t)lnum, nchars);       /* add line/char count */
     if (!shortmess(SHM_WRITE)) {
       if (append)
         STRCAT(IObuff, shortmess(SHM_WRI) ? _(" [a]") : _(" appended"));
@@ -4091,7 +4091,7 @@ static int msg_add_fileformat(int eol_type)
 /*
  * Append line and character count to IObuff.
  */
-void msg_add_lines(int insert_space, long lnum, off_t nchars)
+void msg_add_lines(int insert_space, int64_t lnum, off_t nchars)
 {
   char_u  *p;
 
@@ -4134,7 +4134,7 @@ static void msg_add_eol(void)
 static int check_mtime(buf_T *buf, FileInfo *file_info)
 {
   if (buf->b_mtime_read != 0
-      && time_differs((long)file_info->stat.st_mtim.tv_sec,
+      && time_differs((int64_t)file_info->stat.st_mtim.tv_sec,
                       buf->b_mtime_read)) {
     msg_scroll = TRUE;              /* don't overwrite messages here */
     msg_silent = 0;                 /* must give this prompt */
@@ -4149,7 +4149,7 @@ static int check_mtime(buf_T *buf, FileInfo *file_info)
   return OK;
 }
 
-static int time_differs(long t1, long t2)
+static int time_differs(int64_t t1, int64_t t2)
 {
 #if defined(__linux__) || defined(MSWIN)
   /* On a FAT filesystem, esp. under Linux, there are only 5 bits to store
@@ -4516,7 +4516,7 @@ static int get_fio_flags(char_u *ptr)
  * Return the name of the encoding and set "*lenp" to the length.
  * Returns NULL when no BOM found.
  */
-static char_u *check_for_bom(char_u *p, long size, int *lenp, int flags)
+static char_u *check_for_bom(char_u *p, int64_t size, int *lenp, int flags)
 {
   char        *name = NULL;
   int len = 2;
@@ -4626,7 +4626,7 @@ void shorten_fnames(int force)
  *
  * Assumed that fname is a valid name found in the filesystem we assure that
  * the return value is a different name and ends in 'ext'.
- * "ext" MUST be at most 4 characters long if it starts with a dot, 3
+ * "ext" MUST be at most 4 characters int64_t if it starts with a dot, 3
  * characters otherwise.
  * Space for the returned name is allocated, must be freed later.
  * Returns NULL when out of memory.
@@ -4728,7 +4728,7 @@ modname (
 }
 
 /*
- * Like fgets(), but if the file line is too long, it is truncated and the
+ * Like fgets(), but if the file line is too int64_t, it is truncated and the
  * rest of the line is thrown away.  Returns TRUE for end-of-file.
  */
 int vim_fgets(char_u *buf, int size, FILE *fp)
@@ -4808,7 +4808,7 @@ int vim_rename(char_u *from, char_u *to)
   int n;
   char        *errmsg = NULL;
   char        *buffer;
-  long perm;
+  int64_t perm;
 #ifdef HAVE_ACL
   vim_acl_T acl;                /* ACL from original file */
 #endif
@@ -5105,7 +5105,7 @@ buf_check_timestamp (
   if (!(buf->b_flags & BF_NOTEDITED)
       && buf->b_mtime != 0
       && (!(file_info_ok = os_get_file_info((char *)buf->b_ffname, &file_info))
-          || time_differs((long)file_info.stat.st_mtim.tv_sec, buf->b_mtime)
+          || time_differs((int64_t)file_info.stat.st_mtim.tv_sec, buf->b_mtime)
           || (int)file_info.stat.st_mode != buf->b_orig_mode
           )) {
     retval = 1;
@@ -5421,7 +5421,7 @@ void buf_reload(buf_T *buf, int orig_mode)
 
 void buf_store_file_info(buf_T *buf, FileInfo *file_info)
 {
-  buf->b_mtime = (long)file_info->stat.st_mtim.tv_sec;
+  buf->b_mtime = (int64_t)file_info->stat.st_mtim.tv_sec;
   buf->b_orig_size = file_info->stat.st_size;
   buf->b_orig_mode = (int)file_info->stat.st_mode;
 }
@@ -5437,7 +5437,7 @@ void write_lnum_adjust(linenr_T offset)
 }
 
 #if defined(TEMPDIRNAMES) || defined(PROTO)
-static long temp_count = 0;             /* Temp filename counter. */
+static int64_t temp_count = 0;             /* Temp filename counter. */
 
 /*
  * Delete the temp directory and all files it contains.
@@ -5522,8 +5522,8 @@ vim_tempname (
     for (i = 0; i < (int)(sizeof(tempdirs) / sizeof(char *)); ++i) {
 # ifndef HAVE_MKDTEMP
       size_t itmplen;
-      long nr;
-      long off;
+      int64_t nr;
+      int64_t off;
 # endif
 
       /* expand $TMP, leave room for "/v1100000/999999999" */
@@ -5541,7 +5541,7 @@ vim_tempname (
          * unlikely that it already exists it will be faster,
          * otherwise it doesn't matter.  The use of mkdir() avoids any
          * security problems because of the predictable number. */
-        nr = (os_get_pid() + (long)time(NULL)) % 1000000L;
+        nr = (os_get_pid() + (int64_t)time(NULL)) % 1000000L;
         itmplen = STRLEN(itmp);
 
         /* Try up to 10000 different values until we find a name that
@@ -7082,7 +7082,7 @@ apply_autocmds_group (
   scid_T save_current_SID;
   void        *save_funccalp;
   char_u      *save_cmdarg;
-  long save_cmdbang;
+  int64_t save_cmdbang;
   static int filechangeshell_busy = FALSE;
   proftime_T wait_time;
 
@@ -7300,7 +7300,7 @@ apply_autocmds_group (
     save_cmdbang = get_vim_var_nr(VV_CMDBANG);
     if (eap != NULL) {
       save_cmdarg = set_cmdarg(eap, NULL);
-      set_vim_var_nr(VV_CMDBANG, (long)eap->forceit);
+      set_vim_var_nr(VV_CMDBANG, (int64_t)eap->forceit);
     } else
       save_cmdarg = NULL;       /* avoid gcc warning */
     retval = TRUE;
@@ -7384,7 +7384,7 @@ static char_u   *old_termresponse = NULL;
 
 /*
  * Block triggering autocommands until unblock_autocmd() is called.
- * Can be used recursively, so long as it's symmetric.
+ * Can be used recursively, so int64_t as it's symmetric.
  */
 void block_autocmds(void)
 {
@@ -7843,7 +7843,7 @@ match_file_pat (
 /*
  * Return TRUE if a file matches with a pattern in "list".
  * "list" is a comma-separated list of patterns, like 'wildignore'.
- * "sfname" is the short file name or NULL, "ffname" the long file name.
+ * "sfname" is the short file name or NULL, "ffname" the int64_t file name.
  */
 int match_file_list(char_u *list, char_u *sfname, char_u *ffname)
 {
@@ -8107,12 +8107,12 @@ file_pat_to_reg_pat (
  * Version of read() that retries when interrupted by EINTR (possibly
  * by a SIGWINCH).
  */
-long read_eintr(fd, buf, bufsize)
+int64_t read_eintr(fd, buf, bufsize)
 int fd;
 void    *buf;
 size_t bufsize;
 {
-  long ret;
+  int64_t ret;
 
   for (;; ) {
     ret = vim_read(fd, buf, bufsize);
@@ -8126,17 +8126,17 @@ size_t bufsize;
  * Version of write() that retries when interrupted by EINTR (possibly
  * by a SIGWINCH).
  */
-long write_eintr(fd, buf, bufsize)
+int64_t write_eintr(fd, buf, bufsize)
 int fd;
 void    *buf;
 size_t bufsize;
 {
-  long ret = 0;
-  long wlen;
+  int64_t ret = 0;
+  int64_t wlen;
 
-  /* Repeat the write() so long it didn't fail, other than being interrupted
+  /* Repeat the write() so int64_t it didn't fail, other than being interrupted
    * by a signal. */
-  while (ret < (long)bufsize) {
+  while (ret < (int64_t)bufsize) {
     wlen = vim_write(fd, (char *)buf + ret, bufsize - ret);
     if (wlen < 0) {
       if (errno != EINTR)
