@@ -17137,7 +17137,7 @@ void ex_execute(exarg_T *eap)
       p = get_tv_string(&rettv);
       len = (int)STRLEN(p);
       ga_grow(&ga, len + 2);
-      if (ga.ga_len)
+      if (!GA_EMPTY(&ga))
         ((char_u *)(ga.ga_data))[ga.ga_len++] = ' ';
       STRCPY((char_u *)(ga.ga_data) + ga.ga_len, p);
       ga.ga_len += len;
