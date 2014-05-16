@@ -70,7 +70,7 @@ int coladvance(colnr_T wcol)
 
   if (wcol == MAXCOL || rc == FAIL)
     curwin->w_valid &= ~VALID_VIRTCOL;
-  else if (*ml_get_cursor() != TAB) {
+  else if (*get_cursor_pos_ptr() != TAB) {
     /* Virtcol is valid when not on a TAB */
     curwin->w_valid |= VALID_VIRTCOL;
     curwin->w_virtcol = wcol;
@@ -444,8 +444,8 @@ int leftcol_changed(void)
 int gchar_cursor(void)
 {
   if (has_mbyte)
-    return (*mb_ptr2char)(ml_get_cursor());
-  return (int)*ml_get_cursor();
+    return (*mb_ptr2char)(get_cursor_pos_ptr());
+  return (int)*get_cursor_pos_ptr();
 }
 
 /*
@@ -461,7 +461,7 @@ void pchar_cursor(char_u c)
 /*
  * Return pointer to cursor line.
  */
-char_u *ml_get_curline(void)
+char_u *get_cursor_line_ptr(void)
 {
   return ml_get_buf(curbuf, curwin->w_cursor.lnum, FALSE);
 }
@@ -469,7 +469,7 @@ char_u *ml_get_curline(void)
 /*
  * Return pointer to cursor position.
  */
-char_u *ml_get_cursor(void)
+char_u *get_cursor_pos_ptr(void)
 {
   return ml_get_buf(curbuf, curwin->w_cursor.lnum, FALSE) +
          curwin->w_cursor.col;

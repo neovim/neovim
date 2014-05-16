@@ -120,7 +120,7 @@ open_line (
   /*
    * make a copy of the current line so we can mess with it
    */
-  saved_line = vim_strsave(ml_get_curline());
+  saved_line = vim_strsave(get_cursor_line_ptr());
 
   if (State & VREPLACE_FLAG) {
     /*
@@ -286,7 +286,7 @@ open_line (
             if ((pos = findmatch(NULL, '(')) != NULL) {
               curwin->w_cursor.lnum = pos->lnum;
               newindent = get_indent();
-              ptr = ml_get_curline();
+              ptr = get_cursor_line_ptr();
             }
           }
           /*
@@ -887,7 +887,7 @@ open_line (
       && curbuf->b_p_lisp
       && curbuf->b_p_ai) {
     fixthisline(get_lisp_indent);
-    p = ml_get_curline();
+    p = get_cursor_line_ptr();
     ai_col = (colnr_T)(skipwhite(p) - p);
   }
   /*
@@ -901,7 +901,7 @@ open_line (
           ? KEY_OPEN_FORW
           : KEY_OPEN_BACK, ' ', linewhite(curwin->w_cursor.lnum))) {
     do_c_expr_indent();
-    p = ml_get_curline();
+    p = get_cursor_line_ptr();
     ai_col = (colnr_T)(skipwhite(p) - p);
   }
   if (vreplace_mode != 0)
@@ -914,7 +914,7 @@ open_line (
    */
   if (State & VREPLACE_FLAG) {
     /* Put new line in p_extra */
-    p_extra = vim_strsave(ml_get_curline());
+    p_extra = vim_strsave(get_cursor_line_ptr());
 
     /* Put back original line */
     ml_replace(curwin->w_cursor.lnum, next_line, FALSE);
@@ -1595,7 +1595,7 @@ int del_char(int fixpos)
   if (has_mbyte) {
     /* Make sure the cursor is at the start of a character. */
     mb_adjust_cursor();
-    if (*ml_get_cursor() == NUL)
+    if (*get_cursor_pos_ptr() == NUL)
       return FAIL;
     return del_chars(1L, fixpos);
   }
@@ -1612,7 +1612,7 @@ int del_chars(long count, int fixpos)
   char_u      *p;
   int l;
 
-  p = ml_get_cursor();
+  p = get_cursor_pos_ptr();
   for (i = 0; i < count && *p != NUL; ++i) {
     l = (*mb_ptr2len)(p);
     bytes += l;

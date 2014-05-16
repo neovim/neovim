@@ -91,7 +91,7 @@ void do_ascii(exarg_T *eap)
   int len;
 
   if (enc_utf8)
-    c = utfc_ptr2char(ml_get_cursor(), cc);
+    c = utfc_ptr2char(get_cursor_pos_ptr(), cc);
   else
     c = gchar_cursor();
   if (c == NUL) {
@@ -258,7 +258,7 @@ static int linelen(int *has_tab)
   int len;
 
   /* find the first non-blank character */
-  line = ml_get_curline();
+  line = get_cursor_line_ptr();
   first = skipwhite(line);
 
   /* find the character after the last non-blank character */

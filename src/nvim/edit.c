@@ -428,7 +428,7 @@ edit (
     if (startln)
       Insstart.col = 0;
   }
-  Insstart_textlen = (colnr_T)linetabsize(ml_get_curline());
+  Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
   Insstart_blank_vcol = MAXCOL;
   if (!did_ai)
     ai_col = 0;
@@ -521,7 +521,7 @@ edit (
     update_curswant();
     if (((ins_at_eol && curwin->w_cursor.lnum == o_lnum)
          || curwin->w_curswant > curwin->w_virtcol)
-        && *(ptr = ml_get_curline() + curwin->w_cursor.col) != NUL) {
+        && *(ptr = get_cursor_line_ptr() + curwin->w_cursor.col) != NUL) {
       if (ptr[1] == NUL)
         ++curwin->w_cursor.col;
       else if (has_mbyte) {
@@ -1501,7 +1501,7 @@ void display_dollar(colnr_T col)
     char_u *p;
 
     /* If on the last byte of a multi-byte move to the first byte. */
-    p = ml_get_curline();
+    p = get_cursor_line_ptr();
     curwin->w_cursor.col -= (*mb_head_off)(p, p + col);
   }
   curs_columns(FALSE);              /* recompute w_wrow and w_wcol */
@@ -1555,7 +1555,7 @@ change_indent (
 
   /* VREPLACE mode needs to know what the line was like before changing */
   if (State & VREPLACE_FLAG) {
-    orig_line = vim_strsave(ml_get_curline());      /* Deal with NULL below */
+    orig_line = vim_strsave(get_cursor_line_ptr());   /* Deal with NULL below */
     orig_col = curwin->w_cursor.col;
   }
 
@@ -1636,7 +1636,7 @@ change_indent (
      */
     vcol = last_vcol = 0;
     new_cursor_col = -1;
-    ptr = ml_get_curline();
+    ptr = get_cursor_line_ptr();
     while (vcol <= (int)curwin->w_virtcol) {
       last_vcol = vcol;
       if (has_mbyte && new_cursor_col >= 0)
@@ -1727,7 +1727,7 @@ change_indent (
       return;
 
     /* Save new line */
-    new_line = vim_strsave(ml_get_curline());
+    new_line = vim_strsave(get_cursor_line_ptr());
 
     /* We only put back the new line up to the cursor */
     new_line[curwin->w_cursor.col] = NUL;
@@ -1798,13 +1798,13 @@ static int del_char_after_col(int limit_col)
      * composing character. */
     mb_adjust_cursor();
     while (curwin->w_cursor.col < (colnr_T)limit_col) {
-      int l = utf_ptr2len(ml_get_cursor());
+      int l = utf_ptr2len(get_cursor_pos_ptr());
 
       if (l == 0)        /* end of line */
         break;
       curwin->w_cursor.col += l;
     }
-    if (*ml_get_cursor() == NUL || curwin->w_cursor.col == ecol)
+    if (*get_cursor_pos_ptr() == NUL || curwin->w_cursor.col == ecol)
       return FALSE;
     del_bytes((long)((int)ecol - curwin->w_cursor.col), FALSE, TRUE);
   } else
@@ -2321,7 +2321,8 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_col = startcol;
   compl_length = (int)curwin->w_cursor.col - (int)startcol;
   /* compl_pattern doesn't need to be set */
-  compl_orig_text = vim_strnsave(ml_get_curline() + compl_col, compl_length);
+  compl_orig_text = vim_strnsave(get_cursor_line_ptr() + compl_col,
+                                 compl_length);
   if (ins_compl_add(compl_orig_text, -1, p_ic, NULL, NULL, 0,
                     ORIGINAL_TEXT, FALSE) != OK) {
     return;
@@ -2849,7 +2850,7 @@ static int ins_compl_bs(void)
   char_u      *line;
   char_u      *p;
 
-  line = ml_get_curline();
+  line = get_cursor_line_ptr();
   p = line + curwin->w_cursor.col;
   mb_ptr_back(line, p);
 
@@ -2971,7 +2972,7 @@ static void ins_compl_addleader(int c)
    * break redo. */
   if (!compl_opt_refresh_always) {
     free(compl_leader);
-    compl_leader = vim_strnsave(ml_get_curline() + compl_col,
+    compl_leader = vim_strnsave(get_cursor_line_ptr() + compl_col,
         (int)(curwin->w_cursor.col - compl_col));
     ins_compl_new_leader();
   }
@@ -3220,7 +3221,7 @@ static int ins_compl_prep(int c)
         if (stop_arrow() == OK)
           insertchar(NUL, 0, -1);
         if (prev_col > 0
-            && ml_get_curline()[curwin->w_cursor.col] != NUL)
+            && get_cursor_line_ptr()[curwin->w_cursor.col] != NUL)
           inc_cursor();
       }
 
@@ -4921,7 +4922,8 @@ insert_special (
 
 # define WHITECHAR(cc) (vim_iswhite(cc) && \
                         (!enc_utf8 || \
-                         !utf_iscomposing(utf_ptr2char(ml_get_cursor() + 1))))
+                         !utf_iscomposing( \
+                           utf_ptr2char(get_cursor_pos_ptr() + 1))))
 
 /*
  * "flags": INSCHAR_FORMAT - force formatting
@@ -4967,7 +4969,7 @@ insertchar (
           || (!vim_iswhite(c)
               && !((State & REPLACE_FLAG)
                    && !(State & VREPLACE_FLAG)
-                   && *ml_get_cursor() != NUL)
+                   && *get_cursor_pos_ptr() != NUL)
               && (curwin->w_cursor.lnum != Insstart.lnum
                   || ((!has_format_option(FO_INS_LONG)
                        || Insstart_textlen <= (colnr_T)textwidth)
@@ -5002,7 +5004,7 @@ insertchar (
      * Need to remove existing (middle) comment leader and insert end
      * comment leader.  First, check what comment leader we can find.
      */
-    i = get_leader_len(line = ml_get_curline(), &p, FALSE, TRUE);
+    i = get_leader_len(line = get_cursor_line_ptr(), &p, FALSE, TRUE);
     if (i > 0 && vim_strchr(p, COM_MIDDLE) != NULL) {   /* Just checking */
       /* Skip middle-comment string */
       while (*p && p[-1] != ':')        /* find end of middle flags */
@@ -5198,7 +5200,7 @@ internal_format (
 
     /* Don't break until after the comment leader */
     if (do_comments)
-      leader_len = get_leader_len(ml_get_curline(), NULL, FALSE, TRUE);
+      leader_len = get_leader_len(get_cursor_line_ptr(), NULL, FALSE, TRUE);
     else
       leader_len = 0;
 
@@ -5350,7 +5352,7 @@ internal_format (
        * In VREPLACE mode, we will backspace over the text to be
        * wrapped, so save a copy now to put on the next line.
        */
-      saved_text = vim_strsave(ml_get_cursor());
+      saved_text = vim_strsave(get_cursor_pos_ptr());
       curwin->w_cursor.col = orig_col;
       if (saved_text == NULL)
         break;          /* Can't do it, out of memory */
@@ -5428,7 +5430,7 @@ internal_format (
        * may have added or removed indent.
        */
       curwin->w_cursor.col += startcol;
-      len = (colnr_T)STRLEN(ml_get_curline());
+      len = (colnr_T)STRLEN(get_cursor_line_ptr());
       if (curwin->w_cursor.col > len)
         curwin->w_cursor.col = len;
     }
@@ -5476,7 +5478,7 @@ auto_format (
     return;
 
   pos = curwin->w_cursor;
-  old = ml_get_curline();
+  old = get_cursor_line_ptr();
 
   /* may remove added space */
   check_auto_format(FALSE);
@@ -5539,7 +5541,7 @@ auto_format (
    * need to add a space when 'w' is in 'formatoptions' to keep a paragraph
    * formatted. */
   if (!wasatend && has_format_option(FO_WHITE_PAR)) {
-    new = ml_get_curline();
+    new = get_cursor_line_ptr();
     len = (colnr_T)STRLEN(new);
     if (curwin->w_cursor.col == len) {
       pnew = vim_strnsave(new, len + 2);
@@ -5702,7 +5704,7 @@ int stop_arrow(void)
       ins_need_undo = FALSE;
     }
     Insstart = curwin->w_cursor;        /* new insertion starts here */
-    Insstart_textlen = (colnr_T)linetabsize(ml_get_curline());
+    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
     ai_col = 0;
     if (State & VREPLACE_FLAG) {
       orig_line_count = curbuf->b_ml.ml_line_count;
@@ -5820,7 +5822,7 @@ stop_insert (
       /* <C-S-Right> may have started Visual mode, adjust the position for
        * deleted characters. */
       if (VIsual_active && VIsual.lnum == curwin->w_cursor.lnum) {
-        int len = (int)STRLEN(ml_get_curline());
+        int len = (int)STRLEN(get_cursor_line_ptr());
 
         if (VIsual.col > len) {
           VIsual.col = len;
@@ -5917,7 +5919,7 @@ void beginline(int flags)
     if (flags & (BL_WHITE | BL_SOL)) {
       char_u  *ptr;
 
-      for (ptr = ml_get_curline(); vim_iswhite(*ptr)
+      for (ptr = get_cursor_line_ptr(); vim_iswhite(*ptr)
            && !((flags & BL_FIX) && ptr[1] == NUL); ++ptr)
         ++curwin->w_cursor.col;
     }
@@ -5942,7 +5944,7 @@ int oneright(void)
     pos_T prevpos = curwin->w_cursor;
 
     /* Adjust for multi-wide char (excluding TAB) */
-    ptr = ml_get_cursor();
+    ptr = get_cursor_pos_ptr();
     coladvance(getviscol() + ((*ptr != TAB && vim_isprintc(
                                    (*mb_ptr2char)(ptr)
                                    ))
@@ -5953,7 +5955,7 @@ int oneright(void)
             || prevpos.coladd != curwin->w_cursor.coladd) ? OK : FAIL;
   }
 
-  ptr = ml_get_cursor();
+  ptr = get_cursor_pos_ptr();
   if (*ptr == NUL)
     return FAIL;            /* already at the very end */
 
@@ -6000,7 +6002,7 @@ int oneleft(void)
       char_u *ptr;
 
       /* Adjust for multi-wide char (not a TAB) */
-      ptr = ml_get_cursor();
+      ptr = get_cursor_pos_ptr();
       if (*ptr != TAB && vim_isprintc(
               (*mb_ptr2char)(ptr)
               ) && ptr2cells(ptr) > 1)
@@ -6226,7 +6228,7 @@ static int echeck_abbr(int c)
   if (p_paste || no_abbr || arrow_used)
     return FALSE;
 
-  return check_abbr(c, ml_get_curline(), curwin->w_cursor.col,
+  return check_abbr(c, get_cursor_line_ptr(), curwin->w_cursor.col,
       curwin->w_cursor.lnum == Insstart.lnum ? Insstart.col : 0);
 }
 
@@ -6417,23 +6419,23 @@ static void replace_do_bs(int limit_col)
       /* Get the number of screen cells used by the character we are
        * going to delete. */
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
-      orig_vcols = chartabsize(ml_get_cursor(), start_vcol);
+      orig_vcols = chartabsize(get_cursor_pos_ptr(), start_vcol);
     }
     if (has_mbyte) {
       (void)del_char_after_col(limit_col);
       if (State & VREPLACE_FLAG)
-        orig_len = (int)STRLEN(ml_get_cursor());
+        orig_len = (int)STRLEN(get_cursor_pos_ptr());
       replace_push(cc);
     } else {
       pchar_cursor(cc);
       if (State & VREPLACE_FLAG)
-        orig_len = (int)STRLEN(ml_get_cursor()) - 1;
+        orig_len = (int)STRLEN(get_cursor_pos_ptr()) - 1;
     }
     replace_pop_ins();
 
     if (State & VREPLACE_FLAG) {
       /* Get the number of screen cells used by the inserted characters */
-      p = ml_get_cursor();
+      p = get_cursor_pos_ptr();
       ins_len = (int)STRLEN(p) - orig_len;
       vcol = start_vcol;
       for (i = 0; i < ins_len; ++i) {
@@ -6576,7 +6578,7 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
      */
     else if (*look == 'e') {
       if (try_match && keytyped == 'e' && curwin->w_cursor.col >= 4) {
-        p = ml_get_curline();
+        p = get_cursor_line_ptr();
         if (skipwhite(p) == p + curwin->w_cursor.col - 4 &&
             STRNCMP(p + curwin->w_cursor.col - 4, "else", 4) == 0)
           return TRUE;
@@ -6590,18 +6592,18 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
      */
     else if (*look == ':') {
       if (try_match && keytyped == ':') {
-        p = ml_get_curline();
+        p = get_cursor_line_ptr();
         if (cin_iscase(p, FALSE) || cin_isscopedecl(p) || cin_islabel())
           return TRUE;
         /* Need to get the line again after cin_islabel(). */
-        p = ml_get_curline();
+        p = get_cursor_line_ptr();
         if (curwin->w_cursor.col > 2
             && p[curwin->w_cursor.col - 1] == ':'
             && p[curwin->w_cursor.col - 2] == ':') {
           p[curwin->w_cursor.col - 1] = ' ';
           i = (cin_iscase(p, FALSE) || cin_isscopedecl(p)
                || cin_islabel());
-          p = ml_get_curline();
+          p = get_cursor_line_ptr();
           p[curwin->w_cursor.col - 1] = ':';
           if (i)
             return TRUE;
@@ -6653,7 +6655,7 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
 
           /* Just completed a word, check if it starts with "look".
            * search back for the start of a word. */
-          line = ml_get_curline();
+          line = get_cursor_line_ptr();
           if (has_mbyte) {
             char_u  *n;
 
@@ -6676,7 +6678,7 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
         if (keytyped == (int)p[-1] || (icase && keytyped < 256
                                        && TOLOWER_LOC(keytyped) ==
                                        TOLOWER_LOC((int)p[-1]))) {
-          line = ml_get_cursor();
+          line = get_cursor_pos_ptr();
           if ((curwin->w_cursor.col == (colnr_T)(p - look)
                || !vim_iswordc(line[-(p - look) - 1]))
               && (icase
@@ -6688,7 +6690,7 @@ int in_cinkeys(int keytyped, int when, int line_is_empty)
         if (match && try_match_word && !try_match) {
           /* "0=word": Check if there are only blanks before the
            * word. */
-          line = ml_get_curline();
+          line = get_cursor_line_ptr();
           if ((int)(skipwhite(line) - line) !=
               (int)(curwin->w_cursor.col - (p - look)))
             match = FALSE;
@@ -7229,7 +7231,7 @@ static void ins_shift(int c, int lastc)
   } else
     change_indent(c == Ctrl_D ? INDENT_DEC : INDENT_INC, 0, TRUE, 0, TRUE);
 
-  if (did_ai && *skipwhite(ml_get_curline()) != NUL)
+  if (did_ai && *skipwhite(get_cursor_line_ptr()) != NUL)
     did_ai = FALSE;
   did_si = FALSE;
   can_si = FALSE;
@@ -7452,8 +7454,8 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
                && ((p_sta && in_indent)
                    || (get_sts_value() != 0
                        && curwin->w_cursor.col > 0
-                       && (*(ml_get_cursor() - 1) == TAB
-                           || (*(ml_get_cursor() - 1) == ' '
+                       && (*(get_cursor_pos_ptr() - 1) == TAB
+                           || (*(get_cursor_pos_ptr() - 1) == ' '
                                && (!*inserted_space_p
                                    || arrow_used)))))) {
       int ts;
@@ -7478,7 +7480,7 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
 
       /* delete characters until we are at or before want_vcol */
       while (vcol > want_vcol
-             && (cc = *(ml_get_cursor() - 1), vim_iswhite(cc)))
+             && (cc = *(get_cursor_pos_ptr() - 1), vim_iswhite(cc)))
         ins_bs_one(&vcol);
 
       /* insert extra spaces until we are at want_vcol */
@@ -7530,7 +7532,7 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
           replace_do_bs(-1);
         else {
           if (enc_utf8 && p_deco)
-            (void)utfc_ptr2char(ml_get_cursor(), cpc);
+            (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
           (void)del_char(FALSE);
           /*
            * If there are combining characters and 'delcombine' is set
@@ -7767,7 +7769,7 @@ static void ins_right(void)
       oneright();
     else {
       if (has_mbyte)
-        curwin->w_cursor.col += (*mb_ptr2len)(ml_get_cursor());
+        curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
       else
         ++curwin->w_cursor.col;
     }
@@ -7976,10 +7978,10 @@ static int ins_tab(void)
     if (State & VREPLACE_FLAG) {
       pos = curwin->w_cursor;
       cursor = &pos;
-      saved_line = vim_strsave(ml_get_curline());
+      saved_line = vim_strsave(get_cursor_line_ptr());
       ptr = saved_line + pos.col;
     } else {
-      ptr = ml_get_cursor();
+      ptr = get_cursor_pos_ptr();
       cursor = &curwin->w_cursor;
     }
 
@@ -8120,7 +8122,7 @@ static int ins_eol(int c)
   /* NL in reverse insert will always start in the end of
    * current line. */
   if (revins_on)
-    curwin->w_cursor.col += (colnr_T)STRLEN(ml_get_cursor());
+    curwin->w_cursor.col += (colnr_T)STRLEN(get_cursor_pos_ptr());
 
   AppendToRedobuff(NL_STR);
   i = open_line(FORWARD,
