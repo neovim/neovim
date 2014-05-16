@@ -30,8 +30,9 @@ Object vim_eval(String str, Error *err);
 /// one cell.
 ///
 /// @param str Some text
+/// @param[out] err Details of an error that may have occurred
 /// @return The number of cells
-Integer vim_strwidth(String str);
+Integer vim_strwidth(String str, Error *err);
 
 /// Returns a list of paths contained in 'runtimepath'
 ///

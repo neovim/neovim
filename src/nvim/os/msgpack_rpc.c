@@ -36,7 +36,7 @@ void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
   }
 
   // Set the response id, which is the same as the request
-  msgpack_pack_int(res, req->via.array.ptr[1].via.u64);
+  msgpack_pack_uint64(res, req->via.array.ptr[1].via.u64);
 
   if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
     msgpack_rpc_error("Message type must be an integer", res);
@@ -81,10 +81,9 @@ bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
 
 bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
 {
-
   if (obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
       && obj->via.u64 <= INT64_MAX) {
-    *arg = obj->via.u64;
+    *arg = (int64_t)obj->via.u64;
     return true;
   }
 
@@ -177,18 +176,10 @@ bool msgpack_rpc_to_stringarray(msgpack_object *obj, StringArray *arg)
 
 bool msgpack_rpc_to_position(msgpack_object *obj, Position *arg)
 {
-  // positions are represented by integer arrays of size 2
-  if (obj->type != MSGPACK_OBJECT_ARRAY
-      || obj->via.array.size != 2
-      || obj->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER
-      || obj->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    return false;
-  }
-
-  arg->row = obj->via.array.ptr[0].via.u64;
-  arg->col = obj->via.array.ptr[1].via.u64;
-
-  return true;
+  return obj->type == MSGPACK_OBJECT_ARRAY
+      && obj->via.array.size == 2
+      && msgpack_rpc_to_integer(obj->via.array.ptr, &arg->row)
+      && msgpack_rpc_to_integer(obj->via.array.ptr + 1, &arg->col);
 }
 
 

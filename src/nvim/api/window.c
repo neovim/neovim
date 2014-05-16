@@ -48,8 +48,18 @@ void window_set_cursor(Window window, Position pos, Error *err)
     return;
   }
 
-  win->w_cursor.lnum = pos.row;
-  win->w_cursor.col = pos.col;
+  if (pos.row > LONG_MAX || pos.row < LONG_MIN) {
+    set_api_error("Row value outside range", err);
+    return;
+  }
+
+  if (pos.col > INT_MAX || pos.col < INT_MIN) {
+    set_api_error("Column value outside range", err);
+    return;
+  }
+
+  win->w_cursor.lnum = (linenr_T)pos.row;
+  win->w_cursor.col = (colnr_T)pos.col;
   win->w_cursor.coladd = 0;
   // When column is out of range silently correct it.
   check_cursor_col_win(win);
@@ -75,10 +85,15 @@ void window_set_height(Window window, Integer height, Error *err)
     return;
   }
 
+  if (height > INT_MAX || height < INT_MIN) {
+    set_api_error("Height value outside range", err);
+    return;
+  }
+
   win_T *savewin = curwin;
   curwin = win;
   try_start();
-  win_setheight(height);
+  win_setheight((int)height);
   curwin = savewin;
   try_end(err);
 }
@@ -102,10 +117,15 @@ void window_set_width(Window window, Integer width, Error *err)
     return;
   }
 
+  if (width > INT_MAX || width < INT_MIN) {
+    set_api_error("Width value outside range", err);
+    return;
+  }
+
   win_T *savewin = curwin;
   curwin = win;
   try_start();
-  win_setwidth(width);
+  win_setwidth((int)width);
   curwin = savewin;
   try_end(err);
 }

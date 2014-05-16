@@ -97,12 +97,30 @@ StringArray buffer_get_slice(Buffer buffer,
     return rv;
   }
 
-  rv.size = end - start;
-  rv.items = xmalloc(sizeof(String) * rv.size);
+  rv.size = (size_t)(end - start);
+  rv.items = xcalloc(sizeof(String), rv.size);
 
-  for (uint32_t i = 0; i < rv.size; i++) {
-    rv.items[i].data = xstrdup((char *)ml_get_buf(buf, start + i, false));
+  for (size_t i = 0; i < rv.size; i++) {
+    int64_t lnum = start + (int64_t)i;
+
+    if (lnum > LONG_MAX) {
+      set_api_error("Line index is too high", err);
+      goto end;
+    }
+
+    rv.items[i].data = xstrdup((char *)ml_get_buf(buf, (linenr_T)lnum, false));
     rv.items[i].size = strlen(rv.items[i].data);
+  }
+
+end:
+  if (err->set) {
+    for (size_t i = 0; i < rv.size; i++) {
+      if (rv.items[i].data != NULL) {
+        free(rv.items[i].data);
+      }
+    }
+
+    free(rv.items);
   }
 
   return rv;
@@ -133,10 +151,9 @@ void buffer_set_slice(Buffer buffer,
   buf_T *save_curbuf = NULL;
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
-  uint32_t new_len = replacement.size;
-  uint32_t old_len = end - start;
-  uint32_t i;
-  int32_t extra = 0;  // lines added to text, can be negative
+  size_t new_len = replacement.size;
+  size_t old_len = (size_t)(end - start);
+  ssize_t extra = 0;  // lines added to text, can be negative
   char **lines;
 
   if (new_len == 0) {
@@ -146,7 +163,7 @@ void buffer_set_slice(Buffer buffer,
     lines = xcalloc(sizeof(char *), new_len);
   }
 
-  for (i = 0; i < new_len; i++) {
+  for (size_t i = 0; i < new_len; i++) {
     String l = replacement.items[i];
     lines[i] = xstrndup(l.data, l.size);
   }
@@ -154,30 +171,41 @@ void buffer_set_slice(Buffer buffer,
   try_start();
   switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
 
-  if (u_save(start - 1, end) == FAIL) {
+  if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
     set_api_error("Cannot save undo information", err);
-    goto cleanup;
+    goto end;
   }
 
   // If the size of the range is reducing (ie, new_len < old_len) we
   // need to delete some old_len. We do this at the start, by
   // repeatedly deleting line "start".
-  for (i = 0; new_len < old_len && i < old_len - new_len; i++) {
-    if (ml_delete(start, false) == FAIL) {
+  size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
+  for (size_t i = 0; i < to_delete; i++) {
+    if (ml_delete((linenr_T)start, false) == FAIL) {
       set_api_error("Cannot delete line", err);
-      goto cleanup;
+      goto end;
     }
   }
 
-  extra -= i;
+  if ((ssize_t)to_delete > 0) {
+    extra -= (ssize_t)to_delete;
+  }
 
   // For as long as possible, replace the existing old_len with the
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
-  for (i = 0; i < old_len && i < new_len; i++) {
-    if (ml_replace(start + i, (char_u *)lines[i], false) == FAIL) {
+  size_t to_replace = old_len < new_len ? old_len : new_len;
+  for (size_t i = 0; i < to_replace; i++) {
+    int64_t lnum = start + (int64_t)i;
+
+    if (lnum > LONG_MAX) {
+      set_api_error("Index value is too high", err);
+      goto end;
+    }
+
+    if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
       set_api_error("Cannot replace line", err);
-      goto cleanup;
+      goto end;
     }
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
@@ -185,11 +213,19 @@ void buffer_set_slice(Buffer buffer,
   }
 
   // Now we may need to insert the remaining new old_len
-  while (i < new_len) {
-    if (ml_append(start + i - 1, (char_u *)lines[i], 0, false) == FAIL) {
-      set_api_error("Cannot insert line", err);
-      goto cleanup;
+  for (size_t i = to_replace; i < new_len; i++) {
+    int64_t lnum = start + (int64_t)i - 1;
+
+    if (lnum > LONG_MAX) {
+      set_api_error("Index value is too high", err);
+      goto end;
     }
+
+    if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
+      set_api_error("Cannot insert line", err);
+      goto end;
+    }
+
     // Same as with replacing
     lines[i] = NULL;
     i++;
@@ -201,16 +237,16 @@ void buffer_set_slice(Buffer buffer,
   // Only adjust marks if we managed to switch to a window that holds
   // the buffer, otherwise line numbers will be invalid.
   if (save_curbuf == NULL) {
-    mark_adjust(start, end - 1, MAXLNUM, extra);
+    mark_adjust((linenr_T)start, (linenr_T)(end - 1), MAXLNUM, extra);
   }
 
-  changed_lines(start, 0, end, extra);
+  changed_lines((linenr_T)start, 0, (linenr_T)end, extra);
 
   if (buf == curbuf) {
-    fix_cursor(start, end, extra);
+    fix_cursor((linenr_T)start, (linenr_T)end, extra);
   }
 
-cleanup:
+end:
   for (uint32_t i = 0; i < new_len; i++) {
     if (lines[i] != NULL) {
       free(lines[i]);

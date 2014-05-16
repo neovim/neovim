@@ -123,7 +123,12 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
     return rv;
   }
 
-  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, key.size);
+  if (key.size > INT_MAX) {
+    set_api_error("Key length is too high", err);
+    return rv;
+  }
+
+  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, (int)key.size);
 
   if (value.type == kObjectTypeNil) {
     // Delete the key
@@ -255,7 +260,12 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
       goto cleanup;
     }
 
-    int val = value.data.integer;
+    if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
+      set_api_error("Option value outside range", err);
+      return;
+    }
+
+    int val = (int)value.data.integer;
     set_option_value_for(key, val, NULL, opt_flags, type, to, err);
   } else {
     if (value.type != kObjectTypeString) {
@@ -284,7 +294,12 @@ Object vim_to_object(typval_T *obj)
 
 buf_T *find_buffer(Buffer buffer, Error *err)
 {
-  buf_T *buf = buflist_findnr(buffer);
+  if (buffer > INT_MAX || buffer < INT_MIN) {
+    set_api_error("Invalid buffer id", err);
+    return NULL;
+  }
+
+  buf_T *buf = buflist_findnr((int)buffer);
 
   if (buf == NULL) {
     set_api_error("Invalid buffer id", err);
@@ -310,7 +325,12 @@ win_T * find_window(Window window, Error *err)
 
 tabpage_T * find_tab(Tabpage tabpage, Error *err)
 {
-  tabpage_T *rv = find_tabpage(tabpage);
+  if (tabpage > INT_MAX || tabpage < INT_MIN) {
+    set_api_error("Invalid tabpage id", err);
+    return NULL;
+  }
+
+  tabpage_T *rv = find_tabpage((int)tabpage);
 
   if (!rv) {
     set_api_error("Invalid tabpage id", err);
@@ -336,8 +356,13 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeInteger:
+      if (obj.data.integer > INT_MAX || obj.data.integer < INT_MIN) {
+        set_api_error("Integer value outside range", err);
+        return false;
+      }
+
       tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = obj.data.integer;
+      tv->vval.v_number = (int)obj.data.integer;
       break;
 
     case kObjectTypeFloat:
@@ -447,8 +472,9 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
 
         if (list != NULL) {
           rv.type = kObjectTypeArray;
-          rv.data.array.size = list->lv_len;
-          rv.data.array.items = xmalloc(list->lv_len * sizeof(Object));
+          assert(list->lv_len >= 0);
+          rv.data.array.size = (size_t)list->lv_len;
+          rv.data.array.items = xmalloc(rv.data.array.size * sizeof(Object));
 
           uint32_t i = 0;
           for (item = list->lv_first; item != NULL; item = item->li_next) {

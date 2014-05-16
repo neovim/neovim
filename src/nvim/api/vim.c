@@ -66,9 +66,14 @@ Object vim_eval(String str, Error *err)
   return rv;
 }
 
-Integer vim_strwidth(String str)
+Integer vim_strwidth(String str, Error *err)
 {
-  return mb_string2cells((char_u *)str.data, str.size);
+  if (str.size > INT_MAX) {
+    set_api_error("String length is too high", err);
+    return 0;
+  }
+
+  return mb_string2cells((char_u *)str.data, (int)str.size);
 }
 
 StringArray vim_list_runtime_paths(void)
@@ -99,10 +104,12 @@ StringArray vim_list_runtime_paths(void)
   while (*rtp != NUL) {
     rv.items[i].data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
-    rv.items[i].size = copy_option_part(&rtp,
-                                       (char_u *)rv.items[i].data,
-                                       MAXPATHL,
-                                       ",");
+    int length = copy_option_part(&rtp,
+                                 (char_u *)rv.items[i].data,
+                                 MAXPATHL,
+                                 ",");
+    assert(length >= 0);
+    rv.items[i].size = (size_t)length;
     i++;
   }
 
@@ -180,7 +187,7 @@ void vim_err_write(String str)
 Integer vim_get_buffer_count(void)
 {
   buf_T *b = firstbuf;
-  uint64_t n = 0;
+  Integer n = 0;
 
   while (b) {
     n++;
@@ -197,8 +204,12 @@ Buffer vim_get_current_buffer(void)
 
 void vim_set_current_buffer(Buffer buffer, Error *err)
 {
+  if (!find_buffer(buffer, err)) {
+    return;
+  }
+
   try_start();
-  if (do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buffer, 0) == FAIL) {
+  if (do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, (int)buffer, 0) == FAIL) {
     if (try_end(err)) {
       return;
     }
@@ -216,7 +227,7 @@ Integer vim_get_window_count(void)
 {
   tabpage_T *tp;
   win_T *wp;
-  uint64_t rv = 0;
+  Integer rv = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     rv++;
@@ -268,7 +279,7 @@ void vim_set_current_window(Window window, Error *err)
 Integer vim_get_tabpage_count(void)
 {
   tabpage_T *tp = first_tabpage;
-  uint64_t rv = 0;
+  Integer rv = 0;
 
   while (tp != NULL) {
     tp = tp->tp_next;
@@ -292,8 +303,12 @@ Tabpage vim_get_current_tabpage(void)
 
 void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 {
+  if (!find_tab(tabpage, err)) {
+    return;
+  }
+
   try_start();
-  goto_tabpage(tabpage);
+  goto_tabpage((int)tabpage);
   try_end(err);
 }
 
