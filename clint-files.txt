@@ -11,6 +11,8 @@ src/nvim/api/vim.c
 src/nvim/api/vim.h
 src/nvim/api/window.c
 src/nvim/api/window.h
+src/nvim/cursor.c
+src/nvim/cursor.h
 src/nvim/hashtab.c
 src/nvim/hashtab.h
 src/nvim/indent.c
