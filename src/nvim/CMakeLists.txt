@@ -39,6 +39,8 @@ set(CONV_SRCS
   cursor.c
   garray.c
   hashtab.c
+  log.c
+  map.c
   memory.c
   map.c
   os/env.c
@@ -48,6 +50,7 @@ set(CONV_SRCS
   os/rstream.c
   os/signal.c
   os/users.c
+  os/uv_helpers.c
   os/wstream.c
   os/msgpack_rpc.c
   api/buffer.c
