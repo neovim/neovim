@@ -4,8 +4,6 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
-static bool msgpack_rpc_to_uint16_t(msgpack_object *obj, uint16_t *arg);
-
 void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
 {
   // The initial response structure is the same no matter what happens,
@@ -83,9 +81,15 @@ bool msgpack_rpc_to_bool(msgpack_object *obj, bool *arg)
 
 bool msgpack_rpc_to_int64_t(msgpack_object *obj, int64_t *arg)
 {
+
+  if (obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
+      && obj->via.u64 <= INT64_MAX) {
+    *arg = obj->via.u64;
+    return true;
+  }
+
   *arg = obj->via.i64;
-  return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
-      || obj->type == MSGPACK_OBJECT_NEGATIVE_INTEGER;
+  return obj->type == MSGPACK_OBJECT_NEGATIVE_INTEGER;
 }
 
 bool msgpack_rpc_to_double(msgpack_object *obj, double *arg)
@@ -103,17 +107,17 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
 
 bool msgpack_rpc_to_buffer(msgpack_object *obj, Buffer *arg)
 {
-  return msgpack_rpc_to_uint16_t(obj, arg);
+  return msgpack_rpc_to_int64_t(obj, arg);
 }
 
 bool msgpack_rpc_to_window(msgpack_object *obj, Window *arg)
 {
-  return msgpack_rpc_to_uint16_t(obj, arg);
+  return msgpack_rpc_to_int64_t(obj, arg);
 }
 
 bool msgpack_rpc_to_tabpage(msgpack_object *obj, Tabpage *arg)
 {
-  return msgpack_rpc_to_uint16_t(obj, arg);
+  return msgpack_rpc_to_int64_t(obj, arg);
 }
 
 bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
@@ -245,11 +249,6 @@ void msgpack_rpc_from_int64_t(int64_t result, msgpack_packer *res)
   msgpack_pack_int64(res, result);
 }
 
-void msgpack_rpc_from_uint64_t(uint64_t result, msgpack_packer *res)
-{
-  msgpack_pack_uint64(res, result);
-}
-
 void msgpack_rpc_from_double(double result, msgpack_packer *res)
 {
   msgpack_pack_double(res, result);
@@ -263,17 +262,17 @@ void msgpack_rpc_from_string(String result, msgpack_packer *res)
 
 void msgpack_rpc_from_buffer(Buffer result, msgpack_packer *res)
 {
-  msgpack_rpc_from_uint64_t(result, res);
+  msgpack_rpc_from_int64_t(result, res);
 }
 
 void msgpack_rpc_from_window(Window result, msgpack_packer *res)
 {
-  msgpack_rpc_from_uint64_t(result, res);
+  msgpack_rpc_from_int64_t(result, res);
 }
 
 void msgpack_rpc_from_tabpage(Tabpage result, msgpack_packer *res)
 {
-  msgpack_rpc_from_uint64_t(result, res);
+  msgpack_rpc_from_int64_t(result, res);
 }
 
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
@@ -324,8 +323,8 @@ void msgpack_rpc_from_stringarray(StringArray result, msgpack_packer *res)
 void msgpack_rpc_from_position(Position result, msgpack_packer *res)
 {
   msgpack_pack_array(res, 2);;
-  msgpack_pack_uint16(res, result.row);
-  msgpack_pack_uint16(res, result.col);
+  msgpack_pack_int64(res, result.row);
+  msgpack_pack_int64(res, result.col);
 }
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
@@ -398,11 +397,5 @@ void msgpack_rpc_free_dictionary(Dictionary value)
   }
 
   free(value.items);
-}
-
-static bool msgpack_rpc_to_uint16_t(msgpack_object *obj, uint16_t *arg)
-{
-  *arg = obj->via.u64;
-  return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER;
 }
 

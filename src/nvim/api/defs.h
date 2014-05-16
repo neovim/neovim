@@ -15,9 +15,9 @@ typedef struct {
   size_t size;
 } String;
 
-typedef uint16_t Buffer;
-typedef uint16_t Window;
-typedef uint16_t Tabpage;
+typedef int64_t Buffer;
+typedef int64_t Window;
+typedef int64_t Tabpage;
 
 typedef struct object Object;
 
@@ -27,7 +27,7 @@ typedef struct {
 } StringArray;
 
 typedef struct {
-  uint16_t row, col;
+  int64_t row, col;
 } Position;
 
 typedef struct {
