@@ -1409,12 +1409,11 @@ void getvcols(win_T *wp, pos_T *pos1, pos_T *pos2, colnr_T *left,
 /// @return Pointer to character after the skipped whitespace.
 char_u* skipwhite(char_u *q)
 {
-  char_u *p = q;
-  while (vim_iswhite(*p)) {
+  while (vim_iswhite(*q)) {
     // skip to next non-white
-    p++;
+    q++;
   }
-  return p;
+  return q;
 }
 
 /// skip over digits
@@ -1424,12 +1423,11 @@ char_u* skipwhite(char_u *q)
 /// @return Pointer to the character after the skipped digits.
 char_u* skipdigits(char_u *q)
 {
-  char_u *p = q;
-  while (VIM_ISDIGIT(*p)) {
+  while (VIM_ISDIGIT(*q)) {
     // skip to next non-digit
-    p++;
+    q++;
   }
-  return p;
+  return q;
 }
 
 /// skip over digits and hex characters
@@ -1440,12 +1438,11 @@ char_u* skipdigits(char_u *q)
 ///         characters.
 char_u* skiphex(char_u *q)
 {
-  char_u *p = q;
-  while (vim_isxdigit(*p)) {
+  while (vim_isxdigit(*q)) {
     // skip to next non-digit
-    p++;
+    q++;
   }
-  return p;
+  return q;
 }
 
 /// skip to digit (or NUL after the string)
@@ -1455,12 +1452,11 @@ char_u* skiphex(char_u *q)
 /// @return Pointer to the digit or (NUL after the string).
 char_u* skiptodigit(char_u *q)
 {
-  char_u *p = q;
-  while (*p != NUL && !VIM_ISDIGIT(*p)) {
+  while (*q != NUL && !VIM_ISDIGIT(*q)) {
     // skip to next digit
-    p++;
+    q++;
   }
-  return p;
+  return q;
 }
 
 /// skip to hex character (or NUL after the string)
@@ -1470,12 +1466,11 @@ char_u* skiptodigit(char_u *q)
 /// @return Pointer to the hex character or (NUL after the string).
 char_u* skiptohex(char_u *q)
 {
-  char_u *p = q;
-  while (*p != NUL && !vim_isxdigit(*p)) {
+  while (*q != NUL && !vim_isxdigit(*q)) {
     // skip to next digit
-    p++;
+    q++;
   }
-  return p;
+  return q;
 }
 
 /// Variant of isdigit() that can handle characters > 0x100.
