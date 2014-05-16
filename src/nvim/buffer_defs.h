@@ -576,12 +576,12 @@ struct file_buffer {
   char_u      *b_p_def;         /* 'define' local value */
   char_u      *b_p_inc;         /* 'include' */
   char_u      *b_p_inex;        /* 'includeexpr' */
-  long_u b_p_inex_flags;        /* flags for 'includeexpr' */
+  uint64_t b_p_inex_flags;        /* flags for 'includeexpr' */
   char_u      *b_p_inde;        /* 'indentexpr' */
-  long_u b_p_inde_flags;        /* flags for 'indentexpr' */
+  uint64_t b_p_inde_flags;        /* flags for 'indentexpr' */
   char_u      *b_p_indk;        /* 'indentkeys' */
   char_u      *b_p_fex;         /* 'formatexpr' */
-  long_u b_p_fex_flags;         /* flags for 'formatexpr' */
+  uint64_t b_p_fex_flags;         /* flags for 'formatexpr' */
   char_u      *b_p_key;         /* 'key' */
   char_u      *b_p_kp;          /* 'keywordprg' */
   int b_p_lisp;                 /* 'lisp' */
@@ -1012,9 +1012,9 @@ struct window_S {
   winopt_T w_allbuf_opt;
 
   /* A few options have local flags for P_INSECURE. */
-  long_u w_p_stl_flags;             /* flags for 'statusline' */
-  long_u w_p_fde_flags;             /* flags for 'foldexpr' */
-  long_u w_p_fdt_flags;             /* flags for 'foldtext' */
+  uint64_t w_p_stl_flags;             /* flags for 'statusline' */
+  uint64_t w_p_fde_flags;             /* flags for 'foldexpr' */
+  uint64_t w_p_fdt_flags;             /* flags for 'foldtext' */
   int         *w_p_cc_cols;         /* array of columns to highlight or NULL */
 
   /* transform a pointer to a "onebuf" option into a "allbuf" option */

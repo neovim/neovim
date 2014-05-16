@@ -249,7 +249,7 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[32])
   PUT_UINT32(ctx->state[7], digest, 28);
 }
 
-static unsigned int get_some_time(void);
+static uint32_t get_some_time(void);
 
 /// Gets the hex digest of the buffer.
 ///
@@ -366,17 +366,17 @@ int sha256_self_test(void)
   return failures > 0 ? FAIL : OK;
 }
 
-static unsigned int get_some_time(void)
+static uint32_t get_some_time(void)
 {
 #ifdef HAVE_GETTIMEOFDAY
   struct timeval tv;
 
   // Using usec makes it less predictable.
   gettimeofday(&tv, NULL);
-  return (unsigned int) (tv.tv_sec + tv.tv_usec);
+  return (uint32_t) (tv.tv_sec + tv.tv_usec);
 
 #else  // ifdef HAVE_GETTIMEOFDAY
-  return (unsigned int) time(NULL);
+  return (uint32_t) time(NULL);
 
 #endif  // ifdef HAVE_GETTIMEOFDAY
 }

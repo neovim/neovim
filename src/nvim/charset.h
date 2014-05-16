@@ -56,7 +56,7 @@ long getdigits(char_u **pp);
 int vim_isblankline(char_u *lbuf);
 void vim_str2nr(char_u *start, int *hexp, int *len, int dooct,
                 int dohex, long *nptr,
-                unsigned long *unptr);
+                uint64_t *unptr);
 int hex2nr(int c);
 int hexhex2nr(char_u *p);
 int rem_backslash(char_u *str);

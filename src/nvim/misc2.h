@@ -44,7 +44,7 @@ int get3c(FILE *fd);
 int get4c(FILE *fd);
 time_t get8ctime(FILE *fd);
 char_u *read_string(FILE *fd, int cnt);
-int put_bytes(FILE *fd, long_u nr, int len);
+int put_bytes(FILE *fd, uint64_t nr, int len);
 void put_time(FILE *fd, time_t the_time);
 int has_non_ascii(char_u *s);
 

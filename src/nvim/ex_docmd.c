@@ -69,7 +69,7 @@ static int ex_pressedreturn = FALSE;
 
 typedef struct ucmd {
   char_u      *uc_name;         /* The command name */
-  long_u uc_argt;               /* The argument type */
+  uint64_t uc_argt;               /* The argument type */
   char_u      *uc_rep;          /* The command's replacement string */
   long uc_def;                  /* The default value for a range/count */
   int uc_compl;                 /* completion type */

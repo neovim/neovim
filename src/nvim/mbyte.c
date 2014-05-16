@@ -2055,9 +2055,9 @@ int utf_class(int c)
 {
   /* sorted list of non-overlapping intervals */
   static struct clinterval {
-    unsigned int first;
-    unsigned int last;
-    unsigned int class;
+    uint32_t first;
+    uint32_t last;
+    uint32_t class;
   } classes[] =
   {
     {0x037e, 0x037e, 1},                /* Greek question mark */
@@ -2143,9 +2143,9 @@ int utf_class(int c)
   /* binary search in table */
   while (top >= bot) {
     mid = (bot + top) / 2;
-    if (classes[mid].last < (unsigned int)c)
+    if (classes[mid].last < (uint32_t)c)
       bot = mid + 1;
-    else if (classes[mid].first > (unsigned int)c)
+    else if (classes[mid].first > (uint32_t)c)
       top = mid - 1;
     else
       return (int)classes[mid].class;

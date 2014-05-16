@@ -543,7 +543,7 @@ find_special_key (
   int modifiers;
   int bit;
   int key;
-  unsigned long n;
+  uint64_t n;
   int l;
 
   src = *srcp;

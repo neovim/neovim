@@ -9,7 +9,7 @@
  *		   This reduces the size of hashitem by 1/3.
  */
 typedef struct hashitem_S {
-  long_u hi_hash;               /* cached hash number of hi_key */
+  uint64_t hi_hash;               /* cached hash number of hi_key */
   char_u      *hi_key;
 } hashitem_T;
 
@@ -24,10 +24,10 @@ typedef struct hashitem_S {
 #define HT_INIT_SIZE 16
 
 typedef struct hashtable_S {
-  long_u ht_mask;               /* mask used for hash value (nr of items in
+  uint64_t ht_mask;               /* mask used for hash value (nr of items in
                                  * array is "ht_mask" + 1) */
-  long_u ht_used;               /* number of items used */
-  long_u ht_filled;             /* number of items used + removed */
+  uint64_t ht_used;               /* number of items used */
+  uint64_t ht_filled;             /* number of items used + removed */
   int ht_locked;                /* counter for hash_lock() */
   int ht_error;                 /* when set growing failed, can't add more
                                    items before growing works */
@@ -36,7 +36,7 @@ typedef struct hashtable_S {
   hashitem_T ht_smallarray[HT_INIT_SIZE];      /* initial array */
 } hashtab_T;
 
-typedef long_u hash_T;          /* Type for hi_hash */
+typedef uint64_t hash_T;          /* Type for hi_hash */
 
 /* hashtab.c */
 void hash_init(hashtab_T *ht);

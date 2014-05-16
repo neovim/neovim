@@ -622,7 +622,7 @@ nomem:
     undo_off = TRUE;                /* will be reset when character typed */
     return OK;
   }
-  do_outofmem_msg((long_u)0);
+  do_outofmem_msg((uint64_t)0);
   return FAIL;
 }
 
@@ -805,7 +805,7 @@ static int serialize_header(FILE *fp, buf_T *buf, char_u *hash)
     char_u *header;
     int header_len;
 
-    put_bytes(fp, (long_u)UF_VERSION_CRYPT, 2);
+    put_bytes(fp, (uint64_t)UF_VERSION_CRYPT, 2);
     header = prepare_crypt_write(buf, &header_len);
     if (header == NULL)
       return FAIL;
@@ -816,7 +816,7 @@ static int serialize_header(FILE *fp, buf_T *buf, char_u *hash)
       return FAIL;
     }
   } else
-    put_bytes(fp, (long_u)UF_VERSION, 2);
+    put_bytes(fp, (uint64_t)UF_VERSION, 2);
 
 
   /* Write a hash of the buffer text, so that we can verify it is still the
@@ -825,28 +825,28 @@ static int serialize_header(FILE *fp, buf_T *buf, char_u *hash)
     return FAIL;
 
   /* buffer-specific data */
-  put_bytes(fp, (long_u)buf->b_ml.ml_line_count, 4);
+  put_bytes(fp, (uint64_t)buf->b_ml.ml_line_count, 4);
   len = buf->b_u_line_ptr != NULL ? (int)STRLEN(buf->b_u_line_ptr) : 0;
-  put_bytes(fp, (long_u)len, 4);
+  put_bytes(fp, (uint64_t)len, 4);
   if (len > 0 && fwrite_crypt(buf, buf->b_u_line_ptr, (size_t)len, fp) != 1)
     return FAIL;
-  put_bytes(fp, (long_u)buf->b_u_line_lnum, 4);
-  put_bytes(fp, (long_u)buf->b_u_line_colnr, 4);
+  put_bytes(fp, (uint64_t)buf->b_u_line_lnum, 4);
+  put_bytes(fp, (uint64_t)buf->b_u_line_colnr, 4);
 
   /* Undo structures header data */
   put_header_ptr(fp, buf->b_u_oldhead);
   put_header_ptr(fp, buf->b_u_newhead);
   put_header_ptr(fp, buf->b_u_curhead);
 
-  put_bytes(fp, (long_u)buf->b_u_numhead, 4);
-  put_bytes(fp, (long_u)buf->b_u_seq_last, 4);
-  put_bytes(fp, (long_u)buf->b_u_seq_cur, 4);
+  put_bytes(fp, (uint64_t)buf->b_u_numhead, 4);
+  put_bytes(fp, (uint64_t)buf->b_u_seq_last, 4);
+  put_bytes(fp, (uint64_t)buf->b_u_seq_cur, 4);
   put_time(fp, buf->b_u_time_cur);
 
   /* Optional fields. */
   putc(4, fp);
   putc(UF_LAST_SAVE_NR, fp);
-  put_bytes(fp, (long_u)buf->b_u_save_nr_last, 4);
+  put_bytes(fp, (uint64_t)buf->b_u_save_nr_last, 4);
 
   putc(0, fp);    /* end marker */
 
@@ -858,7 +858,7 @@ static int serialize_uhp(FILE *fp, buf_T *buf, u_header_T *uhp)
   int i;
   u_entry_T   *uep;
 
-  if (put_bytes(fp, (long_u)UF_HEADER_MAGIC, 2) == FAIL)
+  if (put_bytes(fp, (uint64_t)UF_HEADER_MAGIC, 2) == FAIL)
     return FAIL;
 
   put_header_ptr(fp, uhp->uh_next.ptr);
@@ -867,8 +867,8 @@ static int serialize_uhp(FILE *fp, buf_T *buf, u_header_T *uhp)
   put_header_ptr(fp, uhp->uh_alt_prev.ptr);
   put_bytes(fp, uhp->uh_seq, 4);
   serialize_pos(uhp->uh_cursor, fp);
-  put_bytes(fp, (long_u)uhp->uh_cursor_vcol, 4);
-  put_bytes(fp, (long_u)uhp->uh_flags, 2);
+  put_bytes(fp, (uint64_t)uhp->uh_cursor_vcol, 4);
+  put_bytes(fp, (uint64_t)uhp->uh_flags, 2);
   /* Assume NMARKS will stay the same. */
   for (i = 0; i < NMARKS; ++i)
     serialize_pos(uhp->uh_namedm[i], fp);
@@ -878,17 +878,17 @@ static int serialize_uhp(FILE *fp, buf_T *buf, u_header_T *uhp)
   /* Optional fields. */
   putc(4, fp);
   putc(UHP_SAVE_NR, fp);
-  put_bytes(fp, (long_u)uhp->uh_save_nr, 4);
+  put_bytes(fp, (uint64_t)uhp->uh_save_nr, 4);
 
   putc(0, fp);    /* end marker */
 
   /* Write all the entries. */
   for (uep = uhp->uh_entry; uep != NULL; uep = uep->ue_next) {
-    put_bytes(fp, (long_u)UF_ENTRY_MAGIC, 2);
+    put_bytes(fp, (uint64_t)UF_ENTRY_MAGIC, 2);
     if (serialize_uep(fp, buf, uep) == FAIL)
       return FAIL;
   }
-  put_bytes(fp, (long_u)UF_ENTRY_END_MAGIC, 2);
+  put_bytes(fp, (uint64_t)UF_ENTRY_END_MAGIC, 2);
   return OK;
 }
 
@@ -974,13 +974,13 @@ static int serialize_uep(FILE *fp, buf_T *buf, u_entry_T *uep)
   int i;
   size_t len;
 
-  put_bytes(fp, (long_u)uep->ue_top, 4);
-  put_bytes(fp, (long_u)uep->ue_bot, 4);
-  put_bytes(fp, (long_u)uep->ue_lcount, 4);
-  put_bytes(fp, (long_u)uep->ue_size, 4);
+  put_bytes(fp, (uint64_t)uep->ue_top, 4);
+  put_bytes(fp, (uint64_t)uep->ue_bot, 4);
+  put_bytes(fp, (uint64_t)uep->ue_lcount, 4);
+  put_bytes(fp, (uint64_t)uep->ue_size, 4);
   for (i = 0; i < uep->ue_size; ++i) {
     len = STRLEN(uep->ue_array[i]);
-    if (put_bytes(fp, (long_u)len, 4) == FAIL)
+    if (put_bytes(fp, (uint64_t)len, 4) == FAIL)
       return FAIL;
     if (len > 0 && fwrite_crypt(buf, uep->ue_array[i], len, fp) != 1)
       return FAIL;
@@ -1034,9 +1034,9 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
  */
 static void serialize_pos(pos_T pos, FILE *fp)
 {
-  put_bytes(fp, (long_u)pos.lnum, 4);
-  put_bytes(fp, (long_u)pos.col, 4);
-  put_bytes(fp, (long_u)pos.coladd, 4);
+  put_bytes(fp, (uint64_t)pos.lnum, 4);
+  put_bytes(fp, (uint64_t)pos.col, 4);
+  put_bytes(fp, (uint64_t)pos.coladd, 4);
 }
 
 /*
@@ -1062,8 +1062,8 @@ static void serialize_visualinfo(visualinfo_T *info, FILE *fp)
 {
   serialize_pos(info->vi_start, fp);
   serialize_pos(info->vi_end, fp);
-  put_bytes(fp, (long_u)info->vi_mode, 4);
-  put_bytes(fp, (long_u)info->vi_curswant, 4);
+  put_bytes(fp, (uint64_t)info->vi_mode, 4);
+  put_bytes(fp, (uint64_t)info->vi_curswant, 4);
 }
 
 /*
@@ -1083,7 +1083,7 @@ static void unserialize_visualinfo(visualinfo_T *info, FILE *fp)
  * pointers when reading. */
 static void put_header_ptr(FILE *fp, u_header_T *uhp)
 {
-  put_bytes(fp, (long_u)(uhp != NULL ? uhp->uh_seq : 0), 4);
+  put_bytes(fp, (uint64_t)(uhp != NULL ? uhp->uh_seq : 0), 4);
 }
 
 /*
@@ -1279,7 +1279,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
       uhp = uhp->uh_next.ptr;
   }
 
-  if (put_bytes(fp, (long_u)UF_HEADER_END_MAGIC, 2) == OK)
+  if (put_bytes(fp, (uint64_t)UF_HEADER_END_MAGIC, 2) == OK)
     write_ok = TRUE;
 #ifdef U_DEBUG
   if (headers_written != buf->b_u_numhead) {
@@ -2115,7 +2115,7 @@ static void u_undoredo(int undo)
       for (lnum = bot - 1, i = oldsize; --i >= 0; --lnum) {
         /* what can we do when we run out of memory? */
         if ((newarray[i] = u_save_line(lnum)) == NULL)
-          do_outofmem_msg((long_u)0);
+          do_outofmem_msg((uint64_t)0);
         /* remember we deleted the last line in the buffer, and a
          * dummy empty line will be inserted */
         if (curbuf->b_ml.ml_line_count == 1)
@@ -2747,7 +2747,7 @@ void u_saveline(linenr_T lnum)
   else
     curbuf->b_u_line_colnr = 0;
   if ((curbuf->b_u_line_ptr = u_save_line(lnum)) == NULL)
-    do_outofmem_msg((long_u)0);
+    do_outofmem_msg((uint64_t)0);
 }
 
 /*
@@ -2789,7 +2789,7 @@ void u_undoline(void)
     return;
   oldp = u_save_line(curbuf->b_u_line_lnum);
   if (oldp == NULL) {
-    do_outofmem_msg((long_u)0);
+    do_outofmem_msg((uint64_t)0);
     return;
   }
   ml_replace(curbuf->b_u_line_lnum, curbuf->b_u_line_ptr, TRUE);

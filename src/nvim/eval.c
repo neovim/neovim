@@ -3462,10 +3462,10 @@ static char_u *cat_prefix_varname(int prefix, char_u *name)
  */
 char_u *get_user_var_name(expand_T *xp, int idx)
 {
-  static long_u gdone;
-  static long_u bdone;
-  static long_u wdone;
-  static long_u tdone;
+  static uint64_t gdone;
+  static uint64_t bdone;
+  static uint64_t wdone;
+  static uint64_t tdone;
   static int vidx;
   static hashitem_T   *hi;
   hashtab_T           *ht;
@@ -12090,7 +12090,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
       if (*p == '\n' || readlen <= 0) {
         listitem_T  *li;
         char_u      *s  = NULL;
-        long_u len = p - start;
+        uint64_t len = p - start;
 
         /* Finished a line.  Remove CRs before NL. */
         if (readlen > 0 && !binary) {
@@ -12115,7 +12115,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           }
         }
         if (s == NULL) {
-          do_outofmem_msg((long_u) prevlen + len + 1);
+          do_outofmem_msg((uint64_t) prevlen + len + 1);
           failed = TRUE;
           break;
         }
@@ -12194,7 +12194,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
         newprev = prev == NULL ? alloc(prevsize)
                   : xrealloc(prev, prevsize);
         if (newprev == NULL) {
-          do_outofmem_msg((long_u)prevsize);
+          do_outofmem_msg((uint64_t)prevsize);
           failed = TRUE;
           break;
         }
@@ -18373,7 +18373,7 @@ static char_u *autoload_name(char_u *name)
  */
 char_u *get_user_func_name(expand_T *xp, int idx)
 {
-  static long_u done;
+  static uint64_t done;
   static hashitem_T   *hi;
   ufunc_T             *fp;
 

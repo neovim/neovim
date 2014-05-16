@@ -3928,7 +3928,7 @@ add_keyword (
   hashtab_T   *ht;
   hashitem_T  *hi;
   char_u      *name_ic;
-  long_u hash;
+  uint64_t hash;
   char_u name_folded[MAXKEYWLEN + 1];
 
   if (curwin->w_s->b_syn_ic)

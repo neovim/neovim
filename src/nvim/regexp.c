@@ -685,7 +685,7 @@ static void regmbc(int c);
 static void reginsert(int, char_u *);
 static void reginsert_nr(int op, long val, char_u *opnd);
 static void reginsert_limits(int, long, long, char_u *);
-static char_u   *re_put_long(char_u *pr, long_u val);
+static char_u   *re_put_long(char_u *pr, uint64_t val);
 static int read_limits(long *, long *);
 static void regtail(char_u *, char_u *);
 static void regoptail(char_u *, char_u *);
@@ -2065,7 +2065,7 @@ static char_u *regatom(int *flagp)
     default:
       if (VIM_ISDIGIT(c) || c == '<' || c == '>'
           || c == '\'') {
-        long_u n = 0;
+        uint64_t n = 0;
         int cmp;
 
         cmp = c;
@@ -2514,7 +2514,7 @@ static void reginsert_nr(int op, long val, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  re_put_long(place, (long_u)val);
+  re_put_long(place, (uint64_t)val);
 }
 
 /*
@@ -2543,15 +2543,15 @@ static void reginsert_limits(int op, long minval, long maxval, char_u *opnd)
   *place++ = op;
   *place++ = NUL;
   *place++ = NUL;
-  place = re_put_long(place, (long_u)minval);
-  place = re_put_long(place, (long_u)maxval);
+  place = re_put_long(place, (uint64_t)minval);
+  place = re_put_long(place, (uint64_t)maxval);
   regtail(opnd, place);
 }
 
 /*
  * Write a long as four bytes at "p" and return pointer to the next char.
  */
-static char_u *re_put_long(char_u *p, long_u val)
+static char_u *re_put_long(char_u *p, uint64_t val)
 {
   *p++ = (char_u) ((val >> 24) & 0377);
   *p++ = (char_u) ((val >> 16) & 0377);
@@ -3106,7 +3106,7 @@ static void save_se_one(save_se_T *savep, char_u **pp);
     else \
       *(pp) = (savep)->se_u.ptr; }
 
-static int re_num_cmp(long_u val, char_u *scan);
+static int re_num_cmp(uint64_t val, char_u *scan);
 static int match_with_backref(linenr_T start_lnum, colnr_T start_col,
                               linenr_T end_lnum, colnr_T end_col,
                               int *bytelen);
@@ -3892,18 +3892,18 @@ regmatch (
           break;
 
         case RE_LNUM:
-          if (!REG_MULTI || !re_num_cmp((long_u)(reglnum + reg_firstlnum),
+          if (!REG_MULTI || !re_num_cmp((uint64_t)(reglnum + reg_firstlnum),
                   scan))
             status = RA_NOMATCH;
           break;
 
         case RE_COL:
-          if (!re_num_cmp((long_u)(reginput - regline) + 1, scan))
+          if (!re_num_cmp((uint64_t)(reginput - regline) + 1, scan))
             status = RA_NOMATCH;
           break;
 
         case RE_VCOL:
-          if (!re_num_cmp((long_u)win_linetabsize(
+          if (!re_num_cmp((uint64_t)win_linetabsize(
                       reg_win == NULL ? curwin : reg_win,
                       regline, (colnr_T)(reginput - regline)) + 1, scan))
             status = RA_NOMATCH;
@@ -5620,9 +5620,9 @@ static void save_se_one(save_se_T *savep, char_u **pp)
 /*
  * Compare a number with the operand of RE_LNUM, RE_COL or RE_VCOL.
  */
-static int re_num_cmp(long_u val, char_u *scan)
+static int re_num_cmp(uint64_t val, char_u *scan)
 {
-  long_u n = OPERAND_MIN(scan);
+  uint64_t n = OPERAND_MIN(scan);
 
   if (OPERAND_CMP(scan) == '>')
     return val > n;

@@ -294,7 +294,7 @@ static int p_ai_nopaste;
 struct vimoption {
   char        *fullname;        /* full option name */
   char        *shortname;       /* permissible abbreviation */
-  long_u flags;                 /* see below */
+  uint64_t flags;                 /* see below */
   char_u      *var;             /* global option: pointer to variable;
                                 * window-local option: VAR_WIN;
                                 * buffer-local option: global value */
@@ -1864,7 +1864,7 @@ static void did_set_title(int icon);
 static char_u *option_expand(int opt_idx, char_u *val);
 static void didset_options(void);
 static void check_string_option(char_u **pp);
-static long_u *insecure_flag(int opt_idx, int opt_flags);
+static uint64_t *insecure_flag(int opt_idx, int opt_flags);
 static void set_string_option_global(int opt_idx, char_u **varp);
 static char_u *set_string_option(int opt_idx, char_u *value,
                                  int opt_flags);
@@ -1881,7 +1881,7 @@ static char_u *set_bool_option(int opt_idx, char_u *varp, int value,
 static char_u *set_num_option(int opt_idx, char_u *varp, long value,
                               char_u *errbuf, size_t errbuflen,
                               int opt_flags);
-static void check_redraw(long_u flags);
+static void check_redraw(uint64_t flags);
 static int findoption(char_u *);
 static int find_key_option(char_u *);
 static void showoptions(int all, int opt_flags);
@@ -1916,7 +1916,7 @@ void set_init_1(void)
 {
   char_u      *p;
   int opt_idx;
-  long_u n;
+  uint64_t n;
 
   langmap_init();
 
@@ -1991,10 +1991,10 @@ void set_init_1(void)
     {
 #ifdef HAVE_TOTAL_MEM
       /* Use half of amount of memory available to Vim. */
-      /* If too much to fit in long_u, get long_u max */
+      /* If too much to fit in uint64_t, get uint64_t max */
       uint64_t available_kib = os_get_total_mem_kib();
       n = available_kib / 2 > ULONG_MAX ? ULONG_MAX
-                                        : (long_u)(available_kib /2);
+                                        : (uint64_t)(available_kib /2);
 #else
       n = (0x7fffffff >> 11);
 #endif
@@ -2209,8 +2209,8 @@ set_option_default (
 {
   char_u      *varp;            /* pointer to variable for current option */
   int dvi;                      /* index in def_val[] */
-  long_u flags;
-  long_u      *flagsp;
+  uint64_t flags;
+  uint64_t      *flagsp;
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   varp = get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
@@ -2597,7 +2597,7 @@ do_set (
   int i;
   long value;
   int key;
-  long_u flags;                     /* flags for current option */
+  uint64_t flags;                     /* flags for current option */
   char_u      *varp = NULL;         /* pointer to variable for current option */
   int did_show = FALSE;             /* already showed one value */
   int adding;                       /* "opt+=arg" */
@@ -3328,7 +3328,7 @@ did_set_option (
     int new_value              /* value was replaced completely */
 )
 {
-  long_u      *p;
+  uint64_t      *p;
 
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -3681,7 +3681,7 @@ void set_term_option_alloced(char_u **p)
 int was_set_insecurely(char_u *opt, int opt_flags)
 {
   int idx = findoption(opt);
-  long_u  *flagp;
+  uint64_t  *flagp;
 
   if (idx >= 0) {
     flagp = insecure_flag(idx, opt_flags);
@@ -3695,7 +3695,7 @@ int was_set_insecurely(char_u *opt, int opt_flags)
  * Get a pointer to the flags used for the P_INSECURE flag of option
  * "opt_idx".  For some local options a local flags field is used.
  */
-static long_u *insecure_flag(int opt_idx, int opt_flags)
+static uint64_t *insecure_flag(int opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL)
     switch ((int)options[opt_idx].indir) {
@@ -3857,7 +3857,7 @@ did_set_string_option (
   char_u      *s, *p;
   int did_chartab = FALSE;
   char_u      **gvarp;
-  long_u free_oldval = (options[opt_idx].flags & P_ALLOCED);
+  uint64_t free_oldval = (options[opt_idx].flags & P_ALLOCED);
 
   /* Get the global option to compare with, otherwise we would have to check
    * two values for all local options. */
@@ -5815,7 +5815,7 @@ set_num_option (
 /*
  * Called after an option changed: check if something needs to be redrawn.
  */
-static void check_redraw(long_u flags)
+static void check_redraw(uint64_t flags)
 {
   /* Careful: P_RCLR and P_RALL are a combination of other P_ flags */
   int doclear = (flags & P_RCLR) == P_RCLR;
@@ -6083,7 +6083,7 @@ set_option_value (
 {
   int opt_idx;
   char_u      *varp;
-  long_u flags;
+  uint64_t flags;
 
   opt_idx = findoption(name);
   if (opt_idx < 0)
@@ -7238,7 +7238,7 @@ set_context_in_set_cmd (
 )
 {
   int nextchar;
-  long_u flags = 0;             /* init for GCC */
+  uint64_t flags = 0;             /* init for GCC */
   int opt_idx = 0;              /* init for GCC */
   char_u      *p;
   char_u      *s;

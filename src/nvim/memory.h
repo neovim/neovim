@@ -141,9 +141,9 @@ char *xmemdup(const char *data, size_t len)
 /// @deprecated use xmalloc() directly instead
 /// @param size
 /// @return pointer to allocated space. Never NULL
-char_u *lalloc(long_u size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
+char_u *lalloc(uint64_t size, int message) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1);
 
-void do_outofmem_msg(long_u size);
+void do_outofmem_msg(uint64_t size);
 void free_all_mem(void);
 
 #endif

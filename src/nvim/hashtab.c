@@ -268,9 +268,9 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
   hashitem_T *olditem, *newitem;
   unsigned newi;
   int todo;
-  long_u oldsize, newsize;
-  long_u minsize;
-  long_u newmask;
+  uint64_t oldsize, newsize;
+  uint64_t minsize;
+  uint64_t newmask;
   hash_T perturb;
 
   // Don't resize a locked table.
@@ -314,7 +314,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
     }
   } else {
     // Use specified size.
-    if ((long_u)minitems < ht->ht_used) {
+    if ((uint64_t)minitems < ht->ht_used) {
       // just in case...
       minitems = (int)ht->ht_used;
     }

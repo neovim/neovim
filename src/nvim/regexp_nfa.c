@@ -305,7 +305,7 @@ static void nfa_postprocess(nfa_regprog_T *prog);
 static int check_char_class(int class, int c);
 static void nfa_save_listids(nfa_regprog_T *prog, int *list);
 static void nfa_restore_listids(nfa_regprog_T *prog, int *list);
-static int nfa_re_num_cmp(long_u val, int op, long_u pos);
+static int nfa_re_num_cmp(uint64_t val, int op, uint64_t pos);
 static long nfa_regtry(nfa_regprog_T *prog, colnr_T col);
 static long nfa_regexec_both(char_u *line, colnr_T col);
 static regprog_T *nfa_regcomp(char_u *expr, int re_flags);
@@ -4421,7 +4421,7 @@ static void nfa_restore_listids(nfa_regprog_T *prog, int *list)
   }
 }
 
-static int nfa_re_num_cmp(long_u val, int op, long_u pos)
+static int nfa_re_num_cmp(uint64_t val, int op, uint64_t pos)
 {
   if (op == 1) return pos > val;
   if (op == 2) return pos < val;
@@ -5696,7 +5696,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_LNUM_LT:
         result = (REG_MULTI &&
                   nfa_re_num_cmp(t->state->val, t->state->c - NFA_LNUM,
-                      (long_u)(reglnum + reg_firstlnum)));
+                      (uint64_t)(reglnum + reg_firstlnum)));
         if (result) {
           add_here = TRUE;
           add_state = t->state->out;
@@ -5707,7 +5707,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_COL_GT:
       case NFA_COL_LT:
         result = nfa_re_num_cmp(t->state->val, t->state->c - NFA_COL,
-            (long_u)(reginput - regline) + 1);
+            (uint64_t)(reginput - regline) + 1);
         if (result) {
           add_here = TRUE;
           add_state = t->state->out;
@@ -5718,7 +5718,7 @@ static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start, regsubs_T *subm
       case NFA_VCOL_GT:
       case NFA_VCOL_LT:
         result = nfa_re_num_cmp(t->state->val, t->state->c - NFA_VCOL,
-            (long_u)win_linetabsize(
+            (uint64_t)win_linetabsize(
                 reg_win == NULL ? curwin : reg_win,
                 regline, (colnr_T)(reginput - regline)) + 1);
         if (result) {

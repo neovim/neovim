@@ -7,7 +7,7 @@ void del_mouse_termcode(int n);
 void getlinecol(long *cp, long *rp);
 int add_termcap_entry(char_u *name, int force);
 int term_is_8bit(char_u *name);
-char_u *tltoa(unsigned long i);
+char_u *tltoa(uint64_t i);
 void termcapinit(char_u *name);
 void out_flush(void);
 void out_flush_check(void);

@@ -71,14 +71,14 @@ typedef struct exarg exarg_T;
 # undef EX          /* just in case */
 #endif
 #ifdef DO_DECLARE_EXCMD
-# define EX(a, b, c, d)  {(char_u *)b, c, (long_u)(d)}
+# define EX(a, b, c, d)  {(char_u *)b, c, (uint64_t)(d)}
 
 typedef void (*ex_func_T)(exarg_T *eap);
 
 static struct cmdname {
   char_u      *cmd_name;        /* name of the command */
   ex_func_T cmd_func;           /* function for this command */
-  long_u cmd_argt;              /* flags declared above */
+  uint64_t cmd_argt;              /* flags declared above */
 }
 cmdnames[] =
 #else

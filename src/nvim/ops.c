@@ -4234,8 +4234,8 @@ int do_addsub(int command, linenr_T Prenum1)
   char_u buf2[NUMBUFLEN];
   int hex;                      /* 'X' or 'x': hex; '0': octal */
   static int hexupper = FALSE;          /* 0xABC */
-  unsigned long n;
-  long_u oldn;
+  uint64_t n;
+  uint64_t oldn;
   char_u      *ptr;
   int c;
   int length = 0;                       /* character length of the number */
@@ -4351,20 +4351,20 @@ int do_addsub(int command, linenr_T Prenum1)
 
     oldn = n;
     if (subtract)
-      n -= (unsigned long)Prenum1;
+      n -= (uint64_t)Prenum1;
     else
-      n += (unsigned long)Prenum1;
+      n += (uint64_t)Prenum1;
 
     /* handle wraparound for decimal numbers */
     if (!hex) {
       if (subtract) {
         if (n > oldn) {
-          n = 1 + (n ^ (unsigned long)-1);
+          n = 1 + (n ^ (uint64_t)-1);
           negative ^= TRUE;
         }
       } else { /* add */
         if (n < oldn) {
-          n = (n ^ (unsigned long)-1);
+          n = (n ^ (uint64_t)-1);
           negative ^= TRUE;
         }
       }

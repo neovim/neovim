@@ -1709,7 +1709,7 @@ int vim_isblankline(char_u *lbuf)
   return *p == NUL || *p == '\r' || *p == '\n';
 }
 
-/// Convert a string into a long and/or unsigned long, taking care of
+/// Convert a string into a long and/or uint64_t, taking care of
 /// hexadecimal and octal numbers.  Accepts a '-' sign.
 /// If "hexp" is not NULL, returns a flag to indicate the type of the number:
 ///   0      decimal
@@ -1733,12 +1733,12 @@ int vim_isblankline(char_u *lbuf)
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
-                long *nptr, unsigned long *unptr)
+                long *nptr, uint64_t *unptr)
 {
   char_u *ptr = start;
   int hex = 0; // default is decimal
   int negative = FALSE;
-  unsigned long un = 0;
+  uint64_t un = 0;
   int n;
 
   if (ptr[0] == '-') {
@@ -1781,19 +1781,19 @@ void vim_str2nr(char_u *start, int *hexp, int *len, int dooct, int dohex,
   if ((hex == '0') || (dooct > 1)) {
     // octal
     while ('0' <= *ptr && *ptr <= '7') {
-      un = 8 * un + (unsigned long)(*ptr - '0');
+      un = 8 * un + (uint64_t)(*ptr - '0');
       ptr++;
     }
   } else if ((hex != 0) || (dohex > 1)) {
     // hex
     while (vim_isxdigit(*ptr)) {
-      un = 16 * un + (unsigned long)hex2nr(*ptr);
+      un = 16 * un + (uint64_t)hex2nr(*ptr);
       ptr++;
     }
   } else {
     // decimal
     while (VIM_ISDIGIT(*ptr)) {
-      un = 10 * un + (unsigned long)(*ptr - '0');
+      un = 10 * un + (uint64_t)(*ptr - '0');
       ptr++;
     }
   }
