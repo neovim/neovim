@@ -93,7 +93,7 @@ void *verbose_try_malloc(size_t size)
 {
   void *ret = try_malloc(size);
   if (!ret) {
-    do_outofmem_msg((long_u)size);
+    do_outofmem_msg((uint64_t)size);
   }
   return ret;
 }
@@ -223,7 +223,7 @@ char *xmemdup(const char *data, size_t len)
  * Avoid repeating the error message many times (they take 1 second each).
  * Did_outofmem_msg is reset when a character is read.
  */
-void do_outofmem_msg(long_u size)
+void do_outofmem_msg(uint64_t size)
 {
   if (!did_outofmem_msg) {
     /* Don't hide this message */

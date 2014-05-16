@@ -53,9 +53,9 @@ static int cls(void);
 static int skip_chars(int, int);
 static void back_in_line(void);
 static void find_first_blank(pos_T *);
-static void findsent_forward(long count, int at_start_sent);
+static void findsent_forward(int64_t count, int at_start_sent);
 static void show_pat_in_path(char_u *, int,
-                             int, int, FILE *, linenr_T *, long);
+                             int, int, FILE *, linenr_T *, int64_t);
 static void wvsp_one(FILE *fp, int idx, char *s, int sc);
 
 /*
@@ -87,7 +87,7 @@ struct soffset {
   int dir;                      /* search direction, '/' or '?' */
   int line;                     /* search has line offset */
   int end;                      /* search set cursor at end */
-  long off;                     /* line or char offset */
+  int64_t off;                     /* line or char offset */
 };
 
 /* A search pattern and its attributes are stored in a spat struct */
@@ -464,7 +464,7 @@ buf_T       *buf;
 pos_T       *pos;
 int dir;
 char_u      *pat;
-long count;
+int64_t count;
 int options;
 int pat_use;                    /* which pattern to use when "pat" is empty */
 linenr_T stop_lnum;             /* stop after this line number when != 0 */
@@ -482,7 +482,7 @@ proftime_T  *tm;         /* timeout limit or NULL */
   int at_first_line;
   int extra_col;
   int match_ok;
-  long nmatched;
+  int64_t nmatched;
   int submatch = 0;
   int save_called_emsg = called_emsg;
   int break_loop = FALSE;
@@ -862,7 +862,7 @@ void set_search_direction(int cdir)
 
 static void set_vv_searchforward(void)
 {
-  set_vim_var_nr(VV_SEARCHFORWARD, (long)(spats[0].off.dir == '/'));
+  set_vim_var_nr(VV_SEARCHFORWARD, (int64_t)(spats[0].off.dir == '/'));
 }
 
 /*
@@ -908,7 +908,7 @@ int do_search(oap, dirc, pat, count, options, tm)
 oparg_T         *oap;           /* can be NULL */
 int dirc;                       /* '/' or '?' */
 char_u          *pat;
-long count;
+int64_t count;
 int options;
 proftime_T      *tm;            /* timeout limit or NULL */
 {
@@ -917,7 +917,7 @@ proftime_T      *tm;            /* timeout limit or NULL */
   struct soffset old_off;
   int retval;                   /* Return value */
   char_u          *p;
-  long c;
+  int64_t c;
   char_u          *dircp;
   char_u          *strcopy = NULL;
   char_u          *ps;
@@ -1302,7 +1302,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
 {
   int c = cap->nchar;                   /* char to search for */
   int dir = cap->arg;                   /* TRUE for searching forward */
-  long count = cap->count1;                     /* repeat count */
+  int64_t count = cap->count1;                     /* repeat count */
   static int lastc = NUL;               /* last character searched for */
   static int lastcdir;                  /* last direction of character search */
   static int last_t_cmd;                /* last search t_cmd */
@@ -1389,7 +1389,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
     col -= dir;
     if (has_mbyte) {
       if (dir < 0)
-        /* Landed on the search char which is bytelen long */
+        /* Landed on the search char which is bytelen int64_t */
         col += bytelen - 1;
       else
         /* To previous char, which may be multi-byte. */
@@ -2011,8 +2011,8 @@ showmatch (
   pos_T       *lpos, save_cursor;
   pos_T mpos;
   colnr_T vcol;
-  long save_so;
-  long save_siso;
+  int64_t save_so;
+  int64_t save_siso;
   int save_state;
   colnr_T save_dollar_vcol;
   char_u      *p;
@@ -2091,7 +2091,7 @@ showmatch (
  * space or a line break. Also stop at an empty line.
  * Return OK if the next sentence was found.
  */
-int findsent(int dir, long count)
+int findsent(int dir, int64_t count)
 {
   pos_T pos, tpos;
   int c;
@@ -2209,7 +2209,7 @@ int
 findpar (
     int *pincl,         /* Return: TRUE if last char is to be included */
     int dir,
-    long count,
+    int64_t count,
     int what,
     int both
 )
@@ -2379,7 +2379,7 @@ static int cls(void)
  */
 int 
 fwd_word (
-    long count,
+    int64_t count,
     int bigword,                /* "W", "E" or "B" */
     int eol
 )
@@ -2443,7 +2443,7 @@ fwd_word (
  *
  * Returns FAIL if top of the file was reached.
  */
-int bck_word(long count, int bigword, int stop)
+int bck_word(int64_t count, int bigword, int stop)
 {
   int sclass;               /* starting class */
 
@@ -2500,7 +2500,7 @@ finished:
  * If stop is TRUE and we are already on the end of a word, move one less.
  * If empty is TRUE stop on an empty line.
  */
-int end_word(long count, int bigword, int stop, int empty)
+int end_word(int64_t count, int bigword, int stop, int empty)
 {
   int sclass;               /* starting class */
 
@@ -2558,7 +2558,7 @@ finished:
  */
 int 
 bckend_word (
-    long count,
+    int64_t count,
     int bigword,                /* TRUE for "B" */
     int eol                    /* TRUE: stop at end of line. */
 )
@@ -2646,7 +2646,7 @@ static void find_first_blank(pos_T *posp)
  */
 static void 
 findsent_forward (
-    long count,
+    int64_t count,
     int at_start_sent              /* cursor is at start of sentence */
 )
 {
@@ -2667,7 +2667,7 @@ findsent_forward (
 int 
 current_word (
     oparg_T *oap,
-    long count,
+    int64_t count,
     int include,                    /* TRUE: include word and white space */
     int bigword                    /* FALSE == word, TRUE == WORD */
 )
@@ -2816,14 +2816,14 @@ current_word (
  * Find sentence(s) under the cursor, cursor at end.
  * When Visual active, extend it by one or more sentences.
  */
-int current_sent(oparg_T *oap, long count, int include)
+int current_sent(oparg_T *oap, int64_t count, int include)
 {
   pos_T start_pos;
   pos_T pos;
   int start_blank;
   int c;
   int at_start_sent;
-  long ncount;
+  int64_t ncount;
 
   start_pos = curwin->w_cursor;
   pos = start_pos;
@@ -2974,7 +2974,7 @@ extend:
 int 
 current_block (
     oparg_T *oap,
-    long count,
+    int64_t count,
     int include,                    /* TRUE == include white space */
     int what,                       /* '(', '{', etc. */
     int other                      /* ')', '}', etc. */
@@ -3171,12 +3171,12 @@ static int in_html_tag(int end_tag)
 int 
 current_tagblock (
     oparg_T *oap,
-    long count_arg,
+    int64_t count_arg,
     int include                    /* TRUE == include white space */
 )
 {
-  long count = count_arg;
-  long n;
+  int64_t count = count_arg;
+  int64_t n;
   pos_T old_pos;
   pos_T start_pos;
   pos_T end_pos;
@@ -3348,7 +3348,7 @@ theend:
 int 
 current_par (
     oparg_T *oap,
-    long count,
+    int64_t count,
     int include,                    /* TRUE == include white space */
     int type                       /* 'p' for paragraph, 'S' for section */
 )
@@ -3577,7 +3577,7 @@ find_prev_quote (
 int 
 current_quote (
     oparg_T *oap,
-    long count,
+    int64_t count,
     int include,                    /* TRUE == include quote char */
     int quotechar                  /* Quote character */
 )
@@ -3790,7 +3790,7 @@ static int is_one_char(char_u *pattern);
  */
 int 
 current_search (
-    long count,
+    int64_t count,
     int forward                    /* move forward or backwards */
 )
 {
@@ -3851,7 +3851,7 @@ current_search (
       flags = SEARCH_END;
 
     result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
-        spats[last_idx].pat, (long) (i ? count : 1),
+        spats[last_idx].pat, (int64_t) (i ? count : 1),
         SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
 
     /* First search may fail, but then start searching from the
@@ -3983,7 +3983,7 @@ find_pattern_in_path (
     int skip_comments,              /* don't match inside comments */
     int type,                       /* Type of search; are we looking for a type?
                                    a macro? */
-    long count,
+    int64_t count,
     int action,                     /* What to do when we find it */
     linenr_T start_lnum,            /* first line to start searching */
     linenr_T end_lnum              /* last line for searching */
@@ -3992,7 +3992,7 @@ find_pattern_in_path (
   SearchedFile *files;                  /* Stack of included files */
   SearchedFile *bigger;                 /* When we need more space */
   int max_path_depth = 50;
-  long match_count = 1;
+  int64_t match_count = 1;
 
   char_u      *pat;
   char_u      *new_fname;
@@ -4558,7 +4558,7 @@ fpip_end:
   vim_regfree(def_regmatch.regprog);
 }
 
-static void show_pat_in_path(char_u *line, int type, int did_show, int action, FILE *fp, linenr_T *lnum, long count)
+static void show_pat_in_path(char_u *line, int type, int did_show, int action, FILE *fp, linenr_T *lnum, int64_t count)
 {
   char_u  *p;
 
@@ -4614,7 +4614,7 @@ int read_viminfo_search_pattern(vir_T *virp, int force)
   int no_scs = FALSE;
   int off_line = FALSE;
   int off_end = 0;
-  long off = 0;
+  int64_t off = 0;
   int setlast = FALSE;
   static int hlsearch_on = FALSE;
   char_u      *val;

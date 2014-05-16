@@ -75,11 +75,11 @@
  * void mch_print_set_font(int Bold, int Italic, int Underline);
  * Called whenever the font style changes.
  *
- * void mch_print_set_bg(long_u bgcol);
+ * void mch_print_set_bg(uint64_t bgcol);
  * Called to set the background color for the following text. Parameter is an
  * RGB value.
  *
- * void mch_print_set_fg(long_u fgcol);
+ * void mch_print_set_fg(uint64_t fgcol);
  * Called to set the foreground color for the following text. Parameter is an
  * RGB value.
  *
@@ -117,30 +117,30 @@ static option_table_T printer_opts[OPT_PRINT_NUM_OPTIONS]
 ;
 
 
-static const long_u cterm_color_8[8] =
+static const uint64_t cterm_color_8[8] =
 {
-  (long_u)0x000000L, (long_u)0xff0000L, (long_u)0x00ff00L, (long_u)0xffff00L,
-  (long_u)0x0000ffL, (long_u)0xff00ffL, (long_u)0x00ffffL, (long_u)0xffffffL
+  (uint64_t)0x000000L, (uint64_t)0xff0000L, (uint64_t)0x00ff00L, (uint64_t)0xffff00L,
+  (uint64_t)0x0000ffL, (uint64_t)0xff00ffL, (uint64_t)0x00ffffL, (uint64_t)0xffffffL
 };
 
-static const long_u cterm_color_16[16] =
+static const uint64_t cterm_color_16[16] =
 {
-  (long_u)0x000000L, (long_u)0x0000c0L, (long_u)0x008000L, (long_u)0x004080L,
-  (long_u)0xc00000L, (long_u)0xc000c0L, (long_u)0x808000L, (long_u)0xc0c0c0L,
-  (long_u)0x808080L, (long_u)0x6060ffL, (long_u)0x00ff00L, (long_u)0x00ffffL,
-  (long_u)0xff8080L, (long_u)0xff40ffL, (long_u)0xffff00L, (long_u)0xffffffL
+  (uint64_t)0x000000L, (uint64_t)0x0000c0L, (uint64_t)0x008000L, (uint64_t)0x004080L,
+  (uint64_t)0xc00000L, (uint64_t)0xc000c0L, (uint64_t)0x808000L, (uint64_t)0xc0c0c0L,
+  (uint64_t)0x808080L, (uint64_t)0x6060ffL, (uint64_t)0x00ff00L, (uint64_t)0x00ffffL,
+  (uint64_t)0xff8080L, (uint64_t)0xff40ffL, (uint64_t)0xffff00L, (uint64_t)0xffffffL
 };
 
 static int current_syn_id;
 
-#define PRCOLOR_BLACK   (long_u)0
-#define PRCOLOR_WHITE   (long_u)0xFFFFFFL
+#define PRCOLOR_BLACK   (uint64_t)0
+#define PRCOLOR_WHITE   (uint64_t)0xFFFFFFL
 
 static int curr_italic;
 static int curr_bold;
 static int curr_underline;
-static long_u curr_bg;
-static long_u curr_fg;
+static uint64_t curr_bg;
+static uint64_t curr_fg;
 static int page_count;
 
 # define OPT_MBFONT_USECOURIER  0
@@ -169,7 +169,7 @@ typedef struct {
   int print_pos;                    /* virtual column for computing TABs */
   colnr_T column;                   /* byte column */
   linenr_T file_line;               /* line nr in the buffer */
-  long_u bytes_printed;             /* bytes printed so far */
+  uint64_t bytes_printed;             /* bytes printed so far */
   int ff;                           /* seen form feed character */
 } prt_pos_T;
 
@@ -177,10 +177,10 @@ static char_u *parse_list_options(char_u *option_str,
                                   option_table_T *table,
                                   int table_size);
 
-static long_u darken_rgb(long_u rgb);
-static long_u prt_get_term_color(int colorindex);
-static void prt_set_fg(long_u fg);
-static void prt_set_bg(long_u bg);
+static uint64_t darken_rgb(uint64_t rgb);
+static uint64_t prt_get_term_color(int colorindex);
+static void prt_set_fg(uint64_t fg);
+static void prt_set_bg(uint64_t bg);
 static void prt_set_font(int bold, int italic, int underline);
 static void prt_line_number(prt_settings_T *psettings, int page_line,
                             linenr_T lnum);
@@ -277,14 +277,14 @@ static char_u *parse_list_options(char_u *option_str, option_table_T *table, int
  * If using a dark background, the colors will probably be too bright to show
  * up well on white paper, so reduce their brightness.
  */
-static long_u darken_rgb(long_u rgb)
+static uint64_t darken_rgb(uint64_t rgb)
 {
   return ((rgb >> 17) << 16)
          +   (((rgb & 0xff00) >> 9) << 8)
          +   ((rgb & 0xff) >> 1);
 }
 
-static long_u prt_get_term_color(int colorindex)
+static uint64_t prt_get_term_color(int colorindex)
 {
   /* TODO: Should check for xterm with 88 or 256 colors. */
   if (t_colors > 8)
@@ -295,8 +295,8 @@ static long_u prt_get_term_color(int colorindex)
 static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
 {
   int colorindex;
-  long_u fg_color;
-  long_u bg_color;
+  uint64_t fg_color;
+  uint64_t bg_color;
   char    *color;
 
   pattr->bold = (highlight_has_attr(hl_id, HL_BOLD, modec) != NULL);
@@ -328,7 +328,7 @@ static void prt_get_attr(int hl_id, prt_text_attr_T *pattr, int modec)
   pattr->bg_color = bg_color;
 }
 
-static void prt_set_fg(long_u fg)
+static void prt_set_fg(uint64_t fg)
 {
   if (fg != curr_fg) {
     curr_fg = fg;
@@ -336,7 +336,7 @@ static void prt_set_fg(long_u fg)
   }
 }
 
-static void prt_set_bg(long_u bg)
+static void prt_set_bg(uint64_t bg)
 {
   if (bg != curr_bg) {
     curr_bg = bg;
@@ -372,7 +372,7 @@ static void prt_line_number(prt_settings_T *psettings, int page_line, linenr_T l
 
   /* Leave two spaces between the number and the text; depends on
    * PRINT_NUMBER_WIDTH. */
-  sprintf((char *)tbuf, "%6ld", (long)lnum);
+  sprintf((char *)tbuf, "%6ld", (int64_t)lnum);
   for (i = 0; i < 6; i++)
     (void)mch_print_text_out(&tbuf[i], 1);
 
@@ -448,7 +448,7 @@ static void prt_header(prt_settings_T *psettings, int pagenum, linenr_T lnum)
 
     /*
      * Need to (temporarily) set current line number and first/last line
-     * number on the 'window'.  Since we don't know how long the page is,
+     * number on the 'window'.  Since we don't know how int64_t the page is,
      * set the first and current line number to the top line, and guess
      * that the page length is 64.
      */
@@ -519,7 +519,7 @@ void ex_hardcopy(exarg_T *eap)
   linenr_T lnum;
   int collated_copies, uncollated_copies;
   prt_settings_T settings;
-  long_u bytes_to_print = 0;
+  uint64_t bytes_to_print = 0;
   int page_line;
   int jobsplit;
 
@@ -592,15 +592,15 @@ void ex_hardcopy(exarg_T *eap)
    * Estimate the total lines to be printed
    */
   for (lnum = eap->line1; lnum <= eap->line2; lnum++)
-    bytes_to_print += (long_u)STRLEN(skipwhite(ml_get(lnum)));
+    bytes_to_print += (uint64_t)STRLEN(skipwhite(ml_get(lnum)));
   if (bytes_to_print == 0) {
     MSG(_("No text to be printed"));
     goto print_fail_no_begin;
   }
 
   /* Set colors and font to normal. */
-  curr_bg = (long_u)0xffffffffL;
-  curr_fg = (long_u)0xffffffffL;
+  curr_bg = (uint64_t)0xffffffffL;
+  curr_fg = (uint64_t)0xffffffffL;
   curr_italic = MAYBE;
   curr_bold = MAYBE;
   curr_underline = MAYBE;
@@ -757,7 +757,7 @@ static colnr_T hardcopy_line(prt_settings_T *psettings, int page_line, prt_pos_T
   int need_break = FALSE;
   int outputlen;
   int tab_spaces;
-  long_u print_pos;
+  uint64_t print_pos;
   prt_text_attr_T attr;
   int id;
 
@@ -2390,7 +2390,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
   /*
    * Set up printer duplex and tumble based on Duplex option setting - default
-   * is long sided duplex printing (i.e. no tumble).
+   * is int64_t sided duplex printing (i.e. no tumble).
    */
   prt_duplex = TRUE;
   prt_tumble = FALSE;
@@ -2927,8 +2927,8 @@ int mch_print_begin_page(char_u *str)
   prt_dsc_noarg("EndPageSetup");
 
   /* We have reset the font attributes, force setting them again. */
-  curr_bg = (long_u)0xffffffff;
-  curr_fg = (long_u)0xffffffff;
+  curr_bg = (uint64_t)0xffffffff;
+  curr_fg = (uint64_t)0xffffffff;
   curr_bold = MAYBE;
 
   return !prt_file_error;
@@ -3109,7 +3109,7 @@ int mch_print_text_out(char_u *p, int len)
       case '\\': ga_append(&prt_ps_buffer, IF_EB('\\', 0134)); break;
 
       default:
-        sprintf((char *)ch_buff, "%03o", (unsigned int)ch);
+        sprintf((char *)ch_buff, "%03o", (uint32_t)ch);
         ga_append(&prt_ps_buffer, ch_buff[0]);
         ga_append(&prt_ps_buffer, ch_buff[1]);
         ga_append(&prt_ps_buffer, ch_buff[2]);
@@ -3158,16 +3158,16 @@ void mch_print_set_font(int iBold, int iItalic, int iUnderline)
   }
 }
 
-void mch_print_set_bg(long_u bgcol)
+void mch_print_set_bg(uint64_t bgcol)
 {
   prt_bgcol = (int)bgcol;
   prt_attribute_change = TRUE;
   prt_need_bgcol = TRUE;
 }
 
-void mch_print_set_fg(long_u fgcol)
+void mch_print_set_fg(uint64_t fgcol)
 {
-  if (fgcol != (long_u)prt_fgcol) {
+  if (fgcol != (uint64_t)prt_fgcol) {
     prt_fgcol = (int)fgcol;
     prt_attribute_change = TRUE;
     prt_need_fgcol = TRUE;

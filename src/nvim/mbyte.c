@@ -909,8 +909,8 @@ static int dbcs_ptr2len_len(char_u *p, int size)
 }
 
 struct interval {
-  long first;
-  long last;
+  int64_t first;
+  int64_t last;
 };
 static int intable(struct interval *table, size_t size, int c);
 
@@ -2055,9 +2055,9 @@ int utf_class(int c)
 {
   /* sorted list of non-overlapping intervals */
   static struct clinterval {
-    unsigned int first;
-    unsigned int last;
-    unsigned int class;
+    uint32_t first;
+    uint32_t last;
+    uint32_t class;
   } classes[] =
   {
     {0x037e, 0x037e, 1},                /* Greek question mark */
@@ -2143,9 +2143,9 @@ int utf_class(int c)
   /* binary search in table */
   while (top >= bot) {
     mid = (bot + top) / 2;
-    if (classes[mid].last < (unsigned int)c)
+    if (classes[mid].last < (uint32_t)c)
       bot = mid + 1;
-    else if (classes[mid].first > (unsigned int)c)
+    else if (classes[mid].first > (uint32_t)c)
       top = mid - 1;
     else
       return (int)classes[mid].class;
@@ -3785,11 +3785,11 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
   if ((from_prop & ENC_LATIN1) && to_is_utf8) {
     /* Internal latin1 -> utf-8 conversion. */
     vcp->vc_type = CONV_TO_UTF8;
-    vcp->vc_factor = 2;         /* up to twice as long */
+    vcp->vc_factor = 2;         /* up to twice as int64_t */
   } else if ((from_prop & ENC_LATIN9) && to_is_utf8) {
     /* Internal latin9 -> utf-8 conversion. */
     vcp->vc_type = CONV_9_TO_UTF8;
-    vcp->vc_factor = 3;         /* up to three as long (euro sign) */
+    vcp->vc_factor = 3;         /* up to three as int64_t (euro sign) */
   } else if (from_is_utf8 && (to_prop & ENC_LATIN1)) {
     /* Internal utf-8 -> latin1 conversion. */
     vcp->vc_type = CONV_TO_LATIN1;
@@ -3858,7 +3858,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
       }
       memmove(ptr, d, dlen);
     } else
-      /* result is too long, keep the unconverted text (the caller must
+      /* result is too int64_t, keep the unconverted text (the caller must
        * have done something wrong!) */
       dlen = len;
     free(d);

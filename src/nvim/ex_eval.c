@@ -113,7 +113,7 @@ void update_force_abort(void)
 /*
  * Return TRUE if a command with a subcommand resulting in "retcode" should
  * abort the script processing.  Can be used to suppress an autocommand after
- * execution of a failing subcommand as long as the error message has not been
+ * execution of a failing subcommand as int64_t as the error message has not been
  * displayed and actually caused the abortion.
  */
 int should_abort(int retcode)

@@ -5,8 +5,8 @@
  * Structure to hold printing color and font attributes.
  */
 typedef struct {
-  long_u fg_color;
-  long_u bg_color;
+  uint64_t fg_color;
+  uint64_t bg_color;
   int bold;
   int italic;
   int underline;
@@ -38,7 +38,7 @@ typedef struct {
 typedef struct {
   const char  *name;
   int hasnum;
-  long number;
+  int64_t number;
   char_u      *string;          /* points into option string */
   int strlen;
   int present;
@@ -87,7 +87,7 @@ int mch_print_blank_page(void);
 void mch_print_start_line(int margin, int page_line);
 int mch_print_text_out(char_u *p, int len);
 void mch_print_set_font(int iBold, int iItalic, int iUnderline);
-void mch_print_set_bg(long_u bgcol);
-void mch_print_set_fg(long_u fgcol);
+void mch_print_set_bg(uint64_t bgcol);
+void mch_print_set_fg(uint64_t fgcol);
 
 #endif /* NVIM_HARDCOPY_H */

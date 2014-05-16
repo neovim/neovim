@@ -76,7 +76,7 @@ static void find_start_of_word(pos_T *);
 static void find_end_of_word(pos_T *);
 static int get_mouse_class(char_u *p);
 static void prep_redo_cmd(cmdarg_T *cap);
-static void prep_redo(int regname, long, int, int, int, int, int);
+static void prep_redo(int regname, int64_t, int, int, int, int, int);
 static int checkclearop(oparg_T *oap);
 static int checkclearopq(oparg_T *oap);
 static void clearop(oparg_T *oap);
@@ -96,7 +96,7 @@ static void nv_help(cmdarg_T *cap);
 static void nv_addsub(cmdarg_T *cap);
 static void nv_page(cmdarg_T *cap);
 static void nv_gd(oparg_T *oap, int nchar, int thisblock);
-static int nv_screengo(oparg_T *oap, int dir, long dist);
+static int nv_screengo(oparg_T *oap, int dir, int64_t dist);
 static void nv_mousescroll(cmdarg_T *cap);
 static void nv_mouse(cmdarg_T *cap);
 static void nv_scroll_line(cmdarg_T *cap);
@@ -588,7 +588,7 @@ normal_cmd (
   /*
    * If a mapping was started in Visual or Select mode, remember the length
    * of the mapping.  This is used below to not return to Insert mode for as
-   * long as the mapping is being executed.
+   * int64_t as the mapping is being executed.
    */
   if (restart_edit == 0)
     old_mapped_len = 0;
@@ -922,7 +922,7 @@ getcount:
       } else if ((ca.nchar == 'n' || ca.nchar == 'N') && ca.cmdchar == 'g')
         ca.oap->op_type = get_op_type(*cp, NUL);
       else if (*cp == Ctrl_BSL) {
-        long towait = (p_ttm >= 0 ? p_ttm : p_tm);
+        int64_t towait = (p_ttm >= 0 ? p_ttm : p_tm);
 
         /* There is a busy wait here when typing "f<C-\>" and then
          * something different from CTRL-N.  Can't be avoided. */
@@ -1175,7 +1175,7 @@ normal_end:
  */
 static void set_vcount_ca(cmdarg_T *cap, int *set_prevcount)
 {
-  long count = cap->count0;
+  int64_t count = cap->count0;
 
   /* multiply with cap->opcount the same way as above */
   if (cap->opcount != 0)
@@ -1198,7 +1198,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
   static int redo_VIsual_mode = NUL;        /* 'v', 'V', or Ctrl-V */
   static linenr_T redo_VIsual_line_count;   /* number of lines */
   static colnr_T redo_VIsual_vcol;          /* number of cols or end column */
-  static long redo_VIsual_count;            /* count for Visual operator */
+  static int64_t redo_VIsual_count;            /* count for Visual operator */
   int include_line_break = FALSE;
 
   old_cursor = curwin->w_cursor;
@@ -1822,7 +1822,7 @@ static void op_colon(oparg_T *oap)
     if (oap->start.lnum == curwin->w_cursor.lnum)
       stuffcharReadbuff('.');
     else
-      stuffnumReadbuff((long)oap->start.lnum);
+      stuffnumReadbuff((int64_t)oap->start.lnum);
     if (oap->end.lnum != oap->start.lnum) {
       stuffcharReadbuff(',');
       if (oap->end.lnum == curwin->w_cursor.lnum)
@@ -1831,9 +1831,9 @@ static void op_colon(oparg_T *oap)
         stuffcharReadbuff('$');
       else if (oap->start.lnum == curwin->w_cursor.lnum) {
         stuffReadbuff((char_u *)".+");
-        stuffnumReadbuff((long)oap->line_count - 1);
+        stuffnumReadbuff((int64_t)oap->line_count - 1);
       } else
-        stuffnumReadbuff((long)oap->end.lnum);
+        stuffnumReadbuff((int64_t)oap->end.lnum);
     }
   }
   if (oap->op_type != OP_COLON)
@@ -1930,7 +1930,7 @@ do_mouse (
     oparg_T *oap,               /* operator argument, can be NULL */
     int c,                          /* K_LEFTMOUSE, etc */
     int dir,                        /* Direction to 'put' if necessary */
-    long count,
+    int64_t count,
     int fixindent                  /* PUT_FIXINDENT if fixing indent necessary */
 )
 {
@@ -2847,7 +2847,7 @@ static void prep_redo_cmd(cmdarg_T *cap)
  * Prepare for redo of any command.
  * Note that only the last argument can be a multi-byte char.
  */
-static void prep_redo(int regname, long num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
+static void prep_redo(int regname, int64_t num, int cmd1, int cmd2, int cmd3, int cmd4, int cmd5)
 {
   ResetRedobuff();
   if (regname != 0) {   /* yank from specified buffer */
@@ -2946,7 +2946,7 @@ void clear_showcmd(void)
 
   if (VIsual_active && !char_avail()) {
     int cursor_bot = lt(VIsual, curwin->w_cursor);
-    long lines;
+    int64_t lines;
     colnr_T leftcol, rightcol;
     linenr_T top, bot;
 
@@ -3172,7 +3172,7 @@ void do_check_scrollbind(int check)
               || curwin->w_topfill != old_topfill
               || curwin->w_leftcol != old_leftcol)) {
         check_scrollbind(curwin->w_topline - old_topline,
-            (long)(curwin->w_leftcol - old_leftcol));
+            (int64_t)(curwin->w_leftcol - old_leftcol));
       }
     } else if (vim_strchr(p_sbo, 'j')) { /* jump flag set in 'scrollopt' */
       /*
@@ -3202,7 +3202,7 @@ void do_check_scrollbind(int check)
  * number of rows by which the current window has changed
  * (1998-11-02 16:21:01  R. Edward Ralston <eralston@computer.org>)
  */
-void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
+void check_scrollbind(linenr_T topline_diff, int64_t leftcol_diff)
 {
   int want_ver;
   int want_hor;
@@ -3211,8 +3211,8 @@ void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
   int old_VIsual_select = VIsual_select;
   int old_VIsual_active = VIsual_active;
   colnr_T tgt_leftcol = curwin->w_leftcol;
-  long topline;
-  long y;
+  int64_t topline;
+  int64_t y;
 
   /*
    * check 'scrollopt' string for vertical and horizontal scroll options
@@ -3481,7 +3481,7 @@ find_decl (
  *
  * Return OK if able to move cursor, FAIL otherwise.
  */
-static int nv_screengo(oparg_T *oap, int dir, long dist)
+static int nv_screengo(oparg_T *oap, int dir, int64_t dist)
 {
   int linelen = linetabsize(ml_get_curline());
   int retval = OK;
@@ -3529,7 +3529,7 @@ static int nv_screengo(oparg_T *oap, int dir, long dist)
 
     while (dist--) {
       if (dir == BACKWARD) {
-        if ((long)curwin->w_curswant >= width2)
+        if ((int64_t)curwin->w_curswant >= width2)
           /* move back within line */
           curwin->w_curswant -= width2;
         else {
@@ -3658,7 +3658,7 @@ static void nv_scroll_line(cmdarg_T *cap)
 /*
  * Scroll "count" lines up or down, and redraw.
  */
-void scroll_redraw(int up, long count)
+void scroll_redraw(int up, int64_t count)
 {
   linenr_T prev_topline = curwin->w_topline;
   int prev_topfill = curwin->w_topfill;
@@ -3707,10 +3707,10 @@ void scroll_redraw(int up, long count)
  */
 static void nv_zet(cmdarg_T *cap)
 {
-  long n;
+  int64_t n;
   colnr_T col;
   int nchar = cap->nchar;
-  long old_fdl = curwin->w_p_fdl;
+  int64_t old_fdl = curwin->w_p_fdl;
   int old_fen = curwin->w_p_fen;
   int undo = FALSE;
 
@@ -3868,7 +3868,7 @@ dozet:
         col = 0;                        /* like the cursor is in col 0 */
       else
         getvcol(curwin, &curwin->w_cursor, &col, NULL, NULL);
-      if ((long)col > p_siso)
+      if ((int64_t)col > p_siso)
         col -= p_siso;
       else
         col = 0;
@@ -3886,7 +3886,7 @@ dozet:
       else
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
       n = W_WIDTH(curwin) - curwin_col_off();
-      if ((long)col + p_siso < n)
+      if ((int64_t)col + p_siso < n)
         col = 0;
       else
         col = col + p_siso - n + 1;
@@ -4162,7 +4162,7 @@ static void nv_colon(cmdarg_T *cap)
       stuffcharReadbuff('.');
       if (cap->count0 > 1) {
         stuffReadbuff((char_u *)",.+");
-        stuffnumReadbuff((long)cap->count0 - 1L);
+        stuffnumReadbuff((int64_t)cap->count0 - 1L);
       }
     }
 
@@ -4547,7 +4547,7 @@ static void nv_tagpop(cmdarg_T *cap)
 static void nv_scroll(cmdarg_T *cap)
 {
   int used = 0;
-  long n;
+  int64_t n;
   linenr_T lnum;
   int half;
 
@@ -4620,7 +4620,7 @@ static void nv_scroll(cmdarg_T *cap)
  */
 static void nv_right(cmdarg_T *cap)
 {
-  long n;
+  int64_t n;
   int PAST_LINE;
 
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
@@ -4637,7 +4637,7 @@ static void nv_right(cmdarg_T *cap)
 
   /*
    * In virtual mode, there's no such thing as "PAST_LINE", as lines are
-   * (theoretically) infinitely long.
+   * (theoretically) infinitely int64_t.
    */
   if (virtual_active())
     PAST_LINE = 0;
@@ -4708,7 +4708,7 @@ static void nv_right(cmdarg_T *cap)
  */
 static void nv_left(cmdarg_T *cap)
 {
-  long n;
+  int64_t n;
 
   if (mod_mask & (MOD_MASK_SHIFT | MOD_MASK_CTRL)) {
     /* <C-Left> and <S-Left> move a word or WORD left */
@@ -4882,7 +4882,7 @@ static void nv_dollar(cmdarg_T *cap)
   if (!virtual_active() || gchar_cursor() != NUL
       || cap->oap->op_type == OP_NOP)
     curwin->w_curswant = MAXCOL;        /* so we stay at the end */
-  if (cursor_down((long)(cap->count1 - 1),
+  if (cursor_down((int64_t)(cap->count1 - 1),
           cap->oap->op_type == OP_NOP) == FAIL)
     clearopbeep(cap->oap);
   else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
@@ -5007,7 +5007,7 @@ static void nv_brackets(cmdarg_T *cap)
   pos_T       *pos = NULL;          /* init for GCC */
   pos_T old_pos;                    /* cursor position before command */
   int flag;
-  long n;
+  int64_t n;
   int findc;
   int c;
 
@@ -5421,7 +5421,7 @@ static void nv_replace(cmdarg_T *cap)
 {
   char_u      *ptr;
   int had_ctrl_v;
-  long n;
+  int64_t n;
 
   if (checkclearop(cap->oap))
     return;
@@ -5679,7 +5679,7 @@ static void nv_vreplace(cmdarg_T *cap)
  */
 static void n_swapchar(cmdarg_T *cap)
 {
-  long n;
+  int64_t n;
   pos_T startpos;
   int did_change = 0;
 
@@ -6304,7 +6304,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     cap->oap->motion_type = MCHAR;
     cap->oap->inclusive = TRUE;
     curwin->w_curswant = MAXCOL;
-    if (cursor_down((long)(cap->count1 - 1),
+    if (cursor_down((int64_t)(cap->count1 - 1),
             cap->oap->op_type == OP_NOP) == FAIL)
       clearopbeep(cap->oap);
     else {

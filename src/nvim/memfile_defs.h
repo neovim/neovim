@@ -2,7 +2,7 @@
 #define NVIM_MEMFILE_DEFS_H
 
 typedef struct block_hdr bhdr_T;
-typedef long blocknr_T;
+typedef int64_t blocknr_T;
 
 /*
  * mf_hashtab_T is a chained hashtable with blocknr_T key and arbitrary
@@ -22,9 +22,9 @@ struct mf_hashitem_S {
 #define MHT_INIT_SIZE   64
 
 typedef struct mf_hashtab_S {
-  long_u mht_mask;                  /* mask used for hash value (nr of items
+  uint64_t mht_mask;                  /* mask used for hash value (nr of items
                                      * in array is "mht_mask" + 1) */
-  long_u mht_count;                 /* nr of items inserted into hashtable */
+  uint64_t mht_count;                 /* nr of items inserted into hashtable */
   mf_hashitem_T   **mht_buckets;    /* points to mht_small_buckets or
                                      *dynamically allocated array */
   mf_hashitem_T   *mht_small_buckets[MHT_INIT_SIZE];     /* initial buckets */

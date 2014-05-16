@@ -284,7 +284,7 @@ typedef struct state_item {
   int si_end_idx;                       /* group ID for end pattern or zero */
   int si_ends;                          /* if match ends before si_m_endpos */
   int si_attr;                          /* attributes in this state */
-  long si_flags;                        /* HL_HAS_EOL flag in this state, and
+  int64_t si_flags;                        /* HL_HAS_EOL flag in this state, and
                                          * HL_SKIP* for si_next_list */
   int si_seqnr;                         /* sequence number */
   int si_cchar;                         /* substitution character for conceal */
@@ -327,7 +327,7 @@ static lpos_T next_match_m_endpos;      /* position for end of next match */
 static lpos_T next_match_h_startpos;  /* pos. for highl. start of next match */
 static lpos_T next_match_h_endpos;      /* pos. for highl. end of next match */
 static int next_match_idx;              /* index of matched item */
-static long next_match_flags;           /* flags for next match */
+static int64_t next_match_flags;           /* flags for next match */
 static lpos_T next_match_eos_pos;       /* end of start pattn (start region) */
 static lpos_T next_match_eoe_pos;       /* pos. for end of end pattern */
 static int next_match_end_idx;          /* ID of group for end pattn or zero */
@@ -397,7 +397,7 @@ static int syn_time_on = FALSE;
 
 static void syn_stack_apply_changes_block(synblock_T *block, buf_T *buf);
 static void find_endpos(int idx, lpos_T *startpos, lpos_T *m_endpos,
-                        lpos_T *hl_endpos, long *flagsp, lpos_T *end_endpos,
+                        lpos_T *hl_endpos, int64_t *flagsp, lpos_T *end_endpos,
                         int *end_idx, reg_extmatch_T *start_ext);
 static void clear_syn_state(synstate_T *p);
 static void clear_current_state(void);
@@ -414,7 +414,7 @@ static char_u *syn_getcurline(void);
 static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col,
                        syn_time_T *st);
 static int check_keyword_id(char_u *line, int startcol, int *endcol,
-                            long *flags, short **next_list,
+                            int64_t *flags, short **next_list,
                             stateitem_T *cur_si,
                             int *ccharp);
 static keyentry_T *match_keyword(char_u *keyword, hashtab_T *ht,
@@ -621,7 +621,7 @@ void syntax_start(win_T *wp, linenr_T lnum)
         prev = store_current_state();
     }
 
-    /* This can take a long time: break when CTRL-C pressed.  The current
+    /* This can take a int64_t time: break when CTRL-C pressed.  The current
      * state will be wrong then. */
     line_breakcheck();
     if (got_int) {
@@ -791,7 +791,7 @@ static void syn_sync(win_T *wp, linenr_T start_lnum, synstate_T *last_valid)
     end_lnum = start_lnum;
     lnum = start_lnum;
     while (--lnum > break_lnum) {
-      /* This can take a long time: break when CTRL-C pressed. */
+      /* This can take a int64_t time: break when CTRL-C pressed. */
       line_breakcheck();
       if (got_int) {
         invalidate_current_state();
@@ -1098,7 +1098,7 @@ void syn_stack_free_all(synblock_T *block)
  */
 static void syn_stack_alloc(void)
 {
-  long len;
+  int64_t len;
   synstate_T  *to, *from;
   synstate_T  *sstp;
 
@@ -1601,7 +1601,7 @@ int syntax_check_changed(linenr_T lnum)
 /*
  * Finish the current line.
  * This doesn't return any attributes, it only gets the state at the end of
- * the line.  It can start anywhere in the line, as long as the current state
+ * the line.  It can start anywhere in the line, as int64_t as the current state
  * is valid.
  */
 static int 
@@ -1720,7 +1720,7 @@ syn_current_attr (
   stateitem_T *cur_si, *sip = NULL;
   int startcol;
   int endcol;
-  long flags;
+  int64_t flags;
   int cchar;
   short       *next_list;
   int found_match;                          /* found usable match */
@@ -2622,7 +2622,7 @@ find_endpos (
     lpos_T *startpos,          /* where to start looking for an END match */
     lpos_T *m_endpos,          /* return: end of match */
     lpos_T *hl_endpos,         /* return: end of highlighting */
-    long *flagsp,            /* return: flags of matching END */
+    int64_t *flagsp,            /* return: flags of matching END */
     lpos_T *end_endpos,        /* return: end of end pattern match */
     int *end_idx,           /* return: group ID for end pat. match, or 0 */
     reg_extmatch_T *start_ext      /* submatches from the start pattern */
@@ -2985,7 +2985,7 @@ check_keyword_id (
     char_u *line,
     int startcol,                   /* position in line to check for keyword */
     int *endcolp,           /* return: character after found keyword */
-    long *flagsp,            /* return: flags of matching keyword */
+    int64_t *flagsp,            /* return: flags of matching keyword */
     short **next_listp,       /* return: next_list of matching keyword */
     stateitem_T *cur_si,            /* item at the top of the stack */
     int *ccharp     /* conceal substitution char */
@@ -3698,7 +3698,7 @@ static void put_id_list(char_u *name, short *list, int attr)
 
 static void put_pattern(char *s, int c, synpat_T *spp, int attr)
 {
-  long n;
+  int64_t n;
   int mask;
   int first;
   static char *sepchars = "/+=-#@\"|'^&";
@@ -3928,7 +3928,7 @@ add_keyword (
   hashtab_T   *ht;
   hashitem_T  *hi;
   char_u      *name_ic;
-  long_u hash;
+  uint64_t hash;
   char_u name_folded[MAXKEYWLEN + 1];
 
   if (curwin->w_s->b_syn_ic)
@@ -5073,7 +5073,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
   char_u      *next_arg;
   int illegal = FALSE;
   int finished = FALSE;
-  long n;
+  int64_t n;
   char_u      *cpo_save;
 
   if (ends_excmd(*arg_start)) {
@@ -5665,7 +5665,7 @@ char_u *get_syntax_name(expand_T *xp, int idx)
 int 
 syn_get_id (
     win_T *wp,
-    long lnum,
+    int64_t lnum,
     colnr_T col,
     int trans,                   /* remove transparency */
     int *spellp,         /* return: can do spell checking */
@@ -5724,7 +5724,7 @@ int syn_get_stack_item(int i)
 /*
  * Function called to get folding level for line "lnum" in window "wp".
  */
-int syn_get_foldlevel(win_T *wp, long lnum)
+int syn_get_foldlevel(win_T *wp, int64_t lnum)
 {
   int level = 0;
   int i;
@@ -6213,7 +6213,7 @@ do_highlight (
   char_u      *key_start;
   char_u      *arg_start;
   char_u      *key = NULL, *arg = NULL;
-  long i;
+  int64_t i;
   int off;
   int len;
   int attr;
@@ -6737,7 +6737,7 @@ do_highlight (
 
             /* Append it to the already found stuff */
             if ((int)(STRLEN(buf) + STRLEN(p)) >= 99) {
-              EMSG2(_("E422: terminal code too long: %s"), arg);
+              EMSG2(_("E422: terminal code too int64_t: %s"), arg);
               error = TRUE;
               break;
             }
@@ -7709,7 +7709,7 @@ int highlight_changed(void)
       hlt[hlcnt + i].sg_gui ^=
         hlt[id - 1].sg_gui ^ hlt[id_S - 1].sg_gui;
       highlight_ga.ga_len = hlcnt + i + 1;
-      set_hl_attr(hlcnt + i);           /* At long last we can apply */
+      set_hl_attr(hlcnt + i);           /* At int64_t last we can apply */
       highlight_stlnc[i] = syn_id2attr(hlcnt + i + 1);
     }
   }
@@ -7784,7 +7784,7 @@ static void highlight_list_two(int cnt, int attr)
   msg_puts_attr((char_u *)&("N \bI \b!  \b"[cnt / 11]), attr);
   msg_clr_eos();
   out_flush();
-  ui_delay(cnt == 99 ? 40L : (long)cnt * 50L, FALSE);
+  ui_delay(cnt == 99 ? 40L : (int64_t)cnt * 50L, FALSE);
 }
 
 

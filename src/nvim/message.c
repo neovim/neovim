@@ -444,7 +444,7 @@ static char_u *get_emsg_lnum(void)
       && sourcing_lnum != 0) {
     p = (char_u *)_("line %4ld:");
     Buf = alloc((unsigned)(STRLEN(p) + 20));
-    sprintf((char *)Buf, (char *)p, (long)sourcing_lnum);
+    sprintf((char *)Buf, (char *)p, (int64_t)sourcing_lnum);
     return Buf;
   }
   return NULL;
@@ -961,7 +961,7 @@ void wait_return(int redraw)
   if (keep_msg != NULL && vim_strsize(keep_msg) >=
       (Rows - cmdline_row - 1) * Columns + sc_col) {
     free(keep_msg);
-    keep_msg = NULL;                /* don't redisplay message, it's too long */
+    keep_msg = NULL;                /* don't redisplay message, it's too int64_t */
   }
 
   if (tmpState == SETWSIZE) {       /* got resize event while in vgetc() */
@@ -1089,7 +1089,7 @@ void msg_putchar_attr(int c, int attr)
   msg_puts_attr(buf, attr);
 }
 
-void msg_outnum(long n)
+void msg_outnum(int64_t n)
 {
   char_u buf[20];
 
@@ -3059,17 +3059,17 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt
 #if defined(FEAT_EVAL)
 static char *e_printf = N_("E766: Insufficient arguments for printf()");
 
-static long tv_nr(typval_T *tvs, int *idxp);
+static int64_t tv_nr(typval_T *tvs, int *idxp);
 static char *tv_str(typval_T *tvs, int *idxp);
 static double tv_float(typval_T *tvs, int *idxp);
 
 /*
  * Get number argument from "idxp" entry in "tvs".  First entry is 1.
  */
-static long tv_nr(typval_T *tvs, int *idxp)
+static int64_t tv_nr(typval_T *tvs, int *idxp)
 {
   int idx = *idxp - 1;
-  long n = 0;
+  int64_t n = 0;
   int err = FALSE;
 
   if (tvs[idx].v_type == VAR_UNKNOWN)
@@ -3142,8 +3142,8 @@ static double tv_float(typval_T *tvs, int *idxp)
  *
  * Limited support for floating point was added: 'f', 'e', 'E', 'g', 'G'.
  *
- * Length modifiers 'h' (short int) and 'l' (long int) are supported.
- * 'll' (long long int) is not supported.
+ * Length modifiers 'h' (short int) and 'l' (int64_t) are supported.
+ * 'll' (int64_t) is not supported.
  *
  * The locale is not used, the string is used as a byte string.  This is only
  * relevant for double-byte encodings where the second byte may be '%'.
@@ -3293,12 +3293,12 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           justify_left = 1;
         }
       } else if (VIM_ISDIGIT((int)(*p))) {
-        /* size_t could be wider than unsigned int; make sure we treat
+        /* size_t could be wider than uint32_t; make sure we treat
          * argument like common implementations do */
-        unsigned int uj = *p++ - '0';
+        uint32_t uj = *p++ - '0';
 
         while (VIM_ISDIGIT((int)(*p)))
-          uj = 10 * uj + (unsigned int)(*p++ - '0');
+          uj = 10 * uj + (uint32_t)(*p++ - '0');
         min_field_width = uj;
       }
 
@@ -3318,12 +3318,12 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             precision = 0;
           }
         } else if (VIM_ISDIGIT((int)(*p))) {
-          /* size_t could be wider than unsigned int; make sure we
+          /* size_t could be wider than uint32_t; make sure we
            * treat argument like common implementations do */
-          unsigned int uj = *p++ - '0';
+          uint32_t uj = *p++ - '0';
 
           while (VIM_ISDIGIT((int)(*p)))
-            uj = 10 * uj + (unsigned int)(*p++ - '0');
+            uj = 10 * uj + (uint32_t)(*p++ - '0');
           precision = uj;
         }
       }
@@ -3332,7 +3332,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
       if (*p == 'h' || *p == 'l') {
         length_modifier = *p;
         p++;
-        if (length_modifier == 'l' && *p == 'l') { /* double l = long long */
+        if (length_modifier == 'l' && *p == 'l') { /* double l = int64_t */
           length_modifier = '2';                   /* double l encoded as '2' */
           p++;
         }
@@ -3434,15 +3434,15 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
         /* only defined for length modifier h, or for no
          * length modifiers */
         int int_arg = 0;
-        unsigned int uint_arg = 0;
+        uint32_t uint_arg = 0;
 
         /* only defined for length modifier l */
-        long int long_arg = 0;
-        unsigned long int ulong_arg = 0;
+        int64_t long_arg = 0;
+        uint64_t ulong_arg = 0;
 
         /* only defined for length modifier ll */
-        long long int long_long_arg = 0;
-        unsigned long long int ulong_long_arg = 0;
+        int64_t long_long_arg = 0;
+        uint64_t ulong_long_arg = 0;
 
         /* pointer argument value -only defined for p
          * conversion */
@@ -3468,7 +3468,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             break;
           case 'l':
             long_arg = tvs != NULL ? tv_nr(tvs, &arg_idx)
-                                   : va_arg(ap, long int);
+                                   : va_arg(ap, int64_t);
             if (long_arg > 0)
               arg_sign =  1;
             else if (long_arg < 0)
@@ -3476,7 +3476,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
             break;
           case '2':
             long_long_arg = tvs != NULL ? tv_nr(tvs, &arg_idx)
-                                        : va_arg(ap, long long int);
+                                        : va_arg(ap, int64_t);
             if (long_long_arg > 0)
               arg_sign =  1;
             else if (long_long_arg < 0)
@@ -3489,20 +3489,20 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           case '\0':
           case 'h':
             uint_arg = tvs != NULL ? (unsigned)tv_nr(tvs, &arg_idx)
-                                   : va_arg(ap, unsigned int);
+                                   : va_arg(ap, uint32_t);
             if (uint_arg != 0)
               arg_sign = 1;
             break;
           case 'l':
-            ulong_arg = tvs != NULL ? (unsigned long)tv_nr(tvs, &arg_idx)
-                                    : va_arg(ap, unsigned long int);
+            ulong_arg = tvs != NULL ? (uint64_t)tv_nr(tvs, &arg_idx)
+                                    : va_arg(ap, uint64_t);
             if (ulong_arg != 0)
               arg_sign = 1;
             break;
           case '2':
             ulong_long_arg = tvs != NULL ?
-              (unsigned long long)tv_nr(tvs, &arg_idx) :
-              va_arg(ap, unsigned long long int);
+              (uint64_t)tv_nr(tvs, &arg_idx) :
+              va_arg(ap, uint64_t);
             if (ulong_long_arg) arg_sign = 1;
             break;
           }

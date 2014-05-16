@@ -138,7 +138,7 @@ void crypt_encode(char_u *from, size_t len, char_u *to)
   }
 }
 
-void crypt_decode(char_u *ptr, long len)
+void crypt_decode(char_u *ptr, int64_t len)
 {
   char_u *p;
 

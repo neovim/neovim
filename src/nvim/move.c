@@ -136,7 +136,7 @@ void update_topline_redraw(void)
  */
 void update_topline(void)
 {
-  long line_count;
+  int64_t line_count;
   int halfheight;
   int n;
   linenr_T old_topline;
@@ -241,8 +241,8 @@ void update_topline(void)
 
     if (curwin->w_botline <= curbuf->b_ml.ml_line_count) {
       if (curwin->w_cursor.lnum < curwin->w_botline) {
-        if (((long)curwin->w_cursor.lnum
-             >= (long)curwin->w_botline - p_so
+        if (((int64_t)curwin->w_cursor.lnum
+             >= (int64_t)curwin->w_botline - p_so
              || hasAnyFolding(curwin)
              )) {
           lineoff_T loff;
@@ -533,7 +533,7 @@ curs_rows (
   int i;
   int all_invalid;
   int valid;
-  long fold_count;
+  int64_t fold_count;
 
   /* Check if wp->w_lines[].wl_size is invalid */
   all_invalid = (!redrawing()
@@ -595,7 +595,7 @@ curs_rows (
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
           NULL, NULL, TRUE, NULL);
     } else if (i > wp->w_lines_valid) {
-      /* a line that is too long to fit on the last screen line */
+      /* a line that is too int64_t to fit on the last screen line */
       wp->w_cline_height = 0;
       wp->w_cline_folded = hasFoldingWin(wp, wp->w_cursor.lnum,
           NULL, NULL, TRUE, NULL);
@@ -670,7 +670,7 @@ void validate_cursor_col(void)
     col += off;
     width = W_WIDTH(curwin) - off + curwin_col_off2();
 
-    /* long line wrapping, adjust curwin->w_wrow */
+    /* int64_t line wrapping, adjust curwin->w_wrow */
     if (curwin->w_p_wrap
         && col >= (colnr_T)W_WIDTH(curwin)
         && width > 0)
@@ -787,7 +787,7 @@ curs_columns (
              ) {
     width = textwidth + curwin_col_off2();
 
-    /* long line wrapping, adjust curwin->w_wrow */
+    /* int64_t line wrapping, adjust curwin->w_wrow */
     if (curwin->w_wcol >= W_WIDTH(curwin)) {
       /* this same formula is used in validate_cursor_col() */
       n = (curwin->w_wcol - W_WIDTH(curwin)) / width + 1;
@@ -953,11 +953,11 @@ curs_columns (
  */
 void 
 scrolldown (
-    long line_count,
+    int64_t line_count,
     int byfold              /* TRUE: count a closed fold as one line */
 )
 {
-  long done = 0;                /* total # of physical lines done */
+  int64_t done = 0;                /* total # of physical lines done */
   int wrow;
   int moved = FALSE;
 
@@ -1034,7 +1034,7 @@ scrolldown (
  */
 void 
 scrollup (
-    long line_count,
+    int64_t line_count,
     int byfold              /* TRUE: count a closed fold as one line */
 )
 {
@@ -1781,9 +1781,9 @@ static void get_scroll_overlap(lineoff_T *lp, int dir);
  *
  * return FAIL for failure, OK otherwise
  */
-int onepage(int dir, long count)
+int onepage(int dir, int64_t count)
 {
-  long n;
+  int64_t n;
   int retval = OK;
   lineoff_T loff;
   linenr_T old_topline = curwin->w_topline;
@@ -1903,7 +1903,7 @@ int onepage(int dir, long count)
         (void)hasFolding(loff.lnum, &loff.lnum, NULL);
 
         /* Always scroll at least one line.  Avoid getting stuck on
-         * very long lines. */
+         * very int64_t lines. */
         if (loff.lnum >= curwin->w_topline
             && (loff.lnum > curwin->w_topline
                 || loff.fill >= curwin->w_topfill)
@@ -1939,7 +1939,7 @@ int onepage(int dir, long count)
 
   /*
    * Avoid the screen jumping up and down when 'scrolloff' is non-zero.
-   * But make sure we scroll at least one line (happens with mix of long
+   * But make sure we scroll at least one line (happens with mix of int64_t
    * wrapping lines and non-wrapping line).
    */
   if (retval == OK && dir == FORWARD && check_top_offset()) {
@@ -2022,7 +2022,7 @@ static void get_scroll_overlap(lineoff_T *lp, int dir)
  */
 void halfpage(int flag, linenr_T Prenum)
 {
-  long scrolled = 0;
+  int64_t scrolled = 0;
   int i;
   int n;
   int room;

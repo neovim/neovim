@@ -20,17 +20,17 @@
 
 /*
  * Number of Rows and Columns in the screen.
- * Must be long to be able to use them as options in option.c.
+ * Must be int64_t to be able to use them as options in option.c.
  * Note: Use screen_Rows and screen_Columns to access items in ScreenLines[].
  * They may have different values when the screen wasn't (re)allocated yet
  * after setting Rows or Columns (e.g., when starting up).
  */
-EXTERN long Rows                        /* nr of rows in the screen */
+EXTERN int64_t Rows                        /* nr of rows in the screen */
 #ifdef DO_INIT
   = 24L
 #endif
 ;
-EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
+EXTERN int64_t Columns INIT(= 80);         /* nr of columns in the screen */
 
 /*
  * The characters that are currently on the screen are kept in ScreenLines[].
@@ -225,7 +225,7 @@ EXTERN except_T *current_exception;
 
 /*
  * did_throw: An exception is being thrown.  Reset when the exception is caught
- * or as long as it is pending in a finally clause.
+ * or as int64_t as it is pending in a finally clause.
  */
 EXTERN int did_throw INIT(= FALSE);
 
@@ -930,7 +930,7 @@ EXTERN char_u no_lines_msg[] INIT(= N_("--No lines in buffer--"));
  * accumulated until it's finished.
  * Also used for ":spellrepall".
  */
-EXTERN long sub_nsubs;          /* total number of substitutions */
+EXTERN int64_t sub_nsubs;          /* total number of substitutions */
 EXTERN linenr_T sub_nlines;     /* total number of lines changed */
 
 /* table to store parsed 'wildmode' */
@@ -1088,7 +1088,7 @@ EXTERN char_u e_signdata[] INIT(= N_("E255: Couldn't read in sign data!"));
 EXTERN char_u e_swapclose[] INIT(= N_("E72: Close error on swap file"));
 EXTERN char_u e_tagstack[] INIT(= N_("E73: tag stack empty"));
 EXTERN char_u e_toocompl[] INIT(= N_("E74: Command too complex"));
-EXTERN char_u e_longname[] INIT(= N_("E75: Name too long"));
+EXTERN char_u e_longname[] INIT(= N_("E75: Name too int64_t"));
 EXTERN char_u e_toomsbra[] INIT(= N_("E76: Too many ["));
 EXTERN char_u e_toomany[] INIT(= N_("E77: Too many file names"));
 EXTERN char_u e_trailing[] INIT(= N_("E488: Trailing characters"));

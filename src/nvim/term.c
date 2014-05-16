@@ -136,7 +136,7 @@ static int u7_status = U7_GET;
  * Autoconf checks if these variables should be declared extern (not all
  * systems have them).
  * Some versions define ospeed to be speed_t, but that is incompatible with
- * BSD, where ospeed is short and speed_t is long.
+ * BSD, where ospeed is short and speed_t is int64_t.
  */
 # ifndef HAVE_OSPEED
 #  ifdef OSPEED_EXTERN
@@ -1766,8 +1766,8 @@ static char_u *vim_tgetstr(char *s, char_u **pp)
  */
 void 
 getlinecol (
-    long *cp,        /* pointer to columns */
-    long *rp        /* pointer to rows */
+    int64_t *cp,        /* pointer to columns */
+    int64_t *rp        /* pointer to rows */
 )
 {
   char_u tbuf[TBUFSZ];
@@ -1919,7 +1919,7 @@ static int term_7to8bit(char_u *p)
 
 #if !defined(HAVE_TGETENT) || defined(PROTO)
 
-char_u *tltoa(unsigned long i)
+char_u *tltoa(uint64_t i)
 {
   static char_u buf[16];
   char_u      *p;
@@ -1958,7 +1958,7 @@ static char *tgoto(char *cm, int x, int y)
     }
     switch (*++cm) {
     case 'd':
-      p = (char *)tltoa((unsigned long)y);
+      p = (char *)tltoa((uint64_t)y);
       y = x;
       while (*p)
         *s++ = *p++;
@@ -2328,29 +2328,29 @@ void ttest(int pairs)
 
 #if (defined(FEAT_GUI) && (defined(FEAT_MENU) || !defined(USE_ON_FLY_SCROLL))) \
   || defined(PROTO)
-static int get_long_from_buf(char_u *buf, long_u *val);
+static int get_long_from_buf(char_u *buf, uint64_t *val);
 
 /*
- * Interpret the next string of bytes in buf as a long integer, with the most
+ * Interpret the next string of bytes in buf as a int64_t integer, with the most
  * significant byte first.  Note that it is assumed that buf has been through
  * inchar(), so that NUL and K_SPECIAL will be represented as three bytes each.
  * Puts result in val, and returns the number of bytes read from buf
- * (between sizeof(long_u) and 2 * sizeof(long_u)), or -1 if not enough bytes
+ * (between sizeof(uint64_t) and 2 * sizeof(uint64_t)), or -1 if not enough bytes
  * were present.
  */
-static int get_long_from_buf(char_u *buf, long_u *val)
+static int get_long_from_buf(char_u *buf, uint64_t *val)
 {
   int len;
-  char_u bytes[sizeof(long_u)];
+  char_u bytes[sizeof(uint64_t)];
   int i;
   int shift;
 
   *val = 0;
-  len = get_bytes_from_buf(buf, bytes, (int)sizeof(long_u));
+  len = get_bytes_from_buf(buf, bytes, (int)sizeof(uint64_t));
   if (len != -1) {
-    for (i = 0; i < (int)sizeof(long_u); i++) {
-      shift = 8 * (sizeof(long_u) - 1 - i);
-      *val += (long_u)bytes[i] << shift;
+    for (i = 0; i < (int)sizeof(uint64_t); i++) {
+      shift = 8 * (sizeof(uint64_t) - 1 - i);
+      *val += (uint64_t)bytes[i] << shift;
     }
   }
   return len;
@@ -3207,7 +3207,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
   static struct timeval orig_mouse_time = {0, 0};
   /* time of previous mouse click */
   struct timeval mouse_time;            /* time of current mouse click */
-  long timediff;                        /* elapsed time in msec */
+  int64_t timediff;                        /* elapsed time in msec */
 # endif
   int cpo_koffset;
 
@@ -3224,7 +3224,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
    * Check at several positions in typebuf.tb_buf[], to catch something like
    * "x<Up>" that can be mapped. Stop at max_offset, because characters
    * after that cannot be used for mapping, and with @r commands
-   * typebuf.tb_buf[] can become very long.
+   * typebuf.tb_buf[] can become very int64_t.
    * This is used often, KEEP IT FAST!
    */
   for (offset = 0; offset < max_offset; ++offset) {
@@ -4389,7 +4389,7 @@ void show_termcodes(void)
    * do the loop two times:
    * 1. display the short items (non-strings and short strings)
    * 2. display the medium items (medium length strings)
-   * 3. display the long items (remaining strings)
+   * 3. display the int64_t items (remaining strings)
    */
   for (run = 1; run <= 3 && !got_int; ++run) {
     /*
@@ -4486,7 +4486,7 @@ int show_one_termcode(char_u *name, char_u *code, int printit)
 /*
  * For Xterm >= 140 compiled with OPT_TCAP_QUERY: Obtain the actually used
  * termcap codes from the terminal itself.
- * We get them one by one to avoid a very long response string.
+ * We get them one by one to avoid a very int64_t response string.
  */
 static int xt_index_in = 0;
 static int xt_index_out = 0;

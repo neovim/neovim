@@ -24,7 +24,7 @@
  * 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
  * 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
  * 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
- *    long name of the command.
+ *    int64_t name of the command.
  */
 
 #define RANGE           0x001   /* allow a linespecs */
@@ -71,14 +71,14 @@ typedef struct exarg exarg_T;
 # undef EX          /* just in case */
 #endif
 #ifdef DO_DECLARE_EXCMD
-# define EX(a, b, c, d)  {(char_u *)b, c, (long_u)(d)}
+# define EX(a, b, c, d)  {(char_u *)b, c, (uint64_t)(d)}
 
 typedef void (*ex_func_T)(exarg_T *eap);
 
 static struct cmdname {
   char_u      *cmd_name;        /* name of the command */
   ex_func_T cmd_func;           /* function for this command */
-  long_u cmd_argt;              /* flags declared above */
+  uint64_t cmd_argt;              /* flags declared above */
 }
 cmdnames[] =
 #else
@@ -1110,7 +1110,7 @@ struct exarg {
   char_u      *cmd;             /* the name of the command (except for :make) */
   char_u      **cmdlinep;       /* pointer to pointer of allocated cmdline */
   cmdidx_T cmdidx;              /* the index for the command */
-  long argt;                    /* flags for the command */
+  int64_t argt;                    /* flags for the command */
   int skip;                     /* don't execute the command, only parse it */
   int forceit;                  /* TRUE if ! present */
   int addr_count;               /* the number of addresses given */

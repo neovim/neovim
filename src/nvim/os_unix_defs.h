@@ -33,7 +33,7 @@
 #endif
 
 /* The number of arguments to a signal handler is configured here. */
-/* It used to be a long list of almost all systems. Any system that doesn't
+/* It used to be a int64_t list of almost all systems. Any system that doesn't
  * have an argument??? */
 #define SIGHASARG
 

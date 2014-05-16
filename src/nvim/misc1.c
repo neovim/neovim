@@ -855,7 +855,7 @@ open_line (
         if (flags & OPENLINE_MARKFIX)
           mark_col_adjust(curwin->w_cursor.lnum,
               curwin->w_cursor.col + less_cols_off,
-              1L, (long)-less_cols);
+              1L, (int64_t)-less_cols);
       } else
         changed_bytes(curwin->w_cursor.lnum, curwin->w_cursor.col);
     }
@@ -1270,7 +1270,7 @@ plines_win_nofill (
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
-  long col;
+  int64_t col;
   int width;
 
   s = ml_get_buf(wp->w_buffer, lnum, FALSE);
@@ -1302,9 +1302,9 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
  * Like plines_win(), but only reports the number of physical screen lines
  * used from the start of the line to the given column number.
  */
-int plines_win_col(win_T *wp, linenr_T lnum, long column)
+int plines_win_col(win_T *wp, linenr_T lnum, int64_t column)
 {
-  long col;
+  int64_t col;
   char_u      *s;
   int lines = 0;
   int width;
@@ -1610,10 +1610,10 @@ int del_char(int fixpos)
 /*
  * Like del_bytes(), but delete characters instead of bytes.
  */
-int del_chars(long count, int fixpos)
+int del_chars(int64_t count, int fixpos)
 {
-  long bytes = 0;
-  long i;
+  int64_t bytes = 0;
+  int64_t i;
   char_u      *p;
   int l;
 
@@ -1635,7 +1635,7 @@ int del_chars(long count, int fixpos)
  */
 int 
 del_bytes (
-    long count,
+    int64_t count,
     int fixpos_arg,
     int use_delcombine                  /* 'delcombine' option applies */
 )
@@ -1645,7 +1645,7 @@ del_bytes (
   linenr_T lnum = curwin->w_cursor.lnum;
   colnr_T col = curwin->w_cursor.col;
   int was_alloced;
-  long movelen;
+  int64_t movelen;
   int fixpos = fixpos_arg;
 
   oldp = ml_get(lnum);
@@ -1680,7 +1680,7 @@ del_bytes (
   /*
    * When count is too big, reduce it.
    */
-  movelen = (long)oldlen - (long)col - count + 1;   /* includes trailing NUL */
+  movelen = (int64_t)oldlen - (int64_t)col - count + 1;   /* includes trailing NUL */
   if (movelen <= 1) {
     /*
      * If we just took off the last character of a non-blank line, and
@@ -1766,11 +1766,11 @@ truncate_line (
  */
 void 
 del_lines (
-    long nlines,                    /* number of lines to delete */
+    int64_t nlines,                    /* number of lines to delete */
     int undo                       /* if TRUE, prepare for undo */
 )
 {
-  long n;
+  int64_t n;
   linenr_T first = curwin->w_cursor.lnum;
 
   if (nlines <= 0)
@@ -1894,9 +1894,9 @@ void changed_int(void)
 
 static void changedOneline(buf_T *buf, linenr_T lnum);
 static void changed_lines_buf(buf_T *buf, linenr_T lnum, linenr_T lnume,
-                              long xtra);
+                              int64_t xtra);
 static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume,
-                           long xtra);
+                           int64_t xtra);
 
 /*
  * Changed bytes within a single line for the current buffer.
@@ -1947,7 +1947,7 @@ static void changedOneline(buf_T *buf, linenr_T lnum)
  * Must be called AFTER the change and after mark_adjust().
  * Takes care of marking the buffer to be redrawn and sets the changed flag.
  */
-void appended_lines(linenr_T lnum, long count)
+void appended_lines(linenr_T lnum, int64_t count)
 {
   changed_lines(lnum + 1, 0, lnum + 1, count);
 }
@@ -1955,7 +1955,7 @@ void appended_lines(linenr_T lnum, long count)
 /*
  * Like appended_lines(), but adjust marks first.
  */
-void appended_lines_mark(linenr_T lnum, long count)
+void appended_lines_mark(linenr_T lnum, int64_t count)
 {
   mark_adjust(lnum + 1, (linenr_T)MAXLNUM, count, 0L);
   changed_lines(lnum + 1, 0, lnum + 1, count);
@@ -1966,7 +1966,7 @@ void appended_lines_mark(linenr_T lnum, long count)
  * Must be called AFTER the change and after mark_adjust().
  * Takes care of marking the buffer to be redrawn and sets the changed flag.
  */
-void deleted_lines(linenr_T lnum, long count)
+void deleted_lines(linenr_T lnum, int64_t count)
 {
   changed_lines(lnum, 0, lnum + count, -count);
 }
@@ -1976,9 +1976,9 @@ void deleted_lines(linenr_T lnum, long count)
  * Make sure the cursor is on a valid line before calling, a GUI callback may
  * be triggered to display the cursor.
  */
-void deleted_lines_mark(linenr_T lnum, long count)
+void deleted_lines_mark(linenr_T lnum, int64_t count)
 {
-  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (long)MAXLNUM, -count);
+  mark_adjust(lnum, (linenr_T)(lnum + count - 1), (int64_t)MAXLNUM, -count);
   changed_lines(lnum, 0, lnum + count, -count);
 }
 
@@ -1999,7 +1999,7 @@ changed_lines (
     linenr_T lnum,              /* first line with change */
     colnr_T col,                /* column in first line with change */
     linenr_T lnume,             /* line below last changed line */
-    long xtra                  /* number of extra lines (negative when deleting) */
+    int64_t xtra                  /* number of extra lines (negative when deleting) */
 )
 {
   changed_lines_buf(curbuf, lnum, lnume, xtra);
@@ -2029,7 +2029,7 @@ changed_lines_buf (
     buf_T *buf,
     linenr_T lnum,              /* first line with change */
     linenr_T lnume,             /* line below last changed line */
-    long xtra                  /* number of extra lines (negative when deleting) */
+    int64_t xtra                  /* number of extra lines (negative when deleting) */
 )
 {
   if (buf->b_mod_set) {
@@ -2059,7 +2059,7 @@ changed_lines_buf (
  * See changed_lines() for the arguments.
  * Careful: may trigger autocommands that reload the buffer.
  */
-static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra)
+static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, int64_t xtra)
 {
   win_T       *wp;
   tabpage_T   *tp;
@@ -2406,7 +2406,7 @@ int get_keystroke(void)
     if (buf == NULL)
       buf = alloc(buflen);
     else if (maxlen < 10) {
-      /* Need some more space. This might happen when receiving a long
+      /* Need some more space. This might happen when receiving a int64_t
        * escape sequence. */
       buflen += 100;
       buf = xrealloc(buf, buflen);
@@ -2575,9 +2575,9 @@ int prompt_for_number(int *mouse_used)
   return i;
 }
 
-void msgmore(long n)
+void msgmore(int64_t n)
 {
-  long pn;
+  int64_t pn;
 
   if (global_busy           /* no messages now, wait until global is finished */
       || !messaging())        /* 'lazyredraw' set, don't do messages now */

@@ -41,7 +41,7 @@ char_u *ml_encrypt_data(memfile_T *mfp, char_u *data, off_t offset,
                         unsigned size) FUNC_ATTR_NONNULL_RET;
 void ml_decrypt_data(memfile_T *mfp, char_u *data, off_t offset,
                      unsigned size);
-long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp);
-void goto_byte(long cnt);
+int64_t ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int64_t *offp);
+void goto_byte(int64_t cnt);
 
 #endif /* NVIM_MEMLINE_H */

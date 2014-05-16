@@ -457,7 +457,7 @@ getnextmark (
 /*
  * For an xtended filemark: set the fnum from the fname.
  * This is used for marks obtained from the .viminfo file.  It's postponed
- * until the mark is used to avoid a long startup delay.
+ * until the mark is used to avoid a int64_t startup delay.
  */
 static void fname2fnum(xfmark_T *fm)
 {
@@ -840,7 +840,7 @@ void ex_changes(exarg_T *eap)
           i == curwin->w_changelistidx ? '>' : ' ',
           i > curwin->w_changelistidx ? i - curwin->w_changelistidx
           : curwin->w_changelistidx - i,
-          (long)curbuf->b_changelist[i].lnum,
+          (int64_t)curbuf->b_changelist[i].lnum,
           curbuf->b_changelist[i].col);
       msg_outtrans(IObuff);
       name = mark_line(&curbuf->b_changelist[i], 17);
@@ -896,7 +896,7 @@ void ex_changes(exarg_T *eap)
  * Example: Insert two lines below 55: mark_adjust(56, MAXLNUM, 2, 0);
  *				   or: mark_adjust(56, 55, MAXLNUM, 2);
  */
-void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+void mark_adjust(linenr_T line1, linenr_T line2, int64_t amount, int64_t amount_after)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1040,7 +1040,7 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
  * "lnum_amount" to the line number and add "col_amount" to the column
  * position.
  */
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount, long col_amount)
+void mark_col_adjust(linenr_T lnum, colnr_T mincol, int64_t lnum_amount, int64_t col_amount)
 {
   int i;
   int fnum = curbuf->b_fnum;
@@ -1439,7 +1439,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
     }
 
     /*
-     * Handle long line and translate escaped characters.
+     * Handle int64_t line and translate escaped characters.
      * Find file name, set str to start.
      * Ignore leading and trailing white space.
      */
@@ -1497,7 +1497,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
           int64_t lnum_64;
           unsigned u;
           sscanf((char *)line + 2, "%" SCNd64 "%u", &lnum_64, &u);
-          // safely downcast to linenr_T (long); remove when linenr_T refactored
+          // safely downcast to linenr_T (int64_t); remove when linenr_T refactored
           assert(lnum_64 <= LONG_MAX); 
           pos.lnum = (linenr_T)lnum_64;
           pos.col = u;

@@ -245,8 +245,8 @@ static char_u   *p_ff;
 static char_u   *p_fo;
 static char_u   *p_flp;
 static char_u   *p_ft;
-static long p_iminsert;
-static long p_imsearch;
+static int64_t p_iminsert;
+static int64_t p_imsearch;
 static char_u   *p_inex;
 static char_u   *p_inde;
 static char_u   *p_indk;
@@ -264,37 +264,37 @@ static int p_pi;
 static char_u   *p_qe;
 static int p_ro;
 static int p_si;
-static long p_sts;
+static int64_t p_sts;
 static char_u   *p_sua;
-static long p_sw;
+static int64_t p_sw;
 static int p_swf;
-static long p_smc;
+static int64_t p_smc;
 static char_u   *p_syn;
 static char_u   *p_spc;
 static char_u   *p_spf;
 static char_u   *p_spl;
-static long p_ts;
-static long p_tw;
+static int64_t p_ts;
+static int64_t p_tw;
 static int p_udf;
-static long p_wm;
+static int64_t p_wm;
 static char_u   *p_keymap;
 
 /* Saved values for when 'bin' is set. */
 static int p_et_nobin;
 static int p_ml_nobin;
-static long p_tw_nobin;
-static long p_wm_nobin;
+static int64_t p_tw_nobin;
+static int64_t p_wm_nobin;
 
 /* Saved values for when 'paste' is set */
-static long p_tw_nopaste;
-static long p_wm_nopaste;
-static long p_sts_nopaste;
+static int64_t p_tw_nopaste;
+static int64_t p_wm_nopaste;
+static int64_t p_sts_nopaste;
 static int p_ai_nopaste;
 
 struct vimoption {
   char        *fullname;        /* full option name */
   char        *shortname;       /* permissible abbreviation */
-  long_u flags;                 /* see below */
+  uint64_t flags;                 /* see below */
   char_u      *var;             /* global option: pointer to variable;
                                 * window-local option: VAR_WIN;
                                 * buffer-local option: global value */
@@ -1686,7 +1686,7 @@ static struct vimoption
    {(char_u *)"", (char_u *)"b,s"} SCRIPTID_INIT},
   {"wildchar",    "wc",   P_NUM|P_VIM,
    (char_u *)&p_wc, PV_NONE,
-   {(char_u *)(long)Ctrl_E, (char_u *)(long)TAB}
+   {(char_u *)(int64_t)Ctrl_E, (char_u *)(int64_t)TAB}
    SCRIPTID_INIT},
   {"wildcharm",   "wcm",  P_NUM|P_VI_DEF,
    (char_u *)&p_wcm, PV_NONE,
@@ -1864,7 +1864,7 @@ static void did_set_title(int icon);
 static char_u *option_expand(int opt_idx, char_u *val);
 static void didset_options(void);
 static void check_string_option(char_u **pp);
-static long_u *insecure_flag(int opt_idx, int opt_flags);
+static uint64_t *insecure_flag(int opt_idx, int opt_flags);
 static void set_string_option_global(int opt_idx, char_u **varp);
 static char_u *set_string_option(int opt_idx, char_u *value,
                                  int opt_flags);
@@ -1878,10 +1878,10 @@ static char_u *compile_cap_prog(synblock_T *synblock);
 static void set_option_scriptID_idx(int opt_idx, int opt_flags, int id);
 static char_u *set_bool_option(int opt_idx, char_u *varp, int value,
                                int opt_flags);
-static char_u *set_num_option(int opt_idx, char_u *varp, long value,
+static char_u *set_num_option(int opt_idx, char_u *varp, int64_t value,
                               char_u *errbuf, size_t errbuflen,
                               int opt_flags);
-static void check_redraw(long_u flags);
+static void check_redraw(uint64_t flags);
 static int findoption(char_u *);
 static int find_key_option(char_u *);
 static void showoptions(int all, int opt_flags);
@@ -1889,13 +1889,13 @@ static int optval_default(struct vimoption *, char_u *varp);
 static void showoneopt(struct vimoption *, int opt_flags);
 static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep,
                          int expand);
-static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep);
+static int put_setnum(FILE *fd, char *cmd, char *name, int64_t *valuep);
 static int put_setbool(FILE *fd, char *cmd, char *name, int value);
 static int istermoption(struct vimoption *);
 static char_u *get_varp_scope(struct vimoption *p, int opt_flags);
 static char_u *get_varp(struct vimoption *);
 static void option_value2string(struct vimoption *, int opt_flags);
-static int wc_use_keyname(char_u *varp, long *wcp);
+static int wc_use_keyname(char_u *varp, int64_t *wcp);
 static void langmap_init(void);
 static void langmap_set(void);
 static void paste_option_changed(void);
@@ -1916,7 +1916,7 @@ void set_init_1(void)
 {
   char_u      *p;
   int opt_idx;
-  long_u n;
+  uintptr_t n;
 
   langmap_init();
 
@@ -1952,7 +1952,7 @@ void set_init_1(void)
     int mustfree;
 
     ga_init(&ga, 1, 100);
-    for (n = 0; n < (long)(sizeof(names) / sizeof(char *)); ++n) {
+    for (n = 0; n < (int64_t)(sizeof(names) / sizeof(char *)); ++n) {
       mustfree = FALSE;
 # ifdef UNIX
       if (*names[n] == NUL)
@@ -1991,10 +1991,10 @@ void set_init_1(void)
     {
 #ifdef HAVE_TOTAL_MEM
       /* Use half of amount of memory available to Vim. */
-      /* If too much to fit in long_u, get long_u max */
+      /* If too much to fit in uint64_t, get uint64_t max */
       uint64_t available_kib = os_get_total_mem_kib();
       n = available_kib / 2 > ULONG_MAX ? ULONG_MAX
-                                        : (long_u)(available_kib /2);
+                                        : (uint64_t)(available_kib /2);
 #else
       n = (0x7fffffff >> 11);
 #endif
@@ -2002,8 +2002,8 @@ void set_init_1(void)
       opt_idx = findoption((char_u *)"maxmem");
       if (opt_idx >= 0) {
 #ifndef HAVE_TOTAL_MEM
-        if ((long)options[opt_idx].def_val[VI_DEFAULT] > (long)n
-            || (long)options[opt_idx].def_val[VI_DEFAULT] == 0L)
+        if ((int64_t)options[opt_idx].def_val[VI_DEFAULT] > (int64_t)n
+            || (int64_t)options[opt_idx].def_val[VI_DEFAULT] == 0L)
 #endif
         options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       }
@@ -2209,8 +2209,8 @@ set_option_default (
 {
   char_u      *varp;            /* pointer to variable for current option */
   int dvi;                      /* index in def_val[] */
-  long_u flags;
-  long_u      *flagsp;
+  uint64_t flags;
+  uint64_t      *flagsp;
   int both = (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0;
 
   varp = get_varp_scope(&(options[opt_idx]), both ? OPT_LOCAL : opt_flags);
@@ -2233,11 +2233,11 @@ set_option_default (
       if (options[opt_idx].indir == PV_SCROLL)
         win_comp_scroll(curwin);
       else {
-        *(long *)varp = (long)options[opt_idx].def_val[dvi];
+        *(int64_t *)varp = (int64_t)options[opt_idx].def_val[dvi];
         /* May also set global value for local option. */
         if (both)
-          *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
-            *(long *)varp;
+          *(int64_t *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) =
+            *(int64_t *)varp;
       }
     } else {  /* P_BOOL */
       *(int *)varp = (int)(intptr_t)options[opt_idx].def_val[dvi];
@@ -2306,7 +2306,7 @@ void set_string_default(char *name, char_u *val)
  * Set the Vi-default value of a number option.
  * Used for 'lines' and 'columns'.
  */
-void set_number_default(char *name, long val)
+void set_number_default(char *name, int64_t val)
 {
   int opt_idx;
 
@@ -2544,7 +2544,7 @@ void set_helplang_default(char_u *lang)
 void set_title_defaults(void)
 {
   int idx1;
-  long val;
+  int64_t val;
 
   /*
    * If GUI is (going to be) used, we can always set the window title and
@@ -2595,9 +2595,9 @@ do_set (
   int afterchar;                    /* character just after option name */
   int len;
   int i;
-  long value;
+  int64_t value;
   int key;
-  long_u flags;                     /* flags for current option */
+  uint64_t flags;                     /* flags for current option */
   char_u      *varp = NULL;         /* pointer to variable for current option */
   int did_show = FALSE;             /* already showed one value */
   int adding;                       /* "opt+=arg" */
@@ -2900,26 +2900,26 @@ do_set (
              */
             ++arg;
             if (nextchar == '&')
-              value = (long)options[opt_idx].def_val[
+              value = (int64_t)options[opt_idx].def_val[
                 ((flags & P_VI_DEF) || cp_val)
                 ?  VI_DEFAULT : VIM_DEFAULT];
             else if (nextchar == '<') {
               /* For 'undolevels' NO_LOCAL_UNDOLEVEL means to
                * use the global value. */
-              if ((long *)varp == &curbuf->b_p_ul
+              if ((int64_t *)varp == &curbuf->b_p_ul
                   && opt_flags == OPT_LOCAL)
                 value = NO_LOCAL_UNDOLEVEL;
               else
-                value = *(long *)get_varp_scope(
+                value = *(int64_t *)get_varp_scope(
                     &(options[opt_idx]), OPT_GLOBAL);
-            } else if (((long *)varp == &p_wc
-                        || (long *)varp == &p_wcm)
+            } else if (((int64_t *)varp == &p_wc
+                        || (int64_t *)varp == &p_wcm)
                        && (*arg == '<'
                            || *arg == '^'
                            || ((!arg[1] || vim_iswhite(arg[1]))
                                && !VIM_ISDIGIT(*arg)))) {
               value = string_to_key(arg);
-              if (value == 0 && (long *)varp != &p_wcm) {
+              if (value == 0 && (int64_t *)varp != &p_wcm) {
                 errmsg = e_invarg;
                 goto skip;
               }
@@ -2944,11 +2944,11 @@ do_set (
             }
 
             if (adding)
-              value = *(long *)varp + value;
+              value = *(int64_t *)varp + value;
             if (prepending)
-              value = *(long *)varp * value;
+              value = *(int64_t *)varp * value;
             if (removing)
-              value = *(long *)varp - value;
+              value = *(int64_t *)varp - value;
             errmsg = set_num_option(opt_idx, varp, value,
                 errbuf, sizeof(errbuf), opt_flags);
           } else if (opt_idx >= 0) {                      /* string */
@@ -3328,7 +3328,7 @@ did_set_option (
     int new_value              /* value was replaced completely */
 )
 {
-  long_u      *p;
+  uint64_t      *p;
 
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -3681,7 +3681,7 @@ void set_term_option_alloced(char_u **p)
 int was_set_insecurely(char_u *opt, int opt_flags)
 {
   int idx = findoption(opt);
-  long_u  *flagp;
+  uint64_t  *flagp;
 
   if (idx >= 0) {
     flagp = insecure_flag(idx, opt_flags);
@@ -3695,7 +3695,7 @@ int was_set_insecurely(char_u *opt, int opt_flags)
  * Get a pointer to the flags used for the P_INSECURE flag of option
  * "opt_idx".  For some local options a local flags field is used.
  */
-static long_u *insecure_flag(int opt_idx, int opt_flags)
+static uint64_t *insecure_flag(int opt_idx, int opt_flags)
 {
   if (opt_flags & OPT_LOCAL)
     switch ((int)options[opt_idx].indir) {
@@ -3857,7 +3857,7 @@ did_set_string_option (
   char_u      *s, *p;
   int did_chartab = FALSE;
   char_u      **gvarp;
-  long_u free_oldval = (options[opt_idx].flags & P_ALLOCED);
+  uint64_t free_oldval = (options[opt_idx].flags & P_ALLOCED);
 
   /* Get the global option to compare with, otherwise we would have to check
    * two values for all local options. */
@@ -5447,7 +5447,7 @@ static char_u *
 set_num_option (
     int opt_idx,                            /* index in options[] table */
     char_u *varp,                      /* pointer to the option variable */
-    long value,                             /* new value */
+    int64_t value,                             /* new value */
     char_u *errbuf,                    /* buffer for error messages */
     size_t errbuflen,                       /* length of "errbuf" */
     int opt_flags                          /* OPT_LOCAL, OPT_GLOBAL and
@@ -5455,10 +5455,10 @@ set_num_option (
 )
 {
   char_u      *errmsg = NULL;
-  long old_value = *(long *)varp;
-  long old_Rows = Rows;                 /* remember old Rows */
-  long old_Columns = Columns;           /* remember old Columns */
-  long        *pp = (long *)varp;
+  int64_t old_value = *(int64_t *)varp;
+  int64_t old_Rows = Rows;                 /* remember old Rows */
+  int64_t old_Columns = Columns;           /* remember old Columns */
+  int64_t        *pp = (int64_t *)varp;
 
   /* Disallow changing some options from secure mode. */
   if ((secure
@@ -5799,7 +5799,7 @@ set_num_option (
 
   /* May set global value for local option. */
   if ((opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0)
-    *(long *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
+    *(int64_t *)get_varp_scope(&(options[opt_idx]), OPT_GLOBAL) = *pp;
 
   options[opt_idx].flags |= P_WAS_SET;
 
@@ -5815,7 +5815,7 @@ set_num_option (
 /*
  * Called after an option changed: check if something needs to be redrawn.
  */
-static void check_redraw(long_u flags)
+static void check_redraw(uint64_t flags)
 {
   /* Careful: P_RCLR and P_RALL are a combination of other P_ flags */
   int doclear = (flags & P_RCLR) == P_RCLR;
@@ -5905,7 +5905,7 @@ static int findoption(char_u *arg)
 int 
 get_option_value (
     char_u *name,
-    long *numval,
+    int64_t *numval,
     char_u **stringval,            /* NULL when only checking existence */
     int opt_flags
 )
@@ -5936,7 +5936,7 @@ get_option_value (
   if (varp == NULL)                 /* hidden option */
     return -1;
   if (options[opt_idx].flags & P_NUM)
-    *numval = *(long *)varp;
+    *numval = *(int64_t *)varp;
   else {
     /* Special case: 'modified' is b_changed, but we also want to consider
      * it set when 'ff' or 'fenc' changed. */
@@ -6058,7 +6058,7 @@ int get_option_value_strict(char *name,
     if (p->flags & P_STRING) {
       *stringval = xstrdup(*(char **)(varp));
     } else if (p->flags & P_NUM) {
-      *numval = *(long *) varp;
+      *numval = *(int64_t *) varp;
     } else {
       *numval = *(int *)varp;
     }
@@ -6076,14 +6076,14 @@ int get_option_value_strict(char *name,
 char_u *
 set_option_value (
     char_u *name,
-    long number,
+    int64_t number,
     char_u *string,
     int opt_flags                  /* OPT_LOCAL or 0 (both) */
 )
 {
   int opt_idx;
   char_u      *varp;
-  long_u flags;
+  uint64_t flags;
 
   opt_idx = findoption(name);
   if (opt_idx < 0)
@@ -6238,7 +6238,7 @@ showoptions (
   /*
    * do the loop two times:
    * 1. display the short items
-   * 2. display the long items (only strings and numbers)
+   * 2. display the int64_t items (only strings and numbers)
    */
   for (run = 1; run <= 2 && !got_int; ++run) {
     /*
@@ -6307,7 +6307,7 @@ static int optval_default(struct vimoption *p, char_u *varp)
     return TRUE;            /* hidden option is always at default */
   dvi = ((p->flags & P_VI_DEF) || p_cp) ? VI_DEFAULT : VIM_DEFAULT;
   if (p->flags & P_NUM)
-    return *(long *)varp == (long)p->def_val[dvi];
+    return *(int64_t *)varp == (int64_t)p->def_val[dvi];
   if (p->flags & P_BOOL)
     return *(int *)varp == (int)(intptr_t)p->def_val[dvi];
   /* P_STRING */
@@ -6440,7 +6440,7 @@ int makeset(FILE *fd, int opt_flags, int local_only)
             if (put_setbool(fd, cmd, p->fullname, *(int *)varp) == FAIL)
               return FAIL;
           } else if (p->flags & P_NUM) {
-            if (put_setnum(fd, cmd, p->fullname, (long *)varp) == FAIL)
+            if (put_setnum(fd, cmd, p->fullname, (int64_t *)varp) == FAIL)
               return FAIL;
           } else {    /* P_STRING */
             int do_endif = FALSE;
@@ -6527,9 +6527,9 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
   return OK;
 }
 
-static int put_setnum(FILE *fd, char *cmd, char *name, long *valuep)
+static int put_setnum(FILE *fd, char *cmd, char *name, int64_t *valuep)
 {
-  long wc;
+  int64_t wc;
 
   if (fprintf(fd, "%s %s=", cmd, name) < 0)
     return FAIL;
@@ -7238,7 +7238,7 @@ set_context_in_set_cmd (
 )
 {
   int nextchar;
-  long_u flags = 0;             /* init for GCC */
+  uint64_t flags = 0;             /* init for GCC */
   int opt_idx = 0;              /* init for GCC */
   char_u      *p;
   char_u      *s;
@@ -7608,14 +7608,14 @@ option_value2string (
   varp = get_varp_scope(opp, opt_flags);
 
   if (opp->flags & P_NUM) {
-    long wc = 0;
+    int64_t wc = 0;
 
     if (wc_use_keyname(varp, &wc))
       STRCPY(NameBuff, get_special_key_name((int)wc, 0));
     else if (wc != 0)
       STRCPY(NameBuff, transchar((int)wc));
     else
-      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(long *)varp);
+      sprintf((char *)NameBuff, "%" PRId64, (int64_t)*(int64_t *)varp);
   } else { /* P_STRING */
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */
@@ -7638,10 +7638,10 @@ option_value2string (
  * printed as a keyname.
  * "*wcp" is set to the value of the option if it's 'wildchar' or 'wildcharm'.
  */
-static int wc_use_keyname(char_u *varp, long *wcp)
+static int wc_use_keyname(char_u *varp, int64_t *wcp)
 {
-  if (((long *)varp == &p_wc) || ((long *)varp == &p_wcm)) {
-    *wcp = *(long *)varp;
+  if (((int64_t *)varp == &p_wc) || ((int64_t *)varp == &p_wcm)) {
+    *wcp = *(int64_t *)varp;
     if (IS_SPECIAL(*wcp) || find_special_key_in_table((int)*wcp) >= 0)
       return TRUE;
   }
@@ -8226,7 +8226,7 @@ int check_ff_value(char_u *p)
  * Return the effective shiftwidth value for current buffer, using the
  * 'tabstop' value when 'shiftwidth' is zero.
  */
-long get_sw_value(buf_T *buf)
+int64_t get_sw_value(buf_T *buf)
 {
   return buf->b_p_sw ? buf->b_p_sw : buf->b_p_ts;
 }
@@ -8235,7 +8235,7 @@ long get_sw_value(buf_T *buf)
  * Return the effective softtabstop value for the current buffer, using the
  * 'tabstop' value when 'softtabstop' is negative.
  */
-long get_sts_value(void)
+int64_t get_sts_value(void)
 {
   return curbuf->b_p_sts < 0 ? get_sw_value(curbuf) : curbuf->b_p_sts;
 }

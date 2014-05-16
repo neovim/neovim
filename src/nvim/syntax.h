@@ -21,13 +21,13 @@ void reset_expand_highlight(void);
 void set_context_in_echohl_cmd(expand_T *xp, char_u *arg);
 void set_context_in_syntax_cmd(expand_T *xp, char_u *arg);
 char_u *get_syntax_name(expand_T *xp, int idx);
-int syn_get_id(win_T *wp, long lnum, colnr_T col, int trans,
+int syn_get_id(win_T *wp, int64_t lnum, colnr_T col, int trans,
                int *spellp,
                int keep_state);
 int get_syntax_info(int *seqnrp);
 int syn_get_sub_char(void);
 int syn_get_stack_item(int i);
-int syn_get_foldlevel(win_T *wp, long lnum);
+int syn_get_foldlevel(win_T *wp, int64_t lnum);
 void ex_syntime(exarg_T *eap);
 char_u *get_syntime_arg(expand_T *xp, int idx);
 void init_highlight(int both, int reset);

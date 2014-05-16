@@ -72,7 +72,7 @@ void add_pathsep(char_u *p);
 char_u *FullName_save(char_u *fname, int force);
 void simplify_filename(char_u *filename);
 char_u *find_file_name_in_path(char_u *ptr, int len, int options,
-                               long count,
+                               int64_t count,
                                char_u *rel_fname);
 int path_is_url(char_u *p);
 int path_with_url(char_u *fname);

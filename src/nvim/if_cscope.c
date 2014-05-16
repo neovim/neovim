@@ -1512,7 +1512,7 @@ static char *cs_parse_results(int cnumber, char *buf, int bufsize, char **contex
     return NULL;
   }
 
-  /* If the line's too long for the buffer, discard it. */
+  /* If the line's too int64_t for the buffer, discard it. */
   if ((p = strchr(buf, '\n')) == NULL) {
     while ((ch = getc(csinfo[cnumber].fr_fp)) != EOF && ch != '\n')
       ;
@@ -2138,10 +2138,10 @@ static int cs_show(exarg_T *eap)
 
       if (csinfo[i].ppath != NULL)
         (void)smsg((char_u *)"%2d %-5ld  %-34s  %-32s",
-            i, (long)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
+            i, (int64_t)csinfo[i].pid, csinfo[i].fname, csinfo[i].ppath);
       else
         (void)smsg((char_u *)"%2d %-5ld  %-34s  <none>",
-            i, (long)csinfo[i].pid, csinfo[i].fname);
+            i, (int64_t)csinfo[i].pid, csinfo[i].fname);
     }
   }
 

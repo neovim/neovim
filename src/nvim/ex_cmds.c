@@ -288,8 +288,8 @@ static int sort_abort;                  /* flag to indicate if sorting has been 
 /* Struct to store info to be sorted. */
 typedef struct {
   linenr_T lnum;                        /* line number */
-  long start_col_nr;                    /* starting column number or number */
-  long end_col_nr;                      /* ending column number */
+  int64_t start_col_nr;                    /* starting column number or number */
+  int64_t end_col_nr;                      /* ending column number */
 } sorti_T;
 
 static int
@@ -344,7 +344,7 @@ void ex_sort(exarg_T *eap)
   regmatch_T regmatch;
   int len;
   linenr_T lnum;
-  long maxlen = 0;
+  int64_t maxlen = 0;
   size_t count = (size_t)(eap->line2 - eap->line1 + 1);
   size_t i;
   char_u      *p;
@@ -352,7 +352,7 @@ void ex_sort(exarg_T *eap)
   char_u      *s2;
   char_u c;                             /* temporary character storage */
   int unique = FALSE;
-  long deleted;
+  int64_t deleted;
   colnr_T start_col;
   colnr_T end_col;
   int sort_oct;                         /* sort on octal number */
@@ -520,9 +520,9 @@ void ex_sort(exarg_T *eap)
     count = 0;
 
   /* Adjust marks for deleted (or added) lines and prepare for displaying. */
-  deleted = (long)(count - (lnum - eap->line2));
+  deleted = (int64_t)(count - (lnum - eap->line2));
   if (deleted > 0)
-    mark_adjust(eap->line2 - deleted, eap->line2, (long)MAXLNUM, -deleted);
+    mark_adjust(eap->line2 - deleted, eap->line2, (int64_t)MAXLNUM, -deleted);
   else if (deleted < 0)
     mark_adjust(eap->line2, MAXLNUM, -deleted, 0L);
   changed_lines(eap->line1, 0, eap->line2 + 1, -deleted);
@@ -546,15 +546,15 @@ void ex_retab(exarg_T *eap)
 {
   linenr_T lnum;
   int got_tab = FALSE;
-  long num_spaces = 0;
-  long num_tabs;
-  long len;
-  long col;
-  long vcol;
-  long start_col = 0;                   /* For start of white-space string */
-  long start_vcol = 0;                  /* For start of white-space string */
+  int64_t num_spaces = 0;
+  int64_t num_tabs;
+  int64_t len;
+  int64_t col;
+  int64_t vcol;
+  int64_t start_col = 0;                   /* For start of white-space string */
+  int64_t start_vcol = 0;                  /* For start of white-space string */
   int temp;
-  long old_len;
+  int64_t old_len;
   char_u      *ptr;
   char_u      *new_line = (char_u *)1;      /* init to non-NULL */
   int did_undo;                         /* called u_save for current line */
@@ -618,7 +618,7 @@ void ex_retab(exarg_T *eap)
 
             /* len is actual number of white characters used */
             len = num_spaces + num_tabs;
-            old_len = (long)STRLEN(ptr);
+            old_len = (int64_t)STRLEN(ptr);
             new_line = xmalloc(old_len - col + start_col + len + 1);
 
             if (start_col > 0)
@@ -820,7 +820,7 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
 
   appended_lines_mark(n, count);
 
-  msgmore((long)count);
+  msgmore((int64_t)count);
 }
 
 static char_u   *prevcmd = NULL;        /* the previous command */
@@ -1180,7 +1180,7 @@ do_filter (
           /* save message to display it after redraw */
           set_keep_msg(msg_buf, 0);
       } else
-        msgmore((long)linecount);
+        msgmore((int64_t)linecount);
     }
   } else {
 error:
@@ -1765,7 +1765,7 @@ static int read_viminfo_up_to_marks(vir_T *virp, int forceit, int writing)
     case '+':         /* "+40 /path/dir file", for running vim without args */
     case '|':         /* to be defined */
     case '^':         /* to be defined */
-    case '<':         /* long line - ignored */
+    case '<':         /* int64_t line - ignored */
     /* A comment or empty line. */
     case NUL:
     case '\r':
@@ -1864,7 +1864,7 @@ int viminfo_readline(vir_T *virp)
  * - replace CTRL-V CTRL-V with CTRL-V
  * - replace CTRL-V 'n'    with '\n'
  *
- * Check for a long line as written by viminfo_writestring().
+ * Check for a int64_t line as written by viminfo_writestring().
  *
  * Return the string in allocated memory (NULL when out of memory).
  */
@@ -1922,7 +1922,7 @@ viminfo_readstring (
  * - replace '\n'   with CTRL-V 'n'
  * - add a '\n' at the end
  *
- * For a long line:
+ * For a int64_t line:
  * - write " CTRL-V <length> \n " in first line
  * - write " < <string> \n "	  in second line
  */
@@ -1938,7 +1938,7 @@ void viminfo_writestring(FILE *fd, char_u *p)
     ++len;
   }
 
-  /* If the string will be too long, write its length and put it in the next
+  /* If the string will be too int64_t, write its length and put it in the next
    * line.  Take into account that some room is needed for what comes before
    * the string (e.g., variable name).  Add something to the length for the
    * '<', NL and trailing NUL. */
@@ -1977,7 +1977,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
 
   if (curwin->w_p_nu || use_number) {
     vim_snprintf((char *)numbuf, sizeof(numbuf),
-        "%*ld ", number_width(curwin), (long)lnum);
+        "%*ld ", number_width(curwin), (int64_t)lnum);
     msg_puts_attr(numbuf, hl_attr(HLF_N));      /* Highlight line nrs */
   }
   msg_prt_line(ml_get(lnum), list);
@@ -2578,7 +2578,7 @@ do_ecmd (
   buf_T       *old_curbuf = curbuf;
   char_u      *free_fname = NULL;
   int retval = FAIL;
-  long n;
+  int64_t n;
   linenr_T lnum;
   linenr_T topline = 0;
   int newcol = -1;
@@ -3281,7 +3281,7 @@ void ex_change(exarg_T *eap)
 
   /* make sure the cursor is not beyond the end of the file now */
   check_cursor_lnum();
-  deleted_lines_mark(eap->line1, (long)(eap->line2 - lnum));
+  deleted_lines_mark(eap->line1, (int64_t)(eap->line2 - lnum));
 
   /* ":append" on the line above the deleted lines. */
   eap->line2 = eap->line1;
@@ -3456,7 +3456,7 @@ static int global_need_beginline;       /* call beginline() after ":g" */
 void do_sub(exarg_T *eap)
 {
   linenr_T lnum;
-  long i = 0;
+  int64_t i = 0;
   regmmatch_T regmatch;
   static int do_all = FALSE;            /* do multiple substitutions per line */
   static int do_ask = FALSE;            /* ask for confirmation */
@@ -3480,7 +3480,7 @@ void do_sub(exarg_T *eap)
                                          * change */
   linenr_T old_line_count = curbuf->b_ml.ml_line_count;
   linenr_T line2;
-  long nmatch;                          /* number of lines in match */
+  int64_t nmatch;                          /* number of lines in match */
   char_u      *sub_firstline;           /* allocated copy of first sub line */
   int endcolumn = FALSE;                /* cursor in last column when done */
   pos_T old_cursor = curwin->w_cursor;
@@ -3737,7 +3737,7 @@ void do_sub(exarg_T *eap)
       int did_sub = FALSE;
       int lastone;
       int len, copy_len, needed_len;
-      long nmatch_tl = 0;               /* nr of lines matched below lnum */
+      int64_t nmatch_tl = 0;               /* nr of lines matched below lnum */
       int do_again;                     /* do it again after joining lines */
       int skip_match = FALSE;
       linenr_T sub_firstlnum;           /* nr of first sub line */
@@ -3909,9 +3909,9 @@ void do_sub(exarg_T *eap)
                 ec += numw;
               }
               msg_start();
-              for (i = 0; i < (long)sc; ++i)
+              for (i = 0; i < (int64_t)sc; ++i)
                 msg_putchar(' ');
-              for (; i <= (long)ec; ++i)
+              for (; i <= (int64_t)ec; ++i)
                 msg_putchar('^');
 
               resp = getexmodeline('?', NULL, 0);
@@ -4105,7 +4105,7 @@ void do_sub(exarg_T *eap)
           new_end = new_start;
         } else {
           /*
-           * Check if the temporary buffer is long enough to do the
+           * Check if the temporary buffer is int64_t enough to do the
            * substitution into.  If not, make it larger (with a bit
            * extra to avoid too many calls to xmalloc()/free()).
            */
@@ -4262,7 +4262,7 @@ skip:
               for (i = 0; i < nmatch_tl; ++i)
                 ml_delete(lnum, (int)FALSE);
               mark_adjust(lnum, lnum + nmatch_tl - 1,
-                  (long)MAXLNUM, -nmatch_tl);
+                  (int64_t)MAXLNUM, -nmatch_tl);
               if (do_ask)
                 deleted_lines(lnum, nmatch_tl);
               --lnum;
@@ -4932,7 +4932,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
                              "s/\\\\1", "s/\\\\2", "s/\\\\3", "s/\\\\9"};
   int flags;
 
-  d = IObuff;               /* assume IObuff is long enough! */
+  d = IObuff;               /* assume IObuff is int64_t enough! */
 
   /*
    * Recognize a few exceptions to the rule.	Some strings that contain '*'
@@ -4979,7 +4979,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
          * Insert a backslash before '~', '$' and '.' to avoid their
          * special meaning.
          */
-        if (d - IObuff > IOSIZE - 10)           /* getting too long!? */
+        if (d - IObuff > IOSIZE - 10)           /* getting too int64_t!? */
           break;
         switch (*s) {
         case '|':   STRCPY(d, "bar");

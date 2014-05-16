@@ -179,7 +179,7 @@ struct block0 {
   char_u b0_uname[B0_UNAME_SIZE];        /* name of user (uid if no name) */
   char_u b0_hname[B0_HNAME_SIZE];        /* host name (if it has a name) */
   char_u b0_fname[B0_FNAME_SIZE_ORG];        /* name of file being edited */
-  long b0_magic_long;           /* check for byte order of long */
+  int64_t b0_magic_long;           /* check for byte order of int64_t */
   int b0_magic_int;             /* check for byte order of int */
   short b0_magic_short;         /* check for byte order of short */
   char_u b0_magic_char;         /* check for last char */
@@ -187,9 +187,9 @@ struct block0 {
 
 /*
  * Note: b0_dirty and b0_flags are put at the end of the file name.  For very
- * long file names in older versions of Vim they are invalid.
+ * int64_t file names in older versions of Vim they are invalid.
  * The 'fileencoding' comes before b0_flags, with a NUL in front.  But only
- * when there is room, for very long file names it's omitted.
+ * when there is room, for very int64_t file names it's omitted.
  */
 #define B0_DIRTY        0x55
 #define b0_dirty        b0_fname[B0_FNAME_SIZE_ORG - 1]
@@ -263,15 +263,15 @@ static int ml_add_stack(buf_T *);
 static void ml_lineadd(buf_T *, int);
 static int b0_magic_wrong(ZERO_BL *);
 #ifdef CHECK_INODE
-static int fnamecmp_ino(char_u *, char_u *, long);
+static int fnamecmp_ino(char_u *, char_u *, int64_t);
 #endif
-static void long_to_char(long, char_u *);
-static long char_to_long(char_u *);
+static void long_to_char(int64_t, char_u *);
+static int64_t char_to_long(char_u *);
 #if defined(UNIX) || defined(WIN3264)
 static char_u *make_percent_swname(char_u *dir, char_u *name);
 #endif
 static void ml_crypt_prepare(memfile_T *mfp, off_t offset, int reading);
-static void ml_updatechunk(buf_T *buf, long line, long len, int updtype);
+static void ml_updatechunk(buf_T *buf, int64_t line, int64_t len, int updtype);
 
 /*
  * Open a new memline for "buf".
@@ -335,13 +335,13 @@ int ml_open(buf_T *buf)
 
   b0p->b0_id[0] = BLOCK0_ID0;
   b0p->b0_id[1] = BLOCK0_ID1;
-  b0p->b0_magic_long = (long)B0_MAGIC_LONG;
+  b0p->b0_magic_long = (int64_t)B0_MAGIC_LONG;
   b0p->b0_magic_int = (int)B0_MAGIC_INT;
   b0p->b0_magic_short = (short)B0_MAGIC_SHORT;
   b0p->b0_magic_char = B0_MAGIC_CHAR;
   STRNCPY(b0p->b0_version, "VIM ", 4);
   STRNCPY(b0p->b0_version + 4, Version, 6);
-  long_to_char((long)mfp->mf_page_size, b0p->b0_page_size);
+  long_to_char((int64_t)mfp->mf_page_size, b0p->b0_page_size);
 
   if (!buf->b_spell) {
     b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
@@ -445,7 +445,7 @@ void ml_set_crypt_key(buf_T *buf, char_u *old_key, int old_cm)
   bhdr_T      *hp;
   int page_count;
   int idx;
-  long error;
+  int64_t error;
   infoptr_T   *ip;
   PTR_BL      *pp;
   DATA_BL     *dp;
@@ -848,7 +848,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     home_replace(NULL, buf->b_ffname, b0p->b0_fname,
         B0_FNAME_SIZE_CRYPT, TRUE);
     if (b0p->b0_fname[0] == '~') {
-      /* If there is no user name or it is too long, don't use "~/" */
+      /* If there is no user name or it is too int64_t, don't use "~/" */
       int retval = os_get_user_name(uname, B0_UNAME_SIZE);
       size_t ulen = STRLEN(uname);
       size_t flen = STRLEN(b0p->b0_fname);
@@ -862,9 +862,9 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     }
     FileInfo file_info;
     if (os_get_file_info((char *)buf->b_ffname, &file_info)) {
-      long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
+      long_to_char((int64_t)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
 #ifdef CHECK_INODE
-      long_to_char((long)file_info.stat.st_ino, b0p->b0_ino);
+      long_to_char((int64_t)file_info.stat.st_ino, b0p->b0_ino);
 #endif
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
@@ -948,7 +948,7 @@ void ml_recover(void)
   linenr_T lnum;
   char_u      *p;
   int i;
-  long error;
+  int64_t error;
   int cannot_open;
   linenr_T line_count;
   int has_error;
@@ -958,7 +958,7 @@ void ml_recover(void)
   off_t size;
   int called_from_main;
   int serious_error = TRUE;
-  long mtime;
+  int64_t mtime;
   int attr;
   int orig_file_status = NOTDONE;
 
@@ -1661,7 +1661,7 @@ recover_names (
       if (num_files) {
         for (i = 0; i < num_files; ++i) {
           /* print the swap file name */
-          msg_outnum((long)++file_count);
+          msg_outnum((int64_t)++file_count);
           MSG_PUTS(".    ");
           msg_puts(path_tail(files[i]));
           msg_putchar('\n');
@@ -1682,7 +1682,7 @@ recover_names (
   return file_count;
 }
 
-#if defined(UNIX) || defined(WIN3264)  /* Need _very_ long file names */
+#if defined(UNIX) || defined(WIN3264)  /* Need _very_ int64_t file names */
 /*
  * Append the full path to name with path separators made into percent
  * signs, to dir. An unnamed buffer is handled as "" (<currentdir>/"")
@@ -2273,7 +2273,7 @@ ml_append_int (
      * The line counts in the pointer blocks have already been adjusted by
      * ml_find_line().
      */
-    long line_count_left, line_count_right;
+    int64_t line_count_left, line_count_right;
     int page_count_left, page_count_right;
     bhdr_T      *hp_left;
     bhdr_T      *hp_right;
@@ -2583,7 +2583,7 @@ ml_append_int (
   }
 
   /* The line was inserted below 'lnum' */
-  ml_updatechunk(buf, lnum + 1, (long)len, ML_CHNK_ADDLINE);
+  ml_updatechunk(buf, lnum + 1, (int64_t)len, ML_CHNK_ADDLINE);
   return OK;
 }
 
@@ -2646,7 +2646,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
   int stack_idx;
   int text_start;
   int line_start;
-  long line_size;
+  int64_t line_size;
   int i;
 
   if (lnum < 1 || lnum > buf->b_ml.ml_line_count)
@@ -2684,8 +2684,8 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
 
   dp = (DATA_BL *)(hp->bh_data);
   /* compute line count before the delete */
-  count = (long)(buf->b_ml.ml_locked_high)
-          - (long)(buf->b_ml.ml_locked_low) + 2;
+  count = (int64_t)(buf->b_ml.ml_locked_high)
+          - (int64_t)(buf->b_ml.ml_locked_low) + 2;
   idx = lnum - buf->b_ml.ml_locked_low;
 
   --buf->b_ml.ml_line_count;
@@ -2953,7 +2953,7 @@ static void ml_flush_line(buf_T *buf)
         memmove(old_line - extra, new_line, (size_t)new_len);
         buf->b_ml.ml_flags |= (ML_LOCKED_DIRTY | ML_LOCKED_POS);
         /* The else case is already covered by the insert and delete */
-        ml_updatechunk(buf, lnum, (long)extra, ML_CHNK_UPDLINE);
+        ml_updatechunk(buf, lnum, (int64_t)extra, ML_CHNK_UPDLINE);
       } else {
         /*
          * Cannot do it in one data block: Delete and append.
@@ -3348,7 +3348,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   char_u fname_buf[MAXPATHL];
 #endif
 
-#if defined(UNIX) || defined(WIN3264)  /* Need _very_ long file names */
+#if defined(UNIX) || defined(WIN3264)  /* Need _very_ int64_t file names */
   s = dir_name + STRLEN(dir_name);
   if (after_pathsep(dir_name, s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
@@ -3458,7 +3458,7 @@ attention_message (
     if (sx != 0 && x > sx)
       MSG_PUTS(_("      NEWER than swap file!\n"));
   }
-  /* Some of these messages are long to allow translation to
+  /* Some of these messages are int64_t to allow translation to
    * other languages. */
   MSG_PUTS(_(
           "\n(1) Another program may be editing the same file.  If this is the case,\n    be careful not to end up with two different instances of the same\n    file when making changes."));
@@ -3762,7 +3762,7 @@ findswapname (
 
 static int b0_magic_wrong(ZERO_BL *b0p)
 {
-  return b0p->b0_magic_long != (long)B0_MAGIC_LONG
+  return b0p->b0_magic_long != (int64_t)B0_MAGIC_LONG
          || b0p->b0_magic_int != (int)B0_MAGIC_INT
          || b0p->b0_magic_short != (short)B0_MAGIC_SHORT
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
@@ -3822,7 +3822,7 @@ static int
 fnamecmp_ino (
     char_u *fname_c,               /* current file name */
     char_u *fname_s,               /* file name from swap file */
-    long ino_block0
+    int64_t ino_block0
 )
 {
   ino_t ino_c = 0;                  /* ino of current file */
@@ -3871,10 +3871,10 @@ fnamecmp_ino (
 #endif /* CHECK_INODE */
 
 /*
- * Move a long integer into a four byte character array.
+ * Move a int64_t integer into a four byte character array.
  * Used for machine independency in block zero.
  */
-static void long_to_char(long n, char_u *s)
+static void long_to_char(int64_t n, char_u *s)
 {
   s[0] = (char_u)(n & 0xff);
   n = (unsigned)n >> 8;
@@ -3885,9 +3885,9 @@ static void long_to_char(long n, char_u *s)
   s[3] = (char_u)(n & 0xff);
 }
 
-static long char_to_long(char_u *s)
+static int64_t char_to_long(char_u *s)
 {
-  long retval;
+  int64_t retval;
 
   retval = s[3];
   retval <<= 8;
@@ -4039,7 +4039,7 @@ static void ml_crypt_prepare(memfile_T *mfp, off_t offset, int reading)
  * ML_CHNK_DELLINE: Subtract len from parent chunk, possibly deleting it
  * ML_CHNK_UPDLINE: Add len to parent chunk, as a signed entity.
  */
-static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
+static void ml_updatechunk(buf_T *buf, linenr_T line, int64_t len, int updtype)
 {
   static buf_T        *ml_upd_lastbuf = NULL;
   static linenr_T ml_upd_lastline;
@@ -4048,7 +4048,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
 
   linenr_T curline = ml_upd_lastcurline;
   int curix = ml_upd_lastcurix;
-  long size;
+  int64_t size;
   chunksize_T         *curchnk;
   int rest;
   bhdr_T              *hp;
@@ -4071,7 +4071,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
     buf->b_ml.ml_usedchunks = 1;
     buf->b_ml.ml_chunksize[0].mlcs_numlines = 1;
     buf->b_ml.ml_chunksize[0].mlcs_totalsize =
-      (long)STRLEN(buf->b_ml.ml_line_ptr) + 1;
+      (int64_t)STRLEN(buf->b_ml.ml_line_ptr) + 1;
     return;
   }
 
@@ -4130,8 +4130,8 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
           return;
         }
         dp = (DATA_BL *)(hp->bh_data);
-        count = (long)(buf->b_ml.ml_locked_high) -
-                (long)(buf->b_ml.ml_locked_low) + 1;
+        count = (int64_t)(buf->b_ml.ml_locked_high) -
+                (int64_t)(buf->b_ml.ml_locked_low) + 1;
         idx = curline - buf->b_ml.ml_locked_low;
         curline = buf->b_ml.ml_locked_high + 1;
         if (idx == 0)        /* first line in block, text at the end */
@@ -4235,18 +4235,18 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
  * Find offset of line if "lnum" > 0
  * return -1 if information is not available
  */
-long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
+int64_t ml_find_line_or_offset(buf_T *buf, linenr_T lnum, int64_t *offp)
 {
   linenr_T curline;
   int curix;
-  long size;
+  int64_t size;
   bhdr_T      *hp;
   DATA_BL     *dp;
   int count;                    /* number of entries in block */
   int idx;
   int start_idx;
   int text_end;
-  long offset;
+  int64_t offset;
   int len;
   int ffdos = (get_fileformat(buf) == EOL_DOS);
   int extra = 0;
@@ -4290,8 +4290,8 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
         || (hp = ml_find_line(buf, curline, ML_FIND)) == NULL)
       return -1;
     dp = (DATA_BL *)(hp->bh_data);
-    count = (long)(buf->b_ml.ml_locked_high) -
-            (long)(buf->b_ml.ml_locked_low) + 1;
+    count = (int64_t)(buf->b_ml.ml_locked_high) -
+            (int64_t)(buf->b_ml.ml_locked_low) + 1;
     start_idx = idx = curline - buf->b_ml.ml_locked_low;
     if (idx == 0)    /* first line in block, text at the end */
       text_end = dp->db_txt_end;
@@ -4351,9 +4351,9 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
 /*
  * Goto byte in buffer with offset 'cnt'.
  */
-void goto_byte(long cnt)
+void goto_byte(int64_t cnt)
 {
-  long boff = cnt;
+  int64_t boff = cnt;
   linenr_T lnum;
 
   ml_flush_line(curbuf);        /* cached line may be dirty */

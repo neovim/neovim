@@ -770,7 +770,7 @@ proftime_T *tm;
 {
   static char buf[50];
 
-  sprintf(buf, "%3ld.%06ld", (long)tm->tv_sec, (long)tm->tv_usec);
+  sprintf(buf, "%3ld.%06ld", (int64_t)tm->tv_sec, (int64_t)tm->tv_usec);
   return buf;
 }
 
@@ -778,16 +778,16 @@ proftime_T *tm;
  * Put the time "msec" past now in "tm".
  */
 void profile_setlimit(msec, tm)
-long msec;
+int64_t msec;
 proftime_T  *tm;
 {
   if (msec <= 0)     /* no limit */
     profile_zero(tm);
   else {
-    long usec;
+    int64_t usec;
 
     gettimeofday(tm, NULL);
-    usec = (long)tm->tv_usec + (long)msec * 1000;
+    usec = (int64_t)tm->tv_usec + (int64_t)msec * 1000;
     tm->tv_usec = usec % 1000000L;
     tm->tv_sec += usec / 1000000L;
   }
@@ -2989,7 +2989,7 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
         *scan = '\n';
         if (*(scan + 1) != 0) {
           *(scan + 1) = 0;
-          fseek(sp->fp, (long)(scan - buf - len + 1), SEEK_CUR);
+          fseek(sp->fp, (int64_t)(scan - buf - len + 1), SEEK_CUR);
         }
       }
       len = STRLEN(buf);

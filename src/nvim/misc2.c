@@ -549,7 +549,7 @@ void adjust_cursor_col(void)
  */
 int leftcol_changed(void)
 {
-  long lastcol;
+  int64_t lastcol;
   colnr_T s, e;
   int retval = FALSE;
 
@@ -784,7 +784,7 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     shell_resized_check();
   }
 
-  set_vim_var_nr(VV_SHELL_ERROR, (long)retval);
+  set_vim_var_nr(VV_SHELL_ERROR, (int64_t)retval);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);
 
@@ -962,7 +962,7 @@ char_u *read_string(FILE *fd, int cnt)
 /*
  * Write a number to file "fd", MSB first, in "len" bytes.
  */
-int put_bytes(FILE *fd, long_u nr, int len)
+int put_bytes(FILE *fd, uint64_t nr, int len)
 {
   int i;
 
@@ -982,12 +982,12 @@ void put_time(FILE *fd, time_t the_time)
   int i;
   time_t wtime = the_time;
 
-  /* time_t can be up to 8 bytes in size, more than long_u, thus we
+  /* time_t can be up to 8 bytes in size, more than uint64_t, thus we
    * can't use put_bytes() here.
    * Another problem is that ">>" may do an arithmetic shift that keeps the
-   * sign.  This happens for large values of wtime.  A cast to long_u may
+   * sign.  This happens for large values of wtime.  A cast to uint64_t may
    * truncate if time_t is 8 bytes.  So only use a cast when it is 4 bytes,
-   * it's safe to assume that long_u is 4 bytes or more and when using 8
+   * it's safe to assume that uint64_t is 4 bytes or more and when using 8
    * bytes the top bit won't be set. */
   for (i = 7; i >= 0; --i) {
     if (i + 1 > (int)sizeof(time_t))
@@ -997,7 +997,7 @@ void put_time(FILE *fd, time_t the_time)
 #if defined(SIZEOF_TIME_T) && SIZEOF_TIME_T > 4
       c = (int)(wtime >> (i * 8));
 #else
-      c = (int)((long_u)wtime >> (i * 8));
+      c = (int)((uint64_t)wtime >> (i * 8));
 #endif
       putc(c, fd);
     }

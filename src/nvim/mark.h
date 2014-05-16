@@ -24,10 +24,10 @@ void do_marks(exarg_T *eap);
 void ex_delmarks(exarg_T *eap);
 void ex_jumps(exarg_T *eap);
 void ex_changes(exarg_T *eap);
-void mark_adjust(linenr_T line1, linenr_T line2, long amount,
-                 long amount_after);
-void mark_col_adjust(linenr_T lnum, colnr_T mincol, long lnum_amount,
-                     long col_amount);
+void mark_adjust(linenr_T line1, linenr_T line2, int64_t amount,
+                 int64_t amount_after);
+void mark_col_adjust(linenr_T lnum, colnr_T mincol, int64_t lnum_amount,
+                     int64_t col_amount);
 void copy_jumplist(win_T *from, win_T *to);
 void free_jumplist(win_T *wp);
 void set_last_cursor(win_T *win);

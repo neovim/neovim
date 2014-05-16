@@ -951,7 +951,7 @@ static void close_spellbuf(buf_T *buf);
 static char *e_format = N_("E759: Format error in spell file");
 static char *e_spell_trunc = N_("E758: Truncated spell file");
 static char *e_afftrailing = N_("Trailing text in %s line %d: %s");
-static char *e_affname = N_("Affix name too long in %s line %d: %s");
+static char *e_affname = N_("Affix name too int64_t in %s line %d: %s");
 static char *e_affform = N_("E761: Format error in affix file FOL, LOW or UPP");
 static char *e_affrange = N_(
     "E762: Character in FOL, LOW or UPP is out of range");
@@ -3499,7 +3499,7 @@ spell_read_tree (
   idx_T       *ip;
 
   // The tree size was computed when writing the file, so that we can
-  // allocate it as one long block. <nodecount>
+  // allocate it as one int64_t block. <nodecount>
   int len = get4c(fd);
   if (len < 0)
     return SP_TRUNCERROR;
@@ -4267,24 +4267,24 @@ struct wordnode_S {
 // Info used while reading the spell files.
 typedef struct spellinfo_S {
   wordnode_T  *si_foldroot;     // tree with case-folded words
-  long si_foldwcount;           // nr of words in si_foldroot
+  int64_t si_foldwcount;           // nr of words in si_foldroot
 
   wordnode_T  *si_keeproot;     // tree with keep-case words
-  long si_keepwcount;           // nr of words in si_keeproot
+  int64_t si_keepwcount;           // nr of words in si_keeproot
 
   wordnode_T  *si_prefroot;     // tree with postponed prefixes
 
-  long si_sugtree;              // creating the soundfolding trie
+  int64_t si_sugtree;              // creating the soundfolding trie
 
   sblock_T    *si_blocks;       // memory blocks used
-  long si_blocks_cnt;           // memory blocks allocated
+  int64_t si_blocks_cnt;           // memory blocks allocated
   int si_did_emsg;              // TRUE when ran out of memory
 
-  long si_compress_cnt;         // words to add before lowering
+  int64_t si_compress_cnt;         // words to add before lowering
                                 // compression limit
   wordnode_T  *si_first_free;   // List of nodes that have been freed during
                                 // compression, linked by "wn_child" field.
-  long si_free_count;           // number of nodes in si_first_free
+  int64_t si_free_count;           // number of nodes in si_first_free
 #ifdef SPELL_PRINTTREE
   int si_wordnode_nr;           // sequence nr for nodes
 #endif
@@ -4415,9 +4415,9 @@ static void init_spellfile(void);
 #define CONDIT_AFF      8       // word already has an affix
 
 // Tunable parameters for when the tree is compressed.  See 'mkspellmem'.
-static long compress_start = 30000;     // memory / SBLOCKSIZE
-static long compress_inc = 100;         // memory / SBLOCKSIZE
-static long compress_added = 500000;    // word count
+static int64_t compress_start = 30000;     // memory / SBLOCKSIZE
+static int64_t compress_inc = 100;         // memory / SBLOCKSIZE
+static int64_t compress_added = 500000;    // word count
 
 #ifdef SPELL_PRINTTREE
 // For debugging the tree code: print the current tree in a (more or less)
@@ -4638,7 +4638,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         spin->si_conv.vc_fail = true;
       } else if (is_aff_rule(items, itemcnt, "FLAG", 2)
                  && aff->af_flagtype == AFT_CHAR) {
-        if (STRCMP(items[1], "long") == 0)
+        if (STRCMP(items[1], "int64_t") == 0)
           aff->af_flagtype = AFT_LONG;
         else if (STRCMP(items[1], "num") == 0)
           aff->af_flagtype = AFT_NUM;
@@ -6101,7 +6101,7 @@ store_aff_word (
 static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
 {
   FILE        *fd;
-  long lnum = 0;
+  int64_t lnum = 0;
   char_u rline[MAXLINELEN];
   char_u      *line;
   char_u      *pc = NULL;
@@ -6269,7 +6269,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
   return retval;
 }
 
-// Get part of an sblock_T, "len" bytes long.
+// Get part of an sblock_T, "len" bytes int64_t.
 // This avoids calling free() for every little struct we use (and keeping
 // track of them).
 // The memory is cleared to all zeros.
@@ -6552,9 +6552,9 @@ static int tree_add_word(spellinfo_T *spin, char_u *word, wordnode_T *root, int 
 int spell_check_msm(void)
 {
   char_u      *p = p_msm;
-  long start = 0;
-  long incr = 0;
-  long added = 0;
+  int64_t start = 0;
+  int64_t incr = 0;
+  int64_t added = 0;
 
   if (!VIM_ISDIGIT(*p))
     return FAIL;
@@ -6746,7 +6746,7 @@ node_compress (
       n = np->wn_flags + (np->wn_region << 8) + (np->wn_affixID << 16);
     else
       // byte node: use the byte value and the child pointer
-      n = (unsigned)(np->wn_byte + ((long_u)np->wn_child << 8));
+      n = (unsigned)(np->wn_byte + ((uintptr_t)np->wn_child << 8));
     nr = nr * 101 + n;
   }
 
@@ -6840,7 +6840,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(0, fd);                                        // <sectionflags>
 
     i = (int)STRLEN(spin->si_info);
-    put_bytes(fd, (long_u)i, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)i, 4);                        // <sectionlen>
     fwv &= fwrite(spin->si_info, (size_t)i, (size_t)1, fd);     // <infotext>
   }
 
@@ -6850,7 +6850,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(SN_REGION, fd);                                // <sectionID>
     putc(SNF_REQUIRED, fd);                             // <sectionflags>
     l = spin->si_region_count * 2;
-    put_bytes(fd, (long_u)l, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)l, 4);                        // <sectionlen>
     fwv &= fwrite(spin->si_region_name, (size_t)l, (size_t)1, fd);
     // <regionname> ...
     regionmask = (1 << spin->si_region_count) - 1;
@@ -6881,7 +6881,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       else
         folchars[l++] = spelltab.st_fold[i];
     }
-    put_bytes(fd, (long_u)(1 + 128 + 2 + l), 4);        // <sectionlen>
+    put_bytes(fd, (uint64_t)(1 + 128 + 2 + l), 4);        // <sectionlen>
 
     fputc(128, fd);                                     // <charflagslen>
     for (i = 128; i < 256; ++i) {
@@ -6893,7 +6893,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       fputc(flags, fd);                                 // <charflags>
     }
 
-    put_bytes(fd, (long_u)l, 2);                        // <folcharslen>
+    put_bytes(fd, (uint64_t)l, 2);                        // <folcharslen>
     fwv &= fwrite(folchars, (size_t)l, (size_t)1, fd);     // <folchars>
   }
 
@@ -6903,7 +6903,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(SNF_REQUIRED, fd);                             // <sectionflags>
 
     i = (int)STRLEN(spin->si_midword);
-    put_bytes(fd, (long_u)i, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)i, 4);                        // <sectionlen>
     fwv &= fwrite(spin->si_midword, (size_t)i, (size_t)1, fd);
     // <midword>
   }
@@ -6914,7 +6914,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(SNF_REQUIRED, fd);                             // <sectionflags>
 
     l = write_spell_prefcond(NULL, &spin->si_prefcond);
-    put_bytes(fd, (long_u)l, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)l, 4);                        // <sectionlen>
 
     write_spell_prefcond(fd, &spin->si_prefcond);
   }
@@ -6961,7 +6961,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     }
     if (round == 2)
       ++l;              // count <salflags>
-    put_bytes(fd, (long_u)l, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)l, 4);                        // <sectionlen>
 
     if (round == 2) {
       i = 0;
@@ -6974,7 +6974,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
       putc(i, fd);                              // <salflags>
     }
 
-    put_bytes(fd, (long_u)gap->ga_len, 2);      // <repcount> or <salcount>
+    put_bytes(fd, (uint64_t)gap->ga_len, 2);      // <repcount> or <salcount>
     for (i = 0; i < gap->ga_len; ++i) {
       // <rep> : <repfromlen> <repfrom> <reptolen> <repto>
       // <sal> : <salfromlen> <salfrom> <saltolen> <salto>
@@ -6997,14 +6997,14 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(0, fd);                                        // <sectionflags>
 
     l = (int)STRLEN(spin->si_sofofr);
-    put_bytes(fd, (long_u)(l + STRLEN(spin->si_sofoto) + 4), 4);
+    put_bytes(fd, (uint64_t)(l + STRLEN(spin->si_sofoto) + 4), 4);
     // <sectionlen>
 
-    put_bytes(fd, (long_u)l, 2);                        // <sofofromlen>
+    put_bytes(fd, (uint64_t)l, 2);                        // <sofofromlen>
     fwv &= fwrite(spin->si_sofofr, l, (size_t)1, fd);     // <sofofrom>
 
     l = (int)STRLEN(spin->si_sofoto);
-    put_bytes(fd, (long_u)l, 2);                        // <sofotolen>
+    put_bytes(fd, (uint64_t)l, 2);                        // <sofotolen>
     fwv &= fwrite(spin->si_sofoto, l, (size_t)1, fd);     // <sofoto>
   }
 
@@ -7031,7 +7031,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
           --todo;
         }
       if (round == 1)
-        put_bytes(fd, (long_u)len, 4);                  // <sectionlen>
+        put_bytes(fd, (uint64_t)len, 4);                  // <sectionlen>
     }
   }
 
@@ -7041,7 +7041,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(SN_MAP, fd);                                   // <sectionID>
     putc(0, fd);                                        // <sectionflags>
     l = spin->si_map.ga_len;
-    put_bytes(fd, (long_u)l, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)l, 4);                        // <sectionlen>
     fwv &= fwrite(spin->si_map.ga_data, (size_t)l, (size_t)1, fd);
     // <mapstr>
   }
@@ -7056,7 +7056,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
           || (spin->si_sofofr != NULL && spin->si_sofoto != NULL))) {
     putc(SN_SUGFILE, fd);                               // <sectionID>
     putc(0, fd);                                        // <sectionflags>
-    put_bytes(fd, (long_u)8, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)8, 4);                        // <sectionlen>
 
     // Set si_sugtime and write it to the file.
     spin->si_sugtime = time(NULL);
@@ -7069,7 +7069,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
   if (spin->si_nosplitsugs) {
     putc(SN_NOSPLITSUGS, fd);                           // <sectionID>
     putc(0, fd);                                        // <sectionflags>
-    put_bytes(fd, (long_u)0, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)0, 4);                        // <sectionlen>
   }
 
   // SN_COMPOUND: compound info.
@@ -7082,14 +7082,14 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     l = (int)STRLEN(spin->si_compflags);
     for (i = 0; i < spin->si_comppat.ga_len; ++i)
       l += (int)STRLEN(((char_u **)(spin->si_comppat.ga_data))[i]) + 1;
-    put_bytes(fd, (long_u)(l + 7), 4);                  // <sectionlen>
+    put_bytes(fd, (uint64_t)(l + 7), 4);                  // <sectionlen>
 
     putc(spin->si_compmax, fd);                         // <compmax>
     putc(spin->si_compminlen, fd);                      // <compminlen>
     putc(spin->si_compsylmax, fd);                      // <compsylmax>
     putc(0, fd);                // for Vim 7.0b compatibility
     putc(spin->si_compoptions, fd);                     // <compoptions>
-    put_bytes(fd, (long_u)spin->si_comppat.ga_len, 2);
+    put_bytes(fd, (uint64_t)spin->si_comppat.ga_len, 2);
     // <comppatcount>
     for (i = 0; i < spin->si_comppat.ga_len; ++i) {
       p = ((char_u **)(spin->si_comppat.ga_data))[i];
@@ -7108,7 +7108,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(0, fd);                                        // <sectionflags>
 
     // It's empty, the presence of the section flags the feature.
-    put_bytes(fd, (long_u)0, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)0, 4);                        // <sectionlen>
   }
 
   // SN_SYLLABLE: syllable info.
@@ -7119,7 +7119,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     putc(0, fd);                                        // <sectionflags>
 
     l = (int)STRLEN(spin->si_syllable);
-    put_bytes(fd, (long_u)l, 4);                        // <sectionlen>
+    put_bytes(fd, (uint64_t)l, 4);                        // <sectionlen>
     fwv &= fwrite(spin->si_syllable, (size_t)l, (size_t)1, fd);
     // <syllable>
   }
@@ -7147,7 +7147,7 @@ static int write_vim_spell(spellinfo_T *spin, char_u *fname)
     nodecount = put_node(NULL, tree, 0, regionmask, round == 3);
 
     // number of nodes in 4 bytes
-    put_bytes(fd, (long_u)nodecount, 4);        // <nodecount>
+    put_bytes(fd, (uint64_t)nodecount, 4);        // <nodecount>
     spin->si_memtot += nodecount + nodecount * sizeof(int);
 
     // Write the nodes.
@@ -7243,7 +7243,7 @@ put_node (
             putc(np->wn_flags, fd);                     // <pflags>
           }
           putc(np->wn_affixID, fd);                     // <affixID>
-          put_bytes(fd, (long_u)np->wn_region, 2);           // <prefcondnr>
+          put_bytes(fd, (uint64_t)np->wn_region, 2);           // <prefcondnr>
         } else {
           // For word trees we write the flag/region items.
           flags = np->wn_flags;
@@ -7277,7 +7277,7 @@ put_node (
         if (fd != NULL) {
           putc(BY_INDEX, fd);                           // <byte>
                                                         // <nodeidx>
-          put_bytes(fd, (long_u)np->wn_child->wn_u1.index, 3);
+          put_bytes(fd, (uint64_t)np->wn_child->wn_u1.index, 3);
         }
       } else if (np->wn_child->wn_u2.wnode == NULL)
         // We will write the child below and give it an index.
@@ -7686,7 +7686,7 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
   nodecount = put_node(NULL, tree, 0, 0, FALSE);
 
   // number of nodes in 4 bytes
-  put_bytes(fd, (long_u)nodecount, 4);          // <nodecount>
+  put_bytes(fd, (uint64_t)nodecount, 4);          // <nodecount>
   spin->si_memtot += nodecount + nodecount * sizeof(int);
 
   // Write the nodes.
@@ -7694,7 +7694,7 @@ static void sug_write(spellinfo_T *spin, char_u *fname)
 
   // <SUGTABLE>: <sugwcount> <sugline> ...
   wcount = spin->si_spellbuf->b_ml.ml_line_count;
-  put_bytes(fd, (long_u)wcount, 4);     // <sugwcount>
+  put_bytes(fd, (uint64_t)wcount, 4);     // <sugwcount>
 
   for (lnum = 1; lnum <= (linenr_T)wcount; ++lnum) {
     // <sugline>: <sugnr> ... NUL
@@ -8011,7 +8011,7 @@ spell_add_word (
   char_u      *fname;
   char_u      *fnamebuf = NULL;
   char_u line[MAXWLEN * 2];
-  long fpos, fpos_next = 0;
+  int64_t fpos, fpos_next = 0;
   int i;
   char_u      *spf;
 
@@ -8498,7 +8498,7 @@ static int write_spell_prefcond(FILE *fd, garray_T *gap)
   size_t x = 1;         // collect return value of fwrite()
 
   if (fd != NULL)
-    put_bytes(fd, (long_u)gap->ga_len, 2);          // <prefcondcnt>
+    put_bytes(fd, (uint64_t)gap->ga_len, 2);          // <prefcondcnt>
 
   totlen = 2 + gap->ga_len;   // length of <prefcondcnt> and <condlen> bytes
 
@@ -9872,7 +9872,7 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
       else {
         // Include badflags: If the badword is onecap or allcap
         // use that for the goodword too.  But if the badword is
-        // allcap and it's only one char long use onecap.
+        // allcap and it's only one char int64_t use onecap.
         c = su->su_badflags;
         if ((c & WF_ALLCAP)
             && su->su_badlen == (*mb_ptr2len)(su->su_badptr)
@@ -10920,7 +10920,7 @@ static void find_keepcap_word(slang_T *slang, char_u *fword, char_u *kword)
         return;
       }
 
-      // kword is getting too long, continue one level up
+      // kword is getting too int64_t, continue one level up
       --depth;
     } else if (++round[depth] > 2)   {
       // tried both fold-case and upper-case character, continue one
@@ -12851,7 +12851,7 @@ static int spell_edit_score_limit(slang_T *slang, char_u *badword, char_u *goodw
   if (has_mbyte)
     return spell_edit_score_limit_w(slang, badword, goodword, limit);
 
-  // The idea is to go from start to end over the words.  So long as
+  // The idea is to go from start to end over the words.  So int64_t as
   // characters are equal just continue, this always gives the lowest score.
   // When there is a difference try several alternatives.  Each alternative
   // increases "score" for the edit distance.  Some of the alternatives are
@@ -13007,7 +13007,7 @@ static int spell_edit_score_limit_w(slang_T *slang, char_u *badword, char_u *goo
     wgoodword[gi++] = mb_cptr2char_adv(&p);
   wgoodword[gi++] = 0;
 
-  // The idea is to go from start to end over the words.  So long as
+  // The idea is to go from start to end over the words.  So int64_t as
   // characters are equal just continue, this always gives the lowest score.
   // When there is a difference try several alternatives.  Each alternative
   // increases "score" for the edit distance.  Some of the alternatives are
@@ -13171,7 +13171,7 @@ void ex_spellinfo(exarg_T *eap)
 void ex_spelldump(exarg_T *eap)
 {
   char_u  *spl;
-  long dummy;
+  int64_t dummy;
 
   if (no_spell_checking(curwin))
     return;

@@ -32,7 +32,7 @@ int buf_write(buf_T *buf, char_u *fname, char_u *sfname, linenr_T start,
               int reset_changed,
               int filtering);
 void msg_add_fname(buf_T *buf, char_u *fname);
-void msg_add_lines(int insert_space, long lnum, off_t nchars);
+void msg_add_lines(int insert_space, int64_t lnum, off_t nchars);
 void shorten_fnames(int force);
 char_u *modname(char_u *fname, char_u *ext, int prepend_dot);
 int vim_fgets(char_u *buf, int size, FILE *fp);
@@ -88,7 +88,7 @@ int match_file_list(char_u *list, char_u *sfname, char_u *ffname);
 char_u *file_pat_to_reg_pat(char_u *pat, char_u *pat_end,
                             char *allow_dirs,
                             int no_bslash);
-long read_eintr(int fd, void *buf, size_t bufsize);
-long write_eintr(int fd, void *buf, size_t bufsize);
+int64_t read_eintr(int fd, void *buf, size_t bufsize);
+int64_t write_eintr(int fd, void *buf, size_t bufsize);
 
 #endif /* NVIM_FILEIO_H */

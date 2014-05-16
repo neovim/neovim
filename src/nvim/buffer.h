@@ -72,8 +72,8 @@ int buf_findsign_id(buf_T *buf, linenr_T lnum);
 void buf_delete_signs(buf_T *buf);
 void buf_delete_all_signs(void);
 void sign_list_placed(buf_T *rbuf);
-void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount,
-                      long amount_after);
+void sign_mark_adjust(linenr_T line1, linenr_T line2, int64_t amount,
+                      int64_t amount_after);
 void set_buflisted(int on);
 int buf_contents_changed(buf_T *buf);
 void wipe_buffer(buf_T *buf, int aucmd);

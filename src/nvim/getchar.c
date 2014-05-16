@@ -147,8 +147,8 @@ static char_u noremapbuf_init[TYPELEN_INIT];    /* initial typebuf.tb_noremap */
 static int last_recorded_len = 0;       /* number of last recorded chars */
 
 static char_u *get_buffcont(buffheader_T *, int);
-static void add_buff(buffheader_T *, char_u *, long n);
-static void add_num_buff(buffheader_T *, long);
+static void add_buff(buffheader_T *, char_u *, int64_t n);
+static void add_num_buff(buffheader_T *, int64_t);
 static void add_char_buff(buffheader_T *, int);
 static int read_readbuffers(int advance);
 static int read_readbuf(buffheader_T *buf, int advance);
@@ -258,11 +258,11 @@ static void
 add_buff (
     buffheader_T *buf,
     char_u *s,
-    long slen                      /* length of "s" or -1 */
+    int64_t slen                      /* length of "s" or -1 */
 )
 {
   if (slen < 0)
-    slen = (long)STRLEN(s);
+    slen = (int64_t)STRLEN(s);
   if (slen == 0)                                /* don't add empty strings */
     return;
 
@@ -302,7 +302,7 @@ add_buff (
 /*
  * Add number "n" to buffer "buf".
  */
-static void add_num_buff(buffheader_T *buf, long n)
+static void add_num_buff(buffheader_T *buf, int64_t n)
 {
   char_u number[32];
 
@@ -563,7 +563,7 @@ AppendToRedobuffLit (
     if (*s == NUL && (s[-1] == '0' || s[-1] == '^'))
       --s;
     if (s > start)
-      add_buff(&redobuff, start, (long)(s - start));
+      add_buff(&redobuff, start, (int64_t)(s - start));
 
     if (*s == NUL || (len >= 0 && s - str >= len))
       break;
@@ -598,7 +598,7 @@ void AppendCharToRedobuff(int c)
 /*
  * Append a number to the redo buffer.
  */
-void AppendNumberToRedobuff(long n)
+void AppendNumberToRedobuff(int64_t n)
 {
   if (!block_redo)
     add_num_buff(&redobuff, n);
@@ -613,7 +613,7 @@ void stuffReadbuff(char_u *s)
   add_buff(&readbuf1, s, -1L);
 }
 
-void stuffReadbuffLen(char_u *s, long len)
+void stuffReadbuffLen(char_u *s, int64_t len)
 {
   add_buff(&readbuf1, s, len);
 }
@@ -653,7 +653,7 @@ void stuffcharReadbuff(int c)
 /*
  * Append a number to the stuff buffer.
  */
-void stuffnumReadbuff(long n)
+void stuffnumReadbuff(int64_t n)
 {
   add_num_buff(&readbuf1, n);
 }
@@ -740,7 +740,7 @@ static void copy_redo(int old_redo)
  *
  * return FAIL for failure, OK otherwise
  */
-int start_redo(long count, int old_redo)
+int start_redo(int64_t count, int old_redo)
 {
   int c;
 
@@ -886,7 +886,7 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
   else {
     newoff = MAXMAPLEN + 4;
     newlen = typebuf.tb_len + addlen + newoff + 4 * (MAXMAPLEN + 4);
-    if (newlen < 0) {               /* string is getting too long */
+    if (newlen < 0) {               /* string is getting too int64_t */
       EMSG(_(e_toocompl));          /* also calls flush_buffers */
       setcursor();
       return FAIL;
@@ -1933,7 +1933,7 @@ static int vgetorpeek(int advance)
 
               del_typebuf(mlen, 0);               /* remove the chars */
               set_option_value((char_u *)"paste",
-                  (long)!p_paste, NULL, 0);
+                  (int64_t)!p_paste, NULL, 0);
               if (!(State & INSERT)) {
                 msg_col = 0;
                 msg_row = Rows - 1;
@@ -2435,7 +2435,7 @@ int
 inchar (
     char_u *buf,
     int maxlen,
-    long wait_time,                     /* milli seconds */
+    int64_t wait_time,                     /* milli seconds */
     int tb_change_cnt
 )
 {

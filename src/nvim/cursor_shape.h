@@ -38,9 +38,9 @@ typedef struct cursor_entry {
   int shape;                    /* one of the SHAPE_ defines */
   int mshape;                   /* one of the MSHAPE defines */
   int percentage;               /* percentage of cell for bar */
-  long blinkwait;               /* blinking, wait time before blinking starts */
-  long blinkon;                 /* blinking, on time */
-  long blinkoff;                /* blinking, off time */
+  int64_t blinkwait;               /* blinking, wait time before blinking starts */
+  int64_t blinkon;                 /* blinking, on time */
+  int64_t blinkoff;                /* blinking, off time */
   int id;                       /* highlight group ID */
   int id_lm;                    /* highlight group ID for :lmap mode */
   char        *name;            /* mode name (fixed) */

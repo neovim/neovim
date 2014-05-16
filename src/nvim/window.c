@@ -52,7 +52,7 @@ static void win_init_some(win_T *newp, win_T *oldp);
 static void frame_comp_pos(frame_T *topfrp, int *row, int *col);
 static void frame_setheight(frame_T *curfrp, int height);
 static void frame_setwidth(frame_T *curfrp, int width);
-static void win_exchange(long);
+static void win_exchange(int64_t);
 static void win_rotate(int, int);
 static void win_totop(int size, int flags);
 static void win_equal_rec(win_T *next_curwin, int current, frame_T *topfr,
@@ -92,8 +92,8 @@ static void win_free(win_T *wp, tabpage_T *tp);
 static void frame_append(frame_T *after, frame_T *frp);
 static void frame_insert(frame_T *before, frame_T *frp);
 static void frame_remove(frame_T *frp);
-static void win_goto_ver(int up, long count);
-static void win_goto_hor(int left, long count);
+static void win_goto_ver(int up, int64_t count);
+static void win_goto_hor(int left, int64_t count);
 static void frame_add_height(frame_T *frp, int n);
 static void last_status_rec(frame_T *fr, int statusline);
 
@@ -123,11 +123,11 @@ static char *m_onlyone = N_("Already only one window");
 void 
 do_window (
     int nchar,
-    long Prenum,
+    int64_t Prenum,
     int xchar                  /* extra char from ":wincmd gx" or NUL */
 )
 {
-  long Prenum1;
+  int64_t Prenum1;
   win_T       *wp;
   char_u      *ptr;
   linenr_T lnum = -1;
@@ -1117,7 +1117,7 @@ make_windows (
 /*
  * Exchange current and next window
  */
-static void win_exchange(long Prenum)
+static void win_exchange(int64_t Prenum)
 {
   frame_T     *frp;
   frame_T     *frp2;
@@ -3294,7 +3294,7 @@ tabpage_T *win_find_tabpage(win_T *win)
 static void 
 win_goto_ver (
     int up,                         /* TRUE to go to win above */
-    long count
+    int64_t count
 )
 {
   frame_T     *fr;
@@ -3353,7 +3353,7 @@ end:
 static void 
 win_goto_hor (
     int left,                       /* TRUE to go to left win */
-    long count
+    int64_t count
 )
 {
   frame_T     *fr;
@@ -4506,8 +4506,8 @@ void win_drag_vsep_line(win_T *dragwin, int offset)
  */
 static void set_fraction(win_T *wp)
 {
-  wp->w_fraction = ((long)wp->w_wrow * FRACTION_MULT
-                    + FRACTION_MULT / 2) / (long)wp->w_height;
+  wp->w_fraction = ((int64_t)wp->w_wrow * FRACTION_MULT
+                    + FRACTION_MULT / 2) / (int64_t)wp->w_height;
 }
 
 /*
@@ -4545,8 +4545,8 @@ void win_new_height(win_T *wp, int height)
     lnum = wp->w_cursor.lnum;
     if (lnum < 1)               /* can happen when starting up */
       lnum = 1;
-    wp->w_wrow = ((long)wp->w_fraction * (long)height - 1L) / FRACTION_MULT;
-    line_size = plines_win_col(wp, lnum, (long)(wp->w_cursor.col)) - 1;
+    wp->w_wrow = ((int64_t)wp->w_fraction * (int64_t)height - 1L) / FRACTION_MULT;
+    line_size = plines_win_col(wp, lnum, (int64_t)(wp->w_cursor.col)) - 1;
     sline = wp->w_wrow - line_size;
 
     if (sline >= 0) {
@@ -4735,7 +4735,7 @@ static void frame_add_height(frame_T *frp, int n)
  * If Visual mode is active, use the selected text if it's in one line.
  * Returns the name in allocated memory, NULL for failure.
  */
-char_u *grab_file_name(long count, linenr_T *file_lnum)
+char_u *grab_file_name(int64_t count, linenr_T *file_lnum)
 {
   if (VIsual_active) {
     int len;
@@ -4764,7 +4764,7 @@ char_u *grab_file_name(long count, linenr_T *file_lnum)
  * FNAME_HYP	    check for hypertext link
  * FNAME_INCL	    apply "includeexpr"
  */
-char_u *file_name_at_cursor(int options, long count, linenr_T *file_lnum)
+char_u *file_name_at_cursor(int options, int64_t count, linenr_T *file_lnum)
 {
   return file_name_in_line(ml_get_curline(),
       curwin->w_cursor.col, options, count, curbuf->b_ffname,
@@ -4780,7 +4780,7 @@ file_name_in_line (
     char_u *line,
     int col,
     int options,
-    long count,
+    int64_t count,
     char_u *rel_fname,         /* file we are searching relative to */
     linenr_T *file_lnum         /* line number after the file name */
 )

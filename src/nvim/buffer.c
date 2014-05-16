@@ -106,7 +106,7 @@ open_buffer (
 {
   int retval = OK;
   buf_T       *old_curbuf;
-  long old_tw = curbuf->b_p_tw;
+  int64_t old_tw = curbuf->b_p_tw;
 
   /*
    * The 'readonly' flag is only set when BF_NEVERLOADED is being reset.
@@ -634,7 +634,7 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
 void handle_swap_exists(buf_T *old_curbuf)
 {
   cleanup_T cs;
-  long old_tw = curbuf->b_p_tw;
+  int64_t old_tw = curbuf->b_p_tw;
 
   if (swap_exists_action == SEA_QUIT) {
     /* Reset the error/interrupt/exception state here so that
@@ -959,7 +959,7 @@ do_buffer (
 
     /*
      * If the deleted buffer is the current one, close the current window
-     * (unless it's the only window).  Repeat this so long as we end up in
+     * (unless it's the only window).  Repeat this so int64_t as we end up in
      * a window with this buffer.
      */
     while (buf == curbuf
@@ -1137,7 +1137,7 @@ void set_curbuf(buf_T *buf, int action)
   buf_T       *prevbuf;
   int unload = (action == DOBUF_UNLOAD || action == DOBUF_DEL
                 || action == DOBUF_WIPE);
-  long old_tw = curbuf->b_p_tw;
+  int64_t old_tw = curbuf->b_p_tw;
 
   setpcmark();
   if (!cmdmod.keepalt)
@@ -1890,7 +1890,7 @@ static char_u *buflist_match(regprog_T *prog, buf_T *buf)
 {
   char_u      *match;
 
-  /* First try the short file name, then the long file name. */
+  /* First try the short file name, then the int64_t file name. */
   match = fname_match(prog, buf->b_sfname);
   if (match == NULL)
     match = fname_match(prog, buf->b_ffname);
@@ -2511,11 +2511,11 @@ fileinfo (
   /* With 32 bit longs and more than 21,474,836 lines multiplying by 100
    * causes an overflow, thus for large numbers divide instead. */
   if (curwin->w_cursor.lnum > 1000000L)
-    n = (int)(((long)curwin->w_cursor.lnum) /
-              ((long)curbuf->b_ml.ml_line_count / 100L));
+    n = (int)(((int64_t)curwin->w_cursor.lnum) /
+              ((int64_t)curbuf->b_ml.ml_line_count / 100L));
   else
-    n = (int)(((long)curwin->w_cursor.lnum * 100L) /
-              (long)curbuf->b_ml.ml_line_count);
+    n = (int)(((int64_t)curwin->w_cursor.lnum * 100L) /
+              (int64_t)curbuf->b_ml.ml_line_count);
   if (curbuf->b_ml.ml_flags & ML_EMPTY) {
     vim_snprintf_add((char *)buffer, IOSIZE, "%s", _(no_lines_msg));
   } else if (p_ru) {
@@ -2670,7 +2670,7 @@ void maketitle(void)
           *p = NUL;
 
         /* Translate unprintable chars and concatenate.  Keep some
-         * room for the server name.  When there is no room (very long
+         * room for the server name.  When there is no room (very int64_t
          * file name) use (...). */
         if (off < SPACE_FOR_DIR) {
           p = transstr(buf + off);
@@ -2788,7 +2788,7 @@ void free_titles(void)
  * Item: %-<minwid>.<maxwid><itemch> All but <itemch> are optional
  *
  * If maxwidth is not zero, the string will be filled at any middle marker
- * or truncated if too long, fillchar is used for all whitespace.
+ * or truncated if too int64_t, fillchar is used for all whitespace.
  */
 int 
 build_stl_str_hl (
@@ -2811,14 +2811,14 @@ build_stl_str_hl (
   buf_T       *o_curbuf;
   int empty_line;
   colnr_T virtcol;
-  long l;
-  long n;
+  int64_t l;
+  int64_t n;
   int prevchar_isflag;
   int prevchar_isitem;
   int itemisflag;
   int fillable;
   char_u      *str;
-  long num;
+  int64_t num;
   int width;
   int itemcnt;
   int curitem;
@@ -2960,7 +2960,7 @@ build_stl_str_hl (
             n += (*mb_ptr2len)(t + n);
           }
         } else
-          n = (long)(p - t) - item[groupitem[groupdepth]].maxwid + 1;
+          n = (int64_t)(p - t) - item[groupitem[groupdepth]].maxwid + 1;
 
         *t = '<';
         memmove(t + 1, t + n, (size_t)(p - (t + n)));
@@ -2988,7 +2988,7 @@ build_stl_str_hl (
           memmove(t + n - l, t, (size_t)(p - t));
           l = n - l;
           if (p + l >= out + outlen)
-            l = (long)((out + outlen) - p - 1);
+            l = (int64_t)((out + outlen) - p - 1);
           p += l;
           for (n = groupitem[groupdepth] + 1; n < curitem; n++)
             item[n].start += l;
@@ -3131,7 +3131,7 @@ build_stl_str_hl (
 
     case STL_LINE:
       num = (wp->w_buffer->b_ml.ml_flags & ML_EMPTY)
-            ? 0L : (long)(wp->w_cursor.lnum);
+            ? 0L : (int64_t)(wp->w_cursor.lnum);
       break;
 
     case STL_NUMLINES:
@@ -3158,12 +3158,12 @@ build_stl_str_hl (
           && (virtcol == (colnr_T)(!(State & INSERT) && empty_line
                                    ? 0 : (int)wp->w_cursor.col + 1)))
         break;
-      num = (long)virtcol;
+      num = (int64_t)virtcol;
       break;
 
     case STL_PERCENTAGE:
-      num = (int)(((long)wp->w_cursor.lnum * 100L) /
-                  (long)wp->w_buffer->b_ml.ml_line_count);
+      num = (int)(((int64_t)wp->w_cursor.lnum * 100L) /
+                  (int64_t)wp->w_buffer->b_ml.ml_line_count);
       break;
 
     case STL_ALTPERCENT:
@@ -3393,7 +3393,7 @@ build_stl_str_hl (
 
   width = vim_strsize(out);
   if (maxwidth > 0 && width > maxwidth) {
-    /* Result is too long, must truncate somewhere. */
+    /* Result is too int64_t, must truncate somewhere. */
     l = 0;
     if (itemcnt == 0)
       s = out;
@@ -3518,8 +3518,8 @@ build_stl_str_hl (
  */
 void get_rel_pos(win_T *wp, char_u *buf, int buflen)
 {
-  long above;          /* number of lines above window */
-  long below;          /* number of lines below window */
+  int64_t above;          /* number of lines above window */
+  int64_t below;          /* number of lines below window */
 
   above = wp->w_topline - 1;
   above += diff_check_fill(wp, wp->w_topline) - wp->w_topfill;
@@ -3554,7 +3554,7 @@ append_arg_number (
     return FALSE;
 
   p = buf + STRLEN(buf);        /* go to the end of the buffer */
-  if (p - buf + 35 >= buflen)   /* getting too long */
+  if (p - buf + 35 >= buflen)   /* getting too int64_t */
     return FALSE;
   *p++ = ' ';
   *p++ = '(';
@@ -4184,7 +4184,7 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
   char_u      *sfname;
   char_u      *xline;
 
-  /* Handle long line and escaped characters. */
+  /* Handle int64_t line and escaped characters. */
   xline = viminfo_readstring(virp, 1, FALSE);
 
   /* don't read in if there are files on the command-line or if writing: */
@@ -4557,7 +4557,7 @@ void sign_list_placed(buf_T *rbuf)
 /*
  * Adjust a placed sign for inserted/deleted lines.
  */
-void sign_mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
+void sign_mark_adjust(linenr_T line1, linenr_T line2, int64_t amount, int64_t amount_after)
 {
     signlist_T *sign;  /* a sign in a b_signlist */
 

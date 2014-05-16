@@ -171,7 +171,7 @@ void buffer_set_slice(Buffer buffer,
 
   extra -= i;
 
-  // For as long as possible, replace the existing old_len with the
+  // For as int64_t as possible, replace the existing old_len with the
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   for (i = 0; i < old_len && i < new_len; i++) {

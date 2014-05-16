@@ -787,7 +787,7 @@ static void show_menus_recursive(vimmenu_T *menu, int modes, int depth)
     for (i = 0; i < depth; i++)
       MSG_PUTS("  ");
     if (menu->priority) {
-      msg_outnum((long)menu->priority);
+      msg_outnum((int64_t)menu->priority);
       MSG_PUTS(" ");
     }
     /* Same highlighting as for directories!? */

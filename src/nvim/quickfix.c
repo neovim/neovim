@@ -142,7 +142,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title);
 static void ll_free_all(qf_info_T **pqi);
 static int qf_add_entry(qf_info_T *qi, qfline_T **prevp, char_u *dir,
                         char_u *fname, int bufnum, char_u *mesg,
-                        long lnum, int col, int vis_col,
+                        int64_t lnum, int col, int vis_col,
                         char_u *pattern, int nr, int type,
                         int valid);
 static qf_info_T *ll_new_list(void);
@@ -239,7 +239,7 @@ qf_init_ext (
   int type = 0;
   int valid;
   linenr_T buflnum = lnumfirst;
-  long lnum = 0L;
+  int64_t lnum = 0L;
   int enr = 0;
   FILE            *fd = NULL;
   qfline_T        *qfprev = NULL;       /* init to make SASC shut up */
@@ -547,7 +547,7 @@ qf_init_ext (
     } else if (fgets((char *)IObuff, CMDBUFFSIZE - 2, fd) == NULL)
       break;
 
-    IObuff[CMDBUFFSIZE - 2] = NUL;      /* for very long lines */
+    IObuff[CMDBUFFSIZE - 2] = NUL;      /* for very int64_t lines */
     remove_bom(IObuff);
 
     if ((efmp = vim_strrchr(IObuff, '\n')) != NULL)
@@ -912,7 +912,7 @@ qf_add_entry (
     char_u *fname,             /* file name or NULL */
     int bufnum,                     /* buffer number or zero */
     char_u *mesg,              /* message */
-    long lnum,                      /* line number */
+    int64_t lnum,                      /* line number */
     int col,                        /* column */
     int vis_col,                    /* using visual column */
     char_u *pattern,           /* search pattern */
@@ -1670,7 +1670,7 @@ win_found:
       /* Move the cursor to the first line in the buffer */
       save_cursor = curwin->w_cursor;
       curwin->w_cursor.lnum = 0;
-      if (!do_search(NULL, '/', qf_ptr->qf_pattern, (long)1,
+      if (!do_search(NULL, '/', qf_ptr->qf_pattern, (int64_t)1,
               SEARCH_KEEP, NULL))
         curwin->w_cursor = save_cursor;
     }
@@ -1925,7 +1925,7 @@ static void qf_free(qf_info_T *qi, int idx)
 /*
  * qf_mark_adjust: adjust marks
  */
-void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, long amount, long amount_after)
+void qf_mark_adjust(win_T *wp, linenr_T line1, linenr_T line2, int64_t amount, int64_t amount_after)
 {
   int i;
   qfline_T    *qfp;
@@ -2746,7 +2746,7 @@ void ex_vimgrep(exarg_T *eap)
   qf_info_T   *qi = &ql_info;
   qfline_T    *cur_qf_start;
   qfline_T    *prevp = NULL;
-  long lnum;
+  int64_t lnum;
   buf_T       *buf;
   int duplicate_name = FALSE;
   int using_dummy;
@@ -2759,7 +2759,7 @@ void ex_vimgrep(exarg_T *eap)
   aco_save_T aco;
   int flags = 0;
   colnr_T col;
-  long tomatch;
+  int64_t tomatch;
   char_u      *dirname_start = NULL;
   char_u      *dirname_now = NULL;
   char_u      *target_dir = NULL;
@@ -3288,17 +3288,17 @@ int get_errorlist(win_T *wp, list_T *list)
 
     buf[0] = qfp->qf_type;
     buf[1] = NUL;
-    if ( dict_add_nr_str(dict, "bufnr", (long)bufnum, NULL) == FAIL
-         || dict_add_nr_str(dict, "lnum",  (long)qfp->qf_lnum, NULL) == FAIL
-         || dict_add_nr_str(dict, "col",   (long)qfp->qf_col, NULL) == FAIL
-         || dict_add_nr_str(dict, "vcol",  (long)qfp->qf_viscol, NULL) == FAIL
-         || dict_add_nr_str(dict, "nr",    (long)qfp->qf_nr, NULL) == FAIL
+    if ( dict_add_nr_str(dict, "bufnr", (int64_t)bufnum, NULL) == FAIL
+         || dict_add_nr_str(dict, "lnum",  (int64_t)qfp->qf_lnum, NULL) == FAIL
+         || dict_add_nr_str(dict, "col",   (int64_t)qfp->qf_col, NULL) == FAIL
+         || dict_add_nr_str(dict, "vcol",  (int64_t)qfp->qf_viscol, NULL) == FAIL
+         || dict_add_nr_str(dict, "nr",    (int64_t)qfp->qf_nr, NULL) == FAIL
          || dict_add_nr_str(dict, "pattern",  0L,
              qfp->qf_pattern == NULL ? (char_u *)"" : qfp->qf_pattern) == FAIL
          || dict_add_nr_str(dict, "text",  0L,
              qfp->qf_text == NULL ? (char_u *)"" : qfp->qf_text) == FAIL
          || dict_add_nr_str(dict, "type",  0L, buf) == FAIL
-         || dict_add_nr_str(dict, "valid", (long)qfp->qf_valid, NULL) == FAIL)
+         || dict_add_nr_str(dict, "valid", (int64_t)qfp->qf_valid, NULL) == FAIL)
       return FAIL;
 
     qfp = qfp->qf_next;
@@ -3316,7 +3316,7 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
   dict_T      *d;
   char_u      *filename, *pattern, *text, *type;
   int bufnum;
-  long lnum;
+  int64_t lnum;
   int col, nr;
   int vcol;
   qfline_T    *prevp = NULL;
@@ -3513,7 +3513,7 @@ void ex_helpgrep(exarg_T *eap)
   FILE        *fd;
   int fi;
   qfline_T    *prevp = NULL;
-  long lnum;
+  int64_t lnum;
   char_u      *lang;
   qf_info_T   *qi = &ql_info;
   int new_qi = FALSE;

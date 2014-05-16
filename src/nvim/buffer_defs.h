@@ -82,7 +82,7 @@ typedef struct {
 # define w_p_arab w_onebuf_opt.wo_arab  /* 'arabic' */
   int wo_diff;
 # define w_p_diff w_onebuf_opt.wo_diff  /* 'diff' */
-  long wo_fdc;
+  int64_t wo_fdc;
 # define w_p_fdc w_onebuf_opt.wo_fdc    /* 'foldcolumn' */
   int wo_fdc_save;
 # define w_p_fdc_save w_onebuf_opt.wo_fdc_save  /* 'foldenable' saved for diff mode */
@@ -92,7 +92,7 @@ typedef struct {
 # define w_p_fen_save w_onebuf_opt.wo_fen_save  /* 'foldenable' saved for diff mode */
   char_u      *wo_fdi;
 # define w_p_fdi w_onebuf_opt.wo_fdi    /* 'foldignore' */
-  long wo_fdl;
+  int64_t wo_fdl;
 # define w_p_fdl w_onebuf_opt.wo_fdl    /* 'foldlevel' */
   int wo_fdl_save;
 # define w_p_fdl_save w_onebuf_opt.wo_fdl_save  /* 'foldlevel' state saved for diff mode */
@@ -100,9 +100,9 @@ typedef struct {
 # define w_p_fdm w_onebuf_opt.wo_fdm    /* 'foldmethod' */
   char_u      *wo_fdm_save;
 # define w_p_fdm_save w_onebuf_opt.wo_fdm_save  /* 'fdm' saved for diff mode */
-  long wo_fml;
+  int64_t wo_fml;
 # define w_p_fml w_onebuf_opt.wo_fml    /* 'foldminlines' */
-  long wo_fdn;
+  int64_t wo_fdn;
 # define w_p_fdn w_onebuf_opt.wo_fdn    /* 'foldnestmax' */
   char_u      *wo_fde;
 # define w_p_fde w_onebuf_opt.wo_fde    /* 'foldexpr' */
@@ -118,7 +118,7 @@ typedef struct {
 #define w_p_nu w_onebuf_opt.wo_nu       /* 'number' */
   int wo_rnu;
 #define w_p_rnu w_onebuf_opt.wo_rnu     /* 'relativenumber' */
-  long wo_nuw;
+  int64_t wo_nuw;
 # define w_p_nuw w_onebuf_opt.wo_nuw    /* 'numberwidth' */
   int wo_wfh;
 # define w_p_wfh w_onebuf_opt.wo_wfh    /* 'winfixheight' */
@@ -130,7 +130,7 @@ typedef struct {
 # define w_p_rl w_onebuf_opt.wo_rl      /* 'rightleft' */
   char_u      *wo_rlc;
 # define w_p_rlc w_onebuf_opt.wo_rlc    /* 'rightleftcmd' */
-  long wo_scr;
+  int64_t wo_scr;
 #define w_p_scr w_onebuf_opt.wo_scr     /* 'scroll' */
   int wo_spell;
 # define w_p_spell w_onebuf_opt.wo_spell /* 'spell' */
@@ -154,7 +154,7 @@ typedef struct {
 # define w_p_wrap_save w_onebuf_opt.wo_wrap_save
   char_u      *wo_cocu;                 /* 'concealcursor' */
 # define w_p_cocu w_onebuf_opt.wo_cocu
-  long wo_cole;                         /* 'conceallevel' */
+  int64_t wo_cole;                         /* 'conceallevel' */
 # define w_p_cole w_onebuf_opt.wo_cole
   int wo_crb;
 # define w_p_crb w_onebuf_opt.wo_crb    /* 'cursorbind' */
@@ -325,8 +325,8 @@ typedef struct qf_info_S qf_info_T;
 typedef struct {
   proftime_T total;             /* total time used */
   proftime_T slowest;           /* time of slowest call */
-  long count;                   /* nr of times used */
-  long match;                   /* nr of times matched */
+  int64_t count;                   /* nr of times used */
+  int64_t match;                   /* nr of times matched */
 } syn_time_T;
 
 /*
@@ -347,9 +347,9 @@ typedef struct {
                                            "containedin" argument */
   int b_syn_sync_flags;                 /* flags about how to sync */
   short b_syn_sync_id;                  /* group to sync on */
-  long b_syn_sync_minlines;             /* minimal sync lines offset */
-  long b_syn_sync_maxlines;             /* maximal sync lines offset */
-  long b_syn_sync_linebreaks;           /* offset for multi-line pattern */
+  int64_t b_syn_sync_minlines;             /* minimal sync lines offset */
+  int64_t b_syn_sync_maxlines;             /* maximal sync lines offset */
+  int64_t b_syn_sync_linebreaks;           /* offset for multi-line pattern */
   char_u      *b_syn_linecont_pat;      /* line continuation pattern */
   regprog_T   *b_syn_linecont_prog;     /* line continuation program */
   syn_time_T b_syn_linecont_time;
@@ -445,13 +445,13 @@ struct file_buffer {
   linenr_T b_mod_top;           /* topmost lnum that was changed */
   linenr_T b_mod_bot;           /* lnum below last changed line, AFTER the
                                    change */
-  long b_mod_xlines;            /* number of extra buffer lines inserted;
+  int64_t b_mod_xlines;            /* number of extra buffer lines inserted;
                                    negative when lines were deleted */
 
   wininfo_T   *b_wininfo;       /* list of last used info for each window */
 
-  long b_mtime;                 /* last change time of original file */
-  long b_mtime_read;            /* last change time when reading */
+  int64_t b_mtime;                 /* last change time of original file */
+  int64_t b_mtime_read;            /* last change time when reading */
   off_t b_orig_size;            /* size of original file in bytes */
   int b_orig_mode;              /* mode of original file */
 
@@ -504,11 +504,11 @@ struct file_buffer {
   u_header_T  *b_u_curhead;     /* pointer to current header */
   int b_u_numhead;              /* current number of headers */
   int b_u_synced;               /* entry lists are synced */
-  long b_u_seq_last;            /* last used undo sequence number */
-  long b_u_save_nr_last;          /* counter for last file write */
-  long b_u_seq_cur;             /* hu_seq of header below which we are now */
+  int64_t b_u_seq_last;            /* last used undo sequence number */
+  int64_t b_u_save_nr_last;          /* counter for last file write */
+  int64_t b_u_seq_cur;             /* hu_seq of header below which we are now */
   time_t b_u_time_cur;          /* uh_time of header below which we are now */
-  long b_u_save_nr_cur;          /* file write nr after which we are now */
+  int64_t b_u_save_nr_cur;          /* file write nr after which we are now */
 
   /*
    * variables for "U" command in undo.c
@@ -520,8 +520,8 @@ struct file_buffer {
   int b_scanned;                /* ^N/^P have scanned this buffer */
 
   /* flags for use of ":lmap" and IM control */
-  long b_p_iminsert;            /* input mode for insert */
-  long b_p_imsearch;            /* input mode for search */
+  int64_t b_p_iminsert;            /* input mode for insert */
+  int64_t b_p_imsearch;            /* input mode for search */
 #define B_IMODE_USE_INSERT -1   /*	Use b_p_iminsert value for search */
 #define B_IMODE_NONE 0          /*	Input via none */
 #define B_IMODE_LMAP 1          /*	Input via langmap */
@@ -576,12 +576,12 @@ struct file_buffer {
   char_u      *b_p_def;         /* 'define' local value */
   char_u      *b_p_inc;         /* 'include' */
   char_u      *b_p_inex;        /* 'includeexpr' */
-  long_u b_p_inex_flags;        /* flags for 'includeexpr' */
+  uint64_t b_p_inex_flags;        /* flags for 'includeexpr' */
   char_u      *b_p_inde;        /* 'indentexpr' */
-  long_u b_p_inde_flags;        /* flags for 'indentexpr' */
+  uint64_t b_p_inde_flags;        /* flags for 'indentexpr' */
   char_u      *b_p_indk;        /* 'indentkeys' */
   char_u      *b_p_fex;         /* 'formatexpr' */
-  long_u b_p_fex_flags;         /* flags for 'formatexpr' */
+  uint64_t b_p_fex_flags;         /* flags for 'formatexpr' */
   char_u      *b_p_key;         /* 'key' */
   char_u      *b_p_kp;          /* 'keywordprg' */
   int b_p_lisp;                 /* 'lisp' */
@@ -593,21 +593,21 @@ struct file_buffer {
   int b_p_pi;                   /* 'preserveindent' */
   char_u      *b_p_qe;          /* 'quoteescape' */
   int b_p_ro;                   /* 'readonly' */
-  long b_p_sw;                  /* 'shiftwidth' */
+  int64_t b_p_sw;                  /* 'shiftwidth' */
   int b_p_si;                   /* 'smartindent' */
-  long b_p_sts;                 /* 'softtabstop' */
-  long b_p_sts_nopaste;          /* b_p_sts saved for paste mode */
+  int64_t b_p_sts;                 /* 'softtabstop' */
+  int64_t b_p_sts_nopaste;          /* b_p_sts saved for paste mode */
   char_u      *b_p_sua;         /* 'suffixesadd' */
   int b_p_swf;                  /* 'swapfile' */
-  long b_p_smc;                 /* 'synmaxcol' */
+  int64_t b_p_smc;                 /* 'synmaxcol' */
   char_u      *b_p_syn;         /* 'syntax' */
-  long b_p_ts;                  /* 'tabstop' */
-  long b_p_tw;                  /* 'textwidth' */
-  long b_p_tw_nobin;            /* b_p_tw saved for binary mode */
-  long b_p_tw_nopaste;          /* b_p_tw saved for paste mode */
-  long b_p_wm;                  /* 'wrapmargin' */
-  long b_p_wm_nobin;            /* b_p_wm saved for binary mode */
-  long b_p_wm_nopaste;          /* b_p_wm saved for paste mode */
+  int64_t b_p_ts;                  /* 'tabstop' */
+  int64_t b_p_tw;                  /* 'textwidth' */
+  int64_t b_p_tw_nobin;            /* b_p_tw saved for binary mode */
+  int64_t b_p_tw_nopaste;          /* b_p_tw saved for paste mode */
+  int64_t b_p_wm;                  /* 'wrapmargin' */
+  int64_t b_p_wm_nobin;            /* b_p_wm saved for binary mode */
+  int64_t b_p_wm_nopaste;          /* b_p_wm saved for paste mode */
   char_u      *b_p_keymap;      /* 'keymap' */
 
   /* local values for options which are normally global */
@@ -620,7 +620,7 @@ struct file_buffer {
   char_u      *b_p_tags;        /* 'tags' local value */
   char_u      *b_p_dict;        /* 'dictionary' local value */
   char_u      *b_p_tsr;         /* 'thesaurus' local value */
-  long b_p_ul;                  /* 'undolevels' local value */
+  int64_t b_p_ul;                  /* 'undolevels' local value */
   int b_p_udf;                  /* 'undofile' */
 
   /* end of buffer options */
@@ -746,9 +746,9 @@ struct tabpage_S {
   win_T           *tp_prevwin;      /* previous window in this Tab page */
   win_T           *tp_firstwin;     /* first window in this Tab page */
   win_T           *tp_lastwin;      /* last window in this Tab page */
-  long tp_old_Rows;                 /* Rows when Tab page was left */
-  long tp_old_Columns;              /* Columns when Tab page was left */
-  long tp_ch_used;                  /* value of 'cmdheight' when frame size
+  int64_t tp_old_Rows;                 /* Rows when Tab page was left */
+  int64_t tp_old_Columns;              /* Columns when Tab page was left */
+  int64_t tp_ch_used;                  /* value of 'cmdheight' when frame size
                                        was set */
   diff_T          *tp_first_diff;
   buf_T           *(tp_diffbuf[DB_COUNT]);
@@ -1012,15 +1012,15 @@ struct window_S {
   winopt_T w_allbuf_opt;
 
   /* A few options have local flags for P_INSECURE. */
-  long_u w_p_stl_flags;             /* flags for 'statusline' */
-  long_u w_p_fde_flags;             /* flags for 'foldexpr' */
-  long_u w_p_fdt_flags;             /* flags for 'foldtext' */
+  uint64_t w_p_stl_flags;             /* flags for 'statusline' */
+  uint64_t w_p_fde_flags;             /* flags for 'foldexpr' */
+  uint64_t w_p_fdt_flags;             /* flags for 'foldtext' */
   int         *w_p_cc_cols;         /* array of columns to highlight or NULL */
 
   /* transform a pointer to a "onebuf" option into a "allbuf" option */
 #define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))
 
-  long w_scbind_pos;
+  int64_t w_scbind_pos;
 
   dictitem_T w_winvar;          /* variable for "w:" Dictionary */
   dict_T      *w_vars;          /* internal variables, local to window */

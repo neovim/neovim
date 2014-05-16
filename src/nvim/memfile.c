@@ -19,11 +19,11 @@
  * negative to positive numbers.
  *
  * The size of a block is a multiple of a page size, normally the page size of
- * the device the file is on. Most blocks are 1 page long. A Block of multiple
+ * the device the file is on. Most blocks are 1 page int64_t. A Block of multiple
  * pages is used for a line that does not fit in a single page.
  *
  * Each block can be in memory and/or in a file. The block stays in memory
- * as long as it is locked. If it is no longer locked it can be swapped out to
+ * as int64_t as it is locked. If it is no longer locked it can be swapped out to
  * the file. It is only written to the file if it has been changed.
  *
  * Under normal operation the file is created when opening the memory file and
@@ -48,7 +48,7 @@
 
 #define MEMFILE_PAGE_SIZE 4096          /* default page size */
 
-static long_u total_mem_used = 0;       /* total memory used for memfiles */
+static uint64_t total_mem_used = 0;       /* total memory used for memfiles */
 
 static void mf_ins_hash(memfile_T *, bhdr_T *);
 static void mf_rem_hash(memfile_T *, bhdr_T *);
@@ -642,7 +642,7 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
    * higher than the maximum or total memory used is over 'maxmemtot'
    */
   need_release = ((mfp->mf_used_count >= mfp->mf_used_count_max)
-                  || (total_mem_used >> 10) >= (long_u)p_mmt);
+                  || (total_mem_used >> 10) >= (uint64_t)p_mmt);
 
   /*
    * Try to create a swap file if the amount of memory used is getting too
@@ -1125,7 +1125,7 @@ static void mf_hash_free(mf_hashtab_T *mht)
  */
 static void mf_hash_free_all(mf_hashtab_T *mht)
 {
-  long_u idx;
+  uint64_t idx;
   mf_hashitem_T   *mhi;
   mf_hashitem_T   *next;
 
@@ -1159,7 +1159,7 @@ static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
  */
 static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
-  long_u idx;
+  uint64_t idx;
 
   idx = mhi->mhi_key & mht->mht_mask;
   mhi->mhi_next = mht->mht_buckets[idx];
@@ -1206,7 +1206,7 @@ static void mf_hash_rem_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
  */
 static void mf_hash_grow(mf_hashtab_T *mht)
 {
-  long_u i, j;
+  uint64_t i, j;
   int shift;
   mf_hashitem_T   *mhi;
   mf_hashitem_T   *tails[MHT_GROWTH_FACTOR];

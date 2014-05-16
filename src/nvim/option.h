@@ -6,7 +6,7 @@
 /* option.c */
 void set_init_1(void);
 void set_string_default(char *name, char_u *val);
-void set_number_default(char *name, long val);
+void set_number_default(char *name, int64_t val);
 void free_all_options(void);
 void set_init_2(void);
 void set_init_3(void);
@@ -27,7 +27,7 @@ void set_string_option_direct(char_u *name, int opt_idx, char_u *val,
                                       int set_sid);
 char_u *check_colorcolumn(win_T *wp);
 char_u *check_stl_option(char_u *s);
-int get_option_value(char_u *name, long *numval, char_u **stringval,
+int get_option_value(char_u *name, int64_t *numval, char_u **stringval,
                              int opt_flags);
 int get_option_value_strict(char *name,
                             int64_t *numval,
@@ -35,7 +35,7 @@ int get_option_value_strict(char *name,
                             int opt_type,
                             void *from);
 char_u *option_iter_next(void **option, int opt_type);
-char_u *set_option_value(char_u *name, long number, char_u *string,
+char_u *set_option_value(char_u *name, int64_t number, char_u *string,
                                  int opt_flags);
 char_u *get_term_code(char_u *tname);
 char_u *get_highlight_default(void);
@@ -73,8 +73,8 @@ int can_bs(int what);
 void save_file_ff(buf_T *buf);
 int file_ff_differs(buf_T *buf, int ignore_empty);
 int check_ff_value(char_u *p);
-long get_sw_value(buf_T *buf);
-long get_sts_value(void);
+int64_t get_sw_value(buf_T *buf);
+int64_t get_sts_value(void);
 void find_mps_values(int *initc, int *findc, int *backwards,
                              int switchit);
 

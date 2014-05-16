@@ -261,7 +261,7 @@
 #define STL_PAGENUM     'N'             /* page number (when printing)*/
 #define STL_VIM_EXPR    '{'             /* start of expression to substitute */
 #define STL_MIDDLEMARK  '='             /* separation between left and right */
-#define STL_TRUNCMARK   '<'             /* truncation mark if line is too long*/
+#define STL_TRUNCMARK   '<'             /* truncation mark if line is too int64_t*/
 #define STL_USER_HL     '*'             /* highlight from (User)1..9 or 0 */
 #define STL_HIGHLIGHT   '#'             /* highlight name */
 #define STL_TABPAGENR   'T'             /* tab page label nr */
@@ -285,7 +285,7 @@
  * The following are actual variables for the options
  */
 
-EXTERN long p_aleph;            /* 'aleph' */
+EXTERN int64_t p_aleph;            /* 'aleph' */
 EXTERN int p_acd;               /* 'autochdir' */
 EXTERN char_u   *p_ambw;        /* 'ambiwidth' */
 EXTERN int p_ar;                /* 'autoread' */
@@ -321,12 +321,12 @@ EXTERN char_u   *p_enc;         /* 'encoding' */
 EXTERN int p_deco;              /* 'delcombine' */
 EXTERN char_u   *p_ccv;         /* 'charconvert' */
 EXTERN char_u   *p_cedit;       /* 'cedit' */
-EXTERN long p_cwh;              /* 'cmdwinheight' */
-EXTERN long p_ch;               /* 'cmdheight' */
+EXTERN int64_t p_cwh;              /* 'cmdwinheight' */
+EXTERN int64_t p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
 EXTERN int p_cp;                /* 'compatible' */
 EXTERN char_u   *p_cot;         /* 'completeopt' */
-EXTERN long p_ph;               /* 'pumheight' */
+EXTERN int64_t p_ph;               /* 'pumheight' */
 EXTERN char_u   *p_cpo;         /* 'cpoptions' */
 EXTERN char_u   *p_csprg;       /* 'cscopeprg' */
 EXTERN int p_csre;              /* 'cscoperelative' */
@@ -334,8 +334,8 @@ EXTERN char_u   *p_csqf;        /* 'cscopequickfix' */
 #  define       CSQF_CMDS   "sgdctefi"
 #  define       CSQF_FLAGS  "+-0"
 EXTERN int p_cst;               /* 'cscopetag' */
-EXTERN long p_csto;             /* 'cscopetagorder' */
-EXTERN long p_cspc;             /* 'cscopepathcomp' */
+EXTERN int64_t p_csto;             /* 'cscopetagorder' */
+EXTERN int64_t p_cspc;             /* 'cscopepathcomp' */
 EXTERN int p_csverbose;         /* 'cscopeverbose' */
 EXTERN char_u   *p_debug;       /* 'debug' */
 EXTERN char_u   *p_def;         /* 'define' */
@@ -366,9 +366,9 @@ EXTERN int p_ek;                /* 'esckeys' */
 EXTERN int p_exrc;              /* 'exrc' */
 EXTERN char_u   *p_fencs;       /* 'fileencodings' */
 EXTERN char_u   *p_ffs;         /* 'fileformats' */
-EXTERN long p_fic;              /* 'fileignorecase' */
+EXTERN int64_t p_fic;              /* 'fileignorecase' */
 EXTERN char_u   *p_fcl;         /* 'foldclose' */
-EXTERN long p_fdls;             /* 'foldlevelstart' */
+EXTERN int64_t p_fdls;             /* 'foldlevelstart' */
 EXTERN char_u   *p_fdo;         /* 'foldopen' */
 EXTERN unsigned fdo_flags;
 # ifdef IN_OPTION_C
@@ -403,7 +403,7 @@ EXTERN char_u   *p_header;      /* 'printheader' */
 EXTERN int p_prompt;            /* 'prompt' */
 EXTERN char_u   *p_guicursor;   /* 'guicursor' */
 EXTERN char_u   *p_hf;          /* 'helpfile' */
-EXTERN long p_hh;               /* 'helpheight' */
+EXTERN int64_t p_hh;               /* 'helpheight' */
 EXTERN char_u   *p_hlg;         /* 'helplang' */
 EXTERN int p_hid;               /* 'hidden' */
 /* Use P_HID to check if a buffer is to be hidden when it is no longer
@@ -411,7 +411,7 @@ EXTERN int p_hid;               /* 'hidden' */
 # define P_HID(buf) (buf_hide(buf))
 EXTERN char_u   *p_hl;          /* 'highlight' */
 EXTERN int p_hls;               /* 'hlsearch' */
-EXTERN long p_hi;               /* 'history' */
+EXTERN int64_t p_hi;               /* 'history' */
 EXTERN int p_hkmap;             /* 'hkmap' */
 EXTERN int p_hkmapp;            /* 'hkmapp' */
 EXTERN int p_fkmap;             /* 'fkmap' */
@@ -435,8 +435,8 @@ EXTERN char_u   *p_km;          /* 'keymodel' */
 EXTERN char_u   *p_langmap;     /* 'langmap'*/
 EXTERN char_u   *p_lm;          /* 'langmenu' */
 EXTERN char_u   *p_lispwords;   /* 'lispwords' */
-EXTERN long p_ls;               /* 'laststatus' */
-EXTERN long p_stal;             /* 'showtabline' */
+EXTERN int64_t p_ls;               /* 'laststatus' */
+EXTERN int64_t p_stal;             /* 'showtabline' */
 EXTERN char_u   *p_lcs;         /* 'listchars' */
 
 EXTERN int p_lz;                /* 'lazyredraw' */
@@ -446,19 +446,19 @@ EXTERN char_u   *p_mef;         /* 'makeef' */
 EXTERN char_u   *p_mp;          /* 'makeprg' */
 EXTERN char_u   *p_cc;          /* 'colorcolumn' */
 EXTERN int p_cc_cols[256];      /* array for 'colorcolumn' columns */
-EXTERN long p_mat;              /* 'matchtime' */
-EXTERN long p_mco;              /* 'maxcombine' */
-EXTERN long p_mfd;              /* 'maxfuncdepth' */
-EXTERN long p_mmd;              /* 'maxmapdepth' */
-EXTERN long p_mm;               /* 'maxmem' */
-EXTERN long p_mmp;              /* 'maxmempattern' */
-EXTERN long p_mmt;              /* 'maxmemtot' */
-EXTERN long p_mis;              /* 'menuitems' */
+EXTERN int64_t p_mat;              /* 'matchtime' */
+EXTERN int64_t p_mco;              /* 'maxcombine' */
+EXTERN int64_t p_mfd;              /* 'maxfuncdepth' */
+EXTERN int64_t p_mmd;              /* 'maxmapdepth' */
+EXTERN int64_t p_mm;               /* 'maxmem' */
+EXTERN int64_t p_mmp;              /* 'maxmempattern' */
+EXTERN int64_t p_mmt;              /* 'maxmemtot' */
+EXTERN int64_t p_mis;              /* 'menuitems' */
 EXTERN char_u   *p_msm;         /* 'mkspellmem' */
-EXTERN long p_mls;              /* 'modelines' */
+EXTERN int64_t p_mls;              /* 'modelines' */
 EXTERN char_u   *p_mouse;       /* 'mouse' */
 EXTERN char_u   *p_mousem;      /* 'mousemodel' */
-EXTERN long p_mouset;           /* 'mousetime' */
+EXTERN int64_t p_mouset;           /* 'mousetime' */
 EXTERN int p_more;              /* 'more' */
 EXTERN char_u   *p_opfunc;      /* 'operatorfunc' */
 EXTERN char_u   *p_para;        /* 'paragraphs' */
@@ -468,18 +468,18 @@ EXTERN char_u   *p_pex;         /* 'patchexpr' */
 EXTERN char_u   *p_pm;          /* 'patchmode' */
 EXTERN char_u   *p_path;        /* 'path' */
 EXTERN char_u   *p_cdpath;      /* 'cdpath' */
-EXTERN long p_rdt;              /* 'redrawtime' */
+EXTERN int64_t p_rdt;              /* 'redrawtime' */
 EXTERN int p_remap;             /* 'remap' */
-EXTERN long p_re;               /* 'regexpengine' */
-EXTERN long p_report;           /* 'report' */
-EXTERN long p_pvh;              /* 'previewheight' */
+EXTERN int64_t p_re;               /* 'regexpengine' */
+EXTERN int64_t p_report;           /* 'report' */
+EXTERN int64_t p_pvh;              /* 'previewheight' */
 EXTERN int p_ari;               /* 'allowrevins' */
 EXTERN int p_ri;                /* 'revins' */
 EXTERN int p_ru;                /* 'ruler' */
 EXTERN char_u   *p_ruf;         /* 'rulerformat' */
 EXTERN char_u   *p_rtp;         /* 'runtimepath' */
-EXTERN long p_sj;               /* 'scrolljump' */
-EXTERN long p_so;               /* 'scrolloff' */
+EXTERN int64_t p_sj;               /* 'scrolljump' */
+EXTERN int64_t p_so;               /* 'scrolloff' */
 EXTERN char_u   *p_sbo;         /* 'scrollopt' */
 EXTERN char_u   *p_sections;    /* 'sections' */
 EXTERN int p_secure;            /* 'secure' */
@@ -530,12 +530,12 @@ EXTERN int p_sc;                /* 'showcmd' */
 EXTERN int p_sft;               /* 'showfulltag' */
 EXTERN int p_sm;                /* 'showmatch' */
 EXTERN int p_smd;               /* 'showmode' */
-EXTERN long p_ss;               /* 'sidescroll' */
-EXTERN long p_siso;             /* 'sidescrolloff' */
+EXTERN int64_t p_ss;               /* 'sidescroll' */
+EXTERN int64_t p_siso;             /* 'sidescrolloff' */
 EXTERN int p_scs;               /* 'smartcase' */
 EXTERN int p_sta;               /* 'smarttab' */
 EXTERN int p_sb;                /* 'splitbelow' */
-EXTERN long p_tpm;              /* 'tabpagemax' */
+EXTERN int64_t p_tpm;              /* 'tabpagemax' */
 EXTERN char_u   *p_tal;         /* 'tabline' */
 EXTERN char_u   *p_sps;         /* 'spellsuggest' */
 EXTERN int p_spr;               /* 'splitright' */
@@ -552,7 +552,7 @@ static char *(p_swb_values[]) = {"useopen", "usetab", "split", "newtab", NULL};
 #define SWB_SPLIT               0x004
 #define SWB_NEWTAB              0x008
 EXTERN int p_tbs;               /* 'tagbsearch' */
-EXTERN long p_tl;               /* 'taglength' */
+EXTERN int64_t p_tl;               /* 'taglength' */
 EXTERN int p_tr;                /* 'tagrelative' */
 EXTERN char_u   *p_tags;        /* 'tags' */
 EXTERN int p_tgst;              /* 'tagstack' */
@@ -561,17 +561,17 @@ EXTERN char_u   *p_tenc;        /* 'termencoding' */
 EXTERN int p_terse;             /* 'terse' */
 EXTERN int p_to;                /* 'tildeop' */
 EXTERN int p_timeout;           /* 'timeout' */
-EXTERN long p_tm;               /* 'timeoutlen' */
+EXTERN int64_t p_tm;               /* 'timeoutlen' */
 EXTERN int p_title;             /* 'title' */
-EXTERN long p_titlelen;         /* 'titlelen' */
+EXTERN int64_t p_titlelen;         /* 'titlelen' */
 EXTERN char_u   *p_titleold;    /* 'titleold' */
 EXTERN char_u   *p_titlestring; /* 'titlestring' */
 EXTERN char_u   *p_tsr;         /* 'thesaurus' */
 EXTERN int p_ttimeout;          /* 'ttimeout' */
-EXTERN long p_ttm;              /* 'ttimeoutlen' */
+EXTERN int64_t p_ttm;              /* 'ttimeoutlen' */
 EXTERN int p_tbi;               /* 'ttybuiltin' */
 EXTERN int p_tf;                /* 'ttyfast' */
-EXTERN long p_ttyscroll;        /* 'ttyscroll' */
+EXTERN int64_t p_ttyscroll;        /* 'ttyscroll' */
 #if defined(FEAT_MOUSE) && defined(UNIX)
 EXTERN char_u   *p_ttym;        /* 'ttymouse' */
 EXTERN unsigned ttym_flags;
@@ -589,10 +589,10 @@ static char *(p_ttym_values[]) =
 # define TTYM_SGR               0x80
 #endif
 EXTERN char_u   *p_udir;        /* 'undodir' */
-EXTERN long p_ul;               /* 'undolevels' */
-EXTERN long p_ur;               /* 'undoreload' */
-EXTERN long p_uc;               /* 'updatecount' */
-EXTERN long p_ut;               /* 'updatetime' */
+EXTERN int64_t p_ul;               /* 'undolevels' */
+EXTERN int64_t p_ur;               /* 'undoreload' */
+EXTERN int64_t p_uc;               /* 'updatecount' */
+EXTERN int64_t p_ut;               /* 'updatetime' */
 EXTERN char_u   *p_fcs;         /* 'fillchar' */
 EXTERN char_u   *p_viminfo;     /* 'viminfo' */
 EXTERN char_u   *p_vdir;        /* 'viewdir' */
@@ -608,7 +608,7 @@ static char *(p_ve_values[]) = {"block", "insert", "all", "onemore", NULL};
 # define VE_INSERT      6       /* includes "all" */
 # define VE_ALL         4
 # define VE_ONEMORE     8
-EXTERN long p_verbose;          /* 'verbose' */
+EXTERN int64_t p_verbose;          /* 'verbose' */
 #ifdef IN_OPTION_C
 char_u  *p_vfile = (char_u *)""; /* used before options are initialized */
 #else
@@ -616,7 +616,7 @@ extern char_u   *p_vfile;       /* 'verbosefile' */
 #endif
 EXTERN int p_warn;              /* 'warn' */
 EXTERN char_u   *p_wop;         /* 'wildoptions' */
-EXTERN long p_window;           /* 'window' */
+EXTERN int64_t p_window;           /* 'window' */
 #if defined(FEAT_GUI_MSWIN) || defined(FEAT_GUI_MOTIF) || defined(LINT) \
   || defined (FEAT_GUI_GTK) || defined(FEAT_GUI_PHOTON)
 #define FEAT_WAK
@@ -626,20 +626,20 @@ EXTERN char_u *p_wak;
 EXTERN char_u   *p_wig;         /* 'wildignore' */
 EXTERN int p_wiv;               /* 'weirdinvert' */
 EXTERN char_u   *p_ww;          /* 'whichwrap' */
-EXTERN long p_wc;               /* 'wildchar' */
-EXTERN long p_wcm;              /* 'wildcharm' */
-EXTERN long p_wic;              /* 'wildignorecase' */
+EXTERN int64_t p_wc;               /* 'wildchar' */
+EXTERN int64_t p_wcm;              /* 'wildcharm' */
+EXTERN int64_t p_wic;              /* 'wildignorecase' */
 EXTERN char_u   *p_wim;         /* 'wildmode' */
 EXTERN int p_wmnu;              /* 'wildmenu' */
-EXTERN long p_wh;               /* 'winheight' */
-EXTERN long p_wmh;              /* 'winminheight' */
-EXTERN long p_wmw;              /* 'winminwidth' */
-EXTERN long p_wiw;              /* 'winwidth' */
+EXTERN int64_t p_wh;               /* 'winheight' */
+EXTERN int64_t p_wmh;              /* 'winminheight' */
+EXTERN int64_t p_wmw;              /* 'winminwidth' */
+EXTERN int64_t p_wiw;              /* 'winwidth' */
 EXTERN int p_ws;                /* 'wrapscan' */
 EXTERN int p_write;             /* 'write' */
 EXTERN int p_wa;                /* 'writeany' */
 EXTERN int p_wb;                /* 'writebackup' */
-EXTERN long p_wd;               /* 'writedelay' */
+EXTERN int64_t p_wd;               /* 'writedelay' */
 
 /*
  * "indir" values for buffer-local opions.

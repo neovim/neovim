@@ -154,7 +154,7 @@ static schar_T  *current_ScreenLine;
 static void win_update(win_T *wp);
 static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow,
                          hlf_T hl);
-static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo,
+static void fold_line(win_T *wp, int64_t fold_count, foldinfo_T *foldinfo,
                       linenr_T lnum,
                       int row);
 static void fill_foldcolumn(char_u *p, win_T *wp, int closed,
@@ -804,10 +804,10 @@ static void win_update(win_T *wp)
   int eof = FALSE;              /* if TRUE, we hit the end of the file */
   int didline = FALSE;           /* if TRUE, we finished the last line */
   int i;
-  long j;
+  int64_t j;
   static int recursive = FALSE;         /* being called recursively */
   int old_botline = wp->w_botline;
-  long fold_count;
+  int64_t fold_count;
   /* remember what happened to the previous line, to know if
    * check_visual_highlight() can be used */
 #define DID_NONE 1      /* didn't update a line */
@@ -1590,7 +1590,7 @@ static void win_update(win_T *wp)
       wp->w_lines[idx].wl_lnum = lnum;
       wp->w_lines[idx].wl_valid = TRUE;
       if (row > wp->w_height) {         /* past end of screen */
-        /* we may need the size of that too long line later on */
+        /* we may need the size of that too int64_t line later on */
         if (dollar_vcol == -1)
           wp->w_lines[idx].wl_size = plines_win(wp, lnum, TRUE);
         ++idx;
@@ -1825,7 +1825,7 @@ static int advance_color_col(int vcol, int **color_cols)
 /*
  * Display one folded line.
  */
-static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T lnum, int row)
+static void fold_line(win_T *wp, int64_t fold_count, foldinfo_T *foldinfo, linenr_T lnum, int row)
 {
   char_u buf[51];
   pos_T       *top, *bot;
@@ -1911,7 +1911,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     len = W_WIDTH(wp) - col;
     if (len > 0) {
       int w = number_width(wp);
-      long num;
+      int64_t num;
       char *fmt = "%*ld ";
 
       if (len > w + 1)
@@ -1919,10 +1919,10 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
       if (wp->w_p_nu && !wp->w_p_rnu)
         /* 'number' + 'norelativenumber' */
-        num = (long)lnum;
+        num = (int64_t)lnum;
       else {
         /* 'relativenumber', don't use negative numbers */
-        num = labs((long)get_cursor_rel_lnum(wp, lnum));
+        num = labs((int64_t)get_cursor_rel_lnum(wp, lnum));
         if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
           /* 'number' + 'relativenumber': cursor line shows absolute
            * line number */
@@ -2221,8 +2221,8 @@ win_line (
   int col;                              /* visual column on screen */
   unsigned off;                         /* offset in ScreenLines/ScreenAttrs */
   int c = 0;                            /* init for GCC */
-  long vcol = 0;                        /* virtual column (for tabs) */
-  long vcol_prev = -1;                  /* "vcol" of previous character */
+  int64_t vcol = 0;                        /* virtual column (for tabs) */
+  int64_t vcol_prev = -1;                  /* "vcol" of previous character */
   char_u      *line;                    /* current line */
   char_u      *ptr;                     /* current position in "line" */
   int row;                              /* row in the window, excl w_winrow */
@@ -2257,7 +2257,7 @@ win_line (
   pos_T       *top, *bot;
   int lnum_in_visual_area = FALSE;
   pos_T pos;
-  long v;
+  int64_t v;
 
   int char_attr = 0;                    /* attributes for next character */
   int attr_pri = FALSE;                 /* char_attr has priority */
@@ -2546,7 +2546,7 @@ win_line (
       nextlinecol = MAXCOL;
       nextline_idx = 0;
     } else {
-      v = (long)STRLEN(line);
+      v = (int64_t)STRLEN(line);
       if (v < SPWORDLEN) {
         /* Short line, use it completely and append the start of the
          * next line. */
@@ -2699,7 +2699,7 @@ win_line (
     shl->endcol = MAXCOL;
     shl->attr_cur = 0;
     if (shl->rm.regprog != NULL) {
-      v = (long)(ptr - line);
+      v = (int64_t)(ptr - line);
       next_search_hl(wp, shl, lnum, (colnr_T)v);
 
       /* Need to get the line again, a multi-line regexp may have made it
@@ -2724,7 +2724,7 @@ win_line (
           else
             ++shl->endcol;
         }
-        if ((long)shl->startcol < v) {        /* match at leftcol */
+        if ((int64_t)shl->startcol < v) {        /* match at leftcol */
           shl->attr_cur = shl->attr;
           search_attr = shl->attr;
         }
@@ -2821,15 +2821,15 @@ win_line (
           if (row == startrow
               + filler_lines
               ) {
-            long num;
+            int64_t num;
             char *fmt = "%*ld ";
 
             if (wp->w_p_nu && !wp->w_p_rnu)
               /* 'number' + 'norelativenumber' */
-              num = (long)lnum;
+              num = (int64_t)lnum;
             else {
               /* 'relativenumber', don't use negative numbers */
-              num = labs((long)get_cursor_rel_lnum(wp, lnum));
+              num = labs((int64_t)get_cursor_rel_lnum(wp, lnum));
               if (num == 0 && wp->w_p_nu && wp->w_p_rnu) {
                 /* 'number' + 'relativenumber' */
                 num = lnum;
@@ -2906,7 +2906,7 @@ win_line (
 
     /* When still displaying '$' of change command, stop at cursor */
     if (dollar_vcol >= 0 && wp == curwin
-        && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
+        && lnum == wp->w_cursor.lnum && vcol >= (int64_t)wp->w_virtcol
         && filler_todo <= 0
         ) {
       SCREEN_LINE(screen_row, W_WINCOL(wp), col, -(int)W_WIDTH(wp),
@@ -2943,7 +2943,7 @@ win_line (
          * Do this for 'search_hl' and the match list (ordered by
          * priority).
          */
-        v = (long)(ptr - line);
+        v = (int64_t)(ptr - line);
         cur = wp->w_match_head;
         shl_flag = FALSE;
         while (cur != NULL || shl_flag == FALSE) {
@@ -2957,10 +2957,10 @@ win_line (
             shl = &cur->hl;
           while (shl->rm.regprog != NULL) {
             if (shl->startcol != MAXCOL
-                && v >= (long)shl->startcol
-                && v < (long)shl->endcol) {
+                && v >= (int64_t)shl->startcol
+                && v < (int64_t)shl->endcol) {
               shl->attr_cur = shl->attr;
-            } else if (v == (long)shl->endcol) {
+            } else if (v == (int64_t)shl->endcol) {
               shl->attr_cur = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v);
@@ -3312,7 +3312,7 @@ win_line (
 
         /* Get syntax attribute, unless still at the start of the line
          * (double-wide char that doesn't fit). */
-        v = (long)(ptr - line);
+        v = (int64_t)(ptr - line);
         if (has_syntax && v > 0) {
           /* Get the syntax attribute for the character.  If there
            * is an error, disable syntax highlighting. */
@@ -3709,10 +3709,10 @@ win_line (
         || did_line_attr == 1
 #endif
         ) {
-      long prevcol = (long)(ptr - line) - (c == NUL);
+      int64_t prevcol = (int64_t)(ptr - line) - (c == NUL);
 
       /* we're not really at that column when skipping some text */
-      if ((long)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
+      if ((int64_t)(wp->w_p_wrap ? wp->w_skipcol : wp->w_leftcol) > prevcol)
         ++prevcol;
 
       /* Invert at least one char, used for Visual and empty line or
@@ -3720,12 +3720,12 @@ win_line (
        * char on the screen, just overwrite that one (tricky!)  Not
        * needed when a '$' was displayed for 'list'. */
       prevcol_hl_flag = FALSE;
-      if (prevcol == (long)search_hl.startcol)
+      if (prevcol == (int64_t)search_hl.startcol)
         prevcol_hl_flag = TRUE;
       else {
         cur = wp->w_match_head;
         while (cur != NULL) {
-          if (prevcol == (long)cur->hl.startcol) {
+          if (prevcol == (int64_t)cur->hl.startcol) {
             prevcol_hl_flag = TRUE;
             break;
           }
@@ -3780,7 +3780,7 @@ win_line (
               shl_flag = TRUE;
             } else
               shl = &cur->hl;
-            if ((ptr - line) - 1 == (long)shl->startcol)
+            if ((ptr - line) - 1 == (int64_t)shl->startcol)
               char_attr = shl->attr;
             if (shl != &search_hl && cur != NULL)
               cur = cur->next;
@@ -3803,7 +3803,7 @@ win_line (
      * At end of the text line.
      */
     if (c == NUL) {
-      if (eol_hl_off > 0 && vcol - eol_hl_off == (long)wp->w_virtcol
+      if (eol_hl_off > 0 && vcol - eol_hl_off == (int64_t)wp->w_virtcol
           && lnum == wp->w_cursor.lnum) {
         /* highlight last char after line */
         --col;
@@ -3856,7 +3856,7 @@ win_line (
             draw_color_col = advance_color_col(VCOL_HLC,
                 &color_cols);
 
-          if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol)
+          if (wp->w_p_cuc && VCOL_HLC == (int64_t)wp->w_virtcol)
             ScreenAttrs[off++] = hl_attr(HLF_CUC);
           else if (draw_color_col && VCOL_HLC == *color_cols)
             ScreenAttrs[off++] = hl_attr(HLF_MC);
@@ -3919,7 +3919,7 @@ win_line (
      * 'cursorcolumn' */
     vcol_save_attr = -1;
     if (draw_state == WL_LINE && !lnum_in_visual_area) {
-      if (wp->w_p_cuc && VCOL_HLC == (long)wp->w_virtcol
+      if (wp->w_p_cuc && VCOL_HLC == (int64_t)wp->w_virtcol
           && lnum != wp->w_cursor.lnum) {
         vcol_save_attr = char_attr;
         char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUC));
@@ -4111,7 +4111,7 @@ win_line (
         row = endrow;
       }
 
-      /* When line got too long for screen break here. */
+      /* When line got too int64_t for screen break here. */
       if (row == endrow) {
         ++row;
         break;
@@ -4715,13 +4715,13 @@ win_redr_status_matches (
     if (first_match > 0)
       clen += 2;
     /* jumping right, put match at the left */
-    if ((long)clen > Columns) {
+    if ((int64_t)clen > Columns) {
       first_match = match;
       /* if showing the last match, we can add some on the left */
       clen = 2;
       for (i = match; i < num_matches; ++i) {
         clen += status_match_len(xp, L_MATCH(i)) + 2;
-        if ((long)clen >= Columns)
+        if ((int64_t)clen >= Columns)
           break;
       }
       if (i == num_matches)
@@ -4731,7 +4731,7 @@ win_redr_status_matches (
   if (add_left)
     while (first_match > 0) {
       clen += status_match_len(xp, L_MATCH(first_match - 1)) + 2;
-      if ((long)clen >= Columns)
+      if ((int64_t)clen >= Columns)
         break;
       --first_match;
     }
@@ -4748,7 +4748,7 @@ win_redr_status_matches (
   clen = len;
 
   i = first_match;
-  while ((long)(clen + status_match_len(xp, L_MATCH(i)) + 2) < Columns) {
+  while ((int64_t)(clen + status_match_len(xp, L_MATCH(i)) + 2) < Columns) {
     if (i == match) {
       selstart = buf + len;
       selstart_col = clen;
@@ -5624,7 +5624,7 @@ next_search_hl (
 {
   linenr_T l;
   colnr_T matchcol;
-  long nmatched;
+  int64_t nmatched;
 
   if (shl->lnum != 0) {
     /* Check for three situations:
@@ -6291,7 +6291,7 @@ retry:
       || outofmem) {
     if (ScreenLines != NULL || !done_outofmem_msg) {
       /* guess the size */
-      do_outofmem_msg((long_u)((Rows + 1) * Columns));
+      do_outofmem_msg((uint64_t)((Rows + 1) * Columns));
 
       /* Remember we did this to avoid getting outofmem messages over
        * and over again. */
@@ -7410,7 +7410,7 @@ int showmode(void)
     if (do_mode) {
       MSG_PUTS_ATTR("--", attr);
       if (edit_submode != NULL) {               /* CTRL-X in Insert mode */
-        /* These messages can get long, avoid a wrap in a narrow
+        /* These messages can get int64_t, avoid a wrap in a narrow
          * window.  Prefer showing edit_submode_extra. */
         length = (Rows - msg_row) * Columns - 3;
         if (edit_submode_extra != NULL)
@@ -7484,7 +7484,7 @@ int showmode(void)
       need_clear = TRUE;
     }
     if (Recording
-        && edit_submode == NULL             /* otherwise it gets too long */
+        && edit_submode == NULL             /* otherwise it gets too int64_t */
         ) {
       MSG_PUTS_ATTR(_("recording"), attr);
       need_clear = TRUE;
@@ -7822,7 +7822,7 @@ static void win_redr_ruler(win_T *wp, int always)
     return;
 
   /* Don't draw the ruler while doing insert-completion, it might overwrite
-   * the (long) mode message. */
+   * the (int64_t) mode message. */
   if (wp == lastwin && lastwin->w_status_height == 0)
     if (edit_submode != NULL)
       return;

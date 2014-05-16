@@ -5,8 +5,8 @@ void diff_buf_delete(buf_T *buf);
 void diff_buf_adjust(win_T *win);
 void diff_buf_add(buf_T *buf);
 void diff_invalidate(buf_T *buf);
-void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
-                      long amount_after);
+void diff_mark_adjust(linenr_T line1, linenr_T line2, int64_t amount,
+                      int64_t amount_after);
 void ex_diffupdate(exarg_T *eap);
 void ex_diffpatch(exarg_T *eap);
 void ex_diffsplit(exarg_T *eap);
@@ -24,7 +24,7 @@ int diff_infold(win_T *wp, linenr_T lnum);
 void nv_diffgetput(int put);
 void ex_diffgetput(exarg_T *eap);
 int diff_mode_buf(buf_T *buf);
-int diff_move_to(int dir, long count);
+int diff_move_to(int dir, int64_t count);
 linenr_T diff_get_corresponding_line(buf_T *buf1, linenr_T lnum1,
                                      buf_T *buf2,
                                      linenr_T lnum3);

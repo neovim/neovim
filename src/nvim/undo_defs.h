@@ -19,7 +19,7 @@ struct u_entry {
   linenr_T ue_bot;              /* number of line below undo block */
   linenr_T ue_lcount;           /* linecount when u_save called */
   char_u      **ue_array;       /* array of lines in undo block */
-  long ue_size;                 /* number of lines in ue_array */
+  int64_t ue_size;                 /* number of lines in ue_array */
 #ifdef U_DEBUG
   int ue_magic;                 /* magic number to check allocation */
 #endif
@@ -30,31 +30,31 @@ struct u_header {
    * reading the undo file in u_read_undo() */
   union {
     u_header_T *ptr;            /* pointer to next undo header in list */
-    long seq;
+    int64_t seq;
   } uh_next;
   union {
     u_header_T *ptr;            /* pointer to previous header in list */
-    long seq;
+    int64_t seq;
   } uh_prev;
   union {
     u_header_T *ptr;            /* pointer to next header for alt. redo */
-    long seq;
+    int64_t seq;
   } uh_alt_next;
   union {
     u_header_T *ptr;            /* pointer to previous header for alt. redo */
-    long seq;
+    int64_t seq;
   } uh_alt_prev;
-  long uh_seq;                  /* sequence number, higher == newer undo */
+  int64_t uh_seq;                  /* sequence number, higher == newer undo */
   int uh_walk;                  /* used by undo_time() */
   u_entry_T   *uh_entry;        /* pointer to first entry */
   u_entry_T   *uh_getbot_entry;   /* pointer to where ue_bot must be set */
   pos_T uh_cursor;              /* cursor position before saving */
-  long uh_cursor_vcol;
+  int64_t uh_cursor_vcol;
   int uh_flags;                 /* see below */
   pos_T uh_namedm[NMARKS];              /* marks before undo/after redo */
   visualinfo_T uh_visual;       /* Visual areas before undo/after redo */
   time_t uh_time;               /* timestamp when the change was made */
-  long uh_save_nr;              /* set when the file was saved after the
+  int64_t uh_save_nr;              /* set when the file was saved after the
                                    changes in this block */
 #ifdef U_DEBUG
   int uh_magic;                 /* magic number to check allocation */

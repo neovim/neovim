@@ -567,7 +567,7 @@ static int cin_first_id_amount(void)
            || (len == 6 && STRNCMP(p, "signed", 6) == 0)) {
     s = skipwhite(p + len);
     if ((STRNCMP(s, "int", 3) == 0 && vim_iswhite(s[3]))
-        || (STRNCMP(s, "long", 4) == 0 && vim_iswhite(s[4]))
+        || (STRNCMP(s, "int64_t", 4) == 0 && vim_iswhite(s[4]))
         || (STRNCMP(s, "short", 5) == 0 && vim_iswhite(s[5]))
         || (STRNCMP(s, "char", 4) == 0 && vim_iswhite(s[4])))
       p = s;
@@ -1268,7 +1268,7 @@ find_match_paren ( /* XXX */
  */
 static int corr_ind_maxparen(pos_T *startpos)
 {
-  long n = (long)startpos->lnum - (long)curwin->w_cursor.lnum;
+  int64_t n = (int64_t)startpos->lnum - (int64_t)curwin->w_cursor.lnum;
 
   if (n > 0 && n < curbuf->b_ind_maxparen / 2)
     return curbuf->b_ind_maxparen - (int)n;
@@ -1396,7 +1396,7 @@ void parse_cino(buf_T *buf)
 
   /* If the opening paren is the last nonwhite character on the line, and
    * b_ind_unclosed_wrapped is nonzero, use this indent relative to the outer
-   * context (for very long lines). */
+   * context (for very int64_t lines). */
   buf->b_ind_unclosed_wrapped = 0;
 
   /* Suppress ignoring white space when lining up with the character after
@@ -1888,7 +1888,7 @@ int get_c_indent(void)
            * When b_ind_unclosed_wrapped is set and the matching paren is
            * the last nonwhite character of the line, use either the
            * indent of the current line or the indentation of the next
-           * outer paren and add b_ind_unclosed_wrapped (for very long
+           * outer paren and add b_ind_unclosed_wrapped (for very int64_t
            * lines).
            */
           if (theline[0] != ')') {

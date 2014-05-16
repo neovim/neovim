@@ -78,7 +78,7 @@ int
 ui_inchar (
     char_u *buf,
     int maxlen,
-    long wtime,                 /* don't use "time", MIPS cannot handle it */
+    int64_t wtime,                 /* don't use "time", MIPS cannot handle it */
     int tb_change_cnt
 )
 {
@@ -161,7 +161,7 @@ int ui_char_avail(void)
  * Delay for the given number of milliseconds.	If ignoreinput is FALSE then we
  * cancel the delay if a key is hit.
  */
-void ui_delay(long msec, int ignoreinput)
+void ui_delay(int64_t msec, int ignoreinput)
 {
   os_delay(msec, ignoreinput);
 }
@@ -241,7 +241,7 @@ void ui_breakcheck(void)
 #if defined(USE_INPUT_BUF) || defined(PROTO)
 
 /*
- * Internal typeahead buffer.  Includes extra space for long key code
+ * Internal typeahead buffer.  Includes extra space for int64_t key code
  * descriptions which would otherwise overflow.  The buffer is considered full
  * when only this extra space (or part of it) remains.
  */
@@ -368,7 +368,7 @@ void trash_input_buf(void)
  * it in buf.
  * Note: this function used to be Read() in unix.c
  */
-int read_from_input_buf(char_u *buf, long maxlen)
+int read_from_input_buf(char_u *buf, int64_t maxlen)
 {
   if (inbufcount == 0)          /* if the buffer is empty, fill it */
     fill_input_buf(TRUE);
@@ -889,7 +889,7 @@ int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     if (col < off)
       col = off;
     col += row * (W_WIDTH(win) - off);
-    /* add skip column (for long wrapping line) */
+    /* add skip column (for int64_t wrapping line) */
     col += win->w_skipcol;
   }
 
@@ -942,7 +942,7 @@ win_T *mouse_find_win(int *rowp, int *colp)
 /*
  * Save current Input Method status to specified place.
  */
-void im_save_status(long *psave)
+void im_save_status(int64_t *psave)
 {
   /* Don't save when 'imdisable' is set or "xic" is NULL, IM is always
    * disabled then (but might start later).

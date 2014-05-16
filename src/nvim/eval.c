@@ -125,8 +125,8 @@ typedef struct lval_S {
   listitem_T  *ll_li;           /* The list item or NULL. */
   list_T      *ll_list;         /* The list or NULL. */
   int ll_range;                 /* TRUE when a [i:j] range was used */
-  long ll_n1;                   /* First index for list */
-  long ll_n2;                   /* Second index for list range */
+  int64_t ll_n1;                   /* First index for list */
+  int64_t ll_n2;                   /* Second index for list range */
   int ll_empty2;                /* Second index is empty: [i:] */
   dict_T      *ll_dict;         /* The Dictionary or NULL */
   dictitem_T  *ll_di;           /* The dictitem or NULL */
@@ -467,12 +467,12 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate);
 static int get_lit_string_tv(char_u **arg, typval_T *rettv, int evaluate);
 static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate);
 static void rettv_list_alloc(typval_T *rettv);
-static long list_len(list_T *l);
+static int64_t list_len(list_T *l);
 static int list_equal(list_T *l1, list_T *l2, int ic, int recursive);
 static int dict_equal(dict_T *d1, dict_T *d2, int ic, int recursive);
 static int tv_equal(typval_T *tv1, typval_T *tv2, int ic, int recursive);
-static long list_find_nr(list_T *l, long idx, int *errorp);
-static long list_idx_of_item(list_T *l, listitem_T *item);
+static int64_t list_find_nr(list_T *l, int64_t idx, int *errorp);
+static int64_t list_idx_of_item(list_T *l, listitem_T *item);
 static void list_append_number(list_T *l, varnumber_T n);
 static int list_extend(list_T   *l1, list_T *l2, listitem_T *bef);
 static int list_concat(list_T *l1, list_T *l2, typval_T *tv);
@@ -488,7 +488,7 @@ static int rettv_dict_alloc(typval_T *rettv);
 static dictitem_T *dictitem_copy(dictitem_T *org);
 static void dictitem_remove(dict_T *dict, dictitem_T *item);
 static dict_T *dict_copy(dict_T *orig, int deep, int copyID);
-static long dict_len(dict_T *d);
+static int64_t dict_len(dict_T *d);
 static char_u *dict2string(typval_T *tv, int copyID);
 static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate);
 static char_u *echo_string(typval_T *tv, char_u **tofree,
@@ -802,7 +802,7 @@ static int get_var_tv(char_u *name, int len, typval_T *rettv,
 static int handle_subscript(char_u **arg, typval_T *rettv, int evaluate,
                             int verbose);
 static void init_tv(typval_T *varp);
-static long get_tv_number(typval_T *varp);
+static int64_t get_tv_number(typval_T *varp);
 static linenr_T get_tv_lnum(typval_T *argvars);
 static linenr_T get_tv_lnum_buf(typval_T *argvars, buf_T *buf);
 static char_u *get_tv_string(typval_T *varp);
@@ -1487,7 +1487,7 @@ call_vim_function (
 )
 {
   typval_T    *argvars;
-  long n;
+  int64_t n;
   int len;
   int i;
   int doesrange;
@@ -1546,7 +1546,7 @@ call_vim_function (
  * Returns -1 when calling the function fails.
  * Uses argv[argc] for the function arguments.
  */
-long 
+int64_t 
 call_func_retnr (
     char_u *func,
     int argc,
@@ -1555,7 +1555,7 @@ call_func_retnr (
 )
 {
   typval_T rettv;
-  long retval;
+  int64_t retval;
 
   /* All arguments are passed as strings, no conversion to number. */
   if (call_vim_function(func, argc, argv, safe, TRUE, &rettv) == FAIL)
@@ -2195,9 +2195,9 @@ ex_let_one (
                       && vim_strchr(endchars, *skipwhite(p)) == NULL))
       EMSG(_(e_letunexp));
     else {
-      long n;
+      int64_t n;
       int opt_type;
-      long numval;
+      int64_t numval;
       char_u      *stringval = NULL;
       char_u      *s;
 
@@ -2729,7 +2729,7 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
  */
 static int tv_op(typval_T *tv1, typval_T *tv2, char_u *op)
 {
-  long n;
+  int64_t n;
   char_u numbuf[NUMBUFLEN];
   char_u      *s;
 
@@ -3462,10 +3462,10 @@ static char_u *cat_prefix_varname(int prefix, char_u *name)
  */
 char_u *get_user_var_name(expand_T *xp, int idx)
 {
-  static long_u gdone;
-  static long_u bdone;
-  static long_u wdone;
-  static long_u tdone;
+  static uint64_t gdone;
+  static uint64_t bdone;
+  static uint64_t wdone;
+  static uint64_t tdone;
   static int vidx;
   static hashitem_T   *hi;
   hashtab_T           *ht;
@@ -3671,7 +3671,7 @@ static int eval1(char_u **arg, typval_T *rettv, int evaluate)
 static int eval2(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
-  long result;
+  int64_t result;
   int first;
   int error = FALSE;
 
@@ -3734,7 +3734,7 @@ static int eval2(char_u **arg, typval_T *rettv, int evaluate)
 static int eval3(char_u **arg, typval_T *rettv, int evaluate)
 {
   typval_T var2;
-  long result;
+  int64_t result;
   int first;
   int error = FALSE;
 
@@ -3811,7 +3811,7 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
   exptype_T type = TYPE_UNKNOWN;
   int type_is = FALSE;              /* TRUE for "is" and "isnot" */
   int len = 2;
-  long n1, n2;
+  int64_t n1, n2;
   char_u      *s1, *s2;
   char_u buf1[NUMBUFLEN], buf2[NUMBUFLEN];
   regmatch_T regmatch;
@@ -4067,7 +4067,7 @@ static int eval5(char_u **arg, typval_T *rettv, int evaluate)
   typval_T var2;
   typval_T var3;
   int op;
-  long n1, n2;
+  int64_t n1, n2;
   float_T f1 = 0, f2 = 0;
   char_u      *s1, *s2;
   char_u buf1[NUMBUFLEN], buf2[NUMBUFLEN];
@@ -4216,7 +4216,7 @@ eval6 (
 {
   typval_T var2;
   int op;
-  long n1, n2;
+  int64_t n1, n2;
   int use_float = FALSE;
   float_T f1 = 0, f2;
   int error = FALSE;
@@ -4351,7 +4351,7 @@ eval7 (
     int want_string                 /* after "." operator */
 )
 {
-  long n;
+  int64_t n;
   int len;
   char_u      *s;
   char_u      *start_leader, *end_leader;
@@ -4608,8 +4608,8 @@ eval_index (
 {
   int empty1 = FALSE, empty2 = FALSE;
   typval_T var1, var2;
-  long n1, n2 = 0;
-  long len = -1;
+  int64_t n1, n2 = 0;
+  int64_t len = -1;
   int range = FALSE;
   char_u      *s;
   char_u      *key = NULL;
@@ -4703,7 +4703,7 @@ eval_index (
     case VAR_NUMBER:
     case VAR_STRING:
       s = get_tv_string(rettv);
-      len = (long)STRLEN(s);
+      len = (int64_t)STRLEN(s);
       if (range) {
         /* The resulting variable is a substring.  If the indexes
          * are out of range the result is empty. */
@@ -4832,7 +4832,7 @@ get_option_tv (
 )
 {
   char_u      *option_end;
-  long numval;
+  int64_t numval;
   char_u      *stringval;
   int opt_type;
   int c;
@@ -5217,7 +5217,7 @@ void listitem_remove(list_T *l, listitem_T *item)
 /*
  * Get the number of items in a list.
  */
-static long list_len(list_T *l)
+static int64_t list_len(list_T *l)
 {
   if (l == NULL)
     return 0L;
@@ -5328,7 +5328,7 @@ tv_equal (
 
   /* Catch lists and dicts that have an endless loop by limiting
    * recursiveness to a limit.  We guess they are equal then.
-   * A fixed limit has the problem of still taking an awful long time.
+   * A fixed limit has the problem of still taking an awful int64_t time.
    * Reduce the limit every time running into it. That should work fine for
    * deeply linked structures that are not recursively linked and catch
    * recursiveness quickly. */
@@ -5378,10 +5378,10 @@ tv_equal (
  * A negative index is counted from the end; -1 is the last item.
  * Returns NULL when "n" is out of range.
  */
-listitem_T *list_find(list_T *l, long n)
+listitem_T *list_find(list_T *l, int64_t n)
 {
   listitem_T  *item;
-  long idx;
+  int64_t idx;
 
   if (l == NULL)
     return NULL;
@@ -5442,10 +5442,10 @@ listitem_T *list_find(list_T *l, long n)
 /*
  * Get list item "l[idx]" as a number.
  */
-static long 
+static int64_t 
 list_find_nr (
     list_T *l,
-    long idx,
+    int64_t idx,
     int *errorp            /* set to TRUE when something wrong */
 )
 {
@@ -5463,7 +5463,7 @@ list_find_nr (
 /*
  * Get list item "l[idx - 1]" as a string.  Returns NULL for failure.
  */
-char_u *list_find_str(list_T *l, long idx)
+char_u *list_find_str(list_T *l, int64_t idx)
 {
   listitem_T  *li;
 
@@ -5479,9 +5479,9 @@ char_u *list_find_str(list_T *l, long idx)
  * Locate "item" list "l" and return its index.
  * Returns -1 when "item" is not in the list.
  */
-static long list_idx_of_item(list_T *l, listitem_T *item)
+static int64_t list_idx_of_item(list_T *l, listitem_T *item)
 {
-  long idx = 0;
+  int64_t idx = 0;
   listitem_T  *li;
 
   if (l == NULL)
@@ -6282,7 +6282,7 @@ int dict_add(dict_T *d, dictitem_T *item)
  * When "str" is NULL use number "nr", otherwise use "str".
  * Returns FAIL when out of memory and when key already exists.
  */
-int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
+int dict_add_nr_str(dict_T *d, char *key, int64_t nr, char_u *str)
 {
   dictitem_T  *item;
 
@@ -6329,11 +6329,11 @@ int dict_add_list(dict_T *d, char *key, list_T *list)
 /*
  * Get the number of items in a Dictionary.
  */
-static long dict_len(dict_T *d)
+static int64_t dict_len(dict_T *d)
 {
   if (d == NULL)
     return 0L;
-  return (long)d->dv_hashtab.ht_used;
+  return (int64_t)d->dv_hashtab.ht_used;
 }
 
 /*
@@ -6391,7 +6391,7 @@ char_u *get_dict_string(dict_T *d, char_u *key, int save)
  * Get a number item from a dictionary.
  * Returns 0 if the entry doesn't exist or out of memory.
  */
-long get_dict_number(dict_T *d, char_u *key)
+int64_t get_dict_number(dict_T *d, char_u *key)
 {
   dictitem_T  *di;
 
@@ -7554,12 +7554,12 @@ static void f_and(typval_T *argvars, typval_T *rettv)
  */
 static void f_append(typval_T *argvars, typval_T *rettv)
 {
-  long lnum;
+  int64_t lnum;
   char_u      *line;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
   typval_T    *tv;
-  long added = 0;
+  int64_t added = 0;
 
   /* When coming here from Insert mode, sync undo, so that this can be
    * undone separately from what was previously inserted. */
@@ -7875,7 +7875,7 @@ static void f_bufwinnr(typval_T *argvars, typval_T *rettv)
  */
 static void f_byte2line(typval_T *argvars, typval_T *rettv)
 {
-  long boff = 0;
+  int64_t boff = 0;
 
   boff = get_tv_number(&argvars[0]) - 1;    /* boff gets -1 on type error */
   if (boff < 0)
@@ -7889,7 +7889,7 @@ static void byteidx(typval_T *argvars, typval_T *rettv, int comp)
 {
   char_u      *t;
   char_u      *str;
-  long idx;
+  int64_t idx;
 
   str = get_tv_string_chk(&argvars[0]);
   idx = get_tv_number_chk(&argvars[1], NULL);
@@ -8233,13 +8233,13 @@ static void f_cosh(typval_T *argvars, typval_T *rettv)
  */
 static void f_count(typval_T *argvars, typval_T *rettv)
 {
-  long n = 0;
+  int64_t n = 0;
   int ic = FALSE;
 
   if (argvars[0].v_type == VAR_LIST) {
     listitem_T      *li;
     list_T          *l;
-    long idx;
+    int64_t idx;
 
     if ((l = argvars[0].vval.v_list) != NULL) {
       li = l->lv_first;
@@ -8322,8 +8322,8 @@ static void f_cscope_connection(typval_T *argvars, typval_T *rettv)
  */
 static void f_cursor(typval_T *argvars, typval_T *rettv)
 {
-  long line, col;
-  long coladd = 0;
+  int64_t line, col;
+  int64_t coladd = 0;
 
   rettv->vval.v_number = -1;
   if (argvars[1].v_type == VAR_UNKNOWN) {
@@ -8726,7 +8726,7 @@ static void f_extend(typval_T *argvars, typval_T *rettv)
   if (argvars[0].v_type == VAR_LIST && argvars[1].v_type == VAR_LIST) {
     list_T          *l1, *l2;
     listitem_T      *item;
-    long before;
+    int64_t before;
     int error = FALSE;
 
     l1 = argvars[0].vval.v_list;
@@ -9265,7 +9265,7 @@ static void f_foldtext(typval_T *argvars, typval_T *rettv)
                          + STRLEN(s)));                     /* concatenated */
     if (r != NULL) {
       sprintf((char *)r, txt, vimvars[VV_FOLDDASHES].vv_str,
-          (long)((linenr_T)vimvars[VV_FOLDEND].vv_nr
+          (int64_t)((linenr_T)vimvars[VV_FOLDEND].vv_nr
                  - (linenr_T)vimvars[VV_FOLDSTART].vv_nr + 1));
       len = (int)STRLEN(r);
       STRCAT(r, s);
@@ -9838,8 +9838,8 @@ static void f_getmatches(typval_T *argvars, typval_T *rettv)
     dict_T *dict = dict_alloc();
     dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
     dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
-    dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
-    dict_add_nr_str(dict, "id", (long)cur->id, NULL);
+    dict_add_nr_str(dict, "priority", (int64_t)cur->priority, NULL);
+    dict_add_nr_str(dict, "id", (int64_t)cur->id, NULL);
     list_append_dict(rettv->vval.v_list, dict);
     cur = cur->next;
   }
@@ -9925,7 +9925,7 @@ static void f_getregtype(typval_T *argvars, typval_T *rettv)
   char_u      *strregname;
   int regname;
   char_u buf[NUMBUFLEN + 2];
-  long reglen = 0;
+  int64_t reglen = 0;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
     strregname = get_tv_string_chk(&argvars[0]);
@@ -10572,7 +10572,7 @@ static void f_index(typval_T *argvars, typval_T *rettv)
 {
   list_T      *l;
   listitem_T  *item;
-  long idx = 0;
+  int64_t idx = 0;
   int ic = FALSE;
 
   rettv->vval.v_number = -1;
@@ -10663,7 +10663,7 @@ static void get_user_input(typval_T *argvars, typval_T *rettv, int inputdialog)
       if (!inputdialog && argvars[2].v_type != VAR_UNKNOWN) {
         char_u  *xp_name;
         int xp_namelen;
-        long argt;
+        int64_t argt;
 
         /* input() with a third argument: completion */
         rettv->vval.v_string = NULL;
@@ -10806,7 +10806,7 @@ static void f_inputsecret(typval_T *argvars, typval_T *rettv)
  */
 static void f_insert(typval_T *argvars, typval_T *rettv)
 {
-  long before = 0;
+  int64_t before = 0;
   listitem_T  *item;
   list_T      *l;
   int error = FALSE;
@@ -11357,8 +11357,8 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     dict_add_nr_str(dict, "noremap", mp->m_noremap ? 1L : 0L, NULL);
     dict_add_nr_str(dict, "expr",    mp->m_expr    ? 1L : 0L, NULL);
     dict_add_nr_str(dict, "silent",  mp->m_silent  ? 1L : 0L, NULL);
-    dict_add_nr_str(dict, "sid",     (long)mp->m_script_ID, NULL);
-    dict_add_nr_str(dict, "buffer",  (long)buffer_local, NULL);
+    dict_add_nr_str(dict, "sid",     (int64_t)mp->m_script_ID, NULL);
+    dict_add_nr_str(dict, "buffer",  (int64_t)buffer_local, NULL);
     dict_add_nr_str(dict, "nowait",  mp->m_nowait  ? 1L : 0L, NULL);
     dict_add_nr_str(dict, "mode",    0L, mapmode);
 
@@ -11425,20 +11425,20 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int start);
 static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
 {
   char_u      *str = NULL;
-  long        len = 0;
+  int64_t        len = 0;
   char_u      *expr = NULL;
   char_u      *pat;
   regmatch_T regmatch;
   char_u patbuf[NUMBUFLEN];
   char_u strbuf[NUMBUFLEN];
   char_u      *save_cpo;
-  long start = 0;
-  long nth = 1;
+  int64_t start = 0;
+  int64_t nth = 1;
   colnr_T startcol = 0;
   int match = 0;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
-  long idx = 0;
+  int64_t idx = 0;
   char_u      *tofree = NULL;
 
   /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
@@ -11460,7 +11460,7 @@ static void find_some_match(typval_T *argvars, typval_T *rettv, int type)
     li = l->lv_first;
   } else {
     expr = str = get_tv_string(&argvars[0]);
-    len = (long)STRLEN(str);
+    len = (int64_t)STRLEN(str);
   }
 
   pat = get_tv_string_buf_chk(&argvars[1], patbuf);
@@ -11676,8 +11676,8 @@ static void max_min(typval_T *argvars, typval_T *rettv, int domax);
 
 static void max_min(typval_T *argvars, typval_T *rettv, int domax)
 {
-  long n = 0;
-  long i;
+  int64_t n = 0;
+  int64_t i;
   int error = FALSE;
 
   if (argvars[0].v_type == VAR_LIST) {
@@ -12009,10 +12009,10 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
  */
 static void f_range(typval_T *argvars, typval_T *rettv)
 {
-  long start;
-  long end;
-  long stride = 1;
-  long i;
+  int64_t start;
+  int64_t end;
+  int64_t stride = 1;
+  int64_t i;
   int error = FALSE;
 
   start = get_tv_number_chk(&argvars[0], &error);
@@ -12052,10 +12052,10 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
   int io_size = sizeof(buf);
   int readlen;                          /* size of last fread() */
   char_u      *prev    = NULL;          /* previously read bytes, if any */
-  long prevlen  = 0;                    /* length of data in prev */
-  long prevsize = 0;                    /* size of prev buffer */
-  long maxline  = MAXLNUM;
-  long cnt      = 0;
+  int64_t prevlen  = 0;                    /* length of data in prev */
+  int64_t prevsize = 0;                    /* size of prev buffer */
+  int64_t maxline  = MAXLNUM;
+  int64_t cnt      = 0;
   char_u      *p;                       /* position in buf */
   char_u      *start;                   /* start of current line */
 
@@ -12090,7 +12090,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
       if (*p == '\n' || readlen <= 0) {
         listitem_T  *li;
         char_u      *s  = NULL;
-        long_u len = p - start;
+        uint64_t len = p - start;
 
         /* Finished a line.  Remove CRs before NL. */
         if (readlen > 0 && !binary) {
@@ -12105,7 +12105,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           s = vim_strnsave(start, (int)len);
         else {
           /* Change "prev" buffer to be the right size.  This way
-           * the bytes are only copied once, and very long lines are
+           * the bytes are only copied once, and very int64_t lines are
            * allocated only once.  */
           if ((s = xrealloc(prev, prevlen + len + 1)) != NULL) {
             memmove(s + prevlen, start, len);
@@ -12115,7 +12115,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           }
         }
         if (s == NULL) {
-          do_outofmem_msg((long_u) prevlen + len + 1);
+          do_outofmem_msg((uint64_t) prevlen + len + 1);
           failed = TRUE;
           break;
         }
@@ -12185,16 +12185,16 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
          * small, to avoid repeatedly 'allocing' large and
          * 'reallocing' small. */
         if (prevsize == 0)
-          prevsize = (long)(p - start);
+          prevsize = (int64_t)(p - start);
         else {
-          long grow50pc = (prevsize * 3) / 2;
-          long growmin  = (long)((p - start) * 2 + prevlen);
+          int64_t grow50pc = (prevsize * 3) / 2;
+          int64_t growmin  = (int64_t)((p - start) * 2 + prevlen);
           prevsize = grow50pc > growmin ? grow50pc : growmin;
         }
         newprev = prev == NULL ? alloc(prevsize)
                   : xrealloc(prev, prevsize);
         if (newprev == NULL) {
-          do_outofmem_msg((long_u)prevsize);
+          do_outofmem_msg((uint64_t)prevsize);
           failed = TRUE;
           break;
         }
@@ -12202,7 +12202,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
       }
       /* Add the line part to end of "prev". */
       memmove(prev + prevlen, start, p - start);
-      prevlen += (long)(p - start);
+      prevlen += (int64_t)(p - start);
     }
   }   /* while */
 
@@ -12236,7 +12236,7 @@ static int list2proftime(arg, tm)
 typval_T    *arg;
 proftime_T  *tm;
 {
-  long n1, n2;
+  int64_t n1, n2;
   int error = FALSE;
 
   if (arg->v_type != VAR_LIST || arg->vval.v_list == NULL
@@ -12273,8 +12273,8 @@ static void f_reltime(typval_T *argvars, typval_T *rettv)
   }
 
   rettv_list_alloc(rettv);
-  long n1 = res.tv_sec;
-  long n2 = res.tv_usec;
+  int64_t n1 = res.tv_sec;
+  int64_t n2 = res.tv_usec;
   list_append_number(rettv->vval.v_list, (varnumber_T)n1);
   list_append_number(rettv->vval.v_list, (varnumber_T)n2);
 }
@@ -12340,8 +12340,8 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
   list_T      *l;
   listitem_T  *item, *item2;
   listitem_T  *li;
-  long idx;
-  long end;
+  int64_t idx;
+  int64_t end;
   char_u      *key;
   dict_T      *d;
   dictitem_T  *di;
@@ -12752,9 +12752,9 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   int save_p_ws = p_ws;
   int dir;
   int retval = 0;               /* default: FAIL */
-  long lnum_stop = 0;
+  int64_t lnum_stop = 0;
   proftime_T tm;
-  long time_limit = 0;
+  int64_t time_limit = 0;
   int options = SEARCH_KEEP;
   int subpatnum;
 
@@ -12959,8 +12959,8 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
   char_u nbuf2[NUMBUFLEN];
   char_u nbuf3[NUMBUFLEN];
   int retval = 0;                       /* default: FAIL */
-  long lnum_stop = 0;
-  long time_limit = 0;
+  int64_t lnum_stop = 0;
+  int64_t time_limit = 0;
 
   /* Get the three pattern arguments: start, middle, end. */
   spat = get_tv_string_chk(&argvars[0]);
@@ -13049,7 +13049,7 @@ static void f_searchpairpos(typval_T *argvars, typval_T *rettv)
  * Used by searchpair(), see its documentation for the details.
  * Returns 0 or -1 for no match,
  */
-long 
+int64_t 
 do_searchpair (
     char_u *spat,          /* start pattern */
     char_u *mpat,          /* middle pattern */
@@ -13059,12 +13059,12 @@ do_searchpair (
     int flags,                  /* SP_SETPCMARK and other SP_ values */
     pos_T *match_pos,
     linenr_T lnum_stop,         /* stop at this line if not zero */
-    long time_limit            /* stop after this many msec */
+    int64_t time_limit            /* stop after this many msec */
 )
 {
   char_u      *save_cpo;
   char_u      *pat, *pat2 = NULL, *pat3 = NULL;
-  long retval = 0;
+  int64_t retval = 0;
   pos_T pos;
   pos_T firstpos;
   pos_T foundpos;
@@ -13254,7 +13254,7 @@ static void f_setbufvar(typval_T *argvars, typval_T *rettv)
     aucmd_prepbuf(&aco, buf);
 
     if (*varname == '&') {
-      long numval;
+      int64_t numval;
       char_u      *strval;
       int error = FALSE;
 
@@ -13298,7 +13298,7 @@ static void f_setline(typval_T *argvars, typval_T *rettv)
   char_u      *line = NULL;
   list_T      *l = NULL;
   listitem_T  *li = NULL;
-  long added = 0;
+  int64_t added = 0;
   linenr_T lcount = curbuf->b_ml.ml_line_count;
 
   lnum = get_tv_lnum(&argvars[0]);
@@ -13501,7 +13501,7 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   char_u      *strval;
   int append;
   char_u yank_type;
-  long block_len;
+  int64_t block_len;
 
   block_len = -1;
   yank_type = MAUTO;
@@ -13636,7 +13636,7 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
       return;
 
     if (*varname == '&') {
-      long numval;
+      int64_t numval;
       char_u      *strval;
       int error = FALSE;
 
@@ -13810,8 +13810,8 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
   list_T      *l;
   listitem_T  *li;
   listitem_T  **ptrs;
-  long len;
-  long i;
+  int64_t len;
+  int64_t i;
 
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), sort ? "sort()" : "uniq()");
@@ -14144,7 +14144,7 @@ static void f_str2nr(typval_T *argvars, typval_T *rettv)
 {
   int base = 10;
   char_u      *p;
-  long n;
+  int64_t n;
 
   if (argvars[1].v_type != VAR_UNKNOWN) {
     base = get_tv_number(&argvars[1]);
@@ -14461,8 +14461,8 @@ static void f_substitute(typval_T *argvars, typval_T *rettv)
 static void f_synID(typval_T *argvars, typval_T *rettv)
 {
   int id = 0;
-  long lnum;
-  long col;
+  int64_t lnum;
+  int64_t col;
   int trans;
   int transerr = FALSE;
 
@@ -14471,7 +14471,7 @@ static void f_synID(typval_T *argvars, typval_T *rettv)
   trans = get_tv_number_chk(&argvars[2], &transerr);
 
   if (!transerr && lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count
-      && col >= 0 && col < (long)STRLEN(ml_get(lnum)))
+      && col >= 0 && col < (int64_t)STRLEN(ml_get(lnum)))
     id = syn_get_id(curwin, lnum, (colnr_T)col, trans, NULL, FALSE);
 
   rettv->vval.v_number = id;
@@ -14576,8 +14576,8 @@ static void f_synIDtrans(typval_T *argvars, typval_T *rettv)
  */
 static void f_synconcealed(typval_T *argvars, typval_T *rettv)
 {
-  long lnum;
-  long col;
+  int64_t lnum;
+  int64_t col;
   int syntax_flags = 0;
   int cchar;
   int matchid = 0;
@@ -14593,7 +14593,7 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
 
   rettv_list_alloc(rettv);
   if (lnum >= 1 && lnum <= curbuf->b_ml.ml_line_count && col >= 0
-      && col <= (long)STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
+      && col <= (int64_t)STRLEN(ml_get(lnum)) && curwin->w_p_cole > 0) {
     (void)syn_get_id(curwin, lnum, col, FALSE, NULL, FALSE);
     syntax_flags = get_syntax_info(&matchid);
 
@@ -14623,8 +14623,8 @@ static void f_synconcealed(typval_T *argvars, typval_T *rettv)
  */
 static void f_synstack(typval_T *argvars, typval_T *rettv)
 {
-  long lnum;
-  long col;
+  int64_t lnum;
+  int64_t col;
 
   rettv->v_type = VAR_LIST;
   rettv->vval.v_list = NULL;
@@ -14635,7 +14635,7 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   if (lnum >= 1
       && lnum <= curbuf->b_ml.ml_line_count
       && col >= 0
-      && col <= (long)STRLEN(ml_get(lnum))) {
+      && col <= (int64_t)STRLEN(ml_get(lnum))) {
     rettv_list_alloc(rettv);
     (void)syn_get_id(curwin, lnum, (colnr_T)col, FALSE, NULL, TRUE);
 
@@ -15144,13 +15144,13 @@ static void f_undotree(typval_T *argvars, typval_T *rettv)
     dict_T *dict = rettv->vval.v_dict;
     list_T *list;
 
-    dict_add_nr_str(dict, "synced", (long)curbuf->b_u_synced, NULL);
+    dict_add_nr_str(dict, "synced", (int64_t)curbuf->b_u_synced, NULL);
     dict_add_nr_str(dict, "seq_last", curbuf->b_u_seq_last, NULL);
     dict_add_nr_str(dict, "save_last",
-        (long)curbuf->b_u_save_nr_last, NULL);
+        (int64_t)curbuf->b_u_save_nr_last, NULL);
     dict_add_nr_str(dict, "seq_cur", curbuf->b_u_seq_cur, NULL);
-    dict_add_nr_str(dict, "time_cur", (long)curbuf->b_u_time_cur, NULL);
-    dict_add_nr_str(dict, "save_cur", (long)curbuf->b_u_save_nr_cur, NULL);
+    dict_add_nr_str(dict, "time_cur", (int64_t)curbuf->b_u_time_cur, NULL);
+    dict_add_nr_str(dict, "save_cur", (int64_t)curbuf->b_u_save_nr_cur, NULL);
 
     list = list_alloc();
     if (list != NULL) {
@@ -15340,16 +15340,16 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv)
     return;
   dict = rettv->vval.v_dict;
 
-  dict_add_nr_str(dict, "lnum", (long)curwin->w_cursor.lnum, NULL);
-  dict_add_nr_str(dict, "col", (long)curwin->w_cursor.col, NULL);
-  dict_add_nr_str(dict, "coladd", (long)curwin->w_cursor.coladd, NULL);
+  dict_add_nr_str(dict, "lnum", (int64_t)curwin->w_cursor.lnum, NULL);
+  dict_add_nr_str(dict, "col", (int64_t)curwin->w_cursor.col, NULL);
+  dict_add_nr_str(dict, "coladd", (int64_t)curwin->w_cursor.coladd, NULL);
   update_curswant();
-  dict_add_nr_str(dict, "curswant", (long)curwin->w_curswant, NULL);
+  dict_add_nr_str(dict, "curswant", (int64_t)curwin->w_curswant, NULL);
 
-  dict_add_nr_str(dict, "topline", (long)curwin->w_topline, NULL);
-  dict_add_nr_str(dict, "topfill", (long)curwin->w_topfill, NULL);
-  dict_add_nr_str(dict, "leftcol", (long)curwin->w_leftcol, NULL);
-  dict_add_nr_str(dict, "skipcol", (long)curwin->w_skipcol, NULL);
+  dict_add_nr_str(dict, "topline", (int64_t)curwin->w_topline, NULL);
+  dict_add_nr_str(dict, "topfill", (int64_t)curwin->w_topfill, NULL);
+  dict_add_nr_str(dict, "leftcol", (int64_t)curwin->w_leftcol, NULL);
+  dict_add_nr_str(dict, "skipcol", (int64_t)curwin->w_skipcol, NULL);
 }
 
 /*
@@ -15473,7 +15473,7 @@ var2fpos (
     pos.col = list_find_nr(l, 1L, &error);
     if (error)
       return NULL;
-    len = (long)STRLEN(ml_get(pos.lnum));
+    len = (int64_t)STRLEN(ml_get(pos.lnum));
 
     /* We accept "$" for the column number: last column. */
     li = list_find(l, 1L);
@@ -15549,8 +15549,8 @@ var2fpos (
 static int list2fpos(typval_T *arg, pos_T *posp, int *fnump)
 {
   list_T      *l = arg->vval.v_list;
-  long i = 0;
-  long n;
+  int64_t i = 0;
+  int64_t n;
 
   /* List must be: [fnum, lnum, col, coladd], where "fnum" is only there
    * when "fnump" isn't NULL and "coladd" is optional. */
@@ -15838,7 +15838,7 @@ static int eval_isnamec1(int c)
 /*
  * Set number v: variable to "val".
  */
-void set_vim_var_nr(int idx, long val)
+void set_vim_var_nr(int idx, int64_t val)
 {
   vimvars[idx].vv_nr = val;
 }
@@ -15846,7 +15846,7 @@ void set_vim_var_nr(int idx, long val)
 /*
  * Get number v: variable value.
  */
-long get_vim_var_nr(int idx)
+int64_t get_vim_var_nr(int idx)
 {
   return vimvars[idx].vv_nr;
 }
@@ -15888,7 +15888,7 @@ void set_vim_var_char(int c)
  * Set v:count to "count" and v:count1 to "count1".
  * When "set_prevcount" is TRUE first set v:prevcount from v:count.
  */
-void set_vcount(long count, long count1, int set_prevcount)
+void set_vcount(int64_t count, int64_t count1, int set_prevcount)
 {
   if (set_prevcount)
     vimvars[VV_PREVCOUNT].vv_nr = vimvars[VV_COUNT].vv_nr;
@@ -16250,20 +16250,20 @@ static void init_tv(typval_T *varp)
  * caller of incompatible types: it sets *denote to TRUE if "denote"
  * is not NULL or returns -1 otherwise.
  */
-static long get_tv_number(typval_T *varp)
+static int64_t get_tv_number(typval_T *varp)
 {
   int error = FALSE;
 
   return get_tv_number_chk(varp, &error);       /* return 0L on error */
 }
 
-long get_tv_number_chk(typval_T *varp, int *denote)
+int64_t get_tv_number_chk(typval_T *varp, int *denote)
 {
-  long n = 0L;
+  int64_t n = 0L;
 
   switch (varp->v_type) {
   case VAR_NUMBER:
-    return (long)(varp->vval.v_number);
+    return (int64_t)(varp->vval.v_number);
   case VAR_FLOAT:
     EMSG(_("E805: Using a Float as a Number"));
     break;
@@ -16502,7 +16502,7 @@ static hashtab_T *find_var_ht(char_u *name, char_u **varname)
 
 /*
  * Get the string value of a (global/local) variable.
- * Note: see get_tv_string() for how long the pointer remains valid.
+ * Note: see get_tv_string() for how int64_t the pointer remains valid.
  * Returns NULL when it doesn't exist.
  */
 char_u *get_var_value(char_u *name)
@@ -17344,7 +17344,7 @@ void ex_function(exarg_T *eap)
           if (FUNCLINE(fp, j) == NULL)
             continue;
           msg_putchar('\n');
-          msg_outnum((long)(j + 1));
+          msg_outnum((int64_t)(j + 1));
           if (j < 9)
             msg_putchar(' ');
           if (j < 99)
@@ -18373,7 +18373,7 @@ static char_u *autoload_name(char_u *name)
  */
 char_u *get_user_func_name(expand_T *xp, int idx)
 {
-  static long_u done;
+  static uint64_t done;
   static hashitem_T   *hi;
   ufunc_T             *fp;
 
@@ -18586,7 +18586,7 @@ call_user_func (
 
   /*
    * Note about using fc->fixvar[]: This is an array of FIXVAR_CNT variables
-   * with names up to VAR_SHORT_LEN long.  This avoids having to alloc/free
+   * with names up to VAR_SHORT_LEN int64_t.  This avoids having to alloc/free
    * each argument variable and saves a lot of time.
    */
   /*
@@ -18705,7 +18705,7 @@ call_user_func (
           if (i > 0)
             msg_puts((char_u *)", ");
           if (argvars[i].v_type == VAR_NUMBER)
-            msg_outnum((long)argvars[i].vval.v_number);
+            msg_outnum((int64_t)argvars[i].vval.v_number);
           else {
             s = tv2string(&argvars[i], &tofree, numbuf2, 0);
             if (s != NULL) {
@@ -18786,7 +18786,7 @@ call_user_func (
       char_u      *tofree;
       char_u      *s;
 
-      /* The value may be very long.  Skip the middle part, so that we
+      /* The value may be very int64_t.  Skip the middle part, so that we
        * have some idea how it starts and ends. smsg() would always
        * truncate it at the end. */
       s = tv2string(fc->rettv, &tofree, numbuf2, 0);
@@ -19402,7 +19402,7 @@ void ex_oldfiles(exarg_T *eap)
     msg_start();
     msg_scroll = TRUE;
     for (li = l->lv_first; li != NULL && !got_int; li = li->li_next) {
-      msg_outnum((long)++nr);
+      msg_outnum((int64_t)++nr);
       MSG_PUTS(": ");
       msg_outtrans(get_tv_string(&li->li_tv));
       msg_putchar('\n');

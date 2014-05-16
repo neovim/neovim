@@ -1,7 +1,7 @@
 #ifndef NVIM_EX_GETLN_H
 #define NVIM_EX_GETLN_H
 /* ex_getln.c */
-char_u *getcmdline(int firstc, long count, int indent);
+char_u *getcmdline(int firstc, int64_t count, int indent);
 char_u *getcmdline_prompt(int firstc, char_u *prompt, int attr,
                           int xp_context,
                           char_u *xp_arg);
