@@ -154,14 +154,7 @@ void buffer_set_slice(Buffer buffer,
   size_t new_len = replacement.size;
   size_t old_len = (size_t)(end - start);
   ssize_t extra = 0;  // lines added to text, can be negative
-  char **lines;
-
-  if (new_len == 0) {
-    // avoid allocating zero bytes
-    lines = NULL;
-  } else {
-    lines = xcalloc(sizeof(char *), new_len);
-  }
+  char **lines = (new_len != 0) ? xmalloc(new_len * sizeof(char *)) : NULL;
 
   for (size_t i = 0; i < new_len; i++) {
     String l = replacement.items[i];
