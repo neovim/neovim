@@ -7,9 +7,9 @@
 #include "nvim/api/defs.h"
 #include "nvim/api/helpers.h"
 
-int64_t tabpage_get_window_count(Tabpage tabpage, Error *err)
+Integer tabpage_get_window_count(Tabpage tabpage, Error *err)
 {
-  uint64_t rv = 0;
+  Integer rv = 0;
   tabpage_T *tab = find_tab(tabpage, err);
 
   if (!tab) {
@@ -80,7 +80,7 @@ Window tabpage_get_window(Tabpage tabpage, Error *err)
   }
 }
 
-bool tabpage_is_valid(Tabpage tabpage)
+Boolean tabpage_is_valid(Tabpage tabpage)
 {
   Error stub = {.set = false};
   return find_tab(tabpage, &stub) != NULL;

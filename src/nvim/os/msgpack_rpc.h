@@ -38,9 +38,9 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res);
 /// @param obj The object to convert
 /// @param[out] arg A pointer to the avalue
 /// @return true if the convertion succeeded, false otherwise
-bool msgpack_rpc_to_bool(msgpack_object *obj, bool *arg);
-bool msgpack_rpc_to_int64_t(msgpack_object *obj, int64_t *arg);
-bool msgpack_rpc_to_double(msgpack_object *obj, double *arg);
+bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg);
+bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg);
+bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg);
 bool msgpack_rpc_to_position(msgpack_object *obj, Position *arg);
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg);
 bool msgpack_rpc_to_buffer(msgpack_object *obj, Buffer *arg);
@@ -57,9 +57,9 @@ bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg);
 ///
 /// @param result A pointer to the result
 /// @param res A packer that contains the response
-void msgpack_rpc_from_bool(bool result, msgpack_packer *res);
-void msgpack_rpc_from_int64_t(int64_t result, msgpack_packer *res);
-void msgpack_rpc_from_double(double result, msgpack_packer *res);
+void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res);
+void msgpack_rpc_from_integer(Integer result, msgpack_packer *res);
+void msgpack_rpc_from_float(Float result, msgpack_packer *res);
 void msgpack_rpc_from_position(Position result, msgpack_packer *res);
 void msgpack_rpc_from_string(String result, msgpack_packer *res);
 void msgpack_rpc_from_buffer(Buffer result, msgpack_packer *res);
@@ -71,9 +71,9 @@ void msgpack_rpc_from_array(Array result, msgpack_packer *res);
 void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res);
 
 /// Helpers for initializing types that may be freed later
-#define msgpack_rpc_init_bool
-#define msgpack_rpc_init_int64_t
-#define msgpack_rpc_init_double
+#define msgpack_rpc_init_boolean
+#define msgpack_rpc_init_integer
+#define msgpack_rpc_init_float
 #define msgpack_rpc_init_position
 #define msgpack_rpc_init_string
 #define msgpack_rpc_init_buffer
@@ -87,9 +87,9 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res);
 /// Helpers for freeing arguments/return value
 ///
 /// @param value The value to be freed
-#define msgpack_rpc_free_bool(value)
-#define msgpack_rpc_free_int64_t(value)
-#define msgpack_rpc_free_double(value)
+#define msgpack_rpc_free_boolean(value)
+#define msgpack_rpc_free_integer(value)
+#define msgpack_rpc_free_float(value)
 #define msgpack_rpc_free_position(value)
 // Strings are not copied from msgpack and so don't need to be freed(they
 // probably "live" in the msgpack streaming buffer)

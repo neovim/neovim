@@ -32,7 +32,7 @@ void window_set_cursor(Window window, Position pos, Error *err);
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return the height in rows
-int64_t window_get_height(Window window, Error *err);
+Integer window_get_height(Window window, Error *err);
 
 /// Sets the window height. This will only succeed if the screen is split
 /// horizontally.
@@ -40,14 +40,14 @@ int64_t window_get_height(Window window, Error *err);
 /// @param window The window handle
 /// @param height the new height in rows
 /// @param[out] err Details of an error that may have occurred
-void window_set_height(Window window, int64_t height, Error *err);
+void window_set_height(Window window, Integer height, Error *err);
 
 /// Gets the window width
 ///
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return the width in columns
-int64_t window_get_width(Window window, Error *err);
+Integer window_get_width(Window window, Error *err);
 
 /// Sets the window width. This will only succeed if the screen is split
 /// vertically.
@@ -55,7 +55,7 @@ int64_t window_get_width(Window window, Error *err);
 /// @param window The window handle
 /// @param width the new width in columns
 /// @param[out] err Details of an error that may have occurred
-void window_set_width(Window window, int64_t width, Error *err);
+void window_set_width(Window window, Integer width, Error *err);
 
 /// Gets a window variable
 ///
@@ -109,7 +109,7 @@ Tabpage window_get_tabpage(Window window, Error *err);
 ///
 /// @param window The window handle
 /// @return true if the window is valid, false otherwise
-bool window_is_valid(Window window);
+Boolean window_is_valid(Window window);
 
 #endif  // NVIM_API_WINDOW_H
 

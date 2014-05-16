@@ -2,6 +2,7 @@
 #define NVIM_API_DEFS_H
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <string.h>
 
 // Basic types
@@ -10,14 +11,18 @@ typedef struct {
   bool set;
 } Error;
 
+typedef bool Boolean;
+typedef int64_t Integer;
+typedef double Float;
+
 typedef struct {
   char *data;
   size_t size;
 } String;
 
-typedef int64_t Buffer;
-typedef int64_t Window;
-typedef int64_t Tabpage;
+typedef Integer Buffer;
+typedef Integer Window;
+typedef Integer Tabpage;
 
 typedef struct object Object;
 
@@ -27,7 +32,7 @@ typedef struct {
 } StringArray;
 
 typedef struct {
-  int64_t row, col;
+  Integer row, col;
 } Position;
 
 typedef struct {
@@ -44,8 +49,8 @@ typedef struct {
 
 typedef enum {
   kObjectTypeNil,
-  kObjectTypeBool,
-  kObjectTypeInt,
+  kObjectTypeBoolean,
+  kObjectTypeInteger,
   kObjectTypeFloat,
   kObjectTypeString,
   kObjectTypeArray,
@@ -55,9 +60,9 @@ typedef enum {
 struct object {
   ObjectType type;
   union {
-    bool boolean;
-    int64_t integer;
-    double floating_point;
+    Boolean boolean;
+    Integer integer;
+    Float floating;
     String string;
     Array array;
     Dictionary dictionary;

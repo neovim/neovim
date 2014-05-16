@@ -190,10 +190,10 @@ Object get_option_from(void *from, int type, String name, Error *err)
   }
 
   if (flags & SOPT_BOOL) {
-    rv.type = kObjectTypeBool;
+    rv.type = kObjectTypeBoolean;
     rv.data.boolean = numval ? true : false;
   } else if (flags & SOPT_NUM) {
-    rv.type = kObjectTypeInt;
+    rv.type = kObjectTypeInteger;
     rv.data.integer = numval;
   } else if (flags & SOPT_STRING) {
     if (stringval) {
@@ -242,7 +242,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   int opt_flags = (type ? OPT_LOCAL : OPT_GLOBAL);
 
   if (flags & SOPT_BOOL) {
-    if (value.type != kObjectTypeBool) {
+    if (value.type != kObjectTypeBoolean) {
       set_api_error("option requires a boolean value", err);
       goto cleanup;
     }
@@ -250,7 +250,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     set_option_value_for(key, val, NULL, opt_flags, type, to, err);
 
   } else if (flags & SOPT_NUM) {
-    if (value.type != kObjectTypeInt) {
+    if (value.type != kObjectTypeInteger) {
       set_api_error("option requires an integer value", err);
       goto cleanup;
     }
@@ -330,19 +330,19 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
       tv->vval.v_number = 0;
       break;
 
-    case kObjectTypeBool:
+    case kObjectTypeBoolean:
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = obj.data.boolean;
       break;
 
-    case kObjectTypeInt:
+    case kObjectTypeInteger:
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = obj.data.integer;
       break;
 
     case kObjectTypeFloat:
       tv->v_type = VAR_FLOAT;
-      tv->vval.v_float = obj.data.floating_point;
+      tv->vval.v_float = obj.data.floating;
       break;
 
     case kObjectTypeString:
@@ -431,13 +431,13 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
       break;
 
     case VAR_NUMBER:
-      rv.type = kObjectTypeInt;
+      rv.type = kObjectTypeInteger;
       rv.data.integer = obj->vval.v_number;
       break;
 
     case VAR_FLOAT:
       rv.type = kObjectTypeFloat;
-      rv.data.floating_point = obj->vval.v_float;
+      rv.data.floating = obj->vval.v_float;
       break;
 
     case VAR_LIST:

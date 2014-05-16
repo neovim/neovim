@@ -66,7 +66,7 @@ Object vim_eval(String str, Error *err)
   return rv;
 }
 
-int64_t vim_strwidth(String str)
+Integer vim_strwidth(String str)
 {
   return mb_string2cells((char_u *)str.data, str.size);
 }
@@ -177,7 +177,7 @@ void vim_err_write(String str)
   write_msg(str, true);
 }
 
-int64_t vim_get_buffer_count(void)
+Integer vim_get_buffer_count(void)
 {
   buf_T *b = firstbuf;
   uint64_t n = 0;
@@ -212,7 +212,7 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
   try_end(err);
 }
 
-int64_t vim_get_window_count(void)
+Integer vim_get_window_count(void)
 {
   tabpage_T *tp;
   win_T *wp;
@@ -265,7 +265,7 @@ void vim_set_current_window(Window window, Error *err)
   try_end(err);
 }
 
-int64_t vim_get_tabpage_count(void)
+Integer vim_get_tabpage_count(void)
 {
   tabpage_T *tp = first_tabpage;
   uint64_t rv = 0;

@@ -56,7 +56,7 @@ void window_set_cursor(Window window, Position pos, Error *err)
   update_screen(VALID);
 }
 
-int64_t window_get_height(Window window, Error *err)
+Integer window_get_height(Window window, Error *err)
 {
   win_T *win = find_window(window, err);
 
@@ -67,7 +67,7 @@ int64_t window_get_height(Window window, Error *err)
   return win->w_height;
 }
 
-void window_set_height(Window window, int64_t height, Error *err)
+void window_set_height(Window window, Integer height, Error *err)
 {
   win_T *win = find_window(window, err);
 
@@ -83,7 +83,7 @@ void window_set_height(Window window, int64_t height, Error *err)
   try_end(err);
 }
 
-int64_t window_get_width(Window window, Error *err)
+Integer window_get_width(Window window, Error *err)
 {
   win_T *win = find_window(window, err);
 
@@ -94,7 +94,7 @@ int64_t window_get_width(Window window, Error *err)
   return win->w_width;
 }
 
-void window_set_width(Window window, int64_t width, Error *err)
+void window_set_width(Window window, Integer width, Error *err)
 {
   win_T *win = find_window(window, err);
 
@@ -176,7 +176,7 @@ Tabpage window_get_tabpage(Window window, Error *err)
   return 0;
 }
 
-bool window_is_valid(Window window)
+Boolean window_is_valid(Window window)
 {
   Error stub = {.set = false};
   return find_window(window, &stub) != NULL;

@@ -11,7 +11,7 @@
 /// @param tabpage The tabpage
 /// @param[out] err Details of an error that may have occurred
 /// @return The number of windows in `tabpage`
-int64_t tabpage_get_window_count(Tabpage tabpage, Error *err);
+Integer tabpage_get_window_count(Tabpage tabpage, Error *err);
 
 /// Gets a tabpage variable
 ///
@@ -41,7 +41,7 @@ Window tabpage_get_window(Tabpage tabpage, Error *err);
 ///
 /// @param tabpage The tab page handle
 /// @return true if the tab page is valid, false otherwise
-bool tabpage_is_valid(Tabpage tabpage);
+Boolean tabpage_is_valid(Tabpage tabpage);
 
 #endif  // NVIM_API_TABPAGE_H
 

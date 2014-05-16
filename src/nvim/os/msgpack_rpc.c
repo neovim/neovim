@@ -73,13 +73,13 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
   msgpack_pack_nil(res);
 }
 
-bool msgpack_rpc_to_bool(msgpack_object *obj, bool *arg)
+bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
 {
   *arg = obj->via.boolean;
   return obj->type == MSGPACK_OBJECT_BOOLEAN;
 }
 
-bool msgpack_rpc_to_int64_t(msgpack_object *obj, int64_t *arg)
+bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
 {
 
   if (obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
@@ -92,7 +92,7 @@ bool msgpack_rpc_to_int64_t(msgpack_object *obj, int64_t *arg)
   return obj->type == MSGPACK_OBJECT_NEGATIVE_INTEGER;
 }
 
-bool msgpack_rpc_to_double(msgpack_object *obj, double *arg)
+bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
 {
   *arg = obj->via.dec;
   return obj->type == MSGPACK_OBJECT_DOUBLE;
@@ -107,17 +107,17 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
 
 bool msgpack_rpc_to_buffer(msgpack_object *obj, Buffer *arg)
 {
-  return msgpack_rpc_to_int64_t(obj, arg);
+  return msgpack_rpc_to_integer(obj, arg);
 }
 
 bool msgpack_rpc_to_window(msgpack_object *obj, Window *arg)
 {
-  return msgpack_rpc_to_int64_t(obj, arg);
+  return msgpack_rpc_to_integer(obj, arg);
 }
 
 bool msgpack_rpc_to_tabpage(msgpack_object *obj, Tabpage *arg)
 {
-  return msgpack_rpc_to_int64_t(obj, arg);
+  return msgpack_rpc_to_integer(obj, arg);
 }
 
 bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
@@ -128,17 +128,17 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       return true;
 
     case MSGPACK_OBJECT_BOOLEAN:
-      arg->type = kObjectTypeBool;
-      return msgpack_rpc_to_bool(obj, &arg->data.boolean);
+      arg->type = kObjectTypeBoolean;
+      return msgpack_rpc_to_boolean(obj, &arg->data.boolean);
 
     case MSGPACK_OBJECT_POSITIVE_INTEGER:
     case MSGPACK_OBJECT_NEGATIVE_INTEGER:
-      arg->type = kObjectTypeInt;
-      return msgpack_rpc_to_int64_t(obj, &arg->data.integer);
+      arg->type = kObjectTypeInteger;
+      return msgpack_rpc_to_integer(obj, &arg->data.integer);
 
     case MSGPACK_OBJECT_DOUBLE:
       arg->type = kObjectTypeFloat;
-      return msgpack_rpc_to_double(obj, &arg->data.floating_point);
+      return msgpack_rpc_to_float(obj, &arg->data.floating);
 
     case MSGPACK_OBJECT_RAW:
       arg->type = kObjectTypeString;
@@ -235,7 +235,7 @@ bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg)
   return true;
 }
 
-void msgpack_rpc_from_bool(bool result, msgpack_packer *res)
+void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res)
 {
   if (result) {
     msgpack_pack_true(res);
@@ -244,12 +244,12 @@ void msgpack_rpc_from_bool(bool result, msgpack_packer *res)
   }
 }
 
-void msgpack_rpc_from_int64_t(int64_t result, msgpack_packer *res)
+void msgpack_rpc_from_integer(Integer result, msgpack_packer *res)
 {
   msgpack_pack_int64(res, result);
 }
 
-void msgpack_rpc_from_double(double result, msgpack_packer *res)
+void msgpack_rpc_from_float(Float result, msgpack_packer *res)
 {
   msgpack_pack_double(res, result);
 }
@@ -262,17 +262,17 @@ void msgpack_rpc_from_string(String result, msgpack_packer *res)
 
 void msgpack_rpc_from_buffer(Buffer result, msgpack_packer *res)
 {
-  msgpack_rpc_from_int64_t(result, res);
+  msgpack_rpc_from_integer(result, res);
 }
 
 void msgpack_rpc_from_window(Window result, msgpack_packer *res)
 {
-  msgpack_rpc_from_int64_t(result, res);
+  msgpack_rpc_from_integer(result, res);
 }
 
 void msgpack_rpc_from_tabpage(Tabpage result, msgpack_packer *res)
 {
-  msgpack_rpc_from_int64_t(result, res);
+  msgpack_rpc_from_integer(result, res);
 }
 
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
@@ -282,16 +282,16 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_pack_nil(res);
       break;
 
-    case kObjectTypeBool:
-      msgpack_rpc_from_bool(result.data.boolean, res);
+    case kObjectTypeBoolean:
+      msgpack_rpc_from_boolean(result.data.boolean, res);
       break;
 
-    case kObjectTypeInt:
-      msgpack_rpc_from_int64_t(result.data.integer, res);
+    case kObjectTypeInteger:
+      msgpack_rpc_from_integer(result.data.integer, res);
       break;
 
     case kObjectTypeFloat:
-      msgpack_rpc_from_double(result.data.floating_point, res);
+      msgpack_rpc_from_float(result.data.floating, res);
       break;
 
     case kObjectTypeString:
@@ -350,8 +350,8 @@ void msgpack_rpc_free_object(Object value)
 {
   switch (value.type) {
     case kObjectTypeNil:
-    case kObjectTypeBool:
-    case kObjectTypeInt:
+    case kObjectTypeBoolean:
+    case kObjectTypeInteger:
     case kObjectTypeFloat:
       break;
 

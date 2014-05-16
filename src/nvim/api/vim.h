@@ -31,7 +31,7 @@ Object vim_eval(String str, Error *err);
 ///
 /// @param str Some text
 /// @return The number of cells
-int64_t vim_strwidth(String str);
+Integer vim_strwidth(String str);
 
 /// Returns a list of paths contained in 'runtimepath'
 ///
@@ -110,7 +110,7 @@ void vim_err_write(String str);
 /// Gets the number of buffers
 ///
 /// @return The number of buffers
-int64_t vim_get_buffer_count(void);
+Integer vim_get_buffer_count(void);
 
 /// Return the current buffer
 ///
@@ -126,7 +126,7 @@ void vim_set_current_buffer(Buffer buffer, Error *err);
 /// Gets the number of windows
 ///
 /// @return The number of windows
-int64_t vim_get_window_count(void);
+Integer vim_get_window_count(void);
 
 /// Return the current window
 ///
@@ -141,7 +141,7 @@ void vim_set_current_window(Window window, Error *err);
 /// Gets the number of tab pages
 ///
 /// @return The number of tab pages
-int64_t vim_get_tabpage_count(void);
+Integer vim_get_tabpage_count(void);
 
 /// Return the current tab page
 ///

@@ -40,7 +40,7 @@ static void fix_cursor(linenr_T lo, linenr_T hi, linenr_T extra);
 // Normalizes 0-based indexes to buffer line numbers
 static int64_t normalize_index(buf_T *buf, int64_t index);
 
-int64_t buffer_get_length(Buffer buffer, Error *err)
+Integer buffer_get_length(Buffer buffer, Error *err)
 {
   buf_T *buf = find_buffer(buffer, err);
 
@@ -51,7 +51,7 @@ int64_t buffer_get_length(Buffer buffer, Error *err)
   return buf->b_ml.ml_line_count;
 }
 
-String buffer_get_line(Buffer buffer, int64_t index, Error *err)
+String buffer_get_line(Buffer buffer, Integer index, Error *err)
 {
   String rv = {.size = 0};
   StringArray slice = buffer_get_slice(buffer, index, index, true, true, err);
@@ -63,23 +63,23 @@ String buffer_get_line(Buffer buffer, int64_t index, Error *err)
   return rv;
 }
 
-void buffer_set_line(Buffer buffer, int64_t index, String line, Error *err)
+void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 {
   StringArray array = {.items = &line, .size = 1};
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
-void buffer_del_line(Buffer buffer, int64_t index, Error *err)
+void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
   StringArray array = {.size = 0};
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
 StringArray buffer_get_slice(Buffer buffer,
-                             int64_t start,
-                             int64_t end,
-                             bool include_start,
-                             bool include_end,
+                             Integer start,
+                             Integer end,
+                             Boolean include_start,
+                             Boolean include_end,
                              Error *err)
 {
   StringArray rv = {.size = 0};
@@ -109,10 +109,10 @@ StringArray buffer_get_slice(Buffer buffer,
 }
 
 void buffer_set_slice(Buffer buffer,
-                      int64_t start,
-                      int64_t end,
-                      bool include_start,
-                      bool include_end,
+                      Integer start,
+                      Integer end,
+                      Boolean include_start,
+                      Boolean include_end,
                       StringArray replacement,
                       Error *err)
 {
@@ -310,15 +310,15 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
   }
 }
 
-bool buffer_is_valid(Buffer buffer)
+Boolean buffer_is_valid(Buffer buffer)
 {
   Error stub = {.set = false};
   return find_buffer(buffer, &stub) != NULL;
 }
 
-void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err)
+void buffer_insert(Buffer buffer, Integer lnum, StringArray lines, Error *err)
 {
-  buffer_set_slice(buffer, index, index, false, true, lines, err);
+  buffer_set_slice(buffer, lnum, lnum, false, true, lines, err);
 }
 
 Position buffer_get_mark(Buffer buffer, String name, Error *err)

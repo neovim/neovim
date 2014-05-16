@@ -11,7 +11,7 @@
 /// @param buffer The buffer handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The line count
-int64_t buffer_get_length(Buffer buffer, Error *err);
+Integer buffer_get_length(Buffer buffer, Error *err);
 
 /// Gets a buffer line
 ///
@@ -19,7 +19,7 @@ int64_t buffer_get_length(Buffer buffer, Error *err);
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
 /// @return The line string
-String buffer_get_line(Buffer buffer, int64_t index, Error *err);
+String buffer_get_line(Buffer buffer, Integer index, Error *err);
 
 /// Sets a buffer line
 ///
@@ -27,14 +27,14 @@ String buffer_get_line(Buffer buffer, int64_t index, Error *err);
 /// @param index The line index
 /// @param line The new line.
 /// @param[out] err Details of an error that may have occurred
-void buffer_set_line(Buffer buffer, int64_t index, String line, Error *err);
+void buffer_set_line(Buffer buffer, Integer index, String line, Error *err);
 
 /// Deletes a buffer line
 ///
 /// @param buffer The buffer handle
 /// @param index The line index
 /// @param[out] err Details of an error that may have occurred
-void buffer_del_line(Buffer buffer, int64_t index, Error *err);
+void buffer_del_line(Buffer buffer, Integer index, Error *err);
 
 /// Retrieves a line range from the buffer
 ///
@@ -46,10 +46,10 @@ void buffer_del_line(Buffer buffer, int64_t index, Error *err);
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
 StringArray buffer_get_slice(Buffer buffer,
-                             int64_t start,
-                             int64_t end,
-                             bool include_start,
-                             bool include_end,
+                             Integer start,
+                             Integer end,
+                             Boolean include_start,
+                             Boolean include_end,
                              Error *err);
 
 /// Replaces a line range on the buffer
@@ -63,10 +63,10 @@ StringArray buffer_get_slice(Buffer buffer,
 ///        will simply delete the line range)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_slice(Buffer buffer,
-                      int64_t start,
-                      int64_t end,
-                      bool include_start,
-                      bool include_end,
+                      Integer start,
+                      Integer end,
+                      Boolean include_start,
+                      Boolean include_end,
                       StringArray replacement,
                       Error *err);
 
@@ -122,16 +122,16 @@ void buffer_set_name(Buffer buffer, String name, Error *err);
 ///
 /// @param buffer The buffer handle
 /// @return true if the buffer is valid, false otherwise
-bool buffer_is_valid(Buffer buffer);
+Boolean buffer_is_valid(Buffer buffer);
 
 /// Inserts a sequence of lines to a buffer at a certain index
 ///
 /// @param buffer The buffer handle
-/// @param lnum Insert the lines before `lnum`. If negative, it will append
+/// @param lnum Insert the lines after `lnum`. If negative, it will append
 ///        to the end of the buffer.
 /// @param lines An array of lines
 /// @param[out] err Details of an error that may have occurred
-void buffer_insert(Buffer buffer, int64_t index, StringArray lines, Error *err);
+void buffer_insert(Buffer buffer, Integer lnum, StringArray lines, Error *err);
 
 /// Return a tuple (row,col) representing the position of the named mark
 ///
