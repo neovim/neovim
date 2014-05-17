@@ -133,7 +133,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen);
 /// @param data pointer to the chunk
 /// @param len size of the chunk
 /// @return a pointer
-char *xmemdup(const char *data, size_t len)
+void *xmemdup(const void *data, size_t len)
  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET;
 
 /// Old low level memory allocation function.
