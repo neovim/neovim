@@ -7,38 +7,44 @@ if ($ARGV[0] eq '--help') {
   print << "EOF";
 Usage:
 
-  $0 definitions.c static.h non-static.h "cc -E …"
+  $0 definitions.c
 EOF
   exit;
 }
 
 my ($cfname, $sfname, $gfname, $cpp) = @ARGV;
 
-my $pipe;
+my $F;
 
-open $pipe, '-|', "$cpp $cfname";
+open $F, "<", $cfname;
 
-my $text = join "", <$pipe>;
+my $text = join "", <$F>;
 
-close $pipe;
+close $F;
 
 my $s = qr/(?>\s*)/aso;
 my $w = qr/(?>\w+)/aso;
+my $argname = qr/$w(?:\[(?>\w+)\])?/aso;
 my $type_regex = qr/(?:$w$s\**$s)+/aso;
-my $arg_regex = qr/(?:$type_regex$s$w)/aso;
+my $arg_regex = qr/(?:$type_regex$s$argname)/aso;
 
 while ($text =~ /
-    \n              # Definition starts at the start of line
+    (?<=\n)         # Definition starts at the start of line
     $type_regex     # Return type
     $s$w            # Function name
     $s\($s
     (?:
        $arg_regex(?:$s,$s$arg_regex)*+
+       ($s,$s\.\.\.)?                   # varargs function
       |void
     )?
     $s\)
     (?:$s FUNC_ATTR_$w(?:\((?>[^)]*)\))?)*+ # Optional attributes
-    (?=$s\{)        # Start of function body (excluded from match)
-  /axsog) {
-  print "Match: $&\n";
+    (?=$s;)         # Ending semicolon
+  /axsogp) {
+  my $match = "${^MATCH}";
+  my $s = "${^PREMATCH}";
+  $s =~ s/[^\n]++//g;
+  my $line = length $s;
+  print "${cfname}:${line}: $match\n";
 }
