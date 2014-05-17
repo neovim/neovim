@@ -29,7 +29,7 @@ typedef struct growarray {
 /// @return nothing
 ///
 #define GA_DEEP_CLEAR(gap, item_type, free_item_fn) \
-  { \
+  do{ \
     garray_T* _gap = (gap); \
     while (_gap->ga_len > 0) {  \
       _gap->ga_len--; \
@@ -37,7 +37,7 @@ typedef struct growarray {
       free_item_fn(_item);  \
     }  \
     ga_clear(_gap); \
-  }
+  }while(false)
 
 #define GA_DEEP_CLEAR_PTR(gap) GA_DEEP_CLEAR(gap, void*, FREE_PTR)
 
