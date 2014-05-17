@@ -129,7 +129,9 @@ int main() {
 #include <string.h>
 #include <limits.h>
 
+#define DEFINE_FUNC_ATTRIBUTES
 #include "nvim/func_attr.h"
+#undef DEFINE_FUNC_ATTRIBUTES
 #include "nvim/memory.h"
 
 /* compiler specific configuration */
@@ -622,5 +624,4 @@ typedef const char *kh_cstr_t;
  */
 #define KHASH_MAP_INIT_STR(name, khval_t)								\
 	KHASH_INIT(name, kh_cstr_t, khval_t, 1, kh_str_hash_func, kh_str_hash_equal)
-
 #endif /* __AC_KHASH_H */
