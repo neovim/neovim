@@ -343,14 +343,6 @@ static int nfa_ll_index = 0;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "regexp_nfa.c.generated.h"
 #endif
-#ifdef REGEXP_DEBUG
-static void nfa_set_code(int c);
-static void nfa_postfix_dump(char_u *expr, int retval);
-static void nfa_print_state(FILE *debugf, nfa_state_T *state);
-static void nfa_print_state2(FILE *debugf, nfa_state_T *state,
-                             garray_T *indent);
-static void nfa_dump(nfa_regprog_T *prog);
-#endif
 
 /* helper functions used when doing re2post() ... regatom() parsing */
 #define EMIT(c) do {                            \
@@ -3396,10 +3388,6 @@ static void nfa_postprocess(nfa_regprog_T *prog)
 
 
 #ifdef REGEXP_DEBUG
-static void log_subsexpr(regsubs_T *subs);
-static void log_subexpr(regsub_T *sub);
-static char *pim_info(nfa_pim_T *pim);
-
 static void log_subsexpr(regsubs_T *subs)
 {
   log_subexpr(&subs->norm);

@@ -146,7 +146,6 @@ char *UP, *BC, PC;
 
 # define TGETSTR(s, p)  vim_tgetstr((s), (p))
 # define TGETENT(b, t)  tgetent((char *)(b), (char *)(t))
-static char_u *vim_tgetstr(char *s, char_u **pp);
 #endif /* HAVE_TGETENT */
 
 static int detected_8bit = FALSE;       /* detected 8-bit terminal */
