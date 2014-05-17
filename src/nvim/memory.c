@@ -214,7 +214,7 @@ char *xstrndup(const char *str, size_t len)
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 
-char *xmemdup(const char *data, size_t len)
+void *xmemdup(const void *data, size_t len)
 {
   return memcpy(xmalloc(len), data, len);
 }

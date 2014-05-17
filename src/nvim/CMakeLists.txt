@@ -56,6 +56,13 @@ set(CONV_SRCS
   os/signal.c
   os/users.c
   os/wstream.c
+  os/msgpack_rpc.c
+  api/buffer.c
+  api/helpers.c
+  api/tabpage.c
+  api/window.c
+  api/vim.h
+  api/vim.c
   )
 
 set_source_files_properties(

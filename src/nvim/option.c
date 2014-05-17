@@ -5960,10 +5960,10 @@ get_option_value (
 //
 // Returned flags:
 //       0 hidden or unknown option, also option that does not have requested 
-//         type (see SREQ_* in vim.h)
-//  see SOPT_* in vim.h for other flags
+//         type (see SREQ_* in option_defs.h)
+//  see SOPT_* in option_defs.h for other flags
 //
-// Possible opt_type values: see SREQ_* in vim.h
+// Possible opt_type values: see SREQ_* in option_defs.h
 int get_option_value_strict(char *name,
                             int64_t *numval,
                             char **stringval,

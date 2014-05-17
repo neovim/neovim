@@ -14,13 +14,14 @@
 
 #include "nvim/lib/khash.h"
 
+
 #if defined(ARCH_64)
-typedef uint64_t ptr_int_t;
-KHASH_SET_INIT_INT64(Lookup)
+#define ptr_hash_func(key) kh_int64_hash_func(key)
 #elif defined(ARCH_32)
-typedef uint32_t ptr_int_t;
-KHASH_SET_INIT_INT(Lookup)
+#define ptr_hash_func(key) kh_int_hash_func(key)
 #endif
+
+KHASH_INIT(Lookup, uintptr_t, char, 0, ptr_hash_func, kh_int_hash_equal)
 
 /// Recursion helper for the `vim_to_object`. This uses a pointer table
 /// to avoid infinite recursion due to cyclic references
@@ -122,7 +123,12 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
     return rv;
   }
 
-  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, key.size);
+  if (key.size > INT_MAX) {
+    set_api_error("Key length is too high", err);
+    return rv;
+  }
+
+  dictitem_T *di = dict_find(dict, (uint8_t *)key.data, (int)key.size);
 
   if (value.type == kObjectTypeNil) {
     // Delete the key
@@ -189,10 +195,10 @@ Object get_option_from(void *from, int type, String name, Error *err)
   }
 
   if (flags & SOPT_BOOL) {
-    rv.type = kObjectTypeBool;
+    rv.type = kObjectTypeBoolean;
     rv.data.boolean = numval ? true : false;
   } else if (flags & SOPT_NUM) {
-    rv.type = kObjectTypeInt;
+    rv.type = kObjectTypeInteger;
     rv.data.integer = numval;
   } else if (flags & SOPT_STRING) {
     if (stringval) {
@@ -241,7 +247,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   int opt_flags = (type ? OPT_LOCAL : OPT_GLOBAL);
 
   if (flags & SOPT_BOOL) {
-    if (value.type != kObjectTypeBool) {
+    if (value.type != kObjectTypeBoolean) {
       set_api_error("option requires a boolean value", err);
       goto cleanup;
     }
@@ -249,12 +255,17 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     set_option_value_for(key, val, NULL, opt_flags, type, to, err);
 
   } else if (flags & SOPT_NUM) {
-    if (value.type != kObjectTypeInt) {
+    if (value.type != kObjectTypeInteger) {
       set_api_error("option requires an integer value", err);
       goto cleanup;
     }
 
-    int val = value.data.integer;
+    if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
+      set_api_error("Option value outside range", err);
+      return;
+    }
+
+    int val = (int)value.data.integer;
     set_option_value_for(key, val, NULL, opt_flags, type, to, err);
   } else {
     if (value.type != kObjectTypeString) {
@@ -283,7 +294,12 @@ Object vim_to_object(typval_T *obj)
 
 buf_T *find_buffer(Buffer buffer, Error *err)
 {
-  buf_T *buf = buflist_findnr(buffer);
+  if (buffer > INT_MAX || buffer < INT_MIN) {
+    set_api_error("Invalid buffer id", err);
+    return NULL;
+  }
+
+  buf_T *buf = buflist_findnr((int)buffer);
 
   if (buf == NULL) {
     set_api_error("Invalid buffer id", err);
@@ -309,7 +325,12 @@ win_T * find_window(Window window, Error *err)
 
 tabpage_T * find_tab(Tabpage tabpage, Error *err)
 {
-  tabpage_T *rv = find_tabpage(tabpage);
+  if (tabpage > INT_MAX || tabpage < INT_MIN) {
+    set_api_error("Invalid tabpage id", err);
+    return NULL;
+  }
+
+  tabpage_T *rv = find_tabpage((int)tabpage);
 
   if (!rv) {
     set_api_error("Invalid tabpage id", err);
@@ -329,19 +350,24 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
       tv->vval.v_number = 0;
       break;
 
-    case kObjectTypeBool:
+    case kObjectTypeBoolean:
       tv->v_type = VAR_NUMBER;
       tv->vval.v_number = obj.data.boolean;
       break;
 
-    case kObjectTypeInt:
+    case kObjectTypeInteger:
+      if (obj.data.integer > INT_MAX || obj.data.integer < INT_MIN) {
+        set_api_error("Integer value outside range", err);
+        return false;
+      }
+
       tv->v_type = VAR_NUMBER;
-      tv->vval.v_number = obj.data.integer;
+      tv->vval.v_number = (int)obj.data.integer;
       break;
 
     case kObjectTypeFloat:
       tv->v_type = VAR_FLOAT;
-      tv->vval.v_float = obj.data.floating_point;
+      tv->vval.v_float = obj.data.floating;
       break;
 
     case kObjectTypeString:
@@ -412,7 +438,7 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
   if (obj->v_type == VAR_LIST || obj->v_type == VAR_DICT) {
     int ret;
     // Container object, add it to the lookup table
-    kh_put(Lookup, lookup, (ptr_int_t)obj, &ret);
+    kh_put(Lookup, lookup, (uintptr_t)obj, &ret);
     if (!ret) {
       // It's already present, meaning we alredy processed it so just return
       // nil instead.
@@ -430,13 +456,13 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
       break;
 
     case VAR_NUMBER:
-      rv.type = kObjectTypeInt;
+      rv.type = kObjectTypeInteger;
       rv.data.integer = obj->vval.v_number;
       break;
 
     case VAR_FLOAT:
       rv.type = kObjectTypeFloat;
-      rv.data.floating_point = obj->vval.v_float;
+      rv.data.floating = obj->vval.v_float;
       break;
 
     case VAR_LIST:
@@ -446,8 +472,9 @@ static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
 
         if (list != NULL) {
           rv.type = kObjectTypeArray;
-          rv.data.array.size = list->lv_len;
-          rv.data.array.items = xmalloc(list->lv_len * sizeof(Object));
+          assert(list->lv_len >= 0);
+          rv.data.array.size = (size_t)list->lv_len;
+          rv.data.array.items = xmalloc(rv.data.array.size * sizeof(Object));
 
           uint32_t i = 0;
           for (item = list->lv_first; item != NULL; item = item->li_next) {

@@ -20,18 +20,7 @@ c_id = letter * (alpha ^ 0)
 c_void = P('void')
 c_param_type = (
   ((P('Error') * fill * P('*') * fill) * Cc('error')) +
-  (C(P('bool')) * (ws ^ 1)) +
-  (C(P('int64_t')) * (ws ^ 1)) +
-  (C(P('double')) * (ws ^ 1)) +
-  (C(P('StringArray')) * (ws ^ 1)) +
-  (C(P('String')) * (ws ^ 1)) +
-  (C(P('Buffer')) * (ws ^ 1)) +
-  (C(P('Window')) * (ws ^ 1)) +
-  (C(P('Tabpage')) * (ws ^ 1)) +
-  (C(P('Object')) * (ws ^ 1)) +
-  (C(P('Position')) * (ws ^ 1)) +
-  (C(P('Array')) * (ws ^ 1)) +
-  (C(P('Dictionary')) * (ws ^ 1))
+  (C(c_id) * (ws ^ 1))
   )
 c_type = (C(c_void) * (ws ^ 1)) + c_param_type
 c_param = Ct(c_param_type * C(c_id))
