@@ -108,8 +108,8 @@ StringArray buffer_get_slice(Buffer buffer,
       goto end;
     }
 
-    rv.items[i].data = xstrdup((char *)ml_get_buf(buf, (linenr_T)lnum, false));
-    rv.items[i].size = strlen(rv.items[i].data);
+    const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
+    rv.items[i] = cstr_to_string(bufstr);
   }
 
 end:
@@ -307,9 +307,7 @@ String buffer_get_name(Buffer buffer, Error *err)
     return rv;
   }
 
-  rv.data = xstrdup((char *)buf->b_ffname);
-  rv.size = strlen(rv.data);
-  return rv;
+  return cstr_to_string((char *)buf->b_ffname);
 }
 
 void buffer_set_name(Buffer buffer, String name, Error *err)
