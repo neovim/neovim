@@ -86,5 +86,12 @@ win_T * find_window(Window window, Error *err);
 /// @return the tabpage pointer
 tabpage_T * find_tab(Tabpage tabpage, Error *err);
 
+/// Copies a C string into a String (binary safe string, characters + length)
+///
+/// @param str the C string to copy
+/// @return the resulting String, if the input string was NULL, then an
+///         empty String is returned
+String cstr_to_string(const char *str);
+
 #endif  // NVIM_API_HELPERS_H
 

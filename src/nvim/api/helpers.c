@@ -339,6 +339,18 @@ tabpage_T * find_tab(Tabpage tabpage, Error *err)
   return rv;
 }
 
+String cstr_to_string(const char *str) {
+    if (str == NULL) {
+        return (String) { .data = NULL, .size = 0 };
+    }
+
+    size_t len = strlen(str);
+    return (String) {
+        .data = xmemdup(str, len),
+        .size = len
+    };
+}
+
 static bool object_to_vim(Object obj, typval_T *tv, Error *err)
 {
   tv->v_type = VAR_UNKNOWN;
