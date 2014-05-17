@@ -4,7 +4,6 @@
 
 #include <uv.h>
 
-#include "nvim/lib/klist.h"
 #include "nvim/os/event.h"
 #include "nvim/os/input.h"
 #include "nvim/os/channel.h"
@@ -15,6 +14,8 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/misc2.h"
+
+#include "nvim/lib/klist.h"
 
 // event will be cleaned up after it gets processed
 #define _destroy_event(x)  // do nothing
