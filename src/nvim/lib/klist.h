@@ -29,7 +29,9 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#define DEFINE_FUNC_ATTRIBUTES
 #include "nvim/func_attr.h"
+#undef DEFINE_FUNC_ATTRIBUTES
 #include "nvim/memory.h"
 
 #define KMEMPOOL_INIT(name, kmptype_t, kmpfree_f)                       \
@@ -124,5 +126,4 @@
 #define kl_pushp(name, kl) kl_pushp_##name(kl)
 #define kl_shift(name, kl, d) kl_shift_##name(kl, d)
 #define kl_empty(kl) ((kl)->size == 0)
-
 #endif
