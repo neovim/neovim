@@ -6,15 +6,7 @@
 
 #include "nvim/api/private/defs.h"
 
-Integer tabpage_get_window_count(Tabpage tabpage, Error *err);
-
-Object tabpage_get_var(Tabpage tabpage, String name, Error *err);
-
-Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err);
-
-Window tabpage_get_window(Tabpage tabpage, Error *err);
-
-Boolean tabpage_is_valid(Tabpage tabpage);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "api/tabpage.h.generated.h"
+#endif
 #endif  // NVIM_API_TABPAGE_H
-

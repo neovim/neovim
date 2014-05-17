@@ -34,7 +34,6 @@ if(TRAVIS_CI_BUILD)
 endif()
 
 add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
-add_definitions(-Wno-unused-function)
 
 add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)

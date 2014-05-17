@@ -30,6 +30,7 @@ def main(progname, cfname, only_static, move_all):
   index = Index.create()
   src_dirname = os.path.join(os.path.dirname(__file__), '..', 'src')
   src_dirname = os.path.abspath(os.path.normpath(src_dirname))
+  relname = os.path.join(src_dirname, 'nvim')
   unit = index.parse(cfname, args=('-I' + src_dirname,
                                    '-DUNIX',
                                    '-DEXITFREE',
@@ -98,16 +99,12 @@ def main(progname, cfname, only_static, move_all):
     if not generated_existed:
       lines[include_line:include_line] = [
         '#ifdef INCLUDE_GENERATED_DECLARATIONS\n',
-        '# include "{0}.generated.h"\n'.format(os.path.relpath(fname,
-                                                              src_dirname)),
+        '# include "{0}.generated.h"\n'.format(os.path.relpath(fname, relname)),
         '#endif\n',
       ]
 
     with open(fname, 'wb') as F:
       F.writelines(lines)
-
-    with open(fname + '.generated.h', 'ab') as F:
-      F.writelines(stripped)
 
 
 if __name__ == '__main__':

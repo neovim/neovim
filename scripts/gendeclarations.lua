@@ -5,6 +5,8 @@ local static_fname = arg[2]
 local non_static_fname = arg[3]
 local cpp = arg[4]
 
+cpp = cpp:gsub(' %-DINCLUDE_GENERATED_DECLARATIONS ', ' ')
+
 local lpeg = require('lpeg')
 
 local fold = function (func, ...)
@@ -153,18 +155,20 @@ end
 
 local pipe = io.popen(cpp .. ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
 local text = pipe:read('*a')
-pipe:close()
+if not pipe:close() then
+  os.exit(2)
+end
 
 local header = [[
 #ifndef DEFINE_FUNC_ATTRIBUTES
 # define DEFINE_FUNC_ATTRIBUTES
 #endif
-#include "func_attr.h"
+#include "nvim/func_attr.h"
 #undef DEFINE_FUNC_ATTRIBUTES
 ]]
 
 local footer = [[
-#include "func_attr.h"
+#include "nvim/func_attr.h"
 ]]
 
 local non_static = header
