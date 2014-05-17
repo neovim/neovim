@@ -301,10 +301,7 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 /// @param str 0-terminated string that will be copied
 /// @return pointer to a copy of the string
 char *xstrdup(const char *str)
-<<<<<<< HEAD:src/nvim/memory.c
-=======
   FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
->>>>>>> f5c2572... Regenerate all *.generated.h files with gendeclarations.lua:src/memory.c
 {
   char *ret = strdup(str);
 
