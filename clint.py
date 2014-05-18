@@ -2307,7 +2307,8 @@ def CheckBraces(filename, clean_lines, linenum, error):
                'TEST', 'TEST_F', 'MATCHER', 'MATCHER_P', 'TYPED_TEST',
                'EXCLUSIVE_LOCKS_REQUIRED', 'SHARED_LOCKS_REQUIRED',
                'LOCKS_EXCLUDED', 'INTERFACE_DEF')) or
-          Search(r'\s+=\s*$', line_prefix)):
+          Search(r'\s+=\s*$', line_prefix) or
+          Search(r'^\s*return\s*$', line_prefix)):
         match = None
 
   else:
