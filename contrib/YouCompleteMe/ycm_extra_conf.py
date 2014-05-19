@@ -1,5 +1,6 @@
 # .ycm_extra_conf.py for nvim source code.
-import os, ycm_core
+import os
+import ycm_core
 
 
 def DirectoryOfThisScript():
@@ -24,9 +25,9 @@ def GetCompilationInfoForFile(filename):
         return None
     if IsHeaderFile(filename):
         basename = os.path.splitext(filename)[0]
-        replacement_file = basename + '.c'
-        if os.path.exists(replacement_file):
-            compilation_info = database.GetCompilationInfoForFile(replacement_file)
+        c_file = basename + '.c'
+        if os.path.exists(c_file):
+            compilation_info = database.GetCompilationInfoForFile(c_file)
             if compilation_info.compiler_flags_:
                 return compilation_info
         return None
