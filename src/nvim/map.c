@@ -45,7 +45,7 @@ void *map_get(Map *map, const char *key)
 
 bool map_has(Map *map, const char *key)
 {
-  return map_get(map, key) != NULL;
+  return kh_get(Map, map->table, key) != kh_end(map->table);
 }
 
 void *map_put(Map *map, const char *key, void *value)
