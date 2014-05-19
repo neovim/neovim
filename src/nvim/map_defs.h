@@ -10,5 +10,5 @@ typedef struct map Map;
 /// @param value A value
 typedef void (*key_value_cb)(Map *map, const char *key, void *value);
 
-#endif /* NVIM_MAP_DEFS_H */
+#endif  // NVIM_MAP_DEFS_H
 

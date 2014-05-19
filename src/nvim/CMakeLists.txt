@@ -48,6 +48,7 @@ set(CONV_SRCS
   arabic.c
   garray.c
   memory.c
+  map.c
   os/env.c
   os/event.c
   os/job.c

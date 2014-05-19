@@ -53,5 +53,5 @@ void *map_del(Map *map, const char *key);
 /// @param cb A function that will be called for each key/value
 void map_foreach(Map *map, key_value_cb cb);
 
-#endif /* NVIM_MAP_H */
+#endif  // NVIM_MAP_H
 
