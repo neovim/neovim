@@ -2,6 +2,9 @@ src/nvim/indent.c
 src/nvim/indent.h
 src/nvim/log.c
 src/nvim/log.h
+src/nvim/map.c
+src/nvim/map.h
+src/nvim/map_defs.h
 src/nvim/os/env.c
 src/nvim/os/event.c
 src/nvim/os/event_defs.h

@@ -1,4 +1,3 @@
-// General-purpose string->pointer associative array with a simple API
 #ifndef NVIM_MAP_H
 #define NVIM_MAP_H
 
@@ -6,52 +5,35 @@
 
 #include "nvim/map_defs.h"
 
-/// Creates a new `Map` instance
-///
-/// @return a pointer to the new instance
-Map *map_new(void);
+#define MAP_DECLS(T)                                                          \
+  KHASH_DECLARE(T##_map, T, void *)                                           \
+                                                                              \
+  typedef struct {                                                            \
+    khash_t(T##_map) *table;                                                  \
+  } Map(T);                                                                   \
+                                                                              \
+  Map(T) *map_##T##_new(void);                                                \
+  void map_##T##_free(Map(T) *map);                                           \
+  void *map_##T##_get(Map(T) *map, T key);                                    \
+  bool map_##T##_has(Map(T) *map, T key);                                     \
+  void* map_##T##_put(Map(T) *map, T key, void *value);                       \
+  void* map_##T##_del(Map(T) *map, T key);
 
-/// Frees memory for a `Map` instance
-///
-/// @param map The `Map` instance
-void map_free(Map *map);
+MAP_DECLS(cstr_t)
+MAP_DECLS(ptr_t)
 
-/// Gets the value corresponding to a key in a `Map` instance
-///
-/// @param map The `Map` instance
-/// @param key A key string
-/// @return The value if the key exists in the map, or NULL if it doesn't
-void *map_get(Map *map, const char *key);
+#define map_new(T) map_##T##_new
+#define map_free(T) map_##T##_free
+#define map_get(T) map_##T##_get
+#define map_has(T) map_##T##_has
+#define map_put(T) map_##T##_put
+#define map_del(T) map_##T##_del
 
-/// Checks if a key exists in the map
-///
-/// @param map The `Map` instance
-/// @param key A key string
-/// @return true if the key exists, false otherwise
-bool map_has(Map *map, const char *key);
+#define map_foreach(map, key, value, block) \
+  kh_foreach(map->table, key, value, block)
 
-/// Set the value corresponding to a key in a `Map` instance and returns
-/// the old value.
-///
-/// @param map The `Map` instance
-/// @param key A key string
-/// @param value A value
-/// @return The current value if exists or NULL otherwise
-void *map_put(Map *map, const char *key, void *value);
+#define map_foreach_value(map, value, block) \
+  kh_foreach_value(map->table, value, block)
 
-/// Deletes the value corresponding to a key in a `Map` instance and returns
-/// the old value.
-///
-/// @param map The `Map` instance
-/// @param key A key string
-/// @return The current value if exists or NULL otherwise
-void *map_del(Map *map, const char *key);
-
-/// Iterates through each key/value pair in the map
-///
-/// @param map The `Map` instance
-/// @param cb A function that will be called for each key/value
-void map_foreach(Map *map, key_value_cb cb);
-
-#endif /* NVIM_MAP_H */
+#endif  // NVIM_MAP_H
 

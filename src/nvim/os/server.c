@@ -43,16 +43,15 @@ typedef struct {
   } socket;
 } Server;
 
-static Map *servers = NULL;
+static Map(cstr_t) *servers = NULL;
 
-static void close_server(Map *map, const char *endpoint, void *server);
 static void connection_cb(uv_stream_t *server, int status);
 static void free_client(uv_handle_t *handle);
 static void free_server(uv_handle_t *handle);
 
 void server_init()
 {
-  servers = map_new();
+  servers = map_new(cstr_t)();
 
   if (!os_getenv("NEOVIM_LISTEN_ADDRESS")) {
     char *listen_address = (char *)vim_tempname('s');
@@ -70,7 +69,15 @@ void server_teardown()
     return;
   }
 
-  map_foreach(servers, close_server);
+  Server *server;
+
+  map_foreach_value(servers, server, {
+    if (server->type == kServerTypeTcp) {
+      uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
+    } else {
+      uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
+    }
+  });
 }
 
 void server_start(char *endpoint, ChannelProtocol prot)
@@ -81,7 +88,7 @@ void server_start(char *endpoint, ChannelProtocol prot)
   strncpy(addr, endpoint, sizeof(addr));
 
   // Check if the server already exists
-  if (map_has(servers, addr)) {
+  if (map_has(cstr_t)(servers, addr)) {
     EMSG2("Already listening on %s", addr);
     return;
   }
@@ -167,7 +174,7 @@ void server_start(char *endpoint, ChannelProtocol prot)
   server->type = server_type;
 
   // Add the server to the hash table
-  map_put(servers, addr, server);
+  map_put(cstr_t)(servers, addr, server);
 }
 
 void server_stop(char *endpoint)
@@ -178,7 +185,7 @@ void server_stop(char *endpoint)
   // Trim to `ADDRESS_MAX_SIZE`
   strncpy(addr, endpoint, sizeof(addr));
 
-  if ((server = map_get(servers, addr)) == NULL) {
+  if ((server = map_get(cstr_t)(servers, addr)) == NULL) {
     EMSG2("Not listening on %s", addr);
     return;
   }
@@ -189,7 +196,7 @@ void server_stop(char *endpoint)
     uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
   }
 
-  map_del(servers, addr);
+  map_del(cstr_t)(servers, addr);
 }
 
 static void connection_cb(uv_stream_t *server, int status)
@@ -219,17 +226,6 @@ static void connection_cb(uv_stream_t *server, int status)
   }
 
   channel_from_stream(client, srv->protocol);
-}
-
-static void close_server(Map *map, const char *endpoint, void *srv)
-{
-  Server *server = srv;
-
-  if (server->type == kServerTypeTcp) {
-    uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
-  } else {
-    uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
-  }
 }
 
 static void free_client(uv_handle_t *handle)
