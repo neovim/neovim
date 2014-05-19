@@ -47,11 +47,11 @@ void *map_put(Map *map, const char *key, void *value);
 /// @return The current value if exists or NULL otherwise
 void *map_del(Map *map, const char *key);
 
-/// Iterates through each key/value pair in the map
-///
-/// @param map The `Map` instance
-/// @param cb A function that will be called for each key/value
-void map_foreach(Map *map, key_value_cb cb);
+#define map_foreach(map, key, value, block) \
+  kh_foreach(map->table, key, value, block)
+
+#define map_foreach_value(map, value, block) \
+  kh_foreach_value(map->table, value, block)
 
 #endif  // NVIM_MAP_H
 

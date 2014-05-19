@@ -8,15 +8,7 @@
 
 #include "nvim/lib/khash.h"
 
-typedef struct {
-  void *ptr;
-} Value;
-
-KHASH_MAP_INIT_STR(Map, Value)
-
-struct map {
-  khash_t(Map) *table;
-};
+__KHASH_IMPL(Map,, kh_cstr_t, void *, 1, kh_str_hash_func, kh_str_hash_equal)
 
 Map *map_new()
 {
@@ -40,7 +32,7 @@ void *map_get(Map *map, const char *key)
     return NULL;
   }
 
-  return kh_val(map->table, k).ptr;
+  return kh_val(map->table, k);
 }
 
 bool map_has(Map *map, const char *key)
@@ -53,15 +45,14 @@ void *map_put(Map *map, const char *key, void *value)
   int ret;
   void *rv = NULL;
   khiter_t k = kh_put(Map, map->table, key, &ret);
-  Value val = {.ptr = value};
 
   if (!ret) {
     // key present, return the current value
-    rv = kh_val(map->table, k).ptr;
+    rv = kh_val(map->table, k);
     kh_del(Map, map->table, k);
   }
 
-  kh_val(map->table, k) = val;
+  kh_val(map->table, k) = value;
 
   return rv;
 }
@@ -72,20 +63,10 @@ void *map_del(Map *map, const char *key)
   khiter_t k;
 
   if ((k = kh_get(Map, map->table, key)) != kh_end(map->table)) {
-    rv = kh_val(map->table, k).ptr;
+    rv = kh_val(map->table, k);
     kh_del(Map, map->table, k);
   }
 
   return rv;
-}
-
-void map_foreach(Map *map, key_value_cb cb)
-{
-  const char *key;
-  Value value;
-
-  kh_foreach(map->table, key, value, {
-    cb(map, (const char *)key, value.ptr);
-  });
 }
 

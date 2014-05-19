@@ -45,7 +45,6 @@ typedef struct {
 
 static Map *servers = NULL;
 
-static void close_server(Map *map, const char *endpoint, void *server);
 static void connection_cb(uv_stream_t *server, int status);
 static void free_client(uv_handle_t *handle);
 static void free_server(uv_handle_t *handle);
@@ -70,7 +69,15 @@ void server_teardown()
     return;
   }
 
-  map_foreach(servers, close_server);
+  Server *server;
+
+  map_foreach_value(servers, server, {
+    if (server->type == kServerTypeTcp) {
+      uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
+    } else {
+      uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
+    }
+  });
 }
 
 void server_start(char *endpoint, ChannelProtocol prot)
@@ -219,17 +226,6 @@ static void connection_cb(uv_stream_t *server, int status)
   }
 
   channel_from_stream(client, srv->protocol);
-}
-
-static void close_server(Map *map, const char *endpoint, void *srv)
-{
-  Server *server = srv;
-
-  if (server->type == kServerTypeTcp) {
-    uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
-  } else {
-    uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
-  }
 }
 
 static void free_client(uv_handle_t *handle)

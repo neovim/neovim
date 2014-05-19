@@ -1,7 +1,14 @@
 #ifndef NVIM_MAP_DEFS_H
 #define NVIM_MAP_DEFS_H
 
-typedef struct map Map;
+#include "nvim/lib/khash.h"
+
+KHASH_DECLARE(Map, kh_cstr_t, void *)
+
+typedef struct {
+  khash_t(Map) *table;
+} Map;
+
 
 /// Callback for iterating through each key/value pair in a map
 ///
