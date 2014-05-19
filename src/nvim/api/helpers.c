@@ -9,19 +9,10 @@
 #include "nvim/window.h"
 #include "nvim/memory.h"
 #include "nvim/eval.h"
+#include "nvim/map_defs.h"
+#include "nvim/map.h"
 #include "nvim/option.h"
 #include "nvim/option_defs.h"
-
-#include "nvim/lib/khash.h"
-
-
-#if defined(ARCH_64)
-#define ptr_hash_func(key) kh_int64_hash_func(key)
-#elif defined(ARCH_32)
-#define ptr_hash_func(key) kh_int_hash_func(key)
-#endif
-
-KHASH_INIT(Lookup, uintptr_t, char, 0, ptr_hash_func, kh_int_hash_equal)
 
 /// Recursion helper for the `vim_to_object`. This uses a pointer table
 /// to avoid infinite recursion due to cyclic references
@@ -29,7 +20,7 @@ KHASH_INIT(Lookup, uintptr_t, char, 0, ptr_hash_func, kh_int_hash_equal)
 /// @param obj The source object
 /// @param lookup Lookup table containing pointers to all processed objects
 /// @return The converted value
-static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup);
+static Object vim_to_object_rec(typval_T *obj, Map(ptr_t) *lookup);
 
 static bool object_to_vim(Object obj, typval_T *tv, Error *err);
 
@@ -285,10 +276,10 @@ Object vim_to_object(typval_T *obj)
 {
   Object rv;
   // We use a lookup table to break out of cyclic references
-  khash_t(Lookup) *lookup = kh_init(Lookup);
+  Map(ptr_t) *lookup = map_new(ptr_t)();
   rv = vim_to_object_rec(obj, lookup);
   // Free the table
-  kh_destroy(Lookup, lookup);
+  map_free(ptr_t)(lookup);
   return rv;
 }
 
@@ -443,19 +434,18 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
   return true;
 }
 
-static Object vim_to_object_rec(typval_T *obj, khash_t(Lookup) *lookup)
+static Object vim_to_object_rec(typval_T *obj, Map(ptr_t) *lookup)
 {
   Object rv = {.type = kObjectTypeNil};
 
   if (obj->v_type == VAR_LIST || obj->v_type == VAR_DICT) {
-    int ret;
     // Container object, add it to the lookup table
-    kh_put(Lookup, lookup, (uintptr_t)obj, &ret);
-    if (!ret) {
+    if (map_has(ptr_t)(lookup, obj)) {
       // It's already present, meaning we alredy processed it so just return
       // nil instead.
       return rv;
     }
+    map_put(ptr_t)(lookup, obj, NULL);
   }
 
   switch (obj->v_type) {

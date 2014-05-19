@@ -15,6 +15,15 @@
 #define uint32_t_hash kh_int_hash_func
 #define uint32_t_eq kh_int_hash_equal
 
+#if defined(ARCH_64)
+#define ptr_t_hash(key) uint64_t_hash((uint64_t)key)
+#define ptr_t_eq(a, b) uint64_t_eq((uint64_t)a, (uint64_t)b)
+#elif defined(ARCH_32)
+#define ptr_t_hash(key) uint32_t_hash((uint32_t)key)
+#define ptr_t_eq(a, b) uint32_t_eq((uint32_t)a, (uint32_t)b)
+#endif
+
+
 #define MAP_IMPL(T)                                                          \
   __KHASH_IMPL(T##_map,, T, void *, 1, T##_hash, T##_eq)                     \
                                                                              \
@@ -27,7 +36,6 @@
                                                                              \
   void map_##T##_free(Map(T) *map)                                           \
   {                                                                          \
-    kh_clear(T##_map, map->table);                                           \
     kh_destroy(T##_map, map->table);                                         \
     free(map);                                                               \
   }                                                                          \
@@ -56,11 +64,9 @@
                                                                              \
     if (!ret) {                                                              \
       rv = kh_val(map->table, k);                                            \
-      kh_del(T##_map, map->table, k);                                        \
     }                                                                        \
                                                                              \
     kh_val(map->table, k) = value;                                           \
-                                                                             \
     return rv;                                                               \
   }                                                                          \
                                                                              \
@@ -78,3 +84,4 @@
   }
 
 MAP_IMPL(cstr_t)
+MAP_IMPL(ptr_t)

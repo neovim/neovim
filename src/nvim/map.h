@@ -16,10 +16,11 @@
   void map_##T##_free(Map(T) *map);                                           \
   void *map_##T##_get(Map(T) *map, T key);                                    \
   bool map_##T##_has(Map(T) *map, T key);                                     \
-  void *map_##T##_put(Map(T) *map, T key, void *value);                       \
-  void *map_##T##_del(Map(T) *map, T key);
+  void* map_##T##_put(Map(T) *map, T key, void *value);                       \
+  void* map_##T##_del(Map(T) *map, T key);
 
 MAP_DECLS(cstr_t)
+MAP_DECLS(ptr_t)
 
 #define map_new(T) map_##T##_new
 #define map_free(T) map_##T##_free
