@@ -347,18 +347,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
     }
   } else {
     // Allocate an array.
-    newarray = (hashitem_T *)alloc((unsigned)(sizeof(hashitem_T) * newsize));
-
-    if (newarray == NULL) {
-      // Out of memory.  When there are NULL items still return OK.
-      // Otherwise set ht_error, because lookup may result in a hang if
-      // we add another item.
-      if (ht->ht_filled < ht->ht_mask) {
-        return OK;
-      }
-      ht->ht_error = TRUE;
-      return FAIL;
-    }
+    newarray = xmalloc(sizeof(hashitem_T) * newsize);
     oldarray = ht->ht_array;
   }
   memset(newarray, 0, (size_t)(sizeof(hashitem_T) * newsize));

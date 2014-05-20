@@ -1727,8 +1727,6 @@ change_indent (
 
     /* Save new line */
     new_line = vim_strsave(ml_get_curline());
-    if (new_line == NULL)
-      return;
 
     /* We only put back the new line up to the cursor */
     new_line[curwin->w_cursor.col] = NUL;
@@ -2128,10 +2126,7 @@ ins_compl_add (
   match->cp_number = -1;
   if (flags & ORIGINAL_TEXT)
     match->cp_number = 0;
-  if ((match->cp_str = vim_strnsave(str, len)) == NULL) {
-    free(match);
-    return FAIL;
-  }
+  match->cp_str = vim_strnsave(str, len);
   match->cp_icase = icase;
 
   /* match-fname is:
@@ -2210,18 +2205,16 @@ static void ins_compl_longest_match(compl_T *match)
   if (compl_leader == NULL) {
     /* First match, use it as a whole. */
     compl_leader = vim_strsave(match->cp_str);
-    if (compl_leader != NULL) {
-      had_match = (curwin->w_cursor.col > compl_col);
-      ins_compl_delete();
-      ins_bytes(compl_leader + ins_compl_len());
-      ins_redraw(FALSE);
+    had_match = (curwin->w_cursor.col > compl_col);
+    ins_compl_delete();
+    ins_bytes(compl_leader + ins_compl_len());
+    ins_redraw(FALSE);
 
-      /* When the match isn't there (to avoid matching itself) remove it
-       * again after redrawing. */
-      if (!had_match)
-        ins_compl_delete();
-      compl_used_match = FALSE;
-    }
+    /* When the match isn't there (to avoid matching itself) remove it
+     * again after redrawing. */
+    if (!had_match)
+      ins_compl_delete();
+    compl_used_match = FALSE;
   } else {
     /* Reduce the text if this match differs from compl_leader. */
     p = compl_leader;
@@ -2328,9 +2321,10 @@ void set_completion(colnr_T startcol, list_T *list)
   compl_length = (int)curwin->w_cursor.col - (int)startcol;
   /* compl_pattern doesn't need to be set */
   compl_orig_text = vim_strnsave(ml_get_curline() + compl_col, compl_length);
-  if (compl_orig_text == NULL || ins_compl_add(compl_orig_text,
-          -1, p_ic, NULL, NULL, 0, ORIGINAL_TEXT, FALSE) != OK)
+  if (ins_compl_add(compl_orig_text, -1, p_ic, NULL, NULL, 0,
+                    ORIGINAL_TEXT, FALSE) != OK) {
     return;
+  }
 
   /* Handle like dictionary completion. */
   ctrl_x_mode = CTRL_X_WHOLE_LINE;
@@ -2873,14 +2867,12 @@ static int ins_compl_bs(void)
 
   free(compl_leader);
   compl_leader = vim_strnsave(line + compl_col, (int)(p - line) - compl_col);
-  if (compl_leader != NULL) {
-    ins_compl_new_leader();
-    if (compl_shown_match != NULL)
-      /* Make sure current match is not a hidden item. */
-      compl_curr_match = compl_shown_match;
-    return NUL;
-  }
-  return K_BS;
+  ins_compl_new_leader();
+  if (compl_shown_match != NULL)
+    /* Make sure current match is not a hidden item. */
+    compl_curr_match = compl_shown_match;
+
+  return NUL;
 }
 
 /*
@@ -2980,8 +2972,7 @@ static void ins_compl_addleader(int c)
     free(compl_leader);
     compl_leader = vim_strnsave(ml_get_curline() + compl_col,
         (int)(curwin->w_cursor.col - compl_col));
-    if (compl_leader != NULL)
-      ins_compl_new_leader();
+    ins_compl_new_leader();
   }
 }
 
@@ -3003,15 +2994,10 @@ static void ins_compl_restart(void)
  */
 static void ins_compl_set_original_text(char_u *str)
 {
-  char_u      *p;
-
   /* Replace the original text entry. */
   if (compl_first_match->cp_flags & ORIGINAL_TEXT) {    /* safety check */
-    p = vim_strsave(str);
-    if (p != NULL) {
-      free(compl_first_match->cp_str);
-      compl_first_match->cp_str = p;
-    }
+    free(compl_first_match->cp_str);
+    compl_first_match->cp_str = vim_strsave(str);
   }
 }
 
@@ -4356,8 +4342,6 @@ static int ins_complete(int c)
                  ) {
         /* Match any word of at least two chars */
         compl_pattern = vim_strsave((char_u *)"\\<\\k\\k");
-        if (compl_pattern == NULL)
-          return FAIL;
         compl_col += curs_col;
         compl_length = 0;
       } else {
@@ -4432,8 +4416,6 @@ static int ins_complete(int c)
         return FAIL;
     } else if (ctrl_x_mode == CTRL_X_CMDLINE) {
       compl_pattern = vim_strnsave(line, curs_col);
-      if (compl_pattern == NULL)
-        return FAIL;
       set_cmd_context(&compl_xp, compl_pattern,
           (int)STRLEN(compl_pattern), curs_col);
       if (compl_xp.xp_context == EXPAND_UNSUCCESSFUL
@@ -4513,8 +4495,6 @@ static int ins_complete(int c)
       line = ml_get(curwin->w_cursor.lnum);
       compl_length = curs_col - compl_col;
       compl_pattern = vim_strnsave(line + compl_col, compl_length);
-      if (compl_pattern == NULL)
-        return FAIL;
     } else if (ctrl_x_mode == CTRL_X_SPELL) {
       if (spell_bad_len > 0)
         compl_col = curs_col - spell_bad_len;
@@ -4530,8 +4510,6 @@ static int ins_complete(int c)
       /* Need to obtain "line" again, it may have become invalid. */
       line = ml_get(curwin->w_cursor.lnum);
       compl_pattern = vim_strnsave(line + compl_col, compl_length);
-      if (compl_pattern == NULL)
-        return FAIL;
     } else {
       EMSG2(_(e_intern2), "ins_complete()");
       return FAIL;
@@ -4568,8 +4546,8 @@ static int ins_complete(int c)
     /* Always add completion for the original text. */
     free(compl_orig_text);
     compl_orig_text = vim_strnsave(line + compl_col, compl_length);
-    if (compl_orig_text == NULL || ins_compl_add(compl_orig_text,
-            -1, p_ic, NULL, NULL, 0, ORIGINAL_TEXT, FALSE) != OK) {
+    if (ins_compl_add(compl_orig_text, -1, p_ic, NULL, NULL, 0,
+                      ORIGINAL_TEXT, FALSE) != OK) {
       free(compl_pattern);
       compl_pattern = NULL;
       free(compl_orig_text);
@@ -6227,11 +6205,10 @@ char_u *get_last_insert_save(void)
   if (last_insert == NULL)
     return NULL;
   s = vim_strsave(last_insert + last_insert_skip);
-  if (s != NULL) {
-    len = (int)STRLEN(s);
-    if (len > 0 && s[len - 1] == ESC)           /* remove trailing ESC */
-      s[len - 1] = NUL;
-  }
+  len = (int)STRLEN(s);
+  if (len > 0 && s[len - 1] == ESC)           /* remove trailing ESC */
+    s[len - 1] = NUL;
+
   return s;
 }
 
@@ -8006,8 +7983,6 @@ static int ins_tab(void)
       pos = curwin->w_cursor;
       cursor = &pos;
       saved_line = vim_strsave(ml_get_curline());
-      if (saved_line == NULL)
-        return FALSE;
       ptr = saved_line + pos.col;
     } else {
       ptr = ml_get_cursor();
@@ -8411,7 +8386,6 @@ static colnr_T get_nolist_virtcol(void)
  */
 static char_u *do_insert_char_pre(int c)
 {
-  char_u      *res;
   char_u buf[MB_MAXBYTES + 1];
 
   /* Return quickly when there is nothing to do. */
@@ -8429,7 +8403,7 @@ static char_u *do_insert_char_pre(int c)
   ++textlock;
   set_vim_var_string(VV_CHAR, buf, -1);    /* set v:char */
 
-  res = NULL;
+  char_u *res = NULL;
   if (apply_autocmds(EVENT_INSERTCHARPRE, NULL, NULL, FALSE, curbuf)) {
     /* Get the value of v:char.  It may be empty or more than one
      * character.  Only use it when changed, otherwise continue with the

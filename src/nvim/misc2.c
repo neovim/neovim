@@ -229,7 +229,7 @@ coladvance2 (
       if (line[idx] == NUL) {
         /* Append spaces */
         int correct = wcol - col;
-        char_u  *newline = alloc(idx + correct + 1);
+        char_u  *newline = xmalloc(idx + correct + 1);
         int t;
 
         for (t = 0; t < idx; ++t)
@@ -255,7 +255,7 @@ coladvance2 (
         if (-correct > csize)
           return FAIL;
 
-        newline = alloc(linelen + csize);
+        newline = xmalloc(linelen + csize);
 
         for (t = 0; t < linelen; t++) {
           if (t != idx)

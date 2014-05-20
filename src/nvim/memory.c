@@ -43,14 +43,6 @@
 
 static void try_to_free_memory();
 
-/*
- * Note: if unsigned is 16 bits we can only allocate up to 64K with alloc().
- */
-char_u *alloc(unsigned size)
-{
-  return xmalloc(size);
-}
-
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
 static void try_to_free_memory()
@@ -191,7 +183,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     }
 }
 
-char * xstrdup(const char *str)
+char *xstrdup(const char *str)
 {
   char *ret = strdup(str);
 

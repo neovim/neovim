@@ -1920,8 +1920,6 @@ void ex_argedit(exarg_T *eap)
   if (i == ARGCOUNT) {
     /* Can't find it, add it to the argument list. */
     s = vim_strsave(eap->arg);
-    if (s == NULL)
-      return;
     i = alist_add_list(1, &s,
         eap->addr_count > 0 ? (int)eap->line2 : curwin->w_arg_idx + 1);
     curwin->w_arg_idx = i;
@@ -2252,8 +2250,8 @@ void        *cookie;
   /* Make a copy of 'runtimepath'.  Invoking the callback may change the
    * value. */
   rtp_copy = vim_strsave(p_rtp);
-  buf = xmalloc(MAXPATHL);
-  if (rtp_copy != NULL) {
+  buf = xmallocz(MAXPATHL);
+  {
     if (p_verbose > 1 && name != NULL) {
       verbose_enter();
       smsg((char_u *)_("Searching for \"%s\" in \"%s\""),
@@ -2594,10 +2592,8 @@ do_source (
     p = string_convert(&cookie.conv, firstline + 3, NULL);
     if (p == NULL)
       p = vim_strsave(firstline + 3);
-    if (p != NULL) {
-      free(firstline);
-      firstline = p;
-    }
+    free(firstline);
+    firstline = p;
   }
 
 #ifdef STARTUPTIME
@@ -3483,8 +3479,6 @@ static char_u **find_locales(void)
   while (loc != NULL) {
     ga_grow(&locales_ga, 1);
     loc = vim_strsave(loc);
-    if (loc == NULL)
-      break;
 
     ((char_u **)locales_ga.ga_data)[locales_ga.ga_len++] = loc;
     loc = (char_u *)strtok(NULL, "\n");

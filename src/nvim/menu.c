@@ -308,8 +308,6 @@ add_menu_path (
 
   /* Make a copy so we can stuff around with it, since it could be const */
   path_name = vim_strsave(menu_path);
-  if (path_name == NULL)
-    return FAIL;
   menup = &root_menu;
   parent = NULL;
   name = path_name;
@@ -464,7 +462,7 @@ add_menu_path (
         }
 
         if (c != 0) {
-          menu->strings[i] = alloc((unsigned)(STRLEN(call_data) + 5 ));
+          menu->strings[i] = xmalloc(STRLEN(call_data) + 5 );
           menu->strings[i][0] = c;
           if (d == 0)
             STRCPY(menu->strings[i] + 1, call_data);
@@ -728,8 +726,6 @@ static int show_menus(char_u *path_name, int modes)
 
   menu = root_menu;
   name = path_name = vim_strsave(path_name);
-  if (path_name == NULL)
-    return FAIL;
 
   /* First, find the (sub)menu with the given name */
   while (*name) {
@@ -1168,7 +1164,7 @@ get_menu_cmd_modes (
 
 /*
  * Modify a menu name starting with "PopUp" to include the mode character.
- * Returns the name in allocated memory (NULL for failure).
+ * Returns the name in allocated memory.
  */
 static char_u *popup_mode_name(char_u *name, int idx)
 {
@@ -1176,10 +1172,9 @@ static char_u *popup_mode_name(char_u *name, int idx)
   int len = (int)STRLEN(name);
 
   p = vim_strnsave(name, len + 1);
-  if (p != NULL) {
-    memmove(p + 6, p + 5, (size_t)(len - 4));
-    p[5] = menu_mode_chars[idx];
-  }
+  memmove(p + 6, p + 5, (size_t)(len - 4));
+  p[5] = menu_mode_chars[idx];
+
   return p;
 }
 
@@ -1305,8 +1300,6 @@ void ex_emenu(exarg_T *eap)
   char_u      *mode;
 
   saved_name = vim_strsave(eap->arg);
-  if (saved_name == NULL)
-    return;
 
   menu = root_menu;
   name = saved_name;
@@ -1419,8 +1412,6 @@ vimmenu_T *gui_find_menu(char_u *path_name)
   menu = root_menu;
 
   saved_name = vim_strsave(path_name);
-  if (saved_name == NULL)
-    return NULL;
 
   name = saved_name;
   while (*name) {
@@ -1513,23 +1504,21 @@ void ex_menutranslate(exarg_T *eap)
       ga_grow(&menutrans_ga, 1);
       tp = (menutrans_T *)menutrans_ga.ga_data;
       from = vim_strsave(from);
-      if (from != NULL) {
-        from_noamp = menu_text(from, NULL, NULL);
-        to = vim_strnsave(to, (int)(arg - to));
-        if (from_noamp != NULL && to != NULL) {
-          menu_translate_tab_and_shift(from);
-          menu_translate_tab_and_shift(to);
-          menu_unescape_name(from);
-          menu_unescape_name(to);
-          tp[menutrans_ga.ga_len].from = from;
-          tp[menutrans_ga.ga_len].from_noamp = from_noamp;
-          tp[menutrans_ga.ga_len].to = to;
-          ++menutrans_ga.ga_len;
-        } else {
-          free(from);
-          free(from_noamp);
-          free(to);
-        }
+      from_noamp = menu_text(from, NULL, NULL);
+      to = vim_strnsave(to, (int)(arg - to));
+      if (from_noamp != NULL) {
+        menu_translate_tab_and_shift(from);
+        menu_translate_tab_and_shift(to);
+        menu_unescape_name(from);
+        menu_unescape_name(to);
+        tp[menutrans_ga.ga_len].from = from;
+        tp[menutrans_ga.ga_len].from_noamp = from_noamp;
+        tp[menutrans_ga.ga_len].to = to;
+        ++menutrans_ga.ga_len;
+      } else {
+        free(from);
+        free(from_noamp);
+        free(to);
       }
     }
   }

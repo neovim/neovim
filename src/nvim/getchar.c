@@ -891,14 +891,8 @@ int ins_typebuf(char_u *str, int noremap, int offset, int nottyped, int silent)
       setcursor();
       return FAIL;
     }
-    s1 = alloc(newlen);
-    if (s1 == NULL)                 /* out of memory */
-      return FAIL;
-    s2 = alloc(newlen);
-    if (s2 == NULL) {               /* out of memory */
-      free(s1);
-      return FAIL;
-    }
+    s1 = xmalloc(newlen);
+    s2 = xmalloc(newlen);
     typebuf.tb_buflen = newlen;
 
     /* copy the old chars, before the insertion point */
@@ -1147,16 +1141,11 @@ static void may_sync_undo(void)
 
 /*
  * Make "typebuf" empty and allocate new buffers.
- * Returns FAIL when out of memory.
  */
-int alloc_typebuf(void)
+void alloc_typebuf(void)
 {
-  typebuf.tb_buf = alloc(TYPELEN_INIT);
-  typebuf.tb_noremap = alloc(TYPELEN_INIT);
-  if (typebuf.tb_buf == NULL || typebuf.tb_noremap == NULL) {
-    free_typebuf();
-    return FAIL;
-  }
+  typebuf.tb_buf = xmalloc(TYPELEN_INIT);
+  typebuf.tb_noremap = xmalloc(TYPELEN_INIT);
   typebuf.tb_buflen = TYPELEN_INIT;
   typebuf.tb_off = 0;
   typebuf.tb_len = 0;
@@ -1165,7 +1154,6 @@ int alloc_typebuf(void)
   typebuf.tb_no_abbr_cnt = 0;
   if (++typebuf.tb_change_cnt == 0)
     typebuf.tb_change_cnt = 1;
-  return OK;
 }
 
 /*
@@ -1189,16 +1177,11 @@ void free_typebuf(void)
  */
 static typebuf_T saved_typebuf[NSCRIPT];
 
-int save_typebuf(void)
+void save_typebuf(void)
 {
   init_typebuf();
   saved_typebuf[curscript] = typebuf;
-  /* If out of memory: restore typebuf and close file. */
-  if (alloc_typebuf() == FAIL) {
-    closescript();
-    return FAIL;
-  }
-  return OK;
+  alloc_typebuf();
 }
 
 static int old_char = -1;       /* character put back by vungetc() */
@@ -1213,10 +1196,8 @@ static int old_mouse_col;       /* mouse_col related to old_char */
 void save_typeahead(tasave_T *tp)
 {
   tp->save_typebuf = typebuf;
-  tp->typebuf_valid = (alloc_typebuf() == OK);
-  if (!tp->typebuf_valid)
-    typebuf = tp->save_typebuf;
-
+  alloc_typebuf();
+  tp->typebuf_valid = TRUE;
   tp->old_char = old_char;
   tp->old_mod_mask = old_mod_mask;
   old_char = -1;
@@ -1280,8 +1261,7 @@ openscript (
       --curscript;
     return;
   }
-  if (save_typebuf() == FAIL)
-    return;
+  save_typebuf();
 
   /*
    * Execute the commands from the file right now when using ":source!"
@@ -2636,7 +2616,6 @@ do_map (
   char_u      *p;
   int n;
   int len = 0;                  /* init for GCC */
-  char_u      *newstr;
   int hasarg;
   int haskey;
   int did_it = FALSE;
@@ -2979,13 +2958,8 @@ do_map (
             } else {                          /* new rhs for existing entry */
               mp->m_mode &= ~mode;                      /* remove mode bits */
               if (mp->m_mode == 0 && !did_it) {             /* reuse entry */
-                newstr = vim_strsave(rhs);
-                if (newstr == NULL) {
-                  retval = 4;                           /* no mem */
-                  goto theend;
-                }
                 free(mp->m_str);
-                mp->m_str = newstr;
+                mp->m_str = vim_strsave(rhs);
                 free(mp->m_orig_str);
                 mp->m_orig_str = vim_strsave(orig_rhs);
                 mp->m_noremap = noremap;
@@ -3044,11 +3018,7 @@ do_map (
   /*
    * Get here when adding a new entry to the maphash[] list or abbrlist.
    */
-  mp = (mapblock_T *)alloc((unsigned)sizeof(mapblock_T));
-  if (mp == NULL) {
-    retval = 4;             /* no mem */
-    goto theend;
-  }
+  mp = xmalloc(sizeof(mapblock_T));
 
   /* If CTRL-C has been mapped, don't always use it for Interrupting */
   if (*keys == Ctrl_C)
@@ -3057,14 +3027,6 @@ do_map (
   mp->m_keys = vim_strsave(keys);
   mp->m_str = vim_strsave(rhs);
   mp->m_orig_str = vim_strsave(orig_rhs);
-  if (mp->m_keys == NULL || mp->m_str == NULL) {
-    free(mp->m_keys);
-    free(mp->m_str);
-    free(mp->m_orig_str);
-    free(mp);
-    retval = 4;         /* no mem */
-    goto theend;
-  }
   mp->m_keylen = (int)STRLEN(mp->m_keys);
   mp->m_noremap = noremap;
   mp->m_nowait = nowait;
@@ -3328,11 +3290,9 @@ showmap (
     /* Remove escaping of CSI, because "m_str" is in a format to be used
      * as typeahead. */
     char_u *s = vim_strsave(mp->m_str);
-    if (s != NULL) {
-      vim_unescape_csi(s);
-      msg_outtrans_special(s, FALSE);
-      free(s);
-    }
+    vim_unescape_csi(s);
+    msg_outtrans_special(s, FALSE);
+    free(s);
   }
   if (p_verbose > 0)
     last_set_msg(mp->m_script_ID);
@@ -3564,9 +3524,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
       break;       /* for (round) */
 
     if (round == 1) {
-      *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
-      if (*file == NULL)
-        return FAIL;
+      *file = (char_u **)xmalloc(count * sizeof(char_u *));
     }
   }   /* for (round) */
 
@@ -3778,8 +3736,6 @@ eval_map_expr (
   /* Remove escaping of CSI, because "str" is in a format to be used as
    * typeahead. */
   expr = vim_strsave(str);
-  if (expr == NULL)
-    return NULL;
   vim_unescape_csi(expr);
 
   save_cmd = save_cmdline_alloc();
@@ -3831,7 +3787,7 @@ char_u *vim_strsave_escape_csi(char_u *p)
   char_u      *s, *d;
 
   /* Need a buffer to hold up to three times as much. */
-  res = alloc((unsigned)(STRLEN(p) * 3) + 1);
+  res = xmalloc(STRLEN(p) * 3 + 1);
   d = res;
   for (s = p; *s != NUL; ) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
@@ -4325,10 +4281,8 @@ void add_map(char_u *map, int mode)
 
   p_cpo = (char_u *)"";         /* Allow <> notation */
   s = vim_strsave(map);
-  if (s != NULL) {
-    (void)do_map(0, s, mode, FALSE);
-    free(s);
-  }
+  (void)do_map(0, s, mode, FALSE);
+  free(s);
   p_cpo = cpo_save;
 }
 #endif

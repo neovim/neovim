@@ -230,35 +230,29 @@ char_u *get_search_pat(void)
 
 /*
  * Reverse text into allocated memory.
- * Returns the allocated string, NULL when out of memory.
+ * Returns the allocated string.
+ *
+ * TODO(philix): move reverse_text() to strings.c
  */
 char_u *reverse_text(char_u *s)
 {
-  unsigned len;
-  unsigned s_i, rev_i;
-  char_u      *rev;
-
   /*
    * Reverse the pattern.
    */
-  len = (unsigned)STRLEN(s);
-  rev = alloc(len + 1);
-  if (rev != NULL) {
-    rev_i = len;
-    for (s_i = 0; s_i < len; ++s_i) {
-      if (has_mbyte) {
-        int mb_len;
-
-        mb_len = (*mb_ptr2len)(s + s_i);
-        rev_i -= mb_len;
-        memmove(rev + rev_i, s + s_i, mb_len);
-        s_i += mb_len - 1;
-      } else
-        rev[--rev_i] = s[s_i];
-
-    }
-    rev[len] = NUL;
+  size_t len = STRLEN(s);
+  char_u *rev = xmalloc(len + 1);
+  size_t rev_i = len;
+  for (size_t s_i = 0; s_i < len; ++s_i) {
+    if (has_mbyte) {
+      int mb_len = (*mb_ptr2len)(s + s_i);
+      rev_i -= mb_len;
+      memmove(rev + rev_i, s + s_i, mb_len);
+      s_i += mb_len - 1;
+    } else
+      rev[--rev_i] = s[s_i];
   }
+  rev[len] = NUL;
+
   return rev;
 }
 
@@ -1056,8 +1050,8 @@ proftime_T      *tm;            /* timeout limit or NULL */
         p = spats[last_idx].pat;
       else
         p = searchstr;
-      msgbuf = alloc((unsigned)(STRLEN(p) + 40));
-      if (msgbuf != NULL) {
+      msgbuf = xmalloc(STRLEN(p) + 40);
+      {
         msgbuf[0] = dirc;
         if (enc_utf8 && utf_iscomposing(utf_ptr2char(p))) {
           /* Use a space to draw the composing char on. */
@@ -1088,13 +1082,9 @@ proftime_T      *tm;            /* timeout limit or NULL */
          * it would be blanked out again very soon.  Show it on the
          * left, but do reverse the text. */
         if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-          char_u *r;
-
-          r = reverse_text(trunc != NULL ? trunc : msgbuf);
-          if (r != NULL) {
-            free(trunc);
-            trunc = r;
-          }
+          char_u *r = reverse_text(trunc != NULL ? trunc : msgbuf);
+          free(trunc);
+          trunc = r;
         }
         if (trunc != NULL) {
           msg_outtrans(trunc);
@@ -3257,14 +3247,8 @@ again:
     curwin->w_cursor = old_pos;
     goto theend;
   }
-  spat = alloc(len + 31);
-  epat = alloc(len + 9);
-  if (spat == NULL || epat == NULL) {
-    free(spat);
-    free(epat);
-    curwin->w_cursor = old_pos;
-    goto theend;
-  }
+  spat = xmalloc(len + 31);
+  epat = xmalloc(len + 9);
   sprintf((char *)spat, "<%.*s\\>\\%%(\\s\\_[^>]\\{-}[^/]>\\|>\\)\\c", len, p);
   sprintf((char *)epat, "</%.*s>\\c", len, p);
 
@@ -4024,18 +4008,14 @@ find_pattern_in_path (
   incl_regmatch.regprog = NULL;
   def_regmatch.regprog = NULL;
 
-  file_line = alloc(LSIZE);
-  if (file_line == NULL)
-    return;
+  file_line = xmalloc(LSIZE);
 
   if (type != CHECK_PATH && type != FIND_DEFINE
       /* when CONT_SOL is set compare "ptr" with the beginning of the line
        * is faster than quote_meta/regcomp/regexec "ptr" -- Acevedo */
       && !(compl_cont_status & CONT_SOL)
       ) {
-    pat = alloc(len + 5);
-    if (pat == NULL)
-      goto fpip_end;
+    pat = xmalloc(len + 5);
     sprintf((char *)pat, whole ? "\\<%.*s\\>" : "%.*s", len, ptr);
     /* ignore case according to p_ic, p_scs and pat */
     regmatch.rm_ic = ignorecase(pat);

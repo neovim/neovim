@@ -122,7 +122,7 @@ int cin_is_cinword(char_u *line)
   int len;
 
   cinw_len = (int)STRLEN(curbuf->b_p_cinw) + 1;
-  cinw_buf = alloc((unsigned)cinw_len);
+  cinw_buf = xmalloc(cinw_len);
   line = skipwhite(line);
   for (cinw = curbuf->b_p_cinw; *cinw; ) {
     len = copy_option_part(&cinw, cinw_buf, cinw_len, ",");

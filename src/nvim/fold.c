@@ -1610,7 +1610,7 @@ static void foldAddMarker(linenr_T lnum, char_u *marker, int markerlen)
   line_len = (int)STRLEN(line);
 
   if (u_save(lnum - 1, lnum + 1) == OK) {
-    newline = alloc((unsigned)(line_len + markerlen + STRLEN(cms) + 1));
+    newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
     STRCPY(newline, line);
     if (p == NULL)
       vim_strncpy(newline + line_len, marker, markerlen);
@@ -1681,7 +1681,7 @@ static void foldDelMarker(linenr_T lnum, char_u *marker, int markerlen)
       }
       if (u_save(lnum - 1, lnum + 1) == OK) {
         /* Make new line: text-before-marker + text-after-marker */
-        newline = alloc((unsigned)(STRLEN(line) - len + 1));
+        newline = xmalloc(STRLEN(line) - len + 1);
         STRNCPY(newline, line, p - line);
         STRCPY(newline + (p - line), p + len);
         ml_replace(lnum, newline, FALSE);

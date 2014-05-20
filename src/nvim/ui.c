@@ -272,12 +272,10 @@ int vim_is_input_buf_empty(void)
  */
 char_u *get_input_buf(void)
 {
-  garray_T    *gap;
-
   /* We use a growarray to store the data pointer and the length. */
-  gap = (garray_T *)alloc((unsigned)sizeof(garray_T));
+  garray_T *gap = xmalloc(sizeof(garray_T));
   /* Add one to avoid a zero size. */
-  gap->ga_data = alloc((unsigned)inbufcount + 1);
+  gap->ga_data = xmalloc(inbufcount + 1);
   if (gap->ga_data != NULL)
     memmove(gap->ga_data, inbuf, (size_t)inbufcount);
   gap->ga_len = inbufcount;

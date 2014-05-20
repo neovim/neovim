@@ -1198,15 +1198,13 @@ static void parse_builtin_tcap(char_u *term)
           char_u  *s, *t;
 
           s = vim_strsave((char_u *)p->bt_string);
-          if (s != NULL) {
-            for (t = s; *t; ++t)
-              if (term_7to8bit(t)) {
-                *t = term_7to8bit(t);
-                STRCPY(t + 1, t + 2);
-              }
-            term_strings[p->bt_entry] = s;
-            set_term_option_alloced(&term_strings[p->bt_entry]);
-          }
+          for (t = s; *t; ++t)
+            if (term_7to8bit(t)) {
+              *t = term_7to8bit(t);
+              STRCPY(t + 1, t + 2);
+            }
+          term_strings[p->bt_entry] = s;
+          set_term_option_alloced(&term_strings[p->bt_entry]);
         } else
           term_strings[p->bt_entry] = (char_u *)p->bt_string;
       }
@@ -2970,8 +2968,6 @@ void add_termcode(char_u *name, char_u *string, int flags)
   }
 
   s = vim_strsave(string);
-  if (s == NULL)
-    return;
 
   /* Change leading <Esc>[ to CSI, change <Esc>O to <M-O>. */
   if (flags != 0 && flags != ATC_FROM_TERM && term_7to8bit(string) != 0) {
@@ -2987,8 +2983,7 @@ void add_termcode(char_u *name, char_u *string, int flags)
    */
   if (tc_len == tc_max_len) {
     tc_max_len += 20;
-    new_tc = (struct termcode *)alloc(
-        (unsigned)(tc_max_len * sizeof(struct termcode)));
+    new_tc = xmalloc(tc_max_len * sizeof(struct termcode));
     for (i = 0; i < tc_len; ++i)
       new_tc[i] = termcodes[i];
     free(termcodes);
@@ -4174,7 +4169,7 @@ replace_termcodes (
    * Allocate space for the translation.  Worst case a single character is
    * replaced by 6 bytes (shifted special key), plus a NUL at the end.
    */
-  result = alloc((unsigned)STRLEN(from) * 6 + 1);
+  result = xmalloc(STRLEN(from) * 6 + 1);
 
   src = from;
 
@@ -4309,14 +4304,9 @@ replace_termcodes (
   }
   result[dlen] = NUL;
 
-  /*
-   * Copy the new string to allocated memory.
-   * If this fails, just return from.
-   */
-  if ((*bufp = vim_strsave(result)) != NULL)
-    from = *bufp;
-  free(result);
-  return from;
+  *bufp = xrealloc(result, dlen + 1);
+
+  return *bufp;
 }
 
 /*
@@ -4380,7 +4370,7 @@ void show_termcodes(void)
 
   if (tc_len == 0)          /* no terminal codes (must be GUI) */
     return;
-  items = (int *)alloc((unsigned)(sizeof(int) * tc_len));
+  items = xmalloc(sizeof(int) * tc_len);
 
   /* Highlight title */
   MSG_PUTS_TITLE(_("\n--- Terminal keys ---"));

@@ -236,8 +236,7 @@ do_tag (
           cur_fnum = ptag_entry.cur_fnum;
         } else {
           free(ptag_entry.tagname);
-          if ((ptag_entry.tagname = vim_strsave(tag)) == NULL)
-            goto end_do_tag;
+          ptag_entry.tagname = vim_strsave(tag);
         }
       } else {
         /*
@@ -256,13 +255,9 @@ do_tag (
           --tagstackidx;
         }
 
-        /*
-         * put the tag name in the tag stack
-         */
-        if ((tagstack[tagstackidx].tagname = vim_strsave(tag)) == NULL) {
-          curwin->w_tagstacklen = tagstacklen - 1;
-          goto end_do_tag;
-        }
+        // put the tag name in the tag stack
+        tagstack[tagstackidx].tagname = vim_strsave(tag);
+
         curwin->w_tagstacklen = tagstacklen;
 
         save_pos = TRUE;                /* save the cursor position below */
@@ -562,10 +557,9 @@ do_tag (
           /* Find out the actual file name. If it is long, truncate
            * it and put "..." in the middle */
           p = tag_full_fname(&tagp);
-          if (p != NULL) {
-            msg_puts_long_attr(p, hl_attr(HLF_D));
-            free(p);
-          }
+          msg_puts_long_attr(p, hl_attr(HLF_D));
+          free(p);
+
           if (msg_col > 0)
             msg_putchar('\n');
           if (got_int)
@@ -684,8 +678,8 @@ do_tag (
          * window.
          */
 
-        fname = alloc(MAXPATHL + 1);
-        cmd = alloc(CMDBUFFSIZE + 1);
+        fname = xmalloc(MAXPATHL + 1);
+        cmd = xmalloc(CMDBUFFSIZE + 1);
         list = list_alloc();
 
         for (i = 0; i < num_matches; ++i) {
@@ -704,8 +698,6 @@ do_tag (
 
           /* Save the tag file name */
           p = tag_full_fname(&tagp);
-          if (p == NULL)
-            continue;
           vim_strncpy(fname, p, MAXPATHL);
           free(p);
 
@@ -1190,8 +1182,8 @@ find_tags (
   /*
    * Allocate memory for the buffers that are used
    */
-  lbuf = alloc(lbuf_size);
-  tag_fname = alloc(MAXPATHL + 1);
+  lbuf = xmalloc(lbuf_size);
+  tag_fname = xmalloc(MAXPATHL + 1);
   for (mtt = 0; mtt < MT_COUNT; ++mtt)
     ga_init(&ga_match[mtt], (int)sizeof(struct match_found *), 100);
 
@@ -1211,11 +1203,9 @@ find_tags (
         && ASCII_ISALPHA(pat[orgpat.len - 2])
         && ASCII_ISALPHA(pat[orgpat.len - 1])) {
       saved_pat = vim_strnsave(pat, orgpat.len - 3);
-      if (saved_pat != NULL) {
-        help_lang_find = &pat[orgpat.len - 2];
-        orgpat.pat = saved_pat;
-        orgpat.len -= 3;
-      }
+      help_lang_find = &pat[orgpat.len - 2];
+      orgpat.pat = saved_pat;
+      orgpat.len -= 3;
     }
   }
   if (p_tl != 0 && orgpat.len > p_tl)           /* adjust for 'taglength' */
@@ -1821,9 +1811,7 @@ parse_line:
                */
               *tagp.tagname_end = NUL;
               len = (int)(tagp.tagname_end - tagp.tagname);
-              mfp = (struct match_found *)
-                    alloc((int)sizeof(struct match_found) + len
-                  + 10 + ML_EXTRA);
+              mfp = xmalloc(sizeof(struct match_found) + len + 10 + ML_EXTRA);
               /* "len" includes the language and the NUL, but
                * not the priority. */
               mfp->len = len + ML_EXTRA + 1;
@@ -1851,8 +1839,7 @@ parse_line:
 
                 if (tagp.command + 2 < temp_end) {
                   len = (int)(temp_end - tagp.command - 2);
-                  mfp = (struct match_found *)alloc(
-                      (int)sizeof(struct match_found) + len);
+                  mfp = xmalloc(sizeof(struct match_found) + len);
                   mfp->len = len + 1;                 /* include the NUL */
                   p = mfp->match;
                   vim_strncpy(p, tagp.command + 2, len);
@@ -1861,8 +1848,7 @@ parse_line:
                 get_it_again = FALSE;
               } else {
                 len = (int)(tagp.tagname_end - tagp.tagname);
-                mfp = (struct match_found *)alloc(
-                    (int)sizeof(struct match_found) + len);
+                mfp = xmalloc(sizeof(struct match_found) + len);
                 mfp->len = len + 1;               /* include the NUL */
                 p = mfp->match;
                 vim_strncpy(p, tagp.tagname, len);
@@ -1879,8 +1865,7 @@ parse_line:
                */
               len = (int)STRLEN(tag_fname)
                     + (int)STRLEN(lbuf) + 3;
-              mfp = (struct match_found *)alloc(
-                  (int)sizeof(struct match_found) + len);
+              mfp = xmalloc(sizeof(struct match_found) + len);
               mfp->len = len;
               p = mfp->match;
               p[0] = mtt;
@@ -2099,8 +2084,6 @@ get_tagfname (
      * the value without notifying us. */
     tnp->tn_tags = vim_strsave((*curbuf->b_p_tags != NUL)
         ? curbuf->b_p_tags : p_tags);
-    if (tnp->tn_tags == NULL)
-      return FAIL;
     tnp->tn_np = tnp->tn_tags;
   }
 
@@ -2335,19 +2318,13 @@ parse_match (
 /*
  * Find out the actual file name of a tag.  Concatenate the tags file name
  * with the matching tag file name.
- * Returns an allocated string or NULL (out of memory).
+ * Returns an allocated string.
  */
 static char_u *tag_full_fname(tagptrs_T *tagp)
 {
-  char_u      *fullname;
-  int c;
-
-  {
-    c = *tagp->fname_end;
-    *tagp->fname_end = NUL;
-  }
-  fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
-
+  int c = *tagp->fname_end;
+  *tagp->fname_end = NUL;
+  char_u *fullname = expand_tag_fname(tagp->fname, tagp->tag_fname, FALSE);
   *tagp->fname_end = c;
 
   return fullname;
@@ -2384,7 +2361,7 @@ jumpto_tag (
   char_u      *full_fname = NULL;
   int old_KeyTyped = KeyTyped;              /* getting the file may reset it */
 
-  pbuf = alloc(LSIZE);
+  pbuf = xmalloc(LSIZE);
 
   /* parse the match line into the tagp structure */
   if (parse_match(lbuf, &tagp) == FAIL) {
@@ -2420,8 +2397,6 @@ jumpto_tag (
    * If 'tagrelative' option set, may change file name.
    */
   fname = expand_tag_fname(fname, tagp.tag_fname, TRUE);
-  if (fname == NULL)
-    goto erret;
   tofree_fname = fname;         /* free() it later */
 
   /*
@@ -2435,8 +2410,6 @@ jumpto_tag (
     retval = NOTAGFILE;
     free(nofile_fname);
     nofile_fname = vim_strsave(fname);
-    if (nofile_fname == NULL)
-      nofile_fname = empty_option;
     goto erret;
   }
 
@@ -2653,12 +2626,11 @@ erret:
  * If "expand" is TRUE, expand wildcards in fname.
  * If 'tagrelative' option set, change fname (name of file containing tag)
  * according to tag_fname (name of tag file containing fname).
- * Returns a pointer to allocated memory (or NULL when out of memory).
+ * Returns a pointer to allocated memory.
  */
 static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
 {
   char_u      *p;
-  char_u      *retval;
   char_u      *expanded_fname = NULL;
   expand_T xpc;
 
@@ -2674,10 +2646,11 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
       fname = expanded_fname;
   }
 
+  char_u *retval;
   if ((p_tr || curbuf->b_help)
       && !vim_isAbsName(fname)
       && (p = path_tail(tag_fname)) != tag_fname) {
-    retval = alloc(MAXPATHL);
+    retval = xmalloc(MAXPATHL);
     STRCPY(retval, tag_fname);
     vim_strncpy(retval + (p - tag_fname), fname,
         MAXPATHL - (p - tag_fname) - 1);
@@ -2711,10 +2684,8 @@ static int test_for_current(char_u *fname, char_u *fname_end, char_u *tag_fname,
       *fname_end = NUL;
     }
     fullname = expand_tag_fname(fname, tag_fname, TRUE);
-    if (fullname != NULL) {
-      retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
-      free(fullname);
-    }
+    retval = (path_full_compare(fullname, buf_ffname, TRUE) & kEqualFiles);
+    free(fullname);
     *fname_end = c;
   }
 
@@ -2816,7 +2787,6 @@ add_tag_field (
     char_u *end                   /* after the value; can be NULL */
 )
 {
-  char_u      *buf;
   int len = 0;
   int retval;
 
@@ -2829,7 +2799,7 @@ add_tag_field (
     }
     return FAIL;
   }
-  buf = alloc(MAXPATHL);
+  char_u *buf = xmalloc(MAXPATHL);
   if (start != NULL) {
     if (end == NULL) {
       end = start + STRLEN(start);

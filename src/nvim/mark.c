@@ -606,8 +606,7 @@ static char_u *mark_line(pos_T *mp, int lead_len)
   if (mp->lnum == 0 || mp->lnum > curbuf->b_ml.ml_line_count)
     return vim_strsave((char_u *)"-invalid-");
   s = vim_strnsave(skipwhite(ml_get(mp->lnum)), (int)Columns);
-  if (s == NULL)
-    return NULL;
+
   /* Truncate the line to fit it in the window */
   len = 0;
   for (p = s; *p != NUL; mb_ptr_adv(p)) {
@@ -844,8 +843,6 @@ void ex_changes(exarg_T *eap)
           curbuf->b_changelist[i].col);
       msg_outtrans(IObuff);
       name = mark_line(&curbuf->b_changelist[i], 17);
-      if (name == NULL)
-        break;
       msg_outtrans_attr(name, hl_attr(HLF_D));
       free(name);
       ui_breakcheck();
@@ -1418,7 +1415,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
   pos_T pos;
   list_T      *list = NULL;
 
-  name_buf = alloc(LSIZE);
+  name_buf = xmalloc(LSIZE);
   *name_buf = NUL;
 
   if (fp_out == NULL && (flags & (VIF_GET_OLDFILES | VIF_FORCEIT))) {

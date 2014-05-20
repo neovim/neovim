@@ -2070,11 +2070,9 @@ static char_u *next_fenc(char_u **pp)
   } else {
     r = vim_strnsave(*pp, (int)(p - *pp));
     *pp = p + 1;
-    if (r != NULL) {
-      p = enc_canonize(r);
-      free(r);
-      r = p;
-    }
+    p = enc_canonize(r);
+    free(r);
+    r = p;
   }
   if (r == NULL) {      /* out of memory */
     r = (char_u *)"";
@@ -3438,7 +3436,7 @@ restore_backup:
               "E513: write error, conversion failed (make 'fenc' empty to override)");
         else {
           errmsg_allocated = TRUE;
-          errmsg = alloc(300);
+          errmsg = xmalloc(300);
           vim_snprintf((char *)errmsg, 300,
               _("E513: write error, conversion failed in line %" PRId64
                 " (make 'fenc' empty to override)"),
@@ -4373,7 +4371,7 @@ modname (
    * (we need the full path in case :cd is used).
    */
   if (fname == NULL || *fname == NUL) {
-    retval = alloc((unsigned)(MAXPATHL + extlen + 3));
+    retval = xmalloc(MAXPATHL + extlen + 3);
     if (os_dirname(retval, MAXPATHL) == FAIL ||
         (fnamelen = (int)STRLEN(retval)) == 0) {
       free(retval);
@@ -4386,7 +4384,7 @@ modname (
     prepend_dot = FALSE;            /* nothing to prepend a dot to */
   } else {
     fnamelen = (int)STRLEN(fname);
-    retval = alloc((unsigned)(fnamelen + extlen + 3));
+    retval = xmalloc(fnamelen + extlen + 3);
     STRCPY(retval, fname);
   }
 
@@ -4759,7 +4757,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
   curbuf = tobuf;
   for (lnum = 1; lnum <= frombuf->b_ml.ml_line_count; ++lnum) {
     p = vim_strsave(ml_get_buf(frombuf, lnum, FALSE));
-    if (p == NULL || ml_append(lnum - 1, p, 0, FALSE) == FAIL) {
+    if (ml_append(lnum - 1, p, 0, FALSE) == FAIL) {
       free(p);
       retval = FAIL;
       break;
@@ -4936,8 +4934,7 @@ buf_check_timestamp (
     if (path != NULL) {
       if (!helpmesg)
         mesg2 = "";
-      tbuf = alloc((unsigned)(STRLEN(path) + STRLEN(mesg)
-                              + STRLEN(mesg2) + 2));
+      tbuf = xmalloc(STRLEN(path) + STRLEN(mesg) + STRLEN(mesg2) + 2);
       sprintf((char *)tbuf, mesg, path);
       /* Set warningmsg here, before the unimportant and output-specific
        * mesg2 has been appended. */
@@ -5759,8 +5756,6 @@ static int au_new_group(char_u *name)
     }
 
     AUGROUP_NAME(i) = vim_strsave(name);
-    if (AUGROUP_NAME(i) == NULL)
-      return AUGROUP_ERROR;
     if (i == augroups.ga_len)
       ++augroups.ga_len;
   }
@@ -5964,18 +5959,14 @@ char_u *au_event_disable(char *what)
   char_u      *save_ei;
 
   save_ei = vim_strsave(p_ei);
-  if (save_ei != NULL) {
-    new_ei = vim_strnsave(p_ei, (int)(STRLEN(p_ei) + STRLEN(what)));
-    if (new_ei != NULL) {
-      if (*what == ',' && *p_ei == NUL)
-        STRCPY(new_ei, what + 1);
-      else
-        STRCAT(new_ei, what);
-      set_string_option_direct((char_u *)"ei", -1, new_ei,
-          OPT_FREE, SID_NONE);
-      free(new_ei);
-    }
-  }
+  new_ei = vim_strnsave(p_ei, (int)(STRLEN(p_ei) + STRLEN(what)));
+  if (*what == ',' && *p_ei == NUL)
+    STRCPY(new_ei, what + 1);
+  else
+    STRCAT(new_ei, what);
+  set_string_option_direct((char_u *)"ei", -1, new_ei, OPT_FREE, SID_NONE);
+  free(new_ei);
+
   return save_ei;
 }
 
@@ -6126,7 +6117,7 @@ void do_autocmd(char_u *arg, int forceit)
  * Find the group ID in a ":autocmd" or ":doautocmd" argument.
  * The "argp" argument is advanced to the following argument.
  *
- * Returns the group ID, AUGROUP_ERROR for error (out of memory).
+ * Returns the group ID or AUGROUP_ALL.
  */
 static int au_get_grouparg(char_u **argp)
 {
@@ -6138,8 +6129,6 @@ static int au_get_grouparg(char_u **argp)
   p = skiptowhite(arg);
   if (p > arg) {
     group_name = vim_strnsave(arg, (int)(p - arg));
-    if (group_name == NULL)             /* out of memory */
-      return AUGROUP_ERROR;
     group = au_find_group(group_name);
     if (group == AUGROUP_ERROR)
       group = AUGROUP_ALL;              /* no match, use all groups */
@@ -6306,13 +6295,9 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
           return FAIL;
         }
 
-        ap = (AutoPat *)alloc((unsigned)sizeof(AutoPat));
+        ap = xmalloc(sizeof(AutoPat));
         ap->pat = vim_strnsave(pat, patlen);
         ap->patlen = patlen;
-        if (ap->pat == NULL) {
-          free(ap);
-          return FAIL;
-        }
 
         if (is_buflocal) {
           ap->buflocal_nr = buflocal_nr;
@@ -6347,13 +6332,9 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
       prev_ac = &(ap->cmds);
       while ((ac = *prev_ac) != NULL)
         prev_ac = &ac->next;
-      ac = (AutoCmd *)alloc((unsigned)sizeof(AutoCmd));
+      ac = xmalloc(sizeof(AutoCmd));
       ac->cmd = vim_strsave(cmd);
       ac->scriptID = current_SID;
-      if (ac->cmd == NULL) {
-        free(ac);
-        return FAIL;
-      }
       ac->next = NULL;
       *prev_ac = ac;
       ac->nested = nested;
@@ -7160,8 +7141,7 @@ auto_next_pat (
           : ap->buflocal_nr == apc->arg_bufnr) {
         name = event_nr2name(apc->event);
         s = _("%s Auto commands for \"%s\"");
-        sourcing_name = alloc((unsigned)(STRLEN(s)
-                                         + STRLEN(name) + ap->patlen + 1));
+        sourcing_name = xmalloc(STRLEN(s) + STRLEN(name) + ap->patlen + 1);
         sprintf((char *)sourcing_name, s,
             (char *)name, (char *)ap->pat);
         if (p_verbose >= 8) {
@@ -7264,8 +7244,7 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
    * autocommand patterns portable between Unix and MS-DOS.
    */
   sfname = vim_strsave(sfname);
-  if (sfname != NULL)
-    forward_slash(sfname);
+  forward_slash(sfname);
   forward_slash(fname);
 #endif
 
@@ -7403,8 +7382,6 @@ int au_exists(char_u *arg)
 
   /* Make a copy so that we can change the '#' chars to a NUL. */
   arg_save = vim_strsave(arg);
-  if (arg_save == NULL)
-    return FALSE;
   p = vim_strchr(arg_save, '#');
   if (p != NULL)
     *p++ = NUL;

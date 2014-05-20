@@ -120,8 +120,6 @@ open_line (
    * make a copy of the current line so we can mess with it
    */
   saved_line = vim_strsave(ml_get_curline());
-  if (saved_line == NULL)           /* out of memory! */
-    return FALSE;
 
   if (State & VREPLACE_FLAG) {
     /*
@@ -137,8 +135,6 @@ open_line (
       next_line = vim_strsave(ml_get(curwin->w_cursor.lnum + 1));
     else
       next_line = vim_strsave((char_u *)"");
-    if (next_line == NULL)          /* out of memory! */
-      goto theend;
 
     /*
      * In VREPLACE mode, a NL replaces the rest of the line, and starts
@@ -505,7 +501,7 @@ open_line (
     }
     if (lead_len) {
       /* allocate buffer (may concatenate p_extra later) */
-      leader = alloc(lead_len + lead_repl_len + extra_space + extra_len
+      leader = xmalloc(lead_len + lead_repl_len + extra_space + extra_len
           + (second_line_indent > 0 ? second_line_indent : 0) + 1);
       allocated = leader;                   /* remember to free it later */
 
@@ -918,8 +914,6 @@ open_line (
   if (State & VREPLACE_FLAG) {
     /* Put new line in p_extra */
     p_extra = vim_strsave(ml_get_curline());
-    if (p_extra == NULL)
-      goto theend;
 
     /* Put back original line */
     ml_replace(curwin->w_cursor.lnum, next_line, FALSE);
@@ -1708,9 +1702,7 @@ del_bytes (
   if (was_alloced)
     newp = oldp;                            /* use same allocated memory */
   else {                                    /* need to allocate a new line */
-    newp = alloc((unsigned)(oldlen + 1 - count));
-    if (newp == NULL)
-      return FAIL;
+    newp = xmalloc(oldlen + 1 - count);
     memmove(newp, oldp, (size_t)col);
   }
   memmove(newp + col, oldp + col + count, (size_t)movelen);
@@ -1726,10 +1718,8 @@ del_bytes (
 /*
  * Delete from cursor to end of line.
  * Caller must have prepared for undo.
- *
- * return FAIL for failure, OK otherwise
  */
-int 
+void
 truncate_line (
     int fixpos                 /* if TRUE fix the cursor position when done */
 )
@@ -1743,9 +1733,6 @@ truncate_line (
   else
     newp = vim_strnsave(ml_get(lnum), col);
 
-  if (newp == NULL)
-    return FAIL;
-
   ml_replace(lnum, newp, FALSE);
 
   /* mark the buffer as changed and prepare for displaying */
@@ -1756,8 +1743,6 @@ truncate_line (
    */
   if (fixpos && curwin->w_cursor.col > 0)
     --curwin->w_cursor.col;
-
-  return OK;
 }
 
 /*
@@ -2404,7 +2389,7 @@ int get_keystroke(void)
      * bytes. */
     maxlen = (buflen - 6 - len) / 3;
     if (buf == NULL)
-      buf = alloc(buflen);
+      buf = xmalloc(buflen);
     else if (maxlen < 10) {
       /* Need some more space. This might happen when receiving a long
        * escape sequence. */
@@ -2724,9 +2709,7 @@ char_u *expand_env_save(char_u *src)
  */
 char_u *expand_env_save_opt(char_u *src, int one)
 {
-  char_u      *p;
-
-  p = alloc(MAXPATHL);
+  char_u *p = xmalloc(MAXPATHL);
   expand_env_esc(src, p, MAXPATHL, FALSE, one, NULL);
   return p;
 }
@@ -2874,13 +2857,12 @@ expand_env_esc (
       if (p_ssl && var != NULL && vim_strchr(var, '\\') != NULL) {
         char_u  *p = vim_strsave(var);
 
-        if (p != NULL) {
-          if (mustfree)
-            free(var);
-          var = p;
-          mustfree = TRUE;
-          forward_slash(var);
+        if (mustfree) {
+          free(var);
         }
+        var = p;
+        mustfree = TRUE;
+        forward_slash(var);
       }
 #endif
 
@@ -3033,7 +3015,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
       /* check that the result is a directory name */
       p = vim_strnsave(p, (int)(pend - p));
 
-      if (p != NULL && !os_isdir(p)) {
+      if (!os_isdir(p)) {
         free(p);
         p = NULL;
       } else {
@@ -3332,13 +3314,12 @@ home_replace_save (
 )
 {
   char_u      *dst;
-  unsigned len;
 
-  len = 3;                      /* space for "~/" and trailing NUL */
+  size_t len = 3;                      /* space for "~/" and trailing NUL */
   if (src != NULL)              /* just in case */
-    len += (unsigned)STRLEN(src);
-  dst = alloc(len);
-  home_replace(buf, src, dst, len, TRUE);
+    len += STRLEN(src);
+  dst = xmalloc(len);
+  home_replace(buf, src, dst, (int)len, TRUE);
   return dst;
 }
 
@@ -3499,7 +3480,7 @@ get_cmd_output (
   len = ftell(fd);                  /* get size of temp file */
   fseek(fd, 0L, SEEK_SET);
 
-  buffer = alloc(len + 1);
+  buffer = xmalloc(len + 1);
   i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
   fclose(fd);
   os_remove((char *)tempname);

@@ -519,10 +519,6 @@ static void diff_check_unchanged(tabpage_T *tp, diff_T *dp)
                                                 dp->df_lnum[i_org] + off_org,
                                                 FALSE));
 
-      if (line_org == NULL) {
-        return;
-      }
-
       int i_new;
       for (i_new = i_org + 1; i_new < DB_COUNT; ++i_new) {
         if (tp->tp_diffbuf[i_new] == NULL) {
@@ -972,10 +968,7 @@ void ex_diffpatch(exarg_T *eap)
     if (curbuf->b_fname != NULL) {
       newname = vim_strnsave(curbuf->b_fname,
                              (int)(STRLEN(curbuf->b_fname) + 4));
-
-      if (newname != NULL) {
-        STRCAT(newname, ".new");
-      }
+      STRCAT(newname, ".new");
     }
 
     // don't use a new tab page, each tab page has its own diffs
@@ -1580,9 +1573,6 @@ static int diff_equal_entry(diff_T *dp, int idx1, int idx2)
     char_u *line = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx1],
                                           dp->df_lnum[idx1] + i, FALSE));
 
-    if (line == NULL) {
-      return FALSE;
-    }
     int cmp = diff_cmp(line, ml_get_buf(curtab->tp_diffbuf[idx2],
                                         dp->df_lnum[idx2] + i, FALSE));
     free(line);
@@ -1886,9 +1876,6 @@ int diff_find_change(win_T *wp, linenr_T lnum, int *startp, int *endp)
 
   // Make a copy of the line, the next ml_get() will invalidate it.
   char_u *line_org = vim_strsave(ml_get_buf(wp->w_buffer, lnum, FALSE));
-  if (line_org == NULL) {
-    return FALSE;
-  }
 
   int idx = diff_buf_idx(wp->w_buffer);
   if (idx == DB_COUNT) {
@@ -2283,16 +2270,14 @@ void ex_diffgetput(exarg_T *eap)
           break;
         }
         p = vim_strsave(ml_get_buf(curtab->tp_diffbuf[idx_from], nr, FALSE));
-        if (p != NULL) {
-          ml_append(lnum + i - 1, p, 0, FALSE);
-          free(p);
-          added++;
-          if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {
-            // Added the first line into an empty buffer, need to
-            // delete the dummy empty line.
-            buf_empty = FALSE;
-            ml_delete((linenr_T)2, FALSE);
-          }
+        ml_append(lnum + i - 1, p, 0, FALSE);
+        free(p);
+        added++;
+        if (buf_empty && (curbuf->b_ml.ml_line_count == 2)) {
+          // Added the first line into an empty buffer, need to
+          // delete the dummy empty line.
+          buf_empty = FALSE;
+          ml_delete((linenr_T)2, FALSE);
         }
       }
       new_count = dp->df_count[idx_to] + added;

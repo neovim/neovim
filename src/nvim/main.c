@@ -1308,7 +1308,7 @@ static void command_line_scan(mparm_T *parmp)
                 --argv;
               } else
                 a = argv[0];
-              p = alloc((unsigned)(STRLEN(a) + 4));
+              p = xmalloc(STRLEN(a) + 4);
               sprintf((char *)p, "so %s", a);
               parmp->cmds_tofree[parmp->n_commands] = TRUE;
               parmp->commands[parmp->n_commands++] = p;
@@ -1352,8 +1352,7 @@ scripterror:
               mch_errmsg("\"\n");
               mch_exit(2);
             }
-            if (save_typebuf() == FAIL)
-              mch_exit(2);                /* out of memory */
+            save_typebuf();
             break;
 
           case 't':               /* "-t {tag}" */
@@ -1415,8 +1414,8 @@ scripterror:
 
       /* Add the file to the global argument list. */
       ga_grow(&global_alist.al_ga, 1);
-      if ((p = vim_strsave((char_u *)argv[0])) == NULL)
-        mch_exit(2);
+      p = vim_strsave((char_u *)argv[0]);
+
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
         char_u      *r;
@@ -1456,7 +1455,7 @@ scripterror:
   /* If there is a "+123" or "-c" command, set v:swapcommand to the first
    * one. */
   if (parmp->n_commands > 0) {
-    p = alloc((unsigned)STRLEN(parmp->commands[0]) + 3);
+    p = xmalloc(STRLEN(parmp->commands[0]) + 3);
     sprintf((char *)p, ":%s\r", parmp->commands[0]);
     set_vim_var_string(VV_SWAPCOMMAND, p, -1);
     free(p);
@@ -1502,7 +1501,7 @@ static void init_startuptime(mparm_T *paramp)
  */
 static void allocate_generic_buffers(void)
 {
-  NameBuff = alloc(MAXPATHL);
+  NameBuff = xmalloc(MAXPATHL);
   TIME_MSG("Allocated generic buffers");
 }
 

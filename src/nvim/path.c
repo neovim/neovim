@@ -296,7 +296,7 @@ void add_pathsep(char_u *p)
 
 /*
  * FullName_save - Make an allocated copy of a full file name.
- * Returns NULL when out of memory.
+ * Returns NULL when fname is NULL.
  */
 char_u *
 FullName_save (
@@ -305,20 +305,20 @@ FullName_save (
                                  * like a full path name */
 )
 {
-  char_u      *buf;
   char_u      *new_fname = NULL;
 
   if (fname == NULL)
     return NULL;
 
-  buf = alloc((unsigned)MAXPATHL);
-  if (buf != NULL) {
-    if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL)
-      new_fname = vim_strsave(buf);
-    else
-      new_fname = vim_strsave(fname);
-    free(buf);
+  char_u *buf = xmalloc(MAXPATHL);
+
+  if (vim_FullName(fname, buf, MAXPATHL, force) != FAIL) {
+    new_fname = vim_strsave(buf);
+  } else {
+    new_fname = vim_strsave(fname);
   }
+  free(buf);
+
   return new_fname;
 }
 
@@ -380,7 +380,7 @@ unix_expandpath (
   }
 
   /* make room for file name */
-  buf = alloc((int)STRLEN(path) + BASENAMELEN + 5);
+  buf = xmalloc(STRLEN(path) + BASENAMELEN + 5);
 
   /*
    * Find the first part in the path name that contains a wildcard.
@@ -609,7 +609,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   char_u      *p;
   int len;
 
-  buf = alloc((int)MAXPATHL);
+  buf = xmalloc(MAXPATHL);
 
   while (*path_option != NUL) {
     copy_option_part(&path_option, buf, MAXPATHL, " ,");
@@ -650,8 +650,6 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
     ga_grow(gap, 1);
 
     p = vim_strsave(buf);
-    if (p == NULL)
-      break;
     ((char_u **)gap->ga_data)[gap->ga_len++] = p;
   }
 
@@ -723,7 +721,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
    * possible patterns?
    */
   len = (int)STRLEN(pattern);
-  file_pattern = alloc(len + 2);
+  file_pattern = xmalloc(len + 2);
   file_pattern[0] = '*';
   file_pattern[1] = NUL;
   STRCAT(file_pattern, pattern);
@@ -738,7 +736,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   if (regmatch.regprog == NULL)
     return;
 
-  curdir = alloc((int)(MAXPATHL));
+  curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
   expand_path_option(curdir, &path_ga);
 
@@ -814,7 +812,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    rel_path = alloc((int)(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2));
+    rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
     STRCPY(rel_path, ".");
     add_pathsep(rel_path);
     STRCAT(rel_path, short_name);
@@ -887,7 +885,7 @@ expand_in_path (
   char_u      *e;       /* end */
   char_u      *paths = NULL;
 
-  curdir = alloc((unsigned)MAXPATHL);
+  curdir = xmalloc(MAXPATHL);
   os_dirname(curdir, MAXPATHL);
 
   ga_init(&path_ga, (int)sizeof(char_u *), 1);
@@ -1137,8 +1135,6 @@ expand_backtick (
 
   /* Create the command: lop off the backticks. */
   cmd = vim_strnsave(pat + 1, (int)STRLEN(pat) - 2);
-  if (cmd == NULL)
-    return 0;
 
   if (*cmd == '=')          /* `={expr}`: Expand expression */
     buffer = eval_to_string(cmd + 1, &p, TRUE);
@@ -1211,7 +1207,7 @@ addfile (
   /* Make room for another item in the file list. */
   ga_grow(gap, 1);
 
-  p = alloc((unsigned)(STRLEN(f) + 1 + isdir));
+  p = xmalloc(STRLEN(f) + 1 + isdir);
 
   STRCPY(p, f);
 #ifdef BACKSLASH_IN_FILENAME
@@ -1563,9 +1559,7 @@ char_u *fix_fname(char_u *fname)
   fname = vim_strsave(fname);
 
 # ifdef USE_FNAME_CASE
-  if (fname != NULL) {
-    fname_case(fname, 0);             /* set correct case for file name */
-  }
+  fname_case(fname, 0);  // set correct case for file name
 # endif
 
   return fname;

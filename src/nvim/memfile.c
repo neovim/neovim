@@ -104,11 +104,9 @@ static void mf_hash_grow(mf_hashtab_T *);
  */
 memfile_T *mf_open(char_u *fname, int flags)
 {
-  memfile_T           *mfp;
   off_t size;
 
-  if ((mfp = (memfile_T *)alloc((unsigned)sizeof(memfile_T))) == NULL)
-    return NULL;
+  memfile_T *mfp = xmalloc(sizeof(memfile_T));
 
   if (fname == NULL) {      /* no file for this memfile, use memory only */
     mfp->mf_fname = NULL;
@@ -316,14 +314,14 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
      * just use the number and free the bhdr_T from the free list
      */
     if (freep->bh_page_count > page_count) {
-      if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
-        return NULL;
+      if (hp == NULL) {
+        hp = mf_alloc_bhdr(mfp, page_count);
+      }
       hp->bh_bnum = freep->bh_bnum;
       freep->bh_bnum += page_count;
       freep->bh_page_count -= page_count;
     } else if (hp == NULL) {      /* need to allocate memory for this block */
-      if ((p = (char_u *)alloc(mfp->mf_page_size * page_count)) == NULL)
-        return NULL;
+      p = xmalloc(mfp->mf_page_size * page_count);
       hp = mf_rem_free(mfp);
       hp->bh_data = p;
     } else {              /* use the number, remove entry from free list */
@@ -332,8 +330,9 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
       free(freep);
     }
   } else {    /* get a new number */
-    if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
-      return NULL;
+    if (hp == NULL) {
+      hp = mf_alloc_bhdr(mfp, page_count);
+    }
     if (negative) {
       hp->bh_bnum = mfp->mf_blocknr_min--;
       mfp->mf_neg_count++;
@@ -386,8 +385,9 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, int page_count)
      * If not, allocate a new block.
      */
     hp = mf_release(mfp, page_count);
-    if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
-      return NULL;
+    if (hp == NULL) {
+      hp = mf_alloc_bhdr(mfp, page_count);
+    }
 
     hp->bh_bnum = nr;
     hp->bh_flags = 0;
@@ -689,10 +689,7 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
    */
   if (hp->bh_page_count != page_count) {
     free(hp->bh_data);
-    if ((hp->bh_data = alloc(mfp->mf_page_size * page_count)) == NULL) {
-      free(hp);
-      return NULL;
-    }
+    hp->bh_data = xmalloc(mfp->mf_page_size * page_count);
     hp->bh_page_count = page_count;
   }
   return hp;
@@ -743,16 +740,10 @@ int mf_release_all(void)
  */
 static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, int page_count)
 {
-  bhdr_T      *hp;
+  bhdr_T *hp = xmalloc(sizeof(bhdr_T));
+  hp->bh_data = xmalloc(mfp->mf_page_size * page_count);
+  hp->bh_page_count = page_count;
 
-  if ((hp = (bhdr_T *)alloc((unsigned)sizeof(bhdr_T))) != NULL) {
-    if ((hp->bh_data = (char_u *)alloc(mfp->mf_page_size * page_count))
-        == NULL) {
-      free(hp);                 /* not enough memory */
-      return NULL;
-    }
-    hp->bh_page_count = page_count;
-  }
   return hp;
 }
 
@@ -911,14 +902,12 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
 {
   bhdr_T      *freep;
   blocknr_T new_bnum;
-  NR_TRANS    *np;
   int page_count;
 
   if (hp->bh_bnum >= 0)                     /* it's already positive */
     return OK;
 
-  if ((np = (NR_TRANS *)alloc((unsigned)sizeof(NR_TRANS))) == NULL)
-    return FAIL;
+  NR_TRANS *np = xmalloc(sizeof(NR_TRANS));
 
   /*
    * Get a new number for the block.
