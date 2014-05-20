@@ -259,47 +259,34 @@ int dec_cursor(void)
   return dec(&curwin->w_cursor);
 }
 
-/*
- * Get the line number relative to the current cursor position, i.e. the
- * difference between line number and cursor position. Only look for lines that
- * can be visible, folded lines don't count.
- */
-linenr_T get_cursor_rel_lnum(
-    win_T *wp,
-    linenr_T lnum                      /* line number to get the result for */
-)
+/// Get the line number relative to the current cursor position, i.e. the
+/// difference between line number and cursor position. Only look for lines that
+/// can be visible, folded lines don't count.
+///
+/// @param lnum line number to get the result for
+linenr_T get_cursor_rel_lnum(win_T *wp, linenr_T lnum)
 {
   linenr_T cursor = wp->w_cursor.lnum;
-  linenr_T retval = 0;
-
-  if (hasAnyFolding(wp)) {
-    if (lnum > cursor) {
-      while (lnum > cursor) {
-        (void)hasFoldingWin(wp, lnum, &lnum, NULL, true, NULL);
-        /* if lnum and cursor are in the same fold,
-         * now lnum <= cursor */
-        if (lnum > cursor)
-          retval++;
-        lnum--;
-      }
-    } else if (lnum < cursor) {
-      while (lnum < cursor) {
-        (void)hasFoldingWin(wp, lnum, NULL, &lnum, true, NULL);
-        /* if lnum and cursor are in the same fold,
-         * now lnum >= cursor */
-        if (lnum < cursor)
-          retval--;
-        lnum++;
-      }
-    }
-    /* else if (lnum == cursor)
-     *     retval = 0;
-     */
-  } else {
-    retval = lnum - cursor;
+  if (lnum == cursor || !hasAnyFolding(wp)) {
+    return lnum - cursor;
   }
 
-  return retval;
+  linenr_T from_line = lnum < cursor ? lnum : cursor;
+  linenr_T to_line = lnum > cursor ? lnum : cursor;
+  linenr_T retval = 0;
+
+  // Loop until we reach to_line, skipping folds.
+  for (; from_line < to_line; from_line++, retval++) {
+    // If from_line is in a fold, set it to the last line of that fold.
+    hasFoldingWin(wp, from_line, NULL, &from_line, true, NULL);
+  }
+
+  // If to_line is in a closed fold, the line count is off by +1. Correct it.
+  if (from_line > to_line) {
+    retval--;
+  }
+
+  return (lnum < cursor) ? -retval : retval;
 }
 
 /*
