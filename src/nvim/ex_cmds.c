@@ -6026,7 +6026,10 @@ void ex_sign(exarg_T *eap)
 	    else
 		/* ":sign place {id} file={fname}": change sign type */
 		lnum = buf_change_sign_type(buf, id, sp->sn_typenr);
-	    update_debug_sign(buf, lnum);
+            if (lnum > 0)
+                update_debug_sign(buf, lnum);
+            else
+                EMSG2(_("E885: Not possible to change sign %s"), sign_name);
 	}
 	else
 	    EMSG(_(e_invarg));
