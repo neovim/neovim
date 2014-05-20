@@ -14,7 +14,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/fileio.h"
-#include "nvim/blowfish.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/diff.h"
@@ -33,7 +32,6 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
-#include "nvim/crypt.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
 #include "nvim/normal.h"
@@ -52,7 +50,6 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
-
 #if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
 # include <utime.h>             /* for struct utimbuf */
 #endif
@@ -60,27 +57,10 @@
 #define BUFSIZE         8192    /* size of normal write buffer */
 #define SMBUFSIZE       256     /* size of emergency write buffer */
 
-/* crypt_magic[0] is pkzip crypt, crypt_magic[1] is sha2+blowfish */
-static char     *crypt_magic[] = {"VimCrypt~01!", "VimCrypt~02!"};
-static char crypt_magic_head[] = "VimCrypt~";
-# define CRYPT_MAGIC_LEN        12              /* must be multiple of 4! */
-
-/* For blowfish, after the magic header, we store 8 bytes of salt and then 8
- * bytes of seed (initialisation vector). */
-static int crypt_salt_len[] = {0, 8};
-static int crypt_seed_len[] = {0, 8};
-#define CRYPT_SALT_LEN_MAX 8
-#define CRYPT_SEED_LEN_MAX 8
-
 static char_u *next_fenc(char_u **pp);
 static char_u *readfile_charconvert(char_u *fname, char_u *fenc,
                                             int *fdp);
 static void check_marks_read(void);
-static int crypt_method_from_magic(char *ptr, int len);
-static char_u *check_for_cryptkey(char_u *cryptkey, char_u *ptr,
-                                  long *sizep, off_t *filesizep,
-                                  int newfile, char_u *fname,
-                                  int *did_ask);
 #ifdef UNIX
 static void set_file_time(char_u *fname, time_t atime, time_t mtime);
 #endif
@@ -105,7 +85,6 @@ static int au_find_group(char_u *name);
 # define FIO_UCS4       0x08    /* convert UCS-4 */
 # define FIO_UTF16      0x10    /* convert UTF-16 */
 # define FIO_ENDIAN_L   0x80    /* little endian */
-# define FIO_ENCRYPTED  0x1000  /* encrypt written bytes */
 # define FIO_NOCONVERT  0x2000  /* skip encoding conversion */
 # define FIO_UCSBOM     0x4000  /* check for BOM at start of file */
 # define FIO_ALL        -1      /* allow all formats */
@@ -245,9 +224,6 @@ readfile (
   char_u      *p;
   off_t filesize = 0;
   int skip_read = FALSE;
-  char_u      *cryptkey = NULL;
-  int did_ask_for_key = FALSE;
-  int crypt_method_used;
   context_sha256_T sha_ctx;
   int read_undo_file = FALSE;
   int split = 0;                        /* number of split lines */
@@ -812,11 +788,6 @@ retry:
     conv_error = 0;
   }
 
-  if (cryptkey != NULL)
-    /* Need to reset the state, but keep the key, don't want to ask for it
-     * again. */
-    crypt_pop_state();
-
   /*
    * When retrying with another "fenc" and the first time "fileformat"
    * will be reset.
@@ -1147,34 +1118,17 @@ retry:
             }
           }
         }
-
-        /*
-         * At start of file: Check for magic number of encryption.
-         */
-        if (filesize == 0)
-          cryptkey = check_for_cryptkey(cryptkey, ptr, &size,
-              &filesize, newfile, sfname,
-              &did_ask_for_key);
-        /*
-         * Decrypt the read bytes.
-         */
-        if (cryptkey != NULL && size > 0)
-          crypt_decode(ptr, size);
       }
+
       skip_read = FALSE;
 
       /*
-       * At start of file (or after crypt magic number): Check for BOM.
+       * At start of file: Check for BOM.
        * Also check for a BOM for other Unicode encodings, but not after
        * converting with 'charconvert' or when a BOM has already been
        * found.
        */
-      if ((filesize == 0
-           || (filesize == (CRYPT_MAGIC_LEN
-                            + crypt_salt_len[use_crypt_method]
-                            + crypt_seed_len[use_crypt_method])
-               && cryptkey != NULL)
-           )
+      if ((filesize == 0)
           && (fio_flags == FIO_UCSBOM
               || (!curbuf->b_p_bomb
                   && tmpname == NULL
@@ -1734,15 +1688,6 @@ failed:
   if (set_options)
     save_file_ff(curbuf);               /* remember the current file format */
 
-  crypt_method_used = use_crypt_method;
-  if (cryptkey != NULL) {
-    crypt_pop_state();
-    if (cryptkey != curbuf->b_p_key)
-      free_crypt_key(cryptkey);
-    /* don't set cryptkey to NULL, it's used below as a flag that
-     * encryption was used */
-  }
-
   /* If editing a new file: set 'fenc' for the current buffer.
    * Also for ":read ++edit file". */
   if (set_options)
@@ -1881,13 +1826,6 @@ failed:
         STRCAT(IObuff, _("[converted]"));
         c = TRUE;
       }
-      if (cryptkey != NULL) {
-        if (crypt_method_used == 1)
-          STRCAT(IObuff, _("[blowfish]"));
-        else
-          STRCAT(IObuff, _("[crypted]"));
-        c = TRUE;
-      }
       if (conv_error != 0) {
         sprintf((char *)IObuff + STRLEN(IObuff),
             _("[CONVERSION ERROR in line %" PRId64 "]"), (int64_t)conv_error);
@@ -1902,12 +1840,6 @@ failed:
       }
       if (msg_add_fileformat(fileformat))
         c = TRUE;
-      if (cryptkey != NULL)
-        msg_add_lines(c, (long)linecnt, filesize
-            - CRYPT_MAGIC_LEN
-            - crypt_salt_len[use_crypt_method]
-            - crypt_seed_len[use_crypt_method]);
-      else
         msg_add_lines(c, (long)linecnt, filesize);
 
       free(keep_msg);
@@ -2217,178 +2149,6 @@ static void check_marks_read(void)
   curbuf->b_marks_read = TRUE;
 }
 
-/*
- * Get the crypt method used for a file from "ptr[len]", the magic text at the
- * start of the file.
- * Returns -1 when no encryption used.
- */
-static int crypt_method_from_magic(char *ptr, int len)
-{
-  int i;
-
-  for (i = 0; i < (int)(sizeof(crypt_magic) / sizeof(crypt_magic[0])); i++) {
-    if (len < (CRYPT_MAGIC_LEN + crypt_salt_len[i] + crypt_seed_len[i]))
-      continue;
-    if (memcmp(ptr, crypt_magic[i], CRYPT_MAGIC_LEN) == 0)
-      return i;
-  }
-
-  i = (int)STRLEN(crypt_magic_head);
-  if (len >= i && memcmp(ptr, crypt_magic_head, i) == 0)
-    EMSG(_("E821: File is encrypted with unknown method"));
-
-  return -1;
-}
-
-/*
- * Check for magic number used for encryption.  Applies to the current buffer.
- * If found, the magic number is removed from ptr[*sizep] and *sizep and
- * *filesizep are updated.
- * Return the (new) encryption key, NULL for no encryption.
- */
-static char_u *
-check_for_cryptkey (
-    char_u *cryptkey,          /* previous encryption key or NULL */
-    char_u *ptr,               /* pointer to read bytes */
-    long *sizep,             /* length of read bytes */
-    off_t *filesizep,         /* nr of bytes used from file */
-    int newfile,                    /* editing a new buffer */
-    char_u *fname,             /* file name to display */
-    int *did_ask           /* flag: whether already asked for key */
-)
-{
-  int method = crypt_method_from_magic((char *)ptr, *sizep);
-  int b_p_ro = curbuf->b_p_ro;
-
-  if (method >= 0) {
-    /* Mark the buffer as read-only until the decryption has taken place.
-     * Avoids accidentally overwriting the file with garbage. */
-    curbuf->b_p_ro = TRUE;
-
-    set_crypt_method(curbuf, method);
-    if (method > 0)
-      (void)blowfish_self_test();
-    if (cryptkey == NULL && !*did_ask) {
-      if (*curbuf->b_p_key)
-        cryptkey = curbuf->b_p_key;
-      else {
-        /* When newfile is TRUE, store the typed key in the 'key'
-         * option and don't free it.  bf needs hash of the key saved.
-         * Don't ask for the key again when first time Enter was hit.
-         * Happens when retrying to detect encoding. */
-        smsg((char_u *)_(need_key_msg), fname);
-        msg_scroll = TRUE;
-        cryptkey = get_crypt_key(newfile, FALSE);
-        *did_ask = TRUE;
-
-        /* check if empty key entered */
-        if (cryptkey != NULL && *cryptkey == NUL) {
-          if (cryptkey != curbuf->b_p_key)
-            free(cryptkey);
-          cryptkey = NULL;
-        }
-      }
-    }
-
-    if (cryptkey != NULL) {
-      int seed_len = crypt_seed_len[method];
-      int salt_len = crypt_salt_len[method];
-
-      crypt_push_state();
-      use_crypt_method = method;
-      if (method == 0)
-        crypt_init_keys(cryptkey);
-      else {
-        bf_key_init(cryptkey, ptr + CRYPT_MAGIC_LEN, salt_len);
-        bf_cfb_init(ptr + CRYPT_MAGIC_LEN + salt_len, seed_len);
-      }
-
-      /* Remove magic number from the text */
-      *filesizep += CRYPT_MAGIC_LEN + salt_len + seed_len;
-      *sizep -= CRYPT_MAGIC_LEN + salt_len + seed_len;
-      memmove(ptr, ptr + CRYPT_MAGIC_LEN + salt_len + seed_len,
-          (size_t)*sizep);
-      /* Restore the read-only flag. */
-      curbuf->b_p_ro = b_p_ro;
-    }
-  }
-  /* When starting to edit a new file which does not have encryption, clear
-   * the 'key' option, except when starting up (called with -x argument) */
-  else if (newfile && *curbuf->b_p_key != NUL && !starting)
-    set_option_value((char_u *)"key", 0L, (char_u *)"", OPT_LOCAL);
-
-  return cryptkey;
-}
-
-/*
- * Check for magic number used for encryption.  Applies to the current buffer.
- * If found and decryption is possible returns OK;
- */
-int prepare_crypt_read(FILE *fp)
-{
-  int method;
-  char_u buffer[CRYPT_MAGIC_LEN + CRYPT_SALT_LEN_MAX
-                + CRYPT_SEED_LEN_MAX + 2];
-
-  if (fread(buffer, CRYPT_MAGIC_LEN, 1, fp) != 1)
-    return FAIL;
-  method = crypt_method_from_magic((char *)buffer,
-      CRYPT_MAGIC_LEN +
-      CRYPT_SEED_LEN_MAX +
-      CRYPT_SALT_LEN_MAX);
-  if (method < 0 || method != get_crypt_method(curbuf))
-    return FAIL;
-
-  crypt_push_state();
-  if (method == 0)
-    crypt_init_keys(curbuf->b_p_key);
-  else {
-    int salt_len = crypt_salt_len[method];
-    int seed_len = crypt_seed_len[method];
-
-    if (fread(buffer, salt_len + seed_len, 1, fp) != 1)
-      return FAIL;
-    bf_key_init(curbuf->b_p_key, buffer, salt_len);
-    bf_cfb_init(buffer + salt_len, seed_len);
-  }
-  return OK;
-}
-
-/*
- * Prepare for writing encrypted bytes for buffer "buf".
- * Returns a pointer to an allocated header of length "*lenp".
- * When out of memory returns NULL.
- * Otherwise calls crypt_push_state(), call crypt_pop_state() later.
- */
-char_u *prepare_crypt_write(buf_T *buf, int *lenp)
-{
-  char_u  *header = xcalloc(1, CRYPT_MAGIC_LEN + CRYPT_SALT_LEN_MAX
-                   + CRYPT_SEED_LEN_MAX + 2);
-  int seed_len = crypt_seed_len[get_crypt_method(buf)];
-  int salt_len = crypt_salt_len[get_crypt_method(buf)];
-  char_u  *salt;
-  char_u  *seed;
-
-  crypt_push_state();
-  use_crypt_method = get_crypt_method(buf);      /* select zip or blowfish */
-  vim_strncpy(header, (char_u *)crypt_magic[use_crypt_method],
-      CRYPT_MAGIC_LEN);
-  if (use_crypt_method == 0)
-    crypt_init_keys(buf->b_p_key);
-  else {
-    /* Using blowfish, add salt and seed. */
-    salt = header + CRYPT_MAGIC_LEN;
-    seed = salt + salt_len;
-    sha2_seed(salt, salt_len, seed, seed_len);
-    bf_key_init(buf->b_p_key, salt, salt_len);
-    bf_cfb_init(seed, seed_len);
-  }
-
-  *lenp = CRYPT_MAGIC_LEN + salt_len + seed_len;
-  return header;
-}
-
-
 #ifdef UNIX
 static void 
 set_file_time (
@@ -2501,7 +2261,6 @@ buf_write (
 #endif
   int write_undo_file = FALSE;
   context_sha256_T sha_ctx;
-  int crypt_method_used;
 
   if (fname == NULL || *fname == NUL)   /* safety check */
     return FAIL;
@@ -3477,28 +3236,6 @@ restore_backup:
 
 
   write_info.bw_fd = fd;
-
-  if (*buf->b_p_key != NUL && !filtering) {
-    char_u *header;
-    int header_len;
-
-    header = prepare_crypt_write(buf, &header_len);
-    if (header == NULL)
-      end = 0;
-    else {
-      /* Write magic number, so that Vim knows that this file is
-       * encrypted when reading it again.  This also undergoes utf-8 to
-       * ucs-2/4 conversion when needed. */
-      write_info.bw_buf = header;
-      write_info.bw_len = header_len;
-      write_info.bw_flags = FIO_NOCONVERT;
-      if (buf_write_bytes(&write_info) == FAIL)
-        end = 0;
-      wb_flags |= FIO_ENCRYPTED;
-      free(header);
-    }
-  }
-
   write_info.bw_buf = buffer;
   nchars = 0;
 
@@ -3509,14 +3246,13 @@ restore_backup:
     write_bin = buf->b_p_bin;
 
   /*
-   * The BOM is written just after the encryption magic number.
-   * Skip it when appending and the file already existed, the BOM only makes
-   * sense at the start of the file.
+   * Skip the BOM when appending and the file already existed, the BOM 
+   * only makes sense at the start of the file.
    */
   if (buf->b_p_bomb && !write_bin && (!append || perm < 0)) {
     write_info.bw_len = make_bom(buffer, fenc);
     if (write_info.bw_len > 0) {
-      /* don't convert, do encryption */
+      /* don't convert */
       write_info.bw_flags = FIO_NOCONVERT | wb_flags;
       if (buf_write_bytes(&write_info) == FAIL)
         end = 0;
@@ -3677,10 +3413,6 @@ restore_backup:
   if (!backup_copy)
     mch_set_acl(wfname, acl);
 #endif
-  crypt_method_used = use_crypt_method;
-  if (wb_flags & FIO_ENCRYPTED)
-    crypt_pop_state();
-
 
   if (wfname != fname) {
     /*
@@ -3799,13 +3531,6 @@ restore_backup:
     /* may add [unix/dos/mac] */
     if (msg_add_fileformat(fileformat))
       c = TRUE;
-    if (wb_flags & FIO_ENCRYPTED) {
-      if (crypt_method_used == 1)
-        STRCAT(IObuff, _("[blowfish]"));
-      else
-        STRCAT(IObuff, _("[crypted]"));
-      c = TRUE;
-    }
     msg_add_lines(c, (long)lnum, nchars);       /* add line/char count */
     if (!shortmess(SHM_WRITE)) {
       if (append)
@@ -4163,7 +3888,7 @@ static int time_differs(long t1, long t2)
 
 /*
  * Call write() to write a number of bytes to the file.
- * Handles encryption and 'encoding' conversion.
+ * Handles 'encoding' conversion.
  *
  * Return FAIL for failure, OK otherwise.
  */
@@ -4177,7 +3902,7 @@ static int buf_write_bytes(struct bw_info *ip)
 #endif
 
   /*
-   * Skip conversion when writing the crypt magic number or the BOM.
+   * Skip conversion when writing the BOM.
    */
   if (!(flags & FIO_NOCONVERT)) {
     char_u          *p;
@@ -4365,9 +4090,6 @@ static int buf_write_bytes(struct bw_info *ip)
     }
 # endif
   }
-
-  if (flags & FIO_ENCRYPTED)            /* encrypt the data */
-    crypt_encode(buf, len, buf);
 
   wlen = write_eintr(ip->bw_fd, buf, len);
   return (wlen < len) ? FAIL : OK;

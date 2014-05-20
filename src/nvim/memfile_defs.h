@@ -75,8 +75,6 @@ struct nr_trans {
   blocknr_T nt_new_bnum;                /* new, positive, number */
 };
 
-#define MF_SEED_LEN     8
-
 struct memfile {
   char_u      *mf_fname;                /* name of the file */
   char_u      *mf_ffname;               /* idem, full path */
@@ -94,14 +92,6 @@ struct memfile {
   blocknr_T mf_infile_count;            /* number of pages in the file */
   unsigned mf_page_size;                /* number of bytes in a page */
   int mf_dirty;                         /* TRUE if there are dirty blocks */
-  buf_T       *mf_buffer;               /* bufer this memfile is for */
-  char_u mf_seed[MF_SEED_LEN];          /* seed for encryption */
-
-  /* Values for key, method and seed used for reading data blocks when
-   * updating for a newly set key or method. Only when mf_old_key != NULL. */
-  char_u      *mf_old_key;
-  int mf_old_cm;
-  char_u mf_old_seed[MF_SEED_LEN];
 };
 
 #endif // NVIM_MEMFILE_DEFS_H

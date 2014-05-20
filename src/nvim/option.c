@@ -37,7 +37,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/option.h"
-#include "nvim/blowfish.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/diff.h"
@@ -59,7 +58,6 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/keymap.h"
-#include "nvim/crypt.h"
 #include "nvim/garray.h"
 #include "nvim/cursor_shape.h"
 #include "nvim/move.h"
@@ -137,7 +135,6 @@
 # define PV_INEX        OPT_BUF(BV_INEX)
 #define PV_INF          OPT_BUF(BV_INF)
 #define PV_ISK          OPT_BUF(BV_ISK)
-# define PV_KEY         OPT_BUF(BV_KEY)
 # define PV_KMAP        OPT_BUF(BV_KMAP)
 #define PV_KP           OPT_BOTH(OPT_BUF(BV_KP))
 # define PV_LISP        OPT_BUF(BV_LISP)
@@ -253,7 +250,6 @@ static char_u   *p_indk;
 static char_u   *p_fex;
 static int p_inf;
 static char_u   *p_isk;
-static char_u   *p_key;
 static int p_lisp;
 static int p_ml;
 static int p_ma;
@@ -582,10 +578,6 @@ static struct vimoption
   {"cpoptions",   "cpo",  P_STRING|P_VIM|P_RALL|P_FLAGLIST,
    (char_u *)&p_cpo, PV_NONE,
    {(char_u *)CPO_VI, (char_u *)CPO_VIM}
-   SCRIPTID_INIT},
-  {"cryptmethod", "cm",   P_STRING|P_ALLOCED|P_VI_DEF,
-   (char_u *)&p_cm, PV_CM,
-   {(char_u *)"zip", (char_u *)0L}
    SCRIPTID_INIT},
   {"cscopepathcomp", "cspc", P_NUM|P_VI_DEF|P_VIM,
    (char_u *)&p_cspc, PV_NONE,
@@ -1009,10 +1001,6 @@ static struct vimoption
   {"joinspaces",  "js",   P_BOOL|P_VI_DEF|P_VIM,
    (char_u *)&p_js, PV_NONE,
    {(char_u *)TRUE, (char_u *)0L} SCRIPTID_INIT},
-  {"key",         NULL,   P_STRING|P_ALLOCED|P_VI_DEF|P_NO_MKRC,
-   (char_u *)&p_key, PV_KEY,
-   {(char_u *)"", (char_u *)0L}
-   SCRIPTID_INIT},
   {"keymap",      "kmp",  P_STRING|P_ALLOCED|P_VI_DEF|P_RBUF|P_RSTAT|P_NFNAME|
    P_PRI_MKRC,
    (char_u *)&p_keymap, PV_KMAP,
@@ -1832,7 +1820,6 @@ static char *(p_ambw_values[]) = {"single", "double", NULL};
 static char *(p_bg_values[]) = {"light", "dark", NULL};
 static char *(p_nf_values[]) = {"octal", "hex", "alpha", NULL};
 static char *(p_ff_values[]) = {FF_UNIX, FF_DOS, FF_MAC, NULL};
-static char *(p_cm_values[]) = {"zip", "blowfish", NULL};
 static char *(p_wop_values[]) = {"tagfile", NULL};
 static char *(p_wak_values[]) = {"yes", "menu", "no", NULL};
 static char *(p_mousem_values[]) =
@@ -3596,9 +3583,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_inex);
   check_string_option(&buf->b_p_inde);
   check_string_option(&buf->b_p_indk);
-  check_string_option(&buf->b_p_cm);
   check_string_option(&buf->b_p_fex);
-  check_string_option(&buf->b_p_key);
   check_string_option(&buf->b_p_kp);
   check_string_option(&buf->b_p_mps);
   check_string_option(&buf->b_p_fo);
@@ -4135,59 +4120,7 @@ did_set_string_option (
       errmsg = e_invarg;
     }
   }
-  /* 'cryptkey' */
-  else if (gvarp == &p_key) {
-    /* Make sure the ":set" command doesn't show the new value in the
-     * history. */
-    remove_key_from_history();
-    if (STRCMP(curbuf->b_p_key, oldval) != 0)
-      /* Need to update the swapfile. */
-      ml_set_crypt_key(curbuf, oldval, get_crypt_method(curbuf));
-  } else if (gvarp == &p_cm) {
-    if (opt_flags & OPT_LOCAL)
-      p = curbuf->b_p_cm;
-    else
-      p = p_cm;
-    if (check_opt_strings(p, p_cm_values, TRUE) != OK)
-      errmsg = e_invarg;
-    else if (get_crypt_method(curbuf) > 0 && blowfish_self_test() == FAIL)
-      errmsg = e_invarg;
-    else {
-      /* When setting the global value to empty, make it "zip". */
-      if (*p_cm == NUL) {
-        if (new_value_alloced)
-          free_string_option(p_cm);
-        p_cm = vim_strsave((char_u *)"zip");
-        new_value_alloced = TRUE;
-      }
 
-      /* Need to update the swapfile when the effective method changed.
-       * Set "s" to the effective old value, "p" to the effective new
-       * method and compare. */
-      if ((opt_flags & OPT_LOCAL) && *oldval == NUL)
-        s = p_cm;          /* was previously using the global value */
-      else
-        s = oldval;
-      if (*curbuf->b_p_cm == NUL)
-        p = p_cm;          /* is now using the global value */
-      else
-        p = curbuf->b_p_cm;
-      if (STRCMP(s, p) != 0)
-        ml_set_crypt_key(curbuf, curbuf->b_p_key,
-            crypt_method_from_string(s));
-
-      /* If the global value changes need to update the swapfile for all
-       * buffers using that value. */
-      if ((opt_flags & OPT_GLOBAL) && STRCMP(p_cm, oldval) != 0) {
-        buf_T   *buf;
-
-        for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-          if (buf != curbuf && *buf->b_p_cm == NUL)
-            ml_set_crypt_key(buf, buf->b_p_key,
-                crypt_method_from_string(oldval));
-      }
-    }
-  }
   /* 'matchpairs' */
   else if (gvarp == &p_mps) {
     if (has_mbyte) {
@@ -5923,12 +5856,7 @@ get_option_value (
     if (varp == NULL)                       /* hidden option */
       return -2;
     if (stringval != NULL) {
-      /* never return the value of the crypt key */
-      if ((char_u **)varp == &curbuf->b_p_key
-          && **(char_u **)(varp) != NUL)
-        *stringval = vim_strsave((char_u *)"*****");
-      else
-        *stringval = vim_strsave(*(char_u **)(varp));
+      *stringval = vim_strsave(*(char_u **)(varp));
     }
     return 0;
   }
@@ -6756,7 +6684,6 @@ static char_u *get_varp_scope(struct vimoption *p, int opt_flags)
     case PV_INC:  return (char_u *)&(curbuf->b_p_inc);
     case PV_DICT: return (char_u *)&(curbuf->b_p_dict);
     case PV_TSR:  return (char_u *)&(curbuf->b_p_tsr);
-    case PV_CM:   return (char_u *)&(curbuf->b_p_cm);
     case PV_STL:  return (char_u *)&(curwin->w_p_stl);
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
     }
@@ -6802,8 +6729,6 @@ static char_u *get_varp(struct vimoption *p)
            ? (char_u *)&(curbuf->b_p_gp) : p->var;
   case PV_MP:     return *curbuf->b_p_mp != NUL
            ? (char_u *)&(curbuf->b_p_mp) : p->var;
-  case PV_CM:     return *curbuf->b_p_cm != NUL
-           ? (char_u *)&(curbuf->b_p_cm) : p->var;
   case PV_STL:    return *curwin->w_p_stl != NUL
            ? (char_u *)&(curwin->w_p_stl) : p->var;
   case PV_UL:     return curbuf->b_p_ul != NO_LOCAL_UNDOLEVEL
@@ -6873,7 +6798,6 @@ static char_u *get_varp(struct vimoption *p)
   case PV_INDE:   return (char_u *)&(curbuf->b_p_inde);
   case PV_INDK:   return (char_u *)&(curbuf->b_p_indk);
   case PV_FEX:    return (char_u *)&(curbuf->b_p_fex);
-  case PV_KEY:    return (char_u *)&(curbuf->b_p_key);
   case PV_LISP:   return (char_u *)&(curbuf->b_p_lisp);
   case PV_ML:     return (char_u *)&(curbuf->b_p_ml);
   case PV_MPS:    return (char_u *)&(curbuf->b_p_mps);
@@ -7135,7 +7059,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_inde = vim_strsave(p_inde);
       buf->b_p_indk = vim_strsave(p_indk);
       buf->b_p_fex = vim_strsave(p_fex);
-      buf->b_p_key = vim_strsave(p_key);
       buf->b_p_sua = vim_strsave(p_sua);
       buf->b_p_keymap = vim_strsave(p_keymap);
       buf->b_kmap_state |= KEYMAP_INIT;
@@ -7161,7 +7084,6 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_dict = empty_option;
       buf->b_p_tsr = empty_option;
       buf->b_p_qe = vim_strsave(p_qe);
-      buf->b_p_cm = empty_option;
       buf->b_p_udf = p_udf;
 
       /*
@@ -7620,9 +7542,6 @@ option_value2string (
     varp = *(char_u **)(varp);
     if (varp == NULL)                       /* just in case */
       NameBuff[0] = NUL;
-    /* don't show the actual value of 'key', only that it's set */
-    else if (opp->var == (char_u *)&p_key && *varp)
-      STRCPY(NameBuff, "*****");
     else if (opp->flags & P_EXPAND)
       home_replace(NULL, varp, NameBuff, MAXPATHL, FALSE);
     /* Translate 'pastetoggle' into special key names */

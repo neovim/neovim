@@ -1489,9 +1489,7 @@ void free_buf_options(buf_T *buf, int free_p_ff)
   clear_string_option(&buf->b_p_inex);
   clear_string_option(&buf->b_p_inde);
   clear_string_option(&buf->b_p_indk);
-  clear_string_option(&buf->b_p_cm);
   clear_string_option(&buf->b_p_fex);
-  clear_string_option(&buf->b_p_key);
   clear_string_option(&buf->b_p_kp);
   clear_string_option(&buf->b_p_mps);
   clear_string_option(&buf->b_p_fo);

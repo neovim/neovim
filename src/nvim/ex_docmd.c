@@ -14,7 +14,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/ex_docmd.h"
-#include "nvim/blowfish.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/diff.h"
@@ -40,7 +39,6 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/keymap.h"
-#include "nvim/crypt.h"
 #include "nvim/file_search.h"
 #include "nvim/garray.h"
 #include "nvim/move.h"
@@ -224,7 +222,6 @@ static void ex_digraphs(exarg_T *eap);
 static void ex_set(exarg_T *eap);
 static void ex_nohlsearch(exarg_T *eap);
 static void ex_match(exarg_T *eap);
-static void ex_X(exarg_T *eap);
 static void ex_fold(exarg_T *eap);
 static void ex_foldopen(exarg_T *eap);
 static void ex_folddo(exarg_T *eap);
@@ -9072,15 +9069,6 @@ static void ex_match(exarg_T *eap)
     }
   }
   eap->nextcmd = find_nextcmd(end);
-}
-
-/*
- * ":X": Get crypt key
- */
-static void ex_X(exarg_T *eap)
-{
-  if (get_crypt_method(curbuf) == 0 || blowfish_self_test() == OK)
-    (void)get_crypt_key(TRUE, TRUE);
 }
 
 static void ex_fold(exarg_T *eap)

@@ -9,7 +9,6 @@
 ///
 /// Vim specific notes:
 /// Functions exported by this file:
-///  1. sha256_key() hashes the password to 64 bytes char string.
 ///  2. sha2_seed() generates a random header.
 /// sha256_self_test() is implicitly called once.
 
@@ -282,23 +281,6 @@ char_u *sha256_bytes(char_u *buf, int buf_len, char_u *salt, int salt_len)
   }
   hexit[sizeof(hexit) - 1] = '\0';
   return hexit;
-}
-
-/// Gets sha256(buf) as 64 hex characters in a static array.
-///
-/// @param buf
-/// @param salt
-/// @param salt_len
-///
-/// @returns sha256(buf) as 64 hex chars in static array.
-char_u* sha256_key(char_u *buf, char_u *salt, int salt_len)
-{
-  // No passwd means don't encrypt
-  if ((buf == NULL) || (*buf == NUL)) {
-    return (char_u *)"";
-  }
-
-  return sha256_bytes(buf, (int)STRLEN(buf), salt, salt_len);
 }
 
 // These are the standard FIPS-180-2 test vectors

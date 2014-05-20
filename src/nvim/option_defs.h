@@ -308,7 +308,6 @@ static char *(p_bkc_values[]) =
 EXTERN char_u   *p_bdir;        /* 'backupdir' */
 EXTERN char_u   *p_bex;         /* 'backupext' */
 EXTERN char_u   *p_bsk;         /* 'backupskip' */
-EXTERN char_u   *p_cm;          /* 'cryptmethod' */
 EXTERN char_u   *p_breakat;     /* 'breakat' */
 EXTERN char_u   *p_cmp;         /* 'casemap' */
 EXTERN unsigned cmp_flags;
@@ -688,7 +687,6 @@ enum {
   , BV_INEX
   , BV_INF
   , BV_ISK
-  , BV_KEY
   , BV_KMAP
   , BV_KP
   , BV_LISP

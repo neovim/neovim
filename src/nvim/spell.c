@@ -7731,7 +7731,6 @@ static buf_T *open_spellbuf(void)
 
   buf->b_spell = TRUE;
   buf->b_p_swf = TRUE;        // may create a swap file
-  buf->b_p_key = empty_option;
   ml_open(buf);
   ml_open_file(buf);          // create swap file now
 

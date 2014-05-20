@@ -713,7 +713,6 @@ static void f_setreg(typval_T *argvars, typval_T *rettv);
 static void f_settabvar(typval_T *argvars, typval_T *rettv);
 static void f_settabwinvar(typval_T *argvars, typval_T *rettv);
 static void f_setwinvar(typval_T *argvars, typval_T *rettv);
-static void f_sha256(typval_T *argvars, typval_T *rettv);
 static void f_shellescape(typval_T *argvars, typval_T *rettv);
 static void f_shiftwidth(typval_T *argvars, typval_T *rettv);
 static void f_simplify(typval_T *argvars, typval_T *rettv);
@@ -6994,7 +6993,6 @@ static struct fst {
   {"settabvar",       3, 3, f_settabvar},
   {"settabwinvar",    4, 4, f_settabwinvar},
   {"setwinvar",       3, 3, f_setwinvar},
-  {"sha256",          1, 1, f_sha256},
   {"shellescape",     1, 2, f_shellescape},
   {"shiftwidth",      0, 0, f_shiftwidth},
   {"simplify",        1, 1, f_simplify},
@@ -10204,7 +10202,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "cmdline_hist",
     "comments",
     "conceal",
-    "cryptv",
     "cscope",
     "cursorbind",
     "cursorshape",
@@ -13657,19 +13654,6 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 
     restore_win(save_curwin, save_curtab, TRUE);
   }
-}
-
-/*
- * "sha256({string})" function
- */
-static void f_sha256(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *p;
-
-  p = get_tv_string(&argvars[0]);
-  rettv->vval.v_string = vim_strsave(
-      sha256_bytes(p, (int)STRLEN(p), NULL, 0));
-  rettv->v_type = VAR_STRING;
 }
 
 /*
