@@ -3516,9 +3516,8 @@ static void copy_ze_off(regsub_T *to, regsub_T *from)
   }
 }
 
-/*
- * Return TRUE if "sub1" and "sub2" have the same start positions.
- */
+// Return TRUE if "sub1" and "sub2" have the same start positions.
+// When using back-references also check the end position.
 static int sub_equal(regsub_T *sub1, regsub_T *sub2)
 {
   int i;
@@ -3544,6 +3543,26 @@ static int sub_equal(regsub_T *sub1, regsub_T *sub2)
       if (s1 != -1 && sub1->list.multi[i].start.col
           != sub2->list.multi[i].start.col)
         return FALSE;
+
+      if (nfa_has_backref) {
+        if (i < sub1->in_use) {
+          s1 = sub1->list.multi[i].end.lnum;
+        } else {
+          s1 = -1;
+        }
+        if (i < sub2->in_use) {
+          s2 = sub2->list.multi[i].end.lnum;
+        } else {
+          s2 = -1;
+        }
+        if (s1 != s2) {
+          return FALSE;
+        }
+        if (s1 != -1
+            && sub1->list.multi[i].end.col != sub2->list.multi[i].end.col) {
+          return FALSE;
+        }
+      }
     }
   } else {
     for (i = 0; i < todo; ++i) {
@@ -3557,6 +3576,22 @@ static int sub_equal(regsub_T *sub1, regsub_T *sub2)
         sp2 = NULL;
       if (sp1 != sp2)
         return FALSE;
+
+      if (nfa_has_backref) {
+        if (i < sub1->in_use) {
+          sp1 = sub1->list.line[i].end;
+        } else {
+          sp1 = NULL;
+        }
+        if (i < sub2->in_use) {
+          sp2 = sub2->list.line[i].end;
+        } else {
+          sp2 = NULL;
+        }
+        if (sp1 != sp2) {
+          return FALSE;
+        }
+      }
     }
   }
 
