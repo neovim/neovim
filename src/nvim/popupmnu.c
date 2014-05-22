@@ -345,32 +345,27 @@ void pum_redraw(void)
             *p = saved;
 
             if (curwin->w_p_rl) {
-              char_u  *rt = reverse_text(st);
+              char_u *rt = reverse_text(st);
+              char_u *rt_start = rt;
+              int size = vim_strsize(rt);
 
-              if (rt != NULL) {
-                char_u *rt_start = rt;
-                int size;
+              if (size > pum_width) {
+                do {
+                  size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
+                  mb_ptr_adv(rt);
+                } while (size > pum_width);
 
-                size = vim_strsize(rt);
-
-                if (size > pum_width) {
-                  do {
-                    size -= has_mbyte ? (*mb_ptr2cells)(rt) : 1;
-                    mb_ptr_adv(rt);
-                  } while (size > pum_width);
-
-                  if (size < pum_width) {
-                    // Most left character requires 2-cells but only 1 cell
-                    // is available on screen.  Put a '<' on the left of the 
-                    // pum item
-                    *(--rt) = '<';
-                    size++;
-                  }
+                if (size < pum_width) {
+                  // Most left character requires 2-cells but only 1 cell
+                  // is available on screen.  Put a '<' on the left of the 
+                  // pum item
+                  *(--rt) = '<';
+                  size++;
                 }
-                screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1,
-                                attr);
-                free(rt_start);
               }
+              screen_puts_len(rt, (int)STRLEN(rt), row, col - size + 1,
+                              attr);
+              free(rt_start);
               free(st);
 
               col -= width;

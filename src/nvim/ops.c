@@ -689,8 +689,6 @@ char_u *get_expr_line(void)
   /* Make a copy of the expression, because evaluating it may cause it to be
    * changed. */
   expr_copy = vim_strsave(expr_line);
-  if (expr_copy == NULL)
-    return NULL;
 
   /* When we are invoked recursively limit the evaluation to 10 levels.
    * Then return the string as-is. */
@@ -907,7 +905,7 @@ static int stuff_yank(int regname, char_u *p)
     *pp = lp;
   } else {
     free_yank_all();
-    y_current->y_array = (char_u **)alloc((unsigned)sizeof(char_u *));
+    y_current->y_array = (char_u **)xmalloc(sizeof(char_u *));
     y_current->y_array[0] = p;
     y_current->y_size = 1;
     y_current->y_type = MCHAR;      /* used to be MLINE, why? */
@@ -2154,17 +2152,15 @@ void op_insert(oparg_T *oap, long count1)
     if (pre_textlen >= 0
         && (ins_len = (long)STRLEN(firstline) - pre_textlen) > 0) {
       ins_text = vim_strnsave(firstline, (int)ins_len);
-      if (ins_text != NULL) {
-        /* block handled here */
-        if (u_save(oap->start.lnum,
-                (linenr_T)(oap->end.lnum + 1)) == OK)
-          block_insert(oap, ins_text, (oap->op_type == OP_INSERT),
-              &bd);
+      /* block handled here */
+      if (u_save(oap->start.lnum,
+              (linenr_T)(oap->end.lnum + 1)) == OK)
+        block_insert(oap, ins_text, (oap->op_type == OP_INSERT),
+            &bd);
 
-        curwin->w_cursor.col = oap->start.col;
-        check_cursor();
-        free(ins_text);
-      }
+      curwin->w_cursor.col = oap->start.col;
+      check_cursor();
+      free(ins_text);
     }
   }
 }
@@ -2414,9 +2410,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
       break;
 
     case MLINE:
-      if ((y_current->y_array[y_idx] =
-             vim_strsave(ml_get(lnum))) == NULL)
-        goto fail;
+      y_current->y_array[y_idx] = vim_strsave(ml_get(lnum));
       break;
 
     case MCHAR:
@@ -2547,13 +2541,7 @@ int op_yank(oparg_T *oap, int deleting, int mess)
     curbuf->b_op_end.col = MAXCOL;
   }
 
-
   return OK;
-
-fail:           /* free the allocated lines */
-  free_yank(y_idx + 1);
-  y_current = curr;
-  return FAIL;
 }
 
 static void yank_copy_line(struct block_def *bd, long y_idx)
@@ -2676,8 +2664,7 @@ do_put (
         }
         if (y_array != NULL)
           break;
-        y_array = (char_u **)alloc((unsigned)
-            (y_size * sizeof(char_u *)));
+        y_array = (char_u **)xmalloc(y_size * sizeof(char_u *));
       }
     } else {
       y_size = 1;               /* use fake one-line yank register */
@@ -2699,14 +2686,10 @@ do_put (
       if (u_save_cursor() == FAIL)
         goto end;
       ptr = vim_strsave(ml_get_cursor());
-      if (ptr == NULL)
-        goto end;
       ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, FALSE);
       free(ptr);
 
       ptr = vim_strnsave(ml_get_curline(), curwin->w_cursor.col);
-      if (ptr == NULL)
-        goto end;
       ml_replace(curwin->w_cursor.lnum, ptr, FALSE);
       ++nr_lines;
       dir = FORWARD;
@@ -3628,20 +3611,19 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
    * The first line has to be saved, only one line can be locked at a time.
    */
   line1 = vim_strsave(ml_get(lnum));
-  if (line1 != NULL) {
-    for (idx1 = 0; vim_iswhite(line1[idx1]); ++idx1)
-      ;
-    line2 = ml_get(lnum + 1);
-    for (idx2 = 0; idx2 < leader2_len; ++idx2) {
-      if (!vim_iswhite(line2[idx2])) {
-        if (line1[idx1++] != line2[idx2])
-          break;
-      } else
-        while (vim_iswhite(line1[idx1]))
-          ++idx1;
-    }
-    free(line1);
+  for (idx1 = 0; vim_iswhite(line1[idx1]); ++idx1)
+    ;
+  line2 = ml_get(lnum + 1);
+  for (idx2 = 0; idx2 < leader2_len; ++idx2) {
+    if (!vim_iswhite(line2[idx2])) {
+      if (line1[idx1++] != line2[idx2])
+        break;
+    } else
+      while (vim_iswhite(line1[idx1]))
+        ++idx1;
   }
+  free(line1);
+
   return idx2 == leader2_len && idx1 == leader1_len;
 }
 
@@ -4401,7 +4383,7 @@ int do_addsub(int command, linenr_T Prenum1)
      * When there are many leading zeros it could be very long.  Allocate
      * a bit too much.
      */
-    buf1 = alloc((unsigned)length + NUMBUFLEN);
+    buf1 = xmalloc(length + NUMBUFLEN);
     ptr = buf1;
     if (negative) {
       *ptr++ = '-';
@@ -4491,7 +4473,7 @@ int read_viminfo_register(vir_T *virp, int force)
       y_previous = y_current;
     free(y_current->y_array);
     array = y_current->y_array =
-              (char_u **)alloc((unsigned)(limit * sizeof(char_u *)));
+              (char_u **)xmalloc(limit * sizeof(char_u *));
     str = skipwhite(skiptowhite(str));
     if (STRNCMP(str, "CHAR", 4) == 0)
       y_current->y_type = MCHAR;
@@ -4508,8 +4490,7 @@ int read_viminfo_register(vir_T *virp, int force)
          && (virp->vir_line[0] == TAB || virp->vir_line[0] == '<')) {
     if (do_it) {
       if (size >= limit) {
-        y_current->y_array = (char_u **)
-                             alloc((unsigned)(limit * 2 * sizeof(char_u *)));
+        y_current->y_array = (char_u **)xmalloc(limit * 2 * sizeof(char_u *));
         for (i = 0; i < limit; i++)
           y_current->y_array[i] = array[i];
         free(array);
@@ -4529,7 +4510,7 @@ int read_viminfo_register(vir_T *virp, int force)
       y_current->y_array = NULL;
     } else if (size < limit) {
       y_current->y_array =
-        (char_u **)alloc((unsigned)(size * sizeof(char_u *)));
+        (char_u **)xmalloc(size * sizeof(char_u *));
       for (i = 0; i < size; i++)
         y_current->y_array[i] = array[i];
       free(array);
@@ -4773,8 +4754,7 @@ void write_reg_contents_ex(int name, char_u *str, int maxlen, int must_append, i
     char_u      *p, *s;
 
     p = vim_strnsave(str, (int)len);
-    if (p == NULL)
-      return;
+
     if (must_append) {
       s = concat_str(get_expr_line_src(), p);
       free(p);
@@ -4885,7 +4865,7 @@ str_to_reg (
       extra = (int)STRLEN(y_ptr->y_array[lnum]);
     } else
       extra = 0;
-    s = alloc((unsigned)(i + extra + 1));
+    s = xmalloc(i + extra + 1);
     if (extra)
       memmove(s, y_ptr->y_array[lnum], (size_t)extra);
     if (append)

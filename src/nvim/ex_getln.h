@@ -14,7 +14,7 @@ char_u *getexmodeline(int promptc, void *cookie, int indent);
 void free_cmdline_buf(void);
 void putcmdline(int c, int shift);
 void unputcmdline(void);
-int put_on_cmdline(char_u *str, int len, int redraw);
+void put_on_cmdline(char_u *str, int len, int redraw);
 char_u *save_cmdline_alloc(void);
 void restore_cmdline_alloc(char_u *p);
 void cmdline_paste_str(char_u *s, int literally);

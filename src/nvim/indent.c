@@ -182,7 +182,7 @@ int set_indent(int size, int flags)
   // characters and allocate accordingly.  We will fill the rest with spaces
   // after the if (!curbuf->b_p_et) below.
   if (orig_char_len != -1) {
-    newline = alloc(orig_char_len + size - ind_done + line_len);
+    newline = xmalloc(orig_char_len + size - ind_done + line_len);
     todo = size - ind_done;
 
     // Set total length of indent in characters, which may have been
@@ -203,7 +203,7 @@ int set_indent(int size, int flags)
     }
   } else {
     todo = size;
-    newline = alloc(ind_len + line_len);
+    newline = xmalloc(ind_len + line_len);
     s = newline;
   }
 
@@ -368,7 +368,7 @@ int copy_indent(int size, char_u *src)
       // Allocate memory for the result: the copied indent, new indent
       // and the rest of the line.
       line_len = (int)STRLEN(ml_get_curline()) + 1;
-      line = alloc(ind_len + line_len);
+      line = xmalloc(ind_len + line_len);
       p = line;
     }
   }

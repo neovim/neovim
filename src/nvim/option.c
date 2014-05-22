@@ -2089,7 +2089,8 @@ void set_init_1(void)
       p = (char_u *)_(*(char **)options[opt_idx].var);
     else
       p = option_expand(opt_idx, NULL);
-    if (p != NULL && (p = vim_strsave(p)) != NULL) {
+    if (p != NULL) {
+      p = vim_strsave(p);
       *(char_u **)options[opt_idx].var = p;
       /* VIMEXP
        * Defaults for all expanded options are currently the same for Vi
@@ -2278,14 +2279,12 @@ void set_string_default(char *name, char_u *val)
   int opt_idx;
 
   p = vim_strsave(val);
-  if (p != NULL) {              /* we don't want a NULL */
-    opt_idx = findoption((char_u *)name);
-    if (opt_idx >= 0) {
-      if (options[opt_idx].flags & P_DEF_ALLOCED)
-        free(options[opt_idx].def_val[VI_DEFAULT]);
-      options[opt_idx].def_val[VI_DEFAULT] = p;
-      options[opt_idx].flags |= P_DEF_ALLOCED;
-    }
+  opt_idx = findoption((char_u *)name);
+  if (opt_idx >= 0) {
+    if (options[opt_idx].flags & P_DEF_ALLOCED)
+      free(options[opt_idx].def_val[VI_DEFAULT]);
+    options[opt_idx].def_val[VI_DEFAULT] = p;
+    options[opt_idx].flags |= P_DEF_ALLOCED;
   }
 }
 
@@ -2450,7 +2449,7 @@ void set_init_3(void)
         p1 = p2 + 1;
     p = vim_strnsave(p1, (int)(p - p1));
   }
-  if (p != NULL) {
+  {
     /*
      * Default for p_sp is "| tee", for p_srr is ">".
      * For known shells it is changed here to include stderr.
@@ -2506,16 +2505,12 @@ void set_helplang_default(char_u *lang)
     if (options[idx].flags & P_ALLOCED)
       free_string_option(p_hlg);
     p_hlg = vim_strsave(lang);
-    if (p_hlg == NULL)
-      p_hlg = empty_option;
-    else {
-      /* zh_CN becomes "cn", zh_TW becomes "tw". */
-      if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
-        p_hlg[0] = TOLOWER_ASC(p_hlg[3]);
-        p_hlg[1] = TOLOWER_ASC(p_hlg[4]);
-      }
-      p_hlg[2] = NUL;
+    /* zh_CN becomes "cn", zh_TW becomes "tw". */
+    if (STRNICMP(p_hlg, "zh_", 3) == 0 && STRLEN(p_hlg) >= 5) {
+      p_hlg[0] = TOLOWER_ASC(p_hlg[3]);
+      p_hlg[1] = TOLOWER_ASC(p_hlg[4]);
     }
+    p_hlg[2] = NUL;
     options[idx].flags |= P_ALLOCED;
   }
 }
@@ -3075,7 +3070,7 @@ do_set (
               newlen = (unsigned)STRLEN(arg) + 1;
               if (adding || prepending || removing)
                 newlen += (unsigned)STRLEN(origval) + 1;
-              newval = alloc(newlen);
+              newval = xmalloc(newlen);
               s = newval;
 
               /*
@@ -3121,7 +3116,7 @@ do_set (
                   newlen = (unsigned)STRLEN(s) + 1;
                   if (adding || prepending || removing)
                     newlen += (unsigned)STRLEN(origval) + 1;
-                  newval = alloc(newlen);
+                  newval = xmalloc(newlen);
                   STRCPY(newval, s);
                 }
               }
@@ -3739,7 +3734,7 @@ set_string_option_direct (
     return;
 
   s = vim_strsave(val);
-  if (s != NULL) {
+  {
     varp = (char_u **)get_varp_scope(&(options[idx]),
         both ? OPT_LOCAL : opt_flags);
     if ((opt_flags & OPT_FREE) && (options[idx].flags & P_ALLOCED))
@@ -3780,9 +3775,8 @@ set_string_option_global (
     p = (char_u **)GLOBAL_WO(varp);
   else
     p = (char_u **)options[opt_idx].var;
-  if (options[opt_idx].indir != PV_NONE
-      && p != varp
-      && (s = vim_strsave(*varp)) != NULL) {
+  if (options[opt_idx].indir != PV_NONE && p != varp) {
+    s = vim_strsave(*varp);
     free_string_option(*p);
     *p = s;
   }
@@ -3809,18 +3803,17 @@ set_string_option (
     return NULL;
 
   s = vim_strsave(value);
-  if (s != NULL) {
-    varp = (char_u **)get_varp_scope(&(options[opt_idx]),
-        (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
-        ? (((int)options[opt_idx].indir & PV_BOTH)
-           ? OPT_GLOBAL : OPT_LOCAL)
-        : opt_flags);
-    oldval = *varp;
-    *varp = s;
-    if ((r = did_set_string_option(opt_idx, varp, TRUE, oldval, NULL,
-             opt_flags)) == NULL)
-      did_set_option(opt_idx, opt_flags, TRUE);
-  }
+  varp = (char_u **)get_varp_scope(&(options[opt_idx]),
+      (opt_flags & (OPT_LOCAL | OPT_GLOBAL)) == 0
+      ? (((int)options[opt_idx].indir & PV_BOTH)
+        ? OPT_GLOBAL : OPT_LOCAL)
+      : opt_flags);
+  oldval = *varp;
+  *varp = s;
+  if ((r = did_set_string_option(opt_idx, varp, TRUE, oldval, NULL,
+          opt_flags)) == NULL)
+    did_set_option(opt_idx, opt_flags, TRUE);
+
   return r;
 }
 
@@ -4768,7 +4761,7 @@ skip:
   if (count == 0)
     wp->w_p_cc_cols = NULL;
   else {
-    wp->w_p_cc_cols = (int *)alloc((unsigned)sizeof(int) * (count + 1));
+    wp->w_p_cc_cols = xmalloc(sizeof(int) * (count + 1));
     /* sort the columns for faster usage on screen redraw inside
      * win_line() */
     qsort(color_cols, count, sizeof(int), int_cmp);
@@ -6139,7 +6132,6 @@ showoptions (
   int col;
   int isterm;
   char_u              *varp;
-  struct vimoption    **items;
   int item_count;
   int run;
   int row, rows;
@@ -6150,8 +6142,7 @@ showoptions (
 #define INC 20
 #define GAP 3
 
-  items = (struct vimoption **)alloc((unsigned)(sizeof(struct vimoption *) *
-                                                PARAM_COUNT));
+  struct vimoption **items = xmalloc(sizeof(struct vimoption *) * PARAM_COUNT);
 
   /* Highlight title */
   if (all == 2)
@@ -6440,7 +6431,7 @@ static int put_setstring(FILE *fd, char *cmd, char *name, char_u **valuep, int e
         if (put_escstr(fd, str2special(&s, FALSE), 2) == FAIL)
           return FAIL;
     } else if (expand) {
-      buf = alloc(MAXPATHL);
+      buf = xmalloc(MAXPATHL);
       home_replace(NULL, *valuep, buf, MAXPATHL, FALSE);
       if (put_escstr(fd, buf, 2) == FAIL) {
         free(buf);
@@ -7454,11 +7445,7 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
         *num_file = num_term;
       else
         return OK;
-      *file = (char_u **)alloc((unsigned)(*num_file * sizeof(char_u *)));
-      if (*file == NULL) {
-        *file = (char_u **)"";
-        return FAIL;
-      }
+      *file = (char_u **)xmalloc(*num_file * sizeof(char_u *));
     }
   }
   return OK;
@@ -7470,7 +7457,7 @@ int ExpandOldSetting(int *num_file, char_u ***file)
   char_u  *buf;
 
   *num_file = 0;
-  *file = (char_u **)alloc((unsigned)sizeof(char_u *));
+  *file = (char_u **)xmalloc(sizeof(char_u *));
 
   /*
    * For a terminal key code expand_option_idx is < 0.

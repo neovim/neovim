@@ -695,12 +695,10 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
     return FAIL;
   for (extra = 0, l = line1; l <= line2; l++) {
     str = vim_strsave(ml_get(l + extra));
-    if (str != NULL) {
-      ml_append(dest + l - line1, str, (colnr_T)0, FALSE);
-      free(str);
-      if (dest < line1)
-        extra++;
-    }
+    ml_append(dest + l - line1, str, (colnr_T)0, FALSE);
+    free(str);
+    if (dest < line1)
+      extra++;
   }
 
   /*
@@ -803,10 +801,9 @@ void ex_copy(linenr_T line1, linenr_T line2, linenr_T n)
     /* need to use vim_strsave() because the line will be unlocked within
      * ml_append() */
     p = vim_strsave(ml_get(line1));
-    if (p != NULL) {
-      ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, FALSE);
-      free(p);
-    }
+    ml_append(curwin->w_cursor.lnum, p, (colnr_T)0, FALSE);
+    free(p);
+
     /* situation 2: skip already copied lines */
     if (line1 == n)
       line1 = curwin->w_cursor.lnum;
@@ -1454,8 +1451,6 @@ read_viminfo (
     return FAIL;
 
   fname = viminfo_filename(file);       /* get file name in allocated buffer */
-  if (fname == NULL)
-    return FAIL;
   fp = mch_fopen((char *)fname, READBIN);
 
   if (p_verbose > 0) {
@@ -1502,8 +1497,6 @@ void write_viminfo(char_u *file, int forceit)
     return;
 
   fname = viminfo_filename(file);       /* may set to default if NULL */
-  if (fname == NULL)
-    return;
 
   fp_in = mch_fopen((char *)fname, READBIN);
   if (fp_in == NULL) {
@@ -1670,7 +1663,7 @@ end:
  * cmdline functions).
  * Otherwise use "-i file_name", value from 'viminfo' or the default, and
  * expand environment variables.
- * Returns an allocated string.  NULL when out of memory.
+ * Returns an allocated string.
  */
 static char_u *viminfo_filename(char_u *file)
 {
@@ -1886,8 +1879,6 @@ viminfo_readstring (
     s = retval + 1;         /* Skip the leading '<' */
   } else {
     retval = vim_strsave(virp->vir_line + off);
-    if (retval == NULL)
-      return NULL;
     s = retval;
   }
 
@@ -3937,17 +3928,14 @@ void do_sub(exarg_T *eap)
                  * what matches.  Temporarily replace the line
                  * and change it back afterwards. */
                 orig_line = vim_strsave(ml_get(lnum));
-                if (orig_line != NULL) {
-                  char_u *new_line = concat_str(new_start,
-                                                sub_firstline + copycol);
+                char_u *new_line = concat_str(new_start, sub_firstline + copycol);
 
-                  // Position the cursor relative to the end of the line, the
-                  // previous substitute may have inserted or deleted characters
-                  // before the cursor.
-                  len_change = (int)STRLEN(new_line) - (int)STRLEN(orig_line);
-                  curwin->w_cursor.col += len_change;
-                  ml_replace(lnum, new_line, FALSE);
-                }
+                // Position the cursor relative to the end of the line, the
+                // previous substitute may have inserted or deleted characters
+                // before the cursor.
+                len_change = (int)STRLEN(new_line) - (int)STRLEN(orig_line);
+                curwin->w_cursor.col += len_change;
+                ml_replace(lnum, new_line, FALSE);
               }
 
               search_match_lines = regmatch.endpos[0].lnum
@@ -5769,11 +5757,6 @@ void ex_sign(exarg_T *eap)
 			next_sign_typenr = 1; /* wrap around */
 
 		    sp->sn_name = vim_strsave(arg);
-		    if (sp->sn_name == NULL)  /* out of memory */
-		    {
-			free(sp);
-			return;
-		    }
 
 		    /* add the new sign to the list of signs */
 		    if (sp_prev == NULL)
@@ -5837,7 +5820,7 @@ void ex_sign(exarg_T *eap)
 			len = (int)(p - arg + ((cells == 1) ? 1 : 0));
 			sp->sn_text = vim_strnsave(arg, len);
 
-			if (sp->sn_text != NULL && cells == 1)
+			if (cells == 1)
 			    STRCPY(sp->sn_text + len - 1, " ");
 		    }
 		    else if (STRNCMP(arg, "linehl=", 7) == 0)

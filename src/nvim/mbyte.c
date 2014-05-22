@@ -3333,7 +3333,7 @@ char_u * enc_canonize(char_u *enc)
   }
 
   /* copy "enc" to allocated memory, with room for two '-' */
-  r = alloc((unsigned)(STRLEN(enc) + 3));
+  r = xmalloc(STRLEN(enc) + 3);
   /* Make it all lower case and replace '_' with '-'. */
   p = r;
   for (s = enc; *s != NUL; ++s) {
@@ -3534,7 +3534,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       /* Allocate enough room for most conversions.  When re-allocating
        * increase the buffer size. */
       len = len + fromlen * 2 + 40;
-      p = alloc((unsigned)len);
+      p = xmalloc(len);
       if (done > 0)
         memmove(p, result, done);
       free(result);
@@ -3852,7 +3852,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
     if (dlen <= maxlen) {
       if (unconvertlen > 0) {
         /* Move the unconverted characters to allocated memory. */
-        *restp = alloc(unconvertlen);
+        *restp = xmalloc(unconvertlen);
         memmove(*restp, ptr + len - unconvertlen, unconvertlen);
         *restlenp = unconvertlen;
       }
@@ -3908,7 +3908,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
 
   switch (vcp->vc_type) {
     case CONV_TO_UTF8:            /* latin1 to utf-8 conversion */
-      retval = alloc(len * 2 + 1);
+      retval = xmalloc(len * 2 + 1);
       d = retval;
       for (i = 0; i < len; ++i) {
         c = ptr[i];
@@ -3925,7 +3925,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
       break;
 
     case CONV_9_TO_UTF8:          /* latin9 to utf-8 conversion */
-      retval = alloc(len * 3 + 1);
+      retval = xmalloc(len * 3 + 1);
       d = retval;
       for (i = 0; i < len; ++i) {
         c = ptr[i];
@@ -3948,7 +3948,7 @@ char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
 
     case CONV_TO_LATIN1:          /* utf-8 to latin1 conversion */
     case CONV_TO_LATIN9:          /* utf-8 to latin9 conversion */
-      retval = alloc(len + 1);
+      retval = xmalloc(len + 1);
       d = retval;
       for (i = 0; i < len; ++i) {
         l = utf_ptr2len_len(ptr + i, len - i);

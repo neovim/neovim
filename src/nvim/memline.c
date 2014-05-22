@@ -313,8 +313,7 @@ int ml_open(buf_T *buf)
   /*
    * fill block0 struct and write page 0
    */
-  if ((hp = mf_new(mfp, FALSE, 1)) == NULL)
-    goto error;
+  hp = mf_new(mfp, FALSE, 1);
   if (hp->bh_bnum != 0) {
     EMSG(_("E298: Didn't get block nr 0?"));
     goto error;
@@ -373,8 +372,7 @@ int ml_open(buf_T *buf)
   /*
    * Allocate first data block and create an empty line 1.
    */
-  if ((hp = ml_new_data(mfp, FALSE, 1)) == NULL)
-    goto error;
+  hp = ml_new_data(mfp, FALSE, 1);
   if (hp->bh_bnum != 2) {
     EMSG(_("E298: Didn't get block nr 2?"));
     goto error;
@@ -857,7 +855,7 @@ void ml_recover(void)
    * Allocate a buffer structure for the swap file that is used for recovery.
    * Only the memline in it is really used.
    */
-  buf = (buf_T *)alloc((unsigned)sizeof(buf_T));
+  buf = xmalloc(sizeof(buf_T));
 
   /*
    * init fields in memline struct
@@ -956,7 +954,7 @@ void ml_recover(void)
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
     /* need to reallocate the memory used to store the data */
-    p = alloc(mfp->mf_page_size);
+    p = xmalloc(mfp->mf_page_size);
     memmove(p, hp->bh_data, previous_page_size);
     free(hp->bh_data);
     hp->bh_data = p;
@@ -1334,7 +1332,7 @@ recover_names (
    * Do the loop for every directory in 'directory'.
    * First allocate some memory to put the directory name in.
    */
-  dir_name = alloc((unsigned)STRLEN(p_dir) + 1);
+  dir_name = xmalloc(STRLEN(p_dir) + 1);
   dirp = p_dir;
   while (dir_name != NULL && *dirp) {
     /*
@@ -1408,7 +1406,7 @@ recover_names (
       char_u *swapname = modname(fname_res, (char_u *)".swp", TRUE);
       if (swapname != NULL) {
         if (os_file_exists(swapname)) {
-          files = (char_u **)alloc((unsigned)sizeof(char_u *));
+          files = (char_u **)xmalloc(sizeof(char_u *));
           files[0] = swapname;
           swapname = NULL;
           num_files = 1;
@@ -2118,12 +2116,7 @@ ml_append_int (
     }
 
     page_count = ((space_needed + HEADER_SIZE) + page_size - 1) / page_size;
-    if ((hp_new = ml_new_data(mfp, newfile, page_count)) == NULL) {
-      /* correct line counts in pointer blocks */
-      --(buf->b_ml.ml_locked_lineadd);
-      --(buf->b_ml.ml_locked_high);
-      return FAIL;
-    }
+    hp_new = ml_new_data(mfp, newfile, page_count);
     if (db_idx < 0) {           /* left block is new */
       hp_left = hp_new;
       hp_right = hp;
@@ -2403,8 +2396,9 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
   if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
     return FAIL;
 
-  if (copy && (line = vim_strsave(line)) == NULL)   /* allocate memory */
-    return FAIL;
+  if (copy) {
+    line = vim_strsave(line);
+  }
   if (curbuf->b_ml.ml_line_lnum != lnum)            /* other line buffered */
     ml_flush_line(curbuf);                          /* flush it */
   else if (curbuf->b_ml.ml_flags & ML_LINE_DIRTY)   /* same line allocated */
@@ -2777,13 +2771,8 @@ static void ml_flush_line(buf_T *buf)
  */
 static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
 {
-  bhdr_T      *hp;
-  DATA_BL     *dp;
-
-  if ((hp = mf_new(mfp, negative, page_count)) == NULL)
-    return NULL;
-
-  dp = (DATA_BL *)(hp->bh_data);
+  bhdr_T *hp = mf_new(mfp, negative, page_count);
+  DATA_BL *dp = (DATA_BL *)(hp->bh_data);
   dp->db_id = DATA_ID;
   dp->db_txt_start = dp->db_txt_end = page_count * mfp->mf_page_size;
   dp->db_free = dp->db_txt_start - HEADER_SIZE;
@@ -2797,13 +2786,8 @@ static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
  */
 static bhdr_T *ml_new_ptr(memfile_T *mfp)
 {
-  bhdr_T      *hp;
-  PTR_BL      *pp;
-
-  if ((hp = mf_new(mfp, FALSE, 1)) == NULL)
-    return NULL;
-
-  pp = (PTR_BL *)(hp->bh_data);
+  bhdr_T *hp = mf_new(mfp, FALSE, 1);
+  PTR_BL *pp = (PTR_BL *)(hp->bh_data);
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
   pp->pb_count_max = (mfp->mf_page_size - sizeof(PTR_BL)) / sizeof(PTR_EN) + 1;
@@ -3335,7 +3319,7 @@ findswapname (
    * Isolate a directory name from *dirp and put it in dir_name.
    * First allocate some memory to put the directory name in.
    */
-  dir_name = alloc((unsigned)STRLEN(*dirp) + 1);
+  dir_name = xmalloc(STRLEN(*dirp) + 1);
   (void)copy_option_part(dirp, dir_name, 31000, ",");
 
   /*
@@ -3462,9 +3446,9 @@ findswapname (
           if (swap_exists_action != SEA_NONE && choice == 0) {
             char_u  *name;
 
-            name = alloc((unsigned)(STRLEN(fname)
-                                    + STRLEN(_("Swap file \""))
-                                    + STRLEN(_("\" already exists!")) + 5));
+            name = xmalloc(STRLEN(fname)
+                           + STRLEN(_("Swap file \""))
+                           + STRLEN(_("\" already exists!")) + 5);
             STRCPY(name, _("Swap file \""));
             home_replace(NULL, fname, name + STRLEN(name),
                 1000, TRUE);

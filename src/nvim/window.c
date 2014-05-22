@@ -5263,7 +5263,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
   }
 
   /* Build new match. */
-  m = (matchitem_T *)alloc(sizeof(matchitem_T));
+  m = xmalloc(sizeof(matchitem_T));
   m->id = id;
   m->priority = prio;
   m->pattern = vim_strsave(pat);

@@ -3382,7 +3382,7 @@ find_decl (
   int retval = OK;
   int incll;
 
-  pat = alloc(len + 7);
+  pat = xmalloc(len + 7);
 
   /* Put "\V" before the pattern to avoid that the special meaning of "."
    * and "~" causes trouble. */
@@ -4356,7 +4356,7 @@ static void nv_ident(cmdarg_T *cap)
   kp = (*curbuf->b_p_kp == NUL ? p_kp : curbuf->b_p_kp);
   kp_help = (*kp == NUL || STRCMP(kp, ":he") == 0
              || STRCMP(kp, ":help") == 0);
-  buf = alloc((unsigned)(n * 2 + 30 + STRLEN(kp)));
+  buf = xmalloc(n * 2 + 30 + STRLEN(kp));
   buf[0] = NUL;
 
   switch (cmdchar) {

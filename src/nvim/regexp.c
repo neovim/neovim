@@ -1141,8 +1141,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
         /* change "\?" to "?", make a copy first. */
         if (*newp == NULL) {
           *newp = vim_strsave(startp);
-          if (*newp != NULL)
-            p = *newp + (p - startp);
+          p = *newp + (p - startp);
         }
         if (*newp != NULL)
           STRMOVE(p, p + 1);
@@ -5654,7 +5653,7 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
       if (reg_tofree == NULL || len >= (int)reg_tofreelen) {
         len += 50;              /* get some extra */
         free(reg_tofree);
-        reg_tofree = alloc(len);
+        reg_tofree = xmalloc(len);
         reg_tofreelen = len;
       }
       STRCPY(reg_tofree, regline);
@@ -6405,7 +6404,7 @@ char_u *regtilde(char_u *source, int magic)
       if (reg_prev_sub != NULL) {
         /* length = len(newsub) - 1 + len(prev_sub) + 1 */
         prevlen = (int)STRLEN(reg_prev_sub);
-        tmpsub = alloc((unsigned)(STRLEN(newsub) + prevlen));
+        tmpsub = xmalloc(STRLEN(newsub) + prevlen);
         /* copy prefix */
         len = (int)(p - newsub);              /* not including ~ */
         memmove(tmpsub, newsub, (size_t)len);

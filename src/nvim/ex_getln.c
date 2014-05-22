@@ -118,7 +118,7 @@ static void set_cmdspos(void);
 static void set_cmdspos_cursor(void);
 static void correct_cmdspos(int idx, int cells);
 static void alloc_cmdbuff(int len);
-static int realloc_cmdbuff(int len);
+static void realloc_cmdbuff(int len);
 static void draw_cmdline(int start, int len);
 static void save_cmdline(struct cmdline_info *ccp);
 static void restore_cmdline(struct cmdline_info *ccp);
@@ -232,8 +232,6 @@ getcmdline (
 
   /* alloc initial ccline.cmdbuff */
   alloc_cmdbuff(exmode_active ? 250 : indent + 1);
-  if (ccline.cmdbuff == NULL)
-    return NULL;                            /* out of memory */
   ccline.cmdlen = ccline.cmdpos = 0;
   ccline.cmdbuff[0] = NUL;
 
@@ -616,22 +614,21 @@ getcmdline (
 
           if (p != NULL) {
             len = (int)STRLEN(p);
-            if (realloc_cmdbuff(len + 1) == OK) {
-              ccline.cmdlen = len;
-              STRCPY(ccline.cmdbuff, p);
-              free(p);
+            realloc_cmdbuff(len + 1);
+            ccline.cmdlen = len;
+            STRCPY(ccline.cmdbuff, p);
+            free(p);
 
-              /* Restore the cursor or use the position set with
-               * set_cmdline_pos(). */
-              if (new_cmdpos > ccline.cmdlen)
-                ccline.cmdpos = ccline.cmdlen;
-              else
-                ccline.cmdpos = new_cmdpos;
+            /* Restore the cursor or use the position set with
+             * set_cmdline_pos(). */
+            if (new_cmdpos > ccline.cmdlen)
+              ccline.cmdpos = ccline.cmdlen;
+            else
+              ccline.cmdpos = new_cmdpos;
 
-              KeyTyped = FALSE;                 /* Don't do p_wc completion. */
-              redrawcmd();
-              goto cmdline_changed;
-            }
+            KeyTyped = FALSE;                 /* Don't do p_wc completion. */
+            redrawcmd();
+            goto cmdline_changed;
           }
         }
         beep_flush();
@@ -1196,8 +1193,7 @@ getcmdline (
 
       /* save current command string so it can be restored later */
       if (lookfor == NULL) {
-        if ((lookfor = vim_strsave(ccline.cmdbuff)) == NULL)
-          goto cmdline_not_changed;
+        lookfor = vim_strsave(ccline.cmdbuff);
         lookfor[ccline.cmdpos] = NUL;
       }
 
@@ -1286,15 +1282,11 @@ getcmdline (
             }
             if (i == 0) {
               alloc_cmdbuff(len);
-              if (ccline.cmdbuff == NULL)
-                goto returncmd;
             }
           }
           ccline.cmdbuff[len] = NUL;
         } else {
           alloc_cmdbuff((int)STRLEN(p));
-          if (ccline.cmdbuff == NULL)
-            goto returncmd;
           STRCPY(ccline.cmdbuff, p);
         }
 
@@ -1994,27 +1986,21 @@ static void alloc_cmdbuff(int len)
   else
     len += 20;
 
-  ccline.cmdbuff = alloc(len);      /* caller should check for out-of-memory */
+  ccline.cmdbuff = xmalloc(len);
   ccline.cmdbufflen = len;
 }
 
 /*
  * Re-allocate the command line to length len + something extra.
- * return FAIL for failure, OK otherwise
  */
-static int realloc_cmdbuff(int len)
+static void realloc_cmdbuff(int len)
 {
-  char_u      *p;
-
-  if (len < ccline.cmdbufflen)
-    return OK;                          /* no need to resize */
-
-  p = ccline.cmdbuff;
-  alloc_cmdbuff(len);                   /* will get some more */
-  if (ccline.cmdbuff == NULL) {         /* out of memory */
-    ccline.cmdbuff = p;                 /* keep the old one */
-    return FAIL;
+  if (len < ccline.cmdbufflen) {
+    return;  // no need to resize
   }
+
+  char_u *p = ccline.cmdbuff;
+  alloc_cmdbuff(len);                   /* will get some more */
   /* There isn't always a NUL after the command, but it may need to be
    * there, thus copy up to the NUL and add a NUL. */
   memmove(ccline.cmdbuff, p, (size_t)ccline.cmdlen);
@@ -2032,8 +2018,6 @@ static int realloc_cmdbuff(int len)
     if (i >= 0 && i <= ccline.cmdlen)
       ccline.xpc->xp_pattern = ccline.cmdbuff + i;
   }
-
-  return OK;
 }
 
 static char_u   *arshape_buf = NULL;
@@ -2082,9 +2066,7 @@ static void draw_cmdline(int start, int len)
        * alloc()/free() calls. */
       free(arshape_buf);
       buflen = len * 2 + 2;
-      arshape_buf = alloc(buflen);
-      if (arshape_buf == NULL)
-        return;         /* out of memory */
+      arshape_buf = xmalloc(buflen);
     }
 
     if (utf_iscomposing(utf_ptr2char(ccline.cmdbuff + start))) {
@@ -2188,9 +2170,8 @@ void unputcmdline(void)
  * twice in a row, then 'redraw' should be FALSE and redrawcmd() should be
  * called afterwards.
  */
-int put_on_cmdline(char_u *str, int len, int redraw)
+void put_on_cmdline(char_u *str, int len, int redraw)
 {
-  int retval;
   int i;
   int m;
   int c;
@@ -2198,121 +2179,116 @@ int put_on_cmdline(char_u *str, int len, int redraw)
   if (len < 0)
     len = (int)STRLEN(str);
 
-  /* Check if ccline.cmdbuff needs to be longer */
-  if (ccline.cmdlen + len + 1 >= ccline.cmdbufflen)
-    retval = realloc_cmdbuff(ccline.cmdlen + len + 1);
-  else
-    retval = OK;
-  if (retval == OK) {
-    if (!ccline.overstrike) {
-      memmove(ccline.cmdbuff + ccline.cmdpos + len,
-          ccline.cmdbuff + ccline.cmdpos,
-          (size_t)(ccline.cmdlen - ccline.cmdpos));
-      ccline.cmdlen += len;
-    } else {
-      if (has_mbyte) {
-        /* Count nr of characters in the new string. */
-        m = 0;
-        for (i = 0; i < len; i += (*mb_ptr2len)(str + i))
-          ++m;
-        /* Count nr of bytes in cmdline that are overwritten by these
-         * characters. */
-        for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
-             i += (*mb_ptr2len)(ccline.cmdbuff + i))
-          --m;
-        if (i < ccline.cmdlen) {
-          memmove(ccline.cmdbuff + ccline.cmdpos + len,
-              ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
-          ccline.cmdlen += ccline.cmdpos + len - i;
-        } else
-          ccline.cmdlen = ccline.cmdpos + len;
-      } else if (ccline.cmdpos + len > ccline.cmdlen)
-        ccline.cmdlen = ccline.cmdpos + len;
-    }
-    memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
-    ccline.cmdbuff[ccline.cmdlen] = NUL;
+  realloc_cmdbuff(ccline.cmdlen + len + 1);
 
-    if (enc_utf8) {
-      /* When the inserted text starts with a composing character,
-       * backup to the character before it.  There could be two of them.
-       */
-      i = 0;
+  if (!ccline.overstrike) {
+    memmove(ccline.cmdbuff + ccline.cmdpos + len,
+        ccline.cmdbuff + ccline.cmdpos,
+        (size_t)(ccline.cmdlen - ccline.cmdpos));
+    ccline.cmdlen += len;
+  } else {
+    if (has_mbyte) {
+      /* Count nr of characters in the new string. */
+      m = 0;
+      for (i = 0; i < len; i += (*mb_ptr2len)(str + i))
+        ++m;
+      /* Count nr of bytes in cmdline that are overwritten by these
+       * characters. */
+      for (i = ccline.cmdpos; i < ccline.cmdlen && m > 0;
+           i += (*mb_ptr2len)(ccline.cmdbuff + i))
+        --m;
+      if (i < ccline.cmdlen) {
+        memmove(ccline.cmdbuff + ccline.cmdpos + len,
+            ccline.cmdbuff + i, (size_t)(ccline.cmdlen - i));
+        ccline.cmdlen += ccline.cmdpos + len - i;
+      } else
+        ccline.cmdlen = ccline.cmdpos + len;
+    } else if (ccline.cmdpos + len > ccline.cmdlen)
+      ccline.cmdlen = ccline.cmdpos + len;
+  }
+  memmove(ccline.cmdbuff + ccline.cmdpos, str, (size_t)len);
+  ccline.cmdbuff[ccline.cmdlen] = NUL;
+
+  if (enc_utf8) {
+    /* When the inserted text starts with a composing character,
+     * backup to the character before it.  There could be two of them.
+     */
+    i = 0;
+    c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
+    while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
+      i = (*mb_head_off)(ccline.cmdbuff,
+                         ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      ccline.cmdpos -= i;
+      len += i;
       c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-      while (ccline.cmdpos > 0 && utf_iscomposing(c)) {
-        i = (*mb_head_off)(ccline.cmdbuff,
-                           ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+    }
+    if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
+      /* Check the previous character for Arabic combining pair. */
+      i = (*mb_head_off)(ccline.cmdbuff,
+                         ccline.cmdbuff + ccline.cmdpos - 1) + 1;
+      if (arabic_combine(utf_ptr2char(ccline.cmdbuff
+                  + ccline.cmdpos - i), c)) {
         ccline.cmdpos -= i;
         len += i;
-        c = utf_ptr2char(ccline.cmdbuff + ccline.cmdpos);
-      }
-      if (i == 0 && ccline.cmdpos > 0 && arabic_maycombine(c)) {
-        /* Check the previous character for Arabic combining pair. */
-        i = (*mb_head_off)(ccline.cmdbuff,
-                           ccline.cmdbuff + ccline.cmdpos - 1) + 1;
-        if (arabic_combine(utf_ptr2char(ccline.cmdbuff
-                    + ccline.cmdpos - i), c)) {
-          ccline.cmdpos -= i;
-          len += i;
-        } else
-          i = 0;
-      }
-      if (i != 0) {
-        /* Also backup the cursor position. */
-        i = ptr2cells(ccline.cmdbuff + ccline.cmdpos);
-        ccline.cmdspos -= i;
-        msg_col -= i;
-        if (msg_col < 0) {
-          msg_col += Columns;
-          --msg_row;
-        }
-      }
-    }
-
-    if (redraw && !cmd_silent) {
-      msg_no_more = TRUE;
-      i = cmdline_row;
-      cursorcmd();
-      draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
-      /* Avoid clearing the rest of the line too often. */
-      if (cmdline_row != i || ccline.overstrike)
-        msg_clr_eos();
-      msg_no_more = FALSE;
-    }
-    /*
-     * If we are in Farsi command mode, the character input must be in
-     * Insert mode. So do not advance the cmdpos.
-     */
-    if (!cmd_fkmap) {
-      if (KeyTyped) {
-        m = Columns * Rows;
-        if (m < 0)              /* overflow, Columns or Rows at weird value */
-          m = MAXCOL;
       } else
-        m = MAXCOL;
-      for (i = 0; i < len; ++i) {
-        c = cmdline_charsize(ccline.cmdpos);
-        /* count ">" for a double-wide char that doesn't fit. */
-        if (has_mbyte)
-          correct_cmdspos(ccline.cmdpos, c);
-        /* Stop cursor at the end of the screen, but do increment the
-         * insert position, so that entering a very long command
-         * works, even though you can't see it. */
-        if (ccline.cmdspos + c < m)
-          ccline.cmdspos += c;
-        if (has_mbyte) {
-          c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
-          if (c > len - i - 1)
-            c = len - i - 1;
-          ccline.cmdpos += c;
-          i += c;
-        }
-        ++ccline.cmdpos;
+        i = 0;
+    }
+    if (i != 0) {
+      /* Also backup the cursor position. */
+      i = ptr2cells(ccline.cmdbuff + ccline.cmdpos);
+      ccline.cmdspos -= i;
+      msg_col -= i;
+      if (msg_col < 0) {
+        msg_col += Columns;
+        --msg_row;
       }
     }
   }
+
+  if (redraw && !cmd_silent) {
+    msg_no_more = TRUE;
+    i = cmdline_row;
+    cursorcmd();
+    draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
+    /* Avoid clearing the rest of the line too often. */
+    if (cmdline_row != i || ccline.overstrike)
+      msg_clr_eos();
+    msg_no_more = FALSE;
+  }
+  /*
+   * If we are in Farsi command mode, the character input must be in
+   * Insert mode. So do not advance the cmdpos.
+   */
+  if (!cmd_fkmap) {
+    if (KeyTyped) {
+      m = Columns * Rows;
+      if (m < 0)              /* overflow, Columns or Rows at weird value */
+        m = MAXCOL;
+    } else
+      m = MAXCOL;
+    for (i = 0; i < len; ++i) {
+      c = cmdline_charsize(ccline.cmdpos);
+      /* count ">" for a double-wide char that doesn't fit. */
+      if (has_mbyte)
+        correct_cmdspos(ccline.cmdpos, c);
+      /* Stop cursor at the end of the screen, but do increment the
+       * insert position, so that entering a very long command
+       * works, even though you can't see it. */
+      if (ccline.cmdspos + c < m)
+        ccline.cmdspos += c;
+      if (has_mbyte) {
+        c = (*mb_ptr2len)(ccline.cmdbuff + ccline.cmdpos) - 1;
+        if (c > len - i - 1)
+          c = len - i - 1;
+        ccline.cmdpos += c;
+        i += c;
+      }
+      ++ccline.cmdpos;
+    }
+  }
+
   if (redraw)
     msg_check();
-  return retval;
 }
 
 static struct cmdline_info prev_ccline;
@@ -2348,15 +2324,11 @@ static void restore_cmdline(struct cmdline_info *ccp)
 /*
  * Save the command line into allocated memory.  Returns a pointer to be
  * passed to restore_cmdline_alloc() later.
- * Returns NULL when failed.
  */
 char_u *save_cmdline_alloc(void)
 {
-  struct cmdline_info *p;
-
-  p = (struct cmdline_info *)alloc((unsigned)sizeof(struct cmdline_info));
-  if (p != NULL)
-    save_cmdline(p);
+  struct cmdline_info *p = xmalloc(sizeof(struct cmdline_info));
+  save_cmdline(p);
   return (char_u *)p;
 }
 
@@ -2649,7 +2621,6 @@ nextwild (
   char_u      *p1;
   char_u      *p2;
   int difflen;
-  int v;
 
   if (xp->xp_numfiles == -1) {
     set_expand_context(xp);
@@ -2712,18 +2683,15 @@ nextwild (
   if (p2 != NULL && !got_int) {
     difflen = (int)STRLEN(p2) - xp->xp_pattern_len;
     if (ccline.cmdlen + difflen + 4 > ccline.cmdbufflen) {
-      v = realloc_cmdbuff(ccline.cmdlen + difflen + 4);
+      realloc_cmdbuff(ccline.cmdlen + difflen + 4);
       xp->xp_pattern = ccline.cmdbuff + i;
-    } else
-      v = OK;
-    if (v == OK) {
-      memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
-          &ccline.cmdbuff[ccline.cmdpos],
-          (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
-      memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
-      ccline.cmdlen += difflen;
-      ccline.cmdpos += difflen;
     }
+    memmove(&ccline.cmdbuff[ccline.cmdpos + difflen],
+        &ccline.cmdbuff[ccline.cmdpos],
+        (size_t)(ccline.cmdlen - ccline.cmdpos + 1));
+    memmove(&ccline.cmdbuff[i], p2, STRLEN(p2));
+    ccline.cmdlen += difflen;
+    ccline.cmdpos += difflen;
   }
   free(p2);
 
@@ -3104,15 +3072,11 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
  */
 static void escape_fname(char_u **pp)
 {
-  char_u      *p;
-
-  p = alloc((unsigned)(STRLEN(*pp) + 2));
-  if (p != NULL) {
-    p[0] = '\\';
-    STRCPY(p + 1, *pp);
-    free(*pp);
-    *pp = p;
-  }
+  char_u *p = xmalloc(STRLEN(*pp) + 2);
+  p[0] = '\\';
+  STRCPY(p + 1, *pp);
+  free(*pp);
+  *pp = p;
 }
 
 /*
@@ -3246,8 +3210,7 @@ static int showmatches(expand_T *xp, int wildmenu)
             exp_path = expand_env_save_opt(files_found[k], TRUE);
             halved_slash = backslash_halve_save(
                 exp_path != NULL ? exp_path : files_found[k]);
-            j = os_isdir(halved_slash != NULL ? halved_slash
-                : files_found[k]);
+            j = os_isdir(halved_slash);
             free(exp_path);
             free(halved_slash);
           } else
@@ -3403,8 +3366,8 @@ addstar (
              || context == EXPAND_USER_LIST) && fname[i] == '\\')
           new_len++;                    /* '\' becomes "\\" */
       }
-      retval = alloc(new_len);
-      if (retval != NULL) {
+      retval = xmalloc(new_len);
+      {
         retval[0] = '^';
         j = 1;
         for (i = 0; i < len; i++, j++) {
@@ -3437,7 +3400,7 @@ addstar (
       }
     }
   } else {
-    retval = alloc(len + 4);
+    retval = xmalloc(len + 4);
     if (retval != NULL) {
       vim_strncpy(retval, fname, len);
 
@@ -3831,7 +3794,7 @@ ExpandFromContext (
  * obtain strings, one by one.	The strings are matched against a regexp
  * program.  Matching strings are copied into an array, which is returned.
  *
- * Returns OK when no problems encountered, FAIL for error (out of memory).
+ * Returns OK when no problems encountered, FAIL for error.
  */
 int ExpandGeneric(xp, regmatch, num_file, file, func, escaped)
 expand_T    *xp;
@@ -3860,11 +3823,7 @@ int escaped;
   if (count == 0)
     return OK;
   *num_file = count;
-  *file = (char_u **)alloc((unsigned)(count * sizeof(char_u *)));
-  if (*file == NULL) {
-    *file = (char_u **)"";
-    return FAIL;
-  }
+  *file = (char_u **)xmalloc(count * sizeof(char_u *));
 
   // copy the matching names into allocated memory
   count = 0;
@@ -3925,14 +3884,11 @@ expand_shellcmd (
   char_u      *path;
   int mustfree = FALSE;
   garray_T ga;
-  char_u      *buf = alloc(MAXPATHL);
+  char_u *buf = xmalloc(MAXPATHL);
   size_t l;
   char_u      *s, *e;
   int flags = flagsarg;
   int ret;
-
-  if (buf == NULL)
-    return FAIL;
 
   /* for ":set path=" and ":set tags=" halve backslashes for escaped
    * space */
@@ -4157,11 +4113,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
   ga_init(&ga, (int)sizeof(char *), 10);
 
   for (i = 0; dirnames[i] != NULL; ++i) {
-    s = alloc((unsigned)(STRLEN(dirnames[i]) + pat_len + 7));
-    if (s == NULL) {
-      ga_clear_strings(&ga);
-      return FAIL;
-    }
+    s = xmalloc(STRLEN(dirnames[i]) + pat_len + 7);
     sprintf((char *)s, "%s/%s*.vim", dirnames[i], pat);
     matches = globpath(p_rtp, s, 0);
     free(s);
@@ -4208,7 +4160,6 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 char_u *globpath(char_u *path, char_u *file, int expand_options)
 {
   expand_T xpc;
-  char_u      *buf;
   garray_T ga;
   int i;
   int len;
@@ -4216,9 +4167,7 @@ char_u *globpath(char_u *path, char_u *file, int expand_options)
   char_u      **p;
   char_u      *cur = NULL;
 
-  buf = alloc(MAXPATHL);
-  if (buf == NULL)
-    return NULL;
+  char_u *buf = xmalloc(MAXPATHL);
 
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;
@@ -4510,8 +4459,7 @@ add_to_history (
     /* Store the separator after the NUL of the string. */
     len = (int)STRLEN(new_entry);
     hisptr->hisstr = vim_strnsave(new_entry, len + 2);
-    if (hisptr->hisstr != NULL)
-      hisptr->hisstr[len + 1] = sep;
+    hisptr->hisstr[len + 1] = sep;
 
     hisptr->hisnum = ++hisnum[histype];
     hisptr->viminfo = FALSE;
