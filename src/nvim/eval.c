@@ -3438,10 +3438,11 @@ static int eval4(char_u **arg, typval_T *rettv, int evaluate)
             n1 = !n1;
         } else if (rettv->v_type != var2.v_type
                    || (type != TYPE_EQUAL && type != TYPE_NEQUAL)) {
-          if (rettv->v_type != var2.v_type)
+          if (rettv->v_type != var2.v_type) {
             EMSG(_("E691: Can only compare List with List"));
-          else
-            EMSG(_("E692: Invalid operation for Lists"));
+          } else {
+            EMSG(_("E692: Invalid operation for List"));
+          }
           clear_tv(rettv);
           clear_tv(&var2);
           return FAIL;
