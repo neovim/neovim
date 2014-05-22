@@ -3967,6 +3967,7 @@ char_u *did_set_spelllang(win_T *wp)
 theend:
   free(spl_copy);
   recursive = FALSE;
+  redraw_win_later(wp, NOT_VALID);
   return ret_msg;
 }
 
