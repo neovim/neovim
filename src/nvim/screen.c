@@ -2741,14 +2741,14 @@ win_line (
           draw_state = WL_SIGN;
           /* Show the sign column when there are any signs in this
            * buffer or when using Netbeans. */
-          if (draw_signcolumn(wp) && filler_todo <= 0) {
+          if (draw_signcolumn(wp)) {
               int text_sign;
               /* Draw two cells with the sign value or blank. */
               c_extra = ' ';
               char_attr = hl_attr(HLF_SC);
               n_extra = 2;
 
-              if (row == startrow) {
+              if (row == startrow + filler_lines && filler_todo <= 0) {
                   text_sign = buf_getsigntype(wp->w_buffer, lnum, SIGN_TEXT);
                   if (text_sign != 0) {
                       p_extra = sign_get_text(text_sign);
