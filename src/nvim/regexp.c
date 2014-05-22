@@ -4093,25 +4093,28 @@ regmatch (
           else if (*opnd == NUL) {
             /* match empty string always works; happens when "~" is
              * empty. */
-          } else if (opnd[1] == NUL
-                     && !(enc_utf8 && ireg_ic)
-                     )
-            ++reginput;                 /* matched a single char */
-          else {
-            len = (int)STRLEN(opnd);
-            /* Need to match first byte again for multi-byte. */
-            if (cstrncmp(opnd, reginput, &len) != 0)
-              status = RA_NOMATCH;
-            /* Check for following composing character. */
-            else if (enc_utf8
-                     && UTF_COMPOSINGLIKE(reginput, reginput + len)) {
-              /* raaron: This code makes a composing character get
-               * ignored, which is the correct behavior (sometimes)
-               * for voweled Hebrew texts. */
-              if (!ireg_icombine)
+          } else {
+            if (opnd[1] == NUL && !(enc_utf8 && ireg_ic)) {
+              len = 1; /* matched a single byte above */
+            } else {
+              // Need to match first byte again for multi-byte.
+              len = (int)STRLEN(opnd);
+              if (cstrncmp(opnd, reginput, &len) != 0) {
                 status = RA_NOMATCH;
-            } else
+              }
+            }
+            // Check for following composing character.
+            if (status != RA_NOMATCH && enc_utf8
+                && UTF_COMPOSINGLIKE(reginput, reginput + len)
+                && !ireg_icombine) {
+              // raaron: This code makes a composing character get
+              // ignored, which is the correct behavior (sometimes)
+              // for voweled Hebrew texts.
+              status = RA_NOMATCH;
+            }
+            if (status != RA_NOMATCH) {
               reginput += len;
+            }
           }
         }
         break;

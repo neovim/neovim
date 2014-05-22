@@ -49,6 +49,8 @@ STARTTEST
 :call add(tl, [2, ".\u05b9", " y\u05bb\u05b9 x\u05b9 ", "y\u05bb\u05b9"])
 :call add(tl, [1, "\u05b9\u05bb", " y\u05b9 x\u05b9\u05bb ", "x\u05b9\u05bb"])
 :call add(tl, [2, ".\u05b9\u05bb", " y\u05bb x\u05b9\u05bb ", "x\u05b9\u05bb"])
+:call add(tl, [2, "a", "ca\u0300t"])
+:call add(tl, [2, "a\u0300", "ca\u0300t", "a\u0300"])
 
 
 :"""" Test \Z
