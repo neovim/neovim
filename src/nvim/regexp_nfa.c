@@ -3877,8 +3877,10 @@ addstate (
     if (state->lastlist[nfa_ll_index] == l->id && state->c != NFA_SKIP) {
       /* This state is already in the list, don't add it again,
        * unless it is an MOPEN that is used for a backreference or
-       * when there is a PIM. */
-      if (!nfa_has_backref && pim == NULL && !l->has_pim) {
+       * when there is a PIM. For NFA_MATCH check the position,
+       * lower position is preferred. */
+      if (!nfa_has_backref && pim == NULL && !l->has_pim
+          && state->c != NFA_MATCH) {
 skip_add:
 #ifdef REGEXP_DEBUG
         nfa_set_code(state->c);
