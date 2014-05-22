@@ -7244,11 +7244,12 @@ static void ins_del(void)
     return;
   if (gchar_cursor() == NUL) {          /* delete newline */
     temp = curwin->w_cursor.col;
-    if (!can_bs(BS_EOL)                 /* only if "eol" included */
-        || do_join(2, FALSE, TRUE, FALSE) == FAIL)
+    if (!can_bs(BS_EOL)  // only if "eol" included
+        || do_join(2, FALSE, TRUE, FALSE, false) == FAIL) {
       vim_beep();
-    else
+    } else {
       curwin->w_cursor.col = temp;
+    }
   } else if (del_char(FALSE) == FAIL)   /* delete char under cursor */
     vim_beep();
   did_ai = FALSE;
@@ -7387,7 +7388,7 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
             ptr[len - 1] = NUL;
         }
 
-        (void)do_join(2, FALSE, FALSE, FALSE);
+        do_join(2, FALSE, FALSE, FALSE, false);
         if (temp == NUL && gchar_cursor() != NUL)
           inc_cursor();
       } else

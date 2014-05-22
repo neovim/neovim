@@ -1,0 +1,23 @@
+Tests for setting the '[,'] marks when joining lines.
+
+STARTTEST
+:so small.vim
+:/^\t\t/
+0gqj
+:let a=string(getpos("'[")).'/'.string(getpos("']"))
+:/^This line/;'}-join
+:let b=string(getpos("'[")).'/'.string(getpos("']"))
+:$put ='First test: Start/End '.string(a)
+:$put ='Second test: Start/End '.string(b)
+:/^\t\t/,$wq! test.out
+ENDTEST
+
+
+		O sodales, ludite, vos qui
+attamen consulite per voster honur. Tua pulchra facies me fay planszer milies
+
+This line.
+Should be joined with the next line
+and with this line
+
+Results:

@@ -40,8 +40,11 @@ void adjust_cursor_eol(void);
 int preprocs_left(void);
 int get_register_name(int num);
 void ex_display(exarg_T *eap);
-int do_join(long count, int insert_space, int save_undo,
-            int use_formatoptions);
+int do_join(long count,
+            int insert_space,
+            int save_undo,
+            int use_formatoptions,
+            bool setmark);
 void op_format(oparg_T *oap, int keep_cursor);
 void op_formatexpr(oparg_T *oap);
 int fex_format(linenr_T lnum, long count, int c);
