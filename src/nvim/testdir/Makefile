@@ -6,7 +6,8 @@ export SHELL := sh
 
 VIMPROG := ../../../build/bin/nvim
 
-SCRIPTS := test_eval.out                                               \
+SCRIPTS := test_autoformat_join.out                                    \
+           test_eval.out                                               \
            test1.out   test2.out   test3.out   test4.out   test5.out   \
            test6.out   test7.out   test8.out   test9.out   test10.out  \
            test11.out  test12.out  test13.out  test14.out  test15.out  \
