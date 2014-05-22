@@ -16114,11 +16114,11 @@ var_check_func_name (
     int new_var         /* TRUE when creating the variable */
 )
 {
-  if (!(vim_strchr((char_u *)"wbs", name[0]) != NULL && name[1] == ':')
-      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':')
-          ? name[2] : name[0])) {
-    EMSG2(_("E704: Funcref variable name must start with a capital: %s"),
-        name);
+  // Allow for w: b: s: and t:.
+  if (!(vim_strchr((char_u *)"wbst", name[0]) != NULL && name[1] == ':')
+      && !ASCII_ISUPPER((name[0] != NUL && name[1] == ':') ? name[2]
+                                                           : name[0])) {
+    EMSG2(_("E704: Funcref variable name must start with a capital: %s"), name);
     return TRUE;
   }
   /* Don't allow hiding a function.  When "v" is not NULL we might be
