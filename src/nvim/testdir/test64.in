@@ -238,7 +238,11 @@ STARTTEST
 :call add(tl, [2, '\vx(.{-,8})yz(.*)','xayxayzxayzxayz','xayxayzxayzxayz','ayxa','xayzxayz'])
 :call add(tl, [2, '\vx(.*)yz(.*)','xayxayzxayzxayz','xayxayzxayzxayz', 'ayxayzxayzxa',''])
 :call add(tl, [2, '\v(a{1,2}){-2,3}','aaaaaaa','aaaa','aa'])
-:call add(tl, [2, '\v(a{-1,3})+','aa','aa','a'])
+:call add(tl, [2, '\v(a{-1,3})+', 'aa', 'aa', 'a'])
+:call add(tl, [2, '^\s\{-}\zs\( x\|x$\)', ' x', ' x', ' x'])
+:call add(tl, [2, '^\s\{-}\zs\(x\| x$\)', ' x', ' x', ' x'])
+:call add(tl, [2, '^\s\{-}\ze\(x\| x$\)', ' x', '', ' x'])
+:call add(tl, [2, '^\(\s\{-}\)\(x\| x$\)', ' x', ' x', '', ' x'])
 :"
 :" Test Character classes
 :call add(tl, [2, '\d\+e\d\d','test 10e23 fd','10e23'])
@@ -462,15 +466,15 @@ STARTTEST
 :    try
 :      let l = matchlist(text, pat)
 :    catch
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
 :    endtry
 :" check the match itself
 :    if len(l) == 0 && len(t) > matchidx
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
 :    elseif len(l) > 0 && len(t) == matchidx
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
 :    elseif len(t) > matchidx && l[0] != t[matchidx]
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
 :    else
 :      $put ='OK ' . engine . ' - ' . pat
 :    endif
@@ -483,7 +487,7 @@ STARTTEST
 :          let e = t[matchidx + i]
 :        endif
 :        if l[i] != e
-:          $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+:          $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
 :        endif
 :      endfor
 :      unlet i
