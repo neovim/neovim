@@ -1017,7 +1017,7 @@ static struct vimoption
 #  endif
      (char_u *)0L
    } SCRIPTID_INIT},
-  {"langmap",     "lmap", P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
+  {"langmap",     "lmap", P_STRING|P_VI_DEF|P_COMMA|P_NODUP|P_SECURE,
    (char_u *)&p_langmap, PV_NONE,
    {(char_u *)"",                               /* unmatched } */
     (char_u *)0L} SCRIPTID_INIT},
