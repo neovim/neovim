@@ -26,6 +26,11 @@
     map_del(uint64_t)(name##_handles, name->handle);                          \
   }
 
+static uint64_t next_handle = 1;
+
+HANDLE_IMPL(buf_T, buffer)
+
 void handle_init()
 {
+  HANDLE_INIT(buffer);
 }

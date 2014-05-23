@@ -26,6 +26,7 @@
 
 #include <string.h>
 
+#include "nvim/api/private/handle.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -538,6 +539,7 @@ void buf_freeall(buf_T *buf, int flags)
  */
 static void free_buffer(buf_T *buf)
 {
+  handle_unregister_buffer(buf);
   free_buffer_stuff(buf, TRUE);
   unref_var_dict(buf->b_vars);
   aubuflocal_remove(buf);
@@ -1362,6 +1364,7 @@ buflist_new (
   }
   if (buf != curbuf || curbuf == NULL) {
     buf = xcalloc(1, sizeof(buf_T));
+    handle_register_buffer(buf);
     /* init b: variables */
     buf->b_vars = dict_alloc();
     init_var_dict(buf->b_vars, &buf->b_bufvar, VAR_SCOPE);
