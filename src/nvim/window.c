@@ -6,6 +6,7 @@
  * See README.txt for an overview of the Vim source code.
  */
 
+#include "nvim/api/private/handle.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/buffer.h"
@@ -3568,6 +3569,7 @@ static win_T *win_alloc(win_T *after, int hidden)
    * allocate window structure and linesizes arrays
    */
   win_T *new_wp = xcalloc(1, sizeof(win_T));
+  handle_register_window(new_wp);
   win_alloc_lines(new_wp);
 
   /* init w: variables */
@@ -3583,6 +3585,7 @@ static win_T *win_alloc(win_T *after, int hidden)
    */
   if (!hidden)
     win_append(after, new_wp);
+
   new_wp->w_wincol = 0;
   new_wp->w_width = Columns;
 
@@ -3618,6 +3621,7 @@ win_free (
   buf_T       *buf;
   wininfo_T   *wip;
 
+  handle_unregister_window(wp);
   clearFolding(wp);
 
   /* reduce the reference count to the argument list. */

@@ -10,6 +10,7 @@
   void handle_unregister_##name(type *name);
 
 HANDLE_DECLS(buf_T, buffer)
+HANDLE_DECLS(win_T, window)
 
 void handle_init(void);
 

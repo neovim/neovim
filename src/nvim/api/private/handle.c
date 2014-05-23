@@ -29,8 +29,10 @@
 static uint64_t next_handle = 1;
 
 HANDLE_IMPL(buf_T, buffer)
+HANDLE_IMPL(win_T, window)
 
 void handle_init()
 {
   HANDLE_INIT(buffer);
+  HANDLE_INIT(window);
 }

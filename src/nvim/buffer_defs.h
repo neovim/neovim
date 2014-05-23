@@ -840,6 +840,7 @@ struct matchitem {
  * All row numbers are relative to the start of the window, except w_winrow.
  */
 struct window_S {
+  uint64_t handle;
   buf_T       *w_buffer;            /* buffer we are a window into (used
                                        often, keep it the first item!) */
 
