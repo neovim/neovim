@@ -2,19 +2,19 @@
 ///
 /// Handling of a hashtable with Vim-specific properties.
 ///
-/// Each item in a hashtable has a NUL terminated string key.  A key can appear
+/// Each item in a hashtable has a NUL terminated string key. A key can appear
 /// only once in the table.
 ///
-/// A hash number is computed from the key for quick lookup.  When the hashes
+/// A hash number is computed from the key for quick lookup. When the hashes
 /// of two different keys point to the same entry an algorithm is used to
 /// iterate over other entries in the table until the right one is found.
 /// To make the iteration work removed keys are different from entries where a
 /// key was never present.
 ///
 /// The mechanism has been partly based on how Python Dictionaries are
-/// implemented.  The algorithm is from Knuth Vol. 3, Sec. 6.4.
+/// implemented. The algorithm is from Knuth Vol. 3, Sec. 6.4.
 ///
-/// The hashtable grows to accommodate more entries when needed.  At least 1/3
+/// The hashtable grows to accommodate more entries when needed. At least 1/3
 /// of the entries is empty to keep the lookup efficient (at the cost of extra
 /// memory).
 
@@ -31,10 +31,7 @@
 
 static int hash_may_resize(hashtab_T *ht, int minitems);
 
-
 /// Initialize an empty hash table.
-///
-/// @param ht
 void hash_init(hashtab_T *ht)
 {
   // This zeroes all "ht_" entries and all the "hi_key" in "ht_smallarray".
@@ -43,10 +40,10 @@ void hash_init(hashtab_T *ht)
   ht->ht_mask = HT_INIT_SIZE - 1;
 }
 
-/// Free the array of a hash table.  Does not free the items it contains!
-/// If "ht" is not freed then you should call hash_init() next!
+/// Free the array of a hash table without freeing contained values.
 ///
-/// @param ht
+/// If "ht" is not freed (after calling this) then you should call hash_init()
+/// right next!
 void hash_clear(hashtab_T *ht)
 {
   if (ht->ht_array != ht->ht_smallarray) {
@@ -54,12 +51,9 @@ void hash_clear(hashtab_T *ht)
   }
 }
 
-/// Free the array of a hash table and all the keys it contains.  The keys must
-/// have been allocated.  "off" is the offset from the start of the allocate
-/// memory to the location of the key (it's always positive).
+/// Free the array of a hash table and all contained values.
 ///
-/// @param ht
-/// @param off
+/// @param off the offset from start of value to start of key (@see hashitem_T).
 void hash_clear_all(hashtab_T *ht, int off)
 {
   long todo;
@@ -76,17 +70,15 @@ void hash_clear_all(hashtab_T *ht, int off)
   hash_clear(ht);
 }
 
-/// Find "key" in hashtable "ht".  "key" must not be NULL.
-/// Always returns a pointer to a hashitem.  If the item was not found then
-/// HASHITEM_EMPTY() is TRUE.  The pointer is then the place where the key
-/// would be added.
-/// WARNING: The returned pointer becomes invalid when the hashtable is changed
-/// (adding, setting or removing an item)!
+/// Find item for given "key" in hashtable "ht". 
 ///
-/// @param ht
-/// @param key
+/// @param key The key of the looked-for item. Must not be NULL.
 ///
-/// @return Pointer to the hashitem stored with the given key.
+/// @return Pointer to the hash item corresponding to the given key.
+///         If not found, then return pointer to the empty item that would be
+///         used for that key.
+///         WARNING: Returned pointer becomes invalid as soon as the hash table
+///                  is changed in any way.
 hashitem_T* hash_find(hashtab_T *ht, char_u *key)
 {
   return hash_lookup(ht, key, hash_hash(key));
@@ -94,11 +86,14 @@ hashitem_T* hash_find(hashtab_T *ht, char_u *key)
 
 /// Like hash_find(), but caller computes "hash".
 ///
-/// @param ht
-/// @param key
-/// @param hash
+/// @param key  The key of the looked-for item. Must not be NULL.
+/// @param hash The precomputed hash for the key.
 ///
-/// @return Pointer to the hashitem stored with the given key.
+/// @return Pointer to the hashitem corresponding to the given key.
+///         If not found, then return pointer to the empty item that would be
+///         used for that key.
+///         WARNING: Returned pointer becomes invalid as soon as the hash table
+///                  is changed in any way.
 hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
 {
   hash_T perturb;
@@ -129,9 +124,9 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
     freeitem = NULL;
   }
 
-  // Need to search through the table to find the key.  The algorithm
+  // Need to search through the table to find the key. The algorithm
   // to step through the table starts with large steps, gradually becoming
-  // smaller down to (1/4 table size + 1).  This means it goes through all
+  // smaller down to (1/4 table size + 1). This means it goes through all
   // table entries in the end.
   // When we run into a NULL key it's clear that the key isn't there.
   // Return the first available slot found (can be a slot of a removed
@@ -161,6 +156,7 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
 }
 
 /// Print the efficiency of hashtable lookups.
+///
 /// Useful when trying different hash algorithms.
 /// Called when exiting.
 void hash_debug_results(void)
@@ -176,12 +172,13 @@ void hash_debug_results(void)
 #endif  // ifdef HT_DEBUG
 }
 
-/// Add item with key "key" to hashtable "ht".
+/// Add item for key "key" to hashtable "ht".
 ///
-/// @param ht
-/// @param key
+/// @param key Pointer to the key for the new item. The key has to be contained
+///            in the new item (@see hashitem_T). Must not be NULL.
 ///
-/// @returns FAIL when out of memory or the key is already present.
+/// @return OK   if success.
+///         FAIL if key already present, or out of memory.
 int hash_add(hashtab_T *ht, char_u *key)
 {
   hash_T hash = hash_hash(key);
@@ -193,16 +190,16 @@ int hash_add(hashtab_T *ht, char_u *key)
   return hash_add_item(ht, hi, key, hash);
 }
 
-/// Add item "hi" with "key" to hashtable "ht".  "key" must not be NULL and
-/// "hi" must have been obtained with hash_lookup() and point to an empty item.
-/// "hi" is invalid after this!
+/// Add item "hi" for key "key" to hashtable "ht".
 ///
-/// @param ht
-/// @param hi
-/// @param key
-/// @param hash
+/// @param hi   The hash item to be used. Must have been obtained through
+///             hash_lookup() and point to an empty item.
+/// @param key  Pointer to the key for the new item. The key has to be contained
+///             in the new item (@see hashitem_T). Must not be NULL.
+/// @param hash The precomputed hash value for the key.
 ///
-/// @returns OK or FAIL (out of memory).
+/// @return OK   if success.
+///         FAIL if out of memory.
 int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 {
   // If resizing failed before and it fails again we can't add an item.
@@ -221,13 +218,12 @@ int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
   return hash_may_resize(ht, 0);
 }
 
-/// Remove item "hi" from  hashtable "ht".  "hi" must have been obtained with
-/// hash_lookup().
+/// Remove item "hi" from hashtable "ht".
+/// 
+/// Caller must take care of freeing the item itself.
 ///
-/// The caller must take care of freeing the item itself.
-///
-/// @param ht
-/// @param hi
+/// @param hi The hash item to be removed.
+///           It must have been obtained with hash_lookup().
 void hash_remove(hashtab_T *ht, hashitem_T *hi)
 {
   ht->ht_used--;
@@ -235,18 +231,18 @@ void hash_remove(hashtab_T *ht, hashitem_T *hi)
   hash_may_resize(ht, 0);
 }
 
-/// Lock a hashtable: prevent that ht_array changes.
+/// Lock hashtable (prevent changes in ht_array). 
+///
 /// Don't use this when items are to be added!
 /// Must call hash_unlock() later.
-///
-/// @param ht
 void hash_lock(hashtab_T *ht)
 {
   ht->ht_locked++;
 }
 
-/// Unlock a hashtable: allow ht_array changes again.
-/// Table will be resized (shrink) when necessary.
+/// Unlock hashtable (allow changes in ht_array again).
+///
+/// Table will be resized (shrunk) when necessary.
 /// This must balance a call to hash_lock().
 void hash_unlock(hashtab_T *ht)
 {
@@ -254,13 +250,16 @@ void hash_unlock(hashtab_T *ht)
   (void)hash_may_resize(ht, 0);
 }
 
-/// Shrink a hashtable when there is too much empty space.
-/// Grow a hashtable when there is not enough empty space.
+/// Resize hastable (new size can be given or automatically computed).
 ///
-/// @param ht
-/// @param minitems minimal number of items
+/// @param minitems Minimum number of items the new table should hold.
+///                 If zero, new size will depend on currently used items:
+///                 - Shrink when too much empty space.
+///                 - Grow when not enough empty space.
+///                 If non-zero, passed minitems will be used.
 ///
-/// @returns OK or FAIL (out of memory).
+/// @return OK   if success.
+///         FAIL if out of memory.
 static int hash_may_resize(hashtab_T *ht, int minitems)
 {
   hashitem_T temparray[HT_INIT_SIZE];
@@ -289,7 +288,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
 #endif  // ifdef HT_DEBUG
 
   if (minitems == 0) {
-    // Return quickly for small tables with at least two NULL items.  NULL
+    // Return quickly for small tables with at least two NULL items.
     // items are required for the lookup to decide a key isn't there.
     if ((ht->ht_filled < HT_INIT_SIZE - 1)
         && (ht->ht_array == ht->ht_smallarray)) {
@@ -298,7 +297,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
 
     // Grow or refill the array when it's more than 2/3 full (including
     // removed items, so that they get cleaned up).
-    // Shrink the array when it's less than 1/5 full.  When growing it is
+    // Shrink the array when it's less than 1/5 full. When growing it is
     // at least 1/4 full (avoids repeated grow-shrink operations)
     oldsize = ht->ht_mask + 1;
     if ((ht->ht_filled * 3 < oldsize * 2) && (ht->ht_used > oldsize / 5)) {
@@ -338,7 +337,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
     newarray = ht->ht_smallarray;
     if (ht->ht_array == newarray) {
       // Moving from ht_smallarray to ht_smallarray!  Happens when there
-      // are many removed items.  Copy the items to be able to clean up
+      // are many removed items. Copy the items to be able to clean up
       // removed items.
       memmove(temparray, newarray, sizeof(temparray));
       oldarray = temparray;
@@ -353,7 +352,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
   memset(newarray, 0, (size_t)(sizeof(hashitem_T) * newsize));
 
   // Move all the items from the old array to the new one, placing them in
-  // the right spot.  The new array won't have any removed items, thus this
+  // the right spot. The new array won't have any removed items, thus this
   // is also a cleanup action.
   newmask = newsize - 1;
   todo = (int)ht->ht_used;
@@ -361,7 +360,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
   for (olditem = oldarray; todo > 0; ++olditem) {
     if (!HASHITEM_EMPTY(olditem)) {
       // The algorithm to find the spot to add the item is identical to
-      // the algorithm to find an item in hash_lookup().  But we only
+      // the algorithm to find an item in hash_lookup(). But we only
       // need to search for a NULL key, thus it's simpler.
       newi = (unsigned)(olditem->hi_hash & newmask);
       newitem = &newarray[newi];
@@ -391,14 +390,11 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
 }
 
 /// Get the hash number for a key.
+///
 /// If you think you know a better hash function: Compile with HT_DEBUG set and
-/// run a script that uses hashtables a lot.  Vim will then print statistics
-/// when exiting.  Try that with the current hash algorithm and yours.  The
+/// run a script that uses hashtables a lot. Vim will then print statistics
+/// when exiting. Try that with the current hash algorithm and yours. The
 /// lower the percentage the better.
-///
-/// @param key
-///
-/// @return Hash number for the key.
 hash_T hash_hash(char_u *key)
 {
   hash_T hash;
