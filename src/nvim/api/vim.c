@@ -81,7 +81,7 @@ Integer vim_strwidth(String str, Error *err)
 
 StringArray vim_list_runtime_paths(void)
 {
-  StringArray rv = {.size = 0};
+  StringArray rv = ARRAY_DICT_INIT;
   uint8_t *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -192,7 +192,7 @@ void vim_err_write(String str)
 
 BufferArray vim_get_buffers(void)
 {
-  BufferArray rv = {.size = 0};
+  BufferArray rv = ARRAY_DICT_INIT;
   buf_T *b = firstbuf;
 
   while (b) {
@@ -242,7 +242,7 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
 
 WindowArray vim_get_windows(void)
 {
-  WindowArray rv = {.size = 0};
+  WindowArray rv = ARRAY_DICT_INIT;
   tabpage_T *tp;
   win_T *wp;
 
@@ -289,7 +289,7 @@ void vim_set_current_window(Window window, Error *err)
 
 TabpageArray vim_get_tabpages(void)
 {
-  TabpageArray rv = {.size = 0};
+  TabpageArray rv = ARRAY_DICT_INIT;
   tabpage_T *tp = first_tabpage;
 
   while (tp) {

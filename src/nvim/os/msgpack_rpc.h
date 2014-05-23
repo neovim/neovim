@@ -8,8 +8,6 @@
 
 #include "nvim/api/private/defs.h"
 
-#define ARRAY_DICT_INIT {.size = 0, .items = NULL}
-
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.
 ///

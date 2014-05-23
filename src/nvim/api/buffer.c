@@ -71,7 +71,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
-  StringArray array = {.size = 0};
+  StringArray array = ARRAY_DICT_INIT;
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
@@ -82,7 +82,7 @@ StringArray buffer_get_slice(Buffer buffer,
                              Boolean include_end,
                              Error *err)
 {
-  StringArray rv = {.size = 0};
+  StringArray rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf) {

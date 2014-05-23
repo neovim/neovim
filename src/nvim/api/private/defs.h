@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define ARRAY_DICT_INIT {.size = 0, .items = NULL}
 #define REMOTE_TYPE(type) typedef uint64_t type
 
 #define TYPED_ARRAY_OF(type)                                                  \

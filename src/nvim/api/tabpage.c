@@ -10,7 +10,7 @@
 
 WindowArray tabpage_get_windows(Tabpage tabpage, Error *err)
 {
-  WindowArray rv = {.size = 0};
+  WindowArray rv = ARRAY_DICT_INIT;
   tabpage_T *tab = find_tab(tabpage, err);
 
   if (!tab) {
