@@ -67,7 +67,7 @@ void hash_clear_all(hashtab_T *ht, unsigned int off)
   hash_clear(ht);
 }
 
-/// Find item for given "key" in hashtable "ht". 
+/// Find item for given "key" in hashtable "ht".
 ///
 /// @param key The key of the looked-for item. Must not be NULL.
 ///
@@ -210,7 +210,7 @@ int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 }
 
 /// Remove item "hi" from hashtable "ht".
-/// 
+///
 /// Caller must take care of freeing the item itself.
 ///
 /// @param hi The hash item to be removed.
@@ -222,7 +222,7 @@ void hash_remove(hashtab_T *ht, hashitem_T *hi)
   hash_may_resize(ht, 0);
 }
 
-/// Lock hashtable (prevent changes in ht_array). 
+/// Lock hashtable (prevent changes in ht_array).
 ///
 /// Don't use this when items are to be added!
 /// Must call hash_unlock() later.

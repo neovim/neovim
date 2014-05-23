@@ -5,10 +5,10 @@
 #include "nvim/vim.h"
 
 /// Type for hash number (hash calculation result).
-typedef size_t hash_T;          
+typedef size_t hash_T;
 
 /// The address of "hash_removed" is used as a magic number
-/// for hi_key to indicate a removed item. 
+/// for hi_key to indicate a removed item.
 #define HI_KEY_REMOVED &hash_removed
 #define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL \
                             || (hi)->hi_key == &hash_removed)
@@ -34,7 +34,7 @@ typedef struct hashitem_S {
   hash_T hi_hash;
 
   /// Item key.
-  /// 
+  ///
   /// Possible values mean the following:
   /// NULL                      : Item was never used.
   /// HI_KEY_REMOVED            : Item was removed.
@@ -44,7 +44,7 @@ typedef struct hashitem_S {
 
 /// Initial size for a hashtable.
 /// Our items are relatively small and growing is expensive, thus start with 16.
-/// Must be a power of 2. 
+/// Must be a power of 2.
 #define HT_INIT_SIZE 16
 
 /// An array-based hashtable.
@@ -80,4 +80,4 @@ void hash_lock(hashtab_T *ht);
 void hash_unlock(hashtab_T *ht);
 hash_T hash_hash(char_u *key);
 
-#endif /* NVIM_HASHTAB_H */
+#endif  // NVIM_HASHTAB_H
