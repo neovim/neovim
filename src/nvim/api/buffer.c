@@ -219,7 +219,6 @@ void buffer_set_slice(Buffer buffer,
 
     // Same as with replacing
     lines[i] = NULL;
-    i++;
     extra++;
   }
 
