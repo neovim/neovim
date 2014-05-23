@@ -6,17 +6,6 @@ file(GLOB API_HEADERS api/*.h)
 set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/nvim/os/msgpack_rpc.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 
-# Remove helpers.h from API_HEADERS since it doesn't contain public API
-# functions
-foreach(sfile ${API_HEADERS})
-  get_filename_component(f ${sfile} NAME)
-  if(${f} MATCHES "^(helpers.h)$")
-    list(APPEND to_remove ${sfile})
-  endif()
-endforeach()
-list(REMOVE_ITEM API_HEADERS ${to_remove})
-set(to_remove)
-
 file(MAKE_DIRECTORY ${GENERATED_DIR})
 
 add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
@@ -42,6 +31,7 @@ list(APPEND NEOVIM_SOURCES "${MSGPACK_DISPATCH}")
 
 file( GLOB OS_SOURCES os/*.c )
 file( GLOB API_SOURCES api/*.c )
+file( GLOB API_PRIV_SOURCES api/private/*.c )
 
 set(CONV_SRCS
   api.c
@@ -110,13 +100,14 @@ list(APPEND NVIM_LINK_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT})
 
 if(NOT DEFINED ENV{SKIP_EXEC})
-  add_executable(nvim ${NEOVIM_SOURCES} ${OS_SOURCES} ${API_SOURCES})
+  add_executable(nvim ${NEOVIM_SOURCES} ${OS_SOURCES} ${API_SOURCES}
+    ${API_PRIV_SOURCES})
   target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
   install(TARGETS nvim RUNTIME DESTINATION bin)
 endif()
 
 if(NOT DEFINED ENV{SKIP_UNITTEST})
   add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_SOURCES}
-    ${OS_SOURCES} ${API_SOURCES})
+    ${OS_SOURCES} ${API_SOURCES} ${API_PRIV_SOURCES})
   target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 endif()

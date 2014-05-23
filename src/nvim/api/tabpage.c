@@ -4,8 +4,8 @@
 
 #include "nvim/api/tabpage.h"
 #include "nvim/api/vim.h"
-#include "nvim/api/defs.h"
-#include "nvim/api/helpers.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 
 Integer tabpage_get_window_count(Tabpage tabpage, Error *err)
 {

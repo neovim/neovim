@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "nvim/api/helpers.h"
-#include "nvim/api/defs.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"

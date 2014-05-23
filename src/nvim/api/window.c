@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 #include "nvim/api/window.h"
-#include "nvim/api/defs.h"
-#include "nvim/api/helpers.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/screen.h"

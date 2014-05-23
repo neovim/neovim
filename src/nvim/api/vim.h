@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "nvim/api/defs.h"
+#include "nvim/api/private/defs.h"
 
 /// Send keys to vim input buffer, simulating user input.
 ///
