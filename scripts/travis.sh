@@ -1,8 +1,44 @@
 #!/bin/sh -e
 
-check_and_report() {
+tmpdir="$(pwd)/tmp"
+rm -rf "$tmpdir"
+mkdir -p "$tmpdir"
+
+valgrind_check() {
 	(
-	cd $tmpdir
+	cd $1
+	set -- valgrind-[*] valgrind-*
+	case $1$2 in
+		'valgrind-[*]valgrind-*')
+			;;
+		*)
+			shift
+			local err=''
+			for valgrind_log in "$@"; do
+				# Remove useless warning
+				sed -i "$valgrind_log" \
+					-e '/Warning: noted but unhandled ioctl/d' \
+					-e '/could cause spurious value errors to appear/d' \
+					-e '/See README_MISSING_SYSCALL_OR_IOCTL for guidance/d'
+				if [ "$(stat -c %s $valgrind_log)" != "0" ]; then
+					# if after removing the warning, the log still has errors, show its
+					# contents and set the flag so we exit with non-zero status
+					cat "$valgrind_log"
+					err=1
+				fi
+			done
+			if [ -n "$err" ]; then
+				echo "Runtime errors detected"
+				exit 1
+			fi
+			;;
+	esac
+	)
+}
+
+asan_check() {
+	(
+	cd $1
 	set -- [*]san.[*] *san.*
 	case $1$2 in
 		'[*]san.[*]*san.*')
@@ -68,9 +104,6 @@ if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 
 	install_dir="$(pwd)/dist"
 	# temporary directory for writing sanitizer logs
-	tmpdir="$(pwd)/tmp"
-	rm -rf "$tmpdir"
-	mkdir -p "$tmpdir"
 
 	# need the symbolizer path for stack traces with source information
 	if [ -n "$USE_CLANG_34" ]; then
@@ -91,10 +124,10 @@ if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 	$MAKE_CMD
 	if ! $MAKE_CMD test; then
 		reset
-		check_and_report
+		asan_check "$tmpdir"
 		exit 1
 	fi
-	check_and_report
+	asan_check "$tmpdir"
 	coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
 	$MAKE_CMD install
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
@@ -129,4 +162,19 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
 	$MAKE_CMD test
 elif [ "$TRAVIS_BUILD_TYPE" = "clint" ]; then
 	./scripts/clint.sh
+elif [ "$TRAVIS_BUILD_TYPE" = "api/python" ]; then
+	set_environment /opt/neovim-deps
+	$MAKE_CMD
+	sudo apt-get install expect valgrind
+	git clone --depth=1 -b master git://github.com/neovim/python-client
+	cd python-client
+  sudo pip install .
+  sudo pip install nose
+	test_cmd="nosetests --verbosity=2"
+	nvim_cmd="valgrind -q --track-origins=yes --log-file=$tmpdir/valgrind-%p.log ../build/bin/nvim -u NONE"
+	if ! ../scripts/run-api-tests.exp "$test_cmd" "$nvim_cmd"; then
+		valgrind_check "$tmpdir"
+		exit 1
+	fi
+	valgrind_check "$tmpdir"
 fi

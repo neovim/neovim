@@ -4,8 +4,8 @@
 #include <string.h>
 
 #include "nvim/api/vim.h"
-#include "nvim/api/helpers.h"
-#include "nvim/api/defs.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -73,12 +73,15 @@ Integer vim_strwidth(String str, Error *err)
     return 0;
   }
 
-  return mb_string2cells((char_u *)str.data, (int)str.size);
+  char *buf = xstrndup(str.data, str.size);
+  Integer rv = mb_string2cells((char_u *)buf, -1);
+  free(buf);
+  return rv;
 }
 
 StringArray vim_list_runtime_paths(void)
 {
-  StringArray rv = {.size = 0};
+  StringArray rv = ARRAY_DICT_INIT;
   uint8_t *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -94,14 +97,12 @@ StringArray vim_list_runtime_paths(void)
     rtp++;
   }
 
-  // index
-  uint32_t i = 0;
   // Allocate memory for the copies
   rv.items = xmalloc(sizeof(String) * rv.size);
   // reset the position
   rtp = p_rtp;
   // Start copying
-  while (*rtp != NUL) {
+  for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
     rv.items[i].data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
     int length = copy_option_part(&rtp,
@@ -110,7 +111,6 @@ StringArray vim_list_runtime_paths(void)
                                  ",");
     assert(length >= 0);
     rv.items[i].size = (size_t)length;
-    i++;
   }
 
   return rv;
@@ -118,8 +118,14 @@ StringArray vim_list_runtime_paths(void)
 
 void vim_change_directory(String dir, Error *err)
 {
+  if (dir.size >= MAXPATHL) {
+    set_api_error("directory string is too long", err);
+    return;
+  }
+
   char string[MAXPATHL];
   strncpy(string, dir.data, dir.size);
+  string[dir.size] = NUL;
 
   try_start();
 
@@ -136,17 +142,17 @@ void vim_change_directory(String dir, Error *err)
 
 String vim_get_current_line(Error *err)
 {
-  return buffer_get_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
+  return buffer_get_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
 
 void vim_set_current_line(String line, Error *err)
 {
-  buffer_set_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, line, err);
+  buffer_set_line(curbuf->handle, curwin->w_cursor.lnum - 1, line, err);
 }
 
 void vim_del_current_line(Error *err)
 {
-  buffer_del_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
+  buffer_del_line(curbuf->handle, curwin->w_cursor.lnum - 1, err);
 }
 
 Object vim_get_var(String name, Error *err)
@@ -184,32 +190,43 @@ void vim_err_write(String str)
   write_msg(str, true);
 }
 
-Integer vim_get_buffer_count(void)
+BufferArray vim_get_buffers(void)
 {
+  BufferArray rv = ARRAY_DICT_INIT;
   buf_T *b = firstbuf;
-  Integer n = 0;
 
   while (b) {
-    n++;
+    rv.size++;
     b = b->b_next;
   }
 
-  return n;
+  rv.items = xmalloc(sizeof(Buffer) * rv.size);
+  size_t i = 0;
+  b = firstbuf;
+
+  while (b) {
+    rv.items[i++] = b->handle;
+    b = b->b_next;
+  }
+
+  return rv;
 }
 
 Buffer vim_get_current_buffer(void)
 {
-  return curbuf->b_fnum;
+  return curbuf->handle;
 }
 
 void vim_set_current_buffer(Buffer buffer, Error *err)
 {
-  if (!find_buffer(buffer, err)) {
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
     return;
   }
 
   try_start();
-  if (do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, (int)buffer, 0) == FAIL) {
+  if (do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0) == FAIL) {
     if (try_end(err)) {
       return;
     }
@@ -223,14 +240,21 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
   try_end(err);
 }
 
-Integer vim_get_window_count(void)
+WindowArray vim_get_windows(void)
 {
+  WindowArray rv = ARRAY_DICT_INIT;
   tabpage_T *tp;
   win_T *wp;
-  Integer rv = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv++;
+    rv.size++;
+  }
+
+  rv.items = xmalloc(sizeof(Window) * rv.size);
+  size_t i = 0;
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    rv.items[i++] = wp->handle;
   }
 
   return rv;
@@ -238,20 +262,7 @@ Integer vim_get_window_count(void)
 
 Window vim_get_current_window(void)
 {
-  tabpage_T *tp;
-  win_T *wp;
-  Window rv = 1;
-
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (wp == curwin) {
-      return rv;
-    }
-
-    rv++;
-  }
-
-  // There should always be a current window
-  abort();
+  return curwin->handle;
 }
 
 void vim_set_current_window(Window window, Error *err)
@@ -263,7 +274,7 @@ void vim_set_current_window(Window window, Error *err)
   }
 
   try_start();
-  win_goto(win);
+  goto_tabpage_win(win_find_tabpage(win), win);
 
   if (win != curwin) {
     if (try_end(err)) {
@@ -276,14 +287,23 @@ void vim_set_current_window(Window window, Error *err)
   try_end(err);
 }
 
-Integer vim_get_tabpage_count(void)
+TabpageArray vim_get_tabpages(void)
 {
+  TabpageArray rv = ARRAY_DICT_INIT;
   tabpage_T *tp = first_tabpage;
-  Integer rv = 0;
 
-  while (tp != NULL) {
+  while (tp) {
+    rv.size++;
     tp = tp->tp_next;
-    rv++;
+  }
+
+  rv.items = xmalloc(sizeof(Tabpage) * rv.size);
+  size_t i = 0;
+  tp = first_tabpage;
+
+  while (tp) {
+    rv.items[i++] = tp->handle;
+    tp = tp->tp_next;
   }
 
   return rv;
@@ -291,24 +311,19 @@ Integer vim_get_tabpage_count(void)
 
 Tabpage vim_get_current_tabpage(void)
 {
-  Tabpage rv = 1;
-  tabpage_T *t;
-
-  for (t = first_tabpage; t != NULL && t != curtab; t = t->tp_next) {
-    rv++;
-  }
-
-  return rv;
+  return curtab->handle;
 }
 
 void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 {
-  if (!find_tab(tabpage, err)) {
+  tabpage_T *tp = find_tab(tabpage, err);
+
+  if (!tp) {
     return;
   }
 
   try_start();
-  goto_tabpage((int)tabpage);
+  goto_tabpage_tp(tp, true, true);
   try_end(err);
 }
 

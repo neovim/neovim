@@ -4,6 +4,54 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
+#define REMOTE_FUNCS_IMPL(t, lt)                                            \
+  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
+  {                                                                         \
+    *arg = obj->via.u64;                                                    \
+    return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                    \
+  }                                                                         \
+                                                                            \
+  void msgpack_rpc_from_##lt(t result, msgpack_packer *res)                 \
+  {                                                                         \
+    msgpack_pack_uint64(res, result);                                       \
+  }
+
+#define TYPED_ARRAY_IMPL(t, lt)                                             \
+  bool msgpack_rpc_to_##lt##array(msgpack_object *obj, t##Array *arg)       \
+  {                                                                         \
+    if (obj->type != MSGPACK_OBJECT_ARRAY) {                                \
+      return false;                                                         \
+    }                                                                       \
+                                                                            \
+    arg->size = obj->via.array.size;                                        \
+    arg->items = xcalloc(obj->via.array.size, sizeof(t));                   \
+                                                                            \
+    for (size_t i = 0; i < obj->via.array.size; i++) {                      \
+      if (!msgpack_rpc_to_##lt(obj->via.array.ptr + i, &arg->items[i])) {   \
+        return false;                                                       \
+      }                                                                     \
+    }                                                                       \
+                                                                            \
+    return true;                                                            \
+  }                                                                         \
+                                                                            \
+  void msgpack_rpc_from_##lt##array(t##Array result, msgpack_packer *res)   \
+  {                                                                         \
+    msgpack_pack_array(res, result.size);                                   \
+                                                                            \
+    for (size_t i = 0; i < result.size; i++) {                              \
+      msgpack_rpc_from_##lt(result.items[i], res);                          \
+    }                                                                       \
+  }                                                                         \
+                                                                            \
+  void msgpack_rpc_free_##lt##array(t##Array value) {                       \
+    for (size_t i = 0; i < value.size; i++) {                               \
+      msgpack_rpc_free_##lt(value.items[i]);                                \
+    }                                                                       \
+                                                                            \
+    free(value.items);                                                      \
+  }
+
 void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
 {
   // The initial response structure is the same no matter what happens,
@@ -104,21 +152,6 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
   return obj->type == MSGPACK_OBJECT_RAW;
 }
 
-bool msgpack_rpc_to_buffer(msgpack_object *obj, Buffer *arg)
-{
-  return msgpack_rpc_to_integer(obj, arg);
-}
-
-bool msgpack_rpc_to_window(msgpack_object *obj, Window *arg)
-{
-  return msgpack_rpc_to_integer(obj, arg);
-}
-
-bool msgpack_rpc_to_tabpage(msgpack_object *obj, Tabpage *arg)
-{
-  return msgpack_rpc_to_integer(obj, arg);
-}
-
 bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
 {
   switch (obj->type) {
@@ -154,24 +187,6 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
     default:
       return false;
   }
-}
-
-bool msgpack_rpc_to_stringarray(msgpack_object *obj, StringArray *arg)
-{
-  if (obj->type != MSGPACK_OBJECT_ARRAY) {
-    return false;
-  }
-
-  arg->size = obj->via.array.size;
-  arg->items = xcalloc(obj->via.array.size, sizeof(String));
-
-  for (uint32_t i = 0; i < obj->via.array.size; i++) {
-    if (!msgpack_rpc_to_string(obj->via.array.ptr + i, &arg->items[i])) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 bool msgpack_rpc_to_position(msgpack_object *obj, Position *arg)
@@ -251,21 +266,6 @@ void msgpack_rpc_from_string(String result, msgpack_packer *res)
   msgpack_pack_raw_body(res, result.data, result.size);
 }
 
-void msgpack_rpc_from_buffer(Buffer result, msgpack_packer *res)
-{
-  msgpack_rpc_from_integer(result, res);
-}
-
-void msgpack_rpc_from_window(Window result, msgpack_packer *res)
-{
-  msgpack_rpc_from_integer(result, res);
-}
-
-void msgpack_rpc_from_tabpage(Tabpage result, msgpack_packer *res)
-{
-  msgpack_rpc_from_integer(result, res);
-}
-
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
 {
   switch (result.type) {
@@ -299,15 +299,6 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
 
     default:
       abort();
-  }
-}
-
-void msgpack_rpc_from_stringarray(StringArray result, msgpack_packer *res)
-{
-  msgpack_pack_array(res, result.size);
-
-  for (size_t i = 0; i < result.size; i++) {
-    msgpack_rpc_from_string(result.items[i], res);
   }
 }
 
@@ -363,14 +354,6 @@ void msgpack_rpc_free_object(Object value)
   }
 }
 
-void msgpack_rpc_free_stringarray(StringArray value) {
-  for (uint32_t i = 0; i < value.size; i++) {
-    msgpack_rpc_free_string(value.items[i]);
-  }
-
-  free(value.items);
-}
-
 void msgpack_rpc_free_array(Array value)
 {
   for (uint32_t i = 0; i < value.size; i++) {
@@ -389,4 +372,13 @@ void msgpack_rpc_free_dictionary(Dictionary value)
 
   free(value.items);
 }
+
+REMOTE_FUNCS_IMPL(Buffer, buffer)
+REMOTE_FUNCS_IMPL(Window, window)
+REMOTE_FUNCS_IMPL(Tabpage, tabpage)
+
+TYPED_ARRAY_IMPL(Buffer, buffer)
+TYPED_ARRAY_IMPL(Window, window)
+TYPED_ARRAY_IMPL(Tabpage, tabpage)
+TYPED_ARRAY_IMPL(String, string)
 

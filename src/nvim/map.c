@@ -85,3 +85,4 @@
 
 MAP_IMPL(cstr_t)
 MAP_IMPL(ptr_t)
+MAP_IMPL(uint64_t)

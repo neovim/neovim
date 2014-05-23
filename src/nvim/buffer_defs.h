@@ -401,6 +401,7 @@ typedef struct {
  */
 
 struct file_buffer {
+  uint64_t handle;              // unique identifier for the buffer
   memline_T b_ml;               /* associated memline (also contains line
                                    count) */
 
@@ -737,6 +738,7 @@ struct diffblock_S {
  */
 typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
+  uint64_t handle;
   tabpage_T       *tp_next;         /* next tabpage or NULL */
   frame_T         *tp_topframe;     /* topframe for the windows */
   win_T           *tp_curwin;       /* current window in this Tab page */
@@ -839,6 +841,7 @@ struct matchitem {
  * All row numbers are relative to the start of the window, except w_winrow.
  */
 struct window_S {
+  uint64_t handle;
   buf_T       *w_buffer;            /* buffer we are a window into (used
                                        often, keep it the first item!) */
 

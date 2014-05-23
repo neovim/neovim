@@ -5,6 +5,15 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define ARRAY_DICT_INIT {.size = 0, .items = NULL}
+#define REMOTE_TYPE(type) typedef uint64_t type
+
+#define TYPED_ARRAY_OF(type)                                                  \
+  typedef struct {                                                            \
+    type *items;                                                              \
+    size_t size;                                                              \
+  } type##Array
+
 // Basic types
 typedef struct {
   char msg[256];
@@ -20,16 +29,16 @@ typedef struct {
   size_t size;
 } String;
 
-typedef Integer Buffer;
-typedef Integer Window;
-typedef Integer Tabpage;
+REMOTE_TYPE(Buffer);
+REMOTE_TYPE(Window);
+REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
 
-typedef struct {
-  String *items;
-  size_t size;
-} StringArray;
+TYPED_ARRAY_OF(Buffer);
+TYPED_ARRAY_OF(Window);
+TYPED_ARRAY_OF(Tabpage);
+TYPED_ARRAY_OF(String);
 
 typedef struct {
   Integer row, col;

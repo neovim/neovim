@@ -4,5 +4,6 @@ env:
   - TRAVIS_BUILD_TYPE=gcc/ia32
   - TRAVIS_BUILD_TYPE=gcc/unittest
   - TRAVIS_BUILD_TYPE=clint
+  - TRAVIS_BUILD_TYPE=api/python
 script:
   - ./scripts/travis.sh

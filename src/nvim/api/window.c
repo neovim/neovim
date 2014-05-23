@@ -3,8 +3,8 @@
 #include <stdlib.h>
 
 #include "nvim/api/window.h"
-#include "nvim/api/defs.h"
-#include "nvim/api/helpers.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/window.h"
 #include "nvim/screen.h"
@@ -19,7 +19,7 @@ Buffer window_get_buffer(Window window, Error *err)
     return 0;
   }
 
-  return win->w_buffer->b_fnum;
+  return win->w_buffer->handle;
 }
 
 Position window_get_cursor(Window window, Error *err)
@@ -192,8 +192,14 @@ Position window_get_position(Window window, Error *err)
 
 Tabpage window_get_tabpage(Window window, Error *err)
 {
-  set_api_error("Not implemented", err);
-  return 0;
+  Tabpage rv = 0;
+  win_T *win = find_window(window, err);
+
+  if (win) {
+    rv = win_find_tabpage(win)->handle;
+  }
+
+  return rv;
 }
 
 Boolean window_is_valid(Window window)

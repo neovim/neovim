@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "nvim/api/defs.h"
+#include "nvim/api/private/defs.h"
 
 /// Gets the buffer line count
 ///
@@ -103,6 +103,13 @@ Object buffer_get_option(Buffer buffer, String name, Error *err);
 /// @param value The option value
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_option(Buffer buffer, String name, Object value, Error *err);
+
+/// Gets the buffer number
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The buffer number
+Integer buffer_get_number(Buffer buffer, Error *err);
 
 /// Gets the full file name for the buffer
 ///

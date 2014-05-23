@@ -21,6 +21,7 @@
 
 MAP_DECLS(cstr_t)
 MAP_DECLS(ptr_t)
+MAP_DECLS(uint64_t)
 
 #define map_new(T) map_##T##_new
 #define map_free(T) map_##T##_free

@@ -4,8 +4,8 @@
 #include <stdlib.h>
 
 #include "nvim/api/buffer.h"
-#include "nvim/api/helpers.h"
-#include "nvim/api/defs.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/memline.h"
@@ -56,7 +56,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   String rv = {.size = 0};
   StringArray slice = buffer_get_slice(buffer, index, index, true, true, err);
 
-  if (slice.size) {
+  if (!err->set && slice.size) {
     rv = slice.items[0];
   }
 
@@ -71,7 +71,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
-  StringArray array = {.size = 0};
+  StringArray array = ARRAY_DICT_INIT;
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
@@ -82,7 +82,7 @@ StringArray buffer_get_slice(Buffer buffer,
                              Boolean include_end,
                              Error *err)
 {
-  StringArray rv = {.size = 0};
+  StringArray rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf) {
@@ -115,9 +115,7 @@ StringArray buffer_get_slice(Buffer buffer,
 end:
   if (err->set) {
     for (size_t i = 0; i < rv.size; i++) {
-      if (rv.items[i].data != NULL) {
-        free(rv.items[i].data);
-      }
+      free(rv.items[i].data);
     }
 
     free(rv.items);
@@ -221,7 +219,6 @@ void buffer_set_slice(Buffer buffer,
 
     // Same as with replacing
     lines[i] = NULL;
-    i++;
     extra++;
   }
 
@@ -240,10 +237,8 @@ void buffer_set_slice(Buffer buffer,
   }
 
 end:
-  for (uint32_t i = 0; i < new_len; i++) {
-    if (lines[i] != NULL) {
-      free(lines[i]);
-    }
+  for (size_t i = 0; i < new_len; i++) {
+    free(lines[i]);
   }
 
   free(lines);
@@ -296,6 +291,18 @@ void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
   }
 
   set_option_to(buf, SREQ_BUF, name, value, err);
+}
+
+Integer buffer_get_number(Buffer buffer, Error *err)
+{
+  Integer rv = 0;
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  return buf->b_fnum;
 }
 
 String buffer_get_name(Buffer buffer, Error *err)
@@ -357,7 +364,7 @@ Position buffer_get_mark(Buffer buffer, String name, Error *err)
     return rv;
   }
 
-  if (name.size != 0) {
+  if (name.size != 1) {
     set_api_error("mark name must be a single character", err);
     return rv;
   }

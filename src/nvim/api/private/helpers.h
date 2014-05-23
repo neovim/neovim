@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-#include "nvim/api/defs.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 
 #define set_api_error(message, err)                \
