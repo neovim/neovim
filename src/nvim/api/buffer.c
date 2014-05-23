@@ -293,6 +293,18 @@ void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
   set_option_to(buf, SREQ_BUF, name, value, err);
 }
 
+Integer buffer_get_number(Buffer buffer, Error *err)
+{
+  Integer rv = 0;
+  buf_T *buf = find_buffer(buffer, err);
+
+  if (!buf) {
+    return rv;
+  }
+
+  return buf->b_fnum;
+}
+
 String buffer_get_name(Buffer buffer, Error *err)
 {
   String rv = {.size = 0, .data = ""};

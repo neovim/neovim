@@ -104,6 +104,13 @@ Object buffer_get_option(Buffer buffer, String name, Error *err);
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_option(Buffer buffer, String name, Object value, Error *err);
 
+/// Gets the buffer number
+///
+/// @param buffer The buffer handle
+/// @param[out] err Details of an error that may have occurred
+/// @return The buffer number
+Integer buffer_get_number(Buffer buffer, Error *err);
+
 /// Gets the full file name for the buffer
 ///
 /// @param buffer The buffer handle
