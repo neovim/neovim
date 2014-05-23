@@ -4095,9 +4095,8 @@ check_more (
         char_u buff[DIALOG_MSG_SIZE];
 
         if (n == 1)
-          vim_strncpy(buff,
-              (char_u *)_("1 more file to edit.  Quit anyway?"),
-              DIALOG_MSG_SIZE - 1);
+          STRLCPY(buff, _("1 more file to edit.  Quit anyway?"),
+              DIALOG_MSG_SIZE);
         else
           vim_snprintf((char *)buff, DIALOG_MSG_SIZE,
               _("%d more files to edit.  Quit anyway?"), n);
@@ -5865,7 +5864,7 @@ static void ex_tabs(exarg_T *eap)
       msg_putchar(bufIsChanged(wp->w_buffer) ? '+' : ' ');
       msg_putchar(' ');
       if (buf_spname(wp->w_buffer) != NULL)
-        vim_strncpy(IObuff, buf_spname(wp->w_buffer), IOSIZE - 1);
+        STRLCPY(IObuff, buf_spname(wp->w_buffer), IOSIZE);
       else
         home_replace(wp->w_buffer, wp->w_buffer->b_fname,
             IObuff, IOSIZE, TRUE);
