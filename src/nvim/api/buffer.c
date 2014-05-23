@@ -364,7 +364,7 @@ Position buffer_get_mark(Buffer buffer, String name, Error *err)
     return rv;
   }
 
-  if (name.size != 0) {
+  if (name.size != 1) {
     set_api_error("mark name must be a single character", err);
     return rv;
   }
