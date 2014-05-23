@@ -266,7 +266,7 @@ add_buff (
   ssize_t len;
   if (buf->bh_space >= (int)slen) {
     len = STRLEN(buf->bh_curr->b_str);
-    vim_strncpy(buf->bh_curr->b_str + len, s, (size_t)slen);
+    STRLCPY(buf->bh_curr->b_str + len, s, slen + 1);
     buf->bh_space -= slen;
   } else {
     if (slen < MINIMAL_SIZE)
@@ -275,7 +275,7 @@ add_buff (
       len = slen;
     buffblock_T *p = xmalloc(sizeof(buffblock_T) + len);
     buf->bh_space = (int)(len - slen);
-    vim_strncpy(p->b_str, s, (size_t)slen);
+    STRLCPY(p->b_str, s, slen + 1);
 
     p->b_next = buf->bh_curr->b_next;
     buf->bh_curr->b_next = p;
