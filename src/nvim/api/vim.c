@@ -73,7 +73,10 @@ Integer vim_strwidth(String str, Error *err)
     return 0;
   }
 
-  return mb_string2cells((char_u *)str.data, (int)str.size);
+  char *buf = xstrndup(str.data, str.size);
+  Integer rv = mb_string2cells((char_u *)buf, -1);
+  free(buf);
+  return rv;
 }
 
 StringArray vim_list_runtime_paths(void)
