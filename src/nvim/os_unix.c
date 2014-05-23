@@ -27,6 +27,7 @@
 
 #include <string.h>
 
+#include "nvim/api/private/handle.h"
 #include "nvim/vim.h"
 #include "nvim/os_unix.h"
 #include "nvim/buffer.h"
@@ -542,6 +543,7 @@ int mch_nodetype(char_u *name)
 
 void mch_early_init()
 {
+  handle_init();
   time_init();
 }
 
