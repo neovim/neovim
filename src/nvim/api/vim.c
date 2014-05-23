@@ -142,17 +142,27 @@ void vim_change_directory(String dir, Error *err)
 
 String vim_get_current_line(Error *err)
 {
-  return buffer_get_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
+  assert(curbuf->b_fnum >= 0);
+  return buffer_get_line((uint64_t)curbuf->b_fnum,
+                         curwin->w_cursor.lnum - 1,
+                         err);
 }
 
 void vim_set_current_line(String line, Error *err)
 {
-  buffer_set_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, line, err);
+  assert(curbuf->b_fnum >= 0);
+  buffer_set_line((uint64_t)curbuf->b_fnum,
+                  curwin->w_cursor.lnum - 1,
+                  line,
+                  err);
 }
 
 void vim_del_current_line(Error *err)
 {
-  buffer_del_line(curbuf->b_fnum, curwin->w_cursor.lnum - 1, err);
+  assert(curbuf->b_fnum >= 0);
+  buffer_del_line((uint64_t)curbuf->b_fnum,
+                  curwin->w_cursor.lnum - 1,
+                  err);
 }
 
 Object vim_get_var(String name, Error *err)
@@ -205,7 +215,8 @@ Integer vim_get_buffer_count(void)
 
 Buffer vim_get_current_buffer(void)
 {
-  return curbuf->b_fnum;
+  assert(curbuf->b_fnum >= 0);
+  return (uint64_t)curbuf->b_fnum;
 }
 
 void vim_set_current_buffer(Buffer buffer, Error *err)

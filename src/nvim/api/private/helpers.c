@@ -285,7 +285,7 @@ Object vim_to_object(typval_T *obj)
 
 buf_T *find_buffer(Buffer buffer, Error *err)
 {
-  if (buffer > INT_MAX || buffer < INT_MIN) {
+  if (buffer > INT_MAX) {
     set_api_error("Invalid buffer id", err);
     return NULL;
   }
@@ -316,7 +316,7 @@ win_T * find_window(Window window, Error *err)
 
 tabpage_T * find_tab(Tabpage tabpage, Error *err)
 {
-  if (tabpage > INT_MAX || tabpage < INT_MIN) {
+  if (tabpage > INT_MAX) {
     set_api_error("Invalid tabpage id", err);
     return NULL;
   }

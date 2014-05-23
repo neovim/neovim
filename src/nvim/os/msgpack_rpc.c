@@ -7,12 +7,13 @@
 #define REMOTE_FUNCS_IMPL(t, lt)                                            \
   bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
   {                                                                         \
-    return msgpack_rpc_to_integer(obj, arg);                                \
+    *arg = obj->via.u64;                                                    \
+    return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                    \
   }                                                                         \
                                                                             \
   void msgpack_rpc_from_##lt(t result, msgpack_packer *res)                 \
   {                                                                         \
-    msgpack_rpc_from_integer(result, res);                                  \
+    msgpack_pack_uint64(res, result);                                       \
   }
 
 #define TYPED_ARRAY_IMPL(t, lt)                                             \

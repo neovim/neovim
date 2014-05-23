@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define REMOTE_TYPE(type) typedef Integer type
+#define REMOTE_TYPE(type) typedef uint64_t type
 
 #define TYPED_ARRAY_OF(type)                                                  \
   typedef struct {                                                            \

@@ -19,7 +19,8 @@ Buffer window_get_buffer(Window window, Error *err)
     return 0;
   }
 
-  return win->w_buffer->b_fnum;
+  assert(win->w_buffer->b_fnum >= 0);
+  return (uint64_t)win->w_buffer->b_fnum;
 }
 
 Position window_get_cursor(Window window, Error *err)
