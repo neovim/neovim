@@ -11,7 +11,7 @@
 /// @param tabpage The tabpage
 /// @param[out] err Details of an error that may have occurred
 /// @return The number of windows in `tabpage`
-Integer tabpage_get_window_count(Tabpage tabpage, Error *err);
+WindowArray tabpage_get_windows(Tabpage tabpage, Error *err);
 
 /// Gets a tabpage variable
 ///

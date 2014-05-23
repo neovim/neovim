@@ -19,8 +19,7 @@ Buffer window_get_buffer(Window window, Error *err)
     return 0;
   }
 
-  assert(win->w_buffer->b_fnum >= 0);
-  return (uint64_t)win->w_buffer->b_fnum;
+  return win->w_buffer->handle;
 }
 
 Position window_get_cursor(Window window, Error *err)
@@ -193,8 +192,14 @@ Position window_get_position(Window window, Error *err)
 
 Tabpage window_get_tabpage(Window window, Error *err)
 {
-  set_api_error("Not implemented", err);
-  return 0;
+  Tabpage rv = 0;
+  win_T *win = find_window(window, err);
+
+  if (win) {
+    rv = win_find_tabpage(win)->handle;
+  }
+
+  return rv;
 }
 
 Boolean window_is_valid(Window window)

@@ -4,6 +4,7 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
+#include "nvim/api/private/handle.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -285,43 +286,29 @@ Object vim_to_object(typval_T *obj)
 
 buf_T *find_buffer(Buffer buffer, Error *err)
 {
-  if (buffer > INT_MAX) {
-    set_api_error("Invalid buffer id", err);
-    return NULL;
-  }
+  buf_T *rv = handle_get_buffer(buffer);
 
-  buf_T *buf = buflist_findnr((int)buffer);
-
-  if (buf == NULL) {
+  if (!rv) {
     set_api_error("Invalid buffer id", err);
   }
 
-  return buf;
+  return rv;
 }
 
 win_T * find_window(Window window, Error *err)
 {
-  tabpage_T *tp;
-  win_T *wp;
+  win_T *rv = handle_get_window(window);
 
-  FOR_ALL_TAB_WINDOWS(tp, wp) {
-    if (!--window) {
-      return wp;
-    }
+  if (!rv) {
+    set_api_error("Invalid window id", err);
   }
 
-  set_api_error("Invalid window id", err);
-  return NULL;
+  return rv;
 }
 
 tabpage_T * find_tab(Tabpage tabpage, Error *err)
 {
-  if (tabpage > INT_MAX) {
-    set_api_error("Invalid tabpage id", err);
-    return NULL;
-  }
-
-  tabpage_T *rv = find_tabpage((int)tabpage);
+  tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
     set_api_error("Invalid tabpage id", err);

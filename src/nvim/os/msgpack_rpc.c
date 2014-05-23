@@ -377,5 +377,8 @@ REMOTE_FUNCS_IMPL(Buffer, buffer)
 REMOTE_FUNCS_IMPL(Window, window)
 REMOTE_FUNCS_IMPL(Tabpage, tabpage)
 
+TYPED_ARRAY_IMPL(Buffer, buffer)
+TYPED_ARRAY_IMPL(Window, window)
+TYPED_ARRAY_IMPL(Tabpage, tabpage)
 TYPED_ARRAY_IMPL(String, string)
 

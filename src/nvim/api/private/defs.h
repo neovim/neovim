@@ -34,6 +34,9 @@ REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
 
+TYPED_ARRAY_OF(Buffer);
+TYPED_ARRAY_OF(Window);
+TYPED_ARRAY_OF(Tabpage);
 TYPED_ARRAY_OF(String);
 
 typedef struct {

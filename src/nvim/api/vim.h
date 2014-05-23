@@ -108,10 +108,10 @@ void vim_out_write(String str);
 /// @param str The message
 void vim_err_write(String str);
 
-/// Gets the number of buffers
+/// Gets the current list of buffer handles
 ///
 /// @return The number of buffers
-Integer vim_get_buffer_count(void);
+BufferArray vim_get_buffers(void);
 
 /// Return the current buffer
 ///
@@ -124,10 +124,10 @@ Buffer vim_get_current_buffer(void);
 /// @param[out] err Details of an error that may have occurred
 void vim_set_current_buffer(Buffer buffer, Error *err);
 
-/// Gets the number of windows
+/// Gets the current list of window handles
 ///
 /// @return The number of windows
-Integer vim_get_window_count(void);
+WindowArray vim_get_windows(void);
 
 /// Return the current window
 ///
@@ -139,10 +139,10 @@ Window vim_get_current_window(void);
 /// @param handle The window handle
 void vim_set_current_window(Window window, Error *err);
 
-/// Gets the number of tab pages
+/// Gets the current list of tabpage handles
 ///
 /// @return The number of tab pages
-Integer vim_get_tabpage_count(void);
+TabpageArray vim_get_tabpages(void);
 
 /// Return the current tab page
 ///
