@@ -55,9 +55,9 @@ void hash_clear(hashtab_T *ht)
 /// Free the array of a hash table and all contained values.
 ///
 /// @param off the offset from start of value to start of key (@see hashitem_T).
-void hash_clear_all(hashtab_T *ht, int off)
+void hash_clear_all(hashtab_T *ht, unsigned int off)
 {
-  long todo = (long)ht->ht_used;
+  size_t todo = ht->ht_used;
   for (hashitem_T *hi = ht->ht_array; todo > 0; ++hi) {
     if (!HASHITEM_EMPTY(hi)) {
       free(hi->hi_key - off);
@@ -333,7 +333,7 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
   // the right spot. The new array won't have any removed items, thus this
   // is also a cleanup action.
   hash_T newmask = newsize - 1;
-  int todo = (int)ht->ht_used;
+  size_t todo = ht->ht_used;
 
   for (hashitem_T *olditem = oldarray; todo > 0; ++olditem) {
     if (!HASHITEM_EMPTY(olditem)) {
@@ -362,7 +362,7 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_array = newarray;
   ht->ht_mask = newmask;
   ht->ht_filled = ht->ht_used;
-  ht->ht_error = FALSE;
+  ht->ht_error = false;
 
   return OK;
 }

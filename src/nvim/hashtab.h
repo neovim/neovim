@@ -1,6 +1,7 @@
 #ifndef NVIM_HASHTAB_H
 #define NVIM_HASHTAB_H
 
+#include <stdbool.h>
 #include "nvim/vim.h"
 
 /// Type for hash number (hash calculation result).
@@ -58,7 +59,7 @@ typedef struct hashtable_S {
   size_t ht_used;               /// number of items used
   size_t ht_filled;             /// number of items used or removed
   int ht_locked;                /// counter for hash_lock()
-  int ht_error;                 /// when set growing failed, can't add more
+  bool ht_error;                /// when set growing failed, can't add more
                                 /// items before growing works
   hashitem_T *ht_array;         /// points to the array, allocated when it's
                                 /// not "ht_smallarray"
@@ -68,7 +69,7 @@ typedef struct hashtable_S {
 // hashtab.c
 void hash_init(hashtab_T *ht);
 void hash_clear(hashtab_T *ht);
-void hash_clear_all(hashtab_T *ht, int off);
+void hash_clear_all(hashtab_T *ht, unsigned int off);
 hashitem_T *hash_find(hashtab_T *ht, char_u *key);
 hashitem_T *hash_lookup(hashtab_T *ht, char_u *key, hash_T hash);
 void hash_debug_results(void);
