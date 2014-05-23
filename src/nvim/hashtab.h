@@ -1,6 +1,17 @@
 #ifndef NVIM_HASHTAB_H
 #define NVIM_HASHTAB_H
 
+#include "nvim/vim.h"
+
+/// Type for hash number (hash calculation result).
+typedef long_u hash_T;          
+
+/// The address of "hash_removed" is used as a magic number
+/// for hi_key to indicate a removed item. 
+#define HI_KEY_REMOVED &hash_removed
+#define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL \
+                            || (hi)->hi_key == &hash_removed)
+
 /// A hastable item.
 ///
 /// Each item has a NUL terminated string key.
@@ -19,7 +30,7 @@
 /// This reduces the size of this item by 1/3.
 typedef struct hashitem_S {
   /// Cached hash number for hi_key.
-  long_u hi_hash;
+  hash_T hi_hash;
 
   /// Item key.
   /// 
@@ -29,12 +40,6 @@ typedef struct hashitem_S {
   /// (Any other pointer value) : Item is currently being used.
   char_u *hi_key;
 } hashitem_T;
-
-/// The address of "hash_removed" is used as a magic number
-/// for hi_key to indicate a removed item. 
-#define HI_KEY_REMOVED &hash_removed
-#define HASHITEM_EMPTY(hi) ((hi)->hi_key == NULL || (hi)->hi_key == \
-                            &hash_removed)
 
 /// Initial size for a hashtable.
 /// Our items are relatively small and growing is expensive, thus start with 16.
@@ -60,9 +65,6 @@ typedef struct hashtable_S {
   hashitem_T ht_smallarray[HT_INIT_SIZE];      /// initial array
 } hashtab_T;
 
-/// Type for hash number (hash calculation result).
-typedef long_u hash_T;          
-
 // hashtab.c
 void hash_init(hashtab_T *ht);
 void hash_clear(hashtab_T *ht);
@@ -71,8 +73,7 @@ hashitem_T *hash_find(hashtab_T *ht, char_u *key);
 hashitem_T *hash_lookup(hashtab_T *ht, char_u *key, hash_T hash);
 void hash_debug_results(void);
 int hash_add(hashtab_T *ht, char_u *key);
-int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key,
-                  hash_T hash);
+int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash);
 void hash_remove(hashtab_T *ht, hashitem_T *hi);
 void hash_lock(hashtab_T *ht);
 void hash_unlock(hashtab_T *ht);
