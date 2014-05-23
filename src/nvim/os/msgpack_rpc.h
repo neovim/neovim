@@ -8,6 +8,8 @@
 
 #include "nvim/api/private/defs.h"
 
+#define ARRAY_DICT_INIT {.size = 0, .items = NULL}
+
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.
 ///
@@ -80,9 +82,9 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res);
 #define msgpack_rpc_init_window
 #define msgpack_rpc_init_tabpage
 #define msgpack_rpc_init_object = {.type = kObjectTypeNil}
-#define msgpack_rpc_init_stringarray = {.items = NULL, .size = 0}
-#define msgpack_rpc_init_array = {.items = NULL, .size = 0}
-#define msgpack_rpc_init_dictionary = {.items = NULL, .size = 0}
+#define msgpack_rpc_init_stringarray = ARRAY_DICT_INIT
+#define msgpack_rpc_init_array = ARRAY_DICT_INIT
+#define msgpack_rpc_init_dictionary = ARRAY_DICT_INIT
 
 /// Helpers for freeing arguments/return value
 ///
@@ -101,7 +103,6 @@ void msgpack_rpc_free_object(Object value);
 void msgpack_rpc_free_stringarray(StringArray value);
 void msgpack_rpc_free_array(Array value);
 void msgpack_rpc_free_dictionary(Dictionary value);
-
 
 #endif  // NVIM_OS_MSGPACK_RPC_H
 

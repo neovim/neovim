@@ -34,10 +34,7 @@ REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
 
-typedef struct {
-  String *items;
-  size_t size;
-} StringArray;
+TYPED_ARRAY_OF(String);
 
 typedef struct {
   Integer row, col;
