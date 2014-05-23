@@ -118,8 +118,14 @@ StringArray vim_list_runtime_paths(void)
 
 void vim_change_directory(String dir, Error *err)
 {
+  if (dir.size >= MAXPATHL) {
+    set_api_error("directory string is too long", err);
+    return;
+  }
+
   char string[MAXPATHL];
   strncpy(string, dir.data, dir.size);
+  string[dir.size] = NUL;
 
   try_start();
 
