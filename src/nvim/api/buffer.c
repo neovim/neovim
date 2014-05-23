@@ -56,7 +56,7 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
   String rv = {.size = 0};
   StringArray slice = buffer_get_slice(buffer, index, index, true, true, err);
 
-  if (slice.size) {
+  if (!err->set && slice.size) {
     rv = slice.items[0];
   }
 
