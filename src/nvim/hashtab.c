@@ -281,7 +281,7 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
     // removed items, so that they get cleaned up).
     // Shrink the array when it's less than 1/5 full. When growing it is
     // at least 1/4 full (avoids repeated grow-shrink operations)
-    long_u oldsize = ht->ht_mask + 1;
+    size_t oldsize = ht->ht_mask + 1;
     if ((ht->ht_filled * 3 < oldsize * 2) && (ht->ht_used > oldsize / 5)) {
       return OK;
     }
@@ -303,7 +303,7 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
     minsize = minitems * 3 / 2;
   }
 
-  long_u newsize = HT_INIT_SIZE;
+  size_t newsize = HT_INIT_SIZE;
   while (newsize < minsize) {
     // make sure it's always a power of 2
     newsize <<= 1;
@@ -327,12 +327,12 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
     ? ht->ht_smallarray
     : xmalloc(sizeof(hashitem_T) * newsize);
 
-  memset(newarray, 0, (size_t)(sizeof(hashitem_T) * newsize));
+  memset(newarray, 0, sizeof(hashitem_T) * newsize);
 
   // Move all the items from the old array to the new one, placing them in
   // the right spot. The new array won't have any removed items, thus this
   // is also a cleanup action.
-  long_u newmask = newsize - 1;
+  hash_T newmask = newsize - 1;
   int todo = (int)ht->ht_used;
 
   for (hashitem_T *olditem = oldarray; todo > 0; ++olditem) {

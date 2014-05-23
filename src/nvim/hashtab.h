@@ -4,7 +4,7 @@
 #include "nvim/vim.h"
 
 /// Type for hash number (hash calculation result).
-typedef long_u hash_T;          
+typedef size_t hash_T;          
 
 /// The address of "hash_removed" is used as a magic number
 /// for hi_key to indicate a removed item. 
@@ -53,10 +53,10 @@ typedef struct hashitem_S {
 ///
 /// The hashtable grows to accommodate more entries when needed.
 typedef struct hashtable_S {
-  long_u ht_mask;               /// mask used for hash value
+  hash_T ht_mask;               /// mask used for hash value
                                 /// (nr of items in array is "ht_mask" + 1)
-  long_u ht_used;               /// number of items used
-  long_u ht_filled;             /// number of items used or removed
+  size_t ht_used;               /// number of items used
+  size_t ht_filled;             /// number of items used or removed
   int ht_locked;                /// counter for hash_lock()
   int ht_error;                 /// when set growing failed, can't add more
                                 /// items before growing works
