@@ -11,6 +11,7 @@
 
 HANDLE_DECLS(buf_T, buffer)
 HANDLE_DECLS(win_T, window)
+HANDLE_DECLS(tabpage_T, tabpage)
 
 void handle_init(void);
 

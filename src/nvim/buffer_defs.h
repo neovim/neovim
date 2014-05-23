@@ -738,6 +738,7 @@ struct diffblock_S {
  */
 typedef struct tabpage_S tabpage_T;
 struct tabpage_S {
+  uint64_t handle;
   tabpage_T       *tp_next;         /* next tabpage or NULL */
   frame_T         *tp_topframe;     /* topframe for the windows */
   win_T           *tp_curwin;       /* current window in this Tab page */

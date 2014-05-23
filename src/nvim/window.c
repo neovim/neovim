@@ -2845,6 +2845,7 @@ void win_init_size(void)
 static tabpage_T *alloc_tabpage(void)
 {
   tabpage_T *tp = xcalloc(1, sizeof(tabpage_T));
+  handle_register_tabpage(tp);
 
   /* init t: variables */
   tp->tp_vars = dict_alloc();
@@ -2859,6 +2860,7 @@ void free_tabpage(tabpage_T *tp)
 {
   int idx;
 
+  handle_unregister_tabpage(tp);
   diff_clear(tp);
   for (idx = 0; idx < SNAP_COUNT; ++idx)
     clear_snapshot(tp, idx);
