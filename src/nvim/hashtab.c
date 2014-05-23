@@ -30,7 +30,7 @@
 // Magic value for algorithm that walks through the array.
 #define PERTURB_SHIFT 5
 
-static int hash_may_resize(hashtab_T *ht, int minitems);
+static int hash_may_resize(hashtab_T *ht, size_t minitems);
 
 /// Initialize an empty hash table.
 void hash_init(hashtab_T *ht)
@@ -101,7 +101,7 @@ hashitem_T* hash_lookup(hashtab_T *ht, char_u *key, hash_T hash)
   // - return if there is no item at all
   // - skip over a removed item
   // - return if the item matches
-  unsigned idx = (unsigned)(hash & ht->ht_mask);
+  hash_T idx = hash & ht->ht_mask;
   hashitem_T *hi = &ht->ht_array[idx];
 
   if (hi->hi_key == NULL) {
@@ -251,7 +251,7 @@ void hash_unlock(hashtab_T *ht)
 ///
 /// @return OK   if success.
 ///         FAIL if out of memory.
-static int hash_may_resize(hashtab_T *ht, int minitems)
+static int hash_may_resize(hashtab_T *ht, size_t minitems)
 {
   // Don't resize a locked table.
   if (ht->ht_locked > 0) {
@@ -268,7 +268,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
   }
 #endif  // ifdef HT_DEBUG
 
-  long_u minsize;
+  size_t minsize;
   if (minitems == 0) {
     // Return quickly for small tables with at least two NULL items.
     // items are required for the lookup to decide a key isn't there.
@@ -295,9 +295,9 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
     }
   } else {
     // Use specified size.
-    if ((long_u)minitems < ht->ht_used) {
+    if (minitems < ht->ht_used) {
       // just in case...
-      minitems = (int)ht->ht_used;
+      minitems = ht->ht_used;
     }
     // array is up to 2/3 full
     minsize = minitems * 3 / 2;
@@ -340,7 +340,7 @@ static int hash_may_resize(hashtab_T *ht, int minitems)
       // The algorithm to find the spot to add the item is identical to
       // the algorithm to find an item in hash_lookup(). But we only
       // need to search for a NULL key, thus it's simpler.
-      unsigned newi = (unsigned)(olditem->hi_hash & newmask);
+      hash_T newi = olditem->hi_hash & newmask;
       hashitem_T *newitem = &newarray[newi];
       if (newitem->hi_key != NULL) {
         for (hash_T perturb = olditem->hi_hash;; perturb >>= PERTURB_SHIFT) {
