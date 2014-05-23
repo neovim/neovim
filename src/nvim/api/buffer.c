@@ -115,9 +115,7 @@ StringArray buffer_get_slice(Buffer buffer,
 end:
   if (err->set) {
     for (size_t i = 0; i < rv.size; i++) {
-      if (rv.items[i].data != NULL) {
-        free(rv.items[i].data);
-      }
+      free(rv.items[i].data);
     }
 
     free(rv.items);
@@ -240,10 +238,8 @@ void buffer_set_slice(Buffer buffer,
   }
 
 end:
-  for (uint32_t i = 0; i < new_len; i++) {
-    if (lines[i] != NULL) {
-      free(lines[i]);
-    }
+  for (size_t i = 0; i < new_len; i++) {
+    free(lines[i]);
   }
 
   free(lines);
