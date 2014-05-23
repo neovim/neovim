@@ -134,7 +134,7 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen);
 void *xmemdup(const void *data, size_t len)
  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET;
 
-void do_outofmem_msg(long_u size);
+void do_outofmem_msg(size_t size);
 void free_all_mem(void);
 
 #endif
