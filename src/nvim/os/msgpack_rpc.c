@@ -4,6 +4,16 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
+#define REMOTE_FUNCS_IMPL(t, lt)                                            \
+  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
+  {                                                                         \
+    return msgpack_rpc_to_integer(obj, arg);                                \
+  }                                                                         \
+                                                                            \
+  void msgpack_rpc_from_##lt(t result, msgpack_packer *res)                 \
+  {                                                                         \
+    msgpack_rpc_from_integer(result, res);                                  \
+  }
 void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
 {
   // The initial response structure is the same no matter what happens,
@@ -102,21 +112,6 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
   arg->data = (char *)obj->via.raw.ptr;
   arg->size = obj->via.raw.size;
   return obj->type == MSGPACK_OBJECT_RAW;
-}
-
-bool msgpack_rpc_to_buffer(msgpack_object *obj, Buffer *arg)
-{
-  return msgpack_rpc_to_integer(obj, arg);
-}
-
-bool msgpack_rpc_to_window(msgpack_object *obj, Window *arg)
-{
-  return msgpack_rpc_to_integer(obj, arg);
-}
-
-bool msgpack_rpc_to_tabpage(msgpack_object *obj, Tabpage *arg)
-{
-  return msgpack_rpc_to_integer(obj, arg);
 }
 
 bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
@@ -251,21 +246,6 @@ void msgpack_rpc_from_string(String result, msgpack_packer *res)
   msgpack_pack_raw_body(res, result.data, result.size);
 }
 
-void msgpack_rpc_from_buffer(Buffer result, msgpack_packer *res)
-{
-  msgpack_rpc_from_integer(result, res);
-}
-
-void msgpack_rpc_from_window(Window result, msgpack_packer *res)
-{
-  msgpack_rpc_from_integer(result, res);
-}
-
-void msgpack_rpc_from_tabpage(Tabpage result, msgpack_packer *res)
-{
-  msgpack_rpc_from_integer(result, res);
-}
-
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
 {
   switch (result.type) {
@@ -389,4 +369,8 @@ void msgpack_rpc_free_dictionary(Dictionary value)
 
   free(value.items);
 }
+
+REMOTE_FUNCS_IMPL(Buffer, buffer)
+REMOTE_FUNCS_IMPL(Window, window)
+REMOTE_FUNCS_IMPL(Tabpage, tabpage)
 

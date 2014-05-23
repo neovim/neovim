@@ -5,6 +5,14 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define REMOTE_TYPE(type) typedef Integer type
+
+#define TYPED_ARRAY_OF(type)                                                  \
+  typedef struct {                                                            \
+    type *items;                                                              \
+    size_t size;                                                              \
+  } type##Array
+
 // Basic types
 typedef struct {
   char msg[256];
@@ -20,9 +28,9 @@ typedef struct {
   size_t size;
 } String;
 
-typedef Integer Buffer;
-typedef Integer Window;
-typedef Integer Tabpage;
+REMOTE_TYPE(Buffer);
+REMOTE_TYPE(Window);
+REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
 
