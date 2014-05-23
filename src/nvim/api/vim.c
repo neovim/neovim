@@ -94,14 +94,12 @@ StringArray vim_list_runtime_paths(void)
     rtp++;
   }
 
-  // index
-  uint32_t i = 0;
   // Allocate memory for the copies
   rv.items = xmalloc(sizeof(String) * rv.size);
   // reset the position
   rtp = p_rtp;
   // Start copying
-  while (*rtp != NUL) {
+  for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
     rv.items[i].data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
     int length = copy_option_part(&rtp,
@@ -110,7 +108,6 @@ StringArray vim_list_runtime_paths(void)
                                  ",");
     assert(length >= 0);
     rv.items[i].size = (size_t)length;
-    i++;
   }
 
   return rv;
