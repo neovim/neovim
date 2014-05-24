@@ -6242,37 +6242,33 @@ static int echeck_abbr(int c)
  * For a newline, there are two NUL headed lists.  One contains the characters
  * that the NL replaced.  The extra one stores the characters after the cursor
  * that were deleted (always white space).
- *
- * Replace_offset is normally 0, in which case replace_push will add a new
- * character at the end of the stack.  If replace_offset is not 0, that many
- * characters will be left on the stack above the newly inserted character.
  */
 
 static char_u   *replace_stack = NULL;
 static ssize_t replace_stack_nr = 0;           /* next entry in replace stack */
 static ssize_t replace_stack_len = 0;          /* max. number of entries */
 
-void 
-replace_push (
-    int c              /* character that is replaced (NUL is none) */
-)
+/// Push character that is replaced onto the the replace stack.
+///
+/// replace_offset is normally 0, in which case replace_push will add a new
+/// character at the end of the stack.  If replace_offset is not 0, that many
+/// characters will be left on the stack above the newly inserted character.
+///
+/// @param c character that is replaced (NUL is none)
+void replace_push(int c)
 {
-  if (replace_stack_nr < replace_offset)        /* nothing to do */
+  if (replace_stack_nr < replace_offset) {  // nothing to do
     return;
+  }
 
-  // TODO(philix): use xrealloc in replace_push()
   if (replace_stack_len <= replace_stack_nr) {
     replace_stack_len += 50;
-    void *aux = xmalloc(replace_stack_len);
-    if (replace_stack != NULL) {
-      memmove(aux, replace_stack, replace_stack_nr);
-      free(replace_stack);
-    }
-    replace_stack = aux;
+    replace_stack = xrealloc(replace_stack, replace_stack_len);
   }
   char_u *p = replace_stack + replace_stack_nr - replace_offset;
-  if (replace_offset)
+  if (replace_offset) {
     memmove(p + 1, p, replace_offset);
+  }
   *p = (char_u)c;
   ++replace_stack_nr;
 }
@@ -6292,16 +6288,12 @@ int replace_push_mb(char_u *p)
   return l;
 }
 
-/*
- * Pop one item from the replace stack.
- * return -1 if stack empty
- * return replaced character or NUL otherwise
- */
+/// Pop one item from the replace stack.
+///
+/// @return -1 if stack is empty, replaced character or NUL otherwise
 static int replace_pop(void)
 {
-  if (replace_stack_nr == 0)
-    return -1;
-  return (int)replace_stack[--replace_stack_nr];
+  return (replace_stack_nr == 0) ? -1 : (int)replace_stack[--replace_stack_nr];
 }
 
 /*
