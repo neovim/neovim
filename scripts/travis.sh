@@ -77,7 +77,10 @@ fi
 # for more information.
 MAKE_CMD="make -j2"
 
-if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
+if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
+    ./scripts/coverity.sh
+    exit $?
+elif [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 	if [ ! -d /usr/local/clang-3.4 ]; then
 		echo "Downloading clang 3.4..."
 		sudo sh <<- "EOF"
