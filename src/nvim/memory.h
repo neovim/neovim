@@ -125,6 +125,19 @@ char *xstpcpy(char *restrict dst, const char *restrict src);
 /// @param maxlen
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen);
 
+/// xstrlcpy - Copy a %NUL terminated string into a sized buffer
+///
+/// Compatible with *BSD strlcpy: the result is always a valid
+/// NUL-terminated string that fits in the buffer (unless,
+/// of course, the buffer size is zero). It does not pad
+/// out the result like strncpy() does.
+///
+/// @param dst Where to copy the string to
+/// @param src Where to copy the string from
+/// @param size Size of destination buffer
+/// @return Length of the source string (i.e.: strlen(src))
+size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size);
+
 /// Duplicates a chunk of memory using xmalloc
 ///
 /// @see {xmalloc}
