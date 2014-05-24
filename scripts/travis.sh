@@ -78,6 +78,11 @@ fi
 MAKE_CMD="make -j2"
 
 if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
+    export COVERITY_SCAN_PROJECT_NAME="neovim/neovim"
+    export COVERITY_SCAN_BRANCH_PATTERN='.*'
+    export COVERITY_SCAN_BUILD_COMMAND_PREPEND='make cmake'
+    export COVERITY_SCAN_BUILD_COMMAND='make nvim'
+    export COVERITY_SCAN_TOKEN='haNQZKw9AL6c0b5F7x3fww'
     ./scripts/coverity.sh
     exit $?
 elif [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
