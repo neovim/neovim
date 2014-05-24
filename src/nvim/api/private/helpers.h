@@ -5,10 +5,11 @@
 
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
+#include "nvim/memory.h"
 
 #define set_api_error(message, err)                \
   do {                                             \
-    strncpy(err->msg, message, sizeof(err->msg));  \
+    xstrlcpy(err->msg, message, sizeof(err->msg)); \
     err->set = true;                               \
   } while (0)
 

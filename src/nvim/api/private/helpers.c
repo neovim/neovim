@@ -67,7 +67,7 @@ bool try_end(Error *err)
                                              ET_ERROR,
                                              NULL,
                                              &should_free);
-    strncpy(err->msg, msg, sizeof(err->msg));
+    xstrlcpy(err->msg, msg, sizeof(err->msg));
     err->set = true;
     free_global_msglist();
 
