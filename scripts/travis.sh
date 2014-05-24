@@ -79,6 +79,7 @@ MAKE_CMD="make -j2"
 
 if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
     export COVERITY_SCAN_PROJECT_NAME="neovim/neovim"
+    export COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@aktau.be"
     export COVERITY_SCAN_BRANCH_PATTERN='.*'
     export COVERITY_SCAN_BUILD_COMMAND_PREPEND='make deps'
     export COVERITY_SCAN_BUILD_COMMAND='make nvim'
