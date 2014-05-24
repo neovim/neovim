@@ -6288,7 +6288,7 @@ retry:
       || outofmem) {
     if (ScreenLines != NULL || !done_outofmem_msg) {
       /* guess the size */
-      do_outofmem_msg((long_u)((Rows + 1) * Columns));
+      do_outofmem_msg((Rows + 1) * Columns);
 
       /* Remember we did this to avoid getting outofmem messages over
        * and over again. */

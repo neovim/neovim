@@ -37,6 +37,7 @@ set(CONV_SRCS
   api.c
   arabic.c
   garray.c
+  hashtab.c
   memory.c
   map.c
   os/env.c
