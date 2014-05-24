@@ -18,10 +18,10 @@ UPLOAD_URL="https://scan.coverity.com/builds"
 SCAN_URL="https://scan.coverity.com"
 
 # Do not run on pull requests
-if [ "${TRAVIS_PULL_REQUEST}" = "true" ]; then
-  echo -e "\033[33;1mINFO: Skipping Coverity Analysis: branch is a pull request.\033[0m"
-  exit 0
-fi
+# if [ "${TRAVIS_PULL_REQUEST}" = "true" ]; then
+#   echo -e "\033[33;1mINFO: Skipping Coverity Analysis: branch is a pull request.\033[0m"
+#   exit 0
+# fi
 
 # Verify this branch should run
 IS_COVERITY_SCAN_BRANCH=`ruby -e "puts '${TRAVIS_BRANCH}' =~ /\\A$COVERITY_SCAN_BRANCH_PATTERN\\z/ ? 1 : 0"`
