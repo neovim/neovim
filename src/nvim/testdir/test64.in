@@ -407,6 +407,7 @@ STARTTEST
 :call add(tl, [2, '^.*\.\(.*\)/.\+\(\1\)\@<=$', 'foo.bat/foo.bat', 'foo.bat/foo.bat', 'bat', 'bat'])
 :call add(tl, [2, '\\\@<!\${\(\d\+\%(:.\{-}\)\?\\\@<!\)}', '2013-06-27${0}', '${0}', '0'])
 :call add(tl, [2, '^\(a*\)\1$', 'aaaaaaaa', 'aaaaaaaa', 'aaaa'])
+:call add(tl, [2, '^\(a\{-2,}\)\1\+$', 'aaaaaaaaa', 'aaaaaaaaa', 'aaa'])
 :"
 :"""" Look-behind with limit
 :call add(tl, [2, '<\@<=span.', 'xxspanxx<spanyyy', 'spany'])
