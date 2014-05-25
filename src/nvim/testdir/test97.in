@@ -3,7 +3,10 @@ characters.
 
 STARTTEST
 :so small.vim
+:" make sure glob() doesn't use the shell
 :set shell=doesnotexist
+:" consistent sorting of file names
+:set nofileignorecase
 :e test.out
 :put =glob('Xxx\{')
 :put =glob('Xxx\$')
