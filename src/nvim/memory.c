@@ -1,6 +1,5 @@
  // Various routines dealing with allocation and deallocation of memory.
 
-#include <stdlib.h>
 #include <string.h>
 
 #include "nvim/vim.h"
