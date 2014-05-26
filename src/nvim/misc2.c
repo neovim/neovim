@@ -375,7 +375,7 @@ int vim_chdirfile(char_u *fname)
 {
   char_u dir[MAXPATHL];
 
-  vim_strncpy(dir, fname, MAXPATHL - 1);
+  STRLCPY(dir, fname, MAXPATHL);
   *path_tail_with_sep(dir) = NUL;
   return os_chdir((char *)dir) == 0 ? OK : FAIL;
 }
