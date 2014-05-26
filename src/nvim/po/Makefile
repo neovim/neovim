@@ -125,6 +125,8 @@ CHECKFILES = \
 		uk.cp1251.ck \
 		zh_CN.cp936.ck
 
+SOURCE_FILES = $(shell find .. -type f -name '*.[ch]')
+
 PACKAGE = nvim
 SHELL = /bin/sh
 VIM = ../../../build/bin/nvim
@@ -272,11 +274,11 @@ distclean: clean
 checkclean:
 	rm -f *.ck
 
-$(PACKAGE).pot: ../*.c ../globals.h 
-	cd ..; $(XGETTEXT) --default-domain=$(PACKAGE) \
+$(PACKAGE).pot: $(SOURCE_FILES)
+	$(XGETTEXT) --default-domain=$(PACKAGE) \
 		--add-comments --keyword=_ --keyword=N_ \
-		*.c globals.h
-	mv -f ../$(PACKAGE).po $(PACKAGE).pot
+		$(SOURCE_FILES)
+	mv $(PACKAGE).po $(PACKAGE).pot
 
 update-po: $(LANGUAGES)
 
