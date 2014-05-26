@@ -1774,10 +1774,6 @@ msgstr "1 teken"
 msgid "%<PRId64> characters"
 msgstr "%<PRId64> tekens"
 
-#, c-format
-msgid "%<PRId64> characters"
-msgstr "%<PRId64> tekens"
-
 msgid "[noeol]"
 msgstr "[noeol]"
 
