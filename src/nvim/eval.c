@@ -12,7 +12,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-
 #include "nvim/vim.h"
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
@@ -67,6 +66,7 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
+#include "nvim/os/channel.h"
 
 #if defined(FEAT_FLOAT)
 # include <math.h>
@@ -695,6 +695,7 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv);
 static void f_searchpair(typval_T *argvars, typval_T *rettv);
 static void f_searchpairpos(typval_T *argvars, typval_T *rettv);
 static void f_searchpos(typval_T *argvars, typval_T *rettv);
+static void f_send_event(typval_T *argvars, typval_T *rettv);
 static void f_setbufvar(typval_T *argvars, typval_T *rettv);
 static void f_setcmdpos(typval_T *argvars, typval_T *rettv);
 static void f_setline(typval_T *argvars, typval_T *rettv);
@@ -6944,6 +6945,7 @@ static struct fst {
   {"searchpair",      3, 7, f_searchpair},
   {"searchpairpos",   3, 7, f_searchpairpos},
   {"searchpos",       1, 4, f_searchpos},
+  {"send_event",      3, 3, f_send_event},
   {"setbufvar",       3, 3, f_setbufvar},
   {"setcmdpos",       1, 1, f_setcmdpos},
   {"setline",         2, 2, f_setline},
@@ -13055,6 +13057,36 @@ do_searchpair (
     free_string_option(save_cpo);
 
   return retval;
+}
+
+// "send_event()" function
+static void f_send_event(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2), "Event type must be a string");
+    return;
+  }
+
+  if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
+                          (char *)argvars[1].vval.v_string,
+                          &argvars[2])) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+    return;
+  }
+
+  rettv->vval.v_number = 1;
 }
 
 /*

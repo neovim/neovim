@@ -3,6 +3,7 @@
 #include <uv.h>
 #include <msgpack.h>
 
+#include "nvim/api/private/helpers.h"
 #include "nvim/os/channel.h"
 #include "nvim/os/channel_defs.h"
 #include "nvim/os/rstream.h"
@@ -38,16 +39,19 @@ typedef struct {
 
 static uint64_t next_id = 1;
 static Map(uint64_t) *channels = NULL;
+static msgpack_sbuffer msgpack_event_buffer;
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof);
 static void on_job_stderr(RStream *rstream, void *data, bool eof);
 static void parse_msgpack(RStream *rstream, void *data, bool eof);
+static void send_msgpack(Channel *channel, String type, Object data);
 static void close_channel(Channel *channel);
 static void close_cb(uv_handle_t *handle);
 
 void channel_init()
 {
   channels = map_new(uint64_t)();
+  msgpack_sbuffer_init(&msgpack_event_buffer);
 }
 
 void channel_teardown()
@@ -117,6 +121,30 @@ void channel_from_stream(uv_stream_t *stream, ChannelProtocol prot)
   map_put(uint64_t)(channels, channel->id, channel);
 }
 
+bool channel_send_event(uint64_t id, char *type, typval_T *data)
+{
+  Channel *channel = map_get(uint64_t)(channels, id);
+
+  if (!channel) {
+    return false;
+  }
+
+  String event_type = {.size = strnlen(type, 1024), .data = type};
+  Object event_data = vim_to_object(data);
+
+  switch (channel->protocol) {
+    case kChannelProtocolMsgpack:
+      send_msgpack(channel, event_type, event_data);
+      break;
+    default:
+      abort();
+  }
+
+  msgpack_rpc_free_object(event_data);
+
+  return true;
+}
+
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
 {
   Job *job = data;
@@ -167,6 +195,21 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     // Clear the buffer for future calls
     msgpack_sbuffer_clear(channel->proto.msgpack.sbuffer);
   }
+}
+
+static void send_msgpack(Channel *channel, String type, Object data)
+{
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
+  msgpack_rpc_notification(type, data, &packer);
+  char *bytes = xmemdup(msgpack_event_buffer.data, msgpack_event_buffer.size);
+
+  wstream_write(channel->data.streams.write,
+      bytes,
+      msgpack_event_buffer.size,
+      true);
+
+  msgpack_sbuffer_clear(&msgpack_event_buffer);
 }
 
 static void close_channel(Channel *channel)

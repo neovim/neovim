@@ -113,6 +113,15 @@ void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
   msgpack_rpc_dispatch(id, req, res);
 }
 
+void msgpack_rpc_notification(String type, Object data, msgpack_packer *pac)
+{
+  msgpack_pack_array(pac, 3);
+  msgpack_pack_int(pac, 2);
+  msgpack_pack_raw(pac, type.size);
+  msgpack_pack_raw_body(pac, type.data, type.size);
+  msgpack_rpc_from_object(data, pac);
+}
+
 void msgpack_rpc_error(char *msg, msgpack_packer *res)
 {
   size_t len = strlen(msg);

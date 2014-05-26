@@ -16,6 +16,13 @@
 /// @param res A packer that contains the response
 void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res);
 
+/// Packs a notification message
+///
+/// @param type The message type, an arbitrary string
+/// @param data The notification data
+/// @param packer Where the notification will be packed to
+void msgpack_rpc_notification(String type, Object data, msgpack_packer *pac);
+
 /// Dispatches to the actual API function after basic payload validation by
 /// `msgpack_rpc_call`. It is responsible for validating/converting arguments
 /// to C types, and converting the return value back to msgpack types.
