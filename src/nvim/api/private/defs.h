@@ -1,5 +1,5 @@
-#ifndef NVIM_API_DEFS_H
-#define NVIM_API_DEFS_H
+#ifndef NVIM_API_PRIVATE_DEFS_H
+#define NVIM_API_PRIVATE_DEFS_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -85,5 +85,5 @@ struct key_value_pair {
 };
 
 
-#endif  // NVIM_API_DEFS_H
+#endif  // NVIM_API_PRIVATE_DEFS_H
 

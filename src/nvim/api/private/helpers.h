@@ -1,5 +1,5 @@
-#ifndef NVIM_API_HELPERS_H
-#define NVIM_API_HELPERS_H
+#ifndef NVIM_API_PRIVATE_HELPERS_H
+#define NVIM_API_PRIVATE_HELPERS_H
 
 #include <stdbool.h>
 
@@ -94,5 +94,5 @@ tabpage_T * find_tab(Tabpage tabpage, Error *err);
 ///         empty String is returned
 String cstr_to_string(const char *str);
 
-#endif  // NVIM_API_HELPERS_H
+#endif  // NVIM_API_PRIVATE_HELPERS_H
 

@@ -177,9 +177,9 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
 
-  // Deserialize everything we can. 
+  // Deserialize everything we can.
   while (msgpack_unpacker_next(channel->proto.msgpack.unpacker, &unpacked)) {
-    // Each object is a new msgpack-rpc request and requires an empty response 
+    // Each object is a new msgpack-rpc request and requires an empty response
     msgpack_packer response;
     msgpack_packer_init(&response,
                         channel->proto.msgpack.sbuffer,
