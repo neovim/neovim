@@ -217,7 +217,8 @@ void buffer_set_slice(Buffer buffer,
       goto end;
     }
 
-    // Same as with replacing
+    // Same as with replacing, but we also need to free lines
+    free(lines[i]);
     lines[i] = NULL;
     extra++;
   }
