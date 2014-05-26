@@ -903,9 +903,10 @@ static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
   char_u modby[MODBY_LEN];
 
   if (*mesg == ' ') {
-    vim_strncpy(modby, (char_u *)_("Modified by "), MODBY_LEN - 1);
-    l = STRLEN(modby);
-    vim_strncpy(modby + l, (char_u *)MODIFIED_BY, MODBY_LEN - l - 1);
+    l = STRLCPY(modby, _("Modified by "), MODBY_LEN);
+    if (l < MODBY_LEN - 1) {
+      STRLCPY(modby + l, MODIFIED_BY, MODBY_LEN - l);
+    }
     mesg = modby;
   }
 #endif  // ifdef MODIFIED_BY
