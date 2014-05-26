@@ -39,7 +39,7 @@ int os_dirname(char_u *buf, size_t len)
 
   int errno;
   if ((errno = uv_cwd((char *)buf, &len)) != kLibuvSuccess) {
-    vim_strncpy(buf, (char_u *)uv_strerror(errno), len - 1);
+    STRLCPY(buf, uv_strerror(errno), len);
     return FAIL;
   }
   return OK;
@@ -123,7 +123,7 @@ static bool is_executable_in_path(const char_u *name)
 
     // Glue together the given directory from $PATH with name and save into
     // buf.
-    vim_strncpy(buf, (char_u *) path, e - path);
+    STRLCPY(buf, path, e - path + 1);
     append_path((char *) buf, (const char *) name, (int)buf_len);
 
     if (is_executable(buf)) {
