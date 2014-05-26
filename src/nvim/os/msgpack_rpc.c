@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <stdbool.h>
+
 #include <msgpack.h>
 
 #include "nvim/os/msgpack_rpc.h"
@@ -52,7 +55,7 @@
     free(value.items);                                                      \
   }
 
-void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
+void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
 {
   // The initial response structure is the same no matter what happens,
   // we set it up here
@@ -107,7 +110,7 @@ void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
   }
 
   // dispatch the message
-  msgpack_rpc_dispatch(req, res);
+  msgpack_rpc_dispatch(id, req, res);
 }
 
 void msgpack_rpc_error(char *msg, msgpack_packer *res)

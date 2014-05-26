@@ -157,7 +157,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
                         channel->proto.msgpack.sbuffer,
                         msgpack_sbuffer_write);
     // Perform the call
-    msgpack_rpc_call(&unpacked.data, &response);
+    msgpack_rpc_call(channel->id, &unpacked.data, &response);
     wstream_write(channel->data.streams.write,
                   xmemdup(channel->proto.msgpack.sbuffer->data,
                           channel->proto.msgpack.sbuffer->size),

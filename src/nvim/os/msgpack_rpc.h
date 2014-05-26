@@ -11,9 +11,10 @@
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.
 ///
+/// @param id The channel id
 /// @param req The parsed request object
 /// @param res A packer that contains the response
-void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res);
+void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res);
 
 /// Dispatches to the actual API function after basic payload validation by
 /// `msgpack_rpc_call`. It is responsible for validating/converting arguments
@@ -21,9 +22,12 @@ void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res);
 /// The implementation is generated at compile time with metadata extracted
 /// from the api/*.h headers,
 ///
+/// @param id The channel id
 /// @param req The parsed request object
 /// @param res A packer that contains the response
-void msgpack_rpc_dispatch(msgpack_object *req, msgpack_packer *res);
+void msgpack_rpc_dispatch(uint64_t id,
+                          msgpack_object *req,
+                          msgpack_packer *res);
 
 /// Finishes the msgpack-rpc call with an error message.
 ///
