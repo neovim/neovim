@@ -272,10 +272,10 @@ distclean: clean
 checkclean:
 	rm -f *.ck
 
-$(PACKAGE).pot: ../*.c ../if_perl.xs ../GvimExt/gvimext.cpp ../globals.h ../if_py_both.h
+$(PACKAGE).pot: ../*.c ../globals.h 
 	cd ..; $(XGETTEXT) --default-domain=$(PACKAGE) \
 		--add-comments --keyword=_ --keyword=N_ \
-		*.c if_perl.xs GvimExt/gvimext.cpp globals.h if_py_both.h
+		*.c globals.h
 	mv -f ../$(PACKAGE).po $(PACKAGE).pot
 
 update-po: $(LANGUAGES)
