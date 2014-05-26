@@ -5082,11 +5082,11 @@ win_redr_custom (
 
   /* Make all characters printable. */
   p = transstr(buf);
-  vim_strncpy(buf, p, sizeof(buf) - 1);
+  len = STRLCPY(buf, p, sizeof(buf));
+  len = (size_t)len < sizeof(buf) ? len : (int)sizeof(buf) - 1;
   free(p);
 
   /* fill up with "fillchar" */
-  len = (int)STRLEN(buf);
   while (width < maxwidth && len < (int)sizeof(buf) - 1) {
     len += (*mb_char2bytes)(fillchar, buf + len);
     ++width;
@@ -7626,7 +7626,7 @@ static void draw_tabline(void)
 void get_trans_bufname(buf_T *buf)
 {
   if (buf_spname(buf) != NULL)
-    vim_strncpy(NameBuff, buf_spname(buf), MAXPATHL - 1);
+    STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
   else
     home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, TRUE);
   trans_characters(NameBuff, MAXPATHL);
