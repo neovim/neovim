@@ -3,6 +3,7 @@
 tmpdir="$(pwd)/tmp"
 rm -rf "$tmpdir"
 mkdir -p "$tmpdir"
+suppressions="$(pwd)/.valgrind.supp"
 
 valgrind_check() {
 	(
@@ -171,7 +172,7 @@ elif [ "$TRAVIS_BUILD_TYPE" = "api/python" ]; then
   sudo pip install .
   sudo pip install nose
 	test_cmd="nosetests --verbosity=2"
-	nvim_cmd="valgrind -q --track-origins=yes --log-file=$tmpdir/valgrind-%p.log ../build/bin/nvim -u NONE"
+	nvim_cmd="valgrind -q --track-origins=yes --leak-check=yes --suppressions=$suppressions --log-file=$tmpdir/valgrind-%p.log ../build/bin/nvim -u NONE"
 	if ! ../scripts/run-api-tests.exp "$test_cmd" "$nvim_cmd"; then
 		valgrind_check "$tmpdir"
 		exit 1
