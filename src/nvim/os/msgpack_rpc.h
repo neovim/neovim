@@ -81,7 +81,7 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res);
 #define msgpack_rpc_init_integer
 #define msgpack_rpc_init_float
 #define msgpack_rpc_init_position
-#define msgpack_rpc_init_string
+#define msgpack_rpc_init_string = STRING_INIT
 #define msgpack_rpc_init_buffer
 #define msgpack_rpc_init_window
 #define msgpack_rpc_init_tabpage
@@ -100,9 +100,7 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res);
 #define msgpack_rpc_free_integer(value)
 #define msgpack_rpc_free_float(value)
 #define msgpack_rpc_free_position(value)
-// Strings are not copied from msgpack and so don't need to be freed(they
-// probably "live" in the msgpack streaming buffer)
-#define msgpack_rpc_free_string(value)
+void msgpack_rpc_free_string(String value);
 #define msgpack_rpc_free_buffer(value)
 #define msgpack_rpc_free_window(value)
 #define msgpack_rpc_free_tabpage(value)

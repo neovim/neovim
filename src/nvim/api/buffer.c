@@ -307,7 +307,7 @@ Integer buffer_get_number(Buffer buffer, Error *err)
 
 String buffer_get_name(Buffer buffer, Error *err)
 {
-  String rv = {.size = 0, .data = ""};
+  String rv = STRING_INIT;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf || buf->b_ffname == NULL) {

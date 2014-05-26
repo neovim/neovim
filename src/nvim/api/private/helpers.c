@@ -319,7 +319,7 @@ tabpage_T * find_tab(Tabpage tabpage, Error *err)
 
 String cstr_to_string(const char *str) {
     if (str == NULL) {
-        return (String) { .data = NULL, .size = 0 };
+        return (String) STRING_INIT;
     }
 
     size_t len = strlen(str);
