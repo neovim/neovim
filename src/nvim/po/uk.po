@@ -1885,10 +1885,6 @@ msgstr "%<PRId64> рядків, "
 msgid "1 character"
 msgstr "один символ"
 
-#, c-format
-msgid "%<PRId64> characters"
-msgstr "%<PRId64> символів"
-
 #. Explicit typecast avoids warning on Mac OS X 10.6
 #, c-format
 msgid "%<PRId64> characters"
