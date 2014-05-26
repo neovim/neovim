@@ -8,6 +8,7 @@
 #ifndef NVIM_VIM_H
 # define NVIM_VIM_H
 
+#include "nvim/memory.h"// for xstrlcpy
 #include "nvim/types.h"
 
 /* Included when ported to cmake */
@@ -834,6 +835,7 @@ typedef enum {
 #define STRLEN(s)           strlen((char *)(s))
 #define STRCPY(d, s)        strcpy((char *)(d), (char *)(s))
 #define STRNCPY(d, s, n)    strncpy((char *)(d), (char *)(s), (size_t)(n))
+#define STRLCPY(d, s, n)    xstrlcpy((char *)(d), (char *)(s), (size_t)(n))
 #define STRCMP(d, s)        strcmp((char *)(d), (char *)(s))
 #define STRNCMP(d, s, n)    strncmp((char *)(d), (char *)(s), (size_t)(n))
 #ifdef HAVE_STRCASECMP
