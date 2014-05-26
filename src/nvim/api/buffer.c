@@ -60,6 +60,8 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
     rv = slice.items[0];
   }
 
+  free(slice.items);
+
   return rv;
 }
 
@@ -217,7 +219,8 @@ void buffer_set_slice(Buffer buffer,
       goto end;
     }
 
-    // Same as with replacing
+    // Same as with replacing, but we also need to free lines
+    free(lines[i]);
     lines[i] = NULL;
     extra++;
   }
@@ -307,7 +310,7 @@ Integer buffer_get_number(Buffer buffer, Error *err)
 
 String buffer_get_name(Buffer buffer, Error *err)
 {
-  String rv = {.size = 0, .data = ""};
+  String rv = STRING_INIT;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf || buf->b_ffname == NULL) {
@@ -333,6 +336,7 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
   // Using aucmd_*: autocommands will be executed by rename_buffer
   aucmd_prepbuf(&aco, buf);
   ren_ret = rename_buffer((char_u *)val);
+  free(val);
   aucmd_restbuf(&aco);
 
   if (try_end(err)) {

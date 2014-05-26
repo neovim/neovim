@@ -111,7 +111,7 @@ end
 output:write([[
 };
 
-void msgpack_rpc_dispatch(msgpack_object *req, msgpack_packer *res)
+void msgpack_rpc_dispatch(uint64_t id, msgpack_object *req, msgpack_packer *res)
 {
   Error error = { .set = false };
   uint64_t method_id = (uint32_t)req->via.array.ptr[2].via.u64;
@@ -119,7 +119,9 @@ void msgpack_rpc_dispatch(msgpack_object *req, msgpack_packer *res)
   switch (method_id) {
     case 0:
       msgpack_pack_nil(res);
-      // The result is the `msgpack_metadata` byte array
+      // The result is the [channel_id, metadata] array
+      msgpack_pack_array(res, 2);
+      msgpack_pack_uint64(res, id);
       msgpack_pack_raw(res, sizeof(msgpack_metadata));
       msgpack_pack_raw_body(res, msgpack_metadata, sizeof(msgpack_metadata));
       return;

@@ -1,11 +1,12 @@
-#ifndef NVIM_API_DEFS_H
-#define NVIM_API_DEFS_H
+#ifndef NVIM_API_PRIVATE_DEFS_H
+#define NVIM_API_PRIVATE_DEFS_H
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
 
 #define ARRAY_DICT_INIT {.size = 0, .items = NULL}
+#define STRING_INIT {.data = NULL, .size = 0}
 #define REMOTE_TYPE(type) typedef uint64_t type
 
 #define TYPED_ARRAY_OF(type)                                                  \
@@ -84,5 +85,5 @@ struct key_value_pair {
 };
 
 
-#endif  // NVIM_API_DEFS_H
+#endif  // NVIM_API_PRIVATE_DEFS_H
 

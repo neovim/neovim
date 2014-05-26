@@ -5,3 +5,28 @@
    fun:nss_parse_service_list
    fun:__nss_database_lookup
 }
+{
+   ex_function_1
+   Memcheck:Leak
+   fun:malloc
+   fun:try_malloc
+   fun:xmalloc
+   fun:ex_function
+}
+{
+   ex_function_2
+   Memcheck:Leak
+   fun:realloc
+   fun:xrealloc
+   fun:ga_grow
+   fun:ex_function
+}
+{
+   ex_function_3
+   Memcheck:Leak
+   fun:malloc
+   fun:strdup
+   fun:xstrdup
+   fun:vim_strsave
+   fun:ex_function
+}

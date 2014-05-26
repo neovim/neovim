@@ -123,8 +123,8 @@ void server_start(char *endpoint, ChannelProtocol prot)
     char *port_end;
     // Extract the port
     port = strtol(ip_end + 1, &port_end, 10);
-
     errno = 0;
+
     if (errno != 0 || port == 0 || port > 0xffff) {
       // Invalid port, treat as named pipe or unix socket
       server_type = kServerTypePipe;
@@ -156,7 +156,7 @@ void server_start(char *endpoint, ChannelProtocol prot)
     }
   } else {
     // Listen on named pipe or unix socket
-    strcpy(server->socket.pipe.addr, addr);
+    xstrlcpy(server->socket.pipe.addr, addr, sizeof(server->socket.pipe.addr));
     uv_pipe_init(uv_default_loop(), &server->socket.pipe.handle, 0);
     server->socket.pipe.handle.data = server;
     uv_pipe_bind(&server->socket.pipe.handle, server->socket.pipe.addr);

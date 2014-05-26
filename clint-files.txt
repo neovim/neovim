@@ -1,8 +1,10 @@
 src/nvim/api/buffer.c
 src/nvim/api/buffer.h
-src/nvim/api/defs.h
-src/nvim/api/helpers.c
-src/nvim/api/helpers.h
+src/nvim/api/private/defs.h
+src/nvim/api/private/helpers.c
+src/nvim/api/private/helpers.h
+src/nvim/api/private/handle.c
+src/nvim/api/private/handle.h
 src/nvim/api/tabpage.c
 src/nvim/api/tabpage.h
 src/nvim/api/vim.c
@@ -40,3 +42,7 @@ src/nvim/os/signal.c
 src/nvim/os/signal.h
 src/nvim/os/time.c
 src/nvim/os/time.h
+src/nvim/os/server.c
+src/nvim/os/server.h
+src/nvim/os/channel.c
+src/nvim/os/channel.h

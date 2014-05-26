@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <stdbool.h>
+
 #include <msgpack.h>
 
 #include "nvim/os/msgpack_rpc.h"
@@ -52,7 +55,7 @@
     free(value.items);                                                      \
   }
 
-void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
+void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
 {
   // The initial response structure is the same no matter what happens,
   // we set it up here
@@ -107,7 +110,16 @@ void msgpack_rpc_call(msgpack_object *req, msgpack_packer *res)
   }
 
   // dispatch the message
-  msgpack_rpc_dispatch(req, res);
+  msgpack_rpc_dispatch(id, req, res);
+}
+
+void msgpack_rpc_notification(String type, Object data, msgpack_packer *pac)
+{
+  msgpack_pack_array(pac, 3);
+  msgpack_pack_int(pac, 2);
+  msgpack_pack_raw(pac, type.size);
+  msgpack_pack_raw_body(pac, type.data, type.size);
+  msgpack_rpc_from_object(data, pac);
 }
 
 void msgpack_rpc_error(char *msg, msgpack_packer *res)
@@ -147,9 +159,13 @@ bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
 
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
 {
-  arg->data = (char *)obj->via.raw.ptr;
+  if (obj->type != MSGPACK_OBJECT_RAW) {
+    return false;
+  }
+
+  arg->data = xmemdup(obj->via.raw.ptr, obj->via.raw.size);
   arg->size = obj->via.raw.size;
-  return obj->type == MSGPACK_OBJECT_RAW;
+  return true;
 }
 
 bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
@@ -326,6 +342,15 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
     msgpack_rpc_from_string(result.items[i].key, res);
     msgpack_rpc_from_object(result.items[i].value, res);
   }
+}
+
+void msgpack_rpc_free_string(String value)
+{
+  if (!value.data) {
+    return;
+  }
+
+  free(value.data);
 }
 
 void msgpack_rpc_free_object(Object value)

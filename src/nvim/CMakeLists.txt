@@ -50,7 +50,8 @@ set(CONV_SRCS
   os/wstream.c
   os/msgpack_rpc.c
   api/buffer.c
-  api/helpers.c
+  api/private/helpers.c
+  api/private/handle.c
   api/tabpage.c
   api/window.c
   api/vim.h

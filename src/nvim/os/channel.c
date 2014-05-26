@@ -3,7 +3,7 @@
 #include <uv.h>
 #include <msgpack.h>
 
-#include "nvim/lib/klist.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/os/channel.h"
 #include "nvim/os/channel_defs.h"
 #include "nvim/os/rstream.h"
@@ -15,8 +15,10 @@
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+#include "nvim/map.h"
 
 typedef struct {
+  uint64_t id;
   ChannelProtocol protocol;
   bool is_job;
   union {
@@ -30,22 +32,26 @@ typedef struct {
     struct {
       RStream *read;
       WStream *write;
+      uv_stream_t *uv;
     } streams;
   } data;
 } Channel;
 
-#define _destroy_channel(x)
+static uint64_t next_id = 1;
+static Map(uint64_t) *channels = NULL;
+static msgpack_sbuffer msgpack_event_buffer;
 
-KLIST_INIT(Channel, Channel *, _destroy_channel)
-
-static klist_t(Channel) *channels = NULL;
 static void on_job_stdout(RStream *rstream, void *data, bool eof);
 static void on_job_stderr(RStream *rstream, void *data, bool eof);
 static void parse_msgpack(RStream *rstream, void *data, bool eof);
+static void send_msgpack(Channel *channel, String type, Object data);
+static void close_channel(Channel *channel);
+static void close_cb(uv_handle_t *handle);
 
 void channel_init()
 {
-  channels = kl_init(Channel);
+  channels = map_new(uint64_t)();
+  msgpack_sbuffer_init(&msgpack_event_buffer);
 }
 
 void channel_teardown()
@@ -56,24 +62,9 @@ void channel_teardown()
 
   Channel *channel;
 
-  while (kl_shift(Channel, channels, &channel) == 0) {
-
-    switch (channel->protocol) {
-      case kChannelProtocolMsgpack:
-        msgpack_sbuffer_free(channel->proto.msgpack.sbuffer);
-        msgpack_unpacker_free(channel->proto.msgpack.unpacker);
-        break;
-      default:
-        abort();
-    }
-
-    if (channel->is_job) {
-      job_stop(channel->data.job_id);
-    } else {
-      rstream_free(channel->data.streams.read);
-      wstream_free(channel->data.streams.write);
-    }
-  }
+  map_foreach_value(channels, channel, {
+    close_channel(channel);
+  });
 }
 
 void channel_from_job(char **argv, ChannelProtocol prot)
@@ -92,10 +83,11 @@ void channel_from_job(char **argv, ChannelProtocol prot)
       abort();
   }
 
+  channel->id = next_id++;
   channel->protocol = prot;
   channel->is_job = true;
   channel->data.job_id = job_start(argv, channel, rcb, on_job_stderr, NULL);
-  *kl_pushp(Channel, channels) = channel;
+  map_put(uint64_t)(channels, channel->id, channel);
 }
 
 void channel_from_stream(uv_stream_t *stream, ChannelProtocol prot)
@@ -115,6 +107,7 @@ void channel_from_stream(uv_stream_t *stream, ChannelProtocol prot)
   }
 
   stream->data = NULL;
+  channel->id = next_id++;
   channel->protocol = prot;
   channel->is_job = false;
   // read stream
@@ -124,8 +117,32 @@ void channel_from_stream(uv_stream_t *stream, ChannelProtocol prot)
   // write stream
   channel->data.streams.write = wstream_new(1024 * 1024);
   wstream_set_stream(channel->data.streams.write, stream);
-  // push to channel list
-  *kl_pushp(Channel, channels) = channel;
+  channel->data.streams.uv = stream;
+  map_put(uint64_t)(channels, channel->id, channel);
+}
+
+bool channel_send_event(uint64_t id, char *type, typval_T *data)
+{
+  Channel *channel = map_get(uint64_t)(channels, id);
+
+  if (!channel) {
+    return false;
+  }
+
+  String event_type = {.size = strnlen(type, 1024), .data = type};
+  Object event_data = vim_to_object(data);
+
+  switch (channel->protocol) {
+    case kChannelProtocolMsgpack:
+      send_msgpack(channel, event_type, event_data);
+      break;
+    default:
+      abort();
+  }
+
+  msgpack_rpc_free_object(event_data);
+
+  return true;
 }
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
@@ -141,8 +158,13 @@ static void on_job_stderr(RStream *rstream, void *data, bool eof)
 
 static void parse_msgpack(RStream *rstream, void *data, bool eof)
 {
-  msgpack_unpacked unpacked;
   Channel *channel = data;
+
+  if (eof) {
+    close_channel(channel);
+    return;
+  }
+
   uint32_t count = rstream_available(rstream);
 
   // Feed the unpacker with data
@@ -152,17 +174,18 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
                count);
   msgpack_unpacker_buffer_consumed(channel->proto.msgpack.unpacker, count);
 
+  msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
 
-  // Deserialize everything we can. 
+  // Deserialize everything we can.
   while (msgpack_unpacker_next(channel->proto.msgpack.unpacker, &unpacked)) {
-    // Each object is a new msgpack-rpc request and requires an empty response 
+    // Each object is a new msgpack-rpc request and requires an empty response
     msgpack_packer response;
     msgpack_packer_init(&response,
                         channel->proto.msgpack.sbuffer,
                         msgpack_sbuffer_write);
     // Perform the call
-    msgpack_rpc_call(&unpacked.data, &response);
+    msgpack_rpc_call(channel->id, &unpacked.data, &response);
     wstream_write(channel->data.streams.write,
                   xmemdup(channel->proto.msgpack.sbuffer->data,
                           channel->proto.msgpack.sbuffer->size),
@@ -173,3 +196,49 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     msgpack_sbuffer_clear(channel->proto.msgpack.sbuffer);
   }
 }
+
+static void send_msgpack(Channel *channel, String type, Object data)
+{
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
+  msgpack_rpc_notification(type, data, &packer);
+  char *bytes = xmemdup(msgpack_event_buffer.data, msgpack_event_buffer.size);
+
+  wstream_write(channel->data.streams.write,
+      bytes,
+      msgpack_event_buffer.size,
+      true);
+
+  msgpack_sbuffer_clear(&msgpack_event_buffer);
+}
+
+static void close_channel(Channel *channel)
+{
+  map_del(uint64_t)(channels, channel->id);
+
+  switch (channel->protocol) {
+    case kChannelProtocolMsgpack:
+      msgpack_sbuffer_free(channel->proto.msgpack.sbuffer);
+      msgpack_unpacker_free(channel->proto.msgpack.unpacker);
+      break;
+    default:
+      abort();
+  }
+
+  if (channel->is_job) {
+    job_stop(channel->data.job_id);
+  } else {
+    rstream_free(channel->data.streams.read);
+    wstream_free(channel->data.streams.write);
+    uv_close((uv_handle_t *)channel->data.streams.uv, close_cb);
+  }
+
+  free(channel);
+}
+
+static void close_cb(uv_handle_t *handle)
+{
+  free(handle->data);
+  free(handle);
+}
+
