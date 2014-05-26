@@ -6,6 +6,8 @@
 
 if 1	" Only execute this if the eval feature is available.
 
+redir! > check.log
+
 " Function to get a split line at the cursor.
 " Used for both msgid and msgstr lines.
 " Removes all text except % items and returns the result.
@@ -81,6 +83,8 @@ endif
 if error == 0
   echo "OK"
 endif
+
+redir END
 
 let &wrapscan = s:save_wrapscan
 unlet s:save_wrapscan
