@@ -334,6 +334,7 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
   // Using aucmd_*: autocommands will be executed by rename_buffer
   aucmd_prepbuf(&aco, buf);
   ren_ret = rename_buffer((char_u *)val);
+  free(val);
   aucmd_restbuf(&aco);
 
   if (try_end(err)) {
