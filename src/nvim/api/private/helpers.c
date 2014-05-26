@@ -267,6 +267,7 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 
     char *val = xstrndup(value.data.string.data, value.data.string.size);
     set_option_value_for(key, 0, val, opt_flags, type, to, err);
+    free(val);
   }
 
 cleanup:
