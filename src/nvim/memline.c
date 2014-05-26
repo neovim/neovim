@@ -677,8 +677,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
       size_t ulen = STRLEN(uname);
       size_t flen = STRLEN(b0p->b0_fname);
       if (retval == FAIL || ulen + flen > B0_FNAME_SIZE_CRYPT - 1) {
-        vim_strncpy(b0p->b0_fname, buf->b_ffname,
-            B0_FNAME_SIZE_CRYPT - 1);
+        STRLCPY(b0p->b0_fname, buf->b_ffname, B0_FNAME_SIZE_CRYPT);
       } else {
         memmove(b0p->b0_fname + ulen + 1, b0p->b0_fname + 1, flen);
         memmove(b0p->b0_fname + 1, uname, ulen);
@@ -951,7 +950,7 @@ void ml_recover(void)
   smsg((char_u *)_("Using swap file \"%s\""), NameBuff);
 
   if (buf_spname(curbuf) != NULL)
-    vim_strncpy(NameBuff, buf_spname(curbuf), MAXPATHL - 1);
+    STRLCPY(NameBuff, buf_spname(curbuf), MAXPATHL);
   else
     home_replace(NULL, curbuf->b_ffname, NameBuff, MAXPATHL, TRUE);
   smsg((char_u *)_("Original file \"%s\""), NameBuff);
@@ -3021,7 +3020,7 @@ int resolve_symlink(char_u *fname, char_u *buf)
     return FAIL;
 
   /* Put the result so far in tmp[], starting with the original name. */
-  vim_strncpy(tmp, fname, MAXPATHL - 1);
+  STRLCPY(tmp, fname, MAXPATHL);
 
   for (;; ) {
     /* Limit symlink depth to 100, catch recursive loops. */
