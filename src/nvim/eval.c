@@ -680,11 +680,6 @@ static void f_range(typval_T *argvars, typval_T *rettv);
 static void f_readfile(typval_T *argvars, typval_T *rettv);
 static void f_reltime(typval_T *argvars, typval_T *rettv);
 static void f_reltimestr(typval_T *argvars, typval_T *rettv);
-static void f_remote_expr(typval_T *argvars, typval_T *rettv);
-static void f_remote_foreground(typval_T *argvars, typval_T *rettv);
-static void f_remote_peek(typval_T *argvars, typval_T *rettv);
-static void f_remote_read(typval_T *argvars, typval_T *rettv);
-static void f_remote_send(typval_T *argvars, typval_T *rettv);
 static void f_remove(typval_T *argvars, typval_T *rettv);
 static void f_rename(typval_T *argvars, typval_T *rettv);
 static void f_repeat(typval_T *argvars, typval_T *rettv);
@@ -700,8 +695,6 @@ static void f_searchdecl(typval_T *argvars, typval_T *rettv);
 static void f_searchpair(typval_T *argvars, typval_T *rettv);
 static void f_searchpairpos(typval_T *argvars, typval_T *rettv);
 static void f_searchpos(typval_T *argvars, typval_T *rettv);
-static void f_server2client(typval_T *argvars, typval_T *rettv);
-static void f_serverlist(typval_T *argvars, typval_T *rettv);
 static void f_setbufvar(typval_T *argvars, typval_T *rettv);
 static void f_setcmdpos(typval_T *argvars, typval_T *rettv);
 static void f_setline(typval_T *argvars, typval_T *rettv);
@@ -6936,11 +6929,6 @@ static struct fst {
   {"readfile",        1, 3, f_readfile},
   {"reltime",         0, 2, f_reltime},
   {"reltimestr",      1, 1, f_reltimestr},
-  {"remote_expr",     2, 3, f_remote_expr},
-  {"remote_foreground", 1, 1, f_remote_foreground},
-  {"remote_peek",     1, 2, f_remote_peek},
-  {"remote_read",     1, 1, f_remote_read},
-  {"remote_send",     2, 3, f_remote_send},
   {"remove",          2, 3, f_remove},
   {"rename",          2, 2, f_rename},
   {"repeat",          2, 2, f_repeat},
@@ -6956,8 +6944,6 @@ static struct fst {
   {"searchpair",      3, 7, f_searchpair},
   {"searchpairpos",   3, 7, f_searchpairpos},
   {"searchpos",       1, 4, f_searchpos},
-  {"server2client",   2, 2, f_server2client},
-  {"serverlist",      0, 0, f_serverlist},
   {"setbufvar",       3, 3, f_setbufvar},
   {"setcmdpos",       1, 1, f_setcmdpos},
   {"setline",         2, 2, f_setline},
@@ -12226,46 +12212,6 @@ static void f_reltimestr(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_string = vim_strsave((char_u *)profile_msg(&tm));
 }
 
-
-
-/*
- * "remote_expr()" function
- */
-static void f_remote_expr(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-}
-
-/*
- * "remote_foreground()" function
- */
-static void f_remote_foreground(typval_T *argvars, typval_T *rettv)
-{
-}
-
-static void f_remote_peek(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = -1;
-}
-
-static void f_remote_read(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *r = NULL;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = r;
-}
-
-/*
- * "remote_send()" function
- */
-static void f_remote_send(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = NULL;
-}
-
 /*
  * "remove()" function
  */
@@ -13134,20 +13080,6 @@ static void f_searchpos(typval_T *argvars, typval_T *rettv)
   list_append_number(rettv->vval.v_list, (varnumber_T)col);
   if (flags & SP_SUBPAT)
     list_append_number(rettv->vval.v_list, (varnumber_T)n);
-}
-
-
-static void f_server2client(typval_T *argvars, typval_T *rettv)
-{
-  rettv->vval.v_number = -1;
-}
-
-static void f_serverlist(typval_T *argvars, typval_T *rettv)
-{
-  char_u      *r = NULL;
-
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = r;
 }
 
 /*
