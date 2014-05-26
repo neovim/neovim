@@ -85,7 +85,11 @@ void server_start(char *endpoint, ChannelProtocol prot)
   char addr[ADDRESS_MAX_SIZE];
 
   // Trim to `ADDRESS_MAX_SIZE`
-  strncpy(addr, endpoint, sizeof(addr));
+  if (xstrlcpy(addr, endpoint, sizeof(addr)) >= sizeof(addr)) {
+      // TODO(aktau): since this is not what the user wanted, perhaps we
+      // should return an error here
+      EMSG2("Address was too long, truncated to %s", addr);
+  }
 
   // Check if the server already exists
   if (map_has(cstr_t)(servers, addr)) {
@@ -111,7 +115,7 @@ void server_start(char *endpoint, ChannelProtocol prot)
   }
 
   // Extract the address part
-  strncpy(ip, addr, addr_len);
+  xstrlcpy(ip, addr, addr_len);
 
   int port = NEOVIM_DEFAULT_TCP_PORT;
 
@@ -119,7 +123,7 @@ void server_start(char *endpoint, ChannelProtocol prot)
     char *port_end;
     // Extract the port
     port = strtol(ip_end + 1, &port_end, 10);
-  
+
     errno = 0;
     if (errno != 0 || port == 0 || port > 0xffff) {
       // Invalid port, treat as named pipe or unix socket
@@ -183,7 +187,7 @@ void server_stop(char *endpoint)
   char addr[ADDRESS_MAX_SIZE];
 
   // Trim to `ADDRESS_MAX_SIZE`
-  strncpy(addr, endpoint, sizeof(addr));
+  xstrlcpy(addr, endpoint, sizeof(addr));
 
   if ((server = map_get(cstr_t)(servers, addr)) == NULL) {
     EMSG2("Not listening on %s", addr);

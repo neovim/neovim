@@ -183,6 +183,19 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     }
 }
 
+size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
+{
+    size_t ret = strlen(src);
+
+    if (size) {
+        size_t len = (ret >= size) ? size - 1 : ret;
+        memcpy(dst, src, len);
+        dst[len] = '\0';
+    }
+
+    return ret;
+}
+
 char *xstrdup(const char *str)
 {
   char *ret = strdup(str);
