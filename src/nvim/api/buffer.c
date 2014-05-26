@@ -60,6 +60,8 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
     rv = slice.items[0];
   }
 
+  free(slice.items);
+
   return rv;
 }
 
