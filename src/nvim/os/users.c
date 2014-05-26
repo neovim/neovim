@@ -56,7 +56,7 @@ int os_get_uname(uid_t uid, char *s, size_t len)
 
   if ((pw = getpwuid(uid)) != NULL
       && pw->pw_name != NULL && *(pw->pw_name) != NUL) {
-    vim_strncpy((char_u *)s, (char_u *)pw->pw_name, len - 1);
+    STRLCPY(s, pw->pw_name, len);
     return OK;
   }
 #endif
