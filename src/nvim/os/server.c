@@ -5,7 +5,6 @@
 
 #include <uv.h>
 
-#include "nvim/os/channel_defs.h"
 #include "nvim/os/channel.h"
 #include "nvim/os/server.h"
 #include "nvim/os/os.h"
@@ -25,8 +24,6 @@ typedef enum {
 } ServerType;
 
 typedef struct {
-  // Protocol for channels established through this server
-  ChannelProtocol protocol;
   // Type of the union below
   ServerType type;
 
@@ -59,8 +56,7 @@ void server_init()
     free(listen_address);
   }
 
-  server_start((char *)os_getenv("NEOVIM_LISTEN_ADDRESS"),
-               kChannelProtocolMsgpack);
+  server_start((char *)os_getenv("NEOVIM_LISTEN_ADDRESS"));
 }
 
 void server_teardown()
@@ -80,7 +76,7 @@ void server_teardown()
   });
 }
 
-void server_start(char *endpoint, ChannelProtocol prot)
+void server_start(char *endpoint)
 {
   char addr[ADDRESS_MAX_SIZE];
 
@@ -100,8 +96,6 @@ void server_start(char *endpoint, ChannelProtocol prot)
   ServerType server_type = kServerTypeTcp;
   Server *server = xmalloc(sizeof(Server));
   char ip[16], *ip_end = strrchr(addr, ':');
-
-  server->protocol = prot;
 
   if (!ip_end) {
     ip_end = strchr(addr, NUL);
@@ -229,7 +223,7 @@ static void connection_cb(uv_stream_t *server, int status)
     return;
   }
 
-  channel_from_stream(client, srv->protocol);
+  channel_from_stream(client);
 }
 
 static void free_client(uv_handle_t *handle)
