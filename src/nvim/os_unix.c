@@ -381,12 +381,12 @@ char_u      *name,
 int len               /* buffer size, only used when name gets longer */
 )
 {
-  struct stat st;
   char_u      *slash, *tail;
   DIR         *dirp;
   struct dirent *dp;
 
-  if (lstat((char *)name, &st) >= 0) {
+  FileInfo file_info;
+  if (os_get_file_info_link((char *)name, &file_info)) {
     /* Open the directory where the file is located. */
     slash = vim_strrchr(name, '/');
     if (slash == NULL) {
@@ -406,15 +406,14 @@ int len               /* buffer size, only used when name gets longer */
         if (STRICMP(tail, dp->d_name) == 0
             && STRLEN(tail) == STRLEN(dp->d_name)) {
           char_u newname[MAXPATHL + 1];
-          struct stat st2;
 
           /* Verify the inode is equal. */
           STRLCPY(newname, name, MAXPATHL + 1);
           STRLCPY(newname + (tail - name), dp->d_name,
               MAXPATHL - (tail - name) + 1);
-          if (lstat((char *)newname, &st2) >= 0
-              && st.st_ino == st2.st_ino
-              && st.st_dev == st2.st_dev) {
+          FileInfo file_info_new;
+          if (os_get_file_info_link((char *)newname, &file_info_new)
+              && os_file_info_id_equal(&file_info, &file_info_new)) {
             STRCPY(tail, dp->d_name);
             break;
           }
