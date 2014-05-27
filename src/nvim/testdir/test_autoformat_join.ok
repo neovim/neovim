@@ -1,0 +1,8 @@
+		O sodales, ludite, vos qui attamen consulite per voster honur.
+Tua pulchra facies me fay planszer milies
+
+This line.  Should be joined with the next line and with this line
+
+Results:
+First test: Start/End '[0, 16, 1, 0]/[0, 17, 1, 0]'
+Second test: Start/End '[0, 19, 11, 0]/[0, 19, 67, 0]'

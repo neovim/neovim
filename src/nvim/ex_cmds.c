@@ -3588,7 +3588,7 @@ void do_sub(exarg_T *eap)
       eap->flags = EXFLAG_PRINT;
     }
 
-    do_join(eap->line2 - eap->line1 + 1, FALSE, TRUE, FALSE);
+    do_join(eap->line2 - eap->line1 + 1, FALSE, TRUE, FALSE, true);
     sub_nlines = sub_nsubs = eap->line2 - eap->line1 + 1;
     do_sub_msg(FALSE);
     ex_may_print(eap);
