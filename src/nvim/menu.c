@@ -888,7 +888,7 @@ char_u *set_context_in_menu_cmd(expand_T *xp, char_u *cmd, char_u *arg, int forc
     menu = root_menu;
     if (after_dot != arg) {
       path_name = xmalloc(after_dot - arg);
-      vim_strncpy(path_name, arg, after_dot - arg - 1);
+      STRLCPY(path_name, arg, after_dot - arg);
     }
     name = path_name;
     while (name != NULL && *name) {
@@ -1004,9 +1004,9 @@ char_u *get_menu_names(expand_T *xp, int idx)
   if (menu->modes & expand_modes) {
     if (menu->children != NULL) {
       if (should_advance)
-        vim_strncpy(tbuffer, menu->en_dname, TBUFFER_LEN - 2);
+        STRLCPY(tbuffer, menu->en_dname, TBUFFER_LEN - 1);
       else {
-        vim_strncpy(tbuffer, menu->dname,  TBUFFER_LEN - 2);
+        STRLCPY(tbuffer, menu->dname,  TBUFFER_LEN - 1);
         if (menu->en_dname == NULL)
           should_advance = TRUE;
       }
