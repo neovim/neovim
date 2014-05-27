@@ -6772,7 +6772,7 @@ char_u *reg_submatch(int no)
         len = submatch_mmatch->endpos[no].col
               - submatch_mmatch->startpos[no].col;
         if (round == 2)
-          vim_strncpy(retval, s, len);
+          STRLCPY(retval, s, len + 1);
         ++len;
       } else {
         /* Multiple lines: take start line from start col, middle
