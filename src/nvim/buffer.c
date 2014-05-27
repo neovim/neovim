@@ -79,12 +79,6 @@
 # include "buffer.c.generated.h"
 #endif
 
-#ifdef UNIX
-# define dev_T dev_t
-#else
-# define dev_T unsigned
-#endif
-
 static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");
 static char *e_auabort = N_("E855: Autocommands caused command to abort");
@@ -1301,11 +1295,11 @@ buflist_new (
   /* We can use inode numbers when the file exists.  Works better
    * for hard links. */
   FileInfo file_info;
-  if (sfname == NULL || !os_get_file_info((char *)sfname, &file_info)) {
-    file_info.stat.st_dev = INVALID_DEVICE_ID;
-  }
+  bool file_info_valid = (sfname != NULL &&
+                          os_get_file_info((char *)sfname, &file_info));
   if (ffname != NULL && !(flags & BLN_DUMMY)
-      && (buf = buflist_findname_file_info(ffname, &file_info)) != NULL) {
+      && (buf = buflist_findname_file_info(ffname, &file_info,
+                                           file_info_valid)) != NULL) {
     free(ffname);
     if (lnum != 0)
       buflist_setfpos(buf, curwin, lnum, (colnr_T)0, FALSE);
@@ -1432,9 +1426,9 @@ buflist_new (
   hash_init(&buf->b_s.b_keywtab_ic);
 
   buf->b_fname = buf->b_sfname;
-  if (file_info.stat.st_dev == INVALID_DEVICE_ID)
+  if (!file_info_valid) {
     buf->b_dev_valid = FALSE;
-  else {
+  } else {
     buf->b_dev_valid = TRUE;
     buf->b_dev = file_info.stat.st_dev;
     buf->b_ino = file_info.stat.st_ino;
@@ -1659,10 +1653,8 @@ buf_T *buflist_findname_exp(char_u *fname)
 buf_T *buflist_findname(char_u *ffname)
 {
   FileInfo file_info;
-  if (!os_get_file_info((char *)ffname, &file_info)) {
-    file_info.stat.st_dev = INVALID_DEVICE_ID;
-  }
-  return buflist_findname_file_info(ffname, &file_info);
+  bool file_info_valid = os_get_file_info((char *)ffname, &file_info);
+  return buflist_findname_file_info(ffname, &file_info, file_info_valid);
 }
 
 /*
@@ -1670,13 +1662,14 @@ buf_T *buflist_findname(char_u *ffname)
  * getting it twice for the same file.
  * Returns NULL if not found.
  */
-static buf_T *buflist_findname_file_info(char_u *ffname, FileInfo *file_info)
+static buf_T *buflist_findname_file_info(char_u *ffname, FileInfo *file_info,
+                                         bool file_info_valid)
 {
   buf_T       *buf;
 
   for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
     if ((buf->b_flags & BF_DUMMY) == 0
-        && !otherfile_buf(buf, ffname, file_info)) {
+        && !otherfile_buf(buf, ffname, file_info, file_info_valid)) {
       return buf;
     }
   }
@@ -2193,6 +2186,7 @@ setfname (
 {
   buf_T       *obuf = NULL;
   FileInfo file_info;
+  bool file_info_valid = false;
 
   if (ffname == NULL || *ffname == NUL) {
     /* Removing the name. */
@@ -2200,7 +2194,6 @@ setfname (
     free(buf->b_sfname);
     buf->b_ffname = NULL;
     buf->b_sfname = NULL;
-    file_info.stat.st_dev = INVALID_DEVICE_ID;
   } else {
     fname_expand(buf, &ffname, &sfname);     /* will allocate ffname */
     if (ffname == NULL)                     /* out of memory */
@@ -2211,11 +2204,9 @@ setfname (
      * - if the buffer is loaded, fail
      * - if the buffer is not loaded, delete it from the list
      */
-    if (!os_get_file_info((char *)ffname, &file_info)) {
-      file_info.stat.st_dev = INVALID_DEVICE_ID;
-    }
+    file_info_valid = os_get_file_info((char *)ffname, &file_info);
     if (!(buf->b_flags & BF_DUMMY)) {
-      obuf = buflist_findname_file_info(ffname, &file_info);
+      obuf = buflist_findname_file_info(ffname, &file_info, file_info_valid);
     }
     if (obuf != NULL && obuf != buf) {
       if (obuf->b_ml.ml_mfp != NULL) {          /* it's loaded, fail */
@@ -2241,7 +2232,7 @@ setfname (
     buf->b_sfname = sfname;
   }
   buf->b_fname = buf->b_sfname;
-  if (file_info.stat.st_dev == INVALID_DEVICE_ID) {
+  if (!file_info_valid) {
     buf->b_dev_valid = FALSE;
   } else {
     buf->b_dev_valid = TRUE;
@@ -2380,10 +2371,11 @@ void buflist_altfpos(win_T *win)
  */
 int otherfile(char_u *ffname)
 {
-  return otherfile_buf(curbuf, ffname, NULL);
+  return otherfile_buf(curbuf, ffname, NULL, false);
 }
 
-static int otherfile_buf(buf_T *buf, char_u *ffname, FileInfo *file_info_p)
+static int otherfile_buf(buf_T *buf, char_u *ffname,
+                         FileInfo *file_info_p, bool file_info_valid)
 {
   /* no name is different */
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
@@ -2392,13 +2384,18 @@ static int otherfile_buf(buf_T *buf, char_u *ffname, FileInfo *file_info_p)
   if (fnamecmp(ffname, buf->b_ffname) == 0) {
     return FALSE;
   }
+  if (file_info_p != NULL && !file_info_valid) {
+    // file_id not valid, assume files are different.
+    return TRUE;
+  }
   {
     FileInfo file_info;
 
     /* If no struct stat given, get it now */
     if (file_info_p == NULL) {
-      if (!buf->b_dev_valid || !os_get_file_info((char *)ffname, &file_info)) {
-        file_info.stat.st_dev = INVALID_DEVICE_ID;
+      if (!os_get_file_info((char *)ffname, &file_info)) {
+        // could not get file_id to compare, assume files are different.
+        return TRUE;
       }
       file_info_p = &file_info;
     }
