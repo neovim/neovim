@@ -107,12 +107,11 @@ bool channel_send_event(uint64_t id, char *type, typval_T *data)
   msgpack_packer packer;
   msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
   msgpack_rpc_notification(event_type, event_data, &packer);
-  char *bytes = xmemdup(msgpack_event_buffer.data, msgpack_event_buffer.size);
 
   wstream_write(channel->data.streams.write,
-                bytes,
-                msgpack_event_buffer.size,
-                true);
+                wstream_new_buffer(msgpack_event_buffer.data,
+                                   msgpack_event_buffer.size,
+                                   true));
 
   msgpack_rpc_free_object(event_data);
   msgpack_sbuffer_clear(&msgpack_event_buffer);
@@ -158,9 +157,9 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     // Perform the call
     msgpack_rpc_call(channel->id, &unpacked.data, &response);
     wstream_write(channel->data.streams.write,
-                  xmemdup(channel->sbuffer->data, channel->sbuffer->size),
-                  channel->sbuffer->size,
-                  true);
+                  wstream_new_buffer(channel->sbuffer->data,
+                                     channel->sbuffer->size,
+                                     true));
 
     // Clear the buffer for future calls
     msgpack_sbuffer_clear(channel->sbuffer);
