@@ -3209,7 +3209,7 @@ skip:
     }
 
     if (errmsg != NULL) {
-      vim_strncpy(IObuff, (char_u *)_(errmsg), IOSIZE - 1);
+      STRLCPY(IObuff, _(errmsg), IOSIZE);
       i = (int)STRLEN(IObuff) + 2;
       if (i + (arg - startarg) < IOSIZE) {
         /* append the argument with the error */
@@ -7480,7 +7480,7 @@ option_value2string (
     else if ((char_u **)opp->var == &p_pt)
       str2specialbuf(p_pt, NameBuff, MAXPATHL);
     else
-      vim_strncpy(NameBuff, varp, MAXPATHL - 1);
+      STRLCPY(NameBuff, varp, MAXPATHL);
   }
 }
 
