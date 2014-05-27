@@ -61,6 +61,7 @@
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/os/fs_defs.h"
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
 
@@ -108,12 +109,9 @@ typedef struct ff_visited {
    * different. So we have to save it.
    */
   char_u              *ffv_wc_path;
-  /* for unix use inode etc for comparison (needed because of links), else
-   * use filename.
-   */
-  int ffv_dev_valid;                    /* ffv_dev and ffv_ino were set */
-  uint64_t ffv_dev;                        /* device number */
-  uint64_t ffv_ino;                        /* inode number */
+  // use FileID for comparison (needed because of links), else use filename.
+  bool file_id_valid;
+  FileID file_id;
   /* The memory for this struct is allocated according to the length of
    * ffv_fname.
    */
@@ -1088,15 +1086,15 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   ff_visited_T        *vp;
   bool url = false;
 
-  FileInfo file_info;
-  // For a URL we only compare the name, otherwise we compare the
+  FileID file_id;
+  // For an URL we only compare the name, otherwise we compare the
   // device/inode.
   if (path_with_url(fname)) {
     STRLCPY(ff_expand_buffer, fname, MAXPATHL);
     url = true;
   } else {
     ff_expand_buffer[0] = NUL;
-    if (!os_get_file_info((char *)fname, &file_info)) {
+    if (!os_get_file_id((char *)fname, &file_id)) {
       return FAIL;
     }
   }
@@ -1104,9 +1102,8 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   /* check against list of already visited files */
   for (vp = *visited_list; vp != NULL; vp = vp->ffv_next) {
     if ((url && fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0)
-        || (!url && vp->ffv_dev_valid
-            && vp->ffv_dev == file_info.stat.st_dev
-            && vp->ffv_ino == file_info.stat.st_ino)) {
+        || (!url && vp->file_id_valid
+            && os_file_id_equal(&(vp->file_id), &file_id))) {
       /* are the wildcard parts equal */
       if (ff_wc_equal(vp->ffv_wc_path, wc_path) == TRUE)
         /* already visited */
@@ -1120,12 +1117,11 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   vp = xmalloc(sizeof(ff_visited_T) + STRLEN(ff_expand_buffer));
 
   if (!url) {
-    vp->ffv_dev_valid = TRUE;
-    vp->ffv_ino = file_info.stat.st_ino;
-    vp->ffv_dev = file_info.stat.st_dev;
+    vp->file_id_valid = true;
+    vp->file_id = file_id;
     vp->ffv_fname[0] = NUL;
   } else {
-    vp->ffv_dev_valid = FALSE;
+    vp->file_id_valid = false;
     STRCPY(vp->ffv_fname, ff_expand_buffer);
   }
 
