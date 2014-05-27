@@ -649,12 +649,6 @@ enum {
 #define WSP_ABOVE       64      /* put new window above/left */
 #define WSP_NEWLOC      128     /* don't copy location list */
 
-/*
- * arguments for gui_set_shellsize()
- */
-#define RESIZE_VERT     1       /* resize vertically */
-#define RESIZE_HOR      2       /* resize horizontally */
-#define RESIZE_BOTH     15      /* resize in both directions */
 
 /*
  * flags for check_changed()
@@ -1150,13 +1144,6 @@ typedef struct timeval proftime_T;
 # define NUM_MOUSE_CLICKS(code) \
   (((unsigned)((code) & 0xC0) >> 6) + 1)
 
-# define SET_NUM_MOUSE_CLICKS(code, num) \
-  (code) = ((code) & 0x3f) | ((((num) - 1) & 3) << 6)
-
-/* Added to mouse column for GUI when 'mousefocus' wants to give focus to a
- * window by simulating a click on its status line.  We could use up to 128 *
- * 128 = 16384 columns, now it's reduced to 10000. */
-# define MOUSE_COLOFF 10000
 
 /*
  * jump_to_mouse() returns one of first four these values, possibly with
@@ -1321,25 +1308,11 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # endif
 
 
-/* ISSYMLINK(mode) tests if a file is a symbolic link. */
-#if (defined(S_IFMT) && defined(S_IFLNK)) || defined(S_ISLNK)
-# define HAVE_ISSYMLINK
-# if defined(S_IFMT) && defined(S_IFLNK)
-#  define ISSYMLINK(mode) (((mode) & S_IFMT) == S_IFLNK)
-# else
-#  define ISSYMLINK(mode) S_ISLNK(mode)
-# endif
-#endif
-
-#define SIGN_BYTE 1         /* byte value used where sign is displayed;
-                               attribute value is sign type */
 
 
-#  define X_DISPLAY     xterm_dpy
 
 
-# undef NBDEBUG
-# define nbdebug(a)
+
 
 /* flags for skip_vimgrep_pat() */
 #define VGR_GLOBAL      1
@@ -1376,11 +1349,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 #define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
 #define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */
 
-/* Return values from win32_fileinfo(). */
-#define FILEINFO_OK          0
-#define FILEINFO_ENC_FAIL    1  /* enc_to_utf16() failed */
-#define FILEINFO_READ_FAIL   2  /* CreateFile() failed */
-#define FILEINFO_INFO_FAIL   3  /* GetFileInformationByHandle() failed */
 
 /* Character used as separated in autoload function/variable names. */
 #define AUTOLOAD_CHAR '#'
