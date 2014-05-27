@@ -1,8 +1,6 @@
 #ifndef NVIM_OS_SERVER_H
 #define NVIM_OS_SERVER_H
 
-#include "nvim/os/channel_defs.h"
-
 /// Initializes the module
 void server_init();
 
@@ -18,8 +16,7 @@ void server_teardown();
 /// @param endpoint Address of the server. Either a 'ip:port' string or an
 ///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
 ///        named pipe.
-/// @param prot The rpc protocol to be used
-void server_start(char *endpoint, ChannelProtocol prot);
+void server_start(char *endpoint);
 
 /// Stops listening on the address specified by `endpoint`.
 ///
