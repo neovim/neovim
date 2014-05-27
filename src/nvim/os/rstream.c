@@ -33,7 +33,7 @@ static void close_cb(uv_handle_t *handle);
 static void emit_read_event(RStream *rstream, bool eof);
 
 RStream * rstream_new(rstream_cb cb,
-                      uint32_t buffer_size,
+                      size_t buffer_size,
                       void *data,
                       bool async)
 {
@@ -133,7 +133,7 @@ void rstream_stop(RStream *rstream)
   }
 }
 
-size_t rstream_read(RStream *rstream, char *buf, uint32_t count)
+size_t rstream_read(RStream *rstream, char *buf, size_t count)
 {
   size_t read_count = rstream->wpos - rstream->rpos;
 

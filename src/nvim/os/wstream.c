@@ -12,11 +12,11 @@
 struct wstream {
   uv_stream_t *stream;
   // Memory currently used by pending buffers
-  uint32_t curmem;
+  size_t curmem;
   // Maximum memory used by this instance
-  uint32_t maxmem;
+  size_t maxmem;
   // Number of pending requests
-  uint32_t pending_reqs;
+  size_t pending_reqs;
   bool freed;
 };
 
@@ -25,14 +25,14 @@ typedef struct {
   // Buffer containing data to be written
   char *buffer;
   // Size of the buffer
-  uint32_t length;
+  size_t length;
   // If it's our responsibility to free the buffer
   bool free;
 } WriteData;
 
 static void write_cb(uv_write_t *req, int status);
 
-WStream * wstream_new(uint32_t maxmem)
+WStream * wstream_new(size_t maxmem)
 {
   WStream *rv = xmalloc(sizeof(WStream));
   rv->maxmem = maxmem;
@@ -59,7 +59,7 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
   wstream->stream = stream;
 }
 
-bool wstream_write(WStream *wstream, char *buffer, uint32_t length, bool free)
+bool wstream_write(WStream *wstream, char *buffer, size_t length, bool free)
 {
   WriteData *data;
   uv_buf_t uvbuf;

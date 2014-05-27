@@ -12,7 +12,7 @@
 ///
 /// @param maxmem Maximum amount memory used by this `WStream` instance.
 /// @return The newly-allocated `WStream` instance
-WStream * wstream_new(uint32_t maxmem);
+WStream * wstream_new(size_t maxmem);
 
 /// Frees all memory allocated for a WStream instance
 ///
@@ -34,7 +34,7 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream);
 /// @param length Number of bytes that should be written from `buffer`
 /// @param free If true, `buffer` will be freed after the write is complete
 /// @return true if the data was successfully queued, false otherwise.
-bool wstream_write(WStream *wstream, char *buffer, uint32_t length, bool free);
+bool wstream_write(WStream *wstream, char *buffer, size_t length, bool free);
 
 #endif  // NVIM_OS_WSTREAM_H
 
