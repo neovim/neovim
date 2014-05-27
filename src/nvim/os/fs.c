@@ -149,19 +149,13 @@ static bool is_executable_in_path(const char_u *name)
 /// Get stat information for a file.
 ///
 /// @return OK on success, FAIL if a failure occurred.
-int os_stat(const char_u *name, uv_stat_t *statbuf)
+static bool os_stat(const char *name, uv_stat_t *statbuf)
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request,
-                          (const char *)name, NULL);
+  int result = uv_fs_stat(uv_default_loop(), &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
-
-  if (result == kLibuvSuccess) {
-    return OK;
-  }
-
-  return FAIL;
+  return (result == kLibuvSuccess);
 }
 
 /// Get the file permissions for a given file.
@@ -170,10 +164,10 @@ int os_stat(const char_u *name, uv_stat_t *statbuf)
 int32_t os_getperm(const char_u *name)
 {
   uv_stat_t statbuf;
-  if (os_stat(name, &statbuf) == FAIL) {
-    return -1;
-  } else {
+  if (os_stat((char *)name, &statbuf)) {
     return (int32_t)statbuf.st_mode;
+  } else {
+    return -1;
   }
 }
 
@@ -200,11 +194,7 @@ int os_setperm(const char_u *name, int perm)
 bool os_file_exists(const char_u *name)
 {
   uv_stat_t statbuf;
-  if (os_stat(name, &statbuf) == OK) {
-    return true;
-  }
-
-  return false;
+  return os_stat((char *)name, &statbuf);
 }
 
 /// Check if a file is readonly.
@@ -238,7 +228,7 @@ int os_file_is_writable(const char *name)
 bool os_get_file_size(const char *name, off_t *size)
 {
   uv_stat_t statbuf;
-  if (os_stat((char_u *)name, &statbuf) == OK) {
+  if (os_stat(name, &statbuf)) {
     *size = statbuf.st_size;
     return true;
   }
@@ -302,10 +292,7 @@ int os_remove(const char *path)
 /// @return `true` on success, `false` for failure.
 bool os_get_file_info(const char *path, FileInfo *file_info)
 {
-  if (os_stat((char_u *)path, &(file_info->stat)) == OK) {
-    return true;
-  }
-  return false;
+  return os_stat(path, &(file_info->stat));
 }
 
 /// Get the file information for a given path without following links
@@ -319,10 +306,7 @@ bool os_get_file_info_link(const char *path, FileInfo *file_info)
   int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
   file_info->stat = request.statbuf;
   uv_fs_req_cleanup(&request);
-  if (result == kLibuvSuccess) {
-    return true;
-  }
-  return false;
+  return (result == kLibuvSuccess);
 }
 
 /// Get the file information for a given file descriptor
@@ -336,10 +320,7 @@ bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
   int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
   file_info->stat = request.statbuf;
   uv_fs_req_cleanup(&request);
-  if (result == kLibuvSuccess) {
-    return true;
-  }
-  return false;
+  return (result == kLibuvSuccess);
 }
 
 /// Compare the inodes of two FileInfos
@@ -380,7 +361,7 @@ uint64_t os_file_info_get_inode(const FileInfo *file_info)
 bool os_get_file_id(const char *path, FileID *file_id)
 {
   uv_stat_t statbuf;
-  if (os_stat((char_u *)path, &statbuf) == OK) {
+  if (os_stat(path, &statbuf)) {
     file_id->inode = statbuf.st_ino;
     file_id->device_id = statbuf.st_dev;
     return true;
