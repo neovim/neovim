@@ -3372,7 +3372,7 @@ addstar (
   } else {
     retval = xmalloc(len + 4);
     if (retval != NULL) {
-      vim_strncpy(retval, fname, len);
+      STRLCPY(retval, fname, len + 1);
 
       /*
        * Don't add a star to *, ~, ~user, $var or `cmd`.
@@ -3896,10 +3896,10 @@ expand_shellcmd (
     l = e - s;
     if (l > MAXPATHL - 5)
       break;
-    vim_strncpy(buf, s, l);
+    STRLCPY(buf, s, l + 1);
     add_pathsep(buf);
     l = STRLEN(buf);
-    vim_strncpy(buf + l, pat, MAXPATHL - 1 - l);
+    STRLCPY(buf + l, pat, MAXPATHL - l);
 
     /* Expand matches in one directory of $PATH. */
     ret = expand_wildcards(1, &buf, num_file, file, flags);
