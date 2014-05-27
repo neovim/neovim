@@ -88,6 +88,9 @@ typedef struct memfile memfile_T;
 // for signlist_T
 #include "nvim/sign_defs.h"
 
+// for FileID
+#include "nvim/os/fs_defs.h"
+
 /*
  * The taggy struct is used to store the information about a :tag command.
  */
@@ -471,9 +474,8 @@ struct file_buffer {
   char_u      *b_sfname;        /* short file name */
   char_u      *b_fname;         /* current file name */
 
-  int b_dev_valid;              /* TRUE when b_dev has a valid number */
-  uint64_t b_dev;                  /* device number */
-  uint64_t b_ino;                  /* inode number */
+  bool file_id_valid;
+  FileID file_id;
 
   int b_fnum;                   /* buffer number for this file. */
 

@@ -3433,10 +3433,11 @@ restore_backup:
         (void)os_setperm(wfname, perm);
     }
 # endif
-    buf_setino(buf);
-  } else if (!buf->b_dev_valid)
-    /* Set the inode when creating a new file. */
-    buf_setino(buf);
+    buf_set_file_id(buf);
+  } else if (!buf->file_id_valid) {
+    // Set the file_id when creating a new file.
+    buf_set_file_id(buf);
+  }
 #endif
 
   if (close(fd) != 0) {
