@@ -5,6 +5,21 @@
 #include "nvim/types.h"
 #include "nvim/garray.h"
 
+/* Flags for expand_wildcards() */
+#define EW_DIR          0x01    /* include directory names */
+#define EW_FILE         0x02    /* include file names */
+#define EW_NOTFOUND     0x04    /* include not found names */
+#define EW_ADDSLASH     0x08    /* append slash to directory name */
+#define EW_KEEPALL      0x10    /* keep all matches */
+#define EW_SILENT       0x20    /* don't print "1 returned" from shell */
+#define EW_EXEC         0x40    /* executable files */
+#define EW_PATH         0x80    /* search in 'path' too */
+#define EW_ICASE        0x100   /* ignore case */
+#define EW_NOERROR      0x200   /* no error for bad regexp */
+#define EW_NOTWILD      0x400   /* add match with literal name if exists */
+/* Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
+* is used when executing commands and EW_SILENT for interactive expanding. */
+
 /// Return value for the comparison of two files. Also @see path_full_compare.
 typedef enum file_comparison {
   kEqualFiles = 1,        ///< Both exist and are the same file.
