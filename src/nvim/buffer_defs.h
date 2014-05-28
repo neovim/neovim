@@ -949,12 +949,9 @@ struct window_S {
   int w_height;                     /* number of rows in window, excluding
                                        status/command line(s) */
   int w_status_height;              /* number of status lines (0 or 1) */
-  int w_wincol;                     /* Leftmost column of window in screen.
-                                       use W_WINCOL() */
-  int w_width;                      /* Width of window, excluding separation.
-                                       use W_WIDTH() */
-  int w_vsep_width;                 /* Number of separator columns (0 or 1).
-                                       use W_VSEP_WIDTH() */
+  int w_wincol;                     /* Leftmost column of window in screen. */
+  int w_width;                      /* Width of window, excluding separation. */
+  int w_vsep_width;                 /* Number of separator columns (0 or 1). */
 
   /*
    * === start of cached values ====

@@ -2078,7 +2078,7 @@ void ex_copen(exarg_T *eap)
     win_goto(win);
     if (eap->addr_count != 0) {
       if (cmdmod.split & WSP_VERT) {
-        if (height != W_WIDTH(win)) {
+        if (height != win->w_width) {
           win_setwidth(height);
         }
       } else {
