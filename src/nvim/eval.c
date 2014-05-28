@@ -5692,7 +5692,7 @@ dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
 /*
  * Make a copy of a Dictionary item.
  */
-static dictitem_T *dictitem_copy(dictitem_T *org)
+static dictitem_T *dictitem_copy(dictitem_T *org) FUNC_ATTR_NONNULL_RET
 {
   dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(org->di_key));
 
@@ -8186,7 +8186,7 @@ void dict_extend(dict_T *d1, dict_T *d2, char_u *action)
       }
       if (di1 == NULL) {
         di1 = dictitem_copy(HI2DI(hi2));
-        if (di1 != NULL && dict_add(d1, di1) == FAIL)
+        if (dict_add(d1, di1) == FAIL)
           dictitem_free(di1);
       } else if (*action == 'e') {
         EMSG2(_("E737: Key already exists: %s"), hi2->hi_key);
