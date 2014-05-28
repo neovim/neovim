@@ -3532,3 +3532,30 @@ int goto_im(void)
   return p_im && stuff_empty() && typebuf_typed();
 }
 
+/*
+* Isolate the name of the shell:
+* - Skip beyond any path.  E.g., "/usr/bin/csh -f" -> "csh -f".
+* - Remove any argument.  E.g., "csh -f" -> "csh".
+* But don't allow a space in the path, so that this works:
+*   "/usr/bin/csh --rcfile ~/.cshrc"
+* But don't do that for Windows, it's common to have a space in the path.
+*/
+char_u *get_isolated_shell_name()
+{
+  char_u *p;
+  p = skiptowhite(p_sh);
+  if (*p == NUL) {
+    /* No white space, use the tail. */
+    p = vim_strsave(path_tail(p_sh));
+  } else {
+    char_u  *p1, *p2;
+
+    /* Find the last path separator before the space. */
+    p1 = p_sh;
+    for (p2 = p_sh; p2 < p; mb_ptr_adv(p2))
+      if (vim_ispathsep(*p2))
+        p1 = p2 + 1;
+    p = vim_strnsave(p1, (int)(p - p1));
+  }
+  return p;
+}

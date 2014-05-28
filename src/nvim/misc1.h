@@ -72,5 +72,6 @@ void fast_breakcheck(void);
 char_u *get_cmd_output(char_u *cmd, char_u *infile, int flags);
 void FreeWild(int count, char_u **files);
 int goto_im(void);
+char_u *get_isolated_shell_name();
 
 #endif /* NVIM_MISC1_H */
