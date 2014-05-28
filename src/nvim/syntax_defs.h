@@ -3,6 +3,12 @@
 
 #include "nvim/regexp_defs.h"
 
+# define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
+# define SST_MAX_ENTRIES 1000   /* maximal size for state stack array */
+# define SST_FIX_STATES  7      /* size of sst_stack[]. */
+# define SST_DIST        16     /* normal distance between entries */
+# define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
+
 /* struct passed to in_id_list() */
 struct sp_syn {
   int inc_tag;                  /* ":syn include" unique tag */
