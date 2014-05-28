@@ -253,12 +253,6 @@ enum {
 # define gen_expand_wildcards mch_expand_wildcards
 #endif
 
-# define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
-#  define SST_MAX_ENTRIES 1000  /* maximal size for state stack array */
-# define SST_FIX_STATES  7      /* size of sst_stack[]. */
-# define SST_DIST        16     /* normal distance between entries */
-# define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
-
 # define HL_CONTAINED   0x01    /* not used on toplevel */
 # define HL_TRANSP      0x02    /* has no highlighting	*/
 # define HL_ONELINE     0x04    /* match within one line only */
