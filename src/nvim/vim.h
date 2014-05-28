@@ -352,17 +352,6 @@ enum {
 # define gen_expand_wildcards mch_expand_wildcards
 #endif
 
-/* Values for the find_pattern_in_path() function args 'type' and 'action': */
-#define FIND_ANY        1
-#define FIND_DEFINE     2
-#define CHECK_PATH      3
-
-#define ACTION_SHOW     1
-#define ACTION_GOTO     2
-#define ACTION_SPLIT    3
-#define ACTION_SHOW_ALL 4
-# define ACTION_EXPAND  5
-
 # define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
 #  define SST_MAX_ENTRIES 1000  /* maximal size for state stack array */
 # define SST_FIX_STATES  7      /* size of sst_stack[]. */
