@@ -1,6 +1,13 @@
 #ifndef NVIM_FILE_SEARCH_H
 #define NVIM_FILE_SEARCH_H
 
+/* Flags for find_file_*() functions. */
+#define FINDFILE_FILE   0       /* only files */
+#define FINDFILE_DIR    1       /* only directories */
+#define FINDFILE_BOTH   2       /* files and directories */
+
+
+/* file_search.h */
 void *vim_findfile_init(char_u *path, char_u *filename, char_u *
                                 stopdirs, int level, int free_visited,
                                 int find_what, void *search_ctx_arg,
