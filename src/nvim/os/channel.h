@@ -5,6 +5,8 @@
 
 #include "nvim/vim.h"
 
+#define EVENT_MAXLEN 512
+
 /// Initializes the module
 void channel_init(void);
 
@@ -31,6 +33,18 @@ void channel_from_job(char **argv);
 /// @param obj The event data
 /// @return True if the data was sent successfully, false otherwise.
 bool channel_send_event(uint64_t id, char *type, typval_T *data);
+
+/// Subscribes to event broadcasts
+///
+/// @param id The channel id
+/// @param event The event type string
+void channel_subscribe(uint64_t id, char *event);
+
+/// Unsubscribes to event broadcasts
+///
+/// @param id The channel id
+/// @param event The event type string
+void channel_unsubscribe(uint64_t id, char *event);
 
 #endif  // NVIM_OS_CHANNEL_H
 

@@ -35,6 +35,7 @@ typedef struct {
 
 static uint64_t next_id = 1;
 static Map(uint64_t) *channels = NULL;
+static Map(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer msgpack_event_buffer;
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof);
@@ -42,12 +43,14 @@ static void on_job_stderr(RStream *rstream, void *data, bool eof);
 static void parse_msgpack(RStream *rstream, void *data, bool eof);
 static void send_event(Channel *channel, char *type, typval_T *data);
 static void broadcast_event(char *type, typval_T *data);
+static void unsubscribe(Channel *channel, char *event);
 static void close_channel(Channel *channel);
 static void close_cb(uv_handle_t *handle);
 
 void channel_init()
 {
   channels = map_new(uint64_t)();
+  event_strings = map_new(cstr_t)();
   msgpack_sbuffer_init(&msgpack_event_buffer);
 }
 
@@ -116,6 +119,35 @@ bool channel_send_event(uint64_t id, char *type, typval_T *data)
   return true;
 }
 
+void channel_subscribe(uint64_t id, char *event)
+{
+  Channel *channel;
+
+  if (!(channel = map_get(uint64_t)(channels, id))) {
+    return;
+  }
+
+  char *event_string = map_get(cstr_t)(event_strings, event);
+
+  if (!event_string) {
+    event_string = xstrdup(event);
+    map_put(cstr_t)(event_strings, event_string, event_string);
+  }
+
+  map_put(cstr_t)(channel->subscribed_events, event_string, event_string);
+}
+
+void channel_unsubscribe(uint64_t id, char *event)
+{
+  Channel *channel;
+
+  if (!(channel = map_get(uint64_t)(channels, id))) {
+    return;
+  }
+
+  unsubscribe(channel, event);
+}
+
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
 {
   Job *job = data;
@@ -165,7 +197,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
 static void send_event(Channel *channel, char *type, typval_T *data)
 {
-  String event_type = {.size = strnlen(type, 1024), .data = type};
+  String event_type = {.size = strnlen(type, EVENT_MAXLEN), .data = type};
   Object event_data = vim_to_object(data);
   msgpack_packer packer;
   msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
@@ -216,6 +248,22 @@ end:
   kv_destroy(subscribed);
 }
 
+static void unsubscribe(Channel *channel, char *event)
+{
+  char *event_string = map_get(cstr_t)(event_strings, event);
+  map_del(cstr_t)(channel->subscribed_events, event_string);
+
+  map_foreach_value(channels, channel, {
+    if (map_has(cstr_t)(channel->subscribed_events, event_string)) {
+      return;
+    }
+  });
+
+  // Since the string is no longer used by other channels, release it's memory
+  map_del(cstr_t)(event_strings, event_string);
+  free(event_string);
+}
+
 static void close_channel(Channel *channel)
 {
   map_del(uint64_t)(channels, channel->id);
@@ -229,6 +277,12 @@ static void close_channel(Channel *channel)
     wstream_free(channel->data.streams.write);
     uv_close((uv_handle_t *)channel->data.streams.uv, close_cb);
   }
+
+  // Unsubscribe from all events
+  char *event_string;
+  map_foreach_value(channel->subscribed_events, event_string, {
+    unsubscribe(channel, event_string);
+  });
 
   map_free(cstr_t)(channel->subscribed_events);
   free(channel);
