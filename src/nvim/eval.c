@@ -5102,15 +5102,13 @@ static void list_append_number(list_T *l, varnumber_T n)
 /*
  * Insert typval_T "tv" in list "l" before "item".
  * If "item" is NULL append at the end.
- * Return FAIL when out of memory.
  */
-int list_insert_tv(list_T *l, typval_T *tv, listitem_T *item)
+void list_insert_tv(list_T *l, typval_T *tv, listitem_T *item)
 {
   listitem_T  *ni = listitem_alloc();
 
   copy_tv(tv, &ni->li_tv);
   list_insert(l, ni, item);
-  return OK;
 }
 
 void list_insert(list_T *l, listitem_T *ni, listitem_T *item)
@@ -5137,19 +5135,17 @@ void list_insert(list_T *l, listitem_T *ni, listitem_T *item)
 /*
  * Extend "l1" with "l2".
  * If "bef" is NULL append at the end, otherwise insert before this item.
- * Returns FAIL when out of memory.
  */
-static int list_extend(list_T *l1, list_T *l2, listitem_T *bef)
+static void list_extend(list_T *l1, list_T *l2, listitem_T *bef)
 {
   listitem_T  *item;
   int todo = l2->lv_len;
 
   /* We also quit the loop when we have inserted the original item count of
    * the list, avoid a hang when we extend a list with itself. */
-  for (item = l2->lv_first; item != NULL && --todo >= 0; item = item->li_next)
-    if (list_insert_tv(l1, &item->li_tv, bef) == FAIL)
-      return FAIL;
-  return OK;
+  for (item = l2->lv_first; item != NULL && --todo >= 0; item = item->li_next) {
+    list_insert_tv(l1, &item->li_tv, bef);
+  }
 }
 
 /*
@@ -5171,7 +5167,8 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
   tv->vval.v_list = l;
 
   /* append all items from the second list */
-  return list_extend(l, l2, NULL);
+  list_extend(l, l2, NULL);
+  return OK;
 }
 
 /*
@@ -11820,10 +11817,7 @@ static void f_repeat(typval_T *argvars, typval_T *rettv)
     rettv_list_alloc(rettv);
     if (argvars[0].vval.v_list != NULL) {
       while (n-- > 0) {
-        if (list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL)
-            == FAIL) {
-          break;
-        }
+        list_extend(rettv->vval.v_list, argvars[0].vval.v_list, NULL);
       }
     }
   } else {
