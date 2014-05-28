@@ -242,11 +242,6 @@ enum {
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
-/* Flags for find_file_*() functions. */
-#define FINDFILE_FILE   0       /* only files */
-#define FINDFILE_DIR    1       /* only directories */
-#define FINDFILE_BOTH   2       /* files and directories */
-
 # define W_WINCOL(wp)   (wp->w_wincol)
 # define W_WIDTH(wp)    (wp->w_width)
 # define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
