@@ -16,6 +16,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -1638,7 +1639,7 @@ win_found:
            * found, reduce the error column value by the length of
            * a tab character.
            */
-          line = ml_get_curline();
+          line = get_cursor_line_ptr();
           screen_col = 0;
           for (char_col = 0; char_col < curwin->w_cursor.col; ++char_col) {
             if (*line == NUL)

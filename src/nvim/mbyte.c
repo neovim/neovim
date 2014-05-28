@@ -82,6 +82,7 @@
 #include "nvim/vim.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/fileio.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
@@ -2859,7 +2860,7 @@ void show_utf8()
 
   /* Get the byte length of the char under the cursor, including composing
    * characters. */
-  line = ml_get_cursor();
+  line = get_cursor_pos_ptr();
   len = utfc_ptr2len(line);
   if (len == 0) {
     MSG("NUL");
@@ -3096,7 +3097,7 @@ void utf_find_illegal()
 
   curwin->w_cursor.coladd = 0;
   for (;; ) {
-    p = ml_get_cursor();
+    p = get_cursor_pos_ptr();
     if (vimconv.vc_type != CONV_NONE) {
       free(tofree);
       tofree = string_convert(&vimconv, p, NULL);
@@ -3112,12 +3113,12 @@ void utf_find_illegal()
       if (*p >= 0x80 && (len == 1
             || utf_char2len(utf_ptr2char(p)) != len)) {
         if (vimconv.vc_type == CONV_NONE)
-          curwin->w_cursor.col += (colnr_T)(p - ml_get_cursor());
+          curwin->w_cursor.col += (colnr_T)(p - get_cursor_pos_ptr());
         else {
           int l;
 
           len = (int)(p - tofree);
-          for (p = ml_get_cursor(); *p != NUL && len-- > 0; p += l) {
+          for (p = get_cursor_pos_ptr(); *p != NUL && len-- > 0; p += l) {
             l = utf_ptr2len(p);
             curwin->w_cursor.col += l;
           }

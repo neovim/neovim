@@ -1,6 +1,7 @@
 #include "nvim/indent.h"
 #include "nvim/eval.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/memline.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
@@ -17,7 +18,7 @@ static int lisp_match(char_u *p);
 // Count the size (in window cells) of the indent in the current line.
 int get_indent(void)
 {
-  return get_indent_str(ml_get_curline(), (int)curbuf->b_p_ts);
+  return get_indent_str(get_cursor_line_ptr(), (int)curbuf->b_p_ts);
 }
 
 
@@ -87,7 +88,7 @@ int set_indent(int size, int flags)
   // characters needed for the indent.
   todo = size;
   ind_len = 0;
-  p = oldline = ml_get_curline();
+  p = oldline = get_cursor_line_ptr();
 
   // Calculate the buffer size for the new indent, and check to see if it
   // isn't already set.
@@ -367,14 +368,14 @@ int copy_indent(int size, char_u *src)
     if (p == NULL) {
       // Allocate memory for the result: the copied indent, new indent
       // and the rest of the line.
-      line_len = (int)STRLEN(ml_get_curline()) + 1;
+      line_len = (int)STRLEN(get_cursor_line_ptr()) + 1;
       line = xmalloc(ind_len + line_len);
       p = line;
     }
   }
 
   // Append the original line
-  memmove(p, ml_get_curline(), (size_t)line_len);
+  memmove(p, get_cursor_line_ptr(), (size_t)line_len);
 
   // Replace the line
   ml_replace(curwin->w_cursor.lnum, line, false);
@@ -436,7 +437,7 @@ int inindent(int extra)
   char_u      *ptr;
   colnr_T col;
 
-  for (col = 0, ptr = ml_get_curline(); vim_iswhite(*ptr); ++col) {
+  for (col = 0, ptr = get_cursor_line_ptr(); vim_iswhite(*ptr); ++col) {
     ptr++;
   }
 
@@ -549,7 +550,7 @@ int get_lisp_indent(void)
         continue;
       }
 
-      for (that = ml_get_curline(); *that != NUL; ++that) {
+      for (that = get_cursor_line_ptr(); *that != NUL; ++that) {
         if (*that == ';') {
           while (*(that + 1) != NUL) {
             that++;
@@ -596,7 +597,7 @@ int get_lisp_indent(void)
       curwin->w_cursor.col = pos->col;
       col = pos->col;
 
-      that = ml_get_curline();
+      that = get_cursor_line_ptr();
 
       if (vi_lisp && (get_indent() == 0)) {
         amount = 2;

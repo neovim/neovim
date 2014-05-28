@@ -16,6 +16,7 @@
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/ex_cmds.h"
@@ -8035,7 +8036,7 @@ static void f_col(typval_T *argvars, typval_T *rettv)
       /* col(".") when the cursor is on the NUL at the end of the line
        * because of "coladd" can be seen as an extra column. */
       if (virtual_active() && fp == &curwin->w_cursor) {
-        char_u  *p = ml_get_cursor();
+        char_u  *p = get_cursor_pos_ptr();
 
         if (curwin->w_cursor.coladd >= (colnr_T)chartabsize(p,
                 curwin->w_virtcol - curwin->w_cursor.coladd)) {
@@ -13831,7 +13832,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv)
     /* Find the start and length of the badly spelled word. */
     len = spell_move_to(curwin, FORWARD, TRUE, TRUE, &attr);
     if (len != 0)
-      word = ml_get_cursor();
+      word = get_cursor_pos_ptr();
   } else if (curwin->w_p_spell && *curbuf->b_s.b_p_spl != NUL) {
     char_u  *str = get_tv_string_chk(&argvars[0]);
     int capcol = -1;
@@ -15392,7 +15393,7 @@ var2fpos (
       pos.col = 0;
     } else {
       pos.lnum = curwin->w_cursor.lnum;
-      pos.col = (colnr_T)STRLEN(ml_get_curline());
+      pos.col = (colnr_T)STRLEN(get_cursor_line_ptr());
     }
     return &pos;
   }

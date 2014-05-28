@@ -14,6 +14,7 @@
 #include "nvim/vim.h"
 #include "nvim/search.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -1338,7 +1339,7 @@ int searchc(cmdarg_T *cap, int t_cmd)
   else
     cap->oap->inclusive = TRUE;
 
-  p = ml_get_curline();
+  p = get_cursor_line_ptr();
   col = curwin->w_cursor.col;
   len = (int)STRLEN(p);
 
@@ -2415,7 +2416,7 @@ fwd_word (
       /*
        * We'll stop if we land on a blank line
        */
-      if (curwin->w_cursor.col == 0 && *ml_get_curline() == NUL)
+      if (curwin->w_cursor.col == 0 && *get_cursor_line_ptr() == NUL)
         break;
 
       i = inc_cursor();
@@ -3098,7 +3099,7 @@ static int in_html_tag(int);
  */
 static int in_html_tag(int end_tag)
 {
-  char_u      *line = ml_get_curline();
+  char_u      *line = get_cursor_line_ptr();
   char_u      *p;
   int c;
   int lc = NUL;
@@ -3201,12 +3202,12 @@ current_tagblock (
 
     if (in_html_tag(FALSE)) {
       /* cursor on start tag, move to its '>' */
-      while (*ml_get_cursor() != '>')
+      while (*get_cursor_pos_ptr() != '>')
         if (inc_cursor() < 0)
           break;
     } else if (in_html_tag(TRUE)) {
       /* cursor on end tag, move to just before it */
-      while (*ml_get_cursor() != '<')
+      while (*get_cursor_pos_ptr() != '<')
         if (dec_cursor() < 0)
           break;
       dec_cursor();
@@ -3239,7 +3240,7 @@ again:
    * Search for matching "</aaa>".  First isolate the "aaa".
    */
   inc_cursor();
-  p = ml_get_cursor();
+  p = get_cursor_pos_ptr();
   for (cp = p; *cp != NUL && *cp != '>' && !vim_iswhite(*cp); mb_ptr_adv(cp))
     ;
   len = (int)(cp - p);
@@ -3269,12 +3270,12 @@ again:
 
   if (do_include || r < 1) {
     /* Include up to the '>'. */
-    while (*ml_get_cursor() != '>')
+    while (*get_cursor_pos_ptr() != '>')
       if (inc_cursor() < 0)
         break;
   } else {
     /* Exclude the '<' of the end tag. */
-    if (*ml_get_cursor() == '<')
+    if (*get_cursor_pos_ptr() == '<')
       dec_cursor();
   }
   end_pos = curwin->w_cursor;
@@ -3283,7 +3284,7 @@ again:
     /* Exclude the start tag. */
     curwin->w_cursor = start_pos;
     while (inc_cursor() >= 0)
-      if (*ml_get_cursor() == '>') {
+      if (*get_cursor_pos_ptr() == '>') {
         inc_cursor();
         start_pos = curwin->w_cursor;
         break;
@@ -3566,7 +3567,7 @@ current_quote (
     int quotechar                  /* Quote character */
 )
 {
-  char_u      *line = ml_get_curline();
+  char_u      *line = get_cursor_line_ptr();
   int col_end;
   int col_start = curwin->w_cursor.col;
   int inclusive = FALSE;

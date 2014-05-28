@@ -46,6 +46,7 @@
 #include "nvim/vim.h"
 #include "nvim/memline.h"
 #include "nvim/buffer.h"
+#include "nvim/cursor.h"
 #include "nvim/eval.h"
 #include "nvim/fileio.h"
 #include "nvim/main.h"
@@ -1774,23 +1775,6 @@ char_u *ml_get(linenr_T lnum)
 char_u *ml_get_pos(pos_T *pos)
 {
   return ml_get_buf(curbuf, pos->lnum, FALSE) + pos->col;
-}
-
-/*
- * Return pointer to cursor line.
- */
-char_u *ml_get_curline(void)
-{
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, FALSE);
-}
-
-/*
- * Return pointer to cursor position.
- */
-char_u *ml_get_cursor(void)
-{
-  return ml_get_buf(curbuf, curwin->w_cursor.lnum, FALSE) +
-         curwin->w_cursor.col;
 }
 
 /*

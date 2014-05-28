@@ -16,6 +16,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/digraph.h"
 #include "nvim/edit.h"
@@ -6119,7 +6120,7 @@ static void ex_open(exarg_T *eap)
     regmatch.regprog = vim_regcomp(eap->arg, p_magic ? RE_MAGIC : 0);
     if (regmatch.regprog != NULL) {
       regmatch.rm_ic = p_ic;
-      p = ml_get_curline();
+      p = get_cursor_line_ptr();
       if (vim_regexec(&regmatch, p, (colnr_T)0))
         curwin->w_cursor.col = (colnr_T)(regmatch.startp[0] - p);
       else

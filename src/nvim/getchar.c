@@ -20,6 +20,7 @@
 #include "nvim/vim.h"
 #include "nvim/getchar.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
@@ -2171,7 +2172,7 @@ static int vgetorpeek(int advance)
                  * character -- webb
                  */
                 col = vcol = curwin->w_wcol = 0;
-                ptr = ml_get_curline();
+                ptr = get_cursor_line_ptr();
                 while (col < curwin->w_cursor.col) {
                   if (!vim_iswhite(ptr[col]))
                     curwin->w_wcol = vcol;
@@ -2199,7 +2200,7 @@ static int vgetorpeek(int advance)
             if (has_mbyte && col > 0 && curwin->w_wcol > 0) {
               /* Correct when the cursor is on the right halve
                * of a double-wide character. */
-              ptr = ml_get_curline();
+              ptr = get_cursor_line_ptr();
               col -= (*mb_head_off)(ptr, ptr + col);
               if ((*mb_ptr2cells)(ptr + col) > 1)
                 --curwin->w_wcol;

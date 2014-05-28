@@ -6,24 +6,10 @@
 
 /* misc2.c */
 int virtual_active(void);
-int getviscol(void);
-int getviscol2(colnr_T col, colnr_T coladd);
-int coladvance_force(colnr_T wcol);
-int coladvance(colnr_T wcol);
-int getvpos(pos_T *pos, colnr_T wcol);
-int inc_cursor(void);
 int inc(pos_T *lp);
 int incl(pos_T *lp);
-int dec_cursor(void);
 int dec(pos_T *lp);
 int decl(pos_T *lp);
-linenr_T get_cursor_rel_lnum(win_T *wp, linenr_T lnum);
-void check_cursor_lnum(void);
-void check_cursor_col(void);
-void check_cursor_col_win(win_T *win);
-void check_cursor(void);
-void adjust_cursor_col(void);
-int leftcol_changed(void);
 int csh_like_shell(void);
 int copy_option_part(char_u **option, char_u *buf, int maxlen,
                      char *sep_chars);

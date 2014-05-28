@@ -19,6 +19,7 @@
 #include "nvim/vim.h"
 #include "nvim/move.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/diff.h"
 #include "nvim/edit.h"
 #include "nvim/fold.h"
@@ -797,7 +798,7 @@ curs_columns (
       /* When cursor wraps to first char of next line in Insert
        * mode, the 'showbreak' string isn't shown, backup to first
        * column */
-      if (*p_sbr && *ml_get_cursor() == NUL
+      if (*p_sbr && *get_cursor_pos_ptr() == NUL
           && curwin->w_wcol == (int)vim_strsize(p_sbr))
         curwin->w_wcol = 0;
     }

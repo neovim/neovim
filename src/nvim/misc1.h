@@ -25,8 +25,6 @@ int del_bytes(long count, int fixpos_arg, int use_delcombine);
 void truncate_line(int fixpos);
 void del_lines(long nlines, int undo);
 int gchar_pos(pos_T *pos);
-int gchar_cursor(void);
-void pchar_cursor(int c);
 char_u *skip_to_option_part(char_u *p);
 void changed(void);
 void changed_int(void);

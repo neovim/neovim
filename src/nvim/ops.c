@@ -17,6 +17,7 @@
 #include "nvim/ops.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
+#include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"
 #include "nvim/ex_cmds.h"
@@ -211,7 +212,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
     block_col = curwin->w_cursor.col;
 
   for (i = oap->line_count; --i >= 0; ) {
-    first_char = *ml_get_curline();
+    first_char = *get_cursor_line_ptr();
     if (first_char == NUL)                              /* empty line */
       curwin->w_cursor.col = 0;
     else if (oap->block_mode)
@@ -344,7 +345,7 @@ static void shift_block(oparg_T *oap, int amount)
 
   /* total is number of screen columns to be inserted/removed */
   total = amount * p_sw;
-  oldp = ml_get_curline();
+  oldp = get_cursor_line_ptr();
 
   if (!left) {
     /*
@@ -597,7 +598,7 @@ int         (*how)(void);
      */
     if (i != oap->line_count - 1 || oap->line_count == 1
         || how != get_lisp_indent) {
-      l = skipwhite(ml_get_curline());
+      l = skipwhite(get_cursor_line_ptr());
       if (*l == NUL)                        /* empty or blank line */
         count = 0;
       else
@@ -1562,7 +1563,7 @@ int op_delete(oparg_T *oap)
         /* fix up things for virtualedit-delete:
          * break the tabs which are going to get in our way
          */
-        char_u          *curline = ml_get_curline();
+        char_u          *curline = get_cursor_line_ptr();
         int len = (int)STRLEN(curline);
 
         if (oap->end.coladd != 0
@@ -1743,7 +1744,7 @@ int op_replace(oparg_T *oap, int c)
       /* oldlen includes textlen, so don't double count */
       n += numc - bd.textlen;
 
-      oldp = ml_get_curline();
+      oldp = get_cursor_line_ptr();
       oldlen = STRLEN(oldp);
       newp = (char_u *) xmalloc((size_t)(oldlen + 1 + n));
       memset(newp, NUL, (size_t)(oldlen + 1 + n));
@@ -2011,7 +2012,7 @@ int swapchar(int op_type, pos_T *pos)
 
       curwin->w_cursor = *pos;
       /* don't use del_char(), it also removes composing chars */
-      del_bytes(utf_ptr2len(ml_get_cursor()), FALSE, FALSE);
+      del_bytes(utf_ptr2len(get_cursor_pos_ptr()), FALSE, FALSE);
       ins_char(nc);
       curwin->w_cursor = sp;
     } else
@@ -2069,7 +2070,7 @@ void op_insert(oparg_T *oap, long count1)
         ) {
       /* Move the cursor to the character right of the block. */
       curwin->w_set_curswant = TRUE;
-      while (*ml_get_cursor() != NUL
+      while (*get_cursor_pos_ptr() != NUL
              && (curwin->w_cursor.col < bd.textcol + bd.textlen))
         ++curwin->w_cursor.col;
       if (bd.is_short && !bd.is_MAX) {
@@ -2686,11 +2687,11 @@ do_put (
        * between. */
       if (u_save_cursor() == FAIL)
         goto end;
-      ptr = vim_strsave(ml_get_cursor());
+      ptr = vim_strsave(get_cursor_pos_ptr());
       ml_append(curwin->w_cursor.lnum, ptr, (colnr_T)0, FALSE);
       free(ptr);
 
-      ptr = vim_strnsave(ml_get_curline(), curwin->w_cursor.col);
+      ptr = vim_strnsave(get_cursor_line_ptr(), curwin->w_cursor.col);
       ml_replace(curwin->w_cursor.lnum, ptr, FALSE);
       ++nr_lines;
       dir = FORWARD;
@@ -2775,7 +2776,7 @@ do_put (
 
       if (has_mbyte)
         /* move to start of next multi-byte character */
-        curwin->w_cursor.col += (*mb_ptr2len)(ml_get_cursor());
+        curwin->w_cursor.col += (*mb_ptr2len)(get_cursor_pos_ptr());
       else if (c != TAB || ve_flags != VE_ALL)
         ++curwin->w_cursor.col;
       ++col;
@@ -2816,7 +2817,7 @@ do_put (
         ++nr_lines;
       }
       /* get the old line and advance to the position to insert at */
-      oldp = ml_get_curline();
+      oldp = get_cursor_line_ptr();
       oldlen = (int)STRLEN(oldp);
       for (ptr = oldp; vcol < col && *ptr; ) {
         /* Count a tab for what it's worth (if list mode not on) */
@@ -2905,7 +2906,7 @@ do_put (
       curwin->w_cursor.col++;
 
       /* in Insert mode we might be after the NUL, correct for that */
-      len = (colnr_T)STRLEN(ml_get_curline());
+      len = (colnr_T)STRLEN(get_cursor_line_ptr());
       if (curwin->w_cursor.col > len)
         curwin->w_cursor.col = len;
     } else
@@ -2919,7 +2920,7 @@ do_put (
        * char */
       if (dir == FORWARD && gchar_cursor() != NUL) {
         if (has_mbyte) {
-          int bytelen = (*mb_ptr2len)(ml_get_cursor());
+          int bytelen = (*mb_ptr2len)(get_cursor_pos_ptr());
 
           /* put it on the next of the multi-byte character. */
           col += bytelen;
@@ -3950,7 +3951,7 @@ format_lines (
           mark_col_adjust(curwin->w_cursor.lnum, (colnr_T)0, 0L,
               (long)-next_leader_len);
         } else if (second_indent > 0) {  /* the "leader" for FO_Q_SECOND */
-          char_u *p = ml_get_curline();
+          char_u *p = get_cursor_line_ptr();
           int indent = (int)(skipwhite(p) - p);
 
           if (indent > 0) {
@@ -3966,7 +3967,7 @@ format_lines (
         }
         first_par_line = FALSE;
         /* If the line is getting long, format it next time */
-        if (STRLEN(ml_get_curline()) > (size_t)max_len)
+        if (STRLEN(get_cursor_line_ptr()) > (size_t)max_len)
           force_format = TRUE;
         else
           force_format = FALSE;
@@ -4240,7 +4241,7 @@ int do_addsub(int command, linenr_T Prenum1)
   dooct = (vim_strchr(curbuf->b_p_nf, 'o') != NULL);    /* "Octal" */
   doalp = (vim_strchr(curbuf->b_p_nf, 'p') != NULL);    /* "alPha" */
 
-  ptr = ml_get_curline();
+  ptr = get_cursor_line_ptr();
   RLADDSUBFIX(ptr);
 
   /*
@@ -4289,7 +4290,7 @@ int do_addsub(int command, linenr_T Prenum1)
   }
 
   /* get ptr again, because u_save() may have changed it */
-  ptr = ml_get_curline();
+  ptr = get_cursor_line_ptr();
   RLADDSUBFIX(ptr);
 
   if (doalp && ASCII_ISALPHA(firstdigit)) {
@@ -5118,7 +5119,7 @@ void cursor_pos_info(void)
             (int64_t)char_count_cursor, (int64_t)char_count,
             (int64_t)byte_count_cursor, (int64_t)byte_count);
     } else {
-      p = ml_get_curline();
+      p = get_cursor_line_ptr();
       validate_virtcol();
       col_print(buf1, sizeof(buf1), (int)curwin->w_cursor.col + 1,
           (int)curwin->w_virtcol + 1);

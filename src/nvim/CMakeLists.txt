@@ -36,6 +36,7 @@ file( GLOB API_PRIV_SOURCES api/private/*.c )
 set(CONV_SRCS
   api.c
   arabic.c
+  cursor.c
   garray.c
   hashtab.c
   memory.c
