@@ -2237,8 +2237,6 @@ static void set_var_lval(lval_T *lp, char_u *endp, typval_T *rettv, int copy, ch
 
       /* Need to add an item to the Dictionary. */
       di = dictitem_alloc(lp->ll_newkey);
-      if (di == NULL)
-        return;
       if (dict_add(lp->ll_tv->vval.v_dict, di) == FAIL) {
         free(di);
         return;
@@ -5683,7 +5681,7 @@ dict_free (
  * The "key" is copied to the new item.
  * Note that the value of the item "di_tv" still needs to be initialized!
  */
-dictitem_T *dictitem_alloc(char_u *key)
+dictitem_T *dictitem_alloc(char_u *key) FUNC_ATTR_NONNULL_RET
 {
   dictitem_T *di = xmalloc(sizeof(dictitem_T) + STRLEN(key));
   STRCPY(di->di_key, key);
@@ -5756,8 +5754,6 @@ static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
         --todo;
 
         di = dictitem_alloc(hi->hi_key);
-        if (di == NULL)
-          break;
         if (deep) {
           if (item_copy(&HI2DI(hi)->di_tv, &di->di_tv, deep,
                   copyID) == FAIL) {
@@ -5795,15 +5791,13 @@ int dict_add(dict_T *d, dictitem_T *item)
 /*
  * Add a number or string entry to dictionary "d".
  * When "str" is NULL use number "nr", otherwise use "str".
- * Returns FAIL when out of memory and when key already exists.
+ * Returns FAIL when key already exists.
  */
 int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
 {
   dictitem_T  *item;
 
   item = dictitem_alloc((char_u *)key);
-  if (item == NULL)
-    return FAIL;
   item->di_tv.v_lock = 0;
   if (str == NULL) {
     item->di_tv.v_type = VAR_NUMBER;
@@ -5825,11 +5819,8 @@ int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
  */
 int dict_add_list(dict_T *d, char *key, list_T *list)
 {
-  dictitem_T  *item;
+  dictitem_T *item = dictitem_alloc((char_u *)key);
 
-  item = dictitem_alloc((char_u *)key);
-  if (item == NULL)
-    return FAIL;
   item->di_tv.v_lock = 0;
   item->di_tv.v_type = VAR_LIST;
   item->di_tv.vval.v_list = list;
@@ -6038,11 +6029,10 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
       }
       item = dictitem_alloc(key);
       clear_tv(&tvkey);
-      if (item != NULL) {
-        item->di_tv = tv;
-        item->di_tv.v_lock = 0;
-        if (dict_add(d, item) == FAIL)
-          dictitem_free(item);
+      item->di_tv = tv;
+      item->di_tv.v_lock = 0;
+      if (dict_add(d, item) == FAIL) {
+        dictitem_free(item);
       }
     }
 
@@ -17069,10 +17059,6 @@ void ex_function(exarg_T *eap)
       if (fudi.fd_di == NULL) {
         /* add new dict entry */
         fudi.fd_di = dictitem_alloc(fudi.fd_newkey);
-        if (fudi.fd_di == NULL) {
-          free(fp);
-          goto erret;
-        }
         if (dict_add(fudi.fd_dict, fudi.fd_di) == FAIL) {
           free(fudi.fd_di);
           free(fp);
