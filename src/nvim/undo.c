@@ -2725,8 +2725,6 @@ void u_eval_tree(u_header_T *first_uhp, list_T *list)
 
   while (uhp != NULL) {
     dict = dict_alloc();
-    if (dict == NULL)
-      return;
     dict_add_nr_str(dict, "seq", uhp->uh_seq, NULL);
     dict_add_nr_str(dict, "time", (long)uhp->uh_time, NULL);
     if (uhp == curbuf->b_u_newhead)

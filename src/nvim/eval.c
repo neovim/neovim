@@ -26,6 +26,7 @@
 #include "nvim/ex_eval.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
@@ -5592,7 +5593,7 @@ void set_ref_in_item(typval_T *tv, int copyID)
 /*
  * Allocate an empty header for a dictionary.
  */
-dict_T *dict_alloc(void)
+dict_T *dict_alloc(void) FUNC_ATTR_NONNULL_RET
 {
   dict_T *d = xmalloc(sizeof(dict_T));
 
@@ -5614,19 +5615,14 @@ dict_T *dict_alloc(void)
 
 /*
  * Allocate an empty dict for a return value.
- * Returns OK or FAIL.
  */
-static int rettv_dict_alloc(typval_T *rettv)
+static void rettv_dict_alloc(typval_T *rettv)
 {
-  dict_T      *d = dict_alloc();
-
-  if (d == NULL)
-    return FAIL;
+  dict_T *d = dict_alloc();
 
   rettv->vval.v_dict = d;
   rettv->v_type = VAR_DICT;
   ++d->dv_refcount;
-  return OK;
 }
 
 
@@ -5741,7 +5737,6 @@ void dictitem_free(dictitem_T *item)
  */
 static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
 {
-  dict_T      *copy;
   dictitem_T  *di;
   int todo;
   hashitem_T  *hi;
@@ -5749,8 +5744,8 @@ static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
   if (orig == NULL)
     return NULL;
 
-  copy = dict_alloc();
-  if (copy != NULL) {
+  dict_T *copy = dict_alloc();
+  {
     if (copyID != 0) {
       orig->dv_copyID = copyID;
       orig->dv_copydict = copy;
@@ -6003,8 +5998,6 @@ static int get_dict_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   if (evaluate) {
     d = dict_alloc();
-    if (d == NULL)
-      return FAIL;
   }
   tvkey.v_type = VAR_UNKNOWN;
   tv.v_type = VAR_UNKNOWN;
@@ -10820,24 +10813,27 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
     if (rhs != NULL)
       rettv->vval.v_string = str2special_save(rhs, FALSE);
 
-  } else if (rettv_dict_alloc(rettv) != FAIL && rhs != NULL) {
-    /* Return a dictionary. */
-    char_u      *lhs = str2special_save(mp->m_keys, TRUE);
-    char_u      *mapmode = map_mode_to_chars(mp->m_mode);
-    dict_T      *dict = rettv->vval.v_dict;
+  } else {
+    rettv_dict_alloc(rettv);
+    if (rhs != NULL) {
+      // Return a dictionary.
+      char_u      *lhs = str2special_save(mp->m_keys, TRUE);
+      char_u      *mapmode = map_mode_to_chars(mp->m_mode);
+      dict_T      *dict = rettv->vval.v_dict;
 
-    dict_add_nr_str(dict, "lhs",     0L, lhs);
-    dict_add_nr_str(dict, "rhs",     0L, mp->m_orig_str);
-    dict_add_nr_str(dict, "noremap", mp->m_noremap ? 1L : 0L, NULL);
-    dict_add_nr_str(dict, "expr",    mp->m_expr    ? 1L : 0L, NULL);
-    dict_add_nr_str(dict, "silent",  mp->m_silent  ? 1L : 0L, NULL);
-    dict_add_nr_str(dict, "sid",     (long)mp->m_script_ID, NULL);
-    dict_add_nr_str(dict, "buffer",  (long)buffer_local, NULL);
-    dict_add_nr_str(dict, "nowait",  mp->m_nowait  ? 1L : 0L, NULL);
-    dict_add_nr_str(dict, "mode",    0L, mapmode);
+      dict_add_nr_str(dict, "lhs",     0L, lhs);
+      dict_add_nr_str(dict, "rhs",     0L, mp->m_orig_str);
+      dict_add_nr_str(dict, "noremap", mp->m_noremap ? 1L : 0L, NULL);
+      dict_add_nr_str(dict, "expr",    mp->m_expr    ? 1L : 0L, NULL);
+      dict_add_nr_str(dict, "silent",  mp->m_silent  ? 1L : 0L, NULL);
+      dict_add_nr_str(dict, "sid",     (long)mp->m_script_ID, NULL);
+      dict_add_nr_str(dict, "buffer",  (long)buffer_local, NULL);
+      dict_add_nr_str(dict, "nowait",  mp->m_nowait  ? 1L : 0L, NULL);
+      dict_add_nr_str(dict, "mode",    0L, mapmode);
 
-    free(lhs);
-    free(mapmode);
+      free(lhs);
+      free(mapmode);
+    }
   }
 }
 
@@ -14504,23 +14500,23 @@ static void f_undofile(typval_T *argvars, typval_T *rettv)
  */
 static void f_undotree(typval_T *argvars, typval_T *rettv)
 {
-  if (rettv_dict_alloc(rettv) == OK) {
-    dict_T *dict = rettv->vval.v_dict;
-    list_T *list;
+  rettv_dict_alloc(rettv);
 
-    dict_add_nr_str(dict, "synced", (long)curbuf->b_u_synced, NULL);
-    dict_add_nr_str(dict, "seq_last", curbuf->b_u_seq_last, NULL);
-    dict_add_nr_str(dict, "save_last",
-        (long)curbuf->b_u_save_nr_last, NULL);
-    dict_add_nr_str(dict, "seq_cur", curbuf->b_u_seq_cur, NULL);
-    dict_add_nr_str(dict, "time_cur", (long)curbuf->b_u_time_cur, NULL);
-    dict_add_nr_str(dict, "save_cur", (long)curbuf->b_u_save_nr_cur, NULL);
+  dict_T *dict = rettv->vval.v_dict;
+  list_T *list;
 
-    list = list_alloc();
-    if (list != NULL) {
-      u_eval_tree(curbuf->b_u_oldhead, list);
-      dict_add_list(dict, "entries", list);
-    }
+  dict_add_nr_str(dict, "synced", (long)curbuf->b_u_synced, NULL);
+  dict_add_nr_str(dict, "seq_last", curbuf->b_u_seq_last, NULL);
+  dict_add_nr_str(dict, "save_last",
+      (long)curbuf->b_u_save_nr_last, NULL);
+  dict_add_nr_str(dict, "seq_cur", curbuf->b_u_seq_cur, NULL);
+  dict_add_nr_str(dict, "time_cur", (long)curbuf->b_u_time_cur, NULL);
+  dict_add_nr_str(dict, "save_cur", (long)curbuf->b_u_save_nr_cur, NULL);
+
+  list = list_alloc();
+  if (list != NULL) {
+    u_eval_tree(curbuf->b_u_oldhead, list);
+    dict_add_list(dict, "entries", list);
   }
 }
 
@@ -14700,8 +14696,7 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv)
 {
   dict_T      *dict;
 
-  if (rettv_dict_alloc(rettv) == FAIL)
-    return;
+  rettv_dict_alloc(rettv);
   dict = rettv->vval.v_dict;
 
   dict_add_nr_str(dict, "lnum", (long)curwin->w_cursor.lnum, NULL);
