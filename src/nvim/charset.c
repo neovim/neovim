@@ -1001,7 +1001,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
     // non-blank after a blank.
     numberextra = win_col_off(wp);
     col2 = col;
-    colmax = (colnr_T)(W_WIDTH(wp) - numberextra);
+    colmax = (colnr_T)(wp->w_width - numberextra);
 
     if (col >= colmax) {
       n = colmax + win_col_off2(wp);
@@ -1049,15 +1049,15 @@ int win_lbr_chartabsize(win_T *wp, char_u *s, colnr_T col, int *headp)
     numberextra = win_col_off(wp);
     col += numberextra + mb_added;
 
-    if (col >= (colnr_T)W_WIDTH(wp)) {
-      col -= W_WIDTH(wp);
-      numberextra = W_WIDTH(wp) - (numberextra - win_col_off2(wp));
+    if (col >= (colnr_T)wp->w_width) {
+      col -= wp->w_width;
+      numberextra = wp->w_width - (numberextra - win_col_off2(wp));
       if (numberextra > 0) {
         col = col % numberextra;
       }
     }
 
-    if ((col == 0) || (col + size > (colnr_T)W_WIDTH(wp))) {
+    if ((col == 0) || (col + size > (colnr_T)wp->w_width)) {
       added = vim_strsize(p_sbr);
       if (tab_corr) {
         size += (added / wp->w_buffer->b_p_ts) * wp->w_buffer->b_p_ts;
@@ -1124,7 +1124,7 @@ int in_win_border(win_T *wp, colnr_T vcol)
     // there is no border
     return FALSE;
   }
-  width1 = W_WIDTH(wp) - win_col_off(wp);
+  width1 = wp->w_width - win_col_off(wp);
 
   if ((int)vcol < width1 - 1) {
     return FALSE;

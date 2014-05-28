@@ -14682,7 +14682,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv)
 
     check_cursor();
     win_new_height(curwin, curwin->w_height);
-    win_new_width(curwin, W_WIDTH(curwin));
+    win_new_width(curwin, curwin->w_width);
     changed_window_setting();
 
     if (curwin->w_topline == 0)

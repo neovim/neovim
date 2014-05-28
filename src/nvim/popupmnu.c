@@ -73,7 +73,7 @@ redo:
   validate_cursor_col();
   pum_array = NULL;
 
-  row = curwin->w_wrow + W_WINROW(curwin);
+  row = curwin->w_wrow + curwin->w_winrow;
 
   if (firstwin->w_p_pvw) {
     top_clear = firstwin->w_height;
@@ -189,9 +189,9 @@ redo:
 
   // Calculate column
   if (curwin->w_p_rl) {
-    col = W_WINCOL(curwin) + W_WIDTH(curwin) - curwin->w_wcol - 1;
+    col = curwin->w_wincol + curwin->w_width - curwin->w_wcol - 1;
   } else {
-    col = W_WINCOL(curwin) + curwin->w_wcol;
+    col = curwin->w_wincol + curwin->w_wcol;
   }
 
   // if there are more items than room we need a scrollbar
@@ -299,7 +299,7 @@ void pum_redraw(void)
 
     // prepend a space if there is room
     if (curwin->w_p_rl) {
-      if (pum_col < W_WINCOL(curwin) + W_WIDTH(curwin) - 1) {
+      if (pum_col < curwin->w_wincol + curwin->w_width - 1) {
         screen_putchar(' ', row, pum_col + 1, attr);
       }
     } else if (pum_col > 0) {
