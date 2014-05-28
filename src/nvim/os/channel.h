@@ -25,7 +25,8 @@ void channel_from_job(char **argv);
 
 /// Sends event/data to channel
 ///
-/// @param id The channel id
+/// @param id The channel id. If 0, the event will be sent to all
+///        channels that have subscribed to the event type
 /// @param type The event type, an arbitrary string
 /// @param obj The event data
 /// @return True if the data was sent successfully, false otherwise.

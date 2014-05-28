@@ -15,9 +15,11 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/map.h"
+#include "nvim/lib/kvec.h"
 
 typedef struct {
   uint64_t id;
+  Map(cstr_t) *subscribed_events;
   bool is_job;
   msgpack_unpacker *unpacker;
   msgpack_sbuffer *sbuffer;
@@ -38,6 +40,8 @@ static msgpack_sbuffer msgpack_event_buffer;
 static void on_job_stdout(RStream *rstream, void *data, bool eof);
 static void on_job_stderr(RStream *rstream, void *data, bool eof);
 static void parse_msgpack(RStream *rstream, void *data, bool eof);
+static void send_event(Channel *channel, char *type, typval_T *data);
+static void broadcast_event(char *type, typval_T *data);
 static void close_channel(Channel *channel);
 static void close_cb(uv_handle_t *handle);
 
@@ -68,6 +72,7 @@ void channel_from_job(char **argv)
   channel->sbuffer = msgpack_sbuffer_new();
 
   channel->id = next_id++;
+  channel->subscribed_events = map_new(cstr_t)();
   channel->is_job = true;
   channel->data.job_id = job_start(argv, channel, rcb, on_job_stderr, NULL);
   map_put(uint64_t)(channels, channel->id, channel);
@@ -82,6 +87,7 @@ void channel_from_stream(uv_stream_t *stream)
 
   stream->data = NULL;
   channel->id = next_id++;
+  channel->subscribed_events = map_new(cstr_t)();
   channel->is_job = false;
   // read stream
   channel->data.streams.read = rstream_new(rcb, 1024, channel, true);
@@ -96,25 +102,16 @@ void channel_from_stream(uv_stream_t *stream)
 
 bool channel_send_event(uint64_t id, char *type, typval_T *data)
 {
-  Channel *channel = map_get(uint64_t)(channels, id);
+  Channel *channel = NULL;
 
-  if (!channel) {
-    return false;
+  if (id > 0) {
+    if (!(channel = map_get(uint64_t)(channels, id))) {
+      return false;
+    }
+    send_event(channel, type, data);
+  } else {
+    broadcast_event(type, data);
   }
-
-  String event_type = {.size = strnlen(type, 1024), .data = type};
-  Object event_data = vim_to_object(data);
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
-  msgpack_rpc_notification(event_type, event_data, &packer);
-
-  wstream_write(channel->data.streams.write,
-                wstream_new_buffer(msgpack_event_buffer.data,
-                                   msgpack_event_buffer.size,
-                                   true));
-
-  msgpack_rpc_free_object(event_data);
-  msgpack_sbuffer_clear(&msgpack_event_buffer);
 
   return true;
 }
@@ -166,6 +163,59 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   }
 }
 
+static void send_event(Channel *channel, char *type, typval_T *data)
+{
+  String event_type = {.size = strnlen(type, 1024), .data = type};
+  Object event_data = vim_to_object(data);
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
+  msgpack_rpc_notification(event_type, event_data, &packer);
+  WBuffer *buffer = wstream_new_buffer(msgpack_event_buffer.data,
+      msgpack_event_buffer.size,
+      true);
+
+  wstream_write(channel->data.streams.write, buffer);
+
+  msgpack_rpc_free_object(event_data);
+  msgpack_sbuffer_clear(&msgpack_event_buffer);
+}
+
+static void broadcast_event(char *type, typval_T *data)
+{
+  kvec_t(Channel *) subscribed;
+  kv_init(subscribed);
+  Channel *channel;
+
+  map_foreach_value(channels, channel, {
+    if (map_has(cstr_t)(channel->subscribed_events, type)) {
+      kv_push(Channel *, subscribed, channel);
+    }
+  });
+
+  if (!kv_size(subscribed)) {
+    goto end;
+  }
+
+  String event_type = {.size = strnlen(type, 1024), .data = type};
+  Object event_data = vim_to_object(data);
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
+  msgpack_rpc_notification(event_type, event_data, &packer);
+  WBuffer *buffer = wstream_new_buffer(msgpack_event_buffer.data,
+                                       msgpack_event_buffer.size,
+                                       true);
+
+  for (size_t i = 0; i < kv_size(subscribed); i++) {
+    wstream_write(kv_A(subscribed, i)->data.streams.write, buffer);
+  }
+
+  msgpack_rpc_free_object(event_data);
+  msgpack_sbuffer_clear(&msgpack_event_buffer);
+
+end:
+  kv_destroy(subscribed);
+}
+
 static void close_channel(Channel *channel)
 {
   map_del(uint64_t)(channels, channel->id);
@@ -180,6 +230,7 @@ static void close_channel(Channel *channel)
     uv_close((uv_handle_t *)channel->data.streams.uv, close_cb);
   }
 
+  map_free(cstr_t)(channel->subscribed_events);
   free(channel);
 }
 
