@@ -125,6 +125,8 @@ CHECKFILES = \
 		uk.cp1251.ck \
 		zh_CN.cp936.ck
 
+SOURCE_FILES = $(shell find .. -type f -name '*.[ch]')
+
 PACKAGE = nvim
 SHELL = /bin/sh
 VIM = ../../../build/bin/nvim
@@ -136,6 +138,7 @@ VIM = ../../../build/bin/nvim
 MSGFMT = OLD_PO_FILE_INPUT=yes msgfmt -v
 XGETTEXT = OLD_PO_FILE_INPUT=yes OLD_PO_FILE_OUTPUT=yes xgettext
 MSGMERGE = OLD_PO_FILE_INPUT=yes OLD_PO_FILE_OUTPUT=yes msgmerge
+SAFE_SED = LANG=C LC_CTYPE=C LC_ALL=C sed
 
 .SUFFIXES:
 .SUFFIXES: .po .mo .pot .ck
@@ -203,44 +206,44 @@ sjiscorr: sjiscorr.c
 
 ja.euc-jp.po: ja.po
 	iconv -f utf-8 -t euc-jp ja.po | \
-		sed -e 's/charset=utf-8/charset=euc-jp/' -e 's/# Original translations/# Generated from ja.po, DO NOT EDIT/' > ja.euc-jp.po
+		$(SAFE_SED) -e 's/charset=utf-8/charset=euc-jp/' -e 's/# Original translations/# Generated from ja.po, DO NOT EDIT/' > ja.euc-jp.po
 
 # Convert cs.po to create cs.cp1250.po.
 cs.cp1250.po: cs.po
 	rm -f cs.cp1250.po
 	iconv -f iso-8859-2 -t cp1250 cs.po | \
-		sed -e 's/charset=ISO-8859-2/charset=cp1250/' -e 's/# Original translations/# Generated from cs.po, DO NOT EDIT/' > cs.cp1250.po
+		$(SAFE_SED) -e 's/charset=ISO-8859-2/charset=cp1250/' -e 's/# Original translations/# Generated from cs.po, DO NOT EDIT/' > cs.cp1250.po
 
 # Convert pl.po to create pl.cp1250.po.
 pl.cp1250.po: pl.po
 	rm -f pl.cp1250.po
 	iconv -f iso-8859-2 -t cp1250 pl.po | \
-		sed -e 's/charset=ISO-8859-2/charset=cp1250/' -e 's/# Original translations/# Generated from pl.po, DO NOT EDIT/' > pl.cp1250.po
+		$(SAFE_SED) -e 's/charset=ISO-8859-2/charset=cp1250/' -e 's/# Original translations/# Generated from pl.po, DO NOT EDIT/' > pl.cp1250.po
 
 # Convert pl.po to create pl.UTF-8.po.
 pl.UTF-8.po: pl.po
 	rm -f pl.UTF-8.po
 	iconv -f iso-8859-2 -t utf-8 pl.po | \
-		sed -e 's/charset=ISO-8859-2/charset=utf-8/' -e 's/# Original translations/# Generated from pl.po, DO NOT EDIT/' > pl.UTF-8.po
+		$(SAFE_SED) -e 's/charset=ISO-8859-2/charset=utf-8/' -e 's/# Original translations/# Generated from pl.po, DO NOT EDIT/' > pl.UTF-8.po
 
 # Convert sk.po to create sk.cp1250.po.
 sk.cp1250.po: sk.po
 	rm -f sk.cp1250.po
 	iconv -f iso-8859-2 -t cp1250 sk.po | \
-		sed -e 's/charset=ISO-8859-2/charset=cp1250/' -e 's/# Original translations/# Generated from sk.po, DO NOT EDIT/' > sk.cp1250.po
+		$(SAFE_SED) -e 's/charset=ISO-8859-2/charset=cp1250/' -e 's/# Original translations/# Generated from sk.po, DO NOT EDIT/' > sk.cp1250.po
 
 # Convert zh_CN.po to create zh_CN.cp936.po.
 # set 'charset' to gbk to avoid that msfmt generates a warning
 zh_CN.cp936.po: zh_CN.po
 	rm -f zh_CN.cp936.po
 	iconv -f gb2312 -t cp936 zh_CN.po | \
-		sed -e 's/charset=gb2312/charset=gbk/' -e 's/# Original translations/# Generated from zh_CN.po, DO NOT EDIT/' > zh_CN.cp936.po
+		$(SAFE_SED) -e 's/charset=gb2312/charset=gbk/' -e 's/# Original translations/# Generated from zh_CN.po, DO NOT EDIT/' > zh_CN.cp936.po
 
 # Convert ko.UTF-8.po to create ko.po.
 ko.po: ko.UTF-8.po
 	rm -f ko.po
 	iconv -f UTF-8 -t euc-kr ko.UTF-8.po | \
-		sed -e 's/charset=UTF-8/charset=euc-kr/' \
+		$(SAFE_SED) -e 's/charset=UTF-8/charset=euc-kr/' \
 		    -e 's/# Korean translation for Vim/# Generated from ko.UTF-8.po, DO NOT EDIT/' \
 		    > ko.po
 
@@ -248,13 +251,13 @@ ko.po: ko.UTF-8.po
 ru.cp1251.po: ru.po
 	rm -f ru.cp1251.po
 	iconv -f utf-8 -t cp1251 ru.po | \
-		sed -e 's/charset=utf-8/charset=cp1251/' -e 's/# Original translations/# Generated from ru.po, DO NOT EDIT/' > ru.cp1251.po
+		$(SAFE_SED) -e 's/charset=utf-8/charset=cp1251/' -e 's/# Original translations/# Generated from ru.po, DO NOT EDIT/' > ru.cp1251.po
 
 # Convert uk.po to create uk.cp1251.po.
 uk.cp1251.po: uk.po
 	rm -f uk.cp1251.po
 	iconv -f utf-8 -t cp1251 uk.po | \
-		sed -e 's/charset=utf-8/charset=cp1251/' -e 's/# Original translations/# Generated from uk.po, DO NOT EDIT/' > uk.cp1251.po
+		$(SAFE_SED) -e 's/charset=utf-8/charset=cp1251/' -e 's/# Original translations/# Generated from uk.po, DO NOT EDIT/' > uk.cp1251.po
 
 prefixcheck:
 	@if test "x" = "x$(prefix)"; then \
@@ -272,11 +275,11 @@ distclean: clean
 checkclean:
 	rm -f *.ck
 
-$(PACKAGE).pot: ../*.c ../if_perl.xs ../GvimExt/gvimext.cpp ../globals.h ../if_py_both.h
-	cd ..; $(XGETTEXT) --default-domain=$(PACKAGE) \
+$(PACKAGE).pot: $(SOURCE_FILES)
+	$(XGETTEXT) --default-domain=$(PACKAGE) \
 		--add-comments --keyword=_ --keyword=N_ \
-		*.c if_perl.xs GvimExt/gvimext.cpp globals.h if_py_both.h
-	mv -f ../$(PACKAGE).po $(PACKAGE).pot
+		$(SOURCE_FILES)
+	mv $(PACKAGE).po $(PACKAGE).pot
 
 update-po: $(LANGUAGES)
 

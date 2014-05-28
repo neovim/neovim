@@ -1,4 +1,11 @@
-__END_DECLS int main(int argc, char **argv)
+// Simplistic program to correct SJIS inside strings.
+// When a trail byte is a backslash it needs to be doubled.
+// Public domain.
+
+#include <stdio.h>
+#include <string.h>
+
+int main(int argc, char **argv)
 {
 	char buffer[BUFSIZ];
 	char *p;
