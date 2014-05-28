@@ -5781,7 +5781,7 @@ static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
 
 /*
  * Add item "item" to Dictionary "d".
- * Returns FAIL when out of memory and when key already exists.
+ * Returns FAIL when key already exists.
  */
 int dict_add(dict_T *d, dictitem_T *item)
 {
@@ -5815,7 +5815,7 @@ int dict_add_nr_str(dict_T *d, char *key, long nr, char_u *str)
 
 /*
  * Add a list entry to dictionary "d".
- * Returns FAIL when out of memory and when key already exists.
+ * Returns FAIL when key already exists.
  */
 int dict_add_list(dict_T *d, char *key, list_T *list)
 {

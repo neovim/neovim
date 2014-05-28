@@ -171,7 +171,7 @@ void hash_debug_results(void)
 ///            in the new item (@see hashitem_T). Must not be NULL.
 ///
 /// @return OK   if success.
-///         FAIL if key already present, or out of memory.
+///         FAIL if key already present
 int hash_add(hashtab_T *ht, char_u *key)
 {
   hash_T hash = hash_hash(key);
@@ -180,7 +180,8 @@ int hash_add(hashtab_T *ht, char_u *key)
     EMSG2(_(e_intern2), "hash_add()");
     return FAIL;
   }
-  return hash_add_item(ht, hi, key, hash);
+  hash_add_item(ht, hi, key, hash);
+  return OK;
 }
 
 /// Add item "hi" for key "key" to hashtable "ht".
@@ -190,16 +191,8 @@ int hash_add(hashtab_T *ht, char_u *key)
 /// @param key  Pointer to the key for the new item. The key has to be contained
 ///             in the new item (@see hashitem_T). Must not be NULL.
 /// @param hash The precomputed hash value for the key.
-///
-/// @return OK   if success.
-///         FAIL if out of memory.
-int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
+void hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
 {
-  // If resizing failed before and it fails again we can't add an item.
-  if (ht->ht_error && (hash_may_resize(ht, 0) == FAIL)) {
-    return FAIL;
-  }
-
   ht->ht_used++;
   if (hi->hi_key == NULL) {
     ht->ht_filled++;
@@ -208,7 +201,7 @@ int hash_add_item(hashtab_T *ht, hashitem_T *hi, char_u *key, hash_T hash)
   hi->hi_hash = hash;
 
   // When the space gets low may resize the array.
-  return hash_may_resize(ht, 0);
+  hash_may_resize(ht, 0);
 }
 
 /// Remove item "hi" from hashtable "ht".
@@ -250,14 +243,11 @@ void hash_unlock(hashtab_T *ht)
 ///                 - Shrink when too much empty space.
 ///                 - Grow when not enough empty space.
 ///                 If non-zero, passed minitems will be used.
-///
-/// @return OK   if success.
-///         FAIL if out of memory.
-static int hash_may_resize(hashtab_T *ht, size_t minitems)
+static void hash_may_resize(hashtab_T *ht, size_t minitems)
 {
   // Don't resize a locked table.
   if (ht->ht_locked > 0) {
-    return OK;
+    return;
   }
 
 #ifdef HT_DEBUG
@@ -276,7 +266,7 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
     // items are required for the lookup to decide a key isn't there.
     if ((ht->ht_filled < HT_INIT_SIZE - 1)
         && (ht->ht_array == ht->ht_smallarray)) {
-      return OK;
+      return;
     }
 
     // Grow or refill the array when it's more than 2/3 full (including
@@ -285,7 +275,7 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
     // at least 1/4 full (avoids repeated grow-shrink operations)
     size_t oldsize = ht->ht_mask + 1;
     if ((ht->ht_filled * 3 < oldsize * 2) && (ht->ht_used > oldsize / 5)) {
-      return OK;
+      return;
     }
 
     if (ht->ht_used > 1000) {
@@ -309,10 +299,8 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
   while (newsize < minsize) {
     // make sure it's always a power of 2
     newsize <<= 1;
-    if (newsize == 0) {
-      // overflow
-      return FAIL;
-    }
+    // assert newsize didn't overflow
+    assert(newsize != 0);
   }
 
   bool newarray_is_small = newsize == HT_INIT_SIZE;
@@ -364,9 +352,6 @@ static int hash_may_resize(hashtab_T *ht, size_t minitems)
   ht->ht_array = newarray;
   ht->ht_mask = newmask;
   ht->ht_filled = ht->ht_used;
-  ht->ht_error = false;
-
-  return OK;
 }
 
 /// Get the hash number for a key.
