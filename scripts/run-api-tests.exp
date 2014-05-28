@@ -28,9 +28,9 @@ send {
   for group in split(groups)
     exe 'augroup '.group
     autocmd!
-    augroup NONE
-    exe 'augroup! '.group
+    augroup END
   endfor
+  autocmd!
   tabnew
   let curbufnum = eval(bufnr('%'))
   redir => buflist
