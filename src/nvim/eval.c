@@ -4617,12 +4617,9 @@ static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
       goto failret;
     if (evaluate) {
       item = listitem_alloc();
-      if (item != NULL) {
-        item->li_tv = tv;
-        item->li_tv.v_lock = 0;
-        list_append(l, item);
-      } else
-        clear_tv(&tv);
+      item->li_tv = tv;
+      item->li_tv.v_lock = 0;
+      list_append(l, item);
     }
 
     if (**arg == ']')
@@ -4724,7 +4721,7 @@ list_free (
 /*
  * Allocate a list item.
  */
-listitem_T *listitem_alloc(void)
+listitem_T *listitem_alloc(void) FUNC_ATTR_NONNULL_RET
 {
   return xmalloc(sizeof(listitem_T));
 }
@@ -5111,8 +5108,6 @@ int list_insert_tv(list_T *l, typval_T *tv, listitem_T *item)
 {
   listitem_T  *ni = listitem_alloc();
 
-  if (ni == NULL)
-    return FAIL;
   copy_tv(tv, &ni->li_tv);
   list_insert(l, ni, item);
   return OK;
@@ -5205,8 +5200,6 @@ static list_T *list_copy(list_T *orig, int deep, int copyID)
     for (item = orig->lv_first; item != NULL && !got_int;
          item = item->li_next) {
       ni = listitem_alloc();
-      if (ni == NULL)
-        break;
       if (deep) {
         if (item_copy(&item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
           free(ni);
@@ -10392,8 +10385,6 @@ static void dict_list(typval_T *argvars, typval_T *rettv, int what)
       di = HI2DI(hi);
 
       li = listitem_alloc();
-      if (li == NULL)
-        break;
       list_append(rettv->vval.v_list, li);
 
       if (what == 0) {
@@ -10415,16 +10406,12 @@ static void dict_list(typval_T *argvars, typval_T *rettv, int what)
         ++l2->lv_refcount;
 
         li2 = listitem_alloc();
-        if (li2 == NULL)
-          break;
         list_append(l2, li2);
         li2->li_tv.v_type = VAR_STRING;
         li2->li_tv.v_lock = 0;
         li2->li_tv.vval.v_string = vim_strsave(di->di_key);
 
         li2 = listitem_alloc();
-        if (li2 == NULL)
-          break;
         list_append(l2, li2);
         copy_tv(&di->di_tv, &li2->li_tv);
       }
@@ -11566,11 +11553,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
           prevlen = prevsize = 0;
         }
 
-        if ((li = listitem_alloc()) == NULL) {
-          free(s);
-          failed = TRUE;
-          break;
-        }
+        li = listitem_alloc();
         li->li_tv.v_type = VAR_STRING;
         li->li_tv.v_lock = 0;
         li->li_tv.vval.v_string = s;
@@ -13397,14 +13380,10 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
       str = ((char_u **)ga.ga_data)[i];
 
       li = listitem_alloc();
-      if (li == NULL)
-        free(str);
-      else {
-        li->li_tv.v_type = VAR_STRING;
-        li->li_tv.v_lock = 0;
-        li->li_tv.vval.v_string = str;
-        list_append(rettv->vval.v_list, li);
-      }
+      li->li_tv.v_type = VAR_STRING;
+      li->li_tv.v_lock = 0;
+      li->li_tv.vval.v_string = str;
+      list_append(rettv->vval.v_list, li);
     }
     ga_clear(&ga);
   }
