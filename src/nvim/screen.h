@@ -1,6 +1,5 @@
 #ifndef NVIM_SCREEN_H
 #define NVIM_SCREEN_H
-/* screen.c */
 
 /*
  * flags for update_screen()
