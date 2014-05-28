@@ -3228,8 +3228,7 @@ void ex_checktime(exarg_T *eap)
   no_check_timestamps = save_no_check_timestamps;
 }
 
-#if (defined(HAVE_LOCALE_H) || defined(X_LOCALE)) \
-  && (defined(FEAT_EVAL) || defined(FEAT_MULTI_LANG))
+#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
 # define HAVE_GET_LOCALE_VAL
 static char *get_locale_val(int what);
 
@@ -3395,7 +3394,7 @@ void ex_language(exarg_T *eap)
 #endif
     {
       loc = setlocale(what, (char *)name);
-#if defined(FEAT_FLOAT) && defined(LC_NUMERIC)
+#ifdef LC_NUMERIC
       /* Make sure strtod() uses a decimal point, not a comma. */
       setlocale(LC_NUMERIC, "C");
 #endif
@@ -3415,9 +3414,7 @@ void ex_language(exarg_T *eap)
 
       if (what != LC_TIME) {
         /* Tell gettext() what to translate to.  It apparently doesn't
-         * use the currently effective locale.  Also do this when
-         * FEAT_GETTEXT isn't defined, so that shell commands use this
-         * value. */
+         * use the currently effective locale. */
         if (what == LC_ALL) {
           vim_setenv((char_u *)"LANG", name);
 

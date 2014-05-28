@@ -353,17 +353,14 @@ struct vimoption {
  * for the currency sign. */
 # define ISP_LATIN1 (char_u *)"@,161-255"
 
-/* The 16 bit MS-DOS version is low on space, make the string as short as
- * possible when compiling with few features. */
-#if defined(FEAT_DIFF) || defined(FEAT_FOLDING) || defined(FEAT_SPELL) \
-  || defined(FEAT_VERTSPLIT) \
-  || defined(FEAT_INS_EXPAND) || defined(FEAT_SYN_HL) || defined(FEAT_CONCEAL)
-# define HIGHLIGHT_INIT \
-  "8:SpecialKey,@:NonText,d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr,N:CursorLineNr,r:Question,s:StatusLine,S:StatusLineNC,c:VertSplit,t:Title,v:Visual,V:VisualNOS,w:WarningMsg,W:WildMenu,f:Folded,F:FoldColumn,A:DiffAdd,C:DiffChange,D:DiffDelete,T:DiffText,>:SignColumn,-:Conceal,B:SpellBad,P:SpellCap,R:SpellRare,L:SpellLocal,+:Pmenu,=:PmenuSel,x:PmenuSbar,X:PmenuThumb,*:TabLine,#:TabLineSel,_:TabLineFill,!:CursorColumn,.:CursorLine,o:ColorColumn"
-#else
-# define HIGHLIGHT_INIT \
-  "8:SpecialKey,@:NonText,d:Directory,e:ErrorMsg,i:IncSearch,l:Search,m:MoreMsg,M:ModeMsg,n:LineNr,N:CursorLineNr,r:Question,s:StatusLine,S:StatusLineNC,t:Title,v:Visual,w:WarningMsg,W:WildMenu,>:SignColumn,*:TabLine,#:TabLineSel,_:TabLineFill"
-#endif
+#define HIGHLIGHT_INIT \
+  "8:SpecialKey,@:NonText,d:Directory,e:ErrorMsg,i:IncSearch,l:Search," \
+  "m:MoreMsg,M:ModeMsg,n:LineNr,N:CursorLineNr,r:Question,s:StatusLine," \
+  "S:StatusLineNC,c:VertSplit,t:Title,v:Visual,V:VisualNOS,w:WarningMsg," \
+  "W:WildMenu,f:Folded,F:FoldColumn,A:DiffAdd,C:DiffChange,D:DiffDelete," \
+  "T:DiffText,>:SignColumn,-:Conceal,B:SpellBad,P:SpellCap,R:SpellRare," \
+  "L:SpellLocal,+:Pmenu,=:PmenuSel,x:PmenuSbar,X:PmenuThumb,*:TabLine," \
+  "#:TabLineSel,_:TabLineFill,!:CursorColumn,.:CursorLine,o:ColorColumn"
 
 /*
  * options[] is initialized here.
@@ -2035,8 +2032,7 @@ void set_init_1(void)
     }
   }
 
-#if defined(FEAT_POSTSCRIPT) && (defined(MSWIN) || \
-  defined(EBCDIC) || defined(MAC))
+#if defined(MSWIN) || defined(EBCDIC) || defined(MAC)
   /* Set print encoding on platforms that don't default to latin1 */
   set_string_default("penc",
       (char_u *)"hp-roman8"
@@ -7564,9 +7560,8 @@ static int wc_use_keyname(char_u *varp, long *wcp)
  *
  * langmap_mapchar[] maps any of 256 chars to an ASCII char used for Vim
  * commands.
- * When FEAT_MBYTE is defined langmap_mapga.ga_data is a sorted table of
- * langmap_entry_T.  This does the same as langmap_mapchar[] for characters >=
- * 256.
+ * langmap_mapga.ga_data is a sorted table of langmap_entry_T. 
+ * This does the same as langmap_mapchar[] for characters >= 256.
  */
 /*
  * With multi-byte support use growarray for 'langmap' chars >= 256

@@ -2082,8 +2082,6 @@ static void out_char_nf(unsigned c)
     out_flush();
 }
 
-#if defined(FEAT_TITLE) || defined(FEAT_MOUSE_TTY) || defined(FEAT_GUI) \
-  || defined(FEAT_TERMRESPONSE) || defined(PROTO)
 /*
  * A never-padding out_str.
  * use this whenever you don't want to run the string through tputs.
@@ -2104,7 +2102,6 @@ void out_str_nf(char_u *s)
   if (p_wd)
     out_flush();
 }
-#endif
 
 /*
  * out_str(s): Put a character string a byte at a time into the output buffer.
@@ -2219,8 +2216,7 @@ static void term_color(char_u *s, int n)
     OUT_STR(tgoto((char *)s, 0, n));
 }
 
-#if (defined(FEAT_TITLE) && (defined(UNIX) || \
-  defined(MACOS_X))) || defined(PROTO)
+#if defined(UNIX) || defined(MACOS_X) || defined(PROTO)
 /*
  * Generic function to set window title, using t_ts and t_fs.
  */
@@ -2324,8 +2320,7 @@ void ttest(int pairs)
   t_colors = atoi((char *)T_CCO);
 }
 
-#if (defined(FEAT_GUI) && (defined(FEAT_MENU) || !defined(USE_ON_FLY_SCROLL))) \
-  || defined(PROTO)
+#if defined(FEAT_GUI) || defined(PROTO)
 static int get_long_from_buf(char_u *buf, long_u *val);
 
 /*
@@ -3137,7 +3132,7 @@ static void switch_to_8bit(void)
 static linenr_T orig_topline = 0;
 static int orig_topfill = 0;
 #endif
-#if (defined(FEAT_WINDOWS) && defined(CHECK_DOUBLE_CLICK)) || defined(PROTO)
+#if defined(CHECK_DOUBLE_CLICK) || defined(PROTO)
 /*
  * Checking for double clicks ourselves.
  * "orig_topline" is used to avoid detecting a double-click when the window

@@ -880,7 +880,7 @@ static void init_locale(void)
 {
   setlocale(LC_ALL, "");
 
-# if defined(FEAT_FLOAT) && defined(LC_NUMERIC)
+# ifdef LC_NUMERIC
   /* Make sure strtod() uses a decimal point, not a comma. */
   setlocale(LC_NUMERIC, "C");
 # endif

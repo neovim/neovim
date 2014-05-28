@@ -1763,8 +1763,6 @@ void truncate_spaces(char_u *line)
   line[i + 1] = NUL;
 }
 
-#if defined(FEAT_VREPLACE) || defined(FEAT_INS_EXPAND) \
-  || defined(FEAT_COMMENTS) || defined(PROTO)
 /*
  * Backspace the cursor until the given column.  Handles REPLACE and VREPLACE
  * modes correctly.  May also be used when not in insert mode at all.
@@ -1781,7 +1779,6 @@ void backspace_until_column(int col)
       break;
   }
 }
-#endif
 
 /*
  * Like del_char(), but make sure not to go before column "limit_col".

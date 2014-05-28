@@ -7522,7 +7522,7 @@ int syn_get_final_id(int hl_id)
 
 /*
  * Translate the 'highlight' option into attributes in highlight_attr[] and
- * set up the user highlights User1..9.  If FEAT_STL_OPT is in use, a set of
+ * set up the user highlights User1..9. A set of
  * corresponding highlights to use on top of HLF_SNC is computed.
  * Called only when the 'highlight' option has been changed and upon first
  * screen redraw after any :highlight command.
@@ -7611,7 +7611,7 @@ int highlight_changed(void)
             return FAIL;
           attr = syn_id2attr(id);
           p = end - 1;
-#if defined(FEAT_STL_OPT) && defined(USER_HIGHLIGHT)
+#ifdef USER_HIGHLIGHT
           if (hlf == (int)HLF_SNC)
             id_SNC = syn_get_final_id(id);
           else if (hlf == (int)HLF_S)
@@ -7756,8 +7756,6 @@ static void highlight_list_two(int cnt, int attr)
 }
 
 
-#if defined(FEAT_CMDL_COMPL) || (defined(FEAT_SYN_HL) && defined(FEAT_EVAL)) \
-  || defined(FEAT_SIGNS) || defined(PROTO)
 /*
  * Function given to ExpandGeneric() to obtain the list of group names.
  * Also used for synIDattr() function.
@@ -7779,7 +7777,6 @@ char_u *get_highlight_name(expand_T *xp, int idx)
     return NULL;
   return HL_TABLE()[idx].sg_name;
 }
-#endif
 
 
 /**************************************

@@ -328,9 +328,8 @@ void add_to_input_buf(char_u *s, int len)
 #if ((defined(FEAT_XIM) || defined(FEAT_DND)) && defined(FEAT_GUI_GTK)) \
   || defined(FEAT_GUI_MSWIN) \
   || defined(FEAT_GUI_MAC) \
-  || (defined(FEAT_MBYTE) && defined(FEAT_MBYTE_IME)) \
-  || (defined(FEAT_GUI) && (!defined(USE_ON_FLY_SCROLL) \
-  || defined(FEAT_MENU))) \
+  || defined(FEAT_MBYTE_IME) \
+  || defined(FEAT_GUI) \
   || defined(PROTO)
 /*
  * Add "str[len]" to the input buffer while escaping CSI bytes.
@@ -352,15 +351,11 @@ void add_to_input_buf_csi(char_u *str, int len)          {
 
 #endif
 
-#if defined(FEAT_GUI) || defined(FEAT_EVAL) || defined(FEAT_EX_EXTRA) \
-  || defined(PROTO)
 /* Remove everything from the input buffer.  Called when ^C is found */
 void trash_input_buf(void)
 {
   inbufcount = 0;
 }
-
-#endif
 
 /*
  * Read as much data from the input buffer as possible up to maxlen, and store
@@ -494,8 +489,6 @@ void ui_cursor_shape(void)
   conceal_check_cursur_line();
 }
 
-#if defined(FEAT_GUI) || defined(FEAT_RIGHTLEFT) \
-  || defined(FEAT_MBYTE) || defined(PROTO)
 /*
  * Check bounds for column number
  */
@@ -519,7 +512,6 @@ int check_row(int row)
     return (int)screen_Rows - 1;
   return row;
 }
-#endif
 
 /*
  * Stuff for the X clipboard.  Shared between VMS and Unix.

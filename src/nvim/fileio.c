@@ -1493,7 +1493,7 @@ retry:
           /* Detected a UTF-8 error. */
 rewind_retry:
           /* Retry reading with another conversion. */
-# if defined(FEAT_EVAL) && defined(USE_ICONV)
+# ifdef USE_ICONV
           if (*p_ccv != NUL && iconv_fd != (iconv_t)-1)
             /* iconv() failed, try 'charconvert' */
             did_iconv = TRUE;
@@ -5361,8 +5361,6 @@ void forward_slash(char_u *fname)
 
 /*
  * Code for automatic commands.
- *
- * Only included when "FEAT_AUTOCMD" has been defined.
  */
 
 
@@ -6460,7 +6458,6 @@ int check_nomodeline(char_u **argp)
  * Search for a visible window containing the current buffer.  If there isn't
  * one then use "aucmd_win".
  * Set "curbuf" and "curwin" to match "buf".
- * When FEAT_AUTOCMD is not defined another version is used, see below.
  */
 void 
 aucmd_prepbuf (
@@ -6546,7 +6543,6 @@ aucmd_prepbuf (
 /*
  * Cleanup after executing autocommands for a (hidden) buffer.
  * Restore the window as it was (if possible).
- * When FEAT_AUTOCMD is not defined another version is used, see below.
  */
 void 
 aucmd_restbuf (

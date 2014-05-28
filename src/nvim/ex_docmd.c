@@ -4182,8 +4182,6 @@ int ends_excmd(int c)
   return c == NUL || c == '|' || c == '"' || c == '\n';
 }
 
-#if defined(FEAT_SYN_HL) || defined(FEAT_SEARCH_EXTRA) || defined(FEAT_EVAL) \
-  || defined(PROTO)
 /*
  * Return the next command, after the first '|' or '\n'.
  * Return NULL if not found.
@@ -4197,7 +4195,6 @@ char_u *find_nextcmd(char_u *p)
   }
   return p + 1;
 }
-#endif
 
 /*
  * Check if *p is a separator between Ex commands.
@@ -7068,7 +7065,7 @@ static void close_redir(void)
   }
 }
 
-#if defined(FEAT_SESSION) && defined(USE_CRNL)
+#ifdef USE_CRNL
 # define MKSESSION_NL
 static int mksession_nl = FALSE;    /* use NL only in put_eol() */
 #endif

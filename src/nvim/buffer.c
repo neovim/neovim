@@ -601,14 +601,12 @@ static void clear_wininfo(buf_T *buf)
  */
 void goto_buffer(exarg_T *eap, int start, int dir, int count)
 {
-# if defined(FEAT_WINDOWS) && defined(HAS_SWAP_EXISTS_ACTION)
-  buf_T       *old_curbuf = curbuf;
-
-  swap_exists_action = SEA_DIALOG;
-# endif
   (void)do_buffer(*eap->cmd == 's' ? DOBUF_SPLIT : DOBUF_GOTO,
       start, dir, count, eap->forceit);
-# if defined(FEAT_WINDOWS) && defined(HAS_SWAP_EXISTS_ACTION)
+#ifdef HAS_SWAP_EXISTS_ACTION
+  buf_T *old_curbuf = curbuf;
+  swap_exists_action = SEA_DIALOG;
+
   if (swap_exists_action == SEA_QUIT && *eap->cmd == 's') {
     cleanup_T cs;
 
@@ -624,9 +622,10 @@ void goto_buffer(exarg_T *eap, int start, int dir, int count)
     /* Restore the error/interrupt/exception state if not discarded by a
      * new aborting error, interrupt, or uncaught exception. */
     leave_cleanup(&cs);
-  } else
+  } else {
     handle_swap_exists(old_curbuf);
-# endif
+  }
+#endif
 }
 
 #if defined(HAS_SWAP_EXISTS_ACTION) || defined(PROTO)
@@ -1112,12 +1111,9 @@ do_buffer (
   /* Go to the other buffer. */
   set_curbuf(buf, action);
 
-#if defined(FEAT_LISTCMDS) \
-  && (defined(FEAT_SCROLLBIND) || defined(FEAT_CURSORBIND))
   if (action == DOBUF_SPLIT) {
     RESET_BINDING(curwin);      /* reset 'scrollbind' and 'cursorbind' */
   }
-#endif
 
   if (aborting())           /* autocmds may abort script processing */
     return FAIL;
@@ -3511,8 +3507,6 @@ build_stl_str_hl (
   return width;
 }
 
-#if defined(FEAT_STL_OPT) || defined(FEAT_CMDL_INFO) \
-  || defined(FEAT_GUI_TABLINE) || defined(PROTO)
 /*
  * Get relative cursor position in window into "buf[buflen]", in the form 99%,
  * using "Top", "Bot" or "All" when appropriate.
@@ -3535,7 +3529,6 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
         ? (int)(above / ((above + below) / 100L))
         : (int)(above * 100L / (above + below)));
 }
-#endif
 
 /*
  * Append (file 2 of 8) to "buf[buflen]", if editing more than one file.

@@ -13,6 +13,7 @@
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
 #include <string.h>
+#include <math.h>
 
 #include "nvim/vim.h"
 #include "nvim/message.h"
@@ -36,10 +37,6 @@
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/event.h"
-
-#if defined(FEAT_FLOAT)
-# include <math.h>
-#endif
 
 static int other_sourcing_name(void);
 static char_u *get_emsg_source(void);
@@ -156,7 +153,6 @@ int msg(char_u *s)
   return msg_attr_keep(s, 0, FALSE);
 }
 
-#if defined(FEAT_EVAL) || defined(FEAT_GUI_GTK) || defined(PROTO)
 /*
  * Like msg() but keep it silent when 'verbosefile' is set.
  */
@@ -170,7 +166,6 @@ int verb_msg(char_u *s)
 
   return n;
 }
-#endif
 
 int msg_attr(char_u *s, int attr)
 {
@@ -3054,7 +3049,6 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt
 
 
 
-#if defined(FEAT_EVAL)
 static char *e_printf = N_("E766: Insufficient arguments for printf()");
 
 static long tv_nr(typval_T *tvs, int *idxp);
@@ -3120,7 +3114,6 @@ static double tv_float(typval_T *tvs, int *idxp)
   }
   return f;
 }
-#endif
 
 /*
  * This code was included to provide a portable vsnprintf() and snprintf().

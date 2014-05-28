@@ -1501,7 +1501,7 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
 }
 #endif
 
-#if defined(UNIX) && (defined(FEAT_GUI_DIALOG) || defined(FEAT_CON_DIALOG))
+#ifdef UNIX
 static int process_still_running;
 #endif
 
@@ -2437,7 +2437,6 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
         )
       set_keep_msg((char_u *)_(no_lines_msg), 0);
 
-    /* FEAT_BYTEOFF already handled in there, don't worry 'bout it below */
     i = ml_replace((linenr_T)1, (char_u *)"", TRUE);
     buf->b_ml.ml_flags |= ML_EMPTY;
 
@@ -3406,7 +3405,7 @@ findswapname (
           int choice = 0;
 #endif
 
-#if defined(UNIX) && (defined(FEAT_GUI_DIALOG) || defined(FEAT_CON_DIALOG))
+#ifdef UNIX
           process_still_running = FALSE;
 #endif
           /*

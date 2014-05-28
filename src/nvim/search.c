@@ -449,7 +449,7 @@ void last_pat_prog(regmmatch_T *regmatch)
  * if (options & SEARCH_PEEK) check for typed char, cancel search
  *
  * Return FAIL (zero) for failure, non-zero for success.
- * When FEAT_EVAL is defined, returns the index of the first matching
+ * Returns the index of the first matching
  * subpattern plus one; one if there was none.
  */
 int searchit(win, buf, pos, dir, pat, count, options, pat_use, stop_lnum, tm)
@@ -3941,8 +3941,6 @@ static int is_one_char(char_u *pattern)
   return result;
 }
 
-#if defined(FEAT_LISP) || defined(FEAT_CINDENT) || defined(FEAT_TEXTOBJ) \
-  || defined(PROTO)
 /*
  * return TRUE if line 'lnum' is empty or has white chars only.
  */
@@ -3953,7 +3951,6 @@ int linewhite(linenr_T lnum)
   p = skipwhite(ml_get(lnum));
   return *p == NUL;
 }
-#endif
 
 /*
  * Find identifiers or defines in included files.

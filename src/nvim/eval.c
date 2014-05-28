@@ -12,6 +12,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include "nvim/vim.h"
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
@@ -68,10 +69,6 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
-
-#if defined(FEAT_FLOAT)
-# include <math.h>
-#endif
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -1554,9 +1551,6 @@ call_func_retnr (
   return retval;
 }
 
-#if (defined(FEAT_USR_CMDS) && defined(FEAT_CMDL_COMPL)) \
-  || defined(FEAT_COMPL_FUNC) || defined(PROTO)
-
 /*
  * Call vimL function "func" and return the result as a string.
  * Returns NULL when calling the function fails.
@@ -1608,7 +1602,6 @@ call_func_retlist (
 
   return rettv.vval.v_list;
 }
-#endif
 
 /*
  * Save the current function call pointer, and set it to NULL.
