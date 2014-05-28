@@ -46,6 +46,7 @@ static void broadcast_event(char *type, typval_T *data);
 static void unsubscribe(Channel *channel, char *event);
 static void close_channel(Channel *channel);
 static void close_cb(uv_handle_t *handle);
+static WBuffer *serialize_event(char *type, typval_T *data);
 
 void channel_init()
 {
@@ -197,19 +198,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
 static void send_event(Channel *channel, char *type, typval_T *data)
 {
-  String event_type = {.size = strnlen(type, EVENT_MAXLEN), .data = type};
-  Object event_data = vim_to_object(data);
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
-  msgpack_rpc_notification(event_type, event_data, &packer);
-  WBuffer *buffer = wstream_new_buffer(msgpack_event_buffer.data,
-      msgpack_event_buffer.size,
-      true);
-
-  wstream_write(channel->data.streams.write, buffer);
-
-  msgpack_rpc_free_object(event_data);
-  msgpack_sbuffer_clear(&msgpack_event_buffer);
+  wstream_write(channel->data.streams.write, serialize_event(type, data));
 }
 
 static void broadcast_event(char *type, typval_T *data)
@@ -228,21 +217,11 @@ static void broadcast_event(char *type, typval_T *data)
     goto end;
   }
 
-  String event_type = {.size = strnlen(type, 1024), .data = type};
-  Object event_data = vim_to_object(data);
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
-  msgpack_rpc_notification(event_type, event_data, &packer);
-  WBuffer *buffer = wstream_new_buffer(msgpack_event_buffer.data,
-                                       msgpack_event_buffer.size,
-                                       true);
+  WBuffer *buffer = serialize_event(type, data);
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
     wstream_write(kv_A(subscribed, i)->data.streams.write, buffer);
   }
-
-  msgpack_rpc_free_object(event_data);
-  msgpack_sbuffer_clear(&msgpack_event_buffer);
 
 end:
   kv_destroy(subscribed);
@@ -294,3 +273,18 @@ static void close_cb(uv_handle_t *handle)
   free(handle);
 }
 
+static WBuffer *serialize_event(char *type, typval_T *data)
+{
+  String event_type = {.size = strnlen(type, EVENT_MAXLEN), .data = type};
+  Object event_data = vim_to_object(data);
+  msgpack_packer packer;
+  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
+  msgpack_rpc_notification(event_type, event_data, &packer);
+  WBuffer *rv = wstream_new_buffer(msgpack_event_buffer.data,
+                                   msgpack_event_buffer.size,
+                                   true);
+  msgpack_rpc_free_object(event_data);
+  msgpack_sbuffer_clear(&msgpack_event_buffer);
+
+  return rv;
+}
