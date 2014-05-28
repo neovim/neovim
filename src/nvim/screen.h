@@ -15,7 +15,7 @@
 #define CLEAR                   50  /* screen messed up, clear it */
 
 
-
+/* screen.c */
 void redraw_later(int type);
 void redraw_win_later(win_T *wp, int type);
 void redraw_later_clear(void);
