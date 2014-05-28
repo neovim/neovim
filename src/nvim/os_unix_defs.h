@@ -229,9 +229,6 @@
 # define MAXPATHL       1024
 #endif
 
-// TODO(stefan991): remove macro
-#define CHECK_INODE             /* used when checking if a swap file already
-                                    exists for a file */
 # ifndef DFLT_MAXMEM
 #  define DFLT_MAXMEM   (5*1024)         /* use up to 5 Mbyte for a buffer */
 # endif

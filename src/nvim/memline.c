@@ -686,16 +686,12 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     FileInfo file_info;
     if (os_get_file_info((char *)buf->b_ffname, &file_info)) {
       long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
-#ifdef CHECK_INODE
       long_to_char((long)os_file_info_get_inode(&file_info), b0p->b0_ino);
-#endif
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
     } else {
       long_to_char(0L, b0p->b0_mtime);
-#ifdef CHECK_INODE
       long_to_char(0L, b0p->b0_ino);
-#endif
       buf->b_mtime = 0;
       buf->b_mtime_read = 0;
       buf->b_orig_size = 0;
@@ -3339,17 +3335,16 @@ findswapname (
              */
             if (b0.b0_flags & B0_SAME_DIR) {
               if (fnamecmp(path_tail(buf->b_ffname),
-                      path_tail(b0.b0_fname)) != 0
+                           path_tail(b0.b0_fname)) != 0
                   || !same_directory(fname, buf->b_ffname)) {
-#ifdef CHECK_INODE
                 /* Symlinks may point to the same file even
                  * when the name differs, need to check the
                  * inode too. */
                 expand_env(b0.b0_fname, NameBuff, MAXPATHL);
                 if (fnamecmp_ino(buf->b_ffname, NameBuff,
-                        char_to_long(b0.b0_ino)))
-#endif
-                differ = TRUE;
+                    char_to_long(b0.b0_ino))) {
+                  differ = TRUE;
+                }
               }
             } else {
               /*
@@ -3357,14 +3352,10 @@ findswapname (
                * "~user/path/file".  Expand it first.
                */
               expand_env(b0.b0_fname, NameBuff, MAXPATHL);
-#ifdef CHECK_INODE
               if (fnamecmp_ino(buf->b_ffname, NameBuff,
-                      char_to_long(b0.b0_ino)))
+                  char_to_long(b0.b0_ino))) {
                 differ = TRUE;
-#else
-              if (fnamecmp(NameBuff, buf->b_ffname) != 0)
-                differ = TRUE;
-#endif
+              }
             }
           }
           close(fd);
@@ -3504,7 +3495,6 @@ static int b0_magic_wrong(ZERO_BL *b0p)
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
 }
 
-#ifdef CHECK_INODE
 /*
  * Compare current file name with file name from swap file.
  * Try to use inode numbers when possible.
@@ -3603,7 +3593,6 @@ fnamecmp_ino (
     return FALSE;
   return TRUE;
 }
-#endif /* CHECK_INODE */
 
 /*
  * Move a long integer into a four byte character array.
