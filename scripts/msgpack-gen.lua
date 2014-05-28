@@ -62,6 +62,12 @@ for i = 1, #arg - 1 do
     api.functions[#api.functions + 1] = tmp[i]
     local fn_id = #api.functions
     local fn = api.functions[fn_id]
+    if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
+      -- this function should receive the channel id
+      fn.receives_channel_id = true
+      -- remove the parameter since it won't be passed by the api client
+      table.remove(fn.parameters, 1)
+    end
     if #fn.parameters ~= 0 and fn.parameters[#fn.parameters][1] == 'error' then
       -- function can fail if the last parameter type is 'Error'
       fn.can_fail = true
@@ -111,7 +117,7 @@ end
 output:write([[
 };
 
-void msgpack_rpc_dispatch(uint64_t id, msgpack_object *req, msgpack_packer *res)
+void msgpack_rpc_dispatch(uint64_t channel_id, msgpack_object *req, msgpack_packer *res)
 {
   Error error = { .set = false };
   uint64_t method_id = (uint32_t)req->via.array.ptr[2].via.u64;
@@ -121,7 +127,7 @@ void msgpack_rpc_dispatch(uint64_t id, msgpack_object *req, msgpack_packer *res)
       msgpack_pack_nil(res);
       // The result is the [channel_id, metadata] array
       msgpack_pack_array(res, 2);
-      msgpack_pack_uint64(res, id);
+      msgpack_pack_uint64(res, channel_id);
       msgpack_pack_raw(res, sizeof(msgpack_metadata));
       msgpack_pack_raw_body(res, msgpack_metadata, sizeof(msgpack_metadata));
       return;
@@ -169,8 +175,19 @@ for i = 1, #api.functions do
     output:write(fn.return_type..' rv = ')
   end
 
-  -- write the call without the closing parenthesis
-  output:write(fn.name..'('..call_args)
+  -- write the function name and the opening parenthesis
+  output:write(fn.name..'(')
+
+  if fn.receives_channel_id then
+    -- if the function receives the channel id, pass it as first argument
+    if #args > 0 then
+      output:write('channel_id, '..call_args)
+    else
+      output:write('channel_id)')
+    end
+  else
+    output:write(call_args)
+  end
 
   if fn.can_fail then
     -- if the function can fail, also pass a pointer to the local error object
