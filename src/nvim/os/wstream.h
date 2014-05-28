@@ -12,7 +12,7 @@
 ///
 /// @param maxmem Maximum amount memory used by this `WStream` instance.
 /// @return The newly-allocated `WStream` instance
-WStream * wstream_new(uint32_t maxmem);
+WStream * wstream_new(size_t maxmem);
 
 /// Frees all memory allocated for a WStream instance
 ///
@@ -31,10 +31,19 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream);
 ///
 /// @param wstream The `WStream` instance
 /// @param buffer The buffer which contains data to be written
-/// @param length Number of bytes that should be written from `buffer`
-/// @param free If true, `buffer` will be freed after the write is complete
-/// @return true if the data was successfully queued, false otherwise.
-bool wstream_write(WStream *wstream, char *buffer, uint32_t length, bool free);
+/// @return false if the write failed
+bool wstream_write(WStream *wstream, WBuffer *buffer);
+
+/// Creates a WBuffer object for holding output data. Instances of this
+/// object can be reused across WStream instances, and the memory is freed
+/// automatically when no longer needed(it tracks the number of references
+/// internally)
+///
+/// @param data Data stored by the WBuffer
+/// @param size The size of the data array
+/// @param copy If true, the data will be copied into the WBuffer
+/// @return The allocated WBuffer instance
+WBuffer *wstream_new_buffer(char *data, size_t size, bool copy);
 
 #endif  // NVIM_OS_WSTREAM_H
 

@@ -7,6 +7,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
+#include "nvim/os/channel.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -325,6 +326,24 @@ void vim_set_current_tabpage(Tabpage tabpage, Error *err)
   try_start();
   goto_tabpage_tp(tp, true, true);
   try_end(err);
+}
+
+void vim_subscribe(uint64_t channel_id, String event)
+{
+  size_t length = (event.size < EVENT_MAXLEN ? event.size : EVENT_MAXLEN);
+  char e[EVENT_MAXLEN + 1];
+  memcpy(e, event.data, length);
+  e[length] = NUL;
+  channel_subscribe(channel_id, e);
+}
+
+void vim_unsubscribe(uint64_t channel_id, String event)
+{
+  size_t length = (event.size < EVENT_MAXLEN ? event.size : EVENT_MAXLEN);
+  char e[EVENT_MAXLEN + 1];
+  memcpy(e, event.data, length);
+  e[length] = NUL;
+  channel_unsubscribe(channel_id, e);
 }
 
 static void write_msg(String message, bool to_err)

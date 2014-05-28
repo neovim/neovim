@@ -21,7 +21,7 @@
 ///        this to false
 /// @return The newly-allocated `RStream` instance
 RStream * rstream_new(rstream_cb cb,
-                      uint32_t buffer_size,
+                      size_t buffer_size,
                       void *data,
                       bool async);
 
@@ -65,7 +65,7 @@ void rstream_stop(RStream *rstream);
 /// @param buffer The buffer which will receive the data
 /// @param count Number of bytes that `buffer` can accept
 /// @return The number of bytes copied into `buffer`
-size_t rstream_read(RStream *rstream, char *buffer, uint32_t count);
+size_t rstream_read(RStream *rstream, char *buffer, size_t count);
 
 /// Returns the number of bytes available for reading from `rstream`
 ///

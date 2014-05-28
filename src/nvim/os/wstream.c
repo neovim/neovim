@@ -12,27 +12,27 @@
 struct wstream {
   uv_stream_t *stream;
   // Memory currently used by pending buffers
-  uint32_t curmem;
+  size_t curmem;
   // Maximum memory used by this instance
-  uint32_t maxmem;
+  size_t maxmem;
   // Number of pending requests
-  uint32_t pending_reqs;
+  size_t pending_reqs;
   bool freed;
+};
+
+struct wbuffer {
+  size_t refcount, size;
+  char *data;
 };
 
 typedef struct {
   WStream *wstream;
-  // Buffer containing data to be written
-  char *buffer;
-  // Size of the buffer
-  uint32_t length;
-  // If it's our responsibility to free the buffer
-  bool free;
+  WBuffer *buffer;
 } WriteData;
 
 static void write_cb(uv_write_t *req, int status);
 
-WStream * wstream_new(uint32_t maxmem)
+WStream * wstream_new(size_t maxmem)
 {
   WStream *rv = xmalloc(sizeof(WStream));
   rv->maxmem = maxmem;
@@ -59,39 +59,47 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
   wstream->stream = stream;
 }
 
-bool wstream_write(WStream *wstream, char *buffer, uint32_t length, bool free)
+bool wstream_write(WStream *wstream, WBuffer *buffer)
 {
   WriteData *data;
   uv_buf_t uvbuf;
   uv_write_t *req;
 
-  if (wstream->freed) {
-    // Don't accept write requests after the WStream instance was freed
+  // This should not be called after a wstream was freed
+  assert(!wstream->freed);
+
+  if (wstream->curmem + buffer->size > wstream->maxmem) {
     return false;
   }
 
-  if (wstream->curmem + length > wstream->maxmem) {
-    return false;
-  }
-
-  if (free) {
-    // We should only account for buffers that are ours to free
-    wstream->curmem += length;
-  }
-
+  buffer->refcount++;
+  wstream->curmem += buffer->size;
   data = xmalloc(sizeof(WriteData));
   data->wstream = wstream;
   data->buffer = buffer;
-  data->length = length;
-  data->free = free;
   req = xmalloc(sizeof(uv_write_t));
   req->data = data;
-  uvbuf.base = buffer;
-  uvbuf.len = length;
+  uvbuf.base = buffer->data;
+  uvbuf.len = buffer->size;
   wstream->pending_reqs++;
   uv_write(req, wstream->stream, &uvbuf, 1, write_cb);
 
   return true;
+}
+
+WBuffer *wstream_new_buffer(char *data, size_t size, bool copy)
+{
+  WBuffer *rv = xmalloc(sizeof(WBuffer));
+  rv->size = size;
+  rv->refcount = 0;
+
+  if (copy) {
+    rv->data = xmemdup(data, size);
+  } else {
+    rv->data = data;
+  }
+
+  return rv;
 }
 
 static void write_cb(uv_write_t *req, int status)
@@ -99,11 +107,12 @@ static void write_cb(uv_write_t *req, int status)
   WriteData *data = req->data;
 
   free(req);
+  data->wstream->curmem -= data->buffer->size;
 
-  if (data->free) {
+  if (!--data->buffer->refcount) {
     // Free the data written to the stream
+    free(data->buffer->data);
     free(data->buffer);
-    data->wstream->curmem -= data->length;
   }
 
   data->wstream->pending_reqs--;

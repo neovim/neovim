@@ -155,5 +155,17 @@ Tabpage vim_get_current_tabpage(void);
 /// @param[out] err Details of an error that may have occurred
 void vim_set_current_tabpage(Tabpage tabpage, Error *err);
 
+/// Subscribes to event broadcasts
+///
+/// @param channel_id The channel id(passed automatically by the dispatcher)
+/// @param event The event type string
+void vim_subscribe(uint64_t channel_id, String event);
+
+/// Unsubscribes to event broadcasts
+///
+/// @param channel_id The channel id(passed automatically by the dispatcher)
+/// @param event The event type string
+void vim_unsubscribe(uint64_t channel_id, String event);
+
 #endif  // NVIM_API_VIM_H
 

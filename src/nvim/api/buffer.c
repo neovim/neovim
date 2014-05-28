@@ -121,6 +121,7 @@ end:
     }
 
     free(rv.items);
+    rv.items = NULL;
   }
 
   return rv;

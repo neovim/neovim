@@ -13069,7 +13069,7 @@ static void f_send_event(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number < 0) {
     EMSG2(_(e_invarg2), "Channel id must be a positive integer");
     return;
   }
