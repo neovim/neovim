@@ -151,6 +151,7 @@ int decl(pos_T *lp)
 }
 
 /*
+
  * Return TRUE when 'shell' has "csh" in the tail.
  */
 int csh_like_shell(void)

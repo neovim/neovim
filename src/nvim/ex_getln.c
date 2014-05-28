@@ -2513,8 +2513,8 @@ void compute_cmdrow(void)
   if (exmode_active || msg_scrolled != 0)
     cmdline_row = Rows - 1;
   else
-    cmdline_row = W_WINROW(lastwin) + lastwin->w_height
-                  + W_STATUS_HEIGHT(lastwin);
+    cmdline_row = lastwin->w_winrow + lastwin->w_height
+                  + lastwin->w_status_height;
 }
 
 static void cursorcmd(void)

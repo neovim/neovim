@@ -544,7 +544,7 @@ edit (
       validate_cursor_col();
 
       if ((int)curwin->w_wcol < mincol - curbuf->b_p_ts
-          && curwin->w_wrow == W_WINROW(curwin)
+          && curwin->w_wrow == curwin->w_winrow
           + curwin->w_height - 1 - p_so
           && (curwin->w_cursor.lnum != curwin->w_topline
               || curwin->w_topfill > 0
@@ -1342,11 +1342,11 @@ void edit_putchar(int c, int highlight)
       attr = hl_attr(HLF_8);
     else
       attr = 0;
-    pc_row = W_WINROW(curwin) + curwin->w_wrow;
-    pc_col = W_WINCOL(curwin);
+    pc_row = curwin->w_winrow + curwin->w_wrow;
+    pc_col = curwin->w_wincol;
     pc_status = PC_STATUS_UNSET;
     if (curwin->w_p_rl) {
-      pc_col += W_WIDTH(curwin) - 1 - curwin->w_wcol;
+      pc_col += curwin->w_width - 1 - curwin->w_wcol;
       if (has_mbyte) {
         int fix_col = mb_fix_col(pc_col, pc_row);
 
@@ -1408,7 +1408,7 @@ void display_dollar(colnr_T col)
     curwin->w_cursor.col -= (*mb_head_off)(p, p + col);
   }
   curs_columns(FALSE);              /* recompute w_wrow and w_wcol */
-  if (curwin->w_wcol < W_WIDTH(curwin)) {
+  if (curwin->w_wcol < curwin->w_width) {
     edit_putchar('$', FALSE);
     dollar_vcol = curwin->w_virtcol;
   }
@@ -5493,7 +5493,7 @@ check_auto_format (
 /*
  * Find out textwidth to be used for formatting:
  *	if 'textwidth' option is set, use it
- *	else if 'wrapmargin' option is set, use W_WIDTH(curwin) - 'wrapmargin'
+ *	else if 'wrapmargin' option is set, use curwin->w_width - 'wrapmargin'
  *	if invalid value, use 0.
  *	Set default to window width (maximum 79) for "gq" operator.
  */
@@ -5508,7 +5508,7 @@ comp_textwidth (
   if (textwidth == 0 && curbuf->b_p_wm) {
     /* The width is the window width minus 'wrapmargin' minus all the
      * things that add to the margin. */
-    textwidth = W_WIDTH(curwin) - curbuf->b_p_wm;
+    textwidth = curwin->w_width - curbuf->b_p_wm;
     if (cmdwin_type != 0)
       textwidth -= 1;
     textwidth -= curwin->w_p_fdc;
@@ -5523,7 +5523,7 @@ comp_textwidth (
   if (textwidth < 0)
     textwidth = 0;
   if (ff && textwidth == 0) {
-    textwidth = W_WIDTH(curwin) - 1;
+    textwidth = curwin->w_width - 1;
     if (textwidth > 79)
       textwidth = 79;
   }

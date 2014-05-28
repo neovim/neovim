@@ -3394,8 +3394,8 @@ static int nv_screengo(oparg_T *oap, int dir, long dist)
 
   col_off1 = curwin_col_off();
   col_off2 = col_off1 - curwin_col_off2();
-  width1 = W_WIDTH(curwin) - col_off1;
-  width2 = W_WIDTH(curwin) - col_off2;
+  width1 = curwin->w_width - col_off1;
+  width2 = curwin->w_width - col_off2;
 
   if (curwin->w_width != 0) {
     /*
@@ -3730,7 +3730,7 @@ dozet:
 
   /* "zH" - scroll screen right half-page */
   case 'H':
-    cap->count1 *= W_WIDTH(curwin) / 2;
+    cap->count1 *= curwin->w_width / 2;
   /* FALLTHROUGH */
 
   /* "zh" - scroll screen to the right */
@@ -3746,7 +3746,7 @@ dozet:
     break;
 
   /* "zL" - scroll screen left half-page */
-  case 'L':   cap->count1 *= W_WIDTH(curwin) / 2;
+  case 'L':   cap->count1 *= curwin->w_width / 2;
   /* FALLTHROUGH */
 
   /* "zl" - scroll screen to the left */
@@ -3782,7 +3782,7 @@ dozet:
         col = 0;                        /* like the cursor is in col 0 */
       else
         getvcol(curwin, &curwin->w_cursor, NULL, NULL, &col);
-      n = W_WIDTH(curwin) - curwin_col_off();
+      n = curwin->w_width - curwin_col_off();
       if ((long)col + p_siso < n)
         col = 0;
       else
@@ -6170,7 +6170,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     if (curwin->w_p_wrap
         && curwin->w_width != 0
         ) {
-      int width1 = W_WIDTH(curwin) - curwin_col_off();
+      int width1 = curwin->w_width - curwin_col_off();
       int width2 = width1 + curwin_col_off2();
 
       validate_virtcol();
@@ -6183,7 +6183,7 @@ static void nv_g_cmd(cmdarg_T *cap)
      * 'relativenumber' is on and lines are wrapping the middle can be more
      * to the left. */
     if (cap->nchar == 'm')
-      i += (W_WIDTH(curwin) - curwin_col_off()
+      i += (curwin->w_width - curwin_col_off()
             + ((curwin->w_p_wrap && i > 0)
                ? curwin_col_off2() : 0)) / 2;
     coladvance((colnr_T)i);
@@ -6233,7 +6233,7 @@ static void nv_g_cmd(cmdarg_T *cap)
         ) {
       curwin->w_curswant = MAXCOL;              /* so we stay at the end */
       if (cap->count1 == 1) {
-        int width1 = W_WIDTH(curwin) - col_off;
+        int width1 = curwin->w_width - col_off;
         int width2 = width1 + curwin_col_off2();
 
         validate_virtcol();
@@ -6259,7 +6259,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == FAIL)
         clearopbeep(oap);
     } else {
-      i = curwin->w_leftcol + W_WIDTH(curwin) - col_off - 1;
+      i = curwin->w_leftcol + curwin->w_width - col_off - 1;
       coladvance((colnr_T)i);
 
       /* Make sure we stick in this column. */
