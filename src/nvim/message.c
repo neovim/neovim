@@ -3352,7 +3352,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
           if (fmt_spec == 'S') {
             if (min_field_width != 0)
               min_field_width += STRLEN(str_arg)
-                                 - mb_string2cells((char_u *)str_arg, -1);
+                                 - mb_string2cells((char_u *) str_arg);
             if (precision) {
               char_u *p1 = (char_u *)str_arg;
               size_t i;

@@ -90,7 +90,7 @@ Integer vim_strwidth(String str, Error *err)
   }
 
   char *buf = xstrndup(str.data, str.size);
-  Integer rv = mb_string2cells((char_u *)buf, -1);
+  Integer rv = (Integer) mb_string2cells((char_u *) buf);
   free(buf);
   return rv;
 }
