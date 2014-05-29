@@ -271,14 +271,6 @@ enum {
 #define BCO_ALWAYS      2       /* always copy the options */
 #define BCO_NOHELP      4       /* don't touch the help related options */
 
-/* flags for do_put() */
-#define PUT_FIXINDENT   1       /* make indent look nice */
-#define PUT_CURSEND     2       /* leave cursor after end of new text */
-#define PUT_CURSLINE    4       /* leave cursor on last line of new text */
-#define PUT_LINE        8       /* put register as lines */
-#define PUT_LINE_SPLIT  16      /* split line for linewise register */
-#define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
-
 /*
  * There are four history tables:
  */

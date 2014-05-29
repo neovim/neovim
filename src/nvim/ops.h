@@ -4,6 +4,15 @@
 #include "nvim/func_attr.h"
 #include "nvim/types.h"
 
+/* flags for do_put() */
+#define PUT_FIXINDENT   1       /* make indent look nice */
+#define PUT_CURSEND     2       /* leave cursor after end of new text */
+#define PUT_CURSLINE    4       /* leave cursor on last line of new text */
+#define PUT_LINE        8       /* put register as lines */
+#define PUT_LINE_SPLIT  16      /* split line for linewise register */
+#define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
+
+
 /* ops.c */
 int get_op_type(int char1, int char2);
 int op_on_lines(int op);
