@@ -3724,10 +3724,6 @@ eval_map_expr (
   vim_unescape_csi(expr);
 
   save_cmd = save_cmdline_alloc();
-  if (save_cmd == NULL) {
-    free(expr);
-    return NULL;
-  }
 
   /* Forbid changing text or using ":normal" to avoid most of the bad side
    * effects.  Also restore the cursor position. */

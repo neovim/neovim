@@ -2307,10 +2307,8 @@ char_u *save_cmdline_alloc(void)
  */
 void restore_cmdline_alloc(char_u *p)
 {
-  if (p != NULL) {
-    restore_cmdline((struct cmdline_info *)p);
-    free(p);
-  }
+  restore_cmdline((struct cmdline_info *)p);
+  free(p);
 }
 
 /*
