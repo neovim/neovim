@@ -11,6 +11,16 @@
 #define VIM_QUESTION    4
 #define VIM_LAST_TYPE   4       /* sentinel value */
 
+/*
+ * Return values for functions like vim_dialogyesno()
+ */
+#define VIM_YES         2
+#define VIM_NO          3
+#define VIM_CANCEL      4
+#define VIM_ALL         5
+#define VIM_DISCARDALL  6
+
+
 
 /* message.c */
 int msg(char_u *s);

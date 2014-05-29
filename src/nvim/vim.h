@@ -277,15 +277,6 @@ enum {
 #define HIST_COUNT      5       /* number of history tables */
 
 /*
- * Return values for functions like gui_yesnocancel()
- */
-#define VIM_YES         2
-#define VIM_NO          3
-#define VIM_CANCEL      4
-#define VIM_ALL         5
-#define VIM_DISCARDALL  6
-
-/*
  * arguments for win_split()
  */
 #define WSP_ROOM        1       /* require enough room */
