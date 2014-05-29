@@ -2584,7 +2584,7 @@ int input_available(void)
  * Return 0 for success
  *	  1 for invalid arguments
  *	  2 for no match
- *	  4 for out of mem
+ *	  4 for out of mem (deprecated, WON'T HAPPEN)
  *	  5 for entry not unique
  */
 int 
