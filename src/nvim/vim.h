@@ -266,12 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values returned by mch_nodetype() */
-#define NODE_NORMAL     0       /* file or directory, check with os_isdir()*/
-#define NODE_WRITABLE   1       /* something we can write to (character
-                                   device, fifo, socket, ..) */
-#define NODE_OTHER      2       /* non-writable thing (e.g., block device) */
-
 /* Values for readfile() flags */
 #define READ_NEW        0x01    /* read a file into a new buffer */
 #define READ_FILTER     0x02    /* read filter output */
