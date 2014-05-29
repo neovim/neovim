@@ -277,18 +277,6 @@ enum {
 #define HIST_COUNT      5       /* number of history tables */
 
 /*
- * arguments for win_split()
- */
-#define WSP_ROOM        1       /* require enough room */
-#define WSP_VERT        2       /* split vertically */
-#define WSP_TOP         4       /* window at top-left of shell */
-#define WSP_BOT         8       /* window at bottom-right of shell */
-#define WSP_HELP        16      /* creating the help window */
-#define WSP_BELOW       32      /* put new window below/right */
-#define WSP_ABOVE       64      /* put new window above/left */
-#define WSP_NEWLOC      128     /* don't copy location list */
-
-/*
  * arguments for gui_set_shellsize()
  */
 #define RESIZE_VERT     1       /* resize vertically */
