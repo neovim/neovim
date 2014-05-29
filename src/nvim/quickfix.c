@@ -484,9 +484,9 @@ qf_init_ext (
             len = (int)STRLEN(p_str);
 
           if (len > CMDBUFFSIZE - 2)
-            vim_strncpy(IObuff, p_str, CMDBUFFSIZE - 2);
+            STRLCPY(IObuff, p_str, CMDBUFFSIZE - 1);
           else
-            vim_strncpy(IObuff, p_str, len);
+            STRLCPY(IObuff, p_str, len + 1);
 
           p_str += len;
         } else if (tv->v_type == VAR_LIST) {
@@ -501,7 +501,7 @@ qf_init_ext (
           if (len > CMDBUFFSIZE - 2)
             len = CMDBUFFSIZE - 2;
 
-          vim_strncpy(IObuff, p_li->li_tv.vval.v_string, len);
+          STRLCPY(IObuff, p_li->li_tv.vval.v_string, len + 1);
 
           p_li = p_li->li_next;                 /* next item */
         }
@@ -509,8 +509,8 @@ qf_init_ext (
         /* Get the next line from the supplied buffer */
         if (buflnum > lnumlast)
           break;
-        vim_strncpy(IObuff, ml_get_buf(buf, buflnum++, FALSE),
-            CMDBUFFSIZE - 2);
+        STRLCPY(IObuff, ml_get_buf(buf, buflnum++, FALSE),
+            CMDBUFFSIZE - 1);
       }
     } else if (fgets((char *)IObuff, CMDBUFFSIZE - 2, fd) == NULL)
       break;
@@ -609,7 +609,7 @@ restofline:
           if (regmatch.startp[i] == NULL || regmatch.endp[i] == NULL)
             continue;
           len = (int)(regmatch.endp[i] - regmatch.startp[i]);
-          vim_strncpy(errmsg, regmatch.startp[i], len);
+          STRLCPY(errmsg, regmatch.startp[i], len + 1);
         }
         if ((i = (int)fmt_ptr->addr[6]) > 0) {                  /* %r */
           if (regmatch.startp[i] == NULL)
