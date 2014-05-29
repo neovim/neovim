@@ -1539,7 +1539,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
 
   buffer = xmallocz(MAXPATHL);
 
-  vim_strncpy(resource->name, (char_u *)name, 63);
+  STRLCPY(resource->name, name, 64);
   /* Look for named resource file in runtimepath */
   STRCPY(buffer, "print");
   add_pathsep(buffer);
@@ -1748,14 +1748,14 @@ static int prt_open_resource(struct prt_ps_resource_S *resource)
   while (!seen_all && prt_next_dsc(&dsc_line)) {
     switch (dsc_line.type) {
     case PRT_DSC_TITLE_TYPE:
-      vim_strncpy(resource->title, dsc_line.string, dsc_line.len);
+      STRLCPY(resource->title, dsc_line.string, dsc_line.len + 1);
       seen_title = TRUE;
       if (seen_version)
         seen_all = TRUE;
       break;
 
     case PRT_DSC_VERSION_TYPE:
-      vim_strncpy(resource->version, dsc_line.string, dsc_line.len);
+      STRLCPY(resource->version, dsc_line.string, dsc_line.len + 1);
       seen_version = TRUE;
       if (seen_title)
         seen_all = TRUE;
@@ -2160,8 +2160,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
       /* Add charset name if not empty */
       if (p_mbchar->cmap_charset != NULL) {
-        vim_strncpy((char_u *)prt_cmap,
-            (char_u *)p_mbchar->cmap_charset, sizeof(prt_cmap) - 3);
+        STRLCPY(prt_cmap, p_mbchar->cmap_charset, sizeof(prt_cmap) - 2);
         STRCAT(prt_cmap, "-");
       }
     } else {
@@ -2170,7 +2169,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
         EMSG(_("E674: printmbcharset cannot be empty with multi-byte encoding."));
         return FALSE;
       }
-      vim_strncpy((char_u *)prt_cmap, p_pmcs, sizeof(prt_cmap) - 3);
+      STRLCPY(prt_cmap, p_pmcs, sizeof(prt_cmap) - 2);
       STRCAT(prt_cmap, "-");
     }
 
