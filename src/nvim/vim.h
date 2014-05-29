@@ -1094,11 +1094,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 #define DOSO_VIMRC      1       /* loading vimrc file */
 #define DOSO_GVIMRC     2       /* loading gvimrc file */
 
-/* flags for buf_freeall() */
-#define BFA_DEL         1       /* buffer is going to be deleted */
-#define BFA_WIPE        2       /* buffer is going to be wiped out */
-#define BFA_KEEP_UNDO   4       /* do not free undo information */
-
 /* direction for nv_mousescroll() and ins_mousescroll() */
 #define MSCR_DOWN       0       /* DOWN must be FALSE */
 #define MSCR_UP         1

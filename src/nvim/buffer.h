@@ -24,6 +24,11 @@
 #define DOBUF_LAST      2       /* "count" buffer from last buffer */
 #define DOBUF_MOD       3       /* "count" mod. buffer from current buffer */
 
+/* flags for buf_freeall() */
+#define BFA_DEL         1       /* buffer is going to be deleted */
+#define BFA_WIPE        2       /* buffer is going to be wiped out */
+#define BFA_KEEP_UNDO   4       /* do not free undo information */
+
 
 
 /* buffer.c */
