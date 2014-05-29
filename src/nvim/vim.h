@@ -266,19 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* flags for do_ecmd() */
-#define ECMD_HIDE       0x01    /* don't free the current buffer */
-#define ECMD_SET_HELP   0x02    /* set b_help flag of (new) buffer before
-                                   opening file */
-#define ECMD_OLDBUF     0x04    /* use existing buffer if it exists */
-#define ECMD_FORCEIT    0x08    /* ! used in Ex command */
-#define ECMD_ADDBUF     0x10    /* don't edit, just add to buffer list */
-
-/* for lnum argument in do_ecmd() */
-#define ECMD_LASTL      (linenr_T)0     /* use last position in loaded file */
-#define ECMD_LAST       (linenr_T)-1    /* use last position in all files */
-#define ECMD_ONE        (linenr_T)1     /* use first line */
-
 /* flags for do_cmdline() */
 #define DOCMD_VERBOSE   0x01    /* included command in error message */
 #define DOCMD_NOWAIT    0x02    /* don't call wait_return() and friends */
@@ -1115,12 +1102,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 #define DOSO_NONE       0
 #define DOSO_VIMRC      1       /* loading vimrc file */
 #define DOSO_GVIMRC     2       /* loading gvimrc file */
-
-/* flags for read_viminfo() and children */
-#define VIF_WANT_INFO           1       /* load non-mark info */
-#define VIF_WANT_MARKS          2       /* load file marks */
-#define VIF_FORCEIT             4       /* overwrite info already read */
-#define VIF_GET_OLDFILES        8       /* load v:oldfiles */
 
 /* flags for buf_freeall() */
 #define BFA_DEL         1       /* buffer is going to be deleted */
