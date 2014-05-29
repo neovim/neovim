@@ -1305,17 +1305,19 @@ static int dbcs_char2cells(int c)
   return MB_BYTE2LEN((unsigned)c >> 8);
 }
 
-/*
- * Return the number of cells occupied by string "p".
- * Stop at a NUL character.  When "len" >= 0 stop at character "p[len]".
- */
-int mb_string2cells(const char_u *p, int len)
+/// Calculate the number of cells occupied by string `str`.
+///
+/// @param str The source string, may not be NULL, must be a NUL-terminated
+///            string.
+/// @return The number of cells occupied by string `str`
+size_t mb_string2cells(const char_u *str)
 {
-  int i;
-  int clen = 0;
+  size_t clen = 0;
 
-  for (i = 0; (len < 0 || i < len) && p[i] != NUL; i += (*mb_ptr2len)(p + i))
-    clen += (*mb_ptr2cells)(p + i);
+  for (const char_u *p = str; *p != NUL; p += (*mb_ptr2len)(p)) {
+    clen += (*mb_ptr2cells)(p);
+  }
+
   return clen;
 }
 
@@ -2953,7 +2955,7 @@ int utf_head_off(const char_u *base, const char_u *p)
   for (q = p;; --q) {
     /* Move s to the last byte of this char. */
     const char_u *s;
-    for (s = q; (s[1] & 0xc0) == 0x80; ++s);
+    for (s = q; (s[1] & 0xc0) == 0x80; ++s) {}
 
     /* Move q to the first byte of this char. */
     while (q > base && (*q & 0xc0) == 0x80)
