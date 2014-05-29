@@ -1,5 +1,17 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
+
+/* Values for buflist_getfile() */
+#define GETF_SETMARK    0x01    /* set pcmark before jumping */
+#define GETF_ALT        0x02    /* jumping to alternate file (not buf num) */
+#define GETF_SWITCH     0x04    /* respect 'switchbuf' settings when jumping */
+
+/* Values for buflist_new() flags */
+#define BLN_CURBUF      1       /* May re-use curbuf for new buffer */
+#define BLN_LISTED      2       /* Put new buffer in buffer list */
+#define BLN_DUMMY       4       /* Allocating dummy buffer */
+
+
 /* buffer.c */
 int open_buffer(int read_stdin, exarg_T *eap, int flags);
 int buf_valid(buf_T *buf);

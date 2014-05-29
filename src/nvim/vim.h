@@ -266,16 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for buflist_getfile() */
-#define GETF_SETMARK    0x01    /* set pcmark before jumping */
-#define GETF_ALT        0x02    /* jumping to alternate file (not buf num) */
-#define GETF_SWITCH     0x04    /* respect 'switchbuf' settings when jumping */
-
-/* Values for buflist_new() flags */
-#define BLN_CURBUF      1       /* May re-use curbuf for new buffer */
-#define BLN_LISTED      2       /* Put new buffer in buffer list */
-#define BLN_DUMMY       4       /* Allocating dummy buffer */
-
 /* Values for in_cinkeys() */
 #define KEY_OPEN_FORW   0x101
 #define KEY_OPEN_BACK   0x102
