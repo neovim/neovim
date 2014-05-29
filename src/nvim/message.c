@@ -25,6 +25,7 @@
 #include "nvim/charset.h"
 #include "nvim/eval.h"
 #include "nvim/ex_eval.h"
+#include "nvim/ex_docmd.h"
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
@@ -57,6 +58,10 @@ struct msgchunk_S {
   int sb_attr;                  /* text attributes */
   char_u sb_text[1];            /* text to be displayed, actually longer */
 };
+
+/* Magic chars used in confirm dialog strings */
+#define DLG_BUTTON_SEP  '\n'
+#define DLG_HOTKEY_CHAR '&'
 
 static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
 #ifdef INCLUDE_GENERATED_DECLARATIONS

@@ -18,6 +18,11 @@
  * definition of global variables
  */
 
+/* Values for "starting" */
+#define NO_SCREEN       2       /* no screen updating yet */
+#define NO_BUFFERS      1       /* not all buffers loaded yet */
+/*			0	   not starting anymore */
+
 /*
  * Number of Rows and Columns in the screen.
  * Must be long to be able to use them as options in option.c.
@@ -31,6 +36,12 @@ EXTERN long Rows                        /* nr of rows in the screen */
 #endif
 ;
 EXTERN long Columns INIT(= 80);         /* nr of columns in the screen */
+
+/*
+ * The characters and attributes cached for the screen.
+ */
+typedef char_u schar_T;
+typedef unsigned short sattr_T;
 
 /*
  * The characters that are currently on the screen are kept in ScreenLines[].
@@ -212,6 +223,11 @@ EXTERN int ex_nesting_level INIT(= 0);          /* nesting level */
 EXTERN int debug_break_level INIT(= -1);        /* break below this level */
 EXTERN int debug_did_msg INIT(= FALSE);         /* did "debug mode" message */
 EXTERN int debug_tick INIT(= 0);                /* breakpoint change count */
+
+/* Values for "do_profiling". */
+#define PROF_NONE       0       /* profiling not started */
+#define PROF_YES        1       /* profiling busy */
+#define PROF_PAUSED     2       /* profiling paused */
 EXTERN int do_profiling INIT(= PROF_NONE);      /* PROF_ values */
 
 /*
@@ -297,6 +313,14 @@ EXTERN int may_garbage_collect INIT(= FALSE);
 EXTERN int want_garbage_collect INIT(= FALSE);
 EXTERN int garbage_collect_at_exit INIT(= FALSE);
 
+/* Special values for current_SID. */
+#define SID_MODELINE    -1      /* when using a modeline */
+#define SID_CMDARG      -2      /* for "--cmd" argument */
+#define SID_CARG        -3      /* for "-c" argument */
+#define SID_ENV         -4      /* for sourcing environment variable */
+#define SID_ERROR       -5      /* option was reset because of an error */
+#define SID_NONE        -6      /* don't set scriptID */
+
 /* ID of script being sourced or was sourced to define the current function. */
 EXTERN scid_T current_SID INIT(= 0);
 
@@ -325,6 +349,65 @@ EXTERN int need_check_timestamps INIT(= FALSE);      /* need to check file
 EXTERN int did_check_timestamps INIT(= FALSE);      /* did check timestamps
                                                        recently */
 EXTERN int no_check_timestamps INIT(= 0);       /* Don't check timestamps */
+
+/*
+ * Values for index in highlight_attr[].
+ * When making changes, also update HL_FLAGS below!  And update the default
+ * value of 'highlight' in option.c.
+ */
+typedef enum {
+  HLF_8 = 0         /* Meta & special keys listed with ":map", text that is
+                       displayed different from what it is */
+  , HLF_AT          /* @ and ~ characters at end of screen, characters that
+                       don't really exist in the text */
+  , HLF_D           /* directories in CTRL-D listing */
+  , HLF_E           /* error messages */
+  , HLF_I           /* incremental search */
+  , HLF_L           /* last search string */
+  , HLF_M           /* "--More--" message */
+  , HLF_CM          /* Mode (e.g., "-- INSERT --") */
+  , HLF_N           /* line number for ":number" and ":#" commands */
+  , HLF_CLN         /* current line number */
+  , HLF_R           /* return to continue message and yes/no questions */
+  , HLF_S           /* status lines */
+  , HLF_SNC         /* status lines of not-current windows */
+  , HLF_C           /* column to separate vertically split windows */
+  , HLF_T           /* Titles for output from ":set all", ":autocmd" etc. */
+  , HLF_V           /* Visual mode */
+  , HLF_VNC         /* Visual mode, autoselecting and not clipboard owner */
+  , HLF_W           /* warning messages */
+  , HLF_WM          /* Wildmenu highlight */
+  , HLF_FL          /* Folded line */
+  , HLF_FC          /* Fold column */
+  , HLF_ADD         /* Added diff line */
+  , HLF_CHD         /* Changed diff line */
+  , HLF_DED         /* Deleted diff line */
+  , HLF_TXD         /* Text Changed in diff line */
+  , HLF_CONCEAL     /* Concealed text */
+  , HLF_SC          /* Sign column */
+  , HLF_SPB         /* SpellBad */
+  , HLF_SPC         /* SpellCap */
+  , HLF_SPR         /* SpellRare */
+  , HLF_SPL         /* SpellLocal */
+  , HLF_PNI         /* popup menu normal item */
+  , HLF_PSI         /* popup menu selected item */
+  , HLF_PSB         /* popup menu scrollbar */
+  , HLF_PST         /* popup menu scrollbar thumb */
+  , HLF_TP          /* tabpage line */
+  , HLF_TPS         /* tabpage line selected */
+  , HLF_TPF         /* tabpage line filler */
+  , HLF_CUC         /* 'cursurcolumn' */
+  , HLF_CUL         /* 'cursurline' */
+  , HLF_MC          /* 'colorcolumn' */
+  , HLF_COUNT       /* MUST be the last one */
+} hlf_T;
+
+/* The HL_FLAGS must be in the same order as the HLF_ enums!
+ * When changing this also adjust the default for 'highlight'. */
+#define HL_FLAGS {'8', '@', 'd', 'e', 'i', 'l', 'm', 'M', 'n', 'N', 'r', 's', \
+                  'S', 'c', 't', 'v', 'V', 'w', 'W', 'f', 'F', 'A', 'C', 'D', \
+                  'T', '-', '>', 'B', 'P', 'R', 'L', '+', '=', 'x', 'X', '*', \
+                  '#', '_', '!', '.', 'o'}
 
 EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 # define USER_HIGHLIGHT
@@ -727,6 +810,12 @@ EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 EXTERN int msg_silent INIT(= 0);        /* don't print messages */
 EXTERN int emsg_silent INIT(= 0);       /* don't print error messages */
 EXTERN int cmd_silent INIT(= FALSE);      /* don't echo the command line */
+
+/* Values for swap_exists_action: what to do when swap file already exists */
+#define SEA_NONE        0       /* don't use dialog */
+#define SEA_DIALOG      1       /* use dialog when possible */
+#define SEA_QUIT        2       /* quit editing the file */
+#define SEA_RECOVER     3       /* recover the file */
 
 #define HAS_SWAP_EXISTS_ACTION
 EXTERN int swap_exists_action INIT(= SEA_NONE);
