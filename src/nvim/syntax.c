@@ -2915,7 +2915,7 @@ check_keyword_id (
    * Must make a copy of the keyword, so we can add a NUL and make it
    * lowercase.
    */
-  vim_strncpy(keyword, kwp, kwlen);
+  STRLCPY(keyword, kwp, kwlen + 1);
 
   keyentry_T *kp = NULL;
 
@@ -5122,7 +5122,7 @@ get_id_list (
       for (end = p; *end && !vim_iswhite(*end) && *end != ','; ++end)
         ;
       name = xmalloc((int)(end - p + 3));             /* leave room for "^$" */
-      vim_strncpy(name + 1, p, end - p);
+      STRLCPY(name + 1, p, end - p + 1);
       if (       STRCMP(name + 1, "ALLBUT") == 0
                  || STRCMP(name + 1, "ALL") == 0
                  || STRCMP(name + 1, "TOP") == 0
@@ -7229,7 +7229,7 @@ int syn_name2id(char_u *name)
   /* Avoid using stricmp() too much, it's slow on some systems */
   /* Avoid alloc()/free(), these are slow too.  ID names over 200 chars
    * don't deserve to be found! */
-  vim_strncpy(name_u, name, 199);
+  STRLCPY(name_u, name, 200);
   vim_strup(name_u);
   for (i = highlight_ga.ga_len; --i >= 0; )
     if (HL_TABLE()[i].sg_name_u != NULL
