@@ -266,10 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* values for reg_do_extmatch */
-# define REX_SET        1       /* to allow \z\(...\), */
-# define REX_USE        2       /* to allow \z\1 et al. */
-
 /* flags for do_ecmd() */
 #define ECMD_HIDE       0x01    /* don't free the current buffer */
 #define ECMD_SET_HELP   0x02    /* set b_help flag of (new) buffer before

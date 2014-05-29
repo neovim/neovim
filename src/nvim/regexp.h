@@ -6,6 +6,10 @@
 #define RE_STRING       2       /* match in string instead of buffer text */
 #define RE_STRICT       4       /* don't allow [abc] without ] */
 
+/* values for reg_do_extmatch */
+# define REX_SET        1       /* to allow \z\(...\), */
+# define REX_USE        2       /* to allow \z\1 et al. */
+
 
 /* regexp.c */
 int re_multiline(regprog_T *prog);
