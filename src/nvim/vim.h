@@ -266,11 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* flags for buf_copy_options() */
-#define BCO_ENTER       1       /* going to enter the buffer */
-#define BCO_ALWAYS      2       /* always copy the options */
-#define BCO_NOHELP      4       /* don't touch the help related options */
-
 /*
  * There are four history tables:
  */
