@@ -277,16 +277,6 @@ enum {
 #define HIST_COUNT      5       /* number of history tables */
 
 /*
- * Types of dialogs passed to do_vim_dialog().
- */
-#define VIM_GENERIC     0
-#define VIM_ERROR       1
-#define VIM_WARNING     2
-#define VIM_INFO        3
-#define VIM_QUESTION    4
-#define VIM_LAST_TYPE   4       /* sentinel value */
-
-/*
  * Return values for functions like gui_yesnocancel()
  */
 #define VIM_YES         2

@@ -1,5 +1,17 @@
 #ifndef NVIM_MESSAGE_H
 #define NVIM_MESSAGE_H
+
+/*
+ * Types of dialogs passed to do_dialog().
+ */
+#define VIM_GENERIC     0
+#define VIM_ERROR       1
+#define VIM_WARNING     2
+#define VIM_INFO        3
+#define VIM_QUESTION    4
+#define VIM_LAST_TYPE   4       /* sentinel value */
+
+
 /* message.c */
 int msg(char_u *s);
 int verb_msg(char_u *s);
