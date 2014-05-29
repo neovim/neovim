@@ -266,12 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* flags for mf_sync() */
-#define MFS_ALL         1       /* also sync blocks with negative numbers */
-#define MFS_STOP        2       /* stop syncing when a character is available */
-#define MFS_FLUSH       4       /* flushed file to disk */
-#define MFS_ZERO        8       /* only write block 0 */
-
 /* flags for buf_copy_options() */
 #define BCO_ENTER       1       /* going to enter the buffer */
 #define BCO_ALWAYS      2       /* always copy the options */
