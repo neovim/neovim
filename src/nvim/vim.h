@@ -274,11 +274,6 @@ enum {
 #define DOCMD_EXCRESET  0x10    /* reset exception environment (for debugging)*/
 #define DOCMD_KEEPLINE  0x20    /* keep typed line for repeating with "." */
 
-/* flags for beginline() */
-#define BL_WHITE        1       /* cursor on first non-white in the line */
-#define BL_SOL          2       /* use 'sol' option */
-#define BL_FIX          4       /* don't leave cursor on a NUL */
-
 /* flags for mf_sync() */
 #define MFS_ALL         1       /* also sync blocks with negative numbers */
 #define MFS_STOP        2       /* stop syncing when a character is available */
@@ -302,13 +297,6 @@ enum {
 #define SIN_CHANGED     1       /* call changed_bytes() when line changed */
 #define SIN_INSERT      2       /* insert indent before existing text */
 #define SIN_UNDO        4       /* save line for undo before changing it */
-
-/* flags for insertchar() */
-#define INSCHAR_FORMAT  1       /* force formatting */
-#define INSCHAR_DO_COM  2       /* format comments */
-#define INSCHAR_CTRLV   4       /* char typed just after CTRL-V */
-#define INSCHAR_NO_FEX  8       /* don't use 'formatexpr' */
-#define INSCHAR_COM_LIST 16     /* format comments with list/2nd line indent */
 
 /* flags for open_line() */
 #define OPENLINE_DELSPACES  1   /* delete spaces after cursor */
