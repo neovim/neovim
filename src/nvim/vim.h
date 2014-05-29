@@ -267,16 +267,6 @@ enum {
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
 /*
- * There are four history tables:
- */
-#define HIST_CMD        0       /* colon commands */
-#define HIST_SEARCH     1       /* search commands */
-#define HIST_EXPR       2       /* expressions (from entering = register) */
-#define HIST_INPUT      3       /* input() lines */
-#define HIST_DEBUG      4       /* debug commands */
-#define HIST_COUNT      5       /* number of history tables */
-
-/*
  * arguments for gui_set_shellsize()
  */
 #define RESIZE_VERT     1       /* resize vertically */

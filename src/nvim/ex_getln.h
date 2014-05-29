@@ -21,6 +21,17 @@
 #define WILD_ESCAPE             128
 #define WILD_ICASE              256
 
+/*
+ * There are four history tables:
+ */
+#define HIST_CMD        0       /* colon commands */
+#define HIST_SEARCH     1       /* search commands */
+#define HIST_EXPR       2       /* expressions (from entering = register) */
+#define HIST_INPUT      3       /* input() lines */
+#define HIST_DEBUG      4       /* debug commands */
+#define HIST_COUNT      5       /* number of history tables */
+
+
 /* ex_getln.c */
 char_u *getcmdline(int firstc, long count, int indent);
 char_u *getcmdline_prompt(int firstc, char_u *prompt, int attr,
