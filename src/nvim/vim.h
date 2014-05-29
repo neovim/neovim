@@ -266,14 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for file_name_in_line() */
-#define FNAME_MESS      1       /* give error message */
-#define FNAME_EXP       2       /* expand to path */
-#define FNAME_HYP       4       /* check for hypertext link */
-#define FNAME_INCL      8       /* apply 'includeexpr' */
-#define FNAME_REL       16      /* ".." and "./" are relative to the (current)
-                                   file instead of the current directory */
-
 /* Values for buflist_getfile() */
 #define GETF_SETMARK    0x01    /* set pcmark before jumping */
 #define GETF_ALT        0x02    /* jumping to alternate file (not buf num) */

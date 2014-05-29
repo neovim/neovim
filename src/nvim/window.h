@@ -1,5 +1,16 @@
 #ifndef NVIM_WINDOW_H
 #define NVIM_WINDOW_H
+
+/* Values for file_name_in_line() */
+#define FNAME_MESS      1       /* give error message */
+#define FNAME_EXP       2       /* expand to path */
+#define FNAME_HYP       4       /* check for hypertext link */
+#define FNAME_INCL      8       /* apply 'includeexpr' */
+#define FNAME_REL       16      /* ".." and "./" are relative to the (current)
+                                   file instead of the current directory */
+
+
+
 /* window.c */
 void do_window(int nchar, long Prenum, int xchar);
 int win_split(int size, int flags);
