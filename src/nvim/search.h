@@ -32,6 +32,14 @@
 #define FM_BLOCKSTOP    0x04    /* stop at start/end of block */
 #define FM_SKIPCOMM     0x08    /* skip comments */
 
+/* Values for sub_cmd and which_pat argument for search_regcomp() */
+/* Also used for which_pat argument for searchit() */
+#define RE_SEARCH       0       /* save/use pat in/from search_pattern */
+#define RE_SUBST        1       /* save/use pat in/from subst_pattern */
+#define RE_BOTH         2       /* save pat in both patterns */
+#define RE_LAST         2       /* use last used pattern if "pat" is NULL */
+
+
 
 
 
