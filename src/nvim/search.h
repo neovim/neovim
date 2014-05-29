@@ -12,6 +12,22 @@
 #define ACTION_SHOW_ALL 4
 #define ACTION_EXPAND   5
 
+/* Values for 'options' argument in do_search() and searchit() */
+#define SEARCH_REV    0x01  /* go in reverse of previous dir. */
+#define SEARCH_ECHO   0x02  /* echo the search command and handle options */
+#define SEARCH_MSG    0x0c  /* give messages (yes, it's not 0x04) */
+#define SEARCH_NFMSG  0x08  /* give all messages except not found */
+#define SEARCH_OPT    0x10  /* interpret optional flags */
+#define SEARCH_HIS    0x20  /* put search pattern in history */
+#define SEARCH_END    0x40  /* put cursor at end of match */
+#define SEARCH_NOOF   0x80  /* don't add offset to position */
+#define SEARCH_START 0x100  /* start search without col offset */
+#define SEARCH_MARK  0x200  /* set previous context mark */
+#define SEARCH_KEEP  0x400  /* keep previous search pattern */
+#define SEARCH_PEEK  0x800  /* peek for typed char, cancel search */
+
+
+
 /* search.c */
 int search_regcomp(char_u *pat, int pat_save, int pat_use, int options,
                    regmmatch_T *regmatch);
