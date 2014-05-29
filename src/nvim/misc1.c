@@ -503,7 +503,7 @@ open_line (
           + (second_line_indent > 0 ? second_line_indent : 0) + 1);
       allocated = leader;                   /* remember to free it later */
 
-      vim_strncpy(leader, saved_line, lead_len);
+      STRLCPY(leader, saved_line, lead_len + 1);
 
       /*
        * Replace leader with lead_repl, right or left adjusted
@@ -2560,11 +2560,9 @@ void msgmore(long n)
   if (pn > p_report) {
     if (pn == 1) {
       if (n > 0)
-        vim_strncpy(msg_buf, (char_u *)_("1 more line"),
-            MSG_BUF_LEN - 1);
+        STRLCPY(msg_buf, _("1 more line"), MSG_BUF_LEN);
       else
-        vim_strncpy(msg_buf, (char_u *)_("1 line less"),
-            MSG_BUF_LEN - 1);
+        STRLCPY(msg_buf, _("1 line less"), MSG_BUF_LEN);
     } else {
       if (n > 0)
         vim_snprintf((char *)msg_buf, MSG_BUF_LEN,
@@ -3109,7 +3107,7 @@ char_u *get_env_name(expand_T *xp, int idx)
   static char_u name[ENVNAMELEN];
   char *envname = os_getenvname_at_index(idx);
   if (envname) {
-    vim_strncpy(name, (char_u *)envname, ENVNAMELEN - 1);
+    STRLCPY(name, envname, ENVNAMELEN);
     free(envname);
     return name;
   } else {
