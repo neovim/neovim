@@ -265,12 +265,6 @@ enum {
 # define HL_TRANS_CONT  0x10000 /* transparent item without contains arg */
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
-/* Values for "noremap" argument of ins_typebuf().  Also used for
- * map->m_noremap and menu->noremap[]. */
-#define REMAP_YES       0       /* allow remapping */
-#define REMAP_NONE      -1      /* no remapping */
-#define REMAP_SCRIPT    -2      /* remap script-local mappings only */
-#define REMAP_SKIP      -3      /* no remapping for first char */
 
 /* Values returned by mch_nodetype() */
 #define NODE_NORMAL     0       /* file or directory, check with os_isdir()*/
