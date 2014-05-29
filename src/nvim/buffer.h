@@ -11,6 +11,20 @@
 #define BLN_LISTED      2       /* Put new buffer in buffer list */
 #define BLN_DUMMY       4       /* Allocating dummy buffer */
 
+/* Values for action argument for do_buffer() */
+#define DOBUF_GOTO      0       /* go to specified buffer */
+#define DOBUF_SPLIT     1       /* split window and go to specified buffer */
+#define DOBUF_UNLOAD    2       /* unload specified buffer(s) */
+#define DOBUF_DEL       3       /* delete specified buffer(s) from buflist */
+#define DOBUF_WIPE      4       /* delete specified buffer(s) really */
+
+/* Values for start argument for do_buffer() */
+#define DOBUF_CURRENT   0       /* "count" buffer from current buffer */
+#define DOBUF_FIRST     1       /* "count" buffer from first buffer */
+#define DOBUF_LAST      2       /* "count" buffer from last buffer */
+#define DOBUF_MOD       3       /* "count" mod. buffer from current buffer */
+
+
 
 /* buffer.c */
 int open_buffer(int read_stdin, exarg_T *eap, int flags);

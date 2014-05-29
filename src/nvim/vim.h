@@ -266,19 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for action argument for do_buffer() */
-#define DOBUF_GOTO      0       /* go to specified buffer */
-#define DOBUF_SPLIT     1       /* split window and go to specified buffer */
-#define DOBUF_UNLOAD    2       /* unload specified buffer(s) */
-#define DOBUF_DEL       3       /* delete specified buffer(s) from buflist */
-#define DOBUF_WIPE      4       /* delete specified buffer(s) really */
-
-/* Values for start argument for do_buffer() */
-#define DOBUF_CURRENT   0       /* "count" buffer from current buffer */
-#define DOBUF_FIRST     1       /* "count" buffer from first buffer */
-#define DOBUF_LAST      2       /* "count" buffer from last buffer */
-#define DOBUF_MOD       3       /* "count" mod. buffer from current buffer */
-
 /* Values for sub_cmd and which_pat argument for search_regcomp() */
 /* Also used for which_pat argument for searchit() */
 #define RE_SEARCH       0       /* save/use pat in/from search_pattern */
