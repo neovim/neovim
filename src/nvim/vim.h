@@ -266,11 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for find_ident_under_cursor() */
-#define FIND_IDENT      1       /* find identifier (word) */
-#define FIND_STRING     2       /* find any string (WORD) */
-#define FIND_EVAL       4       /* include "->", "[]" and "." */
-
 /* Values for file_name_in_line() */
 #define FNAME_MESS      1       /* give error message */
 #define FNAME_EXP       2       /* expand to path */
