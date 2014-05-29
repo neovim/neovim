@@ -17008,15 +17008,13 @@ void ex_function(exarg_T *eap)
       int j = FAIL;
       if (sourcing_name != NULL) {
         scriptname = autoload_name(name);
-        if (scriptname != NULL) {
-          p = vim_strchr(scriptname, '/');
-          plen = (int)STRLEN(p);
-          slen = (int)STRLEN(sourcing_name);
-          if (slen > plen && fnamecmp(p,
-                  sourcing_name + slen - plen) == 0)
-            j = OK;
-          free(scriptname);
-        }
+        p = vim_strchr(scriptname, '/');
+        plen = (int)STRLEN(p);
+        slen = (int)STRLEN(sourcing_name);
+        if (slen > plen && fnamecmp(p,
+                sourcing_name + slen - plen) == 0)
+          j = OK;
+        free(scriptname);
       }
       if (j == FAIL) {
         EMSG2(_(
@@ -17638,21 +17636,20 @@ script_autoload (
 
 /*
  * Return the autoload script name for a function or variable name.
- * Returns NULL when out of memory.
  */
 static char_u *autoload_name(char_u *name)
 {
-  char_u      *p;
-  char_u      *scriptname;
-
   /* Get the script file name: replace '#' with '/', append ".vim". */
-  scriptname = xmalloc(STRLEN(name) + 14);
+  char_u *scriptname = xmalloc(STRLEN(name) + 14);
   STRCPY(scriptname, "autoload/");
   STRCAT(scriptname, name);
   *vim_strrchr(scriptname, AUTOLOAD_CHAR) = NUL;
   STRCAT(scriptname, ".vim");
+
+  char_u *p;
   while ((p = vim_strchr(scriptname, AUTOLOAD_CHAR)) != NULL)
     *p = '/';
+
   return scriptname;
 }
 
