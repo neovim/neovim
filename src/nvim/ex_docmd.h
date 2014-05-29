@@ -1,5 +1,16 @@
 #ifndef NVIM_EX_DOCMD_H
 #define NVIM_EX_DOCMD_H
+
+/* flags for do_cmdline() */
+#define DOCMD_VERBOSE   0x01    /* included command in error message */
+#define DOCMD_NOWAIT    0x02    /* don't call wait_return() and friends */
+#define DOCMD_REPEAT    0x04    /* repeat exec. until getline() returns NULL */
+#define DOCMD_KEYTYPED  0x08    /* don't reset KeyTyped */
+#define DOCMD_EXCRESET  0x10    /* reset exception environment (for debugging)*/
+#define DOCMD_KEEPLINE  0x20    /* keep typed line for repeating with "." */
+
+
+
 /* ex_docmd.c */
 void do_exmode(int improved);
 int do_cmdline_cmd(char_u *cmd);

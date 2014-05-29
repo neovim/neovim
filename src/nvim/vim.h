@@ -266,14 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* flags for do_cmdline() */
-#define DOCMD_VERBOSE   0x01    /* included command in error message */
-#define DOCMD_NOWAIT    0x02    /* don't call wait_return() and friends */
-#define DOCMD_REPEAT    0x04    /* repeat exec. until getline() returns NULL */
-#define DOCMD_KEYTYPED  0x08    /* don't reset KeyTyped */
-#define DOCMD_EXCRESET  0x10    /* reset exception environment (for debugging)*/
-#define DOCMD_KEEPLINE  0x20    /* keep typed line for repeating with "." */
-
 /* flags for mf_sync() */
 #define MFS_ALL         1       /* also sync blocks with negative numbers */
 #define MFS_STOP        2       /* stop syncing when a character is available */
