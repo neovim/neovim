@@ -266,11 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for change_indent() */
-#define INDENT_SET      1       /* set indent */
-#define INDENT_INC      2       /* increase indent */
-#define INDENT_DEC      3       /* decrease indent */
-
 /* Values for flags argument for findmatchlimit() */
 #define FM_BACKWARD     0x01    /* search backwards */
 #define FM_FORWARD      0x02    /* search forwards */

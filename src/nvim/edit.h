@@ -17,6 +17,11 @@
 #define KEY_OPEN_BACK   0x102
 #define KEY_COMPLETE    0x103   /* end of completion */
 
+/* Values for change_indent() */
+#define INDENT_SET      1       /* set indent */
+#define INDENT_INC      2       /* increase indent */
+#define INDENT_DEC      3       /* decrease indent */
+
 
 
 int edit(int cmdchar, int startln, long count);
