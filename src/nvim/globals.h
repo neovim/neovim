@@ -654,21 +654,21 @@ EXTERN vimconv_T output_conv;                   /* type of output conversion */
  * The value is set in mb_init();
  */
 /* length of char in bytes, including following composing chars */
-EXTERN int (*mb_ptr2len)(char_u *p) INIT(= latin_ptr2len);
+EXTERN int (*mb_ptr2len)(const char_u *p) INIT(= latin_ptr2len);
 /* idem, with limit on string length */
-EXTERN int (*mb_ptr2len_len)(char_u *p, int size) INIT(= latin_ptr2len_len);
+EXTERN int (*mb_ptr2len_len)(const char_u *p, int size) INIT(= latin_ptr2len_len);
 /* byte length of char */
 EXTERN int (*mb_char2len)(int c) INIT(= latin_char2len);
 /* convert char to bytes, return the length */
 EXTERN int (*mb_char2bytes)(int c, char_u *buf) INIT(= latin_char2bytes);
-EXTERN int (*mb_ptr2cells)(char_u *p) INIT(= latin_ptr2cells);
-EXTERN int (*mb_ptr2cells_len)(char_u *p, int size) INIT(
+EXTERN int (*mb_ptr2cells)(const char_u *p) INIT(= latin_ptr2cells);
+EXTERN int (*mb_ptr2cells_len)(const char_u *p, int size) INIT(
       = latin_ptr2cells_len);
 EXTERN int (*mb_char2cells)(int c) INIT(= latin_char2cells);
 EXTERN int (*mb_off2cells)(unsigned off, unsigned max_off) INIT(
       = latin_off2cells);
-EXTERN int (*mb_ptr2char)(char_u *p) INIT(= latin_ptr2char);
-EXTERN int (*mb_head_off)(char_u *base, char_u *p) INIT(= latin_head_off);
+EXTERN int (*mb_ptr2char)(const char_u *p) INIT(= latin_ptr2char);
+EXTERN int (*mb_head_off)(const char_u *base, const char_u *p) INIT(= latin_head_off);
 
 # if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
 /* Pointers to functions and variables to be loaded at runtime */
