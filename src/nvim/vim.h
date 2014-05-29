@@ -266,14 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for readfile() flags */
-#define READ_NEW        0x01    /* read a file into a new buffer */
-#define READ_FILTER     0x02    /* read filter output */
-#define READ_STDIN      0x04    /* read from stdin */
-#define READ_BUFFER     0x08    /* read from curbuf (converting stdin) */
-#define READ_DUMMY      0x10    /* reading into a dummy buffer */
-#define READ_KEEP_UNDO  0x20    /* keep undo info*/
-
 /* Values for change_indent() */
 #define INDENT_SET      1       /* set indent */
 #define INDENT_INC      2       /* increase indent */
