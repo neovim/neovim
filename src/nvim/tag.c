@@ -698,12 +698,11 @@ do_tag (
           len = (int)(tagp.tagname_end - tagp.tagname);
           if (len > 128)
             len = 128;
-          vim_strncpy(tag_name, tagp.tagname, len);
-          tag_name[len] = NUL;
+          STRLCPY(tag_name, tagp.tagname, len + 1);
 
           /* Save the tag file name */
           p = tag_full_fname(&tagp);
-          vim_strncpy(fname, p, MAXPATHL);
+          STRLCPY(fname, p, MAXPATHL + 1);
           free(p);
 
           /*
@@ -1827,7 +1826,7 @@ parse_line:
                   mfp = xmalloc(sizeof(struct match_found) + len);
                   mfp->len = len + 1;                 /* include the NUL */
                   p = mfp->match;
-                  vim_strncpy(p, tagp.command + 2, len);
+                  STRLCPY(p, tagp.command + 2, len + 1);
                 } else
                   mfp = NULL;
                 get_it_again = FALSE;
@@ -1836,7 +1835,7 @@ parse_line:
                 mfp = xmalloc(sizeof(struct match_found) + len);
                 mfp->len = len + 1;               /* include the NUL */
                 p = mfp->match;
-                vim_strncpy(p, tagp.tagname, len);
+                STRLCPY(p, tagp.tagname, len + 1);
 
                 /* if wanted, re-read line to get long form too */
                 if (State & INSERT)
@@ -2058,8 +2057,8 @@ get_tagfname (
       STRCPY(buf, p_hf);
       STRCPY(path_tail(buf), "tags");
     } else
-      vim_strncpy(buf, ((char_u **)(tag_fnames.ga_data))[
-            tnp->tn_hf_idx++], MAXPATHL - 1);
+      STRLCPY(buf, ((char_u **)(tag_fnames.ga_data))[
+            tnp->tn_hf_idx++], MAXPATHL);
     return OK;
   }
 
@@ -2636,8 +2635,8 @@ static char_u *expand_tag_fname(char_u *fname, char_u *tag_fname, int expand)
       && (p = path_tail(tag_fname)) != tag_fname) {
     retval = xmalloc(MAXPATHL);
     STRCPY(retval, tag_fname);
-    vim_strncpy(retval + (p - tag_fname), fname,
-        MAXPATHL - (p - tag_fname) - 1);
+    STRLCPY(retval + (p - tag_fname), fname,
+        MAXPATHL - (p - tag_fname));
     /*
      * Translate names like "src/a/../b/file.c" into "src/b/file.c".
      */
@@ -2791,7 +2790,7 @@ add_tag_field (
     len = (int)(end - start);
     if (len > MAXPATHL - 1)
       len = MAXPATHL - 1;
-    vim_strncpy(buf, start, len);
+    STRLCPY(buf, start, len + 1);
   }
   buf[len] = NUL;
   retval = dict_add_nr_str(dict, field_name, 0L, buf);
