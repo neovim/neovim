@@ -3743,10 +3743,12 @@ ExpandFromContext (
     ret = FAIL;
     for (i = 0; i < (int)(sizeof(tab) / sizeof(struct expgen)); ++i)
       if (xp->xp_context == tab[i].context) {
-        if (tab[i].ic)
+        if (tab[i].ic) {
           regmatch.rm_ic = TRUE;
-        ret = ExpandGeneric(xp, &regmatch, num_file, file,
-            tab[i].func, tab[i].escaped);
+        }
+        ExpandGeneric(xp, &regmatch, num_file, file, tab[i].func,
+                      tab[i].escaped);
+        ret = OK;
         break;
       }
   }
@@ -3762,10 +3764,8 @@ ExpandFromContext (
  * Generic function for command line completion.  It calls a function to
  * obtain strings, one by one.	The strings are matched against a regexp
  * program.  Matching strings are copied into an array, which is returned.
- *
- * Returns OK when no problems encountered, FAIL for error.
  */
-int ExpandGeneric(
+void ExpandGeneric(
     expand_T    *xp,
     regmatch_T  *regmatch,
     int         *num_file,
@@ -3790,7 +3790,7 @@ int ExpandGeneric(
     }
   }
   if (count == 0)
-    return OK;
+    return;
   *num_file = count;
   *file = (char_u **)xmalloc(count * sizeof(char_u *));
 
@@ -3832,8 +3832,6 @@ int ExpandGeneric(
   /* Reset the variables used for special highlight names expansion, so that
    * they don't show up when getting normal highlight names by ID. */
   reset_expand_highlight();
-
-  return OK;
 }
 
 /*
