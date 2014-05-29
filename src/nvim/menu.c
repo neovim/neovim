@@ -186,11 +186,8 @@ ex_menu (
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          if (p != NULL) {
-            menu_nable_recurse(root_menu, p, MENU_ALL_MODES,
-                enable);
-            free(p);
-          }
+          menu_nable_recurse(root_menu, p, MENU_ALL_MODES, enable);
+          free(p);
         }
     }
     menu_nable_recurse(root_menu, menu_path, modes, enable);
@@ -208,10 +205,8 @@ ex_menu (
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          if (p != NULL) {
-            remove_menu(&root_menu, p, MENU_ALL_MODES, TRUE);
-            free(p);
-          }
+          remove_menu(&root_menu, p, MENU_ALL_MODES, TRUE);
+          free(p);
         }
     }
 
@@ -242,13 +237,10 @@ ex_menu (
       for (i = 0; i < MENU_INDEX_TIP; ++i)
         if (modes & (1 << i)) {
           p = popup_mode_name(menu_path, i);
-          if (p != NULL) {
-            /* Include all modes, to make ":amenu" work */
-            menuarg.modes = modes;
-            add_menu_path(p, &menuarg, pri_tab, map_to
-                );
-            free(p);
-          }
+          // Include all modes, to make ":amenu" work
+          menuarg.modes = modes;
+          add_menu_path(p, &menuarg, pri_tab, map_to);
+          free(p);
         }
     }
 
@@ -1153,10 +1145,9 @@ get_menu_cmd_modes (
  */
 static char_u *popup_mode_name(char_u *name, int idx)
 {
-  char_u      *p;
   int len = (int)STRLEN(name);
 
-  p = vim_strnsave(name, len + 1);
+  char_u *p = vim_strnsave(name, len + 1);
   memmove(p + 6, p + 5, (size_t)(len - 4));
   p[5] = menu_mode_chars[idx];
 
