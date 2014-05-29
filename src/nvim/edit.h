@@ -12,6 +12,13 @@
 #define CPT_INFO    3   /* "info" */
 #define CPT_COUNT   4   /* Number of entries */
 
+/* Values for in_cinkeys() */
+#define KEY_OPEN_FORW   0x101
+#define KEY_OPEN_BACK   0x102
+#define KEY_COMPLETE    0x103   /* end of completion */
+
+
+
 int edit(int cmdchar, int startln, long count);
 void edit_putchar(int c, int highlight);
 void edit_unputchar(void);

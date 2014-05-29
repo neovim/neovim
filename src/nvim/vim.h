@@ -265,12 +265,6 @@ enum {
 # define HL_TRANS_CONT  0x10000 /* transparent item without contains arg */
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
-
-/* Values for in_cinkeys() */
-#define KEY_OPEN_FORW   0x101
-#define KEY_OPEN_BACK   0x102
-#define KEY_COMPLETE    0x103   /* end of completion */
-
 /* Values for "noremap" argument of ins_typebuf().  Also used for
  * map->m_noremap and menu->noremap[]. */
 #define REMAP_YES       0       /* allow remapping */
