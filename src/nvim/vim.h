@@ -279,18 +279,6 @@ enum {
 #define PUT_LINE_SPLIT  16      /* split line for linewise register */
 #define PUT_LINE_FORWARD 32     /* put linewise register below Visual sel. */
 
-/* flags for set_indent() */
-#define SIN_CHANGED     1       /* call changed_bytes() when line changed */
-#define SIN_INSERT      2       /* insert indent before existing text */
-#define SIN_UNDO        4       /* save line for undo before changing it */
-
-/* flags for open_line() */
-#define OPENLINE_DELSPACES  1   /* delete spaces after cursor */
-#define OPENLINE_DO_COM     2   /* format comments */
-#define OPENLINE_KEEPTRAIL  4   /* keep trailing spaces */
-#define OPENLINE_MARKFIX    8   /* fix mark positions */
-#define OPENLINE_COM_LIST  16   /* format comments with list/2nd line indent */
-
 /*
  * There are four history tables:
  */
