@@ -1,5 +1,12 @@
 #ifndef NVIM_REGEXP_H
 #define NVIM_REGEXP_H
+
+/* Second argument for vim_regcomp(). */
+#define RE_MAGIC        1       /* 'magic' option */
+#define RE_STRING       2       /* match in string instead of buffer text */
+#define RE_STRICT       4       /* don't allow [abc] without ] */
+
+
 /* regexp.c */
 int re_multiline(regprog_T *prog);
 char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp);
