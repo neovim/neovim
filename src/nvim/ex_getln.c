@@ -3655,8 +3655,10 @@ ExpandFromContext (
     return FAIL;
   }
 
-  if (xp->xp_context == EXPAND_SHELLCMD)
-    return expand_shellcmd(pat, num_file, file, flags);
+  if (xp->xp_context == EXPAND_SHELLCMD) {
+    expand_shellcmd(pat, num_file, file, flags);
+    return OK;
+  }
   if (xp->xp_context == EXPAND_OLD_SETTING)
     return ExpandOldSetting(num_file, file);
   if (xp->xp_context == EXPAND_BUFFERS)
@@ -3836,9 +3838,8 @@ int ExpandGeneric(
 
 /*
  * Complete a shell command.
- * Returns FAIL or OK;
  */
-static int 
+static void
 expand_shellcmd (
     char_u *filepat,           /* pattern to match with command names */
     int *num_file,          /* return: number of matches */
@@ -3926,7 +3927,6 @@ expand_shellcmd (
   free(pat);
   if (mustfree)
     free(path);
-  return OK;
 }
 
 /*
