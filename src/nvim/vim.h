@@ -266,12 +266,6 @@ enum {
 # define HL_CONCEAL     0x20000 /* can be concealed */
 # define HL_CONCEALENDS 0x40000 /* can be concealed */
 
-/* Values for flags argument for findmatchlimit() */
-#define FM_BACKWARD     0x01    /* search backwards */
-#define FM_FORWARD      0x02    /* search forwards */
-#define FM_BLOCKSTOP    0x04    /* stop at start/end of block */
-#define FM_SKIPCOMM     0x08    /* skip comments */
-
 /* Values for action argument for do_buffer() */
 #define DOBUF_GOTO      0       /* go to specified buffer */
 #define DOBUF_SPLIT     1       /* split window and go to specified buffer */

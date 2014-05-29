@@ -26,6 +26,13 @@
 #define SEARCH_KEEP  0x400  /* keep previous search pattern */
 #define SEARCH_PEEK  0x800  /* peek for typed char, cancel search */
 
+/* Values for flags argument for findmatchlimit() */
+#define FM_BACKWARD     0x01    /* search backwards */
+#define FM_FORWARD      0x02    /* search forwards */
+#define FM_BLOCKSTOP    0x04    /* stop at start/end of block */
+#define FM_SKIPCOMM     0x08    /* skip comments */
+
+
 
 
 /* search.c */
