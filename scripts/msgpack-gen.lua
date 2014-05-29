@@ -100,7 +100,7 @@ end
 output:write([[
 
 
-static const uint8_t msgpack_metadata[] = {
+const uint8_t msgpack_metadata[] = {
 
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
@@ -116,6 +116,7 @@ end
 -- usually it is the first function called by clients.
 output:write([[
 };
+const unsigned int msgpack_metadata_size = sizeof(msgpack_metadata);
 
 void msgpack_rpc_dispatch(uint64_t channel_id, msgpack_object *req, msgpack_packer *res)
 {
