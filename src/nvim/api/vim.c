@@ -57,6 +57,10 @@ Object vim_eval(String str, Error *err)
   typval_T *expr_result = eval_expr((char_u *)expr_str, NULL);
   free(expr_str);
 
+  if (!expr_result) {
+    set_api_error("Failed to eval expression", err);
+  }
+
   if (!try_end(err)) {
     // No errors, convert the result
     rv = vim_to_object(expr_result);
