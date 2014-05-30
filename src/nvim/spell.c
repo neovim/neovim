@@ -1553,7 +1553,7 @@ static void find_word(matchinf_T *mip, int mode)
             if (ptr == mip->mi_word)
               (void)spell_casefold(ptr, wlen, fword, MAXWLEN);
             else
-              vim_strncpy(fword, ptr, endlen[endidxcnt]);
+              STRLCPY(fword, ptr, endlen[endidxcnt] + 1);
           }
           if (!can_compound(slang, fword, mip->mi_compflags))
             continue;
@@ -2274,7 +2274,7 @@ void spell_cat_line(char_u *buf, char_u *line, int maxlen)
     n = (int)(p - line) + 1;
     if (n < maxlen - 1) {
       memset(buf, ' ', n);
-      vim_strncpy(buf +  n, p, maxlen - 1 - n);
+      STRLCPY(buf +  n, p, maxlen - n);
     }
   }
 }
@@ -3064,7 +3064,7 @@ count_common_word (
   if (len == -1)
     p = word;
   else {
-    vim_strncpy(buf, word, len);
+    STRLCPY(buf, word, len + 1);
     p = buf;
   }
 
@@ -3354,7 +3354,7 @@ static int init_syl_tab(slang_T *slang)
     ga_grow(&slang->sl_syl_items, 1);
     syl = ((syl_item_T *)slang->sl_syl_items.ga_data)
           + slang->sl_syl_items.ga_len++;
-    vim_strncpy(syl->sy_chars, s, l);
+    STRLCPY(syl->sy_chars, s, l + 1);
     syl->sy_len = l;
   }
   return OK;
@@ -3761,7 +3761,7 @@ char_u *did_set_spelllang(win_T *wp)
       p = vim_strchr(path_tail(lang), '_');
       if (p != NULL && ASCII_ISALPHA(p[1]) && ASCII_ISALPHA(p[2])
           && !ASCII_ISALPHA(p[3])) {
-        vim_strncpy(region_cp, p + 1, 2);
+        STRLCPY(region_cp, p + 1, 3);
         memmove(p, p + 3, len - (p - lang) - 2);
         len -= 3;
         region = region_cp;
@@ -3883,7 +3883,7 @@ char_u *did_set_spelllang(win_T *wp)
       if (round == 0)
         STRCPY(lang, "internal wordlist");
       else {
-        vim_strncpy(lang, path_tail(spf_name), MAXWLEN);
+        STRLCPY(lang, path_tail(spf_name), MAXWLEN + 1);
         p = vim_strchr(lang, '.');
         if (p != NULL)
           *p = NUL;             // truncate at ".encoding.add"
@@ -4004,7 +4004,7 @@ static void use_midword(slang_T *lp, win_T *wp)
         bp = vim_strnsave(wp->w_s->b_spell_ismw_mb, n + l);
         free(wp->w_s->b_spell_ismw_mb);
         wp->w_s->b_spell_ismw_mb = bp;
-        vim_strncpy(bp + n, p, l);
+        STRLCPY(bp + n, p, l + 1);
       }
       p += l;
     } else
@@ -4652,7 +4652,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
         // times.  The affix files that do this have an undocumented
         // "S" flag on all but the last block, thus we check for that
         // and store it in ah_follows.
-        vim_strncpy(key, items[1], AH_KEY_LEN - 1);
+        STRLCPY(key, items[1], AH_KEY_LEN);
         hi = hash_find(tp, key);
         if (!HASHITEM_EMPTY(hi)) {
           cur_aff = HI2AH(hi);
@@ -5223,7 +5223,7 @@ static void process_compflags(spellinfo_T *spin, afffile_T *aff, char_u *compfla
       if (flag != 0) {
         // Find the flag in the hashtable.  If it was used before, use
         // the existing ID.  Otherwise add a new entry.
-        vim_strncpy(key, prevp, p - prevp);
+        STRLCPY(key, prevp, p - prevp + 1);
         hi = hash_find(&aff->af_comp, key);
         if (!HASHITEM_EMPTY(hi))
           id = HI2CI(hi)->ci_newID;
@@ -5612,7 +5612,7 @@ static int get_pfxlist(afffile_T *affile, char_u *afflist, char_u *store_afflist
     if (get_affitem(affile->af_flagtype, &p) != 0) {
       // A flag is a postponed prefix flag if it appears in "af_pref"
       // and it's ID is not zero.
-      vim_strncpy(key, prevp, p - prevp);
+      STRLCPY(key, prevp, p - prevp + 1);
       hi = hash_find(&affile->af_pref, key);
       if (!HASHITEM_EMPTY(hi)) {
         id = HI2AH(hi)->ah_newID;
@@ -5643,7 +5643,7 @@ static void get_compflags(afffile_T *affile, char_u *afflist, char_u *store_affl
     prevp = p;
     if (get_affitem(affile->af_flagtype, &p) != 0) {
       // A flag is a compound flag if it appears in "af_comp".
-      vim_strncpy(key, prevp, p - prevp);
+      STRLCPY(key, prevp, p - prevp + 1);
       hi = hash_find(&affile->af_comp, key);
       if (!HASHITEM_EMPTY(hi))
         store_afflist[cnt++] = HI2CI(hi)->ci_newID;
@@ -5738,7 +5738,7 @@ store_aff_word (
               if (ae->ae_add == NULL)
                 *newword = NUL;
               else
-                vim_strncpy(newword, ae->ae_add, MAXWLEN - 1);
+                STRLCPY(newword, ae->ae_add, MAXWLEN);
               p = word;
               if (ae->ae_chop != NULL) {
                 // Skip chop string.
@@ -5752,7 +5752,7 @@ store_aff_word (
               STRCAT(newword, p);
             } else {
               // suffix: chop/add at the end of the word
-              vim_strncpy(newword, word, MAXWLEN - 1);
+              STRLCPY(newword, word, MAXWLEN);
               if (ae->ae_chop != NULL) {
                 // Remove chop string.
                 p = newword + STRLEN(newword);
@@ -5834,7 +5834,7 @@ store_aff_word (
             // Obey a "COMPOUNDFORBIDFLAG" of the affix: don't
             // use the compound flags.
             if (use_pfxlist != NULL && ae->ae_compforbid) {
-              vim_strncpy(pfx_pfxlist, use_pfxlist, use_pfxlen);
+              STRLCPY(pfx_pfxlist, use_pfxlist, use_pfxlen + 1);
               use_pfxlist = pfx_pfxlist;
             }
 
@@ -7188,7 +7188,7 @@ static void spell_make_sugfile(spellinfo_T *spin, char_u *wfname)
   // Write the .sug file.
   // Make the file name by changing ".spl" to ".sug".
   fname = xmalloc(MAXPATHL);
-  vim_strncpy(fname, wfname, MAXPATHL - 1);
+  STRLCPY(fname, wfname, MAXPATHL);
   len = (int)STRLEN(fname);
   fname[len - 2] = 'u';
   fname[len - 1] = 'g';
@@ -7612,7 +7612,7 @@ mkspell (
           fnames[0], spin.si_ascii ? (char_u *)"ascii" : spell_enc());
     } else if (len > 4 && STRCMP(fnames[0] + len - 4, ".spl") == 0)   {
       // Name ends in ".spl", use as the file name.
-      vim_strncpy(wfname, fnames[0], MAXPATHL - 1);
+      STRLCPY(wfname, fnames[0], MAXPATHL);
     } else
       // Name should be language, make the file name from it.
       vim_snprintf((char *)wfname, MAXPATHL, SPL_FNAME_TMPL,
@@ -7974,8 +7974,8 @@ static void init_spellfile(void)
       if (aspath)
         // Use directory of an entry with path, e.g., for
         // "/dir/lg.utf-8.spl" use "/dir".
-        vim_strncpy(buf, curbuf->b_s.b_p_spl,
-            lstart - curbuf->b_s.b_p_spl - 1);
+        STRLCPY(buf, curbuf->b_s.b_p_spl,
+            lstart - curbuf->b_s.b_p_spl);
       else
         // Copy the path from 'runtimepath' to buf[].
         copy_option_part(&rtp, buf, MAXPATHL, ",");
@@ -7983,8 +7983,8 @@ static void init_spellfile(void)
         // Use the first language name from 'spelllang' and the
         // encoding used in the first loaded .spl file.
         if (aspath)
-          vim_strncpy(buf, curbuf->b_s.b_p_spl,
-              lend - curbuf->b_s.b_p_spl);
+          STRLCPY(buf, curbuf->b_s.b_p_spl,
+              lend - curbuf->b_s.b_p_spl + 1);
         else {
           // Create the "spell" directory if it doesn't exist yet.
           l = (int)STRLEN(buf);
@@ -8530,11 +8530,11 @@ void spell_suggest(int count)
 
       // The suggested word may replace only part of the bad word, add
       // the not replaced part.
-      vim_strncpy(wcopy, stp->st_word, MAXWLEN);
+      STRLCPY(wcopy, stp->st_word, MAXWLEN + 1);
       if (sug.su_badlen > stp->st_orglen)
-        vim_strncpy(wcopy + stp->st_wordlen,
+        STRLCPY(wcopy + stp->st_wordlen,
             sug.su_badptr + stp->st_orglen,
-            sug.su_badlen - stp->st_orglen);
+            sug.su_badlen - stp->st_orglen + 1);
       vim_snprintf((char *)IObuff, IOSIZE, "%2d", i + 1);
       if (cmdmsg_rl)
         rl_mirror(IObuff);
@@ -8816,7 +8816,7 @@ spell_find_suggest (
 
   if (su->su_badlen >= MAXWLEN)
     su->su_badlen = MAXWLEN - 1;        // just in case
-  vim_strncpy(su->su_badword, su->su_badptr, su->su_badlen);
+  STRLCPY(su->su_badword, su->su_badptr, su->su_badlen + 1);
   (void)spell_casefold(su->su_badptr, su->su_badlen,
       su->su_fbadword, MAXWLEN);
   // get caps flags for bad word
@@ -9259,7 +9259,7 @@ onecap_copy (
     l = 1;
     wcopy[0] = c;
   }
-  vim_strncpy(wcopy + l, p, MAXWLEN - l - 1);
+  STRLCPY(wcopy + l, p, MAXWLEN - l);
 }
 
 // Make a copy of "word" with all the letters upper cased into
@@ -9625,9 +9625,9 @@ static void suggest_trie_walk(suginfo_T *su, langp_T *lp, char_u *fword, int sou
 
           compflags[sp->ts_complen] = ((unsigned)flags >> 24);
           compflags[sp->ts_complen + 1] = NUL;
-          vim_strncpy(preword + sp->ts_prewordlen,
+          STRLCPY(preword + sp->ts_prewordlen,
               tword + sp->ts_splitoff,
-              sp->ts_twordlen - sp->ts_splitoff);
+              sp->ts_twordlen - sp->ts_splitoff + 1);
 
           // Verify CHECKCOMPOUNDPATTERN  rules.
           if (match_checkcompoundpattern(preword,  sp->ts_prewordlen,
@@ -10968,8 +10968,8 @@ stp_sal_score (
     // Add part of the bad word to the good word, so that we soundfold
     // what replaces the bad word.
     STRCPY(goodword, stp->st_word);
-    vim_strncpy(goodword + stp->st_wordlen,
-        su->su_badptr + su->su_badlen - lendiff, lendiff);
+    STRLCPY(goodword + stp->st_wordlen,
+        su->su_badptr + su->su_badlen - lendiff, lendiff + 1);
     pgood = goodword;
   } else
     pgood = stp->st_word;
@@ -11545,10 +11545,10 @@ check_suggestions (
   stp = &SUG(*gap, 0);
   for (int i = gap->ga_len - 1; i >= 0; --i) {
     // Need to append what follows to check for "the the".
-    vim_strncpy(longword, stp[i].st_word, MAXWLEN);
+    STRLCPY(longword, stp[i].st_word, MAXWLEN + 1);
     len = stp[i].st_wordlen;
-    vim_strncpy(longword + len, su->su_badptr + stp[i].st_orglen,
-        MAXWLEN - len);
+    STRLCPY(longword + len, su->su_badptr + stp[i].st_orglen,
+        MAXWLEN - len + 1);
     attr = HLF_COUNT;
     (void)spell_check(curwin, longword, &attr, NULL, FALSE);
     if (attr != HLF_COUNT) {
@@ -11815,7 +11815,7 @@ static void spell_soundfold_sal(slang_T *slang, char_u *inword, char_u *res)
     }
     *t = NUL;
   } else
-    vim_strncpy(word, s, MAXWLEN - 1);
+    STRLCPY(word, s, MAXWLEN);
 
   smp = (salitem_T *)slang->sl_sal.ga_data;
 
@@ -13269,7 +13269,7 @@ dump_prefixes (
 
           c = valid_word_prefix(i, n, flags, word, slang, FALSE);
           if (c != 0) {
-            vim_strncpy(prefix + depth, word, MAXWLEN - depth - 1);
+            STRLCPY(prefix + depth, word, MAXWLEN - depth);
             dump_word(slang, prefix, pat, dir, dumpflags,
                 (c & WF_RAREPFX) ? (flags | WF_RARE)
                 : flags, lnum);
@@ -13284,8 +13284,7 @@ dump_prefixes (
             c = valid_word_prefix(i, n, flags, word_up, slang,
                 TRUE);
             if (c != 0) {
-              vim_strncpy(prefix + depth, word_up,
-                  MAXWLEN - depth - 1);
+              STRLCPY(prefix + depth, word_up, MAXWLEN - depth);
               dump_word(slang, prefix, pat, dir, dumpflags,
                   (c & WF_RAREPFX) ? (flags | WF_RARE)
                   : flags, lnum);
