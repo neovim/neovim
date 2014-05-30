@@ -352,19 +352,22 @@ tabpage_T * find_tab(Tabpage tabpage, Error *err)
   return rv;
 }
 
-/// Copies a C string into a String (binary safe string, characters + length)
+/// Copies a C string into a String (binary safe string, characters + length).
+/// The resulting string is also NUL-terminated, to facilitate interoperating
+/// with code using C strings.
 ///
 /// @param str the C string to copy
-/// @return the resulting String, if the input string was NULL, then an
+/// @return the resulting String, if the input string was NULL, an
 ///         empty String is returned
-String cstr_to_string(const char *str) {
+String cstr_to_string(const char *str)
+{
     if (str == NULL) {
         return (String) STRING_INIT;
     }
 
     size_t len = strlen(str);
     return (String) {
-        .data = xmemdup(str, len),
+        .data = xmemdupz(str, len),
         .size = len
     };
 }
