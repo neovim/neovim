@@ -1651,9 +1651,9 @@ static void win_update(win_T *wp)
        * Last line isn't finished: Display "@@@" at the end.
        */
       screen_fill(wp->w_winrow + wp->w_height - 1,
-          wp->w_winrow + wp->w_height,
-          (int)wp->w_wincol + wp->w_width - 3, (int)wp->w_wincol + wp->w_width,
-          '@', '@', hl_attr(HLF_AT));
+                  wp->w_winrow + wp->w_height,
+                  wp->w_wincol + wp->w_width - 3, wp->w_wincol + wp->w_width,
+                  '@', '@', hl_attr(HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -1745,8 +1745,8 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       if (n > wp->w_width)
         n = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-          wp->w_wincol + wp->w_width - n, (int)wp->w_wincol + wp->w_width,
-          ' ', ' ', hl_attr(HLF_FC));
+                  wp->w_wincol + wp->w_width - n, wp->w_wincol + wp->w_width,
+                  ' ', ' ', hl_attr(HLF_FC));
     }
 
     if (draw_signcolumn(wp)) {
@@ -1757,17 +1757,19 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
             nn = wp->w_width;
         }
         screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                wp->w_wincol + wp->w_width - nn, (int)wp->w_wincol + wp->w_width - n,
-                ' ', ' ', hl_attr(HLF_SC));
+                    wp->w_wincol + wp->w_width - nn,
+                    wp->w_wincol + wp->w_width - n,
+                    ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-        wp->w_wincol, wp->w_wincol + wp->w_width - 1 - FDC_OFF,
-        c2, c2, hl_attr(hl));
+                wp->w_wincol, wp->w_wincol + wp->w_width - 1 - FDC_OFF,
+                c2, c2, hl_attr(hl));
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-        wp->w_wincol + wp->w_width - 1 - FDC_OFF, wp->w_wincol + wp->w_width - FDC_OFF,
-        c1, c2, hl_attr(hl));
+                wp->w_wincol + wp->w_width - 1 - FDC_OFF,
+                wp->w_wincol + wp->w_width - FDC_OFF,
+                c1, c2, hl_attr(hl));
   } else {
     if (cmdwin_type != 0 && wp == curwin) {
       /* draw the cmdline character in the leftmost column */
@@ -1775,8 +1777,8 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       if (n > wp->w_width)
         n = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-          wp->w_wincol, (int)wp->w_wincol + n,
-          cmdwin_type, ' ', hl_attr(HLF_AT));
+                  wp->w_wincol, wp->w_wincol + n,
+                  cmdwin_type, ' ', hl_attr(HLF_AT));
     }
     if (wp->w_p_fdc > 0) {
       int nn = n + wp->w_p_fdc;
@@ -1785,8 +1787,8 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
       if (nn > wp->w_width)
         nn = wp->w_width;
       screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-          wp->w_wincol + n, (int)wp->w_wincol + nn,
-          ' ', ' ', hl_attr(HLF_FC));
+                  wp->w_wincol + n, wp->w_wincol + nn,
+                  ' ', ' ', hl_attr(HLF_FC));
       n = nn;
     }
 
@@ -1799,14 +1801,14 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
             nn = wp->w_width;
         }
         screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-                wp->w_wincol + n, (int)wp->w_wincol + nn,
-                ' ', ' ', hl_attr(HLF_SC));
+                    wp->w_wincol + n, wp->w_wincol + nn,
+                    ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
 
     screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
-        wp->w_wincol + FDC_OFF, (int)wp->w_wincol + wp->w_width,
-        c1, c2, hl_attr(hl));
+                wp->w_wincol + FDC_OFF, wp->w_wincol + wp->w_width,
+                c1, c2, hl_attr(hl));
   }
   set_empty_rows(wp, row);
 }
@@ -2123,8 +2125,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
           ScreenAttrs[off + txtcol], hl_attr(HLF_CUC));
   }
 
-  SCREEN_LINE(row + wp->w_winrow, wp->w_wincol, (int)wp->w_width,
-      (int)wp->w_width, FALSE);
+  SCREEN_LINE(row + wp->w_winrow, wp->w_wincol, wp->w_width,
+              wp->w_width, FALSE);
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
@@ -2902,8 +2904,7 @@ win_line (
         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
-      SCREEN_LINE(screen_row, wp->w_wincol, col, -(int)wp->w_width,
-          wp->w_p_rl);
+      SCREEN_LINE(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl);
       /* Pretend we have finished updating the window.  Except when
        * 'cursorcolumn' is set. */
       if (wp->w_p_cuc)
@@ -3842,8 +3843,7 @@ win_line (
         }
       }
 
-      SCREEN_LINE(screen_row, wp->w_wincol, col,
-          (int)wp->w_width, wp->w_p_rl);
+      SCREEN_LINE(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl);
       row++;
 
       /*
@@ -4062,7 +4062,7 @@ win_line (
             || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
       SCREEN_LINE(screen_row, wp->w_wincol, col - boguscols,
-          (int)wp->w_width, wp->w_p_rl);
+                  wp->w_width, wp->w_p_rl);
       boguscols = 0;
       ++row;
       ++screen_row;
@@ -4919,8 +4919,8 @@ void win_redr_status(win_T *wp)
       fillchar = fillchar_status(&attr, wp == curwin);
     else
       fillchar = fillchar_vsep(&attr);
-    screen_putchar(fillchar, wp->w_winrow + wp->w_height, wp->w_wincol + wp->w_width,
-        attr);
+    screen_putchar(fillchar, wp->w_winrow + wp->w_height,
+                   wp->w_wincol + wp->w_width, attr);
   }
   busy = FALSE;
 }
@@ -6810,8 +6810,8 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     if (lastrow > Rows)
       lastrow = Rows;
     screen_fill(nextrow - line_count, lastrow - line_count,
-        wp->w_wincol, (int)wp->w_wincol + wp->w_width,
-        ' ', ' ', 0);
+                wp->w_wincol, wp->w_wincol + wp->w_width,
+                ' ', ' ', 0);
   }
 
   if (screen_ins_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL)
@@ -6897,8 +6897,8 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
    */
   if (row + line_count >= wp->w_height) {
     screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
-        wp->w_wincol, (int)wp->w_wincol + wp->w_width,
-        ' ', ' ', 0);
+                wp->w_wincol, wp->w_wincol + wp->w_width,
+                ' ', ' ', 0);
     return OK;
   }
 
