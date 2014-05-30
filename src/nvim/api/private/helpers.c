@@ -21,7 +21,7 @@
 /// @param obj The source object
 /// @param lookup Lookup table containing pointers to all processed objects
 /// @return The converted value
-static Object vim_to_object_rec(typval_T *obj, Map(ptr_t) *lookup);
+static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup);
 
 static bool object_to_vim(Object obj, typval_T *tv, Error *err);
 
@@ -278,10 +278,10 @@ Object vim_to_object(typval_T *obj)
 {
   Object rv;
   // We use a lookup table to break out of cyclic references
-  Map(ptr_t) *lookup = map_new(ptr_t)();
+  PMap(ptr_t) *lookup = pmap_new(ptr_t)();
   rv = vim_to_object_rec(obj, lookup);
   // Free the table
-  map_free(ptr_t)(lookup);
+  pmap_free(ptr_t)(lookup);
   return rv;
 }
 
@@ -422,18 +422,18 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
   return true;
 }
 
-static Object vim_to_object_rec(typval_T *obj, Map(ptr_t) *lookup)
+static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
 {
   Object rv = {.type = kObjectTypeNil};
 
   if (obj->v_type == VAR_LIST || obj->v_type == VAR_DICT) {
     // Container object, add it to the lookup table
-    if (map_has(ptr_t)(lookup, obj)) {
+    if (pmap_has(ptr_t)(lookup, obj)) {
       // It's already present, meaning we alredy processed it so just return
       // nil instead.
       return rv;
     }
-    map_put(ptr_t)(lookup, obj, NULL);
+    pmap_put(ptr_t)(lookup, obj, NULL);
   }
 
   switch (obj->v_type) {

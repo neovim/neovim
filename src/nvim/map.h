@@ -5,30 +5,37 @@
 
 #include "nvim/map_defs.h"
 
-#define MAP_DECLS(T)                                                          \
-  KHASH_DECLARE(T##_map, T, void *)                                           \
+#define MAP_DECLS(T, U)                                                       \
+  KHASH_DECLARE(T##_##U##_map, T, U)                                          \
                                                                               \
   typedef struct {                                                            \
-    khash_t(T##_map) *table;                                                  \
-  } Map(T);                                                                   \
+    khash_t(T##_##U##_map) *table;                                            \
+  } Map(T, U);                                                                \
                                                                               \
-  Map(T) *map_##T##_new(void);                                                \
-  void map_##T##_free(Map(T) *map);                                           \
-  void *map_##T##_get(Map(T) *map, T key);                                    \
-  bool map_##T##_has(Map(T) *map, T key);                                     \
-  void* map_##T##_put(Map(T) *map, T key, void *value);                       \
-  void* map_##T##_del(Map(T) *map, T key);
+  Map(T, U) *map_##T##_##U##_new(void);                                       \
+  void map_##T##_##U##_free(Map(T, U) *map);                                  \
+  U map_##T##_##U##_get(Map(T, U) *map, T key);                               \
+  bool map_##T##_##U##_has(Map(T, U) *map, T key);                            \
+  U map_##T##_##U##_put(Map(T, U) *map, T key, U value);                      \
+  U map_##T##_##U##_del(Map(T, U) *map, T key);
 
-MAP_DECLS(cstr_t)
-MAP_DECLS(ptr_t)
-MAP_DECLS(uint64_t)
+MAP_DECLS(cstr_t, ptr_t)
+MAP_DECLS(ptr_t, ptr_t)
+MAP_DECLS(uint64_t, ptr_t)
 
-#define map_new(T) map_##T##_new
-#define map_free(T) map_##T##_free
-#define map_get(T) map_##T##_get
-#define map_has(T) map_##T##_has
-#define map_put(T) map_##T##_put
-#define map_del(T) map_##T##_del
+#define map_new(T, U) map_##T##_##U##_new
+#define map_free(T, U) map_##T##_##U##_free
+#define map_get(T, U) map_##T##_##U##_get
+#define map_has(T, U) map_##T##_##U##_has
+#define map_put(T, U) map_##T##_##U##_put
+#define map_del(T, U) map_##T##_##U##_del
+
+#define pmap_new(T) map_new(T, ptr_t)
+#define pmap_free(T) map_free(T, ptr_t)
+#define pmap_get(T) map_get(T, ptr_t)
+#define pmap_has(T) map_has(T, ptr_t)
+#define pmap_put(T) map_put(T, ptr_t)
+#define pmap_del(T) map_del(T, ptr_t)
 
 #define map_foreach(map, key, value, block) \
   kh_foreach(map->table, key, value, block)

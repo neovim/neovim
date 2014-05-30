@@ -19,7 +19,7 @@
 
 typedef struct {
   uint64_t id;
-  Map(cstr_t) *subscribed_events;
+  PMap(cstr_t) *subscribed_events;
   bool is_job;
   msgpack_unpacker *unpacker;
   msgpack_sbuffer *sbuffer;
@@ -34,8 +34,8 @@ typedef struct {
 } Channel;
 
 static uint64_t next_id = 1;
-static Map(uint64_t) *channels = NULL;
-static Map(cstr_t) *event_strings = NULL;
+static PMap(uint64_t) *channels = NULL;
+static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer msgpack_event_buffer;
 
 static void job_out(RStream *rstream, void *data, bool eof);
@@ -51,8 +51,8 @@ static Channel *register_channel(void);
 
 void channel_init()
 {
-  channels = map_new(uint64_t)();
-  event_strings = map_new(cstr_t)();
+  channels = pmap_new(uint64_t)();
+  event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&msgpack_event_buffer);
 }
 
@@ -96,7 +96,7 @@ bool channel_send_event(uint64_t id, char *type, typval_T *data)
   Channel *channel = NULL;
 
   if (id > 0) {
-    if (!(channel = map_get(uint64_t)(channels, id))) {
+    if (!(channel = pmap_get(uint64_t)(channels, id))) {
       return false;
     }
     send_event(channel, type, data);
@@ -111,25 +111,25 @@ void channel_subscribe(uint64_t id, char *event)
 {
   Channel *channel;
 
-  if (!(channel = map_get(uint64_t)(channels, id))) {
+  if (!(channel = pmap_get(uint64_t)(channels, id))) {
     return;
   }
 
-  char *event_string = map_get(cstr_t)(event_strings, event);
+  char *event_string = pmap_get(cstr_t)(event_strings, event);
 
   if (!event_string) {
     event_string = xstrdup(event);
-    map_put(cstr_t)(event_strings, event_string, event_string);
+    pmap_put(cstr_t)(event_strings, event_string, event_string);
   }
 
-  map_put(cstr_t)(channel->subscribed_events, event_string, event_string);
+  pmap_put(cstr_t)(channel->subscribed_events, event_string, event_string);
 }
 
 void channel_unsubscribe(uint64_t id, char *event)
 {
   Channel *channel;
 
-  if (!(channel = map_get(uint64_t)(channels, id))) {
+  if (!(channel = pmap_get(uint64_t)(channels, id))) {
     return;
   }
 
@@ -195,7 +195,7 @@ static void broadcast_event(char *type, typval_T *data)
   Channel *channel;
 
   map_foreach_value(channels, channel, {
-    if (map_has(cstr_t)(channel->subscribed_events, type)) {
+    if (pmap_has(cstr_t)(channel->subscribed_events, type)) {
       kv_push(Channel *, subscribed, channel);
     }
   });
@@ -216,23 +216,23 @@ end:
 
 static void unsubscribe(Channel *channel, char *event)
 {
-  char *event_string = map_get(cstr_t)(event_strings, event);
-  map_del(cstr_t)(channel->subscribed_events, event_string);
+  char *event_string = pmap_get(cstr_t)(event_strings, event);
+  pmap_del(cstr_t)(channel->subscribed_events, event_string);
 
   map_foreach_value(channels, channel, {
-    if (map_has(cstr_t)(channel->subscribed_events, event_string)) {
+    if (pmap_has(cstr_t)(channel->subscribed_events, event_string)) {
       return;
     }
   });
 
   // Since the string is no longer used by other channels, release it's memory
-  map_del(cstr_t)(event_strings, event_string);
+  pmap_del(cstr_t)(event_strings, event_string);
   free(event_string);
 }
 
 static void close_channel(Channel *channel)
 {
-  map_del(uint64_t)(channels, channel->id);
+  pmap_del(uint64_t)(channels, channel->id);
   msgpack_sbuffer_free(channel->sbuffer);
   msgpack_unpacker_free(channel->unpacker);
 
@@ -250,7 +250,7 @@ static void close_channel(Channel *channel)
     unsubscribe(channel, event_string);
   });
 
-  map_free(cstr_t)(channel->subscribed_events);
+  pmap_free(cstr_t)(channel->subscribed_events);
   free(channel);
 }
 
@@ -282,7 +282,7 @@ static Channel *register_channel()
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rv->sbuffer = msgpack_sbuffer_new();
   rv->id = next_id++;
-  rv->subscribed_events = map_new(cstr_t)();
-  map_put(uint64_t)(channels, rv->id, rv);
+  rv->subscribed_events = pmap_new(cstr_t)();
+  pmap_put(uint64_t)(channels, rv->id, rv);
   return rv;
 }
