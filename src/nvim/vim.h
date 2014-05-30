@@ -37,7 +37,7 @@ Error: configure did not run properly.Check auto/config.log.
 #endif
 
 /* user ID of root is usually zero, but not for everybody */
-# define ROOT_UID 0
+#define ROOT_UID 0
 
 
 /* Can't use "PACKAGE" here, conflicts with a Perl include file. */
