@@ -242,7 +242,6 @@ enum {
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
-
 #ifdef NO_EXPANDPATH
 # define gen_expand_wildcards mch_expand_wildcards
 #endif
