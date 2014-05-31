@@ -3806,30 +3806,25 @@ static void clear_keywtab(hashtab_T *ht)
   hash_init(ht);
 }
 
-/*
- * Add a keyword to the list of keywords.
- */
-static void 
-add_keyword (
-    char_u *name,          /* name of keyword */
-    int id,                     /* group ID for this keyword */
-    int flags,                  /* flags for this keyword */
-    short *cont_in_list,     /* containedin for this keyword */
-    short *next_list,     /* nextgroup for this keyword */
-    int conceal_char
-)
+/// Add a keyword to the list of keywords.
+///
+/// @param name name of keyword
+/// @param id group ID for this keyword
+/// @param flags flags for this keyword
+/// @param cont_in_list containedin for this keyword
+/// @param next_list nextgroup for this keyword
+static void add_keyword(char_u *name,
+                        int id,
+                        int flags,
+                        short *cont_in_list,
+                        short *next_list,
+                        int conceal_char)
 {
-  hashtab_T   *ht;
-  hashitem_T  *hi;
-  char_u      *name_ic;
-  long_u hash;
   char_u name_folded[MAXKEYWLEN + 1];
+  char_u *name_ic = (curwin->w_s->b_syn_ic)
+   ? str_foldcase(name, (int)STRLEN(name), name_folded, sizeof(name_folded))
+   : name;
 
-  if (curwin->w_s->b_syn_ic)
-    name_ic = str_foldcase(name, (int)STRLEN(name),
-        name_folded, MAXKEYWLEN + 1);
-  else
-    name_ic = name;
   keyentry_T *kp = xmalloc(sizeof(keyentry_T) + STRLEN(name_ic));
   STRCPY(kp->keyword, name_ic);
   kp->k_syn.id = id;
@@ -3837,23 +3832,26 @@ add_keyword (
   kp->flags = flags;
   kp->k_char = conceal_char;
   kp->k_syn.cont_in_list = copy_id_list(cont_in_list);
-  if (cont_in_list != NULL)
+  if (cont_in_list != NULL) {
     curwin->w_s->b_syn_containedin = TRUE;
+  }
   kp->next_list = copy_id_list(next_list);
 
-  if (curwin->w_s->b_syn_ic)
-    ht = &curwin->w_s->b_keywtab_ic;
-  else
-    ht = &curwin->w_s->b_keywtab;
+  long_u hash = hash_hash(kp->keyword);
+  hashtab_T *ht = (curwin->w_s->b_syn_ic) ? &curwin->w_s->b_keywtab_ic
+                                          : &curwin->w_s->b_keywtab;
+  hashitem_T *hi = hash_lookup(ht, kp->keyword, hash);
 
-  hash = hash_hash(kp->keyword);
-  hi = hash_lookup(ht, kp->keyword, hash);
+  // even though it looks like only the kp->keyword member is
+  // being used here, vim uses some pointer trickery to get the orignal
+  // struct again later by using knowledge of the offset of the keyword
+  // field in the struct. See the definition of the HI2KE macro.
   if (HASHITEM_EMPTY(hi)) {
-    /* new keyword, add to hashtable */
+    // new keyword, add to hashtable
     kp->ke_next = NULL;
     hash_add_item(ht, hi, kp->keyword, hash);
   } else {
-    /* keyword already exists, prepend to list */
+    // keyword already exists, prepend to list
     kp->ke_next = HI2KE(hi);
     hi->hi_key = KE2HIKEY(kp);
   }
