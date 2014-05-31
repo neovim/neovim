@@ -4745,12 +4745,13 @@ void write_reg_contents(int name, char_u *str, int maxlen, int must_append)
 void write_reg_contents_ex(int name, char_u *str, int maxlen, int must_append, int yank_type, long block_len)
 {
   struct yankreg  *old_y_previous, *old_y_current;
-  long len;
 
-  if (maxlen >= 0)
-    len = maxlen;
-  else
-    len = (long)STRLEN(str);
+  size_t len = STRLEN(str);
+
+  // truncate the incoming string to maxlen if necessary
+  if (maxlen >= 0 && len > (size_t) maxlen) {
+    len = (size_t) maxlen;
+  }
 
   /* Special case: '/' search pattern */
   if (name == '/') {
@@ -4759,17 +4760,25 @@ void write_reg_contents_ex(int name, char_u *str, int maxlen, int must_append, i
   }
 
   if (name == '=') {
-    char_u      *p, *s;
+    size_t offset = 0;
+    size_t totlen = len;
 
-    p = vim_strnsave(str, (int)len);
+    if (must_append && expr_line) {
+      // append has been specified and expr_line already exists, so we'll
+      // append the new string to expr_line.
+      size_t exprlen = STRLEN(expr_line);
 
-    if (must_append) {
-      s = concat_str(get_expr_line_src(), p);
-      free(p);
-      p = s;
-
+      totlen = exprlen + len;
+      offset = exprlen;
     }
-    set_expr_line(p);
+
+    // modify the global expr_line, extend/shrink it if necessary (realloc).
+    // Copy the input string into the adjusted memory at the specified
+    // offset.
+    expr_line = xrealloc(expr_line, totlen + 1);
+    memcpy(expr_line + offset, str, len);
+    expr_line[totlen] = NUL;
+
     return;
   }
 
