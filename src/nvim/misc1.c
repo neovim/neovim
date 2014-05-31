@@ -2847,12 +2847,10 @@ expand_env_esc (
       if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
         char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
 
-        if (p != NULL) {
-          if (mustfree)
-            free(var);
-          var = p;
-          mustfree = TRUE;
-        }
+        if (mustfree)
+          free(var);
+        var = p;
+        mustfree = TRUE;
       }
 
       if (var != NULL && *var != NUL

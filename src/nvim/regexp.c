@@ -6500,10 +6500,8 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
         if (had_backslash && backslash) {
           /* Backslashes will be consumed, need to double them. */
           s = vim_strsave_escaped(eval_result, (char_u *)"\\");
-          if (s != NULL) {
-            free(eval_result);
-            eval_result = s;
-          }
+          free(eval_result);
+          eval_result = s;
         }
 
         dst += STRLEN(eval_result);

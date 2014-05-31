@@ -3545,10 +3545,8 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       for (l = repl; *l; ++l)
         if (vim_strchr(ESCAPE_CHARS, *l) != NULL) {
           l = vim_strsave_escaped(repl, ESCAPE_CHARS);
-          if (l != NULL) {
-            free(repl);
-            repl = l;
-          }
+          free(repl);
+          repl = l;
           break;
         }
     }
@@ -3559,10 +3557,8 @@ int expand_filename(exarg_T *eap, char_u **cmdlinep, char_u **errormsgp)
       char_u      *l;
 
       l = vim_strsave_escaped(repl, (char_u *)"!");
-      if (l != NULL) {
-        free(repl);
-        repl = l;
-      }
+      free(repl);
+      repl = l;
     }
 
     p = repl_cmdline(eap, p, srclen, repl, cmdlinep);

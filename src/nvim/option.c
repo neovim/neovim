@@ -7424,12 +7424,6 @@ int ExpandOldSetting(int *num_file, char_u ***file)
    * what happens in do_set(). */
   buf = vim_strsave_escaped(var, escape_chars);
 
-  if (buf == NULL) {
-    free(*file);
-    *file = NULL;
-    return FAIL;
-  }
-
 #ifdef BACKSLASH_IN_FILENAME
   /* For MS-Windows et al. we don't double backslashes at the start and
    * before a file name character. */
