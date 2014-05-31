@@ -8557,8 +8557,6 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
   /* escape special characters */
   p = vim_strsave_fnameescape(sname, FALSE);
   free(sname);
-  if (p == NULL)
-    return FAIL;
 
   /* write the result */
   if (fputs((char *)p, fd) < 0)
