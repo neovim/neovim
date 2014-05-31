@@ -1,7 +1,6 @@
 #ifndef NVIM_MISC2_H
 #define NVIM_MISC2_H
 
-#include "nvim/func_attr.h"
 #include "nvim/os/shell.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
