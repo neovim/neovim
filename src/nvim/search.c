@@ -23,6 +23,7 @@
 #include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
@@ -177,15 +178,8 @@ search_regcomp (
   }
 
   if (curwin->w_p_rl && *curwin->w_p_rlc == 's') {
-    char_u *rev_pattern;
-
-    rev_pattern = reverse_text(pat);
-    if (rev_pattern == NULL)
-      mr_pattern = pat;             /* out of memory, keep normal pattern. */
-    else {
-      mr_pattern = rev_pattern;
-      mr_pattern_alloced = TRUE;
-    }
+    mr_pattern = reverse_text(pat);
+    mr_pattern_alloced = TRUE;
   } else
     mr_pattern = pat;
 
@@ -224,7 +218,7 @@ char_u *get_search_pat(void)
  *
  * TODO(philix): move reverse_text() to strings.c
  */
-char_u *reverse_text(char_u *s)
+char_u *reverse_text(char_u *s) FUNC_ATTR_NONNULL_RET
 {
   /*
    * Reverse the pattern.
