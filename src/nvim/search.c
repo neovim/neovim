@@ -375,14 +375,14 @@ void reset_search_dir(void)
  * Set the last search pattern.  For ":let @/ =" and viminfo.
  * Also set the saved search pattern, so that this works in an autocommand.
  */
-void set_last_search_pat(char_u *s, int idx, int magic, int setlast)
+void set_last_search_pat(const char_u *s, int idx, int magic, int setlast)
 {
   free(spats[idx].pat);
   /* An empty string means that nothing should be matched. */
   if (*s == NUL)
     spats[idx].pat = NULL;
   else
-    spats[idx].pat = vim_strsave(s);
+    spats[idx].pat = (char_u *) xstrdup((char *) s);
   spats[idx].magic = magic;
   spats[idx].no_scs = FALSE;
   spats[idx].off.dir = '/';
