@@ -13,7 +13,10 @@ typedef struct {
   Job *job;
 } HandleData;
 
-static HandleData *init(uv_handle_t *handle);
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/uv_helpers.c.generated.h"
+#endif
 
 /// Gets the RStream instance associated with a libuv handle
 ///
