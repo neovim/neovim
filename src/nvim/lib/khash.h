@@ -129,10 +129,11 @@ int main() {
 #include <string.h>
 #include <limits.h>
 
+#include "nvim/memory.h"
+
 #define DEFINE_FUNC_ATTRIBUTES
 #include "nvim/func_attr.h"
 #undef DEFINE_FUNC_ATTRIBUTES
-#include "nvim/memory.h"
 
 /* compiler specific configuration */
 
