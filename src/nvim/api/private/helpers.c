@@ -83,7 +83,7 @@ bool try_end(Error *err)
 
 Object dict_get_value(dict_T *dict, String key, Error *err)
 {
-  Object rv;
+  Object rv = OBJECT_INIT;
   hashitem_T *hi;
   dictitem_T *di;
   char *k = xstrndup(key.data, key.size);
@@ -103,7 +103,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
 
 Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
 {
-  Object rv = {.type = kObjectTypeNil};
+  Object rv = OBJECT_INIT;
 
   if (dict->dv_lock) {
     set_api_error("Dictionary is locked", err);
@@ -166,7 +166,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
 
 Object get_option_from(void *from, int type, String name, Error *err)
 {
-  Object rv = {.type = kObjectTypeNil};
+  Object rv = OBJECT_INIT;
 
   if (name.size == 0) {
     set_api_error("Empty option name", err);
@@ -424,7 +424,7 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
 static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
 {
-  Object rv = {.type = kObjectTypeNil};
+  Object rv = OBJECT_INIT;
 
   if (obj->v_type == VAR_LIST || obj->v_type == VAR_DICT) {
     // Container object, add it to the lookup table

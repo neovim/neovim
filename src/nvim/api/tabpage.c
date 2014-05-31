@@ -42,11 +42,10 @@ WindowArray tabpage_get_windows(Tabpage tabpage, Error *err)
 
 Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
 {
-  Object rv;
   tabpage_T *tab = find_tab(tabpage, err);
 
   if (!tab) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return dict_get_value(tab->tp_vars, name, err);
@@ -54,11 +53,10 @@ Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
 
 Object tabpage_set_var(Tabpage tabpage, String name, Object value, Error *err)
 {
-  Object rv;
   tabpage_T *tab = find_tab(tabpage, err);
 
   if (!tab) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return dict_set_value(tab->tp_vars, name, value, err);
