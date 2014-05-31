@@ -2216,21 +2216,20 @@ set_options_default (
   win_comp_scroll(wp);
 }
 
-/*
- * Set the Vi-default value of a string option.
- * Used for 'sh', 'backupskip' and 'term'.
- */
-void set_string_default(char *name, char_u *val)
+/// Set the Vi-default value of a string option.
+/// Used for 'sh', 'backupskip' and 'term'.
+///
+/// @param name The name of the option
+/// @param val The value of the option
+void set_string_default(const char *name, const char_u *val)
 {
-  char_u      *p;
-  int opt_idx;
-
-  p = vim_strsave(val);
-  opt_idx = findoption((char_u *)name);
+  int opt_idx = findoption((char_u *)name);
   if (opt_idx >= 0) {
-    if (options[opt_idx].flags & P_DEF_ALLOCED)
+    if (options[opt_idx].flags & P_DEF_ALLOCED) {
       free(options[opt_idx].def_val[VI_DEFAULT]);
-    options[opt_idx].def_val[VI_DEFAULT] = p;
+    }
+
+    options[opt_idx].def_val[VI_DEFAULT] = (char_u *) xstrdup((char *) val);
     options[opt_idx].flags |= P_DEF_ALLOCED;
   }
 }
