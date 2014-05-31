@@ -3971,10 +3971,8 @@ did_set_string_option (
     if (errmsg == NULL) {
       /* canonize the value, so that STRCMP() can be used on it */
       p = enc_canonize(*varp);
-      if (p != NULL) {
-        free(*varp);
-        *varp = p;
-      }
+      free(*varp);
+      *varp = p;
       if (varp == &p_enc) {
         errmsg = mb_init();
         redraw_titles();
@@ -4000,18 +3998,8 @@ did_set_string_option (
   } else if (varp == &p_penc) {
     /* Canonize printencoding if VIM standard one */
     p = enc_canonize(p_penc);
-    if (p != NULL) {
-      free(p_penc);
-      p_penc = p;
-    } else {
-      /* Ensure lower case and '-' for '_' */
-      for (s = p_penc; *s != NUL; s++) {
-        if (*s == '_')
-          *s = '-';
-        else
-          *s = TOLOWER_ASC(*s);
-      }
-    }
+    free(p_penc);
+    p_penc = p;
   } else if (varp == &curbuf->b_p_keymap) {
     /* load or unload key mapping tables */
     errmsg = keymap_init();
