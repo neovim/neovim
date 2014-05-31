@@ -98,19 +98,9 @@ typedef struct {
 #define EDIT_TAG    3       /* tag name argument given, use tagname */
 #define EDIT_QF     4       /* start in quickfix mode */
 
-#if defined(UNIX) && !defined(NO_VIM_MAIN)
-#endif
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "main.c.generated.h"
 #endif
-#ifndef NO_VIM_MAIN
-# if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-static void init_locale(void);
-# endif
-# if defined(HAS_SWAP_EXISTS_ACTION)
-# endif
-#endif /* NO_VIM_MAIN */
-
 
 /*
  * Different types of error messages.
@@ -132,7 +122,7 @@ static char *(main_errors[]) =
 };
 
 #ifndef NO_VIM_MAIN     /* skip this for unittests */
-  int main(int argc, char **argv)
+int main(int argc, char **argv)
 {
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between

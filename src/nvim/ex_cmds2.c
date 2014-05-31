@@ -2372,8 +2372,6 @@ int source_level(void *cookie)
 
 #if (defined(WIN32) && defined(FEAT_CSCOPE)) || defined(HAVE_FD_CLOEXEC)
 # define USE_FOPEN_NOINH
-static FILE *fopen_noinh_readbin(char *filename);
-
 /*
  * Special function to open a file without handle inheritance.
  * When possible the handle is closed on exec().
@@ -3244,8 +3242,6 @@ char_u *get_mess_lang(void)
 
 /* Complicated #if; matches with where get_mess_env() is used below. */
 #ifdef HAVE_WORKING_LIBINTL
-static char_u *get_mess_env(void);
-
 /*
  * Get the language used for messages from the environment.
  */
@@ -3405,9 +3401,6 @@ void ex_language(exarg_T *eap)
 
 static char_u   **locales = NULL;       /* Array of all available locales */
 static int did_init_locales = FALSE;
-
-static void init_locales(void);
-static char_u **find_locales(void);
 
 /*
  * Lazy initialization of all available locales.

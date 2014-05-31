@@ -1153,8 +1153,6 @@ static void clear_csinfo(int i)
 }
 
 #ifndef UNIX
-static char *GetWin32Error(void);
-
 static char *GetWin32Error(void)
 {
   char *msg = NULL;
@@ -1168,7 +1166,6 @@ static char *GetWin32Error(void)
   }
   return msg;
 }
-
 #endif
 
 /*

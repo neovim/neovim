@@ -45,6 +45,6 @@ while ($text =~ /
   my $match = "${^MATCH}";
   my $s = "${^PREMATCH}";
   $s =~ s/[^\n]++//g;
-  my $line = length $s;
+  my $line = 1 + length $s;
   print "${cfname}:${line}: $match\n";
 }
