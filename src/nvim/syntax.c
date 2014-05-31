@@ -4399,10 +4399,6 @@ syn_cmd_region (
       ++key_end;
     free(key);
     key = vim_strnsave_up(rest, (int)(key_end - rest));
-    if (key == NULL) {                          /* out of memory */
-      rest = NULL;
-      break;
-    }
     if (STRCMP(key, "MATCHGROUP") == 0)
       item = ITEM_MATCHGROUP;
     else if (STRCMP(key, "START") == 0)
@@ -4692,12 +4688,8 @@ static void syn_combine_list(short **clstr1, short **clstr2, int list_op)
  */
 static int syn_scl_name2id(char_u *name)
 {
-  char_u      *name_u;
-
-  /* Avoid using stricmp() too much, it's slow on some systems */
-  name_u = vim_strsave_up(name);
-  if (name_u == NULL)
-    return 0;
+  // Avoid using stricmp() too much, it's slow on some systems
+  char_u *name_u = vim_strsave_up(name);
   int i;
   for (i = curwin->w_s->b_syn_clusters.ga_len; --i >= 0; ) {
     if (SYN_CLSTR(curwin->w_s)[i].scl_name_u != NULL

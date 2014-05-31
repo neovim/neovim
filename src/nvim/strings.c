@@ -13,6 +13,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
@@ -214,11 +215,9 @@ char_u *vim_strsave_up(char_u *string)
  * Like vim_strnsave(), but make all characters uppercase.
  * This uses ASCII lower-to-upper case translation, language independent.
  */
-char_u *vim_strnsave_up(char_u *string, int len)
+char_u *vim_strnsave_up(char_u *string, int len) FUNC_ATTR_NONNULL_RET
 {
-  char_u *p1;
-
-  p1 = vim_strnsave(string, len);
+  char_u *p1 = vim_strnsave(string, len);
   vim_strup(p1);
   return p1;
 }
@@ -251,19 +250,16 @@ char_u *strup_save(char_u *orig)
     int l;
 
     if (enc_utf8) {
-      int c, uc;
-      int newl;
-      char_u  *s;
-
-      c = utf_ptr2char(p);
-      uc = utf_toupper(c);
+      int c = utf_ptr2char(p);
+      int uc = utf_toupper(c);
 
       /* Reallocate string when byte count changes.  This is rare,
        * thus it's OK to do another malloc()/free(). */
       l = utf_ptr2len(p);
-      newl = utf_char2len(uc);
+      int newl = utf_char2len(uc);
       if (newl != l) {
-        s = xmalloc(STRLEN(res) + 1 + newl - l);
+        // TODO(philix): use xrealloc() in strup_save()
+        char_u *s = xmalloc(STRLEN(res) + 1 + newl - l);
         memmove(s, res, p - res);
         STRCPY(s + (p - res) + newl, p + l);
         p = s + (p - res);
