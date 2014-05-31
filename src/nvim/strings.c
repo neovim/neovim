@@ -15,6 +15,7 @@
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -514,7 +515,6 @@ int has_non_ascii(char_u *s)
 
 /*
  * Concatenate two strings and return the result in allocated memory.
- * Returns NULL when out of memory.
  */
 char_u *concat_str(char_u *str1, char_u *str2) FUNC_ATTR_NONNULL_RET
 {
