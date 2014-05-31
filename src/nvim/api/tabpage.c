@@ -42,7 +42,7 @@ WindowArray tabpage_get_windows(Tabpage tabpage, Error *err)
 
 Object tabpage_get_var(Tabpage tabpage, String name, Error *err)
 {
-  Object rv;
+  Object rv = OBJECT_INIT;
   tabpage_T *tab = find_tab(tabpage, err);
 
   if (!tab) {

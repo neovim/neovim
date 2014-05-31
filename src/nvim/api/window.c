@@ -133,7 +133,7 @@ void window_set_width(Window window, Integer width, Error *err)
 
 Object window_get_var(Window window, String name, Error *err)
 {
-  Object rv;
+  Object rv = OBJECT_INIT;
   win_T *win = find_window(window, err);
 
   if (!win) {
@@ -145,7 +145,7 @@ Object window_get_var(Window window, String name, Error *err)
 
 Object window_set_var(Window window, String name, Object value, Error *err)
 {
-  Object rv;
+  Object rv = OBJECT_INIT;
   win_T *win = find_window(window, err);
 
   if (!win) {
@@ -157,7 +157,7 @@ Object window_set_var(Window window, String name, Object value, Error *err)
 
 Object window_get_option(Window window, String name, Error *err)
 {
-  Object rv;
+  Object rv = OBJECT_INIT;
   win_T *win = find_window(window, err);
 
   if (!win) {
