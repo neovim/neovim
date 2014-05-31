@@ -7,8 +7,8 @@
 typedef const char * cstr_t;
 typedef void * ptr_t;
 
-#define Map(T) Map_##T
-
+#define Map(T, U) Map_##T##_##U
+#define PMap(T) Map(T, ptr_t)
 
 #endif  // NVIM_MAP_DEFS_H
 
