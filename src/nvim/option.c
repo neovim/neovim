@@ -7384,10 +7384,9 @@ int ExpandSettings(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***
   return OK;
 }
 
-int ExpandOldSetting(int *num_file, char_u ***file)
+void ExpandOldSetting(int *num_file, char_u ***file)
 {
-  char_u  *var = NULL;          /* init for GCC */
-  char_u  *buf;
+  char_u *var = NULL;
 
   *num_file = 0;
   *file = (char_u **)xmalloc(sizeof(char_u *));
@@ -7410,7 +7409,7 @@ int ExpandOldSetting(int *num_file, char_u ***file)
 
   /* A backslash is required before some characters.  This is the reverse of
    * what happens in do_set(). */
-  buf = vim_strsave_escaped(var, escape_chars);
+  char_u *buf = vim_strsave_escaped(var, escape_chars);
 
 #ifdef BACKSLASH_IN_FILENAME
   /* For MS-Windows et al. we don't double backslashes at the start and
@@ -7426,7 +7425,6 @@ int ExpandOldSetting(int *num_file, char_u ***file)
 
   *file[0] = buf;
   *num_file = 1;
-  return OK;
 }
 
 /*

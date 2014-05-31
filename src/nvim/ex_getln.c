@@ -3651,8 +3651,10 @@ ExpandFromContext (
     expand_shellcmd(pat, num_file, file, flags);
     return OK;
   }
-  if (xp->xp_context == EXPAND_OLD_SETTING)
-    return ExpandOldSetting(num_file, file);
+  if (xp->xp_context == EXPAND_OLD_SETTING) {
+    ExpandOldSetting(num_file, file);
+    return OK;
+  }
   if (xp->xp_context == EXPAND_BUFFERS)
     return ExpandBufnames(pat, num_file, file, options);
   if (xp->xp_context == EXPAND_TAGS
