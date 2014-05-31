@@ -1,5 +1,12 @@
 #ifndef NVIM_TERM_H
 #define NVIM_TERM_H
+
+/* Size of the buffer used for tgetent().  Unfortunately this is largely
+ * undocumented, some systems use 1024.  Using a buffer that is too small
+ * causes a buffer overrun and a crash.  Use the maximum known value to stay
+ * on the safe side. */
+#define TBUFSZ 2048             /* buffer size for termcap entry */
+
 /* term.c */
 int set_termname(char_u *term);
 void set_mouse_termcode(int n, char_u *s);

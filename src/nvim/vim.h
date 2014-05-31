@@ -420,11 +420,6 @@ typedef enum {
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6)    /* cell length (worst case: utf-8
                                                takes 6 bytes for one cell) */
 
-/* Size of the buffer used for tgetent().  Unfortunately this is largely
- * undocumented, some systems use 1024.  Using a buffer that is too small
- * causes a buffer overrun and a crash.  Use the maximum known value to stay
- * on the safe side. */
-#define TBUFSZ 2048             /* buffer size for termcap entry */
 
 /*
  * Maximum length of key sequence to be mapped.
