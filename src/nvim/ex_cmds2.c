@@ -46,6 +46,7 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 
+
 /* Growarray to store info about already sourced scripts.
  * Also store the dev/ino, so that we don't have to stat() each
  * script when going through the list. */

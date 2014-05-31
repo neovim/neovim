@@ -416,14 +416,9 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 # include "eval.c.generated.h"
 #endif
 
-
-
-
 #define FNE_INCL_BR     1       /* find_name_end(): include [] in name */
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
-
-
 
 /*
  * Initialize the global and v: variables.

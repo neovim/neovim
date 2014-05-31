@@ -74,4 +74,4 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "hardcopy.h.generated.h"
 #endif
-#endif /* NVIM_HARDCOPY_H */
+#endif  // NVIM_HARDCOPY_H

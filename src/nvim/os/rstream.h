@@ -4,8 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <uv.h>
-
 #include "nvim/os/event_defs.h"
+
 #include "nvim/os/rstream_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS

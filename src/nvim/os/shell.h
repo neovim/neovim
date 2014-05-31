@@ -2,7 +2,6 @@
 #define NVIM_OS_SHELL_H
 
 #include <stdbool.h>
-
 #include "nvim/types.h"
 
 // Flags for mch_call_shell() second argument
@@ -17,11 +16,7 @@ typedef enum {
   kShellOptHideMess = 128,  ///< previously a global variable from os_unix.c
 } ShellOpts;
 
-
-
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.h.generated.h"
 #endif
 #endif  // NVIM_OS_SHELL_H
-

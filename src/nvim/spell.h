@@ -4,4 +4,4 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "spell.h.generated.h"
 #endif
-#endif // NVIM_SPELL_H
+#endif  // NVIM_SPELL_H
