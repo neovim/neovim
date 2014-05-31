@@ -253,11 +253,10 @@ end:
 
 Object buffer_get_var(Buffer buffer, String name, Error *err)
 {
-  Object rv;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return dict_get_value(buf->b_vars, name, err);
@@ -265,11 +264,10 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
 
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 {
-  Object rv;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return dict_set_value(buf->b_vars, name, value, err);
@@ -277,11 +275,10 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 
 Object buffer_get_option(Buffer buffer, String name, Error *err)
 {
-  Object rv;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return get_option_from(buf, SREQ_BUF, name, err);
@@ -363,7 +360,7 @@ void buffer_insert(Buffer buffer, Integer lnum, StringArray lines, Error *err)
 
 Position buffer_get_mark(Buffer buffer, String name, Error *err)
 {
-  Position rv;
+  Position rv = POSITION_INIT;
   buf_T *buf = find_buffer(buffer, err);
 
   if (!buf) {

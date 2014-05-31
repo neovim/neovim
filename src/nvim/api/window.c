@@ -133,11 +133,10 @@ void window_set_width(Window window, Integer width, Error *err)
 
 Object window_get_var(Window window, String name, Error *err)
 {
-  Object rv;
   win_T *win = find_window(window, err);
 
   if (!win) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return dict_get_value(win->w_vars, name, err);
@@ -145,11 +144,10 @@ Object window_get_var(Window window, String name, Error *err)
 
 Object window_set_var(Window window, String name, Object value, Error *err)
 {
-  Object rv;
   win_T *win = find_window(window, err);
 
   if (!win) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return dict_set_value(win->w_vars, name, value, err);
@@ -157,11 +155,10 @@ Object window_set_var(Window window, String name, Object value, Error *err)
 
 Object window_get_option(Window window, String name, Error *err)
 {
-  Object rv;
   win_T *win = find_window(window, err);
 
   if (!win) {
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
   return get_option_from(win, SREQ_WIN, name, err);
