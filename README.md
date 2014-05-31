@@ -9,6 +9,7 @@
 [![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://coveralls.io/repos/neovim/neovim/badge.png)](https://coveralls.io/r/neovim/neovim)
+[![Coverity Scan Build Status](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
@@ -38,7 +39,7 @@ For lots more details, see
 - Reworked out-of-memory handling resulting in greatly simplified control flow
 - Merged 50+ upstream patches (nearly caught up with upstream)
 - [Removed](https://github.com/neovim/neovim/pull/635) 8.3 filename support
-- [Changed](https://github.com/neovim/neovim/pull/574) to portable format 
+- [Changed](https://github.com/neovim/neovim/pull/574) to portable format
   specifiers (first step towards building on Windows)
 
 [unifdef]: http://freecode.com/projects/unifdef
