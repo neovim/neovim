@@ -1,9 +1,35 @@
 language: c
 env:
-  - TRAVIS_BUILD_TYPE=clang/asan
-  - TRAVIS_BUILD_TYPE=gcc/ia32
-  - TRAVIS_BUILD_TYPE=gcc/unittest
-  - TRAVIS_BUILD_TYPE=clint
-  - TRAVIS_BUILD_TYPE=api/python
+  global:
+    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+    # via the "travis encrypt" command using the project repo's public key
+    - secure: "QEz92NyItkzQu52kCFD928jEwUYnA2OIgSyeNrp+Y3gm5rOmSZerY8hGiXyNZxocap9+qIPCapRRYU3ZYKWZPeucWMLN3aIjxAFdhugKbnmNYE1jFugb6b8N3SxiX/3206NHXlYaz0OZhh6OBAFmPUXamJC8OrWVgPNPo7wv4UQ="
+  matrix:
+    # - TRAVIS_BUILD_TYPE=clang/asan
+    # - TRAVIS_BUILD_TYPE=gcc/ia32
+    # - TRAVIS_BUILD_TYPE=gcc/unittest
+    # - TRAVIS_BUILD_TYPE=clint
+    # - TRAVIS_BUILD_TYPE=api/python
+    - TRAVIS_BUILD_TYPE=coverity
+addons:
+  coverity_scan:
+    project:
+      name: neovim/neovim
+      version: 1.0
+      description: The main Neovim project
+    notification_email: coverity@aktau.be
+
+    # Commands to prepare for build_command
+    # ** likely specific to your build **
+    build_command_prepend: make cmake
+
+    # The command that will be added as an argument to "cov-build" to compile your project for analysis,
+    # ** likely specific to your build **
+    build_command: make nvim
+
+    # Pattern to match selecting branches that will run analysis. We recommend leaving this set to 'coverity_scan'.
+    # Take care in resource usage, and consider the build frequency allowances per
+    #   https://scan.coverity.com/faq#frequency
+    branch_pattern: .*
 script:
   - ./scripts/travis.sh
