@@ -1853,7 +1853,7 @@ int viminfo_readline(vir_T *virp)
  *
  * Check for a long line as written by viminfo_writestring().
  *
- * Return the string in allocated memory (NULL when out of memory).
+ * Return the string in allocated memory (or NULL to indicate failure).
  */
 char_u *
 viminfo_readstring (

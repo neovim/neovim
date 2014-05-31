@@ -7975,7 +7975,7 @@ static int ins_tab(void)
 
 /*
  * Handle CR or NL in insert mode.
- * Return TRUE when out of memory or can't undo.
+ * Return TRUE when it can't undo.
  */
 static int ins_eol(int c)
 {

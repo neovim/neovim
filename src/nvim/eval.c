@@ -5150,7 +5150,7 @@ static void list_extend(list_T *l1, list_T *l2, listitem_T *bef)
 
 /*
  * Concatenate lists "l1" and "l2" into a new list, stored in "tv".
- * Return FAIL when out of memory.
+ * Return FAIL on failure to copy.
  */
 static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
 {
@@ -5175,7 +5175,7 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
  * Make a copy of list "orig".  Shallow if "deep" is FALSE.
  * The refcount of the new list is set to 1.
  * See item_copy() for "copyID".
- * Returns NULL when out of memory.
+ * Returns NULL if orig is NULL or some failure happens.
  */
 static list_T *list_copy(list_T *orig, int deep, int copyID)
 {
@@ -5721,7 +5721,7 @@ void dictitem_free(dictitem_T *item)
  * Make a copy of dict "d".  Shallow if "deep" is FALSE.
  * The refcount of the new dict is set to 1.
  * See item_copy() for "copyID".
- * Returns NULL when out of memory.
+ * Returns NULL if orig is NULL or some other failure.
  */
 static dict_T *dict_copy(dict_T *orig, int deep, int copyID)
 {
@@ -5865,7 +5865,7 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
 /*
  * Get a string item from a dictionary.
  * When "save" is TRUE allocate memory for it.
- * Returns NULL if the entry doesn't exist or out of memory.
+ * Returns NULL if the entry doesn't exist or some other failure.
  */
 char_u *get_dict_string(dict_T *d, char_u *key, int save)
 {
@@ -5883,13 +5883,11 @@ char_u *get_dict_string(dict_T *d, char_u *key, int save)
 
 /*
  * Get a number item from a dictionary.
- * Returns 0 if the entry doesn't exist or out of memory.
+ * Returns 0 if the entry doesn't exist.
  */
 long get_dict_number(dict_T *d, char_u *key)
 {
-  dictitem_T  *di;
-
-  di = dict_find(d, key, -1);
+  dictitem_T *di = dict_find(d, key, -1);
   if (di == NULL)
     return 0;
   return get_tv_number(&di->di_tv);
@@ -17436,7 +17434,7 @@ static void func_do_profile(ufunc_T *fp)
   fp->uf_tml_idx = -1;
   if (fp->uf_tml_count == NULL || fp->uf_tml_total == NULL
       || fp->uf_tml_self == NULL)
-    return;         /* out of memory */
+    return;
 
   fp->uf_profiling = TRUE;
 }
