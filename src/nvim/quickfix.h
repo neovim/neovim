@@ -1,5 +1,10 @@
 #ifndef NVIM_QUICKFIX_H
 #define NVIM_QUICKFIX_H
+
+/* flags for skip_vimgrep_pat() */
+#define VGR_GLOBAL      1
+#define VGR_NOJUMP      2
+
 /* quickfix.c */
 int qf_init(win_T *wp, char_u *efile, char_u *errorformat, int newlist,
             char_u *qf_title);

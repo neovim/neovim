@@ -825,9 +825,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # undef NBDEBUG
 # define nbdebug(a)
 
-/* flags for skip_vimgrep_pat() */
-#define VGR_GLOBAL      1
-#define VGR_NOJUMP      2
 
 /* behavior for bad character, "++bad=" argument */
 #define BAD_REPLACE     '?'     /* replace it with '?' (default) */
