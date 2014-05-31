@@ -1,8 +1,6 @@
 #ifndef NVIM_GARRAY_H
 #define NVIM_GARRAY_H
 
-#include "nvim/func_attr.h"
-
 /// Structure used for growing arrays.
 /// This is used to store information that only grows, is deleted all at
 /// once, and needs to be accessed by index.  See ga_clear() and ga_grow().
