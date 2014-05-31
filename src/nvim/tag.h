@@ -16,4 +16,4 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "tag.h.generated.h"
 #endif
-#endif /* NVIM_TAG_H */
+#endif  // NVIM_TAG_H

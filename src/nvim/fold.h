@@ -17,4 +17,4 @@ typedef struct foldinfo {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "fold.h.generated.h"
 #endif
-#endif /* NVIM_FOLD_H */
+#endif  // NVIM_FOLD_H

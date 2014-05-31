@@ -74,6 +74,7 @@
 #define INVALID_DEVICE_ID UINT64_MAX
 
 #define HAVE_BUFLIST_MATCH
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.c.generated.h"
 #endif
@@ -83,7 +84,6 @@
 #else
 # define dev_T unsigned
 #endif
-
 
 static char *msg_loclist = N_("[Location List]");
 static char *msg_qflist = N_("[Quickfix List]");

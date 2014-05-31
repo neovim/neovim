@@ -5,9 +5,8 @@
 
 typedef int guicolor_T;
 
-/* syntax.c */
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.h.generated.h"
 #endif
 
-#endif /* NVIM_SYNTAX_H */
+#endif  // NVIM_SYNTAX_H

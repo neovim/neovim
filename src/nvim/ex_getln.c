@@ -119,7 +119,6 @@ static int cmd_hkmap = 0;       /* Hebrew mapping during command line */
 
 static int cmd_fkmap = 0;       /* Farsi mapping during command line */
 
-
 /*
  * getcmdline() - accept a command line starting with firstc.
  *

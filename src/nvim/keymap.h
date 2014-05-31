@@ -502,4 +502,4 @@ enum key_extra {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "keymap.h.generated.h"
 #endif
-#endif /* NVIM_KEYMAP_H */
+#endif  // NVIM_KEYMAP_H
