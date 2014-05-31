@@ -65,6 +65,7 @@ char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
  * by a backslash.
  */
 char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars)
+  FUNC_ATTR_NONNULL_RET
 {
   return vim_strsave_escaped_ext(string, esc_chars, '\\', FALSE);
 }
@@ -75,10 +76,8 @@ char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars)
  * Escape the characters with "cc".
  */
 char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int bsl)
+  FUNC_ATTR_NONNULL_RET
 {
-  char_u      *p;
-  char_u      *p2;
-  char_u      *escaped_string;
   unsigned length;
   int l;
 
@@ -87,7 +86,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
    * Then allocate the memory and insert them.
    */
   length = 1;                           /* count the trailing NUL */
-  for (p = string; *p; p++) {
+  for (char_u *p = string; *p; p++) {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       length += l;                      /* count a multibyte char */
       p += l - 1;
@@ -97,9 +96,10 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
       ++length;                         /* count a backslash */
     ++length;                           /* count an ordinary char */
   }
-  escaped_string = xmalloc(length);
-  p2 = escaped_string;
-  for (p = string; *p; p++) {
+
+  char_u *escaped_string = xmalloc(length);
+  char_u *p2 = escaped_string;
+  for (char_u *p = string; *p; p++) {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       memmove(p2, p, (size_t)l);
       p2 += l;

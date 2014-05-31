@@ -18603,8 +18603,6 @@ int store_session_globals(FILE *fd)
          * CR into \n and \r. */
         p = vim_strsave_escaped(get_tv_string(&this_var->di_tv),
             (char_u *)"\\\"\n\r");
-        if (p == NULL)              /* out of memory */
-          break;
         for (t = p; *t != NUL; ++t)
           if (*t == '\n')
             *t = 'n';

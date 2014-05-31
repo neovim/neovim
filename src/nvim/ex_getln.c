@@ -2947,17 +2947,13 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
         /* for ":set path=" we need to escape spaces twice */
         if (xp->xp_backslash == XP_BS_THREE) {
           p = vim_strsave_escaped(files[i], (char_u *)" ");
-          if (p != NULL) {
-            free(files[i]);
-            files[i] = p;
+          free(files[i]);
+          files[i] = p;
 #if defined(BACKSLASH_IN_FILENAME)
-            p = vim_strsave_escaped(files[i], (char_u *)" ");
-            if (p != NULL) {
-              free(files[i]);
-              files[i] = p;
-            }
+          p = vim_strsave_escaped(files[i], (char_u *)" ");
+          free(files[i]);
+          files[i] = p;
 #endif
-          }
         }
 #ifdef BACKSLASH_IN_FILENAME
         p = vim_strsave_fnameescape(files[i], FALSE);
@@ -2987,10 +2983,8 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
        */
       for (i = 0; i < numfiles; ++i) {
         p = vim_strsave_escaped(files[i], (char_u *)"\\|\"");
-        if (p != NULL) {
-          free(files[i]);
-          files[i] = p;
-        }
+        free(files[i]);
+        files[i] = p;
       }
     }
   }
@@ -3016,7 +3010,7 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
   p = vim_strsave_escaped(fname, buf);
 #else
   p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
-  if (shell && csh_like_shell() && p != NULL) {
+  if (shell && csh_like_shell()) {
     char_u      *s;
 
     /* For csh and similar shells need to put two backslashes before '!'.
