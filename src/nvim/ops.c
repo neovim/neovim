@@ -986,8 +986,6 @@ do_execreg (
           return FAIL;
       }
       escaped = vim_strsave_escape_csi(y_current->y_array[i]);
-      if (escaped == NULL)
-        return FAIL;
       retval = ins_typebuf(escaped, remap, 0, TRUE, silent);
       free(escaped);
       if (retval == FAIL)

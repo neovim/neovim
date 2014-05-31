@@ -8295,13 +8295,11 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv)
     /* Need to escape K_SPECIAL and CSI before putting the string in the
      * typeahead buffer. */
     keys_esc = vim_strsave_escape_csi(keys);
-    if (keys_esc != NULL) {
-      ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-          typebuf.tb_len, !typed, FALSE);
-      free(keys_esc);
-      if (vgetc_busy)
-        typebuf_was_filled = TRUE;
-    }
+    ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+        typebuf.tb_len, !typed, FALSE);
+    free(keys_esc);
+    if (vgetc_busy)
+      typebuf_was_filled = TRUE;
   }
 }
 

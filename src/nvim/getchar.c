@@ -26,6 +26,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/farsi.h"
+#include "nvim/func_attr.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -3760,17 +3761,13 @@ static bool is_user_input(int k)
 /*
  * Copy "p" to allocated memory, escaping K_SPECIAL and CSI so that the result
  * can be put in the typeahead buffer.
- * Returns NULL when out of memory.
  */
 char_u *vim_strsave_escape_csi(char_u *p)
 {
-  char_u      *res;
-  char_u      *s, *d;
-
   /* Need a buffer to hold up to three times as much. */
-  res = xmalloc(STRLEN(p) * 3 + 1);
-  d = res;
-  for (s = p; *s != NUL; ) {
+  char_u *res = xmalloc(STRLEN(p) * 3 + 1);
+  char_u *d = res;
+  for (char_u *s = p; *s != NUL; ) {
     if (s[0] == K_SPECIAL && s[1] != NUL && s[2] != NUL) {
       /* Copy special key unmodified. */
       *d++ = *s++;
