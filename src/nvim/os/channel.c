@@ -17,8 +17,6 @@
 #include "nvim/map.h"
 #include "nvim/lib/kvec.h"
 
-#include "nvim/lib/klist.h"
-
 typedef struct {
   uint64_t id;
   PMap(cstr_t) *subscribed_events;
