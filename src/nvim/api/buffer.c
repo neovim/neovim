@@ -184,7 +184,7 @@ void buffer_set_slice(Buffer buffer,
 
   for (size_t i = 0; i < new_len; i++) {
     String l = replacement.items[i];
-    lines[i] = xstrndup(l.data, l.size);
+    lines[i] = xmemdupz(l.data, l.size);
   }
 
   try_start();
@@ -392,15 +392,12 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
     return;
   }
 
-  aco_save_T aco;
-  int ren_ret;
-  char *val = xstrndup(name.data, name.size);
-
   try_start();
+
   // Using aucmd_*: autocommands will be executed by rename_buffer
+  aco_save_T aco;
   aucmd_prepbuf(&aco, buf);
-  ren_ret = rename_buffer((char_u *)val);
-  free(val);
+  int ren_ret = rename_buffer((char_u *) name.data);
   aucmd_restbuf(&aco);
 
   if (try_end(err)) {
