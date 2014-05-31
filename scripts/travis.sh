@@ -78,6 +78,10 @@ fi
 MAKE_CMD="make -j2"
 
 if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
+    # temporarily disable error checking, the coverity script exits with
+    # status code 1 whenever it (1) fails OR (2) is not on the correct
+    # branch.
+    set +e
     curl -s https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh |
         COVERITY_SCAN_PROJECT_NAME="neovim/neovim" \
         COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@aktau.be" \
@@ -85,6 +89,7 @@ if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
         COVERITY_SCAN_BUILD_COMMAND_PREPEND="$MAKE_CMD deps" \
         COVERITY_SCAN_BUILD_COMMAND="$MAKE_CMD nvim" \
         bash
+    set -e
     exit 0
 elif [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 	if [ ! -d /usr/local/clang-3.4 ]; then
