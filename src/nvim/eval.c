@@ -11914,15 +11914,10 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
          * concatenate the remainders. */
         q = path_next_component(vim_ispathsep(*buf) ? buf + 1 : buf);
         if (*q != NUL) {
-          if (remain == NULL)
-            remain = vim_strsave(q - 1);
-          else {
-            cpy = concat_str(q - 1, remain);
-            if (cpy != NULL) {
-              free(remain);
-              remain = cpy;
-            }
-          }
+          cpy = remain;
+          remain = remain ?
+            concat_str(q - 1, remain) : (char_u *) xstrdup((char *)q - 1);
+          free(cpy);
           q[-1] = NUL;
         }
 
@@ -11978,10 +11973,8 @@ static void f_resolve(typval_T *argvars, typval_T *rettv)
                            || vim_ispathsep(p[2])))))) {
         /* Prepend "./". */
         cpy = concat_str((char_u *)"./", p);
-        if (cpy != NULL) {
-          free(p);
-          p = cpy;
-        }
+        free(p);
+        p = cpy;
       } else if (!is_relative_to_current) {
         /* Strip leading "./". */
         q = p;
