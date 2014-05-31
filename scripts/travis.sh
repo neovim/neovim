@@ -77,7 +77,16 @@ fi
 # for more information.
 MAKE_CMD="make -j2"
 
-if [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
+if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
+    curl -s https://scan.coverity.com/scripts/travisci_build_coverity_scan.sh |
+        COVERITY_SCAN_PROJECT_NAME="neovim/neovim" \
+        COVERITY_SCAN_NOTIFICATION_EMAIL="coverity@aktau.be" \
+        COVERITY_SCAN_BRANCH_PATTERN="coverity-scan" \
+        COVERITY_SCAN_BUILD_COMMAND_PREPEND="$MAKE_CMD deps" \
+        COVERITY_SCAN_BUILD_COMMAND="$MAKE_CMD nvim" \
+        bash
+    exit $?
+elif [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
 	if [ ! -d /usr/local/clang-3.4 ]; then
 		echo "Downloading clang 3.4..."
 		sudo sh <<- "EOF"
