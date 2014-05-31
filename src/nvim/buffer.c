@@ -1908,7 +1908,7 @@ static char_u *fname_match(regprog_T *prog, char_u *name)
     else {
       /* Replace $(HOME) with '~' and try matching again. */
       p = home_replace_save(NULL, name);
-      if (p != NULL && vim_regexec(&regmatch, p, (colnr_T)0))
+      if (vim_regexec(&regmatch, p, (colnr_T)0))
         match = name;
       free(p);
     }

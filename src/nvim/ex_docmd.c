@@ -7909,8 +7909,7 @@ makeopens (
       return FAIL;
   } else if (ssop_flags & SSOP_CURDIR) {
     sname = home_replace_save(NULL, globaldir != NULL ? globaldir : dirnow);
-    if (sname == NULL
-        || fputs("cd ", fd) < 0
+    if (fputs("cd ", fd) < 0
         || ses_put_fname(fd, sname, &ssop_flags) == FAIL
         || put_eol(fd) == FAIL) {
       free(sname);
@@ -8535,17 +8534,13 @@ static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp)
  * Write a file name to the session file.
  * Takes care of the "slash" option in 'sessionoptions' and escapes special
  * characters.
- * Returns FAIL if writing fails or out of memory.
+ * Returns FAIL if writing fails.
  */
 static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
 {
-  char_u      *sname;
   char_u      *p;
-  int retval = OK;
 
-  sname = home_replace_save(NULL, name);
-  if (sname == NULL)
-    return FAIL;
+  char_u *sname = home_replace_save(NULL, name);
 
   if (*flagp & SSOP_SLASH) {
     /* change all backslashes to forward slashes */
@@ -8559,11 +8554,13 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
   free(sname);
 
   /* write the result */
-  if (fputs((char *)p, fd) < 0)
-    retval = FAIL;
+  if (fputs((char *)p, fd) < 0) {
+    free(p);
+    return FAIL;
+  }
 
   free(p);
-  return retval;
+  return OK;
 }
 
 /*

@@ -18645,17 +18645,13 @@ int store_session_globals(FILE *fd)
  */
 void last_set_msg(scid_T scriptID)
 {
-  char_u *p;
-
   if (scriptID != 0) {
-    p = home_replace_save(NULL, get_scriptname(scriptID));
-    if (p != NULL) {
-      verbose_enter();
-      MSG_PUTS(_("\n\tLast set from "));
-      MSG_PUTS(p);
-      free(p);
-      verbose_leave();
-    }
+    char_u *p = home_replace_save(NULL, get_scriptname(scriptID));
+    verbose_enter();
+    MSG_PUTS(_("\n\tLast set from "));
+    MSG_PUTS(p);
+    free(p);
+    verbose_leave();
   }
 }
 
