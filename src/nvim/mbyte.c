@@ -95,6 +95,7 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/arabic.h"
 
 # define WINBYTE BYTE
 
