@@ -20,4 +20,4 @@ typedef struct {
   colnr_T col;          /* column number */
 } lpos_T;
 
-#endif /* NVIM_POS_H */
+#endif  // NVIM_POS_H

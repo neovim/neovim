@@ -60,4 +60,4 @@ typedef struct cmdarg_S {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "normal.h.generated.h"
 #endif
-#endif /* NVIM_NORMAL_H */
+#endif  // NVIM_NORMAL_H

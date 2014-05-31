@@ -51,4 +51,4 @@ typedef struct cursor_entry {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor_shape.h.generated.h"
 #endif
-#endif /* NVIM_CURSOR_SHAPE_H */
+#endif  // NVIM_CURSOR_SHAPE_H
