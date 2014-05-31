@@ -1,7 +1,6 @@
 #ifndef NVIM_OPS_H
 #define NVIM_OPS_H
 
-#include "nvim/func_attr.h"
 #include "nvim/types.h"
 
 typedef int (*Indenter)(void);
