@@ -13,10 +13,12 @@ set(DEPS_LIB_DIR "${DEPS_DIR}/usr/lib")
 set(DEPS_BUILD_DIR "${DEPS_DIR}/build")
 set(DEPS_DOWNLOAD_DIR "${DEPS_BUILD_DIR}/downloads")
 
-option(USE_BUNDLED_LIBUV "Use the bundled libuv." ON)
-option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ON)
-option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ON)
-option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ON)
+option(USE_BUNDLED "Use bundled dependencies." ON)
+
+option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
+option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
+option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
+option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
 
 # TODO: add windows support
 

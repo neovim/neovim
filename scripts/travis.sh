@@ -59,7 +59,7 @@ set_environment() {
 	eval $($prefix/bin/luarocks path)
 	export PATH="$prefix/bin:$PATH"
 	export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
-	export DEPS_CMAKE_FLAGS="-DUSE_BUNDLED_LIBUV=OFF -DUSE_BUNDLED_LUAJIT=OFF -DUSE_BUNDLED_MSGPACK=OFF -DUSE_BUNDLED_LUAROCKS=OFF"
+	export DEPS_CMAKE_FLAGS="-DUSE_BUNDLED=OFF"
 }
 
 # install prebuilt dependencies
