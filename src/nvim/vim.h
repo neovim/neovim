@@ -389,11 +389,6 @@ typedef enum {
 
 #define MAUTO   0xff            /* Decide between MLINE/MCHAR */
 
-/*
- * Minimum screen size
- */
-#define MIN_COLUMNS     12      /* minimal columns for screen */
-#define MIN_LINES       2       /* minimal lines for screen */
 #define STATUS_HEIGHT   1       /* height of a status line under a window */
 #define QF_WINHEIGHT    10      /* default height for quickfix window */
 

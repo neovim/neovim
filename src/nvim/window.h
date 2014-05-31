@@ -9,7 +9,6 @@
 #define FNAME_REL       16      /* ".." and "./" are relative to the (current)
                                    file instead of the current directory */
 
-
 /*
  * arguments for win_split()
  */
@@ -21,6 +20,12 @@
 #define WSP_BELOW       32      /* put new window below/right */
 #define WSP_ABOVE       64      /* put new window above/left */
 #define WSP_NEWLOC      128     /* don't copy location list */
+
+/*
+ * Minimum screen size
+ */
+#define MIN_COLUMNS     12      /* minimal columns for screen */
+#define MIN_LINES       2       /* minimal lines for screen */
 
 
 
