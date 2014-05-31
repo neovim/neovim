@@ -9,6 +9,7 @@
 #include "nvim/vim.h"
 #include "nvim/charset.h"
 #include "nvim/farsi.h"
+#include "nvim/func_attr.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -321,12 +322,12 @@ void trans_characters(char_u *buf, int bufsize)
 }
 
 /// Translate a string into allocated memory, replacing special chars with
-/// printable chars.  Returns NULL when out of memory.
+/// printable chars.
 ///
 /// @param s
 ///
 /// @return translated string
-char_u *transstr(char_u *s)
+char_u *transstr(char_u *s) FUNC_ATTR_NONNULL_RET
 {
   char_u *res;
   char_u *p;

@@ -3528,8 +3528,6 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
         memmove(p, result, done);
       free(result);
       result = p;
-      if (result == NULL)       /* out of memory */
-        break;
     }
 
     to = (char *)result + done;
