@@ -4438,7 +4438,7 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
       if (is_aff_rule(items, itemcnt, "SET", 2) && aff->af_enc == NULL) {
         // Setup for conversion from "ENC" to 'encoding'.
         aff->af_enc = enc_canonize(items[1]);
-        if (aff->af_enc != NULL && !spin->si_ascii
+        if (!spin->si_ascii
             && convert_setup(&spin->si_conv, aff->af_enc,
                 p_enc) == FAIL)
           smsg((char_u *)_("Conversion in %s not supported: from %s to %s"),
@@ -5978,7 +5978,7 @@ static int spell_read_wordfile(spellinfo_T *spin, char_u *fname)
           // Setup for conversion to 'encoding'.
           line += 9;
           enc = enc_canonize(line);
-          if (enc != NULL && !spin->si_ascii
+          if (!spin->si_ascii
               && convert_setup(&spin->si_conv, enc,
                   p_enc) == FAIL)
             smsg((char_u *)_("Conversion in %s not supported: from %s to %s"),

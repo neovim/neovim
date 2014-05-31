@@ -3012,8 +3012,6 @@ void ex_scriptencoding(exarg_T *eap)
 
   if (*eap->arg != NUL) {
     name = enc_canonize(eap->arg);
-    if (name == NULL)           /* out of memory */
-      return;
   } else
     name = eap->arg;
 
