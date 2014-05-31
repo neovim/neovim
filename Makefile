@@ -1,6 +1,8 @@
 -include local.mk
 
-CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=Debug
+CMAKE_BUILD_TYPE ?= Debug
+
+CMAKE_FLAGS := -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE)
 
 BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
     echo "Unix Makefiles")
