@@ -62,12 +62,6 @@ Error: configure did not run properly.Check auto/config.log.
 #  define MAXPATHL  256
 # endif
 #endif
-#ifdef BACKSLASH_IN_FILENAME
-# define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`%#'\"|!<")
-#else
-#  define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
-#  define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
-#endif
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 

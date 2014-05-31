@@ -3034,6 +3034,12 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
  * after a Vim command, or, when "shell" is non-zero, a shell command.
  * Returns the result in allocated memory.
  */
+#ifdef BACKSLASH_IN_FILENAME
+#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`%#'\"|!<")
+#else
+#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
+#define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
+#endif
 char_u *vim_strsave_fnameescape(char_u *fname, int shell)
 {
   char_u      *p;
