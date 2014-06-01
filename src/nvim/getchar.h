@@ -8,7 +8,9 @@
 #define REMAP_SCRIPT    -2      /* remap script-local mappings only */
 #define REMAP_SKIP      -3      /* no remapping for first char */
 
-
+#define KEYLEN_PART_KEY -1      /* keylen value for incomplete key-code */
+#define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
+#define KEYLEN_REMOVED  9999    /* keylen value for removed sequence */
 
 /* getchar.c */
 void free_buff(buffheader_T *buf);

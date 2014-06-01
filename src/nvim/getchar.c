@@ -68,6 +68,7 @@
 
 #define MINIMAL_SIZE 20                 /* minimal size for b_str */
 
+
 static buffheader_T redobuff = {{NULL, {NUL}}, NULL, 0, 0};
 static buffheader_T old_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
 static buffheader_T save_redobuff = {{NULL, {NUL}}, NULL, 0, 0};
