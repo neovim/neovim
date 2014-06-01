@@ -247,10 +247,6 @@ enum {
 
 
 
-/* Values for "starting" */
-#define NO_SCREEN       2       /* no screen updating yet */
-#define NO_BUFFERS      1       /* not all buffers loaded yet */
-/*			0	   not starting anymore */
 
 /* Values for swap_exists_action: what to do when swap file already exists */
 #define SEA_NONE        0       /* don't use dialog */

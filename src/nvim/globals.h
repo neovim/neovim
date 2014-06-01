@@ -18,6 +18,11 @@
  * definition of global variables
  */
 
+/* Values for "starting" */
+#define NO_SCREEN       2       /* no screen updating yet */
+#define NO_BUFFERS      1       /* not all buffers loaded yet */
+/*			0	   not starting anymore */
+
 /*
  * Number of Rows and Columns in the screen.
  * Must be long to be able to use them as options in option.c.
