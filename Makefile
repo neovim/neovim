@@ -45,6 +45,9 @@ cmake:
 	touch CMakeLists.txt
 	$(MAKE) build/.ran-cmake
 
+release:
+	$(MAKE) CMAKE_EXTRA_FLAGS=-DCMAKE_BUILD_TYPE=Release
+	
 build/.ran-cmake: | deps
 	mkdir -p build
 	cd build && cmake -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
