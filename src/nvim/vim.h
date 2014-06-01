@@ -724,10 +724,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 # define nbdebug(a)
 
 
-/* behavior for bad character, "++bad=" argument */
-#define BAD_REPLACE     '?'     /* replace it with '?' (default) */
-#define BAD_KEEP        -1      /* leave it */
-#define BAD_DROP        -2      /* erase it */
 
 /* last argument for do_source() */
 #define DOSO_NONE       0
