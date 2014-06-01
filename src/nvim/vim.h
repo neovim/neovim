@@ -258,13 +258,6 @@ enum {
 #define MIN_SWAP_PAGE_SIZE 1048
 #define MAX_SWAP_PAGE_SIZE 50000
 
-/* Special values for current_SID. */
-#define SID_MODELINE    -1      /* when using a modeline */
-#define SID_CMDARG      -2      /* for "--cmd" argument */
-#define SID_CARG        -3      /* for "-c" argument */
-#define SID_ENV         -4      /* for sourcing environment variable */
-#define SID_ERROR       -5      /* option was reset because of an error */
-#define SID_NONE        -6      /* don't set scriptID */
 
 /*
  * Values for index in highlight_attr[].
