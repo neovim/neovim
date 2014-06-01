@@ -1,5 +1,9 @@
 #ifndef NVIM_EX_DOCMD_H
 #define NVIM_EX_DOCMD_H
+
+#include "nvim/ex_cmds_defs.h"
+#include "nvim/types.h"
+
 /* ex_docmd.c */
 void do_exmode(int improved);
 int do_cmdline_cmd(char_u *cmd);
