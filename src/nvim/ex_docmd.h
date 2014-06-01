@@ -9,6 +9,9 @@
 #define DOCMD_EXCRESET  0x10    /* reset exception environment (for debugging)*/
 #define DOCMD_KEEPLINE  0x20    /* keep typed line for repeating with "." */
 
+/* defines for eval_vars() */
+#define VALID_PATH              1
+#define VALID_HEAD              2
 
 
 /* ex_docmd.c */

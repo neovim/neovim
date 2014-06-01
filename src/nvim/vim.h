@@ -633,10 +633,6 @@ typedef struct timeval proftime_T;
 # endif
 
 
-/* defines for eval_vars() */
-#define VALID_PATH              1
-#define VALID_HEAD              2
-
 /* Defines for Vim variables.  These must match vimvars[] in eval.c! */
 enum {
     VV_COUNT,
