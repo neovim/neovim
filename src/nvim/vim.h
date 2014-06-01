@@ -456,10 +456,6 @@ typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
 
 typedef struct timeval proftime_T;
 
-/* Values for "do_profiling". */
-#define PROF_NONE       0       /* profiling not started */
-#define PROF_YES        1       /* profiling busy */
-#define PROF_PAUSED     2       /* profiling paused */
 
 
 

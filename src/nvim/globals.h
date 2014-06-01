@@ -217,6 +217,11 @@ EXTERN int ex_nesting_level INIT(= 0);          /* nesting level */
 EXTERN int debug_break_level INIT(= -1);        /* break below this level */
 EXTERN int debug_did_msg INIT(= FALSE);         /* did "debug mode" message */
 EXTERN int debug_tick INIT(= 0);                /* breakpoint change count */
+
+/* Values for "do_profiling". */
+#define PROF_NONE       0       /* profiling not started */
+#define PROF_YES        1       /* profiling busy */
+#define PROF_PAUSED     2       /* profiling paused */
 EXTERN int do_profiling INIT(= PROF_NONE);      /* PROF_ values */
 
 /*
