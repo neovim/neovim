@@ -390,15 +390,6 @@ typedef enum {
 # include <fcntl.h>
 #endif
 
-#ifdef BINARY_FILE_IO
-# define WRITEBIN   "wb"        /* no CR-LF translation */
-# define READBIN    "rb"
-# define APPENDBIN  "ab"
-#else
-# define WRITEBIN   "w"
-# define READBIN    "r"
-# define APPENDBIN  "a"
-#endif
 
 #ifndef O_NOFOLLOW
 # define O_NOFOLLOW 0
