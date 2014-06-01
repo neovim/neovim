@@ -44,21 +44,10 @@
 #include "nvim/ui.h"
 #include "nvim/window.h"
 
-static void save_re_pat(int idx, char_u *pat, int magic);
-static void set_vv_searchforward(void);
-static int first_submatch(regmmatch_T *rp);
-static int check_prevcol(char_u *linep, int col, int ch, int *prevcol);
-static int inmacro(char_u *, char_u *);
-static int check_linecomment(char_u *line);
-static int cls(void);
-static int skip_chars(int, int);
-static void back_in_line(void);
-static void find_first_blank(pos_T *);
-static void findsent_forward(long count, int at_start_sent);
-static void show_pat_in_path(char_u *, int,
-                             int, int, FILE *, linenr_T *, long);
-static void wvsp_one(FILE *fp, int idx, char *s, int sc);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "search.c.generated.h"
+#endif
 /*
  * This file contains various searching-related routines. These fall into
  * three groups:
@@ -452,18 +441,19 @@ void last_pat_prog(regmmatch_T *regmatch)
  * Returns the index of the first matching
  * subpattern plus one; one if there was none.
  */
-int searchit(win, buf, pos, dir, pat, count, options, pat_use, stop_lnum, tm)
-win_T       *win;               /* window to search in; can be NULL for a
-                                   buffer without a window! */
-buf_T       *buf;
-pos_T       *pos;
-int dir;
-char_u      *pat;
-long count;
-int options;
-int pat_use;                    /* which pattern to use when "pat" is empty */
-linenr_T stop_lnum;             /* stop after this line number when != 0 */
-proftime_T  *tm;         /* timeout limit or NULL */
+int searchit(
+    win_T       *win,               /* window to search in, can be NULL for a
+                                       buffer without a window! */
+    buf_T       *buf,
+    pos_T       *pos,
+    int dir,
+    char_u      *pat,
+    long count,
+    int options,
+    int pat_use,                    /* which pattern to use when "pat" is empty */
+    linenr_T stop_lnum,             /* stop after this line number when != 0 */
+    proftime_T  *tm          /* timeout limit or NULL */
+)
 {
   int found;
   linenr_T lnum;                /* no init to shut up Apollo cc */
@@ -899,13 +889,14 @@ static int first_submatch(regmmatch_T *rp)
  *
  * return 0 for failure, 1 for found, 2 for found and line offset added
  */
-int do_search(oap, dirc, pat, count, options, tm)
-oparg_T         *oap;           /* can be NULL */
-int dirc;                       /* '/' or '?' */
-char_u          *pat;
-long count;
-int options;
-proftime_T      *tm;            /* timeout limit or NULL */
+int do_search(
+    oparg_T         *oap,           /* can be NULL */
+    int dirc,                       /* '/' or '?' */
+    char_u          *pat,
+    long count,
+    int options,
+    proftime_T      *tm             /* timeout limit or NULL */
+)
 {
   pos_T pos;                    /* position of the last match */
   char_u          *searchstr;
@@ -3091,7 +3082,6 @@ current_block (
   return OK;
 }
 
-static int in_html_tag(int);
 
 /*
  * Return TRUE if the cursor is on a "<aaa>" tag.  Ignore "<aaa/>".
@@ -3486,10 +3476,6 @@ extend:
   return OK;
 }
 
-static int find_next_quote(char_u *top_ptr, int col, int quotechar,
-                           char_u *escape);
-static int find_prev_quote(char_u *line, int col_start, int quotechar,
-                           char_u *escape);
 
 /*
  * Search quote char from string line[col].
@@ -3766,7 +3752,6 @@ current_quote (
 }
 
 
-static int is_one_char(char_u *pattern);
 
 /*
  * Find next search match under cursor, cursor at end.

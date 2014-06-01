@@ -41,7 +41,9 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
-static void try_to_free_memory();
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "memory.c.generated.h"
+#endif
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
@@ -63,7 +65,15 @@ static void try_to_free_memory()
   trying_to_free = false;
 }
 
-void *try_malloc(size_t size)
+/// malloc() wrapper
+///
+/// try_malloc() is a malloc() wrapper that tries to free some memory before
+/// trying again.
+///
+/// @see {try_to_free_memory}
+/// @param size
+/// @return pointer to allocated space. NULL if out of memory
+void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
   void *ret = malloc(size);
 
@@ -80,7 +90,13 @@ void *try_malloc(size_t size)
   return ret;
 }
 
-void *verbose_try_malloc(size_t size)
+/// try_malloc() wrapper that shows an out-of-memory error message to the user
+/// before returning NULL
+///
+/// @see {try_malloc}
+/// @param size
+/// @return pointer to allocated space. NULL if out of memory
+void *verbose_try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
   void *ret = try_malloc(size);
   if (!ret) {
@@ -89,7 +105,16 @@ void *verbose_try_malloc(size_t size)
   return ret;
 }
 
+/// malloc() wrapper that never returns NULL
+///
+/// xmalloc() succeeds or gracefully aborts when out of memory.
+/// Before aborting try to free some memory and call malloc again.
+///
+/// @see {try_to_free_memory}
+/// @param size
+/// @return pointer to allocated space. Never NULL
 void *xmalloc(size_t size)
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1) FUNC_ATTR_NONNULL_RET
 {
   void *ret = try_malloc(size);
 
@@ -100,7 +125,14 @@ void *xmalloc(size_t size)
   return ret;
 }
 
+/// calloc() wrapper
+///
+/// @see {xmalloc}
+/// @param count
+/// @param size
+/// @return pointer to allocated space. Never NULL
 void *xcalloc(size_t count, size_t size)
+  FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
   void *ret = calloc(count, size);
 
@@ -121,7 +153,13 @@ void *xcalloc(size_t count, size_t size)
   return ret;
 }
 
+/// realloc() wrapper
+///
+/// @see {xmalloc}
+/// @param size
+/// @return pointer to reallocated space. Never NULL
 void *xrealloc(void *ptr, size_t size)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_ALLOC_SIZE(2) FUNC_ATTR_NONNULL_RET
 {
   void *ret = realloc(ptr, size);
 
@@ -142,6 +180,11 @@ void *xrealloc(void *ptr, size_t size)
   return ret;
 }
 
+/// xmalloc() wrapper that allocates size + 1 bytes and zeroes the last byte
+///
+/// @see {xmalloc}
+/// @param size
+/// @return pointer to allocated space. Never NULL
 void *xmallocz(size_t size)
 {
   size_t total_size = size + 1;
@@ -158,17 +201,62 @@ void *xmallocz(size_t size)
   return ret;
 }
 
+/// Allocates (len + 1) bytes of memory, duplicates `len` bytes of
+/// `data` to the allocated memory, zero terminates the allocated memory,
+/// and returns a pointer to the allocated memory. If the allocation fails,
+/// the program dies.
+///
+/// @see {xmalloc}
+/// @param data Pointer to the data that will be copied
+/// @param len number of bytes that will be copied
 void *xmemdupz(const void *data, size_t len)
 {
   return memcpy(xmallocz(len), data, len);
 }
 
+/// The xstpcpy() function shall copy the string pointed to by src (including
+/// the terminating NUL character) into the array pointed to by dst.
+///
+/// The xstpcpy() function shall return a pointer to the terminating NUL
+/// character copied into the dst buffer. This is the only difference with
+/// strcpy(), which returns dst.
+///
+/// WARNING: If copying takes place between objects that overlap, the behavior is
+/// undefined.
+///
+/// This is the Neovim version of stpcpy(3) as defined in POSIX 2008. We
+/// don't require that supported platforms implement POSIX 2008, so we
+/// implement our own version.
+///
+/// @param dst
+/// @param src
 char *xstpcpy(char *restrict dst, const char *restrict src)
 {
   const size_t len = strlen(src);
   return (char *)memcpy(dst, src, len + 1) + len;
 }
 
+/// The xstpncpy() function shall copy not more than n bytes (bytes that follow
+/// a NUL character are not copied) from the array pointed to by src to the
+/// array pointed to by dst.
+///
+/// If a NUL character is written to the destination, the xstpncpy() function
+/// shall return the address of the first such NUL character. Otherwise, it
+/// shall return &dst[maxlen].
+///
+/// WARNING: If copying takes place between objects that overlap, the behavior is
+/// undefined.
+///
+/// WARNING: xstpncpy will ALWAYS write maxlen bytes. If src is shorter than
+/// maxlen, zeroes will be written to the remaining bytes.
+///
+/// TODO(aktau): I don't see a good reason to have this last behaviour, and
+/// it is potentially wasteful. Could we perhaps deviate from the standard
+/// and not zero the rest of the buffer?
+///
+/// @param dst
+/// @param src
+/// @param maxlen
 char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
 {
     const char *p = memchr(src, '\0', maxlen);
@@ -183,6 +271,17 @@ char *xstpncpy(char *restrict dst, const char *restrict src, size_t maxlen)
     }
 }
 
+/// xstrlcpy - Copy a %NUL terminated string into a sized buffer
+///
+/// Compatible with *BSD strlcpy: the result is always a valid
+/// NUL-terminated string that fits in the buffer (unless,
+/// of course, the buffer size is zero). It does not pad
+/// out the result like strncpy() does.
+///
+/// @param dst Where to copy the string to
+/// @param src Where to copy the string from
+/// @param size Size of destination buffer
+/// @return Length of the source string (i.e.: strlen(src))
 size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
 {
     size_t ret = strlen(src);
@@ -196,7 +295,13 @@ size_t xstrlcpy(char *restrict dst, const char *restrict src, size_t size)
     return ret;
 }
 
+/// strdup() wrapper
+///
+/// @see {xmalloc}
+/// @param str 0-terminated string that will be copied
+/// @return pointer to a copy of the string
 char *xstrdup(const char *str)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   char *ret = strdup(str);
 
@@ -212,12 +317,24 @@ char *xstrdup(const char *str)
   return ret;
 }
 
+/// strndup() wrapper
+///
+/// @see {xmalloc}
+/// @param str 0-terminated string that will be copied
+/// @return pointer to a copy of the string
 char *xstrndup(const char *str, size_t len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_RET
 {
   char *p = memchr(str, '\0', len);
   return xmemdupz(str, p ? (size_t)(p - str) : len);
 }
 
+/// Duplicates a chunk of memory using xmalloc
+///
+/// @see {xmalloc}
+/// @param data pointer to the chunk
+/// @param len size of the chunk
+/// @return a pointer
 void *xmemdup(const void *data, size_t len)
 {
   return memcpy(xmalloc(len), data, len);

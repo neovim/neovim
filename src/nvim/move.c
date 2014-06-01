@@ -31,25 +31,16 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 
-static void comp_botline(win_T *wp);
-static void redraw_for_cursorline(win_T *wp);
-static int scrolljump_value(void);
-static int check_top_offset(void);
-static void curs_rows(win_T *wp, int do_botline);
-static void validate_botline_win(win_T *wp);
-static void validate_cheight(void);
-
 typedef struct {
   linenr_T lnum;                /* line number */
   int fill;                     /* filler lines */
   int height;                   /* height of added line */
 } lineoff_T;
 
-static void topline_back(lineoff_T *lp);
-static void botline_forw(lineoff_T *lp);
-static void botline_topline(lineoff_T *lp);
-static void topline_botline(lineoff_T *lp);
-static void max_topfill(void);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "move.c.generated.h"
+#endif
+
 
 /*
  * Compute wp->w_botline for the current wp->w_topline.  Can be called after
@@ -1775,7 +1766,6 @@ void cursor_correct(void)
   curwin->w_valid |= VALID_TOPLINE;
 }
 
-static void get_scroll_overlap(lineoff_T *lp, int dir);
 
 /*
  * move screen 'count' pages up or down and update screen

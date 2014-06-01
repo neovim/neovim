@@ -83,149 +83,61 @@ static garray_T ucmds = {0, 0, sizeof(ucmd_T), 4, NULL};
 #define USER_CMD(i) (&((ucmd_T *)(ucmds.ga_data))[i])
 #define USER_CMD_GA(gap, i) (&((ucmd_T *)((gap)->ga_data))[i])
 
-static void do_ucmd(exarg_T *eap);
-static void ex_command(exarg_T *eap);
-static void ex_delcommand(exarg_T *eap);
-static char_u *get_user_command_name(int idx);
+/* Struct for storing a line inside a while/for loop */
+typedef struct {
+  char_u      *line;            /* command line */
+  linenr_T lnum;                /* sourcing_lnum of the line */
+} wcmd_T;
+
+/*
+ * Structure used to store info for line position in a while or for loop.
+ * This is required, because do_one_cmd() may invoke ex_function(), which
+ * reads more lines that may come from the while/for loop.
+ */
+struct loop_cookie {
+  garray_T    *lines_gap;               /* growarray with line info */
+  int current_line;                     /* last read line from growarray */
+  int repeating;                        /* TRUE when looping a second time */
+  /* When "repeating" is FALSE use "getline" and "cookie" to get lines */
+  char_u      *(*getline)(int, void *, int);
+  void        *cookie;
+};
 
 
-static char_u   *do_one_cmd(char_u **, int, struct condstack *,
-                            char_u *(*fgetline)(int, void *, int),
-                            void *cookie);
-static void append_command(char_u *cmd);
-static char_u   *find_command(exarg_T *eap, int *full);
+/* Struct to save a few things while debugging.  Used in do_cmdline() only. */
+struct dbg_stuff {
+  int trylevel;
+  int force_abort;
+  except_T    *caught_stack;
+  char_u      *vv_exception;
+  char_u      *vv_throwpoint;
+  int did_emsg;
+  int got_int;
+  int did_throw;
+  int need_rethrow;
+  int check_cstack;
+  except_T    *current_exception;
+};
 
-static void ex_abbreviate(exarg_T *eap);
-static void ex_map(exarg_T *eap);
-static void ex_unmap(exarg_T *eap);
-static void ex_mapclear(exarg_T *eap);
-static void ex_abclear(exarg_T *eap);
-static void ex_autocmd(exarg_T *eap);
-static void ex_doautocmd(exarg_T *eap);
-static void ex_bunload(exarg_T *eap);
-static void ex_buffer(exarg_T *eap);
-static void ex_bmodified(exarg_T *eap);
-static void ex_bnext(exarg_T *eap);
-static void ex_bprevious(exarg_T *eap);
-static void ex_brewind(exarg_T *eap);
-static void ex_blast(exarg_T *eap);
-static char_u   *getargcmd(char_u **);
-static char_u   *skip_cmd_arg(char_u *p, int rembs);
-static int getargopt(exarg_T *eap);
 
-static int check_more(int, int);
-static linenr_T get_address(char_u **, int skip, int to_other_file);
-static void get_flags(exarg_T *eap);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_docmd.c.generated.h"
+#endif
+
 # define HAVE_EX_SCRIPT_NI
-static void ex_script_ni(exarg_T *eap);
-static char_u   *invalid_range(exarg_T *eap);
-static void correct_range(exarg_T *eap);
-static char_u   *replace_makeprg(exarg_T *eap, char_u *p,
-                                 char_u **cmdlinep);
-static char_u   *repl_cmdline(exarg_T *eap, char_u *src, int srclen,
-                              char_u *repl,
-                              char_u **cmdlinep);
-static void ex_highlight(exarg_T *eap);
-static void ex_colorscheme(exarg_T *eap);
-static void ex_quit(exarg_T *eap);
-static void ex_cquit(exarg_T *eap);
-static void ex_quit_all(exarg_T *eap);
-static void ex_close(exarg_T *eap);
-static void ex_win_close(int forceit, win_T *win, tabpage_T *tp);
-static void ex_only(exarg_T *eap);
-static void ex_resize(exarg_T *eap);
-static void ex_stag(exarg_T *eap);
-static void ex_tabclose(exarg_T *eap);
-static void ex_tabonly(exarg_T *eap);
-static void ex_tabnext(exarg_T *eap);
-static void ex_tabmove(exarg_T *eap);
-static void ex_tabs(exarg_T *eap);
-static void ex_pclose(exarg_T *eap);
-static void ex_ptag(exarg_T *eap);
-static void ex_pedit(exarg_T *eap);
-static void ex_hide(exarg_T *eap);
-static void ex_stop(exarg_T *eap);
-static void ex_exit(exarg_T *eap);
-static void ex_print(exarg_T *eap);
-static void ex_goto(exarg_T *eap);
-static void ex_preserve(exarg_T *eap);
-static void ex_recover(exarg_T *eap);
-static void ex_mode(exarg_T *eap);
-static void ex_wrongmodifier(exarg_T *eap);
-static void ex_find(exarg_T *eap);
-static void ex_open(exarg_T *eap);
-static void ex_edit(exarg_T *eap);
 # define ex_drop                ex_ni
 # define ex_gui                 ex_nogui
-static void ex_nogui(exarg_T *eap);
 # define ex_tearoff             ex_ni
 # define ex_popup               ex_ni
 # define ex_simalt              ex_ni
 # define gui_mch_find_dialog    ex_ni
 # define gui_mch_replace_dialog ex_ni
 # define ex_helpfind            ex_ni
-static void ex_swapname(exarg_T *eap);
-static void ex_syncbind(exarg_T *eap);
-static void ex_read(exarg_T *eap);
-static void ex_pwd(exarg_T *eap);
-static void ex_equal(exarg_T *eap);
-static void ex_sleep(exarg_T *eap);
-static void do_exmap(exarg_T *eap, int isabbrev);
-static void ex_winsize(exarg_T *eap);
-static void ex_wincmd(exarg_T *eap);
 #if defined(FEAT_GUI) || defined(UNIX) || defined(MSWIN)
-static void ex_winpos(exarg_T *eap);
 #else
 # define ex_winpos          ex_ni
 #endif
-static void ex_operators(exarg_T *eap);
-static void ex_put(exarg_T *eap);
-static void ex_copymove(exarg_T *eap);
-static void ex_submagic(exarg_T *eap);
-static void ex_join(exarg_T *eap);
-static void ex_at(exarg_T *eap);
-static void ex_bang(exarg_T *eap);
-static void ex_undo(exarg_T *eap);
-static void ex_wundo(exarg_T *eap);
-static void ex_rundo(exarg_T *eap);
-static void ex_redo(exarg_T *eap);
-static void ex_later(exarg_T *eap);
-static void ex_redir(exarg_T *eap);
-static void ex_redraw(exarg_T *eap);
-static void ex_redrawstatus(exarg_T *eap);
-static void close_redir(void);
-static void ex_mkrc(exarg_T *eap);
-static void ex_mark(exarg_T *eap);
-static char_u   *uc_fun_cmd(void);
-static char_u   *find_ucmd(exarg_T *eap, char_u *p, int *full,
-                           expand_T *xp,
-                           int *compl);
-static void ex_normal(exarg_T *eap);
-static void ex_startinsert(exarg_T *eap);
-static void ex_stopinsert(exarg_T *eap);
-static void ex_checkpath(exarg_T *eap);
-static void ex_findpat(exarg_T *eap);
-static void ex_psearch(exarg_T *eap);
-static void ex_tag(exarg_T *eap);
-static void ex_tag_cmd(exarg_T *eap, char_u *name);
-static char_u   *arg_all(void);
-static int makeopens(FILE *fd, char_u *dirnow);
-static int put_view(FILE *fd, win_T *wp, int add_edit, unsigned *flagp,
-                    int current_arg_idx);
-static void ex_loadview(exarg_T *eap);
-static char_u   *get_view_file(int c);
 static int did_lcd;             /* whether ":lcd" was produced for a session */
-static void ex_viminfo(exarg_T *eap);
-static void ex_behave(exarg_T *eap);
-static void ex_filetype(exarg_T *eap);
-static void ex_setfiletype(exarg_T *eap);
-static void ex_digraphs(exarg_T *eap);
-static void ex_set(exarg_T *eap);
-static void ex_nohlsearch(exarg_T *eap);
-static void ex_match(exarg_T *eap);
-static void ex_fold(exarg_T *eap);
-static void ex_foldopen(exarg_T *eap);
-static void ex_folddo(exarg_T *eap);
 #ifndef HAVE_WORKING_LIBINTL
 # define ex_language            ex_ni
 #endif
@@ -278,49 +190,6 @@ static cmdidx_T cmdidxs[27] =
 };
 
 static char_u dollar_command[2] = {'$', 0};
-
-
-/* Struct for storing a line inside a while/for loop */
-typedef struct {
-  char_u      *line;            /* command line */
-  linenr_T lnum;                /* sourcing_lnum of the line */
-} wcmd_T;
-
-/*
- * Structure used to store info for line position in a while or for loop.
- * This is required, because do_one_cmd() may invoke ex_function(), which
- * reads more lines that may come from the while/for loop.
- */
-struct loop_cookie {
-  garray_T    *lines_gap;               /* growarray with line info */
-  int current_line;                     /* last read line from growarray */
-  int repeating;                        /* TRUE when looping a second time */
-  /* When "repeating" is FALSE use "getline" and "cookie" to get lines */
-  char_u      *(*getline)(int, void *, int);
-  void        *cookie;
-};
-
-static char_u   *get_loop_line(int c, void *cookie, int indent);
-static void store_loop_line(garray_T *gap, char_u *line);
-static void free_cmdlines(garray_T *gap);
-
-/* Struct to save a few things while debugging.  Used in do_cmdline() only. */
-struct dbg_stuff {
-  int trylevel;
-  int force_abort;
-  except_T    *caught_stack;
-  char_u      *vv_exception;
-  char_u      *vv_throwpoint;
-  int did_emsg;
-  int got_int;
-  int did_throw;
-  int need_rethrow;
-  int check_cstack;
-  except_T    *current_exception;
-};
-
-static void save_dbg_stuff(struct dbg_stuff *dsp);
-static void restore_dbg_stuff(struct dbg_stuff *dsp);
 
 static void save_dbg_stuff(struct dbg_stuff *dsp)
 {
@@ -465,11 +334,9 @@ int do_cmdline_cmd(char_u *cmd)
  *
  * return FAIL if cmdline could not be executed, OK otherwise
  */
-int do_cmdline(cmdline, fgetline, cookie, flags)
-char_u      *cmdline;
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;                    /* argument for fgetline() */
-int flags;
+int do_cmdline(char_u *cmdline, LineGetter fgetline,
+               void *cookie, /* argument for fgetline() */
+               int flags)
 {
   char_u      *next_cmdline;            /* next cmd to execute */
   char_u      *cmdline_copy = NULL;     /* copy of cmd line */
@@ -1191,12 +1058,11 @@ static void free_cmdlines(garray_T *gap)
  * If "fgetline" is get_loop_line(), return TRUE if the getline it uses equals
  * "func".  * Otherwise return TRUE when "fgetline" equals "func".
  */
-int getline_equal(fgetline, cookie, func)
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;             /* argument for fgetline() */
-char_u      *(*func)(int, void *, int);
+int getline_equal(LineGetter fgetline,
+                  void *cookie, /* argument for fgetline() */
+                  LineGetter func)
 {
-  char_u              *(*gp)(int, void *, int);
+  LineGetter gp;
   struct loop_cookie *cp;
 
   /* When "fgetline" is "get_loop_line()" use the "cookie" to find the
@@ -1215,11 +1081,11 @@ char_u      *(*func)(int, void *, int);
  * If "fgetline" is get_loop_line(), return the cookie used by the original
  * getline function.  Otherwise return "cookie".
  */
-void * getline_cookie(fgetline, cookie)
-char_u      *(*fgetline)(int, void *, int);
-void        *cookie;                    /* argument for fgetline() */
+void * getline_cookie(LineGetter fgetline,
+                      void *cookie /* argument for fgetline() */
+                      )
 {
-  char_u              *(*gp)(int, void *, int);
+  LineGetter gp;
   struct loop_cookie *cp;
 
   /* When "fgetline" is "get_loop_line()" use the "cookie" to find the
@@ -1250,14 +1116,12 @@ void        *cookie;                    /* argument for fgetline() */
  *
  * This function may be called recursively!
  */
-static char_u * do_one_cmd(cmdlinep, sourcing,
-    cstack,
-    fgetline, cookie)
-char_u              **cmdlinep;
-int sourcing;
-struct condstack    *cstack;
-char_u              *(*fgetline)(int, void *, int);
-void                *cookie;                    /*argument for fgetline() */
+static char_u * do_one_cmd(char_u **cmdlinep,
+                           int sourcing,
+                           struct condstack *cstack,
+                           LineGetter fgetline,
+                           void *cookie /* argument for fgetline() */
+                           )
 {
   char_u              *p;
   linenr_T lnum;
@@ -3500,7 +3364,6 @@ static void correct_range(exarg_T *eap)
   }
 }
 
-static char_u   *skip_grep_pat(exarg_T *eap);
 
 /*
  * For a ":vimgrep" or ":vimgrepadd" command return a pointer past the
@@ -4263,18 +4126,6 @@ char_u *get_command_name(expand_T *xp, int idx)
   return cmdnames[idx].cmd_name;
 }
 
-static int uc_add_command(char_u *name, size_t name_len, char_u *rep,
-                                  long argt, long def, int flags, int compl,
-                                  char_u *compl_arg,
-                                  int force);
-static void uc_list(char_u *name, size_t name_len);
-static int uc_scan_attr(char_u *attr, size_t len, long *argt, long *def,
-                        int *flags, int *compl,
-                        char_u **compl_arg);
-static char_u   *uc_split_args(char_u *arg, size_t *lenp);
-static size_t uc_check_code(char_u *code, size_t len, char_u *buf,
-                            ucmd_T *cmd, exarg_T *eap, char_u **split_buf,
-                            size_t *split_len);
 
 static int uc_add_command(char_u *name, size_t name_len, char_u *rep, long argt, long def, int flags, int compl, char_u *compl_arg, int force)
 {
@@ -6642,8 +6493,7 @@ static void ex_wincmd(exarg_T *eap)
 /*
  * ":winpos".
  */
-static void ex_winpos(eap)
-exarg_T     *eap;
+static void ex_winpos(exarg_T *eap)
 {
   int x, y;
   char_u      *arg = eap->arg;
@@ -8012,15 +7862,6 @@ char_u *expand_sfile(char_u *arg)
   return result;
 }
 
-static int ses_winsizes(FILE *fd, int restore_size, win_T *tab_firstwin);
-static int ses_win_rec(FILE *fd, frame_T *fr);
-static frame_T *ses_skipframe(frame_T *fr);
-static int ses_do_frame(frame_T *fr);
-static int ses_do_win(win_T *wp);
-static int ses_arglist(FILE *fd, char *cmd, garray_T *gap, int fullname,
-                       unsigned *flagp);
-static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp);
-static int ses_fname(FILE *fd, buf_T *buf, unsigned *flagp);
 
 /*
  * Write openfile commands for the current buffers to an .exrc file.

@@ -42,10 +42,11 @@ typedef struct {
 
 static PMap(cstr_t) *servers = NULL;
 
-static void connection_cb(uv_stream_t *server, int status);
-static void free_client(uv_handle_t *handle);
-static void free_server(uv_handle_t *handle);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/server.c.generated.h"
+#endif
 
+/// Initializes the module
 void server_init()
 {
   servers = pmap_new(cstr_t)();
@@ -59,6 +60,7 @@ void server_init()
   server_start((char *)os_getenv("NEOVIM_LISTEN_ADDRESS"));
 }
 
+/// Teardown the server module
 void server_teardown()
 {
   if (!servers) {
@@ -76,6 +78,15 @@ void server_teardown()
   });
 }
 
+/// Starts listening on arbitrary tcp/unix addresses specified by
+/// `endpoint` for API calls. The type of socket used(tcp or unix/pipe) will
+/// be determined by parsing `endpoint`: If it's a valid tcp address in the
+/// 'ip:port' format, then it will be tcp socket, else it will be a unix
+/// socket or named pipe.
+///
+/// @param endpoint Address of the server. Either a 'ip:port' string or an
+///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
+///        named pipe.
 void server_start(char *endpoint)
 {
   char addr[ADDRESS_MAX_SIZE];
@@ -175,6 +186,9 @@ void server_start(char *endpoint)
   pmap_put(cstr_t)(servers, addr, server);
 }
 
+/// Stops listening on the address specified by `endpoint`.
+///
+/// @param endpoint Address of the server.
 void server_stop(char *endpoint)
 {
   Server *server;

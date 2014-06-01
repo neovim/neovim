@@ -54,27 +54,10 @@ const char_u farsi_text_5[] = {
   ' ', YE_, _SIN, RE, ALEF_, _FE, '\0'
 };
 
-static int toF_Xor_X_(int c);
-static int F_is_TyE(int c);
-static int F_is_TyC_TyD(int c);
-static int F_is_TyB_TyC_TyD(int src, int offset);
-static int toF_TyB(int c);
-static void put_curr_and_l_to_X(int c);
-static void put_and_redo(int c);
-static void chg_c_toX_orX(void);
-static void chg_c_to_X_orX_(void);
-static void chg_c_to_X_or_X(void);
-static void chg_l_to_X_orX_(void);
-static void chg_l_toXor_X(void);
-static void chg_r_to_Xor_X_(void);
-static int toF_leading(int c);
-static int toF_Rjoin(int c);
-static int canF_Ljoin(int c);
-static int canF_Rjoin(int c);
-static int F_isterm(int c);
-static int toF_ending(int c);
-static void lrswapbuf(char_u *buf, int len);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "farsi.c.generated.h"
+#endif
 /// Convert the given Farsi character into a _X or _X_ type
 ///
 /// @param c The character to convert.

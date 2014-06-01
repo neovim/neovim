@@ -91,23 +91,14 @@ struct builtin_term {
 /* start of keys that are not directly used by Vim but can be mapped */
 #define BT_EXTRA_KEYS   0x101
 
-static struct builtin_term *find_builtin_term(char_u *name);
-static void parse_builtin_tcap(char_u *s);
-static void term_color(char_u *s, int n);
-static void gather_termleader(void);
-static void req_codes_from_term(void);
-static void req_more_codes_from_term(void);
-static void got_code_from_term(char_u *code, int len);
-static void check_for_codes_from_term(void);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "term.c.generated.h"
+#endif
 #if defined(FEAT_GUI) \
   || (defined(FEAT_MOUSE) && (!defined(UNIX) || defined(FEAT_MOUSE_XTERM) \
   || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE)))
 static int get_bytes_from_buf(char_u *, char_u *, int);
 #endif
-static void del_termcode_idx(int idx);
-static int term_is_builtin(char_u *name);
-static int term_7to8bit(char_u *p);
-static void switch_to_8bit(void);
 
 #ifdef HAVE_TGETENT
 static char_u *tgetent_error(char_u *, char_u *);
@@ -155,7 +146,6 @@ char *UP, *BC, PC;
 
 # define TGETSTR(s, p)  vim_tgetstr((s), (p))
 # define TGETENT(b, t)  tgetent((char *)(b), (char *)(t))
-static char_u *vim_tgetstr(char *s, char_u **pp);
 #endif /* HAVE_TGETENT */
 
 static int detected_8bit = FALSE;       /* detected 8-bit terminal */
@@ -1216,7 +1206,6 @@ static void parse_builtin_tcap(char_u *term)
     }
   }
 }
-static void set_color_count(int nr);
 
 /*
  * Set number of colors.
@@ -1939,7 +1928,6 @@ char_u *tltoa(unsigned long i)
  * minimal tgoto() implementation.
  * no padding and we only parse for %i %d and %+char
  */
-static char *tgoto(char *, int, int);
 
 static char *tgoto(char *cm, int x, int y)
 {
@@ -2064,7 +2052,6 @@ void out_char(unsigned c)
     out_flush();
 }
 
-static void out_char_nf(unsigned);
 
 /*
  * out_char_nf(c): like out_char(), but don't flush when p_wd is set
@@ -2321,8 +2308,6 @@ void ttest(int pairs)
 }
 
 #if defined(FEAT_GUI) || defined(PROTO)
-static int get_long_from_buf(char_u *buf, long_u *val);
-
 /*
  * Interpret the next string of bytes in buf as a long integer, with the most
  * significant byte first.  Note that it is assumed that buf has been through
@@ -2922,7 +2907,6 @@ static struct termcode {
 static int tc_max_len = 0;  /* number of entries that termcodes[] can hold */
 static int tc_len = 0;      /* current number of entries in termcodes[] */
 
-static int termcode_star(char_u *code, int len);
 
 void clear_termcodes(void)
 {

@@ -20,12 +20,11 @@
 #include "nvim/os_unix.h"
 #include "nvim/strings.h"
 
-static int win_chartabsize(win_T *wp, char_u *p, colnr_T col);
 
-static int win_nolbr_chartabsize(win_T *wp, char_u *s, colnr_T col,
-                                 int *headp);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "charset.c.generated.h"
+#endif
 
-static unsigned nr2hex(unsigned c);
 
 static int chartab_initialized = FALSE;
 

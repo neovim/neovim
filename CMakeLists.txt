@@ -33,6 +33,8 @@ if(TRAVIS_CI_BUILD)
   add_definitions(-Werror)
 endif()
 
+add_definitions(-DINCLUDE_GENERATED_DECLARATIONS)
+
 add_definitions(-DHAVE_CONFIG_H)
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   # cmake automatically appends -g to the compiler flags

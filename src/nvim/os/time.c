@@ -11,19 +11,30 @@
 static uv_mutex_t delay_mutex;
 static uv_cond_t delay_cond;
 
-static void microdelay(uint64_t ms);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/time.c.generated.h"
+#endif
+/// Initializes the time module
 void time_init()
 {
   uv_mutex_init(&delay_mutex);
   uv_cond_init(&delay_cond);
 }
 
+/// Sleeps for a certain amount of milliseconds
+///
+/// @param milliseconds Number of milliseconds to sleep
+/// @param ignoreinput If true, allow a SIGINT to interrupt us
 void os_delay(uint64_t milliseconds, bool ignoreinput)
 {
   os_microdelay(milliseconds * 1000, ignoreinput);
 }
 
+/// Sleeps for a certain amount of microseconds
+///
+/// @param microseconds Number of microseconds to sleep
+/// @param ignoreinput If true, allow a SIGINT to interrupt us
 void os_microdelay(uint64_t microseconds, bool ignoreinput)
 {
   int old_tmode;
@@ -61,6 +72,9 @@ static void microdelay(uint64_t microseconds)
   uv_mutex_unlock(&delay_mutex);
 }
 
+/// Portable version of POSIX localtime_r()
+///
+/// @return NULL in case of error
 struct tm *os_localtime_r(const time_t *clock, struct tm *result)
 {
 #ifdef UNIX
@@ -75,6 +89,11 @@ return result;
 #endif
 }
 
+/// Obtains the current UNIX timestamp and adjusts it to local time
+///
+/// @param result Pointer to a 'struct tm' where the result should be placed
+/// @return A pointer to a 'struct tm' in the current time zone (the 'result'
+///         argument) or NULL in case of error
 struct tm *os_get_localtime(struct tm *result)
 {
   struct timeval tv;

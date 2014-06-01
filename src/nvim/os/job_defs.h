@@ -12,4 +12,3 @@ typedef struct job Job;
 typedef void (*job_exit_cb)(Job *job, void *data);
 
 #endif  // NVIM_OS_JOB_DEFS_H
-

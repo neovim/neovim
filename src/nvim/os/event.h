@@ -7,12 +7,7 @@
 #include "nvim/os/event_defs.h"
 #include "nvim/os/job_defs.h"
 
-void event_init(void);
-void event_teardown(void);
-bool event_poll(int32_t ms);
-bool event_is_pending(void);
-void event_push(Event event);
-void event_process(void);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/event.h.generated.h"
+#endif
 #endif  // NVIM_OS_EVENT_H
-

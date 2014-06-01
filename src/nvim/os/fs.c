@@ -8,13 +8,18 @@
 #include "nvim/path.h"
 #include "nvim/strings.h"
 
-static bool is_executable(const char_u *name);
-static bool is_executable_in_path(const char_u *name);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/fs.c.generated.h"
+#endif
 
 // Many fs functions from libuv return that value on success.
 static const int kLibuvSuccess = 0;
 
-int os_chdir(const char *path) {
+/// Change to the given directory.
+///
+/// @return `0` on success, a libuv error code on failure.
+int os_chdir(const char *path)
+{
   if (p_verbose >= 5) {
     verbose_enter();
     smsg((char_u *)"chdir(%s)", path);
@@ -23,6 +28,11 @@ int os_chdir(const char *path) {
   return uv_chdir(path);
 }
 
+/// Get the name of current directory.
+///
+/// @param buf Buffer to store the directory name.
+/// @param len Length of `buf`.
+/// @return `OK` for success, `FAIL` for failure.
 int os_dirname(char_u *buf, size_t len)
 {
   assert(buf && len);
@@ -35,6 +45,9 @@ int os_dirname(char_u *buf, size_t len)
   return OK;
 }
 
+/// Check if the given path is a directory or not.
+///
+/// @return `true` if `fname` is a directory.
 bool os_isdir(const char_u *name)
 {
   int32_t mode = os_getperm(name);
@@ -49,6 +62,14 @@ bool os_isdir(const char_u *name)
   return true;
 }
 
+/// Check if the given path represents an executable file.
+///
+/// @return `true` if `name` is executable and
+///   - can be found in $PATH,
+///   - is relative to current dir or
+///   - is absolute.
+///
+/// @return `false` otherwise.
 bool os_can_exe(const char_u *name)
 {
   // If it's an absolute or relative path don't need to use $PATH.
@@ -125,6 +146,9 @@ static bool is_executable_in_path(const char_u *name)
   return false;
 }
 
+/// Get stat information for a file.
+///
+/// @return OK on success, FAIL if an failure occured.
 int os_stat(const char_u *name, uv_stat_t *statbuf)
 {
   uv_fs_t request;
@@ -140,6 +164,9 @@ int os_stat(const char_u *name, uv_stat_t *statbuf)
   return FAIL;
 }
 
+/// Get the file permissions for a given file.
+///
+/// @return `-1` when `name` doesn't exist.
 int32_t os_getperm(const char_u *name)
 {
   uv_stat_t statbuf;
@@ -150,6 +177,9 @@ int32_t os_getperm(const char_u *name)
   }
 }
 
+/// Set the permission of a file.
+///
+/// @return `OK` for success, `FAIL` for failure.
 int os_setperm(const char_u *name, int perm)
 {
   uv_fs_t request;
@@ -164,6 +194,9 @@ int os_setperm(const char_u *name, int perm)
   return FAIL;
 }
 
+/// Check if a file exists.
+///
+/// @return `true` if `name` exists.
 bool os_file_exists(const char_u *name)
 {
   uv_stat_t statbuf;
@@ -174,11 +207,19 @@ bool os_file_exists(const char_u *name)
   return false;
 }
 
+/// Check if a file is readonly.
+///
+/// @return `true` if `name` is readonly.
 bool os_file_is_readonly(const char *name)
 {
   return access(name, W_OK) != 0;
 }
 
+/// Check if a file is writable.
+///
+/// @return `0` if `name` is not writable,
+/// @return `1` if `name` is writable,
+/// @return `2` for a directory which we have rights to write into.
 int os_file_is_writable(const char *name)
 {
   if (access(name, W_OK) == 0) {
@@ -190,6 +231,10 @@ int os_file_is_writable(const char *name)
   return 0;
 }
 
+/// Get the size of a file in bytes.
+///
+/// @param[out] size pointer to an off_t to put the size into.
+/// @return `true` for success, `false` for failure.
 bool os_get_file_size(const char *name, off_t *size)
 {
   uv_stat_t statbuf;
@@ -200,6 +245,9 @@ bool os_get_file_size(const char *name, off_t *size)
   return false;
 }
 
+/// Rename a file or directory.
+///
+/// @return `OK` for success, `FAIL` for failure.
 int os_rename(const char_u *path, const char_u *new_path)
 {
   uv_fs_t request;
@@ -214,6 +262,9 @@ int os_rename(const char_u *path, const char_u *new_path)
   return FAIL;
 }
 
+/// Make a directory.
+///
+/// @return `0` for success, non-zero for failure.
 int os_mkdir(const char *path, int32_t mode)
 {
   uv_fs_t request;
@@ -222,6 +273,9 @@ int os_mkdir(const char *path, int32_t mode)
   return result;
 }
 
+/// Remove a directory.
+///
+/// @return `0` for success, non-zero for failure.
 int os_rmdir(const char *path)
 {
   uv_fs_t request;
@@ -230,6 +284,9 @@ int os_rmdir(const char *path)
   return result;
 }
 
+/// Remove a file.
+///
+/// @return `0` for success, non-zero for failure.
 int os_remove(const char *path)
 {
   uv_fs_t request;
@@ -238,6 +295,11 @@ int os_remove(const char *path)
   return result;
 }
 
+/// Get the file information for a given path
+///
+/// @param file_descriptor File descriptor of the file.
+/// @param[out] file_info Pointer to a FileInfo to put the information in.
+/// @return `true` on sucess, `false` for failure.
 bool os_get_file_info(const char *path, FileInfo *file_info)
 {
   if (os_stat((char_u *)path, &(file_info->stat)) == OK) {
@@ -246,6 +308,11 @@ bool os_get_file_info(const char *path, FileInfo *file_info)
   return false;
 }
 
+/// Get the file information for a given path without following links
+///
+/// @param path Path to the file.
+/// @param[out] file_info Pointer to a FileInfo to put the information in.
+/// @return `true` on sucess, `false` for failure.
 bool os_get_file_info_link(const char *path, FileInfo *file_info)
 {
   uv_fs_t request;
@@ -258,6 +325,11 @@ bool os_get_file_info_link(const char *path, FileInfo *file_info)
   return false;
 }
 
+/// Get the file information for a given file descriptor
+///
+/// @param file_descriptor File descriptor of the file.
+/// @param[out] file_info Pointer to a FileInfo to put the information in.
+/// @return `true` on sucess, `false` for failure.
 bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
 {
   uv_fs_t request;
@@ -270,9 +342,11 @@ bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
   return false;
 }
 
+/// Compare the inodes of two FileInfos
+///
+/// @return `true` if the two FileInfos represent the same file.
 bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2)
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
          && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
 }
-

@@ -31,42 +31,22 @@ typedef struct {
   garray_T ga;
 } ProcessData;
 
-/// Parses a command string into a sequence of words, taking quotes into
-/// consideration.
-///
-/// @param str The command string to be parsed
-/// @param argv The vector that will be filled with copies of the parsed
-///        words. It can be NULL if the caller only needs to count words.
-/// @return The number of words parsed.
-static int tokenize(char_u *str, char **argv);
 
-/// Calculates the length of a shell word.
-///
-/// @param str A pointer to the first character of the word
-/// @return The offset from `str` at which the word ends.
-static int word_length(char_u *command);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/shell.c.generated.h"
+#endif
 
-/// Queues selected range for writing to the child process stdin.
-///
-/// @param req The structure containing information to peform the write
-static void write_selection(uv_write_t *req);
 
-/// Cleanup memory and restore state modified by `os_call_shell`.
-///
-/// @param data State shared by all functions collaborating with
-///        `os_call_shell`.
-/// @param opts Process spawning options, containing some allocated memory
-/// @param shellopts Options passed to `os_call_shell`. Used for deciding
-///        if/which messages are displayed.
-static int proc_cleanup_exit(ProcessData *data,
-                             uv_process_options_t *opts,
-                             int shellopts);
 // Callbacks for libuv
-static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf);
-static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf);
-static void write_cb(uv_write_t *req, int status);
-static void exit_cb(uv_process_t *proc, int64_t status, int term_signal);
 
+/// Builds the argument vector for running the shell configured in `sh`
+/// ('shell' option), optionally with a command that will be passed with `shcf`
+/// ('shellcmdflag').
+///
+/// @param cmd Command string. If NULL it will run an interactive shell.
+/// @param extra_shell_opt Extra argument to the shell. If NULL it is ignored
+/// @return A newly allocated argument vector. It must be freed with
+///         `shell_free_argv` when no longer needed.
 char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
 {
   int i;
@@ -94,6 +74,9 @@ char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
   return rv;
 }
 
+/// Releases the memory allocated by `shell_build_argv`.
+///
+/// @param argv The argument vector.
 void shell_free_argv(char **argv)
 {
   char **p = argv;
@@ -112,6 +95,13 @@ void shell_free_argv(char **argv)
   free(argv);
 }
 
+/// Calls the user shell for running a command, interactive session or
+/// wildcard expansion. It uses the shell set in the `sh` option.
+///
+/// @param cmd The command to be executed. If NULL it will run an interactive
+///        shell
+/// @param opts Various options that control how the shell will work
+/// @param extra_shell_arg Extra argument to be passed to the shell
 int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 {
   uv_stdio_container_t proc_stdio[3];
@@ -247,6 +237,13 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   return proc_cleanup_exit(&pdata, &proc_opts, opts);
 }
 
+/// Parses a command string into a sequence of words, taking quotes into
+/// consideration.
+///
+/// @param str The command string to be parsed
+/// @param argv The vector that will be filled with copies of the parsed
+///        words. It can be NULL if the caller only needs to count words.
+/// @return The number of words parsed.
 static int tokenize(char_u *str, char **argv)
 {
   int argc = 0, len;
@@ -270,6 +267,10 @@ static int tokenize(char_u *str, char **argv)
   return argc;
 }
 
+/// Calculates the length of a shell word.
+///
+/// @param str A pointer to the first character of the word
+/// @return The offset from `str` at which the word ends.
 static int word_length(char_u *str)
 {
   char_u *p = str;
@@ -296,6 +297,9 @@ static int word_length(char_u *str)
 /// event loop starts. If we don't(by writing in chunks returned by `ml_get`)
 /// the buffer being modified might get modified by reading from the process
 /// before we finish writing.
+/// Queues selected range for writing to the child process stdin.
+///
+/// @param req The structure containing information to peform the write
 static void write_selection(uv_write_t *req)
 {
   ProcessData *pdata = (ProcessData *)req->data;
@@ -429,6 +433,13 @@ static void write_cb(uv_write_t *req, int status)
   pdata->exited++;
 }
 
+/// Cleanup memory and restore state modified by `os_call_shell`.
+///
+/// @param data State shared by all functions collaborating with
+///        `os_call_shell`.
+/// @param opts Process spawning options, containing some allocated memory
+/// @param shellopts Options passed to `os_call_shell`. Used for deciding
+///        if/which messages are displayed.
 static int proc_cleanup_exit(ProcessData *proc_data,
                              uv_process_options_t *proc_opts,
                              int shellopts)

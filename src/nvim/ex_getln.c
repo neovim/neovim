@@ -99,56 +99,25 @@ typedef struct hist_entry {
   char_u      *hisstr;          /* actual entry, separator char after the NUL */
 } histentry_T;
 
+/*
+ * Type used by call_user_expand_func
+ */
+typedef void *(*user_expand_func_T)(char_u *, int, char_u **, int);
+
 static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL};
 static int hisidx[HIST_COUNT] = {-1, -1, -1, -1, -1};       /* lastused entry */
 static int hisnum[HIST_COUNT] = {0, 0, 0, 0, 0};
 /* identifying (unique) number of newest history entry */
 static int hislen = 0;                  /* actual length of history tables */
 
-static int hist_char2type(int c);
 
-static int in_history(int, char_u *, int, int, int);
-static int calc_hist_idx(int histype, int num);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_getln.c.generated.h"
+#endif
 
 static int cmd_hkmap = 0;       /* Hebrew mapping during command line */
 
 static int cmd_fkmap = 0;       /* Farsi mapping during command line */
-
-static int cmdline_charsize(int idx);
-static void set_cmdspos(void);
-static void set_cmdspos_cursor(void);
-static void correct_cmdspos(int idx, int cells);
-static void alloc_cmdbuff(int len);
-static void realloc_cmdbuff(int len);
-static void draw_cmdline(int start, int len);
-static void save_cmdline(struct cmdline_info *ccp);
-static void restore_cmdline(struct cmdline_info *ccp);
-static int cmdline_paste(int regname, int literally, int remcr);
-static void cmdline_del(int from);
-static void redrawcmdprompt(void);
-static void cursorcmd(void);
-static int ccheck_abbr(int);
-static int nextwild(expand_T *xp, int type, int options, int escape);
-static void escape_fname(char_u **pp);
-static int showmatches(expand_T *xp, int wildmenu);
-static void set_expand_context(expand_T *xp);
-static int ExpandFromContext(expand_T *xp, char_u *, int *, char_u ***, int);
-static int expand_showtail(expand_T *xp);
-static int expand_shellcmd(char_u *filepat, int *num_file,
-                           char_u ***file,
-                           int flagsarg);
-static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file,
-                               char *dirname[]);
-static char_u   *get_history_arg(expand_T *xp, int idx);
-static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch,
-                             int *num_file,
-                             char_u ***file);
-static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file);
-static void clear_hist_entry(histentry_T *hisptr);
-
-static int ex_window(void);
-
-static int sort_func_compare(const void *s1, const void *s2);
 
 /*
  * getcmdline() - accept a command line starting with firstc.
@@ -3584,7 +3553,6 @@ expand_cmdline (
 /*
  * Cleanup matches for help tags: remove "@en" if "en" is the only language.
  */
-static void cleanup_help_tags(int num_file, char_u **file);
 
 static void cleanup_help_tags(int num_file, char_u **file)
 {
@@ -3797,14 +3765,14 @@ ExpandFromContext (
  *
  * Returns OK when no problems encountered, FAIL for error.
  */
-int ExpandGeneric(xp, regmatch, num_file, file, func, escaped)
-expand_T    *xp;
-regmatch_T  *regmatch;
-int         *num_file;
-char_u      ***file;
-char_u      *((*func)(expand_T *, int));
-/* returns a string from the list */
-int escaped;
+int ExpandGeneric(
+    expand_T    *xp,
+    regmatch_T  *regmatch,
+    int         *num_file,
+    char_u      ***file,
+    CompleteListItemGetter func, /* returns a string from the list */
+    int escaped
+    )
 {
   int i;
   int count = 0;
@@ -3962,11 +3930,6 @@ expand_shellcmd (
     free(path);
   return OK;
 }
-
-typedef void *(*user_expand_func_T)(char_u *, int, char_u **, int);
-static void * call_user_expand_func(user_expand_func_T user_expand_func,
-                                    expand_T *xp, int *num_file,
-                                    char_u ***file);
 
 /*
  * Call "user_expand_func()" to invoke a user defined VimL function and return
@@ -4483,7 +4446,6 @@ int get_history_idx(int histype)
   return history[histype][hisidx[histype]].hisnum;
 }
 
-static struct cmdline_info *get_ccline_ptr(void);
 
 /*
  * Get pointer to the command line info to use. cmdline_paste() may clear
@@ -4871,7 +4833,6 @@ static int viminfo_hisidx[HIST_COUNT] = {0, 0, 0, 0};
 static int viminfo_hislen[HIST_COUNT] = {0, 0, 0, 0};
 static int viminfo_add_at_front = FALSE;
 
-static int hist_type2char(int type, int use_question);
 
 /*
  * Translate a history type number to the associated character.

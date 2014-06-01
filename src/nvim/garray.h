@@ -1,8 +1,6 @@
 #ifndef NVIM_GARRAY_H
 #define NVIM_GARRAY_H
 
-#include "nvim/func_attr.h"
-
 /// Structure used for growing arrays.
 /// This is used to store information that only grows, is deleted all at
 /// once, and needs to be accessed by index.  See ga_clear() and ga_grow().
@@ -18,16 +16,7 @@ typedef struct growarray {
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
 
-void ga_clear(garray_T *gap);
-void ga_clear_strings(garray_T *gap);
-void ga_init(garray_T *gap, int itemsize, int growsize);
-void ga_grow(garray_T *gap, int n);
-char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
-  FUNC_ATTR_NONNULL_RET;
-char_u *ga_concat_strings(const garray_T *gap) FUNC_ATTR_NONNULL_RET;
-void ga_remove_duplicate_strings(garray_T *gap);
-void ga_concat(garray_T *gap, const char_u *restrict s);
-void ga_append(garray_T *gap, char c);
-void append_ga_line(garray_T *gap);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "garray.h.generated.h"
+#endif
 #endif  // NVIM_GARRAY_H

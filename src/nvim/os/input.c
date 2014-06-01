@@ -25,12 +25,11 @@ typedef enum {
 static RStream *read_stream;
 static bool eof = false, started_reading = false;
 
-static InbufPollResult inbuf_poll(int32_t ms);
-static void stderr_switch(void);
-static void read_cb(RStream *rstream, void *data, bool eof);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/input.c.generated.h"
+#endif
 // Helper function used to push bytes from the 'event' key sequence partially
 // between calls to os_inchar when maxlen < 3
-static int push_event_key(uint8_t *buf, int maxlen);
 
 void input_init()
 {
@@ -124,6 +123,10 @@ void os_breakcheck()
     fill_input_buf(false);
 }
 
+/// Test whether a file descriptor refers to a terminal.
+///
+/// @param fd File descriptor.
+/// @return `true` if file descriptor refers to a terminal.
 bool os_isatty(int fd)
 {
     return uv_guess_handle(fd) == UV_TTY;

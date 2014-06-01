@@ -38,59 +38,24 @@
 #include "nvim/os/os.h"
 #include "nvim/os/event.h"
 
-static int other_sourcing_name(void);
-static char_u *get_emsg_source(void);
-static char_u *get_emsg_lnum(void);
-static void add_msg_hist(char_u *s, int len, int attr);
-static void hit_return_msg(void);
-static void msg_home_replace_attr(char_u *fname, int attr);
-static char_u *screen_puts_mbyte(char_u *s, int l, int attr);
-static void msg_puts_attr_len(char_u *str, int maxlen, int attr);
-static void msg_puts_display(char_u *str, int maxlen, int attr,
-                             int recurse);
-static void msg_scroll_up(void);
-static void inc_msg_scrolled(void);
-static void store_sb_text(char_u **sb_str, char_u *s, int attr,
-                          int *sb_col,
-                          int finish);
-static void t_puts(int *t_col, char_u *t_s, char_u *s, int attr);
-static void msg_puts_printf(char_u *str, int maxlen);
-static int do_more_prompt(int typed_char);
-static void msg_screen_putchar(int c, int attr);
-static int msg_check_screen(void);
-static void redir_write(char_u *s, int maxlen);
+/*
+ * To be able to scroll back at the "more" and "hit-enter" prompts we need to
+ * store the displayed text and remember where screen lines start.
+ */
+typedef struct msgchunk_S msgchunk_T;
+struct msgchunk_S {
+  msgchunk_T  *sb_next;
+  msgchunk_T  *sb_prev;
+  char sb_eol;                  /* TRUE when line ends after this text */
+  int sb_msg_col;               /* column in which text starts */
+  int sb_attr;                  /* text attributes */
+  char_u sb_text[1];            /* text to be displayed, actually longer */
+};
 
-/// Allocates memory for dialog string & for storing hotkeys
-///
-/// Finds the size of memory required for the confirm_msg & for storing hotkeys
-/// and then allocates the memory for them.
-/// has_hotkey array is also filled-up.
-///
-/// @param message Message which will be part of the confirm_msg
-/// @param buttons String containing button names
-/// @param[out] has_hotkey A element in this array is set to true if
-///                        corresponding button has a hotkey
-///
-/// @return Pointer to memory allocated for storing hotkeys
-static char_u * console_dialog_alloc(const char_u *message,
-                                     char_u *buttons,
-                                     bool has_hotkey[]);
-
-/// Copies hotkeys & dialog message into the memory allocated for it
-///
-/// @param message Message which will be part of the confirm_msg
-/// @param buttons String containing button names
-/// @param default_button_idx Number of default button
-/// @param has_hotkey A element in this array is true if corresponding button
-///                   has a hotkey
-/// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
-static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
-                                 int default_button_idx, const bool has_hotkey[],
-                                 char_u *hotkeys_ptr);
-
-static char_u *msg_show_console_dialog(char_u *message, char_u *buttons,
-                                       int dfltbutton);
 static int confirm_msg_used = FALSE;            /* displaying confirm_msg */
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "message.c.generated.h"
+#endif
 static char_u   *confirm_msg = NULL;            /* ":confirm" message */
 static char_u   *confirm_msg_tail;              /* tail of confirm_msg */
 
@@ -352,7 +317,6 @@ void trunc_string(char_u *s, char_u *buf, int room, int buflen)
  * Note: Caller of smgs() and smsg_attr() must check the resulting string is
  * shorter than IOSIZE!!!
  */
-int vim_snprintf(char *str, size_t str_m, char *fmt, ...);
 
 int smsg(char_u *s, ...)
 {
@@ -1845,24 +1809,8 @@ static void inc_msg_scrolled(void)
   ++msg_scrolled;
 }
 
-/*
- * To be able to scroll back at the "more" and "hit-enter" prompts we need to
- * store the displayed text and remember where screen lines start.
- */
-typedef struct msgchunk_S msgchunk_T;
-struct msgchunk_S {
-  msgchunk_T  *sb_next;
-  msgchunk_T  *sb_prev;
-  char sb_eol;                  /* TRUE when line ends after this text */
-  int sb_msg_col;               /* column in which text starts */
-  int sb_attr;                  /* text attributes */
-  char_u sb_text[1];            /* text to be displayed, actually longer */
-};
-
 static msgchunk_T *last_msgchunk = NULL; /* last displayed text */
 
-static msgchunk_T *msg_sb_start(msgchunk_T *mps);
-static msgchunk_T *disp_sb_line(int row, msgchunk_T *smp);
 
 static int do_clear_sb_text = FALSE;    /* clear text on next msg */
 
@@ -2274,7 +2222,7 @@ static int do_more_prompt(int typed_char)
   return retval;
 }
 
-#if defined(USE_MCH_ERRMSG) || defined(PROTO)
+#if defined(USE_MCH_ERRMSG)
 
 #ifdef mch_errmsg
 # undef mch_errmsg
@@ -2817,7 +2765,6 @@ do_dialog (
   return retval;
 }
 
-static int copy_char(char_u *from, char_u *to, int lowercase);
 
 /*
  * Copy one character from "*from" to "*to", taking care of multi-byte
@@ -2854,6 +2801,18 @@ copy_char (
 #define HAS_HOTKEY_LEN 30
 #define HOTK_LEN (has_mbyte ? MB_MAXBYTES : 1)
 
+/// Allocates memory for dialog string & for storing hotkeys
+///
+/// Finds the size of memory required for the confirm_msg & for storing hotkeys
+/// and then allocates the memory for them.
+/// has_hotkey array is also filled-up.
+///
+/// @param message Message which will be part of the confirm_msg
+/// @param buttons String containing button names
+/// @param[out] has_hotkey A element in this array is set to true if
+///                        corresponding button has a hotkey
+///
+/// @return Pointer to memory allocated for storing hotkeys
 static char_u * console_dialog_alloc(const char_u *message,
                                      char_u *buttons,
                                      bool has_hotkey[])
@@ -2924,6 +2883,14 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
   return hotk;
 }
 
+/// Copies hotkeys & dialog message into the memory allocated for it
+///
+/// @param message Message which will be part of the confirm_msg
+/// @param buttons String containing button names
+/// @param default_button_idx Number of default button
+/// @param has_hotkey A element in this array is true if corresponding button
+///                   has a hotkey
+/// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
 static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,
                                  int default_button_idx, const bool has_hotkey[],
                                  char_u *hotkeys_ptr)
@@ -3050,10 +3017,6 @@ int vim_dialog_yesnoallcancel(int type, char_u *title, char_u *message, int dflt
 
 
 static char *e_printf = N_("E766: Insufficient arguments for printf()");
-
-static long tv_nr(typval_T *tvs, int *idxp);
-static char *tv_str(typval_T *tvs, int *idxp);
-static double tv_float(typval_T *tvs, int *idxp);
 
 /*
  * Get number argument from "idxp" entry in "tvs".  First entry is 1.

@@ -95,19 +95,25 @@
 #include "nvim/strings.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
+#include "nvim/arabic.h"
 
 # define WINBYTE BYTE
 
-static int enc_canon_search(char_u *name);
-static int dbcs_char2len(int c);
-static int dbcs_char2bytes(int c, char_u *buf);
-static int dbcs_ptr2len(char_u *p);
-static int dbcs_ptr2len_len(char_u *p, int size);
-static int utf_ptr2cells_len(char_u *p, int size);
-static int dbcs_char2cells(int c);
-static int dbcs_ptr2cells_len(char_u *p, int size);
-static int dbcs_ptr2char(char_u *p);
-static int utf_safe_read_char_adv(char_u **s, size_t *n);
+typedef struct {
+  int rangeStart;
+  int rangeEnd;
+  int step;
+  int offset;
+} convertStruct;
+
+struct interval {
+  long first;
+  long last;
+};
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "mbyte.c.generated.h"
+#endif
 
 /*
  * Lookup table to quickly get the length in bytes of a UTF-8 character from
@@ -908,12 +914,6 @@ static int dbcs_ptr2len_len(char_u *p, int size)
     len = 1;
   return len;
 }
-
-struct interval {
-  long first;
-  long last;
-};
-static int intable(struct interval *table, size_t size, int c);
 
 /*
  * Return TRUE if "c" is in "table[size / sizeof(struct interval)]".
@@ -2170,12 +2170,6 @@ int utf_class(int c)
  * range from 0x41 to 0x5a inclusive, stepping by 1, are changed to
  * folded/upper/lower by adding 32.
  */
-typedef struct {
-  int rangeStart;
-  int rangeEnd;
-  int step;
-  int offset;
-} convertStruct;
 
 static convertStruct foldCase[] =
 {
@@ -2337,8 +2331,6 @@ static convertStruct foldCase[] =
   {0x10400,0x10427,1,40}
 };
 
-static int utf_convert(int a, convertStruct table[], int tableSize);
-static int utf_strnicmp(char_u *s1, char_u *s2, size_t n1, size_t n2);
 
 /*
  * Generic conversion function for case operations.
@@ -3299,7 +3291,6 @@ int mb_fix_col(int col, int row)
   return col;
 }
 
-static int enc_alias_search(char_u *name);
 
 /*
  * Skip the Vim specific head of a 'encoding' name.
@@ -3457,9 +3448,6 @@ char_u * enc_locale()
 
 # if defined(USE_ICONV) || defined(PROTO)
 
-static char_u *
-iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvlenp,
-             int *resultlenp);
 
 /*
  * Call iconv_open() with a check if iconv() works properly (there are broken
@@ -3734,10 +3722,7 @@ void iconv_end()
  * Afterwards invoke with "from" and "to" equal to NULL to cleanup.
  * Return FAIL when conversion is not supported, OK otherwise.
  */
-int convert_setup(vcp, from, to)
-  vimconv_T   *vcp;
-  char_u      *from;
-  char_u      *to;
+int convert_setup(vimconv_T *vcp, char_u *from, char_u *to)
 {
   return convert_setup_ext(vcp, from, TRUE, to, TRUE);
 }
@@ -3746,12 +3731,8 @@ int convert_setup(vcp, from, to)
  * As convert_setup(), but only when from_unicode_is_utf8 is TRUE will all
  * "from" unicode charsets be considered utf-8.  Same for "to".
  */
-int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
-  vimconv_T   *vcp;
-  char_u      *from;
-  int from_unicode_is_utf8;
-  char_u      *to;
-  int to_unicode_is_utf8;
+int convert_setup_ext(vimconv_T *vcp, char_u *from, int from_unicode_is_utf8,
+                      char_u *to, int to_unicode_is_utf8)
 {
   int from_prop;
   int to_prop;
@@ -3822,10 +3803,7 @@ int convert_setup_ext(vcp, from, from_unicode_is_utf8, to, to_unicode_is_utf8)
  * The input and output are not NUL terminated!
  * Returns the length after conversion.
  */
-int convert_input(ptr, len, maxlen)
-  char_u      *ptr;
-  int len;
-  int maxlen;
+int convert_input(char_u *ptr, int len, int maxlen)
 {
   return convert_input_safe(ptr, len, maxlen, NULL, NULL);
 }
@@ -3836,12 +3814,8 @@ int convert_input(ptr, len, maxlen)
  * end return that as an allocated string in "restp" and set "*restlenp" to
  * the length.  If "restp" is NULL it is not used.
  */
-int convert_input_safe(ptr, len, maxlen, restp, restlenp)
-  char_u      *ptr;
-  int len;
-  int maxlen;
-  char_u      **restp;
-  int         *restlenp;
+int convert_input_safe(char_u *ptr, int len, int maxlen, char_u **restp,
+                       int *restlenp)
 {
   char_u      *d;
   int dlen = len;
@@ -3874,10 +3848,7 @@ int convert_input_safe(ptr, len, maxlen, restp, restlenp)
  * Illegal chars are often changed to "?", unless vcp->vc_fail is set.
  * When something goes wrong, NULL is returned and "*lenp" is unchanged.
  */
-char_u * string_convert(vcp, ptr, lenp)
-  vimconv_T   *vcp;
-  char_u      *ptr;
-  int         *lenp;
+char_u * string_convert(vimconv_T *vcp, char_u *ptr, int *lenp)
 {
   return string_convert_ext(vcp, ptr, lenp, NULL);
 }
@@ -3887,11 +3858,8 @@ char_u * string_convert(vcp, ptr, lenp)
  * an incomplete sequence at the end it is not converted and "*unconvlenp" is
  * set to the number of remaining bytes.
  */
-char_u * string_convert_ext(vcp, ptr, lenp, unconvlenp)
-  vimconv_T   *vcp;
-  char_u      *ptr;
-  int         *lenp;
-  int         *unconvlenp;
+char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
+                            int *unconvlenp)
 {
   char_u      *retval = NULL;
   char_u      *d;
