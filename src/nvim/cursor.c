@@ -10,7 +10,9 @@
 #include "nvim/screen.h"
 #include "nvim/vim.h"
 
-static int coladvance2(pos_T *pos, bool addspaces, bool finetune, colnr_T wcol);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "cursor.c.generated.h"
+#endif
 
 /*
  * Get the screen position of the cursor.
