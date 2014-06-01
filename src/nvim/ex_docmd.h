@@ -13,6 +13,9 @@
 #define VALID_PATH              1
 #define VALID_HEAD              2
 
+/* Values for exmode_active (0 is no exmode) */
+#define EXMODE_NORMAL           1
+#define EXMODE_VIM              2
 
 /* ex_docmd.c */
 void do_exmode(int improved);
