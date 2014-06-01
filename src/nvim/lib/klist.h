@@ -29,10 +29,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#define DEFINE_FUNC_ATTRIBUTES
-#include "nvim/func_attr.h"
-#undef DEFINE_FUNC_ATTRIBUTES
 #include "nvim/memory.h"
+#include "nvim/func_attr.h"
 
 #define KMEMPOOL_INIT(name, kmptype_t, kmpfree_f)                       \
     typedef struct {                                                    \
@@ -89,7 +87,7 @@
         return kl;                                                      \
     }                                                                   \
     static inline void kl_destroy_##name(kl_##name##_t *kl)             \
-        FUNC_ATTR_UNUSED;                                               \
+        REAL_FATTR_UNUSED;                                              \
     static inline void kl_destroy_##name(kl_##name##_t *kl) {           \
         kl1_##name *p;                                                  \
         for (p = kl->head; p != kl->tail; p = p->next)                  \
