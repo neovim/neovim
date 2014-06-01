@@ -10,7 +10,10 @@
 #define CCGD_ALLBUF     8       /* may write all buffers */
 #define CCGD_EXCMD      16      /* may suggest using ! */
 
-
+/* last argument for do_source() */
+#define DOSO_NONE       0
+#define DOSO_VIMRC      1       /* loading vimrc file */
+#define DOSO_GVIMRC     2       /* loading gvimrc file */
 
 /* ex_cmds2.c */
 void do_debug(char_u *cmd);

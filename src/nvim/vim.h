@@ -725,10 +725,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
 
-/* last argument for do_source() */
-#define DOSO_NONE       0
-#define DOSO_VIMRC      1       /* loading vimrc file */
-#define DOSO_GVIMRC     2       /* loading gvimrc file */
 
 /* direction for nv_mousescroll() and ins_mousescroll() */
 #define MSCR_DOWN       0       /* DOWN must be FALSE */
