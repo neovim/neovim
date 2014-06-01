@@ -39,6 +39,10 @@
 #include "nvim/os/os.h"
 #include "nvim/os/event.h"
 
+/* Magic chars used in confirm dialog strings */
+#define DLG_BUTTON_SEP  '\n'
+#define DLG_HOTKEY_CHAR '&'
+
 static int other_sourcing_name(void);
 static char_u *get_emsg_source(void);
 static char_u *get_emsg_lnum(void);

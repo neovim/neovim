@@ -246,9 +246,6 @@ enum {
 #define RESIZE_BOTH     15      /* resize in both directions */
 
 
-/* Magic chars used in confirm dialog strings */
-#define DLG_BUTTON_SEP  '\n'
-#define DLG_HOTKEY_CHAR '&'
 
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
