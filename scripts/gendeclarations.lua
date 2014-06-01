@@ -174,11 +174,24 @@ local footer = [[
 local non_static = header
 local static = header
 
+local filepattern = '^# %d+ "[^"]-/?([^"/]+)"'
+local curfile
+
 init = 0
+curfile = nil
+neededfile = fname:match('[^/]+$')
 while init ~= nil do
   init = text:find('\n', init)
-  if init then
-    init = init + 1
+  if init == nil then
+    break
+  end
+  init = init + 1
+  if text:sub(init, init) == '#' then
+    file = text:match(filepattern, init)
+    if file ~= nil then
+      curfile = file
+    end
+  elseif curfile == neededfile then
     s = init
     e = pattern:match(text, init)
     if e ~= nil then
@@ -197,9 +210,7 @@ while init ~= nil do
       declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
       declaration = declaration:gsub(' $', '')
       declaration = declaration .. ';\n'
-      if text:sub(s, s + 5) == 'inline' then
-        -- Ignore
-      elseif text:sub(s, s + 5) == 'static' then
+      if text:sub(s, s + 5) == 'static' then
         static = static .. declaration
       else
         non_static = non_static .. declaration
