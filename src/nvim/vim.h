@@ -702,11 +702,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 
 
-/* direction for nv_mousescroll() and ins_mousescroll() */
-#define MSCR_DOWN       0       /* DOWN must be FALSE */
-#define MSCR_UP         1
-#define MSCR_LEFT       -1
-#define MSCR_RIGHT      -2
 
 #define KEYLEN_PART_KEY -1      /* keylen value for incomplete key-code */
 #define KEYLEN_PART_MAP -2      /* keylen value for incomplete mapping */
