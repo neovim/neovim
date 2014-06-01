@@ -131,9 +131,7 @@ int main() {
 
 #include "nvim/memory.h"
 
-#define DEFINE_FUNC_ATTRIBUTES
 #include "nvim/func_attr.h"
-#undef DEFINE_FUNC_ATTRIBUTES
 
 /* compiler specific configuration */
 
@@ -209,7 +207,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		return (kh_##name##_t*)kcalloc(1, sizeof(kh_##name##_t));		\
 	}																	\
 	SCOPE void kh_destroy_##name(kh_##name##_t *h)						\
-		FUNC_ATTR_UNUSED;                                     \
+		REAL_FATTR_UNUSED;                                      \
 	SCOPE void kh_destroy_##name(kh_##name##_t *h)						\
 	{																	\
 		if (h) {														\
@@ -219,7 +217,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		}																\
 	}																	\
 	SCOPE void kh_clear_##name(kh_##name##_t *h)						\
-		FUNC_ATTR_UNUSED;                                     \
+		REAL_FATTR_UNUSED;                                    \
 	SCOPE void kh_clear_##name(kh_##name##_t *h)						\
 	{																	\
 		if (h && h->flags) {											\
@@ -228,7 +226,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		}																\
 	}																	\
 	SCOPE khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key) 	\
-		FUNC_ATTR_UNUSED;                                     \
+		REAL_FATTR_UNUSED;                                    \
 	SCOPE khint_t kh_get_##name(const kh_##name##_t *h, khkey_t key) 	\
 	{																	\
 		if (h->n_buckets) {												\
@@ -244,7 +242,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		} else return 0;												\
 	}																	\
 	SCOPE void kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets) \
-		FUNC_ATTR_UNUSED;                                     \
+		REAL_FATTR_UNUSED;                                    \
 	SCOPE void kh_resize_##name(kh_##name##_t *h, khint_t new_n_buckets) \
 	{ /* This function uses 0.25*n_buckets bytes of working space instead of [sizeof(key_t+val_t)+.25]*n_buckets. */ \
 		khint32_t *new_flags = 0;										\
@@ -305,7 +303,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		}																\
 	}																	\
 	SCOPE khint_t kh_put_##name(kh_##name##_t *h, khkey_t key, int *ret) \
-		FUNC_ATTR_UNUSED;                                     \
+		REAL_FATTR_UNUSED;                                    \
 	SCOPE khint_t kh_put_##name(kh_##name##_t *h, khkey_t key, int *ret) \
 	{																	\
 		khint_t x;														\
@@ -347,7 +345,7 @@ static const double __ac_HASH_UPPER = 0.77;
 		return x;														\
 	}																	\
 	SCOPE void kh_del_##name(kh_##name##_t *h, khint_t x)				\
-		FUNC_ATTR_UNUSED;                                     \
+		REAL_FATTR_UNUSED;                                    \
 	SCOPE void kh_del_##name(kh_##name##_t *h, khint_t x)				\
 	{																	\
 		if (x != h->n_buckets && !__ac_iseither(h->flags, x)) {			\
