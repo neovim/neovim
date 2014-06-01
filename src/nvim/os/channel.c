@@ -1,7 +1,7 @@
 #include <string.h>
 
 #include <uv.h>
-#include "nvim/os/msgpack.h"
+#include <msgpack.h>
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/channel.h"

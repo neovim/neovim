@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "nvim/os/msgpack.h"
+#include <msgpack.h>
 
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
