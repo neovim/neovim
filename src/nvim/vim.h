@@ -710,8 +710,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 #define FILEINFO_READ_FAIL   2  /* CreateFile() failed */
 #define FILEINFO_INFO_FAIL   3  /* GetFileInformationByHandle() failed */
 
-/* Character used as separated in autoload function/variable names. */
-#define AUTOLOAD_CHAR '#'
 
 # define SET_NO_HLSEARCH(flag) no_hlsearch = (flag); set_vim_var_nr( \
     VV_HLSEARCH, !no_hlsearch)

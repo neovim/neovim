@@ -75,6 +75,9 @@
 #define DO_NOT_FREE_CNT 99999   /* refcount for dict or list that should not
                                    be freed. */
 
+#define AUTOLOAD_CHAR '#'       /* Character used as separated in autoload 
+                                   function/variable names. */
+
 /*
  * In a hashtab item "hi_key" points to "di_key" in a dictitem.
  * This avoids adding a pointer to the hashtab item.
