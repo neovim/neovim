@@ -746,6 +746,12 @@ EXTERN int msg_silent INIT(= 0);        /* don't print messages */
 EXTERN int emsg_silent INIT(= 0);       /* don't print error messages */
 EXTERN int cmd_silent INIT(= FALSE);      /* don't echo the command line */
 
+/* Values for swap_exists_action: what to do when swap file already exists */
+#define SEA_NONE        0       /* don't use dialog */
+#define SEA_DIALOG      1       /* use dialog when possible */
+#define SEA_QUIT        2       /* quit editing the file */
+#define SEA_RECOVER     3       /* recover the file */
+
 #define HAS_SWAP_EXISTS_ACTION
 EXTERN int swap_exists_action INIT(= SEA_NONE);
 /* For dialog when swap file already

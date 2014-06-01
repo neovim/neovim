@@ -248,11 +248,6 @@ enum {
 
 
 
-/* Values for swap_exists_action: what to do when swap file already exists */
-#define SEA_NONE        0       /* don't use dialog */
-#define SEA_DIALOG      1       /* use dialog when possible */
-#define SEA_QUIT        2       /* quit editing the file */
-#define SEA_RECOVER     3       /* recover the file */
 
 /*
  * Minimal size for block 0 of a swap file.
