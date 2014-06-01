@@ -43,6 +43,7 @@
 /* #undef REGEXP_DEBUG */
 /* #define REGEXP_DEBUG */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"

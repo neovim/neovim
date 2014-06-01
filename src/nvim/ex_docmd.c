@@ -10,6 +10,7 @@
  * ex_docmd.c: functions for executing an Ex command line.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"

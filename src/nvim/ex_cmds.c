@@ -10,6 +10,7 @@
  * ex_cmds.c: some functions for command line commands
  */
 
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 

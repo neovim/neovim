@@ -10,6 +10,7 @@
  * edit.c: functions for Insert mode
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"
