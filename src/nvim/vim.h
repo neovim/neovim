@@ -245,17 +245,6 @@ enum {
 #define RESIZE_HOR      2       /* resize horizontally */
 #define RESIZE_BOTH     15      /* resize in both directions */
 
-/*
- * "flags" values for option-setting functions.
- * When OPT_GLOBAL and OPT_LOCAL are both missing, set both local and global
- * values, get local value.
- */
-#define OPT_FREE        1       /* free old value if it was allocated */
-#define OPT_GLOBAL      2       /* use global value */
-#define OPT_LOCAL       4       /* use local value */
-#define OPT_MODELINE    8       /* option in modeline */
-#define OPT_WINONLY     16      /* only set window-local options */
-#define OPT_NOWIN       32      /* don't set window-local options */
 
 /* Magic chars used in confirm dialog strings */
 #define DLG_BUTTON_SEP  '\n'
