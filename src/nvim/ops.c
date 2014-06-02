@@ -107,7 +107,9 @@ static char_u   *skip_comment(char_u *line, int process,
                               int include_space,
                               int *is_comment);
 static void block_prep(oparg_T *oap, struct block_def *, linenr_T, int);
-static void str_to_reg(struct yankreg *y_ptr, int type, char_u *str,
+static void str_to_reg(struct yankreg *y_ptr,
+                       int type,
+                       const char_u *str,
                        long len,
                        long blocklen);
 static int ends_in_white(linenr_T lnum);
@@ -4728,29 +4730,45 @@ get_reg_contents (
   return retval;
 }
 
-/*
- * Store string "str" in register "name".
- * "maxlen" is the maximum number of bytes to use, -1 for all bytes.
- * If "must_append" is TRUE, always append to the register.  Otherwise append
- * if "name" is an uppercase letter.
- * Note: "maxlen" and "must_append" don't work for the "/" register.
- * Careful: 'str' is modified, you may have to use a copy!
- * If "str" ends in '\n' or '\r', use linewise, otherwise use characterwise.
- */
-void write_reg_contents(int name, char_u *str, int maxlen, int must_append)
+/// write_reg_contents - store `str` in register `name`
+///
+/// @see write_reg_contents_ex
+void write_reg_contents(int name,
+                        const char_u *str,
+                        ssize_t len,
+                        int must_append)
 {
-  write_reg_contents_ex(name, str, maxlen, must_append, MAUTO, 0L);
+  write_reg_contents_ex(name, str, len, must_append, MAUTO, 0L);
 }
 
-void write_reg_contents_ex(int name, char_u *str, int maxlen, int must_append, int yank_type, long block_len)
+/// write_reg_contents_ex - store `str` in register `name`
+///
+/// If `str` ends in '\n' or '\r', use linewise, otherwise use
+/// characterwise.
+///
+/// @param name The name of the register
+/// @param str The contents to write
+/// @param len If >= 0, write `maxlen` bytes of `str`. Otherwise, write
+///               `strlen(str)` bytes. If `maxlen` is larger than the
+///               allocated size of `src`, the behaviour is undefined.
+/// @param must_append If true, append the contents of `str` to the current
+///                    contents of the register. Note that regardless of
+///                    `must_append`, this function will append when `name`
+///                    is an uppercase letter.
+/// @param yank_type MCHAR, MLINE, MBLOCK or MAUTO
+/// @param block_len width of visual block
+void write_reg_contents_ex(int name,
+                           const char_u *str,
+                           ssize_t len,
+                           int must_append,
+                           int yank_type,
+                           long block_len)
 {
   struct yankreg  *old_y_previous, *old_y_current;
-  long len;
 
-  if (maxlen >= 0)
-    len = maxlen;
-  else
-    len = (long)STRLEN(str);
+  if (len < 0) {
+      len = (ssize_t) STRLEN(str);
+  }
 
   /* Special case: '/' search pattern */
   if (name == '/') {
@@ -4759,17 +4777,25 @@ void write_reg_contents_ex(int name, char_u *str, int maxlen, int must_append, i
   }
 
   if (name == '=') {
-    char_u      *p, *s;
+    size_t offset = 0;
+    size_t totlen = (size_t) len;
 
-    p = vim_strnsave(str, (int)len);
+    if (must_append && expr_line) {
+      // append has been specified and expr_line already exists, so we'll
+      // append the new string to expr_line.
+      size_t exprlen = STRLEN(expr_line);
 
-    if (must_append) {
-      s = concat_str(get_expr_line_src(), p);
-      free(p);
-      p = s;
-
+      totlen = exprlen + (size_t) len;
+      offset = exprlen;
     }
-    set_expr_line(p);
+
+    // modify the global expr_line, extend/shrink it if necessary (realloc).
+    // Copy the input string into the adjusted memory at the specified
+    // offset.
+    expr_line = xrealloc(expr_line, totlen + 1);
+    memcpy(expr_line + offset, str, (size_t) len);
+    expr_line[totlen] = NUL;
+
     return;
   }
 
@@ -4797,18 +4823,20 @@ void write_reg_contents_ex(int name, char_u *str, int maxlen, int must_append, i
   y_current = old_y_current;
 }
 
-/*
- * Put a string into a register.  When the register is not empty, the string
- * is appended.
- */
-static void 
-str_to_reg (
-    struct yankreg *y_ptr,             /* pointer to yank register */
-    int yank_type,                          /* MCHAR, MLINE, MBLOCK, MAUTO */
-    char_u *str,               /* string to put in register */
-    long len,                               /* length of string */
-    long blocklen                          /* width of Visual block */
-)
+/// str_to_reg - Put a string into a register.
+///
+/// When the register is not empty, the string is appended.
+///
+/// @param y_ptr pointer to yank register
+/// @param yank_type MCHAR, MLINE, MBLOCK or MAUTO
+/// @param str string to put in register
+/// @param len length of the string
+/// @param blocklen width of visual block
+static void str_to_reg(struct yankreg *y_ptr,
+                       int yank_type,
+                       const char_u *str,
+                       long len,
+                       long blocklen)
 {
   int type;                             /* MCHAR, MLINE or MBLOCK */
   int lnum;

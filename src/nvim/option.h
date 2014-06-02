@@ -5,7 +5,7 @@
 
 /* option.c */
 void set_init_1(void);
-void set_string_default(char *name, char_u *val);
+void set_string_default(const char *name, const char_u *val);
 void set_number_default(char *name, long val);
 void free_all_options(void);
 void set_init_2(void);
