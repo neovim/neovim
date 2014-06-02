@@ -262,17 +262,6 @@
 # include <strings.h>
 #endif
 
-#include <setjmp.h>
-#ifdef HAVE_SIGSETJMP
-# define JMP_BUF sigjmp_buf
-# define SETJMP(x) sigsetjmp((x), 1)
-# define LONGJMP siglongjmp
-#else
-# define JMP_BUF jmp_buf
-# define SETJMP(x) setjmp(x)
-# define LONGJMP longjmp
-#endif
-
 #define HAVE_DUP                /* have dup() */
 
 /* We have three kinds of ACL support. */
