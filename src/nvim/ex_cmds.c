@@ -6223,9 +6223,9 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 
   cmd_idx = sign_cmd_idx(arg, end_subcmd);
 
-  /* :sign {subcmd} {subcmd_args}
-   *          |
-   *          begin_subcmd_args */
+  // :sign {subcmd} {subcmd_args}
+  //                |
+  //                begin_subcmd_args
   begin_subcmd_args = skipwhite(end_subcmd);
   p = skiptowhite(begin_subcmd_args);
   if (*p == NUL)
@@ -6250,13 +6250,13 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
     return;
   }
 
-  /* expand last argument of subcmd */
+  // Expand last argument of subcmd.
+  //
+  // :sign define {name} {args}...
+  //              |
+  //              p
 
-  /* :sign define {name} {args}...
-   *        |
-   *        p */
-
-  /* Loop until reaching last argument. */
+  // Loop until reaching last argument.
   do
   {
     p = skipwhite(p);
@@ -6266,9 +6266,9 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
 
   p = vim_strchr(last, '=');
 
-  /* :sign define {name} {args}... {last}=
-   *             |     |
-   *          last     p */
+  // :sign define {name} {args}... {last}=
+  //                               |     |
+  //                            last     p
   if (p == NUL)
   {
     /* Expand last argument name (before equal sign). */
