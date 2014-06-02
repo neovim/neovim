@@ -29,8 +29,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include "nvim/func_attr.h"
 #include "nvim/memory.h"
+#include "nvim/func_attr.h"
 
 #define KMEMPOOL_INIT(name, kmptype_t, kmpfree_f)                       \
     typedef struct {                                                    \
@@ -56,7 +56,7 @@
         --mp->cnt;                                                      \
         if (mp->n == mp->max) {                                         \
             mp->max = mp->max? mp->max<<1 : 16;                         \
-            mp->buf = xrealloc(mp->buf, sizeof(kmptype_t *) * mp->max);       \
+            mp->buf = xrealloc(mp->buf, sizeof(kmptype_t *) * mp->max); \
         }                                                               \
         mp->buf[mp->n++] = p;                                           \
     }
@@ -79,7 +79,7 @@
         kmp_##name##_t *mp;                                             \
         size_t size;                                                    \
     } kl_##name##_t;                                                    \
-    static inline kl_##name##_t *kl_init_##name(void) {                     \
+    static inline kl_##name##_t *kl_init_##name(void) {                 \
         kl_##name##_t *kl = xcalloc(1, sizeof(kl_##name##_t));          \
         kl->mp = kmp_init(name);                                        \
         kl->head = kl->tail = kmp_alloc(name, kl->mp);                  \
@@ -87,7 +87,7 @@
         return kl;                                                      \
     }                                                                   \
     static inline void kl_destroy_##name(kl_##name##_t *kl)             \
-        FUNC_ATTR_UNUSED;                                               \
+        REAL_FATTR_UNUSED;                                              \
     static inline void kl_destroy_##name(kl_##name##_t *kl) {           \
         kl1_##name *p;                                                  \
         for (p = kl->head; p != kl->tail; p = p->next)                  \
@@ -124,5 +124,4 @@
 #define kl_pushp(name, kl) kl_pushp_##name(kl)
 #define kl_shift(name, kl, d) kl_shift_##name(kl, d)
 #define kl_empty(kl) ((kl)->size == 0)
-
 #endif

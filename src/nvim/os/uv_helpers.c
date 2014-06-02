@@ -13,8 +13,15 @@ typedef struct {
   Job *job;
 } HandleData;
 
-static HandleData *init(uv_handle_t *handle);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/uv_helpers.c.generated.h"
+#endif
+
+/// Gets the RStream instance associated with a libuv handle
+///
+/// @param handle libuv handle
+/// @return the RStream pointer
 RStream *handle_get_rstream(uv_handle_t *handle)
 {
   RStream *rv = init(handle)->rstream;
@@ -22,11 +29,19 @@ RStream *handle_get_rstream(uv_handle_t *handle)
   return rv;
 }
 
+/// Associates a RStream instance with a libuv handle
+///
+/// @param handle libuv handle
+/// @param rstream the RStream pointer
 void handle_set_rstream(uv_handle_t *handle, RStream *rstream)
 {
   init(handle)->rstream = rstream;
 }
 
+/// Gets the WStream instance associated with a libuv handle
+///
+/// @param handle libuv handle
+/// @return the WStream pointer
 WStream *handle_get_wstream(uv_handle_t *handle)
 {
   WStream *rv = init(handle)->wstream;
@@ -34,12 +49,20 @@ WStream *handle_get_wstream(uv_handle_t *handle)
   return rv;
 }
 
+/// Associates a WStream instance with a libuv handle
+///
+/// @param handle libuv handle
+/// @param wstream the WStream pointer
 void handle_set_wstream(uv_handle_t *handle, WStream *wstream)
 {
   HandleData *data = init(handle);
   data->wstream = wstream;
 }
 
+/// Gets the Job instance associated with a libuv handle
+///
+/// @param handle libuv handle
+/// @return the Job pointer
 Job *handle_get_job(uv_handle_t *handle)
 {
   Job *rv = init(handle)->job;
@@ -47,6 +70,10 @@ Job *handle_get_job(uv_handle_t *handle)
   return rv;
 }
 
+/// Associates a Job instance with a libuv handle
+///
+/// @param handle libuv handle
+/// @param job the Job pointer
 void handle_set_job(uv_handle_t *handle, Job *job)
 {
   init(handle)->job = job;

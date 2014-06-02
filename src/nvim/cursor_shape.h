@@ -47,6 +47,8 @@ typedef struct cursor_entry {
   char used_for;                /* SHAPE_MOUSE and/or SHAPE_CURSOR */
 } cursorentry_T;
 
-char_u *parse_shape_opt(int what);
 
-#endif /* NVIM_CURSOR_SHAPE_H */
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "cursor_shape.h.generated.h"
+#endif
+#endif  // NVIM_CURSOR_SHAPE_H

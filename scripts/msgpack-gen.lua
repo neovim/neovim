@@ -94,7 +94,9 @@ output:write([[
 ]])
 
 for i = 1, #headers do
-  output:write('\n#include "nvim/'..headers[i]..'"')
+  if headers[i]:sub(-12) ~= '.generated.h' then
+    output:write('\n#include "nvim/'..headers[i]..'"')
+  end
 end
 
 output:write([[

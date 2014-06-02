@@ -21,10 +21,10 @@ static uv_signal_t spwr;
 #endif
 
 static bool rejecting_deadly;
-static char * signal_name(int signum);
-static void deadly_signal(int signum);
-static void signal_cb(uv_signal_t *, int signum);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/signal.c.generated.h"
+#endif
 void signal_init()
 {
   uv_signal_init(uv_default_loop(), &sint);

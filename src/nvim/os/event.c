@@ -4,7 +4,6 @@
 
 #include <uv.h>
 
-#include "nvim/lib/klist.h"
 #include "nvim/os/event.h"
 #include "nvim/os/input.h"
 #include "nvim/os/channel.h"
@@ -16,15 +15,18 @@
 #include "nvim/memory.h"
 #include "nvim/misc2.h"
 
+#include "nvim/lib/klist.h"
+
 // event will be cleaned up after it gets processed
 #define _destroy_event(x)  // do nothing
 KLIST_INIT(Event, Event, _destroy_event)
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/event.c.generated.h"
+#endif
 static klist_t(Event) *event_queue;
 static uv_timer_t timer;
 static uv_prepare_t timer_prepare;
-static void timer_cb(uv_timer_t *handle);
-static void timer_prepare_cb(uv_prepare_t *);
 
 void event_init()
 {

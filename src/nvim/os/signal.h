@@ -3,11 +3,7 @@
 
 #include "nvim/os/event_defs.h"
 
-void signal_init(void);
-void signal_stop(void);
-void signal_accept_deadly(void);
-void signal_reject_deadly(void);
-void signal_handle(Event event);
-
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/signal.h.generated.h"
+#endif
 #endif  // NVIM_OS_SIGNAL_H
-

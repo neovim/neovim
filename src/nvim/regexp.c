@@ -265,9 +265,115 @@
 #define un_Magic(x)     ((x) + 256)
 #define is_Magic(x)     ((x) < 0)
 
-static int no_Magic(int x);
-static int toggle_Magic(int x);
+/*
+ * We should define ftpr as a pointer to a function returning a pointer to
+ * a function returning a pointer to a function ...
+ * This is impossible, so we declare a pointer to a function returning a
+ * pointer to a function returning void. This should work for all compilers.
+ */
+typedef void (*(*fptr_T)(int *, int))();
 
+typedef struct {
+  char_u     *regparse;
+  int prevchr_len;
+  int curchr;
+  int prevchr;
+  int prevprevchr;
+  int nextchr;
+  int at_start;
+  int prev_at_start;
+  int regnpar;
+} parse_state_T;
+
+/*
+ * Structure used to save the current input state, when it needs to be
+ * restored after trying a match.  Used by reg_save() and reg_restore().
+ * Also stores the length of "backpos".
+ */
+typedef struct {
+  union {
+    char_u  *ptr;       /* reginput pointer, for single-line regexp */
+    lpos_T pos;         /* reginput pos, for multi-line regexp */
+  } rs_u;
+  int rs_len;
+} regsave_T;
+
+/* struct to save start/end pointer/position in for \(\) */
+typedef struct {
+  union {
+    char_u  *ptr;
+    lpos_T pos;
+  } se_u;
+} save_se_T;
+
+/* used for BEHIND and NOBEHIND matching */
+typedef struct regbehind_S {
+  regsave_T save_after;
+  regsave_T save_behind;
+  int save_need_clear_subexpr;
+  save_se_T save_start[NSUBEXP];
+  save_se_T save_end[NSUBEXP];
+} regbehind_T;
+
+/* Values for rs_state in regitem_T. */
+typedef enum regstate_E {
+  RS_NOPEN = 0          /* NOPEN and NCLOSE */
+  , RS_MOPEN            /* MOPEN + [0-9] */
+  , RS_MCLOSE           /* MCLOSE + [0-9] */
+  , RS_ZOPEN            /* ZOPEN + [0-9] */
+  , RS_ZCLOSE           /* ZCLOSE + [0-9] */
+  , RS_BRANCH           /* BRANCH */
+  , RS_BRCPLX_MORE      /* BRACE_COMPLEX and trying one more match */
+  , RS_BRCPLX_LONG      /* BRACE_COMPLEX and trying longest match */
+  , RS_BRCPLX_SHORT     /* BRACE_COMPLEX and trying shortest match */
+  , RS_NOMATCH          /* NOMATCH */
+  , RS_BEHIND1          /* BEHIND / NOBEHIND matching rest */
+  , RS_BEHIND2          /* BEHIND / NOBEHIND matching behind part */
+  , RS_STAR_LONG        /* STAR/PLUS/BRACE_SIMPLE longest match */
+  , RS_STAR_SHORT       /* STAR/PLUS/BRACE_SIMPLE shortest match */
+} regstate_T;
+
+/*
+ * When there are alternatives a regstate_T is put on the regstack to remember
+ * what we are doing.
+ * Before it may be another type of item, depending on rs_state, to remember
+ * more things.
+ */
+typedef struct regitem_S {
+  regstate_T rs_state;          /* what we are doing, one of RS_ above */
+  char_u      *rs_scan;         /* current node in program */
+  union {
+    save_se_T sesave;
+    regsave_T regsave;
+  } rs_un;                      /* room for saving reginput */
+  short rs_no;                  /* submatch nr or BEHIND/NOBEHIND */
+} regitem_T;
+
+
+/* used for STAR, PLUS and BRACE_SIMPLE matching */
+typedef struct regstar_S {
+  int nextb;                    /* next byte */
+  int nextb_ic;                 /* next byte reverse case */
+  long count;
+  long minval;
+  long maxval;
+} regstar_T;
+
+/* used to store input position when a BACK was encountered, so that we now if
+ * we made any progress since the last time. */
+typedef struct backpos_S {
+  char_u      *bp_scan;         /* "scan" where BACK was encountered */
+  regsave_T bp_pos;             /* last input position */
+} backpos_T;
+
+typedef struct {
+  int a, b, c;
+} decomp_T;
+
+
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "regexp.c.generated.h"
+#endif
 static int no_Magic(int x)
 {
   if (is_Magic(x))
@@ -360,9 +466,6 @@ static int toggle_Magic(int x)
 
 #define MAX_LIMIT       (32767L << 16L)
 
-static int re_multi_type(int);
-static int cstrncmp(char_u *s1, char_u *s2, int *n);
-static char_u *cstrchr(char_u *, int);
 
 #ifdef BT_REGEXP_DUMP
 static void regdump(char_u *, bt_regprog_T *);
@@ -433,13 +536,6 @@ static char_u           *reg_prev_sub = NULL;
 static char_u REGEXP_INRANGE[] = "]^-n\\";
 static char_u REGEXP_ABBR[] = "nrtebdoxuU";
 
-static int backslash_trans(int c);
-static int get_char_class(char_u **pp);
-static int get_equi_class(char_u **pp);
-static void reg_equi_class(int c);
-static int get_coll_element(char_u **pp);
-static char_u   *skip_anyof(char_u *p);
-static void init_class_tab(void);
 
 /*
  * Translate '\x' to its control character, except "\n", which is Magic.
@@ -641,54 +737,11 @@ static int nextchr;             /* used for ungetchr() */
 #define REG_ZPAREN      2       /* \z(\) */
 #define REG_NPAREN      3       /* \%(\) */
 
-typedef struct {
-  char_u     *regparse;
-  int prevchr_len;
-  int curchr;
-  int prevchr;
-  int prevprevchr;
-  int nextchr;
-  int at_start;
-  int prev_at_start;
-  int regnpar;
-} parse_state_T;
-
 /*
  * Forward declarations for vim_regcomp()'s friends.
  */
-static void initchr(char_u *);
-static void save_parse_state(parse_state_T *ps);
-static void restore_parse_state(parse_state_T *ps);
-static int getchr(void);
-static void skipchr_keepstart(void);
-static int peekchr(void);
-static void skipchr(void);
-static void ungetchr(void);
-static int gethexchrs(int maxinputlen);
-static int getoctchrs(void);
-static int getdecchrs(void);
-static int coll_get_char(void);
-static void regcomp_start(char_u *expr, int flags);
-static char_u   *reg(int, int *);
-static char_u   *regbranch(int *flagp);
-static char_u   *regconcat(int *flagp);
-static char_u   *regpiece(int *);
-static char_u   *regatom(int *);
-static char_u   *regnode(int);
-static int use_multibytecode(int c);
-static int prog_magic_wrong(void);
-static char_u   *regnext(char_u *);
-static void regc(int b);
-static void regmbc(int c);
 # define REGMBC(x) regmbc(x);
 # define CASEMBC(x) case x:
-static void reginsert(int, char_u *);
-static void reginsert_nr(int op, long val, char_u *opnd);
-static void reginsert_limits(int, long, long, char_u *);
-static char_u   *re_put_long(char_u *pr, long_u val);
-static int read_limits(long *, long *);
-static void regtail(char_u *, char_u *);
-static void regoptail(char_u *, char_u *);
 
 static regengine_T bt_regengine;
 static regengine_T nfa_regengine;
@@ -1061,7 +1114,6 @@ static int get_coll_element(char_u **pp)
   return 0;
 }
 
-static void get_cpo_flags(void);
 static int reg_cpo_lit; /* 'cpoptions' contains 'l' flag */
 static int reg_cpo_bsl; /* 'cpoptions' contains '\' flag */
 
@@ -1158,8 +1210,6 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
   return p;
 }
 
-static regprog_T  *bt_regcomp(char_u *expr, int re_flags);
-static void bt_regfree(regprog_T *prog);
 
 /*
  * bt_regcomp() - compile a regular expression into internal code for the
@@ -3050,49 +3100,6 @@ static int need_clear_subexpr;          /* subexpressions still need to be
 static int need_clear_zsubexpr = FALSE;         /* extmatch subexpressions
                                                  * still need to be cleared */
 
-/*
- * Structure used to save the current input state, when it needs to be
- * restored after trying a match.  Used by reg_save() and reg_restore().
- * Also stores the length of "backpos".
- */
-typedef struct {
-  union {
-    char_u  *ptr;       /* reginput pointer, for single-line regexp */
-    lpos_T pos;         /* reginput pos, for multi-line regexp */
-  } rs_u;
-  int rs_len;
-} regsave_T;
-
-/* struct to save start/end pointer/position in for \(\) */
-typedef struct {
-  union {
-    char_u  *ptr;
-    lpos_T pos;
-  } se_u;
-} save_se_T;
-
-/* used for BEHIND and NOBEHIND matching */
-typedef struct regbehind_S {
-  regsave_T save_after;
-  regsave_T save_behind;
-  int save_need_clear_subexpr;
-  save_se_T save_start[NSUBEXP];
-  save_se_T save_end[NSUBEXP];
-} regbehind_T;
-
-static char_u   *reg_getline(linenr_T lnum);
-static long bt_regexec_both(char_u *line, colnr_T col, proftime_T *tm);
-static long regtry(bt_regprog_T *prog, colnr_T col);
-static void cleanup_subexpr(void);
-static void cleanup_zsubexpr(void);
-static void save_subexpr(regbehind_T *bp);
-static void restore_subexpr(regbehind_T *bp);
-static void reg_nextline(void);
-static void reg_save(regsave_T *save, garray_T *gap);
-static void reg_restore(regsave_T *save, garray_T *gap);
-static int reg_save_equal(regsave_T *save);
-static void save_se_multi(save_se_T *savep, lpos_T *posp);
-static void save_se_one(save_se_T *savep, char_u **pp);
 
 /* Save the sub-expressions before attempting a match. */
 #define save_se(savep, posp, pp) \
@@ -3105,12 +3112,6 @@ static void save_se_one(save_se_T *savep, char_u **pp);
     else \
       *(pp) = (savep)->se_u.ptr; }
 
-static int re_num_cmp(long_u val, char_u *scan);
-static int match_with_backref(linenr_T start_lnum, colnr_T start_col,
-                              linenr_T end_lnum, colnr_T end_col,
-                              int *bytelen);
-static int regmatch(char_u *prog);
-static int regrepeat(char_u *p, long maxcount);
 
 #ifdef REGEXP_DEBUG
 int regnarrate = 0;
@@ -3172,59 +3173,6 @@ static linenr_T reg_firstlnum;
 static linenr_T reg_maxline;
 static int reg_line_lbr;                    /* "\n" in string is line break */
 
-/* Values for rs_state in regitem_T. */
-typedef enum regstate_E {
-  RS_NOPEN = 0          /* NOPEN and NCLOSE */
-  , RS_MOPEN            /* MOPEN + [0-9] */
-  , RS_MCLOSE           /* MCLOSE + [0-9] */
-  , RS_ZOPEN            /* ZOPEN + [0-9] */
-  , RS_ZCLOSE           /* ZCLOSE + [0-9] */
-  , RS_BRANCH           /* BRANCH */
-  , RS_BRCPLX_MORE      /* BRACE_COMPLEX and trying one more match */
-  , RS_BRCPLX_LONG      /* BRACE_COMPLEX and trying longest match */
-  , RS_BRCPLX_SHORT     /* BRACE_COMPLEX and trying shortest match */
-  , RS_NOMATCH          /* NOMATCH */
-  , RS_BEHIND1          /* BEHIND / NOBEHIND matching rest */
-  , RS_BEHIND2          /* BEHIND / NOBEHIND matching behind part */
-  , RS_STAR_LONG        /* STAR/PLUS/BRACE_SIMPLE longest match */
-  , RS_STAR_SHORT       /* STAR/PLUS/BRACE_SIMPLE shortest match */
-} regstate_T;
-
-/*
- * When there are alternatives a regstate_T is put on the regstack to remember
- * what we are doing.
- * Before it may be another type of item, depending on rs_state, to remember
- * more things.
- */
-typedef struct regitem_S {
-  regstate_T rs_state;          /* what we are doing, one of RS_ above */
-  char_u      *rs_scan;         /* current node in program */
-  union {
-    save_se_T sesave;
-    regsave_T regsave;
-  } rs_un;                      /* room for saving reginput */
-  short rs_no;                  /* submatch nr or BEHIND/NOBEHIND */
-} regitem_T;
-
-static regitem_T *regstack_push(regstate_T state, char_u *scan);
-static void regstack_pop(char_u **scan);
-
-/* used for STAR, PLUS and BRACE_SIMPLE matching */
-typedef struct regstar_S {
-  int nextb;                    /* next byte */
-  int nextb_ic;                 /* next byte reverse case */
-  long count;
-  long minval;
-  long maxval;
-} regstar_T;
-
-/* used to store input position when a BACK was encountered, so that we now if
- * we made any progress since the last time. */
-typedef struct backpos_S {
-  char_u      *bp_scan;         /* "scan" where BACK was encountered */
-  regsave_T bp_pos;             /* last input position */
-} backpos_T;
-
 /*
  * "regstack" and "backpos" are used by regmatch().  They are kept over calls
  * to avoid invoking malloc() and free() often.
@@ -3285,7 +3233,6 @@ static lpos_T reg_endzpos[NSUBEXP];     /* idem, end pos */
 /* TRUE if using multi-line regexp. */
 #define REG_MULTI       (reg_match == NULL)
 
-static int bt_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr);
 
 /*
  * Match a regexp against a string.
@@ -3315,9 +3262,6 @@ bt_regexec_nl (
   return bt_regexec_both(line, col, NULL) != 0;
 }
 
-static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
-                             linenr_T lnum, colnr_T col,
-                             proftime_T *tm);
 
 /*
  * Match a regexp against multiple lines.
@@ -3357,10 +3301,10 @@ proftime_T  *tm;                /* timeout limit or NULL */
  * Match a regexp against a string ("line" points to the string) or multiple
  * lines ("line" is NULL, use reg_getline()).
  */
-static long bt_regexec_both(line, col, tm)
-char_u      *line;
-colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm;         /* timeout limit or NULL */
+static long bt_regexec_both(char_u *line,
+                            colnr_T col, /* column to start looking for match */
+                            proftime_T *tm /* timeout limit or NULL */
+                            )
 {
   bt_regprog_T        *prog;
   char_u      *s;
@@ -3543,7 +3487,6 @@ theend:
   return retval;
 }
 
-static reg_extmatch_T *make_extmatch(void);
 
 /*
  * Create a new extmatch and mark it as referenced once.
@@ -3645,7 +3588,6 @@ static long regtry(bt_regprog_T *prog, colnr_T col)
   return 1 + reglnum;
 }
 
-static int reg_prev_class(void);
 
 /*
  * Get class of previous character.
@@ -3658,7 +3600,6 @@ static int reg_prev_class(void)
   return -1;
 }
 
-static int reg_match_visual(void);
 
 /*
  * Return TRUE if the current reginput position matches the Visual area.
@@ -6153,11 +6094,6 @@ static char_u *regprop(char_u *op)
 }
 #endif      /* REGEXP_DEBUG */
 
-static void mb_decompose(int c, int *c1, int *c2, int *c3);
-
-typedef struct {
-  int a, b, c;
-} decomp_T;
 
 
 /* 0xfb20 - 0xfb4f */
@@ -6326,22 +6262,7 @@ static char_u *cstrchr(char_u *s, int c)
 
 /* This stuff below really confuses cc on an SGI -- webb */
 
-/*
- * We should define ftpr as a pointer to a function returning a pointer to
- * a function returning a pointer to a function ...
- * This is impossible, so we declare a pointer to a function returning a
- * pointer to a function returning void. This should work for all compilers.
- */
-typedef void (*(*fptr_T)(int *, int))();
 
-static fptr_T do_upper(int *, int);
-static fptr_T do_Upper(int *, int);
-static fptr_T do_lower(int *, int);
-static fptr_T do_Lower(int *, int);
-
-static int vim_regsub_both(char_u *source, char_u *dest, int copy,
-                           int magic,
-                           int backslash);
 
 static fptr_T do_upper(d, c)
 int         *d;
@@ -6791,7 +6712,6 @@ exit:
   return (int)((dst - dest) + 1);
 }
 
-static char_u *reg_getline_submatch(linenr_T lnum);
 
 /*
  * Call reg_getline() with the line numbers from the submatch.  If a
@@ -6961,7 +6881,10 @@ static regengine_T bt_regengine =
 };
 
 
-#include "nvim/regexp_nfa.c"
+// XXX Do not allow headers generator to catch definitions from regexp_nfa.c
+#ifndef DO_NOT_DEFINE_EMPTY_ATTRIBUTES
+# include "nvim/regexp_nfa.c"
+#endif
 
 static regengine_T nfa_regengine =
 {
@@ -7102,13 +7025,14 @@ int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
  * Return zero if there is no match.  Return number of lines contained in the
  * match otherwise.
  */
-long vim_regexec_multi(rmp, win, buf, lnum, col, tm)
-regmmatch_T *rmp;
-win_T       *win;               /* window in which to search or NULL */
-buf_T       *buf;               /* buffer in which to search */
-linenr_T lnum;                  /* nr of line to start looking for match */
-colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm;                /* timeout limit or NULL */
+long vim_regexec_multi(
+  regmmatch_T *rmp,
+  win_T       *win,               /* window in which to search or NULL */
+  buf_T       *buf,               /* buffer in which to search */
+  linenr_T lnum,                  /* nr of line to start looking for match */
+  colnr_T col,                    /* column to start looking for match */
+  proftime_T  *tm                 /* timeout limit or NULL */
+)
 {
   return rmp->regprog->engine->regexec_multi(rmp, win, buf, lnum, col, tm);
 }

@@ -31,8 +31,10 @@ static int pum_col;                 // left column of pum
 
 static int pum_do_redraw = FALSE;   // do redraw anyway
 
-static int pum_set_selected(int n, int repeat);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "popupmnu.c.generated.h"
+#endif
 #define PUM_DEF_HEIGHT 10
 #define PUM_DEF_WIDTH  15
 

@@ -27,9 +27,10 @@ typedef struct digraph {
   result_T result;
 } digr_T;
 
-static int getexactdigraph(int char1, int char2, int meta_char);
-static void printdigraph(digr_T *dp);
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "digraph.c.generated.h"
+#endif
 // digraphs added by the user
 static garray_T user_digraphs = {0, 0, (int)sizeof(digr_T), 10, NULL};
 
@@ -1721,7 +1722,6 @@ typedef struct {
 
 #define KMAP_MAXLEN 20  // maximum length of "from" or "to"
 
-static void keymap_unload(void);
 
 /// Set up key mapping tables for the 'keymap' option.
 ///

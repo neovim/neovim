@@ -241,6 +241,72 @@ static char_u e_misplaced[] = N_("E866: (NFA regexp) Misplaced %c");
 static char_u e_ill_char_class[] = N_(
     "E877: (NFA regexp) Invalid character class: %" PRId64);
 
+/* Since the out pointers in the list are always
+ * uninitialized, we use the pointers themselves
+ * as storage for the Ptrlists. */
+typedef union Ptrlist Ptrlist;
+union Ptrlist {
+  Ptrlist     *next;
+  nfa_state_T *s;
+};
+
+struct Frag {
+  nfa_state_T *start;
+  Ptrlist     *out;
+};
+typedef struct Frag Frag_T;
+
+typedef struct {
+  int in_use;       /* number of subexpr with useful info */
+
+  /* When REG_MULTI is TRUE list.multi is used, otherwise list.line. */
+  union {
+    struct multipos {
+      lpos_T start;
+      lpos_T end;
+    } multi[NSUBEXP];
+    struct linepos {
+      char_u      *start;
+      char_u      *end;
+    } line[NSUBEXP];
+  } list;
+} regsub_T;
+
+typedef struct {
+  regsub_T norm;      /* \( .. \) matches */
+  regsub_T synt;      /* \z( .. \) matches */
+} regsubs_T;
+
+/* nfa_pim_T stores a Postponed Invisible Match. */
+typedef struct nfa_pim_S nfa_pim_T;
+struct nfa_pim_S {
+  int result;                   /* NFA_PIM_*, see below */
+  nfa_state_T *state;           /* the invisible match start state */
+  regsubs_T subs;               /* submatch info, only party used */
+  union {
+    lpos_T pos;
+    char_u  *ptr;
+  } end;                        /* where the match must end */
+};
+
+/* nfa_thread_T contains execution information of a NFA state */
+typedef struct {
+  nfa_state_T *state;
+  int count;
+  nfa_pim_T pim;                /* if pim.result != NFA_PIM_UNUSED: postponed
+                                 * invisible match */
+  regsubs_T subs;               /* submatch info, only party used */
+} nfa_thread_T;
+
+/* nfa_list_T contains the alternative NFA execution states. */
+typedef struct {
+  nfa_thread_T    *t;           /* allocated array of states */
+  int n;                        /* nr of states currently in "t" */
+  int len;                      /* max nr of states in "t" */
+  int id;                       /* ID of the list */
+  int has_pim;                  /* TRUE when any state has a PIM */
+} nfa_list_T;
+
 /* NFA regexp \ze operator encountered. */
 static int nfa_has_zend;
 
@@ -274,48 +340,9 @@ static int nfa_alt_listid;
 /* 0 for first call to nfa_regmatch(), 1 for recursive call. */
 static int nfa_ll_index = 0;
 
-static void nfa_regcomp_start(char_u *expr, int re_flags);
-static int nfa_get_reganch(nfa_state_T *start, int depth);
-static int nfa_get_regstart(nfa_state_T *start, int depth);
-static char_u *nfa_get_match_text(nfa_state_T *start);
-static void realloc_post_list(void);
-static int nfa_recognize_char_class(char_u *start, char_u *end,
-                                    int extra_newl);
-static void nfa_emit_equi_class(int c);
-static int nfa_regatom(void);
-static int nfa_regpiece(void);
-static int nfa_regconcat(void);
-static int nfa_regbranch(void);
-static int nfa_reg(int paren);
-#ifdef REGEXP_DEBUG
-static void nfa_set_code(int c);
-static void nfa_postfix_dump(char_u *expr, int retval);
-static void nfa_print_state(FILE *debugf, nfa_state_T *state);
-static void nfa_print_state2(FILE *debugf, nfa_state_T *state,
-                             garray_T *indent);
-static void nfa_dump(nfa_regprog_T *prog);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "regexp_nfa.c.generated.h"
 #endif
-static int *re2post(void);
-static nfa_state_T *alloc_state(int c, nfa_state_T *out,
-                                nfa_state_T *out1);
-static void st_error(int *postfix, int *end, int *p);
-static int nfa_max_width(nfa_state_T *startstate, int depth);
-static nfa_state_T *post2nfa(int *postfix, int *end, int nfa_calc_size);
-static void nfa_postprocess(nfa_regprog_T *prog);
-static int check_char_class(int class, int c);
-static void nfa_save_listids(nfa_regprog_T *prog, int *list);
-static void nfa_restore_listids(nfa_regprog_T *prog, int *list);
-static int nfa_re_num_cmp(long_u val, int op, long_u pos);
-static long nfa_regtry(nfa_regprog_T *prog, colnr_T col);
-static long nfa_regexec_both(char_u *line, colnr_T col);
-static regprog_T *nfa_regcomp(char_u *expr, int re_flags);
-static void nfa_regfree(regprog_T *prog);
-static int nfa_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col, bool line_lbr);
-static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
-                              linenr_T lnum, colnr_T col,
-                              proftime_T *tm);
-static int match_follows(nfa_state_T *startstate, int depth);
-static int failure_chance(nfa_state_T *state, int depth);
 
 /* helper functions used when doing re2post() ... regatom() parsing */
 #define EMIT(c) do {                            \
@@ -2480,27 +2507,6 @@ static nfa_state_T *alloc_state(int c, nfa_state_T *out, nfa_state_T *out1)
  * next state for this fragment.
  */
 
-/* Since the out pointers in the list are always
- * uninitialized, we use the pointers themselves
- * as storage for the Ptrlists. */
-typedef union Ptrlist Ptrlist;
-union Ptrlist {
-  Ptrlist     *next;
-  nfa_state_T *s;
-};
-
-struct Frag {
-  nfa_state_T *start;
-  Ptrlist     *out;
-};
-typedef struct Frag Frag_T;
-
-static Frag_T frag(nfa_state_T *start, Ptrlist *out);
-static Ptrlist *list1(nfa_state_T **outp);
-static void patch(Ptrlist *l, nfa_state_T *s);
-static Ptrlist *append(Ptrlist *l1, Ptrlist *l2);
-static void st_push(Frag_T s, Frag_T **p, Frag_T *stack_end);
-static Frag_T st_pop(Frag_T **p, Frag_T *stack);
 
 /*
  * Initialize a Frag_T struct and return it.
@@ -3374,39 +3380,6 @@ static void nfa_postprocess(nfa_regprog_T *prog)
 * NFA execution code.
 ****************************************************************/
 
-typedef struct {
-  int in_use;       /* number of subexpr with useful info */
-
-  /* When REG_MULTI is TRUE list.multi is used, otherwise list.line. */
-  union {
-    struct multipos {
-      lpos_T start;
-      lpos_T end;
-    } multi[NSUBEXP];
-    struct linepos {
-      char_u      *start;
-      char_u      *end;
-    } line[NSUBEXP];
-  } list;
-} regsub_T;
-
-typedef struct {
-  regsub_T norm;      /* \( .. \) matches */
-  regsub_T synt;      /* \z( .. \) matches */
-} regsubs_T;
-
-/* nfa_pim_T stores a Postponed Invisible Match. */
-typedef struct nfa_pim_S nfa_pim_T;
-struct nfa_pim_S {
-  int result;                   /* NFA_PIM_*, see below */
-  nfa_state_T *state;           /* the invisible match start state */
-  regsubs_T subs;               /* submatch info, only party used */
-  union {
-    lpos_T pos;
-    char_u  *ptr;
-  } end;                        /* where the match must end */
-};
-
 /* Values for done in nfa_pim_T. */
 #define NFA_PIM_UNUSED   0      /* pim not used */
 #define NFA_PIM_TODO     1      /* pim not done yet */
@@ -3414,29 +3387,7 @@ struct nfa_pim_S {
 #define NFA_PIM_NOMATCH  3      /* pim executed, no match */
 
 
-/* nfa_thread_T contains execution information of a NFA state */
-typedef struct {
-  nfa_state_T *state;
-  int count;
-  nfa_pim_T pim;                /* if pim.result != NFA_PIM_UNUSED: postponed
-                                 * invisible match */
-  regsubs_T subs;               /* submatch info, only party used */
-} nfa_thread_T;
-
-/* nfa_list_T contains the alternative NFA execution states. */
-typedef struct {
-  nfa_thread_T    *t;           /* allocated array of states */
-  int n;                        /* nr of states currently in "t" */
-  int len;                      /* max nr of states in "t" */
-  int id;                       /* ID of the list */
-  int has_pim;                  /* TRUE when any state has a PIM */
-} nfa_list_T;
-
 #ifdef REGEXP_DEBUG
-static void log_subsexpr(regsubs_T *subs);
-static void log_subexpr(regsub_T *sub);
-static char *pim_info(nfa_pim_T *pim);
-
 static void log_subsexpr(regsubs_T *subs)
 {
   log_subexpr(&subs->norm);
@@ -3485,25 +3436,6 @@ static char *pim_info(nfa_pim_T *pim)
 /* Used during execution: whether a match has been found. */
 static int nfa_match;
 
-static void copy_pim(nfa_pim_T *to, nfa_pim_T *from);
-static void clear_sub(regsub_T *sub);
-static void copy_sub(regsub_T *to, regsub_T *from);
-static void copy_sub_off(regsub_T *to, regsub_T *from);
-static void copy_ze_off(regsub_T *to, regsub_T *from);
-static int sub_equal(regsub_T *sub1, regsub_T *sub2);
-static int match_backref(regsub_T *sub, int subidx, int *bytelen);
-static int has_state_with_pos(nfa_list_T *l, nfa_state_T *state,
-                              regsubs_T *subs,
-                              nfa_pim_T *pim);
-static int pim_equal(nfa_pim_T *one, nfa_pim_T *two);
-static int state_in_list(nfa_list_T *l, nfa_state_T *state,
-                         regsubs_T *subs);
-static regsubs_T *addstate(nfa_list_T *l, nfa_state_T *state,
-                           regsubs_T *subs_arg, nfa_pim_T *pim,
-                           int off);
-static void addstate_here(nfa_list_T *l, nfa_state_T *state,
-                          regsubs_T *subs, nfa_pim_T *pim,
-                          int *ip);
 
 /*
  * Copy postponed invisible match info from "from" to "to".
@@ -4357,7 +4289,6 @@ retempty:
 }
 
 
-static int match_zref(int subidx, int *bytelen);
 
 /*
  * Check for a match with \z subexpression "subidx".
@@ -4427,13 +4358,6 @@ static int nfa_re_num_cmp(long_u val, int op, long_u pos)
   return val == pos;
 }
 
-static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim,
-                              nfa_regprog_T *prog, regsubs_T *submatch,
-                              regsubs_T *m,
-                              int **listids);
-static int nfa_regmatch(nfa_regprog_T *prog, nfa_state_T *start,
-                        regsubs_T *submatch,
-                        regsubs_T *m);
 
 /*
  * Recursively call nfa_regmatch()
@@ -4576,9 +4500,6 @@ static int recursive_regmatch(nfa_state_T *state, nfa_pim_T *pim, nfa_regprog_T 
   return result;
 }
 
-static int skip_to_start(int c, colnr_T *colp);
-static long find_match_text(colnr_T startcol, int regstart,
-                            char_u *match_text);
 
 /*
  * Estimate the chance of a match with "state" failing.

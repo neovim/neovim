@@ -27,13 +27,22 @@ struct rstream {
   bool reading, free_handle, async;
 };
 
-// Callbacks used by libuv
-static void alloc_cb(uv_handle_t *, size_t, uv_buf_t *);
-static void read_cb(uv_stream_t *, ssize_t, const uv_buf_t *);
-static void fread_idle_cb(uv_idle_t *);
-static void close_cb(uv_handle_t *handle);
-static void emit_read_event(RStream *rstream, bool eof);
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/rstream.c.generated.h"
+#endif
 
+/// Creates a new RStream instance. A RStream encapsulates all the boilerplate
+/// necessary for reading from a libuv stream.
+///
+/// @param cb A function that will be called whenever some data is available
+///        for reading with `rstream_read`
+/// @param buffer_size Size in bytes of the internal buffer.
+/// @param data Some state to associate with the `RStream` instance
+/// @param async Flag that specifies if the callback should only be called
+///        outside libuv event loop(When processing async events with
+///        KE_EVENT). Only the RStream instance reading user input should set
+///        this to false
+/// @return The newly-allocated `RStream` instance
 RStream * rstream_new(rstream_cb cb,
                       size_t buffer_size,
                       void *data,
@@ -54,6 +63,9 @@ RStream * rstream_new(rstream_cb cb,
   return rv;
 }
 
+/// Frees all memory allocated for a RStream instance
+///
+/// @param rstream The `RStream` instance
 void rstream_free(RStream *rstream)
 {
   if (rstream->free_handle) {
@@ -68,12 +80,21 @@ void rstream_free(RStream *rstream)
   free(rstream);
 }
 
+/// Sets the underlying `uv_stream_t` instance
+///
+/// @param rstream The `RStream` instance
+/// @param stream The new `uv_stream_t` instance
 void rstream_set_stream(RStream *rstream, uv_stream_t *stream)
 {
   handle_set_rstream((uv_handle_t *)stream, rstream);
   rstream->stream = stream;
 }
 
+/// Sets the underlying file descriptor that will be read from. Only pipes
+/// and regular files are supported for now.
+///
+/// @param rstream The `RStream` instance
+/// @param file The file descriptor
 void rstream_set_file(RStream *rstream, uv_file file)
 {
   rstream->file_type = uv_guess_handle(file);
@@ -111,11 +132,18 @@ void rstream_set_file(RStream *rstream, uv_file file)
   rstream->free_handle = true;
 }
 
+/// Tests if the stream is backed by a regular file
+///
+/// @param rstream The `RStream` instance
+/// @return True if the underlying file descriptor represents a regular file
 bool rstream_is_regular_file(RStream *rstream)
 {
   return rstream->file_type == UV_FILE;
 }
 
+/// Starts watching for events from a `RStream` instance.
+///
+/// @param rstream The `RStream` instance
 void rstream_start(RStream *rstream)
 {
   if (rstream->file_type == UV_FILE) {
@@ -126,6 +154,9 @@ void rstream_start(RStream *rstream)
   }
 }
 
+/// Stops watching for events from a `RStream` instance.
+///
+/// @param rstream The `RStream` instance
 void rstream_stop(RStream *rstream)
 {
   if (rstream->file_type == UV_FILE) {
@@ -135,6 +166,12 @@ void rstream_stop(RStream *rstream)
   }
 }
 
+/// Reads data from a `RStream` instance into a buffer.
+///
+/// @param rstream The `RStream` instance
+/// @param buffer The buffer which will receive the data
+/// @param count Number of bytes that `buffer` can accept
+/// @return The number of bytes copied into `buffer`
 size_t rstream_read(RStream *rstream, char *buf, size_t count)
 {
   size_t read_count = rstream->wpos - rstream->rpos;
@@ -167,17 +204,26 @@ size_t rstream_read(RStream *rstream, char *buf, size_t count)
   return read_count;
 }
 
+/// Returns the number of bytes available for reading from `rstream`
+///
+/// @param rstream The `RStream` instance
+/// @return The number of bytes available
 size_t rstream_available(RStream *rstream)
 {
   return rstream->wpos - rstream->rpos;
 }
 
+/// Runs the read callback associated with the rstream
+///
+/// @param event Object containing data necessary to invoke the callback
 void rstream_read_event(Event event)
 {
   RStream *rstream = event.data.rstream.ptr;
 
   rstream->cb(rstream, rstream->data, event.data.rstream.eof);
 }
+
+// Callbacks used by libuv
 
 // Called by libuv to allocate memory for reading.
 static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
