@@ -9,6 +9,7 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/vim.h"
+#include "nvim/keymap.h"
 #include "nvim/ui.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"

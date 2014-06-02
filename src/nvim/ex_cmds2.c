@@ -25,6 +25,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
+#include "nvim/keymap.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"

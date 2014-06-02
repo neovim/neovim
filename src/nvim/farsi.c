@@ -12,6 +12,7 @@
 #include "nvim/ex_getln.h"
 #include "nvim/farsi.h"
 #include "nvim/getchar.h"
+#include "nvim/keymap.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"

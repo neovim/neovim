@@ -10,6 +10,7 @@
 #include "nvim/ascii.h"
 #include "nvim/charset.h"
 #include "nvim/farsi.h"
+#include "nvim/keymap.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"

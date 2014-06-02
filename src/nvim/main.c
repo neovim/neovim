@@ -25,6 +25,7 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/if_cscope.h"
+#include "nvim/keymap.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"

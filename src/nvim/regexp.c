@@ -48,6 +48,7 @@
 
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
+#include "nvim/keymap.h"
 #include "nvim/regexp.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

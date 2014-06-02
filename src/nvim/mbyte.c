@@ -81,6 +81,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/keymap.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"

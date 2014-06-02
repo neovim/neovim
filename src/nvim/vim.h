@@ -86,7 +86,6 @@ typedef uint16_t u8char_T;
 typedef uint32_t u8char_T;
 # endif
 
-#include "nvim/keymap.h"
 #include "nvim/term_defs.h"
 #include "nvim/macros.h"
 

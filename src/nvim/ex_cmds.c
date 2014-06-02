@@ -18,6 +18,7 @@
 #include "nvim/ascii.h"
 #include "nvim/version_defs.h"
 #include "nvim/ex_cmds.h"
+#include "nvim/keymap.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"

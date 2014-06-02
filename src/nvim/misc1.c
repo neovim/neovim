@@ -14,6 +14,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/keymap.h"
 #include "nvim/version_defs.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"

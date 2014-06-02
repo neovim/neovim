@@ -23,6 +23,7 @@
 #include "nvim/diff.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/fold.h"
+#include "nvim/keymap.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/misc1.h"
