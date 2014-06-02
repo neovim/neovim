@@ -227,6 +227,18 @@ F = io.open(static_fname, 'w')
 F:write(static)
 F:close()
 
+-- Before generating the non-static headers, check if the current file(if
+-- exists) is different from the new one. If they are the same, we won't touch
+-- the current version to avoid triggering an unnecessary rebuilds of modules
+-- that depend on this one
+F = io.open(non_static_fname, 'r')
+if F ~= nil then
+  if F:read('*a') == non_static then
+    os.exit(0)
+  end
+  io.close(F)
+end
+
 F = io.open(non_static_fname, 'w')
 F:write(non_static)
 F:close()
