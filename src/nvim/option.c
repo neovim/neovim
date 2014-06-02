@@ -36,6 +36,7 @@
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/option.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

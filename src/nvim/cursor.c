@@ -1,5 +1,6 @@
 #include <stdbool.h>
 
+#include "nvim/ascii.h"
 #include "nvim/cursor.h"
 #include "nvim/charset.h"
 #include "nvim/fold.h"

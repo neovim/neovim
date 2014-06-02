@@ -2,6 +2,7 @@
 
 #include <uv.h>
 
+#include "nvim/ascii.h"
 #include "nvim/os/os.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"

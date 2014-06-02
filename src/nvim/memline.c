@@ -44,6 +44,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/memline.h"
 #include "nvim/buffer.h"
 #include "nvim/cursor.h"

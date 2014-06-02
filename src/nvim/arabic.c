@@ -11,6 +11,7 @@
 /// Stand-Alone - unicode form-B isolated char denoted with  a_s_* (NOT USED)
 ///
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/arabic.h"
 

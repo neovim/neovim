@@ -11,6 +11,7 @@
 /// interesting.
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
 #include "nvim/memline.h"

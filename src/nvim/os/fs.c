@@ -1,5 +1,6 @@
 // fs.c -- filesystem access
 
+#include "nvim/ascii.h"
 #include "nvim/os/os.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"

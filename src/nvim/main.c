@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/buffer.h"

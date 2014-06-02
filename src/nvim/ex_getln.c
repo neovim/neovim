@@ -15,6 +15,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/arabic.h"
+#include "nvim/ascii.h"
 #include "nvim/ex_getln.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

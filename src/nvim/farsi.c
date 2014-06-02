@@ -4,6 +4,7 @@
 ///
 
 
+#include "nvim/ascii.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
 #include "nvim/ex_docmd.h"
