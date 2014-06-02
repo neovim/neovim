@@ -72,6 +72,7 @@
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/os/dl.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -10623,42 +10624,49 @@ static void f_len(typval_T *argvars, typval_T *rettv)
   }
 }
 
-
-static void libcall_common(typval_T *argvars, typval_T *rettv, int type)
+static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
 {
-#ifdef FEAT_LIBCALL
-  char_u              *string_in;
-  char_u              **string_result;
-  int nr_result;
-#endif
-
-  rettv->v_type = type;
-  if (type != VAR_NUMBER)
+  rettv->v_type = out_type;
+  if (out_type != VAR_NUMBER) {
     rettv->vval.v_string = NULL;
-
-  if (check_restricted() || check_secure())
-    return;
-
-#ifdef FEAT_LIBCALL
-  /* The first two args must be strings, otherwise its meaningless */
-  if (argvars[0].v_type == VAR_STRING && argvars[1].v_type == VAR_STRING) {
-    string_in = NULL;
-    if (argvars[2].v_type == VAR_STRING)
-      string_in = argvars[2].vval.v_string;
-    if (type == VAR_NUMBER)
-      string_result = NULL;
-    else
-      string_result = &rettv->vval.v_string;
-    if (mch_libcall(argvars[0].vval.v_string,
-            argvars[1].vval.v_string,
-            string_in,
-            argvars[2].vval.v_number,
-            string_result,
-            &nr_result) == OK
-        && type == VAR_NUMBER)
-      rettv->vval.v_number = nr_result;
   }
-#endif
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  // The first two args (libname and funcname) must be strings
+  if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
+    return;
+  }
+
+  const char *libname = (char *) argvars[0].vval.v_string;
+  const char *funcname = (char *) argvars[1].vval.v_string;
+
+  int in_type = argvars[2].v_type;
+
+  // input variables
+  char *str_in = (in_type == VAR_STRING)
+      ? (char *) argvars[2].vval.v_string : NULL;
+  int64_t int_in = argvars[2].vval.v_number;
+
+  // output variables
+  char **str_out = (out_type == VAR_STRING)
+      ? (char **) &rettv->vval.v_string : NULL;
+  int64_t int_out = 0;
+
+  bool success = os_libcall(libname, funcname,
+                            str_in, int_in,
+                            str_out, &int_out);
+
+  if (!success) {
+    EMSG2(_(e_libcall), funcname);
+    return;
+  }
+
+  if (out_type == VAR_NUMBER) {
+     rettv->vval.v_number = (int) int_out;
+  }
 }
 
 /*
