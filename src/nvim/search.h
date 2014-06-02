@@ -12,7 +12,7 @@ int ignorecase(char_u *pat);
 int pat_has_uppercase(char_u *pat);
 char_u *last_search_pat(void);
 void reset_search_dir(void);
-void set_last_search_pat(char_u *s, int idx, int magic, int setlast);
+void set_last_search_pat(const char_u *s, int idx, int magic, int setlast);
 void last_pat_prog(regmmatch_T *regmatch);
 int searchit(win_T *win, buf_T *buf, pos_T *pos, int dir, char_u *pat,
              long count, int options, int pat_use, linenr_T stop_lnum,

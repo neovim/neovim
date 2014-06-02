@@ -55,10 +55,15 @@ int read_viminfo_register(vir_T *virp, int force);
 void write_viminfo_registers(FILE *fp);
 char_u get_reg_type(int regname, long *reglen);
 char_u *get_reg_contents(int regname, int allowexpr, int expr_src);
-void write_reg_contents(int name, char_u *str, int maxlen,
+void write_reg_contents(int name,
+                        const char_u *str,
+                        ssize_t len,
                         int must_append);
-void write_reg_contents_ex(int name, char_u *str, int maxlen,
-                           int must_append, int yank_type,
+void write_reg_contents_ex(int name,
+                           const char_u *str,
+                           ssize_t maxlen,
+                           int must_append,
+                           int yank_type,
                            long block_len);
 void clear_oparg(oparg_T *oap);
 void cursor_pos_info(void);
