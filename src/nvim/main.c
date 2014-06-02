@@ -135,6 +135,8 @@ static void check_swap_exists_action(void);
 # endif
 #endif /* NO_VIM_MAIN */
 
+extern const uint8_t msgpack_metadata[];
+extern const unsigned int msgpack_metadata_size;
 
 /*
  * Different types of error messages.
@@ -1046,6 +1048,11 @@ static void command_line_scan(mparm_T *parmp)
             list_version();
             msg_putchar('\n');
             msg_didout = FALSE;
+            mch_exit(0);
+	  } else if (STRICMP(argv[0] + argv_idx, "api-msgpack-metadata") == 0) {
+            for (unsigned int i = 0; i<msgpack_metadata_size; i++) {
+              putchar(msgpack_metadata[i]);
+            }
             mch_exit(0);
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
@@ -2240,6 +2247,7 @@ static void usage(void)
   main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
 #endif
   main_msg(_("-i <viminfo>\t\tUse <viminfo> instead of .viminfo"));
+  main_msg(_("--api-msgpack-metadata\tDump API metadata information and exit"));
   main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));
   main_msg(_("--version\t\tPrint version information and exit"));
 
