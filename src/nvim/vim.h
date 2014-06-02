@@ -70,11 +70,6 @@ Error: configure did not run properly.Check auto/config.log.
 // For printf() and scanf(), we need to take care of long_u specifically.
 typedef unsigned long long_u;
 
-/*
- * The characters and attributes cached for the screen.
- */
-typedef char_u schar_T;
-typedef unsigned short sattr_T;
 # define MAX_TYPENR 65535
 
 /*
