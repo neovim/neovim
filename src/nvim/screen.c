@@ -4820,6 +4820,8 @@ void win_redr_status(win_T *wp)
     return;
   busy = TRUE;
 
+  redraw_status(0, wp);
+
   wp->w_redr_status = FALSE;
   if (wp->w_status_height == 0) {
     /* no status line, can only be last window */

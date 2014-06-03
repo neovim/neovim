@@ -176,6 +176,39 @@ void redraw_update_line(uint64_t channel_id,
                      DICTIONARY_OBJ(event_data));
 }
 
+void redraw_status(uint64_t channel_id, win_T *window)
+{
+  if (false) {
+    return;
+  }
+
+  // Put the buffer name in NameBuff
+  get_trans_bufname(window->w_buffer);
+
+  // Prepare the event data
+  Dictionary event_data = {0, 0, 0};
+  PUT(event_data, "window_id", INTEGER_OBJ(window->handle));
+  PUT(event_data, "name", STRING_OBJ(cstr_to_string((char *)NameBuff)));
+
+  if (window->w_buffer->b_help) {
+    PUT(event_data, "help", BOOLEAN_OBJ(true));
+  }
+
+  if (window->w_p_pvw) {
+    PUT(event_data, "preview", BOOLEAN_OBJ(true));
+  }
+
+  if (bufIsChanged(window->w_buffer)) {
+    PUT(event_data, "modified", BOOLEAN_OBJ(true));
+  }
+
+  if (window->w_buffer->b_p_ro) {
+    PUT(event_data, "readonly", BOOLEAN_OBJ(true));
+  }
+
+  channel_send_event(0, "redraw:status_line", DICTIONARY_OBJ(event_data));
+}
+
 static void add_line_char(LineData *ldata, size_t screen_offset)
 {
   size_t char_len;  // length in bytes of the utf8-encoded character
