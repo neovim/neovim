@@ -237,6 +237,22 @@ void redraw_layout(uint64_t channel_id)
   update_screen(CLEAR);
 }
 
+void redraw_cursor(uint64_t channel_id)
+{
+  if (false) {
+    return;
+  }
+
+  Dictionary event_data = {0, 0, 0};
+  PUT(event_data, "window_id", INTEGER_OBJ(curwin->handle));
+  PUT(event_data, "lnum", INTEGER_OBJ(curwin->w_cursor.lnum));
+  PUT(event_data, "row", INTEGER_OBJ(curwin->w_wrow));
+  // TODO(stefan991): there is a special case for RTL languages which
+  // is not handled here, see setcursor()
+  PUT(event_data, "col", INTEGER_OBJ(curwin->w_wcol));
+  channel_send_event(0, "redraw:cursor", DICTIONARY_OBJ(event_data));
+}
+
 void redraw_foreground_color(uint64_t channel_id)
 {
   if (false) {

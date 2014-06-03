@@ -6758,6 +6758,8 @@ void setcursor(void)
                                && vim_isprintc(gchar_cursor())) ? 2 :
                               1)) :
           curwin->w_wcol));
+
+    redraw_cursor(0);
   }
 }
 
