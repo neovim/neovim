@@ -78,3 +78,18 @@ void redraw_insert_line(uint64_t channel_id, win_T *window, int row, int count)
                      "redraw:insert_line",
                      DICTIONARY_OBJ(event_data));
 }
+
+void redraw_delete_line(uint64_t channel_id, win_T *window, int row, int count)
+{
+  if (false) {
+    return;
+  }
+
+  Dictionary event_data = {0, 0, 0};
+  PUT(event_data, "window_id", INTEGER_OBJ(window->handle));
+  PUT(event_data, "row", INTEGER_OBJ(row - window->w_winrow));
+  PUT(event_data, "count", INTEGER_OBJ(count));
+  channel_send_event(channel_id,
+                     "redraw:delete_line",
+                     DICTIONARY_OBJ(event_data));
+}

@@ -7297,6 +7297,9 @@ screen_del_lines (
     }
   }
 
+  if (current_window) {
+    redraw_delete_line(0, current_window, row, line_count);
+  }
 
   return OK;
 }
