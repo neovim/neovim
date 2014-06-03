@@ -472,3 +472,329 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
   data->exit_status = status;
   uv_close((uv_handle_t *)proc, NULL);
 }
+
+#define NELEMS(x) \
+  ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+#define ROUNDUP32(x) \
+  (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+
+typedef struct {
+  uv_process_t proc;
+  int64_t status;
+  int *exited;
+} process_data_t;
+
+typedef struct {
+  uv_write_t req;
+  uv_pipe_t pipe;
+  int *exited;
+} write_data_t;
+
+typedef struct {
+  char buf[BUFFER_LENGTH];
+  bool in_use;
+} scratch_buffer_t;
+
+typedef struct {
+  char *data;
+  size_t cap;
+  size_t len;
+} dyn_buffer_t;
+
+typedef struct {
+  uv_pipe_t pipe;
+  int *exited;
+  dyn_buffer_t buf;            // buffer in which to assemble all the read data
+  scratch_buffer_t scratch[4]; // scratch buffers for libu
+} read_data_t;
+
+#include "nvim/log.h"
+
+static void on_write(uv_write_t *req, int status)
+{
+  write_data_t *wr = (write_data_t *) req;
+  (*wr->exited)++;
+
+  if (status) {
+    // TODO(aktau): report write error
+  }
+
+  uv_close((uv_handle_t *) &wr->pipe, NULL);
+}
+
+/// need_alloc - return memory for libuv to write into
+///
+/// @note We don't actually allocate memory here, but return a
+///       stack allocated buffer that libuv can write into. That means
+///       there's no need to free this buffer in `on_read` either.
+///
+/// @note returning a NULL buffer will prompt libuv to call the read
+///       callback with UV_ENOBUFS. We do this if all scratch buffers are in
+///       use.
+///
+/// @note On windows, it's possible for this function to be called
+///       multiple times in a row without calling the read callback. Like
+///       this: alloc_cb1, alloc_cb2, read_cb1, read_cb2. We accomodate some
+///       of those out-of-bound requests by using multiple scratch buffers.
+///       since we don't want to start (x)malloc'ing, we can't do that
+///       indefinitely.
+static void on_alloc(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
+{
+  read_data_t *rd = (read_data_t *) handle;
+
+  // assign the first free buffer
+  for (size_t i = 0; i < NELEMS(rd->scratch); ++i) {
+    if (!rd->scratch[i].in_use) {
+      buf->base = rd->scratch[i].buf;
+      buf->len = sizeof(rd->scratch[i].buf);
+      rd->scratch[i].in_use = true;
+      return;
+    }
+  }
+
+  // no free buffer found, this will provoke on_read(..., UV_ENOBUFS, ...)
+  buf->base = NULL;
+  buf->len = 0;
+}
+
+static void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+{
+  DLOG("READ DONE, result: %zd, buflen: %zu", nread, buf->len);
+  read_data_t *rd = (read_data_t *) stream;
+
+  // handle possible errors (including failure to allocate)
+  if (nread < 0) {
+    switch (nread) {
+      case UV_ENOBUFS:
+        // the alloc callback returned a NULL buffer, which means that the
+        // read was skipped, that sucks. We should at least notify.
+        break;
+
+      default:
+        // error or EOF, stop reading
+        (*rd->exited)++;
+        uv_read_stop(stream);
+        uv_close((uv_handle_t *) stream, NULL);
+    }
+
+    return;
+  }
+
+  // check if libuv is done reading for now
+  if (nread == 0) {
+    return;
+  }
+
+  // grow the dynamic buffer if necessary
+  // TODO(aktau): extract into an ensure() function
+  if (rd->buf.cap < rd->buf.len + (size_t) nread) {
+    rd->buf.cap = rd->buf.len + (size_t) nread + 1; // 1 byte for NUL
+    ROUNDUP32(rd->buf.cap);
+    rd->buf.data = xrealloc(rd->buf.data, rd->buf.cap);
+  }
+
+  // some bytes arrived, append them to our read buffer
+  memcpy(rd->buf.data + rd->buf.len, buf->base, nread);
+  rd->buf.len += nread;
+
+  // we're able to reuse one of the scratch buffers now
+  for (size_t i = 0; i < NELEMS(rd->scratch); ++i) {
+    // find which one we got passed
+    if (rd->scratch[i].buf == buf->base) {
+      rd->scratch[i].in_use = false;
+      break;
+    }
+  }
+}
+
+static void on_exit(uv_process_t *proc, int64_t status, int term_signal)
+{
+  process_data_t *pd = (process_data_t *) proc;
+  pd->status = status;
+  (*pd->exited)++;
+  uv_close((uv_handle_t *) &pd->proc, NULL);
+}
+
+/// os_run_sync - synchronously execute a command
+///
+/// @param argv The argument vector, the first element must be the program
+///             to execute, the last element must be NULL. Thus, this vector
+///             must contain at least two elements.
+/// @param input The input to the shell (NULL for no input), passed to the
+///              stdin of the resulting process.
+/// @param len The length of the input buffer (not used if `input` == NULL)
+/// @param[out] output A pointer to to a location where the output will be
+///                    allocated and stored. Will be NULL if the shell command
+///                    did not output anything. Pass NULL if no
+///                    output is desired. It is the callers' responsibility
+///                    to free this buffer if it is not NULL.
+/// @param[out] nread the number of bytes in the returned buffer (if the
+///             returned buffer is not NULL)
+/// @return the exit status code, traditionally 0 for success on UNIX.
+int os_run_sync(char *const argv[],
+                const char *input,
+                size_t len,
+                char **output,
+                size_t *nread)
+{
+  assert(argv);
+
+  if (len == 0) {
+    input = NULL;
+  }
+
+  uv_loop_t *loop = uv_default_loop();
+
+  int exited = 0;
+
+  write_data_t wd;
+  if (input) {
+    memset(&wd, 0, sizeof(wd));
+    wd.exited = &exited;
+    uv_pipe_init(loop, &wd.pipe, 0);
+  }
+
+  read_data_t rd;
+  memset(&rd, 0, sizeof(rd));
+  rd.exited = &exited;
+  uv_pipe_init(loop, &rd.pipe, 0);
+
+  // specify the pipes that we want to connect to the shell (the ones we
+  // just initialized)
+  uv_stdio_container_t stdio[3];
+
+  // setup the pipes to communicate with the child process, if desired
+  if (input) {
+    stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+    stdio[0].data.stream = (uv_stream_t *) &wd.pipe;
+  } else {
+    stdio[0].flags = UV_IGNORE;
+  }
+
+  if (output) {
+    stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+    stdio[1].data.stream = (uv_stream_t *) &rd.pipe;
+  } else {
+    stdio[0].flags = UV_IGNORE;
+  }
+
+  stdio[2].flags = UV_IGNORE;
+
+  // set process-launching options (program name, arguments, pipes, ...)
+  uv_process_options_t options;
+  options.args = (char **) argv;
+  options.file = options.args[0];
+  options.stdio = stdio;
+  options.stdio_count = 3;
+  options.cwd = NULL;
+  options.env = NULL;
+  options.flags = UV_PROCESS_WINDOWS_HIDE;
+  options.exit_cb = on_exit;
+
+  // ignore deadly signals
+  signal_reject_deadly();
+
+  // save the former vim state and set to EXTERNCMD
+  int old_state = State;
+  State = EXTERNCMD;
+
+  int expected_exits = 0;
+  bool success = true;
+
+  // start the process
+  process_data_t pd;
+  {
+    memset(&pd, 0, sizeof(pd));
+    pd.exited = &exited;
+
+    DLOG("starting process, %s", options.args[0]);
+    if (uv_spawn(loop, &pd.proc, &options)) {
+      // failure, the program might not be executable
+      if (!emsg_silent) {
+        MSG_PUTS(_("\nCannot execute shell "));
+        msg_outtrans(p_sh);
+        msg_putchar('\n');
+      }
+
+      success = false;
+      goto cleanup;
+    }
+    expected_exits++;
+  }
+
+  // queue writing the input (if any) to the process' stdin
+  if (input) {
+    uv_buf_t buf_in = uv_buf_init((char *) input, len);
+    uv_write(&wd.req, (uv_stream_t *) &wd.pipe, &buf_in, 1, on_write);
+    expected_exits++;
+  }
+
+  // try reading the output (if requested)
+  if (output) {
+    uv_read_start((uv_stream_t *) &rd, on_alloc, on_read);
+    expected_exits++;
+  }
+
+  // keep running the loop until all three handles are completely closed
+  while (exited < expected_exits) {
+    uv_run(loop, UV_RUN_ONCE);
+
+    if (got_int) {
+      // forward SIGINT to the shell
+      uv_process_kill(&pd.proc, SIGINT);
+      got_int = false;
+    }
+  }
+
+cleanup:
+  State = old_state;
+
+  signal_accept_deadly();
+
+  if (output) {
+    if (rd.buf.data) {
+      rd.buf.data[rd.buf.len] = NUL;
+    }
+    *output = rd.buf.data;
+    *nread = rd.buf.len;
+  }
+
+  return (int) pd.status;
+}
+
+/// os_system - synchronously execute a command in the shell
+///
+/// This is a convenience wrapper around os_run_sync() which does the following
+/// extra things:
+///
+/// 1. passes `cmd` to the program specified in the `shell` (`sh`) option
+/// 2. collects the output (if any) and returns it
+///
+/// example:
+///   char *output = NULL;
+///   size_t nread = 0;
+///   int status = os_sytem("ls -la", NULL, 0, &output, &nread);
+///
+/// @param cmd The full commandline to be passed to the shell
+/// @param input The input to the shell (NULL for no input), passed to the
+///              stdin of the resulting process.
+/// @param len The length of the input buffer (not used if `input` == NULL)
+/// @param[out] output A pointer to to a location where the output will be
+///                    allocated and stored. Will be NULL if the shell command
+///                    did not output anything. Pass NULL if no
+///                    output is desired.
+/// @param[out] nread the number of bytes in the returned buffer (if the
+///             returned buffer is not NULL)
+/// @return an allocated buffer with the output of the shell command, it is
+///         the callers responsibility to free.
+int os_system(const char *cmd,
+              const char *input,
+              size_t len,
+              char **output,
+              size_t *nread)
+{
+  char **args = shell_build_argv((char_u *) cmd, NULL);
+  int status = os_run_sync(args, input, len, output, nread);
+  shell_free_argv(args);
+  return status;
+}
