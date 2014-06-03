@@ -134,6 +134,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
+static win_T *current_window = NULL;
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
 #define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
@@ -806,7 +807,8 @@ static void win_update(win_T *wp)
     wp->w_redr_type = 0;
     return;
   }
-
+  // Set a pointer to the window being updated
+  current_window = wp;
   init_search_hl(wp);
 
   /* Force redraw when width of 'number' or 'relativenumber' column
@@ -1690,6 +1692,8 @@ static void win_update(win_T *wp)
   /* restore got_int, unless CTRL-C was hit while redrawing */
   if (!got_int)
     got_int = save_got_int;
+
+  current_window = NULL;
 }
 
 
@@ -7107,6 +7111,10 @@ screen_ins_lines (
       out_str(T_CE);
       screen_start();               /* don't know where cursor is now */
     }
+  }
+
+  if (current_window) {
+    redraw_insert_line(0, current_window, row, line_count);
   }
 
   return OK;
