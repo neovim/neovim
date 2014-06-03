@@ -47,16 +47,13 @@ typedef struct {
 /// @param extra_shell_opt Extra argument to the shell. If NULL it is ignored
 /// @return A newly allocated argument vector. It must be freed with
 ///         `shell_free_argv` when no longer needed.
-char ** shell_build_argv(char_u *cmd, char_u *extra_shell_opt)
+char **shell_build_argv(const char_u *cmd, const char_u *extra_shell_opt)
 {
-  int i;
-  char **rv;
   int argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
-
-  rv = (char **)xmalloc((unsigned)((argc + 4) * sizeof(char *)));
+  char **rv = xmalloc((unsigned)((argc + 4) * sizeof(char *)));
 
   // Split 'shell'
-  i = tokenize(p_sh, rv);
+  int i = tokenize(p_sh, rv);
 
   if (extra_shell_opt != NULL) {
     // Push a copy of `extra_shell_opt`
@@ -244,10 +241,10 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 /// @param argv The vector that will be filled with copies of the parsed
 ///        words. It can be NULL if the caller only needs to count words.
 /// @return The number of words parsed.
-static int tokenize(char_u *str, char **argv)
+static int tokenize(const char_u *str, char **argv)
 {
   int argc = 0, len;
-  char_u *p = str;
+  char_u *p = (char_u *) str;
 
   while (*p != NUL) {
     len = word_length(p);
@@ -271,9 +268,9 @@ static int tokenize(char_u *str, char **argv)
 ///
 /// @param str A pointer to the first character of the word
 /// @return The offset from `str` at which the word ends.
-static int word_length(char_u *str)
+static int word_length(const char_u *str)
 {
-  char_u *p = str;
+  const char_u *p = str;
   bool inquote = false;
   int length = 0;
 
