@@ -9722,9 +9722,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "jumplist",
     "keymap",
     "langmap",
-#ifdef FEAT_LIBCALL
     "libcall",
-#endif
     "linebreak",
     "lispindent",
     "listcmds",

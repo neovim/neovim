@@ -98,11 +98,7 @@ static char *(features[]) = {
   "+jumplist",
   "+keymap",
   "+langmap",
-#ifdef FEAT_LIBCALL
   "+libcall",
-#else   // ifdef FEAT_LIBCALL
-  "-libcall",
-#endif  // ifdef FEAT_LIBCALL
   "+linebreak",
   "+lispindent",
   "+listcmds",
