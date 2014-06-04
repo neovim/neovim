@@ -3844,13 +3844,11 @@ static int msg_add_fileformat(int eol_type)
     return TRUE;
   }
 #endif
-#ifndef USE_CR
   if (eol_type == EOL_MAC) {
     STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[mac]") : _("[mac format]"));
     return TRUE;
   }
-#endif
-#if defined(USE_CRNL) || defined(USE_CR)
+#ifdef USE_CRNL
   if (eol_type == EOL_UNIX) {
     STRCAT(IObuff, shortmess(SHM_TEXT) ? _("[unix]") : _("[unix format]"));
     return TRUE;
@@ -4506,63 +4504,18 @@ int vim_fgets(char_u *buf, int size, FILE *fp)
   char tbuf[FGETS_SIZE];
 
   buf[size - 2] = NUL;
-#ifdef USE_CR
-  eof = fgets_cr((char *)buf, size, fp);
-#else
   eof = fgets((char *)buf, size, fp);
-#endif
   if (buf[size - 2] != NUL && buf[size - 2] != '\n') {
     buf[size - 1] = NUL;            /* Truncate the line */
 
     /* Now throw away the rest of the line: */
     do {
       tbuf[FGETS_SIZE - 2] = NUL;
-#ifdef USE_CR
-      ignoredp = fgets_cr((char *)tbuf, FGETS_SIZE, fp);
-#else
       ignoredp = fgets((char *)tbuf, FGETS_SIZE, fp);
-#endif
     } while (tbuf[FGETS_SIZE - 2] != NUL && tbuf[FGETS_SIZE - 2] != '\n');
   }
   return eof == NULL;
 }
-
-#if defined(USE_CR) || defined(PROTO)
-/*
- * Like vim_fgets(), but accept any line terminator: CR, CR-LF or LF.
- * Returns TRUE for end-of-file.
- * Only used for the Mac, because it's much slower than vim_fgets().
- */
-int tag_fgets(char_u *buf, int size, FILE *fp)
-{
-  int i = 0;
-  int c;
-  int eof = FALSE;
-
-  for (;; ) {
-    c = fgetc(fp);
-    if (c == EOF) {
-      eof = TRUE;
-      break;
-    }
-    if (c == '\r') {
-      /* Always store a NL for end-of-line. */
-      if (i < size - 1)
-        buf[i++] = '\n';
-      c = fgetc(fp);
-      if (c != '\n')            /* Macintosh format: single CR. */
-        ungetc(c, fp);
-      break;
-    }
-    if (i < size - 1)
-      buf[i++] = c;
-    if (c == '\n')
-      break;
-  }
-  buf[i] = NUL;
-  return eof;
-}
-#endif
 
 /*
  * os_rename() only works if both files are on the same file system, this

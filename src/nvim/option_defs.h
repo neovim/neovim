@@ -39,15 +39,9 @@
 # define DFLT_FFS_VIM   "dos,unix"
 # define DFLT_FFS_VI    "dos,unix"      /* also autodetect in compatible mode */
 #else
-# ifdef USE_CR
-#  define DFLT_FF       "mac"
-#  define DFLT_FFS_VIM  "mac,unix,dos"
-#  define DFLT_FFS_VI   "mac,unix,dos"
-# else
 #  define DFLT_FF       "unix"
 #  define DFLT_FFS_VIM  "unix,dos"
 #   define DFLT_FFS_VI  ""
-# endif
 #endif
 
 
