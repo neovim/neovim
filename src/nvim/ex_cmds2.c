@@ -94,7 +94,7 @@ struct source_cookie {
   FILE        *fp;              /* opened file for sourcing */
   char_u      *nextline;        /* if not NULL: line that was read ahead */
   int finished;                 /* ":finish" used */
-#if defined(USE_CRNL) || defined(USE_CR)
+#if defined(USE_CRNL)
   int fileformat;               /* EOL_UNKNOWN, EOL_UNIX or EOL_DOS */
   int error;                    /* TRUE if LF found after CR-LF */
 #endif
@@ -2520,15 +2520,6 @@ do_source (
   cookie.error = FALSE;
 #endif
 
-#ifdef USE_CR
-  /* If no automatic file format: Set default to CR. */
-  if (*p_ffs == NUL)
-    cookie.fileformat = EOL_MAC;
-  else
-    cookie.fileformat = EOL_UNKNOWN;
-  cookie.error = FALSE;
-#endif
-
   cookie.nextline = NULL;
   cookie.finished = FALSE;
 
@@ -2755,41 +2746,6 @@ void free_scriptnames(void)
 # endif
 
 
-#if defined(USE_CR) || defined(PROTO)
-/*
- * Version of fgets() which also works for lines ending in a <CR> only
- * (Macintosh format).
- * For older versions of the Metrowerks library.
- * At least CodeWarrior 9 needed this code.
- */
-char *fgets_cr(char *s, int n, FILE *stream)
-{
-  int c = 0;
-  int char_read = 0;
-
-  while (!feof(stream) && c != '\r' && c != '\n' && char_read < n - 1) {
-    c = fgetc(stream);
-    s[char_read++] = c;
-    /* If the file is in DOS format, we need to skip a NL after a CR.  I
-     * thought it was the other way around, but this appears to work... */
-    if (c == '\n') {
-      c = fgetc(stream);
-      if (c != '\r')
-        ungetc(c, stream);
-    }
-  }
-
-  s[char_read] = 0;
-  if (char_read == 0)
-    return NULL;
-
-  if (feof(stream) && char_read == 1)
-    return NULL;
-
-  return s;
-}
-#endif
-
 /*
  * Get one full line from a sourced file.
  * Called by do_cmdline() when it's called from do_source().
@@ -2897,9 +2853,6 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
 #ifdef USE_CRNL
   int has_cr;                           /* CR-LF found */
 #endif
-#ifdef USE_CR
-  char_u              *scan;
-#endif
   int have_read = FALSE;
 
   /* use a growarray to store the sourced line */
@@ -2914,13 +2867,6 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
     ga_grow(&ga, 120);
     buf = (char_u *)ga.ga_data;
 
-#ifdef USE_CR
-    if (sp->fileformat == EOL_MAC) {
-      if (fgets_cr((char *)buf + ga.ga_len, ga.ga_maxlen - ga.ga_len,
-              sp->fp) == NULL)
-        break;
-    } else
-#endif
     if (fgets((char *)buf + ga.ga_len, ga.ga_maxlen - ga.ga_len,
             sp->fp) == NULL)
       break;
@@ -2933,30 +2879,6 @@ static char_u *get_one_sourceline(struct source_cookie *sp)
                && buf[len - 1] == Ctrl_Z) {
       buf[len - 1] = NUL;
       break;
-    }
-#endif
-
-#ifdef USE_CR
-    /* If the read doesn't stop on a new line, and there's
-     * some CR then we assume a Mac format */
-    if (sp->fileformat == EOL_UNKNOWN) {
-      if (buf[len - 1] != '\n' && vim_strchr(buf, '\r') != NULL)
-        sp->fileformat = EOL_MAC;
-      else
-        sp->fileformat = EOL_UNIX;
-    }
-
-    if (sp->fileformat == EOL_MAC) {
-      scan = vim_strchr(buf, '\r');
-
-      if (scan != NULL) {
-        *scan = '\n';
-        if (*(scan + 1) != 0) {
-          *(scan + 1) = 0;
-          fseek(sp->fp, (long)(scan - buf - len + 1), SEEK_CUR);
-        }
-      }
-      len = STRLEN(buf);
     }
 #endif
 

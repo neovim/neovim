@@ -14086,18 +14086,7 @@ static void f_system(typval_T *argvars, typval_T *rettv)
   res = get_cmd_output(get_tv_string(&argvars[0]), infile,
       kShellOptSilent | kShellOptCooked);
 
-#ifdef USE_CR
-  /* translate <CR> into <NL> */
-  if (res != NULL) {
-    char_u  *s;
-
-    for (s = res; *s; ++s) {
-      if (*s == CAR)
-        *s = NL;
-    }
-  }
-#else
-# ifdef USE_CRNL
+#ifdef USE_CRNL
   /* translate <CR><NL> into <NL> */
   if (res != NULL) {
     char_u  *s, *d;
@@ -14110,7 +14099,6 @@ static void f_system(typval_T *argvars, typval_T *rettv)
     }
     *d = NUL;
   }
-# endif
 #endif
 
 done:

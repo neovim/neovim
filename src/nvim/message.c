@@ -1992,9 +1992,6 @@ static void msg_puts_printf(char_u *str, int maxlen)
       p = &buf[0];
       if (*s == '\n' && !info_message)
         *p++ = '\r';
-#if defined(USE_CR) && !defined(MACOS_X_UNIX)
-      else
-#endif
       *p++ = *s;
       *p = '\0';
       if (info_message)         /* informative message, not an error */

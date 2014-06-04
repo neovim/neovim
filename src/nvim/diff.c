@@ -50,9 +50,6 @@ static int diff_a_works = MAYBE;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "diff.c.generated.h"
 #endif
-#ifndef USE_CR
-# define tag_fgets vim_fgets
-#endif  // ifndef USE_CR
 
 /// Called when deleting or unloading a buffer: No longer make a diff with it.
 ///
@@ -702,7 +699,7 @@ void ex_diffupdate(exarg_T *eap)
 
           for (;;) {
             // There must be a line that contains "1c1".
-            if (tag_fgets(linebuf, LBUFLEN, fd)) {
+            if (vim_fgets(linebuf, LBUFLEN, fd)) {
               break;
             }
 
@@ -1209,7 +1206,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
   }
 
   for (;;) {
-    if (tag_fgets(linebuf, LBUFLEN, fd)) {
+    if (vim_fgets(linebuf, LBUFLEN, fd)) {
       // end of file
       break;
     }
