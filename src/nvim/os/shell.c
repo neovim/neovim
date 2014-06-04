@@ -31,11 +31,9 @@ typedef struct {
   garray_T ga;
 } ProcessData;
 
-
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.c.generated.h"
 #endif
-
 
 // Callbacks for libuv
 
@@ -476,7 +474,8 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 #define NELEMS(x) \
   ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 #define ROUNDUP32(x) \
-  (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, ++(x))
+  (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, \
+  ++(x))
 
 typedef struct {
   uv_process_t proc;
@@ -504,8 +503,8 @@ typedef struct {
 typedef struct {
   uv_pipe_t pipe;
   int *exited;
-  dyn_buffer_t buf;            // buffer in which to assemble all the read data
-  scratch_buffer_t scratch[4]; // scratch buffers for libu
+  dyn_buffer_t buf;             // buffer in which to assemble the read data
+  scratch_buffer_t scratch[4];  // scratch buffers for libu
 } read_data_t;
 
 #include "nvim/log.h"
@@ -588,7 +587,7 @@ static void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
   // grow the dynamic buffer if necessary
   // TODO(aktau): extract into an ensure() function
   if (rd->buf.cap < rd->buf.len + (size_t) nread) {
-    rd->buf.cap = rd->buf.len + (size_t) nread + 1; // 1 byte for NUL
+    rd->buf.cap = rd->buf.len + (size_t) nread + 1;  // 1 byte for NUL
     ROUNDUP32(rd->buf.cap);
     rd->buf.data = xrealloc(rd->buf.data, rd->buf.cap);
   }
