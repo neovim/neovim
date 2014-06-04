@@ -70,11 +70,6 @@
 # include <termios.h>
 #endif
 
-/* shared library access */
-#if defined(HAVE_DLFCN_H) && defined(USE_DLOPEN)
-# include <dlfcn.h>
-#endif
-
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
 static int selinux_enabled = -1;
