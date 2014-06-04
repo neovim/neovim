@@ -509,7 +509,7 @@ typedef struct {
 
 #include "nvim/log.h"
 
-static void on_write(uv_write_t *req, int status)
+static void run_write_cb(uv_write_t *req, int status)
 {
   write_data_t *wr = (write_data_t *) req;
   (*wr->exited)++;
@@ -525,7 +525,7 @@ static void on_write(uv_write_t *req, int status)
 ///
 /// @note We don't actually allocate memory here, but return a
 ///       stack allocated buffer that libuv can write into. That means
-///       there's no need to free this buffer in `on_read` either.
+///       there's no need to free this buffer in `run_read_db` either.
 ///
 /// @note returning a NULL buffer will prompt libuv to call the read
 ///       callback with UV_ENOBUFS. We do this if all scratch buffers are in
@@ -537,7 +537,7 @@ static void on_write(uv_write_t *req, int status)
 ///       of those out-of-bound requests by using multiple scratch buffers.
 ///       since we don't want to start (x)malloc'ing, we can't do that
 ///       indefinitely.
-static void on_alloc(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
+static void run_alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   read_data_t *rd = (read_data_t *) handle;
 
@@ -551,12 +551,12 @@ static void on_alloc(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
     }
   }
 
-  // no free buffer found, this will provoke on_read(..., UV_ENOBUFS, ...)
+  // no free buffer found, this will provoke run_read_cb(..., UV_ENOBUFS, ...)
   buf->base = NULL;
   buf->len = 0;
 }
 
-static void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
+static void run_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
   DLOG("READ DONE, result: %zd, buflen: %zu", nread, buf->len);
   read_data_t *rd = (read_data_t *) stream;
@@ -606,7 +606,7 @@ static void on_read(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
   }
 }
 
-static void on_exit(uv_process_t *proc, int64_t status, int term_signal)
+static void run_exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 {
   process_data_t *pd = (process_data_t *) proc;
   pd->status = status;
@@ -688,7 +688,7 @@ int os_run_sync(char *const argv[],
   options.cwd = NULL;
   options.env = NULL;
   options.flags = UV_PROCESS_WINDOWS_HIDE;
-  options.exit_cb = on_exit;
+  options.exit_cb = run_exit_cb;
 
   // ignore deadly signals
   signal_reject_deadly();
@@ -723,13 +723,13 @@ int os_run_sync(char *const argv[],
   // queue writing the input (if any) to the process' stdin
   if (input) {
     uv_buf_t buf_in = uv_buf_init((char *) input, len);
-    uv_write(&wd.req, (uv_stream_t *) &wd.pipe, &buf_in, 1, on_write);
+    uv_write(&wd.req, (uv_stream_t *) &wd.pipe, &buf_in, 1, run_write_cb);
     expected_exits++;
   }
 
   // try reading the output (if requested)
   if (output) {
-    uv_read_start((uv_stream_t *) &rd, on_alloc, on_read);
+    uv_read_start((uv_stream_t *) &rd, run_alloc_cb, run_read_cb);
     expected_exits++;
   }
 
