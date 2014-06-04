@@ -14037,8 +14037,6 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
-#include "nvim/log.h"
-
 /// f_system - the VimL system() function
 static void f_system(typval_T *argvars, typval_T *rettv)
 {
@@ -14055,20 +14053,12 @@ static void f_system(typval_T *argvars, typval_T *rettv)
   // get shell command to execute
   const char *cmd = (char *) get_tv_string(&argvars[0]);
 
-  DLOG("os_system -> %s, input: %s", cmd, input);
-
   // execute the command
   size_t nread = 0;
   char *res = NULL;
   int status = os_system(cmd, input, input_len, &res, &nread);
 
   set_vim_var_nr(VV_SHELL_ERROR, (long) status);
-
-  if (res) {
-    DLOG("os_system <- %.*s\n", nread, res);
-  } else {
-    DLOG("os_system <- (null)");
-  }
 
 #ifdef USE_CR
   // translate <CR> into <NL>
