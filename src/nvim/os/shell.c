@@ -698,13 +698,13 @@ int os_run_sync(char *const argv[],
   State = EXTERNCMD;
 
   int expected_exits = 0;
-  bool success = true;
 
   // start the process
   process_data_t pd;
   {
     memset(&pd, 0, sizeof(pd));
     pd.exited = &exited;
+    pd.status = 127;
 
     DLOG("starting process, %s", options.args[0]);
     if (uv_spawn(loop, &pd.proc, &options)) {
@@ -715,7 +715,6 @@ int os_run_sync(char *const argv[],
         msg_putchar('\n');
       }
 
-      success = false;
       goto cleanup;
     }
     expected_exits++;
