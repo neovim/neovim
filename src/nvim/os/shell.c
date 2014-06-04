@@ -507,8 +507,6 @@ typedef struct {
   scratch_buffer_t scratch[4];  // scratch buffers for libu
 } read_data_t;
 
-#include "nvim/log.h"
-
 static void run_write_cb(uv_write_t *req, int status)
 {
   write_data_t *wr = (write_data_t *) req;
@@ -558,7 +556,6 @@ static void run_alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 
 static void run_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf)
 {
-  DLOG("READ DONE, result: %zd, buflen: %zu", nread, buf->len);
   read_data_t *rd = (read_data_t *) stream;
 
   // handle possible errors (including failure to allocate)
@@ -706,7 +703,6 @@ int os_run_sync(char *const argv[],
     pd.exited = &exited;
     pd.status = 127;
 
-    DLOG("starting process, %s", options.args[0]);
     if (uv_spawn(loop, &pd.proc, &options)) {
       // failure, the program might not be executable
       if (!emsg_silent) {
