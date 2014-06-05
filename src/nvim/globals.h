@@ -451,6 +451,8 @@ EXTERN int highlight_attr[HLF_COUNT];       /* Highl. attr for each context. */
 EXTERN int highlight_user[9];                   /* User[1-9] attributes */
 EXTERN int highlight_stlnc[9];                  /* On top of user */
 #endif
+EXTERN char *cterm_normal_gui_fg INIT(= NULL);
+EXTERN char *cterm_normal_gui_bg INIT(= NULL);
 EXTERN int cterm_normal_fg_color INIT(= 0);
 EXTERN int cterm_normal_fg_bold INIT(= 0);
 EXTERN int cterm_normal_bg_color INIT(= 0);

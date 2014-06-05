@@ -6527,9 +6527,13 @@ do_highlight (
 
           free(HL_TABLE()[idx].sg_gui_fg_name);
           if (STRCMP(arg, "NONE"))
-            HL_TABLE()[idx].sg_gui_fg_name = vim_strsave(arg);
+            HL_TABLE()[idx].sg_gui_fg_name = parse_color(arg);
           else
             HL_TABLE()[idx].sg_gui_fg_name = NULL;
+
+          if (is_normal_group) {
+            cterm_normal_gui_fg = (char *)HL_TABLE()[idx].sg_gui_fg_name;
+          }
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
@@ -6538,9 +6542,13 @@ do_highlight (
 
           free(HL_TABLE()[idx].sg_gui_bg_name);
           if (STRCMP(arg, "NONE") != 0)
-            HL_TABLE()[idx].sg_gui_bg_name = vim_strsave(arg);
+            HL_TABLE()[idx].sg_gui_bg_name = parse_color(arg);
           else
             HL_TABLE()[idx].sg_gui_bg_name = NULL;
+
+          if (is_normal_group) {
+            cterm_normal_gui_bg = (char *)HL_TABLE()[idx].sg_gui_bg_name;
+          }
         }
       } else if (STRCMP(key, "GUISP") == 0)   {
         if (!init || !(HL_TABLE()[idx].sg_set & SG_GUI)) {
@@ -6677,6 +6685,8 @@ void free_highlight(void)
  */
 void restore_cterm_colors(void)
 {
+  cterm_normal_gui_fg = NULL;
+  cterm_normal_gui_bg = NULL;
   cterm_normal_fg_color = 0;
   cterm_normal_fg_bold = 0;
   cterm_normal_bg_color = 0;
@@ -6823,6 +6833,9 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
   } else if (table == &cterm_attr_table)   {
     taep->ae_u.cterm.fg_color = aep->ae_u.cterm.fg_color;
     taep->ae_u.cterm.bg_color = aep->ae_u.cterm.bg_color;
+    taep->ae_u.cterm.gui_fg = aep->ae_u.cterm.gui_fg;
+    taep->ae_u.cterm.gui_bg = aep->ae_u.cterm.gui_bg;
+
   }
 
   return table->ga_len - 1 + ATTR_OFF;
@@ -6885,6 +6898,10 @@ int hl_combine_attr(int char_attr, int prim_attr)
           new_en.ae_u.cterm.fg_color = spell_aep->ae_u.cterm.fg_color;
         if (spell_aep->ae_u.cterm.bg_color > 0)
           new_en.ae_u.cterm.bg_color = spell_aep->ae_u.cterm.bg_color;
+        if (spell_aep->ae_u.cterm.gui_fg)
+          new_en.ae_u.cterm.gui_fg = spell_aep->ae_u.cterm.gui_fg;
+        if (spell_aep->ae_u.cterm.gui_bg)
+          new_en.ae_u.cterm.gui_bg = spell_aep->ae_u.cterm.gui_bg;
       }
     }
     return get_attr_entry(&cterm_attr_table, &new_en);
@@ -7200,6 +7217,8 @@ set_hl_attr (
     at_en.ae_attr = sgp->sg_cterm;
     at_en.ae_u.cterm.fg_color = sgp->sg_cterm_fg;
     at_en.ae_u.cterm.bg_color = sgp->sg_cterm_bg;
+    at_en.ae_u.cterm.gui_fg = (char *)sgp->sg_gui_fg_name;
+    at_en.ae_u.cterm.gui_bg = (char *)sgp->sg_gui_bg_name;
     sgp->sg_cterm_attr = get_attr_entry(&cterm_attr_table, &at_en);
   }
 }
@@ -7637,6 +7656,216 @@ char_u *get_highlight_name(expand_T *xp, int idx)
   return HL_TABLE()[idx].sg_name;
 }
 
+static uint8_t *parse_color(uint8_t *name)
+{
+  name = (uint8_t *)xstrdup((char *)name);
+
+  static char *(names[][2]) = {
+    // Color names taken from http://www.rapidtables.com/web/color/RGB_Color.htm
+    {"Maroon", "#800000"},
+    {"DarkRed", "#8b0000"},
+    {"Brown", "#a52a2a"},
+    {"Firebrick", "#b22222"},
+    {"Crimson", "#dc143c"},
+    {"Red", "#ff0000"},
+    {"Tomato", "#ff6347"},
+    {"Coral", "#ff7f50"},
+    {"IndianRed", "#cd5c5c"},
+    {"LightCoral", "#f08080"},
+    {"DarkSalmon", "#e9967a"},
+    {"Salmon", "#fa8072"},
+    {"LightSalmon", "#ffa07a"},
+    {"OrangeRed", "#ff4500"},
+    {"DarkOrange", "#ff8c00"},
+    {"Orange", "#ffa500"},
+    {"Gold", "#ffd700"},
+    {"DarkGoldenRod", "#b8860b"},
+    {"GoldenRod", "#daa520"},
+    {"PaleGoldenRod", "#eee8aa"},
+    {"DarkKhaki", "#bdb76b"},
+    {"Khaki", "#f0e68c"},
+    {"Olive", "#808000"},
+    {"Yellow", "#ffff00"},
+    {"YellowGreen", "#9acd32"},
+    {"DarkOliveGreen", "#556b2f"},
+    {"OliveDrab", "#6b8e23"},
+    {"LawnGreen", "#7cfc00"},
+    {"ChartReuse", "#7fff00"},
+    {"GreenYellow", "#adff2f"},
+    {"DarkGreen", "#006400"},
+    {"Green", "#008000"},
+    {"ForestGreen", "#228b22"},
+    {"Lime", "#00ff00"},
+    {"LimeGreen", "#32cd32"},
+    {"LightGreen", "#90ee90"},
+    {"PaleGreen", "#98fb98"},
+    {"DarkSeaGreen", "#8fbc8f"},
+    {"MediumSpringGreen", "#00fa9a"},
+    {"SpringGreen", "#00ff7f"},
+    {"SeaGreen", "#2e8b57"},
+    {"MediumAquamarine", "#66cdaa"},
+    {"MediumSeaGreen", "#3cb371"},
+    {"LightSeaGreen", "#20b2aa"},
+    {"DarkSlateGray", "#2f4f4f"},
+    {"Teal", "#008080"},
+    {"DarkCyan", "#008b8b"},
+    {"Aqua", "#00ffff"},
+    {"Cyan", "#00ffff"},
+    {"LightCyan", "#e0ffff"},
+    {"DarkTurquoise", "#00ced1"},
+    {"Turquoise", "#40e0d0"},
+    {"MediumTurquoise", "#48d1cc"},
+    {"PaleTurquoise", "#afeeee"},
+    {"Aquamarine", "#7fffd4"},
+    {"PowderBlue", "#b0e0e6"},
+    {"CadetBlue", "#5f9ea0"},
+    {"SteelBlue", "#4682b4"},
+    {"CornFlowerBlue", "#6495ed"},
+    {"DeepSkyBlue", "#00bfff"},
+    {"DodgerBlue", "#1e90ff"},
+    {"LightBlue", "#add8e6"},
+    {"SkyBlue", "#87ceeb"},
+    {"LightSkyBlue", "#87cefa"},
+    {"MidnightBlue", "#191970"},
+    {"Navy", "#000080"},
+    {"DarkBlue", "#00008b"},
+    {"MediumBlue", "#0000cd"},
+    {"Blue", "#0000ff"},
+    {"RoyalBlue", "#4169e1"},
+    {"BlueViolet", "#8a2be2"},
+    {"Indigo", "#4b0082"},
+    {"DarkSlateBlue", "#483d8b"},
+    {"SlateBlue", "#6a5acd"},
+    {"MediumSlateBlue", "#7b68ee"},
+    {"MediumPurple", "#9370db"},
+    {"DarkMagenta", "#8b008b"},
+    {"DarkViolet", "#9400d3"},
+    {"DarkOrchid", "#9932cc"},
+    {"MediumOrchid", "#ba55d3"},
+    {"Purple", "#800080"},
+    {"Thistle", "#d8bfd8"},
+    {"Plum", "#dda0dd"},
+    {"Violet", "#ee82ee"},
+    {"Magenta", "#ff00ff"},
+    {"Fuchsia", "#ff00ff"},
+    {"Orchid", "#da70d6"},
+    {"MediumVioletRed", "#c71585"},
+    {"PaleVioletRed", "#db7093"},
+    {"DeepPink", "#ff1493"},
+    {"HotPink", "#ff69b4"},
+    {"LightPink", "#ffb6c1"},
+    {"Pink", "#ffc0cb"},
+    {"AntiqueWhite", "#faebd7"},
+    {"Beige", "#f5f5dc"},
+    {"Bisque", "#ffe4c4"},
+    {"BlanchedAlmond", "#ffebcd"},
+    {"Wheat", "#f5deb3"},
+    {"Cornsilk", "#fff8dc"},
+    {"LemonChiffon", "#fffacd"},
+    {"LightGoldenRodYellow", "#fafad2"},
+    {"LightYellow", "#ffffe0"},
+    {"SaddleBrown", "#8b4513"},
+    {"Sienna", "#a0522d"},
+    {"Chocolate", "#d2691e"},
+    {"Peru", "#cd853f"},
+    {"SandyBrown", "#f4a460"},
+    {"BurlyWood", "#deb887"},
+    {"Tan", "#d2b48c"},
+    {"RosyBrown", "#bc8f8f"},
+    {"Moccasin", "#ffe4b5"},
+    {"NavajoWhite", "#ffdead"},
+    {"PeachPuff", "#ffdab9"},
+    {"MistyRose", "#ffe4e1"},
+    {"LavenderBlush", "#fff0f5"},
+    {"Linen", "#faf0e6"},
+    {"Oldlace", "#fdf5e6"},
+    {"PapayaWhip", "#ffefd5"},
+    {"SeaShell", "#fff5ee"},
+    {"MintCream", "#f5fffa"},
+    {"SlateGray", "#708090"},
+    {"LightSlateGray", "#778899"},
+    {"LightSteelBlue", "#b0c4de"},
+    {"Lavender", "#e6e6fa"},
+    {"FloralWhite", "#fffaf0"},
+    {"AliceBlue", "#f0f8ff"},
+    {"GhostWhite", "#f8f8ff"},
+    {"Honeydew", "#f0fff0"},
+    {"Ivory", "#fffff0"},
+    {"Azure", "#f0ffff"},
+    {"Snow", "#fffafa"},
+    {"Black", "#000000"},
+    {"DimGray", "#696969"},
+    {"DimGrey", "#696969"},
+    {"Gray", "#808080"},
+    {"Grey", "#808080"},
+    {"DarkGray", "#a9a9a9"},
+    {"DarkGrey", "#a9a9a9"},
+    {"Silver", "#c0c0c0"},
+    {"LightGray", "#d3d3d3"},
+    {"LightGrey", "#d3d3d3"},
+    {"Gainsboro", "#dcdcdc"},
+    {"WhiteSmoke", "#f5f5f5"},
+    {"White", "#ffffff"},
+    // The color names below were taken from gui_x11.c in vim source 
+    {"LightRed", "#ffbbbb"},
+    {"LightMagenta","#ffbbff"},
+    {"DarkYellow", "#bbbb00"},
+    {"Gray10", "#1a1a1a"},
+    {"Grey10", "#1a1a1a"},
+    {"Gray20", "#333333"},
+    {"Grey20", "#333333"},
+    {"Gray30", "#4d4d4d"},
+    {"Grey30", "#4d4d4d"},
+    {"Gray40", "#666666"},
+    {"Grey40", "#666666"},
+    {"Gray50", "#7f7f7f"},
+    {"Grey50", "#7f7f7f"},
+    {"Gray60", "#999999"},
+    {"Grey60", "#999999"},
+    {"Gray70", "#b3b3b3"},
+    {"Grey70", "#b3b3b3"},
+    {"Gray80", "#cccccc"},
+    {"Grey80", "#cccccc"},
+    {"Gray90", "#e5e5e5"},
+    {"Grey90", "#e5e5e5"},
+    {NULL, NULL},
+  };
+
+  uint8_t *rv;
+
+  for (int i = 0; ; i++) {
+    if (names[i][0] == NULL) {
+      rv = name;
+      break;
+    }
+
+    if (!STRICMP(name, names[i][0])) {
+      rv = (uint8_t *)xstrdup(names[i][1]);
+      free(name);
+      break;
+    }
+  }
+
+  // Ensure the result is properly formatted as a rgb hex string
+  if (rv[0] != '#') {
+    free(rv);
+    return NULL;
+  }
+
+  for (int i = 1; i < 7; i++) {
+    uint8_t c = rv[i];
+    if ((c >= 'A' && c <= 'F')
+        || (c >= 'a' && c <= 'f') 
+        || (c >= '0' && c <= '9')) {
+      continue;
+    }
+
+    free(rv);
+    return NULL;
+  }
+
+  return rv;
+}
 
 /**************************************
 *  End of Highlighting stuff	      *
