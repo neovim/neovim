@@ -309,9 +309,6 @@ static struct builtin_term builtin_termcaps[] =
 #  else
   {(int)KS_CRI,       "\033[%dC"},
 #  endif
-#if defined(BEOS_DR8)
-  {(int)KS_DB,        ""},              /* hack! see screen.c */
-#endif
 
   {K_UP,              "\033[A"},
   {K_DOWN,            "\033[B"},
