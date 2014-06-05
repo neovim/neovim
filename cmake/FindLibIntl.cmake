@@ -6,6 +6,7 @@
 #  LibIntl_LIBRARIES    - link these to use libintl
 
 include(CheckCSourceCompiles)
+include(CheckVariableExists)
 include(LibFindMacros)
 
 # Append custom gettext path to CMAKE_PREFIX_PATH
@@ -48,6 +49,10 @@ int main(int argc, char** argv) {
   bind_textdomain_codeset(\"foo\", \"bar\");
   textdomain(\"foo\");
 }" HAVE_WORKING_LIBINTL)
+
+if (HAVE_WORKING_LIBINTL)
+  check_variable_exists(_nl_msg_cat_cntr HAVE_NL_MSG_CAT_CNTR)
+endif()
 
 set(LibIntl_PROCESS_INCLUDES LibIntl_INCLUDE_DIR)
 set(LibIntl_PROCESS_LIBS LibIntl_LIBRARY)
