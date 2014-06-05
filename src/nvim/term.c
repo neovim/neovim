@@ -265,13 +265,6 @@ static struct builtin_term builtin_termcaps[] =
 #  else
   {(int)KS_CDL,       "\033[%dM"},
 #  endif
-#ifdef BEOS_PR_OR_BETTER
-#  ifdef TERMINFO
-  {(int)KS_CS,        "\033[%i%p1%d;%p2%dr"},
-#  else
-  {(int)KS_CS,        "\033[%i%d;%dr"},         /* scroll region */
-#  endif
-#endif
   {(int)KS_CL,        "\033[H\033[2J"},
 #ifdef notyet
   {(int)KS_VI,        "[VI]"},   /* cursor invisible, VT320: CSI ? 25 l */
