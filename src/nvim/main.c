@@ -30,7 +30,6 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/iconv.h"
-#include "nvim/if_cscope.h"
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
@@ -784,7 +783,6 @@ void getout(int exitval)
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
   iconv_end();
 #endif
-  cs_end();
   if (garbage_collect_at_exit)
     garbage_collect();
 

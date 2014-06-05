@@ -30,7 +30,6 @@
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
-#include "nvim/if_cscope.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/message.h"
@@ -202,7 +201,6 @@ do_tag (
   if (type == DT_FREE) {
     /* remove the list of matches */
     FreeWild(num_matches, matches);
-    cs_free_tags();
     num_matches = 0;
     return FALSE;
   }
@@ -330,7 +328,6 @@ do_tag (
 
         /* remove the old list of matches */
         FreeWild(num_matches, matches);
-        cs_free_tags();
         num_matches = 0;
         tag_freematch();
         goto end_do_tag;
@@ -518,7 +515,6 @@ do_tag (
       int ask_for_selection = FALSE;
 
       if (type == DT_CSCOPE && num_matches > 1) {
-        cs_print_tags();
         ask_for_selection = TRUE;
       } else if (type == DT_SELECT ||
                  (type == DT_JUMP && num_matches > 1))        {
@@ -821,7 +817,6 @@ do_tag (
             tagstack[tagstackidx].fmark = saved_fmark;
             tagstackidx = prevtagstackidx;
           }
-          cs_free_tags();
           jumped_to_tag = TRUE;
           break;
         }
@@ -1387,10 +1382,7 @@ find_tags (
         else {
           /* skip empty and blank lines */
           do {
-            if (use_cscope)
-              eof = cs_fgets(lbuf, LSIZE);
-            else
-              eof = vim_fgets(lbuf, LSIZE, fp);
+            eof = vim_fgets(lbuf, LSIZE, fp);
           } while (!eof && vim_isblankline(lbuf));
 
           if (eof) {

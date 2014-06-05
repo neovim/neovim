@@ -36,7 +36,6 @@
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/hardcopy.h"
-#include "nvim/if_cscope.h"
 #include "nvim/main.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -3194,11 +3193,6 @@ set_one_cmd_context (
   case CMD_highlight:
     set_context_in_highlight_cmd(xp, arg);
     break;
-  case CMD_cscope:
-  case CMD_lcscope:
-  case CMD_scscope:
-    set_context_in_cscope_cmd(xp, arg, ea.cmdidx);
-    break;
   case CMD_sign:
     set_context_in_sign_cmd(xp, arg);
     break;
@@ -4628,7 +4622,6 @@ static struct {
   {EXPAND_COLORS, "color"},
   {EXPAND_COMMANDS, "command"},
   {EXPAND_COMPILER, "compiler"},
-  {EXPAND_CSCOPE, "cscope"},
   {EXPAND_USER_DEFINED, "custom"},
   {EXPAND_USER_LIST, "customlist"},
   {EXPAND_DIRECTORIES, "dir"},
@@ -7943,10 +7936,6 @@ static void ex_tag_cmd(exarg_T *eap, char_u *name)
   case 'l': cmd = DT_LAST;              /* ":tlast" */
     break;
   default:                              /* ":tag" */
-    if (p_cst && *eap->arg != NUL) {
-      do_cstag(eap);
-      return;
-    }
     cmd = DT_TAG;
     break;
   }

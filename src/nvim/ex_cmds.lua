@@ -590,18 +590,6 @@ return {
     func='ex_cc',
   },
   {
-    command='cscope',
-    flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
-    addr_type=ADDR_LINES,
-    func='do_cscope',
-  },
-  {
-    command='cstag',
-    flags=bit.bor(BANG, TRLBAR, WORD1),
-    addr_type=ADDR_LINES,
-    func='do_cstag',
-  },
-  {
     command='cunmap',
     flags=bit.bor(EXTRA, TRLBAR, NOTRLCOM, USECTRLV, CMDWIN),
     addr_type=ADDR_LINES,
@@ -1278,12 +1266,6 @@ return {
     flags=bit.bor(RANGE, NOTADR, COUNT, TRLBAR),
     addr_type=ADDR_LINES,
     func='ex_cclose',
-  },
-  {
-    command='lcscope',
-    flags=bit.bor(EXTRA, NOTRLCOM, XFILE),
-    addr_type=ADDR_LINES,
-    func='do_cscope',
   },
   {
     command='left',
@@ -2256,12 +2238,6 @@ return {
     flags=bit.bor(WORD1, TRLBAR, CMDWIN),
     addr_type=ADDR_LINES,
     func='ex_scriptencoding',
-  },
-  {
-    command='scscope',
-    flags=bit.bor(EXTRA, NOTRLCOM),
-    addr_type=ADDR_LINES,
-    func='do_scscope',
   },
   {
     command='set',

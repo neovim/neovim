@@ -44,7 +44,6 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/iconv.h"
-#include "nvim/if_cscope.h"
 #include "nvim/indent_c.h"
 #include "nvim/indent.h"
 #include "nvim/mark.h"
@@ -6441,7 +6440,6 @@ static struct fst {
   {"cos",             1, 1, f_cos},
   {"cosh",            1, 1, f_cosh},
   {"count",           2, 4, f_count},
-  {"cscope_connection",0,3, f_cscope_connection},
   {"cursor",          1, 3, f_cursor},
   {"deepcopy",        1, 2, f_deepcopy},
   {"delete",          1, 1, f_delete},
@@ -7918,29 +7916,6 @@ static void f_count(typval_T *argvars, typval_T *rettv)
   } else
     EMSG2(_(e_listdictarg), "count()");
   rettv->vval.v_number = n;
-}
-
-/*
- * "cscope_connection([{num} , {dbpath} [, {prepend}]])" function
- *
- * Checks the existence of a cscope connection.
- */
-static void f_cscope_connection(typval_T *argvars, typval_T *rettv)
-{
-  int num = 0;
-  char_u      *dbpath = NULL;
-  char_u      *prepend = NULL;
-  char_u buf[NUMBUFLEN];
-
-  if (argvars[0].v_type != VAR_UNKNOWN
-      && argvars[1].v_type != VAR_UNKNOWN) {
-    num = (int)get_tv_number(&argvars[0]);
-    dbpath = get_tv_string(&argvars[1]);
-    if (argvars[2].v_type != VAR_UNKNOWN)
-      prepend = get_tv_string_buf(&argvars[2], buf);
-  }
-
-  rettv->vval.v_number = cs_connection(num, dbpath, prepend);
 }
 
 /*
@@ -9922,7 +9897,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "cmdline_hist",
     "comments",
     "conceal",
-    "cscope",
     "cursorbind",
     "cursorshape",
 #ifdef DEBUG

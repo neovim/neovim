@@ -54,7 +54,10 @@ set(CONV_SOURCES
   ex_getln.c
   fileio.c
   getchar.c
-  if_cscope.c
+  hardcopy.c
+  indent.c
+  keymap.c
+  mark.c
   mbyte.c
   memline.c
   menu.c

@@ -35,7 +35,6 @@
 #include "nvim/fileio.h"
 #include "nvim/func_attr.h"
 #include "nvim/getchar.h"
-#include "nvim/if_cscope.h"
 #include "nvim/indent.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
@@ -3716,7 +3715,6 @@ ExpandFromContext (
       {EXPAND_HIGHLIGHT, get_highlight_name, TRUE, TRUE},
       {EXPAND_EVENTS, get_event_name, TRUE, TRUE},
       {EXPAND_AUGROUP, get_augroup_name, TRUE, TRUE},
-      {EXPAND_CSCOPE, get_cscope_name, TRUE, TRUE},
       {EXPAND_SIGN, get_sign_name, TRUE, TRUE},
       {EXPAND_PROFILE, get_profile_name, TRUE, TRUE},
 #ifdef HAVE_WORKING_LIBINTL
