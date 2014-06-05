@@ -8,14 +8,7 @@
 #ifndef NVIM_ASCII_H
 #define NVIM_ASCII_H
 
-/*
- * Definitions of various common control characters.
- * For EBCDIC we have to use different values.
- */
-
-
-/* IF_EB(ASCII_constant, EBCDIC_constant) */
-#define IF_EB(a, b)     a
+// Definitions of various common control characters.
 
 #define CharOrd(x)      ((x) < 'a' ? (x) - 'A' : (x) - 'a')
 #define CharOrdLow(x)   ((x) - 'a')

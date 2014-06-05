@@ -4076,7 +4076,7 @@ int put_escstr(FILE *fd, char_u *strstart, int what)
      */
     if (c == NL) {
       if (what == 2) {
-        if (fprintf(fd, IF_EB("\\\026\n", "\\" CTRL_V_STR "\n")) < 0)
+        if (fprintf(fd, "\\\026\n") < 0)
           return FAIL;
       } else {
         if (fprintf(fd, "<NL>") < 0)
