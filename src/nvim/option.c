@@ -1995,7 +1995,7 @@ void set_init_1(void)
     }
   }
 
-#if defined(MSWIN) || defined(EBCDIC) || defined(MAC)
+#if defined(MSWIN) || defined(MAC)
   /* Set print encoding on platforms that don't default to latin1 */
   set_string_default("penc",
       (char_u *)"hp-roman8"
