@@ -89,9 +89,6 @@ int buf_init_chartab(buf_T *buf, int global)
     // Set the default size for printable characters:
     // From <Space> to '~' is 1 (printable), others are 2 (not printable).
     // This also inits all 'isident' and 'isfname' flags to FALSE.
-    //
-    // EBCDIC: all chars below ' ' are not printable, all others are
-    // printable.
     c = 0;
 
     while (c < ' ') {
@@ -583,11 +580,8 @@ void transchar_nonprint(char_u *buf, int c)
     buf[2] = NUL;
   } else {
     // 0x80 - 0x9f and 0xff
-    // TODO: EBCDIC I don't know what to do with this chars, so I display
-    // them as '~?' for now
     buf[0] = '~';
     buf[1] = (c - 0x80) ^ 0x40;
-    // 0xff displayed as ~?
     buf[2] = NUL;
   }
 }

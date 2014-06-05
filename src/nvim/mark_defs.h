@@ -8,9 +8,6 @@
  * (a normal mark is a lnum/col pair, the same as a file position)
  */
 
-/* (Note: for EBCDIC there are more than 26, because there are gaps in the
- * alphabet coding.  To minimize changes to the code, I decided to just
- * increase the number of possible marks. */
 #define NMARKS          ('z' - 'a' + 1) /* max. # of named marks */
 #define JUMPLISTSIZE    100             /* max. # of marks in jump list */
 #define TAGSTACKSIZE    20              /* max. # of tags in tag stack */

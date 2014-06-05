@@ -409,7 +409,6 @@ vim_findfile_init (
      * The octet after a '**' is used as a (binary) counter.
      * So '**3' is transposed to '**^C' ('^C' is ASCII value 3)
      * or '**76' is transposed to '**N'( 'N' is ASCII value 76).
-     * For EBCDIC you get different character values.
      * If no restrict is given after '**' the default is used.
      * Due to this technique the path looks awful if you print it as a
      * string.

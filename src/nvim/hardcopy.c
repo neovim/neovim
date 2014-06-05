@@ -1502,9 +1502,7 @@ static void prt_flush_buffer(void)
       prt_write_real(prt_text_run, 2);
       prt_write_string("ul\n");
     }
-    /* Draw the text
-     * Note: we write text out raw - EBCDIC conversion is handled in the
-     * PostScript world via the font encoding vector. */
+    // Draw the text
     if (prt_out_mbyte)
       prt_write_string("<");
     else
@@ -3031,9 +3029,7 @@ int mch_print_text_out(char_u *p, int len)
     if (ch < 32 || ch == '(' || ch == ')' || ch == '\\') {
       /* Convert non-printing characters to either their escape or octal
        * sequence, ensures PS sent over a serial line does not interfere
-       * with the comms protocol.  Note: For EBCDIC we need to write out
-       * the escape sequences as ASCII codes!
-       * Note 2: Char codes < 32 are identical in EBCDIC and ASCII AFAIK!
+       * with the comms protocol.
        */
       ga_append(&prt_ps_buffer, IF_EB('\\', 0134));
       switch (ch) {
