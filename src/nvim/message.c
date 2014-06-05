@@ -1838,7 +1838,8 @@ store_sb_text (
     mp->sb_eol = finish;
     mp->sb_msg_col = *sb_col;
     mp->sb_attr = attr;
-    vim_strncpy(mp->sb_text, *sb_str, s - *sb_str);
+    memcpy(mp->sb_text, *sb_str, s - *sb_str);
+    mp->sb_text[s - *sb_str] = NUL;
 
     if (last_msgchunk == NULL) {
       last_msgchunk = mp;
