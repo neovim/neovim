@@ -96,6 +96,19 @@ String vim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   return cstr_as_string(ptr);
 }
 
+String vim_command_output(String str, Error *err)
+{
+  do_cmdline_cmd((char_u *)"redir => v:command_output");
+  vim_command(str, err);
+  do_cmdline_cmd((char_u *)"redir END");
+
+  if (err->set) {
+    return (String) STRING_INIT;
+  }
+
+  return cstr_to_string((char *)get_vim_var_str(VV_COMMAND_OUTPUT));
+}
+
 /// Evaluates the expression str using the vim internal expression
 /// evaluator (see |expression|).
 /// Dictionaries and lists are recursively expanded.
