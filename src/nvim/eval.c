@@ -424,7 +424,8 @@ static struct vimvar {
   {VV_NAME("oldfiles",         VAR_LIST), 0},
   {VV_NAME("windowid",         VAR_NUMBER), VV_RO},
   {VV_NAME("progpath",         VAR_STRING), VV_RO},
-  {VV_NAME("job_data",         VAR_LIST), 0}
+  {VV_NAME("job_data",         VAR_LIST), 0},
+  {VV_NAME("command_output",   VAR_STRING), 0}
 };
 
 /* shorthand */
