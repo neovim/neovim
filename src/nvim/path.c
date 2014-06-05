@@ -1225,10 +1225,8 @@ addfile (
   /*
    * Append a slash or backslash after directory names if none is present.
    */
-#ifndef DONT_ADD_PATHSEP_TO_DIR
   if (isdir && (flags & EW_ADDSLASH))
     add_pathsep(p);
-#endif
   GA_APPEND(char_u *, gap, p);
 }
 #endif /* !NO_EXPANDPATH */
