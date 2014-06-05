@@ -61,11 +61,7 @@ static char *(features[]) = {
   "+conceal",
   "+cscope",
   "+cursorbind",
-#ifdef CURSOR_SHAPE
   "+cursorshape",
-#else  // ifdef CURSOR_SHAPE
-  "-cursorshape",
-#endif  // ifdef CURSOR_SHAPE
   "+dialog_con",
   "+diff",
   "+digraphs",
