@@ -91,6 +91,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/api/private/redraw.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -7504,6 +7505,7 @@ static void draw_tabline(void)
                        );
 
   redraw_tabline = FALSE;
+  redraw_tabs(0);
 
 
   if (tabline_height() < 1)
