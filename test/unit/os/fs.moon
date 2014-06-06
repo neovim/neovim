@@ -303,92 +303,91 @@ describe 'fs function', ->
         eq 0, (os_rmdir 'unit-test-directory/new-dir', mode)
         eq false, (os_isdir 'unit-test-directory/new-dir')
 
-    describe 'FileInfo', ->
+  describe 'FileInfo', ->
 
-      file_info_new = () ->
-        file_info = ffi.new 'FileInfo[1]'
-        file_info[0].stat.st_ino = 0
-        file_info[0].stat.st_dev = 0
-        file_info
+    file_info_new = () ->
+      file_info = ffi.new 'FileInfo[1]'
+      file_info[0].stat.st_ino = 0
+      file_info[0].stat.st_dev = 0
+      file_info
 
-      is_file_info_filled = (file_info) ->
-        file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
+    is_file_info_filled = (file_info) ->
+      file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
 
-      describe 'os_get_file_info', ->
-        it 'returns false if given a non-existing file', ->
-          file_info = file_info_new!
-          assert.is_false (fs.os_get_file_info '/non-existent', file_info)
+    describe 'os_get_file_info', ->
+      it 'returns false if given a non-existing file', ->
+        file_info = file_info_new!
+        assert.is_false (fs.os_get_file_info '/non-existent', file_info)
 
-        it 'returns true if given an existing file and fills file_info', ->
-          file_info = file_info_new!
-          path = 'unit-test-directory/test.file'
-          assert.is_true (fs.os_get_file_info path, file_info)
-          assert.is_true (is_file_info_filled file_info)
+      it 'returns true if given an existing file and fills file_info', ->
+        file_info = file_info_new!
+        path = 'unit-test-directory/test.file'
+        assert.is_true (fs.os_get_file_info path, file_info)
+        assert.is_true (is_file_info_filled file_info)
 
-        it 'returns the file info of the linked file, not the link', ->
-          file_info = file_info_new!
-          path = 'unit-test-directory/test_link.file'
-          assert.is_true (fs.os_get_file_info path, file_info)
-          assert.is_true (is_file_info_filled file_info)
-          mode = tonumber file_info[0].stat.st_mode
-          eq ffi.C.kS_IFREG, (bit.band mode, ffi.C.kS_IFMT)
+      it 'returns the file info of the linked file, not the link', ->
+        file_info = file_info_new!
+        path = 'unit-test-directory/test_link.file'
+        assert.is_true (fs.os_get_file_info path, file_info)
+        assert.is_true (is_file_info_filled file_info)
+        mode = tonumber file_info[0].stat.st_mode
+        eq ffi.C.kS_IFREG, (bit.band mode, ffi.C.kS_IFMT)
 
-      describe 'os_get_file_info_link', ->
-        it 'returns false if given a non-existing file', ->
-          file_info = file_info_new!
-          assert.is_false (fs.os_get_file_info_link '/non-existent', file_info)
+    describe 'os_get_file_info_link', ->
+      it 'returns false if given a non-existing file', ->
+        file_info = file_info_new!
+        assert.is_false (fs.os_get_file_info_link '/non-existent', file_info)
 
-        it 'returns true if given an existing file and fills file_info', ->
-          file_info = file_info_new!
-          path = 'unit-test-directory/test.file'
-          assert.is_true (fs.os_get_file_info_link path, file_info)
-          assert.is_true (is_file_info_filled file_info)
+      it 'returns true if given an existing file and fills file_info', ->
+        file_info = file_info_new!
+        path = 'unit-test-directory/test.file'
+        assert.is_true (fs.os_get_file_info_link path, file_info)
+        assert.is_true (is_file_info_filled file_info)
 
-        it 'returns the file info of the link, not the linked file', ->
-          file_info = file_info_new!
-          path = 'unit-test-directory/test_link.file'
-          assert.is_true (fs.os_get_file_info_link path, file_info)
-          assert.is_true (is_file_info_filled file_info)
-          mode = tonumber file_info[0].stat.st_mode
-          eq ffi.C.kS_IFLNK, (bit.band mode, ffi.C.kS_IFMT)
+      it 'returns the file info of the link, not the linked file', ->
+        file_info = file_info_new!
+        path = 'unit-test-directory/test_link.file'
+        assert.is_true (fs.os_get_file_info_link path, file_info)
+        assert.is_true (is_file_info_filled file_info)
+        mode = tonumber file_info[0].stat.st_mode
+        eq ffi.C.kS_IFLNK, (bit.band mode, ffi.C.kS_IFMT)
 
-      describe 'os_get_file_info_fd', ->
-        it 'returns false if given an invalid file descriptor', ->
-          file_info = file_info_new!
-          assert.is_false (fs.os_get_file_info_fd -1, file_info)
+    describe 'os_get_file_info_fd', ->
+      it 'returns false if given an invalid file descriptor', ->
+        file_info = file_info_new!
+        assert.is_false (fs.os_get_file_info_fd -1, file_info)
 
-        it 'returns true if given a file descriptor and fills file_info', ->
-          file_info = file_info_new!
-          path = 'unit-test-directory/test.file'
-          fd = ffi.C.open path, 0
-          assert.is_true (fs.os_get_file_info_fd fd, file_info)
-          assert.is_true (is_file_info_filled file_info)
-          ffi.C.close fd
+      it 'returns true if given a file descriptor and fills file_info', ->
+        file_info = file_info_new!
+        path = 'unit-test-directory/test.file'
+        fd = ffi.C.open path, 0
+        assert.is_true (fs.os_get_file_info_fd fd, file_info)
+        assert.is_true (is_file_info_filled file_info)
+        ffi.C.close fd
 
-      describe 'os_file_info_id_equal', ->
-        it 'returns false if file infos represent different files', ->
-          file_info_1 = file_info_new!
-          file_info_2 = file_info_new!
-          path_1 = 'unit-test-directory/test.file'
-          path_2 = 'unit-test-directory/test_2.file'
-          assert.is_true (fs.os_get_file_info path_1, file_info_1)
-          assert.is_true (fs.os_get_file_info path_2, file_info_2)
-          assert.is_false (fs.os_file_info_id_equal file_info_1, file_info_2)
+    describe 'os_file_info_id_equal', ->
+      it 'returns false if file infos represent different files', ->
+        file_info_1 = file_info_new!
+        file_info_2 = file_info_new!
+        path_1 = 'unit-test-directory/test.file'
+        path_2 = 'unit-test-directory/test_2.file'
+        assert.is_true (fs.os_get_file_info path_1, file_info_1)
+        assert.is_true (fs.os_get_file_info path_2, file_info_2)
+        assert.is_false (fs.os_file_info_id_equal file_info_1, file_info_2)
 
-        it 'returns true if file infos represent the same file', ->
-          file_info_1 = file_info_new!
-          file_info_2 = file_info_new!
-          path = 'unit-test-directory/test.file'
-          assert.is_true (fs.os_get_file_info path, file_info_1)
-          assert.is_true (fs.os_get_file_info path, file_info_2)
-          assert.is_true (fs.os_file_info_id_equal file_info_1, file_info_2)
+      it 'returns true if file infos represent the same file', ->
+        file_info_1 = file_info_new!
+        file_info_2 = file_info_new!
+        path = 'unit-test-directory/test.file'
+        assert.is_true (fs.os_get_file_info path, file_info_1)
+        assert.is_true (fs.os_get_file_info path, file_info_2)
+        assert.is_true (fs.os_file_info_id_equal file_info_1, file_info_2)
 
-        it 'returns true if file infos represent the same file (symlink)', ->
-          file_info_1 = file_info_new!
-          file_info_2 = file_info_new!
-          path_1 = 'unit-test-directory/test.file'
-          path_2 = 'unit-test-directory/test_link.file'
-          assert.is_true (fs.os_get_file_info path_1, file_info_1)
-          assert.is_true (fs.os_get_file_info path_2, file_info_2)
-          assert.is_true (fs.os_file_info_id_equal file_info_1, file_info_2)
-
+      it 'returns true if file infos represent the same file (symlink)', ->
+        file_info_1 = file_info_new!
+        file_info_2 = file_info_new!
+        path_1 = 'unit-test-directory/test.file'
+        path_2 = 'unit-test-directory/test_link.file'
+        assert.is_true (fs.os_get_file_info path_1, file_info_1)
+        assert.is_true (fs.os_get_file_info path_2, file_info_2)
+        assert.is_true (fs.os_file_info_id_equal file_info_1, file_info_2)
