@@ -24,10 +24,6 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_LIBC_H
-# include <libc.h>                  /* for NeXT */
-#endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>     /* defines BSD, if it's a BSD system */
 #endif
