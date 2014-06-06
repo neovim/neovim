@@ -1397,8 +1397,6 @@ ex_let_vars (
       /* Put the rest of the list (may be empty) in the var after ';'.
        * Create a new list for this. */
       l = list_alloc();
-      if (l == NULL)
-        return FAIL;
       while (item != NULL) {
         list_append_tv(l, &item->li_tv);
         item = item->li_next;
@@ -4296,8 +4294,6 @@ eval_index (
         if (!empty2 && (n2 < 0 || n2 + 1 < n1))
           n2 = -1;
         l = list_alloc();
-        if (l == NULL)
-          return FAIL;
         item = list_find(rettv->vval.v_list, n1);
         while (n1++ <= n2) {
           list_append_tv(l, &item->li_tv);
@@ -4607,8 +4603,6 @@ static int get_list_tv(char_u **arg, typval_T *rettv, int evaluate)
 
   if (evaluate) {
     l = list_alloc();
-    if (l == NULL)
-      return FAIL;
   }
 
   *arg = skipwhite(*arg + 1);
@@ -4653,7 +4647,7 @@ failret:
  * Allocate an empty header for a list.
  * Caller should take care of the reference count.
  */
-list_T *list_alloc(void)
+list_T *list_alloc(void) FUNC_ATTR_NONNULL_RET
 {
   list_T *list = xcalloc(1, sizeof(list_T));
 
@@ -5179,38 +5173,35 @@ static int list_concat(list_T *l1, list_T *l2, typval_T *tv)
  */
 static list_T *list_copy(list_T *orig, int deep, int copyID)
 {
-  list_T      *copy;
   listitem_T  *item;
   listitem_T  *ni;
 
   if (orig == NULL)
     return NULL;
 
-  copy = list_alloc();
-  if (copy != NULL) {
-    if (copyID != 0) {
-      /* Do this before adding the items, because one of the items may
-       * refer back to this list. */
-      orig->lv_copyID = copyID;
-      orig->lv_copylist = copy;
-    }
-    for (item = orig->lv_first; item != NULL && !got_int;
-         item = item->li_next) {
-      ni = listitem_alloc();
-      if (deep) {
-        if (item_copy(&item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
-          free(ni);
-          break;
-        }
-      } else
-        copy_tv(&item->li_tv, &ni->li_tv);
-      list_append(copy, ni);
-    }
-    ++copy->lv_refcount;
-    if (item != NULL) {
-      list_unref(copy);
-      copy = NULL;
-    }
+  list_T *copy = list_alloc();
+  if (copyID != 0) {
+    /* Do this before adding the items, because one of the items may
+     * refer back to this list. */
+    orig->lv_copyID = copyID;
+    orig->lv_copylist = copy;
+  }
+  for (item = orig->lv_first; item != NULL && !got_int;
+       item = item->li_next) {
+    ni = listitem_alloc();
+    if (deep) {
+      if (item_copy(&item->li_tv, &ni->li_tv, deep, copyID) == FAIL) {
+        free(ni);
+        break;
+      }
+    } else
+      copy_tv(&item->li_tv, &ni->li_tv);
+    list_append(copy, ni);
+  }
+  ++copy->lv_refcount;
+  if (item != NULL) {
+    list_unref(copy);
+    copy = NULL;
   }
 
   return copy;
@@ -10394,8 +10385,6 @@ static void dict_list(typval_T *argvars, typval_T *rettv, int what)
         li->li_tv.v_type = VAR_LIST;
         li->li_tv.v_lock = 0;
         li->li_tv.vval.v_list = l2;
-        if (l2 == NULL)
-          break;
         ++l2->lv_refcount;
 
         li2 = listitem_alloc();
@@ -14466,10 +14455,8 @@ static void f_undotree(typval_T *argvars, typval_T *rettv)
   dict_add_nr_str(dict, "save_cur", (long)curbuf->b_u_save_nr_cur, NULL);
 
   list = list_alloc();
-  if (list != NULL) {
-    u_eval_tree(curbuf->b_u_oldhead, list);
-    dict_add_list(dict, "entries", list);
-  }
+  u_eval_tree(curbuf->b_u_oldhead, list);
+  dict_add_list(dict, "entries", list);
 }
 
 /*
@@ -19041,10 +19028,8 @@ static void on_job_data(RStream *rstream, void *data, bool eof, char *type)
 
 static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
 {
-  list_T *list;
-
   // Create the list which will be set to v:job_data
-  list = list_alloc();
+  list_T *list = list_alloc();
   list_append_number(list, job_id(job));
   list_append_string(list, (uint8_t *)type, -1);
 
