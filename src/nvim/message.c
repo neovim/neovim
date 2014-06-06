@@ -2867,7 +2867,7 @@ static char_u * console_dialog_alloc(const char_u *message,
  * the button is used.
  * The hotkeys can be multi-byte characters, but without combining chars.
  *
- * Returns an allocated string with hotkeys, or NULL for error.
+ * Returns an allocated string with hotkeys.
  */
 static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfltbutton)
   FUNC_ATTR_NONNULL_RET
