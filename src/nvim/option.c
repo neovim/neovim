@@ -1933,26 +1933,15 @@ void set_init_1(void)
    */
   opt_idx = findoption((char_u *)"maxmemtot");
   if (opt_idx >= 0) {
-#ifndef HAVE_TOTAL_MEM
-    if (options[opt_idx].def_val[VI_DEFAULT] == (char_u *)0L)
-#endif
     {
-#ifdef HAVE_TOTAL_MEM
       /* Use half of amount of memory available to Vim. */
       /* If too much to fit in long_u, get long_u max */
       uint64_t available_kib = os_get_total_mem_kib();
       n = available_kib / 2 > ULONG_MAX ? ULONG_MAX
                                         : (long_u)(available_kib /2);
-#else
-      n = (0x7fffffff >> 11);
-#endif
       options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       opt_idx = findoption((char_u *)"maxmem");
       if (opt_idx >= 0) {
-#ifndef HAVE_TOTAL_MEM
-        if ((long)options[opt_idx].def_val[VI_DEFAULT] > (long)n
-            || (long)options[opt_idx].def_val[VI_DEFAULT] == 0L)
-#endif
         options[opt_idx].def_val[VI_DEFAULT] = (char_u *)n;
       }
     }
