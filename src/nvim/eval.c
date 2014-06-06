@@ -5856,7 +5856,7 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
 /*
  * Get a string item from a dictionary.
  * When "save" is TRUE allocate memory for it.
- * Returns NULL if the entry doesn't exist or some other failure.
+ * Returns NULL if the entry doesn't exist.
  */
 char_u *get_dict_string(dict_T *d, char_u *key, int save)
 {
@@ -5867,8 +5867,9 @@ char_u *get_dict_string(dict_T *d, char_u *key, int save)
   if (di == NULL)
     return NULL;
   s = get_tv_string(&di->di_tv);
-  if (save && s != NULL)
+  if (save) {
     s = vim_strsave(s);
+  }
   return s;
 }
 
@@ -17419,9 +17420,6 @@ static void func_do_profile(ufunc_T *fp)
   }
 
   fp->uf_tml_idx = -1;
-  if (fp->uf_tml_count == NULL || fp->uf_tml_total == NULL
-      || fp->uf_tml_self == NULL)
-    return;
 
   fp->uf_profiling = TRUE;
 }
