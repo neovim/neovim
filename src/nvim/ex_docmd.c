@@ -8554,13 +8554,9 @@ static int ses_put_fname(FILE *fd, char_u *name, unsigned *flagp)
   free(sname);
 
   /* write the result */
-  if (fputs((char *)p, fd) < 0) {
-    free(p);
-    return FAIL;
-  }
-
+  bool retval = fputs((char *)p, fd) < 0 ? FAIL : OK;
   free(p);
-  return OK;
+  return retval;
 }
 
 /*
