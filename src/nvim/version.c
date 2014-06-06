@@ -141,11 +141,7 @@ static char *(features[]) = {
   "+syntax",
   "+tag_binary",
   "+tag_old_static",
-#ifdef FEAT_TAG_ANYWHITE
-  "+tag_any_white",
-#else  // ifdef FEAT_TAG_ANYWHITE
   "-tag_any_white",
-#endif  // ifdef FEAT_TAG_ANYWHITE
 #if defined(UNIX)
 
   // only Unix can have terminfo instead of termcap
