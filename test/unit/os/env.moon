@@ -37,6 +37,22 @@ describe 'env function', ->
       eq OK, (os_setenv name, value_updated, 0)
       eq value, os.getenv name
 
+    it 'overwrites an env variable if overwrite is 1', ->
+      name = 'NEOVIM_UNIT_TEST_SETENV_3N'
+      value = 'NEOVIM_UNIT_TEST_SETENV_3V'
+      value_updated = 'NEOVIM_UNIT_TEST_SETENV_3V_UPDATED'
+      eq OK, (os_setenv name, value, 0)
+      eq value, os.getenv name
+      eq OK, (os_setenv name, value_updated, 1)
+      eq value_updated, os.getenv name
+
+    it 'sets an environment and returns OK if overwrite is 0', ->
+      name = 'NEOVIM_UNIT_TEST_SETENV_4N'
+      value = 'NEOVIM_UNIT_TEST_SETENV_4V'
+      eq nil, os.getenv name
+      eq OK, (os_setenv name, value, 0)
+      eq value, os.getenv name
+
   describe 'os_getenv', ->
 
     it 'reads an env variable', ->
