@@ -8,7 +8,7 @@
 
 [![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
-[![Coverage Status](https://coveralls.io/repos/neovim/neovim/badge.png)](https://coveralls.io/r/neovim/neovim)
+[![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
