@@ -1185,21 +1185,7 @@ static char_u *menu_text(char_u *str, int *mnemonic, char_u **actext)
       if (p[1] == NUL)              /* trailing "&" */
         break;
       if (mnemonic != NULL && p[1] != '&')
-#if !defined(__MVS__) || defined(MOTIF390_MNEMONIC_FIXED)
         *mnemonic = p[1];
-#else
-      {
-        /*
-         * Well there is a bug in the Motif libraries on OS390 Unix.
-         * The mnemonic keys needs to be converted to ASCII values
-         * first.
-         * This behavior has been seen in 2.8 and 2.9.
-         */
-        char c = p[1];
-        __etoa_l(&c, 1);
-        *mnemonic = c;
-      }
-#endif
       STRMOVE(p, p + 1);
       p = p + 1;
     }
