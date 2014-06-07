@@ -5655,9 +5655,7 @@ void aubuflocal_remove(buf_T *buf)
  */
 static int au_new_group(char_u *name)
 {
-  int i;
-
-  i = au_find_group(name);
+  int i = au_find_group(name);
   if (i == AUGROUP_ERROR) {     /* the group doesn't exist yet, add it */
     /* First try using a free entry. */
     for (i = 0; i < augroups.ga_len; ++i)
@@ -5694,11 +5692,11 @@ static void au_del_group(char_u *name)
  */
 static int au_find_group(char_u *name)
 {
-  int i;
-
-  for (i = 0; i < augroups.ga_len; ++i)
-    if (AUGROUP_NAME(i) != NULL && STRCMP(AUGROUP_NAME(i), name) == 0)
+  for (int i = 0; i < augroups.ga_len; ++i) {
+    if (AUGROUP_NAME(i) != NULL && STRCMP(AUGROUP_NAME(i), name) == 0) {
       return i;
+    }
+  }
   return AUGROUP_ERROR;
 }
 
@@ -5715,8 +5713,6 @@ int au_has_group(char_u *name)
  */
 void do_augroup(char_u *arg, int del_group)
 {
-  int i;
-
   if (del_group) {
     if (*arg == NUL)
       EMSG(_(e_argreq));
@@ -5725,12 +5721,12 @@ void do_augroup(char_u *arg, int del_group)
   } else if (STRICMP(arg, "end") == 0)   /* ":aug end": back to group 0 */
     current_augroup = AUGROUP_DEFAULT;
   else if (*arg) {                  /* ":aug xxx": switch to group xxx */
-    i = au_new_group(arg);
+    int i = au_new_group(arg);
     if (i != AUGROUP_ERROR)
       current_augroup = i;
   } else {                        /* ":aug": list the group names */
     msg_start();
-    for (i = 0; i < augroups.ga_len; ++i) {
+    for (int i = 0; i < augroups.ga_len; ++i) {
       if (AUGROUP_NAME(i) != NULL) {
         msg_puts(AUGROUP_NAME(i));
         msg_puts((char_u *)"  ");

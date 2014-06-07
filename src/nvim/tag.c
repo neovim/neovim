@@ -1964,7 +1964,7 @@ findtag_end:
     matches = NULL;
   match_count = 0;
   for (mtt = 0; mtt < MT_COUNT; ++mtt) {
-    for (i = 0; i < ga_match[mtt].ga_len; ++i) {
+    for (int i = 0; i < ga_match[mtt].ga_len; ++i) {
       mfp = ((struct match_found **)(ga_match[mtt].ga_data))[i];
       if (matches == NULL)
         free(mfp);

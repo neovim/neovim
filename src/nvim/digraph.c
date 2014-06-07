@@ -1492,8 +1492,7 @@ static int getexactdigraph(int char1, int char2, int meta_char)
 
   // Search user digraphs first.
   digr_T *dp = (digr_T *)user_digraphs.ga_data;
-  int i;
-  for (i = 0; i < user_digraphs.ga_len; ++i) {
+  for (int i = 0; i < user_digraphs.ga_len; ++i) {
     if (((int) dp->char1 == char1) && ((int) dp->char2 == char2)) {
       retval = dp->result;
       break;
@@ -1505,7 +1504,7 @@ static int getexactdigraph(int char1, int char2, int meta_char)
   if (retval == 0) {
     dp = digraphdefault;
 
-    for (i = 0; dp->char1 != 0; ++i) {
+    for (int i = 0; dp->char1 != 0; ++i) {
       if (((int) dp->char1 == char1) && ((int) dp->char2 == char2)) {
         retval = dp->result;
         break;
@@ -1519,7 +1518,7 @@ static int getexactdigraph(int char1, int char2, int meta_char)
     vimconv_T vc;
 
     // Convert the Unicode digraph to 'encoding'.
-    i = utf_char2bytes(retval, buf);
+    int i = utf_char2bytes(retval, buf);
     retval = 0;
     vc.vc_type = CONV_NONE;
 
@@ -1578,7 +1577,6 @@ int getdigraph(int char1, int char2, int meta_char)
 void putdigraph(char_u *str)
 {
   int char1, char2, n;
-  int i;
   digr_T *dp;
 
   while (*str != NUL) {
@@ -1610,6 +1608,7 @@ void putdigraph(char_u *str)
     // If the digraph already exists, replace the result.
     dp = (digr_T *)user_digraphs.ga_data;
 
+    int i;
     for (i = 0; i < user_digraphs.ga_len; ++i) {
       if (((int)dp->char1 == char1) && ((int)dp->char2 == char2)) {
         dp->result = n;
@@ -1632,14 +1631,13 @@ void putdigraph(char_u *str)
 
 void listdigraphs(void)
 {
-  int i;
   digr_T *dp;
 
   msg_putchar('\n');
 
   dp = digraphdefault;
 
-  for (i = 0; dp->char1 != NUL && !got_int; ++i) {
+  for (int i = 0; dp->char1 != NUL && !got_int; ++i) {
     digr_T tmp;
 
     // May need to convert the result to 'encoding'.
@@ -1657,7 +1655,7 @@ void listdigraphs(void)
   }
 
   dp = (digr_T *)user_digraphs.ga_data;
-  for (i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
+  for (int i = 0; i < user_digraphs.ga_len && !got_int; ++i) {
     printdigraph(dp);
     ui_breakcheck();
     dp++;
@@ -1778,7 +1776,6 @@ void ex_loadkeymap(exarg_T *eap)
 
 #define KMAP_LLEN 200  // max length of "to" and "from" together
   char_u buf[KMAP_LLEN + 11];
-  int i;
   char_u *save_cpo = p_cpo;
 
   if (!getline_equal(eap->getline, eap->cookie, getsourceline)) {
@@ -1830,7 +1827,7 @@ void ex_loadkeymap(exarg_T *eap)
   }
 
   // setup ":lnoremap" to map the keys
-  for (i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s %s",
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].from,
                  ((kmap_T *)curbuf->b_kmap_ga.ga_data)[i].to);
@@ -1847,7 +1844,6 @@ void ex_loadkeymap(exarg_T *eap)
 static void keymap_unload(void)
 {
   char_u buf[KMAP_MAXLEN + 10];
-  int i;
   char_u *save_cpo = p_cpo;
   kmap_T *kp;
 
@@ -1861,7 +1857,7 @@ static void keymap_unload(void)
   // clear the ":lmap"s
   kp = (kmap_T *)curbuf->b_kmap_ga.ga_data;
 
-  for (i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
+  for (int i = 0; i < curbuf->b_kmap_ga.ga_len; ++i) {
     vim_snprintf((char *)buf, sizeof(buf), "<buffer> %s", kp[i].from);
     (void)do_map(1, buf, LANGMAP, FALSE);
     free(kp[i].from);

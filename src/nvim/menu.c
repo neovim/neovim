@@ -1454,7 +1454,6 @@ void ex_menutranslate(exarg_T *eap)
 {
   char_u              *arg = eap->arg;
   menutrans_T         *tp;
-  int i;
   char_u              *from, *from_noamp, *to;
 
   if (menutrans_ga.ga_itemsize == 0)
@@ -1465,7 +1464,7 @@ void ex_menutranslate(exarg_T *eap)
    */
   if (STRNCMP(arg, "clear", 5) == 0 && ends_excmd(*skipwhite(arg + 5))) {
     tp = (menutrans_T *)menutrans_ga.ga_data;
-    for (i = 0; i < menutrans_ga.ga_len; ++i) {
+    for (int i = 0; i < menutrans_ga.ga_len; ++i) {
       free(tp[i].from);
       free(tp[i].from_noamp);
       free(tp[i].to);
@@ -1526,24 +1525,26 @@ static char_u *menu_skip_part(char_u *p)
 static char_u *menutrans_lookup(char_u *name, int len)
 {
   menutrans_T         *tp = (menutrans_T *)menutrans_ga.ga_data;
-  int i;
   char_u              *dname;
 
-  for (i = 0; i < menutrans_ga.ga_len; ++i)
-    if (STRNCMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL)
+  for (int i = 0; i < menutrans_ga.ga_len; ++i) {
+    if (STRNCMP(name, tp[i].from, len) == 0 && tp[i].from[len] == NUL) {
       return tp[i].to;
+    }
+  }
 
   /* Now try again while ignoring '&' characters. */
-  i = name[len];
+  char c = name[len];
   name[len] = NUL;
   dname = menu_text(name, NULL, NULL);
-  name[len] = i;
+  name[len] = c;
   if (dname != NULL) {
-    for (i = 0; i < menutrans_ga.ga_len; ++i)
+    for (int i = 0; i < menutrans_ga.ga_len; ++i) {
       if (STRCMP(dname, tp[i].from_noamp) == 0) {
         free(dname);
         return tp[i].to;
       }
+    }
     free(dname);
   }
 
