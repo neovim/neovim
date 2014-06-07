@@ -460,10 +460,9 @@ void eval_init(void)
 #if defined(EXITFREE) || defined(PROTO)
 void eval_clear(void)
 {
-  int i;
   struct vimvar   *p;
 
-  for (i = 0; i < VV_LEN; ++i) {
+  for (int i = 0; i < VV_LEN; ++i) {
     p = &vimvars[i];
     if (p->vv_di.di_tv.v_type == VAR_STRING) {
       free(p->vv_str);
@@ -489,9 +488,9 @@ void eval_clear(void)
   /* Script-local variables. First clear all the variables and in a second
    * loop free the scriptvar_T, because a variable in one script might hold
    * a reference to the whole scope of another script. */
-  for (i = 1; i <= ga_scripts.ga_len; ++i)
+  for (int i = 1; i <= ga_scripts.ga_len; ++i)
     vars_clear(&SCRIPT_VARS(i));
-  for (i = 1; i <= ga_scripts.ga_len; ++i)
+  for (int i = 1; i <= ga_scripts.ga_len; ++i)
     free(SCRIPT_SV(i));
   ga_clear(&ga_scripts);
 
@@ -1038,14 +1037,13 @@ call_vim_function (
 {
   long n;
   int len;
-  int i;
   int doesrange;
   void        *save_funccalp = NULL;
   int ret;
 
   typval_T *argvars = xmalloc((argc + 1) * sizeof(typval_T));
 
-  for (i = 0; i < argc; i++) {
+  for (int i = 0; i < argc; i++) {
     /* Pass a NULL or empty argument as an empty string */
     if (argv[i] == NULL || *argv[i] == NUL) {
       argvars[i].v_type = VAR_STRING;
@@ -5292,7 +5290,6 @@ list_join_inner (
     garray_T *join_gap          /* to keep each list item string */
 )
 {
-  int i;
   join_T      *p;
   int len;
   int sumlen = 0;
@@ -5333,7 +5330,7 @@ list_join_inner (
     sumlen += (int)STRLEN(sep) * (join_gap->ga_len - 1);
   ga_grow(gap, sumlen + 2);
 
-  for (i = 0; i < join_gap->ga_len && !got_int; ++i) {
+  for (int i = 0; i < join_gap->ga_len && !got_int; ++i) {
     if (first)
       first = FALSE;
     else
@@ -5358,7 +5355,6 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
   garray_T join_ga;
   int retval;
   join_T      *p;
-  int i;
 
   ga_init(&join_ga, (int)sizeof(join_T), l->lv_len);
   retval = list_join_inner(gap, l, sep, echo_style, copyID, &join_ga);
@@ -5366,7 +5362,7 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
   /* Dispose each item in join_ga. */
   if (join_ga.ga_data != NULL) {
     p = (join_T *)join_ga.ga_data;
-    for (i = 0; i < join_ga.ga_len; ++i) {
+    for (int i = 0; i < join_ga.ga_len; ++i) {
       free(p->tofree);
       ++p;
     }
@@ -5405,7 +5401,6 @@ int garbage_collect(void)
   int copyID;
   buf_T       *buf;
   win_T       *wp;
-  int i;
   funccall_T  *fc, **pfc;
   int did_free;
   int did_free_funccal = FALSE;
@@ -5435,7 +5430,7 @@ int garbage_collect(void)
   }
 
   /* script-local variables */
-  for (i = 1; i <= ga_scripts.ga_len; ++i)
+  for (int i = 1; i <= ga_scripts.ga_len; ++i)
     set_ref_in_ht(&SCRIPT_VARS(i), copyID);
 
   /* buffer-local variables */
@@ -5463,9 +5458,6 @@ int garbage_collect(void)
 
   /* v: vars */
   set_ref_in_ht(&vimvarht, copyID);
-
-
-
 
   /*
    * 2. Free lists and dictionaries that are not referenced.
@@ -13394,7 +13386,6 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
   int typeerr = FALSE;
   int maxcount;
   garray_T ga;
-  int i;
   listitem_T  *li;
   int need_capital = FALSE;
 
@@ -13416,7 +13407,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
 
     spell_suggest_list(&ga, str, maxcount, need_capital, FALSE);
 
-    for (i = 0; i < ga.ga_len; ++i) {
+    for (int i = 0; i < ga.ga_len; ++i) {
       str = ((char_u **)ga.ga_data)[i];
 
       li = listitem_alloc();
@@ -15888,7 +15879,6 @@ char_u *get_var_value(char_u *name)
  */
 void new_script_vars(scid_T id)
 {
-  int i;
   hashtab_T   *ht;
   scriptvar_T *sv;
 
@@ -15897,7 +15887,7 @@ void new_script_vars(scid_T id)
     /* Re-allocating ga_data means that an ht_array pointing to
      * ht_smallarray becomes invalid.  We can recognize this: ht_mask is
      * at its init value.  Also reset "v_dict", it's always the same. */
-    for (i = 1; i <= ga_scripts.ga_len; ++i) {
+    for (int i = 1; i <= ga_scripts.ga_len; ++i) {
       ht = &SCRIPT_VARS(i);
       if (ht->ht_mask == HT_INIT_SIZE - 1)
         ht->ht_array = ht->ht_smallarray;
@@ -16572,8 +16562,6 @@ static char_u *find_option_end(char_u **arg, int *opt_flags)
 void ex_function(exarg_T *eap)
 {
   char_u      *theline;
-  int i;
-  int j;
   int c;
   int saved_did_emsg;
   int saved_wait_return = need_wait_return;
@@ -16704,7 +16692,7 @@ void ex_function(exarg_T *eap)
       fp = find_func(name);
       if (fp != NULL) {
         list_func_head(fp, TRUE);
-        for (j = 0; j < fp->uf_lines.ga_len && !got_int; ++j) {
+        for (int j = 0; j < fp->uf_lines.ga_len && !got_int; ++j) {
           if (FUNCLINE(fp, j) == NULL)
             continue;
           msg_putchar('\n');
@@ -16754,10 +16742,7 @@ void ex_function(exarg_T *eap)
       arg = fudi.fd_newkey;
     if (arg != NULL && (fudi.fd_di == NULL
                         || fudi.fd_di->di_tv.v_type != VAR_FUNC)) {
-      if (*arg == K_SPECIAL)
-        j = 3;
-      else
-        j = 0;
+      int j = (*arg == K_SPECIAL) ? 3 : 0;
       while (arg[j] != NUL && (j == 0 ? eval_isnamec1(arg[j])
                                : eval_isnamec(arg[j])))
         ++j;
@@ -16794,7 +16779,7 @@ void ex_function(exarg_T *eap)
       arg = vim_strsave(arg);
 
       /* Check for duplicate argument name. */
-      for (i = 0; i < newargs.ga_len; ++i)
+      for (int i = 0; i < newargs.ga_len; ++i)
         if (STRCMP(((char_u **)(newargs.ga_data))[i], arg) == 0) {
           EMSG2(_("E853: Duplicate argument name: %s"), arg);
           free(arg);
@@ -17062,7 +17047,7 @@ void ex_function(exarg_T *eap)
       char_u  *scriptname;
 
       /* Check that the autoload name matches the script name. */
-      j = FAIL;
+      int j = FAIL;
       if (sourcing_name != NULL) {
         scriptname = autoload_name(name);
         if (scriptname != NULL) {
@@ -17357,8 +17342,6 @@ static int eval_fname_sid(char_u *p)
  */
 static void list_func_head(ufunc_T *fp, int indent)
 {
-  int j;
-
   msg_start();
   if (indent)
     MSG_PUTS("   ");
@@ -17369,6 +17352,7 @@ static void list_func_head(ufunc_T *fp, int indent)
   } else
     msg_puts(fp->uf_name);
   msg_putchar('(');
+  int j;
   for (j = 0; j < fp->uf_args.ga_len; ++j) {
     if (j)
       MSG_PUTS(", ");
@@ -17522,7 +17506,6 @@ void func_dump_profile(FILE *fd)
   hashitem_T  *hi;
   int todo;
   ufunc_T     *fp;
-  int i;
   ufunc_T     **sorttab;
   int st_len = 0;
 
@@ -17553,7 +17536,7 @@ void func_dump_profile(FILE *fd)
         fprintf(fd, "\n");
         fprintf(fd, "count  total (s)   self (s)\n");
 
-        for (i = 0; i < fp->uf_lines.ga_len; ++i) {
+        for (int i = 0; i < fp->uf_lines.ga_len; ++i) {
           if (FUNCLINE(fp, i) == NULL)
             continue;
           prof_func_line(fd, fp->uf_tml_count[i],
@@ -17906,7 +17889,6 @@ call_user_func (
   static int depth = 0;
   dictitem_T  *v;
   int fixvar_idx = 0;           /* index in fixvar[] */
-  int i;
   int ai;
   char_u numbuf[NUMBUFLEN];
   char_u      *name;
@@ -17991,7 +17973,7 @@ call_user_func (
       (varnumber_T)firstline);
   add_nr_var(&fc->l_avars, &fc->fixvar[fixvar_idx++].var, "lastline",
       (varnumber_T)lastline);
-  for (i = 0; i < argcount; ++i) {
+  for (int i = 0; i < argcount; ++i) {
     ai = i - fp->uf_args.ga_len;
     if (ai < 0)
       /* named argument a:name */
@@ -18050,7 +18032,7 @@ call_user_func (
         char_u  *s;
 
         msg_puts((char_u *)"(");
-        for (i = 0; i < argcount; ++i) {
+        for (int i = 0; i < argcount; ++i) {
           if (i > 0)
             msg_puts((char_u *)", ");
           if (argvars[i].v_type == VAR_NUMBER)
@@ -19021,7 +19003,6 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 {
   int sublen;
   regmatch_T regmatch;
-  int i;
   int do_all;
   char_u      *tail;
   garray_T ga;
@@ -19064,7 +19045,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
                      (regmatch.endp[0] - regmatch.startp[0])));
 
       /* copy the text up to where the match is */
-      i = (int)(regmatch.startp[0] - tail);
+      int i = (int)(regmatch.startp[0] - tail);
       memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
       /* add the substituted text */
       (void)vim_regsub(&regmatch, sub, (char_u *)ga.ga_data

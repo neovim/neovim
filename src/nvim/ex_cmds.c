@@ -5290,7 +5290,6 @@ void ex_viusage(exarg_T *eap)
 void ex_helptags(exarg_T *eap)
 {
   garray_T ga;
-  int i, j;
   int len;
   char_u lang[2];
   expand_T xpc;
@@ -5331,7 +5330,7 @@ void ex_helptags(exarg_T *eap)
   /* Go over all files in the directory to find out what languages are
    * present. */
   ga_init(&ga, 1, 10);
-  for (i = 0; i < filecount; ++i) {
+  for (int i = 0; i < filecount; ++i) {
     len = (int)STRLEN(files[i]);
     if (len > 4) {
       if (STRICMP(files[i] + len - 4, ".txt") == 0) {
@@ -5348,6 +5347,7 @@ void ex_helptags(exarg_T *eap)
       } else
         continue;
 
+      int j;
       /* Did we find this language already? */
       for (j = 0; j < ga.ga_len; j += 2)
         if (STRNCMP(lang, ((char_u *)ga.ga_data) + j, 2) == 0)
@@ -5364,7 +5364,7 @@ void ex_helptags(exarg_T *eap)
   /*
    * Loop over the found languages to generate a tags file for each one.
    */
-  for (j = 0; j < ga.ga_len; j += 2) {
+  for (int j = 0; j < ga.ga_len; j += 2) {
     STRCPY(fname, "tags-xx");
     fname[5] = ((char_u *)ga.ga_data)[j];
     fname[6] = ((char_u *)ga.ga_data)[j + 1];
@@ -5403,7 +5403,6 @@ helptags_one (
   char_u      *p1, *p2;
   int fi;
   char_u      *s;
-  int i;
   char_u      *fname;
   int dirlen;
   int utf8 = MAYBE;
@@ -5547,7 +5546,7 @@ helptags_one (
     /*
      * Check for duplicates.
      */
-    for (i = 1; i < ga.ga_len; ++i) {
+    for (int i = 1; i < ga.ga_len; ++i) {
       p1 = ((char_u **)ga.ga_data)[i - 1];
       p2 = ((char_u **)ga.ga_data)[i];
       while (*p1 == *p2) {
@@ -5571,7 +5570,7 @@ helptags_one (
     /*
      * Write the tags into the file.
      */
-    for (i = 0; i < ga.ga_len; ++i) {
+    for (int i = 0; i < ga.ga_len; ++i) {
       s = ((char_u **)ga.ga_data)[i];
       if (STRNCMP(s, "help-tags\t", 10) == 0)
         /* help-tags entry was added in formatted form */
@@ -5591,7 +5590,7 @@ helptags_one (
   if (mix)
     got_int = FALSE;        /* continue with other languages */
 
-  for (i = 0; i < ga.ga_len; ++i)
+  for (int i = 0; i < ga.ga_len; ++i)
     free(((char_u **)ga.ga_data)[i]);
   ga_clear(&ga);
   fclose(fd_tags);          /* there is no check for an error... */

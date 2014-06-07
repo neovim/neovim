@@ -557,7 +557,6 @@ void ex_breakdel(exarg_T *eap)
   int nr;
   int todel = -1;
   int del_all = FALSE;
-  int i;
   linenr_T best_lnum = 0;
   garray_T    *gap;
 
@@ -569,7 +568,7 @@ void ex_breakdel(exarg_T *eap)
   if (vim_isdigit(*eap->arg)) {
     /* ":breakdel {nr}" */
     nr = atol((char *)eap->arg);
-    for (i = 0; i < gap->ga_len; ++i)
+    for (int i = 0; i < gap->ga_len; ++i)
       if (DEBUGGY(gap, i).dbg_nr == nr) {
         todel = i;
         break;
@@ -582,7 +581,7 @@ void ex_breakdel(exarg_T *eap)
     if (dbg_parsearg(eap->arg, gap) == FAIL)
       return;
     bp = &DEBUGGY(gap, gap->ga_len);
-    for (i = 0; i < gap->ga_len; ++i) {
+    for (int i = 0; i < gap->ga_len; ++i) {
       bpi = &DEBUGGY(gap, i);
       if (bp->dbg_type == bpi->dbg_type
           && STRCMP(bp->dbg_name, bpi->dbg_name) == 0
@@ -625,12 +624,11 @@ void ex_breakdel(exarg_T *eap)
 void ex_breaklist(exarg_T *eap)
 {
   struct debuggy *bp;
-  int i;
 
   if (GA_EMPTY(&dbg_breakp))
     MSG(_("No breakpoints defined"));
   else
-    for (i = 0; i < dbg_breakp.ga_len; ++i) {
+    for (int i = 0; i < dbg_breakp.ga_len; ++i) {
       bp = &BREAKP(i);
       if (bp->dbg_type == DBG_FILE)
         home_replace(NULL, bp->dbg_name, NameBuff, MAXPATHL, TRUE);
@@ -683,7 +681,6 @@ debuggy_find (
 )
 {
   struct debuggy *bp;
-  int i;
   linenr_T lnum = 0;
   regmatch_T regmatch;
   char_u      *name = fname;
@@ -700,7 +697,7 @@ debuggy_find (
     STRCPY(name + 5, fname + 3);
   }
 
-  for (i = 0; i < gap->ga_len; ++i) {
+  for (int i = 0; i < gap->ga_len; ++i) {
     /* Skip entries that are not useful or are for a line that is beyond
      * an already found breakpoint. */
     bp = &DEBUGGY(gap, i);
@@ -1112,13 +1109,11 @@ void prof_inchar_exit(void)
  */
 static void script_dump_profile(FILE *fd)
 {
-  int id;
   scriptitem_T    *si;
-  int i;
   FILE            *sfd;
   sn_prl_T        *pp;
 
-  for (id = 1; id <= script_items.ga_len; ++id) {
+  for (int id = 1; id <= script_items.ga_len; ++id) {
     si = &SCRIPT_ITEM(id);
     if (si->sn_prof_on) {
       fprintf(fd, "SCRIPT  %s\n", si->sn_name);
@@ -1135,7 +1130,7 @@ static void script_dump_profile(FILE *fd)
       if (sfd == NULL)
         fprintf(fd, "Cannot open file!\n");
       else {
-        for (i = 0; i < si->sn_prl_ga.ga_len; ++i) {
+        for (int i = 0; i < si->sn_prl_ga.ga_len; ++i) {
           if (vim_fgets(IObuff, IOSIZE, sfd))
             break;
           pp = &PRL_ITEM(si, i);
@@ -1579,7 +1574,6 @@ do_arglist (
   garray_T new_ga;
   int exp_count;
   char_u      **exp_files;
-  int i;
   char_u      *p;
   int match;
 
@@ -1597,7 +1591,7 @@ do_arglist (
      * argument list.
      */
     regmatch.rm_ic = p_fic;     /* ignore case when 'fileignorecase' is set */
-    for (i = 0; i < new_ga.ga_len && !got_int; ++i) {
+    for (int i = 0; i < new_ga.ga_len && !got_int; ++i) {
       p = ((char_u **)new_ga.ga_data)[i];
       p = file_pat_to_reg_pat(p, NULL, NULL, FALSE);
       if (p == NULL)
@@ -1629,7 +1623,7 @@ do_arglist (
     }
     ga_clear(&new_ga);
   } else {
-    i = expand_wildcards(new_ga.ga_len, (char_u **)new_ga.ga_data,
+    int i = expand_wildcards(new_ga.ga_len, (char_u **)new_ga.ga_data,
         &exp_count, &exp_files, EW_DIR|EW_FILE|EW_ADDSLASH|EW_NOTFOUND);
     ga_clear(&new_ga);
     if (i == FAIL)
@@ -1714,8 +1708,6 @@ void check_arg_idx(win_T *win)
  */
 void ex_args(exarg_T *eap)
 {
-  int i;
-
   if (eap->cmdidx != CMD_args) {
     alist_unlink(ALIST(curwin));
     if (eap->cmdidx == CMD_argglobal)
@@ -1738,7 +1730,7 @@ void ex_args(exarg_T *eap)
       /* Overwrite the command, for a short list there is no scrolling
        * required and no wait_return(). */
       gotocmdline(TRUE);
-      for (i = 0; i < ARGCOUNT; ++i) {
+      for (int i = 0; i < ARGCOUNT; ++i) {
         if (i == curwin->w_arg_idx)
           msg_putchar('[');
         msg_outtrans(alist_name(&ARGLIST[i]));
@@ -1754,7 +1746,7 @@ void ex_args(exarg_T *eap)
      * ":argslocal": make a local copy of the global argument list.
      */
     ga_grow(gap, GARGCOUNT);
-    for (i = 0; i < GARGCOUNT; ++i)
+    for (int i = 0; i < GARGCOUNT; ++i)
       if (GARGLIST[i].ae_fname != NULL) {
         AARGLIST(curwin->w_alist)[gap->ga_len].ae_fname =
           vim_strsave(GARGLIST[i].ae_fname);
@@ -1941,18 +1933,15 @@ void ex_argadd(exarg_T *eap)
  */
 void ex_argdelete(exarg_T *eap)
 {
-  int i;
-  int n;
-
   if (eap->addr_count > 0) {
     /* ":1,4argdel": Delete all arguments in the range. */
     if (eap->line2 > ARGCOUNT)
       eap->line2 = ARGCOUNT;
-    n = eap->line2 - eap->line1 + 1;
+    int n = eap->line2 - eap->line1 + 1;
     if (*eap->arg != NUL || n <= 0)
       EMSG(_(e_invarg));
     else {
-      for (i = eap->line1; i <= eap->line2; ++i)
+      for (int i = eap->line1; i <= eap->line2; ++i)
         free(ARGLIST[i - 1].ae_fname);
       memmove(ARGLIST + eap->line1 - 1, ARGLIST + eap->line2,
           (size_t)((ARGCOUNT - eap->line2) * sizeof(aentry_T)));
@@ -2107,8 +2096,6 @@ alist_add_list (
     int after                  /* where to add: 0 = before first one */
 )
 {
-  int i;
-
   ga_grow(&ALIST(curwin)->al_ga, count);
   {
     if (after < 0)
@@ -2118,7 +2105,7 @@ alist_add_list (
     if (after < ARGCOUNT)
       memmove(&(ARGLIST[after + count]), &(ARGLIST[after]),
           (ARGCOUNT - after) * sizeof(aentry_T));
-    for (i = 0; i < count; ++i) {
+    for (int i = 0; i < count; ++i) {
       ARGLIST[after + i].ae_fname = files[i];
       ARGLIST[after + i].ae_fnum = buflist_add(files[i], BLN_LISTED);
     }
@@ -2690,9 +2677,7 @@ theend:
  */
 void ex_scriptnames(exarg_T *eap)
 {
-  int i;
-
-  for (i = 1; i <= script_items.ga_len && !got_int; ++i)
+  for (int i = 1; i <= script_items.ga_len && !got_int; ++i)
     if (SCRIPT_ITEM(i).sn_name != NULL) {
       home_replace(NULL, SCRIPT_ITEM(i).sn_name,
           NameBuff, MAXPATHL, TRUE);
@@ -2706,11 +2691,11 @@ void ex_scriptnames(exarg_T *eap)
  */
 void scriptnames_slash_adjust(void)
 {
-  int i;
-
-  for (i = 1; i <= script_items.ga_len; ++i)
-    if (SCRIPT_ITEM(i).sn_name != NULL)
+  for (int i = 1; i <= script_items.ga_len; ++i) {
+    if (SCRIPT_ITEM(i).sn_name != NULL) {
       slash_adjust(SCRIPT_ITEM(i).sn_name);
+    }
+  }
 }
 
 # endif
@@ -2736,9 +2721,7 @@ char_u *get_scriptname(scid_T id)
 # if defined(EXITFREE) || defined(PROTO)
 void free_scriptnames(void)
 {
-  int i;
-
-  for (i = script_items.ga_len; i > 0; --i)
+  for (int i = script_items.ga_len; i > 0; --i)
     free(SCRIPT_ITEM(i).sn_name);
   ga_clear(&script_items);
 }
@@ -2809,10 +2792,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
         /* Adjust the growsize to the current length to speed up
          * concatenating many lines. */
         if (ga.ga_len > 400) {
-          if (ga.ga_len > 8000)
-            ga.ga_growsize = 8000;
-          else
-            ga.ga_growsize = ga.ga_len;
+          ga.ga_growsize = (ga.ga_len > 8000) ? 8000 : ga.ga_len;
         }
         ga_concat(&ga, p + 1);
       }

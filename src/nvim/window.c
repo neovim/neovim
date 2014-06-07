@@ -3796,10 +3796,9 @@ void win_size_save(garray_T *gap)
 void win_size_restore(garray_T *gap)
 {
   win_T       *wp;
-  int i;
 
   if (win_count() * 2 == gap->ga_len) {
-    i = 0;
+    int i = 0;
     for (wp = firstwin; wp != NULL; wp = wp->w_next) {
       frame_setwidth(wp->w_frame, ((int *)gap->ga_data)[i++]);
       win_setheight_win(((int *)gap->ga_data)[i++], wp);

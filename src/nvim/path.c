@@ -588,13 +588,12 @@ static int find_previous_pathsep(char_u *path, char_u **psep)
  */
 static int is_unique(char_u *maybe_unique, garray_T *gap, int i)
 {
-  int j;
   int candidate_len;
   int other_path_len;
   char_u  **other_paths = (char_u **)gap->ga_data;
   char_u  *rival;
 
-  for (j = 0; j < gap->ga_len; j++) {
+  for (int j = 0; j < gap->ga_len; j++) {
     if (j == i)
       continue;        /* don't compare it with itself */
 
@@ -686,12 +685,11 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
  */
 static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
 {
-  int i;
   int maxlen = 0;
   char_u  **path_part = (char_u **)gap->ga_data;
   char_u  *cutoff = NULL;
 
-  for (i = 0; i < gap->ga_len; i++) {
+  for (int i = 0; i < gap->ga_len; i++) {
     int j = 0;
 
     while ((fname[j] == path_part[i][j]
@@ -718,7 +716,6 @@ static char_u *get_path_cutoff(char_u *fname, garray_T *gap)
  */
 static void uniquefy_paths(garray_T *gap, char_u *pattern)
 {
-  int i;
   int len;
   char_u      **fnames = (char_u **)gap->ga_data;
   int sort_again = FALSE;
@@ -760,7 +757,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
   in_curdir = xcalloc(gap->ga_len, sizeof(char_u *));
 
-  for (i = 0; i < gap->ga_len && !got_int; i++) {
+  for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char_u      *path = fnames[i];
     int is_in_curdir;
     char_u      *dir_end = gettail_dir(path);
@@ -813,7 +810,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
   }
 
   /* Shorten filenames in /in/current/directory/{filename} */
-  for (i = 0; i < gap->ga_len && !got_int; i++) {
+  for (int i = 0; i < gap->ga_len && !got_int; i++) {
     char_u *rel_path;
     char_u *path = in_curdir[i];
 
@@ -843,7 +840,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
   free(curdir);
   if (in_curdir != NULL) {
-    for (i = 0; i < gap->ga_len; i++)
+    for (int i = 0; i < gap->ga_len; i++)
       free(in_curdir[i]);
     free(in_curdir);
   }
