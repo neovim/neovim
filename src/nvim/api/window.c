@@ -64,11 +64,6 @@ void window_set_cursor(Window window, Position pos, Error *err)
     return;
   }
 
-  if (pos.row > LONG_MAX || pos.row < LONG_MIN) {
-    set_api_error("Row value outside range", err);
-    return;
-  }
-
   if (pos.col > INT_MAX || pos.col < INT_MIN) {
     set_api_error("Column value outside range", err);
     return;

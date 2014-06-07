@@ -118,12 +118,12 @@ StringArray buffer_get_slice(Buffer buffer,
   rv.items = xcalloc(sizeof(String), rv.size);
 
   for (size_t i = 0; i < rv.size; i++) {
-    int64_t lnum = start + (int64_t)i;
-
-    if (lnum > LONG_MAX) {
-      set_api_error("Line index is too high", err);
+    // detect overflow
+    if ((int64_t)i > (LONG_MAX - start)) {
+      set_api_error("Index value is too high", err);
       goto end;
     }
+    int64_t lnum = start + (int64_t)i;
 
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
     rv.items[i] = cstr_to_string(bufstr);
@@ -215,12 +215,12 @@ void buffer_set_slice(Buffer buffer,
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
   for (size_t i = 0; i < to_replace; i++) {
-    int64_t lnum = start + (int64_t)i;
-
-    if (lnum > LONG_MAX) {
+    // detect overflow
+    if ((int64_t)i > (LONG_MAX - start)) {
       set_api_error("Index value is too high", err);
       goto end;
     }
+    int64_t lnum = start + (int64_t)i;
 
     if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
       set_api_error("Cannot replace line", err);
@@ -233,12 +233,12 @@ void buffer_set_slice(Buffer buffer,
 
   // Now we may need to insert the remaining new old_len
   for (size_t i = to_replace; i < new_len; i++) {
-    int64_t lnum = start + (int64_t)i - 1;
-
-    if (lnum > LONG_MAX) {
+    // detect overflow
+    if ((int64_t)i > (LONG_MAX - start + 1)) {
       set_api_error("Index value is too high", err);
       goto end;
     }
+    int64_t lnum = start + (int64_t)i - 1;
 
     if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
       set_api_error("Cannot insert line", err);
