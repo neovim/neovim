@@ -3153,12 +3153,11 @@ char_u *get_users(expand_T *xp, int idx)
  */
 int match_user(char_u *name)
 {
-  int i;
   int n = (int)STRLEN(name);
   int result = 0;
 
   init_users();
-  for (i = 0; i < ga_users.ga_len; i++) {
+  for (int i = 0; i < ga_users.ga_len; i++) {
     if (STRCMP(((char_u **)ga_users.ga_data)[i], name) == 0)
       return 2;       /* full match */
     if (STRNCMP(((char_u **)ga_users.ga_data)[i], name, n) == 0)
