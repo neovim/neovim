@@ -6547,6 +6547,9 @@ void unset_global_local_option(char *name, void *from)
   buf_T *buf = (buf_T *)from;
 
   opt_idx = findoption((uint8_t *)name);
+  if (opt_idx < 0) {
+	  return; // option not found
+  }
   p = &(options[opt_idx]);
 
   switch ((int)p->indir)
