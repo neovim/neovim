@@ -13696,9 +13696,7 @@ static void f_strwidth(typval_T *argvars, typval_T *rettv)
 {
   char_u      *s = get_tv_string(&argvars[0]);
 
-  rettv->vval.v_number = (varnumber_T)(
-    mb_string2cells(s, -1)
-    );
+  rettv->vval.v_number = (varnumber_T) mb_string2cells(s);
 }
 
 /*

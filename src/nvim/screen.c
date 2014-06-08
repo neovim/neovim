@@ -4834,7 +4834,7 @@ void win_redr_status(win_T *wp)
       int clen = 0, i;
 
       /* Count total number of display cells. */
-      clen = mb_string2cells(p, -1);
+      clen = (int) mb_string2cells(p);
 
       /* Find first character that will fit.
        * Going from start to end is much faster for DBCS. */
