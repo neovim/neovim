@@ -2806,7 +2806,7 @@ copy_char (
 ///
 /// @param message Message which will be part of the confirm_msg
 /// @param buttons String containing button names
-/// @param[out] has_hotkey A element in this array is set to true if
+/// @param[out] has_hotkey An element in this array is set to true if
 ///                        corresponding button has a hotkey
 ///
 /// @return Pointer to memory allocated for storing hotkeys
@@ -2885,7 +2885,7 @@ static char_u *msg_show_console_dialog(char_u *message, char_u *buttons, int dfl
 /// @param message Message which will be part of the confirm_msg
 /// @param buttons String containing button names
 /// @param default_button_idx Number of default button
-/// @param has_hotkey A element in this array is true if corresponding button
+/// @param has_hotkey An element in this array is true if corresponding button
 ///                   has a hotkey
 /// @param[out] hotkeys_ptr Pointer to the memory location where hotkeys will be copied
 static void copy_hotkeys_and_msg(const char_u *message, char_u *buttons,

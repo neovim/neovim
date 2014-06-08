@@ -74,7 +74,7 @@ bool event_poll(int32_t ms)
     // Timeout passed as argument to the timer
     timer.data = &timed_out;
     // We only start the timer after the loop is running, for that we
-    // use an prepare handle(pass the interval as data to it)
+    // use a prepare handle(pass the interval as data to it)
     timer_prepare.data = &ms;
     uv_prepare_start(&timer_prepare, timer_prepare_cb);
   } else if (ms == 0) {

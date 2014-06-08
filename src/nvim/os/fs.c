@@ -148,7 +148,7 @@ static bool is_executable_in_path(const char_u *name)
 
 /// Get stat information for a file.
 ///
-/// @return OK on success, FAIL if an failure occured.
+/// @return OK on success, FAIL if a failure occurred.
 int os_stat(const char_u *name, uv_stat_t *statbuf)
 {
   uv_fs_t request;
@@ -299,7 +299,7 @@ int os_remove(const char *path)
 ///
 /// @param file_descriptor File descriptor of the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
-/// @return `true` on sucess, `false` for failure.
+/// @return `true` on success, `false` for failure.
 bool os_get_file_info(const char *path, FileInfo *file_info)
 {
   if (os_stat((char_u *)path, &(file_info->stat)) == OK) {
@@ -312,7 +312,7 @@ bool os_get_file_info(const char *path, FileInfo *file_info)
 ///
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
-/// @return `true` on sucess, `false` for failure.
+/// @return `true` on success, `false` for failure.
 bool os_get_file_info_link(const char *path, FileInfo *file_info)
 {
   uv_fs_t request;
@@ -329,7 +329,7 @@ bool os_get_file_info_link(const char *path, FileInfo *file_info)
 ///
 /// @param file_descriptor File descriptor of the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
-/// @return `true` on sucess, `false` for failure.
+/// @return `true` on success, `false` for failure.
 bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
 {
   uv_fs_t request;

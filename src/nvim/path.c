@@ -1905,12 +1905,12 @@ int path_full_dir_name(char *directory, char *buffer, int len)
   }
 
   if (os_chdir(directory) != SUCCESS) {
-    // Do not return immediatly since we may be in the wrong directory.
+    // Do not return immediately since we may be in the wrong directory.
     retval = FAIL;
   }
 
   if (retval == FAIL || os_dirname((char_u *) buffer, len) == FAIL) {
-    // Do not return immediatly since we are in the wrong directory.
+    // Do not return immediately since we are in the wrong directory.
     retval = FAIL;
   }
 

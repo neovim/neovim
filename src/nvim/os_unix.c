@@ -1504,7 +1504,7 @@ typedef int (*INTPROCINT)(int);
  */
 int mch_libcall(char_u *libname,
                 char_u *funcname,
-                char_u *argstring,         /* NULL when using a argint */
+                char_u *argstring,         /* NULL when using an argint */
                 int argint,
                 char_u **string_result,    /* NULL when using number_result */
                 int *number_result)

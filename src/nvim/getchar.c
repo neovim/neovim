@@ -2414,7 +2414,7 @@ inchar (
   }
 
   /*
-   * Don't reset these when at the hit-return prompt, otherwise a endless
+   * Don't reset these when at the hit-return prompt, otherwise an endless
    * recursive loop may result (write error in swapfile, hit-return, timeout
    * on char wait, flush swapfile, write error....).
    */

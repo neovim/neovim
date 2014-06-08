@@ -64,20 +64,20 @@ describe 'path function', ->
       neq NULL, res
       ffi.string res
 
-    it 'returns the tail of a file together with its seperator', ->
+    it 'returns the tail of a file together with its separator', ->
       eq '///file.txt', path_tail_with_sep 'directory///file.txt'
 
     it 'returns an empty string when given an empty file name', ->
       eq '', path_tail_with_sep ''
 
-    it 'returns only the seperator if there is a traling seperator', ->
+    it 'returns only the separator if there is a trailing separator', ->
       eq '/', path_tail_with_sep 'some/directory/'
 
-    it 'cuts a leading seperator', ->
+    it 'cuts a leading separator', ->
       eq 'file.txt', path_tail_with_sep '/file.txt'
       eq '', path_tail_with_sep '/'
 
-    it 'returns the whole file name if there is no seperator', ->
+    it 'returns the whole file name if there is no separator', ->
       eq 'file.txt', path_tail_with_sep 'file.txt'
 
   describe 'path_next_component', ->
@@ -89,7 +89,7 @@ describe 'path function', ->
     it 'returns', ->
       eq 'directory/file.txt', path_next_component 'some/directory/file.txt'
 
-    it 'returns empty string if given file contains no seperator', ->
+    it 'returns empty string if given file contains no separator', ->
       eq '', path_next_component 'file.txt'
 
   describe 'path_shorten_fname', ->

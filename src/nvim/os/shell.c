@@ -393,7 +393,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 {
   // TODO(tarruda): avoid using a growable array for this, refactor the
-  // algorithm to call `ml_append` directly(skip unecessary copies/resizes)
+  // algorithm to call `ml_append` directly(skip unnecessary copies/resizes)
   int i;
   ProcessData *pdata = (ProcessData *)stream->data;
 

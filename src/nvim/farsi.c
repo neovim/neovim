@@ -2204,7 +2204,7 @@ static int F_isterm(int c)
   return FALSE;
 }
 
-/// Convert the given Farsi character into a ending type.
+/// Convert the given Farsi character into an ending type.
 ///
 /// @param c The character to convert.
 ///

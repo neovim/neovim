@@ -1215,7 +1215,7 @@ void enter_buffer(buf_T *buf)
   /* Make sure the buffer is loaded. */
   if (curbuf->b_ml.ml_mfp == NULL) {    /* need to load the file */
     /* If there is no filetype, allow for detecting one.  Esp. useful for
-     * ":ball" used in a autocommand.  If there already is a filetype we
+     * ":ball" used in an autocommand.  If there already is a filetype we
      * might prefer to keep it. */
     if (*curbuf->b_p_ft == NUL)
       did_filetype = FALSE;

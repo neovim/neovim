@@ -27,7 +27,7 @@ class Set
     for k,v in pairs(t)
       @add(v)
 
-  -- substracts the argument Set from this Set
+  -- subtracts the argument Set from this Set
   diff: (other) =>
     if other\size! > @size!
       -- this set is smaller than the other set
