@@ -36,7 +36,7 @@ local tokens = P { "tokens";
   -- Single line comment
   line_comment = Ct(P"//" * C((1 - V"newline")^0)  * Cc"comment_line"),
 
-  -- Single platform independant line break which increments line number
+  -- Single platform independent line break which increments line number
   newline = (P"\r\n" + P"\n\r" + S"\r\n") * (Cp() * Carg(1)) / function(pos, state)
     state.line = state.line + 1
     state.line_start = pos

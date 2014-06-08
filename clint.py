@@ -1393,7 +1393,7 @@ class _NestingState(object):
 
       token = matched.group(1)
       if token == '{':
-        # If namespace or class hasn't seen a opening brace yet, mark
+        # If namespace or class hasn't seen an opening brace yet, mark
         # namespace/class head as complete.  Push a new block onto the
         # stack otherwise.
         if not self.SeenOpenBrace():
@@ -3030,7 +3030,7 @@ def ParseArguments(args):
       try:
           _valid_extensions = set(val.split(','))
       except ValueError:
-          PrintUsage('Extensions must be comma seperated list.')
+          PrintUsage('Extensions must be comma separated list.')
 
   if not filenames:
     PrintUsage('No files were specified.')

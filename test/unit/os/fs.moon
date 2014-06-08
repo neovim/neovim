@@ -283,7 +283,7 @@ describe 'fs function', ->
       fs.os_rmdir (to_cstr path)
 
     describe 'os_mkdir', ->
-      it 'returns non-zero when given a already existing directory', ->
+      it 'returns non-zero when given an already existing directory', ->
         mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
         neq 0, (os_mkdir 'unit-test-directory', mode)
 
@@ -315,7 +315,7 @@ describe 'fs function', ->
         file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
 
       describe 'os_get_file_info', ->
-        it 'returns false if given an non-existing file', ->
+        it 'returns false if given a non-existing file', ->
           file_info = file_info_new!
           assert.is_false (fs.os_get_file_info '/non-existent', file_info)
 
@@ -334,7 +334,7 @@ describe 'fs function', ->
           eq ffi.C.kS_IFREG, (bit.band mode, ffi.C.kS_IFMT)
 
       describe 'os_get_file_info_link', ->
-        it 'returns false if given an non-existing file', ->
+        it 'returns false if given a non-existing file', ->
           file_info = file_info_new!
           assert.is_false (fs.os_get_file_info_link '/non-existent', file_info)
 
@@ -357,7 +357,7 @@ describe 'fs function', ->
           file_info = file_info_new!
           assert.is_false (fs.os_get_file_info_fd -1, file_info)
 
-        it 'returns true if given an file descriptor and fills file_info', ->
+        it 'returns true if given a file descriptor and fills file_info', ->
           file_info = file_info_new!
           path = 'unit-test-directory/test.file'
           fd = ffi.C.open path, 0

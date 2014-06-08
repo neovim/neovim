@@ -110,7 +110,7 @@ void rstream_set_file(RStream *rstream, uv_file file)
   }
 
   if (rstream->file_type == UV_FILE) {
-    // Non-blocking file reads are simulated with a idle handle that reads
+    // Non-blocking file reads are simulated with an idle handle that reads
     // in chunks of rstream->buffer_size, giving time for other events to
     // be processed between reads.
     rstream->fread_idle = xmalloc(sizeof(uv_idle_t));

@@ -115,7 +115,7 @@ void server_start(char *endpoint)
   uint32_t addr_len = ip_end - addr;
 
   if (addr_len > sizeof(ip) - 1) {
-    // Maximum length of a ip address buffer is 15(eg: 255.255.255.255)
+    // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)
     addr_len = sizeof(ip);
   }
 

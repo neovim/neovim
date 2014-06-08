@@ -2973,7 +2973,7 @@ static int ml_add_stack(buf_T *buf)
  * Update the pointer blocks on the stack for inserted/deleted lines.
  * The stack itself is also updated.
  *
- * When a insert/delete line action fails, the line is not inserted/deleted,
+ * When an insert/delete line action fails, the line is not inserted/deleted,
  * but the pointer blocks have already been updated. That is fixed here by
  * walking through the stack.
  *
@@ -3383,7 +3383,7 @@ findswapname (
           process_still_running = FALSE;
 #endif
           /*
-           * If there is an SwapExists autocommand and we can handle
+           * If there is a SwapExists autocommand and we can handle
            * the response, trigger it.  It may return 0 to ask the
            * user anyway.
            */
