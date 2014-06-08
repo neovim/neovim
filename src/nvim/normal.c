@@ -4739,7 +4739,7 @@ static void nv_gotofile(cmdarg_T *cap)
   if (ptr != NULL) {
     /* do autowrite if necessary */
     if (curbufIsChanged() && curbuf->b_nwindows <= 1 && !P_HID(curbuf))
-      autowrite(curbuf, FALSE);
+      (void)autowrite(curbuf, FALSE);
     setpcmark();
     (void)do_ecmd(0, ptr, NULL, NULL, ECMD_LAST,
         P_HID(curbuf) ? ECMD_HIDE : 0, curwin);
