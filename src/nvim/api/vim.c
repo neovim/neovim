@@ -40,12 +40,9 @@ void vim_push_keys(String str)
 /// @param[out] err Details of an error that may have occurred
 void vim_command(String str, Error *err)
 {
-  // We still use 0-terminated strings, so we must convert.
-  char *cmd_str = xstrndup(str.data, str.size);
   // Run the command
   try_start();
-  do_cmdline_cmd((char_u *)cmd_str);
-  free(cmd_str);
+  do_cmdline_cmd((char_u *) str.data);
   update_screen(VALID);
   try_end(err);
 }
@@ -60,11 +57,9 @@ void vim_command(String str, Error *err)
 Object vim_eval(String str, Error *err)
 {
   Object rv;
-  char *expr_str = xstrndup(str.data, str.size);
   // Evaluate the expression
   try_start();
-  typval_T *expr_result = eval_expr((char_u *)expr_str, NULL);
-  free(expr_str);
+  typval_T *expr_result = eval_expr((char_u *) str.data, NULL);
 
   if (!try_end(err)) {
     // No errors, convert the result
@@ -89,10 +84,7 @@ Integer vim_strwidth(String str, Error *err)
     return 0;
   }
 
-  char *buf = xstrndup(str.data, str.size);
-  Integer rv = (Integer) mb_string2cells((char_u *) buf);
-  free(buf);
-  return rv;
+  return (Integer) mb_string2cells((char_u *) str.data);
 }
 
 /// Returns a list of paths contained in 'runtimepath'

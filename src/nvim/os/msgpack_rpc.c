@@ -163,7 +163,7 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
     return false;
   }
 
-  arg->data = xmemdup(obj->via.raw.ptr, obj->via.raw.size);
+  arg->data = xmemdupz(obj->via.raw.ptr, obj->via.raw.size);
   arg->size = obj->via.raw.size;
   return true;
 }

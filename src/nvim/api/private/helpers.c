@@ -74,22 +74,15 @@ bool try_end(Error *err)
 /// @param[out] err Details of an error that may have occurred
 Object dict_get_value(dict_T *dict, String key, Error *err)
 {
-  Object rv = OBJECT_INIT;
-  hashitem_T *hi;
-  dictitem_T *di;
-  char *k = xstrndup(key.data, key.size);
-  hi = hash_find(&dict->dv_hashtab, (uint8_t *)k);
-  free(k);
+  hashitem_T *hi = hash_find(&dict->dv_hashtab, (uint8_t *) key.data);
 
   if (HASHITEM_EMPTY(hi)) {
     set_api_error("Key not found", err);
-    return rv;
+    return (Object) OBJECT_INIT;
   }
 
-  di = dict_lookup(hi);
-  rv = vim_to_object(&di->di_tv);
-
-  return rv;
+  dictitem_T *di = dict_lookup(hi);
+  return vim_to_object(&di->di_tv);
 }
 
 /// Set a value in a dict. Objects are recursively expanded into their
@@ -145,9 +138,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
 
     if (di == NULL) {
       // Need to create an entry
-      char *k = xstrndup(key.data, key.size);
-      di = dictitem_alloc((uint8_t *)k);
-      free(k);
+      di = dictitem_alloc((uint8_t *) key.data);
       dict_add(dict, di);
     } else {
       // Return the old value
@@ -183,10 +174,8 @@ Object get_option_from(void *from, int type, String name, Error *err)
   // Return values
   int64_t numval;
   char *stringval = NULL;
-  // copy the option name into 0-delimited string
-  char *key = xstrndup(name.data, name.size);
-  int flags = get_option_value_strict(key, &numval, &stringval, type, from);
-  free(key);
+  int flags = get_option_value_strict(name.data, &numval, &stringval,
+                                      type, from);
 
   if (!flags) {
     set_api_error("invalid option name", err);
@@ -228,25 +217,24 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     return;
   }
 
-  char *key = xstrndup(name.data, name.size);
-  int flags = get_option_value_strict(key, NULL, NULL, type, to);
+  int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
 
   if (flags == 0) {
     set_api_error("invalid option name", err);
-    goto cleanup;
+    return;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
       set_api_error("unable to unset option", err);
-      goto cleanup;
+      return;
     } else if (!(flags & SOPT_GLOBAL)) {
       set_api_error("cannot unset option that doesn't have a global value",
                      err);
-      goto cleanup;
+      return;
     } else {
-      unset_global_local_option(key, to);
-      goto cleanup;
+      unset_global_local_option(name.data, to);
+      return;
     }
   }
 
@@ -255,15 +243,15 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
       set_api_error("option requires a boolean value", err);
-      goto cleanup;
+      return;
     }
-    bool val = value.data.boolean;
-    set_option_value_for(key, val, NULL, opt_flags, type, to, err);
 
+    bool val = value.data.boolean;
+    set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
       set_api_error("option requires an integer value", err);
-      goto cleanup;
+      return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
@@ -271,21 +259,17 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
       return;
     }
 
-    int val = (int)value.data.integer;
-    set_option_value_for(key, val, NULL, opt_flags, type, to, err);
+    int val = (int) value.data.integer;
+    set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
   } else {
     if (value.type != kObjectTypeString) {
       set_api_error("option requires a string value", err);
-      goto cleanup;
+      return;
     }
 
-    char *val = xstrndup(value.data.string.data, value.data.string.size);
-    set_option_value_for(key, 0, val, opt_flags, type, to, err);
-    free(val);
+    set_option_value_for(name.data, 0, value.data.string.data,
+            opt_flags, type, to, err);
   }
-
-cleanup:
-  free(key);
 }
 
 /// Convert a vim object to an `Object` instance, recursively expanding
@@ -352,19 +336,22 @@ tabpage_T * find_tab(Tabpage tabpage, Error *err)
   return rv;
 }
 
-/// Copies a C string into a String (binary safe string, characters + length)
+/// Copies a C string into a String (binary safe string, characters + length).
+/// The resulting string is also NUL-terminated, to facilitate interoperating
+/// with code using C strings.
 ///
 /// @param str the C string to copy
-/// @return the resulting String, if the input string was NULL, then an
+/// @return the resulting String, if the input string was NULL, an
 ///         empty String is returned
-String cstr_to_string(const char *str) {
+String cstr_to_string(const char *str)
+{
     if (str == NULL) {
         return (String) STRING_INIT;
     }
 
     size_t len = strlen(str);
     return (String) {
-        .data = xmemdup(str, len),
+        .data = xmemdupz(str, len),
         .size = len
     };
 }
@@ -402,8 +389,8 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
     case kObjectTypeString:
       tv->v_type = VAR_STRING;
-      tv->vval.v_string = (uint8_t *)xstrndup(obj.data.string.data,
-                                              obj.data.string.size);
+      tv->vval.v_string = xmemdupz(obj.data.string.data,
+                                   obj.data.string.size);
       break;
 
     case kObjectTypeArray:
@@ -441,9 +428,7 @@ static bool object_to_vim(Object obj, typval_T *tv, Error *err)
           return false;
         }
 
-        char *k = xstrndup(key.data, key.size);
-        dictitem_T *di = dictitem_alloc((uint8_t *)k);
-        free(k);
+        dictitem_T *di = dictitem_alloc((uint8_t *) key.data);
 
         if (!object_to_vim(item.value, &di->di_tv, err)) {
           // cleanup
@@ -485,8 +470,7 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
     case VAR_STRING:
       if (obj->vval.v_string != NULL) {
         rv.type = kObjectTypeString;
-        rv.data.string.data = xstrdup((char *)obj->vval.v_string);
-        rv.data.string.size = strlen(rv.data.string.data);
+        rv.data.string = cstr_to_string((char *) obj->vval.v_string);
       }
       break;
 
@@ -552,10 +536,8 @@ static Object vim_to_object_rec(typval_T *obj, PMap(ptr_t) *lookup)
             if (!HASHITEM_EMPTY(hi)) {
               di = dict_lookup(hi);
               // Convert key
-              rv.data.dictionary.items[i].key.data =
-                xstrdup((char *)hi->hi_key);
-              rv.data.dictionary.items[i].key.size =
-                strlen((char *)hi->hi_key);
+              rv.data.dictionary.items[i].key =
+                cstr_to_string((char *) hi->hi_key);
               // Convert value
               rv.data.dictionary.items[i].value =
                 vim_to_object_rec(&di->di_tv, lookup);
