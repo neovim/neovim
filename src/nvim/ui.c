@@ -734,7 +734,7 @@ retnomove:
         if (!first && count > -row)
           break;
         first = FALSE;
-        hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
+        (void)hasFolding(curwin->w_topline, &curwin->w_topline, NULL);
         if (curwin->w_topfill < diff_check(curwin, curwin->w_topline))
           ++curwin->w_topfill;
         else {
