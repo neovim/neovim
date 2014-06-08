@@ -2855,8 +2855,8 @@ void clear_showcmd(void)
       bot = VIsual.lnum;
     }
     /* Include closed folds as a whole. */
-    hasFolding(top, &top, NULL);
-    hasFolding(bot, NULL, &bot);
+    (void)hasFolding(top, &top, NULL);
+    (void)hasFolding(bot, NULL, &bot);
     lines = bot - top + 1;
 
     if (VIsual_mode == Ctrl_V) {
@@ -4497,7 +4497,7 @@ static void nv_scroll(cmdarg_T *cap)
         /* Count a fold for one screen line. */
         lnum = curwin->w_topline;
         while (n-- > 0 && lnum < curwin->w_botline - 1) {
-          hasFolding(lnum, NULL, &lnum);
+          (void)hasFolding(lnum, NULL, &lnum);
           ++lnum;
         }
         n = lnum - curwin->w_topline;
