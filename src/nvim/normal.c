@@ -1532,7 +1532,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
       } else {
         (void)op_delete(oap);
         if (oap->motion_type == MLINE && has_format_option(FO_AUTO))
-          u_save_cursor();                  /* cursor line wasn't saved yet */
+          (void)u_save_cursor();                  /* cursor line wasn't saved yet */
         auto_format(FALSE, TRUE);
       }
       break;
