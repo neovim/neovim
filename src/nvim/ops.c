@@ -334,7 +334,7 @@ static void shift_block(oparg_T *oap, int amount)
      *  3. Divvy into TABs & spp
      *  4. Construct new string
      */
-    total += bd.pre_whitesp;     /* all virtual WS upto & incl a split TAB */
+    total += bd.pre_whitesp;     /* all virtual WS up to & incl a split TAB */
     ws_vcol = bd.start_vcol - bd.pre_whitesp;
     if (bd.startspaces) {
       if (has_mbyte)

@@ -2121,7 +2121,7 @@ int get_c_indent(void)
            */
           if (curwin->w_cursor.lnum <= ourscope) {
             /* we reached end of scope:
-             * if looking for a enum or structure initialization
+             * if looking for an enum or structure initialization
              * go further back:
              * if it is an initializer (enum xxx or xxx =), then
              * don't add ind_continuation, otherwise it is a variable
@@ -2184,7 +2184,7 @@ int get_c_indent(void)
                 if (terminated == ',')
                   break;
 
-                /* if it es a enum declaration or an assignment,
+                /* if it is an enum declaration or an assignment,
                  * we are done.
                  */
                 if (terminated != ';' && cin_isinit())
@@ -2472,7 +2472,7 @@ int get_c_indent(void)
            *   123,
            *   sizeof
            *	  here
-           * Otherwise check whether it is a enumeration or structure
+           * Otherwise check whether it is an enumeration or structure
            * initialisation (not indented) or a variable declaration
            * (indented).
            */

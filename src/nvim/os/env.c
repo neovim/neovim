@@ -63,7 +63,7 @@ int64_t os_get_pid()
 #endif
 }
 
-/// Get the hostname of the machine runing Neovim.
+/// Get the hostname of the machine running Neovim.
 ///
 /// @param hostname Buffer to store the hostname.
 /// @param len Length of `hostname`.

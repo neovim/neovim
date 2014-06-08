@@ -60,7 +60,7 @@
  * String searches
  *
  * The string search functions are divided into two levels:
- * lowest:  searchit(); uses an pos_T for starting position and found match.
+ * lowest:  searchit(); uses a pos_T for starting position and found match.
  * Highest: do_search(); uses curwin->w_cursor; calls searchit().
  *
  * The last search pattern is remembered for repeating the same search.
@@ -1475,7 +1475,7 @@ pos_T *findmatchlimit(oparg_T *oap, int initc, int flags, int maxtravel)
   /*
    * if initc given, look in the table for the matching character
    * '/' and '*' are special cases: look for start or end of comment.
-   * When '/' is used, we ignore running backwards into an star-slash, for
+   * When '/' is used, we ignore running backwards into a star-slash, for
    * "[*" command, we just want to find any comment.
    */
   if (initc == '/' || initc == '*') {
@@ -2091,7 +2091,7 @@ int findsent(int dir, long count)
 
   while (count--) {
     /*
-     * if on an empty line, skip upto a non-empty line
+     * if on an empty line, skip up to a non-empty line
      */
     if (gchar_pos(&pos) == NUL) {
       do

@@ -130,7 +130,7 @@ typedef struct ff_visited {
  *   3) search from Vims current directory downwards for the file "tags"
  * As you can see, the first and the third search are for the same file, so for
  * the third search we can use the visited list of the first search. For the
- * second search we must start from a empty visited list.
+ * second search we must start from an empty visited list.
  * The struct ff_visited_list_hdr is used to manage a linked list of already
  * visited lists.
  */
@@ -1089,7 +1089,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   bool url = false;
 
   FileInfo file_info;
-  // For an URL we only compare the name, otherwise we compare the
+  // For a URL we only compare the name, otherwise we compare the
   // device/inode.
   if (path_with_url(fname)) {
     vim_strncpy(ff_expand_buffer, fname, MAXPATHL - 1);

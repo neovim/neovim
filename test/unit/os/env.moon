@@ -93,7 +93,7 @@ describe 'env function', ->
         pid = tonumber (stat_str\match '%d+')
         eq pid, tonumber env.os_get_pid!
       else
-        -- /proc is not avaliable on all systems, test if pid is nonzero.
+        -- /proc is not available on all systems, test if pid is nonzero.
         eq true, (env.os_get_pid! > 0)
 
   describe 'os_get_hostname', ->

@@ -53,7 +53,7 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 ///
 /// @param obj The object to convert
 /// @param[out] arg A pointer to the avalue
-/// @return true if the convertion succeeded, false otherwise
+/// @return true if the conversion succeeded, false otherwise
 bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
   FUNC_ATTR_NONNULL_ALL;
 bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)

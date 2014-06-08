@@ -1001,7 +1001,7 @@ retry:
      * We allocate as much space for the file as we can get, plus
      * space for the old line plus room for one terminating NUL.
      * The amount is limited by the fact that read() only can read
-     * upto max_unsigned characters (and other things).
+     * up to max_unsigned characters (and other things).
      */
     {
       if (!skip_read) {

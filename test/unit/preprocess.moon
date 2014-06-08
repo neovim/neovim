@@ -38,7 +38,7 @@ parse_make_deps = (deps) ->
   -- remove redundant spaces
   deps = deps\gsub("  +", " ")
 
-  -- split acording to token (space in this case)
+  -- split according to token (space in this case)
   headers = {}
   for token in deps\gmatch("[^%s]+")
     -- headers[token] = true

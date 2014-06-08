@@ -3252,7 +3252,7 @@ win_goto_ver (
   foundfr = curwin->w_frame;
   while (count--) {
     /*
-     * First go upwards in the tree of frames until we find a upwards or
+     * First go upwards in the tree of frames until we find an upwards or
      * downwards neighbor.
      */
     fr = foundfr;
