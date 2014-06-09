@@ -114,29 +114,21 @@ StringArray buffer_get_slice(Buffer buffer,
     return rv;
   }
 
-  rv.size = (size_t)(end - start);
+  size_t last_index = (size_t)(end - start);
+
+  if ((int64_t)last_index > LONG_MAX - start) {
+    set_api_error("Index value is too high", err);
+    return rv;
+  }
+
+  rv.size = last_index;
   rv.items = xcalloc(sizeof(String), rv.size);
 
   for (size_t i = 0; i < rv.size; i++) {
-    // detect overflow
-    if ((int64_t)i > (LONG_MAX - start)) {
-      set_api_error("Index value is too high", err);
-      goto end;
-    }
     int64_t lnum = start + (int64_t)i;
 
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
     rv.items[i] = cstr_to_string(bufstr);
-  }
-
-end:
-  if (err->set) {
-    for (size_t i = 0; i < rv.size; i++) {
-      free(rv.items[i].data);
-    }
-
-    free(rv.items);
-    rv.items = NULL;
   }
 
   return rv;
@@ -214,12 +206,13 @@ void buffer_set_slice(Buffer buffer,
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
+
+  if ((int64_t)to_replace > LONG_MAX - start) {
+    set_api_error("Index value is too high", err);
+    goto end;
+  }
+
   for (size_t i = 0; i < to_replace; i++) {
-    // detect overflow
-    if ((int64_t)i > (LONG_MAX - start)) {
-      set_api_error("Index value is too high", err);
-      goto end;
-    }
     int64_t lnum = start + (int64_t)i;
 
     if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
@@ -231,15 +224,14 @@ void buffer_set_slice(Buffer buffer,
     lines[i] = NULL;
   }
 
+  if ((int64_t)to_replace > LONG_MAX - start + 1) {
+    set_api_error("Index value is too high", err);
+    goto end;
+  }
+
   // Now we may need to insert the remaining new old_len
   for (size_t i = to_replace; i < new_len; i++) {
-    // detect overflow
-    if ((int64_t)i > (LONG_MAX - start + 1)) {
-      set_api_error("Index value is too high", err);
-      goto end;
-    }
-    int64_t lnum = start + (int64_t)i - 1;
-
+    int64_t lnum = start + (int64_t)i + 1;
     if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
       set_api_error("Cannot insert line", err);
       goto end;
