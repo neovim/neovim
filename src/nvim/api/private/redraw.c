@@ -209,6 +209,21 @@ void redraw_status(uint64_t channel_id, win_T *window)
   channel_send_event(0, "redraw:status_line", DICTIONARY_OBJ(event_data));
 }
 
+void redraw_ruler(uint64_t channel_id, win_T *window, bool empty, char *relpos)
+{
+  if (false) {
+    return;
+  }
+
+
+  Dictionary event_data = {0, 0, 0};
+  PUT(event_data, "window_id", INTEGER_OBJ(window->handle));
+  PUT(event_data, "lnum", INTEGER_OBJ(window->w_cursor.lnum));
+  PUT(event_data, "col", INTEGER_OBJ(empty ? 0: window->w_cursor.col + 1));
+  PUT(event_data, "relpos", STRING_OBJ(cstr_to_string(relpos)));
+  channel_send_event(0, "redraw:ruler", DICTIONARY_OBJ(event_data));
+}
+
 static void add_line_char(LineData *ldata, size_t screen_offset)
 {
   size_t char_len;  // length in bytes of the utf8-encoded character

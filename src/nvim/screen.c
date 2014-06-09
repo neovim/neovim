@@ -7882,6 +7882,9 @@ static void win_redr_ruler(win_T *wp, int always)
      */
     i = (int)STRLEN(buffer);
     get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
+
+    redraw_ruler(0, wp, empty_line, (char *)buffer + i + 1);
+
     o = i + vim_strsize(buffer + i + 1);
     if (wp->w_status_height == 0)       /* can't use last char of screen */
       ++o;
