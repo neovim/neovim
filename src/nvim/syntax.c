@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "nvim/api/private/redraw.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/syntax.h"
@@ -6533,6 +6534,7 @@ do_highlight (
 
           if (is_normal_group) {
             cterm_normal_gui_fg = (char *)HL_TABLE()[idx].sg_gui_fg_name;
+            redraw_foreground_color(0);
           }
         }
       } else if (STRCMP(key, "GUIBG") == 0)   {
@@ -6548,6 +6550,7 @@ do_highlight (
 
           if (is_normal_group) {
             cterm_normal_gui_bg = (char *)HL_TABLE()[idx].sg_gui_bg_name;
+            redraw_background_color(0);
           }
         }
       } else if (STRCMP(key, "GUISP") == 0)   {
