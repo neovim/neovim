@@ -15,7 +15,7 @@
 
 typedef struct {
   char buffer[4096];
-  size_t offset, prev_offset;
+  size_t offset, char_offset;
   Dictionary attributes;
 } LineData;
 
@@ -157,7 +157,7 @@ void redraw_update_line(uint64_t channel_id,
   LineData ldata = {
     .attributes = {0, 0, 0},
     .offset = 0,
-    .prev_offset = 0
+    .char_offset = 0
   };
 
   while (col < endcol) {
@@ -325,27 +325,27 @@ static void add_line_char(LineData *ldata, size_t screen_offset)
   }
 
   if (attr & HL_BOLD) {
-    add_line_attribute(ldata, "bold", char_len);
+    add_line_attribute(ldata, "bold");
   }
 
   if (attr & HL_STANDOUT) {
-    add_line_attribute(ldata, "standout", char_len);
+    add_line_attribute(ldata, "standout");
   }
 
   if (attr & HL_UNDERLINE) {
-    add_line_attribute(ldata, "underline", char_len);
+    add_line_attribute(ldata, "underline");
   }
 
   if (attr & HL_UNDERCURL) {
-    add_line_attribute(ldata, "undercurl", char_len);
+    add_line_attribute(ldata, "undercurl");
   }
 
   if (attr & HL_ITALIC) {
-    add_line_attribute(ldata, "italic", char_len);
+    add_line_attribute(ldata, "italic");
   }
 
   if (attr & HL_INVERSE) {
-    add_line_attribute(ldata, "inverse", char_len);
+    add_line_attribute(ldata, "inverse");
   }
 
 #define COLOR_BUFFER_SIZE 11  // fg:#000000 + NUL
@@ -355,7 +355,7 @@ static void add_line_char(LineData *ldata, size_t screen_offset)
         || STRICMP(cterm_normal_gui_fg, aep->ae_u.cterm.gui_fg))) {
     char buf[COLOR_BUFFER_SIZE];
     snprintf(buf, COLOR_BUFFER_SIZE, "fg:%s", aep->ae_u.cterm.gui_fg);
-    add_line_attribute(ldata, buf, char_len);
+    add_line_attribute(ldata, buf);
   }
 
   if (aep && aep->ae_u.cterm.gui_bg
@@ -363,14 +363,14 @@ static void add_line_char(LineData *ldata, size_t screen_offset)
         || STRICMP(cterm_normal_gui_bg, aep->ae_u.cterm.gui_bg))) {
     char buf[COLOR_BUFFER_SIZE];
     snprintf(buf, COLOR_BUFFER_SIZE, "bg:%s", aep->ae_u.cterm.gui_bg);
-    add_line_attribute(ldata, buf, char_len);
+    add_line_attribute(ldata, buf);
   }
 
-  ldata->prev_offset = ldata->offset;
   ldata->offset += char_len;
+  ldata->char_offset++;
 }
 
-static void add_line_attribute(LineData *ldata, char *name, size_t char_len)
+static void add_line_attribute(LineData *ldata, char *name)
 {
   // Attributes are arrays, where each element specifies where the attribute
   // should be applied in the line. Elements can have one of two types:
@@ -380,9 +380,9 @@ static void add_line_attribute(LineData *ldata, char *name, size_t char_len)
   size_t idx;
 
   // previous, current and next offsets
-  int cur_offset = (int)ldata->offset;
-  int prev_offset = (int)ldata->prev_offset;
-  int next_offset = cur_offset + char_len;
+  int cur_offset = (int)ldata->char_offset;
+  int prev_offset = cur_offset - 1;
+  int next_offset = cur_offset + 1;
 
   for (idx = 0; idx < ldata->attributes.size; idx++) {
     String key = ldata->attributes.items[idx].key;
@@ -421,8 +421,8 @@ static void add_line_attribute(LineData *ldata, char *name, size_t char_len)
   } else if (last_applied.type == kObjectTypeArray
       && last_applied.data.array.items[1].data.integer == cur_offset) {
     // The last location is a range with the end boundary equal to the
-    // current offset, so all we need is increase the range by `char_len
-    last_applied.data.array.items[1].data.integer += char_len;
+    // current offset, so all we need is increase the range by 1
+    last_applied.data.array.items[1].data.integer += 1;
     attribute.items[attribute.size - 1] = last_applied;
   } else {
     // In all other cases, the last location where the attribute was applied
