@@ -6047,6 +6047,7 @@ int load_colors(char_u *name)
 
   recursive = FALSE;
 
+  redraw_layout(0);
   return retval;
 }
 
