@@ -1781,6 +1781,11 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
                 c1, c2, hl_attr(hl));
   }
   set_empty_rows(wp, row);
+
+  if (current_window) {
+    // TODO(stefan991): handle higlight (parameter hl)
+    redraw_win_end(0, current_window, c1, c2, row, wp->w_height);
+  }
 }
 
 
