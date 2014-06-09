@@ -12,6 +12,7 @@
 #include <stdbool.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/api/private/redraw.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/window.h"
@@ -903,6 +904,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     p_wiw = i;
   else
     p_wh = i;
+
+  redraw_layout(0);
 
   return OK;
 }
@@ -1901,6 +1904,7 @@ int win_close(win_T *win, int free_buf)
 
 
   redraw_all_later(NOT_VALID);
+  redraw_layout(0);
   return OK;
 }
 
@@ -3024,6 +3028,7 @@ static void enter_tabpage(tabpage_T *tp, buf_T *old_curbuf, int trigger_enter_au
   firstwin = tp->tp_firstwin;
   lastwin = tp->tp_lastwin;
   topframe = tp->tp_topframe;
+  redraw_layout(0);
 
   /* We would like doing the TabEnter event first, but we don't have a
    * valid current window yet, which may break some commands.

@@ -6370,6 +6370,8 @@ retry:
   screen_Rows = Rows;
   screen_Columns = Columns;
 
+  redraw_layout(0);
+
   must_redraw = CLEAR;          /* need to clear the screen later */
   if (doclear)
     screenclear2();
