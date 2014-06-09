@@ -7499,7 +7499,7 @@ typedef struct {
   int to;
 } langmap_entry_T;
 
-static garray_T langmap_mapga;
+static garray_T langmap_mapga = GA_EMPTY_INIT_VALUE;
 
 /*
  * Search for an entry in "langmap_mapga" for "from".  If found set the "to"

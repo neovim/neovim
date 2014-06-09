@@ -6,6 +6,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/log.h"
 #include "nvim/misc2.h"
 #include "nvim/memory.h"
 #include "nvim/path.h"
@@ -52,7 +53,21 @@ void ga_init(garray_T *gap, int itemsize, int growsize)
   gap->ga_maxlen = 0;
   gap->ga_len = 0;
   gap->ga_itemsize = itemsize;
-  gap->ga_growsize = growsize;
+  ga_set_growsize(gap, growsize);
+}
+
+/// A setter for the growsize that guarantees it will be at least 1.
+///
+/// @param gap
+/// @param growsize
+void ga_set_growsize(garray_T *gap, int growsize)
+{
+  if (growsize < 1) {
+    WLOG("trying to set an invalid ga_growsize: %d", growsize);
+    gap->ga_growsize = 1;
+  } else {
+    gap->ga_growsize = growsize;
+  }
 }
 
 /// Make room in growing array "gap" for at least "n" items.
@@ -66,17 +81,24 @@ void ga_grow(garray_T *gap, int n)
     return;
   }
 
-  // the garray grows by at least growsize (do we have a MIN macro somewhere?)
-  n = (n < gap->ga_growsize) ? gap->ga_growsize : n;
+  if (gap->ga_growsize < 1) {
+    WLOG("ga_growsize(%d) is less than 1", gap->ga_growsize);
+  }
 
-  size_t new_size = (size_t)(gap->ga_itemsize * (gap->ga_len + n));
+  // the garray grows by at least growsize
+  if (n < gap->ga_growsize) {
+    n = gap->ga_growsize;
+  }
+  int new_maxlen = gap->ga_len + n;
+
+  size_t new_size = (size_t)(gap->ga_itemsize * new_maxlen);
   size_t old_size = (size_t)(gap->ga_itemsize * gap->ga_maxlen);
 
   // reallocate and clear the new memory
-  char_u *pp = xrealloc(gap->ga_data, new_size);
+  char *pp = xrealloc(gap->ga_data, new_size);
   memset(pp + old_size, 0, new_size - old_size);
 
-  gap->ga_maxlen = gap->ga_len + n;
+  gap->ga_maxlen = new_maxlen;
   gap->ga_data = pp;
 }
 

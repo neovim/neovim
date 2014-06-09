@@ -2790,7 +2790,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
         /* Adjust the growsize to the current length to speed up
          * concatenating many lines. */
         if (ga.ga_len > 400) {
-          ga.ga_growsize = (ga.ga_len > 8000) ? 8000 : ga.ga_len;
+          ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
         }
         ga_concat(&ga, p + 1);
       }

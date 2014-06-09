@@ -75,7 +75,8 @@ struct hl_group {
 #define SG_GUI          4       /* gui has been set */
 #define SG_LINK         8       /* link has been set */
 
-static garray_T highlight_ga;   /* highlight groups for 'highlight' option */
+// highlight groups for 'highlight' option
+static garray_T highlight_ga = GA_EMPTY_INIT_VALUE;
 
 #define HL_TABLE() ((struct hl_group *)((highlight_ga.ga_data)))
 
@@ -360,7 +361,7 @@ static int current_state_stored = 0;      /* TRUE if stored current state
                                            * after setting current_finished */
 static int current_finished = 0;        /* current line has been finished */
 static garray_T current_state           /* current stack of state_items */
-  = {0, 0, 0, 0, NULL};
+  = GA_EMPTY_INIT_VALUE;
 static short    *current_next_list = NULL; /* when non-zero, nextgroup list */
 static int current_next_flags = 0;      /* flags for current_next_list */
 static int current_line_id = 0;         /* unique number for current line */
@@ -1452,7 +1453,7 @@ static void invalidate_current_state(void)
 static void validate_current_state(void)
 {
   current_state.ga_itemsize = sizeof(stateitem_T);
-  current_state.ga_growsize = 3;
+  ga_set_growsize(&current_state, 3);
 }
 
 /*
@@ -4746,7 +4747,7 @@ static int syn_add_cluster(char_u *name)
    */
   if (curwin->w_s->b_syn_clusters.ga_data == NULL) {
     curwin->w_s->b_syn_clusters.ga_itemsize = sizeof(syn_cluster_T);
-    curwin->w_s->b_syn_clusters.ga_growsize = 10;
+    ga_set_growsize(&curwin->w_s->b_syn_clusters, 10);
   }
 
   int len = curwin->w_s->b_syn_clusters.ga_len;
@@ -4846,7 +4847,7 @@ static void syn_cmd_cluster(exarg_T *eap, int syncing)
 static void init_syn_patterns(void)
 {
   curwin->w_s->b_syn_patterns.ga_itemsize = sizeof(synpat_T);
-  curwin->w_s->b_syn_patterns.ga_growsize = 10;
+  ga_set_growsize(&curwin->w_s->b_syn_patterns, 10);
 }
 
 /*
@@ -6731,11 +6732,11 @@ static void highlight_clear(int idx)
  * Note that this table is used by ALL buffers.  This is required because the
  * GUI can redraw at any time for any buffer.
  */
-static garray_T term_attr_table = {0, 0, 0, 0, NULL};
+static garray_T term_attr_table = GA_EMPTY_INIT_VALUE;
 
 #define TERM_ATTR_ENTRY(idx) ((attrentry_T *)term_attr_table.ga_data)[idx]
 
-static garray_T cterm_attr_table = {0, 0, 0, 0, NULL};
+static garray_T cterm_attr_table = GA_EMPTY_INIT_VALUE;
 
 #define CTERM_ATTR_ENTRY(idx) ((attrentry_T *)cterm_attr_table.ga_data)[idx]
 
@@ -6755,7 +6756,7 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
    * Init the table, in case it wasn't done yet.
    */
   table->ga_itemsize = sizeof(attrentry_T);
-  table->ga_growsize = 7;
+  ga_set_growsize(table, 7);
 
   /*
    * Try to find an entry with the same specifications.
@@ -7311,7 +7312,7 @@ static int syn_add_group(char_u *name)
    */
   if (highlight_ga.ga_data == NULL) {
     highlight_ga.ga_itemsize = sizeof(struct hl_group);
-    highlight_ga.ga_growsize = 10;
+    ga_set_growsize(&highlight_ga, 10);
   }
 
   if (highlight_ga.ga_len >= MAX_HL_ID) {
