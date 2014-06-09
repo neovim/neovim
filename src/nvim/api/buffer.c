@@ -231,7 +231,7 @@ void buffer_set_slice(Buffer buffer,
 
   // Now we may need to insert the remaining new old_len
   for (size_t i = to_replace; i < new_len; i++) {
-    int64_t lnum = start + (int64_t)i + 1;
+    int64_t lnum = start + (int64_t)i - 1;
     if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
       set_api_error("Cannot insert line", err);
       goto end;
