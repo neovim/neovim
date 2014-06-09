@@ -3180,8 +3180,8 @@ static int reg_line_lbr;                    /* "\n" in string is line break */
  * or regbehind_T.
  * "backpos_T" is a table with backpos_T for BACK
  */
-static garray_T regstack = {0, 0, 0, 0, NULL};
-static garray_T backpos = {0, 0, 0, 0, NULL};
+static garray_T regstack = GA_EMPTY_INIT_VALUE;
+static garray_T backpos = GA_EMPTY_INIT_VALUE;
 
 /*
  * Both for regstack and backpos tables we use the following strategy of
@@ -3319,13 +3319,13 @@ static long bt_regexec_both(char_u *line,
      * onto the regstack. */
     ga_init(&regstack, 1, REGSTACK_INITIAL);
     ga_grow(&regstack, REGSTACK_INITIAL);
-    regstack.ga_growsize = REGSTACK_INITIAL * 8;
+    ga_set_growsize(&regstack, REGSTACK_INITIAL * 8);
   }
 
   if (backpos.ga_data == NULL) {
     ga_init(&backpos, sizeof(backpos_T), BACKPOS_INITIAL);
     ga_grow(&backpos, BACKPOS_INITIAL);
-    backpos.ga_growsize = BACKPOS_INITIAL * 8;
+    ga_set_growsize(&backpos, BACKPOS_INITIAL * 8);
   }
 
   if (REG_MULTI) {

@@ -1285,7 +1285,7 @@ static int prt_collate;
  * Buffers used when generating PostScript output
  */
 static char_u prt_line_buffer[257];
-static garray_T prt_ps_buffer;
+static garray_T prt_ps_buffer = GA_EMPTY_INIT_VALUE;
 
 static int prt_do_conv;
 static vimconv_T prt_conv;

@@ -1434,7 +1434,7 @@ typedef struct {
   char_u      *to;              /* translated name */
 } menutrans_T;
 
-static garray_T menutrans_ga = {0, 0, 0, 0, NULL};
+static garray_T menutrans_ga = GA_EMPTY_INIT_VALUE;
 
 /*
  * ":menutrans".

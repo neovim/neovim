@@ -12,7 +12,7 @@ typedef struct growarray {
   void *ga_data;                    // pointer to the first item
 } garray_T;
 
-#define GA_EMPTY_INIT_VALUE { 0, 0, 0, 0, NULL }
+#define GA_EMPTY_INIT_VALUE { 0, 0, 0, 1, NULL }
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
 

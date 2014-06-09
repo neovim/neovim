@@ -58,7 +58,7 @@
 # include "misc1.c.generated.h"
 #endif
 /* All user names (for ~user completion as done by shell). */
-static garray_T ga_users;
+static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 
 /*
  * open_line: Add a new line below or above the current line.
