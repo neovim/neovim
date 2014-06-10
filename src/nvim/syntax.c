@@ -6044,10 +6044,10 @@ int load_colors(char_u *name)
   retval = source_runtime(buf, FALSE);
   free(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
+  redraw_layout(0);
 
   recursive = FALSE;
 
-  redraw_layout(0);
   return retval;
 }
 
@@ -6790,7 +6790,11 @@ static int get_attr_entry(garray_T *table, attrentry_T *aep)
                      && aep->ae_u.cterm.fg_color
                      == taep->ae_u.cterm.fg_color
                      && aep->ae_u.cterm.bg_color
-                     == taep->ae_u.cterm.bg_color)
+                     == taep->ae_u.cterm.bg_color
+                     && aep->ae_u.cterm.gui_fg
+                     == taep->ae_u.cterm.gui_fg
+                     && aep->ae_u.cterm.gui_bg
+                     == taep->ae_u.cterm.gui_bg)
                  ))
 
       return i + ATTR_OFF;
