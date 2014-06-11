@@ -5290,8 +5290,7 @@ list_join_inner (
     len = (int)STRLEN(s);
     sumlen += len;
 
-    ga_grow(join_gap, 1);
-    p = ((join_T *)join_gap->ga_data) + (join_gap->ga_len++);
+    p = GA_APPEND_VIA_PTR(join_T, join_gap);
     if (tofree != NULL || s != numbuf) {
       p->s = s;
       p->tofree = tofree;
@@ -10218,11 +10217,9 @@ static void f_inputrestore(typval_T *argvars, typval_T *rettv)
  */
 static void f_inputsave(typval_T *argvars, typval_T *rettv)
 {
-  /* Add an entry to the stack of typeahead storage. */
-  ga_grow(&ga_userinput, 1);
-  save_typeahead((tasave_T *)(ga_userinput.ga_data)
-          + ga_userinput.ga_len);
-  ++ga_userinput.ga_len;
+  // Add an entry to the stack of typeahead storage.
+  tasave_T *p = GA_APPEND_VIA_PTR(tasave_T, &ga_userinput);
+  save_typeahead(p);
 }
 
 /*

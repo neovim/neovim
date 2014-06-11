@@ -1037,10 +1037,9 @@ static char_u *get_loop_line(int c, void *cookie, int indent)
  */
 static void store_loop_line(garray_T *gap, char_u *line)
 {
-  ga_grow(gap, 1);
-  ((wcmd_T *)(gap->ga_data))[gap->ga_len].line = vim_strsave(line);
-  ((wcmd_T *)(gap->ga_data))[gap->ga_len].lnum = sourcing_lnum;
-  ++gap->ga_len;
+  wcmd_T *p = GA_APPEND_VIA_PTR(wcmd_T, gap);
+  p->line = vim_strsave(line);
+  p->lnum = sourcing_lnum;
 }
 
 /*
