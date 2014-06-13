@@ -4534,7 +4534,8 @@ void win_new_height(win_T *wp, int height)
           --wp->w_wrow;
         }
       }
-    } else {
+      set_topline(wp, lnum);
+    } else if (sline > 0) {
       while (sline > 0 && lnum > 1) {
         hasFoldingWin(wp, lnum, &lnum, NULL, TRUE, NULL);
         if (lnum == 1) {
@@ -4565,8 +4566,8 @@ void win_new_height(win_T *wp, int height)
         lnum = 1;
         wp->w_wrow -= sline;
       }
+      set_topline(wp, lnum);
     }
-    set_topline(wp, lnum);
   }
 
   if (wp == curwin) {
