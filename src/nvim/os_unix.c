@@ -837,7 +837,7 @@ void check_mouse_termcode()
     }
   } else
     del_mouse_termcode(KS_URXVT_MOUSE);
-  /* same as the dec mouse */
+  /* There is no conflict with xterm mouse */
   if (use_xterm_mouse() == 4
       ) {
     set_mouse_termcode(KS_SGR_MOUSE, (char_u *)(term_is_8bit(T_NAME)
