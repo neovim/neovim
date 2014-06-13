@@ -598,6 +598,7 @@ static void diff_redraw(int dofold)
         } else if ((n > 0) && (n > wp->w_topfill)) {
           wp->w_topfill = n;
         }
+        check_topfill(wp, FALSE);
       }
     }
   }
