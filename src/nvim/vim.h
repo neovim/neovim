@@ -37,7 +37,7 @@ Error: configure did not run properly.Check auto/config.log.
 #endif
 
 /* user ID of root is usually zero, but not for everybody */
-# define ROOT_UID 0
+#define ROOT_UID 0
 
 
 /* Can't use "PACKAGE" here, conflicts with a Perl include file. */
@@ -132,60 +132,6 @@ typedef uint32_t u8char_T;
 #  define textdomain(x) /* empty */
 #endif
 
-/*
- * flags for update_screen()
- * The higher the value, the higher the priority
- */
-#define VALID                   10  /* buffer not changed, or changes marked
-                                       with b_mod_* */
-#define INVERTED                20  /* redisplay inverted part that changed */
-#define INVERTED_ALL            25  /* redisplay whole inverted part */
-#define REDRAW_TOP              30  /* display first w_upd_rows screen lines */
-#define SOME_VALID              35  /* like NOT_VALID but may scroll */
-#define NOT_VALID               40  /* buffer needs complete redraw */
-#define CLEAR                   50  /* screen messed up, clear it */
-
-/*
- * Flags for w_valid.
- * These are set when something in a window structure becomes invalid, except
- * when the cursor is moved.  Call check_cursor_moved() before testing one of
- * the flags.
- * These are reset when that thing has been updated and is valid again.
- *
- * Every function that invalidates one of these must call one of the
- * invalidate_* functions.
- *
- * w_valid is supposed to be used only in screen.c.  From other files, use the
- * functions that set or reset the flags.
- *
- * VALID_BOTLINE    VALID_BOTLINE_AP
- *     on		on		w_botline valid
- *     off		on		w_botline approximated
- *     off		off		w_botline not valid
- *     on		off		not possible
- */
-#define VALID_WROW      0x01    /* w_wrow (window row) is valid */
-#define VALID_WCOL      0x02    /* w_wcol (window col) is valid */
-#define VALID_VIRTCOL   0x04    /* w_virtcol (file col) is valid */
-#define VALID_CHEIGHT   0x08    /* w_cline_height and w_cline_folded valid */
-#define VALID_CROW      0x10    /* w_cline_row is valid */
-#define VALID_BOTLINE   0x20    /* w_botine and w_empty_rows are valid */
-#define VALID_BOTLINE_AP 0x40   /* w_botine is approximated */
-#define VALID_TOPLINE   0x80    /* w_topline is valid (for cursor position) */
-
-/*
- * Terminal highlighting attribute bits.
- * Attributes above HL_ALL are used for syntax highlighting.
- */
-#define HL_NORMAL               0x00
-#define HL_INVERSE              0x01
-#define HL_BOLD                 0x02
-#define HL_ITALIC               0x04
-#define HL_UNDERLINE            0x08
-#define HL_UNDERCURL            0x10
-#define HL_STANDOUT             0x20
-#define HL_ALL                  0x3f
-
 /* special attribute addition: Put message in history */
 #define MSG_HIST                0x1000
 
@@ -239,24 +185,6 @@ typedef uint32_t u8char_T;
 #define FAIL                    0
 #define NOTDONE                 2   /* not OK or FAIL but skipped */
 
-/* flags for b_flags */
-#define BF_RECOVERED    0x01    /* buffer has been recovered */
-#define BF_CHECK_RO     0x02    /* need to check readonly when loading file
-                                   into buffer (set by ":e", may be reset by
-                                   ":buf" */
-#define BF_NEVERLOADED  0x04    /* file has never been loaded into buffer,
-                                   many variables still need to be set */
-#define BF_NOTEDITED    0x08    /* Set when file name is changed after
-                                   starting to edit, reset when file is
-                                   written out. */
-#define BF_NEW          0x10    /* file didn't exist when editing started */
-#define BF_NEW_W        0x20    /* Warned for BF_NEW and file created */
-#define BF_READERR      0x40    /* got errors while reading the file */
-#define BF_DUMMY        0x80    /* dummy buffer, only used internally */
-#define BF_PRESERVED    0x100   /* ":preserve" was used */
-
-/* Mask to check for flags that prevent normal writing */
-#define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
 
 /*
  * values for xp_context when doing command line completion
@@ -314,73 +242,9 @@ enum {
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
 
-/* Values for nextwild() and ExpandOne().  See ExpandOne() for meaning. */
-#define WILD_FREE               1
-#define WILD_EXPAND_FREE        2
-#define WILD_EXPAND_KEEP        3
-#define WILD_NEXT               4
-#define WILD_PREV               5
-#define WILD_ALL                6
-#define WILD_LONGEST            7
-#define WILD_ALL_KEEP           8
-
-#define WILD_LIST_NOTFOUND      1
-#define WILD_HOME_REPLACE       2
-#define WILD_USE_NL             4
-#define WILD_NO_BEEP            8
-#define WILD_ADD_SLASH          16
-#define WILD_KEEP_ALL           32
-#define WILD_SILENT             64
-#define WILD_ESCAPE             128
-#define WILD_ICASE              256
-
-/* Flags for expand_wildcards() */
-#define EW_DIR          0x01    /* include directory names */
-#define EW_FILE         0x02    /* include file names */
-#define EW_NOTFOUND     0x04    /* include not found names */
-#define EW_ADDSLASH     0x08    /* append slash to directory name */
-#define EW_KEEPALL      0x10    /* keep all matches */
-#define EW_SILENT       0x20    /* don't print "1 returned" from shell */
-#define EW_EXEC         0x40    /* executable files */
-#define EW_PATH         0x80    /* search in 'path' too */
-#define EW_ICASE        0x100   /* ignore case */
-#define EW_NOERROR      0x200   /* no error for bad regexp */
-#define EW_NOTWILD      0x400   /* add match with literal name if exists */
-/* Note: mostly EW_NOTFOUND and EW_SILENT are mutually exclusive: EW_NOTFOUND
-* is used when executing commands and EW_SILENT for interactive expanding. */
-
-/* Flags for find_file_*() functions. */
-#define FINDFILE_FILE   0       /* only files */
-#define FINDFILE_DIR    1       /* only directories */
-#define FINDFILE_BOTH   2       /* files and directories */
-
-# define W_WINCOL(wp)   (wp->w_wincol)
-# define W_WIDTH(wp)    (wp->w_width)
-# define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
-# define W_VSEP_WIDTH(wp) (wp->w_vsep_width)
-# define W_STATUS_HEIGHT(wp) (wp->w_status_height)
-# define W_WINROW(wp)   (wp->w_winrow)
-
 #ifdef NO_EXPANDPATH
 # define gen_expand_wildcards mch_expand_wildcards
 #endif
-
-/* Values for the find_pattern_in_path() function args 'type' and 'action': */
-#define FIND_ANY        1
-#define FIND_DEFINE     2
-#define CHECK_PATH      3
-
-#define ACTION_SHOW     1
-#define ACTION_GOTO     2
-#define ACTION_SPLIT    3
-#define ACTION_SHOW_ALL 4
-# define ACTION_EXPAND  5
-
-# define SST_MIN_ENTRIES 150    /* minimal size for state stack array */
-#  define SST_MAX_ENTRIES 1000  /* maximal size for state stack array */
-# define SST_FIX_STATES  7      /* size of sst_stack[]. */
-# define SST_DIST        16     /* normal distance between entries */
-# define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
 
 # define HL_CONTAINED   0x01    /* not used on toplevel */
 # define HL_TRANSP      0x02    /* has no highlighting	*/

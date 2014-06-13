@@ -131,6 +131,7 @@
 
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
+#define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
 
 /*
  * The attributes that are actually active for writing to the screen.
@@ -434,16 +435,16 @@ void update_screen(int type)
         type = CLEAR;
       FOR_ALL_WINDOWS(wp)
       {
-        if (W_WINROW(wp) < msg_scrolled) {
-          if (W_WINROW(wp) + wp->w_height > msg_scrolled
+        if (wp->w_winrow < msg_scrolled) {
+          if (wp->w_winrow + wp->w_height > msg_scrolled
               && wp->w_redr_type < REDRAW_TOP
               && wp->w_lines_valid > 0
               && wp->w_topline == wp->w_lines[0].wl_lnum) {
-            wp->w_upd_rows = msg_scrolled - W_WINROW(wp);
+            wp->w_upd_rows = msg_scrolled - wp->w_winrow;
             wp->w_redr_type = REDRAW_TOP;
           } else {
             wp->w_redr_type = NOT_VALID;
-            if (W_WINROW(wp) + wp->w_height + W_STATUS_HEIGHT(wp)
+            if (wp->w_winrow + wp->w_height + wp->w_status_height
                 <= msg_scrolled)
               wp->w_redr_status = TRUE;
           }
@@ -1610,10 +1611,10 @@ static void win_update(win_T *wp)
       /*
        * Last line isn't finished: Display "@@@" at the end.
        */
-      screen_fill(W_WINROW(wp) + wp->w_height - 1,
-          W_WINROW(wp) + wp->w_height,
-          (int)W_ENDCOL(wp) - 3, (int)W_ENDCOL(wp),
-          '@', '@', hl_attr(HLF_AT));
+      screen_fill(wp->w_winrow + wp->w_height - 1,
+                  wp->w_winrow + wp->w_height,
+                  (int)W_ENDCOL(wp) - 3, (int)W_ENDCOL(wp),
+                  '@', '@', hl_attr(HLF_AT));
       set_empty_rows(wp, srow);
       wp->w_botline = lnum;
     } else {
@@ -1702,51 +1703,51 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
 
     if (n > 0) {
       /* draw the fold column at the right */
-      if (n > W_WIDTH(wp))
-        n = W_WIDTH(wp);
-      screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-          W_ENDCOL(wp) - n, (int)W_ENDCOL(wp),
-          ' ', ' ', hl_attr(HLF_FC));
+      if (n > wp->w_width)
+        n = wp->w_width;
+      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                  W_ENDCOL(wp) - n, (int)W_ENDCOL(wp),
+                  ' ', ' ', hl_attr(HLF_FC));
     }
 
     if (draw_signcolumn(wp)) {
         int nn = n + 2;
 
         /* draw the sign column left of the fold column */
-        if (nn > W_WIDTH(wp)) {
-            nn = W_WIDTH(wp);
+        if (nn > wp->w_width) {
+            nn = wp->w_width;
         }
-        screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-                W_ENDCOL(wp) - nn, (int)W_ENDCOL(wp) - n,
-                ' ', ' ', hl_attr(HLF_SC));
+        screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                    W_ENDCOL(wp) - nn, (int)W_ENDCOL(wp) - n,
+                    ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
 
-    screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-        W_WINCOL(wp), W_ENDCOL(wp) - 1 - FDC_OFF,
-        c2, c2, hl_attr(hl));
-    screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-        W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
-        c1, c2, hl_attr(hl));
+    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                wp->w_wincol, W_ENDCOL(wp) - 1 - FDC_OFF,
+                c2, c2, hl_attr(hl));
+    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                W_ENDCOL(wp) - 1 - FDC_OFF, W_ENDCOL(wp) - FDC_OFF,
+                c1, c2, hl_attr(hl));
   } else {
     if (cmdwin_type != 0 && wp == curwin) {
       /* draw the cmdline character in the leftmost column */
       n = 1;
       if (n > wp->w_width)
         n = wp->w_width;
-      screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-          W_WINCOL(wp), (int)W_WINCOL(wp) + n,
-          cmdwin_type, ' ', hl_attr(HLF_AT));
+      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                  wp->w_wincol, wp->w_wincol + n,
+                  cmdwin_type, ' ', hl_attr(HLF_AT));
     }
     if (wp->w_p_fdc > 0) {
       int nn = n + wp->w_p_fdc;
 
       /* draw the fold column at the left */
-      if (nn > W_WIDTH(wp))
-        nn = W_WIDTH(wp);
-      screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-          W_WINCOL(wp) + n, (int)W_WINCOL(wp) + nn,
-          ' ', ' ', hl_attr(HLF_FC));
+      if (nn > wp->w_width)
+        nn = wp->w_width;
+      screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                  wp->w_wincol + n, wp->w_wincol + nn,
+                  ' ', ' ', hl_attr(HLF_FC));
       n = nn;
     }
 
@@ -1755,18 +1756,18 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
         int nn = n + 2;
 
         /* draw the sign column after the fold column */
-        if (nn > W_WIDTH(wp)) {
-            nn = W_WIDTH(wp);
+        if (nn > wp->w_width) {
+            nn = wp->w_width;
         }
-        screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-                W_WINCOL(wp) + n, (int)W_WINCOL(wp) + nn,
-                ' ', ' ', hl_attr(HLF_SC));
+        screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                    wp->w_wincol + n, wp->w_wincol + nn,
+                    ' ', ' ', hl_attr(HLF_SC));
         n = nn;
     }
 
-    screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + endrow,
-        W_WINCOL(wp) + FDC_OFF, (int)W_ENDCOL(wp),
-        c1, c2, hl_attr(hl));
+    screen_fill(wp->w_winrow + row, wp->w_winrow + endrow,
+                wp->w_wincol + FDC_OFF, (int)W_ENDCOL(wp),
+                c1, c2, hl_attr(hl));
   }
   set_empty_rows(wp, row);
 }
@@ -1824,18 +1825,18 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * 2. Add the 'foldcolumn'
    */
   fdc = wp->w_p_fdc;
-  if (fdc > W_WIDTH(wp) - col)
-    fdc = W_WIDTH(wp) - col;
+  if (fdc > wp->w_width - col)
+    fdc = wp->w_width - col;
   if (fdc > 0) {
     fill_foldcolumn(buf, wp, TRUE, lnum);
     if (wp->w_p_rl) {
       int i;
 
-      copy_text_attr(off + W_WIDTH(wp) - fdc - col, buf, fdc,
+      copy_text_attr(off + wp->w_width - fdc - col, buf, fdc,
           hl_attr(HLF_FC));
       /* reverse the fold column */
       for (i = 0; i < fdc; ++i)
-        ScreenLines[off + W_WIDTH(wp) - i - 1 - col] = buf[i];
+        ScreenLines[off + wp->w_width - i - 1 - col] = buf[i];
     } else
       copy_text_attr(off + col, buf, fdc, hl_attr(HLF_FC));
     col += fdc;
@@ -1843,18 +1844,18 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
 
 # define RL_MEMSET(p, v, l)  if (wp->w_p_rl) \
     for (ri = 0; ri < l; ++ri) \
-      ScreenAttrs[off + (W_WIDTH(wp) - (p) - (l)) + ri] = v; \
+      ScreenAttrs[off + (wp->w_width - (p) - (l)) + ri] = v; \
   else \
     for (ri = 0; ri < l; ++ri) \
       ScreenAttrs[off + (p) + ri] = v
 
   /* Set all attributes of the 'number' or 'relativenumber' column and the
    * text */
-  RL_MEMSET(col, hl_attr(HLF_FL), W_WIDTH(wp) - col);
+  RL_MEMSET(col, hl_attr(HLF_FL), wp->w_width - col);
 
   /* If signs are being displayed, add two spaces. */
   if (draw_signcolumn(wp)) {
-      len = W_WIDTH(wp) - col;
+      len = wp->w_width - col;
       if (len > 0) {
           if (len > 2) {
               len = 2;
@@ -1868,7 +1869,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
    * 3. Add the 'number' or 'relativenumber' column
    */
   if (wp->w_p_nu || wp->w_p_rnu) {
-    len = W_WIDTH(wp) - col;
+    len = wp->w_width - col;
     if (len > 0) {
       int w = number_width(wp);
       long num;
@@ -1894,7 +1895,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       sprintf((char *)buf, fmt, w, num);
       if (wp->w_p_rl)
         /* the line number isn't reversed */
-        copy_text_attr(off + W_WIDTH(wp) - len - col, buf, len,
+        copy_text_attr(off + wp->w_width - len - col, buf, len,
             hl_attr(HLF_FL));
       else
         copy_text_attr(off + col, buf, len, hl_attr(HLF_FL));
@@ -1933,7 +1934,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     for (p = text; *p != NUL; ) {
       cells = (*mb_ptr2cells)(p);
       c_len = (*mb_ptr2len)(p);
-      if (col + cells > W_WIDTH(wp)
+      if (col + cells > wp->w_width
           - (wp->w_p_rl ? col : 0)
           )
         break;
@@ -1996,8 +1997,8 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
     }
   } else {
     len = (int)STRLEN(text);
-    if (len > W_WIDTH(wp) - col)
-      len = W_WIDTH(wp) - col;
+    if (len > wp->w_width - col)
+      len = wp->w_width - col;
     if (len > 0) {
       if (wp->w_p_rl)
         STRNCPY(current_ScreenLine, text, len);
@@ -2010,7 +2011,7 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
   /* Fill the rest of the line with the fold filler */
   if (wp->w_p_rl)
     col -= txtcol;
-  while (col < W_WIDTH(wp)
+  while (col < wp->w_width
          - (wp->w_p_rl ? txtcol : 0)
          ) {
     if (enc_utf8) {
@@ -2053,19 +2054,19 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
                                 FALSE))))))) {
       if (VIsual_mode == Ctrl_V) {
         /* Visual block mode: highlight the chars part of the block */
-        if (wp->w_old_cursor_fcol + txtcol < (colnr_T)W_WIDTH(wp)) {
+        if (wp->w_old_cursor_fcol + txtcol < (colnr_T)wp->w_width) {
           if (wp->w_old_cursor_lcol != MAXCOL
               && wp->w_old_cursor_lcol + txtcol
-              < (colnr_T)W_WIDTH(wp))
+              < (colnr_T)wp->w_width)
             len = wp->w_old_cursor_lcol;
           else
-            len = W_WIDTH(wp) - txtcol;
+            len = wp->w_width - txtcol;
           RL_MEMSET(wp->w_old_cursor_fcol + txtcol, hl_attr(HLF_V),
               len - (int)wp->w_old_cursor_fcol);
         }
       } else {
         /* Set all attributes of the text */
-        RL_MEMSET(txtcol, hl_attr(HLF_V), W_WIDTH(wp) - txtcol);
+        RL_MEMSET(txtcol, hl_attr(HLF_V), wp->w_width - txtcol);
       }
     }
   }
@@ -2077,13 +2078,13 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       txtcol -= wp->w_skipcol;
     else
       txtcol -= wp->w_leftcol;
-    if (txtcol >= 0 && txtcol < W_WIDTH(wp))
+    if (txtcol >= 0 && txtcol < wp->w_width)
       ScreenAttrs[off + txtcol] = hl_combine_attr(
           ScreenAttrs[off + txtcol], hl_attr(HLF_CUC));
   }
 
-  SCREEN_LINE(row + W_WINROW(wp), W_WINCOL(wp), (int)W_WIDTH(wp),
-      (int)W_WIDTH(wp), FALSE);
+  SCREEN_LINE(row + wp->w_winrow, wp->w_wincol, wp->w_width,
+              wp->w_width, FALSE);
 
   /*
    * Update w_cline_height and w_cline_folded if the cursor line was
@@ -2305,7 +2306,7 @@ win_line (
     return startrow;
 
   row = startrow;
-  screen_row = row + W_WINROW(wp);
+  screen_row = row + wp->w_winrow;
 
   /*
    * To speed up the loop below, set extra_check when there is linebreak,
@@ -2702,7 +2703,7 @@ win_line (
     /* Rightleft window: process the text in the normal direction, but put
      * it in current_ScreenLine[] from right to left.  Start at the
      * rightmost column of the window. */
-    col = W_WIDTH(wp) - 1;
+    col = wp->w_width - 1;
     off += col;
   }
 
@@ -2823,7 +2824,7 @@ win_line (
           if (wp->w_p_rl)
             n_extra = col + 1;
           else
-            n_extra = W_WIDTH(wp) - col;
+            n_extra = wp->w_width - col;
           char_attr = hl_attr(HLF_DED);
         }
         if (*p_sbr != NUL && need_showbreak) {
@@ -2861,8 +2862,7 @@ win_line (
         && lnum == wp->w_cursor.lnum && vcol >= (long)wp->w_virtcol
         && filler_todo <= 0
         ) {
-      SCREEN_LINE(screen_row, W_WINCOL(wp), col, -(int)W_WIDTH(wp),
-          wp->w_p_rl);
+      SCREEN_LINE(screen_row, wp->w_wincol, col, -wp->w_width, wp->w_p_rl);
       /* Pretend we have finished updating the window.  Except when
        * 'cursorcolumn' is set. */
       if (wp->w_p_cuc)
@@ -3054,7 +3054,7 @@ win_line (
            * last column. */
           if ((
                 wp->w_p_rl ? (col <= 0) :
-                (col >= W_WIDTH(wp) - 1))
+                (col >= wp->w_width - 1))
               && (*mb_char2cells)(mb_c) == 2) {
             c = '>';
             mb_c = c;
@@ -3205,7 +3205,7 @@ win_line (
          * next line. */
         if ((
               wp->w_p_rl ? (col <= 0) :
-              (col >= W_WIDTH(wp) - 1))
+              (col >= wp->w_width - 1))
             && (*mb_char2cells)(mb_c) == 2) {
           c = '>';
           mb_c = c;
@@ -3449,7 +3449,7 @@ win_line (
                            && VIsual_mode != Ctrl_V
                            && (
                              wp->w_p_rl ? (col >= 0) :
-                             (col < W_WIDTH(wp)))
+                             (col < wp->w_width))
                            && !(noinvcur
                                 && lnum == wp->w_cursor.lnum
                                 && (colnr_T)vcol == wp->w_virtcol)))
@@ -3508,7 +3508,7 @@ win_line (
                    && vcol < tocol
                    && (
                      wp->w_p_rl ? (col >= 0) :
-                     (col < W_WIDTH(wp)))) {
+                     (col < wp->w_width))) {
           c = ' ';
           --ptr;                    /* put it back at the NUL */
         } else if ((
@@ -3518,7 +3518,7 @@ win_line (
                    wp->w_p_rl ? (col >= 0) :
                    (col
                     - boguscols
-                    < W_WIDTH(wp)))) {
+                    < wp->w_width))) {
           /* Highlight until the right side of the window */
           c = ' ';
           --ptr;                    /* put it back at the NUL */
@@ -3682,7 +3682,7 @@ win_line (
           if (col < 0)
             n = 1;
         } else {
-          if (col >= W_WIDTH(wp))
+          if (col >= wp->w_width)
             n = -1;
         }
         if (n != 0) {
@@ -3762,7 +3762,7 @@ win_line (
       if (((wp->w_p_cuc
             && (int)wp->w_virtcol >= VCOL_HLC - eol_hl_off
             && (int)wp->w_virtcol <
-            W_WIDTH(wp) * (row - startrow + 1) + v
+            wp->w_width * (row - startrow + 1) + v
             && lnum != wp->w_cursor.lnum)
            || draw_color_col)
           && !wp->w_p_rl
@@ -3778,7 +3778,7 @@ win_line (
             if (rightmost_vcol < color_cols[i])
               rightmost_vcol = color_cols[i];
 
-        while (col < W_WIDTH(wp)) {
+        while (col < wp->w_width) {
           ScreenLines[off] = ' ';
           if (enc_utf8)
             ScreenLinesUC[off] = 0;
@@ -3801,8 +3801,7 @@ win_line (
         }
       }
 
-      SCREEN_LINE(screen_row, W_WINCOL(wp), col,
-          (int)W_WIDTH(wp), wp->w_p_rl);
+      SCREEN_LINE(screen_row, wp->w_wincol, col, wp->w_width, wp->w_p_rl);
       row++;
 
       /*
@@ -3825,7 +3824,7 @@ win_line (
         && filler_todo <= 0
         && (
           wp->w_p_rl ? col == 0 :
-          col == W_WIDTH(wp) - 1)
+          col == wp->w_width - 1)
         && (*ptr != NUL
             || (wp->w_p_list && lcs_eol_one > 0)
             || (n_extra && (c_extra != NUL || *p_extra != NUL)))) {
@@ -4014,14 +4013,14 @@ win_line (
      */
     if ((
           wp->w_p_rl ? (col < 0) :
-          (col >= W_WIDTH(wp)))
+          (col >= wp->w_width))
         && (*ptr != NUL
             || filler_todo > 0
             || (wp->w_p_list && lcs_eol != NUL && p_extra != at_end_str)
             || (n_extra != 0 && (c_extra != NUL || *p_extra != NUL)))
         ) {
-      SCREEN_LINE(screen_row, W_WINCOL(wp), col - boguscols,
-          (int)W_WIDTH(wp), wp->w_p_rl);
+      SCREEN_LINE(screen_row, wp->w_wincol, col - boguscols,
+                  wp->w_width, wp->w_p_rl);
       boguscols = 0;
       ++row;
       ++screen_row;
@@ -4050,7 +4049,7 @@ win_line (
 
       if (screen_cur_row == screen_row - 1
           && filler_todo <= 0
-          && W_WIDTH(wp) == Columns) {
+          && wp->w_width == Columns) {
         /* Remember that the line wraps, used for modeless copy. */
         LineWraps[screen_row - 1] = TRUE;
 
@@ -4080,7 +4079,7 @@ win_line (
            * then output the same character again to let the
            * terminal know about the wrap.  If the terminal doesn't
            * auto-wrap, we overwrite the character. */
-          if (screen_cur_col != W_WIDTH(wp))
+          if (screen_cur_col != wp->w_width)
             screen_char(LineOffset[screen_row - 1]
                 + (unsigned)Columns - 1,
                 screen_row - 1, (int)(Columns - 1));
@@ -4103,7 +4102,7 @@ win_line (
       col = 0;
       off = (unsigned)(current_ScreenLine - ScreenLines);
       if (wp->w_p_rl) {
-        col = W_WIDTH(wp) - 1;          /* col is not used if breaking! */
+        col = wp->w_width - 1;          /* col is not used if breaking! */
         off += col;
       }
 
@@ -4532,7 +4531,7 @@ static void draw_vsep_win(win_T *wp, int row)
   if (wp->w_vsep_width) {
     /* draw the vertical separator right of this window */
     c = fillchar_vsep(&hl);
-    screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + wp->w_height,
+    screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
         W_ENDCOL(wp), W_ENDCOL(wp) + 1,
         c, ' ', hl);
   }
@@ -4824,9 +4823,9 @@ void win_redr_status(win_T *wp)
       len += 4;
     }
 
-    this_ru_col = ru_col - (Columns - W_WIDTH(wp));
-    if (this_ru_col < (W_WIDTH(wp) + 1) / 2)
-      this_ru_col = (W_WIDTH(wp) + 1) / 2;
+    this_ru_col = ru_col - (Columns - wp->w_width);
+    if (this_ru_col < (wp->w_width + 1) / 2)
+      this_ru_col = (wp->w_width + 1) / 2;
     if (this_ru_col <= 1) {
       p = (char_u *)"<";                /* No room for file name! */
       len = 1;
@@ -4854,15 +4853,15 @@ void win_redr_status(win_T *wp)
       len = this_ru_col - 1;
     }
 
-    row = W_WINROW(wp) + wp->w_height;
-    screen_puts(p, row, W_WINCOL(wp), attr);
-    screen_fill(row, row + 1, len + W_WINCOL(wp),
-        this_ru_col + W_WINCOL(wp), fillchar, fillchar, attr);
+    row = wp->w_winrow + wp->w_height;
+    screen_puts(p, row, wp->w_wincol, attr);
+    screen_fill(row, row + 1, len + wp->w_wincol,
+        this_ru_col + wp->w_wincol, fillchar, fillchar, attr);
 
     if (get_keymap_str(wp, NameBuff, MAXPATHL)
         && (int)(this_ru_col - len) > (int)(STRLEN(NameBuff) + 1))
       screen_puts(NameBuff, row, (int)(this_ru_col - STRLEN(NameBuff)
-                                       - 1 + W_WINCOL(wp)), attr);
+                                       - 1 + wp->w_wincol), attr);
 
     win_redr_ruler(wp, TRUE);
   }
@@ -4875,8 +4874,8 @@ void win_redr_status(win_T *wp)
       fillchar = fillchar_status(&attr, wp == curwin);
     else
       fillchar = fillchar_vsep(&attr);
-    screen_putchar(fillchar, W_WINROW(wp) + wp->w_height, W_ENDCOL(wp),
-        attr);
+    screen_putchar(fillchar, wp->w_winrow + wp->w_height, 
+                   W_ENDCOL(wp), attr);
   }
   busy = FALSE;
 }
@@ -5023,9 +5022,9 @@ win_redr_custom (
     maxwidth = Columns;
     use_sandbox = was_set_insecurely((char_u *)"tabline", 0);
   } else {
-    row = W_WINROW(wp) + wp->w_height;
+    row = wp->w_winrow + wp->w_height;
     fillchar = fillchar_status(&attr, wp == curwin);
-    maxwidth = W_WIDTH(wp);
+    maxwidth = wp->w_width;
 
     if (draw_ruler) {
       stl = p_ruf;
@@ -5039,10 +5038,10 @@ win_redr_custom (
         if (*stl++ != '(')
           stl = p_ruf;
       }
-      col = ru_col - (Columns - W_WIDTH(wp));
-      if (col < (W_WIDTH(wp) + 1) / 2)
-        col = (W_WIDTH(wp) + 1) / 2;
-      maxwidth = W_WIDTH(wp) - col;
+      col = ru_col - (Columns - wp->w_width);
+      if (col < (wp->w_width + 1) / 2)
+        col = (wp->w_width + 1) / 2;
+      maxwidth = wp->w_width - col;
       if (!wp->w_status_height) {
         row = Rows - 1;
         --maxwidth;             /* writing in last column may cause scrolling */
@@ -5060,7 +5059,7 @@ win_redr_custom (
           *wp->w_p_stl == NUL ? 0 : OPT_LOCAL);
     }
 
-    col += W_WINCOL(wp);
+    col += wp->w_wincol;
   }
 
   if (maxwidth <= 0)
@@ -6700,11 +6699,11 @@ void setcursor(void)
 {
   if (redrawing()) {
     validate_cursor();
-    windgoto(W_WINROW(curwin) + curwin->w_wrow,
-        W_WINCOL(curwin) + (
+    windgoto(curwin->w_winrow + curwin->w_wrow,
+        curwin->w_wincol + (
           /* With 'rightleft' set and the cursor on a double-wide
            * character, position it on the leftmost column. */
-          curwin->w_p_rl ? ((int)W_WIDTH(curwin) - curwin->w_wcol - (
+          curwin->w_p_rl ? ((int)curwin->w_width - curwin->w_wcol - (
                               (has_mbyte
                                && (*mb_ptr2cells)(get_cursor_pos_ptr()) == 2
                                && vim_isprintc(gchar_cursor())) ? 2 :
@@ -6748,7 +6747,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
    */
   did_delete = FALSE;
   if (wp->w_next != NULL || wp->w_status_height) {
-    if (screen_del_lines(0, W_WINROW(wp) + wp->w_height - line_count,
+    if (screen_del_lines(0, wp->w_winrow + wp->w_height - line_count,
             line_count, (int)Rows, FALSE, NULL) == OK)
       did_delete = TRUE;
     else if (wp->w_next)
@@ -6760,16 +6759,16 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   if (!did_delete) {
     wp->w_redr_status = TRUE;
     redraw_cmdline = TRUE;
-    nextrow = W_WINROW(wp) + wp->w_height + W_STATUS_HEIGHT(wp);
+    nextrow = wp->w_winrow + wp->w_height + wp->w_status_height;
     lastrow = nextrow + line_count;
     if (lastrow > Rows)
       lastrow = Rows;
     screen_fill(nextrow - line_count, lastrow - line_count,
-        W_WINCOL(wp), (int)W_ENDCOL(wp),
-        ' ', ' ', 0);
+                wp->w_wincol, (int)W_ENDCOL(wp),
+                ' ', ' ', 0);
   }
 
-  if (screen_ins_lines(0, W_WINROW(wp) + row, line_count, (int)Rows, NULL)
+  if (screen_ins_lines(0, wp->w_winrow + row, line_count, (int)Rows, NULL)
       == FAIL) {
     /* deletion will have messed up other windows */
     if (did_delete) {
@@ -6803,7 +6802,7 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
   if (retval != MAYBE)
     return retval;
 
-  if (screen_del_lines(0, W_WINROW(wp) + row, line_count,
+  if (screen_del_lines(0, wp->w_winrow + row, line_count,
           (int)Rows, FALSE, NULL) == FAIL)
     return FAIL;
 
@@ -6812,7 +6811,7 @@ int win_del_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
    * correct place. If we can't do that, they have to be redrawn.
    */
   if (wp->w_next || wp->w_status_height || cmdline_row < Rows - 1) {
-    if (screen_ins_lines(0, W_WINROW(wp) + wp->w_height - line_count,
+    if (screen_ins_lines(0, wp->w_winrow + wp->w_height - line_count,
             line_count, (int)Rows, NULL) == FAIL) {
       wp->w_redr_status = TRUE;
       win_rest_invalid(wp->w_next);
@@ -6851,9 +6850,9 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
    * Delete all remaining lines
    */
   if (row + line_count >= wp->w_height) {
-    screen_fill(W_WINROW(wp) + row, W_WINROW(wp) + wp->w_height,
-        W_WINCOL(wp), (int)W_ENDCOL(wp),
-        ' ', ' ', 0);
+    screen_fill(wp->w_winrow + row, wp->w_winrow + wp->w_height,
+                wp->w_wincol, (int)W_ENDCOL(wp),
+                ' ', ' ', 0);
     return OK;
   }
 
@@ -6873,15 +6872,15 @@ static int win_do_lines(win_T *wp, int row, int line_count, int mayclear, int de
    * scroll-up in the DJGPP version.
    */
   if (scroll_region
-      || W_WIDTH(wp) != Columns
+      || wp->w_width != Columns
       ) {
     if (scroll_region && (wp->w_width == Columns || *T_CSV != NUL))
       scroll_region_set(wp, row);
     if (del)
-      retval = screen_del_lines(W_WINROW(wp) + row, 0, line_count,
+      retval = screen_del_lines(wp->w_winrow + row, 0, line_count,
           wp->w_height - row, FALSE, wp);
     else
-      retval = screen_ins_lines(W_WINROW(wp) + row, 0, line_count,
+      retval = screen_ins_lines(wp->w_winrow + row, 0, line_count,
           wp->w_height - row, wp);
     if (scroll_region && (wp->w_width == Columns || *T_CSV != NUL))
       scroll_region_reset();
@@ -7789,10 +7788,10 @@ static void win_redr_ruler(win_T *wp, int always)
              || empty_line != wp->w_ru_empty) {
     cursor_off();
     if (wp->w_status_height) {
-      row = W_WINROW(wp) + wp->w_height;
+      row = wp->w_winrow + wp->w_height;
       fillchar = fillchar_status(&attr, wp == curwin);
-      off = W_WINCOL(wp);
-      width = W_WIDTH(wp);
+      off = wp->w_wincol;
+      width = wp->w_width;
     } else {
       row = Rows - 1;
       fillchar = ' ';

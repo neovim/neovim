@@ -648,7 +648,7 @@ retnomove:
             || (!on_status_line
                 && !on_sep_line
                 && (
-                  wp->w_p_rl ? col < W_WIDTH(wp) - wp->w_p_fdc :
+                  wp->w_p_rl ? col < wp->w_width - wp->w_p_fdc :
                                      col >= wp->w_p_fdc
                                              + (cmdwin_type == 0 && wp ==
                                                 curwin ? 0 : 1)
@@ -717,8 +717,8 @@ retnomove:
     }
 
 
-    row -= W_WINROW(curwin);
-    col -= W_WINCOL(curwin);
+    row -= curwin->w_winrow;
+    col -= curwin->w_wincol;
 
     /*
      * When clicking beyond the end of the window, scroll the screen.
@@ -787,7 +787,7 @@ retnomove:
 
   /* Check for position outside of the fold column. */
   if (
-    curwin->w_p_rl ? col < W_WIDTH(curwin) - curwin->w_p_fdc :
+    curwin->w_p_rl ? col < curwin->w_width - curwin->w_p_fdc :
                            col >= curwin->w_p_fdc
                                    + (cmdwin_type == 0 ? 0 : 1)
     )
@@ -847,7 +847,7 @@ int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
   int count;
 
   if (win->w_p_rl)
-    col = W_WIDTH(win) - 1 - col;
+    col = win->w_width - 1 - col;
 
   lnum = win->w_topline;
 
@@ -879,7 +879,7 @@ int mouse_comp_pos(win_T *win, int *rowp, int *colp, linenr_T *lnump)
     off = win_col_off(win) - win_col_off2(win);
     if (col < off)
       col = off;
-    col += row * (W_WIDTH(win) - off);
+    col += row * (win->w_width - off);
     /* add skip column (for long wrapping line) */
     col += win->w_skipcol;
   }

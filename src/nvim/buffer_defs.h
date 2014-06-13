@@ -16,6 +16,53 @@
 // for dict_T
 #include "nvim/eval_defs.h"
 
+/*
+ * Flags for w_valid.
+ * These are set when something in a window structure becomes invalid, except
+ * when the cursor is moved.  Call check_cursor_moved() before testing one of
+ * the flags.
+ * These are reset when that thing has been updated and is valid again.
+ *
+ * Every function that invalidates one of these must call one of the
+ * invalidate_* functions.
+ *
+ * w_valid is supposed to be used only in screen.c.  From other files, use the
+ * functions that set or reset the flags.
+ *
+ * VALID_BOTLINE    VALID_BOTLINE_AP
+ *     on		on		w_botline valid
+ *     off		on		w_botline approximated
+ *     off		off		w_botline not valid
+ *     on		off		not possible
+ */
+#define VALID_WROW      0x01    /* w_wrow (window row) is valid */
+#define VALID_WCOL      0x02    /* w_wcol (window col) is valid */
+#define VALID_VIRTCOL   0x04    /* w_virtcol (file col) is valid */
+#define VALID_CHEIGHT   0x08    /* w_cline_height and w_cline_folded valid */
+#define VALID_CROW      0x10    /* w_cline_row is valid */
+#define VALID_BOTLINE   0x20    /* w_botine and w_empty_rows are valid */
+#define VALID_BOTLINE_AP 0x40   /* w_botine is approximated */
+#define VALID_TOPLINE   0x80    /* w_topline is valid (for cursor position) */
+
+/* flags for b_flags */
+#define BF_RECOVERED    0x01    /* buffer has been recovered */
+#define BF_CHECK_RO     0x02    /* need to check readonly when loading file
+                                   into buffer (set by ":e", may be reset by
+                                   ":buf" */
+#define BF_NEVERLOADED  0x04    /* file has never been loaded into buffer,
+                                   many variables still need to be set */
+#define BF_NOTEDITED    0x08    /* Set when file name is changed after
+                                   starting to edit, reset when file is
+                                   written out. */
+#define BF_NEW          0x10    /* file didn't exist when editing started */
+#define BF_NEW_W        0x20    /* Warned for BF_NEW and file created */
+#define BF_READERR      0x40    /* got errors while reading the file */
+#define BF_DUMMY        0x80    /* dummy buffer, only used internally */
+#define BF_PRESERVED    0x100   /* ":preserve" was used */
+
+/* Mask to check for flags that prevent normal writing */
+#define BF_WRITE_MASK   (BF_NOTEDITED + BF_NEW + BF_READERR)
+
 typedef struct window_S win_T;
 typedef struct wininfo_S wininfo_T;
 typedef struct frame_S frame_T;
@@ -902,12 +949,9 @@ struct window_S {
   int w_height;                     /* number of rows in window, excluding
                                        status/command line(s) */
   int w_status_height;              /* number of status lines (0 or 1) */
-  int w_wincol;                     /* Leftmost column of window in screen.
-                                       use W_WINCOL() */
-  int w_width;                      /* Width of window, excluding separation.
-                                       use W_WIDTH() */
-  int w_vsep_width;                 /* Number of separator columns (0 or 1).
-                                       use W_VSEP_WIDTH() */
+  int w_wincol;                     /* Leftmost column of window in screen. */
+  int w_width;                      /* Width of window, excluding separation. */
+  int w_vsep_width;                 /* Number of separator columns (0 or 1). */
 
   /*
    * === start of cached values ====
@@ -916,7 +960,7 @@ struct window_S {
    * Recomputing is minimized by storing the result of computations.
    * Use functions in screen.c to check if they are valid and to update.
    * w_valid is a bitfield of flags, which indicate if specific values are
-   * valid or need to be recomputed.	See screen.c for values.
+   * valid or need to be recomputed.	
    */
   int w_valid;
   pos_T w_valid_cursor;             /* last known position of w_cursor, used
