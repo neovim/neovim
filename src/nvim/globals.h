@@ -951,6 +951,7 @@ EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
 
 #if defined(UNIX)
 EXTERN int term_is_xterm INIT(= FALSE);         /* xterm-like 'term' */
+EXTERN int xterm_conflict_mouse INIT(= FALSE);
 #endif
 
 #ifdef BACKSLASH_IN_FILENAME
