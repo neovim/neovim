@@ -135,7 +135,7 @@
 /* Advance multi-byte pointer, do not skip over composing chars. */
 # define mb_cptr_adv(p)     p += \
   enc_utf8 ? utf_ptr2len(p) : has_mbyte ? (*mb_ptr2len)(p) : 1
-/* Backup multi-byte pointer. */
+/* Backup multi-byte pointer. Only use with "p" > "s" ! */
 # define mb_ptr_back(s, p)  p -= has_mbyte ? ((*mb_head_off)(s, p - 1) + 1) : 1
 /* get length of multi-byte char, not including composing chars */
 # define mb_cptr2len(p)     (enc_utf8 ? utf_ptr2len(p) : (*mb_ptr2len)(p))

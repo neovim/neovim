@@ -1,7 +1,7 @@
 This is a test of the script language.
 
 If after adding a new test, the test output doesn't appear properly in
-test49.failed, try to add one ore more "G"s at the line ending in "test.out"
+test49.failed, try to add one or more "G"s at the line ending in "test.out"
 
 STARTTEST
 :so small.vim
