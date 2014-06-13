@@ -474,9 +474,9 @@ static void fname2fnum(xfmark_T *fm)
 
       expand_env((char_u *)"~/", NameBuff, MAXPATHL);
       len = (int)STRLEN(NameBuff);
-      vim_strncpy(NameBuff + len, fm->fname + 2, MAXPATHL - len - 1);
+      STRLCPY(NameBuff + len, fm->fname + 2, MAXPATHL - len);
     } else
-      vim_strncpy(NameBuff, fm->fname, MAXPATHL - 1);
+      STRLCPY(NameBuff, fm->fname, MAXPATHL);
 
     /* Try to shorten the file name. */
     os_dirname(IObuff, IOSIZE);

@@ -2126,7 +2126,7 @@ void buflist_list(exarg_T *eap)
       continue;
     msg_putchar('\n');
     if (buf_spname(buf) != NULL)
-      vim_strncpy(NameBuff, buf_spname(buf), MAXPATHL - 1);
+      STRLCPY(NameBuff, buf_spname(buf), MAXPATHL);
     else
       home_replace(buf, buf->b_fname, NameBuff, MAXPATHL, TRUE);
 
@@ -2473,7 +2473,7 @@ fileinfo (
 
   *p++ = '"';
   if (buf_spname(curbuf) != NULL)
-    vim_strncpy(p, buf_spname(curbuf), IOSIZE - (p - buffer) - 1);
+    STRLCPY(p, buf_spname(curbuf), IOSIZE - (p - buffer));
   else {
     if (!fullname && curbuf->b_fname != NULL)
       name = curbuf->b_fname;
@@ -2619,10 +2619,10 @@ void maketitle(void)
 #define SPACE_FOR_DIR   (IOSIZE - 20)
 #define SPACE_FOR_ARGNR (IOSIZE - 10)  /* at least room for " - VIM" */
       if (curbuf->b_fname == NULL)
-        vim_strncpy(buf, (char_u *)_("[No Name]"), SPACE_FOR_FNAME);
+        STRLCPY(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
       else {
         p = transstr(path_tail(curbuf->b_fname));
-        vim_strncpy(buf, p, SPACE_FOR_FNAME);
+        STRLCPY(buf, p, SPACE_FOR_FNAME + 1);
         free(p);
       }
 
@@ -2654,8 +2654,7 @@ void maketitle(void)
         p = path_tail_with_sep(buf + off);
         if (p == buf + off)
           /* must be a help buffer */
-          vim_strncpy(buf + off, (char_u *)_("help"),
-              (size_t)(SPACE_FOR_DIR - off - 1));
+          STRLCPY(buf + off, _("help"), SPACE_FOR_DIR - off);
         else
           *p = NUL;
 
@@ -2664,11 +2663,10 @@ void maketitle(void)
          * file name) use (...). */
         if (off < SPACE_FOR_DIR) {
           p = transstr(buf + off);
-          vim_strncpy(buf + off, p, (size_t)(SPACE_FOR_DIR - off));
+          STRLCPY(buf + off, p, SPACE_FOR_DIR - off + 1);
           free(p);
         } else {
-          vim_strncpy(buf + off, (char_u *)"...",
-              (size_t)(SPACE_FOR_ARGNR - off));
+          STRLCPY(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
         }
         STRCAT(buf, ")");
       }
@@ -3071,7 +3069,7 @@ build_stl_str_hl (
     case STL_FILENAME:
       fillable = FALSE;         /* don't change ' ' to fillchar */
       if (buf_spname(wp->w_buffer) != NULL)
-        vim_strncpy(NameBuff, buf_spname(wp->w_buffer), MAXPATHL - 1);
+        STRLCPY(NameBuff, buf_spname(wp->w_buffer), MAXPATHL);
       else {
         t = (opt == STL_FULLPATH) ? wp->w_buffer->b_ffname
             : wp->w_buffer->b_fname;
@@ -3513,10 +3511,9 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
   above += diff_check_fill(wp, wp->w_topline) - wp->w_topfill;
   below = wp->w_buffer->b_ml.ml_line_count - wp->w_botline + 1;
   if (below <= 0)
-    vim_strncpy(buf, (char_u *)(above == 0 ? _("All") : _("Bot")),
-        (size_t)(buflen - 1));
+    STRLCPY(buf, (above == 0 ? _("All") : _("Bot")), buflen);
   else if (above <= 0)
-    vim_strncpy(buf, (char_u *)_("Top"), (size_t)(buflen - 1));
+    STRLCPY(buf, _("Top"), buflen);
   else
     vim_snprintf((char *)buf, (size_t)buflen, "%2d%%", above > 1000000L
         ? (int)(above / ((above + below) / 100L))

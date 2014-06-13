@@ -307,7 +307,7 @@ vim_findfile_init (
 
     if (!vim_isAbsName(rel_fname) && len + 1 < MAXPATHL) {
       /* Make the start dir an absolute path name. */
-      vim_strncpy(ff_expand_buffer, rel_fname, len);
+      STRLCPY(ff_expand_buffer, rel_fname, len + 1);
       search_ctx->ffsc_start_dir = FullName_save(ff_expand_buffer, FALSE);
     } else
       search_ctx->ffsc_start_dir = vim_strnsave(rel_fname, len);
@@ -1092,7 +1092,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   // For a URL we only compare the name, otherwise we compare the
   // device/inode.
   if (path_with_url(fname)) {
-    vim_strncpy(ff_expand_buffer, fname, MAXPATHL - 1);
+    STRLCPY(ff_expand_buffer, fname, MAXPATHL);
     url = true;
   } else {
     ff_expand_buffer[0] = NUL;

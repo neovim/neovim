@@ -295,7 +295,7 @@ int cs_fgets(char_u *buf, int size)
 
   if ((p = cs_manage_matches(NULL, NULL, -1, Get)) == NULL)
     return TRUE;
-  vim_strncpy(buf, (char_u *)p, size - 1);
+  STRLCPY(buf, p, size);
 
   return FALSE;
 } /* cs_fgets */
@@ -2043,9 +2043,9 @@ static char *cs_resolve_file(int i, char *name)
     /* If 'cscoperelative' is set and ppath is not set, use cscope.out
      * path in path resolution. */
     csdir = xmalloc(MAXPATHL);
-    vim_strncpy(csdir, (char_u *)csinfo[i].fname,
+    STRLCPY(csdir, csinfo[i].fname,
         path_tail((char_u *)csinfo[i].fname)
-        - (char_u *)csinfo[i].fname);
+        - (char_u *)csinfo[i].fname + 1);
     len += STRLEN(csdir);
   }
 

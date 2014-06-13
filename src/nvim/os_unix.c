@@ -409,9 +409,9 @@ int len               /* buffer size, only used when name gets longer */
           struct stat st2;
 
           /* Verify the inode is equal. */
-          vim_strncpy(newname, name, MAXPATHL);
-          vim_strncpy(newname + (tail - name), (char_u *)dp->d_name,
-              MAXPATHL - (tail - name));
+          STRLCPY(newname, name, MAXPATHL + 1);
+          STRLCPY(newname + (tail - name), dp->d_name,
+              MAXPATHL - (tail - name) + 1);
           if (lstat((char *)newname, &st2) >= 0
               && st.st_ino == st2.st_ino
               && st.st_dev == st2.st_dev) {

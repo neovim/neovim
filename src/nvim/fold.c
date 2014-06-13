@@ -1599,7 +1599,7 @@ static void foldAddMarker(linenr_T lnum, char_u *marker, int markerlen)
     newline = xmalloc(line_len + markerlen + STRLEN(cms) + 1);
     STRCPY(newline, line);
     if (p == NULL)
-      vim_strncpy(newline + line_len, marker, markerlen);
+      STRLCPY(newline + line_len, marker, markerlen + 1);
     else {
       STRCPY(newline + line_len, cms);
       STRNCPY(newline + line_len + (p - cms), marker, markerlen);

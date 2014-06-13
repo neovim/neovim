@@ -1534,7 +1534,7 @@ vim_FullName (
     retval = path_get_absolute_path(fname, buf, len, force);
   if (url || retval == FAIL) {
     /* something failed; use the file name (truncate when too long) */
-    vim_strncpy(buf, fname, len - 1);
+    STRLCPY(buf, fname, len);
   }
   return retval;
 }

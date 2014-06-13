@@ -5875,7 +5875,7 @@ dictitem_T *dict_find(dict_T *d, char_u *key, int len)
     tofree = akey = vim_strnsave(key, len);
   } else {
     /* Avoid a malloc/free by using buf[]. */
-    vim_strncpy(buf, key, len);
+    STRLCPY(buf, key, len + 1);
     akey = buf;
   }
 
