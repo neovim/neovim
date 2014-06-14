@@ -16,15 +16,6 @@
  * changed beyond recognition.
  */
 
-/*
- * Some systems have a prototype for select() that has (int *) instead of
- * (fd_set *), which is wrong. This define removes that prototype. We define
- * our own prototype below.
- * Don't use it for the Mac, it causes a warning for precompiled headers.
- * TODO: use a configure check for precompiled headers?
- */
-# define select select_declared_wrong
-
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
