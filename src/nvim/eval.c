@@ -8989,13 +8989,14 @@ static void f_getchar(typval_T *argvars, typval_T *rettv)
       n = safe_vgetc();
     else if (get_tv_number_chk(&argvars[0], &error) == 1)
       /* getchar(1): only check if char avail */
-      n = vpeekc();
-    else if (error || vpeekc() == NUL)
+      n = vpeekc_any();
+    else if (error || vpeekc_any() == NUL)
       /* illegal argument or getchar(0) and no char avail: return zero */
       n = 0;
     else
       /* getchar(0) and char avail: return char */
       n = safe_vgetc();
+
     if (n == K_IGNORE)
       continue;
     break;
