@@ -440,7 +440,7 @@ void ml_setname(buf_T *buf)
   }
 
   if (mfp->mf_fd == -1) {           /* need to (re)open the swap file */
-    mfp->mf_fd = mch_open((char *)mfp->mf_fname, O_RDWR, 0);
+    mfp->mf_fd = os_open((char *)mfp->mf_fname, O_RDWR, 0);
     if (mfp->mf_fd < 0) {
       /* could not (re)open the swap file, what can we do???? */
       EMSG(_("E301: Oops, lost the swap file!!!"));
@@ -1517,7 +1517,7 @@ static time_t swapfile_info(char_u *fname)
   /*
    * print the original file name
    */
-  fd = mch_open((char *)fname, O_RDONLY, 0);
+  fd = os_open((char *)fname, O_RDONLY, 0);
   if (fd >= 0) {
     if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
       if (STRNCMP(b0.b0_version, "VIM 3.0", 7) == 0) {
@@ -3329,7 +3329,7 @@ findswapname (
          * Try to read block 0 from the swap file to get the original
          * file name (and inode number).
          */
-        fd = mch_open((char *)fname, O_RDONLY, 0);
+        fd = os_open((char *)fname, O_RDONLY, 0);
         if (fd >= 0) {
           if (read_eintr(fd, &b0, sizeof(b0)) == sizeof(b0)) {
             /*

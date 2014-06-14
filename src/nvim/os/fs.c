@@ -11,6 +11,7 @@
 #include "nvim/misc2.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
+#include "nvim/log.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.c.generated.h"
@@ -148,6 +149,24 @@ static bool is_executable_in_path(const char_u *name)
   // We should never get to this point.
   assert(false);
   return false;
+}
+
+/// Opens or creates a file and returns a non-negative integer representing
+/// the lowest-numbered unused file descriptor, for use in subsequent system
+/// calls (read, write, lseek, fcntl, etc.). If the operation fails, `-errno`
+/// is returned, and no file is created or modified.
+///
+/// @param flags bitwise OR of flags defined in <fcntl.h>
+/// @param mode permissions for the newly-created file (IGNORED if 'flags' is
+/// not `O_CREAT` or `O_TMPFILE`)
+/// @return file descriptor, or negative `errno` on failure
+int os_open(const char* path, int flags, int mode)
+{
+  uv_fs_t open_req;
+  int r = uv_fs_open(uv_default_loop(), &open_req, path, flags, mode, NULL);
+  uv_fs_req_cleanup(&open_req);
+  //`r` is the same as open_req.result, except when OOM. So just use `r`.
+  return r;
 }
 
 /// Get stat information for a file.
@@ -291,7 +310,7 @@ int os_remove(const char *path)
 
 /// Get the file information for a given path
 ///
-/// @param file_descriptor File descriptor of the file.
+/// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_get_file_info(const char *path, FileInfo *file_info)

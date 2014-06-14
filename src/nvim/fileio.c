@@ -428,7 +428,7 @@ readfile (
 #ifdef UNIX
     /*
      * On Unix it is possible to read a directory, so we have to
-     * check for it before the mch_open().
+     * check for it before os_open().
      */
     perm = os_getperm(fname);
     if (perm >= 0 && !S_ISREG(perm)                 /* not a regular file ... */
@@ -507,13 +507,13 @@ readfile (
   if (!read_buffer && !read_stdin) {
     if (!newfile || readonlymode) {
       file_readonly = TRUE;
-    } else if ((fd = mch_open((char *)fname, O_RDWR, 0)) < 0) {
+    } else if ((fd = os_open((char *)fname, O_RDWR, 0)) < 0) {
       // opening in readwrite mode failed => file is readonly
       file_readonly = TRUE;
     }
     if (file_readonly == TRUE) {
       // try to open readonly
-      fd = mch_open((char *)fname, O_RDONLY, 0);
+      fd = os_open((char *)fname, O_RDONLY, 0);
     }
   }
 
@@ -696,9 +696,7 @@ readfile (
     if (!read_stdin && (curbuf != old_curbuf
                         || (using_b_ffname && (old_b_ffname != curbuf->b_ffname))
                         || (using_b_fname && (old_b_fname != curbuf->b_fname))
-                        || (fd =
-                              mch_open((char *)fname, O_RDONLY,
-                                  0)) < 0)) {
+                        || (fd = os_open((char *)fname, O_RDONLY, 0)) < 0)) {
       --no_wait_return;
       msg_scroll = msg_save;
       if (fd < 0)
@@ -2157,9 +2155,9 @@ readfile_charconvert (
     if (eval_charconvert(fenc, enc_utf8 ? (char_u *)"utf-8" : p_enc,
             fname, tmpname) == FAIL)
       errmsg = (char_u *)_("Conversion with 'charconvert' failed");
-    if (errmsg == NULL && (*fdp = mch_open((char *)tmpname,
-                               O_RDONLY, 0)) < 0)
+    if (errmsg == NULL && (*fdp = os_open((char *)tmpname, O_RDONLY, 0)) < 0) {
       errmsg = (char_u *)_("can't read output of 'charconvert'");
+    }
   }
 
   if (errmsg != NULL) {
@@ -2174,8 +2172,9 @@ readfile_charconvert (
   }
 
   /* If the input file is closed, open it (caller should check for error). */
-  if (*fdp < 0)
-    *fdp = mch_open((char *)fname, O_RDONLY, 0);
+  if (*fdp < 0) {
+    *fdp = os_open((char *)fname, O_RDONLY, 0);
+  }
 
   return tmpname;
 }
@@ -2737,7 +2736,7 @@ buf_write (
             break;
           }
         }
-        fd = mch_open((char *)IObuff,
+        fd = os_open((char *)IObuff,
             O_CREAT|O_WRONLY|O_EXCL|O_NOFOLLOW, perm);
         if (fd < 0)             /* can't write in directory */
           backup_copy = TRUE;
@@ -2791,8 +2790,7 @@ buf_write (
     else
       backup_ext = p_bex;
 
-    if (backup_copy
-        && (fd = mch_open((char *)fname, O_RDONLY, 0)) >= 0) {
+    if (backup_copy && (fd = os_open((char *)fname, O_RDONLY, 0)) >= 0) {
       int bfd;
       char_u      *copybuf, *wp;
       int some_error = FALSE;
@@ -2890,7 +2888,7 @@ buf_write (
           os_remove((char *)backup);
           /* Open with O_EXCL to avoid the file being created while
            * we were sleeping (symlink hacker attack?) */
-          bfd = mch_open((char *)backup,
+          bfd = os_open((char *)backup,
               O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,
               perm & 0777);
           if (bfd < 0) {
@@ -3194,7 +3192,7 @@ nobackup:
    * (this may happen when the user reached his quotum for number of files).
    * Appending will fail if the file does not exist and forceit is FALSE.
    */
-  while ((fd = mch_open((char *)wfname, O_WRONLY | (append
+  while ((fd = os_open((char *)wfname, O_WRONLY | (append
                                                               ? (forceit ? (
                                                                    O_APPEND |
                                                                    O_CREAT) :
@@ -3515,8 +3513,8 @@ restore_backup:
           MSG(_(e_interr));
           out_flush();
         }
-        if ((fd = mch_open((char *)backup, O_RDONLY, 0)) >= 0) {
-          if ((write_info.bw_fd = mch_open((char *)fname,
+        if ((fd = os_open((char *)backup, O_RDONLY, 0)) >= 0) {
+          if ((write_info.bw_fd = os_open((char *)fname,
                    O_WRONLY | O_CREAT | O_TRUNC,
                    perm & 0777)) >= 0) {
             /* copy the file. */
@@ -3646,7 +3644,7 @@ restore_backup:
       int empty_fd;
 
       if (org == NULL
-          || (empty_fd = mch_open(org,
+          || (empty_fd = os_open(org,
                   O_CREAT | O_EXCL | O_NOFOLLOW,
                   perm < 0 ? 0666 : (perm & 0777))) < 0)
         EMSG(_("E206: patchmode: can't touch empty original file"));
@@ -4615,7 +4613,7 @@ int vim_rename(char_u *from, char_u *to)
   /* For systems that support ACL: get the ACL from the original file. */
   acl = mch_get_acl(from);
 #endif
-  fd_in = mch_open((char *)from, O_RDONLY, 0);
+  fd_in = os_open((char *)from, O_RDONLY, 0);
   if (fd_in == -1) {
 #ifdef HAVE_ACL
     mch_free_acl(acl);
@@ -4624,7 +4622,7 @@ int vim_rename(char_u *from, char_u *to)
   }
 
   /* Create the new file with same permissions as the original. */
-  fd_out = mch_open((char *)to,
+  fd_out = os_open((char *)to,
       O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
   if (fd_out == -1) {
     close(fd_in);
@@ -4660,7 +4658,7 @@ int vim_rename(char_u *from, char_u *to)
     errmsg = _("E210: Error reading \"%s\"");
     to = from;
   }
-#ifndef UNIX        /* for Unix mch_open() already set the permission */
+#ifndef UNIX        /* for Unix os_open() already set the permission */
   os_setperm(to, perm);
 #endif
 #ifdef HAVE_ACL

@@ -108,13 +108,12 @@
 #endif
 
 #  define mch_fopen(n, p)       fopen((n), (p))
-#   define mch_open(n, m, p)    open((n), (m), (p))
 
-/* mch_open_rw(): invoke mch_open() with third argument for user R/W. */
+/* mch_open_rw(): invoke os_open() with third argument for user R/W. */
 #if defined(UNIX)  /* open in rw------- mode */
-# define mch_open_rw(n, f)      mch_open((n), (f), (mode_t)0600)
+# define mch_open_rw(n, f)      os_open((n), (f), (mode_t)0600)
 #else
-#  define mch_open_rw(n, f)     mch_open((n), (f), 0)
+#  define mch_open_rw(n, f)     os_open((n), (f), 0)
 #endif
 
 #ifdef STARTUPTIME
