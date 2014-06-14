@@ -314,12 +314,10 @@ static int sort_compare(const void *s1, const void *s2)
     /* We need to copy one line into "sortbuf1", because there is no
      * guarantee that the first pointer becomes invalid when obtaining the
      * second one. */
-    STRNCPY(sortbuf1, ml_get(l1.lnum) + l1.start_col_nr,
-        l1.end_col_nr - l1.start_col_nr + 1);
-    sortbuf1[l1.end_col_nr - l1.start_col_nr] = 0;
-    STRNCPY(sortbuf2, ml_get(l2.lnum) + l2.start_col_nr,
-        l2.end_col_nr - l2.start_col_nr + 1);
-    sortbuf2[l2.end_col_nr - l2.start_col_nr] = 0;
+    STRLCPY(sortbuf1, ml_get(l1.lnum) + l1.start_col_nr,
+            l1.end_col_nr - l1.start_col_nr + 1);
+    STRLCPY(sortbuf2, ml_get(l2.lnum) + l2.start_col_nr,
+            l2.end_col_nr - l2.start_col_nr + 1);
 
     result = sort_ic ? STRICMP(sortbuf1, sortbuf2)
              : STRCMP(sortbuf1, sortbuf2);
