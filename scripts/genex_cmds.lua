@@ -34,15 +34,15 @@ local byte_a = string.byte('a')
 local byte_z = string.byte('z')
 
 local cmdidxs = string.format([[
-static cmdidx_T cmdidxs[%u] = {
+static const cmdidx_T cmdidxs[%u] = {
 ]], byte_z - byte_a + 2)
 
 enumfile:write([[
 typedef enum CMD_index {
 ]])
-defsfile:write([[
-static CommandDefinition cmdnames[] = {
-]])
+defsfile:write(string.format([[
+static CommandDefinition cmdnames[%u] = {
+]], #defs))
 for i, cmd in ipairs(defs) do
   local enumname = cmd.enum or ('CMD_' .. cmd.command)
   firstchar = string.byte(cmd.command)
