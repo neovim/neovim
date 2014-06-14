@@ -1,3 +1,6 @@
+filter-false = $(strip $(filter-out 0 off OFF false FALSE,$1))
+filter-true = $(strip $(filter-out 1 on ON true TRUE,$1))
+
 -include local.mk
 
 CMAKE_BUILD_TYPE ?= Debug
@@ -33,6 +36,11 @@ BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
 # Extra CMake flags which extend the default set
 CMAKE_EXTRA_FLAGS ?=
 DEPS_CMAKE_FLAGS ?=
+USE_BUNDLED_DEPS ?=
+
+ifneq (,$(USE_BUNDLED_DEPS))
+    BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
+endif
 
 # For use where we want to make sure only a single job is run.  This also avoids
 # any warnings from the sub-make.
@@ -48,17 +56,22 @@ cmake:
 	$(MAKE) build/.ran-cmake
 
 build/.ran-cmake: | deps
-	mkdir -p build
 	cd build && cmake -G '$(BUILD_TYPE)' $(CMAKE_FLAGS) $(CMAKE_EXTRA_FLAGS) ..
 	touch $@
 
-deps: | .deps/build/third-party/.ran-cmake
+deps: | build/.ran-third-party-cmake
+ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
 	+$(BUILD_CMD) -C .deps/build/third-party
+endif
 
-.deps/build/third-party/.ran-cmake:
+build/.ran-third-party-cmake:
+ifeq ($(call filter-true,$(USE_BUNDLED_DEPS)),)
 	mkdir -p .deps/build/third-party
 	cd .deps/build/third-party && \
-		cmake -G '$(BUILD_TYPE)' $(DEPS_CMAKE_FLAGS) ../../../third-party
+		cmake -G '$(BUILD_TYPE)' $(BUNDLED_CMAKE_FLAG) \
+		$(DEPS_CMAKE_FLAGS) ../../../third-party
+endif
+	mkdir -p build
 	touch $@
 
 test: | nvim
