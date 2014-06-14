@@ -3686,9 +3686,9 @@ static int ins_compl_get_exp(pos_T *ini)
               /* Try next line, if any. the new word will be
                * "join" as if the normal command "J" was used.
                * IOSIZE is always greater than
-               * compl_length, so the next STRNCPY always
+               * compl_length, so the next string copy always
                * works -- Acevedo */
-              STRNCPY(IObuff, ptr, len);
+              memcpy(IObuff, ptr, len);
               ptr = ml_get_buf(ins_buf, pos->lnum + 1, FALSE);
               tmp_ptr = ptr = skipwhite(ptr);
               /* Find start of next word. */
@@ -3711,7 +3711,7 @@ static int ins_compl_get_exp(pos_T *ini)
                 /* copy as much as possible of the new word */
                 if (tmp_ptr - ptr >= IOSIZE - len)
                   tmp_ptr = ptr + IOSIZE - len - 1;
-                STRNCPY(IObuff + len, ptr, tmp_ptr - ptr);
+                memcpy(IObuff + len, ptr, tmp_ptr - ptr);
                 len += (int)(tmp_ptr - ptr);
                 flags |= CONT_S_IPOS;
               }
