@@ -2001,9 +2001,9 @@ static void fold_line(win_T *wp, long fold_count, foldinfo_T *foldinfo, linenr_T
       len = wp->w_width - col;
     if (len > 0) {
       if (wp->w_p_rl)
-        STRNCPY(current_ScreenLine, text, len);
+        memcpy(current_ScreenLine, text, len);
       else
-        STRNCPY(current_ScreenLine + col, text, len);
+        memcpy(current_ScreenLine + col, text, len);
       col += len;
     }
   }
@@ -4692,7 +4692,7 @@ win_redr_status_matches (
         s += skip_status_match_char(xp, s);
         clen += ptr2cells(s);
         if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1) {
-          STRNCPY(buf + len, s, l);
+          memcpy(buf + len, s, l);
           s += l - 1;
           len += l;
         } else {
