@@ -42,8 +42,8 @@ ifneq (,$(USE_BUNDLED_DEPS))
     BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
 endif
 
-# For use where we want to make sure only a single job is run.  This also avoids
-# any warnings from the sub-make.
+# For use where we want to make sure only a single job is run.  This does issue 
+# a warning, but we need to keep SCRIPTS argument.
 SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 all: nvim
@@ -75,7 +75,7 @@ endif
 	touch $@
 
 test: | nvim
-	+$(SINGLE_MAKE) -C src/nvim/testdir
+	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
