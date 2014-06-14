@@ -1314,7 +1314,16 @@ make_filter_cmd (
     char_u *otmp              /* NULL or name of output file */
 )
 {
-  size_t len = STRLEN(cmd) + 3;                        /* "()" + NUL */
+  int is_fish_shell;
+  size_t len;
+#if defined(UNIX)
+  /* Account for fish's different syntax for subshells */
+  is_fish_shell = (fnamecmp(get_isolated_shell_name(), "fish") == 0);
+  if (is_fish_shell)
+    len = STRLEN(cmd) + 13;                     /* "begin; " + "; end" + NUL */
+  else
+#endif
+    len = STRLEN(cmd) + 3;                        /* "()" + NUL */
   if (itmp != NULL)
     len += STRLEN(itmp) + 9;                    /* " { < " + " } " */
   if (otmp != NULL)
@@ -1327,7 +1336,12 @@ make_filter_cmd (
    * redirecting input and/or output.
    */
   if (itmp != NULL || otmp != NULL)
-    vim_snprintf((char *)buf, len, "(%s)", (char *)cmd);
+  {
+    if (is_fish_shell)
+      vim_snprintf((char *)buf, len, "begin; %s; end", (char *)cmd);
+    else
+      vim_snprintf((char *)buf, len, "(%s)", (char *)cmd);
+  }
   else
     STRCPY(buf, cmd);
   if (itmp != NULL) {
@@ -1336,7 +1350,7 @@ make_filter_cmd (
   }
 #else
   /*
-   * for shells that don't understand braces around commands, at least allow
+   * For shells that don't understand braces around commands, at least allow
    * the use of commands in a pipe.
    */
   STRCPY(buf, cmd);
