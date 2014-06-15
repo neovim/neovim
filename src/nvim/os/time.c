@@ -22,6 +22,15 @@ void time_init(void)
   uv_cond_init(&delay_cond);
 }
 
+/// Obtain a high-resolution timer value
+///
+/// @return a timer value, not related to the time of day and not subject
+///         to clock drift. The value is expressed in nanoseconds.
+uint64_t os_hrtime(void)
+{
+  return uv_hrtime();
+}
+
 /// Sleeps for a certain amount of milliseconds
 ///
 /// @param milliseconds Number of milliseconds to sleep
