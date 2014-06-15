@@ -12,23 +12,23 @@ BUILD_TYPE ?= $(shell (type ninja > /dev/null 2>&1 && echo "Ninja") || \
 
 ifeq (,$(BUILD_TOOL))
   ifeq (Ninja,$(BUILD_TYPE))
-      ifneq ($(shell cmake --help 2>/dev/null | grep Ninja),)
-          BUILD_TOOL := ninja
-      else
-          # User's version of CMake doesn't support Ninja
-          BUILD_TOOL = $(MAKE)
-          BUILD_TYPE := Unix Makefiles
-      endif
-  else
+    ifneq ($(shell cmake --help 2>/dev/null | grep Ninja),)
+      BUILD_TOOL := ninja
+    else
+      # User's version of CMake doesn't support Ninja
       BUILD_TOOL = $(MAKE)
+      BUILD_TYPE := Unix Makefiles
+    endif
+  else
+    BUILD_TOOL = $(MAKE)
   endif
 endif
 
 ifneq ($(VERBOSE),)
-    # Only need to handle Ninja here.  Make will inherit the VERBOSE variable.
-    ifeq ($(BUILD_TYPE),Ninja)
-        VERBOSE_FLAG := -v
-    endif
+  # Only need to handle Ninja here.  Make will inherit the VERBOSE variable.
+  ifeq ($(BUILD_TYPE),Ninja)
+    VERBOSE_FLAG := -v
+  endif
 endif
 
 BUILD_CMD = $(BUILD_TOOL) $(VERBOSE_FLAG)
@@ -39,7 +39,7 @@ DEPS_CMAKE_FLAGS ?=
 USE_BUNDLED_DEPS ?=
 
 ifneq (,$(USE_BUNDLED_DEPS))
-    BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
+  BUNDLED_CMAKE_FLAG := -DUSE_BUNDLED=$(USE_BUNDLED_DEPS)
 endif
 
 # For use where we want to make sure only a single job is run.  This does issue 
