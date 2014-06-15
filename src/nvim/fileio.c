@@ -5254,7 +5254,7 @@ vim_tempname (
 # ifdef HAVE_MKDTEMP
         /* Leave room for filename */
         STRCAT(itmp, "vXXXXXX");
-        if (mkdtemp((char *)itmp) != NULL)
+        if (os_mkdtemp((char *)itmp) != NULL)
           vim_settempdir(itmp);
 # else
         /* Get an arbitrary number of up to 6 digits.  When it's
