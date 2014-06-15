@@ -1396,7 +1396,7 @@ cmdline_changed:
         out_flush();
         ++emsg_off;            /* So it doesn't beep if bad expr */
         /* Set the time limit to half a second. */
-        profile_setlimit(500L, &tm);
+        tm = profile_setlimit(500L);
         i = do_search(NULL, firstc, ccline.cmdbuff, count,
             SEARCH_KEEP + SEARCH_OPT + SEARCH_NOOF + SEARCH_PEEK,
             &tm

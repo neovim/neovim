@@ -426,8 +426,6 @@ typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
  * plus six following composing characters of three bytes each. */
 # define MB_MAXBYTES    21
 
-typedef struct timeval proftime_T;
-
 
 
 

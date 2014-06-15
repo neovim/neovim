@@ -17,6 +17,8 @@
 #include "nvim/hashtab.h"
 // for dict_T
 #include "nvim/eval_defs.h"
+// for proftime_T
+#include "nvim/profile.h"
 
 /*
  * Flags for w_valid.

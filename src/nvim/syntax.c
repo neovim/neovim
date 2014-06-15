@@ -2856,17 +2856,19 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
   int r;
   proftime_T pt;
 
-  if (syn_time_on)
-    profile_start(&pt);
+  if (syn_time_on) {
+    pt = profile_start();
+  }
 
   rmp->rmm_maxcol = syn_buf->b_p_smc;
   r = vim_regexec_multi(rmp, syn_win, syn_buf, lnum, col, NULL);
 
   if (syn_time_on) {
-    profile_end(&pt);
-    profile_add(&st->total, &pt);
-    if (profile_cmp(&pt, &st->slowest) < 0)
+    pt = profile_end(pt);
+    st->total = profile_add(st->total, pt);
+    if (profile_cmp(pt, st->slowest) < 0) {
       st->slowest = pt;
+    }
     ++st->count;
     if (r > 0)
       ++st->match;
@@ -5630,8 +5632,8 @@ void ex_syntime(exarg_T *eap)
 
 static void syn_clear_time(syn_time_T *st)
 {
-  profile_zero(&st->total);
-  profile_zero(&st->slowest);
+  st->total = profile_zero();
+  st->slowest = profile_zero();
   st->count = 0;
   st->match = 0;
 }
@@ -5673,7 +5675,7 @@ static int syn_compare_syntime(const void *v1, const void *v2)
   const time_entry_T  *s1 = v1;
   const time_entry_T  *s2 = v2;
 
-  return profile_cmp(&s1->total, &s2->total);
+  return profile_cmp(s1->total, s2->total);
 }
 
 /*
@@ -5684,7 +5686,6 @@ static void syntime_report(void)
   synpat_T    *spp;
   proftime_T tm;
   int len;
-  proftime_T total_total;
   int total_count = 0;
   garray_T ga;
   time_entry_T *p;
@@ -5695,18 +5696,18 @@ static void syntime_report(void)
   }
 
   ga_init(&ga, sizeof(time_entry_T), 50);
-  profile_zero(&total_total);
+  proftime_T total_total = profile_zero();
   for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; ++idx) {
     spp = &(SYN_ITEMS(curwin->w_s)[idx]);
     if (spp->sp_time.count > 0) {
       p = GA_APPEND_VIA_PTR(time_entry_T, &ga);
       p->total = spp->sp_time.total;
-      profile_add(&total_total, &spp->sp_time.total);
+      total_total = profile_add(total_total, spp->sp_time.total);
       p->count = spp->sp_time.count;
       p->match = spp->sp_time.match;
       total_count += spp->sp_time.count;
       p->slowest = spp->sp_time.slowest;
-      profile_divide(&spp->sp_time.total, spp->sp_time.count, &tm);
+      tm = profile_divide(spp->sp_time.total, spp->sp_time.count);
       p->average = tm;
       p->id = spp->sp_syn.id;
       p->pattern = spp->sp_pattern;
@@ -5724,7 +5725,7 @@ static void syntime_report(void)
     spp = &(SYN_ITEMS(curwin->w_s)[idx]);
     p = ((time_entry_T *)ga.ga_data) + idx;
 
-    MSG_PUTS(profile_msg(&p->total));
+    MSG_PUTS(profile_msg(p->total));
     MSG_PUTS(" ");     /* make sure there is always a separating space */
     msg_advance(13);
     msg_outnum(p->count);
@@ -5733,10 +5734,10 @@ static void syntime_report(void)
     msg_outnum(p->match);
     MSG_PUTS(" ");
     msg_advance(26);
-    MSG_PUTS(profile_msg(&p->slowest));
+    MSG_PUTS(profile_msg(p->slowest));
     MSG_PUTS(" ");
     msg_advance(38);
-    MSG_PUTS(profile_msg(&p->average));
+    MSG_PUTS(profile_msg(p->average));
     MSG_PUTS(" ");
     msg_advance(50);
     msg_outtrans(HL_TABLE()[p->id - 1].sg_name);
@@ -5755,7 +5756,7 @@ static void syntime_report(void)
   ga_clear(&ga);
   if (!got_int) {
     MSG_PUTS("\n");
-    MSG_PUTS(profile_msg(&total_total));
+    MSG_PUTS(profile_msg(total_total));
     msg_advance(13);
     msg_outnum(total_count);
     MSG_PUTS("\n");
