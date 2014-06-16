@@ -6,6 +6,7 @@
 [Reddit](http://www.reddit.com/r/neovim) |
 [Bountysource](https://www.bountysource.com/teams/neovim)
 
+[![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=461131)](https://www.bountysource.com/trackers/461131-neovim?utm_source=461131&utm_medium=shield&utm_campaign=TRACKER_BADGE)
 [![Build Status](https://travis-ci.org/neovim/neovim.svg?branch=master)](https://travis-ci.org/neovim/neovim)
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
