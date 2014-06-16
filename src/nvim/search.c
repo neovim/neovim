@@ -4303,8 +4303,8 @@ search_line:
         i = (int)(p - aux);
 
         if ((compl_cont_status & CONT_ADDING) && i == compl_length) {
-          /* IOSIZE > compl_length, so the STRNCPY works */
-          STRNCPY(IObuff, aux, i);
+          /* IOSIZE > compl_length, so the memcpy works */
+          memcpy(IObuff, aux, i);
 
           /* Get the next line: when "depth" < 0  from the current
            * buffer, otherwise from the included file.  Jump to
@@ -4336,9 +4336,7 @@ search_line:
                 IObuff[i++] = ' ';
             }
             /* copy as much as possible of the new word */
-            if (p - aux >= IOSIZE - i)
-              p = aux + IOSIZE - i - 1;
-            STRNCPY(IObuff + i, aux, p - aux);
+            STRLCPY(IObuff + i, aux, IOSIZE - i);
             i += (int)(p - aux);
             reuse |= CONT_S_IPOS;
           }
