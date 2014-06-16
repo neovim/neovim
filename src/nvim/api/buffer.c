@@ -114,14 +114,11 @@ StringArray buffer_get_slice(Buffer buffer,
     return rv;
   }
 
-  size_t last_index = (size_t)(end - start);
-
-  if ((int64_t)last_index > LONG_MAX - start) {
-    set_api_error("Index value is too high", err);
-    return rv;
-  }
-
-  rv.size = last_index;
+  // since the smallest possible value for start is 1 and the biggest possible
+  // value for end is LONG_MAX, the biggest possible value for
+  // rv.size == LONG_MAX - 1 therefore we don't need to check for out of range
+  // errors here.
+  rv.size = (size_t)(end - start);
   rv.items = xcalloc(sizeof(String), rv.size);
 
   for (size_t i = 0; i < rv.size; i++) {
@@ -208,6 +205,7 @@ void buffer_set_slice(Buffer buffer,
   size_t to_replace = old_len < new_len ? old_len : new_len;
 
   if ((int64_t)to_replace > LONG_MAX - start) {
+    to_replace = LONG_MAX - start;
     set_api_error("Index value is too high", err);
     goto end;
   }
