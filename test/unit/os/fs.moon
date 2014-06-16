@@ -232,12 +232,26 @@ describe 'fs function', ->
     os_remove = (path) ->
       fs.os_remove (to_cstr path)
 
+    p_off_t = ffi.new 'off_t [1]'
+
     describe 'os_file_exists', ->
       it 'returns false when given a non-existing file', ->
         eq false, (os_file_exists 'non-existing-file')
 
       it 'returns true when given an existing file', ->
         eq true, (os_file_exists 'unit-test-directory/test.file')
+
+    describe 'os_get_file_size', ->
+      it 'returns false when given non-existent file', ->
+        eq false, (fs.os_get_file_size (to_cstr 'non-existing-file'), p_off_t)
+
+      it 'returns true when given an existing file', ->
+        eq true, (fs.os_get_file_size (to_cstr 'unit-test-directory/test.file'), p_off_t)
+
+      it 'determines the correct file size', ->
+        fs.os_get_file_size (to_cstr 'unit-test-directory/test.file'), p_off_t
+        size = lfs.attributes 'unit-test-directory/test.file', 'size'
+        eq size, p_off_t[0]
 
     describe 'os_rename', ->
       test = 'unit-test-directory/test.file'
