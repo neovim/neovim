@@ -6794,7 +6794,7 @@ char_u *reg_submatch(int no)
           ++len;
         }
         if (round == 2)
-          STRNCPY(retval + len, reg_getline_submatch(lnum),
+          memcpy(retval + len, reg_getline_submatch(lnum),
               submatch_mmatch->endpos[no].col);
         len += submatch_mmatch->endpos[no].col;
         if (round == 2)
