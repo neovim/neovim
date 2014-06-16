@@ -296,6 +296,22 @@ describe 'fs function', ->
     os_rmdir = (path) ->
       fs.os_rmdir (to_cstr path)
 
+    os_chdir = (path) ->
+      fs.os_chdir (to_cstr path)
+
+    describe 'os_chdir', ->
+      it "returns a value unequal to 0 if directory doesn't exit", ->
+        neq 0, (os_chdir 'not-existing-folder')
+
+      it 'returns a value unequal to 0 if entering the directory is not permited', ->
+        neq 0, (os_chdir '/root')
+
+      it 'returns 0 if changing the directory is succesful', ->
+        eq 0, (os_chdir 'unit-test-directory')
+        -- we need to come back to the original directory for the other tests to
+        -- succeed
+        eq 0, (os_chdir '..')
+
     describe 'os_mkdir', ->
       it 'returns non-zero when given an already existing directory', ->
         mode = ffi.C.kS_IRUSR + ffi.C.kS_IWUSR + ffi.C.kS_IXUSR
