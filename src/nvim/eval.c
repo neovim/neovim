@@ -18382,9 +18382,10 @@ char_u *get_return_cmd(void *rettv)
   if (s == NULL)
     s = (char_u *)"";
 
-  STRCPY(IObuff, ":return ");
-  STRNCPY(IObuff + 8, s, IOSIZE - 8);
-  if (STRLEN(s) + 8 >= IOSIZE)
+  const char *ret = ":return ";
+  STRCPY(IObuff, ret);
+  size_t slen = STRLCPY(IObuff + sizeof(ret), s, IOSIZE - sizeof(ret));
+  if (slen + sizeof(ret) >= IOSIZE)
     STRCPY(IObuff + IOSIZE - 4, "...");
   free(tofree);
   return vim_strsave(IObuff);
