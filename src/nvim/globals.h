@@ -8,8 +8,6 @@
 #ifndef NVIM_GLOBALS_H
 #define NVIM_GLOBALS_H
 
-#include <stdbool.h>
-
 #include "nvim/ex_eval.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"

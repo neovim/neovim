@@ -11,6 +11,7 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/ex_docmd.h"

@@ -7,6 +7,7 @@
  *
  * See README.txt for an overview of the Vim source code.
  */
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/if_cscope.h"

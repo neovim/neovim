@@ -45,6 +45,7 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/file_search.h"

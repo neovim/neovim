@@ -1,5 +1,6 @@
 /// Functions for using external native libraries
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <uv.h>
 
