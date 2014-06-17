@@ -50,6 +50,7 @@
 #define HAVE_NL_MSG_CAT_CNTR 1
 #define HAVE_OPENDIR 1
 #define HAVE_OSPEED 1
+#define HAVE_PATHDEF
 #define HAVE_POLL_H 1
 #define HAVE_PUTENV 1
 #define HAVE_PWD_H 1

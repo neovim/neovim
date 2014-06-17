@@ -25,7 +25,6 @@
 
 #ifdef HAVE_CONFIG_H    /* GNU autoconf (or something else) was here */
 # include "auto/config.h"
-# define HAVE_PATHDEF
 
 /*
  * Check if configure correctly managed to find sizeof(int).  If this failed,
