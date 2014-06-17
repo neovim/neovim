@@ -194,9 +194,10 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     // Perform the call
     msgpack_rpc_call(channel->id, &unpacked.data, &response);
     wstream_write(channel->data.streams.write,
-                  wstream_new_buffer(channel->sbuffer->data,
+                  wstream_new_buffer(xmemdup(channel->sbuffer->data,
+                                             channel->sbuffer->size),
                                      channel->sbuffer->size,
-                                     true));
+                                     free));
 
     // Clear the buffer for future calls
     msgpack_sbuffer_clear(channel->sbuffer);
@@ -218,9 +219,10 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
                       "an object with high level of nesting",
                       &response);
     wstream_write(channel->data.streams.write,
-                  wstream_new_buffer(channel->sbuffer->data,
+                  wstream_new_buffer(xmemdup(channel->sbuffer->data,
+                                             channel->sbuffer->size),
                                      channel->sbuffer->size,
-                                     true));
+                                     free));
     // Clear the buffer for future calls
     msgpack_sbuffer_clear(channel->sbuffer);
   }
@@ -310,9 +312,10 @@ static WBuffer *serialize_event(char *type, typval_T *data)
   msgpack_packer packer;
   msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
   msgpack_rpc_notification(event_type, event_data, &packer);
-  WBuffer *rv = wstream_new_buffer(msgpack_event_buffer.data,
+  WBuffer *rv = wstream_new_buffer(xmemdup(msgpack_event_buffer.data,
+                                           msgpack_event_buffer.size),
                                    msgpack_event_buffer.size,
-                                   true);
+                                   free);
   msgpack_rpc_free_object(event_data);
   msgpack_sbuffer_clear(&msgpack_event_buffer);
 
