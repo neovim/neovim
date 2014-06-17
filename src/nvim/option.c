@@ -31,6 +31,7 @@
  */
 
 #define IN_OPTION_C
+#include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>

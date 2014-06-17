@@ -24,6 +24,7 @@
  * The current implementation remembers all file names ever used.
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/api/private/handle.h"

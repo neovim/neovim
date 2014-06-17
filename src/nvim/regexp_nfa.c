@@ -4,6 +4,8 @@
  * This file is included in "regexp.c".
  */
 
+#include <stdbool.h>
+
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 

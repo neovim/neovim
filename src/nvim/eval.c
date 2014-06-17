@@ -12,7 +12,9 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
+
 #include "nvim/vim.h"
 #include "nvim/eval.h"
 #include "nvim/buffer.h"

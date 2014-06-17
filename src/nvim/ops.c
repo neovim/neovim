@@ -11,6 +11,7 @@
  *	  op_change, op_yank, do_put, do_join
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"

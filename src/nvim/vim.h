@@ -11,9 +11,6 @@
 #include "nvim/memory.h"// for xstrlcpy
 #include "nvim/types.h"
 
-/* Included when ported to cmake */
-/* This is needed to replace TRUE/FALSE macros by true/false from c99 */
-#include <stdbool.h>
 /* Some defines from the old feature.h */
 #define SESSION_FILE "Session.vim"
 #define MAX_MSG_HIST_LEN 200

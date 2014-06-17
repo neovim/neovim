@@ -25,6 +25,7 @@
  */
 # define select select_declared_wrong
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/api/private/handle.h"

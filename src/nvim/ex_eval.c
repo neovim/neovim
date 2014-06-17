@@ -9,6 +9,7 @@
 /*
  * ex_eval.c: functions for Ex command line for the +eval feature.
  */
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/ex_eval.h"

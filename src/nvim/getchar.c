@@ -15,6 +15,7 @@
  * mappings and abbreviations
  */
 
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"
