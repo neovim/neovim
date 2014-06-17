@@ -24,6 +24,7 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/indent.h"
@@ -2847,12 +2848,10 @@ expand_env_esc (
       if (esc && var != NULL && vim_strpbrk(var, (char_u *)" \t") != NULL) {
         char_u  *p = vim_strsave_escaped(var, (char_u *)" \t");
 
-        if (p != NULL) {
-          if (mustfree)
-            free(var);
-          var = p;
-          mustfree = TRUE;
-        }
+        if (mustfree)
+          free(var);
+        var = p;
+        mustfree = TRUE;
       }
 
       if (var != NULL && *var != NUL
@@ -3280,20 +3279,17 @@ home_replace (
 
 /*
  * Like home_replace, store the replaced string in allocated memory.
- * When something fails, NULL is returned.
  */
 char_u *
 home_replace_save (
     buf_T *buf,       /* when not NULL, check for help files */
     char_u *src       /* input file name */
-)
+) FUNC_ATTR_NONNULL_RET
 {
-  char_u      *dst;
-
   size_t len = 3;                      /* space for "~/" and trailing NUL */
   if (src != NULL)              /* just in case */
     len += STRLEN(src);
-  dst = xmalloc(len);
+  char_u *dst = xmalloc(len);
   home_replace(buf, src, dst, (int)len, TRUE);
   return dst;
 }

@@ -59,8 +59,6 @@ typedef struct hashtable_S {
   size_t ht_used;               /// number of items used
   size_t ht_filled;             /// number of items used or removed
   int ht_locked;                /// counter for hash_lock()
-  bool ht_error;                /// when set growing failed, can't add more
-                                /// items before growing works
   hashitem_T *ht_array;         /// points to the array, allocated when it's
                                 /// not "ht_smallarray"
   hashitem_T ht_smallarray[HT_INIT_SIZE];      /// initial array
@@ -69,4 +67,5 @@ typedef struct hashtable_S {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "hashtab.h.generated.h"
 #endif
+
 #endif  // NVIM_HASHTAB_H

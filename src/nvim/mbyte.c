@@ -84,6 +84,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/memline.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
@@ -3308,24 +3309,23 @@ char_u * enc_skip(char_u *p)
  * Find the canonical name for encoding "enc".
  * When the name isn't recognized, returns "enc" itself, but with all lower
  * case characters and '_' replaced with '-'.
- * Returns an allocated string.  NULL for out-of-memory.
+ * Returns an allocated string.
  */
-char_u * enc_canonize(char_u *enc)
+char_u *enc_canonize(char_u *enc) FUNC_ATTR_NONNULL_RET
 {
-  char_u      *r;
   char_u      *p, *s;
   int i;
 
   if (STRCMP(enc, "default") == 0) {
     /* Use the default encoding as it's found by set_init_1(). */
-    r = get_encoding_default();
+    char_u *r = get_encoding_default();
     if (r == NULL)
       r = (char_u *)"latin1";
     return vim_strsave(r);
   }
 
   /* copy "enc" to allocated memory, with room for two '-' */
-  r = xmalloc(STRLEN(enc) + 3);
+  char_u *r = xmalloc(STRLEN(enc) + 3);
   /* Make it all lower case and replace '_' with '-'. */
   p = r;
   for (s = enc; *s != NUL; ++s) {
@@ -3411,7 +3411,7 @@ char_u * enc_locale()
           s = (char *)os_getenv("LANG");
 
   if (s == NULL || *s == NUL)
-    return FAIL;
+    return NULL;
 
   /* The most generic locale format is:
    * language[_territory][.codeset][@modifier][+special][,[sponsor][_revision]]
@@ -3528,8 +3528,6 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
         memmove(p, result, done);
       free(result);
       result = p;
-      if (result == NULL)       /* out of memory */
-        break;
     }
 
     to = (char *)result + done;

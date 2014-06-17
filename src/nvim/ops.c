@@ -943,14 +943,12 @@ do_execreg (
         (char_u *)
         "\001\002\003\004\005\006\007\010\011\012\013\014\015\016\017\020\021\022\023\024\025\026\027\030\031\032\033\034\035\036\037",
         Ctrl_V, FALSE);
-    if (p != NULL) {
-      /* When in Visual mode "'<,'>" will be prepended to the command.
-       * Remove it when it's already there. */
-      if (VIsual_active && STRNCMP(p, "'<,'>", 5) == 0)
-        retval = put_in_typebuf(p + 5, TRUE, TRUE, silent);
-      else
-        retval = put_in_typebuf(p, TRUE, TRUE, silent);
-    }
+    /* When in Visual mode "'<,'>" will be prepended to the command.
+     * Remove it when it's already there. */
+    if (VIsual_active && STRNCMP(p, "'<,'>", 5) == 0)
+      retval = put_in_typebuf(p + 5, TRUE, TRUE, silent);
+    else
+      retval = put_in_typebuf(p, TRUE, TRUE, silent);
     free(p);
   } else if (regname == '=') {
     p = get_expr_line();
@@ -988,8 +986,6 @@ do_execreg (
           return FAIL;
       }
       escaped = vim_strsave_escape_csi(y_current->y_array[i]);
-      if (escaped == NULL)
-        return FAIL;
       retval = ins_typebuf(escaped, remap, 0, TRUE, silent);
       free(escaped);
       if (retval == FAIL)

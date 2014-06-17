@@ -3239,8 +3239,7 @@ int get_errorlist(win_T *wp, list_T *list)
     if (bufnum != 0 && (buflist_findnr(bufnum) == NULL))
       bufnum = 0;
 
-    if ((dict = dict_alloc()) == NULL)
-      return FAIL;
+    dict = dict_alloc();
     list_append_dict(list, dict);
 
     buf[0] = qfp->qf_type;

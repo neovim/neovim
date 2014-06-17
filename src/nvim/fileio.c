@@ -2087,10 +2087,7 @@ void set_forced_fenc(exarg_T *eap)
 {
   if (eap->force_enc != 0) {
     char_u *fenc = enc_canonize(eap->cmd + eap->force_enc);
-
-    if (fenc != NULL)
-      set_string_option_direct((char_u *)"fenc", -1,
-          fenc, OPT_FREE|OPT_LOCAL, 0);
+    set_string_option_direct((char_u *)"fenc", -1, fenc, OPT_FREE|OPT_LOCAL, 0);
     free(fenc);
   }
 }
@@ -5933,8 +5930,6 @@ void do_autocmd(char_u *arg, int forceit)
    * Check for a legal group name.  If not, use AUGROUP_ALL.
    */
   group = au_get_grouparg(&arg);
-  if (arg == NULL)          /* out of memory */
-    return;
 
   /*
    * Scan over the events.
@@ -6271,8 +6266,6 @@ do_doautocmd (
    * Check for a legal group name.  If not, use AUGROUP_ALL.
    */
   group = au_get_grouparg(&arg);
-  if (arg == NULL)          /* out of memory */
-    return FAIL;
 
   if (*arg == '*') {
     EMSG(_("E217: Can't execute autocommands for ALL events"));
@@ -7204,8 +7197,7 @@ set_context_in_autocmd (
   include_groups = FALSE;
   p = arg;
   group = au_get_grouparg(&arg);
-  if (group == AUGROUP_ERROR)
-    return NULL;
+
   /* If there only is a group name that's what we expand. */
   if (*arg == NUL && group != AUGROUP_ALL && !vim_iswhite(arg[-1])) {
     arg = p;

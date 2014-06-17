@@ -1416,8 +1416,7 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
 
   if (fp_out == NULL && (flags & (VIF_GET_OLDFILES | VIF_FORCEIT))) {
     list = list_alloc();
-    if (list != NULL)
-      set_vim_var_list(VV_OLDFILES, list);
+    set_vim_var_list(VV_OLDFILES, list);
   }
 
   num_marked_files = get_viminfo_parameter('\'');

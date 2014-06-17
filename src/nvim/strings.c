@@ -13,7 +13,9 @@
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/fold.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
@@ -64,6 +66,7 @@ char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
  * by a backslash.
  */
 char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars)
+  FUNC_ATTR_NONNULL_RET
 {
   return vim_strsave_escaped_ext(string, esc_chars, '\\', FALSE);
 }
@@ -74,10 +77,8 @@ char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars)
  * Escape the characters with "cc".
  */
 char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int bsl)
+  FUNC_ATTR_NONNULL_RET
 {
-  char_u      *p;
-  char_u      *p2;
-  char_u      *escaped_string;
   unsigned length;
   int l;
 
@@ -86,7 +87,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
    * Then allocate the memory and insert them.
    */
   length = 1;                           /* count the trailing NUL */
-  for (p = string; *p; p++) {
+  for (char_u *p = string; *p; p++) {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       length += l;                      /* count a multibyte char */
       p += l - 1;
@@ -96,9 +97,10 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
       ++length;                         /* count a backslash */
     ++length;                           /* count an ordinary char */
   }
-  escaped_string = xmalloc(length);
-  p2 = escaped_string;
-  for (p = string; *p; p++) {
+
+  char_u *escaped_string = xmalloc(length);
+  char_u *p2 = escaped_string;
+  for (char_u *p = string; *p; p++) {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       memmove(p2, p, (size_t)l);
       p2 += l;
@@ -214,11 +216,9 @@ char_u *vim_strsave_up(char_u *string)
  * Like vim_strnsave(), but make all characters uppercase.
  * This uses ASCII lower-to-upper case translation, language independent.
  */
-char_u *vim_strnsave_up(char_u *string, int len)
+char_u *vim_strnsave_up(char_u *string, int len) FUNC_ATTR_NONNULL_RET
 {
-  char_u *p1;
-
-  p1 = vim_strnsave(string, len);
+  char_u *p1 = vim_strnsave(string, len);
   vim_strup(p1);
   return p1;
 }
@@ -251,19 +251,16 @@ char_u *strup_save(char_u *orig)
     int l;
 
     if (enc_utf8) {
-      int c, uc;
-      int newl;
-      char_u  *s;
-
-      c = utf_ptr2char(p);
-      uc = utf_toupper(c);
+      int c = utf_ptr2char(p);
+      int uc = utf_toupper(c);
 
       /* Reallocate string when byte count changes.  This is rare,
        * thus it's OK to do another malloc()/free(). */
       l = utf_ptr2len(p);
-      newl = utf_char2len(uc);
+      int newl = utf_char2len(uc);
       if (newl != l) {
-        s = xmalloc(STRLEN(res) + 1 + newl - l);
+        // TODO(philix): use xrealloc() in strup_save()
+        char_u *s = xmalloc(STRLEN(res) + 1 + newl - l);
         memmove(s, res, p - res);
         STRCPY(s + (p - res) + newl, p + l);
         p = s + (p - res);
@@ -518,7 +515,6 @@ int has_non_ascii(char_u *s)
 
 /*
  * Concatenate two strings and return the result in allocated memory.
- * Returns NULL when out of memory.
  */
 char_u *concat_str(char_u *str1, char_u *str2) FUNC_ATTR_NONNULL_RET
 {

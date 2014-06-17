@@ -784,8 +784,7 @@ do_tag (
             cmd[len] = NUL;
           }
 
-          if ((dict = dict_alloc()) == NULL)
-            continue;
+          dict = dict_alloc();
           list_append_dict(list, dict);
 
           dict_add_nr_str(dict, "text", 0L, tag_name);
@@ -2822,8 +2821,7 @@ int get_tags(list_T *list, char_u *pat)
       if (STRNCMP(tp.tagname, "!_TAG_", 6) == 0)
         continue;
 
-      if ((dict = dict_alloc()) == NULL)
-        ret = FAIL;
+      dict = dict_alloc();
       list_append_dict(list, dict);
 
       full_fname = tag_full_fname(&tp);

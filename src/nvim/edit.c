@@ -2485,8 +2485,6 @@ ins_compl_dictionaries (
   if (ctrl_x_mode == CTRL_X_WHOLE_LINE) {
     char_u *pat_esc = vim_strsave_escaped(pat, (char_u *)"\\");
 
-    if (pat_esc == NULL)
-      goto theend;
     size_t len = STRLEN(pat_esc) + 10;
     ptr = xmalloc(len);
     vim_snprintf((char *)ptr, len, "^\\s*\\zs\\V%s", pat_esc);
@@ -5253,8 +5251,6 @@ internal_format (
        */
       saved_text = vim_strsave(get_cursor_pos_ptr());
       curwin->w_cursor.col = orig_col;
-      if (saved_text == NULL)
-        break;          /* Can't do it, out of memory */
       saved_text[startcol] = NUL;
 
       /* Backspace over characters that will move to the next line */
@@ -7979,7 +7975,7 @@ static int ins_tab(void)
 
 /*
  * Handle CR or NL in insert mode.
- * Return TRUE when out of memory or can't undo.
+ * Return TRUE when it can't undo.
  */
 static int ins_eol(int c)
 {

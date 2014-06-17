@@ -318,8 +318,6 @@ int call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
       if (*p_sxe != NUL && STRCMP(p_sxq, "(") == 0) {
         ecmd = vim_strsave_escaped_ext(cmd, p_sxe, '^', FALSE);
-        if (ecmd == NULL)
-          ecmd = cmd;
       }
       ncmd = xmalloc(STRLEN(ecmd) + STRLEN(p_sxq) * 2 + 1);
       STRCPY(ncmd, p_sxq);

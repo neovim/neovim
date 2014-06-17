@@ -28,6 +28,7 @@
 #include "nvim/ex_eval.h"
 #include "nvim/farsi.h"
 #include "nvim/fileio.h"
+#include "nvim/func_attr.h"
 #include "nvim/getchar.h"
 #include "nvim/if_cscope.h"
 #include "nvim/indent.h"
@@ -2307,10 +2308,8 @@ char_u *save_cmdline_alloc(void)
  */
 void restore_cmdline_alloc(char_u *p)
 {
-  if (p != NULL) {
-    restore_cmdline((struct cmdline_info *)p);
-    free(p);
-  }
+  restore_cmdline((struct cmdline_info *)p);
+  free(p);
 }
 
 /*
@@ -2949,27 +2948,21 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
         /* for ":set path=" we need to escape spaces twice */
         if (xp->xp_backslash == XP_BS_THREE) {
           p = vim_strsave_escaped(files[i], (char_u *)" ");
-          if (p != NULL) {
-            free(files[i]);
-            files[i] = p;
+          free(files[i]);
+          files[i] = p;
 #if defined(BACKSLASH_IN_FILENAME)
-            p = vim_strsave_escaped(files[i], (char_u *)" ");
-            if (p != NULL) {
-              free(files[i]);
-              files[i] = p;
-            }
+          p = vim_strsave_escaped(files[i], (char_u *)" ");
+          free(files[i]);
+          files[i] = p;
 #endif
-          }
         }
 #ifdef BACKSLASH_IN_FILENAME
         p = vim_strsave_fnameescape(files[i], FALSE);
 #else
         p = vim_strsave_fnameescape(files[i], xp->xp_shell);
 #endif
-        if (p != NULL) {
-          free(files[i]);
-          files[i] = p;
-        }
+        free(files[i]);
+        files[i] = p;
 
         /* If 'str' starts with "\~", replace "~" at start of
          * files[i] with "\~". */
@@ -2989,10 +2982,8 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
        */
       for (i = 0; i < numfiles; ++i) {
         p = vim_strsave_escaped(files[i], (char_u *)"\\|\"");
-        if (p != NULL) {
-          free(files[i]);
-          files[i] = p;
-        }
+        free(files[i]);
+        files[i] = p;
       }
     }
   }
@@ -3003,7 +2994,7 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
  * after a Vim command, or, when "shell" is non-zero, a shell command.
  * Returns the result in allocated memory.
  */
-char_u *vim_strsave_fnameescape(char_u *fname, int shell)
+char_u *vim_strsave_fnameescape(char_u *fname, int shell) FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
 #ifdef BACKSLASH_IN_FILENAME
@@ -3018,12 +3009,10 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
   p = vim_strsave_escaped(fname, buf);
 #else
   p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
-  if (shell && csh_like_shell() && p != NULL) {
-    char_u      *s;
-
+  if (shell && csh_like_shell()) {
     /* For csh and similar shells need to put two backslashes before '!'.
      * One is taken by Vim, one by the shell. */
-    s = vim_strsave_escaped(p, (char_u *)"!");
+    char_u *s = vim_strsave_escaped(p, (char_u *)"!");
     free(p);
     p = s;
   }
@@ -3031,8 +3020,9 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell)
 
   /* '>' and '+' are special at the start of some commands, e.g. ":edit" and
    * ":write".  "cd -" has a special meaning. */
-  if (p != NULL && (*p == '>' || *p == '+' || (*p == '-' && p[1] == NUL)))
+  if (*p == '>' || *p == '+' || (*p == '-' && p[1] == NUL)) {
     escape_fname(&p);
+  }
 
   return p;
 }
@@ -3657,10 +3647,14 @@ ExpandFromContext (
     return FAIL;
   }
 
-  if (xp->xp_context == EXPAND_SHELLCMD)
-    return expand_shellcmd(pat, num_file, file, flags);
-  if (xp->xp_context == EXPAND_OLD_SETTING)
-    return ExpandOldSetting(num_file, file);
+  if (xp->xp_context == EXPAND_SHELLCMD) {
+    expand_shellcmd(pat, num_file, file, flags);
+    return OK;
+  }
+  if (xp->xp_context == EXPAND_OLD_SETTING) {
+    ExpandOldSetting(num_file, file);
+    return OK;
+  }
   if (xp->xp_context == EXPAND_BUFFERS)
     return ExpandBufnames(pat, num_file, file, options);
   if (xp->xp_context == EXPAND_TAGS
@@ -3743,10 +3737,12 @@ ExpandFromContext (
     ret = FAIL;
     for (i = 0; i < (int)(sizeof(tab) / sizeof(struct expgen)); ++i)
       if (xp->xp_context == tab[i].context) {
-        if (tab[i].ic)
+        if (tab[i].ic) {
           regmatch.rm_ic = TRUE;
-        ret = ExpandGeneric(xp, &regmatch, num_file, file,
-            tab[i].func, tab[i].escaped);
+        }
+        ExpandGeneric(xp, &regmatch, num_file, file, tab[i].func,
+                      tab[i].escaped);
+        ret = OK;
         break;
       }
   }
@@ -3762,10 +3758,8 @@ ExpandFromContext (
  * Generic function for command line completion.  It calls a function to
  * obtain strings, one by one.	The strings are matched against a regexp
  * program.  Matching strings are copied into an array, which is returned.
- *
- * Returns OK when no problems encountered, FAIL for error.
  */
-int ExpandGeneric(
+void ExpandGeneric(
     expand_T    *xp,
     regmatch_T  *regmatch,
     int         *num_file,
@@ -3790,7 +3784,7 @@ int ExpandGeneric(
     }
   }
   if (count == 0)
-    return OK;
+    return;
   *num_file = count;
   *file = (char_u **)xmalloc(count * sizeof(char_u *));
 
@@ -3832,15 +3826,12 @@ int ExpandGeneric(
   /* Reset the variables used for special highlight names expansion, so that
    * they don't show up when getting normal highlight names by ID. */
   reset_expand_highlight();
-
-  return OK;
 }
 
 /*
  * Complete a shell command.
- * Returns FAIL or OK;
  */
-static int 
+static void
 expand_shellcmd (
     char_u *filepat,           /* pattern to match with command names */
     int *num_file,          /* return: number of matches */
@@ -3928,7 +3919,6 @@ expand_shellcmd (
   free(pat);
   if (mustfree)
     free(path);
-  return OK;
 }
 
 /*
