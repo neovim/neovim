@@ -141,7 +141,7 @@ void channel_subscribe(uint64_t id, char *event)
   Channel *channel;
 
   if (!(channel = pmap_get(uint64_t)(channels, id))) {
-    return;
+    abort();
   }
 
   char *event_string = pmap_get(cstr_t)(event_strings, event);
@@ -163,7 +163,7 @@ void channel_unsubscribe(uint64_t id, char *event)
   Channel *channel;
 
   if (!(channel = pmap_get(uint64_t)(channels, id))) {
-    return;
+    abort();
   }
 
   unsubscribe(channel, event);
