@@ -5218,11 +5218,7 @@ vim_tempname (
     int extra_char          /* char to use in the name instead of '?' */
 )
 {
-#ifdef USE_TMPNAM
-  char_u itmp[L_tmpnam];        /* use tmpnam() */
-#else
   char_u itmp[TEMPNAMELEN];
-#endif
 
 #ifdef TEMPDIRNAMES
   static char *(tempdirs[]) = {TEMPDIRNAMES};
@@ -5266,15 +5262,6 @@ vim_tempname (
 
 #else /* TEMPDIRNAMES */
 
-
-#  ifdef USE_TMPNAM
-  char_u      *p;
-
-  /* tmpnam() will make its own name */
-  p = tmpnam((char *)itmp);
-  if (p == NULL || *p == NUL)
-    return NULL;
-#  else
   char_u      *p;
 
   STRCPY(itmp, TEMPNAME);
@@ -5282,7 +5269,6 @@ vim_tempname (
     *p = extra_char;
   if (mktemp((char *)itmp) == NULL)
     return NULL;
-#  endif
 
   return vim_strsave(itmp);
 #endif /* TEMPDIRNAMES */
