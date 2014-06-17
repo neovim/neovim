@@ -14,6 +14,7 @@
 #include "nvim/version.h"
 #include "nvim/charset.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc2.h"
 #include "nvim/screen.h"
