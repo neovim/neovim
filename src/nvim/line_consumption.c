@@ -197,7 +197,7 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   int count = 0;
 
   while (first <= last) {
-    int x;
+    int64_t x;
 
     // Check if there are any really folded lines, but also included lines
     // that are maybe folded.
