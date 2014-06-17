@@ -1105,7 +1105,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 #include "nvim/buffer_defs.h"         /* buffer and windows */
 #include "nvim/ex_cmds_defs.h"        /* Ex command defines */
-#include "nvim/proto.h"          /* function prototypes */
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
  * functions of these names. The declarations would break if the defines had
