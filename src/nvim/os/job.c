@@ -260,13 +260,12 @@ void job_stop(Job *job)
 /// returns when the write request was sent.
 ///
 /// @param job The Job instance
-/// @param data Buffer containing the data to be written
-/// @param len Size of the data
+/// @param buffer The buffer which contains the data to be written
 /// @return true if the write request was successfully sent, false if writing
 ///         to the job stream failed (possibly because the OS buffer is full)
-bool job_write(Job *job, char *data, uint32_t len)
+bool job_write(Job *job, WBuffer *buffer)
 {
-  return wstream_write(job->in, wstream_new_buffer(data, len, free));
+  return wstream_write(job->in, buffer);
 }
 
 /// Sets the `defer` flag for a Job instance
