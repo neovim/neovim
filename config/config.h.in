@@ -1,6 +1,8 @@
 #ifndef NVIM_AUTO_CONFIG_H
 #define NVIM_AUTO_CONFIG_H
 
+#ifdef HAVE_CONFIG_H    /* GNU autoconf (or something else) was here */
+
 #define NEOVIM_VERSION_MAJOR @NEOVIM_VERSION_MAJOR@
 #define NEOVIM_VERSION_MINOR @NEOVIM_VERSION_MINOR@
 #define NEOVIM_VERSION_PATCH @NEOVIM_VERSION_PATCH@
@@ -122,5 +124,7 @@
 #if (SIZEOF_INT == 0)
 Error: configure did not run properly.Check auto/config.log.
 #endif
+
+#endif //HAVE_CONFIG_H  
 
 #endif //NVIM_AUTO_CONFIG_H

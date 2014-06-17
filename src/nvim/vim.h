@@ -23,10 +23,8 @@
 
 /* ============ the header file puzzle (ca. 50-100 pieces) ========= */
 
-#ifdef HAVE_CONFIG_H    /* GNU autoconf (or something else) was here */
-# include "auto/config.h"
+#include "auto/config.h"
 
-#endif
 
 /* user ID of root is usually zero, but not for everybody */
 #define ROOT_UID 0
