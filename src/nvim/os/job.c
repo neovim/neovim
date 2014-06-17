@@ -37,6 +37,7 @@ struct job {
   int pending_closes;
   // If the job was already stopped
   bool stopped;
+  bool defer;
   // Data associated with the job
   void *data;
   // Callbacks
@@ -128,6 +129,8 @@ void job_teardown()
 /// @param stderr_cb Callback that will be invoked when data is available
 ///        on stderr
 /// @param exit_cb Callback that will be invoked when the job exits
+/// @param defer If the job callbacks invocation should be deferred to vim
+///         main loop
 /// @param[out] The job id if the job started successfully, 0 if the job table
 ///             is full, -1 if the program could not be executed.
 /// @return The job pointer if the job started successfully, NULL otherwise
@@ -136,6 +139,7 @@ Job *job_start(char **argv,
                rstream_cb stdout_cb,
                rstream_cb stderr_cb,
                job_exit_cb job_exit_cb,
+               bool defer,
                int *status)
 {
   int i;
@@ -178,6 +182,7 @@ Job *job_start(char **argv,
   job->proc_stdin.data = NULL;
   job->proc_stdout.data = NULL;
   job->proc_stderr.data = NULL;
+  job->defer = defer;
 
   // Initialize the job std{in,out,err}
   uv_pipe_init(uv_default_loop(), &job->proc_stdin, 0);
@@ -208,8 +213,8 @@ Job *job_start(char **argv,
   job->in = wstream_new(JOB_WRITE_MAXMEM);
   wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
   // Start the readable streams
-  job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job, true);
-  job->err = rstream_new(read_cb, JOB_BUFFER_SIZE, job, true);
+  job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job, defer);
+  job->err = rstream_new(read_cb, JOB_BUFFER_SIZE, job, defer);
   rstream_set_stream(job->out, (uv_stream_t *)&job->proc_stdout);
   rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
   rstream_start(job->out);
@@ -264,30 +269,24 @@ bool job_write(Job *job, char *data, uint32_t len)
   return wstream_write(job->in, wstream_new_buffer(data, len, free));
 }
 
+/// Sets the `defer` flag for a Job instance
+///
+/// @param rstream The Job id
+/// @param defer The new value for the flag
+void job_set_defer(Job *job, bool defer)
+{
+  job->defer = defer;
+  rstream_set_defer(job->out, defer);
+  rstream_set_defer(job->err, defer);
+}
+
+
 /// Runs the read callback associated with the job exit event
 ///
 /// @param event Object containing data necessary to invoke the callback
 void job_exit_event(Event event)
 {
-  Job *job = event.data.job;
-
-  // Free the slot now, 'exit_cb' may want to start another job to replace
-  // this one
-  table[job->id - 1] = NULL;
-
-  if (job->exit_cb) {
-    // Invoke the exit callback
-    job->exit_cb(job, job->data);
-  }
-
-  // Free the job resources
-  free_job(job);
-
-  // Stop polling job status if this was the last
-  job_count--;
-  if (job_count == 0) {
-    uv_prepare_stop(&job_prepare);
-  }
+  job_exit_callback(event.data.job);
 }
 
 /// Get the job id
@@ -306,6 +305,27 @@ int job_id(Job *job)
 void *job_data(Job *job)
 {
   return job->data;
+}
+
+static void job_exit_callback(Job *job)
+{
+  // Free the slot now, 'exit_cb' may want to start another job to replace
+  // this one
+  table[job->id - 1] = NULL;
+
+  if (job->exit_cb) {
+    // Invoke the exit callback
+    job->exit_cb(job, job->data);
+  }
+
+  // Free the job resources
+  free_job(job);
+
+  // Stop polling job status if this was the last
+  job_count--;
+  if (job_count == 0) {
+    uv_prepare_stop(&job_prepare);
+  }
 }
 
 static bool is_alive(Job *job)
@@ -371,10 +391,14 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 
 static void emit_exit_event(Job *job)
 {
-  Event event;
-  event.type = kEventJobExit;
-  event.data.job = job;
-  event_push(event);
+  if (job->defer) {
+    Event event;
+    event.type = kEventJobExit;
+    event.data.job = job;
+    event_push(event);
+  } else {
+    job_exit_callback(job);
+  }
 }
 
 static void close_cb(uv_handle_t *handle)

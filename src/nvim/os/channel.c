@@ -78,7 +78,8 @@ bool channel_from_job(char **argv)
                                 channel,
                                 job_out,
                                 job_err,
-                                NULL,
+                                job_exit,
+                                true,
                                 &status);
 
   if (status <= 0) {
@@ -177,6 +178,11 @@ static void job_out(RStream *rstream, void *data, bool eof)
 static void job_err(RStream *rstream, void *data, bool eof)
 {
   // TODO(tarruda): plugin error messages should be sent to the error buffer
+}
+
+static void job_exit(Job *job, void *data)
+{
+  // TODO(tarruda): what should be done here?
 }
 
 static void parse_msgpack(RStream *rstream, void *data, bool eof)
