@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/strings.h"
 #include "nvim/misc2.h"
 #include "nvim/file_search.h"

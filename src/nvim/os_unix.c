@@ -30,6 +30,7 @@
 
 #include "nvim/api/private/handle.h"
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/os_unix.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

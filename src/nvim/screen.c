@@ -90,6 +90,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/arabic.h"
 #include "nvim/screen.h"
 #include "nvim/buffer.h"

@@ -3,6 +3,7 @@
 #include <uv.h>
 
 #include "nvim/types.h"
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/globals.h"
 #include "nvim/memline.h"

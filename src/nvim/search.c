@@ -11,6 +11,7 @@
 
 #include <string.h>
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/search.h"
 #include "nvim/charset.h"

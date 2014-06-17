@@ -9,6 +9,7 @@
 #include "nvim/move.h"
 #include "nvim/screen.h"
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "cursor.c.generated.h"

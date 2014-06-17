@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/arabic.h"
 #include "nvim/ex_getln.h"
 #include "nvim/buffer.h"

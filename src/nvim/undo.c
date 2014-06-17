@@ -83,6 +83,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/undo.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"

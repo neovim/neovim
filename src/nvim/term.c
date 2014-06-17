@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/term.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

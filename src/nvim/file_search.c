@@ -48,6 +48,7 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/file_search.h"
 #include "nvim/charset.h"
 #include "nvim/fileio.h"
