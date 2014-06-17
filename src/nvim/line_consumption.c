@@ -33,14 +33,14 @@
 /// @return The physical line count
 int plines(linenr_T lnum)
 {
-  return plines_win(curwin, lnum, TRUE);
+  return plines_win(curwin, lnum, true);
 }
 
 /// Gets the pyhsical line count consumed by a real line in a window
 ///
 /// @param wp The window handle
 /// @param lnum The real line to check
-/// @param winheight when TRUE limit to window height
+/// @param winheight when true limit to window height
 ///
 /// @return The physical line count
 int plines_win(win_T *wp, linenr_T lnum, int winheight)
@@ -60,7 +60,7 @@ int plines_win(win_T *wp, linenr_T lnum, int winheight)
 /// @return The physical line count
 int plines_nofill(linenr_T lnum)
 {
-  return plines_win_nofill(curwin, lnum, TRUE);
+  return plines_win_nofill(curwin, lnum, true);
 }
 
 /// Gets the physical line count ignoring filler lines
@@ -70,10 +70,10 @@ int plines_nofill(linenr_T lnum)
 ///
 /// @param wp The window handle
 /// @param lnum The real line to check
-/// @param winheight when TRUE limit to window height
+/// @param winheight when true limit to window height
 ///
 /// @return The physical line count
-int plines_win_nofill (win_T *wp, linenr_T lnum, int winheight)
+int plines_win_nofill(win_T *wp, linenr_T lnum, int winheight)
 {
   int lines;
 
@@ -85,7 +85,7 @@ int plines_win_nofill (win_T *wp, linenr_T lnum, int winheight)
 
   // A folded lines is handled just like an empty line.
   // NOTE: Caller must handle lines that are MAYBE folded.
-  if (lineFolded(wp, lnum) == TRUE)
+  if (lineFolded(wp, lnum) == true)
     return 1;
 
   lines = plines_win_nofold(wp, lnum);
@@ -106,20 +106,20 @@ int plines_win_nofill (win_T *wp, linenr_T lnum, int winheight)
 int plines_win_nofold(win_T *wp, linenr_T lnum)
 {
   char_u      *s;
-  long col;
+  colnr_T col;
   int width;
 
-  s = ml_get_buf(wp->w_buffer, lnum, FALSE);
+  s = ml_get_buf(wp->w_buffer, lnum, false);
   if (*s == NUL)                /* empty line */
     return 1;
   col = win_linetabsize(wp, s, (colnr_T)MAXCOL);
 
-   // If list mode is on, then the '$' at the end of the line may take up one
-   // extra column.
+  // If list mode is on, then the '$' at the end of the line may take up one
+  // extra column.
   if (wp->w_p_list && lcs_eol != NUL)
     col += 1;
 
-   // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
+  // Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
   width = wp->w_width - win_col_off(wp);
   if (width <= 0)
     return 32000;
@@ -140,9 +140,9 @@ int plines_win_nofold(win_T *wp, linenr_T lnum)
 /// @param column Limits the check of line to this column of the real line
 ///
 /// @return The physical line count
-int plines_win_col(win_T *wp, linenr_T lnum, long column)
+int plines_win_col(win_T *wp, linenr_T lnum, colnr_T column)
 {
-  long col;
+  colnr_T col;
   char_u      *s;
   int lines = 0;
   int width;
@@ -157,7 +157,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   if (wp->w_width == 0)
     return lines + 1;
 
-  s = ml_get_buf(wp->w_buffer, lnum, FALSE);
+  s = ml_get_buf(wp->w_buffer, lnum, false);
 
   col = 0;
   while (*s != NUL && --column >= 0) {
@@ -165,15 +165,15 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
     mb_ptr_adv(s);
   }
 
-   // If *s is a TAB, and the TAB is not displayed as ^I, and we're not in
-   // INSERT mode, then col must be adjusted so that it represents the last
-   // screen position of the TAB.  This only fixes an error when the TAB wraps
-   // from one screen line to the next (when 'columns' is not a multiple of
-   // 'ts') -- webb.
+  // If *s is a TAB, and the TAB is not displayed as ^I, and we're not in
+  // INSERT mode, then col must be adjusted so that it represents the last
+  // screen position of the TAB.  This only fixes an error when the TAB wraps
+  // from one screen line to the next (when 'columns' is not a multiple of
+  // 'ts') -- webb.
   if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || lcs_tab1))
     col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL) - 1;
 
-   // Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
+  // Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
   width = wp->w_width - win_col_off(wp);
   if (width <= 0)
     return 9999;
@@ -207,9 +207,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
       first += x;
     } else {
       if (first == wp->w_topline)
-        count += plines_win_nofill(wp, first, TRUE) + wp->w_topfill;
+        count += plines_win_nofill(wp, first, true) + wp->w_topfill;
       else
-        count += plines_win(wp, first, TRUE);
+        count += plines_win(wp, first, true);
       ++first;
     }
   }
