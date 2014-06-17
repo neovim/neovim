@@ -14,6 +14,7 @@
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/syntax.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

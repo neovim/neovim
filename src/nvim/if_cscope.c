@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/if_cscope.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

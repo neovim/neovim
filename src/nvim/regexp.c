@@ -47,6 +47,7 @@
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/regexp.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

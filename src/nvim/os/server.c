@@ -8,6 +8,7 @@
 #include "nvim/os/channel.h"
 #include "nvim/os/server.h"
 #include "nvim/os/os.h"
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"

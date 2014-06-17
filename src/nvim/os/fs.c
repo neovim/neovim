@@ -2,6 +2,7 @@
 #include <stdbool.h>
 
 #include "nvim/os/os.h"
+#include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"

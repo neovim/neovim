@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "nvim/api/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
@@ -12,7 +13,6 @@
 #include "nvim/buffer.h"
 #include "nvim/window.h"
 #include "nvim/types.h"
-#include "nvim/ascii.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/screen.h"
 #include "nvim/memory.h"

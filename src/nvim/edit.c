@@ -14,6 +14,7 @@
 #include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/edit.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
