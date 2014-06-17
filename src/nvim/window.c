@@ -31,6 +31,7 @@
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc1.h"
+#include "nvim/line_consumption.h"
 #include "nvim/misc2.h"
 #include "nvim/file_search.h"
 #include "nvim/garray.h"

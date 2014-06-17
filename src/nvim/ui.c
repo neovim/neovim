@@ -26,6 +26,7 @@
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/misc1.h"
+#include "nvim/line_consumption.h"
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
