@@ -159,5 +159,5 @@ static void signal_cb(uv_signal_t *handle, int signum)
       .signum = signum
     }
   };
-  event_push(event);
+  event_push(event, true);
 }

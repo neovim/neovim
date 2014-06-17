@@ -390,14 +390,10 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 
 static void emit_exit_event(Job *job)
 {
-  if (job->defer) {
-    Event event;
-    event.type = kEventJobExit;
-    event.data.job = job;
-    event_push(event);
-  } else {
-    job_exit_callback(job);
-  }
+  Event event;
+  event.type = kEventJobExit;
+  event.data.job = job;
+  event_push(event, true);
 }
 
 static void close_cb(uv_handle_t *handle)

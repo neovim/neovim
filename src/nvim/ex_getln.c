@@ -758,7 +758,7 @@ getcmdline (
      */
     switch (c) {
     case K_EVENT:
-      event_process();
+      event_process(true);
       // Force a redraw even though the command line didn't change
       shell_resized();
       goto cmdline_not_changed;
@@ -1873,8 +1873,8 @@ redraw:
       }
 
       if (IS_SPECIAL(c1)) {
-        // Process pending events
-        event_process();
+        // Process deferred events
+        event_process(true);
         // Ignore other special key codes
         continue;
       }
