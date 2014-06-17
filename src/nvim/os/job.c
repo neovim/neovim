@@ -128,14 +128,15 @@ void job_teardown()
 /// @param stderr_cb Callback that will be invoked when data is available
 ///        on stderr
 /// @param exit_cb Callback that will be invoked when the job exits
-/// @return The job id if the job started successfully. If the the first item /
-///         of `argv`(the program) could not be executed, -1 will be returned.
-//          0 will be returned if the job table is full.
-int job_start(char **argv,
-              void *data,
-              rstream_cb stdout_cb,
-              rstream_cb stderr_cb,
-              job_exit_cb job_exit_cb)
+/// @param[out] The job id if the job started successfully, 0 if the job table
+///             is full, -1 if the program could not be executed.
+/// @return The job pointer if the job started successfully, NULL otherwise
+Job *job_start(char **argv,
+               void *data,
+               rstream_cb stdout_cb,
+               rstream_cb stderr_cb,
+               job_exit_cb job_exit_cb,
+               int *status)
 {
   int i;
   Job *job;
@@ -149,12 +150,14 @@ int job_start(char **argv,
 
   if (i == MAX_RUNNING_JOBS) {
     // No free slots
-    return 0;
+    *status = 0;
+    return NULL;
   }
 
   job = xmalloc(sizeof(Job));
   // Initialize
   job->id = i + 1;
+  *status = job->id;
   job->pending_refs = 3;
   job->pending_closes = 4;
   job->data = data;
@@ -192,7 +195,8 @@ int job_start(char **argv,
   // Spawn the job
   if (uv_spawn(uv_default_loop(), &job->proc, &job->proc_opts) != 0) {
     free_job(job);
-    return -1;
+    *status = -1;
+    return NULL;
   }
 
   // Give all handles a reference to the job
@@ -219,51 +223,45 @@ int job_start(char **argv,
   }
   job_count++;
 
-  return job->id;
+  return job;
+}
+
+/// Finds a job instance by id
+///
+/// @param id The job id
+/// @return the Job instance
+Job *job_find(int id)
+{
+  Job *job;
+
+  if (id <= 0 || id > MAX_RUNNING_JOBS || !(job = table[id - 1])
+      || job->stopped) {
+    return NULL;
+  }
+
+  return job;
 }
 
 /// Terminates a job. This is a non-blocking operation, but if the job exists
 /// it's guaranteed to succeed(SIGKILL will eventually be sent)
 ///
-/// @param id The job id
-/// @return true if the stop request was successfully sent, false if the job
-///              id is invalid(probably because it has already stopped)
-bool job_stop(int id)
+/// @param job The Job instance
+void job_stop(Job *job)
 {
-  Job *job = find_job(id);
-
-  if (job == NULL || job->stopped) {
-    return false;
-  }
-
   job->stopped = true;
-
-  return true;
 }
 
 /// Writes data to the job's stdin. This is a non-blocking operation, it
 /// returns when the write request was sent.
 ///
-/// @param id The job id
+/// @param job The Job instance
 /// @param data Buffer containing the data to be written
 /// @param len Size of the data
-/// @return true if the write request was successfully sent, false if the job
-///              id is invalid(probably because it has already stopped)
-bool job_write(int id, char *data, uint32_t len)
+/// @return true if the write request was successfully sent, false if writing
+///         to the job stream failed (possibly because the OS buffer is full)
+bool job_write(Job *job, char *data, uint32_t len)
 {
-  Job *job = find_job(id);
-
-  if (job == NULL || job->stopped) {
-    free(data);
-    return false;
-  }
-
-  if (!wstream_write(job->in, wstream_new_buffer(data, len, free))) {
-    job_stop(job->id);
-    return false;
-  }
-
-  return true;
+  return wstream_write(job->in, wstream_new_buffer(data, len, free));
 }
 
 /// Runs the read callback associated with the job exit event
@@ -313,15 +311,6 @@ void *job_data(Job *job)
 static bool is_alive(Job *job)
 {
   return uv_process_kill(&job->proc, 0) == 0;
-}
-
-static Job * find_job(int id)
-{
-  if (id <= 0 || id > MAX_RUNNING_JOBS) {
-    return NULL;
-  }
-
-  return table[id - 1];
 }
 
 static void free_job(Job *job)

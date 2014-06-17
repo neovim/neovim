@@ -24,7 +24,7 @@ typedef struct {
   msgpack_unpacker *unpacker;
   msgpack_sbuffer *sbuffer;
   union {
-    int job_id;
+    Job *job;
     struct {
       RStream *read;
       WStream *write;
@@ -68,11 +68,25 @@ void channel_teardown()
 /// stdin/stdout. stderr is forwarded to the editor error stream.
 ///
 /// @param argv The argument vector for the process
-void channel_from_job(char **argv)
+bool channel_from_job(char **argv)
 {
   Channel *channel = register_channel();
   channel->is_job = true;
-  channel->data.job_id = job_start(argv, channel, job_out, job_err, NULL);
+
+  int status;
+  channel->data.job = job_start(argv,
+                                channel,
+                                job_out,
+                                job_err,
+                                NULL,
+                                &status);
+
+  if (status <= 0) {
+    close_channel(channel);
+    return false;
+  }
+
+  return true;
 }
 
 /// Creates an API channel from a libuv stream representing a tcp or
@@ -282,7 +296,9 @@ static void close_channel(Channel *channel)
   msgpack_unpacker_free(channel->unpacker);
 
   if (channel->is_job) {
-    job_stop(channel->data.job_id);
+    if (channel->data.job) {
+      job_stop(channel->data.job);
+    }
   } else {
     rstream_free(channel->data.streams.read);
     wstream_free(channel->data.streams.write);
