@@ -25,6 +25,9 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/if_cscope.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
