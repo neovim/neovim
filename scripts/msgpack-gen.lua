@@ -186,7 +186,7 @@ for i = 1, #api.functions do
     if #args > 0 then
       output:write('channel_id, '..call_args)
     else
-      output:write('channel_id)')
+      output:write('channel_id')
     end
   else
     output:write(call_args)
