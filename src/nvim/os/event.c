@@ -30,12 +30,13 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/event.c.generated.h"
 #endif
-static klist_t(Event) *event_queue;
+static klist_t(Event) *deferred_events, *immediate_events;
 
 void event_init()
 {
-  // Initialize the event queue
-  event_queue = kl_init(Event);
+  // Initialize the event queues
+  deferred_events = kl_init(Event);
+  immediate_events = kl_init(Event);
   // Initialize input events
   input_init();
   // Timer to wake the event loop if a timeout argument is passed to
@@ -67,7 +68,12 @@ bool event_poll(int32_t ms)
     return true;
   }
 
-  input_start();
+  static int recursive = 0;
+
+  if (!(recursive++)) {
+    // Only needs to start the libuv handle the first time we enter here
+    input_start();
+  }
 
   uv_timer_t timer;
   uv_prepare_t timer_prepare;
@@ -93,14 +99,21 @@ bool event_poll(int32_t ms)
     // Run one event loop iteration, blocking for events if run_mode is
     // UV_RUN_ONCE
     uv_run(uv_default_loop(), run_mode);
+    // Process immediate events outside uv_run since libuv event loop not
+    // support recursion(processing events may cause a recursive event_poll
+    // call)
+    event_process(false);
   } while (
       // Continue running if ...
       !input_ready() &&   // we have no input
-      kl_empty(event_queue) &&   // no events are waiting to be processed
+      !event_has_deferred() &&   // no events are waiting to be processed
       run_mode != UV_RUN_NOWAIT &&   // ms != 0
       !timer_data.timed_out);  // we didn't get a timeout
 
-  input_stop();
+  if (!(--recursive)) {
+    // Again, only stop when we leave the top-level invocation
+    input_stop();
+  }
 
   if (ms > 0) {
     // Ensure the timer-related handles are closed and run the event loop
@@ -111,26 +124,26 @@ bool event_poll(int32_t ms)
     event_process(false);
   }
 
-  return input_ready() || event_is_pending();
+  return input_ready() || event_has_deferred();
 }
 
-bool event_is_pending()
+bool event_has_deferred()
 {
-  return !kl_empty(event_queue);
+  return !kl_empty(get_queue(true));
 }
 
 // Push an event to the queue
-void event_push(Event event)
+void event_push(Event event, bool deferred)
 {
-  *kl_pushp(Event, event_queue) = event;
+  *kl_pushp(Event, get_queue(deferred)) = event;
 }
 
 // Runs the appropriate action for each queued event
-void event_process()
+void event_process(bool deferred)
 {
   Event event;
 
-  while (kl_shift(Event, event_queue, &event) == 0) {
+  while (kl_shift(Event, get_queue(deferred), &event) == 0) {
     switch (event.type) {
       case kEventSignal:
         signal_handle(event);
@@ -160,4 +173,9 @@ static void timer_prepare_cb(uv_prepare_t *handle)
   assert(data->ms > 0);
   uv_timer_start(data->timer, timer_cb, (uint32_t)data->ms, 0);
   uv_prepare_stop(handle);
+}
+
+static klist_t(Event) *get_queue(bool deferred)
+{
+  return deferred ? deferred_events : immediate_events;
 }

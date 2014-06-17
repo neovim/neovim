@@ -340,16 +340,9 @@ static void close_cb(uv_handle_t *handle)
 
 static void emit_read_event(RStream *rstream, bool eof)
 {
-  if (rstream->defer) {
-    Event event;
-
-    event.type = kEventRStreamData;
-    event.data.rstream.ptr = rstream;
-    event.data.rstream.eof = eof;
-    event_push(event);
-  } else {
-    // Invoke the callback passing in the number of bytes available and data
-    // associated with the stream
-    rstream->cb(rstream, rstream->data, eof);
-  }
+  Event event;
+  event.type = kEventRStreamData;
+  event.data.rstream.ptr = rstream;
+  event.data.rstream.eof = eof;
+  event_push(event, rstream->defer);
 }
