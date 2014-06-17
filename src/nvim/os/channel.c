@@ -183,11 +183,13 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
+  UnpackResult result;
+  msgpack_packer response;
 
   // Deserialize everything we can.
-  while (msgpack_unpacker_next(channel->unpacker, &unpacked)) {
+  while ((result = msgpack_rpc_unpack(channel->unpacker, &unpacked))
+      == kUnpackResultOk) {
     // Each object is a new msgpack-rpc request and requires an empty response
-    msgpack_packer response;
     msgpack_packer_init(&response, channel->sbuffer, msgpack_sbuffer_write);
     // Perform the call
     msgpack_rpc_call(channel->id, &unpacked.data, &response);
@@ -196,6 +198,29 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
                                      channel->sbuffer->size,
                                      true));
 
+    // Clear the buffer for future calls
+    msgpack_sbuffer_clear(channel->sbuffer);
+  }
+
+  if (result == kUnpackResultFail) {
+    // See src/msgpack/unpack_template.h in msgpack source tree for
+    // causes for this error(search for 'goto _failed')
+    //
+    // A not so uncommon cause for this might be deserializing objects with
+    // a high nesting level: msgpack will break when it's internal parse stack
+    // size exceeds MSGPACK_EMBED_STACK_SIZE(defined as 32 by default)
+    msgpack_packer_init(&response, channel->sbuffer, msgpack_sbuffer_write);
+    msgpack_pack_array(&response, 4);
+    msgpack_pack_int(&response, 1);
+    msgpack_pack_int(&response, 0);
+    msgpack_rpc_error("Invalid msgpack payload. "
+                      "This error can also happen when deserializing "
+                      "an object with high level of nesting",
+                      &response);
+    wstream_write(channel->data.streams.write,
+                  wstream_new_buffer(channel->sbuffer->data,
+                                     channel->sbuffer->size,
+                                     true));
     // Clear the buffer for future calls
     msgpack_sbuffer_clear(channel->sbuffer);
   }

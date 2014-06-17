@@ -79,11 +79,13 @@ void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
              "Request array size is %u, it should be 4",
              req->via.array.size);
     msgpack_rpc_error(error_msg, res);
+    return;
   }
 
   if (req->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
     msgpack_pack_int(res, 0);  // no message id yet
     msgpack_rpc_error("Id must be a positive integer", res);
+    return;
   }
 
   // Set the response id, which is the same as the request
@@ -396,6 +398,31 @@ void msgpack_rpc_free_dictionary(Dictionary value)
   }
 
   free(value.items);
+}
+
+UnpackResult msgpack_rpc_unpack(msgpack_unpacker* unpacker,
+                                msgpack_unpacked* result)
+{
+  if (result->zone != NULL) {
+    msgpack_zone_free(result->zone);
+  }
+
+  int res = msgpack_unpacker_execute(unpacker);
+
+  if (res > 0) {
+    result->zone = msgpack_unpacker_release_zone(unpacker);
+    result->data = msgpack_unpacker_data(unpacker);
+    msgpack_unpacker_reset(unpacker);
+    return kUnpackResultOk;
+  }
+
+  if (res < 0) {
+    // Since we couldn't parse it, destroy the data consumed so far
+    msgpack_unpacker_reset(unpacker);
+    return kUnpackResultFail;
+  }
+
+  return kUnpackResultNeedMore;
 }
 
 REMOTE_FUNCS_IMPL(Buffer, buffer)

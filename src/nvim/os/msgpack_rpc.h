@@ -9,6 +9,12 @@
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 
+typedef enum {
+  kUnpackResultOk,        /// Successfully parsed a document
+  kUnpackResultFail,      /// Got unexpected input
+  kUnpackResultNeedMore   /// Need more data
+} UnpackResult;
+
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.
 ///
@@ -39,6 +45,19 @@ void msgpack_rpc_dispatch(uint64_t id,
                           msgpack_object *req,
                           msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3);
+
+/// Try to unpack a msgpack document from the data in the unpacker buffer. This
+/// function is a replacement to msgpack.h `msgpack_unpack_next` that lets
+/// the called know if the unpacking failed due to bad input or due to missing
+/// data.
+///
+/// @param unpacker The unpacker containing the parse buffer
+/// @param result The result which will contain the parsed object
+/// @return kUnpackResultOk      : An object was parsed
+///         kUnpackResultFail    : Got bad input
+///         kUnpackResultNeedMore: Need more data
+UnpackResult msgpack_rpc_unpack(msgpack_unpacker* unpacker,
+                                msgpack_unpacked* result);
 
 /// Finishes the msgpack-rpc call with an error message.
 ///
