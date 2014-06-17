@@ -199,11 +199,9 @@ int plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   int count = 0;
 
   while (first <= last) {
-    int x;
-
-    // Check if there are any really folded lines, but also included lines
-    // that are maybe folded.
-    x = foldedCount(wp, first, NULL);
+    // Check if there are any really folded lines, but also included lines that
+    // are maybe folded.
+    linenr_T x = foldedCount(wp, first, NULL);
     if (x > 0) {
       ++count;              /* count 1 for "+-- folded" line */
       first += x;

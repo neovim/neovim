@@ -41,6 +41,7 @@ set(CONV_SRCS
   cursor.c
   garray.c
   hashtab.c
+  line_consumption.c
   log.c
   map.c
   memory.c
