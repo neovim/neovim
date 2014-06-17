@@ -5240,68 +5240,15 @@ vim_tempname (
      * Try the entries in TEMPDIRNAMES to create the temp directory.
      */
     for (i = 0; i < (int)(sizeof(tempdirs) / sizeof(char *)); ++i) {
-# ifndef HAVE_MKDTEMP
-      size_t itmplen;
-      long nr;
-      long off;
-# endif
-
       /* expand $TMP, leave room for "/v1100000/999999999" */
       expand_env((char_u *)tempdirs[i], itmp, TEMPNAMELEN - 20);
       if (os_isdir(itmp)) {                    /* directory exists */
         add_pathsep(itmp);
 
-# ifdef HAVE_MKDTEMP
         /* Leave room for filename */
         STRCAT(itmp, "vXXXXXX");
         if (os_mkdtemp((char *)itmp) != NULL)
           vim_settempdir(itmp);
-# else
-        /* Get an arbitrary number of up to 6 digits.  When it's
-         * unlikely that it already exists it will be faster,
-         * otherwise it doesn't matter.  The use of mkdir() avoids any
-         * security problems because of the predictable number. */
-        nr = (os_get_pid() + (long)time(NULL)) % 1000000L;
-        itmplen = STRLEN(itmp);
-
-        /* Try up to 10000 different values until we find a name that
-         * doesn't exist. */
-        for (off = 0; off < 10000L; ++off) {
-          int r;
-#  if defined(UNIX)
-          mode_t umask_save;
-#  endif
-
-          sprintf((char *)itmp + itmplen, "v%" PRId64, (int64_t)(nr + off));
-#  ifndef EEXIST
-          /* If mkdir() does not set errno to EEXIST, check for
-           * existing file here.  There is a race condition then,
-           * although it's fail-safe. */
-          if (os_file_exists(itmp))
-            continue;
-#  endif
-#  if defined(UNIX)
-          /* Make sure the umask doesn't remove the executable bit.
-           * "repl" has been reported to use "177". */
-          umask_save = umask(077);
-#  endif
-          r = os_mkdir((char *)itmp, 0700);
-#  if defined(UNIX)
-          (void)umask(umask_save);
-#  endif
-          if (r == 0) {
-            vim_settempdir(itmp);
-            break;
-          }
-#  ifdef EEXIST
-          /* If the mkdir() didn't fail because the file/dir exists,
-           * we probably can't create any dir here, try another
-           * place. */
-          if (errno != EEXIST)
-#  endif
-          break;
-        }
-# endif /* HAVE_MKDTEMP */
         if (vim_tempdir != NULL)
           break;
       }
