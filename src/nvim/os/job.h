@@ -12,6 +12,8 @@
 
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/event_defs.h"
+#include "nvim/os/wstream.h"
+#include "nvim/os/wstream_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/job.h.generated.h"
