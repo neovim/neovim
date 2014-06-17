@@ -90,7 +90,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   // This should not be called after a wstream was freed
   assert(!wstream->freed);
 
-  if (wstream->curmem + buffer->size > wstream->maxmem) {
+  if (wstream->curmem > wstream->maxmem) {
     return false;
   }
 
