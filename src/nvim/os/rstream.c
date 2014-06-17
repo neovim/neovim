@@ -211,6 +211,15 @@ size_t rstream_available(RStream *rstream)
   return rstream->wpos - rstream->rpos;
 }
 
+/// Sets the `defer` flag for a a RStream instance
+///
+/// @param rstream The RStream instance
+/// @param defer The new value for the flag
+void rstream_set_defer(RStream *rstream, bool defer)
+{
+  rstream->defer = defer;
+}
+
 /// Runs the read callback associated with the rstream
 ///
 /// @param event Object containing data necessary to invoke the callback
