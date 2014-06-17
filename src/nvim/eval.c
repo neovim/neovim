@@ -17,6 +17,9 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

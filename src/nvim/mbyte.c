@@ -77,10 +77,13 @@
  */
 
 #include <string.h>
-# include <wchar.h>
+#include <wchar.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -99,7 +102,7 @@
 #include "nvim/os/os.h"
 #include "nvim/arabic.h"
 
-# define WINBYTE BYTE
+#define WINBYTE BYTE
 
 typedef struct {
   int rangeStart;
