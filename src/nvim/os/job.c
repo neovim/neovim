@@ -258,7 +258,7 @@ bool job_write(int id, char *data, uint32_t len)
     return false;
   }
 
-  if (!wstream_write(job->in, wstream_new_buffer(data, len, false))) {
+  if (!wstream_write(job->in, wstream_new_buffer(data, len, free))) {
     job_stop(job->id);
     return false;
   }
