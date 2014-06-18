@@ -575,7 +575,6 @@ void update_screen(int type)
   if (!did_intro)
     maybe_intro_message();
   did_intro = TRUE;
-
 }
 
 /*
@@ -809,6 +808,7 @@ static void win_update(win_T *wp)
     wp->w_redr_type = 0;
     return;
   }
+  redraw_start(0);
   // Set a pointer to the window being updated
   current_window = wp;
   init_search_hl(wp);
@@ -1696,6 +1696,7 @@ static void win_update(win_T *wp)
     got_int = save_got_int;
 
   current_window = NULL;
+  redraw_end(0);
 }
 
 

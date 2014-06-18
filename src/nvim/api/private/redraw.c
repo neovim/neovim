@@ -302,6 +302,24 @@ void redraw_background_color(uint64_t channel_id)
   channel_send_event(0, "redraw:background_color", DICTIONARY_OBJ(event_data));
 }
 
+void redraw_start(uint64_t channel_id)
+{
+  if (false) {
+    return;
+  }
+
+  channel_send_event(0, "redraw:start", NIL);
+}
+
+void redraw_end(uint64_t channel_id)
+{
+  if (false) {
+    return;
+  }
+
+  channel_send_event(0, "redraw:end", NIL);
+}
+
 static void add_line_char(LineData *ldata, size_t screen_offset)
 {
   size_t char_len;  // length in bytes of the utf8-encoded character
