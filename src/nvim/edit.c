@@ -939,7 +939,7 @@ doESCkey:
       break;
 
     case K_EVENT:
-      event_process();
+      event_process(true);
       break;
 
     case K_HOME:        /* <Home> */

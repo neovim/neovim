@@ -67,7 +67,7 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
-  if (event_is_pending()) {
+  if (event_has_deferred()) {
     // Return pending event bytes
     return push_event_key(buf, maxlen);
   }
@@ -91,8 +91,8 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
     }
   }
 
-  // If there are pending events, return the keys directly
-  if (event_is_pending()) {
+  // If there are deferred events, return the keys directly
+  if (event_has_deferred()) {
     return push_event_key(buf, maxlen);
   }
 

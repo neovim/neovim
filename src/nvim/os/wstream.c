@@ -21,8 +21,9 @@ struct wstream {
 };
 
 struct wbuffer {
-  size_t refcount, size;
+  size_t size, refcount;
   char *data;
+  wbuffer_data_finalizer cb;
 };
 
 typedef struct {
@@ -90,7 +91,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   // This should not be called after a wstream was freed
   assert(!wstream->freed);
 
-  if (wstream->curmem + buffer->size > wstream->maxmem) {
+  if (wstream->curmem > wstream->maxmem) {
     return false;
   }
 
@@ -116,19 +117,16 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
 ///
 /// @param data Data stored by the WBuffer
 /// @param size The size of the data array
-/// @param copy If true, the data will be copied into the WBuffer
+/// @param cb Pointer to function that will be responsible for freeing
+///        the buffer data(passing 'free' will work as expected).
 /// @return The allocated WBuffer instance
-WBuffer *wstream_new_buffer(char *data, size_t size, bool copy)
+WBuffer *wstream_new_buffer(char *data, size_t size, wbuffer_data_finalizer cb)
 {
   WBuffer *rv = xmalloc(sizeof(WBuffer));
   rv->size = size;
   rv->refcount = 0;
-
-  if (copy) {
-    rv->data = xmemdup(data, size);
-  } else {
-    rv->data = data;
-  }
+  rv->cb = cb;
+  rv->data = data;
 
   return rv;
 }
@@ -141,8 +139,7 @@ static void write_cb(uv_write_t *req, int status)
   data->wstream->curmem -= data->buffer->size;
 
   if (!--data->buffer->refcount) {
-    // Free the data written to the stream
-    free(data->buffer->data);
+    data->buffer->cb(data->buffer->data);
     free(data->buffer);
   }
 

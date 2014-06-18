@@ -70,6 +70,7 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
+#include "nvim/api/private/helpers.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -10471,11 +10472,13 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
   // The last item of argv must be NULL
   argv[i] = NULL;
 
-  rettv->vval.v_number = job_start(argv,
-                                   xstrdup((char *)argvars[0].vval.v_string),
-                                   on_job_stdout,
-                                   on_job_stderr,
-                                   on_job_exit);
+  job_start(argv,
+            xstrdup((char *)argvars[0].vval.v_string),
+            on_job_stdout,
+            on_job_stderr,
+            on_job_exit,
+            true,
+            &rettv->vval.v_number);
 
   if (rettv->vval.v_number <= 0) {
     if (rettv->vval.v_number == 0) {
@@ -10502,19 +10505,21 @@ static void f_job_stop(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (!job_stop(argvars[0].vval.v_number)) {
+  Job *job = job_find(argvars[0].vval.v_number);
+
+  if (!job) {
     // Probably an invalid job id
     EMSG(_(e_invjob));
     return;
   }
 
+  job_stop(job);
   rettv->vval.v_number = 1;
 }
 
 // "jobwrite()" function
 static void f_job_write(typval_T *argvars, typval_T *rettv)
 {
-  bool res;
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
 
@@ -10529,16 +10534,17 @@ static void f_job_write(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  res = job_write(argvars[0].vval.v_number,
-                  xstrdup((char *)argvars[1].vval.v_string),
-                  strlen((char *)argvars[1].vval.v_string));
+  Job *job = job_find(argvars[0].vval.v_number);
 
-  if (!res) {
+  if (!job) {
     // Invalid job id
     EMSG(_(e_invjob));
   }
 
-  rettv->vval.v_number = 1;
+  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
+                                    strlen((char *)argvars[1].vval.v_string),
+                                    free);
+  rettv->vval.v_number = job_write(job, buf);
 }
 
 /*
@@ -12550,7 +12556,7 @@ static void f_send_event(typval_T *argvars, typval_T *rettv)
 
   if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
                           (char *)argvars[1].vval.v_string,
-                          &argvars[2])) {
+                          vim_to_object(&argvars[2]))) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
   }

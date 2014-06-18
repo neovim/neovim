@@ -288,12 +288,7 @@ Object vim_to_object(typval_T *obj)
   return rv;
 }
 
-/// Finds the pointer for a window number
-///
-/// @param window the window number
-/// @param[out] err Details of an error that may have occurred
-/// @return the window pointer
-buf_T *find_buffer(Buffer buffer, Error *err)
+buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
 {
   buf_T *rv = handle_get_buffer(buffer);
 
@@ -304,12 +299,7 @@ buf_T *find_buffer(Buffer buffer, Error *err)
   return rv;
 }
 
-/// Finds the pointer for a window number
-///
-/// @param window the window number
-/// @param[out] err Details of an error that may have occurred
-/// @return the window pointer
-win_T * find_window(Window window, Error *err)
+win_T * find_window_by_handle(Window window, Error *err)
 {
   win_T *rv = handle_get_window(window);
 
@@ -320,12 +310,7 @@ win_T * find_window(Window window, Error *err)
   return rv;
 }
 
-/// Finds the pointer for a tabpage number
-///
-/// @param tabpage the tabpage number
-/// @param[out] err Details of an error that may have occurred
-/// @return the tabpage pointer
-tabpage_T * find_tab(Tabpage tabpage, Error *err)
+tabpage_T * find_tab_by_handle(Tabpage tabpage, Error *err)
 {
   tabpage_T *rv = handle_get_tabpage(tabpage);
 

@@ -24,7 +24,7 @@ struct rstream {
   uv_file fd;
   rstream_cb cb;
   size_t buffer_size, rpos, wpos, fpos;
-  bool reading, free_handle, async;
+  bool reading, free_handle, defer;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -38,21 +38,19 @@ struct rstream {
 ///        for reading with `rstream_read`
 /// @param buffer_size Size in bytes of the internal buffer.
 /// @param data Some state to associate with the `RStream` instance
-/// @param async Flag that specifies if the callback should only be called
-///        outside libuv event loop(When processing async events with
-///        KE_EVENT). Only the RStream instance reading user input should set
-///        this to false
+/// @param defer Flag that specifies if callback invocation should be deferred
+///        to vim main loop(as a KE_EVENT special key)
 /// @return The newly-allocated `RStream` instance
 RStream * rstream_new(rstream_cb cb,
                       size_t buffer_size,
                       void *data,
-                      bool async)
+                      bool defer)
 {
   RStream *rv = xmalloc(sizeof(RStream));
   rv->buffer = xmalloc(buffer_size);
   rv->buffer_size = buffer_size;
   rv->data = data;
-  rv->async = async;
+  rv->defer = defer;
   rv->cb = cb;
   rv->rpos = rv->wpos = rv->fpos = 0;
   rv->stream = NULL;
@@ -213,6 +211,15 @@ size_t rstream_available(RStream *rstream)
   return rstream->wpos - rstream->rpos;
 }
 
+/// Sets the `defer` flag for a a RStream instance
+///
+/// @param rstream The RStream instance
+/// @param defer The new value for the flag
+void rstream_set_defer(RStream *rstream, bool defer)
+{
+  rstream->defer = defer;
+}
+
 /// Runs the read callback associated with the rstream
 ///
 /// @param event Object containing data necessary to invoke the callback
@@ -333,16 +340,9 @@ static void close_cb(uv_handle_t *handle)
 
 static void emit_read_event(RStream *rstream, bool eof)
 {
-  if (rstream->async) {
-    Event event;
-
-    event.type = kEventRStreamData;
-    event.data.rstream.ptr = rstream;
-    event.data.rstream.eof = eof;
-    event_push(event);
-  } else {
-    // Invoke the callback passing in the number of bytes available and data
-    // associated with the stream
-    rstream->cb(rstream, rstream->data, eof);
-  }
+  Event event;
+  event.type = kEventRStreamData;
+  event.data.rstream.ptr = rstream;
+  event.data.rstream.eof = eof;
+  event_push(event, rstream->defer);
 }
