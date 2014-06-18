@@ -5,7 +5,7 @@ if {$argc < 2} {
   exit 1
 }
 
-set timeout 10
+set timeout 60
 set run_tests [split [lindex $argv 0] " "]
 set run_nvim [split [lindex $argv 1] " "]
 
