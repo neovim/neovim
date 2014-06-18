@@ -116,12 +116,13 @@ void channel_from_stream(uv_stream_t *stream)
 /// @param type The event type, an arbitrary string
 /// @param obj The event data
 /// @return True if the data was sent successfully, false otherwise.
-bool channel_send_event(uint64_t id, char *type, typval_T *data)
+bool channel_send_event(uint64_t id, char *type, Object data)
 {
   Channel *channel = NULL;
 
   if (id > 0) {
     if (!(channel = pmap_get(uint64_t)(channels, id))) {
+      msgpack_rpc_free_object(data);
       return false;
     }
     send_event(channel, type, data);
@@ -248,12 +249,12 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   }
 }
 
-static void send_event(Channel *channel, char *type, typval_T *data)
+static void send_event(Channel *channel, char *type, Object data)
 {
   wstream_write(channel->data.streams.write, serialize_event(type, data));
 }
 
-static void broadcast_event(char *type, typval_T *data)
+static void broadcast_event(char *type, Object data)
 {
   kvec_t(Channel *) subscribed;
   kv_init(subscribed);
@@ -266,6 +267,7 @@ static void broadcast_event(char *type, typval_T *data)
   });
 
   if (!kv_size(subscribed)) {
+    msgpack_rpc_free_object(data);
     goto end;
   }
 
@@ -327,18 +329,17 @@ static void close_cb(uv_handle_t *handle)
   free(handle);
 }
 
-static WBuffer *serialize_event(char *type, typval_T *data)
+static WBuffer *serialize_event(char *type, Object data)
 {
   String event_type = {.size = strnlen(type, EVENT_MAXLEN), .data = type};
-  Object event_data = vim_to_object(data);
   msgpack_packer packer;
   msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
-  msgpack_rpc_notification(event_type, event_data, &packer);
+  msgpack_rpc_notification(event_type, data, &packer);
   WBuffer *rv = wstream_new_buffer(xmemdup(msgpack_event_buffer.data,
                                            msgpack_event_buffer.size),
                                    msgpack_event_buffer.size,
                                    free);
-  msgpack_rpc_free_object(event_data);
+  msgpack_rpc_free_object(data);
   msgpack_sbuffer_clear(&msgpack_event_buffer);
 
   return rv;
