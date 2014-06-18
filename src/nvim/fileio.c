@@ -5156,7 +5156,6 @@ void write_lnum_adjust(linenr_T offset)
     curbuf->b_no_eol_lnum += offset;
 }
 
-#if defined(TEMPDIRNAMES) || defined(PROTO)
 static long temp_count = 0;             /* Temp filename counter. */
 
 /*
@@ -5184,9 +5183,6 @@ void vim_deltempdir(void)
   }
 }
 
-#endif
-
-#ifdef TEMPDIRNAMES
 /*
  * Directory "tempdir" was created.  Expand this name to a full path and put
  * it in "vim_tempdir".  This avoids that using ":cd" would confuse us.
@@ -5203,7 +5199,6 @@ static void vim_settempdir(char_u *tempdir)
     free(buf);
   }
 }
-#endif
 
 /*
  * vim_tempname(): Return a unique name that can be used for a temp file.
@@ -5218,10 +5213,9 @@ vim_tempname (
     int extra_char          /* char to use in the name instead of '?' */
 )
 {
-  char_u itmp[TEMPNAMELEN];
+  char_u itmp[TEMP_FILE_PATH_MAXLEN];
 
-#ifdef TEMPDIRNAMES
-  static char *(tempdirs[]) = {TEMPDIRNAMES};
+  static const char *temp_dirs[] = TEMP_DIR_NAMES;
   int i;
 
   /*
@@ -5233,11 +5227,11 @@ vim_tempname (
    */
   if (vim_tempdir == NULL) {
     /*
-     * Try the entries in TEMPDIRNAMES to create the temp directory.
+     * Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
      */
-    for (i = 0; i < (int)(sizeof(tempdirs) / sizeof(char *)); ++i) {
+    for (i = 0; i < (int)(sizeof(temp_dirs) / sizeof(char *)); ++i) {
       /* expand $TMP, leave room for "/v1100000/999999999" */
-      expand_env((char_u *)tempdirs[i], itmp, TEMPNAMELEN - 20);
+      expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 20);
       if (os_isdir(itmp)) {                    /* directory exists */
         add_pathsep(itmp);
 
@@ -5259,19 +5253,6 @@ vim_tempname (
   }
 
   return NULL;
-
-#else /* TEMPDIRNAMES */
-
-  char_u      *p;
-
-  STRCPY(itmp, TEMPNAME);
-  if ((p = vim_strchr(itmp, '?')) != NULL)
-    *p = extra_char;
-  if (mktemp((char *)itmp) == NULL)
-    return NULL;
-
-  return vim_strsave(itmp);
-#endif /* TEMPDIRNAMES */
 }
 
 #if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)

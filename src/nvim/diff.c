@@ -893,15 +893,11 @@ void ex_diffpatch(exarg_T *eap)
       || (os_chdir((char *)dirbuf) != 0)) {
     dirbuf[0] = NUL;
   } else {
-# ifdef TEMPDIRNAMES
     if (vim_tempdir != NULL) {
       ignored = os_chdir((char *)vim_tempdir);
     } else {
       ignored = os_chdir("/tmp");
     }
-# else
-    ignored = os_chdir("/tmp");
-# endif  // ifdef TEMPDIRNAMES
     shorten_fnames(TRUE);
   }
 #endif  // ifdef UNIX
