@@ -31,7 +31,7 @@
 /// @return The line count
 Integer buffer_get_length(Buffer buffer, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return 0;
@@ -100,7 +100,7 @@ StringArray buffer_get_slice(Buffer buffer,
                              Error *err)
 {
   StringArray rv = ARRAY_DICT_INIT;
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return rv;
@@ -160,7 +160,7 @@ void buffer_set_slice(Buffer buffer,
                       StringArray replacement,
                       Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return;
@@ -283,7 +283,7 @@ end:
 /// @return The variable value
 Object buffer_get_var(Buffer buffer, String name, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return (Object) OBJECT_INIT;
@@ -301,7 +301,7 @@ Object buffer_get_var(Buffer buffer, String name, Error *err)
 /// @return The old value
 Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return (Object) OBJECT_INIT;
@@ -318,7 +318,7 @@ Object buffer_set_var(Buffer buffer, String name, Object value, Error *err)
 /// @return The option value
 Object buffer_get_option(Buffer buffer, String name, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return (Object) OBJECT_INIT;
@@ -336,7 +336,7 @@ Object buffer_get_option(Buffer buffer, String name, Error *err)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return;
@@ -353,7 +353,7 @@ void buffer_set_option(Buffer buffer, String name, Object value, Error *err)
 Integer buffer_get_number(Buffer buffer, Error *err)
 {
   Integer rv = 0;
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return rv;
@@ -370,7 +370,7 @@ Integer buffer_get_number(Buffer buffer, Error *err)
 String buffer_get_name(Buffer buffer, Error *err)
 {
   String rv = STRING_INIT;
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf || buf->b_ffname == NULL) {
     return rv;
@@ -386,7 +386,7 @@ String buffer_get_name(Buffer buffer, Error *err)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_name(Buffer buffer, String name, Error *err)
 {
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return;
@@ -416,7 +416,7 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
 Boolean buffer_is_valid(Buffer buffer)
 {
   Error stub = {.set = false};
-  return find_buffer(buffer, &stub) != NULL;
+  return find_buffer_by_handle(buffer, &stub) != NULL;
 }
 
 /// Inserts a sequence of lines to a buffer at a certain index
@@ -440,7 +440,7 @@ void buffer_insert(Buffer buffer, Integer lnum, StringArray lines, Error *err)
 Position buffer_get_mark(Buffer buffer, String name, Error *err)
 {
   Position rv = POSITION_INIT;
-  buf_T *buf = find_buffer(buffer, err);
+  buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
     return rv;
