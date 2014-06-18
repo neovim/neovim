@@ -108,7 +108,7 @@ const uint8_t msgpack_metadata[] = {
 
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
--- binary for easy querying by clients 
+-- binary for easy querying by clients
 packed = msgpack.pack(api)
 for i = 1, #packed do
   output:write(string.byte(packed, i)..', ')
@@ -116,38 +116,32 @@ for i = 1, #packed do
     output:write('\n  ')
   end
 end
--- start the dispatch function. number 0 is reserved for querying the metadata,
--- usually it is the first function called by clients.
 output:write([[
 };
 const unsigned int msgpack_metadata_size = sizeof(msgpack_metadata);
 
-Object msgpack_rpc_dispatch(uint64_t channel_id,
-                            uint64_t method_id,
-                            msgpack_object *req,
-                            Error *error)
-{
-  Object ret = NIL;
-  switch (method_id) {
 ]])
 
--- Visit each function metadata to build the case label with code generated
--- for validating arguments and calling to the real API
+-- start the handler functions. First handler (method_id=0) is reserved for
+-- querying the metadata, usually it is the first function called by clients.
+-- Visit each function metadata to build the handler function with code
+-- generated for validating arguments and calling to the real API.
 for i = 1, #api.functions do
   local fn = api.functions[i]
   local args = {}
-  local cleanup_label = 'cleanup_'..i
-  output:write('\n    case '..fn.id..': {')
 
-  output:write('\n      if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
-  output:write('\n        snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %u", req->via.array.ptr[3].via.array.size);')
-  output:write('\n        goto '..cleanup_label..';')
-  output:write('\n      }\n')
+  output:write('static Object handle_'..fn.name..'(uint64_t channel_id, msgpack_object *req, Error *error)')
+  output:write('\n{')
+  output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
+  output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %u", req->via.array.ptr[3].via.array.size);')
+  output:write('\n    goto cleanup;')
+  output:write('\n  }\n')
+
   -- Declare/initialize variables that will hold converted arguments
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
     local converted = 'arg_'..j
-    output:write('\n      '..param[1]..' '..converted..' msgpack_rpc_init_'..string.lower(param[1])..';')
+    output:write('\n  '..param[1]..' '..converted..' msgpack_rpc_init_'..string.lower(param[1])..';')
   end
   output:write('\n')
   -- Validation/conversion for each argument
@@ -157,18 +151,17 @@ for i = 1, #api.functions do
     arg = '(req->via.array.ptr[3].via.array.ptr + '..(j - 1)..')'
     converted = 'arg_'..j
     convert_arg = 'msgpack_rpc_to_'..string.lower(param[1])
-    output:write('\n      if (!'..convert_arg..'('..arg..', &'..converted..')) {')
-    output:write('\n        snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
-        
-    output:write('\n        error->set = true;')
-    output:write('\n        goto '..cleanup_label..';')
-    output:write('\n      }\n')
+    output:write('\n  if (!'..convert_arg..'('..arg..', &'..converted..')) {')
+    output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
+    output:write('\n    error->set = true;')
+    output:write('\n    goto cleanup;')
+    output:write('\n  }\n')
     args[#args + 1] = converted
   end
-  
+
   -- function call
   local call_args = table.concat(args, ', ')
-  output:write('\n      ')
+  output:write('\n  ')
   if fn.return_type ~= 'void' then
     -- has a return value, prefix the call with a declaration
     output:write(fn.return_type..' rv = ')
@@ -196,37 +189,67 @@ for i = 1, #api.functions do
       output:write('error);\n')
     end
     -- and check for the error
-    output:write('\n      if (error->set) {')
-    output:write('\n        goto '..cleanup_label..';')
-    output:write('\n      }\n')
+    output:write('\n  if (error->set) {')
+    output:write('\n    goto cleanup;')
+    output:write('\n  }\n')
   else
     output:write(');\n')
   end
 
   if fn.return_type ~= 'void' then
-    output:write('\n      ret = '..string.upper(fn.return_type)..'_OBJ(rv);')
+    output:write('\n  Object ret = '..string.upper(fn.return_type)..'_OBJ(rv);')
   end
   -- Now generate the cleanup label for freeing memory allocated for the
   -- arguments
-  output:write('\n\n'..cleanup_label..':');
+  output:write('\n\ncleanup:');
 
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
-    output:write('\n      msgpack_rpc_free_'..string.lower(param[1])..'(arg_'..j..');')
+    output:write('\n  msgpack_rpc_free_'..string.lower(param[1])..'(arg_'..j..');')
   end
-  output:write('\n      break;');
-  output:write('\n    };\n');
-
+  if fn.return_type ~= 'void' then
+    output:write('\n  return ret;\n}\n\n');
+  else
+    output:write('\n  return NIL;\n}\n\n');
+  end
 end
 
 output:write([[
-
-
-    default:
-      snprintf(error->msg, sizeof(error->msg), "Invalid function id");
-      error->set = true;
-  }
-  return ret;
+static Object handle_missing_method(uint64_t channel_id,
+                                    msgpack_object *req,
+                                    Error *error)
+{
+  snprintf(error->msg, sizeof(error->msg), "Invalid function id");
+  error->set = true;
+  return NIL;
 }
+
 ]])
+
+-- Generate the table of handler functions indexed by method id
+output:write([[
+static const rpc_method_handler_fn rpc_method_handlers[] = {
+  [0] = (rpc_method_handler_fn)NULL]])
+
+for i = 1, #api.functions do
+  local fn = api.functions[i]
+  output:write(',\n  ['..i..'] = handle_'..fn.name..'')
+end
+output:write('\n};\n\n')
+
+output:write([[
+Object msgpack_rpc_dispatch(uint64_t channel_id,
+                            uint64_t method_id,
+                            msgpack_object *req,
+                            Error *error)
+{
+]])
+output:write('\n  // method_id=0 is specially handled')
+output:write('\n  assert(method_id > 0);')
+output:write('\n');
+output:write('\n  rpc_method_handler_fn handler = (method_id <= '..#api.functions..') ?')
+output:write('\n    rpc_method_handlers[method_id] : handle_missing_method;')
+output:write('\n  return handler(channel_id, req, error);')
+output:write('\n}\n')
+
 output:close()
