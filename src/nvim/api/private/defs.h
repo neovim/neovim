@@ -49,14 +49,14 @@ typedef struct {
 
 typedef struct {
   Object *items;
-  size_t size;
+  size_t size, capacity;
 } Array;
 
 typedef struct key_value_pair KeyValuePair;
 
 typedef struct {
   KeyValuePair *items;
-  size_t size;
+  size_t size, capacity;
 } Dictionary;
 
 typedef enum {
