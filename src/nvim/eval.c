@@ -70,6 +70,7 @@
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
+#include "nvim/api/private/helpers.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -12555,7 +12556,7 @@ static void f_send_event(typval_T *argvars, typval_T *rettv)
 
   if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
                           (char *)argvars[1].vval.v_string,
-                          &argvars[2])) {
+                          vim_to_object(&argvars[2]))) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
   }
