@@ -11469,7 +11469,6 @@ static void f_range(typval_T *argvars, typval_T *rettv)
 static void f_readfile(typval_T *argvars, typval_T *rettv)
 {
   int binary = FALSE;
-  int failed = FALSE;
   char_u      *fname;
   FILE        *fd;
   char_u buf[(IOSIZE/256)*256];         /* rounded to avoid odd + 1 */
@@ -11586,7 +11585,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
       }
     }     /* for */
 
-    if (failed || (cnt >= maxline && maxline >= 0) || readlen <= 0)
+    if ((cnt >= maxline && maxline >= 0) || readlen <= 0)
       break;
     if (start < p) {
       /* There's part of a line in buf, store it in "prev". */
@@ -11615,17 +11614,11 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
    * For a negative line count use only the lines at the end of the file,
    * free the rest.
    */
-  if (!failed && maxline < 0)
+  if (maxline < 0)
     while (cnt > -maxline) {
       listitem_remove(rettv->vval.v_list, rettv->vval.v_list->lv_first);
       --cnt;
     }
-
-  if (failed) {
-    list_free(rettv->vval.v_list, TRUE);
-    /* readfile doc says an empty list is returned on error */
-    rettv->vval.v_list = list_alloc();
-  }
 
   free(prev);
   fclose(fd);
