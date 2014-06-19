@@ -7814,7 +7814,7 @@ spell_add_word (
 
   if (idx == 0) {           // use internal wordlist
     if (int_wordlist == NULL) {
-      int_wordlist = vim_tempname('s');
+      int_wordlist = vim_tempname();
       if (int_wordlist == NULL)
         return;
     }

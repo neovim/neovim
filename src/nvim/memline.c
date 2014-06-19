@@ -490,7 +490,7 @@ void ml_open_file(buf_T *buf)
 
   /* For a spell buffer use a temp file name. */
   if (buf->b_spell) {
-    fname = vim_tempname('s');
+    fname = vim_tempname();
     if (fname != NULL)
       (void)mf_open_file(mfp, fname);           /* consumes fname! */
     buf->b_may_swap = FALSE;

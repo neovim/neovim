@@ -3423,7 +3423,7 @@ get_cmd_output (
     return NULL;
 
   /* get a name for the temp file */
-  if ((tempname = vim_tempname('o')) == NULL) {
+  if ((tempname = vim_tempname()) == NULL) {
     EMSG(_(e_notmp));
     return NULL;
   }
