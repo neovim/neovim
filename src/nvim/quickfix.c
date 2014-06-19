@@ -2537,7 +2537,7 @@ static char_u *get_mef_name(void)
   static int off = 0;
 
   if (*p_mef == NUL) {
-    name = vim_tempname('e');
+    name = vim_tempname();
     if (name == NULL)
       EMSG(_(e_notmp));
     return name;

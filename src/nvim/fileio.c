@@ -2146,7 +2146,7 @@ readfile_charconvert (
   char_u      *tmpname;
   char_u      *errmsg = NULL;
 
-  tmpname = vim_tempname('r');
+  tmpname = vim_tempname();
   if (tmpname == NULL)
     errmsg = (char_u *)_("Can't find temp file for conversion");
   else {
@@ -3163,7 +3163,7 @@ nobackup:
      * overwrite the original file.
      */
     if (*p_ccv != NUL) {
-      wfname = vim_tempname('w');
+      wfname = vim_tempname();
       if (wfname == NULL) {             /* Can't write without a tempfile! */
         errmsg = (char_u *)_("E214: Can't find temp file for writing");
         goto restore_backup;
@@ -5156,7 +5156,7 @@ void write_lnum_adjust(linenr_T offset)
     curbuf->b_no_eol_lnum += offset;
 }
 
-static long temp_count = 0;             /* Temp filename counter. */
+static uint32_t temp_count = 0;             /* Temp filename counter. */
 
 /*
  * Delete the temp directory and all files it contains.
@@ -5208,10 +5208,7 @@ static void vim_settempdir(char_u *tempdir)
  * The returned pointer is to allocated memory.
  * The returned pointer is NULL if no valid name was found.
  */
-char_u *
-vim_tempname (
-    int extra_char          /* char to use in the name instead of '?' */
-)
+char_u *vim_tempname(void)
 {
   char_u itmp[TEMP_FILE_PATH_MAXLEN];
 
@@ -5230,13 +5227,13 @@ vim_tempname (
      * Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
      */
     for (i = 0; i < (int)(sizeof(temp_dirs) / sizeof(char *)); ++i) {
-      /* expand $TMP, leave room for "/v1100000/999999999" */
-      expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 20);
+      /* expand $TMP, leave room for "/nvimXXXXXX/999999999" */
+      expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 22);
       if (os_isdir(itmp)) {                    /* directory exists */
         add_pathsep(itmp);
 
         /* Leave room for filename */
-        STRCAT(itmp, "vXXXXXX");
+        STRCAT(itmp, "nvimXXXXXX");
         if (os_mkdtemp((char *)itmp) != NULL)
           vim_settempdir(itmp);
         if (vim_tempdir != NULL)
@@ -5248,7 +5245,7 @@ vim_tempname (
   if (vim_tempdir != NULL) {
     /* There is no need to check if the file exists, because we own the
      * directory and nobody else creates a file in it. */
-    sprintf((char *)itmp, "%s%" PRId64, vim_tempdir, (int64_t)temp_count++);
+    sprintf((char *)itmp, "%s%" PRIu32, vim_tempdir, temp_count++);
     return vim_strsave(itmp);
   }
 

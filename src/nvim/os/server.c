@@ -52,7 +52,7 @@ void server_init(void)
   servers = pmap_new(cstr_t)();
 
   if (!os_getenv("NEOVIM_LISTEN_ADDRESS")) {
-    char *listen_address = (char *)vim_tempname('s');
+    char *listen_address = (char *)vim_tempname();
     os_setenv("NEOVIM_LISTEN_ADDRESS", listen_address, 1);
     free(listen_address);
   }

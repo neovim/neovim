@@ -661,9 +661,9 @@ void ex_diffupdate(exarg_T *eap)
   }
 
   // We need three temp file names.
-  char_u *tmp_orig = vim_tempname('o');
-  char_u *tmp_new = vim_tempname('n');
-  char_u *tmp_diff = vim_tempname('d');
+  char_u *tmp_orig = vim_tempname();
+  char_u *tmp_new = vim_tempname();
+  char_u *tmp_diff = vim_tempname();
 
   if ((tmp_orig == NULL) || (tmp_new == NULL) || (tmp_diff == NULL)) {
     goto theend;
@@ -852,9 +852,9 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
   // We need two temp file names.
   // Name of original temp file.
-  char_u *tmp_orig = vim_tempname('o');
+  char_u *tmp_orig = vim_tempname();
   // Name of patched temp file.
-  char_u *tmp_new = vim_tempname('n');
+  char_u *tmp_new = vim_tempname();
 
   if ((tmp_orig == NULL) || (tmp_new == NULL)) {
     goto theend;
