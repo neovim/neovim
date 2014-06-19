@@ -54,8 +54,9 @@ static inline size_t xstrucpy(char *restrict dst,
                               size_t strsize)
     FUNC_ATTR_NONNULL_ALL
 {
+  size_t cpy = (strsize < bufsize) ? strsize : bufsize - 1;
+
   if (bufsize) {
-    size_t cpy = (strsize < bufsize) ? strsize : bufsize - 1;
     xmemcpyz(dst, src, cpy);
   }
 
