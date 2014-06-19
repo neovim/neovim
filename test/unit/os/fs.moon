@@ -307,10 +307,14 @@ describe 'fs function', ->
         neq 0, (os_chdir '/root')
 
       it 'returns 0 if changing the directory is succesful', ->
-        eq 0, (os_chdir 'unit-test-directory')
+        unit_test_dir = 'unit-test-directory'
+        current_dir = lfs.currentdir!
+        eq 0, (os_chdir unit_test_dir)
+        eq  (current_dir .. '/' .. unit_test_dir), lfs.currentdir!
         -- we need to come back to the original directory for the other tests to
         -- succeed
         eq 0, (os_chdir '..')
+        eq current_dir, lfs.currentdir!
 
     describe 'os_mkdir', ->
       it 'returns non-zero when given an already existing directory', ->
