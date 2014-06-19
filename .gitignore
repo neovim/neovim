@@ -54,5 +54,3 @@
 # local make targets
 local.mk
 
-# Doxygen output
-/documentation/
