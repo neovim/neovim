@@ -63,11 +63,6 @@ bool event_poll(int32_t ms)
 {
   uv_run_mode run_mode = UV_RUN_ONCE;
 
-  if (input_ready()) {
-    // If there's a pending input event to be consumed, do it now
-    return true;
-  }
-
   static int recursive = 0;
 
   if (!(recursive++)) {
@@ -95,13 +90,16 @@ bool event_poll(int32_t ms)
     run_mode = UV_RUN_NOWAIT;
   }
 
+  bool events_processed;
+
   do {
     // Run one event loop iteration, blocking for events if run_mode is
     // UV_RUN_ONCE
     uv_run(uv_default_loop(), run_mode);
+    events_processed = event_process(false);
   } while (
       // Continue running if ...
-      !event_process(false) &&   // we didn't process any immediate events
+      !events_processed &&   // we didn't process any immediate events
       !event_has_deferred() &&   // no events are waiting to be processed
       run_mode != UV_RUN_NOWAIT &&   // ms != 0
       !timer_data.timed_out);  // we didn't get a timeout
@@ -120,7 +118,7 @@ bool event_poll(int32_t ms)
     event_process(false);
   }
 
-  return input_ready() || event_has_deferred();
+  return !timer_data.timed_out && (events_processed || event_has_deferred());
 }
 
 bool event_has_deferred()
