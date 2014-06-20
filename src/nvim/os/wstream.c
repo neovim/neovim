@@ -91,11 +91,13 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   // This should not be called after a wstream was freed
   assert(!wstream->freed);
 
+  buffer->refcount++;
+
   if (wstream->curmem > wstream->maxmem) {
+    release_wbuffer(buffer);
     return false;
   }
 
-  buffer->refcount++;
   wstream->curmem += buffer->size;
   data = xmalloc(sizeof(WriteData));
   data->wstream = wstream;
@@ -138,10 +140,7 @@ static void write_cb(uv_write_t *req, int status)
   free(req);
   data->wstream->curmem -= data->buffer->size;
 
-  if (!--data->buffer->refcount) {
-    data->buffer->cb(data->buffer->data);
-    free(data->buffer);
-  }
+  release_wbuffer(data->buffer);
 
   data->wstream->pending_reqs--;
   if (data->wstream->freed && data->wstream->pending_reqs == 0) {
@@ -152,3 +151,10 @@ static void write_cb(uv_write_t *req, int status)
   free(data);
 }
 
+static void release_wbuffer(WBuffer *buffer)
+{
+  if (!--buffer->refcount) {
+    buffer->cb(buffer->data);
+    free(buffer);
+  }
+}
