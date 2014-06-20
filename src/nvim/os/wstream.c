@@ -100,8 +100,7 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   buffer->refcount++;
 
   if (wstream->curmem > wstream->maxmem) {
-    release_wbuffer(buffer);
-    return false;
+    goto err;
   }
 
   wstream->curmem += buffer->size;
@@ -113,9 +112,16 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   uvbuf.base = buffer->data;
   uvbuf.len = buffer->size;
   wstream->pending_reqs++;
-  uv_write(req, wstream->stream, &uvbuf, 1, write_cb);
+
+  if (uv_write(req, wstream->stream, &uvbuf, 1, write_cb)) {
+    goto err;
+  }
 
   return true;
+
+err:
+  release_wbuffer(buffer);
+  return false;
 }
 
 /// Creates a WBuffer object for holding output data. Instances of this
