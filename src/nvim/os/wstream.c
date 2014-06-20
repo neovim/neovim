@@ -9,6 +9,8 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
+#define DEFAULT_MAXMEM 1024 * 1024 * 10
+
 struct wstream {
   uv_stream_t *stream;
   // Memory currently used by pending buffers
@@ -43,6 +45,10 @@ typedef struct {
 /// @return The newly-allocated `WStream` instance
 WStream * wstream_new(size_t maxmem)
 {
+  if (!maxmem) {
+    maxmem = DEFAULT_MAXMEM;
+  }
+
   WStream *rv = xmalloc(sizeof(WStream));
   rv->maxmem = maxmem;
   rv->stream = NULL;
