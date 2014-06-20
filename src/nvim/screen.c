@@ -5215,10 +5215,11 @@ void screen_puts(char_u *text, int row, int col, int attr)
  * Like screen_puts(), but output "text[len]".  When "len" is -1 output up to
  * a NUL.
  */
-void screen_puts_len(char_u *text, int len, int row, int col, int attr)
+void screen_puts_len(char_u *text, int textlen, int row, int col, int attr)
 {
   unsigned off;
   char_u      *ptr = text;
+  int len = textlen;
   int c;
   unsigned max_off;
   int mbyte_blen = 1;
@@ -5404,8 +5405,11 @@ void screen_puts_len(char_u *text, int len, int row, int col, int attr)
       off += mbyte_cells;
       col += mbyte_cells;
       ptr += mbyte_blen;
-      if (clear_next_cell)
+      if (clear_next_cell) {
+        // This only happens at the end, display one space next.
         ptr = (char_u *)" ";
+        len = -1;
+      }
     } else {
       ++off;
       ++col;
