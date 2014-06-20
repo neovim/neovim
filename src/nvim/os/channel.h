@@ -6,7 +6,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 
-#define EVENT_MAXLEN 512
+#define METHOD_MAXLEN 512
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/channel.h.generated.h"

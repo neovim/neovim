@@ -115,21 +115,21 @@ void channel_from_stream(uv_stream_t *stream)
 ///
 /// @param id The channel id. If 0, the event will be sent to all
 ///        channels that have subscribed to the event type
-/// @param type The event type, an arbitrary string
-/// @param obj The event data
+/// @param name The event name, an arbitrary string
+/// @param arg The event arg
 /// @return True if the data was sent successfully, false otherwise.
-bool channel_send_event(uint64_t id, char *type, Object data)
+bool channel_send_event(uint64_t id, char *name, Object arg)
 {
   Channel *channel = NULL;
 
   if (id > 0) {
     if (!(channel = pmap_get(uint64_t)(channels, id))) {
-      msgpack_rpc_free_object(data);
+      msgpack_rpc_free_object(arg);
       return false;
     }
-    send_event(channel, type, data);
+    send_message(channel, 2, 0, name, arg);
   } else {
-    broadcast_event(type, data);
+    broadcast_event(name, arg);
   }
 
   return true;
@@ -284,29 +284,33 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
   return success;
 }
 
-static void send_event(Channel *channel, char *type, Object data)
+static void send_message(Channel *channel,
+                         int type,
+                         uint64_t id,
+                         char *name,
+                         Object arg)
 {
-  channel_write(channel, serialize_event(type, data));
+  channel_write(channel, serialize_message(type, id, name, arg));
 }
 
-static void broadcast_event(char *type, Object data)
+static void broadcast_event(char *name, Object arg)
 {
   kvec_t(Channel *) subscribed;
   kv_init(subscribed);
   Channel *channel;
 
   map_foreach_value(channels, channel, {
-    if (pmap_has(cstr_t)(channel->subscribed_events, type)) {
+    if (pmap_has(cstr_t)(channel->subscribed_events, name)) {
       kv_push(Channel *, subscribed, channel);
     }
   });
 
   if (!kv_size(subscribed)) {
-    msgpack_rpc_free_object(data);
+    msgpack_rpc_free_object(arg);
     goto end;
   }
 
-  WBuffer *buffer = serialize_event(type, data);
+  WBuffer *buffer = serialize_message(2, 0, name, arg);
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
     channel_write(kv_A(subscribed, i), buffer);
@@ -364,17 +368,20 @@ static void close_cb(uv_handle_t *handle)
   free(handle);
 }
 
-static WBuffer *serialize_event(char *type, Object data)
+static WBuffer *serialize_message(int type,
+                                  uint64_t id,
+                                  char *method,
+                                  Object arg)
 {
-  String event_type = {.size = strnlen(type, EVENT_MAXLEN), .data = type};
+  String method_str = {.size = strnlen(method, METHOD_MAXLEN), .data = method};
   msgpack_packer packer;
   msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
-  msgpack_rpc_notification(event_type, data, &packer);
+  msgpack_rpc_message(type, id, method_str, arg, &packer);
   WBuffer *rv = wstream_new_buffer(xmemdup(msgpack_event_buffer.data,
                                            msgpack_event_buffer.size),
                                    msgpack_event_buffer.size,
                                    free);
-  msgpack_rpc_free_object(data);
+  msgpack_rpc_free_object(arg);
   msgpack_sbuffer_clear(&msgpack_event_buffer);
 
   return rv;
@@ -391,3 +398,4 @@ static Channel *register_channel()
   pmap_put(uint64_t)(channels, rv->id, rv);
   return rv;
 }
+

@@ -424,8 +424,8 @@ void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 /// @param event The event type string
 void vim_subscribe(uint64_t channel_id, String event)
 {
-  size_t length = (event.size < EVENT_MAXLEN ? event.size : EVENT_MAXLEN);
-  char e[EVENT_MAXLEN + 1];
+  size_t length = (event.size < METHOD_MAXLEN ? event.size : METHOD_MAXLEN);
+  char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
   channel_subscribe(channel_id, e);
@@ -437,8 +437,10 @@ void vim_subscribe(uint64_t channel_id, String event)
 /// @param event The event type string
 void vim_unsubscribe(uint64_t channel_id, String event)
 {
-  size_t length = (event.size < EVENT_MAXLEN ? event.size : EVENT_MAXLEN);
-  char e[EVENT_MAXLEN + 1];
+  size_t length = (event.size < METHOD_MAXLEN ?
+                   event.size :
+                   METHOD_MAXLEN);
+  char e[METHOD_MAXLEN + 1];
   memcpy(e, event.data, length);
   e[length] = NUL;
   channel_unsubscribe(channel_id, e);
