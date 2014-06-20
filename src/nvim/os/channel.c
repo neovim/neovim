@@ -80,6 +80,7 @@ bool channel_from_job(char **argv)
                                 job_err,
                                 job_exit,
                                 true,
+                                0,
                                 &status);
 
   if (status <= 0) {
@@ -104,7 +105,7 @@ void channel_from_stream(uv_stream_t *stream)
   rstream_set_stream(channel->data.streams.read, stream);
   rstream_start(channel->data.streams.read);
   // write stream
-  channel->data.streams.write = wstream_new(1024 * 1024);
+  channel->data.streams.write = wstream_new(0);
   wstream_set_stream(channel->data.streams.write, stream);
   channel->data.streams.uv = stream;
 }

@@ -21,7 +21,6 @@
 #define EXIT_TIMEOUT 25
 #define MAX_RUNNING_JOBS 100
 #define JOB_BUFFER_SIZE 1024
-#define JOB_WRITE_MAXMEM 1024 * 1024
 
 struct job {
   // Job id the index in the job table plus one.
@@ -131,6 +130,7 @@ void job_teardown()
 /// @param exit_cb Callback that will be invoked when the job exits
 /// @param defer If the job callbacks invocation should be deferred to vim
 ///         main loop
+/// @param maxmem Maximum amount of memory used by the job WStream
 /// @param[out] The job id if the job started successfully, 0 if the job table
 ///             is full, -1 if the program could not be executed.
 /// @return The job pointer if the job started successfully, NULL otherwise
@@ -140,6 +140,7 @@ Job *job_start(char **argv,
                rstream_cb stderr_cb,
                job_exit_cb job_exit_cb,
                bool defer,
+               size_t maxmem,
                int *status)
 {
   int i;
@@ -210,7 +211,7 @@ Job *job_start(char **argv,
   handle_set_job((uv_handle_t *)&job->proc_stdout, job);
   handle_set_job((uv_handle_t *)&job->proc_stderr, job);
 
-  job->in = wstream_new(JOB_WRITE_MAXMEM);
+  job->in = wstream_new(maxmem);
   wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
   // Start the readable streams
   job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job, defer);
