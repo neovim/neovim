@@ -115,13 +115,22 @@ void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
   msgpack_rpc_dispatch(id, req, res);
 }
 
-void msgpack_rpc_notification(String type, Object data, msgpack_packer *pac)
+void msgpack_rpc_message(int type,
+                         uint64_t id,
+                         String method,
+                         Object arg,
+                         msgpack_packer *pac)
 {
-  msgpack_pack_array(pac, 3);
-  msgpack_pack_int(pac, 2);
-  msgpack_pack_raw(pac, type.size);
-  msgpack_pack_raw_body(pac, type.data, type.size);
-  msgpack_rpc_from_object(data, pac);
+  msgpack_pack_array(pac, id ? 4 : 3);
+  msgpack_pack_int(pac, type);
+
+  if (id) {
+    msgpack_pack_uint64(pac, id);
+  }
+
+  msgpack_pack_raw(pac, method.size);
+  msgpack_pack_raw_body(pac, method.data, method.size);
+  msgpack_rpc_from_object(arg, pac);
 }
 
 void msgpack_rpc_error(char *msg, msgpack_packer *res)

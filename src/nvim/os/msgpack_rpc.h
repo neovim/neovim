@@ -24,13 +24,20 @@ typedef enum {
 void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3);
 
-/// Packs a notification message
+/// Packs a message
 ///
-/// @param type The message type, an arbitrary string
-/// @param data The notification data
+/// @param type The message type
+/// @param id The message id, must be an unique integer > 0 or will be
+///        ignored(the message array will have 3 elements instead of 4).
+/// @param method The message name, an arbitrary string
+/// @param arg The message argument
 /// @param packer Where the notification will be packed to
-void msgpack_rpc_notification(String type, Object data, msgpack_packer *pac)
-  FUNC_ATTR_NONNULL_ARG(3);
+void msgpack_rpc_message(int type,
+                         uint64_t id,
+                         String method,
+                         Object arg,
+                         msgpack_packer *pac)
+  FUNC_ATTR_NONNULL_ARG(5);
 
 /// Dispatches to the actual API function after basic payload validation by
 /// `msgpack_rpc_call`. It is responsible for validating/converting arguments
