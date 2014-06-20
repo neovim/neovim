@@ -341,7 +341,7 @@ String cstr_to_string(const char *str)
     };
 }
 
-static bool object_to_vim(Object obj, typval_T *tv, Error *err)
+bool object_to_vim(Object obj, typval_T *tv, Error *err)
 {
   tv->v_type = VAR_UNKNOWN;
   tv->v_lock = 0;
