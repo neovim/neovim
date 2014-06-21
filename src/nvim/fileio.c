@@ -5156,7 +5156,40 @@ void write_lnum_adjust(linenr_T offset)
     curbuf->b_no_eol_lnum += offset;
 }
 
+/* Name of Vim's own temp dir. Ends in a slash. */
+static char_u *vim_tempdir = NULL;
 static uint32_t temp_count = 0;             /* Temp filename counter. */
+
+/*
+ * This will create a directory for private use by this instance of Vim.
+ * This is done once, and the same directory is used for all temp files.
+ * This method avoids security problems because of symlink attacks et al.
+ * It's also a bit faster, because we only need to check for an existing
+ * file when creating the directory and not for each temp file.
+ */
+static void vim_maketempdir(void)
+{
+  static const char *temp_dirs[] = TEMP_DIR_NAMES;
+  int i;
+  /*
+   * Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
+   */
+  char_u itmp[TEMP_FILE_PATH_MAXLEN];
+  for (i = 0; i < (int)(sizeof(temp_dirs) / sizeof(char *)); ++i) {
+    /* expand $TMP, leave room for "/nvimXXXXXX/999999999" */
+    expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 22);
+    if (os_isdir(itmp)) {                    /* directory exists */
+      add_pathsep(itmp);
+
+      /* Leave room for filename */
+      STRCAT(itmp, "nvimXXXXXX");
+      if (os_mkdtemp((char *)itmp) != NULL)
+        vim_settempdir(itmp);
+      if (vim_tempdir != NULL)
+        break;
+    }
+  }
+}
 
 /*
  * Delete the temp directory and all files it contains.
@@ -5181,6 +5214,15 @@ void vim_deltempdir(void)
     free(vim_tempdir);
     vim_tempdir = NULL;
   }
+}
+
+char_u *vim_gettempdir(void)
+{
+  if (vim_tempdir == NULL) {
+    vim_maketempdir();
+  }
+
+  return vim_tempdir;
 }
 
 /*
@@ -5212,40 +5254,11 @@ char_u *vim_tempname(void)
 {
   char_u itmp[TEMP_FILE_PATH_MAXLEN];
 
-  static const char *temp_dirs[] = TEMP_DIR_NAMES;
-  int i;
-
-  /*
-   * This will create a directory for private use by this instance of Vim.
-   * This is done once, and the same directory is used for all temp files.
-   * This method avoids security problems because of symlink attacks et al.
-   * It's also a bit faster, because we only need to check for an existing
-   * file when creating the directory and not for each temp file.
-   */
-  if (vim_tempdir == NULL) {
-    /*
-     * Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
-     */
-    for (i = 0; i < (int)(sizeof(temp_dirs) / sizeof(char *)); ++i) {
-      /* expand $TMP, leave room for "/nvimXXXXXX/999999999" */
-      expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 22);
-      if (os_isdir(itmp)) {                    /* directory exists */
-        add_pathsep(itmp);
-
-        /* Leave room for filename */
-        STRCAT(itmp, "nvimXXXXXX");
-        if (os_mkdtemp((char *)itmp) != NULL)
-          vim_settempdir(itmp);
-        if (vim_tempdir != NULL)
-          break;
-      }
-    }
-  }
-
-  if (vim_tempdir != NULL) {
+  char_u *tempdir = vim_gettempdir();
+  if (tempdir != NULL) {
     /* There is no need to check if the file exists, because we own the
      * directory and nobody else creates a file in it. */
-    sprintf((char *)itmp, "%s%" PRIu32, vim_tempdir, temp_count++);
+    sprintf((char *)itmp, "%s%" PRIu32, tempdir, temp_count++);
     return vim_strsave(itmp);
   }
 
