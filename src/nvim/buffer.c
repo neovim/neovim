@@ -2219,10 +2219,6 @@ setfname (
       close_buffer(NULL, obuf, DOBUF_WIPE, FALSE);
     }
     sfname = vim_strsave(sfname);
-    if (ffname == NULL) {
-      free(sfname);
-      return FAIL;
-    }
 #ifdef USE_FNAME_CASE
     fname_case(sfname, 0);            /* set correct case for short file name */
 #endif
