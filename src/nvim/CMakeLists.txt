@@ -37,6 +37,14 @@ endforeach()
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 
 set(CONV_SRCS
+
+  api/buffer.c
+  api/private/handle.c
+  api/private/helpers.c
+  api/tabpage.c
+  api/window.c
+  api/vim.h
+  api/vim.c
   api.c
   arabic.c
   cursor.c
@@ -47,27 +55,20 @@ set(CONV_SRCS
   map.c
   memory.c
   misc2.c
-  profile.c
   os/channel.c
   os/env.c
   os/event.c
   os/job.c
   os/mem.c
+  os/msgpack_rpc.c
   os/rstream.c
   os/signal.c
   os/users.c
   os/provider.c
   os/uv_helpers.c
   os/wstream.c
-  os/msgpack_rpc.c
+  profile.c
   tempfile.c
-  api/buffer.c
-  api/private/helpers.c
-  api/private/handle.c
-  api/tabpage.c
-  api/window.c
-  api/vim.h
-  api/vim.c
   )
 
 set_source_files_properties(
