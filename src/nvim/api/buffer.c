@@ -166,8 +166,19 @@ void buffer_set_slice(Buffer buffer,
   buf_T *save_curbuf = NULL;
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
+
   size_t new_len = replacement.size;
+  if (!new_len <= SIZE_MAX) {
+    set_api_error("Too many lines to add", err);
+    return;
+  }
+
   size_t old_len = (size_t)(end - start);
+  if (!buf->b_ml.ml_line_count + (new_len - old_len) <= LONG_MAX) {
+    set_api_error("Exceding maximum line number", err);
+    return;
+  }
+
   ssize_t extra = 0;  // lines added to text, can be negative
   char **lines = (new_len != 0) ? xmalloc(new_len * sizeof(char *)) : NULL;
 
@@ -204,12 +215,6 @@ void buffer_set_slice(Buffer buffer,
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
 
-  if ((int64_t)to_replace > LONG_MAX - start) {
-    to_replace = LONG_MAX - start;
-    set_api_error("Index value is too high", err);
-    goto end;
-  }
-
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
 
@@ -220,11 +225,6 @@ void buffer_set_slice(Buffer buffer,
     // Mark lines that haven't been passed to the buffer as they need
     // to be freed later
     lines[i] = NULL;
-  }
-
-  if ((int64_t)to_replace > LONG_MAX - start + 1) {
-    set_api_error("Index value is too high", err);
-    goto end;
   }
 
   // Now we may need to insert the remaining new old_len
