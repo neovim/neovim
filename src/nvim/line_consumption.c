@@ -206,7 +206,7 @@ size_t plines_m_win(win_T *wp, linenr_T first, linenr_T last)
   while (first <= last) {
     // Check if there are any really folded lines, but also included lines that
     // are maybe folded.
-    int64_t x = foldedCount(wp, first, NULL);
+    linenr_T x = foldedCount(wp, first, NULL);
     if (x > 0) {
       count++;              // count 1 for "+-- folded" line
       first += x;
