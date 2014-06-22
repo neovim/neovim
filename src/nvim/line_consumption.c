@@ -47,7 +47,8 @@ size_t plines_win(win_T *wp, linenr_T lnum, bool winheight)
 {
   // Check for filler lines above this buffer line.  When folded the result
   // is one line anyway.
-  return plines_win_nofill(wp, lnum, winheight) + (size_t)diff_check_fill(wp, lnum);
+  return plines_win_nofill(wp, lnum, winheight)
+         + (size_t)diff_check_fill(wp, lnum);
 }
 
 /// Gets the physical line count in current window, ignoring filler lines
@@ -133,7 +134,7 @@ size_t plines_win_nofold(win_T *wp, linenr_T lnum)
 
   col -= width;
   width += win_col_off2(wp);
-  return (size_t)((col + (width - 1)) / width + 1);  //width cannot be negative
+  return (size_t)((col + (width - 1)) / width + 1);  // width cannot be negative
 }
 
 /// Gets physical line count consumed by a real line up to a certain column
@@ -148,7 +149,6 @@ size_t plines_win_nofold(win_T *wp, linenr_T lnum)
 /// @return The physical line count
 size_t plines_win_col(win_T *wp, linenr_T lnum, colnr_T column)
 {
-
   // Check for filler lines above this buffer line. When folded the result is
   // one line anyway.
   size_t lines = (size_t)diff_check_fill(wp, lnum);
@@ -185,7 +185,7 @@ size_t plines_win_col(win_T *wp, linenr_T lnum, colnr_T column)
   }
 
   lines += 1;
-  if (col > width) { // cast is not dangerous because col > width
+  if (col > width) {  // cast is not dangerous because col > width
     lines += (size_t)((col - width) / (width + win_col_off2(wp)) + 1);
   }
   return lines;
