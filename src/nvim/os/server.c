@@ -11,7 +11,7 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
-#include "nvim/fileio.h"
+#include "nvim/tempfile.h"
 #include "nvim/map.h"
 
 #define MAX_CONNECTIONS 32
