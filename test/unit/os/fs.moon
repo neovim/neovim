@@ -305,7 +305,7 @@ describe 'fs function', ->
       fs.os_chdir (to_cstr path)
 
     describe 'os_chdir', ->
-      it "returns a value unequal to 0 if directory doesn't exit", ->
+      it "returns a value unequal to 0 if directory doesn't exist", ->
         neq 0, (os_chdir 'not-existing-folder')
 
       it 'returns a value unequal to 0 if entering the directory is not permited', ->
