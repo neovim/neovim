@@ -1,14 +1,5 @@
-#include "nvim/vim.h"
-#include "nvim/buffer_defs.h"
-#include "nvim/diff.h"
-#include "nvim/fold.h"
-#include "nvim/memline.h"
-#include "nvim/charset.h"
-#include "nvim/move.h"
-#include "nvim/line_consumption.h"
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "line_consumption.c.generated.h"
-#endif
+/// @file
+///
 /// Functions to determine physical line consumption of real lines
 ///
 /// Throughout this file the terminology is:
@@ -24,6 +15,17 @@
 ///
 /// This file provides functions that determine the amount of physical lines
 /// used by real lines, considering these factors.
+#include "nvim/vim.h"
+#include "nvim/buffer_defs.h"
+#include "nvim/diff.h"
+#include "nvim/fold.h"
+#include "nvim/memline.h"
+#include "nvim/charset.h"
+#include "nvim/move.h"
+#include "nvim/line_consumption.h"
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "line_consumption.c.generated.h"
+#endif
 
 
 /// Gets the physical line count consumed by a real line in current window
