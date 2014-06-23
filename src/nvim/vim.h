@@ -94,7 +94,6 @@ typedef uint32_t u8char_T;
 
 #include <errno.h>
 
-#include <assert.h>
 
 #include <stdarg.h>
 

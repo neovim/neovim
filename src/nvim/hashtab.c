@@ -18,6 +18,7 @@
 /// of the entries is empty to keep the lookup efficient (at the cost of extra
 /// memory).
 
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>

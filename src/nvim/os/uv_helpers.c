@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <uv.h>
 
 #include "nvim/os/uv_helpers.h"

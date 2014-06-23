@@ -2,6 +2,7 @@
 ///
 /// Code related to character sets.
 
+#include <assert.h>
 #include <string.h>
 #include <wctype.h>
 #include <wchar.h>  // for towupper() and towlower()

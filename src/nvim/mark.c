@@ -10,6 +10,7 @@
  * mark.c: functions for setting marks and jumping to them
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <string.h>
 
