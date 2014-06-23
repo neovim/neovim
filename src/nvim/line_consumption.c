@@ -28,7 +28,7 @@
 
 /// Gets the physical line count consumed by a real line in current window
 ///
-/// @param lnum Linenumber of buffer
+/// @param lnum Line number of buffer
 ///
 /// @return The physical line count
 size_t plines(linenr_T lnum)
@@ -36,7 +36,7 @@ size_t plines(linenr_T lnum)
   return plines_win(curwin, lnum, true);
 }
 
-/// Gets the pyhsical line count consumed by a real line in a window
+/// Gets the physical line count consumed by a real line in a window
 ///
 /// @param wp The window handle
 /// @param lnum The real line to check
@@ -66,7 +66,7 @@ size_t plines_nofill(linenr_T lnum)
 
 /// Gets the physical line count ignoring filler lines
 ///
-/// Gets the pyhsical line count consumed by a real line in a window ignoring
+/// Gets the physical line count consumed by a real line in a window ignoring
 /// filler lines
 ///
 /// @remark Note: Caller must handle lines that are MAYBE folded.
