@@ -79,6 +79,7 @@
 #include <inttypes.h>
 #include <string.h>
 #include <wchar.h>
+#include <wctype.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
