@@ -426,6 +426,8 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       }
       tv->vval.v_dict->dv_refcount++;
       break;
+    default:
+      abort();
   }
 
   return true;

@@ -8,77 +8,53 @@
 #include "nvim/os/wstream.h"
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/api/private/helpers.h"
 #include "nvim/func_attr.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/msgpack_rpc.c.generated.h"
 #endif
 
+extern const uint8_t msgpack_metadata[];
+extern const unsigned int msgpack_metadata_size;
+
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.
 ///
-/// @param id The channel id
+/// @param channel_id The channel id
 /// @param req The parsed request object
 /// @param res A packer that contains the response
-void msgpack_rpc_call(uint64_t id, msgpack_object *req, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3)
+WBuffer *msgpack_rpc_call(uint64_t channel_id,
+                          msgpack_object *req,
+                          msgpack_sbuffer *sbuffer)
+  FUNC_ATTR_NONNULL_ARG(2)
+  FUNC_ATTR_NONNULL_ARG(3)
 {
-  // The initial response structure is the same no matter what happens,
-  // we set it up here
-  // Array of size 4
-  msgpack_pack_array(res, 4);
-  // Response type is 1
-  msgpack_pack_int(res, 1);
+  uint64_t response_id;
+  char *err = msgpack_rpc_validate(&response_id, req);
 
-  // Validate the basic structure of the msgpack-rpc payload
-  if (req->type != MSGPACK_OBJECT_ARRAY) {
-    msgpack_pack_int(res, 0);  // no message id yet
-    msgpack_rpc_error("Request is not an array", res);
-    return;
+  if (err) {
+    return serialize_response(response_id, err, NIL, sbuffer);
   }
 
-  if (req->via.array.size != 4) {
-    msgpack_pack_int(res, 0);  // no message id yet
-    char error_msg[256];
-    snprintf(error_msg,
-             sizeof(error_msg),
-             "Request array size is %u, it should be 4",
-             req->via.array.size);
-    msgpack_rpc_error(error_msg, res);
-    return;
+  uint64_t method_id = req->via.array.ptr[2].via.u64;
+
+  if (method_id == 0) {
+    return serialize_metadata(response_id, channel_id, sbuffer);
   }
 
-  if (req->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    msgpack_pack_int(res, 0);  // no message id yet
-    msgpack_rpc_error("Id must be a positive integer", res);
-    return;
+  // dispatch the call
+  Error error = { .set = false };
+  Object rv = msgpack_rpc_dispatch(channel_id, method_id, req, &error);
+  // send the response
+  msgpack_packer response;
+  msgpack_packer_init(&response, sbuffer, msgpack_sbuffer_write);
+
+  if (error.set) {
+    return serialize_response(response_id, error.msg, NIL, sbuffer);
   }
 
-  // Set the response id, which is the same as the request
-  msgpack_pack_uint64(res, req->via.array.ptr[1].via.u64);
-
-  if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    msgpack_rpc_error("Message type must be an integer", res);
-    return;
-  }
-
-  if (req->via.array.ptr[0].via.u64 != 0) {
-    msgpack_rpc_error("Message type must be 0", res);
-    return;
-  }
-
-  if (req->via.array.ptr[2].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    msgpack_rpc_error("Method id must be a positive integer", res);
-    return;
-  }
-
-  if (req->via.array.ptr[3].type != MSGPACK_OBJECT_ARRAY) {
-    msgpack_rpc_error("Paremeters must be an array", res);
-    return;
-  }
-
-  // dispatch the message
-  msgpack_rpc_dispatch(id, req, res);
+  return serialize_response(response_id, NULL, rv, sbuffer);
 }
 
 /// Try to unpack a msgpack document from the data in the unpacker buffer. This
@@ -134,19 +110,19 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 }
 
 /// Serializes a msgpack-rpc request or notification(id == 0)
-WBuffer *serialize_request(uint64_t id,
+WBuffer *serialize_request(uint64_t request_id,
                            String method,
                            Object arg,
                            msgpack_sbuffer *sbuffer)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(4)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
-  msgpack_pack_array(&pac, id ? 4 : 3);
-  msgpack_pack_int(&pac, id ? 0 : 2);
+  msgpack_pack_array(&pac, request_id ? 4 : 3);
+  msgpack_pack_int(&pac, request_id ? 0 : 2);
 
-  if (id) {
-    msgpack_pack_uint64(&pac, id);
+  if (request_id) {
+    msgpack_pack_uint64(&pac, request_id);
   }
 
   msgpack_pack_raw(&pac, method.size);
@@ -161,19 +137,20 @@ WBuffer *serialize_request(uint64_t id,
 }
 
 /// Serializes a msgpack-rpc response
-WBuffer *serialize_response(uint64_t id,
-                            String err,
+WBuffer *serialize_response(uint64_t response_id,
+                            char *err_msg,
                             Object arg,
                             msgpack_sbuffer *sbuffer)
-  FUNC_ATTR_NONNULL_ALL
+  FUNC_ATTR_NONNULL_ARG(4)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
   msgpack_pack_array(&pac, 4);
   msgpack_pack_int(&pac, 1);
-  msgpack_pack_uint64(&pac, id);
+  msgpack_pack_uint64(&pac, response_id);
 
-  if (err.size) {
+  if (err_msg) {
+    String err = {.size = strlen(err_msg), .data = err_msg};
     // error message
     msgpack_pack_raw(&pac, err.size);
     msgpack_pack_raw_body(&pac, err.data, err.size);
@@ -194,3 +171,66 @@ WBuffer *serialize_response(uint64_t id,
   return rv;
 }
 
+WBuffer *serialize_metadata(uint64_t id,
+                            uint64_t channel_id,
+                            msgpack_sbuffer *sbuffer)
+  FUNC_ATTR_NONNULL_ALL
+{
+  msgpack_packer pac;
+  msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
+  msgpack_pack_array(&pac, 4);
+  msgpack_pack_int(&pac, 1);
+  msgpack_pack_uint64(&pac, id);
+  // Nil error
+  msgpack_pack_nil(&pac);
+  // The result is the [channel_id, metadata] array
+  msgpack_pack_array(&pac, 2);
+  msgpack_pack_uint64(&pac, channel_id);
+  msgpack_pack_raw(&pac, msgpack_metadata_size);
+  msgpack_pack_raw_body(&pac, msgpack_metadata, msgpack_metadata_size);
+  WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
+                                   sbuffer->size,
+                                   free);
+  msgpack_sbuffer_clear(sbuffer);
+  return rv;
+}
+
+static char *msgpack_rpc_validate(uint64_t *response_id, msgpack_object *req)
+{
+  // response id not known yet
+
+  *response_id = 0;
+  // Validate the basic structure of the msgpack-rpc payload
+  if (req->type != MSGPACK_OBJECT_ARRAY) {
+    return "Request is not an array";
+  }
+
+  if (req->via.array.size != 4) {
+    return "Request array size should be 4";
+  }
+
+  if (req->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
+    return "Id must be a positive integer";
+  }
+
+  // Set the response id, which is the same as the request
+  *response_id = req->via.array.ptr[1].via.u64;
+
+  if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
+    return "Message type must be an integer";
+  }
+
+  if (req->via.array.ptr[0].via.u64 != 0) {
+    return "Message type must be 0";
+  }
+
+  if (req->via.array.ptr[2].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
+    return "Method id must be a positive integer";
+  }
+
+  if (req->via.array.ptr[3].type != MSGPACK_OBJECT_ARRAY) {
+    return "Paremeters must be an array";
+  }
+
+  return NULL;
+}

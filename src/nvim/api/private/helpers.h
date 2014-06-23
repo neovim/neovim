@@ -14,7 +14,9 @@
     err->set = true;                               \
   } while (0)
 
-#define BOOL_OBJ(b) ((Object) {                                               \
+#define OBJECT_OBJ(o) o
+
+#define BOOLEAN_OBJ(b) ((Object) {                                            \
   .type = kObjectTypeBoolean,                                                 \
   .data.boolean = b                                                           \
   })
@@ -26,24 +28,57 @@
 
 #define STRING_OBJ(s) ((Object) {                                             \
   .type = kObjectTypeString,                                                  \
-  .data.string = cstr_to_string(s)                                            \
+  .data.string = s                                                            \
   })
 
-#define STRINGL_OBJ(d, s) ((Object) {                                         \
-  .type = kObjectTypeString,                                                  \
-  .data.string = (String) {                                                   \
-    .size = s,                                                                \
-    .data = xmemdup(d, s)                                                     \
-  }})
+#define BUFFER_OBJ(s) ((Object) {                                             \
+  .type = kObjectTypeBuffer,                                                  \
+  .data.buffer = s                                                            \
+  })
+
+#define WINDOW_OBJ(s) ((Object) {                                             \
+  .type = kObjectTypeWindow,                                                  \
+  .data.window = s                                                            \
+  })
+
+#define TABPAGE_OBJ(s) ((Object) {                                            \
+  .type = kObjectTypeTabpage,                                                 \
+  .data.tabpage = s                                                           \
+  })
 
 #define ARRAY_OBJ(a) ((Object) {                                              \
   .type = kObjectTypeArray,                                                   \
   .data.array = a                                                             \
   })
 
+#define STRINGARRAY_OBJ(a) ((Object) {                                        \
+  .type = kObjectTypeStringArray,                                             \
+  .data.stringarray = a                                                       \
+  })
+
+#define BUFFERARRAY_OBJ(a) ((Object) {                                        \
+  .type = kObjectTypeBufferArray,                                             \
+  .data.bufferarray = a                                                       \
+  })
+
+#define WINDOWARRAY_OBJ(a) ((Object) {                                        \
+  .type = kObjectTypeWindowArray,                                             \
+  .data.windowarray = a                                                       \
+  })
+
+#define TABPAGEARRAY_OBJ(a) ((Object) {                                       \
+  .type = kObjectTypeTabpageArray,                                            \
+  .data.tabpagearray = a                                                      \
+  })
+
 #define DICTIONARY_OBJ(d) ((Object) {                                         \
   .type = kObjectTypeDictionary,                                              \
   .data.dictionary = d                                                        \
+  })
+
+#define POSITION_OBJ(p) ((Object) {                                           \
+  .type = kObjectTypePosition,                                                \
+  .data.position = p                                                          \
   })
 
 #define NIL ((Object) {.type = kObjectTypeNil})

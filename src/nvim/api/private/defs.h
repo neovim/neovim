@@ -65,8 +65,16 @@ typedef enum {
   kObjectTypeInteger,
   kObjectTypeFloat,
   kObjectTypeString,
+  kObjectTypeBuffer,
+  kObjectTypeWindow,
+  kObjectTypeTabpage,
   kObjectTypeArray,
-  kObjectTypeDictionary
+  kObjectTypeDictionary,
+  kObjectTypePosition,
+  kObjectTypeStringArray,
+  kObjectTypeBufferArray,
+  kObjectTypeWindowArray,
+  kObjectTypeTabpageArray,
 } ObjectType;
 
 struct object {
@@ -76,8 +84,16 @@ struct object {
     Integer integer;
     Float floating;
     String string;
+    Buffer buffer;
+    Window window;
+    Tabpage tabpage;
     Array array;
     Dictionary dictionary;
+    Position position;
+    StringArray stringarray;
+    BufferArray bufferarray;
+    WindowArray windowarray;
+    TabpageArray tabpagearray;
   } data;
 };
 

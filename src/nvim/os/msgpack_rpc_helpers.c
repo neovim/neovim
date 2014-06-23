@@ -231,12 +231,41 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_rpc_from_array(result.data.array, res);
       break;
 
+    case kObjectTypePosition:
+      msgpack_rpc_from_position(result.data.position, res);
+      break;
+
+    case kObjectTypeBuffer:
+      msgpack_rpc_from_buffer(result.data.buffer, res);
+      break;
+
+    case kObjectTypeWindow:
+      msgpack_rpc_from_window(result.data.window, res);
+      break;
+
+    case kObjectTypeTabpage:
+      msgpack_rpc_from_tabpage(result.data.tabpage, res);
+      break;
+
+    case kObjectTypeStringArray:
+      msgpack_rpc_from_stringarray(result.data.stringarray, res);
+      break;
+
+    case kObjectTypeBufferArray:
+      msgpack_rpc_from_bufferarray(result.data.bufferarray, res);
+      break;
+
+    case kObjectTypeWindowArray:
+      msgpack_rpc_from_windowarray(result.data.windowarray, res);
+      break;
+
+    case kObjectTypeTabpageArray:
+      msgpack_rpc_from_tabpagearray(result.data.tabpagearray, res);
+      break;
+
     case kObjectTypeDictionary:
       msgpack_rpc_from_dictionary(result.data.dictionary, res);
       break;
-
-    default:
-      abort();
   }
 }
 
@@ -282,6 +311,10 @@ void msgpack_rpc_free_object(Object value)
     case kObjectTypeBoolean:
     case kObjectTypeInteger:
     case kObjectTypeFloat:
+    case kObjectTypePosition:
+    case kObjectTypeBuffer:
+    case kObjectTypeWindow:
+    case kObjectTypeTabpage:
       break;
 
     case kObjectTypeString:
@@ -290,6 +323,22 @@ void msgpack_rpc_free_object(Object value)
 
     case kObjectTypeArray:
       msgpack_rpc_free_array(value.data.array);
+      break;
+
+    case kObjectTypeStringArray:
+      msgpack_rpc_free_stringarray(value.data.stringarray);
+      break;
+
+    case kObjectTypeBufferArray:
+      msgpack_rpc_free_bufferarray(value.data.bufferarray);
+      break;
+
+    case kObjectTypeWindowArray:
+      msgpack_rpc_free_windowarray(value.data.windowarray);
+      break;
+
+    case kObjectTypeTabpageArray:
+      msgpack_rpc_free_tabpagearray(value.data.tabpagearray);
       break;
 
     case kObjectTypeDictionary:
