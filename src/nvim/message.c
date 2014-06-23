@@ -14,6 +14,7 @@
 
 #include <inttypes.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 

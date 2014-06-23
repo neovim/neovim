@@ -95,7 +95,6 @@ typedef uint32_t u8char_T;
 #include <errno.h>
 
 
-#include <stdarg.h>
 
 /* ================ end of the header file puzzle =============== */
 
