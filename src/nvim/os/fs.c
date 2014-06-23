@@ -1,6 +1,8 @@
 // fs.c -- filesystem access
 #include <stdbool.h>
 
+#include <assert.h>
+
 #include "nvim/os/os.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"

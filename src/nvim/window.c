@@ -6,6 +6,7 @@
  * See README.txt for an overview of the Vim source code.
  */
 
+#include <assert.h>
 #include <inttypes.h>
 
 #include "nvim/api/private/handle.h"

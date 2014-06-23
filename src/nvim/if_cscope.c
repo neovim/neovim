@@ -9,6 +9,7 @@
  */
 #include <stdbool.h>
 
+#include <assert.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"
