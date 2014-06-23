@@ -11,6 +11,7 @@
  *	  op_change, op_yank, do_put, do_join
  */
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 

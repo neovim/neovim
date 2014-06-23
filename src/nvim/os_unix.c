@@ -25,6 +25,7 @@
  */
 # define select select_declared_wrong
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 

@@ -10,6 +10,7 @@
  * syntax.c: code for syntax highlighting
  */
 
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 

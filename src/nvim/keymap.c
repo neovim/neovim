@@ -3,6 +3,8 @@
  * special key codes.
  */
 
+#include <inttypes.h>
+
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/keymap.h"

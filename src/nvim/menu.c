@@ -11,6 +11,7 @@
  * Code for menus.  Used for the GUI and 'wildmenu'.
  */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

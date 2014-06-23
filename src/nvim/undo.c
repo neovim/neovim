@@ -80,6 +80,7 @@
 #define UH_MAGIC 0x18dade       /* value for uh_magic when in use */
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

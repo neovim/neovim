@@ -9,6 +9,7 @@
 /*
  * misc2.c: Various functions.
  */
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

@@ -10,6 +10,7 @@
  * mark.c: functions for setting marks and jumping to them
  */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
