@@ -174,7 +174,7 @@ void buffer_set_slice(Buffer buffer,
   }
 
   size_t old_len = (size_t)(end - start);
-  if (!(buf->b_ml.ml_line_count + (new_len - old_len)) <= LONG_MAX) {
+  if (!((size_t)buf->b_ml.ml_line_count + (new_len - old_len) <= LONG_MAX)) {
     set_api_error("Exceding maximum line number", err);
     return;
   }
