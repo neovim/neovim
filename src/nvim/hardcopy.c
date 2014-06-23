@@ -10,6 +10,7 @@
  * hardcopy.c: printing to paper
  */
 
+#include <errno.h>
 #include <string.h>
 #include <inttypes.h>
 

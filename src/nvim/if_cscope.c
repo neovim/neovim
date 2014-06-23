@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #include <assert.h>
+#include <errno.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"

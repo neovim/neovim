@@ -10,6 +10,7 @@
  * quickfix.c: functions for quickfix mode, using a file with error messages
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>

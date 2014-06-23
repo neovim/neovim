@@ -92,7 +92,6 @@ typedef uint32_t u8char_T;
 #include "nvim/term_defs.h"
 #include "nvim/macros.h"
 
-#include <errno.h>
 
 
 

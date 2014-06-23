@@ -22,6 +22,7 @@
  */
 
 #define tgetstr tgetstr_defined_wrong
+#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 

@@ -12,6 +12,7 @@
 
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdarg.h>

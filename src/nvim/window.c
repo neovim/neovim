@@ -6,6 +6,7 @@
  * See README.txt for an overview of the Vim source code.
  */
 
+#include <errno.h>
 #include <assert.h>
 #include <inttypes.h>
 
