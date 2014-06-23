@@ -31,7 +31,6 @@ typedef struct {
   PMap(cstr_t) *subscribed_events;
   bool is_job, enabled;
   msgpack_unpacker *unpacker;
-  msgpack_sbuffer *sbuffer;
   union {
     Job *job;
     struct {
@@ -168,7 +167,7 @@ bool channel_send_call(uint64_t id,
         "Channel %" PRIu64 " was closed due to a high stack depth "
         "while processing a RPC call",
         channel->id);
-    *result = STRING_OBJ(buf);
+    *result = STRING_OBJ(cstr_to_string(buf));
   }
 
   uint64_t request_id = channel->next_request_id++;
@@ -319,20 +318,12 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
       goto end;
     }
 
-    // Each object is a new msgpack-rpc request and requires an empty response
-    msgpack_packer response;
-    msgpack_packer_init(&response, channel->sbuffer, msgpack_sbuffer_write);
     // Perform the call
-    msgpack_rpc_call(channel->id, &unpacked.data, &response);
-    WBuffer *buffer = wstream_new_buffer(xmemdup(channel->sbuffer->data,
-                                                 channel->sbuffer->size),
-                                         channel->sbuffer->size,
-                                         free);
-    if (!channel_write(channel, buffer)) {
+    WBuffer *resp = msgpack_rpc_call(channel->id, &unpacked.data, &out_buffer);
+    // write the response
+    if (!channel_write(channel, resp)) {
       goto end;
     }
-    // Clear the buffer for future calls
-    msgpack_sbuffer_clear(channel->sbuffer);
   }
 
   if (result == kUnpackResultFail) {
@@ -379,10 +370,9 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
   return success;
 }
 
-static void send_error(Channel *channel, uint64_t id, char *err_msg)
+static void send_error(Channel *channel, uint64_t id, char *err)
 {
-  String err = {.size = strlen(err_msg), .data = err_msg};
-  channel_write(channel, serialize_response(id, err, NIL, channel->sbuffer));
+  channel_write(channel, serialize_response(id, err, NIL, &out_buffer));
 }
 
 static void send_request(Channel *channel,
@@ -449,7 +439,6 @@ static void unsubscribe(Channel *channel, char *event)
 static void close_channel(Channel *channel)
 {
   pmap_del(uint64_t)(channels, channel->id);
-  msgpack_sbuffer_free(channel->sbuffer);
   msgpack_unpacker_free(channel->unpacker);
 
   if (channel->is_job) {
@@ -485,7 +474,6 @@ static Channel *register_channel()
   rv->enabled = true;
   rv->rpc_call_level = 0;
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
-  rv->sbuffer = msgpack_sbuffer_new();
   rv->id = next_id++;
   rv->subscribed_events = pmap_new(cstr_t)();
   rv->next_request_id = 1;
@@ -530,7 +518,7 @@ static void call_stack_unwind(Channel *channel, char *msg, int count)
   while (kv_size(channel->call_stack) && count--) {
     ChannelCallFrame *frame = kv_pop(channel->call_stack);
     frame->errored = true;
-    frame->result = STRING_OBJ(msg);
+    frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 }
 

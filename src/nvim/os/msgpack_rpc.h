@@ -22,12 +22,15 @@ typedef enum {
 /// The implementation is generated at compile time with metadata extracted
 /// from the api/*.h headers,
 ///
-/// @param id The channel id
+/// @param channel_id The channel id
+/// @param method_id The method id
 /// @param req The parsed request object
-/// @param res A packer that contains the response
-void msgpack_rpc_dispatch(uint64_t id,
-                          msgpack_object *req,
-                          msgpack_packer *res)
+/// @param err Pointer to error structure
+/// @return Some object
+Object msgpack_rpc_dispatch(uint64_t channel_id,
+                            uint64_t method_id,
+                            msgpack_object *req,
+                            Error *err)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
