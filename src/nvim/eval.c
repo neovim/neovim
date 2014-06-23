@@ -71,7 +71,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/os/msgpack_rpc.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
