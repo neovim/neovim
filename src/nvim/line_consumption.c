@@ -15,6 +15,7 @@
 ///
 /// This file provides functions that determine the amount of physical lines
 /// used by real lines, considering these factors.
+
 #include "nvim/vim.h"
 #include "nvim/buffer_defs.h"
 #include "nvim/diff.h"
@@ -26,7 +27,6 @@
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "line_consumption.c.generated.h"
 #endif
-
 
 /// Gets the physical line count consumed by a real line in current window
 ///
@@ -167,7 +167,7 @@ size_t plines_win_col(win_T *wp, linenr_T lnum, colnr_T column)
 
   colnr_T col = 0;
   while (*s != NUL && --column >= 0) {
-    col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL);
+    col += win_lbr_chartabsize(wp, s, col, NULL);
     mb_ptr_adv(s);
   }
 
@@ -177,7 +177,7 @@ size_t plines_win_col(win_T *wp, linenr_T lnum, colnr_T column)
   // from one screen line to the next (when 'columns' is not a multiple of
   // 'ts') -- webb.
   if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || lcs_tab1)) {
-    col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL) - 1;
+    col += win_lbr_chartabsize(wp, s, col, NULL) - 1;
   }
 
   // Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
