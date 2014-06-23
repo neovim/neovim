@@ -9,6 +9,7 @@
  * search.c: code for normal mode searching commands
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 

@@ -86,6 +86,7 @@
  *   update_screen() called to redraw.
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>

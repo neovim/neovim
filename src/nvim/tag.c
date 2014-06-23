@@ -10,6 +10,7 @@
  * Code to handle tags and the tag stack
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 

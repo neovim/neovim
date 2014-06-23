@@ -81,6 +81,7 @@
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
 #include <inttypes.h>
+#include <errno.h>
 #include <string.h>
 
 #include "nvim/vim.h"

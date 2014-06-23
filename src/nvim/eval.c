@@ -10,6 +10,7 @@
  * eval.c: Expression evaluation.
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>

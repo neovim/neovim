@@ -9,6 +9,7 @@
 /*
  * misc2.c: Various functions.
  */
+#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 

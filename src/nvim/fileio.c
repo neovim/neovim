@@ -10,6 +10,7 @@
  * fileio.c: read from and write to a file
  */
 
+#include <errno.h>
 #include <stdbool.h>
 #include <string.h>
 #include <inttypes.h>

@@ -10,6 +10,7 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>

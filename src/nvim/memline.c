@@ -41,6 +41,7 @@
  *  mf_get().
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>

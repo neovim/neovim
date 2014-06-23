@@ -10,6 +10,7 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>

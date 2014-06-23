@@ -44,6 +44,7 @@
  *	functions.
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdbool.h>
 #include <inttypes.h>
