@@ -168,13 +168,13 @@ void buffer_set_slice(Buffer buffer,
   tabpage_T *save_curtab = NULL;
 
   size_t new_len = replacement.size;
-  if (!new_len <= SIZE_MAX) {
+  if (!(new_len <= SIZE_MAX)) {
     set_api_error("Too many lines to add", err);
     return;
   }
 
   size_t old_len = (size_t)(end - start);
-  if (!buf->b_ml.ml_line_count + (new_len - old_len) <= LONG_MAX) {
+  if (!(buf->b_ml.ml_line_count + (new_len - old_len)) <= LONG_MAX) {
     set_api_error("Exceding maximum line number", err);
     return;
   }
