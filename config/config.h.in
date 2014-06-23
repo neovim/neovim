@@ -1,3 +1,8 @@
+#ifndef NVIM_AUTO_CONFIG_H
+#define NVIM_AUTO_CONFIG_H
+
+#ifdef HAVE_CONFIG_H    /* GNU autoconf (or something else) was here */
+
 #define NEOVIM_VERSION_MAJOR @NEOVIM_VERSION_MAJOR@
 #define NEOVIM_VERSION_MINOR @NEOVIM_VERSION_MINOR@
 #define NEOVIM_VERSION_PATCH @NEOVIM_VERSION_PATCH@
@@ -47,6 +52,7 @@
 #define HAVE_NL_MSG_CAT_CNTR 1
 #define HAVE_OPENDIR 1
 #define HAVE_OSPEED 1
+#define HAVE_PATHDEF
 #define HAVE_POLL_H 1
 #define HAVE_PUTENV 1
 #define HAVE_PWD_H 1
@@ -109,3 +115,16 @@
 #define FEAT_MOUSE_URXVT
 #define FEAT_MOUSE_XTERM
 #define FEAT_TERMRESPONSE
+
+/*
+ * Check if configure correctly managed to find sizeof(int).  If this failed,
+ * it becomes zero.  This is likely a problem of not being able to run the
+ * test program.  Other items from configure may also be wrong then!
+ */
+#if (SIZEOF_INT == 0)
+Error: configure did not run properly.Check auto/config.log.
+#endif
+
+#endif //HAVE_CONFIG_H  
+
+#endif //NVIM_AUTO_CONFIG_H
