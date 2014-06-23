@@ -9,6 +9,7 @@
  * search.c: code for normal mode searching commands
  */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/ascii.h"

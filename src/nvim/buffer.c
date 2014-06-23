@@ -26,6 +26,7 @@
 
 #include <stdbool.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
 #include "nvim/ascii.h"

@@ -43,6 +43,7 @@
 /* #undef REGEXP_DEBUG */
 /* #define REGEXP_DEBUG */
 
+#include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
 

@@ -22,6 +22,7 @@
  */
 
 #define tgetstr tgetstr_defined_wrong
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

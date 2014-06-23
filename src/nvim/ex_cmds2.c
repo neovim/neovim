@@ -10,8 +10,9 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
-#include <string.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"

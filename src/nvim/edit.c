@@ -10,8 +10,9 @@
  * edit.c: functions for Insert mode
  */
 
-#include <string.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"

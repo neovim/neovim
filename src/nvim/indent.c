@@ -1,3 +1,5 @@
+#include <inttypes.h>
+
 #include "nvim/ascii.h"
 #include "nvim/indent.h"
 #include "nvim/eval.h"

@@ -10,6 +10,7 @@
  * eval.c: Expression evaluation.
  */
 
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>

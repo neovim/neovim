@@ -41,6 +41,7 @@
  *  mf_get().
  */
 
+#include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
 

@@ -10,6 +10,7 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

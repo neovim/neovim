@@ -76,6 +76,7 @@
  * some commands, like ":menutrans"
  */
 
+#include <inttypes.h>
 #include <string.h>
 #include <wchar.h>
 

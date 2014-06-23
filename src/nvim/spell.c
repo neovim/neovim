@@ -284,6 +284,7 @@
 //                          stored as an offset to the previous number in as
 //                          few bytes as possible, see offset2bytes())
 
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 

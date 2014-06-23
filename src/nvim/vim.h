@@ -96,7 +96,6 @@ typedef uint32_t u8char_T;
 
 #include <assert.h>
 
-#include <inttypes.h>
 #include <wctype.h>
 #include <stdarg.h>
 

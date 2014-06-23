@@ -7,6 +7,7 @@
  */
 
 #define EXTERN
+#include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
 

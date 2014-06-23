@@ -2,6 +2,7 @@
 ///
 /// Code for diff'ing two, three or four buffers.
 
+#include <inttypes.h>
 #include <stdbool.h>
 
 #include "nvim/vim.h"

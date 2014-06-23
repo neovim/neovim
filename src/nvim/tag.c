@@ -10,6 +10,7 @@
  * Code to handle tags and the tag stack
  */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

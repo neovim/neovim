@@ -11,6 +11,7 @@
  *		the operators.
  */
 
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 
