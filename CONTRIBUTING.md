@@ -80,6 +80,6 @@ Take a look at @elmart's [commits on Neovim][elmart] for examples.
 [entry]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [elmart]: https://github.com/neovim/neovim/commits?author=elmart
 [imperative]: http://en.wikipedia.org/wiki/Imperative_mood
-[style]: http://neovim.org/development-wiki/style-guide/style-guide.xml
+[style]: http://neovim.org/develop/style-guide.xml
 [waffle]: https://waffle.io/neovim/neovim
 [wiki]: https://github.com/neovim/neovim/wiki/Contributing
