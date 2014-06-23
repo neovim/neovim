@@ -13,6 +13,7 @@
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
 #include "nvim/os/msgpack_rpc.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
@@ -47,7 +48,7 @@ typedef struct {
 static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
 static PMap(cstr_t) *event_strings = NULL;
-static msgpack_sbuffer msgpack_event_buffer;
+static msgpack_sbuffer out_buffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/channel.c.generated.h"
@@ -58,7 +59,7 @@ void channel_init()
 {
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
-  msgpack_sbuffer_init(&msgpack_event_buffer);
+  msgpack_sbuffer_init(&out_buffer);
 }
 
 /// Teardown the module
@@ -137,7 +138,7 @@ bool channel_send_event(uint64_t id, char *name, Object arg)
       msgpack_rpc_free_object(arg);
       return false;
     }
-    send_message(channel, 2, 0, name, arg);
+    send_event(channel, name, arg);
   } else {
     broadcast_event(name, arg);
   }
@@ -172,7 +173,7 @@ bool channel_send_call(uint64_t id,
 
   uint64_t request_id = channel->next_request_id++;
   // Send the msgpack-rpc request
-  channel_write(channel, serialize_message(0, request_id, name, arg));
+  send_request(channel, request_id, name, arg);
 
   if (!kv_size(channel->call_stack)) {
     // This is the first frame, we must disable event deferral for this
@@ -341,9 +342,9 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     // A not so uncommon cause for this might be deserializing objects with
     // a high nesting level: msgpack will break when it's internal parse stack
     // size exceeds MSGPACK_EMBED_STACK_SIZE(defined as 32 by default)
-    send_error(channel, "Invalid msgpack payload. "
-                        "This error can also happen when deserializing "
-                        "an object with high level of nesting");
+    send_error(channel, 0, "Invalid msgpack payload. "
+                           "This error can also happen when deserializing "
+                           "an object with high level of nesting");
   }
 
 end:
@@ -352,31 +353,6 @@ end:
     // Now it's safe to destroy the channel
     close_channel(channel);
   }
-}
-
-static void send_error(Channel *channel, char *msg)
-{
-  msgpack_packer err;
-  // See src/msgpack/unpack_template.h in msgpack source tree for
-  // causes for this error(search for 'goto _failed')
-  //
-  // A not so uncommon cause for this might be deserializing objects with
-  // a high nesting level: msgpack will break when it's internal parse stack
-  // size exceeds MSGPACK_EMBED_STACK_SIZE(defined as 32 by default)
-  msgpack_packer_init(&err, channel->sbuffer, msgpack_sbuffer_write);
-  msgpack_pack_array(&err, 4);
-  msgpack_pack_int(&err, 1);
-  msgpack_pack_int(&err, 0);
-  msgpack_rpc_error(msg, &err);
-  WBuffer *buffer = wstream_new_buffer(xmemdup(channel->sbuffer->data,
-                                               channel->sbuffer->size),
-                                       channel->sbuffer->size,
-                                       free);
-  if (!channel_write(channel, buffer)) {
-    return;
-  }
-  // Clear the buffer for future calls
-  msgpack_sbuffer_clear(channel->sbuffer);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -403,13 +379,27 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
   return success;
 }
 
-static void send_message(Channel *channel,
-                         int type,
+static void send_error(Channel *channel, uint64_t id, char *err_msg)
+{
+  String err = {.size = strlen(err_msg), .data = err_msg};
+  channel_write(channel, serialize_response(id, err, NIL, channel->sbuffer));
+}
+
+static void send_request(Channel *channel,
                          uint64_t id,
                          char *name,
                          Object arg)
 {
-  channel_write(channel, serialize_message(type, id, name, arg));
+  String method = {.size = strlen(name), .data = name};
+  channel_write(channel, serialize_request(id, method, arg, &out_buffer));
+}
+
+static void send_event(Channel *channel,
+                       char *name,
+                       Object arg)
+{
+  String method = {.size = strlen(name), .data = name};
+  channel_write(channel, serialize_request(0, method, arg, &out_buffer));
 }
 
 static void broadcast_event(char *name, Object arg)
@@ -429,7 +419,8 @@ static void broadcast_event(char *name, Object arg)
     goto end;
   }
 
-  WBuffer *buffer = serialize_message(2, 0, name, arg);
+  String method = {.size = strlen(name), .data = name};
+  WBuffer *buffer = serialize_request(0, method, arg, &out_buffer);
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
     channel_write(kv_A(subscribed, i), buffer);
@@ -486,25 +477,6 @@ static void close_cb(uv_handle_t *handle)
 {
   free(handle->data);
   free(handle);
-}
-
-static WBuffer *serialize_message(int type,
-                                  uint64_t id,
-                                  char *method,
-                                  Object arg)
-{
-  String method_str = {.size = strnlen(method, METHOD_MAXLEN), .data = method};
-  msgpack_packer packer;
-  msgpack_packer_init(&packer, &msgpack_event_buffer, msgpack_sbuffer_write);
-  msgpack_rpc_message(type, id, method_str, arg, &packer);
-  WBuffer *rv = wstream_new_buffer(xmemdup(msgpack_event_buffer.data,
-                                           msgpack_event_buffer.size),
-                                   msgpack_event_buffer.size,
-                                   free);
-  msgpack_rpc_free_object(arg);
-  msgpack_sbuffer_clear(&msgpack_event_buffer);
-
-  return rv;
 }
 
 static Channel *register_channel()

@@ -91,6 +91,7 @@ output:write([[
 #include <msgpack.h>
 
 #include "nvim/os/msgpack_rpc.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
 ]])
 
 for i = 1, #headers do
