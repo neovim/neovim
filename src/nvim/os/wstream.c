@@ -9,6 +9,8 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
+#define DEFAULT_MAXMEM 1024 * 1024 * 10
+
 struct wstream {
   uv_stream_t *stream;
   // Memory currently used by pending buffers
@@ -43,6 +45,10 @@ typedef struct {
 /// @return The newly-allocated `WStream` instance
 WStream * wstream_new(size_t maxmem)
 {
+  if (!maxmem) {
+    maxmem = DEFAULT_MAXMEM;
+  }
+
   WStream *rv = xmalloc(sizeof(WStream));
   rv->maxmem = maxmem;
   rv->stream = NULL;
@@ -91,11 +97,12 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   // This should not be called after a wstream was freed
   assert(!wstream->freed);
 
+  buffer->refcount++;
+
   if (wstream->curmem > wstream->maxmem) {
-    return false;
+    goto err;
   }
 
-  buffer->refcount++;
   wstream->curmem += buffer->size;
   data = xmalloc(sizeof(WriteData));
   data->wstream = wstream;
@@ -105,9 +112,16 @@ bool wstream_write(WStream *wstream, WBuffer *buffer)
   uvbuf.base = buffer->data;
   uvbuf.len = buffer->size;
   wstream->pending_reqs++;
-  uv_write(req, wstream->stream, &uvbuf, 1, write_cb);
+
+  if (uv_write(req, wstream->stream, &uvbuf, 1, write_cb)) {
+    goto err;
+  }
 
   return true;
+
+err:
+  release_wbuffer(buffer);
+  return false;
 }
 
 /// Creates a WBuffer object for holding output data. Instances of this
@@ -138,10 +152,7 @@ static void write_cb(uv_write_t *req, int status)
   free(req);
   data->wstream->curmem -= data->buffer->size;
 
-  if (!--data->buffer->refcount) {
-    data->buffer->cb(data->buffer->data);
-    free(data->buffer);
-  }
+  release_wbuffer(data->buffer);
 
   data->wstream->pending_reqs--;
   if (data->wstream->freed && data->wstream->pending_reqs == 0) {
@@ -152,3 +163,10 @@ static void write_cb(uv_write_t *req, int status)
   free(data);
 }
 
+static void release_wbuffer(WBuffer *buffer)
+{
+  if (!--buffer->refcount) {
+    buffer->cb(buffer->data);
+    free(buffer);
+  }
+}

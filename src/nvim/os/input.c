@@ -37,12 +37,6 @@ void input_init()
   rstream_set_file(read_stream, read_cmd_fd);
 }
 
-// Check if there's pending input
-bool input_ready()
-{
-  return rstream_available(read_stream) > 0 || eof;
-}
-
 // Listen for input
 void input_start()
 {
@@ -119,7 +113,7 @@ bool os_char_avail()
 // In cooked mode we should get SIGINT, no need to check.
 void os_breakcheck()
 {
-  if (curr_tmode == TMODE_RAW && event_poll(0))
+  if (curr_tmode == TMODE_RAW && input_poll(0))
     fill_input_buf(false);
 }
 
@@ -132,6 +126,11 @@ bool os_isatty(int fd)
     return uv_guess_handle(fd) == UV_TTY;
 }
 
+static bool input_poll(int32_t ms)
+{
+  return input_ready() || event_poll(ms) || input_ready();
+}
+
 // This is a replacement for the old `WaitForChar` function in os_unix.c
 static InbufPollResult inbuf_poll(int32_t ms)
 {
@@ -139,7 +138,7 @@ static InbufPollResult inbuf_poll(int32_t ms)
     return kInputAvail;
   }
 
-  if (event_poll(ms)) {
+  if (input_poll(ms)) {
     return eof && rstream_available(read_stream) == 0 ?
       kInputEof :
       kInputAvail;
@@ -196,3 +195,10 @@ static int push_event_key(uint8_t *buf, int maxlen)
 
   return buf_idx;
 }
+
+// Check if there's pending input
+bool input_ready()
+{
+  return rstream_available(read_stream) > 0 || eof;
+}
+

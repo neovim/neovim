@@ -71,6 +71,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -6453,6 +6454,7 @@ static struct fst {
   {"searchpair",      3, 7, f_searchpair},
   {"searchpairpos",   3, 7, f_searchpairpos},
   {"searchpos",       1, 4, f_searchpos},
+  {"send_call",       3, 3, f_send_call},
   {"send_event",      3, 3, f_send_event},
   {"setbufvar",       3, 3, f_setbufvar},
   {"setcmdpos",       1, 1, f_setcmdpos},
@@ -10474,6 +10476,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
             on_job_stderr,
             on_job_exit,
             true,
+            0,
             &rettv->vval.v_number);
 
   if (rettv->vval.v_number <= 0) {
@@ -10535,6 +10538,7 @@ static void f_job_write(typval_T *argvars, typval_T *rettv)
   if (!job) {
     // Invalid job id
     EMSG(_(e_invjob));
+    return;
   }
 
   WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
@@ -12521,6 +12525,47 @@ do_searchpair (
     free_string_option(save_cpo);
 
   return retval;
+}
+
+// "send_call()" function
+static void f_send_call(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2), "Method name must be a string");
+    return;
+  }
+
+  bool errored;
+  Object result;
+  if (!channel_send_call((uint64_t)argvars[0].vval.v_number,
+                          (char *)argvars[1].vval.v_string,
+                          vim_to_object(&argvars[2]),
+                          &result,
+                          &errored)) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+    return;
+  }
+
+  Error conversion_error = {.set = false};
+  if (errored || !object_to_vim(result, rettv, &conversion_error)) {
+    EMSG(errored ? 
+        result.data.string.data :
+        _("Error converting the call result"));
+  }
+
+  msgpack_rpc_free_object(result);
 }
 
 // "send_event()" function
