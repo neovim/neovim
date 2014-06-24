@@ -73,10 +73,9 @@ Join the community on IRC in #neovim on Freenode or the [mailing list](https://g
 
 ### License
 
-Vim itself is distributed under the terms of the Vim License.
-See vim-license.txt for details.
-
-Vim also includes this message:
+Neovim is licensed under the terms of the Apache 2.0 License.
+Parts of Neovim that originated in Vim remain under the Vim license.
+See LICENSE for details.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the
