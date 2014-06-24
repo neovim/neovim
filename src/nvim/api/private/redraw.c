@@ -462,7 +462,7 @@ static void add_line_section(LineData *ldata,
     Dictionary section = {0, 0, 0};
     PUT(section, "type", STRING_OBJ(cstr_to_string(section_type)));
     char str[sizeof(ldata->buffer)];
-    xstrlcpy(str, ldata->buffer + ldata->offset, section_width);
+    xstrlcpy(str, ldata->buffer + ldata->offset, sizeof(str) > section_width + 1 ? section_width + 1 : sizeof(str));
     PUT(section, "content", STRING_OBJ(cstr_to_string(str)));
     ADD(*target, DICTIONARY_OBJ(section));
   }
