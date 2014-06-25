@@ -109,11 +109,6 @@ typedef uint32_t u8char_T;
 #include <wctype.h>
 #include <stdarg.h>
 
-#if defined(HAVE_SYS_SELECT_H) && \
-  (!defined(HAVE_SYS_TIME_H) || defined(SYS_SELECT_WITH_SYS_TIME))
-# include <sys/select.h>
-#endif
-
 /* ================ end of the header file puzzle =============== */
 
 #ifdef HAVE_WORKING_LIBINTL
