@@ -24,6 +24,7 @@ env:
     - CI_TARGET=gcc
     - CI_TARGET=gcc-32
     - CI_TARGET=clint
+    - CI_TARGET=mingw
 matrix:
   include:
     - os: osx
