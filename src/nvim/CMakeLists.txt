@@ -55,6 +55,7 @@ set(CONV_SRCS
   os/uv_helpers.c
   os/wstream.c
   os/msgpack_rpc.c
+  tempfile.c
   api/buffer.c
   api/private/helpers.c
   api/private/handle.c
