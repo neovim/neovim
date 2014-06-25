@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -59,7 +60,7 @@ void vim_deltempdir(void)
   int i;
 
   if (vim_tempdir != NULL) {
-    sprintf((char *)NameBuff, "%s*", vim_tempdir);
+    snprintf((char *)NameBuff, MAXPATHL, "%s*", vim_tempdir);
     if (gen_expand_wildcards(1, &NameBuff, &file_count, &files,
             EW_DIR|EW_FILE|EW_SILENT) == OK) {
       for (i = 0; i < file_count; ++i)
@@ -92,7 +93,7 @@ static void vim_settempdir(char_u *tempdir)
 {
   char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
   if (buf) {
-    if (vim_FullName(tempdir, buf, MAXPATHL, FALSE) == FAIL)
+    if (vim_FullName(tempdir, buf, MAXPATHL, false) == FAIL)
       STRCPY(buf, tempdir);
     add_pathsep(buf);
     vim_tempdir = vim_strsave(buf);
@@ -116,7 +117,8 @@ char_u *vim_tempname(void)
   if (tempdir != NULL) {
     /* There is no need to check if the file exists, because we own the
      * directory and nobody else creates a file in it. */
-    sprintf((char *)itmp, "%s%" PRIu32, tempdir, temp_count++);
+    snprintf((char *)itmp, TEMP_FILE_PATH_MAXLEN,
+             "%s%" PRIu32, tempdir, temp_count++);
     return vim_strsave(itmp);
   }
 

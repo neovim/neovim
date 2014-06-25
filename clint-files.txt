@@ -48,3 +48,5 @@ src/nvim/os/server.c
 src/nvim/os/server.h
 src/nvim/os/channel.c
 src/nvim/os/channel.h
+src/nvim/tempfile.c
+src/nvim/tempfile.h
