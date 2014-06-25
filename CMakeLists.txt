@@ -85,13 +85,9 @@ if(LibIntl_FOUND)
 endif()
 
 # Determine platform's threading library. Set CMAKE_THREAD_PREFER_PTHREAD
-# explicitly to indicate a strong preference for pthread. It is an error to not
-# have pthread installed even if, for example, the Win32 threading API is found.
+# explicitly to indicate a strong preference for pthread.
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 find_package(Threads REQUIRED)
-if(NOT CMAKE_USE_PTHREADS_INIT)
-  message(SEND_ERROR "The pthread library must be installed on your system.")
-endif(NOT CMAKE_USE_PTHREADS_INIT)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
