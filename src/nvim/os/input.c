@@ -64,7 +64,7 @@ void input_stop(void)
 }
 
 // Copies (at most `count`) of was read from `read_cmd_fd` into `buf`
-uint32_t input_read(char *buf, uint32_t count)
+size_t input_read(char *buf, size_t count)
 {
   if (embedded_mode) {
     return 0;
