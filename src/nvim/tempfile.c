@@ -31,17 +31,22 @@ static void vim_maketempdir(void)
   for (size_t i = 0; i < sizeof(temp_dirs) / sizeof(char *); ++i) {
     // Expand environment variables, leave room for "/nvimXXXXXX/999999999"
     expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 22);
-    if (os_isdir(itmp)) {  // directory exists
-      add_pathsep(itmp);
+    if (!os_isdir(itmp)) {  // directory doesn't exist
+      continue;
+    }
 
-      // Concatenate with temporary directory name pattern
-      STRCAT(itmp, "nvimXXXXXX");
-      if (os_mkdtemp((char *)itmp) != NULL) {
-        vim_settempdir(itmp);
-      }
-      if (vim_tempdir != NULL) {
-        break;
-      }
+    add_pathsep(itmp);
+    // Concatenate with temporary directory name pattern
+    STRCAT(itmp, "nvimXXXXXX");
+    if (!os_mkdtemp((char *)itmp)) {
+      continue;
+    }
+    if (vim_settempdir(itmp)) {
+      // Successfully created and set temporary directory so stop trying.
+      break;
+    } else {
+      // Couldn't set `vim_tempdir` to itmp so remove created directory.
+      os_rmdir((char *)itmp);
     }
   }
 }
@@ -85,17 +90,19 @@ char_u *vim_gettempdir(void)
 /// `vim_tempdir`. This avoids that using `:cd` would confuse us.
 ///
 /// @param tempdir must be no longer than MAXPATHL.
-static void vim_settempdir(char_u *tempdir)
+///
+/// @return false if we run out of memory.
+static bool vim_settempdir(char_u *tempdir)
 {
   char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
-  if (buf) {
-    if (vim_FullName(tempdir, buf, MAXPATHL, false) == FAIL) {
-      STRCPY(buf, tempdir);
-    }
-    add_pathsep(buf);
-    vim_tempdir = vim_strsave(buf);
-    free(buf);
+  if (!buf) {
+    return false;
   }
+  vim_FullName(tempdir, buf, MAXPATHL, false);
+  add_pathsep(buf);
+  vim_tempdir = vim_strsave(buf);
+  free(buf);
+  return true;
 }
 
 /// Return a unique name that can be used for a temp file.
