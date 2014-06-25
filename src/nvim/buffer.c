@@ -1696,15 +1696,9 @@ int buflist_findpat (
     int curtab_only            /* find buffers in current tab only */
 )
 {
-  buf_T       *buf;
-  regprog_T   *prog;
   int match = -1;
-  int find_listed;
   char_u      *pat;
   char_u      *patend;
-  int attempt;
-  char_u      *p;
-  int toggledollar;
 
   if (pattern_end == pattern + 1 && (*pattern == '%' || *pattern == '#')) {
     if (*pattern == '%')
@@ -1713,72 +1707,16 @@ int buflist_findpat (
       match = curwin->w_alt_fnum;
     if (diffmode && !diff_mode_buf(buflist_findnr(match)))
       match = -1;
-  }
-  /*
-   * Try four ways of matching a listed buffer:
-   * attempt == 0: without '^' or '$' (at any position)
-   * attempt == 1: with '^' at start (only at position 0)
-   * attempt == 2: with '$' at end (only match at end)
-   * attempt == 3: with '^' at start and '$' at end (only full match)
-   * Repeat this for finding an unlisted buffer if there was no matching
-   * listed buffer.
-   */
-  else {
+  } else {
     pat = file_pat_to_reg_pat(pattern, pattern_end, NULL, FALSE);
     if (pat == NULL)
       return -1;
     patend = pat + STRLEN(pat) - 1;
-    toggledollar = (patend > pat && *patend == '$');
 
-    /* First try finding a listed buffer.  If not found and "unlisted"
-     * is TRUE, try finding an unlisted buffer. */
-    find_listed = TRUE;
-    for (;; ) {
-      for (attempt = 0; attempt <= 3; ++attempt) {
-        /* may add '^' and '$' */
-        if (toggledollar)
-          *patend = (attempt < 2) ? NUL : '$';           /* add/remove '$' */
-        p = pat;
-        if (*p == '^' && !(attempt & 1))                 /* add/remove '^' */
-          ++p;
-        prog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
-        if (prog == NULL) {
-          free(pat);
-          return -1;
-        }
+    match = attempt_match(pat, patend, true, diffmode, curtab_only);
 
-        for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-          if (buf->b_p_bl == find_listed
-              && (!diffmode || diff_mode_buf(buf))
-              && buflist_match(prog, buf) != NULL) {
-            if (curtab_only) {
-              /* Ignore the match if the buffer is not open in
-               * the current tab. */
-              win_T       *wp;
-
-              for (wp = firstwin; wp != NULL; wp = wp->w_next)
-                if (wp->w_buffer == buf)
-                  break;
-              if (wp == NULL)
-                continue;
-            }
-            if (match >= 0) {                   /* already found a match */
-              match = -2;
-              break;
-            }
-            match = buf->b_fnum;                /* remember first match */
-          }
-
-        vim_regfree(prog);
-        if (match >= 0)                         /* found one match */
-          break;
-      }
-
-      /* Only search for unlisted buffers if there was no match with
-       * a listed buffer. */
-      if (!unlisted || !find_listed || match != -1)
-        break;
-      find_listed = FALSE;
+    if (match == -1 && unlisted) {
+      match = attempt_match(pat, patend, false, diffmode, curtab_only);
     }
 
     free(pat);
@@ -1788,6 +1726,65 @@ int buflist_findpat (
     EMSG2(_("E93: More than one match for %s"), pattern);
   else if (match < 0)
     EMSG2(_("E94: No matching buffer for %s"), pattern);
+  return match;
+}
+
+/* Returns the buffer number matching the given pattern */
+static int attempt_match(char_u *pat, char_u *patend, int find_listed, int diffmode, int curtab_only)
+{
+  char_u *p = pat;
+  int match = -1;
+
+  if (*p == '^') {
+    p++;
+  }
+
+  if (patend > p && *patend == '$') {
+    *patend = NUL;
+  }
+
+  regprog_T *prog = vim_regcomp(p, p_magic ? RE_MAGIC : 0);
+  if (prog == NULL) {
+    free(pat);
+    return -1;
+  }
+
+  match = find_buf_match(prog, find_listed, diffmode, curtab_only);
+
+  return match;
+}
+
+/*
+ * Find a match and return buffer number
+ */
+static int find_buf_match(regprog_T *prog, int find_listed, int diffmode, int curtab_only)
+{
+  buf_T       *buf;
+  int match = -1;
+  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    if (buf->b_p_bl == find_listed
+        && (!diffmode || diff_mode_buf(buf))
+        && buflist_match(prog, buf) != NULL) {
+      if (curtab_only) {
+        /* Ignore the match if the buffer is not open in
+         * the current tab. */
+        win_T       *wp;
+
+        for (wp = firstwin; wp != NULL; wp = wp->w_next)
+          if (wp->w_buffer == buf)
+            break;
+        if (wp == NULL)
+          continue;
+      }
+      if (match >= 0) {                   /* already found a match */
+        match = -2;
+        break;
+      }
+      match = buf->b_fnum;                /* remember first match */
+    }
+  }
+
+  vim_regfree(prog);
   return match;
 }
 
