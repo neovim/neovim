@@ -1688,13 +1688,12 @@ static buf_T *buflist_findname_file_info(char_u *ffname, FileInfo *file_info)
  * Return fnum of the found buffer.
  * Return < 0 for error.
  */
-int 
-buflist_findpat (
+int buflist_findpat (
     char_u *pattern,
     char_u *pattern_end,       /* pointer to first char after pattern */
-    int unlisted,                   /* find unlisted buffers */
-    int diffmode,             /* find diff-mode buffers only */
-    int curtab_only                /* find buffers in current tab only */
+    int unlisted,              /* find unlisted buffers */
+    int diffmode,              /* find diff-mode buffers only */
+    int curtab_only            /* find buffers in current tab only */
 )
 {
   buf_T       *buf;
