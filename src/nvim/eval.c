@@ -19085,6 +19085,7 @@ static void on_job_stderr(RStream *rstream, void *data, bool eof)
 static void on_job_exit(Job *job, void *data)
 {
   apply_job_autocmds(job, data, "exit", NULL);
+  free(data);
 }
 
 static void on_job_data(RStream *rstream, void *data, bool eof, char *type)
