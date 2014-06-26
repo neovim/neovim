@@ -4000,10 +4000,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
       continue;
     }
 
-    ga_grow(&ga, 1);
-
-    ((char_u **)ga.ga_data)[ga.ga_len] = vim_strnsave(s, (int)(e - s));
-    ++ga.ga_len;
+    GA_APPEND(char_u *, &ga, vim_strnsave(s, (int)(e - s)));
 
     *e = keep;
     if (*e != NUL)
@@ -4034,11 +4031,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
     if (li->li_tv.v_type != VAR_STRING || li->li_tv.vval.v_string == NULL)
       continue;        /* Skip non-string items and empty strings */
 
-    ga_grow(&ga, 1);
-
-    ((char_u **)ga.ga_data)[ga.ga_len] =
-      vim_strsave(li->li_tv.vval.v_string);
-    ++ga.ga_len;
+    GA_APPEND(char_u *, &ga, vim_strsave(li->li_tv.vval.v_string));
   }
   list_unref(retlist);
 

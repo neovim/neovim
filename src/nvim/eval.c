@@ -14420,8 +14420,7 @@ error:
     }
   }
 
-  /* add a terminating NUL */
-  ga_grow(&ga, 1);
+  // add a terminating NUL
   ga_append(&ga, NUL);
 
   rettv->vval.v_string = ga.ga_data;
@@ -17640,8 +17639,7 @@ script_autoload (
   else {
     /* Remember the name if it wasn't loaded already. */
     if (i == ga_loaded.ga_len) {
-      ga_grow(&ga_loaded, 1);
-      ((char_u **)ga_loaded.ga_data)[ga_loaded.ga_len++] = scriptname;
+      GA_APPEND(char_u *, &ga_loaded, scriptname);
       tofree = NULL;
     }
 

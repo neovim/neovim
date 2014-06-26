@@ -1525,8 +1525,7 @@ void get_arglist(garray_T *gap, char_u *str)
 {
   ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
-    ga_grow(gap, 1);
-    ((char_u **)gap->ga_data)[gap->ga_len++] = str;
+    GA_APPEND(char_u *, gap, str);
 
     /* Isolate one argument, change it in-place, put a NUL after it. */
     str = do_one_arg(str);
@@ -3332,13 +3331,12 @@ static char_u **find_locales(void)
   loc = (char_u *)strtok((char *)locale_a, "\n");
 
   while (loc != NULL) {
-    ga_grow(&locales_ga, 1);
     loc = vim_strsave(loc);
-
-    ((char_u **)locales_ga.ga_data)[locales_ga.ga_len++] = loc;
+    GA_APPEND(char_u *, &locales_ga, loc);
     loc = (char_u *)strtok(NULL, "\n");
   }
   free(locale_a);
+  // Guarantee that .ga_data is NULL terminated
   ga_grow(&locales_ga, 1);
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return (char_u **)locales_ga.ga_data;

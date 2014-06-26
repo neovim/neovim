@@ -1963,9 +1963,7 @@ syn_current_attr (
             /* Add the index to a list, so that we can check
              * later that we don't match it again (and cause an
              * endless loop). */
-            ga_grow(&zero_width_next_ga, 1);
-            ((int *)(zero_width_next_ga.ga_data))
-            [zero_width_next_ga.ga_len++] = next_match_idx;
+            GA_APPEND(int, &zero_width_next_ga, next_match_idx);
             next_match_idx = -1;
           } else
             cur_si = push_next_match(cur_si);
