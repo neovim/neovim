@@ -6457,6 +6457,7 @@ static struct fst {
   {"prevnonblank",    1, 1, f_prevnonblank},
   {"printf",          2, 19, f_printf},
   {"pumvisible",      0, 0, f_pumvisible},
+  {"pyeval",          1, 1, f_pyeval},
   {"range",           1, 3, f_range},
   {"readfile",        1, 3, f_readfile},
   {"reltime",         0, 2, f_reltime},
@@ -11461,7 +11462,13 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = 1;
 }
 
-
+/*
+ * "pyeval()" function
+ */
+static void f_pyeval(typval_T *argvars, typval_T *rettv)
+{
+  script_host_eval("python_eval", argvars, rettv);
+}
 
 /*
  * "range()" function

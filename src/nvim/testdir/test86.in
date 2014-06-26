@@ -9,7 +9,7 @@ STARTTEST
 :so small.vim
 :set encoding=latin1
 :set noswapfile
-:if !has('python') | e! test.ok | wq! test.out | endif
+:if !has('python') || has('neovim') | e! test.ok | wq! test.out | endif
 :lang C
 :fun Test()
 :py import vim

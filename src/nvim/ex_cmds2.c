@@ -789,6 +789,22 @@ void ex_profile(exarg_T *eap)
   }
 }
 
+void ex_python(exarg_T *eap)
+{
+  script_host_execute("python_execute", eap);
+}
+
+void ex_pyfile(exarg_T *eap)
+{
+  script_host_execute_file("python_execute_file", eap);
+}
+
+void ex_pydo(exarg_T *eap)
+{
+  script_host_do_range("python_do_range", eap);
+}
+
+
 /* Command line expansion for :profile. */
 static enum {
   PEXP_SUBCMD,          /* expand :profile sub-commands */
