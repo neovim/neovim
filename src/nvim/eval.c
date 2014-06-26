@@ -83,6 +83,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/provider.h"
@@ -19123,5 +19124,22 @@ static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
   set_vim_var_list(VV_JOB_DATA, list);
   // Call JobActivity autocommands
   apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
+}
+
+static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
+{
+  Object result = provider_call(method, vim_to_object(argvars));
+
+  if (result.type == kObjectTypeNil) {
+    return;
+  }
+
+  Error err = {.set = false};
+  object_to_vim(result, rettv, &err);
+  msgpack_rpc_free_object(result);
+
+  if (err.set) {
+    EMSG("Error converting value back to vim");
+  }
 }
 

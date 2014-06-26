@@ -54,6 +54,10 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/fs_defs.h"
+#include "nvim/os/provider.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 
 
 /* Growarray to store info about already sourced scripts.
@@ -3219,3 +3223,40 @@ char_u *get_locales(expand_T *xp, int idx)
 }
 
 #endif
+
+
+static void script_host_execute(char *method, exarg_T *eap)
+{
+  char *script = (char *)script_get(eap, eap->arg);
+
+  if (!eap->skip) {
+    String str = cstr_to_string(script ? script : (char *)eap->arg);
+    Object result = provider_call(method, STRING_OBJ(str));
+    // We don't care about the result, so free it just in case a bad provider
+    // returned something
+    msgpack_rpc_free_object(result);
+  }
+
+  free(script);
+}
+
+static void script_host_execute_file(char *method, exarg_T *eap)
+{
+  char buffer[MAXPATHL];
+  vim_FullName(eap->arg, (uint8_t *)buffer, sizeof(buffer), false);
+
+  String file = cstr_to_string(buffer);
+  Object result = provider_call(method, STRING_OBJ(file));
+  msgpack_rpc_free_object(result);
+}
+
+static void script_host_do_range(char *method, exarg_T *eap)
+{
+  Array arg = {0, 0, 0};
+  ADD(arg, INTEGER_OBJ(eap->line1));
+  ADD(arg, INTEGER_OBJ(eap->line2));
+  ADD(arg, STRING_OBJ(cstr_to_string((char *)eap->arg)));
+  Object result = provider_call(method, ARRAY_OBJ(arg));
+  msgpack_rpc_free_object(result);
+}
+
