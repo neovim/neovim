@@ -124,6 +124,13 @@ void channel_from_stream(uv_stream_t *stream)
   channel->data.streams.uv = stream;
 }
 
+bool channel_exists(uint64_t id)
+{
+  Channel *channel;
+  return (channel = pmap_get(uint64_t)(channels, id)) != NULL
+    && channel->enabled;
+}
+
 /// Sends event/data to channel
 ///
 /// @param id The channel id. If 0, the event will be sent to all
