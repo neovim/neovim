@@ -9138,8 +9138,7 @@ someerror:
           if (c < 0) {
             goto someerror;
           }
-          ga_grow(&ga, 1);
-          ((char_u *)ga.ga_data)[ga.ga_len++] = c;
+          GA_APPEND(char_u, &ga, c);
           if (c == NUL)
             break;
         }

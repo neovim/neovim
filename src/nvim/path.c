@@ -625,7 +625,6 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   char_u      *path_option = *curbuf->b_p_path == NUL
                              ? p_path : curbuf->b_p_path;
   char_u      *buf;
-  char_u      *p;
   int len;
 
   buf = xmalloc(MAXPATHL);
@@ -639,7 +638,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
        * "/path/file"  + "./subdir" -> "/path/subdir" */
       if (curbuf->b_ffname == NULL)
         continue;
-      p = path_tail(curbuf->b_ffname);
+      char_u *p = path_tail(curbuf->b_ffname);
       len = (int)(p - curbuf->b_ffname);
       if (len + (int)STRLEN(buf) >= MAXPATHL)
         continue;
@@ -666,10 +665,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       simplify_filename(buf);
     }
 
-    ga_grow(gap, 1);
-
-    p = vim_strsave(buf);
-    ((char_u **)gap->ga_data)[gap->ga_len++] = p;
+    GA_APPEND(char_u *, gap, vim_strsave(buf));
   }
 
   free(buf);
@@ -1194,7 +1190,6 @@ addfile (
     int flags
 )
 {
-  char_u      *p;
   bool isdir;
 
   /* if the file/dir doesn't exist, may not add it */
@@ -1215,10 +1210,7 @@ addfile (
   if (!isdir && (flags & EW_EXEC) && !os_can_exe(f))
     return;
 
-  /* Make room for another item in the file list. */
-  ga_grow(gap, 1);
-
-  p = xmalloc(STRLEN(f) + 1 + isdir);
+  char_u *p = xmalloc(STRLEN(f) + 1 + isdir);
 
   STRCPY(p, f);
 #ifdef BACKSLASH_IN_FILENAME
@@ -1231,7 +1223,7 @@ addfile (
   if (isdir && (flags & EW_ADDSLASH))
     add_pathsep(p);
 #endif
-  ((char_u **)gap->ga_data)[gap->ga_len++] = p;
+  GA_APPEND(char_u *, gap, p);
 }
 #endif /* !NO_EXPANDPATH */
 

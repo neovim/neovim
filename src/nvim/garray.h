@@ -16,6 +16,12 @@ typedef struct growarray {
 
 #define GA_EMPTY(ga_ptr) ((ga_ptr)->ga_len <= 0)
 
+#define GA_APPEND(item_type, gap, item)                                    \
+  do {                                                                     \
+    ga_grow(gap, 1);                                                       \
+    ((item_type *)(gap)->ga_data)[(gap)->ga_len++] = (item);               \
+  } while (0)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "garray.h.generated.h"
 #endif

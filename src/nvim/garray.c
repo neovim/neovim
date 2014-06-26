@@ -197,10 +197,7 @@ void ga_concat(garray_T *gap, const char_u *restrict s)
 /// @param c
 void ga_append(garray_T *gap, char c)
 {
-  ga_grow(gap, 1);
-  char *str = gap->ga_data;
-  str[gap->ga_len] = c;
-  gap->ga_len++;
+  GA_APPEND(char, gap, c);
 }
 
 #if defined(UNIX) || defined(WIN3264) || defined(PROTO)
