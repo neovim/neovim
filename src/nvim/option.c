@@ -176,6 +176,8 @@
  */
 #define PV_LIST         OPT_WIN(WV_LIST)
 # define PV_ARAB        OPT_WIN(WV_ARAB)
+# define PV_BRI         OPT_WIN(WV_BRI)
+# define PV_BRIOPT      OPT_WIN(WV_BRIOPT)
 # define PV_DIFF        OPT_WIN(WV_DIFF)
 # define PV_FDC         OPT_WIN(WV_FDC)
 # define PV_FEN         OPT_WIN(WV_FEN)
@@ -470,6 +472,14 @@ static struct vimoption
   {"breakat",     "brk",  P_STRING|P_VI_DEF|P_RALL|P_FLAGLIST,
    (char_u *)&p_breakat, PV_NONE,
    {(char_u *)" \t!@*-+;:,./?", (char_u *)0L}
+   SCRIPTID_INIT},
+  {"breakindent",   "bri",  P_BOOL|P_VI_DEF|P_VIM|P_RWIN,
+   (char_u *)VAR_WIN, PV_BRI,
+   {(char_u *)FALSE, (char_u *)0L}
+   SCRIPTID_INIT},
+  {"breakindentopt", "briopt", P_STRING|P_ALLOCED|P_VI_DEF|P_RBUF|P_COMMA|P_NODUP,
+   (char_u *)VAR_WIN, PV_BRIOPT,
+   {(char_u *)"", (char_u *)NULL}
    SCRIPTID_INIT},
   {"browsedir",   "bsdir",P_STRING|P_VI_DEF,
    (char_u *)NULL, PV_NONE,
@@ -3481,6 +3491,7 @@ static void didset_options(void)
   (void)compile_cap_prog(curwin->w_s);
   /* set cedit_key */
   (void)check_cedit();
+  briopt_check();
 }
 
 /*
@@ -3814,6 +3825,11 @@ did_set_string_option (
     if (STRCMP(*p_bex == '.' ? p_bex + 1 : p_bex,
             *p_pm == '.' ? p_pm + 1 : p_pm) == 0)
       errmsg = (char_u *)N_("E589: 'backupext' and 'patchmode' are equal");
+  }
+  /* 'breakindentopt' */
+  else if (varp == &curwin->w_p_briopt) {
+    if (briopt_check() == FAIL)
+      errmsg = e_invarg;
   }
   /*
    * 'isident', 'iskeyword', 'isprint or 'isfname' option: refill chartab[]
@@ -6681,6 +6697,8 @@ static char_u *get_varp(struct vimoption *p)
   case PV_SCROLL: return (char_u *)&(curwin->w_p_scr);
   case PV_WRAP:   return (char_u *)&(curwin->w_p_wrap);
   case PV_LBR:    return (char_u *)&(curwin->w_p_lbr);
+  case PV_BRI:    return (char_u *)&(curwin->w_p_bri);
+  case PV_BRIOPT: return (char_u *)&(curwin->w_p_briopt);
   case PV_SCBIND: return (char_u *)&(curwin->w_p_scb);
   case PV_CRBIND: return (char_u *)&(curwin->w_p_crb);
   case PV_COCU:    return (char_u *)&(curwin->w_p_cocu);
@@ -6788,6 +6806,8 @@ void copy_winopt(winopt_T *from, winopt_T *to)
   to->wo_wrap = from->wo_wrap;
   to->wo_wrap_save = from->wo_wrap_save;
   to->wo_lbr = from->wo_lbr;
+  to->wo_bri = from->wo_bri;
+  to->wo_briopt = vim_strsave(from->wo_briopt);
   to->wo_scb = from->wo_scb;
   to->wo_scb_save = from->wo_scb_save;
   to->wo_crb = from->wo_crb;
@@ -6842,6 +6862,7 @@ void check_winopt(winopt_T *wop)
   check_string_option(&wop->wo_stl);
   check_string_option(&wop->wo_cc);
   check_string_option(&wop->wo_cocu);
+  check_string_option(&wop->wo_briopt);
 }
 
 /*
@@ -6859,6 +6880,7 @@ void clear_winopt(winopt_T *wop)
   clear_string_option(&wop->wo_stl);
   clear_string_option(&wop->wo_cc);
   clear_string_option(&wop->wo_cocu);
+  clear_string_option(&wop->wo_briopt);
 }
 
 /*
@@ -8134,3 +8156,44 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
       ++ptr;
   }
 }
+
+/* This is called when 'breakindentopt' is changed and whenn a window is
+   initialized */
+int briopt_check() {
+  char_u	*p;
+  int bri_shift = 0;
+  long bri_min = 20;
+  bool bri_sbr = false;
+
+  p = curwin->w_p_briopt;
+  while (*p != NUL)
+  {
+    if (STRNCMP(p, "shift:", 6) == 0
+        && ((p[6] == '-' && VIM_ISDIGIT(p[7])) || VIM_ISDIGIT(p[6])))
+    {
+      p += 6;
+      bri_shift = getdigits(&p);
+    }
+    else if (STRNCMP(p, "min:", 4) == 0 && VIM_ISDIGIT(p[4]))
+    {
+      p += 4;
+      bri_min = getdigits(&p);
+    }
+    else if (STRNCMP(p, "sbr", 3) == 0)
+    {
+      p += 3;
+      bri_sbr = true;
+    }
+    if (*p != ',' && *p != NUL)
+      return FAIL;
+    if (*p == ',')
+      ++p;
+  }
+
+  curwin->w_p_brishift = bri_shift;
+  curwin->w_p_brimin   = bri_min;
+  curwin->w_p_brisbr   = bri_sbr;
+
+  return OK;
+}
+

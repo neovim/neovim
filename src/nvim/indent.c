@@ -10,8 +10,10 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
+#include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/regexp.h"
+#include "nvim/screen.h"
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/undo.h"
@@ -24,14 +26,14 @@
 // Count the size (in window cells) of the indent in the current line.
 int get_indent(void)
 {
-  return get_indent_str(get_cursor_line_ptr(), (int)curbuf->b_p_ts);
+  return get_indent_str(get_cursor_line_ptr(), (int)curbuf->b_p_ts, false);
 }
 
 
 // Count the size (in window cells) of the indent in line "lnum".
 int get_indent_lnum(linenr_T lnum)
 {
-  return get_indent_str(ml_get(lnum), (int)curbuf->b_p_ts);
+  return get_indent_str(ml_get(lnum), (int)curbuf->b_p_ts, false);
 }
 
 
@@ -39,20 +41,27 @@ int get_indent_lnum(linenr_T lnum)
 // "buf".
 int get_indent_buf(buf_T *buf, linenr_T lnum)
 {
-  return get_indent_str(ml_get_buf(buf, lnum, false), (int)buf->b_p_ts);
+  return get_indent_str(ml_get_buf(buf, lnum, false), (int)buf->b_p_ts, false);
 }
 
 
 // Count the size (in window cells) of the indent in line "ptr", with
 // 'tabstop' at "ts".
-int get_indent_str(char_u *ptr, int ts)
+// If @param list is TRUE, count only screen size for tabs.
+int get_indent_str(char_u *ptr, int ts, int list)
 {
   int count = 0;
 
   for (; *ptr; ++ptr) {
     // Count a tab for what it is worth.
     if (*ptr == TAB) {
-      count += ts - (count % ts);
+      if (!list || lcs_tab1) {  // count a tab for what it is worth
+        count += ts - (count % ts);
+      } else {
+        // in list mode, when tab is not set, count screen char width for Tab:
+        // ^I
+        count += ptr2cells(ptr);
+      }
     } else if (*ptr == ' ') {
       // Count a space for one.
       count++;
@@ -433,6 +442,50 @@ int get_number_indent(linenr_T lnum)
   return (int)col;
 }
 
+/*
+ * Return appropriate space number for breakindent, taking influencing
+ * parameters into account. Window must be specified, since it is not
+ * necessarily always the current one.
+ */
+int get_breakindent_win(win_T *wp, char_u *line) {
+  static int prev_indent = 0;  /* cached indent value */
+  static int prev_ts     = 0L; /* cached tabstop value */
+  static char_u *prev_line = NULL; /* cached pointer to line */
+  int bri = 0;
+  /* window width minus window margin space, i.e. what rests for text */
+  const int eff_wwidth = wp->w_width
+    - ((wp->w_p_nu || wp->w_p_rnu)
+        && (vim_strchr(p_cpo, CPO_NUMCOL) == NULL)
+        ? number_width(wp) + 1 : 0);
+
+  /* used cached indent, unless pointer or 'tabstop' changed */
+  if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts)
+  {
+    prev_line = line;
+    prev_ts = wp->w_buffer->b_p_ts;
+    prev_indent = get_indent_str(line,
+        (int)wp->w_buffer->b_p_ts, wp->w_p_list) + wp->w_p_brishift;
+  }
+
+  /* indent minus the length of the showbreak string */
+  bri = prev_indent;
+  if (wp->w_p_brisbr)
+    bri -= vim_strsize(p_sbr);
+
+  /* Add offset for number column, if 'n' is in 'cpoptions' */
+  bri += win_col_off2(wp);
+
+  /* never indent past left window margin */
+  if (bri < 0)
+    bri = 0;
+  /* always leave at least bri_min characters on the left,
+   * if text width is sufficient */
+  else if (bri > eff_wwidth - wp->w_p_brimin)
+    bri = (eff_wwidth - wp->w_p_brimin < 0)
+      ? 0 : eff_wwidth - wp->w_p_brimin;
+
+  return bri;
+}
 
 // When extra == 0: Return true if the cursor is before or on the first
 // non-blank in the line.
@@ -608,10 +661,12 @@ int get_lisp_indent(void)
       if (vi_lisp && (get_indent() == 0)) {
         amount = 2;
       } else {
+        char_u *line = that;
+
         amount = 0;
 
         while (*that && col) {
-          amount += lbr_chartabsize_adv(&that, (colnr_T)amount);
+          amount += lbr_chartabsize_adv(line, &that, (colnr_T)amount);
           col--;
         }
 
@@ -628,7 +683,7 @@ int get_lisp_indent(void)
           firsttry = amount;
 
           while (vim_iswhite(*that)) {
-            amount += lbr_chartabsize(that, (colnr_T)amount);
+            amount += lbr_chartabsize(line, that, (colnr_T)amount);
             that++;
           }
 
@@ -658,15 +713,15 @@ int get_lisp_indent(void)
                   parencount--;
                 }
                 if ((*that == '\\') && (*(that + 1) != NUL)) {
-                  amount += lbr_chartabsize_adv(&that, (colnr_T)amount);
+                  amount += lbr_chartabsize_adv(line, &that, (colnr_T)amount);
                 }
 
-                amount += lbr_chartabsize_adv(&that, (colnr_T)amount);
+                amount += lbr_chartabsize_adv(line, &that, (colnr_T)amount);
               }
             }
 
             while (vim_iswhite(*that)) {
-              amount += lbr_chartabsize(that, (colnr_T)amount);
+              amount += lbr_chartabsize(line, that, (colnr_T)amount);
               that++;
             }
 

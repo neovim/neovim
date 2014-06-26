@@ -1,0 +1,55 @@
+
+	abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP
+
+Test 1: Simple breakindent
+    abcd
+    qrst
+    GHIJ
+
+Test 2: Simple breakindent + sbr=>>
+    abcd
+    >>qr
+    >>EF
+
+Test 3: Simple breakindent + briopt:sbr
+    abcd
+++  qrst
+++  GHIJ
+
+Test 4: Simple breakindent + min width: 18
+    abcd
+  qrstuv
+  IJKLMN
+
+ Test 5: Simple breakindent + shift by 2
+    abcd
+      qr
+      EF
+
+ Test 6: Simple breakindent + shift by -1
+    abcd
+   qrstu
+   HIJKL
+
+ Test 7: breakindent + shift by +1 + nu + sbr=? briopt:sbr
+  2     ab
+?        m
+?        x
+
+ Test 8: breakindent + shift:1 + nu + sbr=# list briopt:sbr
+  2 ^Iabcd
+#      opq
+#      BCD
+
+ Test 9: breakindent + shift by +1 + 'nu' + sbr=# list
+  2 ^Iabcd
+       #op
+       #AB
+
+ Test 10: breakindent + shift by +1 + 'nu' + sbr=~ cpo+=n
+  2     ab
+~       mn
+~       yz
+
+ Test 11: strdisplaywidth when breakindent is on
+strdisplaywidth: 46 == calculated: 64

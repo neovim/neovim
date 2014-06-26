@@ -2163,7 +2163,7 @@ static int vgetorpeek(int advance)
                 while (col < curwin->w_cursor.col) {
                   if (!vim_iswhite(ptr[col]))
                     curwin->w_wcol = vcol;
-                  vcol += lbr_chartabsize(ptr + col,
+                  vcol += lbr_chartabsize(ptr, ptr + col,
                       (colnr_T)vcol);
                   if (has_mbyte)
                     col += (*mb_ptr2len)(ptr + col);

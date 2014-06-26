@@ -106,6 +106,7 @@
 #include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/indent.h"
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
@@ -2283,7 +2284,8 @@ win_line (
 # define WL_FOLD        WL_CMDLINE + 1  /* 'foldcolumn' */
 # define WL_SIGN        WL_FOLD + 1     /* column for signs */
 #define WL_NR           WL_SIGN + 1     /* line number */
-# define WL_SBR         WL_NR + 1       /* 'showbreak' or 'diff' */
+# define WL_BRI         WL_NR + 1       /* 'breakindent' */
+# define WL_SBR         WL_BRI + 1       /* 'showbreak' or 'diff' */
 #define WL_LINE         WL_SBR + 1      /* text in the line */
   int draw_state = WL_START;            /* what to draw next */
 
@@ -2540,7 +2542,7 @@ win_line (
   if (v > 0) {
     char_u  *prev_ptr = ptr;
     while (vcol < v && *ptr != NUL) {
-      c = win_lbr_chartabsize(wp, ptr, (colnr_T)vcol, NULL);
+      c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
       mb_ptr_adv(ptr);
@@ -2814,6 +2816,34 @@ win_line (
           if ((wp->w_p_cul || wp->w_p_rnu)
               && lnum == wp->w_cursor.lnum)
             char_attr = hl_attr(HLF_CLN);
+        }
+      }
+
+      if (wp->w_p_brisbr && draw_state == WL_BRI - 1
+          && n_extra == 0 && *p_sbr != NUL) {
+        // draw indent after showbreak value
+        draw_state = WL_BRI;
+      } else if (wp->w_p_brisbr && draw_state == WL_SBR && n_extra == 0) {
+        // after the showbreak, draw the breakindent
+        draw_state = WL_BRI - 1;
+      }
+
+      // draw 'breakindent': indent wrapped text accodringly
+      if (draw_state == WL_BRI - 1 && n_extra == 0) {
+        draw_state = WL_BRI;
+        if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
+          char_attr = 0; // was: hl_attr(HLF_AT);
+
+          if (diff_hlf != (hlf_T)0)
+            char_attr = hl_attr(diff_hlf);
+
+          p_extra = NULL;
+          c_extra = ' ';
+          n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
+          /* Correct end of highlighted area for 'breakindent',
+             required wen 'linebreak' is also set. */
+          if (tocol == vcol)
+            tocol += n_extra;
         }
       }
 
@@ -3380,9 +3410,11 @@ win_line (
          */
         if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)
             && !wp->w_p_list) {
-          n_extra = win_lbr_chartabsize(wp, ptr - (
-                has_mbyte ? mb_l :
-                1), (colnr_T)vcol, NULL) - 1;
+          char_u *p = ptr - (
+              has_mbyte ? mb_l :
+              1);
+          // TODO: is passing p for start of the line OK?
+          n_extra = win_lbr_chartabsize(wp, p, p, (colnr_T)vcol, NULL) - 1;
           c_extra = ' ';
           if (vim_iswhite(c)) {
             if (c == TAB)

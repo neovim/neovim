@@ -726,6 +726,8 @@ enum {
   , WV_COCU
   , WV_COLE
   , WV_CRBIND
+  , WV_BRI
+  , WV_BRIOPT
   , WV_DIFF
   , WV_FDC
   , WV_FEN
