@@ -81,7 +81,8 @@ void channel_teardown(void)
 /// stdin/stdout. stderr is forwarded to the editor error stream.
 ///
 /// @param argv The argument vector for the process
-bool channel_from_job(char **argv)
+/// @return The channel id
+uint64_t channel_from_job(char **argv)
 {
   Channel *channel = register_channel();
   channel->is_job = true;
@@ -98,10 +99,10 @@ bool channel_from_job(char **argv)
 
   if (status <= 0) {
     close_channel(channel);
-    return false;
+    return 0;
   }
 
-  return true;
+  return channel->id;
 }
 
 /// Creates an API channel from a libuv stream representing a tcp or
