@@ -9,6 +9,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/channel.h"
 #include "nvim/os/server.h"
+#include "nvim/os/provider.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/job.h"
@@ -50,6 +51,8 @@ void event_init(void)
   channel_init();
   // Servers
   server_init();
+  // Providers
+  provider_init();
 }
 
 void event_teardown(void)

@@ -85,6 +85,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/os/dl.h"
+#include "nvim/os/provider.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -9805,6 +9806,10 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
     }
+  }
+
+  if (n == FALSE && provider_has_feature((char *)name)) {
+    n = TRUE;
   }
 
   rettv->vval.v_number = n;

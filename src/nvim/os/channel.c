@@ -6,6 +6,7 @@
 #include <msgpack.h>
 
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/vim.h"
 #include "nvim/os/channel.h"
 #include "nvim/os/event.h"
 #include "nvim/os/rstream.h"
@@ -17,9 +18,11 @@
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/map.h"
+#include "nvim/log.h"
 #include "nvim/lib/kvec.h"
 
 typedef struct {
@@ -274,7 +277,15 @@ static void job_out(RStream *rstream, void *data, bool eof)
 
 static void job_err(RStream *rstream, void *data, bool eof)
 {
-  // TODO(tarruda): plugin error messages should be sent to the error buffer
+  size_t count;
+  char buf[256];
+  Channel *channel = job_data(data);
+
+  while ((count = rstream_available(rstream))) {
+    size_t read = rstream_read(rstream, buf, sizeof(buf) - 1);
+    buf[read] = NUL;
+    ELOG("Channel %" PRIu64 " stderr: %s", channel->id, buf);
+  }
 }
 
 static void parse_msgpack(RStream *rstream, void *data, bool eof)
