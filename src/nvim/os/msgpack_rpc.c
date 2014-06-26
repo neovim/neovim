@@ -113,7 +113,8 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 WBuffer *serialize_request(uint64_t request_id,
                            String method,
                            Object arg,
-                           msgpack_sbuffer *sbuffer)
+                           msgpack_sbuffer *sbuffer,
+                           size_t refcount)
   FUNC_ATTR_NONNULL_ARG(4)
 {
   msgpack_packer pac;
@@ -130,6 +131,7 @@ WBuffer *serialize_request(uint64_t request_id,
   msgpack_rpc_from_object(arg, &pac);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
+                                   refcount,
                                    free);
   msgpack_rpc_free_object(arg);
   msgpack_sbuffer_clear(sbuffer);
@@ -165,6 +167,7 @@ WBuffer *serialize_response(uint64_t response_id,
 
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
+                                   1,  // responses only go though 1 channel
                                    free);
   msgpack_rpc_free_object(arg);
   msgpack_sbuffer_clear(sbuffer);
@@ -190,6 +193,7 @@ WBuffer *serialize_metadata(uint64_t id,
   msgpack_pack_raw_body(&pac, msgpack_metadata, msgpack_metadata_size);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
+                                   1,
                                    free);
   msgpack_sbuffer_clear(sbuffer);
   return rv;

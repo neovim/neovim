@@ -10560,6 +10560,7 @@ static void f_job_write(typval_T *argvars, typval_T *rettv)
 
   WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
                                     strlen((char *)argvars[1].vval.v_string),
+                                    1,
                                     free);
   rettv->vval.v_number = job_write(job, buf);
 }

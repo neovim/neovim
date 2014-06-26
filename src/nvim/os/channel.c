@@ -383,7 +383,7 @@ static void send_request(Channel *channel,
                          Object arg)
 {
   String method = {.size = strlen(name), .data = name};
-  channel_write(channel, serialize_request(id, method, arg, &out_buffer));
+  channel_write(channel, serialize_request(id, method, arg, &out_buffer, 1));
 }
 
 static void send_event(Channel *channel,
@@ -391,7 +391,7 @@ static void send_event(Channel *channel,
                        Object arg)
 {
   String method = {.size = strlen(name), .data = name};
-  channel_write(channel, serialize_request(0, method, arg, &out_buffer));
+  channel_write(channel, serialize_request(0, method, arg, &out_buffer, 1));
 }
 
 static void broadcast_event(char *name, Object arg)
@@ -412,7 +412,11 @@ static void broadcast_event(char *name, Object arg)
   }
 
   String method = {.size = strlen(name), .data = name};
-  WBuffer *buffer = serialize_request(0, method, arg, &out_buffer);
+  WBuffer *buffer = serialize_request(0,
+                                      method,
+                                      arg,
+                                      &out_buffer,
+                                      kv_size(subscribed));
 
   for (size_t i = 0; i < kv_size(subscribed); i++) {
     channel_write(kv_A(subscribed, i), buffer);
