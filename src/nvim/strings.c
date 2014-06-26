@@ -56,7 +56,7 @@ char_u *vim_strsave(char_u *string) FUNC_ATTR_NONNULL_RET
  * The allocated memory always has size "len + 1", also when "string" is
  * shorter.
  */
-char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
+char_u *vim_strnsave(char_u *string, size_t len) FUNC_ATTR_NONNULL_RET
 {
   return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }
@@ -76,7 +76,7 @@ char_u *vim_strsave_escaped(char_u *string, char_u *esc_chars)
  * characters where rem_backslash() would remove the backslash.
  * Escape the characters with "cc".
  */
-char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int bsl)
+char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, char_u cc, int bsl)
   FUNC_ATTR_NONNULL_RET
 {
   unsigned length;
@@ -89,7 +89,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
   length = 1;                           /* count the trailing NUL */
   for (char_u *p = string; *p; p++) {
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
-      length += l;                      /* count a multibyte char */
+      length += (unsigned)l;            /* count a multibyte char */
       p += l - 1;
       continue;
     }
@@ -104,7 +104,7 @@ char_u *vim_strsave_escaped_ext(char_u *string, char_u *esc_chars, int cc, int b
     if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1) {
       memmove(p2, p, (size_t)l);
       p2 += l;
-      p += l - 1;                     /* skip multibyte char  */
+      p += l - 1;                       /* skip multibyte char  */
       continue;
     }
     if (vim_strchr(esc_chars, *p) != NULL || (bsl && rem_backslash(p)))
@@ -216,7 +216,7 @@ char_u *vim_strsave_up(char_u *string)
  * Like vim_strnsave(), but make all characters uppercase.
  * This uses ASCII lower-to-upper case translation, language independent.
  */
-char_u *vim_strnsave_up(char_u *string, int len) FUNC_ATTR_NONNULL_RET
+char_u *vim_strnsave_up(char_u *string, size_t len) FUNC_ATTR_NONNULL_RET
 {
   char_u *p1 = vim_strnsave(string, len);
   vim_strup(p1);
@@ -228,13 +228,13 @@ char_u *vim_strnsave_up(char_u *string, int len) FUNC_ATTR_NONNULL_RET
  */
 void vim_strup(char_u *p)
 {
-  char_u  *p2;
-  int c;
+  char_u *p2;
+  char_u c;
 
   if (p != NULL) {
     p2 = p;
     while ((c = *p2) != NUL)
-      *p2++ = (c < 'a' || c > 'z') ? c : (c - 0x20);
+      *p2++ = (c < 'a' || c > 'z') ? c : (char_u)(c - 0x20);
   }
 }
 
@@ -273,7 +273,7 @@ char_u *strup_save(char_u *orig)
     } else if (has_mbyte && (l = (*mb_ptr2len)(p)) > 1)
       p += l;                 /* skip multi-byte character */
     else {
-      *p = TOUPPER_LOC(*p);         /* note that toupper() can be a macro */
+      *p = TOUPPER_LOC(*p);
       p++;
     }
   }
@@ -297,10 +297,10 @@ void copy_spaces(char_u *ptr, size_t count)
  * Copy a character a number of times.
  * Does not work for multi-byte characters!
  */
-void copy_chars(char_u *ptr, size_t count, int c)
+void copy_chars(char_u *ptr, size_t count, char_u c)
 {
   size_t i = count;
-  char_u      *p = ptr;
+  char_u *p = ptr;
 
   while (i--)
     *p++ = c;

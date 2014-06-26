@@ -49,8 +49,8 @@
  * Note: It is often better to use vim_tolower() and vim_toupper(), because many
  * toupper() and tolower() implementations only work for ASCII.
  */
-#define TOUPPER_LOC toupper
-#define TOLOWER_LOC tolower
+#define TOUPPER_LOC (char_u)toupper
+#define TOLOWER_LOC (char_u)tolower
 
 /* toupper() and tolower() for ASCII only and ignore the current locale. */
 # define TOUPPER_ASC(c) (((c) < 'a' || (c) > 'z') ? (c) : (c) - ('a' - 'A'))
