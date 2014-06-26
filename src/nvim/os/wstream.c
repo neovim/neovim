@@ -42,7 +42,8 @@ typedef struct {
 /// Creates a new WStream instance. A WStream encapsulates all the boilerplate
 /// necessary for writing to a libuv stream.
 ///
-/// @param maxmem Maximum amount memory used by this `WStream` instance.
+/// @param maxmem Maximum amount memory used by this `WStream` instance. If 0,
+///        a default value of 10mb will be used.
 /// @return The newly-allocated `WStream` instance
 WStream * wstream_new(size_t maxmem)
 {
