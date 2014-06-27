@@ -18,6 +18,17 @@ set(NEOVIM_VERSION_PATCH 0)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Work around some old, broken detection by CMake for knowing when to use the
+# isystem flag.  Apple's compilers have supported this for quite some time now.
+if(APPLE)
+  if(CMAKE_COMPILER_IS_GNUCC)
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
+  endif()
+  if(CMAKE_COMPILER_IS_GNUCXX)
+    set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
+  endif()
+endif()
+
 add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)
 
 option(
