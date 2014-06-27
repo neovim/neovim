@@ -47,6 +47,9 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
+#include "nvim/os/provider.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/api/private/helpers.h"
 
 /*
  * Registers:
@@ -55,8 +58,9 @@
  * 10..35 = registers 'a' to 'z'
  *     36 = delete register '-'
  */
-#define NUM_REGISTERS 37
+#define NUM_REGISTERS 38
 #define DELETION_REGISTER 36
+#define CLIP_REGISTER 37
 
 /*
  * Each yank register is an array of pointers to lines.
@@ -711,6 +715,8 @@ valid_yank_reg (
              || regname == '"'
              || regname == '-'
              || regname == '_'
+             || regname == '*'
+             || regname == '+'
              )
     return TRUE;
   return FALSE;
@@ -743,6 +749,8 @@ void get_yank_register(int regname, int writing)
     y_append = TRUE;
   } else if (regname == '-')
     i = DELETION_REGISTER;
+  else if (regname == '*' || regname == '+')
+    i = CLIP_REGISTER;
   else                  /* not 0-9, a-z, A-Z or '-': use register 0 */
     i = 0;
   y_current = &(y_regs[i]);
@@ -762,6 +770,7 @@ get_register (
 ) FUNC_ATTR_NONNULL_RET
 {
   get_yank_register(name, 0);
+  get_clipboard(name);
 
   struct yankreg *reg = xmalloc(sizeof(struct yankreg));
   *reg = *y_current;
@@ -789,7 +798,7 @@ void put_register(int name, void *reg)
   free_yank_all();
   *y_current = *(struct yankreg *)reg;
   free(reg);
-
+  set_clipboard(name);
 }
 
 /*
@@ -929,6 +938,7 @@ do_execreg (
   }
   execreg_lastc = regname;
 
+  get_clipboard(regname);
 
   if (regname == '_')                   /* black hole: don't stuff anything */
     return OK;
@@ -1093,6 +1103,7 @@ insert_reg (
   if (regname != NUL && !valid_yank_reg(regname, FALSE))
     return FAIL;
 
+  get_clipboard(regname);
 
   if (regname == '.')                   /* insert last inserted text */
     retval = stuff_inserted(NUL, 1L, TRUE);
@@ -1278,6 +1289,17 @@ cmdline_paste_reg (
   return OK;
 }
 
+bool adjust_clipboard_register(int *rp)
+{
+  // If no reg. specified and 'unnamedclip' is set, use the
+  // clipboard register.
+  if (*rp == 0 && p_unc && provider_has_feature("clipboard")) {
+    *rp = '+';
+    return true;
+  }
+
+  return false;
+}
 
 /*
  * Handle a delete operation.
@@ -1307,6 +1329,7 @@ int op_delete(oparg_T *oap)
     return FAIL;
   }
 
+  bool adjusted = adjust_clipboard_register(&oap->regname);
 
   if (has_mbyte)
     mb_adjust_opend(oap);
@@ -1389,6 +1412,7 @@ int op_delete(oparg_T *oap)
     /* Yank into small delete register when no named register specified
      * and the delete is within one line. */
     if ((
+          adjusted ||
           oap->regname == 0) && oap->motion_type != MLINE
         && oap->line_count == 1) {
       oap->regname = '-';
@@ -2336,7 +2360,6 @@ int op_yank(oparg_T *oap, int deleting, int mess)
   if (oap->regname == '_')          /* black hole: nothing to do */
     return OK;
 
-
   if (!deleting)                    /* op_delete() already set y_current */
     get_yank_register(oap->regname, TRUE);
 
@@ -2519,6 +2542,8 @@ int op_yank(oparg_T *oap, int deleting, int mess)
     curbuf->b_op_end.col = MAXCOL;
   }
 
+  set_clipboard(oap->regname);
+
   return OK;
 }
 
@@ -2581,6 +2606,8 @@ do_put (
   int allocated = FALSE;
   long cnt;
 
+  adjust_clipboard_register(&regname);
+  get_clipboard(regname);
 
   if (flags & PUT_FIXINDENT)
     orig_indent = get_indent();
@@ -3171,6 +3198,8 @@ void ex_display(exarg_T *eap)
         )
       continue;             /* did not ask for this register */
 
+    adjust_clipboard_register(&name);
+    get_clipboard(name);
 
     if (i == -1) {
       if (y_previous != NULL)
@@ -4528,6 +4557,9 @@ void write_viminfo_registers(FILE *fp)
   for (i = 0; i < NUM_REGISTERS; i++) {
     if (y_regs[i].y_array == NULL)
       continue;
+    // Skip '*'/'+' register, we don't want them back next time
+    if (i == CLIP_REGISTER)
+      continue;
     /* Skip empty registers. */
     num_lines = y_regs[i].y_size;
     if (num_lines == 0
@@ -4607,6 +4639,7 @@ char_u get_reg_type(int regname, long *reglen)
     return MCHAR;
   }
 
+  get_clipboard(regname);
 
   if (regname != NUL && !valid_yank_reg(regname, FALSE))
     return MAUTO;
@@ -4654,6 +4687,7 @@ get_reg_contents (
   if (regname != NUL && !valid_yank_reg(regname, FALSE))
     return NULL;
 
+  get_clipboard(regname);
 
   if (get_spec_reg(regname, &retval, &allocated, FALSE)) {
     if (retval == NULL)
@@ -5162,3 +5196,88 @@ void cursor_pos_info(void)
   }
 }
 
+static void free_register(struct yankreg *reg)
+{
+  // Save 'y_current' into 'curr'
+  struct yankreg *curr = y_current;
+  // Set it to 'y_current' since 'free_yank_all' operates on it
+  y_current = reg;
+  free_yank_all();
+  // Restore 'y_current'
+  y_current = curr;
+}
+
+static void copy_register(struct yankreg *dest, struct yankreg *src)
+{
+  free_register(dest);
+  *dest = *src;
+  dest->y_array = xcalloc(src->y_size, sizeof(uint8_t *));
+  for (int j = 0; j < src->y_size; ++j) {
+    dest->y_array[j] = (uint8_t *)xstrdup((char *)src->y_array[j]);
+  }
+}
+
+static void get_clipboard(int name)
+{
+  if (!(name == '*' || name == '+'
+        || (p_unc && !name && provider_has_feature("clipboard")))) {
+    return;
+  }
+
+  struct yankreg *reg = &y_regs[CLIP_REGISTER];
+  free_register(reg);
+  Object result = provider_call("clipboard_get", NIL);
+
+  if (result.type != kObjectTypeArray) {
+    goto err;
+  }
+
+  Array lines = result.data.array;
+  reg->y_array = xcalloc(lines.size, sizeof(uint8_t *));
+  reg->y_size = lines.size;
+
+  for (size_t i = 0; i < lines.size; i++) {
+    if (lines.items[i].type != kObjectTypeString) {
+      goto err;
+    }
+    reg->y_array[i] = (uint8_t *)lines.items[i].data.string.data;
+  }
+
+  if (!name && p_unc) {
+    // copy to the unnamed register
+    copy_register(&y_regs[0], reg);
+  }
+
+  return;
+
+err:
+  msgpack_rpc_free_object(result);
+  free(reg->y_array);
+  reg->y_array = NULL;
+  reg->y_size = 0;
+  EMSG("Clipboard provider returned invalid data");
+}
+
+static void set_clipboard(int name)
+{
+  if (!(name == '*' || name == '+'
+        || (p_unc && !name && provider_has_feature("clipboard")))) {
+    return;
+  }
+
+  struct yankreg *reg = &y_regs[CLIP_REGISTER];
+
+  if (!name && p_unc) {
+    // copy from the unnamed register
+    copy_register(reg, &y_regs[0]);
+  }
+
+  Array lines = {0, 0, 0};
+
+  for (int i = 0; i < reg->y_size; i++) {
+    ADD(lines, STRING_OBJ(cstr_to_string((char *)reg->y_array[i])));
+  }
+
+  Object result = provider_call("clipboard_set", ARRAY_OBJ(lines));
+  msgpack_rpc_free_object(result);
+}

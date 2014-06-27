@@ -36,7 +36,12 @@ static struct feature {
           "python_execute",
           "python_execute_file",
           "python_do_range",
-          "python_eval")
+          "python_eval"),
+
+  FEATURE("clipboard",
+          &p_icpb,
+          "clipboard_get",
+          "clipboard_set")
 };
 
 static Map(cstr_t, uint64_t) *registered_providers = NULL;
