@@ -93,9 +93,9 @@ void server_start(char *endpoint)
 
   // Trim to `ADDRESS_MAX_SIZE`
   if (xstrlcpy(addr, endpoint, sizeof(addr)) >= sizeof(addr)) {
-      // TODO(aktau): since this is not what the user wanted, perhaps we
-      // should return an error here
-      EMSG2("Address was too long, truncated to %s", addr);
+    // TODO(aktau): since this is not what the user wanted, perhaps we
+    // should return an error here
+    EMSG2("Address was too long, truncated to %s", addr);
   }
 
   // Check if the server already exists
