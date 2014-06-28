@@ -116,21 +116,19 @@ void server_start(char *endpoint)
 
   if (addr_len > sizeof(ip) - 1) {
     // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)
-    addr_len = sizeof(ip);
+    addr_len = sizeof(ip) - 1;
   }
 
   // Extract the address part
-  xstrlcpy(ip, addr, addr_len);
+  xstrlcpy(ip, addr, addr_len + 1);
 
   int port = NEOVIM_DEFAULT_TCP_PORT;
 
   if (*ip_end == ':') {
-    char *port_end;
     // Extract the port
-    port = strtol(ip_end + 1, &port_end, 10);
-    errno = 0;
+    port = strtol(ip_end + 1, NULL, 10);
 
-    if (errno != 0 || port == 0 || port > 0xffff) {
+    if (port == 0 || port > 0xffff) {
       // Invalid port, treat as named pipe or unix socket
       server_type = kServerTypePipe;
     }
