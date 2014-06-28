@@ -600,19 +600,6 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 
 
 /*
- * Stuff for setjmp() and longjmp().
- * Used to protect areas where we could crash.
- */
-EXTERN JMP_BUF lc_jump_env;     /* argument to SETJMP() */
-# ifdef SIGHASARG
-/* volatile because it is used in signal handlers. */
-EXTERN volatile int lc_signal;  /* caught signal number, 0 when no was signal
-                                   caught; used for mch_libcall() */
-# endif
-/* volatile because it is used in signal handler deathtrap(). */
-EXTERN volatile int lc_active INIT(= FALSE); /* TRUE when lc_jump_env is valid. */
-
-/*
  * These flags are set based upon 'fileencoding'.
  * Note that "enc_utf8" is also set for "unicode", because the characters are
  * internally stored as UTF-8 (to avoid trouble with NUL bytes).
@@ -1019,9 +1006,7 @@ EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
-#ifdef FEAT_LIBCALL
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
-#endif
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
 EXTERN char_u e_modifiable[] INIT(= N_(
