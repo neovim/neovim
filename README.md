@@ -73,17 +73,17 @@ Join the community on IRC in #neovim on Freenode or the [mailing list](https://g
 
 ### License
 
-Neovim is licensed under the terms of the Apache 2.0 License, *except* for
+Neovim is licensed under the terms of the Apache 2.0 license, except for
 parts of Neovim that were contributed under the Vim license.
 
-- Contributions committed before [b17d96](license-commit) by authors who did
+- Contributions committed before [b17d96][license-commit] by authors who did
   not sign the Contributor License Agreement (CLA), remain under the Vim license.
 
-- Contributions committed after [b17d96](license-commit) are licensed under
-  Apache 2.0 *unless* those contributions were copied from Vim (such Vim
-  patches are easily identified in the commit logs by the `vim-patch` keyword.)
+- Contributions committed after [b17d96][license-commit] are licensed under
+  Apache 2.0 unless those contributions were copied from Vim (such Vim
+  patches are identified in the commit logs by the `vim-patch` keyword.)
 
-See LICENSE for details.
+See LICENSE for the full texts of the Apache 2.0 license and the Vim license.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the
@@ -96,6 +96,6 @@ See LICENSE for details.
     You can also sponsor the development of Vim.  Vim sponsors can vote for
     features.  The money goes to Uganda anyway.
 
-[license-commit][commit/b17d9691a24099c9210289f16afb1a498a89d803]
+[license-commit]: commit/b17d9691a24099c9210289f16afb1a498a89d803
 
 <!-- vim: set tw=80: -->
