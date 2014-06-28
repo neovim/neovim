@@ -7,6 +7,7 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/os/os.h"
+#include "nvim/os/os_defs.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
 #include "nvim/tempfile.h"
