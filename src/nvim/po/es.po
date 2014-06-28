@@ -1,33 +1,33 @@
-# Spanish translation for Vim
-#
-# Translation project homepage:
-# vim-doc-es http://www.assembla.com/wiki/show/vim-doc-es
-#
+# Spanish translation for Neovim
+
+# Copyright (C) 2014 Neovim contributors. All rights reserved.
+# This file is distributed under the same license as the PACKAGE package.
+
 # Last translators:
-# Pedro A. López-Valencia <vorbote@users.sourceforge.net>, 2003-06,2009
+# Pedro A. López-Valencia <vorbote@users.sourceforge.net> 2003,2009
 # Omar Campagne Polaino <ocampagne@gmail.com> 2009
-#
+# Kevin Hernandez <kernan373@gmail.com> 2014
+
 msgid ""
 msgstr ""
-"Project-Id-Version: Vim 7.2.284 (rev 1692)\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-26 14:21+0200\n"
-"PO-Revision-Date: 2009-12-04 18:52+0100\n"
-"Last-Translator: Omar Campagne <ocampagne@gmail.com>\n"
-"Language-Team: vim-doc-es http://www.assembla.com/wiki/show/vim-doc-es\n"
-"Language: \n"
+"PO-Revision-Date: 2014-06-27 13:33+0200\n"
+"Last-Translator: Kevin Hernandez <kernan373@gmail.com>\n"
+"Language-Team: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: octect-stream\n"
 
 #: ../api/private/helpers.c:201
-#, fuzzy
 msgid "Unable to get option value"
-msgstr "Basura después de la opción"
+msgstr "Incapaz de obtener valor de esa opción"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
-msgstr ""
+msgstr "error interno: tipo de opción desconocida"
 
 #: ../buffer.c:92
 msgid "[Location List]"
@@ -38,9 +38,8 @@ msgid "[Quickfix List]"
 msgstr "[Lista de cambios rápidos]"
 
 #: ../buffer.c:94
-#, fuzzy
 msgid "E855: Autocommands caused command to abort"
-msgstr "E812: *Filtro* Las auto-órdenes no deben cambiar el búfer en uso"
+msgstr "E855: Auto-órdenes causaron la orden a abortar"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
@@ -400,13 +399,12 @@ msgid "Hit end of paragraph"
 msgstr "Se llegó al final del párrafo"
 
 #: ../edit.c:101
-#, fuzzy
 msgid "E839: Completion function changed window"
-msgstr "E813: No se puede cerrar la ventana de autocmd"
+msgstr "E839: Función de completitud cambió ventanilla"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr ""
+msgstr "E840: Función de completitud elimino texto."
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -852,9 +850,8 @@ msgid "E702: Sort compare function failed"
 msgstr "E702: Fallo al ordenar funciones comparadas"
 
 #: ../eval.c:13806
-#, fuzzy
 msgid "E882: Uniq compare function failed"
-msgstr "E702: Fallo al ordenar funciones comparadas"
+msgstr "E882: Fallo al ordenar funciones de comparacion"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -943,9 +940,8 @@ msgid "E124: Missing '(': %s"
 msgstr "E124: Falta un \"(\": %s"
 
 #: ../eval.c:17293
-#, fuzzy
 msgid "E862: Cannot use g: here"
-msgstr "E284: No se pudo fijar los valores IC"
+msgstr "E862: No se pudo usar \"g:\" aqui"
 
 #: ../eval.c:17312
 #, c-format
@@ -953,9 +949,9 @@ msgid "E125: Illegal argument: %s"
 msgstr "E125: Argumento ilegal: %s"
 
 #: ../eval.c:17323
-#, fuzzy, c-format
+#, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "E125: Argumento ilegal: %s"
+msgstr "E853: Nombre argumento duplicado: %s"
 
 #: ../eval.c:17416
 msgid "E126: Missing :endfunction"
@@ -981,18 +977,17 @@ msgid "E129: Function name required"
 msgstr "E129: Se requiere el nombre de la función"
 
 #: ../eval.c:17824
-#, fuzzy, c-format
+#, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
 msgstr ""
 "E128: El nombre de una función debe empezar con mayúscula o contener el "
-"signo de dos puntos: %s"
+"signo de dos puntos \"s:\": %s"
 
 #: ../eval.c:17833
-#, fuzzy, c-format
+#, c-format
 msgid "E884: Function name cannot contain a colon: %s"
 msgstr ""
-"E128: El nombre de una función debe empezar con mayúscula o contener el "
-"signo de dos puntos: %s"
+"E128: Nombre de función no puede contener signo de dos puntos: %s"
 
 #: ../eval.c:18336
 #, c-format
@@ -1292,9 +1287,9 @@ msgid "Pattern found in every line: %s"
 msgstr "Patrón encontrado en cada línea: %s"
 
 #: ../ex_cmds.c:4510
-#, fuzzy, c-format
+#, c-format
 msgid "Pattern not found: %s"
-msgstr "No se encontró el patrón de búsqueda"
+msgstr "No se encontró el patrón de búsqueda: %s"
 
 #: ../ex_cmds.c:4587
 msgid ""
@@ -1430,9 +1425,8 @@ msgid "%3d  %s %s  line %<PRId64>"
 msgstr "%3d  %s %s  línea %<PRId64>"
 
 #: ../ex_cmds2.c:942
-#, fuzzy
 msgid "E750: First use \":profile start {fname}\""
-msgstr "E750: Primero use \":profile start <nombre_de_archivo>\""
+msgstr "E750: Primero use \":profile start [nombre_de_archivo]\""
 
 #: ../ex_cmds2.c:1269
 #, c-format
@@ -1688,9 +1682,9 @@ msgstr ""
 "E183: Las órdenes definidas por el usuario deben comenzar con mayúscula"
 
 #: ../ex_docmd.c:4696
-#, fuzzy
 msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr "E464: Uso ambiguo de una orden definida por el usuario"
+msgstr "E841: Nombre reservado, no se puede usar como orden definida por "
+"el usuario"
 
 #: ../ex_docmd.c:4751
 #, c-format
@@ -1715,9 +1709,9 @@ msgstr ""
 "de función"
 
 #: ../ex_docmd.c:5257
-#, fuzzy, c-format
+#, c-format
 msgid "E185: Cannot find color scheme '%s'"
-msgstr "E185: No se pudo encontrar el esquema de colores %s"
+msgstr "E185: No pudo encontrar el esquema de colores %s"
 
 #: ../ex_docmd.c:5263
 msgid "Greetings, Vim user!"
@@ -1820,17 +1814,14 @@ msgstr ""
 "E498: No hay un nombre de archivo \":source\" que sustituya a \"<sfile>\""
 
 #: ../ex_docmd.c:7876
-#, fuzzy
 msgid "E842: no line number to use for \"<slnum>\""
-msgstr ""
-"E498: No hay un nombre de archivo \":source\" que sustituya a \"<sfile>\""
+msgstr "E842: No hay un numero de linea para usar \"<slnum>\""
 
 #: ../ex_docmd.c:7903
-#, fuzzy, c-format
+#, c-format
 msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
 msgstr ""
-"E499: Un nombre de archivo vacío para \"%\" o \"#\" solo funciona con \":p:h"
-"\""
+"E499: Nombre de archivo vacío para \"%\" o \"#\" solo funciona con \":p:h\""
 
 #: ../ex_docmd.c:7905
 msgid "E500: Evaluates to an empty string"
@@ -2740,18 +2731,17 @@ msgid "E17: \"%s\" is a directory"
 msgstr "E17: \"%s\" es un directorio"
 
 #: ../globals.h:1020
-#, fuzzy
 msgid "E900: Invalid job id"
-msgstr "E49: La longitud de desplazamiento no es válida"
+msgstr "E900: Identificacion de trabajo inválido"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
-msgstr ""
+msgstr "E901: Tabla de trabajos esta llena"
 
 #: ../globals.h:1022
 #, c-format
 msgid "E902: \"%s\" is not an executable"
-msgstr ""
+msgstr "E902: \"%s\" no es ejecutable"
 
 #: ../globals.h:1024
 #, c-format
@@ -2867,9 +2857,8 @@ msgstr ""
 "E37: No guardó el archivo desde el último cambio (añada \"!\" para forzar)"
 
 #: ../globals.h:1055
-#, fuzzy
 msgid "E37: No write since last change"
-msgstr "[No se ha escrito nada al disco desde el último cambio]\n"
+msgstr "E37: No se ha escrito nada al disco desde el último cambio"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
@@ -3048,9 +3037,8 @@ msgid "E764: Option '%s' is not set"
 msgstr "E764: No se ha definido la opción '%s'"
 
 #: ../globals.h:1111
-#, fuzzy
 msgid "E850: Invalid register name"
-msgstr "E354: Nombre de registro no válido: '%s'"
+msgstr "E850: Nombre de registro no válido"
 
 #: ../globals.h:1114
 msgid "search hit TOP, continuing at BOTTOM"
@@ -3303,7 +3291,6 @@ msgid "%-5s: %s%*s (Usage: %s)"
 msgstr "%-5s: %s%*s (Modo de uso: %s)"
 
 #: ../if_cscope.c:1155
-#, fuzzy
 msgid ""
 "\n"
 "       c: Find functions calling this function\n"
@@ -3316,14 +3303,14 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
-"       c: Encontrar funciones que invocan esta función\n"
-"       d: Encontrar funciones invocados por esta función\n"
-"       e: Encontrar este patrón egrep\n"
-"       f: Encontrar este archivo\n"
-"       g: Encontrar esta definición\n"
-"       i: Encontrar archivos #incluyendo este archivo\n"
-"       s: Encontrar este símbolo de C\n"
-"       t: Encontrar asignaciones a\n"
+"       c: Buscar funciones que invocan esta función\n"
+"       d: Buscar funciones invocadas por esta función\n"
+"       e: Buscar este patrón egrep\n"
+"       f: Buscar este archivo\n"
+"       g: Buscar esta definición\n"
+"       i: Buscar archivos #incluyendo este archivo\n"
+"       s: Buscar  este símbolo de C\n"
+"       t: buscar asignaciones a\n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
@@ -3956,23 +3943,21 @@ msgstr ""
 "(Podría querer guardar este archivo con otro nombre\n"
 
 #: ../memline.c:1252
-#, fuzzy
 msgid "and run diff with the original file to check for changes)"
 msgstr ""
-"y ejecutar \"diff\" con el archivo original para comprobar los cambios)\n"
+"y ejecutar \"diff\" con el archivo original para verificar cambios)\n"
 
 #: ../memline.c:1254
 msgid "Recovery completed. Buffer contents equals file contents."
 msgstr ""
 
 #: ../memline.c:1255
-#, fuzzy
 msgid ""
 "\n"
 "You may want to delete the .swp file now.\n"
 "\n"
 msgstr ""
-"Elimine el archivo .swp después de terminar.\n"
+"Ya puede eliminar el archivo .swp.\n"
 "\n"
 
 # use msg() to start the scrolling properly
@@ -4186,7 +4171,6 @@ msgstr "     MÁS NUEVO que el archivo de intercambio!\n"
 # Some of these messages are long to allow translation to
 # * other languages.
 #: ../memline.c:3244
-#, fuzzy
 msgid ""
 "\n"
 "(1) Another program may be editing the same file.  If this is the case,\n"
@@ -4194,21 +4178,19 @@ msgid ""
 "    file when making changes."
 msgstr ""
 "\n"
-"(1) Puede que otro programa esté editando el mismo archivo.\n"
-"    De ser así, tenga cuidado de no acabar con dos\n"
-"    ejemplares diferentes del mismo archivo al hacer cambios.\n"
+"(1) Puede ser que otro programa esté editando el mismo archivo.\n"
+"    Si este es el caso, tenga cuidado de no acabar con dos\n"
+"    copias diferentes del mismo archivo al hacer cambios.\n"
 
 #: ../memline.c:3245
-#, fuzzy
 msgid "  Quit, or continue with caution.\n"
 msgstr "    Salga del programa o continúe con precaución.\n"
 
 #: ../memline.c:3246
-#, fuzzy
 msgid "(2) An edit session for this file crashed.\n"
 msgstr ""
 "\n"
-"(2) Falló una sesión de edición de este archivo.\n"
+"(2) Falló una sesión de editacion para este archivo.\n"
 
 #: ../memline.c:3247
 msgid "    If this is the case, use \":recover\" or \"vim -r "
@@ -5155,42 +5137,42 @@ msgid "E872: (NFA regexp) Too many '('"
 msgstr ""
 
 #: ../regexp_nfa.c:2042
-#, fuzzy
 msgid "E879: (NFA regexp) Too many \\z("
-msgstr "E50: Demasiados \\z("
+msgstr "E879: (Expresión regular (regexp) AFN) Hay demasiadas \\z("
 
 #: ../regexp_nfa.c:2066
 msgid "E873: (NFA regexp) proper termination error"
-msgstr ""
+msgstr "E873: (Expresion regular AFN) error de terminacion propia"
 
 #: ../regexp_nfa.c:2599
 msgid "E874: (NFA) Could not pop the stack !"
-msgstr ""
+msgstr "E874: (AFN) No se pudo sacar la pila ! "
 
 #: ../regexp_nfa.c:3298
 msgid ""
 "E875: (NFA regexp) (While converting from postfix to NFA), too many states "
 "left on stack"
-msgstr ""
+msgstr "(Expresion regular AFN) (Mientras convirtiendo de postfix a AFN), demasiados estados "
+"quedaron en la pila"
 
 #: ../regexp_nfa.c:3302
 msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
-msgstr ""
+msgstr "E876: (AFN expresion regular) No hay suficiente espacio en memoria para la AFN"
 
 #: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
 msgid ""
 "Could not open temporary log file for writing, displaying on stderr ... "
-msgstr ""
+msgstr "" 
+"No se pudo abrir el archivo de registro, viendo en stderr ..."
 
 #: ../regexp_nfa.c:4840
 #, c-format
 msgid "(NFA) COULD NOT OPEN %s !"
-msgstr ""
+msgstr "(AFN) NO SE PUDO ABRIR %s !"
 
 #: ../regexp_nfa.c:6049
-#, fuzzy
 msgid "Could not open temporary log file for writing "
-msgstr "E214: No se pudo encontrar el archivo temporal para escribir en él"
+msgstr "No se pudo abrir el archivo de registro temporal para escribir"
 
 #: ../screen.c:7435
 msgid " VREPLACE"
@@ -5737,14 +5719,14 @@ msgid "E765: 'spellfile' does not have %<PRId64> entries"
 msgstr "E765: 'spellfile' no tiene entradas %<PRId64>"
 
 #: ../spell.c:8074
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' removed from %s"
-msgstr "Eliminando palabra de %s"
+msgstr "Palabra \"%.*s\" fue eliminada de %s"
 
 #: ../spell.c:8117
-#, fuzzy, c-format
+#, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "Añadiendo palabra en \"%s\""
+msgstr "Añadiendo palabra \"%.*s\" a \"%s\""
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
@@ -5892,9 +5874,8 @@ msgid "E395: contains argument not accepted here"
 msgstr "E395: el contenido del argumento no se acepta aquí"
 
 #: ../syntax.c:4096
-#, fuzzy
 msgid "E844: invalid cchar value"
-msgstr "E474: El argumento no es válido"
+msgstr "E844: El valor de cchar no es válido"
 
 #: ../syntax.c:4107
 msgid "E393: group[t]here not accepted here"
@@ -5910,9 +5891,8 @@ msgid "E397: Filename required"
 msgstr "E397: Debe proporcionar un nombre de archivo"
 
 #: ../syntax.c:4221
-#, fuzzy
 msgid "E847: Too many syntax includes"
-msgstr "E77: Hay demasiados nombres de archivos"
+msgstr "E847: Hay demasiados incluyes de sintaxis"
 
 #: ../syntax.c:4303
 #, c-format
@@ -5930,9 +5910,8 @@ msgid "E399: Not enough arguments: syntax region %s"
 msgstr "E399: Argumentos insuficientes: región de sintaxis %s"
 
 #: ../syntax.c:4870
-#, fuzzy
 msgid "E848: Too many syntax clusters"
-msgstr "E391: No existe tal agrupamiento sintáctico: %s"
+msgstr "E848: Hay demaciados grupos de sintáxis"
 
 #: ../syntax.c:4954
 msgid "E400: No cluster specified"
@@ -6187,9 +6166,9 @@ msgid "E435: Couldn't find tag, just guessing!"
 msgstr "E435: No se pudo encontrar la etiqueta. ¡Estoy adivinando!"
 
 #: ../tag.c:2797
-#, fuzzy, c-format
+#, c-format
 msgid "Duplicate field name: %s"
-msgstr "Afijo duplicado en %s línea %d: %s"
+msgstr "Nombre de campo duplicado: %s"
 
 #: ../term.c:1442
 msgid "' not known. Available builtin terminals are:"
@@ -6237,79 +6216,78 @@ msgstr "Vim: error al leer la entrada, saliendo...\n"
 #. This happens when the FileChangedRO autocommand changes the
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
-#, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E787: El búfer cambió inesperadamente"
+msgstr "E881: La cuenta de lineas cambió inesperadamente"
 
 #: ../undo.c:627
-#, fuzzy, c-format
+#, c-format
 msgid "E828: Cannot open undo file for writing: %s"
-msgstr "E212: No se pudo abrir el archivo para escribir en él"
+msgstr "E828: No se pudo abrir el archivo de deshacer para escribir: %s"
 
 #: ../undo.c:717
 #, c-format
 msgid "E825: Corrupted undo file (%s): %s"
-msgstr ""
+msgstr "E825: Archivo de deshacer fue corrupto (%s): %s"
 
 #: ../undo.c:1039
 msgid "Cannot write undo file in any directory in 'undodir'"
-msgstr ""
+msgstr "No se pudo escribir al archivo de deshacer en ningun directorio en \"undodir\""
 
 #: ../undo.c:1074
 #, c-format
 msgid "Will not overwrite with undo file, cannot read: %s"
-msgstr ""
+msgstr "No se va a escribir el archivo de deshacer, no se puede leer: %s"
 
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr ""
+msgstr "No se va a actualizar el archivo de deshacer, esto no es archivo de deshacer: %s"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
-msgstr ""
+msgstr "Saltando la escritura al archivo de deshacer, nada que deshacer"
 
 #: ../undo.c:1121
-#, fuzzy, c-format
+#, c-format
 msgid "Writing undo file: %s"
-msgstr "Escribiendo archivo \"viminfo\" \"%s\""
+msgstr "Escribiendo archivo de deshacer: \"%s\""
 
 #: ../undo.c:1213
-#, fuzzy, c-format
+#, c-format
 msgid "E829: write error in undo file: %s"
-msgstr "E297: Error de escritura en el archivo de intercambio"
+msgstr "E829: Error de escritura en el archivo de deshacer: %s"
 
 #: ../undo.c:1280
 #, c-format
 msgid "Not reading undo file, owner differs: %s"
-msgstr ""
+msgstr "No se va a leer el archivo de deshacer, differente propietario: %s"
 
 #: ../undo.c:1292
-#, fuzzy, c-format
+#, c-format
 msgid "Reading undo file: %s"
-msgstr "Leyendo archivo de palabras \"%s\" ..."
+msgstr "Leyendo archivo de deshacer: \"%s\""
 
 #: ../undo.c:1299
-#, fuzzy, c-format
+#, c-format
 msgid "E822: Cannot open undo file for reading: %s"
-msgstr "E195: No se pudo abrir el archivo \"viminfo\" para lectura"
+msgstr "E822: No se pudo abrir el archivo de deshacer para leer: %s"
 
 #: ../undo.c:1308
-#, fuzzy, c-format
+#, c-format
 msgid "E823: Not an undo file: %s"
-msgstr "E753: No se encontró: %s"
+msgstr "E823: No es archivo para deshacer: %s"
 
 #: ../undo.c:1313
-#, fuzzy, c-format
+#, c-format
 msgid "E824: Incompatible undo file: %s"
-msgstr "E484: No se pudo abrir el archivo \"%s\""
+msgstr "E824: Archivo para deshacer no es compatible: \"%s\""
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
-msgstr ""
+msgstr "Contenido del archivo cambiaron, no se puede usar informacion del archivo para deshacer"
 
 #: ../undo.c:1497
-#, fuzzy, c-format
+#, c-format
 msgid "Finished reading undo file %s"
 msgstr "La ejecución de %s ha terminado"
 
@@ -6322,9 +6300,9 @@ msgid "Already at newest change"
 msgstr "Este es el cambio más nuevo"
 
 #: ../undo.c:1806
-#, fuzzy, c-format
+#, c-format
 msgid "E830: Undo number %<PRId64> not found"
-msgstr "No se encontró el número de \"deshacer\" %<PRId64>"
+msgstr "E830: No se encontró el número de deshacer %<PRId64>"
 
 #: ../undo.c:1979
 msgid "E438: u_undo: line numbers wrong"
