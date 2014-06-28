@@ -45,6 +45,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/fs_defs.h"
 
 
 /* Growarray to store info about already sourced scripts.
@@ -52,9 +53,8 @@
  * script when going through the list. */
 typedef struct scriptitem_S {
   char_u      *sn_name;
-  int sn_dev_valid;
-  uint64_t sn_dev;
-  uint64_t sn_ino;
+  bool file_id_valid;
+  FileID file_id;
   int sn_prof_on;               /* TRUE when script is/was profiled */
   int sn_pr_force;              /* forceit: profile functions in this script */
   proftime_T sn_pr_child;       /* time set when going into first child */
@@ -2559,15 +2559,14 @@ do_source (
    * If it's new, generate a new SID.
    */
   save_current_SID = current_SID;
-  FileInfo file_info;
-  bool file_info_ok = os_get_file_info((char *)fname_exp, &file_info);
+  FileID file_id;
+  bool file_id_ok = os_get_file_id((char *)fname_exp, &file_id);
   for (current_SID = script_items.ga_len; current_SID > 0; --current_SID) {
     si = &SCRIPT_ITEM(current_SID);
     // Compare dev/ino when possible, it catches symbolic links.
     // Also compare file names, the inode may change when the file was edited.
-    bool file_id_equal = file_info_ok && si->sn_dev_valid
-                         && si->sn_dev == file_info.stat.st_dev
-                         && si->sn_ino == file_info.stat.st_ino;
+    bool file_id_equal = file_id_ok && si->file_id_valid
+                         && os_file_id_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
         && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
       break;
@@ -2584,12 +2583,11 @@ do_source (
     si = &SCRIPT_ITEM(current_SID);
     si->sn_name = fname_exp;
     fname_exp = NULL;
-    if (file_info_ok) {
-      si->sn_dev_valid = TRUE;
-      si->sn_dev = file_info.stat.st_dev;
-      si->sn_ino = file_info.stat.st_ino;
+    if (file_id_ok) {
+      si->file_id_valid = true;
+      si->file_id = file_id;
     } else {
-      si->sn_dev_valid = FALSE;
+      si->file_id_valid = false;
     }
 
     /* Allocate the local script variables to use for this script. */

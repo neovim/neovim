@@ -149,19 +149,13 @@ static bool is_executable_in_path(const char_u *name)
 /// Get stat information for a file.
 ///
 /// @return OK on success, FAIL if a failure occurred.
-int os_stat(const char_u *name, uv_stat_t *statbuf)
+static bool os_stat(const char *name, uv_stat_t *statbuf)
 {
   uv_fs_t request;
-  int result = uv_fs_stat(uv_default_loop(), &request,
-                          (const char *)name, NULL);
+  int result = uv_fs_stat(uv_default_loop(), &request, name, NULL);
   *statbuf = request.statbuf;
   uv_fs_req_cleanup(&request);
-
-  if (result == kLibuvSuccess) {
-    return OK;
-  }
-
-  return FAIL;
+  return (result == kLibuvSuccess);
 }
 
 /// Get the file permissions for a given file.
@@ -170,10 +164,10 @@ int os_stat(const char_u *name, uv_stat_t *statbuf)
 int32_t os_getperm(const char_u *name)
 {
   uv_stat_t statbuf;
-  if (os_stat(name, &statbuf) == FAIL) {
-    return -1;
-  } else {
+  if (os_stat((char *)name, &statbuf)) {
     return (int32_t)statbuf.st_mode;
+  } else {
+    return -1;
   }
 }
 
@@ -200,11 +194,7 @@ int os_setperm(const char_u *name, int perm)
 bool os_file_exists(const char_u *name)
 {
   uv_stat_t statbuf;
-  if (os_stat(name, &statbuf) == OK) {
-    return true;
-  }
-
-  return false;
+  return os_stat((char *)name, &statbuf);
 }
 
 /// Check if a file is readonly.
@@ -238,7 +228,7 @@ int os_file_is_writable(const char *name)
 bool os_get_file_size(const char *name, off_t *size)
 {
   uv_stat_t statbuf;
-  if (os_stat((char_u *)name, &statbuf) == OK) {
+  if (os_stat(name, &statbuf)) {
     *size = statbuf.st_size;
     return true;
   }
@@ -302,10 +292,7 @@ int os_remove(const char *path)
 /// @return `true` on success, `false` for failure.
 bool os_get_file_info(const char *path, FileInfo *file_info)
 {
-  if (os_stat((char_u *)path, &(file_info->stat)) == OK) {
-    return true;
-  }
-  return false;
+  return os_stat(path, &(file_info->stat));
 }
 
 /// Get the file information for a given path without following links
@@ -319,10 +306,7 @@ bool os_get_file_info_link(const char *path, FileInfo *file_info)
   int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
   file_info->stat = request.statbuf;
   uv_fs_req_cleanup(&request);
-  if (result == kLibuvSuccess) {
-    return true;
-  }
-  return false;
+  return (result == kLibuvSuccess);
 }
 
 /// Get the file information for a given file descriptor
@@ -336,17 +320,75 @@ bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
   int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
   file_info->stat = request.statbuf;
   uv_fs_req_cleanup(&request);
-  if (result == kLibuvSuccess) {
-    return true;
-  }
-  return false;
+  return (result == kLibuvSuccess);
 }
 
 /// Compare the inodes of two FileInfos
 ///
 /// @return `true` if the two FileInfos represent the same file.
-bool os_file_info_id_equal(FileInfo *file_info_1, FileInfo *file_info_2)
+bool os_file_info_id_equal(const FileInfo *file_info_1,
+                           const FileInfo *file_info_2)
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
          && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
 }
+
+/// Get the `FileID` of a `FileInfo`
+///
+/// @param file_info Pointer to the `FileInfo`
+/// @param[out] file_id Pointer to a `FileID`
+void os_file_info_get_id(const FileInfo *file_info, FileID *file_id)
+{
+  file_id->inode = file_info->stat.st_ino;
+  file_id->device_id = file_info->stat.st_dev;
+}
+
+/// Get the inode of a `FileInfo`
+///
+/// @deprecated Use `FileID` instead, this function is only needed in memline.c
+/// @param file_info Pointer to the `FileInfo`
+/// @return the inode number
+uint64_t os_file_info_get_inode(const FileInfo *file_info)
+{
+  return file_info->stat.st_ino;
+}
+
+/// Get the `FileID` for a given path
+///
+/// @param path Path to the file.
+/// @param[out] file_info Pointer to a `FileID` to fill in.
+/// @return `true` on sucess, `false` for failure.
+bool os_get_file_id(const char *path, FileID *file_id)
+{
+  uv_stat_t statbuf;
+  if (os_stat(path, &statbuf)) {
+    file_id->inode = statbuf.st_ino;
+    file_id->device_id = statbuf.st_dev;
+    return true;
+  }
+  return false;
+}
+
+/// Check if two `FileID`s are equal
+///
+/// @param file_id_1 Pointer to first `FileID`
+/// @param file_id_2 Pointer to second `FileID`
+/// @return `true` if the two `FileID`s represent te same file.
+bool os_file_id_equal(const FileID *file_id_1, const FileID *file_id_2)
+{
+  return file_id_1->inode == file_id_2->inode
+         && file_id_1->device_id == file_id_2->device_id;
+}
+
+/// Check if a `FileID` is equal to a `FileInfo`
+///
+/// @param file_id Pointer to a `FileID`
+/// @param file_info Pointer to a `FileInfo`
+/// @return `true` if the `FileID` and the `FileInfo` represent te same file.
+bool os_file_id_equal_file_info(const FileID *file_id,
+                                const FileInfo *file_info)
+{
+  return file_id->inode == file_info->stat.st_ino
+         && file_id->device_id == file_info->stat.st_dev;
+}
+

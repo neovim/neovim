@@ -14,9 +14,9 @@
 
 #if defined(UNIX)
 # include <sys/types.h>         /* pid_t */
-# include <sys/stat.h>          /* dev_t, ino_t */
-#else
 #endif
+
+#include "nvim/os/fs_defs.h"
 
 #define CSCOPE_SUCCESS          0
 #define CSCOPE_FAILURE          -1
@@ -52,8 +52,7 @@ typedef struct csi {
 #if defined(UNIX)
   pid_t pid;                    /* PID of the connected cscope process. */
 #endif
-  uint64_t st_dev;                 /* ID of dev containing cscope db */
-  uint64_t st_ino;                 /* inode number of cscope db */
+  FileID file_id;
 
   FILE *          fr_fp;        /* from cscope: FILE. */
   FILE *          to_fp;        /* to cscope: FILE. */

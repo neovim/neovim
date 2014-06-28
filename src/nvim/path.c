@@ -52,13 +52,13 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   char_u exp1[MAXPATHL];
   char_u full1[MAXPATHL];
   char_u full2[MAXPATHL];
-  uv_stat_t st1, st2;
+  FileID file_id_1, file_id_2;
 
   expand_env(s1, exp1, MAXPATHL);
-  int r1 = os_stat(exp1, &st1);
-  int r2 = os_stat(s2, &st2);
-  if (r1 != OK && r2 != OK) {
-    // If os_stat() doesn't work, may compare the names.
+  bool id_ok_1 = os_get_file_id((char *)exp1, &file_id_1);
+  bool id_ok_2 = os_get_file_id((char *)s2, &file_id_2);
+  if (!id_ok_1 && !id_ok_2) {
+    // If os_get_file_id() doesn't work, may compare the names.
     if (checkname) {
       vim_FullName(exp1, full1, MAXPATHL, FALSE);
       vim_FullName(s2, full2, MAXPATHL, FALSE);
@@ -68,10 +68,10 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
     }
     return kBothFilesMissing;
   }
-  if (r1 != OK || r2 != OK) {
+  if (!id_ok_1 || !id_ok_2) {
     return kOneFileMissing;
   }
-  if (st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino) {
+  if (os_file_id_equal(&file_id_1, &file_id_2)) {
     return kEqualFiles;
   }
   return kDifferentFiles;

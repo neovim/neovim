@@ -686,16 +686,12 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     FileInfo file_info;
     if (os_get_file_info((char *)buf->b_ffname, &file_info)) {
       long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
-#ifdef CHECK_INODE
-      long_to_char((long)file_info.stat.st_ino, b0p->b0_ino);
-#endif
+      long_to_char((long)os_file_info_get_inode(&file_info), b0p->b0_ino);
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
     } else {
       long_to_char(0L, b0p->b0_mtime);
-#ifdef CHECK_INODE
       long_to_char(0L, b0p->b0_ino);
-#endif
       buf->b_mtime = 0;
       buf->b_mtime_read = 0;
       buf->b_orig_size = 0;
@@ -3339,17 +3335,16 @@ findswapname (
              */
             if (b0.b0_flags & B0_SAME_DIR) {
               if (fnamecmp(path_tail(buf->b_ffname),
-                      path_tail(b0.b0_fname)) != 0
+                           path_tail(b0.b0_fname)) != 0
                   || !same_directory(fname, buf->b_ffname)) {
-#ifdef CHECK_INODE
                 /* Symlinks may point to the same file even
                  * when the name differs, need to check the
                  * inode too. */
                 expand_env(b0.b0_fname, NameBuff, MAXPATHL);
                 if (fnamecmp_ino(buf->b_ffname, NameBuff,
-                        char_to_long(b0.b0_ino)))
-#endif
-                differ = TRUE;
+                    char_to_long(b0.b0_ino))) {
+                  differ = TRUE;
+                }
               }
             } else {
               /*
@@ -3357,14 +3352,10 @@ findswapname (
                * "~user/path/file".  Expand it first.
                */
               expand_env(b0.b0_fname, NameBuff, MAXPATHL);
-#ifdef CHECK_INODE
               if (fnamecmp_ino(buf->b_ffname, NameBuff,
-                      char_to_long(b0.b0_ino)))
+                  char_to_long(b0.b0_ino))) {
                 differ = TRUE;
-#else
-              if (fnamecmp(NameBuff, buf->b_ffname) != 0)
-                differ = TRUE;
-#endif
+              }
             }
           }
           close(fd);
@@ -3504,7 +3495,6 @@ static int b0_magic_wrong(ZERO_BL *b0p)
          || b0p->b0_magic_char != B0_MAGIC_CHAR;
 }
 
-#ifdef CHECK_INODE
 /*
  * Compare current file name with file name from swap file.
  * Try to use inode numbers when possible.
@@ -3549,20 +3539,19 @@ static int b0_magic_wrong(ZERO_BL *b0p)
  * available -> probably same file
  *		== 0   == 0    FAIL	FAIL	FALSE
  *
- * Note that when the ino_t is 64 bits, only the last 32 will be used.  This
- * can't be changed without making the block 0 incompatible with 32 bit
- * versions.
+ * Only the last 32 bits of the inode will be used. This can't be changed
+ * without making the block 0 incompatible with 32 bit versions.
  */
 
-static int 
+static int
 fnamecmp_ino (
     char_u *fname_c,               /* current file name */
     char_u *fname_s,               /* file name from swap file */
     long ino_block0
 )
 {
-  ino_t ino_c = 0;                  /* ino of current file */
-  ino_t ino_s;                      /* ino of file from swap file */
+  uint64_t ino_c = 0;               /* ino of current file */
+  uint64_t ino_s;                   /* ino of file from swap file */
   char_u buf_c[MAXPATHL];           /* full path of fname_c */
   char_u buf_s[MAXPATHL];           /* full path of fname_s */
   int retval_c;                     /* flag: buf_c valid */
@@ -3570,7 +3559,7 @@ fnamecmp_ino (
 
   FileInfo file_info;
   if (os_get_file_info((char *)fname_c, &file_info)) {
-    ino_c = (ino_t)file_info.stat.st_ino;
+    ino_c = os_file_info_get_inode(&file_info);
   }
 
   /*
@@ -3579,9 +3568,9 @@ fnamecmp_ino (
    * valid on this machine), use the inode from block 0.
    */
   if (os_get_file_info((char *)fname_s, &file_info)) {
-    ino_s = (ino_t)file_info.stat.st_ino;
+    ino_s = os_file_info_get_inode(&file_info);
   } else {
-    ino_s = (ino_t)ino_block0;
+    ino_s = (uint64_t)ino_block0;
   }
 
   if (ino_c && ino_s)
@@ -3604,7 +3593,6 @@ fnamecmp_ino (
     return FALSE;
   return TRUE;
 }
-#endif /* CHECK_INODE */
 
 /*
  * Move a long integer into a four byte character array.

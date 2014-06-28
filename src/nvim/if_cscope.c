@@ -1139,14 +1139,7 @@ static void clear_csinfo(int i)
   csinfo[i].fname  = NULL;
   csinfo[i].ppath  = NULL;
   csinfo[i].flags  = NULL;
-#if defined(UNIX)
-  csinfo[i].st_dev = (dev_t)0;
-  csinfo[i].st_ino = (ino_t)0;
-#else
-  csinfo[i].nVolume = 0;
-  csinfo[i].nIndexHigh = 0;
-  csinfo[i].nIndexLow = 0;
-#endif
+  csinfo[i].file_id = FILE_ID_EMPTY;
   csinfo[i].pid    = 0;
   csinfo[i].fr_fp  = NULL;
   csinfo[i].to_fp  = NULL;
@@ -1181,8 +1174,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   i = -1;   /* can be set to the index of an empty item in csinfo */
   for (j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
-        && csinfo[j].st_dev == file_info->stat.st_dev
-        && csinfo[j].st_ino == file_info->stat.st_ino) {
+        && os_file_id_equal_file_info(&(csinfo[j].file_id), file_info)) {
       if (p_csverbose)
         (void)EMSG(_("E568: duplicate cscope database not added"));
       return -1;
@@ -1225,8 +1217,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   } else
     csinfo[i].flags = NULL;
 
-  csinfo[i].st_dev = file_info->stat.st_dev;
-  csinfo[i].st_ino = file_info->stat.st_ino;
+  os_file_info_get_id(file_info, &(csinfo[i].file_id));
   return i;
 } /* cs_insert_filelist */
 

@@ -70,19 +70,10 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
-// Todo(stefan991): remove this macro
-#define INVALID_DEVICE_ID UINT64_MAX
-
 #define HAVE_BUFLIST_MATCH
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "buffer.c.generated.h"
-#endif
-
-#ifdef UNIX
-# define dev_T dev_t
-#else
-# define dev_T unsigned
 #endif
 
 static char *msg_loclist = N_("[Location List]");
@@ -1300,12 +1291,12 @@ buflist_new (
    */
   /* We can use inode numbers when the file exists.  Works better
    * for hard links. */
-  FileInfo file_info;
-  if (sfname == NULL || !os_get_file_info((char *)sfname, &file_info)) {
-    file_info.stat.st_dev = INVALID_DEVICE_ID;
-  }
+  FileID file_id;
+  bool file_id_valid = (sfname != NULL &&
+                        os_get_file_id((char *)sfname, &file_id));
   if (ffname != NULL && !(flags & BLN_DUMMY)
-      && (buf = buflist_findname_file_info(ffname, &file_info)) != NULL) {
+      && (buf = buflist_findname_file_id(ffname, &file_id,
+                                         file_id_valid)) != NULL) {
     free(ffname);
     if (lnum != 0)
       buflist_setfpos(buf, curwin, lnum, (colnr_T)0, FALSE);
@@ -1432,12 +1423,11 @@ buflist_new (
   hash_init(&buf->b_s.b_keywtab_ic);
 
   buf->b_fname = buf->b_sfname;
-  if (file_info.stat.st_dev == INVALID_DEVICE_ID)
-    buf->b_dev_valid = FALSE;
-  else {
-    buf->b_dev_valid = TRUE;
-    buf->b_dev = file_info.stat.st_dev;
-    buf->b_ino = file_info.stat.st_ino;
+  if (!file_id_valid) {
+    buf->file_id_valid = false;
+  } else {
+    buf->file_id_valid = true;
+    buf->file_id = file_id;
   }
   buf->b_u_synced = TRUE;
   buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
@@ -1658,25 +1648,24 @@ buf_T *buflist_findname_exp(char_u *fname)
  */
 buf_T *buflist_findname(char_u *ffname)
 {
-  FileInfo file_info;
-  if (!os_get_file_info((char *)ffname, &file_info)) {
-    file_info.stat.st_dev = INVALID_DEVICE_ID;
-  }
-  return buflist_findname_file_info(ffname, &file_info);
+  FileID file_id;
+  bool file_id_valid = os_get_file_id((char *)ffname, &file_id);
+  return buflist_findname_file_id(ffname, &file_id, file_id_valid);
 }
 
 /*
- * Same as buflist_findname(), but pass the FileInfo structure to avoid
+ * Same as buflist_findname(), but pass the FileID structure to avoid
  * getting it twice for the same file.
  * Returns NULL if not found.
  */
-static buf_T *buflist_findname_file_info(char_u *ffname, FileInfo *file_info)
+static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
+                                       bool file_id_valid)
 {
   buf_T       *buf;
 
   for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
     if ((buf->b_flags & BF_DUMMY) == 0
-        && !otherfile_buf(buf, ffname, file_info)) {
+        && !otherfile_buf(buf, ffname, file_id, file_id_valid)) {
       return buf;
     }
   }
@@ -2192,7 +2181,8 @@ setfname (
 )
 {
   buf_T       *obuf = NULL;
-  FileInfo file_info;
+  FileID file_id;
+  bool file_id_valid = false;
 
   if (ffname == NULL || *ffname == NUL) {
     /* Removing the name. */
@@ -2200,7 +2190,6 @@ setfname (
     free(buf->b_sfname);
     buf->b_ffname = NULL;
     buf->b_sfname = NULL;
-    file_info.stat.st_dev = INVALID_DEVICE_ID;
   } else {
     fname_expand(buf, &ffname, &sfname);     /* will allocate ffname */
     if (ffname == NULL)                     /* out of memory */
@@ -2211,11 +2200,9 @@ setfname (
      * - if the buffer is loaded, fail
      * - if the buffer is not loaded, delete it from the list
      */
-    if (!os_get_file_info((char *)ffname, &file_info)) {
-      file_info.stat.st_dev = INVALID_DEVICE_ID;
-    }
+    file_id_valid = os_get_file_id((char *)ffname, &file_id);
     if (!(buf->b_flags & BF_DUMMY)) {
-      obuf = buflist_findname_file_info(ffname, &file_info);
+      obuf = buflist_findname_file_id(ffname, &file_id, file_id_valid);
     }
     if (obuf != NULL && obuf != buf) {
       if (obuf->b_ml.ml_mfp != NULL) {          /* it's loaded, fail */
@@ -2241,12 +2228,11 @@ setfname (
     buf->b_sfname = sfname;
   }
   buf->b_fname = buf->b_sfname;
-  if (file_info.stat.st_dev == INVALID_DEVICE_ID) {
-    buf->b_dev_valid = FALSE;
+  if (!file_id_valid) {
+    buf->file_id_valid = false;
   } else {
-    buf->b_dev_valid = TRUE;
-    buf->b_dev = file_info.stat.st_dev;
-    buf->b_ino = file_info.stat.st_ino;
+    buf->file_id_valid = true;
+    buf->file_id = file_id;
   }
 
   buf_name_changed(buf);
@@ -2380,10 +2366,11 @@ void buflist_altfpos(win_T *win)
  */
 int otherfile(char_u *ffname)
 {
-  return otherfile_buf(curbuf, ffname, NULL);
+  return otherfile_buf(curbuf, ffname, NULL, false);
 }
 
-static int otherfile_buf(buf_T *buf, char_u *ffname, FileInfo *file_info_p)
+static int otherfile_buf(buf_T *buf, char_u *ffname,
+                         FileID *file_id_p, bool file_id_valid)
 {
   /* no name is different */
   if (ffname == NULL || *ffname == NUL || buf->b_ffname == NULL) {
@@ -2393,14 +2380,15 @@ static int otherfile_buf(buf_T *buf, char_u *ffname, FileInfo *file_info_p)
     return FALSE;
   }
   {
-    FileInfo file_info;
-
+    FileID file_id;
     /* If no struct stat given, get it now */
-    if (file_info_p == NULL) {
-      if (!buf->b_dev_valid || !os_get_file_info((char *)ffname, &file_info)) {
-        file_info.stat.st_dev = INVALID_DEVICE_ID;
-      }
-      file_info_p = &file_info;
+    if (file_id_p == NULL) {
+      file_id_p = &file_id;
+      file_id_valid = os_get_file_id((char *)ffname, file_id_p);
+    }
+    if (!file_id_valid) {
+      // file_id not valid, assume files are different.
+      return TRUE;
     }
     /* Use dev/ino to check if the files are the same, even when the names
      * are different (possible with links).  Still need to compare the
@@ -2411,40 +2399,34 @@ static int otherfile_buf(buf_T *buf, char_u *ffname, FileInfo *file_info_p)
      * dev/ino again when they appear to match, but not when they appear
      * to be different: Could skip a buffer when it's actually the same
      * file. */
-    if (buf_same_ino(buf, file_info_p)) {
-      buf_setino(buf);
-      if (buf_same_ino(buf, file_info_p))
+    if (buf_same_file_id(buf, file_id_p)) {
+      buf_set_file_id(buf);
+      if (buf_same_file_id(buf, file_id_p))
         return FALSE;
     }
   }
   return TRUE;
 }
 
-/*
- * Set inode and device number for a buffer.
- * Must always be called when b_fname is changed!.
- */
-void buf_setino(buf_T *buf)
+// Set file_id for a buffer.
+// Must always be called when b_fname is changed!
+void buf_set_file_id(buf_T *buf)
 {
-  FileInfo file_info;
+  FileID file_id;
   if (buf->b_fname != NULL
-      && os_get_file_info((char *)buf->b_fname, &file_info)) {
-    buf->b_dev_valid = TRUE;
-    buf->b_dev = file_info.stat.st_dev;
-    buf->b_ino = file_info.stat.st_ino;
+      && os_get_file_id((char *)buf->b_fname, &file_id)) {
+    buf->file_id_valid = true;
+    buf->file_id = file_id;
   } else {
-    buf->b_dev_valid = FALSE;
+    buf->file_id_valid = false;
   }
 }
 
-/*
- * Return TRUE if dev/ino in buffer "buf" matches with "stp".
- */
-static int buf_same_ino(buf_T *buf, FileInfo *file_info)
+// return TRUE if file_id in buffer "buf" matches with "file_id".
+static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 {
-  return buf->b_dev_valid
-         && file_info->stat.st_dev == buf->b_dev
-         && file_info->stat.st_ino == buf->b_ino;
+  return buf->file_id_valid
+         && os_file_id_equal(&(buf->file_id), file_id);
 }
 
 /*
