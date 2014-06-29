@@ -682,11 +682,7 @@ getcount:
     case '<':       ca.cmdchar = '>'; break;
     }
     idx = find_command(ca.cmdchar);
-    if (idx < 0) {
-      /* Just in case */
-      clearopbeep(oap);
-      goto normal_end;
-    }
+    assert(idx >= 0);
   }
 
   /*
@@ -821,6 +817,7 @@ getcount:
         ca.cmdchar = Ctrl_BSL;
         ca.nchar = ca.extra_char;
         idx = find_command(ca.cmdchar);
+        assert(idx >= 0);
       } else if ((ca.nchar == 'n' || ca.nchar == 'N') && ca.cmdchar == 'g')
         ca.oap->op_type = get_op_type(*cp, NUL);
       else if (*cp == Ctrl_BSL) {
@@ -840,6 +837,7 @@ getcount:
             ca.cmdchar = Ctrl_BSL;
             ca.nchar = c;
             idx = find_command(ca.cmdchar);
+            assert(idx >= 0);
           }
         }
       }
@@ -897,11 +895,7 @@ getcount:
       start_selection();
       unshift_special(&ca);
       idx = find_command(ca.cmdchar);
-      if (idx < 0) {
-        /* Just in case */
-        clearopbeep(oap);
-        goto normal_end;
-      }
+      assert(idx >= 0);
     } else if ((nv_cmds[idx].cmd_flags & NV_SSS)
                && (mod_mask & MOD_MASK_SHIFT)) {
       start_selection();
