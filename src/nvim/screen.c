@@ -5099,7 +5099,7 @@ win_redr_custom (
   curattr = attr;
   p = buf;
   for (n = 0; hltab[n].start != NULL; n++) {
-    len = (int)(hltab[n].start - p);
+    int len = (int)(hltab[n].start - p);
     screen_puts_len(p, len, row, col, curattr);
     col += vim_strnsize(p, len);
     p = hltab[n].start;
@@ -5113,7 +5113,8 @@ win_redr_custom (
     else
       curattr = highlight_user[hltab[n].userhl - 1];
   }
-  screen_puts(p, row, col, curattr);
+  // Make sure to use an empty string instead of p, if p is beyond buf + len.
+  screen_puts(p >= buf + len ? (char_u *)"" : p, row, col, curattr);
 
   if (wp == NULL) {
     /* Fill the TabPageIdxs[] array for clicking in the tab pagesline. */
