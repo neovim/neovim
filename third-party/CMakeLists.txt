@@ -115,6 +115,7 @@ if(USE_BUNDLED_LUAJIT)
     BUILD_COMMAND ""
     INSTALL_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
+                                CFLAGS=-fPIC
                                 BUILDMODE=static
                                 install)
   list(APPEND THIRD_PARTY_DEPS luajit)
