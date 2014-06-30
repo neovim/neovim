@@ -109,6 +109,7 @@ StringArray buffer_get_slice(Buffer buffer,
   }
 
   start = normalize_index(buf, start) + (include_start ? 0 : 1);
+  include_end = include_end || (end >= buf->b_ml.ml_line_count);
   end = normalize_index(buf, end) + (include_end ? 1 : 0);
 
   if (start >= end) {
@@ -169,6 +170,7 @@ void buffer_set_slice(Buffer buffer,
   }
 
   start = normalize_index(buf, start) + (include_start ? 0 : 1);
+  include_end = include_end || (end >= buf->b_ml.ml_line_count);
   end = normalize_index(buf, end) + (include_end ? 1 : 0);
 
   if (start > end) {
