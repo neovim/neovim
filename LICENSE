@@ -1,5 +1,8 @@
 Copyright Neovim contributors. All rights reserved.
 
+Neovim is licensed under the terms of the Apache 2.0 license, except for
+parts of Neovim that were contributed under the Vim license (see below).
+
 Neovim's license follows:
 
 ====
@@ -180,9 +183,10 @@ Neovim's license follows:
 
 ====
 
-This license applies to all parts of Neovim that do not originate in Vim and
-are not externally maintained libraries. The externally maintained libraries
-used by Neovim are:
+The above license applies to all parts of Neovim except (1) parts that were
+contributed under the Vim license and (2) externally maintained libraries.
+
+The externally maintained libraries used by Neovim are:
 
   - Klib: a Generic Library in C. MIT/X11 license.
   - libuv. Copyright Joyent, Inc. and other Node contributors.
@@ -190,7 +194,10 @@ used by Neovim are:
 
 ====
 
-Any parts of Neovim that originated in Vim are licensed under the Vim license.
+Any parts of Neovim that were contributed under the Vim license are licensed
+under the Vim license unless the copyright holder gave permission to license
+those contributions under the Apache 2.0 license.
+
 The Vim license follows:
 
 VIM LICENSE
