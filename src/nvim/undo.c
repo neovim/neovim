@@ -916,7 +916,7 @@ static u_entry_T *unserialize_uep(FILE *fp, int *error, char_u *file_name)
   for (i = 0; i < uep->ue_size; ++i) {
     line_len = get4c(fp);
     if (line_len >= 0)
-      line = read_string(fp, line_len);
+      line = READ_STRING(fp, line_len);
     else {
       line = NULL;
       corruption_error("line length", file_name);
@@ -1316,7 +1316,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
   if (str_len < 0)
     goto error;
   if (str_len > 0)
-    line_ptr = read_string(fp, str_len);
+    line_ptr = READ_STRING(fp, str_len);
   line_lnum = (linenr_T)get4c(fp);
   line_colnr = (colnr_T)get4c(fp);
   if (line_lnum < 0 || line_colnr < 0) {

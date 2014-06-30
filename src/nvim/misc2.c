@@ -488,28 +488,20 @@ time_t get8ctime(FILE *fd)
   return n;
 }
 
-/*
- * Read a string of length "cnt" from "fd" into allocated memory.
- * Returns NULL when unable to read that many bytes.
- */
-char_u *read_string(FILE *fd, int cnt)
+/// Reads a string of length "cnt" from "fd" into allocated memory.
+/// @return pointer to the string or NULL when unable to read that many bytes.
+char *read_string(FILE *fd, size_t cnt)
 {
-  int i;
-  int c;
-
-  char_u *str = xmallocz(cnt);
-  /* Read the string.  Quit when running into the EOF. */
-  for (i = 0; i < cnt; ++i) {
-    c = getc(fd);
+  uint8_t *str = xmallocz(cnt);
+  for (size_t i = 0; i < cnt; i++) {
+    int c = getc(fd);
     if (c == EOF) {
       free(str);
       return NULL;
     }
-    str[i] = c;
+    str[i] = (uint8_t)c;
   }
-  str[i] = NUL;
-
-  return str;
+  return (char *)str;
 }
 
 /*

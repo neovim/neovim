@@ -2600,7 +2600,7 @@ spell_load_file (
     res = 0;
     switch (n) {
     case SN_INFO:
-      lp->sl_info = read_string(fd, len);               // <infotext>
+      lp->sl_info = READ_STRING(fd, len);               // <infotext>
       if (lp->sl_info == NULL)
         goto endFAIL;
       break;
@@ -2614,7 +2614,7 @@ spell_load_file (
       break;
 
     case SN_MIDWORD:
-      lp->sl_midword = read_string(fd, len);            // <midword>
+      lp->sl_midword = READ_STRING(fd, len);            // <midword>
       if (lp->sl_midword == NULL)
         goto endFAIL;
       break;
@@ -2640,7 +2640,7 @@ spell_load_file (
       break;
 
     case SN_MAP:
-      p = read_string(fd, len);                         // <mapstr>
+      p = READ_STRING(fd, len);                         // <mapstr>
       if (p == NULL)
         goto endFAIL;
       set_map_str(lp, p);
@@ -2668,7 +2668,7 @@ spell_load_file (
       break;
 
     case SN_SYLLABLE:
-      lp->sl_syllable = read_string(fd, len);           // <syllable>
+      lp->sl_syllable = READ_STRING(fd, len);           // <syllable>
       if (lp->sl_syllable == NULL)
         goto endFAIL;
       if (init_syl_tab(lp) == FAIL)
@@ -2764,7 +2764,7 @@ static char_u *read_cnt_string(FILE *fd, int cnt_bytes, int *cntp)
   if (cnt == 0)
     return NULL;            // nothing to read, return NULL
 
-  str = read_string(fd, cnt);
+  str = READ_STRING(fd, cnt);
   if (str == NULL)
     *cntp = SP_OTHERERROR;
   return str;
