@@ -44,7 +44,7 @@ set(CONV_SRCS
   log.c
   map.c
   memory.c
-  map.c
+  misc2.c
   os/env.c
   os/event.c
   os/job.c
