@@ -5446,11 +5446,9 @@ helptags_one (
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
           dir, FALSE) == kEqualFiles) {
-    ga_grow(&ga, 1);
     s = xmalloc(18 + STRLEN(tagfname));
     sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
-    ((char_u **)ga.ga_data)[ga.ga_len] = s;
-    ++ga.ga_len;
+    GA_APPEND(char_u *, &ga, s);
   }
 
   /*
@@ -5517,10 +5515,8 @@ helptags_one (
                   || s[1] == '\0')) {
             *p2 = '\0';
             ++p1;
-            ga_grow(&ga, 1);
             s = xmalloc((p2 - p1) + STRLEN(fname) + 2);
-            ((char_u **)ga.ga_data)[ga.ga_len] = s;
-            ++ga.ga_len;
+            GA_APPEND(char_u *, &ga, s);
             sprintf((char *)s, "%s\t%s", p1, fname);
 
             /* find next '*' */

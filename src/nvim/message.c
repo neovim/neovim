@@ -2257,8 +2257,8 @@ void mch_errmsg(char *str)
   emsg_on_display = FALSE;
 
   len = (int)STRLEN(str) + 1;
-  if (error_ga.ga_growsize == 0) {
-    error_ga.ga_growsize = 80;
+  if (error_ga.ga_data == NULL) {
+    ga_set_growsize(&error_ga, 80);
     error_ga.ga_itemsize = 1;
   }
   ga_grow(&error_ga, len);

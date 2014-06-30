@@ -5290,8 +5290,7 @@ list_join_inner (
     len = (int)STRLEN(s);
     sumlen += len;
 
-    ga_grow(join_gap, 1);
-    p = ((join_T *)join_gap->ga_data) + (join_gap->ga_len++);
+    p = GA_APPEND_VIA_PTR(join_T, join_gap);
     if (tofree != NULL || s != numbuf) {
       p->s = s;
       p->tofree = tofree;
@@ -10218,11 +10217,9 @@ static void f_inputrestore(typval_T *argvars, typval_T *rettv)
  */
 static void f_inputsave(typval_T *argvars, typval_T *rettv)
 {
-  /* Add an entry to the stack of typeahead storage. */
-  ga_grow(&ga_userinput, 1);
-  save_typeahead((tasave_T *)(ga_userinput.ga_data)
-          + ga_userinput.ga_len);
-  ++ga_userinput.ga_len;
+  // Add an entry to the stack of typeahead storage.
+  tasave_T *p = GA_APPEND_VIA_PTR(tasave_T, &ga_userinput);
+  save_typeahead(p);
 }
 
 /*
@@ -14420,8 +14417,7 @@ error:
     }
   }
 
-  /* add a terminating NUL */
-  ga_grow(&ga, 1);
+  // add a terminating NUL
   ga_append(&ga, NUL);
 
   rettv->vval.v_string = ga.ga_data;
@@ -17640,8 +17636,7 @@ script_autoload (
   else {
     /* Remember the name if it wasn't loaded already. */
     if (i == ga_loaded.ga_len) {
-      ga_grow(&ga_loaded, 1);
-      ((char_u **)ga_loaded.ga_data)[ga_loaded.ga_len++] = scriptname;
+      GA_APPEND(char_u *, &ga_loaded, scriptname);
       tofree = NULL;
     }
 

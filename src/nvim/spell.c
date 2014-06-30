@@ -3335,7 +3335,6 @@ static int init_syl_tab(slang_T *slang)
   char_u      *p;
   char_u      *s;
   int l;
-  syl_item_T  *syl;
 
   ga_init(&slang->sl_syl_items, sizeof(syl_item_T), 4);
   p = vim_strchr(slang->sl_syllable, '/');
@@ -3351,9 +3350,8 @@ static int init_syl_tab(slang_T *slang)
       l = (int)(p - s);
     if (l >= SY_MAXLEN)
       return SP_FORMERROR;
-    ga_grow(&slang->sl_syl_items, 1);
-    syl = ((syl_item_T *)slang->sl_syl_items.ga_data)
-          + slang->sl_syl_items.ga_len++;
+
+    syl_item_T *syl = GA_APPEND_VIA_PTR(syl_item_T, &slang->sl_syl_items);
     STRLCPY(syl->sy_chars, s, l + 1);
     syl->sy_len = l;
   }
@@ -3835,10 +3833,10 @@ char_u *did_set_spelllang(win_T *wp)
         }
 
         if (region_mask != 0) {
-          ga_grow(&ga, 1);
-          LANGP_ENTRY(ga, ga.ga_len)->lp_slang = slang;
-          LANGP_ENTRY(ga, ga.ga_len)->lp_region = region_mask;
-          ++ga.ga_len;
+          langp_T *p = GA_APPEND_VIA_PTR(langp_T, &ga);
+          p->lp_slang = slang;
+          p->lp_region = region_mask;
+
           use_midword(slang, wp);
           if (slang->sl_nobreak)
             nobreak = TRUE;
@@ -3896,7 +3894,6 @@ char_u *did_set_spelllang(win_T *wp)
         slang->sl_nobreak = TRUE;
     }
     if (slang != NULL) {
-      ga_grow(&ga, 1);
       region_mask = REGION_ALL;
       if (use_region != NULL && !dont_use_region) {
         // find region in sl_regions
@@ -3909,11 +3906,12 @@ char_u *did_set_spelllang(win_T *wp)
       }
 
       if (region_mask != 0) {
-        LANGP_ENTRY(ga, ga.ga_len)->lp_slang = slang;
-        LANGP_ENTRY(ga, ga.ga_len)->lp_sallang = NULL;
-        LANGP_ENTRY(ga, ga.ga_len)->lp_replang = NULL;
-        LANGP_ENTRY(ga, ga.ga_len)->lp_region = region_mask;
-        ++ga.ga_len;
+        langp_T *p = GA_APPEND_VIA_PTR(langp_T, &ga);
+        p->lp_slang = slang;
+        p->lp_sallang = NULL;
+        p->lp_replang = NULL;
+        p->lp_region = region_mask;
+
         use_midword(slang, wp);
       }
     }
@@ -4851,16 +4849,11 @@ static afffile_T *spell_read_aff(spellinfo_T *spin, char_u *fname)
                   break;
               }
               if (idx < 0) {
-                ga_grow(&spin->si_prefcond, 1);
                 // Not found, add a new condition.
-                idx = spin->si_prefcond.ga_len++;
-                pp = ((char_u **)spin->si_prefcond.ga_data)
-                     + idx;
-                if (aff_entry->ae_cond == NULL)
-                  *pp = NULL;
-                else
-                  *pp = getroom_save(spin,
-                      aff_entry->ae_cond);
+                idx = spin->si_prefcond.ga_len;
+                pp = GA_APPEND_VIA_PTR(char_u *, &spin->si_prefcond);
+                *pp = (aff_entry->ae_cond == NULL) ?
+                  NULL : getroom_save(spin, aff_entry->ae_cond);
               }
 
               // Add the prefix to the prefix tree.
@@ -5328,16 +5321,13 @@ static int str_equal(char_u *s1, char_u *s2)
 // They are stored case-folded.
 static void add_fromto(spellinfo_T *spin, garray_T *gap, char_u *from, char_u *to)
 {
-  fromto_T    *ftp;
   char_u word[MAXWLEN];
 
-  ga_grow(gap, 1);
-  ftp = ((fromto_T *)gap->ga_data) + gap->ga_len;
+  fromto_T *ftp = GA_APPEND_VIA_PTR(fromto_T, gap);
   (void)spell_casefold(from, (int)STRLEN(from), word, MAXWLEN);
   ftp->ft_from = getroom_save(spin, word);
   (void)spell_casefold(to, (int)STRLEN(to), word, MAXWLEN);
   ftp->ft_to = getroom_save(spin, word);
-  ++gap->ga_len;
 }
 
 // Convert a boolean argument in a SAL line to TRUE or FALSE;
@@ -9138,8 +9128,7 @@ someerror:
           if (c < 0) {
             goto someerror;
           }
-          ga_grow(&ga, 1);
-          ((char_u *)ga.ga_data)[ga.ga_len++] = c;
+          GA_APPEND(char_u, &ga, c);
           if (c == NUL)
             break;
         }
@@ -11504,9 +11493,8 @@ add_suggestion (
   }
 
   if (i < 0) {
-    ga_grow(gap, 1);
     // Add a suggestion.
-    stp = &SUG(*gap, gap->ga_len);
+    stp = GA_APPEND_VIA_PTR(suggest_T, gap);
     stp->st_word = vim_strnsave(goodword, goodlen);
     stp->st_wordlen = goodlen;
     stp->st_score = score;
@@ -11514,7 +11502,6 @@ add_suggestion (
     stp->st_had_bonus = had_bonus;
     stp->st_orglen = badlen;
     stp->st_slang = slang;
-    ++gap->ga_len;
 
     // If we have too many suggestions now, sort the list and keep
     // the best suggestions.

@@ -1619,12 +1619,10 @@ void putdigraph(char_u *str)
 
     // Add a new digraph to the table.
     if (i == user_digraphs.ga_len) {
-      ga_grow(&user_digraphs, 1);
-      dp = (digr_T *)user_digraphs.ga_data + user_digraphs.ga_len;
+      dp = GA_APPEND_VIA_PTR(digr_T, &user_digraphs);
       dp->char1 = char1;
       dp->char2 = char2;
       dp->result = n;
-      ++user_digraphs.ga_len;
     }
   }
 }
@@ -1772,7 +1770,6 @@ void ex_loadkeymap(exarg_T *eap)
   char_u *line;
   char_u *p;
   char_u *s;
-  kmap_T *kp;
 
 #define KMAP_LLEN 200  // max length of "to" and "from" together
   char_u buf[KMAP_LLEN + 11];
@@ -1803,8 +1800,7 @@ void ex_loadkeymap(exarg_T *eap)
     p = skipwhite(line);
 
     if ((*p != '"') && (*p != NUL)) {
-      ga_grow(&curbuf->b_kmap_ga, 1);
-      kp = (kmap_T *)curbuf->b_kmap_ga.ga_data + curbuf->b_kmap_ga.ga_len;
+      kmap_T *kp = GA_APPEND_VIA_PTR(kmap_T, &curbuf->b_kmap_ga);
       s = skiptowhite(p);
       kp->from = vim_strnsave(p, (int)(s - p));
       p = skipwhite(s);
@@ -1819,8 +1815,7 @@ void ex_loadkeymap(exarg_T *eap)
         }
         free(kp->from);
         free(kp->to);
-      } else {
-        ++curbuf->b_kmap_ga.ga_len;
+        --curbuf->b_kmap_ga.ga_len;
       }
     }
     free(line);

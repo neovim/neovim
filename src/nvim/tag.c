@@ -1995,8 +1995,7 @@ static garray_T tag_fnames = GA_EMPTY_INIT_VALUE;
  */
 static void found_tagfile_cb(char_u *fname, void *cookie)
 {
-  ga_grow(&tag_fnames, 1);
-  ((char_u **)(tag_fnames.ga_data))[tag_fnames.ga_len++] = vim_strsave(fname);
+  GA_APPEND(char_u *, &tag_fnames, vim_strsave(fname));
 }
 
 #if defined(EXITFREE) || defined(PROTO)

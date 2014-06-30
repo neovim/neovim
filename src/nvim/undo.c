@@ -2249,7 +2249,6 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      ga_grow(&ga, 1);
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7ld  ",
           uhp->uh_seq, changes);
       u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
@@ -2260,7 +2259,7 @@ void ex_undolist(exarg_T *eap)
         vim_snprintf_add((char *)IObuff, IOSIZE,
             "  %3ld", uhp->uh_save_nr);
       }
-      ((char_u **)(ga.ga_data))[ga.ga_len++] = vim_strsave(IObuff);
+      GA_APPEND(char_u *, &ga, vim_strsave(IObuff));
     }
 
     uhp->uh_walk = mark;

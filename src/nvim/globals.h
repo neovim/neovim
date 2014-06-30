@@ -969,7 +969,7 @@ EXTERN int need_cursor_line_redraw INIT(= FALSE);
 /* Grow array to collect error messages in until they can be displayed. */
 EXTERN garray_T error_ga
 # ifdef DO_INIT
-  = {0, 0, 0, 0, NULL}
+  = GA_EMPTY_INIT_VALUE
 # endif
 ;
 #endif

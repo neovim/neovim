@@ -3180,8 +3180,8 @@ static int reg_line_lbr;                    /* "\n" in string is line break */
  * or regbehind_T.
  * "backpos_T" is a table with backpos_T for BACK
  */
-static garray_T regstack = {0, 0, 0, 0, NULL};
-static garray_T backpos = {0, 0, 0, 0, NULL};
+static garray_T regstack = GA_EMPTY_INIT_VALUE;
+static garray_T backpos = GA_EMPTY_INIT_VALUE;
 
 /*
  * Both for regstack and backpos tables we use the following strategy of
@@ -3319,13 +3319,13 @@ static long bt_regexec_both(char_u *line,
      * onto the regstack. */
     ga_init(&regstack, 1, REGSTACK_INITIAL);
     ga_grow(&regstack, REGSTACK_INITIAL);
-    regstack.ga_growsize = REGSTACK_INITIAL * 8;
+    ga_set_growsize(&regstack, REGSTACK_INITIAL * 8);
   }
 
   if (backpos.ga_data == NULL) {
     ga_init(&backpos, sizeof(backpos_T), BACKPOS_INITIAL);
     ga_grow(&backpos, BACKPOS_INITIAL);
-    backpos.ga_growsize = BACKPOS_INITIAL * 8;
+    ga_set_growsize(&backpos, BACKPOS_INITIAL * 8);
   }
 
   if (REG_MULTI) {
@@ -4177,7 +4177,6 @@ regmatch (
         case BACK:
         {
           int i;
-          backpos_T       *bp;
 
           /*
            * When we run into BACK we need to check if we don't keep
@@ -4187,17 +4186,13 @@ regmatch (
            * The positions are stored in "backpos" and found by the
            * current value of "scan", the position in the RE program.
            */
-          bp = (backpos_T *)backpos.ga_data;
+          backpos_T *bp = (backpos_T *)backpos.ga_data;
           for (i = 0; i < backpos.ga_len; ++i)
             if (bp[i].bp_scan == scan)
               break;
           if (i == backpos.ga_len) {
-            /* First time at this BACK, make room to store the pos. */
-            ga_grow(&backpos, 1);
-            /* get "ga_data" again, it may have changed */
-            bp = (backpos_T *)backpos.ga_data;
-            bp[i].bp_scan = scan;
-            ++backpos.ga_len;
+            backpos_T *p = GA_APPEND_VIA_PTR(backpos_T, &backpos);
+            p->bp_scan = scan;
           } else if (reg_save_equal(&bp[i].bp_pos))
             /* Still at same position as last time, fail. */
             status = RA_NOMATCH;
