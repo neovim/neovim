@@ -10,6 +10,7 @@
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
+[![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=461131)](https://www.bountysource.com/trackers/461131-neovim?utm_source=461131&utm_medium=shield&utm_campaign=TRACKER_BADGE)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
