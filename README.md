@@ -84,7 +84,7 @@ parts that were contributed under the Vim license.
   Apache 2.0 unless those contributions were copied from Vim (identified in 
   the commit logs by the `vim-patch` token).
 
-See LICENSE for details.
+See `LICENSE` for details.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the

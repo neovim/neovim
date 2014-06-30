@@ -189,8 +189,8 @@ contributed under the Vim license and (2) externally maintained libraries.
 The externally maintained libraries used by Neovim are:
 
   - Klib: a Generic Library in C. MIT/X11 license.
-  - libuv. Copyright Joyent, Inc. and other Node contributors.
-    Node.js license.
+  - libuv. Copyright Joyent, Inc. and other Node contributors. Node.js license.
+  - LuaJIT: a Just-In-Time Compiler for Lua. Copyright Mike Pall. MIT license.
 
 ====
 
