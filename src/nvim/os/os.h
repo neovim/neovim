@@ -6,6 +6,7 @@
 
 #include "nvim/os/fs_defs.h"
 #include "nvim/vim.h"
+#include "nvim/os/os_defs.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/fs.h.generated.h"
