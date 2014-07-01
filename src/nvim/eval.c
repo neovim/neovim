@@ -14647,28 +14647,36 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv)
       || (dict = argvars[0].vval.v_dict) == NULL)
     EMSG(_(e_invarg));
   else {
-    if (dict_find(dict, (char_u *)"lnum", -1) != NULL)
-        curwin->w_cursor.lnum = get_dict_number(dict, (char_u *)"lnum");
-    if (dict_find(dict, (char_u *)"col", -1) != NULL)
-        curwin->w_cursor.col = get_dict_number(dict, (char_u *)"col");
-    if (dict_find(dict, (char_u *)"coladd", -1) != NULL)
-        curwin->w_cursor.coladd = get_dict_number(dict, (char_u *)"coladd");
-    curwin->w_curswant = get_dict_number(dict, (char_u *)"curswant");
-    curwin->w_set_curswant = FALSE;
-    if (dict_find(dict, (char_u *)"curswant", -1) != NULL)
-    {
-        curwin->w_curswant = get_dict_number(dict, (char_u *)"curswant");
-        curwin->w_set_curswant = FALSE;
+    if (dict_find(dict, (char_u *)"lnum", -1) != NULL) {
+      curwin->w_cursor.lnum = get_dict_number(dict, (char_u *)"lnum");
+    }
+    if (dict_find(dict, (char_u *)"col", -1) != NULL) {
+      curwin->w_cursor.col = get_dict_number(dict, (char_u *)"col");
+    }
+    if (dict_find(dict, (char_u *)"coladd", -1) != NULL) {
+      curwin->w_cursor.coladd = get_dict_number(dict, (char_u *)"coladd");
     }
 
-    if (dict_find(dict, (char_u *)"topline", -1) != NULL)
-        set_topline(curwin, get_dict_number(dict, (char_u *)"topline"));
-    if (dict_find(dict, (char_u *)"topfill", -1) != NULL)
-        curwin->w_topfill = get_dict_number(dict, (char_u *)"topfill");
-    if (dict_find(dict, (char_u *)"topcol", -1) != NULL)
-        curwin->w_leftcol = get_dict_number(dict, (char_u *)"leftcol");
-    if (dict_find(dict, (char_u *)"skipcol", -1) != NULL)
-        curwin->w_skipcol = get_dict_number(dict, (char_u *)"skipcol");
+    curwin->w_curswant = get_dict_number(dict, (char_u *)"curswant");
+    curwin->w_set_curswant = FALSE;
+
+    if (dict_find(dict, (char_u *)"curswant", -1) != NULL) {
+      curwin->w_curswant = get_dict_number(dict, (char_u *)"curswant");
+      curwin->w_set_curswant = FALSE;
+    }
+
+    if (dict_find(dict, (char_u *)"topline", -1) != NULL) {
+      set_topline(curwin, get_dict_number(dict, (char_u *)"topline"));
+    }
+    if (dict_find(dict, (char_u *)"topfill", -1) != NULL) {
+      curwin->w_topfill = get_dict_number(dict, (char_u *)"topfill");
+    }
+    if (dict_find(dict, (char_u *)"topcol", -1) != NULL) {
+      curwin->w_leftcol = get_dict_number(dict, (char_u *)"leftcol");
+    }
+    if (dict_find(dict, (char_u *)"skipcol", -1) != NULL) {
+      curwin->w_skipcol = get_dict_number(dict, (char_u *)"skipcol");
+    }
 
     check_cursor();
     win_new_height(curwin, curwin->w_height);
