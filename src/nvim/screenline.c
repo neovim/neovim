@@ -23,9 +23,9 @@
 #include "nvim/memline.h"
 #include "nvim/charset.h"
 #include "nvim/move.h"
-#include "nvim/line_consumption.h"
+#include "nvim/screenline.h"
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "line_consumption.c.generated.h"
+# include "screenline.c.generated.h"
 #endif
 
 /// Gets the physical line count consumed by a real line in current window
