@@ -26,7 +26,6 @@
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
 #include "nvim/misc1.h"
-#include "nvim/line_consumption.h"
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
@@ -38,6 +37,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
 #include "nvim/screen.h"
+#include "nvim/screenline.h"
 #include "nvim/term.h"
 #include "nvim/window.h"
 
