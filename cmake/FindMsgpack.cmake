@@ -22,7 +22,6 @@ set(MSGPACK_DEFINITIONS ${PC_MSGPACK_CFLAGS_OTHER})
 
 find_path(MSGPACK_INCLUDE_DIR msgpack.h
   HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS}
-  PATHS "${DEPS_INSTALL_DIR}"
   ${LIMIT_SEARCH})
 
 # If we're asked to use static linkage, add libmsgpackc.a as a preferred library name.
@@ -35,7 +34,6 @@ list(APPEND MSGPACK_NAMES msgpackc)
 
 find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
-  PATHS "${DEPS_INSTALL_DIR}"
   ${LIMIT_SEARCH})
 
 mark_as_advanced(MSGPACK_INCLUDE_DIR MSGPACK_LIBRARY)
