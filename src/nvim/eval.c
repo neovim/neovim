@@ -12177,15 +12177,6 @@ theend:
   return retval;
 }
 
-
-/*
- * round() is not in C90, use ceil() or floor() instead.
- */
-float_T vim_round(float_T f)
-{
-  return f > 0 ? floor(f + 0.5) : ceil(f - 0.5);
-}
-
 /*
  * "round({float})" function
  */
@@ -12195,7 +12186,7 @@ static void f_round(typval_T *argvars, typval_T *rettv)
 
   rettv->v_type = VAR_FLOAT;
   if (get_float_arg(argvars, &f) == OK)
-    rettv->vval.v_float = vim_round(f);
+    rettv->vval.v_float = round(f);
   else
     rettv->vval.v_float = 0.0;
 }

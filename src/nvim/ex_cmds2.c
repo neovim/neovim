@@ -848,7 +848,7 @@ void profile_divide(proftime_T *tm, int count, proftime_T *tm2)
     double usec = (tm->tv_sec * 1000000.0 + tm->tv_usec) / count;
 
     tm2->tv_sec = floor(usec / 1000000.0);
-    tm2->tv_usec = vim_round(usec - (tm2->tv_sec * 1000000.0));
+    tm2->tv_usec = round(usec - (tm2->tv_sec * 1000000.0));
   }
 }
 
