@@ -746,13 +746,14 @@ void dbg_breakpoint(char_u *name, linenr_T lnum)
 }
 
 static char_u   *profile_fname = NULL;
-static proftime_T pause_time;
 
 /*
  * ":profile cmd args"
  */
 void ex_profile(exarg_T *eap)
 {
+  static proftime_T pause_time;
+
   char_u      *e;
   int len;
 
