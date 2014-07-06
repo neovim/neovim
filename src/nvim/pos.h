@@ -1,6 +1,12 @@
 #ifndef NVIM_POS_H
 #define NVIM_POS_H
 
+typedef long linenr_T;         // line number type
+typedef int colnr_T;           // column number type
+
+#define MAXLNUM (0x7fffffffL)  // maximum (invalid) line number
+#define MAXCOL  (0x7fffffffL)  // maximum column number, 31 bits
+
 /*
  * position in file or buffer
  */

@@ -9,6 +9,7 @@
 # define NVIM_VIM_H
 
 #include "nvim/types.h"
+#include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...
 
 /* Some defines from the old feature.h */
 #define SESSION_FILE "Session.vim"
@@ -354,12 +355,7 @@ enum {
 #define PERROR(msg) \
   (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
 
-typedef long linenr_T;                  /* line number type */
-typedef int colnr_T;                    /* column number type */
 typedef unsigned short disptick_T;      /* display tick type */
-
-#define MAXLNUM (0x7fffffffL)           /* maximum (invalid) line number */
-#define MAXCOL (0x7fffffffL)          /* maximum column number, 31 bits */
 
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
