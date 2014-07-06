@@ -355,8 +355,6 @@ enum {
 #define PERROR(msg) \
   (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
 
-typedef unsigned short disptick_T;      /* display tick type */
-
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
 
