@@ -10,6 +10,11 @@
 
 #include <stdint.h>
 
+// Make sure long_u is big enough to hold a pointer.
+// On Win64, longs are 32 bits and pointers are 64 bits.
+// For printf() and scanf(), we need to take care of long_u specifically.
+typedef unsigned long long_u;
+
 /*
  * Shorthand for unsigned variables. Many systems, but not all, have u_char
  * already defined, so we use char_u to avoid trouble.

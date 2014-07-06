@@ -58,11 +58,6 @@ Error: configure did not run properly.Check auto/config.log.
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
-// Make sure long_u is big enough to hold a pointer.
-// On Win64, longs are 32 bits and pointers are 64 bits.
-// For printf() and scanf(), we need to take care of long_u specifically.
-typedef unsigned long long_u;
-
 # define MAX_TYPENR 65535
 
 /*
