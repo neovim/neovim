@@ -1122,7 +1122,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
       /* If the motion was linewise, "inclusive" will not have been set.
        * Use "exclusive" to be consistent.  Makes "dvj" work nice. */
       if (oap->motion_type == MLINE)
-        oap->inclusive = FALSE;
+        oap->inclusive = false;
       /* If the motion already was characterwise, toggle "inclusive" */
       else if (oap->motion_type == MCHAR)
         oap->inclusive = !oap->inclusive;
@@ -1285,7 +1285,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
       if (VIsual_mode == Ctrl_V) {      /* block mode */
         colnr_T start, end;
 
-        oap->block_mode = TRUE;
+        oap->block_mode = true;
 
         getvvcol(curwin, &(oap->start),
             &oap->start_vcol, NULL, &oap->end_vcol);
@@ -1389,12 +1389,12 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
       }
 
       /*
-       * oap->inclusive defaults to TRUE.
+       * oap->inclusive defaults to true.
        * If oap->end is on a NUL (empty line) oap->inclusive becomes
-       * FALSE.  This makes "d}P" and "v}dP" work the same.
+       * false.  This makes "d}P" and "v}dP" work the same.
        */
       if (oap->motion_force == NUL || oap->motion_type == MLINE)
-        oap->inclusive = TRUE;
+        oap->inclusive = true;
       if (VIsual_mode == 'V')
         oap->motion_type = MLINE;
       else {
@@ -1402,7 +1402,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
         if (VIsual_mode != Ctrl_V && *ml_get_pos(&(oap->end)) == NUL
             && (include_line_break || !virtual_op)
             ) {
-          oap->inclusive = FALSE;
+          oap->inclusive = false;
           /* Try to include the newline, unless it's an operator
            * that works on lines only. */
           if (*p_sel != 'o' && !op_on_lines(oap->op_type)) {
@@ -1415,7 +1415,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
               /* Cannot move below the last line, make the op
                * inclusive to tell the operation to include the
                * line break. */
-              oap->inclusive = TRUE;
+              oap->inclusive = true;
             }
           }
         }
@@ -1484,19 +1484,19 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
 
     /*
      * If the end of an operator is in column one while oap->motion_type
-     * is MCHAR and oap->inclusive is FALSE, we put op_end after the last
+     * is MCHAR and oap->inclusive is false, we put op_end after the last
      * character in the previous line. If op_start is on or before the
      * first non-blank in the line, the operator becomes linewise
      * (strange, but that's the way vi does it).
      */
     if (       oap->motion_type == MCHAR
-               && oap->inclusive == FALSE
+               && oap->inclusive == false
                && !(cap->retval & CA_NO_ADJ_OP_END)
                && oap->end.col == 0
                && (!oap->is_VIsual || *p_sel == 'o')
                && !oap->block_mode
                && oap->line_count > 1) {
-      oap->end_adjusted = TRUE;             /* remember that we did this */
+      oap->end_adjusted = true;             /* remember that we did this */
       --oap->line_count;
       --oap->end.lnum;
       if (inindent(0))
@@ -1505,11 +1505,11 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
         oap->end.col = (colnr_T)STRLEN(ml_get(oap->end.lnum));
         if (oap->end.col) {
           --oap->end.col;
-          oap->inclusive = TRUE;
+          oap->inclusive = true;
         }
       }
     } else
-      oap->end_adjusted = FALSE;
+      oap->end_adjusted = false;
 
     switch (oap->op_type) {
     case OP_LSHIFT:
@@ -1708,7 +1708,7 @@ void do_pending_operator(cmdarg_T *cap, int old_col, int gui_yank)
     } else {
       curwin->w_cursor = old_cursor;
     }
-    oap->block_mode = FALSE;
+    oap->block_mode = false;
     clearop(oap);
   }
 }
@@ -2808,7 +2808,7 @@ static void clearop(oparg_T *oap)
   oap->op_type = OP_NOP;
   oap->regname = 0;
   oap->motion_force = NUL;
-  oap->use_reg_one = FALSE;
+  oap->use_reg_one = false;
 }
 
 static void clearopbeep(oparg_T *oap)
@@ -3285,7 +3285,7 @@ find_decl (
   bool save_p_ws;
   int save_p_scs;
   int retval = OK;
-  int incll;
+  bool incll;
 
   pat = xmalloc(len + 7);
 
@@ -4059,7 +4059,7 @@ static void nv_colon(cmdarg_T *cap)
     if (cap->oap->op_type != OP_NOP) {
       /* Using ":" as a movement is characterwise exclusive. */
       cap->oap->motion_type = MCHAR;
-      cap->oap->inclusive = FALSE;
+      cap->oap->inclusive = false;
     } else if (cap->count0) {
       /* translate "count:" into ":.,.+(count - 1)" */
       stuffcharReadbuff('.');
@@ -4535,7 +4535,7 @@ static void nv_right(cmdarg_T *cap)
   }
 
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   PAST_LINE = (VIsual_active && *p_sel != 'o');
 
   /*
@@ -4567,13 +4567,13 @@ static void nv_right(cmdarg_T *cap)
         if (       cap->oap->op_type != OP_NOP
                    && !cap->oap->inclusive
                    && !lineempty(curwin->w_cursor.lnum))
-          cap->oap->inclusive = TRUE;
+          cap->oap->inclusive = true;
         else {
           ++curwin->w_cursor.lnum;
           curwin->w_cursor.col = 0;
           curwin->w_cursor.coladd = 0;
           curwin->w_set_curswant = TRUE;
-          cap->oap->inclusive = FALSE;
+          cap->oap->inclusive = false;
         }
         continue;
       }
@@ -4583,7 +4583,7 @@ static void nv_right(cmdarg_T *cap)
           beep_flush();
       } else {
         if (!lineempty(curwin->w_cursor.lnum))
-          cap->oap->inclusive = TRUE;
+          cap->oap->inclusive = true;
       }
       break;
     } else if (PAST_LINE) {
@@ -4622,7 +4622,7 @@ static void nv_left(cmdarg_T *cap)
   }
 
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   for (n = cap->count1; n > 0; --n) {
     if (oneleft() == FAIL) {
       /* <BS> and <Del> wrap to previous line if 'whichwrap' has 'b'.
@@ -4778,7 +4778,7 @@ static void nv_end(cmdarg_T *cap)
 static void nv_dollar(cmdarg_T *cap)
 {
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = TRUE;
+  cap->oap->inclusive = true;
   /* In virtual mode when off the edge of a line and an operator
    * is pending (whew!) keep the cursor where it is.
    * Otherwise, send it to the end of the line. */
@@ -4843,8 +4843,8 @@ normal_search (
   int i;
 
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
-  cap->oap->use_reg_one = TRUE;
+  cap->oap->inclusive = false;
+  cap->oap->use_reg_one = true;
   curwin->w_set_curswant = TRUE;
 
   i = do_search(cap->oap, dir, pat, cap->count1,
@@ -4915,7 +4915,7 @@ static void nv_brackets(cmdarg_T *cap)
   int c;
 
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   old_pos = curwin->w_cursor;
   curwin->w_cursor.coladd = 0;              /* TODO: don't do this for an error. */
 
@@ -5199,7 +5199,7 @@ static void nv_percent(cmdarg_T *cap)
   pos_T       *pos;
   linenr_T lnum = curwin->w_cursor.lnum;
 
-  cap->oap->inclusive = TRUE;
+  cap->oap->inclusive = true;
   if (cap->count0) {        /* {cnt}% : goto {cnt} percentage in file */
     if (cap->count0 > 100)
       clearopbeep(cap->oap);
@@ -5220,7 +5220,7 @@ static void nv_percent(cmdarg_T *cap)
     }
   } else {                /* "%" : go to matching paren */
     cap->oap->motion_type = MCHAR;
-    cap->oap->use_reg_one = TRUE;
+    cap->oap->use_reg_one = true;
     if ((pos = findmatch(cap->oap, NUL)) == NULL)
       clearopbeep(cap->oap);
     else {
@@ -5245,9 +5245,9 @@ static void nv_percent(cmdarg_T *cap)
 static void nv_brace(cmdarg_T *cap)
 {
   cap->oap->motion_type = MCHAR;
-  cap->oap->use_reg_one = TRUE;
+  cap->oap->use_reg_one = true;
   /* The motion used to be inclusive for "(", but that is not what Vi does. */
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   curwin->w_set_curswant = TRUE;
 
   if (findsent(cap->arg, cap->count1) == FAIL)
@@ -5279,8 +5279,8 @@ static void nv_mark(cmdarg_T *cap)
 static void nv_findpar(cmdarg_T *cap)
 {
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
-  cap->oap->use_reg_one = TRUE;
+  cap->oap->inclusive = false;
+  cap->oap->use_reg_one = true;
   curwin->w_set_curswant = TRUE;
   if (!findpar(&cap->oap->inclusive, cap->arg, cap->count1, NUL, FALSE))
     clearopbeep(cap->oap);
@@ -5653,8 +5653,8 @@ static void nv_cursormark(cmdarg_T *cap, int flag, pos_T *pos)
   }
   cap->oap->motion_type = flag ? MLINE : MCHAR;
   if (cap->cmdchar == '`')
-    cap->oap->use_reg_one = TRUE;
-  cap->oap->inclusive = FALSE;                  /* ignored if not MCHAR */
+    cap->oap->use_reg_one = true;
+  cap->oap->inclusive = false;                  /* ignored if not MCHAR */
   curwin->w_set_curswant = TRUE;
 }
 
@@ -6173,7 +6173,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case K_HOME:
   case K_KHOME:
     oap->motion_type = MCHAR;
-    oap->inclusive = FALSE;
+    oap->inclusive = false;
     if (curwin->w_p_wrap
         && curwin->w_width != 0
         ) {
@@ -6206,7 +6206,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     /* "g_": to the last non-blank character in the line or <count> lines
      * downward. */
     cap->oap->motion_type = MCHAR;
-    cap->oap->inclusive = TRUE;
+    cap->oap->inclusive = true;
     curwin->w_curswant = MAXCOL;
     if (cursor_down((long)(cap->count1 - 1),
             cap->oap->op_type == OP_NOP) == FAIL)
@@ -6234,7 +6234,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     int col_off = curwin_col_off();
 
     oap->motion_type = MCHAR;
-    oap->inclusive = TRUE;
+    oap->inclusive = true;
     if (curwin->w_p_wrap
         && curwin->w_width != 0
         ) {
@@ -6297,7 +6297,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   case 'E':
     oap->motion_type = MCHAR;
     curwin->w_set_curswant = TRUE;
-    oap->inclusive = TRUE;
+    oap->inclusive = true;
     if (bckend_word(cap->count1, cap->nchar == 'E', FALSE) == FAIL)
       clearopbeep(oap);
     break;
@@ -6682,7 +6682,7 @@ static void nv_home(cmdarg_T *cap)
 static void nv_pipe(cmdarg_T *cap)
 {
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   beginline(0);
   if (cap->count0 > 0) {
     coladvance((colnr_T)(cap->count0 - 1));
@@ -6701,7 +6701,7 @@ static void nv_pipe(cmdarg_T *cap)
 static void nv_bck_word(cmdarg_T *cap)
 {
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   curwin->w_set_curswant = TRUE;
   if (bck_word(cap->count1, cap->arg, FALSE) == FAIL)
     clearopbeep(cap->oap);
@@ -6743,7 +6743,7 @@ static void nv_wordcmd(cmdarg_T *cap)
          * in 'cpoptions'.
          */
         if (cap->count1 == 1 && vim_strchr(p_cpo, CPO_CW) != NULL) {
-          cap->oap->inclusive = TRUE;
+          cap->oap->inclusive = true;
           cap->oap->motion_type = MCHAR;
           return;
         }
@@ -6759,7 +6759,7 @@ static void nv_wordcmd(cmdarg_T *cap)
          * will change only one character! This is done by setting
          * flag.
          */
-        cap->oap->inclusive = TRUE;
+        cap->oap->inclusive = true;
         word_end = true;
         flag = TRUE;
       }
@@ -6807,7 +6807,7 @@ static void adjust_cursor(oparg_T *oap)
     /* prevent cursor from moving on the trail byte */
     if (has_mbyte)
       mb_adjust_cursor();
-    oap->inclusive = TRUE;
+    oap->inclusive = true;
   }
 }
 
@@ -6818,7 +6818,7 @@ static void adjust_cursor(oparg_T *oap)
 static void nv_beginline(cmdarg_T *cap)
 {
   cap->oap->motion_type = MCHAR;
-  cap->oap->inclusive = FALSE;
+  cap->oap->inclusive = false;
   beginline(cap->arg);
   if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
@@ -6837,7 +6837,7 @@ static void adjust_for_sel(cmdarg_T *cap)
       inc_cursor();
     else
       ++curwin->w_cursor.col;
-    cap->oap->inclusive = FALSE;
+    cap->oap->inclusive = false;
   }
 }
 

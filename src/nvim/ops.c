@@ -1549,7 +1549,8 @@ int op_delete(oparg_T *oap)
 
       /* Break a tab only when it's included in the area. */
       if (gchar_pos(&oap->end) == '\t'
-          && (int)oap->end.coladd < oap->inclusive) {
+          && oap->end.coladd == 0
+          && oap->inclusive) {
         /* save last line for undo */
         if (u_save((linenr_T)(oap->end.lnum - 1),
                 (linenr_T)(oap->end.lnum + 1)) == FAIL)
@@ -5058,8 +5059,8 @@ void cursor_pos_info(void)
 
         /* Make 'sbr' empty for a moment to get the correct size. */
         p_sbr = empty_option;
-        oparg.is_VIsual = 1;
-        oparg.block_mode = TRUE;
+        oparg.is_VIsual = true;
+        oparg.block_mode = true;
         oparg.op_type = OP_NOP;
         getvcols(curwin, &min_pos, &max_pos,
             &oparg.start_vcol, &oparg.end_vcol);

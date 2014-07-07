@@ -307,7 +307,7 @@ int check_row(int row)
 int 
 jump_to_mouse (
     int flags,
-    int *inclusive,         /* used for inclusive operator, can be NULL */
+    bool *inclusive,        /* used for inclusive operator, can be NULL */
     int which_button               /* MOUSE_LEFT, MOUSE_RIGHT, MOUSE_MIDDLE */
 )
 {
@@ -575,10 +575,10 @@ retnomove:
   curwin->w_set_curswant = FALSE;       /* May still have been TRUE */
   if (coladvance(col) == FAIL) {        /* Mouse click beyond end of line */
     if (inclusive != NULL)
-      *inclusive = TRUE;
+      *inclusive = true;
     mouse_past_eol = true;
   } else if (inclusive != NULL)
-    *inclusive = FALSE;
+    *inclusive = false;
 
   count = IN_BUFFER;
   if (curwin != old_curwin || curwin->w_cursor.lnum != old_cursor.lnum
