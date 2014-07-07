@@ -132,11 +132,6 @@ for i = 1, #api.functions do
 
   output:write('static Object handle_'..fn.name..'(uint64_t channel_id, msgpack_object *req, Error *error)')
   output:write('\n{')
-  output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
-  output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %u", req->via.array.ptr[3].via.array.size);')
-  output:write('\n    goto cleanup;')
-  output:write('\n  }\n')
-
   -- Declare/initialize variables that will hold converted arguments
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
@@ -144,6 +139,12 @@ for i = 1, #api.functions do
     output:write('\n  '..param[1]..' '..converted..' msgpack_rpc_init_'..string.lower(param[1])..';')
   end
   output:write('\n')
+  output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
+  output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong number of arguments: expecting '..#fn.parameters..' but got %u", req->via.array.ptr[3].via.array.size);')
+  output:write('\n    error->set = true;')
+  output:write('\n    goto cleanup;')
+  output:write('\n  }\n')
+
   -- Validation/conversion for each argument
   for j = 1, #fn.parameters do
     local converted, convert_arg, param, arg
