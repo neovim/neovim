@@ -4,7 +4,6 @@ class Neovim < Formula
   homepage "http://neovim.org"
   head "https://github.com/neovim/neovim.git"
 
-  depends_on "md5sha1sum" => :build unless Formula["polarssl"].installed?
   depends_on "cmake" => :build
   depends_on "libtool" => :build
   depends_on "automake" => :build
