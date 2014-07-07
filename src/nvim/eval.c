@@ -7863,12 +7863,17 @@ static void f_cursor(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = -1;
   if (argvars[1].v_type == VAR_UNKNOWN) {
     pos_T pos;
+    colnr_T curswant = -1;
 
-    if (list2fpos(argvars, &pos, NULL) == FAIL)
+    if (list2fpos(argvars, &pos, NULL, &curswant) == FAIL) {
       return;
+    }
     line = pos.lnum;
     col = pos.col;
     coladd = pos.coladd;
+    if (curswant >= 0) {
+      curwin->w_curswant = curswant - 1;
+    }
   } else {
     line = get_tv_lnum(argvars);
     col = get_tv_number_chk(&argvars[1], NULL);
@@ -9393,6 +9398,9 @@ static void f_getpos(typval_T *argvars, typval_T *rettv)
                        : (varnumber_T)0);
   list_append_number(l,
                      (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
+  if (fp == &curwin->w_cursor) {
+    list_append_number(l, (varnumber_T) curwin->w_curswant + 1);
+  }
 }
 
 /*
@@ -13118,17 +13126,21 @@ static void f_setpos(typval_T *argvars, typval_T *rettv)
   pos_T pos;
   int fnum;
   char_u      *name;
+  colnr_T     curswant = -1;
 
   rettv->vval.v_number = -1;
   name = get_tv_string_chk(argvars);
   if (name != NULL) {
-    if (list2fpos(&argvars[1], &pos, &fnum) == OK) {
+    if (list2fpos(&argvars[1], &pos, &fnum, &curswant) == OK) {
       if (--pos.col < 0)
         pos.col = 0;
       if (name[0] == '.' && name[1] == NUL) {
         /* set cursor */
         if (fnum == curbuf->b_fnum) {
           curwin->w_cursor = pos;
+          if (curswant >= 0) {
+            curwin->w_curswant = curswant - 1;
+          }
           check_cursor();
           rettv->vval.v_number = 0;
         } else
@@ -15177,18 +15189,18 @@ var2fpos (
  * Return FAIL when conversion is not possible, doesn't check the position for
  * validity.
  */
-static int list2fpos(typval_T *arg, pos_T *posp, int *fnump)
+static int list2fpos(typval_T *arg, pos_T *posp, int *fnump, colnr_T *curswantp)
 {
   list_T      *l = arg->vval.v_list;
   long i = 0;
   long n;
 
-  /* List must be: [fnum, lnum, col, coladd], where "fnum" is only there
-   * when "fnump" isn't NULL and "coladd" is optional. */
+  /* List must be: [fnum, lnum, col, coladd, curswant], where "fnum" is only
+   * there when "fnump" isn't NULL; "coladd" and "curswant" are optional. */
   if (arg->v_type != VAR_LIST
       || l == NULL
       || l->lv_len < (fnump == NULL ? 2 : 3)
-      || l->lv_len > (fnump == NULL ? 3 : 4))
+      || l->lv_len > (fnump == NULL ? 4 : 5))
     return FAIL;
 
   if (fnump != NULL) {
@@ -15210,11 +15222,15 @@ static int list2fpos(typval_T *arg, pos_T *posp, int *fnump)
     return FAIL;
   posp->col = n;
 
-  n = list_find_nr(l, i, NULL);
+  n = list_find_nr(l, i, NULL);         // off
   if (n < 0)
     posp->coladd = 0;
   else
     posp->coladd = n;
+
+  if (curswantp != NULL) {
+    *curswantp = list_find_nr(l, i + 1, NULL);  // curswant
+  }
 
   return OK;
 }
