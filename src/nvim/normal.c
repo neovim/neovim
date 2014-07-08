@@ -1789,7 +1789,7 @@ static void op_function(oparg_T *oap)
      * function. */
     virtual_op = MAYBE;
 
-    (void)call_func_retnr(p_opfunc, 1, argv, FALSE);
+    (void)call_func_retnr(p_opfunc, 1, argv, false);
 
     virtual_op = save_virtual_op;
   }
@@ -1829,29 +1829,29 @@ static void op_function(oparg_T *oap)
  * (1) only if mouse pointer moved since press
  * (2) only if click is in same buffer
  *
- * Return TRUE if start_arrow() should be called for edit mode.
+ * Return true if start_arrow() should be called for edit mode.
  */
-int 
+bool
 do_mouse (
     oparg_T *oap,               /* operator argument, can be NULL */
     int c,                          /* K_LEFTMOUSE, etc */
     int dir,                        /* Direction to 'put' if necessary */
     long count,
-    int fixindent                  /* PUT_FIXINDENT if fixing indent necessary */
+    bool fixindent                  /* PUT_FIXINDENT if fixing indent necessary */
 )
 {
-  static int do_always = FALSE;         /* ignore 'mouse' setting next time */
-  static int got_click = FALSE;         /* got a click some time back */
+  static bool do_always = false;        /* ignore 'mouse' setting next time */
+  static bool got_click = false;        /* got a click some time back */
 
   int which_button;             /* MOUSE_LEFT, _MIDDLE or _RIGHT */
-  int is_click;                 /* If FALSE it's a drag or release event */
-  int is_drag;                  /* If TRUE it's a drag event */
+  bool is_click;                /* If false it's a drag or release event */
+  bool is_drag;                 /* If true it's a drag event */
   int jump_flags = 0;           /* flags for jump_to_mouse() */
   pos_T start_visual;
-  int moved;                    /* Has cursor moved? */
-  int in_status_line;           /* mouse in status line */
-  static int in_tab_line = FALSE;    /* mouse clicked in tab line */
-  int in_sep_line;              /* mouse in vertical separator line */
+  bool moved;                   /* Has cursor moved? */
+  bool in_status_line;          /* mouse in status line */
+  static bool in_tab_line = false;   /* mouse clicked in tab line */
+  bool in_sep_line;             /* mouse in vertical separator line */
   int c1, c2;
   pos_T save_cursor;
   win_T       *old_curwin = curwin;
@@ -1873,13 +1873,13 @@ do_mouse (
    *	 do_mouse().
    */
   if (do_always)
-    do_always = FALSE;
+    do_always = false;
   else {
     if (VIsual_active) {
       if (!mouse_has(MOUSE_VISUAL))
-        return FALSE;
+        return false;
     } else if (State == NORMAL && !mouse_has(MOUSE_NORMAL))
-      return FALSE;
+      return false;
   }
 
   for (;; ) {
@@ -1910,15 +1910,15 @@ do_mouse (
    * Ignore drag and release events if we didn't get a click.
    */
   if (is_click)
-    got_click = TRUE;
+    got_click = true;
   else {
     if (!got_click)                     /* didn't get click, ignore */
-      return FALSE;
+      return false;
     if (!is_drag) {                     /* release, reset got_click */
-      got_click = FALSE;
+      got_click = false;
       if (in_tab_line) {
-        in_tab_line = FALSE;
-        return FALSE;
+        in_tab_line = false;
+        return false;
       }
     }
   }
@@ -1933,15 +1933,15 @@ do_mouse (
     if (count > 1)
       stuffnumReadbuff(count);
     stuffcharReadbuff(Ctrl_T);
-    got_click = FALSE;                  /* ignore drag&release now */
-    return FALSE;
+    got_click = false;                  /* ignore drag&release now */
+    return false;
   }
 
   /*
    * CTRL only works with left mouse button
    */
   if ((mod_mask & MOD_MASK_CTRL) && which_button != MOUSE_LEFT)
-    return FALSE;
+    return false;
 
   /*
    * When a modifier is down, ignore drag and release events, as well as
@@ -1960,7 +1960,7 @@ do_mouse (
            && !mouse_model_popup()
            && which_button == MOUSE_RIGHT)
       )
-    return FALSE;
+    return false;
 
   /*
    * If the button press was used as the movement command for an operator
@@ -1968,7 +1968,7 @@ do_mouse (
    * drag/release events.
    */
   if (!is_click && which_button == MOUSE_MIDDLE)
-    return FALSE;
+    return false;
 
   if (oap != NULL)
     regname = oap->regname;
@@ -1986,7 +1986,7 @@ do_mouse (
        */
       if (oap != NULL && oap->op_type != OP_NOP) {
         clearopbeep(oap);
-        return FALSE;
+        return false;
       }
 
       /*
@@ -2002,14 +2002,14 @@ do_mouse (
           stuffcharReadbuff('y');
           stuffcharReadbuff(K_MIDDLEMOUSE);
         }
-        do_always = TRUE;               /* ignore 'mouse' setting next time */
-        return FALSE;
+        do_always = true;               /* ignore 'mouse' setting next time */
+        return false;
       }
       /*
        * The rest is below jump_to_mouse()
        */
     } else if ((State & INSERT) == 0)
-      return FALSE;
+      return false;
 
     /*
      * Middle click in insert mode doesn't move the mouse, just insert the
@@ -2020,10 +2020,10 @@ do_mouse (
      */
     if ((State & INSERT) || !mouse_has(MOUSE_NORMAL)) {
       if (regname == '.')
-        insert_reg(regname, TRUE);
+        insert_reg(regname, true);
       else {
         if ((State & REPLACE_FLAG) && !yank_register_mline(regname))
-          insert_reg(regname, TRUE);
+          insert_reg(regname, true);
         else {
           do_put(regname, BACKWARD, 1L, fixindent | PUT_CURSEND);
 
@@ -2033,7 +2033,7 @@ do_mouse (
           AppendCharToRedobuff(regname == 0 ? '"' : regname);
         }
       }
-      return FALSE;
+      return false;
     }
   }
 
@@ -2050,14 +2050,14 @@ do_mouse (
         c1 = TabPageIdxs[mouse_col];
         tabpage_move(c1 <= 0 ? 9999 : c1 - 1);
       }
-      return FALSE;
+      return false;
     }
 
     /* click in a tab selects that tab page */
     if (is_click
         && cmdwin_type == 0
         && mouse_col < Columns) {
-      in_tab_line = TRUE;
+      in_tab_line = true;
       c1 = TabPageIdxs[mouse_col];
       if (c1 >= 0) {
         if ((mod_mask & MOD_MASK_MULTI_CLICK) == MOD_MASK_2CLICK) {
@@ -2084,16 +2084,16 @@ do_mouse (
           tp = find_tabpage(-c1);
         if (tp == curtab) {
           if (first_tabpage->tp_next != NULL)
-            tabpage_close(FALSE);
+            tabpage_close(false);
         } else if (tp != NULL)
-          tabpage_close_other(tp, FALSE);
+          tabpage_close_other(tp, false);
       }
     }
-    return TRUE;
+    return true;
   } else if (is_drag && in_tab_line) {
     c1 = TabPageIdxs[mouse_col];
     tabpage_move(c1 <= 0 ? 9999 : c1 - 1);
-    return FALSE;
+    return false;
   }
 
 
@@ -2113,9 +2113,9 @@ do_mouse (
 #if defined(FEAT_GUI_MOTIF) || defined(FEAT_GUI_GTK) \
       || defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC)
       if (!is_click)
-        return FALSE;
+        return false;
 #endif
-      return FALSE;
+      return false;
     }
     if (which_button == MOUSE_LEFT
         && (mod_mask & (MOD_MASK_SHIFT|MOD_MASK_ALT))) {
@@ -2159,7 +2159,7 @@ do_mouse (
    * next mouse click.
    */
   if (!is_drag && oap != NULL && oap->op_type != OP_NOP) {
-    got_click = FALSE;
+    got_click = false;
     oap->motion_type = MCHAR;
   }
 
@@ -2209,7 +2209,7 @@ do_mouse (
 
   /* When dragging the mouse above the window, scroll down. */
   if (is_drag && mouse_row < 0 && !in_status_line) {
-    scroll_redraw(FALSE, 1L);
+    scroll_redraw(false, 1L);
     mouse_row = 0;
   }
 
@@ -2325,7 +2325,7 @@ do_mouse (
       stuffReadbuff((char_u *)":.cc\n");
     else                                        /* location list window */
       stuffReadbuff((char_u *)":.ll\n");
-    got_click = FALSE;                  /* ignore drag&release now */
+    got_click = false;                  /* ignore drag&release now */
   }
   /*
    * Ctrl-Mouse click (or double click in a help window) jumps to the tag
@@ -2338,7 +2338,7 @@ do_mouse (
     if (State & INSERT)
       stuffcharReadbuff(Ctrl_O);
     stuffcharReadbuff(Ctrl_RSB);
-    got_click = FALSE;                  /* ignore drag&release now */
+    got_click = false;                  /* ignore drag&release now */
   }
   /*
    * Shift-Mouse click searches for the next occurrence of the word under
@@ -2366,8 +2366,8 @@ do_mouse (
         check_visual_highlight();
         VIsual = curwin->w_cursor;
         orig_cursor = VIsual;
-        VIsual_active = TRUE;
-        VIsual_reselect = TRUE;
+        VIsual_active = true;
+        VIsual_reselect = true;
         /* start Select mode if 'selectmode' contains "mouse" */
         may_start_select('o');
         setmouse();
@@ -2430,7 +2430,7 @@ do_mouse (
           find_end_of_word(&curwin->w_cursor);
         }
       }
-      curwin->w_set_curswant = TRUE;
+      curwin->w_set_curswant = true;
     }
     if (is_click)
       redraw_curbuf_later(INVERTED);            /* update the inversion */
@@ -2445,7 +2445,7 @@ do_mouse (
   if ((!VIsual_active && old_active && mode_displayed)
       || (VIsual_active && p_smd && msg_silent == 0
           && (!old_active || VIsual_mode != old_mode)))
-    redraw_cmdline = TRUE;
+    redraw_cmdline = true;
 
   return moved;
 }
