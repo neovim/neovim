@@ -214,8 +214,8 @@ Job *job_start(char **argv,
   job->in = wstream_new(maxmem);
   wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
   // Start the readable streams
-  job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job, defer);
-  job->err = rstream_new(read_cb, JOB_BUFFER_SIZE, job, defer);
+  job->out = rstream_new(read_cb, JOB_BUFFER_SIZE, job, job_event_source(job));
+  job->err = rstream_new(read_cb, JOB_BUFFER_SIZE, job, job_event_source(job));
   rstream_set_stream(job->out, (uv_stream_t *)&job->proc_stdout);
   rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
   rstream_start(job->out);
@@ -269,18 +269,6 @@ bool job_write(Job *job, WBuffer *buffer)
   return wstream_write(job->in, buffer);
 }
 
-/// Sets the `defer` flag for a Job instance
-///
-/// @param rstream The Job id
-/// @param defer The new value for the flag
-void job_set_defer(Job *job, bool defer)
-{
-  job->defer = defer;
-  rstream_set_defer(job->out, defer);
-  rstream_set_defer(job->err, defer);
-}
-
-
 /// Runs the read callback associated with the job exit event
 ///
 /// @param event Object containing data necessary to invoke the callback
@@ -305,6 +293,11 @@ int job_id(Job *job)
 void *job_data(Job *job)
 {
   return job->data;
+}
+
+EventSource job_event_source(Job *job)
+{
+  return job;
 }
 
 static void job_exit_callback(Job *job)
@@ -391,10 +384,12 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 
 static void emit_exit_event(Job *job)
 {
-  Event event;
-  event.type = kEventJobExit;
-  event.data.job = job;
-  event_push(event, true);
+  Event event = {
+    .source = job_event_source(job),
+    .type = kEventJobExit,
+    .data.job = job
+  };
+  event_push(event);
 }
 
 static void close_cb(uv_handle_t *handle)

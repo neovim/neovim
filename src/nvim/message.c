@@ -2074,7 +2074,7 @@ static int do_more_prompt(int typed_char)
     toscroll = 0;
     switch (c) {
     case K_EVENT:
-      event_process(true);
+      event_process();
       break;
     case BS:                    /* scroll one line back */
     case K_BS:
@@ -2734,8 +2734,11 @@ do_dialog (
       retval = 0;
       break;
     default:                  /* Could be a hotkey? */
-      if (c < 0)              /* special keys are ignored here */
+      if (c < 0) {            /* special keys are ignored here */
+        // drain event queue to prevent infinite loop
+        event_process();
         continue;
+      }
       if (c == ':' && ex_cmd) {
         retval = dfltbutton;
         ins_char_typebuf(':');

@@ -7375,5 +7375,5 @@ static void nv_cursorhold(cmdarg_T *cap)
 
 static void nv_event(cmdarg_T *cap)
 {
-  event_process(true);
+  event_process();
 }

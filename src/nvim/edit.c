@@ -944,7 +944,7 @@ doESCkey:
       break;
 
     case K_EVENT:
-      event_process(true);
+      event_process();
       break;
 
     case K_HOME:        /* <Home> */

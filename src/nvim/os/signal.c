@@ -103,6 +103,11 @@ void signal_handle(Event event)
   }
 }
 
+EventSource signal_event_source(void)
+{
+  return &sint;
+}
+
 static char * signal_name(int signum)
 {
   switch (signum) {
@@ -155,10 +160,11 @@ static void signal_cb(uv_signal_t *handle, int signum)
   }
 
   Event event = {
+    .source = signal_event_source(),
     .type = kEventSignal,
     .data = {
       .signum = signum
     }
   };
-  event_push(event, true);
+  event_push(event);
 }

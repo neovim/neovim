@@ -118,7 +118,7 @@ void channel_from_stream(uv_stream_t *stream)
   stream->data = NULL;
   channel->is_job = false;
   // read stream
-  channel->data.streams.read = rstream_new(parse_msgpack, 1024, channel, true);
+  channel->data.streams.read = rstream_new(parse_msgpack, 1024, channel, NULL);
   rstream_set_stream(channel->data.streams.read, stream);
   rstream_start(channel->data.streams.read);
   // write stream
@@ -189,16 +189,10 @@ bool channel_send_call(uint64_t id,
   // Send the msgpack-rpc request
   send_request(channel, request_id, name, arg);
 
-  if (!kv_size(channel->call_stack)) {
-    // This is the first frame, we must disable event deferral for this
-    // channel because we won't be returning until the client sends a
-    // response
-    if (channel->is_job) {
-      job_set_defer(channel->data.job, false);
-    } else {
-      rstream_set_defer(channel->data.streams.read, false);
-    }
-  }
+  EventSource channel_source = channel->is_job
+    ? job_event_source(channel->data.job)
+    : rstream_event_source(channel->data.streams.read);
+  EventSource sources[] = {channel_source, NULL};
 
   // Push the frame
   ChannelCallFrame frame = {request_id, false, NIL};
@@ -206,24 +200,18 @@ bool channel_send_call(uint64_t id,
   size_t size = kv_size(channel->call_stack);
 
   do {
-    event_poll(-1);
+    event_poll(-1, sources);
   } while (
       // Continue running if ...
       channel->enabled &&  // the channel is still enabled
       kv_size(channel->call_stack) >= size);  // the call didn't return
 
-  if (!kv_size(channel->call_stack)) {
-    // Popped last frame, restore event deferral
-    if (channel->is_job) {
-      job_set_defer(channel->data.job, true);
-    } else {
-      rstream_set_defer(channel->data.streams.read, true);
-    }
-    if (!channel->enabled && !channel->rpc_call_level) {
+  if (!(kv_size(channel->call_stack)
+        || channel->enabled
+        || channel->rpc_call_level)) {
       // Close the channel if it has been disabled and we have not been called
       // by `parse_msgpack`(It would be unsafe to close the channel otherwise)
       close_channel(channel);
-    }
   }
 
   *errored = frame.errored;

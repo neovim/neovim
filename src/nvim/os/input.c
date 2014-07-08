@@ -34,7 +34,7 @@ static bool eof = false, started_reading = false;
 
 void input_init(void)
 {
-  read_stream = rstream_new(read_cb, READ_BUFFER_SIZE, NULL, false);
+  read_stream = rstream_new(read_cb, READ_BUFFER_SIZE, NULL, NULL);
   rstream_set_file(read_stream, read_cmd_fd);
 }
 
@@ -129,7 +129,12 @@ bool os_isatty(int fd)
 
 static bool input_poll(int32_t ms)
 {
-  return input_ready() || event_poll(ms) || input_ready();
+  EventSource input_sources[] = {
+    rstream_event_source(read_stream),
+    NULL
+  };
+
+  return input_ready() || event_poll(ms, input_sources) || input_ready();
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
