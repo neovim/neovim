@@ -106,8 +106,6 @@ src/nvim/screen.c
 src/nvim/screen.h
 src/nvim/search.c
 src/nvim/search.h
-src/nvim/sha256.c
-src/nvim/sha256.h
 src/nvim/sign_defs.h
 src/nvim/spell.c
 src/nvim/spell.h
