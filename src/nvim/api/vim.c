@@ -84,6 +84,24 @@ void vim_feedkeys(String keys, String mode)
     typebuf_was_filled = true;
 }
 
+/// Replace any terminal codes with the internal representation
+///
+/// @see replace_termcodes
+/// @see cpoptions
+String vim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
+                              Boolean special)
+{
+  if (str.size == 0) {
+    // Empty string
+    return str;
+  }
+
+  char *ptr = NULL;
+  replace_termcodes((char_u *)str.data, (char_u **)&ptr,
+                                            from_part, do_lt, special);
+  return cstr_as_string(ptr);
+}
+
 /// Evaluates the expression str using the vim internal expression
 /// evaluator (see |expression|).
 /// Dictionaries and lists are recursively expanded.
