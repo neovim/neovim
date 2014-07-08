@@ -416,7 +416,7 @@ static int find_command(int cmdchar)
 void 
 normal_cmd (
     oparg_T *oap,
-    int toplevel                    /* TRUE when called from main() */
+    bool toplevel                    /* true when called from main() */
 )
 {
   cmdarg_T ca;                          /* command arguments */
@@ -2778,29 +2778,29 @@ static void prep_redo(int regname, long num, int cmd1, int cmd2, int cmd3, int c
 /*
  * check for operator active and clear it
  *
- * return TRUE if operator was active
+ * return true if operator was active
  */
-static int checkclearop(oparg_T *oap)
+static bool checkclearop(oparg_T *oap)
 {
   if (oap->op_type == OP_NOP)
-    return FALSE;
+    return false;
   clearopbeep(oap);
-  return TRUE;
+  return true;
 }
 
 /*
  * Check for operator or Visual active.  Clear active operator.
  *
- * Return TRUE if operator or Visual was active.
+ * Return true if operator or Visual was active.
  */
-static int checkclearopq(oparg_T *oap)
+static bool checkclearopq(oparg_T *oap)
 {
   if (oap->op_type == OP_NOP
       && !VIsual_active
       )
-    return FALSE;
+    return false;
   clearopbeep(oap);
-  return TRUE;
+  return true;
 }
 
 static void clearop(oparg_T *oap)
@@ -2924,9 +2924,9 @@ void clear_showcmd(void)
 
 /*
  * Add 'c' to string of shown command chars.
- * Return TRUE if output has been written (and setcursor() has been called).
+ * Return true if output has been written (and setcursor() has been called).
  */
-int add_to_showcmd(int c)
+bool add_to_showcmd(int c)
 {
   char_u      *p;
   int old_len;
@@ -2946,7 +2946,7 @@ int add_to_showcmd(int c)
   };
 
   if (!p_sc || msg_silent != 0)
-    return FALSE;
+    return false;
 
   if (showcmd_visual) {
     showcmd_buf[0] = NUL;
@@ -2957,7 +2957,7 @@ int add_to_showcmd(int c)
   if (IS_SPECIAL(c))
     for (i = 0; ignore[i] != 0; ++i)
       if (ignore[i] == c)
-        return FALSE;
+        return false;
 
   p = transchar(c);
   if (*p == ' ')
@@ -2971,11 +2971,11 @@ int add_to_showcmd(int c)
   STRCAT(showcmd_buf, p);
 
   if (char_avail())
-    return FALSE;
+    return false;
 
   display_showcmd();
 
-  return TRUE;
+  return true;
 }
 
 void add_to_showcmd_c(int c)
@@ -3047,11 +3047,11 @@ static void display_showcmd(void)
 }
 
 /*
- * When "check" is FALSE, prepare for commands that scroll the window.
- * When "check" is TRUE, take care of scroll-binding after the window has
+ * When "check" is false, prepare for commands that scroll the window.
+ * When "check" is true, take care of scroll-binding after the window has
  * scrolled.  Called from normal_cmd() and edit().
  */
-void do_check_scrollbind(int check)
+void do_check_scrollbind(bool check)
 {
   static win_T        *old_curwin = NULL;
   static linenr_T old_topline = 0;
@@ -3063,7 +3063,7 @@ void do_check_scrollbind(int check)
     /* If a ":syncbind" command was just used, don't scroll, only reset
      * the values. */
     if (did_syncbind)
-      did_syncbind = FALSE;
+      did_syncbind = false;
     else if (curwin == old_curwin) {
       /*
        * Synchronize other windows, as necessary according to
@@ -3109,8 +3109,8 @@ void do_check_scrollbind(int check)
  */
 void check_scrollbind(linenr_T topline_diff, long leftcol_diff)
 {
-  int want_ver;
-  int want_hor;
+  bool want_ver;
+  bool want_hor;
   win_T       *old_curwin = curwin;
   buf_T       *old_curbuf = curbuf;
   int old_VIsual_select = VIsual_select;
@@ -3263,17 +3263,17 @@ nv_gd (
 
 /*
  * Search for variable declaration of "ptr[len]".
- * When "locally" is TRUE in the current function ("gd"), otherwise in the
+ * When "locally" is true in the current function ("gd"), otherwise in the
  * current file ("gD").
- * When "thisblock" is TRUE check the {} block scope.
- * Return FAIL when not found.
+ * When "thisblock" is true check the {} block scope.
+ * Return fail when not found.
  */
-int 
+bool
 find_decl (
     char_u *ptr,
     int len,
-    int locally,
-    int thisblock,
+    bool locally,
+    bool thisblock,
     int searchflags                /* flags passed to searchit() */
 )
 {
@@ -3281,10 +3281,10 @@ find_decl (
   pos_T old_pos;
   pos_T par_pos;
   pos_T found_pos;
-  int t;
+  bool t;
   bool save_p_ws;
   bool save_p_scs;
-  int retval = OK;
+  bool retval = true;
   bool incll;
 
   pat = xmalloc(len + 7);
@@ -3322,9 +3322,9 @@ find_decl (
     t = searchit(curwin, curbuf, &curwin->w_cursor, FORWARD,
         pat, 1L, searchflags, RE_LAST, (linenr_T)0, NULL);
     if (curwin->w_cursor.lnum >= old_pos.lnum)
-      t = FAIL;         /* match after start is failure too */
+      t = false;         /* match after start is failure too */
 
-    if (thisblock && t != FAIL) {
+    if (thisblock && t != false) {
       pos_T       *pos;
 
       /* Check that the block the match is in doesn't end before the
@@ -3335,11 +3335,11 @@ find_decl (
         continue;
     }
 
-    if (t == FAIL) {
+    if (t == false) {
       /* If we previously found a valid position, use it. */
       if (found_pos.lnum != 0) {
         curwin->w_cursor = found_pos;
-        t = OK;
+        t = true;
       }
       break;
     }
@@ -3364,8 +3364,8 @@ find_decl (
     found_pos = curwin->w_cursor;
   }
 
-  if (t == FAIL) {
-    retval = FAIL;
+  if (t == false) {
+    retval = false;
     curwin->w_cursor = old_pos;
   } else {
     curwin->w_set_curswant = true;
@@ -3385,12 +3385,12 @@ find_decl (
  * lines rather than lines in the file.
  * 'dist' must be positive.
  *
- * Return OK if able to move cursor, FAIL otherwise.
+ * Return true if able to move cursor, false otherwise.
  */
-static int nv_screengo(oparg_T *oap, int dir, long dist)
+static bool nv_screengo(oparg_T *oap, int dir, long dist)
 {
   int linelen = linetabsize(get_cursor_line_ptr());
-  int retval = OK;
+  bool retval = true;
   bool atend = false;
   int n;
   int col_off1;                 /* margin offset for first screen line */
@@ -3441,7 +3441,7 @@ static int nv_screengo(oparg_T *oap, int dir, long dist)
         else {
           /* to previous line */
           if (curwin->w_cursor.lnum == 1) {
-            retval = FAIL;
+            retval = false;
             break;
           }
           --curwin->w_cursor.lnum;
@@ -3469,7 +3469,7 @@ static int nv_screengo(oparg_T *oap, int dir, long dist)
           (void)hasFolding(curwin->w_cursor.lnum, NULL,
               &curwin->w_cursor.lnum);
           if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count) {
-            retval = FAIL;
+            retval = false;
             break;
           }
           curwin->w_cursor.lnum++;
@@ -4400,9 +4400,9 @@ static void nv_ident(cmdarg_T *cap)
 
 /*
  * Get visually selected text, within one line only.
- * Returns FAIL if more than one line selected.
+ * Returns false if more than one line selected.
  */
-int 
+bool
 get_visual_text (
     cmdarg_T *cap,
     char_u **pp,           /* return: start of selected text */
@@ -4414,7 +4414,7 @@ get_visual_text (
   if (VIsual.lnum != curwin->w_cursor.lnum) {
     if (cap != NULL)
       clearopbeep(cap->oap);
-    return FAIL;
+    return false;
   }
   if (VIsual_mode == 'V') {
     *pp = get_cursor_line_ptr();
@@ -4432,7 +4432,7 @@ get_visual_text (
       *lenp += (*mb_ptr2len)(*pp + (*lenp - 1)) - 1;
   }
   reset_VIsual_and_resel();
-  return OK;
+  return true;
 }
 
 /*
@@ -6008,7 +6008,7 @@ static void nv_g_cmd(cmdarg_T *cap)
   oparg_T     *oap = cap->oap;
   pos_T tpos;
   int i;
-  int flag = false;
+  bool flag = false;
 
   switch (cap->nchar) {
   /*
@@ -6149,7 +6149,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
     } else
       i = nv_screengo(oap, BACKWARD, cap->count1);
-    if (i == FAIL)
+    if (i == false)
       clearopbeep(oap);
     break;
 
@@ -6844,9 +6844,9 @@ static void adjust_for_sel(cmdarg_T *cap)
 /*
  * Exclude last character at end of Visual area for 'selection' == "exclusive".
  * Should check VIsual_mode before calling this.
- * Returns TRUE when backed up to the previous line.
+ * Returns true when backed up to the previous line.
  */
-static int unadjust_for_sel(void)
+static bool unadjust_for_sel(void)
 {
   pos_T       *pp;
 
@@ -6863,10 +6863,10 @@ static int unadjust_for_sel(void)
     } else if (pp->lnum > 1) {
       --pp->lnum;
       pp->col = (colnr_T)STRLEN(ml_get(pp->lnum));
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*
