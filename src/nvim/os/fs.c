@@ -37,9 +37,9 @@ int os_dirname(char_u *buf, size_t len)
 {
   assert(buf && len);
 
-  int errno;
-  if ((errno = uv_cwd((char *)buf, &len)) != kLibuvSuccess) {
-    STRLCPY(buf, uv_strerror(errno), len);
+  int error_number;
+  if ((error_number = uv_cwd((char *)buf, &len)) != kLibuvSuccess) {
+    STRLCPY(buf, uv_strerror(error_number), len);
     return FAIL;
   }
   return OK;
@@ -92,7 +92,7 @@ static bool is_executable(const char_u *name)
     return false;
   }
 
-  if (S_ISREG(mode) && (S_IEXEC & mode)) {
+  if (S_ISREG(mode) && (S_IXUSR & mode)) {
     return true;
   }
 
