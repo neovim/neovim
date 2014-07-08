@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #include <msgpack.h>
 
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/msgpack_rpc.h"
@@ -51,9 +53,14 @@ WBuffer *msgpack_rpc_call(uint64_t channel_id,
   msgpack_packer_init(&response, sbuffer, msgpack_sbuffer_write);
 
   if (error.set) {
+    ELOG("Error dispatching msgpack-rpc call: %s(request: id %" PRIu64 ")",
+         error.msg,
+         response_id);
     return serialize_response(response_id, error.msg, NIL, sbuffer);
   }
 
+  DLOG("Successfully completed mspgack-rpc call(request id: %" PRIu64 ")",
+       response_id);
   return serialize_response(response_id, NULL, rv, sbuffer);
 }
 

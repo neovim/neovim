@@ -94,16 +94,18 @@ bool event_poll(int32_t ms)
     run_mode = UV_RUN_NOWAIT;
   }
 
-  bool events_processed;
+  size_t processed_events;
 
   do {
     // Run one event loop iteration, blocking for events if run_mode is
     // UV_RUN_ONCE
+    DLOG("Entering event loop");
     uv_run(uv_default_loop(), run_mode);
-    events_processed = event_process(false);
+    processed_events = event_process(false);
+    DLOG("Exited event loop, processed %u events", processed_events);
   } while (
       // Continue running if ...
-      !events_processed &&   // we didn't process any immediate events
+      !processed_events &&   // we didn't process any immediate events
       !event_has_deferred() &&   // no events are waiting to be processed
       run_mode != UV_RUN_NOWAIT &&   // ms != 0
       !timer_data.timed_out);  // we didn't get a timeout
@@ -122,7 +124,7 @@ bool event_poll(int32_t ms)
     event_process(false);
   }
 
-  return !timer_data.timed_out && (events_processed || event_has_deferred());
+  return !timer_data.timed_out && (processed_events || event_has_deferred());
 }
 
 bool event_has_deferred(void)
@@ -137,13 +139,12 @@ void event_push(Event event, bool deferred)
 }
 
 // Runs the appropriate action for each queued event
-bool event_process(bool deferred)
+size_t event_process(bool deferred)
 {
-  bool processed_events = false;
+  size_t count = 0;
   Event event;
 
   while (kl_shift(Event, get_queue(deferred), &event) == 0) {
-    processed_events = true;
     switch (event.type) {
       case kEventSignal:
         signal_handle(event);
@@ -157,9 +158,10 @@ bool event_process(bool deferred)
       default:
         abort();
     }
+    count++;
   }
 
-  return processed_events;
+  return count;
 }
 
 // Set a flag in the `event_poll` loop for signaling of a timeout

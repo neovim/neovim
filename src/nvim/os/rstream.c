@@ -260,6 +260,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 
   if (cnt <= 0) {
     if (cnt != UV_ENOBUFS) {
+      DLOG("Closing RStream(%p)", rstream);
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(stream);
@@ -274,10 +275,12 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rstream->wpos += nread;
+  DLOG("Received %u bytes from RStream(%p)", (size_t)cnt, rstream);
 
   if (rstream->wpos == rstream->buffer_size) {
     // The last read filled the buffer, stop reading for now
     rstream_stop(rstream);
+    DLOG("Buffer for RStream(%p) is full, stopping it", rstream);
   }
 
   rstream->reading = false;

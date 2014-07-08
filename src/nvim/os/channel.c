@@ -305,6 +305,9 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
   channel->rpc_call_level++;
   uint32_t count = rstream_available(rstream);
+  DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
+       count,
+       rstream);
 
   // Feed the unpacker with data
   msgpack_unpacker_reserve_buffer(channel->unpacker, count);
