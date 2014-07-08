@@ -41,8 +41,12 @@
  *  mf_get().
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
+#include <stdbool.h>
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/memline.h"
 #include "nvim/buffer.h"

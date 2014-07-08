@@ -8,6 +8,7 @@
 #include "nvim/os/event.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
 #include "nvim/fileio.h"

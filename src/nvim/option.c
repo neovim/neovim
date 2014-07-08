@@ -31,11 +31,15 @@
  */
 
 #define IN_OPTION_C
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/option.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

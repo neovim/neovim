@@ -10,9 +10,13 @@
  * quickfix.c: functions for quickfix mode, using a file with error messages
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/quickfix.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

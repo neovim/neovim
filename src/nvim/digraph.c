@@ -2,7 +2,10 @@
 ///
 /// code for digraphs
 
+#include <inttypes.h>
+
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/digraph.h"
 #include "nvim/charset.h"
 #include "nvim/ex_cmds2.h"

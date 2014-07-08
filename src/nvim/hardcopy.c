@@ -10,9 +10,15 @@
  * hardcopy.c: printing to paper
  */
 
+#include <errno.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/version_defs.h"
 #include "nvim/hardcopy.h"
 #include "nvim/buffer.h"

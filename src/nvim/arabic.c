@@ -11,6 +11,7 @@
 /// Stand-Alone - unicode form-B isolated char denoted with  a_s_* (NOT USED)
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/arabic.h"
 
 // Arabic ISO-10646-1 character set definition

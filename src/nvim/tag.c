@@ -10,9 +10,12 @@
  * Code to handle tags and the tag stack
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/tag.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

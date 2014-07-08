@@ -10,10 +10,13 @@
  * ex_cmds.c: some functions for command line commands
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/version_defs.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/buffer.h"

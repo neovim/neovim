@@ -1,6 +1,9 @@
  // Various routines dealing with allocation and deallocation of memory.
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/misc2.h"

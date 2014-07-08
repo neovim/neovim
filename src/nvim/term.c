@@ -22,9 +22,12 @@
  */
 
 #define tgetstr tgetstr_defined_wrong
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/term.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

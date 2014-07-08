@@ -10,9 +10,12 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/version_defs.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"

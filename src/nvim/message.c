@@ -12,10 +12,15 @@
 
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/message.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

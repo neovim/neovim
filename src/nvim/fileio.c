@@ -10,9 +10,13 @@
  * fileio.c: read from and write to a file
  */
 
+#include <errno.h>
+#include <stdbool.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/fileio.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

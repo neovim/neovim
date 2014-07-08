@@ -284,10 +284,14 @@
 //                          stored as an offset to the previous number in as
 //                          few bytes as possible, see offset2bytes())
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
+#include <wctype.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/spell.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

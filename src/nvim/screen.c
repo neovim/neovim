@@ -86,9 +86,13 @@
  *   update_screen() called to redraw.
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/arabic.h"
 #include "nvim/screen.h"
 #include "nvim/buffer.h"

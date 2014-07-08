@@ -10,10 +10,13 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/arabic.h"
 #include "nvim/ex_getln.h"
 #include "nvim/buffer.h"

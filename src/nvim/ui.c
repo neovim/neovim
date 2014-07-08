@@ -15,6 +15,7 @@
  * 3. Input buffer stuff.
  */
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

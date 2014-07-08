@@ -10,10 +10,14 @@
 /// All the remarks about older versions have been removed, they are not very
 /// interesting.
 
+#include <inttypes.h>
+
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/version.h"
 #include "nvim/charset.h"
 #include "nvim/memline.h"
+#include "nvim/memory.h"
 #include "nvim/message.h"
 #include "nvim/misc2.h"
 #include "nvim/screen.h"

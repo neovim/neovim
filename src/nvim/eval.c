@@ -10,10 +10,19 @@
  * eval.c: Expression evaluation.
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
+
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

@@ -7,8 +7,14 @@
  *
  * See README.txt for an overview of the Vim source code.
  */
+#include <stdbool.h>
+
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/if_cscope.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

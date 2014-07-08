@@ -15,9 +15,12 @@
  * mappings and abbreviations
  */
 
+#include <stdbool.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/getchar.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"

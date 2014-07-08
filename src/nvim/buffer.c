@@ -24,9 +24,13 @@
  * The current implementation remembers all file names ever used.
  */
 
+#include <stdbool.h>
+#include <errno.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/api/private/handle.h"
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

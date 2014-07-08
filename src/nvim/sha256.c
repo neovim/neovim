@@ -12,6 +12,7 @@
 ///  2. sha2_seed() generates a random header.
 /// sha256_self_test() is implicitly called once.
 
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"

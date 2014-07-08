@@ -10,9 +10,16 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/version_defs.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/buffer.h"

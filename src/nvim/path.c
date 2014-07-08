@@ -1,6 +1,12 @@
+
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/path.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"

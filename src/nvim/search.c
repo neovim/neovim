@@ -9,8 +9,11 @@
  * search.c: code for normal mode searching commands
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/search.h"
 #include "nvim/charset.h"

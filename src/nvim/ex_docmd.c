@@ -11,8 +11,12 @@
  */
 
 #include <string.h>
+#include <stdbool.h>
+#include <errno.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

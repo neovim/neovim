@@ -8,12 +8,8 @@
 #ifndef NVIM_VIM_H
 # define NVIM_VIM_H
 
-#include "nvim/memory.h"// for xstrlcpy
 #include "nvim/types.h"
 
-/* Included when ported to cmake */
-/* This is needed to replace TRUE/FALSE macros by true/false from c99 */
-#include <stdbool.h>
 /* Some defines from the old feature.h */
 #define SESSION_FILE "Session.vim"
 #define MAX_MSG_HIST_LEN 200
@@ -47,10 +43,6 @@ Error: configure did not run properly.Check auto/config.log.
 #endif
 
 #include "nvim/os_unix_defs.h"       /* bring lots of system header files */
-
-# ifdef HAVE_LOCALE_H
-#  include <locale.h>
-# endif
 
 /*
  * Maximum length of a path (for non-unix systems) Make it a bit long, to stay
@@ -96,18 +88,12 @@ typedef uint16_t u8char_T;
 typedef uint32_t u8char_T;
 # endif
 
-#include "nvim/ascii.h"
 #include "nvim/keymap.h"
 #include "nvim/term_defs.h"
 #include "nvim/macros.h"
 
-#include <errno.h>
 
-#include <assert.h>
 
-#include <inttypes.h>
-#include <wctype.h>
-#include <stdarg.h>
 
 /* ================ end of the header file puzzle =============== */
 
@@ -1105,7 +1091,6 @@ typedef int VimClipboard;       /* This is required for the prototypes. */
 
 #include "nvim/buffer_defs.h"         /* buffer and windows */
 #include "nvim/ex_cmds_defs.h"        /* Ex command defines */
-#include "nvim/proto.h"          /* function prototypes */
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
  * functions of these names. The declarations would break if the defines had
