@@ -1,6 +1,8 @@
-# Generated from ko.UTF-8.po, DO NOT EDIT
+# Korean translation for Vim
 #
 # FIRST AUTHOR SungHyun Nam <goweol@gmail.com>, 2000-2011
+#
+# Generated from ko.UTF-8, DO NOT EDIT.
 #
 msgid ""
 msgstr ""
