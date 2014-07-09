@@ -1,6 +1,8 @@
 #ifndef NVIM_ARABIC_H
 #define NVIM_ARABIC_H
 
+#include <stdbool.h>
+
 /// Whether c belongs to the range of Arabic characters that might be shaped.
 static inline bool arabic_char(int c)
 {

@@ -1,6 +1,8 @@
 #ifndef NVIM_EX_CMDS_H
 #define NVIM_EX_CMDS_H
 
+#include <stdbool.h>
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_cmds.h.generated.h"
 #endif

@@ -12,6 +12,8 @@
 #ifndef NVIM_REGEXP_DEFS_H
 #define NVIM_REGEXP_DEFS_H
 
+#include <stdbool.h>
+
 #include "nvim/pos.h"
 
 /*

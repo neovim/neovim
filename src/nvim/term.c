@@ -24,6 +24,7 @@
 #define tgetstr tgetstr_defined_wrong
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"

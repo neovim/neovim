@@ -1,6 +1,8 @@
 #ifndef NVIM_SYNTAX_H
 #define NVIM_SYNTAX_H
 
+#include <stdbool.h>
+
 #include "nvim/buffer_defs.h"
 
 typedef int guicolor_T;

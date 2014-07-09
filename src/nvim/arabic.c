@@ -10,6 +10,8 @@
 /// Final       - unicode form-B final    char denoted with  a_f_*
 /// Stand-Alone - unicode form-B isolated char denoted with  a_s_* (NOT USED)
 
+#include <stdbool.h>
+
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"

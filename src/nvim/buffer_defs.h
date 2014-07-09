@@ -1,6 +1,8 @@
 #ifndef NVIM_BUFFER_DEFS_H
 #define NVIM_BUFFER_DEFS_H
 
+#include <stdbool.h>
+
 // for garray_T
 #include "nvim/garray.h"
 // for pos_T and lpos_T
