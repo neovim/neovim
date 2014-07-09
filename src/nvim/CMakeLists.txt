@@ -204,7 +204,7 @@ add_custom_command(OUTPUT ${GENERATED_OPTIONS}
 # Our dependencies come first.
 
 if (LibIntl_FOUND)
-  list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARY})
+  list(APPEND NVIM_LINK_LIBRARIES ${LibIntl_LIBRARIES})
 endif()
 
 if(Iconv_LIBRARIES)
