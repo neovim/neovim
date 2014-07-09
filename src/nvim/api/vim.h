@@ -2,7 +2,6 @@
 #define NVIM_API_VIM_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include "nvim/api/private/defs.h"
 

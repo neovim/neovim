@@ -26,7 +26,6 @@
 #ifndef _AC_KLIST_H
 #define _AC_KLIST_H
 
-#include <stdbool.h>
 #include <stdlib.h>
 
 #include "nvim/memory.h"
