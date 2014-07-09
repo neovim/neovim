@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,6 +6,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"

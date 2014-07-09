@@ -10,9 +10,12 @@
  * misc1.c: functions that didn't seem to fit elsewhere
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/version_defs.h"
 #include "nvim/misc1.h"
 #include "nvim/charset.h"
@@ -58,7 +61,7 @@
 # include "misc1.c.generated.h"
 #endif
 /* All user names (for ~user completion as done by shell). */
-static garray_T ga_users;
+static garray_T ga_users = GA_EMPTY_INIT_VALUE;
 
 /*
  * open_line: Add a new line below or above the current line.
@@ -1834,7 +1837,7 @@ void changed(void)
        * and don't let the emsg() set msg_scroll. */
       if (need_wait_return && emsg_silent == 0) {
         out_flush();
-        ui_delay(2000L, TRUE);
+        ui_delay(2000L, true);
         wait_return(TRUE);
         msg_scroll = save_msg_scroll;
       }
@@ -2257,7 +2260,7 @@ change_warning (
     (void)msg_end();
     if (msg_silent == 0 && !silent_mode) {
       out_flush();
-      ui_delay(1000L, TRUE);       /* give the user time to think about it */
+      ui_delay(1000L, true);       /* give the user time to think about it */
     }
     curbuf->b_did_warn = TRUE;
     redraw_cmdline = FALSE;     /* don't redraw and erase the message */

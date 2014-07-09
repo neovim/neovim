@@ -10,9 +10,13 @@
  * fileio.c: read from and write to a file
  */
 
+#include <errno.h>
+#include <stdbool.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/fileio.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -3433,10 +3437,11 @@ restore_backup:
         (void)os_setperm(wfname, perm);
     }
 # endif
-    buf_setino(buf);
-  } else if (!buf->b_dev_valid)
-    /* Set the inode when creating a new file. */
-    buf_setino(buf);
+    buf_set_file_id(buf);
+  } else if (!buf->file_id_valid) {
+    // Set the file_id when creating a new file.
+    buf_set_file_id(buf);
+  }
 #endif
 
   if (close(fd) != 0) {
@@ -4965,7 +4970,7 @@ buf_check_timestamp (
           if (emsg_silent == 0) {
             out_flush();
             /* give the user some time to think about it */
-            ui_delay(1000L, TRUE);
+            ui_delay(1000L, true);
 
             /* don't redraw and erase the message */
             redraw_cmdline = FALSE;

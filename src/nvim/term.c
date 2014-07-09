@@ -22,9 +22,12 @@
  */
 
 #define tgetstr tgetstr_defined_wrong
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/term.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -1455,7 +1458,7 @@ int set_termname(char_u *term)
       if (emsg_silent == 0) {
         screen_start();                 /* don't know where cursor is now */
         out_flush();
-        ui_delay(2000L, TRUE);
+        ui_delay(2000L, true);
       }
       set_string_option_direct((char_u *)"term", -1, term,
           OPT_FREE, 0);
@@ -2516,7 +2519,7 @@ void set_shellsize(int width, int height, int mustset)
      */
     if (State == ASKMORE || State == EXTERNCMD || State == CONFIRM
         || exmode_active) {
-      screenalloc(FALSE);
+      screenalloc(false);
       repeat_message();
     } else {
       if (curwin->w_p_scb)
@@ -2608,7 +2611,7 @@ void stoptermcap(void)
       if (crv_status == CRV_SENT || u7_status == U7_SENT) {
 # ifdef UNIX
         /* Give the terminal a chance to respond. */
-        os_delay(100L, FALSE);
+        os_delay(100L, false);
 # endif
 # ifdef TCIFLUSH
         /* Discard data received but not read. */

@@ -7,8 +7,14 @@
  *
  * See README.txt for an overview of the Vim source code.
  */
+#include <stdbool.h>
+
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/if_cscope.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
@@ -1139,14 +1145,7 @@ static void clear_csinfo(int i)
   csinfo[i].fname  = NULL;
   csinfo[i].ppath  = NULL;
   csinfo[i].flags  = NULL;
-#if defined(UNIX)
-  csinfo[i].st_dev = (dev_t)0;
-  csinfo[i].st_ino = (ino_t)0;
-#else
-  csinfo[i].nVolume = 0;
-  csinfo[i].nIndexHigh = 0;
-  csinfo[i].nIndexLow = 0;
-#endif
+  csinfo[i].file_id = FILE_ID_EMPTY;
   csinfo[i].pid    = 0;
   csinfo[i].fr_fp  = NULL;
   csinfo[i].to_fp  = NULL;
@@ -1181,8 +1180,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   i = -1;   /* can be set to the index of an empty item in csinfo */
   for (j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
-        && csinfo[j].st_dev == file_info->stat.st_dev
-        && csinfo[j].st_ino == file_info->stat.st_ino) {
+        && os_file_id_equal_file_info(&(csinfo[j].file_id), file_info)) {
       if (p_csverbose)
         (void)EMSG(_("E568: duplicate cscope database not added"));
       return -1;
@@ -1225,8 +1223,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   } else
     csinfo[i].flags = NULL;
 
-  csinfo[i].st_dev = file_info->stat.st_dev;
-  csinfo[i].st_ino = file_info->stat.st_ino;
+  os_file_info_get_id(file_info, &(csinfo[i].file_id));
   return i;
 } /* cs_insert_filelist */
 
@@ -1895,7 +1892,7 @@ static void cs_release_csp(int i, int freefnpp)
       waitpid_errno = errno;
       if (pid != 0)
         break;          /* break unless the process is still running */
-      os_delay(50L, FALSE);       /* sleep 50 ms */
+      os_delay(50L, false);       /* sleep 50 ms */
     }
 # endif
     /*
@@ -1926,7 +1923,7 @@ static void cs_release_csp(int i, int freefnpp)
             alive = FALSE;             /* cscope process no longer exists */
             break;
           }
-          os_delay(50L, FALSE);           /* sleep 50ms */
+          os_delay(50L, false);           /* sleep 50ms */
         }
       }
       if (alive)

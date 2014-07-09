@@ -9,8 +9,11 @@
  * search.c: code for normal mode searching commands
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/search.h"
 #include "nvim/charset.h"
@@ -795,7 +798,7 @@ int searchit(
         lnum = 1;
       if (!shortmess(SHM_SEARCH) && (options & SEARCH_MSG))
         give_warning((char_u *)_(dir == BACKWARD
-                ? top_bot_msg : bot_top_msg), TRUE);
+                ? top_bot_msg : bot_top_msg), true);
     }
     if (got_int || called_emsg
         || break_loop
@@ -1225,7 +1228,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
       if (p_ws) {
         pos->lnum = buf->b_ml.ml_line_count;
         if (!shortmess(SHM_SEARCH))
-          give_warning((char_u *)_(top_bot_msg), TRUE);
+          give_warning((char_u *)_(top_bot_msg), true);
       } else {
         pos->lnum = 1;
         break;
@@ -1234,7 +1237,7 @@ int search_for_exact_line(buf_T *buf, pos_T *pos, int dir, char_u *pat)
       if (p_ws) {
         pos->lnum = 1;
         if (!shortmess(SHM_SEARCH))
-          give_warning((char_u *)_(bot_top_msg), TRUE);
+          give_warning((char_u *)_(bot_top_msg), true);
       } else {
         pos->lnum = 1;
         break;
@@ -2049,9 +2052,9 @@ showmatch (
        * available.
        */
       if (vim_strchr(p_cpo, CPO_SHOWMATCH) != NULL)
-        ui_delay(p_mat * 100L, TRUE);
+        ui_delay(p_mat * 100L, true);
       else if (!char_avail())
-        ui_delay(p_mat * 100L, FALSE);
+        ui_delay(p_mat * 100L, false);
       curwin->w_cursor = save_cursor;           /* restore cursor position */
       p_so = save_so;
       p_siso = save_siso;
@@ -2183,7 +2186,7 @@ found:
  */
 int 
 findpar (
-    int *pincl,         /* Return: TRUE if last char is to be included */
+    int *pincl,             /* Return: TRUE if last char is to be included */
     int dir,
     long count,
     int what,
@@ -3162,10 +3165,10 @@ current_tagblock (
   int len;
   int r;
   int do_include = include;
-  int save_p_ws = p_ws;
+  bool save_p_ws = p_ws;
   int retval = FAIL;
 
-  p_ws = FALSE;
+  p_ws = false;
 
   old_pos = curwin->w_cursor;
   old_end = curwin->w_cursor;               /* remember where we started */
@@ -3764,13 +3767,13 @@ current_search (
   int i;
   int dir;
   int result;                   /* result of various function calls */
-  char_u old_p_ws = p_ws;
+  bool old_p_ws = p_ws;
   int flags = 0;
   pos_T save_VIsual = VIsual;
   int one_char;
 
   /* wrapping should not occur */
-  p_ws = FALSE;
+  p_ws = false;
 
   /* Correct cursor when 'selection' is exclusive */
   if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor))
@@ -4389,7 +4392,7 @@ search_line:
           /* ":psearch" uses the preview window */
           if (g_do_tagpreview != 0) {
             curwin_save = curwin;
-            prepare_tagpreview(TRUE);
+            prepare_tagpreview(true);
           }
           if (action == ACTION_SPLIT) {
             if (win_split(0, 0) == FAIL)
@@ -4424,7 +4427,7 @@ search_line:
           /* Return cursor to where we were */
           validate_cursor();
           redraw_later(VALID);
-          win_enter(curwin_save, TRUE);
+          win_enter(curwin_save, true);
         }
         break;
       }

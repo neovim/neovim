@@ -229,9 +229,6 @@
 # define MAXPATHL       1024
 #endif
 
-// TODO(stefan991): remove macro
-#define CHECK_INODE             /* used when checking if a swap file already
-                                    exists for a file */
 # ifndef DFLT_MAXMEM
 #  define DFLT_MAXMEM   (5*1024)         /* use up to 5 Mbyte for a buffer */
 # endif
@@ -263,17 +260,6 @@
 # include <string.h>
 #if defined(HAVE_STRINGS_H) && !defined(NO_STRINGS_WITH_STRING_H)
 # include <strings.h>
-#endif
-
-#include <setjmp.h>
-#ifdef HAVE_SIGSETJMP
-# define JMP_BUF sigjmp_buf
-# define SETJMP(x) sigsetjmp((x), 1)
-# define LONGJMP siglongjmp
-#else
-# define JMP_BUF jmp_buf
-# define SETJMP(x) setjmp(x)
-# define LONGJMP longjmp
 #endif
 
 #define HAVE_DUP                /* have dup() */

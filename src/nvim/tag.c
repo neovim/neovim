@@ -10,9 +10,12 @@
  * Code to handle tags and the tag stack
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/tag.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -876,7 +879,7 @@ do_tag (
           give_warning(IObuff, ic);
         if (ic && !msg_scrolled && msg_silent == 0) {
           out_flush();
-          ui_delay(1000L, TRUE);
+          ui_delay(1000L, true);
         }
       }
 
@@ -1995,8 +1998,7 @@ static garray_T tag_fnames = GA_EMPTY_INIT_VALUE;
  */
 static void found_tagfile_cb(char_u *fname, void *cookie)
 {
-  ga_grow(&tag_fnames, 1);
-  ((char_u **)(tag_fnames.ga_data))[tag_fnames.ga_len++] = vim_strsave(fname);
+  GA_APPEND(char_u *, &tag_fnames, vim_strsave(fname));
 }
 
 #if defined(EXITFREE) || defined(PROTO)
@@ -2326,7 +2328,8 @@ jumpto_tag (
 {
   int save_secure;
   int save_magic;
-  int save_p_ws, save_p_scs, save_p_ic;
+  bool save_p_ws;
+  int save_p_scs, save_p_ic;
   linenr_T save_lnum;
   int csave = 0;
   char_u      *str;
@@ -2415,7 +2418,7 @@ jumpto_tag (
        * Make the preview window the current window.
        * Open a preview window when needed.
        */
-      prepare_tagpreview(TRUE);
+      prepare_tagpreview(true);
     }
   }
 
@@ -2477,7 +2480,7 @@ jumpto_tag (
       save_p_ws = p_ws;
       save_p_ic = p_ic;
       save_p_scs = p_scs;
-      p_ws = TRUE;              /* need 'wrapscan' for backward searches */
+      p_ws = true;              /* need 'wrapscan' for backward searches */
       p_ic = FALSE;             /* don't ignore case now */
       p_scs = FALSE;
       save_lnum = curwin->w_cursor.lnum;
@@ -2526,7 +2529,7 @@ jumpto_tag (
             MSG(_("E435: Couldn't find tag, just guessing!"));
             if (!msg_scrolled && msg_silent == 0) {
               out_flush();
-              ui_delay(1000L, TRUE);
+              ui_delay(1000L, true);
             }
           }
           retval = OK;
@@ -2581,7 +2584,7 @@ jumpto_tag (
       /* Return cursor to where we were */
       validate_cursor();
       redraw_later(VALID);
-      win_enter(curwin_save, TRUE);
+      win_enter(curwin_save, true);
     }
 
     --RedrawingDisabled;

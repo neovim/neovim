@@ -8,8 +8,6 @@
 #ifndef NVIM_GLOBALS_H
 #define NVIM_GLOBALS_H
 
-#include <stdbool.h>
-
 #include "nvim/ex_eval.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"
@@ -359,8 +357,8 @@ EXTERN buf_T *au_pending_free_buf INIT(= NULL);
  */
 EXTERN int mouse_row;
 EXTERN int mouse_col;
-EXTERN int mouse_past_bottom INIT(= FALSE);     /* mouse below last line */
-EXTERN int mouse_past_eol INIT(= FALSE);        /* mouse right of line */
+EXTERN bool mouse_past_bottom INIT(= false);    /* mouse below last line */
+EXTERN bool mouse_past_eol INIT(= false);       /* mouse right of line */
 EXTERN int mouse_dragging INIT(= 0);            /* extending Visual area with
                                                    mouse dragging */
 /*
@@ -600,19 +598,6 @@ EXTERN int vr_lines_changed INIT(= 0);      /* #Lines changed by "gR" so far */
 
 
 /*
- * Stuff for setjmp() and longjmp().
- * Used to protect areas where we could crash.
- */
-EXTERN JMP_BUF lc_jump_env;     /* argument to SETJMP() */
-# ifdef SIGHASARG
-/* volatile because it is used in signal handlers. */
-EXTERN volatile int lc_signal;  /* caught signal number, 0 when no was signal
-                                   caught; used for mch_libcall() */
-# endif
-/* volatile because it is used in signal handler deathtrap(). */
-EXTERN volatile int lc_active INIT(= FALSE); /* TRUE when lc_jump_env is valid. */
-
-/*
  * These flags are set based upon 'fileencoding'.
  * Note that "enc_utf8" is also set for "unicode", because the characters are
  * internally stored as UTF-8 (to avoid trouble with NUL bytes).
@@ -631,7 +616,7 @@ EXTERN volatile int lc_active INIT(= FALSE); /* TRUE when lc_jump_env is valid. 
 EXTERN int enc_dbcs INIT(= 0);                  /* One of DBCS_xxx values if
                                                    DBCS encoding */
 EXTERN int enc_unicode INIT(= 0);       /* 2: UCS-2 or UTF-16, 4: UCS-4 */
-EXTERN int enc_utf8 INIT(= FALSE);              /* UTF-8 encoded Unicode */
+EXTERN bool enc_utf8 INIT(= false);             /* UTF-8 encoded Unicode */
 EXTERN int enc_latin1like INIT(= TRUE);         /* 'encoding' is latin1 comp. */
 EXTERN int has_mbyte INIT(= 0);                 /* any multi-byte encoding */
 
@@ -733,7 +718,7 @@ EXTERN char_u   *exe_name;              /* the name of the executable */
 EXTERN int dont_scroll INIT(= FALSE);     /* don't use scrollbars when TRUE */
 #endif
 EXTERN int mapped_ctrl_c INIT(= FALSE);      /* CTRL-C is mapped */
-EXTERN int ctrl_c_interrupts INIT(= TRUE);      /* CTRL-C sets got_int */
+EXTERN bool ctrl_c_interrupts INIT(= true);  /* CTRL-C sets got_int */
 
 EXTERN cmdmod_T cmdmod;                 /* Ex command modifiers */
 
@@ -982,7 +967,7 @@ EXTERN int need_cursor_line_redraw INIT(= FALSE);
 /* Grow array to collect error messages in until they can be displayed. */
 EXTERN garray_T error_ga
 # ifdef DO_INIT
-  = {0, 0, 0, 0, NULL}
+  = GA_EMPTY_INIT_VALUE
 # endif
 ;
 #endif
@@ -1019,9 +1004,7 @@ EXTERN char_u e_isadir2[] INIT(= N_("E17: \"%s\" is a directory"));
 EXTERN char_u e_invjob[] INIT(= N_("E900: Invalid job id"));
 EXTERN char_u e_jobtblfull[] INIT(= N_("E901: Job table is full"));
 EXTERN char_u e_jobexe[] INIT(= N_("E902: \"%s\" is not an executable"));
-#ifdef FEAT_LIBCALL
 EXTERN char_u e_libcall[] INIT(= N_("E364: Library call failed for \"%s()\""));
-#endif
 EXTERN char_u e_markinval[] INIT(= N_("E19: Mark has invalid line number"));
 EXTERN char_u e_marknotset[] INIT(= N_("E20: Mark not set"));
 EXTERN char_u e_modifiable[] INIT(= N_(
@@ -1131,5 +1114,13 @@ EXTERN char *ignoredp;
 /* Temporarily moved these static variables to assist in migrating from
  * os_unix.c */
 EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
+
+/// Used to track the status of external functions.
+/// Currently only used for iconv().
+typedef enum {
+  kUnknown,
+  kWorking,
+  kBroken
+} WorkingStatus;
 
 #endif /* NVIM_GLOBALS_H */

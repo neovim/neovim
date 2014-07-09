@@ -1,6 +1,9 @@
  // Various routines dealing with allocation and deallocation of memory.
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/misc2.h"
@@ -376,13 +379,13 @@ void do_outofmem_msg(size_t size)
 void free_all_mem(void)
 {
   buf_T       *buf, *nextbuf;
-  static int entered = FALSE;
+  static bool entered = false;
 
   /* When we cause a crash here it is caught and Vim tries to exit cleanly.
    * Don't try freeing everything again. */
   if (entered)
     return;
-  entered = TRUE;
+  entered = true;
 
   block_autocmds();         /* don't want to trigger autocommands here */
 

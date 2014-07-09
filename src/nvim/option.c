@@ -31,11 +31,15 @@
  */
 
 #define IN_OPTION_C
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/option.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -5012,7 +5016,7 @@ set_bool_option (
         NULL, NULL, TRUE, curbuf);
   }
   /* when 'swf' is set, create swapfile, when reset remove swapfile */
-  else if ((int *)varp == &curbuf->b_p_swf) {
+  else if ((int *)varp == (int *)&curbuf->b_p_swf) {
     if (curbuf->b_p_swf && p_uc)
       ml_open_file(curbuf);                     /* create the swap file */
     else
@@ -7499,7 +7503,7 @@ typedef struct {
   int to;
 } langmap_entry_T;
 
-static garray_T langmap_mapga;
+static garray_T langmap_mapga = GA_EMPTY_INIT_VALUE;
 
 /*
  * Search for an entry in "langmap_mapga" for "from".  If found set the "to"

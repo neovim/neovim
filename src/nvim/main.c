@@ -7,9 +7,12 @@
  */
 
 #define EXTERN
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdbool.h>
 
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
 #include "nvim/buffer.h"
@@ -24,6 +27,9 @@
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
 #include "nvim/if_cscope.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/mark.h"
 #include "nvim/mbyte.h"
 #include "nvim/memline.h"
@@ -288,7 +294,7 @@ int main(int argc, char **argv)
 
   cmdline_row = Rows - p_ch;
   msg_row = cmdline_row;
-  screenalloc(FALSE);           /* allocate screen buffers */
+  screenalloc(false);           /* allocate screen buffers */
   set_init_2();
   TIME_MSG("inits 2");
 
@@ -1602,7 +1608,7 @@ static void check_tty(mparm_T *parmp)
       mch_errmsg(_("Vim: Warning: Input is not from a terminal\n"));
     out_flush();
     if (scriptin[0] == NULL)
-      ui_delay(2000L, TRUE);
+      ui_delay(2000L, true);
     TIME_MSG("Warning delay");
   }
 }
@@ -1793,7 +1799,7 @@ static void edit_buffers(mparm_T *parmp)
       } else {
         if (curwin->w_next == NULL)             /* just checking */
           break;
-        win_enter(curwin->w_next, FALSE);
+        win_enter(curwin->w_next, false);
       }
     }
     advance = TRUE;
@@ -1847,7 +1853,7 @@ static void edit_buffers(mparm_T *parmp)
       break;
     }
   }
-  win_enter(win, FALSE);
+  win_enter(win, false);
 
   --autocmd_no_leave;
   TIME_MSG("editing files in windows");

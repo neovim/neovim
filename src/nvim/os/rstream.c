@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -9,6 +10,7 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/event_defs.h"
 #include "nvim/os/event.h"
+#include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/log.h"

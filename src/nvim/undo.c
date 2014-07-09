@@ -80,9 +80,12 @@
 #define UH_MAGIC 0x18dade       /* value for uh_magic when in use */
 #define UE_MAGIC 0xabc123       /* value for ue_magic when in use */
 
+#include <inttypes.h>
+#include <errno.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/undo.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
@@ -1301,7 +1304,7 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
       if (name == NULL)
         verbose_enter();
       give_warning((char_u *)
-          _("File contents changed, cannot use undo info"), TRUE);
+          _("File contents changed, cannot use undo info"), true);
       if (name == NULL)
         verbose_leave();
     }
@@ -2249,7 +2252,6 @@ void ex_undolist(exarg_T *eap)
   while (uhp != NULL) {
     if (uhp->uh_prev.ptr == NULL && uhp->uh_walk != nomark
         && uhp->uh_walk != mark) {
-      ga_grow(&ga, 1);
       vim_snprintf((char *)IObuff, IOSIZE, "%6ld %7ld  ",
           uhp->uh_seq, changes);
       u_add_time(IObuff + STRLEN(IObuff), IOSIZE - STRLEN(IObuff),
@@ -2260,7 +2262,7 @@ void ex_undolist(exarg_T *eap)
         vim_snprintf_add((char *)IObuff, IOSIZE,
             "  %3ld", uhp->uh_save_nr);
       }
-      ((char_u **)(ga.ga_data))[ga.ga_len++] = vim_strsave(IObuff);
+      GA_APPEND(char_u *, &ga, vim_strsave(IObuff));
     }
 
     uhp->uh_walk = mark;
