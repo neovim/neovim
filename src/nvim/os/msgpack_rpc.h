@@ -2,7 +2,6 @@
 #define NVIM_OS_MSGPACK_RPC_H
 
 #include <stdint.h>
-#include <stdbool.h>
 
 #include <msgpack.h>
 
