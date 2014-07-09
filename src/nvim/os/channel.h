@@ -1,6 +1,7 @@
 #ifndef NVIM_OS_CHANNEL_H
 #define NVIM_OS_CHANNEL_H
 
+#include <stdbool.h>
 #include <uv.h>
 
 #include "nvim/api/private/defs.h"

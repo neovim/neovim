@@ -1,5 +1,7 @@
 #ifndef NVIM_OS_OS_H
 #define NVIM_OS_OS_H
+
+#include <stdbool.h>
 #include <uv.h>
 
 #include "nvim/os/fs_defs.h"
