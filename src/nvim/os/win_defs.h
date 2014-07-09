@@ -17,6 +17,13 @@
 
 typedef uv_uid_t uid_t;
 
+# ifndef DFLT_MAXMEM
+#  define DFLT_MAXMEM   (5*1024)         /* use up to 5 Mbyte for a buffer */
+# endif
+# ifndef DFLT_MAXMEMTOT
+#  define DFLT_MAXMEMTOT        (10*1024)    /* use up to 10 Mbyte for Vim */
+# endif
+
 // defs
 
 #ifndef VIMINFO_FILE
