@@ -14,7 +14,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2014-05-26 14:21+0200\n"
 "PO-Revision-Date: 2014-06-27 13:33+0200\n"
-"Last-Translator: Kevin Hernandez <kernan373@gmail.com>\n"
+"Last-Translator: XXXXXXXX XXXXXXXX <kernan373@gmail.com>\n"
 "Language-Team: \n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -400,11 +400,11 @@ msgstr "Se llegó al final del párrafo"
 
 #: ../edit.c:101
 msgid "E839: Completion function changed window"
-msgstr "E839: Función de completitud cambió ventanilla"
+msgstr "E839: Función de completado cambió la ventana"
 
 #: ../edit.c:102
 msgid "E840: Completion function deleted text"
-msgstr "E840: Función de completitud elimino texto."
+msgstr "E840: Función de completado elimino texto."
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
@@ -851,7 +851,7 @@ msgstr "E702: Fallo al ordenar funciones comparadas"
 
 #: ../eval.c:13806
 msgid "E882: Uniq compare function failed"
-msgstr "E882: Fallo al ordenar funciones de comparacion"
+msgstr "E882: Fallo la función de comparación Uniq"
 
 #: ../eval.c:14085
 msgid "(Invalid)"
@@ -2731,7 +2731,7 @@ msgstr "E17: \"%s\" es un directorio"
 
 #: ../globals.h:1020
 msgid "E900: Invalid job id"
-msgstr "E900: Identificacion de trabajo inválido"
+msgstr "E900: La id de trabajo (job) es inválida"
 
 #: ../globals.h:1021
 msgid "E901: Job table is full"
