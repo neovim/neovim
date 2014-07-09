@@ -12,6 +12,9 @@
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
+#define BASENAMELEN    _MAX_PATH
+#define TEMPNAMELEN    _MAX_PATH
+
 typedef uv_uid_t uid_t;
 
 #endif  // NVIM_OS_WIN_DEFS_H
