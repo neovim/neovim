@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdbool.h>
 
 #include "nvim/ascii.h"
 #include "nvim/indent.h"

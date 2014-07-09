@@ -2,6 +2,7 @@
 ///
 /// code for digraphs
 
+#include <stdbool.h>
 #include <inttypes.h>
 
 #include "nvim/vim.h"

@@ -1,6 +1,8 @@
 #ifndef NVIM_OPTION_DEFS_H
 #define NVIM_OPTION_DEFS_H
 
+#include <stdbool.h>
+
 #include "nvim/types.h"
 
 // option_defs.h: definition of global variables for settable options

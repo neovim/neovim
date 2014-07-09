@@ -14,6 +14,8 @@
 # define NVIM_EX_CMDS_DEFS_H
 #endif
 
+#include <stdbool.h>
+
 #include "nvim/normal.h"
 
 /*

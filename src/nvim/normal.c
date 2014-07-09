@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
