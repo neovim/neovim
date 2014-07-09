@@ -81,10 +81,11 @@ void server_teardown()
 /// Starts listening on arbitrary tcp/unix addresses specified by
 /// `endpoint` for API calls. The type of socket used(tcp or unix/pipe) will
 /// be determined by parsing `endpoint`: If it's a valid tcp address in the
-/// 'ip:port' format, then it will be tcp socket, else it will be a unix
-/// socket or named pipe.
+/// 'ip[:port]' format, then it will be tcp socket. The port is optional
+/// and if omitted will default to NEOVIM_DEFAULT_TCP_PORT. Otherwise it will
+/// be a unix socket or named pipe.
 ///
-/// @param endpoint Address of the server. Either a 'ip:port' string or an
+/// @param endpoint Address of the server. Either a 'ip[:port]' string or an
 ///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
 ///        named pipe.
 void server_start(char *endpoint)
@@ -126,11 +127,12 @@ void server_start(char *endpoint)
 
   if (*ip_end == ':') {
     // Extract the port
-    port = strtol(ip_end + 1, NULL, 10);
-
-    if (port == 0 || port > 0xffff) {
+    long lport = strtol(ip_end + 1, NULL, 10); // NOLINT
+    if (lport <= 0 || lport > 0xffff) {
       // Invalid port, treat as named pipe or unix socket
       server_type = kServerTypePipe;
+    } else {
+      port = (int) lport;
     }
   }
 
