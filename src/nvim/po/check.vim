@@ -6,7 +6,8 @@
 
 if 1	" Only execute this if the eval feature is available.
 
-redir! > check.log
+let filename = "check-" . expand("%:t:r") . ".log"
+exe 'redir! > ' . filename
 
 " Function to get a split line at the cursor.
 " Used for both msgid and msgstr lines.
