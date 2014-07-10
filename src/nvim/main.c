@@ -938,7 +938,6 @@ static void parse_command_name(mparm_T *parmp)
       exmode_active = EXMODE_VIM;
     else
       exmode_active = EXMODE_NORMAL;
-    change_compatible(TRUE);            /* set 'compatible' */
   }
 }
 
@@ -1065,10 +1064,6 @@ static void command_line_scan(mparm_T *parmp)
           curbuf->b_p_bin = 1;                /* binary file I/O */
           break;
 
-        case 'C':                 /* "-C"  Compatible */
-          change_compatible(TRUE);
-          break;
-
         case 'e':                 /* "-e" Ex mode */
           exmode_active = EXMODE_NORMAL;
           break;
@@ -1114,10 +1109,6 @@ static void command_line_scan(mparm_T *parmp)
 
         case 'y':                 /* "-y"  easy mode */
           parmp->evim_mode = TRUE;
-          break;
-
-        case 'N':                 /* "-N"  Nocompatible */
-          change_compatible(FALSE);
           break;
 
         case 'n':                 /* "-n" no swap file */
@@ -2194,8 +2185,6 @@ static void usage(void)
   main_msg(_("-M\t\t\tModifications in text not allowed"));
   main_msg(_("-b\t\t\tBinary mode"));
   main_msg(_("-l\t\t\tLisp mode"));
-  main_msg(_("-C\t\t\tCompatible with Vi: 'compatible'"));
-  main_msg(_("-N\t\t\tNot fully Vi compatible: 'nocompatible'"));
   main_msg(_("-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"));
   main_msg(_("-D\t\t\tDebugging mode"));
   main_msg(_("-n\t\t\tNo swap file, use memory only"));

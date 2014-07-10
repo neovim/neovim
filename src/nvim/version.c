@@ -820,21 +820,11 @@ void intro_message(int colon)
     "",
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>  or  <F1>  for on-line help"),
-    N_("type  :help version7<Enter>   for version info"),
-    NULL,
-    "",
-    N_("Running in Vi compatible mode"),
-    N_("type  :set nocp<Enter>        for Vim defaults"),
-    N_("type  :help cp-default<Enter> for info on this"),
+    N_("type  :help version7<Enter>   for version info")
   };
 
   // blanklines = screen height - # message lines
   blanklines = (int)Rows - ((sizeof(lines) / sizeof(char *)) - 1);
-
-  if (!p_cp) {
-    // add 4 for not showing "Vi compatible" message
-    blanklines += 4;
-  }
 
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
@@ -856,12 +846,6 @@ void intro_message(int colon)
   if (((row >= 2) && (Columns >= 50)) || colon) {
     for (i = 0; i < (int)(sizeof(lines) / sizeof(char *)); ++i) {
       p = lines[i];
-      if (p == NULL) {
-        if (!p_cp) {
-          break;
-        }
-        continue;
-      }
 
       if (sponsor != 0) {
         if (strstr(p, "children") != NULL) {

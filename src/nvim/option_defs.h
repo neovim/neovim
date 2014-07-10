@@ -317,7 +317,7 @@ EXTERN char_u   *p_cedit;       /* 'cedit' */
 EXTERN long p_cwh;              /* 'cmdwinheight' */
 EXTERN long p_ch;               /* 'cmdheight' */
 EXTERN int p_confirm;           /* 'confirm' */
-EXTERN int p_cp;                /* 'compatible' */
+EXTERN int p_vi_compatible;     /* 'compatible' - unused in nvim but left for compatibility */
 EXTERN char_u   *p_cot;         /* 'completeopt' */
 EXTERN long p_ph;               /* 'pumheight' */
 EXTERN char_u   *p_cpo;         /* 'cpoptions' */
