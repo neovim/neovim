@@ -3181,7 +3181,7 @@ theend:
 static void 
 did_set_option (
     int opt_idx,
-    int opt_flags,              /* possibly with OPT_MODELINE */
+    int opt_flags,             /* possibly with OPT_MODELINE */
     int new_value              /* value was replaced completely */
 )
 {
