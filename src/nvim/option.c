@@ -2048,8 +2048,7 @@ void set_init_1(void)
           || enc_utf8
           ) {
         /* Adjust the default for 'isprint' and 'iskeyword' to match
-         * latin1.  Also set the defaults for when 'nocompatible' is
-         * set. */
+         * latin1. */
         set_string_option_direct((char_u *)"isp", -1,
             ISP_LATIN1, OPT_FREE, SID_NONE);
         set_string_option_direct((char_u *)"isk", -1,
@@ -2081,8 +2080,7 @@ void set_init_1(void)
 static void 
 set_option_default (
     int opt_idx,
-    int opt_flags,                  /* OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL */
-    int compatible                 /* use Vi default value */
+    int opt_flags                  /* OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL */
 )
 {
   char_u      *varp;            /* pointer to variable for current option */
@@ -2150,7 +2148,7 @@ set_options_default (
 
   for (i = 0; !istermoption(&options[i]); i++)
     if (!(options[i].flags & P_NODEFAULT))
-      set_option_default(i, opt_flags, false);
+      set_option_default(i, opt_flags);
 
   /* The 'scroll' option must be computed for all windows. */
   FOR_ALL_TAB_WINDOWS(tp, wp)
@@ -2228,7 +2226,7 @@ void set_init_2(void)
   set_number_default("scroll", Rows / 2);
   idx = findoption((char_u *)"scroll");
   if (idx >= 0 && !(options[idx].flags & P_WAS_SET))
-    set_option_default(idx, OPT_LOCAL, false);
+    set_option_default(idx, OPT_LOCAL);
   comp_col();
 
   /*
@@ -7694,9 +7692,6 @@ static void paste_option_changed(void)
 /*
  * vimrc_found() - Called when a ".vimrc" or "VIMINIT" has been found.
  *
- * Reset 'compatible' and set the values for options that didn't get set yet
- * to the Vim defaults.
- * Don't do this if the 'compatible' option has been set or reset before.
  * When "fname" is not NULL, use it to set $"envname" when it wasn't set yet.
  */
 void vimrc_found(char_u *fname, char_u *envname)
@@ -7708,7 +7703,7 @@ void vimrc_found(char_u *fname, char_u *envname)
   if (!option_was_set((char_u *)"cp")) {
     for (opt_idx = 0; !istermoption(&options[opt_idx]); opt_idx++)
       if (!(options[opt_idx].flags & P_WAS_SET))
-        set_option_default(opt_idx, OPT_FREE, FALSE);
+        set_option_default(opt_idx, OPT_FREE);
     didset_options();
   }
 
