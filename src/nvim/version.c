@@ -806,14 +806,14 @@ void intro_message(int colon)
   int sponsor;
   char *p;
   static char *(lines[]) = {
-    N_("VIM - Vi IMproved"),
+    N_("Neovim"),
     "",
     N_("version "),
     N_("by Bram Moolenaar et al."),
 #ifdef MODIFIED_BY
     " ",
 #endif  // ifdef MODIFIED_BY
-    N_("Vim is open source and freely distributable"),
+    N_("Neovim is open source and freely distributable"),
     "",
     N_("Help poor children in Uganda!"),
     N_("type  :help iccf<Enter>       for information "),
