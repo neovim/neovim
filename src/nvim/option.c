@@ -2470,7 +2470,6 @@ do_set (
   int adding;                       /* "opt+=arg" */
   int prepending;                   /* "opt^=arg" */
   int removing;                     /* "opt-=arg" */
-  int cp_val = 0;
   char_u key_name[2];
 
   if (*arg == NUL) {
@@ -2645,13 +2644,10 @@ do_set (
 
       if (vim_strchr((char_u *)"?=:!&<", nextchar) != NULL) {
         arg += len;
-        cp_val = false;
         if (nextchar == '&' && arg[1] == 'v' && arg[2] == 'i') {
           if (arg[3] == 'm') {          /* "opt&vim": set to Vim default */
-            cp_val = FALSE;
             arg += 3;
           } else {                    /* "opt&vi": set to Vi default */
-            cp_val = TRUE;
             arg += 2;
           }
         }
