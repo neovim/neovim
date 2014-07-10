@@ -146,7 +146,7 @@ else()
     list(APPEND NVIM_LINK_LIBRARIES tinfo)
   else()
     find_package(Curses REQUIRED)
-    list(APPEND NVIM_LINK_LIBRARIES ${CURSES_LIBRARIES})
+    list(APPEND NVIM_LINK_LIBRARIES ${CURSES_LIBRARY})
   endif()
 endif()
 
