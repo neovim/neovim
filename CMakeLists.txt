@@ -91,36 +91,32 @@ find_package(Threads REQUIRED)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-find_program(LUA_PRG luajit)
+# Find Lua interpreter
+include(LuaHelpers)
+set(LUA_DEPENDENCIES lpeg cmsgpack)
+if(NOT LUA_PRG)
+  foreach(CURRENT_LUA_PRG luajit lua)
+    # If LUA_PRG is set find_program() will not search
+    unset(LUA_PRG CACHE)
+    unset(LUA_PRG_WORKS)
+    find_program(LUA_PRG ${CURRENT_LUA_PRG})
 
-# Need a lua interpreter for running the msgapck metadata/dispatch generator
-if(NOT EXISTS ${LUA_PRG})
-  find_program(LUA_PRG lua)
-endif()
-
-if(EXISTS ${LUA_PRG})
-  message(STATUS "Using the lua interpreter ${LUA_PRG}")
+    if(LUA_PRG)
+      check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
+      if(LUA_PRG_WORKS)
+        break()
+      endif()
+    endif()
+  endforeach()
 else()
-  message(FATAL_ERROR "A lua interpreter is required for building the Neovim")
+  check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
 endif()
 
-execute_process(COMMAND ${LUA_PRG} -e "require('lpeg')"
-                RESULT_VARIABLE LUA_LPEG_MISSING
-                ERROR_QUIET)
-
-if(${LUA_LPEG_MISSING})
-  message(FATAL_ERROR
-          "The 'lpeg' lua package is required for building Neovim")
+if(NOT LUA_PRG_WORKS)
+  message(FATAL_ERROR "A suitable Lua interpreter was not found")
 endif()
 
-execute_process(COMMAND ${LUA_PRG} -e "require('cmsgpack')"
-                RESULT_VARIABLE LUA_MSGPACK_MISSING
-                ERROR_QUIET)
-
-if(${LUA_MSGPACK_MISSING})
-  message(FATAL_ERROR
-         "The 'cmsgpack' lua package is required for building Neovim")
-endif()
+message(STATUS "Using the Lua interpreter ${LUA_PRG}")
 
 add_subdirectory(config)
 add_subdirectory(src/nvim)
