@@ -1,0 +1,81 @@
+# Aap recipe for Slovak Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = sk_SK.aff sk_SK.dic
+
+all: $SPELLDIR/sk.iso-8859-2.spl $SPELLDIR/sk.utf-8.spl \
+        $SPELLDIR/sk.cp1250.spl ../README_sk.txt
+
+$SPELLDIR/sk.iso-8859-2.spl : $FILES
+        :sys env LANG=sk_SK.ISO8859-2 $VIM -u NONE -e -c "mkspell! $SPELLDIR/sk sk_SK" -c q
+
+$SPELLDIR/sk.utf-8.spl : $FILES
+        :sys env LANG=sk_SK.UTF-8 $VIM -u NONE -e -c "mkspell! $SPELLDIR/sk sk_SK" -c q
+
+$SPELLDIR/sk.cp1250.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=cp1250" -c "mkspell! $SPELLDIR/sk sk_SK" -c q
+
+../README_sk.txt: README_sk_SK.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} sk_SK.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+sk_SK.aff sk_SK.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch sk_SK.zip
+        :sys $UNZIP sk_SK.zip
+        :delete sk_SK.zip
+        @if not os.path.exists('sk_SK.orig.aff'):
+            :copy sk_SK.aff sk_SK.orig.aff
+        @if not os.path.exists('sk_SK.orig.dic'):
+            :copy sk_SK.dic sk_SK.orig.dic
+        @if os.path.exists('sk_SK.diff'):
+            :sys patch <sk_SK.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 sk_SK.orig.aff sk_SK.aff >sk_SK.diff
+        :sys {force} diff -a -C 1 sk_SK.orig.dic sk_SK.dic >>sk_SK.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch sk_SK.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../sk_SK.zip
+            :sys {force} diff ../sk_SK.orig.aff sk_SK.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy sk_SK.aff ../sk_SK.new.aff
+            :sys {force} diff ../sk_SK.orig.dic sk_SK.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy sk_SK.dic ../sk_SK.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete sk_SK.zip
+
+
+# vim: set sts=4 sw=4 :

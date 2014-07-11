@@ -1,0 +1,57 @@
+.TH VIMTUTOR 1 "2001 April 2"
+.SH NAME
+vimtutor \- the Vim tutor
+.SH SYNOPSIS
+.br
+.B vimtutor [\-g] [language]
+.SH DESCRIPTION
+.B Vimtutor
+starts the
+.B Vim
+tutor.
+It copies the tutor file first, so that it can be modified without changing
+the original file.
+.PP
+The
+.B Vimtutor
+is useful for people that want to learn their first
+.B Vim
+commands.
+.PP
+The optional argument \-g starts vimtutor with gvim rather than vim, if the
+GUI version of vim is available, or falls back to Vim if gvim is not found.
+.PP
+The optional [language] argument is the two-letter name of a language, like
+"it" or "es".
+If the [language] argument is missing, the language of the current locale will
+be used.
+If a tutor in this language is available, it will be used.
+Otherwise the English version will be used.
+.PP
+.B Vim
+is always started in Vi compatible mode.
+.SH FILES
+.TP 15
+/usr/local/lib/vim/tutor/tutor[.language]
+The
+.B Vimtutor
+text file(s).
+.TP 15
+/usr/local/lib/vim/tutor/tutor.vim
+The Vim script used to copy the
+.B Vimtutor
+text file.
+.SH AUTHOR
+The
+.B Vimtutor
+was originally written for Vi by Michael C. Pierce and Robert K. Ware,
+Colorado School of Mines using ideas supplied by Charles Smith,
+Colorado State University.
+E-mail: bware@mines.colorado.edu.
+.br
+It was modified for
+.B Vim
+by Bram Moolenaar.
+For the names of the translators see the tutor files.
+.SH SEE ALSO
+vim(1)

@@ -1,0 +1,126 @@
+*pi_zip.txt*	For Vim version 7.4.  Last change: 2013 Apr 17
+
+				+====================+
+				| Zip File Interface |
+				+====================+
+
+Author:  Charles E. Campbell  <NdrOchip@ScampbellPfamily.AbizM>
+	  (remove NOSPAM from Campbell's email first)
+Copyright: Copyright (C) 2005-2012 Charles E Campbell	 *zip-copyright*
+	The VIM LICENSE (see |copyright|) applies to the files in this
+	package, including zipPlugin.vim, zip.vim, and pi_zip.vim.  except use
+	"zip.vim" instead of "VIM".  Like anything else that's free, zip.vim
+	and its associated files are provided *as is* and comes with no
+	warranty of any kind, either expressed or implied.  No guarantees of
+	merchantability.  No guarantees of suitability for any purpose.  By
+	using this plugin, you agree that in no event will the copyright
+	holder be liable for any damages resulting from the use of this
+	software. Use at your own risk!
+
+==============================================================================
+1. Contents						*zip* *zip-contents*
+   1. Contents................................................|zip-contents|
+   2. Usage...................................................|zip-usage|
+   3. Additional Extensions...................................|zip-extension|
+   4. History.................................................|zip-history|
+
+==============================================================================
+2. Usage						*zip-usage* *zip-manual*
+
+   When one edits a *.zip file, this plugin will handle displaying a
+   contents page.  Select a file to edit by moving the cursor atop
+   the desired file, then hit the <return> key.  After editing, one may
+   also write to the file.  Currently, one may not make a new file in
+   zip archives via the plugin.
+
+   OPTIONS
+
+   							*g:zip_nomax*
+
+   If this variable exists and is true, the file window will not be
+   automatically maximized when opened.
+
+							*g:zip_shq*
+   Different operating systems may use one or more shells to execute
+   commands.  Zip will try to guess the correct quoting mechanism to
+   allow spaces and whatnot in filenames; however, if it is incorrectly
+   guessing the quote to use for your setup, you may use >
+	g:zip_shq
+<  which by default is a single quote under Unix (') and a double quote
+   under Windows (").  If you'd rather have no quotes, simply set
+   g:zip_shq to the empty string (let g:zip_shq= "") in your <.vimrc>.
+
+   							*g:zip_unzipcmd*
+   Use this option to specify the program which does the duty of "unzip".
+   It's used during browsing. By default: >
+   	let g:zip_unzipcmd= "unzip"
+<
+							*g:zip_zipcmd*
+   Use this option to specify the program which does the duty of "zip".
+   It's used during the writing (updating) of a file already in a zip
+   file; by default: >
+   	let g:zip_zipcmd= "zip"
+<
+   PREVENTING LOADING~
+
+   If for some reason you do not wish to use vim to examine zipped files,
+   you may put the following two variables into your <.vimrc> to prevent
+   the zip plugin from loading: >
+
+	let g:loaded_zipPlugin= 1
+	let g:loaded_zip      = 1
+<
+
+==============================================================================
+3. Additional Extensions					*zip-extension*
+
+   Apparently there are a number of archivers which generate zip files that
+   don't use the .zip extension (.jar, .xpi, etc).  To handle such files,
+   place a line in your <.vimrc> file: >
+
+	au BufReadCmd *.jar,*.xpi call zip#Browse(expand("<amatch>"))
+<
+   One can simply extend this line to accommodate additional extensions that
+   should be treated as zip files.
+
+==============================================================================
+4. History							*zip-history* {{{1
+   v26 Nov 15, 2012 * (Jason Spiro) provided a lot of new extensions that
+		      are synonyms for .zip
+   v25 Jun 27, 2011 * using keepj with unzip -Z
+		      (consistent with the -p variant)
+		    * (Ben Staniford) now uses
+			has("win32unix") && executable("cygpath")
+		      before converting to cygwin-style paths
+   v24 Jun 21, 2010 * (Cédric Bosdonnat) unzip seems to need its filenames
+		      fnameescape'd as well as shellquote'd
+		    * (Motoya Kurotsu) inserted keepj before 0d to protect
+		      jump list
+   v17 May 09, 2008 * arno caught a security bug
+   v15 Sep 07, 2007 * &shq now used if not the empty string for g:zip_shq
+   v14 May 07, 2007 * using b:zipfile instead of w:zipfile to avoid problem
+                      when editing alternate file to bring up a zipfile
+   v10 May 02, 2006 * now using "redraw then echo" to show messages, instead
+                      of "echo and prompt user"
+		    * g:zip_shq provided to allow for quoting control for the
+		      command being passed via :r! ... commands.
+   v8 Apr 10, 2006 * Bram Moolenaar reported that he received an error message
+                     due to "Pattern not found: ^.*\%0c"; this was caused by
+		     stridx finding a Name... at the beginning of the line;
+		     zip.vim tried 4,$s/^.*\%0c//, but that doesn't work.
+		     Fixed.
+   v7 Mar 22, 2006 * escaped some characters that can cause filename handling
+                     problems.
+   v6 Dec 21, 2005 * writing to files not in directories caused problems -
+                     fixed (pointed out by Christian Robinson)
+   v5 Nov 22, 2005 * report option workaround installed
+   v3 Oct 18, 2005 * <amatch> used instead of <afile> in autocmds
+   v2 Sep 16, 2005 * silenced some commands (avoiding hit-enter prompt)
+                   * began testing under Windows; works thus far
+		   * filetype detection fixed
+      Nov 03, 2005 * handles writing zipfiles across a network using
+                     netrw#NetWrite()
+   v1 Sep 15, 2005 * Initial release, had browsing, reading, and writing
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:fdm=marker

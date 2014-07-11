@@ -1,0 +1,82 @@
+# Aap recipe for Hungarian Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+VIMRC = ../spell.vim
+FILES    = hu_HU.aff hu_HU.dic
+
+all: $SPELLDIR/hu.iso-8859-2.spl $SPELLDIR/hu.utf-8.spl \
+        $SPELLDIR/hu.cp1250.spl ../README_hu.txt
+
+$SPELLDIR/hu.iso-8859-2.spl : $FILES
+        :sys env LANG=hu_HU.ISO8859-2 $VIM -u $VIMRC -e -c "mkspell! $SPELLDIR/hu hu_HU" -c q
+
+$SPELLDIR/hu.utf-8.spl : $FILES
+        :sys env LANG=hu_HU.UTF-8 $VIM -u $VIMRC -e -c "mkspell! $SPELLDIR/hu hu_HU" -c q
+
+$SPELLDIR/hu.cp1250.spl : $FILES
+        :sys $VIM -u $VIMRC -e -c "set enc=cp1250" -c "mkspell! $SPELLDIR/hu hu_HU" -c q
+
+../README_hu.txt: README_hu_HU.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} hu_HU.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+hu_HU.aff hu_HU.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch hu_HU.zip
+        :sys $UNZIP hu_HU.zip
+        :delete hu_HU.zip
+        @if not os.path.exists('hu_HU.orig.aff'):
+            :copy hu_HU.aff hu_HU.orig.aff
+        @if not os.path.exists('hu_HU.orig.dic'):
+            :copy hu_HU.dic hu_HU.orig.dic
+        @if os.path.exists('hu_HU.diff'):
+            :sys patch <hu_HU.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 hu_HU.orig.aff hu_HU.aff >hu_HU.diff
+        :sys {force} diff -a -C 1 hu_HU.orig.dic hu_HU.dic >>hu_HU.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch hu_HU.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../hu_HU.zip
+            :sys {force} diff ../hu_HU.orig.aff hu_HU.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy hu_HU.aff ../hu_HU.new.aff
+            :sys {force} diff ../hu_HU.orig.dic hu_HU.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy hu_HU.dic ../hu_HU.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete hu_HU.zip
+
+
+# vim: set sts=4 sw=4 :

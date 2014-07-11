@@ -1,0 +1,51 @@
+.TH EVIM 1 "2002 February 16"
+.SH 名前
+evim \- easy Vim, モードレスエディタ Vim
+.SH 書式
+.br
+.B evim
+[options] [file ..]
+.br
+.B eview
+.SH 説明
+.B eVim
+は
+.B Vim
+を起動して、モードレスエディタとして動作するためのオプションを設定します。
+Vim の動作が point-and-click エディタのような動作になります。
+MS-Windows のメモ帳のような動作です。
+.B eVim
+は常に GUI で起動し、メニューとツールバーを表示します。
+.PP
+どうしても Vim の操作に馴染めない場合に使ってください。
+編集効率は下がります。
+.PP
+.B eview
+は同様に、読み込み専用モードで起動します。evim \-R と同じです。
+.PP
+引数や Vim についての詳細は vim(1) を参照してください。
+.PP
+オプション 'insertmode' が設定され、テキストを直接、入力できるようになりま
+す。
+.br
+コピーとペーストのキー操作が MS-Windows と同じになるように、マップが設定され
+ます。
+CTRL-X が切り取り、CTRL-C がコピー、CTRL-V がペーストです。
+標準の CTRL-V の操作は CTRL-Q に割り当てられます。
+.SH オプション
+vim(1) を参照してください。
+.SH ファイル
+.TP 15
+/usr/local/lib/vim/evim.vim
+eVim の初期化スクリプト。
+.SH 別名
+evim は "gumbies のための Vim" とも呼ばれています。
+evim を使っているあなたはきっと、頭にハンカチをかぶっているのです。
+(訳注: gumbies は Monty Python に登場するおもしろ集団。ハンカチをかぶっ
+ている。)
+.SH 関連項目
+vim(1)
+.SH 著者
+.B Vim
+のほとんどの機能は Bram Moolenaar が開発し、多くの人が協力しました。
+メニューの Help/Credits を参照してください。

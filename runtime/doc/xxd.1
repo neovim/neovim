@@ -1,0 +1,370 @@
+.TH XXD 1 "August 1996" "Manual page for xxd"
+.\"
+.\" 21st May 1996
+.\" Man page author:
+.\"    Tony Nugent <tony@sctnugen.ppp.gu.edu.au> <T.Nugent@sct.gu.edu.au>
+.\"    Changes by Bram Moolenaar <Bram@vim.org>
+.SH NAME
+.I xxd
+\- make a hexdump or do the reverse.
+.SH SYNOPSIS
+.B xxd
+\-h[elp]
+.br
+.B xxd
+[options] [infile [outfile]]
+.br
+.B xxd
+\-r[evert] [options] [infile [outfile]]
+.SH DESCRIPTION
+.I xxd
+creates a hex dump of a given file or standard input.
+It can also convert a hex dump back to its original binary form.
+Like
+.BR uuencode (1)
+and
+.BR uudecode (1)
+it allows the transmission of binary data in a `mail-safe' ASCII representation,
+but has the advantage of decoding to standard output.
+Moreover, it can be used to perform binary file patching.
+.SH OPTIONS
+If no
+.I infile
+is given, standard input is read.
+If
+.I infile
+is specified as a
+.RB \` \- '
+character, then input is taken from standard input.
+If no
+.I outfile
+is given (or a
+.RB \` \- '
+character is in its place), results are sent to standard output.
+.PP
+Note that a "lazy" parser is used which does not check for more than the first
+option letter, unless the option is followed by a parameter.
+Spaces between a single option letter and its parameter are optional.
+Parameters to options can be specified in decimal, hexadecimal or octal
+notation.
+Thus
+.BR \-c8 ,
+.BR "\-c 8" ,
+.B \-c 010
+and
+.B \-cols 8
+are all equivalent.
+.PP
+.TP
+.IR \-a " | " \-autoskip
+toggle autoskip: A single '*' replaces nul-lines.  Default off.
+.TP
+.IR \-b " | " \-bits
+Switch to bits (binary digits) dump, rather than hexdump.
+This option writes octets as eight digits "1"s and "0"s instead of a normal
+hexadecimal dump. Each line is preceded by a line number in hexadecimal and
+followed by an ascii (or ebcdic) representation. The command line switches
+\-r, \-p, \-i do not work with this mode.
+.TP
+.IR "\-c cols " | " \-cols cols"
+format
+.RI < cols >
+octets per line. Default 16 (\-i: 12, \-ps: 30, \-b: 6). Max 256.
+.TP
+.IR \-E " | " \-EBCDIC
+Change the character encoding in the righthand column from ASCII to EBCDIC.
+This does not change the hexadecimal representation. The option is
+meaningless in combinations with \-r, \-p or \-i.
+.TP
+.IR "\-g bytes " | " \-groupsize bytes"
+separate the output of every
+.RI < bytes >
+bytes (two hex characters or eight bit-digits each) by a whitespace.
+Specify
+.I \-g 0
+to suppress grouping.
+.RI < Bytes "> defaults to " 2
+in normal mode and \fI1\fP in bits mode.
+Grouping does not apply to postscript or include style.
+.TP
+.IR \-h " | " \-help
+print a summary of available commands and exit.  No hex dumping is performed.
+.TP
+.IR \-i " | " \-include
+output in C include file style. A complete static array definition is written
+(named after the input file), unless xxd reads from stdin.
+.TP
+.IR "\-l len " | " \-len len"
+stop after writing
+.RI  < len >
+octets.
+.TP
+.IR \-p " | " \-ps " | " \-postscript " | " \-plain
+output in postscript continuous hexdump style. Also known as plain hexdump
+style.
+.TP
+.IR \-r " | " \-revert
+reverse operation: convert (or patch) hexdump into binary.
+If not writing to stdout, xxd writes into its output file without truncating
+it. Use the combination
+.I \-r \-p
+to read plain hexadecimal dumps without line number information and without a
+particular column layout. Additional Whitespace and line-breaks are allowed
+anywhere.
+.TP
+.I \-seek offset
+When used after
+.IR \-r :
+revert with
+.RI < offset >
+added to file positions found in hexdump.
+.TP
+.I \-s [+][\-]seek
+start at
+.RI < seek >
+bytes abs. (or rel.) infile offset.
+\fI+ \fRindicates that the seek is relative to the current stdin file position
+(meaningless when not reading from stdin).  \fI\- \fRindicates that the seek
+should be that many characters from the end of the input (or if combined with
+\fI+\fR: before the current stdin file position).
+Without \-s option, xxd starts at the current file position.
+.TP
+.I \-u
+use upper case hex letters. Default is lower case.
+.TP
+.IR \-v " | " \-version
+show version string.
+.SH CAVEATS
+.PP
+.I xxd \-r
+has some builtin magic while evaluating line number information.
+If the output file is seekable, then the linenumbers at the start of each
+hexdump line may be out of order, lines may be missing, or overlapping. In
+these cases xxd will lseek(2) to the next position. If the output file is not
+seekable, only gaps are allowed, which will be filled by null-bytes.
+.PP
+.I xxd \-r
+never generates parse errors. Garbage is silently skipped.
+.PP
+When editing hexdumps, please note that
+.I xxd \-r
+skips everything on the input line after reading enough columns of hexadecimal
+data (see option \-c). This also means, that changes to the printable ascii (or
+ebcdic) columns are always ignored. Reverting a plain (or postscript) style
+hexdump with xxd \-r \-p does not depend on the correct number of columns. Here anything that looks like a pair of hex-digits is interpreted.
+.PP
+Note the difference between
+.br
+\fI% xxd \-i file\fR
+.br
+and
+.br
+\fI% xxd \-i < file\fR
+.PP
+.I xxd \-s +seek
+may be different from
+.IR "xxd \-s seek" ,
+as lseek(2) is used to "rewind" input.  A '+'
+makes a difference if the input source is stdin, and if stdin's file position
+is not at the start of the file by the time xxd is started and given its input.
+The following examples may help to clarify (or further confuse!)...
+.PP
+Rewind stdin before reading; needed because the `cat' has already read to the
+end of stdin.
+.br
+\fI% sh \-c "cat > plain_copy; xxd \-s 0 > hex_copy" < file\fR
+.PP
+Hexdump from file position 0x480 (=1024+128) onwards.
+The `+' sign means "relative to the current position", thus the `128' adds to
+the 1k where dd left off.
+.br
+\fI% sh \-c "dd of=plain_snippet bs=1k count=1; xxd \-s +128 > hex_snippet" < file\fR
+.PP
+Hexdump from file position 0x100 ( = 1024\-768) on.
+.br
+\fI% sh \-c "dd of=plain_snippet bs=1k count=1; xxd \-s +\-768 > hex_snippet" < file\fR
+.PP
+However, this is a rare situation and the use of `+' is rarely needed.
+The author prefers to monitor the effect of xxd with strace(1) or truss(1), whenever \-s is used.
+.SH EXAMPLES
+.PP
+.br
+Print everything but the first three lines (hex 0x30 bytes) of
+.BR file .
+.br
+\fI% xxd \-s 0x30 file\fR
+.PP
+.br
+Print 3 lines (hex 0x30 bytes) from the end of
+.BR file .
+.br
+\fI% xxd \-s \-0x30 file\fR
+.PP
+.br
+Print 120 bytes as continuous hexdump with 20 octets per line.
+.br
+\fI% xxd \-l 120 \-ps \-c 20 xxd.1\fR
+.br
+2e54482058584420312022417567757374203139
+.br
+39362220224d616e75616c207061676520666f72
+.br
+20787864220a2e5c220a2e5c222032317374204d
+.br
+617920313939360a2e5c22204d616e2070616765
+.br
+20617574686f723a0a2e5c2220202020546f6e79
+.br
+204e7567656e74203c746f6e79407363746e7567
+.br
+
+.br
+Hexdump the first 120 bytes of this man page with 12 octets per line.
+.br
+\fI% xxd \-l 120 \-c 12 xxd.1\fR
+.br
+0000000: 2e54 4820 5858 4420 3120 2241  .TH XXD 1 "A
+.br
+000000c: 7567 7573 7420 3139 3936 2220  ugust 1996" 
+.br
+0000018: 224d 616e 7561 6c20 7061 6765  "Manual page
+.br
+0000024: 2066 6f72 2078 7864 220a 2e5c   for xxd"..\\
+.br
+0000030: 220a 2e5c 2220 3231 7374 204d  "..\\" 21st M
+.br
+000003c: 6179 2031 3939 360a 2e5c 2220  ay 1996..\\" 
+.br
+0000048: 4d61 6e20 7061 6765 2061 7574  Man page aut
+.br
+0000054: 686f 723a 0a2e 5c22 2020 2020  hor:..\\"    
+.br
+0000060: 546f 6e79 204e 7567 656e 7420  Tony Nugent 
+.br
+000006c: 3c74 6f6e 7940 7363 746e 7567  <tony@sctnug
+.PP
+.br
+Display just the date from the file xxd.1
+.br
+\fI% xxd \-s 0x36 \-l 13 \-c 13 xxd.1\fR
+.br
+0000036: 3231 7374 204d 6179 2031 3939 36  21st May 1996
+.PP
+.br
+Copy
+.B input_file
+to
+.B output_file
+and prepend 100 bytes of value 0x00.
+.br
+\fI% xxd input_file | xxd \-r \-s 100 > output_file\fR
+.br
+
+.br
+Patch the date in the file xxd.1
+.br
+\fI% echo "0000037: 3574 68" | xxd \-r \- xxd.1\fR
+.br
+\fI% xxd \-s 0x36 \-l 13 \-c 13 xxd.1\fR
+.br
+0000036: 3235 7468 204d 6179 2031 3939 36  25th May 1996
+.PP
+.br
+Create a 65537 byte file with all bytes 0x00,
+except for the last one which is 'A' (hex 0x41).
+.br
+\fI% echo "010000: 41" | xxd \-r > file\fR
+.PP
+.br
+Hexdump this file with autoskip.
+.br
+\fI% xxd \-a \-c 12 file\fR
+.br
+0000000: 0000 0000 0000 0000 0000 0000  ............
+.br
+*
+.br
+000fffc: 0000 0000 40                   ....A
+.PP
+Create a 1 byte file containing a single 'A' character.
+The number after '\-r \-s' adds to the linenumbers found in the file;
+in effect, the leading bytes are suppressed.
+.br
+\fI% echo "010000: 41" | xxd \-r \-s \-0x10000 > file\fR
+.PP
+Use xxd as a filter within an editor such as
+.B vim(1)
+to hexdump a region marked between `a' and `z'.
+.br
+\fI:'a,'z!xxd\fR
+.PP
+Use xxd as a filter within an editor such as
+.B vim(1)
+to recover a binary hexdump marked between `a' and `z'.
+.br
+\fI:'a,'z!xxd \-r\fR
+.PP
+Use xxd as a filter within an editor such as
+.B vim(1)
+to recover one line of a hexdump.  Move the cursor over the line and type:
+.br
+\fI!!xxd \-r\fR
+.PP
+Read single characters from a serial line
+.br
+\fI% xxd \-c1 < /dev/term/b &\fR
+.br
+\fI% stty < /dev/term/b \-echo \-opost \-isig \-icanon min 1\fR
+.br
+\fI% echo \-n foo > /dev/term/b\fR
+.PP
+.SH "RETURN VALUES"
+The following error values are returned:
+.TP
+0
+no errors encountered.
+.TP
+\-1
+operation not supported (
+.I xxd \-r \-i
+still impossible).
+.TP
+1
+error while parsing options.
+.TP
+2
+problems with input file.
+.TP
+3
+problems with output file.
+.TP
+4,5
+desired seek position is unreachable.
+.SH "SEE ALSO"
+uuencode(1), uudecode(1), patch(1)
+.br
+.SH WARNINGS
+The tools weirdness matches its creators brain.
+Use entirely at your own risk. Copy files. Trace it. Become a wizard.
+.br
+.SH VERSION
+This manual page documents xxd version 1.7
+.SH AUTHOR
+.br
+(c) 1990-1997 by Juergen Weigert
+.br
+<jnweiger@informatik.uni\-erlangen.de>
+.LP
+Distribute freely and credit me,
+.br
+make money and share with me,
+.br
+lose money and don't ask me.
+.PP
+Manual page started by Tony Nugent
+.br
+<tony@sctnugen.ppp.gu.edu.au> <T.Nugent@sct.gu.edu.au>
+.br
+Small changes by Bram Moolenaar.
+Edited by Juergen Weigert.
+.PP

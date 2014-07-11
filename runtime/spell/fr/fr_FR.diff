@@ -1,0 +1,176 @@
+*** fr_FR.orig.aff	Wed Feb 13 14:53:22 2008
+--- fr_FR.aff	Wed Feb 13 15:03:20 2008
+***************
+*** 3,19 ****
+  
+! MAP 12
+! MAP aאגה
+! MAP eיטךכ
+! MAP iמןy
+! MAP oפצ
+! MAP uשûü
+  MAP cח
+- MAP AÀÂÄ
+- MAP EÉÈÊË
+- MAP IÎÏY
+- MAP OÔÖ
+- MAP UÙÛÜ
+  MAP CÇ
+  
+! REP 44
+  REP f ph
+--- 3,31 ----
+  
+! FOL  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
+! LOW  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
+! UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗ÿ
+! 
+! MIDWORD	'-
+! 
+! MAP 17
+! MAP aאבגדהו
+! MAP AÀÁÂÃÄÅ
+! MAP eטיךכ
+! MAP EÈÉÊË
+! MAP iלםמן
+! MAP IÌÍÎÏ
+! MAP oעףפץצ
+! MAP OÒÓÔÕÖ
+! MAP uשתûü
+! MAP UÙÚÛÜ
+! MAP nס
+! MAP NÑ
+  MAP cח
+  MAP CÇ
++ MAP yÿ‎
++ MAP YÿÝ
++ MAP s‗
+  
+! 
+! REP 24
+  REP f ph
+***************
+*** 22,45 ****
+  REP qu c
+- REP bb b
+- REP b bb
+- REP cc c
+- REP c cc
+- REP ff f
+- REP f ff
+- REP ll l
+- REP l ll
+- REP mm m
+- REP m mm
+- REP nn n
+- REP n nn
+- REP pp p
+- REP p pp
+- REP rr r
+- REP r rr
+- REP ss s
+- REP s ss
+  REP ss c
+  REP c ss
+- REP tt t
+- REP t tt
+  REP ½ oe
+--- 34,37 ----
+***************
+*** 687 ****
+--- 679,773 ----
+  SFX q   ssait      raient     ssait
++ 
++ 
++ # sound folding from Aspell
++ #   Copyright (C) 2000 Rיmi Vanicat, distributed under LGPL
++ # version francais 0.000000001
++ 
++ #EMME ~ AME
++ 
++ SAL AIX$               E
++ SAL AI                 E
++ SAL AN(AEUIO)-         AM
++ SAL AN                 A
++ SAL AMM                AM
++ SAL AM(AEUIO)-         AM
++ SAL AM                 A
++ SAL AUD$               O
++ SAL AUX$		   O
++ SAL AU                 O
++ SAL A                  A
++ SAL Â                  A
++ SAL À                  A
++ SAL BB                 P
++ SAL B                  P
++ SAL Ç                  S
++ SAL C(EI)-             S
++ SAL CU(EI)-            K
++ SAL CC(EI)-            X
++ SAL CC                 K
++ SAL CH                 CH
++ SAL C                  K
++ SAL DD                 T
++ SAL D                  T
++ SAL EMMENTAL           EMATAL
++ SAL EMMENTHAL          EMATAL
++ SAL EM(AEIOU)-         EM
++ SAL EM                 A
++ SAL ET$                E
++ SAL EUX$               E
++ SAL EU                 E
++ SAL EN(AEUIO)-         EM
++ SAL EN                 A
++ SAL ER$                E
++ SAL EO                 O
++ SAL EAUX$		   O
++ SAL EAU                O
++ SAL E                  E
++ SAL È                  E
++ SAL É                  E
++ SAL Ê                  E
++ SAL F                  F
++ SAL G(EIY)-            J
++ SAL GU(EIY)-           G
++ SAL G                  G
++ SAL H                  _
++ SAL I                  I
++ SAL Î                  I
++ SAL J                  J
++ SAL KS                 X
++ SAL K                  K
++ SAL LL                 L
++ SAL L                  L
++ SAL MM                 M
++ SAL M                  M
++ SAL NN                 M
++ SAL N                  M
++ SAL OEU                E
++ SAL OUX$               U
++ SAL OU                 U
++ SAL OÙ                 U
++ SAL O                  O
++ SAL Ô                  O
++ SAL PP                 P
++ SAL PH                 F
++ SAL P                  P
++ SAL QU                 K
++ SAL Q                  K
++ SAL RIX$               RI
++ SAL RR                 R
++ SAL R                  R
++ SAL S$                 _
++ SAL SS                 S
++ SAL S                  S
++ SAL TT                 T
++ SAL T                  T
++ SAL U                  U
++ SAL Ù                  U
++ SAL Û                  U
++ SAL V                  V
++ SAL W                  W
++ SAL X                  X
++ SAL Y(AEOU)-           IL
++ SAL Y                  I
++ SAL ZZ                 S
++ SAL Z                  S

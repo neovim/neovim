@@ -1,0 +1,92 @@
+# Aap recipe for Spanish Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+REGIONS    = ES MX
+ES_REGIONS = es_$*REGIONS
+
+SPELLDIR   = ..
+FILES      = es_$*(REGIONS).aff es_$*(REGIONS).dic
+
+ZIPFILE_ES = es_ES.zip
+ZIPFILE_MX = es_MX.zip
+ZIPFILES   = $ZIPFILE_ES $ZIPFILE_MX
+
+READMES    = README_es_$*(REGIONS).txt
+
+all: $SPELLDIR/es.latin1.spl $SPELLDIR/es.utf-8.spl ../README_es.txt
+
+$SPELLDIR/es.latin1.spl : $FILES
+        :sys env LANG=es_ES.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/es $ES_REGIONS" -c q
+
+$SPELLDIR/es.utf-8.spl : $FILES
+        :sys env LANG=es_ES.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/es $ES_REGIONS" -c q
+
+../README_es.txt: $READMES
+        :print es_ES >! $target
+        :cat README_es_ES.txt   >> $target
+        :print =================================================== >>$target
+        :print es_MX >> $target
+        :cat README_es_MX.txt   >> $target
+
+#
+# Fetching the files from the OpenOffice.org site.
+# The OLDSPELL file comes from elsewhere
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} $ZIPFILES
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+es_ES.aff es_ES.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch $ZIPFILE_ES
+        :sys $UNZIP $ZIPFILE_ES
+        :delete Changelog_es_ES.txt
+        :delete $ZIPFILE_ES
+        @if not os.path.exists('es_ES.orig.aff'):
+            :copy es_ES.aff es_ES.orig.aff
+        @if not os.path.exists('es_ES.orig.dic'):
+            :copy es_ES.dic es_ES.orig.dic
+        @if os.path.exists('es_ES.diff'):
+            :sys patch <es_ES.diff
+
+es_MX.aff es_MX.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch $ZIPFILE_MX
+        :print No copyright information for es_MX wordlist >! README_es_MX.txt
+        :sys $UNZIP $ZIPFILE_MX
+        :delete $ZIPFILE_MX
+        :sys $VIM -u NONE -e -c "set ff=unix | wq" es_MX.dic
+        @if not os.path.exists('es_MX.orig.aff'):
+            :copy es_MX.aff es_MX.orig.aff
+        @if not os.path.exists('es_MX.orig.dic'):
+            :copy es_MX.dic es_MX.orig.dic
+        @if os.path.exists('es_MX.diff'):
+            :sys patch <es_MX.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 es_ES.orig.aff es_ES.aff >es_ES.diff
+        :sys {force} diff -a -C 1 es_ES.orig.dic es_ES.dic >>es_ES.diff
+        :sys {force} diff -a -C 1 es_MX.orig.aff es_MX.aff >es_MX.diff
+        :sys {force} diff -a -C 1 es_MX.orig.dic es_MX.dic >>es_MX.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :print TODO!!!!
+
+
+# vim: set sts=4 sw=4 :

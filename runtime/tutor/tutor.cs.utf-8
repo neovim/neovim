@@ -1,0 +1,812 @@
+===============================================================================
+=    V í t e j t e   v  t u t o r i a l u   V I M       -    Verze 1.5        =
+===============================================================================
+
+     Vim je velmi výkonný editor, který má příliš mnoho příkazů na to, aby
+     mohly být všechny vysvětlené ve výuce jako tato. Tato výuka obsahuje
+     dostatečné množství příkazů na to, aby bylo možné používat Vim jako
+     víceúčelový editor.
+
+     Přibližný čas potřebný ke zvládnutí této výuky je 25-30 minut, záleží
+     na tom, kolik času strávíte přezkušováním.
+
+     Příkazy v lekcích upravují text. Vytvoř kopii tohoto souboru pro
+     procvičování (při startu "vimtutor" je již toto kopie).
+
+     Je důležité pamatovat, že tato výuka je vytvořena pro výuku používáním.
+     To znamená, že je potřeba si příkazy vyzkoušet pro jejich správné
+     naučení. Pokud si jen čteš text, příkazy zapomeneš!
+
+     Nyní se přesvědčte, že Shift-Lock NENÍ stlačený a několikrát stiskněte
+     klávesu  j   aby se kurzor posunul natolik, že lekce 1.1 zaplní celou
+     obrazovku.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekce 1.1:  POHYB KURZORU
+
+
+   ** Pro pohyb kurzoru používej klávesy h,j,k,l jak je znázorněno níže. **
+	     ^
+	     k		   Funkce: Klávesa h je vlevo a vykoná pohyb vlevo.
+       < h	 l >		   Klávesa l je vpravo a vykoná pohyb vpravo.
+	     j			   Klávesa j vypadá na šipku dolu.
+	     v
+  1. Pohybuj kurzorem po obrazovce dokud si na to nezvykneš.
+
+  2. Drž klávesu pro pohyb dolu (j), dokud se její funkce nezopakuje.
+---> Teď víš jak se přesunout na následující lekci.
+
+  3. Použitím klávesy dolu přejdi na lekci 1.2.
+
+Poznámka: Pokud si někdy nejsi jist něčím, co jsi napsal, stlač <ESC> pro
+          přechod do Normálního módu. Poté přepiš požadovaný příkaz.
+
+Poznámka: Kurzorové klávesy také fungují, avšak používání hjkl je rychlejší
+          jakmile si na něj zvykneš.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekce 1.2: SPUŠTĚNÍ A UKONČENÍ VIM
+
+
+  !! POZNÁMKA: Před vykonáním těchto kroků si přečti celou lekci!!
+
+  1. Stlač <ESC> (pro ujištění, že se nacházíš v Normálním módu).
+
+  2. Napiš:			:q! <ENTER>.
+
+---> Tímto ukončíš editor BEZ uložení změn, které si vykonal.
+     Pokud chceš uložit změny a ukončit editor napiš:
+				:wq  <ENTER>
+
+  3. Až se dostaneš na příkazový řádek, napiš příkaz, kterým se dostaneš zpět
+     do této výuky. To může být: vimtutor <ENTER>
+     Běžně se používá:		 vim tutor <ENTER>
+
+---> 'vim' znamená spuštění editoru, 'tutor' je soubor k editaci.
+
+  4. Pokud si tyto kroky spolehlivě pamatuješ, vykonej kroky 1 až 3, čímž
+     ukončíš a znovu spustíš editor. Potom přesuň kurzor dolu na lekci 1.3.
+     
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekce 1.3: ÚPRAVA TEXTU - MAZÁNÍ
+
+
+  ** Stisknutím klávesy  x  v Normálním módu smažeš znak na místě kurzoru. **
+
+  1. Přesuň kurzor níže na řádek označený --->.
+
+  2. K odstranění chyb přejdi kurzorem na znak, který chceš smazat.
+
+  3. Stlač klávesu  x  k odstranění nechtěných znaků.
+
+  4. Opakuj kroky 2 až 4 dokud není věta správně.
+
+---> Krááva skoččilla přess měssíc.
+
+  5. Pokud je věta správně, přejdi na lekci 1.4.
+
+POZNÁMKA: Nesnaž se pouze zapamatovat předváděné příkazy, uč se je používáním.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekce 1.4: ÚPRAVA TEXTU - VKLÁDÁNÍ
+
+
+      ** Stlačení klávesy  i  v Normálním módu umožňuje vkládání textu. **
+
+  1. Přesuň kurzor na první řádek označený --->.
+
+  2. Pro upravení prvního řádku do podoby řádku druhého, přesuň kurzor na
+     první znak za místo, kde má být text vložený.
+
+  3. Stlač  i  a napiš potřebný dodatek.
+
+  4. Po opravení každé chyby stlač <ESC> pro návrat do Normálního módu.
+     Opakuj kroky 2 až 4 dokud není věta správně.
+
+---> Nějaký txt na této .
+---> Nějaký text chybí na této řádce.
+
+  5. Pokud již ovládáš vkládání textu, přejdi na následující shrnutí.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			       SHRNUTÍ LEKCE 1
+
+
+  1. Kurzorem se pohybuje pomocí šipek nebo klávesami hjkl.
+	h (vlevo)	j (dolu)	k (nahoru)	l (vpravo)
+
+  2. Pro spuštění Vimu (z příkazového řádku) napiš: vim SOUBOR <ENTER>
+
+  3. Pro ukončení Vimu napiš: <ESC>  :q!  <ENTER>  bez uložení změn.
+	     	       anebo: <ESC>  :wq  <ENTER>  pro uložení změn.
+
+  4. Pro smazání znaku pod kurzorem napiš v Normálním módu:  x
+
+  5. Pro vkládání textu od místa kurzoru napiš v Normálním módu:
+	 i     vkládaný text	<ESC>
+
+POZNÁMKA: Stlačení <ESC> tě přemístí do Normálního módu nebo zruší nechtěný
+      a částečně dokončený příkaz.
+
+Nyní pokračuj Lekcí 2.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekce 2.1: PŘÍKAZY MAZÁNÍ
+
+
+	       ** Příkaz  dw  smaže znaky do konce slova. **
+
+  1. Stlač  <ESC>  k ubezpečení, že jsi v Normálním módu.
+
+  2. Přesuň kurzor níže na řádek označený --->.
+
+  3. Přesuň kurzor na začátek slova, které je potřeba smazat.
+
+  4. Napiš   dw	 , aby slovo zmizelo.
+
+POZNÁMKA: Písmena dw se zobrazí na posledním řádku obrazovky jakmile je
+	  napíšeš. Když napíšeš něco špatně, stlač  <ESC>  a začni znova.
+
+---> Jsou tu nějaká slova zábava, která nepatří list do této věty.
+
+  5. Opakuj kroky 3 až 4 dokud není věta správně a přejdi na lekci 2.2.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekce 2.2: VÍCE PŘÍKAZŮ MAZÁNÍ
+
+
+	   ** Napsání příkazu  d$  smaže vše až do konce řádky. **
+
+  1. Stlač  <ESC>  k ubezpečení, že jsi v Normálním módu.
+
+  2. Přesuň kurzor níže na řádek označený --->.
+
+  3. Přesuň kurzor na konec správné věty (ZA první tečku).
+
+  4. Napiš  d$  ,aby jsi smazal znaky až do konce řádku.
+
+---> Někdo napsal konec této věty dvakrát. konec této věty dvakrát.
+
+
+  5. Přejdi na lekci 2.3 pro pochopení toho, co se stalo.
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lekce 2.3: ROZŠIŘOVACÍ PŘÍKAZY A OBJEKTY
+
+
+  Formát mazacího příkazu  d  je následující:
+
+	 [číslo]   d   objekt     NEBO     d   [číslo]   objekt
+  Kde:
+    číslo - udává kolikrát se příkaz vykoná (volitelné, výchozí=1).
+    d - je příkaz mazání.
+    objekt - udává na čem se příkaz vykonává (vypsané níže).
+
+  Krátký výpis objektů:
+    w - od kurzoru do konce slova, včetně mezer.
+    e - od kurzoru do konce slova, BEZ mezer.
+    $ - od kurzoru do konce řádku.
+
+POZNÁMKA:  Stlačením klávesy objektu v Normálním módu se kurzor přesune na
+           místo upřesněné ve výpisu objektů.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekce 2.4: VÝJIMKA Z 'PŘÍKAZ-OBJEKT'
+
+
+    	          ** Napsáním   dd   smažeš celý řádek. **
+
+  Vzhledem k častosti mazání celého řádku se autoři Vimu rozhodli, že bude
+  jednoduší napsat prostě dvě d k smazání celého řádku.
+
+  1. Přesuň kurzor na druhý řádek spodního textu.
+  2. Napiš  dd  pro smazání řádku.
+  3. Přejdi na čtvrtý řádek.
+  4. Napiš   2dd   (vzpomeň si  číslo-příkaz-objekt) pro smazání dvou řádků.
+
+      1)  Růže jsou červené,
+      2)  Bláto je zábavné,
+      3)  Fialky jsou modré,
+      4)  Mám auto,
+      5)  Hodinky ukazují čas,
+      6)  Cukr je sladký,
+      7)  A to jsi i ty.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			   Lekce 2.5: PŘÍKAZ UNDO
+
+
+   ** Stlač  u	pro vrácení posledního příkazu,  U  pro celou řádku. **
+
+  1. Přesuň kurzor níže na řádek označený ---> a přemísti ho na první chybu.
+  2. Napiš  x  pro smazání prvního nechtěného znaku.
+  3. Teď napiš  u  čímž vrátíš zpět poslední vykonaný příkaz.
+  4. Nyní oprav všechny chyby na řádku pomocí příkazu  x  .
+  5. Napiš velké  U  čímž vrátíš řádek do původního stavu.
+  6. Teď napiš  u  několikrát, čímž vrátíš zpět příkaz  U  .
+  7. Stlač CTRL-R (klávesu CTRL drž stlačenou a stiskni R) několikrát,
+     čímž vrátíš zpět předtím vrácené příkazy (redo).
+
+---> Opprav chybby nna toomto řádku a nahraď je pommocí undo.
+
+  8. Toto jsou velmi užitečné příkazy. Nyní přejdi na souhrn Lekce 2.
+
+  
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			       SHRNUTÍ LEKCE 2
+
+
+  1. Pro smazání znaků od kurzoru do konce slova napiš:    dw
+
+  2. Pro smazání znaků od kurzoru do konce řádku napiš:    d$
+
+  3. Pro smazání celého řádku napiš:    dd
+
+  4. Formát příkazu v Normálním módu je:
+
+       [číslo]   příkaz   objekt    NEBO    příkaz     [číslo]   objekt
+     kde:
+       číslo - udává počet opakování příkazu
+       příkaz - udává co je třeba vykonat, například  d  maže
+       objekt - udává rozsah příkazu, například  w  (slovo),
+		$ (do konce řádku), atd.
+
+  5. Pro vrácení předešlé činnosti, napiš:	u (malé u)
+     Pro vrácení všech úprav na řádku napiš:	U (velké U)
+     Pro vrácení vrácených úprav (redo) napiš:	CTRL-R
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			 Lekce 3.1: PŘÍKAZ VLOŽIT
+
+
+       ** Příka  p  vloží poslední vymazaný text za kurzor. **
+
+  1. Přesuň kurzor níže na poslední řádek textu.
+
+  2. Napiš  dd  pro smazání řádku a jeho uložení do bufferu.
+
+  3. Přesuň kurzor VÝŠE tam, kam smazaný řádek patří.
+
+  4. V Normálním módu napiš  p  pro opětné vložení řádku.
+
+  5. Opakuj kroky 2 až 4 dokud řádky nebudou ve správném pořadí.
+
+     d) Také se dokážeš vzdělávat?
+     b) Fialky jsou modré,
+     c) Inteligence se učí,
+     a) Růže jsou červené,
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lekce 3.2: PŘÍKAZ NAHRAZENÍ
+
+
+          ** Napsáním  r  a znaku se nahradí znak pod kurzorem. **
+
+  1. Přesuň kurzor níže na první řádek označený --->.
+
+  2. Přesuň kurzor na začátek první chyby.
+
+  3. Napiš  r  a potom znak, který nahradí chybu.
+
+  4. Opakuj kroky 2 až 3 dokud není první řádka správně.
+
+--->  Kdiž byl pzán tento řádeg, někdu stlažil špaqné klávesy!
+--->  Když byl psán tento řádek, někdo stlačíl špatné klávesy!
+
+  5. Nyní přejdi na Lekci 3.2.
+
+POZNÁMKA: Zapamatuj si, že by ses měl učit používáním, ne zapamatováním.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		           Lekce 3.3: PŘÍKAZ ÚPRAVY
+
+
+	  ** Pokud chceš změnit část nebo celé slovo, napiš  cw . **
+
+  1. Přesuň kurzor níže na první řádek označený --->.
+
+  2. Umísti kurzor na písmeno i v slově řiťok.
+
+  3. Napiš  cw  a oprav slovo (v tomto případě napiš 'ádek'.)
+
+  4. Stlač <ESC> a přejdi na další chybu (první znak, který třeba změnit.)
+
+  5. Opakuj kroky 3 až 4 dokud není první věta stejná jako ta druhá.
+
+---> Tento řiťok má několik skic, které psadoinsa změnit pasdgf příkazu.
+---> Tento řádek má několik slov, které potřebují změnit pomocí příkazu.
+
+Všimni si, že  cw  nejen nahrazuje slovo, ale také přemístí do vkládání.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lekce 3.4: VÍCE ZMĚN POUŽITÍM c
+
+
+   ** Příkaz pro úpravu se druží se stejnými objekty jako ten pro mazání. **
+
+  1. Příkaz pro úpravu pracuje stejně jako pro mazání. Formát je:
+
+       [číslo]   c   objekt	 NEBO	   c	[číslo]   objekt
+
+  2. Objekty jsou také shodné, jako např.: w (slovo), $ (konec řádku), atd.
+
+  3. Přejdi níže na první řádek označený --->.
+
+  4. Přesuň kurzor na první rozdíl.
+
+  5. Napiš  c$  pro upravení zbytku řádku podle toho druhého a stlač <ESC>.
+
+---> Konec tohoto řádku potřebuje pomoc, aby byl jako ten druhý.
+---> Konec tohoto řádku potřebuje opravit použitím příkazu  c$  .
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			       SHRNUTÍ LEKCE 3
+
+
+  1. Pro vložení textu, který byl smazán, napiš  p  . To vloží smazaný text
+     ZA kurzor (pokud byl řádek smazaný, přejde na řádek pod kurzorem).
+
+  2. Pro nahrazení znaku pod kurzorem, napiš  r  a potom znak, kterým
+     chceš původní znak nahradit.
+
+  3. Příkaz na upravování umožňuje změnit specifikovaný objekt od kurzoru
+     do konce objektu. Například: Napiš  cw  ,čímž změníš text od pozice
+     kurzoru do konce slova,  c$  změní text do konce řádku.
+
+  4. Formát pro nahrazování je:
+
+	 [číslo]   c   objekt      NEBO     c   [číslo]   objekt
+
+Nyní přejdi na následující lekci.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekce 4.1: POZICE A STATUS SOUBORU
+
+
+  ** Stlač CTRL-g pro zobrazení své pozice v souboru a statusu souboru.
+     Stlač SHIFT-G pro přechod na řádek v souboru. **
+
+  Poznámka: Přečti si celou lekci než začneš vykonávat kroky!!
+
+  1. Drž klávesu Ctrl stlačenou a stiskni  g  . Vespod obrazovky se zobrazí
+     stavový řádek s názvem souboru a řádkou na které se nacházíš. Zapamatuj
+     si číslo řádku pro krok 3.
+
+  2. Stlač shift-G pro přesun na konec souboru.
+
+  3. Napiš číslo řádku na kterém si se nacházel a stlač shift-G. To tě
+     vrátí na řádek, na kterém jsi dříve stiskl Ctrl-g.
+     (Když píšeš čísla, tak se NEZOBRAZUJÍ na obrazovce.)
+
+  4. Pokud se cítíš schopný vykonat tyto kroky, vykonej je.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekce 4.2: PŘÍKAZ VYHLEDÁVÁNÍ
+
+
+     ** Napiš  /  následované řetězcem pro vyhledání onoho řetězce. **
+
+  1. Stiskni / v Normálním módu.  Všimni si, že tento znak se spolu s
+     kurzorem zobrazí v dolní části obrazovky jako příkaz  :  .
+
+  2. Nyní napiš 'chhybba' <ENTER>.  To je slovo, které chceš vyhledat.
+
+  3. Pro vyhledání dalšího výsledku stejného řetězce, jednoduše stlač  n  .
+     Pro vyhledání dalšího výsledku stejného řetězce opačným směrem, stiskni
+     Shift-N.
+
+  4. Pokud chceš vyhledat řetězec v opačném směru, použij příkaz  ?  místo
+     příkazu  /  .
+
+---> "chhybba" není způsob, jak hláskovat chyba; chhybba je chyba.
+
+Poznámka: Když vyhledávání dosáhne konce souboru, bude pokračovat na jeho
+          začátku.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   Lekce 4.3: VYHLEDÁVÁNÍ PÁROVÉ ZÁVORKY
+
+
+	      ** Napiš  %  pro nalezení párové ),], nebo } . **
+
+  1. Přemísti kurzor na kteroukoli (, [, nebo { v řádku označeném --->.
+
+  2. Nyní napiš znak  %  .
+
+  3. Kurzor se přemístí na odpovídající závorku.
+
+  4. Stlač  %  pro přesun kurzoru zpět na otvírající závorku.
+
+---> Toto ( je testovací řádek ('s, ['s ] a {'s } v něm. ))
+
+Poznámka: Toto je velmi užitečné pří ladění programu s chybějícími
+          uzavíracími závorkami.
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekce 4.4: ZPŮSOB JAK ZMĚNIT CHYBY
+		      
+
+   ** Napiš  :s/staré/nové/g  pro nahrazení slova 'nové' za 'staré'. **
+
+  1. Přesuň kurzor na řádek označený --->.
+
+  2. Napiš  :s/dobréé/dobré <ENTER> .  Všimni si, že tento příkaz změní pouze
+     první výskyt v řádku.
+
+  3. Nyní napiš	 :s/dobréé/dobré/g  což znamená celkové nahrazení v řádku.
+     Toto nahradí všechny výskyty v řádku.
+
+---> dobréé suroviny a dobréé náčiní jsou základem dobréé kuchyně.
+
+  4. Pro změnu všech výskytů řetězce mezi dvěma řádky,
+     Napiš   :#,#s/staré/nové/g  kde #,# jsou čísla oněch řádek.
+     Napiš   :%s/staré/nové/g    pro změnu všech výskytů v celém souboru.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			       SHRNUTÍ LEKCE 4
+
+
+  1. Ctrl-g  vypíše tvou pozici v souboru a status souboru.
+     Shift-G  tě přemístí na konec souboru.  Číslo následované
+     Shift-G  tě přesune na dané číslo řádku.
+
+  2. Napsání  /  následované řetězcem vyhledá řetězec směrem DOPŘEDU.
+     Napsání  ?  následované řetězcem vyhledá řetězec směrem DOZADU.
+     Napsání  n  po vyhledávání najde následující výskyt řetězce ve stejném
+     směru, Shift-N ve směru opačném.
+
+  3. Stisknutí  %  když je kurzor na (,),[,],{, nebo } najde odpovídající
+     párovou závorku.
+
+  4. Pro nahrazení nového za první starý v řádku napiš     :s/staré/nové
+     Pro nahrazení nového za všechny staré v řádku napiš   :s/staré/nové/g
+     Pro nahrazení řetězců mezi dvěmi řádkami # napiš      :#,#s/staré/nové/g
+     Pro nahrazení všech výskytů v souboru napiš	   :%s/staré/nové/g
+     Pro potvrzení každého nahrazení přidej 'c'		   :%s/staré/nové/gc
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lekce 5.1: JAK VYKONAT VNĚJŠÍ PŘÍKAZ
+
+
+   ** Napiš  :!  následované vnějším příkazem pro spuštění příkazu. **
+
+  1. Napiš obvyklý příkaz  :  , který umístí kurzor na spodek obrazovky
+     To umožní napsat příkaz.
+
+  2. Nyní stiskni  !  (vykřičník). To umožní vykonat jakýkoliv vnější
+     příkaz z příkazového řádku.
+
+  3. Například napiš  ls  za ! a stiskni <ENTER>.  Tento příkaz zobrazí
+     obsah tvého adresáře jako v příkazovém řádku.
+     Vyzkoušej  :!dir  pokud ls nefunguje.
+
+Poznámka:  Takto je možné vykonat jakýkoliv příkaz.
+
+Poznámka:  Všechny příkazy  :  musí být dokončené stisknutím <ENTER>
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekce 5.2: VÍCE O UKLÁDÁNÍ SOUBORŮ
+
+
+	    ** Pro uložení změn v souboru napiš  :w SOUBOR. **
+
+  1. Napiš  :!dir  nebo  :!ls  pro výpis aktuálního adresáře.
+     Už víš, že za tímto musíš stisknout <ENTER>.
+
+  2. Vyber si název souboru, který ještě neexistuje, například TEST.
+
+  3. Nyní napiš:  :w TEST  (kde TEST je vybraný název souboru.)
+
+  4. To uloží celý soubor  (Výuka Vimu)  pod názvem TEST.
+     Pro ověření napiš znovu :!dir  , čímž zobrazíš obsah adresáře.
+
+Poznámka: Jakmile ukončíš Vim a znovu ho spustíš s názvem souboru TEST,
+          soubor bude přesná kopie výuky, když si ji ukládal.
+
+  5. Nyní odstraň soubor napsáním (MS-DOS):    :!del TEST
+			     nebo (Unix):      :!rm TEST
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekce 5.3: VÝBĚROVÝ PŘÍKAZ ULOŽENÍ
+
+
+	    ** Pro uložení části souboru napiš  :#,# w SOUBOR **
+
+  1. Ještě jednou napiš  :!dir  nebo  :!ls  pro výpis aktuálního adresáře
+     a vyber vhodný název souboru jako např. TEST.
+
+  2. Přesuň kurzor na vrch této stránky a stiskni  Ctrl-g  pro zobrazení
+     čísla řádku.  ZAPAMATUJ SI TOTO ČÍSLO!
+
+  3. Nyní se přesuň na spodek této stránky a opět stiskni Ctrl-g.
+     ZAPAMATUJ SI I ČÍSLO TOHOTO ŘÁDKU!
+
+  4. Pro uložení POUZE části souboru, napiš  :#,# w TEST  kde #,# jsou
+     čísla dvou zapamatovaných řádků (vrch, spodek) a TEST je název souboru.
+
+  5. Znova se ujisti, že tam ten soubor je pomocí  :!dir  ale NEODSTRAŇUJ ho.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		        Lekce 5.4: SLUČOVÁNÍ SOUBORŮ
+
+
+      	   ** K vložení obsahu souboru napiš  :r NÁZEV_SOUBORU **
+
+  1. Napiš  :!dir  pro ujištění, že soubor TEST stále existuje.
+
+  2. Přesuň kurzor na vrch této stránky.
+
+POZNÁMKA: Po vykonání kroku 3 uvidíš lekci 5.3.	Potom se opět přesuň dolů
+          na tuto lekci.
+
+  3. Nyní vlož soubor TEST použitím příkazu  :r TEST  kde TEST je název
+     souboru.
+
+POZNÁMKA: Soubor, který vkládáš se vloží od místa, kde se nachází kurzor.
+
+  4. Pro potvrzení vložení souboru, přesuň kurzor zpět a všimni si, že teď
+     máš dvě kopie lekce 5.3, originál a souborovou verzi.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			       SHRNUTÍ LEKCE 5
+
+
+  1.  :!příkaz  vykoná vnější příkaz.
+
+      Některé užitečné příklady jsou:
+	 (MS-DOS)	  (Unix)
+	  :!dir		   :!ls		   -  zobrazí obsah souboru.
+	  :!del SOUBOR     :!rm SOUBOR     -  odstraní SOUBOR.
+
+  2.  :w SOUBOR  uloží aktuální text jako SOUBOR na disk.
+
+  3.  :#,#w SOUBOR  uloží řádky od # do # do SOUBORU.
+
+  4.  :r SOUBOR  vybere z disku SOUBOR a vloží ho do editovaného souboru
+      za pozici kurzoru.
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			  Lekce 6.1: PŘÍKAZ OTEVŘÍT
+
+
+  ** Napiš  o  pro vložení řádku pod kurzor a přepnutí do Vkládacího módu. **
+
+  1. Přemísti kurzor níže na řádek označený --->.
+
+  2. Napiš  o (malé) pro vložení řádku POD kurzor a přepnutí do
+     Vkládacího módu.
+
+  3. Nyní zkopíruj řádek označený ---> a stiskni <ESC> pro ukončení
+     Vkládacího módu.
+  
+---> Po stisknutí  o  se kurzor přemístí na vložený řádek do Vkládacího
+     módu.
+
+  4. Pro otevření řádku NAD kurzorem jednoduše napiš velké  O  , místo
+     malého o. Vyzkoušej si to na následujícím řádku.
+Vlož řádek nad tímto napsáním Shift-O po umístění kurzoru na tento řádek.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			  Lekce 6.2: PŘÍKAZ PŘIDAT
+
+
+	     ** Stiskni  a  pro vložení textu ZA kurzor. **
+
+  1. Přesuň kurzor na níže na konec řádky označené --->
+     stisknutím $ v Normálním módu.
+
+  2. Stiskni  a  (malé) pro přidání textu ZA znak, který je pod kurzorem.
+     (Velké  A  přidá na konec řádku.)
+
+Poznámka: Tímto se vyhneš stisknutí  i  , posledního znaku, textu na vložení,
+          <ESC>, kurzor doprava, a nakonec  x  na přidávání na konec řádku!
+
+  3. Nyní dokončí první řádek. Všimni si, že přidávání je vlastně stejné jako
+     Vkládací mód, kromě místa, kam se text vkládá.
+
+---> Tento řádek ti umožňuje nacvičit
+---> Tento řádek ti umožňuje nacvičit přidávání textu na konec řádky.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekce 6.3: JINÝ ZPŮSOB NAHRAZOVÁNÍ
+
+
+         ** Napiš velké  R  pro nahrazení víc než jednoho znaku. **
+
+  1. Přesuň kurzor na první řádek označený --->.
+
+  2. Umísti kurzor na začátek prvního slova, které je odlišné od druhého
+     řádku označeného ---> (slovo 'poslední').
+
+  3. Nyní stiskni  R  a nahraď zbytek textu na prvním řádku přepsáním
+     starého textu tak, aby byl první řádek stejný jako ten druhý.
+
+---> Pro upravení prvního řádku do tvaru toho poslední na straně použij kl.
+---> Pro upravení prvního řádku do tvaru toho druhého, napiš R a nový text.
+
+  4. Všimni si, že jakmile stiskneš <ESC> všechen nezměněný text zůstává.
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		         Lekce 6.4: NASTAVENÍ MOŽNOSTÍ
+
+  ** Nastav možnost, že vyhledávání anebo nahrazování nedbá velikosti písmen **
+
+  1. Vyhledej řetězec 'ignore' napsáním:
+     /ignore
+     Zopakuj několikrát stisknutí klávesy n.
+
+  2. Nastav možnost 'ic' (Ignore case) napsáním příkazu:
+     :set ic
+
+  3. Nyní znovu vyhledej 'ignore' stisknutím: n
+     Několikrát hledání zopakuj stisknutím klávesy n.
+
+  4. Nastav možnosti 'hlsearch' a 'incsearch':
+     :set hls is
+
+  5. Nyní znovu vykonej vyhledávací příkaz a sleduj, co se stane:
+     /ignore
+
+  6. Pro vypnutí zvýrazňování výsledků napiš:
+     :nohlsearch
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			       SHRHNUTÍ LEKCE 6
+
+
+  1. Stisknutí  o  otevře nový řádek POD kurzorem a umístí kurzor na vložený
+     řádek do Vkládacího módu.
+     Napsání velkého  O  otevře řádek NAD řádkem, na kterém je kurzor.
+
+  2. Stiskni  a  pro vložení textu ZA znak na pozici kurzoru.
+     Napsání velkého  A  automaticky přidá text na konec řádku.
+
+  3. Stisknutí velkého  R  přepne do Nahrazovacího módu, dokud
+     nestiskneš <ESC> pro jeho ukončení.
+
+  4. Napsání ":set xxx" nastaví možnosti "xxx".
+
+
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      LEKCE 7: PŘÍKAZY ON-LINE NÁPOVĚDY
+
+
+		   ** Používej on-line systém nápovědy **
+
+  Vim má obsáhlý on-line systém nápovědy. Pro začátek vyzkoušej jeden z
+  následujících:
+	- stiskni klávesu <HELP> (pokud ji máš)
+	- stiskni klávesu <F1>  (pokud ji máš)
+	- napiš  :help <ENTER>
+
+  Napiš  :q <ENTER>  pro uzavření okna nápovědy.
+
+  Můžeš najít nápovědu k jakémukoliv tématu přidáním argumentu k
+  příkazu ":help". Zkus tyto (nezapomeň stisknout <ENTER>):
+
+	:help w
+	:help c_<T
+	:help insert-index
+	:help user-manual
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  LEKCE 8: VYTVOŘENÍ INICIALIZAČNÍHO SKRIPTU
+
+		        ** Zapni funkce editoru Vim **
+
+  Vim má daleko více funkcí než Vi, ale většina z nich je vypnuta ve výchozím
+  nastavení. Pro zapnutí některých vytvoř soubor "vimrc".
+
+  1. Začni upravovat soubor "vimrc". Toto závisí na použitém systému:
+	:edit ~/.vimrc			pro Unix
+	:edit $VIM/_vimrc		pro MS-Windows
+
+  2. Nyní čti ukázkový "vimrc" soubor:
+
+	:read $VIMRUNTIME/vimrc_example.vim
+
+  3. Ulož soubor pomocí:
+
+	:write
+
+  Po příštím startu Vim se zapne zvýrazňování syntaxe.
+  Do souboru "vimrc" můžeš přidat všechny svoje upřednostňované nastavení.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Toto ukončuje výuku Vim, která byla myšlená jako stručný přehled
+  editoru Vim, tak akorát postačující pro lehké a obstojné používání editoru.
+  Tato výuka má daleko od úplnosti, protože Vim obsahuje podstatně více
+  příkazů. Dále si přečti uživatelský manuál: ":help user-manual".
+
+  Pro další studium je doporučená kniha:
+	Vim - Vi Improved - od Steve Oualline
+	Nakladatel: New Riders
+  První kniha určená pro Vim. Obzvláště vhodná pro začátečníky.
+  Obsahuje množství příkladů a obrázků.
+  viz http://iccf-holland.org/click5.html
+
+  Tato kniha je starší a více věnovaná Vi než Vim, ale také doporučená:
+	Learning the Vi Editor - od Linda Lamb
+	Nakladatel: O'Reilly & Associates Inc.
+  Je to dobrá kniha pro získání vědomostí téměř o všem, co můžete s Vi dělat.
+  Šesté vydání obsahuje též informace o Vim.
+
+  Tato výuka byla napsaná autory Michael C. Pierce a Robert K. Ware,
+  Colorado School of Mines s použitím myšlenek od: Charles Smith,
+  Colorado State University.  E-mail: bware@mines.colorado.edu.
+
+  Upravil pro Vim: Bram Moolenaar.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Překlad do češtiny: Luboš Turek
+  E-Mail: lubos.turek@gmail.com
+  2007 Feb 28 

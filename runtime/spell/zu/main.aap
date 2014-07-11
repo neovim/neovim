@@ -1,0 +1,83 @@
+# Aap recipe for Zulu Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = zu_ZA.aff zu_ZA.dic
+
+# There is no Zulu locale, use the Dutch one instead.
+all: $SPELLDIR/zu.latin1.spl $SPELLDIR/zu.utf-8.spl \
+        $SPELLDIR/zu.ascii.spl ../README_zu.txt
+
+$SPELLDIR/zu.latin1.spl : $FILES
+        :sys env LANG=nl_NL.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/zu zu_ZA" -c q
+
+$SPELLDIR/zu.utf-8.spl : $FILES
+        :sys env LANG=nl_NL.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/zu zu_ZA" -c q
+
+$SPELLDIR/zu.ascii.spl : $FILES
+        :sys $VIM -u NONE -e -c "mkspell! -ascii $SPELLDIR/zu zu_ZA" -c q
+ 
+../README_zu.txt : README_zu_ZA.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} zu_ZA.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+zu_ZA.aff zu_ZA.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch zu_ZA.zip
+        :sys $UNZIP zu_ZA.zip
+        :delete zu_ZA.zip
+        @if not os.path.exists('zu_ZA.orig.aff'):
+            :copy zu_ZA.aff zu_ZA.orig.aff
+        @if not os.path.exists('zu_ZA.orig.dic'):
+            :copy zu_ZA.dic zu_ZA.orig.dic
+        @if os.path.exists('zu_ZA.diff'):
+            :sys patch <zu_ZA.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 zu_ZA.orig.aff zu_ZA.aff >zu_ZA.diff
+        :sys {force} diff -a -C 1 zu_ZA.orig.dic zu_ZA.dic >>zu_ZA.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch zu_ZA.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../zu_ZA.zip
+            :sys {force} diff ../zu_ZA.orig.aff zu_ZA.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy zu_ZA.aff ../zu_ZA.new.aff
+            :sys {force} diff ../zu_ZA.orig.dic zu_ZA.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy zu_ZA.dic ../zu_ZA.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete zu_ZA.zip
+
+
+# vim: set sts=4 sw=4 :

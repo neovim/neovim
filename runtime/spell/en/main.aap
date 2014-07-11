@@ -1,0 +1,237 @@
+# Aap recipe for English Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = en_US.aff en_US.dic
+	   en_AU.aff en_AU.dic
+           en_CA.aff en_CA.dic
+           en_GB.aff en_GB.dic
+           en_NZ.aff en_NZ.dic
+
+all: $SPELLDIR/en.latin1.spl $SPELLDIR/en.utf-8.spl \
+        $SPELLDIR/en.ascii.spl ../README_en.txt
+
+$SPELLDIR/en.latin1.spl : $FILES
+        :sys env LANG=en_US.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/en
+                        en_US en_AU en_CA en_GB en_NZ" -c q
+
+$SPELLDIR/en.utf-8.spl : $FILES
+        :sys env LANG=en_US.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/en
+                        en_US en_AU en_CA en_GB en_NZ" -c q
+
+$SPELLDIR/en.ascii.spl : $FILES
+        :sys $VIM -u NONE -e -c "mkspell! -ascii $SPELLDIR/en
+                        en_US en_AU en_CA en_GB en_NZ" -c q
+ 
+../README_en.txt: README_en_US.txt README_en_AU.txt
+        :print en_US >!$target
+        :cat README_en_US.txt | :eval re.sub('\r', '', stdin) >>$target
+        :print =================================================== >>$target
+        :print en_AU: >>$target
+        :cat README_en_AU.txt | :eval re.sub('\r', '', stdin) >>$target
+        :print =================================================== >>$target
+        :print en_CA: >>$target
+        :cat README_en_CA.txt | :eval re.sub('\r', '', stdin) >>$target
+        :print =================================================== >>$target
+        :print en_GB: >>$target
+        :cat README_en_GB.txt | :eval re.sub('\r', '', stdin) >>$target
+        :print =================================================== >>$target
+        :print en_NZ: >>$target
+        :cat README_en_NZ.txt | :eval re.sub('\r', '', stdin) >>$target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} en_US.zip en_CA.zip en_NZ.zip
+                                en_GB.zip en_AU.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+en_US.aff en_US.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch en_US.zip
+        :sys $UNZIP en_US.zip
+        :delete en_US.zip
+        @if not os.path.exists('en_US.orig.aff'):
+            :copy en_US.aff en_US.orig.aff
+        @if not os.path.exists('en_US.orig.dic'):
+            :copy en_US.dic en_US.orig.dic
+        @if os.path.exists('en_US.diff'):
+            :sys patch <en_US.diff
+
+en_AU.aff en_AU.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch en_AU.zip
+        :sys $UNZIP en_AU.zip
+        :delete en_AU.zip
+        @if not os.path.exists('en_AU.orig.aff'):
+            :copy en_AU.aff en_AU.orig.aff
+        @if not os.path.exists('en_AU.orig.dic'):
+            :copy en_AU.dic en_AU.orig.dic
+        @if os.path.exists('en_AU.diff'):
+            :sys patch <en_AU.diff
+
+en_CA.aff en_CA.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch en_CA.zip
+        :sys $UNZIP en_CA.zip
+        :delete en_CA.zip
+        @if not os.path.exists('en_CA.orig.aff'):
+            :copy en_CA.aff en_CA.orig.aff
+        @if not os.path.exists('en_CA.orig.dic'):
+            :copy en_CA.dic en_CA.orig.dic
+        @if os.path.exists('en_CA.diff'):
+            :sys patch <en_CA.diff
+
+en_GB.aff en_GB.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch en_GB.zip
+        :sys $UNZIP en_GB.zip
+        :delete en_GB.zip
+        :delete dictionary.lst.example
+        @if not os.path.exists('en_GB.orig.aff'):
+            :copy en_GB.aff en_GB.orig.aff
+        @if not os.path.exists('en_GB.orig.dic'):
+            :copy en_GB.dic en_GB.orig.dic
+        @if os.path.exists('en_GB.diff'):
+            :sys patch <en_GB.diff
+
+en_NZ.aff en_NZ.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch en_NZ.zip
+        :sys $UNZIP en_NZ.zip
+        :delete en_NZ.zip
+        @if not os.path.exists('en_NZ.orig.aff'):
+            :copy en_NZ.aff en_NZ.orig.aff
+        @if not os.path.exists('en_NZ.orig.dic'):
+            :copy en_NZ.dic en_NZ.orig.dic
+        @if os.path.exists('en_NZ.diff'):
+            :sys patch <en_NZ.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 en_US.orig.aff en_US.aff >en_US.diff
+        :sys {force} diff -a -C 1 en_US.orig.dic en_US.dic >>en_US.diff
+        :sys {force} diff -a -C 1 en_AU.orig.aff en_AU.aff >en_AU.diff
+	:sys {force} diff -a -C 1 en_AU.orig.dic en_AU.dic >>en_AU.diff
+	:sys {force} diff -a -C 1 en_CA.orig.aff en_CA.aff >en_CA.diff
+	:sys {force} diff -a -C 1 en_CA.orig.dic en_CA.dic >>en_CA.diff
+	:sys {force} diff -a -C 1 en_GB.orig.aff en_GB.aff >en_GB.diff
+	:sys {force} diff -a -C 1 en_GB.orig.dic en_GB.dic >>en_GB.diff
+	:sys {force} diff -a -C 1 en_NZ.orig.aff en_NZ.aff >en_NZ.diff
+	:sys {force} diff -a -C 1 en_NZ.orig.dic en_NZ.dic >>en_NZ.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check: check-us check-au check-ca check-gb check-nz
+
+check-us:
+        :assertpkg unzip diff
+        :fetch en_US.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../en_US.zip
+            :sys {force} diff ../en_US.orig.aff en_US.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_US.aff ../en_US.new.aff
+            :sys {force} diff ../en_US.orig.dic en_US.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_US.dic ../en_US.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete en_US.zip
+
+check-au:
+        :assertpkg unzip diff
+        :fetch en_AU.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../en_AU.zip
+            :sys {force} diff ../en_AU.orig.aff en_AU.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_AU.aff ../en_AU.new.aff
+            :sys {force} diff ../en_AU.orig.dic en_AU.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_AU.dic ../en_AU.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete en_AU.zip
+
+check-ca:
+        :assertpkg unzip diff
+        :fetch en_CA.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../en_CA.zip
+            :sys {force} diff ../en_CA.orig.aff en_CA.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_CA.aff ../en_CA.new.aff
+            :sys {force} diff ../en_CA.orig.dic en_CA.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_CA.dic ../en_CA.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete en_CA.zip
+
+check-gb:
+        :assertpkg unzip diff
+        :fetch en_GB.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../en_GB.zip
+            :sys {force} diff ../en_GB.orig.aff en_GB.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_GB.aff ../en_GB.new.aff
+            :sys {force} diff ../en_GB.orig.dic en_GB.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_GB.dic ../en_GB.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete en_GB.zip
+
+check-nz:
+        :assertpkg unzip diff
+        :fetch en_NZ.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../en_NZ.zip
+            :sys {force} diff ../en_NZ.orig.aff en_NZ.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_NZ.aff ../en_NZ.new.aff
+            :sys {force} diff ../en_NZ.orig.dic en_NZ.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy en_NZ.dic ../en_NZ.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete en_NZ.zip
+
+# vim: set sts=4 sw=4 :

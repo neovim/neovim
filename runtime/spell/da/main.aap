@@ -1,0 +1,79 @@
+# Aap recipe for Danish Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = da_DK.aff da_DK.dic
+
+all: $SPELLDIR/da.latin1.spl $SPELLDIR/da.utf-8.spl ../README_da.txt
+
+$SPELLDIR/da.latin1.spl : $FILES
+        :sys env LANG=da_DK.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/da da_DK" -c q
+
+$SPELLDIR/da.utf-8.spl : $FILES
+        :sys env LANG=da_DK.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/da da_DK" -c q
+
+../README_da.txt : README Copyright
+        :cat $source >! $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} da_DK.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+da_DK.aff da_DK.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch da_DK.zip
+        :sys $UNZIP da_DK.zip
+        :delete da_DK.zip
+        :delete COPYING Makefile da_DK.excluded
+        @if not os.path.exists('da_DK.orig.aff'):
+            :copy da_DK.aff da_DK.orig.aff
+        @if not os.path.exists('da_DK.orig.dic'):
+            :copy da_DK.dic da_DK.orig.dic
+        @if os.path.exists('da_DK.diff'):
+            :sys patch <da_DK.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 da_DK.orig.aff da_DK.aff >da_DK.diff
+        :sys {force} diff -a -C 1 da_DK.orig.dic da_DK.dic >>da_DK.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch da_DK.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../da_DK.zip
+            :sys {force} diff ../da_DK.orig.aff da_DK.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy da_DK.aff ../da_DK.new.aff
+            :sys {force} diff ../da_DK.orig.dic da_DK.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy da_DK.dic ../da_DK.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete da_DK.zip
+
+
+# vim: set sts=4 sw=4 :

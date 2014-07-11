@@ -1,0 +1,26 @@
+*** mg_MG.orig.aff	Wed Aug 31 17:58:59 2005
+--- mg_MG.aff	Wed Aug 31 18:00:42 2005
+***************
+*** 19 ****
+--- 19,39 ----
+  TRY anyiotrmehsfkdzl'vpbg-AMjNTFIRHJSKאVDELPBGZOפע
++ 
++ FOL  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ LOW  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ UPP  ‗ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞÿ
++ 
++ SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZאבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
++ SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
++ 
++ MIDWORD	'-
++ 
++ MAP 9
++ MAP aאבגדהו
++ MAP eטיךכ
++ MAP iלםמן
++ MAP oעףפץצ
++ MAP uשתûü
++ MAP nס
++ MAP cח
++ MAP yÿ‎
++ MAP s‗

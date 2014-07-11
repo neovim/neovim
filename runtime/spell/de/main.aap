@@ -1,0 +1,236 @@
+# Aap recipe for German Vim spell files.
+#
+# Since there is a big discussion about whether to use the old or the new
+# spelling rules, both have been included.
+#    "de": all possible words allowed
+# "de_de": old and new German spelling
+# "de_19": old German spelling
+# "de_20": new German spelling
+# "de_AT": Austrian spelling
+# "de_CH": Swiss spelling
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+REGIONS = DE 19 20 AT CH
+DE_REGIONS = de_$*REGIONS
+
+SPELLDIR   = ..
+FILES      = de_$*(REGIONS).aff de_$*(REGIONS).dic
+
+ZIPFILE_DE = de_DE_comb.zip
+ZIPFILE_19 = de_OLDSPELL.zip
+ZIPFILE_20 = de_DE_neu.zip
+ZIPFILE_AT = de_DE.zip
+ZIPFILE_CH = de_CH.zip
+ZIPFILES   = $ZIPFILE_DE $ZIPFILE_19 $ZIPFILE_20 $ZIPFILE_AT $ZIPFILE_CH
+
+READMES    = README_de_$*(REGIONS).txt
+
+all: $SPELLDIR/de.latin1.spl $SPELLDIR/de.utf-8.spl ../README_de.txt
+
+$SPELLDIR/de.latin1.spl : $FILES
+        :sys env LANG=de_DE.ISO-8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/de $DE_REGIONS" -c q
+
+$SPELLDIR/de.utf-8.spl : $FILES
+        :sys env LANG=de_DE.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/de $DE_REGIONS" -c q
+
+../README_de.txt: $READMES
+        :print de_DE (combined) >! $target
+        :cat README_de_DE.txt   >> $target
+        :print =================================================== >>$target
+        :print de_19 (old)      >> $target
+        :cat README_de_19.txt   >> $target
+        :print =================================================== >>$target
+        :print de_20 (new)      >> $target
+        :cat README_de_20.txt   >> $target
+        :print =================================================== >>$target
+        :print de_AT (Austria)  >> $target
+        :cat README_de_AT.txt   >> $target
+        :print =================================================== >>$target
+        :print de_CH (Swiss)    >> $target
+        :cat README_de_CH.txt   >> $target
+
+#
+# Fetching the files from the OpenOffice.org site.
+# The OLDSPELL file comes from elsewhere
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+DEDIR = http://www.j3e.de/myspell
+:attr {fetch = $OODIR/%file%} $ZIPFILES
+:attr {fetch = $DEDIR/%file%} $ZIPFILE_19
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+de_DE.aff de_DE.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch $ZIPFILE_DE
+        :sys $UNZIP $ZIPFILE_DE
+        :delete $ZIPFILE_DE
+        :move de_DE_comb.aff de_DE.aff
+        :move de_DE_comb.dic de_DE.dic
+        :move README_de_DE_comb.txt README_de_DE.txt
+        @if not os.path.exists('de_DE.orig.aff'):
+            :copy de_DE.aff de_DE.orig.aff
+        @if not os.path.exists('de_DE.orig.dic'):
+            :copy de_DE.dic de_DE.orig.dic
+        @if os.path.exists('de_DE.diff'):
+            :sys patch <de_DE.diff
+
+de_19.aff de_19.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch $ZIPFILE_19
+        :sys $UNZIP $ZIPFILE_19
+        :delete $ZIPFILE_19
+        :move de_OLDSPELL.aff de_19.aff
+        :move de_OLDSPELL.dic de_19.dic
+        # there is no README file
+        :print There is no README file for the old spelling >!README_de_19.txt
+        @if not os.path.exists('de_19.orig.aff'):
+            :copy de_19.aff de_19.orig.aff
+        @if not os.path.exists('de_19.orig.dic'):
+            :copy de_19.dic de_19.orig.dic
+        @if os.path.exists('de_19.diff'):
+            :sys patch <de_19.diff
+
+de_20.aff de_20.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch $ZIPFILE_20
+        :sys $UNZIP $ZIPFILE_20
+        :delete $ZIPFILE_20
+        :move de_DE_neu.aff de_20.aff
+        :move de_DE_neu.dic de_20.dic
+        :move README_de_DE_neu.txt README_de_20.txt
+        @if not os.path.exists('de_20.orig.aff'):
+            :copy de_20.aff de_20.orig.aff
+        @if not os.path.exists('de_20.orig.dic'):
+            :copy de_20.dic de_20.orig.dic
+        @if os.path.exists('de_20.diff'):
+            :sys patch <de_20.diff
+
+# The de_AT.dic is included in de_DE.zip.  We rename the files and concatenate
+# them.  Complication is that de_AT.dic is missing a newline at the end.
+# And the de_DE.dic file is used for something else.
+de_AT.aff de_AT.dic: {buildcheck=}
+        :assertpkg unzip patch
+
+        # Move de_DE files out of the way.
+        @if os.path.exists('de_DE.aff'):
+            :move de_DE.aff de_DE.temp.aff
+        @if os.path.exists('de_DE.dic'):
+            :move de_DE.dic de_DE.temp.dic
+        @if os.path.exists('README_de_DE.txt'):
+            :move README_de_DE.txt README_de_DE.temp.txt
+
+        :fetch $ZIPFILE_AT
+        :sys $UNZIP $ZIPFILE_AT
+        :delete $ZIPFILE_AT
+
+        :print >>de_AT.dic
+        # delete the first line, the word count
+        :sys $VIM -u NONE de_DE.dic -e -c 1delete -c wq
+        :cat de_DE.dic >>de_AT.dic
+        :delete de_DE.dic
+        :move de_DE.aff de_AT.aff
+        :move README_de_DE.txt README_de_AT.txt
+
+        @if os.path.exists('de_DE.temp.aff'):
+            :move de_DE.temp.aff de_DE.aff
+        @if os.path.exists('de_DE.temp.dic'):
+            :move de_DE.temp.dic de_DE.dic
+        @if os.path.exists('README_de_DE.temp.txt'):
+            :move README_de_DE.temp.txt README_de_DE.txt
+
+        @if not os.path.exists('de_AT.orig.aff'):
+            :copy de_AT.aff de_AT.orig.aff
+        @if not os.path.exists('de_AT.orig.dic'):
+            :copy de_AT.dic de_AT.orig.dic
+        @if os.path.exists('de_AT.diff'):
+            :sys patch <de_AT.diff
+
+de_CH.aff de_CH.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch $ZIPFILE_CH
+        :sys $UNZIP $ZIPFILE_CH
+        :delete $ZIPFILE_CH
+        @if not os.path.exists('de_CH.orig.aff'):
+            :copy de_CH.aff de_CH.orig.aff
+        @if not os.path.exists('de_CH.orig.dic'):
+            :copy de_CH.dic de_CH.orig.dic
+        @if os.path.exists('de_CH.diff'):
+            :sys patch <de_CH.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 de_DE.orig.aff de_DE.aff >de_DE.diff
+        :sys {force} diff -a -C 1 de_DE.orig.dic de_DE.dic >>de_DE.diff
+        :sys {force} diff -a -C 1 de_19.orig.aff de_19.aff >de_19.diff
+        :sys {force} diff -a -C 1 de_19.orig.dic de_19.dic >>de_19.diff
+        :sys {force} diff -a -C 1 de_20.orig.aff de_20.aff >de_20.diff
+        :sys {force} diff -a -C 1 de_20.orig.dic de_20.dic >>de_20.diff
+        :sys {force} diff -a -C 1 de_AT.orig.aff de_AT.aff >de_AT.diff
+        :sys {force} diff -a -C 1 de_AT.orig.dic de_AT.dic >>de_AT.diff
+        :sys {force} diff -a -C 1 de_CH.orig.aff de_CH.aff >de_CH.diff
+        :sys {force} diff -a -C 1 de_CH.orig.dic de_CH.dic >>de_CH.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip patch
+        :fetch $ZIPFILES
+        :mkdir tmp
+        :cd tmp
+        @try:
+            # Do the _AT one first, it overwrites the _DE files.
+            :sys $UNZIP ../$ZIPFILE_AT
+            :print >>de_AT.dic
+            # delete the first line, the word count
+            :sys ../$VIM -u NONE de_DE.dic -e -c 1delete -c wq
+            :cat de_DE.dic >>de_AT.dic
+            :delete de_DE.dic
+            :move de_DE.aff de_AT.aff
+            :move README_de_DE.txt README_de_AT.txt
+
+            :sys $UNZIP ../$ZIPFILE_DE
+            :move de_DE_comb.aff de_DE.aff
+            :move de_DE_comb.dic de_DE.dic
+            :move README_de_DE_comb.txt README_de_DE.txt
+
+            :sys $UNZIP ../$ZIPFILE_19
+            :move de_OLDSPELL.aff de_19.aff
+            :move de_OLDSPELL.dic de_19.dic
+            # there is no README file
+            :print There is no README file for the old spelling >!README_de_19.txt
+            :sys $UNZIP ../$ZIPFILE_20
+            :move de_DE_neu.aff de_20.aff
+            :move de_DE_neu.dic de_20.dic
+            :move README_de_DE_neu.txt README_de_20.txt
+
+            :sys $UNZIP ../$ZIPFILE_CH
+
+            @import stat
+            @for nm in ['de_DE', 'de_19', 'de_20', 'de_AT', 'de_CH']:
+                @for ext in ['aff', 'dic']:
+                    :sys {force} diff ../$(nm).orig.$ext $(nm).$ext >d
+                    @if os.stat('d')[stat.ST_SIZE] > 0:
+                        :copy $(nm).$ext ../$(nm).new.$ext
+                :sys {force} diff ../README_$(nm).txt README_$(nm).txt >d
+                @if os.stat('d')[stat.ST_SIZE] > 0:
+                    :copy README_$(nm).txt ../README_$(nm).new.txt
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete $ZIPFILES
+
+
+# vim: set sts=4 sw=4 :

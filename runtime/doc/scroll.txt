@@ -1,0 +1,332 @@
+*scroll.txt*    For Vim version 7.4.  Last change: 2006 Aug 27
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Scrolling						*scrolling*
+
+These commands move the contents of the window.  If the cursor position is
+moved off of the window, the cursor is moved onto the window (with
+'scrolloff' screen lines around it).  A page is the number of lines in the
+window minus two.  The mnemonics for these commands may be a bit confusing.
+Remember that the commands refer to moving the window (the part of the buffer
+that you see) upwards or downwards in the buffer.  When the window moves
+upwards in the buffer, the text in the window moves downwards on your screen.
+
+See section |03.7| of the user manual for an introduction.
+
+1. Scrolling downwards		|scroll-down|
+2. Scrolling upwards		|scroll-up|
+3. Scrolling relative to cursor	|scroll-cursor|
+4. Scrolling horizontally	|scroll-horizontal|
+5. Scrolling synchronously	|scroll-binding|
+6. Scrolling with a mouse wheel |scroll-mouse-wheel|
+
+==============================================================================
+1. Scrolling downwards					*scroll-down*
+
+The following commands move the edit window (the part of the buffer that you
+see) downwards (this means that more lines downwards in the text buffer can be
+seen):
+
+							*CTRL-E*
+CTRL-E			Scroll window [count] lines downwards in the buffer.
+			Mnemonic: Extra lines.
+
+							*CTRL-D*
+CTRL-D			Scroll window Downwards in the buffer.  The number of
+			lines comes from the 'scroll' option (default: half a
+			screen).  If [count] given, first set 'scroll' option
+			to [count].  The cursor is moved the same number of
+			lines down in the file (if possible; when lines wrap
+			and when hitting the end of the file there may be a
+			difference).  When the cursor is on the last line of
+			the buffer nothing happens and a beep is produced.
+			See also 'startofline' option.
+			{difference from vi: Vim scrolls 'scroll' screen
+			lines, instead of file lines; makes a difference when
+			lines wrap}
+
+<S-Down>	or				*<S-Down>* *<kPageDown>*
+<PageDown>	or				*<PageDown>* *CTRL-F*
+CTRL-F			Scroll window [count] pages Forwards (downwards) in
+			the buffer.  See also 'startofline' option.
+			When there is only one window the 'window' option
+			might be used.
+
+							*z+*
+z+			Without [count]: Redraw with the line just below the
+			window at the top of the window.  Put the cursor in
+			that line, at the first non-blank in the line.
+			With [count]: just like "z<CR>".
+
+==============================================================================
+2. Scrolling upwards					*scroll-up*
+
+The following commands move the edit window (the part of the buffer that you
+see) upwards (this means that more lines upwards in the text buffer can be
+seen):
+
+							*CTRL-Y*
+CTRL-Y			Scroll window [count] lines upwards in the buffer.
+			Note: When using the MS-Windows key bindings CTRL-Y is
+			remapped to redo.
+
+							*CTRL-U*
+CTRL-U			Scroll window Upwards in the buffer.  The number of
+			lines comes from the 'scroll' option (default: half a
+			screen).  If [count] given, first set the 'scroll'
+			option to [count].  The cursor is moved the same
+			number of lines up in the file (if possible; when
+			lines wrap and when hitting the end of the file there
+			may be a difference).  When the cursor is on the first
+			line of the buffer nothing happens and a beep is
+			produced.  See also 'startofline' option.
+			{difference from vi: Vim scrolls 'scroll' screen
+			lines, instead of file lines; makes a difference when
+			lines wrap}
+
+<S-Up>		or					*<S-Up>* *<kPageUp>*
+<PageUp>	or					*<PageUp>* *CTRL-B*
+CTRL-B			Scroll window [count] pages Backwards (upwards) in the
+			buffer.  See also 'startofline' option.
+			When there is only one window the 'window' option
+			might be used.
+
+							*z^*
+z^			Without [count]: Redraw with the line just above the
+			window at the bottom of the window.  Put the cursor in
+			that line, at the first non-blank in the line.
+			With [count]: First scroll the text to put the [count]
+			line at the bottom of the window, then redraw with the
+			line which is now at the top of the window at the
+			bottom of the window.  Put the cursor in that line, at
+			the first non-blank in the line.
+
+==============================================================================
+3. Scrolling relative to cursor				*scroll-cursor*
+
+The following commands reposition the edit window (the part of the buffer that
+you see) while keeping the cursor on the same line:
+
+							*z<CR>*
+z<CR>			Redraw, line [count] at top of window (default
+			cursor line).  Put cursor at first non-blank in the
+			line.
+
+							*zt*
+zt			Like "z<CR>", but leave the cursor in the same
+			column.  {not in Vi}
+
+							*zN<CR>*
+z{height}<CR>		Redraw, make window {height} lines tall.  This is
+			useful to make the number of lines small when screen
+			updating is very slow.  Cannot make the height more
+			than the physical screen height.
+
+							*z.*
+z.			Redraw, line [count] at center of window (default
+			cursor line).  Put cursor at first non-blank in the
+			line.
+
+							*zz*
+zz			Like "z.", but leave the cursor in the same column.
+			Careful: If caps-lock is on, this command becomes
+			"ZZ": write buffer and exit!  {not in Vi}
+
+							*z-*
+z-			Redraw, line [count] at bottom of window (default
+			cursor line).  Put cursor at first non-blank in the
+			line.
+
+							*zb*
+zb			Like "z-", but leave the cursor in the same column.
+			{not in Vi}
+
+==============================================================================
+4. Scrolling horizontally				*scroll-horizontal*
+
+For the following four commands the cursor follows the screen.  If the
+character that the cursor is on is moved off the screen, the cursor is moved
+to the closest character that is on the screen.  The value of 'sidescroll' is
+not used.
+
+z<Right>    or						*zl* *z<Right>*
+zl			Move the view on the text [count] characters to the
+			right, thus scroll the text [count] characters to the
+			left.  This only works when 'wrap' is off.  {not in
+			Vi}
+
+z<Left>      or						*zh* *z<Left>*
+zh			Move the view on the text [count] characters to the
+			left, thus scroll the text [count] characters to the
+			right.  This only works when 'wrap' is off.  {not in
+			Vi}
+
+							*zL*
+zL			Move the view on the text half a screenwidth to the
+			right, thus scroll the text half a screenwidth to the
+			left.  This only works when 'wrap' is off.  {not in
+			Vi}
+
+							*zH*
+zH			Move the view on the text half a screenwidth to the
+			left, thus scroll the text half a screenwidth to the
+			right.  This only works when 'wrap' is off.  {not in
+			Vi}
+
+For the following two commands the cursor is not moved in the text, only the
+text scrolls on the screen.
+
+							*zs*
+zs			Scroll the text horizontally to position the cursor
+			at the start (left side) of the screen.  This only
+			works when 'wrap' is off.  {not in Vi}
+
+							*ze*
+ze			Scroll the text horizontally to position the cursor
+			at the end (right side) of the screen.  This only
+			works when 'wrap' is off.  {not in Vi}
+
+==============================================================================
+5. Scrolling synchronously				*scroll-binding*
+
+Occasionally, it is desirable to bind two or more windows together such that
+when one window is scrolled, the other windows are also scrolled.  In Vim,
+windows can be given this behavior by setting the (window-specific)
+'scrollbind' option.  When a window that has 'scrollbind' set is scrolled, all
+other 'scrollbind' windows are scrolled the same amount, if possible.  The
+behavior of 'scrollbind' can be modified by the 'scrollopt' option.
+
+When using the scrollbars, the binding only happens when scrolling the window
+with focus (where the cursor is).  You can use this to avoid scroll-binding
+for a moment without resetting options.
+
+When a window also has the 'diff' option set, the scroll-binding uses the
+differences between the two buffers to synchronize the position precisely.
+Otherwise the following method is used.
+
+							*scrollbind-relative*
+Each 'scrollbind' window keeps track of its "relative offset," which can be
+thought of as the difference between the current window's vertical scroll
+position and the other window's vertical scroll position.  When one of the
+'scrollbind' windows is asked to vertically scroll past the beginning or end
+limit of its text, the window no longer scrolls, but remembers how far past
+the limit it wishes to be.  The window keeps this information so that it can
+maintain the same relative offset, regardless of its being asked to scroll
+past its buffer's limits.
+
+However, if a 'scrollbind' window that has a relative offset that is past its
+buffer's limits is given the cursor focus, the other 'scrollbind' windows must
+jump to a location where the current window's relative offset is valid.  This
+behavior can be changed by clearing the 'jump' flag from the 'scrollopt'
+option.
+
+						*syncbind* *:syncbind* *:sync*
+:syncbind		Force all 'scrollbind' windows to have the same
+			relative offset.  I.e., when any of the 'scrollbind'
+			windows is scrolled to the top of its buffer, all of
+			the 'scrollbind' windows will also be at the top of
+			their buffers.
+
+							*scrollbind-quickadj*
+The 'scrollbind' flag is meaningful when using keyboard commands to vertically
+scroll a window, and also meaningful when using the vertical scrollbar of the
+window which has the cursor focus.  However, when using the vertical scrollbar
+of a window which doesn't have the cursor focus, 'scrollbind' is ignored.
+This allows quick adjustment of the relative offset of 'scrollbind' windows.
+
+==============================================================================
+6. Scrolling with a mouse wheel				*scroll-mouse-wheel*
+
+When your mouse has a scroll wheel, it should work with Vim in the GUI.  How
+it works depends on your system.  It might also work in an xterm
+|xterm-mouse-wheel|.  By default only vertical scroll wheels are supported,
+but some GUIs also support horizontal scroll wheels.
+
+For the Win32 GUI the scroll action is hard coded.  It works just like
+dragging the scrollbar of the current window.  How many lines are scrolled
+depends on your mouse driver.  If the scroll action causes input focus
+problems, see |intellimouse-wheel-problems|.
+
+For the X11 GUIs (Motif, Athena and GTK) scrolling the wheel generates key
+presses <ScrollWheelUp>, <ScrollWheelDown>, <ScrollWheelLeft> and
+<ScrollWheelRight>.  For example, if you push the scroll wheel upwards a
+<ScrollWheelUp> key press is generated causing the window to scroll upwards
+(while the text is actually moving downwards).  The default action for these
+keys are:
+    <ScrollWheelUp>	    scroll three lines up	*<ScrollWheelUp>*
+    <S-ScrollWheelUp>	    scroll one page up		*<S-ScrollWheelUp>*
+    <C-ScrollWheelUp>	    scroll one page up		*<C-ScrollWheelUp>*
+    <ScrollWheelDown>	    scroll three lines down	*<ScrollWheelDown>*
+    <S-ScrollWheelDown>	    scroll one page down	*<S-ScrollWheelDown>*
+    <C-ScrollWheelDown>	    scroll one page down	*<C-ScrollWheelDown>*
+    <ScrollWheelLeft>	    scroll six columns left	*<ScrollWheelLeft>*
+    <S-ScrollWheelLeft>	    scroll one page left	*<S-ScrollWheelLeft>*
+    <C-ScrollWheelLeft>	    scroll one page left	*<C-ScrollWheelLeft>*
+    <ScrollWheelRight>	    scroll six columns right	*<ScrollWheelRight>*
+    <S-ScrollWheelRight>    scroll one page right	*<S-ScrollWheelRight>*
+    <C-ScrollWheelRight>    scroll one page right	*<C-ScrollWheelRight>*
+This should work in all modes, except when editing the command line.
+
+Note that horizontal scrolling only works if 'nowrap' is set.  Also, unless
+the "h" flag in 'guioptions' is set, the cursor moves to the longest visible
+line if the cursor line is about to be scrolled off the screen (similarly to
+how the horizontal scrollbar works).
+
+You can modify the default behavior by mapping the keys.  For example, to make
+the scroll wheel move one line or half a page in Normal mode: >
+   :map <ScrollWheelUp> <C-Y>
+   :map <S-ScrollWheelUp> <C-U>
+   :map <ScrollWheelDown> <C-E>
+   :map <S-ScrollWheelDown> <C-D>
+You can also use Alt and Ctrl modifiers.
+
+This only works when Vim gets the scroll wheel events, of course.  You can
+check if this works with the "xev" program.
+
+When using XFree86, the /etc/XF86Config file should have the correct entry for
+your mouse.  For FreeBSD, this entry works for a Logitech scrollmouse: >
+    Protocol     "MouseMan"
+    Device       "/dev/psm0"
+    ZAxisMapping 4 5
+See the XFree86 documentation for information.
+
+						*<MouseDown>* *<MouseUp>*
+The keys <MouseDown> and <MouseUp> have been deprecated.  Use <ScrollWheelUp>
+instead of <MouseDown> and use <ScrollWheelDown> instead of <MouseUp>.
+
+							*xterm-mouse-wheel*
+To use the mouse wheel in a new xterm you only have to make the scroll wheel
+work in your Xserver, as mentioned above.
+
+To use the mouse wheel in an older xterm you must do this:
+1. Make it work in your Xserver, as mentioned above.
+2. Add translations for the xterm, so that the xterm will pass a scroll event
+   to Vim as an escape sequence.
+3. Add mappings in Vim, to interpret the escape sequences as <ScrollWheelDown>
+   or <ScrollWheelUp> keys.
+
+You can do the translations by adding this to your ~.Xdefaults file (or other
+file where your X resources are kept): >
+
+  XTerm*VT100.Translations:		#override \n\
+		s<Btn4Down>: string("0x9b") string("[64~") \n\
+		s<Btn5Down>: string("0x9b") string("[65~") \n\
+		<Btn4Down>: string("0x9b") string("[62~") \n\
+		<Btn5Down>: string("0x9b") string("[63~") \n\
+		<Btn4Up>: \n\
+		<Btn5Up>:
+
+Add these mappings to your vimrc file: >
+	:map <M-Esc>[62~ <ScrollWheelUp>
+	:map! <M-Esc>[62~ <ScrollWheelUp>
+	:map <M-Esc>[63~ <ScrollWheelDown>
+	:map! <M-Esc>[63~ <ScrollWheelDown>
+	:map <M-Esc>[64~ <S-ScrollWheelUp>
+	:map! <M-Esc>[64~ <S-ScrollWheelUp>
+	:map <M-Esc>[65~ <S-ScrollWheelDown>
+	:map! <M-Esc>[65~ <S-ScrollWheelDown>
+<
+ vim:tw=78:ts=8:ft=help:norl:

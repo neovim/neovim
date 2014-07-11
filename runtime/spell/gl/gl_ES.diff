@@ -1,0 +1,72 @@
+*** gl_ES.orig.aff	Tue Aug 16 17:59:15 2005
+--- gl_ES.aff	Fri Sep 30 13:06:45 2005
+***************
+*** 2,3 ****
+--- 2,8 ----
+  TRY ביםףתesianrtolcdugmphbfvס
++ 
++ FOL  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
++ LOW  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
++ UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗ÿ
++ 
+  # COMPOUNDMIN 3
+***************
+*** 1172 ****
+--- 1177,1233 ----
+  SFX C   ionar ciףn         cionar
++ 
++ # soundslike mapping from Aspell
++ #   Copyright (C) 2000 Ramףn Flores, distributed under GNU GPL
++ #    Ramףn Flores may be reached by email at fa2ramon@usc.es
++ # version galega 0.1
++ 
++ SAL followup        0
++ SAL collapse_result 0
++ 
++ SAL Á                  A
++ SAL A                  A
++ SAL BEL$		   BLE
++ SAL BL		   L
++ SAL BM                 M
++ SAL BS		   S
++ SAL BT                 T
++ SAL B		   B
++ SAL C(EI)		   S
++ SAL C		   K
++ SAL D		   D
++ SAL É		   E
++ SAL EI		   EC
++ SAL EI                 EP
++ SAL E		   E
++ SAL F		   F
++ SAL G		   G
++ SAL H                  _
++ SAL Í                  I
++ SAL IT                 ICT
++ SAL I		   I
++ SAL J                  X
++ SAL K                  K
++ SAL L                  L
++ SAL M                  M
++ SAL N                  MN
++ SAL N                  NN
++ SAL N		   N
++ SAL Ó                  O
++ SAL ÓN$                IÓN
++ SAL O                  O
++ SAL PS                 S
++ SAL QU                 K
++ SAL R		   R
++ SAL S                  S
++ SAL T                  T
++ SAL Ú                  U
++ SAL UT                 UCT
++ SAL U                  U
++ SAL V                  B
++ SAL X                  S
++ SAL X                  G
++ SAL X                  J
++ SAL Y                  I
++ SAL ZA$                CIA
++ SAL ZO$                CIO
++ SAL Z                  S

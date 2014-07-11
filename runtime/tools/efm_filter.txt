@@ -1,0 +1,31 @@
+[adopted from a message that Ives posted in the Vim mailing list]
+
+Some compilers produce an error message that cannot be handled with
+'errorformat' in Vim.  Following is an example of a Perl script that
+translates one error message into something that Vim understands.
+
+
+The compiler that generates this kind of error messages (4 lines):
+
+"/tmp_mnt/cm/src/apertos/MoU/MetaCore/MetaCore/common/src/MetaCoreImp_M.cc",
+line 50: error(3114):
+	   identifier "PRIMITIVE_M" is undefined
+	 return(ExecuteCore(PRIMITIVE_M,
+
+You can find a small perl program at the end.
+The way I use it is:
+
+:set   errorformat=%f>%l:%c:%t:%n:%m
+:set   makeprg=clearmake\ -C\ gnu
+:set   shellpipe=2>&1\|\ vimccparse
+
+If somebody thinks this is useful: feel free to do whatever you can think
+of with this code.
+
+-Ives
+____________________________________________________________
+Ives Aerts (SW Developer)	    Sony Telecom Europe
+ives@sonytel.be			    St.Stevens Woluwestr. 55
+`Death could create most things,    B-1130 Brussels, Belgium
+ except for plumbing.'		    PHONE : +32 2 724 19 67
+	 (Soul Music - T.Pratchett) FAX   : +32 2 726 26 86

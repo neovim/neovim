@@ -1,0 +1,26 @@
+# Toplevel Aap recipe for Vim spell files
+#
+# Usage:
+# aap        generate all the .spl files
+# aap diff   create all the diff files
+
+# "hu" is at the end, because it takes a very long time.
+LANG = af am bg br ca cs cy da de el en eo es fr fo ga gd gl he hr id it 
+       ku la lt lv mg mi ms nb nl nn ny pl pt ro ru rw sk sl sv sw
+       tet th tl tn uk yi zu hu
+
+# TODO:
+# Finnish doesn't work, the dictionary fi_FI.zip file contains hyphenation...
+
+diff: $*LANG/diff
+        :print Done.
+
+@for l in string.split(_no.LANG):
+        :child $l/main.aap
+
+# The existing .spl files need to be generated when the spell file format
+# changes.  Depending on the Vim executable does that, but results in doing it
+# much too often.  Generate a dummy .spl file and let the .spl depend on it, so
+# that they are outdated when it changes.
+:child check/main.aap
+*.spl: check/check.latin1.spl

@@ -1,0 +1,984 @@
+===============================================================================
+=      B e m   V i n d o   a o   V I M   T u t o r   -   Versão 1.7 pt_BR     =
+===============================================================================
+
+     Vim é um poderoso editor que possui muitos comandos, tantos que seria
+     impossível ensinar num tutorial como este. Este tutorial é planejado para
+     apresentar os comandos suficientes para você ficar habilitado a usar
+     facilmente o Vim como um editor de textos genérico.
+
+     O tempo aproximado requerido para completar o tutorial é de 25-30 minutos,
+     dependendo de quanto tempo é gasto praticando os comandos.
+
+     ATENÇÃO:
+     Os comandos nas lições vão modificar o texto. Utilize uma cópia deste
+     arquivo para praticar os comandos (se você iniciou o "vimtutor", esta já
+     é uma cópia).
+
+     É importante lembrar que este tutorial é planejado para ensinar através da
+     prática. Isso significa que você precisa executar os comandos para 
+     aprendê-los adequadamente. Se você somente ler o texto, esquecerá os
+     comandos!
+
+     Agora, certifique-se de que sua tecla Shift-Lock (ou Caps Lock) não esteja
+     ativada e pressione a tecla  j  o bastante para mover o cursor até que a
+     Lição 1.1 esteja completamente na tela.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			 Lição 1.1:  MOVENDO O CURSOR
+
+
+  ** Para mover o cursor, pressione as teclas h,j,k,l conforme indicado. **
+             ^
+             k          Dica: A tecla h está à esquerda e move para a esquerda.
+       < h       l >          A tecla l está à direita e move para a direita.
+             j                A tecla j se parece com uma seta para baixo.
+             v
+  1. Mova o cursor pela tela até que você se sinta confortável.
+
+  2. Segure pressionada a tecla (j) até haver repetição.
+     Agora você já sabe como ir para a próxima lição.
+
+  3. Usando a tecla j, mova até a lição 1.2.
+
+NOTA: Se você está inseguro sobre o que digitou, pressione <ESC> para 
+      colocá-lo no modo Normal. Então redigite o comando que você queria.
+
+NOTA: As teclas de cursor devem funcionar também. Mas usando hjkl, tão logo
+      esteja acostumado, você poderá se mover muito mais rapidamente.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			   Lição 1.2: SAINDO DO VIM
+
+
+ !! NOTA: Antes de executar qualquer dos passos abaixo, leia a lição inteira !!
+
+  1. Pressione <ESC> (para ter certeza de que está no modo Normal).
+
+  2. Digite    :q! <ENTER>.
+     Isso sai do editor SEM salvar qualquer mudança que tenha sido feita.
+     Se quiser salvar as alterações e sair, digite     :wq <ENTER>
+
+  3. Repita o procedimento que lhe trouxe a este tutorial. O procedimento pode
+     ter sido a digitação de:  vimtutor <ENTER>.
+
+  4. Se você memorizou estes passos e está confiante, execute os passos de
+     1 a 3 para sair e reentrar no editor.
+
+NOTA:  :q! <ENTER>  descarta qualquer mudança. Em uma próxima lição será
+       ensinado como salvar as mudanças feitas em um arquivo.
+
+  5. Desça o cursor até a Lição 1.3.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lição 1.3: EDITANDO TEXTOS - DELEÇÃO
+
+  ** No modo Normal, pressione  x  para deletar o caractere sob o cursor. **
+
+
+  1. Mova o cursor para a linha abaixo marcada com --->.
+
+  2. Para corrigir os erros, mova o cursor até que ele esteja sobre o 
+     caractere a ser deletado.
+
+  3. Pressione a tecla  x  para deletar o caractere indesejado.
+
+  4. Repita os passos 2 até 4 até que a sentença esteja correta.
+
+---> A vvaca pullouu por ccimaa dda luuua.
+
+  5. Agora que a sentença está correta, vá para a Lição 1.4.
+
+NOTA: Enquanto segue este tutorial, não tente memorizar, aprenda pelo uso.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lição 1.4: EDITANDO TEXTOS - INSERÇÃO
+
+		   ** Pressione  i  para inserir texto. **
+
+
+  1. Mova o cursor até a primeira linha abaixo marcada com --->.
+
+  2. Para fazer a primeira linha ficar igual à segunda, mova o cursor para
+     o primeiro caractere DEPOIS de onde o texto deverá ser inserido.
+
+  3. Pressione  i  e digite as adições necessárias.
+
+  4. Assim que cada erro for corrigido pressione <ESC> para retornar ao modo
+     Normal. Repita os passos 2 até 4 para corrigir a sentença.
+
+---> Tem text fatado desta .
+---> Tem algum texto faltando desta linha.
+
+  5. Quando se sentir confortável com a inserção de texto, mova o cursor para
+     a lição 1.5.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   Lição 1.5: EDITANDO TEXTO - ADICIONANDO
+
+		  ** Pressione  A  para adicionar texto. **
+
+  1. Mova o curso para a primeira linha abaixo marcada com --->.
+     Não importa sobre qual caractere o cursor estará na linha.
+
+  2. Pressione  A  e digite as adições necessárias.
+
+  3. Quando adicionar o texto, pressione <ESC> para retornar ao modo Normal.
+
+  4. Mova o cursor para a segunda linha marcada ---> e repita os passos 2 e 3
+     para corrigir o texto.
+
+---> Há algum texto faltando des
+     Há algum texto faltando desta linha.
+     Há algum texto faltan
+---> Há algum texto faltando aqui.
+
+  5. Quando se sentir confortável adicionando texto, mova para a lição 1.6.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lição 1.6: EDITANDO UM ARQUIVO
+		** Use  :wq  para salvar um arquivo e sair. **
+
+	  !! NOTA: Antes de executar qualquer um dos passos abaixo,
+		       leia esta lição completamente!!
+
+  1. Saia deste tutorial como o fez na lição 1.2:  :q!
+     Ou, se tiver acesso a outro terminal, faça o seguinte nele.
+
+  2. No prompt do shell, digite esse comando:  vim tutor <ENTER>
+     'vim' is é comando para iniciar o editor Vim e 'tutor' é o nome do
+     arquivo que você deseja editar.  Use um arquivo que possa ser modificado.
+
+  3. Insira e delete texto tal como aprendeu com as lições anteriores.
+
+  4. Salve o arquivo com as mudanças e saia do Vim com:  :wq <ENTER>
+
+  5. Se você tiver saído do vimtutor no passo 1, reinicie o vimtutor e vá para
+     o sumário seguinte.
+
+  6. Após ler os passos acima e compreendê-los, execute-os.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      SUMÁRIO DA LIÇÃO 1
+
+  1. O cursor é movido usando tanto as teclas de seta quanto as teclas hjkl.
+	h (esquerda)	j (para baixo)	k (para cima)	l (direita)
+
+  2. Para entrar no Vim a partir de um shell digite: vim NOMEDOARQUIVO <ENTER>
+
+  3. Para sair do Vim digite:  <ESC> :q! <ENTER> para descartar as alterações.
+                   OU digite:  <ESC> :wq <ENTER> para salvar as alterações.
+
+  4. Para deletar um caractere sob o cursor no modo Normal digite:  x
+
+  5. Para inserir texto na posição do cursor enquanto estiver no modo Normal
+     digite:
+             i     digite o texto <ESC>   inserir depois do cursor
+	     A     digite o texto <ESC>   adicionar no final da linha
+
+NOTA: Pressionando <ESC> você irá para o modo Normal ou cancelará um comando
+      ainda incompleto.
+
+Agora continue com a Lição 2.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lição 2.1: COMANDOS DE DELEÇÃO
+
+	  ** Digite  dw  para deletar até o final de uma palavra. **
+
+
+  1. Pressione  <ESC>  para ter certeza de que está no modo Normal.
+
+  2. Mova o cursor até a linha abaixo marcada com --->.
+
+  3. Mova o cursor até o começo da palavra que precisa ser deletada.
+
+  4. Digite  dw  para fazer a palavra desaparecer.
+
+  NOTA: A letra  d  vai aparece na última linha da tela enquanto você a
+	digita. O Vim está lhe esperando digitar um  w . Se você digitou
+	alguma coisa errada, pressione <ESC> e comece de novo.
+
+---> Tem a algumas oi palavras diversão que não pertencem papel a esta sentença.
+
+  5. Repita os passos 3 ao 4 até que a sentença esteja correta e vá para a
+     Lição 2.2.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                     Lição 2.2: MAIS COMANDOS DE DELEÇÃO
+
+          ** Digite  d$  para deletar até o final da linha. **
+
+
+
+  1. Pressione <ESC> para ter certeza de estar no modo Normal.
+
+  2. Mova o cursor até a linha abaixo marcada com --->.
+
+  3. Mova o cursor até o fim da linha correta (DEPOIS do primeiro  .).
+
+  4. Digite  d$  para deletar até o final da linha.
+
+---> Alguém digitou o final desta linha duas vezes. desta linha duas vezes.
+
+  5. Vá para a lição 2.3 para entender o que está acontecendo.
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   Lição 2.3: SOBRE OPERADORES E MOVIMENTOS 
+
+  Muitos comandos que mudam texto são feitos de um operador e um movimento.
+  O formato para um comando deletar com o operador de deleção  d  tem a
+  seguinte forma:
+
+         d   movimento
+  Onde:
+    d - é o operador deletar.
+    movimento - é como o operador vai operar (listado abaixo).
+
+  Uma pequena lista de teclas de movimento:
+    w - do cursor até o fim da palavra, incluindo o espaço.
+    e - do cursor até o fim da palavra, NÃO incluindo o espaço.
+    $ - do cursor até o fim da linha.
+
+  Portanto, digitando  de  irá deletar do cursor ao fim da palavra.
+
+NOTA: Pressionando apenas a tecla de movimento enquanto em modo Normal, sem o
+operador, irá mover o cursor como especificado na lista de teclas de
+movimento.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	       Lição 2.4: USANDO UM CONTADOR PARA UM MOVIMENTO
+
+    ** Digitando um número antes de um movimento repete-o muitas vezes. **
+
+
+   1. Mova o cursor para o começo da linha marcada com ---> abaixo.
+
+   2. Digite  2w  para mover o cursor duas palavras adiante.
+
+   3. Digite  3e  para mover o cursor para o fim da terceira palavra adiante.
+
+   4. Digite  0  (zero) para mover para o início da linha.
+
+   5. Repita os passos 2 e 3 com diferentes números.
+
+---> Esta é uma linha com algumas palavras para lhe permitir fazer movimentos.
+
+   6. Vá para a Lição 2.5.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	       Lição 2.5: USANDO UM CONTADOR PARA DELETAR MAIS
+
+   ** Digitando um número com um operador repete-o esse número de vezes. **
+
+
+   Você deve inserir um contador entre o operador de deleção e o movimento
+   mencionados acima para para deletar mais:
+       d   número   movimento
+
+   1. Movimente o cursor para a primeira palavra com LETRAS MAIÚSCULAS na
+      linha marcada com --->.
+
+   2. Digite  d2w  para deletar as duas palavras com LETRAS MAIÚSCULAS.
+
+   3. Repita os passos 1 e 2 com diferentes contadores para deletar as
+      palavras de LETRAS MAIÚSCULAS com um comando.
+
+--->  esta ABC DE linha FGHI JK LMN OP de palavras está Q RS TUV limpa.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lição 2.6: OPERANDO SOBRE LINHAS
+
+	      ** Digite  dd  para deletar uma linha inteira. **
+
+  Em virtude da frequência em deletar uma linha inteira, os projetistas do Vi
+  decidiram que seria mais simples digitar dois d's numa linha para deletá-la.
+
+  1. Mova o cursor até a segunda linha na lista a baixo.
+  2. Digite  dd  para deletar a linha.
+  3. Agora mova até a quarta linha.
+  4. Digite  2dd  para deletar duas linhas.
+
+--->  1)  Rosas são vermelhas,
+--->  2)  Lama é divertida,
+--->  3)  Violetas são azuis,
+--->  4)  Eu tenho um carro,
+--->  5)  Relógios dizem as horas,
+--->  6)  Açúcar é doce,
+--->  7)  E assim é você.
+
+Notas do tradutor: Lama (mud) em inglês pode significar fofoca, difamação.
+                   Há rima no texto original.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lição 2.7: O COMANDO UNDO (DESFAZER)
+
+** Pressione u para desfazer os últimos comandos, U restaura linha inteira.**
+
+
+  1. Mova o cursor para a linha abaixo marcada com ---> e posicione-o sobre o
+     primeiro erro.
+  2. Digite  x  para deletar o primeiro caractere indesejado.
+  3. Agora, digite  u  para desfazer o último comando executado.
+  4. Desta vez, corrija todos os erros na linha usando o comando  x .
+  5. Agora, digite um U maiúsculo para retornar a linha ao seu estado original.
+  6. Digite  u  algumas vezes para desfazer o  U  e os comandos anteriores.
+  7. Digite CTRL-R (segurando a tecla CTRL enquanto digita R) algumas vezes
+     para refazer os comandos (desfazer os undo's).
+
+---> Corriija os erros nnesta linha e reetorne-os com undo.
+
+  8. Esses comandos são muito úteis. Agora vá para o sumário da Lição 2.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      SUMÁRIO DA LIÇÃO 2
+
+
+  1. Para deletar do cursor até o fim de uma palavra digite:   dw
+  2. Para deletar do cursor até o fim de uma linha digite:   d$
+  3. Para deletar uma linha inteira digite:   dd
+  4. Para repetir um movimento adicione antes um número:   2w
+  5. O formato para um comando no modo Normal é:
+           operador   [número]   movimento
+   onde:
+      operador  - é o que será feito, como  d  para deletar
+      número    - é quantas vezes o comando será repetido
+      movimento - movimento sobre o texto que sofrerá a operação, como
+                  w (palavra), $ (até o final da linha), etc.
+
+  5. Para desfazer um ação anterior, digite:                  u  (minúsculo)
+     Para desfazer todas as modificações em uma linha digite: U (maiúsculo)
+     Para desfazer o que foi desfeito digite:                 CTRL-R
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lição 3.1: O COMANDO PUT (PÔR)
+
+	** Digite  p  para colocar a última deleção após o cursor. **
+
+
+  1. Mova o cursor até a primeira linha na lista abaixo.
+
+  2. Digite  dd  para deletar a linha e guardá-la no buffer do Vim.
+
+  3. Mova o cursor até a linha ACIMA de onde a linha deletada deve ficar.
+
+  4. No modo Normal, digite  p  para inserir a linha.
+
+  5. Repita os passos 2 ao 4 para pôr todas as linhas na ordem correta.
+
+     d) Você pode aprender também?
+     b) Violetas são azuis,
+     c) Inteligência se aprende,
+     a) Rosas são vermelhas,
+
+Nota do tradutor: Há rima no original.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lição 3.2: O COMANDO REPLACE (SUBSTITUIR)
+
+     ** Digite  rx  para substituir o caractere sob o cursor por  x . ** 
+
+
+  1. Mova o cursor até a primeira linha abaixo marcada com --->.
+
+  2. Mova o cursor até que ele esteja sobre o primeiro erro.
+
+  3. Digite  r  e então o caractere que deveria estar lá.
+
+  4. Repita os passos 2 e 3 até que a primeira linha esteja correta.
+
+---> Quendo este limha foi dugitada, alguem pressioniu algumas teclas erradzs!
+---> Quando esta linha foi digitada, alguém pressionou algumas teclas erradas!
+
+  5. Agora vá para a Lição 3.3.
+
+NOTA: Lembre-se que você deve aprender pelo uso, não pela memorização.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lição 3.3: O OPERADOR CHANGE (MUDAR)
+
+	** Para mudar toda uma palavra ou parte dela, digite  cw . **
+
+
+  1. Mova o cursor até a primeira linha abaixo marcada com --->.
+  
+  2. Posicione o cursor sobre o u em lunba.
+
+  3. Digite  cw  e a palavra correta (nesse caso, digite 'inha'.)
+
+  4. Pressione <ESC> e mova para o próximo caractere a ser alterado.
+
+  5. Repita os passos 3 e 4 até que a primeira sentença esteja igual à segunda.
+
+---> Essa lunba tem pwlesmfr que ocrimmm  soi alteradas cup o comando change.
+---> Essa linha tem palavras que precisam ser alteradas com o comando change. 
+
+Note que  cw  não somente substitui a palavra, mas também lhe coloca no modo
+de inserção.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lição 3.4: MAIS MUDANÇAS USANDO c
+
+      ** O operador change é usado com os mesmos objetos que delete. **
+
+  1. O operador change trabalha da mesma maneira que o delete. O formato é:
+
+          c    [número]    movimento
+
+  2. Os movimentos também são os mesmos: w (palavra), $ (fim da linha), etc.
+
+  3. Mova até a primeira linha abaixo marcada com --->.
+
+  4. Mova o cursor até o primeiro erro.
+
+  5. Digite  c$  para fazer o resto da linha ficar igual à segunda e pressione
+     <ESC>.
+
+---> O fim desta linha precisa de ajuda para ficar igual à segunda.
+---> O fim desta linha precisa ser corrigido usando o comando  c$.
+
+NOTA: Você pode usar a tecla Backspace para corrigir erros enquanto digita.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      SUMÁRIO DA LIÇÃO 3
+
+
+  1. Para inserir um texto que já foi deletado, digite  p . Isso coloca o texto
+     deletado APÓS o cursor (se uma linha é deletada ela será inserida na linha
+     abaixo do cursor).
+
+  2. Para substituir o caractere sob o cursor, digite  r  e então o caractere
+     que irá substituir o original.
+
+  3. O comando change possibilita mudar do cursor até onde o movimento for.
+     Ex: Digite  cw  para mudar do cursor até o fim de uma palavra, c$ para
+     mudar até o fim da linha.
+
+  4. O formato para uma operação change é:
+
+         c   [número]   movimento
+
+Agora vá para a próxima lição.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	     Lição 4.1: LOCALIZAÇÃO DO CURSOR E STATUS DO ARQUIVO
+
+    ** Digite CTRL-G para mostrar sua localização no arquivo e seu status.
+       Digite  G  para mover para uma linha do arquivo.  **
+
+  Nota: Leia esta lição inteira antes de executar qualquer um dos passos!!
+
+  1. Segure pressionada a tecla Ctrl e pressione  g . Nós chamamos isso de
+     CTRL-G. Uma mensagem aparecerá no rodapé da página com o nome do arquivo
+     e a sua posição no arquivo. Lembre-se do número da linha para o Passo 3.
+
+NOTA:  A posição do cursor pode estar visível no canto direito inferior da
+       tela. Isso acontece quando a opção 'ruler' está ativa
+       (veja  :help 'ruler' ).
+
+  2. Pressione  G  para mover para o final do arquivo.
+     Digite  gg  para mover para o início do arquivo.
+
+  3. Digite o número da linha em que você estava e então G . Isto
+     retornará o cursor à linha em que você estava quando pressionou CTRL-G.
+
+  4. Se você estiver confiante para fazer isto, execute os passos 1 ao 3.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                       Lição 4.2: O COMANDO SEARCH (PROCURA)
+
+      ** Digite  /  seguido por uma string para procurar pela string. **
+
+  1. No modo Normal digite o caractere  / . Note que ele e o cursor aparecem
+     no rodapé da tela, como ocorre com o comando  : .
+
+  2. Agora digite 'errroo' <ENTER>. Esta é a palavra que você quer procurar.
+
+  3. Para procurar pela mesma palavra de novo, simplesmente tecle  n .
+     Para procurar pela mesma palavra na direção oposta, tecle  N .
+
+  4. Se você quer procurar por uma string no sentido de frente para trás, use
+     ?  em vez de  / .
+
+  5. Para voltar para onde estava, pressione CTRL-O (mantenha a tecla Ctrl
+     pressionada e pressione a tecla o). Repita para voltar outras posições.
+     CTRL-I segue para posições mais recentes.
+
+--->  "errroo" não é uma maneira de escrever erro;  errroo é um erro.
+NOTA: Quando a busca atinge o final do arquivo ela continuará do começo, a
+      menos que a opção 'wrapscan' esteja desativada.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		Lição 4.3: PROCURA POR CASAMENTO DE PARÊNTESES
+
+	   ** Digite  %  para achar um casamento de ),], ou } . **
+
+
+  1. Posicione o cursor em qualquer (, [, ou { na linha abaixo marcada com --->.
+  
+  2. Agora digite o caractere  % .
+  
+  3. O cursor deve estar no parênteses ou colchetes que casa com o primeiro.
+
+  4. Digite  %  para mover o cursor de volta ao primeiro colchete ou parênteses
+     (por casamento).
+
+---> Isto ( é uma linha de teste contendo ('s, ['s ] e {'s }. ))
+
+Nota: Isso é muito útil para corrigir um programa com parênteses não-casados!
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lição 4.4: O COMANDO SUBSTITUIR
+
+      ** Digite  :s/velho/novo/g  para substituir 'velho' por 'novo'. **
+
+
+  1. Mova o cursor para a linha abaixo marcada com --->.
+
+  2. Digite  :s/aa/a <ENTER> . Note que este comando somente muda a 
+     primeira ocorrência na linha.
+
+  3. Agora digite  :s/aa/a/g   significando substituir globalmente na linha.
+     Isto muda todas as ocorrências na linha.
+
+---> aa melhor época para ver aas flores é aa primavera. 
+
+  4. Para mudar toda ocorrência de uma string entre duas linhas,
+     digite  :#,#s/velho/novo/g   onde #,# são os números das duas linhas.
+     Digite  :%s/velho/novo/g     para mudar todas as ocorrências no arquivo
+                                  inteiro.
+     Digite  :%/velho/novo/gc     para mudar todas as ocorrência no arquivo
+                                  inteiro, com a opção de confirmar cada
+				  substituição.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                              SUMÁRIO DA LIÇÃO 4
+  1.    CTRL-G  mostra a sua localização no arquivo e o status do mesmo.
+             G  move para o final do arquivo.
+     número  G  move para esta linha com esse número.
+            gg  move para a primeira linha.
+
+  2. Digitando  /  seguido por uma expressão procura À FRENTE por ela.
+     Digitando  ?  seguido por uma expressão procura pela expressão de TRÁS
+     PARA FRENTE.
+     Após uma busca, digite n para achar a próxima ocorrência na mesma direção
+     ou N para procurar na direção oposta.
+     CTRL-O leva a posições antigas e CTRL-I a posições mais recentes.
+
+  3. Digitando  %  enquanto o cursor está sobre um (,),[,],{, ou } localiza
+     o par que casa com ele.
+
+  4. Para substituir:
+       o primeiro 'velho' de uma linha por 'novo' digite   :s/velho/novo
+       todos os 'velho's em uma linha por 'novo' digite    :s/velho/novo/g
+       expressões entre dois números (#) de linhas digite  :#,#s/velho/novo
+       todas as ocorrências no arquivo digite              :%s/velho/novo/g
+     Para confirmar cada substituição adicione 'c'         :%s/velho/novo/gc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 Lição 5.1: COMO EXECUTAR UM COMANDO EXTERNO
+
+
+ ** Digite  :!  seguido por um comando externo para executar esse comando. **
+
+  1. Digite o familiar comando  :  para levar o cursor ao rodapé da tela. Isso
+     lhe permite entrar um comando.
+
+  2. Agora digite o caractere  !  (ponto de exclamação). Isso lhe permite
+     executar qualquer comando do shell.
+
+  3. Como um exemplo digite  ls  seguindo o  !  e então tecle <ENTER>. Isto
+     irá mostrar uma listagem do seu diretório, como se você estivesse no
+     prompt do shell. Ou use  :!dir se ls não funcionar.
+
+NOTA:  É possível executar qualquer comando externo dessa maneira, inclusive
+       com argumentos.
+
+NOTA:  Todos os comandos  :  devem ser finalizados teclando-se <ENTER>
+       Daqui em diante não iremos mencionar isso sempre.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lição 5.2: MAIS SOBRE SALVAR ARQUIVOS
+
+     ** Para salvar as alterações no texto, digite  :w NOMEDOARQUIVO. **
+
+
+  1. Digite  :!dir  ou  :!ls para ter uma listagem de seu diretório.
+     Você já deve saber que precisa teclar <ENTER> depois disso.
+
+  2. Escolha um nome de arquivo que ainda não exista, como TESTE.
+
+  3. Agora digite:   :w TESTE  (onde TESTE é o nome que você escolheu.)
+
+  4. Isto salva o arquivo inteiro  (o Vim Tutor) com o nome TESTE.
+     Para verificar isso, digite  :!ls de novo para ver seu diretório
+
+NOTA: Se você sair do Vim e entrar de novo com o nome do arquivo TESTE,
+      o arquivo deve ser uma cópia exata do tutor quando você o salvou.
+
+  5. Agora remova o arquivo digitando (MS-DOS):     :!del TESTE
+                                   ou (Unix):       :!rm TESTE
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 Lição 5.3: SELECIONANDO O TEXTO A SER SALVO
+
+  ** Para salvar parte de um arquivo, digite  v  movimento NOMEDOARQUIVO **
+
+  1. Mova o cursor para esta linha.
+
+  2. Pressione  v  e mova o cursor para o quinto item abaixo. Note que o texto
+     é realçado.
+
+  3. Pressione o caractere  :  e note que aparecerá  :'<,'>  no lado inferior
+     da tela.
+
+  4. Digite  w TESTE , sendo TESTE um nome de arquivo que não existe ainda.
+     Você deverá ver  :'<,'>w TESTE  antes de pressionar <ENTER>.
+
+  5. O Vim salvará as linhas selecionadas no arquivo TESTE. Use  :!dir  ou
+     !:ls para vê-lo. Não o apague agora! Nós o usaremos na próxima lição.
+
+NOTA:  Pressionando  v  inicia o modo Visual de seleção.  Você pode mover o
+cursor pela tela para tornar a seleção maior ou menor. Pode, então, usar um
+operador para executar alguma ação. Por exemplo,  d  deleta o texto.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lição 5.4: RECUPERANDO E JUNTANDO ARQUIVOS
+
+    ** Para inserir o conteúdo de um arquivo, digite  :r NOMEDOARQUIVO **
+
+
+  1. Posicione o cursor logo acima desta linha.
+
+NOTA:  Depois de executar o Passo 2 você verá a lição 5.3. Então DESÇA o
+       cursor para ver esta lição novamente.
+
+  2. Agora recupere o arquivo TESTE usando o comando  :r TESTE  onde TESTE é o
+     nome do arquivo.
+     O arquivo recuperado é colocado abaixo da linha atual do cursor.
+
+  3. Para verificar que o arquivo foi recuperado, volte com o cursor e verifique
+     que agora existem duas cópias da Lição 5.3, a original e a versão do 
+     arquivo.
+
+NOTA: Você também pode ler a saída de um comando externo. Por exemplo,  :r !ls
+      lê a saída do comando ls e coloca o resultado abaixo do cursor.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      SUMÁRIO DA LIÇÃO 5 
+
+
+  1.  :!comando  executa um comando externo.
+
+      Alguns exemplos úteis são:
+         (MS-DOS)         (UNIX)
+	  :!dir            :!ls          -  lista conteúdo do diretório.
+          :!del ARQUIVO    :!rm ARQUIVO  -  remove ARQUIVO.
+
+  2. :w ARQUIVO  salva o atual arquivo do Vim para o disco com o nome ARQUIVO.
+
+  3. v  movimento  :w ARQUIVO  salva as linhas Visualmente selecionadas em
+     ARQUIVO.
+
+  4. :r ARQUIVO  recupera ARQUIVO do disco e o insere dentro do arquivo atual
+     na posição do cursor.
+
+  5. :r !dir  lê a saída do comando dir e coloca o resultado abaixo da posição
+     atual do cursor.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                        Lição 6.1: O COMANDO OPEN (ABRIR)
+
+   ** Digite  o  para abrir uma linha embaixo do cursor e ir para o modo de
+      Inserção (INSERT). **
+
+  1. Mova o cursor para a linha abaixo marcada com --->.
+
+  2. Digite  o (minúsculo) para abrir uma linha ABAIXO do cursor e ir para o
+     modo de Inserção (INSERT).
+
+  3. Agora digite algum texto e pressione <ESC> para sair do modo de
+     Inserção.
+
+---> Após teclar  o  o cursor é colocado na linha aberta no modo de Inserção.
+
+  4. Para abrir uma linha ACIMA do cursor, simplesmente tecle um  O  maiúsculo,
+     em vez de um  o  minúsculo. Tente isso na linha abaixo.
+
+---> Abra uma linha acima desta teclando O enquanto o cursor está nesta linha.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			 Lição 6.2: O COMANDO APPEND
+
+	    ** Digite  a  para inserir texto DEPOIS do cursor. **
+
+  1. Mova o cursor para o início da linha marcada com ---> .
+
+  2. Pressione  e  até o cursor ficar sobre o final de li .
+
+  3. Digite um  a  (minúsculo) para adicionar texto DEPOIS do caractere sob o
+     cursor.
+
+  4. Complete a palavra conforme a linha abaixo. Pressione <ESC> para sair do
+     modo de Inserção.
+
+  5. Use  e  para mover para a próxima palavra incompleta  repita os passos 3
+     e 4.
+
+---> Esta lin lhe permite pratic a adiç de texto a uma linha.
+---> Esta linha lhe permite praticar a adição de texto a uma linha.
+
+NOTA: a, i e A levam ao mesmo modo de Inserção, a única diferença é onde os
+      caracteres são inseridos.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	     Lição 6.3: UMA OUTRA VERSÃO DO REPLACE (SUBSTITUIR)
+
+      ** Digite um R maiúsculo para substituir mais de um caractere. **
+
+
+  1. Mova o cursor para a primeira linha abaixo marcada com --->. Mova o
+     cursor para o início do primeiro  xxx .
+  
+  2. Agora pressione  R  e digite os números que estão abaixo dele, na segunda
+     linha, para substituir o  xxx .
+
+  3. Pressione <ESC> para sair do modo de Substituição. Note que o resto da
+     linha permanece inalterada.
+
+  4. Repita os passos para substituir os  xxx  restantes.
+
+--->  Adicionando 123 a xxx resulta em xxx.
+--->  Adicionando 123 a 456 resulta em 579.
+
+NOTA:  O modo de Substituição é como o modo de Inserção, mas cada caractere
+       digitado deleta um caractere existente.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lição 6.4: COPIAR E COLAR TEXTO
+
+	** Use o operador  y  para copiar texto e  p  para colá-lo. **
+
+   1. Vá para a linha marcada com ---> abaixo e posicione o cursor após "a)".
+
+   2. Inicie o modo Visual com  v  e mova o cursor para logo antes de
+      "primeiro".
+
+   3. Digite  y  para copiar o texto selecionado.
+
+   4. Mova o cursor para o final da próxima linha:  j$
+
+   5. Digite  p  par pôr (colar) o texto. Então, digite:  o segundo <ESC> .
+
+   6. Use o modo Visual para selecionar  " item.", copie-o com  y , mova para
+      o fina da próxima linha com  j$  e ponha (cole) o texto com  p .
+
+--->  a) esse é o primeiro item.
+      b)
+NOTA:  Você também pode usar  y  como um operador; por exemplo, yw copia uma
+       palavra.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lição 6.5: CONFIGURAR PREFERÊNCIAS
+
+      ** Configurar uma preferência de modo que um search ou substitute
+	 ignora se as letras estão em maiúsculas ou minúsculas. **
+
+  1. Procure por 'ignore' entrando:  /ignore <ENTER>
+     Repita várias vezes teclando  n .
+  2. Configure a opção 'ic' (Ignore case) digitando:
+     :set ic
+  3. Agora procure por 'ignore' de novo teclando: n
+     Repita várias vezes.
+  4. Configure as opções 'hlsearch' e 'incsearch':
+     :set hls is
+  5. Agora entre com o comando search de novo, e veja o que acontece:
+     /ignore
+  6. Para desabilitar a desconsideração de maiúsculas e minúsculas:
+     :set noic
+
+NOTA:  Para remover o realce dos termos localizados entre:  :nohlsearch
+NOTA:  Se quiser ignorar a diferença entre maiúsculas e minúsculas em apenas
+       uma pesquisa, use  \c  no comando:  /ignore\c <ENTER>
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      SUMÁRIO DA LIÇÃO 6
+
+  1. Digite  o  para abrir uma linha ABAIXO do cursor e iniciar o modo de
+     Inserção.
+     Digite  O  para abrir uma linha ACIMA da linha onde o cursor está.
+
+  2. Digite  a  para adicionar texto DEPOIS do caractere onde está o cursor.
+     Digite  A  para adicionar texto ao final da linha.
+
+  3. O comando  e  move o cursor para o final de uma palavra.
+
+  4. O operador  y  copia texto,  p  põe (cola) o texto copiado.
+
+  5. Digitando  R  entra-se no modo de Substituição até que <ESC> seja
+     pressionado.
+
+  6. Digitando  ":set xxx" modifica-se a opção "xxx". Algumas opções são:
+         'ic' 'ignorecase'     ignora diferença entre maiúsculas/minúsculas
+	 'is' 'incsearch'      realiza a busca enquanto se digita
+	 'hls' 'hlsearch'      realça todos os trechos localizados
+     Você tanto pode usar o nome curto quanto o nome longo da opção.
+  7. Adicione o prefixo "no" para desabilitar uma opção:  :set noic
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			   LIÇÃO 7.1: OBTENDO AJUDA
+
+		 ** Usar o sistema de ajuda do próprio Vim **
+
+  O Vim possui sistema de ajuda abrangente. Para começar, tente algum
+  desses três:
+        - pressione a tecla <HELP> (se você tiver uma)
+        - pressione a tecla <F1>   (se você tiver uma)
+        - digite      :help <ENTER>
+
+  Leia o texto da ajuda para aprender como o sistema de ajuda funciona.
+  Digite  CTRL-W CTRL-W  para pular de uma janela para outra.
+  Digite  :q <ENTER> para fechar a janela da ajuda.
+
+  Você pode achar ajuda sobre qualquer assunto, fornecendo um argumento para
+  o comando ":help". Tente isto (não esqueça de pressionar <ENTER>):
+
+       :help w
+       :help c_CTRL-D
+       :help insert-index
+       :help user-manual
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 Lição 7.2: CRIAR UM SCRIPT DE INICIALIZAÇÃO
+
+		       ** Habilitar recursos do Vim **
+
+  O Vim tem muito mais recursos do que o Vi, mas na sua maioria eles são
+  desabilitados por padrão.  Para usar mais recursos, você tem que criar um
+  arquivo "vimrc".
+
+  1. Comece a editar o arquivo "vimrc". Isso depende do sistema:
+         :e ~/.vimrc              para Unix
+         :e $VIM/_vimrc           para MS-Windows
+
+  2. Agora, leia o conteúdo do arquivo "vimrc" de exemplo:
+         :r $VIM/vimrc_example.vim
+
+  3. Salve o arquivo com:
+         :w
+
+  Da próxima vez que o Vim for iniciado, ele irá usar realce de sintaxe. Você
+  pode adicionar suas configurações preferidas para esse arquivo "vimrc". Para
+  maiores informações, digite:  :help vimrc-intro
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			    Lição 7.3: COMPLETAÇÃO
+
+	   ** Completação da linha de comando com CTRL-D e <TAB> **
+
+   1. Certifique-se de que o Vim não está no modo compatível:  :set nocp
+
+   2. Olhe quais arquivos existem no diretório:  :!ls  ou  :!dir
+
+   3. Digite o início de um comando:  :e
+
+   4. Pressione  CTRL-D  e o Vim irá mostrar a lista dos comandos iniciados
+      com "e".
+
+   5. Pressione  <TAB>  e o Vim irá completar o nome do comando para ":edit".
+
+   6. Agora, adicione um espaço e o início do nome de um arquivo existente:
+      :edit ARQ
+
+   7. Pressione <TAB>.  O Vim irá completar o nome (se ele for único).
+
+NOTA:  A completação funciona com muitos comandos. Basta pressionar CTRL-D e
+<TAB>. Isso é especialmente útil para  :help .
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      SUMÁRIO DA LIÇÃO 7
+
+
+  1. Digite  :help ou pressione <F1> ou <Help>  para abrir a janela de ajuda.
+
+  2. Digite  :help cmd  para achar a ajuda sobre  cmd .
+
+  3. Digite  CTRL-W CTRL-W  para pular de uma janela para outra.
+
+  4. Digite  :q  para fechar a janela de ajuda.
+
+  5. Crie um script de inicialização vimrc para ativar automaticamente as suas
+     configurações preferidas.
+
+  6. Quando pressionando um comando  : , pressione CTRL-D para ver as
+     possibilidade de completação.
+
+
+
+  
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Isto conclui o Vim tutor. Ele pretendeu dar uma breve apresentação do editor
+  Vim, somente o bastante para que você possa usar o editor com facilidade.
+  Ele está longe de ser completo, uma vez que o Vim possui muitos, muitos mais
+  comandos. O próximo passo é ler o manual:  ":help user-manual".
+
+  Livro recomendado em Português sobre o Vim:
+       O editor de texto Vim - de Sérgio Luiz Araújo da Silva et al.
+       http://code.google.com/p/vimbook/
+
+  Para futura leitura e estudo, este livro é recomendado:
+       Vim - Vi Improved - de Steve Oualline
+       Editora: New Riders
+  Este é o primeiro livro completamente dedicado ao Vim. Especialmente útil
+  para iniciantes, com muitos exemplos e ilustrações.
+  Veja http://iccf-holland.org/click5.html
+
+  Esse livro é mais antigo e mais sobre o Vi do que sobre o Vim, mas também é
+  recomendado:
+       Learning the Vi Editor - de Linda Lamb
+       Editora: O'Reilly & Associates Inc.
+  Este é um bom livro para aprender quase tudo o que você quer fazer com o Vi.
+  A sexta edição também inclui informações sobre o Vim.
+
+  Este tutorial foi escrito por Michael C. Pierce e Robert K. Ware,
+  Colorado School of Mines, usando idéias fornecidas por Charles Smith,
+  Colorado State University.  E-mail: bware@mines.colorado.edu.
+
+  Modificado para o Vim por Bram Moolenar.
+
+  Versão 1.4 traduzida para o português por Marcelo Drudi Miranda, Escola
+  Politécnica da Universidade de São Paulo.
+
+  Revisão e atualização da tradução para a versão 1.7 por Jakson Aquino,
+  Universidade Federal do Ceará: E-mail: jalvesaq@gmail.com
+
+  Last Change: 2010 Jul 27
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

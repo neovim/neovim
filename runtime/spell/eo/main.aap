@@ -1,0 +1,80 @@
+# Aap recipe for Esperanto Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = eo_l3.aff eo_l3.dic
+
+all: $SPELLDIR/eo.iso-8859-3.spl $SPELLDIR/eo.utf-8.spl ../README_eo.txt
+
+$SPELLDIR/eo.iso-8859-3.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=iso-8859-3"
+                -c "mkspell! $SPELLDIR/eo eo_l3" -c q
+
+$SPELLDIR/eo.utf-8.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=utf-8"
+                -c "mkspell! $SPELLDIR/eo eo_l3" -c q
+
+../README_eo.txt : README_eo_l3.txt
+        :copy $source $target
+        # fix missing newline
+        :sys $VIM -u NONE -e -c "set ff=unix" -c wq $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} eo.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+eo_l3.aff eo_l3.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch eo.zip
+        :sys $UNZIP eo.zip
+        :delete eo.zip
+        @if not os.path.exists('eo_l3.orig.aff'):
+            :copy eo_l3.aff eo_l3.orig.aff
+        @if not os.path.exists('eo_l3.orig.dic'):
+            :copy eo_l3.dic eo_l3.orig.dic
+        @if os.path.exists('eo_l3.diff'):
+            :sys patch <eo_l3.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 eo_l3.orig.aff eo_l3.aff >eo_l3.diff
+        :sys {force} diff -a -C 1 eo_l3.orig.dic eo_l3.dic >>eo_l3.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch eo.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../eo.zip
+            :sys {force} diff ../eo_l3.orig.aff eo_l3.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy eo_l3.aff ../eo_l3.new.aff
+            :sys {force} diff ../eo_l3.orig.dic eo_l3.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy eo_l3.dic ../eo_l3.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete eo.zip
+
+
+# vim: set sts=4 sw=4 :

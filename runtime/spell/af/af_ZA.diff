@@ -1,0 +1,35 @@
+*** af_ZA.orig.aff	Sun Aug 14 17:37:01 2005
+--- af_ZA.aff	Sun Jan 22 14:21:54 2006
+***************
+*** 23,24 ****
+--- 23,33 ----
+  
++ FOL  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
++ LOW  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
++ UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗ÿ
++ 
++ SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZאבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
++ SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
++ 
++ MIDWORD	'-
++ 
+  MAP 3
+*** af_ZA.orig.dic	Sun Aug 14 17:37:01 2005
+--- af_ZA.dic	Sun Jan 22 14:22:17 2006
+***************
+*** 1861,1864 ****
+  T-skyf
+! TCP/IP
+! TCP/IP-bondel
+  TLA
+--- 1861,1864 ----
+  T-skyf
+! TCP\/IP
+! TCP\/IP-bondel
+  TLA
+***************
+*** 124109,124111 ****
+  vrywilliglik
+- vt
+  vuile/R
+--- 124109,124110 ----

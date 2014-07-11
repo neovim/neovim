@@ -1,0 +1,406 @@
+*matchit.txt*   Extended "%" matching
+
+For instructions on installing this file, type
+	:help matchit-install
+inside Vim.
+
+For Vim version 6.3.  Last change:  2007 Aug 29
+
+
+		  VIM REFERENCE MANUAL    by Benji Fisher
+
+*matchit* *matchit.vim*
+
+1. Extended matching with "%"				|matchit-intro|
+2. Activation						|matchit-activate|
+3. Configuration					|matchit-configure|
+4. Supporting a New Language				|matchit-newlang|
+5. Known Bugs and Limitations				|matchit-bugs|
+
+The functionality mentioned here is a plugin, see |add-plugin|.
+This plugin is only available if 'compatible' is not set.
+You can avoid loading this plugin by setting the "loaded_matchit" variable
+in your |vimrc| file: >
+	:let loaded_matchit = 1
+
+{Vi does not have any of this}
+
+==============================================================================
+1. Extended matching with "%"				*matchit-intro*
+
+							*matchit-%*
+%	Cycle forward through matching groups, such as "if", "else", "endif",
+	as specified by |b:match_words|.
+
+							*g%* *v_g%* *o_g%*
+g%	Cycle backwards through matching groups, as specified by
+	|b:match_words|.  For example, go from "if" to "endif" to "else".
+
+							*[%* *v_[%* *o_[%*
+[%	Go to [count] previous unmatched group, as specified by
+	|b:match_words|.  Similar to |[{|.
+
+							*]%* *v_]%* *o_]%*
+]%	Go to [count] next unmatched group, as specified by
+	|b:match_words|.  Similar to |]}|.
+
+							*v_a%*
+a%	In Visual mode, select the matching group, as specified by
+	|b:match_words|, containing the cursor.  Similar to |v_a[|.
+	A [count] is ignored, and only the first character of the closing
+	pattern is selected.
+
+In Vim, as in plain vi, the percent key, |%|, jumps the cursor from a brace,
+bracket, or paren to its match.  This can be configured with the 'matchpairs'
+option.  The matchit plugin extends this in several ways:
+
+	    You can match whole words, such as "if" and "endif", not just
+	single characters.  You can also specify a |regular-expression|.
+	    You can define groups with more than two words, such as "if",
+	"else", "endif".  Banging on the "%" key will cycle from the "if" to
+	the first "else", the next "else", ..., the closing "endif", and back
+	to the opening "if".  Nested structures are skipped.  Using |g%| goes
+	in the reverse direction.
+	    By default, words inside comments and strings are ignored, unless
+	the cursor is inside a comment or string when you type "%".  If the
+	only thing you want to do is modify the behavior of "%" so that it
+	behaves this way, you do not have to define |b:match_words|, since the
+	script uses the 'matchpairs' option as well as this variable.
+
+See |matchit-details| for details on what the script does, and |b:match_words|
+for how to specify matching patterns.
+
+MODES:			*matchit-modes* *matchit-v_%* *matchit-o_%*
+
+Mostly, % and related motions (|g%| and |[%| and |]%|) work just like built-in
+|motion| commands in |Operator-pending| and |Visual| modes.  However, you
+cannot make these motions |linewise| or |characterwise|, since the |:omap|s
+that define them start with "v" in order to make the default behavior
+inclusive.  (See |o_v|.)  In other words, "dV%" will not work.  The
+work-around is to go through Visual mode:  "V%d" will work.
+
+LANGUAGES:					*matchit-languages*
+
+Currently, the following languages are supported:  Ada, ASP with VBS, Csh,
+DTD, Entity, Essbase, Fortran, HTML, JSP (same as HTML), LaTeX, Lua, Pascal,
+SGML, Shell, Tcsh, Vim, XML.  Other languages may already have support via
+the default |filetype-plugin|s in the standard vim distribution.
+
+To support a new language, see |matchit-newlang| below.
+
+DETAILS:				*matchit-details* *matchit-parse*
+
+Here is an outline of what matchit.vim does each time you hit the "%" key.  If
+there are |backref|s in |b:match_words| then the first step is to produce a
+version in which these back references have been eliminated; if there are no
+|backref|s then this step is skipped.  This step is called parsing.  For
+example, "\(foo\|bar\):end\1" is parsed to yield
+"\(foo\|bar\):end\(foo\|bar\)".  This can get tricky, especially if there are
+nested groups.  If debugging is turned on, the parsed version is saved as
+|b:match_pat|.
+
+							*matchit-choose*
+Next, the script looks for a word on the current line that matches the pattern
+just constructed.  It includes the patterns from the 'matchpairs' option.
+The goal is to do what you expect, which turns out to be a little complicated.
+The script follows these rules:
+
+	Insist on a match that ends on or after the cursor.
+	Prefer a match that includes the cursor position (that is, one that
+		starts on or before the cursor).
+	Prefer a match that starts as close to the cursor as possible.
+	If more than one pattern in |b:match_words| matches, choose the one
+		that is listed first.
+
+Examples:
+
+	Suppose you >
+		:let b:match_words = '<:>,<tag>:</tag>'
+<	and hit "%" with the cursor on or before the "<" in "a <tag> is born".
+	The pattern '<' comes first, so it is preferred over '<tag>', which
+	also matches.  If the cursor is on the "t", however, then '<tag>' is
+	preferred, because this matches a bit of text containing the cursor.
+	If the two groups of patterns were reversed then '<' would never be
+	preferred.
+
+	Suppose you >
+		:let b:match_words = 'if:end if'
+<	(Note the space!) and hit "%" with the cursor at the end of "end if".
+	Then "if" matches, which is probably not what you want, but if the
+	cursor starts on the "end " then "end if" is chosen.  (You can avoid
+	this problem by using a more complicated pattern.)
+
+If there is no match, the cursor does not move.  (Before version 1.13 of the
+script, it would fall back on the usual behavior of |%|).  If debugging is
+turned on, the matched bit of text is saved as |b:match_match| and the cursor
+column of the start of the match is saved as |b:match_col|.
+
+Next, the script looks through |b:match_words| (original and parsed versions)
+for the group and pattern that match.  If debugging is turned on, the group is
+saved as |b:match_ini| (the first pattern) and |b:match_tail| (the rest).  If
+there are |backref|s then, in addition, the matching pattern is saved as
+|b:match_word| and a table of translations is saved as |b:match_table|.  If
+there are |backref|s, these are determined from the matching pattern and
+|b:match_match| and substituted into each pattern in the matching group.
+
+The script decides whether to search forwards or backwards and chooses
+arguments for the |searchpair()| function.  Then, the cursor is moved to the
+start of the match, and |searchpair()| is called.  By default, matching
+structures inside strings and comments are ignored.  This can be changed by
+setting |b:match_skip|.
+
+==============================================================================
+2. Activation						*matchit-activate*
+
+You can use this script as a plugin, by copying it to your plugin directory.
+See |add-global-plugin| for instructions.  You can also add a line to your
+|vimrc| file, such as >
+	:source $VIMRUNTIME/macros/matchit.vim
+or >
+	:runtime macros/matchit.vim
+Either way, the script should start working the next time you start up Vim.
+
+(Earlier versions of the script did nothing unless a |buffer-variable| named
+|b:match_words| was defined.  Even earlier versions contained autocommands
+that set this variable for various file types.  Now, |b:match_words| is
+defined in many of the default |filetype-plugin|s instead.)
+
+For a new language, you can add autocommands to the script or to your vimrc
+file, but the recommended method is to add a line such as >
+	let b:match_words = '\<foo\>:\<bar\>'
+to the |filetype-plugin| for your language.  See |b:match_words| below for how
+this variable is interpreted.
+
+TROUBLESHOOTING					*matchit-troubleshoot*
+
+The script should work in most installations of Vim.  It may not work if Vim
+was compiled with a minimal feature set, for example if the |+syntax| option
+was not enabled.  If your Vim has support for syntax compiled in, but you do
+not have |syntax| highlighting turned on, matchit.vim should work, but it may
+fail to skip matching groups in comments and strings.  If the |filetype|
+mechanism is turned off, the |b:match_words| variable will probably not be
+defined automatically.
+
+==============================================================================
+3. Configuration					*matchit-configure*
+
+There are several variables that govern the behavior of matchit.vim.  Note
+that these are variables local to the buffer, not options, so use |:let| to
+define them, not |:set|.  Some of these variables have values that matter; for
+others, it only matters whether the variable has been defined.  All of these
+can be defined in the |filetype-plugin| or autocommand that defines
+|b:match_words| or "on the fly."
+
+The main variable is |b:match_words|.  It is described in the section below on
+supporting a new language.
+
+				*MatchError* *matchit-hl* *matchit-highlight*
+MatchError is the highlight group for error messages from the script.  By
+default, it is linked to WarningMsg.  If you do not want to be bothered by
+error messages, you can define this to be something invisible.  For example,
+if you use the GUI version of Vim and your command line is normally white, you
+can do >
+	:hi MatchError guifg=white guibg=white
+<
+						*b:match_ignorecase*
+If you >
+	:let b:match_ignorecase = 1
+then matchit.vim acts as if 'ignorecase' is set: for example, "end" and "END"
+are equivalent.  If you >
+	:let b:match_ignorecase = 0
+then matchit.vim treats "end" and "END" differently.  (There will be no
+b:match_infercase option unless someone requests it.)
+
+						*b:match_debug*
+Define b:match_debug if you want debugging information to be saved.  See
+|matchit-debug|, below.
+
+						*b:match_skip*
+If b:match_skip is defined, it is passed as the skip argument to
+|searchpair()|.  This controls when matching structures are skipped, or
+ignored.  By default, they are ignored inside comments and strings, as
+determined by the |syntax| mechanism.  (If syntax highlighting is turned off,
+nothing is skipped.)  You can set b:match_skip to a string, which evaluates to
+a non-zero, numerical value if the match is to be skipped or zero if the match
+should not be skipped.  In addition, the following special values are
+supported by matchit.vim:
+	s:foo becomes (current syntax item) =~ foo
+	S:foo becomes (current syntax item) !~ foo
+	r:foo becomes (line before cursor) =~ foo
+	R:foo becomes (line before cursor) !~ foo
+(The "s" is meant to suggest "syntax", and the "r" is meant to suggest
+"regular expression".)
+
+Examples:
+
+	You can get the default behavior with >
+		:let b:match_skip = 's:comment\|string'
+<
+	If you want to skip matching structures unless they are at the start
+	of the line (ignoring whitespace) then you can >
+		:let b:match_skip = 'R:^\s*'
+<	Do not do this if strings or comments can span several lines, since
+	the normal syntax checking will not be done if you set b:match_skip.
+
+	In LaTeX, since "%" is used as the comment character, you can >
+		:let b:match_skip = 'r:%'
+<	Unfortunately, this will skip anything after "\%", an escaped "%".  To
+	allow for this, and also "\\%" (an excaped backslash followed by the
+	comment character) you can >
+		:let b:match_skip = 'r:\(^\|[^\\]\)\(\\\\\)*%'
+<
+	See the $VIMRUNTIME/ftplugin/vim.vim for an example that uses both
+	syntax and a regular expression.
+
+==============================================================================
+4. Supporting a New Language				*matchit-newlang*
+							*b:match_words*
+In order for matchit.vim to support a new language, you must define a suitable
+pattern for |b:match_words|.  You may also want to set some of the
+|matchit-configure| variables, as described above.  If your language has a
+complicated syntax, or many keywords, you will need to know something about
+Vim's |regular-expression|s.
+
+The format for |b:match_words| is similar to that of the 'matchpairs' option:
+it is a comma (,)-separated list of groups; each group is a colon(:)-separated
+list of patterns (regular expressions).  Commas and backslashes that are part
+of a pattern should be escaped with backslashes ('\:' and '\,').  It is OK to
+have only one group; the effect is undefined if a group has only one pattern.
+A simple example is >
+	:let b:match_words = '\<if\>:\<endif\>,'
+		\ . '\<while\>:\<continue\>:\<break\>:\<endwhile\>'
+(In Vim regular expressions, |\<| and |\>| denote word boundaries.  Thus "if"
+matches the end of "endif" but "\<if\>" does not.)  Then banging on the "%"
+key will bounce the cursor between "if" and the matching "endif"; and from
+"while" to any matching "continue" or "break", then to the matching "endwhile"
+and back to the "while".  It is almost always easier to use |literal-string|s
+(single quotes) as above:  '\<if\>' rather than "\\<if\\>" and so on.
+
+Exception:  If the ":" character does not appear in b:match_words, then it is
+treated as an expression to be evaluated.  For example, >
+	:let b:match_words = 'GetMatchWords()'
+allows you to define a function.  This can return a different string depending
+on the current syntax, for example.
+
+Once you have defined the appropriate value of |b:match_words|, you will
+probably want to have this set automatically each time you edit the
+appropriate file type.  The recommended way to do this is by adding the
+definition to a |filetype-plugin| file.
+
+Tips: Be careful that your initial pattern does not match your final pattern.
+See the example above for the use of word-boundary expressions.  It is usually
+better to use ".\{-}" (as many as necessary) instead of ".*" (as many as
+possible).  See |\{-|.  For example, in the string "<tag>label</tag>", "<.*>"
+matches the whole string whereas "<.\{-}>" and "<[^>]*>" match "<tag>" and
+"</tag>".
+
+				*matchit-spaces* *matchit-s:notend*
+If "if" is to be paired with "end if" (Note the space!) then word boundaries
+are not enough.  Instead, define a regular expression s:notend that will match
+anything but "end" and use it as follows: >
+	:let s:notend = '\%(\<end\s\+\)\@<!'
+	:let b:match_words = s:notend . '\<if\>:\<end\s\+if\>'
+<							*matchit-s:sol*
+This is a simplified version of what is done for Ada.  The s:notend is a
+|script-variable|.  Similarly, you may want to define a start-of-line regular
+expression >
+	:let s:sol = '\%(^\|;\)\s*'
+if keywords are only recognized after the start of a line or after a
+semicolon (;), with optional white space.
+
+					*matchit-backref* *matchit-\1*
+In any group, the expressions |\1|, |\2|, ..., |\9| refer to parts of the
+INITIAL pattern enclosed in |\(|escaped parentheses|\)|.  These are referred
+to as back references, or backrefs.  For example, >
+	:let b:match_words = '\<b\(o\+\)\>:\(h\)\1\>'
+means that "bo" pairs with "ho" and "boo" pairs with "hoo" and so on.  Note
+that "\1" does not refer to the "\(h\)" in this example.  If you have
+"\(nested \(parentheses\)\) then "\d" refers to the d-th "\(" and everything
+up to and including the matching "\)":  in "\(nested\(parentheses\)\)", "\1"
+refers to everything and "\2" refers to "\(parentheses\)".  If you use a
+variable such as |s:notend| or |s:sol| in the previous paragraph then remember
+to count any "\(" patterns in this variable.  You do not have to count groups
+defined by |\%(\)|.
+
+It should be possible to resolve back references from any pattern in the
+group.  For example, >
+	:let b:match_words = '\(foo\)\(bar\):more\1:and\2:end\1\2'
+would not work because "\2" cannot be determined from "morefoo" and "\1"
+cannot be determined from "andbar".  On the other hand, >
+	:let b:match_words = '\(\(foo\)\(bar\)\):\3\2:end\1'
+should work (and have the same effect as "foobar:barfoo:endfoobar"), although
+this has not been thoroughly tested.
+
+You can use |zero-width| patterns such as |\@<=| and |\zs|.  (The latter has
+not been thouroughly tested in matchit.vim.)  For example, if the keyword "if"
+must occur at the start of the line, with optional white space, you might use
+the pattern "\(^\s*\)\@<=if" so that the cursor will end on the "i" instead of
+at the start of the line.  For another example, if HTML had only one tag then
+one could >
+	:let b:match_words = '<:>,<\@<=tag>:<\@<=/tag>'
+so that "%" can bounce between matching "<" and ">" pairs or (starting on
+"tag" or "/tag") between matching tags.  Without the |\@<=|, the script would
+bounce from "tag" to the "<" in "</tag>", and another "%" would not take you
+back to where you started.
+
+DEBUGGING				*matchit-debug* *:MatchDebug*
+
+If you are having trouble figuring out the appropriate definition of
+|b:match_words| then you can take advantage of the same information I use when
+debugging the script.  This is especially true if you are not sure whether
+your patterns or my script are at fault!  To make this more convenient, I have
+made the command :MatchDebug, which defines the variable |b:match_debug| and
+creates a Matchit menu.  This menu makes it convenient to check the values of
+the variables described below.  You will probably also want to read
+|matchit-details| above.
+
+Defining the variable |b:match_debug| causes the script to set the following
+variables, each time you hit the "%" key.  Several of these are only defined
+if |b:match_words| includes |backref|s.
+
+							*b:match_pat*
+The b:match_pat variable is set to |b:match_words| with |backref|s parsed.
+							*b:match_match*
+The b:match_match variable is set to the bit of text that is recognized as a
+match.
+							*b:match_col*
+The b:match_col variable is set to the cursor column of the start of the
+matching text.
+							*b:match_wholeBR*
+The b:match_wholeBR variable is set to the comma-separated group of patterns
+that matches, with |backref|s unparsed.
+							*b:match_iniBR*
+The b:match_iniBR variable is set to the first pattern in |b:match_wholeBR|.
+							*b:match_ini*
+The b:match_ini variable is set to the first pattern in |b:match_wholeBR|,
+with |backref|s resolved from |b:match_match|.
+							*b:match_tail*
+The b:match_tail variable is set to the remaining patterns in
+|b:match_wholeBR|, with |backref|s resolved from |b:match_match|.
+							*b:match_word*
+The b:match_word variable is set to the pattern from |b:match_wholeBR| that
+matches |b:match_match|.
+							*b:match_table*
+The back reference '\'.d refers to the same thing as '\'.b:match_table[d] in
+|b:match_word|.
+
+==============================================================================
+5. Known Bugs and Limitations				*matchit-bugs*
+
+Just because I know about a bug does not mean that it is on my todo list.  I
+try to respond to reports of bugs that cause real problems.  If it does not
+cause serious problems, or if there is a work-around, a bug may sit there for
+a while.  Moral:  if a bug (known or not) bothers you, let me know.
+
+The various |:vmap|s defined in the script (%, |g%|, |[%|, |]%|, |a%|) may
+have undesired effects in Select mode |Select-mode-mapping|.  At least, if you
+want to replace the selection with any character in "ag%[]" there will be a
+pause of |'updatetime'| first.
+
+It would be nice if "\0" were recognized as the entire pattern.  That is, it
+would be nice if "foo:\end\0" had the same effect as "\(foo\):\end\1".  I may
+try to implement this in a future version.  (This is not so easy to arrange as
+you might think!)
+
+==============================================================================
+vim:tw=78:fo=tcq2:

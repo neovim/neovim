@@ -1,0 +1,63 @@
+# Aap recipe for Amharic Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = am_ET.aff am_ET.dic
+
+all: $SPELLDIR/am.utf-8.spl ../README_am.txt
+
+$SPELLDIR/am.utf-8.spl : $FILES
+        :sys env LANG=am_ET.UTF-8 $VIM -u NONE -e -c "mkspell! $SPELLDIR/am am_ET" -c q
+
+../README_am.txt: README_am.txt
+        :copy $source $target
+
+#
+# Fetching the files from Hunspell.
+#
+HTTPDIR = http://hunspell.sourceforge.net
+TARNAME = am-demo.tar.gz
+:attr {fetch = $HTTPDIR/%file%} $TARNAME
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+am_ET.aff am_ET.dic: {buildcheck=}
+        :assertpkg tar gzip
+        :fetch $TARNAME
+        :sys gzip -d -c $TARNAME | tar xf -
+        :move am/am.aff am_ET.aff
+        :move am/am.dic am_ET.dic
+        :move am/README README_am.txt
+        :delete {recursive} am
+        :delete $TARNAME
+        @if not os.path.exists('am_ET.orig.aff'):
+            :copy am_ET.aff am_ET.orig.aff
+        @if not os.path.exists('am_ET.orig.dic'):
+            :copy am_ET.dic am_ET.orig.dic
+        @if os.path.exists('am_ET.diff'):
+            :sys patch <am_ET.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 am_ET.orig.aff am_ET.aff >am_ET.diff
+        :sys {force} diff -a -C 1 am_ET.orig.dic am_ET.dic >>am_ET.diff
+
+
+# Check for updated spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :print Sorry, not implemented yet.
+
+
+# vim: set sts=4 sw=4 :

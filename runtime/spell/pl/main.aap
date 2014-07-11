@@ -1,0 +1,92 @@
+# Aap recipe for Polish Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = pl_PL.aff pl_PL.dic
+
+all: $SPELLDIR/pl.iso-8859-2.spl $SPELLDIR/pl.utf-8.spl \
+        $SPELLDIR/pl.cp1250.spl ../README_pl.txt
+
+$SPELLDIR/pl.iso-8859-2.spl : $FILES
+        :sys env LANG=pl_PL.ISO8859-2 $VIM -u NONE -e -c "mkspell! $SPELLDIR/pl pl_PL" -c q
+
+$SPELLDIR/pl.utf-8.spl : $FILES
+        :sys env LANG=pl_PL.UTF-8 $VIM -u NONE -e -c "mkspell! $SPELLDIR/pl pl_PL" -c q
+
+$SPELLDIR/pl.cp1250.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=cp1250" -c "mkspell! $SPELLDIR/pl pl_PL" -c q
+
+../README_pl.txt: README_pl_PL.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+#OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+#:attr {fetch = $OODIR/%file%} pl_PL.zip
+
+#
+# Fetching the files from
+#
+HTTPDIR = http://www.kurnik.pl/dictionary
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+pl_PL.aff pl_PL.dic: {buildcheck=}
+        :assertpkg tar bunzip2
+        fname = alt-myspell-pl.tar.bz2
+        :attr {fetch = $HTTPDIR/%file%} $fname
+        :fetch $fname
+        :sys bunzip2 -c $fname | tar xf -
+        :move alt-myspell-pl-20[0-9]*/* .
+        :deldir alt-myspell-pl-20[0-9]*
+        :delete $fname
+        @if not os.path.exists('pl_PL.orig.aff'):
+            :copy pl_PL.aff pl_PL.orig.aff
+        @if not os.path.exists('pl_PL.orig.dic'):
+            :copy pl_PL.dic pl_PL.orig.dic
+        @if os.path.exists('pl_PL.diff'):
+            :sys patch <pl_PL.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 pl_PL.orig.aff pl_PL.aff >pl_PL.diff
+        :sys {force} diff -a -C 1 pl_PL.orig.dic pl_PL.dic >>pl_PL.diff
+
+
+# Check for updated spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg tar bunzip2 diff
+        fname = alt-myspell-pl.tar.bz2
+        :attr {fetch = $HTTPDIR/%file%} $fname
+        :fetch $fname
+        :sys bunzip2 -c $fname | tar xf -
+        :cd alt-myspell-pl-20[0-9]*
+        @try:
+            @import stat
+            :sys $UNZIP ../pl_PL.zip
+            :sys {force} diff ../pl_PL.orig.aff pl_PL.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy pl_PL.aff ../pl_PL.new.aff
+            :sys {force} diff ../pl_PL.orig.dic pl_PL.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy pl_PL.dic ../pl_PL.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} $base
+            :delete $fname
+
+
+# vim: set sts=4 sw=4 :

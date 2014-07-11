@@ -1,0 +1,96 @@
+# Aap recipe for Dutch Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = nl_NL.aff nl_NL.dic
+
+all: $SPELLDIR/nl.latin1.spl $SPELLDIR/nl.utf-8.spl ../README_nl.txt
+
+$SPELLDIR/nl.latin1.spl : $FILES
+        :sys env LANG=nl_NL.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/nl nl_NL" -c q
+
+$SPELLDIR/nl.utf-8.spl : $FILES
+        :sys env LANG=nl_NL.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/nl nl_NL" -c q
+
+../README_nl.txt : README_NL.txt README_EN.txt
+        :cat $source >! $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://extensions.services.openoffice.org/e-files/1456/5
+:attr {fetch = $OODIR/%file%} nl-dict.oxt
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+nl_NL.aff nl_NL.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch nl-dict.oxt
+        :sys $UNZIP nl-dict.oxt
+        :update cleanunused
+        @if not os.path.exists('nl_NL.orig.aff'):
+            :copy nl_NL.aff nl_NL.orig.aff
+        @if not os.path.exists('nl_NL.orig.dic'):
+            :copy nl_NL.dic nl_NL.orig.dic
+        @if os.path.exists('nl_NL.diff'):
+            :sys patch <nl_NL.diff
+
+# Delete all the files unpacked from the archive
+clean: cleanunused
+        :delete {f} nl_NL.dic
+        :delete {f} nl_NL.aff
+        :delete {f} README_EN.txt
+        :delete {f} README_NL.txt
+
+# Delete all the files from the archive that are not used, including the
+# archive itself.
+cleanunused:
+        :delete {f} nl-dict.oxt
+        :delete {f} description.xml
+        :delete {f} Dictionaries.xcu
+        :delete {f} hyph_nl_NL.dic
+        :delete {r}{f} description
+        :delete {r}{f} images
+        :delete {r}{f} META-INF
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 nl_NL.orig.aff nl_NL.aff >nl_NL.diff
+        :sys {force} diff -a -C 1 nl_NL.orig.dic nl_NL.dic >>nl_NL.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+# Currently doesn't work.
+
+#check:
+#        :assertpkg unzip diff
+#        :fetch nl_NL.zip
+#        :mkdir tmp
+#        :cd tmp
+#        @try:
+#            @import stat
+#            :sys $UNZIP ../nl_NL.zip
+#            :sys {force} diff ../nl_NL.orig.aff nl_NL.aff >d
+#            @if os.stat('d')[stat.ST_SIZE] > 0:
+#                :copy nl_NL.aff ../nl_NL.new.aff
+#            :sys {force} diff ../nl_NL.orig.dic nl_NL.dic >d
+#            @if os.stat('d')[stat.ST_SIZE] > 0:
+#                :copy nl_NL.dic ../nl_NL.new.dic
+#        @finally:
+#            :cd ..
+#            :delete {r}{f}{q} tmp
+#            :delete nl_NL.zip
+
+
+# vim: set sts=4 sw=4 :

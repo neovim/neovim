@@ -1,0 +1,972 @@
+===============================================================================
+=    D o b r o d o š l i   u   VIM   p r i r u è n i k  -    Verzija 1.7      =
+===============================================================================
+
+     Vim je vrlo moæan editor koji ima mnogo naredbi, previše da bi ih
+     se svih ovdje spomenulo.  Namjena priruènika je objasniti dovoljno
+     naredbi kako bi poèetnici znatno lakše koristili ovaj svestran editor.
+
+     Približno vrijeme potrebno za uspješan završetak priruènika je oko
+     30 minuta a ovisi o tome koliko æe te vremena odvojiti za vježbanje.
+
+     UPOZORENJE:
+     Naredbe u ovom priruèniku æe promijeniti ovaj tekst.
+     Napravite kopiju ove datoteke kako bi ste na istoj vježbali
+     (ako ste pokrenuli "vimtutor" ovo je veæ kopija).
+
+     Vrlo je važno primijetiti da je ovaj priruènik namijenjen za vježbanje.
+     Preciznije, morate izvršiti naredbe u Vim-u kako bi ste iste nauèili
+     pravilno koristiti. Ako samo èitate tekst, zaboraviti æe te naredbe!
+
+     Ako je CapsLock ukljuèen ISKLJUÈITE ga.  Pritiskajte tipku  j  kako
+     bi pomakli kursor sve dok Lekcija 1.1 ne ispuni ekran.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekcija 1.1:  POMICANJE KURSORA
+
+
+ ** Za pomicanje kursora, pritisnite h,j,k,l tipke kako je prikazano **
+	     ^
+	     k		    Savjet:  h tipka je lijevo i pomièe kursor lijevo.
+       < h	 l >		   l tipka je desno i pomièe kursor desno.
+	     j                     j izgleda kao strelica usmjerena dolje.
+	     v
+  1. Pomièite kursor po ekranu dok se ne naviknete na korištenje.
+
+  2. Držite tipku (j) pritisnutom.
+     Sada znate kako doæi do sljedeæe lekcije.
+
+  3. Koristeæi tipku j prijeðite na sljedeæu lekciju 1.2.
+
+NAPOMENA:  Ako niste sigurni što ste zapravo pritisnuli uvijek koristite
+           tipku <ESC> kako bi prešli u Normal mod i onda pokušajte ponovno.
+
+NAPOMENA:  Kursorske tipke rade isto.  Korištenje hjkl tipaka je znatno
+           brže, nakon što se jednom naviknete na njihovo korištenje.  Stvarno!
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			   Lekcija 1.2: IZLAZ IZ VIM-a
+
+
+  !! UPOZORENJE: Prije izvoðenja bilo kojeg koraka,
+                 proèitajte cijelu lekciju!!
+
+  1. Pritisnite <ESC> tipku (Vim je sada u Normal modu).
+
+  2. Otipkajte:	:q! <ENTER>.
+     Izlaz iz editora, GUBE se sve napravljene promjene.
+
+  3. Kada se pojavi ljuska, utipkajte naredbu koja je pokrenula
+     ovaj priruènik:		vimtutor <ENTER>
+
+  4. Ako ste upamtili ove korake, izvršite ih redom od 1 do 3
+     kako bi ponovno pokrenuli editor.
+
+NAPOMENA:  :q! <ENTER>  poništava sve promjene koje ste napravili.
+           U sljedeæim lekcijama nauèit æe te kako promjene saèuvati.
+
+  5. Pomaknite kursor na Lekciju 1.3.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lekcija 1.3: PROMJENA TEKSTA - BRISANJE
+
+
+	      ** Pritisnite  x  za brisanje znaka pod kursorom. **
+
+  1. Pomaknite kursor na liniju oznaèenu s --->.
+
+  2. Kako bi ste ispravili pogreške, pomièite kursor dok se
+     ne bude nalazio na slovu kojeg trebate izbrisati.
+
+  3. Pritisnite tipku x kako bi uklonili neželjeno slovo.
+
+  4. Ponovite korake od 2 do 4 dok ne ispravite sve pogreške.
+
+---> KKKravaa jee presskoèila mmjeseccc.
+
+  5. Nakon što ispravite liniju, prijeðite na lekciju 1.4.
+
+NAPOMENA:  Koristeæi ovaj priruènik ne pokušavajte pamtiti
+           veæ uèite primjenom.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		 Lekcija 1.4: PROMJENA TEKSTA - UBACIVANJE
+
+
+	  ** Pritisnite  i  za ubacivanje teksta ispred kursora. **
+
+  1. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+
+  2. Kako bi napravili prvu liniju istovjetnoj drugoj, pomaknite
+     kursor na prvi znak POSLIJE kojeg æe te utipkati potreban tekst.
+
+  3. Pritisnite  i  te utipkajte potrebne nadopune.
+
+  4. Nakon što ispravite pogrešku pritisnite <ESC> kako bi vratili Vim
+     u Normal mod. Ponovite korake od 2 do 4 kako bi ispravili sve pogreške.
+
+---> Nedje no teka od v lin.
+---> Nedostaje nešto teksta od ove linije.
+
+  5. Prijeðite na sljedeæu lekciju.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lekcija 1.5: PROMJENA TEKSTA - DODAVANJE
+
+
+	           ** Pritisnite  A  za dodavanje teksta. **
+
+  1. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+     Nije važno na kojem se slovu nalazi kursor na toj liniji.
+
+  2. Pritisnite  A  i napravite potrebne promjene.
+
+  3. Nakon što ste dodali tekst, pritisnite <ESC>
+     za povratak u Normal mod.
+
+  4. Pomaknite kursor na drugu liniju oznaèenu s --->
+     i ponovite korake 2 i 3 dok ne popravite tekst.
+
+---> Ima nešto teksta koji nedostaje n
+     Ima nešto teksta koji nedostaje na ovoj liniji.
+---> Ima nešto teksta koji ne
+     Ima nešto teksta koji nedostaje baš ovdje.
+
+  5. Prijeðite na lekciju 1.6.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekcija 1.6: PROMJENA DATOTEKE
+
+
+     ** Koristite  :wq  za spremanje teksta i napuštanje Vim-a. **
+
+  !! UPOZORENJE: Prije izvršavanja bilo kojeg koraka, proèitajte lekciju!!
+
+  1. Izaðite iz programa kao sto ste napravili u lekciji 1.2:  :q!
+
+  2. Iz ljuske utipkajte sljedeæu naredbu:  vim tutor <ENTER>
+     'vim' je naredba pokretanja Vim editora, 'tutor' je ime datoteke koju
+     želite ureðivati.  Koristite datoteku koju imate ovlasti mijenjati.
+
+  3. Ubacite i izbrišite tekst kao što ste to napravili u lekcijama prije.
+
+  4. Saèuvajte promjenjeni tekst i izaðite iz Vim-a:  :wq  <ENTER>
+
+  5. Ponovno pokrenite vimtutor i nastavite èitati sažetak koji sljedi.
+
+  6. Nakon sto proèitate gornje korake i u potpunosti ih razumijete:
+     izvršite ih.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 1 SAŽETAK
+
+
+  1. Kursor se pomièe strelicama ili pomoæu hjkl tipaka.
+	h (lijevo)	j (dolje)	k (gore)	l (desno)
+
+  2. Pokretanje Vim-a iz ljuske:  vim IME_DATOTEKE <ENTER>
+
+  3. Izlaz:	<ESC>	:q! <ENTER> 	sve promjene su izgubljene.
+       ILI:	<ESC>	:wq <ENTER> 	promjene su saèuvane.
+
+  4. Brisanje znaka na kojem se nalazi kursor:  x
+
+  5. Ubacivanja ili dodavanje teksta:
+	 i   utipkajte tekst <ESC>	unos ispred kursora
+	 A   utipkajte tekst <ESC>	dodavanje na kraju linije
+
+NAPOMENA:  Tipkanjem tipke <ESC> prebacuje Vim u Normal mod i
+           prekida neželjenu ili djelomièno završenu naredbu.
+
+Nastavite èitati Lekciju 2.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekcija 2.1: NAREDBE BRISANJA
+
+
+		 ** Tipkajte  dw  za brisanje rijeèi. **
+
+  1. Pritisnite  <ESC>  kako bi bili sigurni da je Vim u Normal modu.
+
+  2. Pomaknite kursor na liniju oznaèenu s --->.
+
+  3. Pomaknite kursor na poèetak rijeèi koju treba izbrisati.
+
+  4. Otipkajte  dw  kako bi uklonili rijeè.
+
+NAPOMENA:  Vim æe prikazati slovo  d  na zadnjoj liniji kad ga otipkate.
+           Vim èeka da otipkate  w .  Ako je prikazano neko drugo slovo,
+           krivo ste otipkali; pritisnite <ESC> i pokušajte ponovno.
+
+---> Neke rijeèi smiješno ne pripadaju na papir ovoj reèenici.
+
+  5. Ponovite korake 3 i 4 dok ne ispravite reèenicu;
+     prijeðite na Lekciju 2.2.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekcija 2.2: JOŠ BRISANJA
+
+
+       ** Otipkajte  d$ za brisanje znakova do kraja linije. **
+
+  1. Pritisnite  <ESC>  kako bi bili
+     sigurni da je Vim u Normal modu.
+
+  2. Pomaknite kursor na liniju oznaèenu s  --->.
+
+  3. Pomaknite kursor do kraja ispravne reèenice
+     (POSLJE prve . ).
+
+  4. Otipkajte  d$
+     kako bi izbrisali sve znakove do kraja linije.
+
+---> Netko je utipkao kraj ove linije dvaput. kraj ove linije dvaput.
+
+  5. Prijeðite na Lekciju 2.3 za bolje objašnjenje.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	      Lekcija 2.3: UKRATKO O OPERATORIMA I POKRETIMA
+
+
+  Mnogo naredbi koje mijenjaju tekst se sastoje od operatora i pokreta.
+  Oblik naredbe brisanja sa  d  operatorom je sljedeæi:
+
+  	d   pokret
+
+  Pri èemu je:
+    d      - operator brisanja.
+    pokret - ono na èemu æe se operacija izvršavati (navedeno u nastavku).
+
+  Kratka lista pokreta:
+    w - sve do poèetka sljedeæe rijeèi, NE UKLJUÈUJUÆI prvo slovo.
+    e - sve do kraja trenutaène rijeèi, UKLJUÈUJUÆI zadnje slovo.
+    $ - sve do kraje linije, UKLJUÈUJUÆI zadnje slovo.
+
+  Tipkanjem  de  æe se brisati od kursora do kraja rijeèi.
+
+NAPOMENA:  Pritiskajuæi samo pokrete dok ste u Normal modu bez operatora æe
+           pomicati kursor kao što je navedeno.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lekcija 2.4: KORIŠTENJE BROJANJA ZA POKRETE
+
+
+  ** Tipkanjem nekog broja prije pokreta, pokret se izvršava toliko puta. **
+
+  1. Pomaknite kursor na liniju oznaèenu s --->.
+
+  2. Otipkajte  2w  da pomaknete kursor dvije rijeèi naprijed.
+
+  3. Otipkajte  3e  da pomaknete kursor na kraj treæe rijeèi naprijed.
+
+  4. Otipkajte  0  (nulu) da pomaknete kursor na poèetak linije.
+
+  5. Ponovite korake 2 i 3 s nekim drugim brojevima.
+
+---> Reèenica sa rijeèima po kojoj možete pomicati kursor.
+
+  6. Prijeðite na Lekciju 2.5.
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+             Lekcija 2.5: KORIŠTENJE BROJANJA ZA VEÆE BRISANJE
+
+
+	  ** Tipkanje broja N s operatorom ponavlja ga N-puta. **
+
+  U kombinaciji operatora brisanja i pokreta spomenutih iznad
+  ubacujete broj prije pokreta kako bi izbrisali više znakova:
+
+	 d   broj   pokret
+
+  1. Pomaknite kursor na prvo slovo u rijeèi sa VELIKIM SLOVIMA
+     oznaèenu s --->.
+
+  2. Otipkajte  2dw  da izbrišete dvije rijeèi sa VELIKIM SLOVIMA
+
+  3. Ponovite korake 1 i 2 sa razlièitim brojevima da izbrišete
+     uzastopne rijeèi sa VELIKIM SLOVIMA sa samo jednom naredbom.
+
+---> ova ABCÈÆ DÐE linija FGHI JK LMN OP rijeèi je RSŠ TUVZŽ popravljena.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekcija 2.6: OPERIRANJE NAD LINIJAMA
+
+
+	       ** Otipkajte  dd   za brisanje cijele linije. **
+
+  Zbog uèestalosti brisanja cijelih linija, dizajneri Vi-a su odluèili da
+  je lakše brisati linije tipkanjem  d  dvaput.
+
+  1. Pomaknite kursor na drugu liniju u donjoj kitici.
+  2. Otipkajte  dd  kako bi izbrisali liniju.
+  3. Pomaknite kursor na èetvrtu liniju.
+  4. Otipkajte   2dd   kako bi izbrisali dvije linije.
+
+--->  1)  Ruže su crvene,
+--->  2)  Plaža je super,
+--->  3)  Ljubice su plave,
+--->  4)  Imam auto,
+--->  5)  Satovi ukazuju vrijeme,
+--->  6)  Šeæer je sladak
+--->  7)  Kao i ti.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekcija 2.7: NAREDBA PONIŠTENJA
+
+
+  ** Pritisnite  u  za poništenje zadnje naredbe,  U  za cijelu liniju. **
+
+  1. Pomaknite kursor na liniju oznaèenu s ---> i postavite kursor na prvu
+     pogrešku.
+  2. Otipkajte  x  kako bi izbrisali prvi neželjeni znak.
+  3. Otipkajte  u  kako bi poništili zadnju izvršenu naredbu.
+  4. Ovaj put ispravite sve pogreške na liniji koristeæi  x  naredbu.
+  5. Sada utipkajte veliko  U  kako bi poništili sve promjene
+     na liniji, vraæajuæi je u prijašnje stanje.
+  6. Sada utipkajte  u  nekoliko puta kako bi poništili  U
+     i prijašnje naredbe.
+  7. Sada utipkajte CTRL-R (držeæi  CTRL  tipku pritisnutom dok
+     ne pritisnete  R) nekoliko puta kako bi vratili promjene
+     (poništili poništenja).
+
+---> Poopravite pogreške nna ovvoj liniji ii pooništiteee ih.
+
+  8. Vrlo korisne naredbe.  Prijeðite na sažetak Lekcije 2.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 2 SAŽETAK
+
+
+  1. Brisanje od kursora do sljedeæe rijeèi:    dw
+  2. Brisanje od kursora do kraja linije:    d$
+  3. Brisanje cijele linije:    dd
+
+  4. Za ponavljanje pokreta prethodite mu broj:   2w
+  5. Oblik naredbe mijenjanja:
+               operator   [broj]   pokret
+     gdje je:
+       operator - što napraviti, npr.   d  za brisanje
+       [broj]   - neobavezan broj ponavljanja pokreta
+       pokret   - kretanje po tekstu po kojem se operira,
+                  kao što je: w (rijeè), $ (kraj linije), itd.
+
+  6. Postavljanje kursora na poèetak linije:  0
+
+  7. Za poništenje prethodnih promjena, pritisnite:	  u  (malo u)
+     Za poništenje svih promjena na liniji, pritisnite:   U  (veliko U)
+     Za vraæanja promjena, utipkajte:	CTRL-R
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lekcija 3.1: NAREDBA POSTAVI
+
+
+	** p  za unos prethodno izbrisanog teksta iza kursora. **
+
+  1. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+
+  2. Otipkajte  dd  kako bi izbrisali liniju i spremili je u Vim registar.
+
+  3. Pomaknite kursor na liniju c), IZNAD linije koju trebate unijeti.
+
+  4. Otipkajte  p  kako bi postavili liniju ispod kursora.
+
+  5. Ponovite korake 2 do 4 kako bi postavili sve linije u pravilnom
+     rasporedu.
+
+---> d) Možeš li i ti nauèiti?
+---> b) Ljubice su plave,
+---> c) Inteligencija je nauèena,
+---> a) Ruže su crvene,
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lekcija 3.2: NAREDBA PROMJENE
+
+
+      ** Otipkajte  rx  za zamjenu slova ispod kursora sa slovom  x . **
+
+  1. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+
+  2. Pomaknite kursor tako da se nalazi na prvoj pogrešci.
+
+  3. Otipkajte  r  i nakon toga ispravan znak na tom mjestu.
+
+  4. Ponovite korake 2 i 3 sve dok prva
+     linije ne bude istovjetna drugoj.
+
+--->  Kede ju ovu limija tupjana, natko je protuskao kruve tupke!
+--->  Kada je ova linija tipkana, netko je pritiskao krive tipke!
+
+  5. Prijeðite na Lekciju 3.2.
+
+NAPOMENA:  Prisjetite da trebate uèiti vježbanjem, ne pamæenjem.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lekcija 3.3: OPERATOR MIJENJANJA
+
+
+	  ** Za mijenjanje do kraja rijeèi, istipkajte  ce . **
+
+  1. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+
+  2. Postavite kursor na  a  u  lackmb.
+
+  3. Otipkajte  ce  i ispravite rijeè (u ovom sluèaju otipkajte  inija ).
+
+  4. Pritisnite <ESC> i pomaknite kursor na sljedeæi znak
+     kojeg je potrebno ispraviti.
+
+  5. Ponovite korake 3 i 4 sve dok prva reèenica ne postane istovjetna
+     drugoj.
+
+---> Ova lackmb ima nekoliko rjlcah koje trfcb mijdmlfsz.
+---> Ova linija ima nekoliko rijeèi koje treba mijenjati.
+
+Primijetite da  ce  briše rijeè i postavlja Vim u Insert mod.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	         Lekcija 3.4: JOŠ MIJENJANJA KORIŠTENJEM c
+
+
+    ** Naredba mijenjanja se koristi sa istim pokretima kao i brisanje. **
+
+  1. Operator mijenjanja se koristi na isti naèin kao i operator brisanja:
+
+         c    [broj]   pokret
+
+  2. Pokreti su isti, npr:   w (rijeè) i  $ (kraj linije).
+
+  3. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+
+  4. Pomaknite kursor na prvu pogrešku.
+
+  5. Otipkajte  c$  i utipkajte ostatak linije tako da bude istovjetna
+     drugoj te pritisnite <ESC>.
+
+---> Kraj ove linije treba pomoæ tako da izgleda kao linija ispod.
+---> Kraj ove linije treba ispraviti korištenjem c$ naredbe.
+
+NAPOMENA:  Možete koristiti Backspace za ispravljanje grešaka.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 3 SAŽETAK
+
+
+  1. Za postavljanje teksta koji je upravo izbrisan, pritisnite  p . Ovo
+     postavlja tekst IZA kursora (ako je pak linija izbrisana tekst se
+     postavlja na liniju ispod kursora).
+
+  2. Za promjenu znaka na kojem se nalazi kursor, pritisnite  r  i nakon toga
+     željeni znak.
+
+  3. Operator mijenjanja dozvoljava promjenu teksta od kursora do pozicije do
+     koje dovede pokret. tj. Otipkajte  ce  za mijenjanje od kursora do kraja
+     rijeèi, c$  za mijenjanje od kursora do kraja linije.
+
+  4. Oblik naredbe mijenjanja:
+
+	 c   [broj]   pokret
+
+Prijeðite na sljedeæu lekciju.
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	      Lekcija 4.1: POZICIJA KURSORA I STATUS DATOTEKE
+
+  ** CTRL-G za prikaz pozicije kursora u datoteci i status datoteke.
+     Pritisnite  G  za pomicanje kursora na neku liniju u datoteci. **
+
+NAPOMENA:  Proèitajte cijelu lekciju prije izvršenja bilo kojeg koraka!!
+
+  1. Držite Ctrl tipku pritisnutom i pritisnite  g .  Ukratko: CTRL-G.
+     Vim æe ispisati poruku na dnu ekrana sa imenom datoteke i pozicijom
+     kursora u datoteci.  Zapamtite broj linije za 3. korak.
+
+NAPOMENA:  Možete vidjeti poziciju kursora u donjem desnom kutu ako
+           je postavka 'ruler' aktivirana (objašnjeno u 6. lekciji).
+
+  2. Pritisnite  G  za pomicanje kursora na kraj datoteke.
+     Otipkajte  gg  za pomicanje kursora na poèetak datoteke.
+
+  3. Otipkajte broj linije na kojoj ste bili maloprije i zatim  G .  Kursor
+     æe se vratiti na liniju na kojoj se nalazio kada ste otipkali CTRL-G.
+
+  4. Ako ste spremni, izvršite korake od 1 do 3.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekcija 4.2: NAREDBE TRAŽENJA
+
+       ** Otipkajte  /  i nakon toga izraz kojeg želite tražiti. **
+
+  1. U Normal modu otipkajte  /  znak.  Primijetite da se znak
+     pojavio zajedno sa kursorom na dnu ekrana kao kod  :  naredbe.
+
+  2. Sada otipkajte 'grrrreška' <ENTER>.  To je rijeè koju zapravo tražite.
+
+  3. Za ponovno traženje istog izraza, otipkajte  n .
+     Za traženje istog izraza ali u suprotnom smjeru, otipkajte  N .
+
+  4. Za traženje izraza unatrag, koristite  ?  umjesto  / .
+
+  5. Za povratak na prethodnu poziciju koristite  CTRL-O  (držite Ctrl
+     pritisnutim dok ne pritisnete tipku o).  Ponavljajte sve dok se ne
+     vratite na poèetak.  CTRL-I slièno kao CTRL-O ali u suprotnom smjeru.
+
+---> "pogrrrreška" je pogrešno; umjesto pogrrrreška treba stajati pogreška.
+
+NAPOMENA:  Ako se traženjem doðe do kraja datoteke nastavit æe se od njenog
+           poèetka osim ako je postavka 'wrapscan' deaktivirana.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lekcija 4.3: TRAŽENJE PRIPADAJUÆE ZAGRADE
+
+
+	** Otipkajte  %  za pronalazak pripadajuæe ), ] ili } . **
+
+  1. Postavite kursor na bilo koju od  ( ,  [  ili  {
+     otvorenih zagrada u liniji oznaèenoj s --->.
+
+  2. Otipkajte znak  % .
+
+  3. Kursor æe se pomaknuti na pripadajuæu zatvorenu zagradu.
+
+  4. Otipkajte  %  kako bi pomakli kursor na drugu pripadajuæu zagradu.
+
+  5. Pomaknite kursor na neku od (,),[,],{ ili } i ponovite  %  naredbu.
+
+---> Linija ( testiranja obiènih ( [ uglatih ] i { vitièastih } zagrada.))
+
+
+NAPOMENA:  Vrlo korisno u ispravljanju koda sa nepripadajuæim zagradama!
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		      Lekcija 4.4: NAREDBE ZAMIJENE
+
+
+       ** Otipkajte  :s/staro/novo/g  da zamijenite 'staro' za 'novo'. **
+
+  1. Pomaknite kursor na liniju oznaèenu s --->.
+
+  2. Otipkajte  :s/cvræè/cvrè <ENTER> .  Primjetite da ova naredba zamjenjuje
+     samo prvi "cvræè" u liniji.
+
+  3. Otipkajte  :s/cvræè/cvrè/g .  Dodavanje  g  stavke znaèi da æe se naredba
+     izvršiti na cijeloj liniji, zamjenjivanjem svih "cvræè" u liniji.
+
+---> i cvræèi cvræèi cvræèak na èvoru crne smrèe.
+
+  4. Za zamjenu svih izraza u rasponu dviju linija,
+     otipkajte :#,#s/staro/novo/g   #,# su brojevi linije datoteke na kojima
+                                    te izmeðu njih æe se izvršiti zamjena.
+     Otipkajte :%s/staro/novo/g     za zamjenu svih izraza u cijeloj datoteci.
+     Otipkajte :%s/staro/novo/gc    za pronalazak svakog izraza u datoteci i
+     			            potvrdu zamjene.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 4 SAŽETAK
+
+
+  1. CTRL-G  prikazuje poziciju kursora u datoteci i status datoteke.
+             G  postavlja kursor na zadnju liniju datoteke.
+     broj    G  postavlja kursor na  broj  liniju.
+            gg  postavlja kursor na prvu liniju.
+
+  2. Tipkanje  /  sa izrazom traži UNAPRIJED taj izraz.
+     Tipkanje  ?  sa izrazom traži UNATRAG taj izraz.
+     Nakon naredbe traženja koristite  n  za pronalazak izraza u istom
+     smjeru, i  N  za pronalazak istog izraza ali u suprotnom smjeru.
+     CTRL-O vraæa kursor na prethodnu poziciju, CTRL-I na sljedeæu poziciju.
+
+  3. Tipkanje  %  dok je kursor na zagradi pomièe ga na pripadajuæu zagradu.
+
+  4. Za zamjenu prvog izraza staro za izraz novo	   :s/staro/novo
+     Za zamjenu svih izraza staro na cijeloj liniji	   :s/staro/novo/g
+     Za zamjenu svih izraza staro u rasponu linija #,#     :#,#s/staro/novo/g
+     Za zamjenu u cijeloj datoteci			   :%s/staro/novo/g
+     Za potvrdu svake zamjene dodajte 'c'		   :%s/staro/novo/gc
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lekcija 5.1: IZVRŠAVANJE VANJSKIH NAREDBI
+
+
+	** Otipkajte  :!  sa vanjskom naredbom koju želite izvršiti. **
+
+  1. Otipkajte poznatu naredbu  :  kako bi kursor premjestili na dno
+     ekrana.  Time omoguæavate unos naredbe u naredbenoj liniji.
+
+  2. Otipkajte znak  !  (uskliènik).  Tako omoguæavate
+     izvršavanje naredbe vanjske ljuske.
+
+  3. Kao primjer otipkajte   ls   nakon ! te pritisnite <ENTER>.
+     Ovo æe prikazati sadržaj direktorija, kao da ste u ljusci.
+     Koristite   :!dir   ako   :!ls   ne radi.
+
+NAPOMENA:  Moguæe je izvršavati bilo koju vanjsku naredbu na ovaj naèin,
+           zajedno sa njenim argumentima.
+
+NAPOMENA:  Sve  :  naredbe se izvršavaju nakon što pritisnete <ENTER>
+	   U daljnjem tekstu to neæe uvijek biti napomenuto.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   Lekcija 5.2: VIŠE O SPREMANJU DATOTEKA
+
+           ** Za spremanje promjena, otipkajte  :w IME_DATOTEKE. **
+
+  1. Otipkajte   :!dir   ili   :!ls   za pregled direktorija.
+     Veæ znate da morate pritisnuti <ENTER> na kraju tipkanja.
+
+  2. Izaberite ime datoteke koja još ne postoji, npr. TEST.
+
+  3. Otipkajte:	 :w TEST   (gdje je TEST ime koje ste prethodno odabrali.)
+
+  4. Time æe te spremiti cijelu datoteku (Vim Tutor) pod imenom TEST.
+     Za provjeru, otipkajte ponovno   :!dir   ili   :!ls
+     za pregled direktorija.
+
+NAPOMENA:  Ako bi napustili Vim i ponovno ga pokrenuli sa vim TEST ,
+           datoteka bi bila potpuna kopija ove datoteke u trenutku
+           kada ste je spremili.
+
+  5. Izbrišite datoteku tako da otipkate (MS-DOS):	:!del TEST
+				       ili (Unix):	:!rm TEST
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		  Lekcija 5.3: SPREMANJE OZNAÈENOG TEKSTA
+
+
+   ** Kako bi spremili dio datoteke, otipkajte  v  pokret  :w IME_DATOTEKE **
+
+  1. Pomaknite kursor na ovu liniju.
+
+  2. Pritisnite  v  i pomaknite kursor pet linija ispod ove.
+     Primijetite promjenu, oznaèeni tekst se razlikuje od obiènog.
+
+  3. Pritisnite  :  znak.  Na dnu ekrana pojavit æe se  :'<,'> .
+
+  4. Otipkajte  w TEST  , pritom je TEST ime datoteke koja još ne postoji.
+     Provjerite da zaista piše  :'<,'>w TEST
+     prije nego što pritisnite <ENTER>.
+
+  5. Vim æe spremiti oznaèeni tekst u TEST.  Provjerite sa :!dir  ili  :!ls .
+     Nemojte je još brisati!  Koristiti æe te je u sljedeæoj lekciji.
+
+NAPOMENA:  Tipka  v  zapoèinje Vizualno oznaèavanje.  Možete pomicati kursor
+           unaokolo kako bi mijenjali velièinu oznaèenog teksta. Možete
+           koristiti i operatore.  Npr,  d  æe izbrisati oznaèeni tekst.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		   Lekcija 5.4: UÈITAVANJE DATOTEKA
+
+
+       ** Za ubacivanje sadržaja datoteke, otipkajte  :r IME_DATOTEKE  **
+
+  1. Postavite kursor iznad ove linije.
+
+NAPOMENA:  Nakon što izvršite 2. korak vidjeti æe te tekst iz Lekcije 5.3.
+           Stoga pomaknite kursor DOLJE kako bi ponovno vidjeli ovu lekciju.
+
+  2. Uèitajte vašu TEST datoteku koristeæi naredbu   :r TEST
+     gdje je TEST ime datoteke koju ste koristili u prethodnoj lekciji.
+     Sadržaj uèitane datoteke je ubaèen liniju ispod kursora.
+
+  3. Kako bi provjerili da je datoteka uèitana, vratite kursor unatrag i
+     primijetite dvije kopije Lekcije 5.3, originalnu i onu iz datoteke.
+
+NAPOMENA:  Možete takoðer uèitati ispis vanjske naredbe.  Npr,  :r !ls
+           æe uèitati ispis  ls  naredbe i postaviti ispis liniju ispod
+           kursora.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 5 SAŽETAK
+
+
+  1.  :!naredba  izvršava vanjsku naredbu.
+
+      Korisni primjeri:
+	 (MS-DOS)	  (Unix)
+	  :!dir		   :!ls		   -  pregled direktorija.
+	  :!del DATOTEKA   :!rm DATOTEKA   -  briše datoteku DATOTEKA.
+
+  2.  :w DATOTEKA  zapisuje trenutaènu datoteku na disk sa imenom DATOTEKA.
+
+  3.  v  pokret  :w IME_DATOTEKE  sprema vizualno oznaèene linije u
+      datoteku IME_DATOTEKE.
+
+  4.  :r IME_DATOTEKE  uèitava datoteku IME_DATOTEKE sa diska i stavlja
+      njen sadržaj liniju ispod kursora.
+
+  5.  :r !dir  uèitava ispis naredbe dir i postavlja sadržaj ispisa liniju
+      ispod kursora.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			 Lekcija 6.1: NAREDBA OTVORI
+
+
+	** Pritisnite  o  kako bi otvorili liniju ispod kursora
+	   i prešli u Insert mod. **
+
+  1. Pomaknite kursor na sljedeæu liniju oznaèenu s --->.
+
+  2. Otipkajte malo  o  kako bi otvorili novu liniju ISPOD kursora
+     i prešli u Insert mod.
+
+  3. Otipkajte nešto teksta i nakon toga pritisnite <ESC>
+     kako bi napustili Insert mod.
+
+---> Nakon što pritisnete  o  kursor æe preæi u novu liniju u Insert mod.
+
+  4. Za otvaranje linije IZNAD kursora, otipkajte umjesto malog o veliko O ,
+     Pokušajte na donjoj liniji oznaèenoj s --->.
+
+---> Otvorite liniju iznad ove - otipkajte O dok je kursor na ovoj liniji.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekcija 6.2: NAREDBA DODAJ
+
+
+	     ** Otipkajte  a  za dodavanje teksta IZA kursora. **
+
+  1. Pomaknite kursor na poèetak sljedeæe linije oznaèene s --->.
+  
+  2. Tipkajte  e  dok se kursor ne nalazi na kraju  li .
+
+  3. Otipkajte  a  (malo) kako bi dodali tekst IZA kursora.
+
+  4. Dopunite rijeè kao što je na liniji ispod.
+     Pritisnite <ESC> za izlaz iz Insert moda.
+
+  5. Sa  e  prijeðite na sljedeæu nepotpunu rijeè i ponovite korake 3 i 4.
+  
+---> Ova li omoguæava vje dodav teksta nekoj liniji.
+---> Ova linija omoguæava vježbanje dodavanja teksta nekoj liniji.
+
+NAPOMENA:  Sa i, a, i  A  prelazite u isti Insert mod, jedina
+           razlika je u poziciji od koje æe se tekst ubacivati.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lekcija 6.3: DRUGI NAÈIN MIJENJANJA
+
+
+      ** Otipkajte veliko  R  kako bi zamijelili više od jednog znaka. **
+
+  1. Pomaknite kursor na prvu sljedeæu liniju oznaèenu s --->.
+     Pomaknite kursor na poèetak prvog  xxx .
+
+  2. Pritisnite  R  i otipkajte broj koji je liniju ispod,
+     tako da zamijeni xxx .
+
+  3. Pritisnite <ESC> za izlaz iz Replace moda.
+     Primijetite da je ostatak linije ostao nepromjenjen.
+
+  5. Ponovite korake kako bi zamijenili preostali xxx.
+
+---> Zbrajanje: 123 plus xxx je xxx.
+---> Zbrajanje: 123 plus 456 je 579.
+
+NAPOMENA:  Replace mod je kao Insert mod, ali sa bitnom razlikom,
+           svaki otipkani znak briše veæ postojeæi.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		Lekcija 6.4: KOPIRANJE I LIJEPLJENJE TEKSTA
+
+
+    ** Koristite  y  operator za kopiranje a  p  za lijepljenje teksta. **
+
+  1. Pomaknite kursor na liniju s --->  i postavite kursor nakon "a)".
+  
+  2. Pokrenite Visual mod sa  v  i pomaknite kursor sve do ispred "prva".
+  
+  3. Pritisnite  y  kako bi kopirali oznaèeni tekst.
+
+  4. Pomaknite kursor do kraja sljedeæe linije:  j$
+
+  5. Pritisnite  p  kako bi zalijepili tekst.  Onda utipkajte:  druga <ESC> .
+
+  6. Koristite Visual mod kako bi oznaèili " linija.", kopirajte:  y , kursor
+     postavite na kraj sljedeæe linije:  j$  i ondje zalijepite tekst:  p .
+
+--->  a) ovo je prva linija.
+      b)
+
+NAPOMENA:  možete koristiti  y  kao operator;  yw   kopira jednu rijeè.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		    Lekcija 6.5: MIJENJANJE POSTAVKI
+
+
+ ** Postavka: naredbe traženja i zamijene ne razlikuju VELIKA i mala slova **
+
+  1. Potražite 'razlika' tipkanjem:   /razlika  <ENTER>
+     Nekoliko puta ponovite pritiskanjem  n .
+
+  2. Aktivirajte 'ic' (Ignore case) postavku:   :set ic
+
+  3. Ponovno potražite 'razlika' tipkanjem  n
+     Primijetite da su sada i RAZLIKA i Razlika pronaðeni.
+
+  4. Aktivirajte 'hlsearch' i 'incsearch' postavke:  :set hls is
+
+  5. Otipkajte naredbu traženja i primijetite razlike:  /razlika <ENTER>
+
+  6. Za deaktiviranje  ic  postavke koristite:  :set noic
+
+NAPOMENA:  Za neoznaèavanje pronaðenih izraza otipkajte:   :nohlsearch
+NAPOMENA:  Bez razlikovanja velikih i malih slova u samo jednoj naredbi
+	   koristite  \c u izrazu:  /razlika\c  <ENTER>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 6 SAŽETAK
+
+  1. Pritisnite  o  za otvaranje linije ISPOD kursora i prelazak u Insert mod.
+     Pritisnite  O  za otvaranje linije IZNAD kursora.
+
+  2. Pritisnite  a  za unos teksta IZA kursora.
+     Pritisnite  A  za unos teksta na kraju linije.
+
+  3. Naredba  e  pomièe kursor na kraj rijeèi.
+
+  4. Operator  y  kopira tekst,  p  ga lijepi.
+
+  5. Tipkanjem velikog  R  Vim prelazi u Replace mod dok ne pritisnete <ESC> .
+
+  6. Tipkanjem ":set xxx" aktivira postavku "xxx".  Neke postavke su:
+  	'ic' 'ignorecase'	ne razlikuje velika/mala slova pri traženju
+	'is' 'incsearch'	traži nedovršene izraze
+	'hls' 'hlsearch'	oznaèi sve pronaðene izraze
+     Možete koristite dugo ili kratko ime postavke.
+
+  7. Prethodite "no" imenu postavke za deaktiviranje iste:   :set noic
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		       Lekcija 7.1: DOBIVANJE POMOÆI
+
+
+		   ** Koristite on-line sustav pomoæi **
+
+  Vim ima detaljan on-line sustav pomoæi.
+  Za poèetak, pokušajte jedno od sljedeæeg:
+	- pritisnite <HELP> tipku (ako je vaša tipkovnica ima)
+	- pritisnite <F1> tipku (ako je vaša tipkovnica ima)
+	- utipkajte   :help <ENTER>
+
+  Proèitajte tekst u prozoru pomoæi kako bi ste se znali služiti istom.
+  Tipkanjem  CTRL-W CTRL-W   prelazite iz jednog prozora u drugi.
+  Otipkajte    :q <ENTER>    kako bi zatvorili prozor pomoæi.
+
+  Pronaæi æe te pomoæ o bilo kojoj temi, tako da dodate upit samoj
+  ":help" naredbi.  Pokušajte (ne zaboravite pritisnuti <ENTER>):
+
+	:help w
+	:help c_CTRL-D
+	:help insert-index
+	:help user-manual
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			Lekcija 7.2: PRAVLJENJE SKRIPTE
+
+
+		       ** Aktivirajte Vim moguænosti **
+
+  Vim ima mnogo više alata od Vi-ja, ali veæina njih nije aktivirana.
+  Kako bi mogli koristiti više moguænosti napravite "vimrc" datoteku.
+
+  1. Uredite "vimrc" datoteku.  Ovo ovisi o vašem sistemu:
+	:e ~/.vimrc		za Unix
+	:e $VIM/_vimrc		za MS-Windows
+
+  2. Sada uèitajte primjer sadržaja "vimrc" datoteke:
+	:r $VIMRUNTIME/vimrc_example.vim
+
+  3. Saèuvajte datoteku sa:
+	:w
+
+  Sljedeæeg puta kada pokrenete Vim, bojanje sintakse teksta biti æe
+  aktivirano. Sve vaše postavke možete dodati u "vimrc" datoteku.
+  Za više informacija otipkajte  :help vimrc-intro
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+		     Lekcija 7.3: AUTOMATSKO DOVRŠAVANJE
+
+
+	** Dovršavanje iz naredbene linije pomoæu CTRL-D i <TAB> **
+
+  1. Provjerite da Vim nije u Vi modu:  :set nocp
+
+  2. Pogledajte koje datoteke postoje u direktoriju:  :!ls   or  :!dir
+
+  3. Otipkajte poèetak naredbe:  :e
+
+  4. Tipkajte  CTRL-D  i prikazati æe se lista naredbi koje zapoèinju sa "e".
+
+  5. Pritisnite <TAB>  i Vim æe dopuniti unos u naredbu ":edit".
+
+  6. Dodajte razmak i poèetak datoteke:  :edit FIL
+
+  7. Pritisnite <TAB>.  Vim æe nadopuniti ime datoteke (ako je jedinstveno).
+
+NAPOMENA:  Moguæe je dopuniti mnoge naredbe.  Koristite CTRL-D i <TAB>.
+           Naroèito je korisno za  :help  naredbe.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			      Lekcija 7 SAŽETAK
+
+
+  1. Otipkajte  :help  ili pritisnite <F1> ili <Help>  za pomoæ.
+
+  2. Otipkajte  :help naredba  kako bi dobili pomoæ za  naredba .
+
+  3. Otipkajte  CTRL-W CTRL-W  za prelazak u drugi prozor
+
+  4. Otipkajte  :q  kako bi zatvorili prozor pomoæi
+
+  5. Napravite vimrc skriptu za podizanje kako bi u nju spremali
+     vaše omiljene postavke.
+
+  6. Kada tipkate naredbu koja zapoèinje sa  :
+     pritisnite CTRL-D kako bi vidjeli moguæe valjane vrijednosti.
+     Pritisnite <TAB> kako bi odabrali jednu od njih.
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Kraj.  Cilj priruènika je da pokaže kratak pregled Vim editora, tek toliko
+  da omoguæi njegovo korištenje. Priruènik nije potpun jer Vim ima mnogo više
+  naredbi. Za više informacija: ":help user-manual".
+
+  Za èitanje i korištenje, preporuèamo:
+	Vim - Vi Improved - by Steve Oualline
+	Izdavaè: New Riders
+  Prva knjiga potpuno posveæena Vim-u. Vrlo korisna za poèetnike.
+  Sa mnogo primjera i slika.
+  Posjetite http://iccf-holland.org/click5.html
+
+  Sljedeæa knjiga je nešto starija i više o Vi-u nego o Vim-u, preporuèamo:
+	Learning the Vi Editor - by Linda Lamb
+	Izdavaè: O'Reilly & Associates Inc.
+  Solidna knjiga, možete saznati skoro sve što možete napraviti
+  u Vi-u. Šesto izdanje ima nešto informacija i o Vim-u.
+
+  Ovaj priruènik su napisali: Michael C. Pierce i Robert K. Ware,
+  Colorado School of Mines koristeæi ideje Charles Smith,
+  Colorado State University.  E-pošta: bware@mines.colorado.edu.
+
+  Naknadne promjene napravio je Bram Moolenaar.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Preveo na hrvatski: Paul B. Mahol <onemda@gmail.com>
+  Preinaka 1.42, Lipanj 2008
+
+

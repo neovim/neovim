@@ -1,0 +1,201 @@
+*sign.txt*      For Vim version 7.4.  Last change: 2014 May 07
+
+
+		  VIM REFERENCE MANUAL    by Gordon Prieur
+					  and Bram Moolenaar
+
+
+Sign Support Features				*sign-support*
+
+1. Introduction				|sign-intro|
+2. Commands				|sign-commands|
+
+{Vi does not have any of these features}
+{only available when compiled with the |+signs| feature}
+
+==============================================================================
+1. Introduction					*sign-intro* *signs*
+
+When a debugger or other IDE tool is driving an editor it needs to be able
+to give specific highlights which quickly tell the user useful information
+about the file.  One example of this would be a debugger which had an icon
+in the left-hand column denoting a breakpoint.  Another example might be an
+arrow representing the Program Counter (PC).  The sign features allow both
+placement of a sign, or icon, in the left-hand side of the window and
+definition of a highlight which will be applied to that line.  Displaying the
+sign as an image is most likely only feasible in gvim (although Sun
+Microsystem's dtterm does support this it's the only terminal emulator I know
+of which does).  A text sign and the highlight should be feasible in any color
+terminal emulator.
+
+Signs and highlights are not useful just for debuggers.  Sun's Visual
+WorkShop uses signs and highlights to mark build errors and SourceBrowser
+hits.  Additionally, the debugger supports 8 to 10 different signs and
+highlight colors. |workshop|  Same for Netbeans |netbeans|.
+
+There are two steps in using signs:
+
+1. Define the sign.  This specifies the image, text and highlighting.  For
+   example, you can define a "break" sign with an image of a stop roadsign and
+   text "!!".
+
+2. Place the sign.  This specifies the file and line number where the sign is
+   displayed.  A defined sign can be placed several times in different lines
+   and files.
+
+When signs are defined for a file, Vim will automatically add a column of two
+characters to display them in.  When the last sign is unplaced the column
+disappears again.  The color of the column is set with the SignColumn group
+|hl-SignColumn|.  Example to set the color: >
+
+	:highlight SignColumn guibg=darkgrey
+
+==============================================================================
+2. Commands					*sign-commands* *:sig* *:sign*
+
+Here is an example that places a sign "piet", displayed with the text ">>", in
+line 23 of the current file: >
+	:sign define piet text=>> texthl=Search
+	:exe ":sign place 2 line=23 name=piet file=" . expand("%:p")
+
+And here is the command to delete it again: >
+	:sign unplace 2
+
+Note that the ":sign" command cannot be followed by another command or a
+comment.  If you do need that, use the |:execute| command.
+
+
+DEFINING A SIGN.			*:sign-define* *E255* *E160* *E612*
+
+:sign define {name} {argument}...
+		Define a new sign or set attributes for an existing sign.
+		The {name} can either be a number (all digits) or a name
+		starting with a non-digit.  Leading digits are ignored, thus
+		"0012", "012" and "12" are considered the same name.
+		About 120 different signs can be defined.
+
+		Accepted arguments:
+
+	icon={bitmap}
+		Define the file name where the bitmap can be found.  Should be
+		a full path.  The bitmap should fit in the place of two
+		characters.  This is not checked.  If the bitmap is too big it
+		will cause redraw problems.  Only GTK 2 can scale the bitmap
+		to fit the space available.
+			toolkit		supports ~
+			GTK 1		pixmap (.xpm)
+			GTK 2		many
+			Motif		pixmap (.xpm)
+			Win32		.bmp, .ico, .cur
+					pixmap (.xpm) |+xpm_w32|
+
+	linehl={group}
+		Highlighting group used for the whole line the sign is placed
+		in.  Most useful is defining a background color.
+
+	text={text}						*E239*
+		Define the text that is displayed when there is no icon or the
+		GUI is not being used.  Only printable characters are allowed
+		and they must occupy one or two display cells.
+
+	texthl={group}
+		Highlighting group used for the text item.
+
+
+DELETING A SIGN						*:sign-undefine* *E155*
+
+:sign undefine {name}
+		Deletes a previously defined sign.  If signs with this {name}
+		are still placed this will cause trouble.
+
+
+LISTING SIGNS						*:sign-list* *E156*
+
+:sign list	Lists all defined signs and their attributes.
+
+:sign list {name}
+		Lists one defined sign and its attributes.
+
+
+PLACING SIGNS						*:sign-place* *E158*
+
+:sign place {id} line={lnum} name={name} file={fname}
+		Place sign defined as {name} at line {lnum} in file {fname}.
+							*:sign-fname*
+		The file {fname} must already be loaded in a buffer.  The
+		exact file name must be used, wildcards, $ENV and ~ are not
+		expanded, white space must not be escaped.  Trailing white
+		space is ignored.
+
+		The sign is remembered under {id}, this can be used for
+		further manipulation.  {id} must be a number.
+		It's up to the user to make sure the {id} is used only once in
+		each file (if it's used several times unplacing will also have
+		to be done several times and making changes may not work as
+		expected).
+
+:sign place {id} line={lnum} name={name} buffer={nr}
+		Same, but use buffer {nr}.
+
+							*E885*
+:sign place {id} name={name} file={fname}
+		Change the placed sign {id} in file {fname} to use the defined
+		sign {name}.  See remark above about {fname} |:sign-fname|.
+		This can be used to change the displayed sign without moving
+		it (e.g., when the debugger has stopped at a breakpoint).
+
+:sign place {id} name={name} buffer={nr}
+		Same, but use buffer {nr}.
+
+
+REMOVING SIGNS						*:sign-unplace* *E159*
+
+:sign unplace {id} file={fname}
+		Remove the previously placed sign {id} from file {fname}.
+		See remark above about {fname} |:sign-fname|.
+
+:sign unplace * file={fname}
+		Remove all placed signs in file {fname}.
+
+:sign unplace {id} buffer={nr}
+		Remove the previously placed sign {id} from buffer {nr}.
+
+:sign unplace * buffer={nr}
+		Remove all placed signs in buffer {nr}.
+
+:sign unplace {id}
+		Remove the previously placed sign {id} from all files it
+		appears in.
+
+:sign unplace *
+		Remove all placed signs.
+
+:sign unplace
+		Remove the placed sign at the cursor position.
+
+
+LISTING PLACED SIGNS					*:sign-place-list*
+
+:sign place file={fname}
+		List signs placed in file {fname}.
+		See remark above about {fname} |:sign-fname|.
+
+:sign place buffer={nr}
+		List signs placed in buffer {nr}.
+
+:sign place	List placed signs in all files.
+
+
+JUMPING TO A SIGN					*:sign-jump* *E157*
+
+:sign jump {id} file={fname}
+		Open the file {fname} or jump to the window that contains
+		{fname} and position the cursor at sign {id}.
+		See remark above about {fname} |:sign-fname|.
+		If the file isn't displayed in window and the current file can
+		not be |abandon|ed this fails.
+
+:sign jump {id} buffer={nr}
+		Same, but use buffer {nr}.
+
+ vim:tw=78:ts=8:ft=help:norl:

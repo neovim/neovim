@@ -1,0 +1,135 @@
+#
+# Demonstration of a termcap file (for the Amiga and Archimedes)
+#
+# Maintainer:	Bram Moolenaar <Bram@vim.org>
+# Last change:	1999 Feb 02
+#
+sx|ansi|any ansi terminal with pessimistic assumptions:\
+	:co#80:li#24:cl=50\E[;H\E[2J:bs:am:cm=\E[%i%d;%dH:\
+	:nd=\E[C:up=\E[A:ce=\E[K:ho=\E[H:pt:
+
+Mu|sun|Sun Microsystems Workstation console:\
+	:am:bs:km:mi:ms:pt:li#34:co#80:cl=^L:cm=\E[%i%d;%dH:\
+	:ce=\E[K:cd=\E[J:\
+	:so=\E[7m:se=\E[m:us=\E[4m:ue=\E[m:rs=\E[s:\
+	:md=\E[1m:mr=\E[7m:me=\E[m:\
+	:al=\E[L:dl=\E[M:im=:ei=:ic=\E[@:dc=\E[P:\
+	:AL=\E[%dL:DL=\E[%dM:IC=\E[%d@:DC=\E[%dP:\
+	:up=\E[A:nd=\E[C:ku=\E[A:kd=\E[B:kr=\E[C:kl=\E[D:\
+	:k1=\E[224z:k2=\E[225z:k3=\E[226z:k4=\E[227z:k5=\E[228z:\
+	:k6=\E[229z:k7=\E[230z:k8=\E[231z:k9=\E[232z:
+
+M-|sun-e|sun-nic|sune|Sun Microsystems Workstation without insert character:\
+	:ic@:im@:ei@:tc=sun:
+Mu|sun-s|Sun Microsystems Workstation window with status line:\
+	:hs:ts=\E]l:fs=\E\\:ds=\E]l\E\\:tc=sun:
+Mu|sun-e-s|sun-s-e|Sun Microsystems Workstation with status hacked for emacs:\
+	:hs:ts=\E]l:fs=\E\\:ds=\E]l\E\\:tc=sun-e:
+M0|sun-48|Sun 48-line window:\
+	:li#48:co#80:tc=sun:
+M1|sun-34|Sun 34-line window:\
+	:li#34:co#80:tc=sun:
+M2|sun-24|Sun 24-line window:\
+	:li#24:co#80:tc=sun:
+M3|sun-17|Sun 17-line window:\
+	:li#17:co#80:tc=sun:
+
+v9|925a|tvi925a|TeleVideo Model 925:\
+	:al=\EE:am:bs:bt=\EI:bw:cd=\EY:ce=\ET:cl=^Z:cm=\E=%+ %+ :co#80:dc=\EW:\
+	:dl=\ER:do=^V:ei=:ic=\EQ:if=/usr/share/lib/tabset/std:im=:kb=^H:kd=^V:\
+	:kh=^^:kl=^H:kn#12:kr=^L:ku=^K:li#24:nd=^L:pt:se=\EG0:sg#1:so=\EG4:\
+	:ue=\EG0:ug#1:ul:up=^K:us=\EG8:is=\El\
+	:vb=\Eb\200\200\200\200\200\200\200\200\200\200\200\200\200\200\Ed:\
+	:ve=\E.4:vs=\E.2:
+
+d0|vt100|vt100-am|vt100am|dec vt100:\
+	:do=^J:co#80:li#24:cl=50\E[;H\E[2J:sf=5\ED:\
+	:le=^H:bs:am:cm=5\E[%i%d;%dH:nd=2\E[C:up=2\E[A:\
+	:ce=3\E[K:cd=50\E[J:so=2\E[7m:se=2\E[m:us=2\E[4m:ue=2\E[m:\
+	:md=2\E[1m:mr=2\E[7m:mb=2\E[5m:me=2\E[m:is=\E[1;24r\E[24;1H:\
+	:rf=/usr/share/lib/tabset/vt100:\
+	:rs=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:ks=\E[?1h\E=:ke=\E[?1l\E>:\
+	:ku=\EOA:kd=\EOB:kr=\EOC:kl=\EOD:kb=^H:\
+	:ho=\E[H:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:pt:sr=5\EM:vt#3:xn:\
+	:sc=\E7:rc=\E8:cs=\E[%i%d;%dr:
+
+# Amiga termcap by Bram Moolenaar
+AA|amiga|Amiga ANSI:\
+	:co#80:li#25:am:do=\E[B:ce=\E[K:cd=\E[J:\
+	:cl=\014:ku=\233A:kd=\233B:kl=\233D:kr=\233C:kb=^H:\
+	:#4=\233 A:%i=\233 @:%1=\233?~:\
+	:k1=\2330~:k2=\2331~:k3=\2332~:k4=\2333~:k5=\2334~:\
+	:k6=\2335~:k7=\2336~:k8=\2337~:k9=\2338~:k;=\2339~:\
+	:F1=\23310~:F2=\23311~:F3=\23312~:F4=\23313~:F5=\23314~:\
+	:F6=\23315~:F7=\23316~:F8=\23317~:F9=\23318~:FA=\23319~:\
+	:al=\E[L:AL=\E[%dL:dl=\E[M:DL=\E[%dM:le=^H:cm=\E[%i%d;%dH:\
+	:nd=\E[C:RI=\E[%dC:up=\E[A:\
+	:ce=\E[K:ho=\E[H:dc=\E[P:ic=\E[@:vi=\E[0 p:ve=\E[1 p:\
+	:so=\E[2m:se=\E[m:us=\E[4m:ue=\E[m:mr=\E[7m:mb=\E[7;2m:me=\E[m:
+
+# Acorn VDU
+# For non-green text, change the ^B in the :cl= line to
+# your favourite control code.
+a0|acorn0|Acorn VDU Driver Mode 0:\
+	:cl=^V\200^S^A^B\200\200\200:\
+	:is=^C^F^D^O^V\200^S^A^B\200\200\200:\
+	:tc=acorn_generic
+
+ag|acorn_generic|Acorn Generic VDU driver:\
+	:li#32:\
+	:co#80:\
+	:am:\
+	:bs:\
+	:bw:\
+	:bl=^G:\
+	:ce=^W^H^E^F\200\200\200\200\200\200:\
+	:cl=^L:\
+	:cm=^_%r%.%.:\
+	:ho=^^:\
+	:le=\010:\
+	:cr=\015:\
+	:me=^W^Q^E\200\200\200\200\200\200\200:\
+	:mr=^W^Q^E\200\200\200\200\200\200\200:\
+	:sb=^W^G^A^B\200\200\200\200\200\200:\
+	:se=^W^Q^E\200\200\200\200\200\200\200:\
+	:sf=^W^G^A^C\200\200\200\200\200\200:\
+	:so=^W^Q^E\200\200\200\200\200\200\200:\
+	:sr=^W^G^A^B\200\200\200\200\200\200:\
+	:up=^K:\
+	:vb=^R^C^G^Y^D\200\200\200\200^Ye\200^E\200^D^Ye\200\200\200\200:\
+	:vi=^W^A\200\200\200\200\200\200\200\200:\
+	:ve=^W^A^A\200\200\200\200\200\200\200:\
+	:ku=\317:\
+	:kd=\316:\
+	:kl=\314:\
+	:kr=\315:\
+	:kP=\337:\
+	:kN=\336:\
+	:kh=\036:\
+	:kH=\313:\
+	:su=\337:\
+	:sd=\336:\
+	:#4=\334:\
+	:%i=\335:\
+	:k1=\301:\
+	:k2=\302:\
+	:k3=\303:\
+	:k4=\304:\
+	:k5=\305:\
+	:k6=\306:\
+	:k7=\307:\
+	:k8=\310:\
+	:k9=\311:\
+	:F1=\321:\
+	:F2=\322:\
+	:F3=\323:\
+	:F4=\324:\
+	:F5=\325:\
+	:F6=\326:\
+	:F7=\327:\
+	:F8=\330:\
+	:F9=\331
+
+#
+# END OF TERMCAP
+#

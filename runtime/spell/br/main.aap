@@ -1,0 +1,86 @@
+# Aap recipe for Breton Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = br_FR.aff br_FR.dic
+
+all: $SPELLDIR/br.latin1.spl $SPELLDIR/br.utf-8.spl ../README_br.txt
+
+$SPELLDIR/br.latin1.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=latin1"
+                -c "mkspell! $SPELLDIR/br br_FR" -c q
+
+$SPELLDIR/br.utf-8.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=UTF-8"
+                -c "mkspell! $SPELLDIR/br br_FR" -c q
+
+../README_br.txt : package-description.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://extensions.libreoffice.org/extension-center/an-drouizig-breton-spellchecker/releases/0.11/
+:attr {fetch = $OODIR/%file%} dict-br-0.11.oxt
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+br_FR.aff br_FR.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch dict-br-0.11.oxt
+        :sys $UNZIP dict-br-0.11.oxt
+        :delete dict-br-0.11.oxt
+        :copy dictionaries/br_FR.aff br_FR.aff
+        :copy dictionaries/br_FR.dic br_FR.dic
+        # The br_FR.aff file contains a BOM, remove it.
+        :sys $VIM -u NONE -e -c "set enc=utf-8"
+                    -c "e br_FR.aff"
+                    -c "set nobomb ff=unix"
+                    -c "update" -c q
+        :sys $VIM -u NONE -e -c "set enc=utf-8"
+                    -c "e br_FR.dic"
+                    -c "set nobomb ff=unix"
+                    -c "update" -c q
+        @if not os.path.exists('br_FR.orig.aff'):
+            :copy br_FR.aff br_FR.orig.aff
+        @if os.path.exists('br_FR.diff'):
+            :sys patch <br_FR.diff
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 dictionaries/br_FR.aff br_FR.aff >br_FR.diff
+        :sys {force} diff -a -C 1 dictionaries/br_FR.dic br_FR.dic >>br_FR.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch dict-br-0.11.oxt
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../dict-br-0.11.oxt
+            :sys {force} diff ../dictionaries/br_FR.aff br_FR.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy br_FR.aff ../br_FR.new.aff
+            :sys {force} diff ../dictionaries/br_FR.dic br_FR.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy br_FR.dic ../br_FR.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete dict-br-0.11.oxt
+
+
+# vim: set sts=4 sw=4 :

@@ -1,0 +1,61 @@
+.TH shtags 1 "local Utilities"
+.SH NAME
+shtags \- Create tags for shell scripts
+.SH SYNOPSIS
+.B shtags
+[\fI-mvw\fP] [\fI-t <file>\fP] [\fI-s <shell>\fP] <files>
+.SH DESCRIPTION
+\fBshtags\fP creates a \fBvi(1)\fP tags file for shell scripts - which
+essentially turns your code into a hypertext document. \fBshtags\fP
+attempts to create tags for all function and variable definitions,
+although this is a little difficult, because in most shell languages,
+variables don't need to be explicitly defined, and as such there is
+often no distinct "variable definition". If this is the case,
+\fBshtags\fP simply creates a tag for the first instance of a variable
+which is being set in a simple way, ie: \fIset x = 5\fP.
+.SH OPTIONS
+.IP "\fB-t <file>\fP"
+Name of tags file to create. (default is 'tags')
+.IP "\fB-s <shell>\fP"
+The name of the shell used by the script(s). By default,
+\fBshtags\fP tries to work out which is the appropriate shell for each
+file individually by looking at the first line of each file. This wont
+work however, if the script starts as a bourne shell script and tries
+to be clever about starting the shell it really wants.
+.b
+Currently supported shells are:
+.RS
+.IP \fBsh\fP
+Bourne Shell
+.IP \fBperl\fP
+Perl (versions 4 and 5)
+.IP \fBksh\fP
+Korn Shell
+.IP \fBtclsh\fP
+The TCL shell
+.IP \fBwish\fP
+The TK Windowing shell (same as tclsh)
+.RE
+
+.IP \fB-v\fP
+Include variable definitions (variables mentioned at the start of a line)
+.IP \fB-V\fP
+Print version information.
+.IP \fB-w\fP
+Suppress "duplicate tag" warning messages.
+.IP \fB-x\fP
+Explicitly create a new tags file. Normally new tags are merged with
+the old tags file.
+.PP
+\fBshtags\fP scans the specified files for subroutines and possibly
+variable definitions, and creates a \fBvi\fP style tags file.
+.SH FILES
+.IP \fBtags\fP
+A tags file contains a sorted list of tags, one tag per line. The
+format is the same as that used by \fBvi\fP(1)
+.SH AUTHOR
+Stephen Riehm
+.br
+sr@pc-plus.de
+.SH "SEE ALSO"
+ctags(1), etags(1), perl(1), tclsh(1), wish(1), sh(1), ksh(1).

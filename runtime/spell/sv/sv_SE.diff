@@ -1,0 +1,205 @@
+*** sv_SE.orig.aff	2010-07-10 14:45:33.000000000 +0200
+--- sv_SE.aff	2010-07-11 17:42:38.000000000 +0200
+***************
+*** 6,7 ****
+--- 6,21 ----
+  NOSUGGEST !
++ FOL  ßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ
++ LOW  ßàáâãäåæçèéêëìíîïğñòóôõöøùúûüışÿ
++ UPP  ßÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞÿ
++ 
++ MAP 9
++ MAP aàáâãäå
++ MAP eèéêë
++ MAP iìíîï
++ MAP oòóôõö
++ MAP uùúûü
++ MAP nñ
++ MAP cç
++ MAP yÿı
++ MAP sß
+  
+***************
+*** 649 ****
+--- 663,763 ----
+  SFX  t  el  la/WXZ  el
++ 
++ # soundslike mapping from Aspell
++ # swedish_phonet.dat - Swedish phonetic transformation rules for aspell
++ # Copyright (C) 2000  Martin Norbäck  <d95mback@dtek.chalmers.se>
++ # distributed under GNU GPL or the Vim license, at your choice.
++ # version 0.2
++ 
++ SAL &	&
++ SAL @	@
++ SAL ANG(EIYÄÖ)-^	ANI	# förledet an- ska inte bli @-ljud
++ SAL AGNO6	AKNO	# agnostiker osv.
++ SAL AG(IE)-6	AK	# vokal+g(ie) ger ej j-ljud
++ SAL A	A
++ SAL BB-<	_
++ SAL B	P
++ SAL CCO-	K	# broccoli, piccolo
++ SAL CC	KS	# successiv, access, succé
++ SAL CH	&	# choklad osv.
++ SAL CK	K	# ck -> k som vanligt
++ SAL C(EIYÄÖ)-<	S	# c + mjuk vokal -> s
++ SAL C	K	# c + annat -> k
++ SAL DJ(UÄÖ)-	I	# djungel, djävel, adjö
++ SAL DD-	_
++ SAL D	T
++ SAL EG(IE)-6	EK	# vokal+g(ie) ger ej j-ljud
++ SAL E	E
++ SAL É	E
++ SAL FF	F
++ SAL F	F
++ SAL G(EIYÄÖ)-3	I	# g+mjuk vokal ger j-ljud
++ SAL GG6	K
++ SAL GN	@N	# ugn, lugn...
++ SAL G	K
++ SAL H(AOUÅEIYÄÖ)-^	H	# h i början av ord hörs
++ SAL H(AUOÅEIYÄÖ)-	_	# annars stumt framför vokal
++ SAL HJ	I	# hj->j (hjärta osv.)
++ SAL H	H
++ SAL IG(IE)-6	IK	# vokal+g(ie) ger ej j-ljud
++ SAL I	I
++ SAL J	I
++ SAL K(EIYÄÖ)-^	&	# k+mjuk vokal ger sje-ljud
++ SAL KJ	&	# kjol
++ SAL K	K
++ SAL LJU-	I	# ljuga, ljus
++ SAL LL-	_
++ SAL L	L
++ SAL MM-	_
++ SAL M	M
++ SAL NG6	@
++ SAL NN-	_
++ SAL N	N
++ SAL ORIGI8	ORKI	# specialfall
++ SAL OG(IE)-6	OK	# vokal+g(ie) ger ej j-ljud
++ SAL O	O
++ SAL PROJEKT	PRO&EKT	# specialfall
++ SAL PSALT<	SALT	# specialfall
++ SAL PSALM<	SALM	# specialfall
++ SAL PP-	_
++ SAL P	P
++ SAL Q	K
++ SAL RGI$6	RGI	# inget j i slutet
++ SAL RGA$6	RIA	# här är det däremot j (arga,färga)
++ SAL RGE$6	RIE	# här också (Norge, överge)
++ SAL RGS$	RIS	# rgs i slutet
++ SAL RG$	RI	# rg i slutet
++ SAL RD	T	# "blött" d
++ SAL RN	N	# "blött" n
++ SAL RT	T	# "blött" t
++ SAL RLD	T	# värld
++ SAL RL	L	# "blött" l
++ SAL RS	&	# sje-ljud (fars, gärsgård)
++ SAL RR-	_
++ SAL R	R
++ SAL SS-	_
++ SAL SCHIZ6	SKITS	# specialfall
++ SAL SCH6	&
++ SAL SKJ	&	# skjorta, skjuta
++ SAL SJ	&	# sje-ljud
++ SAL S	S
++ SAL TION9^	TION	# tionde
++ SAL TION6	&ON	# station osv.
++ SAL TT-	_
++ SAL T	T
++ SAL UG(IE)-6	UK	# vokal+g(ie) ger ej j-ljud
++ SAL U	U
++ SAL V	F
++ SAL W	F
++ SAL X9	KS
++ SAL YG(IE)-6	YK	# vokal+g(ie) ger ej j-ljud
++ SAL Y	I
++ SAL ZZ	TS
++ SAL Z	S
++ SAL ÅTTIO9	OTIO	# specialfall (ej sje-ljud)
++ SAL ÅRTION9	ORTION	# specialfall (r hörs)
++ SAL ÅG(IE)-6	OK	# vokal+g(ie) ger ej j-ljud
++ SAL Å	O
++ SAL ÄG(IE)-6	EK	# vokal+g(ie) ger ej j-ljud
++ SAL Ä	E
++ SAL ÖG(IE)-6	ÖK	# vokal+g(ie) ger ej j-ljud
++ SAL Ö	Ö
+*** sv_SE.orig.dic	2010-07-10 14:45:33.000000000 +0200
+--- sv_SE.dic	2010-07-10 14:45:33.000000000 +0200
+***************
+*** 11786,11788 ****
+  DVD
+! dvs
+  dväljas
+--- 11786,11788 ----
+  DVD
+! #dvs Removed by Stefan.
+  dväljas
+***************
+*** 31959,31960 ****
+--- 31959,32024 ----
+  korsning/ADGvY
++ 
++ # Additions by Stefan:
++ SEK
++ adr.
++ anm.
++ art.
++ aug.
++ bl.a.
++ d.v.s.
++ dec.
++ dr
++ dvs.
++ e.Kr.
++ e.d.
++ enl.
++ etc.
++ f.Kr.
++ f.d.
++ f.n.
++ f.ö.
++ febr.
++ fig.
++ fil.kand.
++ fil.lic.
++ forts.
++ fr.o.m.
++ fre.
++ jan.
++ jfr
++ kap.
++ kl.
++ lör.
++ m.fl.
++ m.m.
++ max.
++ min.
++ mån.
++ ngn
++ ngt
++ nov.
++ nr.
++ o.s.v.
++ obs.
++ okt.
++ ons.
++ osv.
++ p.g.a.
++ resp.
++ s.k.
++ sept.
++ sön.
++ t.ex.
++ t.o.m.
++ tab.
++ tis.
++ tors.
++ u.a.
++ uppl.
++ utg.
++ v.g.
++ v.g.v.
++ vard.
++ vd
++ vol.
+  korsningsfri/OY

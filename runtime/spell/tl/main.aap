@@ -1,0 +1,77 @@
+# Aap recipe for Tagalog Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = tl_PH.aff tl_PH.dic
+
+all: $SPELLDIR/tl.latin1.spl $SPELLDIR/tl.utf-8.spl ../README_tl.txt
+
+$SPELLDIR/tl.latin1.spl : $FILES
+        :sys env LANG=tl_PH.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/tl tl_PH" -c q
+
+$SPELLDIR/tl.utf-8.spl : $FILES
+        :sys $VIM -u NONE -e -c "set enc=utf-8" -c "mkspell! $SPELLDIR/tl tl_PH" -c q
+
+../README_tl.txt : README_tl_PH.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} tl_PH.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+tl_PH.aff tl_PH.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch tl_PH.zip
+        :sys $UNZIP tl_PH.zip
+        :delete tl_PH.zip
+        @if not os.path.exists('tl_PH.orig.aff'):
+            :copy tl_PH.aff tl_PH.orig.aff
+        @if not os.path.exists('tl_PH.orig.dic'):
+            :copy tl_PH.dic tl_PH.orig.dic
+        @if os.path.exists('tl_PH.diff'):
+            :sys patch <tl_PH.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 tl_PH.orig.aff tl_PH.aff >tl_PH.diff
+        :sys {force} diff -a -C 1 tl_PH.orig.dic tl_PH.dic >>tl_PH.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch tl_PH.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../tl_PH.zip
+            :sys {force} diff ../tl_PH.orig.aff tl_PH.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy tl_PH.aff ../tl_PH.new.aff
+            :sys {force} diff ../tl_PH.orig.dic tl_PH.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy tl_PH.dic ../tl_PH.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete tl_PH.zip
+
+
+# vim: set sts=4 sw=4 :

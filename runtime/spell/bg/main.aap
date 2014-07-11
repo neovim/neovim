@@ -1,0 +1,80 @@
+# Aap recipe for Bulgarian Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = bg_BG.aff bg_BG.dic
+
+all: $SPELLDIR/bg.cp1251.spl $SPELLDIR/bg.utf-8.spl ../README_bg.txt
+
+$SPELLDIR/bg.cp1251.spl : $FILES
+        :sys env LANG=bg_BG.CP1251 $VIM -u NONE -e -c "mkspell! $SPELLDIR/bg bg_BG" -c q
+
+$SPELLDIR/bg.utf-8.spl : $FILES
+        :sys env LANG=bg_BG.UTF-8 $VIM -u NONE -e -c "mkspell! $SPELLDIR/bg bg_BG" -c q
+
+../README_bg.txt: README_bg_BG.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} bg_BG.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+bg_BG.aff bg_BG.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch bg_BG.zip
+        :sys $UNZIP bg_BG.zip
+        :delete bg_BG.zip
+        :sys $VIM bg_BG.aff -u NONE -e -c "set ff=unix" -c update -c q
+        :sys $VIM bg_BG.dic -u NONE -e -c "set ff=unix" -c update -c q
+        :sys $VIM README_bg_BG.txt -u NONE -e -c "set ff=unix" -c update -c q
+        @if not os.path.exists('bg_BG.orig.aff'):
+            :copy bg_BG.aff bg_BG.orig.aff
+        @if not os.path.exists('bg_BG.orig.dic'):
+            :copy bg_BG.dic bg_BG.orig.dic
+        @if os.path.exists('bg_BG.diff'):
+            :sys patch <bg_BG.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 bg_BG.orig.aff bg_BG.aff >bg_BG.diff
+        :sys {force} diff -a -C 1 bg_BG.orig.dic bg_BG.dic >>bg_BG.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch bg_BG.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../bg_BG.zip
+            :sys {force} diff ../bg_BG.orig.aff bg_BG.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy bg_BG.aff ../bg_BG.new.aff
+            :sys {force} diff ../bg_BG.orig.dic bg_BG.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy bg_BG.dic ../bg_BG.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete bg_BG.zip
+
+
+# vim: set sts=4 sw=4 :

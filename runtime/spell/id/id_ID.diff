@@ -1,0 +1,22 @@
+*** id_ID.orig.aff	Wed Aug 31 16:41:11 2005
+--- id_ID.aff	Wed Aug 31 16:43:29 2005
+***************
+*** 18,19 ****
+--- 18,26 ----
+  
++ FOL  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ LOW  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ UPP  ‗ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞÿ
++ 
++ SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZאבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
++ SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
++ 
+  PFX A Y 1
+*** id_ID.orig.dic	Wed Aug 31 16:41:11 2005
+--- id_ID.dic	Wed Aug 31 16:41:35 2005
+***************
+*** 21729,21731 ****
+  berabarkan
+- buletin
+  kernu
+--- 21729,21730 ----

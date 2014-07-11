@@ -1,0 +1,79 @@
+# Aap recipe for Italian Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = it_IT.aff it_IT.dic
+
+all: $SPELLDIR/it.latin1.spl $SPELLDIR/it.utf-8.spl ../README_it.txt
+
+$SPELLDIR/it.latin1.spl : $FILES
+        :sys env LANG=it_IT.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/it it_IT" -c q
+
+$SPELLDIR/it.utf-8.spl : $FILES
+        :sys env LANG=it_IT.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/it it_IT" -c q
+
+../README_it.txt : README_it_IT.txt README.txt
+        :cat $source >! $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} it_IT.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+it_IT.aff it_IT.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch it_IT.zip
+        :sys $UNZIP it_IT.zip
+        :delete it_IT.zip
+        :delete GPL.txt history.txt license.txt notes.txt statistiche.sxc thanks.txt
+        @if not os.path.exists('it_IT.orig.aff'):
+            :copy it_IT.aff it_IT.orig.aff
+        @if not os.path.exists('it_IT.orig.dic'):
+            :copy it_IT.dic it_IT.orig.dic
+        @if os.path.exists('it_IT.diff'):
+            :sys patch <it_IT.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 it_IT.orig.aff it_IT.aff >it_IT.diff
+        :sys {force} diff -a -C 1 it_IT.orig.dic it_IT.dic >>it_IT.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch it_IT.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../it_IT.zip
+            :sys {force} diff ../it_IT.orig.aff it_IT.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy it_IT.aff ../it_IT.new.aff
+            :sys {force} diff ../it_IT.orig.dic it_IT.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy it_IT.dic ../it_IT.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete it_IT.zip
+
+
+# vim: set sts=4 sw=4 :

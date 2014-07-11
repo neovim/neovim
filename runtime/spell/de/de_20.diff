@@ -1,0 +1,533 @@
+*** de_20.orig.aff	Sat Nov 26 19:59:52 2005
+--- de_20.aff	Sat Nov 26 20:13:50 2005
+***************
+*** 2,3 ****
+--- 2,21 ----
+  TRY esianrtolcdugmphbyfvkwäüößáéêàâñESIANRTOLCDUGMPHBYFVKWÄÜÖ
++ 
++ FOL  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
++ LOW  àáâãäåæçèéêëìíîïğñòóôõöøùúûüışßÿ
++ UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİŞßÿ
++ 
++ MIDWORD	'
++ 
++ MAP 9
++ MAP aàáâãäå
++ MAP eèéêë
++ MAP iìíîï
++ MAP oòóôõö
++ MAP uùúûü
++ MAP nñ
++ MAP cç
++ MAP yÿı
++ MAP sß
++ 
+  #
+***************
+*** 28,31 ****
+  PFX V Y 1
+! PFX V   0     ver        . 
+!  
+  
+--- 46,49 ----
+  PFX V Y 1
+! PFX V   0     ver          .
+! 
+  
+***************
+*** 235,237 ****
+  SFX F   arzt  ärztin       arzt  
+! SFX F   arzt  Ärztinnen    arzt  
+  SFX F   Arzt  Ärztin       Arzt  
+--- 253,255 ----
+  SFX F   arzt  ärztin       arzt  
+! SFX F   arzt  ärztinnen    arzt  
+  SFX F   Arzt  Ärztin       Arzt  
+***************
+*** 1410 ****
+--- 1428,1904 ----
+  REP ö öe
++ 
++ #   German phonetic transformation rules from Aspell
++ #   Copyright (C) 2000 Björn Jacke, distributed under LGPL.
++ #   Björn Jacke may be reached by email at bjoern.jacke@gmx.de
++ #   Last changed 2000-01-07
++ 
++ SAL followup        1
++ SAL collapse_result 1
++ 
++ SAL ÄER-                 E
++ SAL ÄU<                  EU
++ SAL Ä<                   E
++ SAL É                    E
++ SAL ÖER-                 Ö
++ SAL Ö                    Ö
++ SAL ÜBER^^               IPA
++ SAL ÜER-                 I
++ SAL Ü                    I
++ SAL ß                    Z
++ SAL ABELLE$              APL
++ SAL ABELL$               APL
++ SAL ABIENNE$             APIN
++ SAL ACEY$                AZI
++ SAL AEU<                 EU
++ SAL AE2                  E
++ SAL AGNI-^               AKN
++ SAL AGNIE-               ANI
++ SAL AGN(AEOU)-$          ANI
++ SAL AIA2                 AIA
++ SAL AIE$                 E
++ SAL AILL(EOU)-           ALI
++ SAL AINE$                EN
++ SAL AIRE$                ER
++ SAL AIR-                 E
++ SAL AISE$                EZ
++ SAL AISSANCE$            EZANZ
++ SAL AISSE$               EZ
++ SAL AIX$                 EX
++ SAL AJ(AÄEIOÖUÜ)--       A
++ SAL AKTIE                AXIE
++ SAL ALO(IY)^             ALUI
++ SAL AMATEU(RS)-          ANATÖ
++ SAL ANIELLE$             ANIL
++ SAL ANTI^^               ANTI
++ SAL ANVER^^              ANFA
++ SAL ATIA$                ATIA
++ SAL ATIA(NS)--           ATI
++ SAL ATI(AÄOÖUÜ)-         AZI
++ SAL AUAU--               _
++ SAL AUER<                AUA
++ SAL AUF^^                AUF
++ SAL AULT$                U
++ SAL AUSSE$               UZ
++ SAL AUS(ST)-^            AUZ
++ SAL AUS^^                AUZ
++ SAL AUTO^^               AUTU
++ SAL AUX(IY)-             AUX
++ SAL AUX                  U
++ SAL AU                   AU
++ SAL AVIER$               AFIE
++ SAL AYER--<              EI
++ SAL AY(AÄEIOÖUÜ)--       A
++ SAL A(IJY)<              EI
++ SAL A                    A
++ SAL BEA(BCMNRU)-^        PEA
++ SAL BEAT(AEIMORU)-^      PEAT
++ SAL BEIGE^$              PEZ
++ SAL BE(LMNRST)-^         PE
++ SAL BETTE$               PET
++ SAL BIC$                 PIZ
++ SAL BOWL(EI)-            PUL
++ SAL BP(AÄEIOÖRUÜY)-      P
++ SAL BUDGET7              PIKE
++ SAL BUFFET7              PIFE
++ SAL BYLLE$               PILE
++ SAL BYLL$                PIL
++ SAL BYTE<                PEIT
++ SAL B                    P
++ SAL CÄ-                  Z
++ SAL CÜ$                  ZI
++ SAL CACH(EI)-^           KEZ
++ SAL CAE--                Z
++ SAL CA(IY)$              ZEI
++ SAL CCH                  Z
++ SAL CCE-                 X
++ SAL CE(EIJUY)--          Z
++ SAL CENT<                ZENT
++ SAL CERST(EI)----^       KE
++ SAL CER$                 ZA
++ SAL CE3                  ZE
++ SAL CHAO(ST)-            KAU
++ SAL CHAMPIO-^            ZENPI
++ SAL CHAR(AI)-^           KAR
++ SAL CHAU(CDFSVWXZ)-      ZU
++ SAL CHE(CF)-             ZE
++ SAL CHEM-^               KE
++ SAL CHEQUE<              ZEK
++ SAL CHI(CFGPVW)-         ZI
++ SAL CH(AEUY)-<^          Z
++ SAL CHK-                 _
++ SAL CH(LOR)-<^           K
++ SAL CHST-                X
++ SAL CH(SßXZ)3            X
++ SAL CH                   K
++ SAL CIER$                ZIE
++ SAL CYB-^                ZEI
++ SAL CY9^                 ZI
++ SAL C(IJY)-3             Z
++ SAL CKST                 XT
++ SAL CK(SßXZ)3            X
++ SAL C(CK)-               _
++ SAL CLAUDET---           KLU
++ SAL CLAUDINE^$           KLUTIN
++ SAL COLE$                KUL
++ SAL COUCH                KAUZ
++ SAL CQUES$               K
++ SAL CQUE                 K
++ SAL CREAT-^              KREA
++ SAL CST                  XT
++ SAL CS<^                 Z
++ SAL C(SßX)               X
++ SAL CT(SßXZ)             X
++ SAL CZ<                  Z
++ SAL C<                   K
++ SAL D'H^                 T
++ SAL D'S3$                Z
++ SAL DAVO(NR)-^$          TAFU
++ SAL DD(SZ)--<            _
++ SAL DEPOT7               TEPU
++ SAL DESIGN               TIZEIN
++ SAL DE(LMNRST)-3^        TE
++ SAL DETTE$               TET
++ SAL DIC$                 TIZ
++ SAL DJ(AEIOU)-^          I
++ SAL DS(CH)--<            T
++ SAL DST                  ZT
++ SAL DT-                  _
++ SAL DUIS-^               TI
++ SAL DURCH^^              TURK
++ SAL DZS(CH)--            T
++ SAL D(SßZ)               Z
++ SAL D                    T
++ SAL EAULT$               U
++ SAL EAUX$                U
++ SAL EAU                  U
++ SAL EAV                  IF
++ SAL EA(AÄEIOÖÜY)-3       EA
++ SAL EA3$                 EA
++ SAL EA3                  I
++ SAL EBEN^^               EPN
++ SAL EE9                  E
++ SAL EIEI--               _
++ SAL EIH--                E
++ SAL EILLE$               EI
++ SAL EI                   EI
++ SAL EJ$                  EI
++ SAL EL-^                 E
++ SAL EL(DKL)--1           E
++ SAL EL(MNT)--1$          E
++ SAL ELYNE$               ELINE
++ SAL ELYN$                ELIN
++ SAL EL(AÄEIOÖUÜY)-1      EL
++ SAL EL-1                 L
++ SAL EM-^                 E
++ SAL EM(DFKMPQT)--1       E
++ SAL EM(AÄEIOÖUÜY)--1     E
++ SAL EM-1                 N
++ SAL EN-^                 E
++ SAL EN(CDGKQT)--1        E
++ SAL ENZ(AEIOUY)--1       EN
++ SAL EN(AÄEINOÖUÜY)-1     EN
++ SAL EN-<1                N
++ SAL ERH(AÄEIOÖUÜ)-^      ER
++ SAL ER-^                 E
++ SAL ER(AÄEIOÖUÜY)-1      A
++ SAL ER1$                 A
++ SAL ER<1                 A
++ SAL ETI(AÄOÖÜU)-         EZI
++ SAL EUEU--               _
++ SAL EUILLE$              Ö
++ SAL EUR$                 ÖR
++ SAL EUX                  Ö
++ SAL EUYS$                EUZ
++ SAL EU                   EU
++ SAL EYER<                EIA
++ SAL EY<                  EI
++ SAL E                    E
++ SAL FANS--^$             FE
++ SAL FAN-^$               FE
++ SAL FAULT-               FUL
++ SAL FEE(DL)-             FI
++ SAL FEHLER               FELA
++ SAL FE(LMNRST)-3^        FE
++ SAL FOND7                FUN
++ SAL FRAIN$               FRA
++ SAL FRISEU(RS)-          FRIZÖ  # x
++ SAL F                    F
++ SAL G'S$                 X
++ SAL GAGS^$               KEX
++ SAL GAG^$                KEK
++ SAL GD                   KT
++ SAL GEGEN^^              KEKN
++ SAL GE(LMNRST)-3^        KE
++ SAL GETTE$               KET
++ SAL G(CK)-               _
++ SAL GG-                  _
++ SAL GI(AO)-^             I
++ SAL GION$                KIUN
++ SAL GIUS-^               IU
++ SAL GMBH^$               GMPH
++ SAL GNAC$                NIAK
++ SAL GNON$                NIUN
++ SAL GN$                  N
++ SAL GONCAL-^             KUNZA
++ SAL GS(CH)--             K
++ SAL GST                  XT
++ SAL G(SßXZ)              X
++ SAL GUCK-                KU
++ SAL GUI-^                K
++ SAL G                    K
++ SAL HEAD-                E
++ SAL HE(LMNRST)-3^        E
++ SAL HE(LMN)-1            E
++ SAL HEUR1$               ÖR
++ SAL H^                   _
++ SAL IEC$                 IZ
++ SAL IEI-3                _
++ SAL IELL3                IEL
++ SAL IENNE$               IN
++ SAL IERRE$               IER
++ SAL IETTE$               IT
++ SAL IEU                  IÖ
++ SAL IE<4                 I
++ SAL IGHT3$               EIT
++ SAL IGNI(EO)-            INI
++ SAL IGN(AEOU)-$          INI
++ SAL IJ(AOU)-             I
++ SAL IJ$                  I
++ SAL IJ<                  EI
++ SAL IKOLE$               IKUL
++ SAL ILLAN(STZ)--         ILIA
++ SAL ILLAR(DT)--          ILIA
++ SAL INVER-               INFE
++ SAL ITI(AÄOÖUÜ)-         IZI
++ SAL IVIER$               IFIE
++ SAL I                    I
++ SAL JAVIE---<^           ZA
++ SAL JEAN^$               IA
++ SAL JEAN-^               IA
++ SAL JER-^                IE
++ SAL JE(LMNST)-           IE
++ SAL JOR(GK)^$            IÖRK
++ SAL J                    I
++ SAL KC(ÄEIJ)-            X
++ SAL KE(LMNRST)-3^        KE
++ SAL KH<^                 K
++ SAL KIC$                 KIZ
++ SAL KLE(LMNRST)-3^       KLE
++ SAL KOTELE-^             KUTL
++ SAL KREAT-^              KREA
++ SAL KST                  XT
++ SAL K(SßXZ)              X
++ SAL KTI(AIOU)-3          XI
++ SAL KT(SßXZ)             X
++ SAL K                    K
++ SAL LARVE-               LARF
++ SAL LEAND-^              LEAN
++ SAL LEL-                 LE
++ SAL LE(MNRST)-3^         LE
++ SAL LETTE$               LET
++ SAL LFGNAG-              LFKAN
++ SAL LIC$                 LIZ
++ SAL LIVE^$               LEIF
++ SAL LUI(GS)--            LU
++ SAL L                    L
++ SAL MASSEU(RS)-          NAZÖ
++ SAL MAURICE              NURIZ
++ SAL MBH^$                MPH
++ SAL MB(SßZ)-             N
++ SAL MC9^                 NK
++ SAL MEMOIR-^             NENUA
++ SAL ME(LMNRST)-3^        NE
++ SAL MIGUEL               NIKL
++ SAL MIKE^$               NEIK
++ SAL MN                   N
++ SAL MPJUTE-              NPUT
++ SAL MP(SßZ)-             N
++ SAL MP(BDJLMNPQRTVW)-    NP
++ SAL M                    N
++ SAL NACH^^               NAK
++ SAL NADINE               NATIN
++ SAL NAIV--               NA
++ SAL NAISE$               NEZE
++ SAL NCOISE$              ZUA
++ SAL NCOIS$               ZUA
++ SAL NEBEN^^              NEPN
++ SAL NE(LMNRST)-3^        NE
++ SAL NEN-3                NE
++ SAL NETTE$               NET
++ SAL NG(BDFJLMNPQRTVW)-   NK
++ SAL NICHTS^^             NIX
++ SAL NICHT^^              NIKT
++ SAL NINE$                NIN
++ SAL NON^^                NUN
++ SAL NOT^^                NUT
++ SAL NTI(AIOU)-3          NZI
++ SAL NTIEL--3             NZI
++ SAL NYLON                NEILUN
++ SAL ND(SßZ)$             NZ
++ SAL NT(SßZ)$             NZ
++ SAL ND'S$                NZ
++ SAL NT'S$                NZ
++ SAL NSTS$                NZ
++ SAL N                    N
++ SAL OBER^^               UPA
++ SAL OE2                  Ö
++ SAL OGNIE-               UNI
++ SAL OGN(AEOU)-$          UNI
++ SAL OIE$                 Ö
++ SAL OIR$                 UAR
++ SAL OIX                  UA
++ SAL OI<3                 EU
++ SAL OJ(AÄEIOÖUÜ)--       U
++ SAL OKAY^$               UKE
++ SAL OLYN$                ULIN
++ SAL OTI(AÄOÖUÜ)-         UZI
++ SAL OUI^                 FI
++ SAL OUILLE$              ULIE
++ SAL OU(DT)-^             AU
++ SAL OUSE$                AUZ
++ SAL OUT-                 AU
++ SAL OU                   U
++ SAL OWS$                 UZ
++ SAL OY(AÄEIOÖUÜ)--       U
++ SAL O(JY)<               EU
++ SAL O                    U
++ SAL PATIEN--^            PAZI
++ SAL PENSIO-^             PANZI
++ SAL PE(LMNRST)-3^        PE
++ SAL PFER-^               FE
++ SAL P(FH)<               F
++ SAL POLY^^               PULI
++ SAL PORTRAIT7            PURTRE
++ SAL PP(FH)--<            P
++ SAL PP-                  _
++ SAL PRIX^$               PRI
++ SAL P(SßZ)^              Z
++ SAL PTI(AÄOÖUÜ)-3        PZI
++ SAL PIC^$                PIK
++ SAL P                    P
++ SAL QUE(LMNRST)-3        KFE
++ SAL QUE$                 K
++ SAL QUI(NS)$             KI
++ SAL QU                   KF
++ SAL Q<                   K
++ SAL RCH                  RK
++ SAL RECHERCH^            REZAZ
++ SAL RER$                 RA
++ SAL RE(MNR)-4            RE
++ SAL RETTE$               RET
++ SAL RH<^                 R
++ SAL RJA(MN)--            RI
++ SAL RTI(AÄOÖUÜ)-3        RZI
++ SAL RY(KN)-$             RI
++ SAL R                    R
++ SAL SAFE^$               ZEIF
++ SAL SAUCE-^              ZUZ
++ SAL SCHSCH---7           _
++ SAL SCHTSCH              Z
++ SAL SC(HZ)<              Z
++ SAL SC                   ZK
++ SAL SELBSTST--7^^        ZELP
++ SAL SELBST7^^            ZELPZT
++ SAL SERVICE7^            ZÖRFIZ
++ SAL SE(LMNRST)-3^        ZE
++ SAL SETTE$               ZET
++ SAL SHP-^                Z
++ SAL SHST                 ZT
++ SAL SHTSH                Z
++ SAL SHT                  Z
++ SAL SH3                  Z
++ SAL SIEGLI-^             ZIKL
++ SAL SIGLI-^              ZIKL
++ SAL SIGHT                ZEIT
++ SAL SIGN                 ZEIN
++ SAL SKI(NPZ)-            ZKI
++ SAL SKI<^                ZI
++ SAL SOUND-               ZAUN
++ SAL STAATS^^             ZTAZ
++ SAL STADT^^              ZTAT
++ SAL START^^              ZTART
++ SAL STAURANT7            ZTURAN
++ SAL STEAK-               ZTE
++ SAL STRAF^^              ZTRAF
++ SAL ST'S$                Z
++ SAL STST--               _
++ SAL STS(ACEHIOUÄÜÖ)--    ZT
++ SAL ST(SZ)               Z
++ SAL STYN(AE)-$           ZTIN
++ SAL ST                   ZT
++ SAL SZE(NPT)-^           ZE
++ SAL SZI(ELN)-^           ZI
++ SAL SZCZ<                Z
++ SAL SZT<                 ZT
++ SAL SZ<3                 Z
++ SAL S                    Z
++ SAL T'S3$                Z
++ SAL TCH                  Z
++ SAL TEAT-^               TEA
++ SAL TE(LMNRST)-3^        TE
++ SAL TH<                  T
++ SAL TIC$                 TIZ
++ SAL TOAS-^               TU
++ SAL TOILET-              TULE
++ SAL TOIN-                TUA
++ SAL TRAINI-              TREN
++ SAL TSCH                 Z
++ SAL TSH                  Z
++ SAL TST                  ZT
++ SAL T(Sß)                Z
++ SAL TT(SZ)--<            _
++ SAL TT9                  T
++ SAL TZ-                  _
++ SAL T                    T
++ SAL UEBER^^              IPA
++ SAL UE2                  I
++ SAL UIE$                 I
++ SAL UM^^                 UN
++ SAL UNTERE--             UNTE
++ SAL UNTER^^              UNTA
++ SAL UNVER^^              UNFA
++ SAL UN^^                 UN
++ SAL UTI(AÄOÖUÜ)-         UZI
++ SAL U                    U
++ SAL VACL-^               FAZ
++ SAL VAC$                 FAZ
++ SAL VEDD-^               FE
++ SAL VEREIN               FAEIN
++ SAL VERSEN^              FAZN
++ SAL VER^^                FA
++ SAL VER                  FA
++ SAL VET(HT)-^            FET
++ SAL VETTE$               FET
++ SAL VIC$                 FIZ
++ SAL VIEL                 FIL
++ SAL VIEW                 FIU
++ SAL VOR^^                FUR
++ SAL VY9^                 FI
++ SAL V<                   F
++ SAL WE(LMNRST)-3^        FE
++ SAL WIC$                 FIZ
++ SAL WIEDER^^             FITA
++ SAL WY9^                 FI
++ SAL W                    F
++ SAL XE(LMNRST)-3^        XE
++ SAL X<^                  Z
++ SAL X(CSZ)               X
++ SAL XTS(CH)--            XT
++ SAL XT(SZ)               Z
++ SAL X                    X
++ SAL YE(LMNRST)-3^        IE
++ SAL YE-3                 I
++ SAL YOR(GK)^$            IÖRK
++ SAL Y(AOU)-<7            I
++ SAL YVES^$               IF
++ SAL YVONNE^$             IFUN
++ SAL Y                    I
++ SAL ZC(AOU)-             ZK
++ SAL ZE(LMNRST)-3^        ZE
++ SAL ZH<                  Z
++ SAL ZS(CHT)--            _
++ SAL ZS                   Z
++ SAL ZUERST               ZUERZT
++ SAL ZURÜCK^^             ZURIK
++ SAL ZUVER^^              ZUFA    # x
++ SAL Z                    Z
+*** de_20.orig.dic	Sat Nov 26 19:59:53 2005
+--- de_20.dic	Mon Jan  2 20:19:18 2006
+***************
+*** 1,3 ****
+  314626
+- 23394
+  A-Bombe/N
+--- 1,2 ----

@@ -1,0 +1,126 @@
+# Aap recipe for French Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = fr_FR.aff fr_FR.dic
+
+all: $SPELLDIR/fr.latin1.spl $SPELLDIR/fr.utf-8.spl ../README_fr.txt
+
+# The spell file is iso-8859-15, but Vim normally uses "latin1" for this.
+# This is OK for the utf-8 files, but for latin1 we need to avoid the "oe"
+# character.  When unpacking we create four files:
+#    fr_FR_latin1.aff    modified file
+#    fr_FR_latin1.dic    modified file
+#    fr_FR_iso15.aff     original file (after applying diff)
+#    fr_FR_iso15.dic     original file (after applying diff)
+# Just before using the dictionary files, the right ones are copied to
+#    fr_FR.aff
+#    fr_FR.dic
+
+$SPELLDIR/fr.latin1.spl : $FILES
+        :copy {force} fr_FR_latin1.aff fr_FR.aff
+        :copy {force} fr_FR_latin1.dic fr_FR.dic
+        :sys env LANG=fr_FR.ISO-8859-15@euro
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/fr fr_FR" -c q
+
+$SPELLDIR/fr.utf-8.spl : $FILES
+        :copy {force} fr_FR_iso15.aff fr_FR.aff
+        :copy {force} fr_FR_iso15.dic fr_FR.dic
+        :sys env LANG=fr_FR.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/fr fr_FR" -c q
+
+../README_fr.txt : README_fr_FR.txt
+        :cat $source >!$target
+
+#
+# Used to fetch the files from OpenOffice.org.  Those are old.
+# Later versions are elsewhere.
+#
+#OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+ZIPFILE = http://dico.savant.free.fr/_download/fr_FR_1-1-6.zip
+
+:attr {fetch = $ZIPFILE} fr_FR.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+fr_FR.aff fr_FR.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch fr_FR.zip
+        :sys $UNZIP fr_FR.zip
+        :delete fr_FR.zip
+        @if not os.path.exists('fr_FR.orig.aff'):
+            :copy fr_FR.aff fr_FR.orig.aff
+        @if not os.path.exists('fr_FR.orig.dic'):
+            :copy fr_FR.dic fr_FR.orig.dic
+        @if os.path.exists('fr_FR.diff'):
+            :sys patch <fr_FR.diff
+
+        # Keep the unmodified files (after diff) for ISO-8859-15.
+        :copy fr_FR.aff fr_FR_iso15.aff
+        :copy fr_FR.dic fr_FR_iso15.dic
+        # For the latin1 .dic file change all the "oe" characters to the two
+        # characters "oe".
+        :sys $VIM -u NONE -e -c "set enc=latin1"
+                    -c "e fr_FR.dic"
+                    -c "%s/½/oe/g"
+                    -c "w! fr_FR_latin1.dic"
+                    -c q
+        # For the latin1 .aff file delete all the "oe" and "OE" characters and
+        # delete the REP lines with those characters.
+        :sys $VIM -u NONE -e -c "set enc=latin1"
+                    -c "e fr_FR.aff"
+                    -c "%s/½//g"
+                    -c "%s/¼//g"
+                    -c "%g/REP.*oe/d"
+                    -c "w! fr_FR_latin1.aff"
+                    -c q
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+# This uses the iso-8859-15 files.
+diff:
+        :assertpkg diff
+        :copy {force} fr_FR_iso15.aff fr_FR.aff
+        :copy {force} fr_FR_iso15.dic fr_FR.dic
+        :sys {force} diff -a -C 1 fr_FR.orig.aff fr_FR.aff >fr_FR.diff
+        :sys {force} diff -a -C 1 fr_FR.orig.dic fr_FR.dic >>fr_FR.diff
+
+# Delete all the unpacked and generated files, including the "orig" files.
+clean:
+        :delete {force} fr_FR.zip fr_FR.aff fr_FR.dic
+                        fr_FR.aff.orig fr_FR.dic.orig
+                        fr_FR.orig.aff fr_FR.orig.dic
+                        fr_FR_latin1.aff fr_FR_latin1.dic
+                        fr_FR_iso15.aff fr_FR_iso15.dic
+                        README_fr_FR.txt
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch fr_FR.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../fr_FR.zip
+            :sys {force} diff ../fr_FR.orig.aff fr_FR.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy fr_FR.aff ../fr_FR.new.aff
+            :sys {force} diff ../fr_FR.orig.dic fr_FR.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy fr_FR.dic ../fr_FR.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete fr_FR.zip
+
+
+# vim: set sts=4 sw=4 :

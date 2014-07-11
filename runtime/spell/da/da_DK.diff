@@ -1,0 +1,140 @@
+*** da_DK.orig.aff	Sun Aug 14 20:04:31 2005
+--- da_DK.aff	Thu Sep 29 22:20:15 2005
+***************
+*** 6,7 ****
+--- 6,13 ----
+  
++ FOL  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
++ LOW  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
++ UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗ÿ
++ 
++ MIDWORD	'-
++ 
+  # Foranstilling af u-
+***************
+*** 606,618 ****
+--- 612,735 ----
+  
++ # sound folding from Aspell
++ # Doesn't contain a copyright notice.
++ # version 0.1-2002.12.15-3
++ 
++ SAL AA<                  Å
++ SAL ACTION               AKSJON
++ SAL AF<                  AV
++ SAL ASIE<                ASJE
++ SAL A                    A
++ 
++ SAL BEDST<               BEST
++ SAL BORD<                BOR
++ SAL BRYST<               BRØST
++ SAL BUREAU               BYRO
++ SAL B                    B
++ 
++ SAL CC<                  KS
++ SAL CK<                  K  
++ SAL CH<                  TJ
++ SAL CI<                  SI
++ SAL CO<                  KO
++ SAL CY<                  SY
++ SAL C<                   S
++ SAL #C                   C
++ 
++ SAL DIG^$                DAJ
++ SAL DIG<                 DI
++ SAL D$                   _
++ SAL D                    D
++ 
++ SAL EAUX<                O
++ SAL EAU<                 O
++ SAL EJ$<                 AJ
++ SAL EU<                  ØV
++ SAL E                    E
++ 
++ SAL É                    E
++ 
++ SAL È                    E
++ 
++ SAL FEDT<                FET
++ SAL F                    F
++ 
++ SAL G                    G
++ 
++ SAL HJ^<                 J
++ SAL HÅRD<                HÅR
++ SAL HÅND<                HÅN
++ SAL H                    H
++ 
++ SAL ION<                 JON
++ SAL IND^<                IN
++ SAL I                    I
++ 
++ SAL J                    J
++ 
++ SAL K                    K
++ 
++ # Stumt G
++ SAL LIG<                 LI
++ SAL L                    L
++ 
++ SAL MAND<                MAN
++ SAL MIG^$                MAJ
++ SAL M                    M
++ 
++ SAL N                    N
++ 
++ SAL OST                  ÅST
++ SAL O                    O
++ 
++ SAL Ó                    O
++ 
++ SAL PH<                  F
++ SAL P                    P
++ 
++ SAL Q<                   KU
++ 
++ SAL REGN<                REJN
++ SAL RUG<                 RU
++ SAL RYG                  RØG
++ SAL R                    R
++ 
++ SAL SH<                  SJ
++ SAL SIG^$                SAJ
++ SAL SKIND<               SKIN
++ SAL S'S<$                S
++ SAL S                    S
++ 
++ SAL TION                 SJON
++ SAL TZ<                  TS
++ SAL T                    T
+  
++ SAL U                    U
+  
++ SAL Ü<                   Y
+  
++ SAL V                    V
+  
++ SAL W<                   V
+  
++ SAL X'S<                 KS
++ SAL X<                   KS
+  
++ SAL YKK<                 ØKK
++ SAL YND<                 ØND
++ SAL Y                    Y
+  
++ SAL Z'S<                 S
++ SAL Z<                   S
++ SAL #Z                   Z
+  
++ SAL Æ                    Æ
+  
++ SAL Ä<                   Æ
+  
++ # eks. Han lרv en tur (lרb) 
++ SAL ØB<                  ØV
++ SAL Ø                    Ø
+  
++ SAL Ö<                   Ø
+  
++ SAL Å                    Å

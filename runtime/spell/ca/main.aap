@@ -1,0 +1,81 @@
+# Aap recipe for Catelan (Spain) Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = ca_ES.aff ca_ES.dic
+
+all: $SPELLDIR/ca.latin1.spl $SPELLDIR/ca.utf-8.spl ../README_ca.txt
+
+$SPELLDIR/ca.latin1.spl : $FILES
+        :sys env LANG=ca_ES.ISO8859-1
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/ca ca_ES" -c q
+
+$SPELLDIR/ca.utf-8.spl : $FILES
+        :sys env LANG=ca_ES.UTF-8
+		$VIM -u NONE -e -c "mkspell! $SPELLDIR/ca ca_ES" -c q
+
+../README_ca.txt : README_ca_ES.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} ca_ES.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# Make sure the files are in Unix fileformat
+ca_ES.aff ca_ES.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch ca_ES.zip
+        :sys $UNZIP ca_ES.zip
+        :delete ca_ES.zip
+        :sys $VIM ca_ES.aff -u NONE -c "set ff=unix" -c "update" -c q
+        :sys $VIM ca_ES.dic -u NONE -c "set ff=unix" -c "update" -c q
+        @if not os.path.exists('ca_ES.orig.aff'):
+            :copy ca_ES.aff ca_ES.orig.aff
+        @if not os.path.exists('ca_ES.orig.dic'):
+            :copy ca_ES.dic ca_ES.orig.dic
+        @if os.path.exists('ca_ES.diff'):
+            :sys patch <ca_ES.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 ca_ES.orig.aff ca_ES.aff >ca_ES.diff
+        :sys {force} diff -a -C 1 ca_ES.orig.dic ca_ES.dic >>ca_ES.diff
+
+
+# Check for updated OpenOffice spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch ca_ES.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../ca_ES.zip
+            :sys {force} diff ../ca_ES.orig.aff ca_ES.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy ca_ES.aff ../ca_ES.new.aff
+            :sys {force} diff ../ca_ES.orig.dic ca_ES.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy ca_ES.dic ../ca_ES.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete ca_ES.zip
+
+
+# vim: set sts=4 sw=4 :

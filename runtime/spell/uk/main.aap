@@ -1,0 +1,57 @@
+# Aap recipe for Ukrainian Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = uk_UA.aff uk_UA.dic
+
+all: $SPELLDIR/uk.koi8-u.spl $SPELLDIR/uk.utf-8.spl \
+        ../README_uk.txt
+
+$SPELLDIR/uk.koi8-u.spl : $FILES
+        :sys env LANG=uk_UA.KOI8-U $VIM -u NONE -e -c "mkspell! $SPELLDIR/uk uk_UA" -c q
+
+$SPELLDIR/uk.utf-8.spl : $FILES
+        :sys env LANG=uk_UA.UTF-8 $VIM -u NONE -e -c "mkspell! $SPELLDIR/uk uk_UA" -c q
+
+../README_uk.txt: README_uk_UA.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} uk_UA.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+uk_UA.aff uk_UA.dic: {buildcheck=}
+        :assertpkg unzip
+        :fetch uk_UA.zip
+        :sys unzip uk_UA.zip
+        :delete uk_UA.zip
+        @if not os.path.exists('uk_UA.orig.aff'):
+            :copy uk_UA.aff uk_UA.orig.aff
+        @if not os.path.exists('uk_UA.orig.dic'):
+            :copy uk_UA.dic uk_UA.orig.dic
+        @if os.path.exists('uk_UA.diff'):
+            :sys patch <uk_UA.diff
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 uk_UA.orig.aff uk_UA.aff >uk_UA.diff
+        :sys {force} diff -a -C 1 uk_UA.orig.dic uk_UA.dic >>uk_UA.diff
+
+# Check for updated spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :print Doesn't work yet.

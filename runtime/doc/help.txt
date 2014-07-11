@@ -1,0 +1,221 @@
+*help.txt*	For Vim version 7.4.  Last change: 2012 Dec 06
+
+			VIM - main help file
+									 k
+      Move around:  Use the cursor keys, or "h" to go left,	       h   l
+		    "j" to go down, "k" to go up, "l" to go right.	 j
+Close this window:  Use ":q<Enter>".
+   Get out of Vim:  Use ":qa!<Enter>" (careful, all changes are lost!).
+
+Jump to a subject:  Position the cursor on a tag (e.g. |bars|) and hit CTRL-].
+   With the mouse:  ":set mouse=a" to enable the mouse (in xterm or GUI).
+		    Double-click the left mouse button on a tag, e.g. |bars|.
+	Jump back:  Type CTRL-T or CTRL-O (repeat to go further back).
+
+Get specific help:  It is possible to go directly to whatever you want help
+		    on, by giving an argument to the |:help| command.
+		    It is possible to further specify the context:
+							*help-context*
+			  WHAT			PREPEND    EXAMPLE	~
+		      Normal mode command      (nothing)   :help x
+		      Visual mode command	  v_	   :help v_u
+		      Insert mode command	  i_	   :help i_<Esc>
+		      Command-line command	  :	   :help :quit
+		      Command-line editing	  c_	   :help c_<Del>
+		      Vim command argument	  -	   :help -r
+		      Option			  '	   :help 'textwidth'
+  Search for help:  Type ":help word", then hit CTRL-D to see matching
+		    help entries for "word".
+		    Or use ":helpgrep word". |:helpgrep|
+
+VIM stands for Vi IMproved.  Most of VIM was made by Bram Moolenaar, but only
+through the help of many others.  See |credits|.
+------------------------------------------------------------------------------
+						*doc-file-list* *Q_ct*
+BASIC:
+|quickref|	Overview of the most common commands you will use
+|tutor|		30 minutes training course for beginners
+|copying|	About copyrights
+|iccf|		Helping poor children in Uganda
+|sponsor|	Sponsor Vim development, become a registered Vim user
+|www|		Vim on the World Wide Web
+|bugs|		Where to send bug reports
+
+USER MANUAL: These files explain how to accomplish an editing task.
+
+|usr_toc.txt|	Table Of Contents
+
+Getting Started ~
+|usr_01.txt|  About the manuals
+|usr_02.txt|  The first steps in Vim
+|usr_03.txt|  Moving around
+|usr_04.txt|  Making small changes
+|usr_05.txt|  Set your settings
+|usr_06.txt|  Using syntax highlighting
+|usr_07.txt|  Editing more than one file
+|usr_08.txt|  Splitting windows
+|usr_09.txt|  Using the GUI
+|usr_10.txt|  Making big changes
+|usr_11.txt|  Recovering from a crash
+|usr_12.txt|  Clever tricks
+
+Editing Effectively ~
+|usr_20.txt|  Typing command-line commands quickly
+|usr_21.txt|  Go away and come back
+|usr_22.txt|  Finding the file to edit
+|usr_23.txt|  Editing other files
+|usr_24.txt|  Inserting quickly
+|usr_25.txt|  Editing formatted text
+|usr_26.txt|  Repeating
+|usr_27.txt|  Search commands and patterns
+|usr_28.txt|  Folding
+|usr_29.txt|  Moving through programs
+|usr_30.txt|  Editing programs
+|usr_31.txt|  Exploiting the GUI
+|usr_32.txt|  The undo tree
+
+Tuning Vim ~
+|usr_40.txt|  Make new commands
+|usr_41.txt|  Write a Vim script
+|usr_42.txt|  Add new menus
+|usr_43.txt|  Using filetypes
+|usr_44.txt|  Your own syntax highlighted
+|usr_45.txt|  Select your language
+
+Making Vim Run ~
+|usr_90.txt|  Installing Vim
+
+
+REFERENCE MANUAL: These files explain every detail of Vim.	*reference_toc*
+
+General subjects ~
+|intro.txt|	general introduction to Vim; notation used in help files
+|help.txt|	overview and quick reference (this file)
+|helphelp.txt|	about using the help files
+|index.txt|	alphabetical index of all commands
+|help-tags|	all the tags you can jump to (index of tags)
+|howto.txt|	how to do the most common editing tasks
+|tips.txt|	various tips on using Vim
+|message.txt|	(error) messages and explanations
+|quotes.txt|	remarks from users of Vim
+|todo.txt|	known problems and desired extensions
+|develop.txt|	development of Vim
+|debug.txt|	debugging Vim itself
+|uganda.txt|	Vim distribution conditions and what to do with your money
+
+Basic editing ~
+|starting.txt|	starting Vim, Vim command arguments, initialisation
+|editing.txt|	editing and writing files
+|motion.txt|	commands for moving around
+|scroll.txt|	scrolling the text in the window
+|insert.txt|	Insert and Replace mode
+|change.txt|	deleting and replacing text
+|indent.txt|	automatic indenting for C and other languages
+|undo.txt|	Undo and Redo
+|repeat.txt|	repeating commands, Vim scripts and debugging
+|visual.txt|	using the Visual mode (selecting a text area)
+|various.txt|	various remaining commands
+|recover.txt|	recovering from a crash
+
+Advanced editing ~
+|cmdline.txt|	Command-line editing
+|options.txt|	description of all options
+|pattern.txt|	regexp patterns and search commands
+|map.txt|	key mapping and abbreviations
+|tagsrch.txt|	tags and special searches
+|quickfix.txt|	commands for a quick edit-compile-fix cycle
+|windows.txt|	commands for using multiple windows and buffers
+|tabpage.txt|	commands for using multiple tab pages
+|syntax.txt|	syntax highlighting
+|spell.txt|	spell checking
+|diff.txt|	working with two to four versions of the same file
+|autocmd.txt|	automatically executing commands on an event
+|filetype.txt|	settings done specifically for a type of file
+|eval.txt|	expression evaluation, conditional commands
+|fold.txt|	hide (fold) ranges of lines
+
+Special issues ~
+|print.txt|	printing
+|remote.txt|	using Vim as a server or client
+|term.txt|	using different terminals and mice
+|digraph.txt|	list of available digraphs
+|mbyte.txt|	multi-byte text support
+|mlang.txt|	non-English language support
+|arabic.txt|	Arabic language support and editing
+|farsi.txt|	Farsi (Persian) editing
+|hebrew.txt|	Hebrew language support and editing
+|russian.txt|	Russian language support and editing
+|ft_ada.txt|	Ada (the programming language) support
+|ft_sql.txt|	about the SQL filetype plugin
+|hangulin.txt|	Hangul (Korean) input mode
+|rileft.txt|	right-to-left editing mode
+
+GUI ~
+|gui.txt|	Graphical User Interface (GUI)
+|gui_w16.txt|	Windows 3.1 GUI
+|gui_w32.txt|	Win32 GUI
+|gui_x11.txt|	X11 GUI
+
+Interfaces ~
+|if_cscop.txt|	using Cscope with Vim
+|if_lua.txt|	Lua interface
+|if_mzsch.txt|	MzScheme interface
+|if_perl.txt|	Perl interface
+|if_pyth.txt|	Python interface
+|if_sniff.txt|	SNiFF+ interface
+|if_tcl.txt|	Tcl interface
+|if_ole.txt|	OLE automation interface for Win32
+|if_ruby.txt|	Ruby interface
+|debugger.txt|	Interface with a debugger
+|workshop.txt|	Sun Visual Workshop interface
+|netbeans.txt|	NetBeans External Editor interface
+|sign.txt|	debugging signs
+
+Versions ~
+|vi_diff.txt|	Main differences between Vim and Vi
+|version4.txt|	Differences between Vim version 3.0 and 4.x
+|version5.txt|	Differences between Vim version 4.6 and 5.x
+|version6.txt|	Differences between Vim version 5.7 and 6.x
+|version7.txt|	Differences between Vim version 6.4 and 7.x
+						*sys-file-list*
+Remarks about specific systems ~
+|os_390.txt|	OS/390 Unix
+|os_amiga.txt|	Amiga
+|os_beos.txt|	BeOS and BeBox
+|os_dos.txt|	MS-DOS and MS-Windows NT/95 common items
+|os_mac.txt|	Macintosh
+|os_mint.txt|	Atari MiNT
+|os_msdos.txt|	MS-DOS (plain DOS and DOS box under Windows)
+|os_os2.txt|	OS/2
+|os_qnx.txt|	QNX
+|os_risc.txt|	RISC-OS
+|os_unix.txt|	Unix
+|os_vms.txt|	VMS
+|os_win32.txt|	MS-Windows 95/98/NT
+						*standard-plugin-list*
+Standard plugins ~
+|pi_getscript.txt| Downloading latest version of Vim scripts
+|pi_gzip.txt|      Reading and writing compressed files
+|pi_netrw.txt|     Reading and writing files over a network
+|pi_paren.txt|     Highlight matching parens
+|pi_tar.txt|       Tar file explorer
+|pi_vimball.txt|   Create a self-installing Vim script
+|pi_zip.txt|       Zip archive explorer
+
+LOCAL ADDITIONS:				*local-additions*
+
+------------------------------------------------------------------------------
+*bars*		Bars example
+
+Now that you've jumped here with CTRL-] or a double mouse click, you can use
+CTRL-T, CTRL-O, g<RightMouse>, or <C-RightMouse> to go back to where you were.
+
+Note that tags are within | characters, but when highlighting is enabled these
+characters are hidden.  That makes it easier to read a command.
+
+Anyway, you can use CTRL-] on any word, also when it is not within |, and Vim
+will try to find help for it.  Especially for options in single quotes, e.g.
+'compatible'.
+
+------------------------------------------------------------------------------
+ vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:

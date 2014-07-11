@@ -1,0 +1,216 @@
+*if_ruby.txt*   For Vim version 7.4.  Last change: 2012 Aug 02
+
+
+		  VIM REFERENCE MANUAL    by Shugo Maeda
+
+The Ruby Interface to Vim				*ruby* *Ruby*
+
+
+1. Commands			|ruby-commands|
+2. The VIM module		|ruby-vim|
+3. VIM::Buffer objects		|ruby-buffer|
+4. VIM::Window objects		|ruby-window|
+5. Global variables		|ruby-globals|
+6. Dynamic loading		|ruby-dynamic|
+
+{Vi does not have any of these commands}
+			*E266* *E267* *E268* *E269* *E270* *E271* *E272* *E273*
+
+The Ruby interface only works when Vim was compiled with the |+ruby| feature.
+
+The home page for ruby is http://www.ruby-lang.org/.  You can find links for
+downloading Ruby there.
+
+==============================================================================
+1. Commands						*ruby-commands*
+
+							*:ruby* *:rub*
+:rub[y] {cmd}		Execute Ruby command {cmd}.  A command to try it out: >
+				:ruby print "Hello"
+
+:rub[y] << {endpattern}
+{script}
+{endpattern}
+			Execute Ruby script {script}.
+			{endpattern} must NOT be preceded by any white space.
+			If {endpattern} is omitted, it defaults to a dot '.'
+			like for the |:append| and |:insert| commands.  This
+			form of the |:ruby| command is mainly useful for
+			including ruby code in vim scripts.
+			Note: This command doesn't work when the Ruby feature
+			wasn't compiled in.  To avoid errors, see
+			|script-here|.
+
+Example Vim script: >
+
+	function! RedGem()
+	ruby << EOF
+	class Garnet
+		def initialize(s)
+			@buffer = VIM::Buffer.current
+			vimputs(s)
+		end
+		def vimputs(s)
+			@buffer.append(@buffer.count,s)
+		end
+	end
+	gem = Garnet.new("pretty")
+	EOF
+	endfunction
+<
+
+						*:rubydo* *:rubyd* *E265*
+:[range]rubyd[o] {cmd}	Evaluate Ruby command {cmd} for each line in the
+			[range], with $_ being set to the text of each line in
+			turn, without a trailing <EOL>.  Setting $_ will change
+			the text, but note that it is not possible to add or
+			delete lines using this command.
+			The default for [range] is the whole file: "1,$".
+
+							*:rubyfile* *:rubyf*
+:rubyf[ile] {file}	Execute the Ruby script in {file}.  This is the same as
+			":ruby load 'file'", but allows file name completion.
+
+Executing Ruby commands is not possible in the |sandbox|.
+
+==============================================================================
+2. The VIM module					*ruby-vim*
+
+Ruby code gets all of its access to vim via the "VIM" module.
+
+Overview >
+	print "Hello"			      # displays a message
+	VIM.command(cmd)		      # execute an Ex command
+	num = VIM::Window.count		      # gets the number of windows
+	w = VIM::Window[n]		      # gets window "n"
+	cw = VIM::Window.current	      # gets the current window
+	num = VIM::Buffer.count		      # gets the number of buffers
+	b = VIM::Buffer[n]		      # gets buffer "n"
+	cb = VIM::Buffer.current	      # gets the current buffer
+	w.height = lines		      # sets the window height
+	w.cursor = [row, col]		      # sets the window cursor position
+	pos = w.cursor			      # gets an array [row, col]
+	name = b.name			      # gets the buffer file name
+	line = b[n]			      # gets a line from the buffer
+	num = b.count			      # gets the number of lines
+	b[n] = str			      # sets a line in the buffer
+	b.delete(n)			      # deletes a line
+	b.append(n, str)		      # appends a line after n
+	line = VIM::Buffer.current.line       # gets the current line
+	num = VIM::Buffer.current.line_number # gets the current line number
+	VIM::Buffer.current.line = "test"     # sets the current line number
+<
+
+Module Functions:
+
+							*ruby-message*
+VIM::message({msg})
+	Displays the message {msg}.
+
+							*ruby-set_option*
+VIM::set_option({arg})
+	Sets a vim option.  {arg} can be any argument that the ":set" command
+	accepts.  Note that this means that no spaces are allowed in the
+	argument!  See |:set|.
+
+							*ruby-command*
+VIM::command({cmd})
+	Executes Ex command {cmd}.
+
+							*ruby-evaluate*
+VIM::evaluate({expr})
+	Evaluates {expr} using the vim internal expression evaluator (see
+	|expression|).  Returns the expression result as a string.
+	A |List| is turned into a string by joining the items and inserting
+	line breaks.
+
+==============================================================================
+3. VIM::Buffer objects					*ruby-buffer*
+
+VIM::Buffer objects represent vim buffers.
+
+Class Methods:
+
+current		Returns the current buffer object.
+count		Returns the number of buffers.
+self[{n}]	Returns the buffer object for the number {n}.  The first number
+		is 0.
+
+Methods:
+
+name		Returns the name of the buffer.
+number		Returns the number of the buffer.
+count		Returns the number of lines.
+length		Returns the number of lines.
+self[{n}]	Returns a line from the buffer. {n} is the line number.
+self[{n}] = {str}
+		Sets a line in the buffer. {n} is the line number.
+delete({n})	Deletes a line from the buffer. {n} is the line number.
+append({n}, {str})
+		Appends a line after the line {n}.
+line		Returns the current line of the buffer if the buffer is
+		active.
+line = {str}    Sets the current line of the buffer if the buffer is active.
+line_number     Returns the number of the current line if the buffer is
+		active.
+
+==============================================================================
+4. VIM::Window objects					*ruby-window*
+
+VIM::Window objects represent vim windows.
+
+Class Methods:
+
+current		Returns the current window object.
+count		Returns the number of windows.
+self[{n}]	Returns the window object for the number {n}.  The first number
+		is 0.
+
+Methods:
+
+buffer		Returns the buffer displayed in the window.
+height		Returns the height of the window.
+height = {n}	Sets the window height to {n}.
+width		Returns the width of the window.
+width = {n}	Sets the window width to {n}.
+cursor		Returns a [row, col] array for the cursor position.
+cursor = [{row}, {col}]
+		Sets the cursor position to {row} and {col}.
+
+==============================================================================
+5. Global variables					*ruby-globals*
+
+There are two global variables.
+
+$curwin		The current window object.
+$curbuf		The current buffer object.
+
+==============================================================================
+6. Dynamic loading					*ruby-dynamic*
+
+On MS-Windows and Unix the Ruby library can be loaded dynamically.  The
+|:version| output then includes |+ruby/dyn|.
+
+This means that Vim will search for the Ruby DLL file or shared library only
+when needed.  When you don't use the Ruby interface you don't need it, thus
+you can use Vim even though this library file is not on your system.
+
+You need to install the right version of Ruby for this to work.  You can find
+the package to download from:
+http://www.garbagecollect.jp/ruby/mswin32/en/download/release.html
+Currently that is ruby-1.9.1-p429-i386-mswin32.zip
+
+To use the Ruby interface the Ruby DLL must be in your search path.  In a
+console window type "path" to see what directories are used.
+
+The name of the DLL must match the Ruby version Vim was compiled with.
+Currently the name is "msvcrt-ruby191.dll".  That is for Ruby 1.9.1.  To know
+for sure edit "gvim.exe" and search for "ruby\d*.dll\c".
+
+If you want to build Vim with Ruby 1.9.1, you need to edit the config.h file
+and comment-out the check for _MSC_VER.
+You may also need to rename the include directory name to match the version,
+strangely for Ruby 1.9.3 the directory is called 1.9.1.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

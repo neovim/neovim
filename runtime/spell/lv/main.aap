@@ -1,0 +1,83 @@
+# Aap recipe for Latvian Vim spell files.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+SPELLDIR = ..
+FILES    = lv_LV.aff lv_LV.dic
+
+# I don't have a Latvian locale, use Lithuanian instead.
+all: $SPELLDIR/lv.iso-8859-13.spl $SPELLDIR/lv.utf-8.spl \
+         ../README_lv.txt
+
+$SPELLDIR/lv.iso-8859-13.spl : $FILES
+        :sys env LANG=lt_LT.ISO8859-13 $VIM -u NONE -e -c "mkspell! $SPELLDIR/lv lv_LV" -c q
+
+$SPELLDIR/lv.utf-8.spl : $FILES
+        :sys env LANG=lt_LT.UTF-8 $VIM -u NONE -e -c "mkspell! $SPELLDIR/lv lv_LV" -c q
+
+../README_lv.txt: README_lv_LV.txt
+        :copy $source $target
+
+#
+# Fetching the files from OpenOffice.org.
+#
+OODIR = http://ftp.services.openoffice.org/pub/OpenOffice.org/contrib/dictionaries
+:attr {fetch = $OODIR/%file%} lv_LV.zip
+
+# The files don't depend on the .zip file so that we can delete it.
+# Only download the zip file if the targets don't exist.
+# This is a bit tricky, since the file name includes the date.
+lv_LV.aff lv_LV.dic: {buildcheck=}
+        :assertpkg unzip patch
+        :fetch lv_LV.zip
+        :sys $UNZIP lv_LV.zip
+        :delete lv_LV.zip
+        :delete changelog.txt gpl.txt lin-lv_LV_add.sh win-lv_LV_add.bat
+        :sys $VIM lv_LV.aff -u NONE -e -N -c "%s/\r//" -c update -c q
+        :sys $VIM lv_LV.dic -u NONE -e -N -c "%s/\r//" -c update -c q
+        :sys $VIM README_lv_LV.txt -u NONE -e -c "set ff=unix" -c update -c q
+        @if not os.path.exists('lv_LV.orig.aff'):
+            :copy lv_LV.aff lv_LV.orig.aff
+        @if not os.path.exists('lv_LV.orig.dic'):
+            :copy lv_LV.dic lv_LV.orig.dic
+        @if os.path.exists('lv_LV.diff'):
+            :sys patch <lv_LV.diff
+
+
+# Generate diff files, so that others can get the OpenOffice files and apply
+# the diffs to get the Vim versions.
+
+diff:
+        :assertpkg diff
+        :sys {force} diff -a -C 1 lv_LV.orig.aff lv_LV.aff >lv_LV.diff
+        :sys {force} diff -a -C 1 lv_LV.orig.dic lv_LV.dic >>lv_LV.diff
+
+
+# Check for updated spell files.  When there are changes the
+# ".new.aff" and ".new.dic" files are left behind for manual inspection.
+
+check:
+        :assertpkg unzip diff
+        :fetch lv_LV.zip
+        :mkdir tmp
+        :cd tmp
+        @try:
+            @import stat
+            :sys $UNZIP ../lv_LV.zip
+            :sys {force} diff ../lv_LV.orig.aff lv_LV.aff >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy lv_LV.aff ../lv_LV.new.aff
+            :sys {force} diff ../lv_LV.orig.dic lv_LV.dic >d
+            @if os.stat('d')[stat.ST_SIZE] > 0:
+                :copy lv_LV.dic ../lv_LV.new.dic
+        @finally:
+            :cd ..
+            :delete {r}{f}{q} tmp
+            :delete lv_LV.zip
+
+
+# vim: set sts=4 sw=4 :

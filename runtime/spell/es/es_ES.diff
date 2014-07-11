@@ -1,0 +1,38 @@
+*** es_ES.orig.aff	Fri Apr 21 10:57:12 2006
+--- es_ES.aff	Fri Apr 21 11:10:16 2006
+***************
+*** 4,5 ****
+--- 4,12 ----
+  
++ FOL  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ LOW  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ UPP  ‗ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞÿ
++ 
++ SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZאבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
++ SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
++ 
+  REP 20
+***************
+*** 26,33 ****
+  
+! MAP 5
+! MAP aבAÁ
+! MAP eיEÉ
+! MAP iםIÍ
+! MAP oףOÓ
+! MAP uתüUÚÜ
+  PFX a Y 2
+--- 33,45 ----
+  
+! MAP 9
+! MAP aאבגדהו
+! MAP eטיךכ
+! MAP iלםמן
+! MAP oעףפץצ
+! MAP uשתûü
+! MAP nס
+! MAP cח
+! MAP yÿ‎
+! MAP s‗
+! 
+  PFX a Y 2

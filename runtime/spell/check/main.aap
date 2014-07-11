@@ -1,0 +1,15 @@
+# Aap recipe for a dummy spell file.
+# This is used to check if the .spl file format changes.
+
+# Use a freshly compiled Vim if it exists.
+@if os.path.exists('../../../src/vim'):
+    VIM = ../../../src/vim
+@else:
+    :progsearch VIM vim
+
+all: check.latin1.spl
+
+check.latin1.spl : $VIM check_aa.aff check_aa.dic check_bb.aff check_bb.dic
+        :sys $VIM -u NONE -e -c "mkspell! check check_aa check_bb" -c q
+
+# vim: set sts=4 sw=4 :

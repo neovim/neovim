@@ -1,0 +1,50 @@
+SET ISO8859-1
+TRY esianrtolcdugmphbyfvkwjkqxz-כיטךןמהאגצüû'ESIANRTOLCDUGMPHBYFVKWJKQXZ
+
+FOL  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
+LOW  אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿ
+UPP  ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ‗ÿ
+
+SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZאבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
+SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
+
+MIDWORD	'-
+
+PFXPOSTPONE
+
+COMPOUNDFLAG x
+COMPOUNDMIN 5
+
+KEEPCASE =
+RARE ?
+BAD !
+
+MAP 9
+MAP aאבגדהו
+MAP eטיךכ
+MAP iלםמן
+MAP oעףפץצ
+MAP uשתûü
+MAP nס
+MAP cח
+MAP yÿ‎
+MAP s‗
+
+PFX A Y 1
+PFX A 0 aan .
+
+PFX B N 1
+PFX B 0 be .
+
+PFX C Y 1
+PFX C a in aa
+
+SFX J N 1
+SFX J 0 tje [aeiou][aeiou]
+
+SFX Z N 1
+SFX Z af ven aaf
+
+REP 2
+REP g ch
+REP cht gd

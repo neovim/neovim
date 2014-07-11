@@ -1,0 +1,18 @@
+*** tl_PH.orig.aff	Wed Aug 31 21:12:20 2005
+--- tl_PH.aff	Wed Aug 31 21:13:16 2005
+***************
+*** 19 ****
+--- 19,31 ----
+  TRY angisotmklypubrhdewAP-SKMINDTHB'LEJGUvWCcORfjYzqFxVQZ
++ 
++ FOL  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ LOW  ‗אבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏ÿ
++ UPP  ‗ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞÿ
++ 
++ SOFOFROM abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZאבגדהוזחטיךכלםמןנסעףפץצרשתûü‎‏‗ÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ¿
++ SOFOTO   ebctefghejklnnepkrstevvkesebctefghejklnnepkrstevvkeseeeeeeeceeeeeeeedneeeeeeeeeeepseeeeeeeeceeeeeeeedneeeeeeeeeeep?
++ 
++ MIDWORD	'-
++ 
++ MAP 1
++ MAP nס

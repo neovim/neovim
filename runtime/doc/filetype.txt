@@ -1,0 +1,623 @@
+*filetype.txt*  For Vim version 7.4.  Last change: 2013 Dec 15
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Filetypes						*filetype* *file-type*
+
+1. Filetypes					|filetypes|
+2. Filetype plugin				|filetype-plugins|
+3. Docs for the default filetype plugins.	|ftplugin-docs|
+
+Also see |autocmd.txt|.
+
+{Vi does not have any of these commands}
+
+==============================================================================
+1. Filetypes					*filetypes* *file-types*
+
+Vim can detect the type of file that is edited.  This is done by checking the
+file name and sometimes by inspecting the contents of the file for specific
+text.
+
+							*:filetype* *:filet*
+To enable file type detection, use this command in your vimrc: >
+	:filetype on
+Each time a new or existing file is edited, Vim will try to recognize the type
+of the file and set the 'filetype' option.  This will trigger the FileType
+event, which can be used to set the syntax highlighting, set options, etc.
+
+NOTE: Filetypes and 'compatible' don't work together well, since being Vi
+compatible means options are global.  Resetting 'compatible' is recommended,
+if you didn't do that already.
+
+Detail: The ":filetype on" command will load one of these files:
+		Amiga	    $VIMRUNTIME/filetype.vim
+		Mac	    $VIMRUNTIME:filetype.vim
+		MS-DOS	    $VIMRUNTIME\filetype.vim
+		RiscOS	    Vim:Filetype
+		Unix	    $VIMRUNTIME/filetype.vim
+		VMS	    $VIMRUNTIME/filetype.vim
+	This file is a Vim script that defines autocommands for the
+	BufNewFile and BufRead events.  If the file type is not found by the
+	name, the file $VIMRUNTIME/scripts.vim is used to detect it from the
+	contents of the file.
+	When the GUI is running or will start soon, the menu.vim script is
+	also sourced.  See |'go-M'| about avoiding that.
+
+To add your own file types, see |new-filetype| below.  To search for help on a
+filetype prepend "ft-" and optionally append "-syntax", "-indent" or
+"-plugin".  For example: >
+	:help ft-vim-indent
+	:help ft-vim-syntax
+	:help ft-man-plugin
+
+If the file type is not detected automatically, or it finds the wrong type,
+you can either set the 'filetype' option manually, or add a modeline to your
+file.  Example, for an IDL file use the command: >
+	:set filetype=idl
+
+or add this |modeline| to the file:
+	/* vim: set filetype=idl : */ ~
+
+						*:filetype-plugin-on*
+You can enable loading the plugin files for specific file types with: >
+	:filetype plugin on
+If filetype detection was not switched on yet, it will be as well.
+This actually loads the file "ftplugin.vim" in 'runtimepath'.
+The result is that when a file is edited its plugin file is loaded (if there
+is one for the detected filetype). |filetype-plugin|
+
+						*:filetype-plugin-off*
+You can disable it again with: >
+	:filetype plugin off
+The filetype detection is not switched off then.  But if you do switch off
+filetype detection, the plugins will not be loaded either.
+This actually loads the file "ftplugof.vim" in 'runtimepath'.
+
+						*:filetype-indent-on*
+You can enable loading the indent file for specific file types with: >
+	:filetype indent on
+If filetype detection was not switched on yet, it will be as well.
+This actually loads the file "indent.vim" in 'runtimepath'.
+The result is that when a file is edited its indent file is loaded (if there
+is one for the detected filetype). |indent-expression|
+
+						*:filetype-indent-off*
+You can disable it again with: >
+	:filetype indent off
+The filetype detection is not switched off then.  But if you do switch off
+filetype detection, the indent files will not be loaded either.
+This actually loads the file "indoff.vim" in 'runtimepath'.
+This disables auto-indenting for files you will open.  It will keep working in
+already opened files.  Reset 'autoindent', 'cindent', 'smartindent' and/or
+'indentexpr' to disable indenting in an opened file.
+
+						*:filetype-off*
+To disable file type detection, use this command: >
+	:filetype off
+This will keep the flags for "plugin" and "indent", but since no file types
+are being detected, they won't work until the next ":filetype on".
+
+
+Overview:					*:filetype-overview*
+
+command				detection	plugin		indent ~
+:filetype on			on		unchanged	unchanged
+:filetype off			off		unchanged	unchanged
+:filetype plugin on		on		on		unchanged
+:filetype plugin off		unchanged	off		unchanged
+:filetype indent on		on		unchanged	on
+:filetype indent off		unchanged	unchanged	off
+:filetype plugin indent on	on		on		on
+:filetype plugin indent off	unchanged	off		off
+
+To see the current status, type: >
+	:filetype
+The output looks something like this: >
+	filetype detection:ON  plugin:ON  indent:OFF
+
+The file types are also used for syntax highlighting.  If the ":syntax on"
+command is used, the file type detection is installed too.  There is no need
+to do ":filetype on" after ":syntax on".
+
+To disable one of the file types, add a line in your filetype file, see
+|remove-filetype|.
+
+							*filetype-detect*
+To detect the file type again: >
+	:filetype detect
+Use this if you started with an empty file and typed text that makes it
+possible to detect the file type.  For example, when you entered this in a
+shell script: "#!/bin/csh".
+   When filetype detection was off, it will be enabled first, like the "on"
+argument was used.
+
+							*filetype-overrule*
+When the same extension is used for two filetypes, Vim tries to guess what
+kind of file it is.  This doesn't always work.  A number of global variables
+can be used to overrule the filetype used for certain extensions:
+
+	file name	variable ~
+	*.asa		g:filetype_asa	|ft-aspvbs-syntax| |ft-aspperl-syntax|
+	*.asp		g:filetype_asp	|ft-aspvbs-syntax| |ft-aspperl-syntax|
+	*.asm		g:asmsyntax	|ft-asm-syntax|
+	*.prg		g:filetype_prg
+	*.pl		g:filetype_pl
+	*.inc		g:filetype_inc
+	*.w		g:filetype_w	|ft-cweb-syntax|
+	*.i		g:filetype_i	|ft-progress-syntax|
+	*.p		g:filetype_p	|ft-pascal-syntax|
+	*.sh		g:bash_is_sh	|ft-sh-syntax|
+	*.tex		g:tex_flavor	|ft-tex-plugin|
+
+							*filetype-ignore*
+To avoid that certain files are being inspected, the g:ft_ignore_pat variable
+is used.  The default value is set like this: >
+	:let g:ft_ignore_pat = '\.\(Z\|gz\|bz2\|zip\|tgz\)$'
+This means that the contents of compressed files are not inspected.
+
+							*new-filetype*
+If a file type that you want to use is not detected yet, there are four ways
+to add it.  In any way, it's better not to modify the $VIMRUNTIME/filetype.vim
+file.  It will be overwritten when installing a new version of Vim.
+
+A. If you want to overrule all default file type checks.
+   This works by writing one file for each filetype.  The disadvantage is that
+   means there can be many files.  The advantage is that you can simply drop
+   this file in the right directory to make it work.
+							*ftdetect*
+   1. Create your user runtime directory.  You would normally use the first
+      item of the 'runtimepath' option.  Then create the directory "ftdetect"
+      inside it.  Example for Unix: >
+	:!mkdir ~/.vim
+	:!mkdir ~/.vim/ftdetect
+<
+   2. Create a file that contains an autocommand to detect the file type.
+      Example: >
+	au BufRead,BufNewFile *.mine		set filetype=mine
+<     Note that there is no "augroup" command, this has already been done
+      when sourcing your file.  You could also use the pattern "*" and then
+      check the contents of the file to recognize it.
+      Write this file as "mine.vim" in the "ftdetect" directory in your user
+      runtime directory.  For example, for Unix: >
+	:w ~/.vim/ftdetect/mine.vim
+
+<  3. To use the new filetype detection you must restart Vim.
+
+   The files in the "ftdetect" directory are used after all the default
+   checks, thus they can overrule a previously detected file type.  But you
+   can also use |:setfiletype| to keep a previously detected filetype.
+
+B. If you want to detect your file after the default file type checks.
+
+   This works like A above, but instead of setting 'filetype' unconditionally
+   use ":setfiletype".  This will only set 'filetype' if no file type was
+   detected yet.  Example: >
+	au BufRead,BufNewFile *.txt		setfiletype text
+<
+   You can also use the already detected file type in your command.  For
+   example, to use the file type "mypascal" when "pascal" has been detected: >
+	au BufRead,BufNewFile *		if &ft == 'pascal' | set ft=mypascal
+								       | endif
+
+C. If your file type can be detected by the file name.
+   1. Create your user runtime directory.  You would normally use the first
+      item of the 'runtimepath' option.  Example for Unix: >
+	:!mkdir ~/.vim
+<
+   2. Create a file that contains autocommands to detect the file type.
+      Example: >
+	" my filetype file
+	if exists("did_load_filetypes")
+	  finish
+	endif
+	augroup filetypedetect
+	  au! BufRead,BufNewFile *.mine		setfiletype mine
+	  au! BufRead,BufNewFile *.xyz		setfiletype drawing
+	augroup END
+<     Write this file as "filetype.vim" in your user runtime directory.  For
+      example, for Unix: >
+	:w ~/.vim/filetype.vim
+
+<  3. To use the new filetype detection you must restart Vim.
+
+   Your filetype.vim will be sourced before the default FileType autocommands
+   have been installed.  Your autocommands will match first, and the
+   ":setfiletype" command will make sure that no other autocommands will set
+   'filetype' after this.
+							*new-filetype-scripts*
+D. If your filetype can only be detected by inspecting the contents of the
+   file.
+
+   1. Create your user runtime directory.  You would normally use the first
+      item of the 'runtimepath' option.  Example for Unix: >
+	:!mkdir ~/.vim
+<
+   2. Create a vim script file for doing this.  Example: >
+	if did_filetype()	" filetype already set..
+	  finish		" ..don't do these checks
+	endif
+	if getline(1) =~ '^#!.*\<mine\>'
+	  setfiletype mine
+	elseif getline(1) =~? '\<drawing\>'
+	  setfiletype drawing
+	endif
+<     See $VIMRUNTIME/scripts.vim for more examples.
+      Write this file as "scripts.vim" in your user runtime directory.  For
+      example, for Unix: >
+	:w ~/.vim/scripts.vim
+<
+   3. The detection will work right away, no need to restart Vim.
+
+   Your scripts.vim is loaded before the default checks for file types, which
+   means that your rules override the default rules in
+   $VIMRUNTIME/scripts.vim.
+
+						*remove-filetype*
+If a file type is detected that is wrong for you, install a filetype.vim or
+scripts.vim to catch it (see above).  You can set 'filetype' to a non-existing
+name to avoid that it will be set later anyway: >
+	:set filetype=ignored
+
+If you are setting up a system with many users, and you don't want each user
+to add/remove the same filetypes, consider writing the filetype.vim and
+scripts.vim files in a runtime directory that is used for everybody.  Check
+the 'runtimepath' for a directory to use.  If there isn't one, set
+'runtimepath' in the |system-vimrc|.  Be careful to keep the default
+directories!
+
+
+						*autocmd-osfiletypes*
+NOTE: this code is currently disabled, as the RISC OS implementation was
+removed.  In the future this will use the 'filetype' option.
+
+On operating systems which support storing a file type with the file, you can
+specify that an autocommand should only be executed if the file is of a
+certain type.
+
+The actual type checking depends on which platform you are running Vim
+on; see your system's documentation for details.
+
+To use osfiletype checking in an autocommand you should put a list of types to
+match in angle brackets in place of a pattern, like this: >
+
+	:au BufRead *.html,<&faf;HTML>  runtime! syntax/html.vim
+
+This will match:
+
+- Any file whose name ends in ".html"
+- Any file whose type is "&faf" or "HTML", where the meaning of these types
+  depends on which version of Vim you are using.
+  Unknown types are considered NOT to match.
+
+You can also specify a type and a pattern at the same time (in which case they
+must both match): >
+
+	:au BufRead <&fff>diff*
+
+This will match files of type "&fff" whose names start with "diff".
+
+
+							*plugin-details*
+The "plugin" directory can be in any of the directories in the 'runtimepath'
+option.  All of these directories will be searched for plugins and they are
+all loaded.  For example, if this command: >
+
+	set runtimepath
+
+produces this output:
+
+	runtimepath=/etc/vim,~/.vim,/usr/local/share/vim/vim60 ~
+
+then Vim will load all plugins in these directories and below:
+
+	/etc/vim/plugin/  ~
+	~/.vim/plugin/  ~
+	/usr/local/share/vim/vim60/plugin/  ~
+
+Note that the last one is the value of $VIMRUNTIME which has been expanded.
+
+What if it looks like your plugin is not being loaded?  You can find out what
+happens when Vim starts up by using the |-V| argument: >
+
+	vim -V2
+
+You will see a lot of messages, in between them is a remark about loading the
+plugins.  It starts with:
+
+	Searching for "plugin/**/*.vim" in ~
+
+There you can see where Vim looks for your plugin scripts.
+
+==============================================================================
+2. Filetype plugin					*filetype-plugins*
+
+When loading filetype plugins has been enabled |:filetype-plugin-on|, options
+will be set and mappings defined.  These are all local to the buffer, they
+will not be used for other files.
+
+Defining mappings for a filetype may get in the way of the mappings you
+define yourself.  There are a few ways to avoid this:
+1. Set the "maplocalleader" variable to the key sequence you want the mappings
+   to start with.  Example: >
+	:let maplocalleader = ","
+<  All mappings will then start with a comma instead of the default, which
+   is a backslash.  Also see |<LocalLeader>|.
+
+2. Define your own mapping.  Example: >
+	:map ,p <Plug>MailQuote
+<  You need to check the description of the plugin file below for the
+   functionality it offers and the string to map to.
+   You need to define your own mapping before the plugin is loaded (before
+   editing a file of that type).  The plugin will then skip installing the
+   default mapping.
+
+3. Disable defining mappings for a specific filetype by setting a variable,
+   which contains the name of the filetype.  For the "mail" filetype this
+   would be: >
+	:let no_mail_maps = 1
+
+4. Disable defining mappings for all filetypes by setting a variable: >
+	:let no_plugin_maps = 1
+<
+
+							*ftplugin-overrule*
+If a global filetype plugin does not do exactly what you want, there are three
+ways to change this:
+
+1. Add a few settings.
+   You must create a new filetype plugin in a directory early in
+   'runtimepath'.  For Unix, for example you could use this file: >
+	vim ~/.vim/ftplugin/fortran.vim
+<  You can set those settings and mappings that you would like to add.  Note
+   that the global plugin will be loaded after this, it may overrule the
+   settings that you do here.  If this is the case, you need to use one of the
+   following two methods.
+
+2. Make a copy of the plugin and change it.
+   You must put the copy in a directory early in 'runtimepath'.  For Unix, for
+   example, you could do this: >
+	cp $VIMRUNTIME/ftplugin/fortran.vim ~/.vim/ftplugin/fortran.vim
+<  Then you can edit the copied file to your liking.  Since the b:did_ftplugin
+   variable will be set, the global plugin will not be loaded.
+   A disadvantage of this method is that when the distributed plugin gets
+   improved, you will have to copy and modify it again.
+
+3. Overrule the settings after loading the global plugin.
+   You must create a new filetype plugin in a directory from the end of
+   'runtimepath'.  For Unix, for example, you could use this file: >
+	vim ~/.vim/after/ftplugin/fortran.vim
+<  In this file you can change just those settings that you want to change.
+
+==============================================================================
+3.  Docs for the default filetype plugins.		*ftplugin-docs*
+
+
+CHANGELOG						*ft-changelog-plugin*
+
+Allows for easy entrance of Changelog entries in Changelog files.  There are
+some commands, mappings, and variables worth exploring:
+
+Options:
+'comments'		is made empty to not mess up formatting.
+'textwidth'		is set to 78, which is standard.
+'formatoptions'		the 't' flag is added to wrap when inserting text.
+
+Commands:
+NewChangelogEntry	Adds a new Changelog entry in an intelligent fashion
+			(see below).
+
+Local mappings:
+<Leader>o		Starts a new Changelog entry in an equally intelligent
+			fashion (see below).
+
+Global mappings:
+			NOTE: The global mappings are accessed by sourcing the
+			ftplugin/changelog.vim file first, e.g. with >
+				runtime ftplugin/changelog.vim
+<			in your |.vimrc|.
+<Leader>o		Switches to the ChangeLog buffer opened for the
+			current directory, or opens it in a new buffer if it
+			exists in the current directory.  Then it does the
+			same as the local <Leader>o described above.
+
+Variables:
+g:changelog_timeformat  Deprecated; use g:changelog_dateformat instead.
+g:changelog_dateformat	The date (and time) format used in ChangeLog entries.
+			The format accepted is the same as for the
+			|strftime()| function.
+			The default is "%Y-%m-%d" which is the standard format
+			for many ChangeLog layouts.
+g:changelog_username	The name and email address of the user.
+			The default is deduced from environment variables and
+			system files.  It searches /etc/passwd for the comment
+			part of the current user, which informally contains
+			the real name of the user up to the first separating
+			comma.  then it checks the $NAME environment variable
+			and finally runs `whoami` and `hostname` to build an
+			email address.  The final form is >
+				Full Name  <user@host>
+<
+g:changelog_new_date_format
+			The format to use when creating a new date-entry.
+			The following table describes special tokens in the
+			string:
+				%%	insert a single '%' character
+				%d	insert the date from above
+				%u	insert the user from above
+                                %p	insert result of b:changelog_entry_prefix
+				%c	where to position cursor when done
+			The default is "%d  %u\n\n\t* %p%c\n\n", which produces
+			something like (| is where cursor will be, unless at
+			the start of the line where it denotes the beginning
+			of the line) >
+				|2003-01-14  Full Name  <user@host>
+				|
+				|        * prefix|
+<
+g:changelog_new_entry_format
+			The format used when creating a new entry.
+			The following table describes special tokens in the
+			string:
+                                %p	insert result of b:changelog_entry_prefix
+				%c	where to position cursor when done
+			The default is "\t*%c", which produces something
+			similar to >
+				|        * prefix|
+<
+g:changelog_date_entry_search
+			The search pattern to use when searching for a
+			date-entry.
+			The same tokens that can be used for
+			g:changelog_new_date_format can be used here as well.
+			The default is '^\s*%d\_s*%u' which finds lines
+			matching the form >
+				|2003-01-14  Full Name  <user@host>
+<			and some similar formats.
+
+g:changelog_date_end_entry_search
+			The search pattern to use when searching for the end
+			of a date-entry.
+			The same tokens that can be used for
+			g:changelog_new_date_format can be used here as well.
+			The default is '^\s*$' which finds lines that contain
+			only whitespace or are completely empty.
+
+b:changelog_name					*b:changelog_name*
+			Name of the ChangeLog file to look for.
+			The default is 'ChangeLog'.
+
+b:changelog_path
+			Path of the ChangeLog to use for the current buffer.
+			The default is empty, thus looking for a file named
+			|b:changelog_name| in the same directory as the
+			current buffer.  If not found, the parent directory of
+			the current buffer is searched.  This continues
+			recursively until a file is found or there are no more
+			parent directories to search.
+
+b:changelog_entry_prefix
+			Name of a function to call to generate a prefix to a
+			new entry.  This function takes no arguments and
+			should return a string containing the prefix.
+			Returning an empty prefix is fine.
+			The default generates the shortest path between the
+			ChangeLog's pathname and the current buffers pathname.
+			In the future, it will also be possible to use other
+			variable contexts for this variable, for example, g:.
+
+The Changelog entries are inserted where they add the least amount of text.
+After figuring out the current date and user, the file is searched for an
+entry beginning with the current date and user and if found adds another item
+under it.  If not found, a new entry and item is prepended to the beginning of
+the Changelog.
+
+
+FORTRAN							*ft-fortran-plugin*
+
+Options:
+'expandtab'	is switched on to avoid tabs as required by the Fortran
+		standards unless the user has set fortran_have_tabs in .vimrc.
+'textwidth'	is set to 72 for fixed source format as required by the
+		Fortran standards and to 80 for free source format.
+'formatoptions' is set to break code and comment lines and to preserve long
+		lines.  You can format comments with |gq|.
+For further discussion of fortran_have_tabs and the method used for the
+detection of source format see |ft-fortran-syntax|.
+
+
+GIT COMMIT                                              *ft-gitcommit-plugin*
+
+One command, :DiffGitCached, is provided to show a diff of the current commit
+in the preview window.  It is equivalent to calling "git diff --cached" plus
+any arguments given to the command.
+
+
+MAIL							*ft-mail-plugin*
+
+Options:
+'modeline'	is switched off to avoid the danger of trojan horses, and to
+		avoid that a Subject line with "Vim:" in it will cause an
+		error message.
+'textwidth'	is set to 72.  This is often recommended for e-mail.
+'formatoptions'  is set to break text lines and to repeat the comment leader
+		in new lines, so that a leading ">" for quotes is repeated.
+		You can also format quoted text with |gq|.
+
+Local mappings:
+<LocalLeader>q   or   \\MailQuote
+	Quotes the text selected in Visual mode, or from the cursor position
+	to the end of the file in Normal mode.  This means "> " is inserted in
+	each line.
+
+MAN							*ft-man-plugin* *:Man*
+
+Displays a manual page in a nice way.  Also see the user manual
+|find-manpage|.
+
+To start using the ":Man" command before any manual page was loaded, source
+this script from your startup vimrc file: >
+
+	runtime ftplugin/man.vim
+
+Options:
+'iskeyword'	the '.' character is added to be able to use CTRL-] on the
+		manual page name.
+
+Commands:
+Man {name}	Display the manual page for {name} in a window.
+Man {number} {name}
+		Display the manual page for {name} in a section {number}.
+
+Global mapping:
+<Leader>K	Displays the manual page for the word under the cursor.
+
+Local mappings:
+CTRL-]		Jump to the manual page for the word under the cursor.
+CTRL-T		Jump back to the previous manual page.
+
+
+PDF							*ft-pdf-plugin*
+
+Two maps, <C-]> and <C-T>, are provided to simulate a tag stack for navigating
+the PDF.  The following are treated as tags:
+
+- The byte offset after "startxref" to the xref table
+- The byte offset after the /Prev key in the trailer to an earlier xref table
+- A line of the form "0123456789 00000 n" in the xref table
+- An object reference like "1 0 R" anywhere in the PDF
+
+These maps can be disabled with >
+	:let g:no_pdf_maps = 1
+<
+
+RPM SPEC						*ft-spec-plugin*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |pi_spec.txt|.
+
+
+SQL							*ft-sql*
+
+Since the text for this plugin is rather long it has been put in a separate
+file: |ft_sql.txt|.
+
+
+TEX						*ft-tex-plugin* *g:tex_flavor*
+
+If the first line of a *.tex file has the form >
+	%&<format>
+then this determined the file type:  plaintex (for plain TeX), context (for
+ConTeXt), or tex (for LaTeX).  Otherwise, the file is searched for keywords to
+choose context or tex.  If no keywords are found, it defaults to plaintex.
+You can change the default by defining the variable g:tex_flavor to the format
+(not the file type) you use most.  Use one of these: >
+	let g:tex_flavor = "plain"
+	let g:tex_flavor = "context"
+	let g:tex_flavor = "latex"
+Currently no other formats are recognized.
+
+
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,204 @@
+*remote.txt*    For Vim version 7.4.  Last change: 2008 May 24
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Vim client-server communication				*client-server*
+
+1. Common functionality		|clientserver|
+2. X11 specific items		|x11-clientserver|
+3. MS-Windows specific items	|w32-clientserver|
+
+{Vi does not have any of these commands}
+
+==============================================================================
+1. Common functionality					*clientserver*
+
+When compiled with the |+clientserver| option, Vim can act as a command
+server.  It accepts messages from a client and executes them.  At the same
+time, Vim can function as a client and send commands to a Vim server.
+
+The following command line arguments are available:
+
+    argument			meaning	~
+
+   --remote [+{cmd}] {file} ...					*--remote*
+				Open the file list in a remote Vim.  When
+				there is no Vim server, execute locally.
+				There is one optional init command: +{cmd}.
+				This must be an Ex command that can be
+				followed by "|".
+				The rest of the command line is taken as the
+				file list.  Thus any non-file arguments must
+				come before this.
+				You cannot edit stdin this way |--|.
+				The remote Vim is raised.  If you don't want
+				this use >
+				 vim --remote-send "<C-\><C-N>:n filename<CR>"
+<  --remote-silent [+{cmd}] {file} ...			*--remote-silent*
+				As above, but don't complain if there is no
+				server and the file is edited locally.
+   --remote-wait [+{cmd}] {file} ...				*--remote-wait*
+				As --remote, but wait for files to complete
+				(unload) in remote Vim.
+   --remote-wait-silent [+{cmd}] {file} ...		*--remote-wait-silent*
+				As --remote-wait, but don't complain if there
+				is no server.
+							*--remote-tab*
+   --remote-tab			Like --remote but open each file in a new
+				tabpage.
+							*--remote-tab-silent*
+   --remote-tab-silent		Like --remote-silent but open each file in a
+				new tabpage.
+							*--remote-tab-wait*
+   --remote-tab-wait		Like --remote-wait but open each file in a new
+				tabpage.
+
+						*--remote-tab-wait-silent*
+   --remote-tab-wait-silent	Like --remote-wait-silent but open each file
+				in a new tabpage.
+								*--servername*
+   --servername {name}		Become the server {name}.  When used together
+				with one of the --remote commands: connect to
+				server {name} instead of the default (see
+				below).
+								*--remote-send*
+   --remote-send {keys}		Send {keys} to server and exit.  The {keys}
+   				are not mapped.  Special key names are
+				recognized, e.g., "<CR>" results in a CR
+				character.
+								*--remote-expr*
+   --remote-expr {expr}		Evaluate {expr} in server and print the result
+				on stdout.
+								*--serverlist*
+   --serverlist			Output a list of server names.
+
+
+Examples ~
+
+Edit "file.txt" in an already running GVIM server: >
+    gvim --remote file.txt
+
+Edit "file.txt" in an already running server called FOOBAR: >
+    gvim --servername FOOBAR --remote file.txt
+
+Edit "file.txt" in server "FILES" if it exists, become server "FILES"
+otherwise: >
+    gvim --servername FILES --remote-silent file.txt
+
+This doesn't work, all arguments after --remote will be used as file names: >
+    gvim --remote --servername FOOBAR file.txt
+
+Edit file "+foo" in a remote server (note the use of "./" to avoid the special
+meaning of the leading plus): >
+    vim --remote ./+foo
+
+Tell the remote server "BLA" to write all files and exit: >
+    vim --servername BLA --remote-send '<C-\><C-N>:wqa<CR>'
+
+
+SERVER NAME
+
+By default Vim will try to register the name under which it was invoked (gvim,
+egvim ...).  This can be overridden with the --servername argument.  If the
+specified name is not available, a postfix is applied until a free name is
+encountered, i.e. "gvim1" for the second invocation of gvim on a particular
+X-server.  The resulting name is available in the servername builtin variable
+|v:servername|.  The case of the server name is ignored, thus "gvim" and
+"GVIM" are considered equal.
+
+When Vim is invoked with --remote, --remote-wait or --remote-send it will try
+to locate the server name determined by the invocation name and --servername
+argument as described above.  If an exact match is not available, the first
+server with the number postfix will be used.  If a name with the number
+postfix is specified with the --servername argument, it must match exactly.
+
+If no server can be located and --remote or --remote-wait was used, Vim will
+start up according to the rest of the command line and do the editing by
+itself.  This way it is not necessary to know whether gvim is already started
+when sending command to it.
+
+The --serverlist argument will cause Vim to print a list of registered command
+servers on the standard output (stdout) and exit.
+
+Win32 Note: Making the Vim server go to the foreground doesn't always work,
+because MS-Windows doesn't allow it.  The client will move the server to the
+foreground when using the --remote or --remote-wait argument and the server
+name starts with "g".
+
+
+REMOTE EDITING
+
+The --remote argument will cause a |:drop| command to be constructed from the
+rest of the command line and sent as described above.
+The --remote-wait argument does the same thing and additionally sets up to
+wait for each of the files to have been edited.  This uses the BufUnload
+event, thus as soon as a file has been unloaded, Vim assumes you are done
+editing it.
+Note that the --remote and --remote-wait arguments will consume the rest of
+the command line.  I.e. all remaining arguments will be regarded as filenames.
+You can not put options there!
+
+
+FUNCTIONS
+								*E240* *E573*
+There are a number of Vim functions for scripting the command server.  See
+the description in |eval.txt| or use CTRL-] on the function name to jump to
+the full explanation.
+
+    synopsis				     explanation ~
+    remote_expr( server, string, idvar)      send expression
+    remote_send( server, string, idvar)      send key sequence
+    serverlist()			     get a list of available servers
+    remote_peek( serverid, retvar)	     check for reply string
+    remote_read( serverid)		     read reply string
+    server2client( serverid, string)	     send reply string
+    remote_foreground( server)		     bring server to the front
+
+See also the explanation of |CTRL-\_CTRL-N|.  Very useful as a leading key
+sequence.
+The {serverid} for server2client() can be obtained with expand("<client>")
+
+==============================================================================
+2. X11 specific items					*x11-clientserver*
+				    *E247* *E248* *E251* *E258* *E277*
+
+The communication between client and server goes through the X server.  The
+display of the Vim server must be specified.  The usual protection of the X
+server is used, you must be able to open a window on the X server for the
+communication to work.  It is possible to communicate between different
+systems.
+
+By default, a GUI Vim will register a name on the X-server by which it can be
+addressed for subsequent execution of injected strings.  Vim can also act as
+a client and send strings to other instances of Vim on the same X11 display.
+
+When an X11 GUI Vim (gvim) is started, it will try to register a send-server
+name on the 'VimRegistry' property on the root window.
+
+A non GUI Vim with access to the X11 display (|xterm-clipboard| enabled), can
+also act as a command server if a server name is explicitly given with the
+--servername argument.
+
+An empty --servername argument will cause the command server to be disabled.
+
+To send commands to a Vim server from another application, read the source
+file src/if_xcmdsrv.c, it contains some hints about the protocol used.
+
+==============================================================================
+3. Win32 specific items					*w32-clientserver*
+
+Every Win32 Vim can work as a server, also in the console.  You do not need a
+version compiled with OLE.  Windows messages are used, this works on any
+version of MS-Windows.  But only communication within one system is possible.
+
+Since MS-Windows messages are used, any other application should be able to
+communicate with a Vim server.  An alternative is using the OLE functionality
+|ole-interface|.
+
+When using gvim, the --remote-wait only works properly this way: >
+
+	start /w gvim --remote-wait file.txt
+<
+ vim:tw=78:sw=4:ts=8:ft=help:norl:
