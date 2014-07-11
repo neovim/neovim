@@ -48,8 +48,16 @@ SINGLE_MAKE = export MAKEFLAGS= ; $(MAKE)
 
 all: nvim
 
-nvim: build/.ran-cmake deps
+nvim: build/.ran-cmake deps runtime
 	+$(BUILD_CMD) -C build
+
+runtime:
+	mkdir -p build
+	git submodule init
+	git submodule update
+	rm -rf build/runtime
+	cp -R build/vimscript/runtime build
+	cp -R build/docs build/runtime
 
 cmake:
 	touch CMakeLists.txt

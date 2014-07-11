@@ -1,0 +1,6 @@
+[submodule "build/docs"]
+	path = build/docs
+	url = https://github.com/neovim/docs
+[submodule "build/vimscript"]
+	path = build/vimscript
+	url = https://github.com/neovim/vimscript
