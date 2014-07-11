@@ -790,6 +790,8 @@ void mch_setmouse(int on)
  */
 void check_mouse_termcode()
 {
+  xterm_conflict_mouse = FALSE;
+
   if (use_xterm_mouse()
       && use_xterm_mouse() != 3
       ) {
@@ -815,17 +817,23 @@ void check_mouse_termcode()
   else
     del_mouse_termcode(KS_NETTERM_MOUSE);
 
-  /* conflicts with xterm mouse: "\033[" and "\033[M" */
-  if (!use_xterm_mouse()
+  /* Conflicts with xterm mouse: "\033[" and "\033[M"
+   * Also conflicts with the xterm termresponse, skip this if it was
+   * requested already. */
+  if (!use_xterm_mouse() && !did_request_esc_sequence()
       )
+  {
     set_mouse_termcode(KS_DEC_MOUSE, (char_u *)(term_is_8bit(T_NAME)
                                                 ? IF_EB("\233",
                                                     CSI_STR) : IF_EB("\033[",
                                                     ESC_STR "[")));
+    xterm_conflict_mouse = TRUE;
+  }
   else
     del_mouse_termcode(KS_DEC_MOUSE);
   /* same as the dec mouse */
   if (use_xterm_mouse() == 3
+      && !did_request_esc_sequence()
       ) {
     set_mouse_termcode(KS_URXVT_MOUSE, (char_u *)(term_is_8bit(T_NAME)
                                                   ? IF_EB("\233", CSI_STR)
@@ -835,6 +843,7 @@ void check_mouse_termcode()
       mch_setmouse(FALSE);
       setmouse();
     }
+    xterm_conflict_mouse = TRUE;
   } else
     del_mouse_termcode(KS_URXVT_MOUSE);
   /* There is no conflict with xterm mouse */
