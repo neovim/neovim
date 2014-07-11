@@ -10,10 +10,19 @@
  * eval.c: Expression evaluation.
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
+
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -72,6 +81,7 @@
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/os/dl.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -5289,8 +5299,7 @@ list_join_inner (
     len = (int)STRLEN(s);
     sumlen += len;
 
-    ga_grow(join_gap, 1);
-    p = ((join_T *)join_gap->ga_data) + (join_gap->ga_len++);
+    p = GA_APPEND_VIA_PTR(join_T, join_gap);
     if (tofree != NULL || s != numbuf) {
       p->s = s;
       p->tofree = tofree;
@@ -9673,9 +9682,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "jumplist",
     "keymap",
     "langmap",
-#ifdef FEAT_LIBCALL
     "libcall",
-#endif
     "linebreak",
     "lispindent",
     "listcmds",
@@ -9781,7 +9788,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
       n = has_mbyte;
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
     } else if (STRICMP(name, "iconv") == 0) {
-      n = iconv_enabled(FALSE);
+      n = iconv_enabled(false);
 #endif
     } else if (STRICMP(name, "syntax_items") == 0) {
       n = syntax_present(curwin);
@@ -10219,11 +10226,9 @@ static void f_inputrestore(typval_T *argvars, typval_T *rettv)
  */
 static void f_inputsave(typval_T *argvars, typval_T *rettv)
 {
-  /* Add an entry to the stack of typeahead storage. */
-  ga_grow(&ga_userinput, 1);
-  save_typeahead((tasave_T *)(ga_userinput.ga_data)
-          + ga_userinput.ga_len);
-  ++ga_userinput.ga_len;
+  // Add an entry to the stack of typeahead storage.
+  tasave_T *p = GA_APPEND_VIA_PTR(tasave_T, &ga_userinput);
+  save_typeahead(p);
 }
 
 /*
@@ -10623,42 +10628,49 @@ static void f_len(typval_T *argvars, typval_T *rettv)
   }
 }
 
-
-static void libcall_common(typval_T *argvars, typval_T *rettv, int type)
+static void libcall_common(typval_T *argvars, typval_T *rettv, int out_type)
 {
-#ifdef FEAT_LIBCALL
-  char_u              *string_in;
-  char_u              **string_result;
-  int nr_result;
-#endif
-
-  rettv->v_type = type;
-  if (type != VAR_NUMBER)
+  rettv->v_type = out_type;
+  if (out_type != VAR_NUMBER) {
     rettv->vval.v_string = NULL;
-
-  if (check_restricted() || check_secure())
-    return;
-
-#ifdef FEAT_LIBCALL
-  /* The first two args must be strings, otherwise its meaningless */
-  if (argvars[0].v_type == VAR_STRING && argvars[1].v_type == VAR_STRING) {
-    string_in = NULL;
-    if (argvars[2].v_type == VAR_STRING)
-      string_in = argvars[2].vval.v_string;
-    if (type == VAR_NUMBER)
-      string_result = NULL;
-    else
-      string_result = &rettv->vval.v_string;
-    if (mch_libcall(argvars[0].vval.v_string,
-            argvars[1].vval.v_string,
-            string_in,
-            argvars[2].vval.v_number,
-            string_result,
-            &nr_result) == OK
-        && type == VAR_NUMBER)
-      rettv->vval.v_number = nr_result;
   }
-#endif
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  // The first two args (libname and funcname) must be strings
+  if (argvars[0].v_type != VAR_STRING || argvars[1].v_type != VAR_STRING) {
+    return;
+  }
+
+  const char *libname = (char *) argvars[0].vval.v_string;
+  const char *funcname = (char *) argvars[1].vval.v_string;
+
+  int in_type = argvars[2].v_type;
+
+  // input variables
+  char *str_in = (in_type == VAR_STRING)
+      ? (char *) argvars[2].vval.v_string : NULL;
+  int64_t int_in = argvars[2].vval.v_number;
+
+  // output variables
+  char **str_out = (out_type == VAR_STRING)
+      ? (char **) &rettv->vval.v_string : NULL;
+  int64_t int_out = 0;
+
+  bool success = os_libcall(libname, funcname,
+                            str_in, int_in,
+                            str_out, &int_out);
+
+  if (!success) {
+    EMSG2(_(e_libcall), funcname);
+    return;
+  }
+
+  if (out_type == VAR_NUMBER) {
+     rettv->vval.v_number = (int) int_out;
+  }
 }
 
 /*
@@ -12051,8 +12063,8 @@ static int get_search_arg(typval_T *varp, int *flagsp)
     while (*flags != NUL) {
       switch (*flags) {
       case 'b': dir = BACKWARD; break;
-      case 'w': p_ws = TRUE; break;
-      case 'W': p_ws = FALSE; break;
+      case 'w': p_ws = true; break;
+      case 'W': p_ws = false; break;
       default:  mask = 0;
         if (flagsp != NULL)
           switch (*flags) {
@@ -12087,7 +12099,7 @@ static int search_cmn(typval_T *argvars, pos_T *match_pos, int *flagsp)
   char_u      *pat;
   pos_T pos;
   pos_T save_cursor;
-  int save_p_ws = p_ws;
+  bool save_p_ws = p_ws;
   int dir;
   int retval = 0;               /* default: FAIL */
   long lnum_stop = 0;
@@ -12290,7 +12302,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
 {
   char_u      *spat, *mpat, *epat;
   char_u      *skip;
-  int save_p_ws = p_ws;
+  bool save_p_ws = p_ws;
   int dir;
   int flags = 0;
   char_u nbuf1[NUMBUFLEN];
@@ -12323,7 +12335,7 @@ static int searchpair_cmn(typval_T *argvars, pos_T *match_pos)
 
   /* Using 'r' implies 'W', otherwise it doesn't work. */
   if (flags & SP_REPEAT)
-    p_ws = FALSE;
+    p_ws = false;
 
   /* Optional fifth argument: skip expression */
   if (argvars[3].v_type == VAR_UNKNOWN
@@ -13340,7 +13352,7 @@ static void f_spellbadword(typval_T *argvars, typval_T *rettv)
     if (str != NULL) {
       /* Check the argument for spelling. */
       while (*str != NUL) {
-        len = spell_check(curwin, str, &attr, &capcol, FALSE);
+        len = spell_check(curwin, str, &attr, &capcol, false);
         if (attr != HLF_COUNT) {
           word = str;
           break;
@@ -13369,7 +13381,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
   int maxcount;
   garray_T ga;
   listitem_T  *li;
-  int need_capital = FALSE;
+  bool need_capital = false;
 
   rettv_list_alloc(rettv);
 
@@ -13387,7 +13399,7 @@ static void f_spellsuggest(typval_T *argvars, typval_T *rettv)
     } else
       maxcount = 25;
 
-    spell_suggest_list(&ga, str, maxcount, need_capital, FALSE);
+    spell_suggest_list(&ga, str, maxcount, need_capital, false);
 
     for (int i = 0; i < ga.ga_len; ++i) {
       str = ((char_u **)ga.ga_data)[i];
@@ -14414,8 +14426,7 @@ error:
     }
   }
 
-  /* add a terminating NUL */
-  ga_grow(&ga, 1);
+  // add a terminating NUL
   ga_append(&ga, NUL);
 
   rettv->vval.v_string = ga.ga_data;
@@ -14665,7 +14676,7 @@ static void f_winrestview(typval_T *argvars, typval_T *rettv)
       curwin->w_topline = 1;
     if (curwin->w_topline > curbuf->b_ml.ml_line_count)
       curwin->w_topline = curbuf->b_ml.ml_line_count;
-    check_topfill(curwin, TRUE);
+    check_topfill(curwin, true);
   }
 }
 
@@ -17634,8 +17645,7 @@ script_autoload (
   else {
     /* Remember the name if it wasn't loaded already. */
     if (i == ga_loaded.ga_len) {
-      ga_grow(&ga_loaded, 1);
-      ((char_u **)ga_loaded.ga_data)[ga_loaded.ga_len++] = scriptname;
+      GA_APPEND(char_u *, &ga_loaded, scriptname);
       tofree = NULL;
     }
 

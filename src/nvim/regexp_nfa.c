@@ -4,6 +4,10 @@
  * This file is included in "regexp.c".
  */
 
+#include <inttypes.h>
+#include <stdbool.h>
+
+#include "nvim/ascii.h"
 #include "nvim/misc2.h"
 #include "nvim/garray.h"
 

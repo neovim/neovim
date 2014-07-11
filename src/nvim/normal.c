@@ -11,10 +11,13 @@
  *		the operators.
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/normal.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -992,8 +995,8 @@ getcount:
     cursor_on();
     out_flush();
     if (msg_scroll || emsg_on_display)
-      ui_delay(1000L, TRUE);            /* wait at least one second */
-    ui_delay(3000L, FALSE);             /* wait up to three seconds */
+      ui_delay(1000L, true);            /* wait at least one second */
+    ui_delay(3000L, false);             /* wait up to three seconds */
     State = save_State;
 
     msg_scroll = FALSE;
@@ -3273,7 +3276,7 @@ find_decl (
   pos_T par_pos;
   pos_T found_pos;
   int t;
-  int save_p_ws;
+  bool save_p_ws;
   int save_p_scs;
   int retval = OK;
   int incll;
@@ -3287,7 +3290,7 @@ find_decl (
   old_pos = curwin->w_cursor;
   save_p_ws = p_ws;
   save_p_scs = p_scs;
-  p_ws = FALSE;         /* don't wrap around end of file now */
+  p_ws = false;         /* don't wrap around end of file now */
   p_scs = FALSE;        /* don't switch ignorecase off now */
 
   /*
@@ -6709,7 +6712,7 @@ static void nv_bck_word(cmdarg_T *cap)
 static void nv_wordcmd(cmdarg_T *cap)
 {
   int n;
-  int word_end;
+  bool word_end;
   int flag = FALSE;
   pos_T startpos = curwin->w_cursor;
 
@@ -6717,9 +6720,9 @@ static void nv_wordcmd(cmdarg_T *cap)
    * Set inclusive for the "E" and "e" command.
    */
   if (cap->cmdchar == 'e' || cap->cmdchar == 'E')
-    word_end = TRUE;
+    word_end = true;
   else
-    word_end = FALSE;
+    word_end = false;
   cap->oap->inclusive = word_end;
 
   /*
@@ -6753,7 +6756,7 @@ static void nv_wordcmd(cmdarg_T *cap)
          * flag.
          */
         cap->oap->inclusive = TRUE;
-        word_end = TRUE;
+        word_end = true;
         flag = TRUE;
       }
     }

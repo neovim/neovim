@@ -10,9 +10,14 @@
  * edit.c: functions for Insert mode
  */
 
+#include <assert.h>
+#include <errno.h>
 #include <string.h>
+#include <inttypes.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/edit.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -1752,7 +1757,7 @@ static int has_compl_option(int dict_opt)
       vim_beep();
       setcursor();
       out_flush();
-      ui_delay(2000L, FALSE);
+      ui_delay(2000L, false);
     }
     return FALSE;
   }
@@ -3415,7 +3420,7 @@ static int ins_compl_get_exp(pos_T *ini)
   pos_T       *pos;
   char_u      **matches;
   int save_p_scs;
-  int save_p_ws;
+  bool save_p_ws;
   int save_p_ic;
   int i;
   int num_matches;
@@ -3613,9 +3618,9 @@ static int ins_compl_get_exp(pos_T *ini)
        *	wrapscan for curbuf to avoid missing matches -- Acevedo,Webb */
       save_p_ws = p_ws;
       if (ins_buf != curbuf)
-        p_ws = FALSE;
+        p_ws = false;
       else if (*e_cpt == '.')
-        p_ws = TRUE;
+        p_ws = true;
       for (;; ) {
         int flags = 0;
 

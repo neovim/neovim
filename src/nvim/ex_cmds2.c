@@ -10,9 +10,16 @@
  * ex_cmds2.c: some more functions for command line commands
  */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/version_defs.h"
 #include "nvim/ex_cmds2.h"
 #include "nvim/buffer.h"
@@ -45,6 +52,7 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/fs_defs.h"
 
 
 /* Growarray to store info about already sourced scripts.
@@ -52,9 +60,8 @@
  * script when going through the list. */
 typedef struct scriptitem_S {
   char_u      *sn_name;
-  int sn_dev_valid;
-  uint64_t sn_dev;
-  uint64_t sn_ino;
+  bool file_id_valid;
+  FileID file_id;
   int sn_prof_on;               /* TRUE when script is/was profiled */
   int sn_pr_force;              /* forceit: profile functions in this script */
   proftime_T sn_pr_child;       /* time set when going into first child */
@@ -1525,8 +1532,7 @@ void get_arglist(garray_T *gap, char_u *str)
 {
   ga_init(gap, (int)sizeof(char_u *), 20);
   while (*str != NUL) {
-    ga_grow(gap, 1);
-    ((char_u **)gap->ga_data)[gap->ga_len++] = str;
+    GA_APPEND(char_u *, gap, str);
 
     /* Isolate one argument, change it in-place, put a NUL after it. */
     str = do_one_arg(str);
@@ -1535,17 +1541,17 @@ void get_arglist(garray_T *gap, char_u *str)
 
 /*
  * Parse a list of arguments (file names), expand them and return in
- * "fnames[fcountp]".  When "wig" is TRUE, removes files matching 'wildignore'.
+ * "fnames[fcountp]".  When "wig" is true, removes files matching 'wildignore'.
  * Return FAIL or OK.
  */
-int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, int wig)
+int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
 {
   garray_T ga;
   int i;
 
   get_arglist(&ga, str);
 
-  if (wig == TRUE)
+  if (wig)
     i = expand_wildcards(ga.ga_len, (char_u **)ga.ga_data,
         fcountp, fnamesp, EW_FILE|EW_NOTFOUND);
   else
@@ -2559,15 +2565,14 @@ do_source (
    * If it's new, generate a new SID.
    */
   save_current_SID = current_SID;
-  FileInfo file_info;
-  bool file_info_ok = os_get_file_info((char *)fname_exp, &file_info);
+  FileID file_id;
+  bool file_id_ok = os_get_file_id((char *)fname_exp, &file_id);
   for (current_SID = script_items.ga_len; current_SID > 0; --current_SID) {
     si = &SCRIPT_ITEM(current_SID);
     // Compare dev/ino when possible, it catches symbolic links.
     // Also compare file names, the inode may change when the file was edited.
-    bool file_id_equal = file_info_ok && si->sn_dev_valid
-                         && si->sn_dev == file_info.stat.st_dev
-                         && si->sn_ino == file_info.stat.st_ino;
+    bool file_id_equal = file_id_ok && si->file_id_valid
+                         && os_file_id_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
         && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
       break;
@@ -2584,12 +2589,11 @@ do_source (
     si = &SCRIPT_ITEM(current_SID);
     si->sn_name = fname_exp;
     fname_exp = NULL;
-    if (file_info_ok) {
-      si->sn_dev_valid = TRUE;
-      si->sn_dev = file_info.stat.st_dev;
-      si->sn_ino = file_info.stat.st_ino;
+    if (file_id_ok) {
+      si->file_id_valid = true;
+      si->file_id = file_id;
     } else {
-      si->sn_dev_valid = FALSE;
+      si->file_id_valid = false;
     }
 
     /* Allocate the local script variables to use for this script. */
@@ -2792,7 +2796,7 @@ char_u *getsourceline(int c, void *cookie, int indent)
         /* Adjust the growsize to the current length to speed up
          * concatenating many lines. */
         if (ga.ga_len > 400) {
-          ga.ga_growsize = (ga.ga_len > 8000) ? 8000 : ga.ga_len;
+          ga_set_growsize(&ga, (ga.ga_len > 8000) ? 8000 : ga.ga_len);
         }
         ga_concat(&ga, p + 1);
       }
@@ -3334,13 +3338,12 @@ static char_u **find_locales(void)
   loc = (char_u *)strtok((char *)locale_a, "\n");
 
   while (loc != NULL) {
-    ga_grow(&locales_ga, 1);
     loc = vim_strsave(loc);
-
-    ((char_u **)locales_ga.ga_data)[locales_ga.ga_len++] = loc;
+    GA_APPEND(char_u *, &locales_ga, loc);
     loc = (char_u *)strtok(NULL, "\n");
   }
   free(locale_a);
+  // Guarantee that .ga_data is NULL terminated
   ga_grow(&locales_ga, 1);
   ((char_u **)locales_ga.ga_data)[locales_ga.ga_len] = NULL;
   return (char_u **)locales_ga.ga_data;

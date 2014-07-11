@@ -31,9 +31,12 @@
  * file is opened.
  */
 
+#include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/memfile.h"
 #include "nvim/fileio.h"
 #include "nvim/memline.h"

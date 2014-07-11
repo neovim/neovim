@@ -10,6 +10,7 @@
 [![Stories in Ready](https://badge.waffle.io/neovim/neovim.png?label=ready)](https://waffle.io/neovim/neovim)
 [![Coverage Status](https://img.shields.io/coveralls/neovim/neovim.svg)](https://coveralls.io/r/neovim/neovim)
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/2227/badge.svg)](https://scan.coverity.com/projects/2227)
+[![Bountysource](https://www.bountysource.com/badge/tracker?tracker_id=461131)](https://www.bountysource.com/trackers/461131-neovim?utm_source=461131&utm_medium=shield&utm_campaign=TRACKER_BADGE)
 
 Neovim is a project that seeks to aggressively refactor Vim in order to:
 
@@ -73,9 +74,17 @@ Join the community on IRC in #neovim on Freenode or the [mailing list](https://g
 
 ### License
 
-Neovim is licensed under the terms of the Apache 2.0 License.
-Parts of Neovim that originated in Vim remain under the Vim license.
-See LICENSE for details.
+Neovim is licensed under the terms of the Apache 2.0 license, except for
+parts that were contributed under the Vim license.
+
+- Contributions committed before [b17d96][license-commit] by authors who did
+  not sign the Contributor License Agreement (CLA) remain under the Vim license.
+
+- Contributions committed after [b17d96][license-commit] are licensed under
+  Apache 2.0 unless those contributions were copied from Vim (identified in 
+  the commit logs by the `vim-patch` token).
+
+See `LICENSE` for details.
 
     Vim is Charityware.  You can use and copy it as much as you like, but you are
     encouraged to make a donation for needy children in Uganda.  Please see the
@@ -87,5 +96,7 @@ See LICENSE for details.
 
     You can also sponsor the development of Vim.  Vim sponsors can vote for
     features.  The money goes to Uganda anyway.
+
+[license-commit]: https://github.com/neovim/neovim/commit/b17d9691a24099c9210289f16afb1a498a89d803
 
 <!-- vim: set tw=80: -->

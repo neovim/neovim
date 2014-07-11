@@ -314,6 +314,12 @@ describe 'fs function', ->
       is_file_info_filled = (file_info) ->
         file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
 
+      file_id_new = () ->
+        file_info = ffi.new 'FileID[1]'
+        file_info[0].inode = 0
+        file_info[0].device_id = 0
+        file_info
+
       describe 'os_get_file_info', ->
         it 'returns false if given a non-existing file', ->
           file_info = file_info_new!
@@ -391,4 +397,68 @@ describe 'fs function', ->
           assert.is_true (fs.os_get_file_info path_1, file_info_1)
           assert.is_true (fs.os_get_file_info path_2, file_info_2)
           assert.is_true (fs.os_file_info_id_equal file_info_1, file_info_2)
+
+      describe 'os_file_info_get_id', ->
+        it 'extracts ino/dev from file_info into file_id', ->
+          file_info = file_info_new!
+          file_id = file_id_new!
+          path = 'unit-test-directory/test.file'
+          assert.is_true (fs.os_get_file_info path, file_info)
+          fs.os_file_info_get_id(file_info, file_id)
+          eq file_info[0].stat.st_ino, file_id[0].inode
+          eq file_info[0].stat.st_dev, file_id[0].device_id
+
+      describe 'os_file_info_get_inode', ->
+        it 'returns the inode from file_info', ->
+          file_info = file_info_new!
+          path = 'unit-test-directory/test.file'
+          assert.is_true (fs.os_get_file_info path, file_info)
+          inode = fs.os_file_info_get_inode(file_info)
+          eq file_info[0].stat.st_ino, inode
+
+      describe 'os_get_file_id', ->
+        it 'returns false if given an non-existing file', ->
+          file_id = file_id_new!
+          assert.is_false (fs.os_get_file_id '/non-existent', file_id)
+
+        it 'returns true if given an existing file and fills file_id', ->
+          file_id = file_id_new!
+          path = 'unit-test-directory/test.file'
+          assert.is_true (fs.os_get_file_id path, file_id)
+          assert.is_true 0 < file_id[0].inode
+          assert.is_true 0 < file_id[0].device_id
+
+      describe 'os_file_id_equal', ->
+        it 'returns true if two FileIDs are equal', ->
+          file_id = file_id_new!
+          path = 'unit-test-directory/test.file'
+          assert.is_true (fs.os_get_file_id path, file_id)
+          assert.is_true (fs.os_file_id_equal file_id, file_id)
+
+        it 'returns false if two FileIDs are not equal', ->
+          file_id_1 = file_id_new!
+          file_id_2 = file_id_new!
+          path_1 = 'unit-test-directory/test.file'
+          path_2 = 'unit-test-directory/test_2.file'
+          assert.is_true (fs.os_get_file_id path_1, file_id_1)
+          assert.is_true (fs.os_get_file_id path_2, file_id_2)
+          assert.is_false (fs.os_file_id_equal file_id_1, file_id_2)
+
+      describe 'os_file_id_equal_file_info', ->
+        it 'returns true if file_id and file_info represent the same file', ->
+          file_id = file_id_new!
+          file_info = file_info_new!
+          path = 'unit-test-directory/test.file'
+          assert.is_true (fs.os_get_file_id path, file_id)
+          assert.is_true (fs.os_get_file_info path, file_info)
+          assert.is_true (fs.os_file_id_equal_file_info file_id, file_info)
+
+        it 'returns false if file_id and file_info represent different files',->
+          file_id = file_id_new!
+          file_info = file_info_new!
+          path_1 = 'unit-test-directory/test.file'
+          path_2 = 'unit-test-directory/test_2.file'
+          assert.is_true (fs.os_get_file_id path_1, file_id)
+          assert.is_true (fs.os_get_file_info path_2, file_info)
+          assert.is_false (fs.os_file_id_equal_file_info file_id, file_info)
 

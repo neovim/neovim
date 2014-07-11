@@ -12,10 +12,15 @@
 
 #define MESSAGE_FILE            /* don't include prototype for smsg() */
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <math.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/message.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
@@ -777,7 +782,7 @@ void wait_return(int redraw)
   } else {
     /* Make sure the hit-return prompt is on screen when 'guioptions' was
      * just changed. */
-    screenalloc(FALSE);
+    screenalloc(false);
 
     State = HITRETURN;
     setmouse();
@@ -2257,8 +2262,8 @@ void mch_errmsg(char *str)
   emsg_on_display = FALSE;
 
   len = (int)STRLEN(str) + 1;
-  if (error_ga.ga_growsize == 0) {
-    error_ga.ga_growsize = 80;
+  if (error_ga.ga_data == NULL) {
+    ga_set_growsize(&error_ga, 80);
     error_ga.ga_itemsize = 1;
   }
   ga_grow(&error_ga, len);
@@ -2612,7 +2617,7 @@ int verbose_open(void)
  * Give a warning message (for searching).
  * Use 'w' highlighting and may repeat the message after redrawing
  */
-void give_warning(char_u *message, int hl)
+void give_warning(char_u *message, bool hl)
 {
   /* Don't do this for ":silent". */
   if (msg_silent != 0)

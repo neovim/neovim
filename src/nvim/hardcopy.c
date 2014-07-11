@@ -10,9 +10,15 @@
  * hardcopy.c: printing to paper
  */
 
+#include <errno.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
+#ifdef HAVE_LOCALE_H
+# include <locale.h>
+#endif
 #include "nvim/version_defs.h"
 #include "nvim/hardcopy.h"
 #include "nvim/buffer.h"
@@ -1285,7 +1291,7 @@ static int prt_collate;
  * Buffers used when generating PostScript output
  */
 static char_u prt_line_buffer[257];
-static garray_T prt_ps_buffer;
+static garray_T prt_ps_buffer = GA_EMPTY_INIT_VALUE;
 
 static int prt_do_conv;
 static vimconv_T prt_conv;

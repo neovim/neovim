@@ -72,7 +72,6 @@
 // #define HAVE_SYSCONF 1
 #define HAVE_SYS_IOCTL_H 1
 #define HAVE_SYS_PARAM_H 1
-#define HAVE_SYS_SELECT_H 1
 #define HAVE_SYS_STATFS_H 1
 // TODO: add proper cmake check
 // #define HAVE_SYS_SYSINFO_H 1

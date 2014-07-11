@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 
 #include "nvim/vim.h"

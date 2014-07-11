@@ -10,10 +10,13 @@
  * ex_cmds.c: some functions for command line commands
  */
 
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/version_defs.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/buffer.h"
@@ -3445,7 +3448,7 @@ void do_sub(exarg_T *eap)
   regmmatch_T regmatch;
   static int do_all = FALSE;            /* do multiple substitutions per line */
   static int do_ask = FALSE;            /* ask for confirmation */
-  static int do_count = FALSE;          /* count only */
+  static bool do_count = false;         /* count only */
   static int do_error = TRUE;           /* if false, ignore errors */
   static int do_print = FALSE;          /* print last line with subs. */
   static int do_list = FALSE;           /* list last line with subs. */
@@ -3584,7 +3587,7 @@ void do_sub(exarg_T *eap)
 
     do_join(eap->line2 - eap->line1 + 1, FALSE, TRUE, FALSE, true);
     sub_nlines = sub_nsubs = eap->line2 - eap->line1 + 1;
-    do_sub_msg(FALSE);
+    do_sub_msg(false);
     ex_may_print(eap);
 
     return;
@@ -3605,7 +3608,7 @@ void do_sub(exarg_T *eap)
     }
     do_error = TRUE;
     do_print = FALSE;
-    do_count = FALSE;
+    do_count = false;
     do_number = FALSE;
     do_ic = 0;
   }
@@ -3619,7 +3622,7 @@ void do_sub(exarg_T *eap)
     else if (*cmd == 'c')
       do_ask = !do_ask;
     else if (*cmd == 'n')
-      do_count = TRUE;
+      do_count = true;
     else if (*cmd == 'e')
       do_error = !do_error;
     else if (*cmd == 'r')           /* use last used regexp */
@@ -4355,9 +4358,9 @@ skip:
  * Can also be used after a ":global" command.
  * Return TRUE if a message was given.
  */
-int 
+bool
 do_sub_msg (
-    int count_only                 /* used 'n' flag for ":s" */
+    bool count_only                /* used 'n' flag for ":s" */
 )
 {
   /*
@@ -4390,13 +4393,13 @@ do_sub_msg (
     if (msg(msg_buf))
       /* save message to display it after redraw */
       set_keep_msg(msg_buf, 0);
-    return TRUE;
+    return true;
   }
   if (got_int) {
     EMSG(_(e_interr));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -4562,7 +4565,7 @@ void global_exe(char_u *cmd)
    * number of extra or deleted lines.
    * Don't report extra or deleted lines in the edge case where the buffer
    * we are in after execution is different from the buffer we started in. */
-  if (!do_sub_msg(FALSE) && curbuf == old_buf)
+  if (!do_sub_msg(false) && curbuf == old_buf)
     msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 }
 
@@ -4595,9 +4598,9 @@ void free_old_sub(void)
  * Set up for a tagpreview.
  * Return TRUE when it was created.
  */
-int 
+bool
 prepare_tagpreview (
-    int undo_sync                  /* sync undo when leaving the window */
+    bool undo_sync                  /* sync undo when leaving the window */
 )
 {
   win_T       *wp;
@@ -4618,17 +4621,17 @@ prepare_tagpreview (
        */
       if (win_split(g_do_tagpreview > 0 ? g_do_tagpreview : 0, 0)
           == FAIL)
-        return FALSE;
+        return false;
       curwin->w_p_pvw = TRUE;
       curwin->w_p_wfh = TRUE;
       RESET_BINDING(curwin);                /* don't take over 'scrollbind'
                                                and 'cursorbind' */
       curwin->w_p_diff = FALSE;             /* no 'diff' */
       curwin->w_p_fdc = 0;                  /* no 'foldcolumn' */
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 
@@ -4735,7 +4738,7 @@ void ex_help(exarg_T *eap)
         if (wp->w_buffer != NULL && wp->w_buffer->b_help)
           break;
     if (wp != NULL && wp->w_buffer->b_nwindows > 0)
-      win_enter(wp, TRUE);
+      win_enter(wp, true);
     else {
       /*
        * There is no help window yet.
@@ -5446,11 +5449,9 @@ helptags_one (
   ga_init(&ga, (int)sizeof(char_u *), 100);
   if (add_help_tags || path_full_compare((char_u *)"$VIMRUNTIME/doc",
           dir, FALSE) == kEqualFiles) {
-    ga_grow(&ga, 1);
     s = xmalloc(18 + STRLEN(tagfname));
     sprintf((char *)s, "help-tags\t%s\t1\n", tagfname);
-    ((char_u **)ga.ga_data)[ga.ga_len] = s;
-    ++ga.ga_len;
+    GA_APPEND(char_u *, &ga, s);
   }
 
   /*
@@ -5517,10 +5518,8 @@ helptags_one (
                   || s[1] == '\0')) {
             *p2 = '\0';
             ++p1;
-            ga_grow(&ga, 1);
             s = xmalloc((p2 - p1) + STRLEN(fname) + 2);
-            ((char_u **)ga.ga_data)[ga.ga_len] = s;
-            ++ga.ga_len;
+            GA_APPEND(char_u *, &ga, s);
             sprintf((char *)s, "%s\t%s", p1, fname);
 
             /* find next '*' */

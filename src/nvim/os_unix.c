@@ -25,10 +25,14 @@
  */
 # define select select_declared_wrong
 
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/api/private/handle.h"
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/os_unix.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
@@ -70,11 +74,6 @@
 # include <termios.h>
 #endif
 
-/* shared library access */
-#if defined(HAVE_DLFCN_H) && defined(USE_DLOPEN)
-# include <dlfcn.h>
-#endif
-
 #ifdef HAVE_SELINUX
 # include <selinux/selinux.h>
 static int selinux_enabled = -1;
@@ -99,36 +98,6 @@ void mch_write(char_u *s, int len)
   ignored = (int)write(1, (char *)s, len);
   if (p_wd)             /* Unix is too fast, slow down a bit more */
     os_microdelay(p_wd, false);
-}
-
-/*
- * A simplistic version of setjmp() that only allows one level of using.
- * Don't call twice before calling mch_endjmp()!.
- * Usage:
- *	mch_startjmp();
- *	if (SETJMP(lc_jump_env) != 0)
- *	{
- *	    mch_didjmp();
- *	    EMSG("crash!");
- *	}
- *	else
- *	{
- *	    do_the_work;
- *	    mch_endjmp();
- *	}
- * Note: Can't move SETJMP() here, because a function calling setjmp() must
- * not return before the saved environment is used.
- * Returns OK for normal return, FAIL when the protected code caused a
- * problem and LONGJMP() was used.
- */
-void mch_startjmp()
-{
-  lc_active = TRUE;
-}
-
-void mch_endjmp()
-{
-  lc_active = FALSE;
 }
 
 /*
@@ -164,7 +133,7 @@ void mch_suspend()
     long wait_time;
     for (wait_time = 0; !sigcont_received && wait_time <= 3L; wait_time++)
       /* Loop is not entered most of the time */
-      os_delay(wait_time, FALSE);
+      os_delay(wait_time, false);
   }
 # endif
 
@@ -381,12 +350,12 @@ char_u      *name,
 int len               /* buffer size, only used when name gets longer */
 )
 {
-  struct stat st;
   char_u      *slash, *tail;
   DIR         *dirp;
   struct dirent *dp;
 
-  if (lstat((char *)name, &st) >= 0) {
+  FileInfo file_info;
+  if (os_get_file_info_link((char *)name, &file_info)) {
     /* Open the directory where the file is located. */
     slash = vim_strrchr(name, '/');
     if (slash == NULL) {
@@ -406,15 +375,14 @@ int len               /* buffer size, only used when name gets longer */
         if (STRICMP(tail, dp->d_name) == 0
             && STRLEN(tail) == STRLEN(dp->d_name)) {
           char_u newname[MAXPATHL + 1];
-          struct stat st2;
 
           /* Verify the inode is equal. */
           STRLCPY(newname, name, MAXPATHL + 1);
           STRLCPY(newname + (tail - name), dp->d_name,
               MAXPATHL - (tail - name) + 1);
-          if (lstat((char *)newname, &st2) >= 0
-              && st.st_ino == st2.st_ino
-              && st.st_dev == st2.st_dev) {
+          FileInfo file_info_new;
+          if (os_get_file_info_link((char *)newname, &file_info_new)
+              && os_file_info_id_equal(&file_info, &file_info_new)) {
             STRCPY(tail, dp->d_name);
             break;
           }
@@ -1222,7 +1190,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   /* When running in the background, give it some time to create the temp
    * file, but don't wait for it to finish. */
   if (ampersent)
-    os_delay(10L, TRUE);
+    os_delay(10L, true);
 
   free(command);
 
@@ -1491,158 +1459,3 @@ static int have_dollars(int num, char_u **file)
       return TRUE;
   return FALSE;
 }
-
-#if defined(FEAT_LIBCALL) || defined(PROTO)
-typedef char_u * (*STRPROCSTR)(char_u *);
-typedef char_u * (*INTPROCSTR)(int);
-typedef int (*STRPROCINT)(char_u *);
-typedef int (*INTPROCINT)(int);
-
-/*
- * Call a DLL routine which takes either a string or int param
- * and returns an allocated string.
- */
-int mch_libcall(char_u *libname,
-                char_u *funcname,
-                char_u *argstring,         /* NULL when using an argint */
-                int argint,
-                char_u **string_result,    /* NULL when using number_result */
-                int *number_result)
-{
-# if defined(USE_DLOPEN)
-  void        *hinstLib;
-  char        *dlerr = NULL;
-# else
-  shl_t hinstLib;
-# endif
-  STRPROCSTR ProcAdd;
-  INTPROCSTR ProcAddI;
-  char_u      *retval_str = NULL;
-  int retval_int = 0;
-  int success = FALSE;
-
-  /*
-   * Get a handle to the DLL module.
-   */
-# if defined(USE_DLOPEN)
-  /* First clear any error, it's not cleared by the dlopen() call. */
-  (void)dlerror();
-
-  hinstLib = dlopen((char *)libname, RTLD_LAZY
-#  ifdef RTLD_LOCAL
-      | RTLD_LOCAL
-#  endif
-      );
-  if (hinstLib == NULL) {
-    /* "dlerr" must be used before dlclose() */
-    dlerr = (char *)dlerror();
-    if (dlerr != NULL)
-      EMSG2(_("dlerror = \"%s\""), dlerr);
-  }
-# else
-  hinstLib = shl_load((const char*)libname, BIND_IMMEDIATE|BIND_VERBOSE, 0L);
-# endif
-
-  /* If the handle is valid, try to get the function address. */
-  if (hinstLib != NULL) {
-    /*
-     * Catch a crash when calling the library function.  For example when
-     * using a number where a string pointer is expected.
-     */
-    mch_startjmp();
-    if (SETJMP(lc_jump_env) != 0) {
-      success = FALSE;
-# if defined(USE_DLOPEN)
-      dlerr = NULL;
-# endif
-    } else
-    {
-      retval_str = NULL;
-      retval_int = 0;
-
-      if (argstring != NULL) {
-# if defined(USE_DLOPEN)
-        ProcAdd = (STRPROCSTR)dlsym(hinstLib, (const char *)funcname);
-        dlerr = (char *)dlerror();
-# else
-        if (shl_findsym(&hinstLib, (const char *)funcname,
-                TYPE_PROCEDURE, (void *)&ProcAdd) < 0)
-          ProcAdd = NULL;
-# endif
-        if ((success = (ProcAdd != NULL
-# if defined(USE_DLOPEN)
-                        && dlerr == NULL
-# endif
-                        ))) {
-          if (string_result == NULL)
-            retval_int = ((STRPROCINT)ProcAdd)(argstring);
-          else
-            retval_str = (ProcAdd)(argstring);
-        }
-      } else {
-# if defined(USE_DLOPEN)
-        ProcAddI = (INTPROCSTR)dlsym(hinstLib, (const char *)funcname);
-        dlerr = (char *)dlerror();
-# else
-        if (shl_findsym(&hinstLib, (const char *)funcname,
-                TYPE_PROCEDURE, (void *)&ProcAddI) < 0)
-          ProcAddI = NULL;
-# endif
-        if ((success = (ProcAddI != NULL
-# if defined(USE_DLOPEN)
-                        && dlerr == NULL
-# endif
-                        ))) {
-          if (string_result == NULL)
-            retval_int = ((INTPROCINT)ProcAddI)(argint);
-          else
-            retval_str = (ProcAddI)(argint);
-        }
-      }
-
-      /* Save the string before we free the library. */
-      /* Assume that a "1" or "-1" result is an illegal pointer. */
-      if (string_result == NULL)
-        *number_result = retval_int;
-      else if (retval_str != NULL
-               && retval_str != (char_u *)1
-               && retval_str != (char_u *)-1)
-        *string_result = vim_strsave(retval_str);
-    }
-
-    mch_endjmp();
-# ifdef SIGHASARG
-    if (lc_signal != 0) {
-      int i;
-
-      /* try to find the name of this signal */
-      for (i = 0; signal_info[i].sig != -1; i++)
-        if (lc_signal == signal_info[i].sig)
-          break;
-      EMSG2("E368: got SIG%s in libcall()", signal_info[i].name);
-    }
-# endif
-
-# if defined(USE_DLOPEN)
-    /* "dlerr" must be used before dlclose() */
-    if (dlerr != NULL)
-      EMSG2(_("dlerror = \"%s\""), dlerr);
-
-    /* Free the DLL module. */
-    (void)dlclose(hinstLib);
-# else
-    (void)shl_unload(hinstLib);
-# endif
-  }
-
-  if (!success) {
-    EMSG2(_(e_libcall), funcname);
-    return FAIL;
-  }
-
-  return OK;
-}
-#endif
-
-
-

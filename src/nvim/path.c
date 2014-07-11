@@ -1,6 +1,12 @@
+
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/path.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
@@ -52,13 +58,13 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   char_u exp1[MAXPATHL];
   char_u full1[MAXPATHL];
   char_u full2[MAXPATHL];
-  uv_stat_t st1, st2;
+  FileID file_id_1, file_id_2;
 
   expand_env(s1, exp1, MAXPATHL);
-  int r1 = os_stat(exp1, &st1);
-  int r2 = os_stat(s2, &st2);
-  if (r1 != OK && r2 != OK) {
-    // If os_stat() doesn't work, may compare the names.
+  bool id_ok_1 = os_get_file_id((char *)exp1, &file_id_1);
+  bool id_ok_2 = os_get_file_id((char *)s2, &file_id_2);
+  if (!id_ok_1 && !id_ok_2) {
+    // If os_get_file_id() doesn't work, may compare the names.
     if (checkname) {
       vim_FullName(exp1, full1, MAXPATHL, FALSE);
       vim_FullName(s2, full2, MAXPATHL, FALSE);
@@ -68,10 +74,10 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
     }
     return kBothFilesMissing;
   }
-  if (r1 != OK || r2 != OK) {
+  if (!id_ok_1 || !id_ok_2) {
     return kOneFileMissing;
   }
-  if (st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino) {
+  if (os_file_id_equal(&file_id_1, &file_id_2)) {
     return kEqualFiles;
   }
   return kDifferentFiles;
@@ -625,7 +631,6 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
   char_u      *path_option = *curbuf->b_p_path == NUL
                              ? p_path : curbuf->b_p_path;
   char_u      *buf;
-  char_u      *p;
   int len;
 
   buf = xmalloc(MAXPATHL);
@@ -639,7 +644,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
        * "/path/file"  + "./subdir" -> "/path/subdir" */
       if (curbuf->b_ffname == NULL)
         continue;
-      p = path_tail(curbuf->b_ffname);
+      char_u *p = path_tail(curbuf->b_ffname);
       len = (int)(p - curbuf->b_ffname);
       if (len + (int)STRLEN(buf) >= MAXPATHL)
         continue;
@@ -666,10 +671,7 @@ static void expand_path_option(char_u *curdir, garray_T *gap)
       simplify_filename(buf);
     }
 
-    ga_grow(gap, 1);
-
-    p = vim_strsave(buf);
-    ((char_u **)gap->ga_data)[gap->ga_len++] = p;
+    GA_APPEND(char_u *, gap, vim_strsave(buf));
   }
 
   free(buf);
@@ -1194,7 +1196,6 @@ addfile (
     int flags
 )
 {
-  char_u      *p;
   bool isdir;
 
   /* if the file/dir doesn't exist, may not add it */
@@ -1215,10 +1216,7 @@ addfile (
   if (!isdir && (flags & EW_EXEC) && !os_can_exe(f))
     return;
 
-  /* Make room for another item in the file list. */
-  ga_grow(gap, 1);
-
-  p = xmalloc(STRLEN(f) + 1 + isdir);
+  char_u *p = xmalloc(STRLEN(f) + 1 + isdir);
 
   STRCPY(p, f);
 #ifdef BACKSLASH_IN_FILENAME
@@ -1231,7 +1229,7 @@ addfile (
   if (isdir && (flags & EW_ADDSLASH))
     add_pathsep(p);
 #endif
-  ((char_u **)gap->ga_data)[gap->ga_len++] = p;
+  GA_APPEND(char_u *, gap, p);
 }
 #endif /* !NO_EXPANDPATH */
 

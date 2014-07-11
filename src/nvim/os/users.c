@@ -2,6 +2,7 @@
 
 #include <uv.h>
 
+#include "nvim/ascii.h"
 #include "nvim/os/os.h"
 #include "nvim/garray.h"
 #include "nvim/memory.h"
@@ -21,16 +22,13 @@ int os_get_usernames(garray_T *users)
   ga_init(users, sizeof(char *), 20);
 
 # if defined(HAVE_GETPWENT) && defined(HAVE_PWD_H)
-  char *user;
   struct passwd *pw;
 
   setpwent();
   while ((pw = getpwent()) != NULL) {
     // pw->pw_name shouldn't be NULL but just in case...
     if (pw->pw_name != NULL) {
-      ga_grow(users, 1);
-      user = xstrdup(pw->pw_name);
-      ((char **)(users->ga_data))[users->ga_len++] = user;
+      GA_APPEND(char *, users, xstrdup(pw->pw_name));
     }
   }
   endpwent();

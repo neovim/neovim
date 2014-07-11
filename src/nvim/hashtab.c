@@ -18,10 +18,13 @@
 /// of the entries is empty to keep the lookup efficient (at the cost of extra
 /// memory).
 
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nvim/vim.h"
+#include "nvim/ascii.h"
 #include "nvim/hashtab.h"
 #include "nvim/message.h"
 #include "nvim/memory.h"
