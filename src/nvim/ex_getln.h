@@ -23,6 +23,16 @@
 #define WILD_ESCAPE             128
 #define WILD_ICASE              256
 
+/*
+ * There are four history tables:
+ */
+#define HIST_CMD        0       /* colon commands */
+#define HIST_SEARCH     1       /* search commands */
+#define HIST_EXPR       2       /* expressions (from entering = register) */
+#define HIST_INPUT      3       /* input() lines */
+#define HIST_DEBUG      4       /* debug commands */
+#define HIST_COUNT      5       /* number of history tables */
+
 typedef char_u *(*CompleteListItemGetter)(expand_T *, int);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
