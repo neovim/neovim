@@ -98,29 +98,15 @@ if(NOT EXISTS ${LUA_PRG})
   find_program(LUA_PRG lua)
 endif()
 
-if(EXISTS ${LUA_PRG})
-  message(STATUS "Using the lua interpreter ${LUA_PRG}")
-else()
-  message(FATAL_ERROR "A lua interpreter is required for building the Neovim")
+include(LuaHelpers)
+set(LUA_DEPENDENCIES lpeg cmsgpack)
+check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
+
+if(NOT LUA_PRG_WORKS)
+  message(FATAL_ERROR "A suitable Lua interpreter was not found")
 endif()
 
-execute_process(COMMAND ${LUA_PRG} -e "require('lpeg')"
-                RESULT_VARIABLE LUA_LPEG_MISSING
-                ERROR_QUIET)
-
-if(${LUA_LPEG_MISSING})
-  message(FATAL_ERROR
-          "The 'lpeg' lua package is required for building Neovim")
-endif()
-
-execute_process(COMMAND ${LUA_PRG} -e "require('cmsgpack')"
-                RESULT_VARIABLE LUA_MSGPACK_MISSING
-                ERROR_QUIET)
-
-if(${LUA_MSGPACK_MISSING})
-  message(FATAL_ERROR
-         "The 'cmsgpack' lua package is required for building Neovim")
-endif()
+message(STATUS "Using the Lua interpreter ${LUA_PRG}")
 
 add_subdirectory(config)
 add_subdirectory(src/nvim)
