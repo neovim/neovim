@@ -1,0 +1,501 @@
+*develop.txt*   For Vim version 7.4.  Last change: 2014 Mar 27
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Development of Vim.					*development*
+
+This text is important for those who want to be involved in further developing
+Vim.
+
+1. Design goals		|design-goals|
+2. Coding style		|coding-style|
+3. Design decisions	|design-decisions|
+4. Assumptions		|design-assumptions|
+
+See the file README.txt in the "src" directory for an overview of the source
+code.
+
+Vim is open source software.  Everybody is encouraged to contribute to help
+improving Vim.  For sending patches a context diff "diff -c" is preferred.
+Also see http://vim.wikia.com/wiki/How_to_make_and_submit_a_patch.
+
+==============================================================================
+1. Design goals						*design-goals*
+
+Most important things come first (roughly).
+
+Note that quite a few items are contradicting.  This is intentional.  A
+balance must be found between them.
+
+
+VIM IS... VI COMPATIBLE					*design-compatible*
+
+First of all, it should be possible to use Vim as a drop-in replacement for
+Vi.  When the user wants to, he can use Vim in compatible mode and hardly
+notice any difference with the original Vi.
+
+Exceptions:
+- We don't reproduce obvious Vi bugs in Vim.
+- There are different versions of Vi.  I am using Version 3.7 (6/7/85) as a
+  reference.  But support for other versions is also included when possible.
+  The Vi part of POSIX is not considered a definitive source.
+- Vim adds new commands, you cannot rely on some command to fail because it
+  didn't exist in Vi.
+- Vim will have a lot of features that Vi doesn't have.  Going back from Vim
+  to Vi will be a problem, this cannot be avoided.
+- Some things are hardly ever used (open mode, sending an e-mail when
+  crashing, etc.).  Those will only be included when someone has a good reason
+  why it should be included and it's not too much work.
+- For some items it is debatable whether Vi compatibility should be
+  maintained.  There will be an option flag for these.
+
+
+VIM IS... IMPROVED					*design-improved*
+
+The IMproved bits of Vim should make it a better Vi, without becoming a
+completely different editor.  Extensions are done with a "Vi spirit".
+- Use the keyboard as much as feasible.  The mouse requires a third hand,
+  which we don't have.  Many terminals don't have a mouse.
+- When the mouse is used anyway, avoid the need to switch back to the
+  keyboard.  Avoid mixing mouse and keyboard handling.
+- Add commands and options in a consistent way.  Otherwise people will have a
+  hard time finding and remembering them.  Keep in mind that more commands and
+  options will be added later.
+- A feature that people do not know about is a useless feature.  Don't add
+  obscure features, or at least add hints in documentation that they exist.
+- Minimize using CTRL and other modifiers, they are more difficult to type.
+- There are many first-time and inexperienced Vim users.  Make it easy for
+  them to start using Vim and learn more over time.
+- There is no limit to the features that can be added.  Selecting new features
+  is one based on (1) what users ask for, (2) how much effort it takes to
+  implement and (3) someone actually implementing it.
+
+
+VIM IS... MULTI PLATFORM				*design-multi-platform*
+
+Vim tries to help as many users on as many platforms as possible.
+- Support many kinds of terminals.  The minimal demands are cursor positioning
+  and clear-screen.  Commands should only use key strokes that most keyboards
+  have.  Support all the keys on the keyboard for mapping.
+- Support many platforms.  A condition is that there is someone willing to do
+  Vim development on that platform, and it doesn't mean messing up the code.
+- Support many compilers and libraries.  Not everybody is able or allowed to
+  install another compiler or GUI library.
+- People switch from one platform to another, and from GUI to terminal
+  version.  Features should be present in all versions, or at least in as many
+  as possible with a reasonable effort.  Try to avoid that users must switch
+  between platforms to accomplish their work efficiently.
+- That a feature is not possible on some platforms, or only possible on one
+  platform, does not mean it cannot be implemented.  [This intentionally
+  contradicts the previous item, these two must be balanced.]
+
+
+VIM IS... WELL DOCUMENTED				*design-documented*
+
+- A feature that isn't documented is a useless feature.  A patch for a new
+  feature must include the documentation.
+- Documentation should be comprehensive and understandable.  Using examples is
+  recommended.
+- Don't make the text unnecessarily long.  Less documentation means that an
+  item is easier to find.
+
+
+VIM IS... HIGH SPEED AND SMALL IN SIZE			*design-speed-size*
+
+Using Vim must not be a big attack on system resources.  Keep it small and
+fast.
+- Computers are becoming faster and bigger each year.  Vim can grow too, but
+  no faster than computers are growing.  Keep Vim usable on older systems.
+- Many users start Vim from a shell very often.  Startup time must be short.
+- Commands must work efficiently.  The time they consume must be as small as
+  possible.  Useful commands may take longer.
+- Don't forget that some people use Vim over a slow connection.  Minimize the
+  communication overhead.
+- Items that add considerably to the size and are not used by many people
+  should be a feature that can be disabled.
+- Vim is a component among other components.  Don't turn it into a massive
+  application, but have it work well together with other programs.
+
+
+VIM IS... MAINTAINABLE					*design-maintain*
+
+- The source code should not become a mess.  It should be reliable code.
+- Use the same layout in all files to make it easy to read |coding-style|.
+- Use comments in a useful way!  Quoting the function name and argument names
+  is NOT useful.  Do explain what they are for.
+- Porting to another platform should be made easy, without having to change
+  too much platform-independent code.
+- Use the object-oriented spirit: Put data and code together.  Minimize the
+  knowledge spread to other parts of the code.
+
+
+VIM IS... FLEXIBLE					*design-flexible*
+
+Vim should make it easy for users to work in their preferred styles rather
+than coercing its users into particular patterns of work.  This can be for
+items with a large impact (e.g., the 'compatible' option) or for details.  The
+defaults are carefully chosen such that most users will enjoy using Vim as it
+is.  Commands and options can be used to adjust Vim to the desire of the user
+and its environment.
+
+
+VIM IS... NOT						*design-not*
+
+- Vim is not a shell or an Operating System.  You will not be able to run a
+  shell inside Vim or use it to control a debugger.  This should work the
+  other way around: Use Vim as a component from a shell or in an IDE.
+  A satirical way to say this: "Unlike Emacs, Vim does not attempt to include
+  everything but the kitchen sink, but some people say that you can clean one
+  with it.  ;-)"
+  To use Vim with gdb see: http://www.agide.org and http://clewn.sf.net.
+- Vim is not a fancy GUI editor that tries to look nice at the cost of
+  being less consistent over all platforms.  But functional GUI features are
+  welcomed.
+
+==============================================================================
+2. Coding style						*coding-style*
+
+These are the rules to use when making changes to the Vim source code.  Please
+stick to these rules, to keep the sources readable and maintainable.
+
+This list is not complete.  Look in the source code for more examples.
+
+
+MAKING CHANGES						*style-changes*
+
+The basic steps to make changes to the code:
+1. Adjust the documentation.  Doing this first gives you an impression of how
+   your changes affect the user.
+2. Make the source code changes.
+3. Check ../doc/todo.txt if the change affects any listed item.
+4. Make a patch with "diff -c" against the unmodified code and docs.
+5. Make a note about what changed and include it with the patch.
+
+
+USE OF COMMON FUNCTIONS					*style-functions*
+
+Some functions that are common to use, have a special Vim version.  Always
+consider using the Vim version, because they were introduced with a reason.
+
+NORMAL NAME	VIM NAME	DIFFERENCE OF VIM VERSION
+free()		vim_free()	Checks for freeing NULL
+malloc()	alloc()		Checks for out of memory situation
+malloc()	lalloc()	Like alloc(), but has long argument
+strcpy()	STRCPY()	Includes cast to (char *), for char_u * args
+strchr()	vim_strchr()	Accepts special characters
+strrchr()	vim_strrchr()	Accepts special characters
+isspace()	vim_isspace()	Can handle characters > 128
+iswhite()	vim_iswhite()	Only TRUE for tab and space
+memcpy()	mch_memmove()	Handles overlapped copies
+bcopy()		mch_memmove()	Handles overlapped copies
+memset()	vim_memset()	Uniform for all systems
+
+
+NAMES							*style-names*
+
+Function names can not be more than 31 characters long (because of VMS).
+
+Don't use "delete" as a variable name, C++ doesn't like it.
+
+Because of the requirement that Vim runs on as many systems as possible, we
+need to avoid using names that are already defined by the system.  This is a
+list of names that are known to cause trouble.  The name is given as a regexp
+pattern.
+
+is.*()		POSIX, ctype.h
+to.*()		POSIX, ctype.h
+
+d_.*		POSIX, dirent.h
+l_.*		POSIX, fcntl.h
+gr_.*		POSIX, grp.h
+pw_.*		POSIX, pwd.h
+sa_.*		POSIX, signal.h
+mem.*		POSIX, string.h
+str.*		POSIX, string.h
+wcs.*		POSIX, string.h
+st_.*		POSIX, stat.h
+tms_.*		POSIX, times.h
+tm_.*		POSIX, time.h
+c_.*		POSIX, termios.h
+MAX.*		POSIX, limits.h
+__.*		POSIX, system
+_[A-Z].*	POSIX, system
+E[A-Z0-9]*	POSIX, errno.h
+
+.*_t		POSIX, for typedefs.  Use .*_T instead.
+
+wait		don't use as argument to a function, conflicts with types.h
+index		shadows global declaration
+time		shadows global declaration
+new		C++ reserved keyword
+try		Borland C++ doesn't like it to be used as a variable.
+
+clear		Mac curses.h
+echo		Mac curses.h
+instr		Mac curses.h
+meta		Mac curses.h
+newwin		Mac curses.h
+nl		Mac curses.h
+overwrite	Mac curses.h
+refresh		Mac curses.h
+scroll		Mac curses.h
+typeahead	Mac curses.h
+
+basename()	GNU string function
+dirname()	GNU string function
+get_env_value()	Linux system function
+
+
+VARIOUS							*style-various*
+
+Typedef'ed names should end in "_T": >
+    typedef int some_T;
+Define'ed names should be uppercase: >
+    #define SOME_THING
+Features always start with "FEAT_": >
+    #define FEAT_FOO
+
+Don't use '\"', some compilers can't handle it.  '"' works fine.
+
+Don't use:
+    #if HAVE_SOME
+Some compilers can't handle that and complain that "HAVE_SOME" is not defined.
+Use
+    #ifdef HAVE_SOME
+or
+    #if defined(HAVE_SOME)
+
+
+STYLE							*style-examples*
+
+General rule: One statement per line.
+
+Wrong:	    if (cond) a = 1;
+
+OK:	    if (cond)
+		a = 1;
+
+Wrong:	    while (cond);
+
+OK:	    while (cond)
+		;
+
+Wrong:	    do a = 1; while (cond);
+
+OK:	    do
+		a = 1;
+	    while (cond);
+
+
+Functions start with:
+
+Wrong:	int function_name(int arg1, int arg2)
+
+OK:	/*
+	 * Explanation of what this function is used for.
+	 *
+	 * Return value explanation.
+	 */
+	    int
+	function_name(arg1, arg2)
+	    int		arg1;		/* short comment about arg1 */
+	    int		arg2;		/* short comment about arg2 */
+	{
+	    int		local;		/* comment about local */
+
+	    local = arg1 * arg2;
+
+NOTE: Don't use ANSI style function declarations.  A few people still have to
+use a compiler that doesn't support it.
+
+
+SPACES AND PUNCTUATION					*style-spaces*
+
+No space between a function name and the bracket:
+
+Wrong:  func (arg);
+OK:	func(arg);
+
+Do use a space after if, while, switch, etc.
+
+Wrong:	if(arg)		for(;;)
+OK:	if (arg)	for (;;)
+
+Use a space after a comma and semicolon:
+
+Wrong:  func(arg1,arg2);	for (i = 0;i < 2;++i)
+OK:	func(arg1, arg2);	for (i = 0; i < 2; ++i)
+
+Use a space before and after '=', '+', '/', etc.
+
+Wrong:	var=a*5;
+OK:	var = a * 5;
+
+In general: Use empty lines to group lines of code together.  Put a comment
+just above the group of lines.  This makes it easier to quickly see what is
+being done.
+
+OK:	/* Prepare for building the table. */
+	get_first_item();
+	table_idx = 0;
+
+	/* Build the table */
+	while (has_item())
+	    table[table_idx++] = next_item();
+
+	/* Finish up. */
+	cleanup_items();
+	generate_hash(table);
+
+==============================================================================
+3. Design decisions					*design-decisions*
+
+Folding
+
+Several forms of folding should be possible for the same buffer.  For example,
+have one window that shows the text with function bodies folded, another
+window that shows a function body.
+
+Folding is a way to display the text.  It should not change the text itself.
+Therefore the folding has been implemented as a filter between the text stored
+in a buffer (buffer lines) and the text displayed in a window (logical lines).
+
+
+Naming the window
+
+The word "window" is commonly used for several things: A window on the screen,
+the xterm window, a window inside Vim to view a buffer.
+To avoid confusion, other items that are sometimes called window have been
+given another name.  Here is an overview of the related items:
+
+screen		The whole display.  For the GUI it's something like 1024x768
+		pixels.  The Vim shell can use the whole screen or part of it.
+shell		The Vim application.  This can cover the whole screen (e.g.,
+		when running in a console) or part of it (xterm or GUI).
+window		View on a buffer.  There can be several windows in Vim,
+		together with the command line, menubar, toolbar, etc. they
+		fit in the shell.
+
+
+Spell checking						*develop-spell*
+
+When spell checking was going to be added to Vim a survey was done over the
+available spell checking libraries and programs.  Unfortunately, the result
+was that none of them provided sufficient capabilities to be used as the spell
+checking engine in Vim, for various reasons:
+
+- Missing support for multi-byte encodings.  At least UTF-8 must be supported,
+  so that more than one language can be used in the same file.
+  Doing on-the-fly conversion is not always possible (would require iconv
+  support).
+- For the programs and libraries: Using them as-is would require installing
+  them separately from Vim.  That's mostly not impossible, but a drawback.
+- Performance: A few tests showed that it's possible to check spelling on the
+  fly (while redrawing), just like syntax highlighting.  But the mechanisms
+  used by other code are much slower.  Myspell uses a hashtable, for example.
+  The affix compression that most spell checkers use makes it slower too.
+- For using an external program like aspell a communication mechanism would
+  have to be setup.  That's complicated to do in a portable way (Unix-only
+  would be relatively simple, but that's not good enough).  And performance
+  will become a problem (lots of process switching involved).
+- Missing support for words with non-word characters, such as "Etten-Leur" and
+  "et al.", would require marking the pieces of them OK, lowering the
+  reliability.
+- Missing support for regions or dialects.  Makes it difficult to accept
+  all English words and highlight non-Canadian words differently.
+- Missing support for rare words.  Many words are correct but hardly ever used
+  and could be a misspelled often-used word.
+- For making suggestions the speed is less important and requiring to install
+  another program or library would be acceptable.  But the word lists probably
+  differ, the suggestions may be wrong words.
+
+
+Spelling suggestions				*develop-spell-suggestions*
+
+For making suggestions there are two basic mechanisms:
+1. Try changing the bad word a little bit and check for a match with a good
+   word.  Or go through the list of good words, change them a little bit and
+   check for a match with the bad word.  The changes are deleting a character,
+   inserting a character, swapping two characters, etc.
+2. Perform soundfolding on both the bad word and the good words and then find
+   matches, possibly with a few changes like with the first mechanism.
+
+The first is good for finding typing mistakes.  After experimenting with
+hashtables and looking at solutions from other spell checkers the conclusion
+was that a trie (a kind of tree structure) is ideal for this.  Both for
+reducing memory use and being able to try sensible changes.  For example, when
+inserting a character only characters that lead to good words need to be
+tried.  Other mechanisms (with hashtables) need to try all possible letters at
+every position in the word.  Also, a hashtable has the requirement that word
+boundaries are identified separately, while a trie does not require this.
+That makes the mechanism a lot simpler.
+
+Soundfolding is useful when someone knows how the words sounds but doesn't
+know how it is spelled.  For example, the word "dictionary" might be written
+as "daktonerie".  The number of changes that the first method would need to
+try is very big, it's hard to find the good word that way.  After soundfolding
+the words become "tktnr" and "tkxnry", these differ by only two letters.
+
+To find words by their soundfolded equivalent (soundalike word) we need a list
+of all soundfolded words.  A few experiments have been done to find out what
+the best method is.  Alternatives:
+1. Do the sound folding on the fly when looking for suggestions.  This means
+   walking through the trie of good words, soundfolding each word and
+   checking how different it is from the bad word.  This is very efficient for
+   memory use, but takes a long time.  On a fast PC it takes a couple of
+   seconds for English, which can be acceptable for interactive use.  But for
+   some languages it takes more than ten seconds (e.g., German, Catalan),
+   which is unacceptable slow.  For batch processing (automatic corrections)
+   it's too slow for all languages.
+2. Use a trie for the soundfolded words, so that searching can be done just
+   like how it works without soundfolding.  This requires remembering a list
+   of good words for each soundfolded word.  This makes finding matches very
+   fast but requires quite a lot of memory, in the order of 1 to 10 Mbyte.
+   For some languages more than the original word list.
+3. Like the second alternative, but reduce the amount of memory by using affix
+   compression and store only the soundfolded basic word.  This is what Aspell
+   does.  Disadvantage is that affixes need to be stripped from the bad word
+   before soundfolding it, which means that mistakes at the start and/or end
+   of the word will cause the mechanism to fail.  Also, this becomes slow when
+   the bad word is quite different from the good word.
+
+The choice made is to use the second mechanism and use a separate file.  This
+way a user with sufficient memory can get very good suggestions while a user
+who is short of memory or just wants the spell checking and no suggestions
+doesn't use so much memory.
+
+
+Word frequency
+
+For sorting suggestions it helps to know which words are common.  In theory we
+could store a word frequency with the word in the dictionary.  However, this
+requires storing a count per word.  That degrades word tree compression a lot.
+And maintaining the word frequency for all languages will be a heavy task.
+Also, it would be nice to prefer words that are already in the text.  This way
+the words that appear in the specific text are preferred for suggestions.
+
+What has been implemented is to count words that have been seen during
+displaying.  A hashtable is used to quickly find the word count.  The count is
+initialized from words listed in COMMON items in the affix file, so that it
+also works when starting a new file.
+
+This isn't ideal, because the longer Vim is running the higher the counts
+become.  But in practice it is a noticeable improvement over not using the word
+count.
+
+==============================================================================
+4. Assumptions						*design-assumptions*
+
+Size of variables:
+char	    8 bit signed
+char_u	    8 bit unsigned
+int	    32 or 64 bit signed (16 might be possible with limited features)
+unsigned    32 or 64 bit unsigned (16 as with ints)
+long	    32 or 64 bit signed, can hold a pointer
+
+Note that some compilers cannot handle long lines or strings.  The C89
+standard specifies a limit of 509 characters.
+
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,1012 @@
+*vi_diff.txt*   For Vim version 7.4.  Last change: 2013 Aug 22
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Differences between Vim and Vi				*vi-differences*
+
+Throughout the help files differences between Vim and Vi/Ex are given in
+curly braces, like "{not in Vi}".  This file only lists what has not been
+mentioned in other files and gives an overview.
+
+Vim is mostly POSIX 1003.2-1 compliant.  The only command known to be missing
+is ":open".  There are probably a lot of small differences (either because Vim
+is missing something or because Posix is beside the mark).
+
+1. Simulated command			|simulated-command|
+2. Missing options			|missing-options|
+3. Limits				|limits|
+4. The most interesting additions	|vim-additions|
+5. Other vim features			|other-features|
+6. Command-line arguments		|cmdline-arguments|
+7. POSIX compliance			|posix-compliance|
+
+==============================================================================
+1. Simulated command					*simulated-command*
+
+This command is in Vi, but Vim only simulates it:
+
+							*:o* *:op* *:open*
+:[range]o[pen]			Works like |:visual|: end Ex mode.
+				{Vi: start editing in open mode}
+
+:[range]o[pen] /pattern/	As above, additionally move the cursor to the
+				column where "pattern" matches in the cursor
+				line.
+
+Vim does not support open mode, since it's not really useful.  For those
+situations where ":open" would start open mode Vim will leave Ex mode, which
+allows executing the same commands, but updates the whole screen instead of
+only one line.
+
+==============================================================================
+2. Missing options					*missing-options*
+
+These options are in the Unix Vi, but not in Vim.  If you try to set one of
+them you won't get an error message, but the value is not used and cannot be
+printed.
+
+autoprint (ap)		boolean	(default on)		*'autoprint'* *'ap'*
+beautify (bf)		boolean	(default off)		*'beautify'* *'bf'*
+flash (fl)		boolean	(default ??)		*'flash'* *'fl'*
+graphic (gr)		boolean	(default off)		*'graphic'* *'gr'*
+hardtabs (ht)		number	(default 8)		*'hardtabs'* *'ht'*
+	number of spaces that a <Tab> moves on the display
+mesg			boolean	(default on)		*'mesg'*
+novice			boolean	(default off)		*'novice'*
+open			boolean	(default on)		*'open'*
+optimize (op)		boolean	(default off)		*'optimize'* *'op'*
+redraw			boolean	(default off)		*'redraw'*
+slowopen (slow)		boolean	(default off)		*'slowopen'* *'slow'*
+sourceany		boolean	(default off)		*'sourceany'*
+w300			number	(default 23)		*'w300'*
+w1200			number	(default 23)		*'w1200'*
+w9600			number	(default 23)		*'w9600'*
+
+==============================================================================
+3. Limits						*limits*
+
+Vim has only a few limits for the files that can be edited {Vi: can not handle
+<Nul> characters and characters above 128, has limited line length, many other
+limits}.
+							*E340*
+Maximum line length	   On machines with 16-bit ints (Amiga and MS-DOS real
+			   mode): 32767, otherwise 2147483647 characters.
+			   Longer lines are split.
+Maximum number of lines	   2147483647 lines.
+Maximum file size	   2147483647 bytes (2 Gbyte) when a long integer is
+			   32 bits.  Much more for 64 bit longs.  Also limited
+			   by available disk space for the |swap-file|.
+							*E75*
+Length of a file path	   Unix and Win32: 1024 characters, otherwise 256
+			   characters (or as much as the system supports).
+Length of an expanded string option
+			   Unix and Win32: 1024 characters, otherwise 256
+			   characters
+Maximum display width	   Unix and Win32: 1024 characters, otherwise 255
+			   characters
+Maximum lhs of a mapping   50 characters.
+Number of different highlighting types: over 30000
+Range of a Number variable:  -2147483648 to 2147483647 (might be more on 64
+			   bit systems)
+Maximum length of a line in a tags file: 512 bytes.
+
+Information for undo and text in registers is kept in memory, thus when making
+(big) changes the amount of (virtual) memory available limits the number of
+undo levels and the text that can be kept in registers.  Other things are also
+kept in memory:  Command-line history, error messages for Quickfix mode, etc.
+
+Memory usage limits
+-------------------
+
+The option 'maxmem' ('mm') is used to set the maximum memory used for one
+buffer (in kilobytes).  'maxmemtot' is used to set the maximum memory used for
+all buffers (in kilobytes).  The defaults depend on the system used.  For the
+Amiga and MS-DOS, 'maxmemtot' is set depending on the amount of memory
+available.
+These are not hard limits, but tell Vim when to move text into a swap file.
+If you don't like Vim to swap to a file, set 'maxmem' and 'maxmemtot' to a
+very large value.  The swap file will then only be used for recovery.  If you
+don't want a swap file at all, set 'updatecount' to 0, or use the "-n"
+argument when starting Vim.
+
+==============================================================================
+4. The most interesting additions			*vim-additions*
+
+Vi compatibility.					|'compatible'|
+	Although Vim is 99% Vi compatible, some things in Vi can be
+	considered to be a bug, or at least need improvement.  But still, Vim
+	starts in a mode which behaves like the "real" Vi as much as possible.
+	To make Vim behave a little bit better, try resetting the 'compatible'
+	option:
+		:set nocompatible
+	Or start Vim with the "-N" argument:
+		vim -N
+	Vim starts with 'nocompatible' automatically if you have a .vimrc
+	file.  See |startup|.
+	The 'cpoptions' option can be used to set Vi compatibility on/off for
+	a number of specific items.
+
+Support for different systems.
+	Vim can be used on:
+	- All Unix systems (it works on all systems it was tested on, although
+	  the GUI and Perl interface may not work everywhere).
+	- Amiga (500, 1000, 1200, 2000, 3000, 4000, ...).
+	- MS-DOS in real-mode (no additional drivers required).
+	- In protected mode on Windows 3.1 and MS-DOS (DPMI driver required).
+	- Windows 95 and Windows NT, with support for long file names.
+	- OS/2 (needs emx.dll)
+	- Atari MiNT
+	- VMS
+	- BeOS
+	- Macintosh
+	- Risc OS
+	- IBM OS/390
+	Note that on some systems features need to be disabled to reduce
+	resource usage, esp. on MS-DOS.  For some outdated systems you need to
+	use an older Vim version.
+
+Multi level undo.					|undo|
+	'u' goes backward in time, 'CTRL-R' goes forward again.  Set option
+	'undolevels' to the number of changes to be remembered (default 1000).
+	Set 'undolevels' to 0 for a Vi-compatible one level undo.  Set it to
+	-1 for no undo at all.
+	When all changes in a buffer have been undone, the buffer is not
+	considered changed anymore.  You can exit it with :q, without <!>.
+	When undoing a few changes and then making a new change Vim will
+	create a branch in the undo tree.  This means you can go back to any
+	state of the text, there is no risk of a change causing text to be
+	lost forever. |undo-tree|
+
+Graphical User Interface (GUI).				|gui|
+	Included support for GUI: menu's, mouse, scrollbars, etc.  You can
+	define your own menus.  Better support for CTRL/SHIFT/ALT keys in
+	combination with special keys and mouse.  Supported for various
+	platforms, such as X11 (with Motif and Athena interfaces), GTK, Win32
+	(Windows 95 and later), BeOS, Amiga and Macintosh.
+
+Multiple windows and buffers.				|windows.txt|
+	Vim can split the screen into several windows, each editing a
+	different buffer or the same buffer at a different location.  Buffers
+	can still be loaded (and changed) but not displayed in a window.  This
+	is called a hidden buffer.  Many commands and options have been added
+	for this facility.
+	Vim can also use multiple tab pages, each with one or more windows.  A
+	line with tab labels can be used to quickly switch between these pages.
+	|tab-page|
+
+Syntax highlighting.					|:syntax|
+	Vim can highlight keywords, patterns and other things.  This is
+	defined by a number of |:syntax| commands, and can be made to
+	highlight most languages and file types.  A number of files are
+	included for highlighting the most common languages, like C, C++,
+	Java, Pascal, Makefiles, shell scripts, etc.  The colors used for
+	highlighting can be defined for ordinary terminals, color terminals
+	and the GUI with the |:highlight| command.  A convenient way to do
+	this is using a |:colorscheme| command.
+	The highlighted text can be exported as HTML. |convert-to-HTML|
+	Other items that can be highlighted are matches with the search string
+	|'hlsearch'|, matching parens |matchparen| and the cursor line and
+	column |'cursorline'| |'cursorcolumn'|.
+
+Spell checking.						|spell|
+	When the 'spell' option is set Vim will highlight spelling mistakes.
+	About 50 languages are currently supported, selected with the
+	'spelllang' option.  In source code only comments and strings are
+	checked for spelling.
+
+Folding.						|folding|
+	A range of lines can be shown as one "folded" line.  This allows
+	overviewing a file and moving blocks of text around quickly.
+	Folds can be created manually, from the syntax of the file, by indent,
+	etc.
+
+Diff mode.						|diff|
+	Vim can show two versions of a file with the differences highlighted.
+	Parts of the text that are equal are folded away.  Commands can be
+	used to move text from one version to the other.
+
+Plugins.						|add-plugin|
+	The functionality can be extended by dropping a plugin file in the
+	right directory.  That's an easy way to start using Vim scripts
+	written by others.  Plugins can be for all kind of files, or
+	specifically for a filetype.
+
+Repeat a series of commands.				|q|
+	"q{c}" starts recording typed characters into named register {c}.
+	A subsequent "q" stops recording.  The register can then be executed
+	with the "@{c}" command.  This is very useful to repeat a complex
+	action.
+
+Flexible insert mode.					|ins-special-special|
+	The arrow keys can be used in insert mode to move around in the file.
+	This breaks the insert in two parts as far as undo and redo is
+	concerned.
+
+	CTRL-O can be used to execute a single Normal mode command.  This is
+	almost the same as hitting <Esc>, typing the command and doing |a|.
+
+Visual mode.						|Visual-mode|
+	Visual mode can be used to first highlight a piece of text and then
+	give a command to do something with it.  This is an (easy to use)
+	alternative to first giving the operator and then moving to the end of
+	the text to be operated upon.
+	|v| and |V| are used to start Visual mode.  |v| works on characters
+	and |V| on lines.  Move the cursor to extend the Visual area.  It is
+	shown highlighted on the screen.  By typing "o" the other end of the
+	Visual area can be moved.  The Visual area can be affected by an
+	operator:
+		d	delete
+		c	change
+		y	yank
+		> or <	insert or delete indent
+		!	filter through external program
+		=	filter through indent
+		:	start |:| command for the Visual lines.
+		gq	format text to 'textwidth' columns
+		J	join lines
+		~	swap case
+		u	make lowercase
+		U	make uppercase
+
+Block operators.					|visual-block|
+	With Visual mode a rectangular block of text can be selected.  Start
+	Visual mode with CTRL-V.  The block can be deleted ("d"), yanked ("y")
+	or its case can be changed ("~", "u" and "U").  A deleted or yanked
+	block can be put into the text with the "p" and "P" commands.
+
+Help system.						|:help|
+	Help is displayed in a window.  The usual commands can be used to
+	move around, search for a string, etc.  Tags can be used to jump
+	around in the help files, just like hypertext links.  The |:help|
+	command takes an argument to quickly jump to the info on a subject.
+	<F1> is the quick access to the help system.  The name of the help
+	index file can be set with the 'helpfile' option.
+
+Command-line editing and history.			|cmdline-editing|
+	You can insert or delete at any place in the command-line using the
+	cursor keys.  The right/left cursor keys can be used to move
+	forward/backward one character.  The shifted right/left cursor keys
+	can be used to move forward/backward one word.  CTRL-B/CTRL-E can be
+	used to go to the begin/end of the command-line.
+							|cmdline-history|
+	The command-lines are remembered.  The up/down cursor keys can be used
+	to recall previous command-lines.  The 'history' option can be set to
+	the number of lines that will be remembered.  There is a separate
+	history for commands and for search patterns.
+
+Command-line completion.				|cmdline-completion|
+	While entering a command-line (on the bottom line of the screen)
+	<Tab> can be typed to complete
+	   what		example		~
+	- command	:e<Tab>
+	- tag		:ta scr<Tab>
+	- option	:set sc<Tab>
+	- option value  :set hf=<Tab>
+	- file name	:e ve<Tab>
+	- etc.
+
+	If there are multiple matches, CTRL-N (next) and CTRL-P (previous)
+	will walk through the matches.  <Tab> works like CTRL-N, but wraps
+	around to the first match.
+
+	The 'wildchar' option can be set to the character for command-line
+	completion, <Tab> is the default.  CTRL-D can be typed after an
+	(incomplete) wildcard; all matches will be listed.  CTRL-A will insert
+	all matches.  CTRL-L will insert the longest common part of the
+	matches.
+
+Insert-mode completion.					|ins-completion|
+	In Insert mode the CTRL-N and CTRL-P keys can be used to complete a
+	word that appears elsewhere.	|i_CTRL-N|
+	With CTRL-X another mode is entered, through which completion can be
+	done for:
+	|i_CTRL-X_CTRL-F|	file names
+	|i_CTRL-X_CTRL-K|	words from 'dictionary' files
+	|i_CTRL-X_CTRL-T|	words from 'thesaurus' files
+	|i_CTRL-X_CTRL-I|	words from included files
+	|i_CTRL-X_CTRL-L|	whole lines
+	|i_CTRL-X_CTRL-]|	words from the tags file
+	|i_CTRL-X_CTRL-D|	definitions or macros
+	|i_CTRL-X_CTRL-O|	Omni completion: clever completion
+				specifically for a file type
+	etc.
+
+Long line support.					|'wrap'| |'linebreak'|
+	If the 'wrap' option is off, long lines will not wrap and only part
+	of them will be shown.  When the cursor is moved to a part that is not
+	shown, the screen will scroll horizontally.  The minimum number of
+	columns to scroll can be set with the 'sidescroll' option.  The |zh|
+	and |zl| commands can be used to scroll sideways.
+	Alternatively, long lines are broken in between words when the
+	'linebreak' option is set.  This allows editing a single-line
+	paragraph conveniently (e.g. when the text is later read into a DTP
+	program).  Move the cursor up/down with the |gk| and |gj| commands.
+
+Text formatting.					|formatting|
+	The 'textwidth' option can be used to automatically limit the line
+	length.  This supplements the 'wrapmargin' option of Vi, which was not
+	very useful.  The |gq| operator can be used to format a piece of text
+	(for example, |gqap| formats the current paragraph).  Commands for
+	text alignment: |:center|, |:left| and |:right|.
+
+Extended search patterns.				|pattern|
+	There are many extra items to match various text items.  Examples:
+	A "\n" can be used in a search pattern to match a line break.
+	"x\{2,4}" matches "x" 2 to 4 times.
+	"\s" matches a white space character.
+
+Directory, remote and archive browsing.			|netrw|
+	Vim can browse the file system.  Simply edit a directory.  Move around
+	in the list with the usual commands and press <Enter> to go to the
+	directory or file under the cursor.
+	This also works for remote files over ftp, http, ssh, etc.
+	Zip and tar archives can also be browsed. |tar| |zip|
+
+Edit-compile-edit speedup.				|quickfix|
+	The |:make| command can be used to run the compilation and jump to the
+	first error.  A file with compiler error messages is interpreted.  Vim
+	jumps to the first error.
+
+	Each line in the error file is scanned for the name of a file, line
+	number and error message.  The 'errorformat' option can be set to a
+	list of scanf-like strings to handle output from many compilers.
+
+	The |:cn| command can be used to jump to the next error.
+	|:cl| lists all the error messages.  Other commands are available.
+	The 'makeef' option has the name of the file with error messages.
+	The 'makeprg' option contains the name of the program to be executed
+	with the |:make| command.
+	The 'shellpipe' option contains the string to be used to put the
+	output of the compiler into the errorfile.
+
+Finding matches in files.				|:vimgrep|
+	Vim can search for a pattern in multiple files.  This uses the
+	advanced Vim regexp pattern, works on all systems and also works to
+	search in compressed files.
+
+Improved indenting for programs.			|'cindent'|
+	When the 'cindent' option is on the indent of each line is
+	automatically adjusted.  C syntax is mostly recognized.  The indent
+	for various styles can be set with 'cinoptions'.  The keys to trigger
+	indenting can be set with 'cinkeys'.
+
+	Comments can be automatically formatted.  The 'comments' option can be
+	set to the characters that start and end a comment.  This works best
+	for C code, but also works for e-mail (">" at start of the line) and
+	other types of text.  The |=| operator can be used to re-indent
+	lines.
+
+	For many other languages an indent plugin is present to support
+	automatic indenting. |30.3|
+
+Searching for words in included files.			|include-search|
+	The |[i| command can be used to search for a match of the word under
+	the cursor in the current and included files.  The 'include' option
+	can be set to a pattern that describes a command to include a file
+	(the default is for C programs).
+	The |[I| command lists all matches, the |[_CTRL-I| command jumps to
+	a match.
+	The |[d|, |[D| and |[_CTRL-D| commands do the same, but only for
+	lines where the pattern given with the 'define' option matches.
+
+Automatic commands.					|autocommand|
+	Commands can be automatically executed when reading a file, writing a
+	file, jumping to another buffer, etc., depending on the file name.
+	This is useful to set options and mappings for C programs,
+	documentation, plain text, e-mail, etc.  This also makes it possible
+	to edit compressed files.
+
+Scripts and Expressions.				|expression|
+	Commands have been added to form up a powerful script language.
+	|:if|		Conditional execution, which can be used for example
+			to set options depending on the value of $TERM.
+	|:while|	Repeat a number of commands.
+	|:for|		Loop over a list.
+	|:echo|		Print the result of an expression.
+	|:let|		Assign a value to an internal variable, option, etc.
+			Variable types are Number, String, List and Dictionary.
+	|:execute|	Execute a command formed by an expression.
+	|:try|		Catch exceptions.
+	etc., etc.  See |eval|.
+	Debugging and profiling are supported. |debug-scripts| |profile|
+	If this is not enough, an interface is provided to |Python|, |Ruby|,
+	|Tcl|, |Lua|, |Perl| and |MzScheme|.
+
+Viminfo.						|viminfo-file|
+	The command-line history, marks and registers can be stored in a file
+	that is read on startup.  This can be used to repeat a search command
+	or command-line command after exiting and restarting Vim.  It is also
+	possible to jump right back to where the last edit stopped with |'0|.
+	The 'viminfo' option can be set to select which items to store in the
+	.viminfo file.  This is off by default.
+
+Printing.						|printing|
+	The |:hardcopy| command sends text to the printer.  This can include
+	syntax highlighting.
+
+Mouse support.						|mouse-using|
+	The mouse is supported in the GUI version, in an xterm for Unix, for
+	BSDs with sysmouse, for Linux with gpm, for MS-DOS, and Win32.  It
+	can be used to position the cursor, select the visual area, paste a
+	register, etc.
+
+Usage of key names.					|<>| |key-notation|
+	Special keys now all have a name like <Up>, <End>, etc.
+	This name can be used in mappings, to make it easy to edit them.
+
+Editing binary files.					|edit-binary|
+	Vim can edit binary files.  You can change a few characters in an
+	executable file, without corrupting it.  Vim doesn't remove NUL
+	characters (they are represented as <NL> internally).
+	|-b|		command-line argument to start editing a binary file
+	|'binary'|	Option set by |-b|.  Prevents adding an <EOL> for the
+			last line in the file.
+
+Multi-language support.					|multi-lang|
+	Files in double-byte or multi-byte encodings can be edited.  There is
+	UTF-8 support to be able to edit various languages at the same time,
+	without switching fonts. |UTF-8|
+	Messages and menus are available in different languages.
+
+Move cursor beyond lines.
+	When the 'virtualedit' option is set the cursor can move all over the
+	screen, also where there is no text.  This is useful to edit tables
+	and figures easily.
+
+==============================================================================
+5. Other vim features					*other-features*
+
+A random collection of nice extra features.
+
+
+When Vim is started with "-s scriptfile", the characters read from
+"scriptfile" are treated as if you typed them.  If end of file is reached
+before the editor exits, further characters are read from the console.
+
+The "-w" option can be used to record all typed characters in a script file.
+This file can then be used to redo the editing, possibly on another file or
+after changing some commands in the script file.
+
+The "-o" option opens a window for each argument.  "-o4" opens four windows.
+
+Vi requires several termcap entries to be able to work full-screen.  Vim only
+requires the "cm" entry (cursor motion).
+
+
+In command mode:
+
+When the 'showcmd' option is set, the command characters are shown in the last
+line of the screen.  They are removed when the command is finished.
+
+If the 'ruler' option is set, the current cursor position is shown in the
+last line of the screen.
+
+"U" still works after having moved off the last changed line and after "u".
+
+Characters with the 8th bit set are displayed.  The characters between '~' and
+0xa0 are displayed as "~?", "~@", "~A", etc., unless they are included in the
+'isprint' option.
+
+"][" goes to the next ending of a C function ('}' in column 1).
+"[]" goes to the previous ending of a C function ('}' in column 1).
+
+"]f", "[f" and "gf" start editing the file whose name is under the cursor.
+CTRL-W f splits the window and starts editing the file whose name is under
+the cursor.
+
+"*" searches forward for the identifier under the cursor, "#" backward.
+"K" runs the program defined by the 'keywordprg' option, with the identifier
+under the cursor as argument.
+
+"%" can be preceded with a count.  The cursor jumps to the line that
+percentage down in the file.  The normal "%" function to jump to the matching
+brace skips braces inside quotes.
+
+With the CTRL-] command, the cursor may be in the middle of the identifier.
+
+The used tags are remembered.  Commands that can be used with the tag stack
+are CTRL-T, ":pop" and ":tag".  ":tags" lists the tag stack.
+
+The 'tags' option can be set to a list of tag file names.  Thus multiple
+tag files can be used.  For file names that start with "./", the "./" is
+replaced with the path of the current file.  This makes it possible to use a
+tags file in the same directory as the file being edited.
+
+Previously used file names are remembered in the alternate file name list.
+CTRL-^ accepts a count, which is an index in this list.
+":files" command shows the list of alternate file names.
+"#<N>" is replaced with the <N>th alternate file name in the list.
+"#<" is replaced with the current file name without extension.
+
+Search patterns have more features.  The <NL> character is seen as part of the
+search pattern and the substitute string of ":s".  Vi sees it as the end of
+the command.
+
+Searches can put the cursor on the end of a match and may include a character
+offset.
+
+Count added to "~", ":next", ":Next", "n" and "N".
+
+The command ":next!" with 'autowrite' set does not write the file.  In vi the
+file was written, but this is considered to be a bug, because one does not
+expect it and the file is not written with ":rewind!".
+
+In Vi when entering a <CR> in replace mode deletes a character only when 'ai'
+is set (but does not show it until you hit <Esc>).  Vim always deletes a
+character (and shows it immediately).
+
+Added :wnext command.  Same as ":write" followed by ":next".
+
+The ":w!" command always writes, also when the file is write protected.  In Vi
+you would have to do ":!chmod +w %:S" and ":set noro".
+
+When 'tildeop' has been set, "~" is an operator (must be followed by a
+movement command).
+
+With the "J" (join) command you can reset the 'joinspaces' option to have only
+one space after a period (Vi inserts two spaces).
+
+"cw" can be used to change white space formed by several characters (Vi is
+confusing: "cw" only changes one space, while "dw" deletes all white space).
+
+"o" and "O" accept a count for repeating the insert (Vi clears a part of
+display).
+
+Flags after Ex commands not supported (no plans to include it).
+
+On non-UNIX systems ":cd" command shows current directory instead of going to
+the home directory (there isn't one).  ":pwd" prints the current directory on
+all systems.
+
+After a ":cd" command the file names (in the argument list, opened files)
+still point to the same files.  In Vi ":cd" is not allowed in a changed file;
+otherwise the meaning of file names change.
+
+":source!" command reads Vi commands from a file.
+
+":mkexrc" command writes current modified options and mappings to a ".exrc"
+file.  ":mkvimrc" writes to a ".vimrc" file.
+
+No check for "tail recursion" with mappings.  This allows things like
+":map! foo ^]foo".
+
+When a mapping starts with number, vi loses the count typed before it (e.g.
+when using the mapping ":map g 4G" the command "7g" goes to line 4).  This is
+considered a vi bug.  Vim concatenates the counts (in the example it becomes
+"74G"), as most people would expect.
+
+The :put! command inserts the contents of a register above the current line.
+
+The "p" and "P" commands of vi cannot be repeated with "." when the putted
+text is less than a line.  In Vim they can always be repeated.
+
+":noremap" command can be used to enter a mapping that will not be remapped.
+This is useful to exchange the meaning of two keys.  ":cmap", ":cunmap" and
+":cnoremap" can be used for mapping in command-line editing only.  ":imap",
+":iunmap" and ":inoremap" can be used for mapping in insert mode only.
+Similar commands exist for abbreviations: ":noreabbrev", ":iabbrev"
+":cabbrev", ":iunabbrev", ":cunabbrev", ":inoreabbrev", ":cnoreabbrev".
+
+In Vi the command ":map foo bar" would remove a previous mapping
+":map bug foo".  This is considered a bug, so it is not included in Vim.
+":unmap! foo" does remove ":map! bug foo", because unmapping would be very
+difficult otherwise (this is vi compatible).
+
+The ':' register contains the last command-line.
+The '%' register contains the current file name.
+The '.' register contains the last inserted text.
+
+":dis" command shows the contents of the yank registers.
+
+CTRL-O/CTRL-I can be used to jump to older/newer positions.  These are the
+same positions as used with the '' command, but may be in another file.  The
+":jumps" command lists the older positions.
+
+If the 'shiftround' option is set, an indent is rounded to a multiple of
+'shiftwidth' with ">" and "<" commands.
+
+The 'scrolljump' option can be set to the minimum number of lines to scroll
+when the cursor gets off the screen.  Use this when scrolling is slow.
+
+The 'scrolloff' option can be set to the minimum number of lines to keep
+above and below the cursor.  This gives some context to where you are
+editing.  When set to a large number the cursor line is always in the middle
+of the window.
+
+Uppercase marks can be used to jump between files.  The ":marks" command lists
+all currently set marks.  The commands "']" and "`]" jump to the end of the
+previous operator or end of the text inserted with the put command.  "'[" and
+"`[" do jump to the start.
+
+The 'shelltype' option can be set to reflect the type of shell used on the
+Amiga.
+
+The 'highlight' option can be set for the highlight mode to be used for
+several commands.
+
+The CTRL-A (add) and CTRL-X (subtract) commands are new.  The count to the
+command (default 1) is added to/subtracted from the number at or after the
+cursor.  That number may be decimal, octal (starts with a '0') or hexadecimal
+(starts with '0x').  Very useful in macros.
+
+With the :set command the prefix "inv" can be used to invert boolean options.
+
+In both Vi and Vim you can create a line break with the ":substitute" command
+by using a CTRL-M.  For Vi this means you cannot insert a real CTRL-M in the
+text.  With Vim you can put a real CTRL-M in the text by preceding it with a
+CTRL-V.
+
+
+In Insert mode:
+
+If the 'revins' option is set, insert happens backwards.  This is for typing
+Hebrew.  When inserting normal characters the cursor will not be shifted and
+the text moves rightwards.  Backspace, CTRL-W and CTRL-U will also work in
+the opposite direction.  CTRL-B toggles the 'revins' option.  In replace mode
+'revins' has no effect.  Only when enabled at compile time.
+
+The backspace key can be used just like CTRL-D to remove auto-indents.
+
+You can backspace, CTRL-U and CTRL-W over line breaks if the 'backspace' (bs)
+option includes "eol".  You can backspace over the start of insert if the
+'backspace' option includes "start".
+
+When the 'paste' option is set, a few options are reset and mapping in insert
+mode and abbreviation are disabled.  This allows for pasting text in windowing
+systems without unexpected results.  When the 'paste' option is reset, the old
+option values are restored.
+
+CTRL-T/CTRL-D always insert/delete an indent in the current line, no matter
+what column the cursor is in.
+
+CTRL-@ (insert previously inserted text) works always (Vi: only when typed as
+first character).
+
+CTRL-A works like CTRL-@ but does not leave insert mode.
+
+CTRL-R {0-9a-z..} can be used to insert the contents of a register.
+
+When the 'smartindent' option is set, C programs will be better auto-indented.
+With 'cindent' even more.
+
+CTRL-Y and CTRL-E can be used to copy a character from above/below the
+current cursor position.
+
+After CTRL-V you can enter a three digit decimal number.  This byte value is
+inserted in the text as a single character.  Useful for international
+characters that are not on your keyboard.
+
+When the 'expandtab' (et) option is set, a <Tab> is expanded to the
+appropriate number of spaces.
+
+The window always reflects the contents of the buffer (Vi does not do this
+when changing text and in some other cases).
+
+If Vim is compiled with DIGRAPHS defined, digraphs are supported.  A set of
+normal digraphs is included.  They are shown with the ":digraph" command.
+More can be added with ":digraph {char1}{char2} {number}".  A digraph is
+entered with "CTRL-K {char1} {char2}" or "{char1} BS {char2}" (only when
+'digraph' option is set).
+
+When repeating an insert, e.g. "10atest <Esc>" vi would only handle wrapmargin
+for the first insert.  Vim does it for all.
+
+A count to the "i" or "a" command is used for all the text.  Vi uses the count
+only for one line.  "3iabc<NL>def<Esc>" would insert "abcabcabc<NL>def" in Vi
+but "abc<NL>defabc<NL>defabc<NL>def" in Vim.
+
+
+In Command-line mode:
+
+<Esc> terminates the command-line without executing it.  In vi the command
+line would be executed, which is not what most people expect (hitting <Esc>
+should always get you back to command mode).  To avoid problems with some
+obscure macros, an <Esc> in a macro will execute the command.  If you want a
+typed <Esc> to execute the command like vi does you can fix this with
+	":cmap ^V<Esc> ^V<CR>"
+
+General:
+
+The 'ttimeout' option is like 'timeout', but only works for cursor and
+function keys, not for ordinary mapped characters.  The 'timeoutlen' option
+gives the number of milliseconds that is waited for.  If the 'esckeys' option
+is not set, cursor and function keys that start with <Esc> are not recognized
+in insert mode.
+
+There is an option for each terminal string.  Can be used when termcap is not
+supported or to change individual strings.
+
+The 'fileformat' option can be set to select the <EOL>: "dos" <CR><NL>, "unix"
+<NL> or "mac" <CR>.
+When the 'fileformats' option is not empty, Vim tries to detect the type of
+<EOL> automatically.  The 'fileformat' option is set accordingly.
+
+On systems that have no job control (older Unix systems and non-Unix systems)
+the CTRL-Z, ":stop" or ":suspend" command starts a new shell.
+
+If Vim is started on the Amiga without an interactive window for output, a
+window is opened (and :sh still works).  You can give a device to use for
+editing with the |-d| argument, e.g. "-d con:20/20/600/150".
+
+The 'columns' and 'lines' options are used to set or get the width and height
+of the display.
+
+Option settings are read from the first and last few lines of the file.
+Option 'modelines' determines how many lines are tried (default is 5).  Note
+that this is different from the Vi versions that can execute any Ex command
+in a modeline (a major security problem).  |trojan-horse|
+
+If the 'insertmode' option is set (e.g. in .exrc), Vim starts in insert mode.
+And it comes back there, when pressing <Esc>.
+
+Undo information is kept in memory.  Available memory limits the number and
+size of change that can be undone.  This may be a problem with MS-DOS, is
+hardly a problem on the Amiga and almost never with Unix and Win32.
+
+If the 'backup' or 'writebackup' option is set: Before a file is overwritten,
+a backup file (.bak) is made.  If the "backup" option is set it is left
+behind.
+
+Vim creates a file ending in ".swp" to store parts of the file that have been
+changed or that do not fit in memory.  This file can be used to recover from
+an aborted editing session with "vim -r file".  Using the swap file can be
+switched off by setting the 'updatecount' option to 0 or starting Vim with
+the "-n" option.  Use the 'directory' option for placing the .swp file
+somewhere else.
+
+Vim is able to work correctly on filesystems with 8.3 file names, also when
+using messydos or crossdos filesystems on the Amiga, or any 8.3 mounted
+filesystem under Unix.  See |'shortname'|.
+
+Error messages are shown at least one second (Vi overwrites error messages).
+
+If Vim gives the |hit-enter| prompt, you can hit any key.  Characters other
+than <CR>, <NL> and <Space> are interpreted as the (start of) a command.  (Vi
+only accepts a command starting with ':').
+
+The contents of the numbered and unnamed registers is remembered when
+changing files.
+
+The "No lines in buffer" message is a normal message instead of an error
+message, since that may cause a mapping to be aborted.
+
+The AUX: device of the Amiga is supported.
+
+==============================================================================
+6. Command-line arguments				*cmdline-arguments*
+
+Different versions of Vi have different command-line arguments.  This can be
+confusing.  To help you, this section gives an overview of the differences.
+
+Five variants of Vi will be considered here:
+	Elvis	Elvis version 2.1b
+	Nvi	Nvi version 1.79
+	Posix	Posix 1003.2
+	Vi	Vi version 3.7 (for Sun 4.1.x)
+	Vile	Vile version 7.4 (incomplete)
+	Vim	Vim version 5.2
+
+Only Vim is able to accept options in between and after the file names.
+
++{command}	Elvis, Nvi, Posix, Vi, Vim: Same as "-c {command}".
+
+-		Nvi, Posix, Vi: Run Ex in batch mode.
+		Vim: Read file from stdin (use -s for batch mode).
+
+--		Vim: End of options, only file names are following.
+
+--cmd {command}	Vim: execute {command} before sourcing vimrc files.
+
+--echo-wid	Vim: GTK+ echoes the Window ID on stdout
+
+--help		Vim: show help message and exit.
+
+--literal	Vim: take file names literally, don't expand wildcards.
+
+--nofork	Vim: same as |-f|
+
+--noplugin[s]	Vim: Skip loading plugins.
+
+--remote	Vim: edit the files in another Vim server
+
+--remote-expr {expr}	Vim: evaluate {expr} in another Vim server
+
+--remote-send {keys}	Vim: send {keys} to a Vim server and exit
+
+--remote-silent {file}	Vim: edit the files in another Vim server if possible
+
+--remote-wait	Vim: edit the files in another Vim server and wait for it
+
+--remote-wait-silent	Vim: like --remote-wait, no complaints if not possible
+
+--role {role}	Vim: GTK+ 2: set role of main window
+
+--serverlist	Vim: Output a list of Vim servers and exit
+
+--servername {name}	Vim: Specify Vim server name
+
+--socketid {id}		Vim: GTK window socket to run Vim in
+
+--windowid {id}		Vim: Win32 window ID to run Vim in
+
+--version	Vim: show version message and exit.
+
+-?		Vile: print usage summary and exit.
+
+-a		Elvis: Load all specified file names into a window (use -o for
+		Vim).
+
+-A		Vim: Start in Arabic mode (when compiled with Arabic).
+
+-b {blksize}	Elvis: Use {blksize} blocksize for the session file.
+-b		Vim: set 'binary' mode.
+
+-C		Vim: Compatible mode.
+
+-c {command}	Elvis, Nvi, Posix, Vim: run {command} as an Ex command after
+		loading the edit buffer.
+		Vim: allow up to 10 "-c" arguments
+
+-d {device}	Vim: Use {device} for I/O (Amiga only). {only when compiled
+		without the |+diff| feature}
+-d		Vim: start with 'diff' set. |vimdiff|
+
+-dev {device}	Vim: Use {device} for I/O (Amiga only).
+
+-D		Vim: debug mode.
+
+-e		Elvis, Nvi, Vim: Start in Ex mode, as if the executable is
+		called "ex".
+
+-E		Vim: Start in improved Ex mode |gQ|, like "exim".
+
+-f		Vim: Run GUI in foreground (Amiga: don't open new window).
+-f {session}	Elvis: Use {session} as the session file.
+
+-F		Vim: Start in Farsi mode (when compiled with Farsi).
+		Nvi: Fast start, don't read the entire file when editing
+		starts.
+
+-G {gui}	Elvis: Use the {gui} as user interface.
+
+-g		Vim: Start GUI.
+-g N		Vile: start editing at line N
+
+-h		Vim: Give help message.
+		Vile: edit the help file
+
+-H		Vim: start Hebrew mode (when compiled with it).
+
+-i		Elvis: Start each window in Insert mode.
+-i {viminfo}	Vim: Use {viminfo} for viminfo file.
+
+-L		Vim: Same as "-r" (also in some versions of Vi).
+
+-l		Nvi, Vi, Vim: Set 'lisp' and 'showmatch' options.
+
+-m		Vim: Modifications not allowed to be written, resets 'write'
+		option.
+
+-M		Vim: Modifications not allowed, resets 'modifiable' and the
+		'write' option.
+
+-N		Vim: No-compatible mode.
+
+-n		Vim: No swap file used.
+
+-nb[args]	Vim: open a NetBeans interface connection
+
+-O[N]		Vim: Like -o, but use vertically split windows.
+
+-o[N]		Vim: Open [N] windows, or one for each file.
+
+-p[N]		Vim: Open [N] tab pages, or one for each file.
+
+-P {parent-title} Win32 Vim: open Vim inside a parent application window
+
+-q {name}	Vim: Use {name} for quickfix error file.
+-q{name}	Vim: Idem.
+
+-R		Elvis, Nvi, Posix, Vile, Vim: Set the 'readonly' option.
+
+-r		Elvis, Nvi, Posix, Vi, Vim: Recovery mode.
+
+-S		Nvi: Set 'secure' option.
+-S {script}	Vim: source script after starting up.
+
+-s		Nvi, Posix, Vim: Same as "-" (silent mode), when in Ex mode.
+		Elvis: Sets the 'safer' option.
+-s {scriptin}	Vim: Read from script file {scriptin}; only when not in Ex
+		mode.
+-s {pattern}	Vile: search for {pattern}
+
+-t {tag}	Elvis, Nvi, Posix, Vi, Vim: Edit the file containing {tag}.
+-t{tag}		Vim: Idem.
+
+-T {term}	Vim: Set terminal name to {term}.
+
+-u {vimrc}	Vim: Read initializations from {vimrc} file.
+
+-U {gvimrc}	Vim: Read GUI initializations from {gvimrc} file.
+
+-v		Nvi, Posix, Vi, Vim: Begin in Normal mode (visual mode, in Vi
+		terms).
+		Vile: View mode, no changes possible.
+
+-V		Elvis, Vim: Verbose mode.
+-V{nr}		Vim: Verbose mode with specified level.
+
+-w {size}	Elvis, Posix, Nvi, Vi, Vim: Set value of 'window' to {size}.
+-w{size}	Nvi, Vi: Same as "-w {size}".
+-w {name}	Vim: Write to script file {name} (must start with non-digit).
+
+-W {name}	Vim: Append to script file {name}.
+
+-x		Vi, Vim: Ask for encryption key.  See |encryption|.
+
+-X		Vim: Don't connect to the X server.
+
+-y		Vim: Start in easy mode, like |evim|.
+
+-Z		Vim: restricted mode
+
+@{cmdfile}	Vile: use {cmdfile} as startup file.
+
+==============================================================================
+7. POSIX compliance				*posix* *posix-compliance*
+
+In 2005 the POSIX test suite was run to check the compatibility of Vim.  Most
+of the test was executed properly.  There are the few things where Vim
+is not POSIX compliant, even when run in Vi compatibility mode.
+
+Set the $VIM_POSIX environment variable to have 'cpoptions' include the POSIX
+flags when Vim starts up.  This makes Vim run as POSIX as it can.  That's
+a bit different from being Vi compatible.
+
+This is where Vim does not behave as POSIX specifies and why:
+
+							*posix-screen-size*
+	The $COLUMNS and $LINES environment variables are ignored by Vim if
+	the size can be obtained from the terminal in a more reliable way.
+	Add the '|' flag to 'cpoptions' to have $COLUMNS and $LINES overrule
+	sizes obtained in another way.
+
+	The "{" and "}" commands don't stop at a "{" in the original Vi, but
+	POSIX specifies it does.  Add the '{' flag to 'cpoptions' if you want
+	it the POSIX way.
+
+	The "D", "o" and "O" commands accept a count.  Also when repeated.
+	Add the '#' flag to 'cpoptions' if you want to ignore the count.
+
+	The ":cd" command fails if the current buffer is modified when the '.'
+	flag is present in 'cpoptions'.
+
+	There is no ATTENTION message, the "A" flag is added to 'shortmess'.
+
+These are remarks about running the POSIX test suite:
+- vi test 33 sometimes fails for unknown reasons
+- vi test 250 fails; behavior will be changed in a new revision
+    http://www.opengroup.org/austin/mailarchives/ag-review/msg01710.html
+    (link no longer works, perhaps it's now:
+    https://www.opengroup.org/sophocles/show_mail.tpl?CALLER=show_archive.tpl&source=L&listname=austin-review-l&id=1711)
+- vi test 310 fails; exit code non-zero when any error occurred?
+- ex test 24 fails because test is wrong.  Changed between SUSv2 and SUSv3.
+- ex tests 47, 48, 49, 72, 73 fail because .exrc file isn't read in silent
+  mode and $EXINIT isn't used.
+- ex tests 76, 78 fail because echo is used instead of printf. (fixed)
+    Also: problem with \s not changed to space.
+- ex test 355 fails because 'window' isn't used for "30z".
+- ex test 368 fails because shell command isn't echoed in silent mode.
+- ex test 394 fails because "=" command output isn't visible in silent mode.
+- ex test 411 fails because test file is wrong, contains stray ':'.
+- ex test 475 and 476 fail because reprint output isn't visible in silent mode.
+- ex test 480 and 481 fail because the tags file has spaces instead of a tab.
+- ex test 502 fails because .exrc isn't read in silent mode.
+- ex test 509 fails because .exrc isn't read in silent mode. and exit code is
+  1 instead of 2.
+- ex test 534 fails because .exrc isn't read in silent mode.
+
+
+ vim:tw=78:ts=8:ft=help:norl:

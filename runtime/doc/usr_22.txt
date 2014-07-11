@@ -1,0 +1,400 @@
+*usr_22.txt*	For Vim version 7.4.  Last change: 2012 Nov 15
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			   Finding the file to edit
+
+
+Files can be found everywhere.  So how do you find them?  Vim offers various
+ways to browse the directory tree.  There are commands to jump to a file that
+is mentioned in another.  And Vim remembers which files have been edited
+before.
+
+|22.1|	The file browser
+|22.2|	The current directory
+|22.3|	Finding a file
+|22.4|	The buffer list
+
+     Next chapter: |usr_23.txt|  Editing other files
+ Previous chapter: |usr_21.txt|  Go away and come back
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*22.1*	The file browser
+
+Vim has a plugin that makes it possible to edit a directory.  Try this: >
+
+	:edit .
+
+Through the magic of autocommands and Vim scripts, the window will be filled
+with the contents of the directory.  It looks like this:
+
+" ============================================================================ ~
+" Netrw Directory Listing                                        (netrw v109) ~
+"   Sorted by      name ~
+"   Sort sequence: [\/]$,\.h$,\.c$,\.cpp$,*,\.info$,\.swp$,\.o$\.obj$,\.bak$ ~
+"   Quick Help: <F1>:help  -:go up dir  D:delete  R:rename  s:sort-by  x:exec ~
+" ============================================================================ ~
+../ ~
+./ ~
+check/ ~
+Makefile ~
+autocmd.txt ~
+change.txt ~
+eval.txt~ ~
+filetype.txt~ ~
+help.txt.info ~
+
+You can see these items:
+
+1.  The name of the browsing tool and its version number
+2.  The name of the browsing directory
+3.  The method of sorting (may be by name, time, or size)
+4.  How names are to be sorted (directories first, then *.h files,
+    *.c files, etc)
+5.  How to get help (use the <F1> key), and an abbreviated listing
+    of available commands
+6.  A listing of files, including "../", which allows one to list
+    the parent directory.
+
+If you have syntax highlighting enabled, the different parts are highlighted
+so as to make it easier to spot them.
+
+You can use Normal mode Vim commands to move around in the text.  For example,
+move the cursor atop a file and press <Enter>; you will then be editing that
+file.  To go back to the browser use ":edit ." again, or use ":Explore".
+CTRL-O also works.
+
+Try using <Enter> while the cursor is atop a directory name.  The result is
+that the file browser moves into that directory and displays the items found
+there.  Pressing <Enter> on the first directory "../" moves you one level
+higher.  Pressing "-" does the same thing, without the need to move to the
+"../" item first.
+
+You can press <F1> to get help on the things you can do in the netrw file
+browser.  This is what you get: >
+
+    9. Directory Browsing	 netrw-browse   netrw-dir   netrw-list   netrw-help 
+
+    MAPS								 netrw-maps 
+     	 <F1>.............Help.......................................|netrw-help|
+     	 <cr>.............Browsing...................................|netrw-cr|
+     	 <del>............Deleting Files or Directories..............|netrw-delete|
+     	 -................Going Up...................................|netrw--|
+     	 a................Hiding Files or Directories................|netrw-a|
+     	 mb...............Bookmarking a Directory....................|netrw-mb|
+     	 gb...............Changing to a Bookmarked Directory.........|netrw-gb|
+     	 c................Make Browsing Directory The Current Dir....|netrw-c|
+     	 d................Make A New Directory.......................|netrw-d|
+     	 D................Deleting Files or Directories..............|netrw-D|
+     	 <c-h>............Edit File/Directory Hiding List............|netrw-ctrl-h|
+     	 i................Change Listing Style.......................|netrw-i|
+     	 <c-l>............Refreshing the Listing.....................|netrw-ctrl-l|
+     	 o................Browsing with a Horizontal Split...........|netrw-o|
+     	 p................Use Preview Window.........................|netrw-p|
+     	 P................Edit in Previous Window....................|netrw-p|
+     	 q................Listing Bookmarks and History..............|netrw-q|
+     	 r................Reversing Sorting Order....................|netrw-r|
+<    	(etc)
+
+The <F1> key thus brings you to a netrw directory browsing contents help page.
+It's a regular help page; use the usual |CTRL-]| to jump to tagged help items
+and |CTRL-O| to jump back.
+
+To select files for display and editing: (with the cursor is atop a filename)
+
+	<enter>		Open the file in the current window.	   |netrw-cr|
+	o		Horizontally split window and display file |netrw-o|
+	v		Vertically split window and display file   |netrw-v|
+	p		Use the |preview-window| 		   |netrw-p|
+	P		Edit in the previous window		   |netrw-P|
+	t		Open file in a new tab			   |netrw-t|
+
+The following normal-mode commands may be used to control the browser display:
+
+	i		Controls listing style (thin, long, wide, and tree).
+			The long listing includes size and date information.
+	s		Repeatedly pressing s will change the way the files
+			are sorted; one may sort on name, modification time,
+			or size.
+	r		Reverse the sorting order.
+
+As a sampling of extra normal-mode commands:
+
+	c		Change Vim's notion of the current directory to be
+			the same as the browser directory.  (see
+			|g:netrw_keepdir| to control this, too)
+	R		Rename the file or directory under the cursor; a
+			prompt will be issued for the new name.
+	D		Delete the file or directory under the cursor; a
+			confirmation request will be issued.
+	mb gb		Make bookmark/goto bookmark
+
+
+One may also use command mode; again, just a sampling:
+
+	:Explore [directory]	Browse specified/current directory
+	:NetrwSettings		A comprehensive list of your current netrw
+				settings with help linkage.
+
+The netrw browser is not limited to just your local machine; one may use
+urls such as:    (that trailing / is important)
+
+	:Explore ftp://somehost/path/to/dir/
+	:e scp://somehost/path/to/dir/
+
+See |netrw-browse| for more.
+
+==============================================================================
+*22.2*	The current directory
+
+Just like the shell, Vim has the concept of a current directory.  Suppose you
+are in your home directory and want to edit several files in a directory
+"VeryLongFileName".  You could do: >
+
+	:edit VeryLongFileName/file1.txt
+	:edit VeryLongFileName/file2.txt
+	:edit VeryLongFileName/file3.txt
+
+To avoid much of the typing, do this: >
+
+	:cd VeryLongFileName
+	:edit file1.txt
+	:edit file2.txt
+	:edit file3.txt
+
+The ":cd" command changes the current directory.  You can see what the current
+directory is with the ":pwd" command: >
+
+	:pwd
+	/home/Bram/VeryLongFileName
+
+Vim remembers the last directory that you used.  Use "cd -" to go back to it.
+Example: >
+
+	:pwd
+	/home/Bram/VeryLongFileName
+	:cd /etc
+	:pwd
+	/etc
+	:cd -
+	:pwd
+	/home/Bram/VeryLongFileName
+	:cd -
+	:pwd
+	/etc
+
+
+WINDOW LOCAL DIRECTORY
+
+When you split a window, both windows use the same current directory.  When
+you want to edit a number of files somewhere else in the new window, you can
+make it use a different directory, without changing the current directory in
+the other window.  This is called a local directory. >
+
+	:pwd
+	/home/Bram/VeryLongFileName
+	:split
+	:lcd /etc
+	:pwd
+	/etc
+	CTRL-W w
+	:pwd
+	/home/Bram/VeryLongFileName
+
+So long as no ":lcd" command has been used, all windows share the same current
+directory.  Doing a ":cd" command in one window will also change the current
+directory of the other window.
+   For a window where ":lcd" has been used a different current directory is
+remembered.  Using ":cd" or ":lcd" in other windows will not change it.
+   When using a ":cd" command in a window that uses a different current
+directory, it will go back to using the shared directory.
+
+==============================================================================
+*22.3*	Finding a file
+
+You are editing a C program that contains this line:
+
+	#include "inits.h" ~
+
+You want to see what is in that "inits.h" file.  Move the cursor on the name
+of the file and type: >
+
+	gf
+
+Vim will find the file and edit it.
+   What if the file is not in the current directory?  Vim will use the 'path'
+option to find the file.  This option is a list of directory names where to
+look for your file.
+   Suppose you have your include files located in "c:/prog/include".  This
+command will add it to the 'path' option: >
+
+	:set path+=c:/prog/include
+
+This directory is an absolute path.  No matter where you are, it will be the
+same place.  What if you have located files in a subdirectory, below where the
+file is?  Then you can specify a relative path name.  This starts with a dot:
+>
+	:set path+=./proto
+
+This tells Vim to look in the directory "proto", below the directory where the
+file in which you use "gf" is.  Thus using "gf" on "inits.h" will make Vim
+look for "proto/inits.h", starting in the directory of the file.
+   Without the "./", thus "proto", Vim would look in the "proto" directory
+below the current directory.  And the current directory might not be where the
+file that you are editing is located.
+
+The 'path' option allows specifying the directories where to search for files
+in many more ways.  See the help on the 'path' option.
+   The 'isfname' option is used to decide which characters are included in the
+file name, and which ones are not (e.g., the " character in the example
+above).
+
+When you know the file name, but it's not to be found in the file, you can
+type it: >
+
+	:find inits.h
+
+Vim will then use the 'path' option to try and locate the file.  This is the
+same as the ":edit" command, except for the use of 'path'.
+
+To open the found file in a new window use CTRL-W f instead of "gf", or use
+":sfind" instead of ":find".
+
+
+A nice way to directly start Vim to edit a file somewhere in the 'path': >
+
+	vim "+find stdio.h"
+
+This finds the file "stdio.h" in your value of 'path'.  The quotes are
+necessary to have one argument |-+c|.
+
+==============================================================================
+*22.4*	The buffer list
+
+The Vim editor uses the term buffer to describe a file being edited.
+Actually, a buffer is a copy of the file that you edit.  When you finish
+changing the buffer, you write the contents of the buffer to the file.
+Buffers not only contain file contents, but also all the marks, settings, and
+other stuff that goes with it.
+
+
+HIDDEN BUFFERS
+
+Suppose you are editing the file one.txt and need to edit the file two.txt.
+You could simply use ":edit two.txt", but since you made changes to one.txt
+that won't work.  You also don't want to write one.txt yet.  Vim has a
+solution for you: >
+
+	:hide edit two.txt
+
+The buffer "one.txt" disappears from the screen, but Vim still knows that you
+are editing this buffer, so it keeps the modified text.  This is called a
+hidden buffer: The buffer contains text, but you can't see it.
+   The argument of ":hide" is another command.  ":hide" makes that command
+behave as if the 'hidden' option was set.  You could also set this option
+yourself.  The effect is that when any buffer is abandoned, it becomes hidden.
+   Be careful!  When you have hidden buffers with changes, don't exit Vim
+without making sure you have saved all the buffers.
+
+
+INACTIVE BUFFERS
+
+   When a buffer has been used once, Vim remembers some information about it.
+When it is not displayed in a window and it is not hidden, it is still in the
+buffer list.  This is called an inactive buffer.  Overview:
+
+   Active		Appears in a window, text loaded.
+   Hidden		Not in a window, text loaded.
+   Inactive		Not in a window, no text loaded.
+
+The inactive buffers are remembered, because Vim keeps information about them,
+like marks.  And remembering the file name is useful too, so that you can see
+which files you have edited.  And edit them again.
+
+
+LISTING BUFFERS
+
+View the buffer list with this command: >
+
+	:buffers
+
+A command which does the same, is not so obvious to list buffers, but is much
+shorter to type: >
+
+	:ls
+
+The output could look like this:
+
+  1 #h   "help.txt"			line 62 ~
+  2 %a + "usr_21.txt"			line 1 ~
+  3      "usr_toc.txt"			line 1 ~
+
+The first column contains the buffer number.  You can use this to edit the
+buffer without having to type the name, see below.
+   After the buffer number come the flags.  Then the name of the file
+and the line number where the cursor was the last time.
+   The flags that can appear are these (from left to right):
+
+	u	Buffer is unlisted |unlisted-buffer|.
+	 %	Current buffer.
+	 #	Alternate buffer.
+	  a	Buffer is loaded and displayed.
+	  h	Buffer is loaded but hidden.
+	   =	Buffer is read-only.
+	   -	Buffer is not modifiable, the 'modifiable' option is off.
+	    +	Buffer has been modified.
+
+
+EDITING A BUFFER
+
+You can edit a buffer by its number.  That avoids having to type the file
+name: >
+
+	:buffer 2
+
+But the only way to know the number is by looking in the buffer list.  You can
+use the name, or part of it, instead: >
+
+	:buffer help
+
+Vim will find the best match for the name you type.  If there is only one
+buffer that matches the name, it will be used.  In this case "help.txt".
+   To open a buffer in a new window: >
+
+	:sbuffer 3
+
+This works with a name as well.
+
+
+USING THE BUFFER LIST
+
+You can move around in the buffer list with these commands:
+
+	:bnext		go to next buffer
+	:bprevious	go to previous buffer
+	:bfirst		go to the first buffer
+	:blast		go to the last buffer
+
+To remove a buffer from the list, use this command: >
+
+	:bdelete 3
+
+Again, this also works with a name.
+   If you delete a buffer that was active (visible in a window), that window
+will be closed.  If you delete the current buffer, the current window will be
+closed.  If it was the last window, Vim will find another buffer to edit.  You
+can't be editing nothing!
+
+	Note:
+	Even after removing the buffer with ":bdelete" Vim still remembers it.
+	It's actually made "unlisted", it no longer appears in the list from
+	":buffers".  The ":buffers!" command will list unlisted buffers (yes,
+	Vim can do the impossible).  To really make Vim forget about a buffer,
+	use ":bwipe".  Also see the 'buflisted' option.
+
+==============================================================================
+
+Next chapter: |usr_23.txt|  Editing other files
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

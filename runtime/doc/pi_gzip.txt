@@ -1,0 +1,41 @@
+*pi_gzip.txt*   For Vim version 7.4.  Last change: 2012 Jul 19
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Editing compressed files with Vim		*gzip* *bzip2* *compress*
+
+1. Autocommands			|gzip-autocmd|
+
+The functionality mentioned here is a |standard-plugin|.
+This plugin is only available if 'compatible' is not set.
+You can avoid loading this plugin by setting the "loaded_gzip" variable: >
+	:let loaded_gzip = 1
+
+{Vi does not have any of this}
+
+==============================================================================
+1. Autocommands						*gzip-autocmd*
+
+The plugin installs autocommands to intercept reading and writing of files
+with these extensions:
+
+	extension	compression ~
+	*.Z		compress (Lempel-Ziv)
+	*.gz		gzip
+	*.bz2		bzip2
+	*.lzma		lzma
+	*.xz		xz
+
+That's actually the only thing you need to know.  There are no options.
+
+After decompressing a file, the filetype will be detected again.  This will
+make a file like "foo.c.gz" get the "c" filetype.
+
+If you have 'patchmode' set, it will be appended after the extension for
+compression.  Thus editing the patchmode file will not give you the automatic
+decompression.  You have to rename the file if you want this.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

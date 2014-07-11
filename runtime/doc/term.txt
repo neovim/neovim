@@ -1,0 +1,879 @@
+*term.txt*      For Vim version 7.4.  Last change: 2014 May 13
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Terminal information					*terminal-info*
+
+Vim uses information about the terminal you are using to fill the screen and
+recognize what keys you hit.  If this information is not correct, the screen
+may be messed up or keys may not be recognized.  The actions which have to be
+performed on the screen are accomplished by outputting a string of
+characters.  Special keys produce a string of characters.  These strings are
+stored in the terminal options, see |terminal-options|.
+
+NOTE: Most of this is not used when running the |GUI|.
+
+1. Startup			|startup-terminal|
+2. Terminal options		|terminal-options|
+3. Window size			|window-size|
+4. Slow and fast terminals	|slow-fast-terminal|
+5. Using the mouse		|mouse-using|
+
+==============================================================================
+1. Startup						*startup-terminal*
+
+When Vim is started a default terminal type is assumed.  For the Amiga this is
+a standard CLI window, for MS-DOS the pc terminal, for Unix an ansi terminal.
+A few other terminal types are always available, see below |builtin-terms|.
+
+You can give the terminal name with the '-T' Vim argument.  If it is not given
+Vim will try to get the name from the TERM environment variable.
+
+				*termcap* *terminfo* *E557* *E558* *E559*
+On Unix the terminfo database or termcap file is used.  This is referred to as
+"termcap" in all the documentation.  At compile time, when running configure,
+the choice whether to use terminfo or termcap is done automatically.  When
+running Vim the output of ":version" will show |+terminfo| if terminfo is
+used.  Also see |xterm-screens|.
+
+On non-Unix systems a termcap is only available if Vim was compiled with
+TERMCAP defined.
+
+					*builtin-terms* *builtin_terms*
+Which builtin terminals are available depends on a few defines in feature.h,
+which need to be set at compile time:
+    define		output of ":version"	terminals builtin	~
+NO_BUILTIN_TCAPS	-builtin_terms		none
+SOME_BUILTIN_TCAPS	+builtin_terms		most common ones (default)
+ALL_BUILTIN_TCAPS	++builtin_terms		all available
+
+You can see a list of available builtin terminals with ":set term=xxx" (when
+not running the GUI).  Also see |+builtin_terms|.
+
+If the termcap code is included Vim will try to get the strings for the
+terminal you are using from the termcap file and the builtin termcaps.  Both
+are always used, if an entry for the terminal you are using is present.  Which
+one is used first depends on the 'ttybuiltin' option:
+
+'ttybuiltin' on		1: builtin termcap	2: external termcap
+'ttybuiltin' off	1: external termcap	2: builtin termcap
+
+If an option is missing in one of them, it will be obtained from the other
+one.  If an option is present in both, the one first encountered is used.
+
+Which external termcap file is used varies from system to system and may
+depend on the environment variables "TERMCAP" and "TERMPATH".  See "man
+tgetent".
+
+Settings depending on terminal			*term-dependent-settings*
+
+If you want to set options or mappings, depending on the terminal name, you
+can do this best in your .vimrc.  Example: >
+
+   if &term == "xterm"
+     ... xterm maps and settings ...
+   elseif &term =~ "vt10."
+     ... vt100, vt102 maps and settings ...
+   endif
+<
+						*raw-terminal-mode*
+For normal editing the terminal will be put into "raw" mode.  The strings
+defined with 't_ti' and 't_ks' will be sent to the terminal.  Normally this
+puts the terminal in a state where the termcap codes are valid and activates
+the cursor and function keys.  When Vim exits the terminal will be put back
+into the mode it was before Vim started.  The strings defined with 't_te' and
+'t_ke' will be sent to the terminal.  On the Amiga, with commands that execute
+an external command (e.g., "!!"), the terminal will be put into Normal mode
+for a moment.  This means that you can stop the output to the screen by
+hitting a printing key.  Output resumes when you hit <BS>.
+
+							*cs7-problem*
+Note: If the terminal settings are changed after running Vim, you might have
+an illegal combination of settings.  This has been reported on Solaris 2.5
+with "stty cs8 parenb", which is restored as "stty cs7 parenb".  Use
+"stty cs8 -parenb -istrip" instead, this is restored correctly.
+
+Some termcap entries are wrong in the sense that after sending 't_ks' the
+cursor keys send codes different from the codes defined in the termcap.  To
+avoid this you can set 't_ks' (and 't_ke') to empty strings.  This must be
+done during initialization (see |initialization|), otherwise it's too late.
+
+Some termcap entries assume that the highest bit is always reset.  For
+example: The cursor-up entry for the Amiga could be ":ku=\E[A:".  But the
+Amiga really sends "\233A".  This works fine if the highest bit is reset,
+e.g., when using an Amiga over a serial line.  If the cursor keys don't work,
+try the entry ":ku=\233A:".
+
+Some termcap entries have the entry ":ku=\E[A:".  But the Amiga really sends
+"\233A".  On output "\E[" and "\233" are often equivalent, on input they
+aren't.  You will have to change the termcap entry, or change the key code with
+the :set command to fix this.
+
+Many cursor key codes start with an <Esc>.  Vim must find out if this is a
+single hit of the <Esc> key or the start of a cursor key sequence.  It waits
+for a next character to arrive.  If it does not arrive within one second a
+single <Esc> is assumed.  On very slow systems this may fail, causing cursor
+keys not to work sometimes.  If you discover this problem reset the 'timeout'
+option.  Vim will wait for the next character to arrive after an <Esc>.  If
+you want to enter a single <Esc> you must type it twice.  Resetting the
+'esckeys' option avoids this problem in Insert mode, but you lose the
+possibility to use cursor and function keys in Insert mode.
+
+On the Amiga the recognition of window resizing is activated only when the
+terminal name is "amiga" or "builtin_amiga".
+
+Some terminals have confusing codes for the cursor keys.  The televideo 925 is
+such a terminal.  It sends a CTRL-H for cursor-left.  This would make it
+impossible to distinguish a backspace and cursor-left.  To avoid this problem
+CTRL-H is never recognized as cursor-left.
+
+					*vt100-cursor-keys* *xterm-cursor-keys*
+Other terminals (e.g., vt100 and xterm) have cursor keys that send <Esc>OA,
+<Esc>OB, etc.  Unfortunately these are valid commands in insert mode: Stop
+insert, Open a new line above the new one, start inserting 'A', 'B', etc.
+Instead of performing these commands Vim will erroneously recognize this typed
+key sequence as a cursor key movement.  To avoid this and make Vim do what you
+want in either case you could use these settings: >
+	:set notimeout		" don't timeout on mappings
+	:set ttimeout		" do timeout on terminal key codes
+	:set timeoutlen=100	" timeout after 100 msec
+This requires the key-codes to be sent within 100 msec in order to recognize
+them as a cursor key.  When you type you normally are not that fast, so they
+are recognized as individual typed commands, even though Vim receives the same
+sequence of bytes.
+
+				*vt100-function-keys* *xterm-function-keys*
+An xterm can send function keys F1 to F4 in two modes: vt100 compatible or
+not.  Because Vim may not know what the xterm is sending, both types of keys
+are recognized.  The same happens for the <Home> and <End> keys.
+			normal			vt100 ~
+	<F1>	t_k1	<Esc>[11~	<xF1>	<Esc>OP	    *<xF1>-xterm*
+	<F2>	t_k2	<Esc>[12~	<xF2>	<Esc>OQ	    *<xF2>-xterm*
+	<F3>	t_k3	<Esc>[13~	<xF3>	<Esc>OR	    *<xF3>-xterm*
+	<F4>	t_k4	<Esc>[14~	<xF4>	<Esc>OS	    *<xF4>-xterm*
+	<Home>	t_kh	<Esc>[7~	<xHome>	<Esc>OH	    *<xHome>-xterm*
+	<End>	t_@7	<Esc>[4~	<xEnd>	<Esc>OF	    *<xEnd>-xterm*
+
+When Vim starts, <xF1> is mapped to <F1>, <xF2> to <F2> etc.  This means that
+by default both codes do the same thing.  If you make a mapping for <xF2>,
+because your terminal does have two keys, the default mapping is overwritten,
+thus you can use the <F2> and <xF2> keys for something different.
+
+							*xterm-shifted-keys*
+Newer versions of xterm support shifted function keys and special keys.  Vim
+recognizes most of them.  Use ":set termcap" to check which are supported and
+what the codes are.  Mostly these are not in a termcap, they are only
+supported by the builtin_xterm termcap.
+
+							*xterm-modifier-keys*
+Newer versions of xterm support Alt and Ctrl for most function keys.  To avoid
+having to add all combinations of Alt, Ctrl and Shift for every key a special
+sequence is recognized at the end of a termcap entry: ";*X".  The "X" can be
+any character, often '~' is used.  The ";*" stands for an optional modifier
+argument.  ";2" is Shift, ";3" is Alt, ";5" is Ctrl and ";9" is Meta (when
+it's different from Alt).  They can be combined.  Examples: >
+	:set <F8>=^[[19;*~
+	:set <Home>=^[[1;*H
+Another speciality about these codes is that they are not overwritten by
+another code.  That is to avoid that the codes obtained from xterm directly
+|t_RV| overwrite them.
+							*xterm-scroll-region*
+The default termcap entry for xterm on Sun and other platforms does not
+contain the entry for scroll regions.  Add ":cs=\E[%i%d;%dr:" to the xterm
+entry in /etc/termcap and everything should work.
+
+							*xterm-end-home-keys*
+On some systems (at least on FreeBSD with XFree86 3.1.2) the codes that the
+<End> and <Home> keys send contain a <Nul> character.  To make these keys send
+the proper key code, add these lines to your ~/.Xdefaults file:
+
+*VT100.Translations:		#override \n\
+		<Key>Home: string("0x1b") string("[7~") \n\
+		<Key>End: string("0x1b") string("[8~")
+
+						*xterm-8bit* *xterm-8-bit*
+Xterm can be run in a mode where it uses 8-bit escape sequences.  The CSI code
+is used instead of <Esc>[.  The advantage is that an <Esc> can quickly be
+recognized in Insert mode, because it can't be confused with the start of a
+special key.
+For the builtin termcap entries, Vim checks if the 'term' option contains
+"8bit" anywhere.  It then uses 8-bit characters for the termcap entries, the
+mouse and a few other things.  You would normally set $TERM in your shell to
+"xterm-8bit" and Vim picks this up and adjusts to the 8-bit setting
+automatically.
+When Vim receives a response to the |t_RV| (request version) sequence and it
+starts with CSI, it assumes that the terminal is in 8-bit mode and will
+convert all key sequences to their 8-bit variants.
+
+==============================================================================
+2. Terminal options		*terminal-options* *termcap-options* *E436*
+
+The terminal options can be set just like normal options.  But they are not
+shown with the ":set all" command.  Instead use ":set termcap".
+
+It is always possible to change individual strings by setting the
+appropriate option.  For example: >
+	:set t_ce=^V^[[K	(CTRL-V, <Esc>, [, K)
+
+{Vi: no terminal options.  You have to exit Vi, edit the termcap entry and
+try again}
+
+The options are listed below.  The associated termcap code is always equal to
+the last two characters of the option name.  Only one termcap code is
+required: Cursor motion, 't_cm'.
+
+The options 't_da', 't_db', 't_ms', 't_xs' represent flags in the termcap.
+When the termcap flag is present, the option will be set to "y".  But any
+non-empty string means that the flag is set.  An empty string means that the
+flag is not set.  't_CS' works like this too, but it isn't a termcap flag.
+
+OUTPUT CODES
+	option	meaning	~
+
+	t_AB	set background color (ANSI)			*t_AB* *'t_AB'*
+	t_AF	set foreground color (ANSI)			*t_AF* *'t_AF'*
+	t_AL	add number of blank lines			*t_AL* *'t_AL'*
+	t_al	add new blank line				*t_al* *'t_al'*
+	t_bc	backspace character				*t_bc* *'t_bc'*
+	t_cd	clear to end of screen				*t_cd* *'t_cd'*
+	t_ce	clear to end of line				*t_ce* *'t_ce'*
+	t_cl	clear screen					*t_cl* *'t_cl'*
+	t_cm	cursor motion (required!)		  *E437* *t_cm* *'t_cm'*
+	t_Co	number of colors				*t_Co* *'t_Co'*
+	t_CS	if non-empty, cursor relative to scroll region	*t_CS* *'t_CS'*
+	t_cs	define scrolling region				*t_cs* *'t_cs'*
+	t_CV	define vertical scrolling region		*t_CV* *'t_CV'*
+	t_da	if non-empty, lines from above scroll down	*t_da* *'t_da'*
+	t_db	if non-empty, lines from below scroll up	*t_db* *'t_db'*
+	t_DL	delete number of lines				*t_DL* *'t_DL'*
+	t_dl	delete line					*t_dl* *'t_dl'*
+	t_fs	set window title end (from status line)		*t_fs* *'t_fs'*
+	t_ke	exit "keypad transmit" mode			*t_ke* *'t_ke'*
+	t_ks	start "keypad transmit" mode			*t_ks* *'t_ks'*
+	t_le	move cursor one char left			*t_le* *'t_le'*
+	t_mb	blinking mode					*t_mb* *'t_mb'*
+	t_md	bold mode					*t_md* *'t_md'*
+	t_me	Normal mode (undoes t_mr, t_mb, t_md and color)	*t_me* *'t_me'*
+	t_mr	reverse (invert) mode				*t_mr* *'t_mr'*
+								*t_ms* *'t_ms'*
+	t_ms	if non-empty, cursor can be moved in standout/inverse mode
+	t_nd	non destructive space character			*t_nd* *'t_nd'*
+	t_op	reset to original color pair			*t_op* *'t_op'*
+	t_RI	cursor number of chars right			*t_RI* *'t_RI'*
+	t_Sb	set background color				*t_Sb* *'t_Sb'*
+	t_Sf	set foreground color				*t_Sf* *'t_Sf'*
+	t_se	standout end					*t_se* *'t_se'*
+	t_so	standout mode					*t_so* *'t_so'*
+	t_sr	scroll reverse (backward)			*t_sr* *'t_sr'*
+	t_te	out of "termcap" mode				*t_te* *'t_te'*
+	t_ti	put terminal in "termcap" mode			*t_ti* *'t_ti'*
+	t_ts	set window title start (to status line)		*t_ts* *'t_ts'*
+	t_ue	underline end					*t_ue* *'t_ue'*
+	t_us	underline mode					*t_us* *'t_us'*
+	t_Ce	undercurl end					*t_Ce* *'t_Ce'*
+	t_Cs	undercurl mode					*t_Cs* *'t_Cs'*
+	t_ut	clearing uses the current background color	*t_ut* *'t_ut'*
+	t_vb	visual bell					*t_vb* *'t_vb'*
+	t_ve	cursor visible					*t_ve* *'t_ve'*
+	t_vi	cursor invisible				*t_vi* *'t_vi'*
+	t_vs	cursor very visible				*t_vs* *'t_vs'*
+								*t_xs* *'t_xs'*
+	t_xs	if non-empty, standout not erased by overwriting (hpterm)
+	t_ZH	italics mode					*t_ZH* *'t_ZH'*
+	t_ZR	italics end					*t_ZR* *'t_ZR'*
+
+Added by Vim (there are no standard codes for these):
+	t_IS	set icon text start				*t_IS* *'t_IS'*
+	t_IE	set icon text end				*t_IE* *'t_IE'*
+	t_WP	set window position (Y, X) in pixels		*t_WP* *'t_WP'*
+	t_WS	set window size (height, width) in characters	*t_WS* *'t_WS'*
+	t_SI	start insert mode (bar cursor shape)		*t_SI* *'t_SI'*
+	t_EI	end insert mode (block cursor shape)		*t_EI* *'t_EI'*
+		|termcap-cursor-shape|
+	t_RV	request terminal version string (for xterm)	*t_RV* *'t_RV'*
+		|xterm-8bit| |v:termresponse| |'ttymouse'| |xterm-codes|
+	t_u7	request cursor position (for xterm)		*t_u7* *'t_u7'*
+		see |'ambiwidth'|
+
+KEY CODES
+Note: Use the <> form if possible
+
+	option	name		meaning	~
+
+	t_ku	<Up>		arrow up			*t_ku* *'t_ku'*
+	t_kd	<Down>		arrow down			*t_kd* *'t_kd'*
+	t_kr	<Right>		arrow right			*t_kr* *'t_kr'*
+	t_kl	<Left>		arrow left			*t_kl* *'t_kl'*
+		<xUp>		alternate arrow up		*<xUp>*
+		<xDown>		alternate arrow down		*<xDown>*
+		<xRight>	alternate arrow right		*<xRight>*
+		<xLeft>		alternate arrow left		*<xLeft>*
+		<S-Up>		shift arrow up
+		<S-Down>	shift arrow down
+	t_%i	<S-Right>	shift arrow right		*t_%i* *'t_%i'*
+	t_#4	<S-Left>	shift arrow left		*t_#4* *'t_#4'*
+	t_k1	<F1>		function key 1			*t_k1* *'t_k1'*
+		<xF1>		alternate F1			*<xF1>*
+	t_k2	<F2>		function key 2		*<F2>*	*t_k2* *'t_k2'*
+		<xF2>		alternate F2			*<xF2>*
+	t_k3	<F3>		function key 3		*<F3>*	*t_k3* *'t_k3'*
+		<xF3>		alternate F3			*<xF3>*
+	t_k4	<F4>		function key 4		*<F4>*	*t_k4* *'t_k4'*
+		<xF4>		alternate F4			*<xF4>*
+	t_k5	<F5>		function key 5		*<F5>*	*t_k5* *'t_k5'*
+	t_k6	<F6>		function key 6		*<F6>*	*t_k6* *'t_k6'*
+	t_k7	<F7>		function key 7		*<F7>*	*t_k7* *'t_k7'*
+	t_k8	<F8>		function key 8		*<F8>*	*t_k8* *'t_k8'*
+	t_k9	<F9>		function key 9		*<F9>*	*t_k9* *'t_k9'*
+	t_k;	<F10>		function key 10		*<F10>*	*t_k;* *'t_k;'*
+	t_F1	<F11>		function key 11		*<F11>*	*t_F1* *'t_F1'*
+	t_F2	<F12>		function key 12		*<F12>*	*t_F2* *'t_F2'*
+	t_F3	<F13>		function key 13		*<F13>*	*t_F3* *'t_F3'*
+	t_F4	<F14>		function key 14		*<F14>*	*t_F4* *'t_F4'*
+	t_F5	<F15>		function key 15		*<F15>*	*t_F5* *'t_F5'*
+	t_F6	<F16>		function key 16		*<F16>*	*t_F6* *'t_F6'*
+	t_F7	<F17>		function key 17		*<F17>*	*t_F7* *'t_F7'*
+	t_F8	<F18>		function key 18		*<F18>*	*t_F8* *'t_F8'*
+	t_F9	<F19>		function key 19		*<F19>*	*t_F9* *'t_F9'*
+		<S-F1>		shifted function key 1
+		<S-xF1>		alternate <S-F1>		*<S-xF1>*
+		<S-F2>		shifted function key 2		*<S-F2>*
+		<S-xF2>		alternate <S-F2>		*<S-xF2>*
+		<S-F3>		shifted function key 3		*<S-F3>*
+		<S-xF3>		alternate <S-F3>		*<S-xF3>*
+		<S-F4>		shifted function key 4		*<S-F4>*
+		<S-xF4>		alternate <S-F4>		*<S-xF4>*
+		<S-F5>		shifted function key 5		*<S-F5>*
+		<S-F6>		shifted function key 6		*<S-F6>*
+		<S-F7>		shifted function key 7		*<S-F7>*
+		<S-F8>		shifted function key 8		*<S-F8>*
+		<S-F9>		shifted function key 9		*<S-F9>*
+		<S-F10>		shifted function key 10		*<S-F10>*
+		<S-F11>		shifted function key 11		*<S-F11>*
+		<S-F12>		shifted function key 12		*<S-F12>*
+	t_%1	<Help>		help key			*t_%1* *'t_%1'*
+	t_&8	<Undo>		undo key			*t_&8* *'t_&8'*
+	t_kI	<Insert>	insert key			*t_kI* *'t_kI'*
+	t_kD	<Del>		delete key			*t_kD* *'t_kD'*
+	t_kb	<BS>		backspace key			*t_kb* *'t_kb'*
+	t_kB	<S-Tab>		back-tab (shift-tab)  *<S-Tab>*	*t_kB* *'t_kB'*
+	t_kh	<Home>		home key			*t_kh* *'t_kh'*
+	t_#2	<S-Home>	shifted home key     *<S-Home>*	*t_#2* *'t_#2'*
+		<xHome>		alternate home key		*<xHome>*
+	t_@7	<End>		end key				*t_@7* *'t_@7'*
+	t_*7	<S-End>		shifted end key	*<S-End>* *t_star7* *'t_star7'*
+		<xEnd>		alternate end key		*<xEnd>*
+	t_kP	<PageUp>	page-up key			*t_kP* *'t_kP'*
+	t_kN	<PageDown>	page-down key			*t_kN* *'t_kN'*
+	t_K1	<kHome>		keypad home key			*t_K1* *'t_K1'*
+	t_K4	<kEnd>		keypad end key			*t_K4* *'t_K4'*
+	t_K3	<kPageUp>	keypad page-up key		*t_K3* *'t_K3'*
+	t_K5	<kPageDown>	keypad page-down key		*t_K5* *'t_K5'*
+	t_K6	<kPlus>		keypad plus key	      *<kPlus>*	*t_K6* *'t_K6'*
+	t_K7	<kMinus>	keypad minus key     *<kMinus>*	*t_K7* *'t_K7'*
+	t_K8	<kDivide>	keypad divide	    *<kDivide>*	*t_K8* *'t_K8'*
+	t_K9	<kMultiply>	keypad multiply   *<kMultiply>*	*t_K9* *'t_K9'*
+	t_KA	<kEnter>	keypad enter key     *<kEnter>*	*t_KA* *'t_KA'*
+	t_KB	<kPoint>	keypad decimal point *<kPoint>*	*t_KB* *'t_KB'*
+	t_KC	<k0>		keypad 0		 *<k0>*	*t_KC* *'t_KC'*
+	t_KD	<k1>		keypad 1		 *<k1>*	*t_KD* *'t_KD'*
+	t_KE	<k2>		keypad 2		 *<k2>*	*t_KE* *'t_KE'*
+	t_KF	<k3>		keypad 3		 *<k3>*	*t_KF* *'t_KF'*
+	t_KG	<k4>		keypad 4		 *<k4>*	*t_KG* *'t_KG'*
+	t_KH	<k5>		keypad 5		 *<k5>*	*t_KH* *'t_KH'*
+	t_KI	<k6>		keypad 6		 *<k6>*	*t_KI* *'t_KI'*
+	t_KJ	<k7>		keypad 7		 *<k7>*	*t_KJ* *'t_KJ'*
+	t_KK	<k8>		keypad 8		 *<k8>*	*t_KK* *'t_KK'*
+	t_KL	<k9>		keypad 9		 *<k9>*	*t_KL* *'t_KL'*
+		<Mouse>		leader of mouse code		*<Mouse>*
+
+Note about t_so and t_mr: When the termcap entry "so" is not present the
+entry for "mr" is used.  And vice versa.  The same is done for "se" and "me".
+If your terminal supports both inversion and standout mode, you can see two
+different modes.  If your terminal supports only one of the modes, both will
+look the same.
+
+							*keypad-comma*
+The keypad keys, when they are not mapped, behave like the equivalent normal
+key.  There is one exception: if you have a comma on the keypad instead of a
+decimal point, Vim will use a dot anyway.  Use these mappings to fix that: >
+	:noremap <kPoint> ,
+	:noremap! <kPoint> ,
+<							*xterm-codes*
+There is a special trick to obtain the key codes which currently only works
+for xterm.  When |t_RV| is defined and a response is received which indicates
+an xterm with patchlevel 141 or higher, Vim uses special escape sequences to
+request the key codes directly from the xterm.  The responses are used to
+adjust the various t_ codes.  This avoids the problem that the xterm can
+produce different codes, depending on the mode it is in (8-bit, VT102,
+VT220, etc.).  The result is that codes like <xF1> are no longer needed.
+Note: This is only done on startup.  If the xterm options are changed after
+Vim has started, the escape sequences may not be recognized any more.
+
+							*xterm-resize*
+Window resizing with xterm only works if the allowWindowOps resource is
+enabled.  On some systems and versions of xterm it's disabled by default
+because someone thought it would be a security issue.  It's not clear if this
+is actually the case.
+
+To overrule the default, put this line in your ~/.Xdefaults or
+~/.Xresources:
+>
+	XTerm*allowWindowOps: 		true
+
+And run "xrdb -merge .Xresources" to make it effective.  You can check the
+value with the context menu (right mouse button while CTRL key is pressed),
+there should be a tick at allow-window-ops.
+
+							*termcap-colors*
+Note about colors: The 't_Co' option tells Vim the number of colors available.
+When it is non-zero, the 't_AB' and 't_AF' options are used to set the color.
+If one of these is not available, 't_Sb' and 't_Sf' are used.  't_me' is used
+to reset to the default colors.
+
+				*termcap-cursor-shape* *termcap-cursor-color*
+When Vim enters Insert mode the 't_SI' escape sequence is sent.  When leaving
+Insert mode 't_EI' is used.  But only if both are defined.  This can be used
+to change the shape or color of the cursor in Insert mode.  These are not
+standard termcap/terminfo entries, you need to set them yourself.
+Example for an xterm, this changes the color of the cursor: >
+    if &term =~ "xterm"
+	let &t_SI = "\<Esc>]12;purple\x7"
+	let &t_EI = "\<Esc>]12;blue\x7"
+    endif
+NOTE: When Vim exits the shape for Normal mode will remain.  The shape from
+before Vim started will not be restored.
+{not available when compiled without the |+cursorshape| feature}
+
+							*termcap-title*
+The 't_ts' and 't_fs' options are used to set the window title if the terminal
+allows title setting via sending strings.  They are sent before and after the
+title string, respectively.  Similar 't_IS' and 't_IE'  are used to set the
+icon text.  These are Vim-internal extensions of the Unix termcap, so they
+cannot be obtained from an external termcap.  However, the builtin termcap
+contains suitable entries for xterm and iris-ansi, so you don't need to set
+them here.
+							*hpterm*
+If inversion or other highlighting does not work correctly, try setting the
+'t_xs' option to a non-empty string.  This makes the 't_ce' code be used to
+remove highlighting from a line.  This is required for "hpterm".  Setting the
+'weirdinvert' option has the same effect as making 't_xs' non-empty, and vice
+versa.
+
+							*scroll-region*
+Some termcaps do not include an entry for 'cs' (scroll region), although the
+terminal does support it.  For example: xterm on a Sun.  You can use the
+builtin_xterm or define t_cs yourself.  For example: >
+	:set t_cs=^V^[[%i%d;%dr
+Where ^V is CTRL-V and ^[ is <Esc>.
+
+The vertical scroll region t_CV is not a standard termcap code.  Vim uses it
+internally in the GUI.  But it can also be defined for a terminal, if you can
+find one that supports it.  The two arguments are the left and right column of
+the region which to restrict the scrolling to.  Just like t_cs defines the top
+and bottom lines.  Defining t_CV will make scrolling in vertically split
+windows a lot faster.  Don't set t_CV when t_da or t_db is set (text isn't
+cleared when scrolling).
+
+Unfortunately it is not possible to deduce from the termcap how cursor
+positioning should be done when using a scrolling region: Relative to the
+beginning of the screen or relative to the beginning of the scrolling region.
+Most terminals use the first method.  A known exception is the MS-DOS console
+(pcterm).  The 't_CS' option should be set to any string when cursor
+positioning is relative to the start of the scrolling region.  It should be
+set to an empty string otherwise.  It defaults to "yes" when 'term' is
+"pcterm".
+
+Note for xterm users: The shifted cursor keys normally don't work.  You can
+	make them work with the xmodmap command and some mappings in Vim.
+
+	Give these commands in the xterm:
+		xmodmap -e "keysym Up = Up F13"
+		xmodmap -e "keysym Down = Down F16"
+		xmodmap -e "keysym Left = Left F18"
+		xmodmap -e "keysym Right = Right F19"
+
+	And use these mappings in Vim:
+		:map <t_F3> <S-Up>
+		:map! <t_F3> <S-Up>
+		:map <t_F6> <S-Down>
+		:map! <t_F6> <S-Down>
+		:map <t_F8> <S-Left>
+		:map! <t_F8> <S-Left>
+		:map <t_F9> <S-Right>
+		:map! <t_F9> <S-Right>
+
+Instead of, say, <S-Up> you can use any other command that you want to use the
+shift-cursor-up key for.  (Note: To help people that have a Sun keyboard with
+left side keys F14 is not used because it is confused with the undo key; F15
+is not used, because it does a window-to-front; F17 is not used, because it
+closes the window.  On other systems you can probably use them.)
+
+==============================================================================
+3. Window size						*window-size*
+
+[This is about the size of the whole window Vim is using, not a window that is
+created with the ":split" command.]
+
+If you are running Vim on an Amiga and the terminal name is "amiga" or
+"builtin_amiga", the amiga-specific window resizing will be enabled.  On Unix
+systems three methods are tried to get the window size:
+
+- an ioctl call (TIOCGSIZE or TIOCGWINSZ, depends on your system)
+- the environment variables "LINES" and "COLUMNS"
+- from the termcap entries "li" and "co"
+
+If everything fails a default size of 24 lines and 80 columns is assumed.  If
+a window-resize signal is received the size will be set again.  If the window
+size is wrong you can use the 'lines' and 'columns' options to set the
+correct values.
+
+One command can be used to set the screen size:
+
+						*:mod* *:mode* *E359* *E362*
+:mod[e] [mode]
+
+Without argument this only detects the screen size and redraws the screen.
+With MS-DOS it is possible to switch screen mode.  [mode] can be one of these
+values:
+	"bw40"		40 columns black&white
+	"c40"		40 columns color
+	"bw80"		80 columns black&white
+	"c80"		80 columns color (most people use this)
+	"mono"		80 columns monochrome
+	"c4350"		43 or 50 lines EGA/VGA mode
+	number		mode number to use, depends on your video card
+
+==============================================================================
+4. Slow and fast terminals			*slow-fast-terminal*
+						*slow-terminal*
+
+If you have a fast terminal you may like to set the 'ruler' option.  The
+cursor position is shown in the status line.  If you are using horizontal
+scrolling ('wrap' option off) consider setting 'sidescroll' to a small
+number.
+
+If you have a slow terminal you may want to reset the 'showcmd' option.
+The command characters will not be shown in the status line.  If the terminal
+scrolls very slowly, set the 'scrolljump' to 5 or so.  If the cursor is moved
+off the screen (e.g., with "j") Vim will scroll 5 lines at a time.  Another
+possibility is to reduce the number of lines that Vim uses with the command
+"z{height}<CR>".
+
+If the characters from the terminal are arriving with more than 1 second
+between them you might want to set the 'timeout' and/or 'ttimeout' option.
+See the "Options" chapter |options|.
+
+If your terminal does not support a scrolling region, but it does support
+insert/delete line commands, scrolling with multiple windows may make the
+lines jump up and down.  If you don't want this set the 'ttyfast' option.
+This will redraw the window instead of scroll it.
+
+If your terminal scrolls very slowly, but redrawing is not slow, set the
+'ttyscroll' option to a small number, e.g., 3.  This will make Vim redraw the
+screen instead of scrolling, when there are more than 3 lines to be scrolled.
+
+If you are using a color terminal that is slow, use this command: >
+	hi NonText cterm=NONE ctermfg=NONE
+This avoids that spaces are sent when they have different attributes.  On most
+terminals you can't see this anyway.
+
+If you are using Vim over a slow serial line, you might want to try running
+Vim inside the "screen" program.  Screen will optimize the terminal I/O quite
+a bit.
+
+If you are testing termcap options, but you cannot see what is happening,
+you might want to set the 'writedelay' option.  When non-zero, one character
+is sent to the terminal at a time (does not work for MS-DOS).  This makes the
+screen updating a lot slower, making it possible to see what is happening.
+
+==============================================================================
+5. Using the mouse					*mouse-using*
+
+This section is about using the mouse on a terminal or a terminal window.  How
+to use the mouse in a GUI window is explained in |gui-mouse|.  For scrolling
+with a mouse wheel see |scroll-mouse-wheel|.
+
+Don't forget to enable the mouse with this command: >
+	:set mouse=a
+Otherwise Vim won't recognize the mouse in all modes (See 'mouse').
+
+Currently the mouse is supported for Unix in an xterm window, in a *BSD
+console with |sysmouse|, in a Linux console (with GPM |gpm-mouse|), for
+MS-DOS and in a Windows console.
+Mouse clicks can be used to position the cursor, select an area and paste.
+
+These characters in the 'mouse' option tell in which situations the mouse will
+be used by Vim:
+		n	Normal mode
+		v	Visual mode
+		i	Insert mode
+		c	Command-line mode
+		h	all previous modes when in a help file
+		a	all previous modes
+		r	for |hit-enter| prompt
+
+The default for 'mouse' is empty, the mouse is not used.  Normally you would
+do: >
+	:set mouse=a
+to start using the mouse (this is equivalent to setting 'mouse' to "nvich").
+If you only want to use the mouse in a few modes or also want to use it for
+the two questions you will have to concatenate the letters for those modes.
+For example: >
+	:set mouse=nv
+Will make the mouse work in Normal mode and Visual mode. >
+	:set mouse=h
+Will make the mouse work in help files only (so you can use "g<LeftMouse>" to
+jump to tags).
+
+Whether the selection that is started with the mouse is in Visual mode or
+Select mode depends on whether "mouse" is included in the 'selectmode'
+option.
+
+In an xterm, with the currently active mode included in the 'mouse' option,
+normal mouse clicks are used by Vim, mouse clicks with the shift or ctrl key
+pressed go to the xterm.  With the currently active mode not included in
+'mouse' all mouse clicks go to the xterm.
+
+							*xterm-clipboard*
+In the Athena and Motif GUI versions, when running in a terminal and there is
+access to the X-server (DISPLAY is set), the copy and paste will behave like
+in the GUI.  If not, the middle mouse button will insert the unnamed register.
+In that case, here is how you copy and paste a piece of text:
+
+Copy/paste with the mouse and Visual mode ('mouse' option must be set, see
+above):
+1. Press left mouse button on first letter of text, move mouse pointer to last
+   letter of the text and release the button.  This will start Visual mode and
+   highlight the selected area.
+2. Press "y" to yank the Visual text in the unnamed register.
+3. Click the left mouse button at the insert position.
+4. Click the middle mouse button.
+
+Shortcut: If the insert position is on the screen at the same time as the
+Visual text, you can do 2, 3 and 4 all in one: Click the middle mouse button
+at the insert position.
+
+Note: When the |-X| command line argument is used, Vim will not connect to the
+X server and copy/paste to the X clipboard (selection) will not work.  Use the
+shift key with the mouse buttons to let the xterm do the selection.
+
+							*xterm-command-server*
+When the X-server clipboard is available, the command server described in
+|x11-clientserver| can be enabled with the --servername command line argument.
+
+							*xterm-copy-paste*
+NOTE: In some (older) xterms, it's not possible to move the cursor past column
+95 or 223.  This is an xterm problem, not Vim's.  Get a newer xterm
+|color-xterm|.  Also see |'ttymouse'|.
+
+Copy/paste in xterm with (current mode NOT included in 'mouse'):
+1. Press left mouse button on first letter of text, move mouse pointer to last
+   letter of the text and release the button.
+2. Use normal Vim commands to put the cursor at the insert position.
+3. Press "a" to start Insert mode.
+4. Click the middle mouse button.
+5. Press ESC to end Insert mode.
+(The same can be done with anything in 'mouse' if you keep the shift key
+pressed while using the mouse.)
+
+Note: if you lose the 8th bit when pasting (special characters are translated
+into other characters), you may have to do "stty cs8 -istrip -parenb" in your
+shell before starting Vim.
+
+Thus in an xterm the shift and ctrl keys cannot be used with the mouse.  Mouse
+commands requiring the CTRL modifier can be simulated by typing the "g" key
+before using the mouse:
+	"g<LeftMouse>"	is "<C-LeftMouse>	(jump to tag under mouse click)
+	"g<RightMouse>" is "<C-RightMouse>	("CTRL-T")
+
+					*mouse-mode-table* *mouse-overview*
+A short overview of what the mouse buttons do, when 'mousemodel' is "extend":
+
+Normal Mode:
+event	      position	   selection	  change  action	~
+	       cursor			  window		~
+<LeftMouse>     yes	     end	    yes
+<C-LeftMouse>   yes	     end	    yes	   "CTRL-]" (2)
+<S-LeftMouse>   yes	  no change	    yes	   "*" (2)    *<S-LeftMouse>*
+<LeftDrag>      yes	start or extend (1) no		      *<LeftDrag>*
+<LeftRelease>   yes	start or extend (1) no
+<MiddleMouse>   yes	  if not active     no	   put
+<MiddleMouse>   yes	  if active	    no	   yank and put
+<RightMouse>    yes	start or extend     yes
+<A-RightMouse>  yes start or extend blockw. yes		      *<A-RightMouse>*
+<S-RightMouse>  yes	   no change	    yes	   "#" (2)    *<S-RightMouse>*
+<C-RightMouse>  no	   no change	    no	   "CTRL-T"
+<RightDrag>     yes	    extend	    no		      *<RightDrag>*
+<RightRelease>  yes	    extend	    no		      *<RightRelease>*
+
+Insert or Replace Mode:
+event	      position	   selection	  change  action	~
+	       cursor			  window		~
+<LeftMouse>     yes     (cannot be active)  yes
+<C-LeftMouse>   yes     (cannot be active)  yes	   "CTRL-O^]" (2)
+<S-LeftMouse>   yes     (cannot be active)  yes	   "CTRL-O*" (2)
+<LeftDrag>      yes     start or extend (1) no	   like CTRL-O (1)
+<LeftRelease>   yes     start or extend (1) no	   like CTRL-O (1)
+<MiddleMouse>   no      (cannot be active)  no	   put register
+<RightMouse>    yes     start or extend	    yes	   like CTRL-O
+<A-RightMouse>  yes start or extend blockw. yes
+<S-RightMouse>  yes     (cannot be active)  yes	   "CTRL-O#" (2)
+<C-RightMouse>  no	(cannot be active)  no	   "CTRL-O CTRL-T"
+
+In a help window:
+event	      position	   selection	  change  action	~
+	       cursor			  window		~
+<2-LeftMouse>   yes     (cannot be active)  no	   "^]" (jump to help tag)
+
+When 'mousemodel' is "popup", these are different:
+
+Normal Mode:
+event	      position	   selection	  change  action	~
+	       cursor			  window		~
+<S-LeftMouse>	yes	start or extend (1) no
+<A-LeftMouse>   yes start or extend blockw. no		      *<A-LeftMouse>*
+<RightMouse>	no	popup menu	    no
+
+Insert or Replace Mode:
+event	      position	   selection	  change  action	~
+	       cursor			  window		~
+<S-LeftMouse>   yes     start or extend (1) no	   like CTRL-O (1)
+<A-LeftMouse>   yes start or extend blockw. no
+<RightMouse>    no	popup menu	    no
+
+(1) only if mouse pointer moved since press
+(2) only if click is in same buffer
+
+Clicking the left mouse button causes the cursor to be positioned.  If the
+click is in another window that window is made the active window.  When
+editing the command-line the cursor can only be positioned on the
+command-line.  When in Insert mode Vim remains in Insert mode.  If 'scrolloff'
+is set, and the cursor is positioned within 'scrolloff' lines from the window
+border, the text is scrolled.
+
+A selection can be started by pressing the left mouse button on the first
+character, moving the mouse to the last character, then releasing the mouse
+button.  You will not always see the selection until you release the button,
+only in some versions (GUI, MS-DOS, WIN32) will the dragging be shown
+immediately.  Note that you can make the text scroll by moving the mouse at
+least one character in the first/last line in the window when 'scrolloff' is
+non-zero.
+
+In Normal, Visual and Select mode clicking the right mouse button causes the
+Visual area to be extended.  When 'mousemodel' is "popup", the left button has
+to be used while keeping the shift key pressed.  When clicking in a window
+which is editing another buffer, the Visual or Select mode is stopped.
+
+In Normal, Visual and Select mode clicking the right mouse button with the alt
+key pressed causes the Visual area to become blockwise.  When 'mousemodel' is
+"popup" the left button has to be used with the alt key.  Note that this won't
+work on systems where the window manager consumes the mouse events when the
+alt key is pressed (it may move the window).
+
+							*double-click*
+Double, triple and quadruple clicks are supported when the GUI is active,
+for MS-DOS and Win32, and for an xterm (if the gettimeofday() function is
+available).  For selecting text, extra clicks extend the selection:
+	click		select ~
+	double		word or % match		*<2-LeftMouse>*
+	triple		line			*<3-LeftMouse>*
+	quadruple	rectangular block	*<4-LeftMouse>*
+Exception: In a Help window a double click jumps to help for the word that is
+clicked on.
+A double click on a word selects that word.  'iskeyword' is used to specify
+which characters are included in a word.  A double click on a character
+that has a match selects until that match (like using "v%").  If the match is
+an #if/#else/#endif block, the selection becomes linewise.
+For MS-DOS and xterm the time for double clicking can be set with the
+'mousetime' option.  For the other systems this time is defined outside of
+Vim.
+An example, for using a double click to jump to the tag under the cursor: >
+	:map <2-LeftMouse> :exe "tag ". expand("<cword>")<CR>
+
+Dragging the mouse with a double click (button-down, button-up, button-down
+and then drag) will result in whole words to be selected.  This continues
+until the button is released, at which point the selection is per character
+again.
+
+							*gpm-mouse*
+The GPM mouse is only supported when the |+mouse_gpm| feature was enabled at
+compile time.  The GPM mouse driver (Linux console) does not support quadruple
+clicks.
+
+In Insert mode, when a selection is started, Vim goes into Normal mode
+temporarily.  When Visual or Select mode ends, it returns to Insert mode.
+This is like using CTRL-O in Insert mode.  Select mode is used when the
+'selectmode' option contains "mouse".
+							*sysmouse*
+The sysmouse is only supported when the |+mouse_sysmouse| feature was enabled
+at compile time.  The sysmouse driver (*BSD console) does not support keyboard
+modifiers.
+
+							*drag-status-line*
+When working with several windows, the size of the windows can be changed by
+dragging the status line with the mouse.  Point the mouse at a status line,
+press the left button, move the mouse to the new position of the status line,
+release the button.  Just clicking the mouse in a status line makes that window
+the current window, without moving the cursor.  If by selecting a window it
+will change position or size, the dragging of the status line will look
+confusing, but it will work (just try it).
+
+					*<MiddleRelease>* *<MiddleDrag>*
+Mouse clicks can be mapped.  The codes for mouse clicks are:
+     code	    mouse button	      normal action	~
+ <LeftMouse>	 left pressed		    set cursor position
+ <LeftDrag>	 left moved while pressed   extend selection
+ <LeftRelease>	 left released		    set selection end
+ <MiddleMouse>	 middle pressed		    paste text at cursor position
+ <MiddleDrag>	 middle moved while pressed -
+ <MiddleRelease> middle released	    -
+ <RightMouse>	 right pressed		    extend selection
+ <RightDrag>	 right moved while pressed  extend selection
+ <RightRelease>  right released		    set selection end
+ <X1Mouse>	 X1 button pressed	    -			*X1Mouse*
+ <X1Drag>	 X1 moved while pressed	    -			*X1Drag*
+ <X1Release>	 X1 button release	    -			*X1Release*
+ <X2Mouse>	 X2 button pressed	    -			*X2Mouse*
+ <X2Drag>	 X2 moved while pressed     -			*X2Drag*
+ <X2Release>	 X2 button release	    -			*X2Release*
+
+The X1 and X2 buttons refer to the extra buttons found on some mice.  The
+'Microsoft Explorer' mouse has these buttons available to the right thumb.
+Currently X1 and X2 only work on Win32 environments.
+
+Examples: >
+	:noremap <MiddleMouse> <LeftMouse><MiddleMouse>
+Paste at the position of the middle mouse button click (otherwise the paste
+would be done at the cursor position). >
+
+	:noremap <LeftRelease> <LeftRelease>y
+Immediately yank the selection, when using Visual mode.
+
+Note the use of ":noremap" instead of "map" to avoid a recursive mapping.
+>
+	:map <X1Mouse> <C-O>
+	:map <X2Mouse> <C-I>
+Map the X1 and X2 buttons to go forwards and backwards in the jump list, see
+|CTRL-O| and |CTRL-I|.
+
+						*mouse-swap-buttons*
+To swap the meaning of the left and right mouse buttons: >
+	:noremap	<LeftMouse>	<RightMouse>
+	:noremap	<LeftDrag>	<RightDrag>
+	:noremap	<LeftRelease>	<RightRelease>
+	:noremap	<RightMouse>	<LeftMouse>
+	:noremap	<RightDrag>	<LeftDrag>
+	:noremap	<RightRelease>	<LeftRelease>
+	:noremap	g<LeftMouse>	<C-RightMouse>
+	:noremap	g<RightMouse>	<C-LeftMouse>
+	:noremap!	<LeftMouse>	<RightMouse>
+	:noremap!	<LeftDrag>	<RightDrag>
+	:noremap!	<LeftRelease>	<RightRelease>
+	:noremap!	<RightMouse>	<LeftMouse>
+	:noremap!	<RightDrag>	<LeftDrag>
+	:noremap!	<RightRelease>	<LeftRelease>
+<
+ vim:tw=78:ts=8:ft=help:norl:

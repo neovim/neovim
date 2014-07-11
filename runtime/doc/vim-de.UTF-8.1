@@ -1,0 +1,478 @@
+.\"*******************************************************************
+.\"
+.\" This file was generated with po4a. Translate the source file.
+.\"
+.\"*******************************************************************
+.\" Translated by bw1 (2008) and Florian Rehnisch <fm-r@gmx.de> (2012)
+.\" Kudos to the folks on vim-dev and debian-l10n-german
+.TH VIM 1 "2006 Apr 11"  
+.SH BEZEICHNUNG
+vim \- Vi IMproved, ein Text\-Editor für Programmierer
+.SH ÜBERSICHT
+.br
+\fBvim\fP [Optionen] [Datei …]
+.br
+\fBvim\fP [Optionen] \-
+.br
+\fBvim\fP [Optionen] \-t Tag
+.br
+\fBvim\fP [Optionen] \-q [Fehlerdatei]
+.PP
+.br
+\fBex\fP
+.br
+\fBview\fP
+.br
+\fBgvim\fP \fBgview\fP \fBevim\fP \fBeview\fP
+.br
+\fBrvim\fP \fBrview\fP \fBrgvim\fP \fBrgview\fP
+.SH BESCHREIBUNG
+\fBVim\fP ist ein Text\-Editor, der aufwärtskompatibel zu Vi ist. Er kann
+verwendet werden, um alle Arten von Klartext zu bearbeiten. Er ist besonders
+nützlich, um Programme zu bearbeiten.
+.PP
+Vim hat einige Erweiterungen gegenüber Vi, z.B.: Rückgängigmachen in
+mehreren Schritten, mehrere Fenster und Puffer, Syntax\-Hervorhebung,
+Bearbeiten der Befehlszeile, Dateinamenergänzung, eingebaute Hilfe, visuelle
+Auswahl, usw. … Siehe »:help vi_diff.txt« für eine Übersicht der
+Unterschiede zwischen \fBVim\fP und Vi.
+.PP
+Im laufenden \fBVim\fP kann mit dem Befehl »:help« viel Hilfe durch das
+eingebaute Hilfesystem erlangt werden. Siehe den Abschnitt EINGEBAUTE HILFE
+weiter unten.
+.PP
+Meistens wird \fBVim\fP zum Editieren einer einzigen Datei mit dem folgende
+Befehl gestartet:
+.PP
+  vim Datei
+.PP
+Allgemeiner betrachtet, wird \fBVim\fP folgendermaßen gestartet:
+.PP
+  vim [Optionen] [Dateiliste]
+.PP
+Bei einer fehlenden Dateiliste startet der Editor mit einem leeren
+Puffer. Andernfalls werden nach den folgenden vier Möglichkeiten eine oder
+mehrere Dateien bearbeitet:
+.TP  12
+Datei …
+Eine Liste von Dateinamen. Die erste Datei wird in den Puffer geladen und
+zur aktuellen. Der Cursor wird auf der ersten Zeile des Puffers
+platziert. Zu den anderen Dateien kann mit dem Befehl »:next« gelangt
+werden. Falls einer der Dateinamen mit einem Bindestrich beginnt, stellen
+Sie der Dateiliste »\-\-« voran.
+.TP 
+\-
+Die zu bearbeitende Datei wird von der Standardeingabe gelesen. Befehle
+werden von der Standardfehlerausgabe gelesen, die ein Text\-Terminal sein
+sollte.
+.TP 
+\-t {Tag}
+Die zu editierende Datei und die anfängliche Cursor\-Position hängen von
+einem »Tag« ab, einer Art Sprungmarke. {Tag} wird in der Tag\-Datei
+nachgeschlagen, die zugehörige Datei wird zur aktuellen und der zugehörige
+Befehl wird ausgeführt. Dies wird meistens für Programme in der Sprache »C«
+benutzt, wobei {Tag} ein Funktionsname sein könnte. Die Wirkung dieses
+Befehls ist, dass die Datei, die die Funktion enthält, als aktuelle im
+Editor geöffnet und angezeigt wird und der Cursor auf dem Beginn der
+Funktion positioniert wird. Siehe »:help tag\-commands«.
+.TP 
+\-q [Fehlerdatei]
+Startet im QuickFix\-Modus. Die Datei [Fehlerdatei] wird gelesen und der
+erste Fehler wird angezeigt. Falls [Fehlerdatei] ausgelassen wird, wird der
+Dateiname aus der Option 'errorfile' verwendet (bei AmigaOS ist dies
+vorgabemäßig »AztecC.Err«, sowie „errors.err« bei anderen). Weitere Fehler
+können mit dem »:cn«\-Befehl angesprungen werden. Siehe „:help quickfix«.
+.PP
+\fBVim\fP reagiert unterschiedlich auf den Namen, der verwendet wird, um Vim zu
+starten (die ausführbare Datei kann dieselbe sein).
+.TP  10
+vim
+der »normale« Weg, alles ist standardmäßig
+.TP 
+ex
+Startet im Ex\-Modus. Mit dem Befehl »:vi« gelangt man in den normalen
+Modus. Funktioniert auch mit dem Argument »\-e«.
+.TP 
+view
+Startet im Nur\-Lesen\-Modus. Die Datei wird vor dem Überschreiben
+geschützt. Dasselbe wird mit dem Parameter »\-R« erreicht.
+.TP 
+gvim gview
+Die grafische Version: Öffnet ein neues Fenster. Dasselbe wird mit dem
+Parameter »\-g« erreicht.
+.TP 
+evim eview
+Die grafische Version im einfachen Modus: Öffnet ein neues Fenster. Dasselbe
+wird mit dem Parameter »\-y« erreicht.
+.TP 
+rvim rview rgvim rgview
+Wie die obigen, aber mit Beschränkungen: Es ist nicht möglich, Shell\-Befehle
+aufzurufen oder mit Unterbrechung in eine Shell zurückzuspringen. Dasselbe
+wird mit dem Parameter »\-Z« erreicht.
+.SH OPTIONEN
+Die Optionen können in beliebiger Reihenfolge vor oder nach den Dateinamen
+angegeben werden. Optionen ohne Parameter können hinter einem einzigen
+Bindestrich gruppiert werden.
+.TP  12
++[Nummer]
+In der ersten Datei wird der Cursor auf die Zeile [Nummer] gesetzt. Falls
+[Nummer] nicht angegeben wird, wird der Cursor in die letzte Zeile der Datei
+gesetzt.
+.TP 
++/{Suchmuster}
+In der ersten Datei wird der Cursor auf das erste Auftreten von {Suchmuster}
+gesetzt. Siehe »:help search\-pattern«.
+.TP 
++{Befehl}
+.TP 
+\-c {Befehl}
+{Befehl} wird nach dem Lesen der ersten Datei ausgeführt. Als {Befehl} wird
+ein Ex\-Befehl erwartet. Sind in {Befehl} Leerzeichen vorhanden, muss alles
+in Anführungszeichen gesetzt werden (hängt von der verwendeten Shell
+ab). Beispiel: vim "+set si" main.c
+.br
+Anmerkung: Sie können bis zu 10 »+«\- oder „\-c«\-Befehle verwenden.
+.TP 
+\-S {Datei}
+{Datei} wird nach dem Lesen der ersten Datei ausgeführt. Dies entspricht »\-c
+"source {Datei}"«. {Datei} darf nicht mit einem Bindestrich (\-)
+anfangen. Wenn kein Dateiname angegeben wird, wird »Session.vim« verwendet
+(Funktioniert nur, wenn »\-S« als letzter Parameter steht).
+.TP 
+\-\-cmd {Befehl}
+Wie »\-c«, aber dieser Befehl wird vor allen VimRC\-Dateien ausgeführt. Sie
+können unabhängig von den »\-c«\-Befehlen bis zu 10 dieser Befehle verwenden.
+.TP 
+\-A
+Falls \fBVim\fP mit Unterstützung für das Schreiben von rechts nach links und
+arabischer Tastaturbelegung compiliert wurde (ARABIC), startet dieser
+Parameter den Modus fürs Arabische (:set arabic). Anderenfalls beendet sich
+\fBVim\fP mit einer Fehlermeldung.
+.TP 
+b
+Binärer Modus: Es werden einige Variablen gesetzt, sodass es möglich ist,
+eine binäre oder ausführbare Datei zu bearbeiten.
+.TP 
+\-C
+Kompatibel: Setzt die Option 'compatible'. Das macht \fBVim\fP im Verhalten
+sehr ähnlich zu Vi, selbst wenn eine VimRC\-Datei existiert.
+.TP 
+\-d
+Startet im diff\-Modus. Es sollten zwei, drei oder vier Dateinamen als
+Parameter übergeben werden. \fBVim\fP öffnet sie alle und zeigt die
+Unterschiede an. Arbeitet wie vimdiff(1).
+.TP 
+\-d {Gerät}
+Öffnet das {Gerät}, um es als Terminal zu nutzen. Nur für AmigaOS. Beispiel:
+"\-d con:20/30/600/150".
+.TP 
+D
+Debug\-Modus: \fBVim\fP geht in den Debug\-Modus, wenn der erste Befehl in einem
+Skript ausgeführt wird.
+.TP 
+\-e
+Startet \fBVim\fP im Ex\-Modus, als würde als ausführbare Datei »ex« aufgerufen.
+.TP 
+\-E
+Startet \fBVim\fP im erweiterten Ex\-Modus, als würde die ausführbare Datei als
+»exim« aufgerufen.
+.TP 
+\-f
+Vordergrund: Bei der GUI\-Version erzeugt \fBVim\fP keinen neuen Prozess und
+löst sich nicht von der Shell, in der er aufgerufen wurde. Bei AmigaOS wird
+kein neues Fenster geöffnet. Dieser Parameter wird benutzt, damit das
+aufrufende Programm auf das Beenden des Bearbeitungssitzung wartet (z.B.:
+mail). Bei AmigaOS funktionieren die Befehle »:sh« und „:!« nicht.
+.TP 
+\-\-nofork
+Vordergrund: Bei der GUI\-Version erzeugt \fBVim\fP keinen neuen Prozess und
+löst sich nicht von der Shell, in der er aufgerufen wurde.
+.TP 
+\-F
+Wenn \fBVim\fP mit FKMAP\-Unterstützung für das Schreiben von rechts nach links
+und Farsi\-Tastatur\-Belegung kompiliert wurde, startet Vim im Farsi\-Modus,
+d.h. die Optionen 'fkmap' und 'rightleft' werden gesetzt. Andernfalls bricht
+\fBVim\fP mit einer Fehlermeldung ab.
+.TP 
+\-g
+Falls \fBVim\fP mit GUI\-Unterstützung kompiliert wurde, wird die GUI
+aktiviert. Falls keine GUI\-Unterstützung einkompiliert wurde, wird mit einer
+Fehlermeldung abgebrochen.
+.TP 
+\-h
+Gibt eine kleine Hilfe für die Befehlszeilenparameter aus. Danach beendet
+sich \fBVim.\fP
+.TP 
+\-H
+Hebräisch\-Modus, falls \fBVim\fP mit RIGHTLEFT\-Unterstützung für das Schreiben
+von rechts nach links und hebräischer Tastaturbelegung kompiliert wurde,
+werden die Optionen 'hkmap' und 'rightleft' gesetzt. Andernfalls beendet
+sich \fBVim\fP mit einer Fehlermeldung.
+.TP 
+\-i {VimInfo}
+Wenn eine VimInfo\-Datei verwendet wird: Verwendet statt »~/.viminfo« die
+angegebene Datei. Es ist auch möglich die Verwendung einer VimInfo\-Datei
+durch Angabe des Dateinamen »NONE« zu verhindern,
+.TP 
+\-L
+dasselbe wie »\-r«
+.TP 
+\-l
+Lisp\-Modus. Aktiviert die Optionen 'lisp' und 'showmatch'.
+.TP 
+\-m
+Deaktiviert das Verändern von Dateien, indem die Option 'write' gelöscht
+wird. Der Puffer kann verändert werden, nur das Schreiben einer Datei ist
+nicht möglich.
+.TP 
+\-M
+Keine Veränderungen erlaubt: Die Optionen 'modifiable' und 'write' werden
+gelöscht, so dass Änderungen nicht erlaubt sind und Dateien nicht
+geschrieben werden können. Man beachte, dass diese Optionen ('modifiable',
+\&'write') dennnoch nachträglich zum Erlauben von Änderungen gesetzt werden
+können.
+.TP 
+\-N
+Nicht\-kompatibler Modus: Löscht die Option 'compatible'. Dies veranlasst
+\fBVim\fP, sich ein wenig besser, aber weniger Vi\-kompatibel zu verhalten,
+selbst wenn es keine VimRC\-Datei gibt.
+.TP 
+\-n
+Verwendet keine Auslagerungsdatei: Eine Wiederherstellung nach einem Absturz
+ist nicht möglich. Auf einem langsamen Medium (Diskette) kann diese
+Einstellung nützlich sein. Kann auch mit »set uc=0« erreicht werden; kann
+mit »set uc=200« aufgehoben werden.
+.TP 
+\-nb
+\fBVim\fP fungiert als Server für NetBeans. Details siehe Dokumentation.
+.TP 
+\-o[N]
+Öffnet [N] Fenster übereinander. Wenn keine Zahl angegeben wird, öffne ein
+Fenster pro Datei.
+.TP 
+\-O[N]
+Öffnet [N] Fenster nebeneinander. Wenn keine Zahl angegeben wird, öffne ein
+Fenster pro Datei.
+.TP 
+\-p[N]
+Öffnet [N] Reiterseiten. Wenn keine Zahl angegeben wird, öffne eine
+Reiterseite pro Datei.
+.TP 
+\-R
+Nur\-Lesen\-Modus: Die Option 'readonly' wird gesetzt. Der Puffer kann noch
+bearbeitet werden, aber es wird verhindert, eine Datei aus Versehen zu
+überschreiben. Wenn Sie wirklich eine Datei überschreiben wollen, fügen Sie
+dem Ex\-Befehl ein Ausrufezeichen hinzu (wie in »:w!«). Die Option „\-R«
+bedingt die Option »\-n« (siehe oben). Die Option 'readonly' kann durch „:set
+noro« gelöscht werden. Siehe »:help 'readonly'«.
+.TP 
+\-r
+Listet die Auslagerungsdateien und gibt Informationen zu ihrer
+Verwendbarkeit zur Wiederherstellung.
+.TP 
+\-r {Datei}
+Wiederherstellungsmodus: Die Auslagerungsdatei wird zur Wiederherstellung
+verwendet und hat denselben Dateinamen wie die Text\-Datei + ».swp«. Siehe
+„:help recovery«.
+.TP 
+\-s
+Der stille Modus: Nur wenn die ausführbare Datei als »ex« aufgerufen wird
+oder vor »\-s« die Option „\-e« gegeben wird.
+.TP 
+\-s {Eingabeskript}
+Die Datei {Eingabeskript} wird gelesen und ausgeführt, als würden Sie die
+Zeichen in ihr tippen. Dasselbe kann mit dem Befehl »:source!
+{Eingabeskript}« erreicht werden. Wird das Ende der Datei vor dem Beenden
+des Editors erreicht, werden weitere Zeichen von der Tastatur gelesen.
+.TP 
+\-T {Terminal}
+Setzt den Namen des benutzten Terminals. Nur erforderlich, wenn die
+Automatik nicht funktioniert. Sollte ein \fBVim\fP bekanntes Terminal sein:
+(builtin) oder in einer termcap\- oder terminfo\-Datei definiert.
+.TP 
+\-u {VimRC}
+Verwendet zur Initialisierung die Befehle in der Datei {VimRC}. Alle anderen
+Initialisierungen werden übersprungen. Benutzen Sie dies, um eine besondere
+Art von Dateien zu bearbeiten. Dies kann auch benutzt werden, um alle
+Initialisierungen zu überspringen, indem der Name »NONE« angegeben wird. Für
+weitere Einzelheiten siehe »:help initialisation« innerhalb von Vim.
+.TP 
+\-U {GvimRC}
+Benutzt die Befehle in der Datei {GvimRC} für die Initialisierung der
+grafischen Oberfläche. Alle anderen Initialisierungen werden
+übersprungen. Dies kann ebenfalls benutzt werden, um alle
+GUI\-Initialisierungen zu überspringen, indem der Name »NONE« angegeben
+wird. Siehe »:help gui\-init« innerhalb von Vim für weitere Einzelheiten.
+.TP 
+\-V[N]
+Ausführlich (verbose): Gibt Meldungen darüber, welche Befehlsdateien
+eingelesen werden, und über das Lesen und Schreiben einer VimInfo\-Datei. Die
+optionale Zahl N ist der Wert für 'verbose'. Vorgabe ist 10.
+.TP 
+\-v
+Startet \fBVim\fP im Vi\-Modus, so als würde die ausführbare Datei mit »vi«
+aufgerufen. Dies wirkt sich nur aus, wenn die ausführbare Datei als »ex«
+aufgerufen wird.
+.TP 
+\-w {Ausgabeskript}
+Alle Zeichen, die eingetippt werden, werden in der Datei {Ausgabeskript}
+aufgezeichnet, solange bis Sie \fBVim\fP beenden. Dies ist nützlich, falls Sie
+eine Skript\-Datei zum Benutzen mit »vim \-s« oder „:source!« erzeugen
+wollen. Falls die Datei {Ausgabeskript} vorhanden ist, werden die Zeichen
+angehängt.
+.TP 
+\-W {Ausgabeskript}
+Wie \-w, aber eine bereits vorhandene Datei wird überschrieben.
+.TP 
+\-x
+Benutzt beim Schreiben von Dateien eine Verschlüsselung. Fragt nach dem
+Schlüssel.
+.TP 
+\-X
+Führt keine Verbindung zum X\-Server durch. Dadurch verkürzt sich die
+Startzeit, aber der Fenstertitel und die Zwischenablage werden nicht
+verwendet.
+.TP 
+\-y
+Startet \fBVim\fP im einfachen Modus, als würde die ausführbare Datei mit
+»evim« oder »eview« aufgerufen. \fBVim\fP verhält sich dann wie ein Editor zum
+Klicken und Tippen.
+.TP 
+\-Z
+Eingeschränkter Modus: Funktioniert, als würde der Name der ausführbaren
+Datei mit »r« beginnen.
+.TP 
+\-\-
+Markiert das Ende der Optionen. Argumente, die folgen, werden als Dateinamen
+behandelt. Dies kann benutzt werden, um einen Dateinamen mit »\-« am Anfang
+zu verwenden.
+.TP 
+\-\-echo\-wid
+Nur GTK\-GUI: Schreibe die Fenster\-ID auf die Standardausgabe.
+.TP 
+\-\-help
+Gibt eine Hilfe\-Nachricht aus und beendet, wie »\-h«.
+.TP 
+\-\-literal
+Nimmt die Dateinamen so wie sie sind und vervollständigt sie nicht nach
+Metazeichen (*,?). Dies wirkt sich nicht unter Unix aus, wo die Shell die
+Metazeichen expandiert.
+.TP 
+\-\-noplugin
+Lade keine Plugins. Impliziert durch »\-u NONE«.
+.TP 
+\-\-remote
+Verbindet mit einem Vim\-Server und lässt ihn die in den restlichen
+Argumenten angegeben Dateien editieren. Wenn kein Server gefunden wird,
+führt dies zu einer Warnmeldung und die Dateien werden im gegenwärtigen Vim
+zum Bearbeiten geöffnet.
+.TP 
+\-\-remote\-expr {Ausdruck}
+Verbindet mit einem Vim\-Server, führt {Ausdruck} aus und zeigt das Ergebnis
+auf der Standardausgabe an.
+.TP 
+\-\-remote\-send {Zeichen}
+Verbindet mit einem Vim\-Server und sendet ihm {Zeichen}.
+.TP 
+\-\-remote\-silent
+Wie »\-\-remote«, aber ohne Warnung, wenn kein Server gefunden wird.
+.TP 
+\-\-remote\-wait
+Wie »\-\-remote«, aber Vim beendet sich nicht, bis die Dateien bearbeitet
+wurden.
+.TP 
+\-\-remote\-wait\-silent
+Wie »\-\-remote\-wait«, aber ohne Warnung, wenn kein Server gefunden wird.
+.TP 
+\-\-serverlist
+Listet die Namen aller gefundenen Vim\-Server auf.
+.TP 
+\-\-servername {Name}
+Benutzt {Name} als Server\-Namen. Wird für den gegenwärtigen Vim benutzt,
+außer es wird mit dem Argument »\-\-remote« benutzt, dann ist es der Name des
+zu kontaktierenden Servers.
+.TP 
+\-\-socketid {id}
+Nur GTK\-GUI: Benutzt den GtkPlug\-Mechanismus, um GVim in einem anderen
+Fenster laufen zu lassen.
+.TP 
+\-\-version
+Versionsinformation anzeigen und beenden
+.SH "EINGEBAUTE HILFE"
+Tippen Sie in \fBVim\fP »:help«, um zu beginnen. Geben Sie „:help begriff« ein,
+um Hilfe über ein bestimmtes Thema zu bekommen. Zum Beispiel »:help ZZ« für
+Hilfe über den Befehl »ZZ«. Benutzen Sie <Tab> und CTRL\-D, um
+Begriffe zu vervollständigen (»:help cmdline\-completion«). Tags sind
+vorhanden, um von einem Ort zum anderen zu springen (eine Art
+Hypertext\-Verknüpfungen, siehe »:help«). Auf diese Weise können alle
+Dokumentations\-Dateien aufgerufen werden, zum Beispiel »:help syntax.txt«.
+.SH DATEIEN
+.TP  15
+/usr/local/lib/vim/doc/*.txt
+Dokumentations\-Dateien für \fBVim\fP. Verwenden Sie »:help doc\-file\-list«, um
+die gesamte Liste zu bekommen.
+.TP 
+/usr/local/lib/vim/doc/tags
+Die »Tag«\-Datei, die verwendet wird, um Informationen in der Dokumentation
+zu finden.
+.TP 
+/usr/local/lib/vim/syntax/syntax.vim
+Die systemweite Einrichtung der Syntaxhervorhebung.
+.TP 
+/usr/local/lib/vim/syntax/*.vim
+Syntaxdateien für die verschiedenen Sprachen.
+.TP 
+/usr/local/lib/vim/vimrc
+Systemweite Einstellungsdatei für \fBVim\fP
+.TP 
+~/.vimrc
+Persönliche Einstellungsdatei für \fBVim\fP
+.TP 
+/usr/local/lib/vim/gvimrc
+Systemweite Einstellungsdatei für GVim
+.TP 
+~/.gvimrc
+Persönliche Einstellungsdatei für GVim
+.TP 
+/usr/local/lib/vim/optwin.vim
+Das Script, das von dem Befehl »:options« verwendet wird, eine schöne
+Möglichkeit, um Optionen zu betrachten und zu setzen.
+.TP 
+/usr/local/lib/vim/menu.vim
+Systemweite Einstellungsdatei für das Menü von GVim
+.TP 
+/usr/local/lib/vim/bugreport.vim
+Das Script zum Generieren eines Fehlerberichts. Siehe »:help bugs«.
+.TP 
+/usr/local/lib/vim/filetype.vim
+Mit diesem Script erkennt Vim den Typ einer Datei anhand ihres
+Dateinamens. Siehe »:help 'filetype'«.
+.TP 
+/usr/local/lib/vim/scripts.vim
+Mit diesem Script erkennt Vim den Typ einer Datei anhand ihres
+Inhaltes. Siehe »:help 'filetype'«.
+.TP 
+/usr/local/lib/vim/print/*.ps
+Diese Dateien werden zum Drucken von PostScript verwendet.
+.PP
+Für die neuesten Informationen lesen Sie die Vim\-Homepage:
+.br
+<URL:http://www.vim.org/>
+.SH "SIEHE AUCH"
+vimtutor(1)
+.SH AUTOR
+\fBVim\fP wurde größtenteils von Bram Moolenaar erstellt, mit viel Hilfe von
+anderen Leuten. Siehe »:help credits« in \fBVim.\fP
+.br
+\fBVim\fP basiert auf Stevie, der von Tim Thompson, Tony Andrews und
+G.R. (Fred) Walter geschrieben wurde. Es ist jedoch kaum etwas vom
+ursprünglichen Code übrig geblieben.
+.SH FEHLER
+Die sind möglich. Siehe »:help todo« für eine Liste bekannter Probleme.
+.PP
+Beachten Sie, dass gewisse Dinge, die manche Leute als Fehler betrachten
+mögen, in Wirklichkeit durch zu getreue Nachbildung des Vi\-Verhaltens
+verursacht werden. Und falls Sie denken, dass andere Dinge Fehler sind,
+»weil Vi es anders tut«, sollten Sie einen genaueren Blick auf die Datei
+vi_diff.txt werfen (oder in Vim »:help vi_diff.txt« tippen). Sehen Sie sich
+auch die Optionen 'compatible' und 'cpoptions' an.

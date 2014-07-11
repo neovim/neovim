@@ -1,0 +1,566 @@
+.TH VIM 1 "22 febbraio 2002"
+.SH NOME
+vim \- VI Migliorato, un editor di testi per programmatori
+.SH SINTASSI
+.br
+.B vim
+[opzioni] [file ..]
+.br
+.B vim
+[opzioni] \-
+.br
+.B vim
+[opzioni] \-t tag
+.br
+.B vim
+[opzioni] \-q [file_errori]
+.PP
+.br
+.B ex
+.br
+.B view
+.br
+.B gvim
+.B gview
+.B evim
+.B eview
+.br
+.B rvim
+.B rview
+.B rgvim
+.B rgview
+.SH DESCRIZIONE
+.B Vim
+Un editore di testi, compatibile con, e migliore di, Vi.
+Può essere usato per editare qualsiasi file di testo.
+Particolarmente utile per editare programmi.
+.PP
+Ci sono parecchi miglioramenti rispetto a Vi: undo multipli,
+finestre e buffer multipli, evidenziazione sintattica, possibilità
+di modificare la linea di comando, completamento nomi file, help
+in linea, selezione testi in Modo Visual, etc..
+Vedere ":help vi_diff.txt" per un sommario delle differenze fra
+.B Vim
+e Vi.
+.PP
+Mentre usate
+.B Vim
+potete ricevere molto aiuto dal sistema di help online, col comando ":help".
+Vedere qui sotto la sezione AIUTO ONLINE.
+.PP
+Quasi sempre
+.B Vim
+viene invocato, per modificare un file, col comando
+.PP
+	vim nome_file
+.PP
+Più in generale
+.B Vim
+viene invocato con:
+.PP
+	vim [opzioni] [lista_file]
+.PP
+Se lista_file non è presente, l'editor inizia aprendo un buffer vuoto.
+Altrimenti, una e una sola delle quattro maniere indicate qui sotto può
+essere usata per scegliere uno o più file da modificare.
+.TP 12
+nome_file ..
+Una lista di nomi di file.
+Il primo di questi sarà il file corrente, e verrà letto nel buffer.
+Il cursore sarà posizionato sulla prima linea del buffer.
+Potete arrivare agli altri file col comando ":next".
+Per editare un file il cui nome inizia per "\-" premettete "\-\-" alla
+lista_file.
+.TP
+\-
+Il file da editare è letto dallo "stdin" [di solito, ma non
+necessariamente, il terminale \- NdT].  I comandi sono letti da "stderr",
+che dovrebbe essere un terminale [tty].
+.TP
+\-t {tag}
+Il file da editare e la posizione iniziale del cursore dipendono da "tag",
+una specie di "etichetta" a cui saltare.
+{tag} viene cercata nel file "tags", ed il file ad essa associato diventa
+quello corrente, ed il comando ad essa associato viene eseguito.
+Di solito si usa per programmi C, nel qual caso {tag} potrebbe essere un
+nome di funzione.
+L'effetto è che il file contenente quella funzione diventa il file corrente
+e il cursore è posizionato all'inizio della funzione.
+Vedere ":help tag\-commands".
+.TP
+\-q [file_errori]
+Inizia in Modo QuickFix [correzione veloce].
+Il file [file_errori] è letto e il primo errore è visualizzato.
+Se [file_errori] non è indicato, il suo nome è ottenuto dal valore
+dell'opzione 'errorfile' (che, se non specificata, vale "AztecC.Err"
+per l'Amiga, "errors.err" su altri sistemi).
+Si può saltare all'errore successivo col comando ":cn".
+Vedere ":help quickfix".
+.PP
+.B Vim
+si comporta in modo diverso se invocato con nomi differenti (il programma
+eseguibile "sottostante" può essere sempre lo stesso).
+.TP 10
+vim
+Modo Normal, comportamento normale.
+.TP
+ex
+Inizia in Modo "Ex".
+Si può passare in Modo Normal col comando ":vi".
+Si può invocare il Modo "Ex" anche con l'argomento "\-e".
+.TP
+view
+Inizia in Modo Read-only (Sola Lettura).  Non potete modificare i file.
+Si può invocare il Modo Read-only anche con l'argomento "\-R".
+.TP
+gvim gview
+La versione GUI [Graphical User Interface].
+Apre una nuova finestra.
+Si può invocare il Modo GUI anche con l'argomento "\-g".
+.TP
+evim eview
+La versione GUI in Modo Easy (semplificata).
+Apre una nuova finestra.
+Si può invocare il Modo Easy anche con l'argomento "\-y".
+.TP
+rvim rview rgvim rgview
+Come sopra, ma con restrizioni ai comandi.  Non si potranno eseguire comandi
+della shell o sospendere
+.B Vim.
+Si può chiedere la stessa cosa anche con l'argomento "\-Z".
+.SH OPZIONI
+Le opzioni possono essere in un ordine qualsiasi, prima o dopo i nomi di
+file.  Opzioni che non necessitano un argomento possono essere specificate
+dietro a un solo "\-".
+.TP 12
++[numero]
+Per il primo file il cursore sarà posizionato sulla linea "numero".
+Se "numero" manca, il cursore sarà posizionato sull'ultima linea del file.
+.TP
++/{espressione}
+Per il primo file il cursore sarà posizionato alla
+prima occorrenza di {espressione}.
+Vedere ":help search\-pattern" per come specificare l'espressione.
+.TP
++{comando}
+.TP
+\-c {comando}
+{comando} sarà eseguito dopo che il
+primo file è stato letto.
+{comando} è interpretato come un comando Ex.
+Se il {comando} contiene spazi deve essere incluso fra doppi apici
+(o altro delimitatore, a seconda della shell che si sta usando).
+Esempio: Vim "+set si" main.c
+.br
+Note: Si possono avere fino a 10 comandi "+" o "\-c".
+.TP
+\-S {file}
+I comandi contenuti in {file} sono eseguiti dopo la lettura del primo file.
+Equivalente a \-c "source {file}".
+{file} non può avere un nome che inizia per '\-'.
+Se {file} è omesso si usa "Session.vim" (funziona solo se \-S è l'ultimo
+argomento specificato).
+.TP
+\-\-cmd {comando}
+Come "\-c", ma il comando è eseguito PRIMA
+di eseguire qualsiasi file vimrc.
+Si possono usare fino a 10 di questi comandi, indipendentemente dai comandi
+"\-c".
+.TP
+\-A
+Se
+.B Vim
+è stato compilato con supporto Arabic per editare file con orientamento
+destra-sinistra e tastiera con mappatura Araba, questa opzione inizia
+.B Vim
+in Modo Arabic, cioè impostando 'arabic'.
+Altrimenti viene dato un messaggio di errore e
+.B Vim
+termina in modo anormale.
+.TP
+\-b
+Modo Binary (binario).
+Vengono impostate alcune opzioni che permettono di modificare un file
+binario o un programma eseguibile.
+.TP
+\-C
+Compatibile.  Imposta l'opzione 'compatible'.
+In questo modo
+.B Vim
+ha quasi lo stesso comportamento di Vi, anche in presenza di un file
+di configurazione .vimrc [proprio di Vim, vi usa .exrc \- Ndt].
+.TP
+\-d
+Inizia in Modo Diff [differenze].
+Dovrebbero esserci come argomenti due o tre o quattro nomi di file.
+.B Vim
+aprirà tutti i file evidenziando le differenze fra gli stessi.
+Funziona come vimdiff(1).
+.TP
+\-d {dispositivo}
+Apre {dispositivo} per usarlo come terminale.
+Solo per l'Amiga.
+Esempio:
+"\-d con:20/30/600/150".
+.TP
+\-D
+Debugging.  Vim si mette in Modo "debugging" a partire
+dall'esecuzione del primo comando da uno script.
+.TP
+\-e
+Eseguire
+.B Vim
+in Modo Ex, come se il programma eseguito sia "ex".
+.TP
+\-E
+Eseguire
+.B Vim
+in Modo Ex migliorato, come se il programma eseguito sia "exim".
+.TP
+\-f
+Direttamente [Foreground].  Per la versione GUI,
+.B Vim
+non crea [fork] una nuova finestra, indipendente dalla shell di invocazione.
+Per l'Amiga,
+.B Vim
+non è fatto ripartire per aprire una nuova finestra.
+Opzione da usare quando
+.B Vim
+è eseguito da un programma che attende la fine della
+sessione di edit (ad es. mail).
+Sull'Amiga i comandi ":sh" e ":!" non sono disponibili.
+.TP
+\-\-nofork
+Direttamente [Foreground].  Per la versione GUI,
+.B Vim
+non crea [fork] una nuova finestra, indipendente dalla shell di invocazione.
+.TP
+\-F
+Se
+.B Vim
+è stato compilato con supporto FKMAP per editare file con orientamento
+destra-sinistra e tastiera con mappatura Farsi, questa opzione inizia
+.B Vim
+in Modo Farsi, cioè impostando 'fkmap' e 'rightleft'.
+Altrimenti viene dato un messaggio di errore e
+.B Vim
+termina in modo anormale.
+.TP
+\-g
+Se
+.B Vim
+è stato compilato con supporto GUI, questa opzione chiede di usarla.
+Se Vim è stato compilato senza supporto GUI viene dato un messaggio di errore e
+.B Vim
+termina in modo anormale.
+.TP
+\-h
+Un po' di aiuto su opzioni e argomenti che si possono dare invocando Vim.
+Subito dopo
+.B Vim
+esce.
+.TP
+\-H
+Se
+.B Vim
+è stato compilato col supporto RIGHTLEFT per editare file con orientamento
+destra-sinistra e tastiera con mappatura Ebraica, questa opzione inizia
+.B Vim
+in Modo Ebraico, cioè impostando 'hkmap' e 'rightleft'.
+Altrimenti viene dato un messaggio di errore e
+.B Vim
+termina in modo anormale.
+.TP
+\-i {viminfo}
+Se è abilitato l'uso di un file viminfo, questa opzione indica il nome
+del file da usare invece di quello predefinito "~/.viminfo".
+Si può anche evitare l'uso di un file .viminfo, dando come nome "NONE".
+.TP
+\-L
+Equivalente a \-r.
+.TP
+\-l
+Modo Lisp.
+Imposta le opzioni 'lisp' e 'showmatch'.
+.TP
+\-m
+Inibisce modifica file.
+Annulla l'opzione 'write'.
+È ancora possibile modificare un buffer [in memoria \- Ndt], ma non scriverlo.
+.TP
+\-M
+Modifiche non permesse.  Le opzioni 'modifiable' e 'write' sono annullate,
+in modo da impedire sia modifiche che riscritture.  Da notare che queste
+opzioni possono essere abilitate in seguito, permettendo così modifiche.
+.TP
+\-N
+Modo "Non-compatibile".  Annulla l'opzione 'compatible'.
+Così
+.B Vim
+va un po' meglio, ma è meno compatibile con Vi, anche in assenza di un
+file .vimrc.
+.TP
+\-n
+Inibisce l'uso di un file di swap.
+Il recupero dopo una caduta di macchina diventa impossibile.
+Utile per editare un file su un supporto molto lento (ad es. floppy).
+Il comando ":set uc=0" ha lo stesso effetto.
+Per abilitare il recupero usare ":set uc=200".
+.TP
+\-nb
+Diviene un Editor server per NetBeans.  Vedere la documentazione per dettagli.
+.TP
+\-o[N]
+Apri N finestre in orizzontale.
+Se N manca, apri una finestra per ciascun file.
+.TP
+\-O[N]
+Apri N finestre, in verticale.
+Se N manca, apri una finestra per ciascun file.
+.TP
+\-R
+Modo Read-only (Sola Lettura).
+Imposta l'opzione 'readonly'.
+Si può ancora modificare il buffer, ma siete protetti da una riscrittura
+involontaria.
+Se volete davvero riscrivere il file, aggiungete un punto esclamativo
+al comando Ex, come in ":w!".
+L'opzione \-R implica anche l'opzione \-n (vedere sotto).
+L'opzione 'readonly' può essere annullata con ":set noro".
+Vedere ":help 'readonly'".
+.TP
+\-r
+Lista file di swap, assieme a dati utili per un recupero.
+.TP
+\-r {file}
+Modo Recovery (ripristino).
+Il file di swap è usato per recuperare una sessione di edit finita male.
+Il file di swap è un file con lo stesso nome file del file di testo
+editato, col suffisso ".swp".
+Vedere ":help recovery".
+.TP
+\-s
+Modo silenzioso.  Solo quando invocato come "Ex" o quando l'opzione
+"\-e" è stata data prima dell'opzione "\-s".
+.TP
+\-s {scriptin}
+Lo script file {scriptin} è letto.
+I caratteri nel file sono interpretati come se immessi da voi.
+Lo stesso si può ottenere col comando ":source! {scriptin}".
+Se la fine del file di input viene raggiunta prima che Vim termini,
+l'ulteriore input viene preso dalla tastiera.
+.TP
+\-T {terminale}
+Dice a
+.B Vim
+quale tipo di terminale state usando.
+Utile solo se il terminale non viene riconosciuto correttamente da Vim.
+Dovrebbe essere un terminale noto a
+.B Vim
+(internamente) o definito nel file termcap o terminfo.
+.TP
+\-u {vimrc}
+Usa i comandi nel file {vimrc} per inizializzazioni.
+Tutte le altre inizializzazioni non sono eseguite.
+Usate questa opzione per editare qualche file di tipo speciale.
+Può anche essere usato per non fare alcuna inizializzazione dando
+come nome "NONE".
+Vedere ":help initialization" da vim per ulteriori dettagli.
+.TP
+\-U {gvimrc}
+Usa i comandi nel file {gvimrc} per inizializzazioni GUI.
+Tutte le altre inizializzazioni GUI non sono eseguite.
+Può anche essere usata per non fare alcuna inizializzazione GUI dando
+come nome "NONE".
+Vedere ":help gui-init" da vim per ulteriori dettagli.
+.TP
+\-V[N]
+Verboso.  Vim manda messaggi relativi agli script file che esegue
+e quando legge o scrive un file viminfo.  Il numero opzionale N è il valore
+dell'opzione 'verbose'.
+Il valore predefinito è 10.
+.TP
+\-v
+Inizia
+.B Vim
+in Modo Vi, come se il programma eseguibile fosse "vi".  Questo ha
+effetto solo quando Vim viene invocato con il nome "ex".
+.TP
+\-w {scriptout}
+Ogni carattere immesso viene registrato nel file {scriptout},
+finché non uscite da
+.B Vim.
+Utile se si vuole creare uno script file da usare con "vim \-s" o
+":source!".
+Se il file {scriptout} esiste, quel che immettete viene aggiunto in fondo.
+.TP
+\-W {scriptout}
+Come \-w, ma uno script file esistente viene sovrascritto.
+.TP
+\-x
+Uso di cifratura nella scrittura dei file.  E' necessario immettere
+una chiave di cifratura.
+.TP
+\-X
+Non connetterti al server X.  Vim parte più rapidamente,
+ma il titolo della finestra e la clipboard non sono disponibili.
+.TP
+\-y
+Eseguire
+.B Vim
+in Modo Easy (semplificata), come se l'eseguibile invocato
+sia "evim" o "eview".
+Fa sì che
+.B Vim
+si comporti come un editor che usa solo il mouse e i caratteri.
+.TP
+\-Z
+Modo ristretto.  Vim si comporta come se invocato con un nome
+che inizia per "r".
+.TP
+\-\-
+Specifica la fine delle opzioni.
+Argomenti specificati dopo questo sono considerati nomi file.
+Si può usare per editare un file il cui nome inizi per '-'.
+.TP
+\-\-echo\-wid
+Solo con GUI GTK: Visualizza Window ID su "stdout".
+.TP
+\-\-help
+Vim dà un messaggio ed esce, come con l'argomento "\-h".
+.TP
+\-\-literal
+Considera i nomi passati come argomenti letterali, senza espandere
+metacaratteri.  Non necessario in Unix, la shell espande i metacaratteri.
+.TP
+\-\-noplugin
+Non caricare plugin.  Implicito se si specifica \-u NONE.
+.TP
+\-\-remote
+Connettersi a un server Vim e chiedere di editare i file elencati come altri
+argomenti.  Se non si trova un server viene dato un messaggio e i file sono
+editati nel Vim corrente.
+.TP
+\-\-remote\-expr {expr}
+Connettersi a un server Vim, valutare ivi {expr} e stampare il risultato
+su "stdout".
+.TP
+\-\-remote\-send {chiavi}
+Connettersi a un server Vim e spedirgli {chiavi}.
+.TP
+\-\-remote\-silent
+Come \-\-remote, ma senza avvisare se non si trova un server.
+.TP
+\-\-remote-wait
+Come \-\-remote, ma Vim non termina finché i file non sono stati editati.
+.TP
+\-\-remote\-wait\-silent
+Come \-\-remote\-wait, ma senza avvisare se non si trova un server.
+.TP
+\-\-serverlist
+Lista i nomi di tutti i server Vim disponibili.
+.TP
+\-\-servername {nome}
+Usa {nome} come nome server.  Usato per il Vim corrente, a meno che sia
+usato con l'argomento \-\-remote, nel qual caso indica il server a cui
+connettersi.
+.TP
+\-\-socketid {id}
+Solo con GUI GTK: Usa il meccanismo GtkPlug per eseguire gvim in un'altra
+finestra.
+.TP
+\-\-version
+Stampa la versione di Vim ed esci.
+.SH AIUTO ONLINE
+Battere ":help" in
+.B Vim
+per iniziare.
+Battere ":help argomento" per ricevere aiuto su uno specifico argomento.
+Per esempio: ":help ZZ" per ricevere aiuto sul comando "ZZ".
+Usare <Tab> e CTRL\-D per completare gli argomenti
+(":help cmdline\-completion").
+Ci sono "tag" nei file di help per saltare da un argomento a un altro
+(simili a legami ipertestuali, vedere ":help").
+Tutti i file di documentazione possono essere navigati così.  Ad es.:
+":help syntax.txt".
+.SH FILE
+.TP 15
+/usr/local/lib/vim/doc/*.txt
+I file di documentazione di
+.B Vim
+.
+Usate ":help doc\-file\-list" per avere la lista completa.
+.TP
+/usr/local/lib/vim/doc/tags
+Il file di tags usato per trovare informazioni nei file di documentazione.
+.TP
+/usr/local/lib/vim/syntax/syntax.vim
+Inizializzazioni sintattiche a livello di sistema.
+.TP
+/usr/local/lib/vim/syntax/*.vim
+File di colorazione sintattica per vari linguaggi.
+.TP
+/usr/local/lib/vim/vimrc
+Inizializzazioni
+.B Vim
+a livello di sistema.
+.TP
+~/.vimrc
+Le vostre personali inizializzazioni di
+.B Vim
+.
+.TP
+/usr/local/lib/vim/gvimrc
+Inizializzazioni gvim a livello di sistema.
+.TP
+~/.gvimrc
+Le vostre personali inizializzazioni di gvim.
+.TP
+/usr/local/lib/vim/optwin.vim
+Script Vim usato dal comando ":options", un modo semplice
+per visualizzare e impostare opzioni.
+.TP
+/usr/local/lib/vim/menu.vim
+Inizializzazioni del menù gvim a livello di sistema.
+.TP
+/usr/local/lib/vim/bugreport.vim
+Script Vim per generare una segnalazione di errore.  Vedere ":help bugs".
+.TP
+/usr/local/lib/vim/filetype.vim
+Script Vim per determinare il tipo di un file a partire dal suo nome.
+Vedere ":help 'filetype'".
+.TP
+/usr/local/lib/vim/scripts.vim
+Script Vim per determinare il tipo di un file a partire dal suo contenuto.
+Vedere ":help 'filetype'".
+.TP
+/usr/local/lib/vim/print/*.ps
+File usati per stampa PostScript.
+.PP
+Per informazioni aggiornate [in inglese \- NdT] vedere la home page di Vim:
+.br
+<URL:http://www.vim.org/>
+.SH VEDERE ANCHE
+vimtutor(1)
+.SH AUTORE
+Buona parte di
+.B Vim
+è stato scritto da Bram Moolenaar, con molto aiuto da altri.
+Vedere ":help credits" in
+.B Vim.
+.br
+.B Vim
+è basato su Stevie, scritto da: Tim Thompson,
+Tony Andrews e G.R. (Fred) Walter.
+In verità, poco o nulla è rimasto del loro codice originale.
+.SH BACHI
+Probabili.
+Vedere ":help todo" per una lista di problemi noti.
+.PP
+Si noti che un certo numero di comportamenti che possono essere considerati
+errori da qualcuno, sono in effetti causati da una riproduzione fin troppo
+fedele del comportamento di Vi.
+Se ritenete che altre cose siano errori "perché Vi si comporta diversamente",
+date prima un'occhiata al file vi_diff.txt
+(o battere :help vi_diff.txt da Vim).
+Date anche un'occhiata alle opzioni 'compatible' e 'cpoptions.

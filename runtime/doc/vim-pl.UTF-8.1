@@ -1,0 +1,558 @@
+.TH VIM 1 "2006 kwi 11"
+.SH NAME
+vim \- Vi rozbudowany, edytor tekstu dla programisty
+.SH SYNOPSIS
+.br
+.B vim
+[opcje] [plik ..]
+.br
+.B vim
+[opcje] \-
+.br
+.B vim
+[opcje] \-t znacznik
+.br
+.B vim
+[opcje] \-q [plik_błędu]
+.PP
+.br
+.B ex
+.br
+.B view
+.br
+.B gvim
+.B gview
+.B evim
+.B eview
+.br
+.B rvim
+.B rview
+.B rgvim
+.B rgview
+.SH OPIS
+.B Vim
+jest edytorem tekstu kompatybilnym z Vi. Może być
+używany do edycji wszelkiego rodzaju plików tekstowych.
+Użyteczny zwłaszcza przy edycji programów.
+.PP
+Posiada wiele usprawnień w porównaniu z Vi: wielopoziomowe cofanie zmian,
+wiele okien i buforów, podświetlanie składni, edycja linii poleceń,
+uzupełnianie nazw plików, pomoc on-line, wizualna selekcja, itd.
+Zobacz ":help vi_diff.txt" dla podsumowania różnic pomiędzy
+.B Vimem
+i Vi.
+.PP
+W czasie korzystania z
+.B Vima
+można uzyskać obszerną pomoc z systemu pomocy on-line dzięki poleceniu ":help".
+Zobacz rozdział POMOC ON-LINE poniżej.
+.PP
+Najczęściej
+.B Vim
+jest uruchamiany do edycji pojedynczego pliku poleceniem
+.PP
+	vim plik
+.PP
+Bardziej ogólnie
+.B Vim
+jest uruchamiany poprzez:
+.PP
+	vim [opcje] [lista plików]
+.PP
+Jeśli brak listy plików edytor rozpocznie z pustym buforem. W innym
+wypadku istnieje dokładnie jedna z czterech możliwości by wybrać jeden
+lub więcej plików do edycji.
+.TP 12
+plik ..
+Lista nazw plików.
+Pierwsza nazwa będzie nazwą bieżącego pliku, który zostanie wczytany
+do bufora. Kursor zostanie umieszczony w pierwszym wierszu. Do
+kolejnych plików można przejść dzięki poleceniu ":next". By otworzyć
+plik, którego nazwa zaczyna się od myślnika należy listę plików
+poprzedzić "\-\-".
+.TP
+\-
+Plik do edycji jest wczytany ze standardowego wejścia. Polecenia są
+odczytywane ze standardowego wyjścia błędów, którym powinien być
+terminal (tty).
+.TP
+\-t {znacznik}
+Plik do edycji i początkowa pozycja kursora zależy od "znacznika",
+rodzaju etykiety goto.
+{znacznika} szuka się w pliku tags, związany z nim plik staje się
+plikiem bieżącym i wykonuje się powiązane polecenie.
+Zazwyczaj używa się tego sposobu dla programów w C, w których wypadku
+{znacznik} może być nazwą funkcji.
+W efekcie plik zawierający określoną funkcję staje się plikiem
+bieżącym a kursor jest umieszczony na początku funkcji.
+Zobacz ":help tag-commands".
+.TP
+\-q [plik_błędów]
+Zacznij w trybie quickFix.
+Plik [plik_błędów] zostaje zinterpretowany i pokaże się pierwszy błąd.
+Jeśli brak opcji [plik_błędów] nazwa pliku zostanie pobrana z opcji
+\&'errorfile' (domyślnie "AztecC.Err" dla Amigi, "errros.err" dla innych
+systemów.
+Do kolejnych błędów można przeskoczyć dzięki poleceniu ":cn".
+Zobacz ":help quickfix".
+.PP
+W zależności od wywołania
+.B Vim
+zachowuje się inaczej (program może być cały czas tym samym
+plikiem).
+.TP 10
+vim
+"Normalny" sposób, wszystko jest domyślne.
+.TP
+ex
+Zacznij w trybie Ex.
+Przejdź do trybu Normalnego poleceniem ":vi".
+Można także uruchomić poprzez argument "\-e".
+.TP
+view
+Zacznij w trybie tylko do odczytu. W ten sposób będziesz chroniony
+przed zapisywaniem pliku. Można także uruchomić poprzez argument
+"\-R".
+.TP
+gvim gview
+Wersja GUI.
+Uruchamia nowe okno.
+Można także uruchomić poprzez argument "\-g".
+.TP
+evim eview
+Wersja GUI w łatwym trybie.
+Uruchamia nowe okno.
+Można także uruchomić poprzez argument "\-y".
+.TP
+rvim rview rgvim rgview
+Podobnie jak powyżej, ale z ograniczeniami. Nie będzie można uruchomić
+poleceń powłoki lub zawiesić
+.B Vima.
+Można także uruchomić poprzez argument "\-Z".
+.SH OPCJE
+Opcje można podać w dowolnej kolejności, przed lub po nazwach plików.
+Opcje bez argumentów można łączyć po pojedynczym myślniku.
+.TP 12
++[num]
+W pierwszym pliku kursor zostanie umieszczony w wierszu "num".
+Jeśli brak "num" kursor zostanie umieszczony w ostatnim wierszu.
+.TP
++/{wzór}
+W pierwszym pliku kursor zostanie umieszczony na pierwszym wystąpieniu
+{wzór}.
+Zobacz ":help search-pattern" by dowiedzieć się jakie są możliwe
+wzorce wyszukiwania.
+.TP
++{polecenie}
+.TP
+\-c {polecenie}
+{polecenie} zostanie wykonane po tym jak wczyta się pierwszy plik.
+{polecenie} jest interpretowane jako polecenie Ex.
+Jeśli {poleceni} zawiera białe znaki musi być umieszczone w podwójnych
+cudzysłowach (zależy to od używanej powłoki).
+Przykład: Vim "+set si" main.c
+.br
+Uwaga: Można użyć do 10 poleceń "+" lub "\-c".
+.TP
+\-S {plik}
+{plik} zostanie zinterpretowany po wczytaniu pierwszego pliku.
+Jest równoważne \-c "source {plik}".
+{plik} nie może zaczynać się '\-'.
+Jeśli nie podano {plik} zostanie użyty "Session.vim" (działa tylko
+wtedy jeśli \-S jest ostatnim argumentem).
+.TP
+\-\-cmd {polecenie}
+Podobne do "\-c", ale polecenie jest wykonywane tuż przed
+interpretacją jakiegokolwiek pliku vimrc.
+Można użyć do 10 takich poleceń, niezależnie od poleceń od "\-c"
+.TP
+\-A
+Jeśli
+.B Vim
+został skompilowany ze wsparciem dla języków arabskich (edycja od
+prawej do lewej i arabska mapa klawiatury) ta opcja uruchamia
+.B Vima
+w trybie arabskim, np. ustawia się opcja 'arabic'. W innym wypadku
+pojawi się komunikat błędu i
+.B Vim
+zakończy działanie.
+.TP
+\-b
+Tryb binarny.
+Ustawi się kilka opcji, które umożliwią edycję plików binarnych lub
+wykonywalnych.
+.TP
+\-C
+Kompatybilny. Ustawia opcję 'compatible'.
+W ten sposób 
+.B Vim
+będzie zachowywał się jak Vi, nawet jeśli istnieje plik .vimrc.
+.TP
+\-d
+Uruchom w trybie diff.
+Powinno się użyć dwóch, trzech lub czterech nazwy plików jako argumentów.
+.B Vim
+otworzy wszystkie te pliki i pokaże różnice między nimi.
+Działa jak vimdiff(1).
+.TP
+\-d {urządzenie}
+Otwórz {urządzenie} by używać jako terminal.
+Tylko na Amidze.
+Przykład:
+"\-d con:20/30/600/150".
+.TP
+\-D
+Debugowanie. Przejdź do trybu debugowanie wykonując pierwsze polecenie
+ze skryptu.
+.TP
+\-e
+Uruchom
+.B Vima
+w trybie Ex, działa tak samo jakby wywołano program jako "ex".
+.TP
+\-E
+Uruchom
+.B Vima
+w ulepszonym trybie Ex, działa tak samo jakby wywołano program jako
+"exim".
+.TP
+\-f
+Pierszy plan. Dla wersji GUI.
+.B Vim
+nie nie oddzieli się od powłoki w jakiej został uruchomiony. Na Amidze
+.B Vim
+nie jest uruchomiony ponownie by otworzyć nowe okno.
+Opcja powinna być użyta kiedy
+.B Vim
+jest wywoływany przez program, który ma zaczekać na koniec sesji (np.
+mail).
+Na Amidze polecenia ":sh" i ":!" nie będą działać.
+.TP
+\-\-nofork
+Pierwszy plan. Dla wersji GUI.
+.B Vim
+nie oddzieli się od powłoki w jakiej został uruchomiony.
+.TP
+\-F
+Jeśli Vim został skompilowany ze wsparciem FKMAP dla edycji tekstów od
+prawej do lewej i mapowania klawiatury Farsi, ta opcja uruchomi
+.B Vima
+w trybie Farsi, np. zostawią ustawione opcje 'fkmap' i 'rightleft'.
+W innym wypadku pojawi się komunikat błędu i
+.B Vim
+zakończy działanie.
+.TP
+\-g
+Jeśli
+.B Vim
+został skompilowany ze wsparciem dla GUI ta opcja uruchomi GUI.
+W innym wypadku pojawi się komunikat błędu i
+.B Vim
+zakończy działanie.
+.TP
+\-h
+Wyświetli krótką pomoc o argumentach linii poleceń i opcjach. Potem
+.B Vim
+zakończy działanie.
+.TP
+\-H
+Jeśli
+.B Vim
+został skompilowany ze wsparciem RIGHTLEFT dla edycji od prawej do
+lewej oraz ma mapowanie klawiatury dla hebrajskiego, ta opcja uruchomi
+.B Vima
+w trybie hebrajskim, np. ustawi opcje 'hkmap' i 'rightleft'.
+W innym wypadku pojawi się komunikat błędu i
+.B Vim
+zakończy działanie.
+.TP
+\-i {viminfo}
+Kiedy
+.B Vim
+używa pliku viminfo ta opcja wskaże jakiego pliku użyć zamiast
+domyślnego "~/.viminfo".
+Można też ominąć użycie pliku .viminfo przez podanie nazwy "NONE".
+.TP
+\-L
+To samo co \-r.
+.TP
+\-l
+Tryb Lisp.
+Ustawia opcje 'lisp' i 'showmatch'.
+.TP
+\-m
+Zmiana pliku jest niemożliwa.
+Przestawia opcję 'write'.
+Można zmieniać zawartość bufora, ale zapisanie pliku nie jest
+możliwe.
+.TP
+\-M
+Opcje 'modifiable' i 'write' zostaną wyłączone, tak więc zmiany
+w pliku oraz ich zapisanie nie są możliwe. Wartość tych opcji można
+zmienić.
+.TP
+\-N
+Tryb niekompatybilny. Przestawia opcję 'compatible'. Dzięki temu
+.B Vim
+będzie zachowywał się odrobinę lepiej, ale mniej zgodnie z Vi nawet
+jeśli nie istnieje plik .vimrc.
+.TP
+\-n
+Nie powstanie plik wymiany. Odzyskanie pliku po wypadku nie będzie
+możliwe.
+Wygodne jeśli instnieje potrzeba edycji na bardzo wolnym medium (np.
+dyskietce). Ten cel można osiągnąć także przez ":set uc=0". Można
+odwrócić przez ":set uc=200".
+.TP
+\-nb
+Uruchom jako serwer edytora dla NetBeans. Zobacz dokumentację by
+dowiedzieć się więcej.
+.TP
+\-o[N]
+Otwórz N okien w stosie.
+Kiedy brak N, otwórz jedno okno dla każdego pliku.
+.TP
+\-O[N]
+Otwórz N okien obok siebie.
+Kiedy brak N, otwórz jedno okno dla każdego pliku.
+.TP
+\-p[N]
+Otwórz N kart.
+Kiedy brak N, otwórz jedną kartę dla każdego pliku.
+.TP
+\-R
+Tryb tylko do odczytu.
+Zostanie ustawiona opcja 'readonly'.
+Cały czas można zmieniać bufor, ale będzie istniała blokada by chronić
+przed przypadkowym zapisaniem pliku.
+Jeśli chcesz zapisać plik dodaj wykrzyknik do polecenia Ex, np. ":w!".
+Opcja \-R implikuje opcję \-n (zobacz poniżej).
+Opcja 'readonly' może zostać przestawiona poprzez ":set noro".
+Zobacz ":help 'readonly'".
+.TP
+\-r
+Wypisz listę plików wymiany razem z informacjami o nich.
+.TP
+\-r {plik}
+Tryb odzyskiwania danych.
+Plik wymiany zostanie wykorzystany do odzyskania gwałtownie przerwanej sesji.
+Plik wymiany to plik z taką samą nazwą co plik oryginalny z dodanym ".swp".
+Zobacz ":help recovery".
+.TP
+\-s
+Tryb cichy. Rozpoczęty tylko kiedy uruchomiony jako "Ex" lub opcja
+"\-e" została podana przed opcją "\-s".
+.TP
+\-s {skrypt}
+Zostanie wczytany plik {skrypt}.
+Znaki w pliku zostaną zinterpretowane jakby były wpisywane.
+To samo można osiągnąć poprzez polecenie ":source! {skrypt}".
+Jeśli osiągnięto koniec pliku zanim edytor zakończył działanie, dalsze
+znaki odczytywane są z klawiatury.
+.TP
+\-T {terminal}
+Przekazuje
+.B Vimowi
+nazwę terminalu jakiego używasz.
+Wymagane tylko wtedy jeśli nie działa automatycznie.
+Powinien być to terminal znany
+.B Vimowi
+(builtin) lub zdefiniowany w plikach termcap lub terminfo.
+.TP
+\-u {vimrc}
+Użyj poleceń z pliku {vimrc} w czasie uruchamiania.
+Wszystkie inne możliwe pliki uruchamiania zostaną pominięte.
+Używaj do edytowania plików specjalnych.
+Można pominąć także wszystkie możliwe pliki uruchamiania poprzez
+podanie nazwy "NONE".
+Zobacz ":help initialization" by poznać więcej szczegółów.
+.TP
+\-U {gvimrc}
+Użyj poleceń z pliku {gvimrc} w czasie uruchamiania GUI.
+Wszystkie inne możliwe pliki uruchamiania GUI zostaną pominięte.
+Można pominąć także wszystkie możliwe pliki uruchamiania GUI poprzez
+podanie nazwy "NONE".
+Zobacz ":help gui-init" by poznać więcej szczegółów.
+.TP
+\-V[N]
+Tryb gadatliwy. Wypisz wiadomości o tym jaki pliki są wczytywane
+i o informacjach pobieranych i dodawanych do pliku viminfo. Opcjonalny
+argument N jest wartością 'verbose'. Domyślnie 10.
+.TP
+\-v
+Uruchom
+.B Vima
+w trybie Vi, tak jakby program był nazwany "vi". Ma znaczenie
+tylko wtedy jeśli program nazwany jest "ex".
+.TP
+\-w {plik}
+Wszystkie wciśnięcia klawiszy, aż do zakończenia działania programu,
+są zapisywane w {plik} .
+Użyteczne jeśli chce się stworzyć skrypt do użycia z "vim \-s" lub
+":source!".
+Jeśli {plik} istnieje, znaki są dopisywane.
+.TP
+\-W {plik}
+Podobnie do \-w, ale istniejący plik jest nadpisywany.
+.TP
+\-x
+Użyj szyfrowania podczas zapisywania plików. Zostaniesz poproszony
+o podanie klucza.
+.TP
+\-X
+Nie łącz z serwerem X. Skraca czas uruchamiania w terminalu, ale tytuł
+okna i schowek nie będą wykorzystywane.
+.TP
+\-y
+Uruchom
+.B Vima
+w łatwym trybie, tak jakby program został wywołany "evim" lub "eview".
+.B Vim
+będzie zachowywał się bardziej jak edytor kliknij-i-wpisz.
+.TP
+\-Z
+Tryb ograniczony. Zachowuje się jakby nazwa programu zaczynała się od
+"r".
+.TP
+\-\-
+Oznacza koniec opcji.
+Argumenty po tej opcji będą traktowane jak nazwy plików. Używa się do
+otwierania plików, których nazwy zaczynają się od '\-'.
+.TP
+\-\-echo\-wid
+Wyłącznie GTK GUI: wypisz ID okna na standardowe wyjście.
+.TP
+\-\-help
+Wyświetl informację o pomocy i zakończy, to samo co"\-h".
+.TP
+\-\-literal
+Potraktuj nazwy plików dosłownie i nie rozwiązuj kwantyfikatorów. Nie
+ma znaczenia na Uniksach gdzie powłoka rozwiązuje kwantyfikatory.
+.TP
+\-\-noplugin
+Pomiń ładowanie wtyczek. Implikowane przy \-u NONE.
+.TP
+\-\-remote
+Połącz się z serwerem Vima i edytuj w nim resztę plików podanych jako
+argumenty. Jeśli nie znaleziono serwera zostanie zgłoszony błąd a pliki zostaną
+otwarte w bieżącym Vimie.
+.TP
+\-\-remote\-expr {wyrażenie}
+Połącz z serwerem Vima, rozwiąż w nim {wyrażenie} i wypisz rozwiązanie
+na standardowe wyjście.
+.TP
+\-\-remote\-send {klawisze}
+Połącz z serwerem Vima i wyślij do niego {klawisze}.
+.TP
+\-\-remote\-silent
+Tak samo jak \-remote, ale bez ostrzeżenia kiedy nie znaleziono
+serwera.
+.TP
+\-\-remote\-wait
+Tak samo jak \-remote, ale Vim nie zakończy dopóki pliki pozostaną
+otwarte.
+.TP
+\-\-remote\-wait\-silent
+Tak samo jak \-\-remote\-wait, ale bez ostrzeżenie kiedy nie
+znaleziono serwera.
+.TP
+\-\-serverlist
+Wypisz nazwy wszystkich serwerów Vima jakie można znaleźć.
+.TP
+\-\-servername {nazwa}
+Użyj {nazwa} jako nazwy serwera. Wykorzystane dla bieżącego Vima o ile
+nie połączone z argumentem \-\-remote, wtedy jest to nazwa serwera do
+połączenia.
+.TP
+\-\-socketid {id}
+Wyłącznie GTK GUI: Użyj mechanizmu GtkPlug by uruchomić gvima w innym
+oknie.
+.TP
+\-\-version
+Wypisz informację o wersji i zakończ.
+.SH POMOC ON-LINE
+By rozpocząć wpisz ":help" w
+.B Vimie
+Wpisz ":help temat" by uzyskać pomoc na określony temat.
+Przykład: ":help ZZ" by uzyskać pomoc na temat polecenia "ZZ".
+Użyj <Tab> i CTRL\-D aby uzupełnić tematy (":help
+cmdline\-completion"). W plikach pomocy istnieją znaczniki by ułatwić
+skakanie z jednego miejsca do innego (rodzaj linków hipertekstowych,
+zobacz ":help").
+Można w ten sposób zobaczyć całą dokumentację, np. ":help syntax.txt".
+.SH PLIKI
+.TP 15
+/usr/local/lib/vim/doc/*.txt
+Dokumentacja
+.B Vima
+Użyj ":help doc\-file\-list" aby uzyskać pełną listę.
+.TP
+/usr/local/lib/vim/doc/tags
+Plik znaczników służy do znajdowania informacji w plikach dokumentacji.
+.TP
+/usr/local/lib/vim/syntax/syntax.vim
+Globalne uruchamianie podświetlania składni.
+.TP
+/usr/local/lib/vim/syntax/*.vim
+Pliki składni dla różnych języków.
+.TP
+/usr/local/lib/vim/vimrc
+Globalny plik uruchamiania
+.B Vima
+.TP
+~/.vimrc
+Osobiste parametry uruchamiania
+.B Vima
+.TP
+/usr/local/lib/vim/gvimrc
+Globalne uruchamianie gvima.
+.TP
+~/.gvimrc
+Osobiste parametry uruchamiania gvima.
+.TP
+/usr/local/lib/vim/optwin.vim
+Skrypt używany w poleceniu ":options", dobry sposób do przeglądania
+i ustawiania opcji.
+.TP
+/usr/local/lib/vim/menu.vim
+Globalne uruchamianie menu gvima.
+.TP
+/usr/local/lib/vim/bugreport.vim
+Skrypt służący do tworzenia raportów o błędach. Zobacz ":help bugs".
+.TP
+/usr/local/lib/vim/filetype.vim
+Skrypt do wykrywania typu pliku według jego nazwy. Zobacz ":help 'filetype'".
+.TP
+/usr/local/lib/vim/scripts.vim
+Skrypt do wykrywania typu pliku według jego zawartości. Zobacz ":help 'filetype'".
+.TP
+/usr/local/lib/vim/print/*.ps
+Pliku używane do drukowania PostScriptu.
+.PP
+Najświeższe wiadomości na stronie
+.B Vima:
+.br
+<URL:http://www.vim.org/>
+.SH ZOBACZ TAKŻE
+vimtutor(1)
+.SH AUTOR
+.B Vim
+został napisany przez Brama Moolenaara z dużą pomocą innych osób.
+Zobacz ":help credits" w
+.B Vimie.
+.br
+.B Vim
+bazuje na Steviem, nad którym pracowali: Tim Thompson, Tony Andrews
+i G.R. (Fred) Walter.
+Mało już zostało z oryginalnego kodu.
+.SH BŁĘDY
+Prawdopodobne.
+Zobacz ":help todo" by poznać listę znanych problemów.
+.PP
+Pamiętaj że pewna ilość problemów, które mogą być uznawane przez
+niektórych ludzi za błędy są w rzeczywistości spowodowane wiernością
+w odtwarzaniu zachowania Vi.
+Jeśli sądzisz, że inne rzeczy są błędami "ponieważ Vi robi to
+inaczej", powinieneś przyjrzeć się bliżej plikowi vi_diff.txt (lub
+wpisać ":help vi_diff.txt" w Vimie).
+Sprawdź także opis opcji 'compatible' i 'cpoptions'.

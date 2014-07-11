@@ -1,0 +1,180 @@
+*usr_32.txt*	For Vim version 7.4.  Last change: 2010 Jul 20
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			      The undo tree
+
+
+Vim provides multi-level undo.  If you undo a few changes and then make a new
+change you create a branch in the undo tree.  This text is about moving
+through the branches.
+
+|32.1|	Undo up to a file write
+|32.2|	Numbering changes
+|32.3|	Jumping around the tree
+|32.4|	Time travelling
+
+     Next chapter: |usr_40.txt|  Make new commands
+ Previous chapter: |usr_31.txt|  Exploiting the GUI
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*32.1*	Undo up to a file write
+
+Sometimes you make several changes, and then discover you want to go back to
+when you have last written the file.  You can do that with this command: >
+
+	:earlier 1f
+
+The "f" stands for "file" here.
+
+You can repeat this command to go further back in the past.  Or use a count
+different from 1 to go back faster.
+
+If you go back too far, go forward again with: >
+
+	:later 1f
+
+Note that these commands really work in time sequence.  This matters if you
+made changes after undoing some changes.  It's explained in the next section.
+
+Also note that we are talking about text writes here.  For writing the undo
+information in a file see |undo-persistence|.
+
+==============================================================================
+*32.2*	Numbering changes
+
+In section |02.5| we only discussed one line of undo/redo.  But it is also
+possible to branch off.  This happens when you undo a few changes and then
+make a new change.  The new changes become a branch in the undo tree.
+
+Let's start with the text "one".  The first change to make is to append
+" too".  And then move to the first 'o' and change it into 'w'.  We then have
+two changes, numbered 1 and 2, and three states of the text:
+
+		one ~
+		 |
+	      change 1
+		 |
+	      one too ~
+		 |
+	      change 2
+		 |
+	      one two ~
+
+If we now undo one change, back to "one too", and change "one" to "me" we
+create a branch in the undo tree:
+
+		one ~
+		 |
+	      change 1
+		 |
+	      one too ~
+	      /     \
+	 change 2  change 3
+	    |	      |
+	 one two    me too ~
+
+You can now use the |u| command to undo.  If you do this twice you get to
+"one".  Use |CTRL-R| to redo, and you will go to "one too".  One more |CTRL-R|
+takes you to "me too".  Thus undo and redo go up and down in the tree, using
+the branch that was last used.
+
+What matters here is the order in which the changes are made.  Undo and redo
+are not considered changes in this context.  After each change you have a new
+state of the text.
+
+Note that only the changes are numbered, the text shown in the tree above has
+no identifier.  They are mostly referred to by the number of the change above
+it.  But sometimes by the number of one of the changes below it, especially
+when moving up in the tree, so that you know which change was just undone.
+
+==============================================================================
+*32.3*	Jumping around the tree
+
+So how do you get to "one two" now?  You can use this command: >
+
+	:undo 2
+
+The text is now "one two", you are below change 2.  You can use the |:undo|
+command to jump to below any change in the tree.
+
+Now make another change: change "one" to "not":
+
+		one ~
+		 |
+	      change 1
+		 |
+	      one too ~
+	      /     \
+	 change 2  change 3
+	    |	      |
+	 one two    me too ~
+	    |
+	 change 4
+	    |
+	 not two ~
+
+Now you change your mind and want to go back to "me too".  Use the |g-|
+command.  This moves back in time.  Thus it doesn't walk the tree upwards or
+downwards, but goes to the change made before.
+
+You can repeat |g-| and you will see the text change:
+	me too ~
+	one two ~
+	one too ~
+	one ~
+
+Use |g+| to move forward in time:
+	one ~
+	one too ~
+	one two ~
+	me too ~
+	not two ~
+
+Using |:undo| is useful if you know what change you want to jump to.  |g-| and
+|g+| are useful if you don't know exactly what the change number is.
+
+You can type a count before |g-| and |g+| to repeat them.
+
+==============================================================================
+*32.4*	Time travelling
+
+When you have been working on text for a while the tree grows to become big.
+Then you may want to go to the text of some minutes ago.
+
+To see what branches there are in the undo tree use this command: >
+
+	:undolist
+<	number changes  time ~
+	     3       2  16 seconds ago
+	     4       3  5 seconds ago
+
+Here you can see the number of the leaves in each branch and when the change
+was made.  Assuming we are below change 4, at "not two", you can go back ten
+seconds with this command: >
+
+	:earlier 10s
+
+Depending on how much time you took for the changes you end up at a certain
+position in the tree.  The |:earlier| command argument can be "m" for minutes,
+"h" for hours and "d" for days.  To go all the way back use a big number: >
+
+	:earlier 100d
+
+To travel forward in time again use the |:later| command: >
+
+	:later 1m
+
+The arguments are "s", "m" and "h", just like with |:earlier|.
+
+If you want even more details, or want to manipulate the information, you can
+use the |undotree()| function.  To see what it returns: >
+
+	:echo undotree()
+
+==============================================================================
+
+Next chapter: |usr_40.txt|  Make new commands
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

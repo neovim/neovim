@@ -1,0 +1,140 @@
+*debugger.txt*  For Vim version 7.4.  Last change: 2005 Mar 29
+
+
+		  VIM REFERENCE MANUAL    by Gordon Prieur
+
+
+Debugger Support Features				*debugger-support*
+
+1. Debugger Features		|debugger-features|
+2. Vim Compile Options		|debugger-compilation|
+3. Integrated Debuggers		|debugger-integration|
+
+{Vi does not have any of these features}
+
+==============================================================================
+1. Debugger Features					*debugger-features*
+
+The following features are available for an integration with a debugger or
+an Integrated Programming Environment (IPE) or Integrated Development
+Environment (IDE):
+
+	Alternate Command Input				|alt-input|
+	Debug Signs					|debug-signs|
+	Debug Source Highlight				|debug-highlight|
+	Message Footer					|gui-footer|
+	Balloon Evaluation				|balloon-eval|
+
+These features were added specifically for use in the Motif version of gvim.
+However, the |alt-input| and |debug-highlight| were written to be usable in
+both vim and gvim.  Some of the other features could be used in the non-GUI
+vim with slight modifications.  However, I did not do this nor did I test the
+reliability of building for vim or non Motif GUI versions.
+
+
+1.1 Alternate Command Input				*alt-input*
+
+For Vim to work with a debugger there must be at least an input connection
+with a debugger or external tool.  In many cases there will also be an output
+connection but this isn't absolutely necessary.
+
+The purpose of the input connection is to let the external debugger send
+commands to Vim.  The commands sent by the debugger should give the debugger
+enough control to display the current debug environment and state.
+
+The current implementation is based on the X Toolkit dispatch loop and the
+XtAddInput() function call.
+
+
+1.2 Debug Signs						*debug-signs*
+
+Many debuggers mark specific lines by placing a small sign or color highlight
+on the line.  The |:sign| command lets the debugger set this graphic mark.  Some
+examples where this feature would be used would be a debugger showing an arrow
+representing the Program Counter (PC) of the program being debugged.  Another
+example would be a small stop sign for a line with a breakpoint.  These visible
+highlights let the user keep track of certain parts of the state of the
+debugger.
+
+This feature can be used with more than debuggers, too.  An IPE can use a sign
+to highlight build errors, searched text, or other things.  The sign feature
+can also work together with the |debug-highlight| to ensure the mark is
+highly visible.
+
+Debug signs are defined and placed using the |:sign| command.
+
+
+1.3 Debug Source Highlight				*debug-highlight*
+
+This feature allows a line to have a predominant highlight.  The highlight is
+intended to make a specific line stand out.  The highlight could be made to
+work for both vim and gvim, whereas the debug sign is, in most cases, limited
+to gvim.  The one exception to this is Sun Microsystem's dtterm.  The dtterm
+from Sun has a "sign gutter" for showing signs.
+
+
+1.4 Message Footer					*gui-footer*
+
+The message footer can be used to display messages from a debugger or IPE.  It
+can also be used to display menu and toolbar tips.  The footer area is at the
+bottom of the GUI window, below the line used to display colon commands.
+
+The display of the footer is controlled by the 'guioptions' letter 'F'.
+
+
+1.5 Balloon Evaluation					*balloon-eval*
+
+This feature allows a debugger, or other external tool, to display dynamic
+information based on where the mouse is pointing.  The purpose of this feature
+was to allow Sun's Visual WorkShop debugger to display expression evaluations.
+However, the feature was implemented in as general a manner as possible and
+could be used for displaying other information as well.
+
+The Balloon Evaluation has some settable parameters too.  For Motif the font
+list and colors can be set via X resources (XmNballoonEvalFontList,
+XmNballoonEvalBackground, and XmNballoonEvalForeground).
+The 'balloondelay' option sets the delay before an attempt is made to show a
+balloon.
+The 'ballooneval' option needs to be set to switch it on.
+
+Balloon evaluation is only available when compiled with the |+balloon_eval|
+feature.
+
+The Balloon evaluation functions are also used to show a tooltip for the
+toolbar.  The 'ballooneval' option does not need to be set for this.  But the
+other settings apply.
+
+Another way to use the balloon is with the 'balloonexpr' option.  This is
+completely user definable.
+
+==============================================================================
+2. Vim Compile Options					*debugger-compilation*
+
+The debugger features were added explicitly for use with Sun's Visual
+WorkShop Integrated Programming Environment (ipe).  However, they were done
+in as generic a manner as possible so that integration with other debuggers
+could also use some or all of the tools used with Sun's ipe.
+
+The following compile time preprocessor variables control the features:
+
+    Alternate Command Input			ALT_X_INPUT
+    Debug Glyphs				FEAT_SIGNS
+    Debug Highlights				FEAT_SIGNS
+    Message Footer				FEAT_FOOTER
+    Balloon Evaluation				FEAT_BEVAL
+
+The first integration with a full IPE/IDE was with Sun Visual WorkShop.  To
+compile a gvim which interfaces with VWS set the following flag, which sets
+all the above flags:
+
+    Sun Visual WorkShop				FEAT_SUN_WORKSHOP
+
+==============================================================================
+3. Integrated Debuggers					*debugger-integration*
+
+One fully integrated debugger/IPE/IDE is Sun's Visual WorkShop Integrated
+Programming Environment.
+
+For Sun NetBeans support see |netbeans|.
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:

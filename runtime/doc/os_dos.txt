@@ -1,0 +1,296 @@
+*os_dos.txt*    For Vim version 7.4.  Last change: 2006 Mar 30
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+							*dos* *DOS*
+This file documents the common particularities of the MS-DOS and Win32
+versions of Vim.  Also see |os_win32.txt| and |os_msdos.txt|.
+
+1. File locations		|dos-locations|
+2. Using backslashes		|dos-backslash|
+3. Standard mappings		|dos-standard-mappings|
+4. Screen output and colors	|dos-colors|
+5. File formats			|dos-file-formats|
+6. :cd command			|dos-:cd|
+7. Interrupting			|dos-CTRL-Break|
+8. Temp files			|dos-temp-files|
+9. Shell option default		|dos-shell|
+
+==============================================================================
+1. File locations					*dos-locations*
+
+If you keep the Vim executable in the directory that contains the help and
+syntax subdirectories, there is no need to do anything special for Vim to
+work.  No registry entries or environment variables need to be set.  Just make
+sure that the directory is in your search path, or use a shortcut on the
+desktop.
+
+Your vimrc files ("_vimrc" and "_gvimrc") are normally located one directory
+up from the runtime files.  If you want to put them somewhere else, set the
+environment variable $VIM to the directory where you keep them.  Example: >
+	set VIM=C:\user\piet
+Will find "c:\user\piet\_vimrc".
+Note: This would only be needed when the computer is used by several people.
+Otherwise it's simpler to keep your _vimrc file in the default place.
+
+If you move the executable to another location, you also need to set the $VIM
+environment variable.  The runtime files will be found in "$VIM/vim{version}".
+Example: >
+	set VIM=E:\vim
+Will find the version 5.4 runtime files in "e:\vim\vim54".
+Note: This is _not_ recommended.  The preferred way is to keep the executable
+in the runtime directory.
+
+If you move your executable AND want to put your "_vimrc" and "_gvimrc" files
+somewhere else, you must set $VIM to where you vimrc files are, and set
+$VIMRUNTIME to the runtime files.  Example: >
+	set VIM=C:\usr\piet
+	set VIMRUNTIME=E:\vim\vim54
+Will find "c:\user\piet\_vimrc" and the runtime files in "e:\vim\vim54".
+
+See |$VIM| and |$VIMRUNTIME| for more information.
+
+Under Windows 95, you can set $VIM in your C:\autoexec.bat file.  For
+example: >
+  set VIM=D:\vim
+Under Windows NT, you can set environment variables for each user separately
+under "Start/Settings/Control Panel->System", or through the properties in the
+menu of "My Computer", under the Environment Tab.
+
+==============================================================================
+2. Using backslashes					*dos-backslash*
+
+Using backslashes in file names can be a problem.  Vi halves the number of
+backslashes for some commands.  Vim is a bit more tolerant and does not remove
+backslashes from a file name, so ":e c:\foo\bar" works as expected.  But when
+a backslash occurs before a special character (space, comma, backslash, etc.),
+Vim removes the backslash.  Use slashes to avoid problems: ":e c:/foo/bar"
+works fine.  Vim replaces the slashes with backslashes internally to avoid
+problems with some MS-DOS programs and Win32 programs.
+
+When you prefer to use forward slashes, set the 'shellslash' option.  Vim will
+then replace backslashes with forward slashes when expanding file names.  This
+is especially useful when using a Unix-like 'shell'.
+
+==============================================================================
+3. Standard mappings				*dos-standard-mappings*
+
+The mappings for CTRL-PageUp and CTRL-PageDown have been removed, they now
+jump to the next or previous tab page |<C-PageUp>| |<C-PageDown>|
+
+If you want them to move to the first and last screen line you can use these
+mappings:
+
+key		key code     Normal/Visual mode	    Insert mode ~
+CTRL-PageUp	<M-N><M-C-D>	    H		    <C-O>H
+CTRL-PageDown	<M-N>v		    L$		    <C-O>L<C-O>$
+
+Additionally, these keys are available for copy/cut/paste.  In the Win32
+and DJGPP versions, they also use the clipboard.
+
+Shift-Insert	paste text (from clipboard)			*<S-Insert>*
+CTRL-Insert	copy Visual text (to clipboard)			*<C-Insert>*
+CTRL-Del	cut Visual text (to clipboard)			*<C-Del>*
+Shift-Del	cut Visual text (to clipboard)			*<S-Del>*
+
+These mappings accomplish this (Win32 and DJGPP versions of Vim):
+
+key		key code     Normal	Visual	    Insert ~
+Shift-Insert	<M-N><M-T>   "*P	"-d"*P      <C-R><C-O>*
+CTRL-Insert	<M-N><M-U>		"*y
+Shift-Del	<M-N><M-W>		"*d
+CTRL-Del	<M-N><M-X>		"*d
+
+Or these mappings (non-Win32 version of Vim):
+
+key		key code     Normal	Visual	    Insert ~
+Shift-Insert	<M-N><M-T>   P		"-dP	    <C-R><C-O>"
+CTRL-Insert	<M-N><M-U>		y
+Shift-Del	<M-N><M-W>		d
+CTRL-Del	<M-N><M-X>		d
+
+When the clipboard is supported, the "* register is used.
+
+==============================================================================
+4. Screen output and colors				*dos-colors*
+
+The default output method for the screen is to use bios calls.  This works
+right away on most systems.  You do not need ansi.sys.  You can use ":mode" to
+set the current screen mode.  See |:mode|.
+
+To change the screen colors that Vim uses, you can use the |:highlight|
+command.  The Normal highlight group specifies the colors Vim uses for normal
+text.  For example, to get grey text on a blue background: >
+	:hi Normal ctermbg=Blue ctermfg=grey
+See |highlight-groups| for other groups that are available.
+
+A DOS console does not support attributes like bold and underlining.  You can
+set the color used in five modes with nine terminal options.  Note that this
+is not necessary since you can set the color directly with the ":highlight"
+command; these options are for backward compatibility with older Vim versions.
+The |'highlight'| option specifies which of the five modes is used for which
+action. >
+
+	:set t_mr=^V^[\|xxm		start of invert mode
+	:set t_md=^V^[\|xxm		start of bold mode
+	:set t_me=^V^[\|xxm		back to normal text
+
+	:set t_so=^V^[\|xxm		start of standout mode
+	:set t_se=^V^[\|xxm		back to normal text
+
+	:set t_us=^V^[\|xxm		start of underline mode
+	:set t_ue=^V^[\|xxm		back to normal text
+
+	:set t_ZH=^V^[\|xxm		start of italics mode
+	:set t_ZR=^V^[\|xxm		back to normal text
+
+^V is CTRL-V
+^[ is <Esc>
+You must replace xx with a decimal code, which is the foreground color number
+and background color number added together:
+
+COLOR			FOREGROUND	BACKGROUND	~
+Black			    0		    0
+DarkBlue		    1		   16
+DarkGreen		    2		   32
+DarkCyan		    3		   48
+DarkRed			    4		   64
+DarkMagenta		    5		   80
+Brown, DarkYellow	    6		   96
+LightGray		    7		  112
+DarkGray		    8		  128 *
+Blue, LightBlue		    9		  144 *
+Green, LightGreen	   10		  160 *
+Cyan, LightCyan		   11		  176 *
+Red, LightRed		   12		  192 *
+Magenta, LightMagenta	   13		  208 *
+Yellow, LightYellow	   14		  224 *
+White			   15		  240 *
+
+* Depending on the display mode, the color codes above 128 may not be
+  available, and code 128 will make the text blink.
+
+When you use 0, the color is reset to the one used when you started Vim
+(usually 7, lightgray on black, but you can override this.  If you have
+overridden the default colors in a command prompt, you may need to adjust
+some of the highlight colors in your vimrc---see below).
+This is the default for t_me.
+
+The defaults for the various highlight modes are:
+	t_mr	112	 reverse mode: Black text (0) on LightGray (112)
+	t_md	 15	 bold mode: White text (15) on Black (0)
+	t_me	  0	 normal mode (revert to default)
+
+	t_so	 31	 standout mode: White (15) text on DarkBlue (16)
+	t_se	  0	 standout mode end (revert to default)
+
+	t_czh	225	 italic mode: DarkBlue text (1) on Yellow (224)
+	t_czr	  0	 italic mode end (revert to default)
+
+	t_us	 67	 underline mode: DarkCyan text (3) on DarkRed (64)
+	t_ue	  0	 underline mode end (revert to default)
+
+These colors were chosen because they also look good when using an inverted
+display, but you can change them to your liking.
+
+Example: >
+  :set t_mr=^V^[\|97m	" start of invert mode: DarkBlue (1) on Brown (96)
+  :set t_md=^V^[\|67m	" start of bold mode: DarkCyan (3) on DarkRed (64)
+  :set t_me=^V^[\|112m	" back to normal mode: Black (0) on LightGray (112)
+
+  :set t_so=^V^[\|37m	" start of standout mode: DarkMagenta (5) on DarkGreen
+									(32)
+  :set t_se=^V^[\|112m	" back to normal mode: Black (0) on LightGray (112)
+
+==============================================================================
+5. File formats						*dos-file-formats*
+
+If the 'fileformat' option is set to "dos" (which is the default), Vim accepts
+a single <NL> or a <CR><NL> pair for end-of-line (<EOL>).  When writing a
+file, Vim uses <CR><NL>.  Thus, if you edit a file and write it, Vim replaces
+<NL> with <CR><NL>.
+
+If the 'fileformat' option is set to "unix", Vim uses a single <NL> for <EOL>
+and shows <CR> as ^M.
+
+You can use Vim to replace <NL> with <CR><NL> by reading in any mode and
+writing in Dos mode (":se ff=dos").
+You can use Vim to replace <CR><NL> with <NL> by reading in Dos mode and
+writing in Unix mode (":se ff=unix").
+
+Vim sets 'fileformat' automatically when 'fileformats' is not empty (which is
+the default), so you don't really have to worry about what you are doing.
+					|'fileformat'| |'fileformats'|
+
+If you want to edit a script file or a binary file, you should set the
+'binary' option before loading the file.  Script files and binary files may
+contain single <NL> characters which Vim would replace with <CR><NL>.  You can
+set 'binary' automatically by starting Vim with the "-b" (binary) option.
+
+==============================================================================
+6. :cd command						*dos-:cd*
+
+The ":cd" command recognizes the drive specifier and changes the current
+drive.  Use ":cd c:" to make drive C the active drive.  Use ":cd d:\foo" to go
+to the directory "foo" in the root of drive D.  Vim also recognizes UNC names
+if the system supports them; e.g., ":cd \\server\share\dir".  |:cd|
+
+==============================================================================
+7. Interrupting						*dos-CTRL-Break*
+
+Use CTRL-Break instead of CTRL-C to interrupt searches.  Vim does not detect
+the CTRL-C until it tries to read a key.
+
+==============================================================================
+8. Temp files						*dos-temp-files*
+
+Only for the 16 bit and 32 bit DOS version:
+Vim puts temporary files (for filtering) in the first of these directories
+that exists and in which Vim can create a file:
+	$TMP
+	$TEMP
+	C:\TMP
+	C:\TEMP
+	current directory
+
+For the Win32 version (both console and GUI):
+Vim uses standard Windows functions to obtain a temporary file name (for
+filtering).  The first of these directories that exists and in which Vim can
+create a file is used:
+	$TMP
+	$TEMP
+	current directory
+
+==============================================================================
+9. Shell option default					*dos-shell*
+
+The default for the 'sh' ('shell') option is "command.com" on Windows 95 and
+"cmd.exe" on Windows NT.  If SHELL is defined, Vim uses SHELL instead, and if
+SHELL is not defined but COMSPEC is, Vim uses COMSPEC.  Vim starts external
+commands with "<shell> /c <command_name>".  Typing CTRL-Z starts a new command
+subshell.  Return to Vim with "exit".	|'shell'| |CTRL-Z|
+
+If you are running a third-party shell, you may need to set the
+|'shellcmdflag'| ('shcf') and |'shellquote'| ('shq') or |'shellxquote'|
+('sxq') options.  Unfortunately, this also depends on the version of Vim used.
+For example, with the MKS Korn shell or with bash, the values of the options
+should be:
+
+		DOS 16 bit	    DOS 32 bit		Win32  ~
+'shellcmdflag'	   -c			-c		 -c
+'shellquote'	   "
+'shellxquote'						 "
+
+For Dos 16 bit this starts the shell as:
+	<shell> -c "command name" >file
+For Win32 as:
+	<shell> -c "command name >file"
+For DOS 32 bit, DJGPP does this internally somehow.
+
+When starting up, Vim checks for the presence of "sh" anywhere in the 'shell'
+option.  If it is present, Vim sets the 'shellcmdflag' and 'shellquote' or
+'shellxquote' options will be set as described above.
+
+ vim:tw=78:ts=8:ft=help:norl:

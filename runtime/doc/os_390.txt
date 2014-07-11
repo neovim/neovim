@@ -1,0 +1,135 @@
+*os_390.txt*    For Vim version 7.4.  Last change: 2010 May 30
+
+
+		  VIM REFERENCE MANUAL	  by Ralf Schandl
+
+					*zOS* *z/OS* *OS390* *os390* *MVS*
+This file contains the particulars for the z/OS UNIX version of Vim.
+
+1. ASCII/EBCDIC dependent scripts	|zOS-has-ebcdic|
+2. Putty and Colors                     |zOS-PuTTY|
+3. Motif Problems			|zOS-Motif|
+4. Bugs					|zOS-Bugs|
+5. Limitations     			|zOS-limitations|
+6. Open source on z/OS UNIX		|zOS-open-source|
+
+Contributors: ~
+The port to z/OS UNIX was done by Ralf Schandl for the Redbook mentioned
+below.
+
+Changes, bug-reports, or both by:
+
+	David Moore
+	Anthony Giorgio
+	and others
+
+==============================================================================
+1. ASCII/EBCDIC dependent scripts	*OS390-has-ebcdic* *zOS-has-ebcdic*
+
+For the internal script language the feature "ebcdic" was added.  With this
+you can fix ASCII dependent scripts like this:
+>
+    if has("ebcdic")
+	let space = 64
+    else
+	let space = 32
+    endif
+<
+
+==============================================================================
+2. PuTTY and Colors			*OS390-PuTTY* *zOS-PuTTY*
+
+If you see problems with syntax highlighting or screen corruptions when you
+connect to z/OS using Putty, try the following:
+
+- Configure Putty as "vt220" terminal (Connection->Data)
+- Add the following 3 lines to your vimrc:
+
+>
+    set t_AB=[4%p1%dm
+    set t_AF=[3%p1%dm
+    set t_CO=8
+<
+
+Note:  is one character use <C-V><Esc> to enter it.
+
+==============================================================================
+3. Motif Problems			*OS390-Motif* *zOS-Motif*
+
+Note: Seen with Vim 6.*, never tested since.
+
+It seems that in porting the Motif library to z/OS, a translation from EBCDIC
+to ASCII for the accelerator characters of the pull-down menus was forgotten.
+Even after I tried to hand convert the menus, the accelerator keys continued
+to only work for the opening of menus (like <Alt-F> to open the file menu).
+They still do not work for the menu items themselves (like <Alt-F>O to open
+the file browser).
+
+There is no solution for this yet.
+
+==============================================================================
+4. Bugs					*OS390-bugs* *zOS-Bugs*
+
+- Vim will consistently hang when a large amount of text is selected in
+  visual block mode.  This may be due to a memory corruption issue.  Note that
+  this occurs in both the terminal and gui versions.
+
+==============================================================================
+5. Limitations     			*OS390-limitations* *zOS-limitations*
+
+- No binary search in tag files.
+  The program /bin/sort sorts by ASCII value by default.  This program is
+  normally used by ctags to sort the tags.  There might be a version of
+  ctags out there, that does it right, but we can't be sure.  So this seems to
+  be a permanent restriction.
+
+- The cscope interface (|cscope|) doesn't work for the version of cscope
+  that we use on our mainframe.  We have a copy of version 15.0b12, and it
+  causes Vim to hang when using the "cscope add" command.  I'm guessing that
+  the binary format of the cscope database isn't quite what Vim is expecting.
+  I've tried to port the current version of cscope (15.3) to z/OS, without
+  much success.  If anyone is interested in trying, drop me a line if you
+  make any progress.
+
+- No glib/gtk support.  I have not been able to successfully compile glib on
+  z/OS UNIX.  This means you'll have to live without the pretty gtk toolbar.
+ 
+Disabled at compile time:
+    - Multibyte support         (|multibyte|)
+    - Right-to-left mode        (|rileft|)
+    - Farsi key map             (|Farsi|)
+    - Arabic language support   (|Arabic|)
+    - Spell checking            (|spell|)
+
+Never tested:
+    - Perl interface		(|perl|)
+    - Hangul input		(|hangul|)
+    - Encryption support	(|encryption|)
+    - Langmap			(|'langmap'|)
+    - Python support		(|Python|)
+    - Right-to-left mode	(|'rightleft'|)
+    - SNiFF+ interface		(|sniff|)
+    - TCL interface		(|tcl|)
+    ...
+
+==============================================================================
+6. Open source on z/OS UNIX		*OS390-open-source* *zOS-open-source*
+
+If you are interested in other Open Source Software on z/OS UNIX, have a
+look at the following Redbook:
+
+    Mike MacIsaac et al
+    "Open Source Software for z/OS and OS/390 UNIX"
+    IBM Form Number: SG24-5944-01
+    ISBN: 0738424633
+    http://www-03.ibm.com/systems/resources/servers_eserver_zseries_zos_unix_redbook_sg245944.pdf
+
+Also look at:
+    http://www.redbooks.ibm.com
+    http://www-03.ibm.com/systems/z/os/zos/features/unix/
+    http://www-03.ibm.com/systems/z/os/zos/features/unix/library/IBM+Redbooks/index.html
+
+
+
+------------------------------------------------------------------------------
+ vim:tw=78:fo=tcq2:ts=8:ft=help:norl:

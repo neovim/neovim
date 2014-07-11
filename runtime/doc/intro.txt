@@ -1,0 +1,886 @@
+*intro.txt*     For Vim version 7.4.  Last change: 2014 May 24
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Introduction to Vim					*ref* *reference*
+
+1. Introduction			|intro|
+2. Vim on the internet		|internet|
+3. Credits			|credits|
+4. Notation			|notation|
+5. Modes, introduction		|vim-modes-intro|
+6. Switching from mode to mode	|mode-switching|
+7. The window contents		|window-contents|
+8. Definitions			|definitions|
+
+==============================================================================
+1. Introduction						*intro*
+
+Vim stands for Vi IMproved.  It used to be Vi IMitation, but there are so many
+improvements that a name change was appropriate.  Vim is a text editor which
+includes almost all the commands from the Unix program "Vi" and a lot of new
+ones.  It is very useful for editing programs and other plain text.
+   All commands are given with the keyboard.  This has the advantage that you
+can keep your fingers on the keyboard and your eyes on the screen.  For those
+who want it, there is mouse support and a GUI version with scrollbars and
+menus (see |gui.txt|).
+
+An overview of this manual can be found in the file "help.txt", |help.txt|.
+It can be accessed from within Vim with the <Help> or <F1> key and with the
+|:help| command (just type ":help", without the bars or quotes).
+   The 'helpfile' option can be set to the name of the help file, in case it
+is not located in the default place.  You can jump to subjects like with tags:
+Use CTRL-] to jump to a subject under the cursor, use CTRL-T to jump back.
+
+Throughout this manual the differences between Vi and Vim are mentioned in
+curly braces, like this: {Vi does not have on-line help}.  See |vi_diff.txt|
+for a summary of the differences between Vim and Vi.
+
+This manual refers to Vim on various machines.  There may be small differences
+between different computers and terminals.  Besides the remarks given in this
+document, there is a separate document for each supported system, see
+|sys-file-list|.
+
+							*pronounce*
+Vim is pronounced as one word, like Jim, not vi-ai-em.  It's written with a
+capital, since it's a name, again like Jim.
+
+This manual is a reference for all the Vim commands and options.  This is not
+an introduction to the use of Vi or Vim, it gets a bit complicated here and
+there.  For beginners, there is a hands-on |tutor|.  To learn using Vim, read
+the user manual |usr_toc.txt|.
+
+							*book*
+There are many books on Vi that contain a section for beginners.  There are
+two books I can recommend:
+
+	"Vim - Vi Improved" by Steve Oualline
+
+This is the very first book completely dedicated to Vim.  It is very good for
+beginners.  The most often used commands are explained with pictures and
+examples.  The less often used commands are also explained, the more advanced
+features are summarized.  There is a comprehensive index and a quick
+reference.  Parts of this book have been included in the user manual
+|frombook|.
+Published by New Riders Publishing.  ISBN: 0735710015
+For more information try one of these:
+	http://iccf-holland.org/click5.html
+	http://www.vim.org/iccf/click5.html
+
+	"Learning the Vi editor" by Linda Lamb and Arnold Robbins
+
+This is a book about Vi that includes a chapter on Vim (in the sixth edition).
+The first steps in Vi are explained very well.  The commands that Vim adds are
+only briefly mentioned.  There is also a German translation.
+Published by O'Reilly.  ISBN: 1-56592-426-6.
+
+==============================================================================
+2. Vim on the internet					*internet*
+
+			*www* *WWW*  *faq* *FAQ* *distribution* *download*
+The Vim pages contain the most recent information about Vim.  They also
+contain links to the most recent version of Vim.  The FAQ is a list of
+Frequently Asked Questions.  Read this if you have problems.
+
+	VIM home page:	  http://www.vim.org/
+	VIM FAQ:	  http://vimdoc.sf.net/
+	Downloading:	  ftp://ftp.vim.org/pub/vim/MIRRORS
+
+
+Usenet News group where Vim is discussed:		*news* *usenet*
+	comp.editors
+This group is also for other editors.  If you write about Vim, don't forget to
+mention that.
+
+						*mail-list* *maillist*
+There are several mailing lists for Vim:
+<vim@vim.org>
+	For discussions about using existing versions of Vim: Useful mappings,
+	questions, answers, where to get a specific version, etc.  There are
+	quite a few people watching this list and answering questions, also
+	for beginners.  Don't hesitate to ask your question here.
+<vim-dev@vim.org>				*vim-dev* *vimdev*
+	For discussions about changing Vim: New features, porting, patches,
+	beta-test versions, etc.
+<vim-announce@vim.org>				*vim-announce*
+	Announcements about new versions of Vim; also for beta-test versions
+	and ports to different systems.  This is a read-only list.
+<vim-multibyte@vim.org>				*vim-multibyte*
+	For discussions about using and improving the multi-byte aspects of
+	Vim.
+<vim-mac@vim.org>				*vim-mac*
+	For discussions about using and improving the Macintosh version of
+	Vim.
+
+See http://www.vim.org/maillist.php for the latest information.
+
+NOTE:
+- You can only send messages to these lists if you have subscribed!
+- You need to send the messages from the same location as where you subscribed
+  from (to avoid spam mail).
+- Maximum message size is 40000 characters.
+
+						*subscribe-maillist*
+If you want to join, send a message to
+	<vim-subscribe@vim.org>
+Make sure that your "From:" address is correct.  Then the list server will
+give you help on how to subscribe.
+
+						*maillist-archive*
+For more information and archives look on the Vim maillist page:
+http://www.vim.org/maillist.php
+
+
+Bug reports:				*bugs* *bug-reports* *bugreport.vim*
+
+Send bug reports to: Vim Developers <vim_dev@vim.org>
+This is a maillist, you need to become a member first and many people will see
+the message.  If you don't want that, e.g. because it is a security issue,
+send it to <bugs@vim.org>, this only goes to the Vim maintainer (that's Bram).
+
+Please be brief; all the time that is spent on answering mail is subtracted
+from the time that is spent on improving Vim!  Always give a reproducible
+example and try to find out which settings or other things influence the
+appearance of the bug.  Try different machines, if possible.  Send me patches
+if you can!
+
+It will help to include information about the version of Vim you are using and
+your setup.  You can get the information with this command: >
+   :so $VIMRUNTIME/bugreport.vim
+This will create a file "bugreport.txt" in the current directory, with a lot
+of information of your environment.  Before sending this out, check if it
+doesn't contain any confidential information!
+
+If Vim crashes, please try to find out where.  You can find help on this here:
+|debug.txt|.
+
+In case of doubt or when you wonder if the problem has already been fixed but
+you can't find a fix for it, become a member of the vim-dev maillist and ask
+your question there. |maillist|
+
+							*year-2000* *Y2K*
+Since Vim internally doesn't use dates for editing, there is no year 2000
+problem to worry about.  Vim does use the time in the form of seconds since
+January 1st 1970.  It is used for a time-stamp check of the edited file and
+the swap file, which is not critical and should only cause warning messages.
+
+There might be a year 2038 problem, when the seconds don't fit in a 32 bit int
+anymore.  This depends on the compiler, libraries and operating system.
+Specifically, time_t and the ctime() function are used.  And the time_t is
+stored in four bytes in the swap file.  But that's only used for printing a
+file date/time for recovery, it will never affect normal editing.
+
+The Vim strftime() function directly uses the strftime() system function.
+localtime() uses the time() system function.  getftime() uses the time
+returned by the stat() system function.  If your system libraries are year
+2000 compliant, Vim is too.
+
+The user may create scripts for Vim that use external commands.  These might
+introduce Y2K problems, but those are not really part of Vim itself.
+
+==============================================================================
+3. Credits				*credits* *author* *Bram* *Moolenaar*
+
+Most of Vim was written by Bram Moolenaar <Bram@vim.org>.
+
+Parts of the documentation come from several Vi manuals, written by:
+	W.N. Joy
+	Alan P.W. Hewett
+	Mark Horton
+
+The Vim editor is based on Stevie and includes (ideas from) other software,
+worked on by the people mentioned here.  Other people helped by sending me
+patches, suggestions and giving feedback about what is good and bad in Vim.
+
+Vim would never have become what it is now, without the help of these people!
+
+	Ron Aaron		Win32 GUI changes
+	Mohsin Ahmed		encryption
+	Zoltan Arpadffy		work on VMS port
+	Tony Andrews		Stevie
+	Gert van Antwerpen	changes for DJGPP on MS-DOS
+	Berkeley DB(3)		ideas for swap file implementation
+	Keith Bostic		Nvi
+	Walter Briscoe		Makefile updates, various patches
+	Ralf Brown		SPAWNO library for MS-DOS
+	Robert Colon		many useful remarks
+	Marcin Dalecki		GTK+ GUI port, toolbar icons, gettext()
+	Kayhan Demirel		sent me news in Uganda
+	Chris & John Downey	xvi (ideas for multi-windows version)
+	Henk Elbers		first VMS port
+	Daniel Elstner		GTK+ 2 port
+	Eric Fischer		Mac port, 'cindent', and other improvements
+	Benji Fisher		Answering lots of user questions
+	Bill Foster		Athena GUI port
+	Google			Lets me work on Vim one day a week
+	Loic Grenie		xvim (ideas for multi windows version)
+	Sven Guckes		Vim promoter and previous WWW page maintainer
+	Darren Hiebert		Exuberant ctags
+	Jason Hildebrand	GTK+ 2 port
+	Bruce Hunsaker		improvements for VMS port
+	Andy Kahn		Cscope support, GTK+ GUI port
+	Oezguer Kesim		Maintainer of Vim Mailing Lists
+	Axel Kielhorn		work on the Macintosh port
+	Steve Kirkendall	Elvis
+	Roger Knobbe		original port to Windows NT
+	Sergey Laskavy		Vim's help from Moscow
+	Felix von Leitner	Previous maintainer of Vim Mailing Lists
+	David Leonard		Port of Python extensions to Unix
+	Avner Lottem		Edit in right-to-left windows
+	Flemming Madsen		X11 client-server, various features and patches
+	Tony Mechelynck		answers many user questions
+	Paul Moore		Python interface extensions, many patches
+	Katsuhito Nagano	Work on multi-byte versions
+	Sung-Hyun Nam		Work on multi-byte versions
+	Vince Negri		Win32 GUI and generic console enhancements
+	Steve Oualline		Author of the first Vim book |frombook|
+	Dominique Pelle		valgrind reports and many fixes
+	A.Politz		Many bug reports and some fixes
+	George V. Reilly	Win32 port, Win32 GUI start-off
+	Stephen Riehm		bug collector
+	Stefan Roemer		various patches and help to users
+	Ralf Schandl		IBM OS/390 port
+	Olaf Seibert		DICE and BeBox version, regexp improvements
+	Mortaza Shiran		Farsi patches
+	Peter da Silva		termlib
+	Paul Slootman		OS/2 port
+	Henry Spencer		regular expressions
+	Dany St-Amant		Macintosh port
+	Tim Thompson		Stevie
+	G. R. (Fred) Walter	Stevie
+	Sven Verdoolaege	Perl interface
+	Robert Webb		Command-line completion, GUI versions, and
+				lots of patches
+	Ingo Wilken		Tcl interface
+	Mike Williams		PostScript printing
+	Juergen Weigert		Lattice version, AUX improvements, UNIX and
+				MS-DOS ports, autoconf
+	Stefan 'Sec' Zehl	Maintainer of vim.org
+
+I wish to thank all the people that sent me bug reports and suggestions.  The
+list is too long to mention them all here.  Vim would not be the same without
+the ideas from all these people: They keep Vim alive!
+*love* *peace* *friendship* *gross-national-happiness*
+
+
+In this documentation there are several references to other versions of Vi:
+							*Vi* *vi*
+Vi	"the original".  Without further remarks this is the version
+	of Vi that appeared in Sun OS 4.x.  ":version" returns
+	"Version 3.7, 6/7/85".  Sometimes other versions are referred
+	to.  Only runs under Unix.  Source code only available with a
+	license.  More information on Vi can be found through:
+		http://vi-editor.org	[doesn't currently work...]
+							*Posix*
+Posix	From the IEEE standard 1003.2, Part 2: Shell and utilities.
+	Generally known as "Posix".  This is a textual description of
+	how Vi is supposed to work.
+	See |posix-compliance|.
+							*Nvi*
+Nvi	The "New" Vi.  The version of Vi that comes with BSD 4.4 and FreeBSD.
+	Very good compatibility with the original Vi, with a few extensions.
+	The version used is 1.79.  ":version" returns "Version 1.79
+	(10/23/96)".  There has been no release the last few years, although
+	there is a development version 1.81.
+	Source code is freely available.
+							*Elvis*
+Elvis	Another Vi clone, made by Steve Kirkendall.  Very compact but isn't
+	as flexible as Vim.
+	The version used is 2.1.  It is still being developed.  Source code is
+	freely available.
+
+==============================================================================
+4. Notation						*notation*
+
+When syntax highlighting is used to read this, text that is not typed
+literally is often highlighted with the Special group.  These are items in [],
+{} and <>, and CTRL-X.
+
+Note that Vim uses all possible characters in commands.  Sometimes the [], {}
+and <> are part of what you type, the context should make this clear.
+
+
+[]		Characters in square brackets are optional.
+
+						    *count* *[count]*
+[count]		An optional number that may precede the command to multiply
+		or iterate the command.  If no number is given, a count of one
+		is used, unless otherwise noted.  Note that in this manual the
+		[count] is not mentioned in the description of the command,
+		but only in the explanation.  This was done to make the
+		commands easier to look up.  If the 'showcmd' option is on,
+		the (partially) entered count is shown at the bottom of the
+		window.  You can use <Del> to erase the last digit (|N<Del>|).
+
+							*[quotex]*
+["x]		An optional register designation where text can be stored.
+		See |registers|.  The x is a single character between 'a' and
+		'z' or 'A' and 'Z' or '"', and in some cases (with the put
+		command) between '0' and '9', '%', '#', or others.  The
+		uppercase and lowercase letter designate the same register,
+		but the lowercase letter is used to overwrite the previous
+		register contents, while the uppercase letter is used to
+		append to the previous register contents.  Without the ""x" or
+		with """" the stored text is put into the unnamed register.
+
+							*{}*
+{}		Curly braces denote parts of the command which must appear,
+		but which can take a number of different values.  The
+		differences between Vim and Vi are also given in curly braces
+		(this will be clear from the context).
+
+							*{char1-char2}*
+{char1-char2}	A single character from the range char1 to char2.  For
+		example: {a-z} is a lowercase letter.  Multiple ranges may be
+		concatenated.  For example, {a-zA-Z0-9} is any alphanumeric
+		character.
+
+						*{motion}* *movement*
+{motion}	A command that moves the cursor.  These are explained in
+		|motion.txt|.  Examples:
+			w		to start of next word
+			b		to begin of current word
+			4j		four lines down
+			/The<CR>	to next occurrence of "The"
+		This is used after an |operator| command to move over the text
+		that is to be operated upon.
+		- If the motion includes a count and the operator also has a
+		  count, the two counts are multiplied.  For example: "2d3w"
+		  deletes six words.
+		- The motion can be backwards, e.g. "db" to delete to the
+		  start of the word.
+		- The motion can also be a mouse click.  The mouse is not
+		  supported in every terminal though.
+		- The ":omap" command can be used to map characters while an
+		  operator is pending.
+		- Ex commands can be used to move the cursor.  This can be
+		  used to call a function that does some complicated motion.
+		  The motion is always characterwise exclusive, no matter
+		  what ":" command is used.  This means it's impossible to
+		  include the last character of a line without the line break
+		  (unless 'virtualedit' is set).
+		  If the Ex command changes the text before where the operator
+		  starts or jumps to another buffer the result is
+		  unpredictable.  It is possible to change the text further
+		  down.  Jumping to another buffer is possible if the current
+		  buffer is not unloaded.
+
+							*{Visual}*
+{Visual}	A selected text area.  It is started with the "v", "V", or
+		CTRL-V command, then any cursor movement command can be used
+		to change the end of the selected text.
+		This is used before an |operator| command to highlight the
+		text that is to be operated upon.
+		See |Visual-mode|.
+
+							*<character>*
+<character>	A special character from the table below, optionally with
+		modifiers, or a single ASCII character with modifiers.
+
+							*'character'*
+'c'		A single ASCII character.
+
+							*CTRL-{char}*
+CTRL-{char}	{char} typed as a control character; that is, typing {char}
+		while holding the CTRL key down.  The case of {char} does not
+		matter; thus CTRL-A and CTRL-a are equivalent.  But on some
+		terminals, using the SHIFT key will produce another code,
+		don't use it then.
+
+							*'option'*
+'option'	An option, or parameter, that can be set to a value, is
+		enclosed in single quotes.  See |options|.
+
+							*quotecommandquote*
+"command"	A reference to a command that you can type is enclosed in
+		double quotes.
+`command`	New style command, this distinguishes it from other quoted
+		text and strings.
+
+					*key-notation* *key-codes* *keycodes*
+These names for keys are used in the documentation.  They can also be used
+with the ":map" command (insert the key name by pressing CTRL-K and then the
+key you want the name for).
+
+notation	meaning		    equivalent	decimal value(s)	~
+-----------------------------------------------------------------------
+<Nul>		zero			CTRL-@	  0 (stored as 10) *<Nul>*
+<BS>		backspace		CTRL-H	  8	*backspace*
+<Tab>		tab			CTRL-I	  9	*tab* *Tab*
+							*linefeed*
+<NL>		linefeed		CTRL-J	 10 (used for <Nul>)
+<FF>		formfeed		CTRL-L	 12	*formfeed*
+<CR>		carriage return		CTRL-M	 13	*carriage-return*
+<Return>	same as <CR>				*<Return>*
+<Enter>		same as <CR>				*<Enter>*
+<Esc>		escape			CTRL-[	 27	*escape* *<Esc>*
+<Space>		space				 32	*space*
+<lt>		less-than		<	 60	*<lt>*
+<Bslash>	backslash		\	 92	*backslash* *<Bslash>*
+<Bar>		vertical bar		|	124	*<Bar>*
+<Del>		delete				127
+<CSI>		command sequence intro  ALT-Esc 155	*<CSI>*
+<xCSI>		CSI when typed in the GUI		*<xCSI>*
+
+<EOL>		end-of-line (can be <CR>, <LF> or <CR><LF>,
+		depends on system and 'fileformat')	*<EOL>*
+
+<Up>		cursor-up			*cursor-up* *cursor_up*
+<Down>		cursor-down			*cursor-down* *cursor_down*
+<Left>		cursor-left			*cursor-left* *cursor_left*
+<Right>		cursor-right			*cursor-right* *cursor_right*
+<S-Up>		shift-cursor-up
+<S-Down>	shift-cursor-down
+<S-Left>	shift-cursor-left
+<S-Right>	shift-cursor-right
+<C-Left>	control-cursor-left
+<C-Right>	control-cursor-right
+<F1> - <F12>	function keys 1 to 12		*function_key* *function-key*
+<S-F1> - <S-F12> shift-function keys 1 to 12	*<S-F1>*
+<Help>		help key
+<Undo>		undo key
+<Insert>	insert key
+<Home>		home				*home*
+<End>		end				*end*
+<PageUp>	page-up				*page_up* *page-up*
+<PageDown>	page-down			*page_down* *page-down*
+<kHome>		keypad home (upper left)	*keypad-home*
+<kEnd>		keypad end (lower left)		*keypad-end*
+<kPageUp>	keypad page-up (upper right)	*keypad-page-up*
+<kPageDown>	keypad page-down (lower right)	*keypad-page-down*
+<kPlus>		keypad +			*keypad-plus*
+<kMinus>	keypad -			*keypad-minus*
+<kMultiply>	keypad *			*keypad-multiply*
+<kDivide>	keypad /			*keypad-divide*
+<kEnter>	keypad Enter			*keypad-enter*
+<kPoint>	keypad Decimal point		*keypad-point*
+<k0> - <k9>	keypad 0 to 9			*keypad-0* *keypad-9*
+<S-...>		shift-key			*shift* *<S-*
+<C-...>		control-key			*control* *ctrl* *<C-*
+<M-...>		alt-key or meta-key		*meta* *alt* *<M-*
+<A-...>		same as <M-...>			*<A-*
+<D-...>		command-key (Macintosh only)	*<D-*
+<t_xx>		key with "xx" entry in termcap
+-----------------------------------------------------------------------
+
+Note: The shifted cursor keys, the help key, and the undo key are only
+available on a few terminals.  On the Amiga, shifted function key 10 produces
+a code (CSI) that is also used by key sequences.  It will be recognized only
+after typing another key.
+
+Note: There are two codes for the delete key.  127 is the decimal ASCII value
+for the delete key, which is always recognized.  Some delete keys send another
+value, in which case this value is obtained from the termcap entry "kD".  Both
+values have the same effect.  Also see |:fixdel|.
+
+Note: The keypad keys are used in the same way as the corresponding "normal"
+keys.  For example, <kHome> has the same effect as <Home>.  If a keypad key
+sends the same raw key code as its non-keypad equivalent, it will be
+recognized as the non-keypad code.  For example, when <kHome> sends the same
+code as <Home>, when pressing <kHome> Vim will think <Home> was pressed.
+Mapping <kHome> will not work then.
+
+								*<>*
+Examples are often given in the <> notation.  Sometimes this is just to make
+clear what you need to type, but often it can be typed literally, e.g., with
+the ":map" command.  The rules are:
+ 1.  Any printable characters are typed directly, except backslash and '<'
+ 2.  A backslash is represented with "\\", double backslash, or "<Bslash>".
+ 3.  A real '<' is represented with "\<" or "<lt>".  When there is no
+     confusion possible, a '<' can be used directly.
+ 4.  "<key>" means the special key typed.  This is the notation explained in
+     the table above.  A few examples:
+	   <Esc>		Escape key
+	   <C-G>		CTRL-G
+	   <Up>			cursor up key
+	   <C-LeftMouse>	Control- left mouse click
+	   <S-F11>		Shifted function key 11
+	   <M-a>		Meta- a  ('a' with bit 8 set)
+	   <M-A>		Meta- A  ('A' with bit 8 set)
+	   <t_kd>		"kd" termcap entry (cursor down key)
+
+If you want to use the full <> notation in Vim, you have to make sure the '<'
+flag is excluded from 'cpoptions' (when 'compatible' is not set, it already is
+by default). >
+	:set cpo-=<
+The <> notation uses <lt> to escape the special meaning of key names.  Using a
+backslash also works, but only when 'cpoptions' does not include the 'B' flag.
+
+Examples for mapping CTRL-H to the six characters "<Home>": >
+	:imap <C-H> \<Home>
+	:imap <C-H> <lt>Home>
+The first one only works when the 'B' flag is not in 'cpoptions'.  The second
+one always works.
+To get a literal "<lt>" in a mapping: >
+	:map <C-L> <lt>lt>
+
+For mapping, abbreviation and menu commands you can then copy-paste the
+examples and use them directly.  Or type them literally, including the '<' and
+'>' characters.  This does NOT work for other commands, like ":set" and
+":autocmd"!
+
+==============================================================================
+5. Modes, introduction				*vim-modes-intro* *vim-modes*
+
+Vim has six BASIC modes:
+
+					*Normal* *Normal-mode* *command-mode*
+Normal mode		In Normal mode you can enter all the normal editor
+			commands.  If you start the editor you are in this
+			mode (unless you have set the 'insertmode' option,
+			see below).  This is also known as command mode.
+
+Visual mode		This is like Normal mode, but the movement commands
+			extend a highlighted area.  When a non-movement
+			command is used, it is executed for the highlighted
+			area.  See |Visual-mode|.
+			If the 'showmode' option is on "-- VISUAL --" is shown
+			at the bottom of the window.
+
+Select mode		This looks most like the MS-Windows selection mode.
+			Typing a printable character deletes the selection
+			and starts Insert mode.  See |Select-mode|.
+			If the 'showmode' option is on "-- SELECT --" is shown
+			at the bottom of the window.
+
+Insert mode		In Insert mode the text you type is inserted into the
+			buffer.  See |Insert-mode|.
+			If the 'showmode' option is on "-- INSERT --" is shown
+			at the bottom of the window.
+
+Command-line mode	In Command-line mode (also called Cmdline mode) you
+Cmdline mode		can enter one line of text at the bottom of the
+			window.  This is for the Ex commands, ":", the pattern
+			search commands, "?" and "/", and the filter command,
+			"!".  |Cmdline-mode|
+
+Ex mode			Like Command-line mode, but after entering a command
+			you remain in Ex mode.  Very limited editing of the
+			command line.  |Ex-mode|
+
+There are six ADDITIONAL modes.  These are variants of the BASIC modes:
+
+				*Operator-pending* *Operator-pending-mode*
+Operator-pending mode	This is like Normal mode, but after an operator
+			command has started, and Vim is waiting for a {motion}
+			to specify the text that the operator will work on.
+
+Replace mode		Replace mode is a special case of Insert mode.  You
+			can do the same things as in Insert mode, but for
+			each character you enter, one character of the existing
+			text is deleted.  See |Replace-mode|.
+			If the 'showmode' option is on "-- REPLACE --" is
+			shown at the bottom of the window.
+
+Virtual Replace mode	Virtual Replace mode is similar to Replace mode, but
+			instead of file characters you are replacing screen
+			real estate.  See |Virtual-Replace-mode|.
+			If the 'showmode' option is on "-- VREPLACE --" is
+			shown at the bottom of the window.
+
+Insert Normal mode	Entered when CTRL-O given in Insert mode.  This is
+			like Normal mode, but after executing one command Vim
+			returns to Insert mode.
+			If the 'showmode' option is on "-- (insert) --" is
+			shown at the bottom of the window.
+
+Insert Visual mode	Entered when starting a Visual selection from Insert
+			mode, e.g., by using CTRL-O and then "v", "V" or
+			CTRL-V.  When the Visual selection ends, Vim returns
+			to Insert mode.
+			If the 'showmode' option is on "-- (insert) VISUAL --"
+			is shown at the bottom of the window.
+
+Insert Select mode	Entered when starting Select mode from Insert mode.
+			E.g., by dragging the mouse or <S-Right>.
+			When the Select mode ends, Vim returns to Insert mode.
+			If the 'showmode' option is on "-- (insert) SELECT --"
+			is shown at the bottom of the window.
+
+==============================================================================
+6. Switching from mode to mode				*mode-switching*
+
+If for any reason you do not know which mode you are in, you can always get
+back to Normal mode by typing <Esc> twice.  This doesn't work for Ex mode
+though, use ":visual".
+You will know you are back in Normal mode when you see the screen flash or
+hear the bell after you type <Esc>.  However, when pressing <Esc> after using
+CTRL-O in Insert mode you get a beep but you are still in Insert mode, type
+<Esc> again.
+
+							*i_esc*
+		TO mode						    ~
+		Normal	Visual	Select	Insert	  Replace   Cmd-line  Ex ~
+FROM mode								 ~
+Normal			v V ^V	  *4	 *1	   R gR     : / ? !   Q
+Visual		 *2		  ^G	 c C	    --	      :       --
+Select		 *5	^O ^G		 *6	    --	      --      --
+Insert		 <Esc>	  --	  --		  <Insert>    --      --
+Replace		 <Esc>	  --	  --	<Insert>	      --      --
+Command-line	 *3	  --	  --	 :start	    --		      --
+Ex		 :vi	  --	  --	 --	    --	      --
+
+-- not possible
+
+*1 Go from Normal mode to Insert mode by giving the command "i", "I", "a",
+   "A", "o", "O", "c", "C", "s" or S".
+*2 Go from Visual mode to Normal mode by giving a non-movement command, which
+   causes the command to be executed, or by hitting <Esc> "v", "V" or "CTRL-V"
+   (see |v_v|), which just stops Visual mode without side effects.
+*3 Go from Command-line mode to Normal mode by:
+   - Hitting <CR> or <NL>, which causes the entered command to be executed.
+   - Deleting the complete line (e.g., with CTRL-U) and giving a final <BS>.
+   - Hitting CTRL-C or <Esc>, which quits the command-line without executing
+     the command.
+   In the last case <Esc> may be the character defined with the 'wildchar'
+   option, in which case it will start command-line completion.  You can
+   ignore that and type <Esc> again.  {Vi: when hitting <Esc> the command-line
+   is executed.  This is unexpected for most people; therefore it was changed
+   in Vim.  But when the <Esc> is part of a mapping, the command-line is
+   executed.  If you want the Vi behaviour also when typing <Esc>, use ":cmap
+   ^V<Esc> ^V^M"}
+*4 Go from Normal to Select mode by:
+   - use the mouse to select text while 'selectmode' contains "mouse"
+   - use a non-printable command to move the cursor while keeping the Shift
+     key pressed, and the 'selectmode' option contains "key"
+   - use "v", "V" or "CTRL-V" while 'selectmode' contains "cmd"
+   - use "gh", "gH" or "g CTRL-H"  |g_CTRL-H|
+*5 Go from Select mode to Normal mode by using a non-printable command to move
+   the cursor, without keeping the Shift key pressed.
+*6 Go from Select mode to Insert mode by typing a printable character.  The
+   selection is deleted and the character is inserted.
+
+If the 'insertmode' option is on, editing a file will start in Insert mode.
+
+	*CTRL-\_CTRL-N* *i_CTRL-\_CTRL-N* *c_CTRL-\_CTRL-N* *v_CTRL-\_CTRL-N*
+Additionally the command CTRL-\ CTRL-N or <C-\><C-N> can be used to go to
+Normal mode from any other mode.  This can be used to make sure Vim is in
+Normal mode, without causing a beep like <Esc> would.  However, this does not
+work in Ex mode.  When used after a command that takes an argument, such as
+|f| or |m|, the timeout set with 'ttimeoutlen' applies.
+
+	*CTRL-\_CTRL-G* *i_CTRL-\_CTRL-G* *c_CTRL-\_CTRL-G* *v_CTRL-\_CTRL-G*
+The command CTRL-\ CTRL-G or <C-\><C-G> can be used to go to Insert mode when
+'insertmode' is set.  Otherwise it goes to Normal mode.  This can be used to
+make sure Vim is in the mode indicated by 'insertmode', without knowing in
+what mode Vim currently is.
+
+				    *Q* *mode-Ex* *Ex-mode* *Ex* *EX* *E501*
+Q			Switch to "Ex" mode.  This is a bit like typing ":"
+			commands one after another, except:
+			- You don't have to keep pressing ":".
+			- The screen doesn't get updated after each command.
+			- There is no normal command-line editing.
+			- Mappings and abbreviations are not used.
+			In fact, you are editing the lines with the "standard"
+			line-input editing commands (<Del> or <BS> to erase,
+			CTRL-U to kill the whole line).
+			Vim will enter this mode by default if it's invoked as
+			"ex" on the command-line.
+			Use the ":vi" command |:visual| to exit "Ex" mode.
+			Note: In older versions of Vim "Q" formatted text,
+			that is now done with |gq|.  But if you use the
+			|vimrc_example.vim| script "Q" works like "gq".
+
+					*gQ*
+gQ			Switch to "Ex" mode like with "Q", but really behave
+			like typing ":" commands after another.  All command
+			line editing, completion etc. is available.
+			Use the ":vi" command |:visual| to exit "Ex" mode.
+			{not in Vi}
+
+==============================================================================
+7. The window contents					*window-contents*
+
+In Normal mode and Insert/Replace mode the screen window will show the current
+contents of the buffer: What You See Is What You Get.  There are two
+exceptions:
+- When the 'cpoptions' option contains '$', and the change is within one line,
+  the text is not directly deleted, but a '$' is put at the last deleted
+  character.
+- When inserting text in one window, other windows on the same text are not
+  updated until the insert is finished.
+{Vi: The screen is not always updated on slow terminals}
+
+Lines longer than the window width will wrap, unless the 'wrap' option is off
+(see below).  The 'linebreak' option can be set to wrap at a blank character.
+
+If the window has room after the last line of the buffer, Vim will show '~' in
+the first column of the last lines in the window, like this:
+
+	+-----------------------+
+	|some line		|
+	|last line		|
+	|~			|
+	|~			|
+	+-----------------------+
+
+Thus the '~' lines indicate that the end of the buffer was reached.
+
+If the last line in a window doesn't fit, Vim will indicate this with a '@' in
+the first column of the last lines in the window, like this:
+
+	+-----------------------+
+	|first line		|
+	|second line		|
+	|@			|
+	|@			|
+	+-----------------------+
+
+Thus the '@' lines indicate that there is a line that doesn't fit in the
+window.
+
+When the "lastline" flag is present in the 'display' option, you will not see
+'@' characters at the left side of window.  If the last line doesn't fit
+completely, only the part that fits is shown, and the last three characters of
+the last line are replaced with "@@@", like this:
+
+	+-----------------------+
+	|first line		|
+	|second line		|
+	|a very long line that d|
+	|oesn't fit in the wi@@@|
+	+-----------------------+
+
+If there is a single line that is too long to fit in the window, this is a
+special situation.  Vim will show only part of the line, around where the
+cursor is.  There are no special characters shown, so that you can edit all
+parts of this line.
+{Vi: gives an "internal error" on lines that do not fit in the window}
+
+The '@' occasion in the 'highlight' option can be used to set special
+highlighting for the '@' and '~' characters.  This makes it possible to
+distinguish them from real characters in the buffer.
+
+The 'showbreak' option contains the string to put in front of wrapped lines.
+
+							*wrap-off*
+If the 'wrap' option is off, long lines will not wrap.  Only the part that
+fits on the screen is shown.  If the cursor is moved to a part of the line
+that is not shown, the screen is scrolled horizontally.  The advantage of
+this method is that columns are shown as they are and lines that cannot fit
+on the screen can be edited.  The disadvantage is that you cannot see all the
+characters of a line at once.  The 'sidescroll' option can be set to the
+minimal number of columns to scroll.  {Vi: has no 'wrap' option}
+
+All normal ASCII characters are displayed directly on the screen.  The <Tab>
+is replaced with the number of spaces that it represents.  Other non-printing
+characters are replaced with "^{char}", where {char} is the non-printing
+character with 64 added.  Thus character 7 (bell) will be shown as "^G".
+Characters between 127 and 160 are replaced with "~{char}", where {char} is
+the character with 64 subtracted.  These characters occupy more than one
+position on the screen.  The cursor can only be positioned on the first one.
+
+If you set the 'number' option, all lines will be preceded with their
+number.  Tip: If you don't like wrapping lines to mix with the line numbers,
+set the 'showbreak' option to eight spaces:
+	":set showbreak=\ \ \ \ \ \ \ \ "
+
+If you set the 'list' option, <Tab> characters will not be shown as several
+spaces, but as "^I".  A '$' will be placed at the end of the line, so you can
+find trailing blanks.
+
+In Command-line mode only the command-line itself is shown correctly.  The
+display of the buffer contents is updated as soon as you go back to Command
+mode.
+
+The last line of the window is used for status and other messages.  The
+status messages will only be used if an option is on:
+
+status message			option	     default	Unix default	~
+current mode			'showmode'	on	    on
+command characters		'showcmd'	on	    off
+cursor position			'ruler'		off	    off
+
+The current mode is "-- INSERT --" or "-- REPLACE --", see |'showmode'|.  The
+command characters are those that you typed but were not used yet.  {Vi: does
+not show the characters you typed or the cursor position}
+
+If you have a slow terminal you can switch off the status messages to speed
+up editing:
+	:set nosc noru nosm
+
+If there is an error, an error message will be shown for at least one second
+(in reverse video).  {Vi: error messages may be overwritten with other
+messages before you have a chance to read them}
+
+Some commands show how many lines were affected.  Above which threshold this
+happens can be controlled with the 'report' option (default 2).
+
+On the Amiga Vim will run in a CLI window.  The name Vim and the full name of
+the current file name will be shown in the title bar.  When the window is
+resized, Vim will automatically redraw the window.  You may make the window as
+small as you like, but if it gets too small not a single line will fit in it.
+Make it at least 40 characters wide to be able to read most messages on the
+last line.
+
+On most Unix systems, resizing the window is recognized and handled correctly
+by Vim.  {Vi: not ok}
+
+==============================================================================
+8. Definitions						*definitions*
+
+  screen		The whole area that Vim uses to work in.  This can be
+			a terminal emulator window.  Also called "the Vim
+			window".
+  window		A view on a buffer.
+
+A screen contains one or more windows, separated by status lines and with the
+command line at the bottom.
+
+	+-------------------------------+
+screen	| window 1	| window 2	|
+	|		|		|
+	|		|		|
+	|= status line =|= status line =|
+	| window 3			|
+	|				|
+	|				|
+	|==== status line ==============|
+	|command line			|
+	+-------------------------------+
+
+The command line is also used for messages.  It scrolls up the screen when
+there is not enough room in the command line.
+
+A difference is made between four types of lines:
+
+  buffer lines		The lines in the buffer.  This is the same as the
+			lines as they are read from/written to a file.  They
+			can be thousands of characters long.
+  logical lines		The buffer lines with folding applied.  Buffer lines
+			in a closed fold are changed to a single logical line:
+			"+-- 99 lines folded".  They can be thousands of
+			characters long.
+  window lines		The lines displayed in a window: A range of logical
+			lines with wrapping, line breaks, etc.  applied.  They
+			can only be as long as the width of the window allows,
+			longer lines are wrapped or truncated.
+  screen lines		The lines of the screen that Vim uses.  Consists of
+			the window lines of all windows, with status lines
+			and the command line added.  They can only be as long
+			as the width of the screen allows.  When the command
+			line gets longer it wraps and lines are scrolled to
+			make room.
+
+buffer lines	logical lines	window lines	screen lines ~
+
+1. one		1. one		1. +-- folded   1.  +-- folded
+2. two		2. +-- folded	2. five		2.  five
+3. three	3. five		3. six		3.  six
+4. four		4. six		4. seven	4.  seven
+5. five		5. seven			5.  === status line ===
+6. six						6.  aaa
+7. seven					7.  bbb
+						8.  ccc ccc c
+1. aaa		1. aaa		1. aaa		9.  cc
+2. bbb		2. bbb		2. bbb		10. ddd
+3. ccc ccc ccc	3. ccc ccc ccc	3. ccc ccc c	11. ~ 
+4. ddd		4. ddd		4. cc		12. === status line ===
+				5. ddd		13. (command line)
+				6. ~ 
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

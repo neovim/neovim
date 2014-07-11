@@ -1,0 +1,272 @@
+*usr_31.txt*	For Vim version 7.4.  Last change: 2007 May 08
+
+		     VIM USER MANUAL - by Bram Moolenaar
+
+			      Exploiting the GUI
+
+
+Vim works well in a terminal, but the GUI has a few extra items.  A file
+browser can be used for commands that use a file.  A dialog to make a choice
+between alternatives.  Use keyboard shortcuts to access menu items quickly.
+
+|31.1|	The file browser
+|31.2|	Confirmation
+|31.3|	Menu shortcuts
+|31.4|	Vim window position and size
+|31.5|	Various
+
+     Next chapter: |usr_32.txt|  The undo tree
+ Previous chapter: |usr_30.txt|  Editing programs
+Table of contents: |usr_toc.txt|
+
+==============================================================================
+*31.1*	The file browser
+
+When using the File/Open... menu you get a file browser.  This makes it easier
+to find the file you want to edit.  But what if you want to split a window to
+edit another file?  There is no menu entry for this.  You could first use
+Window/Split and then File/Open..., but that's more work.
+   Since you are typing most commands in Vim, opening the file browser with a
+typed command is possible as well.  To make the split command use the file
+browser, prepend "browse": >
+
+	:browse split
+
+Select a file and then the ":split" command will be executed with it.  If you
+cancel the file dialog nothing happens, the window isn't split.
+   You can also specify a file name argument.  This is used to tell the file
+browser where to start.  Example: >
+
+	:browse split /etc
+
+The file browser will pop up, starting in the directory "/etc".
+
+The ":browse" command can be prepended to just about any command that opens a
+file.
+   If no directory is specified, Vim will decide where to start the file
+browser.  By default it uses the same directory as the last time.  Thus when
+you used ":browse split" and selected a file in "/usr/local/share", the next
+time you use a ":browse" it will start in "/usr/local/share" again.
+   This can be changed with the 'browsedir' option.  It can have one of three
+values:
+
+	last		Use the last directory browsed (default)
+	buffer		Use the same directory as the current buffer
+	current		use the current directory
+
+For example, when you are in the directory "/usr", editing the file
+"/usr/local/share/readme", then the command: >
+
+	:set browsedir=buffer
+	:browse edit
+
+Will start the browser in "/usr/local/share".  Alternatively: >
+
+	:set browsedir=current
+	:browse edit
+
+Will start the browser in "/usr".
+
+	Note:
+	To avoid using the mouse, most file browsers offer using key presses
+	to navigate.  Since this is different for every system, it is not
+	explained here.  Vim uses a standard browser when possible, your
+	system documentation should contain an explanation on the keyboard
+	shortcuts somewhere.
+
+When you are not using the GUI version, you could use the file explorer window
+to select files like in a file browser.  However, this doesn't work for the
+":browse" command.  See |netrw-browse|.
+
+==============================================================================
+*31.2*	Confirmation
+
+Vim protects you from accidentally overwriting a file and other ways to lose
+changes.  If you do something that might be a bad thing to do, Vim produces an
+error message and suggests appending ! if you really want to do it.
+   To avoid retyping the command with the !, you can make Vim give you a
+dialog.  You can then press "OK" or "Cancel" to tell Vim what you want.
+   For example, you are editing a file and made changes to it.  You start
+editing another file with: >
+
+	:confirm edit foo.txt
+
+Vim will pop up a dialog that looks something like this:
+
+	+-----------------------------------+
+	|				    |
+	|   ?	Save changes to "bar.txt"?  |
+	|				    |
+	|   YES   NO		 CANCEL     |
+	+-----------------------------------+
+
+Now make your choice.  If you do want to save the changes, select "YES".  If
+you want to lose the changes for ever: "NO".  If you forgot what you were
+doing and want to check what really changed use "CANCEL".  You will be back in
+the same file, with the changes still there.
+
+Just like ":browse", the ":confirm" command can be prepended to most commands
+that edit another file.  They can also be combined: >
+
+	:confirm browse edit
+
+This will produce a dialog when the current buffer was changed.  Then it will
+pop up a file browser to select the file to edit.
+
+	Note:
+	In the dialog you can use the keyboard to select the choice.
+	Typically the <Tab> key and the cursor keys change the choice.
+	Pressing <Enter> selects the choice.  This depends on the system
+	though.
+
+When you are not using the GUI, the ":confirm" command works as well.  Instead
+of popping up a dialog, Vim will print the message at the bottom of the Vim
+window and ask you to press a key to make a choice. >
+
+	:confirm edit main.c
+<	Save changes to "Untitled"? ~
+	[Y]es, (N)o, (C)ancel:  ~
+
+You can now press the single key for the choice.  You don't have to press
+<Enter>, unlike other typing on the command line.
+
+==============================================================================
+*31.3*	Menu shortcuts
+
+The keyboard is used for all Vim commands.  The menus provide a simple way to
+select commands, without knowing what they are called.  But you have to move
+your hand from the keyboard and grab the mouse.
+   Menus can often be selected with keys as well.  This depends on your
+system, but most often it works this way.  Use the <Alt> key in combination
+with the underlined letter of a menu.  For example, <A-w> (<Alt> and w) pops
+up the Window menu.
+   In the Window menu, the "split" item has the p underlined.  To select it,
+let go of the <Alt> key and press p.
+
+After the first selection of a menu with the <Alt> key, you can use the cursor
+keys to move through the menus.  <Right> selects a submenu and <left> closes
+it.  <Esc> also closes a menu.  <Enter> selects a menu item.
+
+There is a conflict between using the <Alt> key to select menu items, and
+using <Alt> key combinations for mappings.  The 'winaltkeys' option tells Vim
+what it should do with the <Alt> key.
+   The default value "menu" is the smart choice: If the key combination is a
+menu shortcut it can't be mapped.  All other keys are available for mapping.
+   The value "no" doesn't use any <Alt> keys for the menus.  Thus you must use
+the mouse for the menus, and all <Alt> keys can be mapped.
+   The value "yes" means that Vim will use any <Alt> keys for the menus.  Some
+<Alt> key combinations may also do other things than selecting a menu.
+
+==============================================================================
+*31.4*	Vim window position and size
+
+To see the current Vim window position on the screen use: >
+
+	:winpos
+
+This will only work in the GUI.  The output may look like this:
+
+	Window position: X 272, Y 103 ~
+
+The position is given in screen pixels.  Now you can use the numbers to move
+Vim somewhere else.  For example, to move it to the left a hundred pixels: >
+
+	:winpos 172 103
+<
+	Note:
+	There may be a small offset between the reported position and where
+	the window moves.  This is because of the border around the window.
+	This is added by the window manager.
+
+You can use this command in your startup script to position the window at a
+specific position.
+
+The size of the Vim window is computed in characters.  Thus this depends on
+the size of the font being used.  You can see the current size with this
+command: >
+
+	:set lines columns
+
+To change the size set the 'lines' and/or 'columns' options to a new value: >
+
+	:set lines=50
+	:set columns=80
+
+Obtaining the size works in a terminal just like in the GUI.  Setting the size
+is not possible in most terminals.
+
+You can start the X-Windows version of gvim with an argument to specify the
+size and position of the window: >
+
+	gvim -geometry {width}x{height}+{x_offset}+{y_offset}
+
+{width} and {height} are in characters, {x_offset} and {y_offset} are in
+pixels.  Example: >
+
+	gvim -geometry 80x25+100+300
+
+==============================================================================
+*31.5*	Various
+
+You can use gvim to edit an e-mail message.  In your e-mail program you must
+select gvim to be the editor for messages.  When you try that, you will
+see that it doesn't work: The mail program thinks that editing is finished,
+while gvim is still running!
+   What happens is that gvim disconnects from the shell it was started in.
+That is fine when you start gvim in a terminal, so that you can do other work
+in that terminal.  But when you really want to wait for gvim to finish, you
+must prevent it from disconnecting.  The "-f" argument does this: >
+
+	gvim -f file.txt
+
+The "-f" stands for foreground.  Now Vim will block the shell it was started
+in until you finish editing and exit.
+
+
+DELAYED START OF THE GUI
+
+On Unix it's possible to first start Vim in a terminal.  That's useful if you
+do various tasks in the same shell.  If you are editing a file and decide you
+want to use the GUI after all, you can start it with: >
+
+	:gui
+
+Vim will open the GUI window and no longer use the terminal.  You can continue
+using the terminal for something else.  The "-f" argument is used here to run
+the GUI in the foreground.  You can also use ":gui -f".
+
+
+THE GVIM STARTUP FILE
+
+When gvim starts, it reads the gvimrc file.  That's similar to the vimrc file
+used when starting Vim.  The gvimrc file can be used for settings and commands
+that are only to be used when the GUI is going to be started.  For example,
+you can set the 'lines' option to set a different window size: >
+
+	:set lines=55
+
+You don't want to do this in a terminal, since its size is fixed (except for
+an xterm that supports resizing).
+   The gvimrc file is searched for in the same locations as the vimrc file.
+Normally its name is "~/.gvimrc" for Unix and "$VIM/_gvimrc" for MS-Windows.
+The $MYGVIMRC environment variable is set to it, thus you can use this command
+to edit the file, if you have one: >
+
+	:edit $MYGVIMRC
+<
+   If for some reason you don't want to use the normal gvimrc file, you can
+specify another one with the "-U" argument: >
+
+	gvim -U thisrc ...
+
+That allows starting gvim for different kinds of editing.  You could set
+another font size, for example.
+   To completely skip reading a gvimrc file: >
+
+	gvim -U NONE ...
+
+==============================================================================
+
+Next chapter: |usr_32.txt|  The undo tree
+
+Copyright: see |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
