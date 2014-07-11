@@ -91,16 +91,26 @@ find_package(Threads REQUIRED)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-find_program(LUA_PRG luajit)
-
-# Need a lua interpreter for running the msgapck metadata/dispatch generator
-if(NOT EXISTS ${LUA_PRG})
-  find_program(LUA_PRG lua)
-endif()
-
+# Find Lua interpreter
 include(LuaHelpers)
 set(LUA_DEPENDENCIES lpeg cmsgpack)
-check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
+if(NOT LUA_PRG)
+  foreach(CURRENT_LUA_PRG luajit lua)
+    # If LUA_PRG is set find_program() will not search
+    unset(LUA_PRG CACHE)
+    unset(LUA_PRG_WORKS)
+    find_program(LUA_PRG ${CURRENT_LUA_PRG})
+
+    if(LUA_PRG)
+      check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
+      if(LUA_PRG_WORKS)
+        break()
+      endif()
+    endif()
+  endforeach()
+else()
+  check_lua_deps(${LUA_PRG} "${LUA_DEPENDENCIES}" LUA_PRG_WORKS)
+endif()
 
 if(NOT LUA_PRG_WORKS)
   message(FATAL_ERROR "A suitable Lua interpreter was not found")
