@@ -1,6 +1,8 @@
 #ifndef NVIM_SCREEN_H
 #define NVIM_SCREEN_H
 
+#include <stdbool.h>
+
 /*
  * flags for update_screen()
  * The higher the value, the higher the priority

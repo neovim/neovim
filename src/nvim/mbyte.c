@@ -78,6 +78,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <string.h>
 #include <wchar.h>
 #include <wctype.h>

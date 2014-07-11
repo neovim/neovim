@@ -82,6 +82,7 @@
 
 #include <inttypes.h>
 #include <errno.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "nvim/vim.h"

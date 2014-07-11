@@ -1,6 +1,8 @@
 #ifndef NVIM_EX_CMDS2_H
 #define NVIM_EX_CMDS2_H
 
+#include <stdbool.h>
+
 #include "nvim/ex_docmd.h"
 
 typedef void (*DoInRuntimepathCB)(char_u *, void *);

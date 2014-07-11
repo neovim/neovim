@@ -3,6 +3,7 @@
 /// Popup menu (PUM)
 //
 #include <inttypes.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
