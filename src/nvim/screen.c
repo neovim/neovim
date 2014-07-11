@@ -123,6 +123,7 @@
 #include "nvim/popupmnu.h"
 #include "nvim/quickfix.h"
 #include "nvim/regexp.h"
+#include "nvim/screenline.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"

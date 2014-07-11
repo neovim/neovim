@@ -49,6 +49,7 @@
 #include "nvim/option.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
+#include "nvim/screenline.h"
 #include "nvim/search.h"
 #include "nvim/spell.h"
 #include "nvim/strings.h"

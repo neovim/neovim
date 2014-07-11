@@ -33,6 +33,7 @@
 #include "nvim/move.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
+#include "nvim/screenline.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/undo.h"
@@ -279,7 +280,6 @@ int foldLevel(linenr_T lnum)
  * Low level function to check if a line is folded.  Doesn't use any caching.
  * Return TRUE if line is folded.
  * Return FALSE if line is not folded.
- * Return MAYBE if the line is folded when next to a folded line.
  */
 int lineFolded(win_T *win, linenr_T lnum)
 {

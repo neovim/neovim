@@ -38,6 +38,7 @@
 #include "nvim/os/input.h"
 #include "nvim/os/signal.h"
 #include "nvim/screen.h"
+#include "nvim/screenline.h"
 #include "nvim/term.h"
 #include "nvim/window.h"
 

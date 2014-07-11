@@ -32,6 +32,7 @@
 #include "nvim/misc2.h"
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
+#include "nvim/screenline.h"
 #include "nvim/strings.h"
 
 typedef struct {
