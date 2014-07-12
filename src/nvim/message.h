@@ -2,6 +2,7 @@
 #define NVIM_MESSAGE_H
 
 #include <stdbool.h>
+#include "nvim/eval_defs.h"  // for typval_T
 
 /*
  * Types of dialogs passed to do_dialog().

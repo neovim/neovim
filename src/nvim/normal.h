@@ -2,6 +2,7 @@
 #define NVIM_NORMAL_H
 
 #include "nvim/pos.h"
+#include "nvim/buffer_defs.h"  // for win_T
 
 /* Values for find_ident_under_cursor() */
 #define FIND_IDENT      1       /* find identifier (word) */

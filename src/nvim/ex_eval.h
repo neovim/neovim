@@ -2,6 +2,7 @@
 #define NVIM_EX_EVAL_H
 
 #include "nvim/pos.h"           // for linenr_T
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
 
 /*
  * A list used for saving values of "emsg_silent".  Used by ex_try() to save the
