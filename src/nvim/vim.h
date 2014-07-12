@@ -358,8 +358,6 @@ enum {
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
 
-typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
-
 /*
  * fnamecmp() is used to compare file names.
  * On some systems case in a file name does not matter, on others it does.

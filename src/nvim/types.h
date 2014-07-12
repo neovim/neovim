@@ -10,6 +10,9 @@
 
 #include <stdint.h>
 
+// dummy to pass an ACL to a function
+typedef void *vim_acl_T;
+
 // Make sure long_u is big enough to hold a pointer.
 // On Win64, longs are 32 bits and pointers are 64 bits.
 // For printf() and scanf(), we need to take care of long_u specifically.
