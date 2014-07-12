@@ -12,6 +12,33 @@
 #define ACTION_SHOW_ALL 4
 #define ACTION_EXPAND   5
 
+/* Values for 'options' argument in do_search() and searchit() */
+#define SEARCH_REV    0x01  /* go in reverse of previous dir. */
+#define SEARCH_ECHO   0x02  /* echo the search command and handle options */
+#define SEARCH_MSG    0x0c  /* give messages (yes, it's not 0x04) */
+#define SEARCH_NFMSG  0x08  /* give all messages except not found */
+#define SEARCH_OPT    0x10  /* interpret optional flags */
+#define SEARCH_HIS    0x20  /* put search pattern in history */
+#define SEARCH_END    0x40  /* put cursor at end of match */
+#define SEARCH_NOOF   0x80  /* don't add offset to position */
+#define SEARCH_START 0x100  /* start search without col offset */
+#define SEARCH_MARK  0x200  /* set previous context mark */
+#define SEARCH_KEEP  0x400  /* keep previous search pattern */
+#define SEARCH_PEEK  0x800  /* peek for typed char, cancel search */
+
+/* Values for flags argument for findmatchlimit() */
+#define FM_BACKWARD     0x01    /* search backwards */
+#define FM_FORWARD      0x02    /* search forwards */
+#define FM_BLOCKSTOP    0x04    /* stop at start/end of block */
+#define FM_SKIPCOMM     0x08    /* skip comments */
+
+/* Values for sub_cmd and which_pat argument for search_regcomp() */
+/* Also used for which_pat argument for searchit() */
+#define RE_SEARCH       0       /* save/use pat in/from search_pattern */
+#define RE_SUBST        1       /* save/use pat in/from subst_pattern */
+#define RE_BOTH         2       /* save pat in both patterns */
+#define RE_LAST         2       /* use last used pattern if "pat" is NULL */
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "search.h.generated.h"
 #endif

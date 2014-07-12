@@ -3002,6 +3002,7 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell) FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
 #ifdef BACKSLASH_IN_FILENAME
+#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`%#'\"|!<")
   char_u buf[20];
   int j = 0;
 
@@ -3012,6 +3013,8 @@ char_u *vim_strsave_fnameescape(char_u *fname, int shell) FUNC_ATTR_NONNULL_RET
   buf[j] = NUL;
   p = vim_strsave_escaped(fname, buf);
 #else
+#define PATH_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<")
+#define SHELL_ESC_CHARS ((char_u *)" \t\n*?[{`$\\%#'\"|!<>();&")
   p = vim_strsave_escaped(fname, shell ? SHELL_ESC_CHARS : PATH_ESC_CHARS);
   if (shell && csh_like_shell()) {
     /* For csh and similar shells need to put two backslashes before '!'.

@@ -11,14 +11,34 @@ typedef int guicolor_T;
  * Terminal highlighting attribute bits.
  * Attributes above HL_ALL are used for syntax highlighting.
  */
-#define HL_NORMAL               0x00
-#define HL_INVERSE              0x01
-#define HL_BOLD                 0x02
-#define HL_ITALIC               0x04
-#define HL_UNDERLINE            0x08
-#define HL_UNDERCURL            0x10
-#define HL_STANDOUT             0x20
-#define HL_ALL                  0x3f
+#define HL_NORMAL      0x00
+#define HL_INVERSE     0x01
+#define HL_BOLD        0x02
+#define HL_ITALIC      0x04
+#define HL_UNDERLINE   0x08
+#define HL_UNDERCURL   0x10
+#define HL_STANDOUT    0x20
+#define HL_ALL         0x3f
+
+#define HL_CONTAINED   0x01    /* not used on toplevel */
+#define HL_TRANSP      0x02    /* has no highlighting	*/
+#define HL_ONELINE     0x04    /* match within one line only */
+#define HL_HAS_EOL     0x08    /* end pattern that matches with $ */
+#define HL_SYNC_HERE   0x10    /* sync point after this item (syncing only) */
+#define HL_SYNC_THERE  0x20    /* sync point at current line (syncing only) */
+#define HL_MATCH       0x40    /* use match ID instead of item ID */
+#define HL_SKIPNL      0x80    /* nextgroup can skip newlines */
+#define HL_SKIPWHITE   0x100   /* nextgroup can skip white space */
+#define HL_SKIPEMPTY   0x200   /* nextgroup can skip empty lines */
+#define HL_KEEPEND     0x400   /* end match always kept */
+#define HL_EXCLUDENL   0x800   /* exclude NL from match */
+#define HL_DISPLAY     0x1000  /* only used for displaying, not syncing */
+#define HL_FOLD        0x2000  /* define fold */
+#define HL_EXTEND      0x4000  /* ignore a keepend */
+#define HL_MATCHCONT   0x8000  /* match continued from previous line */
+#define HL_TRANS_CONT  0x10000 /* transparent item without contains arg */
+#define HL_CONCEAL     0x20000 /* can be concealed */
+#define HL_CONCEALENDS 0x40000 /* can be concealed */
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "syntax.h.generated.h"

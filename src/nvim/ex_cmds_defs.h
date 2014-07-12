@@ -70,6 +70,11 @@
 typedef struct exarg exarg_T;
 #endif
 
+/* behavior for bad character, "++bad=" argument */
+#define BAD_REPLACE     '?'     /* replace it with '?' (default) */
+#define BAD_KEEP        -1      /* leave it */
+#define BAD_DROP        -2      /* erase it */
+
 /*
  * This array maps ex command names to command codes.
  * The order in which command names are listed below is significant --
