@@ -38,7 +38,6 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(utime.h HAVE_UTIME_H)
 
 # Functions
-check_function_exists(fchown HAVE_FCHOWN)
 check_function_exists(fseeko HAVE_FSEEKO)
 check_function_exists(fsync HAVE_FSYNC)
 check_function_exists(getpwent HAVE_GETPWENT)

@@ -210,6 +210,21 @@ int os_setperm(const char_u *name, int perm)
   return FAIL;
 }
 
+/// Changes the ownership of the file referred to by the open file descriptor.
+///
+/// @return `0` on success, a libuv error code on failure.
+///
+/// @note If the `owner` or `group` is specified as `-1`, then that ID is not
+/// changed.
+int os_fchown(int file_descriptor, uv_uid_t owner, uv_gid_t group)
+{
+  uv_fs_t request;
+  int result = uv_fs_fchown(uv_default_loop(), &request, file_descriptor,
+                            owner, group, NULL);
+  uv_fs_req_cleanup(&request);
+  return result;
+}
+
 /// Check if a file exists.
 ///
 /// @return `true` if `name` exists.
