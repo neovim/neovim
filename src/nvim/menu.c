@@ -215,10 +215,12 @@ ex_menu (
     if (STRICMP(map_to, "<nop>") == 0) {        /* "<Nop>" means nothing */
       map_to = (char_u *)"";
       map_buf = NULL;
-    } else if (modes & MENU_TIP_MODE)
-      map_buf = NULL;           /* Menu tips are plain text. */
-    else
-      map_to = replace_termcodes(map_to, &map_buf, FALSE, TRUE, special);
+    } else if (modes & MENU_TIP_MODE) {
+      map_buf = NULL;  // Menu tips are plain text.
+    } else {
+      map_to = replace_termcodes(map_to, STRLEN(map_to), &map_buf, false, true,
+                                 special, CPO_TO_CPO_FLAGS);
+    }
     menuarg.modes = modes;
     menuarg.noremap[0] = noremap;
     menuarg.silent[0] = silent;

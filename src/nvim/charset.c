@@ -1794,10 +1794,11 @@ bool vim_isblankline(char_u *lbuf)
 /// @param nptr Returns the signed result.
 /// @param unptr Returns the unsigned result.
 /// @param maxlen Max length of string to check.
-void vim_str2nr(char_u *start, int *prep, int *len, int what,
-                long *nptr, unsigned long *unptr, int maxlen)
+void vim_str2nr(const char_u *const start, int *const prep, int *const len,
+                const int what, long *const nptr, unsigned long *const unptr,
+                const int maxlen)
 {
-  char_u *ptr = start;
+  const char_u *ptr = start;
   int pre = 0;  // default is decimal
   bool negative = false;
   unsigned long un = 0;

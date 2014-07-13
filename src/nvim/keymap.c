@@ -482,26 +482,28 @@ char_u *get_special_key_name(int c, int modifiers)
   return string;
 }
 
-/*
- * Try translating a <> name at (*srcp)[] to dst[].
- * Return the number of characters added to dst[], zero for no match.
- * If there is a match, srcp is advanced to after the <> name.
- * dst[] must be big enough to hold the result (up to six characters)!
- */
-unsigned int 
-trans_special (
-    char_u **srcp,
-    char_u *dst,
-    int keycode             /* prefer key code, e.g. K_DEL instead of DEL */
-)
+/// Try translating a <> name
+///
+/// @param[in,out]  srcp  Source from which <> are translated. Is advanced to
+///                       after the <> name if there is a match.
+/// @param[in]  src_len  Length of the srcp.
+/// @param[out]  dst  Location where translation result will be kept. Must have
+///                   at least six bytes.
+/// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
+///
+/// @return Number of characters added to dst, zero for no match.
+unsigned int trans_special(const char_u **srcp, const size_t src_len,
+                           char_u *const dst, const bool keycode)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_WARN_UNUSED_RESULT
 {
   int modifiers = 0;
   int key;
   unsigned int dlen = 0;
 
-  key = find_special_key(srcp, &modifiers, keycode, FALSE);
-  if (key == 0)
+  key = find_special_key(srcp, src_len, &modifiers, keycode, false);
+  if (key == 0) {
     return 0;
+  }
 
   /* Put the appropriate modifier in a string */
   if (modifiers != 0) {
@@ -514,69 +516,78 @@ trans_special (
     dst[dlen++] = K_SPECIAL;
     dst[dlen++] = (char_u)KEY2TERMCAP0(key);
     dst[dlen++] = KEY2TERMCAP1(key);
-  } else if (has_mbyte && !keycode)
+  } else if (has_mbyte && !keycode) {
     dlen += (unsigned int)(*mb_char2bytes)(key, dst + dlen);
-  else if (keycode) {
+  } else if (keycode) {
     char_u *after = add_char2buf(key, dst + dlen);
     assert(after >= dst && (uintmax_t)(after - dst) <= UINT_MAX);
     dlen = (unsigned int)(after - dst);
-  }
-  else
+  } else {
     dst[dlen++] = (char_u)key;
+  }
 
   return dlen;
 }
 
-// Try translating a <> name at (*srcp)[], return the key and modifiers.
-// srcp is advanced to after the <> name.
-// returns 0 if there is no match.
-int find_special_key(
-    char_u **srcp,
-    int *modp,
-    int keycode,                // prefer key code, e.g. K_DEL instead of DEL
-    int keep_x_key              // don't translate xHome to Home key
-)
+/// Try translating a <> name
+///
+/// @param[in,out]  srcp  Translated <> name. Is advanced to after the <> name.
+/// @param[in]  src_len  srcp length.
+/// @param[out]  modp  Location where information about modifiers is saved.
+/// @param[in]  keycode  Prefer key code, e.g. K_DEL in place of DEL.
+/// @param[in]  keep_x_key  Don’t translate xHome to Home key.
+///
+/// @return Key and modifiers or 0 if there is no match.
+int find_special_key(const char_u **srcp, const size_t src_len, int *const modp,
+                     const bool keycode, const bool keep_x_key)
+  FUNC_ATTR_WARN_UNUSED_RESULT FUNC_ATTR_NONNULL_ALL
 {
-  char_u      *last_dash;
-  char_u      *end_of_name;
-  char_u      *src;
-  char_u      *bp;
+  const char_u *last_dash;
+  const char_u *end_of_name;
+  const char_u *src;
+  const char_u *bp;
+  const char_u *const end = *srcp + src_len - 1;
   int modifiers;
   int bit;
   int key;
   unsigned long n;
   int l;
 
-  src = *srcp;
-  if (src[0] != '<')
+  if (src_len == 0) {
     return 0;
+  }
+
+  src = *srcp;
+  if (src[0] != '<') {
+    return 0;
+  }
 
   // Find end of modifier list
   last_dash = src;
-  for (bp = src + 1; *bp == '-' || vim_isIDc(*bp); bp++) {
+  for (bp = src + 1; bp <= end && (*bp == '-' || vim_isIDc(*bp)); bp++) {
     if (*bp == '-') {
       last_dash = bp;
-      if (bp[1] != NUL) {
+      if (bp + 1 <= end) {
         if (has_mbyte) {
-          l = mb_ptr2len(bp + 1);
+          l = mb_ptr2len_len(bp + 1, (int) (end - bp) + 1);
         } else {
           l = 1;
         }
-        if (bp[l + 1] == '>') {
-          bp += l;              // anything accepted, like <C-?>
+        if (end - bp > l && bp[l + 1] == '>') {
+          bp += l;  // anything accepted, like <C-?>
         }
       }
     }
-    if (bp[0] == 't' && bp[1] == '_' && bp[2] && bp[3]) {
-      bp += 3;          // skip t_xx, xx may be '-' or '>'
-    } else if (STRNICMP(bp, "char-", 5) == 0) {
+    if (end - bp > 3 && bp[0] == 't' && bp[1] == '_') {
+      bp += 3;  // skip t_xx, xx may be '-' or '>'
+    } else if (end - bp > 4 && STRNICMP(bp, "char-", 5) == 0) {
       vim_str2nr(bp + 5, NULL, &l, STR2NR_ALL, NULL, NULL, 0);
       bp += l + 5;
       break;
     }
   }
 
-  if (*bp == '>') {     /* found matching '>' */
+  if (bp <= end && *bp == '>') {  // found matching '>'
     end_of_name = bp + 1;
 
     /* Which modifiers are given? */
@@ -696,7 +707,7 @@ int find_special_key_in_table(int c)
  * termcap name.
  * Return the key code, or 0 if not found.
  */
-int get_special_key_code(char_u *name)
+int get_special_key_code(const char_u *name)
 {
   char_u  *table_name;
   int i, j;
@@ -730,50 +741,58 @@ int get_mouse_button(int code, bool *is_click, bool *is_drag)
   return 0;         /* Shouldn't get here */
 }
 
-// Replace any terminal code strings in from[] with the equivalent internal
-// vim representation.	This is used for the "from" and "to" part of a
-// mapping, and the "to" part of a menu command.
-// Any strings like "<C-UP>" are also replaced, unless 'cpoptions' contains
-// '<'.
-// K_SPECIAL by itself is replaced by K_SPECIAL KS_SPECIAL KE_FILLER.
-//
-// The replacement is done in result[] and finally copied into allocated
-// memory. If this all works well *bufp is set to the allocated memory and a
-// pointer to it is returned. If something fails *bufp is set to NULL and from
-// is returned.
-//
-// CTRL-V characters are removed.  When "from_part" is TRUE, a trailing CTRL-V
-// is included, otherwise it is removed (for ":map xx ^V", maps xx to
-// nothing).  When 'cpoptions' does not contain 'B', a backslash can be used
-// instead of a CTRL-V.
-char_u * replace_termcodes (
-    char_u *from,
-    char_u **bufp,
-    int from_part,
-    int do_lt,                     // also translate <lt>
-    int special                    // always accept <key> notation
-)
+/// Replace any terminal code strings with the equivalent internal
+/// representation
+///
+/// This is used for the "from" and "to" part of a mapping, and the "to" part of
+/// a menu command. Any strings like "<C-UP>" are also replaced, unless
+/// 'cpoptions' contains '<'. K_SPECIAL by itself is replaced by K_SPECIAL
+/// KS_SPECIAL KE_FILLER.
+///
+/// @param[in]  from  What characters to replace.
+/// @param[in]  from_len  Length of the "from" argument.
+/// @param[out]  bufp  Location where results were saved in case of success
+///                    (allocated). Will be set to NULL in case of failure.
+/// @param[in]  do_lt  If true, also translate <lt>.
+/// @param[in]  from_part  If true, trailing <C-v> is included, otherwise it is
+///                        removed (to make ":map xx ^V" map xx to nothing).
+///                        When cpo_flags contains #FLAG_CPO_BSLASH, a backslash
+///                        can be used in place of <C-v>. All other <C-v>
+///                        characters are removed.
+/// @param[in]  special  If true, always accept <key> notation.
+/// @param[in]  cpo_flags  Relevant flags derived from p_cpo, see
+///                        #CPO_TO_CPO_FLAGS.
+///
+/// @return Pointer to an allocated memory in case of success, "from" in case of
+///         failure. In case of success returned pointer is also saved to
+///         "bufp".
+char_u *replace_termcodes(const char_u *from, const size_t from_len,
+                          char_u **bufp, const bool from_part, const bool do_lt,
+                          const bool special, int cpo_flags)
+  FUNC_ATTR_NONNULL_ALL
 {
   ssize_t i;
   size_t slen;
   char_u key;
   size_t dlen = 0;
-  char_u      *src;
+  const char_u *src;
+  const char_u *const end = from + from_len - 1;
   int do_backslash;             // backslash is a special character
   int do_special;               // recognize <> key codes
   char_u      *result;          // buffer for resulting string
 
-  do_backslash = (vim_strchr(p_cpo, CPO_BSLASH) == NULL);
-  do_special = (vim_strchr(p_cpo, CPO_SPECI) == NULL) || special;
+  do_backslash = !(cpo_flags&FLAG_CPO_BSLASH);
+  do_special = !(cpo_flags&FLAG_CPO_SPECI) || special;
 
   // Allocate space for the translation.  Worst case a single character is
   // replaced by 6 bytes (shifted special key), plus a NUL at the end.
-  result = xmalloc(STRLEN(from) * 6 + 1);
+  result = xmalloc(from_len * 6 + 1);
 
   src = from;
 
   // Check for #n at start only: function key n
-  if (from_part && src[0] == '#' && ascii_isdigit(src[1])) {  // function key
+  if (from_part && from_len > 1 && src[0] == '#'
+      && ascii_isdigit(src[1])) {  // function key
     result[dlen++] = K_SPECIAL;
     result[dlen++] = 'k';
     if (src[1] == '0') {
@@ -785,13 +804,14 @@ char_u * replace_termcodes (
   }
 
   // Copy each byte from *from to result[dlen]
-  while (*src != NUL) {
+  while (src <= end) {
     // If 'cpoptions' does not contain '<', check for special key codes,
     // like "<C-S-LeftMouse>"
-    if (do_special && (do_lt || STRNCMP(src, "<lt>", 4) != 0)) {
+    if (do_special && (do_lt || ((end - src) >= 3
+                                 && STRNCMP(src, "<lt>", 4) != 0))) {
       // Replace <SID> by K_SNR <script-nr> _.
       // (room: 5 * 6 = 30 bytes; needed: 3 + <nr> + 1 <= 14)
-      if (STRNICMP(src, "<SID>", 5) == 0) {
+      if (end - src >= 4 && STRNICMP(src, "<SID>", 5) == 0) {
         if (current_SID <= 0) {
           EMSG(_(e_usingsid));
         } else {
@@ -806,7 +826,7 @@ char_u * replace_termcodes (
         }
       }
 
-      slen = trans_special(&src, result + dlen, TRUE);
+      slen = trans_special(&src, (size_t) (end - src) + 1, result + dlen, true);
       if (slen) {
         dlen += slen;
         continue;
@@ -819,10 +839,10 @@ char_u * replace_termcodes (
       // Replace <Leader> by the value of "mapleader".
       // Replace <LocalLeader> by the value of "maplocalleader".
       // If "mapleader" or "maplocalleader" isn't set use a backslash.
-      if (STRNICMP(src, "<Leader>", 8) == 0) {
+      if (end - src >= 7 && STRNICMP(src, "<Leader>", 8) == 0) {
         len = 8;
         p = get_var_value((char_u *)"g:mapleader");
-      } else if (STRNICMP(src, "<LocalLeader>", 13) == 0)   {
+      } else if (end - src >= 12 && STRNICMP(src, "<LocalLeader>", 13) == 0) {
         len = 13;
         p = get_var_value((char_u *)"g:maplocalleader");
       } else {
@@ -851,8 +871,8 @@ char_u * replace_termcodes (
     // If 'cpoptions' does not contain 'B', also accept a backslash.
     key = *src;
     if (key == Ctrl_V || (do_backslash && key == '\\')) {
-      ++src;  // skip CTRL-V or backslash
-      if (*src == NUL) {
+      src++;  // skip CTRL-V or backslash
+      if (src > end) {
         if (from_part) {
           result[dlen++] = key;
         }
@@ -861,7 +881,7 @@ char_u * replace_termcodes (
     }
 
     // skip multibyte char correctly
-    for (i = (*mb_ptr2len)(src); i > 0; --i) {
+    for (i = (*mb_ptr2len_len)(src, (int) (end - src) + 1); i > 0; i--) {
       // If the character is K_SPECIAL, replace it with K_SPECIAL
       // KS_SPECIAL KE_FILLER.
       // If compiled with the GUI replace CSI with K_CSI.
