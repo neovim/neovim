@@ -13,7 +13,7 @@
 /// int -> string
 /// string -> string
 /// string -> int
-typedef void (*gen_fn)();
+typedef void (*gen_fn)(void);
 typedef const char *(*str_str_fn)(const char *str);
 typedef int64_t (*str_int_fn)(const char *str);
 typedef const char *(*int_str_fn)(int64_t i);

@@ -29,7 +29,8 @@ if(APPLE)
   endif()
 endif()
 
-add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter -std=gnu99)
+add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
+    -Wstrict-prototypes -std=gnu99)
 
 option(
   TRAVIS_CI_BUILD "Travis CI build.  Extra compilation flags will be set." OFF)

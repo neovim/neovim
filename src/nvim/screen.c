@@ -639,7 +639,7 @@ void update_single_line(win_T *wp, linenr_T lnum)
  * Prepare for updating one or more windows.
  * Caller must check for "updating_screen" already set to avoid recursiveness.
  */
-static void update_prepare()
+static void update_prepare(void)
 {
     cursor_off();
     updating_screen = TRUE;
@@ -649,7 +649,7 @@ static void update_prepare()
 /*
  * Finish updating one or more windows.
  */
-static void update_finish()
+static void update_finish(void)
 {
     if (redraw_cmdline) {
         showmode();

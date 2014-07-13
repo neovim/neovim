@@ -67,7 +67,7 @@
  * A few linux systems define outfuntype in termcap.h to be used as the third
  * argument for tputs().
  */
-#   define TPUTSFUNCAST (int (*)())
+#   define TPUTSFUNCAST (int (*)(int))
 #endif
 
 #undef tgetstr

@@ -396,7 +396,7 @@ int stuff_empty(void)
  * Return TRUE if readbuf1 is empty.  There may still be redo characters in
  * redbuf2.
  */
-int readbuf1_empty()
+int readbuf1_empty(void)
 {
   return (readbuf1.bh_first.b_next == NULL);
 }

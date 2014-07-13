@@ -41,17 +41,14 @@
 
 #ifdef SIGHASARG
 # ifdef SIGHAS3ARGS
-#  define SIGPROTOARG   (int, int, struct sigcontext *)
-#  define SIGDEFARG(s)  (s, sig2, scont) int s, sig2; struct sigcontext *scont;
+#  define SIGDEFARG(s)  (int s, int sig2, struct sigcontext *scont)
 #  define SIGDUMMYARG   0, 0, (struct sigcontext *)0
 # else
-#  define SIGPROTOARG   (int)
-#  define SIGDEFARG(s)  (s) int s;
+#  define SIGDEFARG(s)  (int s)
 #  define SIGDUMMYARG   0
 # endif
 #else
-# define SIGPROTOARG   (void)
-# define SIGDEFARG(s)  ()
+# define SIGDEFARG(s)  (void)
 # define SIGDUMMYARG
 #endif
 

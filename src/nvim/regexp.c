@@ -274,7 +274,7 @@
  * This is impossible, so we declare a pointer to a function returning a
  * pointer to a function returning void. This should work for all compilers.
  */
-typedef void (*(*fptr_T)(int *, int))();
+typedef void (*(*fptr_T)(int *, int))(void);
 
 typedef struct {
   char_u     *regparse;
@@ -3266,21 +3266,20 @@ bt_regexec_nl (
 }
 
 
-/*
- * Match a regexp against multiple lines.
- * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
- * Uses curbuf for line count and 'iskeyword'.
- *
- * Return zero if there is no match.  Return number of lines contained in the
- * match otherwise.
- */
-static long bt_regexec_multi(rmp, win, buf, lnum, col, tm)
-regmmatch_T *rmp;
-win_T       *win;               /* window in which to search or NULL */
-buf_T       *buf;               /* buffer in which to search */
-linenr_T lnum;                  /* nr of line to start looking for match */
-colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm;                /* timeout limit or NULL */
+/// Matches a regexp against multiple lines.
+/// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+/// Uses curbuf for line count and 'iskeyword'.
+/// 
+/// @param win Window in which to search or NULL
+/// @param buf Buffer in which to search
+/// @param lnum Number of line to start looking for match 
+/// @param col Column to start looking for match
+/// @param tm Timeout limit or NULL
+///
+/// @return zero if there is no match and number of lines contained in the match
+///         otherwise.
+static long bt_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
+                             linenr_T lnum, colnr_T col, proftime_T *tm)
 {
   long r;
 
@@ -6265,36 +6264,28 @@ static char_u *cstrchr(char_u *s, int c)
 
 
 
-static fptr_T do_upper(d, c)
-int         *d;
-int c;
+static fptr_T do_upper(int *d, int c)
 {
   *d = vim_toupper(c);
 
   return (fptr_T)NULL;
 }
 
-static fptr_T do_Upper(d, c)
-int         *d;
-int c;
+static fptr_T do_Upper(int *d, int c)
 {
   *d = vim_toupper(c);
 
   return (fptr_T)do_Upper;
 }
 
-static fptr_T do_lower(d, c)
-int         *d;
-int c;
+static fptr_T do_lower(int *d, int c)
 {
   *d = vim_tolower(c);
 
   return (fptr_T)NULL;
 }
 
-static fptr_T do_Lower(d, c)
-int         *d;
-int c;
+static fptr_T do_Lower(int *d, int c)
 {
   *d = vim_tolower(c);
 

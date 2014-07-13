@@ -11649,9 +11649,7 @@ static void f_readfile(typval_T *argvars, typval_T *rettv)
  * Convert a List to proftime_T.
  * Return FAIL when there is something wrong.
  */
-static int list2proftime(arg, tm)
-typval_T    *arg;
-proftime_T  *tm;
+static int list2proftime(typval_T *arg, proftime_T *tm)
 {
   long n1, n2;
   int error = FALSE;

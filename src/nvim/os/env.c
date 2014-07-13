@@ -55,7 +55,7 @@ char *os_getenvname_at_index(size_t index)
 /// Get the process ID of the Neovim process.
 ///
 /// @return the process ID.
-int64_t os_get_pid()
+int64_t os_get_pid(void)
 {
 #ifdef _WIN32
   return (int64_t)GetCurrentProcessId();

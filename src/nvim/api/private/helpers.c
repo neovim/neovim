@@ -22,7 +22,7 @@
 #endif
 
 /// Start block that may cause vimscript exceptions
-void try_start()
+void try_start(void)
 {
   ++trylevel;
 }

@@ -49,7 +49,7 @@
 
 /// Try to free memory. Used when trying to recover from out of memory errors.
 /// @see {xmalloc}
-static void try_to_free_memory()
+static void try_to_free_memory(void)
 {
   static bool trying_to_free = false;
   // avoid recursive calls

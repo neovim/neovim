@@ -65,14 +65,14 @@ static uv_prepare_t job_prepare;
 // Callbacks for libuv
 
 /// Initializes job control resources
-void job_init()
+void job_init(void)
 {
   uv_disable_stdio_inheritance();
   uv_prepare_init(uv_default_loop(), &job_prepare);
 }
 
 /// Releases job control resources and terminates running jobs
-void job_teardown()
+void job_teardown(void)
 {
   // 20 tries will give processes about 1 sec to exit cleanly
   uint32_t remaining_tries = 20;

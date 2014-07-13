@@ -16,7 +16,7 @@ static uv_cond_t delay_cond;
 # include "os/time.c.generated.h"
 #endif
 /// Initializes the time module
-void time_init()
+void time_init(void)
 {
   uv_mutex_init(&delay_mutex);
   uv_cond_init(&delay_cond);
