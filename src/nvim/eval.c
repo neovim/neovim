@@ -4719,13 +4719,14 @@ static int get_string_tv(char_u **arg, typval_T *rettv, int evaluate)
         ++name;
         break;
 
-      /* Special key, e.g.: "\<C-W>" */
-      case '<': extra = trans_special(&p, name, TRUE);
+      // Special key, e.g.: "\<C-W>"
+      case '<':
+        extra = trans_special((const char_u **) &p, STRLEN(p), name, true);
         if (extra != 0) {
           name += extra;
           break;
         }
-      /* FALLTHROUGH */
+        // FALLTHROUGH
 
       default:  MB_COPY_CHAR(p, name);
         break;
@@ -12319,8 +12320,9 @@ static void get_maparg(typval_T *argvars, typval_T *rettv, int exact)
 
   mode = get_map_mode(&which, 0);
 
-  keys = replace_termcodes(keys, &keys_buf, TRUE, TRUE, FALSE);
-  rhs = check_map(keys, mode, exact, FALSE, abbr, &mp, &buffer_local);
+  keys = replace_termcodes(keys, STRLEN(keys), &keys_buf, true, true, false,
+                           CPO_TO_CPO_FLAGS);
+  rhs = check_map(keys, mode, exact, false, abbr, &mp, &buffer_local);
   xfree(keys_buf);
 
   if (!get_dict) {
