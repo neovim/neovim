@@ -92,49 +92,30 @@ if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
     set -e
     exit 0
 elif [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
-    if [ ! -d /usr/local/clang-3.4 ]; then
-        echo "Downloading clang 3.4..."
-        sudo sh <<- "EOF"
-        mkdir /usr/local/clang-3.4
-        wget -q -O - http://llvm.org/releases/3.4/clang+llvm-3.4-x86_64-unknown-ubuntu12.04.tar.xz |
-        unxz -c | tar xf - --strip-components=1 -C /usr/local/clang-3.4
-        EOF
+    clang_version=3.4
+    if [ ! -d /usr/local/clang-$clang_version ]; then
+        echo "Downloading clang $clang_version..."
+        sudo mkdir /usr/local/clang-$clang_version
+        wget -q -O - http://llvm.org/releases/$clang_version/clang+llvm-$clang_version-x86_64-unknown-ubuntu12.04.xz \
+            | sudo tar xJf - --strip-components=1 -C /usr/local/clang-$clang_version
+        symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
+        export CC=/usr/local/clang-$clang_version/bin/clang
+    else
+      export CC=clang
+      symbolizer=/usr/local/clang-3.4/bin/llvm-symbolizer
     fi
     sudo pip install cpp-coveralls
-
-    export CC=clang
     set_environment /opt/neovim-deps
-    if test -f /usr/local/clang-3.4/bin/clang; then
-        USE_CLANG_34=true
-        export CC=/usr/local/clang-3.4/bin/clang
-        symbolizer=/usr/local/clang-3.4/bin/llvm-symbolizer
-    fi
-
-    # Try to detect clang-3.4 installed via apt and through llvm.org/apt/.
-    if dpkg -s clang-3.4 > /dev/null 2>&1; then
-        USE_CLANG_34=true
-        export CC=/usr/bin/clang
-        symbolizer=/usr/bin/llvm-symbolizer-3.4
-    fi
-
-    install_dir="$(pwd)/dist"
-    # temporary directory for writing sanitizer logs
-
-    # need the symbolizer path for stack traces with source information
-    if [ -n "$USE_CLANG_34" ]; then
-        export ASAN_OPTIONS="detect_leaks=1:"
-    else
-        symbolizer=/usr/local/clang-3.3/bin/llvm-symbolizer
-    fi
 
     export SANITIZE=1
     export ASAN_SYMBOLIZER_PATH=$symbolizer
-    export ASAN_OPTIONS="${ASAN_OPTIONS}log_path=$tmpdir/asan"
+    export ASAN_OPTIONS="detect_leaks=1:log_path=$tmpdir/asan"
     export TSAN_OPTIONS="external_symbolizer_path=$symbolizer:log_path=$tmpdir/tsan"
 
     export SKIP_UNITTEST=1
     export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
+    install_dir="$(pwd)/dist"
     $MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
     $MAKE_CMD
     if ! $MAKE_CMD test; then
