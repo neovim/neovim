@@ -65,7 +65,7 @@ set_environment() {
 # install prebuilt dependencies
 if [ ! -d /opt/neovim-deps ]; then
     cd /opt
-    sudo git clone --depth=1 git://github.com/tarruda/neovim-deps
+    sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps
     cd -
 fi
 
