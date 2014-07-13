@@ -26,7 +26,7 @@ static bool rejecting_deadly;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/signal.c.generated.h"
 #endif
-void signal_init()
+void signal_init(void)
 {
   uv_signal_init(uv_default_loop(), &sint);
   uv_signal_init(uv_default_loop(), &spipe);
@@ -46,7 +46,7 @@ void signal_init()
 #endif
 }
 
-void signal_stop()
+void signal_stop(void)
 {
   uv_signal_stop(&sint);
   uv_signal_stop(&spipe);
@@ -59,12 +59,12 @@ void signal_stop()
 #endif
 }
 
-void signal_reject_deadly()
+void signal_reject_deadly(void)
 {
   rejecting_deadly = true;
 }
 
-void signal_accept_deadly()
+void signal_accept_deadly(void)
 {
   rejecting_deadly = false;
 }

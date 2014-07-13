@@ -416,7 +416,7 @@ int enc_canon_props(char_u *name)
  * When there is something wrong: Returns an error message and doesn't change
  * anything.
  */
-char_u * mb_init()
+char_u * mb_init(void)
 {
   int i;
   int idx;
@@ -620,7 +620,7 @@ char_u * mb_init()
  * 4 - UCS-4 BOM
  * 3 - UTF-8 BOM
  */
-int bomb_size()
+int bomb_size(void)
 {
   int n = 0;
 
@@ -2850,7 +2850,7 @@ int mb_strnicmp(char_u *s1, char_u *s2, size_t nn)
  * "g8": show bytes of the UTF-8 char under the cursor.  Doesn't matter what
  * 'encoding' has been set to.
  */
-void show_utf8()
+void show_utf8(void)
 {
   int len;
   int rlen = 0;
@@ -3080,7 +3080,7 @@ int mb_tail_off(char_u *base, char_u *p)
 /*
  * Find the next illegal byte sequence.
  */
-void utf_find_illegal()
+void utf_find_illegal(void)
 {
   pos_T pos = curwin->w_cursor;
   char_u      *p;
@@ -3147,7 +3147,7 @@ theend:
  * If the cursor moves on an trail byte, set the cursor on the lead byte.
  * Thus it moves left if necessary.
  */
-void mb_adjust_cursor()
+void mb_adjust_cursor(void)
 {
   mb_adjustpos(curbuf, &curwin->w_cursor);
 }
@@ -3401,7 +3401,7 @@ static int enc_alias_search(char_u *name)
  * Get the canonicalized encoding of the current locale.
  * Returns an allocated string when successful, NULL when not.
  */
-char_u * enc_locale()
+char_u * enc_locale(void)
 {
   char        *s;
   char        *p;
@@ -3696,7 +3696,7 @@ bool iconv_enabled(bool verbose)
   return true;
 }
 
-void iconv_end()
+void iconv_end(void)
 {
   /* Don't use iconv() when inputting or outputting characters. */
   if (input_conv.vc_type == CONV_ICONV)

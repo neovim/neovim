@@ -6338,38 +6338,42 @@ nfa_regexec_nl (
   return nfa_regexec_both(line, col) != 0;
 }
 
-/*
- * Match a regexp against multiple lines.
- * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
- * Uses curbuf for line count and 'iskeyword'.
- *
- * Return zero if there is no match.  Return number of lines contained in the
- * match otherwise.
- *
- * Note: the body is the same as bt_regexec() except for nfa_regexec_both()
- *
- * ! Also NOTE : match may actually be in another line. e.g.:
- * when r.e. is \nc, cursor is at 'a' and the text buffer looks like
- *
- * +-------------------------+
- * |a                        |
- * |b                        |
- * |c                        |
- * |                         |
- * +-------------------------+
- *
- * then nfa_regexec_multi() returns 3. while the original
- * vim_regexec_multi() returns 0 and a second call at line 2 will return 2.
- *
- * FIXME if this behavior is not compatible.
- */
-static long nfa_regexec_multi(rmp, win, buf, lnum, col, tm)
-regmmatch_T *rmp;
-win_T       *win;               /* window in which to search or NULL */
-buf_T       *buf;               /* buffer in which to search */
-linenr_T lnum;                  /* nr of line to start looking for match */
-colnr_T col;                    /* column to start looking for match */
-proftime_T  *tm;         /* timeout limit or NULL */
+/// Matches a regexp against multiple lines.
+/// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
+/// Uses curbuf for line count and 'iskeyword'.
+///
+/// @param win Window in which to search or NULL
+/// @param buf Buffer in which to search
+/// @param lnum Number of line to start looking for match
+/// @param col Column to start looking for match
+/// @param tm Timeout limit or NULL
+///
+/// @return Zero if there is no match and number of lines contained in the match
+/// otherwise.
+///
+/// @note The body is the same as bt_regexec() except for nfa_regexec_both()
+///
+/// @warning
+/// Match may actually be in another line. e.g.:
+/// when r.e. is \nc, cursor is at 'a' and the text buffer looks like
+///
+/// @par
+///
+///     +-------------------------+
+///     |a                        |
+///     |b                        |
+///     |c                        |
+///     |                         |
+///     +-------------------------+
+///
+/// @par
+/// then nfa_regexec_multi() returns 3. while the original vim_regexec_multi()
+/// returns 0 and a second call at line 2 will return 2.
+///
+/// @par
+/// FIXME if this behavior is not compatible.
+static long nfa_regexec_multi(regmmatch_T *rmp, win_T *win, buf_T *buf,
+                              linenr_T lnum, colnr_T col, proftime_T *tm)
 {
   reg_match = NULL;
   reg_mmatch = rmp;

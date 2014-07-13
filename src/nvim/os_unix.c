@@ -104,7 +104,7 @@ void mch_write(char_u *s, int len)
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
  */
-void mch_suspend()
+void mch_suspend(void)
 {
   /* BeOS does have SIGTSTP, but it doesn't work. */
 #if defined(SIGTSTP) && !defined(__BEOS__)
@@ -148,7 +148,7 @@ void mch_suspend()
 #endif
 }
 
-void mch_init()
+void mch_init(void)
 {
   Columns = 80;
   Rows = 24;
@@ -179,12 +179,12 @@ static int get_x11_icon(int test_only)
 }
 
 
-int mch_can_restore_title()
+int mch_can_restore_title(void)
 {
   return get_x11_title(TRUE);
 }
 
-int mch_can_restore_icon()
+int mch_can_restore_icon(void)
 {
   return get_x11_icon(TRUE);
 }
@@ -292,7 +292,7 @@ int use_xterm_like_mouse(char_u *name)
  * Return 3 for "urxvt".
  * Return 4 for "sgr".
  */
-int use_xterm_mouse()
+int use_xterm_mouse(void)
 {
   if (ttym_flags == TTYM_SGR)
     return 4;
@@ -506,14 +506,15 @@ int mch_nodetype(char_u *name)
   return NODE_WRITABLE;
 }
 
-void mch_early_init()
+void mch_early_init(void)
 {
   handle_init();
   time_init();
 }
 
 #if defined(EXITFREE) || defined(PROTO)
-void mch_free_mem()          {
+void mch_free_mem(void)
+{
   free(oldtitle);
   free(oldicon);
 }
@@ -525,7 +526,7 @@ void mch_free_mem()          {
  * Output a newline when exiting.
  * Make sure the newline goes to the same stream as the text.
  */
-static void exit_scroll()
+static void exit_scroll(void)
 {
   if (silent_mode)
     return;
@@ -691,7 +692,7 @@ void mch_settmode(int tmode)
  * be), they're going to get really annoyed if their erase key starts
  * doing forward deletes for no reason. (Eric Fischer)
  */
-void get_stty()
+void get_stty(void)
 {
   char_u buf[2];
   char_u  *p;
@@ -788,7 +789,7 @@ void mch_setmouse(int on)
 /*
  * Set the mouse termcode, depending on the 'term' and 'ttymouse' options.
  */
-void check_mouse_termcode()
+void check_mouse_termcode(void)
 {
   if (use_xterm_mouse()
       && use_xterm_mouse() != 3
@@ -860,7 +861,7 @@ void check_mouse_termcode()
  * 4. keep using the old values
  * Return OK when size could be determined, FAIL otherwise.
  */
-int mch_get_shellsize()
+int mch_get_shellsize(void)
 {
   long rows = 0;
   long columns = 0;
@@ -937,7 +938,7 @@ int mch_get_shellsize()
 /*
  * Try to set the window size to Rows and Columns.
  */
-void mch_set_shellsize()
+void mch_set_shellsize(void)
 {
   if (*T_CWS) {
     /*

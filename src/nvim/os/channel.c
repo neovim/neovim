@@ -56,7 +56,7 @@ static msgpack_sbuffer out_buffer;
 #endif
 
 /// Initializes the module
-void channel_init()
+void channel_init(void)
 {
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
@@ -64,7 +64,7 @@ void channel_init()
 }
 
 /// Teardown the module
-void channel_teardown()
+void channel_teardown(void)
 {
   if (!channels) {
     return;
@@ -470,7 +470,7 @@ static void close_cb(uv_handle_t *handle)
   free(handle);
 }
 
-static Channel *register_channel()
+static Channel *register_channel(void)
 {
   Channel *rv = xmalloc(sizeof(Channel));
   rv->enabled = true;

@@ -47,7 +47,7 @@ static PMap(cstr_t) *servers = NULL;
 #endif
 
 /// Initializes the module
-void server_init()
+void server_init(void)
 {
   servers = pmap_new(cstr_t)();
 
@@ -61,7 +61,7 @@ void server_init()
 }
 
 /// Teardown the server module
-void server_teardown()
+void server_teardown(void)
 {
   if (!servers) {
     return;

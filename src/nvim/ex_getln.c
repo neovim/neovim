@@ -3932,11 +3932,8 @@ expand_shellcmd (
  * Call "user_expand_func()" to invoke a user defined VimL function and return
  * the result (either a string or a List).
  */
-static void * call_user_expand_func(user_expand_func, xp, num_file, file)
-user_expand_func_T user_expand_func;
-expand_T           *xp;
-int                *num_file;
-char_u             ***file;
+static void * call_user_expand_func(user_expand_func_T user_expand_func,
+                                    expand_T *xp, int *num_file, char_u ***file)
 {
   int keep = 0;
   char_u num[50];

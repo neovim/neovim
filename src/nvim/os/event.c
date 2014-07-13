@@ -33,7 +33,7 @@ typedef struct {
 #endif
 static klist_t(Event) *deferred_events, *immediate_events;
 
-void event_init()
+void event_init(void)
 {
   // Initialize the event queues
   deferred_events = kl_init(Event);
@@ -52,7 +52,7 @@ void event_init()
   server_init();
 }
 
-void event_teardown()
+void event_teardown(void)
 {
   channel_teardown();
   job_teardown();
@@ -122,7 +122,7 @@ bool event_poll(int32_t ms)
   return !timer_data.timed_out && (events_processed || event_has_deferred());
 }
 
-bool event_has_deferred()
+bool event_has_deferred(void)
 {
   return !kl_empty(get_queue(true));
 }

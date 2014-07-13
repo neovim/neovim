@@ -4484,7 +4484,7 @@ void buf_delete_signs(buf_T *buf)
 /*
  * Delete all signs in all buffers.
  */
-void buf_delete_all_signs()
+void buf_delete_all_signs(void)
 {
     buf_T *buf;     /* buffer we are checking for signs */
 
