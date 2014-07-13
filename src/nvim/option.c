@@ -6658,3 +6658,75 @@ unsigned int get_bkc_value(buf_T *buf)
 {
   return buf->b_bkc_flags ? buf->b_bkc_flags : bkc_flags;
 }
+
+/// Return option properties
+///
+/// Currently only returns the locality and type of the option. Returned flags:
+///
+/// GOP_GLOBAL
+/// :   This flag is set if option has global value.
+///
+/// GOP_BUFFER_LOCAL
+/// :   This flag is set if option is buffer-local.
+///
+/// GOP_WINDOW_LOCAL
+/// :   This flag is set if option is window-local.
+///
+/// GOP_DISABLED
+/// :   This flag is set if option is disabled in this version of neovim.
+///
+/// GOP_BOOLEAN
+/// :   This flag is set if option has boolean value.
+///
+/// GOP_NUMERIC
+/// :   This flag is set if option has numeric value.
+///
+/// GOP_STRING
+/// :   This flag is set if option has string value.
+///
+/// If no flags are set (== returned zero) then option was not found.
+///
+/// @param[in]  name  Option that will be searched for.
+///
+/// @return Flag value.
+uint_least8_t get_option_properties(const char_u *const name, const size_t len)
+  FUNC_ATTR_PURE FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  uint_least8_t flags = 0;
+  int idx = findoption_len(name, len);
+
+  if (idx == -1)
+    return flags;
+
+  const struct vimoption *const p = options + idx;
+
+  if (p->indir == PV_NONE) {
+    flags |= GOP_GLOBAL;
+  } else {
+    if (p->indir & PV_BOTH)
+      flags |= GOP_GLOBAL;
+    if (p->indir & PV_WIN)
+      flags |= GOP_WINDOW_LOCAL;
+    if (p->indir & PV_BUF)
+      flags |= GOP_BUFFER_LOCAL;
+    if (p->var != VAR_WIN && p->var != NULL)
+      // All buffer-local options really have global value, no matter what
+      // p->indir tells. This is just a saner variant then adding GOP_GLOBAL in
+      // one "if" with GOP_BUFFER_LOCAL.
+      flags |= GOP_GLOBAL;
+  }
+  if (p->var == NULL)
+    flags |= GOP_DISABLED;
+
+  if (p->flags & P_BOOL)
+    flags |= GOP_BOOLEAN;
+  else if (p->flags & P_NUM)
+    flags |= GOP_NUMERIC;
+  else if (p->flags & P_STRING)
+    flags |= GOP_STRING;
+  else
+    // Option may only be boolean, string or numeric
+    assert(FALSE);
+
+  return flags;
+}

@@ -792,4 +792,19 @@ enum {
 /* Value for b_p_ul indicating the global value must be used. */
 #define NO_LOCAL_UNDOLEVEL -123456
 
+#define GOP_GLOBAL        0x01
+#define GOP_BUFFER_LOCAL  0x02
+#define GOP_WINDOW_LOCAL  0x04
+
+#define GOP_LOCALITY_MASK (GOP_GLOBAL|GOP_BUFFER_LOCAL|GOP_WINDOW_LOCAL)
+
+#define GOP_DISABLED      0x08
+
+#define GOP_BOOLEAN       0x10
+#define GOP_NUMERIC       0x20
+#define GOP_STRING        0x40
+#define GOP_TYPE_MASK     (GOP_BOOLEAN|GOP_NUMERIC|GOP_STRING)
+
+uint_least8_t get_option_properties(const char_u *const name, const size_t len);
+
 #endif // NVIM_OPTION_DEFS_H
