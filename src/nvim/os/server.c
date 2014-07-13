@@ -81,10 +81,11 @@ void server_teardown()
 /// Starts listening on arbitrary tcp/unix addresses specified by
 /// `endpoint` for API calls. The type of socket used(tcp or unix/pipe) will
 /// be determined by parsing `endpoint`: If it's a valid tcp address in the
-/// 'ip:port' format, then it will be tcp socket, else it will be a unix
-/// socket or named pipe.
+/// 'ip[:port]' format, then it will be tcp socket. The port is optional
+/// and if omitted will default to NEOVIM_DEFAULT_TCP_PORT. Otherwise it will
+/// be a unix socket or named pipe.
 ///
-/// @param endpoint Address of the server. Either a 'ip:port' string or an
+/// @param endpoint Address of the server. Either a 'ip[:port]' string or an
 ///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
 ///        named pipe.
 void server_start(char *endpoint)
@@ -93,9 +94,9 @@ void server_start(char *endpoint)
 
   // Trim to `ADDRESS_MAX_SIZE`
   if (xstrlcpy(addr, endpoint, sizeof(addr)) >= sizeof(addr)) {
-      // TODO(aktau): since this is not what the user wanted, perhaps we
-      // should return an error here
-      EMSG2("Address was too long, truncated to %s", addr);
+    // TODO(aktau): since this is not what the user wanted, perhaps we
+    // should return an error here
+    EMSG2("Address was too long, truncated to %s", addr);
   }
 
   // Check if the server already exists
@@ -116,23 +117,22 @@ void server_start(char *endpoint)
 
   if (addr_len > sizeof(ip) - 1) {
     // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)
-    addr_len = sizeof(ip);
+    addr_len = sizeof(ip) - 1;
   }
 
   // Extract the address part
-  xstrlcpy(ip, addr, addr_len);
+  xstrlcpy(ip, addr, addr_len + 1);
 
   int port = NEOVIM_DEFAULT_TCP_PORT;
 
   if (*ip_end == ':') {
-    char *port_end;
     // Extract the port
-    port = strtol(ip_end + 1, &port_end, 10);
-    errno = 0;
-
-    if (errno != 0 || port == 0 || port > 0xffff) {
+    long lport = strtol(ip_end + 1, NULL, 10); // NOLINT
+    if (lport <= 0 || lport > 0xffff) {
       // Invalid port, treat as named pipe or unix socket
       server_type = kServerTypePipe;
+    } else {
+      port = (int) lport;
     }
   }
 
