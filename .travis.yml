@@ -1,3 +1,4 @@
+cache: apt
 language: c
 env:
   global:
