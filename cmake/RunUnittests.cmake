@@ -5,7 +5,7 @@ if(DEFINED ENV{TEST_FILE})
 endif()
 
 execute_process(
-  COMMAND ${BUSTED_PRG} -o ${BUSTED_OUTPUT_TYPE} --lpath=${BUILD_DIR}/?.lua --pattern=.moon ${TEST_DIR}
+  COMMAND ${BUSTED_PRG} -o ${BUSTED_OUTPUT_TYPE} --lpath=${BUILD_DIR}/?.lua ${TEST_DIR}
   WORKING_DIRECTORY ${WORKING_DIR}
   RESULT_VARIABLE res)
 
