@@ -77,17 +77,16 @@ static void try_to_free_memory(void)
 /// @return pointer to allocated space. NULL if out of memory
 void *try_malloc(size_t size) FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE(1)
 {
+  size = size ? size : 1; // At least allocate one byte.
+
   void *ret = malloc(size);
 
-  if (!ret && !size) {
-    ret = malloc(1);
-  }
   if (!ret) {
     try_to_free_memory();
     ret = malloc(size);
-    if (!ret && !size) {
+
+    if (!ret)
       ret = malloc(1);
-    }
   }
   return ret;
 }
@@ -136,16 +135,21 @@ void *xmalloc(size_t size)
 void *xcalloc(size_t count, size_t size)
   FUNC_ATTR_MALLOC FUNC_ATTR_ALLOC_SIZE_PROD(1, 2) FUNC_ATTR_NONNULL_RET
 {
+  // Make sure we allocate at least one byte. calloc on a size of zero is
+  // undefined and can return either NULL or a non-NULL pointer.
+  count = count ? count : 1;
+  size  = size  ?  size : 1;
+  
   void *ret = calloc(count, size);
-
-  if (!ret && (!count || !size))
-    ret = calloc(1, 1);
 
   if (!ret) {
     try_to_free_memory();
+
     ret = calloc(count, size);
-    if (!ret && (!count || !size))
-      ret = calloc(1, 1);
+
+    if (!ret)
+      ret = calloc(1,1);
+
     if (!ret) {
       OUT_STR("Vim: Error: Out of memory.\n");
       preserve_exit();
