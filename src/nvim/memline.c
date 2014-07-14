@@ -69,6 +69,7 @@
 #include "nvim/spell.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
+#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -490,7 +491,7 @@ void ml_open_file(buf_T *buf)
 
   /* For a spell buffer use a temp file name. */
   if (buf->b_spell) {
-    fname = vim_tempname('s');
+    fname = vim_tempname();
     if (fname != NULL)
       (void)mf_open_file(mfp, fname);           /* consumes fname! */
     buf->b_may_swap = FALSE;
@@ -589,9 +590,7 @@ void ml_close_all(int del_file)
     ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0
                                || vim_strchr(p_cpo, CPO_PRESERVE) == NULL));
   spell_delete_wordlist();      /* delete the internal wordlist */
-#ifdef TEMPDIRNAMES
   vim_deltempdir();             /* delete created temp directory */
-#endif
 }
 
 /*

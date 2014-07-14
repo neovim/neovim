@@ -52,6 +52,7 @@
 #include "nvim/screen.h"
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
+#include "nvim/tempfile.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
@@ -1034,7 +1035,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   /*
    * get a name for the temp file
    */
-  if ((tempname = vim_tempname('o')) == NULL) {
+  if ((tempname = vim_tempname()) == NULL) {
     EMSG(_(e_notmp));
     return FAIL;
   }

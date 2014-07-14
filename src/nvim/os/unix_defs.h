@@ -1,0 +1,7 @@
+#ifndef NEOVIM_OS_UNIX_DEFS_H
+#define NEOVIM_OS_UNIX_DEFS_H
+
+#define TEMP_DIR_NAMES {"$TMPDIR", "/tmp", ".", "$HOME"}
+#define TEMP_FILE_PATH_MAXLEN 256
+
+#endif  // NEOVIM_OS_UNIX_DEFS_H

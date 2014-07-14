@@ -322,6 +322,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
+#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
@@ -7814,7 +7815,7 @@ spell_add_word (
 
   if (idx == 0) {           // use internal wordlist
     if (int_wordlist == NULL) {
-      int_wordlist = vim_tempname('s');
+      int_wordlist = vim_tempname();
       if (int_wordlist == NULL)
         return;
     }

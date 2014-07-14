@@ -30,6 +30,7 @@
 #include "nvim/path.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
+#include "nvim/tempfile.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
@@ -661,9 +662,9 @@ void ex_diffupdate(exarg_T *eap)
   }
 
   // We need three temp file names.
-  char_u *tmp_orig = vim_tempname('o');
-  char_u *tmp_new = vim_tempname('n');
-  char_u *tmp_diff = vim_tempname('d');
+  char_u *tmp_orig = vim_tempname();
+  char_u *tmp_new = vim_tempname();
+  char_u *tmp_diff = vim_tempname();
 
   if ((tmp_orig == NULL) || (tmp_new == NULL) || (tmp_diff == NULL)) {
     goto theend;
@@ -852,9 +853,9 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
   // We need two temp file names.
   // Name of original temp file.
-  char_u *tmp_orig = vim_tempname('o');
+  char_u *tmp_orig = vim_tempname();
   // Name of patched temp file.
-  char_u *tmp_new = vim_tempname('n');
+  char_u *tmp_new = vim_tempname();
 
   if ((tmp_orig == NULL) || (tmp_new == NULL)) {
     goto theend;
@@ -893,15 +894,11 @@ void ex_diffpatch(exarg_T *eap)
       || (os_chdir((char *)dirbuf) != 0)) {
     dirbuf[0] = NUL;
   } else {
-# ifdef TEMPDIRNAMES
-    if (vim_tempdir != NULL) {
-      ignored = os_chdir((char *)vim_tempdir);
-    } else {
-      ignored = os_chdir("/tmp");
+    char *tempdir = (char *)vim_gettempdir();
+    if (tempdir == NULL) {
+      tempdir = "/tmp";
     }
-# else
-    ignored = os_chdir("/tmp");
-# endif  // ifdef TEMPDIRNAMES
+    os_chdir(tempdir);
     shorten_fnames(TRUE);
   }
 #endif  // ifdef UNIX

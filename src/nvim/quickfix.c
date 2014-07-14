@@ -47,6 +47,7 @@
 #include "nvim/search.h"
 #include "nvim/strings.h"
 #include "nvim/term.h"
+#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
@@ -2537,7 +2538,7 @@ static char_u *get_mef_name(void)
   static int off = 0;
 
   if (*p_mef == NUL) {
-    name = vim_tempname('e');
+    name = vim_tempname();
     if (name == NULL)
       EMSG(_(e_notmp));
     return name;

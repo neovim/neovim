@@ -28,6 +28,7 @@
 #include "nvim/quickfix.h"
 #include "nvim/strings.h"
 #include "nvim/tag.h"
+#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
@@ -1044,7 +1045,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
   if (qfpos != NULL && *qfpos != '0' && totmatches > 0) {
     /* fill error list */
     FILE        *f;
-    char_u      *tmp = vim_tempname('c');
+    char_u      *tmp = vim_tempname();
     qf_info_T   *qi = NULL;
     win_T       *wp = NULL;
 

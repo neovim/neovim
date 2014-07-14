@@ -49,6 +49,7 @@
 #include "nvim/search.h"
 #include "nvim/sha256.h"
 #include "nvim/strings.h"
+#include "nvim/tempfile.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
@@ -2146,7 +2147,7 @@ readfile_charconvert (
   char_u      *tmpname;
   char_u      *errmsg = NULL;
 
-  tmpname = vim_tempname('r');
+  tmpname = vim_tempname();
   if (tmpname == NULL)
     errmsg = (char_u *)_("Can't find temp file for conversion");
   else {
@@ -3163,7 +3164,7 @@ nobackup:
      * overwrite the original file.
      */
     if (*p_ccv != NUL) {
-      wfname = vim_tempname('w');
+      wfname = vim_tempname();
       if (wfname == NULL) {             /* Can't write without a tempfile! */
         errmsg = (char_u *)_("E214: Can't find temp file for writing");
         goto restore_backup;
@@ -5154,191 +5155,6 @@ void write_lnum_adjust(linenr_T offset)
 {
   if (curbuf->b_no_eol_lnum != 0)       /* only if there is a missing eol */
     curbuf->b_no_eol_lnum += offset;
-}
-
-#if defined(TEMPDIRNAMES) || defined(PROTO)
-static long temp_count = 0;             /* Temp filename counter. */
-
-/*
- * Delete the temp directory and all files it contains.
- */
-void vim_deltempdir(void)
-{
-  char_u      **files;
-  int file_count;
-  int i;
-
-  if (vim_tempdir != NULL) {
-    sprintf((char *)NameBuff, "%s*", vim_tempdir);
-    if (gen_expand_wildcards(1, &NameBuff, &file_count, &files,
-            EW_DIR|EW_FILE|EW_SILENT) == OK) {
-      for (i = 0; i < file_count; ++i)
-        os_remove((char *)files[i]);
-      FreeWild(file_count, files);
-    }
-    path_tail(NameBuff)[-1] = NUL;
-    os_rmdir((char *)NameBuff);
-
-    free(vim_tempdir);
-    vim_tempdir = NULL;
-  }
-}
-
-#endif
-
-#ifdef TEMPDIRNAMES
-/*
- * Directory "tempdir" was created.  Expand this name to a full path and put
- * it in "vim_tempdir".  This avoids that using ":cd" would confuse us.
- * "tempdir" must be no longer than MAXPATHL.
- */
-static void vim_settempdir(char_u *tempdir)
-{
-  char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
-  if (buf) {
-    if (vim_FullName(tempdir, buf, MAXPATHL, FALSE) == FAIL)
-      STRCPY(buf, tempdir);
-    add_pathsep(buf);
-    vim_tempdir = vim_strsave(buf);
-    free(buf);
-  }
-}
-#endif
-
-/*
- * vim_tempname(): Return a unique name that can be used for a temp file.
- *
- * The temp file is NOT created.
- *
- * The returned pointer is to allocated memory.
- * The returned pointer is NULL if no valid name was found.
- */
-char_u *
-vim_tempname (
-    int extra_char          /* char to use in the name instead of '?' */
-)
-{
-#ifdef USE_TMPNAM
-  char_u itmp[L_tmpnam];        /* use tmpnam() */
-#else
-  char_u itmp[TEMPNAMELEN];
-#endif
-
-#ifdef TEMPDIRNAMES
-  static char *(tempdirs[]) = {TEMPDIRNAMES};
-  int i;
-
-  /*
-   * This will create a directory for private use by this instance of Vim.
-   * This is done once, and the same directory is used for all temp files.
-   * This method avoids security problems because of symlink attacks et al.
-   * It's also a bit faster, because we only need to check for an existing
-   * file when creating the directory and not for each temp file.
-   */
-  if (vim_tempdir == NULL) {
-    /*
-     * Try the entries in TEMPDIRNAMES to create the temp directory.
-     */
-    for (i = 0; i < (int)(sizeof(tempdirs) / sizeof(char *)); ++i) {
-# ifndef HAVE_MKDTEMP
-      size_t itmplen;
-      long nr;
-      long off;
-# endif
-
-      /* expand $TMP, leave room for "/v1100000/999999999" */
-      expand_env((char_u *)tempdirs[i], itmp, TEMPNAMELEN - 20);
-      if (os_isdir(itmp)) {                    /* directory exists */
-        add_pathsep(itmp);
-
-# ifdef HAVE_MKDTEMP
-        /* Leave room for filename */
-        STRCAT(itmp, "vXXXXXX");
-        if (mkdtemp((char *)itmp) != NULL)
-          vim_settempdir(itmp);
-# else
-        /* Get an arbitrary number of up to 6 digits.  When it's
-         * unlikely that it already exists it will be faster,
-         * otherwise it doesn't matter.  The use of mkdir() avoids any
-         * security problems because of the predictable number. */
-        nr = (os_get_pid() + (long)time(NULL)) % 1000000L;
-        itmplen = STRLEN(itmp);
-
-        /* Try up to 10000 different values until we find a name that
-         * doesn't exist. */
-        for (off = 0; off < 10000L; ++off) {
-          int r;
-#  if defined(UNIX)
-          mode_t umask_save;
-#  endif
-
-          sprintf((char *)itmp + itmplen, "v%" PRId64, (int64_t)(nr + off));
-#  ifndef EEXIST
-          /* If mkdir() does not set errno to EEXIST, check for
-           * existing file here.  There is a race condition then,
-           * although it's fail-safe. */
-          if (os_file_exists(itmp))
-            continue;
-#  endif
-#  if defined(UNIX)
-          /* Make sure the umask doesn't remove the executable bit.
-           * "repl" has been reported to use "177". */
-          umask_save = umask(077);
-#  endif
-          r = os_mkdir((char *)itmp, 0700);
-#  if defined(UNIX)
-          (void)umask(umask_save);
-#  endif
-          if (r == 0) {
-            vim_settempdir(itmp);
-            break;
-          }
-#  ifdef EEXIST
-          /* If the mkdir() didn't fail because the file/dir exists,
-           * we probably can't create any dir here, try another
-           * place. */
-          if (errno != EEXIST)
-#  endif
-          break;
-        }
-# endif /* HAVE_MKDTEMP */
-        if (vim_tempdir != NULL)
-          break;
-      }
-    }
-  }
-
-  if (vim_tempdir != NULL) {
-    /* There is no need to check if the file exists, because we own the
-     * directory and nobody else creates a file in it. */
-    sprintf((char *)itmp, "%s%" PRId64, vim_tempdir, (int64_t)temp_count++);
-    return vim_strsave(itmp);
-  }
-
-  return NULL;
-
-#else /* TEMPDIRNAMES */
-
-
-#  ifdef USE_TMPNAM
-  char_u      *p;
-
-  /* tmpnam() will make its own name */
-  p = tmpnam((char *)itmp);
-  if (p == NULL || *p == NUL)
-    return NULL;
-#  else
-  char_u      *p;
-
-  STRCPY(itmp, TEMPNAME);
-  if ((p = vim_strchr(itmp, '?')) != NULL)
-    *p = extra_char;
-  if (mktemp((char *)itmp) == NULL)
-    return NULL;
-#  endif
-
-  return vim_strsave(itmp);
-#endif /* TEMPDIRNAMES */
 }
 
 #if defined(BACKSLASH_IN_FILENAME) || defined(PROTO)

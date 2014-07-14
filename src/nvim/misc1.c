@@ -52,6 +52,7 @@
 #include "nvim/strings.h"
 #include "nvim/tag.h"
 #include "nvim/term.h"
+#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -3423,7 +3424,7 @@ get_cmd_output (
     return NULL;
 
   /* get a name for the temp file */
-  if ((tempname = vim_tempname('o')) == NULL) {
+  if ((tempname = vim_tempname()) == NULL) {
     EMSG(_(e_notmp));
     return NULL;
   }

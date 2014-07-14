@@ -13,4 +13,5 @@
 # include "os/env.h.generated.h"
 # include "os/users.h.generated.h"
 #endif
+
 #endif  // NVIM_OS_OS_H

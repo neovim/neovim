@@ -40,6 +40,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
+#include "nvim/tempfile.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 
@@ -2346,7 +2347,7 @@ int mch_print_init(prt_settings_T *psettings, char_u *jobname, int forceit)
 
   /* If the user didn't specify a file name, use a temp file. */
   if (psettings->outfile == NULL) {
-    prt_ps_file_name = vim_tempname('p');
+    prt_ps_file_name = vim_tempname();
     if (prt_ps_file_name == NULL) {
       EMSG(_(e_notmp));
       return FAIL;

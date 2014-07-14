@@ -204,9 +204,6 @@
   "~/.nvim,$VIM/vimfiles,$VIMRUNTIME,$VIM/vimfiles/after,~/.nvim/after"
 #  endif
 
-#  define TEMPDIRNAMES  "$TMPDIR", "/tmp", ".", "$HOME"
-#  define TEMPNAMELEN    256
-
 /* Special wildcards that need to be handled by the shell */
 #define SPECIAL_WILDCHAR    "`'{"
 

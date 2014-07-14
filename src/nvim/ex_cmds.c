@@ -59,6 +59,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
+#include "nvim/tempfile.h"
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
@@ -1032,8 +1033,8 @@ do_filter (
     curbuf->b_op_start.lnum = line1;
     curbuf->b_op_end.lnum = line2;
     curwin->w_cursor.lnum = line2;
-  } else if ((do_in && (itmp = vim_tempname('i')) == NULL)
-      || (do_out && (otmp = vim_tempname('o')) == NULL)) {
+  } else if ((do_in && (itmp = vim_tempname()) == NULL)
+      || (do_out && (otmp = vim_tempname()) == NULL)) {
     EMSG(_(e_notmp));
     goto filterend;
   }
@@ -1601,7 +1602,7 @@ void write_viminfo(char_u *file, int forceit)
        */
       if (fp_out == NULL) {
         free(tempname);
-        if ((tempname = vim_tempname('o')) != NULL)
+        if ((tempname = vim_tempname()) != NULL)
           fp_out = mch_fopen((char *)tempname, WRITEBIN);
       }
 
