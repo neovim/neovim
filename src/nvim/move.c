@@ -34,6 +34,7 @@
 #include "nvim/popupmnu.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
+#include "nvim/window.h"
 
 typedef struct {
   linenr_T lnum;                /* line number */
@@ -312,6 +313,17 @@ void update_topline(void)
   }
 
   p_so = save_so;
+}
+
+/*
+ * Update win->w_topline to move the cursor onto the screen.
+ */
+void update_topline_win(win_T* win)
+{
+  win_T *save_curwin;
+  switch_win(&save_curwin, NULL, win, NULL, true);
+  update_topline();
+  restore_win(save_curwin, NULL, true);
 }
 
 /*
