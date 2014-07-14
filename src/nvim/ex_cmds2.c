@@ -2372,9 +2372,9 @@ int source_level(void *cookie)
  */
 static FILE *fopen_noinh_readbin(char *filename)
 {
-  int fd_tmp = mch_open(filename, O_RDONLY, 0);
+  int fd_tmp = os_open(filename, O_RDONLY, 0);
 
-  if (fd_tmp == -1)
+  if (fd_tmp < 0)
     return NULL;
 
 # ifdef HAVE_FD_CLOEXEC

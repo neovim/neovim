@@ -8317,7 +8317,7 @@ static void f_filereadable(typval_T *argvars, typval_T *rettv)
 # define O_NONBLOCK 0
 #endif
   p = get_tv_string(&argvars[0]);
-  if (*p && !os_isdir(p) && (fd = mch_open((char *)p,
+  if (*p && !os_isdir(p) && (fd = os_open((char *)p,
                                   O_RDONLY | O_NONBLOCK, 0)) >= 0) {
     n = TRUE;
     close(fd);

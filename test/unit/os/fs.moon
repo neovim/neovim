@@ -9,6 +9,14 @@ FAIL = 0
 OK = 1
 
 cppimport 'sys/stat.h'
+cppimport 'sys/fcntl.h'
+cppimport 'sys/errno.h'
+
+assert_file_exists = (filepath) ->
+  eq false, nil == (lfs.attributes filepath, 'r')
+
+assert_file_does_not_exist = (filepath) ->
+  eq true, nil == (lfs.attributes filepath, 'r')
 
 describe 'fs function', ->
   setup ->
@@ -217,12 +225,6 @@ describe 'fs function', ->
         eq 2, os_file_is_writable 'unit-test-directory'
 
   describe 'file operations', ->
-    setup ->
-      (io.open 'unit-test-directory/test_remove.file', 'w').close!
-
-    teardown ->
-      os.remove 'unit-test-directory/test_remove.file'
-
     os_file_exists = (filename) ->
       fs.os_file_exists (to_cstr filename)
 
@@ -231,6 +233,9 @@ describe 'fs function', ->
 
     os_remove = (path) ->
       fs.os_remove (to_cstr path)
+
+    os_open = (path, flags, mode) ->
+      fs.os_open (to_cstr path), flags, mode
 
     describe 'os_file_exists', ->
       it 'returns false when given a non-existing file', ->
@@ -267,13 +272,61 @@ describe 'fs function', ->
         file\close!
 
     describe 'os_remove', ->
+      before_each ->
+        (io.open 'unit-test-directory/test_remove.file', 'w').close!
+      after_each ->
+        os.remove 'unit-test-directory/test_remove.file'
+
       it 'returns non-zero when given a non-existing file', ->
         neq 0, (os_remove 'non-existing-file')
 
       it 'removes the given file and returns 0', ->
-        eq true, (os_file_exists 'unit-test-directory/test_remove.file')
-        eq 0, (os_remove 'unit-test-directory/test_remove.file')
-        eq false, (os_file_exists 'unit-test-directory/test_remove.file')
+        f = 'unit-test-directory/test_remove.file'
+        assert_file_exists f
+        eq 0, (os_remove f)
+        assert_file_does_not_exist f
+
+    describe 'os_open', ->
+      before_each ->
+        (io.open 'unit-test-directory/test_existing.file', 'w').close!
+      after_each ->
+        os.remove 'unit-test-directory/test_existing.file'
+        os.remove 'test_new_file'
+
+      new_file = 'test_new_file'
+      existing_file = 'unit-test-directory/test_existing.file'
+
+      it 'returns -ENOENT for O_RDWR on a non-existing file', ->
+        eq -ffi.C.kENOENT, (os_open 'non-existing-file', ffi.C.kO_RDWR, 0)
+
+      it 'returns non-negative for O_CREAT on a non-existing file', ->
+        assert_file_does_not_exist new_file
+        assert.is_true 0 <= (os_open new_file, ffi.C.kO_CREAT, 0)
+
+      it 'returns non-negative for O_CREAT on a existing file', ->
+        assert_file_exists existing_file
+        assert.is_true 0 <= (os_open existing_file, ffi.C.kO_CREAT, 0)
+
+      it 'returns -EEXIST for O_CREAT|O_EXCL on a existing file', ->
+        assert_file_exists existing_file
+        eq -ffi.C.kEEXIST, (os_open existing_file, (bit.bor ffi.C.kO_CREAT, ffi.C.kO_EXCL), 0)
+
+      it 'sets `rwx` permissions for O_CREAT 700', ->
+        assert_file_does_not_exist new_file
+        --create the file
+        os_open new_file, ffi.C.kO_CREAT, tonumber("700", 8)
+        --verify permissions
+        eq 'rwx------', lfs.attributes(new_file)['permissions']
+
+      it 'sets `rw` permissions for O_CREAT 600', ->
+        assert_file_does_not_exist new_file
+        --create the file
+        os_open new_file, ffi.C.kO_CREAT, tonumber("600", 8)
+        --verify permissions
+        eq 'rw-------', lfs.attributes(new_file)['permissions']
+
+      it 'returns a non-negative file descriptor for an existing file', ->
+        assert.is_true 0 <= (os_open existing_file, ffi.C.kO_RDWR, 0)
 
   describe 'folder operations', ->
     os_mkdir = (path, mode) ->

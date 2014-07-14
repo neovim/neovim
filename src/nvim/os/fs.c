@@ -150,6 +150,24 @@ static bool is_executable_in_path(const char_u *name)
   return false;
 }
 
+/// Opens or creates a file and returns a non-negative integer representing
+/// the lowest-numbered unused file descriptor, for use in subsequent system
+/// calls (read, write, lseek, fcntl, etc.). If the operation fails, `-errno`
+/// is returned, and no file is created or modified.
+///
+/// @param flags Bitwise OR of flags defined in <fcntl.h>
+/// @param mode Permissions for the newly-created file (IGNORED if 'flags' is
+///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
+/// @return file descriptor, or negative `errno` on failure
+int os_open(const char* path, int flags, int mode)
+{
+  uv_fs_t open_req;
+  int r = uv_fs_open(uv_default_loop(), &open_req, path, flags, mode, NULL);
+  uv_fs_req_cleanup(&open_req);
+  // r is the same as open_req.result (except for OOM: then only r is set).
+  return r;
+}
+
 /// Get stat information for a file.
 ///
 /// @return OK on success, FAIL if a failure occurred.
@@ -291,7 +309,7 @@ int os_remove(const char *path)
 
 /// Get the file information for a given path
 ///
-/// @param file_descriptor File descriptor of the file.
+/// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_get_file_info(const char *path, FileInfo *file_info)
