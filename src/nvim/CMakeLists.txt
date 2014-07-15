@@ -80,8 +80,10 @@ foreach(sfile ${CONV_SOURCES})
   endif()
 endforeach()
 
-set_source_files_properties(
-  ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+if(NOT MSVC)
+  set_source_files_properties(
+    ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+endif()
 
 if(MIN_LOG_LEVEL)
   message(STATUS "nvim log leve is ${MIN_LOG_LEVEL}")
