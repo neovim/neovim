@@ -109,7 +109,9 @@ if(NOT _FORTIFY_SOURCE_ACCEPTABLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_FORTIFY_SOURCE_PREFIX}-U_FORTIFY_SOURCE ${_FORTIFY_SOURCE_PREFIX}-D_FORTIFY_SOURCE=1")
 endif()
 
-if (NOT MSVC)
+if (MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
 endif()
