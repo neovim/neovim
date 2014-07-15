@@ -101,8 +101,10 @@ foreach(sfile ${CONV_SOURCES})
   endif()
 endforeach()
 
-set_source_files_properties(
-  ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+if(NOT MSVC)
+  set_source_files_properties(
+    ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wno-conversion")
+endif()
 
 get_directory_property(gen_cdefs COMPILE_DEFINITIONS)
 foreach(gen_cdef ${gen_cdefs} DO_NOT_DEFINE_EMPTY_ATTRIBUTES)
