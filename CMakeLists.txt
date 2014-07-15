@@ -153,6 +153,12 @@ endif()
 if(BUSTED_PRG)
   get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
+
+  # Set policy CMP0026 to OLD so we avoid CMake warnings on newer
+  # versions of cmake.
+  if(POLICY CMP0026)
+    cmake_policy(SET CMP0026 OLD)
+  endif()
   get_target_property(TEST_LIBNVIM_PATH nvim-test LOCATION)
 
   configure_file(
