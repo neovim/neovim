@@ -2,9 +2,7 @@
 #define NEOVIM_VERSION_MINOR @NEOVIM_VERSION_MINOR@
 #define NEOVIM_VERSION_PATCH @NEOVIM_VERSION_PATCH@
 
-#if @DEBUG@
-#define DEBUG
-#endif
+#cmakedefine DEBUG
 
 #define SIZEOF_INT @SIZEOF_INT@
 #define SIZEOF_LONG @SIZEOF_LONG@
@@ -17,85 +15,65 @@
 #define ARCH_32
 #endif
 
-#define _FILE_OFFSET_BITS 64
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_CRT_EXTERNS_H
-#define HAVE_DIRENT_H 1
-#define HAVE_DLFCN_H 1
-#define HAVE_FCHOWN 1
-#define HAVE_FCNTL_H 1
-#define HAVE_FD_CLOEXEC 1
-#define HAVE_FSEEKO 1
-#define HAVE_FSYNC 1
-#define HAVE_GETCWD 1
-#define HAVE_GETPWENT 1
-#define HAVE_GETPWNAM 1
-#define HAVE_GETPWUID 1
-#define HAVE_GETRLIMIT 1
-#define HAVE_GETTIMEOFDAY 1
-#define HAVE_GETWD 1
-#define HAVE_ICONV 1
-#define HAVE_ICONV_H 1
-#define HAVE_LANGINFO_H 1
-#define HAVE_LIBGEN_H 1
-#define HAVE_LIBINTL_H 1
-#define HAVE_LOCALE_H 1
-#define HAVE_LSTAT 1
-#define HAVE_NANOSLEEP 1
-#define HAVE_NL_LANGINFO_CODESET 1
-#define HAVE_NL_MSG_CAT_CNTR 1
-#define HAVE_OPENDIR 1
+#cmakedefine HAVE_DIRENT_H
+#cmakedefine HAVE_FCHOWN
+#cmakedefine HAVE_FCNTL_H
+#cmakedefine HAVE_FD_CLOEXEC
+#cmakedefine HAVE_FSEEKO
+#cmakedefine HAVE_FSYNC
+#cmakedefine HAVE_GETPWENT
+#cmakedefine HAVE_GETPWNAM
+#cmakedefine HAVE_GETPWUID
+#cmakedefine HAVE_GETTIMEOFDAY
+#cmakedefine HAVE_ICONV
+#cmakedefine USE_ICONV
+#cmakedefine HAVE_ICONV_H
+#cmakedefine HAVE_LANGINFO_H
+#cmakedefine HAVE_LIBGEN_H
+#cmakedefine HAVE_LOCALE_H
+#cmakedefine HAVE_LSTAT
+#cmakedefine HAVE_NL_LANGINFO_CODESET
+#cmakedefine HAVE_NL_MSG_CAT_CNTR
+#cmakedefine HAVE_OPENDIR
 #define HAVE_OSPEED 1
-#define HAVE_POLL_H 1
-#define HAVE_PUTENV 1
-#define HAVE_PWD_H 1
-#define HAVE_READLINK 1
-#define HAVE_SELECT 1
+#cmakedefine HAVE_PUTENV
+#cmakedefine HAVE_PWD_H
+#cmakedefine HAVE_READLINK
 // TODO: add proper cmake check
 // #define HAVE_SELINUX 1
-#define HAVE_SETENV 1
-#define HAVE_SETPGID 1
-#define HAVE_SETSID 1
-#define HAVE_SGTTY_H 1
-#define HAVE_SIGACTION 1
-#define HAVE_SIGALTSTACK 1
-#define HAVE_SIGSTACK 1
-#define HAVE_SIGVEC 1
-#define HAVE_ST_BLKSIZE 1
-#define HAVE_STRCASECMP 1
-#define HAVE_STRINGS_H 1
-#define HAVE_STRNCASECMP 1
-// TODO: add proper cmake check
-// #define HAVE_STROPTS_H 1
-// TODO: add proper cmake check
-// #define HAVE_SYSCONF 1
-#define HAVE_SYS_IOCTL_H 1
-#define HAVE_SYS_PARAM_H 1
-#define HAVE_SYS_STATFS_H 1
-// TODO: add proper cmake check
-// #define HAVE_SYS_SYSINFO_H 1
-#define HAVE_SYS_TIME_H 1
-#define HAVE_SYS_UTSNAME_H 1
-#define HAVE_SYS_WAIT_H 1
-#define HAVE_TERMCAP_H 1
-#define HAVE_TERMIO_H 1
-#define HAVE_TERMIOS_H 1
+#cmakedefine HAVE_SETENV
+#cmakedefine HAVE_SETPGID
+#cmakedefine HAVE_SETSID
+#cmakedefine HAVE_SIGACTION
+#cmakedefine HAVE_SIGVEC
+#cmakedefine HAVE_STRCASECMP
+#cmakedefine HAVE_STRINGS_H
+#cmakedefine HAVE_STRNCASECMP
+#cmakedefine HAVE_STROPTS_H
+#cmakedefine HAVE_SYS_IOCTL_H
+#cmakedefine HAVE_SYS_PARAM_H
+#cmakedefine HAVE_SYS_TIME_H
+#cmakedefine HAVE_SYS_UTSNAME_H
+#cmakedefine HAVE_SYS_WAIT_H
+#cmakedefine HAVE_TERMCAP_H
+#cmakedefine HAVE_TERMIOS_H
+#cmakedefine HAVE_TERMIO_H
 #define HAVE_TGETENT 1
-#define HAVE_UNISTD_H 1
+#cmakedefine HAVE_UNISTD_H
 #define HAVE_UP_BC_PC 1
-#define HAVE_UTIME 1
-#define HAVE_UTIME_H 1
-#define HAVE_UTIMES 1
+#cmakedefine HAVE_UTIME
+#cmakedefine HAVE_UTIME_H
+#cmakedefine HAVE_UTIMES
 #cmakedefine HAVE_WORKING_LIBINTL
 #define RETSIGTYPE void
 #define SIGRETURN return
-#define SYS_SELECT_WITH_SYS_TIME 1
 #define TERMINFO 1
 #define TGETENT_ZERO_ERR 0
 #define TIME_WITH_SYS_TIME 1
-#define UNIX 1
+#cmakedefine UNIX
 #define USEMAN_S 1
-#define USEMEMMOVE 1
 
 #define FEAT_BROWSE
 #define FEAT_CSCOPE
