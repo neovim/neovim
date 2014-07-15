@@ -4,13 +4,18 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/time.h>
-#include <unistd.h>
 
 #include "nvim/log.h"
 #include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
+
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #define USR_LOG_FILE "$HOME/.nvimlog"
 
