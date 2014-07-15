@@ -9,6 +9,17 @@
 #include <stdio.h>
 #include <time.h>
 
+// For MSVC
+#ifndef restrict
+# define restrict __restrict
+#endif
+#ifndef inline
+# define inline __inline
+#endif
+#ifndef __func__
+#define __func__ __FUNCTION__
+#endif
+
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
 
