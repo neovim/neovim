@@ -32,8 +32,11 @@ if(LUAJIT_USE_STATIC)
 endif()
 
 list(APPEND LUAJIT_NAMES luajit-5.1)
+if(MSVC)
+  list(APPEND LUAJIT_NAMES lua51)
+endif()
 
-find_library(LUAJIT_LIBRARY NAMES luajit-5.1
+find_library(LUAJIT_LIBRARY NAMES ${LUAJIT_NAMES}
              PATHS ${PC_LUAJIT_LIBDIR} ${PC_LUAJIT_LIBRARY_DIRS}
              ${LIMIT_SEARCH})
 
