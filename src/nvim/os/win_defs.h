@@ -19,6 +19,9 @@
 #ifndef __func__
 #define __func__ __FUNCTION__
 #endif
+#ifndef STDOUT_FILENO
+#define STDOUT_FILENO fileno(stdout)
+#endif
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
