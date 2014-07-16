@@ -1,6 +1,8 @@
 #ifndef NVIM_UNDO_DEFS_H
 #define NVIM_UNDO_DEFS_H
 
+#include <time.h>  // for time_t
+
 #include "nvim/pos.h"
 
 /* Structure to store info about the Visual area. */

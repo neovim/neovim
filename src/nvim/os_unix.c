@@ -54,6 +54,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
+#include "nvim/types.h"
 #include "nvim/ui.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"

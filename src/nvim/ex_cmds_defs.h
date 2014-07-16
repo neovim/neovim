@@ -16,6 +16,7 @@
 
 #include <stdbool.h>
 
+#include "nvim/pos.h"      // for linenr_T
 #include "nvim/normal.h"
 
 /*

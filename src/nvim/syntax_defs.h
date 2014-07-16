@@ -9,6 +9,8 @@
 # define SST_DIST        16     /* normal distance between entries */
 # define SST_INVALID    (synstate_T *)-1        /* invalid syn_state pointer */
 
+typedef unsigned short disptick_T;      /* display tick type */
+
 /* struct passed to in_id_list() */
 struct sp_syn {
   int inc_tag;                  /* ":syn include" unique tag */

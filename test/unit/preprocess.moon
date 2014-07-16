@@ -85,6 +85,8 @@ class Gcc
    '-D "__asm(ARGS)="',
    '-D "__asm__(ARGS)="',
    '-D "__inline__="',
+   '-D "EXTERN=extern"',
+   '-D "INIT(...)="',
    '-D_GNU_SOURCE',
    '-DINCLUDE_GENERATED_DECLARATIONS'
   }

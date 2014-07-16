@@ -2,10 +2,12 @@
 #define NVIM_BUFFER_DEFS_H
 
 #include <stdbool.h>
+// for FILE
+#include <stdio.h>
 
 // for garray_T
 #include "nvim/garray.h"
-// for pos_T and lpos_T
+// for pos_T, lpos_T and linenr_T
 #include "nvim/pos.h"
 // for the number window-local and buffer-local options
 #include "nvim/option_defs.h"

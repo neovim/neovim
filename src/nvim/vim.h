@@ -9,6 +9,7 @@
 # define NVIM_VIM_H
 
 #include "nvim/types.h"
+#include "nvim/pos.h"  // for linenr_T, MAXCOL, etc...
 
 /* Some defines from the old feature.h */
 #define SESSION_FILE "Session.vim"
@@ -57,11 +58,6 @@ Error: configure did not run properly.Check auto/config.log.
 #endif
 
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
-
-// Make sure long_u is big enough to hold a pointer.
-// On Win64, longs are 32 bits and pointers are 64 bits.
-// For printf() and scanf(), we need to take care of long_u specifically.
-typedef unsigned long long_u;
 
 # define MAX_TYPENR 65535
 
@@ -359,17 +355,8 @@ enum {
 #define PERROR(msg) \
   (void) emsg3((char_u *) "%s: %s", (char_u *)msg, (char_u *)strerror(errno))
 
-typedef long linenr_T;                  /* line number type */
-typedef int colnr_T;                    /* column number type */
-typedef unsigned short disptick_T;      /* display tick type */
-
-#define MAXLNUM (0x7fffffffL)           /* maximum (invalid) line number */
-#define MAXCOL (0x7fffffffL)          /* maximum column number, 31 bits */
-
 #define SHOWCMD_COLS 10                 /* columns needed by shown command */
 #define STL_MAX_ITEM 80                 /* max nr of %<flag> in statusline */
-
-typedef void        *vim_acl_T;         /* dummy to pass an ACL to a function */
 
 /*
  * fnamecmp() is used to compare file names.

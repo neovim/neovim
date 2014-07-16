@@ -107,6 +107,7 @@
 #include "nvim/screen.h"
 #include "nvim/sha256.h"
 #include "nvim/strings.h"
+#include "nvim/types.h"
 #include "nvim/os/os.h"
 #include "nvim/os/time.h"
 

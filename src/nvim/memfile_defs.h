@@ -1,6 +1,8 @@
 #ifndef NVIM_MEMFILE_DEFS_H
 #define NVIM_MEMFILE_DEFS_H
 
+#include "nvim/types.h"
+
 typedef struct block_hdr bhdr_T;
 typedef long blocknr_T;
 

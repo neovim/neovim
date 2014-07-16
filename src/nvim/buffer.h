@@ -1,6 +1,9 @@
 #ifndef NVIM_BUFFER_H
 #define NVIM_BUFFER_H
 
+#include "nvim/pos.h"  // for linenr_T
+#include "nvim/ex_cmds_defs.h"  // for exarg_T
+
 /* Values for buflist_getfile() */
 #define GETF_SETMARK    0x01    /* set pcmark before jumping */
 #define GETF_ALT        0x02    /* jumping to alternate file (not buf num) */

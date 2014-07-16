@@ -57,37 +57,6 @@ describe 'fs function', ->
       buf = cstr (len-1), ''
       eq FAIL, (os_dirname buf, (len-1))
 
-  describe 'path_full_dir_name', ->
-    path_full_dir_name = (directory, buffer, len) ->
-      directory = to_cstr directory
-      fs.path_full_dir_name directory, buffer, len
-
-    before_each ->
-      -- Create empty string buffer which will contain the resulting path.
-      export len = (string.len lfs.currentdir!) + 22
-      export buffer = cstr len, ''
-
-    it 'returns the absolute directory name of a given relative one', ->
-      result = path_full_dir_name '..', buffer, len
-      eq OK, result
-      old_dir = lfs.currentdir!
-      lfs.chdir '..'
-      expected = lfs.currentdir!
-      lfs.chdir old_dir
-      eq expected, (ffi.string buffer)
-
-    it 'returns the current directory name if the given string is empty', ->
-      eq OK, (path_full_dir_name '', buffer, len)
-      eq lfs.currentdir!, (ffi.string buffer)
-
-    it 'fails if the given directory does not exist', ->
-      eq FAIL, path_full_dir_name('does_not_exist', buffer, len)
-
-    it 'works with a normal relative dir', ->
-      result = path_full_dir_name('unit-test-directory', buffer, len)
-      eq lfs.currentdir! .. '/unit-test-directory', (ffi.string buffer)
-      eq OK, result
-
   os_isdir = (name) ->
     fs.os_isdir (to_cstr name)
 
