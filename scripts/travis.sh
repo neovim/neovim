@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 tmpdir="$(pwd)/tmp"
 rm -rf "$tmpdir"
@@ -63,11 +63,11 @@ set_environment() {
 }
 
 # install prebuilt dependencies
-if [ ! -d /opt/neovim-deps ]; then
-    cd /opt
-    sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps
-    cd -
-fi
+# if [ ! -d /opt/neovim-deps ]; then
+#     cd /opt
+#     sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps
+#     cd -
+# fi
 
 # Travis reports back that it has 32-cores via /proc/cpuinfo, but it's not
 # what we really have available.  According to their documentation, it only has
@@ -76,6 +76,13 @@ fi
 #   http://docs.travis-ci.com/user/speeding-up-the-build/#Paralellizing-your-build-on-one-VM
 # for more information.
 MAKE_CMD="make -j2"
+
+sudo apt-get install tree
+which clang
+clang --version
+which llvm-symbolizer
+tree --charset=ASCII -F -v /usr/local/clang-3.4
+exit 1
 
 if [ "$TRAVIS_BUILD_TYPE" = "coverity" ]; then
     # temporarily disable error checking, the coverity script exits with

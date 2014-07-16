@@ -179,3 +179,5 @@ endif()
 # add_custom_target(test
 #   COMMAND ${MAKE_PRG} -C ${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/testdir
 #     VIMPROG=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nvim)
+
+message(STATUS "Ignore me")
