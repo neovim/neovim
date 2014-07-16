@@ -188,7 +188,7 @@ describe 'fs function', ->
             new_gid = id_fd\read '*n'
           id_fd\close!
 
-          -- User can be a member of only one group (e.g., it is on Travis-CI).
+          -- User can be a member of only one group.
           -- In that case we can not perform this test.
           if new_gid
             eq 0, (os_fchown filename, -1, new_gid)
