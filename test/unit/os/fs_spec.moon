@@ -112,6 +112,12 @@ describe 'fs function', ->
     os_setperm = (filename, perm) ->
       fs.os_setperm (to_cstr filename), perm
 
+    os_fchown = (filename, user_id, group_id) ->
+      fd = ffi.C.open filename, 0
+      res = fs.os_fchown fd, user_id, group_id
+      ffi.C.close fd
+      return res
+
     os_file_is_readonly = (filename) ->
       fs.os_file_is_readonly (to_cstr filename)
 
@@ -157,6 +163,43 @@ describe 'fs function', ->
       it 'fails if given file does not exist', ->
         perm = ffi.C.kS_IXUSR
         eq FAIL, (os_setperm 'non-existing-file', perm)
+
+    describe 'os_fchown', ->
+      filename = 'unit-test-directory/test.file'
+
+      it 'does not change owner and group if respective IDs are equal to -1', ->
+        uid = lfs.attributes filename, 'uid'
+        gid = lfs.attributes filename, 'gid'
+        eq 0, os_fchown filename, -1, -1
+        eq uid, lfs.attributes filename, 'uid'
+        eq gid, lfs.attributes filename, 'gid'
+
+      it 'owner of a file may change the group of the file
+      to any group of which that owner is a member', ->
+        -- Some systems may not have `id` utility.
+        if (os.execute('id -G &> /dev/null') == 0)
+          file_gid = lfs.attributes filename, 'gid'
+
+          -- Gets ID of any group of which current user is a member except the
+          -- group that owns the file.
+          id_fd = io.popen('id -G')
+          new_gid = id_fd\read '*n'
+          if (new_gid == file_gid)
+            new_gid = id_fd\read '*n'
+          id_fd\close!
+
+          -- User can be a member of only one group (e.g., it is on Travis-CI).
+          -- In that case we can not perform this test.
+          if new_gid
+            eq 0, (os_fchown filename, -1, new_gid)
+            eq new_gid, (lfs.attributes filename, 'gid')
+
+      it 'returns nonzero if process has not enough permissions', ->
+        -- On Windows `os_fchown` always returns 0
+        -- because `uv_fs_chown` is no-op on this platform.
+        if (ffi.os != 'Windows' and ffi.C.geteuid! != 0)
+          -- chown to root
+          neq 0, os_fchown filename, 0, 0
 
     describe 'os_file_is_readonly', ->
       it 'returns true if the file is readonly', ->
