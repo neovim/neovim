@@ -50,3 +50,5 @@ src/nvim/os/channel.c
 src/nvim/os/channel.h
 src/nvim/tempfile.c
 src/nvim/tempfile.h
+src/nvim/profile.c
+src/nvim/profile.h

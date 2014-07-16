@@ -50,6 +50,7 @@
 #include "nvim/term.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
+#include "nvim/profile.h"
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/fs_defs.h"
@@ -744,192 +745,15 @@ void dbg_breakpoint(char_u *name, linenr_T lnum)
   debug_breakpoint_lnum = lnum;
 }
 
-
-/*
- * Store the current time in "tm".
- */
-void profile_start(proftime_T *tm)
-{
-  gettimeofday(tm, NULL);
-}
-
-/*
- * Compute the elapsed time from "tm" till now and store in "tm".
- */
-void profile_end(proftime_T *tm)
-{
-  proftime_T now;
-
-  gettimeofday(&now, NULL);
-  tm->tv_usec = now.tv_usec - tm->tv_usec;
-  tm->tv_sec = now.tv_sec - tm->tv_sec;
-  if (tm->tv_usec < 0) {
-    tm->tv_usec += 1000000;
-    --tm->tv_sec;
-  }
-}
-
-/*
- * Subtract the time "tm2" from "tm".
- */
-void profile_sub(proftime_T *tm, proftime_T *tm2)
-{
-  tm->tv_usec -= tm2->tv_usec;
-  tm->tv_sec -= tm2->tv_sec;
-  if (tm->tv_usec < 0) {
-    tm->tv_usec += 1000000;
-    --tm->tv_sec;
-  }
-}
-
-/*
- * Return a string that represents the time in "tm".
- * Uses a static buffer!
- */
-char * profile_msg(proftime_T *tm)
-{
-  static char buf[50];
-
-  sprintf(buf, "%3ld.%06ld", (long)tm->tv_sec, (long)tm->tv_usec);
-  return buf;
-}
-
-/*
- * Put the time "msec" past now in "tm".
- */
-void profile_setlimit(long msec, proftime_T *tm)
-{
-  if (msec <= 0)     /* no limit */
-    profile_zero(tm);
-  else {
-    long usec;
-
-    gettimeofday(tm, NULL);
-    usec = (long)tm->tv_usec + (long)msec * 1000;
-    tm->tv_usec = usec % 1000000L;
-    tm->tv_sec += usec / 1000000L;
-  }
-}
-
-/*
- * Return TRUE if the current time is past "tm".
- */
-int profile_passed_limit(proftime_T *tm)
-{
-  proftime_T now;
-
-  if (tm->tv_sec == 0)      /* timer was not set */
-    return FALSE;
-  gettimeofday(&now, NULL);
-  return now.tv_sec > tm->tv_sec
-         || (now.tv_sec == tm->tv_sec && now.tv_usec > tm->tv_usec);
-}
-
-/*
- * Set the time in "tm" to zero.
- */
-void profile_zero(proftime_T *tm)
-{
-  tm->tv_usec = 0;
-  tm->tv_sec = 0;
-}
-
-
-#include <math.h>
-
-/*
- * Divide the time "tm" by "count" and store in "tm2".
- */
-void profile_divide(proftime_T *tm, int count, proftime_T *tm2)
-{
-  if (count == 0)
-    profile_zero(tm2);
-  else {
-    double usec = (tm->tv_sec * 1000000.0 + tm->tv_usec) / count;
-
-    tm2->tv_sec = floor(usec / 1000000.0);
-    tm2->tv_usec = round(usec - (tm2->tv_sec * 1000000.0));
-  }
-}
-
-/*
- * Functions for profiling.
- */
-static proftime_T prof_wait_time;
-
-/*
- * Add the time "tm2" to "tm".
- */
-void profile_add(proftime_T *tm, proftime_T *tm2)
-{
-  tm->tv_usec += tm2->tv_usec;
-  tm->tv_sec += tm2->tv_sec;
-  if (tm->tv_usec >= 1000000) {
-    tm->tv_usec -= 1000000;
-    ++tm->tv_sec;
-  }
-}
-
-/*
- * Add the "self" time from the total time and the children's time.
- */
-void profile_self(proftime_T *self, proftime_T *total, proftime_T *children)
-{
-  /* Check that the result won't be negative.  Can happen with recursive
-   * calls. */
-  if (total->tv_sec < children->tv_sec
-      || (total->tv_sec == children->tv_sec
-          && total->tv_usec <= children->tv_usec))
-    return;
-  profile_add(self, total);
-  profile_sub(self, children);
-}
-
-/*
- * Get the current waittime.
- */
-void profile_get_wait(proftime_T *tm)
-{
-  *tm = prof_wait_time;
-}
-
-/*
- * Subtract the passed waittime since "tm" from "tma".
- */
-void profile_sub_wait(proftime_T *tm, proftime_T *tma)
-{
-  proftime_T tm3 = prof_wait_time;
-
-  profile_sub(&tm3, tm);
-  profile_sub(tma, &tm3);
-}
-
-/*
- * Return TRUE if "tm1" and "tm2" are equal.
- */
-int profile_equal(proftime_T *tm1, proftime_T *tm2)
-{
-  return tm1->tv_usec == tm2->tv_usec && tm1->tv_sec == tm2->tv_sec;
-}
-
-/*
- * Return <0, 0 or >0 if "tm1" < "tm2", "tm1" == "tm2" or "tm1" > "tm2"
- */
-int profile_cmp(const proftime_T *tm1, const proftime_T *tm2)
-{
-  if (tm1->tv_sec == tm2->tv_sec)
-    return tm2->tv_usec - tm1->tv_usec;
-  return tm2->tv_sec - tm1->tv_sec;
-}
-
 static char_u   *profile_fname = NULL;
-static proftime_T pause_time;
 
 /*
  * ":profile cmd args"
  */
 void ex_profile(exarg_T *eap)
 {
+  static proftime_T pause_time;
+
   char_u      *e;
   int len;
 
@@ -941,18 +765,18 @@ void ex_profile(exarg_T *eap)
     free(profile_fname);
     profile_fname = vim_strsave(e);
     do_profiling = PROF_YES;
-    profile_zero(&prof_wait_time);
+    profile_set_wait(profile_zero());
     set_vim_var_nr(VV_PROFILING, 1L);
   } else if (do_profiling == PROF_NONE)
     EMSG(_("E750: First use \":profile start {fname}\""));
   else if (STRCMP(eap->arg, "pause") == 0) {
     if (do_profiling == PROF_YES)
-      profile_start(&pause_time);
+      pause_time = profile_start();
     do_profiling = PROF_PAUSED;
   } else if (STRCMP(eap->arg, "continue") == 0) {
     if (do_profiling == PROF_PAUSED) {
-      profile_end(&pause_time);
-      profile_add(&prof_wait_time, &pause_time);
+      pause_time = profile_end(pause_time);
+      profile_set_wait(profile_add(profile_get_wait(), pause_time));
     }
     do_profiling = PROF_YES;
   } else {
@@ -1048,8 +872,8 @@ void profile_dump(void)
 static void script_do_profile(scriptitem_T *si)
 {
   si->sn_pr_count = 0;
-  profile_zero(&si->sn_pr_total);
-  profile_zero(&si->sn_pr_self);
+  si->sn_pr_total = profile_zero();
+  si->sn_pr_self = profile_zero();
 
   ga_init(&si->sn_prl_ga, sizeof(sn_prl_T), 100);
   si->sn_prl_idx = -1;
@@ -1069,9 +893,9 @@ void script_prof_save(
   if (current_SID > 0 && current_SID <= script_items.ga_len) {
     si = &SCRIPT_ITEM(current_SID);
     if (si->sn_prof_on && si->sn_pr_nest++ == 0)
-      profile_start(&si->sn_pr_child);
+      si->sn_pr_child = profile_start();
   }
-  profile_get_wait(tm);
+  *tm = profile_get_wait();
 }
 
 /*
@@ -1084,10 +908,11 @@ void script_prof_restore(proftime_T *tm)
   if (current_SID > 0 && current_SID <= script_items.ga_len) {
     si = &SCRIPT_ITEM(current_SID);
     if (si->sn_prof_on && --si->sn_pr_nest == 0) {
-      profile_end(&si->sn_pr_child);
-      profile_sub_wait(tm, &si->sn_pr_child);       /* don't count wait time */
-      profile_add(&si->sn_pr_children, &si->sn_pr_child);
-      profile_add(&si->sn_prl_children, &si->sn_pr_child);
+      si->sn_pr_child = profile_end(si->sn_pr_child);
+      // don't count wait time
+      si->sn_pr_child = profile_sub_wait(*tm, si->sn_pr_child);
+      si->sn_pr_children = profile_add(si->sn_pr_children, si->sn_pr_child);
+      si->sn_prl_children = profile_add(si->sn_prl_children, si->sn_pr_child);
     }
   }
 }
@@ -1099,7 +924,7 @@ static proftime_T inchar_time;
  */
 void prof_inchar_enter(void)
 {
-  profile_start(&inchar_time);
+  inchar_time = profile_start();
 }
 
 /*
@@ -1107,8 +932,8 @@ void prof_inchar_enter(void)
  */
 void prof_inchar_exit(void)
 {
-  profile_end(&inchar_time);
-  profile_add(&prof_wait_time, &inchar_time);
+  inchar_time = profile_end(inchar_time);
+  profile_set_wait(profile_add(profile_get_wait(), inchar_time));
 }
 
 /*
@@ -1128,8 +953,8 @@ static void script_dump_profile(FILE *fd)
         fprintf(fd, "Sourced 1 time\n");
       else
         fprintf(fd, "Sourced %d times\n", si->sn_pr_count);
-      fprintf(fd, "Total time: %s\n", profile_msg(&si->sn_pr_total));
-      fprintf(fd, " Self time: %s\n", profile_msg(&si->sn_pr_self));
+      fprintf(fd, "Total time: %s\n", profile_msg(si->sn_pr_total));
+      fprintf(fd, " Self time: %s\n", profile_msg(si->sn_pr_self));
       fprintf(fd, "\n");
       fprintf(fd, "count  total (s)   self (s)\n");
 
@@ -1143,11 +968,11 @@ static void script_dump_profile(FILE *fd)
           pp = &PRL_ITEM(si, i);
           if (pp->snp_count > 0) {
             fprintf(fd, "%5d ", pp->snp_count);
-            if (profile_equal(&pp->sn_prl_total, &pp->sn_prl_self))
+            if (profile_equal(pp->sn_prl_total, pp->sn_prl_self))
               fprintf(fd, "           ");
             else
-              fprintf(fd, "%s ", profile_msg(&pp->sn_prl_total));
-            fprintf(fd, "%s ", profile_msg(&pp->sn_prl_self));
+              fprintf(fd, "%s ", profile_msg(pp->sn_prl_total));
+            fprintf(fd, "%s ", profile_msg(pp->sn_prl_self));
           } else
             fprintf(fd, "                            ");
           fprintf(fd, "%s", IObuff);
@@ -2610,8 +2435,8 @@ do_source (
     }
     if (si->sn_prof_on) {
       ++si->sn_pr_count;
-      profile_start(&si->sn_pr_start);
-      profile_zero(&si->sn_pr_children);
+      si->sn_pr_start = profile_start();
+      si->sn_pr_children = profile_zero();
     }
   }
 
@@ -2626,11 +2451,11 @@ do_source (
     /* Get "si" again, "script_items" may have been reallocated. */
     si = &SCRIPT_ITEM(current_SID);
     if (si->sn_prof_on) {
-      profile_end(&si->sn_pr_start);
-      profile_sub_wait(&wait_start, &si->sn_pr_start);
-      profile_add(&si->sn_pr_total, &si->sn_pr_start);
-      profile_self(&si->sn_pr_self, &si->sn_pr_start,
-          &si->sn_pr_children);
+      si->sn_pr_start = profile_end(si->sn_pr_start);
+      si->sn_pr_start = profile_sub_wait(wait_start, si->sn_pr_start);
+      si->sn_pr_total = profile_add(si->sn_pr_total, si->sn_pr_start);
+      si->sn_pr_self = profile_self(si->sn_pr_self, si->sn_pr_start,
+          si->sn_pr_children);
     }
   }
 
@@ -2949,14 +2774,14 @@ void script_line_start(void)
       /* Zero counters for a line that was not used before. */
       pp = &PRL_ITEM(si, si->sn_prl_ga.ga_len);
       pp->snp_count = 0;
-      profile_zero(&pp->sn_prl_total);
-      profile_zero(&pp->sn_prl_self);
+      pp->sn_prl_total = profile_zero();
+      pp->sn_prl_self = profile_zero();
       ++si->sn_prl_ga.ga_len;
     }
     si->sn_prl_execed = FALSE;
-    profile_start(&si->sn_prl_start);
-    profile_zero(&si->sn_prl_children);
-    profile_get_wait(&si->sn_prl_wait);
+    si->sn_prl_start = profile_start();
+    si->sn_prl_children = profile_zero();
+    si->sn_prl_wait = profile_get_wait();
   }
 }
 
@@ -2990,11 +2815,11 @@ void script_line_end(void)
     if (si->sn_prl_execed) {
       pp = &PRL_ITEM(si, si->sn_prl_idx);
       ++pp->snp_count;
-      profile_end(&si->sn_prl_start);
-      profile_sub_wait(&si->sn_prl_wait, &si->sn_prl_start);
-      profile_add(&pp->sn_prl_total, &si->sn_prl_start);
-      profile_self(&pp->sn_prl_self, &si->sn_prl_start,
-          &si->sn_prl_children);
+      si->sn_prl_start = profile_end(si->sn_prl_start);
+      si->sn_prl_start = profile_sub_wait(si->sn_prl_wait, si->sn_prl_start);
+      pp->sn_prl_total = profile_add(pp->sn_prl_total, si->sn_prl_start);
+      pp->sn_prl_self = profile_self(pp->sn_prl_self, si->sn_prl_start,
+          si->sn_prl_children);
     }
     si->sn_prl_idx = -1;
   }

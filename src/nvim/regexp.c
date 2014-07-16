@@ -3468,7 +3468,7 @@ static long bt_regexec_both(char_u *line,
       /* Check for timeout once in a twenty times to avoid overhead. */
       if (tm != NULL && ++tm_count == 20) {
         tm_count = 0;
-        if (profile_passed_limit(tm))
+        if (profile_passed_limit(*tm))
           break;
       }
     }

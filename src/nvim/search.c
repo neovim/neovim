@@ -530,7 +530,7 @@ int searchit(
                                ? lnum > stop_lnum : lnum < stop_lnum))
           break;
         /* Stop after passing the "tm" time limit. */
-        if (tm != NULL && profile_passed_limit(tm))
+        if (tm != NULL && profile_passed_limit(*tm))
           break;
 
         /*
