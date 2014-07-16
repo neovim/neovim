@@ -22,6 +22,7 @@ set nvim_id $spawn_id
 send {
 :function BeforeEachTest()
   set all&
+  let &initpython = 'python -c "import neovim; neovim.start_host()"'
   redir => groups
   silent augroup
   redir END
