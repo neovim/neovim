@@ -98,12 +98,12 @@ elif [ "$TRAVIS_BUILD_TYPE" = "clang/asan" ]; then
         sudo mkdir /usr/local/clang-$clang_version
         wget -q -O - http://llvm.org/releases/$clang_version/clang+llvm-$clang_version-x86_64-unknown-ubuntu12.04.xz \
             | sudo tar xJf - --strip-components=1 -C /usr/local/clang-$clang_version
-        symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
         export CC=/usr/local/clang-$clang_version/bin/clang
     else
-      export CC=clang
-      symbolizer=/usr/local/clang-3.4/bin/llvm-symbolizer
+        export CC=clang
     fi
+    symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
+
     sudo pip install cpp-coveralls
     set_environment /opt/neovim-deps
 
