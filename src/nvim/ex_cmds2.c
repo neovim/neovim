@@ -2262,8 +2262,8 @@ do_source (
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
 #ifdef STARTUPTIME
-  struct timeval tv_rel;
-  struct timeval tv_start;
+  proftime_T tv_rel;
+  proftime_T tv_start;
 #endif
   proftime_T wait_start;
 
@@ -2494,7 +2494,7 @@ do_source (
   if (time_fd != NULL) {
     vim_snprintf((char *)IObuff, IOSIZE, "sourcing %s", fname);
     time_msg((char *)IObuff, &tv_start);
-    time_pop(&tv_rel);
+    time_pop(tv_rel);
   }
 #endif
 
