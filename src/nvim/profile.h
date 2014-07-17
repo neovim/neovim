@@ -6,6 +6,14 @@
 
 typedef uint64_t proftime_T;
 
+#ifdef STARTUPTIME
+#define TIME_MSG(s) do { \
+  if (time_fd != NULL) time_msg(s, NULL); \
+} while (0)
+#else
+#define TIME_MSG(s)
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.h.generated.h"
 #endif
