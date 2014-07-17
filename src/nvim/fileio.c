@@ -4616,7 +4616,7 @@ int vim_rename(char_u *from, char_u *to)
   acl = mch_get_acl(from);
 #endif
   fd_in = os_open((char *)from, O_RDONLY, 0);
-  if (fd_in == -1) {
+  if (fd_in < 0) {
 #ifdef HAVE_ACL
     mch_free_acl(acl);
 #endif
@@ -4626,7 +4626,7 @@ int vim_rename(char_u *from, char_u *to)
   /* Create the new file with same permissions as the original. */
   fd_out = os_open((char *)to,
       O_CREAT|O_EXCL|O_WRONLY|O_NOFOLLOW, (int)perm);
-  if (fd_out == -1) {
+  if (fd_out < 0) {
     close(fd_in);
 #ifdef HAVE_ACL
     mch_free_acl(acl);
