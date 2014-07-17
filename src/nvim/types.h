@@ -13,10 +13,10 @@
 // dummy to pass an ACL to a function
 typedef void *vim_acl_T;
 
-// Make sure long_u is big enough to hold a pointer.
-// On Win64, longs are 32 bits and pointers are 64 bits.
-// For printf() and scanf(), we need to take care of long_u specifically.
-typedef unsigned long long_u;
+// According to the vanilla Vim docs, long_u needs to be big enough to hold
+// a pointer for the platform. On C99, this is easy to do with the uintptr_t
+// type in lieu of the platform-specific typedefs that existed before.
+typedef uintptr_t long_u;
 
 /*
  * Shorthand for unsigned variables. Many systems, but not all, have u_char
