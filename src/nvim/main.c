@@ -1472,7 +1472,7 @@ static void init_startuptime(mparm_T *paramp)
   for (i = 1; i < paramp->argc; ++i) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0 && i + 1 < paramp->argc) {
       time_fd = mch_fopen(paramp->argv[i + 1], "a");
-      TIME_MSG("--- VIM STARTING ---");
+      time_start("--- VIM STARTING ---");
       break;
     }
   }
