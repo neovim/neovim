@@ -116,12 +116,6 @@
 #  define mch_open_rw(n, f)     os_open((n), (f), 0)
 #endif
 
-#ifdef STARTUPTIME
-# define TIME_MSG(s) { if (time_fd != NULL) time_msg(s, NULL); }
-#else
-# define TIME_MSG(s)
-#endif
-
 # define REPLACE_NORMAL(s) (((s) & REPLACE_FLAG) && !((s) & VREPLACE_FLAG))
 
 # define UTF_COMPOSINGLIKE(p1, p2)  utf_composinglike((p1), (p2))

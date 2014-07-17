@@ -6,6 +6,13 @@
 #include "nvim/os/time.h"
 #include "nvim/func_attr.h"
 
+#if defined(STARTUPTIME) || defined(PROTO)
+#include <string.h>    // for strstr
+#include <sys/time.h>  // for struct timeval
+
+#include "nvim/vim.h"  // for the global `time_fd`
+#endif
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"
 #endif
@@ -182,3 +189,121 @@ int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
   return sgn64((int64_t)(tm2 - tm1));
 }
+
+#if defined(STARTUPTIME) || defined(PROTO)
+
+static struct timeval prev_timeval;
+
+/// time_push - save the previous time before doing something that could nest
+///
+/// After calling this function, the static global `prev_timeval` will
+/// contain the current time.
+///
+/// @param[out] tv_rel to the time elapsed so far
+/// @param[out] tv_start the current time
+void time_push(void *tv_rel, void *tv_start)
+{
+  // save the time elapsed so far into tv_rel
+  *((struct timeval *)tv_rel) = prev_timeval;
+
+  // set prev_timeval to the current time
+  gettimeofday(&prev_timeval, NULL);
+
+  // subtract the previous time from the current time, store it in tv_rel
+  ((struct timeval *)tv_rel)->tv_usec = prev_timeval.tv_usec
+    - ((struct timeval *)tv_rel)->tv_usec;
+  ((struct timeval *)tv_rel)->tv_sec = prev_timeval.tv_sec
+    - ((struct timeval *)tv_rel)->tv_sec;
+
+  // correct usec overflow
+  if (((struct timeval *)tv_rel)->tv_usec < 0) {
+    ((struct timeval *)tv_rel)->tv_usec += 1000000;
+    --((struct timeval *)tv_rel)->tv_sec;
+  }
+
+  // set tv_start to now
+  *(struct timeval *)tv_start = prev_timeval;
+}
+
+/// time_pop - compute the prev time after doing something that could nest
+///
+/// Subtracts `*tp` from the static global `prev_timeval`.
+///
+/// Note: The arguments are (void *) to avoid trouble with systems that don't
+/// have struct timeval.
+///
+/// @param tp actually `struct timeval *`
+void time_pop(const void *tp)
+{
+  // subtract `tp` from `prev_timeval`
+  prev_timeval.tv_usec -= ((struct timeval *)tp)->tv_usec;
+  prev_timeval.tv_sec -= ((struct timeval *)tp)->tv_sec;
+
+  // correct usec oveflow
+  if (prev_timeval.tv_usec < 0) {
+    prev_timeval.tv_usec += 1000000;
+    --prev_timeval.tv_sec;
+  }
+}
+
+/// time_diff - print the difference between `then` and `now`
+///
+/// the format is "msec.usec".
+static void time_diff(const struct timeval *then, const struct timeval *now)
+{
+  // convert timeval (sec/usec) to (msec,usec)
+  long usec = now->tv_usec - then->tv_usec;
+  long msec = (now->tv_sec - then->tv_sec) * 1000L + usec / 1000L;
+  usec %= 1000L;
+
+  fprintf(time_fd, "%03ld.%03ld", msec, usec >= 0 ? usec : usec + 1000L);
+}
+
+/// time_msg - print out timing info
+///
+/// when `mesg` contains the text "STARTING", special information is
+/// printed.
+///
+/// @param mesg the message to display next to the timing information
+/// @param tv_start only for do_source: start time; actually (struct timeval *)
+void time_msg(const char *mesg, const void *tv_start)
+{
+  static struct timeval start;
+  struct timeval now;
+
+  if (time_fd == NULL) {
+    return;
+  }
+
+  // if the message contains STARTING, print some extra information and
+  // initialize a few variables
+  if (strstr(mesg, "STARTING") != NULL) {
+    // intialize the `start` static variable
+    gettimeofday(&start, NULL);
+    prev_timeval = start;
+
+    fprintf(time_fd, "\n\ntimes in msec\n");
+    fprintf(time_fd, " clock   self+sourced   self:  sourced script\n");
+    fprintf(time_fd, " clock   elapsed:              other lines\n\n");
+  }
+
+  // print out the difference between `start` (init earlier) and `now`
+  gettimeofday(&now, NULL);
+  time_diff(&start, &now);
+
+  // if `tv_start` was supplied, print the diff between `tv_start` and `now`
+  if (((struct timeval *)tv_start) != NULL) {
+    fprintf(time_fd, "  ");
+    time_diff(((struct timeval *)tv_start), &now);
+  }
+
+  // print the difference between the global `prev_timeval` and `now`
+  fprintf(time_fd, "  ");
+  time_diff(&prev_timeval, &now);
+
+  // set the global `prev_timeval` to `now` and print the message
+  prev_timeval = now;
+  fprintf(time_fd, ": %s\n", mesg);
+}
+
+#endif
