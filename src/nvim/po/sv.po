@@ -3165,7 +3165,9 @@ msgstr ""
 msgid ""
 "\n"
 "Extra patches: "
-msgstr "Extra patchar:\n"
+msgstr ""
+"\n"
+"Extra patchar: "
 
 #: ../version.c:678 ../version.c:902
 msgid "Modified by "
@@ -6070,6 +6072,7 @@ msgid ""
 "You may want to delete the .swp file now.\n"
 "\n"
 msgstr ""
+"\n"
 "Du vill kanske ta bort .swp-filen nu.\n"
 "\n"
 
@@ -6290,7 +6293,7 @@ msgstr ""
 "\n"
 "(1) Ett annat program kan redigera samma fil.\n"
 "    Om så är fallet, var försiktig så att det inte slutar med två\n"
-"    versioner av samma fil med olika ändringar.\n"
+"    versioner av samma fil med olika ändringar."
 
 #: ../memline.c:3198
 msgid "  Quit, or continue with caution.\n"
