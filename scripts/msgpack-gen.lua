@@ -91,6 +91,7 @@ output:write([[
 #include <assert.h>
 #include <msgpack.h>
 
+#include "nvim/log.h"
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/api/private/helpers.h"
@@ -133,6 +134,7 @@ for i = 1, #api.functions do
 
   output:write('static Object handle_'..fn.name..'(uint64_t channel_id, msgpack_object *req, Error *error)')
   output:write('\n{')
+  output:write('\n  DLOG("Received msgpack-rpc call to '..fn.name..'(request id: %" PRIu64 ")", req->via.array.ptr[1].via.u64);')
   -- Declare/initialize variables that will hold converted arguments
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]

@@ -83,8 +83,10 @@
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/os/dl.h"
+#include "nvim/os/provider.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -6455,6 +6457,7 @@ static struct fst {
   {"prevnonblank",    1, 1, f_prevnonblank},
   {"printf",          2, 19, f_printf},
   {"pumvisible",      0, 0, f_pumvisible},
+  {"pyeval",          1, 1, f_pyeval},
   {"range",           1, 3, f_range},
   {"readfile",        1, 3, f_readfile},
   {"reltime",         0, 2, f_reltime},
@@ -9807,6 +9810,10 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     }
   }
 
+  if (n == FALSE && provider_has_feature((char *)name)) {
+    n = TRUE;
+  }
+
   rettv->vval.v_number = n;
 }
 
@@ -10560,6 +10567,7 @@ static void f_job_write(typval_T *argvars, typval_T *rettv)
 
   WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
                                     strlen((char *)argvars[1].vval.v_string),
+                                    1,
                                     free);
   rettv->vval.v_number = job_write(job, buf);
 }
@@ -11454,7 +11462,13 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = 1;
 }
 
-
+/*
+ * "pyeval()" function
+ */
+static void f_pyeval(typval_T *argvars, typval_T *rettv)
+{
+  script_host_eval("python_eval", argvars, rettv);
+}
 
 /*
  * "range()" function
@@ -19084,6 +19098,7 @@ static void on_job_stderr(RStream *rstream, void *data, bool eof)
 static void on_job_exit(Job *job, void *data)
 {
   apply_job_autocmds(job, data, "exit", NULL);
+  free(data);
 }
 
 static void on_job_data(RStream *rstream, void *data, bool eof, char *type)
@@ -19116,5 +19131,22 @@ static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
   set_vim_var_list(VV_JOB_DATA, list);
   // Call JobActivity autocommands
   apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
+}
+
+static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
+{
+  Object result = provider_call(method, vim_to_object(argvars));
+
+  if (result.type == kObjectTypeNil) {
+    return;
+  }
+
+  Error err = {.set = false};
+  object_to_vim(result, rettv, &err);
+  msgpack_rpc_free_object(result);
+
+  if (err.set) {
+    EMSG("Error converting value back to vim");
+  }
 }
 

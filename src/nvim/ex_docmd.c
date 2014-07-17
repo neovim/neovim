@@ -1859,6 +1859,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
     case CMD_noautocmd:
     case CMD_noswapfile:
     case CMD_psearch:
+    case CMD_python:
     case CMD_return:
     case CMD_rightbelow:
     case CMD_silent:

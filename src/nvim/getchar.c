@@ -49,6 +49,7 @@
 #include "nvim/term.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
+#include "nvim/os/event.h"
 
 /*
  * These buffers are used for storing:
@@ -2472,6 +2473,7 @@ inchar (
       char_u dum[DUM_LEN + 1];
 
       for (;; ) {
+        event_process();
         len = ui_inchar(dum, DUM_LEN, 0L, 0);
         if (len == 0 || (len == 1 && dum[0] == 3))
           break;

@@ -6,6 +6,8 @@
 #include "nvim/os/job_defs.h"
 #include "nvim/os/rstream_defs.h"
 
+typedef void * EventSource;
+
 typedef enum {
   kEventSignal,
   kEventRStreamData,
@@ -13,6 +15,7 @@ typedef enum {
 } EventType;
 
 typedef struct {
+  EventSource source;
   EventType type;
   union {
     int signum;

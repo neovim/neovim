@@ -10,6 +10,7 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
 #include "nvim/os/channel.h"
+#include "nvim/os/provider.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
 #include "nvim/window.h"
@@ -503,6 +504,22 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
+/// Registers the channel as the provider for `method`. This fails if
+/// a provider for `method` is already registered.
+///
+/// @param channel_id The channel id
+/// @param method The method name
+/// @param[out] err Details of an error that may have occurred
+void vim_register_provider(uint64_t channel_id, String method, Error *err)
+{
+  char buf[METHOD_MAXLEN];
+  xstrlcpy(buf, method.data, sizeof(buf));
+
+  if (!provider_register(buf, channel_id)) {
+    set_api_error("Provider already registered", err);
+  }
+}
+
 /// Writes a message to vim output or error buffer. The string is split
 /// and flushed after each newline. Incomplete lines are kept for writing
 /// later.
@@ -512,23 +529,24 @@ void vim_unsubscribe(uint64_t channel_id, String event)
 ///        `emsg` instead of `msg` to print each line)
 static void write_msg(String message, bool to_err)
 {
-  static int pos = 0;
-  static char line_buf[LINE_BUFFER_SIZE];
+  static int out_pos = 0, err_pos = 0;
+  static char out_line_buf[LINE_BUFFER_SIZE], err_line_buf[LINE_BUFFER_SIZE];
+
+#define PUSH_CHAR(i, pos, line_buf, msg)                                      \
+  if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) {                 \
+    line_buf[pos] = NUL;                                                      \
+    msg((uint8_t *)line_buf);                                                 \
+    pos = 0;                                                                  \
+    continue;                                                                 \
+  }                                                                           \
+                                                                              \
+  line_buf[pos++] = message.data[i];
 
   for (uint32_t i = 0; i < message.size; i++) {
-    if (message.data[i] == NL || pos == LINE_BUFFER_SIZE - 1) {
-      // Flush line
-      line_buf[pos] = NUL;
-      if (to_err) {
-        emsg((uint8_t *)line_buf);
-      } else {
-        msg((uint8_t *)line_buf);
-      }
-
-      pos = 0;
-      continue;
+    if (to_err) {
+      PUSH_CHAR(i, err_pos, err_line_buf, emsg);
+    } else {
+      PUSH_CHAR(i, out_pos, out_line_buf, msg);
     }
-
-    line_buf[pos++] = message.data[i];
   }
 }

@@ -42,7 +42,8 @@ typedef struct {
 /// Creates a new WStream instance. A WStream encapsulates all the boilerplate
 /// necessary for writing to a libuv stream.
 ///
-/// @param maxmem Maximum amount memory used by this `WStream` instance.
+/// @param maxmem Maximum amount memory used by this `WStream` instance. If 0,
+///        a default value of 10mb will be used.
 /// @return The newly-allocated `WStream` instance
 WStream * wstream_new(size_t maxmem)
 {
@@ -91,33 +92,33 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 /// @return false if the write failed
 bool wstream_write(WStream *wstream, WBuffer *buffer)
 {
-  WriteData *data;
-  uv_buf_t uvbuf;
-  uv_write_t *req;
-
   // This should not be called after a wstream was freed
   assert(!wstream->freed);
-
-  buffer->refcount++;
 
   if (wstream->curmem > wstream->maxmem) {
     goto err;
   }
 
   wstream->curmem += buffer->size;
-  data = xmalloc(sizeof(WriteData));
+
+  WriteData *data = xmalloc(sizeof(WriteData));
   data->wstream = wstream;
   data->buffer = buffer;
-  req = xmalloc(sizeof(uv_write_t));
+
+  uv_write_t *req = xmalloc(sizeof(uv_write_t));
   req->data = data;
+
+  uv_buf_t uvbuf;
   uvbuf.base = buffer->data;
   uvbuf.len = buffer->size;
-  wstream->pending_reqs++;
 
   if (uv_write(req, wstream->stream, &uvbuf, 1, write_cb)) {
+    free(data);
+    free(req);
     goto err;
   }
 
+  wstream->pending_reqs++;
   return true;
 
 err:
@@ -132,14 +133,19 @@ err:
 ///
 /// @param data Data stored by the WBuffer
 /// @param size The size of the data array
+/// @param refcount The number of references for the WBuffer. This will be used
+///        by WStream instances to decide when a WBuffer should be freed.
 /// @param cb Pointer to function that will be responsible for freeing
 ///        the buffer data(passing 'free' will work as expected).
 /// @return The allocated WBuffer instance
-WBuffer *wstream_new_buffer(char *data, size_t size, wbuffer_data_finalizer cb)
+WBuffer *wstream_new_buffer(char *data,
+                            size_t size,
+                            size_t refcount,
+                            wbuffer_data_finalizer cb)
 {
   WBuffer *rv = xmalloc(sizeof(WBuffer));
   rv->size = size;
-  rv->refcount = 0;
+  rv->refcount = refcount;
   rv->cb = cb;
   rv->data = data;
 

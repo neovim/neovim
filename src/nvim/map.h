@@ -19,6 +19,7 @@
   U map_##T##_##U##_put(Map(T, U) *map, T key, U value);                      \
   U map_##T##_##U##_del(Map(T, U) *map, T key);
 
+MAP_DECLS(cstr_t, uint64_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)

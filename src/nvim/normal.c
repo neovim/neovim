@@ -923,6 +923,7 @@ getcount:
 
       /* Adjust the register according to 'clipboard', so that when
        * "unnamed" is present it becomes '*' or '+' instead of '"'. */
+      adjust_clipboard_register(&regname);
       set_reg_var(regname);
     }
   }
@@ -5101,6 +5102,7 @@ static void nv_brackets(cmdarg_T *cap)
         end = equalpos(start, VIsual) ? curwin->w_cursor : VIsual;
         curwin->w_cursor = (dir == BACKWARD ? start : end);
       }
+      adjust_clipboard_register(&regname);
       prep_redo_cmd(cap);
       do_put(regname, dir, cap->count1, PUT_FIXINDENT);
       if (was_visual) {
@@ -7267,9 +7269,10 @@ static void nv_put(cmdarg_T *cap)
        */
       was_visual = TRUE;
       regname = cap->oap->regname;
+      bool adjusted = adjust_clipboard_register(&regname);
       if (regname == 0 || regname == '"'
           || VIM_ISDIGIT(regname) || regname == '-'
-
+          || adjusted
           ) {
         /* The delete is going to overwrite the register we want to
          * put, save it first. */
@@ -7372,5 +7375,5 @@ static void nv_cursorhold(cmdarg_T *cap)
 
 static void nv_event(cmdarg_T *cap)
 {
-  event_process(true);
+  event_process();
 }

@@ -1,9 +1,11 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <inttypes.h>
 
 #include <msgpack.h>
 
 #include "nvim/vim.h"
+#include "nvim/log.h"
 #include "nvim/memory.h"
 #include "nvim/os/wstream.h"
 #include "nvim/os/msgpack_rpc.h"
@@ -51,9 +53,14 @@ WBuffer *msgpack_rpc_call(uint64_t channel_id,
   msgpack_packer_init(&response, sbuffer, msgpack_sbuffer_write);
 
   if (error.set) {
+    ELOG("Error dispatching msgpack-rpc call: %s(request: id %" PRIu64 ")",
+         error.msg,
+         response_id);
     return serialize_response(response_id, error.msg, NIL, sbuffer);
   }
 
+  DLOG("Successfully completed mspgack-rpc call(request id: %" PRIu64 ")",
+       response_id);
   return serialize_response(response_id, NULL, rv, sbuffer);
 }
 
@@ -113,7 +120,8 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 WBuffer *serialize_request(uint64_t request_id,
                            String method,
                            Object arg,
-                           msgpack_sbuffer *sbuffer)
+                           msgpack_sbuffer *sbuffer,
+                           size_t refcount)
   FUNC_ATTR_NONNULL_ARG(4)
 {
   msgpack_packer pac;
@@ -130,6 +138,7 @@ WBuffer *serialize_request(uint64_t request_id,
   msgpack_rpc_from_object(arg, &pac);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
+                                   refcount,
                                    free);
   msgpack_rpc_free_object(arg);
   msgpack_sbuffer_clear(sbuffer);
@@ -165,6 +174,7 @@ WBuffer *serialize_response(uint64_t response_id,
 
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
+                                   1,  // responses only go though 1 channel
                                    free);
   msgpack_rpc_free_object(arg);
   msgpack_sbuffer_clear(sbuffer);
@@ -190,6 +200,7 @@ WBuffer *serialize_metadata(uint64_t id,
   msgpack_pack_raw_body(&pac, msgpack_metadata, msgpack_metadata_size);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
+                                   1,
                                    free);
   msgpack_sbuffer_clear(sbuffer);
   return rv;

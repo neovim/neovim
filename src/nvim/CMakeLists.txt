@@ -51,6 +51,7 @@ set(CONV_SRCS
   os/rstream.c
   os/signal.c
   os/users.c
+  os/provider.c
   os/uv_helpers.c
   os/wstream.c
   os/msgpack_rpc.c
