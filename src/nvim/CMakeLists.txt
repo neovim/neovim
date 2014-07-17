@@ -20,8 +20,7 @@ file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
 
-file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c)
-file(GLOB_RECURSE NEOVIM_HEADERS *.h)
+file( GLOB NEOVIM_SOURCES *.c )
 
 foreach(sfile ${NEOVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
@@ -31,6 +30,10 @@ foreach(sfile ${NEOVIM_SOURCES})
 endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
+
+file( GLOB OS_SOURCES os/*.c )
+file( GLOB API_SOURCES api/*.c )
+file( GLOB API_PRIV_SOURCES api/private/*.c )
 
 set(CONV_SRCS
   api.c
@@ -92,7 +95,10 @@ endforeach()
 set(gen_cflags "${gen_cflags} ${CMAKE_C_FLAGS}")
 
 foreach(sfile ${NEOVIM_SOURCES}
-              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c")
+              "${PROJECT_SOURCE_DIR}/src/nvim/regexp_nfa.c"
+              ${OS_SOURCES}
+              ${API_SOURCES}
+              ${API_PRIV_SOURCES})
   get_filename_component(full_d ${sfile} PATH)
   file(RELATIVE_PATH d "${PROJECT_SOURCE_DIR}/src/nvim" "${full_d}")
   get_filename_component(f ${sfile} NAME)
@@ -125,9 +131,8 @@ add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
     ${DISPATCH_GENERATOR}
     )
 
-list(APPEND NEOVIM_GENERATED_SOURCES
-  "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
-  "${MSGPACK_DISPATCH}")
+list(APPEND NEOVIM_SOURCES "${PROJECT_BINARY_DIR}/config/auto/pathdef.c")
+list(APPEND NEOVIM_SOURCES "${MSGPACK_DISPATCH}")
 
 # Our dependencies come first.
 
@@ -158,15 +163,13 @@ list(APPEND NVIM_LINK_LIBRARIES
 
 if(NOT DEFINED ENV{SKIP_EXEC})
   add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
-    ${NEOVIM_HEADERS})
+    ${OS_SOURCES} ${API_SOURCES} ${API_PRIV_SOURCES})
   target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
   install(TARGETS nvim RUNTIME DESTINATION bin)
 endif()
 
 if(NOT DEFINED ENV{SKIP_UNITTEST})
   add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
-    ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
+    ${NEOVIM_SOURCES} ${OS_SOURCES} ${API_SOURCES} ${API_PRIV_SOURCES})
   target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
 endif()
-
-add_subdirectory(po)

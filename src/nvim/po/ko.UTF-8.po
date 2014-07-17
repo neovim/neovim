@@ -2,8 +2,6 @@
 #
 # FIRST AUTHOR SungHyun Nam <goweol@gmail.com>, 2000-2011
 #
-# Original translations.
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: vim 7.3\n"
