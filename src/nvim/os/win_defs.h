@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <sys/stat.h>
 
 // For MSVC
 #ifdef MSVC
@@ -26,6 +27,16 @@
 # ifndef W_OK
 // There is no W_OK for MSVC but it is 02
 # define W_OK 2
+# endif
+# ifndef S_ISDIR
+#  define S_ISDIR(mode) (((mode) & S_IFMT) == S_IFDIR)
+# endif
+# ifndef S_ISREG
+#  define S_ISREG(mode) (((mode) & S_IFMT) == S_IFREG)
+# endif
+# ifndef S_IXUSR
+//#  define S_IXUSR(mode) (((mode) & S_IFMT) == S_IEXEC)
+#   define S_IXUSR S_IEXEC
 # endif
 #endif
 
