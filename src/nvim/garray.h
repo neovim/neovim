@@ -1,6 +1,9 @@
 #ifndef NVIM_GARRAY_H
 #define NVIM_GARRAY_H
 
+#include <stddef.h>  // for size_t
+
+#include "nvim/types.h"  // for char_u
 #include "nvim/log.h"
 
 /// Structure used for growing arrays.
