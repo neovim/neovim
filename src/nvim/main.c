@@ -711,7 +711,6 @@ main_loop (
 
       do_redraw = FALSE;
 
-#ifdef STARTUPTIME
       /* Now that we have drawn the first screen all the startup stuff
        * has been done, close any file for startup messages. */
       if (time_fd != NULL) {
@@ -720,7 +719,6 @@ main_loop (
         fclose(time_fd);
         time_fd = NULL;
       }
-#endif
     }
 
     /*
@@ -1467,16 +1465,14 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
  */
 static void init_startuptime(mparm_T *paramp)
 {
-#ifdef STARTUPTIME
-  int i;
-  for (i = 1; i < paramp->argc; ++i) {
+  for (int i = 1; i < paramp->argc; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0 && i + 1 < paramp->argc) {
       time_fd = mch_fopen(paramp->argv[i + 1], "a");
       time_start("--- VIM STARTING ---");
       break;
     }
   }
-#endif
+
   starttime = time(NULL);
 }
 
@@ -2221,9 +2217,7 @@ static void usage(void)
   main_msg(_("-s <scriptin>\tRead Normal mode commands from file <scriptin>"));
   main_msg(_("-w <scriptout>\tAppend all typed commands to file <scriptout>"));
   main_msg(_("-W <scriptout>\tWrite all typed commands to file <scriptout>"));
-#ifdef STARTUPTIME
   main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
-#endif
   main_msg(_("-i <viminfo>\t\tUse <viminfo> instead of .viminfo"));
   main_msg(_("--api-msgpack-metadata\tDump API metadata information and exit"));
   main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));

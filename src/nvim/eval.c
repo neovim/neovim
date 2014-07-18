@@ -9731,9 +9731,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "cmdline_info",
     "signs",
     "smartindent",
-#ifdef STARTUPTIME
     "startuptime",
-#endif
     "statusline",
     "spell",
     "syntax",
