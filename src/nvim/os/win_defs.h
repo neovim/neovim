@@ -24,6 +24,9 @@
 # ifndef STDOUT_FILENO
 #  define STDOUT_FILENO fileno(stdout)
 # endif
+# ifndef STDERR_FILENO
+#  define STDERR_FILENO fileno(stderr)
+# endif
 # ifndef W_OK
 // There is no W_OK for MSVC but it is 02
 # define W_OK 2
