@@ -4,6 +4,7 @@
 // winsock2.h must be before windows.h - or so says Mingw
 #include <winsock2.h>
 #include <windows.h>
+#include <io.h>
 #include <uv.h>
 
 #include <stdio.h>
@@ -41,6 +42,12 @@
 //#  define S_IXUSR(mode) (((mode) & S_IFMT) == S_IEXEC)
 #   define S_IXUSR S_IEXEC
 # endif
+
+// FIXME: (equalsraf)
+#define close _close
+#define read _read
+#define write _write
+#define snprintf _snprintf
 #endif
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
