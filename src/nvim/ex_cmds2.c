@@ -2261,10 +2261,6 @@ do_source (
   void                    *save_funccalp;
   int save_debug_break_level = debug_break_level;
   scriptitem_T            *si = NULL;
-#ifdef STARTUPTIME
-  proftime_T tv_rel;
-  proftime_T tv_start;
-#endif
   proftime_T wait_start;
 
   p = expand_env_save(fname);
@@ -2393,10 +2389,13 @@ do_source (
     firstline = p;
   }
 
-#ifdef STARTUPTIME
-  if (time_fd != NULL)
-    time_push(&tv_rel, &tv_start);
-#endif
+  // start measuring script load time if --startuptime was passed and
+  // time_fd was successfully opened afterwards.
+  proftime_T rel_time;
+  proftime_T start_time;
+  if (time_fd != NULL) {
+    time_push(&rel_time, &start_time);
+  }
 
   if (do_profiling == PROF_YES)
     prof_child_enter(&wait_start);              /* entering a child now */
@@ -2490,13 +2489,12 @@ do_source (
       smsg((char_u *)_("continuing in %s"), sourcing_name);
     verbose_leave();
   }
-#ifdef STARTUPTIME
+
   if (time_fd != NULL) {
     vim_snprintf((char *)IObuff, IOSIZE, "sourcing %s", fname);
-    time_msg((char *)IObuff, &tv_start);
-    time_pop(tv_rel);
+    time_msg((char *)IObuff, &start_time);
+    time_pop(rel_time);
   }
-#endif
 
   /*
    * After a "finish" in debug mode, need to break at first command of next

@@ -6,9 +6,7 @@
 #include "nvim/os/time.h"
 #include "nvim/func_attr.h"
 
-#ifdef STARTUPTIME
-#include "nvim/vim.h"  // for the global `time_fd`
-#endif
+#include "nvim/globals.h"  // for the global `time_fd` (startuptime)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"
@@ -187,8 +185,7 @@ int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
   return sgn64((int64_t)(tm2 - tm1));
 }
 
-#ifdef STARTUPTIME
-
+/// globals for use in the startuptime related functionality (time_*).
 static proftime_T g_start_time;
 static proftime_T g_prev_time;
 
@@ -282,5 +279,3 @@ void time_msg(const char *mesg, const proftime_T *start)
   g_prev_time = now;
   fprintf(time_fd, ": %s\n", mesg);
 }
-
-#endif
