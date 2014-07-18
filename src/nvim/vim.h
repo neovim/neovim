@@ -61,18 +61,6 @@ Error: configure did not run properly.Check auto/config.log.
 
 # define MAX_TYPENR 65535
 
-/*
- * The u8char_T can hold one decoded UTF-8 character.
- * We normally use 32 bits now, since some Asian characters don't fit in 16
- * bits.  u8char_T is only used for displaying, it could be 16 bits to save
- * memory.
- */
-# ifdef UNICODE16
-typedef uint16_t u8char_T;
-# else
-typedef uint32_t u8char_T;
-# endif
-
 #include "nvim/keymap.h"
 #include "nvim/term_defs.h"
 #include "nvim/macros.h"
@@ -258,14 +246,7 @@ enum {
 
 #define LSIZE       512         /* max. size of a line in the tags file */
 
-#define IOSIZE     (1024+1)     /* file i/o and sprintf buffer size */
-
 #define DIALOG_MSG_SIZE 1000    /* buffer size for dialog_msg() */
-
-# define MSG_BUF_LEN 480        /* length of buffer for small messages */
-# define MSG_BUF_CLEN  (MSG_BUF_LEN / 6)    /* cell length (worst case: utf-8
-                                               takes 6 bytes for one cell) */
-
 
 /*
  * Maximum length of key sequence to be mapped.
@@ -392,36 +373,10 @@ enum {
  */
 #define vim_iswhite(x)  ((x) == ' ' || (x) == '\t')
 
-/*
- * EXTERN is only defined in main.c.  That's where global variables are
- * actually defined and initialized.
- */
-#ifndef EXTERN
-# define EXTERN extern
-# define INIT(x)
-#else
-# ifndef INIT
-#  define INIT(x) x
-#  define DO_INIT
-# endif
-#endif
-
-# define MAX_MCO        6       /* maximum value for 'maxcombine' */
-
 /* Maximum number of bytes in a multi-byte character.  It can be one 32-bit
  * character of up to 6 bytes, or one 16-bit character of up to three bytes
  * plus six following composing characters of three bytes each. */
 # define MB_MAXBYTES    21
-
-
-
-
-
-
-
-
-#include "nvim/buffer_defs.h"         /* buffer and windows */
-#include "nvim/ex_cmds_defs.h"        /* Ex command defines */
 
 /* This has to go after the include of proto.h, as proto/gui.pro declares
  * functions of these names. The declarations would break if the defines had
@@ -436,11 +391,9 @@ enum {
 # define USE_MCH_ERRMSG
 #endif
 
-
-
-
 #include "nvim/globals.h"        /* global variables and messages */
-
+#include "nvim/buffer_defs.h"         /* buffer and windows */
+#include "nvim/ex_cmds_defs.h"        /* Ex command defines */
 
 # ifdef USE_ICONV
 #  ifndef EILSEQ

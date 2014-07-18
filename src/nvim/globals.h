@@ -10,14 +10,35 @@
 
 #include <stdbool.h>
 
+// EXTERN is only defined in main.c. That's where global variables are
+// actually defined and initialized.
+#ifndef EXTERN
+# define EXTERN extern
+# define INIT(x)
+#else
+# ifndef INIT
+#  define INIT(x) x
+#  define DO_INIT
+# endif
+#endif
+
 #include "nvim/ex_eval.h"
 #include "nvim/mbyte.h"
 #include "nvim/menu.h"
 #include "nvim/syntax_defs.h"
+#include "nvim/types.h"
 
 /*
  * definition of global variables
  */
+
+#define IOSIZE         (1024+1)          // file I/O and sprintf buffer size
+
+#define MAX_MCO        6                 // maximum value for 'maxcombine'
+
+# define MSG_BUF_LEN 480                 // length of buffer for small messages
+# define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
+                                         // takes 6 bytes for one cell)
 
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
