@@ -22,6 +22,10 @@
 #ifndef STDOUT_FILENO
 #define STDOUT_FILENO fileno(stdout)
 #endif
+#if defined(MSVC) && !defined(W_OK)
+// There is no W_OK for MSVC but it is 02
+# define W_OK 2
+#endif
 
 #define TEMP_DIR_NAMES {"$TMP", "$TEMP", "$USERPROFILE", ""}
 #define TEMP_FILE_PATH_MAXLEN _MAX_PATH
