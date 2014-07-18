@@ -715,7 +715,7 @@ main_loop (
        * has been done, close any file for startup messages. */
       if (time_fd != NULL) {
         TIME_MSG("first screen update");
-        TIME_MSG("--- VIM STARTED ---");
+        TIME_MSG("--- NVIM STARTED ---");
         fclose(time_fd);
         time_fd = NULL;
       }
@@ -1468,7 +1468,7 @@ static void init_startuptime(mparm_T *paramp)
   for (int i = 1; i < paramp->argc; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0 && i + 1 < paramp->argc) {
       time_fd = mch_fopen(paramp->argv[i + 1], "a");
-      time_start("--- VIM STARTING ---");
+      time_start("--- NVIM STARTING ---");
       break;
     }
   }
