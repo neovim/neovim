@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include <uv.h>
 
@@ -105,10 +105,6 @@ return result;
 ///         argument) or NULL in case of error
 struct tm *os_get_localtime(struct tm *result)
 {
-  struct timeval tv;
-  if (gettimeofday(&tv, NULL) < 0) {
-    return NULL;
-  }
-
-  return os_localtime_r(&tv.tv_sec, result);
+  time_t rawtime = time(NULL);
+  return os_localtime_r(&rawtime, result);
 }
