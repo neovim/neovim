@@ -180,6 +180,13 @@ byteidx
 byteidxcomp
 
 STARTTEST
+/^substitute
+:let y = substitute('１２３', '\zs', 'a', 'g') | put =y
+ENDTEST
+
+substitute
+
+STARTTEST
 :g/^STARTTEST/.,/^ENDTEST/d
 :1;/^Results/,$wq! test.out
 ENDTEST
