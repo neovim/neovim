@@ -50,7 +50,11 @@ STARTTEST
 :call add(tl, [1, "\u05b9\u05bb", " y\u05b9 x\u05b9\u05bb ", "x\u05b9\u05bb"])
 :call add(tl, [2, ".\u05b9\u05bb", " y\u05bb x\u05b9\u05bb ", "x\u05b9\u05bb"])
 :call add(tl, [2, "a", "ca\u0300t"])
+:call add(tl, [2, "ca", "ca\u0300t"])
 :call add(tl, [2, "a\u0300", "ca\u0300t", "a\u0300"])
+:call add(tl, [2, 'a\%C', "ca\u0300t", "a\u0300"])
+:call add(tl, [2, 'ca\%C', "ca\u0300t", "ca\u0300"])
+:call add(tl, [2, 'ca\%Ct', "ca\u0300t", "ca\u0300t"])
 
 
 :"""" Test \Z
@@ -90,15 +94,15 @@ STARTTEST
 :    try
 :      let l = matchlist(text, pat)
 :    catch
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", caused an exception: \"' . v:exception . '\"'
 :    endtry
 :" check the match itself
 :    if len(l) == 0 && len(t) > matchidx
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", did not match, expected: \"' . t[matchidx] . '\"'
 :    elseif len(l) > 0 && len(t) == matchidx
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected no match'
 :    elseif len(t) > matchidx && l[0] != t[matchidx]
-:      $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
+:      $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", match: \"' . l[0] . '\", expected: \"' . t[matchidx] . '\"'
 :    else
 :      $put ='OK ' . engine . ' - ' . pat
 :    endif
@@ -111,7 +115,7 @@ STARTTEST
 :          let e = t[matchidx + i]
 :        endif
 :        if l[i] != e
-:          $put ='ERROR: pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
+:          $put ='ERROR ' . engine . ': pat: \"' . pat . '\", text: \"' . text . '\", submatch ' . i . ': \"' . l[i] . '\", expected: \"' . e . '\"'
 :        endif
 :      endfor
 :      unlet i
