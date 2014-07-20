@@ -24,4 +24,13 @@ typedef uintptr_t long_u;
  */
 typedef unsigned char char_u;
 
+// The u8char_T can hold one decoded UTF-8 character. We normally use 32
+// bits now, since some Asian characters don't fit in 16 bits. u8char_T is
+// only used for displaying, it could be 16 bits to save memory.
+#ifdef UNICODE16
+typedef uint16_t u8char_T;
+#else
+typedef uint32_t u8char_T;
+#endif
+
 #endif /* NVIM_TYPES_H */

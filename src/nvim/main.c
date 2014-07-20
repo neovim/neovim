@@ -45,6 +45,7 @@
 #include "nvim/option.h"
 #include "nvim/os_unix.h"
 #include "nvim/path.h"
+#include "nvim/profile.h"
 #include "nvim/quickfix.h"
 #include "nvim/screen.h"
 #include "nvim/strings.h"
@@ -710,16 +711,14 @@ main_loop (
 
       do_redraw = FALSE;
 
-#ifdef STARTUPTIME
       /* Now that we have drawn the first screen all the startup stuff
        * has been done, close any file for startup messages. */
       if (time_fd != NULL) {
         TIME_MSG("first screen update");
-        TIME_MSG("--- VIM STARTED ---");
+        TIME_MSG("--- NVIM STARTED ---");
         fclose(time_fd);
         time_fd = NULL;
       }
-#endif
     }
 
     /*
@@ -1466,16 +1465,14 @@ static void init_params(mparm_T *paramp, int argc, char **argv)
  */
 static void init_startuptime(mparm_T *paramp)
 {
-#ifdef STARTUPTIME
-  int i;
-  for (i = 1; i < paramp->argc; ++i) {
+  for (int i = 1; i < paramp->argc; i++) {
     if (STRICMP(paramp->argv[i], "--startuptime") == 0 && i + 1 < paramp->argc) {
       time_fd = mch_fopen(paramp->argv[i + 1], "a");
-      TIME_MSG("--- VIM STARTING ---");
+      time_start("--- NVIM STARTING ---");
       break;
     }
   }
-#endif
+
   starttime = time(NULL);
 }
 
@@ -2220,9 +2217,7 @@ static void usage(void)
   main_msg(_("-s <scriptin>\tRead Normal mode commands from file <scriptin>"));
   main_msg(_("-w <scriptout>\tAppend all typed commands to file <scriptout>"));
   main_msg(_("-W <scriptout>\tWrite all typed commands to file <scriptout>"));
-#ifdef STARTUPTIME
   main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
-#endif
   main_msg(_("-i <viminfo>\t\tUse <viminfo> instead of .viminfo"));
   main_msg(_("--api-msgpack-metadata\tDump API metadata information and exit"));
   main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));
@@ -2246,92 +2241,5 @@ static void check_swap_exists_action(void)
 }
 
 #endif
-
-#endif
-
-#if defined(STARTUPTIME) || defined(PROTO)
-
-static struct timeval prev_timeval;
-
-
-/*
- * Save the previous time before doing something that could nest.
- * set "*tv_rel" to the time elapsed so far.
- */
-void time_push(void *tv_rel, void *tv_start)
-{
-  *((struct timeval *)tv_rel) = prev_timeval;
-  gettimeofday(&prev_timeval, NULL);
-  ((struct timeval *)tv_rel)->tv_usec = prev_timeval.tv_usec
-    - ((struct timeval *)tv_rel)->tv_usec;
-  ((struct timeval *)tv_rel)->tv_sec = prev_timeval.tv_sec
-    - ((struct timeval *)tv_rel)->tv_sec;
-  if (((struct timeval *)tv_rel)->tv_usec < 0) {
-    ((struct timeval *)tv_rel)->tv_usec += 1000000;
-    --((struct timeval *)tv_rel)->tv_sec;
-  }
-  *(struct timeval *)tv_start = prev_timeval;
-}
-
-/*
- * Compute the previous time after doing something that could nest.
- * Subtract "*tp" from prev_timeval;
- * Note: The arguments are (void *) to avoid trouble with systems that don't
- * have struct timeval.
- */
-void 
-time_pop (
-    void *tp        /* actually (struct timeval *) */
-)
-{
-  prev_timeval.tv_usec -= ((struct timeval *)tp)->tv_usec;
-  prev_timeval.tv_sec -= ((struct timeval *)tp)->tv_sec;
-  if (prev_timeval.tv_usec < 0) {
-    prev_timeval.tv_usec += 1000000;
-    --prev_timeval.tv_sec;
-  }
-}
-
-static void time_diff(struct timeval *then, struct timeval *now)
-{
-  long usec;
-  long msec;
-
-  usec = now->tv_usec - then->tv_usec;
-  msec = (now->tv_sec - then->tv_sec) * 1000L + usec / 1000L,
-       usec = usec % 1000L;
-  fprintf(time_fd, "%03ld.%03ld", msec, usec >= 0 ? usec : usec + 1000L);
-}
-
-void 
-time_msg (
-    char *mesg,
-    void *tv_start      /* only for do_source: start time; actually
-                                 (struct timeval *) */
-)
-{
-  static struct timeval start;
-  struct timeval now;
-
-  if (time_fd != NULL) {
-    if (strstr(mesg, "STARTING") != NULL) {
-      gettimeofday(&start, NULL);
-      prev_timeval = start;
-      fprintf(time_fd, "\n\ntimes in msec\n");
-      fprintf(time_fd, " clock   self+sourced   self:  sourced script\n");
-      fprintf(time_fd, " clock   elapsed:              other lines\n\n");
-    }
-    gettimeofday(&now, NULL);
-    time_diff(&start, &now);
-    if (((struct timeval *)tv_start) != NULL) {
-      fprintf(time_fd, "  ");
-      time_diff(((struct timeval *)tv_start), &now);
-    }
-    fprintf(time_fd, "  ");
-    time_diff(&prev_timeval, &now);
-    prev_timeval = now;
-    fprintf(time_fd, ": %s\n", mesg);
-  }
-}
 
 #endif

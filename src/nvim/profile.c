@@ -6,6 +6,8 @@
 #include "nvim/os/time.h"
 #include "nvim/func_attr.h"
 
+#include "nvim/globals.h"  // for the global `time_fd` (startuptime)
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "profile.c.generated.h"
 #endif
@@ -181,4 +183,99 @@ static inline int sgn64(int64_t x) FUNC_ATTR_CONST
 int profile_cmp(proftime_T tm1, proftime_T tm2) FUNC_ATTR_CONST
 {
   return sgn64((int64_t)(tm2 - tm1));
+}
+
+/// globals for use in the startuptime related functionality (time_*).
+static proftime_T g_start_time;
+static proftime_T g_prev_time;
+
+/// time_push - save the previous time before doing something that could nest
+///
+/// After calling this function, the static global `g_prev_time` will
+/// contain the current time.
+///
+/// @param[out] rel to the time elapsed so far
+/// @param[out] start the current time
+void time_push(proftime_T *rel, proftime_T *start)
+{
+  proftime_T now = profile_start();
+
+  // subtract the previous time from now, store it in `rel`
+  *rel = profile_sub(now, g_prev_time);
+  *start = now;
+
+  // reset global `g_prev_time` for the next call
+  g_prev_time = now;
+}
+
+/// time_pop - compute the prev time after doing something that could nest
+///
+/// Subtracts `tp` from the static global `g_prev_time`.
+///
+/// @param tp the time to subtract
+void time_pop(proftime_T tp)
+{
+  g_prev_time -= tp;
+}
+
+/// time_diff - print the difference between `then` and `now`
+///
+/// the format is "msec.usec".
+static void time_diff(proftime_T then, proftime_T now)
+{
+  proftime_T diff = profile_sub(now, then);
+  fprintf(time_fd, "%07.3lf", (double) diff / 1.0E6);
+}
+
+/// time_start - initialize the startuptime code
+///
+/// Needs to be called once before calling other startuptime code (such as
+/// time_{push,pop,msg,...}).
+///
+/// @param message the message that will be displayed
+void time_start(const char *message)
+{
+  if (time_fd == NULL) {
+    return;
+  }
+
+  // intialize the global variables
+  g_prev_time = g_start_time = profile_start();
+
+  fprintf(time_fd, "\n\ntimes in msec\n");
+  fprintf(time_fd, " clock   self+sourced   self:  sourced script\n");
+  fprintf(time_fd, " clock   elapsed:              other lines\n\n");
+
+  time_msg(message, NULL);
+}
+
+/// time_msg - print out timing info
+///
+/// @warning don't forget to call `time_start()` once before calling this.
+///
+/// @param mesg the message to display next to the timing information
+/// @param start only for do_source: start time
+void time_msg(const char *mesg, const proftime_T *start)
+{
+  if (time_fd == NULL) {
+    return;
+  }
+
+  // print out the difference between `start` (init earlier) and `now`
+  proftime_T now = profile_start();
+  time_diff(g_start_time, now);
+
+  // if `start` was supplied, print the diff between `start` and `now`
+  if (start != NULL) {
+    fprintf(time_fd, "  ");
+    time_diff(*start, now);
+  }
+
+  // print the difference between the global `g_prev_time` and `now`
+  fprintf(time_fd, "  ");
+  time_diff(g_prev_time, now);
+
+  // reset `g_prev_time` and print the message
+  g_prev_time = now;
+  fprintf(time_fd, ": %s\n", mesg);
 }
