@@ -3015,21 +3015,21 @@ current_block (
   }
   curwin->w_cursor = *end_pos;
 
-  /*
-   * Try to exclude the '(', '{', ')', '}', etc. when "include" is FALSE.
-   * If the ending '}' is only preceded by indent, skip that indent.
-   * But only if the resulting area is not smaller than what we started with.
-   */
+  // Try to exclude the '(', '{', ')', '}', etc. when "include" is FALSE.
+  // If the ending '}', ')' or ']' is only preceded by indent, skip that
+  // indent. But only if the resulting area is not smaller than what we
+  // started with.
   while (!include) {
     incl(&start_pos);
     sol = (curwin->w_cursor.col == 0);
     decl(&curwin->w_cursor);
-    if (what == '{')
-      while (inindent(1)) {
-        sol = TRUE;
-        if (decl(&curwin->w_cursor) != 0)
-          break;
+    while (inindent(1)) {
+      sol = TRUE;
+      if (decl(&curwin->w_cursor) != 0) {
+        break;
       }
+    }
+
     /*
      * In Visual mode, when the resulting area is not bigger than what we
      * started with, extend it to the next block, and then exclude again.
