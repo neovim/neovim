@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/time.h>
+#include <time.h>
 
 #include <uv.h>
 
@@ -84,7 +84,8 @@ static void microdelay(uint64_t microseconds)
 /// Portable version of POSIX localtime_r()
 ///
 /// @return NULL in case of error
-struct tm *os_localtime_r(const time_t *clock, struct tm *result)
+struct tm *os_localtime_r(const time_t *restrict clock,
+                          struct tm *restrict result) FUNC_ATTR_NONNULL_ALL
 {
 #ifdef UNIX
   // POSIX provides localtime_r() as a thread-safe version of localtime().
@@ -93,8 +94,11 @@ struct tm *os_localtime_r(const time_t *clock, struct tm *result)
   // Windows version of localtime() is thread-safe.
   // See http://msdn.microsoft.com/en-us/library/bf12f0hc%28VS.80%29.aspx
   struct tm *local_time = localtime(clock);  // NOLINT
+  if (!local_time) {
+    return NULL;
+  }
   *result = *local_time;
-return result;
+  return result;
 #endif
 }
 
@@ -103,12 +107,8 @@ return result;
 /// @param result Pointer to a 'struct tm' where the result should be placed
 /// @return A pointer to a 'struct tm' in the current time zone (the 'result'
 ///         argument) or NULL in case of error
-struct tm *os_get_localtime(struct tm *result)
+struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 {
-  struct timeval tv;
-  if (gettimeofday(&tv, NULL) < 0) {
-    return NULL;
-  }
-
-  return os_localtime_r(&tv.tv_sec, result);
+  time_t rawtime = time(NULL);
+  return os_localtime_r(&rawtime, result);
 }
