@@ -6,10 +6,7 @@ local tempfile = helpers.cimport './src/nvim/tempfile.h'
 
 describe('tempfile related functions', function()
   after_each(function()
-    -- This won't work because vim_deltempdir() uses global buffer
-    -- that is initialized in main() and main() is not called for unit tests.
-    -- But it is not a big problem: all tests can work with or without it.
-    -- tempfile.vim_deltempdir()
+    tempfile.vim_deltempdir()
   end)
 
   local vim_gettempdir = function()

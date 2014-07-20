@@ -510,8 +510,6 @@ void free_all_mem(void)
   free_screenlines();
 
   clear_hl_tables();
-
-  free(NameBuff);
 }
 
 #endif
