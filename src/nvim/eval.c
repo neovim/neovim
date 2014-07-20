@@ -18996,8 +18996,10 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
       if (regmatch.startp[0] == regmatch.endp[0]) {
         if (zero_width == regmatch.startp[0]) {
           /* avoid getting stuck on a match with an empty string */
-          *((char_u *)ga.ga_data + ga.ga_len) = *tail++;
-          ++ga.ga_len;
+          int i = MB_PTR2LEN(tail);
+          memmove((char_u *)ga.ga_data + ga.ga_len, tail, (size_t)i);
+          ga.ga_len += i;
+          tail += i;
           continue;
         }
         zero_width = regmatch.startp[0];
