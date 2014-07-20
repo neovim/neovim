@@ -111,6 +111,9 @@ endif()
 
 if (MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  # We link against static dependencies
+  set(CMAKE_C_FLAGS_RELEASE -MT)
+  set(CMAKE_C_FLAGS_DEBUG -MTd)
 else()
   add_definitions(-Wall -Wextra -pedantic -Wno-unused-parameter
     -Wstrict-prototypes -std=gnu99)
