@@ -9703,6 +9703,10 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "lispindent",
     "listcmds",
     "localmap",
+#ifdef __APPLE__
+    "mac",
+    "macunix",
+#endif
     "menu",
     "mksession",
     "modify_fname",
