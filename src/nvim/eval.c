@@ -14077,76 +14077,58 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
-/*
- * "system()" function
- */
+/// f_system - the VimL system() function
 static void f_system(typval_T *argvars, typval_T *rettv)
 {
-  char_u      *res = NULL;
-  char_u      *p;
-  char_u      *infile = NULL;
-  char_u buf[NUMBUFLEN];
-  int err = FALSE;
-  FILE        *fd;
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
 
-  if (check_restricted() || check_secure())
-    goto done;
-
-  if (argvars[1].v_type != VAR_UNKNOWN) {
-    /*
-     * Write the string to a temp file, to be used for input of the shell
-     * command.
-     */
-    if ((infile = vim_tempname()) == NULL) {
-      EMSG(_(e_notmp));
-      goto done;
-    }
-
-    fd = mch_fopen((char *)infile, WRITEBIN);
-    if (fd == NULL) {
-      EMSG2(_(e_notopen), infile);
-      goto done;
-    }
-    p = get_tv_string_buf_chk(&argvars[1], buf);
-    if (p == NULL) {
-      fclose(fd);
-      goto done;                /* type error; errmsg already given */
-    }
-    if (fwrite(p, STRLEN(p), 1, fd) != 1)
-      err = TRUE;
-    if (fclose(fd) != 0)
-      err = TRUE;
-    if (err) {
-      EMSG(_("E677: Error writing temp file"));
-      goto done;
-    }
+  if (check_restricted() || check_secure()) {
+    return;
   }
 
-  res = get_cmd_output(get_tv_string(&argvars[0]), infile,
-      kShellOptSilent | kShellOptCooked);
+  // get input to the shell command (if any), and its length
+  char_u buf[NUMBUFLEN];
+  const char *input = (argvars[1].v_type != VAR_UNKNOWN)
+      ? (char *) get_tv_string_buf_chk(&argvars[1], buf): NULL;
+  size_t input_len = input ? strlen(input) : 0;
 
-#ifdef USE_CRNL
-  /* translate <CR><NL> into <NL> */
+  // get shell command to execute
+  const char *cmd = (char *) get_tv_string(&argvars[0]);
+
+  // execute the command
+  size_t nread = 0;
+  char *res = NULL;
+  int status = os_system(cmd, input, input_len, &res, &nread);
+
+  set_vim_var_nr(VV_SHELL_ERROR, (long) status);
+
+#if defined(USE_CR)
+  // translate <CR> into <NL>
   if (res != NULL) {
-    char_u  *s, *d;
-
-    d = res;
-    for (s = res; *s; ++s) {
-      if (s[0] == CAR && s[1] == NL)
+    for (char *s = res; *s; ++s) {
+      if (*s == CAR) {
+        *s = NL;
+      }
+    }
+  }
+#elif defined(USE_CRNL)
+  // translate <CR><NL> into <NL>
+  if (res != NULL) {
+    char *d = res;
+    for (char *s = res; *s; ++s) {
+      if (s[0] == CAR && s[1] == NL) {
         ++s;
+      }
+
       *d++ = *s;
     }
+
     *d = NUL;
   }
 #endif
 
-done:
-  if (infile != NULL) {
-    os_remove((char *)infile);
-    free(infile);
-  }
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = res;
+  rettv->vval.v_string = (char_u *) res;
 }
 
 /*
