@@ -1224,8 +1224,7 @@ force_cindent:
  * Only redraw when there are no characters available.  This speeds up
  * inserting sequences of characters (e.g., for CTRL-R).
  */
-static void 
-ins_redraw (
+void ins_redraw (
     int ready                   /* not busy with something */
 )
 {
