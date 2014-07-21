@@ -5,6 +5,10 @@
 #include <uv.h>
 
 #include "nvim/ascii.h"
+#include "nvim/lib/kvec.h"
+#include "nvim/log.h"
+#include "nvim/os/job.h"
+#include "nvim/os/rstream.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/signal.h"
 #include "nvim/types.h"
@@ -31,6 +35,11 @@ typedef struct {
   garray_T ga;
 } ProcessData;
 
+typedef struct {
+  char *data;
+  size_t cap;
+  size_t len;
+} dyn_buffer_t;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.c.generated.h"
@@ -232,6 +241,128 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   }
 
   return proc_cleanup_exit(&pdata, &proc_opts, opts);
+}
+
+/// os_system - synchronously execute a command in the shell
+///
+/// example:
+///   char *output = NULL;
+///   size_t nread = 0;
+///   int status = os_sytem("ls -la", NULL, 0, &output, &nread);
+///
+/// @param cmd The full commandline to be passed to the shell
+/// @param input The input to the shell (NULL for no input), passed to the
+///              stdin of the resulting process.
+/// @param len The length of the input buffer (not used if `input` == NULL)
+/// @param[out] output A pointer to to a location where the output will be
+///                    allocated and stored. Will point to NULL if the shell
+///                    command did not output anything. NOTE: it's not
+///                    allowed to pass NULL yet
+/// @param[out] nread the number of bytes in the returned buffer (if the
+///             returned buffer is not NULL)
+/// @return the return code of the process, -1 if the process couldn't be
+///         started properly
+int os_system(const char *cmd,
+              const char *input,
+              size_t len,
+              char **output,
+              size_t *nread) FUNC_ATTR_NONNULL_ARG(1, 4)
+{
+  // the output buffer
+  dyn_buffer_t buf;
+  memset(&buf, 0, sizeof(buf));
+
+  char **argv = shell_build_argv((char_u *) cmd, NULL);
+
+  int i;
+  Job *job = job_start(argv,
+                       &buf,
+                       system_data_cb,
+                       system_data_cb,
+                       NULL,
+                       false,
+                       0,
+                       &i);
+
+  if (i <= 0) {
+    // couldn't even start the job
+    ELOG("Couldn't start job, error code: '%d'", i);
+    return -1;
+  }
+
+  // write the input, if any
+  if (input) {
+    WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
+
+    // we want to be notified when the write completes
+    job_write_cb(job, system_write_cb);
+
+    if (!job_write(job, input_buffer)) {
+      // couldn't write, stop the job and tell the user about it
+      job_stop(job);
+      return -1;
+    }
+  } else {
+    // close the input stream, let the process know that no input is coming
+    job_close_in(job);
+  }
+
+  int status = job_wait(job, -1);
+
+  // prepare the out parameters if requested
+  if (buf.len == 0) {
+    // no data received from the process, return NULL
+    *output = NULL;
+    free(buf.data);
+  } else {
+    // NUL-terminate to make the output directly usable as a C string
+    buf.data[buf.len] = NUL;
+    *output = buf.data;
+  }
+
+  if (nread) {
+    *nread = buf.len;
+  }
+
+  return status;
+}
+
+/// dyn_buf_ensure - ensures at least `desired` bytes in buffer
+///
+/// TODO(aktau): fold with kvec/garray
+static void dyn_buf_ensure(dyn_buffer_t *buf, size_t desired)
+{
+  if (buf->cap >= desired) {
+    return;
+  }
+
+  buf->cap = desired;
+  kv_roundup32(buf->cap);
+  buf->data = xrealloc(buf->data, buf->cap);
+}
+
+static void system_data_cb(RStream *rstream, void *data, bool eof)
+{
+  Job *job = data;
+  dyn_buffer_t *buf = job_data(job);
+
+  size_t nread = rstream_available(rstream);
+
+  dyn_buf_ensure(buf, buf->len + nread + 1);
+  rstream_read(rstream, buf->data + buf->len, nread);
+
+  buf->len += nread;
+}
+
+static void system_write_cb(WStream *wstream,
+                            void *data,
+                            size_t pending,
+                            int status)
+{
+  if (pending == 0) {
+    Job *job = data;
+    job_close_in(job);
+  }
 }
 
 /// Parses a command string into a sequence of words, taking quotes into
