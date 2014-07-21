@@ -58,7 +58,6 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/os/event.h"
 
 /*
  * definitions used for CTRL-X submode
@@ -941,10 +940,6 @@ doESCkey:
     case K_CURSORHOLD:          /* Didn't type something for a while. */
       apply_autocmds(EVENT_CURSORHOLDI, NULL, NULL, FALSE, curbuf);
       did_cursorhold = TRUE;
-      break;
-
-    case K_EVENT:
-      event_process();
       break;
 
     case K_HOME:        /* <Home> */
