@@ -16,6 +16,9 @@
 #include "nvim/memory.h"
 #include "nvim/keymap.h"
 #include "nvim/mbyte.h"
+#include "nvim/edit.h"
+#include "nvim/main.h"
+#include "nvim/screen.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/term.h"
@@ -80,11 +83,6 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
-  if (event_has_deferred()) {
-    // Return pending event bytes
-    return push_event_key(buf, maxlen);
-  }
-
   if (ms >= 0) {
     if ((result = inbuf_poll(ms)) == kInputNone) {
       return 0;
@@ -102,11 +100,6 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
       before_blocking();
       result = inbuf_poll(-1);
     }
-  }
-
-  // If there are deferred events, return the keys directly
-  if (event_has_deferred()) {
-    return push_event_key(buf, maxlen);
   }
 
   // If input was put directly in typeahead buffer bail out here.
@@ -169,17 +162,38 @@ void input_buffer_restore(String str)
 
 static bool input_poll(int32_t ms)
 {
-  if (embedded_mode) {
-    EventSource input_sources[] = { signal_event_source(), NULL };
-    return event_poll(ms, input_sources);
+  EventSource input_sources[] = { signal_event_source(), NULL };
+
+  if (!embedded_mode) {
+    input_sources[0] = rstream_event_source(read_stream);
   }
 
-  EventSource input_sources[] = {
-    rstream_event_source(read_stream),
-    NULL
-  };
+  linenr_T conceal_old_cursor_line = 0, conceal_new_cursor_line = 0;
+  bool conceal_update_lines = false;
 
-  return input_ready() || event_poll(ms, input_sources) || input_ready();
+  while (!typebuf_changed(typebuf.tb_change_cnt)
+      && !input_ready()
+      && event_poll(ms, input_sources)) {
+    event_process();
+
+    if (State & (NORMAL | VISUAL | OP_PENDING)) {
+      normal_redraw(&conceal_old_cursor_line,
+                    &conceal_new_cursor_line,
+                    &conceal_update_lines);
+    } else if (State & INSERT) {
+      ins_redraw(true);
+      setcursor();
+      cursor_on();
+    } else {
+      // Redraws only in NORMAL, VISUAL, OP_PENDING or INSERT(and all variants
+      // of those).
+      continue;
+    }
+
+    out_flush();
+  }
+
+  return input_ready();
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
@@ -287,23 +301,9 @@ static void convert_input(void)
   }
 }
 
-static int push_event_key(uint8_t *buf, int maxlen)
-{
-  static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };
-  static int key_idx = 0;
-  int buf_idx = 0;
-
-  do {
-    buf[buf_idx++] = key[key_idx++];
-    key_idx %= 3;
-  } while (key_idx > 0 && buf_idx < maxlen);
-
-  return buf_idx;
-}
-
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return rstream_pending(read_stream) > 0 || eof;
+  return (!embedded_mode && rstream_pending(read_stream) > 0) || eof;
 }
 
