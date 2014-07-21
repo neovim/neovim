@@ -6490,6 +6490,7 @@ static struct fst {
   {"settabvar",       3, 3, f_settabvar},
   {"settabwinvar",    4, 4, f_settabwinvar},
   {"setwinvar",       3, 3, f_setwinvar},
+  {"sha256",          1, 1, f_sha256},
   {"shellescape",     1, 2, f_shellescape},
   {"shiftwidth",      0, 0, f_shiftwidth},
   {"simplify",        1, 1, f_simplify},
@@ -13100,6 +13101,17 @@ static void setwinvar(typval_T *argvars, typval_T *rettv, int off)
 
     restore_win(save_curwin, save_curtab, TRUE);
   }
+}
+
+/// f_sha256 - sha256({string}) function
+static void f_sha256(typval_T *argvars, typval_T *rettv)
+{
+  char_u *p = get_tv_string(&argvars[0]);
+  const char_u *hash = sha256_bytes(p, (int) STRLEN(p) , NULL, 0);
+
+  // make a copy of the hash (sha256_bytes returns a static buffer)
+  rettv->vval.v_string = (char_u *) xstrdup((char *) hash);
+  rettv->v_type = VAR_STRING;
 }
 
 /*
