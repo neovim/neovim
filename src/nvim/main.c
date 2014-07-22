@@ -144,10 +144,6 @@ int main(int argc, char **argv)
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
-  /*
-   * Do any system-specific initialisations.  These can NOT use IObuff or
-   * NameBuff.  Thus emsg2() cannot be called!
-   */
   mch_early_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
@@ -166,12 +162,6 @@ int main(int argc, char **argv)
 
   /* Init the table of Normal mode commands. */
   init_normal_cmds();
-
-  /*
-   * Allocate space for the generic buffers (needed for set_init_1() and
-   * EMSG2()).
-   */
-  allocate_generic_buffers();
 
 #if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
   /*
@@ -1474,16 +1464,6 @@ static void init_startuptime(mparm_T *paramp)
   }
 
   starttime = time(NULL);
-}
-
-/*
- * Allocate space for the generic buffers (needed for set_init_1() and
- * EMSG2()).
- */
-static void allocate_generic_buffers(void)
-{
-  NameBuff = xmalloc(MAXPATHL);
-  TIME_MSG("Allocated generic buffers");
 }
 
 /*

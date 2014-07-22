@@ -45,18 +45,6 @@ Error: configure did not run properly.Check auto/config.log.
 
 #include "nvim/os_unix_defs.h"       /* bring lots of system header files */
 
-/*
- * Maximum length of a path (for non-unix systems) Make it a bit long, to stay
- * on the safe side.  But not too long to put on the stack.
- */
-#ifndef MAXPATHL
-# ifdef MAXPATHLEN
-#  define MAXPATHL  MAXPATHLEN
-# else
-#  define MAXPATHL  256
-# endif
-#endif
-
 #define NUMBUFLEN 30        /* length of a buffer to store a number in ASCII */
 
 # define MAX_TYPENR 65535

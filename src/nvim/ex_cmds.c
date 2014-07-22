@@ -5156,7 +5156,11 @@ void fix_help_buffer(void)
           /* Find all "doc/ *.txt" files in this directory. */
           add_pathsep(NameBuff);
           STRCAT(NameBuff, "doc/*.??[tx]");
-          if (gen_expand_wildcards(1, &NameBuff, &fcount,
+
+          // Note: We cannot just do `&NameBuff` because it is a statically sized array
+          //       so `NameBuff == &NameBuff` according to C semantics.
+          char_u *buff_list[1] = {(char_u*) NameBuff};
+          if (gen_expand_wildcards(1, buff_list, &fcount,
                   &fnames, EW_FILE|EW_SILENT) == OK
               && fcount > 0) {
             int i1;
@@ -5324,7 +5328,11 @@ void ex_helptags(exarg_T *eap)
   STRCPY(NameBuff, dirname);
   add_pathsep(NameBuff);
   STRCAT(NameBuff, "**");
-  if (gen_expand_wildcards(1, &NameBuff, &filecount, &files,
+
+  // Note: We cannot just do `&NameBuff` because it is a statically sized array
+  //       so `NameBuff == &NameBuff` according to C semantics.
+  char_u *buff_list[1] = {(char_u*) NameBuff};
+  if (gen_expand_wildcards(1, buff_list, &filecount, &files,
           EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
     EMSG2("E151: No match: %s", NameBuff);
@@ -5422,7 +5430,11 @@ helptags_one (
   STRCPY(NameBuff, dir);
   STRCAT(NameBuff, "/**/*");
   STRCAT(NameBuff, ext);
-  if (gen_expand_wildcards(1, &NameBuff, &filecount, &files,
+
+  // Note: We cannot just do `&NameBuff` because it is a statically sized array
+  //       so `NameBuff == &NameBuff` according to C semantics.
+  char_u *buff_list[1] = {(char_u*) NameBuff};
+  if (gen_expand_wildcards(1, buff_list, &filecount, &files,
           EW_FILE|EW_SILENT) == FAIL
       || filecount == 0) {
     if (!got_int)

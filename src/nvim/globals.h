@@ -40,6 +40,20 @@
 # define MSG_BUF_CLEN  (MSG_BUF_LEN / 6) // cell length (worst case: utf-8
                                          // takes 6 bytes for one cell)
 
+/*
+ * Maximum length of a path (for non-unix systems) Make it a bit long, to stay
+ * on the safe side.  But not too long to put on the stack.
+ * TODO(metrix78): Move this to os_defs.h
+ */
+#ifndef MAXPATHL
+# ifdef MAXPATHLEN
+#  define MAXPATHL  MAXPATHLEN
+# else
+#  define MAXPATHL  256
+# endif
+#endif
+
+
 /* Values for "starting" */
 #define NO_SCREEN       2       /* no screen updating yet */
 #define NO_BUFFERS      1       /* not all buffers loaded yet */
@@ -841,11 +855,9 @@ EXTERN int swap_exists_action INIT(= SEA_NONE);
 EXTERN int swap_exists_did_quit INIT(= FALSE);
 /* Selected "quit" at the dialog. */
 
-EXTERN char_u   IObuff[IOSIZE];         /* sprintf's are done in this buffer,
-                                           size is IOSIZE */
-EXTERN char_u   *NameBuff;              /* file names are expanded in this
-                                         * buffer, size is MAXPATHL */
-EXTERN char_u msg_buf[MSG_BUF_LEN];     /* small buffer for messages */
+EXTERN char_u IObuff[IOSIZE];       /* sprintf's are done in this buffer */
+EXTERN char_u NameBuff[MAXPATHL];   /* buffer for expanding file names */
+EXTERN char_u msg_buf[MSG_BUF_LEN]; /* small buffer for messages */
 
 /* When non-zero, postpone redrawing. */
 EXTERN int RedrawingDisabled INIT(= 0);
