@@ -21,7 +21,7 @@
 
 #define EXIT_TIMEOUT 25
 #define MAX_RUNNING_JOBS 100
-#define JOB_BUFFER_SIZE 1024
+#define JOB_BUFFER_SIZE 0xFFFF
 
 struct job {
   // Job id the index in the job table plus one.
