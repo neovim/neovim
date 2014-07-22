@@ -218,6 +218,8 @@ local function standalone(...)
   require "moonscript"
   Preprocess = require("preprocess")
   Preprocess.add_to_include_path('./../../src')
+  Preprocess.add_to_include_path('./../../build/include')
+  Preprocess.add_to_include_path('./../../.deps/usr/include')
 
   input = Preprocess.preprocess_stream(arg[1])
   local raw = input:read('*all')
