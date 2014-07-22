@@ -204,7 +204,10 @@ static void write_cb(uv_write_t *req, int status)
 static void release_wbuffer(WBuffer *buffer)
 {
   if (!--buffer->refcount) {
-    buffer->cb(buffer->data);
+    if (buffer->cb) {
+      buffer->cb(buffer->data);
+    }
+
     free(buffer);
   }
 }
