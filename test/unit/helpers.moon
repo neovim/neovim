@@ -88,9 +88,9 @@ cimport './src/nvim/types.h'
 
 -- take a pointer to a C-allocated string and return an interned
 -- version while also freeing the memory
-internalize = (cdata) ->
+internalize = (cdata, len) ->
   ffi.gc cdata, ffi.C.free
-  return ffi.string cdata
+  return ffi.string cdata, len
 
 cstr = ffi.typeof 'char[?]'
 
