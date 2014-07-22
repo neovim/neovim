@@ -1,5 +1,6 @@
 bit = require 'bit'
 
+-- Description of the values below is contained in ex_cmds_defs.h file.
 local RANGE      =    0x001
 local BANG       =    0x002
 local EXTRA      =    0x004
@@ -26,6 +27,8 @@ local EXFLAGS    = 0x400000
 local FILES      = bit.bor(XFILE, EXTRA)
 local WORD1      = bit.bor(EXTRA, NOSPC)
 local FILE1      = bit.bor(FILES, NOSPC)
+
+-- The following table is described in ex_cmds_defs.h file.
 return {
   {
     command='append',

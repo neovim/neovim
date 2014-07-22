@@ -21,6 +21,21 @@
  * 1. Add an entry to the table in src/nvim/ex_cmds.lua.  Keep it sorted on the 
  *    shortest version of the command name that works.  If it doesn't start with 
  *    a lower case letter, add it at the end.
+ *
+ *    Each table entry is a table with the following keys:
+ *
+ *      Key     | Description
+ *      ------- | -------------------------------------------------------------
+ *      command | Name of the command. Required.
+ *      enum    | Name of the enum entry. If not set defaults to CMD_{command}.
+ *      flags   | A set of the flags from below list joined by bitwise or.
+ *      func    | Name of the function containing the implementation.
+ *
+ *    Referenced function should be either non-static one or defined in 
+ *    ex_docmd.c and be coercible to ex_func_T type from below.
+ *
+ *    All keys not described in the above table are reserved for future use.
+ *
  * 2. Add a "case: CMD_xxx" in the big switch in ex_docmd.c.
  * 3. Add an entry in the index for Ex commands at ":help ex-cmd-index".
  * 4. Add documentation in ../doc/xxx.txt.  Add a tag for both the short and
