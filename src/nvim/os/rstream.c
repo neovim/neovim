@@ -26,7 +26,7 @@ struct rstream {
   uv_file fd;
   rstream_cb cb;
   size_t buffer_size, rpos, wpos, fpos;
-  bool reading, free_handle;
+  bool free_handle;
   EventSource source_override;
 };
 
@@ -150,7 +150,6 @@ void rstream_start(RStream *rstream)
   if (rstream->file_type == UV_FILE) {
     uv_idle_start(rstream->fread_idle, fread_idle_cb);
   } else {
-    rstream->reading = false;
     uv_read_start(rstream->stream, alloc_cb, read_cb);
   }
 }
@@ -236,16 +235,8 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   RStream *rstream = handle_get_rstream(handle);
 
-  if (rstream->reading) {
-    buf->len = 0;
-    return;
-  }
-
   buf->len = rstream->buffer_size - rstream->wpos;
   buf->base = rstream->buffer + rstream->wpos;
-
-  // Avoid `alloc_cb`, `alloc_cb` sequences on windows
-  rstream->reading = true;
 }
 
 // Callback invoked by libuv after it copies the data into the buffer provided
@@ -287,7 +278,6 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
          rstream_event_source(rstream));
   }
 
-  rstream->reading = false;
   emit_read_event(rstream, false);
 }
 
