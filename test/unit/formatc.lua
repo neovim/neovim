@@ -176,9 +176,10 @@ local function formatc(str)
         end_at_brace = false
       end
     elseif typ == 'identifier' then
-      -- static usually indicates an inline header function, which has no
-      -- trailing ';', so we have to add a newline after the '}' ourselves.
-      if token[1] == 'static' then
+      -- static and/or inline usually indicate an inline header function,
+      -- which has no trailing ';', so we have to add a newline after the
+      -- '}' ourselves.
+      if token[1] == 'static' or token[1] == 'inline' then
         end_at_brace = true
       end
     elseif typ == 'preprocessor' then
