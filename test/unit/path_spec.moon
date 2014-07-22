@@ -1,13 +1,10 @@
-{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr, :NULL, :OK, :FAIL} = require 'test.unit.helpers'
 require 'lfs'
 
 path = cimport './src/nvim/path.h'
 
 -- import constants parsed by ffi
 {:kEqualFiles, :kDifferentFiles, :kBothFilesMissing, :kOneFileMissing, :kEqualFileNames} = path
-NULL = ffi.cast 'void*', 0
-OK = 1
-FAIL = 0
 
 describe 'path function', ->
   describe 'path_full_dir_name', ->

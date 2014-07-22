@@ -1,10 +1,6 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :NULL, :OK, :FAIL} = require 'test.unit.helpers'
 
 users = cimport './src/nvim/os/os.h', 'unistd.h'
-
-NULL = ffi.cast 'void*', 0
-OK = 1
-FAIL = 0
 
 garray_new = () ->
   ffi.new 'garray_T[1]'

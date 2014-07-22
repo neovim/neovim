@@ -108,6 +108,12 @@ vim_init = ->
   os.mch_early_init!
   vim_init_called = true
 
+-- C constants.
+NULL = ffi.cast 'void*', 0
+
+OK   = 1
+FAIL = 0
+
 return {
   cimport: cimport
   cppimport: cppimport
@@ -119,4 +125,7 @@ return {
   cstr: cstr
   to_cstr: to_cstr
   vim_init: vim_init
+  NULL: NULL
+  OK: OK
+  FAIL: FAIL
 }

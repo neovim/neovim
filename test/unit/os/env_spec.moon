@@ -1,9 +1,7 @@
-{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :ffi, :lib, :cstr, :to_cstr, :NULL} = require 'test.unit.helpers'
 require 'lfs'
 
 env = cimport './src/nvim/os/os.h'
-
-NULL = ffi.cast 'void*', 0
 
 describe 'env function', ->
 
