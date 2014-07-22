@@ -1,9 +1,6 @@
-{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+{:cimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr, :NULL} = require 'test.unit.helpers'
 
 garray = cimport './src/nvim/garray.h'
-
--- handy constants
-NULL = ffi.cast 'void*', 0
 
 -- define a basic interface to garray. We could make it a lot nicer by
 -- constructing a moonscript class wrapper around garray. It could for

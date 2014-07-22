@@ -1,12 +1,8 @@
-{:cimport, :cppimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr} = require 'test.unit.helpers'
+{:cimport, :cppimport, :internalize, :eq, :neq, :ffi, :lib, :cstr, :to_cstr, :OK, :FAIL} = require 'test.unit.helpers'
 require 'lfs'
 require 'bit'
 
 fs = cimport './src/nvim/os/os.h'
-
--- TODO(aktau): define these constants "better"
-FAIL = 0
-OK = 1
 
 cppimport 'sys/stat.h'
 cppimport 'sys/fcntl.h'
