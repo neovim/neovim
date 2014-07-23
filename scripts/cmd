@@ -1,0 +1,64 @@
+#!/usr/bin/luajit
+
+ffi = require 'ffi'
+
+cstr = ffi.typeof 'char[?]'
+
+to_cstr = (function(string)
+  return cstr(string:len() + 1, string)
+end)
+
+libnvim = ffi.load './build/src/nvim/libnvim-test.so'
+
+cimport = (function(path)
+  pipe = io.popen('cc -Isrc -P -E ' .. path)
+  header = pipe:read('*a')
+  pipe:close()
+  header = header:gsub('%c[^%c]*1UL[^%c]*', '')
+  ffi.cdef(header)
+end)
+
+cimport 'src/nvim/vim.h'
+cimport 'src/nvim/viml/printer/ex_commands.h'
+cimport 'src/nvim/os_unix.h'
+cimport 'src/nvim/eval.h'
+-- cimport 'src/nvim/main.h'
+ffi.cdef('void allocate_generic_buffers(void);')
+cimport 'src/nvim/window.h'
+cimport 'src/nvim/ops.h'
+-- cimport 'src/nvim/misc1.h'
+ffi.cdef('void init_homedir(void);')
+cimport 'src/nvim/option.h'
+cimport 'src/nvim/ex_cmds2.h'
+
+p1ct = (function(str, flags)
+  if flags == nil then
+    flags = 0
+  else
+    flags = tonumber(flags)
+  end
+  s = to_cstr(str)
+  result = libnvim.parse_cmd_test(s, flags, false, false)
+  if result == nil then
+    error('parse_cmd_test returned nil')
+  end
+  result = ffi.string(result)
+
+  result = result:gsub("!!!", "\x1B[1;33;41m \x1B[m")
+  result = result:gsub("!!(.)!!", "\x1B[1;33;41m%1\x1B[m")
+
+  return result
+end)
+
+libnvim.mch_early_init()
+libnvim.mb_init()
+libnvim.eval_init()
+libnvim.init_normal_cmds()
+libnvim.allocate_generic_buffers()
+libnvim.win_alloc_first()
+libnvim.init_yank()
+libnvim.init_homedir()
+libnvim.set_init_1()
+libnvim.set_lang_var()
+
+print (p1ct(arg[1], arg[2]))

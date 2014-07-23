@@ -48,10 +48,8 @@ local w = branch(
   rng('A', 'Z'),
   lit('_')
 )
-local aw = branch(
-  w,
-  rng('0', '9')
-)
+local d = rng('0', '9')
+local aw = branch(w, d)
 local s = set(' ', '\n', '\t')
 local raw_word = concat(w, any_amount(aw))
 local right_word = concat(
@@ -79,6 +77,23 @@ local spaces = any_amount(branch(
       any_character
     )),
     lit('*/')
+  ),
+  -- This is crap from GCC preprocessor when generating declarations with macros
+  concat(
+    -- # 820 "src/nvim/…"
+    lit('#'),
+    any_amount(s),
+    any_amount(d),  -- Line number
+    any_amount(s),
+    lit('"'),
+    any_amount(branch(
+      concat(lit('\\'), set('"', '\\')),
+      concat(
+        neg_look_ahead(set('"', '\\')),
+        any_character
+      )
+    )),
+    lit('"\n')
   ),
   concat(
     lit('//'),
@@ -243,6 +258,11 @@ local F
 F = io.open(static_fname, 'w')
 F:write(static)
 F:close()
+
+-- Support for *.c.h files
+if non_static_fname == 'none' then
+  os.exit(0)
+end
 
 -- Before generating the non-static headers, check if the current file(if
 -- exists) is different from the new one. If they are the same, we won't touch

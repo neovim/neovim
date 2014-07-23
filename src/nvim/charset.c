@@ -609,7 +609,7 @@ void transchar_hex(char_u *buf, int c)
 /// @param c
 ///
 /// @return the hex character.
-static unsigned nr2hex(unsigned c)
+unsigned nr2hex(unsigned c)
 {
   if ((c & 0xf) <= 9) {
     return (c & 0xf) + '0';

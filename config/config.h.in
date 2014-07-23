@@ -46,6 +46,10 @@
 #cmakedefine HAVE_UTIME_H
 #cmakedefine HAVE_UTIMES
 #cmakedefine HAVE_WORKING_LIBINTL
+#cmakedefine HAVE_LUAJIT
+#define RETSIGTYPE void
+#define SIGRETURN return
+#define TIME_WITH_SYS_TIME 1
 #cmakedefine UNIX
 #cmakedefine USE_FNAME_CASE
 

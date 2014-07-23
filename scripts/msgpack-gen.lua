@@ -40,18 +40,19 @@ c_proto = Ct(
   )
 grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
--- we need at least 2 arguments since the last one is the output file
-assert(#arg >= 1)
+-- we need at least 3 arguments since two last ones are for output files
+assert(#arg >= 2)
+-- api metadata
 functions = {}
-
 -- names of all headers relative to the source root(for inclusion in the
 -- generated file)
 headers = {}
 -- output file(dispatch function + metadata serialized with msgpack)
-outputf = arg[#arg]
+dispatch_outputf = arg[#arg - 1]
+lua_c_bindings_outputf = arg[#arg]
 
 -- read each input file, parse and append to the api metadata
-for i = 1, #arg - 1 do
+for i = 1, #arg - 2 do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -81,9 +82,23 @@ for i = 1, #arg - 1 do
   input:close()
 end
 
+local include_headers = function(output, headers)
+  for i = 1, #headers do
+    if headers[i]:sub(-12) ~= '.generated.h' then
+      output:write('\n#include "nvim/'..headers[i]..'"')
+    end
+  end
+end
 
--- start building the output
-output = io.open(outputf, 'wb')
+local write_shifted_output = function(output, str)
+  str = str:gsub('\n  ', '\n')
+  str = str:gsub('^  ', '')
+  str = str:gsub(' +$', '')
+  output:write(str)
+end
+
+-- start building the msgpack output
+output = io.open(dispatch_outputf, 'wb')
 
 output:write([[
 #include <inttypes.h>
@@ -101,11 +116,7 @@ output:write([[
 #include "nvim/api/private/defs.h"
 ]])
 
-for i = 1, #headers do
-  if headers[i]:sub(-12) ~= '.generated.h' then
-    output:write('\n#include "nvim/'..headers[i]..'"')
-  end
-end
+include_headers(output, headers)
 
 output:write([[
 
@@ -304,6 +315,114 @@ MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
   }
 
   return rv;
+}
+]])
+
+output:close()
+
+
+-- start building lua output
+output = io.open(lua_c_bindings_outputf, 'wb')
+
+output:write([[
+#include <lua.h>
+#include <lualib.h>
+#include <lauxlib.h>
+
+#include "nvim/func_attr.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/viml/executor/converter.h"
+]])
+include_headers(output, headers)
+output:write('\n')
+-- FIXME Replace channel_id with something more sensible
+output:write('\n#define channel_id 0\n')
+
+lua_c_functions = {}
+
+for i = 1, #functions do
+  local fn = functions[i]
+
+  lua_c_function_name = ('nlua_msgpack_%s'):format(fn.name)
+  write_shifted_output(output, string.format([[
+
+  static int %s(lua_State *lstate)
+  {
+    Error err = {.set = false};
+  ]], lua_c_function_name))
+  lua_c_functions[#lua_c_functions + 1] = {
+    binding=lua_c_function_name,
+    api=fn.name
+  }
+  cparams = ''
+  for j, param in ipairs(fn.parameters) do
+    cparam = string.format('arg%u', j)
+    if param[1]:match('^ArrayOf') then
+      param_type = 'Array'
+    else
+      param_type = param[1]
+    end
+    write_shifted_output(output, string.format([[
+    %s %s = nlua_pop_%s(lstate, &err);
+    if (err.set) {
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+    ]], param[1], cparam, param_type))
+    cparams = cparams .. cparam .. ', '
+  end
+  if fn.receives_channel_id then
+    cparams = 'channel_id, ' .. cparams
+  end
+  if fn.can_fail then
+    cparams = cparams .. '&err'
+  else
+    cparams = cparams:gsub(', $', '')
+  end
+  if fn.return_type ~= 'void' then
+    if fn.return_type:match('^ArrayOf') then
+      return_type = 'Array'
+    else
+      return_type = fn.return_type
+    end
+    write_shifted_output(output, string.format([[
+    %s ret = %s(%s);
+    if (err.set) {
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+    nlua_push_%s(lstate, ret);
+    return 1;
+    ]], fn.return_type, fn.name, cparams, return_type))
+  else
+    write_shifted_output(output, string.format([[
+    %s(%s);
+    if (err.set) {
+      lua_pushstring(lstate, err.msg);
+      return lua_error(lstate);
+    }
+    return 0;
+    ]], fn.name, cparams))
+  end
+  write_shifted_output(output, [[
+  }
+  ]])
+end
+
+output:write(string.format([[
+void nlua_add_api_functions(lua_State *lstate)
+  FUNC_ATTR_NONNULL_ALL
+{
+  lua_createtable(lstate, 0, %u);
+]], #lua_c_functions))
+for _, func in ipairs(lua_c_functions) do
+  output:write(string.format([[
+  lua_pushcfunction(lstate, &%s);
+  lua_setfield(lstate, -2, "%s");
+  ]], func.binding, func.api))
+end
+output:write([[
+  lua_setfield(lstate, -2, "api");
 }
 ]])
 

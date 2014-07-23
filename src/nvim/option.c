@@ -1852,7 +1852,7 @@ static char_u *illegal_char(char_u *errbuf, int c)
  * Convert a key name or string into a key value.
  * Used for 'wildchar' and 'cedit' options.
  */
-static int string_to_key(char_u *arg)
+int string_to_key(char_u *arg)
 {
   if (*arg == '<')
     return find_key_option(arg + 1);
@@ -6748,4 +6748,23 @@ uint_least8_t get_option_properties(const char_u *const name, const size_t len)
     return 0;
 
   return get_option_properties_idx(idx);
+}
+
+/// Return option name
+///
+/// @param[in]  idx           Option index.
+/// @param[in]  return_short  If true, return short name in place of long.
+///
+/// @return Option name in allocated memory or NULL for invalid option index.
+char *get_option_name(const int idx, const bool return_short)
+{
+  if (idx < 0 || idx > (int) PARAM_COUNT) {
+    return NULL;
+  } else if (return_short && options[idx].shortname != NULL) {
+    return xstrdup(options[idx].shortname);
+  } else if (options[idx].fullname != NULL) {
+    return xstrdup(options[idx].fullname);
+  } else {
+    return NULL;
+  }
 }

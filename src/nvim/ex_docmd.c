@@ -4650,10 +4650,7 @@ static struct {
  * List of names for completion for ":command" with the EXPAND_ flag.
  * Must be alphabetical for completion.
  */
-static struct {
-  int expand;
-  char    *name;
-} command_complete[] =
+const CompleteVariant command_complete[] =
 {
   {EXPAND_AUGROUP, "augroup"},
   {EXPAND_BEHAVE, "behave"},
