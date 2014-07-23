@@ -109,6 +109,7 @@ Object provider_call(char *method, Object arg)
              "Provider for \"%s\" is not available",
              method);
     report_error(buf);
+    msgpack_rpc_free_object(arg);
     return NIL;
   }
 
