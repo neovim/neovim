@@ -1307,19 +1307,16 @@ do_shell (
   apply_autocmds(EVENT_SHELLCMDPOST, NULL, NULL, FALSE, curbuf);
 }
 
-/*
- * Create a shell command from a command string, input redirection file and
- * output redirection file.
- * Returns an allocated string with the shell command.
- */
-char_u *
-make_filter_cmd (
-    char_u *cmd,               /* command */
-    char_u *itmp,              /* NULL or name of input file */
-    char_u *otmp              /* NULL or name of output file */
-)
+/// Create a shell command from a command string, input redirection file and
+/// output redirection file.
+///
+/// @param cmd  Command to execute.
+/// @param itmp NULL or the input file.
+/// @param otmp NULL or the output file.
+/// @returns an allocated string with the shell command.
+char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
 {
-  size_t len = STRLEN(cmd) + 1;  // len + NLL
+  size_t len = STRLEN(cmd) + 1;  // At least enough space for cmd + NULL.
   len += sizeof("("")") - 1;
   if (itmp != NULL)
     len += STRLEN(itmp) + sizeof(" { "" < "" } ") - 1;
@@ -1328,10 +1325,8 @@ make_filter_cmd (
   char_u *buf = xmalloc(len);
 
 #if defined(UNIX)
-  /*
-   * Put braces around the command (for concatenated commands) when
-   * redirecting input and/or output.
-   */
+  // Put braces around the command (for concatenated commands) when
+  // redirecting input and/or output.
   if (itmp != NULL || otmp != NULL)
     vim_snprintf((char *)buf, len, "(%s)", (char *)cmd);
   else
@@ -1341,19 +1336,15 @@ make_filter_cmd (
     STRCAT(buf, itmp);
   }
 #else
-  /*
-   * for shells that don't understand braces around commands, at least allow
-   * the use of commands in a pipe.
-   */
+  // for shells that don't understand braces around commands, at least allow
+  // the use of commands in a pipe.
   STRCPY(buf, cmd);
   if (itmp != NULL) {
     char_u  *p;
 
-    /*
-     * If there is a pipe, we have to put the '<' in front of it.
-     * Don't do this when 'shellquote' is not empty, otherwise the
-     * redirection would be inside the quotes.
-     */
+    // If there is a pipe, we have to put the '<' in front of it.
+    // Don't do this when 'shellquote' is not empty, otherwise the
+    // redirection would be inside the quotes.
     if (*p_shq == NUL) {
       p = vim_strchr(buf, '|');
       if (p != NULL)
@@ -1364,7 +1355,7 @@ make_filter_cmd (
     if (*p_shq == NUL) {
       p = vim_strchr(cmd, '|');
       if (p != NULL) {
-        STRCAT(buf, " ");           /* insert a space before the '|' for DOS */
+        STRCAT(buf, " ");  // Insert a space before the '|' for DOS
         STRCAT(buf, p);
       }
     }
