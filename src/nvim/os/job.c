@@ -319,6 +319,43 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   return (job->pending_refs) ? -1 : (int) job->status;
 }
 
+/// Close the pipe used to write to the job.
+///
+/// This can be used for example to indicate to the job process that no more
+/// input is coming, and that it should shut down cleanly.
+///
+/// It has no effect when the input pipe doesn't exist or was already
+/// closed.
+///
+/// @param job The job instance
+void job_close_in(Job *job) FUNC_ATTR_NONNULL_ALL
+{
+  if (!job->in) {
+    return;
+  }
+
+  // let other functions in the job module know that the in pipe is no more
+  wstream_free(job->in);
+  job->in = NULL;
+
+  uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+}
+
+/// All writes that complete after calling this function will be reported
+/// to `cb`.
+///
+/// Use this function to be notified about the status of an in-flight write.
+///
+/// @see {wstream_set_write_cb}
+///
+/// @param job The job instance
+/// @param cb The function that will be called on write completion or
+///        failure. It will be called with the job as the `data` argument.
+void job_write_cb(Job *job, wstream_cb cb) FUNC_ATTR_NONNULL_ALL
+{
+  wstream_set_write_cb(job->in, cb, job);
+}
+
 /// Writes data to the job's stdin. This is a non-blocking operation, it
 /// returns when the write request was sent.
 ///
@@ -391,7 +428,9 @@ static bool is_alive(Job *job)
 static void free_job(Job *job)
 {
   uv_close((uv_handle_t *)&job->proc_stdout, close_cb);
-  uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+  if (job->in) {
+    uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+  }
   uv_close((uv_handle_t *)&job->proc_stderr, close_cb);
   uv_close((uv_handle_t *)&job->proc, close_cb);
 }
@@ -464,7 +503,9 @@ static void close_cb(uv_handle_t *handle)
     // closed by libuv
     rstream_free(job->out);
     rstream_free(job->err);
-    wstream_free(job->in);
+    if (job->in) {
+      wstream_free(job->in);
+    }
 
     // Free data memory of process and pipe handles, that was allocated
     // by handle_set_job in job_start.
