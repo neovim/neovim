@@ -5684,22 +5684,19 @@ static int syn_compare_syntime(const void *v1, const void *v2)
  */
 static void syntime_report(void)
 {
-  synpat_T    *spp;
-  proftime_T tm;
-  int len;
-  int total_count = 0;
-  garray_T ga;
-  time_entry_T *p;
-
   if (!syntax_present(curwin)) {
     MSG(_(msg_no_items));
     return;
   }
 
+  garray_T ga;
   ga_init(&ga, sizeof(time_entry_T), 50);
+
   proftime_T total_total = profile_zero();
+  int total_count = 0;
+  time_entry_T *p;
   for (int idx = 0; idx < curwin->w_s->b_syn_patterns.ga_len; ++idx) {
-    spp = &(SYN_ITEMS(curwin->w_s)[idx]);
+    synpat_T *spp = &(SYN_ITEMS(curwin->w_s)[idx]);
     if (spp->sp_time.count > 0) {
       p = GA_APPEND_VIA_PTR(time_entry_T, &ga);
       p->total = spp->sp_time.total;
@@ -5708,7 +5705,7 @@ static void syntime_report(void)
       p->match = spp->sp_time.match;
       total_count += spp->sp_time.count;
       p->slowest = spp->sp_time.slowest;
-      tm = profile_divide(spp->sp_time.total, spp->sp_time.count);
+      proftime_T tm = profile_divide(spp->sp_time.total, spp->sp_time.count);
       p->average = tm;
       p->id = spp->sp_syn.id;
       p->pattern = spp->sp_pattern;
@@ -5723,7 +5720,6 @@ static void syntime_report(void)
           "  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"));
   MSG_PUTS("\n");
   for (int idx = 0; idx < ga.ga_len && !got_int; ++idx) {
-    spp = &(SYN_ITEMS(curwin->w_s)[idx]);
     p = ((time_entry_T *)ga.ga_data) + idx;
 
     MSG_PUTS(profile_msg(p->total));
@@ -5745,6 +5741,7 @@ static void syntime_report(void)
     MSG_PUTS(" ");
 
     msg_advance(69);
+    int len;
     if (Columns < 80)
       len = 20;       /* will wrap anyway */
     else
