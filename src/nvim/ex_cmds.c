@@ -1319,11 +1319,12 @@ make_filter_cmd (
     char_u *otmp              /* NULL or name of output file */
 )
 {
-  size_t len = STRLEN(cmd) + 3;                        /* "()" + NUL */
+  size_t len = STRLEN(cmd) + 1;  // len + NLL
+  len += sizeof("("")") - 1;
   if (itmp != NULL)
-    len += STRLEN(itmp) + 9;                    /* " { < " + " } " */
+    len += STRLEN(itmp) + sizeof(" { "" < "" } ") - 1;
   if (otmp != NULL)
-    len += STRLEN(otmp) + STRLEN(p_srr) + 2;     /* "  " */
+    len += STRLEN(otmp) + STRLEN(p_srr) + 2;  // two extra spaces ("  "),
   char_u *buf = xmalloc(len);
 
 #if defined(UNIX)
