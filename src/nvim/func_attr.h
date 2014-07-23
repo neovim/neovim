@@ -105,6 +105,8 @@
     #define REAL_FATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
     #define REAL_FATTR_ALWAYS_INLINE __attribute__((always_inline))
     #define REAL_FATTR_UNUSED __attribute__((unused))
+    #define REAL_FATTR_NONNULL_ALL __attribute__((nonnull))
+    #define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
 
     #ifdef __clang__
       // clang only
@@ -118,8 +120,6 @@
       // gcc only
       #define REAL_FATTR_ALLOC_SIZE(x) __attribute__((alloc_size(x)))
       #define REAL_FATTR_ALLOC_SIZE_PROD(x,y) __attribute__((alloc_size(x,y)))
-      #define REAL_FATTR_NONNULL_ALL __attribute__((nonnull))
-      #define REAL_FATTR_NONNULL_ARG(...) __attribute__((nonnull(__VA_ARGS__)))
       #if GCC_VERSION >= 40900
         #define REAL_FATTR_NONNULL_RET __attribute__((returns_nonnull))
       #endif
