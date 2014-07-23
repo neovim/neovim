@@ -114,6 +114,65 @@ describe 'path function', ->
     it 'returns the whole file name if there is no separator', ->
       eq 'file.txt', path_tail_with_sep 'file.txt'
 
+  describe 'invocation_path_tail', ->
+    -- Returns the path tail and length (out param) of the tail.
+    -- Does not convert the tail from C-pointer to lua string for use with
+    -- strcmp.
+    invocation_path_tail = (invk) ->
+      plen = ffi.new 'size_t[?]', 1
+      ptail = path.invocation_path_tail (to_cstr invk), plen
+      neq NULL, ptail
+
+      -- it does not change the output if len==NULL
+      tail2 = path.invocation_path_tail (to_cstr invk), NULL
+      neq NULL, tail2
+      eq (ffi.string ptail), (ffi.string tail2)
+
+      ptail, plen[0]
+
+    -- This test mimics the intended use in C.
+    compare = (base, pinvk, len) ->
+      eq 0, (ffi.C.strncmp (to_cstr base), pinvk, len)
+
+    it 'returns the executable name of an invocation given a relative invocation', ->
+      invk, len = invocation_path_tail 'directory/exe a b c'
+      compare "exe a b c", invk, len
+      eq 3, len
+
+    it 'returns the executable name of an invocation given an absolute invocation', ->
+      if ffi.os == 'Windows'
+        invk, len = invocation_path_tail 'C:\\Users\\anyone\\Program Files\\z a b'
+        compare 'z a b', invk, len
+        eq 1, len
+      else
+        invk, len = invocation_path_tail '/usr/bin/z a b'
+        compare 'z a b', invk, len
+        eq 1, len
+
+    it 'does not count arguments to the executable as part of its path', ->
+      invk, len = invocation_path_tail 'exe a/b\\c'
+      compare "exe a/b\\c", invk, len
+      eq 3, len
+
+    it 'only accepts whitespace as a terminator for the executable name', ->
+      invk, len = invocation_path_tail 'exe-a+b_c[]()|#!@$%^&*'
+      eq 'exe-a+b_c[]()|#!@$%^&*', (ffi.string invk)
+
+    it 'is equivalent to path_tail when args do not contain a path separator', ->
+      ptail = path.path_tail to_cstr "a/b/c x y z"
+      neq NULL, ptail
+      tail = ffi.string ptail
+
+      invk, len = invocation_path_tail "a/b/c x y z"
+      eq tail, ffi.string invk
+
+    it 'is not equivalent to path_tail when args contain a path separator', ->
+      ptail = path.path_tail to_cstr "a/b/c x y/z"
+      neq NULL, ptail
+
+      invk, len = invocation_path_tail "a/b/c x y/z"
+      neq (ffi.string ptail), (ffi.string invk)
+
   describe 'path_next_component', ->
     path_next_component = (file) ->
       res = path.path_next_component (to_cstr file)
