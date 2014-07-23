@@ -1445,7 +1445,6 @@ win_equal_rec (
     }
 
     for (fr = topfr->fr_child; fr != NULL; fr = fr->fr_next) {
-      n = m = 0;
       wincount = 1;
       if (fr->fr_next == NULL)
         /* last frame gets all that remains (avoid roundoff error) */
@@ -1566,7 +1565,6 @@ win_equal_rec (
     }
 
     for (fr = topfr->fr_child; fr != NULL; fr = fr->fr_next) {
-      n = m = 0;
       wincount = 1;
       if (fr->fr_next == NULL)
         /* last frame gets all that remains (avoid roundoff error) */
