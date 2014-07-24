@@ -402,6 +402,14 @@ static void close_cb(uv_handle_t *handle)
     rstream_free(job->out);
     rstream_free(job->err);
     wstream_free(job->in);
+
+    // Free data memory of process and pipe handles, that was allocated
+    // by handle_set_job in job_start.
+    free(job->proc.data);
+    free(job->proc_stdin.data);
+    free(job->proc_stdout.data);
+    free(job->proc_stderr.data);
+
     shell_free_argv(job->proc_opts.args);
     free(job);
   }
