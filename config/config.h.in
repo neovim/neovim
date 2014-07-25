@@ -26,7 +26,6 @@
 #cmakedefine HAVE_GETPWENT
 #cmakedefine HAVE_GETPWNAM
 #cmakedefine HAVE_GETPWUID
-#cmakedefine HAVE_GETTIMEOFDAY
 #cmakedefine HAVE_ICONV
 #cmakedefine USE_ICONV
 #cmakedefine HAVE_ICONV_H

@@ -15,9 +15,9 @@
 #include <inttypes.h>
 #include <string.h>
 
+#include "nvim/os/time.h"
 #include "nvim/vim.h"
 #include "nvim/sha256.h"
-
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "sha256.c.generated.h"
@@ -350,21 +350,6 @@ int sha256_self_test(void)
   return failures > 0 ? FAIL : OK;
 }
 
-static unsigned int get_some_time(void)
-{
-#ifdef HAVE_GETTIMEOFDAY
-  struct timeval tv;
-
-  // Using usec makes it less predictable.
-  gettimeofday(&tv, NULL);
-  return (unsigned int) (tv.tv_sec + tv.tv_usec);
-
-#else  // ifdef HAVE_GETTIMEOFDAY
-  return (unsigned int) time(NULL);
-
-#endif  // ifdef HAVE_GETTIMEOFDAY
-}
-
 /// Fill "header[header_len]" with random_data.
 /// Also "salt[salt_len]" when "salt" is not NULL.
 ///
@@ -378,11 +363,11 @@ void sha2_seed(char_u *header, int header_len, char_u *salt, int salt_len)
   char_u sha256sum[32];
   context_sha256_T ctx;
 
-  srand(get_some_time());
+  srand((unsigned int) os_hrtime());
 
   int i;
   for (i = 0; i < (int) sizeof(random_data) - 1; i++) {
-    random_data[i] = (char_u) ((get_some_time() ^ rand()) & 0xff);
+    random_data[i] = (char_u) ((os_hrtime() ^ rand()) & 0xff);
   }
   sha256_start(&ctx);
   sha256_update(&ctx, (char_u *) random_data, sizeof(random_data));

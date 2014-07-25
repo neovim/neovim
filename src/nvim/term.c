@@ -3179,14 +3179,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
   static int held_button = MOUSE_RELEASE;
   static int orig_num_clicks = 1;
   static int orig_mouse_code = 0x0;
-# ifdef CHECK_DOUBLE_CLICK
-  static int orig_mouse_col = 0;
-  static int orig_mouse_row = 0;
-  static struct timeval orig_mouse_time = {0, 0};
-  /* time of previous mouse click */
-  struct timeval mouse_time;            /* time of current mouse click */
-  long timediff;                        /* elapsed time in msec */
-# endif
   int cpo_koffset;
 
   cpo_koffset = (vim_strchr(p_cpo, CPO_KOFFSET) != NULL);
@@ -3955,17 +3947,17 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
       } else if (wheel_code == 0)   {
 # ifdef CHECK_DOUBLE_CLICK
         {
-          /*
-           * Compute the time elapsed since the previous mouse click.
-           */
-          gettimeofday(&mouse_time, NULL);
-          timediff = (mouse_time.tv_usec
-                      - orig_mouse_time.tv_usec) / 1000;
-          if (timediff < 0)
-            --orig_mouse_time.tv_sec;
-          timediff += (mouse_time.tv_sec
-                       - orig_mouse_time.tv_sec) * 1000;
+          static int orig_mouse_col = 0;
+          static int orig_mouse_row = 0;
+
+          static uint64_t orig_mouse_time = 0;  // time of previous mouse click
+          uint64_t mouse_time = os_hrtime();    // time of current mouse click
+
+          // compute the time elapsed since the previous mouse click and
+          // convert it from ns to ms because p_mouset is stored as ms
+          long timediff = (long) (mouse_time - orig_mouse_time) / 1E6;
           orig_mouse_time = mouse_time;
+
           if (mouse_code == orig_mouse_code
               && timediff < p_mouset
               && orig_num_clicks != 4

@@ -52,7 +52,7 @@
  * 128 = 16384 columns, now it's reduced to 10000. */
 #define MOUSE_COLOFF 10000
 
-#if defined(UNIX) && defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)
+#if defined(UNIX)
 # define CHECK_DOUBLE_CLICK 1  /* Checking for double clicks ourselves. */
 #endif
 
