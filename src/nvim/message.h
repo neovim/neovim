@@ -2,6 +2,7 @@
 #define NVIM_MESSAGE_H
 
 #include <stdbool.h>
+#include <stdarg.h>
 #include "nvim/eval_defs.h"  // for typval_T
 
 /*
