@@ -131,7 +131,7 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/unittest" ]; then
     export CC=gcc
     set_environment /opt/neovim-deps
     export SKIP_EXEC=1
-    $MAKE_CMD CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=TAP -DUSE_GCOV=ON" unittest
+    $MAKE_CMD CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=color_terminal -DUSE_GCOV=ON" unittest
     coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
 elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
     set_environment /opt/neovim-deps/32
@@ -154,7 +154,7 @@ elif [ "$TRAVIS_BUILD_TYPE" = "gcc/ia32" ]; then
     # correctly.
     sudo apt-get install libncurses5-dev:i386
 
-    CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=TAP \
+    CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DBUSTED_OUTPUT_TYPE=color_terminal \
         -DCMAKE_SYSTEM_PROCESSOR=i386 \
         -DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32 \
         -DFIND_LIBRARY_USE_LIB64_PATHS=OFF \
