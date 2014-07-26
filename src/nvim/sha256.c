@@ -52,9 +52,10 @@ void sha256_start(context_sha256_T *ctx)
   ctx->state[7] = 0x5BE0CD19;
 }
 
-static void sha256_process(context_sha256_T *ctx, const char_u data[64])
+static void sha256_process(context_sha256_T *ctx,
+                           const char_u data[SHA256_BUFFER_SIZE])
 {
-  uint32_t temp1, temp2, W[64];
+  uint32_t temp1, temp2, W[SHA256_BUFFER_SIZE];
   uint32_t A, B, C, D, E, F, G, H;
 
   GET_UINT32(W[0],  data,  0);
@@ -186,7 +187,7 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
     return;
   }
 
-  uint32_t left = ctx->total[0] & 0x3F;  // left < 64
+  uint32_t left = ctx->total[0] & (SHA256_BUFFER_SIZE-1);  // left < buf size
 
   ctx->total[0] += (uint32_t) length;
   ctx->total[0] &= 0xFFFFFFFF;
@@ -195,7 +196,7 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
     ctx->total[1]++;
   }
 
-  size_t fill = 64 - left;
+  size_t fill = SHA256_BUFFER_SIZE - left;
 
   if (left && (length >= fill)) {
     memcpy((void *)(ctx->buffer + left), (void *)input, fill);
@@ -205,10 +206,10 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
     left = 0;
   }
 
-  while (length >= 64) {
+  while (length >= SHA256_BUFFER_SIZE) {
     sha256_process(ctx, input);
-    length -= 64;
-    input  += 64;
+    length -= SHA256_BUFFER_SIZE;
+    input  += SHA256_BUFFER_SIZE;
   }
 
   if (length) {
@@ -216,14 +217,14 @@ void sha256_update(context_sha256_T *ctx, const char_u *input, size_t length)
   }
 }
 
-static char_u sha256_padding[64] = {
+static char_u sha256_padding[SHA256_BUFFER_SIZE] = {
   0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void sha256_finish(context_sha256_T *ctx, char_u digest[32])
+void sha256_finish(context_sha256_T *ctx, char_u digest[SHA256_SUM_SIZE])
 {
   uint32_t last, padn;
   uint32_t high, low;
@@ -251,7 +252,7 @@ void sha256_finish(context_sha256_T *ctx, char_u digest[32])
   PUT_UINT32(ctx->state[7], digest, 28);
 }
 
-static const unsigned int kShaStep = 2;
+#define SHA_STEP 2
 
 /// Gets the hex digest of the buffer.
 ///
@@ -265,8 +266,8 @@ static const unsigned int kShaStep = 2;
 char_u *sha256_bytes(const char_u *restrict buf,  size_t buf_len,
                      const char_u *restrict salt, size_t salt_len)
 {
-  char_u sha256sum[32];
-  static char_u hexit[65];
+  char_u sha256sum[SHA256_SUM_SIZE];
+  static char_u hexit[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
 
   sha256_self_test();
@@ -279,8 +280,8 @@ char_u *sha256_bytes(const char_u *restrict buf,  size_t buf_len,
   }
   sha256_finish(&ctx, sha256sum);
 
-  for (size_t j = 0; j < 32; j++) {
-    snprintf((char *) hexit + j * kShaStep, kShaStep+1, "%02x", sha256sum[j]);
+  for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
+    snprintf((char *) hexit + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
   }
   hexit[sizeof(hexit) - 1] = '\0';
   return hexit;
@@ -307,10 +308,10 @@ static char *sha_self_test_vector[] = {
 /// @returns true if not failures generated.
 bool sha256_self_test(void)
 {
-  char output[65];
+  char output[SHA256_BUFFER_SIZE + 1];  // buf size + NULL
   context_sha256_T ctx;
   char_u buf[1000];
-  char_u sha256sum[32];
+  char_u sha256sum[SHA256_SUM_SIZE];
   char_u *hexit;
 
   static bool sha256_self_tested = false;
@@ -336,12 +337,12 @@ bool sha256_self_test(void)
       }
       sha256_finish(&ctx, sha256sum);
 
-      for (size_t j = 0; j < 32; j++) {
-        snprintf(output + j * kShaStep, kShaStep+1, "%02x", sha256sum[j]);
+      for (size_t j = 0; j < SHA256_SUM_SIZE; j++) {
+        snprintf(output + j * SHA_STEP, SHA_STEP+1, "%02x", sha256sum[j]);
       }
     }
 
-    if (memcmp(output, sha_self_test_vector[i], 64)) {
+    if (memcmp(output, sha_self_test_vector[i], SHA256_BUFFER_SIZE)) {
       failures = true;
       output[sizeof(output) - 1] = '\0';
 
@@ -362,7 +363,7 @@ void sha2_seed(char_u *restrict header, size_t header_len,
                char_u *restrict salt,   size_t salt_len)
 {
   static char_u random_data[1000];
-  char_u sha256sum[32];
+  char_u sha256sum[SHA256_SUM_SIZE];
   context_sha256_T ctx;
 
   unsigned int seed = (unsigned int) os_hrtime();
