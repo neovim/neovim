@@ -21,6 +21,9 @@ struct wstream {
   // Number of pending requests
   size_t pending_reqs;
   bool freed;
+  // (optional) Write callback and data
+  wstream_cb cb;
+  void *data;
 };
 
 struct wbuffer {
@@ -57,6 +60,7 @@ WStream * wstream_new(size_t maxmem)
   rv->curmem = 0;
   rv->pending_reqs = 0;
   rv->freed = false;
+  rv->cb = NULL;
 
   return rv;
 }
@@ -81,6 +85,25 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 {
   handle_set_wstream((uv_handle_t *)stream, wstream);
   wstream->stream = stream;
+}
+
+/// Sets a callback that will be called on completion of a write request,
+/// indicating failure/success.
+///
+/// This affects all requests currently in-flight as well. Overwrites any
+/// possible earlier callback.
+///
+/// @note This callback will not fire if the write request couldn't even be
+///       queued properly (i.e.: when `wstream_write() returns an error`).
+///
+/// @param wstream The `WStream` instance
+/// @param cb The callback
+/// @param data User-provided data that will be passed to `cb`
+void wstream_set_write_cb(WStream *wstream, wstream_cb cb, void *data)
+  FUNC_ATTR_NONNULL_ARG(1)
+{
+  wstream->cb = cb;
+  wstream->data = data;
 }
 
 /// Queues data for writing to the backing file descriptor of a `WStream`
@@ -162,6 +185,14 @@ static void write_cb(uv_write_t *req, int status)
   release_wbuffer(data->buffer);
 
   data->wstream->pending_reqs--;
+
+  if (data->wstream->cb) {
+    data->wstream->cb(data->wstream,
+                      data->wstream->data,
+                      data->wstream->pending_reqs,
+                      status);
+  }
+
   if (data->wstream->freed && data->wstream->pending_reqs == 0) {
     // Last pending write, free the wstream;
     free(data->wstream);
@@ -173,7 +204,10 @@ static void write_cb(uv_write_t *req, int status)
 static void release_wbuffer(WBuffer *buffer)
 {
   if (!--buffer->refcount) {
-    buffer->cb(buffer->data);
+    if (buffer->cb) {
+      buffer->cb(buffer->data);
+    }
+
     free(buffer);
   }
 }

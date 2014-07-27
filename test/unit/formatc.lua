@@ -176,9 +176,10 @@ local function formatc(str)
         end_at_brace = false
       end
     elseif typ == 'identifier' then
-      -- static usually indicates an inline header function, which has no
-      -- trailing ';', so we have to add a newline after the '}' ourselves.
-      if token[1] == 'static' then
+      -- static and/or inline usually indicate an inline header function,
+      -- which has no trailing ';', so we have to add a newline after the
+      -- '}' ourselves.
+      if token[1] == 'static' or token[1] == 'inline' then
         end_at_brace = true
       end
     elseif typ == 'preprocessor' then
@@ -217,6 +218,8 @@ local function standalone(...)
   require "moonscript"
   Preprocess = require("preprocess")
   Preprocess.add_to_include_path('./../../src')
+  Preprocess.add_to_include_path('./../../build/include')
+  Preprocess.add_to_include_path('./../../.deps/usr/include')
 
   input = Preprocess.preprocess_stream(arg[1])
   local raw = input:read('*all')

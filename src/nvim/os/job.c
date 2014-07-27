@@ -14,17 +14,20 @@
 #include "nvim/os/event_defs.h"
 #include "nvim/os/time.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/signal.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/term.h"
 
 #define EXIT_TIMEOUT 25
 #define MAX_RUNNING_JOBS 100
-#define JOB_BUFFER_SIZE 1024
+#define JOB_BUFFER_SIZE 0xFFFF
 
 struct job {
   // Job id the index in the job table plus one.
   int id;
+  // Exit status code of the job process
+  int64_t status;
   // Number of polls after a SIGTERM that will trigger a SIGKILL
   int exit_timeout;
   // exit_cb may be called while there's still pending data from stdout/stderr.
@@ -163,6 +166,7 @@ Job *job_start(char **argv,
   // Initialize
   job->id = i + 1;
   *status = job->id;
+  job->status = -1;
   job->pending_refs = 3;
   job->pending_closes = 4;
   job->data = data;
@@ -257,6 +261,101 @@ void job_stop(Job *job)
   job->stopped = true;
 }
 
+/// job_wait - synchronously wait for a job to finish
+///
+/// @param job The job instance
+/// @param ms Number of milliseconds to wait, 0 for not waiting, -1 for
+///        waiting until the job quits.
+/// @return returns the status code of the exited job. -1 if the job is
+///         still running and the `timeout` has expired. Note that this is
+///         indistinguishable from the process returning -1 by itself. Which
+///         is possible on some OS.
+int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
+{
+  // switch to cooked so `got_int` will be set if the user interrupts
+  int old_mode = cur_tmode;
+  settmode(TMODE_COOK);
+
+  EventSource sources[] = {job_event_source(job), signal_event_source(), NULL};
+
+  // keep track of the elapsed time if ms > 0
+  uint64_t before = (ms > 0) ? os_hrtime() : 0;
+
+  while (1) {
+    // check if the job has exited (and the status is available).
+    if (job->pending_refs == 0) {
+      break;
+    }
+
+    event_poll(ms, sources);
+
+    // we'll assume that a user frantically hitting interrupt doesn't like
+    // the current job. Signal that it has to be killed.
+    if (got_int) {
+      job_stop(job);
+    }
+
+    if (ms == 0) {
+      break;
+    }
+
+    // check if the poll timed out, if not, decrease the ms to wait for the
+    // next run
+    if (ms > 0) {
+      uint64_t now = os_hrtime();
+      ms -= (int) ((now - before) / 1000000);
+      before = now;
+
+      // if the time elapsed is greater than the `ms` wait time, break
+      if (ms <= 0) {
+        break;
+      }
+    }
+  }
+
+  settmode(old_mode);
+
+  // return -1 for a timeout, the job status otherwise
+  return (job->pending_refs) ? -1 : (int) job->status;
+}
+
+/// Close the pipe used to write to the job.
+///
+/// This can be used for example to indicate to the job process that no more
+/// input is coming, and that it should shut down cleanly.
+///
+/// It has no effect when the input pipe doesn't exist or was already
+/// closed.
+///
+/// @param job The job instance
+void job_close_in(Job *job) FUNC_ATTR_NONNULL_ALL
+{
+  if (!job->in) {
+    return;
+  }
+
+  // let other functions in the job module know that the in pipe is no more
+  wstream_free(job->in);
+  job->in = NULL;
+
+  uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+}
+
+/// All writes that complete after calling this function will be reported
+/// to `cb`.
+///
+/// Use this function to be notified about the status of an in-flight write.
+///
+/// @see {wstream_set_write_cb}
+///
+/// @param job The job instance
+/// @param cb The function that will be called on write completion or
+///        failure. It will be called with the job as the `data` argument.
+void job_write_cb(Job *job, wstream_cb cb) FUNC_ATTR_NONNULL_ALL
+{
+  wstream_set_write_cb(job->in, cb, job);
+}
+
 /// Writes data to the job's stdin. This is a non-blocking operation, it
 /// returns when the write request was sent.
 ///
@@ -329,7 +428,9 @@ static bool is_alive(Job *job)
 static void free_job(Job *job)
 {
   uv_close((uv_handle_t *)&job->proc_stdout, close_cb);
-  uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+  if (job->in) {
+    uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+  }
   uv_close((uv_handle_t *)&job->proc_stderr, close_cb);
   uv_close((uv_handle_t *)&job->proc, close_cb);
 }
@@ -377,6 +478,7 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 {
   Job *job = handle_get_job((uv_handle_t *)proc);
 
+  job->status = status;
   if (--job->pending_refs == 0) {
     emit_exit_event(job);
   }
@@ -401,7 +503,9 @@ static void close_cb(uv_handle_t *handle)
     // closed by libuv
     rstream_free(job->out);
     rstream_free(job->err);
-    wstream_free(job->in);
+    if (job->in) {
+      wstream_free(job->in);
+    }
 
     // Free data memory of process and pipe handles, that was allocated
     // by handle_set_job in job_start.
