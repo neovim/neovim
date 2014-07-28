@@ -14099,16 +14099,7 @@ static void f_system(typval_T *argvars, typval_T *rettv)
 
   set_vim_var_nr(VV_SHELL_ERROR, (long) status);
 
-#if defined(USE_CR)
-  // translate <CR> into <NL>
-  if (res != NULL) {
-    for (char *s = res; *s; ++s) {
-      if (*s == CAR) {
-        *s = NL;
-      }
-    }
-  }
-#elif defined(USE_CRNL)
+#ifdef USE_CRNL
   // translate <CR><NL> into <NL>
   if (res != NULL) {
     char *d = res;
