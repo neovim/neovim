@@ -3988,9 +3988,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 	currently being edited.  Only the last part of the name is used.
 	Overridden by the 'iconstring' option.
 	Only works if the terminal supports setting window icons (currently
-	only X11 GUI and terminals with a non-empty 't_IS' option - these are
-	Unix xterm and iris-ansi by default, where 't_IS' is taken from the
-	builtin termcap).
+	only X11 GUI and terminals with a non-empty 't_IS' option - this is
+	Unix xterm by default, where 't_IS' is taken from the builtin termcap).
 	When Vim was compiled with HAVE_X11 defined, the original icon will be
 	restored if possible |X11|.  See |X11-icon| for changing the icon on
 	X11.
@@ -7359,8 +7358,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 		- VIM		the server name |v:servername| or "VIM"
 	Only works if the terminal supports setting window titles
 	(currently Amiga console, Win32 console, all GUI versions and
-	terminals with a non- empty 't_ts' option - these are Unix xterm and
-	iris-ansi by default, where 't_ts' is taken from the builtin termcap).
+	terminals with a non- empty 't_ts' option - this is Unix xterm
+	by default, where 't_ts' is taken from the builtin termcap).
 								*X11*
 	When Vim was compiled with HAVE_X11 defined, the original title will
 	be restored if possible.  The output of ":version" will include "+X11"
@@ -7492,9 +7491,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
 'ttyfast' 'tf'		boolean	(default off, on when 'term' is xterm, hpterm,
-					sun-cmd, screen, rxvt, dtterm or
-					iris-ansi; also on when running Vim in
-					a DOS console)
+					sun-cmd, screen, rxvt or dtterm; also
+					on when running Vim in a DOS console)
 			global
 			{not in Vi}
 	Indicates a fast terminal connection.  More characters will be sent to

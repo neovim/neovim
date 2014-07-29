@@ -807,115 +807,6 @@ static struct builtin_term builtin_termcaps[] =
   {TERMCAP2KEY('F', 'R'), IF_EB("\033[58;*~", ESC_STR "[58;*~")},   /* F37 */
 # endif
 
-# if defined(UNIX) || defined(ALL_BUILTIN_TCAPS)
-  /*
-   * iris-ansi for Silicon Graphics machines.
-   */
-  {(int)KS_NAME,      "iris-ansi"},
-  {(int)KS_CE,        "\033[K"},
-  {(int)KS_CD,        "\033[J"},
-  {(int)KS_AL,        "\033[L"},
-#  ifdef TERMINFO
-  {(int)KS_CAL,       "\033[%p1%dL"},
-#  else
-  {(int)KS_CAL,       "\033[%dL"},
-#  endif
-  {(int)KS_DL,        "\033[M"},
-#  ifdef TERMINFO
-  {(int)KS_CDL,       "\033[%p1%dM"},
-#  else
-  {(int)KS_CDL,       "\033[%dM"},
-#  endif
-  {(int)KS_CL,        "\033[H\033[2J"},
-  {(int)KS_VE,        "\033[9/y\033[12/y"},     /* These aren't documented */
-  {(int)KS_VS,        "\033[10/y\033[=1h\033[=2l"},   /* These aren't documented */
-  {(int)KS_TI,        "\033[=6h"},
-  {(int)KS_TE,        "\033[=6l"},
-  {(int)KS_SE,        "\033[21;27m"},
-  {(int)KS_SO,        "\033[1;7m"},
-  {(int)KS_ME,        "\033[m"},
-  {(int)KS_MR,        "\033[7m"},
-  {(int)KS_MD,        "\033[1m"},
-  {(int)KS_CCO,       "8"},                     /* allow 8 colors */
-  {(int)KS_CZH,       "\033[3m"},               /* italic mode on */
-  {(int)KS_CZR,       "\033[23m"},              /* italic mode off */
-  {(int)KS_US,        "\033[4m"},               /* underline on */
-  {(int)KS_UE,        "\033[24m"},              /* underline off */
-#  ifdef TERMINFO
-  {(int)KS_CAB,       "\033[4%p1%dm"},      /* set background color (ANSI) */
-  {(int)KS_CAF,       "\033[3%p1%dm"},      /* set foreground color (ANSI) */
-  {(int)KS_CSB,       "\033[102;%p1%dm"},   /* set screen background color */
-  {(int)KS_CSF,       "\033[101;%p1%dm"},   /* set screen foreground color */
-#  else
-  {(int)KS_CAB,       "\033[4%dm"},         /* set background color (ANSI) */
-  {(int)KS_CAF,       "\033[3%dm"},         /* set foreground color (ANSI) */
-  {(int)KS_CSB,       "\033[102;%dm"},      /* set screen background color */
-  {(int)KS_CSF,       "\033[101;%dm"},      /* set screen foreground color */
-#  endif
-  {(int)KS_MS,        "y"},             /* guessed */
-  {(int)KS_UT,        "y"},             /* guessed */
-  {(int)KS_LE,        "\b"},
-#  ifdef TERMINFO
-  {(int)KS_CM,        "\033[%i%p1%d;%p2%dH"},
-#  else
-  {(int)KS_CM,        "\033[%i%d;%dH"},
-#  endif
-  {(int)KS_SR,        "\033M"},
-#  ifdef TERMINFO
-  {(int)KS_CRI,       "\033[%p1%dC"},
-#  else
-  {(int)KS_CRI,       "\033[%dC"},
-#  endif
-  {(int)KS_CIS,       "\033P3.y"},
-  {(int)KS_CIE,       "\234"},      /* ST "String Terminator" */
-  {(int)KS_TS,        "\033P1.y"},
-  {(int)KS_FS,        "\234"},      /* ST "String Terminator" */
-#  ifdef TERMINFO
-  {(int)KS_CWS,       "\033[203;%p1%d;%p2%d/y"},
-  {(int)KS_CWP,       "\033[205;%p1%d;%p2%d/y"},
-#  else
-  {(int)KS_CWS,       "\033[203;%d;%d/y"},
-  {(int)KS_CWP,       "\033[205;%d;%d/y"},
-#  endif
-  {K_UP,              "\033[A"},
-  {K_DOWN,            "\033[B"},
-  {K_LEFT,            "\033[D"},
-  {K_RIGHT,           "\033[C"},
-  {K_S_UP,            "\033[161q"},
-  {K_S_DOWN,          "\033[164q"},
-  {K_S_LEFT,          "\033[158q"},
-  {K_S_RIGHT,         "\033[167q"},
-  {K_F1,              "\033[001q"},
-  {K_F2,              "\033[002q"},
-  {K_F3,              "\033[003q"},
-  {K_F4,              "\033[004q"},
-  {K_F5,              "\033[005q"},
-  {K_F6,              "\033[006q"},
-  {K_F7,              "\033[007q"},
-  {K_F8,              "\033[008q"},
-  {K_F9,              "\033[009q"},
-  {K_F10,             "\033[010q"},
-  {K_F11,             "\033[011q"},
-  {K_F12,             "\033[012q"},
-  {K_S_F1,            "\033[013q"},
-  {K_S_F2,            "\033[014q"},
-  {K_S_F3,            "\033[015q"},
-  {K_S_F4,            "\033[016q"},
-  {K_S_F5,            "\033[017q"},
-  {K_S_F6,            "\033[018q"},
-  {K_S_F7,            "\033[019q"},
-  {K_S_F8,            "\033[020q"},
-  {K_S_F9,            "\033[021q"},
-  {K_S_F10,           "\033[022q"},
-  {K_S_F11,           "\033[023q"},
-  {K_S_F12,           "\033[024q"},
-  {K_INS,             "\033[139q"},
-  {K_HOME,            "\033[H"},
-  {K_END,             "\033[146q"},
-  {K_PAGEUP,          "\033[150q"},
-  {K_PAGEDOWN,        "\033[154q"},
-# endif
-
 # if defined(DEBUG) || defined(ALL_BUILTIN_TCAPS)
   /*
    * for debugging
@@ -1148,9 +1039,7 @@ static struct builtin_term *find_builtin_term(char_u *term)
   while (p->bt_string != NULL) {
     if (p->bt_entry == (int)KS_NAME) {
 #ifdef UNIX
-      if (STRCMP(p->bt_string, "iris-ansi") == 0 && vim_is_iris(term))
-        return p;
-      else if (STRCMP(p->bt_string, "xterm") == 0 && vim_is_xterm(term))
+      if (STRCMP(p->bt_string, "xterm") == 0 && vim_is_xterm(term))
         return p;
       else
 #endif
@@ -1557,7 +1446,7 @@ int set_termname(char_u *term)
 
 #if defined(UNIX)
   /*
-   * 'ttyfast' is default on for xterm, iris-ansi and a few others.
+   * 'ttyfast' is default on for xterm and a few others.
    */
   if (vim_is_fastterm(term))
     p_tf = TRUE;
