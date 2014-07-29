@@ -9709,9 +9709,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "mouse",
 #if defined(UNIX)
     "mouse_dec",
-# ifdef FEAT_MOUSE_JSB
-    "mouse_jsbterm",
-# endif
     "mouse_netterm",
     "mouse_sgr",
     "mouse_urxvt",

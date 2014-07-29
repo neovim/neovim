@@ -252,9 +252,6 @@ static struct key_name_entry {
   {K_MOUSE,           (char_u *)"Mouse"},
   {K_NETTERM_MOUSE,   (char_u *)"NetMouse"},
   {K_DEC_MOUSE,       (char_u *)"DecMouse"},
-#ifdef FEAT_MOUSE_JSB
-  {K_JSBTERM_MOUSE,   (char_u *)"JsbMouse"},
-#endif
   {K_URXVT_MOUSE,     (char_u *)"UrxvtMouse"},
   {K_SGR_MOUSE,       (char_u *)"SgrMouse"},
   {K_LEFTMOUSE,       (char_u *)"LeftMouse"},
