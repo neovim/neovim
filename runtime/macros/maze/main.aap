@@ -1,4 +1,0 @@
-# Aap recipe to build the maze program
-:program maze : mazeansi.c
-
-:program mazeclean : mazeclean.c
