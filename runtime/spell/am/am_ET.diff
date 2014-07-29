@@ -1,9 +1,0 @@
-*** am_ET.orig.aff	Mon Aug 22 11:52:57 2005
---- am_ET.aff	Thu Sep 29 21:56:20 2005
-***************
-*** 24 ****
---- 24,27 ----
-  SFX c   0     ዎች        
-+ 
-+ # Aspell has sound folding for Amharic, but it doesn't look right, it uses
-+ # different characters than the dictionary.  Therefore it was not included.
