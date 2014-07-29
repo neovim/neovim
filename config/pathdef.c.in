@@ -1,5 +1,5 @@
 #include "${PROJECT_SOURCE_DIR}/src/nvim/vim.h"
-char_u *default_vim_dir = (char_u *)"${CMAKE_INSTALL_PREFIX}/share/vim";
+char_u *default_vim_dir = (char_u *)"${CMAKE_INSTALL_PREFIX}/share/nvim";
 char_u *default_vimruntime_dir = (char_u *)"";
 char_u *all_cflags = (char_u *)"${COMPILER_FLAGS}";
 char_u *all_lflags = (char_u *)"${LINKER_FLAGS}";
