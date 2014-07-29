@@ -96,7 +96,6 @@ uint64_t channel_from_job(char **argv)
                                 job_out,
                                 job_err,
                                 NULL,
-                                true,
                                 0,
                                 &status);
 

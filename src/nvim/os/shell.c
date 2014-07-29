@@ -280,7 +280,6 @@ int os_system(const char *cmd,
                        system_data_cb,
                        system_data_cb,
                        NULL,
-                       false,
                        0,
                        &i);
 
