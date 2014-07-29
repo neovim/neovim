@@ -307,14 +307,6 @@ int use_xterm_mouse(void)
   return 0;
 }
 
-int vim_is_iris(char_u *name)
-{
-  if (name == NULL)
-    return FALSE;
-  return STRNICMP(name, "iris-ansi", 9) == 0
-         || STRCMP(name, "builtin_iris-ansi") == 0;
-}
-
 int vim_is_vt300(char_u *name)
 {
   if (name == NULL)
@@ -333,7 +325,7 @@ int vim_is_fastterm(char_u *name)
 {
   if (name == NULL)
     return FALSE;
-  if (vim_is_xterm(name) || vim_is_vt300(name) || vim_is_iris(name))
+  if (vim_is_xterm(name) || vim_is_vt300(name))
     return TRUE;
   return STRNICMP(name, "hpterm", 6) == 0
          || STRNICMP(name, "sun-cmd", 7) == 0

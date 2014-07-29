@@ -453,8 +453,7 @@ allows title setting via sending strings.  They are sent before and after the
 title string, respectively.  Similar 't_IS' and 't_IE'  are used to set the
 icon text.  These are Vim-internal extensions of the Unix termcap, so they
 cannot be obtained from an external termcap.  However, the builtin termcap
-contains suitable entries for xterm and iris-ansi, so you don't need to set
-them here.
+contains suitable entries for xterm, so you don't need to set them here.
 							*hpterm*
 If inversion or other highlighting does not work correctly, try setting the
 't_xs' option to a non-empty string.  This makes the 't_ce' code be used to

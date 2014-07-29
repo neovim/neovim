@@ -437,7 +437,6 @@ Terminal entry not found in termcap
     builtin_pcansi
     builtin_win32
     builtin_xterm
-    builtin_iris-ansi
     builtin_debug
     builtin_dumb
 defaulting to 'vt320'
