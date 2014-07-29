@@ -1636,10 +1636,9 @@ int set_termname(char_u *term)
 #  define HMT_NORMAL    1
 #  define HMT_NETTERM   2
 #  define HMT_DEC       4
-#  define HMT_JSBTERM   8
-#  define HMT_PTERM     16
-#  define HMT_URXVT     32
-#  define HMT_SGR       64
+#  define HMT_PTERM     8
+#  define HMT_URXVT     16
+#  define HMT_SGR       32
 static int has_mouse_termcode = 0;
 
 void 
@@ -1653,11 +1652,6 @@ set_mouse_termcode (
   name[0] = n;
   name[1] = KE_FILLER;
   add_termcode(name, s, FALSE);
-#   ifdef FEAT_MOUSE_JSB
-  if (n == KS_JSBTERM_MOUSE)
-    has_mouse_termcode |= HMT_JSBTERM;
-  else
-#   endif
   if (n == KS_NETTERM_MOUSE)
     has_mouse_termcode |= HMT_NETTERM;
   else if (n == KS_DEC_MOUSE)
@@ -1681,11 +1675,6 @@ del_mouse_termcode (
   name[0] = n;
   name[1] = KE_FILLER;
   del_termcode(name);
-#   ifdef FEAT_MOUSE_JSB
-  if (n == KS_JSBTERM_MOUSE)
-    has_mouse_termcode &= ~HMT_JSBTERM;
-  else
-#   endif
   if (n == KS_NETTERM_MOUSE)
     has_mouse_termcode &= ~HMT_NETTERM;
   else if (n == KS_DEC_MOUSE)
@@ -3498,9 +3487,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
      * If it is a mouse click, get the coordinates.
      */
     if (key_name[0] == KS_MOUSE
-# ifdef FEAT_MOUSE_JSB
-        || key_name[0] == KS_JSBTERM_MOUSE
-# endif
         || key_name[0] == KS_NETTERM_MOUSE
         || key_name[0] == KS_DEC_MOUSE
         || key_name[0] == KS_URXVT_MOUSE
@@ -3682,122 +3668,6 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
         mouse_code = MOUSE_LEFT;
         slen += (int)(p - (tp + slen));
       }
-# ifdef FEAT_MOUSE_JSB
-      if (key_name[0] == (int)KS_JSBTERM_MOUSE) {
-        int mult, val, iter, button, status;
-
-        /* JSBTERM Input Model
-         * \033[0~zw uniq escape sequence
-         * (L-x)  Left button pressed - not pressed x not reporting
-         * (M-x)  Middle button pressed - not pressed x not reporting
-         * (R-x)  Right button pressed - not pressed x not reporting
-         * (SDmdu)  Single , Double click, m mouse move d button down
-         *						   u button up
-         *  ###   X cursor position padded to 3 digits
-         *  ###   Y cursor position padded to 3 digits
-         * (s-x)  SHIFT key pressed - not pressed x not reporting
-         * (c-x)  CTRL key pressed - not pressed x not reporting
-         * \033\\ terminating sequence
-         */
-
-        p = tp + slen;
-        button = mouse_code = 0;
-        switch (*p++) {
-        case 'L': button = 1; break;
-        case '-': break;
-        case 'x': break;             /* ignore sequence */
-        default:  return -1;             /* Unknown Result */
-        }
-        switch (*p++) {
-        case 'M': button |= 2; break;
-        case '-': break;
-        case 'x': break;             /* ignore sequence */
-        default:  return -1;             /* Unknown Result */
-        }
-        switch (*p++) {
-        case 'R': button |= 4; break;
-        case '-': break;
-        case 'x': break;             /* ignore sequence */
-        default:  return -1;             /* Unknown Result */
-        }
-        status = *p++;
-        for (val = 0, mult = 100, iter = 0; iter < 3; iter++,
-             mult /= 10, p++)
-          if (*p >= '0' && *p <= '9')
-            val += (*p - '0') * mult;
-          else
-            return -1;
-        mouse_col = val;
-        for (val = 0, mult = 100, iter = 0; iter < 3; iter++,
-             mult /= 10, p++)
-          if (*p >= '0' && *p <= '9')
-            val += (*p - '0') * mult;
-          else
-            return -1;
-        mouse_row = val;
-        switch (*p++) {
-        case 's': button |= 8; break;              /* SHIFT key Pressed */
-        case '-': break;              /* Not Pressed */
-        case 'x': break;              /* Not Reporting */
-        default:  return -1;             /* Unknown Result */
-        }
-        switch (*p++) {
-        case 'c': button |= 16; break;              /* CTRL key Pressed */
-        case '-': break;              /* Not Pressed */
-        case 'x': break;              /* Not Reporting */
-        default:  return -1;             /* Unknown Result */
-        }
-        if (*p++ != '\033')
-          return -1;
-        if (*p++ != '\\')
-          return -1;
-        switch (status) {
-        case 'D':             /* Double Click */
-        case 'S':             /* Single Click */
-          if (button & 1) mouse_code |= MOUSE_LEFT;
-          if (button & 2) mouse_code |= MOUSE_MIDDLE;
-          if (button & 4) mouse_code |= MOUSE_RIGHT;
-          if (button & 8) mouse_code |= MOUSE_SHIFT;
-          if (button & 16) mouse_code |= MOUSE_CTRL;
-          break;
-        case 'm':             /* Mouse move */
-          if (button & 1) mouse_code |= MOUSE_LEFT;
-          if (button & 2) mouse_code |= MOUSE_MIDDLE;
-          if (button & 4) mouse_code |= MOUSE_RIGHT;
-          if (button & 8) mouse_code |= MOUSE_SHIFT;
-          if (button & 16) mouse_code |= MOUSE_CTRL;
-          if ((button & 7) != 0) {
-            held_button = mouse_code;
-            mouse_code |= MOUSE_DRAG;
-          }
-          is_drag = TRUE;
-          showmode();
-          break;
-        case 'd':             /* Button Down */
-          if (button & 1) mouse_code |= MOUSE_LEFT;
-          if (button & 2) mouse_code |= MOUSE_MIDDLE;
-          if (button & 4) mouse_code |= MOUSE_RIGHT;
-          if (button & 8) mouse_code |= MOUSE_SHIFT;
-          if (button & 16) mouse_code |= MOUSE_CTRL;
-          break;
-        case 'u':             /* Button Up */
-          if (button & 1)
-            mouse_code |= MOUSE_LEFT | MOUSE_RELEASE;
-          if (button & 2)
-            mouse_code |= MOUSE_MIDDLE | MOUSE_RELEASE;
-          if (button & 4)
-            mouse_code |= MOUSE_RIGHT | MOUSE_RELEASE;
-          if (button & 8)
-            mouse_code |= MOUSE_SHIFT;
-          if (button & 16)
-            mouse_code |= MOUSE_CTRL;
-          break;
-        default: return -1;             /* Unknown Result */
-        }
-
-        slen += (p - (tp + slen));
-      }
-# endif /* FEAT_MOUSE_JSB */
       if (key_name[0] == (int)KS_DEC_MOUSE) {
         /* The DEC Locator Input Model
          * Netterm delivers the code sequence:

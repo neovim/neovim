@@ -7564,8 +7564,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 			rather complex sequence, starting with "<Esc>[".
 			This is also available for an Xterm, if it was
 			configured with "--enable-dec-locator".
-							*jsbterm-mouse*
-	   jsbterm	JSB term mouse handling.
 							*pterm-mouse*
 	   pterm	QNX pterm mouse handling.
 							*urxvt-mouse*
@@ -7581,8 +7579,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 			mouse codes.
 
 	The mouse handling must be enabled at compile time |+mouse_xterm|
-	|+mouse_dec| |+mouse_netterm| |+mouse_jsbterm| |+mouse_urxvt|
-	|+mouse_sgr|.
+	|+mouse_dec| |+mouse_netterm| |+mouse_urxvt| |+mouse_sgr|.
 	Only "xterm"(2) is really recognized.  NetTerm mouse codes are always
 	recognized, if enabled at compile time.  DEC terminal mouse codes
 	are recognized if enabled at compile time, and 'ttymouse' is not

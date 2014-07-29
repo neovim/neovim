@@ -116,11 +116,6 @@ static char *(features[]) = {
 #if defined(UNIX)
   "+mouse_dec",
   "-mouse_gpm",
-# ifdef FEAT_MOUSE_JSB
-  "+mouse_jsbterm",
-# else  // ifdef FEAT_MOUSE_JSB
-  "-mouse_jsbterm",
-# endif  // ifdef FEAT_MOUSE_JSB
   "+mouse_netterm",
 #endif  // if defined(UNIX)
 

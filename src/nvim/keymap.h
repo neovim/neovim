@@ -94,9 +94,6 @@
  */
 #define KS_TEAROFF              244
 
-/* Used for JSB term mouse. */
-#define KS_JSBTERM_MOUSE        243
-
 /* Used a termcap entry that produces a normal character. */
 #define KS_KEY                  242
 
@@ -415,7 +412,6 @@ enum key_extra {
 
 #define K_NETTERM_MOUSE TERMCAP2KEY(KS_NETTERM_MOUSE, KE_FILLER)
 #define K_DEC_MOUSE     TERMCAP2KEY(KS_DEC_MOUSE, KE_FILLER)
-#define K_JSBTERM_MOUSE TERMCAP2KEY(KS_JSBTERM_MOUSE, KE_FILLER)
 #define K_PTERM_MOUSE   TERMCAP2KEY(KS_PTERM_MOUSE, KE_FILLER)
 #define K_URXVT_MOUSE   TERMCAP2KEY(KS_URXVT_MOUSE, KE_FILLER)
 #define K_SGR_MOUSE     TERMCAP2KEY(KS_SGR_MOUSE, KE_FILLER)
