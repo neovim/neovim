@@ -39,7 +39,6 @@ struct job {
   int pending_closes;
   // If the job was already stopped
   bool stopped;
-  bool defer;
   // Data associated with the job
   void *data;
   // Callbacks
@@ -130,19 +129,16 @@ void job_teardown(void)
 ///        on stdout
 /// @param stderr_cb Callback that will be invoked when data is available
 ///        on stderr
-/// @param exit_cb Callback that will be invoked when the job exits
-/// @param defer If the job callbacks invocation should be deferred to vim
-///         main loop
+/// @param job_exit_cb Callback that will be invoked when the job exits
 /// @param maxmem Maximum amount of memory used by the job WStream
-/// @param[out] The job id if the job started successfully, 0 if the job table
-///             is full, -1 if the program could not be executed.
+/// @param[out] status The job id if the job started successfully, 0 if the job
+///             table is full, -1 if the program could not be executed.
 /// @return The job pointer if the job started successfully, NULL otherwise
 Job *job_start(char **argv,
                void *data,
                rstream_cb stdout_cb,
                rstream_cb stderr_cb,
                job_exit_cb job_exit_cb,
-               bool defer,
                size_t maxmem,
                int *status)
 {
@@ -187,7 +183,6 @@ Job *job_start(char **argv,
   job->proc_stdin.data = NULL;
   job->proc_stdout.data = NULL;
   job->proc_stderr.data = NULL;
-  job->defer = defer;
 
   // Initialize the job std{in,out,err}
   uv_pipe_init(uv_default_loop(), &job->proc_stdin, 0);

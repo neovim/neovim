@@ -10498,7 +10498,6 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
             on_job_stdout,
             on_job_stderr,
             on_job_exit,
-            true,
             0,
             &rettv->vval.v_number);
 
