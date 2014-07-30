@@ -9,10 +9,6 @@ AWK = awk
 # Set to $(VIMTARGET) when executed from src/Makefile.
 VIMEXE = vim
 
-# include the config.mk from the source directory.  It's only needed to set
-# AWK, used for "make html".  Comment this out if the include gives problems.
-include ../../src/auto/config.mk
-
 DOCS = \
 	arabic.txt \
 	autocmd.txt \
@@ -34,7 +30,6 @@ DOCS = \
 	gui_w16.txt \
 	gui_w32.txt \
 	gui_x11.txt \
-	hangulin.txt \
 	hebrew.txt \
 	help.txt \
 	helphelp.txt \
@@ -162,7 +157,6 @@ HTMLS = \
 	gui_w16.html \
 	gui_w32.html \
 	gui_x11.html \
-	hangulin.html \
 	hebrew.html \
 	helphelp.html \
 	howto.html \
