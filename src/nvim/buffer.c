@@ -293,11 +293,9 @@ close_buffer (
     int abort_if_last
 )
 {
-  int is_curbuf;
-  int nwindows;
-  int unload_buf = (action != 0);
-  int del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
-  int wipe_buf = (action == DOBUF_WIPE);
+  bool unload_buf = (action != 0);
+  bool del_buf = (action == DOBUF_DEL || action == DOBUF_WIPE);
+  bool wipe_buf = (action == DOBUF_WIPE);
 
   /*
    * Force unloading or deleting when 'bufhidden' says so.
@@ -305,14 +303,14 @@ close_buffer (
    * "hide" (otherwise we could never free or delete a buffer).
    */
   if (buf->b_p_bh[0] == 'd') {          /* 'bufhidden' == "delete" */
-    del_buf = TRUE;
-    unload_buf = TRUE;
+    del_buf = true;
+    unload_buf = true;
   } else if (buf->b_p_bh[0] == 'w') { /* 'bufhidden' == "wipe" */
-    del_buf = TRUE;
-    unload_buf = TRUE;
-    wipe_buf = TRUE;
+    del_buf = true;
+    unload_buf = true;
+    wipe_buf = true;
   } else if (buf->b_p_bh[0] == 'u')     /* 'bufhidden' == "unload" */
-    unload_buf = TRUE;
+    unload_buf = true;
 
   if (win != NULL) {
     /* Set b_last_cursor when closing the last window for the buffer.
@@ -333,14 +331,15 @@ close_buffer (
         FALSE, buf);
     if (!buf_valid(buf)) {
       /* Autocommands deleted the buffer. */
-aucmd_abort:
       EMSG(_(e_auabort));
       return;
     }
     buf->b_closing = FALSE;
-    if (abort_if_last && one_window())
+    if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
-      goto aucmd_abort;
+      EMSG(_(e_auabort));
+      return;
+    }
 
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
@@ -348,18 +347,22 @@ aucmd_abort:
       buf->b_closing = TRUE;
       apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
           FALSE, buf);
-      if (!buf_valid(buf))
+      if (!buf_valid(buf)) {
         /* Autocommands deleted the buffer. */
-        goto aucmd_abort;
+        EMSG(_(e_auabort));
+        return;
+      }
       buf->b_closing = FALSE;
-      if (abort_if_last && one_window())
+      if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
-        goto aucmd_abort;
+        EMSG(_(e_auabort));
+        return;
+      }
     }
     if (aborting())         /* autocmds may abort script processing */
       return;
   }
-  nwindows = buf->b_nwindows;
+  int nwindows = buf->b_nwindows;
 
   /* decrease the link count from windows (unless not in any window) */
   if (buf->b_nwindows > 0)
@@ -380,7 +383,7 @@ aucmd_abort:
    */
   /* Remember if we are closing the current buffer.  Restore the number of
    * windows, so that autocommands in buf_freeall() don't get confused. */
-  is_curbuf = (buf == curbuf);
+  bool is_curbuf = (buf == curbuf);
   buf->b_nwindows = nwindows;
 
   buf_freeall(buf, (del_buf ? BFA_DEL : 0) + (wipe_buf ? BFA_WIPE : 0));
@@ -470,7 +473,7 @@ void buf_clear_file(buf_T *buf)
  */
 void buf_freeall(buf_T *buf, int flags)
 {
-  int is_curbuf = (buf == curbuf);
+  bool is_curbuf = (buf == curbuf);
 
   buf->b_closing = TRUE;
   apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, FALSE, buf);
@@ -509,9 +512,10 @@ void buf_freeall(buf_T *buf, int flags)
     win_T           *win;
     tabpage_T       *tp;
 
-    FOR_ALL_TAB_WINDOWS(tp, win)
-    if (win->w_buffer == buf)
-      clearFolding(win);
+    FOR_ALL_TAB_WINDOWS(tp, win) {
+      if (win->w_buffer == buf)
+        clearFolding(win);
+    }
   }
 
   ml_close(buf, TRUE);              /* close and delete the memline/memfile */
@@ -4203,8 +4207,9 @@ void write_viminfo_bufferlist(FILE *fp)
 #define LINE_BUF_LEN (MAXPATHL + 40)
   line = xmalloc(LINE_BUF_LEN);
 
-  FOR_ALL_TAB_WINDOWS(tp, win)
-  set_last_cursor(win);
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    set_last_cursor(win);
+  }
 
   fputs(_("\n# Buffer list:\n"), fp);
   for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
@@ -4265,12 +4270,12 @@ char_u *buf_spname(buf_T *buf)
  */
 int find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 {
-  FOR_ALL_TAB_WINDOWS(*tp, *wp)
-  if ((*wp)->w_buffer == buf)
-    goto win_found;
+  FOR_ALL_TAB_WINDOWS(*tp, *wp) {
+    if ((*wp)->w_buffer == buf) {
+      return OK;
+    }
+  }
   return FAIL;
-win_found:
-  return OK;
 }
 
 /*
