@@ -532,18 +532,9 @@ correct values.
 One command can be used to set the screen size:
 
 						*:mod* *:mode* *E359* *E362*
-:mod[e] [mode]
+:mod[e]
 
-Without argument this only detects the screen size and redraws the screen.
-With MS-DOS it is possible to switch screen mode.  [mode] can be one of these
-values:
-	"bw40"		40 columns black&white
-	"c40"		40 columns color
-	"bw80"		80 columns black&white
-	"c80"		80 columns color (most people use this)
-	"mono"		80 columns monochrome
-	"c4350"		43 or 50 lines EGA/VGA mode
-	number		mode number to use, depends on your video card
+Detects the screen size and redraws the screen.
 
 ==============================================================================
 4. Slow and fast terminals			*slow-fast-terminal*
