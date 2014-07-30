@@ -500,7 +500,6 @@ The 'fileformat' option sets the <EOL> style for a file:
   "dos"		<CR><NL> or <NL>   DOS format		*DOS-format*
   "unix"	<NL>		   Unix format		*Unix-format*
   "mac"		<CR>		   Mac format		*Mac-format*
-Previously 'textmode' was used.  It is obsolete now.
 
 When reading a file, the mentioned characters are interpreted as the <EOL>.
 In DOS format (default for MS-DOS, OS/2 and Win32), <CR><NL> and <NL> are both

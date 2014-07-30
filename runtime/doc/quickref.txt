@@ -904,7 +904,6 @@ Short explanation of each option:		*option-list*
 'termencoding'	  'tenc'    character encoding used by the terminal
 'terse'			    shorten some messages
 'textauto'	  'ta'	    obsolete, use 'fileformats'
-'textmode'	  'tx'	    obsolete, use 'fileformat'
 'textwidth'	  'tw'	    maximum width of text that is being inserted
 'thesaurus'	  'tsr'     list of thesaurus files for keyword completion
 'tildeop'	  'top'     tilde command "~" behaves like an operator

@@ -1727,7 +1727,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'softtabstop'	  0		tabs are always 'tabstop' positions
 	'startofline'	  on		goto startofline with some commands
 	'tagrelative'	+ off		tag file names are not relative
-	'textauto'	+ off		no automatic textmode detection
+	'textauto'	+ off		no automatic fileformats detection
 	'textwidth'	  0		no automatic line wrap
 	'tildeop'	  off		tilde is not an operator
 	'ttimeout'	  off		no terminal timeout
@@ -2915,8 +2915,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	When this option is set, after starting to edit a file, the 'modified'
 	option is set, because the file would be different when written.
 	This option can not be changed when 'modifiable' is off.
-	For backwards compatibility: When this option is set to "dos",
-	'textmode' is set, otherwise 'textmode' is reset.
 
 					*'fileformats'* *'ffs'*
 'fileformats' 'ffs'	string (default:
@@ -7260,16 +7258,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	reset, 'fileformats' is made empty.
 	NOTE: This option is set to the Vi default value when 'compatible' is
 	set and to the Vim default value when 'compatible' is reset.
-
-				   *'textmode'* *'tx'* *'notextmode'* *'notx'*
-'textmode' 'tx'		boolean	(MS-DOS, Win32 and OS/2: default on,
-				 others: default off)
-			local to buffer
-			{not in Vi}
-	This option is obsolete.  Use 'fileformat'.
-	For backwards compatibility, when 'textmode' is set, 'fileformat' is
-	set to "dos".  When 'textmode' is reset, 'fileformat' is set to
-	"unix".
 
 						*'textwidth'* *'tw'*
 'textwidth' 'tw'	number	(default 0)

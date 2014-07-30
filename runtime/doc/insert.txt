@@ -1925,7 +1925,6 @@ The 'fileformat' option sets the <EOL> style for a file:
   "dos"		<CR><NL> or <NL>   DOS format
   "unix"	<NL>		   Unix format
   "mac"		<CR>		   Mac format
-Previously 'textmode' was used.  It is obsolete now.
 
 If 'fileformat' is "dos", a <CR> in front of an <NL> is ignored and a CTRL-Z
 at the end of the file is ignored.
