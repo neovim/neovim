@@ -355,59 +355,6 @@ perlhtml: tags $(DOCS)
 clean:
 	-rm doctags *.html tags.ref
 
-# These files are in the extra archive, skip if not present
-
-arabic.txt:
-	touch arabic.txt
-
-farsi.txt:
-	touch farsi.txt
-
-hebrew.txt:
-	touch hebrew.txt
-
-russian.txt:
-	touch russian.txt
-
-gui_w16.txt:
-	touch gui_w16.txt
-
-gui_w32.txt:
-	touch gui_w32.txt
-
-if_ole.txt:
-	touch if_ole.txt
-
-os_390.txt:
-	touch os_390.txt
-
-os_amiga.txt:
-	touch os_amiga.txt
-
-os_beos.txt:
-	touch os_beos.txt
-
-os_dos.txt:
-	touch os_dos.txt
-
-os_mac.txt:
-	touch os_mac.txt
-
-os_mint.txt:
-	touch os_mint.txt
-
-os_os2.txt:
-	touch os_os2.txt
-
-os_qnx.txt:
-	touch os_qnx.txt
-
-os_risc.txt:
-	touch os_risc.txt
-
-os_win32.txt:
-	touch os_win32.txt
-
 # Note that $< works with GNU make while $> works for BSD make.
 # Is there a solution that works for both??
 vim-fr.UTF-8.1: vim-fr.1
