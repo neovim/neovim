@@ -193,6 +193,9 @@ static int current_copyID = 0;
 #define COPYID_INC 2
 #define COPYID_MASK (~0x1)
 
+/// Abort conversion to string after a recursion error.
+static bool did_echo_string_emsg = false;
+
 /*
  * Array to hold the hashtab with variables local to each sourced script.
  * Each item holds a variable (nameless) that points to the dict_T.
@@ -5322,6 +5325,9 @@ list_join_inner (
     }
 
     line_breakcheck();
+    if (did_echo_string_emsg) {  // recursion error, bail out
+      break;
+    }
   }
 
   /* Allocate result buffer with its total size, avoid re-allocation and
@@ -5945,8 +5951,10 @@ static char_u *dict2string(typval_T *tv, int copyID)
       if (s != NULL)
         ga_concat(&ga, s);
       free(tofree);
-      if (s == NULL)
+      if (s == NULL || did_echo_string_emsg) {
         break;
+      }
+      line_breakcheck();
     }
   }
   if (todo > 0) {
@@ -6077,9 +6085,15 @@ static char_u *echo_string(typval_T *tv, char_u **tofree, char_u *numbuf, int co
   char_u      *r = NULL;
 
   if (recurse >= DICT_MAXNEST) {
-    EMSG(_("E724: variable nested too deep for displaying"));
+    if (!did_echo_string_emsg) {
+      // Only give this message once for a recursive call to avoid
+      // flooding the user with errors. And stop iterating over lists
+      // and dicts.
+      did_echo_string_emsg = true;
+      EMSG(_("E724: variable nested too deep for displaying"));
+    }
     *tofree = NULL;
-    return NULL;
+    return (char_u *)"{E724}";
   }
   ++recurse;
 
@@ -6134,7 +6148,9 @@ static char_u *echo_string(typval_T *tv, char_u **tofree, char_u *numbuf, int co
     *tofree = NULL;
   }
 
-  --recurse;
+  if (--recurse == 0) {
+    did_echo_string_emsg = false;
+  }
   return r;
 }
 
@@ -18009,7 +18025,10 @@ call_user_func (
           if (argvars[i].v_type == VAR_NUMBER)
             msg_outnum((long)argvars[i].vval.v_number);
           else {
+            // Do not want errors such as E724 here.
+            ++emsg_off;
             s = tv2string(&argvars[i], &tofree, numbuf2, 0);
+            --emsg_off;
             if (s != NULL) {
               if (vim_strsize(s) > MSG_BUF_CLEN) {
                 trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
@@ -18091,10 +18110,12 @@ call_user_func (
       char_u      *tofree;
       char_u      *s;
 
-      /* The value may be very long.  Skip the middle part, so that we
-       * have some idea how it starts and ends. smsg() would always
-       * truncate it at the end. */
+      // The value may be very long.  Skip the middle part, so that we
+      // have some idea how it starts and ends. smsg() would always
+      // truncate it at the end. Don't want errors such as E724 here.
+      ++emsg_off;
       s = tv2string(fc->rettv, &tofree, numbuf2, 0);
+      --emsg_off;
       if (s != NULL) {
         if (vim_strsize(s) > MSG_BUF_CLEN) {
           trunc_string(s, buf, MSG_BUF_CLEN, MSG_BUF_LEN);
