@@ -1727,7 +1727,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	'softtabstop'	  0		tabs are always 'tabstop' positions
 	'startofline'	  on		goto startofline with some commands
 	'tagrelative'	+ off		tag file names are not relative
-	'textauto'	+ off		no automatic fileformats detection
 	'textwidth'	  0		no automatic line wrap
 	'tildeop'	  off		tilde is not an operator
 	'ttimeout'	  off		no terminal timeout
@@ -2970,9 +2969,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	  <CR> in front of it, Dos format is used, otherwise Unix format is
 	  used.
 	Also see |file-formats|.
-	For backwards compatibility: When this option is set to an empty
-	string or one format (no comma is included), 'textauto' is reset,
-	otherwise 'textauto' is set.
 	NOTE: This option is set to the Vi default value when 'compatible' is
 	set and to the Vim default value when 'compatible' is reset.
 
@@ -7247,17 +7243,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	for a search that hits the start or end of the file not being
 	displayed).  When reset: Remove 's' flag from 'shortmess' option.  {Vi
 	shortens a lot of messages}
-
-				   *'textauto'* *'ta'* *'notextauto'* *'nota'*
-'textauto' 'ta'		boolean	(Vim default: on, Vi default: off)
-			global
-			{not in Vi}
-	This option is obsolete.  Use 'fileformats'.
-	For backwards compatibility, when 'textauto' is set, 'fileformats' is
-	set to the default value for the current system.  When 'textauto' is
-	reset, 'fileformats' is made empty.
-	NOTE: This option is set to the Vi default value when 'compatible' is
-	set and to the Vim default value when 'compatible' is reset.
 
 						*'textwidth'* *'tw'*
 'textwidth' 'tw'	number	(default 0)
