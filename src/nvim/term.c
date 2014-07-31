@@ -1435,27 +1435,11 @@ int set_termname(char_u *term)
 # endif
 
 
-#ifdef USE_TERM_CONSOLE
-  /* DEFAULT_TERM indicates that it is the machine console. */
-  if (STRCMP(term, DEFAULT_TERM) != 0)
-    term_console = FALSE;
-  else {
-    term_console = TRUE;
-  }
-#endif
-
 #if defined(UNIX)
   /*
    * 'ttyfast' is default on for xterm and a few others.
    */
   if (vim_is_fastterm(term))
-    p_tf = TRUE;
-#endif
-#ifdef USE_TERM_CONSOLE
-  /*
-   * 'ttyfast' is default on consoles
-   */
-  if (term_console)
     p_tf = TRUE;
 #endif
 
