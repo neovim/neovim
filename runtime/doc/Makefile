@@ -264,10 +264,43 @@ HTMLS = \
 	windows.html \
 	workshop.html
 
-.SUFFIXES:
-.SUFFIXES: .c .o .txt .html
+MANPAGES = \
+	manpages/vim.man \
+	manpages/evim.man \
+	manpages/vimdiff.man \
+	manpages/vimtutor.man \
+	manpages/xxd.man \
+	manpages/de/vim-de.man \
+	manpages/fr/vim-fr.man \
+	manpages/fr/evim-fr.man \
+	manpages/fr/vimdiff-fr.man \
+	manpages/fr/vimtutor-fr.man \
+	manpages/fr/xxd-fr.man \
+	manpages/pl/vim-pl.man \
+	manpages/pl/evim-pl.man \
+	manpages/pl/vimdiff-pl.man \
+	manpages/pl/vimtutor-pl.man \
+	manpages/pl/xxd-pl.man \
+	manpages/it/vim-it.man \
+	manpages/it/evim-it.man \
+	manpages/it/vimdiff-it.man \
+	manpages/it/vimtutor-it.man \
+	manpages/it/xxd-it.man \
+	manpages/ru/vim-ru.man \
+	manpages/ru/evim-ru.man \
+	manpages/ru/vimdiff-ru.man \
+	manpages/ru/vimtutor-ru.man \
+	manpages/ru/xxd-ru.man \
+	manpages/ja/vim-ja.man \
+	manpages/ja/evim-ja.man \
+	manpages/ja/vimdiff-ja.man \
+	manpages/ja/vimtutor-ja.man \
+	manpages/ja/xxd-ja.man
 
-all: tags vim.man evim.man vimdiff.man vimtutor.man xxd.man
+.SUFFIXES:
+.SUFFIXES: .c .o .txt .html .1 .man
+
+all: tags manpages
 
 # Use Vim to generate the tags file.  Can only be used when Vim has been
 # compiled and installed.  Supports multiple languages.
@@ -282,22 +315,11 @@ tags: doctags $(DOCS)
 doctags: doctags.c
 	$(CC) doctags.c -o doctags
 
-vim.man: vim.1
-	nroff -man vim.1 | sed -e s/.//g > vim.man
+manpages: $(MANPAGES)
 
-evim.man: evim.1
-	nroff -man evim.1 | sed -e s/.//g > evim.man
-
-vimdiff.man: vimdiff.1
-	nroff -man vimdiff.1 | sed -e s/.//g > vimdiff.man
-
-vimtutor.man: vimtutor.1
-	nroff -man vimtutor.1 | sed -e s/.//g > vimtutor.man
-
-xxd.man: xxd.1
-	nroff -man xxd.1 | sed -e s/.//g > xxd.man
-
-# TODO(stefan991): add targets for translated manpages
+# OSX groff dosn't support utf-8 as input encoding, so this won't work there.
+.1.man:
+	groff -k -mandoc -Tutf8 $< | sed -e s/.^H//g > $@
 
 # Awk version of .txt to .html conversion.
 html: noerrors tags $(HTMLS)
@@ -329,5 +351,5 @@ perlhtml: tags $(DOCS)
 	./vim2html.pl tags $(DOCS)
 
 clean:
-	-rm doctags *.html tags.ref
+	-rm -f doctags *.html tags.ref $(MANPAGES)
 
