@@ -476,8 +476,6 @@ in memory, you can reduce that with these options:
   helps for a change that affects all lines.
 - 'undoreload' Set to zero to disable.
 
-Also see |msdos-limitations|.
-
 							*E339*  >
   Pattern too long
 

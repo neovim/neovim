@@ -300,7 +300,7 @@ MANPAGES = \
 .SUFFIXES:
 .SUFFIXES: .c .o .txt .html .1 .man
 
-all: tags manpages
+all: tags manpages html
 
 # Use Vim to generate the tags file.  Can only be used when Vim has been
 # compiled and installed.  Supports multiple languages.
@@ -351,5 +351,5 @@ perlhtml: tags $(DOCS)
 	./vim2html.pl tags $(DOCS)
 
 clean:
-	-rm -f doctags *.html tags.ref $(MANPAGES)
+	-rm -f doctags *.html tags.ref $(MANPAGES) $(HTMLS) errors.log
 

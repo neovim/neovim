@@ -357,7 +357,7 @@ N  *+gettext*		message translations |multi-lang|
    *+GUI_GTK*		Unix only: GTK+ |GUI|
    *+GUI_Motif*		Unix only: Motif |GUI|
    *+GUI_Photon*	QNX only:  Photon |GUI|
-m  *+hangul_input*	Hangul input support |hangul|
+m  *+hangul_input*	Hangul input support hangul
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| Insert mode completion
