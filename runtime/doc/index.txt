@@ -34,7 +34,6 @@ tag		char		action in Insert mode	~
 |i_CTRL-@|	CTRL-@		insert previously inserted text and stop
 				insert
 |i_CTRL-A|	CTRL-A		insert previously inserted text
-		CTRL-B		not used |i_CTRL-B-gone|
 |i_CTRL-C|	CTRL-C		quit insert mode, without checking for
 				abbreviation, unless 'insertmode' set.
 |i_CTRL-D|	CTRL-D		delete one shiftwidth of indent in the current
