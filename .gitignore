@@ -54,3 +54,11 @@
 # local make targets
 local.mk
 
+# runtime/doc
+/runtime/doc/*.html
+/runtime/doc/**/*.man
+/runtime/doc/tags
+/runtime/doc/tags.ref
+/runtime/doc/doctags
+/runtime/doc/errors.log
+
