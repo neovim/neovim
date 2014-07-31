@@ -902,9 +902,6 @@ EXTERN int read_cmd_fd INIT(= 0);           /* fd to read commands from */
 /* volatile because it is used in signal handler catch_sigint(). */
 EXTERN volatile int got_int INIT(= FALSE);    /* set to TRUE when interrupt
                                                  signal occurred */
-#ifdef USE_TERM_CONSOLE
-EXTERN int term_console INIT(= FALSE);      /* set to TRUE when console used */
-#endif
 EXTERN int termcap_active INIT(= FALSE);        /* set by starttermcap() */
 EXTERN int cur_tmode INIT(= TMODE_COOK);        /* input terminal mode */
 EXTERN int bangredo INIT(= FALSE);          /* set to TRUE with ! command */

@@ -2593,7 +2593,6 @@ Macintosh:
     ":noremap".  Add "mapcmd({string}, {mode})?  Use code from ":mkexrc".
 9   incsearch is incorrect for "/that/<Return>/this/;//" (last search pattern
     isn't updated).
-9   term_console is used before it is set (msdos, Amiga).
 9   Get out-of-memory for ":g/^/,$s//@/" on 1000 lines, this is not handled
     correctly.  Get many error messages while redrawing the screen, which
     cause another redraw, etc.
