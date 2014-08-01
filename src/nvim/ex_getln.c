@@ -4116,6 +4116,7 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
   expand_T xpc;
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;
+  expand_options |= WILD_SILENT;
 
   char_u *buf = xmalloc(MAXPATHL);
 
@@ -4123,26 +4124,29 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, buf, MAXPATHL, ",");
-    if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
-      add_pathsep(buf);
-      STRCAT(buf, file);  // NOLINT
-
-      char_u **p;
-      int num_p;
-      if (ExpandFromContext(&xpc, buf, &num_p, &p,
-              WILD_SILENT|expand_options) != FAIL && num_p > 0) {
-        ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT|expand_options);
-
-        // Concatenate new results to previous ones.
-        ga_grow(ga, num_p);
-        for (int i = 0; i < num_p; i++) {
-          ((char_u **)ga->ga_data)[ga->ga_len] = vim_strsave(p[i]);
-          ga->ga_len++;
-        }
-
-        FreeWild(num_p, p);
-      }
+    if (STRLEN(buf) + STRLEN(file) + 2 >= MAXPATHL) {
+      continue;
     }
+
+    add_pathsep(buf);
+    STRCAT(buf, file);  // NOLINT
+
+    char_u **p;
+    int num_p;
+    if (ExpandFromContext(&xpc, buf, &num_p, &p, expand_options) == FAIL
+        || num_p <= 0) {
+      continue;
+    }
+
+    ExpandEscape(&xpc, buf, num_p, p, expand_options);
+
+    // Concatenate new results to previous ones.
+    ga_grow(ga, num_p);
+    for (int i = 0; i < num_p; i++) {
+      GA_APPEND(char_u *, ga, p[i]);
+    }
+
+    free(p);
   }
 
   free(buf);
