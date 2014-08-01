@@ -3167,13 +3167,14 @@ static char_u **find_locales(void)
 {
   garray_T locales_ga;
   char_u      *loc;
+  char *locale_a;
 
   /* Find all available locales by running command "locale -a".  If this
    * doesn't work we won't have completion. */
-  char_u *locale_a = get_cmd_output((char_u *)"locale -a",
-      NULL, kShellOptSilent);
-  if (locale_a == NULL)
+  if (os_system("locale -a", NULL, 0, &locale_a, NULL) || locale_a == NULL) {
     return NULL;
+  }
+
   ga_init(&locales_ga, sizeof(char_u *), 20);
 
   /* Transform locale_a string where each locale is separated by "\n"
