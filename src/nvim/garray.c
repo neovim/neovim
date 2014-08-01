@@ -133,6 +133,7 @@ void ga_remove_duplicate_strings(garray_T *gap)
 /// strings with sep as separator.
 ///
 /// @param gap
+/// @param sep
 ///
 /// @returns the concatenated strings
 char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)

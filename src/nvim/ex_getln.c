@@ -4051,45 +4051,38 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
  */
 static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
 {
-  char_u      *matches;
-  char_u      *s;
-  char_u      *e;
-  garray_T ga;
-  int i;
-  int pat_len;
-
   *num_file = 0;
   *file = NULL;
-  pat_len = (int)STRLEN(pat);
+  size_t pat_len = STRLEN(pat);
+
+  garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 10);
 
-  for (i = 0; dirnames[i] != NULL; ++i) {
-    s = xmalloc(STRLEN(dirnames[i]) + pat_len + 7);
-    sprintf((char *)s, "%s/%s*.vim", dirnames[i], pat);
-    matches = globpath(p_rtp, s, 0);
+  for (int i = 0; dirnames[i] != NULL; i++) {
+    size_t size = STRLEN(dirnames[i]) + pat_len + 7;
+    char_u *s = xmalloc(size);
+    snprintf((char *)s, size, "%s/%s*.vim", dirnames[i], pat);
+    globpath(p_rtp, s, &ga, 0);
     free(s);
-    if (matches == NULL)
-      continue;
-
-    for (s = matches; *s != NUL; s = e) {
-      e = vim_strchr(s, '\n');
-      if (e == NULL)
-        e = s + STRLEN(s);
-      ga_grow(&ga, 1);
-      if (e - 4 > s && STRNICMP(e - 4, ".vim", 4) == 0) {
-        for (s = e - 4; s > matches; mb_ptr_back(matches, s))
-          if (*s == '\n' || vim_ispathsep(*s))
-            break;
-        ++s;
-        ((char_u **)ga.ga_data)[ga.ga_len] =
-          vim_strnsave(s, (int)(e - s - 4));
-        ++ga.ga_len;
-      }
-      if (*e != NUL)
-        ++e;
-    }
-    free(matches);
   }
+
+  for (int i = 0; i < ga.ga_len; i++) {
+    char_u *match = ((char_u **)ga.ga_data)[i];
+    char_u *s = match;
+    char_u *e = s + STRLEN(s);
+    if (e - s > 4 && STRNICMP(e - 4, ".vim", 4) == 0) {
+      e -= 4;
+      for (s = e; s > match; mb_ptr_back(match, s)) {
+        if (vim_ispathsep(*s)) {
+          break;
+        }
+      }
+      s++;
+      *e = NUL;
+      memmove(match, s, e - s + 1);
+    }
+  }
+
   if (GA_EMPTY(&ga))
     return FAIL;
 
@@ -4103,60 +4096,43 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 }
 
 
-/*
- * Expand "file" for all comma-separated directories in "path".
- * Returns an allocated string with all matches concatenated, separated by
- * newlines.  Returns NULL for an error or no matches.
- */
-char_u *globpath(char_u *path, char_u *file, int expand_options)
+/// Expand `file` for all comma-separated directories in `path`.
+/// Adds matches to `ga`.
+void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
 {
   expand_T xpc;
-  garray_T ga;
-  int i;
-  int len;
-  int num_p;
-  char_u      **p;
-  char_u      *cur = NULL;
-
-  char_u *buf = xmalloc(MAXPATHL);
-
   ExpandInit(&xpc);
   xpc.xp_context = EXPAND_FILES;
 
-  ga_init(&ga, 1, 100);
+  char_u *buf = xmalloc(MAXPATHL);
 
-  /* Loop over all entries in {path}. */
+  // Loop over all entries in {path}.
   while (*path != NUL) {
-    /* Copy one item of the path to buf[] and concatenate the file name. */
+    // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
       add_pathsep(buf);
-      STRCAT(buf, file);
+      STRCAT(buf, file);  // NOLINT
+
+      char_u **p;
+      int num_p;
       if (ExpandFromContext(&xpc, buf, &num_p, &p,
               WILD_SILENT|expand_options) != FAIL && num_p > 0) {
         ExpandEscape(&xpc, buf, num_p, p, WILD_SILENT|expand_options);
-        for (len = 0, i = 0; i < num_p; ++i)
-          len += (int)STRLEN(p[i]) + 1;
 
-        /* Concatenate new results to previous ones. */
-        ga_grow(&ga, len);
-        cur = (char_u *)ga.ga_data + ga.ga_len;
-        for (i = 0; i < num_p; ++i) {
-          STRCPY(cur, p[i]);
-          cur += STRLEN(p[i]);
-          *cur++ = '\n';
+        // Concatenate new results to previous ones.
+        ga_grow(ga, num_p);
+        for (int i = 0; i < num_p; i++) {
+          ((char_u **)ga->ga_data)[ga->ga_len] = vim_strsave(p[i]);
+          ga->ga_len++;
         }
-        ga.ga_len += len;
 
         FreeWild(num_p, p);
       }
     }
   }
-  if (cur != NULL)
-    *--cur = 0;     /* Replace trailing newline with NUL */
 
   free(buf);
-  return (char_u *)ga.ga_data;
 }
 
 
