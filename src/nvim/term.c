@@ -152,7 +152,7 @@ char *UP, *BC, PC;
 # define TGETENT(b, t)  tgetent((char *)(b), (char *)(t))
 #endif /* HAVE_TGETENT */
 
-static int detected_8bit = FALSE;       /* detected 8-bit terminal */
+static bool detected_8bit = false;       // detected 8-bit terminal
 
 static struct builtin_term builtin_termcaps[] =
 {
@@ -1138,15 +1138,13 @@ static struct builtin_term builtin_termcaps[] =
  */
 char_u *(term_strings[(int)KS_LAST + 1]);
 
-static int need_gather = FALSE;             /* need to fill termleader[] */
-static char_u termleader[256 + 1];          /* for check_termcode() */
-static int check_for_codes = FALSE;         /* check for key code response */
+static bool need_gather = false;            // need to fill termleader[]
+static char_u termleader[256 + 1];          // for check_termcode()
+static bool check_for_codes = false;        // check for key code response
 
 static struct builtin_term *find_builtin_term(char_u *term)
 {
-  struct builtin_term *p;
-
-  p = builtin_termcaps;
+  struct builtin_term *p = builtin_termcaps;
   while (p->bt_string != NULL) {
     if (p->bt_entry == (int)KS_NAME) {
 #ifdef UNIX
@@ -1171,12 +1169,10 @@ static struct builtin_term *find_builtin_term(char_u *term)
  */
 static void parse_builtin_tcap(char_u *term)
 {
-  struct builtin_term     *p;
   char_u name[2];
-  int term_8bit;
 
-  p = find_builtin_term(term);
-  term_8bit = term_is_8bit(term);
+  struct builtin_term *p = find_builtin_term(term);
+  bool term_8bit = term_is_8bit(term);
 
   /* Do not parse if builtin term not found */
   if (p->bt_string == NULL)
@@ -1251,7 +1247,6 @@ static char *(key_names[]) =
  */
 int set_termname(char_u *term)
 {
-  struct builtin_term *termp;
 #ifdef HAVE_TGETENT
   int builtin_first = p_tbi;
   int try;
@@ -1265,7 +1260,7 @@ int set_termname(char_u *term)
   if (silent_mode)
     return OK;
 
-  detected_8bit = FALSE;                /* reset 8-bit detection */
+  detected_8bit = false;                // reset 8-bit detection
 
   if (term_is_builtin(term)) {
     term += 8;
@@ -1409,7 +1404,7 @@ int set_termname(char_u *term)
     /*
      * search for 'term' in builtin_termcaps[]
      */
-    termp = find_builtin_term(term);
+    struct builtin_term *termp = find_builtin_term(term);
     if (termp->bt_string == NULL) {             /* did not find it */
 #ifdef HAVE_TGETENT
       /*
@@ -1529,9 +1524,7 @@ int set_termname(char_u *term)
    * The termcode for the mouse is added as a side effect in option.c.
    */
   {
-    char_u  *p;
-
-    p = (char_u *)"";
+    char_u *p = (char_u *)"";
     if (use_xterm_like_mouse(term)) {
       if (use_xterm_mouse())
         p = NULL;               /* keep existing value, might be "xterm2" */
@@ -1610,13 +1603,11 @@ int set_termname(char_u *term)
     check_map_keycodes();       /* check mappings for terminal codes used */
 
     {
-      buf_T       *old_curbuf;
-
       /*
        * Execute the TermChanged autocommands for each buffer that is
        * loaded.
        */
-      old_curbuf = curbuf;
+      buf_T *old_curbuf = curbuf;
       for (curbuf = firstbuf; curbuf != NULL; curbuf = curbuf->b_next) {
         if (curbuf->b_ml.ml_mfp != NULL)
           apply_autocmds(EVENT_TERMCHANGED, NULL, NULL, FALSE,
@@ -1647,10 +1638,8 @@ set_mouse_termcode (
     char_u *s
 )
 {
-  char_u name[2];
+  char_u name[2] = { n, KE_FILLER };
 
-  name[0] = n;
-  name[1] = KE_FILLER;
   add_termcode(name, s, FALSE);
   if (n == KS_NETTERM_MOUSE)
     has_mouse_termcode |= HMT_NETTERM;
@@ -1670,10 +1659,8 @@ del_mouse_termcode (
     int n                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
 )
 {
-  char_u name[2];
+  char_u name[2] = { n, KE_FILLER };
 
-  name[0] = n;
-  name[1] = KE_FILLER;
   del_termcode(name);
   if (n == KS_NETTERM_MOUSE)
     has_mouse_termcode &= ~HMT_NETTERM;
@@ -1695,9 +1682,7 @@ del_mouse_termcode (
  */
 static char_u *tgetent_error(char_u *tbuf, char_u *term)
 {
-  int i;
-
-  i = TGETENT(tbuf, term);
+  int i = TGETENT(tbuf, term);
   if (i < 0                 /* -1 is always an error */
 # ifdef TGETENT_ZERO_ERR
       || i == 0             /* sometimes zero is also an error */
@@ -1728,9 +1713,7 @@ static char_u *tgetent_error(char_u *tbuf, char_u *term)
  */
 static char_u *vim_tgetstr(char *s, char_u **pp)
 {
-  char        *p;
-
-  p = tgetstr(s, (char **)pp);
+  char *p = tgetstr(s, (char **)pp);
   if (p == (char *)-1)
     p = NULL;
   return (char_u *)p;
@@ -1868,11 +1851,11 @@ static int term_is_builtin(char_u *name)
 }
 
 /*
- * Return TRUE if terminal "name" uses CSI instead of <Esc>[.
+ * Return true if terminal "name" uses CSI instead of <Esc>[.
  * Assume that the terminal is using 8-bit controls when the name contains
  * "8bit", like in "xterm-8bit".
  */
-int term_is_8bit(char_u *name)
+bool term_is_8bit(char_u *name)
 {
   return detected_8bit || strstr((char *)name, "8bit") != NULL;
 }
@@ -1902,9 +1885,7 @@ static int term_7to8bit(char_u *p)
 char_u *tltoa(unsigned long i)
 {
   static char_u buf[16];
-  char_u      *p;
-
-  p = buf + 15;
+  char_u *p = buf + 15;
   *p = '\0';
   do {
     --p;
@@ -1925,19 +1906,18 @@ char_u *tltoa(unsigned long i)
 static char *tgoto(char *cm, int x, int y)
 {
   static char buf[30];
-  char *p, *s, *e;
 
   if (!cm)
     return "OOPS";
-  e = buf + 29;
-  for (s = buf; s < e && *cm; cm++) {
+  char *e = buf + 29;
+  for (char *s = buf; s < e && *cm; cm++) {
     if (*cm != '%') {
       *s++ = *cm;
       continue;
     }
     switch (*++cm) {
     case 'd':
-      p = (char *)tltoa((unsigned long)y);
+      char *p = (char *)tltoa((unsigned long)y);
       y = x;
       while (*p)
         *s++ = *p++;
@@ -1970,11 +1950,9 @@ static char *tgoto(char *cm, int x, int y)
  */
 void termcapinit(char_u *name)
 {
-  char_u      *term;
-
   if (name != NULL && *name == NUL)
     name = NULL;            /* empty name is equal to no name */
-  term = name;
+  char_u *term = name;
 
   if (term == NULL)
     term = (char_u *)os_getenv("TERM");
@@ -2005,11 +1983,9 @@ static int out_pos = 0;                 /* number of chars in out_buf */
  */
 void out_flush(void)
 {
-  int len;
-
   if (out_pos != 0) {
     /* set out_pos to 0 before ui_write, to avoid recursiveness */
-    len = out_pos;
+    int len = out_pos;
     out_pos = 0;
     ui_write(out_buf, len);
   }
@@ -2294,7 +2270,7 @@ void ttest(int pairs)
     /* Set 'weirdinvert' according to value of 't_xs' */
     p_wiv = (*T_XS != NUL);
   }
-  need_gather = TRUE;
+  need_gather = true;
 
   /* Set t_colors to the value of t_Co. */
   t_colors = atoi((char *)T_CCO);
@@ -2311,16 +2287,13 @@ void ttest(int pairs)
  */
 static int get_long_from_buf(char_u *buf, long_u *val)
 {
-  int len;
   char_u bytes[sizeof(long_u)];
-  int i;
-  int shift;
 
   *val = 0;
-  len = get_bytes_from_buf(buf, bytes, (int)sizeof(long_u));
+  int len = get_bytes_from_buf(buf, bytes, (int)sizeof(long_u));
   if (len != -1) {
-    for (i = 0; i < (int)sizeof(long_u); i++) {
-      shift = 8 * (sizeof(long_u) - 1 - i);
+    for (int i = 0; i < (int)sizeof(long_u); i++) {
+      int shift = 8 * (sizeof(long_u) - 1 - i);
       *val += (long_u)bytes[i] << shift;
     }
   }
@@ -2340,10 +2313,9 @@ static int get_long_from_buf(char_u *buf, long_u *val)
 static int get_bytes_from_buf(char_u *buf, char_u *bytes, int num_bytes)
 {
   int len = 0;
-  int i;
   char_u c;
 
-  for (i = 0; i < num_bytes; i++) {
+  for (int i = 0; i < num_bytes; i++) {
     if ((c = buf[len++]) == NUL)
       return -1;
     if (c == K_SPECIAL) {
@@ -2705,13 +2677,12 @@ void may_req_ambiguous_char_width(void)
 static void log_tr(char *msg)                 {
   static FILE *fd_tr = NULL;
   static proftime_T start;
-  proftime_T now;
 
   if (fd_tr == NULL) {
     fd_tr = fopen("termresponse.log", "w");
     profile_start(&start);
   }
-  now = start;
+  proftime_T now = start;
   profile_end(&now);
   fprintf(fd_tr, "%s: %s %s\n",
       profile_msg(&now),
@@ -2776,9 +2747,7 @@ void setmouse(void)
  */
 int mouse_has(int c)
 {
-  char_u      *p;
-
-  for (p = p_mouse; *p; ++p)
+  for (char_u *p = p_mouse; *p; ++p)
     switch (*p) {
     case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
         return TRUE;
@@ -2916,7 +2885,7 @@ void clear_termcodes(void)
   ospeed = 0;
 #endif
 
-  need_gather = TRUE;           /* need to fill termleader[] */
+  need_gather = true;           // need to fill termleader[]
 }
 
 #define ATC_FROM_TERM 55
@@ -2931,24 +2900,22 @@ void add_termcode(char_u *name, char_u *string, int flags)
 {
   struct termcode *new_tc;
   int i, j;
-  char_u          *s;
-  int len;
 
   if (string == NULL || *string == NUL) {
     del_termcode(name);
     return;
   }
 
-  s = vim_strsave(string);
+  char_u *s = vim_strsave(string);
 
   /* Change leading <Esc>[ to CSI, change <Esc>O to <M-O>. */
   if (flags != 0 && flags != ATC_FROM_TERM && term_7to8bit(string) != 0) {
     STRMOVE(s, s + 1);
     s[0] = term_7to8bit(string);
   }
-  len = (int)STRLEN(s);
+  int len = (int)STRLEN(s);
 
-  need_gather = TRUE;           /* need to fill termleader[] */
+  need_gather = true;           // need to fill termleader[]
 
   /*
    * need to make space for more entries
@@ -3039,9 +3006,7 @@ static int termcode_star(char_u *code, int len)
 
 char_u *find_termcode(char_u *name)
 {
-  int i;
-
-  for (i = 0; i < tc_len; ++i)
+  for (int i = 0; i < tc_len; ++i)
     if (termcodes[i].name[0] == name[0] && termcodes[i].name[1] == name[1])
       return termcodes[i].code;
   return NULL;
@@ -3056,14 +3021,12 @@ char_u *get_termcode(int i)
 
 void del_termcode(char_u *name)
 {
-  int i;
-
   if (termcodes == NULL)        /* nothing there yet */
     return;
 
-  need_gather = TRUE;           /* need to fill termleader[] */
+  need_gather = true;           // need to fill termleader[]
 
-  for (i = 0; i < tc_len; ++i)
+  for (int i = 0; i < tc_len; ++i)
     if (termcodes[i].name[0] == name[0] && termcodes[i].name[1] == name[1]) {
       del_termcode_idx(i);
       return;
@@ -3073,11 +3036,9 @@ void del_termcode(char_u *name)
 
 static void del_termcode_idx(int idx)
 {
-  int i;
-
   free(termcodes[idx].code);
   --tc_len;
-  for (i = idx; i < tc_len; ++i)
+  for (int i = idx; i < tc_len; ++i)
     termcodes[i] = termcodes[i + 1];
 }
 
@@ -3087,21 +3048,18 @@ static void del_termcode_idx(int idx)
  */
 static void switch_to_8bit(void)
 {
-  int i;
-  int c;
-
   /* Only need to do something when not already using 8-bit codes. */
   if (!term_is_8bit(T_NAME)) {
-    for (i = 0; i < tc_len; ++i) {
-      c = term_7to8bit(termcodes[i].code);
+    for (int i = 0; i < tc_len; ++i) {
+      int c = term_7to8bit(termcodes[i].code);
       if (c != 0) {
         STRMOVE(termcodes[i].code + 1, termcodes[i].code + 2);
         termcodes[i].code[0] = c;
       }
     }
-    need_gather = TRUE;                 /* need to fill termleader[] */
+    need_gather = true;                 // need to fill termleader[]
   }
-  detected_8bit = TRUE;
+  detected_8bit = true;
   LOG_TR("Switching to 8 bit");
 }
 
@@ -3442,7 +3400,7 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
             if (extra >= 141) {
               LOG_TR("Enable checking for XT codes");
               check_for_codes = TRUE;
-              need_gather = TRUE;
+              need_gather = true;
               req_codes_from_term();
             }
           }
@@ -4160,10 +4118,9 @@ replace_termcodes (
  */
 int find_term_bykeys(char_u *src)
 {
-  int i;
   int slen = (int)STRLEN(src);
 
-  for (i = 0; i < tc_len; ++i) {
+  for (int i = 0; i < tc_len; ++i) {
     if (slen == termcodes[i].len
         && STRNCMP(termcodes[i].code, src, (size_t)slen) == 0)
       return i;
@@ -4177,7 +4134,6 @@ int find_term_bykeys(char_u *src)
  */
 static void gather_termleader(void)
 {
-  int i;
   int len = 0;
 
   if (check_for_codes)
@@ -4185,13 +4141,13 @@ static void gather_termleader(void)
                                        in 8-bit mode */
   termleader[len] = NUL;
 
-  for (i = 0; i < tc_len; ++i)
+  for (int i = 0; i < tc_len; ++i)
     if (vim_strchr(termleader, termcodes[i].code[0]) == NULL) {
       termleader[len++] = termcodes[i].code[0];
       termleader[len] = NUL;
     }
 
-  need_gather = FALSE;
+  need_gather = false;
 }
 
 /*
@@ -4406,7 +4362,7 @@ static void got_code_from_term(char_u *code, int len)
       str[j] = NUL;
       if (name[0] == 'C' && name[1] == 'o') {
         /* Color count is not a key code. */
-        i = atoi((char *)str);
+        int i = atoi((char *)str);
         if (i != t_colors) {
           /* Nr of colors changed, initialize highlighting and
            * redraw everything.  This causes a redraw, which usually
@@ -4502,31 +4458,24 @@ translate_mapping (
 )
 {
   garray_T ga;
-  int c;
-  int modifiers;
-  int cpo_bslash;
-  int cpo_special;
-  int cpo_keycode;
-
   ga_init(&ga, 1, 40);
 
-  cpo_bslash = (vim_strchr(p_cpo, CPO_BSLASH) != NULL);
-  cpo_special = (vim_strchr(p_cpo, CPO_SPECI) != NULL);
-  cpo_keycode = (vim_strchr(p_cpo, CPO_KEYCODE) == NULL);
+  int cpo_bslash = (vim_strchr(p_cpo, CPO_BSLASH) != NULL);
+  int cpo_special = (vim_strchr(p_cpo, CPO_SPECI) != NULL);
+  int cpo_keycode = (vim_strchr(p_cpo, CPO_KEYCODE) == NULL);
 
   for (; *str; ++str) {
-    c = *str;
+    int c = *str;
     if (c == K_SPECIAL && str[1] != NUL && str[2] != NUL) {
-      modifiers = 0;
+      int modifiers = 0;
       if (str[1] == KS_MODIFIER) {
         str++;
         modifiers = *++str;
         c = *++str;
       }
       if (cpo_special && cpo_keycode && c == K_SPECIAL && !modifiers) {
-        int i;
-
         /* try to find special key in termcodes */
+        int i;
         for (i = 0; i < tc_len; ++i)
           if (termcodes[i].name[0] == str[1]
               && termcodes[i].name[1] == str[2])
