@@ -4044,12 +4044,17 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
   return OK;
 }
 
-/*
- * Expand color scheme, compiler or filetype names:
- * 'runtimepath'/{dirnames}/{pat}.vim
- * "dirnames" is an array with one or more directory names.
- */
-static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
+/// Expands color scheme, compiler or filetype names:
+/// 'runtimepath'/{dirnames}/{pat}*.vim
+///
+/// @param[in]  pat      The pattern to search for.
+/// @param[out] num_file Number of files stored in `file`.
+/// @param[out] file     List of matches.
+/// @param[in]  dirnames (see above)
+/// @returns true if any files found.
+static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file,
+                       char *dirnames[])
+  FUNC_ATTR_NONNULL_ALL
 {
   *num_file = 0;
   *file = NULL;
@@ -4096,9 +4101,17 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 }
 
 
-/// Expand `file` for all comma-separated directories in `path`.
-/// Adds matches to `ga`.
+/// Expands `file` for all comma-separated directories in `path` and appends
+/// the results to `ga`.
+///
+/// @remark May be called repeatedly on `ga`.
+///
+/// @param[in]  path String of comma-separated directories.
+/// @param[in]  file The pattern to search for in each directory.
+/// @param[out] ga   Growable array of `file`s found in `path`.
+/// @param[in]  expand_options
 void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
+  FUNC_ATTR_NONNULL_ALL
 {
   expand_T xpc;
   ExpandInit(&xpc);
