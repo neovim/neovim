@@ -5,6 +5,11 @@ local static_fname = arg[2]
 local non_static_fname = arg[3]
 local cpp = arg[4]
 
+local test_includes = {}
+for i = 5, #arg do
+  test_includes[#test_includes + 1] = arg[i]
+end
+
 cpp = cpp:gsub(' %-DINCLUDE_GENERATED_DECLARATIONS ', ' ')
 
 local lpeg = require('lpeg')
@@ -153,6 +158,17 @@ if fname == '--help' then
   os.exit()
 end
 
+function get_test_includes(test_includes, extra)
+  includes = '#ifdef UNIT_TESTING\n'
+  for i = 1, #test_includes do
+    includes = includes .. '# include "'..test_includes[i]..'"\n'
+  end
+  if extra then
+    includes = includes .. '\n' .. extra .. '\n'
+  end
+  return includes .. '#endif\n'
+end
+
 function get_declarations(fname)
   local pipe = io.popen(cpp ..
                         ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
@@ -208,7 +224,7 @@ function get_declarations(fname)
       end
     end
   end
-  return {non_static, static}
+  return non_static, static
 end
 
 function write_file(fname, data)
@@ -246,6 +262,29 @@ local footer = [[
 ]]
 
 local non_static, static = get_declarations(fname)
+
+if #test_includes > 0 then
+  local first = test_includes[1]
+  if first:sub(#first - 1, #first) == '.c' then
+    -- The first included file is a C module, we must generate declarations for
+    -- its public functions and include into the non static header so tests can
+    -- automatically use the helper functions without manually calling ffi.cdef
+    local test_helper_decls, _ = get_declarations(first)
+    -- if there's a .defs.h for the c file, prefix the declarations with it
+    local F = io.open(first .. '.defs.h', 'r')
+    if F ~= nil then
+      local defs = F:read('*a')
+      test_helper_decls = defs .. '\n' .. test_helper_decls
+      F:close()
+    end
+    non_static = non_static .. get_test_includes({}, test_helper_decls)
+  end
+  -- Include every file in the static header
+  static = static .. get_test_includes(test_includes)
+end
+
+local non_static = header .. non_static  .. footer
+local static = header .. static .. footer
 
 write_file(static_fname, static)
 write_file(non_static_fname, non_static)
