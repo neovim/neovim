@@ -153,10 +153,62 @@ if fname == '--help' then
   os.exit()
 end
 
-local pipe = io.popen(cpp .. ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
-local text = pipe:read('*a')
-if not pipe:close() then
-  os.exit(2)
+function get_declarations(fname)
+  local pipe = io.popen(cpp ..
+                        ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
+  local text = pipe:read('*a')
+  if not pipe:close() then
+    os.exit(2)
+  end
+
+  local non_static = ''
+  local static = ''
+
+  local filepattern = '^# %d+ "[^"]-/?([^"/]+)"'
+  local curfile
+
+  local init = 0
+  local curfile = nil
+  local neededfile = fname:match('[^/]+$')
+  while init ~= nil do
+    init = text:find('\n', init)
+    if init == nil then
+      break
+    end
+    init = init + 1
+    if text:sub(init, init) == '#' then
+      file = text:match(filepattern, init)
+      if file ~= nil then
+        curfile = file
+      end
+    elseif curfile == neededfile then
+      s = init
+      e = pattern:match(text, init)
+      if e ~= nil then
+        local declaration = text:sub(s, e - 1)
+        -- Comments are really handled by preprocessor, so the following is not 
+        -- needed
+        declaration = declaration:gsub('/%*.-%*/', '')
+        declaration = declaration:gsub('//.-\n', '\n')
+
+        declaration = declaration:gsub('\n', ' ')
+        declaration = declaration:gsub('%s+', ' ')
+        declaration = declaration:gsub(' ?%( ?', '(')
+        declaration = declaration:gsub(' ?%) ?', ')')
+        declaration = declaration:gsub(' ?, ?', ', ')
+        declaration = declaration:gsub(' ?(%*+) ?', ' %1')
+        declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
+        declaration = declaration:gsub(' $', '')
+        declaration = declaration .. ';\n'
+        if text:sub(s, s + 5) == 'static' then
+          static = static .. declaration
+        else
+          non_static = non_static .. declaration
+        end
+      end
+    end
+  end
+  return {non_static, static}
 end
 
 local header = [[
@@ -171,56 +223,7 @@ local footer = [[
 #include "nvim/func_attr.h"
 ]]
 
-local non_static = header
-local static = header
-
-local filepattern = '^# %d+ "[^"]-/?([^"/]+)"'
-local curfile
-
-init = 0
-curfile = nil
-neededfile = fname:match('[^/]+$')
-while init ~= nil do
-  init = text:find('\n', init)
-  if init == nil then
-    break
-  end
-  init = init + 1
-  if text:sub(init, init) == '#' then
-    file = text:match(filepattern, init)
-    if file ~= nil then
-      curfile = file
-    end
-  elseif curfile == neededfile then
-    s = init
-    e = pattern:match(text, init)
-    if e ~= nil then
-      local declaration = text:sub(s, e - 1)
-      -- Comments are really handled by preprocessor, so the following is not 
-      -- needed
-      declaration = declaration:gsub('/%*.-%*/', '')
-      declaration = declaration:gsub('//.-\n', '\n')
-
-      declaration = declaration:gsub('\n', ' ')
-      declaration = declaration:gsub('%s+', ' ')
-      declaration = declaration:gsub(' ?%( ?', '(')
-      declaration = declaration:gsub(' ?%) ?', ')')
-      declaration = declaration:gsub(' ?, ?', ', ')
-      declaration = declaration:gsub(' ?(%*+) ?', ' %1')
-      declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
-      declaration = declaration:gsub(' $', '')
-      declaration = declaration .. ';\n'
-      if text:sub(s, s + 5) == 'static' then
-        static = static .. declaration
-      else
-        non_static = non_static .. declaration
-      end
-    end
-  end
-end
-
-non_static = non_static .. footer
-static = static .. footer
+local non_static, static = get_declarations(fname)
 
 local F
 F = io.open(static_fname, 'w')
