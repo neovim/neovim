@@ -211,6 +211,28 @@ function get_declarations(fname)
   return {non_static, static}
 end
 
+function write_file(fname, data)
+  -- Before writing the file, check if the current file(if exists) is different
+  -- from the new one. If they are the same, we won't touch the current version
+  -- to avoid triggering an unnecessary rebuilds of modules that depend on the
+  -- file
+  local F = io.open(fname, 'r')
+  local old_data
+
+  if F ~= nil then
+    old_data = F:read('*a')
+    io.close(F)
+  end
+
+  if old_data == data then
+    return
+  end
+
+  F = io.open(fname, 'w')
+  F:write(data)
+  F:close()
+end
+
 local header = [[
 #ifndef DEFINE_FUNC_ATTRIBUTES
 # define DEFINE_FUNC_ATTRIBUTES
@@ -225,23 +247,5 @@ local footer = [[
 
 local non_static, static = get_declarations(fname)
 
-local F
-F = io.open(static_fname, 'w')
-F:write(static)
-F:close()
-
--- Before generating the non-static headers, check if the current file(if
--- exists) is different from the new one. If they are the same, we won't touch
--- the current version to avoid triggering an unnecessary rebuilds of modules
--- that depend on this one
-F = io.open(non_static_fname, 'r')
-if F ~= nil then
-  if F:read('*a') == non_static then
-    os.exit(0)
-  end
-  io.close(F)
-end
-
-F = io.open(non_static_fname, 'w')
-F:write(non_static)
-F:close()
+write_file(static_fname, static)
+write_file(non_static_fname, non_static)
