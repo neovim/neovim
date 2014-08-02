@@ -127,33 +127,33 @@ static const struct nv_cmd {
   {NUL,       nv_error,       0,                      0},
   {Ctrl_A,    nv_addsub,      0,                      0},
   {Ctrl_B,    nv_page,        NV_STS,                 BACKWARD},
-  {Ctrl_C,    nv_esc,         0,                      TRUE},
+  {Ctrl_C,    nv_esc,         0,                      true},
   {Ctrl_D,    nv_halfpage,    0,                      0},
-  {Ctrl_E,    nv_scroll_line, 0,                      TRUE},
+  {Ctrl_E,    nv_scroll_line, 0,                      true},
   {Ctrl_F,    nv_page,        NV_STS,                 FORWARD},
   {Ctrl_G,    nv_ctrlg,       0,                      0},
   {Ctrl_H,    nv_ctrlh,       0,                      0},
   {Ctrl_I,    nv_pcmark,      0,                      0},
-  {NL,        nv_down,        0,                      FALSE},
+  {NL,        nv_down,        0,                      false},
   {Ctrl_K,    nv_error,       0,                      0},
   {Ctrl_L,    nv_clear,       0,                      0},
-  {Ctrl_M,    nv_down,        0,                      TRUE},
-  {Ctrl_N,    nv_down,        NV_STS,                 FALSE},
+  {Ctrl_M,    nv_down,        0,                      true},
+  {Ctrl_N,    nv_down,        NV_STS,                 false},
   {Ctrl_O,    nv_ctrlo,       0,                      0},
-  {Ctrl_P,    nv_up,          NV_STS,                 FALSE},
-  {Ctrl_Q,    nv_visual,      0,                      FALSE},
+  {Ctrl_P,    nv_up,          NV_STS,                 false},
+  {Ctrl_Q,    nv_visual,      0,                      false},
   {Ctrl_R,    nv_redo,        0,                      0},
   {Ctrl_S,    nv_ignore,      0,                      0},
   {Ctrl_T,    nv_tagpop,      NV_NCW,                 0},
   {Ctrl_U,    nv_halfpage,    0,                      0},
-  {Ctrl_V,    nv_visual,      0,                      FALSE},
-  {'V',       nv_visual,      0,                      FALSE},
-  {'v',       nv_visual,      0,                      FALSE},
+  {Ctrl_V,    nv_visual,      0,                      false},
+  {'V',       nv_visual,      0,                      false},
+  {'v',       nv_visual,      0,                      false},
   {Ctrl_W,    nv_window,      0,                      0},
   {Ctrl_X,    nv_addsub,      0,                      0},
-  {Ctrl_Y,    nv_scroll_line, 0,                      FALSE},
+  {Ctrl_Y,    nv_scroll_line, 0,                      false},
   {Ctrl_Z,    nv_suspend,     0,                      0},
-  {ESC,       nv_esc,         0,                      FALSE},
+  {ESC,       nv_esc,         0,                      false},
   {Ctrl_BSL,  nv_normal,      NV_NCH_ALW,             0},
   {Ctrl_RSB,  nv_ident,       NV_NCW,                 0},
   {Ctrl_HAT,  nv_hat,         NV_NCW,                 0},
@@ -165,15 +165,15 @@ static const struct nv_cmd {
   {'$',       nv_dollar,      0,                      0},
   {'%',       nv_percent,     0,                      0},
   {'&',       nv_optrans,     0,                      0},
-  {'\'',      nv_gomark,      NV_NCH_ALW,             TRUE},
+  {'\'',      nv_gomark,      NV_NCH_ALW,             true},
   {'(',       nv_brace,       0,                      BACKWARD},
   {')',       nv_brace,       0,                      FORWARD},
   {'*',       nv_ident,       0,                      0},
-  {'+',       nv_down,        0,                      TRUE},
-  {',',       nv_csearch,     0,                      TRUE},
-  {'-',       nv_up,          0,                      TRUE},
+  {'+',       nv_down,        0,                      true},
+  {',',       nv_csearch,     0,                      true},
+  {'-',       nv_up,          0,                      true},
   {'.',       nv_dot,         NV_KEEPREG,             0},
-  {'/',       nv_search,      0,                      FALSE},
+  {'/',       nv_search,      0,                      false},
   {'0',       nv_beginline,   0,                      0},
   {'1',       nv_ignore,      0,                      0},
   {'2',       nv_ignore,      0,                      0},
@@ -185,19 +185,19 @@ static const struct nv_cmd {
   {'8',       nv_ignore,      0,                      0},
   {'9',       nv_ignore,      0,                      0},
   {':',       nv_colon,       0,                      0},
-  {';',       nv_csearch,     0,                      FALSE},
+  {';',       nv_csearch,     0,                      false},
   {'<',       nv_operator,    NV_RL,                  0},
   {'=',       nv_operator,    0,                      0},
   {'>',       nv_operator,    NV_RL,                  0},
-  {'?',       nv_search,      0,                      FALSE},
-  {'@',       nv_at,          NV_NCH_NOP,             FALSE},
+  {'?',       nv_search,      0,                      false},
+  {'@',       nv_at,          NV_NCH_NOP,             false},
   {'A',       nv_edit,        0,                      0},
   {'B',       nv_bck_word,    0,                      1},
   {'C',       nv_abbrev,      NV_KEEPREG,             0},
   {'D',       nv_abbrev,      NV_KEEPREG,             0},
-  {'E',       nv_wordcmd,     0,                      TRUE},
+  {'E',       nv_wordcmd,     0,                      true},
   {'F',       nv_csearch,     NV_NCH_ALW|NV_LANG,     BACKWARD},
-  {'G',       nv_goto,        0,                      TRUE},
+  {'G',       nv_goto,        0,                      true},
   {'H',       nv_scroll,      0,                      0},
   {'I',       nv_edit,        0,                      0},
   {'J',       nv_join,        0,                      0},
@@ -208,11 +208,11 @@ static const struct nv_cmd {
   {'O',       nv_open,        0,                      0},
   {'P',       nv_put,         0,                      0},
   {'Q',       nv_exmode,      NV_NCW,                 0},
-  {'R',       nv_Replace,     0,                      FALSE},
+  {'R',       nv_Replace,     0,                      false},
   {'S',       nv_subst,       NV_KEEPREG,             0},
   {'T',       nv_csearch,     NV_NCH_ALW|NV_LANG,     BACKWARD},
   {'U',       nv_Undo,        0,                      0},
-  {'W',       nv_wordcmd,     0,                      TRUE},
+  {'W',       nv_wordcmd,     0,                      true},
   {'X',       nv_abbrev,      NV_KEEPREG,             0},
   {'Y',       nv_abbrev,      NV_KEEPREG,             0},
   {'Z',       nv_Zet,         NV_NCH_NOP|NV_NCW,      0},
@@ -221,18 +221,18 @@ static const struct nv_cmd {
   {']',       nv_brackets,    NV_NCH_ALW,             FORWARD},
   {'^',       nv_beginline,   0,                      BL_WHITE | BL_FIX},
   {'_',       nv_lineop,      0,                      0},
-  {'`',       nv_gomark,      NV_NCH_ALW,             FALSE},
+  {'`',       nv_gomark,      NV_NCH_ALW,             false},
   {'a',       nv_edit,        NV_NCH,                 0},
   {'b',       nv_bck_word,    0,                      0},
   {'c',       nv_operator,    0,                      0},
   {'d',       nv_operator,    0,                      0},
-  {'e',       nv_wordcmd,     0,                      FALSE},
+  {'e',       nv_wordcmd,     0,                      false},
   {'f',       nv_csearch,     NV_NCH_ALW|NV_LANG,     FORWARD},
-  {'g',       nv_g_cmd,       NV_NCH_ALW,             FALSE},
+  {'g',       nv_g_cmd,       NV_NCH_ALW,             false},
   {'h',       nv_left,        NV_RL,                  0},
   {'i',       nv_edit,        NV_NCH,                 0},
-  {'j',       nv_down,        0,                      FALSE},
-  {'k',       nv_up,          0,                      FALSE},
+  {'j',       nv_down,        0,                      false},
+  {'k',       nv_up,          0,                      false},
   {'l',       nv_right,       NV_RL,                  0},
   {'m',       nv_mark,        NV_NCH_NOP,             0},
   {'n',       nv_next,        0,                      0},
@@ -243,7 +243,7 @@ static const struct nv_cmd {
   {'s',       nv_subst,       NV_KEEPREG,             0},
   {'t',       nv_csearch,     NV_NCH_ALW|NV_LANG,     FORWARD},
   {'u',       nv_undo,        0,                      0},
-  {'w',       nv_wordcmd,     0,                      FALSE},
+  {'w',       nv_wordcmd,     0,                      false},
   {'x',       nv_abbrev,      NV_KEEPREG,             0},
   {'y',       nv_operator,    0,                      0},
   {'z',       nv_zet,         NV_NCH_ALW,             0},
@@ -280,28 +280,28 @@ static const struct nv_cmd {
   {K_INS,     nv_edit,        0,                      0},
   {K_KINS,    nv_edit,        0,                      0},
   {K_BS,      nv_ctrlh,       0,                      0},
-  {K_UP,      nv_up,          NV_SSS|NV_STS,          FALSE},
+  {K_UP,      nv_up,          NV_SSS|NV_STS,          false},
   {K_S_UP,    nv_page,        NV_SS,                  BACKWARD},
-  {K_DOWN,    nv_down,        NV_SSS|NV_STS,          FALSE},
+  {K_DOWN,    nv_down,        NV_SSS|NV_STS,          false},
   {K_S_DOWN,  nv_page,        NV_SS,                  FORWARD},
   {K_LEFT,    nv_left,        NV_SSS|NV_STS|NV_RL,    0},
   {K_S_LEFT,  nv_bck_word,    NV_SS|NV_RL,            0},
   {K_C_LEFT,  nv_bck_word,    NV_SSS|NV_RL|NV_STS,    1},
   {K_RIGHT,   nv_right,       NV_SSS|NV_STS|NV_RL,    0},
-  {K_S_RIGHT, nv_wordcmd,     NV_SS|NV_RL,            FALSE},
-  {K_C_RIGHT, nv_wordcmd,     NV_SSS|NV_RL|NV_STS,    TRUE},
+  {K_S_RIGHT, nv_wordcmd,     NV_SS|NV_RL,            false},
+  {K_C_RIGHT, nv_wordcmd,     NV_SSS|NV_RL|NV_STS,    true},
   {K_PAGEUP,  nv_page,        NV_SSS|NV_STS,          BACKWARD},
   {K_KPAGEUP, nv_page,        NV_SSS|NV_STS,          BACKWARD},
   {K_PAGEDOWN, nv_page,       NV_SSS|NV_STS,          FORWARD},
   {K_KPAGEDOWN, nv_page,      NV_SSS|NV_STS,          FORWARD},
-  {K_END,     nv_end,         NV_SSS|NV_STS,          FALSE},
-  {K_KEND,    nv_end,         NV_SSS|NV_STS,          FALSE},
-  {K_S_END,   nv_end,         NV_SS,                  FALSE},
-  {K_C_END,   nv_end,         NV_SSS|NV_STS,          TRUE},
+  {K_END,     nv_end,         NV_SSS|NV_STS,          false},
+  {K_KEND,    nv_end,         NV_SSS|NV_STS,          false},
+  {K_S_END,   nv_end,         NV_SS,                  false},
+  {K_C_END,   nv_end,         NV_SSS|NV_STS,          true},
   {K_HOME,    nv_home,        NV_SSS|NV_STS,          0},
   {K_KHOME,   nv_home,        NV_SSS|NV_STS,          0},
   {K_S_HOME,  nv_home,        NV_SS,                  0},
-  {K_C_HOME,  nv_goto,        NV_SSS|NV_STS,          FALSE},
+  {K_C_HOME,  nv_goto,        NV_SSS|NV_STS,          false},
   {K_DEL,     nv_abbrev,      0,                      0},
   {K_KDEL,    nv_abbrev,      0,                      0},
   {K_UNDO,    nv_kundo,       0,                      0},
@@ -3220,7 +3220,7 @@ static void nv_help(cmdarg_T *cap)
 static void nv_addsub(cmdarg_T *cap)
 {
   if (!checkclearopq(cap->oap)
-      && do_addsub((int)cap->cmdchar, cap->count1) == OK)
+      && do_addsub((int)cap->cmdchar, cap->count1))
     prep_redo_cmd(cap);
 }
 
@@ -3255,7 +3255,7 @@ nv_gd (
   char_u      *ptr;
 
   if ((len = find_ident_under_cursor(&ptr, FIND_IDENT)) == 0
-      || find_decl(ptr, len, nchar == 'd', thisblock, 0) == FAIL)
+      || find_decl(ptr, len, nchar == 'd', thisblock, 0) == false)
     clearopbeep(oap);
   else if ((fdo_flags & FDO_SEARCH) && KeyTyped && oap->op_type == OP_NOP)
     foldOpenCursor();
@@ -3589,12 +3589,12 @@ void scroll_redraw(int up, long count)
            ) {
       if (up) {
         if (curwin->w_cursor.lnum > prev_lnum
-            || cursor_down(1L, false) == FAIL)
+            || cursor_down(1L, false) == false)
           break;
       } else {
         if (curwin->w_cursor.lnum < prev_lnum
             || prev_topline == 1L
-            || cursor_up(1L, false) == FAIL)
+            || cursor_up(1L, false) == false)
           break;
       }
       /* Mark w_topline as valid, otherwise the screen jumps back at the
@@ -3945,7 +3945,7 @@ dozet:
   case 'j':     /* "zj" move to next fold downwards */
   case 'k':     /* "zk" move to next fold upwards */
     if (foldMoveTo(true, nchar == 'j' ? FORWARD : BACKWARD,
-            cap->count1) == FAIL)
+            cap->count1) == false)
       clearopbeep(cap->oap);
     break;
 
@@ -3976,7 +3976,7 @@ dozet:
     if (checkclearop(cap->oap))
       break;
     if (VIsual_active && get_visual_text(cap, &ptr, &len)
-        == FAIL)
+        == false)
       return;
     if (ptr == NULL) {
       pos_T pos = curwin->w_cursor;
@@ -4051,7 +4051,7 @@ static void nv_exmode(cmdarg_T *cap)
 static void nv_colon(cmdarg_T *cap)
 {
   int old_p_im;
-  int cmd_result;
+  bool cmd_result;
 
   if (VIsual_active)
     nv_operator(cap);
@@ -4087,7 +4087,7 @@ static void nv_colon(cmdarg_T *cap)
         restart_edit = 0;
     }
 
-    if (cmd_result == FAIL)
+    if (cmd_result == false)
       /* The Ex command failed, do not execute the operator. */
       clearop(cap->oap);
     else if (cap->oap->op_type != OP_NOP
@@ -4240,7 +4240,7 @@ static void nv_ident(cmdarg_T *cap)
    * The "]", "CTRL-]" and "K" commands accept an argument in Visual mode.
    */
   if (cmdchar == ']' || cmdchar == Ctrl_RSB || cmdchar == 'K') {
-    if (VIsual_active && get_visual_text(cap, &ptr, &n) == FAIL)
+    if (VIsual_active && get_visual_text(cap, &ptr, &n) == false)
       return;
     if (checkclearopq(cap->oap))
       return;
@@ -4546,7 +4546,7 @@ static void nv_right(cmdarg_T *cap)
     PAST_LINE = 0;
 
   for (n = cap->count1; n > 0; --n) {
-    if ((!PAST_LINE && oneright() == FAIL)
+    if ((!PAST_LINE && oneright() == false)
         || (PAST_LINE && *get_cursor_pos_ptr() == NUL)
         ) {
       /*
@@ -4624,7 +4624,7 @@ static void nv_left(cmdarg_T *cap)
   cap->oap->motion_type = MCHAR;
   cap->oap->inclusive = false;
   for (n = cap->count1; n > 0; --n) {
-    if (oneleft() == FAIL) {
+    if (oneleft() == false) {
       /* <BS> and <Del> wrap to previous line if 'whichwrap' has 'b'.
        *		 'h' wraps to previous line if 'whichwrap' has 'h'.
        *	   CURS_LEFT wraps to previous line if 'whichwrap' has '<'.
@@ -4684,7 +4684,7 @@ static void nv_up(cmdarg_T *cap)
     nv_page(cap);
   } else {
     cap->oap->motion_type = MLINE;
-    if (cursor_up(cap->count1, cap->oap->op_type == OP_NOP) == FAIL)
+    if (cursor_up(cap->count1, cap->oap->op_type == OP_NOP) == false)
       clearopbeep(cap->oap);
     else if (cap->arg)
       beginline(BL_WHITE | BL_FIX);
@@ -4714,7 +4714,7 @@ static void nv_down(cmdarg_T *cap)
       cmdwin_result = CAR;
     else {
       cap->oap->motion_type = MLINE;
-      if (cursor_down(cap->count1, cap->oap->op_type == OP_NOP) == FAIL)
+      if (cursor_down(cap->count1, cap->oap->op_type == OP_NOP) == false)
         clearopbeep(cap->oap);
       else if (cap->arg)
         beginline(BL_WHITE | BL_FIX);
@@ -4786,7 +4786,7 @@ static void nv_dollar(cmdarg_T *cap)
       || cap->oap->op_type == OP_NOP)
     curwin->w_curswant = MAXCOL;        /* so we stay at the end */
   if (cursor_down((long)(cap->count1 - 1),
-          cap->oap->op_type == OP_NOP) == FAIL)
+          cap->oap->op_type == OP_NOP) == false)
     clearopbeep(cap->oap);
   else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
@@ -4880,7 +4880,7 @@ static void nv_csearch(cmdarg_T *cap)
     t_cmd = false;
 
   cap->oap->motion_type = MCHAR;
-  if (IS_SPECIAL(cap->nchar) || searchc(cap, t_cmd) == FAIL)
+  if (IS_SPECIAL(cap->nchar) || searchc(cap, t_cmd) == false)
     clearopbeep(cap->oap);
   else {
     curwin->w_set_curswant = true;
@@ -5161,7 +5161,7 @@ static void nv_brackets(cmdarg_T *cap)
    */
   else if (cap->nchar == 'z') {
     if (foldMoveTo(false, cap->cmdchar == ']' ? FORWARD : BACKWARD,
-            cap->count1) == FAIL)
+            cap->count1) == false)
       clearopbeep(cap->oap);
   }
   /*
@@ -5169,7 +5169,7 @@ static void nv_brackets(cmdarg_T *cap)
    */
   else if (cap->nchar == 'c') {
     if (diff_move_to(cap->cmdchar == ']' ? FORWARD : BACKWARD,
-            cap->count1) == FAIL)
+            cap->count1) == false)
       clearopbeep(cap->oap);
   }
   /*
@@ -5250,7 +5250,7 @@ static void nv_brace(cmdarg_T *cap)
   cap->oap->inclusive = false;
   curwin->w_set_curswant = true;
 
-  if (findsent(cap->arg, cap->count1) == FAIL)
+  if (findsent(cap->arg, cap->count1) == false)
     clearopbeep(cap->oap);
   else {
     /* Don't leave the cursor on the NUL past end of line. */
@@ -5267,7 +5267,7 @@ static void nv_brace(cmdarg_T *cap)
 static void nv_mark(cmdarg_T *cap)
 {
   if (!checkclearop(cap->oap)) {
-    if (setmark(cap->nchar) == FAIL)
+    if (setmark(cap->nchar) == false)
       clearopbeep(cap->oap);
   }
 }
@@ -5362,7 +5362,7 @@ static void nv_replace(cmdarg_T *cap)
 
   /* Break tabs, etc. */
   if (virtual_active()) {
-    if (u_save_cursor() == FAIL)
+    if (u_save_cursor() == false)
       return;
     if (gchar_cursor() == NUL) {
       /* Add extra space and put the cursor on the first one. */
@@ -5397,7 +5397,7 @@ static void nv_replace(cmdarg_T *cap)
   }
 
   /* save line for undo */
-  if (u_save_cursor() == FAIL)
+  if (u_save_cursor() == false)
     return;
 
   if (had_ctrl_v != Ctrl_V && (cap->nchar == '\r' || cap->nchar == '\n')) {
@@ -5597,7 +5597,7 @@ static void n_swapchar(cmdarg_T *cap)
 
   prep_redo_cmd(cap);
 
-  if (u_save_cursor() == FAIL)
+  if (u_save_cursor() == false)
     return;
 
   startpos = curwin->w_cursor;
@@ -5610,7 +5610,7 @@ static void n_swapchar(cmdarg_T *cap)
         ++curwin->w_cursor.lnum;
         curwin->w_cursor.col = 0;
         if (n > 1) {
-          if (u_savesub(curwin->w_cursor.lnum) == FAIL)
+          if (u_savesub(curwin->w_cursor.lnum) == false)
             break;
           u_clearline();
         }
@@ -5637,7 +5637,7 @@ static void n_swapchar(cmdarg_T *cap)
  */
 static void nv_cursormark(cmdarg_T *cap, int flag, pos_T *pos)
 {
-  if (check_mark(pos) == FAIL)
+  if (check_mark(pos) == false)
     clearop(cap->oap);
   else {
     if (cap->cmdchar == '\''
@@ -6134,7 +6134,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       i = cursor_down(cap->count1, oap->op_type == OP_NOP);
     } else
       i = nv_screengo(oap, FORWARD, cap->count1);
-    if (i == FAIL)
+    if (!i)
       clearopbeep(oap);
     break;
 
@@ -6149,7 +6149,7 @@ static void nv_g_cmd(cmdarg_T *cap)
       i = cursor_up(cap->count1, oap->op_type == OP_NOP);
     } else
       i = nv_screengo(oap, BACKWARD, cap->count1);
-    if (i == false)
+    if (!i)
       clearopbeep(oap);
     break;
 
@@ -6197,7 +6197,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     if (flag) {
       do
         i = gchar_cursor();
-      while (vim_iswhite(i) && oneright() == OK);
+      while (vim_iswhite(i) && oneright());
     }
     curwin->w_set_curswant = true;
     break;
@@ -6209,7 +6209,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     cap->oap->inclusive = true;
     curwin->w_curswant = MAXCOL;
     if (cursor_down((long)(cap->count1 - 1),
-            cap->oap->op_type == OP_NOP) == FAIL)
+            cap->oap->op_type == OP_NOP) == false)
       clearopbeep(cap->oap);
     else {
       char_u  *ptr = get_cursor_line_ptr();
@@ -6263,7 +6263,7 @@ static void nv_g_cmd(cmdarg_T *cap)
           if (curwin->w_virtcol > (colnr_T)i)
             --curwin->w_cursor.col;
         }
-      } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == FAIL)
+      } else if (nv_screengo(oap, FORWARD, cap->count1 - 1) == false)
         clearopbeep(oap);
     } else {
       i = curwin->w_leftcol + curwin->w_width - col_off - 1;
@@ -6298,7 +6298,7 @@ static void nv_g_cmd(cmdarg_T *cap)
     oap->motion_type = MCHAR;
     curwin->w_set_curswant = true;
     oap->inclusive = true;
-    if (bckend_word(cap->count1, cap->nchar == 'E', false) == FAIL)
+    if (bckend_word(cap->count1, cap->nchar == 'E', false) == false)
       clearopbeep(oap);
     break;
 
@@ -6526,7 +6526,7 @@ static void n_opencmd(cmdarg_T *cap)
                           (cap->cmdchar == 'O' ? 1 : 0)),
             (linenr_T)(curwin->w_cursor.lnum +
                        (cap->cmdchar == 'o' ? 1 : 0))
-            ) == OK
+            )
         && open_line(cap->cmdchar == 'O' ? BACKWARD : FORWARD,
             has_format_option(FO_OPEN_COMS) ? OPENLINE_DO_COM :
             0, 0)) {
@@ -6551,7 +6551,7 @@ static void nv_dot(cmdarg_T *cap)
      * instead of the last command (inserting text). This is used for
      * CTRL-O <.> in insert mode.
      */
-    if (start_redo(cap->count0, restart_edit != 0 && !arrow_used) == FAIL)
+    if (start_redo(cap->count0, restart_edit != 0 && !arrow_used) == false)
       clearopbeep(cap->oap);
   }
 }
@@ -6648,7 +6648,7 @@ static void set_op_var(int optype)
 static void nv_lineop(cmdarg_T *cap)
 {
   cap->oap->motion_type = MLINE;
-  if (cursor_down(cap->count1 - 1L, cap->oap->op_type == OP_NOP) == FAIL)
+  if (cursor_down(cap->count1 - 1L, cap->oap->op_type == OP_NOP) == false)
     clearopbeep(cap->oap);
   else if (  (cap->oap->op_type == OP_DELETE   /* only with linewise motions */
               && cap->oap->motion_force != 'v'
@@ -6703,7 +6703,7 @@ static void nv_bck_word(cmdarg_T *cap)
   cap->oap->motion_type = MCHAR;
   cap->oap->inclusive = false;
   curwin->w_set_curswant = true;
-  if (bck_word(cap->count1, cap->arg, false) == FAIL)
+  if (bck_word(cap->count1, cap->arg, false) == false)
     clearopbeep(cap->oap);
   else if ((fdo_flags & FDO_HOR) && KeyTyped && cap->oap->op_type == OP_NOP)
     foldOpenCursor();
@@ -6778,7 +6778,7 @@ static void nv_wordcmd(cmdarg_T *cap)
   if (lt(startpos, curwin->w_cursor))
     adjust_cursor(cap->oap);
 
-  if (n == FAIL && cap->oap->op_type == OP_NOP)
+  if (n == false && cap->oap->op_type == OP_NOP)
     clearopbeep(cap->oap);
   else {
     adjust_for_sel(cap);
@@ -7176,7 +7176,7 @@ static void nv_record(cmdarg_T *cap)
     } else
     /* (stop) recording into a named register, unless executing a
      * register */
-    if (!Exec_reg && do_record(cap->nchar) == FAIL)
+    if (!Exec_reg && do_record(cap->nchar) == false)
       clearopbeep(cap->oap);
   }
 }
@@ -7193,7 +7193,7 @@ static void nv_at(cmdarg_T *cap)
       return;
   }
   while (cap->count1-- && !got_int) {
-    if (do_execreg(cap->nchar, false, false, false) == FAIL) {
+    if (do_execreg(cap->nchar, false, false, false) == false) {
       clearopbeep(cap->oap);
       break;
     }
