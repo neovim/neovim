@@ -4246,7 +4246,7 @@ char_u *buf_spname(buf_T *buf)
      * For location list window, w_llist_ref points to the location list.
      * For quickfix window, w_llist_ref is NULL.
      */
-    if (find_win_for_buf(buf, &win, &tp) == OK && win->w_llist_ref != NULL)
+    if (find_win_for_buf(buf, &win, &tp) && win->w_llist_ref != NULL)
       return (char_u *)_(msg_loclist);
     else
       return (char_u *)_(msg_qflist);
@@ -4265,17 +4265,17 @@ char_u *buf_spname(buf_T *buf)
 
 /*
  * Find a window for buffer "buf".
- * If found OK is returned and "wp" and "tp" are set to the window and tabpage.
- * If not found FAIL is returned.
+ * If found true is returned and "wp" and "tp" are set to the window and tabpage.
+ * If not found false is returned.
  */
-int find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
+bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 {
   FOR_ALL_TAB_WINDOWS(*tp, *wp) {
     if ((*wp)->w_buffer == buf) {
-      return OK;
+      return true;
     }
   }
-  return FAIL;
+  return false;
 }
 
 /*
