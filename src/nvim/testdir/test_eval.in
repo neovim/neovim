@@ -49,9 +49,9 @@ STARTTEST
 :  $put =v:exception
 :endtry
 
-:$put ='{{{1 setpos/getpos'
+:$put ='{{{1 getcurpos/setpos'
 /^012345678
-6l:let sp = getpos('.')
+6l:let sp = getcurpos()
 0:call setpos('.', sp)
 jyl:$put
 

@@ -6387,6 +6387,7 @@ static struct fst {
   {"getcmdline",      0, 0, f_getcmdline},
   {"getcmdpos",       0, 0, f_getcmdpos},
   {"getcmdtype",      0, 0, f_getcmdtype},
+  {"getcurpos",       0, 0, f_getcurpos},
   {"getcwd",          0, 0, f_getcwd},
   {"getfontname",     0, 1, f_getfontname},
   {"getfperm",        1, 1, f_getfperm},
@@ -9378,10 +9379,7 @@ static void f_getpid(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = os_get_pid();
 }
 
-/*
- * "getpos(string)" function
- */
-static void f_getpos(typval_T *argvars, typval_T *rettv)
+static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
 {
   pos_T *fp;
   list_T *l;
@@ -9389,7 +9387,11 @@ static void f_getpos(typval_T *argvars, typval_T *rettv)
 
   rettv_list_alloc(rettv);
   l = rettv->vval.v_list;
-  fp = var2fpos(&argvars[0], TRUE, &fnum);
+  if (getcurpos) {
+    fp = &curwin->w_cursor;
+  } else {
+    fp = var2fpos(&argvars[0], true, &fnum);
+  }
   list_append_number(l, (fnum != -1) ? (varnumber_T)fnum : (varnumber_T)0);
   list_append_number(l, (fp != NULL) ? (varnumber_T)fp->lnum : (varnumber_T)0);
   list_append_number(l,
@@ -9398,9 +9400,25 @@ static void f_getpos(typval_T *argvars, typval_T *rettv)
                        : (varnumber_T)0);
   list_append_number(l,
                      (fp != NULL) ? (varnumber_T)fp->coladd : (varnumber_T)0);
-  if (fp == &curwin->w_cursor) {
+  if (getcurpos) {
     list_append_number(l, (varnumber_T) curwin->w_curswant + 1);
   }
+}
+
+/*
+ * "getcurpos(string)" function
+ */
+static void f_getcurpos(typval_T *argvars, typval_T *rettv)
+{
+  getpos_both(argvars, rettv, true);
+}
+
+/*
+ * "getpos(string)" function
+ */
+static void f_getpos(typval_T *argvars, typval_T *rettv)
+{
+  getpos_both(argvars, rettv, false);
 }
 
 /*
