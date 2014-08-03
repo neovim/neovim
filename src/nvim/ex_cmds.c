@@ -1239,11 +1239,12 @@ do_shell (
   if (p_warn
       && !autocmd_busy
       && msg_silent == 0)
-    for (buf = firstbuf; buf; buf = buf->b_next)
+    FOR_ALL_BUFFERS(buf) {
       if (bufIsChanged(buf)) {
         MSG_PUTS(_("[No write since last change]\n"));
         break;
       }
+    }
 
   /* This windgoto is required for when the '\n' resulted in a "delete line
    * 1" command to the terminal. */
@@ -1810,8 +1811,9 @@ static int read_viminfo_up_to_marks(vir_T *virp, int forceit, int writing)
     finish_viminfo_history();
 
   /* Change file names to buffer numbers for fmarks. */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     fmarks_check_names(buf);
+  }
 
   return eof;
 }
@@ -2363,7 +2365,7 @@ void do_wqall(exarg_T *eap)
   if (eap->cmdidx == CMD_xall || eap->cmdidx == CMD_wqall)
     exiting = TRUE;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf)) {
       /*
        * Check if there is a reason the buffer cannot be written:
@@ -5900,10 +5902,11 @@ void ex_sign(exarg_T *eap)
 		if (idx == SIGNCMD_UNPLACE && *arg == NUL)
 		{
 		    /* ":sign unplace {id}": remove placed sign by number */
-		    for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-			if ((lnum = buf_delsign(buf, id)) != 0)
-			    update_debug_sign(buf, lnum);
-		    return;
+         FOR_ALL_BUFFERS(buf) {
+           if ((lnum = buf_delsign(buf, id)) != 0)
+               update_debug_sign(buf, lnum);
+            return;
+         }
 		}
 	    }
 	}

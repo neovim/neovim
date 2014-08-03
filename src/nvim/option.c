@@ -4977,7 +4977,7 @@ set_bool_option (
       char_u hash[UNDO_HASH_SIZE];
       buf_T       *save_curbuf = curbuf;
 
-      for (curbuf = firstbuf; curbuf != NULL; curbuf = curbuf->b_next) {
+      FOR_ALL_BUFFERS(curbuf) {
         /* When 'undofile' is set globally: for every buffer, otherwise
          * only for the current buffer: Try to read in the undofile,
          * if one exists, the buffer wasn't changed and the buffer was
@@ -7703,7 +7703,7 @@ static void paste_option_changed(void)
      */
     if (!old_p_paste) {
       /* save options for each buffer */
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+      FOR_ALL_BUFFERS(buf) {
         buf->b_p_tw_nopaste = buf->b_p_tw;
         buf->b_p_wm_nopaste = buf->b_p_wm;
         buf->b_p_sts_nopaste = buf->b_p_sts;
@@ -7727,7 +7727,7 @@ static void paste_option_changed(void)
      * already on.
      */
     /* set options for each buffer */
-    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    FOR_ALL_BUFFERS(buf) {
       buf->b_p_tw = 0;              /* textwidth is 0 */
       buf->b_p_wm = 0;              /* wrapmargin is 0 */
       buf->b_p_sts = 0;             /* softtabstop is 0 */
@@ -7752,7 +7752,7 @@ static void paste_option_changed(void)
    */
   else if (old_p_paste) {
     /* restore options for each buffer */
-    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    FOR_ALL_BUFFERS(buf) {
       buf->b_p_tw = buf->b_p_tw_nopaste;
       buf->b_p_wm = buf->b_p_wm_nopaste;
       buf->b_p_sts = buf->b_p_sts_nopaste;

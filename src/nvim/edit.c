@@ -3434,8 +3434,9 @@ static int ins_compl_get_exp(pos_T *ini)
   int set_match_pos;
 
   if (!compl_started) {
-    for (ins_buf = firstbuf; ins_buf != NULL; ins_buf = ins_buf->b_next)
+    FOR_ALL_BUFFERS(ins_buf) {
       ins_buf->b_scanned = 0;
+    }
     found_all = FALSE;
     ins_buf = curbuf;
     e_cpt = (compl_cont_status & CONT_LOCAL)

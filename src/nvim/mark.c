@@ -1351,7 +1351,7 @@ int write_viminfo_marks(FILE *fp_out)
 
   fputs(_("\n# History of marks within files (newest to oldest):\n"), fp_out);
   count = 0;
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     /*
      * Only write something if buffer has been loaded and at least one
      * mark is set.
@@ -1467,12 +1467,13 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
       }
     } else { /* fp_out != NULL */
              /* This is slow if there are many buffers!! */
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+      FOR_ALL_BUFFERS(buf) {
         if (buf->b_ffname != NULL) {
           home_replace(NULL, buf->b_ffname, name_buf, LSIZE, TRUE);
           if (fnamecmp(str, name_buf) == 0)
             break;
         }
+      }
 
       /*
        * copy marks if the buffer has not been loaded

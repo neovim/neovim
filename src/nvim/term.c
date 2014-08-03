@@ -1608,7 +1608,7 @@ int set_termname(char_u *term)
        * loaded.
        */
       buf_T *old_curbuf = curbuf;
-      for (curbuf = firstbuf; curbuf != NULL; curbuf = curbuf->b_next) {
+      FOR_ALL_BUFFERS(curbuf) {
         if (curbuf->b_ml.ml_mfp != NULL)
           apply_autocmds(EVENT_TERMCHANGED, NULL, NULL, FALSE,
               curbuf);

@@ -3609,10 +3609,11 @@ win_free (
 
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
       if (wip->wi_win == wp)
         wip->wi_win = NULL;
+  }
 
   clear_matches(wp);
 

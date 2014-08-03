@@ -556,6 +556,9 @@ EXTERN buf_T    *firstbuf INIT(= NULL); /* first buffer */
 EXTERN buf_T    *lastbuf INIT(= NULL);  /* last buffer */
 EXTERN buf_T    *curbuf INIT(= NULL);   /* currently active buffer */
 
+// Iterates over all buffers in the buffer list.
+# define FOR_ALL_BUFFERS(buf) for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+
 /* Flag that is set when switching off 'swapfile'.  It means that all blocks
  * are to be loaded into memory.  Shouldn't be global... */
 EXTERN int mf_dont_release INIT(= FALSE);       /* don't release blocks */

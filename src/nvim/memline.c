@@ -468,9 +468,11 @@ void ml_open_files(void)
 {
   buf_T       *buf;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-    if (!buf->b_p_ro || buf->b_changed)
+  FOR_ALL_BUFFERS(buf) {
+    if (!buf->b_p_ro || buf->b_changed) {
       ml_open_file(buf);
+    }
+  }
 }
 
 /*
@@ -586,9 +588,10 @@ void ml_close_all(int del_file)
 {
   buf_T       *buf;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0
                                || vim_strchr(p_cpo, CPO_PRESERVE) == NULL));
+  }
   spell_delete_wordlist();      /* delete the internal wordlist */
   vim_deltempdir();             /* delete created temp directory */
 }
@@ -601,9 +604,11 @@ void ml_close_notmod(void)
 {
   buf_T       *buf;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-    if (!bufIsChanged(buf))
+  FOR_ALL_BUFFERS(buf) {
+    if (!bufIsChanged(buf)) {
       ml_close(buf, TRUE);          /* close all not-modified buffers */
+    }
+  }
 }
 
 /*
@@ -1619,7 +1624,7 @@ void ml_sync_all(int check_file, int check_char)
 {
   buf_T               *buf;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
       continue;                             /* no file */
 

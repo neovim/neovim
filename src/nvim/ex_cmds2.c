@@ -1048,13 +1048,14 @@ void autowrite_all(void)
 
   if (!(p_aw || p_awa) || !p_write)
     return;
-  for (buf = firstbuf; buf; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf) && !buf->b_p_ro) {
       (void)buf_write_all(buf, FALSE);
       /* an autocommand may have deleted the buffer */
       if (!buf_valid(buf))
         buf = firstbuf;
     }
+  }
 }
 
 /*
@@ -1074,11 +1075,11 @@ int check_changed(buf_T *buf, int flags)
       int count = 0;
 
       if (flags & CCGD_ALLBUF)
-        for (buf2 = firstbuf; buf2 != NULL; buf2 = buf2->b_next)
-          if (bufIsChanged(buf2)
-              && (buf2->b_ffname != NULL
-                  ))
+        FOR_ALL_BUFFERS(buf2) {
+          if (bufIsChanged(buf2) && (buf2->b_ffname != NULL)) {
             ++count;
+          }
+        }
       if (!buf_valid(buf))
         /* Autocommand deleted buffer, oops!  It's not changed now. */
         return FALSE;
@@ -1139,7 +1140,7 @@ dialog_changed (
      * Skip readonly buffers, these need to be confirmed
      * individually.
      */
-    for (buf2 = firstbuf; buf2 != NULL; buf2 = buf2->b_next) {
+    FOR_ALL_BUFFERS(buf2) {
       if (bufIsChanged(buf2)
           && (buf2->b_ffname != NULL
               )
@@ -1157,8 +1158,9 @@ dialog_changed (
     /*
      * mark all buffers as unchanged
      */
-    for (buf2 = firstbuf; buf2 != NULL; buf2 = buf2->b_next)
+    FOR_ALL_BUFFERS(buf2) {
       unchanged(buf2, TRUE);
+    }
   }
 }
 
@@ -1209,8 +1211,9 @@ check_changed_any (
   tabpage_T   *tp;
   win_T       *wp;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     ++bufcount;
+  }
 
   if (bufcount == 0)
     return FALSE;
@@ -1230,8 +1233,9 @@ check_changed_any (
       for (wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next)
         add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
   /* any other buf */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     add_bufnum(bufnrs, &bufnum, buf->b_fnum);
+  }
 
   for (i = 0; i < bufnum; ++i) {
     buf = buflist_findnr(bufnrs[i]);
@@ -1898,9 +1902,11 @@ void ex_listdo(exarg_T *eap)
         if (next_fnum < 0)
           break;
         /* Check if the buffer still exists. */
-        for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-          if (buf->b_fnum == next_fnum)
+        FOR_ALL_BUFFERS(buf) {
+          if (buf->b_fnum == next_fnum) {
             break;
+          }
+        }
         if (buf == NULL)
           break;
 

@@ -4363,7 +4363,7 @@ void shorten_fnames(int force)
   char_u      *p;
 
   os_dirname(dirname, MAXPATHL);
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (buf->b_fname != NULL
         && !bt_nofile(buf)
         && !path_with_url(buf->b_fname)
@@ -6134,7 +6134,7 @@ void ex_doautoall(exarg_T *eap)
    * gives problems when the autocommands make changes to the list of
    * buffers or windows...
    */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL) {
       /* find a window for this buffer and save some values */
       aucmd_prepbuf(&aco, buf);
