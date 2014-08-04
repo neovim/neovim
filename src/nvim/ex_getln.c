@@ -10,6 +10,7 @@
  * ex_getln.c: Functions for entering and editing an Ex command line.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <string.h>
@@ -4052,52 +4053,46 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 /// @param[out] file     List of matches.
 /// @param[in]  dirnames (see above)
 /// @returns true if any files found.
-static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file,
-                       char *dirnames[])
+static bool ExpandRTDir(char_u *pat, int *num_file, char_u ***file,
+                        char *dirnames[])
   FUNC_ATTR_NONNULL_ALL
 {
-  *num_file = 0;
-  *file = NULL;
-  size_t pat_len = STRLEN(pat);
-
+  // A garray for globpath() to store results in.
   garray_T ga;
   ga_init(&ga, (int)sizeof(char *), 10);
 
+  char_u *pat_dot_vim = concat_str(pat, (char_u *)"*.vim");  // {pat}*.vim
+
   for (int i = 0; dirnames[i] != NULL; i++) {
-    size_t size = STRLEN(dirnames[i]) + pat_len + 7;
-    char_u *s = xmalloc(size);
-    snprintf((char *)s, size, "%s/%s*.vim", dirnames[i], pat);
+    // :call globpath(&rtp, 'dirname/pat*.vim')
+    char_u *s = concat_fnames((char_u *)dirnames[i], pat_dot_vim, true);
     globpath(p_rtp, s, &ga, 0);
     free(s);
   }
 
+  free(pat_dot_vim);
+
   for (int i = 0; i < ga.ga_len; i++) {
+    // Replace the paths with file names, minus the .vim extension.
     char_u *match = ((char_u **)ga.ga_data)[i];
-    char_u *s = match;
-    char_u *e = s + STRLEN(s);
-    if (e - s > 4 && STRNICMP(e - 4, ".vim", 4) == 0) {
-      e -= 4;
-      for (s = e; s > match; mb_ptr_back(match, s)) {
-        if (vim_ispathsep(*s)) {
-          break;
-        }
-      }
-      s++;
-      *e = NUL;
-      memmove(match, s, e - s + 1);
-    }
+    char_u *tail = path_tail(match);
+    char_u *dot = vim_strrchr(tail, '.');
+    assert(dot);  // In case globpath() returned an invalid result.
+    *(dot++) = 0;
+    memmove(match, tail, dot - tail);
   }
 
-  if (GA_EMPTY(&ga))
-    return FAIL;
-
-  /* Sort and remove duplicates which can happen when specifying multiple
-   * directories in dirnames. */
-  ga_remove_duplicate_strings(&ga);
+  if (GA_EMPTY(&ga)) {
+    ga_clear(&ga);
+  } else {
+    // Sort and remove duplicates which can happen when specifying multiple
+    // directories in dirnames.
+    ga_remove_duplicate_strings(&ga);
+  }
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
-  return OK;
+  return ga.ga_len > 0;
 }
 
 
