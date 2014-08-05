@@ -28,26 +28,29 @@ static void vim_maketempdir(void)
 {
   static const char *temp_dirs[] = TEMP_DIR_NAMES;
   // Try the entries in `TEMP_DIR_NAMES` to create the temp directory.
-  char_u itmp[TEMP_FILE_PATH_MAXLEN];
+  char_u template[TEMP_FILE_PATH_MAXLEN];
+  char_u path[TEMP_FILE_PATH_MAXLEN];
   for (size_t i = 0; i < sizeof(temp_dirs) / sizeof(char *); ++i) {
     // Expand environment variables, leave room for "/nvimXXXXXX/999999999"
-    expand_env((char_u *)temp_dirs[i], itmp, TEMP_FILE_PATH_MAXLEN - 22);
-    if (!os_isdir(itmp)) {  // directory doesn't exist
+    expand_env((char_u *)temp_dirs[i], template, TEMP_FILE_PATH_MAXLEN - 22);
+    if (!os_isdir(template)) {  // directory doesn't exist
       continue;
     }
 
-    add_pathsep(itmp);
+    add_pathsep(template);
     // Concatenate with temporary directory name pattern
-    STRCAT(itmp, "nvimXXXXXX");
-    if (!os_mkdtemp((char *)itmp)) {
+    STRCAT(template, "nvimXXXXXX");
+
+    if (os_mkdtemp((const char *)template, (char *)path) != 0) {
       continue;
     }
-    if (vim_settempdir(itmp)) {
+
+    if (vim_settempdir(path)) {
       // Successfully created and set temporary directory so stop trying.
       break;
     } else {
-      // Couldn't set `vim_tempdir` to itmp so remove created directory.
-      os_rmdir((char *)itmp);
+      // Couldn't set `vim_tempdir` to `path` so remove created directory.
+      os_rmdir((char *)path);
     }
   }
 }
@@ -128,8 +131,8 @@ char_u *vim_tempname(void)
 
   // There is no need to check if the file exists, because we own the directory
   // and nobody else creates a file in it.
-  char_u itmp[TEMP_FILE_PATH_MAXLEN];
-  snprintf((char *)itmp, TEMP_FILE_PATH_MAXLEN,
+  char_u template[TEMP_FILE_PATH_MAXLEN];
+  snprintf((char *)template, TEMP_FILE_PATH_MAXLEN,
            "%s%" PRIu32, tempdir, temp_count++);
-  return vim_strsave(itmp);
+  return vim_strsave(template);
 }

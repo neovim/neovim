@@ -3,13 +3,6 @@
 
 #include <assert.h>
 
-// TODO(hinidu): remove after implementing `os_mkdtemp` on top of libuv
-#ifdef WIN32
-# include <io.h>
-#else
-# include <stdlib.h>
-#endif
-
 #include "nvim/os/os.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
@@ -293,18 +286,21 @@ int os_mkdir(const char *path, int32_t mode)
 }
 
 /// Create a unique temporary directory.
-/// TODO(hinidu): Implement on top of libuv. ref #850
 ///
-/// @param[in,out] template Template of the path to the directory with XXXXXX
-///                         which would be replaced by random chars.
-/// @return Pointer to changed `template` for success, `NULL` for failure.
-char *os_mkdtemp(char *template)
+/// @param[in] template Template of the path to the directory with XXXXXX
+///                     which would be replaced by random chars.
+/// @param[out] path Path to created directory for success, undefined for
+///                  failure.
+/// @return `0` for success, non-zero for failure.
+int os_mkdtemp(const char *template, char *path)
 {
-#ifdef WIN32
-  return _mktemp(template) && os_mkdir(template, 0700) == 0 ? template : NULL;
-#else
-  return mkdtemp(template);
-#endif
+  uv_fs_t request;
+  int result = uv_fs_mkdtemp(uv_default_loop(), &request, template, NULL);
+  if (result == kLibuvSuccess) {
+    strcpy(path, request.path);
+  }
+  uv_fs_req_cleanup(&request);
+  return result;
 }
 
 /// Remove a directory.
