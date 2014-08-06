@@ -26,37 +26,13 @@ For lots more details, see
 
 ### What's been done so far
 
-- Cleaned up source tree, leaving only core files
-- Removed support for legacy systems and moved to C99
-    - Removed tons of `FEAT_*` macros with [unifdef]
-    - Reduced C code from 300k lines to 170k
-- Enabled modern compiler features and [optimizations](https://github.com/neovim/neovim/pull/426)
-- Formatted entire source with [uncrustify]
-- Replaced autotools build system with [CMake]
-- Implemented [continuous integration] and [test coverage]
-- Wrote 100+ new unit tests
-- Split large, monolithic files (`misc1.c`) into logical units
-  (`path.c`, `indent.c`, `garray.c`, `keymap.c`, ...)
-- [Implemented](https://github.com/neovim/neovim/pull/475) job control ("async")
-- Reworked out-of-memory handling resulting in greatly simplified control flow
-- Merged 50+ upstream patches (nearly caught up with upstream)
-- [Removed](https://github.com/neovim/neovim/pull/635) 8.3 filename support
-- [Changed](https://github.com/neovim/neovim/pull/574) to portable format
-  specifiers (first step towards building on Windows)
+You can see the progress on the [wiki](https://github.com/neovim/neovim/wiki/Progress#completed).
 
-[unifdef]: http://freecode.com/projects/unifdef
-[uncrustify]: http://uncrustify.sourceforge.net/
-[CMake]: http://cmake.org/
-[continuous integration]: https://travis-ci.org/neovim/neovim
-[test coverage]: https://coveralls.io/r/neovim/neovim
 
 ### What's being worked on now
 
-- Porting all IO to libuv
-- Lots of refactoring
-- A VimL => Lua transpiler
-- Formatting with `clint.py`
-- msg-pack remote API
+See the [wiki](https://github.com/neovim/neovim/wiki/Progress#in-progress).
+
 
 ### How do I get it?
 
