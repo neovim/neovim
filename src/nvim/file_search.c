@@ -66,12 +66,15 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 #include "nvim/os/fs_defs.h"
+#include "nvim/option_defs.h"  // for p_bfs
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
 
 // type for the directory search state
 typedef struct ff_state {
   // Points to the next node to search.
+  // Either one node down on the stack, or the next node in the queue when
+  // p_bfs is set.
   struct ff_state *ffs_child;
 
   /* the fix part (no wildcards) and the part containing the wildcards
@@ -172,6 +175,7 @@ typedef struct ff_visited_list_hdr {
  */
 typedef struct ff_search_ctx_T {
   ff_state_T                 *ffsc_state_ptr;
+  ff_state_T                 *ffsc_queue_last;
   ff_visited_list_hdr_T      *ffsc_visited_list;
   ff_visited_list_hdr_T      *ffsc_dir_visited_list;
   ff_visited_list_hdr_T      *ffsc_visited_lists_list;
@@ -193,6 +197,10 @@ typedef struct ff_search_ctx_T {
 #endif
 
 static char_u e_pathtoolong[] = N_("E854: path too long for completion");
+
+// Pointer to the implementation of push for the stack or queue.
+// Set to  `ffs_push()` if using DFS  and `ffq_push()` if using BFS.
+static void (*ff_push)(ff_search_ctx_T *, ff_state_T *);
 
 /*
  * Initialization routine for vim_findfile().
@@ -262,6 +270,8 @@ vim_findfile_init (
   char_u              *wc_part;
   ff_state_T          *sptr;
   ff_search_ctx_T     *search_ctx;
+
+  ff_push = p_bfs ? ffq_push : ffs_push;
 
   /* If a search context is given by the caller, reuse it, else allocate a
    * new one.
@@ -569,7 +579,7 @@ void vim_findfile_cleanup(void *ctx)
  *
  * If the passed search_context is NULL, NULL is returned.
  *
- * The search algorithm is depth first by default, and breadth first if p_bsp
+ * The search algorithm is depth first by default, and breadth first if p_bfs
  * is set.
  */
 char_u *vim_findfile(void *search_ctx_arg)
@@ -1144,7 +1154,7 @@ static ff_state_T *ff_create_state_element(char_u *fix_part, char_u *wc_part, in
 {
   ff_state_T *new = xmalloc(sizeof(ff_state_T));
 
-  new->ffs_child          = NULL;
+  new->ffs_child = NULL;
   new->ffs_filearray     = NULL;
   new->ffs_filearray_size = 0;
   new->ffs_filearray_cur  = 0;
@@ -1165,25 +1175,34 @@ static ff_state_T *ff_create_state_element(char_u *fix_part, char_u *wc_part, in
 }
 
 // Push a dir on the directory state.
-static void ff_push(ff_search_ctx_T *search_ctx, ff_state_T *state_ptr)
+// Stack implementation.
+static void ffs_push(ff_search_ctx_T *search_ctx, ff_state_T *stack_ptr)
 {
-  /* check for NULL pointer, not to return an error to the user, but
-   * to prevent a crash */
-  if (state_ptr != NULL) {
-    state_ptr->ffs_child = search_ctx->ffsc_state_ptr;
-    search_ctx->ffsc_state_ptr = state_ptr;
+  stack_ptr->ffs_child = search_ctx->ffsc_state_ptr;
+  search_ctx->ffsc_state_ptr = stack_ptr;
+}
+
+// Queue implementation.
+static void ffq_push(ff_search_ctx_T *search_ctx, ff_state_T *queue_ptr)
+{
+  if (search_ctx->ffsc_state_ptr && search_ctx->ffsc_queue_last) {
+    search_ctx->ffsc_queue_last->ffs_child = queue_ptr;
+  } else {
+    search_ctx->ffsc_state_ptr = queue_ptr;
   }
+
+  search_ctx->ffsc_queue_last = queue_ptr;
 }
 
 // Pop a dir from the directory state.
 // Returns NULL if state is empty.
 static ff_state_T *ff_pop(ff_search_ctx_T *search_ctx)
 {
-  ff_state_T  *sptr;
-
-  sptr = search_ctx->ffsc_state_ptr;
-  if (search_ctx->ffsc_state_ptr != NULL)
+  ff_state_T  *sptr = search_ctx->ffsc_state_ptr;
+  if (search_ctx->ffsc_state_ptr != NULL) {
     search_ctx->ffsc_state_ptr = search_ctx->ffsc_state_ptr->ffs_child;
+    sptr->ffs_child = NULL;
+  }
 
   return sptr;
 }
@@ -1234,6 +1253,7 @@ static void ff_clear(ff_search_ctx_T *search_ctx)
   search_ctx->ffsc_fix_path = NULL;
   search_ctx->ffsc_wc_path = NULL;
   search_ctx->ffsc_level = 0;
+  search_ctx->ffsc_queue_last = NULL;
 }
 
 /*

@@ -632,6 +632,7 @@ EXTERN int p_wb;                /* 'writebackup' */
 EXTERN long p_wd;               /* 'writedelay' */
 EXTERN char *p_ipy;             // 'initpython'
 EXTERN char *p_icpb;            // 'initclipboard'
+EXTERN bool p_bfs;              // 'breadthfirst'
 
 /*
  * "indir" values for buffer-local opions.
