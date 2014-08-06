@@ -26,44 +26,12 @@ For lots more details, see
 
 ### What's been done so far
 
-- Cleaned up source tree, leaving only core files
-- Removed support for legacy systems and moved to C99
-    - Removed tons of `FEAT_*` macros with [unifdef]
-    - Reduced C code from 300k lines to 170k
-- Enabled modern compiler features and [optimizations](https://github.com/neovim/neovim/pull/426)
-- Formatted entire source with [uncrustify]
-- Replaced autotools build system with [CMake]
-- Implemented [continuous integration] and [test coverage]
-- Wrote 120+ new unit tests
-- Split large, monolithic files (`misc1.c`) into logical units
-  (`path.c`, `indent.c`, `garray.c`, `keymap.c`, ...)
-- [Implemented](https://github.com/neovim/neovim/pull/475) job control ("async")
-- Reworked out-of-memory handling resulting in greatly simplified control flow
-- Merged 50+ upstream patches (nearly caught up with upstream)
-- [Removed](https://github.com/neovim/neovim/pull/635) 8.3 filename support
-- [Changed](https://github.com/neovim/neovim/pull/574) to portable format
-  specifiers (first step towards building on Windows)
-- Implement system() with [pipes](https://github.com/neovim/neovim/pull/978) instead of temp files to improve [performance](https://github.com/neovim/neovim/pull/978#issuecomment-50092527) and reliability ([1](https://groups.google.com/forum/#!msg/vim_use/JSXaM9YjWKo/HtHn36WFb_kJ), [2](https://groups.google.com/forum/#!msg/vim_use/adD_-9yBCEU/Y0ul-OwXGpYJ), [3](https://github.com/mattn/gist-vim/issues/48#issuecomment-12916349), [4](https://groups.google.com/forum/#!msg/vim_use/oU7y-hmQoNc/2qQnkPl6aKkJ))
-- Use hrtime() (more precise and monotonic) for profiling instead of gettimeofday() [#831](https://github.com/neovim/neovim/issues/831)
-- Update translations (runtime messages--not user manual): 
-  - pt_BR
-  - de
-  - sv
-- Implement msgpack remote API [#509](https://github.com/neovim/neovim/pull/509) [#779](https://github.com/neovim/neovim/pull/779)
-- [Reduce indiscriminate redraws](https://github.com/neovim/neovim/pull/485#issuecomment-39924973) to improve performance
+You can see the progress on the [wiki](https://github.com/neovim/neovim/wiki/Progress#completed).
 
-[unifdef]: http://freecode.com/projects/unifdef
-[uncrustify]: http://uncrustify.sourceforge.net/
-[CMake]: http://cmake.org/
-[continuous integration]: https://travis-ci.org/neovim/neovim
-[test coverage]: https://coveralls.io/r/neovim/neovim
 
 ### What's being worked on now
 
- - Replace [eval.c](https://github.com/neovim/neovim/blob/57cd2d661454cd6686c7d98cafa783ea94495fd5/src/eval.c) (20k lines) by VimL => Lua translator
- - Remove superfluous #includes with Google's [include-what-you-use](https://code.google.com/p/include-what-you-use/) [#549](https://github.com/neovim/neovim/issues/549)
- - Avoid unnecessary STRLEN
- - Port all IO to libuv
+See the [wiki](https://github.com/neovim/neovim/wiki/Progress#in-progress).
 
 
 ### How do I get it?
