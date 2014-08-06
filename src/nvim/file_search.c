@@ -69,11 +69,10 @@
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
 
-/*
- * type for the directory search stack
- */
-typedef struct ff_stack {
-  struct ff_stack     *ffs_prev;
+// type for the directory search state
+typedef struct ff_state {
+  // Points to the next node to search.
+  struct ff_state *ffs_child;
 
   /* the fix part (no wildcards) and the part containing the wildcards
    * of the search path
@@ -101,7 +100,7 @@ typedef struct ff_stack {
 
   /* Did we already expand '**' to an empty string? */
   int ffs_star_star_empty;
-} ff_stack_T;
+} ff_state_T;
 
 /*
  * type for already visited directories or files.
@@ -155,7 +154,8 @@ typedef struct ff_visited_list_hdr {
 
 /*
  * The search context:
- *   ffsc_stack_ptr:	the stack for the dirs to search
+ *   ffsc_state_ptr:  the state for the dirs to search
+ *   ffsc_queue_last: the last node of the state list when using BFS.
  *   ffsc_visited_list: the currently active visited list
  *   ffsc_dir_visited_list: the currently active visited list for search dirs
  *   ffsc_visited_lists_list: the list of all visited lists
@@ -171,7 +171,7 @@ typedef struct ff_visited_list_hdr {
  *   ffsc_tagfile:	searching for tags file, don't use 'suffixesadd'
  */
 typedef struct ff_search_ctx_T {
-  ff_stack_T                 *ffsc_stack_ptr;
+  ff_state_T                 *ffsc_state_ptr;
   ff_visited_list_hdr_T      *ffsc_visited_list;
   ff_visited_list_hdr_T      *ffsc_dir_visited_list;
   ff_visited_list_hdr_T      *ffsc_visited_lists_list;
@@ -193,7 +193,6 @@ typedef struct ff_search_ctx_T {
 #endif
 
 static char_u e_pathtoolong[] = N_("E854: path too long for completion");
-
 
 /*
  * Initialization routine for vim_findfile().
@@ -261,7 +260,7 @@ vim_findfile_init (
 )
 {
   char_u              *wc_part;
-  ff_stack_T          *sptr;
+  ff_state_T          *sptr;
   ff_search_ctx_T     *search_ctx;
 
   /* If a search context is given by the caller, reuse it, else allocate a
@@ -507,7 +506,7 @@ vim_findfile_init (
     free(buf);
   }
 
-  sptr = ff_create_stack_element(ff_expand_buffer,
+  sptr = ff_create_state_element(ff_expand_buffer,
       search_ctx->ffsc_wc_path,
       level, 0);
 
@@ -570,16 +569,15 @@ void vim_findfile_cleanup(void *ctx)
  *
  * If the passed search_context is NULL, NULL is returned.
  *
- * The search algorithm is depth first. To change this replace the
- * stack with a list (don't forget to leave partly searched directories on the
- * top of the list).
+ * The search algorithm is depth first by default, and breadth first if p_bsp
+ * is set.
  */
 char_u *vim_findfile(void *search_ctx_arg)
 {
   char_u      *file_path;
   char_u      *rest_of_wildcards;
   char_u      *path_end = NULL;
-  ff_stack_T  *stackp;
+  ff_state_T  *statep;
   int len;
   int i;
   char_u      *p;
@@ -611,9 +609,9 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (got_int)
         break;
 
-      /* get directory to work on from stack */
-      stackp = ff_pop(search_ctx);
-      if (stackp == NULL)
+      /* get directory to work on from state */
+      statep = ff_pop(search_ctx);
+      if (statep == NULL)
         break;
 
       /*
@@ -633,32 +631,32 @@ char_u *vim_findfile(void *search_ctx_arg)
        *  /etc/rc.d/init.d is linked to /etc/rc.d -> endless loop)
        *
        * This check is only needed for directories we work on for the
-       * first time (hence stackp->ff_filearray == NULL)
+       * first time (hence statep->ff_filearray == NULL)
        */
-      if (stackp->ffs_filearray == NULL
+      if (statep->ffs_filearray == NULL
           && ff_check_visited(&search_ctx->ffsc_dir_visited_list
               ->ffvl_visited_list,
-              stackp->ffs_fix_path
-              , stackp->ffs_wc_path
+              statep->ffs_fix_path
+              , statep->ffs_wc_path
               ) == FAIL) {
 #ifdef FF_VERBOSE
         if (p_verbose >= 5) {
           verbose_enter_scroll();
           smsg((char_u *)"Already Searched: %s (%s)",
-              stackp->ffs_fix_path, stackp->ffs_wc_path);
+              statep->ffs_fix_path, statep->ffs_wc_path);
           /* don't overwrite this either */
           msg_puts((char_u *)"\n");
           verbose_leave_scroll();
         }
 #endif
-        ff_free_stack_element(stackp);
+        ff_free_state_element(statep);
         continue;
       }
 #ifdef FF_VERBOSE
       else if (p_verbose >= 5) {
         verbose_enter_scroll();
         smsg((char_u *)"Searching: %s (%s)",
-            stackp->ffs_fix_path, stackp->ffs_wc_path);
+            statep->ffs_fix_path, statep->ffs_wc_path);
         /* don't overwrite this either */
         msg_puts((char_u *)"\n");
         verbose_leave_scroll();
@@ -666,8 +664,8 @@ char_u *vim_findfile(void *search_ctx_arg)
 #endif
 
       /* check depth */
-      if (stackp->ffs_level <= 0) {
-        ff_free_stack_element(stackp);
+      if (statep->ffs_level <= 0) {
+        ff_free_state_element(statep);
         continue;
       }
 
@@ -679,7 +677,7 @@ char_u *vim_findfile(void *search_ctx_arg)
        * and all possible expands are returned in one array. We use this
        * to handle the expansion of '**' into an empty string.
        */
-      if (stackp->ffs_filearray == NULL) {
+      if (statep->ffs_filearray == NULL) {
         char_u *dirptrs[2];
 
         /* we use filepath to build the path expand_wildcards() should
@@ -689,17 +687,17 @@ char_u *vim_findfile(void *search_ctx_arg)
         dirptrs[1] = NULL;
 
         /* if we have a start dir copy it in */
-        if (!vim_isAbsName(stackp->ffs_fix_path)
+        if (!vim_isAbsName(statep->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
           STRCPY(file_path, search_ctx->ffsc_start_dir);
           add_pathsep(file_path);
         }
 
         /* append the fix part of the search path */
-        STRCAT(file_path, stackp->ffs_fix_path);
+        STRCAT(file_path, statep->ffs_fix_path);
         add_pathsep(file_path);
 
-        rest_of_wildcards = stackp->ffs_wc_path;
+        rest_of_wildcards = statep->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
           len = (int)STRLEN(file_path);
           if (STRNCMP(rest_of_wildcards, "**", 2) == 0) {
@@ -719,10 +717,10 @@ char_u *vim_findfile(void *search_ctx_arg)
             } else
               rest_of_wildcards += 3;
 
-            if (stackp->ffs_star_star_empty == 0) {
+            if (statep->ffs_star_star_empty == 0) {
               /* if not done before, expand '**' to empty */
-              stackp->ffs_star_star_empty = 1;
-              dirptrs[1] = stackp->ffs_fix_path;
+              statep->ffs_star_star_empty = 1;
+              dirptrs[1] = statep->ffs_fix_path;
             }
           }
 
@@ -731,7 +729,7 @@ char_u *vim_findfile(void *search_ctx_arg)
            * the path. If we stop at a path separator, there is
            * still something else left. This is handled below by
            * pushing every directory returned from expand_wildcards()
-           * on the stack again for further search.
+           * on the state again for further search.
            */
           while (*rest_of_wildcards
                  && !vim_ispathsep(*rest_of_wildcards))
@@ -747,40 +745,40 @@ char_u *vim_findfile(void *search_ctx_arg)
          * If the path is a URL don't try this.
          */
         if (path_with_url(dirptrs[0])) {
-          stackp->ffs_filearray = (char_u **)xmalloc(sizeof(char *));
-          stackp->ffs_filearray[0] = vim_strsave(dirptrs[0]);
-          stackp->ffs_filearray_size = 1;
+          statep->ffs_filearray = (char_u **)xmalloc(sizeof(char *));
+          statep->ffs_filearray[0] = vim_strsave(dirptrs[0]);
+          statep->ffs_filearray_size = 1;
         } else
           /* Add EW_NOTWILD because the expanded path may contain
            * wildcard characters that are to be taken literally.
            * This is a bit of a hack. */
           expand_wildcards((dirptrs[1] == NULL) ? 1 : 2, dirptrs,
-              &stackp->ffs_filearray_size,
-              &stackp->ffs_filearray,
+              &statep->ffs_filearray_size,
+              &statep->ffs_filearray,
               EW_DIR|EW_ADDSLASH|EW_SILENT|EW_NOTWILD);
 
-        stackp->ffs_filearray_cur = 0;
-        stackp->ffs_stage = 0;
+        statep->ffs_filearray_cur = 0;
+        statep->ffs_stage = 0;
       } else
-        rest_of_wildcards = &stackp->ffs_wc_path[
-          STRLEN(stackp->ffs_wc_path)];
+        rest_of_wildcards = &statep->ffs_wc_path[
+          STRLEN(statep->ffs_wc_path)];
 
-      if (stackp->ffs_stage == 0) {
+      if (statep->ffs_stage == 0) {
         /* this is the first time we work on this directory */
         if (*rest_of_wildcards == NUL) {
           /*
            * We don't have further wildcards to expand, so we have to
            * check for the final file now.
            */
-          for (i = stackp->ffs_filearray_cur;
-               i < stackp->ffs_filearray_size; ++i) {
-            if (!path_with_url(stackp->ffs_filearray[i])
-                && !os_isdir(stackp->ffs_filearray[i]))
+          for (i = statep->ffs_filearray_cur;
+               i < statep->ffs_filearray_size; ++i) {
+            if (!path_with_url(statep->ffs_filearray[i])
+                && !os_isdir(statep->ffs_filearray[i]))
               continue;                 /* not a directory */
 
             /* prepare the filename to be checked for existence
              * below */
-            STRCPY(file_path, stackp->ffs_filearray[i]);
+            STRCPY(file_path, statep->ffs_filearray[i]);
             add_pathsep(file_path);
             STRCAT(file_path, search_ctx->ffsc_file_to_search);
 
@@ -829,8 +827,8 @@ char_u *vim_findfile(void *search_ctx_arg)
 #endif
 
                 /* push dir to examine rest of subdirs later */
-                stackp->ffs_filearray_cur = i + 1;
-                ff_push(search_ctx, stackp);
+                statep->ffs_filearray_cur = i + 1;
+                ff_push(search_ctx, statep);
 
                 if (!path_with_url(file_path))
                   simplify_filename(file_path);
@@ -865,42 +863,42 @@ char_u *vim_findfile(void *search_ctx_arg)
            * still wildcards left, push the directories for further
            * search
            */
-          for (i = stackp->ffs_filearray_cur;
-               i < stackp->ffs_filearray_size; ++i) {
-            if (!os_isdir(stackp->ffs_filearray[i]))
+          for (i = statep->ffs_filearray_cur;
+               i < statep->ffs_filearray_size; ++i) {
+            if (!os_isdir(statep->ffs_filearray[i]))
               continue;                 /* not a directory */
 
             ff_push(search_ctx,
-                ff_create_stack_element(
-                    stackp->ffs_filearray[i],
+                ff_create_state_element(
+                    statep->ffs_filearray[i],
                     rest_of_wildcards,
-                    stackp->ffs_level - 1, 0));
+                    statep->ffs_level - 1, 0));
           }
         }
-        stackp->ffs_filearray_cur = 0;
-        stackp->ffs_stage = 1;
+        statep->ffs_filearray_cur = 0;
+        statep->ffs_stage = 1;
       }
 
       /*
        * if wildcards contains '**' we have to descent till we reach the
        * leaves of the directory tree.
        */
-      if (STRNCMP(stackp->ffs_wc_path, "**", 2) == 0) {
-        for (i = stackp->ffs_filearray_cur;
-             i < stackp->ffs_filearray_size; ++i) {
-          if (fnamecmp(stackp->ffs_filearray[i],
-                  stackp->ffs_fix_path) == 0)
+      if (STRNCMP(statep->ffs_wc_path, "**", 2) == 0) {
+        for (i = statep->ffs_filearray_cur;
+             i < statep->ffs_filearray_size; ++i) {
+          if (fnamecmp(statep->ffs_filearray[i],
+                  statep->ffs_fix_path) == 0)
             continue;             /* don't repush same directory */
-          if (!os_isdir(stackp->ffs_filearray[i]))
+          if (!os_isdir(statep->ffs_filearray[i]))
             continue;               /* not a directory */
           ff_push(search_ctx,
-              ff_create_stack_element(stackp->ffs_filearray[i],
-                  stackp->ffs_wc_path, stackp->ffs_level - 1, 1));
+              ff_create_state_element(statep->ffs_filearray[i],
+                  statep->ffs_wc_path, statep->ffs_level - 1, 1));
         }
       }
 
       /* we are done with the current directory */
-      ff_free_stack_element(stackp);
+      ff_free_state_element(statep);
 
     }
 
@@ -909,7 +907,7 @@ char_u *vim_findfile(void *search_ctx_arg)
      */
     if (search_ctx->ffsc_start_dir
         && search_ctx->ffsc_stopdirs_v != NULL && !got_int) {
-      ff_stack_T  *sptr;
+      ff_state_T  *sptr;
 
       /* is the last starting directory in the stop list? */
       if (ff_path_in_stoplist(search_ctx->ffsc_start_dir,
@@ -934,8 +932,8 @@ char_u *vim_findfile(void *search_ctx_arg)
       add_pathsep(file_path);
       STRCAT(file_path, search_ctx->ffsc_fix_path);
 
-      /* create a new stack entry */
-      sptr = ff_create_stack_element(file_path,
+      /* create a new entry */
+      sptr = ff_create_state_element(file_path,
           search_ctx->ffsc_wc_path, search_ctx->ffsc_level, 0);
       ff_push(search_ctx, sptr);
     } else
@@ -1140,13 +1138,13 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
 }
 
 /*
- * create stack element from given path pieces
+ * create state element from given path pieces
  */
-static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, int level, int star_star_empty)
+static ff_state_T *ff_create_state_element(char_u *fix_part, char_u *wc_part, int level, int star_star_empty)
 {
-  ff_stack_T *new = xmalloc(sizeof(ff_stack_T));
+  ff_state_T *new = xmalloc(sizeof(ff_state_T));
 
-  new->ffs_prev          = NULL;
+  new->ffs_child          = NULL;
   new->ffs_filearray     = NULL;
   new->ffs_filearray_size = 0;
   new->ffs_filearray_cur  = 0;
@@ -1166,47 +1164,41 @@ static ff_stack_T *ff_create_stack_element(char_u *fix_part, char_u *wc_part, in
   return new;
 }
 
-/*
- * Push a dir on the directory stack.
- */
-static void ff_push(ff_search_ctx_T *search_ctx, ff_stack_T *stack_ptr)
+// Push a dir on the directory state.
+static void ff_push(ff_search_ctx_T *search_ctx, ff_state_T *state_ptr)
 {
   /* check for NULL pointer, not to return an error to the user, but
    * to prevent a crash */
-  if (stack_ptr != NULL) {
-    stack_ptr->ffs_prev = search_ctx->ffsc_stack_ptr;
-    search_ctx->ffsc_stack_ptr = stack_ptr;
+  if (state_ptr != NULL) {
+    state_ptr->ffs_child = search_ctx->ffsc_state_ptr;
+    search_ctx->ffsc_state_ptr = state_ptr;
   }
 }
 
-/*
- * Pop a dir from the directory stack.
- * Returns NULL if stack is empty.
- */
-static ff_stack_T *ff_pop(ff_search_ctx_T *search_ctx)
+// Pop a dir from the directory state.
+// Returns NULL if state is empty.
+static ff_state_T *ff_pop(ff_search_ctx_T *search_ctx)
 {
-  ff_stack_T  *sptr;
+  ff_state_T  *sptr;
 
-  sptr = search_ctx->ffsc_stack_ptr;
-  if (search_ctx->ffsc_stack_ptr != NULL)
-    search_ctx->ffsc_stack_ptr = search_ctx->ffsc_stack_ptr->ffs_prev;
+  sptr = search_ctx->ffsc_state_ptr;
+  if (search_ctx->ffsc_state_ptr != NULL)
+    search_ctx->ffsc_state_ptr = search_ctx->ffsc_state_ptr->ffs_child;
 
   return sptr;
 }
 
-/*
- * free the given stack element
- */
-static void ff_free_stack_element(ff_stack_T *stack_ptr)
+// free the given element
+static void ff_free_state_element(ff_state_T *state_ptr)
 {
   /* free handles possible NULL pointers */
-  free(stack_ptr->ffs_fix_path);
-  free(stack_ptr->ffs_wc_path);
+  free(state_ptr->ffs_fix_path);
+  free(state_ptr->ffs_wc_path);
 
-  if (stack_ptr->ffs_filearray != NULL)
-    FreeWild(stack_ptr->ffs_filearray_size, stack_ptr->ffs_filearray);
+  if (state_ptr->ffs_filearray != NULL)
+    FreeWild(state_ptr->ffs_filearray_size, state_ptr->ffs_filearray);
 
-  free(stack_ptr);
+  free(state_ptr);
 }
 
 /*
@@ -1214,11 +1206,11 @@ static void ff_free_stack_element(ff_stack_T *stack_ptr)
  */
 static void ff_clear(ff_search_ctx_T *search_ctx)
 {
-  ff_stack_T   *sptr;
+  ff_state_T   *sptr;
 
-  /* clear up stack */
+  /* clear up state */
   while ((sptr = ff_pop(search_ctx)) != NULL)
-    ff_free_stack_element(sptr);
+    ff_free_state_element(sptr);
 
   free(search_ctx->ffsc_file_to_search);
   free(search_ctx->ffsc_start_dir);
