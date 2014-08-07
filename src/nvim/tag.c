@@ -1516,13 +1516,8 @@ parse_line:
         if (orgpat.headlen
             ) {
           tagp.tagname = lbuf;
-#ifdef FEAT_TAG_ANYWHITE
-          tagp.tagname_end = skiptowhite(lbuf);
-          if (*tagp.tagname_end == NUL)
-#else
           tagp.tagname_end = vim_strchr(lbuf, TAB);
           if (tagp.tagname_end == NULL)
-#endif
           {
             if (vim_strchr(lbuf, NL) == NULL) {
               /* Truncated line, ignore it.  Has been reported for
@@ -1557,17 +1552,9 @@ parse_line:
           for (p = lbuf; p < tagp.tagname_end; ++p) {
             if (*p == ':') {
               if (tagp.fname == NULL)
-#ifdef FEAT_TAG_ANYWHITE
-                tagp.fname = skipwhite(tagp.tagname_end);
-#else
                 tagp.fname = tagp.tagname_end + 1;
-#endif
               if (       fnamencmp(lbuf, tagp.fname, p - lbuf) == 0
-#ifdef FEAT_TAG_ANYWHITE
-                         && vim_iswhite(tagp.fname[p - lbuf])
-#else
                          && tagp.fname[p - lbuf] == TAB
-#endif
                          ) {
                 /* found one */
                 tagp.tagname = p + 1;
@@ -1675,20 +1662,10 @@ parse_line:
            * Can be a matching tag, isolate the file name and command.
            */
           if (tagp.fname == NULL)
-#ifdef FEAT_TAG_ANYWHITE
-            tagp.fname = skipwhite(tagp.tagname_end);
-#else
             tagp.fname = tagp.tagname_end + 1;
-#endif
-#ifdef FEAT_TAG_ANYWHITE
-          tagp.fname_end = skiptowhite(tagp.fname);
-          tagp.command = skipwhite(tagp.fname_end);
-          if (*tagp.command == NUL)
-#else
           tagp.fname_end = vim_strchr(tagp.fname, TAB);
           tagp.command = tagp.fname_end + 1;
           if (tagp.fname_end == NULL)
-#endif
             i = FAIL;
           else
             i = OK;
@@ -2152,39 +2129,23 @@ parse_tag_line (
 
   /* Isolate the tagname, from lbuf up to the first white */
   tagp->tagname = lbuf;
-#ifdef FEAT_TAG_ANYWHITE
-  p = skiptowhite(lbuf);
-#else
   p = vim_strchr(lbuf, TAB);
   if (p == NULL)
     return FAIL;
-#endif
   tagp->tagname_end = p;
 
   /* Isolate file name, from first to second white space */
-#ifdef FEAT_TAG_ANYWHITE
-  p = skipwhite(p);
-#else
   if (*p != NUL)
     ++p;
-#endif
   tagp->fname = p;
-#ifdef FEAT_TAG_ANYWHITE
-  p = skiptowhite(p);
-#else
   p = vim_strchr(p, TAB);
   if (p == NULL)
     return FAIL;
-#endif
   tagp->fname_end = p;
 
   /* find start of search command, after second white space */
-#ifdef FEAT_TAG_ANYWHITE
-  p = skipwhite(p);
-#else
   if (*p != NUL)
     ++p;
-#endif
   if (*p == NUL)
     return FAIL;
   tagp->command = p;

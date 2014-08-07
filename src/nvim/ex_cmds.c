@@ -1933,7 +1933,7 @@ void viminfo_writestring(FILE *fd, char_u *p)
    * the string (e.g., variable name).  Add something to the length for the
    * '<', NL and trailing NUL. */
   if (len > LSIZE / 2)
-    fprintf(fd, IF_EB("\026%d\n<", CTRL_V_STR "%d\n<"), len + 3);
+    fprintf(fd, "\026%d\n<", len + 3);
 
   while ((c = *p++) != NUL) {
     if (c == Ctrl_V || c == '\n') {

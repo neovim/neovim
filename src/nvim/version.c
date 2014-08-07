@@ -61,11 +61,7 @@ static char *(features[]) = {
   "+conceal",
   "+cscope",
   "+cursorbind",
-#ifdef CURSOR_SHAPE
   "+cursorshape",
-#else  // ifdef CURSOR_SHAPE
-  "-cursorshape",
-#endif  // ifdef CURSOR_SHAPE
   "+dialog_con",
   "+diff",
   "+digraphs",
@@ -145,11 +141,7 @@ static char *(features[]) = {
   "+syntax",
   "+tag_binary",
   "+tag_old_static",
-#ifdef FEAT_TAG_ANYWHITE
-  "+tag_any_white",
-#else  // ifdef FEAT_TAG_ANYWHITE
   "-tag_any_white",
-#endif  // ifdef FEAT_TAG_ANYWHITE
 #if defined(UNIX)
 
   // only Unix can have terminfo instead of termcap

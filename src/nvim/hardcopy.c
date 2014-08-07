@@ -1502,9 +1502,7 @@ static void prt_flush_buffer(void)
       prt_write_real(prt_text_run, 2);
       prt_write_string("ul\n");
     }
-    /* Draw the text
-     * Note: we write text out raw - EBCDIC conversion is handled in the
-     * PostScript world via the font encoding vector. */
+    // Draw the text
     if (prt_out_mbyte)
       prt_write_string("<");
     else
@@ -2803,7 +2801,7 @@ void mch_print_end(prt_settings_T *psettings)
 
   /* Write CTRL-D to close serial communication link if used.
    * NOTHING MUST BE WRITTEN AFTER THIS! */
-  prt_write_file((char_u *)IF_EB("\004", "\067"));
+  prt_write_file((char_u *)"\004");
 
   if (!prt_file_error && psettings->outfile == NULL
       && !got_int && !psettings->user_abort) {
@@ -3031,20 +3029,18 @@ int mch_print_text_out(char_u *p, int len)
     if (ch < 32 || ch == '(' || ch == ')' || ch == '\\') {
       /* Convert non-printing characters to either their escape or octal
        * sequence, ensures PS sent over a serial line does not interfere
-       * with the comms protocol.  Note: For EBCDIC we need to write out
-       * the escape sequences as ASCII codes!
-       * Note 2: Char codes < 32 are identical in EBCDIC and ASCII AFAIK!
+       * with the comms protocol.
        */
-      ga_append(&prt_ps_buffer, IF_EB('\\', 0134));
+      ga_append(&prt_ps_buffer, '\\');
       switch (ch) {
-      case BS:   ga_append(&prt_ps_buffer, IF_EB('b', 0142)); break;
-      case TAB:  ga_append(&prt_ps_buffer, IF_EB('t', 0164)); break;
-      case NL:   ga_append(&prt_ps_buffer, IF_EB('n', 0156)); break;
-      case FF:   ga_append(&prt_ps_buffer, IF_EB('f', 0146)); break;
-      case CAR:  ga_append(&prt_ps_buffer, IF_EB('r', 0162)); break;
-      case '(':  ga_append(&prt_ps_buffer, IF_EB('(', 0050)); break;
-      case ')':  ga_append(&prt_ps_buffer, IF_EB(')', 0051)); break;
-      case '\\': ga_append(&prt_ps_buffer, IF_EB('\\', 0134)); break;
+      case BS:   ga_append(&prt_ps_buffer, 'b'); break;
+      case TAB:  ga_append(&prt_ps_buffer, 't'); break;
+      case NL:   ga_append(&prt_ps_buffer, 'n'); break;
+      case FF:   ga_append(&prt_ps_buffer, 'f'); break;
+      case CAR:  ga_append(&prt_ps_buffer, 'r'); break;
+      case '(':  ga_append(&prt_ps_buffer, '('); break;
+      case ')':  ga_append(&prt_ps_buffer, ')'); break;
+      case '\\': ga_append(&prt_ps_buffer, '\\'); break;
 
       default:
         sprintf((char *)ch_buff, "%03o", (unsigned int)ch);

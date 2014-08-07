@@ -16,15 +16,6 @@
  * changed beyond recognition.
  */
 
-/*
- * Some systems have a prototype for select() that has (int *) instead of
- * (fd_set *), which is wrong. This define removes that prototype. We define
- * our own prototype below.
- * Don't use it for the Mac, it causes a warning for precompiled headers.
- * TODO: use a configure check for precompiled headers?
- */
-# define select select_declared_wrong
-
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
@@ -745,16 +736,16 @@ void mch_setmouse(int on)
   if (ttym_flags == TTYM_URXVT) {
     out_str_nf((char_u *)
         (on
-         ? IF_EB("\033[?1015h", ESC_STR "[?1015h")
-         : IF_EB("\033[?1015l", ESC_STR "[?1015l")));
+         ? "\033[?1015h"
+         : "\033[?1015l"));
     ison = on;
   }
 
   if (ttym_flags == TTYM_SGR) {
     out_str_nf((char_u *)
         (on
-         ? IF_EB("\033[?1006h", ESC_STR "[?1006h")
-         : IF_EB("\033[?1006l", ESC_STR "[?1006l")));
+         ? "\033[?1006h"
+         : "\033[?1006l"));
     ison = on;
   }
 
@@ -762,13 +753,13 @@ void mch_setmouse(int on)
     if (on)     /* enable mouse events, use mouse tracking if available */
       out_str_nf((char_u *)
           (xterm_mouse_vers > 1
-           ? IF_EB("\033[?1002h", ESC_STR "[?1002h")
-           : IF_EB("\033[?1000h", ESC_STR "[?1000h")));
+           ? "\033[?1002h"
+           : "\033[?1000h"));
     else        /* disable mouse events, could probably always send the same */
       out_str_nf((char_u *)
           (xterm_mouse_vers > 1
-           ? IF_EB("\033[?1002l", ESC_STR "[?1002l")
-           : IF_EB("\033[?1000l", ESC_STR "[?1000l")));
+           ? "\033[?1002l"
+           : "\033[?1000l"));
     ison = on;
   } else if (ttym_flags == TTYM_DEC) {
     if (on)     /* enable mouse events */
@@ -789,8 +780,8 @@ void check_mouse_termcode(void)
       && use_xterm_mouse() != 3
       ) {
     set_mouse_termcode(KS_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                            ? IF_EB("\233M", CSI_STR "M")
-                                            : IF_EB("\033[M", ESC_STR "[M")));
+                                            ? "\233M"
+                                            : "\033[M"));
     if (*p_mouse != NUL) {
       /* force mouse off and maybe on to send possibly new mouse
        * activation sequence to the xterm, with(out) drag tracing. */
@@ -806,7 +797,7 @@ void check_mouse_termcode(void)
   if (!use_xterm_mouse()
       )
     set_mouse_termcode(KS_NETTERM_MOUSE,
-        (char_u *)IF_EB("\033}", ESC_STR "}"));
+        (char_u *)"\033}");
   else
     del_mouse_termcode(KS_NETTERM_MOUSE);
 
@@ -814,17 +805,15 @@ void check_mouse_termcode(void)
   if (!use_xterm_mouse()
       )
     set_mouse_termcode(KS_DEC_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                ? IF_EB("\233",
-                                                    CSI_STR) : IF_EB("\033[",
-                                                    ESC_STR "[")));
+                                                ? "\233" : "\033["));
   else
     del_mouse_termcode(KS_DEC_MOUSE);
   /* same as the dec mouse */
   if (use_xterm_mouse() == 3
       ) {
     set_mouse_termcode(KS_URXVT_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                  ? IF_EB("\233", CSI_STR)
-                                                  : IF_EB("\033[", ESC_STR "[")));
+                                                  ? "\233"
+                                                  : "\033["));
 
     if (*p_mouse != NUL) {
       mch_setmouse(FALSE);
@@ -836,8 +825,8 @@ void check_mouse_termcode(void)
   if (use_xterm_mouse() == 4
       ) {
     set_mouse_termcode(KS_SGR_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                ? IF_EB("\233<", CSI_STR "<")
-                                                : IF_EB("\033[<", ESC_STR "[<")));
+                                                ? "\233<"
+                                                : "\033[<"));
 
     if (*p_mouse != NUL) {
       mch_setmouse(FALSE);

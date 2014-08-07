@@ -1147,10 +1147,7 @@ static void stuffescaped(char_u *arg, int literally)
      * stuff K_SPECIAL to get the effect of a special key when "literally"
      * is TRUE. */
     start = arg;
-    while ((*arg >= ' '
-            && *arg < DEL         /* EBCDIC: chars above space are normal */
-            )
-           || (*arg == K_SPECIAL && !literally))
+    while ((*arg >= ' ' && *arg < DEL) || (*arg == K_SPECIAL && !literally))
       ++arg;
     if (arg > start)
       stuffReadbuffLen(start, (long)(arg - start));

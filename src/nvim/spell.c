@@ -8009,7 +8009,6 @@ static void init_spellfile(void)
 }
 
 // Init the chartab used for spelling for ASCII.
-// EBCDIC is not supported!
 static void clear_spell_chartab(spelltab_T *sp)
 {
   int i;

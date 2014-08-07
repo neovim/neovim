@@ -9742,9 +9742,6 @@ static void f_has(typval_T *argvars, typval_T *rettv)
 #endif
     "tag_binary",
     "tag_old_static",
-#ifdef FEAT_TAG_ANYWHITE
-    "tag_any_white",
-#endif
 #ifdef TERMINFO
     "terminfo",
 #endif
