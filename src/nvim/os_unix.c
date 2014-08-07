@@ -298,32 +298,6 @@ int use_xterm_mouse(void)
   return 0;
 }
 
-int vim_is_vt300(char_u *name)
-{
-  if (name == NULL)
-    return FALSE;              /* actually all ANSI comp. terminals should be here  */
-  /* catch VT100 - VT5xx */
-  return (STRNICMP(name, "vt", 2) == 0
-          && vim_strchr((char_u *)"12345", name[2]) != NULL)
-         || STRCMP(name, "builtin_vt320") == 0;
-}
-
-/*
- * Return TRUE if "name" is a terminal for which 'ttyfast' should be set.
- * This should include all windowed terminal emulators.
- */
-int vim_is_fastterm(char_u *name)
-{
-  if (name == NULL)
-    return FALSE;
-  if (vim_is_xterm(name) || vim_is_vt300(name))
-    return TRUE;
-  return STRNICMP(name, "hpterm", 6) == 0
-         || STRNICMP(name, "sun-cmd", 7) == 0
-         || STRNICMP(name, "screen", 6) == 0
-         || STRNICMP(name, "dtterm", 6) == 0;
-}
-
 #if defined(USE_FNAME_CASE) || defined(PROTO)
 /*
  * Set the case of the file name, if it already exists.  This will cause the

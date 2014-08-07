@@ -1418,15 +1418,6 @@ int set_termname(char_u *term)
   set_mouse_termcode(KS_MOUSE, (char_u *)"\233M");
 # endif
 
-
-#if defined(UNIX)
-  /*
-   * 'ttyfast' is default on for xterm and a few others.
-   */
-  if (vim_is_fastterm(term))
-    p_tf = TRUE;
-#endif
-
   ttest(TRUE);          /* make sure we have a valid set of terminal codes */
 
   full_screen = TRUE;           /* we can use termcap codes from now on */
