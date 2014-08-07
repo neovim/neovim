@@ -65,7 +65,7 @@ set_environment() {
 # install prebuilt dependencies
 if [ ! -d /opt/neovim-deps ]; then
     cd /opt
-    sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps
+    sudo git clone --depth=1 -b add-color_terminal-output git://github.com/ZyX-I/deps neovim-deps
     cd -
 fi
 
