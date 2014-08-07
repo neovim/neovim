@@ -339,24 +339,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		{not available when compiled without the |+eval| feature}
 		{not in Vi}
 
-							*-C*
--C		Compatible mode.  Sets the 'compatible' option.  You can use
-		this to get 'compatible', even though a .vimrc file exists.
-		Keep in mind that the command ":set nocompatible" in some
-		plugin or startup script overrules this, so you may end up
-		with 'nocompatible' anyway.  To find out, use: >
-			:verbose set compatible?
-<		Several plugins won't work with 'compatible' set.  You may
-		want to set it after startup this way: >
-			vim "+set cp" filename
-<		Also see |compatible-default|.  {not in Vi}
-
-							*-N*
--N		Not compatible mode.  Resets the 'compatible' option.  You can
-		use this to get 'nocompatible', when there is no .vimrc file
-		or when using "-u NONE".
-		Also see |compatible-default|.  {not in Vi}
-
 							*-y* *easy*
 -y		Easy mode.  Implied for |evim| and |eview|.  Starts with
 		'insertmode' set and behaves like a click-and-type editor.
@@ -960,15 +942,10 @@ mappings depend on a certain value of 'compatible', set or reset it before
 giving the mapping.
 
 The above behavior can be overridden in these ways:
-- If the "-N" command line argument is given, 'nocompatible' will be used,
-  even when no vimrc file exists.
-- If the "-C" command line argument is given, 'compatible' will be used, even
-  when a vimrc file exists.
 - If the "-u {vimrc}" argument is used, 'compatible' will be used.
-- When the name of the executable ends in "ex", then this works like the "-C"
-  argument was given: 'compatible' will be used, even when a vimrc file
-  exists.  This has been done to make Vim behave like "ex", when it is started
-  as "ex".
+- When the name of the executable ends in "ex", 'compatible' will be used,
+  even when a vimrc file exists.  This has been done to make Vim behave like
+  "ex", when it is started as "ex".
 
 Avoiding trojan horses:					*trojan-horse*
 While reading the "vimrc" or the "exrc" file in the current directory, some
