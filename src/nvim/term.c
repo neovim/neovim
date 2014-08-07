@@ -1904,7 +1904,7 @@ static void out_char_nf(unsigned c)
  * This should only be used for writing terminal codes, not for outputting
  * normal text (use functions like msg_puts() and screen_putchar() for that).
  */
-void out_str_nf(char_u *s)
+void out_str_nf(const char_u *s)
 {
   if (out_pos > OUT_SIZE - 20)    /* avoid terminal strings being split up */
     out_flush();
@@ -1922,7 +1922,7 @@ void out_str_nf(char_u *s)
  * This should only be used for writing terminal codes, not for outputting
  * normal text (use functions like msg_puts() and screen_putchar() for that).
  */
-void out_str(char_u *s)
+void out_str(const char_u *s)
 {
   if (s != NULL && *s) {
     /* avoid terminal strings being split up */
@@ -2410,6 +2410,8 @@ void starttermcap(void)
     out_flush();
     termcap_active = TRUE;
     screen_start();                     /* don't know where cursor is now */
+    // Enable bracketed paste on xterm-compatible terminals:
+    if (term_is_xterm) out_str((const char_u*) "\033[?2004h");
     {
       may_req_termresponse();
       /* Immediately check for a response.  If t_Co changes, we don't
@@ -2424,6 +2426,8 @@ void stoptermcap(void)
 {
   screen_stop_highlight();
   reset_cterm_colors();
+  // Disable bracketed paste on xterm-compatible terminals:
+  if (term_is_xterm) out_str((const char_u*) "\033[?2004l");
   if (termcap_active) {
     {
       /* May need to discard T_CRV or T_U7 response. */
@@ -3181,6 +3185,26 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
           col = 0;
         }
 
+        if (i == 5 && (strncmp("\033[200~", (const char*)tp, 5) == 0
+                    || strncmp("\033[201~", (const char*)tp, 5) == 0)) {
+          // Bracketed paste mode change.
+          bool starting_paste = (tp[4] == '0');
+          if (starting_paste != (bool)p_paste) {
+            set_option_value((char_u *)"paste", (long)starting_paste, NULL, 0);
+            if (!(State & INSERT)) {
+              msg_col = 0;
+              msg_row = Rows - 1;
+              msg_clr_eos(); // clear ruler
+            }
+            status_redraw_all();
+            redraw_statuslines();
+            showmode();
+            setcursor();
+          }
+          key_name[0] = (int)KS_EXTRA;
+          key_name[1] = (int)KE_IGNORE;
+          slen = i + 1;
+	} else
         /* Eat it when it has 2 arguments and ends in 'R'. Also when
          * u7_status is not "sent", it may be from a previous Vim that
          * just exited.  But not for <S-F3>, it sends something
