@@ -7490,9 +7490,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 	xterm entries...).
 
 				     *'ttyfast'* *'tf'* *'nottyfast'* *'notf'*
-'ttyfast' 'tf'		boolean	(default off, on when 'term' is xterm, hpterm,
-					sun-cmd, screen, rxvt or dtterm; also
-					on when running Vim in a DOS console)
+'ttyfast' 'tf'		boolean	(default on)
 			global
 			{not in Vi}
 	Indicates a fast terminal connection.  More characters will be sent to
