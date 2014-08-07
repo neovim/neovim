@@ -76,6 +76,7 @@ endif
 
 test: | nvim
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
+	PATH="$$(pwd)/build/bin:$$PATH" vroom --neovim --crawl test
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
