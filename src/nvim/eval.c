@@ -83,7 +83,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
-#include "nvim/api/private/defs.h"
+#include "nvim/api/vim.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/provider.h"
@@ -8280,11 +8280,8 @@ static void f_extend(typval_T *argvars, typval_T *rettv)
  */
 static void f_feedkeys(typval_T *argvars, typval_T *rettv)
 {
-  int remap = TRUE;
-  char_u      *keys, *flags;
+  char_u      *keys, *flags = NULL;
   char_u nbuf[NUMBUFLEN];
-  int typed = FALSE;
-  char_u      *keys_esc;
 
   /* This is not allowed in the sandbox.  If the commands would still be
    * executed in the sandbox it would be OK, but it probably happens later,
@@ -8296,23 +8293,10 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv)
   if (*keys != NUL) {
     if (argvars[1].v_type != VAR_UNKNOWN) {
       flags = get_tv_string_buf(&argvars[1], nbuf);
-      for (; *flags != NUL; ++flags) {
-        switch (*flags) {
-        case 'n': remap = FALSE; break;
-        case 'm': remap = TRUE; break;
-        case 't': typed = TRUE; break;
-        }
-      }
     }
 
-    /* Need to escape K_SPECIAL and CSI before putting the string in the
-     * typeahead buffer. */
-    keys_esc = vim_strsave_escape_csi(keys);
-    ins_typebuf(keys_esc, (remap ? REMAP_YES : REMAP_NONE),
-        typebuf.tb_len, !typed, FALSE);
-    free(keys_esc);
-    if (vgetc_busy)
-      typebuf_was_filled = TRUE;
+    vim_feedkeys(cstr_as_string((char *)keys),
+		    cstr_as_string((char *)flags));
   }
 }
 

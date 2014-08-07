@@ -343,6 +343,20 @@ String cstr_to_string(const char *str)
     };
 }
 
+/// Creates a String using the given C string. Unlike
+/// cstr_to_string this function DOES NOT copy the C string.
+///
+/// @param str the C string to use
+/// @return The resulting String, or an empty String if
+///           str was NULL
+String cstr_as_string(char *str) FUNC_ATTR_PURE
+{
+  if (str == NULL) {
+    return (String) STRING_INIT;
+  }
+  return (String) {.data = str, .size = strlen(str)};
+}
+
 bool object_to_vim(Object obj, typval_T *tv, Error *err)
 {
   tv->v_type = VAR_UNKNOWN;

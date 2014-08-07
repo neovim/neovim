@@ -54,55 +54,52 @@ void vim_command(String str, Error *err)
 /// Pass input keys to Neovim
 ///
 /// @param keys to be typed
-/// @param replace_tcodes If true replace special keys such as <CR> or <Leader>
-///           for compatibility with Vim --remote-send expressions
-/// @param remap If True remap keys
-/// @param typed Handle keys as if typed; otherwise they are handled as
-///           if coming from a mapping.  This matters for undo,
-///           opening folds, etc.
-void vim_feedkeys(String keys, Boolean replace_tcodes, Boolean remap,
-                Boolean typed, Error *err)
+/// @param mode specifies the mapping options
+/// @see feedkeys()
+void vim_feedkeys(String keys, String mode)
 {
-  char *ptr = NULL;
-  char *cpo_save = (char *)p_cpo;
+  bool remap = true;
+  bool typed = false;
 
-  if (replace_tcodes) {
-    // Set 'cpoptions' the way we want it.
-    //    B set - backslashes are *not* treated specially
-    //    k set - keycodes are *not* reverse-engineered
-    //    < unset - <Key> sequences *are* interpreted
-    //  The last but one parameter of replace_termcodes() is TRUE so that the
-    //  <lt> sequence is recognised - needed for a real backslash.
-    p_cpo = (char_u *)"Bk";
-    replace_termcodes((char_u *)keys.data, (char_u **)&ptr, false, true, true);
-    p_cpo = (char_u *)cpo_save;
-  } else {
-    ptr = keys.data;
+  if (keys.size == 0) {
+    return;
   }
 
-  if (ptr == NULL) {
-    set_api_error("Failed to eval expression", err);
-  } else {
-    // Add the string to the input stream.
-    // Can't use add_to_input_buf() here, we now have K_SPECIAL bytes.
-    //
-    // First clear typed characters from the typeahead buffer, there could
-    // be half a mapping there.  Then append to the existing string, so
-    // that multiple commands from a client are concatenated.
-    if (typebuf.tb_maplen < typebuf.tb_len) {
-        del_typebuf(typebuf.tb_len - typebuf.tb_maplen, typebuf.tb_maplen);
+  for (size_t i = 0; i < mode.size; ++i) {
+    switch (mode.data[i]) {
+    case 'n': remap = false; break;
+    case 'm': remap = true; break;
+    case 't': typed = true; break;
     }
-    (void)ins_typebuf((char_u *)ptr, (remap ? REMAP_YES : REMAP_NONE),
-                    typebuf.tb_len, !typed, false);
+  }
 
-    // Let input_available() know we inserted text in the typeahead
-    // buffer. */
+  /* Need to escape K_SPECIAL and CSI before putting the string in the
+   * typeahead buffer. */
+  char *keys_esc = (char *)vim_strsave_escape_csi((char_u *)keys.data);
+  ins_typebuf((char_u *)keys_esc, (remap ? REMAP_YES : REMAP_NONE),
+      typebuf.tb_len, !typed, false);
+  free(keys_esc);
+
+  if (vgetc_busy)
     typebuf_was_filled = true;
+}
 
-    if (replace_tcodes) {
-      free(ptr);
-    }
+/// Replace any terminal codes with the internal representation
+///
+/// @see replace_termcodes
+/// @see cpoptions
+String vim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
+                              Boolean special)
+{
+  if (str.size == 0) {
+    // Empty string
+    return str;
   }
+
+  char *ptr = NULL;
+  replace_termcodes((char_u *)str.data, (char_u **)&ptr,
+                                            from_part, do_lt, special);
+  return cstr_as_string(ptr);
 }
 
 /// Evaluates the expression str using the vim internal expression
