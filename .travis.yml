@@ -1,15 +1,17 @@
 language: c
 env:
   global:
+    - PROJECT_ROOT="$(pwd)"
+    - CI_SCRIPTS="$PROJECT_ROOT/.ci"
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
     # via the "travis encrypt" command using the project repo's public key
     - secure: "QEz92NyItkzQu52kCFD928jEwUYnA2OIgSyeNrp+Y3gm5rOmSZerY8hGiXyNZxocap9+qIPCapRRYU3ZYKWZPeucWMLN3aIjxAFdhugKbnmNYE1jFugb6b8N3SxiX/3206NHXlYaz0OZhh6OBAFmPUXamJC8OrWVgPNPo7wv4UQ="
   matrix:
-    - TRAVIS_BUILD_TYPE=clang/asan
-    - TRAVIS_BUILD_TYPE=gcc/ia32
-    - TRAVIS_BUILD_TYPE=gcc/unittest
-    - TRAVIS_BUILD_TYPE=clint
-    - TRAVIS_BUILD_TYPE=api/python
-    - TRAVIS_BUILD_TYPE=coverity
+    - CI_TARGET=clang-asan
+    - CI_TARGET=gcc-ia32
+    - CI_TARGET=gcc-unittest
+    - CI_TARGET=clint
+    - CI_TARGET=api-python
+    - CI_TARGET=coverity
 script:
-  - ./scripts/travis.sh
+  - sh -e "${CI_SCRIPTS}/${CI_TARGET}.sh"
