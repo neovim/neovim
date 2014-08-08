@@ -9165,15 +9165,16 @@ static void f_getfsize(typval_T *argvars, typval_T *rettv)
 
   rettv->v_type = VAR_NUMBER;
 
-  off_t file_size;
-  if (os_get_file_size(fname, &file_size)) {
+  FileInfo file_info;
+  if (os_get_file_info(fname, &file_info)) {
+    off_t filesize = os_fileinfo_size(&file_info);
     if (os_isdir((char_u *)fname))
       rettv->vval.v_number = 0;
     else {
-      rettv->vval.v_number = (varnumber_T)file_size;
+      rettv->vval.v_number = (varnumber_T)filesize;
 
       /* non-perfect check for overflow */
-      if ((off_t)rettv->vval.v_number != file_size) {
+      if ((off_t)rettv->vval.v_number != filesize) {
         rettv->vval.v_number = -2;
       }
     }

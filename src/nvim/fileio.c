@@ -5127,9 +5127,10 @@ void buf_reload(buf_T *buf, int orig_mode)
 }
 
 void buf_store_file_info(buf_T *buf, FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
 {
   buf->b_mtime = (long)file_info->stat.st_mtim.tv_sec;
-  buf->b_orig_size = file_info->stat.st_size;
+  buf->b_orig_size = os_fileinfo_size(file_info);
   buf->b_orig_mode = (int)file_info->stat.st_mode;
 }
 

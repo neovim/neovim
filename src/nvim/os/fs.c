@@ -258,20 +258,6 @@ int os_file_is_writable(const char *name)
   return 0;
 }
 
-/// Get the size of a file in bytes.
-///
-/// @param[out] size pointer to an off_t to put the size into.
-/// @return `true` for success, `false` for failure.
-bool os_get_file_size(const char *name, off_t *size)
-{
-  uv_stat_t statbuf;
-  if (os_stat(name, &statbuf)) {
-    *size = statbuf.st_size;
-    return true;
-  }
-  return false;
-}
-
 /// Rename a file or directory.
 ///
 /// @return `OK` for success, `FAIL` for failure.
@@ -406,6 +392,15 @@ void os_file_info_get_id(const FileInfo *file_info, FileID *file_id)
 uint64_t os_file_info_get_inode(const FileInfo *file_info)
 {
   return file_info->stat.st_ino;
+}
+
+/// Get the size of a file from a `FileInfo`.
+///
+/// @return filesize in bytes.
+off_t os_fileinfo_size(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return file_info->stat.st_size;
 }
 
 /// Get the `FileID` for a given path

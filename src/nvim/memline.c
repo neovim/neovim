@@ -1632,7 +1632,7 @@ void ml_sync_all(int check_file, int check_char)
       FileInfo file_info;
       if (!os_get_file_info((char *)buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
-          || (off_t)file_info.stat.st_size != buf->b_orig_size) {
+          || os_fileinfo_size(&file_info) != buf->b_orig_size) {
         ml_preserve(buf, FALSE);
         did_check_timestamps = FALSE;
         need_check_timestamps = TRUE;           /* give message later */
