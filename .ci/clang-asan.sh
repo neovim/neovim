@@ -1,5 +1,7 @@
 . "$CI_SCRIPTS/common.sh"
 
+install_vroom
+
 set_environment /opt/neovim-deps
 
 sudo pip install cpp-coveralls

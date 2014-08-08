@@ -1,4 +1,7 @@
 . "$CI_SCRIPTS/common.sh"
+
+install_vroom
+
 set_environment /opt/neovim-deps/32
 
 # Need this to keep apt-get from removing gcc when installing libncurses
