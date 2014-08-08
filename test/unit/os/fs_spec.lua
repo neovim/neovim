@@ -47,6 +47,7 @@ describe('fs function', function()
     os.remove('unit-test-directory/test.file')
     os.remove('unit-test-directory/test_2.file')
     os.remove('unit-test-directory/test_link.file')
+    os.remove('unit-test-directory/test_hlink.file')
     lfs.rmdir('unit-test-directory')
   end)
 
@@ -608,6 +609,19 @@ describe('fs function', function()
         local file_info = file_info_new()
         assert.is_true(fs.os_get_file_info(path, file_info))
         eq(size, fs.os_fileinfo_size(file_info))
+      end)
+    end)
+
+    describe('os_fileinfo_hardlinks', function()
+      it('returns the correct number of hardlinks', function()
+        local path = 'unit-test-directory/test.file'
+        local path_link = 'unit-test-directory/test_hlink.file'
+        local file_info = file_info_new()
+        assert.is_true(fs.os_get_file_info(path, file_info))
+        eq(1, fs.os_fileinfo_hardlinks(file_info))
+        lfs.link(path, path_link)
+        assert.is_true(fs.os_get_file_info(path, file_info))
+        eq(2, fs.os_fileinfo_hardlinks(file_info))
       end)
     end)
 

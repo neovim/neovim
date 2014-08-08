@@ -2712,7 +2712,7 @@ buf_write (
        * - it's a symbolic link
        * - we don't have write permission in the directory
        */
-      if (file_info_old.stat.st_nlink > 1
+      if (os_fileinfo_hardlinks(&file_info_old) > 1
           || !os_get_file_info_link((char *)fname, &file_info)
           || !os_file_info_id_equal(&file_info, &file_info_old)) {
         backup_copy = TRUE;
@@ -2770,7 +2770,7 @@ buf_write (
 
       /* Hardlinks. */
       if ((bkc_flags & BKC_BREAKHARDLINK)
-          && file_info_old.stat.st_nlink > 1
+          && os_fileinfo_hardlinks(&file_info_old) > 1
           && (!file_info_link_ok
               || os_file_info_id_equal(&file_info, &file_info_old))) {
         backup_copy = FALSE;
@@ -3201,7 +3201,7 @@ nobackup:
       FileInfo file_info;
 
       /* Don't delete the file when it's a hard or symbolic link. */
-      if ((!newfile && file_info_old.stat.st_nlink > 1)
+      if ((!newfile && os_fileinfo_hardlinks(&file_info) > 1)
           || (os_get_file_info_link((char *)fname, &file_info)
               && !os_file_info_id_equal(&file_info, &file_info_old))) {
         errmsg = (char_u *)_("E166: Can't open linked file for writing");

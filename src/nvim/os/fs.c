@@ -403,6 +403,15 @@ off_t os_fileinfo_size(const FileInfo *file_info)
   return file_info->stat.st_size;
 }
 
+/// Get the number of hardlinks from a `FileInfo`.
+///
+/// @return number of hardlinks.
+uint64_t os_fileinfo_hardlinks(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return file_info->stat.st_nlink;
+}
+
 /// Get the `FileID` for a given path
 ///
 /// @param path Path to the file.
