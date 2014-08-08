@@ -91,6 +91,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "nvim/api/private/redraw.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/arabic.h"
@@ -133,6 +134,9 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 
+// State of the window/line being drawn
+static UpdateLineWidths current_widths = {0, 0, 0, 0, 0, 0};
+static win_T *current_window = NULL;
 #define MB_FILLER_CHAR '<'  /* character used when a double-width character
                              * doesn't fit. */
 #define W_ENDCOL(wp)   (wp->w_wincol + wp->w_width)
@@ -571,7 +575,6 @@ void update_screen(int type)
   if (!did_intro)
     maybe_intro_message();
   did_intro = TRUE;
-
 }
 
 /*
@@ -805,7 +808,9 @@ static void win_update(win_T *wp)
     wp->w_redr_type = 0;
     return;
   }
-
+  redraw_start(0);
+  // Set a pointer to the window being updated
+  current_window = wp;
   init_search_hl(wp);
 
   /* Force redraw when width of 'number' or 'relativenumber' column
@@ -1689,6 +1694,9 @@ static void win_update(win_T *wp)
   /* restore got_int, unless CTRL-C was hit while redrawing */
   if (!got_int)
     got_int = save_got_int;
+
+  current_window = NULL;
+  redraw_end(0);
 }
 
 
@@ -1774,6 +1782,11 @@ static void win_draw_end(win_T *wp, int c1, int c2, int row, int endrow, hlf_T h
                 c1, c2, hl_attr(hl));
   }
   set_empty_rows(wp, row);
+
+  if (current_window) {
+    // TODO(stefan991): handle higlight (parameter hl)
+    redraw_win_end(0, current_window, c1, c2, row, wp->w_height);
+  }
 }
 
 
@@ -2711,6 +2724,17 @@ win_line (
     off += col;
   }
 
+  // The following 1.5k loc loop will prepare/display a screen line for the
+  // current window.
+  // While the line is being prepared, we store widths for the parts of the
+  // line that don't contain user text in order to send structured data
+  // with the 'redraw:update_line' event
+  current_widths.colon =
+    current_widths.fold =
+    current_widths.sign =
+    current_widths.number =
+    current_widths.deleted =
+    current_widths.linebreak = 0;
   /*
    * Repeat for the whole displayed line.
    */
@@ -2724,6 +2748,7 @@ win_line (
           n_extra = 1;
           c_extra = cmdwin_type;
           char_attr = hl_attr(HLF_AT);
+          current_widths.colon = n_extra;
         }
       }
 
@@ -2737,6 +2762,7 @@ win_line (
           p_extra[n_extra] = NUL;
           c_extra = NUL;
           char_attr = hl_attr(HLF_FC);
+          current_widths.fold = n_extra;
         }
       }
 
@@ -2763,6 +2789,7 @@ win_line (
                       char_attr = sign_get_attr(text_sign, FALSE);
                   }
               }
+              current_widths.sign = n_extra;
           }
       }
 
@@ -2814,6 +2841,7 @@ win_line (
           if ((wp->w_p_cul || wp->w_p_rnu)
               && lnum == wp->w_cursor.lnum)
             char_attr = hl_attr(HLF_CLN);
+          current_widths.number = n_extra;
         }
       }
 
@@ -2830,6 +2858,7 @@ win_line (
           else
             n_extra = wp->w_width - col;
           char_attr = hl_attr(HLF_DED);
+          current_widths.deleted = n_extra;
         }
         if (*p_sbr != NUL && need_showbreak) {
           /* Draw 'showbreak' at the start of each broken line. */
@@ -2845,6 +2874,7 @@ win_line (
           /* combine 'showbreak' with 'cursorline' */
           if (wp->w_p_cul && lnum == wp->w_cursor.lnum)
             char_attr = hl_combine_attr(char_attr, HLF_CLN);
+          current_widths.linebreak = n_extra;
         }
       }
 
@@ -4221,7 +4251,6 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
   if (endcol > Columns)
     endcol = Columns;
 
-
   off_from = (unsigned)(current_ScreenLine - ScreenLines);
   off_to = LineOffset[row] + coloff;
   max_off_from = off_from + screen_Columns;
@@ -4391,6 +4420,19 @@ static void screen_line(int row, int coloff, int endcol, int clear_width, int rl
     off_to += CHAR_CELLS;
     off_from += CHAR_CELLS;
     col += CHAR_CELLS;
+  }
+
+  if (current_window) {
+    off_from = (unsigned)(current_ScreenLine - ScreenLines);
+    max_off_from = off_from + screen_Columns;
+    redraw_update_line(0,
+                       current_window,
+                       &current_widths,
+                       row,
+                       coloff,
+                       endcol,
+                       off_from,
+                       max_off_from);
   }
 
   if (clear_next) {
@@ -4783,6 +4825,8 @@ void win_redr_status(win_T *wp)
   if (busy)
     return;
   busy = TRUE;
+
+  redraw_status(0, wp);
 
   wp->w_redr_status = FALSE;
   if (wp->w_status_height == 0) {
@@ -6332,6 +6376,8 @@ retry:
   screen_Rows = Rows;
   screen_Columns = Columns;
 
+  redraw_layout(0);
+
   must_redraw = CLEAR;          /* need to clear the screen later */
   if (doclear)
     screenclear2();
@@ -6718,6 +6764,8 @@ void setcursor(void)
                                && vim_isprintc(gchar_cursor())) ? 2 :
                               1)) :
           curwin->w_wcol));
+
+    redraw_cursor(0);
   }
 }
 
@@ -7108,6 +7156,10 @@ screen_ins_lines (
     }
   }
 
+  if (current_window) {
+    redraw_insert_line(0, current_window, row, line_count);
+  }
+
   return OK;
 }
 
@@ -7288,6 +7340,9 @@ screen_del_lines (
     }
   }
 
+  if (current_window) {
+    redraw_delete_line(0, current_window, row, line_count);
+  }
 
   return OK;
 }
@@ -7504,6 +7559,7 @@ static void draw_tabline(void)
                        );
 
   redraw_tabline = FALSE;
+  redraw_tabs(0);
 
 
   if (tabline_height() < 1)
@@ -7836,6 +7892,9 @@ static void win_redr_ruler(win_T *wp, int always)
      */
     i = (int)STRLEN(buffer);
     get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
+
+    redraw_ruler(0, wp, empty_line, (char *)buffer + i + 1);
+
     o = i + vim_strsize(buffer + i + 1);
     if (wp->w_status_height == 0)       /* can't use last char of screen */
       ++o;

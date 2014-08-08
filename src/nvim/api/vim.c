@@ -7,6 +7,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/redraw.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/buffer.h"
 #include "nvim/os/channel.h"
@@ -100,6 +101,19 @@ String vim_replace_termcodes(String str, Boolean from_part, Boolean do_lt,
   replace_termcodes((char_u *)str.data, (char_u **)&ptr,
                                             from_part, do_lt, special);
   return cstr_as_string(ptr);
+}
+
+String vim_command_output(String str, Error *err)
+{
+  do_cmdline_cmd((char_u *)"redir => v:command_output");
+  vim_command(str, err);
+  do_cmdline_cmd((char_u *)"redir END");
+
+  if (err->set) {
+    return (String) STRING_INIT;
+  }
+
+  return cstr_to_string((char *)get_vim_var_str(VV_COMMAND_OUTPUT));
 }
 
 /// Evaluates the expression str using the vim internal expression
@@ -515,6 +529,13 @@ void vim_register_provider(uint64_t channel_id, String method, Error *err)
   if (!provider_register(buf, channel_id)) {
     set_api_error("Provider already registered", err);
   }
+}
+
+/// Forces a complete redraw. This can be used by UI clients to get a full
+/// state of the screen when connecting through redraw:* events
+void vim_request_screen(uint64_t channel_id)
+{
+  redraw_layout(channel_id);
 }
 
 /// Writes a message to vim output or error buffer. The string is split
