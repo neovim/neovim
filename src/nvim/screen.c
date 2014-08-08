@@ -7726,22 +7726,6 @@ void showruler(int always)
 
 static void win_redr_ruler(win_T *wp, int always)
 {
-#define RULER_BUF_LEN 70
-  char_u buffer[RULER_BUF_LEN];
-  int row;
-  int fillchar;
-  int attr;
-  int empty_line = FALSE;
-  colnr_T virtcol;
-  int i;
-  size_t len;
-  int o;
-  int this_ru_col;
-  int off = 0;
-  int width = Columns;
-# define WITH_OFF(x) x
-# define WITH_WIDTH(x) x
-
   /* If 'ruler' off or redrawing disabled, don't do anything */
   if (!p_ru)
     return;
@@ -7777,6 +7761,7 @@ static void win_redr_ruler(win_T *wp, int always)
   /*
    * Check if not in Insert mode and the line is empty (will show "0-1").
    */
+  int empty_line = FALSE;
   if (!(State & INSERT)
       && *ml_get_buf(wp->w_buffer, wp->w_cursor.lnum, FALSE) == NUL)
     empty_line = TRUE;
@@ -7796,6 +7781,13 @@ static void win_redr_ruler(win_T *wp, int always)
              || wp->w_topfill != wp->w_ru_topfill
              || empty_line != wp->w_ru_empty) {
     cursor_off();
+
+    int width;
+    int row;
+    int fillchar;
+    int attr;
+    int off;
+
     if (wp->w_status_height) {
       row = wp->w_winrow + wp->w_height;
       fillchar = fillchar_status(&attr, wp == curwin);
@@ -7810,12 +7802,15 @@ static void win_redr_ruler(win_T *wp, int always)
     }
 
     /* In list mode virtcol needs to be recomputed */
-    virtcol = wp->w_virtcol;
+    colnr_T virtcol = wp->w_virtcol;
     if (wp->w_p_list && lcs_tab1 == NUL) {
       wp->w_p_list = FALSE;
       getvvcol(wp, &wp->w_cursor, NULL, &virtcol, NULL);
       wp->w_p_list = TRUE;
     }
+
+#define RULER_BUF_LEN 70
+    char_u buffer[RULER_BUF_LEN];
 
     /*
      * Some sprintfs return the length, some return a pointer.
@@ -7824,7 +7819,7 @@ static void win_redr_ruler(win_T *wp, int always)
     vim_snprintf((char *)buffer, RULER_BUF_LEN, "%" PRId64 ",",
         (wp->w_buffer->b_ml.ml_flags & ML_EMPTY) ? (int64_t)0L
                                                  : (int64_t)wp->w_cursor.lnum);
-    len = STRLEN(buffer);
+    size_t len = STRLEN(buffer);
     col_print(buffer + len, RULER_BUF_LEN - len,
         empty_line ? 0 : (int)wp->w_cursor.col + 1,
         (int)virtcol + 1);
@@ -7834,20 +7829,20 @@ static void win_redr_ruler(win_T *wp, int always)
      * On the last line, don't print in the last column (scrolls the
      * screen up on some terminals).
      */
-    i = (int)STRLEN(buffer);
+    int i = (int)STRLEN(buffer);
     get_rel_pos(wp, buffer + i + 1, RULER_BUF_LEN - i - 1);
-    o = i + vim_strsize(buffer + i + 1);
+    int o = i + vim_strsize(buffer + i + 1);
     if (wp->w_status_height == 0)       /* can't use last char of screen */
       ++o;
-    this_ru_col = ru_col - (Columns - width);
+    int this_ru_col = ru_col - (Columns - width);
     if (this_ru_col < 0)
       this_ru_col = 0;
     /* Never use more than half the window/screen width, leave the other
      * half for the filename. */
-    if (this_ru_col < (WITH_WIDTH(width) + 1) / 2)
-      this_ru_col = (WITH_WIDTH(width) + 1) / 2;
-    if (this_ru_col + o < WITH_WIDTH(width)) {
-      while (this_ru_col + o < WITH_WIDTH(width)) {
+    if (this_ru_col < (width + 1) / 2)
+      this_ru_col = (width + 1) / 2;
+    if (this_ru_col + o < width) {
+      while (this_ru_col + o < width) {
         if (has_mbyte)
           i += (*mb_char2bytes)(fillchar, buffer + i);
         else
@@ -7861,19 +7856,19 @@ static void win_redr_ruler(win_T *wp, int always)
       o = 0;
       for (i = 0; buffer[i] != NUL; i += (*mb_ptr2len)(buffer + i)) {
         o += (*mb_ptr2cells)(buffer + i);
-        if (this_ru_col + o > WITH_WIDTH(width)) {
+        if (this_ru_col + o > width) {
           buffer[i] = NUL;
           break;
         }
       }
-    } else if (this_ru_col + (int)STRLEN(buffer) > WITH_WIDTH(width))
-      buffer[WITH_WIDTH(width) - this_ru_col] = NUL;
+    } else if (this_ru_col + (int)STRLEN(buffer) > width)
+      buffer[width - this_ru_col] = NUL;
 
-    screen_puts(buffer, row, this_ru_col + WITH_OFF(off), attr);
+    screen_puts(buffer, row, this_ru_col + off, attr);
     i = redraw_cmdline;
     screen_fill(row, row + 1,
-        this_ru_col + WITH_OFF(off) + (int)STRLEN(buffer),
-        (int)(WITH_OFF(off) + WITH_WIDTH(width)),
+        this_ru_col + off + (int)STRLEN(buffer),
+        (int)(off + width),
         fillchar, fillchar, attr);
     /* don't redraw the cmdline because of showing the ruler */
     redraw_cmdline = i;

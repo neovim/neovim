@@ -159,7 +159,7 @@ char_u *ga_concat_strings_sep(const garray_T *gap, const char *sep)
     s = xstpcpy(s, strings[i]);
     s = xstpcpy(s, sep);
   }
-  s = xstpcpy(s, strings[nelem - 1]);
+  strcpy(s, strings[nelem - 1]);
 
   return (char_u *) ret;
 }

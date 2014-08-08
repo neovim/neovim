@@ -1261,28 +1261,12 @@ spell_check (
 // For a match mip->mi_result is updated.
 static void find_word(matchinf_T *mip, int mode)
 {
-  idx_T arridx = 0;
-  int endlen[MAXWLEN];              // length at possible word endings
-  idx_T endidx[MAXWLEN];            // possible word endings
-  int endidxcnt = 0;
-  int len;
   int wlen = 0;
   int flen;
-  int c;
   char_u      *ptr;
-  idx_T lo;
-  idx_T hi;
-  idx_T m;
-  char_u      *s;
-  char_u      *p;
-  int res = SP_BAD;
   slang_T     *slang = mip->mi_lp->lp_slang;
-  unsigned flags;
   char_u      *byts;
   idx_T       *idxs;
-  bool word_ends;
-  bool prefix_found;
-  int nobreak_result;
 
   if (mode == FIND_KEEPWORD || mode == FIND_KEEPCOMPOUND) {
     // Check for word with matching case in keep-case tree.
@@ -1315,6 +1299,13 @@ static void find_word(matchinf_T *mip, int mode)
 
   if (byts == NULL)
     return;                     // array is empty
+
+  idx_T arridx = 0;
+  int endlen[MAXWLEN];              // length at possible word endings
+  idx_T endidx[MAXWLEN];            // possible word endings
+  int endidxcnt = 0;
+  int len;
+  int c;
 
   // Repeat advancing in the tree until:
   // - there is a byte that doesn't match,
@@ -1356,10 +1347,10 @@ static void find_word(matchinf_T *mip, int mode)
     c = ptr[wlen];
     if (c == TAB)           // <Tab> is handled like <Space>
       c = ' ';
-    lo = arridx;
-    hi = arridx + len - 1;
+    idx_T lo = arridx;
+    idx_T hi = arridx + len - 1;
     while (lo < hi) {
-      m = (lo + hi) / 2;
+      idx_T m = (lo + hi) / 2;
       if (byts[m] > c)
         hi = m - 1;
       else if (byts[m] < c)
@@ -1393,6 +1384,9 @@ static void find_word(matchinf_T *mip, int mode)
     }
   }
 
+  char_u *p;
+  bool word_ends;
+
   // Verify that one of the possible endings is valid.  Try the longest
   // first.
   while (endidxcnt > 0) {
@@ -1410,7 +1404,7 @@ static void find_word(matchinf_T *mip, int mode)
       word_ends = true;
     // The prefix flag is before compound flags.  Once a valid prefix flag
     // has been found we try compound flags.
-    prefix_found = false;
+    bool prefix_found = false;
 
     if (mode != FIND_KEEPWORD && has_mbyte) {
       // Compute byte length in original word, length may change
@@ -1418,7 +1412,7 @@ static void find_word(matchinf_T *mip, int mode)
       // case-folded word is equal to the keep-case word.
       p = mip->mi_word;
       if (STRNCMP(ptr, p, wlen) != 0) {
-        for (s = ptr; s < ptr + wlen; mb_ptr_adv(s))
+        for (char_u *s = ptr; s < ptr + wlen; mb_ptr_adv(s))
           mb_ptr_adv(p);
         wlen = (int)(p - mip->mi_word);
       }
@@ -1428,10 +1422,9 @@ static void find_word(matchinf_T *mip, int mode)
     // prefix ID.
     // Repeat this if there are more flags/region alternatives until there
     // is a match.
-    res = SP_BAD;
     for (len = byts[arridx - 1]; len > 0 && byts[arridx] == 0;
          --len, ++arridx) {
-      flags = idxs[arridx];
+      uint32_t flags = idxs[arridx];
 
       // For the fold-case tree check that the case of the checked word
       // matches with what the word in the tree requires.
@@ -1527,7 +1520,7 @@ static void find_word(matchinf_T *mip, int mode)
                   mip->mi_compoff) != 0) {
             // case folding may have changed the length
             p = mip->mi_word;
-            for (s = ptr; s < ptr + mip->mi_compoff; mb_ptr_adv(s))
+            for (char_u *s = ptr; s < ptr + mip->mi_compoff; mb_ptr_adv(s))
               mb_ptr_adv(p);
           } else
             p = mip->mi_word + mip->mi_compoff;
@@ -1577,7 +1570,7 @@ static void find_word(matchinf_T *mip, int mode)
       else if (flags & WF_NEEDCOMP)
         continue;
 
-      nobreak_result = SP_OK;
+      int nobreak_result = SP_OK;
 
       if (!word_ends) {
         int save_result = mip->mi_result;
@@ -1601,7 +1594,7 @@ static void find_word(matchinf_T *mip, int mode)
           // the case-folded word is equal to the keep-case word.
           p = mip->mi_fword;
           if (STRNCMP(ptr, p, wlen) != 0) {
-            for (s = ptr; s < ptr + wlen; mb_ptr_adv(s))
+            for (char_u *s = ptr; s < ptr + wlen; mb_ptr_adv(s))
               mb_ptr_adv(p);
             mip->mi_compoff = (int)(p - mip->mi_fword);
           }
@@ -1661,6 +1654,7 @@ static void find_word(matchinf_T *mip, int mode)
         }
       }
 
+      int res = SP_BAD;
       if (flags & WF_BANNED)
         res = SP_BANNED;
       else if (flags & WF_REGION) {
@@ -3767,7 +3761,6 @@ char_u *did_set_spelllang(win_T *wp)
           && !ASCII_ISALPHA(p[3])) {
         STRLCPY(region_cp, p + 1, 3);
         memmove(p, p + 3, len - (p - lang) - 2);
-        len -= 3;
         region = region_cp;
       } else
         dont_use_region = true;
@@ -3780,8 +3773,7 @@ char_u *did_set_spelllang(win_T *wp)
       filename = false;
       if (len > 3 && lang[len - 3] == '_') {
         region = lang + len - 2;
-        len -= 3;
-        lang[len] = NUL;
+        lang[len - 3] = NUL;
       } else
         dont_use_region = true;
 

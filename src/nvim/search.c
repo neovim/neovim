@@ -3762,16 +3762,8 @@ current_search (
     int forward                    /* move forward or backwards */
 )
 {
-  pos_T start_pos;              /* position before the pattern */
-  pos_T orig_pos;               /* position of the cursor at beginning */
-  pos_T pos;                    /* position after the pattern */
-  int i;
-  int dir;
-  int result;                   /* result of various function calls */
   bool old_p_ws = p_ws;
-  int flags = 0;
   pos_T save_VIsual = VIsual;
-  int one_char;
 
   /* wrapping should not occur */
   p_ws = false;
@@ -3780,11 +3772,11 @@ current_search (
   if (VIsual_active && *p_sel == 'e' && lt(VIsual, curwin->w_cursor))
     dec_cursor();
 
-  if (VIsual_active) {
-    orig_pos = curwin->w_cursor;
+  pos_T orig_pos;               /* position of the cursor at beginning */
+  pos_T pos;                    /* position after the pattern */
 
-    pos = curwin->w_cursor;
-    start_pos = VIsual;
+  if (VIsual_active) {
+    orig_pos = pos = curwin->w_cursor;
 
     /* make sure, searching further will extend the match */
     if (VIsual_active) {
@@ -3794,10 +3786,10 @@ current_search (
         decl(&pos);
     }
   } else
-    orig_pos = pos = start_pos = curwin->w_cursor;
+    orig_pos = pos = curwin->w_cursor;
 
   /* Is the pattern is zero-width? */
-  one_char = is_one_char(spats[last_idx].pat);
+  int one_char = is_one_char(spats[last_idx].pat);
   if (one_char == -1) {
     p_ws = old_p_ws;
     return FAIL;      /* pattern not found */
@@ -3808,17 +3800,14 @@ current_search (
    * so that a match at the current cursor position will be correctly
    * captured.
    */
-  for (i = 0; i < 2; i++) {
-    if (forward)
-      dir = i;
-    else
-      dir = !i;
+  for (int i = 0; i < 2; i++) {
+    int dir = forward ? i : !i;
+    int flags = 0;
 
-    flags = 0;
     if (!dir && !one_char)
       flags = SEARCH_END;
 
-    result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
+    int result = searchit(curwin, curbuf, &pos, (dir ? FORWARD : BACKWARD),
         spats[last_idx].pat, (long) (i ? count : 1),
         SEARCH_KEEP | flags, RE_SEARCH, 0, NULL);
 
@@ -3845,13 +3834,13 @@ current_search (
     p_ws = old_p_ws;
   }
 
-  start_pos = pos;
-  flags = forward ? SEARCH_END : 0;
+  int flags = forward ? SEARCH_END : 0;
+  pos_T start_pos = pos;
 
   /* move to match, except for zero-width matches, in which case, we are
    * already on the next match */
   if (!one_char)
-    result = searchit(curwin, curbuf, &pos, (forward ? FORWARD : BACKWARD),
+    searchit(curwin, curbuf, &pos, (forward ? FORWARD : BACKWARD),
         spats[last_idx].pat, 0L, flags | SEARCH_KEEP, RE_SEARCH, 0, NULL);
 
   if (!VIsual_active)

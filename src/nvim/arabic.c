@@ -1361,24 +1361,19 @@ static int half_shape(int c)
 int arabic_shape(int c, int *ccp, int *c1p, int prev_c, int prev_c1,
                  int next_c)
 {
-  int curr_c;
-  int shape_c;
-  int curr_laa;
-  int prev_laa;
-
   /* Deal only with Arabic character, pass back all others */
   if (!A_is_ok(c)) {
     return c;
   }
 
   /* half-shape current and previous character */
-  shape_c = half_shape(prev_c);
+  int shape_c = half_shape(prev_c);
 
   /* Save away current character */
-  curr_c = c;
+  int curr_c = c;
 
-  curr_laa = A_firstc_laa(c, *c1p);
-  prev_laa = A_firstc_laa(prev_c, prev_c1);
+  int curr_laa = A_firstc_laa(c, *c1p);
+  int prev_laa = A_firstc_laa(prev_c, prev_c1);
 
   if (curr_laa) {
     if (A_is_valid(prev_c) && !A_is_f(shape_c) && !A_is_s(shape_c) &&
