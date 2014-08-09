@@ -1670,8 +1670,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	happen for the system-wide vimrc or gvimrc file, nor for a file given
 	with the |-u| argument).  Also see |compatible-default| and
 	|posix-compliance|.
-	You can also set this option with the "-C" argument, and reset it with
-	"-N".  See |-C| and |-N|.
 	Switching this option off makes the Vim defaults be used for options
 	that have a different Vi and Vim default value.  See the options
 	marked with a '+' below.  Other options are not modified.
