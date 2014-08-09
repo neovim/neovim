@@ -412,6 +412,15 @@ uint64_t os_fileinfo_hardlinks(const FileInfo *file_info)
   return file_info->stat.st_nlink;
 }
 
+/// Get the blocksize from a `FileInfo`.
+///
+/// @return blocksize in bytes.
+uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return file_info->stat.st_blksize;
+}
+
 /// Get the `FileID` for a given path
 ///
 /// @param path Path to the file.

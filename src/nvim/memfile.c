@@ -123,10 +123,11 @@ memfile_T *mf_open(char_u *fname, int flags)
    */
   FileInfo file_info;
   if (mfp->mf_fd >= 0
-      && os_get_file_info_fd(mfp->mf_fd, &file_info)
-      && file_info.stat.st_blksize >= MIN_SWAP_PAGE_SIZE
-      && file_info.stat.st_blksize <= MAX_SWAP_PAGE_SIZE) {
-    mfp->mf_page_size = file_info.stat.st_blksize;
+      && os_get_file_info_fd(mfp->mf_fd, &file_info)) {
+    uint64_t blocksize = os_fileinfo_blocksize(&file_info);
+    if (blocksize >= MIN_SWAP_PAGE_SIZE && blocksize <= MAX_SWAP_PAGE_SIZE) {
+      mfp->mf_page_size = blocksize;
+    }
   }
 
   if (mfp->mf_fd < 0 || (flags & (O_TRUNC|O_EXCL))
