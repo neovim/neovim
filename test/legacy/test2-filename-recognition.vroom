@@ -1,0 +1,40 @@
+Test if URLs are recognized as filenames by commands such as "gf". Here
+we'll use `expand("<cfile>")` since "gf" would need to open the file.
+
+Insert some URLs:
+
+  % first test for URL://machine.name/tmp/vimtest2a and other text<cr>
+  % second test for URL://machine.name/tmp/vimtest2b. And other text<cr>
+  % third test for URL:\\machine.name\vimtest2c and other text<cr>
+  % fourth test for URL:\\machine.name\tmp\vimtest2d, and other text
+
+Go to the first URL:
+
+  :/^first<cr>/tmp
+
+Append the url to the beginning of the buffer:
+
+  :call append(0, expand("<cfile>"))
+
+Repeat for the second URL, but navigate to the 'URL' word:
+
+  :/^second<cr>/URL<cr>:call append(1, expand("<cfile>"))
+
+Repeat for the other two, but first the 'isfname' option must be set to
+allow '\' in filenames
+
+  :set isf=@,48-57,/,.,-,_,+,,,$,:,~,\
+  :/^third<cr>/name<cr>:call append(2, expand("<cfile>"))
+  :/^fourth<cr>/URL<cr>:call append(3, expand("<cfile>"))
+
+Delete the initial text which starts at line 5:
+
+  > 5GdG
+
+Result:
+
+  URL://machine.name/tmp/vimtest2a
+  URL://machine.name/tmp/vimtest2b
+  URL:\\machine.name\vimtest2c
+  URL:\\machine.name\tmp\vimtest2d
+  @end

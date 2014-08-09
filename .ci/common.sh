@@ -65,6 +65,16 @@ install_prebuilt_deps() {
 	fi
 }
 
+install_vroom() {
+	(
+	sudo pip install neovim
+	git clone git://github.com/google/vroom
+	cd vroom
+	python setup.py build
+	sudo python setup.py install
+	)
+}
+
 tmpdir="$(pwd)/tmp"
 rm -rf "$tmpdir"
 mkdir -p "$tmpdir"
