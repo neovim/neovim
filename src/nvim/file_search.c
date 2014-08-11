@@ -45,9 +45,7 @@
  */
 
 #include <errno.h>
-#include <string.h>
 #include <stdbool.h>
-#include <inttypes.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -58,14 +56,10 @@
 #include "nvim/message.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
-#include "nvim/os_unix.h"
 #include "nvim/path.h"
 #include "nvim/strings.h"
-#include "nvim/tag.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
-#include "nvim/os/os.h"
-#include "nvim/os/fs_defs.h"
 #include "nvim/option_defs.h"  // for p_bfs
 
 static char_u   *ff_expand_buffer = NULL; /* used for expanding filenames */
