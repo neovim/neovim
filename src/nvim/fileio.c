@@ -4359,7 +4359,6 @@ static int make_bom(char_u *buf, char_u *name)
 void shorten_fnames(int force)
 {
   char_u dirname[MAXPATHL];
-  buf_T       *buf;
   char_u      *p;
 
   os_dirname(dirname, MAXPATHL);
@@ -6123,7 +6122,6 @@ void ex_doautoall(exarg_T *eap)
 {
   int retval;
   aco_save_T aco;
-  buf_T       *buf;
   char_u      *arg = eap->arg;
   int call_do_modelines = check_nomodeline(&arg);
 

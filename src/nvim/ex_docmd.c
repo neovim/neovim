@@ -7871,7 +7871,6 @@ makeopens (
     char_u *dirnow            /* Current directory name */
 )
 {
-  buf_T       *buf;
   int only_save_windows = TRUE;
   int nr;
   int cnr = 1;

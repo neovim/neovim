@@ -1044,10 +1044,10 @@ int autowrite(buf_T *buf, int forceit)
  */
 void autowrite_all(void)
 {
-  buf_T       *buf;
-
-  if (!(p_aw || p_awa) || !p_write)
+  if (!(p_aw || p_awa) || !p_write) {
     return;
+  }
+
   FOR_ALL_BUFFERS(buf) {
     if (bufIsChanged(buf) && !buf->b_p_ro) {
       (void)buf_write_all(buf, FALSE);
@@ -1071,7 +1071,6 @@ int check_changed(buf_T *buf, int flags)
              && ((flags & CCGD_MULTWIN) || buf->b_nwindows <= 1)
              && (!(flags & CCGD_AW) || autowrite(buf, forceit) == FAIL)) {
     if ((p_confirm || cmdmod.confirm) && p_write) {
-      buf_T       *buf2;
       int count = 0;
 
       if (flags & CCGD_ALLBUF)
@@ -1112,7 +1111,6 @@ dialog_changed (
 {
   char_u buff[DIALOG_MSG_SIZE];
   int ret;
-  buf_T       *buf2;
   exarg_T ea;
 
   dialog_msg(buff, _("Save changes to \"%s\"?"),
@@ -1202,7 +1200,6 @@ check_changed_any (
 )
 {
   int ret = FALSE;
-  buf_T       *buf;
   int save;
   int i;
   int bufnum = 0;
@@ -1237,6 +1234,7 @@ check_changed_any (
     add_bufnum(bufnrs, &bufnum, buf->b_fnum);
   }
 
+  buf_T *buf = NULL;
   for (i = 0; i < bufnum; ++i) {
     buf = buflist_findnr(bufnrs[i]);
     if (buf == NULL)
@@ -1821,7 +1819,6 @@ void ex_listdo(exarg_T *eap)
   int i;
   win_T       *wp;
   tabpage_T   *tp;
-  buf_T       *buf;
   int next_fnum = 0;
   char_u      *save_ei = NULL;
   char_u      *p_shm_save;
@@ -1886,7 +1883,7 @@ void ex_listdo(exarg_T *eap)
         /* Remember the number of the next listed buffer, in case
          * ":bwipe" is used or autocommands do something strange. */
         next_fnum = -1;
-        for (buf = curbuf->b_next; buf != NULL; buf = buf->b_next)
+        for (buf_T *buf = curbuf->b_next; buf != NULL; buf = buf->b_next)
           if (buf->b_p_bl) {
             next_fnum = buf->b_fnum;
             break;
@@ -1901,14 +1898,18 @@ void ex_listdo(exarg_T *eap)
         /* Done? */
         if (next_fnum < 0)
           break;
+
         /* Check if the buffer still exists. */
-        FOR_ALL_BUFFERS(buf) {
-          if (buf->b_fnum == next_fnum) {
+        bool buf_still_exists = false;
+        FOR_ALL_BUFFERS(bp) {
+          if (bp->b_fnum == next_fnum) {
+            buf_still_exists = true;
             break;
           }
         }
-        if (buf == NULL)
+        if (buf_still_exists) {
           break;
+        }
 
         /* Go to the next buffer.  Clear 'shm' to avoid that the file
          * message overwrites any output from the command. */

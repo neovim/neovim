@@ -466,8 +466,6 @@ void ml_setname(buf_T *buf)
  */
 void ml_open_files(void)
 {
-  buf_T       *buf;
-
   FOR_ALL_BUFFERS(buf) {
     if (!buf->b_p_ro || buf->b_changed) {
       ml_open_file(buf);
@@ -586,8 +584,6 @@ void ml_close(buf_T *buf, int del_file)
  */
 void ml_close_all(int del_file)
 {
-  buf_T       *buf;
-
   FOR_ALL_BUFFERS(buf) {
     ml_close(buf, del_file && ((buf->b_flags & BF_PRESERVED) == 0
                                || vim_strchr(p_cpo, CPO_PRESERVE) == NULL));
@@ -602,8 +598,6 @@ void ml_close_all(int del_file)
  */
 void ml_close_notmod(void)
 {
-  buf_T       *buf;
-
   FOR_ALL_BUFFERS(buf) {
     if (!bufIsChanged(buf)) {
       ml_close(buf, TRUE);          /* close all not-modified buffers */
@@ -1622,8 +1616,6 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
  */
 void ml_sync_all(int check_file, int check_char)
 {
-  buf_T               *buf;
-
   FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp == NULL || buf->b_ml.ml_mfp->mf_fname == NULL)
       continue;                             /* no file */

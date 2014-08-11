@@ -3329,8 +3329,6 @@ void prepare_to_exit(void)
  */
 void preserve_exit(void)
 {
-  buf_T       *buf;
-
   // Prevent repeated calls into this method.
   if (really_exiting) {
     exit(2);

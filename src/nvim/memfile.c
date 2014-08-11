@@ -613,7 +613,6 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
 {
   bhdr_T      *hp;
   int need_release;
-  buf_T       *buf;
 
   /* don't release while in mf_close_file() */
   if (mf_dont_release)
@@ -632,13 +631,16 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
    */
   if (mfp->mf_fd < 0 && need_release && p_uc) {
     /* find for which buffer this memfile is */
-    FOR_ALL_BUFFERS(buf) {
-      if (buf->b_ml.ml_mfp == mfp) {
+    buf_T *buf = NULL;
+    FOR_ALL_BUFFERS(bp) {
+      if (bp->b_ml.ml_mfp == mfp) {
+        buf = bp;
         break;
       }
     }
-    if (buf != NULL && buf->b_may_swap)
+    if (buf != NULL && buf->b_may_swap) {
       ml_open_file(buf);
+    }
   }
 
   /*
@@ -688,7 +690,6 @@ static bhdr_T *mf_release(memfile_T *mfp, int page_count)
  */
 int mf_release_all(void)
 {
-  buf_T       *buf;
   memfile_T   *mfp;
   bhdr_T      *hp;
   int retval = FALSE;

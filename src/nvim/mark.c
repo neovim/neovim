@@ -1337,7 +1337,6 @@ int removable(char_u *name)
 int write_viminfo_marks(FILE *fp_out)
 {
   int count;
-  buf_T       *buf;
   int is_mark_set;
   int i;
   win_T       *win;
@@ -1346,8 +1345,9 @@ int write_viminfo_marks(FILE *fp_out)
   /*
    * Set b_last_cursor for the all buffers that have a window.
    */
-  FOR_ALL_TAB_WINDOWS(tp, win)
-  set_last_cursor(win);
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    set_last_cursor(win);
+  }
 
   fputs(_("\n# History of marks within files (newest to oldest):\n"), fp_out);
   count = 0;
@@ -1467,11 +1467,14 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
       }
     } else { /* fp_out != NULL */
              /* This is slow if there are many buffers!! */
-      FOR_ALL_BUFFERS(buf) {
-        if (buf->b_ffname != NULL) {
-          home_replace(NULL, buf->b_ffname, name_buf, LSIZE, TRUE);
-          if (fnamecmp(str, name_buf) == 0)
+      buf = NULL;
+      FOR_ALL_BUFFERS(bp) {
+        if (bp->b_ffname != NULL) {
+          home_replace(NULL, bp->b_ffname, name_buf, LSIZE, TRUE);
+          if (fnamecmp(str, name_buf) == 0) {
+            buf = bp;
             break;
+          }
         }
       }
 

@@ -1211,7 +1211,6 @@ do_shell (
     int flags              /* may be SHELL_DOOUT when output is redirected */
 )
 {
-  buf_T       *buf;
   int save_nwr;
 
   /*
@@ -1748,7 +1747,6 @@ static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags)
 static int read_viminfo_up_to_marks(vir_T *virp, int forceit, int writing)
 {
   int eof;
-  buf_T       *buf;
 
   prepare_viminfo_history(forceit ? 9999 : 0, writing);
   eof = viminfo_readline(virp);
@@ -2358,7 +2356,6 @@ void ex_wnext(exarg_T *eap)
  */
 void do_wqall(exarg_T *eap)
 {
-  buf_T       *buf;
   int error = 0;
   int save_forceit = eap->forceit;
 
@@ -5675,7 +5672,6 @@ void ex_sign(exarg_T *eap)
     int		idx;
     sign_T	*sp;
     sign_T	*sp_prev;
-    buf_T	*buf;
 
     /* Parse the subcommand. */
     p = skiptowhite(arg);
@@ -5915,6 +5911,8 @@ void ex_sign(exarg_T *eap)
 	 * Check for line={lnum} name={name} and file={fname} or buffer={nr}.
 	 * Leave "arg" pointing to {fname}.
 	 */
+
+   buf_T *buf = NULL;
 	for (;;)
 	{
 	    if (STRNCMP(arg, "line=", 5) == 0)

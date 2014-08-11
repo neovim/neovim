@@ -744,7 +744,6 @@ main_loop (
 /* Exit properly */
 void getout(int exitval)
 {
-  buf_T       *buf;
   win_T       *wp;
   tabpage_T   *tp, *next_tp;
 
@@ -772,7 +771,7 @@ void getout(int exitval)
         if (wp->w_buffer == NULL)
           /* Autocmd must have close the buffer already, skip. */
           continue;
-        buf = wp->w_buffer;
+        buf_T *buf = wp->w_buffer;
         if (buf->b_changedtick != -1) {
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,
               buf->b_fname, FALSE, buf);

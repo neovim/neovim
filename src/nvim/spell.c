@@ -4139,7 +4139,6 @@ void spell_delete_wordlist(void)
 void spell_free_all(void)
 {
   slang_T     *slang;
-  buf_T       *buf;
 
   // Go through all buffers and handle 'spelllang'. <VN>
   FOR_ALL_BUFFERS(buf) {
