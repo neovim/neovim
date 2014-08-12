@@ -278,6 +278,7 @@ static void job_err(RStream *rstream, void *data, bool eof)
 static void parse_msgpack(RStream *rstream, void *data, bool eof)
 {
   Channel *channel = data;
+  channel->rpc_call_level++;
 
   if (eof) {
     char buf[256];
@@ -287,10 +288,9 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
              "closed by the client",
              channel->id);
     call_set_error(channel, buf);
-    return;
+    goto end;
   }
 
-  channel->rpc_call_level++;
   uint32_t count = rstream_available(rstream);
   DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
        count,
