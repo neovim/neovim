@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #include <uv.h>
 
@@ -20,7 +21,7 @@ struct wstream {
   size_t maxmem;
   // Number of pending requests
   size_t pending_reqs;
-  bool freed;
+  bool freed, free_handle;
   // (optional) Write callback and data
   wstream_cb cb;
   void *data;
@@ -60,6 +61,7 @@ WStream * wstream_new(size_t maxmem)
   rv->curmem = 0;
   rv->pending_reqs = 0;
   rv->freed = false;
+  rv->free_handle = false;
   rv->cb = NULL;
 
   return rv;
@@ -68,9 +70,13 @@ WStream * wstream_new(size_t maxmem)
 /// Frees all memory allocated for a WStream instance
 ///
 /// @param wstream The `WStream` instance
-void wstream_free(WStream *wstream)
-{
+void wstream_free(WStream *wstream) {
   if (!wstream->pending_reqs) {
+    handle_set_wstream((uv_handle_t *)wstream->stream, NULL);
+    if (wstream->free_handle) {
+      uv_close((uv_handle_t *)wstream->stream, close_cb);
+    }
+
     free(wstream);
   } else {
     wstream->freed = true;
@@ -85,6 +91,24 @@ void wstream_set_stream(WStream *wstream, uv_stream_t *stream)
 {
   handle_set_wstream((uv_handle_t *)stream, wstream);
   wstream->stream = stream;
+}
+
+/// Sets the underlying file descriptor that will be written to. Only pipes
+/// are supported for now.
+///
+/// @param wstream The `WStream` instance
+/// @param file The file descriptor
+void wstream_set_file(WStream *wstream, uv_file file)
+{
+  uv_handle_type type = uv_guess_handle(file);
+
+  assert(type == UV_NAMED_PIPE || type == UV_TTY);
+  wstream->stream = xmalloc(sizeof(uv_pipe_t));
+  uv_pipe_init(uv_default_loop(), (uv_pipe_t *)wstream->stream, 0);
+  uv_pipe_open((uv_pipe_t *)wstream->stream, file);
+  wstream->stream->data = NULL;
+  handle_set_wstream((uv_handle_t *)wstream->stream, wstream);
+  wstream->free_handle = true;
 }
 
 /// Sets a callback that will be called on completion of a write request,
@@ -211,3 +235,16 @@ static void release_wbuffer(WBuffer *buffer)
     free(buffer);
   }
 }
+
+static void close_cb(uv_handle_t *handle)
+{
+  WStream *wstream = handle_get_wstream(handle);
+
+  if (wstream) {
+    free(wstream);
+  }
+
+  free(handle->data);
+  free(handle);
+}
+
