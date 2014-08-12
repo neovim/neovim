@@ -67,6 +67,10 @@ void channel_init(void)
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
+
+  if (embedded_mode) {
+    channel_from_stdio();
+  }
 }
 
 /// Teardown the module

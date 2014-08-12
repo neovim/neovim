@@ -2360,6 +2360,9 @@ void set_shellsize(int width, int height, int mustset)
  */
 void settmode(int tmode)
 {
+  if (embedded_mode) {
+    return;
+  }
 
   if (full_screen) {
     /*
