@@ -20,6 +20,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
+#include "nvim/os_unix.h"
 #include "nvim/message.h"
 #include "nvim/map.h"
 #include "nvim/log.h"
@@ -261,6 +262,25 @@ void channel_unsubscribe(uint64_t id, char *event)
   unsubscribe(channel, event);
 }
 
+/// Creates an API channel from stdin/stdout. This is used when embedding
+/// Neovim
+static void channel_from_stdio(void)
+{
+  Channel *channel = register_channel();
+  channel->is_job = false;
+  // read stream
+  channel->data.streams.read = rstream_new(parse_msgpack,
+                                           CHANNEL_BUFFER_SIZE,
+                                           channel,
+                                           NULL);
+  rstream_set_file(channel->data.streams.read, 0);
+  rstream_start(channel->data.streams.read);
+  // write stream
+  channel->data.streams.write = wstream_new(0);
+  wstream_set_file(channel->data.streams.write, 1);
+  channel->data.streams.uv = NULL;
+}
+
 static void job_out(RStream *rstream, void *data, bool eof)
 {
   Job *job = data;
@@ -474,7 +494,12 @@ static void close_channel(Channel *channel)
   } else {
     rstream_free(channel->data.streams.read);
     wstream_free(channel->data.streams.write);
-    uv_close((uv_handle_t *)channel->data.streams.uv, close_cb);
+    if (channel->data.streams.uv) {
+      uv_close((uv_handle_t *)channel->data.streams.uv, close_cb);
+    } else {
+      // When the stdin channel closes, it's time to go
+      mch_exit(0);
+    }
   }
 
   free(channel);
