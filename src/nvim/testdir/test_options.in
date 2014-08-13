@@ -1,0 +1,17 @@
+Test for ":options".
+
+STARTTEST
+:so small.vim
+:let caught = 'ok'
+:try
+  :options
+:catch 
+  :let caught = v:throwpoint . "\n" . v:exception
+:endtry
+:buf 1
+:$put =caught
+:/^result/,$w! test.out
+:qa!
+ENDTEST
+
+result
