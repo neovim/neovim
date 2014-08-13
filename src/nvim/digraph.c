@@ -835,6 +835,8 @@ static digr_T digraphdefault[] =
   { 'W', '=', 0x20a9 },
   { '=', 'e', 0x20ac }, // euro
   { 'E', 'u', 0x20ac }, // euro
+  { '=', 'R', 0x20bd }, // rouble
+  { '=', 'P', 0x20bd }, // rouble
   { 'o', 'C', 0x2103 },
   { 'c', 'o', 0x2105 },
   { 'o', 'F', 0x2109 },
