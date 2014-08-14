@@ -25,6 +25,8 @@
 #include "nvim/log.h"
 #include "nvim/lib/kvec.h"
 
+#define CHANNEL_BUFFER_SIZE 0xffff
+
 typedef struct {
   uint64_t request_id;
   bool errored;
@@ -117,7 +119,10 @@ void channel_from_stream(uv_stream_t *stream)
   stream->data = NULL;
   channel->is_job = false;
   // read stream
-  channel->data.streams.read = rstream_new(parse_msgpack, 1024, channel, NULL);
+  channel->data.streams.read = rstream_new(parse_msgpack,
+                                           CHANNEL_BUFFER_SIZE,
+                                           channel,
+                                           NULL);
   rstream_set_stream(channel->data.streams.read, stream);
   rstream_start(channel->data.streams.read);
   // write stream
