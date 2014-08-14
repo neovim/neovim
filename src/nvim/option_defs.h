@@ -684,6 +684,7 @@ enum {
   , BV_KMAP
   , BV_KP
   , BV_LISP
+  , BV_LW
   , BV_MA
   , BV_ML
   , BV_MOD

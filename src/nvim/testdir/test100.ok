@@ -39,3 +39,13 @@ THREE: expecting global undolevels: 50, local undolevels: -123456 (default)
 
   undolevels=50 global
   undolevels=-123456 local
+
+Testing 'lispwords' local value
+  lispwords=foo,bar,baz
+  lispwords=bar,baz,quux
+bar,baz,quux
+
+Testing 'lispwords' value reset
+  lispwords=foo,bar,baz
+  lispwords=foo,bar,baz
+foo,bar,baz
