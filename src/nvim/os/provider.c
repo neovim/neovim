@@ -158,8 +158,10 @@ static uint64_t get_provider_for(char *method)
 
 err:
   // Ensure we won't try to restart the provider
-  f->bootstrap_command = NULL;
-  f->channel_id = 0;
+  if (f) {
+    f->bootstrap_command = NULL;
+    f->channel_id = 0;
+  }
   return 0;
 }
 
