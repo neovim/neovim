@@ -185,7 +185,8 @@
 #define SHM_SEARCH      's'             /* no search hit bottom messages */
 #define SHM_ATTENTION   'A'             /* no ATTENTION messages */
 #define SHM_INTRO       'I'             /* intro messages */
-#define SHM_ALL         "rmfixlnwaWtToOsAI" /* all possible flags for 'shm' */
+#define SHM_COMPLETIONMENU 'c'          // completion menu messages
+#define SHM_ALL         "rmfixlnwaWtToOsAIc" /* all possible flags for 'shm' */
 
 /* characters for p_go: */
 #define GO_ASEL         'a'             /* autoselect */
