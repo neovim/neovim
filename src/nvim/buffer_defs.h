@@ -677,6 +677,7 @@ struct file_buffer {
   char_u      *b_p_tsr;         /* 'thesaurus' local value */
   long b_p_ul;                  /* 'undolevels' local value */
   int b_p_udf;                  /* 'undofile' */
+  char_u      *b_p_lw;          // 'lispwords' local value
 
   /* end of buffer options */
 

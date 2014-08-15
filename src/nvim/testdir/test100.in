@@ -37,6 +37,14 @@ STARTTEST
 :call UndoLevel()
 :%w >> test.out
 :"sleep 10
+:"
+:" Testing 'lispwords'
+:"
+:setglobal lispwords=foo,bar,baz
+:setlocal lispwords-=foo | setlocal lispwords+=quux
+:redir >> test.out | echon "\nTesting 'lispwords' local value" | setglobal lispwords? | setlocal lispwords? | echo &lispwords . "\n" | redir end
+:setlocal lispwords<
+:redir >> test.out | echon "\nTesting 'lispwords' value reset" | setglobal lispwords? | setlocal lispwords? | echo &lispwords . "\n" | redir end
 :qa!
 ENDTEST
 

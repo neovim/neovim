@@ -143,6 +143,7 @@
 # define PV_KMAP        OPT_BUF(BV_KMAP)
 #define PV_KP           OPT_BOTH(OPT_BUF(BV_KP))
 # define PV_LISP        OPT_BUF(BV_LISP)
+# define PV_LW          OPT_BOTH(OPT_BUF(BV_LW))
 #define PV_MA           OPT_BUF(BV_MA)
 #define PV_ML           OPT_BUF(BV_ML)
 #define PV_MOD          OPT_BUF(BV_MOD)
@@ -1057,7 +1058,7 @@ static struct vimoption
    (char_u *)&p_lisp, PV_LISP,
    {(char_u *)FALSE, (char_u *)0L} SCRIPTID_INIT},
   {"lispwords",   "lw",   P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)&p_lispwords, PV_NONE,
+   (char_u *)&p_lispwords, PV_LW,
    {(char_u *)LISPWORD_VALUE, (char_u *)0L}
    SCRIPTID_INIT},
   {"list",        NULL,   P_BOOL|P_VI_DEF|P_RWIN,
@@ -3558,6 +3559,7 @@ void check_buf_options(buf_T *buf)
   check_string_option(&buf->b_p_tags);
   check_string_option(&buf->b_p_dict);
   check_string_option(&buf->b_p_tsr);
+  check_string_option(&buf->b_p_lw);
 }
 
 /*
@@ -6583,6 +6585,9 @@ void unset_global_local_option(char *name, void *from)
     case PV_UL:
       buf->b_p_ul = NO_LOCAL_UNDOLEVEL;
       break;
+    case PV_LW:
+      clear_string_option(&buf->b_p_lw);
+      break;
   }
 }
 
@@ -6612,6 +6617,7 @@ static char_u *get_varp_scope(struct vimoption *p, int opt_flags)
     case PV_TSR:  return (char_u *)&(curbuf->b_p_tsr);
     case PV_STL:  return (char_u *)&(curwin->w_p_stl);
     case PV_UL:   return (char_u *)&(curbuf->b_p_ul);
+    case PV_LW:   return (char_u *)&(curbuf->b_p_lw);
     }
     return NULL;     /* "cannot happen" */
   }
@@ -6659,6 +6665,8 @@ static char_u *get_varp(struct vimoption *p)
            ? (char_u *)&(curwin->w_p_stl) : p->var;
   case PV_UL:     return curbuf->b_p_ul != NO_LOCAL_UNDOLEVEL
            ? (char_u *)&(curbuf->b_p_ul) : p->var;
+  case PV_LW:   return *curbuf->b_p_lw != NUL
+           ? (char_u *)&(curbuf->b_p_lw) : p->var;
 
   case PV_ARAB:   return (char_u *)&(curwin->w_p_arab);
   case PV_LIST:   return (char_u *)&(curwin->w_p_list);
@@ -7011,6 +7019,7 @@ void buf_copy_options(buf_T *buf, int flags)
       buf->b_p_tsr = empty_option;
       buf->b_p_qe = vim_strsave(p_qe);
       buf->b_p_udf = p_udf;
+      buf->b_p_lw = empty_option;
 
       /*
        * Don't copy the options set by ex_help(), use the saved values,
