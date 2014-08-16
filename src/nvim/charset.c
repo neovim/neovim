@@ -972,6 +972,7 @@ int lbr_chartabsize_adv(char_u *line, char_u **s, colnr_T col)
 int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *headp)
 {
   colnr_T col2;
+  colnr_T col_adj = 0; /* col + screen size of tab */
   colnr_T colmax;
   int added;
   int mb_added = 0;
@@ -991,6 +992,9 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   // First get normal size, without 'linebreak'
   int size = win_chartabsize(wp, s, col);
   int c = *s;
+  if (tab_corr) {
+      col_adj = size - 1;
+  }
 
   // If 'linebreak' set check at a blank before a non-blank if the line
   // needs a break here
@@ -1003,13 +1007,14 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
     // non-blank after a blank.
     numberextra = win_col_off(wp);
     col2 = col;
-    colmax = (colnr_T)(wp->w_width - numberextra);
+    colmax = (colnr_T)(wp->w_width - numberextra - col_adj);
 
     if (col >= colmax) {
-      n = colmax + win_col_off2(wp);
+        colmax += col_adj;
+        n = colmax + win_col_off2(wp);
 
       if (n > 0) {
-        colmax += (((col - colmax) / n) + 1) * n;
+        colmax += (((col - colmax) / n) + 1) * n - col_adj;
       }
     }
 
@@ -1028,7 +1033,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       col2 += win_chartabsize(wp, s, col2);
 
       if (col2 >= colmax) { /* doesn't fit */
-        size = colmax - col;
+        size = colmax - col + col_adj;
         tab_corr = FALSE;
         break;
       }
