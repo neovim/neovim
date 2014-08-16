@@ -464,11 +464,11 @@ int get_breakindent_win(win_T *wp, char_u *line) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
     prev_indent = get_indent_str(line,
-        (int)wp->w_buffer->b_p_ts, wp->w_p_list) + wp->w_p_brishift;
+            (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
+  bri = prev_indent + wp->w_p_brishift;
 
   /* indent minus the length of the showbreak string */
-  bri = prev_indent;
   if (wp->w_p_brisbr)
     bri -= vim_strsize(p_sbr);
 
