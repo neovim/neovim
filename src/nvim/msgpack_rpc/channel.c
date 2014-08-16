@@ -343,12 +343,12 @@ static void job_err(RStream *rstream, void *data, bool eof)
 {
   size_t count;
   char buf[256];
-  Channel *channel = job_data(data);
 
   while ((count = rstream_pending(rstream))) {
     size_t read = rstream_read(rstream, buf, sizeof(buf) - 1);
     buf[read] = NUL;
-    ELOG("Channel %" PRIu64 " stderr: %s", channel->id, buf);
+    ELOG("Channel %" PRIu64 " stderr: %s",
+         ((Channel *)job_data(data))->id, buf);
   }
 }
 
