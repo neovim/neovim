@@ -3562,6 +3562,9 @@ win_line (
             mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
         } else if (c != NUL) {
           p_extra = transchar(c);
+          if (n_extra == 0) {
+              n_extra = byte2cells(c);
+          }
           if ((dy_flags & DY_UHEX) && wp->w_p_rl)
             rl_mirror(p_extra);                 /* reverse "<12>" */
           c_extra = NUL;
