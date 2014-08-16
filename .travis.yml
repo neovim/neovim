@@ -13,5 +13,13 @@ env:
     - CI_TARGET=clint
     - CI_TARGET=api-python
     - CI_TARGET=coverity
+before_install:
+  # Adds user to a dummy group.
+  # That allows to test changing the group of the file by `os_fchown`.
+  - sudo groupadd chown_test
+  - sudo usermod -a -G chown_test ${USER}
 script:
-  - sh -e "${CI_SCRIPTS}/${CI_TARGET}.sh"
+  # This will pass the environment variables down to a bash process which runs
+  # as $USER, while retaining the environment variables defined and belonging
+  # to secondary groups given above in usermod.
+  - sudo -E su ${USER} -c "sh -e \"${CI_SCRIPTS}/${CI_TARGET}.sh\""

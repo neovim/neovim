@@ -1606,13 +1606,13 @@ void write_viminfo(char_u *file, int forceit)
           fp_out = mch_fopen((char *)tempname, WRITEBIN);
       }
 
-#if defined(UNIX) && defined(HAVE_FCHOWN)
+#ifdef UNIX
       /*
        * Make sure the owner can read/write it.  This only works for
        * root.
        */
       if (fp_out != NULL) {
-        fchown(fileno(fp_out), old_info.stat.st_uid, old_info.stat.st_gid);
+        os_fchown(fileno(fp_out), old_info.stat.st_uid, old_info.stat.st_gid);
       }
 #endif
     }

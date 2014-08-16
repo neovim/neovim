@@ -12,10 +12,8 @@ if [ ! -d /usr/local/clang-$clang_version ]; then
 	sudo mkdir /usr/local/clang-$clang_version
 	wget -q -O - http://llvm.org/releases/$clang_version/clang+llvm-$clang_version-x86_64-unknown-ubuntu12.04.xz \
 		| sudo tar xJf - --strip-components=1 -C /usr/local/clang-$clang_version
-	export CC=/usr/local/clang-$clang_version/bin/clang
-else
-	export CC=clang
 fi
+export CC=/usr/local/clang-$clang_version/bin/clang
 symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
 
 export SANITIZE=1

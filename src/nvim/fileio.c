@@ -2711,16 +2711,10 @@ buf_write (
        * - it's a hard link
        * - it's a symbolic link
        * - we don't have write permission in the directory
-       * - we can't set the owner/group of the new file
        */
       if (file_info_old.stat.st_nlink > 1
           || !os_get_file_info_link((char *)fname, &file_info)
-          || !os_file_info_id_equal(&file_info, &file_info_old)
-#  ifndef HAVE_FCHOWN
-          || file_info.stat.st_uid != file_info_old.stat.st_uid
-          || file_info.stat.st_gid != file_info_old.stat.st_gid
-#  endif
-          ) {
+          || !os_file_info_id_equal(&file_info, &file_info_old)) {
         backup_copy = TRUE;
       } else
 # endif
@@ -2744,9 +2738,7 @@ buf_write (
           backup_copy = TRUE;
         else {
 # ifdef UNIX
-#  ifdef HAVE_FCHOWN
-          fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
-#  endif
+          os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
           if (!os_get_file_info((char *)IObuff, &file_info)
               || file_info.stat.st_uid != file_info_old.stat.st_uid
               || file_info.stat.st_gid != file_info_old.stat.st_gid
@@ -2909,10 +2901,7 @@ buf_write (
              * others.
              */
             if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
-# ifdef HAVE_FCHOWN  /* sequent-ptx lacks fchown() */
-                && fchown(bfd, (uid_t)-1, file_info_old.stat.st_gid) != 0
-# endif
-                ) {
+                && os_fchown(bfd, -1, file_info_old.stat.st_gid) != 0) {
               os_setperm(backup, (perm & 0707) | ((perm & 07) << 3));
             }
 # ifdef HAVE_SELINUX
@@ -3424,19 +3413,16 @@ restore_backup:
   /* When creating a new file, set its owner/group to that of the original
    * file.  Get the new device and inode number. */
   if (backup != NULL && !backup_copy) {
-# ifdef HAVE_FCHOWN
-
     /* don't change the owner when it's already OK, some systems remove
      * permission or ACL stuff */
     FileInfo file_info;
     if (!os_get_file_info((char *)wfname, &file_info)
         || file_info.stat.st_uid != file_info_old.stat.st_uid
         || file_info.stat.st_gid != file_info_old.stat.st_gid) {
-      fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
+      os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
       if (perm >= 0)            /* set permission again, may have changed */
         (void)os_setperm(wfname, perm);
     }
-# endif
     buf_set_file_id(buf);
   } else if (!buf->file_id_valid) {
     // Set the file_id when creating a new file.

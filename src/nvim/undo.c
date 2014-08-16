@@ -1119,10 +1119,7 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
   if (os_get_file_info((char *)buf->b_ffname, &file_info_old)
       && os_get_file_info((char *)file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
-# ifdef HAVE_FCHOWN  /* sequent-ptx lacks fchown() */
-      && fchown(fd, (uid_t)-1, file_info_old.stat.st_gid) != 0
-# endif
-      ) {
+      && os_fchown(fd, -1, file_info_old.stat.st_gid) != 0) {
     os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
   }
 # ifdef HAVE_SELINUX

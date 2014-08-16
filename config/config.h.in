@@ -18,7 +18,6 @@
 #cmakedefine HAVE__NSGETENVIRON
 #cmakedefine HAVE_CRT_EXTERNS_H
 #cmakedefine HAVE_DIRENT_H
-#cmakedefine HAVE_FCHOWN
 #cmakedefine HAVE_FCNTL_H
 #cmakedefine HAVE_FD_CLOEXEC
 #cmakedefine HAVE_FSEEKO
