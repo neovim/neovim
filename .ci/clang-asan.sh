@@ -2,26 +2,7 @@
 
 sudo pip install cpp-coveralls
 
-if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-	clang_version=3.4.2
-	clang_suffix=x86_64-unknown-ubuntu12.04.xz
-elif [ "$TRAVIS_OS_NAME" = "osx" ]; then
-	clang_version=3.5.0
-	clang_suffix=macosx-apple-darwin.tar.xz
-else
-	echo "Unknown OS '$TRAVIS_OS_NAME'."
-	exit 1
-fi
-
-if [ ! -d /usr/local/clang-$clang_version ]; then
-	echo "Downloading clang $clang_version..."
-	sudo mkdir /usr/local/clang-$clang_version
-	wget -q -O - http://llvm.org/releases/$clang_version/clang+llvm-$clang_version-$clang_suffix \
-		| sudo tar xJf - --strip-components=1 -C /usr/local/clang-$clang_version
-fi
-
-export CC=/usr/local/clang-$clang_version/bin/clang
-symbolizer=/usr/local/clang-$clang_version/bin/llvm-symbolizer
+setup_clang
 
 setup_deps x64
 
