@@ -12,3 +12,10 @@ Test 2: set nolinebreak list
 +pqrstuvwxyz␣1060ABC
 +DEFGHIJKLMNOPˑ¶    
 ¶                   
+	*mask = nil;
+
+Test 3: set linebreak nolist
+    *mask = nil;    
+~                   
+~                   
+~                   

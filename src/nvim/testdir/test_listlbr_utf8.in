@@ -30,11 +30,22 @@ STARTTEST
 :redraw!
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
+:"
 :let g:test ="Test 2: set nolinebreak list"
 :set list nolinebreak
 :redraw!
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
+:"
+:let g:test ="Test 3: set linebreak nolist"
+:$put =\"\t*mask = nil;\"
+:$
+:norm! zt
+:set nolist linebreak
+:redraw!
+:let line=ScreenChar(winwidth(0))
+:call DoRecordScreen()
+:"
 :%w! test.out
 :qa!
 ENDTEST
