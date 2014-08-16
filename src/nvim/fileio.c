@@ -2901,7 +2901,7 @@ buf_write (
              * others.
              */
             if (file_info_new.stat.st_gid != file_info_old.stat.st_gid
-                && os_fchown(bfd, (uid_t)-1, file_info_old.stat.st_gid) != 0) {
+                && os_fchown(bfd, -1, file_info_old.stat.st_gid) != 0) {
               os_setperm(backup, (perm & 0707) | ((perm & 07) << 3));
             }
 # ifdef HAVE_SELINUX
