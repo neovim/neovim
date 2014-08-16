@@ -1,0 +1,39 @@
+
+	abcdef hijklmn	pqrstuvwxyz 1060ABCDEFGHIJKLMNOP 
+
+Test 1: set linebreak
+    abcdef          
++hijklmn            
++pqrstuvwxyz 1060ABC
++DEFGHIJKLMNOP      
+
+Test 2: set linebreak + set list
+^Iabcdef hijklmn^I  
++pqrstuvwxyz 1060ABC
++DEFGHIJKLMNOP      
+                    
+
+Test 3: set linebreak + set list + fancy listchars
+▕———abcdef          
++hijklmn▕———        
++pqrstuvwxyz␣1060ABC
++DEFGHIJKLMNOPˑ¶    
+
+Test 4: set linebreak nolist
+    abcdef          
++hijklmn            
++pqrstuvwxyz 1060ABC
++DEFGHIJKLMNOP      
+
+Test 5: set nolinebreak list
+▕———abcdef hijklmn▕—
++pqrstuvwxyz␣1060ABC
++DEFGHIJKLMNOPˑ¶    
+¶                   
+1	aaaaaaaaaaaaaaaaaa
+
+Test 6: set linebreak with tab and 1 line as long as screen: should break!
+1                   
++aaaaaaaaaaaaaaaaaa 
+~                   
+~                   

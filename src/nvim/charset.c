@@ -997,7 +997,6 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
   if (wp->w_p_lbr
       && vim_isbreak(c)
       && !vim_isbreak(s[1])
-      && !wp->w_p_list
       && wp->w_p_wrap
       && (wp->w_width != 0)) {
     // Count all characters from first non-blank after a blank up to next

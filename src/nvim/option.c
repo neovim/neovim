@@ -8157,9 +8157,10 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
   }
 }
 
-/* This is called when 'breakindentopt' is changed and whenn a window is
+/* This is called when 'breakindentopt' is changed and when a window is
    initialized */
-int briopt_check() {
+int briopt_check(void) 
+{
   char_u	*p;
   int bri_shift = 0;
   long bri_min = 20;
