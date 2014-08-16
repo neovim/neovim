@@ -103,9 +103,6 @@
 # include <strings.h>
 #endif
 
-// For dup(3).
-#define HAVE_DUP
-
 /// Function to convert -errno error to char * error description
 ///
 /// -errno errors are returned by a number of os functions.

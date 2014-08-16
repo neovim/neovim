@@ -1755,13 +1755,11 @@ failed:
 #endif
   xfree(buffer);
 
-#ifdef HAVE_DUP
   if (read_stdin) {
     /* Use stderr for stdin, makes shell commands work. */
     close(0);
     ignored = dup(2);
   }
-#endif
 
   if (tmpname != NULL) {
     os_remove((char *)tmpname);  // delete converted file
