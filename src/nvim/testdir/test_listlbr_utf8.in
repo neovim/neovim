@@ -1,10 +1,12 @@
-Test for linebreak and list option (non-utf8)
+Test for linebreak and list option in utf-8 mode
 
 STARTTEST
 :so small.vim
 :if !exists("+linebreak") | e! test.ok | w! test.out | qa! | endif
+:so mbyte.vim
+:if &enc !=? 'utf-8'|:e! test.ok|:w! test.out|qa!|endif
 :10new|:vsp|:vert resize 20
-:put =\"\tabcdef hijklmn\tpqrstuvwxyz_1060ABCDEFGHIJKLMNOP \"
+:put =\"\tabcdef hijklmn\tpqrstuvwxyz\u00a01060ABCDEFGHIJKLMNOP \"
 :norm! zt
 :set ts=4 sw=4 sts=4 linebreak sbr=+ wrap
 :fu! ScreenChar(width)
@@ -23,26 +25,13 @@ STARTTEST
 :	$put =g:line
 :	wincmd p
 :endfu
-:let g:test="Test 1: set linebreak"
+:let g:test ="Test 1: set linebreak + set list + fancy listchars"
+:exe "set linebreak list listchars=nbsp:\u2423,tab:\u2595\u2014,trail:\u02d1,eol:\ub6"
 :redraw!
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
-:let g:test="Test 2: set linebreak + set list"
-:set linebreak list listchars=
-:redraw!
-:let line=ScreenChar(winwidth(0))
-:call DoRecordScreen()
-:let g:test ="Test 3: set linebreak nolist"
-:set nolist linebreak
-:redraw!
-:let line=ScreenChar(winwidth(0))
-:call DoRecordScreen()
-:let g:test ="Test 4: set linebreak with tab and 1 line as long as screen: should break!"
-:set nolist linebreak ts=8
-:let line="1\t".repeat('a', winwidth(0)-2)
-:$put =line
-:$
-:norm! zt
+:let g:test ="Test 2: set nolinebreak list"
+:set list nolinebreak
 :redraw!
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
