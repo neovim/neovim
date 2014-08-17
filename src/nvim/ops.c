@@ -3396,7 +3396,7 @@ static char_u *skip_comment(char_u *line, int process, int include_space, int *i
 // to set those marks.
 //
 // return FAIL for failure, OK otherwise
-int do_join(long count,
+int do_join(size_t count,
             int insert_space,
             int save_undo,
             int use_formatoptions,
@@ -3411,7 +3411,6 @@ int do_join(long count,
   int endcurr2 = NUL;
   int currsize = 0;             /* size of the current line */
   int sumsize = 0;              /* size of the long new line */
-  linenr_T t;
   colnr_T col = 0;
   int ret = OK;
   int         *comments = NULL;
@@ -3436,7 +3435,7 @@ int do_join(long count,
    * Don't move anything, just compute the final line length
    * and setup the array of space strings lengths
    */
-  for (t = 0; t < count; ++t) {
+  for (size_t t = 0; t < count; ++t) {
     curr = curr_start = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
     if (t == 0 && setmark) {
       // Set the '[ mark.
@@ -3518,14 +3517,14 @@ int do_join(long count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
-  for (t = count - 1;; --t) {
+  for (size_t t = count - 1; t > 0; --t) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
       cend -= spaces[t];
       copy_spaces(cend, (size_t)(spaces[t]));
     }
-    mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
+    mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, -((linenr_T)t),
         (long)(cend - newp + spaces[t] - (curr - curr_start)));
     if (t == 0)
       break;
@@ -3552,12 +3551,12 @@ int do_join(long count,
   /*
    * Delete following lines. To do this we move the cursor there
    * briefly, and then move it back. After del_lines() the cursor may
-   * have moved up (last line deleted), so the current lnum is kept in t.
+   * have moved up (last line deleted), so the current lnum is kept in tmp.
    */
-  t = curwin->w_cursor.lnum;
+  linenr_T tmp = curwin->w_cursor.lnum;
   ++curwin->w_cursor.lnum;
   del_lines(count - 1, FALSE);
-  curwin->w_cursor.lnum = t;
+  curwin->w_cursor.lnum = tmp;
 
   /*
    * Set the cursor column:
