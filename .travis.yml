@@ -19,6 +19,7 @@ env:
     - CI_TARGET=clang-asan
     - CI_TARGET=gcc
     - CI_TARGET=gcc-32
+    - CI_TARGET=gcc-release
     - CI_TARGET=clang-release
     - CI_TARGET=clint
 matrix:
