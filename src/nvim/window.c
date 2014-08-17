@@ -4484,7 +4484,12 @@ void win_new_height(win_T *wp, int height)
 
   if (wp->w_height > 0) {
     if (wp == curwin) {
-      validate_cursor();  // w_wrow needs to be valid
+      // w_wrow needs to be valid. When setting 'laststatus' this may
+      // call win_new_height() recursively.
+      validate_cursor();
+    }
+    if (wp->w_height != prev_height) {
+      return;  // Recursive call already changed the size, bail out.
     }
     if (wp->w_wrow != wp->w_prev_fraction_row) {
       set_fraction(wp);
