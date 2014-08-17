@@ -3402,6 +3402,10 @@ int do_join(size_t count,
             int use_formatoptions,
             bool setmark)
 {
+  if (count < 2) {
+    return OK;
+  }
+
   char_u      *curr = NULL;
   char_u      *curr_start = NULL;
   char_u      *cend;
@@ -3517,7 +3521,7 @@ int do_join(size_t count,
    * column.  This is not Vi compatible, but Vi deletes the marks, thus that
    * should not really be a problem.
    */
-  for (size_t t = count - 1; t > 0; --t) {
+  for (size_t t = count - 1; ; --t) {
     cend -= currsize;
     memmove(cend, curr, (size_t)currsize);
     if (spaces[t] > 0) {
