@@ -3396,12 +3396,19 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
       return;
   }
 
-  /* sync undo before leaving the current buffer */
-  if (undo_sync && curbuf != wp->w_buffer)
+  // sync undo before leaving the current buffer
+  if (undo_sync && curbuf != wp->w_buffer) {
     u_sync(FALSE);
-  /* may have to copy the buffer options when 'cpo' contains 'S' */
-  if (wp->w_buffer != curbuf)
+  }
+
+  // Might need to scroll the old window before switching, e.g., when the
+  // cursor was moved.
+  update_topline();
+
+  // may have to copy the buffer options when 'cpo' contains 'S'
+  if (wp->w_buffer != curbuf) {
     buf_copy_options(wp->w_buffer, BCO_ENTER | BCO_NOHELP);
+  }
   if (!curwin_invalid) {
     prevwin = curwin;           /* remember for CTRL-W p */
     curwin->w_redr_status = TRUE;
