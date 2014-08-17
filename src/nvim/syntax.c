@@ -6687,6 +6687,8 @@ static int hl_has_settings(int idx, int check_link)
 {
   return HL_TABLE()[idx].sg_term_attr != 0
          || HL_TABLE()[idx].sg_cterm_attr != 0
+         || HL_TABLE()[idx].sg_cterm_fg != 0
+         || HL_TABLE()[idx].sg_cterm_bg != 0
          || (check_link && (HL_TABLE()[idx].sg_set & SG_LINK));
 }
 
