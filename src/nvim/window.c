@@ -3730,8 +3730,11 @@ void win_alloc_lines(win_T *wp)
  */
 void win_free_lsize(win_T *wp)
 {
-  free(wp->w_lines);
-  wp->w_lines = NULL;
+  // TODO: why would wp be NULL here?
+  if (wp != NULL) {
+    free(wp->w_lines);
+    wp->w_lines = NULL;
+  }
 }
 
 /*
