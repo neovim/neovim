@@ -2359,7 +2359,6 @@ void set_init_3(void)
    * This is done after other initializations, where 'shell' might have been
    * set, but only if they have not been set before.
    */
-  char_u  *p;
   int idx_srr;
   int do_srr;
   int idx_sp;
@@ -2376,28 +2375,10 @@ void set_init_3(void)
   else
     do_sp = !(options[idx_sp].flags & P_WAS_SET);
 
-  /*
-   * Isolate the name of the shell:
-   * - Skip beyond any path.  E.g., "/usr/bin/csh -f" -> "csh -f".
-   * - Remove any argument.  E.g., "csh -f" -> "csh".
-   * But don't allow a space in the path, so that this works:
-   *   "/usr/bin/csh --rcfile ~/.cshrc"
-   * But don't do that for Windows, it's common to have a space in the path.
-   */
-  p = skiptowhite(p_sh);
-  if (*p == NUL) {
-    /* No white space, use the tail. */
-    p = vim_strsave(path_tail(p_sh));
-  } else {
-    char_u  *p1, *p2;
+  size_t len = 0;
+  char_u *p = (char_u *)invocation_path_tail(p_sh, &len);
+  p = vim_strnsave(p, len);
 
-    /* Find the last path separator before the space. */
-    p1 = p_sh;
-    for (p2 = p_sh; p2 < p; mb_ptr_adv(p2))
-      if (vim_ispathsep(*p2))
-        p1 = p2 + 1;
-    p = vim_strnsave(p1, (int)(p - p1));
-  }
   {
     /*
      * Default for p_sp is "| tee", for p_srr is ">".
@@ -2421,6 +2402,7 @@ void set_init_3(void)
                       || fnamecmp(p, "zsh") == 0
                       || fnamecmp(p, "zsh-beta") == 0
                       || fnamecmp(p, "bash") == 0
+                      || fnamecmp(p, "fish") == 0
                       ) {
       if (do_sp) {
         p_sp = (char_u *)"2>&1| tee";

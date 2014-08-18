@@ -131,6 +131,35 @@ char_u *path_tail_with_sep(char_u *fname)
   return tail;
 }
 
+/// Finds the path tail (or executable) in an invocation.
+///
+/// @param[in]  invocation A program invocation in the form:
+///                        "path/to/exe [args]".
+/// @param[out] len Stores the length of the executable name.
+///
+/// @post if `len` is not null, stores the length of the executable name.
+///
+/// @return The position of the last path separator + 1.
+const char_u *invocation_path_tail(const char_u *invocation, size_t *len)
+    FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ARG(1)
+{
+  const char_u *tail = get_past_head((char_u *) invocation);
+  const char_u *p = tail;
+  while (*p != NUL && *p != ' ') {
+    bool was_sep = vim_ispathsep_nocolon(*p);
+    mb_ptr_adv(p);
+    if (was_sep) {
+      tail = p;  // Now tail points one past the separator.
+    }
+  }
+
+  if (len != NULL) {
+    *len = (size_t)(p - tail);
+  }
+
+  return tail;
+}
+
 /// Get the next path component of a path name.
 ///
 /// @param fname A file path. (Must be != NULL.)
