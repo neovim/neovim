@@ -1159,15 +1159,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	the last line if there is none; this would make the file longer).  See
 	the 'endofline' option.
 
-			*'bioskey'* *'biosk'* *'nobioskey'* *'nobiosk'*
-'bioskey' 'biosk'	boolean	(default on)
-			global
-			{not in Vi}  {only for MS-DOS}
-	When on the BIOS is called to obtain a keyboard character.  This works
-	better to detect CTRL-C, but only works for the console.  When using a
-	terminal over a serial port reset this option.
-	Also see |'conskey'|.
-
 							*'bomb'* *'nobomb'*
 'bomb'			boolean	(default off)
 			local to buffer
@@ -1881,18 +1872,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	command only (this is most useful in mappings) with the |:confirm|
 	command.
 	Also see the |confirm()| function and the 'v' flag in 'guioptions'.
-
-			*'conskey'* *'consk'* *'noconskey'* *'noconsk'*
-'conskey' 'consk'	boolean	(default off)
-			global
-			{not in Vi}  {only for MS-DOS}
-	When on direct console I/O is used to obtain a keyboard character.
-	This should work in most cases.  Also see |'bioskey'|.  Together,
-	three methods of console input are available:
-	'conskey'   'bioskey'	    action ~
-	   on	     on or off	    direct console input
-	   off		on	    BIOS
-	   off		off	    STDIN
 
 			*'copyindent'* *'ci'* *'nocopyindent'* *'noci'*
 'copyindent' 'ci'	boolean	(default off)
