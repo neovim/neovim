@@ -5,8 +5,8 @@
 
 
 							*dos* *DOS*
-This file documents the common particularities of the MS-DOS and Win32
-versions of Vim.  Also see |os_win32.txt| and |os_msdos.txt|.
+This file documents some particularities of the Win32
+version of Vim.  Also see |os_win32.txt|.
 
 1. File locations		|dos-locations|
 2. Using backslashes		|dos-backslash|
