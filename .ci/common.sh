@@ -60,7 +60,7 @@ install_prebuilt_deps() {
 	# install prebuilt dependencies
 	if [ ! -d /opt/neovim-deps ]; then
 		cd /opt
-		sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps
+		sudo git clone -q --depth=1 git://github.com/neovim/deps neovim-deps
 		cd -
 	fi
 }
@@ -68,7 +68,7 @@ install_prebuilt_deps() {
 install_vroom() {
 	(
 	sudo pip install neovim
-	git clone git://github.com/google/vroom
+	git clone -q git://github.com/google/vroom
 	cd vroom
 	python setup.py build
 	sudo python setup.py install
@@ -94,4 +94,4 @@ install_prebuilt_deps
 # and avoids a lengthy upgrade process for them.
 sudo apt-mark hold oracle-java7-installer oracle-java8-installer
 
-sudo apt-get update
+sudo apt-get -q update
