@@ -55,8 +55,8 @@ set(MSGPACK_MD5 ea0bee0939d2980c0df91f0e4843ccc4)
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.3.tar.gz)
 set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
 
-set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/v2.2.0beta1.tar.gz)
-set(LUAROCKS_MD5 d865fd8c333d6daca98ea052ff919043)
+set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/v2.2.0.tar.gz)
+set(LUAROCKS_MD5 881321272f2d2ac0811baf03a3fc6f77)
 
 if(USE_BUNDLED_LIBUV)
   ExternalProject_Add(libuv
