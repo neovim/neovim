@@ -6516,10 +6516,13 @@ void comp_col(void)
 void unset_global_local_option(char *name, void *from)
 {
   struct vimoption *p;
-  int opt_idx;
   buf_T *buf = (buf_T *)from;
 
-  opt_idx = findoption((uint8_t *)name);
+  int opt_idx = findoption((uint8_t *)name);
+  if (opt_idx < 0) {
+    EMSG2(_("E355: Unknown option: %s"), name);
+    return;
+  }
   p = &(options[opt_idx]);
 
   switch ((int)p->indir)
