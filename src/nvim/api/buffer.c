@@ -117,29 +117,18 @@ StringArray buffer_get_slice(Buffer buffer,
     return rv;
   }
 
+  // since the smallest possible value for start is 1 and the biggest possible
+  // value for end is LONG_MAX, the biggest possible value for
+  // rv.size == LONG_MAX - 1 therefore we don't need to check for out of range
+  // errors here.
   rv.size = (size_t)(end - start);
   rv.items = xcalloc(sizeof(String), rv.size);
 
   for (size_t i = 0; i < rv.size; i++) {
     int64_t lnum = start + (int64_t)i;
 
-    if (lnum > LONG_MAX) {
-      set_api_error("Line index is too high", err);
-      goto end;
-    }
-
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
     rv.items[i] = cstr_to_string(bufstr);
-  }
-
-end:
-  if (err->set) {
-    for (size_t i = 0; i < rv.size; i++) {
-      free(rv.items[i].data);
-    }
-
-    free(rv.items);
-    rv.items = NULL;
   }
 
   return rv;
@@ -181,8 +170,19 @@ void buffer_set_slice(Buffer buffer,
   buf_T *save_curbuf = NULL;
   win_T *save_curwin = NULL;
   tabpage_T *save_curtab = NULL;
+
   size_t new_len = replacement.size;
+  if (!(new_len <= SIZE_MAX)) {
+    set_api_error("Too many lines to add", err);
+    return;
+  }
+
   size_t old_len = (size_t)(end - start);
+  if (!((size_t)buf->b_ml.ml_line_count + (new_len - old_len) <= LONG_MAX)) {
+    set_api_error("Exceding maximum line number", err);
+    return;
+  }
+
   ssize_t extra = 0;  // lines added to text, can be negative
   char **lines = (new_len != 0) ? xmalloc(new_len * sizeof(char *)) : NULL;
 
@@ -218,13 +218,9 @@ void buffer_set_slice(Buffer buffer,
   // new old_len. This is a more efficient operation, as it requires
   // less memory allocation and freeing.
   size_t to_replace = old_len < new_len ? old_len : new_len;
+
   for (size_t i = 0; i < to_replace; i++) {
     int64_t lnum = start + (int64_t)i;
-
-    if (lnum > LONG_MAX) {
-      set_api_error("Index value is too high", err);
-      goto end;
-    }
 
     if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
       set_api_error("Cannot replace line", err);
@@ -238,12 +234,6 @@ void buffer_set_slice(Buffer buffer,
   // Now we may need to insert the remaining new old_len
   for (size_t i = to_replace; i < new_len; i++) {
     int64_t lnum = start + (int64_t)i - 1;
-
-    if (lnum > LONG_MAX) {
-      set_api_error("Index value is too high", err);
-      goto end;
-    }
-
     if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
       set_api_error("Cannot insert line", err);
       goto end;
