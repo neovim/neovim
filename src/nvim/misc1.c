@@ -503,7 +503,7 @@ open_line (
         break;
       }
     }
-    if (lead_len) {
+    if (lead_len > 0) {
       /* allocate buffer (may concatenate p_extra later) */
       leader = xmalloc(lead_len + lead_repl_len + extra_space + extra_len
           + (second_line_indent > 0 ? second_line_indent : 0) + 1);
