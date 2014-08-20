@@ -3329,8 +3329,6 @@ void prepare_to_exit(void)
  */
 void preserve_exit(void)
 {
-  buf_T       *buf;
-
   // Prevent repeated calls into this method.
   if (really_exiting) {
     exit(2);
@@ -3346,7 +3344,7 @@ void preserve_exit(void)
 
   ml_close_notmod();                /* close all not-modified buffers */
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (buf->b_ml.ml_mfp != NULL && buf->b_ml.ml_mfp->mf_fname != NULL) {
       OUT_STR("Vim: preserving files...\n");
       screen_start();               /* don't know where cursor is now */

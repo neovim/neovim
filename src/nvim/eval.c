@@ -5405,7 +5405,6 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
 int garbage_collect(void)
 {
   int copyID;
-  buf_T       *buf;
   win_T       *wp;
   funccall_T  *fc, **pfc;
   int did_free;
@@ -5440,8 +5439,9 @@ int garbage_collect(void)
     set_ref_in_ht(&SCRIPT_VARS(i), copyID);
 
   /* buffer-local variables */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     set_ref_in_item(&buf->b_bufvar.di_tv, copyID);
+  }
 
   /* window-local variables */
   FOR_ALL_TAB_WINDOWS(tp, wp)
@@ -7223,13 +7223,16 @@ static buf_T *find_buffer(typval_T *avar)
     if (buf == NULL) {
       /* No full path name match, try a match with a URL or a "nofile"
        * buffer, these don't use the full path. */
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-        if (buf->b_fname != NULL
-            && (path_with_url(buf->b_fname)
-                || bt_nofile(buf)
+      FOR_ALL_BUFFERS(bp) {
+        if (bp->b_fname != NULL
+            && (path_with_url(bp->b_fname)
+                || bt_nofile(bp)
                 )
-            && STRCMP(buf->b_fname, avar->vval.v_string) == 0)
+            && STRCMP(bp->b_fname, avar->vval.v_string) == 0) {
+          buf = bp;
           break;
+        }
+      }
     }
   }
   return buf;
@@ -10635,11 +10638,12 @@ static void f_keys(typval_T *argvars, typval_T *rettv)
 static void f_last_buffer_nr(typval_T *argvars, typval_T *rettv)
 {
   int n = 0;
-  buf_T *buf;
 
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-    if (n < buf->b_fnum)
+  FOR_ALL_BUFFERS(buf) {
+    if (n < buf->b_fnum) {
       n = buf->b_fnum;
+    }
+  }
 
   rettv->vval.v_number = n;
 }

@@ -1337,7 +1337,6 @@ int removable(char_u *name)
 int write_viminfo_marks(FILE *fp_out)
 {
   int count;
-  buf_T       *buf;
   int is_mark_set;
   int i;
   win_T       *win;
@@ -1346,12 +1345,13 @@ int write_viminfo_marks(FILE *fp_out)
   /*
    * Set b_last_cursor for the all buffers that have a window.
    */
-  FOR_ALL_TAB_WINDOWS(tp, win)
-  set_last_cursor(win);
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    set_last_cursor(win);
+  }
 
   fputs(_("\n# History of marks within files (newest to oldest):\n"), fp_out);
   count = 0;
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     /*
      * Only write something if buffer has been loaded and at least one
      * mark is set.
@@ -1467,12 +1467,16 @@ void copy_viminfo_marks(vir_T *virp, FILE *fp_out, int count, int eof, int flags
       }
     } else { /* fp_out != NULL */
              /* This is slow if there are many buffers!! */
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-        if (buf->b_ffname != NULL) {
-          home_replace(NULL, buf->b_ffname, name_buf, LSIZE, TRUE);
-          if (fnamecmp(str, name_buf) == 0)
+      buf = NULL;
+      FOR_ALL_BUFFERS(bp) {
+        if (bp->b_ffname != NULL) {
+          home_replace(NULL, bp->b_ffname, name_buf, LSIZE, TRUE);
+          if (fnamecmp(str, name_buf) == 0) {
+            buf = bp;
             break;
+          }
         }
+      }
 
       /*
        * copy marks if the buffer has not been loaded

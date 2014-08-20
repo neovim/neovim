@@ -7677,7 +7677,6 @@ static void paste_option_changed(void)
   static int save_ru = 0;
   static int save_ri = 0;
   static int save_hkmap = 0;
-  buf_T       *buf;
 
   if (p_paste) {
     /*
@@ -7686,7 +7685,7 @@ static void paste_option_changed(void)
      */
     if (!old_p_paste) {
       /* save options for each buffer */
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+      FOR_ALL_BUFFERS(buf) {
         buf->b_p_tw_nopaste = buf->b_p_tw;
         buf->b_p_wm_nopaste = buf->b_p_wm;
         buf->b_p_sts_nopaste = buf->b_p_sts;
@@ -7710,7 +7709,7 @@ static void paste_option_changed(void)
      * already on.
      */
     /* set options for each buffer */
-    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    FOR_ALL_BUFFERS(buf) {
       buf->b_p_tw = 0;              /* textwidth is 0 */
       buf->b_p_wm = 0;              /* wrapmargin is 0 */
       buf->b_p_sts = 0;             /* softtabstop is 0 */
@@ -7735,7 +7734,7 @@ static void paste_option_changed(void)
    */
   else if (old_p_paste) {
     /* restore options for each buffer */
-    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+    FOR_ALL_BUFFERS(buf) {
       buf->b_p_tw = buf->b_p_tw_nopaste;
       buf->b_p_wm = buf->b_p_wm_nopaste;
       buf->b_p_sts = buf->b_p_sts_nopaste;

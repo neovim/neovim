@@ -3576,7 +3576,6 @@ win_free (
 )
 {
   int i;
-  buf_T       *buf;
   wininfo_T   *wip;
 
   handle_unregister_window(wp);
@@ -3588,13 +3587,6 @@ win_free (
   /* Don't execute autocommands while the window is halfway being deleted.
    * gui_mch_destroy_scrollbar() may trigger a FocusGained event. */
   block_autocmds();
-
-
-
-
-
-
-
 
   clear_winopt(&wp->w_onebuf_opt);
   clear_winopt(&wp->w_allbuf_opt);
@@ -3614,10 +3606,11 @@ win_free (
 
   /* Remove the window from the b_wininfo lists, it may happen that the
    * freed memory is re-used for another window. */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+  FOR_ALL_BUFFERS(buf) {
     for (wip = buf->b_wininfo; wip != NULL; wip = wip->wi_next)
       if (wip->wi_win == wp)
         wip->wi_win = NULL;
+  }
 
   clear_matches(wp);
 

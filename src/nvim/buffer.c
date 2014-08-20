@@ -115,9 +115,15 @@ open_buffer (
      * If we can't create one for the current buffer, take another buffer
      */
     close_buffer(NULL, curbuf, 0, FALSE);
-    for (curbuf = firstbuf; curbuf != NULL; curbuf = curbuf->b_next)
-      if (curbuf->b_ml.ml_mfp != NULL)
+
+    curbuf = NULL;
+    FOR_ALL_BUFFERS(buf) {
+      if (buf->b_ml.ml_mfp != NULL) {
+        curbuf = buf;
         break;
+      }
+    }
+
     /*
      * if there is no memfile at all, exit
      * This is OK, since there are no changes to lose.
@@ -260,11 +266,11 @@ open_buffer (
  */
 int buf_valid(buf_T *buf)
 {
-  buf_T       *bp;
-
-  for (bp = firstbuf; bp != NULL; bp = bp->b_next)
-    if (bp == buf)
+  FOR_ALL_BUFFERS(bp) {
+    if (bp == buf) {
       return TRUE;
+    }
+  }
   return FALSE;
 }
 
@@ -946,9 +952,13 @@ do_buffer (
      * If deleting the last (listed) buffer, make it empty.
      * The last (listed) buffer cannot be unloaded.
      */
-    for (bp = firstbuf; bp != NULL; bp = bp->b_next)
-      if (bp->b_p_bl && bp != buf)
+    bp = NULL;
+    FOR_ALL_BUFFERS(bp2) {
+      if (bp2->b_p_bl && bp2 != buf) {
+        bp = bp2;
         break;
+      }
+    }
     if (bp == NULL && buf == curbuf)
       return empty_curbuf(TRUE, forceit, action);
 
@@ -1047,9 +1057,12 @@ do_buffer (
     if (buf == NULL)            /* No loaded buffer, use unloaded one */
       buf = bp;
     if (buf == NULL) {          /* No loaded buffer, find listed one */
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-        if (buf->b_p_bl && buf != curbuf)
+      FOR_ALL_BUFFERS(buf2) {
+        if (buf2->b_p_bl && buf2 != curbuf) {
+          buf = buf2;
           break;
+        }
+      }
     }
     if (buf == NULL) {          /* Still no buffer, just take one */
       if (curbuf->b_next != NULL)
@@ -1670,9 +1683,7 @@ buf_T *buflist_findname(char_u *ffname)
 static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
                                        bool file_id_valid)
 {
-  buf_T       *buf;
-
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if ((buf->b_flags & BF_DUMMY) == 0
         && !otherfile_buf(buf, ffname, file_id, file_id_valid)) {
       return buf;
@@ -1695,7 +1706,6 @@ buflist_findpat (
     int curtab_only                /* find buffers in current tab only */
 )
 {
-  buf_T       *buf;
   regprog_T   *prog;
   int match = -1;
   int find_listed;
@@ -1746,7 +1756,7 @@ buflist_findpat (
           return -1;
         }
 
-        for (buf = firstbuf; buf != NULL; buf = buf->b_next)
+        FOR_ALL_BUFFERS(buf) {
           if (buf->b_p_bl == find_listed
               && (!diffmode || diff_mode_buf(buf))
               && buflist_match(prog, buf) != NULL) {
@@ -1767,6 +1777,7 @@ buflist_findpat (
             }
             match = buf->b_fnum;                /* remember first match */
           }
+        }
 
         vim_regfree(prog);
         if (match >= 0)                         /* found one match */
@@ -1799,7 +1810,6 @@ buflist_findpat (
 int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
 {
   int count = 0;
-  buf_T       *buf;
   int round;
   char_u      *p;
   int attempt;
@@ -1837,7 +1847,7 @@ int ExpandBufnames(char_u *pat, int *num_file, char_u ***file, int options)
      */
     for (round = 1; round <= 2; ++round) {
       count = 0;
-      for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+      FOR_ALL_BUFFERS(buf) {
         if (!buf->b_p_bl)               /* skip unlisted buffers */
           continue;
         p = buflist_match(prog, buf);
@@ -1921,13 +1931,15 @@ static char_u *fname_match(regprog_T *prog, char_u *name)
  */
 buf_T *buflist_findnr(int nr)
 {
-  buf_T       *buf;
-
-  if (nr == 0)
+  if (nr == 0) {
     nr = curwin->w_alt_fnum;
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next)
-    if (buf->b_fnum == nr)
+  }
+
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->b_fnum == nr) {
       return buf;
+    }
+  }
   return NULL;
 }
 
@@ -2344,9 +2356,7 @@ int buflist_add(char_u *fname, int flags)
  */
 void buflist_slash_adjust(void)
 {
-  buf_T       *bp;
-
-  for (bp = firstbuf; bp != NULL; bp = bp->b_next) {
+  FOR_ALL_BUFFERS(bp) {
     if (bp->b_ffname != NULL)
       slash_adjust(bp->b_ffname);
     if (bp->b_sfname != NULL)
@@ -4192,7 +4202,6 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
 
 void write_viminfo_bufferlist(FILE *fp)
 {
-  buf_T       *buf;
   win_T       *win;
   tabpage_T   *tp;
   char_u      *line;
@@ -4213,7 +4222,7 @@ void write_viminfo_bufferlist(FILE *fp)
   }
 
   fputs(_("\n# Buffer list:\n"), fp);
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (buf->b_fname == NULL
         || !buf->b_p_bl
         || bt_quickfix(buf)
@@ -4488,13 +4497,11 @@ void buf_delete_signs(buf_T *buf)
  */
 void buf_delete_all_signs(void)
 {
-    buf_T *buf;     /* buffer we are checking for signs */
-
-    for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
-      if (buf->b_signlist != NULL) {
-        buf_delete_signs(buf);
-      }
+  FOR_ALL_BUFFERS(buf) {
+    if (buf->b_signlist != NULL) {
+      buf_delete_signs(buf);
     }
+  }
 }
 
 /*

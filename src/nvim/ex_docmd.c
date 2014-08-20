@@ -7871,7 +7871,6 @@ makeopens (
     char_u *dirnow            /* Current directory name */
 )
 {
-  buf_T       *buf;
   int only_save_windows = TRUE;
   int nr;
   int cnr = 1;
@@ -7943,7 +7942,7 @@ makeopens (
     return FAIL;
 
   /* Now put the other buffers into the buffer list */
-  for (buf = firstbuf; buf != NULL; buf = buf->b_next) {
+  FOR_ALL_BUFFERS(buf) {
     if (!(only_save_windows && buf->b_nwindows == 0)
         && !(buf->b_help && !(ssop_flags & SSOP_HELP))
         && buf->b_fname != NULL
