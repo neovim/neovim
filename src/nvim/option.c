@@ -4306,7 +4306,6 @@ did_set_string_option (
   /* When 'spelllang' or 'spellfile' is set and there is a window for this
    * buffer in which 'spell' is set load the wordlists. */
   else if (varp == &(curbuf->b_s.b_p_spl) || varp == &(curbuf->b_s.b_p_spf)) {
-    win_T       *wp;
     int l;
 
     if (varp == &(curbuf->b_s.b_p_spf)) {
@@ -4317,10 +4316,11 @@ did_set_string_option (
     }
 
     if (errmsg == NULL) {
-      FOR_ALL_WINDOWS(wp)
-      if (wp->w_buffer == curbuf && wp->w_p_spell) {
-        errmsg = did_set_spelllang(wp);
-        break;
+      FOR_ALL_WINDOWS(wp) {
+        if (wp->w_buffer == curbuf && wp->w_p_spell) {
+          errmsg = did_set_spelllang(wp);
+          break;
+        }
       }
     }
   }

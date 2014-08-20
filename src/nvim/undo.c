@@ -2191,12 +2191,10 @@ u_undo_end (
     u_add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
 
   {
-    win_T   *wp;
-
-    FOR_ALL_WINDOWS(wp)
-    {
-      if (wp->w_buffer == curbuf && wp->w_p_cole > 0)
+    FOR_ALL_WINDOWS(wp) {
+      if (wp->w_buffer == curbuf && wp->w_p_cole > 0) {
         redraw_win_later(wp, NOT_VALID);
+      }
     }
   }
 

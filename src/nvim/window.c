@@ -1677,20 +1677,19 @@ static int last_window(void)
  * Return TRUE if there is only one window other than "aucmd_win" in the
  * current tab page.
  */
-int one_window(void)
+bool one_window(void)
 {
-  win_T       *wp;
-  int seen_one = FALSE;
+  bool seen_one = false;
 
-  FOR_ALL_WINDOWS(wp)
-  {
+  FOR_ALL_WINDOWS(wp) {
     if (wp != aucmd_win) {
-      if (seen_one)
-        return FALSE;
-      seen_one = TRUE;
+      if (seen_one) {
+        return false;
+      }
+      seen_one = true;
     }
   }
-  return TRUE;
+  return true;
 }
 
 /*

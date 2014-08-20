@@ -4008,12 +4008,9 @@ dozet:
 
   /* Redraw when 'foldenable' changed */
   if (old_fen != curwin->w_p_fen) {
-    win_T       *wp;
-
     if (foldmethodIsDiff(curwin) && curwin->w_p_scb) {
       /* Adjust 'foldenable' in diff-synced windows. */
-      FOR_ALL_WINDOWS(wp)
-      {
+      FOR_ALL_WINDOWS(wp) {
         if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
           wp->w_p_fen = curwin->w_p_fen;
           changed_window_setting_win(wp);
