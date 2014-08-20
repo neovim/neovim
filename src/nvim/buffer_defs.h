@@ -136,6 +136,10 @@ struct buffheader {
 typedef struct {
   int wo_arab;
 # define w_p_arab w_onebuf_opt.wo_arab  /* 'arabic' */
+  int wo_bri;
+# define w_p_bri w_onebuf_opt.wo_bri	/* 'breakindent' */
+  char_u *wo_briopt;
+# define w_p_briopt w_onebuf_opt.wo_briopt /* 'breakindentopt' */
   int wo_diff;
 # define w_p_diff w_onebuf_opt.wo_diff  /* 'diff' */
   long wo_fdc;
@@ -1069,6 +1073,9 @@ struct window_S {
   long_u w_p_fde_flags;             /* flags for 'foldexpr' */
   long_u w_p_fdt_flags;             /* flags for 'foldtext' */
   int         *w_p_cc_cols;         /* array of columns to highlight or NULL */
+  int         w_p_brimin;           /* minimum width for breakindent */
+  int         w_p_brishift;         /* additional shift for breakindent */
+  bool        w_p_brisbr;           /* sbr in 'briopt' */
 
   /* transform a pointer to a "onebuf" option into a "allbuf" option */
 #define GLOBAL_WO(p)    ((char *)p + sizeof(winopt_T))

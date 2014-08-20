@@ -106,6 +106,7 @@
 #include "nvim/farsi.h"
 #include "nvim/fileio.h"
 #include "nvim/fold.h"
+#include "nvim/indent.h"
 #include "nvim/getchar.h"
 #include "nvim/main.h"
 #include "nvim/mbyte.h"
@@ -2196,6 +2197,7 @@ win_line (
   char_u extra[18];                     /* line number and 'fdc' must fit in here */
   int n_extra = 0;                      /* number of extra chars */
   char_u      *p_extra = NULL;          /* string of extra chars, plus NUL */
+  char_u      *p_extra_free = NULL;     /* p_extra needs to be freed */
   int c_extra = NUL;                    /* extra chars, all the same */
   int extra_attr = 0;                   /* attributes when n_extra != 0 */
   static char_u *at_end_str = (char_u *)"";   /* used for p_extra when
@@ -2283,7 +2285,8 @@ win_line (
 # define WL_FOLD        WL_CMDLINE + 1  /* 'foldcolumn' */
 # define WL_SIGN        WL_FOLD + 1     /* column for signs */
 #define WL_NR           WL_SIGN + 1     /* line number */
-# define WL_SBR         WL_NR + 1       /* 'showbreak' or 'diff' */
+# define WL_BRI         WL_NR + 1       /* 'breakindent' */
+# define WL_SBR         WL_BRI + 1       /* 'showbreak' or 'diff' */
 #define WL_LINE         WL_SBR + 1      /* text in the line */
   int draw_state = WL_START;            /* what to draw next */
 
@@ -2540,7 +2543,7 @@ win_line (
   if (v > 0) {
     char_u  *prev_ptr = ptr;
     while (vcol < v && *ptr != NUL) {
-      c = win_lbr_chartabsize(wp, ptr, (colnr_T)vcol, NULL);
+      c = win_lbr_chartabsize(wp, line, ptr, (colnr_T)vcol, NULL);
       vcol += c;
       prev_ptr = ptr;
       mb_ptr_adv(ptr);
@@ -2817,6 +2820,34 @@ win_line (
         }
       }
 
+      if (wp->w_p_brisbr && draw_state == WL_BRI - 1
+          && n_extra == 0 && *p_sbr != NUL) {
+        // draw indent after showbreak value
+        draw_state = WL_BRI;
+      } else if (wp->w_p_brisbr && draw_state == WL_SBR && n_extra == 0) {
+        // after the showbreak, draw the breakindent
+        draw_state = WL_BRI - 1;
+      }
+
+      // draw 'breakindent': indent wrapped text accodringly
+      if (draw_state == WL_BRI - 1 && n_extra == 0) {
+        draw_state = WL_BRI;
+        if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
+          char_attr = 0; // was: hl_attr(HLF_AT);
+
+          if (diff_hlf != (hlf_T)0)
+            char_attr = hl_attr(diff_hlf);
+
+          p_extra = NULL;
+          c_extra = ' ';
+          n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
+          /* Correct end of highlighted area for 'breakindent',
+             required wen 'linebreak' is also set. */
+          if (tocol == vcol)
+            tocol += n_extra;
+        }
+      }
+
       if (draw_state == WL_SBR - 1 && n_extra == 0) {
         draw_state = WL_SBR;
         if (filler_todo > 0) {
@@ -3078,6 +3109,10 @@ win_line (
       }
       --n_extra;
     } else {
+      if (p_extra_free != NULL) {
+        free(p_extra_free);
+        p_extra_free = NULL;
+      }
       /*
        * Get a character from the line itself.
        */
@@ -3378,17 +3413,20 @@ win_line (
         /*
          * Found last space before word: check for line break.
          */
-        if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)
-            && !wp->w_p_list) {
-          n_extra = win_lbr_chartabsize(wp, ptr - (
-                has_mbyte ? mb_l :
-                1), (colnr_T)vcol, NULL) - 1;
+        if (wp->w_p_lbr && vim_isbreak(c) && !vim_isbreak(*ptr)) {
+          char_u *p = ptr - (
+              has_mbyte ? mb_l :
+              1);
+          // TODO: is passing p for start of the line OK?
+          n_extra = win_lbr_chartabsize(wp, line, p, (colnr_T)vcol, NULL) - 1;
           c_extra = ' ';
           if (vim_iswhite(c)) {
             if (c == TAB)
               /* See "Tab alignment" below. */
               FIX_FOR_BOGUSCOLS;
-            c = ' ';
+            if (!wp->w_p_list) {
+              c = ' ';
+            }
           }
         }
 
@@ -3419,9 +3457,36 @@ win_line (
          * into "ScreenLines".
          */
         if (c == TAB && (!wp->w_p_list || lcs_tab1)) {
+          int tab_len = 0;
           /* tab amount depends on current column */
-          n_extra = (int)wp->w_buffer->b_p_ts
+          tab_len = (int)wp->w_buffer->b_p_ts
                     - vcol % (int)wp->w_buffer->b_p_ts - 1;
+          if (!wp->w_p_lbr || !wp->w_p_list) {
+            n_extra = tab_len;
+          } else {
+            char_u *p;
+            int    len = n_extra;
+            int    i;
+            int    saved_nextra = n_extra;
+
+            /* if n_extra > 0, it gives the number of chars to use for
+             * a tab, else we need to calculate the width for a tab */
+            len = (tab_len * mb_char2len(lcs_tab2));
+            if (n_extra > 0) {
+              len += n_extra - tab_len;
+            }
+            c = lcs_tab1;
+            p = xmalloc(len + 1);
+            memset(p, ' ', len);
+            p[len] = NUL;
+            p_extra_free = p;
+            for (i = 0; i < tab_len; i++) {
+              mb_char2bytes(lcs_tab2, p);
+              p += mb_char2len(lcs_tab2);
+              n_extra += mb_char2len(lcs_tab2) - (saved_nextra > 0 ? 1: 0);
+            }
+            p_extra = p_extra_free;
+          }
           /* Tab alignment should be identical regardless of
            * 'conceallevel' value. So tab compensates of all
            * previous concealed characters, and thus resets vcol_off
@@ -3432,8 +3497,12 @@ win_line (
           mb_utf8 = FALSE;              /* don't draw as UTF-8 */
           if (wp->w_p_list) {
             c = lcs_tab1;
-            c_extra = lcs_tab2;
-            n_attr = n_extra + 1;
+            if (wp->w_p_lbr) {
+              c_extra = NUL; /* using p_extra from above */
+            } else {
+              c_extra = lcs_tab2;
+            }
+            n_attr = tab_len + 1;
             extra_attr = hl_attr(HLF_8);
             saved_attr2 = char_attr;             /* save current attr */
             mb_c = c;
@@ -3493,11 +3562,25 @@ win_line (
             mb_utf8 = FALSE;                    /* don't draw as UTF-8 */
         } else if (c != NUL) {
           p_extra = transchar(c);
+          if (n_extra == 0) {
+              n_extra = byte2cells(c);
+          }
           if ((dy_flags & DY_UHEX) && wp->w_p_rl)
             rl_mirror(p_extra);                 /* reverse "<12>" */
-          n_extra = byte2cells(c) - 1;
           c_extra = NUL;
-          c = *p_extra++;
+          if (wp->w_p_lbr) {
+            char_u *p;
+
+            c = *p_extra;
+            p = xmalloc(n_extra + 1);
+            memset(p, ' ', n_extra);
+            STRNCPY(p, p_extra + 1, STRLEN(p_extra) - 1);
+            p[n_extra] = NUL;
+            p_extra_free = p_extra = p;
+          } else {
+            n_extra = byte2cells(c) - 1;
+            c = *p_extra++;
+          }
           if (!attr_pri) {
             n_attr = n_extra + 1;
             extra_attr = hl_attr(HLF_8);

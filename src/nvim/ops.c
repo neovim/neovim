@@ -350,7 +350,8 @@ static void shift_block(oparg_T *oap, int amount)
         ++bd.textstart;
     }
     for (; vim_iswhite(*bd.textstart); ) {
-      incr = lbr_chartabsize_adv(&bd.textstart, (colnr_T)(bd.start_vcol));
+      // TODO: is passing bd.textstart for start of the line OK?
+      incr = lbr_chartabsize_adv(bd.textstart, &bd.textstart, (colnr_T)(bd.start_vcol));
       total += incr;
       bd.start_vcol += incr;
     }
@@ -405,7 +406,7 @@ static void shift_block(oparg_T *oap, int amount)
     non_white_col = bd.start_vcol;
 
     while (vim_iswhite(*non_white)) {
-      incr = lbr_chartabsize_adv(&non_white, non_white_col);
+      incr = lbr_chartabsize_adv(bd.textstart, &non_white, non_white_col);
       non_white_col += incr;
     }
 
@@ -429,7 +430,10 @@ static void shift_block(oparg_T *oap, int amount)
     if (bd.startspaces)
       verbatim_copy_width -= bd.start_char_vcols;
     while (verbatim_copy_width < destination_col) {
-      incr = lbr_chartabsize(verbatim_copy_end, verbatim_copy_width);
+      char_u *line = verbatim_copy_end;
+
+      // TODO: is passing verbatim_copy_end for start of the line OK?
+      incr = lbr_chartabsize(line, verbatim_copy_end, verbatim_copy_width);
       if (verbatim_copy_width + incr > destination_col)
         break;
       verbatim_copy_width += incr;
@@ -2824,7 +2828,7 @@ do_put (
       oldlen = (int)STRLEN(oldp);
       for (ptr = oldp; vcol < col && *ptr; ) {
         /* Count a tab for what it's worth (if list mode not on) */
-        incr = lbr_chartabsize_adv(&ptr, (colnr_T)vcol);
+        incr = lbr_chartabsize_adv(oldp, &ptr, (colnr_T)vcol);
         vcol += incr;
       }
       bd.textcol = (colnr_T)(ptr - oldp);
@@ -2854,7 +2858,7 @@ do_put (
       /* calculate number of spaces required to fill right side of block*/
       spaces = y_width + 1;
       for (j = 0; j < yanklen; j++)
-        spaces -= lbr_chartabsize(&y_array[i][j], 0);
+        spaces -= lbr_chartabsize(NULL, &y_array[i][j], 0);
       if (spaces < 0)
         spaces = 0;
 
@@ -4114,7 +4118,7 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
   prev_pstart = line;
   while (bdp->start_vcol < oap->start_vcol && *pstart) {
     /* Count a tab for what it's worth (if list mode not on) */
-    incr = lbr_chartabsize(pstart, (colnr_T)bdp->start_vcol);
+    incr = lbr_chartabsize(line, pstart, (colnr_T)bdp->start_vcol);
     bdp->start_vcol += incr;
     if (vim_iswhite(*pstart)) {
       bdp->pre_whitesp += incr;
@@ -4163,7 +4167,9 @@ static void block_prep(oparg_T *oap, struct block_def *bdp, linenr_T lnum, int i
       while (bdp->end_vcol <= oap->end_vcol && *pend != NUL) {
         /* Count a tab for what it's worth (if list mode not on) */
         prev_pend = pend;
-        incr = lbr_chartabsize_adv(&pend, (colnr_T)bdp->end_vcol);
+        // TODO: is passing prev_pend for start of the line OK?
+        // prehaps it should be "line"
+        incr = lbr_chartabsize_adv(prev_pend, &pend, (colnr_T)bdp->end_vcol);
         bdp->end_vcol += incr;
       }
       if (bdp->end_vcol <= oap->end_vcol

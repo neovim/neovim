@@ -194,7 +194,7 @@ open_line (
     /*
      * count white space on current line
      */
-    newindent = get_indent_str(saved_line, (int)curbuf->b_p_ts);
+    newindent = get_indent_str(saved_line, (int)curbuf->b_p_ts, FALSE);
     if (newindent == 0 && !(flags & OPENLINE_COM_LIST))
       newindent = second_line_indent;       /* for ^^D command in insert mode */
 
@@ -631,7 +631,7 @@ open_line (
         if (curbuf->b_p_ai
             || do_si
             )
-          newindent = get_indent_str(leader, (int)curbuf->b_p_ts);
+          newindent = get_indent_str(leader, (int)curbuf->b_p_ts, FALSE);
 
         /* Add the indent offset */
         if (newindent + off < 0) {
@@ -1306,6 +1306,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   char_u      *s;
   int lines = 0;
   int width;
+  char_u *line;
 
   /* Check for filler lines above this buffer line.  When folded the result
    * is one line anyway. */
@@ -1317,11 +1318,11 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
   if (wp->w_width == 0)
     return lines + 1;
 
-  s = ml_get_buf(wp->w_buffer, lnum, FALSE);
+  line = s = ml_get_buf(wp->w_buffer, lnum, FALSE);
 
   col = 0;
   while (*s != NUL && --column >= 0) {
-    col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL);
+    col += win_lbr_chartabsize(wp, line, s, (colnr_T)col, NULL);
     mb_ptr_adv(s);
   }
 
@@ -1333,7 +1334,7 @@ int plines_win_col(win_T *wp, linenr_T lnum, long column)
    * 'ts') -- webb.
    */
   if (*s == TAB && (State & NORMAL) && (!wp->w_p_list || lcs_tab1))
-    col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL) - 1;
+    col += win_lbr_chartabsize(wp, line, s, (colnr_T)col, NULL) - 1;
 
   /*
    * Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.

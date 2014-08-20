@@ -1817,10 +1817,10 @@ getexmodeline (
 
         p = (char_u *)line_ga.ga_data;
         p[line_ga.ga_len] = NUL;
-        indent = get_indent_str(p, 8);
+        indent = get_indent_str(p, 8, FALSE);
         indent += sw - indent % sw;
 add_indent:
-        while (get_indent_str(p, 8) < indent) {
+        while (get_indent_str(p, 8, FALSE) < indent) {
           char_u *s = skipwhite(p);
 
           ga_grow(&line_ga, 1);
@@ -1858,11 +1858,11 @@ redraw:
           p[--line_ga.ga_len] = NUL;
         } else {
           p[line_ga.ga_len] = NUL;
-          indent = get_indent_str(p, 8);
+          indent = get_indent_str(p, 8, FALSE);
           --indent;
           indent -= indent % get_sw_value(curbuf);
         }
-        while (get_indent_str(p, 8) > indent) {
+        while (get_indent_str(p, 8, FALSE) > indent) {
           char_u *s = skipwhite(p);
 
           memmove(s - 1, s, line_ga.ga_len - (s - p) + 1);
