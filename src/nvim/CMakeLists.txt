@@ -7,6 +7,10 @@ set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/nvim/os/msgpack_rpc.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
+set(GENERATED_EX_CMDS_ENUM ${GENERATED_INCLUDES_DIR}/ex_cmds_enum.generated.h)
+set(GENERATED_EX_CMDS_DEFS ${GENERATED_DIR}/ex_cmds_defs.generated.h)
+set(EX_CMDS_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/genex_cmds.lua)
+set(EX_CMDS_DEFS_FILE ${PROJECT_SOURCE_DIR}/src/nvim/ex_cmds.lua)
 
 include_directories(${GENERATED_DIR})
 include_directories(${GENERATED_INCLUDES_DIR})
@@ -124,11 +128,20 @@ add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
     ${API_HEADERS}
     ${MSGPACK_RPC_HEADER}
     ${DISPATCH_GENERATOR}
-    )
+)
 
 list(APPEND NEOVIM_GENERATED_SOURCES
   "${PROJECT_BINARY_DIR}/config/auto/pathdef.c"
-  "${MSGPACK_DISPATCH}")
+  "${MSGPACK_DISPATCH}"
+  "${GENERATED_EX_CMDS_ENUM}"
+  "${GENERATED_EX_CMDS_DEFS}"
+)
+
+add_custom_command(OUTPUT ${GENERATED_EX_CMDS_ENUM} ${GENERATED_EX_CMDS_DEFS}
+  COMMAND ${LUA_PRG} ${EX_CMDS_GENERATOR}
+      ${PROJECT_SOURCE_DIR}/src/nvim ${GENERATED_INCLUDES_DIR} ${GENERATED_DIR}
+  DEPENDS ${EX_CMDS_GENERATOR} ${EX_CMDS_DEFS_FILE}
+)
 
 # Our dependencies come first.
 

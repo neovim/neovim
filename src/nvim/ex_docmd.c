@@ -66,6 +66,7 @@
 #include "nvim/version.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/ex_cmds_defs.h"
 
 static int quitmore = 0;
 static int ex_pressedreturn = FALSE;
@@ -156,42 +157,9 @@ static int did_lcd;             /* whether ":lcd" was produced for a session */
 /*
  * Declare cmdnames[].
  */
-#define DO_DECLARE_EXCMD
-#include "nvim/ex_cmds_defs.h"
-
-/*
- * Table used to quickly search for a command, based on its first character.
- */
-static cmdidx_T cmdidxs[27] =
-{
-  CMD_append,
-  CMD_buffer,
-  CMD_change,
-  CMD_delete,
-  CMD_edit,
-  CMD_file,
-  CMD_global,
-  CMD_help,
-  CMD_insert,
-  CMD_join,
-  CMD_k,
-  CMD_list,
-  CMD_move,
-  CMD_next,
-  CMD_open,
-  CMD_print,
-  CMD_quit,
-  CMD_read,
-  CMD_substitute,
-  CMD_t,
-  CMD_undo,
-  CMD_vglobal,
-  CMD_write,
-  CMD_xit,
-  CMD_yank,
-  CMD_z,
-  CMD_bang
-};
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "ex_cmds_defs.generated.h"
+#endif
 
 static char_u dollar_command[2] = {'$', 0};
 

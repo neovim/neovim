@@ -1,6 +1,8 @@
 #ifndef NVIM_EX_DOCMD_H
 #define NVIM_EX_DOCMD_H
 
+#include "nvim/ex_cmds_defs.h"
+
 /* flags for do_cmdline() */
 #define DOCMD_VERBOSE   0x01    /* included command in error message */
 #define DOCMD_NOWAIT    0x02    /* don't call wait_return() and friends */
@@ -16,8 +18,6 @@
 /* Values for exmode_active (0 is no exmode) */
 #define EXMODE_NORMAL           1
 #define EXMODE_VIM              2
-
-typedef char_u *(*LineGetter)(int, void *, int);
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "ex_docmd.h.generated.h"
