@@ -334,21 +334,17 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
+#define STPCPY(d, s) (char_u *) xstpcpy((char *) d, (char *) s)
+
 /*
  * Concatenate file names fname1 and fname2 into allocated memory.
  * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
  */
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
-  FUNC_ATTR_NONNULL_RET
+char_u *concat_fnames(const char_u *fname1, const char_u *fname2, int sep)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
 {
   char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-
-  STRCPY(dest, fname1);
-  if (sep) {
-    add_pathsep(dest);
-  }
-  STRCAT(dest, fname2);
-
+  STRCPY(add_pathsep(STPCPY(dest, fname1)), fname2);
   return dest;
 }
 
@@ -356,10 +352,13 @@ char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
  * Add a path separator to a file name, unless it already ends in a path
  * separator.
  */
-void add_pathsep(char_u *p)
+char_u *add_pathsep(char_u *p) FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
-    STRCAT(p, PATHSEPSTR);
+  if (*p == NUL || after_pathsep(p, p + STRLEN(p))) {
+    return p;
+  }
+
+  return STPCPY(p, PATHSEPSTR);
 }
 
 /*
