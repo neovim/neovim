@@ -1877,16 +1877,16 @@ void changed_bytes(linenr_T lnum, colnr_T col)
 
   /* Diff highlighting in other diff windows may need to be updated too. */
   if (curwin->w_p_diff) {
-    win_T       *wp;
     linenr_T wlnum;
 
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
         if (wlnum > 0)
           changedOneline(wp->w_buffer, wlnum);
       }
+    }
   }
 }
 
@@ -1973,17 +1973,18 @@ changed_lines (
     /* When the number of lines doesn't change then mark_adjust() isn't
      * called and other diff buffers still need to be marked for
      * displaying. */
-    win_T       *wp;
     linenr_T wlnum;
 
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_diff && wp != curwin) {
         redraw_win_later(wp, VALID);
         wlnum = diff_lnum_win(lnum, wp);
-        if (wlnum > 0)
+        if (wlnum > 0) {
           changed_lines_buf(wp->w_buffer, wlnum,
               lnume - lnum + wlnum, 0L);
+        }
       }
+    }
   }
 
   changed_common(lnum, col, lnume, xtra);
@@ -2214,14 +2215,14 @@ unchanged (
  */
 void check_status(buf_T *buf)
 {
-  win_T       *wp;
-
-  for (wp = firstwin; wp != NULL; wp = wp->w_next)
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer == buf && wp->w_status_height) {
       wp->w_redr_status = TRUE;
-      if (must_redraw < VALID)
+      if (must_redraw < VALID) {
         must_redraw = VALID;
+      }
     }
+  }
 }
 
 /*

@@ -471,11 +471,10 @@ int main(int argc, char **argv)
   edit_buffers(&params);
 
   if (params.diff_mode) {
-    win_T   *wp;
-
     /* set options in each window for "vimdiff". */
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
+    FOR_ALL_WINDOWS(wp) {
       diff_win_options(wp, TRUE);
+    }
   }
 
   /*

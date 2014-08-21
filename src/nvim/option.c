@@ -5075,9 +5075,7 @@ set_bool_option (
   /* There can be only one window with 'previewwindow' set. */
   else if ((int *)varp == &curwin->w_p_pvw) {
     if (curwin->w_p_pvw) {
-      win_T       *win;
-
-      for (win = firstwin; win != NULL; win = win->w_next) {
+      FOR_ALL_WINDOWS(win) {
         if (win->w_p_pvw && win != curwin) {
           curwin->w_p_pvw = FALSE;
           return (char_u *)N_("E590: A preview window already exists");

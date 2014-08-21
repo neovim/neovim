@@ -4610,19 +4610,19 @@ prepare_tagpreview (
     bool undo_sync                  /* sync undo when leaving the window */
 )
 {
-  win_T       *wp;
-
-
   /*
    * If there is already a preview window open, use that one.
    */
   if (!curwin->w_p_pvw) {
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
-      if (wp->w_p_pvw)
+    bool found_win = false;
+    FOR_ALL_WINDOWS(wp) {
+      if (wp->w_p_pvw) {
+        win_enter(wp, undo_sync);
+        found_win = true;
         break;
-    if (wp != NULL)
-      win_enter(wp, undo_sync);
-    else {
+      }
+    }
+    if (!found_win) {
       /*
        * There is no preview window open yet.  Create one.
        */

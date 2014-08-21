@@ -4553,13 +4553,13 @@ void rl_mirror(char_u *str)
  */
 void status_redraw_all(void)
 {
-  win_T       *wp;
 
-  for (wp = firstwin; wp; wp = wp->w_next)
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_status_height) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
     }
+  }
 }
 
 /*
@@ -4567,13 +4567,12 @@ void status_redraw_all(void)
  */
 void status_redraw_curbuf(void)
 {
-  win_T       *wp;
-
-  for (wp = firstwin; wp; wp = wp->w_next)
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_status_height != 0 && wp->w_buffer == curbuf) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
     }
+  }
 }
 
 /*
@@ -4581,11 +4580,11 @@ void status_redraw_curbuf(void)
  */
 void redraw_statuslines(void)
 {
-  win_T       *wp;
-
-  for (wp = firstwin; wp; wp = wp->w_next)
-    if (wp->w_redr_status)
+  FOR_ALL_WINDOWS(wp) {
+    if (wp->w_redr_status) {
       win_redr_status(wp);
+    }
+  }
   if (redraw_tabline)
     draw_tabline();
 }

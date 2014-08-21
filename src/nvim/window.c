@@ -982,13 +982,13 @@ static void win_init_some(win_T *newp, win_T *oldp)
  */
 int win_valid(win_T *win)
 {
-  win_T       *wp;
-
   if (win == NULL)
     return FALSE;
-  for (wp = firstwin; wp != NULL; wp = wp->w_next)
-    if (wp == win)
+  FOR_ALL_WINDOWS(wp) {
+    if (wp == win) {
       return TRUE;
+    }
+  }
   return FALSE;
 }
 
@@ -997,11 +997,11 @@ int win_valid(win_T *win)
  */
 int win_count(void)
 {
-  win_T       *wp;
   int count = 0;
 
-  for (wp = firstwin; wp != NULL; wp = wp->w_next)
+  FOR_ALL_WINDOWS(wp) {
     ++count;
+  }
   return count;
 }
 
@@ -3475,14 +3475,14 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
  */
 win_T *buf_jump_open_win(buf_T *buf)
 {
-  win_T       *wp;
+  FOR_ALL_WINDOWS(wp) {
+    if (wp->w_buffer == buf) {
+      win_enter(wp, false);
+      return wp;
+    }
+  }
 
-  for (wp = firstwin; wp != NULL; wp = wp->w_next)
-    if (wp->w_buffer == buf)
-      break;
-  if (wp != NULL)
-    win_enter(wp, false);
-  return wp;
+  return NULL;
 }
 
 /*
@@ -3784,11 +3784,9 @@ void shell_new_columns(void)
 void win_size_save(garray_T *gap)
 
 {
-  win_T       *wp;
-
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2);
-  for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+  FOR_ALL_WINDOWS(wp) {
     ((int *)gap->ga_data)[gap->ga_len++] =
       wp->w_width + wp->w_vsep_width;
     ((int *)gap->ga_data)[gap->ga_len++] = wp->w_height;
@@ -3801,11 +3799,9 @@ void win_size_save(garray_T *gap)
  */
 void win_size_restore(garray_T *gap)
 {
-  win_T       *wp;
-
   if (win_count() * 2 == gap->ga_len) {
     int i = 0;
-    for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+    FOR_ALL_WINDOWS(wp) {
       frame_setwidth(wp->w_frame, ((int *)gap->ga_data)[i++]);
       win_setheight_win(((int *)gap->ga_data)[i++], wp);
     }
@@ -4233,14 +4229,14 @@ void win_setminheight(void)
 {
   int room;
   int first = TRUE;
-  win_T       *wp;
 
   /* loop until there is a 'winminheight' that is possible */
   while (p_wmh > 0) {
     /* TODO: handle vertical splits */
     room = -p_wh;
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
+    FOR_ALL_WINDOWS(wp) {
       room += wp->w_height - p_wmh;
+    }
     if (room >= 0)
       break;
     --p_wmh;
@@ -4931,20 +4927,21 @@ int min_rows(void)
 int only_one_window(void)
 {
   int count = 0;
-  win_T       *wp;
 
   /* If there is another tab page there always is another window. */
   if (first_tabpage->tp_next != NULL)
     return FALSE;
 
-  for (wp = firstwin; wp != NULL; wp = wp->w_next)
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_buffer != NULL
         && (!((wp->w_buffer->b_help && !curbuf->b_help)
               || wp->w_p_pvw
               ) || wp == curwin)
         && wp != aucmd_win
-        )
+        ) {
       ++count;
+    }
+  }
   return count <= 1;
 }
 

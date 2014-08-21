@@ -1379,14 +1379,16 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
    * For ":helpgrep" find a help window or open one.
    */
   if (qf_ptr->qf_type == 1 && (!curwin->w_buffer->b_help || cmdmod.tab != 0)) {
-    win_T   *wp;
+    win_T *wp = NULL;
 
-    if (cmdmod.tab != 0)
-      wp = NULL;
-    else
-      for (wp = firstwin; wp != NULL; wp = wp->w_next)
-        if (wp->w_buffer != NULL && wp->w_buffer->b_help)
+    if (cmdmod.tab == 0) {
+      FOR_ALL_WINDOWS(wp2) {
+        if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
+          wp = wp2;
           break;
+        }
+      }
+    }
     if (wp != NULL && wp->w_buffer->b_nwindows > 0)
       win_enter(wp, true);
     else {
