@@ -6850,7 +6850,7 @@ void check_win_options(win_T *win)
 /*
  * Check for NULL pointers in a winopt_T and replace them with empty_option.
  */
-void check_winopt(winopt_T *wop)
+static void check_winopt(winopt_T *wop)
 {
   check_string_option(&wop->wo_fdi);
   check_string_option(&wop->wo_fdm);
