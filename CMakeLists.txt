@@ -123,7 +123,7 @@ add_subdirectory(config)
 add_subdirectory(src/nvim)
 add_subdirectory(test/includes)
 
-find_program(BUSTED_PRG busted)
+find_program(BUSTED_PRG busted_bootstrap)
 
 find_program(MAKE_PRG NAMES gmake make)
 if(MAKE_PRG)
