@@ -343,22 +343,27 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 char_u *concat_fnames(const char_u *fname1, const char_u *fname2, int sep)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
 {
-  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-  STRCPY(add_pathsep(STPCPY(dest, fname1)), fname2);
-  return dest;
+  char_u *dst = vim_strnsave(fname1, STRLEN(fname1) + STRLEN(fname2) + 3);
+  STRCPY(add_pathsep(dst), fname2);
+  return dst;
 }
 
-/*
- * Add a path separator to a file name, unless it already ends in a path
- * separator.
- */
+/// add_pathsep - Add a path separator to a file name if necessary
+///
+/// A path separator is added unless it already ends in a path separator or
+/// the string is empty.
+///
+/// @param p The path
+/// @return a pointer to the end of the resulting string
 char_u *add_pathsep(char_u *p) FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
-  if (*p == NUL || after_pathsep(p, p + STRLEN(p))) {
-    return p;
+  size_t len = STRLEN(p);
+
+  if (len == 0 || after_pathsep(p, p + len)) {
+    return p + len;
   }
 
-  return STPCPY(p, PATHSEPSTR);
+  return STPCPY(p + len, PATHSEPSTR);
 }
 
 /*
