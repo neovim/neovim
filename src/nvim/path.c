@@ -334,29 +334,25 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
-/*
- * Concatenate file names fname1 and fname2 into allocated memory.
- * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
- */
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
-  FUNC_ATTR_NONNULL_RET
+/// Concatenate file names p1 and p2, separated by PATHSEPSTR, into allocated
+/// memory.
+char_u *path_join(const char_u *p1, const char_u *p2)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
+  char_u *dest = xmalloc(STRLEN(p1) + STRLEN(p2) + 3);
 
-  STRCPY(dest, fname1);
-  if (sep) {
-    add_pathsep(dest);
-  }
-  STRCAT(dest, fname2);
+  STRCPY(dest, p1);
+  add_pathsep(dest);
+  STRCAT(dest, p2);
 
   return dest;
 }
 
-/*
- * Add a path separator to a file name, unless it already ends in a path
- * separator.
- */
+/// Add a path separator to a file name, unless it already ends in a path
+/// separator.
 void add_pathsep(char_u *p)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
     STRCAT(p, PATHSEPSTR);

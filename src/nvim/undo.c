@@ -677,7 +677,7 @@ char_u *u_get_undo_file_name(char_u *buf_ffname, int reading)
             if (vim_ispathsep(*p))
               *p = '%';
         }
-        undo_file_name = concat_fnames(dir_name, munged_name, TRUE);
+        undo_file_name = path_join(dir_name, munged_name);
       }
     }
 

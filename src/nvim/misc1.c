@@ -3056,11 +3056,11 @@ static char_u *vim_version_dir(char_u *vimdir)
 
   if (vimdir == NULL || *vimdir == NUL)
     return NULL;
-  p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
+  p = path_join(vimdir, (char_u *)VIM_VERSION_NODOT);
   if (os_isdir(p))
     return p;
   free(p);
-  p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, TRUE);
+  p = path_join(vimdir, (char_u *)RUNTIME_DIRNAME);
   if (os_isdir(p))
     return p;
   free(p);

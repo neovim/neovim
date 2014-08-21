@@ -1408,9 +1408,7 @@ scripterror:
 
       if (parmp->diff_mode && os_isdir(p) && GARGCOUNT > 0
           && !os_isdir(alist_name(&GARGLIST[0]))) {
-        char_u      *r;
-
-        r = concat_fnames(p, path_tail(alist_name(&GARGLIST[0])), TRUE);
+        char_u *r = path_join(p, path_tail(alist_name(&GARGLIST[0])));
         free(p);
         p = r;
       }

@@ -418,6 +418,25 @@ describe('more path function', function()
     end)
   end)
 
+  describe('concat_fnames', function()
+    function path_join(fname1, fname2)
+      return internalize(path.path_join(to_cstr(fname1), to_cstr(fname2)))
+    end
+
+    it('correctly concats two strings with a path separator', function()
+      eq('f1/f2', path_join('f1', 'f2'))
+    end)
+
+    it('does not add an extraneous separator', function()
+      eq('f1/f2', path_join('f1/', 'f2'))
+    end)
+
+    it('deals with empty strings', function()
+      eq('f2', path_join('', 'f2'))
+      eq('f1/', path_join('f1', ''))
+    end)
+  end)
+
   describe('append_path', function()
     it('joins given paths with a slash', function()
       local path1 = cstr(100, 'path1')
