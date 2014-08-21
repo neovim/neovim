@@ -1078,7 +1078,7 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
     slash_adjust(fname);
 #endif
     if (directory != NULL && !vim_isAbsName(fname)) {
-      ptr = concat_fnames(directory, fname, TRUE);
+      ptr = concat_fnames(directory, fname);
       /*
        * Here we check if the file really exists.
        * This should normally be true, but if make works without
@@ -1089,7 +1089,7 @@ static int qf_get_fnum(char_u *directory, char_u *fname)
         free(ptr);
         directory = qf_guess_filepath(fname);
         if (directory)
-          ptr = concat_fnames(directory, fname, TRUE);
+          ptr = concat_fnames(directory, fname);
         else
           ptr = vim_strsave(fname);
       }
@@ -1130,8 +1130,7 @@ static char_u *qf_push_dir(char_u *dirbuf, struct dir_stack_T **stackptr)
     (*stackptr)->dirname = NULL;
     while (ds_new) {
       free((*stackptr)->dirname);
-      (*stackptr)->dirname = concat_fnames(ds_new->dirname, dirbuf,
-          TRUE);
+      (*stackptr)->dirname = concat_fnames(ds_new->dirname, dirbuf);
       if (os_isdir((*stackptr)->dirname))
         break;
 
@@ -1235,7 +1234,7 @@ static char_u *qf_guess_filepath(char_u *filename)
   fullname = NULL;
   while (ds_ptr) {
     free(fullname);
-    fullname = concat_fnames(ds_ptr->dirname, filename, TRUE);
+    fullname = concat_fnames(ds_ptr->dirname, filename);
 
     if (os_file_exists(fullname))
       break;

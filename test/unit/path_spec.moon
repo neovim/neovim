@@ -247,7 +247,7 @@ describe 'more path function', ->
 
   describe 'concat_fnames', ->
     concat_fnames = (fname1, fname2) ->
-      internalize(path.concat_fnames(to_cstr(fname1), to_cstr(fname2), true))
+      internalize(path.concat_fnames(to_cstr(fname1), to_cstr(fname2)))
 
     it 'correctly concats two strings with a path separator', ->
       eq('f1/f2', concat_fnames('f1', 'f2'))
