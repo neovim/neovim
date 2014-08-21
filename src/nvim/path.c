@@ -341,7 +341,7 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
  * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
  */
 char_u *concat_fnames(const char_u *fname1, const char_u *fname2, int sep)
-  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
   char_u *dst = vim_strnsave(fname1, STRLEN(fname1) + STRLEN(fname2) + 3);
   STRCPY(add_pathsep(dst), fname2);
