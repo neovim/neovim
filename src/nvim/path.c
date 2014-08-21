@@ -344,7 +344,8 @@ char_u *concat_fnames(const char_u *fname1, const char_u *fname2, int sep)
   FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
   char_u *dst = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-  STRCPY(add_pathsep((char_u *) STRCPY(dst, fname1)), fname2);
+  STRCPY(dst, fname1);
+  STRCPY(add_pathsep(dst), fname2);
   return dst;
 }
 
