@@ -136,26 +136,6 @@ void mch_free_acl(vim_acl_T aclent)
 }
 #endif
 
-/*
- * Check what "name" is:
- * NODE_NORMAL: file or directory (or doesn't exist)
- * NODE_WRITABLE: writable device, socket, fifo, etc.
- * NODE_OTHER: non-writable things
- */
-int mch_nodetype(char_u *name)
-{
-  struct stat st;
-
-  if (stat((char *)name, &st))
-    return NODE_NORMAL;
-  if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))
-    return NODE_NORMAL;
-  if (S_ISBLK(st.st_mode))      /* block device isn't writable */
-    return NODE_OTHER;
-  /* Everything else is writable? */
-  return NODE_WRITABLE;
-}
-
 void mch_exit(int r)
 {
   exiting = true;

@@ -94,9 +94,74 @@ bool os_isdir(const char_u *name)
   return true;
 }
 
+/// Check what `name` is:
+/// @return NODE_NORMAL: file or directory (or doesn't exist)
+///         NODE_WRITABLE: writable device, socket, fifo, etc.
+///         NODE_OTHER: non-writable things
+int os_nodetype(const char *name)
+{
+#ifdef WIN32
+  // Edge case from Vim os_win32.c:
+  // We can't open a file with a name "\\.\con" or "\\.\prn", trying to read
+  // from it later will cause Vim to hang. Thus return NODE_WRITABLE here.
+  if (STRNCMP(name, "\\\\.\\", 4) == 0) {
+    return NODE_WRITABLE;
+  }
+#endif
+
+  uv_stat_t statbuf;
+  if (os_stat(name, &statbuf) == 0) {
+    return NODE_NORMAL;
+  }
+
+#ifndef WIN32
+  // libuv does not handle BLK and DIR in uv_handle_type.
+  //    Related: https://github.com/joyent/libuv/pull/1421
+  if (S_ISREG(statbuf.st_mode) || S_ISDIR(statbuf.st_mode)) {
+    return NODE_NORMAL;
+  }
+  if (S_ISBLK(statbuf.st_mode)) {  // block device isn't writable
+    return NODE_OTHER;
+  }
+#endif
+
+  // Vim os_win32.c:mch_nodetype does this (since patch 7.4.015):
+  //    if (enc_codepage >= 0 && (int)GetACP() != enc_codepage) {
+  //      wn = enc_to_utf16(name, NULL);
+  //      hFile = CreatFile(wn, ...)
+  // to get a HANDLE. But libuv just calls win32's _get_osfhandle() on the fd we
+  // give it. uv_fs_open calls fs__capture_path which does a similar dance and
+  // saves us the hassle.
+
+  int nodetype = NODE_WRITABLE;
+  int fd = os_open(name, O_RDONLY, 0);
+  switch(uv_guess_handle(fd)) {
+    case UV_TTY:         // FILE_TYPE_CHAR
+      nodetype = NODE_WRITABLE;
+      break;
+    case UV_FILE:        // FILE_TYPE_DISK
+      nodetype = NODE_NORMAL;
+      break;
+    case UV_NAMED_PIPE:  // not handled explicitly in Vim os_win32.c
+    case UV_UDP:         // unix only
+    case UV_TCP:         // unix only
+    case UV_UNKNOWN_HANDLE:
+    default:
+#ifdef WIN32
+      nodetype = NODE_OTHER;
+#else
+      nodetype = NODE_WRITABLE;  // Everything else is writable?
+#endif
+      break;
+  }
+
+  close(fd);
+  return nodetype;
+}
+
 /// Checks if the given path represents an executable file.
 ///
-/// @param[in]  name     The name of the executable.
+/// @param[in]  name     Name of the executable.
 /// @param[out] abspath  Path of the executable, if found and not `NULL`.
 ///
 /// @return `true` if `name` is executable and
