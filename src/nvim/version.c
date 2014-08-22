@@ -406,11 +406,11 @@ static int included_patches[] = {
   192,
   191,
   //190 NA
-  //189,
+  //189 NA
   //188 NA
   187,
   186,
-  //185,
+  //185 NA
   184,
   //183 NA
   //182 NA
@@ -419,7 +419,7 @@ static int included_patches[] = {
   //179 NA
   178,
   //177 NA
-  //176,
+  //176 NA
   //175 NA
   //174 NA
   173,
