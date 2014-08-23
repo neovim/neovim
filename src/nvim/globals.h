@@ -548,6 +548,9 @@ EXTERN tabpage_T    *first_tabpage;
 EXTERN tabpage_T    *curtab;
 EXTERN int redraw_tabline INIT(= FALSE);           /* need to redraw tabline */
 
+// Iterates over all tabs in the tab list
+# define FOR_ALL_TABS(tp) for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+
 /*
  * All buffers are linked in a list. 'firstbuf' points to the first entry,
  * 'lastbuf' to the last entry and 'curbuf' to the currently active buffer.

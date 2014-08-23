@@ -7632,7 +7632,6 @@ void unshowmode(int force)
 static void draw_tabline(void)
 {
   int tabcount = 0;
-  tabpage_T   *tp;
   int tabwidth;
   int col = 0;
   int scol = 0;
@@ -7675,8 +7674,9 @@ static void draw_tabline(void)
           (char_u *)"", OPT_FREE, SID_ERROR);
     called_emsg |= save_called_emsg;
   } else {
-    for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+    FOR_ALL_TABS(tp) {
       ++tabcount;
+    }
 
     tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
     if (tabwidth < 6)
@@ -7685,8 +7685,12 @@ static void draw_tabline(void)
     attr = attr_nosel;
     tabcount = 0;
     scol = 0;
-    for (tp = first_tabpage; tp != NULL && col < Columns - 4;
-         tp = tp->tp_next) {
+
+    FOR_ALL_TABS(tp) {
+      if (col >= Columns - 4) {
+        break;
+      }
+
       scol = col;
 
       if (tp->tp_topframe == topframe)

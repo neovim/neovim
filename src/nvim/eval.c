@@ -5407,7 +5407,6 @@ int garbage_collect(void)
   funccall_T  *fc, **pfc;
   int did_free;
   int did_free_funccal = FALSE;
-  tabpage_T   *tp;
 
   /* Only do this once. */
   want_garbage_collect = FALSE;
@@ -5442,14 +5441,19 @@ int garbage_collect(void)
   }
 
   /* window-local variables */
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  set_ref_in_item(&wp->w_winvar.di_tv, copyID);
+  {
+    tabpage_T *tp;
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      set_ref_in_item(&wp->w_winvar.di_tv, copyID);
+    }
+  }
   if (aucmd_win != NULL)
     set_ref_in_item(&aucmd_win->w_winvar.di_tv, copyID);
 
   /* tabpage-local variables */
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+  FOR_ALL_TABS(tp) {
     set_ref_in_item(&tp->tp_winvar.di_tv, copyID);
+  }
 
   /* global variables */
   set_ref_in_ht(&globvarht, copyID);

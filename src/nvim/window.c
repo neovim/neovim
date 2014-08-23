@@ -2986,14 +2986,14 @@ int make_tabpages(int maxcount)
 /*
  * Return TRUE when "tpc" points to a valid tab page.
  */
-int valid_tabpage(tabpage_T *tpc)
+bool valid_tabpage(tabpage_T *tpc)
 {
-  tabpage_T   *tp;
-
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
-    if (tp == tpc)
-      return TRUE;
-  return FALSE;
+  FOR_ALL_TABS(tp) {
+    if (tp == tpc) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /*
@@ -3550,14 +3550,13 @@ win_T *buf_jump_open_win(buf_T *buf)
 win_T *buf_jump_open_tab(buf_T *buf)
 {
   win_T       *wp;
-  tabpage_T   *tp;
 
   /* First try the current tab page. */
   wp = buf_jump_open_win(buf);
   if (wp != NULL)
     return wp;
 
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+  FOR_ALL_TABS(tp) {
     if (tp != curtab) {
       for (wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next)
         if (wp->w_buffer == buf)
@@ -3569,6 +3568,7 @@ win_T *buf_jump_open_tab(buf_T *buf)
         break;
       }
     }
+  }
 
   return wp;
 }
@@ -4963,18 +4963,15 @@ int tabline_height(void)
  */
 int min_rows(void)
 {
-  int total;
-  tabpage_T   *tp;
-  int n;
-
   if (firstwin == NULL)         /* not initialized yet */
     return MIN_LINES;
 
-  total = 0;
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-    n = frame_minheight(tp->tp_topframe, NULL);
-    if (total < n)
+  int total = 0;
+  FOR_ALL_TABS(tp) {
+    int n = frame_minheight(tp->tp_topframe, NULL);
+    if (total < n) {
       total = n;
+    }
   }
   total += tabline_height();
   total += 1;           /* count the room for the command line */

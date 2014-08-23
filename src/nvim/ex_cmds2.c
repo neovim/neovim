@@ -1204,7 +1204,6 @@ check_changed_any (
   int bufnum = 0;
   int bufcount = 0;
   int         *bufnrs;
-  tabpage_T   *tp;
 
   FOR_ALL_BUFFERS(buf) {
     ++bufcount;
@@ -1225,7 +1224,7 @@ check_changed_any (
   }
 
   /* buf in other tab */
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+  FOR_ALL_TABS(tp) {
     if (tp != curtab) {
       for (win_T *wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next) {
         add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
@@ -1283,6 +1282,7 @@ check_changed_any (
   /* Try to find a window that contains the buffer. */
   if (buf != curbuf) {
     win_T *wp;
+    tabpage_T *tp;
     FOR_ALL_TAB_WINDOWS(tp, wp) {
       if (wp->w_buffer == buf) {
         goto_tabpage_win(tp, wp);

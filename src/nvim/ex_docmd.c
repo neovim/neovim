@@ -5267,9 +5267,6 @@ static void ex_tabclose(exarg_T *eap)
  */
 static void ex_tabonly(exarg_T *eap)
 {
-  tabpage_T   *tp;
-  int done;
-
   if (cmdwin_type != 0)
     cmdwin_result = K_IGNORE;
   else if (first_tabpage->tp_next == NULL)
@@ -5277,8 +5274,8 @@ static void ex_tabonly(exarg_T *eap)
   else {
     /* Repeat this up to a 1000 times, because autocommands may mess
      * up the lists. */
-    for (done = 0; done < 1000; ++done) {
-      for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+    for (int done = 0; done < 1000; ++done) {
+      FOR_ALL_TABS(tp) {
         if (tp->tp_topframe != topframe) {
           tabpage_close_other(tp, eap->forceit);
           /* if we failed to close it quit */
@@ -5287,8 +5284,10 @@ static void ex_tabonly(exarg_T *eap)
           /* start over, "tp" is now invalid */
           break;
         }
-      if (first_tabpage->tp_next == NULL)
+      }
+      if (first_tabpage->tp_next == NULL) {
         break;
+      }
     }
   }
 }
@@ -5808,23 +5807,28 @@ static void ex_tabmove(exarg_T *eap)
  */
 static void ex_tabs(exarg_T *eap)
 {
-  tabpage_T   *tp;
-  win_T       *wp;
   int tabcount = 1;
 
   msg_start();
   msg_scroll = TRUE;
-  for (tp = first_tabpage; tp != NULL && !got_int; tp = tp->tp_next) {
+
+  FOR_ALL_TABS(tp) {
+    if (got_int) {
+       break;
+    }
+
     msg_putchar('\n');
     vim_snprintf((char *)IObuff, IOSIZE, _("Tab page %d"), tabcount++);
     msg_outtrans_attr(IObuff, hl_attr(HLF_T));
     out_flush();            /* output one line at a time */
     ui_breakcheck();
 
-    if (tp  == curtab)
+    win_T *wp;
+    if (tp  == curtab) {
       wp = firstwin;
-    else
+    } else {
       wp = tp->tp_firstwin;
+    }
     for (; wp != NULL && !got_int; wp = wp->w_next) {
       msg_putchar('\n');
       msg_putchar(wp == curwin ? '>' : ' ');
