@@ -5723,9 +5723,8 @@ next_search_hl (
         }
         shl->rm.regprog = NULL;
         shl->lnum = 0;
-        got_int = FALSE;        /* avoid the "Type :quit to exit Vim" 
-                                   message */
-        break; 
+        got_int = FALSE; // avoid the "Type :quit to exit Vim" message
+        break;
       }
     } else if (cur != NULL) {
       nmatched = next_search_hl_pos(shl, lnum, &(cur->pos), matchcol);

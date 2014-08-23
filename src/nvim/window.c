@@ -5263,7 +5263,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
       int		len = 1;
       list_T	*subl;
       listitem_T	*subli;
-      int		error;
+      int		error = FALSE;
 
       if (li == NULL) {
         m->pos.pos[i].lnum = 0;
