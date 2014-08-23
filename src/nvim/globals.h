@@ -525,9 +525,12 @@ EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
  * to break out of the tabpage loop.
  */
 # define FOR_ALL_TAB_WINDOWS(tp, wp) \
-  for ((tp) = first_tabpage; (tp) != NULL; (tp) = (tp)->tp_next) \
-    for ((wp) = ((tp) == curtab) \
-                ? firstwin : (tp)->tp_firstwin; (wp); (wp) = (wp)->w_next)
+  FOR_ALL_TABS(tp) \
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp)
+
+# define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
+  for (win_T *wp = ((tp) == curtab) \
+              ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
 
 EXTERN win_T    *curwin;        /* currently active window */
 

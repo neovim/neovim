@@ -2027,8 +2027,6 @@ changed_lines_buf (
  */
 static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra)
 {
-  win_T       *wp;
-  tabpage_T   *tp;
   int i;
   int cols;
   pos_T       *p;
@@ -2072,21 +2070,21 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
           curbuf->b_changelistlen = JUMPLISTSIZE - 1;
           memmove(curbuf->b_changelist, curbuf->b_changelist + 1,
               sizeof(pos_T) * (JUMPLISTSIZE - 1));
-          FOR_ALL_TAB_WINDOWS(tp, wp)
-          {
+          FOR_ALL_TAB_WINDOWS(tp, wp) {
             /* Correct position in changelist for other windows on
              * this buffer. */
-            if (wp->w_buffer == curbuf && wp->w_changelistidx > 0)
+            if (wp->w_buffer == curbuf && wp->w_changelistidx > 0) {
               --wp->w_changelistidx;
+            }
           }
         }
-        FOR_ALL_TAB_WINDOWS(tp, wp)
-        {
+        FOR_ALL_TAB_WINDOWS(tp, wp) {
           /* For other windows, if the position in the changelist is
            * at the end it stays at the end. */
           if (wp->w_buffer == curbuf
-              && wp->w_changelistidx == curbuf->b_changelistlen)
+              && wp->w_changelistidx == curbuf->b_changelistlen) {
             ++wp->w_changelistidx;
+          }
         }
         ++curbuf->b_changelistlen;
       }
@@ -2098,8 +2096,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
     curwin->w_changelistidx = curbuf->b_changelistlen;
   }
 
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curbuf) {
       /* Mark this window to be redrawn later. */
       if (wp->w_redr_type < VALID)

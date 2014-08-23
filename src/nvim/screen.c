@@ -6263,7 +6263,6 @@ int screen_valid(int doclear)
 void screenalloc(bool doclear)
 {
   int new_row, old_row;
-  win_T           *wp;
   int outofmem = FALSE;
   int len;
   schar_T         *new_ScreenLines;
@@ -6275,7 +6274,6 @@ void screenalloc(bool doclear)
   unsigned        *new_LineOffset;
   char_u          *new_LineWraps;
   short           *new_TabPageIdxs;
-  tabpage_T       *tp;
   static int entered = FALSE;                   /* avoid recursiveness */
   static int done_outofmem_msg = FALSE;         /* did outofmem message */
   int retry_count = 0;
@@ -6328,8 +6326,9 @@ retry:
    * Continuing with the old ScreenLines may result in a crash, because the
    * size is wrong.
    */
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  win_free_lsize(wp);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    win_free_lsize(wp);
+  }
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
@@ -6349,8 +6348,7 @@ retry:
   new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
   new_TabPageIdxs = xmalloc((size_t)(Columns * sizeof(short)));
 
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_alloc_lines(wp);
   }
   if (aucmd_win != NULL && aucmd_win->w_lines == NULL) {

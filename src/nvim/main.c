@@ -758,7 +758,6 @@ main_loop (
 /* Exit properly */
 void getout(int exitval)
 {
-  win_T       *wp;
   tabpage_T   *tp, *next_tp;
 
   exiting = TRUE;
@@ -780,11 +779,12 @@ void getout(int exitval)
     /* Trigger BufWinLeave for all windows, but only once per buffer. */
     for (tp = first_tabpage; tp != NULL; tp = next_tp) {
       next_tp = tp->tp_next;
-      for (wp = (tp == curtab)
-          ? firstwin : tp->tp_firstwin; wp != NULL; wp = wp->w_next) {
-        if (wp->w_buffer == NULL)
+      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+        if (wp->w_buffer == NULL) {
           /* Autocmd must have close the buffer already, skip. */
           continue;
+        }
+
         buf_T *buf = wp->w_buffer;
         if (buf->b_changedtick != -1) {
           apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname,

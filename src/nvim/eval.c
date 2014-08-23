@@ -5403,7 +5403,6 @@ static int list_join(garray_T *gap, list_T *l, char_u *sep, int echo_style, int 
 int garbage_collect(void)
 {
   int copyID;
-  win_T       *wp;
   funccall_T  *fc, **pfc;
   int did_free;
   int did_free_funccal = FALSE;
@@ -5441,11 +5440,8 @@ int garbage_collect(void)
   }
 
   /* window-local variables */
-  {
-    tabpage_T *tp;
-    FOR_ALL_TAB_WINDOWS(tp, wp) {
-      set_ref_in_item(&wp->w_winvar.di_tv, copyID);
-    }
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    set_ref_in_item(&wp->w_winvar.di_tv, copyID);
   }
   if (aucmd_win != NULL)
     set_ref_in_item(&aucmd_win->w_winvar.di_tv, copyID);
@@ -9592,21 +9588,27 @@ find_win_by_nr (
     tabpage_T *tp         /* NULL for current tab page */
 )
 {
-  win_T       *wp;
-  int nr;
+  int nr = get_tv_number_chk(vp, NULL);
 
-  nr = get_tv_number_chk(vp, NULL);
-
-  if (nr < 0)
+  if (nr < 0) {
     return NULL;
-  if (nr == 0)
-    return curwin;
+  }
 
-  for (wp = (tp == NULL || tp == curtab) ? firstwin : tp->tp_firstwin;
-       wp != NULL; wp = wp->w_next)
-    if (--nr <= 0)
-      break;
-  return wp;
+  if (nr == 0) {
+    return curwin;
+  }
+
+  // This method accepts NULL as an alias for curtab.
+  if (tp == NULL) {
+     tp = curtab;
+  }
+
+  FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+    if (--nr <= 0) {
+      return wp;
+    }
+  }
+  return NULL;
 }
 
 /*

@@ -2210,17 +2210,16 @@ set_options_default (
     int opt_flags                  /* OPT_FREE, OPT_LOCAL and/or OPT_GLOBAL */
 )
 {
-  int i;
-  win_T       *wp;
-  tabpage_T   *tp;
-
-  for (i = 0; !istermoption(&options[i]); i++)
-    if (!(options[i].flags & P_NODEFAULT))
+  for (int i = 0; !istermoption(&options[i]); i++) {
+    if (!(options[i].flags & P_NODEFAULT)) {
       set_option_default(i, opt_flags, p_cp);
+    }
+  }
 
   /* The 'scroll' option must be computed for all windows. */
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  win_comp_scroll(wp);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    win_comp_scroll(wp);
+  }
 }
 
 /// Set the Vi-default value of a string option.
@@ -5532,13 +5531,11 @@ set_num_option (
       errmsg = e_positive;
       curbuf->b_p_tw = 0;
     }
-    {
-      win_T       *wp;
-      tabpage_T   *tp;
 
-      FOR_ALL_TAB_WINDOWS(tp, wp)
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
       check_colorcolumn(wp);
     }
+
   }
 
   /*

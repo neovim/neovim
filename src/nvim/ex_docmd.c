@@ -5606,18 +5606,21 @@ alist_add (
  */
 void alist_slash_adjust(void)
 {
-  int i;
-  win_T       *wp;
-  tabpage_T   *tp;
-
-  for (i = 0; i < GARGCOUNT; ++i)
-    if (GARGLIST[i].ae_fname != NULL)
+  for (int i = 0; i < GARGCOUNT; ++i) {
+    if (GARGLIST[i].ae_fname != NULL) {
       slash_adjust(GARGLIST[i].ae_fname);
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  if (wp->w_alist != &global_alist)
-    for (i = 0; i < WARGCOUNT(wp); ++i)
-      if (WARGLIST(wp)[i].ae_fname != NULL)
-        slash_adjust(WARGLIST(wp)[i].ae_fname);
+    }
+  }
+
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp->w_alist != &global_alist) {
+      for (int i = 0; i < WARGCOUNT(wp); ++i) {
+        if (WARGLIST(wp)[i].ae_fname != NULL) {
+          slash_adjust(WARGLIST(wp)[i].ae_fname);
+        }
+      }
+    }
+  }
 }
 
 #endif
@@ -5823,13 +5826,11 @@ static void ex_tabs(exarg_T *eap)
     out_flush();            /* output one line at a time */
     ui_breakcheck();
 
-    win_T *wp;
-    if (tp  == curtab) {
-      wp = firstwin;
-    } else {
-      wp = tp->tp_firstwin;
-    }
-    for (; wp != NULL && !got_int; wp = wp->w_next) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      if (got_int) {
+        break;
+      }
+
       msg_putchar('\n');
       msg_putchar(wp == curwin ? '>' : ' ');
       msg_putchar(' ');

@@ -2962,13 +2962,10 @@ do_ecmd (
 
     /* It's possible that all lines in the buffer changed.  Need to update
      * automatic folding for all windows where it's used. */
-    {
-      win_T           *win;
-      tabpage_T       *tp;
-
-      FOR_ALL_TAB_WINDOWS(tp, win)
-      if (win->w_buffer == curbuf)
+    FOR_ALL_TAB_WINDOWS(tp, win) {
+      if (win->w_buffer == curbuf) {
         foldUpdateAll(win);
+      }
     }
 
     /* Change directories when the 'acd' option is set. */

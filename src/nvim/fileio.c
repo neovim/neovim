@@ -5102,16 +5102,15 @@ void buf_reload(buf_T *buf, int orig_mode)
   check_cursor();
   update_topline();
   keep_filetype = FALSE;
-  {
-    win_T       *wp;
-    tabpage_T   *tp;
 
-    /* Update folds unless they are defined manually. */
-    FOR_ALL_TAB_WINDOWS(tp, wp)
+  /* Update folds unless they are defined manually. */
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (wp->w_buffer == curwin->w_buffer
-        && !foldmethodIsManual(wp))
+        && !foldmethodIsManual(wp)) {
       foldUpdateAll(wp);
+    }
   }
+
   /* If the mode didn't change and 'readonly' was set, keep the old
    * value; the user probably used the ":view" command.  But don't
    * reset it, might have had a read error. */
@@ -6269,14 +6268,11 @@ aucmd_restbuf (
      * page. Do not trigger autocommands here. */
     block_autocmds();
     if (curwin != aucmd_win) {
-      tabpage_T   *tp;
-      win_T       *wp;
-
-      FOR_ALL_TAB_WINDOWS(tp, wp)
-      {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
         if (wp == aucmd_win) {
-          if (tp != curtab)
+          if (tp != curtab) {
             goto_tabpage_tp(tp, TRUE, TRUE);
+          }
           win_goto(aucmd_win);
           goto win_found;
         }

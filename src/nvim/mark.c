@@ -898,8 +898,6 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
   int i;
   int fnum = curbuf->b_fnum;
   linenr_T    *lp;
-  win_T       *win;
-  tabpage_T   *tab;
   static pos_T initpos = INIT_POS_T(1, 0, 0);
 
   if (line2 < line1 && amount_after == 0L)          /* nothing to do */
@@ -939,8 +937,9 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
     /* quickfix marks */
     qf_mark_adjust(NULL, line1, line2, amount, amount_after);
     /* location lists */
-    FOR_ALL_TAB_WINDOWS(tab, win)
-        qf_mark_adjust(win, line1, line2, amount, amount_after);
+    FOR_ALL_TAB_WINDOWS(tab, win) {
+      qf_mark_adjust(win, line1, line2, amount, amount_after);
+    }
 
     sign_mark_adjust(line1, line2, amount, amount_after);
   }
@@ -958,21 +957,26 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
   /*
    * Adjust items in all windows related to the current buffer.
    */
-  FOR_ALL_TAB_WINDOWS(tab, win)
-  {
-    if (!cmdmod.lockmarks)
+  FOR_ALL_TAB_WINDOWS(tab, win) {
+    if (!cmdmod.lockmarks) {
       /* Marks in the jumplist.  When deleting lines, this may create
        * duplicate marks in the jumplist, they will be removed later. */
-      for (i = 0; i < win->w_jumplistlen; ++i)
-        if (win->w_jumplist[i].fmark.fnum == fnum)
+      for (i = 0; i < win->w_jumplistlen; ++i) {
+        if (win->w_jumplist[i].fmark.fnum == fnum) {
           one_adjust_nodel(&(win->w_jumplist[i].fmark.mark.lnum));
+        }
+      }
+    }
 
     if (win->w_buffer == curbuf) {
-      if (!cmdmod.lockmarks)
+      if (!cmdmod.lockmarks) {
         /* marks in the tag stack */
-        for (i = 0; i < win->w_tagstacklen; i++)
-          if (win->w_tagstack[i].fmark.fnum == fnum)
+        for (i = 0; i < win->w_tagstacklen; i++) {
+          if (win->w_tagstack[i].fmark.fnum == fnum) {
             one_adjust_nodel(&(win->w_tagstack[i].fmark.mark.lnum));
+          }
+        }
+      }
 
       /* the displayed Visual area */
       if (win->w_old_cursor_lnum != 0) {
@@ -985,12 +989,14 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
       if (win != curwin) {
         if (win->w_topline >= line1 && win->w_topline <= line2) {
           if (amount == MAXLNUM) {                  /* topline is deleted */
-            if (line1 <= 1)
+            if (line1 <= 1) {
               win->w_topline = 1;
-            else
+            } else {
               win->w_topline = line1 - 1;
-          } else                        /* keep topline on the same line */
+            }
+          } else {                      /* keep topline on the same line */
             win->w_topline += amount;
+          }
           win->w_topfill = 0;
         } else if (amount_after && win->w_topline > line2) {
           win->w_topline += amount_after;
@@ -998,15 +1004,18 @@ void mark_adjust(linenr_T line1, linenr_T line2, long amount, long amount_after)
         }
         if (win->w_cursor.lnum >= line1 && win->w_cursor.lnum <= line2) {
           if (amount == MAXLNUM) {         /* line with cursor is deleted */
-            if (line1 <= 1)
+            if (line1 <= 1) {
               win->w_cursor.lnum = 1;
-            else
+            } else {
               win->w_cursor.lnum = line1 - 1;
+            }
             win->w_cursor.col = 0;
-          } else                        /* keep cursor on the same line */
+          } else {                      /* keep cursor on the same line */
             win->w_cursor.lnum += amount;
-        } else if (amount_after && win->w_cursor.lnum > line2)
+          }
+        } else if (amount_after && win->w_cursor.lnum > line2) {
           win->w_cursor.lnum += amount_after;
+        }
       }
 
       /* adjust folds */
@@ -1338,12 +1347,6 @@ int removable(char_u *name)
  */
 int write_viminfo_marks(FILE *fp_out)
 {
-  int count;
-  int is_mark_set;
-  int i;
-  win_T       *win;
-  tabpage_T   *tp;
-
   /*
    * Set b_last_cursor for the all buffers that have a window.
    */
@@ -1352,22 +1355,22 @@ int write_viminfo_marks(FILE *fp_out)
   }
 
   fputs(_("\n# History of marks within files (newest to oldest):\n"), fp_out);
-  count = 0;
+  int count = 0;
   FOR_ALL_BUFFERS(buf) {
     /*
      * Only write something if buffer has been loaded and at least one
      * mark is set.
      */
     if (buf->b_marks_read) {
-      if (buf->b_last_cursor.lnum != 0)
-        is_mark_set = TRUE;
-      else {
-        is_mark_set = FALSE;
-        for (i = 0; i < NMARKS; i++)
+      bool is_mark_set = true;
+      if (buf->b_last_cursor.lnum == 0) {
+        is_mark_set = false;
+        for (int i = 0; i < NMARKS; i++) {
           if (buf->b_namedm[i].lnum != 0) {
-            is_mark_set = TRUE;
+            is_mark_set = true;
             break;
           }
+        }
       }
       if (is_mark_set && buf->b_ffname != NULL
           && buf->b_ffname[0] != NUL && !removable(buf->b_ffname)) {
@@ -1378,10 +1381,12 @@ int write_viminfo_marks(FILE *fp_out)
         write_one_mark(fp_out, '^', &buf->b_last_insert);
         write_one_mark(fp_out, '.', &buf->b_last_change);
         /* changelist positions are stored oldest first */
-        for (i = 0; i < buf->b_changelistlen; ++i)
+        for (int i = 0; i < buf->b_changelistlen; ++i) {
           write_one_mark(fp_out, '+', &buf->b_changelist[i]);
-        for (i = 0; i < NMARKS; i++)
+        }
+        for (int i = 0; i < NMARKS; i++) {
           write_one_mark(fp_out, 'a' + i, &buf->b_namedm[i]);
+        }
         count++;
       }
     }
