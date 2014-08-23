@@ -177,7 +177,8 @@ if(BUSTED_PRG)
     DEPENDS nvim-test unittest-headers)
 endif()
 
-install(DIRECTORY runtime DESTINATION share/nvim/)
+install(DIRECTORY runtime DESTINATION share/nvim)
+install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
 
 # Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
 # pseudo-tty when launching processes, because it can put many jobs in parallel
