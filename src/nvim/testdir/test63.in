@@ -1,5 +1,5 @@
 Test for ":match", ":2match", ":3match", "clearmatches()", "getmatches()",
-"matchadd()", "matcharg()", "matchdelete()", and "setmatches()".
+"matchadd()", "matchaddpos()", "matcharg()", "matchdelete()", and "setmatches()".
 
 STARTTEST
 :so small.vim
@@ -147,9 +147,26 @@ STARTTEST
 :unlet rf1
 :unlet rf2
 :unlet rf3
-:highlight clear MyGroup1
-:highlight clear MyGroup2
-:highlight clear MyGroup3
+:" --- Check that "matchaddpos()" positions matches correctly
+:let @r .= "*** Test 11:\n"
+:set nolazyredraw
+:call setline(1, 'abcdefghijklmnopq')
+:call matchaddpos("MyGroup1", [[1, 5], [1, 8, 3]], 10, 3)
+:1
+:redraw!
+:let v1 = screenattr(1, 1)
+:let v5 = screenattr(1, 5)
+:let v6 = screenattr(1, 6)
+:let v8 = screenattr(1, 8)
+:let v10 = screenattr(1, 10)
+:let v11 = screenattr(1, 11)
+:let @r .= string(getmatches())."\n"
+:if v1 != v5 && v6 == v1 && v8 == v5 && v10 == v5 && v11 == v1
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED\n"
+:endif
+:call clearmatches()
 G"rp
 :/^Results/,$wq! test.out
 ENDTEST

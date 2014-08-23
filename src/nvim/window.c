@@ -5190,16 +5190,18 @@ void restore_buffer(buf_T *save_curbuf)
  * If no particular ID is desired, -1 must be specified for 'id'.
  * Return ID of added match, -1 on failure.
  */
-int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
+int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos_list)
 {
   matchitem_T *cur;
   matchitem_T *prev;
   matchitem_T *m;
   int hlg_id;
-  regprog_T   *regprog;
+  regprog_T   *regprog = NULL;
+  int rtype = SOME_VALID;
 
-  if (*grp == NUL || *pat == NUL)
+  if (*grp == NUL || (pat != NULL && *pat == NUL)) {
     return -1;
+  }
   if (id < -1 || id == 0) {
     EMSGN("E799: Invalid ID: %" PRId64
           " (must be greater than or equal to 1)",
@@ -5220,7 +5222,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
     EMSG2(_(e_nogroup), grp);
     return -1;
   }
-  if ((regprog = vim_regcomp(pat, RE_MAGIC)) == NULL) {
+  if (pat != NULL && (regprog = vim_regcomp(pat, RE_MAGIC)) == NULL) {
     EMSG2(_(e_invarg2), pat);
     return -1;
   }
@@ -5236,15 +5238,108 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
   }
 
   /* Build new match. */
-  m = xmalloc(sizeof(matchitem_T));
+  m = xcalloc(1, sizeof(matchitem_T));
   m->id = id;
   m->priority = prio;
-  m->pattern = vim_strsave(pat);
+  m->pattern = pat == NULL ? NULL: vim_strsave(pat);
+  m->pos.cur = 0;
   m->hlg_id = hlg_id;
   m->match.regprog = regprog;
   m->match.rmm_ic = FALSE;
   m->match.rmm_maxcol = 0;
 
+  // Set up position matches
+  if (pos_list != NULL)
+  {
+    linenr_T	toplnum = 0;
+    linenr_T	botlnum = 0;
+    listitem_T	*li;
+    int		i;
+
+    for (i = 0, li = pos_list->lv_first; i < MAXPOSMATCH;
+        i++, li = li->li_next) {
+      linenr_T	lnum = 0;
+      colnr_T	col = 0;
+      int		len = 1;
+      list_T	*subl;
+      listitem_T	*subli;
+      int		error;
+
+      if (li == NULL) {
+        m->pos.pos[i].lnum = 0;
+        break;
+      }
+      if (li->li_tv.v_type == VAR_LIST) {
+        subl = li->li_tv.vval.v_list;
+        if (subl == NULL) {
+          goto fail;
+        }
+        subli = subl->lv_first;
+        if (subli == NULL) {
+          goto fail;
+        }
+        lnum = get_tv_number_chk(&subli->li_tv, &error);
+        if (error == TRUE) {
+          goto fail;
+        }
+        m->pos.pos[i].lnum = lnum;
+        if (lnum == 0) {
+          --i;
+          continue;
+        }
+        subli = subli->li_next;
+        if (subli != NULL) {
+          col = get_tv_number_chk(&subli->li_tv, &error);
+          if (error == TRUE)
+            goto fail;
+          subli = subli->li_next;
+          if (subli != NULL) {
+            len = get_tv_number_chk(&subli->li_tv, &error);
+            if (error == true) {
+              goto fail;
+            }
+          }
+        }
+        m->pos.pos[i].col = col;
+        m->pos.pos[i].len = len;
+      } else if (li->li_tv.v_type == VAR_NUMBER) {
+        if (li->li_tv.vval.v_number == 0)
+          continue;
+        m->pos.pos[i].lnum = li->li_tv.vval.v_number;
+        m->pos.pos[i].col = 0;
+        m->pos.pos[i].len = 0;
+      } else {
+        EMSG(_("List or number required"));
+        goto fail;
+      }
+      if (toplnum == 0 || lnum < toplnum) {
+        toplnum = lnum;
+      }
+      if (botlnum == 0 || lnum > botlnum) {
+        botlnum = lnum;
+      }
+    }
+
+    // Calculate top and bottom lines for redrawing area 
+    if (toplnum != 0){
+      if (wp->w_buffer->b_mod_set) {
+        if (wp->w_buffer->b_mod_top > toplnum) {
+          wp->w_buffer->b_mod_top = toplnum;
+        }
+        if (wp->w_buffer->b_mod_bot < botlnum) {
+          wp->w_buffer->b_mod_bot = botlnum;
+        }
+      } else {
+        wp->w_buffer->b_mod_top = toplnum;
+        wp->w_buffer->b_mod_bot = botlnum;
+      }
+      m->pos.toplnum = toplnum;
+      m->pos.botlnum = botlnum;
+      wp->w_buffer->b_mod_set = TRUE;
+      rtype = VALID;
+    }
+  }
+ 
   /* Insert new match.  The match list is in ascending order with regard to
    * the match priorities. */
   cur = wp->w_match_head;
@@ -5259,8 +5354,12 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id)
     prev->next = m;
   m->next = cur;
 
-  redraw_later(SOME_VALID);
+  redraw_later(rtype);
   return id;
+
+fail:
+  free(m);
+  return -1;
 }
 
 /*
@@ -5271,6 +5370,7 @@ int match_delete(win_T *wp, int id, int perr)
 {
   matchitem_T *cur = wp->w_match_head;
   matchitem_T *prev = cur;
+  int rtype = SOME_VALID;
 
   if (id < 1) {
     if (perr == TRUE)
@@ -5294,8 +5394,23 @@ int match_delete(win_T *wp, int id, int perr)
     prev->next = cur->next;
   vim_regfree(cur->match.regprog);
   free(cur->pattern);
+  if (cur->pos.toplnum != 0) {
+    if (wp->w_buffer->b_mod_set) {
+      if (wp->w_buffer->b_mod_top > cur->pos.toplnum) {
+        wp->w_buffer->b_mod_top = cur->pos.toplnum;
+      }
+      if (wp->w_buffer->b_mod_bot < cur->pos.botlnum) {
+        wp->w_buffer->b_mod_bot = cur->pos.botlnum;
+      }
+    } else {
+      wp->w_buffer->b_mod_top = cur->pos.toplnum;
+      wp->w_buffer->b_mod_bot = cur->pos.botlnum;
+    }
+    wp->w_buffer->b_mod_set = TRUE;
+    rtype = VALID;
+  }
   free(cur);
-  redraw_later(SOME_VALID);
+  redraw_later(rtype);
   return 0;
 }
 

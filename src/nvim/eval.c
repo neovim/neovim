@@ -6456,6 +6456,7 @@ static struct fst {
   {"mapcheck",        1, 3, f_mapcheck},
   {"match",           2, 4, f_match},
   {"matchadd",        2, 4, f_matchadd},
+  {"matchaddpos",     2, 4, f_matchaddpos}, 
   {"matcharg",        1, 1, f_matcharg},
   {"matchdelete",     1, 1, f_matchdelete},
   {"matchend",        2, 4, f_matchend},
@@ -9300,12 +9301,34 @@ static void f_getline(typval_T *argvars, typval_T *rettv)
 static void f_getmatches(typval_T *argvars, typval_T *rettv)
 {
   matchitem_T *cur = curwin->w_match_head;
+  int i;
 
   rettv_list_alloc(rettv);
   while (cur != NULL) {
     dict_T *dict = dict_alloc();
+    if (cur->match.regprog == NULL) {
+      // match added with matchaddpos() 
+      for (i = 0; i < MAXPOSMATCH; ++i) {
+        llpos_T   *llpos;
+        char      buf[6];
+
+        llpos = &cur->pos.pos[i];
+        if (llpos->lnum == 0) {
+          break;
+        }
+        list_T *l = list_alloc();
+        list_append_number(l, (varnumber_T)llpos->lnum);
+        if (llpos->col > 0) {
+          list_append_number(l, (varnumber_T)llpos->col);
+          list_append_number(l, (varnumber_T)llpos->len);
+        }
+        sprintf(buf, "pos%d", i + 1);
+        dict_add_list(dict, buf, l);
+      }
+    } else {
+      dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
+    }
     dict_add_nr_str(dict, "group", 0L, syn_id2name(cur->hlg_id));
-    dict_add_nr_str(dict, "pattern", 0L, cur->pattern);
     dict_add_nr_str(dict, "priority", (long)cur->priority, NULL);
     dict_add_nr_str(dict, "id", (long)cur->id, NULL);
     list_append_dict(rettv->vval.v_list, dict);
@@ -11104,7 +11127,52 @@ static void f_matchadd(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  rettv->vval.v_number = match_add(curwin, grp, pat, prio, id);
+  rettv->vval.v_number = match_add(curwin, grp, pat, prio, id, NULL);
+}
+
+static void f_matchaddpos(typval_T *argvars, typval_T *rettv) FUNC_ATTR_NONNULL_ALL
+{
+    rettv->vval.v_number = -1;
+    
+    char_u buf[NUMBUFLEN];
+    char_u *group;
+    group = get_tv_string_buf_chk(&argvars[0], buf);
+    if (group == NULL) {
+        return;
+    }
+
+    if (argvars[1].v_type != VAR_LIST) {
+        EMSG2(_(e_listarg), "matchaddpos()");
+        return;
+    }
+
+    list_T *l;
+    l = argvars[1].vval.v_list;
+    if (l == NULL) {
+        return;
+    }
+
+    int error = false;
+    int prio = 10;
+    int id = -1;
+
+    if (argvars[2].v_type != VAR_UNKNOWN) {
+        prio = get_tv_number_chk(&argvars[2], &error);
+        if (argvars[3].v_type != VAR_UNKNOWN) {
+            id = get_tv_number_chk(&argvars[3], &error);
+        }
+    }
+    if (error == true) {
+        return;
+    }
+
+    // id == 3 is ok because matchaddpos() is supposed to substitute :3match 
+    if (id == 1 || id == 2) {
+        EMSGN("E798: ID is reserved for \"match\": %" PRId64, id);
+        return;
+    }
+
+    rettv->vval.v_number = match_add(curwin, group, NULL, prio, id, l);
 }
 
 /*
@@ -12914,7 +12982,7 @@ static void f_setmatches(typval_T *argvars, typval_T *rettv)
       match_add(curwin, get_dict_string(d, (char_u *)"group", FALSE),
           get_dict_string(d, (char_u *)"pattern", FALSE),
           (int)get_dict_number(d, (char_u *)"priority"),
-          (int)get_dict_number(d, (char_u *)"id"));
+          (int)get_dict_number(d, (char_u *)"id"), NULL);
       li = li->li_next;
     }
     rettv->vval.v_number = 0;
