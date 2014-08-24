@@ -4,7 +4,7 @@
 " URL:		http://www.fleiner.com/vim/syntax/sather.vim
 " Last Change:	2003 May 11
 
-" Sather is a OO-language developped at the International Computer Science
+" Sather is a OO-language developed at the International Computer Science
 " Institute (ICSI) in Berkeley, CA. pSather is a parallel extension to Sather.
 " Homepage: http://www.icsi.berkeley.edu/~sather
 " Sather files use .sa as suffix

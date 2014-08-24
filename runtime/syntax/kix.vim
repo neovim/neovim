@@ -10,7 +10,7 @@
 " 26 April 2001: RMH
 "    Removed development comments from distro version
 "    Renamed "Kix*" to "kix*" for consistancy
-"    Changes made in preperation for VIM version 5.8/6.00
+"    Changes made in preparation for VIM version 5.8/6.00
 
 " TODO:
 "	Handle arrays highlighting

@@ -110,7 +110,7 @@ if exists( "php_htmlInStrings")
   syn cluster phpAddStrings add=@htmlTop
 endif
 
-" make sure we can use \ at the begining of the line to do a continuation
+" make sure we can use \ at the beginning of the line to do a continuation
 let s:cpo_save = &cpo
 set cpo&vim
 

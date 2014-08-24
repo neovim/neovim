@@ -109,7 +109,7 @@ else
 endif
 syntax match clipperCommentError	"\*/"
 
-" Lines beggining with an "*" are comments too
+" Lines beginning with an "*" are comments too
 syntax match clipperComment		"^\*.*"
 
 

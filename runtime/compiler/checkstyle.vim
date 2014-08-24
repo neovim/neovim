@@ -14,6 +14,6 @@ endif
 
 CompilerSet makeprg=java\ com.puppycrawl.tools.checkstyle.Main\ -f\ plain
 
-" sample error: WebTable.java:282: '+=' is not preceeded with whitespace.
+" sample error: WebTable.java:282: '+=' is not preceded with whitespace.
 "		WebTable.java:201:1: '{' should be on the previous line.
 CompilerSet errorformat=%f:%l:%v:\ %m,%f:%l:\ %m,%-G%.%#

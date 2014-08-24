@@ -223,7 +223,7 @@ syn match asm68kOperator	"<>"		" inequality
 syn match asm68kOperator	"="		" must be before other ops containing '='
 syn match asm68kOperator	">="
 syn match asm68kOperator	"<="
-syn match asm68kOperator	"=="		" operand existance - used in macro definitions
+syn match asm68kOperator	"=="		" operand existence - used in macro definitions
 
 " Condition code style operators
 syn match asm68kOperator	"<[CV][CS]>"

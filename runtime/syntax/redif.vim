@@ -934,7 +934,7 @@ highlight redifFieldDeprecated term=undercurl cterm=undercurl gui=undercurl guis
 " Sync: The template-type (ReDIF-Paper, ReDIF-Archive, etc.) influences which
 " fields can follow. Thus sync must search backwards for it.
 "
-" I would like to simply ask VIM to search backward for the first occurence of
+" I would like to simply ask VIM to search backward for the first occurrence of
 " /^Template-Type:/, but it does not seem to be possible, so I have to start
 " from the beginning of the file... This might slow down a lot for files that
 " contain a lot of Template-Type statements.

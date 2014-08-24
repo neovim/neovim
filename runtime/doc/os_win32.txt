@@ -334,7 +334,7 @@ A. You have two possible solutions depending on what you want:
         :!start /min ctags -R .
 <  When it has finished you should see file named "tags" in your current
    directory.  You should notice the window title blinking on your taskbar.
-   This is more noticable for commands that take longer.
+   This is more noticeable for commands that take longer.
    Now delete the "tags" file and run this command: >
         :!start /b ctags -R .
 <  You should have the same "tags" file, but this time there will be no

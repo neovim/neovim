@@ -55,7 +55,7 @@ syn keyword sambaKeyword contained only open oplock oplocks options order os
 syn keyword sambaKeyword contained output packet page panic passwd password
 syn keyword sambaKeyword contained passwords path permissions pipe port ports
 syn keyword sambaKeyword contained postexec postscript prediction preexec
-syn keyword sambaKeyword contained prefered preferred preload preserve print
+syn keyword sambaKeyword contained preferred preload preserve print
 syn keyword sambaKeyword contained printable printcap printer printers
 syn keyword sambaKeyword contained printing program protocol proxy public
 syn keyword sambaKeyword contained queuepause queueresume raw read readonly
