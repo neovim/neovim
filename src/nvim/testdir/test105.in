@@ -7,7 +7,7 @@ STARTTEST
 :set shellslash
 :let tab="\t"
 :command -nargs=1 Put :let expr=<q-args> | $put =expr.tab.strtrans(string(eval(expr)))
-:let $HOME=fnamemodify('.', ':p:h:h:h:h')
+:let $HOME=fnamemodify('.', ':p:h:h:h')
 :Put fnamemodify('.',              ':p'      )[-1:]
 :Put fnamemodify('.',              ':p:h'    )[-1:]
 :Put fnamemodify('test.out',       ':p'      )[-1:]
@@ -23,7 +23,7 @@ STARTTEST
 :Put fnamemodify('abc.fb2.tar.gz', ':r'      )
 :Put fnamemodify('abc.fb2.tar.gz', ':r:r'    )
 :Put fnamemodify('abc.fb2.tar.gz', ':r:r:r'  )
-:Put substitute(fnamemodify('abc.fb2.tar.gz', ':p:r:r'), '.*\(src/nvim/testdir/.*\)', '\1', '')
+:Put substitute(fnamemodify('abc.fb2.tar.gz', ':p:r:r'), '.*\(nvim/testdir/.*\)', '\1', '')
 :Put fnamemodify('abc.fb2.tar.gz', ':e'      )
 :Put fnamemodify('abc.fb2.tar.gz', ':e:e'    )
 :Put fnamemodify('abc.fb2.tar.gz', ':e:e:e'  )
