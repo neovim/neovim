@@ -334,36 +334,74 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
-/// Concatenate file names fname1 and fname2 into allocated memory.
-/// @returns "{fname1}/{fname2}"
-char_u *concat_fnames(const char_u *fname1, const char_u *fname2)
+/// Concatenate file names fname1 and fname2, separated by PATHSEPSTR, into
+/// allocated memory.
+char_u *concat_fnames(const char_u * restrict fname1,
+                      const char_u * restrict fname2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-  char_u *end = (char_u *) STPCPY(dest, fname1);
-  if (end - dest > 0) {
-    end = add_pathsep(end-1);
-  }
-  STRCPY(end, fname2);
-
+  concat_fnames_buf(dest, fname1, fname2);
   return dest;
+}
+
+/// Concatenate file names fname1 and fname2 into buf.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL.
+/// @param[in]  base The path appended to.
+/// @param[in]  ext  The path to append.
+///
+/// @remark buf may be smaller than MAXPATHL only if 
+///         STRLEN(base + ext + PATHSEPSTR) is known to be smaller.
+///
+/// @returns The number of bytes written to buf on success.
+/// @returns Zero if truncation occurred.
+size_t concat_fnames_buf(char_u * restrict buf,
+                         const char_u * restrict base,
+                         const char_u * restrict ext)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t len = STRLCPY(buf, base, MAXPATHL);
+  if (len) {
+    len = add_pathsep_at(buf, buf + len) - buf;
+  }
+  len += STRLCPY(buf + len, ext, MAXPATHL - len);
+  return len < MAXPATHL ? len : 0;
+}
+
+/// Appends appends buf with a path separator (if needed) fallowed by fname.
+char_u *fname_append(char_u * restrict buf, const char_u * restrict fname)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  return (char_u *) STPCPY(add_pathsep(buf), fname);
 }
 
 /// Add a path separator to a file name, unless it already ends in a path
 /// separator.
 ///
 /// @param p The path of a directory.
-/// @post `p = "{p}/"` if it did not already end with a separator.
 /// @returns a pointer to the end of 'p'.
 char_u *add_pathsep(char_u *p)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  char_u *end = p + STRLEN(p);
-  if (*p == NUL || after_pathsep(p, end)) {
-    return end;
+  return *p != NUL ? add_pathsep_at(p, p + STRLEN(p)) : p;
+}
+
+/// Add a path separator to a file name, unless it already ends in a path
+/// separator.
+///
+/// @param b The path of a directory.
+/// @param p The location to insert the separator.
+/// @returns a pointer to the end of 'p'.
+char_u *add_pathsep_at(char_u *b, char_u *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  if (after_pathsep(b, p)) {
+    *p = NUL;
+    return p;
   }
-  return (char_u *) STPCPY(end, PATHSEPSTR);
+  return (char_u *) STPCPY(p, PATHSEPSTR);
 }
 
 /*
@@ -834,11 +872,8 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
        *	    c:\file.txt		  c:\		.\file.txt
        */
       short_name = path_shorten_fname(path, curdir);
-      if (short_name != NULL && short_name > path + 1
-          ) {
-        STRCPY(path, ".");
-        add_pathsep(path);
-        STRMOVE(path + STRLEN(path), short_name);
+      if (short_name != NULL && short_name > path + 1) {
+        concat_fnames_buf(path, (char_u *) ".", short_name);
       }
     }
     ui_breakcheck();
@@ -862,10 +897,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
-    STRCPY(rel_path, ".");
-    add_pathsep(rel_path);
-    STRCAT(rel_path, short_name);
+    rel_path = concat_fnames((char_u *)".", short_name);
 
     free(fnames[i]);
     fnames[i] = rel_path;

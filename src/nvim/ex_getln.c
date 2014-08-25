@@ -3892,12 +3892,14 @@ expand_shellcmd (
       e = s + STRLEN(s);
 
     l = e - s;
+    // TODO(SplinterOfChaos): Why MAXPATHL - 5? 
     if (l > MAXPATHL - 5)
       break;
     STRLCPY(buf, s, l + 1);
-    add_pathsep(buf);
-    l = STRLEN(buf);
+    l = add_pathsep_at(buf, buf + l) - buf;
     STRLCPY(buf + l, pat, MAXPATHL - l);
+    // TODO(SplinterOfChaos): Should we break at this point 
+    //                        if STRLEN(buf) > MAXPATHL?
 
     /* Expand matches in one directory of $PATH. */
     ret = expand_wildcards(1, &buf, num_file, file, flags);
@@ -4111,8 +4113,7 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
     // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, buf, MAXPATHL, ",");
     if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
-      add_pathsep(buf);
-      STRCAT(buf, file);  // NOLINT
+      fname_append(buf, file);
 
       char_u **p;
       int num_p;
