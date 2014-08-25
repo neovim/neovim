@@ -341,10 +341,11 @@ char_u *concat_fnames(const char_u *fname1, const char_u *fname2)
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
   char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-
-  STRCPY(dest, fname1);
-  add_pathsep(dest);
-  STRCAT(dest, fname2);
+  char_u *end = (char_u *) STPCPY(dest, fname1);
+  if (end - dest > 0) {
+    end = add_pathsep(end-1);
+  }
+  STRCPY(end, fname2);
 
   return dest;
 }
