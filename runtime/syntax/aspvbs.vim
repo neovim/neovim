@@ -40,7 +40,7 @@ syn match AspVBSVariableComplex contained "\<\(arr\|ary\|obj\)\u\w*"
 
 
 " Functions and methods that are in VB but will cause errors in an ASP page
-" This is helpfull if your porting VB code to ASP
+" This is helpful if you're porting VB code to ASP
 " I removed (Count, Item) because these are common variable names in AspVBScript
 syn keyword AspVBSError contained Val Str CVar CVDate DoEvents GoSub Return GoTo
 syn keyword AspVBSError contained Stop LinkExecute Add Type LinkPoke
@@ -62,7 +62,7 @@ syn match AspVBSError contained "\<Option\s\+\(Base\|Compare\|Private\s\+Module\
 syn match AspVBSError contained "Respon\?ce\.\S*"
 syn match AspVBSError contained "Respose\.\S*"
 " When I looked up the VBScript syntax it mentioned that Property Get/Set/Let
-" statements are illegal, however, I have recived reports that they do work.
+" statements are illegal, however, I have received reports that they do work.
 " So I commented it out for now.
 " syn match AspVBSError contained "\<Property\s\+\(Get\|Let\|Set\)\>"
 

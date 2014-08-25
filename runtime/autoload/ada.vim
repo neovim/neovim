@@ -447,7 +447,7 @@ function ada#Switch_Session (New_Session)
 
       if a:New_Session != v:this_session
 	 "
-	 "  We actualy got a new session - otherwise there
+	 "  We actually got a new session - otherwise there
 	 "  is nothing to do.
 	 "
 	 if strlen (v:this_session) > 0

@@ -38,7 +38,7 @@ endif
 
 " one line comment syntax (# comments)
 " 1. allow appended code after comment, do not complain
-" 2. show code beginnig with the second # as an error
+" 2. show code beginning with the second # as an error
 " 3. show whole lines with more than one # as an error
 if !exists("oneline_comments")
     let oneline_comments = 2

@@ -548,7 +548,7 @@ function! s:SyntaxCSyntaxGroupItems( group_name, syntax_full )
         " let syn_list = substitute( @l, '^.*xxx\s*\%(contained\s*\)\?', "", '' )
         " let syn_list = substitute( @l, '^.*xxx\s*', "", '' )
 
-        " We only want the words for the lines begining with
+        " We only want the words for the lines beginning with
         " containedin, but there could be other items.
 
         " Tried to remove all lines that do not begin with contained

@@ -47,7 +47,7 @@ exec 'syn match dtraceProbe "'.s:oneProbe.'\%(,\_s*'.s:oneProbe.'\)*\ze\_s\%({\|
 " Also be careful not to eat `c = a / b; b = a / 2;`. We use the same
 " technique as the dtrace lexer: a predicate has to be followed by {, ;, or
 " EOF. Also note that dtrace doesn't allow an empty predicate // (we do).
-" This regex doesn't allow a divison operator in the predicate.
+" This regex doesn't allow a division operator in the predicate.
 " Make sure that this matches the empty predicate as well.
 " XXX: This doesn't work if followed by a comment.
 syn match dtracePredicate "/\*\@!\_[^/]*/\ze\_s*\%({\|;\|\%$\)"

@@ -171,7 +171,7 @@ syn region tcltkCommand matchgroup=tcltkCommandColor start="\<format\>" matchgro
 
 " PACK
 " commands associated with pack
-syn keyword tcltkPackSwitch	contained	forget info propogate slaves
+syn keyword tcltkPackSwitch	contained	forget info propagate slaves
 syn keyword tcltkPackConfSwitch	contained	after anchor before expand fill in ipadx ipady padx pady side
 syn region tcltkCommand matchgroup=tcltkCommandColor start="\<pack\>" matchgroup=NONE skip="^\s*$" end="]\|[^\\]*\s*$"he=e-1  contains=tclLineContinue,tcltkPackSwitch,tcltkPackConf,tcltkPackConfSwitch,tclNumber,tclVarRef,tclString,tcltkCommand keepend
 

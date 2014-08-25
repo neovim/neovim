@@ -588,7 +588,7 @@ function! sqlcomplete#DrillIntoTable()
     else
 	" If the popup is not visible, simple perform the normal
 	" key behaviour.
-	" Must use exec since they key must be preceeded by "\"
+	" Must use exec since the key must be preceded by "\"
 	" or feedkeys will simply push each character of the string
 	" rather than the "key press".
         exec 'call feedkeys("\'.g:ftplugin_sql_omni_key_right.'", "n")'
@@ -605,7 +605,7 @@ function! sqlcomplete#DrillOutOfColumns()
     else
 	" If the popup is not visible, simple perform the normal
 	" key behaviour.
-	" Must use exec since they key must be preceeded by "\"
+	" Must use exec since the key must be preceded by "\"
 	" or feedkeys will simply push each character of the string
 	" rather than the "key press".
         exec 'call feedkeys("\'.g:ftplugin_sql_omni_key_left.'", "n")'
@@ -831,7 +831,7 @@ function! s:SQLCGetColumns(table_name, list_type)
 
          " Start characterwise visual mode
          " Advance right one character
-         " Search foward until one of the following:
+         " Search forward until one of the following:
          "     1.  Another select/update/delete statement
          "     2.  A ; at the end of a line (the delimiter)
          "     3.  The end of the file (incase no delimiter)

@@ -27,7 +27,7 @@ syn keyword	chillLogical	NOT not
 syn keyword	chillRepeat	while WHILE for FOR do DO od OD TO to
 syn keyword	chillProcess	START start STACKSIZE stacksize PRIORITY priority THIS this STOP stop
 syn keyword	chillBlock		PROC proc PROCESS process
-syn keyword	chillSignal	RECEIVE receive SEND send NONPERSISTENT nonpersistent PERSISTENT peristent SET set EVER ever
+syn keyword	chillSignal	RECEIVE receive SEND send NONPERSISTENT nonpersistent PERSISTENT persistent SET set EVER ever
 
 syn keyword	chillTodo		contained TODO FIXME XXX
 
