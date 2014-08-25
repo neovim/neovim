@@ -351,11 +351,18 @@ char_u *concat_fnames(const char_u *fname1, const char_u *fname2)
 
 /// Add a path separator to a file name, unless it already ends in a path
 /// separator.
-void add_pathsep(char_u *p)
-  FUNC_ATTR_NONNULL_ALL
+///
+/// @param p The path of a directory.
+/// @post `p = "{p}/"` if it did not already end with a separator.
+/// @returns a pointer to the end of 'p'.
+char_u *add_pathsep(char_u *p)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
-    STRCAT(p, PATHSEPSTR);
+  char_u *end = p + STRLEN(p);
+  if (*p == NUL || after_pathsep(p, end)) {
+    return end;
+  }
+  return (char_u *) STPCPY(end, PATHSEPSTR);
 }
 
 /*
