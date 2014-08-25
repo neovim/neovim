@@ -35,7 +35,7 @@ Buffer window_get_buffer(Window window, Error *err)
 /// @return the (row, col) tuple
 Position window_get_cursor(Window window, Error *err)
 {
-  Position rv = {.row = 0, .col = 0};
+  Position rv = POSITION_INIT;
   win_T *win = find_window_by_handle(window, err);
 
   if (win) {
@@ -245,7 +245,7 @@ void window_set_option(Window window, String name, Object value, Error *err)
 /// @return The (row, col) tuple with the window position
 Position window_get_position(Window window, Error *err)
 {
-  Position rv;
+  Position rv = POSITION_INIT;
   win_T *win = find_window_by_handle(window, err);
 
   if (win) {
