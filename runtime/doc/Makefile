@@ -65,7 +65,6 @@ DOCS = \
 	os_dos.txt \
 	os_mac.txt \
 	os_mint.txt \
-	os_msdos.txt \
 	os_os2.txt \
 	os_qnx.txt \
 	os_risc.txt \
@@ -197,7 +196,6 @@ HTMLS = \
 	os_dos.html \
 	os_mac.html \
 	os_mint.html \
-	os_msdos.html \
 	os_os2.html \
 	os_qnx.html \
 	os_risc.html \
@@ -411,9 +409,6 @@ os_mac.txt:
 
 os_mint.txt:
 	touch os_mint.txt
-
-os_msdos.txt:
-	touch os_msdos.txt
 
 os_os2.txt:
 	touch os_os2.txt
