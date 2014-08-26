@@ -173,10 +173,6 @@ Interfaces ~
 
 Versions ~
 |vi_diff.txt|	Main differences between Vim and Vi
-|version4.txt|	Differences between Vim version 3.0 and 4.x
-|version5.txt|	Differences between Vim version 4.6 and 5.x
-|version6.txt|	Differences between Vim version 5.7 and 6.x
-|version7.txt|	Differences between Vim version 6.4 and 7.x
 						*sys-file-list*
 Remarks about specific systems ~
 |os_390.txt|	OS/390 Unix
