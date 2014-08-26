@@ -334,32 +334,37 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
+#define STPCPY(d, s) (char_u *) xstpcpy((char *) d, (char *) s)
+
 /*
  * Concatenate file names fname1 and fname2 into allocated memory.
  * Only add a '/' or '\\' when 'sep' is TRUE and it is necessary.
  */
-char_u *concat_fnames(char_u *fname1, char_u *fname2, int sep)
-  FUNC_ATTR_NONNULL_RET
+char_u *concat_fnames(const char_u *fname1, const char_u *fname2, int sep)
+  FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
-  char_u *dest = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
-
-  STRCPY(dest, fname1);
-  if (sep) {
-    add_pathsep(dest);
-  }
-  STRCAT(dest, fname2);
-
-  return dest;
+  char_u *dst = xmalloc(STRLEN(fname1) + STRLEN(fname2) + 3);
+  STRCPY(dst, fname1);
+  STRCPY(add_pathsep(dst), fname2);
+  return dst;
 }
 
-/*
- * Add a path separator to a file name, unless it already ends in a path
- * separator.
- */
-void add_pathsep(char_u *p)
+/// add_pathsep - Add a path separator to a file name if necessary
+///
+/// A path separator is added unless it already ends in a path separator or
+/// the string is empty.
+///
+/// @param p The path
+/// @return a pointer to the end of the resulting string
+char_u *add_pathsep(char_u *p) FUNC_ATTR_NONNULL_RET FUNC_ATTR_NONNULL_ALL
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
-    STRCAT(p, PATHSEPSTR);
+  size_t len = STRLEN(p);
+
+  if (len == 0 || after_pathsep(p, p + len)) {
+    return p + len;
+  }
+
+  return STPCPY(p + len, PATHSEPSTR);
 }
 
 /*

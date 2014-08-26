@@ -61,7 +61,7 @@ char_u *vim_strsave(char_u *string) FUNC_ATTR_NONNULL_RET
  * The allocated memory always has size "len + 1", also when "string" is
  * shorter.
  */
-char_u *vim_strnsave(char_u *string, int len) FUNC_ATTR_NONNULL_RET
+char_u *vim_strnsave(const char_u *string, size_t len) FUNC_ATTR_NONNULL_RET
 {
   return (char_u *)strncpy(xmallocz(len), (char *)string, len);
 }

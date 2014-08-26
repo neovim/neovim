@@ -245,6 +245,20 @@ describe 'more path function', ->
     os.remove 'unit-test-directory/test.file'
     lfs.rmdir 'unit-test-directory'
 
+  describe 'concat_fnames', ->
+    concat_fnames = (fname1, fname2) ->
+      internalize(path.concat_fnames(to_cstr(fname1), to_cstr(fname2), true))
+
+    it 'correctly concats two strings with a path separator', ->
+      eq('f1/f2', concat_fnames('f1', 'f2'))
+
+    it 'does not add an extraneous separator', ->
+      eq('f1/f2', concat_fnames('f1/', 'f2'))
+
+    it 'deals with empty strings', ->
+      eq('f2', concat_fnames('', 'f2'))
+      eq('f1/', concat_fnames('f1', ''))
+
   describe 'vim_FullName', ->
     vim_FullName = (filename, buffer, length, force) ->
       filename = to_cstr filename
