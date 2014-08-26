@@ -263,6 +263,7 @@ enum {
 #define STRNCPY(d, s, n)    strncpy((char *)(d), (char *)(s), (size_t)(n))
 #define STRLCPY(d, s, n)    xstrlcpy((char *)(d), (char *)(s), (size_t)(n))
 #define STPCPY(d, s)        xstpcpy((char *)(d), (char *)(s))
+#define STPNCPY(d, s, l)    xstpncpy((char *)(d), (char *)(s), (size_t)(l))
 #define STRCMP(d, s)        strcmp((char *)(d), (char *)(s))
 #define STRNCMP(d, s, n)    strncmp((char *)(d), (char *)(s), (size_t)(n))
 #ifdef HAVE_STRCASECMP
