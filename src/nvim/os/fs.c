@@ -331,7 +331,7 @@ int os_remove(const char *path)
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
-bool os_get_file_info(const char *path, FileInfo *file_info)
+bool os_fileinfo(const char *path, FileInfo *file_info)
 {
   return os_stat(path, &(file_info->stat));
 }
@@ -341,7 +341,7 @@ bool os_get_file_info(const char *path, FileInfo *file_info)
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
-bool os_get_file_info_link(const char *path, FileInfo *file_info)
+bool os_fileinfo_link(const char *path, FileInfo *file_info)
 {
   uv_fs_t request;
   int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
@@ -355,7 +355,7 @@ bool os_get_file_info_link(const char *path, FileInfo *file_info)
 /// @param file_descriptor File descriptor of the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
-bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
+bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 {
   uv_fs_t request;
   int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);

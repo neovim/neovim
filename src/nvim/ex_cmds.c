@@ -1533,7 +1533,7 @@ void write_viminfo(char_u *file, int forceit)
      */
 
     FileInfo old_info;  // FileInfo of existing viminfo file
-    if (os_get_file_info((char *)fname, &old_info)
+    if (os_fileinfo((char *)fname, &old_info)
         && getuid() != ROOT_UID
         && !(old_info.stat.st_uid == getuid()
              ? (old_info.stat.st_mode & 0200)

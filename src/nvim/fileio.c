@@ -472,7 +472,7 @@ readfile (
   if (newfile && !read_stdin && !read_buffer) {
     /* Remember time of file. */
     FileInfo file_info;
-    if (os_get_file_info((char *)fname, &file_info)) {
+    if (os_fileinfo((char *)fname, &file_info)) {
       buf_store_file_info(curbuf, &file_info);
       curbuf->b_mtime_read = curbuf->b_mtime;
 #ifdef UNIX
@@ -2583,7 +2583,7 @@ buf_write (
 #if defined(UNIX)
   perm = -1;
   FileInfo file_info_old;
-  if (!os_get_file_info((char *)fname, &file_info_old)) {
+  if (!os_fileinfo((char *)fname, &file_info_old)) {
     newfile = TRUE;
   } else {
     perm = file_info_old.stat.st_mode;
@@ -2629,7 +2629,7 @@ buf_write (
       goto fail;
     }
     if (overwriting) {
-      os_get_file_info((char *)fname, &file_info_old);
+      os_fileinfo((char *)fname, &file_info_old);
     }
 
   }
@@ -2713,7 +2713,7 @@ buf_write (
        * - we don't have write permission in the directory
        */
       if (os_fileinfo_hardlinks(&file_info_old) > 1
-          || !os_get_file_info_link((char *)fname, &file_info)
+          || !os_fileinfo_link((char *)fname, &file_info)
           || !os_file_info_id_equal(&file_info, &file_info_old)) {
         backup_copy = TRUE;
       } else
@@ -2728,7 +2728,7 @@ buf_write (
         STRCPY(IObuff, fname);
         for (i = 4913;; i += 123) {
           sprintf((char *)path_tail(IObuff), "%d", i);
-          if (!os_get_file_info_link((char *)IObuff, &file_info)) {
+          if (!os_fileinfo_link((char *)IObuff, &file_info)) {
             break;
           }
         }
@@ -2739,7 +2739,7 @@ buf_write (
         else {
 # ifdef UNIX
           os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
-          if (!os_get_file_info((char *)IObuff, &file_info)
+          if (!os_fileinfo((char *)IObuff, &file_info)
               || file_info.stat.st_uid != file_info_old.stat.st_uid
               || file_info.stat.st_gid != file_info_old.stat.st_gid
               || (long)file_info.stat.st_mode != perm) {
@@ -2759,7 +2759,7 @@ buf_write (
      */
     if ((bkc_flags & BKC_BREAKSYMLINK) || (bkc_flags & BKC_BREAKHARDLINK)) {
 # ifdef UNIX
-      bool file_info_link_ok = os_get_file_info_link((char *)fname, &file_info);
+      bool file_info_link_ok = os_fileinfo_link((char *)fname, &file_info);
 
       /* Symlinks. */
       if ((bkc_flags & BKC_BREAKSYMLINK)
@@ -2837,7 +2837,7 @@ buf_write (
           /*
            * Check if backup file already exists.
            */
-          if (os_get_file_info((char *)backup, &file_info_new)) {
+          if (os_fileinfo((char *)backup, &file_info_new)) {
             /*
              * Check if backup file is same as original file.
              * May happen when modname() gave the same file back (e.g. silly
@@ -2861,7 +2861,7 @@ buf_write (
                 wp = backup;
               *wp = 'z';
               while (*wp > 'a'
-                     && os_get_file_info((char *)backup, &file_info_new)) {
+                     && os_fileinfo((char *)backup, &file_info_new)) {
                 --*wp;
               }
               /* They all exist??? Must be something wrong. */
@@ -3202,7 +3202,7 @@ nobackup:
 
       /* Don't delete the file when it's a hard or symbolic link. */
       if ((!newfile && os_fileinfo_hardlinks(&file_info) > 1)
-          || (os_get_file_info_link((char *)fname, &file_info)
+          || (os_fileinfo_link((char *)fname, &file_info)
               && !os_file_info_id_equal(&file_info, &file_info_old))) {
         errmsg = (char_u *)_("E166: Can't open linked file for writing");
       } else
@@ -3416,7 +3416,7 @@ restore_backup:
     /* don't change the owner when it's already OK, some systems remove
      * permission or ACL stuff */
     FileInfo file_info;
-    if (!os_get_file_info((char *)wfname, &file_info)
+    if (!os_fileinfo((char *)wfname, &file_info)
         || file_info.stat.st_uid != file_info_old.stat.st_uid
         || file_info.stat.st_gid != file_info_old.stat.st_gid) {
       os_fchown(fd, file_info_old.stat.st_uid, file_info_old.stat.st_gid);
@@ -3713,7 +3713,7 @@ nofail:
 
       /* Update the timestamp to avoid an "overwrite changed file"
        * prompt when writing again. */
-      if (os_get_file_info((char *)fname, &file_info_old)) {
+      if (os_fileinfo((char *)fname, &file_info_old)) {
         buf_store_file_info(buf, &file_info_old);
         buf->b_mtime_read = buf->b_mtime;
       }
@@ -4536,7 +4536,7 @@ int vim_rename(char_u *from, char_u *to)
 
   // Fail if the "from" file doesn't exist. Avoids that "to" is deleted.
   FileInfo from_info;
-  if (!os_get_file_info((char *)from, &from_info)) {
+  if (!os_fileinfo((char *)from, &from_info)) {
     return -1;
   }
 
@@ -4544,7 +4544,7 @@ int vim_rename(char_u *from, char_u *to)
   // This happens when "from" and "to" differ in case and are on a FAT32
   // filesystem. In that case go through a temp file name.
   FileInfo to_info;
-  if (os_get_file_info((char *)to, &to_info)
+  if (os_fileinfo((char *)to, &to_info)
       && os_file_info_id_equal(&from_info,  &to_info)) {
     use_tmp_file = true;
   }
@@ -4812,7 +4812,7 @@ buf_check_timestamp (
   bool file_info_ok;
   if (!(buf->b_flags & BF_NOTEDITED)
       && buf->b_mtime != 0
-      && (!(file_info_ok = os_get_file_info((char *)buf->b_ffname, &file_info))
+      && (!(file_info_ok = os_fileinfo((char *)buf->b_ffname, &file_info))
           || time_differs((long)file_info.stat.st_mtim.tv_sec, buf->b_mtime)
           || (int)file_info.stat.st_mode != buf->b_orig_mode
           )) {

@@ -9166,7 +9166,7 @@ static void f_getfsize(typval_T *argvars, typval_T *rettv)
   rettv->v_type = VAR_NUMBER;
 
   FileInfo file_info;
-  if (os_get_file_info(fname, &file_info)) {
+  if (os_fileinfo(fname, &file_info)) {
     off_t filesize = os_fileinfo_size(&file_info);
     if (os_isdir((char_u *)fname))
       rettv->vval.v_number = 0;
@@ -9191,7 +9191,7 @@ static void f_getftime(typval_T *argvars, typval_T *rettv)
   char *fname = (char *)get_tv_string(&argvars[0]);
 
   FileInfo file_info;
-  if (os_get_file_info(fname, &file_info)) {
+  if (os_fileinfo(fname, &file_info)) {
     rettv->vval.v_number = (varnumber_T)file_info.stat.st_mtim.tv_sec;
   } else {
     rettv->vval.v_number = -1;
@@ -9211,7 +9211,7 @@ static void f_getftype(typval_T *argvars, typval_T *rettv)
 
   rettv->v_type = VAR_STRING;
   FileInfo file_info;
-  if (os_get_file_info_link((char *)fname, &file_info)) {
+  if (os_fileinfo_link((char *)fname, &file_info)) {
     uint64_t mode = file_info.stat.st_mode;
 #ifdef S_ISREG
     if (S_ISREG(mode))

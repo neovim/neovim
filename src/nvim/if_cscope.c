@@ -473,7 +473,7 @@ cs_add_common (
   fname = (char *)vim_strnsave((char_u *)fname, len);
   free(fbuf);
   FileInfo file_info;
-  bool file_info_ok  = os_get_file_info(fname, &file_info);
+  bool file_info_ok  = os_fileinfo(fname, &file_info);
   if (!file_info_ok) {
 staterr:
     if (p_csverbose)
@@ -504,7 +504,7 @@ staterr:
     else
       (void)sprintf(fname2, "%s/%s", fname, CSCOPE_DBFILE);
 
-    file_info_ok = os_get_file_info(fname2, &file_info);
+    file_info_ok = os_fileinfo(fname2, &file_info);
     if (!file_info_ok) {
       if (p_csverbose)
         cs_stat_emsg(fname2);

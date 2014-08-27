@@ -1304,7 +1304,7 @@ void simplify_filename(char_u *filename)
           saved_char = p[-1];
           p[-1] = NUL;
           FileInfo file_info;
-          if (!os_get_file_info_link((char *)filename, &file_info)) {
+          if (!os_fileinfo_link((char *)filename, &file_info)) {
             do_strip = TRUE;
           }
           p[-1] = saved_char;
@@ -1327,7 +1327,7 @@ void simplify_filename(char_u *filename)
              * components. */
             saved_char = *tail;
             *tail = NUL;
-            if (os_get_file_info((char *)filename, &file_info)) {
+            if (os_fileinfo((char *)filename, &file_info)) {
               do_strip = TRUE;
             }
             else
@@ -1343,11 +1343,11 @@ void simplify_filename(char_u *filename)
                * component's parent directory.) */
               FileInfo new_file_info;
               if (p == start && relative) {
-                os_get_file_info(".", &new_file_info);
+                os_fileinfo(".", &new_file_info);
               } else {
                 saved_char = *p;
                 *p = NUL;
-                os_get_file_info((char *)filename, &new_file_info);
+                os_fileinfo((char *)filename, &new_file_info);
                 *p = saved_char;
               }
 
