@@ -453,7 +453,7 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_id Pointer to a `FileID`
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
-bool os_fileid_equal_file_info(const FileID *file_id,
+bool os_fileid_equal_fileinfo(const FileID *file_id,
                                 const FileInfo *file_info)
 {
   return file_id->inode == file_info->stat.st_ino

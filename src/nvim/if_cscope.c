@@ -1181,7 +1181,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   i = -1;   /* can be set to the index of an empty item in csinfo */
   for (j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
-        && os_fileid_equal_file_info(&(csinfo[j].file_id), file_info)) {
+        && os_fileid_equal_fileinfo(&(csinfo[j].file_id), file_info)) {
       if (p_csverbose)
         (void)EMSG(_("E568: duplicate cscope database not added"));
       return -1;
