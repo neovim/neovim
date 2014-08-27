@@ -426,7 +426,7 @@ uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a `FileID` to fill in.
 /// @return `true` on sucess, `false` for failure.
-bool os_get_file_id(const char *path, FileID *file_id)
+bool os_fileid(const char *path, FileID *file_id)
 {
   uv_stat_t statbuf;
   if (os_stat(path, &statbuf)) {

@@ -1097,7 +1097,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
     url = true;
   } else {
     ff_expand_buffer[0] = NUL;
-    if (!os_get_file_id((char *)fname, &file_id)) {
+    if (!os_fileid((char *)fname, &file_id)) {
       return FAIL;
     }
   }

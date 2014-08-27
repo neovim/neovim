@@ -61,10 +61,10 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   FileID file_id_1, file_id_2;
 
   expand_env(s1, exp1, MAXPATHL);
-  bool id_ok_1 = os_get_file_id((char *)exp1, &file_id_1);
-  bool id_ok_2 = os_get_file_id((char *)s2, &file_id_2);
+  bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
+  bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
   if (!id_ok_1 && !id_ok_2) {
-    // If os_get_file_id() doesn't work, may compare the names.
+    // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
       vim_FullName(exp1, full1, MAXPATHL, FALSE);
       vim_FullName(s2, full2, MAXPATHL, FALSE);
