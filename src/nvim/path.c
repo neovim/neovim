@@ -1351,7 +1351,7 @@ void simplify_filename(char_u *filename)
                 *p = saved_char;
               }
 
-              if (!os_file_info_id_equal(&file_info, &new_file_info)) {
+              if (!os_fileinfo_id_equal(&file_info, &new_file_info)) {
                 do_strip = FALSE;
                 /* We don't disable stripping of later
                  * components since the unstripped path name is

@@ -545,7 +545,7 @@ describe('fs function', function()
       end)
     end)
 
-    describe('os_file_info_id_equal', function()
+    describe('os_fileinfo_id_equal', function()
       it('returns false if file infos represent different files', function()
         local file_info_1 = file_info_new()
         local file_info_2 = file_info_new()
@@ -553,7 +553,7 @@ describe('fs function', function()
         local path_2 = 'unit-test-directory/test_2.file'
         assert.is_true((fs.os_fileinfo(path_1, file_info_1)))
         assert.is_true((fs.os_fileinfo(path_2, file_info_2)))
-        assert.is_false((fs.os_file_info_id_equal(file_info_1, file_info_2)))
+        assert.is_false((fs.os_fileinfo_id_equal(file_info_1, file_info_2)))
       end)
 
       it('returns true if file infos represent the same file', function()
@@ -562,7 +562,7 @@ describe('fs function', function()
         local path = 'unit-test-directory/test.file'
         assert.is_true((fs.os_fileinfo(path, file_info_1)))
         assert.is_true((fs.os_fileinfo(path, file_info_2)))
-        assert.is_true((fs.os_file_info_id_equal(file_info_1, file_info_2)))
+        assert.is_true((fs.os_fileinfo_id_equal(file_info_1, file_info_2)))
       end)
 
       it('returns true if file infos represent the same file (symlink)', function()
@@ -572,7 +572,7 @@ describe('fs function', function()
         local path_2 = 'unit-test-directory/test_link.file'
         assert.is_true((fs.os_fileinfo(path_1, file_info_1)))
         assert.is_true((fs.os_fileinfo(path_2, file_info_2)))
-        assert.is_true((fs.os_file_info_id_equal(file_info_1, file_info_2)))
+        assert.is_true((fs.os_fileinfo_id_equal(file_info_1, file_info_2)))
       end)
     end)
 

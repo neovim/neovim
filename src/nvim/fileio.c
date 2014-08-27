@@ -2714,7 +2714,7 @@ buf_write (
        */
       if (os_fileinfo_hardlinks(&file_info_old) > 1
           || !os_fileinfo_link((char *)fname, &file_info)
-          || !os_file_info_id_equal(&file_info, &file_info_old)) {
+          || !os_fileinfo_id_equal(&file_info, &file_info_old)) {
         backup_copy = TRUE;
       } else
 # endif
@@ -2764,7 +2764,7 @@ buf_write (
       /* Symlinks. */
       if ((bkc_flags & BKC_BREAKSYMLINK)
           && file_info_link_ok
-          && !os_file_info_id_equal(&file_info, &file_info_old)) {
+          && !os_fileinfo_id_equal(&file_info, &file_info_old)) {
         backup_copy = FALSE;
       }
 
@@ -2772,7 +2772,7 @@ buf_write (
       if ((bkc_flags & BKC_BREAKHARDLINK)
           && os_fileinfo_hardlinks(&file_info_old) > 1
           && (!file_info_link_ok
-              || os_file_info_id_equal(&file_info, &file_info_old))) {
+              || os_fileinfo_id_equal(&file_info, &file_info_old))) {
         backup_copy = FALSE;
       }
 # endif
@@ -2844,7 +2844,7 @@ buf_write (
              * link). If we don't check here, we either ruin the file when
              * copying or erase it after writing.
              */
-            if (os_file_info_id_equal(&file_info_new, &file_info_old)) {
+            if (os_fileinfo_id_equal(&file_info_new, &file_info_old)) {
               free(backup);
               backup = NULL;                    /* no backup file to delete */
             }
@@ -3203,7 +3203,7 @@ nobackup:
       /* Don't delete the file when it's a hard or symbolic link. */
       if ((!newfile && os_fileinfo_hardlinks(&file_info) > 1)
           || (os_fileinfo_link((char *)fname, &file_info)
-              && !os_file_info_id_equal(&file_info, &file_info_old))) {
+              && !os_fileinfo_id_equal(&file_info, &file_info_old))) {
         errmsg = (char_u *)_("E166: Can't open linked file for writing");
       } else
 #endif
@@ -4545,7 +4545,7 @@ int vim_rename(char_u *from, char_u *to)
   // filesystem. In that case go through a temp file name.
   FileInfo to_info;
   if (os_fileinfo((char *)to, &to_info)
-      && os_file_info_id_equal(&from_info,  &to_info)) {
+      && os_fileinfo_id_equal(&from_info,  &to_info)) {
     use_tmp_file = true;
   }
 

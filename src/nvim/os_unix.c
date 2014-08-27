@@ -355,7 +355,7 @@ int len               /* buffer size, only used when name gets longer */
               MAXPATHL - (tail - name) + 1);
           FileInfo file_info_new;
           if (os_fileinfo_link((char *)newname, &file_info_new)
-              && os_file_info_id_equal(&file_info, &file_info_new)) {
+              && os_fileinfo_id_equal(&file_info, &file_info_new)) {
             STRCPY(tail, dp->d_name);
             break;
           }

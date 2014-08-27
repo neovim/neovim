@@ -367,7 +367,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 /// Compare the inodes of two FileInfos
 ///
 /// @return `true` if the two FileInfos represent the same file.
-bool os_file_info_id_equal(const FileInfo *file_info_1,
+bool os_fileinfo_id_equal(const FileInfo *file_info_1,
                            const FileInfo *file_info_2)
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
