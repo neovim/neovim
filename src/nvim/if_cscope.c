@@ -1224,7 +1224,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   } else
     csinfo[i].flags = NULL;
 
-  os_file_info_get_id(file_info, &(csinfo[i].file_id));
+  os_fileinfo_id(file_info, &(csinfo[i].file_id));
   return i;
 } /* cs_insert_filelist */
 

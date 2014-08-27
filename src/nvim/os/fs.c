@@ -378,7 +378,7 @@ bool os_fileinfo_id_equal(const FileInfo *file_info_1,
 ///
 /// @param file_info Pointer to the `FileInfo`
 /// @param[out] file_id Pointer to a `FileID`
-void os_file_info_get_id(const FileInfo *file_info, FileID *file_id)
+void os_fileinfo_id(const FileInfo *file_info, FileID *file_id)
 {
   file_id->inode = file_info->stat.st_ino;
   file_id->device_id = file_info->stat.st_dev;
