@@ -2,7 +2,7 @@
 
 set_environment /opt/neovim-deps
 
-sudo pip install cpp-coveralls
+sudo pip -q install cpp-coveralls
 
 export CC=gcc
 export SKIP_EXEC=1

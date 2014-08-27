@@ -4,7 +4,7 @@ install_vroom
 
 set_environment /opt/neovim-deps
 
-sudo pip install cpp-coveralls
+sudo pip -q install cpp-coveralls
 
 clang_version=3.4
 if [ ! -d /usr/local/clang-$clang_version ]; then
