@@ -2441,7 +2441,7 @@ void buf_set_file_id(buf_T *buf)
 static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 {
   return buf->file_id_valid
-         && os_file_id_equal(&(buf->file_id), file_id);
+         && os_fileid_equal(&(buf->file_id), file_id);
 }
 
 /*

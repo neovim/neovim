@@ -2423,7 +2423,7 @@ do_source (
     // Compare dev/ino when possible, it catches symbolic links.
     // Also compare file names, the inode may change when the file was edited.
     bool file_id_equal = file_id_ok && si->file_id_valid
-                         && os_file_id_equal(&(si->file_id), &file_id);
+                         && os_fileid_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
         && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
       break;

@@ -442,7 +442,7 @@ bool os_fileid(const char *path, FileID *file_id)
 /// @param file_id_1 Pointer to first `FileID`
 /// @param file_id_2 Pointer to second `FileID`
 /// @return `true` if the two `FileID`s represent te same file.
-bool os_file_id_equal(const FileID *file_id_1, const FileID *file_id_2)
+bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 {
   return file_id_1->inode == file_id_2->inode
          && file_id_1->device_id == file_id_2->device_id;
@@ -453,7 +453,7 @@ bool os_file_id_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_id Pointer to a `FileID`
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
-bool os_file_id_equal_file_info(const FileID *file_id,
+bool os_fileid_equal_file_info(const FileID *file_id,
                                 const FileInfo *file_info)
 {
   return file_id->inode == file_info->stat.st_ino

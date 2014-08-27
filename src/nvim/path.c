@@ -77,7 +77,7 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   if (!id_ok_1 || !id_ok_2) {
     return kOneFileMissing;
   }
-  if (os_file_id_equal(&file_id_1, &file_id_2)) {
+  if (os_fileid_equal(&file_id_1, &file_id_2)) {
     return kEqualFiles;
   }
   return kDifferentFiles;
