@@ -688,7 +688,7 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
     FileInfo file_info;
     if (os_fileinfo((char *)buf->b_ffname, &file_info)) {
       long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
-      long_to_char((long)os_file_info_get_inode(&file_info), b0p->b0_ino);
+      long_to_char((long)os_fileinfo_inode(&file_info), b0p->b0_ino);
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
     } else {
@@ -3559,7 +3559,7 @@ fnamecmp_ino (
 
   FileInfo file_info;
   if (os_fileinfo((char *)fname_c, &file_info)) {
-    ino_c = os_file_info_get_inode(&file_info);
+    ino_c = os_fileinfo_inode(&file_info);
   }
 
   /*
@@ -3568,7 +3568,7 @@ fnamecmp_ino (
    * valid on this machine), use the inode from block 0.
    */
   if (os_fileinfo((char *)fname_s, &file_info)) {
-    ino_s = os_file_info_get_inode(&file_info);
+    ino_s = os_fileinfo_inode(&file_info);
   } else {
     ino_s = (uint64_t)ino_block0;
   }

@@ -389,7 +389,7 @@ void os_fileinfo_id(const FileInfo *file_info, FileID *file_id)
 /// @deprecated Use `FileID` instead, this function is only needed in memline.c
 /// @param file_info Pointer to the `FileInfo`
 /// @return the inode number
-uint64_t os_file_info_get_inode(const FileInfo *file_info)
+uint64_t os_fileinfo_inode(const FileInfo *file_info)
 {
   return file_info->stat.st_ino;
 }
