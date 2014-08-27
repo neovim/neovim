@@ -4790,7 +4790,7 @@ buf_check_timestamp (
   int helpmesg = FALSE;
   int reload = FALSE;
   int can_reload = FALSE;
-  off_t orig_size = buf->b_orig_size;
+  uint64_t orig_size = buf->b_orig_size;
   int orig_mode = buf->b_orig_mode;
   static int busy = FALSE;
   int n;

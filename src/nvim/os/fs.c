@@ -397,7 +397,7 @@ uint64_t os_fileinfo_inode(const FileInfo *file_info)
 /// Get the size of a file from a `FileInfo`.
 ///
 /// @return filesize in bytes.
-off_t os_fileinfo_size(const FileInfo *file_info)
+uint64_t os_fileinfo_size(const FileInfo *file_info)
   FUNC_ATTR_NONNULL_ALL
 {
   return file_info->stat.st_size;
