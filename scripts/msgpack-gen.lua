@@ -91,6 +91,7 @@ output:write([[
 #include <assert.h>
 #include <msgpack.h>
 
+#include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
@@ -241,12 +242,49 @@ for i = 1, #api.functions do
 end
 output:write('\n};\n\n')
 
+-- Generate a function that initializes method names with handler functions
 output:write([[
+static Map(cstr_t, uint64_t) *rpc_method_ids = NULL;
+
+void msgpack_rpc_init(void)
+{
+  rpc_method_ids = map_new(cstr_t, uint64_t)();
+
+]])
+
+-- Msgpack strings must be copied to a 0-terminated temporary buffer before
+-- searching in the map, so we keep track of the maximum method name length in
+-- order to create the smallest possible buffer for xstrlcpy
+local max_fname_len = 0
+for i = 1, #api.functions do
+  local fn = api.functions[i]
+  output:write('  map_put(cstr_t, uint64_t)(rpc_method_ids, "'
+               ..fn.name..'", '..i..');\n')
+  if #fn.name > max_fname_len then
+    max_fname_len = #fn.name
+  end
+end
+
+output:write('\n}\n\n')
+
+output:write([[
+#define min(X, Y) (X < Y ? X : Y)
+
 Object msgpack_rpc_dispatch(uint64_t channel_id,
-                            uint64_t method_id,
                             msgpack_object *req,
                             Error *error)
 {
+  msgpack_object method = req->via.array.ptr[2];
+  uint64_t method_id = method.via.u64;
+
+  if (method.type == MSGPACK_OBJECT_RAW) {
+    char method_name[]]..(max_fname_len + 1)..[[];
+    xstrlcpy(method_name, method.via.raw.ptr, min(method.via.raw.size, ]] ..(max_fname_len)..[[) + 1);
+    method_id = map_get(cstr_t, uint64_t)(rpc_method_ids, method_name);
+    if (!method_id) {
+      method_id = UINT64_MAX;
+    }
+  }
 ]])
 output:write('\n  // method_id=0 is specially handled')
 output:write('\n  assert(method_id > 0);')

@@ -21,6 +21,11 @@ typedef Object (*rpc_method_handler_fn)(uint64_t channel_id,
                                         msgpack_object *req,
                                         Error *error);
 
+
+/// Initializes the msgpack-rpc method table
+void msgpack_rpc_init(void);
+
+
 /// Dispatches to the actual API function after basic payload validation by
 /// `msgpack_rpc_call`. It is responsible for validating/converting arguments
 /// to C types, and converting the return value back to msgpack types.
@@ -33,10 +38,10 @@ typedef Object (*rpc_method_handler_fn)(uint64_t channel_id,
 /// @param error Pointer to error structure
 /// @return Some object
 Object msgpack_rpc_dispatch(uint64_t channel_id,
-                            uint64_t method_id,
                             msgpack_object *req,
                             Error *error)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3);
+
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/msgpack_rpc.h.generated.h"
