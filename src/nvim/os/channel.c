@@ -143,40 +143,48 @@ bool channel_exists(uint64_t id)
     && channel->enabled;
 }
 
-/// Sends event/data to channel
+/// Sends event/arguments to channel
 ///
 /// @param id The channel id. If 0, the event will be sent to all
 ///        channels that have subscribed to the event type
 /// @param name The event name, an arbitrary string
-/// @param arg The event arg
-/// @return True if the data was sent successfully, false otherwise.
-bool channel_send_event(uint64_t id, char *name, Object arg)
+/// @param args Array with event arguments
+/// @return True if the event was sent successfully, false otherwise.
+bool channel_send_event(uint64_t id, char *name, Array args)
 {
   Channel *channel = NULL;
 
   if (id > 0) {
     if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
-      msgpack_rpc_free_object(arg);
+      msgpack_rpc_free_array(args);
       return false;
     }
-    send_event(channel, name, arg);
+    send_event(channel, name, args);
   } else {
-    broadcast_event(name, arg);
+    broadcast_event(name, args);
   }
 
   return true;
 }
 
+/// Sends a method call to a channel
+///
+/// @param id The channel id
+/// @param name The method name, an arbitrary string
+/// @param args Array with method arguments
+/// @param[out] result Pointer to return value received from the channel
+/// @param[out] error True if the return value is an error
+/// @return True if the call was sent successfully, false otherwise.
 bool channel_send_call(uint64_t id,
                        char *name,
-                       Object arg,
+                       Array args,
                        Object *result,
                        bool *errored)
 {
   Channel *channel = NULL;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
-    msgpack_rpc_free_object(arg);
+    msgpack_rpc_free_array(args);
     return false;
   }
 
@@ -190,13 +198,13 @@ bool channel_send_call(uint64_t id,
         "while processing a RPC call",
         channel->id);
     *result = STRING_OBJ(cstr_to_string(buf));
-    msgpack_rpc_free_object(arg);
+    msgpack_rpc_free_array(args);
     return false;
   }
 
   uint64_t request_id = channel->next_request_id++;
   // Send the msgpack-rpc request
-  send_request(channel, request_id, name, arg);
+  send_request(channel, request_id, name, args);
 
   EventSource channel_source = channel->is_job
     ? job_event_source(channel->data.job)
@@ -415,21 +423,21 @@ static void send_error(Channel *channel, uint64_t id, char *err)
 static void send_request(Channel *channel,
                          uint64_t id,
                          char *name,
-                         Object arg)
+                         Array args)
 {
   String method = {.size = strlen(name), .data = name};
-  channel_write(channel, serialize_request(id, method, arg, &out_buffer, 1));
+  channel_write(channel, serialize_request(id, method, args, &out_buffer, 1));
 }
 
 static void send_event(Channel *channel,
                        char *name,
-                       Object arg)
+                       Array args)
 {
   String method = {.size = strlen(name), .data = name};
-  channel_write(channel, serialize_request(0, method, arg, &out_buffer, 1));
+  channel_write(channel, serialize_request(0, method, args, &out_buffer, 1));
 }
 
-static void broadcast_event(char *name, Object arg)
+static void broadcast_event(char *name, Array args)
 {
   kvec_t(Channel *) subscribed;
   kv_init(subscribed);
@@ -442,14 +450,14 @@ static void broadcast_event(char *name, Object arg)
   });
 
   if (!kv_size(subscribed)) {
-    msgpack_rpc_free_object(arg);
+    msgpack_rpc_free_array(args);
     goto end;
   }
 
   String method = {.size = strlen(name), .data = name};
   WBuffer *buffer = serialize_request(0,
                                       method,
-                                      arg,
+                                      args,
                                       &out_buffer,
                                       kv_size(subscribed));
 

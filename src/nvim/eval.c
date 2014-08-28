@@ -6493,8 +6493,8 @@ static struct fst {
   {"searchpair",      3, 7, f_searchpair},
   {"searchpairpos",   3, 7, f_searchpairpos},
   {"searchpos",       1, 4, f_searchpos},
-  {"send_call",       3, 3, f_send_call},
-  {"send_event",      3, 3, f_send_event},
+  {"send_call",       2, 64, f_send_call},
+  {"send_event",      2, 64, f_send_event},
   {"setbufvar",       3, 3, f_setbufvar},
   {"setcmdpos",       1, 1, f_setcmdpos},
   {"setline",         2, 2, f_setline},
@@ -12632,13 +12632,19 @@ static void f_send_call(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+  Array args = ARRAY_DICT_INIT;
+
+  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
+    ADD(args, vim_to_object(tv));
+  }
+
   bool errored;
   Object result;
   if (!channel_send_call((uint64_t)argvars[0].vval.v_number,
-                          (char *)argvars[1].vval.v_string,
-                          vim_to_object(&argvars[2]),
-                          &result,
-                          &errored)) {
+                         (char *)argvars[1].vval.v_string,
+                         args,
+                         &result,
+                         &errored)) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
   }
@@ -12673,9 +12679,15 @@ static void f_send_event(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+  Array args = ARRAY_DICT_INIT;
+
+  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
+    ADD(args, vim_to_object(tv));
+  }
+
   if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
                           (char *)argvars[1].vval.v_string,
-                          vim_to_object(&argvars[2]))) {
+                          args)) {
     EMSG2(_(e_invarg2), "Channel doesn't exist");
     return;
   }
@@ -19149,7 +19161,9 @@ static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
 
 static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
 {
-  Object result = provider_call(method, vim_to_object(argvars));
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, vim_to_object(argvars));
+  Object result = provider_call(method, args);
 
   if (result.type == kObjectTypeNil) {
     return;

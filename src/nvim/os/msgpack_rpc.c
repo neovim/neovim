@@ -118,7 +118,7 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 /// Serializes a msgpack-rpc request or notification(id == 0)
 WBuffer *serialize_request(uint64_t request_id,
                            String method,
-                           Object arg,
+                           Array args,
                            msgpack_sbuffer *sbuffer,
                            size_t refcount)
   FUNC_ATTR_NONNULL_ARG(4)
@@ -134,12 +134,12 @@ WBuffer *serialize_request(uint64_t request_id,
 
   msgpack_pack_raw(&pac, method.size);
   msgpack_pack_raw_body(&pac, method.data, method.size);
-  msgpack_rpc_from_object(arg, &pac);
+  msgpack_rpc_from_array(args, &pac);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    refcount,
                                    free);
-  msgpack_rpc_free_object(arg);
+  msgpack_rpc_free_array(args);
   msgpack_sbuffer_clear(sbuffer);
   return rv;
 }

@@ -3251,8 +3251,9 @@ static void script_host_execute(char *method, exarg_T *eap)
   char *script = (char *)script_get(eap, eap->arg);
 
   if (!eap->skip) {
-    String str = cstr_to_string(script ? script : (char *)eap->arg);
-    Object result = provider_call(method, STRING_OBJ(str));
+    Array args = ARRAY_DICT_INIT;
+    ADD(args, STRING_OBJ(cstr_to_string(script ? script : (char *)eap->arg)));
+    Object result = provider_call(method, args);
     // We don't care about the result, so free it just in case a bad provider
     // returned something
     msgpack_rpc_free_object(result);
@@ -3266,18 +3267,19 @@ static void script_host_execute_file(char *method, exarg_T *eap)
   char buffer[MAXPATHL];
   vim_FullName(eap->arg, (uint8_t *)buffer, sizeof(buffer), false);
 
-  String file = cstr_to_string(buffer);
-  Object result = provider_call(method, STRING_OBJ(file));
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, STRING_OBJ(cstr_to_string(buffer)));
+  Object result = provider_call(method, args);
   msgpack_rpc_free_object(result);
 }
 
 static void script_host_do_range(char *method, exarg_T *eap)
 {
-  Array arg = {0, 0, 0};
-  ADD(arg, INTEGER_OBJ(eap->line1));
-  ADD(arg, INTEGER_OBJ(eap->line2));
-  ADD(arg, STRING_OBJ(cstr_to_string((char *)eap->arg)));
-  Object result = provider_call(method, ARRAY_OBJ(arg));
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, INTEGER_OBJ(eap->line1));
+  ADD(args, INTEGER_OBJ(eap->line2));
+  ADD(args, STRING_OBJ(cstr_to_string((char *)eap->arg)));
+  Object result = provider_call(method, args);
   msgpack_rpc_free_object(result);
 }
 
