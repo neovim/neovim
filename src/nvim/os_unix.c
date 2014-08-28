@@ -88,6 +88,18 @@ static int did_set_icon = FALSE;
  */
 void mch_write(char_u *s, int len)
 {
+  if (embedded_mode) {
+    // TODO(tarruda): This is a temporary hack to stop Neovim from writing
+    // messages to stdout in embedded mode. In the future, embedded mode will
+    // be the only possibility(GUIs will always start neovim with a msgpack-rpc
+    // over stdio) and this function won't exist.
+    //
+    // The reason for this is because before Neovim fully migrates to a
+    // msgpack-rpc-driven architecture, we must have a fully functional
+    // UI working
+    return;
+  }
+
   ignored = (int)write(1, (char *)s, len);
   if (p_wd)             /* Unix is too fast, slow down a bit more */
     os_microdelay(p_wd, false);

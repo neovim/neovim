@@ -256,10 +256,10 @@ int main(int argc, char **argv)
   TIME_MSG("shell init");
 
 
-  /*
-   * Print a warning if stdout is not a terminal.
-   */
-  check_tty(&params);
+  if (!embedded_mode) {
+    // Print a warning if stdout is not a terminal.
+    check_tty(&params);
+  }
 
   /* This message comes before term inits, but after setting "silent_mode"
    * when the input is not a tty. */
@@ -267,8 +267,16 @@ int main(int argc, char **argv)
     printf(_("%d files to edit\n"), GARGCOUNT);
 
   if (params.want_full_screen && !silent_mode) {
-    termcapinit(params.term);           /* set terminal name and get terminal
-                                           capabilities (will set full_screen) */
+    if (embedded_mode) {
+      // In embedded mode don't do terminal-related initializations, assume an
+      // initial screen size of 80x20
+      full_screen = true;
+      set_shellsize(80, 20, false);
+    } else { 
+      // set terminal name and get terminal capabilities (will set full_screen)
+      // Do some initialization of the screen
+      termcapinit(params.term);
+    }
     screen_start();             /* don't know where cursor is now */
     TIME_MSG("Termcap init");
   }
@@ -405,14 +413,18 @@ int main(int argc, char **argv)
     TIME_MSG("waiting for return");
   }
 
-  starttermcap();             /* start termcap if not done by wait_return() */
-  TIME_MSG("start termcap");
-  may_req_ambiguous_char_width();
+  if (!embedded_mode) {
+    starttermcap(); // start termcap if not done by wait_return()
+    TIME_MSG("start termcap");
+    may_req_ambiguous_char_width();
+    setmouse();  // may start using the mouse
 
-  setmouse();                             /* may start using the mouse */
-  if (scroll_region)
-    scroll_region_reset();                /* In case Rows changed */
-  scroll_start();         /* may scroll the screen to the right position */
+    if (scroll_region) {
+      scroll_region_reset(); // In case Rows changed
+    }
+
+    scroll_start(); // may scroll the screen to the right position
+  }
 
   /*
    * Don't clear the screen when starting in Ex mode, unless using the GUI.
@@ -1015,11 +1027,13 @@ static void command_line_scan(mparm_T *parmp)
             msg_putchar('\n');
             msg_didout = FALSE;
             mch_exit(0);
-	  } else if (STRICMP(argv[0] + argv_idx, "api-msgpack-metadata") == 0) {
+          } else if (STRICMP(argv[0] + argv_idx, "api-msgpack-metadata") == 0) {
             for (unsigned int i = 0; i<msgpack_metadata_size; i++) {
               putchar(msgpack_metadata[i]);
             }
             mch_exit(0);
+          } else if (STRICMP(argv[0] + argv_idx, "embedded-mode") == 0) {
+            embedded_mode = true;
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
             parmp->literal = TRUE;
@@ -2200,6 +2214,8 @@ static void usage(void)
   main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
   main_msg(_("-i <viminfo>\t\tUse <viminfo> instead of .viminfo"));
   main_msg(_("--api-msgpack-metadata\tDump API metadata information and exit"));
+  main_msg(_("--embedded-mode\tUse stdin/stdout as a msgpack-rpc channel. "
+             "This can be used for embedding Neovim into other programs"));
   main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));
   main_msg(_("--version\t\tPrint version information and exit"));
 

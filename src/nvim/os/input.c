@@ -6,6 +6,7 @@
 
 #include "nvim/os/input.h"
 #include "nvim/os/event.h"
+#include "nvim/os/signal.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/ascii.h"
@@ -34,6 +35,10 @@ static bool eof = false, started_reading = false;
 
 void input_init(void)
 {
+  if (embedded_mode) {
+    return;
+  }
+
   read_stream = rstream_new(read_cb, READ_BUFFER_SIZE, NULL, NULL);
   rstream_set_file(read_stream, read_cmd_fd);
 }
@@ -41,18 +46,30 @@ void input_init(void)
 // Listen for input
 void input_start(void)
 {
+  if (embedded_mode) {
+    return;
+  }
+
   rstream_start(read_stream);
 }
 
 // Stop listening for input
 void input_stop(void)
 {
+  if (embedded_mode) {
+    return;
+  }
+
   rstream_stop(read_stream);
 }
 
 // Copies (at most `count`) of was read from `read_cmd_fd` into `buf`
 uint32_t input_read(char *buf, uint32_t count)
 {
+  if (embedded_mode) {
+    return 0;
+  }
+
   return rstream_read(read_stream, buf, count);
 }
 
@@ -129,6 +146,11 @@ bool os_isatty(int fd)
 
 static bool input_poll(int32_t ms)
 {
+  if (embedded_mode) {
+    EventSource input_sources[] = { signal_event_source(), NULL };
+    return event_poll(ms, input_sources);
+  }
+
   EventSource input_sources[] = {
     rstream_event_source(read_stream),
     NULL

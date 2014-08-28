@@ -20,43 +20,6 @@ set nvim_id $spawn_id
 # Reset function that can be invoked by test runners to put nvim in a cleaner
 # state
 send {
-:function BeforeEachTest()
-  set all&
-  let &initpython = 'python -c "import neovim; neovim.start_host()"'
-  redir => groups
-  silent augroup
-  redir END
-  for group in split(groups)
-    exe 'augroup '.group
-    autocmd!
-    augroup END
-  endfor
-  autocmd!
-  tabnew
-  let curbufnum = eval(bufnr('%'))
-  redir => buflist
-  silent ls!
-  redir END
-  let bufnums = []
-  for buf in split(buflist, '\n')
-    let bufnum = eval(split(buf, '[ u]')[0])
-    if bufnum != curbufnum
-      call add(bufnums, bufnum)
-    endif
-  endfor
-  if len(bufnums) > 0
-    exe 'silent bwipeout! '.join(bufnums, ' ')
-  endif
-  silent tabonly
-  for k in keys(g:)
-    exe 'unlet g:'.k
-  endfor
-  filetype plugin indent off
-  mapclear
-  mapclear!
-  abclear
-  comclear
-endfunction
 :echo "read"."y"
 }
 # wait until nvim is ready

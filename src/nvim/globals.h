@@ -1233,6 +1233,9 @@ EXTERN char *ignoredp;
  * os_unix.c */
 EXTERN int curr_tmode INIT(= TMODE_COOK); /* contains current terminal mode */
 
+// If a msgpack-rpc channel should be started over stdin/stdout
+EXTERN bool embedded_mode INIT(= false);
+
 /// Used to track the status of external functions.
 /// Currently only used for iconv().
 typedef enum {
