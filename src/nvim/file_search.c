@@ -458,16 +458,16 @@ vim_findfile_init (
     search_ctx->ffsc_fix_path[0] = NUL;
   }
 
-  /* create an absolute path */
-  if (STRLEN(search_ctx->ffsc_start_dir)
-      + STRLEN(search_ctx->ffsc_fix_path) + 3 >= MAXPATHL) {
+  // create an absolute path
+  size_t eb_len = path_copy(ff_expand_buffer, search_ctx->ffsc_start_dir);
+
+  if (eb_len == 0 ||
+      eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1 >= MAXPATHL) {
     EMSG(_(e_pathtoolong));
     goto error_return;
   }
-  STRCPY(ff_expand_buffer, search_ctx->ffsc_start_dir);
-  path_add_sep(ff_expand_buffer);
+
   {
-    size_t eb_len = STRLEN(ff_expand_buffer);
     char_u *buf = xmalloc(eb_len + STRLEN(search_ctx->ffsc_fix_path) + 1);
 
     STRCPY(buf, ff_expand_buffer);
@@ -693,8 +693,7 @@ char_u *vim_findfile(void *search_ctx_arg)
         /* if we have a start dir copy it in */
         if (!vim_isAbsName(stackp->ffs_fix_path)
             && search_ctx->ffsc_start_dir) {
-          STRCPY(file_path, search_ctx->ffsc_start_dir);
-          path_add_sep(file_path);
+          path_copy(file_path, search_ctx->ffsc_start_dir);
         }
 
         // append the fix part of the search path

@@ -334,13 +334,51 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
+/// Copies `path` into allocated memory, adding a path separator at the end.
+///
+/// @remark If you don't need a trailing path separator, use {xstrdup}.
+///
+/// @returns `xstrdup(path + PATHSEPSTR)` on success.
+/// @returns `NULL` if the new string would exceed `MAXPATHL`.
+char_u *path_save(const char_u *path)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_MALLOC
+  FUNC_ATTR_WARN_UNUSED_RESULT
+{
+  size_t new_len = STRLEN(path) + STRLEN(PATHSEPSTR);
+  if (!path_len_check(new_len)) {
+    return NULL;
+  }
+  char_u *ret = xmalloc(new_len + 1);
+  path_copy(ret, path);
+  return ret;
+}
+
+/// Copies `path` into `buf`, adding a path separator at the end.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL.
+/// @param[in]  path The path to copy.
+///
+/// @returns The new length of `buf` on success.
+/// @returns Zero if truncation occurred.
+///
+/// @remark If you don't need a trailing path separator, use {STRCPY}.
+/// @remark buf may be smaller than MAXPATHL only if
+///         `strlen(path + PATHSEPSTR)` is known to be smaller.
+size_t path_copy(char_u * restrict buf, const char_u *path)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t len = STRLCPY(buf, path, MAXPATHL);
+  len = path_add_sep_impl(buf, buf + len, MAXPATHL);
+  return path_len_check(len);
+}
+
 /// Concatenates file names p1 and p2, separated by PATHSEPSTR, into allocated
 /// memory.
 char_u *path_join(const char_u *p1, const char_u *p2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u *dest = xmalloc(STRLEN(p1) + STRLEN(p2) + 3);
+  char_u *dest = xmalloc(STRLEN(p1) + STRLEN(p2) + STRLEN(PATHSEPSTR) + 1);
   path_buf_join(dest, p1, p2);
   return dest;
 }

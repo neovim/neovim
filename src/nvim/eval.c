@@ -19459,13 +19459,11 @@ repeat:
     /* Append a path separator to a directory. */
     if (os_isdir(*fnamep)) {
       /* Make room for one or two extra characters. */
-      // TODO (SplinterOfChaos): When/if implemented, use path_save().
-      *fnamep = vim_strnsave(*fnamep, (int)STRLEN(*fnamep) + 2);
-      free(*bufp);          /* free any allocated file name */
+      *fnamep = path_save(*fnamep);
+      free(*bufp);          // free any allocated file name
       *bufp = *fnamep;
       if (*fnamep == NULL)
         return -1;
-      path_add_sep(*fnamep);
     }
   }
 

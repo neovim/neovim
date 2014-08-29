@@ -8576,9 +8576,8 @@ static char_u *get_view_file(int c)
   for (p = sname; *p; ++p)
     if (*p == '=' || vim_ispathsep(*p))
       ++len;
-  retval = xmalloc(STRLEN(sname) + len + STRLEN(p_vdir) + 9);
-  STRCPY(retval, p_vdir);
-  size_t ret_len = path_add_sep(retval);
+  retval = xmalloc(MAXPATHL);
+  size_t ret_len = path_copy(retval, p_vdir);
   s = retval + ret_len;
   for (p = sname; *p; ++p) {
     if (*p == '=') {
