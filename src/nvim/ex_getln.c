@@ -4084,11 +4084,7 @@ void globpath(char_u *path, char_u *file, garray_T *ga, int expand_options)
   while (*path != NUL) {
     // Copy one item of the path to buf[] and concatenate the file name.
     copy_option_part(&path, buf, MAXPATHL, ",");
-    // TODO (SplinterOfChaos): if (path_append(buf,file)).
-    if (STRLEN(buf) + STRLEN(file) + 2 < MAXPATHL) {
-      path_add_sep(buf);
-      STRCAT(buf, file);  // NOLINT
-
+    if (path_append(buf, file)) {
       char_u **p;
       int num_p;
       if (ExpandFromContext(&xpc, buf, &num_p, &p,

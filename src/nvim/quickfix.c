@@ -3544,9 +3544,8 @@ void ex_helpgrep(exarg_T *eap)
     while (*p != NUL && !got_int) {
       copy_option_part(&p, NameBuff, MAXPATHL, ",");
 
-      /* Find all "*.txt" and "*.??x" files in the "doc" directory. */
-      path_add_sep(NameBuff);
-      STRCAT(NameBuff, "doc/*.\\(txt\\|??x\\)");
+      // Find all "*.txt" and "*.??x" files in the "doc" directory.
+      path_append(NameBuff, (char_u *) "doc/*.\\(txt\\|??x\\)");
 
       // Note: We cannot just do `&NameBuff` because it is a statically sized array
       //       so `NameBuff == &NameBuff` according to C semantics.

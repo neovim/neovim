@@ -37,9 +37,8 @@ static void vim_maketempdir(void)
       continue;
     }
 
-    path_add_sep(template);
     // Concatenate with temporary directory name pattern
-    STRCAT(template, "nvimXXXXXX");
+    path_append(template, (char_u *) "nvimXXXXXX");
 
     if (os_mkdtemp((const char *)template, (char *)path) != 0) {
       continue;

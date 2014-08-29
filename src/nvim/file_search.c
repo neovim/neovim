@@ -473,8 +473,7 @@ vim_findfile_init (
     STRCPY(buf, ff_expand_buffer);
     STRCPY(buf + eb_len, search_ctx->ffsc_fix_path);
     if (os_isdir(buf)) {
-      STRCAT(ff_expand_buffer, search_ctx->ffsc_fix_path);
-      path_add_sep(ff_expand_buffer);
+      path_append_with_sep(ff_expand_buffer, search_ctx->ffsc_fix_path);
     } else {
       char_u *p =  path_tail(search_ctx->ffsc_fix_path);
       char_u *wc_path = NULL;
@@ -698,9 +697,8 @@ char_u *vim_findfile(void *search_ctx_arg)
           path_add_sep(file_path);
         }
 
-        /* append the fix part of the search path */
-        STRCAT(file_path, stackp->ffs_fix_path);
-        path_add_sep(file_path);
+        // append the fix part of the search path
+        path_append_with_sep(file_path, stackp->ffs_fix_path);
 
         rest_of_wildcards = stackp->ffs_wc_path;
         if (*rest_of_wildcards != NUL) {
