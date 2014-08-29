@@ -5346,11 +5346,8 @@ void ex_helptags(exarg_T *eap)
     return;
   }
 
-  /* Get a list of all files in the help directory and in subdirectories. */
-  // TODO (SplinterOfChaos): When/if implemented, use path_buf_join().
-  STRCPY(NameBuff, dirname);
-  path_add_sep(NameBuff);
-  STRCAT(NameBuff, "**");
+  // Get a list of all files in the help directory and in subdirectories.
+  path_buf_join(NameBuff, dirname, (char_u *) "**");
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -5466,14 +5463,9 @@ helptags_one (
     return;
   }
 
-  /*
-   * Open the tags file for writing.
-   * Do this before scanning through all the files.
-   */
-  // TODO (SplinterOfChaos): When/if implemented, use path_buf_join().
-  STRCPY(NameBuff, dir);
-  path_add_sep(NameBuff);
-  STRCAT(NameBuff, tagfname);
+  // Open the tags file for writing.
+  // Do this before scanning through all the files.
+  path_buf_join(NameBuff, dir, tagfname);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);

@@ -1894,13 +1894,14 @@ void set_init_1(void)
       if (p != NULL && *p != NUL) {
         /* First time count the NUL, otherwise count the ','. */
         len = (int)STRLEN(p) + 3;
+
         ga_grow(&ga, len);
         if (!GA_EMPTY(&ga))
           STRCAT(ga.ga_data, ",");
-        STRCAT(ga.ga_data, p);
-        path_add_sep(ga.ga_data);
-        STRCAT(ga.ga_data, "*");
         ga.ga_len += len;
+
+        char_u *path = (char_u *) ga.ga_data + STRLEN(ga.ga_data);
+        path_buf_join(path, p, (char_u *) "*");
       }
       if (mustfree)
         free(p);

@@ -783,15 +783,18 @@ char_u *vim_findfile(void *search_ctx_arg)
 
             /* prepare the filename to be checked for existence
              * below */
-            STRCPY(file_path, stackp->ffs_filearray[i]);
-            path_add_sep(file_path);
-            STRCAT(file_path, search_ctx->ffsc_file_to_search);
+            len = path_buf_join(file_path, stackp->ffs_filearray[i],
+                                           search_ctx->ffsc_file_to_search);
+
+            if (len == 0) {
+              // Path too long.
+              continue;
+            }
 
             /*
              * Try without extra suffix and then with suffixes
              * from 'suffixesadd'.
              */
-            len = STRLEN(file_path);
             if (search_ctx->ffsc_tagfile)
               suf = (char_u *)"";
             else
@@ -935,9 +938,8 @@ char_u *vim_findfile(void *search_ctx_arg)
       if (*search_ctx->ffsc_start_dir == 0)
         break;
 
-      STRCPY(file_path, search_ctx->ffsc_start_dir);
-      path_add_sep(file_path);
-      STRCAT(file_path, search_ctx->ffsc_fix_path);
+      path_buf_join(file_path, search_ctx->ffsc_start_dir, 
+                               search_ctx->ffsc_fix_path);
 
       /* create a new stack entry */
       sptr = ff_create_stack_element(file_path,

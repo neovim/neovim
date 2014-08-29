@@ -334,21 +334,38 @@ int vim_fnamencmp(char_u *x, char_u *y, size_t len)
 #endif
 }
 
-/// Concatenate file names p1 and p2, separated by PATHSEPSTR, into allocated
+/// Concatenates file names p1 and p2, separated by PATHSEPSTR, into allocated
 /// memory.
 char_u *path_join(const char_u *p1, const char_u *p2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  size_t dest_len = STRLEN(p1) + STRLEN(p2) + 3;
-  char_u *dest = xmalloc(dest_len);
-
-  size_t len;
-  len = STRLCPY(dest, p1, dest_len);
-  path_add_sep_impl(dest, dest + len);
-  STRCAT(dest, p2);
-
+  char_u *dest = xmalloc(STRLEN(p1) + STRLEN(p2) + 3);
+  path_buf_join(dest, p1, p2);
   return dest;
+}
+
+/// Concatenates file names base and ext into buf.
+///
+/// @param[out] buf  A buffer, assumed to be of size MAXPATHL.
+/// @param[in]  base The path appended to.
+/// @param[in]  ext  The path to append.
+///
+/// @remark buf may be smaller than MAXPATHL only if 
+///         `strlen(base + ext + PATHSEPSTR)` is known to be smaller.
+///
+/// @returns The number of bytes written to buf on success.
+/// @returns Zero if truncation occurred.
+size_t path_buf_join(char_u * restrict buf,
+                     const char_u *base,
+                     const char_u *ext)
+  FUNC_ATTR_NONNULL_ALL
+{
+  size_t len = 0;
+  len += STRLCPY(buf, base, MAXPATHL);
+  len  = path_add_sep_impl(buf, buf + len);
+  len += STRLCPY(buf + len, ext, MAXPATHL - len);
+  return len < MAXPATHL ? len : 0;
 }
 
 /// Adds a path separator to a file name, unless it already ends in a path
@@ -881,10 +898,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       continue;
     }
 
-    rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
-    STRCPY(rel_path, ".");
-    path_add_sep(rel_path);
-    STRCAT(rel_path, short_name);
+    rel_path = path_join((char_u *) ".", short_name);
 
     free(fnames[i]);
     fnames[i] = rel_path;
