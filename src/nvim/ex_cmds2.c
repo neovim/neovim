@@ -2089,6 +2089,7 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
   /* Make a copy of 'runtimepath'.  Invoking the callback may change the
    * value. */
   rtp_copy = vim_strsave(p_rtp);
+  // TODO (SplinterOfChaos): path_malloc()?
   buf = xmallocz(MAXPATHL);
   {
     if (p_verbose > 1 && name != NULL) {
@@ -2102,22 +2103,20 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
     rtp = rtp_copy;
     while (*rtp != NUL && (all || !did_one)) {
       /* Copy the path from 'runtimepath' to buf[]. */
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
+      size_t len = copy_option_part(&rtp, buf, MAXPATHL, ",");
       if (name == NULL) {
         (*callback)(buf, (void *) &cookie);
         if (!did_one)
           did_one = (cookie == NULL);
-      } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL) {
-        add_pathsep(buf);
-        tail = buf + STRLEN(buf);
+      } else if (len + STRLEN(name) + 2 < MAXPATHL) {
+        len = path_add_sep(buf);
+        tail = buf + len;
 
         /* Loop over all patterns in "name" */
         np = name;
         while (*np != NUL && (all || !did_one)) {
           /* Append the pattern from "name" to buf[]. */
-          assert(MAXPATHL >= (tail - buf));
-          copy_option_part(&np, tail, (size_t)(MAXPATHL - (tail - buf)),
-              "\t ");
+          copy_option_part(&np, tail, (size_t)(MAXPATHL - len), "\t ");
 
           if (p_verbose > 2) {
             verbose_enter();

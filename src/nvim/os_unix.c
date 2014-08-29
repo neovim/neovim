@@ -1287,7 +1287,7 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
     p = xmalloc(STRLEN((*file)[i]) + 1 + dir);
     STRCPY(p, (*file)[i]);
     if (dir)
-      add_pathsep(p);             /* add '/' to a directory name */
+      path_add_sep(p);             /* add '/' to a directory name */
     (*file)[j++] = p;
   }
   free(buffer);

@@ -37,7 +37,7 @@ static void vim_maketempdir(void)
       continue;
     }
 
-    add_pathsep(template);
+    path_add_sep(template);
     // Concatenate with temporary directory name pattern
     STRCAT(template, "nvimXXXXXX");
 
@@ -107,7 +107,7 @@ static bool vim_settempdir(char_u *tempdir)
     return false;
   }
   vim_FullName(tempdir, buf, MAXPATHL, false);
-  add_pathsep(buf);
+  path_add_sep(buf);
   vim_tempdir = vim_strsave(buf);
   free(buf);
   return true;

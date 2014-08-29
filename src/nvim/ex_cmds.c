@@ -5175,7 +5175,7 @@ void fix_help_buffer(void)
           char_u      *cp;
 
           /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep(NameBuff);
+          path_add_sep(NameBuff);
           STRCAT(NameBuff, "doc/*.??[tx]");
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -5347,8 +5347,9 @@ void ex_helptags(exarg_T *eap)
   }
 
   /* Get a list of all files in the help directory and in subdirectories. */
+  // TODO (SplinterOfChaos): When/if implemented, use path_buf_join().
   STRCPY(NameBuff, dirname);
-  add_pathsep(NameBuff);
+  path_add_sep(NameBuff);
   STRCAT(NameBuff, "**");
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
@@ -5469,8 +5470,9 @@ helptags_one (
    * Open the tags file for writing.
    * Do this before scanning through all the files.
    */
+  // TODO (SplinterOfChaos): When/if implemented, use path_buf_join().
   STRCPY(NameBuff, dir);
-  add_pathsep(NameBuff);
+  path_add_sep(NameBuff);
   STRCAT(NameBuff, tagfname);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {

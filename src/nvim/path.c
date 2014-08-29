@@ -340,22 +340,36 @@ char_u *path_join(const char_u *p1, const char_u *p2)
   FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET FUNC_ATTR_MALLOC
   FUNC_ATTR_WARN_UNUSED_RESULT
 {
-  char_u *dest = xmalloc(STRLEN(p1) + STRLEN(p2) + 3);
+  size_t dest_len = STRLEN(p1) + STRLEN(p2) + 3;
+  char_u *dest = xmalloc(dest_len);
 
-  STRCPY(dest, p1);
-  add_pathsep(dest);
+  size_t len;
+  len = STRLCPY(dest, p1, dest_len);
+  path_add_sep_impl(dest, dest + len);
   STRCAT(dest, p2);
 
   return dest;
 }
 
-/// Add a path separator to a file name, unless it already ends in a path
+/// Adds a path separator to a file name, unless it already ends in a path
 /// separator.
-void add_pathsep(char_u *p)
-  FUNC_ATTR_NONNULL_ALL
+///
+/// @param p The path of a directory.
+/// @returns The new length of p.
+size_t path_add_sep(char_u *p)
+  FUNC_ATTR_NONNULL_ALL 
 {
-  if (*p != NUL && !after_pathsep(p, p + STRLEN(p)))
-    STRCAT(p, PATHSEPSTR);
+  return path_add_sep_impl(p, p + STRLEN(p));
+}
+
+static size_t path_add_sep_impl(char_u *p, char_u *end)
+{
+  size_t len = end - p;
+  if (*p == NUL || after_pathsep(p, end)) {
+    return len;
+  }
+  STRCPY(end, PATHSEPSTR);
+  return len + STRLEN(PATHSEPSTR);
 }
 
 /*
@@ -842,7 +856,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
       if (short_name != NULL && short_name > path + 1
           ) {
         STRCPY(path, ".");
-        add_pathsep(path);
+        path_add_sep(path);
         STRMOVE(path + STRLEN(path), short_name);
       }
     }
@@ -869,7 +883,7 @@ static void uniquefy_paths(garray_T *gap, char_u *pattern)
 
     rel_path = xmalloc(STRLEN(short_name) + STRLEN(PATHSEPSTR) + 2);
     STRCPY(rel_path, ".");
-    add_pathsep(rel_path);
+    path_add_sep(rel_path);
     STRCAT(rel_path, short_name);
 
     free(fnames[i]);
@@ -1241,7 +1255,7 @@ addfile (
    * Append a slash or backslash after directory names if none is present.
    */
   if (isdir && (flags & EW_ADDSLASH))
-    add_pathsep(p);
+    path_add_sep(p);
   GA_APPEND(char_u *, gap, p);
 }
 #endif /* !NO_EXPANDPATH */

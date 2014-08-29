@@ -1898,7 +1898,7 @@ void set_init_1(void)
         if (!GA_EMPTY(&ga))
           STRCAT(ga.ga_data, ",");
         STRCAT(ga.ga_data, p);
-        add_pathsep(ga.ga_data);
+        path_add_sep(ga.ga_data);
         STRCAT(ga.ga_data, "*");
         ga.ga_len += len;
       }
