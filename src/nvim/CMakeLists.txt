@@ -26,6 +26,8 @@ file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
 
 file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c)
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
+file(GLOB_RECURSE NEOVIM_TEST_MOCKS
+  ${PROJECT_SOURCE_DIR}/test/c-helpers/*.mocks.h)
 
 foreach(sfile ${NEOVIM_SOURCES})
   get_filename_component(f ${sfile} NAME)
@@ -108,11 +110,23 @@ foreach(sfile ${NEOVIM_SOURCES}
   endif()
   set(gf1 "${GENERATED_DIR}/${r}.c.generated.h")
   set(gf2 "${GENERATED_INCLUDES_DIR}/${r}.h.generated.h")
+  set(test_helper "${PROJECT_SOURCE_DIR}/test/c-helpers/${f}")
+  set(test_mocks ${NEOVIM_TEST_MOCKS})
+  if(EXISTS "${test_helper}")
+    # Ensure the mocks.h file for a module is not included in the real module
+    # or it would cause redefinition errors caused by the mock being expanded
+    # into the real function definition
+    list(REMOVE_ITEM test_mocks "${test_helper}.mocks.h")
+  else()
+    unset(test_helper)
+  endif()
+  
   add_custom_command(
     OUTPUT "${gf1}" "${gf2}"
     COMMAND "${LUA_PRG}" "${HEADER_GENERATOR}"
                              "${sfile}" "${gf1}" "${gf2}"
                              "${CMAKE_C_COMPILER} ${gen_cflags} -E"
+                             "${test_helper}" ${test_mocks}
     DEPENDS "${HEADER_GENERATOR}" "${sfile}"
     )
   list(APPEND NEOVIM_GENERATED_SOURCES "${gf1}")
@@ -181,6 +195,7 @@ if(NOT DEFINED ENV{SKIP_UNITTEST})
   add_library(nvim-test MODULE EXCLUDE_FROM_ALL ${NEOVIM_GENERATED_SOURCES}
     ${NEOVIM_SOURCES} ${NEOVIM_HEADERS})
   target_link_libraries(nvim-test ${NVIM_LINK_LIBRARIES})
+  set_target_properties(nvim-test PROPERTIES COMPILE_FLAGS -DUNIT_TESTING)
 endif()
 
 add_subdirectory(po)

@@ -2,12 +2,14 @@ local helpers = require("test.unit.helpers")
 
 local to_cstr = helpers.to_cstr
 local eq      = helpers.eq
+local intern  = helpers.internalize
 
 helpers.vim_init()
 
 local buffer = helpers.cimport("./src/nvim/buffer.h")
 local window = helpers.cimport("./src/nvim/window.h")
 local option = helpers.cimport("./src/nvim/option.h")
+local message = helpers.cimport("./src/nvim/message.h")
 
 --{ Initialize the options needed for interacting with buffers
 window.win_alloc_first()
@@ -28,18 +30,25 @@ describe('buffer functions', function()
   local path1 = 'test_file_path'
   local path2 = 'file_path_test'
   local path3 = 'path_test_file'
+  local messages = nul
 
   before_each(function()
     -- create the files
     io.open(path1, 'w').close()
     io.open(path2, 'w').close()
     io.open(path3, 'w').close()
+    messages = {}
+    message.set_emsg_mock(function(msg)
+      table.insert(messages, intern(msg))
+      return true
+    end)
   end)
 
   after_each(function()
     os.remove(path1)
     os.remove(path2)
     os.remove(path3)
+    message.set_emsg_mock(NULL)
   end)
 
   describe('buf_valid', function()
@@ -172,6 +181,13 @@ describe('buffer functions', function()
       eq(-1, buflist_findpat("_test_", ONLY_LISTED))
       eq(-1, buflist_findpat("_test_", ALLOW_UNLISTED))
       --}
+
+      -- messages:
+      eq({
+        'E94: No matching buffer for _test_',
+        'E94: No matching buffer for _test_',
+        'E94: No matching buffer for _test_'
+      }, messages)
     end)
 
     it('should prefer listed buffers to unlisted buffers.', function()
@@ -211,6 +227,9 @@ describe('buffer functions', function()
 
       close_buffer(NULL, buf1, buffer.DOBUF_WIPE, 0)
       close_buffer(NULL, buf2, buffer.DOBUF_WIPE, 0)
+
+      -- messages:
+      eq({'E94: No matching buffer for test'}, messages)
     end)
   end)
 end)

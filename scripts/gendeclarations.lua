@@ -5,6 +5,11 @@ local static_fname = arg[2]
 local non_static_fname = arg[3]
 local cpp = arg[4]
 
+local test_includes = {}
+for i = 5, #arg do
+  test_includes[#test_includes + 1] = arg[i]
+end
+
 cpp = cpp:gsub(' %-DINCLUDE_GENERATED_DECLARATIONS ', ' ')
 
 local lpeg = require('lpeg')
@@ -153,10 +158,95 @@ if fname == '--help' then
   os.exit()
 end
 
-local pipe = io.popen(cpp .. ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
-local text = pipe:read('*a')
-if not pipe:close() then
-  os.exit(2)
+function get_test_includes(test_includes, extra)
+  includes = '#ifdef UNIT_TESTING\n'
+  for i = 1, #test_includes do
+    includes = includes .. '# include "'..test_includes[i]..'"\n'
+  end
+  if extra then
+    includes = includes .. '\n' .. extra .. '\n'
+  end
+  return includes .. '#endif\n'
+end
+
+function get_declarations(fname)
+  local pipe = io.popen(cpp ..
+                        ' -DDO_NOT_DEFINE_EMPTY_ATTRIBUTES ' .. fname, 'r')
+  local text = pipe:read('*a')
+  if not pipe:close() then
+    os.exit(2)
+  end
+
+  local non_static = ''
+  local static = ''
+
+  local filepattern = '^# %d+ "[^"]-/?([^"/]+)"'
+  local curfile
+
+  local init = 0
+  local curfile = nil
+  local neededfile = fname:match('[^/]+$')
+  while init ~= nil do
+    init = text:find('\n', init)
+    if init == nil then
+      break
+    end
+    init = init + 1
+    if text:sub(init, init) == '#' then
+      file = text:match(filepattern, init)
+      if file ~= nil then
+        curfile = file
+      end
+    elseif curfile == neededfile then
+      s = init
+      e = pattern:match(text, init)
+      if e ~= nil then
+        local declaration = text:sub(s, e - 1)
+        -- Comments are really handled by preprocessor, so the following is not 
+        -- needed
+        declaration = declaration:gsub('/%*.-%*/', '')
+        declaration = declaration:gsub('//.-\n', '\n')
+
+        declaration = declaration:gsub('\n', ' ')
+        declaration = declaration:gsub('%s+', ' ')
+        declaration = declaration:gsub(' ?%( ?', '(')
+        declaration = declaration:gsub(' ?%) ?', ')')
+        declaration = declaration:gsub(' ?, ?', ', ')
+        declaration = declaration:gsub(' ?(%*+) ?', ' %1')
+        declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
+        declaration = declaration:gsub(' $', '')
+        declaration = declaration .. ';\n'
+        if text:sub(s, s + 5) == 'static' then
+          static = static .. declaration
+        else
+          non_static = non_static .. declaration
+        end
+      end
+    end
+  end
+  return non_static, static
+end
+
+function write_file(fname, data)
+  -- Before writing the file, check if the current file(if exists) is different
+  -- from the new one. If they are the same, we won't touch the current version
+  -- to avoid triggering an unnecessary rebuilds of modules that depend on the
+  -- file
+  local F = io.open(fname, 'r')
+  local old_data
+
+  if F ~= nil then
+    old_data = F:read('*a')
+    io.close(F)
+  end
+
+  if old_data == data then
+    return
+  end
+
+  F = io.open(fname, 'w')
+  F:write(data)
+  F:close()
 end
 
 local header = [[
@@ -171,74 +261,30 @@ local footer = [[
 #include "nvim/func_attr.h"
 ]]
 
-local non_static = header
-local static = header
+local non_static, static = get_declarations(fname)
 
-local filepattern = '^# %d+ "[^"]-/?([^"/]+)"'
-local curfile
-
-init = 0
-curfile = nil
-neededfile = fname:match('[^/]+$')
-while init ~= nil do
-  init = text:find('\n', init)
-  if init == nil then
-    break
-  end
-  init = init + 1
-  if text:sub(init, init) == '#' then
-    file = text:match(filepattern, init)
-    if file ~= nil then
-      curfile = file
+if #test_includes > 0 then
+  local first = test_includes[1]
+  if first:sub(#first - 1, #first) == '.c' then
+    -- The first included file is a C module, we must generate declarations for
+    -- its public functions and include into the non static header so tests can
+    -- automatically use the helper functions without manually calling ffi.cdef
+    local test_helper_decls, _ = get_declarations(first)
+    -- if there's a .defs.h for the c file, prefix the declarations with it
+    local F = io.open(first .. '.defs.h', 'r')
+    if F ~= nil then
+      local defs = F:read('*a')
+      test_helper_decls = defs .. '\n' .. test_helper_decls
+      F:close()
     end
-  elseif curfile == neededfile then
-    s = init
-    e = pattern:match(text, init)
-    if e ~= nil then
-      local declaration = text:sub(s, e - 1)
-      -- Comments are really handled by preprocessor, so the following is not 
-      -- needed
-      declaration = declaration:gsub('/%*.-%*/', '')
-      declaration = declaration:gsub('//.-\n', '\n')
-
-      declaration = declaration:gsub('\n', ' ')
-      declaration = declaration:gsub('%s+', ' ')
-      declaration = declaration:gsub(' ?%( ?', '(')
-      declaration = declaration:gsub(' ?%) ?', ')')
-      declaration = declaration:gsub(' ?, ?', ', ')
-      declaration = declaration:gsub(' ?(%*+) ?', ' %1')
-      declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')
-      declaration = declaration:gsub(' $', '')
-      declaration = declaration .. ';\n'
-      if text:sub(s, s + 5) == 'static' then
-        static = static .. declaration
-      else
-        non_static = non_static .. declaration
-      end
-    end
+    non_static = non_static .. get_test_includes({}, test_helper_decls)
   end
+  -- Include every file in the static header
+  static = static .. get_test_includes(test_includes)
 end
 
-non_static = non_static .. footer
-static = static .. footer
+local non_static = header .. non_static  .. footer
+local static = header .. static .. footer
 
-local F
-F = io.open(static_fname, 'w')
-F:write(static)
-F:close()
-
--- Before generating the non-static headers, check if the current file(if
--- exists) is different from the new one. If they are the same, we won't touch
--- the current version to avoid triggering an unnecessary rebuilds of modules
--- that depend on this one
-F = io.open(non_static_fname, 'r')
-if F ~= nil then
-  if F:read('*a') == non_static then
-    os.exit(0)
-  end
-  io.close(F)
-end
-
-F = io.open(non_static_fname, 'w')
-F:write(non_static)
-F:close()
+write_file(static_fname, static)
+write_file(non_static_fname, non_static)

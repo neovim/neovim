@@ -88,7 +88,8 @@ class Gcc
    '-D "EXTERN=extern"',
    '-D "INIT(...)="',
    '-D_GNU_SOURCE',
-   '-DINCLUDE_GENERATED_DECLARATIONS'
+   '-DINCLUDE_GENERATED_DECLARATIONS',
+   '-DUNIT_TESTING'
   }
 
   new: (path) =>
