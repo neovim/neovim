@@ -39,15 +39,14 @@ WBuffer *msgpack_rpc_call(uint64_t channel_id,
     return serialize_response(response_id, err, NIL, sbuffer);
   }
 
-  uint64_t method_id = req->via.array.ptr[2].via.u64;
-
-  if (method_id == 0) {
+  if (req->via.array.ptr[2].type == MSGPACK_OBJECT_POSITIVE_INTEGER
+     && req->via.array.ptr[2].via.u64 == 0) {
     return serialize_metadata(response_id, channel_id, sbuffer);
   }
 
   // dispatch the call
   Error error = { .set = false };
-  Object rv = msgpack_rpc_dispatch(channel_id, method_id, req, &error);
+  Object rv = msgpack_rpc_dispatch(channel_id, req, &error);
   // send the response
   msgpack_packer response;
   msgpack_packer_init(&response, sbuffer, msgpack_sbuffer_write);
@@ -119,7 +118,7 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 /// Serializes a msgpack-rpc request or notification(id == 0)
 WBuffer *serialize_request(uint64_t request_id,
                            String method,
-                           Object arg,
+                           Array args,
                            msgpack_sbuffer *sbuffer,
                            size_t refcount)
   FUNC_ATTR_NONNULL_ARG(4)
@@ -135,12 +134,12 @@ WBuffer *serialize_request(uint64_t request_id,
 
   msgpack_pack_raw(&pac, method.size);
   msgpack_pack_raw_body(&pac, method.data, method.size);
-  msgpack_rpc_from_object(arg, &pac);
+  msgpack_rpc_from_array(args, &pac);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    refcount,
                                    free);
-  msgpack_rpc_free_object(arg);
+  msgpack_rpc_free_array(args);
   msgpack_sbuffer_clear(sbuffer);
   return rv;
 }
@@ -235,8 +234,9 @@ static char *msgpack_rpc_validate(uint64_t *response_id, msgpack_object *req)
     return "Message type must be 0";
   }
 
-  if (req->via.array.ptr[2].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    return "Method id must be a positive integer";
+  if (req->via.array.ptr[2].type != MSGPACK_OBJECT_POSITIVE_INTEGER
+      && req->via.array.ptr[2].type != MSGPACK_OBJECT_RAW) {
+    return "Method must be a positive integer or a string";
   }
 
   if (req->via.array.ptr[3].type != MSGPACK_OBJECT_ARRAY) {

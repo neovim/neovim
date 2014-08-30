@@ -5232,7 +5232,8 @@ static void get_clipboard(int name)
 
   struct yankreg *reg = &y_regs[CLIP_REGISTER];
   free_register(reg);
-  Object result = provider_call("clipboard_get", NIL);
+  Array args = ARRAY_DICT_INIT;
+  Object result = provider_call("clipboard_get", args);
 
   if (result.type != kObjectTypeArray) {
     goto err;
@@ -5278,12 +5279,15 @@ static void set_clipboard(int name)
     copy_register(reg, &y_regs[0]);
   }
 
-  Array lines = {0, 0, 0};
+  Array lines = ARRAY_DICT_INIT;
 
   for (int i = 0; i < reg->y_size; i++) {
     ADD(lines, STRING_OBJ(cstr_to_string((char *)reg->y_array[i])));
   }
 
-  Object result = provider_call("clipboard_set", ARRAY_OBJ(lines));
+  Array args = ARRAY_DICT_INIT;
+  ADD(args, ARRAY_OBJ(lines));
+
+  Object result = provider_call("clipboard_set", args);
   msgpack_rpc_free_object(result);
 }

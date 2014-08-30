@@ -98,7 +98,7 @@ bool provider_register(char *method, uint64_t channel_id)
   return true;
 }
 
-Object provider_call(char *method, Object arg)
+Object provider_call(char *method, Array args)
 {
   uint64_t channel_id = get_provider_for(method);
 
@@ -109,13 +109,13 @@ Object provider_call(char *method, Object arg)
              "Provider for \"%s\" is not available",
              method);
     report_error(buf);
-    msgpack_rpc_free_object(arg);
+    msgpack_rpc_free_array(args);
     return NIL;
   }
 
   bool error = false;
   Object result = NIL;
-  channel_send_call(channel_id, method, arg, &result, &error);
+  channel_send_call(channel_id, method, args, &result, &error);
 
   if (error) {
     report_error(result.data.string.data);
