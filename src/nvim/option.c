@@ -1925,9 +1925,8 @@ void set_init_1(void)
         ga_grow(&ga, len);
         if (!GA_EMPTY(&ga))
           STRCAT(ga.ga_data, ",");
-        STRCAT(ga.ga_data, p);
-        add_pathsep(ga.ga_data);
-        STRCAT(ga.ga_data, "*");
+        concat_fnames_buf((char_u *) ga.ga_data + STRLEN(ga.ga_data),
+                          p, (char_u *) "*");
         ga.ga_len += len;
       }
       if (mustfree)

@@ -2099,21 +2099,19 @@ int do_in_runtimepath(char_u *name, int all, DoInRuntimepathCB callback,
     rtp = rtp_copy;
     while (*rtp != NUL && (all || !did_one)) {
       /* Copy the path from 'runtimepath' to buf[]. */
-      copy_option_part(&rtp, buf, MAXPATHL, ",");
+      int buf_len = copy_option_part(&rtp, buf, MAXPATHL, ",");
       if (name == NULL) {
         (*callback)(buf, (void *) &cookie);
         if (!did_one)
           did_one = (cookie == NULL);
-      } else if (STRLEN(buf) + STRLEN(name) + 2 < MAXPATHL) {
-        add_pathsep(buf);
-        tail = buf + STRLEN(buf);
+      } else if (buf_len + STRLEN(name) + 2 < MAXPATHL) {
+        tail = add_pathsep_at(buf, buf + buf_len);
 
         /* Loop over all patterns in "name" */
         np = name;
         while (*np != NUL && (all || !did_one)) {
           /* Append the pattern from "name" to buf[]. */
-          copy_option_part(&np, tail, (int)(MAXPATHL - (tail - buf)),
-              "\t ");
+          copy_option_part(&np, tail, (int)(MAXPATHL - (tail - buf)), "\t ");
 
           if (p_verbose > 2) {
             verbose_enter();

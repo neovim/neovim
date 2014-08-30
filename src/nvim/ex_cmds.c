@@ -5159,8 +5159,7 @@ void fix_help_buffer(void)
           char_u      *cp;
 
           /* Find all "doc/ *.txt" files in this directory. */
-          add_pathsep(NameBuff);
-          STRCAT(NameBuff, "doc/*.??[tx]");
+          fname_append(NameBuff, (char_u *) "doc/*.??[tx]");
 
           // Note: We cannot just do `&NameBuff` because it is a statically sized array
           //       so `NameBuff == &NameBuff` according to C semantics.
@@ -5330,9 +5329,7 @@ void ex_helptags(exarg_T *eap)
   }
 
   /* Get a list of all files in the help directory and in subdirectories. */
-  STRCPY(NameBuff, dirname);
-  add_pathsep(NameBuff);
-  STRCAT(NameBuff, "**");
+  concat_fnames_buf(NameBuff, dirname, (char_u *) "**");
 
   // Note: We cannot just do `&NameBuff` because it is a statically sized array
   //       so `NameBuff == &NameBuff` according to C semantics.
@@ -5451,9 +5448,7 @@ helptags_one (
    * Open the tags file for writing.
    * Do this before scanning through all the files.
    */
-  STRCPY(NameBuff, dir);
-  add_pathsep(NameBuff);
-  STRCAT(NameBuff, tagfname);
+  concat_fnames_buf(NameBuff, dir, tagfname);
   fd_tags = mch_fopen((char *)NameBuff, "w");
   if (fd_tags == NULL) {
     EMSG2(_("E152: Cannot open %s for writing"), NameBuff);

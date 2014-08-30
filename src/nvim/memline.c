@@ -1332,12 +1332,12 @@ recover_names (
         num_names = recov_file_names(names, fname_res, TRUE);
     } else {                      /* check directory dir_name */
       if (fname == NULL) {
-        names[0] = concat_fnames(dir_name, (char_u *)"*.sw?", TRUE);
+        names[0] = concat_fnames(dir_name, (char_u *)"*.sw?");
 #if defined(UNIX) || defined(WIN3264)
         /* For Unix names starting with a dot are special.  MS-Windows
          * supports this too, on some file systems. */
-        names[1] = concat_fnames(dir_name, (char_u *)".*.sw?", TRUE);
-        names[2] = concat_fnames(dir_name, (char_u *)".sw?", TRUE);
+        names[1] = concat_fnames(dir_name, (char_u *)".*.sw?");
+        names[2] = concat_fnames(dir_name, (char_u *)".sw?");
         num_names = 3;
 #else
         num_names = 1;
@@ -1351,7 +1351,7 @@ recover_names (
         } else
 #endif
         tail = path_tail(fname_res);
-        tail = concat_fnames(dir_name, tail, TRUE);
+        tail = concat_fnames(dir_name, tail);
         num_names = recov_file_names(names, tail, FALSE);
         free(tail);
       }
@@ -1466,7 +1466,7 @@ static char_u *make_percent_swname(char_u *dir, char_u *name)
     for (d = s; *d != NUL; mb_ptr_adv(d))
       if (vim_ispathsep(*d))
         *d = '%';
-    d = concat_fnames(dir, s, TRUE);
+    d = concat_fnames(dir, s);
     free(s);
     free(f);
   }
@@ -1590,7 +1590,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
   }
 
   // Form the normal swap file name pattern by appending ".sw?".
-  names[num_names] = concat_fnames(path, (char_u *)".sw?", FALSE);
+  names[num_names] = concat_str(path, (char_u *)".sw?");
   if (num_names >= 1) {     /* check if we have the same name twice */
     p = names[num_names - 1];
     i = (int)STRLEN(names[num_names - 1]) - (int)STRLEN(names[num_names]);
@@ -3141,17 +3141,17 @@ get_file_in_dir (
     retval = vim_strsave(fname);
   else if (dname[0] == '.' && vim_ispathsep(dname[1])) {
     if (tail == fname)              /* no path before file name */
-      retval = concat_fnames(dname + 2, tail, TRUE);
+      retval = concat_fnames(dname + 2, tail);
     else {
       save_char = *tail;
       *tail = NUL;
-      t = concat_fnames(fname, dname + 2, TRUE);
+      t = concat_fnames(fname, dname + 2);
       *tail = save_char;
-      retval = concat_fnames(t, tail, TRUE);
+      retval = concat_fnames(t, tail);
       free(t);
     }
   } else {
-    retval = concat_fnames(dname, tail, TRUE);
+    retval = concat_fnames(dname, tail);
   }
 
   return retval;

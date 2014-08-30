@@ -37,9 +37,8 @@ static void vim_maketempdir(void)
       continue;
     }
 
-    add_pathsep(template);
     // Concatenate with temporary directory name pattern
-    STRCAT(template, "nvimXXXXXX");
+    fname_append(template, (char_u *) "nvimXXXXXX");
 
     if (os_mkdtemp((const char *)template, (char *)path) != 0) {
       continue;
@@ -102,6 +101,7 @@ char_u *vim_gettempdir(void)
 /// @return false if we run out of memory.
 static bool vim_settempdir(char_u *tempdir)
 {
+  // TODO(SplinterOfChaos): Why don't we use xmalloc()?
   char_u *buf = verbose_try_malloc((size_t)MAXPATHL + 2);
   if (!buf) {
     return false;
