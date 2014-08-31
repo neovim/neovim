@@ -461,194 +461,194 @@ describe('fs function', function()
         eq(false, (os_isdir('unit-test-directory/new-dir')))
       end)
     end)
+  end)
 
-    describe('FileInfo', function()
-      function file_info_new()
-        local file_info = ffi.new('FileInfo[1]')
-        file_info[0].stat.st_ino = 0
-        file_info[0].stat.st_dev = 0
-        return file_info
-      end
+  describe('FileInfo', function()
+    function file_info_new()
+      local file_info = ffi.new('FileInfo[1]')
+      file_info[0].stat.st_ino = 0
+      file_info[0].stat.st_dev = 0
+      return file_info
+    end
 
-      function is_file_info_filled(file_info)
-        return file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
-      end
+    function is_file_info_filled(file_info)
+      return file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
+    end
 
-      function file_id_new()
-        local file_info = ffi.new('FileID[1]')
-        file_info[0].inode = 0
-        file_info[0].device_id = 0
-        return file_info
-      end
+    function file_id_new()
+      local file_info = ffi.new('FileID[1]')
+      file_info[0].inode = 0
+      file_info[0].device_id = 0
+      return file_info
+    end
 
-      describe('os_get_file_info', function()
-        it('returns false if given a non-existing file', function()
-          local file_info = file_info_new()
-          assert.is_false((fs.os_get_file_info('/non-existent', file_info)))
-        end)
-
-        it('returns true if given an existing file and fills file_info', function()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_info(path, file_info)))
-          assert.is_true((is_file_info_filled(file_info)))
-        end)
-
-        it('returns the file info of the linked file, not the link', function()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test_link.file'
-          assert.is_true((fs.os_get_file_info(path, file_info)))
-          assert.is_true((is_file_info_filled(file_info)))
-          local mode = tonumber(file_info[0].stat.st_mode)
-          return eq(ffi.C.kS_IFREG, (bit.band(mode, ffi.C.kS_IFMT)))
-        end)
+    describe('os_get_file_info', function()
+      it('returns false if given a non-existing file', function()
+        local file_info = file_info_new()
+        assert.is_false((fs.os_get_file_info('/non-existent', file_info)))
       end)
 
-      describe('os_get_file_info_link', function()
-        it('returns false if given a non-existing file', function()
-          local file_info = file_info_new()
-          assert.is_false((fs.os_get_file_info_link('/non-existent', file_info)))
-        end)
-
-        it('returns true if given an existing file and fills file_info', function()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_info_link(path, file_info)))
-          assert.is_true((is_file_info_filled(file_info)))
-        end)
-
-        it('returns the file info of the link, not the linked file', function()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test_link.file'
-          assert.is_true((fs.os_get_file_info_link(path, file_info)))
-          assert.is_true((is_file_info_filled(file_info)))
-          local mode = tonumber(file_info[0].stat.st_mode)
-          eq(ffi.C.kS_IFLNK, (bit.band(mode, ffi.C.kS_IFMT)))
-        end)
+      it('returns true if given an existing file and fills file_info', function()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_info(path, file_info)))
+        assert.is_true((is_file_info_filled(file_info)))
       end)
 
-      describe('os_get_file_info_fd', function()
-        it('returns false if given an invalid file descriptor', function()
-          local file_info = file_info_new()
-          assert.is_false((fs.os_get_file_info_fd(-1, file_info)))
-        end)
+      it('returns the file info of the linked file, not the link', function()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test_link.file'
+        assert.is_true((fs.os_get_file_info(path, file_info)))
+        assert.is_true((is_file_info_filled(file_info)))
+        local mode = tonumber(file_info[0].stat.st_mode)
+        return eq(ffi.C.kS_IFREG, (bit.band(mode, ffi.C.kS_IFMT)))
+      end)
+    end)
 
-        it('returns true if given a file descriptor and fills file_info', function()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test.file'
-          local fd = ffi.C.open(path, 0)
-          assert.is_true((fs.os_get_file_info_fd(fd, file_info)))
-          assert.is_true((is_file_info_filled(file_info)))
-          ffi.C.close(fd)
-        end)
+    describe('os_get_file_info_link', function()
+      it('returns false if given a non-existing file', function()
+        local file_info = file_info_new()
+        assert.is_false((fs.os_get_file_info_link('/non-existent', file_info)))
       end)
 
-      describe('os_file_info_id_equal', function()
-        it('returns false if file infos represent different files', function()
-          local file_info_1 = file_info_new()
-          local file_info_2 = file_info_new()
-          local path_1 = 'unit-test-directory/test.file'
-          local path_2 = 'unit-test-directory/test_2.file'
-          assert.is_true((fs.os_get_file_info(path_1, file_info_1)))
-          assert.is_true((fs.os_get_file_info(path_2, file_info_2)))
-          assert.is_false((fs.os_file_info_id_equal(file_info_1, file_info_2)))
-        end)
-
-        it('returns true if file infos represent the same file', function()
-          local file_info_1 = file_info_new()
-          local file_info_2 = file_info_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_info(path, file_info_1)))
-          assert.is_true((fs.os_get_file_info(path, file_info_2)))
-          assert.is_true((fs.os_file_info_id_equal(file_info_1, file_info_2)))
-        end)
-
-        it('returns true if file infos represent the same file (symlink)', function()
-          local file_info_1 = file_info_new()
-          local file_info_2 = file_info_new()
-          local path_1 = 'unit-test-directory/test.file'
-          local path_2 = 'unit-test-directory/test_link.file'
-          assert.is_true((fs.os_get_file_info(path_1, file_info_1)))
-          assert.is_true((fs.os_get_file_info(path_2, file_info_2)))
-          assert.is_true((fs.os_file_info_id_equal(file_info_1, file_info_2)))
-        end)
+      it('returns true if given an existing file and fills file_info', function()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_info_link(path, file_info)))
+        assert.is_true((is_file_info_filled(file_info)))
       end)
 
-      describe('os_file_info_get_id', function()
-        it('extracts ino/dev from file_info into file_id', function()
-          local file_info = file_info_new()
-          local file_id = file_id_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_info(path, file_info)))
-          fs.os_file_info_get_id(file_info, file_id)
-          eq(file_info[0].stat.st_ino, file_id[0].inode)
-          eq(file_info[0].stat.st_dev, file_id[0].device_id)
-        end)
+      it('returns the file info of the link, not the linked file', function()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test_link.file'
+        assert.is_true((fs.os_get_file_info_link(path, file_info)))
+        assert.is_true((is_file_info_filled(file_info)))
+        local mode = tonumber(file_info[0].stat.st_mode)
+        eq(ffi.C.kS_IFLNK, (bit.band(mode, ffi.C.kS_IFMT)))
+      end)
+    end)
+
+    describe('os_get_file_info_fd', function()
+      it('returns false if given an invalid file descriptor', function()
+        local file_info = file_info_new()
+        assert.is_false((fs.os_get_file_info_fd(-1, file_info)))
       end)
 
-      describe('os_file_info_get_inode', function()
-        it('returns the inode from file_info', function()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_info(path, file_info)))
-          local inode = fs.os_file_info_get_inode(file_info)
-          eq(file_info[0].stat.st_ino, inode)
-        end)
+      it('returns true if given a file descriptor and fills file_info', function()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test.file'
+        local fd = ffi.C.open(path, 0)
+        assert.is_true((fs.os_get_file_info_fd(fd, file_info)))
+        assert.is_true((is_file_info_filled(file_info)))
+        ffi.C.close(fd)
+      end)
+    end)
+
+    describe('os_file_info_id_equal', function()
+      it('returns false if file infos represent different files', function()
+        local file_info_1 = file_info_new()
+        local file_info_2 = file_info_new()
+        local path_1 = 'unit-test-directory/test.file'
+        local path_2 = 'unit-test-directory/test_2.file'
+        assert.is_true((fs.os_get_file_info(path_1, file_info_1)))
+        assert.is_true((fs.os_get_file_info(path_2, file_info_2)))
+        assert.is_false((fs.os_file_info_id_equal(file_info_1, file_info_2)))
       end)
 
-      describe('os_get_file_id', function()
-        it('returns false if given an non-existing file', function()
-          local file_id = file_id_new()
-          assert.is_false((fs.os_get_file_id('/non-existent', file_id)))
-        end)
-
-        it('returns true if given an existing file and fills file_id', function()
-          local file_id = file_id_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_id(path, file_id)))
-          assert.is_true(0 < file_id[0].inode)
-          assert.is_true(0 < file_id[0].device_id)
-        end)
+      it('returns true if file infos represent the same file', function()
+        local file_info_1 = file_info_new()
+        local file_info_2 = file_info_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_info(path, file_info_1)))
+        assert.is_true((fs.os_get_file_info(path, file_info_2)))
+        assert.is_true((fs.os_file_info_id_equal(file_info_1, file_info_2)))
       end)
 
-      describe('os_file_id_equal', function()
-        it('returns true if two FileIDs are equal', function()
-          local file_id = file_id_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_id(path, file_id)))
-          assert.is_true((fs.os_file_id_equal(file_id, file_id)))
-        end)
+      it('returns true if file infos represent the same file (symlink)', function()
+        local file_info_1 = file_info_new()
+        local file_info_2 = file_info_new()
+        local path_1 = 'unit-test-directory/test.file'
+        local path_2 = 'unit-test-directory/test_link.file'
+        assert.is_true((fs.os_get_file_info(path_1, file_info_1)))
+        assert.is_true((fs.os_get_file_info(path_2, file_info_2)))
+        assert.is_true((fs.os_file_info_id_equal(file_info_1, file_info_2)))
+      end)
+    end)
 
-        it('returns false if two FileIDs are not equal', function()
-          local file_id_1 = file_id_new()
-          local file_id_2 = file_id_new()
-          local path_1 = 'unit-test-directory/test.file'
-          local path_2 = 'unit-test-directory/test_2.file'
-          assert.is_true((fs.os_get_file_id(path_1, file_id_1)))
-          assert.is_true((fs.os_get_file_id(path_2, file_id_2)))
-          assert.is_false((fs.os_file_id_equal(file_id_1, file_id_2)))
-        end)
+    describe('os_file_info_get_id', function()
+      it('extracts ino/dev from file_info into file_id', function()
+        local file_info = file_info_new()
+        local file_id = file_id_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_info(path, file_info)))
+        fs.os_file_info_get_id(file_info, file_id)
+        eq(file_info[0].stat.st_ino, file_id[0].inode)
+        eq(file_info[0].stat.st_dev, file_id[0].device_id)
+      end)
+    end)
+
+    describe('os_file_info_get_inode', function()
+      it('returns the inode from file_info', function()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_info(path, file_info)))
+        local inode = fs.os_file_info_get_inode(file_info)
+        eq(file_info[0].stat.st_ino, inode)
+      end)
+    end)
+
+    describe('os_get_file_id', function()
+      it('returns false if given an non-existing file', function()
+        local file_id = file_id_new()
+        assert.is_false((fs.os_get_file_id('/non-existent', file_id)))
       end)
 
-      describe('os_file_id_equal_file_info', function()
-        it('returns true if file_id and file_info represent the same file', function()
-          local file_id = file_id_new()
-          local file_info = file_info_new()
-          local path = 'unit-test-directory/test.file'
-          assert.is_true((fs.os_get_file_id(path, file_id)))
-          assert.is_true((fs.os_get_file_info(path, file_info)))
-          assert.is_true((fs.os_file_id_equal_file_info(file_id, file_info)))
-        end)
+      it('returns true if given an existing file and fills file_id', function()
+        local file_id = file_id_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_id(path, file_id)))
+        assert.is_true(0 < file_id[0].inode)
+        assert.is_true(0 < file_id[0].device_id)
+      end)
+    end)
 
-        it('returns false if file_id and file_info represent different files', function()
-          local file_id = file_id_new()
-          local file_info = file_info_new()
-          local path_1 = 'unit-test-directory/test.file'
-          local path_2 = 'unit-test-directory/test_2.file'
-          assert.is_true((fs.os_get_file_id(path_1, file_id)))
-          assert.is_true((fs.os_get_file_info(path_2, file_info)))
-          assert.is_false((fs.os_file_id_equal_file_info(file_id, file_info)))
-        end)
+    describe('os_file_id_equal', function()
+      it('returns true if two FileIDs are equal', function()
+        local file_id = file_id_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_id(path, file_id)))
+        assert.is_true((fs.os_file_id_equal(file_id, file_id)))
+      end)
+
+      it('returns false if two FileIDs are not equal', function()
+        local file_id_1 = file_id_new()
+        local file_id_2 = file_id_new()
+        local path_1 = 'unit-test-directory/test.file'
+        local path_2 = 'unit-test-directory/test_2.file'
+        assert.is_true((fs.os_get_file_id(path_1, file_id_1)))
+        assert.is_true((fs.os_get_file_id(path_2, file_id_2)))
+        assert.is_false((fs.os_file_id_equal(file_id_1, file_id_2)))
+      end)
+    end)
+
+    describe('os_file_id_equal_file_info', function()
+      it('returns true if file_id and file_info represent the same file', function()
+        local file_id = file_id_new()
+        local file_info = file_info_new()
+        local path = 'unit-test-directory/test.file'
+        assert.is_true((fs.os_get_file_id(path, file_id)))
+        assert.is_true((fs.os_get_file_info(path, file_info)))
+        assert.is_true((fs.os_file_id_equal_file_info(file_id, file_info)))
+      end)
+
+      it('returns false if file_id and file_info represent different files', function()
+        local file_id = file_id_new()
+        local file_info = file_info_new()
+        local path_1 = 'unit-test-directory/test.file'
+        local path_2 = 'unit-test-directory/test_2.file'
+        assert.is_true((fs.os_get_file_id(path_1, file_id)))
+        assert.is_true((fs.os_get_file_info(path_2, file_info)))
+        assert.is_false((fs.os_file_id_equal_file_info(file_id, file_info)))
       end)
     end)
   end)
