@@ -150,31 +150,21 @@ if(USE_BUNDLED_LUAROCKS)
     add_dependencies(luarocks luajit)
   endif()
 
-  add_custom_command(OUTPUT ${DEPS_BIN_DIR}/moon ${DEPS_BIN_DIR}/moonc
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install moonscript
-    DEPENDS luarocks)
-  add_custom_target(moonscript
-    DEPENDS ${DEPS_BIN_DIR}/moon ${DEPS_BIN_DIR}/moonc)
-
-  # Busted doesn't depend on luarocks, but luarocks is unhappy to have two
-  # instances running in parallel.  So we depend on moonscript to force it
-  # to be serialized.
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install busted 1.10.0
-    DEPENDS moonscript)
+    DEPENDS luarocks)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
 
-  # Like busted dependency on moonscript, we add a dependency on busted
-  # to serialize the install
+  # lua-cmsgpack doesn't depend on busted, but luarocks is unhappy to have two
+  # instances running in parallel.  So we depend on busted to force it
+  # to be serialized.
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lua-cmsgpack
     DEPENDS busted)
   add_custom_target(lua-cmsgpack
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack)
 
-  # lpeg is a moonscript dependency, but since it is also required for
-  # normal compilation(even without unit testing) we better add it explicitly.
   # Like before, depend on cmsgpack to ensure serialization of install commands
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
     COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lpeg
@@ -182,7 +172,7 @@ if(USE_BUNDLED_LUAROCKS)
   add_custom_target(lpeg
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
 
-  list(APPEND THIRD_PARTY_DEPS moonscript busted lua-cmsgpack lpeg)
+  list(APPEND THIRD_PARTY_DEPS busted lua-cmsgpack lpeg)
 endif()
 
 add_custom_target(third-party ALL
