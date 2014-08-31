@@ -50,8 +50,8 @@ include(ExternalProject)
 set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.28.tar.gz)
 set(LIBUV_MD5 1a849ba4fc571d531482ed74bc7aabc4)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/releases/download/cpp-0.5.8/msgpack-0.5.8.tar.gz)
-set(MSGPACK_MD5 ea0bee0939d2980c0df91f0e4843ccc4)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/0335df55e1a408c0d56d43e46253c952fb8a7f04.tar.gz)
+set(MSGPACK_MD5 4c18a1625b586c0d69a0e955ce9a187f)
 
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.3.tar.gz)
 set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
@@ -92,9 +92,18 @@ if(USE_BUNDLED_MSGPACK)
       -DEXPECTED_MD5=${MSGPACK_MD5}
       -DTARGET=msgpack
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
-    CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/msgpack/configure --disable-shared
-      --with-pic --prefix=${DEPS_INSTALL_DIR} CC=${DEPS_C_COMPILER}
-    INSTALL_COMMAND ${MAKE_PRG} install)
+    CONFIGURE_COMMAND cmake ${DEPS_BUILD_DIR}/src/msgpack
+       -DMSGPACK_ENABLE_CXX=OFF
+       -DMSGPACK_BUILD_TESTS=OFF
+       -DCMAKE_INSTALL_PREFIX=${DEPS_INSTALL_DIR}
+       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+       "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} -fPIC"
+    BUILD_COMMAND ${MAKE_PRG}
+    INSTALL_COMMAND ${MAKE_PRG} install &&
+       rm ${DEPS_INSTALL_DIR}/lib/libmsgpack.so &&
+       rm ${DEPS_INSTALL_DIR}/lib/libmsgpack.so.3 &&
+       rm ${DEPS_INSTALL_DIR}/lib/libmsgpack.so.4.0.0
+       )
   list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()
 

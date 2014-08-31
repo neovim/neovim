@@ -277,9 +277,9 @@ Object msgpack_rpc_dispatch(uint64_t channel_id,
   msgpack_object method = req->via.array.ptr[2];
   uint64_t method_id = method.via.u64;
 
-  if (method.type == MSGPACK_OBJECT_RAW) {
+  if (method.type == MSGPACK_OBJECT_BIN) {
     char method_name[]]..(max_fname_len + 1)..[[];
-    xstrlcpy(method_name, method.via.raw.ptr, min(method.via.raw.size, ]] ..(max_fname_len)..[[) + 1);
+    xstrlcpy(method_name, method.via.bin.ptr, min(method.via.bin.size, ]] ..(max_fname_len)..[[) + 1);
     method_id = map_get(cstr_t, uint64_t)(rpc_method_ids, method_name);
     if (!method_id) {
       method_id = UINT64_MAX;

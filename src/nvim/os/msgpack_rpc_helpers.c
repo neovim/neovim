@@ -81,12 +81,12 @@ bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
 
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
 {
-  if (obj->type != MSGPACK_OBJECT_RAW) {
+  if (obj->type != MSGPACK_OBJECT_BIN) {
     return false;
   }
 
-  arg->data = xmemdupz(obj->via.raw.ptr, obj->via.raw.size);
-  arg->size = obj->via.raw.size;
+  arg->data = xmemdupz(obj->via.bin.ptr, obj->via.bin.size);
+  arg->size = obj->via.bin.size;
   return true;
 }
 
@@ -110,7 +110,7 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       arg->type = kObjectTypeFloat;
       return msgpack_rpc_to_float(obj, &arg->data.floating);
 
-    case MSGPACK_OBJECT_RAW:
+    case MSGPACK_OBJECT_BIN:
       arg->type = kObjectTypeString;
       return msgpack_rpc_to_string(obj, &arg->data.string);
 
@@ -200,8 +200,8 @@ void msgpack_rpc_from_float(Float result, msgpack_packer *res)
 
 void msgpack_rpc_from_string(String result, msgpack_packer *res)
 {
-  msgpack_pack_raw(res, result.size);
-  msgpack_pack_raw_body(res, result.data, result.size);
+  msgpack_pack_bin(res, result.size);
+  msgpack_pack_bin_body(res, result.data, result.size);
 }
 
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)

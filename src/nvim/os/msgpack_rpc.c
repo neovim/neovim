@@ -109,8 +109,8 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
   size_t len = strlen(msg);
 
   // error message
-  msgpack_pack_raw(res, len);
-  msgpack_pack_raw_body(res, msg, len);
+  msgpack_pack_bin(res, len);
+  msgpack_pack_bin_body(res, msg, len);
   // Nil result
   msgpack_pack_nil(res);
 }
@@ -132,8 +132,8 @@ WBuffer *serialize_request(uint64_t request_id,
     msgpack_pack_uint64(&pac, request_id);
   }
 
-  msgpack_pack_raw(&pac, method.size);
-  msgpack_pack_raw_body(&pac, method.data, method.size);
+  msgpack_pack_bin(&pac, method.size);
+  msgpack_pack_bin_body(&pac, method.data, method.size);
   msgpack_rpc_from_array(args, &pac);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
@@ -160,8 +160,8 @@ WBuffer *serialize_response(uint64_t response_id,
   if (err_msg) {
     String err = {.size = strlen(err_msg), .data = err_msg};
     // error message
-    msgpack_pack_raw(&pac, err.size);
-    msgpack_pack_raw_body(&pac, err.data, err.size);
+    msgpack_pack_bin(&pac, err.size);
+    msgpack_pack_bin_body(&pac, err.data, err.size);
     // Nil result
     msgpack_pack_nil(&pac);
   } else {
@@ -195,8 +195,8 @@ WBuffer *serialize_metadata(uint64_t id,
   // The result is the [channel_id, metadata] array
   msgpack_pack_array(&pac, 2);
   msgpack_pack_uint64(&pac, channel_id);
-  msgpack_pack_raw(&pac, msgpack_metadata_size);
-  msgpack_pack_raw_body(&pac, msgpack_metadata, msgpack_metadata_size);
+  msgpack_pack_bin(&pac, msgpack_metadata_size);
+  msgpack_pack_bin_body(&pac, msgpack_metadata, msgpack_metadata_size);
   WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
                                    sbuffer->size,
                                    1,
@@ -235,7 +235,7 @@ static char *msgpack_rpc_validate(uint64_t *response_id, msgpack_object *req)
   }
 
   if (req->via.array.ptr[2].type != MSGPACK_OBJECT_POSITIVE_INTEGER
-      && req->via.array.ptr[2].type != MSGPACK_OBJECT_RAW) {
+      && req->via.array.ptr[2].type != MSGPACK_OBJECT_BIN) {
     return "Method must be a positive integer or a string";
   }
 

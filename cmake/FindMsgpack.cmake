@@ -24,13 +24,13 @@ find_path(MSGPACK_INCLUDE_DIR msgpack.h
   HINTS ${PC_MSGPACK_INCLUDEDIR} ${PC_MSGPACK_INCLUDE_DIRS}
   ${LIMIT_SEARCH})
 
-# If we're asked to use static linkage, add libmsgpackc.a as a preferred library name.
+# If we're asked to use static linkage, add libmsgpack.a as a preferred library name.
 if(MSGPACK_USE_STATIC)
   list(APPEND MSGPACK_NAMES
-    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpackc${CMAKE_STATIC_LIBRARY_SUFFIX}")
+    "${CMAKE_STATIC_LIBRARY_PREFIX}msgpack${CMAKE_STATIC_LIBRARY_SUFFIX}")
 endif()
 
-list(APPEND MSGPACK_NAMES msgpackc)
+list(APPEND MSGPACK_NAMES msgpack)
 
 find_library(MSGPACK_LIBRARY NAMES ${MSGPACK_NAMES}
   HINTS ${PC_MSGPACK_LIBDIR} ${PC_MSGPACK_LIBRARY_DIRS}
