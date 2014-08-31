@@ -215,7 +215,6 @@ end
 -- uncomment the following lines (and comment the return) for standalone
 -- operation (very handy for debugging)
 local function standalone(...)
-  require "moonscript"
   Preprocess = require("preprocess")
   Preprocess.add_to_include_path('./../../src')
   Preprocess.add_to_include_path('./../../build/include')
