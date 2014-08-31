@@ -194,8 +194,7 @@ bool channel_send_call(uint64_t id,
     char buf[256];
     snprintf(buf,
         sizeof(buf),
-        "Channel %" PRIu64 " was closed due to a high stack depth "
-        "while processing a RPC call",
+        "Channel %" PRIu64 " crossed maximum stack depth",
         channel->id);
     *result = STRING_OBJ(cstr_to_string(buf));
     msgpack_rpc_free_array(args);
@@ -222,14 +221,6 @@ bool channel_send_call(uint64_t id,
       // Continue running if ...
       channel->enabled &&  // the channel is still enabled
       kv_size(channel->call_stack) >= size);  // the call didn't return
-
-  if (!(kv_size(channel->call_stack)
-        || channel->enabled
-        || channel->rpc_call_level)) {
-      // Close the channel if it has been disabled and we have not been called
-      // by `parse_msgpack`(It would be unsafe to close the channel otherwise)
-      close_channel(channel);
-  }
 
   *errored = frame.errored;
   *result = frame.result;
