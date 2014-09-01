@@ -389,19 +389,21 @@ char_u *path_join(const char_u *p1, const char_u *p2)
 /// @param[in]  base The path appended to.
 /// @param[in]  ext  The path to append.
 ///
-/// @remark buf may be smaller than MAXPATHL only if 
-///         `strlen(base + ext + PATHSEPSTR)` is known to be smaller.
-///
 /// @returns The number of bytes written to buf on success.
 /// @returns Zero if truncation occurred.
+///
+/// @remark buf may be smaller than MAXPATHL only if 
+///         `strlen(base + ext + PATHSEPSTR)` is known to be smaller.
 size_t path_buf_join(char_u * restrict buf,
                      const char_u *base,
                      const char_u *ext)
   FUNC_ATTR_NONNULL_ALL
 {
-  size_t len = 0;
-  len += STRLCPY(buf, base, MAXPATHL);
-  len  = path_add_sep_impl(buf, buf + len, MAXPATHL);
+  size_t len = path_copy(buf, base);
+  // If path_copy returned 0, either `base = ""` (OK) or truncation occurred.
+  if (len == 0 && *base != NUL) {
+    return 0;
+  }
   len += STRLCPY(buf + len, ext, MAXPATHL - len);
   return path_len_check(len);
 }
