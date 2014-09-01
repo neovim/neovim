@@ -5242,7 +5242,6 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
   m->id = id;
   m->priority = prio;
   m->pattern = pat == NULL ? NULL: vim_strsave(pat);
-  m->pos.cur = 0;
   m->hlg_id = hlg_id;
   m->match.regprog = regprog;
   m->match.rmm_ic = FALSE;
@@ -5256,19 +5255,15 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
     listitem_T	*li;
     int		i;
 
-    for (i = 0, li = pos_list->lv_first; i < MAXPOSMATCH;
+    for (i = 0, li = pos_list->lv_first; li != NULL && i < MAXPOSMATCH;
         i++, li = li->li_next) {
-      linenr_T	lnum = 0;
-      colnr_T	col = 0;
-      int		len = 1;
-      list_T	*subl;
-      listitem_T	*subli;
-      int		error = FALSE;
+      linenr_T	  lnum = 0;
+      colnr_T	  col = 0;
+      int	  len = 1;
+      list_T	  *subl;
+      listitem_T  *subli;
+      int	  error = false;
 
-      if (li == NULL) {
-        m->pos.pos[i].lnum = 0;
-        break;
-      }
       if (li->li_tv.v_type == VAR_LIST) {
         subl = li->li_tv.vval.v_list;
         if (subl == NULL) {
@@ -5279,18 +5274,18 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
           goto fail;
         }
         lnum = get_tv_number_chk(&subli->li_tv, &error);
-        if (error == TRUE) {
+        if (error == true) {
           goto fail;
         }
-        m->pos.pos[i].lnum = lnum;
         if (lnum == 0) {
           --i;
           continue;
         }
+        m->pos.pos[i].lnum = lnum;
         subli = subli->li_next;
         if (subli != NULL) {
           col = get_tv_number_chk(&subli->li_tv, &error);
-          if (error == TRUE)
+          if (error == true)
             goto fail;
           subli = subli->li_next;
           if (subli != NULL) {
@@ -5303,8 +5298,10 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
         m->pos.pos[i].col = col;
         m->pos.pos[i].len = len;
       } else if (li->li_tv.v_type == VAR_NUMBER) {
-        if (li->li_tv.vval.v_number == 0)
+        if (li->li_tv.vval.v_number == 0) {
+          --i;
           continue;
+        }
         m->pos.pos[i].lnum = li->li_tv.vval.v_number;
         m->pos.pos[i].col = 0;
         m->pos.pos[i].len = 0;
