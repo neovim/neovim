@@ -5315,8 +5315,8 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
       if (toplnum == 0 || lnum < toplnum) {
         toplnum = lnum;
       }
-      if (botlnum == 0 || lnum > botlnum) {
-        botlnum = lnum;
+      if (botlnum == 0 || lnum >= botlnum) {
+        botlnum = lnum + 1;
       }
     }
 
