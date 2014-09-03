@@ -60,8 +60,7 @@ for i = 1, #arg - 1 do
   local tmp = grammar:match(input:read('*all'))
   for i = 1, #tmp do
     api.functions[#api.functions + 1] = tmp[i]
-    local fn_id = #api.functions
-    local fn = api.functions[fn_id]
+    local fn = tmp[i]
     if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
       -- this function should receive the channel id
       fn.receives_channel_id = true
@@ -75,8 +74,6 @@ for i = 1, #arg - 1 do
       -- for specifying errors
       fn.parameters[#fn.parameters] = nil
     end
-    -- assign a unique integer id for each api function
-    fn.id = fn_id
   end
   input:close()
 end
@@ -221,17 +218,6 @@ for i = 1, #api.functions do
   end
 end
 
--- Generate the table of handler functions indexed by method id
-output:write([[
-static const rpc_method_handler_fn rpc_method_handlers[] = {
-  [0] = (rpc_method_handler_fn)NULL]])
-
-for i = 1, #api.functions do
-  local fn = api.functions[i]
-  output:write(',\n  ['..i..'] = handle_'..fn.name..'')
-end
-output:write('\n};\n\n')
-
 -- Generate a function that initializes method names with handler functions
 output:write([[
 static Map(String, rpc_method_handler_fn) *methods = NULL;
@@ -279,7 +265,6 @@ Object msgpack_rpc_dispatch(uint64_t channel_id,
                             Error *error)
 {
   msgpack_object method = req->via.array.ptr[2];
-  uint64_t method_id = method.via.u64;
   rpc_method_handler_fn handler = NULL;
 
   if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
@@ -288,8 +273,6 @@ output:write('    handler = map_get(String, rpc_method_handler_fn)')
 output:write('(methods, (String){.data=(char *)method.via.bin.ptr,')
 output:write('.size=min(method.via.bin.size, '..max_fname_len..')});\n')
 output:write([[
-  } else if (method_id <= ]]..#api.functions..[[) {
-    handler = rpc_method_handlers[method_id];
   }
 
   if (!handler) {
