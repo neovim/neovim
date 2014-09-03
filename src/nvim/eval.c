@@ -13328,7 +13328,6 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   int regname;
   char_u      *strregname;
   char_u      *stropt;
-  char_u      *strval;
   int append;
   char_u yank_type;
   long block_len;
@@ -13345,8 +13344,6 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
   regname = *strregname;
   if (regname == 0 || regname == '@')
     regname = '"';
-  else if (regname == '=')
-    return;
 
   if (argvars[2].v_type != VAR_UNKNOWN) {
     stropt = get_tv_string_chk(&argvars[2]);
@@ -13374,10 +13371,32 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
       }
   }
 
-  strval = get_tv_string_chk(&argvars[1]);
-  if (strval != NULL)
-    write_reg_contents_ex(regname, strval, -1,
-        append, yank_type, block_len);
+  if (argvars[1].v_type == VAR_LIST) {
+    int len = argvars[1].vval.v_list->lv_len;
+    char_u **lstval = xmalloc(sizeof(char_u *) * (len + 1));
+    char_u **curval = lstval;
+
+    for (listitem_T *li = argvars[1].vval.v_list->lv_first;
+         li != NULL;
+         li = li->li_next) {
+      char_u *strval = get_tv_string_chk(&li->li_tv);
+      if (strval == NULL) {
+        free(lstval);
+        return;
+      }
+      *curval++ = strval;
+    }
+    *curval++ = NULL;
+
+    write_reg_contents_lst(regname, lstval, -1, append, yank_type, block_len);
+    free(lstval);
+  } else {
+    char_u *strval = get_tv_string_chk(&argvars[1]);
+    if (strval == NULL) {
+      return;
+    }
+    write_reg_contents_ex(regname, strval, -1, append, yank_type, block_len);
+  }
   rettv->vval.v_number = 0;
 }
 
