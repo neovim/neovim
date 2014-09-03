@@ -245,22 +245,24 @@ output:write('\n};\n\n')
 
 -- Generate a function that initializes method names with handler functions
 output:write([[
-static Map(cstr_t, uint64_t) *rpc_method_ids = NULL;
+static Map(String, rpc_method_handler_fn) *methods = NULL;
 
 void msgpack_rpc_init(void)
 {
-  rpc_method_ids = map_new(cstr_t, uint64_t)();
+  methods = map_new(String, rpc_method_handler_fn)();
 
 ]])
 
--- Msgpack strings must be copied to a 0-terminated temporary buffer before
--- searching in the map, so we keep track of the maximum method name length in
--- order to create the smallest possible buffer for xstrlcpy
+-- Keep track of the maximum method name length in order to avoid walking
+-- strings longer than that when searching for a method handler
 local max_fname_len = 0
 for i = 1, #api.functions do
   local fn = api.functions[i]
-  output:write('  map_put(cstr_t, uint64_t)(rpc_method_ids, "'
-               ..fn.name..'", '..i..');\n')
+  output:write('  map_put(String, rpc_method_handler_fn)(methods, '..
+               '(String) {.data = "'..fn.name..'", '..
+               '.size = sizeof("'..fn.name..'") - 1}, handle_'..
+               fn.name..');\n')
+
   if #fn.name > max_fname_len then
     max_fname_len = #fn.name
   end
@@ -275,22 +277,24 @@ Object msgpack_rpc_dispatch(uint64_t channel_id,
 {
   msgpack_object method = req->via.array.ptr[2];
   uint64_t method_id = method.via.u64;
+  rpc_method_handler_fn handler = NULL;
 
-  if (method.type == MSGPACK_OBJECT_BIN) {
-    char method_name[]]..(max_fname_len + 1)..[[];
-    xstrlcpy(method_name, method.via.bin.ptr, min(method.via.bin.size, ]] ..(max_fname_len)..[[) + 1);
-    method_id = map_get(cstr_t, uint64_t)(rpc_method_ids, method_name);
-    if (!method_id) {
-      method_id = UINT64_MAX;
-    }
-  }
+  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
 ]])
-output:write('\n  // method_id=0 is specially handled')
-output:write('\n  assert(method_id > 0);')
-output:write('\n');
-output:write('\n  rpc_method_handler_fn handler = (method_id <= '..#api.functions..') ?')
-output:write('\n    rpc_method_handlers[method_id] : handle_missing_method;')
-output:write('\n  return handler(channel_id, req, error);')
-output:write('\n}\n')
+output:write('    handler = map_get(String, rpc_method_handler_fn)')
+output:write('(methods, (String){.data=(char *)method.via.bin.ptr,')
+output:write('.size=min(method.via.bin.size, '..max_fname_len..')});\n')
+output:write([[
+  } else if (method_id <= ]]..#api.functions..[[) {
+    handler = rpc_method_handlers[method_id];
+  }
+
+  if (!handler) {
+    handler = handle_missing_method;
+  }
+
+  return handler(channel_id, req, error);
+}
+]])
 
 output:close()

@@ -235,7 +235,8 @@ static char *msgpack_rpc_validate(uint64_t *response_id, msgpack_object *req)
   }
 
   if (req->via.array.ptr[2].type != MSGPACK_OBJECT_POSITIVE_INTEGER
-      && req->via.array.ptr[2].type != MSGPACK_OBJECT_BIN) {
+      && req->via.array.ptr[2].type != MSGPACK_OBJECT_BIN
+      && req->via.array.ptr[2].type != MSGPACK_OBJECT_STR) {
     return "Method must be a positive integer or a string";
   }
 

@@ -81,12 +81,13 @@ bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
 
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
 {
-  if (obj->type != MSGPACK_OBJECT_BIN) {
+  if (obj->type == MSGPACK_OBJECT_BIN || obj->type == MSGPACK_OBJECT_STR) {
+    arg->data = xmemdupz(obj->via.bin.ptr, obj->via.bin.size);
+    arg->size = obj->via.bin.size;
+  } else {
     return false;
   }
 
-  arg->data = xmemdupz(obj->via.bin.ptr, obj->via.bin.size);
-  arg->size = obj->via.bin.size;
   return true;
 }
 
@@ -111,6 +112,7 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       return msgpack_rpc_to_float(obj, &arg->data.floating);
 
     case MSGPACK_OBJECT_BIN:
+    case MSGPACK_OBJECT_STR:
       arg->type = kObjectTypeString;
       return msgpack_rpc_to_string(obj, &arg->data.string);
 
