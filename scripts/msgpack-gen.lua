@@ -123,6 +123,7 @@ end
 output:write([[
 };
 const unsigned int msgpack_metadata_size = sizeof(msgpack_metadata);
+msgpack_unpacked msgpack_unpacked_metadata;
 
 ]])
 
@@ -237,6 +238,14 @@ static Map(String, rpc_method_handler_fn) *methods = NULL;
 
 void msgpack_rpc_init(void)
 {
+  msgpack_unpacked_init(&msgpack_unpacked_metadata);
+  if (msgpack_unpack_next(&msgpack_unpacked_metadata,
+                          (const char *)msgpack_metadata,
+                          msgpack_metadata_size,
+                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+    abort();
+  }
+
   methods = map_new(String, rpc_method_handler_fn)();
 
 ]])
@@ -255,6 +264,12 @@ for i = 1, #api.functions do
     max_fname_len = #fn.name
   end
 end
+
+local metadata_fn = 'get_api_metadata'
+output:write('  map_put(String, rpc_method_handler_fn)(methods, '..
+             '(String) {.data = "'..metadata_fn..'", '..
+             '.size = sizeof("'..metadata_fn..'") - 1}, msgpack_rpc_handle_'..
+             metadata_fn..');\n')
 
 output:write('\n}\n\n')
 
