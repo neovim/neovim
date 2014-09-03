@@ -22,8 +22,10 @@
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/message.h"
+#include "nvim/term.h"
 #include "nvim/map.h"
 #include "nvim/log.h"
+#include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
 
 #define CHANNEL_BUFFER_SIZE 0xffff
@@ -331,11 +333,10 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  UnpackResult result;
+  msgpack_unpack_return result;
 
   // Deserialize everything we can.
-  while ((result = msgpack_rpc_unpack(channel->unpacker, &unpacked))
-      == kUnpackResultOk) {
+  while ((result = msgpack_unpacker_next(channel->unpacker, &unpacked))) {
     if (kv_size(channel->call_stack) && is_rpc_response(&unpacked.data)) {
       if (is_valid_rpc_response(&unpacked.data, channel)) {
         call_stack_pop(&unpacked.data, channel);
@@ -362,7 +363,13 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     }
   }
 
-  if (result == kUnpackResultFail) {
+  if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
+    OUT_STR(e_outofmem);
+    out_char('\n');
+    preserve_exit();
+  }
+
+  if (result == MSGPACK_UNPACK_PARSE_ERROR) {
     // See src/msgpack/unpack_template.h in msgpack source tree for
     // causes for this error(search for 'goto _failed')
     //

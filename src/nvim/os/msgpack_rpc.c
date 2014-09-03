@@ -57,42 +57,6 @@ WBuffer *msgpack_rpc_call(uint64_t channel_id,
   return serialize_response(response_id, NULL, rv, sbuffer);
 }
 
-/// Try to unpack a msgpack document from the data in the unpacker buffer. This
-/// function is a replacement to msgpack.h `msgpack_unpack_next` that lets
-/// the called know if the unpacking failed due to bad input or due to missing
-/// data.
-///
-/// @param unpacker The unpacker containing the parse buffer
-/// @param result The result which will contain the parsed object
-/// @return kUnpackResultOk      : An object was parsed
-///         kUnpackResultFail    : Got bad input
-///         kUnpackResultNeedMore: Need more data
-UnpackResult msgpack_rpc_unpack(msgpack_unpacker* unpacker,
-                                msgpack_unpacked* result)
-  FUNC_ATTR_NONNULL_ALL
-{
-  if (result->zone != NULL) {
-    msgpack_zone_free(result->zone);
-  }
-
-  int res = msgpack_unpacker_execute(unpacker);
-
-  if (res > 0) {
-    result->zone = msgpack_unpacker_release_zone(unpacker);
-    result->data = msgpack_unpacker_data(unpacker);
-    msgpack_unpacker_reset(unpacker);
-    return kUnpackResultOk;
-  }
-
-  if (res < 0) {
-    // Since we couldn't parse it, destroy the data consumed so far
-    msgpack_unpacker_reset(unpacker);
-    return kUnpackResultFail;
-  }
-
-  return kUnpackResultNeedMore;
-}
-
 /// Finishes the msgpack-rpc call with an error message.
 ///
 /// @param msg The error message
