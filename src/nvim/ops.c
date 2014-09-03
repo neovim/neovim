@@ -4656,7 +4656,9 @@ char_u get_reg_type(int regname, long *reglen)
 
 /// When `flags` has `kGRegList` return a list with text `s`.
 /// Otherwise just return `s`.
-static char_u *get_reg_wrap_one_line(char_u *s, int flags)
+///
+/// Returns a void * for use in get_reg_contents().
+static void *get_reg_wrap_one_line(char_u *s, int flags)
 {
   if (!(flags & kGRegList)) {
     return s;
@@ -4664,7 +4666,7 @@ static char_u *get_reg_wrap_one_line(char_u *s, int flags)
   list_T *list = list_alloc();
   list_append_string(list, NULL, -1);
   list->lv_first->li_tv.vval.v_string = s;
-  return (char_u *)list;
+  return list;
 }
 
 /// Gets the contents of a register.
@@ -4674,10 +4676,9 @@ static char_u *get_reg_wrap_one_line(char_u *s, int flags)
 /// @param flags    see @ref GRegFlags
 ///
 /// @returns The contents of the register as an allocated string.
-/// @returns A linked list cast to a string when given @ref kGRegList.
+/// @returns A linked list when `flags` contains @ref kGRegList.
 /// @returns NULL for error.
-// TODO(SplinterOfChaos): Maybe this should return a void*.
-char_u *get_reg_contents(int regname, int flags)
+void *get_reg_contents(int regname, int flags)
 {
   long i;
 
@@ -4722,7 +4723,7 @@ char_u *get_reg_contents(int regname, int flags)
       list_append_string(list, y_current->y_array[i], -1);
     }
 
-    return (char_u *) list;
+    return list;
   }
 
   /*

@@ -9559,8 +9559,7 @@ static void f_getreg(typval_T *argvars, typval_T *rettv)
   if (return_list) {
     rettv->v_type = VAR_LIST;
     rettv->vval.v_list = 
-      (list_T *)get_reg_contents(regname,
-                                 (arg2 ? kGRegExprSrc : 0) | kGRegList);
+      get_reg_contents(regname, (arg2 ? kGRegExprSrc : 0) | kGRegList);
   } else {
     rettv->v_type = VAR_STRING;
     rettv->vval.v_string = get_reg_contents(regname, arg2 ? kGRegExprSrc : 0);
