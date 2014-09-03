@@ -115,6 +115,16 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
   msgpack_pack_nil(res);
 }
 
+/// Handler executed when an invalid method name is passed
+Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
+                                         msgpack_object *req,
+                                         Error *error)
+{
+  snprintf(error->msg, sizeof(error->msg), "Invalid method name");
+  error->set = true;
+  return NIL;
+}
+
 /// Serializes a msgpack-rpc request or notification(id == 0)
 WBuffer *serialize_request(uint64_t request_id,
                            String method,

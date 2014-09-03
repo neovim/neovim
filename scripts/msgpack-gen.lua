@@ -220,18 +220,6 @@ for i = 1, #api.functions do
   end
 end
 
-output:write([[
-static Object handle_missing_method(uint64_t channel_id,
-                                    msgpack_object *req,
-                                    Error *error)
-{
-  snprintf(error->msg, sizeof(error->msg), "Invalid function id");
-  error->set = true;
-  return NIL;
-}
-
-]])
-
 -- Generate the table of handler functions indexed by method id
 output:write([[
 static const rpc_method_handler_fn rpc_method_handlers[] = {
@@ -290,7 +278,7 @@ output:write([[
   }
 
   if (!handler) {
-    handler = handle_missing_method;
+    handler = msgpack_rpc_handle_missing_method;
   }
 
   return handler(channel_id, req, error);
