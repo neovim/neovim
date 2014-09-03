@@ -4654,30 +4654,42 @@ char_u get_reg_type(int regname, long *reglen)
   return MAUTO;
 }
 
-/*
- * Return the contents of a register as a single allocated string.
- * Used for "@r" in expressions and for getreg().
- * Returns NULL for error.
- */
-char_u *
-get_reg_contents (
-    int regname,
-    int allowexpr,                  /* allow "=" register */
-    int expr_src                   /* get expression for "=" register */
-)
+/// When `flags` has `kGRegList` return a list with text `s`.
+/// Otherwise just return `s`.
+static char_u *get_reg_wrap_one_line(char_u *s, int flags)
+{
+  if (!(flags & kGRegList)) {
+    return s;
+  }
+  list_T *list = list_alloc();
+  list_append_string(list, NULL, -1);
+  list->lv_first->li_tv.vval.v_string = s;
+  return (char_u *)list;
+}
+
+/// Gets the contents of a register.
+/// @remark Used for `@r` in expressions and for `getreg()`.
+///
+/// @param regname  The register.
+/// @param flags    see @ref GRegFlags
+///
+/// @returns The contents of the register as an allocated string.
+/// @returns A linked list cast to a string when given @ref kGRegList.
+/// @returns NULL for error.
+// TODO(SplinterOfChaos): Maybe this should return a void*.
+char_u *get_reg_contents(int regname, int flags)
 {
   long i;
-  char_u      *retval;
-  int allocated;
 
-  /* Don't allow using an expression register inside an expression */
+  // Don't allow using an expression register inside an expression.
   if (regname == '=') {
-    if (allowexpr) {
-      if (expr_src)
-        return get_expr_line_src();
-      return get_expr_line();
+    if (flags & kGRegNoExpr) {
+      return NULL;
     }
-    return NULL;
+    if (flags & kGRegExprSrc) {
+      return get_reg_wrap_one_line(get_expr_line_src(), flags);
+    }
+    return get_reg_wrap_one_line(get_expr_line(), flags);
   }
 
   if (regname == '@')       /* "@@" is used for unnamed register */
@@ -4689,17 +4701,29 @@ get_reg_contents (
 
   get_clipboard(regname);
 
+  char_u *retval;
+  int allocated;
   if (get_spec_reg(regname, &retval, &allocated, FALSE)) {
     if (retval == NULL)
       return NULL;
-    if (!allocated)
-      retval = vim_strsave(retval);
-    return retval;
+    if (allocated) {
+      return get_reg_wrap_one_line(retval, flags);
+    }
+    return get_reg_wrap_one_line(vim_strsave(retval), flags);
   }
 
   get_yank_register(regname, FALSE);
   if (y_current->y_array == NULL)
     return NULL;
+
+  if (flags & kGRegList) {
+    list_T *list = list_alloc();
+    for (int i = 0; i < y_current->y_size; ++i) {
+      list_append_string(list, y_current->y_array[i], -1);
+    }
+
+    return (char_u *) list;
+  }
 
   /*
    * Compute length of resulting string.

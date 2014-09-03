@@ -1835,7 +1835,7 @@ ex_let_one (
 
       p = get_tv_string_chk(tv);
       if (p != NULL && op != NULL && *op == '.') {
-        s = get_reg_contents(*arg == '@' ? '"' : *arg, TRUE, TRUE);
+        s = get_reg_contents(*arg == '@' ? '"' : *arg, kGRegExprSrc);
         if (s != NULL) {
           p = ptofree = concat_str(s, p);
           free(s);
@@ -4076,7 +4076,7 @@ eval7 (
   case '@':   ++*arg;
     if (evaluate) {
       rettv->v_type = VAR_STRING;
-      rettv->vval.v_string = get_reg_contents(**arg, TRUE, TRUE);
+      rettv->vval.v_string = get_reg_contents(**arg, kGRegExprSrc);
     }
     if (**arg != NUL)
       ++*arg;
@@ -6466,7 +6466,7 @@ static struct fst {
   {"getpid",          0, 0, f_getpid},
   {"getpos",          1, 1, f_getpos},
   {"getqflist",       0, 0, f_getqflist},
-  {"getreg",          0, 2, f_getreg},
+  {"getreg",          0, 3, f_getreg},
   {"getregtype",      0, 1, f_getregtype},
   {"gettabvar",       2, 3, f_gettabvar},
   {"gettabwinvar",    3, 4, f_gettabwinvar},
@@ -9526,30 +9526,45 @@ static void f_getqflist(typval_T *argvars, typval_T *rettv)
   (void)get_errorlist(wp, rettv->vval.v_list);
 }
 
-/*
- * "getreg()" function
- */
+/// "getreg()" function
 static void f_getreg(typval_T *argvars, typval_T *rettv)
 {
   char_u      *strregname;
   int regname;
-  int arg2 = FALSE;
-  int error = FALSE;
+  int arg2 = false;
+  bool return_list = false;
+  int error = false;
 
   if (argvars[0].v_type != VAR_UNKNOWN) {
     strregname = get_tv_string_chk(&argvars[0]);
     error = strregname == NULL;
-    if (argvars[1].v_type != VAR_UNKNOWN)
+    if (argvars[1].v_type != VAR_UNKNOWN) {
       arg2 = get_tv_number_chk(&argvars[1], &error);
-  } else
+      if (!error && argvars[2].v_type != VAR_UNKNOWN) {
+        return_list = get_tv_number_chk(&argvars[2], &error);
+      }
+    }
+  } else {
     strregname = vimvars[VV_REG].vv_str;
+  }
+
+  if (error) {
+    return;
+  }
+
   regname = (strregname == NULL ? '"' : *strregname);
   if (regname == 0)
     regname = '"';
 
-  rettv->v_type = VAR_STRING;
-  rettv->vval.v_string = error ? NULL :
-                         get_reg_contents(regname, TRUE, arg2);
+  if (return_list) {
+    rettv->v_type = VAR_LIST;
+    rettv->vval.v_list = 
+      (list_T *)get_reg_contents(regname,
+                                 (arg2 ? kGRegExprSrc : 0) | kGRegList);
+  } else {
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = get_reg_contents(regname, arg2 ? kGRegExprSrc : 0);
+  }
 }
 
 /*
