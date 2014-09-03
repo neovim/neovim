@@ -93,6 +93,7 @@ output:write([[
 
 #include "nvim/map.h"
 #include "nvim/log.h"
+#include "nvim/vim.h"
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/api/private/helpers.h"
@@ -268,8 +269,6 @@ end
 output:write('\n}\n\n')
 
 output:write([[
-#define min(X, Y) (X < Y ? X : Y)
-
 Object msgpack_rpc_dispatch(uint64_t channel_id,
                             msgpack_object *req,
                             Error *error)

@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "nvim/map.h"
 #include "nvim/map_defs.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+#include "nvim/os/msgpack_rpc.h"
 
 #include "nvim/lib/khash.h"
 
@@ -87,7 +89,23 @@
     return rv;                                                                \
   }
 
+static inline khint_t String_hash(String s)
+{
+  khint_t h = 0;
+  for (size_t i = 0; i < s.size && s.data[i]; i++) {
+    h = (h << 5) - h + (uint8_t)s.data[i];
+  }
+  return h;
+}
+
+static inline bool String_eq(String a, String b)
+{
+  return strncmp(a.data, b.data, min(a.size, b.size)) == 0;
+}
+
+
 MAP_IMPL(cstr_t, uint64_t, DEFAULT_INITIALIZER)
 MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
+MAP_IMPL(String, rpc_method_handler_fn, DEFAULT_INITIALIZER)
