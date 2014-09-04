@@ -947,9 +947,10 @@ void ex_diffpatch(exarg_T *eap)
   os_remove((char *)buf);
 
   // Only continue if the output file was created.
-  off_t file_size;
-  bool file_size_success = os_get_file_size((char *)tmp_new, &file_size);
-  if (!file_size_success || file_size == 0) {
+  FileInfo file_info;
+  bool info_ok = os_fileinfo((char *)tmp_new, &file_info);
+  uint64_t filesize = os_fileinfo_size(&file_info);
+  if (!info_ok || filesize == 0) {
     EMSG(_("E816: Cannot read patch output"));
   } else {
     if (curbuf->b_fname != NULL) {

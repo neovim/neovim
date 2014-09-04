@@ -2417,13 +2417,13 @@ do_source (
    */
   save_current_SID = current_SID;
   FileID file_id;
-  bool file_id_ok = os_get_file_id((char *)fname_exp, &file_id);
+  bool file_id_ok = os_fileid((char *)fname_exp, &file_id);
   for (current_SID = script_items.ga_len; current_SID > 0; --current_SID) {
     si = &SCRIPT_ITEM(current_SID);
     // Compare dev/ino when possible, it catches symbolic links.
     // Also compare file names, the inode may change when the file was edited.
     bool file_id_equal = file_id_ok && si->file_id_valid
-                         && os_file_id_equal(&(si->file_id), &file_id);
+                         && os_fileid_equal(&(si->file_id), &file_id);
     if (si->sn_name != NULL
         && (file_id_equal || fnamecmp(si->sn_name, fname_exp) == 0)) {
       break;

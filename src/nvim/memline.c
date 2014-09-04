@@ -686,9 +686,9 @@ static void set_b0_fname(ZERO_BL *b0p, buf_T *buf)
       }
     }
     FileInfo file_info;
-    if (os_get_file_info((char *)buf->b_ffname, &file_info)) {
+    if (os_fileinfo((char *)buf->b_ffname, &file_info)) {
       long_to_char((long)file_info.stat.st_mtim.tv_sec, b0p->b0_mtime);
-      long_to_char((long)os_file_info_get_inode(&file_info), b0p->b0_ino);
+      long_to_char((long)os_fileinfo_inode(&file_info), b0p->b0_ino);
       buf_store_file_info(buf, &file_info);
       buf->b_mtime_read = buf->b_mtime;
     } else {
@@ -961,8 +961,8 @@ void ml_recover(void)
   FileInfo swp_file_info;
   mtime = char_to_long(b0p->b0_mtime);
   if (curbuf->b_ffname != NULL
-      && os_get_file_info((char *)curbuf->b_ffname, &org_file_info)
-      && ((os_get_file_info((char *)mfp->mf_fname, &swp_file_info)
+      && os_fileinfo((char *)curbuf->b_ffname, &org_file_info)
+      && ((os_fileinfo((char *)mfp->mf_fname, &swp_file_info)
            && org_file_info.stat.st_mtim.tv_sec
               > swp_file_info.stat.st_mtim.tv_sec)
           || org_file_info.stat.st_mtim.tv_sec != mtime)) {
@@ -1494,7 +1494,7 @@ static time_t swapfile_info(char_u *fname)
 
   /* print the swap file date */
   FileInfo file_info;
-  if (os_get_file_info((char *)fname, &file_info)) {
+  if (os_fileinfo((char *)fname, &file_info)) {
 #ifdef UNIX
     /* print name of owner of the file */
     if (os_get_uname(file_info.stat.st_uid, uname, B0_UNAME_SIZE) == OK) {
@@ -1630,9 +1630,9 @@ void ml_sync_all(int check_file, int check_char)
        * call ml_preserve() to get rid of all negative numbered blocks.
        */
       FileInfo file_info;
-      if (!os_get_file_info((char *)buf->b_ffname, &file_info)
+      if (!os_fileinfo((char *)buf->b_ffname, &file_info)
           || file_info.stat.st_mtim.tv_sec != buf->b_mtime_read
-          || (off_t)file_info.stat.st_size != buf->b_orig_size) {
+          || os_fileinfo_size(&file_info) != buf->b_orig_size) {
         ml_preserve(buf, FALSE);
         did_check_timestamps = FALSE;
         need_check_timestamps = TRUE;           /* give message later */
@@ -3180,7 +3180,7 @@ attention_message (
   msg_outtrans(buf->b_fname);
   MSG_PUTS("\"\n");
   FileInfo file_info;
-  if (os_get_file_info((char *)buf->b_fname, &file_info)) {
+  if (os_fileinfo((char *)buf->b_fname, &file_info)) {
     MSG_PUTS(_("             dated: "));
     x = file_info.stat.st_mtim.tv_sec;
     p = ctime(&x);  // includes '\n'
@@ -3294,7 +3294,7 @@ findswapname (
     // Extra security check: When a swap file is a symbolic link, this
     // is most likely a symlink attack.
     FileInfo file_info;
-    bool file_or_link_found = os_get_file_info_link((char *)fname, &file_info);
+    bool file_or_link_found = os_fileinfo_link((char *)fname, &file_info);
     if (!file_or_link_found) {
       break;
     }
@@ -3558,8 +3558,8 @@ fnamecmp_ino (
   int retval_s;                     /* flag: buf_s valid */
 
   FileInfo file_info;
-  if (os_get_file_info((char *)fname_c, &file_info)) {
-    ino_c = os_file_info_get_inode(&file_info);
+  if (os_fileinfo((char *)fname_c, &file_info)) {
+    ino_c = os_fileinfo_inode(&file_info);
   }
 
   /*
@@ -3567,8 +3567,8 @@ fnamecmp_ino (
    * the swap file may be outdated.  If that fails (e.g. this path is not
    * valid on this machine), use the inode from block 0.
    */
-  if (os_get_file_info((char *)fname_s, &file_info)) {
-    ino_s = os_file_info_get_inode(&file_info);
+  if (os_fileinfo((char *)fname_s, &file_info)) {
+    ino_s = os_fileinfo_inode(&file_info);
   } else {
     ino_s = (uint64_t)ino_block0;
   }

@@ -61,10 +61,10 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   FileID file_id_1, file_id_2;
 
   expand_env(s1, exp1, MAXPATHL);
-  bool id_ok_1 = os_get_file_id((char *)exp1, &file_id_1);
-  bool id_ok_2 = os_get_file_id((char *)s2, &file_id_2);
+  bool id_ok_1 = os_fileid((char *)exp1, &file_id_1);
+  bool id_ok_2 = os_fileid((char *)s2, &file_id_2);
   if (!id_ok_1 && !id_ok_2) {
-    // If os_get_file_id() doesn't work, may compare the names.
+    // If os_fileid() doesn't work, may compare the names.
     if (checkname) {
       vim_FullName(exp1, full1, MAXPATHL, FALSE);
       vim_FullName(s2, full2, MAXPATHL, FALSE);
@@ -77,7 +77,7 @@ FileComparison path_full_compare(char_u *s1, char_u *s2, int checkname)
   if (!id_ok_1 || !id_ok_2) {
     return kOneFileMissing;
   }
-  if (os_file_id_equal(&file_id_1, &file_id_2)) {
+  if (os_fileid_equal(&file_id_1, &file_id_2)) {
     return kEqualFiles;
   }
   return kDifferentFiles;
@@ -1304,7 +1304,7 @@ void simplify_filename(char_u *filename)
           saved_char = p[-1];
           p[-1] = NUL;
           FileInfo file_info;
-          if (!os_get_file_info_link((char *)filename, &file_info)) {
+          if (!os_fileinfo_link((char *)filename, &file_info)) {
             do_strip = TRUE;
           }
           p[-1] = saved_char;
@@ -1327,7 +1327,7 @@ void simplify_filename(char_u *filename)
              * components. */
             saved_char = *tail;
             *tail = NUL;
-            if (os_get_file_info((char *)filename, &file_info)) {
+            if (os_fileinfo((char *)filename, &file_info)) {
               do_strip = TRUE;
             }
             else
@@ -1343,15 +1343,15 @@ void simplify_filename(char_u *filename)
                * component's parent directory.) */
               FileInfo new_file_info;
               if (p == start && relative) {
-                os_get_file_info(".", &new_file_info);
+                os_fileinfo(".", &new_file_info);
               } else {
                 saved_char = *p;
                 *p = NUL;
-                os_get_file_info((char *)filename, &new_file_info);
+                os_fileinfo((char *)filename, &new_file_info);
                 *p = saved_char;
               }
 
-              if (!os_file_info_id_equal(&file_info, &new_file_info)) {
+              if (!os_fileinfo_id_equal(&file_info, &new_file_info)) {
                 do_strip = FALSE;
                 /* We don't disable stripping of later
                  * components since the unstripped path name is

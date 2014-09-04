@@ -473,7 +473,7 @@ cs_add_common (
   fname = (char *)vim_strnsave((char_u *)fname, len);
   free(fbuf);
   FileInfo file_info;
-  bool file_info_ok  = os_get_file_info(fname, &file_info);
+  bool file_info_ok  = os_fileinfo(fname, &file_info);
   if (!file_info_ok) {
 staterr:
     if (p_csverbose)
@@ -504,7 +504,7 @@ staterr:
     else
       (void)sprintf(fname2, "%s/%s", fname, CSCOPE_DBFILE);
 
-    file_info_ok = os_get_file_info(fname2, &file_info);
+    file_info_ok = os_fileinfo(fname2, &file_info);
     if (!file_info_ok) {
       if (p_csverbose)
         cs_stat_emsg(fname2);
@@ -1181,7 +1181,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   i = -1;   /* can be set to the index of an empty item in csinfo */
   for (j = 0; j < csinfo_size; j++) {
     if (csinfo[j].fname != NULL
-        && os_file_id_equal_file_info(&(csinfo[j].file_id), file_info)) {
+        && os_fileid_equal_fileinfo(&(csinfo[j].file_id), file_info)) {
       if (p_csverbose)
         (void)EMSG(_("E568: duplicate cscope database not added"));
       return -1;
@@ -1224,7 +1224,7 @@ static int cs_insert_filelist(char *fname, char *ppath, char *flags,
   } else
     csinfo[i].flags = NULL;
 
-  os_file_info_get_id(file_info, &(csinfo[i].file_id));
+  os_fileinfo_id(file_info, &(csinfo[i].file_id));
   return i;
 } /* cs_insert_filelist */
 

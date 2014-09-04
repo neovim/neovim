@@ -258,20 +258,6 @@ int os_file_is_writable(const char *name)
   return 0;
 }
 
-/// Get the size of a file in bytes.
-///
-/// @param[out] size pointer to an off_t to put the size into.
-/// @return `true` for success, `false` for failure.
-bool os_get_file_size(const char *name, off_t *size)
-{
-  uv_stat_t statbuf;
-  if (os_stat(name, &statbuf)) {
-    *size = statbuf.st_size;
-    return true;
-  }
-  return false;
-}
-
 /// Rename a file or directory.
 ///
 /// @return `OK` for success, `FAIL` for failure.
@@ -345,7 +331,7 @@ int os_remove(const char *path)
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
-bool os_get_file_info(const char *path, FileInfo *file_info)
+bool os_fileinfo(const char *path, FileInfo *file_info)
 {
   return os_stat(path, &(file_info->stat));
 }
@@ -355,7 +341,7 @@ bool os_get_file_info(const char *path, FileInfo *file_info)
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
-bool os_get_file_info_link(const char *path, FileInfo *file_info)
+bool os_fileinfo_link(const char *path, FileInfo *file_info)
 {
   uv_fs_t request;
   int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
@@ -369,7 +355,7 @@ bool os_get_file_info_link(const char *path, FileInfo *file_info)
 /// @param file_descriptor File descriptor of the file.
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
-bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
+bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 {
   uv_fs_t request;
   int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
@@ -381,7 +367,7 @@ bool os_get_file_info_fd(int file_descriptor, FileInfo *file_info)
 /// Compare the inodes of two FileInfos
 ///
 /// @return `true` if the two FileInfos represent the same file.
-bool os_file_info_id_equal(const FileInfo *file_info_1,
+bool os_fileinfo_id_equal(const FileInfo *file_info_1,
                            const FileInfo *file_info_2)
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
@@ -392,7 +378,7 @@ bool os_file_info_id_equal(const FileInfo *file_info_1,
 ///
 /// @param file_info Pointer to the `FileInfo`
 /// @param[out] file_id Pointer to a `FileID`
-void os_file_info_get_id(const FileInfo *file_info, FileID *file_id)
+void os_fileinfo_id(const FileInfo *file_info, FileID *file_id)
 {
   file_id->inode = file_info->stat.st_ino;
   file_id->device_id = file_info->stat.st_dev;
@@ -403,9 +389,36 @@ void os_file_info_get_id(const FileInfo *file_info, FileID *file_id)
 /// @deprecated Use `FileID` instead, this function is only needed in memline.c
 /// @param file_info Pointer to the `FileInfo`
 /// @return the inode number
-uint64_t os_file_info_get_inode(const FileInfo *file_info)
+uint64_t os_fileinfo_inode(const FileInfo *file_info)
 {
   return file_info->stat.st_ino;
+}
+
+/// Get the size of a file from a `FileInfo`.
+///
+/// @return filesize in bytes.
+uint64_t os_fileinfo_size(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return file_info->stat.st_size;
+}
+
+/// Get the number of hardlinks from a `FileInfo`.
+///
+/// @return number of hardlinks.
+uint64_t os_fileinfo_hardlinks(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return file_info->stat.st_nlink;
+}
+
+/// Get the blocksize from a `FileInfo`.
+///
+/// @return blocksize in bytes.
+uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return file_info->stat.st_blksize;
 }
 
 /// Get the `FileID` for a given path
@@ -413,7 +426,7 @@ uint64_t os_file_info_get_inode(const FileInfo *file_info)
 /// @param path Path to the file.
 /// @param[out] file_info Pointer to a `FileID` to fill in.
 /// @return `true` on sucess, `false` for failure.
-bool os_get_file_id(const char *path, FileID *file_id)
+bool os_fileid(const char *path, FileID *file_id)
 {
   uv_stat_t statbuf;
   if (os_stat(path, &statbuf)) {
@@ -429,7 +442,7 @@ bool os_get_file_id(const char *path, FileID *file_id)
 /// @param file_id_1 Pointer to first `FileID`
 /// @param file_id_2 Pointer to second `FileID`
 /// @return `true` if the two `FileID`s represent te same file.
-bool os_file_id_equal(const FileID *file_id_1, const FileID *file_id_2)
+bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 {
   return file_id_1->inode == file_id_2->inode
          && file_id_1->device_id == file_id_2->device_id;
@@ -440,7 +453,7 @@ bool os_file_id_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @param file_id Pointer to a `FileID`
 /// @param file_info Pointer to a `FileInfo`
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
-bool os_file_id_equal_file_info(const FileID *file_id,
+bool os_fileid_equal_fileinfo(const FileID *file_id,
                                 const FileInfo *file_info)
 {
   return file_id->inode == file_info->stat.st_ino

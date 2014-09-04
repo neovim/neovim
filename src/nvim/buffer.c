@@ -1314,7 +1314,7 @@ buflist_new (
    * for hard links. */
   FileID file_id;
   bool file_id_valid = (sfname != NULL &&
-                        os_get_file_id((char *)sfname, &file_id));
+                        os_fileid((char *)sfname, &file_id));
   if (ffname != NULL && !(flags & BLN_DUMMY)
       && (buf = buflist_findname_file_id(ffname, &file_id,
                                          file_id_valid)) != NULL) {
@@ -1671,7 +1671,7 @@ buf_T *buflist_findname_exp(char_u *fname)
 buf_T *buflist_findname(char_u *ffname)
 {
   FileID file_id;
-  bool file_id_valid = os_get_file_id((char *)ffname, &file_id);
+  bool file_id_valid = os_fileid((char *)ffname, &file_id);
   return buflist_findname_file_id(ffname, &file_id, file_id_valid);
 }
 
@@ -2221,7 +2221,7 @@ setfname (
      * - if the buffer is loaded, fail
      * - if the buffer is not loaded, delete it from the list
      */
-    file_id_valid = os_get_file_id((char *)ffname, &file_id);
+    file_id_valid = os_fileid((char *)ffname, &file_id);
     if (!(buf->b_flags & BF_DUMMY)) {
       obuf = buflist_findname_file_id(ffname, &file_id, file_id_valid);
     }
@@ -2399,7 +2399,7 @@ static int otherfile_buf(buf_T *buf, char_u *ffname,
     /* If no struct stat given, get it now */
     if (file_id_p == NULL) {
       file_id_p = &file_id;
-      file_id_valid = os_get_file_id((char *)ffname, file_id_p);
+      file_id_valid = os_fileid((char *)ffname, file_id_p);
     }
     if (!file_id_valid) {
       // file_id not valid, assume files are different.
@@ -2429,7 +2429,7 @@ void buf_set_file_id(buf_T *buf)
 {
   FileID file_id;
   if (buf->b_fname != NULL
-      && os_get_file_id((char *)buf->b_fname, &file_id)) {
+      && os_fileid((char *)buf->b_fname, &file_id)) {
     buf->file_id_valid = true;
     buf->file_id = file_id;
   } else {
@@ -2441,7 +2441,7 @@ void buf_set_file_id(buf_T *buf)
 static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 {
   return buf->file_id_valid
-         && os_file_id_equal(&(buf->file_id), file_id);
+         && os_fileid_equal(&(buf->file_id), file_id);
 }
 
 /*

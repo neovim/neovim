@@ -1097,7 +1097,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
     url = true;
   } else {
     ff_expand_buffer[0] = NUL;
-    if (!os_get_file_id((char *)fname, &file_id)) {
+    if (!os_fileid((char *)fname, &file_id)) {
       return FAIL;
     }
   }
@@ -1106,7 +1106,7 @@ static int ff_check_visited(ff_visited_T **visited_list, char_u *fname, char_u *
   for (vp = *visited_list; vp != NULL; vp = vp->ffv_next) {
     if ((url && fnamecmp(vp->ffv_fname, ff_expand_buffer) == 0)
         || (!url && vp->file_id_valid
-            && os_file_id_equal(&(vp->file_id), &file_id))) {
+            && os_fileid_equal(&(vp->file_id), &file_id))) {
       /* are the wildcard parts equal */
       if (ff_wc_equal(vp->ffv_wc_path, wc_path) == TRUE)
         /* already visited */

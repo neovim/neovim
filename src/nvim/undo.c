@@ -1116,8 +1116,8 @@ void u_write_undo(char_u *name, int forceit, buf_T *buf, char_u *hash)
    */
   FileInfo file_info_old;
   FileInfo file_info_new;
-  if (os_get_file_info((char *)buf->b_ffname, &file_info_old)
-      && os_get_file_info((char *)file_name, &file_info_new)
+  if (os_fileinfo((char *)buf->b_ffname, &file_info_old)
+      && os_fileinfo((char *)file_name, &file_info_new)
       && file_info_old.stat.st_gid != file_info_new.stat.st_gid
       && os_fchown(fd, -1, file_info_old.stat.st_gid) != 0) {
     os_setperm(file_name, (perm & 0707) | ((perm & 07) << 3));
@@ -1249,8 +1249,8 @@ void u_read_undo(char_u *name, char_u *hash, char_u *orig_name)
      * owner of the text file or equal to the current user. */
     FileInfo file_info_orig;
     FileInfo file_info_undo;
-    if (os_get_file_info((char *)orig_name, &file_info_orig)
-        && os_get_file_info((char *)file_name, &file_info_undo)
+    if (os_fileinfo((char *)orig_name, &file_info_orig)
+        && os_fileinfo((char *)file_name, &file_info_undo)
         && file_info_orig.stat.st_uid != file_info_undo.stat.st_uid
         && file_info_undo.stat.st_uid != getuid()) {
       if (p_verbose > 0) {

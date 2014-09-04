@@ -122,11 +122,11 @@ memfile_T *mf_open(char_u *fname, int flags)
    * mf_blocknr_max must be rounded up.
    */
   FileInfo file_info;
-  if (mfp->mf_fd >= 0
-      && os_get_file_info_fd(mfp->mf_fd, &file_info)
-      && file_info.stat.st_blksize >= MIN_SWAP_PAGE_SIZE
-      && file_info.stat.st_blksize <= MAX_SWAP_PAGE_SIZE) {
-    mfp->mf_page_size = file_info.stat.st_blksize;
+  if (mfp->mf_fd >= 0 && os_fileinfo_fd(mfp->mf_fd, &file_info)) {
+    uint64_t blocksize = os_fileinfo_blocksize(&file_info);
+    if (blocksize >= MIN_SWAP_PAGE_SIZE && blocksize <= MAX_SWAP_PAGE_SIZE) {
+      mfp->mf_page_size = blocksize;
+    }
   }
 
   if (mfp->mf_fd < 0 || (flags & (O_TRUNC|O_EXCL))
@@ -1017,7 +1017,7 @@ mf_do_open (
    */
   FileInfo file_info;
   if ((flags & O_CREAT)
-      && os_get_file_info_link((char *)mfp->mf_fname, &file_info)) {
+      && os_fileinfo_link((char *)mfp->mf_fname, &file_info)) {
     mfp->mf_fd = -1;
     EMSG(_("E300: Swap file already exists (symlink attack?)"));
   } else {

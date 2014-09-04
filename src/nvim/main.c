@@ -2094,9 +2094,9 @@ static int file_owned(char *fname)
 {
   uid_t uid = getuid();
   FileInfo file_info;
-  bool file_owned = os_get_file_info(fname, &file_info)
+  bool file_owned = os_fileinfo(fname, &file_info)
                     && file_info.stat.st_uid == uid;
-  bool link_owned = os_get_file_info_link(fname, &file_info)
+  bool link_owned = os_fileinfo_link(fname, &file_info)
                     && file_info.stat.st_uid == uid;
   return file_owned && link_owned;
 }
