@@ -14427,9 +14427,17 @@ static void f_system(typval_T *argvars, typval_T *rettv)
 
   // get input to the shell command (if any), and its length
   char_u buf[NUMBUFLEN];
-  const char *input = (argvars[1].v_type != VAR_UNKNOWN)
-      ? (char *) get_tv_string_buf_chk(&argvars[1], buf): NULL;
-  size_t input_len = input ? strlen(input) : 0;
+  const char *input = NULL;
+  size_t input_len = 0;
+  if (argvars[1].v_type == VAR_LIST) {
+    input = write_list_to_string(argvars[1].vval.v_list, &input_len);
+  } else if (argvars[1].v_type != VAR_UNKNOWN) {
+    if ((input = (char *) get_tv_string_buf_chk(&argvars[1], buf))) {
+      input_len = strlen(input);
+    } else {
+      return;  // Type error handled in get_tv_string_buf_chk().
+    }
+  }
 
   // get shell command to execute
   const char *cmd = (char *) get_tv_string(&argvars[0]);
@@ -14438,6 +14446,10 @@ static void f_system(typval_T *argvars, typval_T *rettv)
   size_t nread = 0;
   char *res = NULL;
   int status = os_system(cmd, input, input_len, &res, &nread);
+
+  if (argvars[1].v_type == VAR_LIST) {
+    free(input);
+  }
 
   set_vim_var_nr(VV_SHELL_ERROR, (long) status);
 
@@ -15058,6 +15070,59 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv)
   dict_add_nr_str(dict, "skipcol", (long)curwin->w_skipcol, NULL);
 }
 
+/// Writes list of strings to file
+static bool write_list(FILE *fd, list_T *list, bool binary)
+{
+  int ret = true;
+
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; ++s) {
+      if (putc(*s == '\n' ? NUL : *s, fd) == EOF) {
+        ret = false;
+        break;
+      }
+    }
+    if (!binary || li->li_next != NULL) {
+      if (putc('\n', fd) == EOF) {
+        ret = false;
+        break;
+      }
+    }
+    if (ret == false) {
+      EMSG(_(e_write));
+      break;
+    }
+  }
+  return ret;
+}
+
+/// Like write_list, but to a string with an out-parameter for the length and
+/// always assumes binary.
+static char *write_list_to_string(list_T *list, size_t *len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+{
+  // Calculate the resulting length.
+  *len = 0;
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    *len += STRLEN(get_tv_string(&li->li_tv)) + 1;
+  }
+
+  char *ret = xmallocz(*len);
+  char *end = ret;
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    for (char *s = (char *) get_tv_string(&li->li_tv); *s != NUL; s++) {
+      *end++ = (*s == '\n') ? NUL : *s;
+    }
+
+    if (li->li_next != NULL) {
+      *end++ = '\n';
+    }
+  }
+  *end = NUL;
+  *len = end - ret;
+  return ret;
+}
+
 /*
  * "winwidth(nr)" function
  */
@@ -15072,68 +15137,43 @@ static void f_winwidth(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = wp->w_width;
 }
 
-/*
- * "writefile()" function
- */
+/// "writefile()" function
 static void f_writefile(typval_T *argvars, typval_T *rettv)
 {
-  int binary = FALSE;
-  char_u      *fname;
-  FILE        *fd;
-  listitem_T  *li;
-  char_u      *s;
-  int ret = 0;
-  int c;
+  rettv->vval.v_number = 0;  // Assuming success.
 
-  if (check_restricted() || check_secure())
+  if (check_restricted() || check_secure()) {
     return;
+  }
 
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "writefile()");
     return;
   }
-  if (argvars[0].vval.v_list == NULL)
+  if (argvars[0].vval.v_list == NULL) {
     return;
+  }
 
+  bool binary = false;
   if (argvars[2].v_type != VAR_UNKNOWN
-      && STRCMP(get_tv_string(&argvars[2]), "b") == 0)
-    binary = TRUE;
+      && STRCMP(get_tv_string(&argvars[2]), "b") == 0) {
+    binary = true;
+  }
 
-  /* Always open the file in binary mode, library functions have a mind of
-   * their own about CR-LF conversion. */
-  fname = get_tv_string(&argvars[1]);
+  // Always open the file in binary mode, library functions have a mind of
+  // their own about CR-LF conversion.
+  char_u *fname = get_tv_string(&argvars[1]);
+  FILE *fd;
   if (*fname == NUL || (fd = mch_fopen((char *)fname, WRITEBIN)) == NULL) {
     EMSG2(_(e_notcreate), *fname == NUL ? (char_u *)_("<empty>") : fname);
-    ret = -1;
+    rettv->vval.v_number = -1;
   } else {
-    for (li = argvars[0].vval.v_list->lv_first; li != NULL;
-         li = li->li_next) {
-      for (s = get_tv_string(&li->li_tv); *s != NUL; ++s) {
-        if (*s == '\n')
-          c = putc(NUL, fd);
-        else
-          c = putc(*s, fd);
-        if (c == EOF) {
-          ret = -1;
-          break;
-        }
-      }
-      if (!binary || li->li_next != NULL)
-        if (putc('\n', fd) == EOF) {
-          ret = -1;
-          break;
-        }
-      if (ret < 0) {
-        EMSG(_(e_write));
-        break;
-      }
+    if (write_list(fd, argvars[0].vval.v_list, binary) == false) {
+      rettv->vval.v_number = -1;
     }
     fclose(fd);
   }
-
-  rettv->vval.v_number = ret;
 }
-
 /*
  * "xor(expr, expr)" function
  */
