@@ -234,6 +234,43 @@ void memchrsub(void *data, char c, char x, size_t len)
   }
 }
 
+/// Counts the number of occurrences of `c` in `str`.
+///
+/// @warning Unsafe if `c == NUL`.
+///
+/// @param str Pointer to the string to search.
+/// @param c   The byte to search for.
+/// @returns the number of occurrences of `c` in `str`.
+size_t strcnt(const char *str, char c, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  assert(c != 0);
+  size_t cnt = 0;
+  while ((str = strchr(str, c))) {
+    cnt++;
+    str++;  // Skip the instance of c.
+  }
+  return cnt;
+}
+
+/// Counts the number of occurrences of byte `c` in `data[len]`.
+///
+/// @param data Pointer to the data to search.
+/// @param c    The byte to search for.
+/// @param len  The length of `data`.
+/// @returns the number of occurrences of `c` in `data[len]`.
+size_t memcnt(const void *data, char c, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  size_t cnt = 0;
+  const char *ptr = data, *end = ptr + len;
+  while ((ptr = memchr(ptr, c, (size_t)(end - ptr))) != NULL) {
+    cnt++;
+    ptr++;  // Skip the instance of c.
+  }
+  return cnt;
+}
+
 /// The xstpcpy() function shall copy the string pointed to by src (including
 /// the terminating NUL character) into the array pointed to by dst.
 ///
