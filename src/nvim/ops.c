@@ -4910,45 +4910,36 @@ void write_reg_contents_ex(int name,
 ///
 /// @param y_ptr pointer to yank register
 /// @param yank_type MCHAR, MLINE, MBLOCK or MAUTO
-/// @param str string to put in register
-/// @param len length of the string
-/// @param blocklen width of visual block
+/// @param str string or list of strings to put in register
+/// @param len length of the string (Ignored when str_list=true.)
+/// @param blocklen width of visual block, or -1 for "I don't know."
 /// @param str_list True if str is `char_u **`.
 static void str_to_reg(struct yankreg *y_ptr, int yank_type, const char_u *str,
-                       long len, long blocklen, bool str_list)
+                       size_t len, colnr_T blocklen, bool str_list)
+  FUNC_ATTR_NONNULL_ALL
 {
-  int type;                             /* MCHAR, MLINE or MBLOCK */
-  int lnum;
-  long start;
-  long i;
-  int extra;
-  int extraline = 0;                    /* extra line at the end */
-  int append = FALSE;                   /* append to last line in register */
-  long maxlen;
-
-  if (y_ptr->y_array == NULL)           /* NULL means empty register */
+  if (y_ptr->y_array == NULL) {  // NULL means empty register
     y_ptr->y_size = 0;
+  }
 
+  int type = yank_type;  // MCHAR, MLINE or MBLOCK
   if (yank_type == MAUTO) {
     type = ((str_list ||
              (len > 0 && (str[len - 1] == NL || str[len - 1] == CAR)))
             ? MLINE : MCHAR);
-  } else {
-    type = yank_type;
   }
 
-  // Count the number of lines within the string
   size_t newlines = 0;
+  bool extraline = false;  // extra line at the end
+  bool append = false;     // append to last line in register
+
+  // Count the number of lines within the string
   if (str_list) {
     for (char_u **ss = (char_u **) str; *ss != NULL; ++ss) {
       newlines++;
     }
   } else {
-    for (i = 0; i < len; i++) {
-      if (str[i] == '\n') {
-        ++newlines;
-      }
-    }
+    newlines = memcnt(str, '\n', len);
     if (type == MCHAR || len == 0 || str[len - 1] != '\n') {
       extraline = 1;
       ++newlines;         // count extra newline at the end
@@ -4959,65 +4950,57 @@ static void str_to_reg(struct yankreg *y_ptr, int yank_type, const char_u *str,
     }
   }
 
-  // Allocate an array to hold the pointers to the new register lines.
-  // If the register was not empty, move the existing lines to the new array.
-  char_u **pp = xcalloc(y_ptr->y_size + newlines, sizeof(char_u *));
-  for (lnum = 0; lnum < y_ptr->y_size; ++lnum) {
-    pp[lnum] = y_ptr->y_array[lnum];
-  }
-  free(y_ptr->y_array);
+
+  // Grow the register array to hold the pointers to the new lines.
+  char_u **pp = xrealloc(y_ptr->y_array,
+                         (y_ptr->y_size + newlines) * sizeof(char_u *));
   y_ptr->y_array = pp;
-  maxlen = 0;
+
+  linenr_T lnum = y_ptr->y_size;  // The current line number.
+
+  // If called with `blocklen < 0`, we have to update the yank reg's width.
+  size_t maxlen = 0;
 
   // Find the end of each line and save it into the array.
   if (str_list) {
     for (char_u **ss = (char_u **) str; *ss != NULL; ++ss, ++lnum) {
-      int i = STRLEN(*ss);
-      pp[lnum] = vim_strnsave(*ss, i);
-      if (i > maxlen) {
-        maxlen = i;
+      size_t ss_len = STRLEN(*ss);
+      pp[lnum] = xmemdupz(*ss, ss_len);
+      if (ss_len > maxlen) {
+        maxlen = ss_len;
       }
     }
   } else {
-    for (start = 0; start < len + extraline; start += i + 1) {
-      // Let i represent the length of one line.
-      const char_u *p = str + start;
-      i = (char_u *)xmemscan(p, '\n', len - start) - p;
-      if (i > maxlen) {
-        maxlen = i;
+    size_t line_len;
+    for (const char_u *start = str, *end = str + len;
+         start < end + extraline;
+         start += line_len + 1, lnum++) {
+      line_len = (const char_u *) xmemscan(start, '\n', end - start) - start;
+      if (line_len > maxlen) {
+        maxlen = line_len;
       }
+
+      // When appending, copy the previous line and free it after.
+      size_t extra = append ? STRLEN(pp[--lnum]) : 0;
+      char_u *s = xmallocz(line_len + extra);
+      memcpy(s, pp[lnum], extra);
+      memcpy(s + extra, start, line_len);
+      ssize_t s_len = extra + line_len;
+
       if (append) {
-        --lnum;
-        extra = (int)STRLEN(y_ptr->y_array[lnum]);
-      } else {
-        extra = 0;
+        free(pp[lnum]);
+        append = false;  // only first line is appended
       }
-      char_u *s = xmalloc(i + extra + 1);
-      if (extra) {
-        memmove(s, y_ptr->y_array[lnum], (size_t)extra);
-      }
-      if (append) {
-        free(y_ptr->y_array[lnum]);
-      }
-      if (i) {
-        memmove(s + extra, str + start, (size_t)i);
-      }
-      extra += i;
-      s[extra] = NUL;
-      y_ptr->y_array[lnum++] = s;
-      while (--extra >= 0) {
-        if (*s == NUL) {
-          *s = '\n';                  // replace NUL with newline
-        }
-        ++s;
-      }
-      append = FALSE;                 // only first line is appended
+      pp[lnum] = s;
+
+      // Convert NULs to '\n' to prevent truncation.
+      memchrsub(pp[lnum], NUL, '\n', s_len);
     }
   }
   y_ptr->y_type = type;
   y_ptr->y_size = lnum;
   if (type == MBLOCK) {
-    y_ptr->y_width = (blocklen < 0 ? maxlen - 1 : blocklen);
+    y_ptr->y_width = (blocklen == -1 ? (colnr_T) maxlen - 1 : blocklen);
   } else {
     y_ptr->y_width = 0;
   }
