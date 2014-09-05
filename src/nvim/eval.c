@@ -13373,22 +13373,36 @@ static void f_setreg(typval_T *argvars, typval_T *rettv)
 
   if (argvars[1].v_type == VAR_LIST) {
     int len = argvars[1].vval.v_list->lv_len;
-    char_u **lstval = xmalloc(sizeof(char_u *) * (len + 1));
+    // First half: use for pointers to result lines; second half: use for
+    // pointers to allocated copies.
+    char_u **lstval = xmalloc(sizeof(char_u *) * ((len + 1) * 2));
     char_u **curval = lstval;
+    char_u **allocval = lstval + len + 2;
+    char_u **curallocval = allocval;
 
+    char_u buf[NUMBUFLEN];
     for (listitem_T *li = argvars[1].vval.v_list->lv_first;
          li != NULL;
          li = li->li_next) {
-      char_u *strval = get_tv_string_chk(&li->li_tv);
+      char_u *strval = get_tv_string_buf_chk(&li->li_tv, buf);
       if (strval == NULL) {
-        free(lstval);
-        return;
+        goto free_lstval;
+      }
+      if (strval == buf) {
+        // Need to make a copy,
+        // next get_tv_string_buf_chk() will overwrite the string.
+        strval = vim_strsave(buf);
+        *curallocval++ = strval;
       }
       *curval++ = strval;
     }
     *curval++ = NULL;
 
     write_reg_contents_lst(regname, lstval, -1, append, yank_type, block_len);
+
+free_lstval:
+    while (curallocval > allocval)
+        free(*--curallocval);
     free(lstval);
   } else {
     char_u *strval = get_tv_string_chk(&argvars[1]);
@@ -16334,6 +16348,7 @@ static char_u *get_tv_string_buf(typval_T *varp, char_u *buf)
   return res != NULL ? res : (char_u *)"";
 }
 
+/// Careful: This uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
 char_u *get_tv_string_chk(typval_T *varp)
 {
   static char_u mybuf[NUMBUFLEN];

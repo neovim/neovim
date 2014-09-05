@@ -90,6 +90,8 @@ call SetReg('a', ['abcA3'], 'c')
 call SetReg('b', ['abcB3'], 'l')
 call SetReg('c', ['abcC3'], 'b')
 call SetReg('d', ['abcD3'])
+call SetReg('e', [1, 2, 'abc', 3])
+call SetReg('f', [1, 2, 3])
 
 $put ='{{{1 Appending lists with setreg()'
 call SetReg('A', ['abcA3c'], 'c')
@@ -128,8 +130,8 @@ call ErrExe('call setreg(1, 2, 3, 4)')
 call ErrExe('call setreg([], 2)')
 call ErrExe('call setreg(1, {})')
 call ErrExe('call setreg(1, 2, [])')
-call ErrExe('call setreg("/", [1, 2])')
-call ErrExe('call setreg("=", [1, 2])')
+call ErrExe('call setreg("/", ["1", "2"])')
+call ErrExe('call setreg("=", ["1", "2"])')
 call ErrExe('call setreg(1, ["", "", [], ""])')
 endfun
 :"
