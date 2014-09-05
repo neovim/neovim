@@ -3173,8 +3173,7 @@ int vim_vsnprintf(char *str, size_t str_m, char *fmt, va_list ap, typval_T *tvs)
     p = "";
   while (*p != NUL) {
     if (*p != '%') {
-      char    *q = strchr(p + 1, '%');
-      size_t n = (q == NULL) ? STRLEN(p) : (size_t)(q - p);
+      size_t n = xstrchrnul(p + 1, '%') - p;
 
       /* Copy up to the next '%' or NUL without any changes. */
       if (str_l < str_m) {
