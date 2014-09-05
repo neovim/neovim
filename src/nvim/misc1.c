@@ -3401,13 +3401,16 @@ void fast_breakcheck(void)
 
 /*
  * Get the stdout of an external command.
+ * If "ret_len" is NULL replace NUL characters with NL.  When "ret_len" is not
+ * NULL store the length there.
  * Returns an allocated string, or NULL for error.
  */
 char_u *
 get_cmd_output (
     char_u *cmd,
     char_u *infile,            /* optional input file name */
-    int flags                      /* can be SHELL_SILENT */
+    int flags,                 // can be kShellOptSilent
+    size_t *ret_len
 )
 {
   char_u      *tempname;
@@ -3463,13 +3466,15 @@ get_cmd_output (
     EMSG2(_(e_notread), tempname);
     free(buffer);
     buffer = NULL;
-  } else {
+  } else if (ret_len == NULL) {
     /* Change NUL into SOH, otherwise the string is truncated. */
     for (i = 0; i < len; ++i)
       if (buffer[i] == NUL)
         buffer[i] = 1;
 
     buffer[len] = NUL;          /* make sure the buffer is terminated */
+  } else {
+    *ret_len = len;
   }
 
 done:

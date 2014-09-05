@@ -6543,6 +6543,7 @@ static struct fst {
   {"synconcealed",    2, 2, f_synconcealed},
   {"synstack",        2, 2, f_synstack},
   {"system",          1, 2, f_system},
+  {"systemlist",      1, 2, f_systemlist},
   {"tabpagebuflist",  0, 1, f_tabpagebuflist},
   {"tabpagenr",       0, 1, f_tabpagenr},
   {"tabpagewinnr",    1, 2, f_tabpagewinnr},
@@ -9873,7 +9874,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "spell",
     "syntax",
 #if !defined(UNIX)
-    "system",
+    "system",  // TODO(SplinterOfChaos): This IS defined for UNIX!
 #endif
     "tag_binary",
     "tag_old_static",
@@ -14415,8 +14416,8 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
-/// f_system - the VimL system() function
-static void f_system(typval_T *argvars, typval_T *rettv)
+static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, 
+                                       bool retlist)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -14453,9 +14454,41 @@ static void f_system(typval_T *argvars, typval_T *rettv)
 
   set_vim_var_nr(VV_SHELL_ERROR, (long) status);
 
+  if (res == NULL) {
+    rettv->v_type = VAR_STRING;
+    rettv->vval.v_string = NULL;
+    return;
+  }
+
+  if (retlist) {
+    list_T *list = list_alloc();
+
+    // Copy each line to a list element using NL as the delimiter.
+    for (size_t i = 0; i < nread; i++) {
+      char_u *start = (char_u *) res + i;
+      size_t len = (char_u *) xmemscan(start, NL, nread - i) - start;
+      i += len;
+
+      char_u *s = vim_strnsave(start, len);
+      for (size_t j = 0; j < len; j++) {
+        if (s[j] == NUL) {
+          s[j] = NL;
+        }
+      }
+
+      listitem_T  *li = listitem_alloc();
+      li->li_tv.v_type = VAR_STRING;
+      li->li_tv.vval.v_string = s;
+      list_append(list, li);
+    }
+
+    free(res);
+
+    rettv->v_type = VAR_LIST;
+    rettv->vval.v_list = list;
+  } else {
 #ifdef USE_CRNL
-  // translate <CR><NL> into <NL>
-  if (res != NULL) {
+    // translate <CR><NL> into <NL>
     char *d = res;
     for (char *s = res; *s; ++s) {
       if (s[0] == CAR && s[1] == NL) {
@@ -14466,11 +14499,22 @@ static void f_system(typval_T *argvars, typval_T *rettv)
     }
 
     *d = NUL;
-  }
 #endif
-
-  rettv->vval.v_string = (char_u *) res;
+    rettv->vval.v_string = (char_u *) res;
+  }
 }
+
+/// f_system - the VimL system() function
+static void f_system(typval_T *argvars, typval_T *rettv)
+{
+  get_system_output_as_rettv(argvars, rettv, false);
+}
+
+static void f_systemlist(typval_T *argvars, typval_T *rettv)
+{
+  get_system_output_as_rettv(argvars, rettv, true);
+}
+
 
 /*
  * "tabpagebuflist()" function

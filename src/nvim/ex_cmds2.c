@@ -3181,8 +3181,8 @@ static char_u **find_locales(void)
 
   /* Find all available locales by running command "locale -a".  If this
    * doesn't work we won't have completion. */
-  char_u *locale_a = get_cmd_output((char_u *)"locale -a",
-      NULL, kShellOptSilent);
+  char_u *locale_a = get_cmd_output((char_u *)"locale -a", NULL,
+                                    kShellOptSilent, NULL);
   if (locale_a == NULL)
     return NULL;
   ga_init(&locales_ga, sizeof(char_u *), 20);
