@@ -14460,7 +14460,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   if (retlist) {
-    list_T *list = list_alloc();
+    list_T *list = rettv_list_alloc(rettv);
 
     // Copy each line to a list element using NL as the delimiter.
     for (size_t i = 0; i < nread; i++) {
@@ -14468,12 +14468,9 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
       size_t len = (char_u *) xmemscan(start, NL, nread - i) - start;
       i += len;
 
-      char_u *s = vim_strnsave(start, len);
-      for (size_t j = 0; j < len; j++) {
-        if (s[j] == NUL) {
-          s[j] = NL;
-        }
-      }
+      // Don't use a str function to copy res as it may contains NULs.
+      char_u *s = xmemdupz(start, len);
+      memchrsub(s, NUL, NL, len);  // Replace NUL with NL to avoid truncation.
 
       listitem_T  *li = listitem_alloc();
       li->li_tv.v_type = VAR_STRING;
@@ -14482,9 +14479,6 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
     }
 
     free(res);
-
-    rettv->v_type = VAR_LIST;
-    rettv->vval.v_list = list;
   } else {
 #ifdef USE_CRNL
     // translate <CR><NL> into <NL>
