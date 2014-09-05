@@ -58,6 +58,7 @@ set(CONV_SRCS
   os/channel.c
   os/env.c
   os/event.c
+  os/fs.c
   os/input.c
   os/job.c
   os/mem.c
