@@ -4686,12 +4686,13 @@ list_T *list_alloc(void) FUNC_ATTR_NONNULL_RET
 /*
  * Allocate an empty list for a return value.
  */
-static void rettv_list_alloc(typval_T *rettv)
+static list_T *rettv_list_alloc(typval_T *rettv)
 {
   list_T *l = list_alloc();
   rettv->vval.v_list = l;
   rettv->v_type = VAR_LIST;
   ++l->lv_refcount;
+  return l;
 }
 
 /*
@@ -9408,16 +9409,15 @@ static void f_getpid(typval_T *argvars, typval_T *rettv)
 static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
 {
   pos_T *fp;
-  list_T *l;
   int fnum = -1;
 
-  rettv_list_alloc(rettv);
-  l = rettv->vval.v_list;
   if (getcurpos) {
     fp = &curwin->w_cursor;
   } else {
     fp = var2fpos(&argvars[0], true, &fnum);
   }
+
+  list_T *l = rettv_list_alloc(rettv);
   list_append_number(l, (fnum != -1) ? (varnumber_T)fnum : (varnumber_T)0);
   list_append_number(l, (fp != NULL) ? (varnumber_T)fp->lnum : (varnumber_T)0);
   list_append_number(l,
@@ -12010,8 +12010,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
             EMSG(_(e_invrange));
           else {
             vim_list_remove(l, item, item2);
-            rettv_list_alloc(rettv);
-            l = rettv->vval.v_list;
+            l = rettv_list_alloc(rettv);
             l->lv_first = item;
             l->lv_last = item2;
             item->li_prev = NULL;
@@ -14656,8 +14655,7 @@ static void f_taglist(typval_T *argvars, typval_T *rettv)
   if (*tag_pattern == NUL)
     return;
 
-  rettv_list_alloc(rettv);
-  (void)get_tags(rettv->vval.v_list, tag_pattern);
+  (void)get_tags(rettv_list_alloc(rettv), tag_pattern);
 }
 
 /*
