@@ -13366,6 +13366,7 @@ static bool item_compare_numeric;
 static char_u   *item_compare_func;
 static dict_T   *item_compare_selfdict;
 static int item_compare_func_err;
+static bool  item_compare_keep_zero;
 #define ITEM_COMPARE_FAIL 999
 
 /*
@@ -13397,6 +13398,13 @@ static int item_compare(const void *s1, const void *s2)
     n2 = strtod((char *)p2, (char **)&p2);
     res = n1 == n2 ? 0 : n1 > n2 ? 1 : -1;
   }
+
+  // When the result would be zero, compare the pointers themselves.  Makes
+  // the sort stable.
+  if (res == 0 && !item_compare_keep_zero) {
+    res = s1 > s2 ? 1 : -1;
+  }
+  
   free(tofree1);
   free(tofree2);
   return res;
@@ -13413,8 +13421,8 @@ static int item_compare2(const void *s1, const void *s2)
   if (item_compare_func_err)
     return 0;
 
-  /* copy the values.  This is needed to be able to set v_lock to VAR_FIXED
-   * in the copy without changing the original list items. */
+  // Copy the values.  This is needed to be able to set v_lock to VAR_FIXED
+  // in the copy without changing the original list items.
   copy_tv(&(*(listitem_T **)s1)->li_tv, &argv[0]);
   copy_tv(&(*(listitem_T **)s2)->li_tv, &argv[1]);
 
@@ -13432,6 +13440,13 @@ static int item_compare2(const void *s1, const void *s2)
   if (item_compare_func_err)
     res = ITEM_COMPARE_FAIL;      /* return value has wrong type */
   clear_tv(&rettv);
+
+  // When the result would be zero, compare the pointers themselves.  Makes
+  // the sort stable.
+  if (res == 0 && !item_compare_keep_zero) {
+    res = s1 > s2 ? 1 : -1;
+  }
+
   return res;
 }
 
@@ -13513,6 +13528,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
       }
 
       item_compare_func_err = FALSE;
+      item_compare_keep_zero = false;
       // Test the compare function.
       if (item_compare_func != NULL
           && item_compare2(&ptrs[0], &ptrs[1]) == ITEM_COMPARE_FAIL) {
@@ -13539,6 +13555,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       // f_uniq(): ptrs will be a stack of items to remove.
       item_compare_func_err = FALSE;
+      item_compare_keep_zero = true;
       item_compare_func_ptr = item_compare_func ? item_compare2 : item_compare;
 
       for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
