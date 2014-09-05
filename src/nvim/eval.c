@@ -16334,14 +16334,16 @@ static linenr_T get_tv_lnum_buf(typval_T *argvars, buf_T *buf)
  * get_tv_string_chk() and get_tv_string_buf_chk() are similar, but return
  * NULL on error.
  */
-static char_u *get_tv_string(typval_T *varp)
+static char_u *get_tv_string(const typval_T *varp)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   static char_u mybuf[NUMBUFLEN];
 
   return get_tv_string_buf(varp, mybuf);
 }
 
-static char_u *get_tv_string_buf(typval_T *varp, char_u *buf)
+static char_u *get_tv_string_buf(const typval_T *varp, char_u *buf)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
 {
   char_u      *res =  get_tv_string_buf_chk(varp, buf);
 
@@ -16349,14 +16351,16 @@ static char_u *get_tv_string_buf(typval_T *varp, char_u *buf)
 }
 
 /// Careful: This uses a single, static buffer.  YOU CAN ONLY USE IT ONCE!
-char_u *get_tv_string_chk(typval_T *varp)
+char_u *get_tv_string_chk(const typval_T *varp)
+  FUNC_ATTR_NONNULL_ALL
 {
   static char_u mybuf[NUMBUFLEN];
 
   return get_tv_string_buf_chk(varp, mybuf);
 }
 
-static char_u *get_tv_string_buf_chk(typval_T *varp, char_u *buf)
+static char_u *get_tv_string_buf_chk(const typval_T *varp, char_u *buf)
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (varp->v_type) {
   case VAR_NUMBER:
