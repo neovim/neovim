@@ -34,7 +34,7 @@ For lots more details, see
 
 ### What's being worked on now
 
-- Port all IO to libuv
+- Port all IO to [libuv](https://github.com/joyent/libuv/blob/master/README.md)
 - Lots of refactoring
 - A VimL => Lua transpiler
 
