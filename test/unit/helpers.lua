@@ -64,10 +64,15 @@ function cimport(...)
     return libnvim
   end
 
-  -- preprocess the header
-  local stream = Preprocess.preprocess_stream(unpack(paths))
-  local body = stream:read("*a")
-  stream:close()
+  -- require 'pl.pretty'.dump(paths)
+  local body = nil
+  for i=1, 3 do
+    local stream = Preprocess.preprocess_stream(unpack(paths))
+    body = stream:read("*a")
+    stream:close()
+    if body ~= nil then break end
+  end
+  -- require 'pl.pretty'.dump(body)
 
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks
