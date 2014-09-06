@@ -212,17 +212,20 @@ local function formatc(str)
   return table.concat(result)
 end
 
--- uncomment the following lines (and comment the return) for standalone
--- operation (very handy for debugging)
+-- standalone operation (very handy for debugging)
 local function standalone(...)
   Preprocess = require("preprocess")
   Preprocess.add_to_include_path('./../../src')
   Preprocess.add_to_include_path('./../../build/include')
   Preprocess.add_to_include_path('./../../.deps/usr/include')
 
-  input = Preprocess.preprocess_stream(arg[1])
+  local input = Preprocess.preprocess_stream(arg[1])
   local raw = input:read('*all')
   input:close()
+
+  if raw == nil then
+    print("ERROR: Preprocess.preprocess_stream():read() returned empty")
+  end
 
   local formatted
   if #arg == 2 and arg[2] == 'no' then
@@ -233,6 +236,9 @@ local function standalone(...)
 
   print(formatted)
 end
+-- uncomment this line (and comment the `return`) for standalone debugging
+-- example usage:
+--    ../../.deps/usr/bin/luajit formatc.lua ../../include/tempfile.h.generated.h
+--    ../../.deps/usr/bin/luajit formatc.lua /usr/include/malloc.h
 -- standalone(...)
-
 return formatc

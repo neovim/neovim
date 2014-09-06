@@ -10,7 +10,10 @@ local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local NULL = helpers.NULL
 
-local garray = cimport('./src/nvim/garray.h')
+local garray = cimport('stdlib.h', './src/nvim/garray.h')
+
+local itemsize = 14
+local growsize = 95
 
 -- define a basic interface to garray. We could make it a lot nicer by
 -- constructing a class wrapper around garray. It could for example associate
@@ -20,70 +23,70 @@ local garray = cimport('./src/nvim/garray.h')
 -- how one would use it from C.
 
 -- accessors
-function ga_len(garr)
+local ga_len = function(garr)
   return garr[0].ga_len
 end
 
-function ga_maxlen(garr)
+local ga_maxlen = function(garr)
   return garr[0].ga_maxlen
 end
 
-function ga_itemsize(garr)
+local ga_itemsize = function(garr)
   return garr[0].ga_itemsize
 end
 
-function ga_growsize(garr)
+local ga_growsize = function(garr)
   return garr[0].ga_growsize
 end
 
-function ga_data(garr)
+local ga_data = function(garr)
   return garr[0].ga_data
 end
 
 -- derived accessors
-function ga_size(garr)
+local ga_size = function(garr)
   return ga_len(garr) * ga_itemsize(garr)
 end
 
-function ga_maxsize(garr)
+local ga_maxsize = function(garr)
   return ga_maxlen(garr) * ga_itemsize(garr)
 end
 
-function ga_data_as_bytes(garr)
+local ga_data_as_bytes = function(garr)
   return ffi.cast('uint8_t *', ga_data(garr))
 end
 
-function ga_data_as_strings(garr)
+local ga_data_as_strings = function(garr)
   return ffi.cast('char **', ga_data(garr))
 end
 
-function ga_data_as_ints(garr)
+local ga_data_as_ints = function(garr)
   return ffi.cast('int *', ga_data(garr))
 end
 
 -- garray manipulation
-function ga_init(garr, itemsize, growsize)
+local ga_init = function(garr, itemsize, growsize)
   return garray.ga_init(garr, itemsize, growsize)
 end
 
-function ga_clear(garr)
+local ga_clear = function(garr)
   return garray.ga_clear(garr)
 end
 
-function ga_clear_strings(garr)
+local ga_clear_strings = function(garr)
   assert.is_true(ga_itemsize(garr) == ffi.sizeof('char *'))
   return garray.ga_clear_strings(garr)
 end
 
-function ga_grow(garr, n)
+local ga_grow = function(garr, n)
   return garray.ga_grow(garr, n)
 end
 
-function ga_concat(garr, str)
+local ga_concat = function(garr, str)
   return garray.ga_concat(garr, to_cstr(str))
 end
 
-function ga_append(garr, b)
+local ga_append = function(garr, b)
   if type(b) == 'string' then
     return garray.ga_append(garr, string.byte(b))
   else
@@ -91,31 +94,31 @@ function ga_append(garr, b)
   end
 end
 
-function ga_concat_strings(garr)
+local ga_concat_strings = function(garr)
   return internalize(garray.ga_concat_strings(garr))
 end
 
-function ga_concat_strings_sep(garr, sep)
+local ga_concat_strings_sep = function(garr, sep)
   return internalize(garray.ga_concat_strings_sep(garr, to_cstr(sep)))
 end
 
-function ga_remove_duplicate_strings(garr)
+local ga_remove_duplicate_strings = function(garr)
   return garray.ga_remove_duplicate_strings(garr)
 end
 
 -- derived manipulators
-function ga_set_len(garr, len)
+local ga_set_len = function(garr, len)
   assert.is_true(len <= ga_maxlen(garr))
   garr[0].ga_len = len
 end
 
-function ga_inc_len(garr, by)
+local ga_inc_len = function(garr, by)
   return ga_set_len(garr, ga_len(garr) + 1)
 end
 
 -- custom append functions
 -- not the C ga_append, which only works for bytes
-function ga_append_int(garr, it)
+local ga_append_int = function(garr, it)
   assert.is_true(ga_itemsize(garr) == ffi.sizeof('int'))
   ga_grow(garr, 1)
   local data = ga_data_as_ints(garr)
@@ -123,7 +126,7 @@ function ga_append_int(garr, it)
   return ga_inc_len(garr, 1)
 end
 
-function ga_append_string(garr, it)
+local ga_append_string = function(garr, it)
   assert.is_true(ga_itemsize(garr) == ffi.sizeof('char *'))
   -- make a non-garbage collected string and copy the lua string into it,
   -- TODO(aktau): we should probably call xmalloc here, though as long as
@@ -136,7 +139,7 @@ function ga_append_string(garr, it)
   return ga_inc_len(garr, 1)
 end
 
-function ga_append_strings(garr, ...)
+local ga_append_strings = function(garr, ...)
   local prevlen = ga_len(garr)
   local len = select('#', ...)
   for i = 1, len do
@@ -145,7 +148,7 @@ function ga_append_strings(garr, ...)
   return eq(prevlen + len, ga_len(garr))
 end
 
-function ga_append_ints(garr, ...)
+local ga_append_ints = function(garr, ...)
   local prevlen = ga_len(garr)
   local len = select('#', ...)
   for i = 1, len do
@@ -156,23 +159,23 @@ end
 
 -- enhanced constructors
 local garray_ctype = ffi.typeof('garray_T[1]')
-function new_garray()
+local new_garray = function()
   local garr = garray_ctype()
   return ffi.gc(garr, ga_clear)
 end
 
-function new_string_garray()
+local new_string_garray = function()
   local garr = garray_ctype()
-  ga_init(garr, ffi.sizeof("char_u *"), 1)
+  ga_init(garr, ffi.sizeof("unsigned char *"), 1)
   return ffi.gc(garr, ga_clear_strings)
 end
 
-function randomByte()
+local randomByte = function()
   return ffi.cast('uint8_t', math.random(0, 255))
 end
 
 -- scramble the data in a garray
-function ga_scramble(garr)
+local ga_scramble = function(garr)
   local size, bytes = ga_size(garr), ga_data_as_bytes(garr)
   for i = 0, size - 1 do
     bytes[i] = randomByte()
@@ -180,8 +183,6 @@ function ga_scramble(garr)
 end
 
 describe('garray', function()
-  local itemsize = 14
-  local growsize = 95
 
   describe('ga_init', function()
     it('initializes the values of the garray', function()

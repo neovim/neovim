@@ -1,19 +1,18 @@
 local ffi = require('ffi')
-local lpeg = require('lpeg')
 local formatc = require('test.unit.formatc')
 local Set = require('test.unit.set')
 local Preprocess = require('test.unit.preprocess')
 local Paths = require('test.config.paths')
 
 -- add some standard header locations
-for i, p in ipairs(Paths.include_paths) do
+for _, p in ipairs(Paths.include_paths) do
   Preprocess.add_to_include_path(p)
 end
 
 -- load neovim shared library
 local libnvim = ffi.load(Paths.test_libnvim_path)
 
-function trim(s)
+local function trim(s)
   return s:match('^%s*(.*%S)') or ''
 end
 
@@ -28,7 +27,7 @@ end
 
 -- some things are just too complex for the LuaJIT C parser to digest. We
 -- usually don't need them anyway.
-function filter_complex_blocks(body)
+local function filter_complex_blocks(body)
   local result = {}
 
   for line in body:gmatch("[^\r\n]+") do
@@ -43,28 +42,25 @@ end
 
 -- use this helper to import C files, you can pass multiple paths at once,
 -- this helper will return the C namespace of the nvim library.
--- cimport = (path) ->
-function cimport(...)
+local function cimport(...)
   local paths = {}
   local args = {...}
 
   -- filter out paths we've already imported
-  for i = 1, #args do
-    local path = args[i]
-    if not imported:contains(path) then
+  for _,path in pairs(args) do
+    if path ~= nil and not imported:contains(path) then
       paths[#paths + 1] = path
     end
   end
 
-  for i = 1, #paths do
-    imported:add(paths[i])
+  for _,path in pairs(paths) do
+    imported:add(path)
   end
 
   if #paths == 0 then
     return libnvim
   end
 
-  -- require 'pl.pretty'.dump(paths)
   local body = nil
   for i=1, 3 do
     local stream = Preprocess.preprocess_stream(unpack(paths))
@@ -72,7 +68,10 @@ function cimport(...)
     stream:close()
     if body ~= nil then break end
   end
-  -- require 'pl.pretty'.dump(body)
+
+  if body == nil then
+    print("ERROR: helpers.lua: Preprocess.preprocess_stream():read() returned empty")
+  end
 
   -- format it (so that the lines are "unique" statements), also filter out
   -- Objective-C blocks
@@ -103,7 +102,7 @@ function cimport(...)
   return libnvim
 end
 
-function cppimport(path)
+local function cppimport(path)
   return cimport(Paths.test_include_path .. '/' .. path)
 end
 
@@ -111,19 +110,19 @@ cimport('./src/nvim/types.h')
 
 -- take a pointer to a C-allocated string and return an interned
 -- version while also freeing the memory
-function internalize(cdata, len)
+local function internalize(cdata, len)
   ffi.gc(cdata, ffi.C.free)
   return ffi.string(cdata, len)
 end
 
 local cstr = ffi.typeof('char[?]')
-function to_cstr(string)
+local function to_cstr(string)
   return cstr((string.len(string)) + 1, string)
 end
 
 -- initialize some global variables, this is still necessary to unit test
 -- functions that rely on global state.
-function vim_init()
+local function vim_init()
   if vim_init_called ~= nil then
     return 
   end
