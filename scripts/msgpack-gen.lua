@@ -38,9 +38,28 @@ assert(#arg >= 1)
 -- api metadata
 api = {
   functions = {},
-  -- Helpers for object-oriented languages
-  classes = {'Buffer', 'Window', 'Tabpage'}
+  types = {}
 }
+
+-- Extract type codes from api/private/defs.h. The codes are values between
+-- comment markers in the ObjectType enum
+local typedefs_header = arg[1]
+local input = io.open(typedefs_header, 'rb')
+local reading_types = false
+while true do
+  local line = input:read('*l'):gsub("^%s*(.-)%s*$", "%1")
+  if reading_types then
+    if line == '// end custom types' then
+      break
+    end
+    local type_name = line:gsub("^kObjectType(.-),$", "%1")
+    api.types[#api.types + 1] = type_name
+  else
+    reading_types = line == '// start custom types'
+  end
+end
+input:close()
+
 -- names of all headers relative to the source root(for inclusion in the
 -- generated file)
 headers = {}
@@ -48,7 +67,7 @@ headers = {}
 outputf = arg[#arg]
 
 -- read each input file, parse and append to the api metadata
-for i = 1, #arg - 1 do
+for i = 2, #arg - 1 do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do

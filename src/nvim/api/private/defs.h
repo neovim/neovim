@@ -49,32 +49,36 @@ typedef struct {
 } Dictionary;
 
 typedef enum {
+// The following comments are markers that msgpack-gen.lua uses to extract
+// types, don't remove!
+// start custom types
+  kObjectTypePosition,
+  kObjectTypeBuffer,
+  kObjectTypeWindow,
+  kObjectTypeTabpage,
+// end custom types
   kObjectTypeNil,
   kObjectTypeBoolean,
   kObjectTypeInteger,
   kObjectTypeFloat,
   kObjectTypeString,
-  kObjectTypeBuffer,
-  kObjectTypeWindow,
-  kObjectTypeTabpage,
   kObjectTypeArray,
   kObjectTypeDictionary,
-  kObjectTypePosition,
 } ObjectType;
 
 struct object {
   ObjectType type;
   union {
+    Position position;
+    Buffer buffer;
+    Window window;
+    Tabpage tabpage;
     Boolean boolean;
     Integer integer;
     Float floating;
     String string;
-    Buffer buffer;
-    Window window;
-    Tabpage tabpage;
     Array array;
     Dictionary dictionary;
-    Position position;
   } data;
 };
 
