@@ -13,9 +13,9 @@
 /// @param tabpage The tabpage
 /// @param[out] err Details of an error that may have occurred
 /// @return The number of windows in `tabpage`
-WindowArray tabpage_get_windows(Tabpage tabpage, Error *err)
+Array tabpage_get_windows(Tabpage tabpage, Error *err)
 {
-  WindowArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);
 
   if (!tab) {
@@ -32,14 +32,14 @@ WindowArray tabpage_get_windows(Tabpage tabpage, Error *err)
     rv.size++;
   }
 
-  rv.items = xmalloc(sizeof(Window) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     if (tp != tab) {
       break;
     }
-    rv.items[i++] = wp->handle;
+    rv.items[i++] = WINDOW_OBJ(wp->handle);
   }
 
   return rv;

@@ -19,42 +19,6 @@
     msgpack_pack_uint64(res, result);                                       \
   }
 
-#define TYPED_ARRAY_IMPL(t, lt)                                             \
-  bool msgpack_rpc_to_##lt##array(msgpack_object *obj, t##Array *arg)       \
-  {                                                                         \
-    if (obj->type != MSGPACK_OBJECT_ARRAY) {                                \
-      return false;                                                         \
-    }                                                                       \
-                                                                            \
-    arg->size = obj->via.array.size;                                        \
-    arg->items = xcalloc(obj->via.array.size, sizeof(t));                   \
-                                                                            \
-    for (size_t i = 0; i < obj->via.array.size; i++) {                      \
-      if (!msgpack_rpc_to_##lt(obj->via.array.ptr + i, &arg->items[i])) {   \
-        return false;                                                       \
-      }                                                                     \
-    }                                                                       \
-                                                                            \
-    return true;                                                            \
-  }                                                                         \
-                                                                            \
-  void msgpack_rpc_from_##lt##array(t##Array result, msgpack_packer *res)   \
-  {                                                                         \
-    msgpack_pack_array(res, result.size);                                   \
-                                                                            \
-    for (size_t i = 0; i < result.size; i++) {                              \
-      msgpack_rpc_from_##lt(result.items[i], res);                          \
-    }                                                                       \
-  }                                                                         \
-                                                                            \
-  void msgpack_rpc_free_##lt##array(t##Array value) {                       \
-    for (size_t i = 0; i < value.size; i++) {                               \
-      msgpack_rpc_free_##lt(value.items[i]);                                \
-    }                                                                       \
-                                                                            \
-    free(value.items);                                                      \
-  }
-
 bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
 {
   *arg = obj->via.boolean;
@@ -249,22 +213,6 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_rpc_from_tabpage(result.data.tabpage, res);
       break;
 
-    case kObjectTypeStringArray:
-      msgpack_rpc_from_stringarray(result.data.stringarray, res);
-      break;
-
-    case kObjectTypeBufferArray:
-      msgpack_rpc_from_bufferarray(result.data.bufferarray, res);
-      break;
-
-    case kObjectTypeWindowArray:
-      msgpack_rpc_from_windowarray(result.data.windowarray, res);
-      break;
-
-    case kObjectTypeTabpageArray:
-      msgpack_rpc_from_tabpagearray(result.data.tabpagearray, res);
-      break;
-
     case kObjectTypeDictionary:
       msgpack_rpc_from_dictionary(result.data.dictionary, res);
       break;
@@ -327,22 +275,6 @@ void msgpack_rpc_free_object(Object value)
       msgpack_rpc_free_array(value.data.array);
       break;
 
-    case kObjectTypeStringArray:
-      msgpack_rpc_free_stringarray(value.data.stringarray);
-      break;
-
-    case kObjectTypeBufferArray:
-      msgpack_rpc_free_bufferarray(value.data.bufferarray);
-      break;
-
-    case kObjectTypeWindowArray:
-      msgpack_rpc_free_windowarray(value.data.windowarray);
-      break;
-
-    case kObjectTypeTabpageArray:
-      msgpack_rpc_free_tabpagearray(value.data.tabpagearray);
-      break;
-
     case kObjectTypeDictionary:
       msgpack_rpc_free_dictionary(value.data.dictionary);
       break;
@@ -374,9 +306,3 @@ void msgpack_rpc_free_dictionary(Dictionary value)
 REMOTE_FUNCS_IMPL(Buffer, buffer)
 REMOTE_FUNCS_IMPL(Window, window)
 REMOTE_FUNCS_IMPL(Tabpage, tabpage)
-
-TYPED_ARRAY_IMPL(Buffer, buffer)
-TYPED_ARRAY_IMPL(Window, window)
-TYPED_ARRAY_IMPL(Tabpage, tabpage)
-TYPED_ARRAY_IMPL(String, string)
-

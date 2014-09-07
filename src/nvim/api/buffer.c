@@ -51,10 +51,10 @@ Integer buffer_get_length(Buffer buffer, Error *err)
 String buffer_get_line(Buffer buffer, Integer index, Error *err)
 {
   String rv = {.size = 0};
-  StringArray slice = buffer_get_slice(buffer, index, index, true, true, err);
+  Array slice = buffer_get_slice(buffer, index, index, true, true, err);
 
   if (!err->set && slice.size) {
-    rv = slice.items[0];
+    rv = slice.items[0].data.string;
   }
 
   free(slice.items);
@@ -70,7 +70,8 @@ String buffer_get_line(Buffer buffer, Integer index, Error *err)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 {
-  StringArray array = {.items = &line, .size = 1};
+  Object l = STRING_OBJ(line);
+  Array array = {.items = &l, .size = 1};
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
@@ -81,7 +82,7 @@ void buffer_set_line(Buffer buffer, Integer index, String line, Error *err)
 /// @param[out] err Details of an error that may have occurred
 void buffer_del_line(Buffer buffer, Integer index, Error *err)
 {
-  StringArray array = ARRAY_DICT_INIT;
+  Array array = ARRAY_DICT_INIT;
   buffer_set_slice(buffer, index, index, true, true, array, err);
 }
 
@@ -94,14 +95,14 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 /// @param include_end True if the slice includes the `end` parameter
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
-StringArray buffer_get_slice(Buffer buffer,
-                             Integer start,
-                             Integer end,
-                             Boolean include_start,
-                             Boolean include_end,
-                             Error *err)
+Array buffer_get_slice(Buffer buffer,
+                       Integer start,
+                       Integer end,
+                       Boolean include_start,
+                       Boolean include_end,
+                       Error *err)
 {
-  StringArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
@@ -118,7 +119,7 @@ StringArray buffer_get_slice(Buffer buffer,
   }
 
   rv.size = (size_t)(end - start);
-  rv.items = xcalloc(sizeof(String), rv.size);
+  rv.items = xcalloc(sizeof(Object), rv.size);
 
   for (size_t i = 0; i < rv.size; i++) {
     int64_t lnum = start + (int64_t)i;
@@ -129,13 +130,13 @@ StringArray buffer_get_slice(Buffer buffer,
     }
 
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
-    rv.items[i] = cstr_to_string(bufstr);
+    rv.items[i] = STRING_OBJ(cstr_to_string(bufstr));
   }
 
 end:
   if (err->set) {
     for (size_t i = 0; i < rv.size; i++) {
-      free(rv.items[i].data);
+      free(rv.items[i].data.string.data);
     }
 
     free(rv.items);
@@ -152,15 +153,15 @@ end:
 /// @param end The last line index
 /// @param include_start True if the slice includes the `start` parameter
 /// @param include_end True if the slice includes the `end` parameter
-/// @param lines An array of lines to use as replacement(A 0-length array
-///        will simply delete the line range)
+/// @param replacement An array of lines to use as replacement(A 0-length
+//         array will simply delete the line range)
 /// @param[out] err Details of an error that may have occurred
 void buffer_set_slice(Buffer buffer,
                       Integer start,
                       Integer end,
                       Boolean include_start,
                       Boolean include_end,
-                      StringArray replacement,
+                      Array replacement,
                       Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -184,10 +185,15 @@ void buffer_set_slice(Buffer buffer,
   size_t new_len = replacement.size;
   size_t old_len = (size_t)(end - start);
   ssize_t extra = 0;  // lines added to text, can be negative
-  char **lines = (new_len != 0) ? xmalloc(new_len * sizeof(char *)) : NULL;
+  char **lines = (new_len != 0) ? xcalloc(new_len, sizeof(char *)) : NULL;
 
   for (size_t i = 0; i < new_len; i++) {
-    String l = replacement.items[i];
+    if (replacement.items[i].type != kObjectTypeString) {
+      set_api_error("all items in the replacement array must be strings", err);
+      goto end;
+    }
+
+    String l = replacement.items[i].data.string;
     lines[i] = xmemdupz(l.data, l.size);
   }
 
@@ -430,7 +436,7 @@ Boolean buffer_is_valid(Buffer buffer)
 ///        to the end of the buffer.
 /// @param lines An array of lines
 /// @param[out] err Details of an error that may have occurred
-void buffer_insert(Buffer buffer, Integer lnum, StringArray lines, Error *err)
+void buffer_insert(Buffer buffer, Integer lnum, Array lines, Error *err)
 {
   buffer_set_slice(buffer, lnum, lnum, false, true, lines, err);
 }

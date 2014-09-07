@@ -11,12 +11,6 @@
 #define POSITION_INIT { .row = 0, .col = 0 }
 #define REMOTE_TYPE(type) typedef uint64_t type
 
-#define TYPED_ARRAY_OF(type)                                                  \
-  typedef struct {                                                            \
-    type *items;                                                              \
-    size_t size;                                                              \
-  } type##Array
-
 // Basic types
 typedef struct {
   char msg[256];
@@ -37,11 +31,6 @@ REMOTE_TYPE(Window);
 REMOTE_TYPE(Tabpage);
 
 typedef struct object Object;
-
-TYPED_ARRAY_OF(Buffer);
-TYPED_ARRAY_OF(Window);
-TYPED_ARRAY_OF(Tabpage);
-TYPED_ARRAY_OF(String);
 
 typedef struct {
   Integer row, col;
@@ -71,10 +60,6 @@ typedef enum {
   kObjectTypeArray,
   kObjectTypeDictionary,
   kObjectTypePosition,
-  kObjectTypeStringArray,
-  kObjectTypeBufferArray,
-  kObjectTypeWindowArray,
-  kObjectTypeTabpageArray,
 } ObjectType;
 
 struct object {
@@ -90,10 +75,6 @@ struct object {
     Array array;
     Dictionary dictionary;
     Position position;
-    StringArray stringarray;
-    BufferArray bufferarray;
-    WindowArray windowarray;
-    TabpageArray tabpagearray;
   } data;
 };
 

@@ -149,9 +149,9 @@ Integer vim_strwidth(String str, Error *err)
 /// Returns a list of paths contained in 'runtimepath'
 ///
 /// @return The list of paths
-StringArray vim_list_runtime_paths(void)
+Array vim_list_runtime_paths(void)
 {
-  StringArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   uint8_t *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -168,19 +168,20 @@ StringArray vim_list_runtime_paths(void)
   }
 
   // Allocate memory for the copies
-  rv.items = xmalloc(sizeof(String) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   // reset the position
   rtp = p_rtp;
   // Start copying
   for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
-    rv.items[i].data = xmalloc(MAXPATHL);
+    rv.items[i].type = kObjectTypeString;
+    rv.items[i].data.string.data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
     int length = copy_option_part(&rtp,
-                                 (char_u *)rv.items[i].data,
+                                 (char_u *)rv.items[i].data.string.data,
                                  MAXPATHL,
                                  ",");
     assert(length >= 0);
-    rv.items[i].size = (size_t)length;
+    rv.items[i].data.string.size = (size_t)length;
   }
 
   return rv;
@@ -310,9 +311,9 @@ void vim_err_write(String str)
 /// Gets the current list of buffer handles
 ///
 /// @return The number of buffers
-BufferArray vim_get_buffers(void)
+Array vim_get_buffers(void)
 {
-  BufferArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   buf_T *b = firstbuf;
 
   while (b) {
@@ -320,12 +321,12 @@ BufferArray vim_get_buffers(void)
     b = b->b_next;
   }
 
-  rv.items = xmalloc(sizeof(Buffer) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
   b = firstbuf;
 
   while (b) {
-    rv.items[i++] = b->handle;
+    rv.items[i++] = BUFFER_OBJ(b->handle);
     b = b->b_next;
   }
 
@@ -370,9 +371,9 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
 /// Gets the current list of window handles
 ///
 /// @return The number of windows
-WindowArray vim_get_windows(void)
+Array vim_get_windows(void)
 {
-  WindowArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   tabpage_T *tp;
   win_T *wp;
 
@@ -380,11 +381,11 @@ WindowArray vim_get_windows(void)
     rv.size++;
   }
 
-  rv.items = xmalloc(sizeof(Window) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.items[i++] = wp->handle;
+    rv.items[i++] = WINDOW_OBJ(wp->handle);
   }
 
   return rv;
@@ -426,9 +427,9 @@ void vim_set_current_window(Window window, Error *err)
 /// Gets the current list of tabpage handles
 ///
 /// @return The number of tab pages
-TabpageArray vim_get_tabpages(void)
+Array vim_get_tabpages(void)
 {
-  TabpageArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   tabpage_T *tp = first_tabpage;
 
   while (tp) {
@@ -436,12 +437,12 @@ TabpageArray vim_get_tabpages(void)
     tp = tp->tp_next;
   }
 
-  rv.items = xmalloc(sizeof(Tabpage) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
   tp = first_tabpage;
 
   while (tp) {
-    rv.items[i++] = tp->handle;
+    rv.items[i++] = TABPAGE_OBJ(tp->handle);
     tp = tp->tp_next;
   }
 
