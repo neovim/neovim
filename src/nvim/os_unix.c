@@ -55,6 +55,7 @@
 #include "nvim/os/signal.h"
 #include "nvim/os/job.h"
 #include "nvim/os/msgpack_rpc.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
 
 #if defined(HAVE_SYS_IOCTL_H)
 # include <sys/ioctl.h>
@@ -166,6 +167,7 @@ void mch_init(void)
 #endif
 
   msgpack_rpc_init();
+  msgpack_rpc_helpers_init();
   event_init();
 }
 

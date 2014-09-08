@@ -9,6 +9,8 @@
 #include "nvim/func_attr.h"
 #include "nvim/api/private/defs.h"
 
+void msgpack_rpc_helpers_init(void);
+
 /// Functions for validating and converting from msgpack types to C types.
 /// These are used by `msgpack_rpc_dispatch` to validate and convert each
 /// argument.

@@ -7,17 +7,47 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
-#define REMOTE_FUNCS_IMPL(t, lt)                                            \
+static msgpack_zone zone;
+static msgpack_sbuffer sbuffer;
+
+#define HANDLE_TYPE_CONVERSION_IMPL(t, lt)                                  \
   bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
   {                                                                         \
-    *arg = obj->via.u64;                                                    \
-    return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                    \
+    if (obj->type != MSGPACK_OBJECT_EXT                                     \
+        || obj->via.ext.type != kObjectType##t) {                           \
+      return false;                                                         \
+    }                                                                       \
+                                                                            \
+    msgpack_object data;                                                    \
+    msgpack_unpack_return ret = msgpack_unpack(obj->via.ext.ptr,            \
+                                               obj->via.ext.size,           \
+                                               NULL,                        \
+                                               &zone,                       \
+                                               &data);                      \
+                                                                            \
+    if (ret != MSGPACK_UNPACK_SUCCESS) {                                    \
+      return false;                                                         \
+    }                                                                       \
+                                                                            \
+    *arg = data.via.u64;                                                    \
+    return true;                                                            \
   }                                                                         \
                                                                             \
-  void msgpack_rpc_from_##lt(t result, msgpack_packer *res)                 \
+  void msgpack_rpc_from_##lt(t o, msgpack_packer *res)                      \
   {                                                                         \
-    msgpack_pack_uint64(res, result);                                       \
+    msgpack_packer pac;                                                     \
+    msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);             \
+    msgpack_pack_uint64(&pac, o);                                           \
+    msgpack_pack_ext(res, sbuffer.size, kObjectType##t);                    \
+    msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size);                 \
+    msgpack_sbuffer_clear(&sbuffer);                                        \
   }
+
+void msgpack_rpc_helpers_init(void)
+{
+  msgpack_zone_init(&zone, 0xfff);
+  msgpack_sbuffer_init(&sbuffer);
+}
 
 bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
 {
@@ -88,6 +118,15 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       arg->type = kObjectTypeDictionary;
       return msgpack_rpc_to_dictionary(obj, &arg->data.dictionary);
 
+    case MSGPACK_OBJECT_EXT:
+      switch (obj->via.ext.type) {
+        case kObjectTypeBuffer:
+          return msgpack_rpc_to_buffer(obj, &arg->data.buffer);
+        case kObjectTypeWindow:
+          return msgpack_rpc_to_window(obj, &arg->data.window);
+        case kObjectTypeTabpage:
+          return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage);
+      }
     default:
       return false;
   }
@@ -303,6 +342,6 @@ void msgpack_rpc_free_dictionary(Dictionary value)
   free(value.items);
 }
 
-REMOTE_FUNCS_IMPL(Buffer, buffer)
-REMOTE_FUNCS_IMPL(Window, window)
-REMOTE_FUNCS_IMPL(Tabpage, tabpage)
+HANDLE_TYPE_CONVERSION_IMPL(Buffer, buffer)
+HANDLE_TYPE_CONVERSION_IMPL(Window, window)
+HANDLE_TYPE_CONVERSION_IMPL(Tabpage, tabpage)
