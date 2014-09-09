@@ -72,12 +72,12 @@ WStream * wstream_new(size_t maxmem)
 /// @param wstream The `WStream` instance
 void wstream_free(WStream *wstream) {
   if (!wstream->pending_reqs) {
-    handle_set_wstream((uv_handle_t *)wstream->stream, NULL);
     if (wstream->free_handle) {
       uv_close((uv_handle_t *)wstream->stream, close_cb);
+    } else {
+      handle_set_wstream((uv_handle_t *)wstream->stream, NULL);
+      free(wstream);
     }
-
-    free(wstream);
   } else {
     wstream->freed = true;
   }
@@ -238,12 +238,7 @@ static void release_wbuffer(WBuffer *buffer)
 
 static void close_cb(uv_handle_t *handle)
 {
-  WStream *wstream = handle_get_wstream(handle);
-
-  if (wstream) {
-    free(wstream);
-  }
-
+  free(handle_get_wstream(handle));
   free(handle->data);
   free(handle);
 }
