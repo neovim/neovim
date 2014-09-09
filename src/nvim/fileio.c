@@ -6177,12 +6177,17 @@ aucmd_prepbuf (
   int save_acd;
 
   /* Find a window that is for the new buffer */
-  if (buf == curbuf)            /* be quick when buf is curbuf */
+  if (buf == curbuf) {          /* be quick when buf is curbuf */
     win = curwin;
-  else
-    for (win = firstwin; win != NULL; win = win->w_next)
-      if (win->w_buffer == buf)
+  } else {
+    win = NULL;
+    FOR_ALL_WINDOWS(wp) {
+      if (wp->w_buffer == buf) {
+        win = wp;
         break;
+      }
+    }
+  }
 
   /* Allocate "aucmd_win" when needed.  If this fails (out of memory) fall
    * back to using the current window. */

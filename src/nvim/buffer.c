@@ -1763,13 +1763,16 @@ buflist_findpat (
             if (curtab_only) {
               /* Ignore the match if the buffer is not open in
                * the current tab. */
-              win_T       *wp;
-
-              for (wp = firstwin; wp != NULL; wp = wp->w_next)
-                if (wp->w_buffer == buf)
+              bool found_window = false;
+              FOR_ALL_WINDOWS(wp) {
+                if (wp->w_buffer == buf) {
+                  found_window = true;
                   break;
-              if (wp == NULL)
+                }
+              }
+              if (!found_window) {
                 continue;
+              }
             }
             if (match >= 0) {                   /* already found a match */
               match = -2;
@@ -2020,22 +2023,22 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
 
 
 /*
- * Return TRUE when "wip" has 'diff' set and the diff is only for another tab
+ * Return true when "wip" has 'diff' set and the diff is only for another tab
  * page.  That's because a diff is local to a tab page.
  */
-static int wininfo_other_tab_diff(wininfo_T *wip)
+static bool wininfo_other_tab_diff(wininfo_T *wip)
 {
-  win_T       *wp;
-
   if (wip->wi_opt.wo_diff) {
-    for (wp = firstwin; wp != NULL; wp = wp->w_next)
-      /* return FALSE when it's a window in the current tab page, thus
+    FOR_ALL_WINDOWS(wp) {
+      /* return false when it's a window in the current tab page, thus
        * the buffer was in diff mode here */
-      if (wip->wi_win == wp)
-        return FALSE;
-    return TRUE;
+      if (wip->wi_win == wp) {
+        return false;
+      }
+    }
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -3601,7 +3604,6 @@ do_arg_all (
 )
 {
   int i;
-  win_T       *wp, *wpnext;
   char_u      *opened;          /* Array of weight for which args are open:
                                  *  0: not opened
                                  *  1: opened in other tab
@@ -3651,8 +3653,9 @@ do_arg_all (
   if (had_tab > 0)
     goto_tabpage_tp(first_tabpage, TRUE, TRUE);
   for (;; ) {
+    win_T *wpnext = NULL;
     tpnext = curtab->tp_next;
-    for (wp = firstwin; wp != NULL; wp = wpnext) {
+    for (win_T *wp = firstwin; wp != NULL; wp = wpnext) {
       wpnext = wp->w_next;
       buf = wp->w_buffer;
       if (buf->b_ffname == NULL
@@ -3762,13 +3765,14 @@ do_arg_all (
     if (opened[i] > 0) {
       /* Move the already present window to below the current window */
       if (curwin->w_arg_idx != i) {
-        for (wpnext = firstwin; wpnext != NULL; wpnext = wpnext->w_next) {
-          if (wpnext->w_arg_idx == i) {
+        FOR_ALL_WINDOWS(wp) {
+          if (wp->w_arg_idx == i) {
             if (keep_tabs) {
-              new_curwin = wpnext;
+              new_curwin = wp;
               new_curtab = curtab;
-            } else
-              win_move_after(wpnext, curwin);
+            } else {
+              win_move_after(wp, curwin);
+            }
             break;
           }
         }

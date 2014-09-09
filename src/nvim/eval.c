@@ -7361,19 +7361,20 @@ static void f_bufnr(typval_T *argvars, typval_T *rettv)
  */
 static void f_bufwinnr(typval_T *argvars, typval_T *rettv)
 {
-  win_T       *wp;
-  int winnr = 0;
-  buf_T       *buf;
-
   (void)get_tv_number(&argvars[0]);         /* issue errmsg if type error */
   ++emsg_off;
-  buf = get_buf_tv(&argvars[0], TRUE);
-  for (wp = firstwin; wp; wp = wp->w_next) {
+
+  buf_T *buf = get_buf_tv(&argvars[0], TRUE);
+  int winnr = 0;
+  bool found_buf = false;
+  FOR_ALL_WINDOWS(wp) {
     ++winnr;
-    if (wp->w_buffer == buf)
+    if (wp->w_buffer == buf) {
+      found_buf = true;
       break;
+    }
   }
-  rettv->vval.v_number = (wp != NULL ? winnr : -1);
+  rettv->vval.v_number = (found_buf ? winnr : -1);
   --emsg_off;
 }
 
@@ -14750,13 +14751,12 @@ static void f_winnr(typval_T *argvars, typval_T *rettv)
  */
 static void f_winrestcmd(typval_T *argvars, typval_T *rettv)
 {
-  win_T       *wp;
   int winnr = 1;
   garray_T ga;
   char_u buf[50];
 
   ga_init(&ga, (int)sizeof(char), 70);
-  for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+  FOR_ALL_WINDOWS(wp) {
     sprintf((char *)buf, "%dresize %d|", winnr, wp->w_height);
     ga_concat(&ga, buf);
     sprintf((char *)buf, "vert %dresize %d|", winnr, wp->w_width);

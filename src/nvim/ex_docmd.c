@@ -5188,13 +5188,12 @@ static void ex_close(exarg_T *eap)
  */
 static void ex_pclose(exarg_T *eap)
 {
-  win_T       *win;
-
-  for (win = firstwin; win != NULL; win = win->w_next)
+  FOR_ALL_WINDOWS(win) {
     if (win->w_p_pvw) {
       ex_win_close(eap->forceit, win, NULL);
       break;
     }
+  }
 }
 
 /*
@@ -6119,7 +6118,6 @@ static void ex_swapname(exarg_T *eap)
  */
 static void ex_syncbind(exarg_T *eap)
 {
-  win_T       *wp;
   win_T       *save_curwin = curwin;
   buf_T       *save_curbuf = curbuf;
   long topline;
@@ -6133,15 +6131,17 @@ static void ex_syncbind(exarg_T *eap)
    */
   if (curwin->w_p_scb) {
     topline = curwin->w_topline;
-    for (wp = firstwin; wp; wp = wp->w_next) {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_p_scb && wp->w_buffer) {
         y = wp->w_buffer->b_ml.ml_line_count - p_so;
-        if (topline > y)
+        if (topline > y) {
           topline = y;
+        }
       }
     }
-    if (topline < 1)
+    if (topline < 1) {
       topline = 1;
+    }
   } else {
     topline = 1;
   }

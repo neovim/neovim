@@ -1206,7 +1206,6 @@ check_changed_any (
   int bufcount = 0;
   int         *bufnrs;
   tabpage_T   *tp;
-  win_T       *wp;
 
   FOR_ALL_BUFFERS(buf) {
     ++bufcount;
@@ -1220,15 +1219,21 @@ check_changed_any (
   /* curbuf */
   bufnrs[bufnum++] = curbuf->b_fnum;
   /* buf in curtab */
-  FOR_ALL_WINDOWS(wp)
-  if (wp->w_buffer != curbuf)
-    add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
+  FOR_ALL_WINDOWS(wp) {
+    if (wp->w_buffer != curbuf) {
+      add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
+    }
+  }
 
   /* buf in other tab */
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
-    if (tp != curtab)
-      for (wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next)
+  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+    if (tp != curtab) {
+      for (win_T *wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next) {
         add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
+      }
+    }
+  }
+
   /* any other buf */
   FOR_ALL_BUFFERS(buf) {
     add_bufnum(bufnrs, &bufnum, buf->b_fnum);
@@ -1277,16 +1282,19 @@ check_changed_any (
   }
 
   /* Try to find a window that contains the buffer. */
-  if (buf != curbuf)
-    FOR_ALL_TAB_WINDOWS(tp, wp)
-    if (wp->w_buffer == buf) {
-      goto_tabpage_win(tp, wp);
-      /* Paranoia: did autocms wipe out the buffer with changes? */
-      if (!buf_valid(buf)) {
-        goto theend;
+  if (buf != curbuf) {
+    win_T *wp;
+    FOR_ALL_TAB_WINDOWS(tp, wp) {
+      if (wp->w_buffer == buf) {
+        goto_tabpage_win(tp, wp);
+        /* Paranoia: did autocms wipe out the buffer with changes? */
+        if (!buf_valid(buf)) {
+          goto theend;
+        }
+        goto buf_found;
       }
-      goto buf_found;
     }
+  }
 buf_found:
 
   /* Open the changed buffer in the current window. */

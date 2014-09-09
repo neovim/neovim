@@ -87,14 +87,14 @@ void diff_buf_adjust(win_T *win)
   if (!win->w_p_diff) {
     // When there is no window showing a diff for this buffer, remove
     // it from the diffs.
-    win_T *wp;
-    for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+    bool found_win = false;
+    FOR_ALL_WINDOWS(wp) {
       if ((wp->w_buffer == win->w_buffer) && wp->w_p_diff) {
-        break;
+        found_win = true;
       }
     }
 
-    if (wp == NULL) {
+    if (!found_win) {
       int i = diff_buf_idx(win->w_buffer);
       if (i != DB_COUNT) {
         curtab->tp_diffbuf[i] = NULL;
@@ -581,8 +581,7 @@ static int diff_check_sanity(tabpage_T *tp, diff_T *dp)
 /// @param dofold Also recompute the folds
 static void diff_redraw(int dofold)
 {
-  win_T *wp;
-  for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+  FOR_ALL_WINDOWS(wp) {
     if (wp->w_p_diff) {
       redraw_win_later(wp, SOME_VALID);
       if (dofold && foldmethodIsDiff(wp)) {
@@ -1111,8 +1110,7 @@ void ex_diffoff(exarg_T *eap)
   win_T *old_curwin = curwin;
   int diffwin = FALSE;
 
-  win_T *wp;
-  for (wp = firstwin; wp != NULL; wp = wp->w_next) {
+  FOR_ALL_WINDOWS(wp) {
     if (eap->forceit ? wp->w_p_diff : (wp == curwin)) {
       // Set 'diff', 'scrollbind' off and 'wrap' on. If option values
       // were saved in diff_win_options() restore them.
@@ -2364,10 +2362,8 @@ void ex_diffgetput(exarg_T *eap)
 /// @param skip_idx
 static void diff_fold_update(diff_T *dp, int skip_idx)
 {
-  win_T *wp;
-  for (wp = firstwin; wp != NULL; wp = wp->w_next) {
-    int i;
-    for (i = 0; i < DB_COUNT; ++i) {
+  FOR_ALL_WINDOWS(wp) {
+    for (int i = 0; i < DB_COUNT; ++i) {
       if ((curtab->tp_diffbuf[i] == wp->w_buffer) && (i != skip_idx)) {
         foldUpdate(wp, dp->df_lnum[i], dp->df_lnum[i] + dp->df_count[i]);
       }

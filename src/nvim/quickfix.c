@@ -1294,7 +1294,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
   int len;
   int old_KeyTyped = KeyTyped;                   /* getting file may reset it */
   int ok = OK;
-  int usable_win;
+  bool usable_win;
 
   if (qi == NULL)
     qi = &ql_info;
@@ -1379,14 +1379,16 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
    * For ":helpgrep" find a help window or open one.
    */
   if (qf_ptr->qf_type == 1 && (!curwin->w_buffer->b_help || cmdmod.tab != 0)) {
-    win_T   *wp;
+    win_T *wp = NULL;
 
-    if (cmdmod.tab != 0)
-      wp = NULL;
-    else
-      for (wp = firstwin; wp != NULL; wp = wp->w_next)
-        if (wp->w_buffer != NULL && wp->w_buffer->b_help)
+    if (cmdmod.tab == 0) {
+      FOR_ALL_WINDOWS(wp2) {
+        if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
+          wp = wp2;
           break;
+        }
+      }
+    }
     if (wp != NULL && wp->w_buffer->b_nwindows > 0)
       win_enter(wp, true);
     else {
@@ -1433,26 +1435,29 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     if (qf_ptr->qf_fnum == 0)
       goto theend;
 
-    usable_win = 0;
+    usable_win = false;
 
     ll_ref = curwin->w_llist_ref;
     if (ll_ref != NULL) {
       /* Find a window using the same location list that is not a
        * quickfix window. */
-      FOR_ALL_WINDOWS(usable_win_ptr)
-      if (usable_win_ptr->w_llist == ll_ref
-          && usable_win_ptr->w_buffer->b_p_bt[0] != 'q') {
-        usable_win = 1;
-        break;
+      FOR_ALL_WINDOWS(wp) {
+        if (wp->w_llist == ll_ref
+            && wp->w_buffer->b_p_bt[0] != 'q') {
+          usable_win = true;
+          usable_win_ptr = wp;
+          break;
+        }
       }
     }
 
     if (!usable_win) {
       /* Locate a window showing a normal buffer */
-      FOR_ALL_WINDOWS(win)
-      if (win->w_buffer->b_p_bt[0] == NUL) {
-        usable_win = 1;
-        break;
+      FOR_ALL_WINDOWS(wp) {
+        if (wp->w_buffer->b_p_bt[0] == NUL) {
+          usable_win = true;
+          break;
+        }
       }
     }
 
@@ -1468,7 +1473,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
       {
         if (wp->w_buffer->b_fnum == qf_ptr->qf_fnum) {
           goto_tabpage_win(tp, wp);
-          usable_win = 1;
+          usable_win = true;
           goto win_found;
         }
       }
@@ -1501,9 +1506,12 @@ win_found:
         win = usable_win_ptr;
         if (win == NULL) {
           /* Find the window showing the selected file */
-          FOR_ALL_WINDOWS(win)
-          if (win->w_buffer->b_fnum == qf_ptr->qf_fnum)
-            break;
+          FOR_ALL_WINDOWS(wp) {
+            if (wp->w_buffer->b_fnum == qf_ptr->qf_fnum) {
+              win = wp;
+              break;
+            }
+          }
           if (win == NULL) {
             /* Find a previous usable window */
             win = curwin;
@@ -2212,13 +2220,13 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
  */
 static win_T *qf_find_win(qf_info_T *qi)
 {
-  win_T       *win;
+  FOR_ALL_WINDOWS(win) {
+    if (is_qf_win(win, qi)) {
+      return win;
+    }
+  }
 
-  FOR_ALL_WINDOWS(win)
-  if (is_qf_win(win, qi))
-    break;
-
-  return win;
+  return NULL;
 }
 
 /*
@@ -3478,7 +3486,6 @@ void ex_helpgrep(exarg_T *eap)
   char_u      *lang;
   qf_info_T   *qi = &ql_info;
   int new_qi = FALSE;
-  win_T       *wp;
   char_u      *au_name =  NULL;
 
   /* Check for a specified language */
@@ -3501,16 +3508,16 @@ void ex_helpgrep(exarg_T *eap)
   p_cpo = empty_option;
 
   if (eap->cmdidx == CMD_lhelpgrep) {
+    qi = NULL;
+
     /* Find an existing help window */
-    FOR_ALL_WINDOWS(wp)
-    if (wp->w_buffer != NULL && wp->w_buffer->b_help)
-      break;
+    FOR_ALL_WINDOWS(wp) {
+      if (wp->w_buffer != NULL && wp->w_buffer->b_help) {
+        qi = wp->w_llist;
+      }
+    }
 
-    if (wp == NULL)         /* Help window not found */
-      qi = NULL;
-    else
-      qi = wp->w_llist;
-
+    /* Help window not found */
     if (qi == NULL) {
       /* Allocate a new location list for help text matches */
       qi = ll_new_list();

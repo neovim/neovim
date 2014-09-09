@@ -3698,17 +3698,15 @@ op_format (
   }
 
   if (oap->is_VIsual) {
-    win_T   *wp;
-
-    FOR_ALL_WINDOWS(wp)
-    {
+    FOR_ALL_WINDOWS(wp) {
       if (wp->w_old_cursor_lnum != 0) {
         /* When lines have been inserted or deleted, adjust the end of
          * the Visual area to be redrawn. */
-        if (wp->w_old_cursor_lnum > wp->w_old_visual_lnum)
+        if (wp->w_old_cursor_lnum > wp->w_old_visual_lnum) {
           wp->w_old_cursor_lnum += old_line_count;
-        else
+        } else {
           wp->w_old_visual_lnum += old_line_count;
+        }
       }
     }
   }

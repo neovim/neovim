@@ -984,16 +984,13 @@ static void syn_stack_free_block(synblock_T *block)
  */
 void syn_stack_free_all(synblock_T *block)
 {
-  win_T       *wp;
-
   syn_stack_free_block(block);
 
-
   /* When using "syntax" fold method, must update all folds. */
-  FOR_ALL_WINDOWS(wp)
-  {
-    if (wp->w_s == block && foldmethodIsSyntax(wp))
+  FOR_ALL_WINDOWS(wp) {
+    if (wp->w_s == block && foldmethodIsSyntax(wp)) {
       foldUpdateAll(wp);
+    }
   }
 }
 
@@ -1075,14 +1072,12 @@ static void syn_stack_alloc(void)
  */
 void syn_stack_apply_changes(buf_T *buf)
 {
-  win_T       *wp;
-
   syn_stack_apply_changes_block(&buf->b_s, buf);
 
-  FOR_ALL_WINDOWS(wp)
-  {
-    if ((wp->w_buffer == buf) && (wp->w_s != &buf->b_s))
+  FOR_ALL_WINDOWS(wp) {
+    if ((wp->w_buffer == buf) && (wp->w_s != &buf->b_s)) {
       syn_stack_apply_changes_block(wp->w_s, buf);
+    }
   }
 }
 
