@@ -797,13 +797,14 @@ accordingly.  Vim proceeds in this order:
 	nocp" command if you like.
 	For the Macintosh the $VIMRUNTIME/macmap.vim is read.
 
-	  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
-     c. Four places are searched for initializations.  The first that exists
+	  *NVIMINIT* *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc* *$MYVIMRC*
+     c. Five places are searched for initializations.  The first that exists
 	is used, the others are ignored.  The $MYVIMRC environment variable is
 	set to the file that was first found, unless $MYVIMRC was already set
-	and when using VIMINIT.
-	-  The environment variable VIMINIT (see also |compatible-default|) (*)
-	   The value of $VIMINIT is used as an Ex command line.
+	and when using NVIMINIT or VIMINIT.
+	-  The environment variable NVIMINIT or (if the former has not been
+	   set) VIMINIT (see also |compatible-default|) (*)
+	   The value of $NVIMINIT or $VIMINIT is used as an Ex command line.
 	-  The user vimrc file(s):
 		    "$HOME/.vimrc"	   (for Unix and OS/2) (*)
 		    "$HOME/.vim/vimrc"	   (for Unix and OS/2) (*)
