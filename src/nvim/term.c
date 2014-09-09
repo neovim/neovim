@@ -152,6 +152,9 @@ char *UP, *BC, PC;
 # define TGETENT(b, t)  tgetent((char *)(b), (char *)(t))
 #endif /* HAVE_TGETENT */
 
+static int xt_index_in = 0;
+static int xt_index_out = 0;
+
 static bool detected_8bit = false;       // detected 8-bit terminal
 
 static struct builtin_term builtin_termcaps[] =
@@ -2408,8 +2411,9 @@ void starttermcap(void)
       may_req_termresponse();
       /* Immediately check for a response.  If t_Co changes, we don't
        * want to redraw with wrong colors first. */
-      if (crv_status != CRV_GET)
+      if (crv_status == CRV_SENT) {
         check_for_codes_from_term();
+      }
     }
   }
 }
@@ -2446,6 +2450,26 @@ void stoptermcap(void)
   }
 }
 
+#if defined(UNIX)
+/// Returns true when the xterm version was requested or anything else that
+/// would send an ESC sequence back to Vim.
+///
+/// If not sent yet, prevent it from being sent soon.
+/// Used to check whether it is OK to enable checking for DEC mouse codes,
+/// which conflict with may xterm ESC sequences.
+bool did_request_esc_sequence(void)
+{
+  if (crv_status == CRV_GET) {
+    crv_status = 0;
+  }
+  if (u7_status == U7_GET) {
+    u7_status = 0;
+  }
+  return crv_status == CRV_SENT || u7_status == U7_SENT
+    || xt_index_out > xt_index_in;
+}
+#endif
+
 /*
  * Request version string (for xterm) when needed.
  * Only do this after switching to raw mode, otherwise the result will be
@@ -2458,6 +2482,8 @@ void stoptermcap(void)
  * Insert mode.
  * On Unix only do it when both output and input are a tty (avoid writing
  * request to terminal while reading from a file).
+ * Do not do this when a mouse is being detected that starts with the same ESC
+ * sequence as the termresponse.
  * The result is caught in check_termcode().
  */
 void may_req_termresponse(void)
@@ -2470,6 +2496,7 @@ void may_req_termresponse(void)
 # ifdef UNIX
       && isatty(1)
       && isatty(read_cmd_fd)
+      && !xterm_conflict_mouse
 # endif
       && *T_CRV != NUL) {
     LOG_TR("Sending CRV");
@@ -4130,9 +4157,6 @@ int show_one_termcode(char_u *name, char_u *code, int printit)
  * termcap codes from the terminal itself.
  * We get them one by one to avoid a very long response string.
  */
-static int xt_index_in = 0;
-static int xt_index_out = 0;
-
 static void req_codes_from_term(void)
 {
   xt_index_out = 0;
