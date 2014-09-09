@@ -761,11 +761,11 @@ void mch_setmouse(int on)
 
 }
 
-/*
- * Set the mouse termcode, depending on the 'term' and 'ttymouse' options.
- */
+/// Sets the mouse termcode, depending on the 'term' and 'ttymouse' options.
 void check_mouse_termcode(void)
 {
+  xterm_conflict_mouse = false;
+
   if (use_xterm_mouse()
       && use_xterm_mouse() != 3
       ) {
@@ -791,29 +791,31 @@ void check_mouse_termcode(void)
   else
     del_mouse_termcode(KS_NETTERM_MOUSE);
 
-  /* conflicts with xterm mouse: "\033[" and "\033[M" */
-  if (!use_xterm_mouse()
-      )
+  // Conflicts with xterm mouse: "\033[" and "\033[M".
+  // Also conflicts with the xterm termresponse, skip this if it was requested
+  // already.
+  if (!use_xterm_mouse()) {
     set_mouse_termcode(KS_DEC_MOUSE, (char_u *)(term_is_8bit(T_NAME)
                                                 ? "\233" : "\033["));
-  else
+    xterm_conflict_mouse = true;
+  }
+  else {
     del_mouse_termcode(KS_DEC_MOUSE);
+  }
   /* same as the dec mouse */
-  if (use_xterm_mouse() == 3
-      ) {
-    set_mouse_termcode(KS_URXVT_MOUSE, (char_u *)(term_is_8bit(T_NAME)
-                                                  ? "\233"
-                                                  : "\033["));
-
+  if (use_xterm_mouse() == 3 && !did_request_esc_sequence()) {
+    set_mouse_termcode(KS_URXVT_MOUSE,
+                       (char_u *)(term_is_8bit(T_NAME) ? "\233" : "\033["));
     if (*p_mouse != NUL) {
-      mch_setmouse(FALSE);
+      mch_setmouse(false);
       setmouse();
     }
-  } else
+    xterm_conflict_mouse = true;
+  } else {
     del_mouse_termcode(KS_URXVT_MOUSE);
-  /* There is no conflict with xterm mouse */
-  if (use_xterm_mouse() == 4
-      ) {
+  }
+  // There is no conflict with xterm mouse.
+  if (use_xterm_mouse() == 4) {
     set_mouse_termcode(KS_SGR_MOUSE, (char_u *)(term_is_8bit(T_NAME)
                                                 ? "\233<"
                                                 : "\033[<"));
@@ -822,8 +824,9 @@ void check_mouse_termcode(void)
       mch_setmouse(FALSE);
       setmouse();
     }
-  } else
+  } else {
     del_mouse_termcode(KS_SGR_MOUSE);
+  }
 }
 
 /*
