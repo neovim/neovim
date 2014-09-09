@@ -810,7 +810,7 @@ void check_mouse_termcode(void)
       mch_setmouse(false);
       setmouse();
     }
-    xterm_conflict_mouse = true;
+    resume_get_esc_sequence();
   } else {
     del_mouse_termcode(KS_URXVT_MOUSE);
   }
