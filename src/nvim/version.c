@@ -186,17 +186,17 @@ static char *(features[]) = {
 static int included_patches[] = {
   // Add new patch number below this line
   //410,
-  //409,
+  //409 NA
   //408,
   //407,
   //406,
   //405,
-  //404,
-  //403,
+  //404 NA
+  //403 NA
   //402,
-  //401,
-  //400,
-  //399,
+  //401 NA
+  //400 NA
+  //399 NA
   //398,
   //397,
   //396,
@@ -211,7 +211,7 @@ static int included_patches[] = {
   //387,
   //386,
   //385,
-  //384,
+  //384 NA
   //383,
   //382,
   //381,
@@ -222,7 +222,7 @@ static int included_patches[] = {
   //376,
   //375,
   //374,
-  //373,
+  //373 NA
   //372,
   371,
   370,
@@ -241,7 +241,7 @@ static int included_patches[] = {
   //357,
   //356 NA
   //355,
-  //354,
+  //354 NA
   353,
   352,
   //351,
@@ -298,7 +298,7 @@ static int included_patches[] = {
   //300 NA
   //299 NA
   298,
-  //297,
+  297,
   296,
   295,
   294,
@@ -312,7 +312,7 @@ static int included_patches[] = {
   286,
   285,
   284,
-  //283,
+  //283 NA
   282,
   281,
   280,
@@ -324,7 +324,7 @@ static int included_patches[] = {
   274,
   //273 NA
   272,
-  //271,
+  //271 NA
   //270 NA
   269,
   268,
@@ -332,11 +332,11 @@ static int included_patches[] = {
   266,
   265,
   264,
-  //263,
+  //263 NA
   262,
   261,
   260,
-  //259,
+  //259 NA
   //258 NA
   //257 NA
   //256,
@@ -345,7 +345,7 @@ static int included_patches[] = {
   253,
   //252 NA
   251,
-  //250,
+  //250 NA
   //249,
   //248,
   //247,
