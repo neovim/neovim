@@ -24,8 +24,6 @@ bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
   FUNC_ATTR_NONNULL_ALL;
 bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
   FUNC_ATTR_NONNULL_ALL;
-bool msgpack_rpc_to_position(msgpack_object *obj, Position *arg)
-  FUNC_ATTR_NONNULL_ALL;
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
   FUNC_ATTR_NONNULL_ALL;
 bool msgpack_rpc_to_buffer(msgpack_object *obj, Buffer *arg)
@@ -52,8 +50,6 @@ void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res)
 void msgpack_rpc_from_integer(Integer result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2);
 void msgpack_rpc_from_float(Float result, msgpack_packer *res)
-  FUNC_ATTR_NONNULL_ARG(2);
-void msgpack_rpc_from_position(Position result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2);
 void msgpack_rpc_from_string(String result, msgpack_packer *res)
   FUNC_ATTR_NONNULL_ARG(2);

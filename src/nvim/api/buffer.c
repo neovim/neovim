@@ -447,9 +447,9 @@ void buffer_insert(Buffer buffer, Integer lnum, Array lines, Error *err)
 /// @param name The mark's name
 /// @param[out] err Details of an error that may have occurred
 /// @return The (row, col) tuple
-Position buffer_get_mark(Buffer buffer, String name, Error *err)
+Array buffer_get_mark(Buffer buffer, String name, Error *err)
 {
-  Position rv = POSITION_INIT;
+  Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
 
   if (!buf) {
@@ -479,8 +479,9 @@ Position buffer_get_mark(Buffer buffer, String name, Error *err)
     return rv;
   }
 
-  rv.row = posp->lnum;
-  rv.col = posp->col;
+  ADD(rv, INTEGER_OBJ(posp->lnum));
+  ADD(rv, INTEGER_OBJ(posp->col));
+
   return rv;
 }
 

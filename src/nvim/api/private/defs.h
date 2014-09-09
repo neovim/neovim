@@ -8,7 +8,6 @@
 #define ARRAY_DICT_INIT {.size = 0, .items = NULL}
 #define STRING_INIT {.data = NULL, .size = 0}
 #define OBJECT_INIT { .type = kObjectTypeNil }
-#define POSITION_INIT { .row = 0, .col = 0 }
 #define REMOTE_TYPE(type) typedef uint64_t type
 
 // Basic types
@@ -33,10 +32,6 @@ REMOTE_TYPE(Tabpage);
 typedef struct object Object;
 
 typedef struct {
-  Integer row, col;
-} Position;
-
-typedef struct {
   Object *items;
   size_t size, capacity;
 } Array;
@@ -52,7 +47,6 @@ typedef enum {
 // The following comments are markers that msgpack-gen.lua uses to extract
 // types, don't remove!
 // start custom types
-  kObjectTypePosition,
   kObjectTypeBuffer,
   kObjectTypeWindow,
   kObjectTypeTabpage,
@@ -69,7 +63,6 @@ typedef enum {
 struct object {
   ObjectType type;
   union {
-    Position position;
     Buffer buffer;
     Window window;
     Tabpage tabpage;

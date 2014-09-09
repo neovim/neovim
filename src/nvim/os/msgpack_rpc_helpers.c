@@ -132,15 +132,6 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
   }
 }
 
-bool msgpack_rpc_to_position(msgpack_object *obj, Position *arg)
-{
-  return obj->type == MSGPACK_OBJECT_ARRAY
-      && obj->via.array.size == 2
-      && msgpack_rpc_to_integer(obj->via.array.ptr, &arg->row)
-      && msgpack_rpc_to_integer(obj->via.array.ptr + 1, &arg->col);
-}
-
-
 bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
 {
   if (obj->type != MSGPACK_OBJECT_ARRAY) {
@@ -236,10 +227,6 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_rpc_from_array(result.data.array, res);
       break;
 
-    case kObjectTypePosition:
-      msgpack_rpc_from_position(result.data.position, res);
-      break;
-
     case kObjectTypeBuffer:
       msgpack_rpc_from_buffer(result.data.buffer, res);
       break;
@@ -256,13 +243,6 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_rpc_from_dictionary(result.data.dictionary, res);
       break;
   }
-}
-
-void msgpack_rpc_from_position(Position result, msgpack_packer *res)
-{
-  msgpack_pack_array(res, 2);;
-  msgpack_pack_int64(res, result.row);
-  msgpack_pack_int64(res, result.col);
 }
 
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
@@ -300,7 +280,6 @@ void msgpack_rpc_free_object(Object value)
     case kObjectTypeBoolean:
     case kObjectTypeInteger:
     case kObjectTypeFloat:
-    case kObjectTypePosition:
     case kObjectTypeBuffer:
     case kObjectTypeWindow:
     case kObjectTypeTabpage:

@@ -33,14 +33,14 @@ Buffer window_get_buffer(Window window, Error *err)
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return the (row, col) tuple
-Position window_get_cursor(Window window, Error *err)
+Array window_get_cursor(Window window, Error *err)
 {
-  Position rv = POSITION_INIT;
+  Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
 
   if (win) {
-    rv.row = win->w_cursor.lnum;
-    rv.col = win->w_cursor.col;
+    ADD(rv, INTEGER_OBJ(win->w_cursor.lnum));
+    ADD(rv, INTEGER_OBJ(win->w_cursor.col));
   }
 
   return rv;
@@ -51,31 +51,35 @@ Position window_get_cursor(Window window, Error *err)
 /// @param window The window handle
 /// @param pos the (row, col) tuple representing the new position
 /// @param[out] err Details of an error that may have occurred
-void window_set_cursor(Window window, Position pos, Error *err)
+void window_set_cursor(Window window, Array pos, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
+
+  if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger ||
+      pos.items[1].type != kObjectTypeInteger) {
+    set_api_error("\"pos\" argument must be a [row, col] array", err);
+    return;
+  }
 
   if (!win) {
     return;
   }
 
-  if (pos.row <= 0 || pos.row > win->w_buffer->b_ml.ml_line_count) {
+  int64_t row = pos.items[0].data.integer;
+  int64_t col = pos.items[1].data.integer;
+
+  if (row <= 0 || row > win->w_buffer->b_ml.ml_line_count) {
     set_api_error("cursor position outside buffer", err);
     return;
   }
 
-  if (pos.row > LONG_MAX || pos.row < LONG_MIN) {
-    set_api_error("Row value outside range", err);
-    return;
-  }
-
-  if (pos.col > INT_MAX || pos.col < INT_MIN) {
+  if (col > MAXCOL || col < 0) {
     set_api_error("Column value outside range", err);
     return;
   }
 
-  win->w_cursor.lnum = (linenr_T)pos.row;
-  win->w_cursor.col = (colnr_T)pos.col;
+  win->w_cursor.lnum = (linenr_T)row;
+  win->w_cursor.col = (colnr_T)col;
   win->w_cursor.coladd = 0;
   // When column is out of range silently correct it.
   check_cursor_col_win(win);
@@ -243,14 +247,14 @@ void window_set_option(Window window, String name, Object value, Error *err)
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The (row, col) tuple with the window position
-Position window_get_position(Window window, Error *err)
+Array window_get_position(Window window, Error *err)
 {
-  Position rv = POSITION_INIT;
+  Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
 
   if (win) {
-    rv.col = win->w_wincol;
-    rv.row = win->w_winrow;
+    ADD(rv, INTEGER_OBJ(win->w_winrow));
+    ADD(rv, INTEGER_OBJ(win->w_wincol));
   }
 
   return rv;
