@@ -2468,6 +2468,18 @@ bool did_request_esc_sequence(void)
   return crv_status == CRV_SENT || u7_status == U7_SENT
     || xt_index_out > xt_index_in;
 }
+
+/// If requesting the version was disabled in did_request_esc_sequence(),
+/// enable it again.
+void resume_get_esc_sequence(void)
+{
+  if (crv_status == 0) {
+    crv_status = CRV_GET;
+  }
+  if (u7_status == 0) {
+    u7_status = U7_GET;
+  }
+}
 #endif
 
 /*
