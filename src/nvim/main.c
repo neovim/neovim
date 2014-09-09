@@ -1026,12 +1026,12 @@ static void command_line_scan(mparm_T *parmp)
             msg_putchar('\n');
             msg_didout = FALSE;
             mch_exit(0);
-          } else if (STRICMP(argv[0] + argv_idx, "api-msgpack-metadata") == 0) {
+          } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
             for (unsigned int i = 0; i<msgpack_metadata_size; i++) {
               putchar(msgpack_metadata[i]);
             }
             mch_exit(0);
-          } else if (STRICMP(argv[0] + argv_idx, "embedded-mode") == 0) {
+          } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;
           } else if (STRNICMP(argv[0] + argv_idx, "literal", 7) == 0) {
 #if !defined(UNIX)
@@ -2212,8 +2212,8 @@ static void usage(void)
   main_msg(_("-W <scriptout>\tWrite all typed commands to file <scriptout>"));
   main_msg(_("--startuptime <file>\tWrite startup timing messages to <file>"));
   main_msg(_("-i <viminfo>\t\tUse <viminfo> instead of .viminfo"));
-  main_msg(_("--api-msgpack-metadata\tDump API metadata information and exit"));
-  main_msg(_("--embedded-mode\tUse stdin/stdout as a msgpack-rpc channel. "
+  main_msg(_("--api-info\t\tDump API metadata serialized to msgpack and exit"));
+  main_msg(_("--embed\t\tUse stdin/stdout as a msgpack-rpc channel. "
              "This can be used for embedding Neovim into other programs"));
   main_msg(_("-h  or  --help\tPrint Help (this message) and exit"));
   main_msg(_("--version\t\tPrint version information and exit"));
