@@ -4758,7 +4758,7 @@ void listitem_free(listitem_T *item)
  */
 void listitem_remove(list_T *l, listitem_T *item)
 {
-  list_remove(l, item, item);
+  vim_list_remove(l, item, item);
   listitem_free(item);
 }
 
@@ -5231,30 +5231,29 @@ static list_T *list_copy(list_T *orig, int deep, int copyID)
   return copy;
 }
 
-/*
- * Remove items "item" to "item2" from list "l".
- * Does not free the listitem or the value!
- */
-void list_remove(list_T *l, listitem_T *item, listitem_T *item2)
+/// Remove items "item" to "item2" from list "l".
+/// @warning Does not free the listitem or the value!
+void vim_list_remove(list_T *l, listitem_T *item, listitem_T *item2)
 {
-  listitem_T  *ip;
-
-  /* notify watchers */
-  for (ip = item; ip != NULL; ip = ip->li_next) {
+  // notify watchers
+  for (listitem_T *ip = item; ip != NULL; ip = ip->li_next) {
     --l->lv_len;
     list_fix_watch(l, ip);
-    if (ip == item2)
+    if (ip == item2) {
       break;
+    }
   }
 
-  if (item2->li_next == NULL)
+  if (item2->li_next == NULL) {
     l->lv_last = item->li_prev;
-  else
+  } else {
     item2->li_next->li_prev = item->li_prev;
-  if (item->li_prev == NULL)
+  }
+  if (item->li_prev == NULL) {
     l->lv_first = item2->li_next;
-  else
+  } else {
     item->li_prev->li_next = item2->li_next;
+  }
   l->lv_idx_item = NULL;
 }
 
@@ -11901,8 +11900,8 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
       EMSGN(_(e_listidx), idx);
     else {
       if (argvars[2].v_type == VAR_UNKNOWN) {
-        /* Remove one item, return its value. */
-        list_remove(l, item, item);
+        // Remove one item, return its value.
+        vim_list_remove(l, item, item);
         *rettv = item->li_tv;
         free(item);
       } else {
@@ -11923,7 +11922,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
           if (li == NULL)            /* didn't find "item2" after "item" */
             EMSG(_(e_invrange));
           else {
-            list_remove(l, item, item2);
+            vim_list_remove(l, item, item2);
             rettv_list_alloc(rettv);
             l = rettv->vval.v_list;
             l->lv_first = item;
