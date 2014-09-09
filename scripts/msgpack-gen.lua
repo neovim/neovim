@@ -158,7 +158,7 @@ for i = 1, #api.functions do
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
     local converted = 'arg_'..j
-    output:write('\n  '..param[1]..' '..converted..' msgpack_rpc_init_'..string.lower(param[1])..';')
+    output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(param[1])..';')
   end
   output:write('\n')
   output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
@@ -228,7 +228,7 @@ for i = 1, #api.functions do
 
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
-    output:write('\n  msgpack_rpc_free_'..string.lower(param[1])..'(arg_'..j..');')
+    output:write('\n  api_free_'..string.lower(param[1])..'(arg_'..j..');')
   end
   if fn.return_type ~= 'void' then
     output:write('\n  return ret;\n}\n\n');

@@ -158,7 +158,7 @@ bool channel_send_event(uint64_t id, char *name, Array args)
 
   if (id > 0) {
     if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
-      msgpack_rpc_free_array(args);
+      api_free_array(args);
       return false;
     }
     send_event(channel, name, args);
@@ -186,7 +186,7 @@ bool channel_send_call(uint64_t id,
   Channel *channel = NULL;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     return false;
   }
 
@@ -199,7 +199,7 @@ bool channel_send_call(uint64_t id,
         "Channel %" PRIu64 " crossed maximum stack depth",
         channel->id);
     *result = STRING_OBJ(cstr_to_string(buf));
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     return false;
   }
 
@@ -448,7 +448,7 @@ static void broadcast_event(char *name, Array args)
   });
 
   if (!kv_size(subscribed)) {
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     goto end;
   }
 

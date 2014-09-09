@@ -14,7 +14,6 @@
 #include "nvim/log.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
 
 #define FEATURE_COUNT (sizeof(features) / sizeof(features[0]))
 
@@ -109,7 +108,7 @@ Object provider_call(char *method, Array args)
              "Provider for \"%s\" is not available",
              method);
     report_error(buf);
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     return NIL;
   }
 
@@ -119,7 +118,7 @@ Object provider_call(char *method, Array args)
 
   if (error) {
     report_error(result.data.string.data);
-    msgpack_rpc_free_object(result);
+    api_free_object(result);
     return NIL;
   }
   

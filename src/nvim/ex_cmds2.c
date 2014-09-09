@@ -55,7 +55,6 @@
 #include "nvim/os/shell.h"
 #include "nvim/os/fs_defs.h"
 #include "nvim/os/provider.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 
@@ -3264,7 +3263,7 @@ static void script_host_execute(char *method, exarg_T *eap)
     Object result = provider_call(method, args);
     // We don't care about the result, so free it just in case a bad provider
     // returned something
-    msgpack_rpc_free_object(result);
+    api_free_object(result);
   }
 
   free(script);
@@ -3278,7 +3277,7 @@ static void script_host_execute_file(char *method, exarg_T *eap)
   Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_to_string(buffer)));
   Object result = provider_call(method, args);
-  msgpack_rpc_free_object(result);
+  api_free_object(result);
 }
 
 static void script_host_do_range(char *method, exarg_T *eap)
@@ -3288,6 +3287,6 @@ static void script_host_do_range(char *method, exarg_T *eap)
   ADD(args, INTEGER_OBJ(eap->line2));
   ADD(args, STRING_OBJ(cstr_to_string((char *)eap->arg)));
   Object result = provider_call(method, args);
-  msgpack_rpc_free_object(result);
+  api_free_object(result);
 }
 

@@ -84,7 +84,6 @@
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/provider.h"
 
@@ -12725,7 +12724,7 @@ static void f_send_call(typval_T *argvars, typval_T *rettv)
         _("Error converting the call result"));
   }
 
-  msgpack_rpc_free_object(result);
+  api_free_object(result);
 }
 
 // "send_event()" function
@@ -19239,7 +19238,7 @@ static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
 
   Error err = {.set = false};
   object_to_vim(result, rettv, &err);
-  msgpack_rpc_free_object(result);
+  api_free_object(result);
 
   if (err.set) {
     EMSG("Error converting value back to vim");

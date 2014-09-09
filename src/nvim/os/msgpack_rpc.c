@@ -120,7 +120,7 @@ WBuffer *serialize_request(uint64_t request_id,
                                    sbuffer->size,
                                    refcount,
                                    free);
-  msgpack_rpc_free_array(args);
+  api_free_array(args);
   msgpack_sbuffer_clear(sbuffer);
   return rv;
 }
@@ -156,7 +156,7 @@ WBuffer *serialize_response(uint64_t response_id,
                                    sbuffer->size,
                                    1,  // responses only go though 1 channel
                                    free);
-  msgpack_rpc_free_object(arg);
+  api_free_object(arg);
   msgpack_sbuffer_clear(sbuffer);
   return rv;
 }

@@ -449,6 +449,64 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
   return true;
 }
 
+void api_free_string(String value)
+{
+  if (!value.data) {
+    return;
+  }
+
+  free(value.data);
+}
+
+void api_free_object(Object value)
+{
+  switch (value.type) {
+    case kObjectTypeNil:
+    case kObjectTypeBoolean:
+    case kObjectTypeInteger:
+    case kObjectTypeFloat:
+    case kObjectTypeBuffer:
+    case kObjectTypeWindow:
+    case kObjectTypeTabpage:
+      break;
+
+    case kObjectTypeString:
+      api_free_string(value.data.string);
+      break;
+
+    case kObjectTypeArray:
+      api_free_array(value.data.array);
+      break;
+
+    case kObjectTypeDictionary:
+      api_free_dictionary(value.data.dictionary);
+      break;
+
+    default:
+      abort();
+  }
+}
+
+void api_free_array(Array value)
+{
+  for (size_t i = 0; i < value.size; i++) {
+    api_free_object(value.items[i]);
+  }
+
+  free(value.items);
+}
+
+void api_free_dictionary(Dictionary value)
+{
+  for (size_t i = 0; i < value.size; i++) {
+    api_free_string(value.items[i].key);
+    api_free_object(value.items[i].value);
+  }
+
+  free(value.items);
+}
+
+
 /// Recursion helper for the `vim_to_object`. This uses a pointer table
 /// to avoid infinite recursion due to cyclic references
 ///
