@@ -1098,6 +1098,7 @@ EXTERN garray_T error_ga
  * Excluded are errors that are only used once and debugging messages.
  */
 EXTERN char_u e_abort[] INIT(= N_("E470: Command aborted"));
+EXTERN char_u e_api_spawn_failed[] INIT(= N_("E903: Could not spawn API job"));
 EXTERN char_u e_argreq[] INIT(= N_("E471: Argument required"));
 EXTERN char_u e_backslash[] INIT(= N_("E10: \\ should be followed by /, ? or &"));
 EXTERN char_u e_cmdwin[] INIT(= N_(

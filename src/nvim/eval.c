@@ -6306,6 +6306,7 @@ static struct fst {
   {"acos",            1, 1, f_acos},    /* WJMc */
   {"add",             2, 2, f_add},
   {"and",             2, 2, f_and},
+  {"api_spawn",       1, 2, f_api_spawn},
   {"append",          2, 2, f_append},
   {"argc",            0, 0, f_argc},
   {"argidx",          0, 0, f_argidx},
@@ -7051,6 +7052,63 @@ static void f_and(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
                          & get_tv_number_chk(&argvars[1], NULL);
+}
+
+// "api_spawn(prog, argv)" function
+static void f_api_spawn(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_STRING
+      || (argvars[1].v_type != VAR_LIST && argvars[1].v_type != VAR_UNKNOWN)) {
+    // Wrong argument types
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  list_T *args = NULL;
+  int argsl = 0;
+  if (argvars[1].v_type == VAR_LIST) {
+    args = argvars[1].vval.v_list;
+    argsl = args->lv_len;
+    // Assert that all list items are strings
+    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+      if (arg->li_tv.v_type != VAR_STRING) {
+        EMSG(_(e_invarg));
+        return;
+      }
+    }
+  }
+
+  // Allocate extra memory for the argument vector and the NULL pointer
+  int argvl = argsl + 2;
+  char **argv = xmalloc(sizeof(char_u *) * argvl);
+
+  // Copy program name
+  argv[0] = xstrdup((char *)argvars[0].vval.v_string);
+
+  int i = 1;
+  // Copy arguments to the vector
+  if (argsl > 0) {
+    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+      argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+    }
+  }
+
+  // The last item of argv must be NULL
+  argv[i] = NULL;
+  uint64_t channel_id = channel_from_job(argv);
+
+  if (!channel_id) {
+    EMSG(_(e_api_spawn_failed));
+  }
+
+  rettv->vval.v_number = (varnumber_T)channel_id;
 }
 
 /*
