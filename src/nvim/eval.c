@@ -13360,6 +13360,11 @@ static void f_sinh(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_float = 0.0;
 }
 
+/// struct used in the array that's given to qsort()
+typedef struct {
+  listitem_T *item;
+  int idx;
+} sortItem_T;
 
 static int item_compare_ic;
 static bool item_compare_numeric;
@@ -13374,14 +13379,17 @@ static bool  item_compare_keep_zero;
  */
 static int item_compare(const void *s1, const void *s2)
 {
+  sortItem_T  *si1, *si2;
   char_u      *p1, *p2;
   char_u      *tofree1, *tofree2;
   int res;
   char_u numbuf1[NUMBUFLEN];
   char_u numbuf2[NUMBUFLEN];
 
-  p1 = tv2string(&(*(listitem_T **)s1)->li_tv, &tofree1, numbuf1, 0);
-  p2 = tv2string(&(*(listitem_T **)s2)->li_tv, &tofree2, numbuf2, 0);
+  si1 = (sortItem_T *)s1;
+  si2 = (sortItem_T *)s2;
+  p1 = tv2string(&si1->item->li_tv, &tofree1, numbuf1, 0);
+  p2 = tv2string(&si2->item->li_tv, &tofree2, numbuf2, 0);
   if (p1 == NULL)
     p1 = (char_u *)"";
   if (p2 == NULL)
@@ -13402,7 +13410,7 @@ static int item_compare(const void *s1, const void *s2)
   // When the result would be zero, compare the pointers themselves.  Makes
   // the sort stable.
   if (res == 0 && !item_compare_keep_zero) {
-    res = s1 > s2 ? 1 : -1;
+    res = si1->idx > si2->idx ? 1 : -1;
   }
   
   free(tofree1);
@@ -13412,6 +13420,7 @@ static int item_compare(const void *s1, const void *s2)
 
 static int item_compare2(const void *s1, const void *s2)
 {
+  sortItem_T  *si1, *si2;
   int res;
   typval_T rettv;
   typval_T argv[3];
@@ -13421,10 +13430,13 @@ static int item_compare2(const void *s1, const void *s2)
   if (item_compare_func_err)
     return 0;
 
+  si1 = (sortItem_T *)s1;
+  si2 = (sortItem_T *)s2;
+
   // Copy the values.  This is needed to be able to set v_lock to VAR_FIXED
   // in the copy without changing the original list items.
-  copy_tv(&(*(listitem_T **)s1)->li_tv, &argv[0]);
-  copy_tv(&(*(listitem_T **)s2)->li_tv, &argv[1]);
+  copy_tv(&si1->item->li_tv, &argv[0]);
+  copy_tv(&si2->item->li_tv, &argv[1]);
 
   rettv.v_type = VAR_UNKNOWN;           /* clear_tv() uses this */
   res = call_func(item_compare_func, (int)STRLEN(item_compare_func),
@@ -13444,7 +13456,7 @@ static int item_compare2(const void *s1, const void *s2)
   // When the result would be zero, compare the pointers themselves.  Makes
   // the sort stable.
   if (res == 0 && !item_compare_keep_zero) {
-    res = s1 > s2 ? 1 : -1;
+    res = si1->idx > si2->idx ? 1 : -1;
   }
 
   return res;
@@ -13457,7 +13469,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 {
   list_T      *l;
   listitem_T  *li;
-  listitem_T  **ptrs;
+  sortItem_T  *ptrs;
   long len;
   long i;
 
@@ -13518,13 +13530,15 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
     }
 
     /* Make an array with each entry pointing to an item in the List. */
-    ptrs = xmalloc((size_t)(len * sizeof (listitem_T *)));
+    ptrs = xmalloc((size_t)(len * sizeof (sortItem_T)));
 
     i = 0;
     if (sort) {
       // sort(): ptrs will be the list to sort.
       for (li = l->lv_first; li != NULL; li = li->li_next) {
-        ptrs[i++] = li;
+        ptrs[i].item = li;
+        ptrs[i].idx = i;
+        i++;
       }
 
       item_compare_func_err = FALSE;
@@ -13535,7 +13549,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
         EMSG(_("E702: Sort compare function failed"));
       } else {
         // Sort the array with item pointers.
-        qsort(ptrs, (size_t)len, sizeof (listitem_T *),
+        qsort(ptrs, (size_t)len, sizeof (sortItem_T),
               item_compare_func == NULL ? item_compare : item_compare2);
 
         if (!item_compare_func_err) {
@@ -13546,7 +13560,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
           l->lv_len      = 0;
 
           for (i = 0; i < len; i++) {
-            list_append(l, ptrs[i]);
+            list_append(l, ptrs[i].item);
           }
         }
       }
@@ -13560,7 +13574,7 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       for (li = l->lv_first; li != NULL && li->li_next != NULL; li = li->li_next) {
         if (item_compare_func_ptr(&li, &li->li_next) == 0) {
-          ptrs[i++] = li;
+          ptrs[i++].item = li;
         }
         if (item_compare_func_err) {
           EMSG(_("E882: Uniq compare function failed"));
@@ -13570,12 +13584,12 @@ static void do_sort_uniq(typval_T *argvars, typval_T *rettv, bool sort)
 
       if (!item_compare_func_err) {
         while (--i >= 0) {
-          li = ptrs[i]->li_next;
-          ptrs[i]->li_next = li->li_next;
+          li = ptrs[i].item->li_next;
+          ptrs[i].item->li_next = li->li_next;
           if (li->li_next != NULL) {
-            li->li_next->li_prev = ptrs[i];
+            li->li_next->li_prev = ptrs[i].item;
           } else {
-            l->lv_last = ptrs[i];
+            l->lv_last = ptrs[i].item;
           }
           list_fix_watch(l, li);
           listitem_free(li);
