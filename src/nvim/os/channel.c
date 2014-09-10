@@ -267,6 +267,23 @@ void channel_unsubscribe(uint64_t id, char *event)
   unsubscribe(channel, event);
 }
 
+/// Closes a channel
+///
+/// @param id The channel id
+/// @return true if successful, false otherwise
+bool channel_close(uint64_t id)
+{
+  Channel *channel;
+
+  if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+    return false;
+  }
+
+  channel_kill(channel);
+  channel->enabled = false;
+  return true;
+}
+
 /// Creates an API channel from stdin/stdout. This is used when embedding
 /// Neovim
 static void channel_from_stdio(void)
@@ -496,7 +513,13 @@ static void close_channel(Channel *channel)
 
   pmap_free(cstr_t)(channel->subscribed_events);
   kv_destroy(channel->call_stack);
+  channel_kill(channel);
 
+  free(channel);
+}
+
+static void channel_kill(Channel *channel)
+{
   if (channel->is_job) {
     if (channel->data.job) {
       job_stop(channel->data.job);
@@ -511,8 +534,6 @@ static void close_channel(Channel *channel)
       mch_exit(0);
     }
   }
-
-  free(channel);
 }
 
 static void close_cb(uv_handle_t *handle)

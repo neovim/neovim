@@ -6306,6 +6306,7 @@ static struct fst {
   {"acos",            1, 1, f_acos},    /* WJMc */
   {"add",             2, 2, f_add},
   {"and",             2, 2, f_and},
+  {"api_close",       1, 1, f_api_close},
   {"api_spawn",       1, 2, f_api_spawn},
   {"append",          2, 2, f_append},
   {"argc",            0, 0, f_argc},
@@ -7053,6 +7054,26 @@ static void f_and(typval_T *argvars, typval_T *rettv)
   rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
                          & get_tv_number_chk(&argvars[1], NULL);
 }
+
+// "api_close(prog, argv)" function
+static void f_api_close(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER) {
+    // Wrong argument types
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+}
+
 
 // "api_spawn(prog, argv)" function
 static void f_api_spawn(typval_T *argvars, typval_T *rettv)
