@@ -451,6 +451,7 @@ int get_breakindent_win(win_T *wp, char_u *line) {
   static int prev_indent = 0;  /* cached indent value */
   static int prev_ts     = 0L; /* cached tabstop value */
   static char_u *prev_line = NULL; /* cached pointer to line */
+  static int prev_tick = 0;  // changedtick of cached value
   int bri = 0;
   /* window width minus window margin space, i.e. what rests for text */
   const int eff_wwidth = wp->w_width
@@ -459,10 +460,11 @@ int get_breakindent_win(win_T *wp, char_u *line) {
         ? number_width(wp) + 1 : 0);
 
   /* used cached indent, unless pointer or 'tabstop' changed */
-  if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts)
-  {
+  if (prev_line != line || prev_ts != wp->w_buffer->b_p_ts
+      || prev_tick != wp->w_buffer->b_changedtick) {
     prev_line = line;
     prev_ts = wp->w_buffer->b_p_ts;
+    prev_tick = wp->w_buffer->b_changedtick;
     prev_indent = get_indent_str(line,
             (int)wp->w_buffer->b_p_ts, wp->w_p_list);
   }
