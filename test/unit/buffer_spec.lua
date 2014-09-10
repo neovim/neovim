@@ -9,11 +9,6 @@ local buffer = helpers.cimport("./src/nvim/buffer.h")
 local window = helpers.cimport("./src/nvim/window.h")
 local option = helpers.cimport("./src/nvim/option.h")
 
---{ Initialize the options needed for interacting with buffers
-window.win_alloc_first()
-option.set_init_1()
---}
-
 describe('buffer functions', function()
 
   local buflist_new = function(file, flags)

@@ -3,11 +3,12 @@ local helpers = require 'test.unit.helpers'
 
 local os = helpers.cimport './src/nvim/os/os.h'
 local tempfile = helpers.cimport './src/nvim/tempfile.h'
--- os.mch_early_init
+
+helpers.vim_init()
 
 describe('tempfile related functions', function()
   after_each(function()
-    -- tempfile.vim_deltempdir()
+    tempfile.vim_deltempdir()
   end)
 
   local vim_gettempdir = function()

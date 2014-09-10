@@ -127,8 +127,25 @@ local function vim_init()
     return 
   end
   -- import os_unix.h for mch_early_init(), which initializes some globals
-  local os = cimport('./src/nvim/os_unix.h')
-  os.mch_early_init()
+  local all = cimport('./src/nvim/os_unix.h',
+                      './src/nvim/misc1.h',
+                      './src/nvim/eval.h',
+                      './src/nvim/os_unix.h',
+                      './src/nvim/option.h',
+                      './src/nvim/ex_cmds2.h',
+                      './src/nvim/window.h',
+                      './src/nvim/ops.h',
+                      './src/nvim/normal.h',
+                      './src/nvim/mbyte.h')
+  all.mch_early_init()
+  all.mb_init()
+  all.eval_init()
+  all.init_normal_cmds()
+  all.win_alloc_first()
+  all.init_yank()
+  all.init_homedir()
+  all.set_init_1()
+  all.set_lang_var()
   vim_init_called = true
 end
 
