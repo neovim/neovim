@@ -3,15 +3,11 @@ env:
   global:
     - PROJECT_ROOT="$(pwd)"
     - CI_SCRIPTS="$PROJECT_ROOT/.ci"
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    # via the "travis encrypt" command using the project repo's public key
-    - secure: "QEz92NyItkzQu52kCFD928jEwUYnA2OIgSyeNrp+Y3gm5rOmSZerY8hGiXyNZxocap9+qIPCapRRYU3ZYKWZPeucWMLN3aIjxAFdhugKbnmNYE1jFugb6b8N3SxiX/3206NHXlYaz0OZhh6OBAFmPUXamJC8OrWVgPNPo7wv4UQ="
   matrix:
     - CI_TARGET=clang-asan
     - CI_TARGET=gcc
     - CI_TARGET=gcc-32
     - CI_TARGET=clint
-    - CI_TARGET=coverity
 before_install:
   # Adds user to a dummy group.
   # That allows to test changing the group of the file by `os_fchown`.
