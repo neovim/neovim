@@ -502,20 +502,26 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
-/// Registers the channel as the provider for `method`. This fails if
-/// a provider for `method` is already registered.
+/// Registers the channel as the provider for `feature`. This fails if
+/// a provider for `feature` is already provided by another channel.
 ///
 /// @param channel_id The channel id
-/// @param method The method name
+/// @param feature The feature name
 /// @param[out] err Details of an error that may have occurred
-void vim_register_provider(uint64_t channel_id, String method, Error *err)
+void vim_register_provider(uint64_t channel_id, String feature, Error *err)
 {
   char buf[METHOD_MAXLEN];
-  xstrlcpy(buf, method.data, sizeof(buf));
+  xstrlcpy(buf, feature.data, sizeof(buf));
 
   if (!provider_register(buf, channel_id)) {
-    set_api_error("Provider already registered", err);
+    set_api_error("Feature doesn't exist", err);
   }
+}
+
+/// Returns a feature->method list dictionary for all pluggable features
+Dictionary vim_discover_features(void)
+{
+  return provider_get_all();
 }
 
 /// Writes a message to vim output or error buffer. The string is split
