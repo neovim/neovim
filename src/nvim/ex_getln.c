@@ -287,6 +287,14 @@ getcmdline (
 
   do_digraph(-1);               /* init digraph typeahead */
 
+  // If something above caused an error, reset the flags, we do want to type
+  // and execute commands. Display may be messed up a bit.
+  if (did_emsg) {
+    redrawcmd();
+  }
+  did_emsg = FALSE;
+  got_int = FALSE;
+
   /*
    * Collect the command string, handling editing keys.
    */
