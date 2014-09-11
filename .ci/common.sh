@@ -48,7 +48,7 @@ asan_check() {
 }
 
 set_environment() {
-	local prefix="$1"
+	local prefix="$1/usr"
 	eval $($prefix/bin/luarocks path)
 	export PATH="$prefix/bin:$PATH"
 	export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
