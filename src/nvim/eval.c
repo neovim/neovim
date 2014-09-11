@@ -12796,13 +12796,17 @@ static void f_send_call(typval_T *argvars, typval_T *rettv)
     return;
   }
 
+  if (errored) {
+    vim_report_error(result.data.string);
+    goto end;
+  }
+  
   Error conversion_error = {.set = false};
-  if (errored || !object_to_vim(result, rettv, &conversion_error)) {
-    EMSG(errored ? 
-        result.data.string.data :
-        _("Error converting the call result"));
+  if (!object_to_vim(result, rettv, &conversion_error)) {
+    EMSG(_("Error converting the call result"));
   }
 
+end:
   api_free_object(result);
 }
 

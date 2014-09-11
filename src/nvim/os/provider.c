@@ -102,7 +102,7 @@ Object provider_call(char *method, Array args)
              sizeof(buf),
              "Provider for method \"%s\" is not available",
              method);
-    report_error(buf);
+    vim_report_error(cstr_as_string(buf));
     api_free_array(args);
     return NIL;
   }
@@ -112,7 +112,7 @@ Object provider_call(char *method, Array args)
   channel_send_call(f->channel_id, method, args, &result, &error);
 
   if (error) {
-    report_error(result.data.string.data);
+    vim_report_error(result.data.string);
     api_free_object(result);
     return NIL;
   }
@@ -150,10 +150,4 @@ static Feature * find_feature(char *name)
   }
 
   return NULL;
-}
-
-static void report_error(char *str)
-{
-  vim_err_write((String) {.data = str, .size = strlen(str)});
-  vim_err_write((String) {.data = "\n", .size = 1});
 }

@@ -308,6 +308,16 @@ void vim_err_write(String str)
   write_msg(str, true);
 }
 
+/// Higher level error reporting function that ensures all str contents
+/// are written by sending a trailing linefeed to `vim_wrr_write`
+///
+/// @param str The message
+void vim_report_error(String str)
+{
+  vim_err_write(str);
+  vim_err_write((String) {.data = "\n", .size = 1});
+}
+
 /// Gets the current list of buffer handles
 ///
 /// @return The number of buffers
