@@ -1356,8 +1356,9 @@ static void win_update(win_T *wp)
                               (foldmethodIsSyntax(wp)
                                && hasAnyFolding(wp)) ||
                               syntax_check_changed(lnum)))
-                        /* match in fixed position might need redraw */
-                        ||  wp->w_match_head != NULL
+                        // match in fixed position might need redraw
+                        // if lines were inserted or deleted
+                        || (wp->w_match_head != NULL && buf->b_mod_xlines != 0)
                         ))))) {
       if (lnum == mod_top)
         top_to_mod = FALSE;
