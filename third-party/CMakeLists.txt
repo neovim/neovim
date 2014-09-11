@@ -43,6 +43,7 @@ if(CMAKE_GENERATOR MATCHES "Makefiles")
   set(MAKE_PRG "$(MAKE)")
 endif()
 
+set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
 
 include(ExternalProject)
 
@@ -73,7 +74,7 @@ if(USE_BUNDLED_LIBUV)
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND sh ${DEPS_BUILD_DIR}/src/libuv/autogen.sh &&
       ${DEPS_BUILD_DIR}/src/libuv/configure --with-pic --disable-shared
-        --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
+        --prefix=${DEPS_INSTALL_DIR} CC=${DEPS_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} install)
   list(APPEND THIRD_PARTY_DEPS libuv)
 endif()
@@ -92,7 +93,7 @@ if(USE_BUNDLED_MSGPACK)
       -DTARGET=msgpack
       -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
     CONFIGURE_COMMAND ${DEPS_BUILD_DIR}/src/msgpack/configure --disable-shared
-       --with-pic --prefix=${DEPS_INSTALL_DIR} CC=${CMAKE_C_COMPILER}
+      --with-pic --prefix=${DEPS_INSTALL_DIR} CC=${DEPS_C_COMPILER}
     INSTALL_COMMAND ${MAKE_PRG} install)
   list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()
@@ -113,7 +114,7 @@ if(USE_BUNDLED_LUAJIT)
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND ""
-    INSTALL_COMMAND ${MAKE_PRG} CC=${CMAKE_C_COMPILER}
+    INSTALL_COMMAND ${MAKE_PRG} CC=${DEPS_C_COMPILER}
                                 PREFIX=${DEPS_INSTALL_DIR}
                                 CFLAGS=-fPIC
                                 BUILDMODE=static
@@ -151,7 +152,8 @@ if(USE_BUNDLED_LUAROCKS)
   endif()
 
   add_custom_command(OUTPUT ${DEPS_BIN_DIR}/busted
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install busted 1.10.0
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build busted 1.10.0 CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     DEPENDS luarocks)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
@@ -160,14 +162,16 @@ if(USE_BUNDLED_LUAROCKS)
   # instances running in parallel.  So we depend on busted to force it
   # to be serialized.
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lua-cmsgpack
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build lua-cmsgpack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     DEPENDS busted)
   add_custom_target(lua-cmsgpack
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack)
 
   # Like before, depend on cmsgpack to ensure serialization of install commands
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
-    COMMAND ${DEPS_BIN_DIR}/luarocks ARGS install lpeg
+    COMMAND ${DEPS_BIN_DIR}/luarocks
+    ARGS build lpeg CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     DEPENDS lua-cmsgpack)
   add_custom_target(lpeg
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
