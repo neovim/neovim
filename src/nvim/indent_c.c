@@ -2009,12 +2009,14 @@ int get_c_indent(void)
          *			ldfd) {
          *		    }
          */
-        if (curbuf->b_ind_js || (curbuf->b_ind_keep_case_label
-                                 && cin_iscase(skipwhite(get_cursor_line_ptr()),
-                                     FALSE)))
+        if ((curbuf->b_ind_js || curbuf->b_ind_keep_case_label)
+            && cin_iscase(skipwhite(get_cursor_line_ptr()), FALSE)) {
           amount = get_indent();
-        else
+        } else if (curbuf->b_ind_js) {
+          amount = get_indent_lnum(lnum);
+        } else {
           amount = skip_label(lnum, &l);
+        }
 
         start_brace = BRACE_AT_END;
       }
