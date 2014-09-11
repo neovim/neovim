@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define ARRAY_DICT_INIT {.size = 0, .items = NULL}
+#define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
 #define STRING_INIT {.data = NULL, .size = 0}
 #define OBJECT_INIT { .type = kObjectTypeNil }
 #define REMOTE_TYPE(type) typedef uint64_t type
