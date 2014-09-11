@@ -5323,12 +5323,13 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
           wp->w_buffer->b_mod_bot = botlnum;
         }
       } else {
+        wp->w_buffer->b_mod_set = TRUE;
         wp->w_buffer->b_mod_top = toplnum;
         wp->w_buffer->b_mod_bot = botlnum;
+        wp->w_buffer->b_mod_xlines = 0;
       }
       m->pos.toplnum = toplnum;
       m->pos.botlnum = botlnum;
-      wp->w_buffer->b_mod_set = TRUE;
       rtype = VALID;
     }
   }
@@ -5396,10 +5397,11 @@ int match_delete(win_T *wp, int id, int perr)
         wp->w_buffer->b_mod_bot = cur->pos.botlnum;
       }
     } else {
+      wp->w_buffer->b_mod_set = TRUE;
       wp->w_buffer->b_mod_top = cur->pos.toplnum;
       wp->w_buffer->b_mod_bot = cur->pos.botlnum;
+      wp->w_buffer->b_mod_xlines = 0;
     }
-    wp->w_buffer->b_mod_set = TRUE;
     rtype = VALID;
   }
   free(cur);
