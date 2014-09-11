@@ -13,6 +13,7 @@ local OK = helpers.OK
 local FAIL = helpers.FAIL
 
 require('lfs')
+cimport('string.h')
 local path = cimport('./src/nvim/path.h')
 
 -- import constants parsed by ffi
@@ -21,6 +22,9 @@ local kDifferentFiles = path.kDifferentFiles
 local kBothFilesMissing = path.kBothFilesMissing
 local kOneFileMissing = path.kOneFileMissing
 local kEqualFileNames = path.kEqualFileNames
+
+local len = 0
+local buffer = nil
 
 describe('path function', function()
   describe('path_full_dir_name', function()

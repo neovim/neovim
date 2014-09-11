@@ -23,7 +23,7 @@ table.insert(ccs, {path = "/usr/bin/env clang", type = "clang"})
 table.insert(ccs, {path = "/usr/bin/env icc", type = "gcc"})
 
 local quote_me = '[^%w%+%-%=%@%_%/]' -- complement (needn't quote)
-function shell_quote(str)
+local function shell_quote(str)
   if string.find(str, quote_me) or str == '' then
     return "'" .. string.gsub(str, "'", [['"'"']]) .. "'"
   else
@@ -32,7 +32,7 @@ function shell_quote(str)
 end
 
 -- parse Makefile format dependencies into a Lua table
-function parse_make_deps(deps)
+local function parse_make_deps(deps)
   -- remove line breaks and line concatenators
   deps = deps:gsub("\n", ""):gsub("\\", "")
   -- remove the Makefile "target:" element
@@ -70,7 +70,7 @@ end
 -- produces:
 -- #include "vim.h"
 -- #include "memory.h"
-function headerize(headers, global)
+local function headerize(headers, global)
   local pre = '"'
   local post = pre
   if global then
@@ -166,7 +166,7 @@ local type_to_class = {
 -- find the best cc. If os.exec causes problems on windows (like popping up
 -- a console window) we might consider using something like this:
 -- http://scite-ru.googlecode.com/svn/trunk/pack/tools/LuaLib/shell.html#exec
-function find_best_cc(ccs)
+local function find_best_cc(ccs)
   for _, meta in pairs(ccs) do
     local version = io.popen(tostring(meta.path) .. " -v 2>&1")
     version:close()

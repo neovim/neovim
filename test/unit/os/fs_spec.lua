@@ -15,16 +15,22 @@ local FAIL = helpers.FAIL
 require('lfs')
 require('bit')
 
+cimport('unistd.h')
 local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
 cppimport('sys/fcntl.h')
 cppimport('sys/errno.h')
 
-function assert_file_exists(filepath)
+local len = 0
+local buf = ""
+local directory = nil
+local executable_name = nil
+
+local function assert_file_exists(filepath)
   eq(false, nil == (lfs.attributes(filepath, 'r')))
 end
 
-function assert_file_does_not_exist(filepath)
+local function assert_file_does_not_exist(filepath)
   eq(true, nil == (lfs.attributes(filepath, 'r')))
 end
 
@@ -37,7 +43,7 @@ describe('fs function', function()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
     -- Since the tests are executed, they are called by an executable. We use
     -- that executable for several asserts.
-    absolute_executable = arg[0]
+    local absolute_executable = arg[0]
     -- Split absolute_executable into a directory and the actual file name for
     -- later usage.
     directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
@@ -52,7 +58,7 @@ describe('fs function', function()
   end)
 
   describe('os_dirname', function()
-    function os_dirname(buf, len)
+    local function os_dirname(buf, len)
       return fs.os_dirname(buf, len)
     end
 
@@ -73,7 +79,7 @@ describe('fs function', function()
     end)
   end)
 
-  function os_isdir(name)
+  local function os_isdir(name)
     return fs.os_isdir((to_cstr(name)))
   end
 
@@ -112,7 +118,7 @@ describe('fs function', function()
   end)
 
   describe('os_can_exe', function()
-    function os_can_exe(name)
+    local function os_can_exe(name)
       return fs.os_can_exe((to_cstr(name)))
     end
 
@@ -142,39 +148,39 @@ describe('fs function', function()
   end)
 
   describe('file permissions', function()
-    function os_getperm(filename)
+    local function os_getperm(filename)
       local perm = fs.os_getperm((to_cstr(filename)))
       return tonumber(perm)
     end
 
-    function os_setperm(filename, perm)
+    local function os_setperm(filename, perm)
       return fs.os_setperm((to_cstr(filename)), perm)
     end
 
-    function os_fchown(filename, user_id, group_id)
+    local function os_fchown(filename, user_id, group_id)
       local fd = ffi.C.open(filename, 0)
       local res = fs.os_fchown(fd, user_id, group_id)
       ffi.C.close(fd)
       return res
     end
 
-    function os_file_is_readonly(filename)
+    local function os_file_is_readonly(filename)
       return fs.os_file_is_readonly((to_cstr(filename)))
     end
 
-    function os_file_is_writable(filename)
+    local function os_file_is_writable(filename)
       return fs.os_file_is_writable((to_cstr(filename)))
     end
 
-    function bit_set(number, check_bit)
+    local function bit_set(number, check_bit)
       return 0 ~= (bit.band(number, check_bit))
     end
 
-    function set_bit(number, to_set)
+    local function set_bit(number, to_set)
       return bit.bor(number, to_set)
     end
 
-    function unset_bit(number, to_unset)
+    local function unset_bit(number, to_unset)
       return bit.band(number, (bit.bnot(to_unset)))
     end
 
@@ -295,19 +301,19 @@ describe('fs function', function()
   end)
 
   describe('file operations', function()
-    function os_file_exists(filename)
+    local function os_file_exists(filename)
       return fs.os_file_exists((to_cstr(filename)))
     end
 
-    function os_rename(path, new_path)
+    local function os_rename(path, new_path)
       return fs.os_rename((to_cstr(path)), (to_cstr(new_path)))
     end
 
-    function os_remove(path)
+    local function os_remove(path)
       return fs.os_remove((to_cstr(path)))
     end
 
-    function os_open(path, flags, mode)
+    local function os_open(path, flags, mode)
       return fs.os_open((to_cstr(path)), flags, mode)
     end
 
@@ -428,11 +434,11 @@ describe('fs function', function()
   end)
 
   describe('folder operations', function()
-    function os_mkdir(path, mode)
+    local function os_mkdir(path, mode)
       return fs.os_mkdir(to_cstr(path), mode)
     end
 
-    function os_rmdir(path)
+    local function os_rmdir(path)
       return fs.os_rmdir(to_cstr(path))
     end
 
@@ -465,18 +471,18 @@ describe('fs function', function()
   end)
 
   describe('FileInfo', function()
-    function file_info_new()
+    local function file_info_new()
       local file_info = ffi.new('FileInfo[1]')
       file_info[0].stat.st_ino = 0
       file_info[0].stat.st_dev = 0
       return file_info
     end
 
-    function is_file_info_filled(file_info)
+    local function is_file_info_filled(file_info)
       return file_info[0].stat.st_ino > 0 and file_info[0].stat.st_dev > 0
     end
 
-    function file_id_new()
+    local function file_id_new()
       local file_info = ffi.new('FileID[1]')
       file_info[0].inode = 0
       file_info[0].device_id = 0
