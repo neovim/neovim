@@ -3798,6 +3798,8 @@ static void ins_compl_delete(void)
    */
   i = compl_col + (compl_cont_status & CONT_ADDING ? compl_length : 0);
   backspace_until_column(i);
+  // TODO: is this sufficient for redrawing?  Redrawing everything causes
+  // flicker, thus we can't do that.
   changed_cline_bef_curs();
 }
 
