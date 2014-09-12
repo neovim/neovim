@@ -44,13 +44,9 @@ typedef struct {
 } Dictionary;
 
 typedef enum {
-// The following comments are markers that msgpack-gen.lua uses to extract
-// types, don't remove!
-// start custom types
   kObjectTypeBuffer,
   kObjectTypeWindow,
   kObjectTypeTabpage,
-// end custom types
   kObjectTypeNil,
   kObjectTypeBoolean,
   kObjectTypeInteger,

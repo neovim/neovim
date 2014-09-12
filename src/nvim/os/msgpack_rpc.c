@@ -17,8 +17,6 @@
 # include "os/msgpack_rpc.c.generated.h"
 #endif
 
-extern msgpack_unpacked msgpack_unpacked_metadata;
-
 /// Validates the basic structure of the msgpack-rpc call and fills `res`
 /// with the basic response structure.
 ///
@@ -81,19 +79,6 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
   snprintf(error->msg, sizeof(error->msg), "Invalid method name");
   error->set = true;
   return NIL;
-}
-
-/// Handler for retrieving API metadata through a msgpack-rpc call
-Object msgpack_rpc_handle_get_api_metadata(uint64_t channel_id,
-                                           msgpack_object *req,
-                                           Error *error)
-{
-  Array rv = ARRAY_DICT_INIT;
-  Object metadata;
-  msgpack_rpc_to_object(&msgpack_unpacked_metadata.data, &metadata);
-  ADD(rv, INTEGER_OBJ((int64_t)channel_id));
-  ADD(rv, metadata);
-  return ARRAY_OBJ(rv);
 }
 
 /// Serializes a msgpack-rpc request or notification(id == 0)

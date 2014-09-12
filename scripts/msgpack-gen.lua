@@ -35,30 +35,7 @@ grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
 -- we need at least 2 arguments since the last one is the output file
 assert(#arg >= 1)
--- api metadata
-api = {
-  functions = {},
-  types = {}
-}
-
--- Extract type codes from api/private/defs.h. The codes are values between
--- comment markers in the ObjectType enum
-local typedefs_header = arg[1]
-local input = io.open(typedefs_header, 'rb')
-local reading_types = false
-while true do
-  local line = input:read('*l'):gsub("^%s*(.-)%s*$", "%1")
-  if reading_types then
-    if line == '// end custom types' then
-      break
-    end
-    local type_name = line:gsub("^kObjectType(.-),$", "%1")
-    api.types[#api.types + 1] = type_name
-  else
-    reading_types = line == '// start custom types'
-  end
-end
-input:close()
+functions = {}
 
 -- names of all headers relative to the source root(for inclusion in the
 -- generated file)
@@ -67,7 +44,7 @@ headers = {}
 outputf = arg[#arg]
 
 -- read each input file, parse and append to the api metadata
-for i = 2, #arg - 1 do
+for i = 1, #arg - 1 do
   local full_path = arg[i]
   local parts = {}
   for part in string.gmatch(full_path, '[^/]+') do
@@ -78,7 +55,7 @@ for i = 2, #arg - 1 do
   local input = io.open(full_path, 'rb')
   local tmp = grammar:match(input:read('*all'))
   for i = 1, #tmp do
-    api.functions[#api.functions + 1] = tmp[i]
+    functions[#functions + 1] = tmp[i]
     local fn = tmp[i]
     if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
       -- this function should receive the channel id
@@ -124,12 +101,12 @@ end
 output:write([[
 
 
-const uint8_t msgpack_metadata[] = {
+static const uint8_t msgpack_metadata[] = {
 
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-packed = msgpack.pack(api)
+packed = msgpack.pack(functions)
 for i = 1, #packed do
   output:write(string.byte(packed, i)..', ')
   if i % 10 == 0 then
@@ -138,17 +115,28 @@ for i = 1, #packed do
 end
 output:write([[
 };
-const unsigned int msgpack_metadata_size = sizeof(msgpack_metadata);
-msgpack_unpacked msgpack_unpacked_metadata;
+
+void msgpack_rpc_init_function_metadata(Dictionary *metadata)
+{
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  assert(msgpack_unpack_next(&unpacked,
+                             (const char *)msgpack_metadata,
+                             sizeof(msgpack_metadata),
+                             NULL) == MSGPACK_UNPACK_SUCCESS);
+  Object functions;
+  msgpack_rpc_to_object(&unpacked.data, &functions);
+  msgpack_unpacked_destroy(&unpacked);
+  PUT(*metadata, "functions", functions);
+}
 
 ]])
 
--- start the handler functions. First handler (method_id=0) is reserved for
--- querying the metadata, usually it is the first function called by clients.
--- Visit each function metadata to build the handler function with code
--- generated for validating arguments and calling to the real API.
-for i = 1, #api.functions do
-  local fn = api.functions[i]
+-- start the handler functions. Visit each function metadata to build the
+-- handler function with code generated for validating arguments and calling to
+-- the real API.
+for i = 1, #functions do
+  local fn = functions[i]
   local args = {}
 
   output:write('static Object handle_'..fn.name..'(uint64_t channel_id, msgpack_object *req, Error *error)')
@@ -243,14 +231,6 @@ static Map(String, rpc_method_handler_fn) *methods = NULL;
 
 void msgpack_rpc_init(void)
 {
-  msgpack_unpacked_init(&msgpack_unpacked_metadata);
-  if (msgpack_unpack_next(&msgpack_unpacked_metadata,
-                          (const char *)msgpack_metadata,
-                          msgpack_metadata_size,
-                          NULL) != MSGPACK_UNPACK_SUCCESS) {
-    abort();
-  }
-
   methods = map_new(String, rpc_method_handler_fn)();
 
 ]])
@@ -258,8 +238,8 @@ void msgpack_rpc_init(void)
 -- Keep track of the maximum method name length in order to avoid walking
 -- strings longer than that when searching for a method handler
 local max_fname_len = 0
-for i = 1, #api.functions do
-  local fn = api.functions[i]
+for i = 1, #functions do
+  local fn = functions[i]
   output:write('  map_put(String, rpc_method_handler_fn)(methods, '..
                '(String) {.data = "'..fn.name..'", '..
                '.size = sizeof("'..fn.name..'") - 1}, handle_'..
@@ -269,12 +249,6 @@ for i = 1, #api.functions do
     max_fname_len = #fn.name
   end
 end
-
-local metadata_fn = 'get_api_metadata'
-output:write('  map_put(String, rpc_method_handler_fn)(methods, '..
-             '(String) {.data = "'..metadata_fn..'", '..
-             '.size = sizeof("'..metadata_fn..'") - 1}, msgpack_rpc_handle_'..
-             metadata_fn..');\n')
 
 output:write('\n}\n\n')
 

@@ -120,9 +120,9 @@ Object provider_call(char *method, Array args)
   return result;
 }
 
-Dictionary provider_get_all(void)
+void provider_init_feature_metadata(Dictionary *metadata)
 {
-  Dictionary rv = ARRAY_DICT_INIT;
+  Dictionary md = ARRAY_DICT_INIT;
 
   for (size_t i = 0; i < FEATURE_COUNT; i++) {
     Array methods = ARRAY_DICT_INIT;
@@ -134,10 +134,10 @@ Dictionary provider_get_all(void)
       ADD(methods, STRING_OBJ(cstr_to_string(method)));
     }
 
-    PUT(rv, f->name, ARRAY_OBJ(methods));
+    PUT(md, f->name, ARRAY_OBJ(methods));
   }
 
-  return rv;
+  PUT(*metadata, "features", DICTIONARY_OBJ(md));
 }
 
 static Feature * find_feature(char *name)

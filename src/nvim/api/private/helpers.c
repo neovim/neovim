@@ -6,6 +6,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/os/provider.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/buffer.h"
@@ -506,6 +507,72 @@ void api_free_dictionary(Dictionary value)
   free(value.items);
 }
 
+Dictionary api_metadata(void)
+{
+  static Dictionary metadata = ARRAY_DICT_INIT;
+
+  if (!metadata.size) {
+    msgpack_rpc_init_function_metadata(&metadata);
+    init_type_metadata(&metadata);
+    provider_init_feature_metadata(&metadata);
+  }
+
+  return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
+}
+
+static void init_type_metadata(Dictionary *metadata)
+{
+  Dictionary types = ARRAY_DICT_INIT;
+
+  Dictionary buffer_metadata = ARRAY_DICT_INIT;
+  PUT(buffer_metadata, "id", INTEGER_OBJ(kObjectTypeBuffer));
+
+  Dictionary window_metadata = ARRAY_DICT_INIT;
+  PUT(window_metadata, "id", INTEGER_OBJ(kObjectTypeWindow));
+
+  Dictionary tabpage_metadata = ARRAY_DICT_INIT;
+  PUT(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage));
+
+  PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
+  PUT(types, "Window", DICTIONARY_OBJ(window_metadata));
+  PUT(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
+
+  PUT(*metadata, "types", DICTIONARY_OBJ(types));
+}
+
+/// Creates a deep clone of an object
+static Object copy_object(Object obj)
+{
+  switch (obj.type) {
+    case kObjectTypeNil:
+    case kObjectTypeBoolean:
+    case kObjectTypeInteger:
+    case kObjectTypeFloat:
+      return obj;
+
+    case kObjectTypeString:
+      return STRING_OBJ(cstr_to_string(obj.data.string.data));
+
+    case kObjectTypeArray: {
+      Array rv = ARRAY_DICT_INIT;
+      for (size_t i = 0; i < obj.data.array.size; i++) {
+        ADD(rv, copy_object(obj.data.array.items[i]));
+      }
+      return ARRAY_OBJ(rv);
+    }
+
+    case kObjectTypeDictionary: {
+      Dictionary rv = ARRAY_DICT_INIT;
+      for (size_t i = 0; i < obj.data.dictionary.size; i++) {
+        KeyValuePair item = obj.data.dictionary.items[i];
+        PUT(rv, item.key.data, copy_object(item.value));
+      }
+      return DICTIONARY_OBJ(rv);
+    }
+    default:
+      abort();
+  }
+}
 
 /// Recursion helper for the `vim_to_object`. This uses a pointer table
 /// to avoid infinite recursion due to cyclic references

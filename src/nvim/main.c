@@ -12,6 +12,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include <msgpack.h>
+
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/main.h"
@@ -57,6 +59,9 @@
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
 #include "nvim/os/signal.h"
+#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/api/private/defs.h"
+#include "nvim/api/private/helpers.h"
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
@@ -115,9 +120,6 @@ static void init_locale(void);
 # if defined(HAS_SWAP_EXISTS_ACTION)
 # endif
 #endif /* NO_VIM_MAIN */
-
-extern const uint8_t msgpack_metadata[];
-extern const unsigned int msgpack_metadata_size;
 
 /*
  * Different types of error messages.
@@ -1027,9 +1029,15 @@ static void command_line_scan(mparm_T *parmp)
             msg_didout = FALSE;
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "api-info") == 0) {
-            for (unsigned int i = 0; i<msgpack_metadata_size; i++) {
-              putchar(msgpack_metadata[i]);
+            msgpack_sbuffer* b = msgpack_sbuffer_new();
+            msgpack_packer* p = msgpack_packer_new(b, msgpack_sbuffer_write);
+            Object md = DICTIONARY_OBJ(api_metadata());
+            msgpack_rpc_from_object(md, p);
+
+            for (size_t i = 0; i < b->size; i++) {
+              putchar(b->data[i]);
             }
+
             mch_exit(0);
           } else if (STRICMP(argv[0] + argv_idx, "embed") == 0) {
             embedded_mode = true;

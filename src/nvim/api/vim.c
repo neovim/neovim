@@ -528,10 +528,15 @@ void vim_register_provider(uint64_t channel_id, String feature, Error *err)
   }
 }
 
-/// Returns a feature->method list dictionary for all pluggable features
-Dictionary vim_discover_features(void)
+Array vim_get_api_info(uint64_t channel_id)
 {
-  return provider_get_all();
+  Array rv = ARRAY_DICT_INIT;
+
+  assert(channel_id <= INT64_MAX);
+  ADD(rv, INTEGER_OBJ((int64_t)channel_id));
+  ADD(rv, DICTIONARY_OBJ(api_metadata()));
+
+  return rv;
 }
 
 /// Writes a message to vim output or error buffer. The string is split
