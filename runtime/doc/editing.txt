@@ -251,7 +251,9 @@ If you want to keep the changed buffer without saving it, switch on the
 
 							*:fin* *:find*
 :fin[d][!] [++opt] [+cmd] {file}
-			Find {file} in 'path' and then |:edit| it.
+			Find {file} in 'path' and then |:edit| it. By default
+			searches depth-first. Set 'breadthfirst' to search
+			nearest files first.
 			{not in Vi} {not available when the |+file_in_path|
 			feature was disabled at compile time}
 

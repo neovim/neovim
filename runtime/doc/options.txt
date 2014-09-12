@@ -1190,6 +1190,15 @@ A jump table for the options with a short description can be found at |Q_op|.
 	don't see it when editing.  When you don't change the options, the BOM
 	will be restored when writing the file.
 
+						*'breadthfirst'* *'bfs'*
+'breadthfirst' 'bfs'	boolean (default off)
+			global
+			{not in Vi}
+	When set, causes ":find {file}" to search for {file} in the 'path'
+	closest to the current directory, rather than lexically first. For
+	example, if z/z/z/{file} and a/a/{file} are both in 'path', the first
+	will be returned by default, and the second with 'bfs' set.
+
 						*'breakat'* *'brk'*
 'breakat' 'brk'		string	(default " ^I!@*-+;:,./?")
 			global
