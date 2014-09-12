@@ -147,7 +147,7 @@ if(CMAKE_GENERATOR MATCHES "Makefiles")
 endif()
 
 if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "utf_terminal")
+  set(BUSTED_OUTPUT_TYPE "utfTerminal")
 endif()
 
 if(BUSTED_PRG)
