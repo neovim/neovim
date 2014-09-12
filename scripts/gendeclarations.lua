@@ -59,9 +59,16 @@ local right_word = concat(
   raw_word,
   neg_look_ahead(aw)
 )
-local word = concat(
-  neg_look_behind(aw),
-  right_word
+local word = branch(
+  concat(
+    branch(lit('ArrayOf('), lit('DictionaryOf(')), -- typed container macro
+    one_or_more(any_character - lit(')')),
+    lit(')')
+  ),
+  concat(
+    neg_look_behind(aw),
+    right_word
+  )
 )
 local spaces = any_amount(branch(
   s,
@@ -204,7 +211,7 @@ while init ~= nil do
       declaration = declaration:gsub('\n', ' ')
       declaration = declaration:gsub('%s+', ' ')
       declaration = declaration:gsub(' ?%( ?', '(')
-      declaration = declaration:gsub(' ?%) ?', ')')
+      -- declaration = declaration:gsub(' ?%) ?', ')')
       declaration = declaration:gsub(' ?, ?', ', ')
       declaration = declaration:gsub(' ?(%*+) ?', ' %1')
       declaration = declaration:gsub(' ?(FUNC_ATTR_)', ' %1')

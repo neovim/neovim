@@ -7,61 +7,67 @@
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
-#define REMOTE_FUNCS_IMPL(t, lt)                                            \
-  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
-  {                                                                         \
-    *arg = obj->via.u64;                                                    \
-    return obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER;                    \
-  }                                                                         \
-                                                                            \
-  void msgpack_rpc_from_##lt(t result, msgpack_packer *res)                 \
-  {                                                                         \
-    msgpack_pack_uint64(res, result);                                       \
-  }
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+# include "os/msgpack_rpc_helpers.c.generated.h"
+#endif
 
-#define TYPED_ARRAY_IMPL(t, lt)                                             \
-  bool msgpack_rpc_to_##lt##array(msgpack_object *obj, t##Array *arg)       \
+static msgpack_zone zone;
+static msgpack_sbuffer sbuffer;
+
+#define HANDLE_TYPE_CONVERSION_IMPL(t, lt)                                  \
+  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
+    FUNC_ATTR_NONNULL_ALL                                                   \
   {                                                                         \
-    if (obj->type != MSGPACK_OBJECT_ARRAY) {                                \
+    if (obj->type != MSGPACK_OBJECT_EXT                                     \
+        || obj->via.ext.type != kObjectType##t) {                           \
       return false;                                                         \
     }                                                                       \
                                                                             \
-    arg->size = obj->via.array.size;                                        \
-    arg->items = xcalloc(obj->via.array.size, sizeof(t));                   \
+    msgpack_object data;                                                    \
+    msgpack_unpack_return ret = msgpack_unpack(obj->via.ext.ptr,            \
+                                               obj->via.ext.size,           \
+                                               NULL,                        \
+                                               &zone,                       \
+                                               &data);                      \
                                                                             \
-    for (size_t i = 0; i < obj->via.array.size; i++) {                      \
-      if (!msgpack_rpc_to_##lt(obj->via.array.ptr + i, &arg->items[i])) {   \
-        return false;                                                       \
-      }                                                                     \
+    if (ret != MSGPACK_UNPACK_SUCCESS) {                                    \
+      return false;                                                         \
     }                                                                       \
                                                                             \
+    *arg = data.via.u64;                                                    \
     return true;                                                            \
   }                                                                         \
                                                                             \
-  void msgpack_rpc_from_##lt##array(t##Array result, msgpack_packer *res)   \
+  void msgpack_rpc_from_##lt(t o, msgpack_packer *res)                      \
+    FUNC_ATTR_NONNULL_ARG(2)                                                \
   {                                                                         \
-    msgpack_pack_array(res, result.size);                                   \
-                                                                            \
-    for (size_t i = 0; i < result.size; i++) {                              \
-      msgpack_rpc_from_##lt(result.items[i], res);                          \
-    }                                                                       \
-  }                                                                         \
-                                                                            \
-  void msgpack_rpc_free_##lt##array(t##Array value) {                       \
-    for (size_t i = 0; i < value.size; i++) {                               \
-      msgpack_rpc_free_##lt(value.items[i]);                                \
-    }                                                                       \
-                                                                            \
-    free(value.items);                                                      \
+    msgpack_packer pac;                                                     \
+    msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);             \
+    msgpack_pack_uint64(&pac, o);                                           \
+    msgpack_pack_ext(res, sbuffer.size, kObjectType##t);                    \
+    msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size);                 \
+    msgpack_sbuffer_clear(&sbuffer);                                        \
   }
 
+void msgpack_rpc_helpers_init(void)
+{
+  msgpack_zone_init(&zone, 0xfff);
+  msgpack_sbuffer_init(&sbuffer);
+}
+
+HANDLE_TYPE_CONVERSION_IMPL(Buffer, buffer)
+HANDLE_TYPE_CONVERSION_IMPL(Window, window)
+HANDLE_TYPE_CONVERSION_IMPL(Tabpage, tabpage)
+
 bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   *arg = obj->via.boolean;
   return obj->type == MSGPACK_OBJECT_BOOLEAN;
 }
 
 bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
       && obj->via.u64 <= INT64_MAX) {
@@ -74,23 +80,27 @@ bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
 }
 
 bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   *arg = obj->via.dec;
   return obj->type == MSGPACK_OBJECT_DOUBLE;
 }
 
 bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
-  if (obj->type != MSGPACK_OBJECT_RAW) {
+  if (obj->type == MSGPACK_OBJECT_BIN || obj->type == MSGPACK_OBJECT_STR) {
+    arg->data = xmemdupz(obj->via.bin.ptr, obj->via.bin.size);
+    arg->size = obj->via.bin.size;
+  } else {
     return false;
   }
 
-  arg->data = xmemdupz(obj->via.raw.ptr, obj->via.raw.size);
-  arg->size = obj->via.raw.size;
   return true;
 }
 
 bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   switch (obj->type) {
     case MSGPACK_OBJECT_NIL:
@@ -110,7 +120,8 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       arg->type = kObjectTypeFloat;
       return msgpack_rpc_to_float(obj, &arg->data.floating);
 
-    case MSGPACK_OBJECT_RAW:
+    case MSGPACK_OBJECT_BIN:
+    case MSGPACK_OBJECT_STR:
       arg->type = kObjectTypeString;
       return msgpack_rpc_to_string(obj, &arg->data.string);
 
@@ -122,21 +133,22 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
       arg->type = kObjectTypeDictionary;
       return msgpack_rpc_to_dictionary(obj, &arg->data.dictionary);
 
+    case MSGPACK_OBJECT_EXT:
+      switch (obj->via.ext.type) {
+        case kObjectTypeBuffer:
+          return msgpack_rpc_to_buffer(obj, &arg->data.buffer);
+        case kObjectTypeWindow:
+          return msgpack_rpc_to_window(obj, &arg->data.window);
+        case kObjectTypeTabpage:
+          return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage);
+      }
     default:
       return false;
   }
 }
 
-bool msgpack_rpc_to_position(msgpack_object *obj, Position *arg)
-{
-  return obj->type == MSGPACK_OBJECT_ARRAY
-      && obj->via.array.size == 2
-      && msgpack_rpc_to_integer(obj->via.array.ptr, &arg->row)
-      && msgpack_rpc_to_integer(obj->via.array.ptr + 1, &arg->col);
-}
-
-
 bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type != MSGPACK_OBJECT_ARRAY) {
     return false;
@@ -155,6 +167,7 @@ bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
 }
 
 bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (obj->type != MSGPACK_OBJECT_MAP) {
     return false;
@@ -180,6 +193,7 @@ bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg)
 }
 
 void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   if (result) {
     msgpack_pack_true(res);
@@ -189,22 +203,26 @@ void msgpack_rpc_from_boolean(Boolean result, msgpack_packer *res)
 }
 
 void msgpack_rpc_from_integer(Integer result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_int64(res, result);
 }
 
 void msgpack_rpc_from_float(Float result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_double(res, result);
 }
 
 void msgpack_rpc_from_string(String result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
-  msgpack_pack_raw(res, result.size);
-  msgpack_pack_raw_body(res, result.data, result.size);
+  msgpack_pack_bin(res, result.size);
+  msgpack_pack_bin_body(res, result.data, result.size);
 }
 
 void msgpack_rpc_from_object(Object result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   switch (result.type) {
     case kObjectTypeNil:
@@ -231,10 +249,6 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_rpc_from_array(result.data.array, res);
       break;
 
-    case kObjectTypePosition:
-      msgpack_rpc_from_position(result.data.position, res);
-      break;
-
     case kObjectTypeBuffer:
       msgpack_rpc_from_buffer(result.data.buffer, res);
       break;
@@ -247,36 +261,14 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
       msgpack_rpc_from_tabpage(result.data.tabpage, res);
       break;
 
-    case kObjectTypeStringArray:
-      msgpack_rpc_from_stringarray(result.data.stringarray, res);
-      break;
-
-    case kObjectTypeBufferArray:
-      msgpack_rpc_from_bufferarray(result.data.bufferarray, res);
-      break;
-
-    case kObjectTypeWindowArray:
-      msgpack_rpc_from_windowarray(result.data.windowarray, res);
-      break;
-
-    case kObjectTypeTabpageArray:
-      msgpack_rpc_from_tabpagearray(result.data.tabpagearray, res);
-      break;
-
     case kObjectTypeDictionary:
       msgpack_rpc_from_dictionary(result.data.dictionary, res);
       break;
   }
 }
 
-void msgpack_rpc_from_position(Position result, msgpack_packer *res)
-{
-  msgpack_pack_array(res, 2);;
-  msgpack_pack_int64(res, result.row);
-  msgpack_pack_int64(res, result.col);
-}
-
 void msgpack_rpc_from_array(Array result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_array(res, result.size);
 
@@ -286,6 +278,7 @@ void msgpack_rpc_from_array(Array result, msgpack_packer *res)
 }
 
 void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
 {
   msgpack_pack_map(res, result.size);
 
@@ -294,87 +287,3 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
     msgpack_rpc_from_object(result.items[i].value, res);
   }
 }
-
-void msgpack_rpc_free_string(String value)
-{
-  if (!value.data) {
-    return;
-  }
-
-  free(value.data);
-}
-
-void msgpack_rpc_free_object(Object value)
-{
-  switch (value.type) {
-    case kObjectTypeNil:
-    case kObjectTypeBoolean:
-    case kObjectTypeInteger:
-    case kObjectTypeFloat:
-    case kObjectTypePosition:
-    case kObjectTypeBuffer:
-    case kObjectTypeWindow:
-    case kObjectTypeTabpage:
-      break;
-
-    case kObjectTypeString:
-      msgpack_rpc_free_string(value.data.string);
-      break;
-
-    case kObjectTypeArray:
-      msgpack_rpc_free_array(value.data.array);
-      break;
-
-    case kObjectTypeStringArray:
-      msgpack_rpc_free_stringarray(value.data.stringarray);
-      break;
-
-    case kObjectTypeBufferArray:
-      msgpack_rpc_free_bufferarray(value.data.bufferarray);
-      break;
-
-    case kObjectTypeWindowArray:
-      msgpack_rpc_free_windowarray(value.data.windowarray);
-      break;
-
-    case kObjectTypeTabpageArray:
-      msgpack_rpc_free_tabpagearray(value.data.tabpagearray);
-      break;
-
-    case kObjectTypeDictionary:
-      msgpack_rpc_free_dictionary(value.data.dictionary);
-      break;
-
-    default:
-      abort();
-  }
-}
-
-void msgpack_rpc_free_array(Array value)
-{
-  for (uint32_t i = 0; i < value.size; i++) {
-    msgpack_rpc_free_object(value.items[i]);
-  }
-
-  free(value.items);
-}
-
-void msgpack_rpc_free_dictionary(Dictionary value)
-{
-  for (uint32_t i = 0; i < value.size; i++) {
-    msgpack_rpc_free_string(value.items[i].key);
-    msgpack_rpc_free_object(value.items[i].value);
-  }
-
-  free(value.items);
-}
-
-REMOTE_FUNCS_IMPL(Buffer, buffer)
-REMOTE_FUNCS_IMPL(Window, window)
-REMOTE_FUNCS_IMPL(Tabpage, tabpage)
-
-TYPED_ARRAY_IMPL(Buffer, buffer)
-TYPED_ARRAY_IMPL(Window, window)
-TYPED_ARRAY_IMPL(Tabpage, tabpage)
-TYPED_ARRAY_IMPL(String, string)
-

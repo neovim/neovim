@@ -197,18 +197,18 @@ Job *job_start(char **argv,
   job->stdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
   job->stdio[2].data.stream = (uv_stream_t *)&job->proc_stderr;
 
+  // Give all handles a reference to the job
+  handle_set_job((uv_handle_t *)&job->proc, job);
+  handle_set_job((uv_handle_t *)&job->proc_stdin, job);
+  handle_set_job((uv_handle_t *)&job->proc_stdout, job);
+  handle_set_job((uv_handle_t *)&job->proc_stderr, job);
+
   // Spawn the job
   if (uv_spawn(uv_default_loop(), &job->proc, &job->proc_opts) != 0) {
     free_job(job);
     *status = -1;
     return NULL;
   }
-
-  // Give all handles a reference to the job
-  handle_set_job((uv_handle_t *)&job->proc, job);
-  handle_set_job((uv_handle_t *)&job->proc_stdin, job);
-  handle_set_job((uv_handle_t *)&job->proc_stdout, job);
-  handle_set_job((uv_handle_t *)&job->proc_stderr, job);
 
   job->in = wstream_new(maxmem);
   wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);

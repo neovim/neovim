@@ -48,7 +48,6 @@
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/provider.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/api/private/helpers.h"
 
 /*
@@ -5256,7 +5255,7 @@ static void get_clipboard(int name)
   return;
 
 err:
-  msgpack_rpc_free_object(result);
+  api_free_object(result);
   free(reg->y_array);
   reg->y_array = NULL;
   reg->y_size = 0;
@@ -5287,5 +5286,5 @@ static void set_clipboard(int name)
   ADD(args, ARRAY_OBJ(lines));
 
   Object result = provider_call("clipboard_set", args);
-  msgpack_rpc_free_object(result);
+  api_free_object(result);
 }

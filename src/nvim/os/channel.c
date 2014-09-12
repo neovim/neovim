@@ -22,8 +22,10 @@
 #include "nvim/memory.h"
 #include "nvim/os_unix.h"
 #include "nvim/message.h"
+#include "nvim/term.h"
 #include "nvim/map.h"
 #include "nvim/log.h"
+#include "nvim/misc1.h"
 #include "nvim/lib/kvec.h"
 
 #define CHANNEL_BUFFER_SIZE 0xffff
@@ -156,7 +158,7 @@ bool channel_send_event(uint64_t id, char *name, Array args)
 
   if (id > 0) {
     if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
-      msgpack_rpc_free_array(args);
+      api_free_array(args);
       return false;
     }
     send_event(channel, name, args);
@@ -184,7 +186,7 @@ bool channel_send_call(uint64_t id,
   Channel *channel = NULL;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     return false;
   }
 
@@ -197,7 +199,7 @@ bool channel_send_call(uint64_t id,
         "Channel %" PRIu64 " crossed maximum stack depth",
         channel->id);
     *result = STRING_OBJ(cstr_to_string(buf));
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     return false;
   }
 
@@ -263,6 +265,23 @@ void channel_unsubscribe(uint64_t id, char *event)
   }
 
   unsubscribe(channel, event);
+}
+
+/// Closes a channel
+///
+/// @param id The channel id
+/// @return true if successful, false otherwise
+bool channel_close(uint64_t id)
+{
+  Channel *channel;
+
+  if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+    return false;
+  }
+
+  channel_kill(channel);
+  channel->enabled = false;
+  return true;
 }
 
 /// Creates an API channel from stdin/stdout. This is used when embedding
@@ -331,11 +350,10 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  UnpackResult result;
+  msgpack_unpack_return result;
 
   // Deserialize everything we can.
-  while ((result = msgpack_rpc_unpack(channel->unpacker, &unpacked))
-      == kUnpackResultOk) {
+  while ((result = msgpack_unpacker_next(channel->unpacker, &unpacked))) {
     if (kv_size(channel->call_stack) && is_rpc_response(&unpacked.data)) {
       if (is_valid_rpc_response(&unpacked.data, channel)) {
         call_stack_pop(&unpacked.data, channel);
@@ -362,7 +380,13 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     }
   }
 
-  if (result == kUnpackResultFail) {
+  if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
+    OUT_STR(e_outofmem);
+    out_char('\n');
+    preserve_exit();
+  }
+
+  if (result == MSGPACK_UNPACK_PARSE_ERROR) {
     // See src/msgpack/unpack_template.h in msgpack source tree for
     // causes for this error(search for 'goto _failed')
     //
@@ -441,7 +465,7 @@ static void broadcast_event(char *name, Array args)
   });
 
   if (!kv_size(subscribed)) {
-    msgpack_rpc_free_array(args);
+    api_free_array(args);
     goto end;
   }
 
@@ -489,7 +513,13 @@ static void close_channel(Channel *channel)
 
   pmap_free(cstr_t)(channel->subscribed_events);
   kv_destroy(channel->call_stack);
+  channel_kill(channel);
 
+  free(channel);
+}
+
+static void channel_kill(Channel *channel)
+{
   if (channel->is_job) {
     if (channel->data.job) {
       job_stop(channel->data.job);
@@ -504,8 +534,6 @@ static void close_channel(Channel *channel)
       mch_exit(0);
     }
   }
-
-  free(channel);
 }
 
 static void close_cb(uv_handle_t *handle)

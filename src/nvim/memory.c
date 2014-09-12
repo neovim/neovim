@@ -121,7 +121,8 @@ void *xmalloc(size_t size)
   void *ret = try_malloc(size);
 
   if (!ret) {
-    OUT_STR("Vim: Error: Out of memory.\n");
+    OUT_STR(e_outofmem);
+    out_char('\n');
     preserve_exit();
   }
   return ret;
@@ -147,7 +148,8 @@ void *xcalloc(size_t count, size_t size)
     if (!ret && (!count || !size))
       ret = calloc(1, 1);
     if (!ret) {
-      OUT_STR("Vim: Error: Out of memory.\n");
+      OUT_STR(e_outofmem);
+      out_char('\n');
       preserve_exit();
     }
   }
@@ -174,7 +176,8 @@ void *xrealloc(void *ptr, size_t size)
     if (!ret && !size)
       ret = realloc(ptr, 1);
     if (!ret) {
-      OUT_STR("Vim: Error: Out of memory.\n");
+      OUT_STR(e_outofmem);
+      out_char('\n');
       preserve_exit();
     }
   }
@@ -194,7 +197,7 @@ void *xmallocz(size_t size)
   void *ret;
 
   if (total_size < size) {
-    OUT_STR("Vim: Data too large to fit into virtual memory space\n");
+    OUT_STR(_("Vim: Data too large to fit into virtual memory space\n"));
     preserve_exit();
   }
 
@@ -316,7 +319,8 @@ char *xstrdup(const char *str)
     try_to_free_memory();
     ret = strdup(str);
     if (!ret) {
-      OUT_STR("Vim: Error: Out of memory.\n");
+      OUT_STR(e_outofmem);
+      out_char('\n');
       preserve_exit();
     }
   }

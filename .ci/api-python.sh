@@ -23,7 +23,7 @@ fi
 
 valgrind_check "$tmpdir"
 
-export NVIM_SPAWN_ARGV="[\"valgrind\", \"-q\", \"--track-origins=yes\", \"--leak-check=yes\", \"--suppressions=$suppressions\", \"--log-file=$tmpdir/valgrind-%p.log\", \"../build/bin/nvim\", \"-u\", \"NONE\", \"--embedded-mode\"]"
+export NVIM_SPAWN_ARGV="[\"valgrind\", \"-q\", \"--track-origins=yes\", \"--leak-check=yes\", \"--suppressions=$suppressions\", \"--log-file=$tmpdir/valgrind-%p.log\", \"../build/bin/nvim\", \"-u\", \"NONE\", \"--embed\"]"
 if ! nosetests --verbosity=2 --nologcapture; then
 	valgrind_check "$tmpdir"
 	exit 1

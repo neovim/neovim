@@ -25,6 +25,7 @@ typedef Object (*rpc_method_handler_fn)(uint64_t channel_id,
 /// Initializes the msgpack-rpc method table
 void msgpack_rpc_init(void);
 
+void msgpack_rpc_init_function_metadata(Dictionary *metadata);
 
 /// Dispatches to the actual API function after basic payload validation by
 /// `msgpack_rpc_call`. It is responsible for validating/converting arguments

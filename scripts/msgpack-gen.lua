@@ -16,7 +16,12 @@ ws = S(' \t') + nl
 fill = ws ^ 0
 c_comment = P('//') * (not_nl ^ 0)
 c_preproc = P('#') * (not_nl ^ 0)
-c_id = letter * (alpha ^ 0)
+typed_container =
+  (P('ArrayOf(') + P('DictionaryOf(')) * ((any - P(')')) ^ 1) * P(')')
+c_id = (
+  typed_container +
+  (letter * (alpha ^ 0))
+)
 c_void = P('void')
 c_param_type = (
   ((P('Error') * fill * P('*') * fill) * Cc('error')) +
@@ -35,12 +40,8 @@ grammar = Ct((c_proto + c_comment + c_preproc + ws) ^ 1)
 
 -- we need at least 2 arguments since the last one is the output file
 assert(#arg >= 1)
--- api metadata
-api = {
-  functions = {},
-  -- Helpers for object-oriented languages
-  classes = {'Buffer', 'Window', 'Tabpage'}
-}
+functions = {}
+
 -- names of all headers relative to the source root(for inclusion in the
 -- generated file)
 headers = {}
@@ -59,9 +60,8 @@ for i = 1, #arg - 1 do
   local input = io.open(full_path, 'rb')
   local tmp = grammar:match(input:read('*all'))
   for i = 1, #tmp do
-    api.functions[#api.functions + 1] = tmp[i]
-    local fn_id = #api.functions
-    local fn = api.functions[fn_id]
+    functions[#functions + 1] = tmp[i]
+    local fn = tmp[i]
     if #fn.parameters ~= 0 and fn.parameters[1][2] == 'channel_id' then
       -- this function should receive the channel id
       fn.receives_channel_id = true
@@ -75,8 +75,6 @@ for i = 1, #arg - 1 do
       -- for specifying errors
       fn.parameters[#fn.parameters] = nil
     end
-    -- assign a unique integer id for each api function
-    fn.id = fn_id
   end
   input:close()
 end
@@ -93,9 +91,11 @@ output:write([[
 
 #include "nvim/map.h"
 #include "nvim/log.h"
+#include "nvim/vim.h"
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 ]])
 
 for i = 1, #headers do
@@ -107,12 +107,12 @@ end
 output:write([[
 
 
-const uint8_t msgpack_metadata[] = {
+static const uint8_t msgpack_metadata[] = {
 
 ]])
 -- serialize the API metadata using msgpack and embed into the resulting
 -- binary for easy querying by clients
-packed = msgpack.pack(api)
+packed = msgpack.pack(functions)
 for i = 1, #packed do
   output:write(string.byte(packed, i)..', ')
   if i % 10 == 0 then
@@ -121,16 +121,40 @@ for i = 1, #packed do
 end
 output:write([[
 };
-const unsigned int msgpack_metadata_size = sizeof(msgpack_metadata);
+
+void msgpack_rpc_init_function_metadata(Dictionary *metadata)
+{
+  msgpack_unpacked unpacked;
+  msgpack_unpacked_init(&unpacked);
+  assert(msgpack_unpack_next(&unpacked,
+                             (const char *)msgpack_metadata,
+                             sizeof(msgpack_metadata),
+                             NULL) == MSGPACK_UNPACK_SUCCESS);
+  Object functions;
+  msgpack_rpc_to_object(&unpacked.data, &functions);
+  msgpack_unpacked_destroy(&unpacked);
+  PUT(*metadata, "functions", functions);
+}
 
 ]])
 
--- start the handler functions. First handler (method_id=0) is reserved for
--- querying the metadata, usually it is the first function called by clients.
--- Visit each function metadata to build the handler function with code
--- generated for validating arguments and calling to the real API.
-for i = 1, #api.functions do
-  local fn = api.functions[i]
+local function real_type(type)
+  local rv = type
+  if typed_container:match(rv) then
+    if rv:match('Array') then
+      rv = 'Array'
+    else
+      rv = 'Dictionary'
+    end
+  end
+  return rv
+end
+
+-- start the handler functions. Visit each function metadata to build the
+-- handler function with code generated for validating arguments and calling to
+-- the real API.
+for i = 1, #functions do
+  local fn = functions[i]
   local args = {}
 
   output:write('static Object handle_'..fn.name..'(uint64_t channel_id, msgpack_object *req, Error *error)')
@@ -140,7 +164,7 @@ for i = 1, #api.functions do
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
     local converted = 'arg_'..j
-    output:write('\n  '..param[1]..' '..converted..' msgpack_rpc_init_'..string.lower(param[1])..';')
+    output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(real_type(param[1]))..';')
   end
   output:write('\n')
   output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
@@ -155,7 +179,7 @@ for i = 1, #api.functions do
     param = fn.parameters[j]
     arg = '(req->via.array.ptr[3].via.array.ptr + '..(j - 1)..')'
     converted = 'arg_'..j
-    convert_arg = 'msgpack_rpc_to_'..string.lower(param[1])
+    convert_arg = 'msgpack_rpc_to_'..real_type(param[1]):lower()
     output:write('\n  if (!'..convert_arg..'('..arg..', &'..converted..')) {')
     output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
     output:write('\n    error->set = true;')
@@ -202,7 +226,7 @@ for i = 1, #api.functions do
   end
 
   if fn.return_type ~= 'void' then
-    output:write('\n  Object ret = '..string.upper(fn.return_type)..'_OBJ(rv);')
+    output:write('\n  Object ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
   end
   -- Now generate the cleanup label for freeing memory allocated for the
   -- arguments
@@ -210,7 +234,7 @@ for i = 1, #api.functions do
 
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
-    output:write('\n  msgpack_rpc_free_'..string.lower(param[1])..'(arg_'..j..');')
+    output:write('\n  api_free_'..string.lower(real_type(param[1]))..'(arg_'..j..');')
   end
   if fn.return_type ~= 'void' then
     output:write('\n  return ret;\n}\n\n');
@@ -219,47 +243,26 @@ for i = 1, #api.functions do
   end
 end
 
-output:write([[
-static Object handle_missing_method(uint64_t channel_id,
-                                    msgpack_object *req,
-                                    Error *error)
-{
-  snprintf(error->msg, sizeof(error->msg), "Invalid function id");
-  error->set = true;
-  return NIL;
-}
-
-]])
-
--- Generate the table of handler functions indexed by method id
-output:write([[
-static const rpc_method_handler_fn rpc_method_handlers[] = {
-  [0] = (rpc_method_handler_fn)NULL]])
-
-for i = 1, #api.functions do
-  local fn = api.functions[i]
-  output:write(',\n  ['..i..'] = handle_'..fn.name..'')
-end
-output:write('\n};\n\n')
-
 -- Generate a function that initializes method names with handler functions
 output:write([[
-static Map(cstr_t, uint64_t) *rpc_method_ids = NULL;
+static Map(String, rpc_method_handler_fn) *methods = NULL;
 
 void msgpack_rpc_init(void)
 {
-  rpc_method_ids = map_new(cstr_t, uint64_t)();
+  methods = map_new(String, rpc_method_handler_fn)();
 
 ]])
 
--- Msgpack strings must be copied to a 0-terminated temporary buffer before
--- searching in the map, so we keep track of the maximum method name length in
--- order to create the smallest possible buffer for xstrlcpy
+-- Keep track of the maximum method name length in order to avoid walking
+-- strings longer than that when searching for a method handler
 local max_fname_len = 0
-for i = 1, #api.functions do
-  local fn = api.functions[i]
-  output:write('  map_put(cstr_t, uint64_t)(rpc_method_ids, "'
-               ..fn.name..'", '..i..');\n')
+for i = 1, #functions do
+  local fn = functions[i]
+  output:write('  map_put(String, rpc_method_handler_fn)(methods, '..
+               '(String) {.data = "'..fn.name..'", '..
+               '.size = sizeof("'..fn.name..'") - 1}, handle_'..
+               fn.name..');\n')
+
   if #fn.name > max_fname_len then
     max_fname_len = #fn.name
   end
@@ -268,30 +271,27 @@ end
 output:write('\n}\n\n')
 
 output:write([[
-#define min(X, Y) (X < Y ? X : Y)
-
 Object msgpack_rpc_dispatch(uint64_t channel_id,
                             msgpack_object *req,
                             Error *error)
 {
   msgpack_object method = req->via.array.ptr[2];
-  uint64_t method_id = method.via.u64;
+  rpc_method_handler_fn handler = NULL;
 
-  if (method.type == MSGPACK_OBJECT_RAW) {
-    char method_name[]]..(max_fname_len + 1)..[[];
-    xstrlcpy(method_name, method.via.raw.ptr, min(method.via.raw.size, ]] ..(max_fname_len)..[[) + 1);
-    method_id = map_get(cstr_t, uint64_t)(rpc_method_ids, method_name);
-    if (!method_id) {
-      method_id = UINT64_MAX;
-    }
-  }
+  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
 ]])
-output:write('\n  // method_id=0 is specially handled')
-output:write('\n  assert(method_id > 0);')
-output:write('\n');
-output:write('\n  rpc_method_handler_fn handler = (method_id <= '..#api.functions..') ?')
-output:write('\n    rpc_method_handlers[method_id] : handle_missing_method;')
-output:write('\n  return handler(channel_id, req, error);')
-output:write('\n}\n')
+output:write('    handler = map_get(String, rpc_method_handler_fn)')
+output:write('(methods, (String){.data=(char *)method.via.bin.ptr,')
+output:write('.size=min(method.via.bin.size, '..max_fname_len..')});\n')
+output:write([[
+  }
+
+  if (!handler) {
+    handler = msgpack_rpc_handle_missing_method;
+  }
+
+  return handler(channel_id, req, error);
+}
+]])
 
 output:close()

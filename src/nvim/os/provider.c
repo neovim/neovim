@@ -14,37 +14,34 @@
 #include "nvim/log.h"
 #include "nvim/map.h"
 #include "nvim/message.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
 
 #define FEATURE_COUNT (sizeof(features) / sizeof(features[0]))
 
-#define FEATURE(feature_name, provider_bootstrap_command, ...) {            \
+#define FEATURE(feature_name, ...) {            \
   .name = feature_name,                                                     \
-  .bootstrap_command = provider_bootstrap_command,                          \
-  .argv = NULL,                                                             \
   .channel_id = 0,                                                          \
   .methods = (char *[]){__VA_ARGS__, NULL}                                  \
 }
 
-static struct feature {
-  char *name, **bootstrap_command, **argv, **methods;
+typedef struct {
+  char *name, **methods;
   size_t name_length;
   uint64_t channel_id;
-} features[] = {
+} Feature;
+
+static Feature features[] = {
   FEATURE("python",
-          &p_ipy,
           "python_execute",
           "python_execute_file",
           "python_do_range",
           "python_eval"),
 
   FEATURE("clipboard",
-          &p_icpb,
           "clipboard_get",
           "clipboard_set")
 };
 
-static Map(cstr_t, uint64_t) *registered_providers = NULL;
+static PMap(cstr_t) *registered_providers = NULL;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/provider.c.generated.h"
@@ -53,163 +50,101 @@ static Map(cstr_t, uint64_t) *registered_providers = NULL;
 
 void provider_init(void)
 {
-  registered_providers = map_new(cstr_t, uint64_t)();
+  registered_providers = pmap_new(cstr_t)();
 }
 
 bool provider_has_feature(char *name)
 {
-  for (size_t i = 0; i < FEATURE_COUNT; i++) {
-    struct feature *f = &features[i];
-    if (!STRICMP(name, f->name)) {
-      return f->channel_id || can_execute(f);
-    }
-  }
-
-  return false;
+  Feature *f = find_feature(name);
+  return f != NULL && channel_exists(f->channel_id);
 }
 
-bool provider_available(char *method)
+bool provider_register(char *name, uint64_t channel_id)
 {
-  return map_has(cstr_t, uint64_t)(registered_providers, method);
-}
+  Feature *f = find_feature(name);
 
-bool provider_register(char *method, uint64_t channel_id)
-{
-  if (map_has(cstr_t, uint64_t)(registered_providers, method)) {
+  if (!f) {
     return false;
   }
 
-  // First check if this method is part of a feature, and if so, update
-  // the feature structure with the channel id
-  struct feature *f = get_feature_for(method);
-  if (f) {
-    DLOG("Registering provider for \"%s\" "
-        "which is part of the \"%s\" feature",
-        method,
-        f->name);
-    f->channel_id = channel_id;
+  if (f->channel_id && channel_exists(f->channel_id)) {
+    ILOG("Feature \"%s\" is already provided by another channel"
+         "(will be replaced)", name);
   }
 
-  map_put(cstr_t, uint64_t)(registered_providers, xstrdup(method), channel_id);
-  ILOG("Registered channel %" PRIu64 " as the provider for \"%s\"",
+  DLOG("Registering provider for \"%s\"", name);
+  f->channel_id = channel_id;
+
+  // Associate all method names with the feature struct
+  size_t i;
+  char *method;
+  for (method = f->methods[i = 0]; method; method = f->methods[++i]) {
+    pmap_put(cstr_t)(registered_providers, method, f);
+    DLOG("Channel \"%" PRIu64 "\" will be sent requests for \"%s\"",
+         channel_id,
+         method);
+  }
+
+  ILOG("Registered channel %" PRIu64 " as the provider for the \"%s\" feature",
        channel_id,
-       method);
+       name);
 
   return true;
 }
 
 Object provider_call(char *method, Array args)
 {
-  uint64_t channel_id = get_provider_for(method);
+  Feature *f = pmap_get(cstr_t)(registered_providers, method);
 
-  if (!channel_id) {
+  if (!f || !channel_exists(f->channel_id)) {
     char buf[256];
     snprintf(buf,
              sizeof(buf),
-             "Provider for \"%s\" is not available",
+             "Provider for method \"%s\" is not available",
              method);
-    report_error(buf);
-    msgpack_rpc_free_array(args);
+    vim_report_error(cstr_as_string(buf));
+    api_free_array(args);
     return NIL;
   }
 
   bool error = false;
   Object result = NIL;
-  channel_send_call(channel_id, method, args, &result, &error);
+  channel_send_call(f->channel_id, method, args, &result, &error);
 
   if (error) {
-    report_error(result.data.string.data);
-    msgpack_rpc_free_object(result);
+    vim_report_error(result.data.string);
+    api_free_object(result);
     return NIL;
   }
   
   return result;
 }
 
-static uint64_t get_provider_for(char *method)
+void provider_init_feature_metadata(Dictionary *metadata)
 {
-  uint64_t channel_id = map_get(cstr_t, uint64_t)(registered_providers, method);
+  Dictionary md = ARRAY_DICT_INIT;
 
-  if (channel_id) {
-    return channel_id;
-  }
+  for (size_t i = 0; i < FEATURE_COUNT; i++) {
+    Array methods = ARRAY_DICT_INIT;
+    Feature *f = &features[i];
 
-  // Try to bootstrap if the method is part of a feature
-  struct feature *f = get_feature_for(method);
-
-  if (!f || !can_execute(f)) {
-    ELOG("Cannot bootstrap provider for \"%s\"", method);
-    goto err;
-  }
-
-  if (f->channel_id) {
-    ELOG("Already bootstrapped provider for \"%s\"", f->name);
-    goto err;
-  }
-
-  f->channel_id = channel_from_job(f->argv);
-
-  if (!f->channel_id) {
-    ELOG("The provider for \"%s\" failed to bootstrap", f->name);
-    goto err;
-  }
-
-  return f->channel_id;
-
-err:
-  // Ensure we won't try to restart the provider
-  if (f) {
-    f->bootstrap_command = NULL;
-    f->channel_id = 0;
-  }
-  return 0;
-}
-
-static bool can_execute(struct feature *f)
-{
-  if (!f->bootstrap_command) {
-    return false;
-  }
-
-  char *cmd = *f->bootstrap_command;
-
-  if (!cmd || !strlen(cmd)) {
-    return false;
-  }
-
-  if (!f->argv) {
-    f->argv = shell_build_argv((uint8_t *)cmd, NULL);
-  }
-
-  return os_can_exe((uint8_t *)f->argv[0]);
-}
-
-static void report_error(char *str)
-{
-  vim_err_write((String) {.data = str, .size = strlen(str)});
-  vim_err_write((String) {.data = "\n", .size = 1});
-}
-
-static bool feature_has_method(struct feature *f, char *method)
-{
-  size_t i;
-  char *m;
-
-  for (m = f->methods[i = 0]; m; m = f->methods[++i]) {
-    if (!STRCMP(method, m)) {
-      return true;
+    size_t j;
+    char *method;
+    for (method = f->methods[j = 0]; method; method = f->methods[++j]) {
+      ADD(methods, STRING_OBJ(cstr_to_string(method)));
     }
+
+    PUT(md, f->name, ARRAY_OBJ(methods));
   }
 
-  return false;
+  PUT(*metadata, "features", DICTIONARY_OBJ(md));
 }
 
-
-static struct feature *get_feature_for(char *method)
+static Feature * find_feature(char *name)
 {
   for (size_t i = 0; i < FEATURE_COUNT; i++) {
-    struct feature *f = &features[i];
-    if (feature_has_method(f, method)) {
+    Feature *f = &features[i];
+    if (!STRICMP(name, f->name)) {
       return f;
     }
   }

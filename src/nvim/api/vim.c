@@ -149,9 +149,9 @@ Integer vim_strwidth(String str, Error *err)
 /// Returns a list of paths contained in 'runtimepath'
 ///
 /// @return The list of paths
-StringArray vim_list_runtime_paths(void)
+ArrayOf(String) vim_list_runtime_paths(void)
 {
-  StringArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   uint8_t *rtp = p_rtp;
 
   if (*rtp == NUL) {
@@ -168,19 +168,20 @@ StringArray vim_list_runtime_paths(void)
   }
 
   // Allocate memory for the copies
-  rv.items = xmalloc(sizeof(String) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   // reset the position
   rtp = p_rtp;
   // Start copying
   for (size_t i = 0; i < rv.size && *rtp != NUL; i++) {
-    rv.items[i].data = xmalloc(MAXPATHL);
+    rv.items[i].type = kObjectTypeString;
+    rv.items[i].data.string.data = xmalloc(MAXPATHL);
     // Copy the path from 'runtimepath' to rv.items[i]
     int length = copy_option_part(&rtp,
-                                 (char_u *)rv.items[i].data,
+                                 (char_u *)rv.items[i].data.string.data,
                                  MAXPATHL,
                                  ",");
     assert(length >= 0);
-    rv.items[i].size = (size_t)length;
+    rv.items[i].data.string.size = (size_t)length;
   }
 
   return rv;
@@ -307,12 +308,22 @@ void vim_err_write(String str)
   write_msg(str, true);
 }
 
+/// Higher level error reporting function that ensures all str contents
+/// are written by sending a trailing linefeed to `vim_wrr_write`
+///
+/// @param str The message
+void vim_report_error(String str)
+{
+  vim_err_write(str);
+  vim_err_write((String) {.data = "\n", .size = 1});
+}
+
 /// Gets the current list of buffer handles
 ///
 /// @return The number of buffers
-BufferArray vim_get_buffers(void)
+ArrayOf(Buffer) vim_get_buffers(void)
 {
-  BufferArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   buf_T *b = firstbuf;
 
   while (b) {
@@ -320,12 +331,12 @@ BufferArray vim_get_buffers(void)
     b = b->b_next;
   }
 
-  rv.items = xmalloc(sizeof(Buffer) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
   b = firstbuf;
 
   while (b) {
-    rv.items[i++] = b->handle;
+    rv.items[i++] = BUFFER_OBJ(b->handle);
     b = b->b_next;
   }
 
@@ -370,9 +381,9 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
 /// Gets the current list of window handles
 ///
 /// @return The number of windows
-WindowArray vim_get_windows(void)
+ArrayOf(Window) vim_get_windows(void)
 {
-  WindowArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   tabpage_T *tp;
   win_T *wp;
 
@@ -380,11 +391,11 @@ WindowArray vim_get_windows(void)
     rv.size++;
   }
 
-  rv.items = xmalloc(sizeof(Window) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
-    rv.items[i++] = wp->handle;
+    rv.items[i++] = WINDOW_OBJ(wp->handle);
   }
 
   return rv;
@@ -426,9 +437,9 @@ void vim_set_current_window(Window window, Error *err)
 /// Gets the current list of tabpage handles
 ///
 /// @return The number of tab pages
-TabpageArray vim_get_tabpages(void)
+ArrayOf(Tabpage) vim_get_tabpages(void)
 {
-  TabpageArray rv = ARRAY_DICT_INIT;
+  Array rv = ARRAY_DICT_INIT;
   tabpage_T *tp = first_tabpage;
 
   while (tp) {
@@ -436,12 +447,12 @@ TabpageArray vim_get_tabpages(void)
     tp = tp->tp_next;
   }
 
-  rv.items = xmalloc(sizeof(Tabpage) * rv.size);
+  rv.items = xmalloc(sizeof(Object) * rv.size);
   size_t i = 0;
   tp = first_tabpage;
 
   while (tp) {
-    rv.items[i++] = tp->handle;
+    rv.items[i++] = TABPAGE_OBJ(tp->handle);
     tp = tp->tp_next;
   }
 
@@ -501,20 +512,31 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
-/// Registers the channel as the provider for `method`. This fails if
-/// a provider for `method` is already registered.
+/// Registers the channel as the provider for `feature`. This fails if
+/// a provider for `feature` is already provided by another channel.
 ///
 /// @param channel_id The channel id
-/// @param method The method name
+/// @param feature The feature name
 /// @param[out] err Details of an error that may have occurred
-void vim_register_provider(uint64_t channel_id, String method, Error *err)
+void vim_register_provider(uint64_t channel_id, String feature, Error *err)
 {
   char buf[METHOD_MAXLEN];
-  xstrlcpy(buf, method.data, sizeof(buf));
+  xstrlcpy(buf, feature.data, sizeof(buf));
 
   if (!provider_register(buf, channel_id)) {
-    set_api_error("Provider already registered", err);
+    set_api_error("Feature doesn't exist", err);
   }
+}
+
+Array vim_get_api_info(uint64_t channel_id)
+{
+  Array rv = ARRAY_DICT_INIT;
+
+  assert(channel_id <= INT64_MAX);
+  ADD(rv, INTEGER_OBJ((int64_t)channel_id));
+  ADD(rv, DICTIONARY_OBJ(api_metadata()));
+
+  return rv;
 }
 
 /// Writes a message to vim output or error buffer. The string is split

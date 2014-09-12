@@ -51,34 +51,9 @@
   .data.array = a                                                             \
   })
 
-#define STRINGARRAY_OBJ(a) ((Object) {                                        \
-  .type = kObjectTypeStringArray,                                             \
-  .data.stringarray = a                                                       \
-  })
-
-#define BUFFERARRAY_OBJ(a) ((Object) {                                        \
-  .type = kObjectTypeBufferArray,                                             \
-  .data.bufferarray = a                                                       \
-  })
-
-#define WINDOWARRAY_OBJ(a) ((Object) {                                        \
-  .type = kObjectTypeWindowArray,                                             \
-  .data.windowarray = a                                                       \
-  })
-
-#define TABPAGEARRAY_OBJ(a) ((Object) {                                       \
-  .type = kObjectTypeTabpageArray,                                            \
-  .data.tabpagearray = a                                                      \
-  })
-
 #define DICTIONARY_OBJ(d) ((Object) {                                         \
   .type = kObjectTypeDictionary,                                              \
   .data.dictionary = d                                                        \
-  })
-
-#define POSITION_OBJ(p) ((Object) {                                           \
-  .type = kObjectTypePosition,                                                \
-  .data.position = p                                                          \
   })
 
 #define NIL ((Object) {.type = kObjectTypeNil})
@@ -90,6 +65,25 @@
 
 #define ADD(array, item)                                                      \
   kv_push(Object, array, item)
+
+// Helpers used by the generated msgpack-rpc api wrappers
+#define api_init_boolean
+#define api_init_integer
+#define api_init_float
+#define api_init_string = STRING_INIT
+#define api_init_buffer
+#define api_init_window
+#define api_init_tabpage
+#define api_init_object = NIL
+#define api_init_array = ARRAY_DICT_INIT
+#define api_init_dictionary = ARRAY_DICT_INIT
+
+#define api_free_boolean(value)
+#define api_free_integer(value)
+#define api_free_float(value)
+#define api_free_buffer(value)
+#define api_free_window(value)
+#define api_free_tabpage(value)
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "api/private/helpers.h.generated.h"
