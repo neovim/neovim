@@ -67,7 +67,7 @@ install_prebuilt_deps() {
 
 install_vroom() {
 	(
-	sudo pip install neovim
+	sudo pip install git+https://github.com/neovim/python-client.git
 	git clone git://github.com/google/vroom
 	cd vroom
 	python setup.py build
