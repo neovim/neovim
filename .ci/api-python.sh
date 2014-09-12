@@ -1,6 +1,6 @@
 . "$CI_SCRIPTS/common.sh"
 
-set_environment /opt/neovim-deps
+set_environment /opt/neovim-deps/64
 
 sudo apt-get install expect valgrind
 

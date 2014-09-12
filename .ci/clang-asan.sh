@@ -2,7 +2,7 @@
 
 install_vroom
 
-set_environment /opt/neovim-deps
+set_environment /opt/neovim-deps/64
 
 sudo pip install cpp-coveralls
 
