@@ -13,7 +13,7 @@
 /// @param tabpage The tabpage
 /// @param[out] err Details of an error that may have occurred
 /// @return The number of windows in `tabpage`
-Array tabpage_get_windows(Tabpage tabpage, Error *err)
+ArrayOf(Window) tabpage_get_windows(Tabpage tabpage, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   tabpage_T *tab = find_tab_by_handle(tabpage, err);

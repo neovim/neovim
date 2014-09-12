@@ -33,7 +33,7 @@ Buffer window_get_buffer(Window window, Error *err)
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return the (row, col) tuple
-Array window_get_cursor(Window window, Error *err)
+ArrayOf(Integer, 2) window_get_cursor(Window window, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);
@@ -51,7 +51,7 @@ Array window_get_cursor(Window window, Error *err)
 /// @param window The window handle
 /// @param pos the (row, col) tuple representing the new position
 /// @param[out] err Details of an error that may have occurred
-void window_set_cursor(Window window, Array pos, Error *err)
+void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 {
   win_T *win = find_window_by_handle(window, err);
 
@@ -247,7 +247,7 @@ void window_set_option(Window window, String name, Object value, Error *err)
 /// @param window The window handle
 /// @param[out] err Details of an error that may have occurred
 /// @return The (row, col) tuple with the window position
-Array window_get_position(Window window, Error *err)
+ArrayOf(Integer, 2) window_get_position(Window window, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   win_T *win = find_window_by_handle(window, err);

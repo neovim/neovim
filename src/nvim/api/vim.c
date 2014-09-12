@@ -149,7 +149,7 @@ Integer vim_strwidth(String str, Error *err)
 /// Returns a list of paths contained in 'runtimepath'
 ///
 /// @return The list of paths
-Array vim_list_runtime_paths(void)
+ArrayOf(String) vim_list_runtime_paths(void)
 {
   Array rv = ARRAY_DICT_INIT;
   uint8_t *rtp = p_rtp;
@@ -321,7 +321,7 @@ void vim_report_error(String str)
 /// Gets the current list of buffer handles
 ///
 /// @return The number of buffers
-Array vim_get_buffers(void)
+ArrayOf(Buffer) vim_get_buffers(void)
 {
   Array rv = ARRAY_DICT_INIT;
   buf_T *b = firstbuf;
@@ -381,7 +381,7 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
 /// Gets the current list of window handles
 ///
 /// @return The number of windows
-Array vim_get_windows(void)
+ArrayOf(Window) vim_get_windows(void)
 {
   Array rv = ARRAY_DICT_INIT;
   tabpage_T *tp;
@@ -437,7 +437,7 @@ void vim_set_current_window(Window window, Error *err)
 /// Gets the current list of tabpage handles
 ///
 /// @return The number of tab pages
-Array vim_get_tabpages(void)
+ArrayOf(Tabpage) vim_get_tabpages(void)
 {
   Array rv = ARRAY_DICT_INIT;
   tabpage_T *tp = first_tabpage;

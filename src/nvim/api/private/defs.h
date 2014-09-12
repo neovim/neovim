@@ -10,6 +10,11 @@
 #define OBJECT_INIT { .type = kObjectTypeNil }
 #define REMOTE_TYPE(type) typedef uint64_t type
 
+#ifdef INCLUDE_GENERATED_DECLARATIONS
+  #define ArrayOf(...) Array
+  #define DictionaryOf(...) Dictionary
+#endif
+
 // Basic types
 typedef struct {
   char msg[256];

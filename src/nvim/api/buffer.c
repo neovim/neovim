@@ -95,12 +95,12 @@ void buffer_del_line(Buffer buffer, Integer index, Error *err)
 /// @param include_end True if the slice includes the `end` parameter
 /// @param[out] err Details of an error that may have occurred
 /// @return An array of lines
-Array buffer_get_slice(Buffer buffer,
-                       Integer start,
-                       Integer end,
-                       Boolean include_start,
-                       Boolean include_end,
-                       Error *err)
+ArrayOf(String) buffer_get_slice(Buffer buffer,
+                                 Integer start,
+                                 Integer end,
+                                 Boolean include_start,
+                                 Boolean include_end,
+                                 Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -161,7 +161,7 @@ void buffer_set_slice(Buffer buffer,
                       Integer end,
                       Boolean include_start,
                       Boolean include_end,
-                      Array replacement,
+                      ArrayOf(String) replacement,
                       Error *err)
 {
   buf_T *buf = find_buffer_by_handle(buffer, err);
@@ -436,7 +436,10 @@ Boolean buffer_is_valid(Buffer buffer)
 ///        to the end of the buffer.
 /// @param lines An array of lines
 /// @param[out] err Details of an error that may have occurred
-void buffer_insert(Buffer buffer, Integer lnum, Array lines, Error *err)
+void buffer_insert(Buffer buffer,
+                   Integer lnum,
+                   ArrayOf(String) lines,
+                   Error *err)
 {
   buffer_set_slice(buffer, lnum, lnum, false, true, lines, err);
 }
@@ -447,7 +450,7 @@ void buffer_insert(Buffer buffer, Integer lnum, Array lines, Error *err)
 /// @param name The mark's name
 /// @param[out] err Details of an error that may have occurred
 /// @return The (row, col) tuple
-Array buffer_get_mark(Buffer buffer, String name, Error *err)
+ArrayOf(Integer, 2) buffer_get_mark(Buffer buffer, String name, Error *err)
 {
   Array rv = ARRAY_DICT_INIT;
   buf_T *buf = find_buffer_by_handle(buffer, err);

@@ -16,7 +16,12 @@ ws = S(' \t') + nl
 fill = ws ^ 0
 c_comment = P('//') * (not_nl ^ 0)
 c_preproc = P('#') * (not_nl ^ 0)
-c_id = letter * (alpha ^ 0)
+typed_container =
+  (P('ArrayOf(') + P('DictionaryOf(')) * ((any - P(')')) ^ 1) * P(')')
+c_id = (
+  typed_container +
+  (letter * (alpha ^ 0))
+)
 c_void = P('void')
 c_param_type = (
   ((P('Error') * fill * P('*') * fill) * Cc('error')) +
@@ -90,6 +95,7 @@ output:write([[
 #include "nvim/os/msgpack_rpc.h"
 #include "nvim/os/msgpack_rpc_helpers.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 ]])
 
 for i = 1, #headers do
@@ -132,6 +138,18 @@ void msgpack_rpc_init_function_metadata(Dictionary *metadata)
 
 ]])
 
+local function real_type(type)
+  local rv = type
+  if typed_container:match(rv) then
+    if rv:match('Array') then
+      rv = 'Array'
+    else
+      rv = 'Dictionary'
+    end
+  end
+  return rv
+end
+
 -- start the handler functions. Visit each function metadata to build the
 -- handler function with code generated for validating arguments and calling to
 -- the real API.
@@ -146,7 +164,7 @@ for i = 1, #functions do
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
     local converted = 'arg_'..j
-    output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(param[1])..';')
+    output:write('\n  '..param[1]..' '..converted..' api_init_'..string.lower(real_type(param[1]))..';')
   end
   output:write('\n')
   output:write('\n  if (req->via.array.ptr[3].via.array.size != '..#fn.parameters..') {')
@@ -161,7 +179,7 @@ for i = 1, #functions do
     param = fn.parameters[j]
     arg = '(req->via.array.ptr[3].via.array.ptr + '..(j - 1)..')'
     converted = 'arg_'..j
-    convert_arg = 'msgpack_rpc_to_'..string.lower(param[1])
+    convert_arg = 'msgpack_rpc_to_'..real_type(param[1]):lower()
     output:write('\n  if (!'..convert_arg..'('..arg..', &'..converted..')) {')
     output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
     output:write('\n    error->set = true;')
@@ -208,7 +226,7 @@ for i = 1, #functions do
   end
 
   if fn.return_type ~= 'void' then
-    output:write('\n  Object ret = '..string.upper(fn.return_type)..'_OBJ(rv);')
+    output:write('\n  Object ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
   end
   -- Now generate the cleanup label for freeing memory allocated for the
   -- arguments
@@ -216,7 +234,7 @@ for i = 1, #functions do
 
   for j = 1, #fn.parameters do
     local param = fn.parameters[j]
-    output:write('\n  api_free_'..string.lower(param[1])..'(arg_'..j..');')
+    output:write('\n  api_free_'..string.lower(real_type(param[1]))..'(arg_'..j..');')
   end
   if fn.return_type ~= 'void' then
     output:write('\n  return ret;\n}\n\n');
