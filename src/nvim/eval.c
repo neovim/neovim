@@ -19238,7 +19238,7 @@ static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
   }
 
   Error err = {.set = false};
-  object_to_vim(result, rettv, &err);
+  (void)object_to_vim(result, rettv, &err);
   msgpack_rpc_free_object(result);
 
   if (err.set) {

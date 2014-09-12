@@ -3753,7 +3753,8 @@ static void syn_clear_keyword(int id, hashtab_T *ht)
 
   hash_lock(ht);
   todo = (int)ht->ht_used;
-  for (hi = ht->ht_array; todo > 0; ++hi) {
+  for (size_t offset = 0; todo > 0; ++offset) {
+    hi = ht->ht_array + offset;
     if (!HASHITEM_EMPTY(hi)) {
       --todo;
       kp_prev = NULL;
