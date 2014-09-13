@@ -6436,9 +6436,9 @@ static struct fst {
   {"isdirectory",     1, 1, f_isdirectory},
   {"islocked",        1, 1, f_islocked},
   {"items",           1, 1, f_items},
-  {"jobstart",        2, 3, f_job_start},
-  {"jobstop",         1, 1, f_job_stop},
-  {"jobwrite",        2, 2, f_job_write},
+  {"jobsend",         2, 2, f_jobsend},
+  {"jobstart",        2, 3, f_jobstart},
+  {"jobstop",         1, 1, f_jobstop},
   {"join",            1, 2, f_join},
   {"keys",            1, 1, f_keys},
   {"last_buffer_nr",  0, 0, f_last_buffer_nr},  /* obsolete */
@@ -10558,8 +10558,40 @@ static void f_items(typval_T *argvars, typval_T *rettv)
   dict_list(argvars, rettv, 2);
 }
 
+// "jobsend()" function
+static void f_jobsend(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
+    // First argument is the job id and second is the string to write to 
+    // the job's stdin
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  Job *job = job_find(argvars[0].vval.v_number);
+
+  if (!job) {
+    // Invalid job id
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
+                                    strlen((char *)argvars[1].vval.v_string),
+                                    1,
+                                    free);
+  rettv->vval.v_number = job_write(job, buf);
+}
+
 // "jobstart()" function
-static void f_job_start(typval_T *argvars, typval_T *rettv)
+static void f_jobstart(typval_T *argvars, typval_T *rettv)
 {
   list_T *args = NULL;
   listitem_T *arg;
@@ -10637,7 +10669,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
 }
 
 // "jobstop()" function
-static void f_job_stop(typval_T *argvars, typval_T *rettv)
+static void f_jobstop(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
@@ -10662,38 +10694,6 @@ static void f_job_stop(typval_T *argvars, typval_T *rettv)
 
   job_stop(job);
   rettv->vval.v_number = 1;
-}
-
-// "jobwrite()" function
-static void f_job_write(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
-    // First argument is the job id and second is the string to write to 
-    // the job's stdin
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  Job *job = job_find(argvars[0].vval.v_number);
-
-  if (!job) {
-    // Invalid job id
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
-                                    strlen((char *)argvars[1].vval.v_string),
-                                    1,
-                                    free);
-  rettv->vval.v_number = job_write(job, buf);
 }
 
 /*
