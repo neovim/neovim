@@ -11,8 +11,8 @@ set run_nvim [split [lindex $argv 1] " "]
 
 # don't echo to stdout
 log_user 0
-# set NEOVIM_LISTEN_ADDRESS, so nvim will listen on a known socket
-set env(NEOVIM_LISTEN_ADDRESS) "/tmp/nvim-[exec date +%s%N].sock"
+# set NVIM_LISTEN_ADDRESS, so nvim will listen on a known socket
+set env(NVIM_LISTEN_ADDRESS) "/tmp/nvim-[exec date +%s%N].sock"
 # start nvim
 spawn {*}$run_nvim
 # save the job descriptor
