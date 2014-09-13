@@ -568,6 +568,7 @@ EXTERN int mf_dont_release INIT(= FALSE);       /* don't release blocks */
  * to this when the window is using the global argument list.
  */
 EXTERN alist_T global_alist;    /* global argument list */
+EXTERN int max_alist_id INIT(= 0);     ///< the previous argument list id
 EXTERN int arg_had_last INIT(= FALSE);      /* accessed last file in
                                                global_alist */
 

@@ -5504,6 +5504,7 @@ void alist_new(void)
 {
   curwin->w_alist = xmalloc(sizeof(*curwin->w_alist));
   curwin->w_alist->al_refcount = 1;
+  curwin->w_alist->id = ++max_alist_id;
   alist_init(curwin->w_alist);
 }
 
