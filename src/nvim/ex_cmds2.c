@@ -1914,7 +1914,7 @@ void ex_listdo(exarg_T *eap)
             break;
           }
         }
-        if (buf_still_exists) {
+        if (!buf_still_exists) {
           break;
         }
 
