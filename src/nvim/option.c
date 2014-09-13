@@ -7773,7 +7773,7 @@ static void paste_option_changed(void)
 }
 
 /*
- * vimrc_found() - Called when a ".vimrc" or "VIMINIT" has been found.
+ * vimrc_found() - Called when a ".vimrc", "NVIMINIT" or "VIMINIT" has been found.
  *
  * Reset 'compatible' and set the values for options that didn't get set yet
  * to the Vim defaults.

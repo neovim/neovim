@@ -1956,7 +1956,7 @@ static void source_startup_scripts(mparm_T *parmp)
 
     /*
      * Try to read initialization commands from the following places:
-     * - environment variable VIMINIT
+     * - environment variable NVIMINIT, then VIMINIT
      * - user vimrc file (s:.vimrc for Amiga, ~/.vimrc otherwise)
      * - second user vimrc file ($VIM/.vimrc for Dos)
      * - environment variable EXINIT
@@ -1964,7 +1964,8 @@ static void source_startup_scripts(mparm_T *parmp)
      * - second user exrc file ($VIM/.exrc for Dos)
      * The first that exists is used, the rest is ignored.
      */
-    if (process_env((char_u *)"VIMINIT", TRUE) != OK) {
+    if (process_env((char_u *)"NVIMINIT", TRUE) != OK
+        && process_env((char_u *)"VIMINIT", TRUE) != OK) {
       if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
 #ifdef USR_VIMRC_FILE2
           && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
@@ -2064,7 +2065,7 @@ static void main_start_gui(void)
 int 
 process_env (
     char_u *env,
-    int is_viminit             /* when TRUE, called for VIMINIT */
+    int is_viminit             /* when TRUE, called for {N,}VIMINIT */
 )
 {
   char_u      *initstr;
