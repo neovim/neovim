@@ -542,6 +542,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int layout;
   frame_T     *frp, *curfrp;
   int before;
+  int minwidth;
+  int minheight;
 
   if (flags & WSP_TOP)
     oldwin = firstwin;
@@ -571,10 +573,13 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (flags & WSP_ROOM)
       needed += p_wiw - p_wmw;
     if (p_ea || (flags & (WSP_BOT | WSP_TOP))) {
+      minwidth = frame_minwidth(topframe, NULL);
       available = topframe->fr_width;
-      needed += frame_minwidth(topframe, NULL);
-    } else
+      needed += minwidth;
+    } else {
+      minwidth = frame_minwidth(oldwin->w_frame, NULL);
       available = oldwin->w_width;
+    }
     if (available < needed && new_wp == NULL) {
       EMSG(_(e_noroom));
       return FAIL;
@@ -583,6 +588,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       new_size = oldwin->w_width / 2;
     if (new_size > oldwin->w_width - p_wmw - 1)
       new_size = oldwin->w_width - p_wmw - 1;
+    if (new_size > available - minwidth - 1) {
+      new_size = available - minwidth - 1;
+    }
     if (new_size < p_wmw)
       new_size = p_wmw;
 
@@ -623,9 +631,11 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (flags & WSP_ROOM)
       needed += p_wh - p_wmh;
     if (p_ea || (flags & (WSP_BOT | WSP_TOP))) {
+      minheight = frame_minheight(topframe, NULL);
       available = topframe->fr_height;
-      needed += frame_minheight(topframe, NULL);
+      needed += minheight;
     } else {
+      minheight = frame_minheight(oldwin->w_frame, NULL);
       available = oldwin->w_height;
       needed += p_wmh;
     }
@@ -643,6 +653,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
     if (new_size > oldwin_height - p_wmh - STATUS_HEIGHT)
       new_size = oldwin_height - p_wmh - STATUS_HEIGHT;
+    if (new_size > available - minheight - STATUS_HEIGHT) {
+      new_size = available - minheight - STATUS_HEIGHT;
+    }
     if (new_size < p_wmh)
       new_size = p_wmh;
 
