@@ -1865,6 +1865,10 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
+job_close({job})		Closes a job with id {job}
+job_send({job}, {data})		Writes {data} to {job}'s stdin
+job_spawn({name}, {prog}[, {argv}])
+				Spawns {prog} as a job associated with {name}
 join( {list} [, {sep}])		String	join {list} items into one String
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
@@ -4008,6 +4012,22 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
+jobsend({job}, {data})					{Nvim} *jobsend()*
+		Send data to {job} by writing it to the stdin of the process.
+		See |job-control| for more information.
+
+jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
+		Spawns {prog} as a job and associate it with the {name} string,
+		which will be used to match the "filename pattern" in
+		|JobActivity| events. See |job-control| for more information.
+
+jobstop({job})						{Nvim} *jobstop()*
+		Stop a job created with |jobstart| by sending a `SIGTERM`
+		to the corresponding process. If the process doesn't exit
+		cleanly soon, a `SIGKILL` will be sent. When the job is
+		finally closed, a |JobActivity| event will trigger with
+		`v:job_data[0]` set to `exited`.  See |job-control| for more
+		information.
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.

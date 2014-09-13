@@ -303,6 +303,7 @@ Name			triggered by ~
 |InsertLeave|		when leaving Insert mode
 |InsertCharPre|		when a character was typed in Insert mode, before
 			inserting it
+|JobActivity|		when something interesting happen with a job
 
 |TextChanged|		after a change was made to the text in Normal mode
 |TextChangedI|		after a change was made to the text in Insert mode
@@ -712,6 +713,10 @@ InsertEnter			Just before starting Insert mode.  Also for
 							*InsertLeave*
 InsertLeave			When leaving Insert mode.  Also when using
 				CTRL-O |i_CTRL-O|.  But not for |i_CTRL-C|.
+						{Nvim}  *JobActivity*
+JobActivity			When something interesting happens with a job
+				spawned by |jobstart()|. See |job-control| for
+				details. 
 							*MenuPopup*
 MenuPopup			Just before showing the popup menu (under the
 				right mouse button).  Useful for adjusting the
@@ -1383,4 +1388,4 @@ This will write the file without triggering the autocommands defined by the
 gzip plugin.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
