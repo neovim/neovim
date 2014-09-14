@@ -30,7 +30,7 @@ simple step-by-step:
 - Add the following snippet to your `vimrc`, before any python plugins are
   loaded:
 >
-  if has('neovim')
+  if has('nvim')
     runtime! plugin/python_setup.vim
   endif
 <
