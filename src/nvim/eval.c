@@ -6306,8 +6306,6 @@ static struct fst {
   {"acos",            1, 1, f_acos},    /* WJMc */
   {"add",             2, 2, f_add},
   {"and",             2, 2, f_and},
-  {"api_close",       1, 1, f_api_close},
-  {"api_spawn",       1, 2, f_api_spawn},
   {"append",          2, 2, f_append},
   {"argc",            0, 0, f_argc},
   {"argidx",          0, 0, f_argidx},
@@ -6436,9 +6434,9 @@ static struct fst {
   {"isdirectory",     1, 1, f_isdirectory},
   {"islocked",        1, 1, f_islocked},
   {"items",           1, 1, f_items},
-  {"jobstart",        2, 3, f_job_start},
-  {"jobstop",         1, 1, f_job_stop},
-  {"jobwrite",        2, 2, f_job_write},
+  {"jobsend",         2, 2, f_jobsend},
+  {"jobstart",        2, 3, f_jobstart},
+  {"jobstop",         1, 1, f_jobstop},
   {"join",            1, 2, f_join},
   {"keys",            1, 1, f_keys},
   {"last_buffer_nr",  0, 0, f_last_buffer_nr},  /* obsolete */
@@ -6485,6 +6483,10 @@ static struct fst {
   {"resolve",         1, 1, f_resolve},
   {"reverse",         1, 1, f_reverse},
   {"round",           1, 1, f_round},
+  {"rpcnotify",       2, 64, f_rpcnotify},
+  {"rpcrequest",      2, 64, f_rpcrequest},
+  {"rpcstart",        1, 2, f_rpcstart},
+  {"rpcstop",         1, 1, f_rpcstop},
   {"screenattr",      2, 2, f_screenattr},
   {"screenchar",      2, 2, f_screenchar},
   {"screencol",       0, 0, f_screencol},
@@ -6494,8 +6496,6 @@ static struct fst {
   {"searchpair",      3, 7, f_searchpair},
   {"searchpairpos",   3, 7, f_searchpairpos},
   {"searchpos",       1, 4, f_searchpos},
-  {"send_call",       2, 64, f_send_call},
-  {"send_event",      2, 64, f_send_event},
   {"setbufvar",       3, 3, f_setbufvar},
   {"setcmdpos",       1, 1, f_setcmdpos},
   {"setline",         2, 2, f_setline},
@@ -7053,83 +7053,6 @@ static void f_and(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = get_tv_number_chk(&argvars[0], NULL)
                          & get_tv_number_chk(&argvars[1], NULL);
-}
-
-// "api_close(prog, argv)" function
-static void f_api_close(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER) {
-    // Wrong argument types
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
-}
-
-
-// "api_spawn(prog, argv)" function
-static void f_api_spawn(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_STRING
-      || (argvars[1].v_type != VAR_LIST && argvars[1].v_type != VAR_UNKNOWN)) {
-    // Wrong argument types
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  list_T *args = NULL;
-  int argsl = 0;
-  if (argvars[1].v_type == VAR_LIST) {
-    args = argvars[1].vval.v_list;
-    argsl = args->lv_len;
-    // Assert that all list items are strings
-    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      if (arg->li_tv.v_type != VAR_STRING) {
-        EMSG(_(e_invarg));
-        return;
-      }
-    }
-  }
-
-  // Allocate extra memory for the argument vector and the NULL pointer
-  int argvl = argsl + 2;
-  char **argv = xmalloc(sizeof(char_u *) * argvl);
-
-  // Copy program name
-  argv[0] = xstrdup((char *)argvars[0].vval.v_string);
-
-  int i = 1;
-  // Copy arguments to the vector
-  if (argsl > 0) {
-    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
-      argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
-    }
-  }
-
-  // The last item of argv must be NULL
-  argv[i] = NULL;
-  uint64_t channel_id = channel_from_job(argv);
-
-  if (!channel_id) {
-    EMSG(_(e_api_spawn_failed));
-  }
-
-  rettv->vval.v_number = (varnumber_T)channel_id;
 }
 
 /*
@@ -10558,8 +10481,40 @@ static void f_items(typval_T *argvars, typval_T *rettv)
   dict_list(argvars, rettv, 2);
 }
 
+// "jobsend()" function
+static void f_jobsend(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
+    // First argument is the job id and second is the string to write to 
+    // the job's stdin
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  Job *job = job_find(argvars[0].vval.v_number);
+
+  if (!job) {
+    // Invalid job id
+    EMSG(_(e_invjob));
+    return;
+  }
+
+  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
+                                    strlen((char *)argvars[1].vval.v_string),
+                                    1,
+                                    free);
+  rettv->vval.v_number = job_write(job, buf);
+}
+
 // "jobstart()" function
-static void f_job_start(typval_T *argvars, typval_T *rettv)
+static void f_jobstart(typval_T *argvars, typval_T *rettv)
 {
   list_T *args = NULL;
   listitem_T *arg;
@@ -10637,7 +10592,7 @@ static void f_job_start(typval_T *argvars, typval_T *rettv)
 }
 
 // "jobstop()" function
-static void f_job_stop(typval_T *argvars, typval_T *rettv)
+static void f_jobstop(typval_T *argvars, typval_T *rettv)
 {
   rettv->v_type = VAR_NUMBER;
   rettv->vval.v_number = 0;
@@ -10662,38 +10617,6 @@ static void f_job_stop(typval_T *argvars, typval_T *rettv)
 
   job_stop(job);
   rettv->vval.v_number = 1;
-}
-
-// "jobwrite()" function
-static void f_job_write(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
-    // First argument is the job id and second is the string to write to 
-    // the job's stdin
-    EMSG(_(e_invarg));
-    return;
-  }
-
-  Job *job = job_find(argvars[0].vval.v_number);
-
-  if (!job) {
-    // Invalid job id
-    EMSG(_(e_invjob));
-    return;
-  }
-
-  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
-                                    strlen((char *)argvars[1].vval.v_string),
-                                    1,
-                                    free);
-  rettv->vval.v_number = job_write(job, buf);
 }
 
 /*
@@ -12420,6 +12343,169 @@ static void f_round(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_float = 0.0;
 }
 
+// "rpcnotify()" function
+static void f_rpcnotify(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number < 0) {
+    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2), "Event type must be a string");
+    return;
+  }
+
+  Array args = ARRAY_DICT_INIT;
+
+  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
+    ADD(args, vim_to_object(tv));
+  }
+
+  if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
+                          (char *)argvars[1].vval.v_string,
+                          args)) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+    return;
+  }
+
+  rettv->vval.v_number = 1;
+}
+
+// "rpcrequest()" function
+static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
+    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
+    return;
+  }
+
+  if (argvars[1].v_type != VAR_STRING) {
+    EMSG2(_(e_invarg2), "Method name must be a string");
+    return;
+  }
+
+  Array args = ARRAY_DICT_INIT;
+
+  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
+    ADD(args, vim_to_object(tv));
+  }
+
+  bool errored;
+  Object result;
+  if (!channel_send_call((uint64_t)argvars[0].vval.v_number,
+                         (char *)argvars[1].vval.v_string,
+                         args,
+                         &result,
+                         &errored)) {
+    EMSG2(_(e_invarg2), "Channel doesn't exist");
+    return;
+  }
+
+  if (errored) {
+    vim_report_error(result.data.string);
+    goto end;
+  }
+  
+  Error conversion_error = {.set = false};
+  if (!object_to_vim(result, rettv, &conversion_error)) {
+    EMSG(_("Error converting the call result"));
+  }
+
+end:
+  api_free_object(result);
+}
+
+// "rpcstart()" function
+static void f_rpcstart(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_STRING
+      || (argvars[1].v_type != VAR_LIST && argvars[1].v_type != VAR_UNKNOWN)) {
+    // Wrong argument types
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  list_T *args = NULL;
+  int argsl = 0;
+  if (argvars[1].v_type == VAR_LIST) {
+    args = argvars[1].vval.v_list;
+    argsl = args->lv_len;
+    // Assert that all list items are strings
+    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+      if (arg->li_tv.v_type != VAR_STRING) {
+        EMSG(_(e_invarg));
+        return;
+      }
+    }
+  }
+
+  // Allocate extra memory for the argument vector and the NULL pointer
+  int argvl = argsl + 2;
+  char **argv = xmalloc(sizeof(char_u *) * argvl);
+
+  // Copy program name
+  argv[0] = xstrdup((char *)argvars[0].vval.v_string);
+
+  int i = 1;
+  // Copy arguments to the vector
+  if (argsl > 0) {
+    for (listitem_T *arg = args->lv_first; arg != NULL; arg = arg->li_next) {
+      argv[i++] = xstrdup((char *)arg->li_tv.vval.v_string);
+    }
+  }
+
+  // The last item of argv must be NULL
+  argv[i] = NULL;
+  uint64_t channel_id = channel_from_job(argv);
+
+  if (!channel_id) {
+    EMSG(_(e_api_spawn_failed));
+  }
+
+  rettv->vval.v_number = (varnumber_T)channel_id;
+}
+
+// "rpcstop()" function
+static void f_rpcstop(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_NUMBER;
+  rettv->vval.v_number = 0;
+
+  if (check_restricted() || check_secure()) {
+    return;
+  }
+
+  if (argvars[0].v_type != VAR_NUMBER) {
+    // Wrong argument types
+    EMSG(_(e_invarg));
+    return;
+  }
+
+  rettv->vval.v_number = channel_close(argvars[0].vval.v_number);
+}
+
 /*
  * "screenattr()" function
  */
@@ -12757,93 +12843,6 @@ do_searchpair (
     free_string_option(save_cpo);
 
   return retval;
-}
-
-// "send_call()" function
-static void f_send_call(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number <= 0) {
-    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "Method name must be a string");
-    return;
-  }
-
-  Array args = ARRAY_DICT_INIT;
-
-  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
-  }
-
-  bool errored;
-  Object result;
-  if (!channel_send_call((uint64_t)argvars[0].vval.v_number,
-                         (char *)argvars[1].vval.v_string,
-                         args,
-                         &result,
-                         &errored)) {
-    EMSG2(_(e_invarg2), "Channel doesn't exist");
-    return;
-  }
-
-  if (errored) {
-    vim_report_error(result.data.string);
-    goto end;
-  }
-  
-  Error conversion_error = {.set = false};
-  if (!object_to_vim(result, rettv, &conversion_error)) {
-    EMSG(_("Error converting the call result"));
-  }
-
-end:
-  api_free_object(result);
-}
-
-// "send_event()" function
-static void f_send_event(typval_T *argvars, typval_T *rettv)
-{
-  rettv->v_type = VAR_NUMBER;
-  rettv->vval.v_number = 0;
-
-  if (check_restricted() || check_secure()) {
-    return;
-  }
-
-  if (argvars[0].v_type != VAR_NUMBER || argvars[0].vval.v_number < 0) {
-    EMSG2(_(e_invarg2), "Channel id must be a positive integer");
-    return;
-  }
-
-  if (argvars[1].v_type != VAR_STRING) {
-    EMSG2(_(e_invarg2), "Event type must be a string");
-    return;
-  }
-
-  Array args = ARRAY_DICT_INIT;
-
-  for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
-    ADD(args, vim_to_object(tv));
-  }
-
-  if (!channel_send_event((uint64_t)argvars[0].vval.v_number,
-                          (char *)argvars[1].vval.v_string,
-                          args)) {
-    EMSG2(_(e_invarg2), "Channel doesn't exist");
-    return;
-  }
-
-  rettv->vval.v_number = 1;
 }
 
 /*

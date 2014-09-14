@@ -17,6 +17,7 @@
 #define MAX_CONNECTIONS 32
 #define ADDRESS_MAX_SIZE 256
 #define NEOVIM_DEFAULT_TCP_PORT 7450
+#define LISTEN_ADDRESS_ENV_VAR "NVIM_LISTEN_ADDRESS"
 
 typedef enum {
   kServerTypeTcp,
@@ -51,13 +52,13 @@ void server_init(void)
 {
   servers = pmap_new(cstr_t)();
 
-  if (!os_getenv("NEOVIM_LISTEN_ADDRESS")) {
+  if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
     char *listen_address = (char *)vim_tempname();
-    os_setenv("NEOVIM_LISTEN_ADDRESS", listen_address, 1);
+    os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
     free(listen_address);
   }
 
-  server_start((char *)os_getenv("NEOVIM_LISTEN_ADDRESS"));
+  server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR));
 }
 
 /// Teardown the server module

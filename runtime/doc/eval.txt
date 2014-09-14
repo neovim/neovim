@@ -1865,6 +1865,10 @@ invert( {expr})			Number  bitwise invert
 isdirectory( {directory})	Number	TRUE if {directory} is a directory
 islocked( {expr})		Number	TRUE if {expr} is locked
 items( {dict})			List	key-value pairs in {dict}
+job_close({job})		Closes a job with id {job}
+job_send({job}, {data})		Writes {data} to {job}'s stdin
+job_spawn({name}, {prog}[, {argv}])
+				Spawns {prog} as a job associated with {name}
 join( {list} [, {sep}])		String	join {list} items into one String
 keys( {dict})			List	keys in {dict}
 len( {expr})			Number	the length of {expr}
@@ -1934,6 +1938,12 @@ repeat( {expr}, {count})	String	repeat {expr} {count} times
 resolve( {filename})		String	get filename a shortcut points to
 reverse( {list})		List	reverse {list} in-place
 round( {expr})			Float	round off {expr}
+rpcnotify({channel}, {event}[, {args}...])
+				Sends a |msgpack-rpc| notification to {channel}
+rpcrequest({channel}, {method}[, {args}...])
+				Sends a |msgpack-rpc| request to {channel}
+rpcstart({prog}[, {argv}])	Spawns {prog} and opens a |msgpack-rpc| channel
+rpcstop({channel})		Closes a |msgpack-rpc| {channel}
 screenattr( {row}, {col})	Number	attribute at screen position
 screenchar( {row}, {col})	Number	character at screen position
 screencol()			Number	current cursor column
@@ -4002,6 +4012,22 @@ items({dict})						*items()*
 		entry and the value of this entry.  The |List| is in arbitrary
 		order.
 
+jobsend({job}, {data})					{Nvim} *jobsend()*
+		Send data to {job} by writing it to the stdin of the process.
+		See |job-control| for more information.
+
+jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
+		Spawns {prog} as a job and associate it with the {name} string,
+		which will be used to match the "filename pattern" in
+		|JobActivity| events. See |job-control| for more information.
+
+jobstop({job})						{Nvim} *jobstop()*
+		Stop a job created with |jobstart| by sending a `SIGTERM`
+		to the corresponding process. If the process doesn't exit
+		cleanly soon, a `SIGKILL` will be sent. When the job is
+		finally closed, a |JobActivity| event will trigger with
+		`v:job_data[0]` set to `exited`.  See |job-control| for more
+		information.
 
 join({list} [, {sep}])					*join()*
 		Join the items in {list} together into one String.
@@ -5042,6 +5068,32 @@ round({expr})							*round()*
 			echo round(-4.5)
 <			-5.0
 		{only available when compiled with the |+float| feature}
+
+rpcnotify({channel}, {event}[, {args}...])		  {Nvim} *rpcnotify()*
+		Sends {event} to {channel} via |msgpack-rpc| and returns
+		immediately. If {channel} is 0, the event is broadcast to all
+		channels. Example: >
+			:au VimLeave call rpcnotify(0, "leaving")
+
+rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
+		Sends a request to {channel} to invoke {method} via
+		|msgpack-rpc| and blocks until a response is received.
+		Example:  >
+			:let result = rpcrequest(rpc_chan, "func", 1, 2, 3)
+
+rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
+		Spawns {prog} as a job(optionally passing the {argv} list),
+		and open a |msgpack-rpc| channel with the spawned process
+		stdin/stdout. Returns the channel id, which is used by
+		|rpcrequest()|, |rpcnotify()| and |rpcstop()|
+		It expects the rpc channel id as argument. Example: >
+			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2']) 
+
+rpcstop({channel})					    {Nvim} *rpcstop()*
+		Closes a |msgpack-rpc| channel, possibly created via
+		|rpcspawn()| (Though it will also close channels created by
+		connections to |NVIM_LISTEN_ADDRESS|). It accepts the rpc 
+		channel id as only argument.
 
 screenattr(row, col)						*screenattr()*
 		Like screenchar(), but return the attribute.  This is a rather
@@ -8874,4 +8926,4 @@ This is not allowed when the textlock is active:
 	- etc.
 
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:noet:ft=help:norl:
