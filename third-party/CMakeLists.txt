@@ -99,11 +99,10 @@ if(USE_BUNDLED_MSGPACK)
        -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
        "-DCMAKE_C_FLAGS:STRING=${CMAKE_C_COMPILER_ARG1} -fPIC"
     BUILD_COMMAND ${MAKE_PRG}
-    INSTALL_COMMAND ${MAKE_PRG} install &&
-       rm ${DEPS_INSTALL_DIR}/lib/libmsgpack.so &&
-       rm ${DEPS_INSTALL_DIR}/lib/libmsgpack.so.3 &&
-       rm ${DEPS_INSTALL_DIR}/lib/libmsgpack.so.4.0.0
-       )
+    INSTALL_COMMAND ${CMAKE_COMMAND}
+      -DMAKE_PRG=${MAKE_PRG}
+      -DREMOVE_FILE_GLOB=${DEPS_INSTALL_DIR}/lib/${CMAKE_SHARED_LIBRARY_PREFIX}msgpack*${CMAKE_SHARED_LIBRARY_SUFFIX}*
+      -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/InstallMsgpack.cmake)
   list(APPEND THIRD_PARTY_DEPS msgpack)
 endif()
 
