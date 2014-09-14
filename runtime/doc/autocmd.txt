@@ -303,7 +303,7 @@ Name			triggered by ~
 |InsertLeave|		when leaving Insert mode
 |InsertCharPre|		when a character was typed in Insert mode, before
 			inserting it
-|JobActivity|		when something interesting happen with a job
+|JobActivity|		when something interesting happens with a job
 
 |TextChanged|		after a change was made to the text in Normal mode
 |TextChangedI|		after a change was made to the text in Insert mode

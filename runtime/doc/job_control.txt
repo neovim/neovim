@@ -66,14 +66,14 @@ nvim instance:
 <
 Here's what is happening:
 
-- Two bash instances are spawned |jobstart()| and their stdin/stdout/stderr
+- Two bash instances are spawned by |jobstart()| and their stdin/stdout/stderr
   are connected to nvim.
 - The first shell is idle, waiting to read commands from it's stdin
 - The second shell is passed the -c option to execute a command and exit. In
   our case, the command is a for loop that will print numbers and exit after
   a while.
 - The JobHandler function is called by the JobActivity autocommand(notice how
-  it the shell* pattern matches the `shell1` and `shell2` names passed to
+  the shell* pattern matches the `shell1` and `shell2` names passed to
   |jobstart()|), and it takes care of displaying stdout/stderr received from
   the shells.
 - The v:job_data is an array set by the JobActivity event. It has the
@@ -86,9 +86,9 @@ Here's what is happening:
 To send data to the job's stdin, one can use the |jobsend()| function, like
 this:
 >
-    :call jobsend(job1, 'ls\n')<cr>
-    :call jobsend(job1, 'invalid-command\n')<cr>
-    :call jobsend(job1, 'exit\n')<cr>
+    :call jobsend(job1, 'ls\n')
+    :call jobsend(job1, 'invalid-command\n')
+    :call jobsend(job1, 'exit\n')
 <
 A job may be killed at any time with the |jobstop()| function:
 >
