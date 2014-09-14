@@ -6919,8 +6919,9 @@ ins_esc (
         State &= ~REPLACE_FLAG;
 
       (void)start_redo_ins();
-      if (cmdchar == 'r' || cmdchar == 'v')
-        stuffReadbuff(ESC_STR);         /* no ESC in redo buffer */
+      if (cmdchar == 'r' || cmdchar == 'v') {
+        stuffRedoReadbuff(ESC_STR);  // No ESC in redo buffer
+      }
       ++RedrawingDisabled;
       disabled_redraw = TRUE;
       return FALSE;             /* repeat the insert */
