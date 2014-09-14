@@ -7647,6 +7647,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 	Note that this causes the whole buffer to be stored in memory.  Set
 	this option to a lower value if you run out of memory.
 
+			                          {Nvim} *'unnamedclip'* *ucp'*
+'unnamedclip' 'ucp'	boolean	(default off)
+			global
+	Use the unnamed register to access the clipboard(when available).
+	This option has the same effect of setting 'clipboard' to
+	'unnamed/unnamedplus' in Vim.
+
 						*'updatecount'* *'uc'*
 'updatecount' 'uc'	number	(default: 200)
 			global
@@ -8311,4 +8318,4 @@ A jump table for the options with a short description can be found at |Q_op|.
 	screen.  When non-zero, characters are sent to the terminal one by
 	one.  For MS-DOS pcterm this does not work.  For debugging purposes.
 
- vim:tw=78:ts=8:ft=help:norl:
+ vim:tw=78:ts=8:ft=help:noet:norl:
