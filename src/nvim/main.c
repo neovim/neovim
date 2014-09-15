@@ -192,6 +192,7 @@ int main(int argc, char **argv)
   init_yank();                  /* init yank buffers */
 
   alist_init(&global_alist);    /* Init the argument list to empty. */
+  global_alist.id = 0;
 
   /*
    * Set the default values for the options.

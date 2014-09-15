@@ -6309,6 +6309,7 @@ static struct fst {
   {"append",          2, 2, f_append},
   {"argc",            0, 0, f_argc},
   {"argidx",          0, 0, f_argidx},
+  {"arglistid",       0, 2, f_arglistid},
   {"argv",            0, 1, f_argv},
   {"asin",            1, 1, f_asin},    /* WJMc */
   {"atan",            1, 1, f_atan},
@@ -7124,6 +7125,32 @@ static void f_argc(typval_T *argvars, typval_T *rettv)
 static void f_argidx(typval_T *argvars, typval_T *rettv)
 {
   rettv->vval.v_number = curwin->w_arg_idx;
+}
+
+/// "arglistid" function
+static void f_arglistid(typval_T *argvars, typval_T *rettv)
+{
+  rettv->vval.v_number = -1;
+  if (argvars[0].v_type != VAR_UNKNOWN) {
+    tabpage_T *tp = NULL;
+    if (argvars[1].v_type != VAR_UNKNOWN) {
+      long n = get_tv_number(&argvars[1]);
+      if (n >= 0) {
+        tp = find_tabpage(n);
+      }
+    } else {
+      tp = curtab;
+    }
+
+    if (tp != NULL) {
+      win_T *wp = find_win_by_nr(&argvars[0], tp);
+      if (wp != NULL) {
+        rettv->vval.v_number = wp->w_alist->id;
+      }
+    }
+  } else {
+    rettv->vval.v_number = curwin->w_alist->id;
+  }
 }
 
 /*
