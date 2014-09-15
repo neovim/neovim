@@ -6,9 +6,9 @@
 
 Introduction to Nvim						   *nvim-intro*
 
-This is an introduction new Nvim users. It is meant for experienced Vim users
-that want to get started with Nvim. For a basic introduction to Vim, see
-|help.txt|.
+This is an introduction to Vim users that are just getting started with Nvim.
+It is not meant for Vim beginners. For a basic introduction to Vim,
+see |help.txt|.
 
 For now, it is just an index with the most relevant topics/features that
 differentiate Nvim from Vim:

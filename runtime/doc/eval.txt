@@ -4019,7 +4019,12 @@ jobsend({job}, {data})					{Nvim} *jobsend()*
 jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
 		Spawns {prog} as a job and associate it with the {name} string,
 		which will be used to match the "filename pattern" in
-		|JobActivity| events. See |job-control| for more information.
+		|JobActivity| events. It returns:
+		  - The job id on success, which is used by |jobsend()| and
+		    |jobstop()|
+		  - 0 when the job table is full or on invalid arguments
+		  - -1 when {prog} is not executable
+		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*
 		Stop a job created with |jobstart| by sending a `SIGTERM`
@@ -5083,10 +5088,12 @@ rpcrequest({channel}, {method}[, {args}...])		 {Nvim} *rpcrequest()*
 
 rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 		Spawns {prog} as a job(optionally passing the {argv} list),
-		and open a |msgpack-rpc| channel with the spawned process
-		stdin/stdout. Returns the channel id, which is used by
-		|rpcrequest()|, |rpcnotify()| and |rpcstop()|
-		It expects the rpc channel id as argument. Example: >
+		and opens a |msgpack-rpc| channel with the spawned process
+		stdin/stdout. It returns:
+		  - The channel id on success, which is used by |rpcrequest()|,
+		    |rpcnotify()| and |rpcstop()|
+		  - 0 on failure.
+		Example: >
 			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2']) 
 
 rpcstop({channel})					    {Nvim} *rpcstop()*

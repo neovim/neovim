@@ -17,20 +17,20 @@ The Msgpack-RPC Interface to Nvim		  *msgpack-rpc*
 ==============================================================================
 1. Introduction						    *msgpack-rpc-intro*
 
-The primary means of controlling a running nvim instance is through
+The primary means of controlling a running Nvim instance is through
 MessagePack-RPC, a messaging protocol that uses the MessagePack serialization
 format: https://github.com/msgpack/msgpack/blob/7498cf3/spec.md.
 From now on, we'll be referring to the protocol as msgpack-rpc.
 
 At this point, only plugins use msgpack-rpc, but eventually even user
 interaction will be achieved through the protocol, since user interfaces will
-be separate programs that control a headless nvim instance.
+be separate programs that control a headless Nvim instance.
 
 This is what can be achieved by connecting to the msgpack-rpc interface:
 
-- Call any nvim API function
-- Listen for nvim events
-- Receive remote calls from nvim
+- Call any Nvim API function
+- Listen for Nvim events
+- Receive remote calls from Nvim
 
 Nvim's msgpack-rpc interface can be seen as a more powerful version of Vim's
 `clientserver` feature.
@@ -69,7 +69,7 @@ python and the pyyaml/msgpack-python pip packages):
 
 There are four ways to open msgpack-rpc streams to nvim:
 
-1. Through nvim's stdin/stdout when started with the `--embed` option. This
+1. Through nvim's stdin/stdout when started with the `--embed` option. This is
    how other programs can embed nvim.
 
 2. Through stdin/stdout of a program spawned by the |rpcstart()| function.
@@ -122,7 +122,7 @@ functions can be called interactively:
 Nvim is still alpha and there's no in-depth documentation explaining how to
 properly implement a client library. The python client(neovim pip package)
 will be always up-to-date with the latest API changes, so it's source code is
-best documentation currently available. There are some guidelines however:
+the best documentation currently available. There are some guidelines however:
 
 - Separate the transport layer from the rest of the library(See
   |msgpack-rpc-connecting| for details of how a client can connect to nvim).
@@ -134,7 +134,7 @@ best documentation currently available. There are some guidelines however:
 - Use a fiber/coroutine library for the language you are implementing a client
   for. These greatly simplify concurrency and allow the library to expose a
   blocking API on top of a non-blocking event loop without the complexity
-  that comes with preemptive multi-tasking.
+  that comes with preemptive multitasking.
 - Don't assume anything about the order that responses to msgpack-rpc requests
   will arrive.
 - Clients should expect to receive msgpack-rpc requests, which need to be
@@ -159,7 +159,7 @@ around C99 standard types). The types can be split into two groups:
 
 - Basic types that map natively to msgpack(and probably have a default
   representation in msgpack-supported programming languages)
-- Special Nvim types that map to msgpack ext with custom type codes.
+- Special Nvim types that map to msgpack EXT with custom type codes.
 
 Basic type mapping: 
 
@@ -171,7 +171,7 @@ String				  -> msgpack binary
 Array				  -> msgpack array
 Dictionary			  -> msgpack map
 
-Special Nvim types that use msgpack ext:
+Special Nvim types that use msgpack EXT:
 
 Buffer				  -> enum value kObjectTypeBuffer
 Window				  -> enum value kObjectTypeWindow
@@ -231,7 +231,7 @@ Four functions related to msgpack-rpc are available to vimscript:
 - |rpcstart()|: Similarly to |jobstart()|, this will spawn a co-process with
   it's standard handles connected to Nvim, the difference is that it's not
   possible to process raw data to/from the process stdin/stdout/stderr(Since
-  the job's stdin/stdout combo are used as a msgpack channgel that is
+  the job's stdin/stdout combo are used as a msgpack channel that is
   processed directly by Nvim C code).
 - |rpcstop()|: Same as |jobstop()|, but operates on handles returned by
   |rpcstart().|

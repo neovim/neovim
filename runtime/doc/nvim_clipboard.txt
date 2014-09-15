@@ -36,9 +36,9 @@ by Nvim):
 This should enable the '+' and '*' registers. As an optional step, set the
 'unnamedclip' option to transparently access clipboard using the unnamed
 register. If you use the same |vimrc| for both Vim and Nvim, make sure you
-only set the option when `has('neovim')` is true:
+only set the option when `has('nvim')` is true:
 >
-    if has('neovim')
+    if has('nvim')
       set unnamedclip
     endif
 <

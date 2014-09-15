@@ -9842,7 +9842,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "windows",
     "winaltkeys",
     "writebackup",
-    "neovim",
+    "nvim",
     NULL
   };
 
