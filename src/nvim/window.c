@@ -544,6 +544,8 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int before;
   int minwidth;
   int minheight;
+  int wmw1;
+  int wmh1;
 
   if (flags & WSP_TOP)
     oldwin = firstwin;
@@ -569,16 +571,20 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * Check if we are able to split the current window and compute its
      * width.
      */
-    needed = p_wmw + 1;
-    if (flags & WSP_ROOM)
-      needed += p_wiw - p_wmw;
+    // Current window requires at least 1 space.
+    wmw1 = (p_wmw == 0 ? 1 : p_wmw);
+    needed = wmw1 + 1;
+    if (flags & WSP_ROOM) {
+      needed += p_wiw - wmw1;
+    }
     if (p_ea || (flags & (WSP_BOT | WSP_TOP))) {
-      minwidth = frame_minwidth(topframe, NULL);
+      minwidth = frame_minwidth(topframe, NOWIN);
       available = topframe->fr_width;
       needed += minwidth;
     } else {
-      minwidth = frame_minwidth(oldwin->w_frame, NULL);
-      available = oldwin->w_width;
+      minwidth = frame_minwidth(oldwin->w_frame, NOWIN);
+      available = oldwin->w_frame->fr_width;
+      needed += minwidth;
     }
     if (available < needed && new_wp == NULL) {
       EMSG(_(e_noroom));
@@ -586,13 +592,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     }
     if (new_size == 0)
       new_size = oldwin->w_width / 2;
-    if (new_size > oldwin->w_width - p_wmw - 1)
-      new_size = oldwin->w_width - p_wmw - 1;
     if (new_size > available - minwidth - 1) {
       new_size = available - minwidth - 1;
     }
-    if (new_size < p_wmw)
-      new_size = p_wmw;
+    if (new_size < wmw1) {
+      new_size = wmw1;
+    }
 
     /* if it doesn't fit in the current window, need win_equal() */
     if (oldwin->w_width - new_size - 1 < p_wmw)
@@ -627,17 +632,20 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
      * Check if we are able to split the current window and compute its
      * height.
      */
-    needed = p_wmh + STATUS_HEIGHT + need_status;
-    if (flags & WSP_ROOM)
-      needed += p_wh - p_wmh;
+    // Current window requires at least 1 space.
+    wmh1 = (p_wmh == 0 ? 1 : p_wmh);
+    needed = wmh1 + STATUS_HEIGHT;
+    if (flags & WSP_ROOM) {
+      needed += p_wh - wmh1;
+    }
     if (p_ea || (flags & (WSP_BOT | WSP_TOP))) {
-      minheight = frame_minheight(topframe, NULL);
+      minheight = frame_minheight(topframe, NOWIN) + need_status;
       available = topframe->fr_height;
       needed += minheight;
     } else {
-      minheight = frame_minheight(oldwin->w_frame, NULL);
-      available = oldwin->w_height;
-      needed += p_wmh;
+      minheight = frame_minheight(oldwin->w_frame, NOWIN) + need_status;
+      available = oldwin->w_frame->fr_height;
+      needed += minheight;
     }
     if (available < needed && new_wp == NULL) {
       EMSG(_(e_noroom));
@@ -651,13 +659,12 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (new_size == 0)
       new_size = oldwin_height / 2;
 
-    if (new_size > oldwin_height - p_wmh - STATUS_HEIGHT)
-      new_size = oldwin_height - p_wmh - STATUS_HEIGHT;
     if (new_size > available - minheight - STATUS_HEIGHT) {
       new_size = available - minheight - STATUS_HEIGHT;
     }
-    if (new_size < p_wmh)
-      new_size = p_wmh;
+    if (new_size < wmh1) {
+      new_size = wmh1;
+    }
 
     /* if it doesn't fit in the current window, need win_equal() */
     if (oldwin_height - new_size - STATUS_HEIGHT < p_wmh)
