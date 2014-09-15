@@ -542,9 +542,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int layout;
   frame_T     *frp, *curfrp;
   int before;
-  int minwidth;
   int minheight;
-  int wmw1;
   int wmh1;
 
   if (flags & WSP_TOP)
@@ -565,6 +563,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
 
 
   if (flags & WSP_VERT) {
+    int wmw1;
+    int minwidth;
+
     layout = FR_ROW;
 
     /*
