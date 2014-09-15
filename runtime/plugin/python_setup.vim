@@ -6,8 +6,8 @@ let did_python_setup = 1
 
 
 let s:get_version =
-      \ ' -c "import sys; sys.stdout.write(str(sys.version_info.major) + '.
-      \ '\".\" + str(sys.version_info.minor))"'
+      \ ' -c "import sys; sys.stdout.write(str(sys.version_info[0]) + '.
+      \ '\".\" + str(sys.version_info[1]))"'
 
 let s:supported = ['2.6', '2.7']
 
