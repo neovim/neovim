@@ -751,7 +751,7 @@ void get_yank_register(int regname, int writing)
   int i;
 
   y_append = FALSE;
-  if ((regname == 0 || regname == '"') && !writing && y_previous != NULL) {
+  if ((regname == 0 || regname == '"') && !p_unc && !writing && y_previous != NULL) {
     y_current = y_previous;
     return;
   }
@@ -1302,18 +1302,6 @@ cmdline_paste_reg (
   return OK;
 }
 
-bool adjust_clipboard_register(int *rp)
-{
-  // If no reg. specified and 'unnamedclip' is set, use the
-  // clipboard register.
-  if (*rp == 0 && p_unc && eval_has_provider("clipboard")) {
-    *rp = '+';
-    return true;
-  }
-
-  return false;
-}
-
 /*
  * Handle a delete operation.
  *
@@ -1328,7 +1316,6 @@ int op_delete(oparg_T *oap)
   struct block_def bd;
   linenr_T old_lcount = curbuf->b_ml.ml_line_count;
   int did_yank = FALSE;
-  int orig_regname = oap->regname;
 
   if (curbuf->b_ml.ml_flags & ML_EMPTY)             /* nothing to do */
     return OK;
@@ -1341,8 +1328,6 @@ int op_delete(oparg_T *oap)
     EMSG(_(e_modifiable));
     return FAIL;
   }
-
-  bool adjusted = adjust_clipboard_register(&oap->regname);
 
   if (has_mbyte)
     mb_adjust_opend(oap);
@@ -1393,9 +1378,9 @@ int op_delete(oparg_T *oap)
    * register.  For the black hole register '_' don't yank anything.
    */
   if (oap->regname != '_') {
-    if (oap->regname != 0) {
+    if (oap->regname != 0 || p_unc) {
       /* check for read-only register */
-      if (!valid_yank_reg(oap->regname, TRUE)) {
+      if (!( valid_yank_reg(oap->regname, TRUE) || (p_unc && oap->regname == 0) )) {
         beep_flush();
         return OK;
       }
@@ -1407,10 +1392,8 @@ int op_delete(oparg_T *oap)
     /*
      * Put deleted text into register 1 and shift number registers if the
      * delete contains a line break, or when a regname has been specified.
-     * Use the register name from before adjust_clip_reg() may have
-     * changed it.
      */
-    if (orig_regname != 0 || oap->motion_type == MLINE
+    if (oap->regname != 0 || oap->motion_type == MLINE
         || oap->line_count > 1 || oap->use_reg_one) {
       y_current = &y_regs[9];
       free_yank_all();                          /* free register nine */
@@ -1424,9 +1407,7 @@ int op_delete(oparg_T *oap)
 
     /* Yank into small delete register when no named register specified
      * and the delete is within one line. */
-    if ((
-          adjusted ||
-          oap->regname == 0) && oap->motion_type != MLINE
+    if (oap->regname == 0 && oap->motion_type != MLINE
         && oap->line_count == 1) {
       oap->regname = '-';
       get_yank_register(oap->regname, TRUE);
@@ -2623,7 +2604,6 @@ do_put (
   int allocated = FALSE;
   long cnt;
 
-  adjust_clipboard_register(&regname);
   get_clipboard(regname);
 
   if (flags & PUT_FIXINDENT)
@@ -3215,7 +3195,6 @@ void ex_display(exarg_T *eap)
         )
       continue;             /* did not ask for this register */
 
-    adjust_clipboard_register(&name);
     get_clipboard(name);
 
     if (i == -1) {
@@ -5225,28 +5204,30 @@ static void free_register(struct yankreg *reg)
   y_current = curr;
 }
 
-static void copy_register(struct yankreg *dest, struct yankreg *src)
-{
-  free_register(dest);
-  *dest = *src;
-  dest->y_array = xcalloc(src->y_size, sizeof(uint8_t *));
-  for (int j = 0; j < src->y_size; ++j) {
-    dest->y_array[j] = (uint8_t *)xstrdup((char *)src->y_array[j]);
+static int check_clipboard_name(int *name) {
+  if (*name == '*' || *name == '+') {
+    return CLIP_REGISTER;
+  } else if (p_unc && *name == NUL && eval_has_provider("clipboard")) {
+    *name = '+';
+    return 0; //unnamed register
+  } else {
+    return -1;
   }
 }
 
+
 static void get_clipboard(int name)
 {
-  if (!(name == '*' || name == '+'
-        || (p_unc && !name && eval_has_provider("clipboard")))) {
+  int ireg = check_clipboard_name(&name);
+  if (ireg < 0) {
     return;
   }
 
-  struct yankreg *reg = &y_regs[CLIP_REGISTER];
+  struct yankreg *reg = &y_regs[ireg];
   free_register(reg);
 
   list_T *args = list_alloc();
-  char_u regname = (char_u)name;
+  char_u regname = name;
   list_append_string(args, &regname, 1);
 
   typval_T result = eval_call_provider("clipboard", "get", args);
@@ -5314,11 +5295,6 @@ static void get_clipboard(int name)
     reg->y_width = maxlen-1;
   }
 
-  if (!name && p_unc) {
-    // copy to the unnamed register
-    copy_register(&y_regs[0], reg);
-  }
-
   return;
 
 err:
@@ -5335,18 +5311,12 @@ err:
 
 static void set_clipboard(int name)
 {
-  if (!(name == '*' || name == '+'
-        || (p_unc && !name && eval_has_provider("clipboard")))) {
+  int ireg = check_clipboard_name(&name);
+  if (ireg < 0) {
     return;
   }
 
-  struct yankreg *reg = &y_regs[CLIP_REGISTER];
-
-  if (!name && p_unc) {
-    // copy from the unnamed register
-    copy_register(reg, &y_regs[0]);
-    name = '+';
-  }
+  struct yankreg *reg = &y_regs[ireg];
 
   list_T *lines = list_alloc();
 
@@ -5372,7 +5342,7 @@ static void set_clipboard(int name)
   }
   list_append_string(args, &regtype, 1);
 
-  char_u regname = (char_u)name;
+  char_u regname = name;
   list_append_string(args, &regname, 1);
 
   (void)eval_call_provider("clipboard", "set", args);
