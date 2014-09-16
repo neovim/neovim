@@ -50,8 +50,8 @@ include(ExternalProject)
 set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.28.tar.gz)
 set(LIBUV_MD5 1a849ba4fc571d531482ed74bc7aabc4)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/0335df55e1a408c0d56d43e46253c952fb8a7f04.tar.gz)
-set(MSGPACK_MD5 4c18a1625b586c0d69a0e955ce9a187f)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/ecf4b09acd29746829b6a02939db91dfdec635b4.tar.gz)
+set(MSGPACK_MD5 3599eaf904b8ba0c36cea7ed80973364)
 
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.3.tar.gz)
 set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
