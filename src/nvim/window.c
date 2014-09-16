@@ -540,7 +540,7 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
   int available;
   int oldwin_height = 0;
   int layout;
-  frame_T     *frp, *curfrp;
+  frame_T   *frp, *curfrp, *frp2, *prevfrp;
   int before;
   int minheight;
   int wmh1;
@@ -578,8 +578,24 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (flags & WSP_ROOM) {
       needed += p_wiw - wmw1;
     }
-    if (p_ea || (flags & (WSP_BOT | WSP_TOP))) {
+    if (flags & (WSP_BOT | WSP_TOP)) {
       minwidth = frame_minwidth(topframe, NOWIN);
+      available = topframe->fr_width;
+      needed += minwidth;
+    } else if (p_ea) {
+      minwidth = frame_minwidth(oldwin->w_frame, NOWIN);
+      prevfrp = oldwin->w_frame;
+      for (frp = oldwin->w_frame->fr_parent; frp != NULL;
+           frp = frp->fr_parent) {
+        if (frp->fr_layout == FR_ROW) {
+          for (frp2 = frp->fr_child; frp2 != NULL; frp2 = frp2->fr_next) {
+            if (frp2 != prevfrp) {
+              minwidth += frame_minwidth(frp2, NOWIN);
+            }
+          }
+        }
+        prevfrp = frp;
+      }
       available = topframe->fr_width;
       needed += minwidth;
     } else {
@@ -639,8 +655,24 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
     if (flags & WSP_ROOM) {
       needed += p_wh - wmh1;
     }
-    if (p_ea || (flags & (WSP_BOT | WSP_TOP))) {
+    if (flags & (WSP_BOT | WSP_TOP)) {
       minheight = frame_minheight(topframe, NOWIN) + need_status;
+      available = topframe->fr_height;
+      needed += minheight;
+    } else if (p_ea) {
+      minheight = frame_minheight(oldwin->w_frame, NOWIN) + need_status;
+      prevfrp = oldwin->w_frame;
+      for (frp = oldwin->w_frame->fr_parent; frp != NULL;
+           frp = frp->fr_parent) {
+        if (frp->fr_layout == FR_COL) {
+          for (frp2 = frp->fr_child; frp2 != NULL; frp2 = frp2->fr_next) {
+            if (frp2 != prevfrp) {
+              minheight += frame_minheight(frp2, NOWIN);
+            }
+          }
+        }
+        prevfrp = frp;
+      }
       available = topframe->fr_height;
       needed += minheight;
     } else {
