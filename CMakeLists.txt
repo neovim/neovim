@@ -94,7 +94,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Find Lua interpreter
 include(LuaHelpers)
-set(LUA_DEPENDENCIES lpeg cmsgpack bit)
+set(LUA_DEPENDENCIES lpeg MessagePack bit)
 if(NOT LUA_PRG)
   foreach(CURRENT_LUA_PRG luajit lua)
     # If LUA_PRG is set find_program() will not search

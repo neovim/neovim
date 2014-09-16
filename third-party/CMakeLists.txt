@@ -166,25 +166,26 @@ if(USE_BUNDLED_LUAROCKS)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
 
-  # lua-cmsgpack doesn't depend on busted, but luarocks is unhappy to have two
-  # instances running in parallel.  So we depend on busted to force it
-  # to be serialized.
-  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack
+  # lua-messagepack doesn't depend on busted, but luarocks is unhappy to have
+  # two instances running in parallel.  So we depend on busted to force it to
+  # be serialized.
+  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack
     COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lua-cmsgpack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    ARGS build lua-messagepack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     DEPENDS busted)
-  add_custom_target(lua-cmsgpack
-    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack)
+  add_custom_target(lua-messagepack
+    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack)
 
-  # Like before, depend on cmsgpack to ensure serialization of install commands
+  # Like before, depend on lua-messagepack to ensure serialization of install
+  # commands
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
     COMMAND ${DEPS_BIN_DIR}/luarocks
     ARGS build lpeg CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    DEPENDS lua-cmsgpack)
+    DEPENDS lua-messagepack)
   add_custom_target(lpeg
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
 
-  list(APPEND THIRD_PARTY_DEPS busted lua-cmsgpack lpeg)
+  list(APPEND THIRD_PARTY_DEPS busted lua-messagepack lpeg)
 endif()
 
 add_custom_target(third-party ALL

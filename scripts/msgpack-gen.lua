@@ -1,5 +1,5 @@
 lpeg = require('lpeg')
-msgpack = require('cmsgpack')
+msgpack = require('MessagePack')
 
 -- lpeg grammar for building api metadata from a set of header files. It
 -- ignores comments and preprocessor commands and parses a very small subset
