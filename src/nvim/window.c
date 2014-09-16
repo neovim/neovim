@@ -2001,6 +2001,10 @@ void win_free_all(void)
 
   while (firstwin != NULL)
     (void)win_free_mem(firstwin, &dummy, NULL);
+
+  // No window should be used after this. Set curwin to NULL to crash
+  // instead of using freed memory.
+  curwin = NULL;
 }
 
 #endif
