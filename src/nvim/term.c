@@ -1822,11 +1822,35 @@ void termcapinit(char_u *name)
   set_termname(T_NAME != NULL ? T_NAME : term);
 }
 
+/// Write s[len] to the screen.
+void term_write(char_u *s, size_t len)
+{
+  if (embedded_mode) {
+    // TODO(tarruda): This is a temporary hack to stop Neovim from writing
+    // messages to stdout in embedded mode. In the future, embedded mode will
+    // be the only possibility(GUIs will always start neovim with a msgpack-rpc
+    // over stdio) and this function won't exist.
+    //
+    // The reason for this is because before Neovim fully migrates to a
+    // msgpack-rpc-driven architecture, we must have a fully functional
+    // UI working
+    return;
+  }
+
+  (void) fwrite(s, len, 1, stdout);
+
+#ifdef UNIX
+  if (p_wd) {           // Unix is too fast, slow down a bit more
+    os_microdelay(p_wd, false);
+  }
+#endif
+}
+
 /*
  * the number of calls to ui_write is reduced by using the buffer "out_buf"
  */
 #  define OUT_SIZE      2047
-/* Add one to allow mch_write() in os_win32.c to append a NUL */
+// Add one to allow term_write() in os_win32.c to append a NUL
 static char_u out_buf[OUT_SIZE + 1];
 static int out_pos = 0;                 /* number of chars in out_buf */
 

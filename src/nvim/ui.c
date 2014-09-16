@@ -55,7 +55,7 @@ void ui_write(char_u *s, int len)
         s = tofree;
     }
 
-    mch_write(s, len);
+    term_write(s, len);
 
     if (output_conv.vc_type != CONV_NONE)
       free(tofree);

@@ -82,30 +82,6 @@ static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
 
-
-
-/*
- * Write s[len] to the screen.
- */
-void mch_write(char_u *s, int len)
-{
-  if (embedded_mode) {
-    // TODO(tarruda): This is a temporary hack to stop Neovim from writing
-    // messages to stdout in embedded mode. In the future, embedded mode will
-    // be the only possibility(GUIs will always start neovim with a msgpack-rpc
-    // over stdio) and this function won't exist.
-    //
-    // The reason for this is because before Neovim fully migrates to a
-    // msgpack-rpc-driven architecture, we must have a fully functional
-    // UI working
-    return;
-  }
-
-  ignored = (int)write(1, (char *)s, len);
-  if (p_wd)             /* Unix is too fast, slow down a bit more */
-    os_microdelay(p_wd, false);
-}
-
 /*
  * If the machine has job control, use it to suspend the program,
  * otherwise fake it by starting a new shell.
@@ -158,6 +134,12 @@ void mch_init(void)
 {
   Columns = 80;
   Rows = 24;
+
+  // Prevent buffering output.
+  // Output gets explicitly buffered and flushed by out_flush() at times like,
+  // for example, when the user presses a key. Without this line, vim will not
+  // render the screen correctly.
+  setbuf(stdout, NULL);
 
   out_flush();
 
