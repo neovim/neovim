@@ -1,6 +1,10 @@
 cmake_minimum_required (VERSION 2.8.7)
 project (NEOVIM)
 
+if (UNIX)
+  execute_process(COMMAND umask 0022)
+endif()
+
 # Point CMake at any custom modules we may ship
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
