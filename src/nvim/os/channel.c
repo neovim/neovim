@@ -353,7 +353,8 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   msgpack_unpack_return result;
 
   // Deserialize everything we can.
-  while ((result = msgpack_unpacker_next(channel->unpacker, &unpacked))) {
+  while ((result = msgpack_unpacker_next(channel->unpacker, &unpacked)) ==
+      MSGPACK_UNPACK_SUCCESS) {
     if (kv_size(channel->call_stack) && is_rpc_response(&unpacked.data)) {
       if (is_valid_rpc_response(&unpacked.data, channel)) {
         call_stack_pop(&unpacked.data, channel);

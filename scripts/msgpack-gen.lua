@@ -1,5 +1,5 @@
 lpeg = require('lpeg')
-msgpack = require('cmsgpack')
+msgpack = require('MessagePack')
 
 -- lpeg grammar for building api metadata from a set of header files. It
 -- ignores comments and preprocessor commands and parses a very small subset
@@ -126,10 +126,12 @@ void msgpack_rpc_init_function_metadata(Dictionary *metadata)
 {
   msgpack_unpacked unpacked;
   msgpack_unpacked_init(&unpacked);
-  assert(msgpack_unpack_next(&unpacked,
-                             (const char *)msgpack_metadata,
-                             sizeof(msgpack_metadata),
-                             NULL) == MSGPACK_UNPACK_SUCCESS);
+  if (msgpack_unpack_next(&unpacked,
+                          (const char *)msgpack_metadata,
+                          sizeof(msgpack_metadata),
+                          NULL) != MSGPACK_UNPACK_SUCCESS) {
+    abort();
+  }
   Object functions;
   msgpack_rpc_to_object(&unpacked.data, &functions);
   msgpack_unpacked_destroy(&unpacked);

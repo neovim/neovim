@@ -50,8 +50,8 @@ include(ExternalProject)
 set(LIBUV_URL https://github.com/joyent/libuv/archive/v0.11.28.tar.gz)
 set(LIBUV_MD5 1a849ba4fc571d531482ed74bc7aabc4)
 
-set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/0335df55e1a408c0d56d43e46253c952fb8a7f04.tar.gz)
-set(MSGPACK_MD5 4c18a1625b586c0d69a0e955ce9a187f)
+set(MSGPACK_URL https://github.com/msgpack/msgpack-c/archive/ecf4b09acd29746829b6a02939db91dfdec635b4.tar.gz)
+set(MSGPACK_MD5 3599eaf904b8ba0c36cea7ed80973364)
 
 set(LUAJIT_URL http://luajit.org/download/LuaJIT-2.0.3.tar.gz)
 set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
@@ -166,25 +166,26 @@ if(USE_BUNDLED_LUAROCKS)
   add_custom_target(busted
     DEPENDS ${DEPS_BIN_DIR}/busted)
 
-  # lua-cmsgpack doesn't depend on busted, but luarocks is unhappy to have two
-  # instances running in parallel.  So we depend on busted to force it
-  # to be serialized.
-  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack
+  # lua-messagepack doesn't depend on busted, but luarocks is unhappy to have
+  # two instances running in parallel.  So we depend on busted to force it to
+  # be serialized.
+  add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack
     COMMAND ${DEPS_BIN_DIR}/luarocks
-    ARGS build lua-cmsgpack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
+    ARGS build lua-messagepack CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
     DEPENDS busted)
-  add_custom_target(lua-cmsgpack
-    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-cmsgpack)
+  add_custom_target(lua-messagepack
+    DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lua-messagepack)
 
-  # Like before, depend on cmsgpack to ensure serialization of install commands
+  # Like before, depend on lua-messagepack to ensure serialization of install
+  # commands
   add_custom_command(OUTPUT ${DEPS_LIB_DIR}/luarocks/rocks/lpeg
     COMMAND ${DEPS_BIN_DIR}/luarocks
     ARGS build lpeg CC=${DEPS_C_COMPILER} LD=${DEPS_C_COMPILER}
-    DEPENDS lua-cmsgpack)
+    DEPENDS lua-messagepack)
   add_custom_target(lpeg
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
 
-  list(APPEND THIRD_PARTY_DEPS busted lua-cmsgpack lpeg)
+  list(APPEND THIRD_PARTY_DEPS busted lua-messagepack lpeg)
 endif()
 
 add_custom_target(third-party ALL
