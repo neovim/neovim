@@ -737,7 +737,7 @@ open_line (
     p_extra = (char_u *)"";                 /* append empty line */
 
   /* concatenate leader and p_extra, if there is a leader */
-  if (lead_len) {
+  if (lead_len > 0) {
     if (flags & OPENLINE_COM_LIST && second_line_indent > 0) {
       int i;
       int padding = second_line_indent
