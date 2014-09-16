@@ -29,9 +29,8 @@ endif
 
 " Execute python, import neovim and print a string. If import_result matches
 " the printed string, we can probably start the host
-let s:import_result = substitute(system(
-      \ s:python_interpreter .' -c "import neovim; print \"ok\""'),
-      \ '^[\s\n]*\(ok\)[\s\n]*$', '\1', '')
+let s:import_result = system(s:python_interpreter .
+      \ ' -c "import neovim, sys; sys.stdout.write(\"ok\")"')
 if s:import_result != 'ok'
   finish
 endif
