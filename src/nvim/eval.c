@@ -6355,6 +6355,7 @@ static struct fst {
   {"eval",            1, 1, f_eval},
   {"eventhandler",    0, 0, f_eventhandler},
   {"executable",      1, 1, f_executable},
+  {"exepath",         1, 1, f_exepath},
   {"exists",          1, 1, f_exists},
   {"exp",             1, 1, f_exp},
   {"expand",          1, 3, f_expand},
@@ -8066,7 +8067,19 @@ static void f_eventhandler(typval_T *argvars, typval_T *rettv)
  */
 static void f_executable(typval_T *argvars, typval_T *rettv)
 {
-  rettv->vval.v_number = os_can_exe(get_tv_string(&argvars[0]));
+  rettv->vval.v_number = os_can_exe(get_tv_string(&argvars[0]), NULL);
+}
+
+/// "exepath()" function
+static void f_exepath(typval_T *argvars, typval_T *rettv)
+{
+  char_u *arg = get_tv_string(&argvars[0]);
+  char_u *path = NULL;
+
+  (void)os_can_exe(arg, &path);
+
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = path;
 }
 
 /*
@@ -10577,7 +10590,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
     }
   }
 
-  if (!os_can_exe(get_tv_string(&argvars[1]))) {
+  if (!os_can_exe(get_tv_string(&argvars[1]), NULL)) {
     // String is not executable
     EMSG2(e_jobexe, get_tv_string(&argvars[1]));
     return;

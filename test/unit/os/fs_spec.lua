@@ -11,6 +11,7 @@ local cstr = helpers.cstr
 local to_cstr = helpers.to_cstr
 local OK = helpers.OK
 local FAIL = helpers.FAIL
+local NULL = helpers.NULL
 
 require('lfs')
 require('bit')
@@ -118,7 +119,7 @@ describe('fs function', function()
   end)
 
   describe('os_can_exe', function()
-    local function os_can_exe(name)
+    local function os_can_exe(name, NULL)
       return fs.os_can_exe((to_cstr(name)))
     end
 

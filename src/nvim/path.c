@@ -1232,7 +1232,7 @@ addfile (
     return;
 
   /* If the file isn't executable, may not add it.  Do accept directories. */
-  if (!isdir && (flags & EW_EXEC) && !os_can_exe(f))
+  if (!isdir && (flags & EW_EXEC) && !os_can_exe(f, NULL))
     return;
 
   char_u *p = xmalloc(STRLEN(f) + 1 + isdir);
