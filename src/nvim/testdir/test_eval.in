@@ -1,7 +1,7 @@
 STARTTEST
-
-:e test.out
-:%d
+:so small.vim
+:set encoding=latin1
+:set noswapfile
 
 :" function name not starting with a capital
 :try
@@ -49,9 +49,18 @@ STARTTEST
 :  $put =v:exception
 :endtry
 
-:1d
-:w
-:qa!
+:$put ='{{{1 getcurpos/setpos'
+/^012345678
+6l:let sp = getcurpos()
+0:call setpos('.', sp)
+jyl:$put
 
+:/^start:/+1,$wq! test.out
+:" vim: et ts=4 isk-=\: fmr=???,???
+:call getchar()
 ENDTEST
 
+012345678
+012345678
+
+start:

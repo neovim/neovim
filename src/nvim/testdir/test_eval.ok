@@ -9,3 +9,5 @@ func s:Testje exists: 1
 Bar exists: 1
 func Bar exists: 1
 Vim(call):E116: Invalid arguments for function append
+{{{1 getcurpos/setpos
+6
