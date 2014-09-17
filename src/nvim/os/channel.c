@@ -584,9 +584,9 @@ static void call_stack_return(msgpack_object *obj, Channel *channel)
   frame->returned = true;
 
   if (frame->errored) {
-    msgpack_rpc_to_object(&obj->via.array.ptr[2], &frame->result);
+    msgpack_rpc_to_object(&obj->via.array.ptr[2], &frame->result, 0);
   } else {
-    msgpack_rpc_to_object(&obj->via.array.ptr[3], &frame->result);
+    msgpack_rpc_to_object(&obj->via.array.ptr[3], &frame->result, 0);
   }
 }
 

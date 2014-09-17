@@ -80,6 +80,7 @@
 #define api_init_object = NIL
 #define api_init_array = ARRAY_DICT_INIT
 #define api_init_dictionary = ARRAY_DICT_INIT
+#define api_init_function = FUNCTION_INIT
 
 #define api_free_boolean(value)
 #define api_free_integer(value)
