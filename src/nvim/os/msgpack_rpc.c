@@ -30,14 +30,14 @@ WBuffer *msgpack_rpc_call(uint64_t channel_id,
   FUNC_ATTR_NONNULL_ARG(3)
 {
   uint64_t response_id;
-  char *err = msgpack_rpc_validate(&response_id, req);
+  Error error = ERROR_INIT;
+  msgpack_rpc_validate(&response_id, req, &error);
 
-  if (err) {
-    return serialize_response(response_id, err, NIL, sbuffer);
+  if (error.set) {
+    return serialize_response(response_id, &error, NIL, sbuffer);
   }
 
   // dispatch the call
-  Error error = { .set = false };
   Object rv = msgpack_rpc_dispatch(channel_id, req, &error);
   // send the response
   msgpack_packer response;
@@ -47,12 +47,12 @@ WBuffer *msgpack_rpc_call(uint64_t channel_id,
     ELOG("Error dispatching msgpack-rpc call: %s(request: id %" PRIu64 ")",
          error.msg,
          response_id);
-    return serialize_response(response_id, error.msg, NIL, sbuffer);
+    return serialize_response(response_id, &error, NIL, sbuffer);
   }
 
   DLOG("Successfully completed mspgack-rpc call(request id: %" PRIu64 ")",
        response_id);
-  return serialize_response(response_id, NULL, rv, sbuffer);
+  return serialize_response(response_id, &error, rv, sbuffer);
 }
 
 /// Finishes the msgpack-rpc call with an error message.
@@ -112,10 +112,10 @@ WBuffer *serialize_request(uint64_t request_id,
 
 /// Serializes a msgpack-rpc response
 WBuffer *serialize_response(uint64_t response_id,
-                            char *err_msg,
+                            Error *err,
                             Object arg,
                             msgpack_sbuffer *sbuffer)
-  FUNC_ATTR_NONNULL_ARG(4)
+  FUNC_ATTR_NONNULL_ARG(2, 4)
 {
   msgpack_packer pac;
   msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
@@ -123,11 +123,11 @@ WBuffer *serialize_response(uint64_t response_id,
   msgpack_pack_int(&pac, 1);
   msgpack_pack_uint64(&pac, response_id);
 
-  if (err_msg) {
-    String err = {.size = strlen(err_msg), .data = err_msg};
-    // error message
-    msgpack_pack_bin(&pac, err.size);
-    msgpack_pack_bin_body(&pac, err.data, err.size);
+  if (err->set) {
+    // error represented by a [type, message] array
+    msgpack_pack_array(&pac, 2);
+    msgpack_rpc_from_integer(err->type, &pac);
+    msgpack_rpc_from_string(cstr_as_string(err->msg), &pac);
     // Nil result
     msgpack_pack_nil(&pac);
   } else {
@@ -146,43 +146,43 @@ WBuffer *serialize_response(uint64_t response_id,
   return rv;
 }
 
-static char *msgpack_rpc_validate(uint64_t *response_id, msgpack_object *req)
+static void msgpack_rpc_validate(uint64_t *response_id,
+                                 msgpack_object *req,
+                                 Error *err)
 {
   // response id not known yet
 
   *response_id = 0;
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
-    return "Request is not an array";
+    api_set_error(err, Validation, _("Request is not an array"));
   }
 
   if (req->via.array.size != 4) {
-    return "Request array size should be 4";
+    api_set_error(err, Validation, _("Request array size should be 4"));
   }
 
   if (req->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    return "Id must be a positive integer";
+    api_set_error(err, Validation, _("Id must be a positive integer"));
   }
 
   // Set the response id, which is the same as the request
   *response_id = req->via.array.ptr[1].via.u64;
 
   if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
-    return "Message type must be an integer";
+    api_set_error(err, Validation, _("Message type must be an integer"));
   }
 
   if (req->via.array.ptr[0].via.u64 != 0) {
-    return "Message type must be 0";
+    api_set_error(err, Validation, _("Message type must be 0"));
   }
 
   if (req->via.array.ptr[2].type != MSGPACK_OBJECT_BIN
     && req->via.array.ptr[2].type != MSGPACK_OBJECT_STR) {
-    return "Method must be a string";
+    api_set_error(err, Validation, _("Method must be a string"));
   }
 
   if (req->via.array.ptr[3].type != MSGPACK_OBJECT_ARRAY) {
-    return "Paremeters must be an array";
+    api_set_error(err, Validation, _("Paremeters must be an array"));
   }
-
-  return NULL;
 }

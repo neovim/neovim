@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -117,7 +118,7 @@ Object vim_eval(String str, Error *err)
   typval_T *expr_result = eval_expr((char_u *) str.data, NULL);
 
   if (!expr_result) {
-    set_api_error("Failed to eval expression", err);
+    api_set_error(err, Exception, _("Failed to evaluate expression"));
   }
 
   if (!try_end(err)) {
@@ -139,7 +140,7 @@ Object vim_eval(String str, Error *err)
 Integer vim_strwidth(String str, Error *err)
 {
   if (str.size > INT_MAX) {
-    set_api_error("String length is too high", err);
+    api_set_error(err, Validation, _("String length is too high"));
     return 0;
   }
 
@@ -194,7 +195,7 @@ ArrayOf(String) vim_list_runtime_paths(void)
 void vim_change_directory(String dir, Error *err)
 {
   if (dir.size >= MAXPATHL) {
-    set_api_error("directory string is too long", err);
+    api_set_error(err, Validation, _("Directory string is too long"));
     return;
   }
 
@@ -206,7 +207,7 @@ void vim_change_directory(String dir, Error *err)
 
   if (vim_chdir((char_u *)string)) {
     if (!try_end(err)) {
-      set_api_error("failed to change directory", err);
+      api_set_error(err, Exception, _("Failed to change directory"));
     }
     return;
   }
@@ -364,18 +365,13 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
   }
 
   try_start();
-  if (do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0) == FAIL) {
-    if (try_end(err)) {
-      return;
-    }
-
-    char msg[256];
-    snprintf(msg, sizeof(msg), "failed to switch to buffer %d", (int)buffer);
-    set_api_error(msg, err);
-    return;
+  int result = do_buffer(DOBUF_GOTO, DOBUF_FIRST, FORWARD, buf->b_fnum, 0);
+  if (!try_end(err) && result == FAIL) {
+    api_set_error(err,
+                  Exception,
+                  _("Failed to switch to buffer %" PRIu64),
+                  buffer);
   }
-
-  try_end(err);
 }
 
 /// Gets the current list of window handles
@@ -422,16 +418,12 @@ void vim_set_current_window(Window window, Error *err)
 
   try_start();
   goto_tabpage_win(win_find_tabpage(win), win);
-
-  if (win != curwin) {
-    if (try_end(err)) {
-      return;
-    }
-    set_api_error("did not switch to the specified window", err);
-    return;
+  if (!try_end(err) && win != curwin) {
+    api_set_error(err,
+                  Exception,
+                  _("Failed to switch to window %" PRIu64),
+                  window);
   }
-
-  try_end(err);
 }
 
 /// Gets the current list of tabpage handles
@@ -481,7 +473,12 @@ void vim_set_current_tabpage(Tabpage tabpage, Error *err)
 
   try_start();
   goto_tabpage_tp(tp, true, true);
-  try_end(err);
+  if (!try_end(err) && tp != curtab) {
+    api_set_error(err,
+                  Exception,
+                  _("Failed to switch to tabpage %" PRIu64),
+                  tabpage);
+  }
 }
 
 /// Subscribes to event broadcasts
@@ -524,7 +521,7 @@ void vim_register_provider(uint64_t channel_id, String feature, Error *err)
   xstrlcpy(buf, feature.data, sizeof(buf));
 
   if (!provider_register(buf, channel_id)) {
-    set_api_error("Feature doesn't exist", err);
+    api_set_error(err, Validation, _("Feature doesn't exist"));
   }
 }
 

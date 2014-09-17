@@ -116,7 +116,7 @@ Window tabpage_get_window(Tabpage tabpage, Error *err)
 /// @return true if the tab page is valid, false otherwise
 Boolean tabpage_is_valid(Tabpage tabpage)
 {
-  Error stub = {.set = false};
+  Error stub = ERROR_INIT;
   return find_tab_by_handle(tabpage, &stub) != NULL;
 }
 

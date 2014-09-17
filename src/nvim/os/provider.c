@@ -107,12 +107,11 @@ Object provider_call(char *method, Array args)
     return NIL;
   }
 
-  bool error = false;
-  Object result = NIL;
-  channel_send_call(f->channel_id, method, args, &result, &error);
+  Error err = ERROR_INIT;
+  Object result = NIL = channel_send_call(f->channel_id, method, args, &err);
 
-  if (error) {
-    vim_report_error(result.data.string);
+  if (err.set) {
+    vim_report_error(cstr_as_string(err.msg));
     api_free_object(result);
     return NIL;
   }

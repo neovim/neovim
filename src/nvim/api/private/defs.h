@@ -8,6 +8,7 @@
 #define ARRAY_DICT_INIT {.size = 0, .capacity = 0, .items = NULL}
 #define STRING_INIT {.data = NULL, .size = 0}
 #define OBJECT_INIT { .type = kObjectTypeNil }
+#define ERROR_INIT { .set = false }
 #define REMOTE_TYPE(type) typedef uint64_t type
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -16,8 +17,14 @@
 #endif
 
 // Basic types
+typedef enum {
+  kErrorTypeException,
+  kErrorTypeValidation
+} ErrorType;
+
 typedef struct {
-  char msg[256];
+  ErrorType type;
+  char msg[1024];
   bool set;
 } Error;
 
