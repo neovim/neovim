@@ -845,7 +845,10 @@ getcount:
 
       /* When getting a text character and the next character is a
        * multi-byte character, it could be a composing character.
-       * However, don't wait for it to arrive. */
+       * However, don't wait for it to arrive. Also, do enable mapping,
+       * because if it's put back with vungetc() it's too late to apply
+       * mapping. */
+      no_mapping--;
       while (enc_utf8 && lang && (c = vpeekc()) > 0
              && (c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1)) {
         c = plain_vgetc();
@@ -857,6 +860,7 @@ getcount:
         else
           ca.ncharC2 = c;
       }
+      no_mapping++;
     }
     --no_mapping;
     --allow_keys;
