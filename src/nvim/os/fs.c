@@ -66,7 +66,10 @@ bool os_isdir(const char_u *name)
   return true;
 }
 
-/// Check if the given path represents an executable file.
+/// Checks if the given path represents an executable file.
+///
+/// @param[in]  name     The name of the executable.
+/// @param[out] abspath  Path of the executable, if found and not `NULL`.
 ///
 /// @return `true` if `name` is executable and
 ///   - can be found in $PATH,
@@ -74,16 +77,24 @@ bool os_isdir(const char_u *name)
 ///   - is absolute.
 ///
 /// @return `false` otherwise.
-bool os_can_exe(const char_u *name)
+bool os_can_exe(const char_u *name, char_u **abspath)
 {
   // If it's an absolute or relative path don't need to use $PATH.
   if (path_is_absolute_path(name) ||
      (name[0] == '.' && (name[1] == '/' ||
                         (name[1] == '.' && name[2] == '/')))) {
-    return is_executable(name);
+    if (is_executable(name)) {
+      if (abspath != NULL) {
+        *abspath = save_absolute_path(name);
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
-  return is_executable_in_path(name);
+  return is_executable_in_path(name, abspath);
 }
 
 // Return true if "name" is an executable file, false if not or it doesn't
@@ -103,10 +114,13 @@ static bool is_executable(const char_u *name)
   return false;
 }
 
-/// Check if a file is inside the $PATH and is executable.
+/// Checks if a file is inside the `$PATH` and is executable.
 ///
-/// @return `true` if `name` is an executable inside $PATH.
-static bool is_executable_in_path(const char_u *name)
+/// @param[in]  name The name of the executable.
+/// @param[out] abspath  Path of the executable, if found and not `NULL`.
+///
+/// @return `true` if `name` is an executable inside `$PATH`.
+static bool is_executable_in_path(const char_u *name, char_u **abspath)
 {
   const char *path = getenv("PATH");
   // PATH environment variable does not exist or is empty.
@@ -131,8 +145,13 @@ static bool is_executable_in_path(const char_u *name)
     append_path((char *) buf, (const char *) name, (int)buf_len);
 
     if (is_executable(buf)) {
-      // Found our executable. Free buf and return.
+      // Check if the caller asked for a copy of the path.
+      if (abspath != NULL) {
+        *abspath = save_absolute_path(buf);
+      }
+
       free(buf);
+
       return true;
     }
 
