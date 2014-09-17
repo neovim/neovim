@@ -60,6 +60,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/event.h"
 #include "nvim/os/signal.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/api/private/defs.h"
@@ -252,14 +253,12 @@ int main(int argc, char **argv)
    */
 
 
-  /*
-   * mch_init() sets up the terminal (window) for use.  This must be
-   * done after resetting full_screen, otherwise it may move the cursor
-   * Note that we may use mch_exit() before mch_init()!
-   */
-  mch_init();
+  // term_init() sets up the terminal (window) for use.  This must be
+  // done after resetting full_screen, otherwise it may move the cursor
+  term_init();
   TIME_MSG("shell init");
 
+  event_init();
 
   if (!embedded_mode) {
     // Print a warning if stdout is not a terminal.

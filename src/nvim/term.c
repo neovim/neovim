@@ -1010,6 +1010,30 @@ static struct builtin_term builtin_termcaps[] =
 # define DEFAULT_TERM   (char_u *)"dumb"
 #endif
 
+/// Sets up the terminal window for use.
+///
+/// This must be done after resetting full_screen, otherwise it may move the
+/// cursor.
+///
+/// @remark We may call mch_exit() before calling this.
+void term_init(void)
+{
+  Columns = 80;
+  Rows = 24;
+
+  // Prevent buffering output.
+  // Output gets explicitly buffered and flushed by out_flush() at times like,
+  // for example, when the user presses a key. Without this line, vim will not
+  // render the screen correctly.
+  setbuf(stdout, NULL);
+
+  out_flush();
+
+#ifdef MACOS_CONVERT
+  mac_conv_init();
+#endif
+}
+
 /*
  * Term_strings contains currently used terminal output strings.
  * It is initialized with the default values by parse_builtin_tcap().

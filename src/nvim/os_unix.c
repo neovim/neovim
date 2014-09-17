@@ -130,26 +130,6 @@ void mch_suspend(void)
 #endif
 }
 
-void mch_init(void)
-{
-  Columns = 80;
-  Rows = 24;
-
-  // Prevent buffering output.
-  // Output gets explicitly buffered and flushed by out_flush() at times like,
-  // for example, when the user presses a key. Without this line, vim will not
-  // render the screen correctly.
-  setbuf(stdout, NULL);
-
-  out_flush();
-
-#ifdef MACOS_CONVERT
-  mac_conv_init();
-#endif
-
-  event_init();
-}
-
 static int get_x11_title(int test_only)
 {
   return FALSE;
