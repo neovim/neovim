@@ -17,6 +17,10 @@ require('lfs')
 require('bit')
 
 cimport('unistd.h')
+cimport('./src/nvim/os/shell.h')
+cimport('./src/nvim/option_defs.h')
+cimport('./src/nvim/os/event.h')
+cimport('./src/nvim/fileio.h')
 local fs = cimport('./src/nvim/os/os.h')
 cppimport('sys/stat.h')
 cppimport('sys/fcntl.h')
@@ -25,6 +29,7 @@ cppimport('sys/errno.h')
 local len = 0
 local buf = ""
 local directory = nil
+local absolute_executable = nil
 local executable_name = nil
 
 local function assert_file_exists(filepath)
@@ -44,7 +49,7 @@ describe('fs function', function()
     lfs.link('test.file', 'unit-test-directory/test_link.file', true)
     -- Since the tests are executed, they are called by an executable. We use
     -- that executable for several asserts.
-    local absolute_executable = arg[0]
+    absolute_executable = arg[0]
     -- Split absolute_executable into a directory and the actual file name for
     -- later usage.
     directory, executable_name = string.match(absolute_executable, '^(.*)/(.*)$')
@@ -119,32 +124,58 @@ describe('fs function', function()
   end)
 
   describe('os_can_exe', function()
-    local function os_can_exe(name, NULL)
-      return fs.os_can_exe((to_cstr(name)))
+    local function os_can_exe(name)
+      local buf = ffi.new('char *[1]')
+      buf[0] = NULL
+      local ok = fs.os_can_exe(to_cstr(name), buf)
+
+      -- When os_can_exe returns true, it must set the path.
+      -- When it returns false, the path must be NULL.
+      if ok then
+        neq(NULL, buf[0])
+        return internalize(buf[0])
+      else
+        eq(NULL, buf[0])
+        return nil
+      end
+    end
+
+    local function cant_exe(name)
+      eq(nil, os_can_exe(name))
+    end
+
+    local function exe(name)
+      return os_can_exe(name)
     end
 
     it('returns false when given a directory', function()
-      eq(false, (os_can_exe('./unit-test-directory')))
+      cant_exe('./unit-test-directory')
     end)
 
     it('returns false when given a regular file without executable bit set', function()
-      eq(false, (os_can_exe('unit-test-directory/test.file')))
+      cant_exe('unit-test-directory/test.file')
     end)
 
     it('returns false when the given file does not exists', function()
-      eq(false, (os_can_exe('does-not-exist.file')))
+      cant_exe('does-not-exist.file')
     end)
 
-    it('returns true when given an executable inside $PATH', function()
-      eq(true, (os_can_exe(executable_name)))
+    it('returns the absolute path when given an executable inside $PATH', function()
+      -- Since executable_name does not start with "./", the path will be
+      -- selected from $PATH. Make sure the ends match, ignore the directories.
+      local _, busted = string.match(absolute_executable, '^(.*)/(.*)$')
+      local _, name = string.match(exe(executable_name), '^(.*)/(.*)$')
+      eq(busted, name)
     end)
 
-    it('returns true when given an executable relative to the current dir', function()
+    it('returns the absolute path when given an executable relative to the current dir', function()
       local old_dir = lfs.currentdir()
       lfs.chdir(directory)
       local relative_executable = './' .. executable_name
-      eq(true, (os_can_exe(relative_executable)))
+      -- Don't test yet; we need to chdir back first.
+      local res = exe(relative_executable)
       lfs.chdir(old_dir)
+      eq(absolute_executable, res)
     end)
   end)
 
