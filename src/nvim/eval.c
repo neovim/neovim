@@ -6388,6 +6388,7 @@ static struct fst {
   {"getcmdline",      0, 0, f_getcmdline},
   {"getcmdpos",       0, 0, f_getcmdpos},
   {"getcmdtype",      0, 0, f_getcmdtype},
+  {"getcmdwintype",   0, 0, f_getcmdwintype},
   {"getcurpos",       0, 0, f_getcurpos},
   {"getcwd",          0, 0, f_getcwd},
   {"getfontname",     0, 1, f_getfontname},
@@ -9153,6 +9154,17 @@ static void f_getcmdtype(typval_T *argvars, typval_T *rettv)
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = xmallocz(1);
   rettv->vval.v_string[0] = get_cmdline_type();
+}
+
+/*
+ * "getcmdwintype()" function
+ */
+static void f_getcmdwintype(typval_T *argvars, typval_T *rettv)
+{
+  rettv->v_type = VAR_STRING;
+  rettv->vval.v_string = NULL;
+  rettv->vval.v_string = xmallocz(1);
+  rettv->vval.v_string[0] = cmdwin_type;
 }
 
 /*
