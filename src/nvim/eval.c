@@ -11644,7 +11644,7 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
  */
 static void f_pyeval(typval_T *argvars, typval_T *rettv)
 {
-  script_host_eval("python_eval", argvars, rettv);
+  script_host_eval("python", "eval", argvars, rettv);
 }
 
 /*
@@ -19464,11 +19464,14 @@ static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
   apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
 }
 
-static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
+static void script_host_eval(char *feature,
+                             char *method,
+                             typval_T *argvars,
+                             typval_T *rettv)
 {
   Array args = ARRAY_DICT_INIT;
   ADD(args, vim_to_object(argvars));
-  Object result = provider_call(method, args);
+  Object result = provider_call(feature, method, args);
 
   if (result.type == kObjectTypeNil) {
     return;

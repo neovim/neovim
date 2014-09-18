@@ -4,6 +4,7 @@
 
 #include "nvim/map.h"
 #include "nvim/map_defs.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/os/msgpack_rpc.h"
@@ -109,3 +110,4 @@ MAP_IMPL(cstr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(ptr_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(uint64_t, ptr_t, DEFAULT_INITIALIZER)
 MAP_IMPL(String, rpc_method_handler_fn, DEFAULT_INITIALIZER)
+MAP_IMPL(cstr_t, Function, FUNCTION_INIT)

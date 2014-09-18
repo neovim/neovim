@@ -17,28 +17,28 @@
 
 #define FEATURE_COUNT (sizeof(features) / sizeof(features[0]))
 
-#define FEATURE(feature_name, ...) {            \
+#define FEATURE(feature_name, ...) {                                        \
   .name = feature_name,                                                     \
-  .channel_id = 0,                                                          \
+  .handlers = NULL,                                                         \
   .methods = (char *[]){__VA_ARGS__, NULL}                                  \
 }
 
 typedef struct {
   char *name, **methods;
   size_t name_length;
-  uint64_t channel_id;
+  Map(cstr_t, Function) *handlers;
 } Feature;
 
 static Feature features[] = {
   FEATURE("python",
-          "python_execute",
-          "python_execute_file",
-          "python_do_range",
-          "python_eval"),
+          "execute",
+          "execute_file",
+          "do_range",
+          "eval"),
 
   FEATURE("clipboard",
-          "clipboard_get",
-          "clipboard_set")
+          "get",
+          "set")
 };
 
 static PMap(cstr_t) *registered_providers = NULL;
@@ -51,52 +51,94 @@ static PMap(cstr_t) *registered_providers = NULL;
 void provider_init(void)
 {
   registered_providers = pmap_new(cstr_t)();
+
+  for (size_t i = 0; i < FEATURE_COUNT; i++) {
+    features[i].handlers = map_new(cstr_t, Function)();
+  }
 }
 
 bool provider_has_feature(char *name)
 {
-  Feature *f = find_feature(name);
-  return f != NULL && channel_exists(f->channel_id);
+  Feature *f = pmap_get(cstr_t)(registered_providers, name);
+  return f != NULL && is_provided(f);
 }
 
-bool provider_register(char *name, uint64_t channel_id)
+void provider_register(char *name, Dictionary handlers, Error *err)
 {
-  Feature *f = find_feature(name);
-
-  if (!f) {
-    return false;
+  Feature *f = NULL;
+  for (size_t i = 0; i < FEATURE_COUNT; i++) {
+    if (!STRICMP(name, features[i].name)) {
+      f = &features[i];
+      break;
+    }
   }
 
-  if (f->channel_id && channel_exists(f->channel_id)) {
-    ILOG("Feature \"%s\" is already provided by another channel"
-         "(will be replaced)", name);
+  if (!f) {
+    api_set_error(err, Validation, _("Unknown feature \"%s\""), name);
+    return;
+  }
+
+  if (is_provided(f)) {
+    api_set_error(err,
+                  Exception,
+                  _("Feature \"%s\" is already provided by another "
+                    "extension"),
+                  name);
+    return;
   }
 
   DLOG("Registering provider for \"%s\"", name);
-  f->channel_id = channel_id;
 
   // Associate all method names with the feature struct
   size_t i;
   char *method;
   for (method = f->methods[i = 0]; method; method = f->methods[++i]) {
-    pmap_put(cstr_t)(registered_providers, method, f);
-    DLOG("Channel \"%" PRIu64 "\" will be sent requests for \"%s\"",
-         channel_id,
-         method);
+    size_t j;
+    for (j = 0; j < handlers.size; j++) {
+      KeyValuePair e = handlers.items[j];
+
+      if (e.value.type != kObjectTypeFunction) {
+        api_set_error(err,
+                      Validation,
+                      _("Dictionary key \"%s\" is not associated with a "
+                        "function"),
+                      e.key.data);
+        return;
+      }
+
+      if (!strcmp(method, e.key.data)) {
+        Function function = map_get(cstr_t, Function)(f->handlers, method);
+        // Ensure memory allocated for the current value(if exists) is
+        // freed
+        api_free_function(function);
+        function = e.value.data.function;
+        // Copy the function id because `handlers` will be freed soon
+        function.data.name = xstrdup(function.data.name);
+        map_put(cstr_t, Function)(f->handlers, method, function);
+        break;
+      }
+    }
+
+    if (j == handlers.size) {
+      // Did not find method in handlers dictionary
+      api_set_error(err,
+                    Validation,
+                    _("Dictionary does not contain an implementation "
+                      "for \"%s\""),
+                    method);
+      return;
+    }
   }
 
-  ILOG("Registered channel %" PRIu64 " as the provider for the \"%s\" feature",
-       channel_id,
-       name);
-
-  return true;
+  pmap_put(cstr_t)(registered_providers, f->name, f);
+  DLOG("Registered provider for \"%s\"", name);
 }
 
-Object provider_call(char *method, Array args)
+Object provider_call(char *name, char *method, Array args)
 {
-  Feature *f = pmap_get(cstr_t)(registered_providers, method);
+  Feature *f = pmap_get(cstr_t)(registered_providers, name);
 
-  if (!f || !channel_exists(f->channel_id)) {
+  if (!f) {
     char buf[256];
     snprintf(buf,
              sizeof(buf),
@@ -107,8 +149,9 @@ Object provider_call(char *method, Array args)
     return NIL;
   }
 
+  Function function = map_get(cstr_t, Function)(f->handlers, method);
   Error err = ERROR_INIT;
-  Object result = NIL = channel_send_call(f->channel_id, method, args, &err);
+  Object result = api_call_function(&function, args, &err);
 
   if (err.set) {
     vim_report_error(cstr_as_string(err.msg));
@@ -139,14 +182,17 @@ void provider_init_feature_metadata(Dictionary *metadata)
   PUT(*metadata, "features", DICTIONARY_OBJ(md));
 }
 
-static Feature * find_feature(char *name)
+static bool is_provided(Feature *f)
 {
-  for (size_t i = 0; i < FEATURE_COUNT; i++) {
-    Feature *f = &features[i];
-    if (!STRICMP(name, f->name)) {
-      return f;
+  size_t i;
+  char *method;
+  for (method = f->methods[i = 0]; method; method = f->methods[++i]) {
+    Function function = map_get(cstr_t, Function)(f->handlers, method);
+
+    if (!api_function_is_valid(&function)) {
+      return false;
     }
   }
 
-  return NULL;
+  return true;
 }

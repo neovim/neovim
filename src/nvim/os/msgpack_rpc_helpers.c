@@ -148,6 +148,7 @@ bool msgpack_rpc_to_object(msgpack_object *obj,
       return msgpack_rpc_to_dictionary(obj, &arg->data.dictionary, channel);
 
     case MSGPACK_OBJECT_EXT:
+      arg->type = obj->via.ext.type;
       switch (obj->via.ext.type) {
         case kObjectTypeBuffer:
           return msgpack_rpc_to_buffer(obj, &arg->data.buffer, channel);
@@ -157,6 +158,8 @@ bool msgpack_rpc_to_object(msgpack_object *obj,
           return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage, channel);
         case kObjectTypeFunction:
           return msgpack_rpc_to_function(obj, &arg->data.function, channel);
+        default:
+          arg->type = kObjectTypeNil;
       }
     default:
       return false;

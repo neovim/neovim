@@ -5230,7 +5230,7 @@ static void get_clipboard(int name)
   struct yankreg *reg = &y_regs[CLIP_REGISTER];
   free_register(reg);
   Array args = ARRAY_DICT_INIT;
-  Object result = provider_call("clipboard_get", args);
+  Object result = provider_call("clipboard", "get", args);
 
   if (result.type != kObjectTypeArray) {
     goto err;
@@ -5285,6 +5285,6 @@ static void set_clipboard(int name)
   Array args = ARRAY_DICT_INIT;
   ADD(args, ARRAY_OBJ(lines));
 
-  Object result = provider_call("clipboard_set", args);
+  Object result = provider_call("clipboard", "set", args);
   api_free_object(result);
 }
