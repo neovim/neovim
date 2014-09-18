@@ -7267,6 +7267,7 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
       }
       --Insstart_orig.lnum;
       Insstart_orig.col = MAXCOL;
+      Insstart = Insstart_orig;
     }
     /*
      * In replace mode:
