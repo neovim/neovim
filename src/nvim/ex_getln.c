@@ -5200,8 +5200,13 @@ static int ex_window(void)
 
   RedrawingDisabled = i;
 
+  int save_KeyTyped = KeyTyped;
+
   /* Trigger CmdwinLeave autocommands. */
   apply_autocmds(EVENT_CMDWINLEAVE, typestr, typestr, FALSE, curbuf);
+
+  /* Restore KeyTyped in case it is modified by autocommands */
+  KeyTyped = save_KeyTyped;
 
   /* Restore the command line info. */
   ccline = save_ccline;
