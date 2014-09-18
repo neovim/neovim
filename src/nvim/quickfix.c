@@ -1890,6 +1890,7 @@ static void qf_free(qf_info_T *qi, int idx)
   }
   free(qi->qf_lists[idx].qf_title);
   qi->qf_lists[idx].qf_title = NULL;
+  qi->qf_lists[idx].qf_index = 0;
 }
 
 /*
