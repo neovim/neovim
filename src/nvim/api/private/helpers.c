@@ -478,10 +478,9 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       break;
 
     case kObjectTypeFunction:
-      api_set_error(err,
-                    Exception,
-                    _("Cannot convert Function to vim function"));
-      return false;
+      tv->v_type = VAR_FUNC;
+      tv->vval.v_string = (uint8_t *)eval_wrap_function(obj.data.function);
+      break;
 
     default:
       abort();
