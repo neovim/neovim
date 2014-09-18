@@ -88,17 +88,16 @@ static int did_set_icon = FALSE;
  */
 void mch_suspend(void)
 {
-  /* BeOS does have SIGTSTP, but it doesn't work. */
-#if defined(SIGTSTP) && !defined(__BEOS__)
+#if defined(SIGTSTP)
   out_flush();              /* needed to make cursor visible on some systems */
   settmode(TMODE_COOK);
   out_flush();              /* needed to disable mouse on some systems */
 
-
+  // Note: compiler defines _REENTRANT when given -pthread flag.
 # if defined(_REENTRANT) && defined(SIGCONT)
   sigcont_received = FALSE;
 # endif
-  kill(0, SIGTSTP);         /* send ourselves a STOP signal */
+  uv_kill(0, SIGTSTP);         // send ourselves a STOP signal
 # if defined(_REENTRANT) && defined(SIGCONT)
   /*
    * Wait for the SIGCONT signal to be handled. It generally happens
