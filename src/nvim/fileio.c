@@ -57,10 +57,6 @@
 #include "nvim/window.h"
 #include "nvim/os/os.h"
 
-#if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
-# include <utime.h>             /* for struct utimbuf */
-#endif
-
 #define BUFSIZE         8192    /* size of normal write buffer */
 #define SMBUFSIZE       256     /* size of emergency write buffer */
 
@@ -2197,34 +2193,6 @@ static void check_marks_read(void)
   curbuf->b_marks_read = TRUE;
 }
 
-#ifdef UNIX
-static void 
-set_file_time (
-    char_u *fname,
-    time_t atime,               /* access time */
-    time_t mtime               /* modification time */
-)
-{
-# if defined(HAVE_UTIME) && defined(HAVE_UTIME_H)
-  struct utimbuf buf;
-
-  buf.actime  = atime;
-  buf.modtime = mtime;
-  (void)utime((char *)fname, &buf);
-# else
-#  if defined(HAVE_UTIMES)
-  struct timeval tvp[2];
-
-  tvp[0].tv_sec   = atime;
-  tvp[0].tv_usec  = 0;
-  tvp[1].tv_sec   = mtime;
-  tvp[1].tv_usec  = 0;
-  (void)utimes((char *)fname, (const struct timeval *)&tvp);
-#  endif
-# endif
-}
-#endif /* UNIX */
-
 /*
  * buf_write() - write to file "fname" lines "start" through "end"
  *
@@ -2937,11 +2905,9 @@ buf_write (
             if (write_info.bw_len < 0)
               errmsg = (char_u *)_(
                   "E508: Can't read file for backup (add ! to override)");
-#ifdef UNIX
-            set_file_time(backup,
-                          file_info_old.stat.st_atim.tv_sec,
-                          file_info_old.stat.st_mtim.tv_sec);
-#endif
+            os_utime((char *)backup,
+                     (double)file_info_old.atime, (double)file_info_old.mtime);
+
 #ifdef HAVE_ACL
             mch_set_acl(backup, acl);
 #endif
@@ -3617,11 +3583,7 @@ restore_backup:
         vim_rename(backup, (char_u *)org);
         free(backup);                   /* don't delete the file */
         backup = NULL;
-#ifdef UNIX
-        set_file_time((char_u *)org,
-                      file_info_old.stat.st_atim.tv_sec,
-                      file_info_old.stat.st_mtim.tv_sec);
-#endif
+        os_utime(org, (double)file_info_old.atime, (double)file_info_old.mtime);
       }
     }
     /*

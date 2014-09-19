@@ -479,3 +479,14 @@ bool os_fileid_equal_fileinfo(const FileID *file_id,
          && file_id->device_id == file_info->stat.st_dev;
 }
 
+
+/// Set access time and modification time of a file
+///
+/// @return `0` on success, a libuv error code on failure.
+int os_utime(const char *path, double atime, double mtime)
+{
+  uv_fs_t utime_req;
+  int r = uv_fs_utime(uv_default_loop(), &utime_req, path, atime, mtime, NULL);
+  uv_fs_req_cleanup(&utime_req);
+  return r;
+}
