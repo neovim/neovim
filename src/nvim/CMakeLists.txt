@@ -174,7 +174,7 @@ if(NOT DEFINED ENV{SKIP_EXEC})
   add_executable(nvim ${NEOVIM_GENERATED_SOURCES} ${NEOVIM_SOURCES}
     ${NEOVIM_HEADERS})
   target_link_libraries(nvim ${NVIM_LINK_LIBRARIES})
-  install(TARGETS nvim RUNTIME DESTINATION bin)
+  install_helper(TARGETS nvim)
 endif()
 
 if(NOT DEFINED ENV{SKIP_UNITTEST})
