@@ -439,12 +439,6 @@ int mch_nodetype(char_u *name)
   return NODE_WRITABLE;
 }
 
-void mch_early_init(void)
-{
-  handle_init();
-  time_init();
-}
-
 #if defined(EXITFREE) || defined(PROTO)
 void mch_free_mem(void)
 {

@@ -60,11 +60,13 @@
 #include "nvim/os/time.h"
 #include "nvim/os/input.h"
 #include "nvim/os/os.h"
+#include "nvim/os/time.h"
 #include "nvim/os/event.h"
 #include "nvim/os/signal.h"
 #include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/handle.h"
 
 /* Maximum number of commands from + or -c arguments. */
 #define MAX_ARG_CMDS 10
@@ -143,13 +145,60 @@ static char *(main_errors[]) =
 #define ME_INVALID_ARG          5
 };
 
+/// Performs early initialization.
+///
+/// Needed for unit tests. Must be called after `time_init()`.
+void early_init(void)
+{
+  handle_init();
+
+  (void)mb_init();      // init mb_bytelen_tab[] to ones
+  eval_init();          // init global variables
+
+#ifdef __QNXNTO__
+  qnx_init();           // PhAttach() for clipboard, (and gui)
+#endif
+
+  // Init the table of Normal mode commands.
+  init_normal_cmds();
+
+#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
+  // Setup to use the current locale (for ctype() and many other things).
+  // NOTE: Translated messages with encodings other than latin1 will not
+  // work until set_init_1() has been called!
+  init_locale();
+#endif
+
+  // Allocate the first window and buffer.
+  // Can't do anything without it, exit when it fails.
+  if (!win_alloc_first()) {
+    mch_exit(0);
+  }
+
+  init_yank();                  // init yank buffers
+
+  alist_init(&global_alist);    // Init the argument list to empty.
+  global_alist.id = 0;
+
+  // Set the default values for the options.
+  // NOTE: Non-latin1 translated messages are working only after this,
+  // because this is where "has_mbyte" will be set, which is used by
+  // msg_outtrans_len_attr().
+  // First find out the home directory, needed to expand "~" in options.
+  init_homedir();               // find real value of $HOME
+  set_init_1();
+  TIME_MSG("inits 1");
+
+  set_lang_var();               // set v:lang and v:ctype
+}
+
 #ifndef NO_VIM_MAIN     /* skip this for unittests */
 int main(int argc, char **argv)
 {
   char_u      *fname = NULL;            /* file name from command line */
   mparm_T params;                       /* various parameters passed between
                                          * main() and other functions. */
-  mch_early_init();
+  time_init();
 
   /* Many variables are in "params" so that we can pass them to invoked
    * functions without a lot of arguments.  "argc" and "argv" are also
@@ -158,24 +207,7 @@ int main(int argc, char **argv)
 
   init_startuptime(&params);
 
-  (void)mb_init();      /* init mb_bytelen_tab[] to ones */
-  eval_init();          /* init global variables */
-
-#ifdef __QNXNTO__
-  qnx_init();           /* PhAttach() for clipboard, (and gui) */
-#endif
-
-  /* Init the table of Normal mode commands. */
-  init_normal_cmds();
-
-#if defined(HAVE_LOCALE_H) || defined(X_LOCALE)
-  /*
-   * Setup to use the current locale (for ctype() and many other things).
-   * NOTE: Translated messages with encodings other than latin1 will not
-   * work until set_init_1() has been called!
-   */
-  init_locale();
-#endif
+  early_init();
 
   /*
    * Check if we have an interactive window.
@@ -184,32 +216,6 @@ int main(int argc, char **argv)
    * -dev argument.
    */
   check_and_set_isatty(&params);
-
-  /*
-   * Allocate the first window and buffer.
-   * Can't do anything without it, exit when it fails.
-   */
-  if (win_alloc_first() == FAIL)
-    mch_exit(0);
-
-  init_yank();                  /* init yank buffers */
-
-  alist_init(&global_alist);    /* Init the argument list to empty. */
-  global_alist.id = 0;
-
-  /*
-   * Set the default values for the options.
-   * NOTE: Non-latin1 translated messages are working only after this,
-   * because this is where "has_mbyte" will be set, which is used by
-   * msg_outtrans_len_attr().
-   * First find out the home directory, needed to expand "~" in options.
-   */
-  init_homedir();               /* find real value of $HOME */
-  set_init_1();
-  TIME_MSG("inits 1");
-
-  set_lang_var();               /* set v:lang and v:ctype */
-
 
   /*
    * Figure out the way to work from the command name argv[0].
