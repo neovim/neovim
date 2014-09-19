@@ -23,6 +23,9 @@ G$khhhhhkkcmno
 /^aaaa/
 :exe ":norm! l\<C-V>jjjlllI\<Right>\<Right>  \<Esc>"
 :/^aa/,/^$/w >> test.out
+/xaaa$/
+:exe ":norm! \<C-V>jjjI<>\<Left>p\<Esc>"
+:/xaaa$/,/^$/w >> test.out
 :" Test for Visual block was created with the last <C-v>$
 /^A23$/
 :exe ":norm! l\<C-V>j$Aab\<Esc>"
@@ -76,6 +79,11 @@ aaaaaa
 bbbbbb
 cccccc
 dddddd
+
+xaaa
+bbbb
+cccc
+dddd
 
 A23
 4567
