@@ -57,7 +57,9 @@ void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
 
   if (pos.size != 2 || pos.items[0].type != kObjectTypeInteger ||
       pos.items[1].type != kObjectTypeInteger) {
-    set_api_error("\"pos\" argument must be a [row, col] array", err);
+    api_set_error(err,
+                  Validation,
+                  _("Argument \"pos\" must be a [row, col] array"));
     return;
   }
 
@@ -69,12 +71,12 @@ void window_set_cursor(Window window, ArrayOf(Integer, 2) pos, Error *err)
   int64_t col = pos.items[1].data.integer;
 
   if (row <= 0 || row > win->w_buffer->b_ml.ml_line_count) {
-    set_api_error("cursor position outside buffer", err);
+    api_set_error(err, Validation, _("Cursor position outside buffer"));
     return;
   }
 
   if (col > MAXCOL || col < 0) {
-    set_api_error("Column value outside range", err);
+    api_set_error(err, Validation, _("Column value outside range"));
     return;
   }
 
@@ -117,7 +119,7 @@ void window_set_height(Window window, Integer height, Error *err)
   }
 
   if (height > INT_MAX || height < INT_MIN) {
-    set_api_error("Height value outside range", err);
+    api_set_error(err, Validation, _("Height value outside range"));
     return;
   }
 
@@ -160,7 +162,7 @@ void window_set_width(Window window, Integer width, Error *err)
   }
 
   if (width > INT_MAX || width < INT_MIN) {
-    set_api_error("Width value outside range", err);
+    api_set_error(err, Validation, _("Width value outside range"));
     return;
   }
 
@@ -283,7 +285,7 @@ Tabpage window_get_tabpage(Window window, Error *err)
 /// @return true if the window is valid, false otherwise
 Boolean window_is_valid(Window window)
 {
-  Error stub = {.set = false};
+  Error stub = ERROR_INIT;
   return find_window_by_handle(window, &stub) != NULL;
 }
 

@@ -48,7 +48,7 @@ bool try_end(Error *err)
       discard_current_exception();
     }
 
-    set_api_error("Keyboard interrupt", err);
+    api_set_error(err, Exception, _("Keyboard interrupt"));
     got_int = false;
   } else if (msg_list != NULL && *msg_list != NULL) {
     int should_free;
@@ -64,7 +64,7 @@ bool try_end(Error *err)
       free(msg);
     }
   } else if (did_throw) {
-    set_api_error((char *)current_exception->value, err);
+    api_set_error(err, Exception, "%s", current_exception->value);
   }
 
   return err->set;
@@ -80,7 +80,7 @@ Object dict_get_value(dict_T *dict, String key, Error *err)
   hashitem_T *hi = hash_find(&dict->dv_hashtab, (uint8_t *) key.data);
 
   if (HASHITEM_EMPTY(hi)) {
-    set_api_error("Key not found", err);
+    api_set_error(err, Validation, _("Key not found"));
     return (Object) OBJECT_INIT;
   }
 
@@ -101,17 +101,17 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
   Object rv = OBJECT_INIT;
 
   if (dict->dv_lock) {
-    set_api_error("Dictionary is locked", err);
+    api_set_error(err, Exception, _("Dictionary is locked"));
     return rv;
   }
 
   if (key.size == 0) {
-    set_api_error("Empty dictionary keys aren't allowed", err);
+    api_set_error(err, Validation, _("Empty dictionary keys aren't allowed"));
     return rv;
   }
 
   if (key.size > INT_MAX) {
-    set_api_error("Key length is too high", err);
+    api_set_error(err, Validation, _("Key length is too high"));
     return rv;
   }
 
@@ -121,7 +121,7 @@ Object dict_set_value(dict_T *dict, String key, Object value, Error *err)
     // Delete the key
     if (di == NULL) {
       // Doesn't exist, fail
-      set_api_error("Key doesn't exist", err);
+      api_set_error(err, Validation, _("Key \"%s\" doesn't exist"), key.data);
     } else {
       // Return the old value
       rv = vim_to_object(&di->di_tv);
@@ -170,7 +170,7 @@ Object get_option_from(void *from, int type, String name, Error *err)
   Object rv = OBJECT_INIT;
 
   if (name.size == 0) {
-    set_api_error("Empty option name", err);
+    api_set_error(err, Validation, _("Empty option name"));
     return rv;
   }
 
@@ -181,7 +181,10 @@ Object get_option_from(void *from, int type, String name, Error *err)
                                       type, from);
 
   if (!flags) {
-    set_api_error("invalid option name", err);
+    api_set_error(err,
+                  Validation,
+                  _("Invalid option name \"%s\""),
+                  name.data);
     return rv;
   }
 
@@ -197,10 +200,16 @@ Object get_option_from(void *from, int type, String name, Error *err)
       rv.data.string.data = stringval;
       rv.data.string.size = strlen(stringval);
     } else {
-      set_api_error(N_("Unable to get option value"), err);
+      api_set_error(err,
+                    Exception,
+                    _("Unable to get value for option \"%s\""),
+                    name.data);
     }
   } else {
-    set_api_error(N_("internal error: unknown option type"), err);
+    api_set_error(err,
+                  Exception,
+                  _("Unknown type for option \"%s\""),
+                  name.data);
   }
 
   return rv;
@@ -216,24 +225,33 @@ Object get_option_from(void *from, int type, String name, Error *err)
 void set_option_to(void *to, int type, String name, Object value, Error *err)
 {
   if (name.size == 0) {
-    set_api_error("Empty option name", err);
+    api_set_error(err, Validation, _("Empty option name"));
     return;
   }
 
   int flags = get_option_value_strict(name.data, NULL, NULL, type, to);
 
   if (flags == 0) {
-    set_api_error("invalid option name", err);
+    api_set_error(err,
+                  Validation,
+                  _("Invalid option name \"%s\""),
+                  name.data);
     return;
   }
 
   if (value.type == kObjectTypeNil) {
     if (type == SREQ_GLOBAL) {
-      set_api_error("unable to unset option", err);
+      api_set_error(err,
+                    Exception,
+                    _("Unable to unset option \"%s\""),
+                    name.data);
       return;
     } else if (!(flags & SOPT_GLOBAL)) {
-      set_api_error("cannot unset option that doesn't have a global value",
-                     err);
+      api_set_error(err,
+                    Exception,
+                    _("Cannot unset option \"%s\" "
+                      "because it doesn't have a global value"),
+                    name.data);
       return;
     } else {
       unset_global_local_option(name.data, to);
@@ -245,7 +263,10 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
 
   if (flags & SOPT_BOOL) {
     if (value.type != kObjectTypeBoolean) {
-      set_api_error("option requires a boolean value", err);
+      api_set_error(err,
+                    Validation,
+                    _("Option \"%s\" requires a boolean value"),
+                    name.data);
       return;
     }
 
@@ -253,12 +274,18 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
   } else if (flags & SOPT_NUM) {
     if (value.type != kObjectTypeInteger) {
-      set_api_error("option requires an integer value", err);
+      api_set_error(err,
+                    Validation,
+                    _("Option \"%s\" requires an integer value"),
+                    name.data);
       return;
     }
 
     if (value.data.integer > INT_MAX || value.data.integer < INT_MIN) {
-      set_api_error("Option value outside range", err);
+      api_set_error(err,
+                    Validation,
+                    _("Value for option \"%s\" is outside range"),
+                    name.data);
       return;
     }
 
@@ -266,7 +293,10 @@ void set_option_to(void *to, int type, String name, Object value, Error *err)
     set_option_value_for(name.data, val, NULL, opt_flags, type, to, err);
   } else {
     if (value.type != kObjectTypeString) {
-      set_api_error("option requires a string value", err);
+      api_set_error(err,
+                    Validation,
+                    _("Option \"%s\" requires a string value"),
+                    name.data);
       return;
     }
 
@@ -296,7 +326,7 @@ buf_T *find_buffer_by_handle(Buffer buffer, Error *err)
   buf_T *rv = handle_get_buffer(buffer);
 
   if (!rv) {
-    set_api_error("Invalid buffer id", err);
+    api_set_error(err, Validation, _("Invalid buffer id"));
   }
 
   return rv;
@@ -307,7 +337,7 @@ win_T * find_window_by_handle(Window window, Error *err)
   win_T *rv = handle_get_window(window);
 
   if (!rv) {
-    set_api_error("Invalid window id", err);
+    api_set_error(err, Validation, _("Invalid window id"));
   }
 
   return rv;
@@ -318,7 +348,7 @@ tabpage_T * find_tab_by_handle(Tabpage tabpage, Error *err)
   tabpage_T *rv = handle_get_tabpage(tabpage);
 
   if (!rv) {
-    set_api_error("Invalid tabpage id", err);
+    api_set_error(err, Validation, _("Invalid tabpage id"));
   }
 
   return rv;
@@ -376,7 +406,7 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
 
     case kObjectTypeInteger:
       if (obj.data.integer > INT_MAX || obj.data.integer < INT_MIN) {
-        set_api_error("Integer value outside range", err);
+        api_set_error(err, Validation, _("Integer value outside range"));
         return false;
       }
 
@@ -424,7 +454,9 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
         String key = item.key;
 
         if (key.size == 0) {
-          set_api_error("Empty dictionary keys aren't allowed", err);
+          api_set_error(err,
+                        Validation,
+                        _("Empty dictionary keys aren't allowed"));
           // cleanup
           dict_free(tv->vval.v_dict, true);
           return false;
@@ -513,6 +545,7 @@ Dictionary api_metadata(void)
 
   if (!metadata.size) {
     msgpack_rpc_init_function_metadata(&metadata);
+    init_error_type_metadata(&metadata);
     init_type_metadata(&metadata);
     provider_init_feature_metadata(&metadata);
   }
@@ -520,6 +553,21 @@ Dictionary api_metadata(void)
   return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
 }
 
+static void init_error_type_metadata(Dictionary *metadata)
+{
+  Dictionary types = ARRAY_DICT_INIT;
+
+  Dictionary exception_metadata = ARRAY_DICT_INIT;
+  PUT(exception_metadata, "id", INTEGER_OBJ(kErrorTypeException));
+
+  Dictionary validation_metadata = ARRAY_DICT_INIT;
+  PUT(validation_metadata, "id", INTEGER_OBJ(kErrorTypeValidation));
+
+  PUT(types, "Exception", DICTIONARY_OBJ(exception_metadata));
+  PUT(types, "Validation", DICTIONARY_OBJ(validation_metadata));
+
+  PUT(*metadata, "error_types", DICTIONARY_OBJ(types));
+}
 static void init_type_metadata(Dictionary *metadata)
 {
   Dictionary types = ARRAY_DICT_INIT;
@@ -704,7 +752,9 @@ static void set_option_value_for(char *key,
         if (try_end(err)) {
           return;
         }
-        set_api_error("problem while switching windows", err);
+        api_set_error(err,
+                      Exception,
+                      _("Problem while switching windows"));
         return;
       }
       set_option_value_err(key, numval, stringval, opt_flags, err);
@@ -745,6 +795,6 @@ static void set_option_value_err(char *key,
       return;
     }
 
-    set_api_error(errmsg, err);
+    api_set_error(err, Exception, "%s", errmsg);
   }
 }

@@ -125,7 +125,7 @@ ArrayOf(String) buffer_get_slice(Buffer buffer,
     int64_t lnum = start + (int64_t)i;
 
     if (lnum > LONG_MAX) {
-      set_api_error("Line index is too high", err);
+      api_set_error(err, Validation, _("Line index is too high"));
       goto end;
     }
 
@@ -175,7 +175,9 @@ void buffer_set_slice(Buffer buffer,
   end = normalize_index(buf, end) + (include_end ? 1 : 0);
 
   if (start > end) {
-    set_api_error("start > end", err);
+    api_set_error(err,
+                  Validation,
+                  _("Argument \"start\" is higher than \"end\""));
     return;
   }
 
@@ -189,7 +191,9 @@ void buffer_set_slice(Buffer buffer,
 
   for (size_t i = 0; i < new_len; i++) {
     if (replacement.items[i].type != kObjectTypeString) {
-      set_api_error("all items in the replacement array must be strings", err);
+      api_set_error(err,
+                    Validation,
+                    _("All items in the replacement array must be strings"));
       goto end;
     }
 
@@ -201,7 +205,7 @@ void buffer_set_slice(Buffer buffer,
   switch_to_win_for_buf(buf, &save_curwin, &save_curtab, &save_curbuf);
 
   if (u_save((linenr_T)(start - 1), (linenr_T)end) == FAIL) {
-    set_api_error("Cannot save undo information", err);
+    api_set_error(err, Exception, _("Failed to save undo information"));
     goto end;
   }
 
@@ -211,7 +215,7 @@ void buffer_set_slice(Buffer buffer,
   size_t to_delete = (new_len < old_len) ? (size_t)(old_len - new_len) : 0;
   for (size_t i = 0; i < to_delete; i++) {
     if (ml_delete((linenr_T)start, false) == FAIL) {
-      set_api_error("Cannot delete line", err);
+      api_set_error(err, Exception, _("Failed to delete line"));
       goto end;
     }
   }
@@ -228,12 +232,12 @@ void buffer_set_slice(Buffer buffer,
     int64_t lnum = start + (int64_t)i;
 
     if (lnum > LONG_MAX) {
-      set_api_error("Index value is too high", err);
+      api_set_error(err, Validation, _("Index value is too high"));
       goto end;
     }
 
     if (ml_replace((linenr_T)lnum, (char_u *)lines[i], false) == FAIL) {
-      set_api_error("Cannot replace line", err);
+      api_set_error(err, Exception, _("Failed to replace line"));
       goto end;
     }
     // Mark lines that haven't been passed to the buffer as they need
@@ -246,12 +250,12 @@ void buffer_set_slice(Buffer buffer,
     int64_t lnum = start + (int64_t)i - 1;
 
     if (lnum > LONG_MAX) {
-      set_api_error("Index value is too high", err);
+      api_set_error(err, Validation, _("Index value is too high"));
       goto end;
     }
 
     if (ml_append((linenr_T)lnum, (char_u *)lines[i], 0, false) == FAIL) {
-      set_api_error("Cannot insert line", err);
+      api_set_error(err, Exception, _("Failed to insert line"));
       goto end;
     }
 
@@ -415,7 +419,7 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
   }
 
   if (ren_ret == FAIL) {
-    set_api_error("failed to rename buffer", err);
+    api_set_error(err, Exception, _("Failed to rename buffer"));
   }
 }
 
@@ -425,7 +429,7 @@ void buffer_set_name(Buffer buffer, String name, Error *err)
 /// @return true if the buffer is valid, false otherwise
 Boolean buffer_is_valid(Buffer buffer)
 {
-  Error stub = {.set = false};
+  Error stub = ERROR_INIT;
   return find_buffer_by_handle(buffer, &stub) != NULL;
 }
 
@@ -460,7 +464,7 @@ ArrayOf(Integer, 2) buffer_get_mark(Buffer buffer, String name, Error *err)
   }
 
   if (name.size != 1) {
-    set_api_error("mark name must be a single character", err);
+    api_set_error(err, Validation, _("Mark name must be a single character"));
     return rv;
   }
 
@@ -478,7 +482,7 @@ ArrayOf(Integer, 2) buffer_get_mark(Buffer buffer, String name, Error *err)
   }
 
   if (posp == NULL) {
-    set_api_error("invalid mark name", err);
+    api_set_error(err, Validation, _("Invalid mark name"));
     return rv;
   }
 

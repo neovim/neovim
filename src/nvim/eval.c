@@ -12471,25 +12471,18 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
     ADD(args, vim_to_object(tv));
   }
 
-  bool errored;
-  Object result;
-  if (!channel_send_call((uint64_t)argvars[0].vval.v_number,
-                         (char *)argvars[1].vval.v_string,
-                         args,
-                         &result,
-                         &errored)) {
-    EMSG2(_(e_invarg2), "Channel doesn't exist");
-    return;
-  }
-
-  if (errored) {
-    vim_report_error(result.data.string);
+  Error err = ERROR_INIT;
+  Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
+                                    (char *)argvars[1].vval.v_string,
+                                    args,
+                                    &err);
+  if (err.set) {
+    vim_report_error(cstr_as_string(err.msg));
     goto end;
   }
-  
-  Error conversion_error = {.set = false};
-  if (!object_to_vim(result, rettv, &conversion_error)) {
-    EMSG(_("Error converting the call result"));
+
+  if (!object_to_vim(result, rettv, &err)) {
+    EMSG2(_("Error converting the call result: %s"), err.msg);
   }
 
 end:
@@ -19442,7 +19435,7 @@ static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  Error err = {.set = false};
+  Error err = ERROR_INIT;
   object_to_vim(result, rettv, &err);
   api_free_object(result);
 

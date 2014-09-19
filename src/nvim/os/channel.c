@@ -172,40 +172,36 @@ bool channel_send_event(uint64_t id, char *name, Array args)
 /// Sends a method call to a channel
 ///
 /// @param id The channel id
-/// @param name The method name, an arbitrary string
+/// @param method_name The method name, an arbitrary string
 /// @param args Array with method arguments
-/// @param[out] result Pointer to return value received from the channel
 /// @param[out] error True if the return value is an error
-/// @return True if the call was sent successfully, false otherwise.
-bool channel_send_call(uint64_t id,
-                       char *name,
-                       Array args,
-                       Object *result,
-                       bool *errored)
+/// @return Whatever the remote method returned
+Object channel_send_call(uint64_t id,
+                         char *method_name,
+                         Array args,
+                         Error *err)
 {
   Channel *channel = NULL;
 
   if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+    api_set_error(err, Exception, _("Invalid channel \"%" PRIu64 "\""), id);
     api_free_array(args);
-    return false;
+    return NIL;
   }
 
   if (kv_size(channel->call_stack) > 20) {
     // 20 stack depth is more than anyone should ever need for RPC calls
-    *errored = true;
-    char buf[256];
-    snprintf(buf,
-        sizeof(buf),
-        "Channel %" PRIu64 " crossed maximum stack depth",
-        channel->id);
-    *result = STRING_OBJ(cstr_to_string(buf));
+    api_set_error(err,
+                  Exception,
+                  _("Channel %" PRIu64 " crossed maximum stack depth"),
+                  channel->id);
     api_free_array(args);
-    return false;
+    return NIL;
   }
 
   uint64_t request_id = channel->next_request_id++;
   // Send the msgpack-rpc request
-  send_request(channel, request_id, name, args);
+  send_request(channel, request_id, method_name, args);
 
   EventSource channel_source = channel->is_job
     ? job_event_source(channel->data.job)
@@ -224,10 +220,12 @@ bool channel_send_call(uint64_t id,
       channel->enabled &&  // the channel is still enabled
       kv_size(channel->call_stack) >= size);  // the call didn't return
 
-  *errored = frame.errored;
-  *result = frame.result;
+  if (frame.errored) {
+    api_set_error(err, Exception, "%s", frame.result.data.string.data);
+    return NIL;
+  }
 
-  return true;
+  return frame.result;
 }
 
 /// Subscribes to event broadcasts
@@ -433,7 +431,9 @@ static bool channel_write(Channel *channel, WBuffer *buffer)
 
 static void send_error(Channel *channel, uint64_t id, char *err)
 {
-  channel_write(channel, serialize_response(id, err, NIL, &out_buffer));
+  Error e = ERROR_INIT;
+  api_set_error(&e, Exception, "%s", err);
+  channel_write(channel, serialize_response(id, &e, NIL, &out_buffer));
 }
 
 static void send_request(Channel *channel,
