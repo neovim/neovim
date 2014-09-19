@@ -32,7 +32,10 @@ typedef struct {
   union {
     struct {
       uv_tcp_t handle;
-      struct sockaddr_in addr;
+      union {
+        struct sockaddr_in ipv4;
+        struct sockaddr_in6 ipv6;
+      } addr;
     } tcp;
     struct {
       uv_pipe_t handle;
@@ -108,7 +111,17 @@ void server_start(char *endpoint)
 
   ServerType server_type = kServerTypeTcp;
   Server *server = xmalloc(sizeof(Server));
-  char ip[16], *ip_end = strrchr(addr, ':');
+  char ip[INET6_ADDRSTRLEN + 2], *ip_end = NULL;
+
+  // Is it an IPv6 address in the form [2001:db8:85a3:8d3:1319:8a2e:370:7348]:PORT?
+  if(addr[0] == '[') {
+    char *tmp = strrchr(addr, ']');
+    if(tmp) {
+      ip_end = strrchr(tmp, ':');
+    }
+  } else {
+    ip_end = strrchr(addr, ':');
+  }
 
   if (!ip_end) {
     ip_end = strchr(addr, NUL);
@@ -117,14 +130,15 @@ void server_start(char *endpoint)
   uint32_t addr_len = ip_end - addr;
 
   if (addr_len > sizeof(ip) - 1) {
-    // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)
+    // Maximum length of an IPv6 address buffer is 48
+    // (e.g.: [0000:0000:0000:0000:0000:0000:255.255.255.255])
     addr_len = sizeof(ip) - 1;
   }
 
   // Extract the address part
   xstrlcpy(ip, addr, addr_len + 1);
 
-  int port = NEOVIM_DEFAULT_TCP_PORT;
+  unsigned short port = NEOVIM_DEFAULT_TCP_PORT;
 
   if (*ip_end == ':') {
     // Extract the port
@@ -133,15 +147,26 @@ void server_start(char *endpoint)
       // Invalid port, treat as named pipe or unix socket
       server_type = kServerTypePipe;
     } else {
-      port = (int) lport;
+      port = (unsigned short) lport;
     }
   }
 
   if (server_type == kServerTypeTcp) {
-    // Try to parse ip address
-    if (uv_ip4_addr(ip, port, &server->socket.tcp.addr)) {
-      // Invalid address, treat as named pipe or unix socket
-      server_type = kServerTypePipe;
+    // Try to parse ip address,
+    // if it starts with a '[' it's supposed to be an IPv6 address,
+    // otherwise try to parse it as an IPv4 address.
+    if(ip[0] == '[' && ip[addr_len - 1] == ']') {
+      char *addr = ip;
+      addr++[addr_len - 1] = '\0';
+      if (uv_ip6_addr(addr, port, &server->socket.tcp.addr.ipv6)) {
+        // Invalid address, treat as named pipe or unix socket
+        server_type = kServerTypePipe;
+      }
+    } else {
+      if (uv_ip4_addr(ip, port, &server->socket.tcp.addr.ipv4)) {
+        // Invalid address, treat as named pipe or unix socket
+        server_type = kServerTypePipe;
+      }
     }
   }
 
