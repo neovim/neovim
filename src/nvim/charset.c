@@ -24,6 +24,7 @@
 #include "nvim/move.h"
 #include "nvim/os_unix.h"
 #include "nvim/strings.h"
+#include "nvim/path.h"
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -871,7 +872,7 @@ int vim_isfilec(int c)
 
 /// return TRUE if 'c' is a valid file-name character or a wildcard character
 /// Assume characters above 0x100 are valid (multi-byte).
-/// Explicitly interpret ']' as a wildcard character as mch_has_wildcard("]")
+/// Explicitly interpret ']' as a wildcard character as path_has_wildcard("]")
 /// returns false.
 ///
 /// @param c
@@ -882,7 +883,7 @@ int vim_isfilec_or_wc(int c)
   char_u buf[2];
   buf[0] = (char_u)c;
   buf[1] = NUL;
-  return vim_isfilec(c) || c == ']' || mch_has_wildcard(buf);
+  return vim_isfilec(c) || c == ']' || path_has_wildcard(buf);
 }
 
 /// return TRUE if 'c' is a printable character

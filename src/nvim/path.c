@@ -400,6 +400,32 @@ char_u *save_absolute_path(const char_u *name)
   return vim_strsave((char_u *) name);
 }
 
+/// Checks if a path has a wildcard character including '~', unless at the end.
+/// @param p  The path to expand.
+/// @returns Unix: True if it contains one of "?[{`'$".
+/// @returns Windows: True if it contains one of "*?$[".
+bool path_has_wildcard(const char_u *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (; *p; mb_ptr_adv(p)) {
+#if defined(UNIX)
+    if (p[0] == '\\' && p[1] != NUL) {
+      p++;
+      continue;
+    }
+
+    const char *wildcards = "*?[{`'$";
+#else
+    // Windows:
+    const char *wildcards = "?*$[`";
+#endif
+    if (vim_strchr((char_u *)wildcards, *p) != NULL
+        || (p[0] == '~' && p[1] != NUL)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 #if defined(UNIX)
 /*
@@ -409,6 +435,32 @@ char_u *save_absolute_path(const char_u *name)
 static int pstrcmp(const void *a, const void *b)
 {
   return pathcmp(*(char **)a, *(char **)b, -1);
+}
+#endif
+
+/// Checks if a path has a character expandpath can expand.
+/// @param p  The path to expand.
+/// @returns Unix: True if it contains one of *?[{.
+/// @returns Windows: True if it contains one of *?[.
+bool path_has_exp_wildcard(const char_u *p)
+  FUNC_ATTR_NONNULL_ALL
+{
+  for (; *p != NUL; mb_ptr_adv(p)) {
+#if defined(UNIX)
+    if (p[0] == '\\' && p[1] != NUL) {
+      p++;
+      continue;
+    }
+
+    const char *wildcards = "*?[{";
+#else
+    const char *wildcards = "*?[";  // Windows.
+#endif
+    if (vim_strchr((char_u *) wildcards, *p) != NULL) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /*
@@ -566,7 +618,7 @@ unix_expandpath (
         }
 
         STRCPY(buf + len, path_end);
-        if (mch_has_exp_wildcard(path_end)) {       /* handle more wildcards */
+        if (path_has_exp_wildcard(path_end)) {       // handle more wildcards
           /* need to expand another component of the path */
           /* remove backslashes for the remaining components only */
           (void)unix_expandpath(gap, buf, len + 1, flags, FALSE);
@@ -1078,7 +1130,7 @@ gen_expand_wildcards (
        * If there are no wildcards: Add the file name if it exists or
        * when EW_NOTFOUND is given.
        */
-      if (mch_has_exp_wildcard(p)) {
+      if (path_has_exp_wildcard(p)) {
         if ((flags & EW_PATH)
             && !path_is_absolute_path(p)
             && !(p[0] == '.'
