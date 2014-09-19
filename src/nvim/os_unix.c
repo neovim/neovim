@@ -719,47 +719,12 @@ static void save_patterns(int num_pat, char_u **pat, int *num_file,
   *num_file = num_pat;
 }
 
-/*
- * Return TRUE if the string "p" contains a wildcard that mch_expandpath() can
- * expand.
- */
-int mch_has_exp_wildcard(char_u *p)
-{
-  for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)
-                 "*?[{'"
-                 , *p) != NULL)
-      return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * Return TRUE if the string "p" contains a wildcard.
- * Don't recognize '~' at the end as a wildcard.
- */
-int mch_has_wildcard(char_u *p)
-{
-  for (; *p; mb_ptr_adv(p)) {
-    if (*p == '\\' && p[1] != NUL)
-      ++p;
-    else if (vim_strchr((char_u *)
-                 "*?[{`'$"
-                 , *p) != NULL
-             || (*p == '~' && p[1] != NUL))
-      return TRUE;
-  }
-  return FALSE;
-}
-
 static int have_wildcard(int num, char_u **file)
 {
   int i;
 
   for (i = 0; i < num; i++)
-    if (mch_has_wildcard(file[i]))
+    if (path_has_wildcard(file[i]))
       return 1;
   return 0;
 }
