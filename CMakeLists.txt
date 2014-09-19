@@ -119,12 +119,13 @@ endif()
 
 message(STATUS "Using the Lua interpreter ${LUA_PRG}")
 
-add_subdirectory(config)
-add_subdirectory(src/nvim)
-add_subdirectory(test/includes)
-
+# Setup busted.
 find_program(BUSTED_PRG busted)
+if(NOT BUSTED_OUTPUT_TYPE)
+  set(BUSTED_OUTPUT_TYPE "utfTerminal")
+endif()
 
+# Setup make.
 find_program(MAKE_PRG NAMES gmake make)
 if(MAKE_PRG)
   execute_process(
@@ -146,10 +147,47 @@ if(CMAKE_GENERATOR MATCHES "Makefiles")
   set(MAKE_PRG "$(MAKE)")
 endif()
 
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "utfTerminal")
-endif()
+# CMake is painful here.  It will create the destination using the user's
+# current umask, and we don't want that.  And we don't just want to install
+# the target directory, as it will mess with existing permissions.  So this
+# seems like the best compromise.  If we create it, then everyone can see it.
+# If it's preexisting, leave it alone.
+include(InstallHelpers)
 
+install_helper(
+  DIRECTORY runtime
+  DESTINATION share/nvim)
+
+file(GLOB_RECURSE RUNTIME_PROGRAMS
+  RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  runtime/*.pl runtime/*.awk runtime/*.sh
+  runtime/tools/ref
+  runtime/tools/vimm)
+
+foreach(PROG ${RUNTIME_PROGRAMS})
+  get_filename_component(BASEDIR ${PROG} PATH)
+  install_helper(PROGRAMS ${PROG} DESTINATION share/nvim/${BASEDIR})
+endforeach()
+
+install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
+
+# Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
+# pseudo-tty when launching processes, because it can put many jobs in parallel
+# and eat-up all the available pseudo-ttys.  Unfortunately, that doesn't work
+# well with the legacy tests.  I have a branch that converts them to run under
+# CTest, but it needs a little more work.
+# add_custom_target(test
+#   COMMAND ${MAKE_PRG} -C ${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/testdir
+#     VIMPROG=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nvim)
+
+# Go down the tree.
+
+add_subdirectory(config)
+add_subdirectory(src/nvim)
+add_subdirectory(test/includes)
+
+# Setup some test-related bits.  We do this after going down the tree because we
+# need some of the targets.
 if(BUSTED_PRG)
   get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
@@ -176,15 +214,3 @@ if(BUSTED_PRG)
       -P ${CMAKE_MODULE_PATH}/RunUnittests.cmake
     DEPENDS nvim-test unittest-headers)
 endif()
-
-install(DIRECTORY runtime DESTINATION share/nvim)
-install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
-
-# Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
-# pseudo-tty when launching processes, because it can put many jobs in parallel
-# and eat-up all the available pseudo-ttys.  Unfortunately, that doesn't work
-# well with the legacy tests.  I have a branch that converts them to run under
-# CTest, but it needs a little more work.
-# add_custom_target(test
-#   COMMAND ${MAKE_PRG} -C ${CMAKE_CURRENT_SOURCE_DIR}/src/nvim/testdir
-#     VIMPROG=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nvim)
