@@ -4309,7 +4309,7 @@ did_set_string_option (
     }
 
     if (errmsg == NULL) {
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_buffer == curbuf && wp->w_p_spell) {
           errmsg = did_set_spelllang(wp);
           break;
@@ -5068,7 +5068,7 @@ set_bool_option (
   /* There can be only one window with 'previewwindow' set. */
   else if ((int *)varp == &curwin->w_p_pvw) {
     if (curwin->w_p_pvw) {
-      FOR_ALL_WINDOWS(win) {
+      FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
         if (win->w_p_pvw && win != curwin) {
           curwin->w_p_pvw = FALSE;
           return (char_u *)N_("E590: A preview window already exists");

@@ -1217,7 +1217,7 @@ check_changed_any (
   /* curbuf */
   bufnrs[bufnum++] = curbuf->b_fnum;
   /* buf in curtab */
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != curbuf) {
       add_bufnum(bufnrs, &bufnum, wp->w_buffer->b_fnum);
     }

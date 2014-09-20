@@ -519,8 +519,6 @@ EXTERN win_T    *firstwin;              /* first window */
 EXTERN win_T    *lastwin;               /* last window */
 EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
 # define W_NEXT(wp) ((wp)->w_next)
-# define FOR_ALL_WINDOWS(wp) \
-   FOR_ALL_WINDOWS_IN_TAB(wp, curtab)
 /*
  * When using this macro "break" only breaks out of the inner loop. Use "goto"
  * to break out of the tabpage loop.

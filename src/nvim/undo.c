@@ -2191,7 +2191,7 @@ u_undo_end (
     u_add_time(msgbuf, sizeof(msgbuf), uhp->uh_time);
 
   {
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer == curbuf && wp->w_p_cole > 0) {
         redraw_win_later(wp, NOT_VALID);
       }

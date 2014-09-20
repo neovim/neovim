@@ -1382,7 +1382,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     win_T *wp = NULL;
 
     if (cmdmod.tab == 0) {
-      FOR_ALL_WINDOWS(wp2) {
+      FOR_ALL_WINDOWS_IN_TAB(wp2, curtab) {
         if (wp2->w_buffer != NULL && wp2->w_buffer->b_help) {
           wp = wp2;
           break;
@@ -1441,7 +1441,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
     if (ll_ref != NULL) {
       /* Find a window using the same location list that is not a
        * quickfix window. */
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_llist == ll_ref
             && wp->w_buffer->b_p_bt[0] != 'q') {
           usable_win = true;
@@ -1453,7 +1453,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
 
     if (!usable_win) {
       /* Locate a window showing a normal buffer */
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_buffer->b_p_bt[0] == NUL) {
           usable_win = true;
           break;
@@ -1502,7 +1502,7 @@ win_found:
         win = usable_win_ptr;
         if (win == NULL) {
           /* Find the window showing the selected file */
-          FOR_ALL_WINDOWS(wp) {
+          FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
             if (wp->w_buffer->b_fnum == qf_ptr->qf_fnum) {
               win = wp;
               break;
@@ -2217,7 +2217,7 @@ static int is_qf_win(win_T *win, qf_info_T *qi)
  */
 static win_T *qf_find_win(qf_info_T *qi)
 {
-  FOR_ALL_WINDOWS(win) {
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (is_qf_win(win, qi)) {
       return win;
     }
@@ -3507,7 +3507,7 @@ void ex_helpgrep(exarg_T *eap)
     qi = NULL;
 
     /* Find an existing help window */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_buffer != NULL && wp->w_buffer->b_help) {
         qi = wp->w_llist;
       }

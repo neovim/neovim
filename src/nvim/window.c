@@ -1037,7 +1037,7 @@ int win_valid(win_T *win)
 {
   if (win == NULL)
     return FALSE;
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp == win) {
       return TRUE;
     }
@@ -1052,7 +1052,7 @@ int win_count(void)
 {
   int count = 0;
 
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ++count;
   }
   return count;
@@ -1735,7 +1735,7 @@ bool one_window(void)
 {
   bool seen_one = false;
 
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp != aucmd_win) {
       if (seen_one) {
         return false;
@@ -3537,7 +3537,7 @@ static void win_enter_ext(win_T *wp, bool undo_sync, int curwin_invalid, int tri
  */
 win_T *buf_jump_open_win(buf_T *buf)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
       win_enter(wp, false);
       return wp;
@@ -3856,7 +3856,7 @@ void win_size_save(garray_T *gap)
 {
   ga_init(gap, (int)sizeof(int), 1);
   ga_grow(gap, win_count() * 2);
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ((int *)gap->ga_data)[gap->ga_len++] =
       wp->w_width + wp->w_vsep_width;
     ((int *)gap->ga_data)[gap->ga_len++] = wp->w_height;
@@ -3875,7 +3875,7 @@ void win_size_restore(garray_T *gap)
     for (int j = 0; j < 2; ++j)
     {
       int i = 0;
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         frame_setwidth(wp->w_frame, ((int *)gap->ga_data)[i++]);
         win_setheight_win(((int *)gap->ga_data)[i++], wp);
       }
@@ -4309,7 +4309,7 @@ void win_setminheight(void)
   while (p_wmh > 0) {
     /* TODO: handle vertical splits */
     room = -p_wh;
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       room += wp->w_height - p_wmh;
     }
     if (room >= 0)
@@ -5004,7 +5004,7 @@ int only_one_window(void)
   if (first_tabpage->tp_next != NULL)
     return FALSE;
 
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer != NULL
         && (!((wp->w_buffer->b_help && !curbuf->b_help)
               || wp->w_p_pvw
