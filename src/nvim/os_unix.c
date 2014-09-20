@@ -171,11 +171,6 @@ void mch_init(void)
   event_init();
 }
 
-static int get_x11_title(int test_only)
-{
-  return FALSE;
-}
-
 static int get_x11_icon(int test_only)
 {
   if (!test_only) {
@@ -190,7 +185,7 @@ static int get_x11_icon(int test_only)
 
 int mch_can_restore_title(void)
 {
-  return get_x11_title(TRUE);
+  return FALSE;
 }
 
 int mch_can_restore_icon(void)
@@ -226,10 +221,6 @@ void mch_settitle(char_u *title, char_u *icon)
    *	     than x11 calls, because the x11 calls don't always work
    */
   if ((type || *T_TS != NUL) && title != NULL) {
-    if (oldtitle == NULL
-        )                       /* first call but not in GUI, save title */
-      (void)get_x11_title(FALSE);
-
     if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
       term_settitle(title);
     did_set_title = TRUE;
