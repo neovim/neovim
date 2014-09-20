@@ -8025,7 +8025,7 @@ makeopens (
      * Remember the window number of the current window after restoring.
      */
     nr = 0;
-    for (wp = tab_firstwin; wp != NULL; wp = W_NEXT(wp)) {
+    for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp))
         ++nr;
       else

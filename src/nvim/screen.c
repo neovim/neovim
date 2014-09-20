@@ -6927,7 +6927,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     /* deletion will have messed up other windows */
     if (did_delete) {
       wp->w_redr_status = TRUE;
-      win_rest_invalid(W_NEXT(wp));
+      win_rest_invalid(wp->w_next);
     }
     return FAIL;
   }
