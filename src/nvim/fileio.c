@@ -6754,7 +6754,8 @@ apply_autocmds_group (
   --nesting;            /* see matching increment above */
 
   // When stopping to execute autocommands, restore the search patterns and
-  // the redo buffer.  Free buffers in the au_pending_free_buf list.
+  // the redo buffer. Free any buffers in the au_pending_free_buf list and
+  // free any windows in the au_pending_free_win list.
   if (!autocmd_busy) {
     restore_search_patterns();
     restoreRedobuff();
@@ -6763,6 +6764,11 @@ apply_autocmds_group (
       buf_T *b = au_pending_free_buf->b_next;
       free(au_pending_free_buf);
       au_pending_free_buf = b;
+    }
+    while (au_pending_free_win != NULL) {
+      win_T *w = au_pending_free_win->w_next;
+      free(au_pending_free_win);
+      au_pending_free_win = w;
     }
   }
 

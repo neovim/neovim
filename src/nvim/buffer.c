@@ -318,7 +318,7 @@ close_buffer (
   } else if (buf->b_p_bh[0] == 'u')     /* 'bufhidden' == "unload" */
     unload_buf = true;
 
-  if (win != NULL) {
+  if (win_valid(win)) {
     /* Set b_last_cursor when closing the last window for the buffer.
      * Remember the last cursor position and window options of the buffer.
      * This used to be only for the current window, but then options like
