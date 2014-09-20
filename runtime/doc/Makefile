@@ -323,7 +323,7 @@ manpages: $(MANPAGES)
 
 # Awk version of .txt to .html conversion.
 html: noerrors tags $(HTMLS)
-	@if test -f errors.log; then more errors.log; fi
+	@if test -f errors.log; then cat errors.log; fi
 
 noerrors:
 	-rm -f errors.log
