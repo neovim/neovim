@@ -47,12 +47,17 @@ DOCS = \
 	index.txt \
 	insert.txt \
 	intro.txt \
+	job_control.txt \
 	map.txt \
 	mbyte.txt \
 	message.txt \
 	mlang.txt \
 	motion.txt \
+	msgpack_rpc.txt \
 	netbeans.txt \
+	nvim_clipboard.txt \
+	nvim_intro.txt \
+	nvim_python.txt \
 	options.txt \
 	os_390.txt \
 	os_amiga.txt \
@@ -173,12 +178,17 @@ HTMLS = \
 	index.html \
 	insert.html \
 	intro.html \
+	job_control.html \
 	map.html \
 	mbyte.html \
 	message.html \
 	mlang.html \
 	motion.html \
+	msgpack_rpc.html \
 	netbeans.html \
+	nvim_clipboard.html \
+	nvim_intro.html \
+	nvim_python.html \
 	options.html \
 	os_390.html \
 	os_amiga.html \
