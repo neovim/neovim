@@ -178,6 +178,25 @@ if(BUSTED_PRG)
 endif()
 
 install(DIRECTORY runtime DESTINATION share/nvim)
+
+set(RUNTIME_PROGRAMS
+  runtime/macros/less.sh
+  runtime/tools/efm_filter.pl
+  runtime/tools/efm_perl.pl
+  runtime/tools/mve.awk
+  runtime/tools/pltags.pl
+  runtime/tools/ref
+  runtime/tools/shtags.pl
+  runtime/tools/vim132
+  runtime/tools/vimm
+  runtime/tools/vimspell.sh)
+
+foreach(program ${RUNTIME_PROGRAMS})
+  get_filename_component(program_dir ${program} PATH)
+  file(TO_CMAKE_PATH share/nvim/${program_dir} program_destination)
+  install(PROGRAMS ${program} DESTINATION ${program_destination})
+endforeach()
+
 install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
 
 # Unfortunately, the below does not work under Ninja.  Ninja doesn't use a
