@@ -1059,6 +1059,10 @@ EXTERN int typebuf_was_filled INIT(= FALSE);      /* received text from client
 EXTERN int term_is_xterm INIT(= FALSE);         /* xterm-like 'term' */
 #endif
 
+#if defined(UNIX)
+EXTERN int xterm_conflict_mouse INIT(= FALSE);
+#endif
+
 #ifdef BACKSLASH_IN_FILENAME
 EXTERN char psepc INIT(= '\\');         /* normal path separator character */
 EXTERN char psepcN INIT(= '/');         /* abnormal path separator character */
