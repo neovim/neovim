@@ -1858,8 +1858,8 @@ void changed_int(void)
   curbuf->b_changed = TRUE;
   ml_setflags(curbuf);
   check_status(curbuf);
+  need_maketitle = TRUE; // Set window title later.
   redraw_tabline = TRUE;
-  need_maketitle = TRUE;            /* set window title later */
 }
 
 
@@ -2200,8 +2200,8 @@ unchanged (
     if (ff)
       save_file_ff(buf);
     check_status(buf);
+    need_maketitle = TRUE; // Set window title later.
     redraw_tabline = TRUE;
-    need_maketitle = TRUE;          /* set window title later */
   }
   ++buf->b_changedtick;
 }

@@ -31,6 +31,7 @@
 #include "nvim/ascii.h"
 #include "nvim/term.h"
 #include "nvim/buffer.h"
+#include "nvim/title.h"
 #include "nvim/charset.h"
 #include "nvim/edit.h"
 #include "nvim/eval.h"

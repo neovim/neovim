@@ -75,6 +75,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
+#include "nvim/title.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
@@ -2469,13 +2470,13 @@ void set_title_defaults(void)
    */
   idx1 = findoption((char_u *)"title");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
-    val = mch_can_restore_title();
+    val = FALSE;
     options[idx1].def_val[VI_DEFAULT] = (char_u *)val;
     p_title = val;
   }
   idx1 = findoption((char_u *)"icon");
   if (idx1 >= 0 && !(options[idx1].flags & P_WAS_SET)) {
-    val = mch_can_restore_icon();
+    val = FALSE;
     options[idx1].def_val[VI_DEFAULT] = (char_u *)val;
     p_icon = val;
   }
@@ -3304,30 +3305,6 @@ static char_u *check_cedit(void)
 }
 
 /*
- * When changing 'title', 'titlestring', 'icon' or 'iconstring', call
- * maketitle() to create and display it.
- * When switching the title or icon off, call mch_restore_title() to get
- * the old value back.
- */
-static void 
-did_set_title (
-    int icon                   /* Did set icon instead of title */
-)
-{
-  if (starting != NO_SCREEN
-      ) {
-    maketitle();
-    if (icon) {
-      if (!p_icon)
-        mch_restore_title(2);
-    } else {
-      if (!p_title)
-        mch_restore_title(1);
-    }
-  }
-}
-
-/*
  * set_options_bin -  called when 'bin' changes value.
  */
 void 
@@ -3627,14 +3604,6 @@ static long_u *insecure_flag(int opt_idx, int opt_flags)
   return &options[opt_idx].flags;
 }
 
-
-/*
- * Redraw the window title and/or tab page text later.
- */
-static void redraw_titles(void) {
-  need_maketitle = TRUE;
-  redraw_tabline = TRUE;
-}
 
 /*
  * Set a string option to a new value (without checking the effect).
@@ -3958,7 +3927,8 @@ did_set_string_option (
         errmsg = e_invarg;
       else {
         /* May show a "+" in the title now. */
-        redraw_titles();
+        need_maketitle = TRUE; // Set window title later.
+        redraw_tabline = TRUE;
         /* Add 'fileencoding' to the swap file. */
         ml_setflags(curbuf);
       }
@@ -3970,7 +3940,8 @@ did_set_string_option (
       *varp = p;
       if (varp == &p_enc) {
         errmsg = mb_init();
-        redraw_titles();
+        need_maketitle = TRUE; // Set window title later.
+        redraw_tabline = TRUE;
       }
     }
 
@@ -4026,7 +3997,8 @@ did_set_string_option (
     else if (check_opt_strings(*varp, p_ff_values, FALSE) != OK)
       errmsg = e_invarg;
     else {
-      redraw_titles();
+      need_maketitle = TRUE; // Set window title later.
+      redraw_tabline = TRUE;
       /* update flag in swap file */
       ml_setflags(curbuf);
       /* Redraw needed when switching to/from "mac": a CR in the text
@@ -4227,8 +4199,17 @@ did_set_string_option (
       stl_syntax |= flagval;
     else
       stl_syntax &= ~flagval;
-    did_set_title(varp == &p_iconstring);
 
+    if (starting != NO_SCREEN) {
+      maketitle();
+      if (varp == &p_iconstring) {
+        if (!p_icon)
+          mch_restore_icon();
+      } else {
+        if (!p_title)
+          mch_restore_title();
+      }
+    }
   }
 
 
@@ -4346,7 +4327,8 @@ did_set_string_option (
         redraw_later(VALID);
       }
       curbuf->b_help = (curbuf->b_p_bt[0] == 'h');
-      redraw_titles();
+      need_maketitle = TRUE; // Set window title later.
+      redraw_tabline = TRUE;
     }
   }
   /* 'statusline' or 'rulerformat' */
@@ -4982,24 +4964,29 @@ set_bool_option (
     if (curbuf->b_p_ro)
       curbuf->b_did_warn = FALSE;
 
-    redraw_titles();
+    need_maketitle = TRUE; // Set window title later.
+    redraw_tabline = TRUE;
   }
   /* when 'modifiable' is changed, redraw the window title */
   else if ((int *)varp == &curbuf->b_p_ma) {
-    redraw_titles();
+    need_maketitle = TRUE; // Set window title later.
+    redraw_tabline = TRUE;
   }
   /* when 'endofline' is changed, redraw the window title */
   else if ((int *)varp == &curbuf->b_p_eol) {
-    redraw_titles();
+    need_maketitle = TRUE; // Set window title later.
+    redraw_tabline = TRUE;
   }
   /* when 'bomb' is changed, redraw the window title and tab page text */
   else if ((int *)varp == &curbuf->b_p_bomb) {
-    redraw_titles();
+    need_maketitle = TRUE; // Set window title later.
+    redraw_tabline = TRUE;
   }
   /* when 'bin' is set also set some other options */
   else if ((int *)varp == &curbuf->b_p_bin) {
     set_options_bin(old_value, curbuf->b_p_bin, opt_flags);
-    redraw_titles();
+    need_maketitle = TRUE; // Set window title later.
+    redraw_tabline = TRUE;
   }
   /* when 'buflisted' changes, trigger autocommands */
   else if ((int *)varp == &curbuf->b_p_bl && old_value != curbuf->b_p_bl) {
@@ -5086,13 +5073,23 @@ set_bool_option (
   }
   /* when 'title' changed, may need to change the title; same for 'icon' */
   else if ((int *)varp == &p_title) {
-    did_set_title(FALSE);
+    if (starting != NO_SCREEN) {
+      maketitle();
+      if (!p_title)
+        mch_restore_title();
+    }
   } else if ((int *)varp == &p_icon) {
-    did_set_title(TRUE);
+    if (starting != NO_SCREEN) {
+      maketitle();
+      if (!p_icon)
+        mch_restore_icon();
+
+    }
   } else if ((int *)varp == &curbuf->b_changed) {
     if (!value)
       save_file_ff(curbuf);             /* Buffer is unchanged */
-    redraw_titles();
+    need_maketitle = TRUE; // Set window title later.
+    redraw_tabline = TRUE;
     modified_was_set = value;
   }
 
@@ -6410,7 +6407,9 @@ void clear_termoptions(void)
    * screen will be cleared later, so this is OK.
    */
   mch_setmouse(FALSE);              /* switch mouse off */
-  mch_restore_title(3);             /* restore window titles */
+  mch_restore_title();              /* restore window titles */
+  mch_restore_icon();
+
   stoptermcap();                        /* stop termcap mode */
 
   free_termoptions();

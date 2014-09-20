@@ -270,8 +270,8 @@ void set_fileformat(int eol_style, int opt_flags)
 
   // This may cause the buffer to become (un)modified.
   check_status(curbuf);
+  need_maketitle = TRUE; // Set window title later.
   redraw_tabline = TRUE;
-  need_maketitle = TRUE;  // Set window title later.
 }
 
 /*

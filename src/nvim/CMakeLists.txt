@@ -48,6 +48,7 @@ set(CONV_SRCS
   misc2.c
   map.c
   profile.c
+  title.c
   os/env.c
   os/event.c
   os/job.c

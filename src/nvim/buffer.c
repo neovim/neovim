@@ -69,10 +69,12 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
+#include "nvim/title.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
+#include "nvim/title.h"
 
 #define HAVE_BUFLIST_MATCH
 
@@ -2290,7 +2292,7 @@ void buf_name_changed(buf_T *buf)
 
   if (curwin->w_buffer == buf)
     check_arg_idx(curwin);      /* check file name for arg list */
-  maketitle();                  /* set window title */
+  maketitle();                  // set window title
   status_redraw_all();          /* status lines need to be redrawn */
   fmarks_check_names(buf);      /* check named file marks */
   ml_timestamp(buf);            /* reset timestamp */
@@ -2554,210 +2556,6 @@ void col_print(char_u *buf, size_t buflen, int col, int vcol)
   else
     vim_snprintf((char *)buf, buflen, "%d-%d", col, vcol);
 }
-
-/*
- * put file name in title bar of window and in icon title
- */
-
-static char_u *lasttitle = NULL;
-static char_u *lasticon = NULL;
-
-void maketitle(void)
-{
-  char_u      *p;
-  char_u      *t_str = NULL;
-  char_u      *i_name;
-  char_u      *i_str = NULL;
-  int maxlen = 0;
-  int len;
-  int mustset;
-  char_u buf[IOSIZE];
-  int off;
-
-  if (!redrawing()) {
-    /* Postpone updating the title when 'lazyredraw' is set. */
-    need_maketitle = TRUE;
-    return;
-  }
-
-  need_maketitle = FALSE;
-  if (!p_title && !p_icon && lasttitle == NULL && lasticon == NULL)
-    return;
-
-  if (p_title) {
-    if (p_titlelen > 0) {
-      maxlen = p_titlelen * Columns / 100;
-      if (maxlen < 10)
-        maxlen = 10;
-    }
-
-    t_str = buf;
-    if (*p_titlestring != NUL) {
-      if (stl_syntax & STL_IN_TITLE) {
-        int use_sandbox = FALSE;
-        int save_called_emsg = called_emsg;
-
-        use_sandbox = was_set_insecurely((char_u *)"titlestring", 0);
-        called_emsg = FALSE;
-        build_stl_str_hl(curwin, t_str, sizeof(buf),
-            p_titlestring, use_sandbox,
-            0, maxlen, NULL, NULL);
-        if (called_emsg)
-          set_string_option_direct((char_u *)"titlestring", -1,
-              (char_u *)"", OPT_FREE, SID_ERROR);
-        called_emsg |= save_called_emsg;
-      } else
-        t_str = p_titlestring;
-    } else {
-      /* format: "fname + (path) (1 of 2) - VIM" */
-
-#define SPACE_FOR_FNAME (IOSIZE - 100)
-#define SPACE_FOR_DIR   (IOSIZE - 20)
-#define SPACE_FOR_ARGNR (IOSIZE - 10)  /* at least room for " - VIM" */
-      if (curbuf->b_fname == NULL)
-        STRLCPY(buf, _("[No Name]"), SPACE_FOR_FNAME + 1);
-      else {
-        p = transstr(path_tail(curbuf->b_fname));
-        STRLCPY(buf, p, SPACE_FOR_FNAME + 1);
-        free(p);
-      }
-
-      switch (bufIsChanged(curbuf)
-              + (curbuf->b_p_ro * 2)
-              + (!curbuf->b_p_ma * 4)) {
-      case 1: STRCAT(buf, " +"); break;
-      case 2: STRCAT(buf, " ="); break;
-      case 3: STRCAT(buf, " =+"); break;
-      case 4:
-      case 6: STRCAT(buf, " -"); break;
-      case 5:
-      case 7: STRCAT(buf, " -+"); break;
-      }
-
-      if (curbuf->b_fname != NULL) {
-        /* Get path of file, replace home dir with ~ */
-        off = (int)STRLEN(buf);
-        buf[off++] = ' ';
-        buf[off++] = '(';
-        home_replace(curbuf, curbuf->b_ffname,
-            buf + off, SPACE_FOR_DIR - off, TRUE);
-#ifdef BACKSLASH_IN_FILENAME
-        /* avoid "c:/name" to be reduced to "c" */
-        if (isalpha(buf[off]) && buf[off + 1] == ':')
-          off += 2;
-#endif
-        /* remove the file name */
-        p = path_tail_with_sep(buf + off);
-        if (p == buf + off)
-          /* must be a help buffer */
-          STRLCPY(buf + off, _("help"), SPACE_FOR_DIR - off);
-        else
-          *p = NUL;
-
-        /* Translate unprintable chars and concatenate.  Keep some
-         * room for the server name.  When there is no room (very long
-         * file name) use (...). */
-        if (off < SPACE_FOR_DIR) {
-          p = transstr(buf + off);
-          STRLCPY(buf + off, p, SPACE_FOR_DIR - off + 1);
-          free(p);
-        } else {
-          STRLCPY(buf + off, "...", SPACE_FOR_ARGNR - off + 1);
-        }
-        STRCAT(buf, ")");
-      }
-
-      append_arg_number(curwin, buf, SPACE_FOR_ARGNR, FALSE);
-
-      STRCAT(buf, " - VIM");
-
-      if (maxlen > 0) {
-        /* make it shorter by removing a bit in the middle */
-        if (vim_strsize(buf) > maxlen)
-          trunc_string(buf, buf, maxlen, IOSIZE);
-      }
-    }
-  }
-  mustset = ti_change(t_str, &lasttitle);
-
-  if (p_icon) {
-    i_str = buf;
-    if (*p_iconstring != NUL) {
-      if (stl_syntax & STL_IN_ICON) {
-        int use_sandbox = FALSE;
-        int save_called_emsg = called_emsg;
-
-        use_sandbox = was_set_insecurely((char_u *)"iconstring", 0);
-        called_emsg = FALSE;
-        build_stl_str_hl(curwin, i_str, sizeof(buf),
-            p_iconstring, use_sandbox,
-            0, 0, NULL, NULL);
-        if (called_emsg)
-          set_string_option_direct((char_u *)"iconstring", -1,
-              (char_u *)"", OPT_FREE, SID_ERROR);
-        called_emsg |= save_called_emsg;
-      } else
-        i_str = p_iconstring;
-    } else {
-      if (buf_spname(curbuf) != NULL)
-        i_name = buf_spname(curbuf);
-      else                          /* use file name only in icon */
-        i_name = path_tail(curbuf->b_ffname);
-      *i_str = NUL;
-      /* Truncate name at 100 bytes. */
-      len = (int)STRLEN(i_name);
-      if (len > 100) {
-        len -= 100;
-        if (has_mbyte)
-          len += (*mb_tail_off)(i_name, i_name + len) + 1;
-        i_name += len;
-      }
-      STRCPY(i_str, i_name);
-      trans_characters(i_str, IOSIZE);
-    }
-  }
-
-  mustset |= ti_change(i_str, &lasticon);
-
-  if (mustset)
-    resettitle();
-}
-
-/*
- * Used for title and icon: Check if "str" differs from "*last".  Set "*last"
- * from "str" if it does.
- * Return TRUE when "*last" changed.
- */
-static int ti_change(char_u *str, char_u **last)
-{
-  if ((str == NULL) != (*last == NULL)
-      || (str != NULL && *last != NULL && STRCMP(str, *last) != 0)) {
-    free(*last);
-    if (str == NULL)
-      *last = NULL;
-    else
-      *last = vim_strsave(str);
-    return TRUE;
-  }
-  return FALSE;
-}
-
-/*
- * Put current window title back (used after calling a shell)
- */
-void resettitle(void)
-{
-  mch_settitle(lasttitle, lasticon);
-}
-
-# if defined(EXITFREE) || defined(PROTO)
-void free_titles(void)
-{
-  free(lasttitle);
-  free(lasticon);
-}
-
-# endif
 
 
 /*
@@ -3520,7 +3318,7 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
  * Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
  * Return TRUE if it was appended.
  */
-static int 
+int
 append_arg_number (
     win_T *wp,
     char_u *buf,

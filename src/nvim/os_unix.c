@@ -78,7 +78,6 @@ static int selinux_enabled = -1;
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os_unix.c.generated.h"
 #endif
-static char_u   *oldtitle = NULL;
 static int did_set_title = FALSE;
 static char_u   *oldicon = NULL;
 static int did_set_icon = FALSE;
@@ -144,11 +143,6 @@ void mch_suspend(void)
   }
 # endif
 
-  /*
-   * Set oldtitle to NULL, so the current title is obtained again.
-   */
-  free(oldtitle);
-  oldtitle = NULL;
   settmode(TMODE_RAW);
   need_check_timestamps = TRUE;
   did_check_timestamps = FALSE;
@@ -171,31 +165,16 @@ void mch_init(void)
   event_init();
 }
 
-static int get_x11_title(int test_only)
-{
-  return FALSE;
-}
-
 static int get_x11_icon(int test_only)
 {
   if (!test_only) {
+    // If builtin term, strip leading "builtin_" from term name
     if (STRNCMP(T_NAME, "builtin_", 8) == 0)
       oldicon = vim_strsave(T_NAME + 8);
     else
       oldicon = vim_strsave(T_NAME);
   }
   return FALSE;
-}
-
-
-int mch_can_restore_title(void)
-{
-  return get_x11_title(TRUE);
-}
-
-int mch_can_restore_icon(void)
-{
-  return get_x11_icon(TRUE);
 }
 
 /*
@@ -226,18 +205,13 @@ void mch_settitle(char_u *title, char_u *icon)
    *	     than x11 calls, because the x11 calls don't always work
    */
   if ((type || *T_TS != NUL) && title != NULL) {
-    if (oldtitle == NULL
-        )                       /* first call but not in GUI, save title */
-      (void)get_x11_title(FALSE);
-
     if (*T_TS != NUL)                   /* it's OK if t_fs is empty */
       term_settitle(title);
     did_set_title = TRUE;
   }
 
   if ((type || *T_CIS != NUL) && icon != NULL) {
-    if (oldicon == NULL
-        )                       /* first call, save icon */
+    if (oldicon == NULL)                       /* first call, save icon */
       get_x11_icon(FALSE);
 
     if (*T_CIS != NUL) {
@@ -252,18 +226,17 @@ void mch_settitle(char_u *title, char_u *icon)
 }
 
 /*
- * Restore the window/icon title.
- * "which" is one of:
- *  1  only restore title
- *  2  only restore icon
- *  3  restore title and icon
+ * Restore the window title.
  */
-void mch_restore_title(int which)
-{
-  /* only restore the title or icon when it has been set */
-  mch_settitle(((which & 1) && did_set_title) ?
-      (oldtitle ? oldtitle : p_titleold) : NULL,
-      ((which & 2) && did_set_icon) ? oldicon : NULL);
+void mch_restore_title(void) {
+  mch_settitle(p_titleold, NULL);
+}
+
+/*
+ * Restore the window icon.
+ */
+void mch_restore_icon(void) {
+  mch_settitle(NULL, oldicon);
 }
 
 
@@ -490,7 +463,6 @@ void mch_early_init(void)
 #if defined(EXITFREE) || defined(PROTO)
 void mch_free_mem(void)
 {
-  free(oldtitle);
   free(oldicon);
 }
 
@@ -528,7 +500,9 @@ void mch_exit(int r)
 
   {
     settmode(TMODE_COOK);
-    mch_restore_title(3);       /* restore xterm title and icon name */
+    mch_restore_title();        /* restore xterm title and icon name */
+    mch_restore_icon();
+
     /*
      * When t_ti is not empty but it doesn't cause swapping terminal
      * pages, need to output a newline when msg_didout is set.  But when

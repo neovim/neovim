@@ -39,6 +39,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/term.h"
+#include "nvim/title.h"
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"

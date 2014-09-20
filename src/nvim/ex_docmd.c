@@ -61,6 +61,7 @@
 #include "nvim/syntax.h"
 #include "nvim/tag.h"
 #include "nvim/term.h"
+#include "nvim/title.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/version.h"
@@ -5383,10 +5384,11 @@ static void ex_stop(exarg_T *eap)
     out_flush();
     stoptermcap();
     out_flush();                /* needed for SUN to restore xterm buffer */
-    mch_restore_title(3);       /* restore window titles */
+    mch_restore_title();        /* restore window titles */
+    mch_restore_icon();
     ui_suspend();               /* call machine specific function */
     maketitle();
-    resettitle();               /* force updating the title */
+    force_update_title();       /* force updating the title */
     starttermcap();
     scroll_start();             /* scroll screen before redrawing */
     redraw_later_clear();
