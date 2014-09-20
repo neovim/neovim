@@ -438,7 +438,7 @@ static int pstrcmp(const void *a, const void *b)
 }
 #endif
 
-/// Checks if a path has a character expandpath can expand.
+/// Checks if a path has a character path_expand can expand.
 /// @param p  The path to expand.
 /// @returns Unix: True if it contains one of *?[{.
 /// @returns Windows: True if it contains one of *?[.
@@ -463,37 +463,39 @@ bool path_has_exp_wildcard(const char_u *p)
   return false;
 }
 
-/*
- * Recursively expand one path component into all matching files and/or
- * directories.  Adds matches to "gap".  Handles "*", "?", "[a-z]", "**", etc.
- * "path" has backslashes before chars that are not to be expanded, starting
- * at "path + wildoff".
- * Return the number of matches found.
- * NOTE: much of this is identical to dos_expandpath(), keep in sync!
- */
-int 
-unix_expandpath (
-    garray_T *gap,
-    char_u *path,
-    int wildoff,
-    int flags,                      /* EW_* flags */
-    int didstar                    /* expanded "**" once already */
-)
+/// Recursively expands one path component into all matching files and/or
+/// directories. Handles "*", "?", "[a-z]", "**", etc.
+/// @remark "**" in `path` requests recursive expansion.
+///
+/// @param[out] gap  The matches found.
+/// @param path     The path to search.
+/// @param flags    Flags for regexp expansion.
+///   - EW_ICASE: Ignore case.
+///   - EW_NOERROR: Silence error messeges.
+///   - EW_NOTWILD: Add matches literally.
+/// @returns the number of matches found.
+static size_t path_expand(garray_T *gap, const char_u *path, int flags)
+  FUNC_ATTR_NONNULL_ALL
+{
+  return do_path_expand(gap, path, 0, flags, false);
+}
+
+/// Implementation of path_expand().
+///
+/// Chars before `path + wildoff` do not get expanded.
+static size_t do_path_expand(garray_T *gap, const char_u *path,
+                             size_t wildoff, int flags, bool didstar)
+  FUNC_ATTR_NONNULL_ALL
 {
   char_u      *buf;
-  char_u      *path_end;
   char_u      *p, *s, *e;
   int start_len = gap->ga_len;
   char_u      *pat;
-  regmatch_T regmatch;
   int starts_with_dot;
   int matches;
   int len;
   int starstar = FALSE;
   static int stardepth = 0;         /* depth for "**" expansion */
-
-  DIR         *dirp;
-  struct dirent *dp;
 
   /* Expanding "**" may take a long time, check for CTRL-C. */
   if (stardepth > 0) {
@@ -513,7 +515,7 @@ unix_expandpath (
   p = buf;
   s = buf;
   e = NULL;
-  path_end = path;
+  const char_u *path_end = path;
   while (*path_end != NUL) {
     /* May ignore a wildcard that has a backslash before it; it will
      * be removed by rem_backslash() or file_pat_to_reg_pat() below. */
@@ -562,11 +564,14 @@ unix_expandpath (
     return 0;
   }
 
-  /* compile the regexp into a program */
-  if (flags & EW_ICASE)
-    regmatch.rm_ic = TRUE;              /* 'wildignorecase' set */
-  else
-    regmatch.rm_ic = p_fic;     /* ignore case when 'fileignorecase' is set */
+  // compile the regexp into a program
+  regmatch_T regmatch;
+#if defined(UNIX)
+  // Ignore case if given 'wildignorecase', else respect 'fileignorecase'.
+  regmatch.rm_ic = (flags & EW_ICASE) || p_fic;
+#else
+  regmatch.rm_ic = true;  // Always ignore case on Windows.
+#endif
   if (flags & (EW_NOERROR | EW_NOTWILD))
     ++emsg_silent;
   regmatch.regprog = vim_regcomp(pat, RE_MAGIC);
@@ -585,26 +590,22 @@ unix_expandpath (
       && *path_end == '/') {
     STRCPY(s, path_end + 1);
     ++stardepth;
-    (void)unix_expandpath(gap, buf, (int)(s - buf), flags, TRUE);
+    (void)do_path_expand(gap, buf, (int)(s - buf), flags, TRUE);
     --stardepth;
   }
-
-  /* open the directory for scanning */
   *s = NUL;
-  dirp = opendir(*buf == NUL ? "." : (char *)buf);
 
-  /* Find all matching entries */
-  if (dirp != NULL) {
-    for (;; ) {
-      dp = readdir(dirp);
-      if (dp == NULL)
-        break;
-      if ((dp->d_name[0] != '.' || starts_with_dot)
-          && ((regmatch.regprog != NULL && vim_regexec(&regmatch,
-                   (char_u *)dp->d_name, (colnr_T)0))
+  Directory dir;
+  // open the directory for scanning
+  if (os_scandir(&dir, *buf == NUL ? "." : (char *)buf)) {
+    // Find all matching entries.
+    char_u *name;
+    while((name = (char_u *) os_scandir_next(&dir))) {
+      if ((name[0] != '.' || starts_with_dot)
+          && ((regmatch.regprog != NULL && vim_regexec(&regmatch, name, 0))
               || ((flags & EW_NOTWILD)
-                  && fnamencmp(path + (s - buf), dp->d_name, e - s) == 0))) {
-        STRCPY(s, dp->d_name);
+                  && fnamencmp(path + (s - buf), name, e - s) == 0))) {
+        STRCPY(s, name);
         len = STRLEN(buf);
 
         if (starstar && stardepth < 100) {
@@ -613,15 +614,15 @@ unix_expandpath (
           STRCPY(buf + len, "/**");
           STRCPY(buf + len + 3, path_end);
           ++stardepth;
-          (void)unix_expandpath(gap, buf, len + 1, flags, TRUE);
+          (void)do_path_expand(gap, buf, len + 1, flags, true);
           --stardepth;
         }
 
         STRCPY(buf + len, path_end);
-        if (path_has_exp_wildcard(path_end)) {       // handle more wildcards
+        if (path_has_exp_wildcard(path_end)) {      /* handle more wildcards */
           /* need to expand another component of the path */
           /* remove backslashes for the remaining components only */
-          (void)unix_expandpath(gap, buf, len + 1, flags, FALSE);
+          (void)do_path_expand(gap, buf, len + 1, flags, false);
         } else {
           /* no more wildcards, check if there is a match */
           /* remove backslashes for the remaining components only */
@@ -633,8 +634,7 @@ unix_expandpath (
         }
       }
     }
-
-    closedir(dirp);
+    os_closedir(&dir);
   }
 
   free(buf);
@@ -646,7 +646,6 @@ unix_expandpath (
         sizeof(char_u *), pstrcmp);
   return matches;
 }
-#endif
 
 /*
  * Moves "*psep" back to the previous path separator in "path".
@@ -1144,7 +1143,7 @@ gen_expand_wildcards (
           recursive = TRUE;
           did_expand_in_path = TRUE;
         } else
-          add_pat = mch_expandpath(&ga, p, flags);
+          add_pat = path_expand(&ga, p, flags);
       }
     }
 
@@ -1720,19 +1719,6 @@ int pathcmp(const char *p, const char *q, int maxlen)
   if (s == q)
     return -1;              /* no match */
   return 1;
-}
-
-/*
- * Expand a path into all matching files and/or directories.  Handles "*",
- * "?", "[a-z]", "**", etc.
- * "path" has backslashes before chars that are not to be expanded.
- * Returns the number of matches found.
- *
- * Uses EW_* flags
- */
-int mch_expandpath(garray_T *gap, char_u *path, int flags)
-{
-  return unix_expandpath(gap, path, 0, flags, FALSE);
 }
 
 /// Try to find a shortname by comparing the fullname with the current
