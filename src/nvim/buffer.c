@@ -2253,7 +2253,7 @@ setfname (
     }
     sfname = vim_strsave(sfname);
 #ifdef USE_FNAME_CASE
-    fname_case(sfname, 0);            /* set correct case for short file name */
+    path_fix_case(sfname);            /* set correct case for short file name */
 #endif
     free(buf->b_ffname);
     free(buf->b_sfname);

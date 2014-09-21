@@ -1617,11 +1617,66 @@ char_u *fix_fname(char_u *fname)
   fname = vim_strsave(fname);
 
 # ifdef USE_FNAME_CASE
-  fname_case(fname, 0);  // set correct case for file name
+  path_fix_case(fname);  // set correct case for file name
 # endif
 
   return fname;
 #endif
+}
+
+/// Set the case of the file name, if it already exists.  This will cause the
+/// file name to remain exactly the same.
+/// Only required for file systems where case is ignored and preserved.
+// TODO(SplinterOfChaos): Could also be used when mounting case-insensitive
+// file systems.
+void path_fix_case(char_u *name)
+  FUNC_ATTR_NONNULL_ALL
+{
+  FileInfo file_info;
+  if (!os_fileinfo_link((char *)name, &file_info)) {
+    return;
+  }
+
+  // Open the directory where the file is located.
+  char_u *slash = vim_strrchr(name, '/');
+  char_u *tail;
+  Directory dir;
+  bool ok;
+  if (slash == NULL) {
+    ok = os_scandir(&dir, ".");
+    tail = name;
+  } else {
+    *slash = NUL;
+    ok = os_scandir(&dir, (char *) name);
+    *slash = '/';
+    tail = slash + 1;
+  }
+
+  if (!ok) {
+    return;
+  }
+
+  char_u *entry;
+  while ((entry = (char_u *) os_scandir_next(&dir))) {
+    // Only accept names that differ in case and are the same byte
+    // length. TODO: accept different length name.
+    if (STRICMP(tail, entry) == 0 && STRLEN(tail) == STRLEN(entry)) {
+      char_u newname[MAXPATHL + 1];
+
+      // Verify the inode is equal.
+      STRLCPY(newname, name, MAXPATHL + 1);
+      STRLCPY(newname + (tail - name), entry,
+              MAXPATHL - (tail - name) + 1);
+      FileInfo file_info_new;
+      if (os_fileinfo_link((char *)newname, &file_info_new)
+          && os_fileinfo_id_equal(&file_info, &file_info_new)) {
+        STRCPY(tail, entry);
+        break;
+      }
+    }
+  }
+
+  os_closedir(&dir);
 }
 
 /*
