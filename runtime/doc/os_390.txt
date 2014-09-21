@@ -103,7 +103,6 @@ Disabled at compile time:
 
 Never tested:
     - Perl interface		(|perl|)
-    - Hangul input		(|hangul|)
     - Encryption support	(|encryption|)
     - Langmap			(|'langmap'|)
     - Python support		(|Python|)

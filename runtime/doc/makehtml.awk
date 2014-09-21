@@ -6,6 +6,13 @@ BEGIN   {
 	sample="no";
 	while ( getline ti <"tags.ref" > 0 ) {
 		nf=split(ti,tag,"	");
+		# as help.txt renders into index.html and index.txt -> vimindex.html,
+		# this hack is needed to get the links right to those pages.
+		if ( tag[2] == "index.txt" ) {
+			tag[2] = "vimindex.txt"
+		} else if ( tag[2]  == "help.txt" ) {
+			tag[2] = "index.txt"
+		}
 		tagkey[tag[1]]="yes";tagref[tag[1]]=tag[2];
 	}
 	skip_word["and"]="yes";

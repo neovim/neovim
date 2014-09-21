@@ -9,10 +9,6 @@ AWK = awk
 # Set to $(VIMTARGET) when executed from src/Makefile.
 VIMEXE = vim
 
-# include the config.mk from the source directory.  It's only needed to set
-# AWK, used for "make html".  Comment this out if the include gives problems.
-include ../../src/auto/config.mk
-
 DOCS = \
 	arabic.txt \
 	autocmd.txt \
@@ -34,7 +30,6 @@ DOCS = \
 	gui_w16.txt \
 	gui_w32.txt \
 	gui_x11.txt \
-	hangulin.txt \
 	hebrew.txt \
 	help.txt \
 	helphelp.txt \
@@ -52,12 +47,17 @@ DOCS = \
 	index.txt \
 	insert.txt \
 	intro.txt \
+	job_control.txt \
 	map.txt \
 	mbyte.txt \
 	message.txt \
 	mlang.txt \
 	motion.txt \
+	msgpack_rpc.txt \
 	netbeans.txt \
+	nvim_clipboard.txt \
+	nvim_intro.txt \
+	nvim_python.txt \
 	options.txt \
 	os_390.txt \
 	os_amiga.txt \
@@ -162,7 +162,6 @@ HTMLS = \
 	gui_w16.html \
 	gui_w32.html \
 	gui_x11.html \
-	hangulin.html \
 	hebrew.html \
 	helphelp.html \
 	howto.html \
@@ -179,12 +178,17 @@ HTMLS = \
 	index.html \
 	insert.html \
 	intro.html \
+	job_control.html \
 	map.html \
 	mbyte.html \
 	message.html \
 	mlang.html \
 	motion.html \
+	msgpack_rpc.html \
 	netbeans.html \
+	nvim_clipboard.html \
+	nvim_intro.html \
+	nvim_python.html \
 	options.html \
 	os_390.html \
 	os_amiga.html \
@@ -270,32 +274,43 @@ HTMLS = \
 	windows.html \
 	workshop.html
 
-CONVERTED = \
-	vim-fr.UTF-8.1 \
-	evim-fr.UTF-8.1 \
-	vimdiff-fr.UTF-8.1 \
-	vimtutor-fr.UTF-8.1 \
-	xxd-fr.UTF-8.1 \
-	vim-it.UTF-8.1 \
-	evim-it.UTF-8.1 \
-	vimdiff-it.UTF-8.1 \
-	vimtutor-it.UTF-8.1 \
-	xxd-it.UTF-8.1 \
-	vim-pl.UTF-8.1 \
-	evim-pl.UTF-8.1 \
-	vimdiff-pl.UTF-8.1 \
-	vimtutor-pl.UTF-8.1 \
-	xxd-pl.UTF-8.1 \
-	vim-ru.UTF-8.1 \
-	evim-ru.UTF-8.1 \
-	vimdiff-ru.UTF-8.1 \
-	vimtutor-ru.UTF-8.1 \
-	xxd-ru.UTF-8.1
+MANPAGES = \
+	manpages/vim.man \
+	manpages/evim.man \
+	manpages/vimdiff.man \
+	manpages/vimtutor.man \
+	manpages/xxd.man \
+	manpages/de/vim-de.man \
+	manpages/fr/vim-fr.man \
+	manpages/fr/evim-fr.man \
+	manpages/fr/vimdiff-fr.man \
+	manpages/fr/vimtutor-fr.man \
+	manpages/fr/xxd-fr.man \
+	manpages/pl/vim-pl.man \
+	manpages/pl/evim-pl.man \
+	manpages/pl/vimdiff-pl.man \
+	manpages/pl/vimtutor-pl.man \
+	manpages/pl/xxd-pl.man \
+	manpages/it/vim-it.man \
+	manpages/it/evim-it.man \
+	manpages/it/vimdiff-it.man \
+	manpages/it/vimtutor-it.man \
+	manpages/it/xxd-it.man \
+	manpages/ru/vim-ru.man \
+	manpages/ru/evim-ru.man \
+	manpages/ru/vimdiff-ru.man \
+	manpages/ru/vimtutor-ru.man \
+	manpages/ru/xxd-ru.man \
+	manpages/ja/vim-ja.man \
+	manpages/ja/evim-ja.man \
+	manpages/ja/vimdiff-ja.man \
+	manpages/ja/vimtutor-ja.man \
+	manpages/ja/xxd-ja.man
 
 .SUFFIXES:
-.SUFFIXES: .c .o .txt .html
+.SUFFIXES: .c .o .txt .html .1 .man
 
-all: tags vim.man evim.man vimdiff.man vimtutor.man xxd.man $(CONVERTED)
+all: tags manpages html
 
 # Use Vim to generate the tags file.  Can only be used when Vim has been
 # compiled and installed.  Supports multiple languages.
@@ -310,28 +325,15 @@ tags: doctags $(DOCS)
 doctags: doctags.c
 	$(CC) doctags.c -o doctags
 
-vim.man: vim.1
-	nroff -man vim.1 | sed -e s/.//g > vim.man
+manpages: $(MANPAGES)
 
-evim.man: evim.1
-	nroff -man evim.1 | sed -e s/.//g > evim.man
-
-vimdiff.man: vimdiff.1
-	nroff -man vimdiff.1 | sed -e s/.//g > vimdiff.man
-
-vimtutor.man: vimtutor.1
-	nroff -man vimtutor.1 | sed -e s/.//g > vimtutor.man
-
-xxd.man: xxd.1
-	nroff -man xxd.1 | sed -e s/.//g > xxd.man
-
-uganda.nsis.txt: uganda.txt
-	sed -e 's/[ 	]*\*[-a-zA-Z0-9.]*\*//g' -e 's/vim:tw=78://' \
-		uganda.txt | uniq >uganda.nsis.txt
+# OSX groff dosn't support utf-8 as input encoding, so this won't work there.
+.1.man:
+	groff -k -mandoc -Tutf8 $< | sed -e s/.^H//g > $@
 
 # Awk version of .txt to .html conversion.
 html: noerrors tags $(HTMLS)
-	@if test -f errors.log; then more errors.log; fi
+	@if test -f errors.log; then cat errors.log; fi
 
 noerrors:
 	-rm -f errors.log
@@ -359,119 +361,5 @@ perlhtml: tags $(DOCS)
 	./vim2html.pl tags $(DOCS)
 
 clean:
-	-rm doctags *.html tags.ref
+	-rm -f doctags *.html tags.ref $(MANPAGES) $(HTMLS) errors.log
 
-# These files are in the extra archive, skip if not present
-
-arabic.txt:
-	touch arabic.txt
-
-farsi.txt:
-	touch farsi.txt
-
-hebrew.txt:
-	touch hebrew.txt
-
-russian.txt:
-	touch russian.txt
-
-gui_w16.txt:
-	touch gui_w16.txt
-
-gui_w32.txt:
-	touch gui_w32.txt
-
-if_ole.txt:
-	touch if_ole.txt
-
-os_390.txt:
-	touch os_390.txt
-
-os_amiga.txt:
-	touch os_amiga.txt
-
-os_beos.txt:
-	touch os_beos.txt
-
-os_dos.txt:
-	touch os_dos.txt
-
-os_mac.txt:
-	touch os_mac.txt
-
-os_mint.txt:
-	touch os_mint.txt
-
-os_os2.txt:
-	touch os_os2.txt
-
-os_qnx.txt:
-	touch os_qnx.txt
-
-os_risc.txt:
-	touch os_risc.txt
-
-os_win32.txt:
-	touch os_win32.txt
-
-# Note that $< works with GNU make while $> works for BSD make.
-# Is there a solution that works for both??
-vim-fr.UTF-8.1: vim-fr.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-evim-fr.UTF-8.1: evim-fr.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-vimdiff-fr.UTF-8.1: vimdiff-fr.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-vimtutor-fr.UTF-8.1: vimtutor-fr.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-xxd-fr.UTF-8.1: xxd-fr.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-vim-it.UTF-8.1: vim-it.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-evim-it.UTF-8.1: evim-it.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-vimdiff-it.UTF-8.1: vimdiff-it.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-vimtutor-it.UTF-8.1: vimtutor-it.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-xxd-it.UTF-8.1: xxd-it.1
-	iconv -f latin1 -t utf-8 $< >$@
-
-vim-pl.UTF-8.1: vim-pl.1
-	iconv -f latin2 -t utf-8 $< >$@
-
-evim-pl.UTF-8.1: evim-pl.1
-	iconv -f latin2 -t utf-8 $< >$@
-
-vimdiff-pl.UTF-8.1: vimdiff-pl.1
-	iconv -f latin2 -t utf-8 $< >$@
-
-vimtutor-pl.UTF-8.1: vimtutor-pl.1
-	iconv -f latin2 -t utf-8 $< >$@
-
-xxd-pl.UTF-8.1: xxd-pl.1
-	iconv -f latin2 -t utf-8 $< >$@
-
-vim-ru.UTF-8.1: vim-ru.1
-	iconv -f KOI8-R -t utf-8 $< >$@
-
-evim-ru.UTF-8.1: evim-ru.1
-	iconv -f KOI8-R -t utf-8 $< >$@
-
-vimdiff-ru.UTF-8.1: vimdiff-ru.1
-	iconv -f KOI8-R -t utf-8 $< >$@
-
-vimtutor-ru.UTF-8.1: vimtutor-ru.1
-	iconv -f KOI8-R -t utf-8 $< >$@
-
-xxd-ru.UTF-8.1: xxd-ru.1
-	iconv -f KOI8-R -t utf-8 $< >$@
