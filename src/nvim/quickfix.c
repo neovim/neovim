@@ -798,6 +798,16 @@ qf_init_end:
   return retval;
 }
 
+static void qf_store_title(qf_info_T *qi, char_u *title)
+{
+  if (title != NULL) {
+    char_u *p = xmalloc(STRLEN(title) + 2);
+
+    qi->qf_lists[qi->qf_curlist].qf_title = p;
+    sprintf((char *)p, ":%s", (char *)title);
+  }
+}
+
 /*
  * Prepare for adding a new quickfix list.
  */
@@ -805,11 +815,9 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
 {
   int i;
 
-  /*
-   * If the current entry is not the last entry, delete entries below
-   * the current entry.  This makes it possible to browse in a tree-like
-   * way with ":grep'.
-   */
+  // If the current entry is not the last entry, delete entries beyond
+  // the current entry.  This makes it possible to browse in a tree-like
+  // way with ":grep'.
   while (qi->qf_listcount > qi->qf_curlist + 1)
     qf_free(qi, --qi->qf_listcount);
 
@@ -825,12 +833,7 @@ static void qf_new_list(qf_info_T *qi, char_u *qf_title)
   } else
     qi->qf_curlist = qi->qf_listcount++;
   memset(&qi->qf_lists[qi->qf_curlist], 0, (size_t)(sizeof(qf_list_T)));
-  if (qf_title != NULL) {
-    char_u *p = xmalloc(STRLEN(qf_title) + 2);
-
-    qi->qf_lists[qi->qf_curlist].qf_title = p;
-    sprintf((char *)p, ":%s", (char *)qf_title);
-  }
+  qf_store_title(qi, qf_title);
 }
 
 /*
@@ -2124,8 +2127,9 @@ void ex_copen(exarg_T *eap)
    */
   qf_fill_buffer(qi);
 
-  if (qi->qf_lists[qi->qf_curlist].qf_title != NULL)
-    qf_set_title(qi);
+  if (qi->qf_lists[qi->qf_curlist].qf_title != NULL) {
+    qf_set_title_var(qi);
+  }
 
   curwin->w_cursor.lnum = qi->qf_lists[qi->qf_curlist].qf_index;
   curwin->w_cursor.col = 0;
@@ -2263,7 +2267,7 @@ static void qf_update_buffer(qf_info_T *qi)
         && (win = qf_find_win(qi)) != NULL) {
       curwin_save = curwin;
       curwin = win;
-      qf_set_title(qi);
+      qf_set_title_var(qi);
       curwin = curwin_save;
 
     }
@@ -2275,7 +2279,7 @@ static void qf_update_buffer(qf_info_T *qi)
   }
 }
 
-static void qf_set_title(qf_info_T *qi)
+static void qf_set_title_var(qf_info_T *qi)
 {
   set_internal_string_var((char_u *)"w:quickfix_title",
       qi->qf_lists[qi->qf_curlist].qf_title);
@@ -3302,8 +3306,10 @@ int set_errorlist(win_T *wp, list_T *list, int action, char_u *title)
     for (prevp = qi->qf_lists[qi->qf_curlist].qf_start;
          prevp->qf_next != prevp; prevp = prevp->qf_next)
       ;
-  else if (action == 'r')
+  else if (action == 'r') {
     qf_free(qi, qi->qf_curlist);
+    qf_store_title(qi, title);
+  }
 
   for (li = list->lv_first; li != NULL; li = li->li_next) {
     if (li->li_tv.v_type != VAR_DICT)
