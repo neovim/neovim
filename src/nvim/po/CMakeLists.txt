@@ -71,7 +71,7 @@ if(HAVE_WORKING_LIBINTL AND GETTEXT_FOUND AND XGETTEXT_PRG AND ICONV_PRG AND
           -P ${CMAKE_MODULE_PATH}/RunMsgfmt.cmake
       DEPENDS ${poFile} ${NVIM_POT})
 
-    install(
+    install_helper(
       FILES ${moFile}
       DESTINATION share/locale/${name}/LC_MESSAGES
       RENAME nvim.mo)
