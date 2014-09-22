@@ -14480,6 +14480,9 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 
     free(res);
   } else {
+    // res may contain several NULs before the final terminating one.
+    // Replace them with SOH (1) like in get_cmd_output() to avoid truncation.
+    memchrsub(res, NUL, 1, nread);
 #ifdef USE_CRNL
     // translate <CR><NL> into <NL>
     char *d = res;
