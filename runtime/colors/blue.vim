@@ -14,6 +14,7 @@ endif
 let g:colors_name = "blue"
 hi Normal		guifg=yellow	guibg=darkBlue	ctermfg=yellow	ctermbg=darkBlue
 hi NonText		guifg=magenta	ctermfg=lightMagenta
+hi EndofFile		guifg=magenta	ctermfg=lightMagenta
 hi comment		guifg=gray		ctermfg=gray	ctermbg=darkBlue	gui=bold 
 hi constant		guifg=cyan		ctermfg=cyan
 hi identifier	guifg=gray		ctermfg=red

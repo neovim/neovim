@@ -15,6 +15,7 @@ hi Scrollbar	  guifg=darkcyan guibg=cyan
 hi Menu			  guifg=black guibg=cyan
 hi SpecialKey	  term=bold  cterm=bold  ctermfg=darkred  guifg=#cc0000
 hi NonText		  term=bold  cterm=bold  ctermfg=darkred  gui=bold      guifg=#cc0000
+hi EndOfFile		  term=bold  cterm=bold  ctermfg=darkred  gui=bold      guifg=#cc0000
 hi Directory	  term=bold  cterm=bold  ctermfg=brown  guifg=#cc8000
 hi ErrorMsg		  term=standout  cterm=bold  ctermfg=grey  ctermbg=red  guifg=White  guibg=Red
 hi Search		  term=reverse  ctermfg=white  ctermbg=red      guifg=white  guibg=Red

@@ -32,6 +32,7 @@ hi LineNr		term=underline ctermfg=Yellow					guifg=Yellow
 hi ModeMsg		term=bold	   cterm=bold		  gui=bold
 hi MoreMsg		term=bold	   ctermfg=LightGreen gui=bold		guifg=SeaGreen
 hi NonText		term=bold	   ctermfg=Blue		  gui=bold		guifg=Blue
+hi EndOfFile		term=bold	   ctermfg=Blue		  gui=bold		guifg=Blue
 hi Question		term=standout  ctermfg=LightGreen gui=bold		guifg=Cyan
 hi SpecialKey	term=bold	   ctermfg=LightBlue  guifg=Cyan
 hi StatusLine	term=reverse,bold cterm=reverse   gui=NONE		guifg=White guibg=darkblue

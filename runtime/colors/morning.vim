@@ -31,6 +31,7 @@ hi Directory term=bold ctermfg=DarkBlue guifg=Blue
 hi LineNr term=underline ctermfg=Brown guifg=Brown
 hi MoreMsg term=bold ctermfg=DarkGreen gui=bold guifg=SeaGreen
 hi NonText term=bold ctermfg=Blue gui=bold guifg=Blue guibg=grey80
+hi EndOfFile term=bold ctermfg=Blue gui=bold guifg=Blue guibg=grey80
 hi Question term=standout ctermfg=DarkGreen gui=bold guifg=SeaGreen
 hi Search term=reverse ctermbg=Yellow ctermfg=NONE guibg=Yellow guifg=NONE
 hi SpecialKey term=bold ctermfg=DarkBlue guifg=Blue
