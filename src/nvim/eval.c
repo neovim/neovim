@@ -14426,17 +14426,10 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   // get input to the shell command (if any), and its length
-  char_u buf[NUMBUFLEN];
-  const char *input = NULL;
-  size_t input_len = 0;
-  if (argvars[1].v_type == VAR_LIST) {
-    input = write_list_to_string(argvars[1].vval.v_list, &input_len);
-  } else if (argvars[1].v_type != VAR_UNKNOWN) {
-    if ((input = (char *) get_tv_string_buf_chk(&argvars[1], buf))) {
-      input_len = strlen(input);
-    } else {
-      return;  // Type error handled in get_tv_string_buf_chk().
-    }
+  ssize_t input_len;
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len);
+  if (input_len == -1) {
+    return;
   }
 
   // get shell command to execute
@@ -14447,15 +14440,11 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   char *res = NULL;
   int status = os_system(cmd, input, input_len, &res, &nread);
 
-  if (argvars[1].v_type == VAR_LIST) {
-    free(input);
-  }
+  free(input);
 
   set_vim_var_nr(VV_SHELL_ERROR, (long) status);
 
   if (res == NULL) {
-    rettv->v_type = VAR_STRING;
-    rettv->vval.v_string = NULL;
     return;
   }
 
@@ -15135,24 +15124,54 @@ static bool write_list(FILE *fd, list_T *list, bool binary)
   return ret;
 }
 
-/// Like write_list, but to a string with an out-parameter for the length and
-/// always assumes binary.
-static char *write_list_to_string(list_T *list, size_t *len)
-  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL FUNC_ATTR_NONNULL_RET
+/// Saves a typval_T as a string.
+///
+/// For lists, replaces NLs with NUL and separates items with NLs.
+///
+/// @param[in]  tv   A value to store as a string.
+/// @param[out] len  The length of the resulting string or -1 on error.
+/// @returns an allocated string if `tv` represents a VimL string, list, or
+///          number; NULL otherwise.
+static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
-  // Calculate the resulting length.
+  if (tv->v_type == VAR_UNKNOWN) {
+    *len = 0;
+    return NULL;
+  }
+
+  // For types other than list, let get_tv_string_buf_chk() get the value or
+  // print an error.
+  if (tv->v_type != VAR_LIST) {
+    char_u *ret = get_tv_string_chk(tv);
+    if (ret && (*len = STRLEN(ret))) {
+      ret = vim_strsave(ret);
+    } else {
+      ret = NULL;
+    }
+    if (tv->v_type != VAR_STRING) {
+      *len = -1;
+    }
+    return ret;
+  }
+
+  // Pre-calculate the resulting length.
   *len = 0;
+  list_T *list = tv->vval.v_list;
   for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
     *len += STRLEN(get_tv_string(&li->li_tv)) + 1;
   }
 
-  char *ret = xmallocz(*len);
-  char *end = ret;
+  if (*len == 0) {
+    return NULL;
+  }
+
+  char_u *ret = xmalloc(*len);
+  char_u *end = ret;
   for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
-    for (char *s = (char *) get_tv_string(&li->li_tv); *s != NUL; s++) {
+    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; s++) {
       *end++ = (*s == '\n') ? NUL : *s;
     }
-
     if (li->li_next != NULL) {
       *end++ = '\n';
     }
