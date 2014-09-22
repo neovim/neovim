@@ -5194,6 +5194,7 @@ static struct event_name {
   {"BufWritePost",    EVENT_BUFWRITEPOST},
   {"BufWritePre",     EVENT_BUFWRITEPRE},
   {"BufWriteCmd",     EVENT_BUFWRITECMD},
+  {"CmdPre",          EVENT_CMDPRE},
   {"CmdwinEnter",     EVENT_CMDWINENTER},
   {"CmdwinLeave",     EVENT_CMDWINLEAVE},
   {"ColorScheme",     EVENT_COLORSCHEME},
@@ -5269,7 +5270,7 @@ static AutoPat *first_autopat[NUM_EVENTS] =
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 static AutoPatCmd *active_apc_list = NULL; /* stack of active autocommands */
@@ -6625,7 +6626,8 @@ apply_autocmds_group (
         || event == EVENT_QUICKFIXCMDPRE
         || event == EVENT_COLORSCHEME
         || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_JOBACTIVITY)
+        || event == EVENT_JOBACTIVITY
+        || event == EVENT_CMDPRE)
       fname = vim_strsave(fname);
     else
       fname = FullName_save(fname, FALSE);

@@ -275,6 +275,8 @@ Name			triggered by ~
 |FileChangedShellPost|	After handling a file changed since editing started
 |FileChangedRO|		before making the first change to a read-only file
 
+|CmdPre|		before executing a command
+
 |ShellCmdPost|		after executing a shell command
 |ShellFilterPost|	after filtering with a shell command
 
@@ -466,6 +468,13 @@ BufWriteCmd			Before writing the whole buffer to a file.
 							*BufWritePost*
 BufWritePost			After writing the whole buffer to a file
 				(should undo the commands for BufWritePre).
+
+						        *CmdPre*
+CmdPre                          Before executing a command, either built-in or
+				user defined. The pattern is matched against the
+				command. Can be used to ensure some condition
+				is met before the command is executed.
+
 							*CmdwinEnter*
 CmdwinEnter			After entering the command-line window.
 				Useful for setting options specifically for

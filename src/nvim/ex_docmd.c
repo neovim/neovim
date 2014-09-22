@@ -1892,6 +1892,9 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   ea.cookie = cookie;
   ea.cstack = cstack;
 
+  // apply CmdPre autocommands
+  apply_autocmds(EVENT_CMDPRE, cmdnames[ea.cmdidx].cmd_name, NULL, false, NULL);
+
   if (USER_CMDIDX(ea.cmdidx)) {
     /*
      * Execute a user-defined command.
