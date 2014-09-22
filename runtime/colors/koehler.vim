@@ -45,6 +45,7 @@ hi TabLineFill	  term=bold,reverse  cterm=bold ctermfg=lightblue ctermbg=white g
 hi TabLineSel	  term=reverse	ctermfg=white ctermbg=lightblue guifg=white guibg=blue
 hi Underlined	  term=underline cterm=bold,underline ctermfg=lightblue guifg=lightblue gui=bold,underline
 hi Ignore		  ctermfg=black ctermbg=black guifg=black guibg=black
+hi link EndOfBuffer		NonText
 hi link IncSearch		Visual
 hi link String			Constant
 hi link Character		Constant

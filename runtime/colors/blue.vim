@@ -25,6 +25,8 @@ hi Underlined	guifg=cyan		ctermfg=cyan	gui=underline	cterm=underline
 hi label		guifg=yellow	ctermfg=yellow
 hi operator		guifg=orange	gui=bold	ctermfg=lightRed	ctermbg=darkBlue
 
+hi link EndOfBuffer NonText
+
 hi ErrorMsg		guifg=orange	guibg=darkBlue	ctermfg=lightRed
 hi WarningMsg	guifg=cyan		guibg=darkBlue	ctermfg=cyan	gui=bold
 hi ModeMsg		guifg=yellow	gui=NONE	ctermfg=yellow

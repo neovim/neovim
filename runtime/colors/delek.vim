@@ -43,6 +43,8 @@ hi VisualNOS  cterm=underline,bold gui=underline,bold
 hi WarningMsg ctermfg=DarkRed	   guifg=Red
 hi WildMenu   ctermfg=Black	   ctermbg=Yellow    guibg=Yellow guifg=Black
 
+hi link EndOfBuffer NonText
+
 " syntax highlighting
 hi Comment    cterm=NONE ctermfg=DarkRed     gui=NONE guifg=red2
 hi Constant   cterm=NONE ctermfg=DarkGreen   gui=NONE guifg=green3

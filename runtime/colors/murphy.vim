@@ -39,3 +39,5 @@ hi StatusLineNC term=reverse   cterm=reverse	  gui=NONE		guifg=white guibg=#3333
 hi Title		term=bold	   ctermfg=LightMagenta gui=bold	guifg=Pink
 hi WarningMsg	term=standout  ctermfg=LightRed   guifg=Red
 hi Visual		term=reverse   cterm=reverse	  gui=NONE		guifg=white guibg=darkgreen
+
+hi link EndOfBuffer NonText

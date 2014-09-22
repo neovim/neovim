@@ -45,6 +45,8 @@ hi DiffDelete term=bold ctermfg=Blue ctermbg=DarkCyan gui=bold guifg=Blue guibg=
 hi CursorColumn term=reverse ctermbg=Black guibg=grey40
 hi CursorLine term=underline cterm=underline guibg=grey40
 
+hi link EndOfBuffer NonText
+
 " Groups for syntax highlighting
 hi Constant term=underline ctermfg=Magenta guifg=#ffa0a0 guibg=grey5
 hi Special term=bold ctermfg=LightRed guifg=Orange guibg=grey5
