@@ -1900,7 +1900,6 @@ static char_u * do_one_cmd(char_u **cmdlinep,
       cmd_name = (char*)cmdnames[ea.cmdidx].cmd_name;
   }
   apply_autocmds(EVENT_CMDPRE, (char_u *)cmd_name, NULL, false, NULL);
-  free(cmd_name);
 
   if (USER_CMDIDX(ea.cmdidx)) {
     /*
