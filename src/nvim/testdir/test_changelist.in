@@ -1,0 +1,22 @@
+Test changelist position after splitting window
+Set 'undolevels' to make changelist for sourced file
+
+STARTTEST
+:so small.vim
+Gkylp:set ul=100
+Gylp:set ul=100
+gg
+:vsplit
+:try
+:  normal g;
+:  normal ggVGcpass
+:catch
+:  normal ggVGcfail
+:finally
+:  %w! test.out
+:endtry
+:qa!
+ENDTEST
+
+1
+2

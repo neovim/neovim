@@ -33,6 +33,7 @@ SCRIPTS := test_autoformat_join.out                                    \
            test106.out test107.out                                     \
            test_options.out                                            \
            test_listlbr.out test_listlbr_utf8.out                      \
+           test_changelist.out                                         \
            test_breakindent.out                                        \
            test_insertcount.out
 
