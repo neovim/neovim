@@ -62,8 +62,7 @@ static int diff_a_works = MAYBE;
 /// @param buf
 void diff_buf_delete(buf_T *buf)
 {
-  tabpage_T *tp;
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+  FOR_ALL_TABS(tp) {
     int i = diff_buf_idx_tp(buf, tp);
 
     if (i != DB_COUNT) {
@@ -175,8 +174,7 @@ static int diff_buf_idx_tp(buf_T *buf, tabpage_T *tp)
 /// @param buf
 void diff_invalidate(buf_T *buf)
 {
-  tabpage_T *tp;
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+  FOR_ALL_TABS(tp) {
     int i = diff_buf_idx_tp(buf, tp);
     if (i != DB_COUNT) {
       tp->tp_diff_invalid = TRUE;
@@ -197,8 +195,7 @@ void diff_mark_adjust(linenr_T line1, linenr_T line2, long amount,
                       long amount_after)
 {
   // Handle all tab pages that use the current buffer in a diff.
-  tabpage_T *tp;
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+  FOR_ALL_TABS(tp) {
     int idx = diff_buf_idx_tp(curbuf, tp);
     if (idx != DB_COUNT) {
       diff_mark_adjust_tp(tp, idx, line1, line2, amount, amount_after);
@@ -1819,8 +1816,7 @@ int diffopt_changed(void)
 
   // If "icase" or "iwhite" was added or removed, need to update the diff.
   if (diff_flags != diff_flags_new) {
-    tabpage_T *tp;
-    for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+    FOR_ALL_TABS(tp) {
       tp->tp_diff_invalid = TRUE;
     }
   }
@@ -2376,15 +2372,14 @@ static void diff_fold_update(diff_T *dp, int skip_idx)
 /// @param buf The buffer to check.
 ///
 /// @return TRUE if buffer "buf" is in diff-mode.
-int diff_mode_buf(buf_T *buf)
+bool diff_mode_buf(buf_T *buf)
 {
-  tabpage_T *tp;
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
+  FOR_ALL_TABS(tp) {
     if (diff_buf_idx_tp(buf, tp) != DB_COUNT) {
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /// Move "count" times in direction "dir" to the next diff block.

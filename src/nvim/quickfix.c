@@ -1466,11 +1466,7 @@ void qf_jump(qf_info_T *qi, int dir, int errornr, int forceit)
      * then search in other tabs.
      */
     if (!usable_win && (swb_flags & SWB_USETAB)) {
-      tabpage_T   *tp;
-      win_T       *wp;
-
-      FOR_ALL_TAB_WINDOWS(tp, wp)
-      {
+      FOR_ALL_TAB_WINDOWS(tp, wp) {
         if (wp->w_buffer->b_fnum == qf_ptr->qf_fnum) {
           goto_tabpage_win(tp, wp);
           usable_win = true;
@@ -2236,12 +2232,11 @@ static win_T *qf_find_win(qf_info_T *qi)
  */
 static buf_T *qf_find_buf(qf_info_T *qi)
 {
-  tabpage_T   *tp;
-  win_T       *win;
-
-  FOR_ALL_TAB_WINDOWS(tp, win)
-  if (is_qf_win(win, qi))
-    return win->w_buffer;
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    if (is_qf_win(win, qi)) {
+      return win->w_buffer;
+    }
+  }
 
   return NULL;
 }

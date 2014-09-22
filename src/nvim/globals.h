@@ -519,15 +519,19 @@ EXTERN win_T    *firstwin;              /* first window */
 EXTERN win_T    *lastwin;               /* last window */
 EXTERN win_T    *prevwin INIT(= NULL);  /* previous window */
 # define W_NEXT(wp) ((wp)->w_next)
-# define FOR_ALL_WINDOWS(wp) for (win_T *wp = firstwin; wp != NULL; wp = wp->w_next)
+# define FOR_ALL_WINDOWS(wp) \
+   FOR_ALL_WINDOWS_IN_TAB(wp, curtab)
 /*
  * When using this macro "break" only breaks out of the inner loop. Use "goto"
  * to break out of the tabpage loop.
  */
 # define FOR_ALL_TAB_WINDOWS(tp, wp) \
-  for ((tp) = first_tabpage; (tp) != NULL; (tp) = (tp)->tp_next) \
-    for ((wp) = ((tp) == curtab) \
-                ? firstwin : (tp)->tp_firstwin; (wp); (wp) = (wp)->w_next)
+  FOR_ALL_TABS(tp) \
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp)
+
+# define FOR_ALL_WINDOWS_IN_TAB(wp, tp) \
+  for (win_T *wp = ((tp) == curtab) \
+              ? firstwin : (tp)->tp_firstwin; wp != NULL; wp = wp->w_next)
 
 EXTERN win_T    *curwin;        /* currently active window */
 
@@ -547,6 +551,9 @@ EXTERN frame_T  *topframe;      /* top of the window frame tree */
 EXTERN tabpage_T    *first_tabpage;
 EXTERN tabpage_T    *curtab;
 EXTERN int redraw_tabline INIT(= FALSE);           /* need to redraw tabline */
+
+// Iterates over all tabs in the tab list
+# define FOR_ALL_TABS(tp) for (tabpage_T *tp = first_tabpage; tp != NULL; tp = tp->tp_next)
 
 /*
  * All buffers are linked in a list. 'firstbuf' points to the first entry,

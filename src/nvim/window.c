@@ -1674,13 +1674,12 @@ close_windows (
     int keep_curwin                    /* don't close "curwin" */
 )
 {
-  win_T       *wp;
   tabpage_T   *tp, *nexttp;
   int h = tabline_height();
 
   ++RedrawingDisabled;
 
-  for (wp = firstwin; wp != NULL && lastwin != firstwin; ) {
+  for (win_T *wp = firstwin; wp != NULL && lastwin != firstwin; ) {
     if (wp->w_buffer == buf && (!keep_curwin || wp != curwin)
         && !(wp->w_closing || wp->w_buffer->b_closing)
         ) {
@@ -1695,8 +1694,8 @@ close_windows (
   /* Also check windows in other tab pages. */
   for (tp = first_tabpage; tp != NULL; tp = nexttp) {
     nexttp = tp->tp_next;
-    if (tp != curtab)
-      for (wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next)
+    if (tp != curtab) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
         if (wp->w_buffer == buf
             && !(wp->w_closing || wp->w_buffer->b_closing)
             ) {
@@ -1707,6 +1706,8 @@ close_windows (
           nexttp = first_tabpage;
           break;
         }
+      }
+    }
   }
 
   --RedrawingDisabled;
@@ -1963,7 +1964,6 @@ int win_close(win_T *win, int free_buf)
  */
 void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
 {
-  win_T       *wp;
   int dir;
   tabpage_T   *ptp = NULL;
   int free_tp = FALSE;
@@ -1982,10 +1982,18 @@ void win_close_othertab(win_T *win, int free_buf, tabpage_T *tp)
     return;
 
   /* Autocommands may have closed the window already. */
-  for (wp = tp->tp_firstwin; wp != NULL && wp != win; wp = wp->w_next)
-    ;
-  if (wp == NULL)
-    return;
+  {
+    bool found_window = false;
+    FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+      if (wp == win) {
+         found_window = true;
+         break;
+      }
+    }
+    if (!found_window) {
+       return;
+    }
+  }
 
   /* When closing the last window in a tab page remove the tab page. */
   if (tp->tp_firstwin == tp->tp_lastwin) {
@@ -2986,14 +2994,14 @@ int make_tabpages(int maxcount)
 /*
  * Return TRUE when "tpc" points to a valid tab page.
  */
-int valid_tabpage(tabpage_T *tpc)
+bool valid_tabpage(tabpage_T *tpc)
 {
-  tabpage_T   *tp;
-
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
-    if (tp == tpc)
-      return TRUE;
-  return FALSE;
+  FOR_ALL_TABS(tp) {
+    if (tp == tpc) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /*
@@ -3285,14 +3293,11 @@ void win_goto(win_T *wp)
  */
 tabpage_T *win_find_tabpage(win_T *win)
 {
-  win_T       *wp;
-  tabpage_T   *tp;
-
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
-    for (wp = (tp == curtab ? firstwin : tp->tp_firstwin);
-         wp != NULL; wp = wp->w_next)
-      if (wp == win)
-        return tp;
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if (wp == win) {
+      return tp;
+    }
+  }
   return NULL;
 }
 
@@ -3549,28 +3554,36 @@ win_T *buf_jump_open_win(buf_T *buf)
  */
 win_T *buf_jump_open_tab(buf_T *buf)
 {
-  win_T       *wp;
-  tabpage_T   *tp;
 
-  /* First try the current tab page. */
-  wp = buf_jump_open_win(buf);
-  if (wp != NULL)
-    return wp;
+  // First try the current tab page.
+  {
+    win_T *wp = buf_jump_open_win(buf);
+    if (wp != NULL)
+      return wp;
+  }
 
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+  FOR_ALL_TABS(tp) {
+    // Skip the current tab since we already checked it.
     if (tp != curtab) {
-      for (wp = tp->tp_firstwin; wp != NULL; wp = wp->w_next)
-        if (wp->w_buffer == buf)
-          break;
-      if (wp != NULL) {
-        goto_tabpage_win(tp, wp);
-        if (curwin != wp)
-          wp = NULL;            /* something went wrong */
-        break;
+      FOR_ALL_WINDOWS_IN_TAB(wp, tp) {
+        if (wp->w_buffer == buf) {
+          goto_tabpage_win(tp, wp);
+
+          // If we the current window didn't switch,
+          // something went wrong.
+          if (curwin != wp) {
+            wp = NULL;
+          }
+
+          // Return the window we switched to.
+          return wp;
+        }
       }
     }
+  }
 
-  return wp;
+  // If we made it this far, we didn't find the buffer.
+  return NULL;
 }
 
 /*
@@ -4963,18 +4976,15 @@ int tabline_height(void)
  */
 int min_rows(void)
 {
-  int total;
-  tabpage_T   *tp;
-  int n;
-
   if (firstwin == NULL)         /* not initialized yet */
     return MIN_LINES;
 
-  total = 0;
-  for (tp = first_tabpage; tp != NULL; tp = tp->tp_next) {
-    n = frame_minheight(tp->tp_topframe, NULL);
-    if (total < n)
+  int total = 0;
+  FOR_ALL_TABS(tp) {
+    int n = frame_minheight(tp->tp_topframe, NULL);
+    if (total < n) {
       total = n;
+    }
   }
   total += tabline_height();
   total += 1;           /* count the room for the command line */
@@ -5014,16 +5024,15 @@ int only_one_window(void)
  */
 void check_lnums(int do_curwin)
 {
-  win_T       *wp;
-
-  tabpage_T   *tp;
-
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  if ((do_curwin || wp != curwin) && wp->w_buffer == curbuf) {
-    if (wp->w_cursor.lnum > curbuf->b_ml.ml_line_count)
-      wp->w_cursor.lnum = curbuf->b_ml.ml_line_count;
-    if (wp->w_topline > curbuf->b_ml.ml_line_count)
-      wp->w_topline = curbuf->b_ml.ml_line_count;
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    if ((do_curwin || wp != curwin) && wp->w_buffer == curbuf) {
+      if (wp->w_cursor.lnum > curbuf->b_ml.ml_line_count) {
+        wp->w_cursor.lnum = curbuf->b_ml.ml_line_count;
+      }
+      if (wp->w_topline > curbuf->b_ml.ml_line_count) {
+        wp->w_topline = curbuf->b_ml.ml_line_count;
+      }
+    }
   }
 }
 

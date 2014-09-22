@@ -452,13 +452,9 @@ void free_all_mem(void)
   p_hi = 0;
   init_history();
 
-  {
-    win_T       *win;
-    tabpage_T   *tab;
-
-    qf_free_all(NULL);
-    /* Free all location lists */
-    FOR_ALL_TAB_WINDOWS(tab, win)
+  qf_free_all(NULL);
+  /* Free all location lists */
+  FOR_ALL_TAB_WINDOWS(tab, win) {
     qf_free_all(win);
   }
 

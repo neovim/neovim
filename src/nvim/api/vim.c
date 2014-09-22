@@ -380,8 +380,6 @@ void vim_set_current_buffer(Buffer buffer, Error *err)
 ArrayOf(Window) vim_get_windows(void)
 {
   Array rv = ARRAY_DICT_INIT;
-  tabpage_T *tp;
-  win_T *wp;
 
   FOR_ALL_TAB_WINDOWS(tp, wp) {
     rv.size++;

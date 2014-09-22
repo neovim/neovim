@@ -514,13 +514,9 @@ void buf_freeall(buf_T *buf, int flags)
     reset_synblock(curwin);
 
   /* No folds in an empty buffer. */
-  {
-    win_T           *win;
-    tabpage_T       *tp;
-
-    FOR_ALL_TAB_WINDOWS(tp, win) {
-      if (win->w_buffer == buf)
-        clearFolding(win);
+  FOR_ALL_TAB_WINDOWS(tp, win) {
+    if (win->w_buffer == buf) {
+      clearFolding(win);
     }
   }
 
@@ -4206,8 +4202,6 @@ int read_viminfo_bufferlist(vir_T *virp, int writing)
 
 void write_viminfo_bufferlist(FILE *fp)
 {
-  win_T       *win;
-  tabpage_T   *tp;
   char_u      *line;
   int max_buffers;
 
@@ -4284,8 +4278,12 @@ char_u *buf_spname(buf_T *buf)
  */
 bool find_win_for_buf(buf_T *buf, win_T **wp, tabpage_T **tp)
 {
-  FOR_ALL_TAB_WINDOWS(*tp, *wp) {
-    if ((*wp)->w_buffer == buf) {
+  *wp = NULL;
+  *tp = NULL;
+  FOR_ALL_TAB_WINDOWS(tp2, wp2) {
+    if (wp2->w_buffer == buf) {
+      *tp = tp2;
+      *wp = wp2;
       return true;
     }
   }

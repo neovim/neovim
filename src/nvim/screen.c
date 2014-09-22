@@ -6263,7 +6263,6 @@ int screen_valid(int doclear)
 void screenalloc(bool doclear)
 {
   int new_row, old_row;
-  win_T           *wp;
   int outofmem = FALSE;
   int len;
   schar_T         *new_ScreenLines;
@@ -6275,7 +6274,6 @@ void screenalloc(bool doclear)
   unsigned        *new_LineOffset;
   char_u          *new_LineWraps;
   short           *new_TabPageIdxs;
-  tabpage_T       *tp;
   static int entered = FALSE;                   /* avoid recursiveness */
   static int done_outofmem_msg = FALSE;         /* did outofmem message */
   int retry_count = 0;
@@ -6328,8 +6326,9 @@ retry:
    * Continuing with the old ScreenLines may result in a crash, because the
    * size is wrong.
    */
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  win_free_lsize(wp);
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
+    win_free_lsize(wp);
+  }
   if (aucmd_win != NULL)
     win_free_lsize(aucmd_win);
 
@@ -6349,8 +6348,7 @@ retry:
   new_LineWraps = xmalloc((size_t)(Rows * sizeof(char_u)));
   new_TabPageIdxs = xmalloc((size_t)(Columns * sizeof(short)));
 
-  FOR_ALL_TAB_WINDOWS(tp, wp)
-  {
+  FOR_ALL_TAB_WINDOWS(tp, wp) {
     win_alloc_lines(wp);
   }
   if (aucmd_win != NULL && aucmd_win->w_lines == NULL) {
@@ -7632,7 +7630,6 @@ void unshowmode(int force)
 static void draw_tabline(void)
 {
   int tabcount = 0;
-  tabpage_T   *tp;
   int tabwidth;
   int col = 0;
   int scol = 0;
@@ -7675,8 +7672,9 @@ static void draw_tabline(void)
           (char_u *)"", OPT_FREE, SID_ERROR);
     called_emsg |= save_called_emsg;
   } else {
-    for (tp = first_tabpage; tp != NULL; tp = tp->tp_next)
+    FOR_ALL_TABS(tp) {
       ++tabcount;
+    }
 
     tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
     if (tabwidth < 6)
@@ -7685,8 +7683,12 @@ static void draw_tabline(void)
     attr = attr_nosel;
     tabcount = 0;
     scol = 0;
-    for (tp = first_tabpage; tp != NULL && col < Columns - 4;
-         tp = tp->tp_next) {
+
+    FOR_ALL_TABS(tp) {
+      if (col >= Columns - 4) {
+        break;
+      }
+
       scol = col;
 
       if (tp->tp_topframe == topframe)
