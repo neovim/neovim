@@ -1,8 +1,8 @@
 " Nvim plugin for loading python extensions via an external interpreter
-if exists("did_python_setup") || &cp
+if exists("loaded_python_setup") || &cp
   finish
 endif
-let did_python_setup = 1
+let loaded_python_setup = 1
 
 if exists('python_interpreter')
       \ && executable(g:python_interpreter)
