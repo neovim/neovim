@@ -33,6 +33,7 @@
 typedef struct {
   uint64_t request_id;
   bool errored;
+  bool returned;
   Object result;
 } ChannelCallFrame;
 
@@ -209,16 +210,17 @@ Object channel_send_call(uint64_t id,
   EventSource sources[] = {channel_source, NULL};
 
   // Push the frame
-  ChannelCallFrame frame = {request_id, false, NIL};
+  ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
-  size_t size = kv_size(channel->call_stack);
 
   do {
     event_poll(-1, sources);
   } while (
       // Continue running if ...
       channel->enabled &&  // the channel is still enabled
-      kv_size(channel->call_stack) >= size);  // the call didn't return
+      !frame.returned);  // the call didn't return
+
+  (void)kv_pop(channel->call_stack);
 
   if (frame.errored) {
     api_set_error(err, Exception, "%s", frame.result.data.string.data);
@@ -355,7 +357,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
       MSGPACK_UNPACK_SUCCESS) {
     if (kv_size(channel->call_stack) && is_rpc_response(&unpacked.data)) {
       if (is_valid_rpc_response(&unpacked.data, channel)) {
-        call_stack_pop(&unpacked.data, channel);
+        call_stack_return(&unpacked.data, channel);
       } else {
         char buf[256];
         snprintf(buf,
@@ -574,10 +576,12 @@ static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
                              kv_size(channel->call_stack) - 1)->request_id;
 }
 
-static void call_stack_pop(msgpack_object *obj, Channel *channel)
+static void call_stack_return(msgpack_object *obj, Channel *channel)
 {
-  ChannelCallFrame *frame = kv_pop(channel->call_stack);
+  ChannelCallFrame *frame = kv_A(channel->call_stack,
+      kv_size(channel->call_stack) - 1);
   frame->errored = obj->via.array.ptr[2].type != MSGPACK_OBJECT_NIL;
+  frame->returned = true;
 
   if (frame->errored) {
     msgpack_rpc_to_object(&obj->via.array.ptr[2], &frame->result);
@@ -589,8 +593,9 @@ static void call_stack_pop(msgpack_object *obj, Channel *channel)
 static void call_set_error(Channel *channel, char *msg)
 {
   for (size_t i = 0; i < kv_size(channel->call_stack); i++) {
-    ChannelCallFrame *frame = kv_pop(channel->call_stack);
+    ChannelCallFrame *frame = kv_A(channel->call_stack, i);
     frame->errored = true;
+    frame->returned = true;
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
