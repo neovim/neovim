@@ -5610,12 +5610,18 @@ static void spell_back_to_badword(void)
 int stop_arrow(void)
 {
   if (arrow_used) {
+    Insstart = curwin->w_cursor;  //new insertion starts here
+    if (Insstart.col > Insstart_orig.col && !ins_need_undo) {
+      // Don't update the original insert position when moved to the
+      // right, except when nothing was inserted yet.
+      update_Insstart_orig = FALSE;
+    }
+    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
+
     if (u_save_cursor() == OK) {
       arrow_used = FALSE;
       ins_need_undo = FALSE;
     }
-    Insstart = curwin->w_cursor;        /* new insertion starts here */
-    Insstart_textlen = (colnr_T)linetabsize(get_cursor_line_ptr());
     ai_col = 0;
     if (State & VREPLACE_FLAG) {
       orig_line_count = curbuf->b_ml.ml_line_count;
