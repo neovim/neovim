@@ -43,7 +43,11 @@ if(CMAKE_GENERATOR MATCHES "Makefiles")
   set(MAKE_PRG "$(MAKE)")
 endif()
 
-set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
+if(CMAKE_C_COMPILER_ARG1)
+  set(DEPS_C_COMPILER "${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1}")
+else()
+  set(DEPS_C_COMPILER "${CMAKE_C_COMPILER}")
+endif()
 
 include(ExternalProject)
 
