@@ -2948,7 +2948,7 @@ win_line (
                 && v >= (long)shl->startcol
                 && v < (long)shl->endcol) {
               shl->attr_cur = shl->attr;
-            } else if (v >= (long)shl->endcol) {
+            } else if (v >= (long)shl->endcol && shl->lnum == lnum) {
               shl->attr_cur = 0;
 
               next_search_hl(wp, shl, lnum, (colnr_T)v, cur);

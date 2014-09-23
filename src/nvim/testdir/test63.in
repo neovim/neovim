@@ -3,6 +3,7 @@ Test for ":match", ":2match", ":3match", "clearmatches()", "getmatches()",
 
 STARTTEST
 :so small.vim
+:set encoding=utf8
 :" --- Check that "matcharg()" returns the correct group and pattern if a match
 :" --- is defined.
 :let @r = "*** Test 1: "
@@ -164,7 +165,27 @@ STARTTEST
 :if v1 != v5 && v6 == v1 && v8 == v5 && v10 == v5 && v11 == v1
 :  let @r .= "OK\n"
 :else
-:  let @r .= "FAILED\n"
+:  let @r .= "FAILED: " . v5 . "/" . v6 . "/" . v8 . "/" . v10 . "/" . v11 . "\n"
+:endif
+:call clearmatches()
+:"
+:call setline(1, 'abcdΣabcdef')
+:call matchaddpos("MyGroup1", [[1, 4, 2], [1, 9, 2]])
+:1
+:redraw!
+:let v1 = screenattr(1, 1)
+:let v4 = screenattr(1, 4)
+:let v5 = screenattr(1, 5)
+:let v6 = screenattr(1, 6)
+:let v7 = screenattr(1, 7)
+:let v8 = screenattr(1, 8)
+:let v9 = screenattr(1, 9)
+:let v10 = screenattr(1, 10)
+:let @r .= string(getmatches())."\n"
+:if v1 != v4 && v5 == v4 && v6 == v1 && v7 == v1 && v8 == v4 && v9 == v4 && v10 == v1
+:  let @r .= "OK\n"
+:else
+:  let @r .= "FAILED: " . v4 . "/" . v5 . "/" . v6 . "/" . v7 . "/" . v8 . "/" . v9 . "/" . v10 . "\n"
 :endif
 :call clearmatches()
 G"rp

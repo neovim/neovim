@@ -12,3 +12,5 @@ Results of test63:
 *** Test 11:
 [{'group': 'MyGroup1', 'id': 3, 'priority': 10, 'pos1': [1, 5, 1], 'pos2': [1, 8, 3]}]
 OK
+[{'group': 'MyGroup1', 'id': 11, 'priority': 10, 'pos1': [1, 4, 2], 'pos2': [1, 9, 2]}]
+OK
