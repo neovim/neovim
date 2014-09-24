@@ -83,17 +83,17 @@ void free_homedir(void)
  */
 char_u *expand_env_save(char_u *src)
 {
-  return expand_env_save_opt(src, FALSE);
+  return expand_env_save_opt(src, false);
 }
 
 /*
  * Idem, but when "one" is TRUE handle the string as one file name, only
  * expand "~" at the start.
  */
-char_u *expand_env_save_opt(char_u *src, int one)
+char_u *expand_env_save_opt(char_u *src, bool one)
 {
   char_u *p = xmalloc(MAXPATHL);
-  expand_env_esc(src, p, MAXPATHL, FALSE, one, NULL);
+  expand_env_esc(src, p, MAXPATHL, false, one, NULL);
   return p;
 }
 
@@ -103,23 +103,23 @@ char_u *expand_env_save_opt(char_u *src, int one)
  * Skips over "\ ", "\~" and "\$" (not for Win32 though).
  * If anything fails no expansion is done and dst equals src.
  */
-void 
-expand_env (
+void
+expand_env(
     char_u *src,               /* input string e.g. "$HOME/vim.hlp" */
     char_u *dst,               /* where to put the result */
     int dstlen                     /* maximum length of the result */
 )
 {
-  expand_env_esc(src, dst, dstlen, FALSE, FALSE, NULL);
+  expand_env_esc(src, dst, dstlen, false, false, NULL);
 }
 
-void 
-expand_env_esc (
+void
+expand_env_esc(
     char_u *srcp,              /* input string e.g. "$HOME/vim.hlp" */
     char_u *dst,               /* where to put the result */
     int dstlen,                     /* maximum length of the result */
-    int esc,                        /* escape spaces in expanded variables */
-    int one,                        /* "srcp" is one file name */
+    bool esc,                        /* escape spaces in expanded variables */
+    bool one,                        /* "srcp" is one file name */
     char_u *startstr          /* start again after this (can be NULL) */
 )
 {
@@ -127,9 +127,9 @@ expand_env_esc (
   char_u      *tail;
   int c;
   char_u      *var;
-  int copy_char;
-  int mustfree;                 /* var was allocated, need to free it later */
-  int at_start = TRUE;           /* at start of a name */
+  bool copy_char;
+  bool mustfree;                /* var was allocated, need to free it later */
+  bool at_start = true;         /* at start of a name */
   int startstr_len = 0;
 
   if (startstr != NULL)
@@ -138,11 +138,11 @@ expand_env_esc (
   src = skipwhite(srcp);
   --dstlen;                 /* leave one char space for "\," */
   while (*src && dstlen > 0) {
-    copy_char = TRUE;
+    copy_char = true;
     if ((*src == '$'
          )
         || (*src == '~' && at_start)) {
-      mustfree = FALSE;
+      mustfree = false;
 
       /*
        * The variable name is copied into dst temporarily, because it may
@@ -159,23 +159,25 @@ expand_env_esc (
           tail++;               /* ignore '{' */
           while (c-- > 0 && *tail && *tail != '}')
             *var++ = *tail++;
-        } else
+        } else // NOLINT
+        // We're going to ask clint.py to ignore this else very nicely
+        // because there isn't really a better way to format it given
+        // the ifdef mess below
 #endif
         {
-          while (c-- > 0 && *tail != NUL && ((vim_isIDc(*tail))
-                                             )) {
+          while (c-- > 0 && *tail != NUL && ((vim_isIDc(*tail)))) {
             *var++ = *tail++;
           }
         }
 
 #if defined(MSWIN) || defined(UNIX)
 # ifdef UNIX
-        if (src[1] == '{' && *tail != '}')
+        if (src[1] == '{' && *tail != '}') {
 # else
-        if (*src == '%' && *tail != '%')
+        if (*src == '%' && *tail != '%') {
 # endif
           var = NULL;
-        else {
+        } else {
 # ifdef UNIX
           if (src[1] == '{')
 # else
@@ -188,9 +190,8 @@ expand_env_esc (
 #if defined(MSWIN) || defined(UNIX)
       }
 #endif
-      }
       /* home directory */
-      else if (  src[1] == NUL
+      } else if (  src[1] == NUL
                  || vim_ispathsep(src[1])
                  || vim_strchr((char_u *)" ,\t\n", src[1]) != NULL) {
         var = homedir;
@@ -216,7 +217,7 @@ expand_env_esc (
          * does not support ~user (old versions of /bin/sh).
          */
         var = (char_u *)os_get_user_directory((char *)dst + 1);
-        mustfree = TRUE;
+        mustfree = true;
         if (var == NULL)
         {
           expand_T xpc;
@@ -225,7 +226,7 @@ expand_env_esc (
           xpc.xp_context = EXPAND_FILES;
           var = ExpandOne(&xpc, dst, NULL,
               WILD_ADD_SLASH|WILD_SILENT, WILD_EXPAND_FREE);
-          mustfree = TRUE;
+          mustfree = true;
         }
 #else
         /* cannot expand user's home directory, so don't try */
@@ -244,7 +245,7 @@ expand_env_esc (
           free(var);
         }
         var = p;
-        mustfree = TRUE;
+        mustfree = true;
         forward_slash(var);
       }
 #endif
@@ -257,7 +258,7 @@ expand_env_esc (
         if (mustfree)
           free(var);
         var = p;
-        mustfree = TRUE;
+        mustfree = true;
       }
 
       if (var != NULL && *var != NUL
@@ -275,7 +276,7 @@ expand_env_esc (
           ++tail;
         dst += c;
         src = tail;
-        copy_char = FALSE;
+        copy_char = false;
       }
       if (mustfree)
         free(var);
@@ -287,18 +288,19 @@ expand_env_esc (
        * Don't do this when "one" is TRUE, to avoid expanding "~" in
        * ":edit foo ~ foo".
        */
-      at_start = FALSE;
+      at_start = false;
       if (src[0] == '\\' && src[1] != NUL) {
         *dst++ = *src++;
         --dstlen;
-      } else if ((src[0] == ' ' || src[0] == ',') && !one)
-        at_start = TRUE;
+      } else if ((src[0] == ' ' || src[0] == ',') && !one) {
+        at_start = true;
+      }
       *dst++ = *src++;
       --dstlen;
 
       if (startstr != NULL && src - startstr_len >= srcp
           && STRNCMP(src - startstr_len, startstr, startstr_len) == 0)
-        at_start = TRUE;
+        at_start = true;
     }
   }
   *dst = NUL;
@@ -311,7 +313,7 @@ expand_env_esc (
  * "mustfree" is set to TRUE when returned is allocated, it must be
  * initialized to FALSE by the caller.
  */
-char_u *vim_getenv(char_u *name, int *mustfree)
+char_u *vim_getenv(char_u *name, bool *mustfree)
 {
   char_u      *p;
   char_u      *pend;
@@ -345,10 +347,9 @@ char_u *vim_getenv(char_u *name, int *mustfree)
     if (p != NULL) {
       p = vim_version_dir(p);
       if (p != NULL)
-        *mustfree = TRUE;
+        *mustfree = true;
       else
         p = (char_u *)os_getenv("VIM");
-
     }
   }
 
@@ -407,7 +408,7 @@ char_u *vim_getenv(char_u *name, int *mustfree)
           p = pend;
         }
 #endif
-        *mustfree = TRUE;
+        *mustfree = true;
       }
     }
   }
@@ -419,13 +420,13 @@ char_u *vim_getenv(char_u *name, int *mustfree)
     /* Only use default_vimruntime_dir when it is not empty */
     if (vimruntime && *default_vimruntime_dir != NUL) {
       p = default_vimruntime_dir;
-      *mustfree = FALSE;
+      *mustfree = false;
     } else if (*default_vim_dir != NUL) {
-      if (vimruntime && (p = vim_version_dir(default_vim_dir)) != NULL)
-        *mustfree = TRUE;
-      else {
+      if (vimruntime && (p = vim_version_dir(default_vim_dir)) != NULL) {
+        *mustfree = true;
+      } else {
         p = default_vim_dir;
-        *mustfree = FALSE;
+        *mustfree = false;
       }
     }
   }
@@ -438,10 +439,10 @@ char_u *vim_getenv(char_u *name, int *mustfree)
   if (p != NULL) {
     if (vimruntime) {
       vim_setenv((char_u *)"VIMRUNTIME", p);
-      didset_vimruntime = TRUE;
+      didset_vimruntime = true;
     } else {
       vim_setenv((char_u *)"VIM", p);
-      didset_vim = TRUE;
+      didset_vim = true;
     }
   }
   return p;
@@ -457,11 +458,11 @@ static char_u *vim_version_dir(char_u *vimdir)
 
   if (vimdir == NULL || *vimdir == NUL)
     return NULL;
-  p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, TRUE);
+  p = concat_fnames(vimdir, (char_u *)VIM_VERSION_NODOT, true);
   if (os_isdir(p))
     return p;
   free(p);
-  p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, TRUE);
+  p = concat_fnames(vimdir, (char_u *)RUNTIME_DIRNAME, true);
   if (os_isdir(p))
     return p;
   free(p);
@@ -510,7 +511,7 @@ char_u *get_env_name(expand_T *xp, int idx)
 # define ENVNAMELEN 100
   // this static buffer is needed to avoid a memory leak in ExpandGeneric
   static char_u name[ENVNAMELEN];
-  char *envname = os_getenvname_at_index(idx);
+  char *envname = os_getenvname_at_index((size_t)idx);
   if (envname) {
     STRLCPY(name, envname, ENVNAMELEN);
     free(envname);
@@ -525,13 +526,13 @@ char_u *get_env_name(expand_T *xp, int idx)
  * 'src'.
  * If anything fails (except when out of space) dst equals src.
  */
-void 
-home_replace (
+void
+home_replace(
     buf_T *buf,       /* when not NULL, check for help files */
     char_u *src,       /* input file name */
     char_u *dst,       /* where to put the result */
     int dstlen,             /* maximum length of the result */
-    int one                /* if TRUE, only replace one file name, include
+    bool one                /* if TRUE, only replace one file name, include
                            spaces and commas in the file name. */
 )
 {
@@ -638,7 +639,7 @@ home_replace (
  * Like home_replace, store the replaced string in allocated memory.
  */
 char_u *
-home_replace_save (
+home_replace_save(
     buf_T *buf,       /* when not NULL, check for help files */
     char_u *src       /* input file name */
 ) FUNC_ATTR_NONNULL_RET
@@ -647,7 +648,7 @@ home_replace_save (
   if (src != NULL)              /* just in case */
     len += STRLEN(src);
   char_u *dst = xmalloc(len);
-  home_replace(buf, src, dst, (int)len, TRUE);
+  home_replace(buf, src, dst, (int)len, true);
   return dst;
 }
 

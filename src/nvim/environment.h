@@ -7,4 +7,4 @@
 # include "environment.h.generated.h"
 #endif
 
-#endif
+#endif  // NVIM_ENVIRONMENT_H
