@@ -25,6 +25,7 @@
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
 #include "nvim/edit.h"
+#include "nvim/environment.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"

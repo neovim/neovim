@@ -9,6 +9,7 @@
 #include "nvim/ascii.h"
 #include "nvim/path.h"
 #include "nvim/charset.h"
+#include "nvim/environment.h"
 #include "nvim/eval.h"
 #include "nvim/ex_docmd.h"
 #include "nvim/ex_getln.h"

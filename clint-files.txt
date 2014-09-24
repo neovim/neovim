@@ -13,6 +13,8 @@ src/nvim/api/window.c
 src/nvim/api/window.h
 src/nvim/cursor.c
 src/nvim/cursor.h
+src/nvim/environment.c
+src/nvim/environment.h
 src/nvim/hashtab.c
 src/nvim/hashtab.h
 src/nvim/indent.c

@@ -40,6 +40,7 @@ set(CONV_SRCS
   api.c
   arabic.c
   cursor.c
+  environment.c
   garray.c
   hashtab.c
   log.c

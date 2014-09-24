@@ -130,6 +130,7 @@ local function vim_init()
   local all = cimport('./src/nvim/os_unix.h',
                       './src/nvim/misc1.h',
                       './src/nvim/eval.h',
+                      './src/nvim/environment.h',
                       './src/nvim/os_unix.h',
                       './src/nvim/option.h',
                       './src/nvim/ex_cmds2.h',

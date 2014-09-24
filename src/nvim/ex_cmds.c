@@ -18,6 +18,7 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
+#include "nvim/environment.h"
 #include "nvim/version_defs.h"
 #include "nvim/ex_cmds.h"
 #include "nvim/buffer.h"
