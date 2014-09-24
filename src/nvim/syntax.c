@@ -1507,7 +1507,7 @@ int syntax_check_changed(linenr_T lnum)
  * the line.  It can start anywhere in the line, as long as the current state
  * is valid.
  */
-static int 
+static int
 syn_finish_line (
     int syncing                    /* called for syncing */
 )
@@ -1555,7 +1555,7 @@ syn_finish_line (
  * When "can_spell" is not NULL set it to TRUE when spell-checking should be
  * done.
  */
-int 
+int
 get_syntax_attr (
     colnr_T col,
     bool *can_spell,
@@ -1603,7 +1603,7 @@ get_syntax_attr (
 /*
  * Get syntax attributes for current_lnum, current_col.
  */
-static int 
+static int
 syn_current_attr (
     int syncing,                           /* When 1: called for syncing */
     int displaying,                        /* result will be displayed */
@@ -2424,7 +2424,7 @@ static void check_keepend(void)
  *
  * Return the flags for the matched END.
  */
-static void 
+static void
 update_si_end (
     stateitem_T *sip,
     int startcol,               /* where to start searching for the end */
@@ -2517,7 +2517,7 @@ static void pop_current_state(void)
  * If found, the end of the region and the end of the highlighting is
  * computed.
  */
-static void 
+static void
 find_endpos (
     int idx,                        /* index of the pattern */
     lpos_T *startpos,          /* where to start looking for an END match */
@@ -2746,7 +2746,7 @@ static void limit_pos_zero(lpos_T *pos, lpos_T *limit)
 /*
  * Add offset to matched text for end of match or highlight.
  */
-static void 
+static void
 syn_add_end_off (
     lpos_T *result,            /* returned position */
     regmmatch_T *regmatch,          /* start/end of match */
@@ -2792,7 +2792,7 @@ syn_add_end_off (
  * Add offset to matched text for start of match or highlight.
  * Avoid resulting column to become negative.
  */
-static void 
+static void
 syn_add_start_off (
     lpos_T *result,            /* returned position */
     regmmatch_T *regmatch,          /* start/end of match */
@@ -2883,7 +2883,7 @@ static int syn_regexec(regmmatch_T *rmp, linenr_T lnum, colnr_T col, syn_time_T 
  * The caller must check if a keyword can start at startcol.
  * Return it's ID if found, 0 otherwise.
  */
-static int 
+static int
 check_keyword_id (
     char_u *line,
     int startcol,                   /* position in line to check for keyword */
@@ -3311,7 +3311,7 @@ static void syn_cmd_onoff(exarg_T *eap, char *name)
 /*
  * Handle ":syntax [list]" command: list current syntax words.
  */
-static void 
+static void
 syn_cmd_list (
     exarg_T *eap,
     int syncing                        /* when TRUE: list syncing items */
@@ -3425,7 +3425,7 @@ static int last_matchgroup;
 /*
  * List one syntax item, for ":syntax" or "syntax list syntax_name".
  */
-static void 
+static void
 syn_list_one (
     int id,
     int syncing,                        /* when TRUE: list syncing items */
@@ -3655,7 +3655,7 @@ static void put_pattern(char *s, int c, synpat_T *spp, int attr)
  * List or clear the keywords for one syntax group.
  * Return TRUE if the header has been printed.
  */
-static int 
+static int
 syn_list_keywords (
     int id,
     hashtab_T *ht,
@@ -4235,7 +4235,7 @@ static void syn_cmd_keyword(exarg_T *eap, int syncing)
  *
  * Also ":syntax sync match {name} [[grouphere | groupthere] {group-name}] .."
  */
-static void 
+static void
 syn_cmd_match (
     exarg_T *eap,
     int syncing                        /* TRUE for ":syntax sync match .. " */
@@ -4332,7 +4332,7 @@ syn_cmd_match (
  * Handle ":syntax region {group-name} [matchgroup={group-name}]
  *		start {start} .. [skip {skip}] end {end} .. [{options}]".
  */
-static void 
+static void
 syn_cmd_region (
     exarg_T *eap,
     int syncing                        /* TRUE for ":syntax sync region .." */
@@ -5060,7 +5060,7 @@ static void syn_cmd_sync(exarg_T *eap, int syncing)
  * Careful: the argument is modified (NULs added).
  * returns FAIL for some error, OK for success.
  */
-static int 
+static int
 get_id_list (
     char_u **arg,
     int keylen,                     /* length of keyword */
@@ -5250,7 +5250,7 @@ static short *copy_id_list(short *list)
  * the current item.
  * This function is called very often, keep it fast!!
  */
-static int 
+static int
 in_id_list (
     stateitem_T *cur_si,            /* current item or NULL */
     short *list,              /* id list */
@@ -5525,7 +5525,7 @@ char_u *get_syntax_name(expand_T *xp, int idx)
 /*
  * Function called for expression evaluation: get syntax ID at file position.
  */
-int 
+int
 syn_get_id (
     win_T *wp,
     long lnum,
@@ -5939,7 +5939,7 @@ static char *(highlight_init_dark[]) =
   NULL
 };
 
-void 
+void
 init_highlight (
     int both,                   /* include groups where 'bg' doesn't matter */
     int reset                  /* clear group first */
@@ -6046,7 +6046,7 @@ int load_colors(char_u *name)
  * When using ":hi clear" this is called recursively for each group with
  * "forceit" and "init" both TRUE.
  */
-void 
+void
 do_highlight (
     char_u *line,
     int forceit,
@@ -7114,7 +7114,7 @@ highlight_color (
  * Output the syntax list header.
  * Return TRUE when started a new line.
  */
-static int 
+static int
 syn_list_header (
     int did_header,                 /* did header already */
     int outlen,                     /* length of string that comes */
@@ -7159,7 +7159,7 @@ syn_list_header (
  * Set the attribute numbers for a highlight group.
  * Called after one of the attributes has changed.
  */
-static void 
+static void
 set_hl_attr (
     int idx                    /* index in array */
 )

@@ -413,7 +413,7 @@ static int find_command(int cmdchar)
 /*
  * Execute a command in Normal mode.
  */
-void 
+void
 normal_cmd (
     oparg_T *oap,
     int toplevel                    /* TRUE when called from main() */
@@ -1831,7 +1831,7 @@ static void op_function(oparg_T *oap)
  *
  * Return TRUE if start_arrow() should be called for edit mode.
  */
-int 
+int
 do_mouse (
     oparg_T *oap,               /* operator argument, can be NULL */
     int c,                          /* K_LEFTMOUSE, etc */
@@ -3244,7 +3244,7 @@ static void nv_page(cmdarg_T *cap)
 /*
  * Implementation of "gd" and "gD" command.
  */
-static void 
+static void
 nv_gd (
     oparg_T *oap,
     int nchar,
@@ -3268,7 +3268,7 @@ nv_gd (
  * When "thisblock" is TRUE check the {} block scope.
  * Return FAIL when not found.
  */
-int 
+int
 find_decl (
     char_u *ptr,
     int len,
@@ -4402,7 +4402,7 @@ static void nv_ident(cmdarg_T *cap)
  * Get visually selected text, within one line only.
  * Returns FAIL if more than one line selected.
  */
-int 
+int
 get_visual_text (
     cmdarg_T *cap,
     char_u **pp,           /* return: start of selected text */
@@ -4832,7 +4832,7 @@ static void nv_next(cmdarg_T *cap)
  * Search for "pat" in direction "dir" ('/' or '?', 0 for repeat).
  * Uses only cap->count1 and cap->oap from "cap".
  */
-static void 
+static void
 normal_search (
     cmdarg_T *cap,
     int dir,
@@ -7060,7 +7060,7 @@ static void nv_edit(cmdarg_T *cap)
 /*
  * Invoke edit() and take care of "restart_edit" and the return value.
  */
-static void 
+static void
 invoke_edit (
     cmdarg_T *cap,
     int repl,                       /* "r" or "gr" command */

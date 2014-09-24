@@ -971,7 +971,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
  * We use input redirection if do_in is TRUE.
  * We use output redirection if do_out is TRUE.
  */
-static void 
+static void
 do_filter (
     linenr_T line1,
     linenr_T line2,
@@ -1205,7 +1205,7 @@ filterend:
  * Call a shell to execute a command.
  * When "cmd" is NULL start an interactive shell.
  */
-void 
+void
 do_shell (
     char_u *cmd,
     int flags              /* may be SHELL_DOOUT when output is redirected */
@@ -1324,7 +1324,7 @@ char_u *make_filter_cmd(char_u *cmd, char_u *itmp, char_u *otmp)
 #endif
 
   size_t len = STRLEN(cmd) + 1;  // At least enough space for cmd + NULL.
-  
+
   len += is_fish_shell ?  sizeof("begin; ""; end") - 1
                        :  sizeof("("")") - 1;
 
@@ -1443,7 +1443,7 @@ int viminfo_error(char *errnum, char *message, char_u *line)
  * read_viminfo() -- Read the viminfo file.  Registers etc. which are already
  * set are not over-written unless "flags" includes VIF_FORCEIT. -- webb
  */
-int 
+int
 read_viminfo (
     char_u *file,          /* file name or NULL to use default name */
     int flags                  /* VIF_WANT_INFO et al. */
@@ -2252,7 +2252,7 @@ theend:
  * May set eap->forceit if a dialog says it's OK to overwrite.
  * Return OK if it's OK, FAIL if it is not.
  */
-int 
+int
 check_overwrite (
     exarg_T *eap,
     buf_T *buf,
@@ -2554,7 +2554,7 @@ theend:
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 do_ecmd (
     int fnum,
     char_u *ffname,
@@ -4841,7 +4841,7 @@ char_u *check_help_lang(char_u *arg)
  * Assumption is made that the matched_string passed has already been found to
  * match some string for which help is requested.  webb.
  */
-int 
+int
 help_heuristic (
     char_u *matched_string,
     int offset,                             /* offset for match */
@@ -5404,7 +5404,7 @@ void ex_helptags(exarg_T *eap)
   free(dirname);
 }
 
-static void 
+static void
 helptags_one (
     char_u *dir,               /* doc directory */
     char_u *ext,               /* suffix, ".txt", ".itx", ".frx", etc. */

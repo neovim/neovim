@@ -423,7 +423,7 @@ static int pstrcmp(const void *a, const void *b)
  * Return the number of matches found.
  * NOTE: much of this is identical to dos_expandpath(), keep in sync!
  */
-int 
+int
 unix_expandpath (
     garray_T *gap,
     char_u *path,
@@ -930,7 +930,7 @@ static char_u *gettail_dir(char_u *fname)
  * result in "gap".
  * Returns the total number of matches.
  */
-static int 
+static int
 expand_in_path (
     garray_T *gap,
     char_u *pattern,
@@ -1005,7 +1005,7 @@ static int has_special_wildchar(char_u *p)
  * Return OK when some files found.  "num_file" is set to the number of
  * matches, "file" to the array of matches.  Call FreeWild() later.
  */
-int 
+int
 gen_expand_wildcards (
     int num_pat,                    /* number of input patterns */
     char_u **pat,              /* array of input patterns */
@@ -1152,7 +1152,7 @@ static int vim_backtick(char_u *p)
  * Currently only works when pat[] starts and ends with a `.
  * Returns number of file names found.
  */
-static int 
+static int
 expand_backtick (
     garray_T *gap,
     char_u *pat,
@@ -1208,7 +1208,7 @@ expand_backtick (
  * EW_NOTFOUND	add even when it doesn't exist
  * EW_ADDSLASH	add slash after directory name
  */
-void 
+void
 addfile (
     garray_T *gap,
     char_u *f,         /* filename */
@@ -1529,7 +1529,7 @@ int vim_isAbsName(char_u *name)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 vim_FullName (
     char_u *fname,
     char_u *buf,
@@ -1796,7 +1796,7 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
  * 'wildignore'.
  * Returns OK or FAIL.  When FAIL then "num_file" won't be set.
  */
-int 
+int
 expand_wildcards (
     int num_pat,                    /* number of input patterns */
     char_u **pat,             /* array of input patterns */

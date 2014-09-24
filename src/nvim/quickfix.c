@@ -158,7 +158,7 @@ struct efm_S {
  * list. Set the error list's title to qf_title.
  * Return -1 for error, number of errors for success.
  */
-int 
+int
 qf_init (
     win_T *wp,
     char_u *efile,
@@ -190,7 +190,7 @@ qf_init (
  * Set the title of the list to "qf_title".
  * Return -1 for error, number of errors for success.
  */
-static int 
+static int
 qf_init_ext (
     qf_info_T *qi,
     char_u *efile,
@@ -874,7 +874,7 @@ void qf_free_all(win_T *wp)
  * Add an entry to the end of the list of errors.
  * Returns OK or FAIL.
  */
-static int 
+static int
 qf_add_entry (
     qf_info_T *qi,                /* quickfix list */
     qfline_T **prevp,            /* pointer to previously added entry or NULL */
@@ -2152,7 +2152,7 @@ linenr_T qf_current_entry(win_T *wp)
  * Update the cursor position in the quickfix window to the current error.
  * Return TRUE if there is a quickfix window.
  */
-static int 
+static int
 qf_win_pos_update (
     qf_info_T *qi,
     int old_qf_index               /* previous qf_index or zero */

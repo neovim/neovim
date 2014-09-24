@@ -328,7 +328,7 @@ static int cin_isinit(void)
 /*
  * Recognize a switch label: "case .*:" or "default:".
  */
-int 
+int
 cin_iscase (
     char_u *s,
     int strict     /* Allow relaxed check of case statement for JS */
@@ -455,7 +455,7 @@ static char_u *after_label(char_u *l)
  * Get indent of line "lnum", skipping a label.
  * Return 0 if there is nothing after the label.
  */
-static int 
+static int
 get_indent_nolabel (     /* XXX */
     linenr_T lnum
 )
@@ -662,7 +662,7 @@ static int cin_islinecomment(char_u *p)
  * Return the character terminating the line (ending char's have precedence if
  * both apply in order to determine initializations).
  */
-static int 
+static int
 cin_isterminated (
     char_u *s,
     int incl_open,                  /* include '{' at the end as terminator */
@@ -820,7 +820,7 @@ static int cin_isdo(char_u *p)
  * We only accept a "while (condition) ;", with only white space between the
  * ')' and ';'. The condition may be spread over several lines.
  */
-static int 
+static int
 cin_iswhileofdo ( /* XXX */
     char_u *p,
     linenr_T lnum
@@ -960,7 +960,7 @@ static int cin_isbreak(char_u *p)
  *
  * This is a lot of guessing.  Watch out for "cond ? func() : foo".
  */
-static int 
+static int
 cin_is_cpp_baseclass (
     colnr_T *col           /* return: column to align with */
 )

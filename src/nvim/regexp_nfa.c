@@ -2061,7 +2061,7 @@ static int nfa_regbranch(void)
  *	or  branch \| branch \| branch
  *	etc.
  */
-static int 
+static int
 nfa_reg (
     int paren              /* REG_NOPAREN, REG_PAREN, REG_NPAREN or REG_ZPAREN */
 )
@@ -3635,7 +3635,7 @@ static void report_state(char *action,
  * Return TRUE if the same state is already in list "l" with the same
  * positions as "subs".
  */
-static int 
+static int
 has_state_with_pos (
     nfa_list_T *l,         /* runtime state list */
     nfa_state_T *state,     /* state to update */
@@ -3776,7 +3776,7 @@ static int match_follows(nfa_state_T *startstate, int depth)
 /*
  * Return TRUE if "state" is already in list "l".
  */
-static int 
+static int
 state_in_list (
     nfa_list_T *l,         /* runtime state list */
     nfa_state_T *state,     /* state to update */
@@ -4143,7 +4143,7 @@ skip_add:
  * This makes sure the order of states to be tried does not change, which
  * matters for alternatives.
  */
-static void 
+static void
 addstate_here (
     nfa_list_T *l,         /* runtime state list */
     nfa_state_T *state,     /* state to update */
@@ -4286,7 +4286,7 @@ static int check_char_class(int class, int c)
  * Check for a match with subexpression "subidx".
  * Return TRUE if it matches.
  */
-static int 
+static int
 match_backref (
     regsub_T *sub,           /* pointers to subexpressions */
     int subidx,
@@ -4343,7 +4343,7 @@ retempty:
  * Check for a match with \z subexpression "subidx".
  * Return TRUE if it matches.
  */
-static int 
+static int
 match_zref (
     int subidx,
     int *bytelen       /* out: length of match in bytes */
@@ -6115,7 +6115,7 @@ static long nfa_regtry(nfa_regprog_T *prog, colnr_T col)
  *
  * Returns 0 for failure, number of lines contained in the match otherwise.
  */
-static long 
+static long
 nfa_regexec_both (
     char_u *line,
     colnr_T startcol               /* column to start looking for match */
@@ -6345,7 +6345,7 @@ static void nfa_regfree(regprog_T *prog)
  *
  * Return TRUE if there is a match, FALSE if not.
  */
-static int 
+static int
 nfa_regexec_nl (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */

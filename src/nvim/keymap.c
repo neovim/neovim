@@ -487,7 +487,7 @@ char_u *get_special_key_name(int c, int modifiers)
  * If there is a match, srcp is advanced to after the <> name.
  * dst[] must be big enough to hold the result (up to six characters)!
  */
-int 
+int
 trans_special (
     char_u **srcp,
     char_u *dst,
@@ -528,7 +528,7 @@ trans_special (
  * srcp is advanced to after the <> name.
  * returns 0 if there is no match.
  */
-int 
+int
 find_special_key (
     char_u **srcp,
     int *modp,
@@ -758,7 +758,7 @@ int get_mouse_button(int code, int *is_click, int *is_drag)
  * the given information about which mouse button is down, and whether the
  * mouse was clicked, dragged or released.
  */
-int 
+int
 get_pseudo_mouse_code (
     int button,             /* eg MOUSE_LEFT */
     int is_click,

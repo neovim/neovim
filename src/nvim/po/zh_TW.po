@@ -24,8 +24,8 @@
 #   So please change [¦æ"] to [¦æ "]
 #
 # Q. How to use UTF8 mode on Win32?
-# A. A simple configuration: 
-#   set encoding=utf-8; let $LANG='zh_TW.UTF-8'; 
+# A. A simple configuration:
+#   set encoding=utf-8; let $LANG='zh_TW.UTF-8';
 #   (set langmenu=none or ..)
 #   set termencoding=utf-8
 #   set fileencodings=ucs-bom,utf-8,japan,taiwan,prc

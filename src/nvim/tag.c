@@ -150,7 +150,7 @@ static taggy_T ptag_entry = {NULL, {INIT_POS_T(0, 0, 0), 0}, 0, 0};
  *
  * for cscope, returns TRUE if we jumped to tag or aborted, FALSE otherwise
  */
-int 
+int
 do_tag (
     char_u *tag,               /* tag (pattern) to jump to */
     int type,
@@ -1071,7 +1071,7 @@ static void prepare_pats(pat_T *pats, int has_re)
  * TAG_NOIC	  don't always ignore case
  * TAG_KEEP_LANG  keep language
  */
-int 
+int
 find_tags (
     char_u *pat,                       /* pattern to search for */
     int *num_matches,               /* return: number of matches found */
@@ -2000,7 +2000,7 @@ void free_tag_stuff(void)
  *
  * Return FAIL if no more tag file names, OK otherwise.
  */
-int 
+int
 get_tagfname (
     tagname_T *tnp,       /* holds status info */
     int first,              /* TRUE when first file name is wanted */
@@ -2119,7 +2119,7 @@ void tagname_free(tagname_T *tnp)
  *
  * Return FAIL if there is a format error in this line, OK otherwise.
  */
-static int 
+static int
 parse_tag_line (
     char_u *lbuf,              /* line to be parsed */
     tagptrs_T *tagp
@@ -2208,7 +2208,7 @@ static int test_for_static(tagptrs_T *tagp)
  *
  * Return OK or FAIL.
  */
-static int 
+static int
 parse_match (
     char_u *lbuf,          /* input: matching line */
     tagptrs_T *tagp          /* output: pointers into the line */
@@ -2281,7 +2281,7 @@ static char_u *tag_full_fname(tagptrs_T *tagp)
  *
  * returns OK for success, NOTAGFILE when file not found, FAIL otherwise.
  */
-static int 
+static int
 jumpto_tag (
     char_u *lbuf,              /* line from the tags file for this tag */
     int forceit,                    /* :ta with ! */
@@ -2672,7 +2672,7 @@ static int find_extra(char_u **pp)
   return FAIL;
 }
 
-int 
+int
 expand_tags (
     int tagnames,                   /* expand tag names */
     char_u *pat,
@@ -2724,7 +2724,7 @@ expand_tags (
  * Add a tag field to the dictionary "dict".
  * Return OK or FAIL.
  */
-static int 
+static int
 add_tag_field (
     dict_T *dict,
     char *field_name,

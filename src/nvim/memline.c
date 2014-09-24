@@ -546,7 +546,7 @@ void ml_open_file(buf_T *buf)
  * If still need to create a swap file, and starting to edit a not-readonly
  * file, or reading into an existing buffer, create a swap file now.
  */
-void 
+void
 check_need_swap (
     int newfile                    /* reading file into new buffer */
 )
@@ -1262,7 +1262,7 @@ theend:
  * - list the swap files when recovering
  * - find the name of the n'th swap file when recovering
  */
-int 
+int
 recover_names (
     char_u *fname,             /* base for swap file name */
     int list,                       /* when TRUE, list the swap file names */
@@ -1844,7 +1844,7 @@ int ml_line_alloced(void)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 ml_append (
     linenr_T lnum,                  /* append after this line (can be 0) */
     char_u *line,              /* text of the new line */
@@ -1865,7 +1865,7 @@ ml_append (
  * Like ml_append() but for an arbitrary buffer.  The buffer must already have
  * a memline.
  */
-int 
+int
 ml_append_buf (
     buf_T *buf,
     linenr_T lnum,                  /* append after this line (can be 0) */
@@ -1882,7 +1882,7 @@ ml_append_buf (
   return ml_append_int(buf, lnum, line, len, newfile, FALSE);
 }
 
-static int 
+static int
 ml_append_int (
     buf_T *buf,
     linenr_T lnum,                  /* append after this line (can be 0) */
@@ -3161,7 +3161,7 @@ get_file_in_dir (
 /*
  * Print the ATTENTION message: info about an existing swap file.
  */
-static void 
+static void
 attention_message (
     buf_T *buf,           /* buffer being edited */
     char_u *fname         /* swap file name */
