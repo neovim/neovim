@@ -7630,7 +7630,7 @@ void unshowmode(int force)
 static void draw_tabline(void)
 {
   int tabcount = 0;
-  int tabwidth;
+  int tabwidth = 0;
   int col = 0;
   int scol = 0;
   int attr;
