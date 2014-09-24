@@ -7676,10 +7676,13 @@ static void draw_tabline(void)
       ++tabcount;
     }
 
-    if (tabcount > 0)
+    if (tabcount > 0) {
       tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
-    if (tabwidth < 6)
+    }
+
+    if (tabwidth < 6) {
       tabwidth = 6;
+    }
 
     attr = attr_nosel;
     tabcount = 0;
