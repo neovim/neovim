@@ -2830,9 +2830,12 @@ win_line (
         if (wp->w_p_bri && n_extra == 0 && row != startrow && filler_lines == 0) {
           char_attr = 0; // was: hl_attr(HLF_AT);
 
-          if (diff_hlf != (hlf_T)0)
+          if (diff_hlf != (hlf_T)0) {
             char_attr = hl_attr(diff_hlf);
-
+            if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+              char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
+            }
+          }
           p_extra = NULL;
           c_extra = ' ';
           n_extra = get_breakindent_win(wp, ml_get_buf(wp->w_buffer, lnum, FALSE));
@@ -2869,8 +2872,9 @@ win_line (
           if (tocol == vcol)
             tocol += n_extra;
           /* combine 'showbreak' with 'cursorline' */
-          if (wp->w_p_cul && lnum == wp->w_cursor.lnum)
-            char_attr = hl_combine_attr(char_attr, HLF_CLN);
+          if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+            char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
+          }
         }
       }
 
@@ -3016,6 +3020,9 @@ win_line (
             && n_extra == 0)
           diff_hlf = HLF_CHD;                   /* changed line */
         line_attr = hl_attr(diff_hlf);
+        if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+          line_attr = hl_combine_attr(line_attr, hl_attr(HLF_CUL));
+        }
       }
 
       /* Decide which of the highlight attributes to use. */
@@ -3620,8 +3627,12 @@ win_line (
             char_attr = line_attr;
           if (diff_hlf == HLF_TXD) {
             diff_hlf = HLF_CHD;
-            if (attr == 0 || char_attr != attr)
+            if (attr == 0 || char_attr != attr) {
               char_attr = hl_attr(diff_hlf);
+              if (wp->w_p_cul && lnum == wp->w_cursor.lnum) {
+                char_attr = hl_combine_attr(char_attr, hl_attr(HLF_CUL));
+              }
+            }
           }
         }
       }
@@ -7720,8 +7731,7 @@ static void draw_tabline(void)
           if (col + len >= Columns - 3)
             break;
           screen_puts_len(NameBuff, len, 0, col,
-              hl_combine_attr(attr, hl_attr(HLF_T))
-              );
+                          hl_combine_attr(attr, hl_attr(HLF_T)));
           col += len;
         }
         if (modified)
