@@ -898,7 +898,7 @@ typedef struct posmatch posmatch_T;
 struct posmatch
 {
     llpos_T     pos[MAXPOSMATCH];	///< array of positions
-    int         cur;			///< internal position counter 
+    int         cur;			///< internal position counter
     linenr_T    toplnum;		///< top buffer line
     linenr_T    botlnum;		///< bottom buffer line
 };
@@ -997,7 +997,7 @@ struct window_S {
    * Recomputing is minimized by storing the result of computations.
    * Use functions in screen.c to check if they are valid and to update.
    * w_valid is a bitfield of flags, which indicate if specific values are
-   * valid or need to be recomputed.	
+   * valid or need to be recomputed.
    */
   int w_valid;
   pos_T w_valid_cursor;             /* last known position of w_cursor, used

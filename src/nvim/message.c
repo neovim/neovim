@@ -148,7 +148,7 @@ int msg_attr(char_u *s, int attr)
   return msg_attr_keep(s, attr, FALSE);
 }
 
-int 
+int
 msg_attr_keep (
     char_u *s,
     int attr,
@@ -643,7 +643,7 @@ char_u *msg_may_trunc(int force, char_u *s)
   return s;
 }
 
-static void 
+static void
 add_msg_hist (
     char_u *s,
     int len,                        /* -1 for undetermined length */
@@ -1225,7 +1225,7 @@ void msg_make(char_u *arg)
  * This function is used to show mappings, where we want to see how to type
  * the character/string -- webb
  */
-int 
+int
 msg_outtrans_special (
     char_u *strstart,
     int from               /* TRUE for lhs of a mapping */
@@ -1828,7 +1828,7 @@ static int do_clear_sb_text = FALSE;    /* clear text on next msg */
 /*
  * Store part of a printed message for displaying when scrolling back.
  */
-static void 
+static void
 store_sb_text (
     char_u **sb_str,           /* start of string */
     char_u *s,                 /* just after string */
@@ -2684,7 +2684,7 @@ void msg_advance(int col)
  * A '&' in a button name becomes a shortcut, so each '&' should be before a
  * different letter.
  */
-int 
+int
 do_dialog (
     int type,
     char_u *title,
@@ -2780,7 +2780,7 @@ do_dialog (
  * Copy one character from "*from" to "*to", taking care of multi-byte
  * characters.  Return the length of the character in bytes.
  */
-static int 
+static int
 copy_char (
     char_u *from,
     char_u *to,

@@ -115,7 +115,7 @@ Object provider_call(char *method, Array args)
     api_free_object(result);
     return NIL;
   }
-  
+
   return result;
 }
 

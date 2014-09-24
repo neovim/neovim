@@ -89,7 +89,7 @@ static char *e_auabort = N_("E855: Autocommands caused command to abort");
  * memory.
  * Return FAIL for failure, OK otherwise.
  */
-int 
+int
 open_buffer (
     int read_stdin,                     /* read file from stdin */
     exarg_T *eap,                   /* for forced 'ff' and 'fenc' or NULL */
@@ -291,7 +291,7 @@ int buf_valid(buf_T *buf)
  * cause there to be only one window with this buffer.  e.g. when ":quit" is
  * supposed to close the window but autocommands close all other windows.
  */
-void 
+void
 close_buffer (
     win_T *win,               /* if not NULL, set b_last_cursor */
     buf_T *buf,
@@ -553,7 +553,7 @@ static void free_buffer(buf_T *buf)
 /*
  * Free stuff in the buffer for ":bdel" and when wiping out the buffer.
  */
-static void 
+static void
 free_buffer_stuff (
     buf_T *buf,
     int free_options                       /* free options as well */
@@ -838,7 +838,7 @@ static int empty_curbuf(int close_others, int forceit, int action)
  *
  * Return FAIL or OK.
  */
-int 
+int
 do_buffer (
     int action,
     int start,
@@ -1693,7 +1693,7 @@ static buf_T *buflist_findname_file_id(char_u *ffname, FileID *file_id,
  * Return fnum of the found buffer.
  * Return < 0 for error.
  */
-int 
+int
 buflist_findpat (
     char_u *pattern,
     char_u *pattern_end,       /* pointer to first char after pattern */
@@ -2192,7 +2192,7 @@ int buflist_name_nr(int fnum, char_u **fname, linenr_T *lnum)
  * Returns FAIL for failure (file name already in use by other buffer)
  *	OK otherwise.
  */
-int 
+int
 setfname (
     buf_T *buf,
     char_u *ffname,
@@ -2446,7 +2446,7 @@ static bool buf_same_file_id(buf_T *buf, FileID *file_id)
 /*
  * Print info about the current buffer.
  */
-void 
+void
 fileinfo (
     int fullname,               /* when non-zero print full path */
     int shorthelp,
@@ -2774,7 +2774,7 @@ void free_titles(void)
  * If maxwidth is not zero, the string will be filled at any middle marker
  * or truncated if too long, fillchar is used for all whitespace.
  */
-int 
+int
 build_stl_str_hl (
     win_T *wp,
     char_u *out,               /* buffer to write into != NameBuff */
@@ -3520,7 +3520,7 @@ void get_rel_pos(win_T *wp, char_u *buf, int buflen)
  * Append (file 2 of 8) to "buf[buflen]", if editing more than one file.
  * Return TRUE if it was appended.
  */
-static int 
+static int
 append_arg_number (
     win_T *wp,
     char_u *buf,
@@ -3592,7 +3592,7 @@ char_u *alist_name(aentry_T *aep)
 /*
  * do_arg_all(): Open up to 'count' windows, one for each argument.
  */
-void 
+void
 do_arg_all (
     int count,
     int forceit,                    /* hide buffers in current windows */
@@ -4046,7 +4046,7 @@ void do_modelines(int flags)
  * chk_modeline() - check a single line for a mode string
  * Return FAIL if an error encountered.
  */
-static int 
+static int
 chk_modeline (
     linenr_T lnum,
     int flags                      /* Same as for do_modelines(). */
@@ -4628,7 +4628,7 @@ int buf_contents_changed(buf_T *buf)
  * this buffer.  Call this to wipe out a temp buffer that does not contain any
  * marks.
  */
-void 
+void
 wipe_buffer (
     buf_T *buf,
     int aucmd                   /* When TRUE trigger autocommands. */

@@ -364,7 +364,7 @@ void pum_redraw(void)
 
                 if (size < pum_width) {
                   // Most left character requires 2-cells but only 1 cell
-                  // is available on screen.  Put a '<' on the left of the 
+                  // is available on screen.  Put a '<' on the left of the
                   // pum item
                   *(--rt) = '<';
                   size++;

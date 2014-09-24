@@ -153,7 +153,7 @@ int hasFolding(linenr_T lnum, linenr_T *firstp, linenr_T *lastp)
 }
 
 /* hasFoldingWin() {{{2 */
-int 
+int
 hasFoldingWin (
     win_T *win,
     linenr_T lnum,
@@ -382,7 +382,7 @@ void closeFoldRecurse(linenr_T lnum)
  * Open or Close folds for current window in lines "first" to "last".
  * Used for "zo", "zO", "zc" and "zC" in Visual mode.
  */
-void 
+void
 opFoldRange (
     linenr_T first,
     linenr_T last,
@@ -663,7 +663,7 @@ void foldCreate(linenr_T start, linenr_T end)
  * When "end" is not 0, delete all folds from "start" to "end".
  * When "recursive" is TRUE delete recursively.
  */
-void 
+void
 deleteFold (
     linenr_T start,
     linenr_T end,
@@ -809,7 +809,7 @@ void foldUpdateAll(win_T *win)
  * If "updown" is TRUE: move to fold at the same level.
  * If not moved return FAIL.
  */
-int 
+int
 foldMoveTo (
     int updown,
     int dir,                    /* FORWARD or BACKWARD */
@@ -1128,7 +1128,7 @@ static void setFoldRepeat(linenr_T lnum, long count, int do_open)
  * Open or close the fold in the current window which contains "lnum".
  * Also does this for other windows in diff mode when needed.
  */
-static linenr_T 
+static linenr_T
 setManualFold (
     linenr_T lnum,
     int opening,                /* TRUE when opening, FALSE when closing */
@@ -1166,7 +1166,7 @@ setManualFold (
  * Return the line number of the next line that could be closed.
  * It's only valid when "opening" is TRUE!
  */
-static linenr_T 
+static linenr_T
 setManualFoldWin (
     win_T *wp,
     linenr_T lnum,
@@ -1476,7 +1476,7 @@ static int getDeepestNestingRecurse(garray_T *gap)
 /*
  * Check if a fold is closed and update the info needed to check nested folds.
  */
-static int 
+static int
 check_closed (
     win_T *win,
     fold_T *fp,
@@ -1514,7 +1514,7 @@ check_closed (
 /*
  * Update fd_small field of fold "fp".
  */
-static void 
+static void
 checkSmall (
     win_T *wp,
     fold_T *fp,
@@ -1612,7 +1612,7 @@ static void foldAddMarker(linenr_T lnum, char_u *marker, int markerlen)
 /*
  * Delete the markers for a fold, causing it to be deleted.
  */
-static void 
+static void
 deleteFoldMarkers (
     fold_T *fp,
     int recursive,

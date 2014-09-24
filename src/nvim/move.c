@@ -519,7 +519,7 @@ void validate_cursor(void)
  *
  * Returns OK when cursor is in the window, FAIL when it isn't.
  */
-static void 
+static void
 curs_rows (
     win_T *wp,
     int do_botline                         /* also compute w_botline */
@@ -722,7 +722,7 @@ int curwin_col_off2(void)
  * Also updates curwin->w_wrow and curwin->w_cline_row.
  * Also updates curwin->w_leftcol.
  */
-void 
+void
 curs_columns (
     int may_scroll                 /* when TRUE, may scroll horizontally */
 )
@@ -947,7 +947,7 @@ curs_columns (
 /*
  * Scroll the current window down by "line_count" logical lines.  "CTRL-Y"
  */
-void 
+void
 scrolldown (
     long line_count,
     int byfold              /* TRUE: count a closed fold as one line */
@@ -1028,7 +1028,7 @@ scrolldown (
 /*
  * Scroll the current window up by "line_count" logical lines.  "CTRL-E"
  */
-void 
+void
 scrollup (
     long line_count,
     int byfold              /* TRUE: count a closed fold as one line */
@@ -1086,7 +1086,7 @@ scrollup (
 /*
  * Don't end up with too many filler lines in the window.
  */
-void 
+void
 check_topfill (
     win_T *wp,
     bool down              /* when TRUE scroll down when not enough space */

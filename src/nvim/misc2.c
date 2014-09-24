@@ -214,7 +214,7 @@ int get_fileformat(buf_T *buf)
  * Like get_fileformat(), but override 'fileformat' with "p" for "++opt=val"
  * argument.
  */
-int 
+int
 get_fileformat_force (
     buf_T *buf,
     exarg_T *eap           /* can be NULL! */

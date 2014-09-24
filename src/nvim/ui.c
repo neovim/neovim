@@ -77,7 +77,7 @@ void ui_write(char_u *s, int len)
  * from a remote client) "buf" can no longer be used.  "tb_change_cnt" is NULL
  * otherwise.
  */
-int 
+int
 ui_inchar (
     char_u *buf,
     int maxlen,
@@ -205,7 +205,7 @@ int ui_get_shellsize(void)
  * The gui_set_shellsize() or mch_set_shellsize() function will try to set the
  * new size.  If this is not possible, it will adjust Rows and Columns.
  */
-void 
+void
 ui_set_shellsize(int mustset)
 {
   mch_set_shellsize();
@@ -545,7 +545,7 @@ int check_row(int row)
  * If flags has MOUSE_SETPOS, nothing is done, only the current position is
  * remembered.
  */
-int 
+int
 jump_to_mouse (
     int flags,
     int *inclusive,         /* used for inclusive operator, can be NULL */

@@ -260,7 +260,7 @@ void op_shift(oparg_T *oap, int curs_top, int amount)
  * shift the current line one shiftwidth left (if left != 0) or right
  * leaves cursor on first blank in the line
  */
-void 
+void
 shift_line (
     int left,
     int round,
@@ -705,7 +705,7 @@ char_u *get_expr_line_src(void)
  * Check if 'regname' is a valid name of a yank register.
  * Note: There is no check for 0 (default register), caller should do this
  */
-int 
+int
 valid_yank_reg (
     int regname,
     int writing                /* if TRUE check for writable registers */
@@ -914,7 +914,7 @@ static int execreg_lastc = NUL;
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 do_execreg (
     int regname,
     int colon,                      /* insert ':' before each line */
@@ -1043,7 +1043,7 @@ static void put_reedit_in_typebuf(int silent)
  * When "esc" is TRUE it is to be taken literally: Escape CSI characters and
  * no remapping.
  */
-static int 
+static int
 put_in_typebuf (
     char_u *s,
     int esc,
@@ -1082,7 +1082,7 @@ put_in_typebuf (
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 insert_reg (
     int regname,
     int literally                  /* insert literally, not as if typed */
@@ -1172,7 +1172,7 @@ static void stuffescaped(char_u *arg, int literally)
  * If "regname" is a special register, return TRUE and store a pointer to its
  * value in "argp".
  */
-int 
+int
 get_spec_reg (
     int regname,
     char_u **argp,
@@ -1255,7 +1255,7 @@ get_spec_reg (
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 cmdline_paste_reg (
     int regname,
     int literally,          /* Insert text literally instead of "as typed" */
@@ -2572,7 +2572,7 @@ static void yank_copy_line(struct block_def *bd, long y_idx)
  *	    PUT_CURSEND		leave cursor after end of new text
  *	    PUT_LINE		force linewise put (":put")
  */
-void 
+void
 do_put (
     int regname,
     int dir,                        /* BACKWARD for 'P', FORWARD for 'p' */
@@ -3305,7 +3305,7 @@ void ex_display(exarg_T *eap)
  * display a string for do_dis()
  * truncate at end of screen line
  */
-static void 
+static void
 dis_msg (
     char_u *p,
     int skip_esc                       /* if TRUE, ignore trailing ESC */
@@ -3646,7 +3646,7 @@ static int same_leader(linenr_T lnum, int leader1_len, char_u *leader1_flags, in
 /*
  * Implementation of the format operator 'gq'.
  */
-void 
+void
 op_format (
     oparg_T *oap,
     int keep_cursor                        /* keep cursor on same text char */
@@ -3726,7 +3726,7 @@ void op_formatexpr(oparg_T *oap)
     op_format(oap, FALSE);
 }
 
-int 
+int
 fex_format (
     linenr_T lnum,
     long count,
@@ -3765,7 +3765,7 @@ fex_format (
  * Lines after the cursor line are saved for undo, caller must have saved the
  * first line.
  */
-void 
+void
 format_lines (
     linenr_T line_count,
     int avoid_fex                          /* don't use 'formatexpr' */

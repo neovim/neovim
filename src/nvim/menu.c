@@ -54,7 +54,7 @@ static char_u e_nomenu[] = N_("E329: No menu \"%s\"");
 /*
  * Do the :menu command and relatives.
  */
-void 
+void
 ex_menu (
     exarg_T *eap                   /* Ex command arguments */
 )
@@ -257,7 +257,7 @@ theend:
 /*
  * Add the menu with the given name to the menu hierarchy
  */
-static int 
+static int
 add_menu_path (
     char_u *menu_path,
     vimmenu_T *menuarg,           /* passes modes, iconfile, iconidx,
@@ -546,7 +546,7 @@ static int menu_nable_recurse(vimmenu_T *menu, char_u *name, int modes, int enab
  * Remove the (sub)menu with the given name from the menu hierarchy
  * Called recursively.
  */
-static int 
+static int
 remove_menu (
     vimmenu_T **menup,
     char_u *name,
@@ -1082,7 +1082,7 @@ static int menu_namecmp(char_u *name, char_u *mname)
  * If "unmenu" is not NULL, then the flag it points to is set according to
  * whether the command is an "unmenu" command.
  */
-static int 
+static int
 get_menu_cmd_modes (
     char_u *cmd,
     int forceit,                /* Was there a "!" after the command? */

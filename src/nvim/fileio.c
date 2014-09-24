@@ -245,7 +245,7 @@ void filemess(buf_T *buf, char_u *name, char_u *s, int attr)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 readfile (
     char_u *fname,
     char_u *sfname,
@@ -2027,7 +2027,7 @@ static int is_dev_fd_file(char_u *fname)
  * line number where we are now.
  * Used for error messages that include a line number.
  */
-static linenr_T 
+static linenr_T
 readfile_linenr (
     linenr_T linecnt,               /* line count before reading more bytes */
     char_u *p,                 /* start of more bytes read */
@@ -2198,7 +2198,7 @@ static void check_marks_read(void)
 }
 
 #ifdef UNIX
-static void 
+static void
 set_file_time (
     char_u *fname,
     time_t atime,               /* access time */
@@ -2241,7 +2241,7 @@ set_file_time (
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 buf_write (
     buf_T *buf,
     char_u *fname,
@@ -3282,7 +3282,7 @@ restore_backup:
     write_bin = buf->b_p_bin;
 
   /*
-   * Skip the BOM when appending and the file already existed, the BOM 
+   * Skip the BOM when appending and the file already existed, the BOM
    * only makes sense at the start of the file.
    */
   if (buf->b_p_bomb && !write_bin && (!append || perm < 0)) {
@@ -4131,7 +4131,7 @@ static int buf_write_bytes(struct bw_info *ip)
  * Convert a Unicode character to bytes.
  * Return TRUE for an error, FALSE when it's OK.
  */
-static int 
+static int
 ucs2bytes (
     unsigned c,                     /* in: character */
     char_u **pp,               /* in/out: pointer to result */
@@ -4673,7 +4673,7 @@ static int already_warned = FALSE;
  * Returns TRUE if some message was written (screen should be redrawn and
  * cursor positioned).
  */
-int 
+int
 check_timestamps (
     int focus                      /* called for GUI focus event */
 )
@@ -4776,7 +4776,7 @@ static int move_lines(buf_T *frombuf, buf_T *tobuf)
  * return 2 if a message has been displayed.
  * return 0 otherwise.
  */
-int 
+int
 buf_check_timestamp (
     buf_T *buf,
     int focus               /* called for GUI focus event */
@@ -6057,7 +6057,7 @@ static int do_autocmd_event(event_T event, char_u *pat, int nested, char_u *cmd,
  * Implementation of ":doautocmd [group] event [fname]".
  * Return OK for success, FAIL for failure;
  */
-int 
+int
 do_doautocmd (
     char_u *arg,
     int do_msg                 /* give message for no matching autocmds? */
@@ -6165,7 +6165,7 @@ int check_nomodeline(char_u **argp)
  * one then use "aucmd_win".
  * Set "curbuf" and "curwin" to match "buf".
  */
-void 
+void
 aucmd_prepbuf (
     aco_save_T *aco,               /* structure to save values in */
     buf_T *buf               /* new curbuf */
@@ -6255,7 +6255,7 @@ aucmd_prepbuf (
  * Cleanup after executing autocommands for a (hidden) buffer.
  * Restore the window as it was (if possible).
  */
-void 
+void
 aucmd_restbuf (
     aco_save_T *aco               /* structure holding saved values */
 )
@@ -6337,7 +6337,7 @@ static int autocmd_nested = FALSE;
  * Execute autocommands for "event" and file name "fname".
  * Return TRUE if some commands were executed.
  */
-int 
+int
 apply_autocmds (
     event_T event,
     char_u *fname,         /* NULL or empty means use actual file name */
@@ -6366,7 +6366,7 @@ static int apply_autocmds_exarg(event_T event, char_u *fname, char_u *fname_io, 
  * conditional, no autocommands are executed.  If otherwise the autocommands
  * cause the script to be aborted, retval is set to FAIL.
  */
-int 
+int
 apply_autocmds_retval (
     event_T event,
     char_u *fname,         /* NULL or empty means use actual file name */
@@ -6459,7 +6459,7 @@ int has_insertcharpre(void)
   return first_autopat[(int)EVENT_INSERTCHARPRE] != NULL;
 }
 
-static int 
+static int
 apply_autocmds_group (
     event_T event,
     char_u *fname,         /* NULL or empty means use actual file name */
@@ -6817,7 +6817,7 @@ void unblock_autocmds(void)
 /*
  * Find next autocommand pattern that matches.
  */
-static void 
+static void
 auto_next_pat (
     AutoPatCmd *apc,
     int stop_at_last                   /* stop when 'last' flag is set */
@@ -7159,7 +7159,7 @@ theend:
  * Used for autocommands and 'wildignore'.
  * Returns TRUE if there is a match, FALSE otherwise.
  */
-int 
+int
 match_file_pat (
     char_u *pattern,                   /* pattern to match with */
     regprog_T *prog,                      /* pre-compiled regprog or NULL */

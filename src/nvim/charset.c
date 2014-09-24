@@ -924,7 +924,7 @@ int vim_isprintc_strict(int c)
 
 /// like chartabsize(), but also check for line breaks on the screen
 ///
-/// @param line 
+/// @param line
 /// @param s
 /// @param col
 ///

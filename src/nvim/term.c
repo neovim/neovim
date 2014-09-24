@@ -1483,7 +1483,7 @@ int set_termname(char_u *term)
 #  define HMT_SGR       32
 static int has_mouse_termcode = 0;
 
-void 
+void
 set_mouse_termcode (
     int n,                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
     char_u *s
@@ -1505,7 +1505,7 @@ set_mouse_termcode (
 }
 
 # if (defined(UNIX) && defined(FEAT_MOUSE_TTY)) || defined(PROTO)
-void 
+void
 del_mouse_termcode (
     int n                  /* KS_MOUSE, KS_NETTERM_MOUSE or KS_DEC_MOUSE */
 )
@@ -1578,7 +1578,7 @@ static char_u *vim_tgetstr(char *s, char_u **pp)
  * and "li" entries never change. But on some systems this works.
  * Errors while getting the entries are ignored.
  */
-void 
+void
 getlinecol (
     long *cp,        /* pointer to columns */
     long *rp        /* pointer to rows */

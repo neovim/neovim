@@ -244,7 +244,7 @@ char_u *get_inserted(void)
  * Add string "s" after the current block of buffer "buf".
  * K_SPECIAL and CSI should have been escaped already.
  */
-static void 
+static void
 add_buff (
     buffheader_T *buf,
     char_u *s,
@@ -526,7 +526,7 @@ void AppendToRedobuff(char_u *s)
  * Append to Redo buffer literally, escaping special characters with CTRL-V.
  * K_SPECIAL and CSI are escaped as well.
  */
-void 
+void
 AppendToRedobuffLit (
     char_u *str,
     int len                    /* length of "str" or -1 for up to the NUL */
@@ -987,7 +987,7 @@ void ins_char_typebuf(int c)
  * Or "typebuf.tb_off" may have been changed and we would overwrite characters
  * that was just added.
  */
-int 
+int
 typebuf_changed (
     int tb_change_cnt              /* old value of typebuf.tb_change_cnt */
 )
@@ -1232,7 +1232,7 @@ void restore_typeahead(tasave_T *tp)
 /*
  * Open a new script file for the ":source!" command.
  */
-void 
+void
 openscript (
     char_u *name,
     int directly                   /* when TRUE execute directly */
@@ -1592,7 +1592,7 @@ int char_avail(void)
   return retval != NUL;
 }
 
-void 
+void
 vungetc ( /* unget one character (can only be done once!) */
     int c
 )
@@ -2412,7 +2412,7 @@ static int vgetorpeek(int advance)
  *  Return the number of obtained characters.
  *  Return -1 when end of input script reached.
  */
-int 
+int
 inchar (
     char_u *buf,
     int maxlen,
@@ -2516,7 +2516,7 @@ inchar (
  * buf[] must have room to triple the number of bytes!
  * Returns the new length.
  */
-int 
+int
 fix_input_buffer (
     char_u *buf,
     int len,
@@ -2604,7 +2604,7 @@ int input_available(void)
  *	  4 for out of mem (deprecated, WON'T HAPPEN)
  *	  5 for entry not unique
  */
-int 
+int
 do_map (
     int maptype,
     char_u *arg,
@@ -3143,7 +3143,7 @@ void map_clear(char_u *cmdp, char_u *arg, int forceit, int abbr)
 /*
  * Clear all mappings in "mode".
  */
-void 
+void
 map_clear_int (
     buf_T *buf,        /* buffer for local mappings */
     int mode,                       /* mode in which to delete */
@@ -3240,7 +3240,7 @@ char_u *map_mode_to_chars(int mode)
   return (char_u *)mapmode.ga_data;
 }
 
-static void 
+static void
 showmap (
     mapblock_T *mp,
     int local                  /* TRUE for buffer-local map */
@@ -3834,7 +3834,7 @@ void vim_unescape_csi(char_u *p)
  * Write map commands for the current mappings to an .exrc file.
  * Return FAIL on error, OK otherwise.
  */
-int 
+int
 makemap (
     FILE *fd,
     buf_T *buf           /* buffer for local mappings or NULL */

@@ -431,7 +431,7 @@ static garray_T prof_ga = {0, 0, sizeof(struct debuggy), 4, NULL};
  * is allocated.
  * Returns FAIL for failure.
  */
-static int 
+static int
 dbg_parsearg (
     char_u *arg,
     garray_T *gap           /* either &dbg_breakp or &prof_ga */
@@ -655,7 +655,7 @@ void ex_breaklist(exarg_T *eap)
  * Find a breakpoint for a function or sourced file.
  * Returns line number at which to break; zero when no matching breakpoint.
  */
-linenr_T 
+linenr_T
 dbg_find_breakpoint (
     int file,                   /* TRUE for a file, FALSE for a function */
     char_u *fname,         /* file or function name */
@@ -668,7 +668,7 @@ dbg_find_breakpoint (
 /*
  * Return TRUE if profiling is on for a function or sourced file.
  */
-int 
+int
 has_profiling (
     int file,                   /* TRUE for a file, FALSE for a function */
     char_u *fname,         /* file or function name */
@@ -682,7 +682,7 @@ has_profiling (
 /*
  * Common code for dbg_find_breakpoint() and has_profiling().
  */
-static linenr_T 
+static linenr_T
 debuggy_find (
     int file,                   /* TRUE for a file, FALSE for a function */
     char_u *fname,         /* file or function name */
@@ -1102,7 +1102,7 @@ int check_changed(buf_T *buf, int flags)
  * Ask the user what to do when abandoning a changed buffer.
  * Must check 'write' option first!
  */
-void 
+void
 dialog_changed (
     buf_T *buf,
     int checkall                   /* may abandon all changed buffers */
@@ -1193,7 +1193,7 @@ static void add_bufnum(int *bufnrs, int *bufnump, int nr)
  * Return TRUE if any buffer was changed and cannot be abandoned.
  * That changed buffer becomes the current buffer.
  */
-int 
+int
 check_changed_any (
     int hidden                     /* Only check hidden buffers */
 )
@@ -1422,7 +1422,7 @@ int get_arglist_exp(char_u *str, int *fcountp, char_u ***fnamesp, bool wig)
  *
  * Return FAIL for failure, OK otherwise.
  */
-static int 
+static int
 do_arglist (
     char_u *str,
     int what,
@@ -1951,7 +1951,7 @@ void ex_listdo(exarg_T *eap)
  * Files[] itself is not taken over.
  * Returns index of first added argument.
  */
-static int 
+static int
 alist_add_list (
     int count,
     char_u **files,
@@ -2253,7 +2253,7 @@ static FILE *fopen_noinh_readbin(char *filename)
  *
  * return FAIL if file could not be opened, OK otherwise
  */
-int 
+int
 do_source (
     char_u *fname,
     int check_other,                    /* check for .vimrc and _vimrc */

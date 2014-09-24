@@ -1844,7 +1844,7 @@ static void prt_dsc_ints(char *comment, int count, int *ints)
   prt_write_string("\n");
 }
 
-static void 
+static void
 prt_dsc_resources (
     char *comment,           /* if NULL add to previous */
     char *type,

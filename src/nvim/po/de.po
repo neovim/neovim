@@ -3,7 +3,7 @@
 # Do ":help uganda"  in Vim to read copying and usage conditions.
 # Do ":help credits" in Vim to see a list of people who contributed.
 #
-# Previous-Translator(s): 
+# Previous-Translator(s):
 # Johannes Zellner <johannes@zellner.org>
 # Gerfried Fuchs <alfie@ist.org>
 msgid ""

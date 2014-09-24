@@ -1355,7 +1355,7 @@ static void bt_regfree(regprog_T *prog)
 /*
  * Setup to parse the regexp.  Used once to get the length and once to do it.
  */
-static void 
+static void
 regcomp_start (
     char_u *expr,
     int re_flags                       /* see vim_regcomp() */
@@ -3256,7 +3256,7 @@ static lpos_T reg_endzpos[NSUBEXP];     /* idem, end pos */
  *
  * Return TRUE if there is a match, FALSE if not.
  */
-static int 
+static int
 bt_regexec_nl (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */
@@ -3280,10 +3280,10 @@ bt_regexec_nl (
 /// Matches a regexp against multiple lines.
 /// "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
 /// Uses curbuf for line count and 'iskeyword'.
-/// 
+///
 /// @param win Window in which to search or NULL
 /// @param buf Buffer in which to search
-/// @param lnum Number of line to start looking for match 
+/// @param lnum Number of line to start looking for match
 /// @param col Column to start looking for match
 /// @param tm Timeout limit or NULL
 ///
@@ -3701,7 +3701,7 @@ static long bl_maxval;
  * Returns FALSE when there is no match.  Leaves reginput and reglnum in an
  * undefined state!
  */
-static int 
+static int
 regmatch (
     char_u *scan              /* Current node. */
 )
@@ -5043,7 +5043,7 @@ static void regstack_pop(char_u **scan)
  * regrepeat - repeatedly match something simple, return how many.
  * Advances reginput (and reglnum) to just after the matched chars.
  */
-static int 
+static int
 regrepeat (
     char_u *p,
     long maxcount              /* maximum number of matches allowed */
@@ -7012,7 +7012,7 @@ void vim_regfree(regprog_T *prog)
  *
  * Return TRUE if there is a match, FALSE if not.
  */
-int 
+int
 vim_regexec (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */

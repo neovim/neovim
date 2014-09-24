@@ -214,7 +214,7 @@ void mf_close(memfile_T *mfp, int del_file)
 /*
  * Close the swap file for a memfile.  Used when 'swapfile' is reset.
  */
-void 
+void
 mf_close_file (
     buf_T *buf,
     int getlines                   /* get all lines into memory? */
@@ -995,7 +995,7 @@ int mf_need_trans(memfile_T *mfp)
  * The "fname" must be in allocated memory, and is consumed (also when an
  * error occurs).
  */
-static void 
+static void
 mf_do_open (
     memfile_T *mfp,
     char_u *fname,

@@ -85,7 +85,7 @@ static garray_T ga_users = GA_EMPTY_INIT_VALUE;
  *
  * Return TRUE for success, FALSE for failure
  */
-int 
+int
 open_line (
     int dir,                        /* FORWARD or BACKWARD */
     int flags,
@@ -1218,7 +1218,7 @@ int plines(linenr_T lnum)
   return plines_win(curwin, lnum, TRUE);
 }
 
-int 
+int
 plines_win (
     win_T *wp,
     linenr_T lnum,
@@ -1235,7 +1235,7 @@ int plines_nofill(linenr_T lnum)
   return plines_win_nofill(curwin, lnum, TRUE);
 }
 
-int 
+int
 plines_win_nofill (
     win_T *wp,
     linenr_T lnum,
@@ -1629,7 +1629,7 @@ int del_chars(long count, int fixpos)
  *
  * return FAIL for failure, OK otherwise
  */
-int 
+int
 del_bytes (
     long count,
     int fixpos_arg,
@@ -1751,7 +1751,7 @@ truncate_line (
  * Delete "nlines" lines at the cursor.
  * Saves the lines for undo first if "undo" is TRUE.
  */
-void 
+void
 del_lines (
     long nlines,                    /* number of lines to delete */
     int undo                       /* if TRUE, prepare for undo */
@@ -1959,7 +1959,7 @@ void deleted_lines_mark(linenr_T lnum, long count)
  * Takes care of calling changed() and updating b_mod_*.
  * Careful: may trigger autocommands that reload the buffer.
  */
-void 
+void
 changed_lines (
     linenr_T lnum,              /* first line with change */
     colnr_T col,                /* column in first line with change */
@@ -1990,7 +1990,7 @@ changed_lines (
   changed_common(lnum, col, lnume, xtra);
 }
 
-static void 
+static void
 changed_lines_buf (
     buf_T *buf,
     linenr_T lnum,              /* first line with change */
@@ -2188,7 +2188,7 @@ static void changed_common(linenr_T lnum, colnr_T col, linenr_T lnume, long xtra
 /*
  * unchanged() is called when the changed flag must be reset for buffer 'buf'
  */
-void 
+void
 unchanged (
     buf_T *buf,
     int ff                 /* also reset 'fileformat' */
@@ -2230,7 +2230,7 @@ void check_status(buf_T *buf)
  * will be TRUE.
  * Careful: may trigger autocommands that reload the buffer.
  */
-void 
+void
 change_warning (
     int col                        /* column for message; non-zero when in insert
                                    mode and 'showmode' is on */
@@ -2449,7 +2449,7 @@ int get_keystroke(void)
  * Get a number from the user.
  * When "mouse_used" is not NULL allow using the mouse.
  */
-int 
+int
 get_number (
     int colon,                              /* allow colon to abort */
     int *mouse_used
@@ -2701,7 +2701,7 @@ char_u *expand_env_save_opt(char_u *src, int one)
  * Skips over "\ ", "\~" and "\$" (not for Win32 though).
  * If anything fails no expansion is done and dst equals src.
  */
-void 
+void
 expand_env (
     char_u *src,               /* input string e.g. "$HOME/vim.hlp" */
     char_u *dst,               /* where to put the result */
@@ -2711,7 +2711,7 @@ expand_env (
   expand_env_esc(src, dst, dstlen, FALSE, FALSE, NULL);
 }
 
-void 
+void
 expand_env_esc (
     char_u *srcp,              /* input string e.g. "$HOME/vim.hlp" */
     char_u *dst,               /* where to put the result */
@@ -3131,7 +3131,7 @@ static void init_users(void)
   }
 
   lazy_init_done = TRUE;
-  
+
   os_get_usernames(&ga_users);
 }
 
@@ -3172,7 +3172,7 @@ int match_user(char_u *name)
  * 'src'.
  * If anything fails (except when out of space) dst equals src.
  */
-void 
+void
 home_replace (
     buf_T *buf,       /* when not NULL, check for help files */
     char_u *src,       /* input file name */
