@@ -51,7 +51,9 @@
 #include "nvim/ui.h"
 #include "nvim/window.h"
 #include "nvim/os/os.h"
-
+#include "nvim/os/shell.h"
+#include "nvim/os/job.h"
+#include "nvim/os/rstream.h"
 
 struct dir_stack_T {
   struct dir_stack_T  *next;
@@ -152,6 +154,39 @@ struct efm_S {
  * For location list window, return the referenced location list
  */
 #define GET_LOC_LIST(wp) (IS_LL_WINDOW(wp) ? wp->w_llist_ref : wp->w_llist)
+
+/// Data for running an `ex_make()` job.
+struct qf_data_T {
+  bool new_list;        ///< Make new quick-fix list. (Only true on first run.)
+  int found;            ///< Number of items found.
+  qf_info_T *list;      ///< Existing list, or NULL.
+  char_u *errorformat;  ///< Pattern to parse errors with.
+  char_u *title;        ///< Title of the quick-fix list.
+};
+
+/// A callback to run qf_init from a job with the output of "grep", "ag",
+/// "make", etc.
+static void qf_init_cb(RStream *rstream, void *job, bool eof)
+{
+  size_t size = rstream_available(rstream);
+  if (eof || size == 0) {
+    return;
+  }
+
+  // Save the input as a vim string.
+  char *buf = xmalloc(size + 1);
+  size_t read = rstream_read(rstream, buf, size);
+  buf[read] = NUL;
+  typval_T tv;
+  tv.v_type = VAR_STRING;
+  tv.vval.v_string = (char_u *) buf;
+
+  struct qf_data_T *qf_data = job_data(job);
+  qf_data->found += qf_init_ext(qf_data->list, NULL, curbuf, &tv, p_gefm,
+                                qf_data->new_list, 0, 0, qf_data->title);
+  qf_data->new_list = false;  // Not a new list if we get called again.
+  free(buf);
+}
 
 /*
  * Read the errorfile "efile" into memory, line by line, building the error
@@ -2436,17 +2471,11 @@ int grep_internal(cmdidx_T cmdidx)
       *curbuf->b_p_gp == NUL ? p_gp : curbuf->b_p_gp) == 0;
 }
 
-/*
- * Used for ":make", ":lmake", ":grep", ":lgrep", ":grepadd", and ":lgrepadd"
- */
+/// Implements `:make`, `:lmake`, `:grep`, `:lgrep`, `:grepadd`,
+/// and `:lgrepadd`.
 void ex_make(exarg_T *eap)
 {
-  char_u      *fname;
-  char_u      *cmd;
-  unsigned len;
   win_T       *wp = NULL;
-  qf_info_T   *qi = &ql_info;
-  int res;
   char_u      *au_name = NULL;
 
   /* Redirect ":grep" to ":vimgrep" if 'grepprg' is "internal". */
@@ -2476,22 +2505,7 @@ void ex_make(exarg_T *eap)
     wp = curwin;
 
   autowrite_all();
-  fname = get_mef_name();
-  if (fname == NULL)
-    return;
-  os_remove((char *)fname);  // in case it's not unique
 
-  /*
-   * If 'shellpipe' empty: don't redirect to 'errorfile'.
-   */
-  len = (unsigned)STRLEN(p_shq) * 2 + (unsigned)STRLEN(eap->arg) + 1;
-  if (*p_sp != NUL)
-    len += (unsigned)STRLEN(p_sp) + (unsigned)STRLEN(fname) + 3;
-  cmd = xmalloc(len);
-  sprintf((char *)cmd, "%s%s%s", (char *)p_shq, (char *)eap->arg,
-      (char *)p_shq);
-  if (*p_sp != NUL)
-    append_redir(cmd, len, p_sp, fname);
   /*
    * Output a newline if there's something else than the :make command that
    * was typed (in which case the cursor is in column 0).
@@ -2500,17 +2514,38 @@ void ex_make(exarg_T *eap)
     msg_didout = FALSE;
   msg_start();
   MSG_PUTS(":!");
-  msg_outtrans(cmd);            /* show what we are doing */
+  msg_outtrans(eap->arg);       /* show what we are doing */
 
-  /* let the shell know if we are redirecting output or not */
-  do_shell(cmd, *p_sp != NUL ? kShellOptDoOut : 0);
+  out_flush();
 
+  struct qf_data_T qf_data = {
+    // :grepadd preserves the existing list.
+    .new_list = (eap->cmdidx != CMD_grepadd && eap->cmdidx != CMD_lgrepadd),
+    .found = 0,
+    .list = wp ? ll_get_or_alloc_list(wp) : &ql_info,
+    .errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) ?
+      p_gefm : p_efm,
+    .title = *eap->cmdlinep,
+  };
 
-  res = qf_init(wp, fname, (eap->cmdidx != CMD_make
-                            && eap->cmdidx != CMD_lmake) ? p_gefm : p_efm,
-      (eap->cmdidx != CMD_grepadd
-       && eap->cmdidx != CMD_lgrepadd),
-      *eap->cmdlinep);
+  int status;
+  char **argv = shell_build_argv(eap->arg, NULL);
+  Job *job = job_start(argv, &qf_data, qf_init_cb, qf_init_cb, NULL, 0, &status);
+
+  if (status <= 0) {
+    shell_free_argv(argv);
+    char buf[NUMBUFLEN];
+    sprintf(buf, "%i", status);
+    EMSG3("Could not start %s; error: %s", eap->arg, buf);
+    return;
+  }
+
+  job_close_in(job);
+  job_wait(job, -1);
+
+  int res = qf_data.found;
+
+  qf_info_T *qi = &ql_info;
   if (wp != NULL)
     qi = GET_LOC_LIST(wp);
   if (au_name != NULL) {
@@ -2523,10 +2558,6 @@ void ex_make(exarg_T *eap)
   }
   if (res > 0 && !eap->forceit)
     qf_jump(qi, 0, 0, FALSE);                   /* display first error */
-
-  os_remove((char *)fname);
-  free(fname);
-  free(cmd);
 }
 
 /*
