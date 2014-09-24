@@ -1,7 +1,7 @@
-/**
- * Provides utilities for manipulating and accessing environment variables.
- * These utilities build on top of the platform-specific utilities  provided by os/env.h
- */
+///
+/// Provides utilities for manipulating and accessing environment variables.
+/// These utilities build on top of the platform-specific utilities  provided by os/env.h
+///
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -26,17 +26,18 @@
 # include "environment.c.generated.h"
 #endif
 
-/*
- * To get the "real" home directory:
- * - get value of $HOME
- * For Unix:
- *  - go to that directory
- *  - do os_dirname() to get the real name of that directory.
- *  This also works with mounts and links.
- *  Don't do this for MS-DOS, it will change the "current dir" for a drive.
- */
 static char_u   *homedir = NULL;
 
+/// Initialize the global homedir
+/// To get the "real" home directory:
+/// - get value of $HOME
+///
+/// For Unix:
+///  - go to that directory
+///  - do os_dirname() to get the real name of that directory.
+///
+/// This also works with mounts and links.
+/// Don't do this for MS-DOS, it will change the "current dir" for a drive.
 void init_homedir(void)
 {
   char_u  *var;
@@ -76,20 +77,25 @@ void free_homedir(void)
 }
 #endif
 
-/*
- * Call expand_env() and store the result in an allocated string.
- * This is not very memory efficient, this expects the result to be freed
- * again soon.
- */
+/// Call expand_env() and store the result in an allocated string.
+///
+/// This is not very memory efficient, this expects the result to be freed
+/// again soon.
+///
+/// @param src The environment variable to expand
+/// @see expand_env_save_opt
 char_u *expand_env_save(char_u *src)
 {
   return expand_env_save_opt(src, false);
 }
 
-/*
- * Idem, but when "one" is TRUE handle the string as one file name, only
- * expand "~" at the start.
- */
+/// Call expand_env() and store the result in an allocated string.
+//
+/// When "one" is TRUE handle the string as one file name, only expand
+/// "~" at the start.
+///
+/// @param src The environment variable to expand
+/// @see expand_env_save
 char_u *expand_env_save_opt(char_u *src, bool one)
 {
   char_u *p = xmalloc(MAXPATHL);
@@ -97,30 +103,40 @@ char_u *expand_env_save_opt(char_u *src, bool one)
   return p;
 }
 
-/*
- * Expand environment variable with path name.
- * "~/" is also expanded, using $HOME.	For Unix "~user/" is expanded.
- * Skips over "\ ", "\~" and "\$" (not for Win32 though).
- * If anything fails no expansion is done and dst equals src.
- */
+/// Expand environment variable with path name.
+///
+/// "~/" is also expanded, using $HOME.	For Unix "~user/" is expanded.
+/// Skips over "\ ", "\~" and "\$" (not for Win32 though).
+/// If anything fails no expansion is done and dst equals src.
+/// @param src Input string e.g. "$HOME/vim.hlp"
+/// @param dst Where to put the result
+/// @param dstlen Maximum length of thet destination
 void
 expand_env(
-    char_u *src,               /* input string e.g. "$HOME/vim.hlp" */
-    char_u *dst,               /* where to put the result */
-    int dstlen                     /* maximum length of the result */
+    char_u *src,
+    char_u *dst,
+    int dstlen
 )
 {
   expand_env_esc(src, dst, dstlen, false, false, NULL);
 }
 
+/// Expands a path using environment variables
+///
+/// @param srcp input string e.g. "$HOME/vim.hlp"
+/// @param dst where to put the result
+/// @param dstlen maximum length of the result
+/// @param esc escape spaces in expanded variables
+/// @param one "srcp" is one file name 
+/// @param startstr start again after this (can be NULL)
 void
 expand_env_esc(
-    char_u *srcp,              /* input string e.g. "$HOME/vim.hlp" */
-    char_u *dst,               /* where to put the result */
-    int dstlen,                     /* maximum length of the result */
-    bool esc,                        /* escape spaces in expanded variables */
-    bool one,                        /* "srcp" is one file name */
-    char_u *startstr          /* start again after this (can be NULL) */
+    char_u *srcp,
+    char_u *dst,
+    int dstlen,
+    bool esc,
+    bool one,
+    char_u *startstr
 )
 {
   char_u      *src;
@@ -306,13 +322,12 @@ expand_env_esc(
   *dst = NUL;
 }
 
-/*
- * Vim's version of getenv().
- * Special handling of $HOME, $VIM and $VIMRUNTIME.
- * Also does ACP to 'enc' conversion for Win32.
- * "mustfree" is set to TRUE when returned is allocated, it must be
- * initialized to FALSE by the caller.
- */
+/// Vim's version of getenv().
+/// Special handling of $HOME, $VIM and $VIMRUNTIME.
+/// Also does ACP to 'enc' conversion for Win32.
+/// @param name the name of the environment variable to getenv()
+/// @param mustfree Should be initialized to false, will be set to true
+///        if the returned char_u * must be freed by the caller
 char_u *vim_getenv(char_u *name, bool *mustfree)
 {
   char_u      *p;
@@ -485,9 +500,10 @@ static char_u *remove_tail(char_u *p, char_u *pend, char_u *name)
   return pend;
 }
 
-/*
- * Our portable version of setenv.
- */
+/// Our portable version of setenv.
+///
+/// @param name The name of the variable to set
+/// @param val The val of the variable to set
 void vim_setenv(char_u *name, char_u *val)
 {
   os_setenv((char *)name, (char *)val, 1);
@@ -503,9 +519,9 @@ void vim_setenv(char_u *name, char_u *val)
 }
 
 
-/*
- * Function given to ExpandGeneric() to obtain an environment variable name.
- */
+/// Function given to ExpandGeneric() to obtain an environment variable name.
+/// @param xp the buffer to expand into
+/// @param idx the index of the environment variable in the environ cache.
 char_u *get_env_name(expand_T *xp, int idx)
 {
 # define ENVNAMELEN 100
@@ -521,19 +537,22 @@ char_u *get_env_name(expand_T *xp, int idx)
   }
 }
 
-/*
- * Replace home directory by "~" in each space or comma separated file name in
- * 'src'.
- * If anything fails (except when out of space) dst equals src.
- */
+/// Replace home directory by "~" in each space or comma separated file name in
+/// 'src'.
+/// If anything fails (except when out of space) dst equals src.
+/// @param buf when not NULL, check for help files 
+/// @param src input file name
+/// @param dst where to put the result
+/// @param dstlen maximum length of the result
+/// @param one if TRUE, only replace one file name, include spaces and commas 
+///        in the file name
 void
 home_replace(
-    buf_T *buf,       /* when not NULL, check for help files */
-    char_u *src,       /* input file name */
-    char_u *dst,       /* where to put the result */
-    int dstlen,             /* maximum length of the result */
-    bool one                /* if TRUE, only replace one file name, include
-                           spaces and commas in the file name. */
+    buf_T *buf,
+    char_u *src,
+    char_u *dst,
+    int dstlen,
+    bool one
 )
 {
   size_t dirlen = 0, envlen = 0;
@@ -635,13 +654,15 @@ home_replace(
     free(homedir_env);
 }
 
-/*
- * Like home_replace, store the replaced string in allocated memory.
- */
+/// Like home_replace, store the replaced string in allocated memory.
+///
+/// @param buf when not NULL, check for help files
+/// @param src input file name
+>>>>>>> 09fdf2e... Documentation comment formating
 char_u *
 home_replace_save(
-    buf_T *buf,       /* when not NULL, check for help files */
-    char_u *src       /* input file name */
+    buf_T *buf,
+    char_u *src
 ) FUNC_ATTR_NONNULL_RET
 {
   size_t len = 3;                      /* space for "~/" and trailing NUL */
