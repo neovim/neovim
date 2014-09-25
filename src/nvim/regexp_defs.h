@@ -108,7 +108,7 @@ typedef struct {
   regprog_T           *regprog;
   char_u              *startp[NSUBEXP];
   char_u              *endp[NSUBEXP];
-  int rm_ic;
+  bool                 rm_ic;
 } regmatch_T;
 
 /*
