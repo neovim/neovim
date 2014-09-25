@@ -162,26 +162,65 @@ struct qf_data_T {
   qf_info_T *list;      ///< Existing list, or NULL.
   char_u *errorformat;  ///< Pattern to parse errors with.
   char_u *title;        ///< Title of the quick-fix list.
+  char_u *partial_line;   ///< A line from an incomplete read of stdout.
+  char_u *epartial_line;  ///< A line from an incomplete read of stderr.
 };
+
+/// A callback to run qf_init() from a job with the standard out of "grep",
+/// "ag", "make", etc.
+static void qf_stdin_cb(RStream *rstream, void *job, bool eof)
+{
+  qf_init_cb(rstream, job_data(job), eof, false);
+}
+
+/// A callback to run qf_init() from a job with the standard err of "grep",
+/// "ag", "make", etc.
+static void qf_stdout_cb(RStream *rstream, void *job, bool eof)
+{
+  qf_init_cb(rstream, job_data(job), eof, true);
+}
 
 /// A callback to run qf_init from a job with the output of "grep", "ag",
 /// "make", etc.
-static void qf_init_cb(RStream *rstream, void *job, bool eof)
+static void qf_init_cb(RStream *rstream, void *qf_datav,
+                       bool eof, bool err)
 {
+  struct qf_data_T *qf_data = qf_datav;
+  char_u **partial_ptr = err ? &qf_data->epartial_line
+                             : &qf_data->partial_line;
   size_t size = rstream_available(rstream);
-  if (eof || size == 0) {
+
+  // Exit early, but only if we have nothing to do.
+  if (eof && size == 0 && *partial_ptr == NULL) {
     return;
   }
 
-  // Save the input as a vim string.
-  char *buf = xmalloc(size + 1);
-  size_t read = rstream_read(rstream, buf, size);
+  size_t partial_size = *partial_ptr ? STRLEN(*partial_ptr) : 0;
+
+  // Prepend the truncated line from the previous run to the new output.
+  char *buf = xrealloc(*partial_ptr, size + partial_size + 1);
+  *partial_ptr = NULL;
+  size_t read = rstream_read(rstream, buf + partial_size, size);
+  read += partial_size;
   buf[read] = NUL;
+
+  // Detect truncation: The last character should be a new line.
+  // If not, save the remaining bits for the next run.
+  char *lastnl = strrchr(buf + partial_size, NL);
+  if (lastnl == NULL) {
+    // Couldn't even read one complete line!
+    *partial_ptr = (char_u *) buf;
+    return;  // Nothing to do.
+  } else if (lastnl[1] != NUL) {
+    *partial_ptr = (char_u *) xstrdup(lastnl + 1);
+    *lastnl = NUL;
+  }
+
+  // Save the input as a vim string.
   typval_T tv;
   tv.v_type = VAR_STRING;
   tv.vval.v_string = (char_u *) buf;
 
-  struct qf_data_T *qf_data = job_data(job);
   qf_data->found += qf_init_ext(qf_data->list, NULL, curbuf, &tv, p_gefm,
                                 qf_data->new_list, 0, 0, qf_data->title);
   qf_data->new_list = false;  // Not a new list if we get called again.
@@ -2526,11 +2565,13 @@ void ex_make(exarg_T *eap)
     .errorformat = (eap->cmdidx != CMD_make && eap->cmdidx != CMD_lmake) ?
       p_gefm : p_efm,
     .title = *eap->cmdlinep,
+    .partial_line = NULL,
+    .epartial_line = NULL
   };
 
   int status;
   char **argv = shell_build_argv(eap->arg, NULL);
-  Job *job = job_start(argv, &qf_data, qf_init_cb, qf_init_cb, NULL, 0, &status);
+  Job *job = job_start(argv, &qf_data, qf_stdin_cb, qf_stdout_cb, NULL, 0, &status);
 
   if (status <= 0) {
     shell_free_argv(argv);
