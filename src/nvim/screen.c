@@ -346,7 +346,7 @@ int redraw_asap(int type)
  * Note that when also inserting/deleting lines w_redraw_top and w_redraw_bot
  * may become invalid and the whole window will have to be redrawn.
  */
-void 
+void
 redrawWinline (
     linenr_T lnum,
     int invalid             /* window line height is invalid now */
@@ -2114,7 +2114,7 @@ static void copy_text_attr(int off, char_u *buf, int len, int attr)
  * Fill the foldcolumn at "p" for window "wp".
  * Only to be called when 'foldcolumn' > 0.
  */
-static void 
+static void
 fill_foldcolumn (
     char_u *p,
     win_T *wp,
@@ -2166,7 +2166,7 @@ fill_foldcolumn (
  *
  * Return the number of last row the line occupies.
  */
-static int 
+static int
 win_line (
     win_T *wp,
     linenr_T lnum,
@@ -2655,8 +2655,8 @@ win_line (
     }
     next_search_hl(wp, shl, lnum, (colnr_T)v, cur);
 
-    // Need to get the line again, a multi-line regexp may have made it 
-    // invalid. 
+    // Need to get the line again, a multi-line regexp may have made it
+    // invalid.
     line = ml_get_buf(wp->w_buffer, lnum, false);
     ptr = line + v;
 
@@ -2672,7 +2672,7 @@ win_line (
       } else {
           shl->endcol = MAXCOL;
       }
-      // Highlight one character for an empty match. 
+      // Highlight one character for an empty match.
       if (shl->startcol == shl->endcol) {
           if (has_mbyte && line[shl->endcol] != NUL) {
               shl->endcol += (*mb_ptr2len)(line + shl->endcol);
@@ -2680,7 +2680,7 @@ win_line (
               ++shl->endcol;
           }
       }
-      if ((long)shl->startcol < v) {   // match at leftcol 
+      if ((long)shl->startcol < v) {   // match at leftcol
         shl->attr_cur = shl->attr;
         search_attr = shl->attr;
       }
@@ -4676,7 +4676,7 @@ static int skip_status_match_char(expand_T *xp, char_u *s)
  *
  * If inversion is possible we use it. Else '=' characters are used.
  */
-void 
+void
 win_redr_status_matches (
     expand_T *xp,
     int num_matches,
@@ -4962,7 +4962,7 @@ void win_redr_status(win_T *wp)
       fillchar = fillchar_status(&attr, wp == curwin);
     else
       fillchar = fillchar_vsep(&attr);
-    screen_putchar(fillchar, wp->w_winrow + wp->w_height, 
+    screen_putchar(fillchar, wp->w_winrow + wp->w_height,
                    W_ENDCOL(wp), attr);
   }
   busy = FALSE;
@@ -5024,7 +5024,7 @@ int stl_connected(win_T *wp)
 /*
  * Get the value to show for the language mappings, active 'keymap'.
  */
-int 
+int
 get_keymap_str (
     win_T *wp,
     char_u *buf,           /* buffer for the result */
@@ -5068,7 +5068,7 @@ get_keymap_str (
  * Redraw the status line or ruler of window "wp".
  * When "wp" is NULL redraw the tab pages line from 'tabline'.
  */
-static void 
+static void
 win_redr_custom (
     win_T *wp,
     int draw_ruler                 /* TRUE or FALSE */
@@ -5606,7 +5606,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
       if (cur != NULL) {
         cur->pos.cur = 0;
       }
-      bool pos_inprogress = true; // mark that a position match search is 
+      bool pos_inprogress = true; // mark that a position match search is
                                   // in progress
       n = 0;
       while (shl->first_lnum < lnum && (shl->rm.regprog != NULL
@@ -5637,7 +5637,7 @@ static void prepare_search_hl(win_T *wp, linenr_T lnum)
  * shl->lnum is zero.
  * Careful: Any pointers for buffer lines will become invalid.
  */
-static void 
+static void
 next_search_hl (
     win_T *win,
     match_T *shl,               /* points to search_hl or a match */
@@ -5705,9 +5705,9 @@ next_search_hl (
     if (shl->rm.regprog != NULL) {
       nmatched = vim_regexec_multi(&shl->rm, win, shl->buf, lnum, matchcol, &(shl->tm));
       if (called_emsg || got_int) {
-        // Error while handling regexp: stop using this regexp. 
+        // Error while handling regexp: stop using this regexp.
         if (shl == &search_hl) {
-          // don't free regprog in the match list, it's a copy 
+          // don't free regprog in the match list, it's a copy
           vim_regfree(shl->rm.regprog);
           SET_NO_HLSEARCH(TRUE);
         }
@@ -5735,11 +5735,11 @@ next_search_hl (
 
 static int
 next_search_hl_pos(
-    match_T *shl,         // points to a match 
+    match_T *shl,         // points to a match
     linenr_T lnum,
-    posmatch_T *posmatch, // match positions 
+    posmatch_T *posmatch, // match positions
     colnr_T mincol        // minimal column for a match
-) 
+)
 {
   int i;
   int bot = -1;
@@ -5754,8 +5754,8 @@ next_search_hl_pos(
     }
     if (posmatch->pos[i].lnum == lnum) {
       if (shl->lnum == lnum) {
-        // partially sort positions by column numbers 
-        // on the same line 
+        // partially sort positions by column numbers
+        // on the same line
         if (posmatch->pos[i].col < posmatch->pos[bot].col) {
           llpos_T tmp = posmatch->pos[i];
 
@@ -5772,7 +5772,7 @@ next_search_hl_pos(
   if (shl->lnum == lnum) {
     colnr_T start = posmatch->pos[bot].col == 0
                     ? 0: posmatch->pos[bot].col - 1;
-    colnr_T end = posmatch->pos[bot].col == 0 
+    colnr_T end = posmatch->pos[bot].col == 0
                   ? MAXCOL : start + posmatch->pos[bot].len;
 
     shl->rm.startpos[0].lnum = 0;
@@ -7091,7 +7091,7 @@ static void win_rest_invalid(win_T *wp)
  *
  * return FAIL for failure, OK for success.
  */
-int 
+int
 screen_ins_lines (
     int off,
     int row,
@@ -7264,7 +7264,7 @@ screen_ins_lines (
  *
  * Return OK for success, FAIL if the lines are not deleted.
  */
-int 
+int
 screen_del_lines (
     int off,
     int row,
@@ -7630,7 +7630,7 @@ void unshowmode(int force)
 static void draw_tabline(void)
 {
   int tabcount = 0;
-  int tabwidth;
+  int tabwidth = 0;
   int col = 0;
   int scol = 0;
   int attr;
@@ -7676,9 +7676,13 @@ static void draw_tabline(void)
       ++tabcount;
     }
 
-    tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
-    if (tabwidth < 6)
+    if (tabcount > 0) {
+      tabwidth = (Columns - 1 + tabcount / 2) / tabcount;
+    }
+
+    if (tabwidth < 6) {
       tabwidth = 6;
+    }
 
     attr = attr_nosel;
     tabcount = 0;
