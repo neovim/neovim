@@ -609,6 +609,8 @@ struct file_buffer {
 
   int b_p_ai;                   /* 'autoindent' */
   int b_p_ai_nopaste;           /* b_p_ai saved for paste mode */
+  char_u      *b_p_bkc;         ///< 'backupcopy'
+  uint8_t      b_bkc_flags;     ///< flags for 'backupcopy'
   int b_p_ci;                   /* 'copyindent' */
   int b_p_bin;                  /* 'binary' */
   int b_p_bomb;                 /* 'bomb' */
