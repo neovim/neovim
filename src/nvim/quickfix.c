@@ -2561,54 +2561,6 @@ void ex_make(exarg_T *eap)
 }
 
 /*
- * Return the name for the errorfile, in allocated memory.
- * Find a new unique name when 'makeef' contains "##".
- * Returns NULL for error.
- */
-static char_u *get_mef_name(void)
-{
-  char_u      *p;
-  char_u      *name;
-  static int start = -1;
-  static int off = 0;
-
-  if (*p_mef == NUL) {
-    name = vim_tempname();
-    if (name == NULL)
-      EMSG(_(e_notmp));
-    return name;
-  }
-
-  for (p = p_mef; *p; ++p)
-    if (p[0] == '#' && p[1] == '#')
-      break;
-
-  if (*p == NUL)
-    return vim_strsave(p_mef);
-
-  /* Keep trying until the name doesn't exist yet. */
-  for (;; ) {
-    if (start == -1)
-      start = os_get_pid();
-    else
-      off += 19;
-
-    name = xmalloc(STRLEN(p_mef) + 30);
-    STRCPY(name, p_mef);
-    sprintf((char *)name + (p - p_mef), "%d%d", start, off);
-    STRCAT(name, p + 2);
-    // Don't accept a symbolic link, its a security risk.
-    FileInfo file_info;
-    bool file_or_link_found = os_fileinfo_link((char *)name, &file_info);
-    if (!file_or_link_found) {
-      break;
-    }
-    free(name);
-  }
-  return name;
-}
-
-/*
  * ":cc", ":crewind", ":cfirst" and ":clast".
  * ":ll", ":lrewind", ":lfirst" and ":llast".
  */
