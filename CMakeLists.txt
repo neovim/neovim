@@ -119,12 +119,6 @@ endif()
 
 message(STATUS "Using the Lua interpreter ${LUA_PRG}")
 
-# Setup busted.
-find_program(BUSTED_PRG busted)
-if(NOT BUSTED_OUTPUT_TYPE)
-  set(BUSTED_OUTPUT_TYPE "utfTerminal")
-endif()
-
 # Setup make.
 find_program(MAKE_PRG NAMES gmake make)
 if(MAKE_PRG)
@@ -188,7 +182,14 @@ add_subdirectory(test/includes)
 
 # Setup some test-related bits.  We do this after going down the tree because we
 # need some of the targets.
+
+# Setup busted.
+find_program(BUSTED_PRG busted)
 if(BUSTED_PRG)
+  if(NOT BUSTED_OUTPUT_TYPE)
+    set(BUSTED_OUTPUT_TYPE "utfTerminal")
+  endif()
+
   get_property(TEST_INCLUDE_DIRS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
 
@@ -213,4 +214,19 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -P ${CMAKE_MODULE_PATH}/RunUnittests.cmake
     DEPENDS nvim-test unittest-headers)
+endif()
+
+# Setup vroom.
+find_program(VROOM_PRG vroom)
+if(VROOM_PRG)
+  add_custom_target(integrationtest
+    COMMAND ${CMAKE_COMMAND}
+      -DVROOM_PRG=${VROOM_PRG}
+      -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+      -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
+      -DBUILD_DIR=${CMAKE_BINARY_DIR}
+      -DDEPS_INSTALL_DIR=${DEPS_INSTALL_DIR}
+      -P ${CMAKE_MODULE_PATH}/RunIntegrationtests.cmake)
+    #TODO(fwalch): following doesn't work
+    #DEPENDS nvim-python)
 endif()

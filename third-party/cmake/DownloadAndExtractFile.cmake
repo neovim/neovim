@@ -46,11 +46,18 @@ message(STATUS "downloading...
      dst='${file}'
      timeout='${timeout_msg}'")
 
-file(DOWNLOAD ${URL} ${file}
-  ${timeout_args}
-  EXPECTED_MD5 ${EXPECTED_MD5}
-  STATUS status
-  LOG log)
+ if(EXPECTED_MD5 STREQUAL "SKIP")
+  file(DOWNLOAD ${URL} ${file}
+    ${timeout_args}
+    STATUS status
+    LOG log)
+ else()
+  file(DOWNLOAD ${URL} ${file}
+    ${timeout_args}
+    EXPECTED_MD5 ${EXPECTED_MD5}
+    STATUS status
+    LOG log)
+endif()
 
 list(GET status 0 status_code)
 list(GET status 1 status_string)

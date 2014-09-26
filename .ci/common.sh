@@ -53,26 +53,15 @@ set_environment() {
 	export PATH="$prefix/bin:$PATH"
 	export PKG_CONFIG_PATH="$prefix/lib/pkgconfig"
 	export USE_BUNDLED_DEPS=OFF
+	export PYTHONPATH="$prefix/lib/python2.7/site-packages"
 }
 
 
 install_prebuilt_deps() {
 	# install prebuilt dependencies
 	if [ ! -d /opt/neovim-deps ]; then
-		cd /opt
-		sudo git clone --depth=1 git://github.com/neovim/deps neovim-deps
-		cd -
+		sudo git clone --depth=1 --branch=testing git://github.com/fwalch/deps /opt/neovim-deps
 	fi
-}
-
-install_vroom() {
-	(
-	sudo pip install git+https://github.com/neovim/python-client.git
-	git clone git://github.com/google/vroom
-	cd vroom
-	python setup.py build
-	sudo python setup.py install
-	)
 }
 
 tmpdir="$(pwd)/tmp"

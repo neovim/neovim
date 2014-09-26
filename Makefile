@@ -74,9 +74,13 @@ endif
 	mkdir -p build
 	touch $@
 
-test: | nvim
+test: | integrationtest legacytest
+
+integrationtest: | nvim
+	+$(BUILD_CMD) -C build integrationtest
+
+legacytest: | nvim
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
-	PATH="$$(pwd)/build/bin:$$PATH" vroom --neovim --crawl test
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
@@ -91,4 +95,5 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-.PHONY: test unittest clean distclean nvim cmake deps install
+.PHONY: test integrationtest legacytest unittest \
+        clean distclean nvim cmake deps install

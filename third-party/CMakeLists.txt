@@ -19,6 +19,8 @@ option(USE_BUNDLED_LIBUV "Use the bundled libuv." ${USE_BUNDLED})
 option(USE_BUNDLED_MSGPACK "Use the bundled msgpack." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAJIT "Use the bundled version of luajit." ${USE_BUNDLED})
 option(USE_BUNDLED_LUAROCKS "Use the bundled version of luarocks." ${USE_BUNDLED})
+option(USE_BUNDLED_VROOM "Use the bundled version of vroom." ${USE_BUNDLED})
+option(USE_BUNDLED_NVIM_CLIENT "Use the bundled version of the neovim python client." ${USE_BUNDLED})
 
 # TODO: add windows support
 
@@ -62,6 +64,12 @@ set(LUAJIT_MD5 f14e9104be513913810cd59c8c658dc0)
 
 set(LUAROCKS_URL https://github.com/keplerproject/luarocks/archive/0587afbb5fe8ceb2f2eea16f486bd6183bf02f29.tar.gz)
 set(LUAROCKS_MD5 0f53f42909fbcd2c88be303e8f970516)
+
+set(VROOM_URL https://github.com/google/vroom/archive/master.tar.gz)
+set(VROOM_MD5 SKIP)
+
+set(NVIM_PYTHON_URL https://github.com/neovim/python-client/archive/master.tar.gz)
+set(NVIM_PYTHON_MD5 SKIP)
 
 if(USE_BUNDLED_LIBUV)
   ExternalProject_Add(libuv
@@ -190,6 +198,54 @@ if(USE_BUNDLED_LUAROCKS)
     DEPENDS ${DEPS_LIB_DIR}/luarocks/rocks/lpeg)
 
   list(APPEND THIRD_PARTY_DEPS busted lua-messagepack lpeg)
+endif()
+
+find_package(PythonInterp 2.6)
+if(PYTHONINTERP_FOUND)
+  if(USE_BUNDLED_VROOM OR USE_BUNDLED_NVIM_CLIENT)
+    set(PYTHONPATH "${DEPS_INSTALL_DIR}/lib/python${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}/site-packages/")
+    file(MAKE_DIRECTORY ${PYTHONPATH})
+  endif()
+
+  if(USE_BUNDLED_VROOM)
+    ExternalProject_Add(vroom
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${VROOM_URL}
+      URL_MD5 ${VROOM_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/vroom
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+        -DPREFIX=${DEPS_BUILD_DIR}
+        -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/vroom
+        -DURL=${VROOM_URL}
+        -DEXPECTED_MD5=${VROOM_MD5}
+        -DTARGET=vroom
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      BUILD_IN_SOURCE 1
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ${PYTHON_EXECUTABLE} setup.py build
+      INSTALL_COMMAND PYTHONPATH=${PYTHONPATH} ${PYTHON_EXECUTABLE} setup.py install --prefix=${DEPS_INSTALL_DIR})
+    list(APPEND THIRD_PARTY_DEPS vroom)
+  endif()
+
+  if(USE_BUNDLED_NVIM_CLIENT)
+    ExternalProject_Add(nvim-python
+      PREFIX ${DEPS_BUILD_DIR}
+      URL ${NVIM_PYTHON_URL}
+      URL_MD5 ${NVIM_PYTHON_MD5}
+      DOWNLOAD_DIR ${DEPS_DOWNLOAD_DIR}/nvim-python
+      DOWNLOAD_COMMAND ${CMAKE_COMMAND}
+        -DPREFIX=${DEPS_BUILD_DIR}
+        -DDOWNLOAD_DIR=${DEPS_DOWNLOAD_DIR}/nvim-python
+        -DURL=${NVIM_PYTHON_URL}
+        -DEXPECTED_MD5=${NVIM_PYTHON_MD5}
+        -DTARGET=nvim-python
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadAndExtractFile.cmake
+      BUILD_IN_SOURCE 1
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ${PYTHON_EXECUTABLE} setup.py build
+      INSTALL_COMMAND PYTHONPATH=${PYTHONPATH} ${PYTHON_EXECUTABLE} setup.py install --prefix=${DEPS_INSTALL_DIR})
+    list(APPEND THIRD_PARTY_DEPS nvim-python)
+  endif()
 endif()
 
 add_custom_target(third-party ALL
