@@ -2711,12 +2711,9 @@ A jump table for the options with a short description can be found at |Q_op|.
 					others: "errors.err")
 			global
 			{not in Vi}
-			{not available when compiled without the |+quickfix|
-			feature}
-	Name of the errorfile for the QuickFix mode (see |:cf|).
+	Name of the errorfile for the |:cfile| ex command.
 	When the "-q" command-line argument is used, 'errorfile' is set to the
 	following argument.  See |-q|.
-	NOT used for the ":make" command.  See 'makeef' for that.
 	Environment variables are expanded |:set_env|.
 	See |option-backslash| about including spaces and backslashes.
 	This option cannot be set from a |modeline| or in the |sandbox|, for
@@ -4766,19 +4763,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'makeef' 'mef'		string	(default: "")
 			global
 			{not in Vi}
-			{not available when compiled without the |+quickfix|
-			feature}
-	Name of the errorfile for the |:make| command (see |:make_makeprg|)
-	and the |:grep| command.
-	When it is empty, an internally generated temp file will be used.
-	When "##" is included, it is replaced by a number to make the name
-	unique.  This makes sure that the ":make" command doesn't overwrite an
-	existing file.
-	NOT used for the ":cf" command.  See 'errorfile' for that.
-	Environment variables are expanded |:set_env|.
-	See |option-backslash| about including spaces and backslashes.
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
+			{not used}
+	Not used in neovim. Pipes are used instead.
 
 						*'makeprg'* *'mp'*
 'makeprg' 'mp'		string	(default "make", VMS: "MMS")
@@ -6073,36 +6059,8 @@ A jump table for the options with a short description can be found at |Q_op|.
 'shellpipe' 'sp'	string	(default ">", "| tee", "|& tee" or "2>&1| tee")
 			global
 			{not in Vi}
-			{not available when compiled without the |+quickfix|
-			feature}
-	String to be used to put the output of the ":make" command in the
-	error file.  See also |:make_makeprg|.  See |option-backslash| about
-	including spaces and backslashes.
-	The name of the temporary file can be represented by "%s" if necessary
-	(the file name is appended automatically if no %s appears in the value
-	of this option).
-	For the Amiga and MS-DOS the default is ">".  The output is directly
-	saved in a file and not echoed to the screen.
-	For Unix the default it "| tee".  The stdout of the compiler is saved
-	in a file and echoed to the screen.  If the 'shell' option is "csh" or
-	"tcsh" after initializations, the default becomes "|& tee".  If the
-	'shell' option is "sh", "ksh", "mksh", "pdksh", "zsh" or "bash" the
-	default becomes "2>&1| tee".  This means that stderr is also included.
-	Before using the 'shell' option a path is removed, thus "/bin/sh" uses
-	"sh".
-	The initialization of this option is done after reading the ".vimrc"
-	and the other initializations, so that when the 'shell' option is set
-	there, the 'shellpipe' option changes automatically, unless it was
-	explicitly set before.
-	When 'shellpipe' is set to an empty string, no redirection of the
-	":make" output will be done.  This is useful if you use a 'makeprg'
-	that writes to 'makeef' by itself.  If you want no piping, but do
-	want to include the 'makeef', set 'shellpipe' to a single space.
-	Don't forget to precede the space with a backslash: ":set sp=\ ".
-	In the future pipes may be used for filtering and this option will
-	become obsolete (at least for Unix).
-	This option cannot be set from a |modeline| or in the |sandbox|, for
-	security reasons.
+			{not used}
+	Not used in neovim. Pipes are used instead.
 
 						*'shellquote'* *'shq'*
 'shellquote' 'shq'	string	(default: ""; MS-DOS and Win32, when 'shell'

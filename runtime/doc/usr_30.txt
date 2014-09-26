@@ -182,23 +182,6 @@ This will find the Vim script for the "msvc" compiler and set the appropriate
 options.
    You can write your own compiler files.  See |write-compiler-plugin|.
 
-
-OUTPUT REDIRECTION
-
-The ":make" command redirects the output of the executed program to an error
-file.  How this works depends on various things, such as the 'shell'.  If your
-":make" command doesn't capture the output, check the 'makeef' and
-'shellpipe' options.  The 'shellquote' and 'shellxquote' options might also
-matter.
-
-In case you can't get ":make" to redirect the file for you, an alternative is
-to compile the program in another window and redirect the output into a file.
-Then have Vim read this file with: >
-
-	:cfile {filename}
-
-Jumping to errors will work like with the ":make" command.
-
 ==============================================================================
 *30.2*	Indenting C style text
 
