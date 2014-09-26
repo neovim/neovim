@@ -3695,7 +3695,12 @@ win_free (
 
   if (wp != aucmd_win)
     win_remove(wp, tp);
-  free(wp);
+  if (autocmd_busy) {
+    wp->w_next = au_pending_free_win;
+    au_pending_free_win = wp;
+  } else {
+    free(wp);
+  }
 
   unblock_autocmds();
 }
