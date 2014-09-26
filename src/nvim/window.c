@@ -364,14 +364,16 @@ newwindow:
   /*FALLTHROUGH*/
   case ']':
   case Ctrl_RSB:
-    CHECK_CMDWIN reset_VIsual_and_resel();      /* stop Visual mode */
+    CHECK_CMDWIN
+    // Keep visual mode, can select words to use as a tag.
     if (Prenum)
       postponed_split = Prenum;
     else
       postponed_split = -1;
+    g_do_tagpreview = 0;
 
-    /* Execute the command right here, required when
-     * "wincmd ]" was used in a function. */
+    // Execute the command right here, required when
+    // "wincmd ]" was used in a function.
     do_nv_ident(Ctrl_RSB, NUL);
     break;
 
@@ -457,7 +459,7 @@ wingotofile:
     /*FALLTHROUGH*/
     case ']':
     case Ctrl_RSB:
-      reset_VIsual_and_resel();                         /* stop Visual mode */
+      // Keep visual mode, can select words to use as a tag.
       if (Prenum)
         postponed_split = Prenum;
       else
