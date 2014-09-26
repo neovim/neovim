@@ -117,15 +117,19 @@ Object vim_eval(String str, Error *err)
   try_start();
   typval_T *expr_result = eval_expr((char_u *) str.data, NULL);
 
+  if (try_end(err)) {
+    goto end;
+  }
+
   if (!expr_result) {
     api_set_error(err, Exception, _("Failed to evaluate expression"));
+    goto end;
   }
 
-  if (!try_end(err)) {
-    // No errors, convert the result
-    rv = vim_to_object(expr_result);
-  }
+  // No errors, convert the result
+  rv = vim_to_object(expr_result);
 
+end:
   // Free the vim object
   free_tv(expr_result);
   return rv;
