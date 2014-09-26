@@ -1198,14 +1198,9 @@ static pos_T *find_start_brace(void)
   return trypos;
 }
 
-/*
- * Find the matching '(', failing if it is in a comment.
- * Return NULL if no match found.
- */
-static pos_T *
-find_match_paren ( /* XXX */
-    int ind_maxparen
-)
+/// Find the matching '(', failing if it is in a comment.
+/// @returns NULL or the found match.
+static pos_T *find_match_paren(int ind_maxparen)
 {
   pos_T cursor_save;
   pos_T       *trypos;
@@ -1220,7 +1215,7 @@ find_match_paren ( /* XXX */
       pos_copy = *trypos;           /* copy trypos, findmatch will change it */
       trypos = &pos_copy;
       curwin->w_cursor = *trypos;
-      if (ind_find_start_comment() != NULL)       /* XXX */
+      if (ind_find_start_comment() != NULL)
         trypos = NULL;
     }
   }
