@@ -3302,7 +3302,7 @@ expand_by_function (
     goto theend;
   }
   curwin->w_cursor = pos;       /* restore the cursor position */
-  check_cursor();
+  validate_cursor();
   if (!equalpos(curwin->w_cursor, pos)) {
     EMSG(_(e_compldel));
     goto theend;
@@ -4369,7 +4369,7 @@ static int ins_complete(int c)
         return FAIL;
       }
       curwin->w_cursor = pos;           /* restore the cursor position */
-      check_cursor();
+      validate_cursor();
       if (!equalpos(curwin->w_cursor, pos)) {
         EMSG(_(e_compldel));
         return FAIL;
