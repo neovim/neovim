@@ -6327,6 +6327,9 @@ win_found:
 
       curwin = aco->save_curwin;
       curbuf = curwin->w_buffer;
+      // In case the autocommand moves the cursor to a position that does not
+      // exist in curbuf
+      check_cursor();
     }
   }
 }
