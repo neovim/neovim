@@ -8065,9 +8065,6 @@ msgstr "E446: Geen lêernaam onder loper"
 #~ msgid "line ~%<PRId64>: %s"
 #~ msgstr "reël ~%<PRId64>: %s"
 
-#~ msgid "makeef option not set"
-#~ msgstr "'makeef' opsie nie aan nie"
-
 #~ msgid "Security error: filter output is a symbolic link: %s"
 #~ msgstr "Sekuriteitsfout: filter afvoer is 'n simboliese skakel"
 
