@@ -948,6 +948,9 @@ int win_split_ins(int size, int flags, win_T *new_wp, int dir)
       p_wh = size;
   }
 
+  // Keep same changelist position in new window.
+  wp->w_changelistidx = oldwin->w_changelistidx;
+
   /*
    * make the new window the current window
    */
