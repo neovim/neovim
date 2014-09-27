@@ -1950,6 +1950,10 @@ ENDTEST
 JSSTART
 (function($){
 
+if (cond &&
+cond) {
+stmt;
+}
 var class_name='myclass';
 
 function private_method() {

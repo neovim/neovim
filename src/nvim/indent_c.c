@@ -1198,7 +1198,7 @@ static pos_T *find_start_brace(void)
   return trypos;
 }
 
-/// Find the matching '(', failing if it is in a comment.
+/// Find the matching '(', ignoring it if it is in a comment.
 /// @returns NULL or the found match.
 static pos_T *find_match_paren(int ind_maxparen)
 {
@@ -1222,6 +1222,29 @@ static pos_T *find_match_paren(int ind_maxparen)
   curwin->w_cursor = cursor_save;
   return trypos;
 }
+
+/// Find the matching '(', ignoring it if it is in a comment or before an
+/// unmatched {.
+/// @returns NULL or the found match.
+static pos_T *find_match_paren_after_brace(int ind_maxparen)
+{
+  pos_T *trypos = find_match_paren(ind_maxparen);
+  if (trypos == NULL) {
+    return NULL;
+  }
+
+  pos_T *tryposBrace = find_start_brace();
+  // If both an unmatched '(' and '{' is found.  Ignore the '('
+  // position if the '{' is further down.
+  if (tryposBrace != NULL
+      && (trypos->lnum != tryposBrace->lnum
+          ? trypos->lnum < tryposBrace->lnum
+          : trypos->col < tryposBrace->col)) {
+    trypos = NULL;
+  }
+  return trypos;
+}
+
 
 /*
  * Return ind_maxparen corrected for the difference in line number between the
@@ -1934,13 +1957,14 @@ int get_c_indent(void)
           else {
             curwin->w_cursor.lnum = our_paren_pos.lnum;
             curwin->w_cursor.col = col;
-            if (find_match_paren(curbuf->b_ind_maxparen) != NULL)
+            if (find_match_paren_after_brace(curbuf->b_ind_maxparen)) {
               amount += curbuf->b_ind_unclosed2;
-            else {
-              if (is_if_for_while)
+            } else {
+              if (is_if_for_while) {
                 amount += curbuf->b_ind_if_for_while;
-              else
+              } else {
                 amount += curbuf->b_ind_unclosed;
+              }
             }
           }
           /*
