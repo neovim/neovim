@@ -6025,7 +6025,7 @@ A jump table for the options with a short description can be found at |Q_op|.
 					"cmd.exe", OS/2: "cmd")
 			global
 	Name of the shell to use for ! and :! commands.  When changing the
-	value also check these options: 'shelltype', 'shellpipe', 'shellslash'
+	value also check these options: 'shellpipe', 'shellslash'
 	'shellredir', 'shellquote', 'shellxquote' and 'shellcmdflag'.
 	It is allowed to give an argument to the command, e.g.  "csh -f".
 	See |option-backslash| about including spaces and backslashes.
@@ -6178,20 +6178,6 @@ A jump table for the options with a short description can be found at |Q_op|.
 	The |FilterReadPre|, |FilterReadPost| and |FilterWritePre|,
 	|FilterWritePost| autocommands event are not triggered when
 	'shelltemp' is off.
-
-						*'shelltype'* *'st'*
-'shelltype' 'st'	number	(default 0)
-			global
-			{not in Vi} {only for the Amiga}
-	On the Amiga this option influences the way how the commands work
-	which use a shell.
-	0 and 1: always use the shell
-	2 and 3: use the shell only to filter lines
-	4 and 5: use shell only for ':sh' command
-	When not using the shell, the command is executed directly.
-
-	0 and 2: use "shell 'shellcmdflag' cmd" to start external commands
-	1 and 3: use "shell cmd" to start external commands
 
 						*'shellxescape'* *'sxe'*
 'shellxescape' 'sxe'	string	(default: "";

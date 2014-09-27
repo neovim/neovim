@@ -232,8 +232,7 @@ g8			Print the hex values of the bytes used in the
 			mode.
 
 							*:!cmd* *:!* *E34*
-:!{cmd}			Execute {cmd} with the shell.  See also the 'shell'
-			and 'shelltype' option.
+:!{cmd}			Execute {cmd} with the shell. See also 'shell'.
 
 			Any '!' in {cmd} is replaced with the previous
 			external command (see also 'cpoptions').  But not when
