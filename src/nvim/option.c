@@ -1390,9 +1390,6 @@ static struct vimoption
   {"shelltemp",   "stmp", P_BOOL,
    (char_u *)&p_stmp, PV_NONE,
    {(char_u *)FALSE, (char_u *)TRUE} SCRIPTID_INIT},
-  {"shelltype",   "st",   P_NUM|P_VI_DEF,
-   (char_u *)NULL, PV_NONE,
-   {(char_u *)0L, (char_u *)0L} SCRIPTID_INIT},
   {"shellxquote", "sxq",  P_STRING|P_VI_DEF|P_SECURE,
    (char_u *)&p_sxq, PV_NONE,
    {
