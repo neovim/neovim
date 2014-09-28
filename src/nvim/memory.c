@@ -389,6 +389,25 @@ char *xstrdup(const char *str)
   return ret;
 }
 
+/// A version of memchr that starts the search at `src + len`.
+///
+/// Based on glibc's memrchr.
+///
+/// @param src The source memory object.
+/// @param c   The byte to search for.
+/// @param len The length of the memory object.
+/// @returns a pointer to the found byte in src[len], or NULL.
+void *xmemrchr(void *src, uint8_t c, size_t len)
+  FUNC_ATTR_NONNULL_ALL FUNC_ATTR_PURE
+{
+  while (len--) {
+    if (((uint8_t *)src)[len] == c) {
+      return (uint8_t *) src + len;
+    }
+  }
+  return NULL;
+}
+
 /// strndup() wrapper
 ///
 /// @see {xmalloc}
