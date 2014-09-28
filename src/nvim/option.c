@@ -4710,7 +4710,7 @@ skip:
  */
 static char_u *set_chars_option(char_u **varp)
 {
-  int round, entries;
+  int entries;
   char_u      *p, *s;
   int c1, c2 = 0;
   struct charstab {
@@ -4746,7 +4746,7 @@ static char_u *set_chars_option(char_u **varp)
   }
 
   /* first round: check for valid value, second round: assign values */
-  for (round = 0; round <= 1; ++round) {
+  for (int round = 0; round <= 1; ++round) {
     if (round > 0) {
       /* After checking that the value is valid: set defaults: space for
        * 'fillchars', NUL for 'listchars' */
