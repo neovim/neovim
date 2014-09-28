@@ -4737,10 +4737,10 @@ static char_u *set_chars_option(char_u **varp)
   int entries;
   if (varp == &p_lcs) {
     tab = lcstab;
-    entries = sizeof(lcstab) / sizeof(struct charstab);
+    entries = sizeof(lcstab) / sizeof(*tab);
   } else {
     tab = filltab;
-    entries = sizeof(filltab) / sizeof(struct charstab);
+    entries = sizeof(filltab) / sizeof(*tab);
   }
 
   /* first round: check for valid value, second round: assign values */
