@@ -4710,7 +4710,6 @@ skip:
  */
 static char_u *set_chars_option(char_u **varp)
 {
-  char_u *s;
   int c1, c2 = 0;
   struct charstab {
     int     *cp;
@@ -4765,7 +4764,7 @@ static char_u *set_chars_option(char_u **varp)
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
             && p[len + 1] != NUL) {
-          s = p + len + 1;
+          char_u *s = p + len + 1;
           c1 = mb_ptr2char_adv(&s);
           if (mb_char2cells(c1) > 1)
             continue;
