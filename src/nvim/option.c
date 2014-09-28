@@ -4748,13 +4748,16 @@ static char_u *set_chars_option(char_u **varp)
     if (round > 0) {
       /* After checking that the value is valid: set defaults: space for
        * 'fillchars', NUL for 'listchars' */
-      for (int i = 0; i < entries; ++i)
-        if (tab[i].cp != NULL)
+      for (int i = 0; i < entries; ++i) {
+        if (tab[i].cp != NULL) {
           *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
-      if (varp == &p_lcs)
+        }
+      }
+      if (varp == &p_lcs) {
         lcs_tab1 = NUL;
-      else
+      } else {
         fill_diff = '-';
+      }
     }
     for (char_u *p = *varp; *p;) {
       bool valid = false;
@@ -4765,24 +4768,27 @@ static char_u *set_chars_option(char_u **varp)
             && p[len + 1] != NUL) {
           char_u *s = p + len + 1;
           int c1 = mb_ptr2char_adv(&s);
-          if (mb_char2cells(c1) > 1)
+          if (mb_char2cells(c1) > 1) {
             continue;
+          }
           int c2 = 0;
           if (tab[i].cp == &lcs_tab2) {
-            if (*s == NUL)
+            if (*s == NUL) {
               continue;
+            }
             c2 = mb_ptr2char_adv(&s);
-            if (mb_char2cells(c2) > 1)
+            if (mb_char2cells(c2) > 1) {
               continue;
+            }
           }
           if (*s == ',' || *s == NUL) {
             if (round) {
               if (tab[i].cp == &lcs_tab2) {
                 lcs_tab1 = c1;
                 lcs_tab2 = c2;
-              } else if (tab[i].cp != NULL)
+              } else if (tab[i].cp != NULL) {
                 *(tab[i].cp) = c1;
-
+              }
             }
             p = s;
             valid = true;
@@ -4791,10 +4797,12 @@ static char_u *set_chars_option(char_u **varp)
         }
       }
 
-      if (!valid)
+      if (!valid) {
         return e_invarg;
-      if (*p == ',')
+      }
+      if (*p == ',') {
         ++p;
+      }
     }
   }
 
