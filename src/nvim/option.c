@@ -4710,7 +4710,7 @@ skip:
  */
 static char_u *set_chars_option(char_u **varp)
 {
-  int c1, c2 = 0;
+  int c2 = 0;
   struct charstab {
     int     *cp;
     char    *name;
@@ -4765,7 +4765,7 @@ static char_u *set_chars_option(char_u **varp)
             && p[len] == ':'
             && p[len + 1] != NUL) {
           char_u *s = p + len + 1;
-          c1 = mb_ptr2char_adv(&s);
+          int c1 = mb_ptr2char_adv(&s);
           if (mb_char2cells(c1) > 1)
             continue;
           if (tab[i].cp == &lcs_tab2) {
