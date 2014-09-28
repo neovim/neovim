@@ -4710,7 +4710,7 @@ skip:
  */
 static char_u *set_chars_option(char_u **varp)
 {
-  int round, i, entries;
+  int round, entries;
   char_u      *p, *s;
   int c1, c2 = 0;
   struct charstab {
@@ -4750,7 +4750,7 @@ static char_u *set_chars_option(char_u **varp)
     if (round > 0) {
       /* After checking that the value is valid: set defaults: space for
        * 'fillchars', NUL for 'listchars' */
-      for (i = 0; i < entries; ++i)
+      for (int i = 0; i < entries; ++i)
         if (tab[i].cp != NULL)
           *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
       if (varp == &p_lcs)
@@ -4760,7 +4760,8 @@ static char_u *set_chars_option(char_u **varp)
     }
     p = *varp;
     while (*p) {
-      for (i = 0; i < entries; ++i) {
+      bool valid = false;
+      for (int i = 0; i < entries; ++i) {
         int len = (int)STRLEN(tab[i].name);
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
@@ -4786,12 +4787,13 @@ static char_u *set_chars_option(char_u **varp)
 
             }
             p = s;
+            valid = true;
             break;
           }
         }
       }
 
-      if (i == entries)
+      if (!valid)
         return e_invarg;
       if (*p == ',')
         ++p;
