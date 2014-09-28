@@ -4710,7 +4710,7 @@ skip:
  */
 static char_u *set_chars_option(char_u **varp)
 {
-  char_u      *p, *s;
+  char_u *s;
   int c1, c2 = 0;
   struct charstab {
     int     *cp;
@@ -4758,8 +4758,7 @@ static char_u *set_chars_option(char_u **varp)
       else
         fill_diff = '-';
     }
-    p = *varp;
-    while (*p) {
+    for (char_u *p = *varp; *p;) {
       bool valid = false;
       for (int i = 0; i < entries; ++i) {
         int len = (int)STRLEN(tab[i].name);
