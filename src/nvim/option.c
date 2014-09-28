@@ -4704,10 +4704,9 @@ skip:
   return NULL;    /* no error */
 }
 
-/*
- * Handle setting 'listchars' or 'fillchars'.
- * Returns error message, NULL if it's OK.
- */
+
+// Handle setting 'listchars' or 'fillchars'.
+// Returns error message, NULL if it's OK.
 static char_u *set_chars_option(char_u **varp)
 {
   struct charstab {
@@ -4743,11 +4742,11 @@ static char_u *set_chars_option(char_u **varp)
     entries = sizeof(filltab) / sizeof(*tab);
   }
 
-  /* first round: check for valid value, second round: assign values */
+  // First round: check for valid value, second round: assign values.
   for (int round = 0; round <= 1; ++round) {
     if (round > 0) {
-      /* After checking that the value is valid: set defaults: space for
-       * 'fillchars', NUL for 'listchars' */
+      // After checking that the value is valid: set defaults: space for
+      // 'fillchars', NUL for 'listchars'.
       for (int i = 0; i < entries; ++i) {
         if (tab[i].cp != NULL) {
           *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
@@ -4806,7 +4805,7 @@ static char_u *set_chars_option(char_u **varp)
     }
   }
 
-  return NULL;          /* no error */
+  return NULL; // No error.
 }
 
 /*
