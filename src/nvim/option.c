@@ -4710,7 +4710,6 @@ skip:
  */
 static char_u *set_chars_option(char_u **varp)
 {
-  int entries;
   char_u      *p, *s;
   int c1, c2 = 0;
   struct charstab {
@@ -4737,6 +4736,7 @@ static char_u *set_chars_option(char_u **varp)
   };
   struct charstab *tab;
 
+  int entries;
   if (varp == &p_lcs) {
     tab = lcstab;
     entries = sizeof(lcstab) / sizeof(struct charstab);
