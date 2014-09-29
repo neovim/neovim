@@ -4743,11 +4743,11 @@ static char_u *set_chars_option(char_u **varp)
   }
 
   // First round: check for valid value, second round: assign values.
-  for (int round = 0; round <= 1; ++round) {
+  for (int round = 0; round <= 1; round++) {
     if (round > 0) {
       // After checking that the value is valid: set defaults: space for
       // 'fillchars', NUL for 'listchars'.
-      for (int i = 0; i < entries; ++i) {
+      for (int i = 0; i < entries; i++) {
         if (tab[i].cp != NULL) {
           *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
         }
@@ -4760,7 +4760,7 @@ static char_u *set_chars_option(char_u **varp)
     }
     for (char_u *p = *varp; *p;) {
       bool valid = false;
-      for (int i = 0; i < entries; ++i) {
+      for (int i = 0; i < entries; i++) {
         int len = (int)STRLEN(tab[i].name);
         if (STRNCMP(p, tab[i].name, len) == 0
             && p[len] == ':'
@@ -4800,7 +4800,7 @@ static char_u *set_chars_option(char_u **varp)
         return e_invarg;
       }
       if (*p == ',') {
-        ++p;
+        p++;
       }
     }
   }
