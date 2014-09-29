@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "nvim/ascii.h"
-#include "nvim/environment.h"
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/os/os.h"

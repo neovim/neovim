@@ -47,7 +47,6 @@
 #include <stdbool.h>
 
 #include "nvim/ascii.h"
-#include "nvim/environment.h"
 #include "nvim/vim.h"
 #include "nvim/memline.h"
 #include "nvim/buffer.h"

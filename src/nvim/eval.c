@@ -24,7 +24,6 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
-#include "nvim/environment.h"
 #include "nvim/eval.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

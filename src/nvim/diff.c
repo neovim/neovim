@@ -8,7 +8,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/environment.h"
 #include "nvim/diff.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"

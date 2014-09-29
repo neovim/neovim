@@ -21,7 +21,6 @@
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
-#include "nvim/environment.h"
 #include "nvim/message.h"
 #include "nvim/charset.h"
 #include "nvim/eval.h"
