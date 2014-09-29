@@ -1,8 +1,8 @@
 . "$CI_SCRIPTS/common.sh"
 
-install_vroom
-
 set_environment /opt/neovim-deps/64
+
+install_functional_test_deps
 
 sudo pip install cpp-coveralls
 
@@ -26,8 +26,9 @@ export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
 install_dir="$(pwd)/dist"
 $MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
-$MAKE_CMD
-if ! $MAKE_CMD test; then
+$MAKE_CMD test
+asan_check "$tmpdir"
+if ! $MAKE_CMD oldtest; then
 	reset
 	asan_check "$tmpdir"
 	exit 1

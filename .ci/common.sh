@@ -1,4 +1,8 @@
 valgrind_check() {
+	# For some strange reason, now we need to give ubuntu some time to flush it's
+	# FS cache in order to see valgrind logs, even though the script executes
+	# synchronously
+	sleep 1
 	(
 	cd $1
 	set -- valgrind-[*] valgrind-*
@@ -31,6 +35,8 @@ valgrind_check() {
 }
 
 asan_check() {
+	# See valgrind_check
+	sleep 1
 	(
 	cd $1
 	set -- [*]san.[*] *san.*
@@ -65,14 +71,10 @@ install_prebuilt_deps() {
 	fi
 }
 
-install_vroom() {
-	(
+install_functional_test_deps() {
 	sudo pip install git+https://github.com/neovim/python-client.git
-	git clone git://github.com/google/vroom
-	cd vroom
-	python setup.py build
-	sudo python setup.py install
-	)
+	# Pass -E to let pip use PKG_CONFIG_PATH for luajit
+	sudo -E pip install lupa
 }
 
 tmpdir="$(pwd)/tmp"
