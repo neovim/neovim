@@ -4704,6 +4704,51 @@ skip:
   return NULL;    /* no error */
 }
 
+static char_u *parse_chars_option(char_u *s, void *t, int entries,
+                                  int **cp, int *c1, int *c2)
+{
+  struct charstab {
+    int     *cp;
+    char    *name;
+  };
+  struct charstab *tab = (struct charstab *)t;
+  *c1 = 0;
+  *c2 = 0;
+  bool found_name = false;
+  for (int i = 0; i < entries; i++) {
+    int len = (int)STRLEN(tab[i].name);
+    if (STRNCMP(s, tab[i].name, len) == 0
+        && s[len] == ':'
+        && s[len + 1] != NUL) {
+      s += len + 1;
+      *cp = tab[i].cp;
+      found_name = true;
+      break;
+    }
+  }
+  if (!found_name) {
+    return e_invarg;
+  }
+  *c1 = mb_ptr2char_adv(&s);
+  if (mb_char2cells(*c1) > 1) {
+    return e_invarg;
+  }
+  if (*cp == &lcs_tab2) {
+    if (*s == NUL) {
+      return e_invarg;
+    }
+    *c2 = mb_ptr2char_adv(&s);
+    if (mb_char2cells(*c2) > 1) {
+      return e_invarg;
+    }
+  }
+  if (*s != ',' && *s != NUL) {
+    return e_invarg;
+  }
+
+  return NULL;
+}
+
 
 // Handle setting 'listchars' or 'fillchars'.
 // Returns error message, NULL if it's OK.
@@ -4758,47 +4803,30 @@ static char_u *set_chars_option(char_u **varp)
         fill_diff = '-';
       }
     }
-    for (char_u *p = *varp; *p;) {
-      bool valid = false;
-      for (int i = 0; i < entries; i++) {
-        int len = (int)STRLEN(tab[i].name);
-        if (STRNCMP(p, tab[i].name, len) == 0
-            && p[len] == ':'
-            && p[len + 1] != NUL) {
-          char_u *s = p + len + 1;
-          int c1 = mb_ptr2char_adv(&s);
-          if (mb_char2cells(c1) > 1) {
-            continue;
-          }
-          int c2 = 0;
-          if (tab[i].cp == &lcs_tab2) {
-            if (*s == NUL) {
-              continue;
-            }
-            c2 = mb_ptr2char_adv(&s);
-            if (mb_char2cells(c2) > 1) {
-              continue;
-            }
-          }
-          if (*s == ',' || *s == NUL) {
-            if (round) {
-              if (tab[i].cp == &lcs_tab2) {
-                lcs_tab1 = c1;
-                lcs_tab2 = c2;
-              } else if (tab[i].cp != NULL) {
-                *(tab[i].cp) = c1;
-              }
-            }
-            p = s;
-            valid = true;
-            break;
-          }
-        }
-      }
 
-      if (!valid) {
+    for (char_u *p = *varp; *p;) {
+      int *cp;
+      int c1;
+      int c2;
+      char_u *s = p;
+
+      char_u *error = parse_chars_option(s, (void *)tab, entries,
+          &cp, &c1, &c2);
+
+      if (error == e_invarg) {
         return e_invarg;
       }
+
+      if (round) {
+        if (cp == &lcs_tab2) {
+          lcs_tab1 = c1;
+          lcs_tab2 = c2;
+        } else if (cp != NULL) {
+          *cp = c1;
+        }
+      }
+      p = s;
+
       if (*p == ',') {
         p++;
       }
