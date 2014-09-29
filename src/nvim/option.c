@@ -4749,7 +4749,6 @@ static char_u *parse_chars_option(char_u *s, void *t, int entries,
   return NULL;
 }
 
-
 // Handle setting 'listchars' or 'fillchars'.
 // Returns error message, NULL if it's OK.
 static char_u *set_chars_option(char_u **varp)
@@ -4787,49 +4786,63 @@ static char_u *set_chars_option(char_u **varp)
     entries = sizeof(filltab) / sizeof(*tab);
   }
 
-  // First round: check for valid value, second round: assign values.
-  for (int round = 0; round <= 1; round++) {
-    if (round > 0) {
-      // After checking that the value is valid: set defaults: space for
-      // 'fillchars', NUL for 'listchars'.
-      for (int i = 0; i < entries; i++) {
-        if (tab[i].cp != NULL) {
-          *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
-        }
-      }
-      if (varp == &p_lcs) {
-        lcs_tab1 = NUL;
-      } else {
-        fill_diff = '-';
-      }
+  // Check for valid value.
+  for (char_u *p = *varp; *p;) {
+    int *cp;
+    int c1;
+    int c2;
+    char_u *s = p;
+
+    char_u *error = parse_chars_option(s, (void *)tab, entries,
+        &cp, &c1, &c2);
+
+    if (error == e_invarg) {
+      return e_invarg;
     }
 
-    for (char_u *p = *varp; *p;) {
-      int *cp;
-      int c1;
-      int c2;
-      char_u *s = p;
+    p = s;
 
-      char_u *error = parse_chars_option(s, (void *)tab, entries,
-          &cp, &c1, &c2);
+    if (*p == ',') {
+      p++;
+    }
+  }
+  // After checking that the value is valid: set defaults: space for
+  // 'fillchars', NUL for 'listchars'.
+  for (int i = 0; i < entries; i++) {
+    if (tab[i].cp != NULL) {
+      *(tab[i].cp) = (varp == &p_lcs ? NUL : ' ');
+    }
+  }
+  if (varp == &p_lcs) {
+    lcs_tab1 = NUL;
+  } else {
+    fill_diff = '-';
+  }
 
-      if (error == e_invarg) {
-        return e_invarg;
-      }
+  // Assign values.
+  for (char_u *p = *varp; *p;) {
+    int *cp;
+    int c1;
+    int c2;
+    char_u *s = p;
 
-      if (round) {
-        if (cp == &lcs_tab2) {
-          lcs_tab1 = c1;
-          lcs_tab2 = c2;
-        } else if (cp != NULL) {
-          *cp = c1;
-        }
-      }
-      p = s;
+    char_u *error = parse_chars_option(s, (void *)tab, entries,
+        &cp, &c1, &c2);
 
-      if (*p == ',') {
-        p++;
-      }
+    if (error == e_invarg) {
+      return e_invarg;
+    }
+
+    if (cp == &lcs_tab2) {
+      lcs_tab1 = c1;
+      lcs_tab2 = c2;
+    } else if (cp != NULL) {
+      *cp = c1;
+    }
+    p = s;
+
+    if (*p == ',') {
+      p++;
     }
   }
 
