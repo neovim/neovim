@@ -60,6 +60,7 @@
 #define DELETION_REGISTER 36
 #define CLIP_REGISTER 37
 
+# define CB_UNNAMEDMASK         (CB_UNNAMED | CB_UNNAMEDPLUS)
 /*
  * Each yank register is an array of pointers to lines.
  */
@@ -751,7 +752,8 @@ void get_yank_register(int regname, int writing)
   int i;
 
   y_append = FALSE;
-  if ((regname == 0 || regname == '"') && !p_unc && !writing && y_previous != NULL) {
+  int unnamedclip = cb_flags & CB_UNNAMEDMASK;
+  if ((regname == 0 || regname == '"') && !unnamedclip && !writing && y_previous != NULL) {
     y_current = y_previous;
     return;
   }
@@ -1378,9 +1380,10 @@ int op_delete(oparg_T *oap)
    * register.  For the black hole register '_' don't yank anything.
    */
   if (oap->regname != '_') {
-    if (oap->regname != 0 || p_unc) {
+    bool unnamedclip = oap->regname == 0 && (cb_flags & CB_UNNAMEDMASK);
+    if (oap->regname != 0 || unnamedclip) {
       /* check for read-only register */
-      if (!( valid_yank_reg(oap->regname, TRUE) || (p_unc && oap->regname == 0) )) {
+      if (!( valid_yank_reg(oap->regname, TRUE) || unnamedclip )) {
         beep_flush();
         return OK;
       }
@@ -5204,17 +5207,22 @@ static void free_register(struct yankreg *reg)
   y_current = curr;
 }
 
+// return target register
 static int check_clipboard_name(int *name) {
   if (*name == '*' || *name == '+') {
     return CLIP_REGISTER;
-  } else if (p_unc && *name == NUL && eval_has_provider("clipboard")) {
-    *name = '+';
-    return 0; //unnamed register
-  } else {
-    return -1;
+  } else if (*name == NUL && eval_has_provider("clipboard")) {
+    if (cb_flags & CB_UNNAMEDPLUS) {
+      *name = '+';
+      return 0; //unnamed
+    } else if (cb_flags & CB_UNNAMED) {
+      *name = '*';
+      return 0; //unnamed
+    }
   }
+  // don't do anything for other register names
+  return -1;
 }
-
 
 static void get_clipboard(int name)
 {

@@ -527,7 +527,7 @@ static struct vimoption
     (char_u *)0L}
    SCRIPTID_INIT},
   {"clipboard",   "cb",   P_STRING|P_VI_DEF|P_COMMA|P_NODUP,
-   (char_u *)NULL, PV_NONE,
+   (char_u *)&p_cb, PV_NONE,
    {(char_u *)"", (char_u *)0L}
    SCRIPTID_INIT},
   {"cmdheight",   "ch",   P_NUM|P_VI_DEF|P_RALL,
@@ -1620,9 +1620,6 @@ static struct vimoption
   {"undoreload",  "ur",   P_NUM|P_VI_DEF,
    (char_u *)&p_ur, PV_NONE,
    { (char_u *)10000L, (char_u *)0L} SCRIPTID_INIT},
-  {"unnamedclip",  "ucp",   P_BOOL|P_VI_DEF|P_VIM,
-   (char_u *)&p_unc, PV_NONE,
-   {(char_u *)FALSE, (char_u *)FALSE} SCRIPTID_INIT},
   {"updatecount", "uc",   P_NUM|P_VI_DEF,
    (char_u *)&p_uc, PV_NONE,
    {(char_u *)200L, (char_u *)0L} SCRIPTID_INIT},
@@ -4279,6 +4276,10 @@ did_set_string_option (
     if (check_opt_strings(p_ead, p_ead_values, FALSE) != OK)
       errmsg = e_invarg;
   }
+  else if (varp == &p_cb) {
+    if (opt_strings_flags(p_cb, p_cb_values, &cb_flags, TRUE) != OK)
+      errmsg = e_invarg;
+  }
   /* When 'spelllang' or 'spellfile' is set and there is a window for this
    * buffer in which 'spell' is set load the wordlists. */
   else if (varp == &(curbuf->b_s.b_p_spl) || varp == &(curbuf->b_s.b_p_spf)) {
@@ -4845,7 +4846,6 @@ char_u *check_stl_option(char_u *s)
     return (char_u *)N_("E542: unbalanced groups");
   return NULL;
 }
-
 
 /*
  * Set curbuf->b_cap_prog to the regexp program for 'spellcapcheck'.
