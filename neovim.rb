@@ -11,8 +11,6 @@ class Neovim < Formula
 
   def install
     ENV.deparallelize
-    system "make", "deps"
-    system "cmake", "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_PREFIX_PATH=.deps/usr", "-DLibUV_USE_STATIC=YES", "-DCMAKE_INSTALL_PREFIX:PATH=#{prefix}"
-    system "make", "install"
+    system "make", "CMAKE_EXTRA_FLAGS=\"-DCMAKE_PREFIX_PATH=#{prefix}\"", "install"
   end
 end
