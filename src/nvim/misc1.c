@@ -3415,10 +3415,6 @@ get_cmd_output (
 {
   char_u      *tempname;
   char_u      *command;
-  char_u      *buffer = NULL;
-  int len;
-  int i = 0;
-  FILE        *fd;
 
   if (check_restricted() || check_secure())
     return NULL;
@@ -3430,56 +3426,40 @@ get_cmd_output (
   }
 
   /* Add the redirection stuff */
-  command = make_filter_cmd(cmd, infile, tempname);
+  command = make_filter_cmd(cmd, infile, NULL);
+
+  garray_T gout;
+  ga_init(&gout, 1, 0xFFFF);
 
   /*
    * Call the shell to execute the command (errors are ignored).
    * Don't check timestamps here.
    */
   ++no_check_timestamps;
-  call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL, NULL, NULL);
+  call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL,
+             (shell_read_cb) cmd_output_cb, &gout);
   --no_check_timestamps;
 
   free(command);
 
-  /*
-   * read the names from the file into memory
-   */
-  fd = mch_fopen((char *)tempname, READBIN);
-
-  if (fd == NULL) {
-    EMSG2(_(e_notopen), tempname);
-    goto done;
+  size_t len = gout.ga_len;
+  char_u *buffer = gout.ga_data;
+  if (buffer == NULL) {
+    return NULL;
   }
 
-  fseek(fd, 0L, SEEK_END);
-  len = ftell(fd);                  /* get size of temp file */
-  fseek(fd, 0L, SEEK_SET);
+  // Change NUL into SOH, otherwise the string is truncated.
+  memchrsub(buffer, NUL, 1, len);
+  buffer[len] = NUL;          // make sure the buffer is terminated.
 
-  buffer = xmalloc(len + 1);
-  i = (int)fread((char *)buffer, (size_t)1, (size_t)len, fd);
-  fclose(fd);
-  os_remove((char *)tempname);
-  if (buffer == NULL)
-    goto done;
-  if (i != len) {
-    EMSG2(_(e_notread), tempname);
-    free(buffer);
-    buffer = NULL;
-  } else if (ret_len == NULL) {
-    /* Change NUL into SOH, otherwise the string is truncated. */
-    for (i = 0; i < len; ++i)
-      if (buffer[i] == NUL)
-        buffer[i] = 1;
-
-    buffer[len] = NUL;          /* make sure the buffer is terminated */
-  } else {
-    *ret_len = len;
-  }
-
-done:
-  free(tempname);
   return buffer;
+}
+
+void cmd_output_cb(char_u *buf, size_t len, garray_T *gap)
+{
+  ga_grow(gap, len);
+  memcpy((char *)gap->ga_data + gap->ga_len, buf, len);
+  gap->ga_len += len;
 }
 
 /*

@@ -172,7 +172,9 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
     proc_stdio[0].flags = UV_IGNORE;
     proc_stdio[1].flags = UV_IGNORE;
     proc_stdio[2].flags = UV_IGNORE;
-  } else {
+  }
+  if (!(opts & (kShellOptHideMess | kShellOptExpand)) || out_cb)
+  {
     State = EXTERNCMD;
 
     if (opts & kShellOptWrite) {
