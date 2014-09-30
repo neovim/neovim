@@ -1,0 +1,6307 @@
+# UK English Translation for Vim		vim:set foldmethod=marker:
+#
+# Do ":help uganda"  in Vim to read copying and usage conditions.
+# Do ":help credits" in Vim to see a list of people who contributed.
+#
+# FIRST AUTHOR Mike Williams <mrw@eandem.co.uk>, 2003.
+#
+# Style Guide:
+# o English spelling!
+# o -ise, not -ize.
+# o No contractions.
+# o Cannot, not can not.
+# o Backward (no s) when used as an adjective.
+# o TBC ...
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Vim(UK English)\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2014-05-26 14:21+0200\n"
+"PO-Revision-Date: 2003-02-25 11:05+0000\n"
+"Last-Translator: Mike Williams <mrw@eandem.co.uk>\n"
+"Language-Team: Mike Williams <mrw@eandem.co.uk>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO_8859-1\n"
+"Content-Transfer-Encoding: 7bit\n"
+
+#: ../api/private/helpers.c:201
+msgid "Unable to get option value"
+msgstr ""
+
+#: ../api/private/helpers.c:204
+msgid "internal error: unknown option type"
+msgstr ""
+
+#: ../buffer.c:92
+msgid "[Location List]"
+msgstr ""
+
+#: ../buffer.c:93
+msgid "[Quickfix List]"
+msgstr ""
+
+#: ../buffer.c:94
+msgid "E855: Autocommands caused command to abort"
+msgstr ""
+
+#: ../buffer.c:135
+#, fuzzy
+msgid "E82: Cannot allocate any buffer, exiting..."
+msgstr "E254: Cannot allocate colour %s"
+
+#: ../buffer.c:138
+msgid "E83: Cannot allocate buffer, using other one..."
+msgstr ""
+
+#: ../buffer.c:763
+msgid "E515: No buffers were unloaded"
+msgstr ""
+
+#: ../buffer.c:765
+msgid "E516: No buffers were deleted"
+msgstr ""
+
+#: ../buffer.c:767
+msgid "E517: No buffers were wiped out"
+msgstr ""
+
+#: ../buffer.c:772
+msgid "1 buffer unloaded"
+msgstr ""
+
+#: ../buffer.c:774
+#, c-format
+msgid "%d buffers unloaded"
+msgstr ""
+
+#: ../buffer.c:777
+msgid "1 buffer deleted"
+msgstr ""
+
+#: ../buffer.c:779
+#, c-format
+msgid "%d buffers deleted"
+msgstr ""
+
+#: ../buffer.c:782
+msgid "1 buffer wiped out"
+msgstr ""
+
+#: ../buffer.c:784
+#, c-format
+msgid "%d buffers wiped out"
+msgstr ""
+
+#: ../buffer.c:806
+#, fuzzy
+msgid "E90: Cannot unload last buffer"
+msgstr "E102: Cannot find buffer \"%s\""
+
+#: ../buffer.c:874
+msgid "E84: No modified buffer found"
+msgstr ""
+
+#. back where we started, didn't find anything.
+#: ../buffer.c:903
+msgid "E85: There is no listed buffer"
+msgstr ""
+
+#: ../buffer.c:913
+#, c-format
+msgid "E86: Buffer %<PRId64> does not exist"
+msgstr ""
+
+#: ../buffer.c:915
+msgid "E87: Cannot go beyond last buffer"
+msgstr ""
+
+#: ../buffer.c:917
+msgid "E88: Cannot go before first buffer"
+msgstr ""
+
+#: ../buffer.c:945
+#, fuzzy, c-format
+msgid ""
+"E89: No write since last change for buffer %<PRId64> (add ! to override)"
+msgstr "E508: Cannot read file for backup (add ! to override)"
+
+#. wrap around (may cause duplicates)
+#: ../buffer.c:1423
+msgid "W14: Warning: List of file names overflow"
+msgstr ""
+
+#: ../buffer.c:1555 ../quickfix.c:3361
+#, c-format
+msgid "E92: Buffer %<PRId64> not found"
+msgstr ""
+
+#: ../buffer.c:1798
+#, c-format
+msgid "E93: More than one match for %s"
+msgstr ""
+
+#: ../buffer.c:1800
+#, c-format
+msgid "E94: No matching buffer for %s"
+msgstr ""
+
+#: ../buffer.c:2161
+#, c-format
+msgid "line %<PRId64>"
+msgstr ""
+
+#: ../buffer.c:2233
+msgid "E95: Buffer with this name already exists"
+msgstr ""
+
+#: ../buffer.c:2498
+msgid " [Modified]"
+msgstr ""
+
+#: ../buffer.c:2501
+msgid "[Not edited]"
+msgstr ""
+
+#: ../buffer.c:2504
+msgid "[New file]"
+msgstr ""
+
+#: ../buffer.c:2505
+msgid "[Read errors]"
+msgstr ""
+
+#: ../buffer.c:2506 ../buffer.c:3217 ../fileio.c:1807 ../screen.c:4895
+msgid "[RO]"
+msgstr ""
+
+#: ../buffer.c:2507 ../fileio.c:1807
+msgid "[readonly]"
+msgstr ""
+
+#: ../buffer.c:2524
+#, c-format
+msgid "1 line --%d%%--"
+msgstr ""
+
+#: ../buffer.c:2526
+#, c-format
+msgid "%<PRId64> lines --%d%%--"
+msgstr ""
+
+#: ../buffer.c:2530
+#, c-format
+msgid "line %<PRId64> of %<PRId64> --%d%%-- col "
+msgstr ""
+
+#: ../buffer.c:2632 ../buffer.c:4292 ../memline.c:1554
+msgid "[No Name]"
+msgstr ""
+
+#. must be a help buffer
+#: ../buffer.c:2667
+msgid "help"
+msgstr ""
+
+#: ../buffer.c:3225 ../screen.c:4883
+msgid "[Help]"
+msgstr ""
+
+#: ../buffer.c:3254 ../screen.c:4887
+msgid "[Preview]"
+msgstr ""
+
+#: ../buffer.c:3528
+msgid "All"
+msgstr ""
+
+#: ../buffer.c:3528
+msgid "Bot"
+msgstr ""
+
+#: ../buffer.c:3531
+msgid "Top"
+msgstr ""
+
+#: ../buffer.c:4244
+msgid ""
+"\n"
+"# Buffer list:\n"
+msgstr ""
+
+#: ../buffer.c:4289
+msgid "[Scratch]"
+msgstr ""
+
+#: ../buffer.c:4529
+msgid ""
+"\n"
+"--- Signs ---"
+msgstr ""
+
+#: ../buffer.c:4538
+#, c-format
+msgid "Signs for %s:"
+msgstr ""
+
+#: ../buffer.c:4543
+#, c-format
+msgid "    line=%<PRId64>  id=%d  name=%s"
+msgstr ""
+
+#: ../cursor_shape.c:68
+msgid "E545: Missing colon"
+msgstr ""
+
+#: ../cursor_shape.c:70 ../cursor_shape.c:94
+msgid "E546: Illegal mode"
+msgstr ""
+
+#: ../cursor_shape.c:134
+msgid "E548: digit expected"
+msgstr ""
+
+#: ../cursor_shape.c:138
+msgid "E549: Illegal percentage"
+msgstr ""
+
+#: ../diff.c:146
+#, c-format
+msgid "E96: Can not diff more than %<PRId64> buffers"
+msgstr "E96: Cannot diff more than %<PRId64> buffers"
+
+#: ../diff.c:753
+#, fuzzy
+msgid "E810: Cannot read or write temp files"
+msgstr "E482: Cannot create file %s"
+
+#: ../diff.c:755
+#, fuzzy
+msgid "E97: Cannot create diffs"
+msgstr "E482: Cannot create file %s"
+
+#: ../diff.c:966
+msgid "E816: Cannot read patch output"
+msgstr ""
+
+#: ../diff.c:1220
+#, fuzzy
+msgid "E98: Cannot read diff output"
+msgstr "E485: Cannot read file %s"
+
+#: ../diff.c:2081
+msgid "E99: Current buffer is not in diff mode"
+msgstr ""
+
+#: ../diff.c:2100
+msgid "E793: No other buffer in diff mode is modifiable"
+msgstr ""
+
+#: ../diff.c:2102
+msgid "E100: No other buffer in diff mode"
+msgstr ""
+
+#: ../diff.c:2112
+msgid "E101: More than two buffers in diff mode, don't know which one to use"
+msgstr "E101: More than two buffers in diff mode, do not know which one to use"
+
+#: ../diff.c:2141
+#, c-format
+msgid "E102: Can't find buffer \"%s\""
+msgstr "E102: Cannot find buffer \"%s\""
+
+#: ../diff.c:2152
+#, c-format
+msgid "E103: Buffer \"%s\" is not in diff mode"
+msgstr ""
+
+#: ../diff.c:2193
+msgid "E787: Buffer changed unexpectedly"
+msgstr ""
+
+#: ../digraph.c:1598
+msgid "E104: Escape not allowed in digraph"
+msgstr ""
+
+#: ../digraph.c:1760
+msgid "E544: Keymap file not found"
+msgstr ""
+
+#: ../digraph.c:1785
+msgid "E105: Using :loadkeymap not in a sourced file"
+msgstr ""
+
+#: ../digraph.c:1821
+msgid "E791: Empty keymap entry"
+msgstr ""
+
+#: ../edit.c:82
+msgid " Keyword completion (^N^P)"
+msgstr ""
+
+#. ctrl_x_mode == 0, ^P/^N compl.
+#: ../edit.c:83
+msgid " ^X mode (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
+msgstr ""
+
+#: ../edit.c:85
+msgid " Whole line completion (^L^N^P)"
+msgstr ""
+
+#: ../edit.c:86
+msgid " File name completion (^F^N^P)"
+msgstr ""
+
+#: ../edit.c:87
+msgid " Tag completion (^]^N^P)"
+msgstr ""
+
+#: ../edit.c:88
+msgid " Path pattern completion (^N^P)"
+msgstr ""
+
+#: ../edit.c:89
+msgid " Definition completion (^D^N^P)"
+msgstr ""
+
+#: ../edit.c:91
+msgid " Dictionary completion (^K^N^P)"
+msgstr ""
+
+#: ../edit.c:92
+msgid " Thesaurus completion (^T^N^P)"
+msgstr ""
+
+#: ../edit.c:93
+msgid " Command-line completion (^V^N^P)"
+msgstr ""
+
+#: ../edit.c:94
+msgid " User defined completion (^U^N^P)"
+msgstr ""
+
+#: ../edit.c:95
+msgid " Omni completion (^O^N^P)"
+msgstr ""
+
+#: ../edit.c:96
+msgid " Spelling suggestion (s^N^P)"
+msgstr ""
+
+#: ../edit.c:97
+msgid " Keyword Local completion (^N^P)"
+msgstr ""
+
+#: ../edit.c:100
+msgid "Hit end of paragraph"
+msgstr ""
+
+#: ../edit.c:101
+msgid "E839: Completion function changed window"
+msgstr ""
+
+#: ../edit.c:102
+msgid "E840: Completion function deleted text"
+msgstr ""
+
+#: ../edit.c:1847
+msgid "'dictionary' option is empty"
+msgstr ""
+
+#: ../edit.c:1848
+msgid "'thesaurus' option is empty"
+msgstr ""
+
+#: ../edit.c:2655
+#, c-format
+msgid "Scanning dictionary: %s"
+msgstr ""
+
+#: ../edit.c:3079
+msgid " (insert) Scroll (^E/^Y)"
+msgstr ""
+
+#: ../edit.c:3081
+msgid " (replace) Scroll (^E/^Y)"
+msgstr ""
+
+#: ../edit.c:3587
+#, c-format
+msgid "Scanning: %s"
+msgstr ""
+
+#: ../edit.c:3614
+msgid "Scanning tags."
+msgstr ""
+
+#: ../edit.c:4519
+msgid " Adding"
+msgstr ""
+
+#. showmode might reset the internal line pointers, so it must
+#. * be called before line = ml_get(), or when this address is no
+#. * longer needed.  -- Acevedo.
+#.
+#: ../edit.c:4562
+msgid "-- Searching..."
+msgstr ""
+
+#: ../edit.c:4618
+msgid "Back at original"
+msgstr ""
+
+#: ../edit.c:4621
+msgid "Word from other line"
+msgstr ""
+
+#: ../edit.c:4624
+#, fuzzy
+msgid "The only match"
+msgstr "Keys do not match!"
+
+#: ../edit.c:4680
+#, c-format
+msgid "match %d of %d"
+msgstr ""
+
+#: ../edit.c:4684
+#, c-format
+msgid "match %d"
+msgstr ""
+
+#: ../eval.c:137
+msgid "E18: Unexpected characters in :let"
+msgstr ""
+
+#: ../eval.c:138
+#, c-format
+msgid "E684: list index out of range: %<PRId64>"
+msgstr ""
+
+#: ../eval.c:139
+#, c-format
+msgid "E121: Undefined variable: %s"
+msgstr ""
+
+#: ../eval.c:140
+msgid "E111: Missing ']'"
+msgstr ""
+
+#: ../eval.c:141
+#, c-format
+msgid "E686: Argument of %s must be a List"
+msgstr ""
+
+#: ../eval.c:143
+#, c-format
+msgid "E712: Argument of %s must be a List or Dictionary"
+msgstr ""
+
+#: ../eval.c:144
+#, fuzzy
+msgid "E713: Cannot use empty key for Dictionary"
+msgstr "E214: Cannot find temp file for writing"
+
+#: ../eval.c:145
+msgid "E714: List required"
+msgstr ""
+
+#: ../eval.c:146
+msgid "E715: Dictionary required"
+msgstr ""
+
+#: ../eval.c:147
+#, c-format
+msgid "E118: Too many arguments for function: %s"
+msgstr ""
+
+#: ../eval.c:148
+#, c-format
+msgid "E716: Key not present in Dictionary: %s"
+msgstr ""
+
+#: ../eval.c:150
+#, c-format
+msgid "E122: Function %s already exists, add ! to replace it"
+msgstr ""
+
+#: ../eval.c:151
+msgid "E717: Dictionary entry already exists"
+msgstr ""
+
+#: ../eval.c:152
+msgid "E718: Funcref required"
+msgstr ""
+
+#: ../eval.c:153
+msgid "E719: Cannot use [:] with a Dictionary"
+msgstr ""
+
+#: ../eval.c:154
+#, fuzzy, c-format
+msgid "E734: Wrong variable type for %s="
+msgstr "E738: Cannot list variables for %s"
+
+#: ../eval.c:155
+#, c-format
+msgid "E130: Unknown function: %s"
+msgstr ""
+
+#: ../eval.c:156
+#, c-format
+msgid "E461: Illegal variable name: %s"
+msgstr ""
+
+#: ../eval.c:157
+msgid "E806: using Float as a String"
+msgstr ""
+
+#: ../eval.c:1830
+msgid "E687: Less targets than List items"
+msgstr ""
+
+#: ../eval.c:1834
+msgid "E688: More targets than List items"
+msgstr ""
+
+#: ../eval.c:1906
+msgid "Double ; in list of variables"
+msgstr ""
+
+#: ../eval.c:2078
+#, c-format
+msgid "E738: Can't list variables for %s"
+msgstr "E738: Cannot list variables for %s"
+
+#: ../eval.c:2391
+msgid "E689: Can only index a List or Dictionary"
+msgstr ""
+
+#: ../eval.c:2396
+msgid "E708: [:] must come last"
+msgstr ""
+
+#: ../eval.c:2439
+msgid "E709: [:] requires a List value"
+msgstr ""
+
+#: ../eval.c:2674
+msgid "E710: List value has more items than target"
+msgstr ""
+
+#: ../eval.c:2678
+msgid "E711: List value has not enough items"
+msgstr ""
+
+#: ../eval.c:2867
+msgid "E690: Missing \"in\" after :for"
+msgstr ""
+
+#: ../eval.c:3063
+#, c-format
+msgid "E107: Missing parentheses: %s"
+msgstr ""
+
+#: ../eval.c:3263
+#, c-format
+msgid "E108: No such variable: \"%s\""
+msgstr ""
+
+#: ../eval.c:3333
+msgid "E743: variable nested too deep for (un)lock"
+msgstr ""
+
+#: ../eval.c:3630
+msgid "E109: Missing ':' after '?'"
+msgstr ""
+
+#: ../eval.c:3893
+msgid "E691: Can only compare List with List"
+msgstr ""
+
+#: ../eval.c:3895
+msgid "E692: Invalid operation for Lists"
+msgstr ""
+
+#: ../eval.c:3915
+msgid "E735: Can only compare Dictionary with Dictionary"
+msgstr ""
+
+#: ../eval.c:3917
+msgid "E736: Invalid operation for Dictionary"
+msgstr ""
+
+#: ../eval.c:3932
+msgid "E693: Can only compare Funcref with Funcref"
+msgstr ""
+
+#: ../eval.c:3934
+msgid "E694: Invalid operation for Funcrefs"
+msgstr ""
+
+#: ../eval.c:4277
+msgid "E804: Cannot use '%' with Float"
+msgstr ""
+
+#: ../eval.c:4478
+msgid "E110: Missing ')'"
+msgstr ""
+
+#: ../eval.c:4609
+msgid "E695: Cannot index a Funcref"
+msgstr ""
+
+#: ../eval.c:4839
+#, c-format
+msgid "E112: Option name missing: %s"
+msgstr ""
+
+#: ../eval.c:4855
+#, c-format
+msgid "E113: Unknown option: %s"
+msgstr ""
+
+#: ../eval.c:4904
+#, c-format
+msgid "E114: Missing quote: %s"
+msgstr ""
+
+#: ../eval.c:5020
+#, c-format
+msgid "E115: Missing quote: %s"
+msgstr ""
+
+#: ../eval.c:5084
+#, c-format
+msgid "E696: Missing comma in List: %s"
+msgstr ""
+
+#: ../eval.c:5091
+#, c-format
+msgid "E697: Missing end of List ']': %s"
+msgstr ""
+
+#: ../eval.c:6475
+#, c-format
+msgid "E720: Missing colon in Dictionary: %s"
+msgstr ""
+
+#: ../eval.c:6499
+#, c-format
+msgid "E721: Duplicate key in Dictionary: \"%s\""
+msgstr ""
+
+#: ../eval.c:6517
+#, c-format
+msgid "E722: Missing comma in Dictionary: %s"
+msgstr ""
+
+#: ../eval.c:6524
+#, c-format
+msgid "E723: Missing end of Dictionary '}': %s"
+msgstr ""
+
+#: ../eval.c:6555
+msgid "E724: variable nested too deep for displaying"
+msgstr ""
+
+#: ../eval.c:7188
+#, c-format
+msgid "E740: Too many arguments for function %s"
+msgstr ""
+
+#: ../eval.c:7190
+#, c-format
+msgid "E116: Invalid arguments for function %s"
+msgstr ""
+
+#: ../eval.c:7377
+#, c-format
+msgid "E117: Unknown function: %s"
+msgstr ""
+
+#: ../eval.c:7383
+#, c-format
+msgid "E119: Not enough arguments for function: %s"
+msgstr ""
+
+#: ../eval.c:7387
+#, c-format
+msgid "E120: Using <SID> not in a script context: %s"
+msgstr ""
+
+#: ../eval.c:7391
+#, c-format
+msgid "E725: Calling dict function without Dictionary: %s"
+msgstr ""
+
+#: ../eval.c:7453
+msgid "E808: Number or Float required"
+msgstr ""
+
+#: ../eval.c:7503
+msgid "add() argument"
+msgstr ""
+
+#: ../eval.c:7907
+msgid "E699: Too many arguments"
+msgstr ""
+
+#: ../eval.c:8073
+msgid "E785: complete() can only be used in Insert mode"
+msgstr ""
+
+#: ../eval.c:8156
+msgid "&Ok"
+msgstr ""
+
+#: ../eval.c:8676
+#, c-format
+msgid "E737: Key already exists: %s"
+msgstr ""
+
+#: ../eval.c:8692
+msgid "extend() argument"
+msgstr ""
+
+#: ../eval.c:8915
+msgid "map() argument"
+msgstr ""
+
+#: ../eval.c:8916
+msgid "filter() argument"
+msgstr ""
+
+#: ../eval.c:9229
+#, c-format
+msgid "+-%s%3ld lines: "
+msgstr ""
+
+#: ../eval.c:9291
+#, c-format
+msgid "E700: Unknown function: %s"
+msgstr ""
+
+#: ../eval.c:10729
+msgid "called inputrestore() more often than inputsave()"
+msgstr ""
+
+#: ../eval.c:10771
+msgid "insert() argument"
+msgstr ""
+
+#: ../eval.c:10841
+msgid "E786: Range not allowed"
+msgstr ""
+
+#: ../eval.c:11140
+msgid "E701: Invalid type for len()"
+msgstr ""
+
+#: ../eval.c:11980
+msgid "E726: Stride is zero"
+msgstr ""
+
+#: ../eval.c:11982
+msgid "E727: Start past end"
+msgstr ""
+
+#: ../eval.c:12024 ../eval.c:15297
+msgid "<empty>"
+msgstr ""
+
+#: ../eval.c:12282
+msgid "remove() argument"
+msgstr ""
+
+#: ../eval.c:12466
+msgid "E655: Too many symbolic links (cycle?)"
+msgstr ""
+
+#: ../eval.c:12593
+msgid "reverse() argument"
+msgstr ""
+
+#: ../eval.c:13721
+msgid "sort() argument"
+msgstr ""
+
+#: ../eval.c:13721
+msgid "uniq() argument"
+msgstr ""
+
+#: ../eval.c:13776
+msgid "E702: Sort compare function failed"
+msgstr ""
+
+#: ../eval.c:13806
+msgid "E882: Uniq compare function failed"
+msgstr ""
+
+#: ../eval.c:14085
+msgid "(Invalid)"
+msgstr ""
+
+#: ../eval.c:14590
+msgid "E677: Error writing temp file"
+msgstr ""
+
+#: ../eval.c:16159
+msgid "E805: Using a Float as a Number"
+msgstr ""
+
+#: ../eval.c:16162
+msgid "E703: Using a Funcref as a Number"
+msgstr ""
+
+#: ../eval.c:16170
+msgid "E745: Using a List as a Number"
+msgstr ""
+
+#: ../eval.c:16173
+msgid "E728: Using a Dictionary as a Number"
+msgstr ""
+
+#: ../eval.c:16259
+msgid "E729: using Funcref as a String"
+msgstr ""
+
+#: ../eval.c:16262
+msgid "E730: using List as a String"
+msgstr ""
+
+#: ../eval.c:16265
+msgid "E731: using Dictionary as a String"
+msgstr ""
+
+#: ../eval.c:16619
+#, c-format
+msgid "E706: Variable type mismatch for: %s"
+msgstr ""
+
+#: ../eval.c:16705
+#, fuzzy, c-format
+msgid "E795: Cannot delete variable %s"
+msgstr "E738: Cannot list variables for %s"
+
+#: ../eval.c:16724
+#, c-format
+msgid "E704: Funcref variable name must start with a capital: %s"
+msgstr ""
+
+#: ../eval.c:16732
+#, c-format
+msgid "E705: Variable name conflicts with existing function: %s"
+msgstr ""
+
+#: ../eval.c:16763
+#, c-format
+msgid "E741: Value is locked: %s"
+msgstr ""
+
+#: ../eval.c:16764 ../eval.c:16769 ../message.c:1839
+msgid "Unknown"
+msgstr ""
+
+#: ../eval.c:16768
+#, fuzzy, c-format
+msgid "E742: Cannot change value of %s"
+msgstr "E482: Cannot create file %s"
+
+#: ../eval.c:16838
+msgid "E698: variable nested too deep for making a copy"
+msgstr ""
+
+#: ../eval.c:17249
+#, c-format
+msgid "E123: Undefined function: %s"
+msgstr ""
+
+#: ../eval.c:17260
+#, c-format
+msgid "E124: Missing '(': %s"
+msgstr ""
+
+#: ../eval.c:17293
+msgid "E862: Cannot use g: here"
+msgstr ""
+
+#: ../eval.c:17312
+#, c-format
+msgid "E125: Illegal argument: %s"
+msgstr ""
+
+#: ../eval.c:17323
+#, c-format
+msgid "E853: Duplicate argument name: %s"
+msgstr ""
+
+#: ../eval.c:17416
+msgid "E126: Missing :endfunction"
+msgstr ""
+
+#: ../eval.c:17537
+#, c-format
+msgid "E707: Function name conflicts with variable: %s"
+msgstr ""
+
+#: ../eval.c:17549
+#, c-format
+msgid "E127: Cannot redefine function %s: It is in use"
+msgstr ""
+
+#: ../eval.c:17604
+#, fuzzy, c-format
+msgid "E746: Function name does not match script file name: %s"
+msgstr "E781: .sug file does not match .spl file: %s"
+
+#: ../eval.c:17716
+msgid "E129: Function name required"
+msgstr ""
+
+#: ../eval.c:17824
+#, c-format
+msgid "E128: Function name must start with a capital or \"s:\": %s"
+msgstr ""
+
+#: ../eval.c:17833
+#, c-format
+msgid "E884: Function name cannot contain a colon: %s"
+msgstr ""
+
+#: ../eval.c:18336
+#, c-format
+msgid "E131: Cannot delete function %s: It is in use"
+msgstr ""
+
+#: ../eval.c:18441
+msgid "E132: Function call depth is higher than 'maxfuncdepth'"
+msgstr ""
+
+#: ../eval.c:18568
+#, c-format
+msgid "calling %s"
+msgstr ""
+
+#: ../eval.c:18651
+#, c-format
+msgid "%s aborted"
+msgstr ""
+
+#: ../eval.c:18653
+#, c-format
+msgid "%s returning #%<PRId64>"
+msgstr ""
+
+#: ../eval.c:18670
+#, c-format
+msgid "%s returning %s"
+msgstr ""
+
+#: ../eval.c:18691 ../ex_cmds2.c:2695
+#, c-format
+msgid "continuing in %s"
+msgstr ""
+
+#: ../eval.c:18795
+msgid "E133: :return not inside a function"
+msgstr ""
+
+#: ../eval.c:19159
+msgid ""
+"\n"
+"# global variables:\n"
+msgstr ""
+
+#: ../eval.c:19254
+msgid ""
+"\n"
+"\tLast set from "
+msgstr ""
+
+#: ../eval.c:19272
+msgid "No old files"
+msgstr ""
+
+#: ../ex_cmds.c:122
+#, c-format
+msgid "<%s>%s%s  %d,  Hex %02x,  Octal %03o"
+msgstr ""
+
+#: ../ex_cmds.c:145
+#, c-format
+msgid "> %d, Hex %04x, Octal %o"
+msgstr ""
+
+#: ../ex_cmds.c:146
+#, c-format
+msgid "> %d, Hex %08x, Octal %o"
+msgstr ""
+
+#: ../ex_cmds.c:684
+msgid "E134: Move lines into themselves"
+msgstr ""
+
+#: ../ex_cmds.c:747
+msgid "1 line moved"
+msgstr ""
+
+#: ../ex_cmds.c:749
+#, c-format
+msgid "%<PRId64> lines moved"
+msgstr ""
+
+#: ../ex_cmds.c:1175
+#, c-format
+msgid "%<PRId64> lines filtered"
+msgstr ""
+
+#: ../ex_cmds.c:1194
+msgid "E135: *Filter* Autocommands must not change current buffer"
+msgstr ""
+
+#: ../ex_cmds.c:1244
+msgid "[No write since last change]\n"
+msgstr ""
+
+#: ../ex_cmds.c:1424
+#, c-format
+msgid "%sviminfo: %s in line: "
+msgstr ""
+
+#: ../ex_cmds.c:1431
+msgid "E136: viminfo: Too many errors, skipping rest of file"
+msgstr ""
+
+#: ../ex_cmds.c:1458
+#, c-format
+msgid "Reading viminfo file \"%s\"%s%s%s"
+msgstr ""
+
+#: ../ex_cmds.c:1460
+msgid " info"
+msgstr ""
+
+#: ../ex_cmds.c:1461
+msgid " marks"
+msgstr ""
+
+#: ../ex_cmds.c:1462
+msgid " oldfiles"
+msgstr ""
+
+#: ../ex_cmds.c:1463
+msgid " FAILED"
+msgstr ""
+
+#. avoid a wait_return for this message, it's annoying
+#: ../ex_cmds.c:1541
+#, c-format
+msgid "E137: Viminfo file is not writable: %s"
+msgstr ""
+
+#: ../ex_cmds.c:1626
+#, c-format
+msgid "E138: Can't write viminfo file %s!"
+msgstr "E138: Cannot write viminfo file %s!"
+
+#: ../ex_cmds.c:1635
+#, fuzzy, c-format
+msgid "Writing viminfo file \"%s\""
+msgstr "E138: Cannot write viminfo file %s!"
+
+#. Write the info:
+#: ../ex_cmds.c:1720
+#, c-format
+msgid "# This viminfo file was generated by Vim %s.\n"
+msgstr ""
+
+#: ../ex_cmds.c:1722
+msgid ""
+"# You may edit it if you're careful!\n"
+"\n"
+msgstr ""
+"# You may edit it if you are careful!\n"
+"\n"
+
+#: ../ex_cmds.c:1723
+msgid "# Value of 'encoding' when this file was written\n"
+msgstr ""
+
+#: ../ex_cmds.c:1800
+msgid "Illegal starting char"
+msgstr ""
+
+#: ../ex_cmds.c:2162
+msgid "Write partial file?"
+msgstr ""
+
+#: ../ex_cmds.c:2166
+msgid "E140: Use ! to write partial buffer"
+msgstr ""
+
+#: ../ex_cmds.c:2281
+#, c-format
+msgid "Overwrite existing file \"%s\"?"
+msgstr ""
+
+#: ../ex_cmds.c:2317
+#, c-format
+msgid "Swap file \"%s\" exists, overwrite anyway?"
+msgstr ""
+
+#: ../ex_cmds.c:2326
+#, c-format
+msgid "E768: Swap file exists: %s (:silent! overrides)"
+msgstr ""
+
+#: ../ex_cmds.c:2381
+#, c-format
+msgid "E141: No file name for buffer %<PRId64>"
+msgstr ""
+
+#: ../ex_cmds.c:2412
+msgid "E142: File not written: Writing is disabled by 'write' option"
+msgstr ""
+
+#: ../ex_cmds.c:2434
+#, c-format
+msgid ""
+"'readonly' option is set for \"%s\".\n"
+"Do you wish to write anyway?"
+msgstr ""
+
+#: ../ex_cmds.c:2439
+#, c-format
+msgid ""
+"File permissions of \"%s\" are read-only.\n"
+"It may still be possible to write it.\n"
+"Do you wish to try?"
+msgstr ""
+
+#: ../ex_cmds.c:2451
+#, fuzzy, c-format
+msgid "E505: \"%s\" is read-only (add ! to override)"
+msgstr "E508: Cannot read file for backup (add ! to override)"
+
+#: ../ex_cmds.c:3120
+#, c-format
+msgid "E143: Autocommands unexpectedly deleted new buffer %s"
+msgstr ""
+
+#: ../ex_cmds.c:3313
+msgid "E144: non-numeric argument to :z"
+msgstr ""
+
+#: ../ex_cmds.c:3404
+msgid "E145: Shell commands not allowed in rvim"
+msgstr ""
+
+#: ../ex_cmds.c:3498
+msgid "E146: Regular expressions can't be delimited by letters"
+msgstr "E146: Regular expressions cannot be delimited by letters"
+
+#: ../ex_cmds.c:3964
+#, c-format
+msgid "replace with %s (y/n/a/q/l/^E/^Y)?"
+msgstr ""
+
+#: ../ex_cmds.c:4379
+msgid "(Interrupted) "
+msgstr ""
+
+#: ../ex_cmds.c:4384
+msgid "1 match"
+msgstr ""
+
+#: ../ex_cmds.c:4384
+msgid "1 substitution"
+msgstr ""
+
+#: ../ex_cmds.c:4387
+#, c-format
+msgid "%<PRId64> matches"
+msgstr ""
+
+#: ../ex_cmds.c:4388
+#, c-format
+msgid "%<PRId64> substitutions"
+msgstr ""
+
+#: ../ex_cmds.c:4392
+msgid " on 1 line"
+msgstr ""
+
+#: ../ex_cmds.c:4395
+#, c-format
+msgid " on %<PRId64> lines"
+msgstr ""
+
+#: ../ex_cmds.c:4438
+msgid "E147: Cannot do :global recursive"
+msgstr ""
+
+#: ../ex_cmds.c:4467
+#, fuzzy
+msgid "E148: Regular expression missing from global"
+msgstr "E146: Regular expressions cannot be delimited by letters"
+
+#: ../ex_cmds.c:4508
+#, c-format
+msgid "Pattern found in every line: %s"
+msgstr ""
+
+#: ../ex_cmds.c:4510
+#, c-format
+msgid "Pattern not found: %s"
+msgstr ""
+
+#: ../ex_cmds.c:4587
+msgid ""
+"\n"
+"# Last Substitute String:\n"
+"$"
+msgstr ""
+
+#: ../ex_cmds.c:4679
+msgid "E478: Don't panic!"
+msgstr ""
+
+#: ../ex_cmds.c:4717
+#, c-format
+msgid "E661: Sorry, no '%s' help for %s"
+msgstr ""
+
+#: ../ex_cmds.c:4719
+#, c-format
+msgid "E149: Sorry, no help for %s"
+msgstr ""
+
+#: ../ex_cmds.c:4751
+#, c-format
+msgid "Sorry, help file \"%s\" not found"
+msgstr ""
+
+#: ../ex_cmds.c:5323
+#, c-format
+msgid "E150: Not a directory: %s"
+msgstr ""
+
+#: ../ex_cmds.c:5446
+#, fuzzy, c-format
+msgid "E152: Cannot open %s for writing"
+msgstr "E212: Cannot open file for writing"
+
+#: ../ex_cmds.c:5471
+#, fuzzy, c-format
+msgid "E153: Unable to open %s for reading"
+msgstr "E212: Cannot open file for writing"
+
+#: ../ex_cmds.c:5500
+#, c-format
+msgid "E670: Mix of help file encodings within a language: %s"
+msgstr ""
+
+#: ../ex_cmds.c:5565
+#, c-format
+msgid "E154: Duplicate tag \"%s\" in file %s/%s"
+msgstr ""
+
+#: ../ex_cmds.c:5687
+#, c-format
+msgid "E160: Unknown sign command: %s"
+msgstr ""
+
+#: ../ex_cmds.c:5704
+msgid "E156: Missing sign name"
+msgstr ""
+
+#: ../ex_cmds.c:5746
+msgid "E612: Too many signs defined"
+msgstr ""
+
+#: ../ex_cmds.c:5813
+#, c-format
+msgid "E239: Invalid sign text: %s"
+msgstr ""
+
+#: ../ex_cmds.c:5844 ../ex_cmds.c:6035
+#, c-format
+msgid "E155: Unknown sign: %s"
+msgstr ""
+
+#: ../ex_cmds.c:5877
+msgid "E159: Missing sign number"
+msgstr ""
+
+#: ../ex_cmds.c:5971
+#, c-format
+msgid "E158: Invalid buffer name: %s"
+msgstr ""
+
+#: ../ex_cmds.c:6008
+#, c-format
+msgid "E157: Invalid sign ID: %<PRId64>"
+msgstr ""
+
+#: ../ex_cmds.c:6066
+msgid " (not supported)"
+msgstr ""
+
+#: ../ex_cmds.c:6169
+msgid "[Deleted]"
+msgstr ""
+
+#: ../ex_cmds2.c:139
+msgid "Entering Debug mode.  Type \"cont\" to continue."
+msgstr ""
+
+#: ../ex_cmds2.c:143 ../ex_docmd.c:759
+#, c-format
+msgid "line %<PRId64>: %s"
+msgstr ""
+
+#: ../ex_cmds2.c:145
+#, c-format
+msgid "cmd: %s"
+msgstr ""
+
+#: ../ex_cmds2.c:322
+#, c-format
+msgid "Breakpoint in \"%s%s\" line %<PRId64>"
+msgstr ""
+
+#: ../ex_cmds2.c:581
+#, c-format
+msgid "E161: Breakpoint not found: %s"
+msgstr ""
+
+#: ../ex_cmds2.c:611
+msgid "No breakpoints defined"
+msgstr ""
+
+#: ../ex_cmds2.c:617
+#, c-format
+msgid "%3d  %s %s  line %<PRId64>"
+msgstr ""
+
+#: ../ex_cmds2.c:942
+msgid "E750: First use \":profile start {fname}\""
+msgstr ""
+
+#: ../ex_cmds2.c:1269
+#, c-format
+msgid "Save changes to \"%s\"?"
+msgstr ""
+
+#: ../ex_cmds2.c:1271 ../ex_docmd.c:8851
+msgid "Untitled"
+msgstr ""
+
+#: ../ex_cmds2.c:1421
+#, c-format
+msgid "E162: No write since last change for buffer \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:1480
+msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
+msgstr ""
+
+#: ../ex_cmds2.c:1826
+msgid "E163: There is only one file to edit"
+msgstr ""
+
+#: ../ex_cmds2.c:1828
+msgid "E164: Cannot go before first file"
+msgstr ""
+
+#: ../ex_cmds2.c:1830
+msgid "E165: Cannot go beyond last file"
+msgstr ""
+
+#: ../ex_cmds2.c:2175
+#, c-format
+msgid "E666: compiler not supported: %s"
+msgstr ""
+
+#: ../ex_cmds2.c:2257
+#, c-format
+msgid "Searching for \"%s\" in \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2284
+#, c-format
+msgid "Searching for \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2307
+#, c-format
+msgid "not found in 'runtimepath': \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2472
+#, c-format
+msgid "Cannot source a directory: \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2518
+#, c-format
+msgid "could not source \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2520
+#, c-format
+msgid "line %<PRId64>: could not source \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2535
+#, c-format
+msgid "sourcing \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2537
+#, c-format
+msgid "line %<PRId64>: sourcing \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:2693
+#, c-format
+msgid "finished sourcing %s"
+msgstr ""
+
+#: ../ex_cmds2.c:2765
+msgid "modeline"
+msgstr ""
+
+#: ../ex_cmds2.c:2767
+msgid "--cmd argument"
+msgstr ""
+
+#: ../ex_cmds2.c:2769
+msgid "-c argument"
+msgstr ""
+
+#: ../ex_cmds2.c:2771
+msgid "environment variable"
+msgstr ""
+
+#: ../ex_cmds2.c:2773
+msgid "error handler"
+msgstr ""
+
+#: ../ex_cmds2.c:3020
+msgid "W15: Warning: Wrong line separator, ^M may be missing"
+msgstr ""
+
+#: ../ex_cmds2.c:3139
+msgid "E167: :scriptencoding used outside of a sourced file"
+msgstr ""
+
+#: ../ex_cmds2.c:3166
+msgid "E168: :finish used outside of a sourced file"
+msgstr ""
+
+#: ../ex_cmds2.c:3389
+#, c-format
+msgid "Current %slanguage: \"%s\""
+msgstr ""
+
+#: ../ex_cmds2.c:3404
+#, fuzzy, c-format
+msgid "E197: Cannot set language to \"%s\""
+msgstr "E738: Cannot list variables for %s"
+
+#. don't redisplay the window
+#. don't wait for return
+#: ../ex_docmd.c:387
+msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
+msgstr ""
+
+#: ../ex_docmd.c:428
+msgid "E501: At end-of-file"
+msgstr ""
+
+#: ../ex_docmd.c:513
+msgid "E169: Command too recursive"
+msgstr ""
+
+#: ../ex_docmd.c:1006
+#, c-format
+msgid "E605: Exception not caught: %s"
+msgstr ""
+
+#: ../ex_docmd.c:1085
+msgid "End of sourced file"
+msgstr ""
+
+#: ../ex_docmd.c:1086
+msgid "End of function"
+msgstr ""
+
+#: ../ex_docmd.c:1628
+msgid "E464: Ambiguous use of user-defined command"
+msgstr ""
+
+#: ../ex_docmd.c:1638
+msgid "E492: Not an editor command"
+msgstr ""
+
+#: ../ex_docmd.c:1729
+msgid "E493: Backwards range given"
+msgstr "E493: Backward range given"
+
+#: ../ex_docmd.c:1733
+msgid "Backwards range given, OK to swap"
+msgstr "Backward range given, OK to swap"
+
+#. append
+#. typed wrong
+#: ../ex_docmd.c:1787
+msgid "E494: Use w or w>>"
+msgstr ""
+
+#: ../ex_docmd.c:3454
+msgid "E319: Sorry, the command is not available in this version"
+msgstr ""
+
+#: ../ex_docmd.c:3752
+msgid "E172: Only one file name allowed"
+msgstr ""
+
+#: ../ex_docmd.c:4238
+msgid "1 more file to edit.  Quit anyway?"
+msgstr ""
+
+#: ../ex_docmd.c:4242
+#, c-format
+msgid "%d more files to edit.  Quit anyway?"
+msgstr ""
+
+#: ../ex_docmd.c:4248
+msgid "E173: 1 more file to edit"
+msgstr ""
+
+#: ../ex_docmd.c:4250
+#, c-format
+msgid "E173: %<PRId64> more files to edit"
+msgstr ""
+
+#: ../ex_docmd.c:4320
+msgid "E174: Command already exists: add ! to replace it"
+msgstr ""
+
+#: ../ex_docmd.c:4432
+msgid ""
+"\n"
+"    Name        Args Range Complete  Definition"
+msgstr ""
+
+#: ../ex_docmd.c:4516
+msgid "No user-defined commands found"
+msgstr ""
+
+#: ../ex_docmd.c:4538
+msgid "E175: No attribute specified"
+msgstr ""
+
+#: ../ex_docmd.c:4583
+msgid "E176: Invalid number of arguments"
+msgstr ""
+
+#: ../ex_docmd.c:4594
+msgid "E177: Count cannot be specified twice"
+msgstr ""
+
+#: ../ex_docmd.c:4603
+msgid "E178: Invalid default value for count"
+msgstr ""
+
+#: ../ex_docmd.c:4625
+msgid "E179: argument required for -complete"
+msgstr ""
+
+#: ../ex_docmd.c:4635
+#, c-format
+msgid "E181: Invalid attribute: %s"
+msgstr ""
+
+#: ../ex_docmd.c:4678
+msgid "E182: Invalid command name"
+msgstr ""
+
+#: ../ex_docmd.c:4691
+msgid "E183: User defined commands must start with an uppercase letter"
+msgstr ""
+
+#: ../ex_docmd.c:4696
+msgid "E841: Reserved name, cannot be used for user defined command"
+msgstr ""
+
+#: ../ex_docmd.c:4751
+#, c-format
+msgid "E184: No such user-defined command: %s"
+msgstr ""
+
+#: ../ex_docmd.c:5219
+#, c-format
+msgid "E180: Invalid complete value: %s"
+msgstr ""
+
+#: ../ex_docmd.c:5225
+msgid "E468: Completion argument only allowed for custom completion"
+msgstr ""
+
+#: ../ex_docmd.c:5231
+msgid "E467: Custom completion requires a function argument"
+msgstr ""
+
+#: ../ex_docmd.c:5257
+#, fuzzy, c-format
+msgid "E185: Cannot find color scheme '%s'"
+msgstr "E185: Cannot find colour scheme %s"
+
+#: ../ex_docmd.c:5263
+msgid "Greetings, Vim user!"
+msgstr ""
+
+#: ../ex_docmd.c:5431
+msgid "E784: Cannot close last tab page"
+msgstr ""
+
+#: ../ex_docmd.c:5462
+msgid "Already only one tab page"
+msgstr ""
+
+#: ../ex_docmd.c:6004
+#, c-format
+msgid "Tab page %d"
+msgstr ""
+
+#: ../ex_docmd.c:6295
+msgid "No swap file"
+msgstr ""
+
+#: ../ex_docmd.c:6478
+#, fuzzy
+msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
+msgstr "E506: Cannot write to backup file (add ! to override)"
+
+#: ../ex_docmd.c:6485
+msgid "E186: No previous directory"
+msgstr ""
+
+#: ../ex_docmd.c:6530
+msgid "E187: Unknown"
+msgstr ""
+
+#: ../ex_docmd.c:6610
+msgid "E465: :winsize requires two number arguments"
+msgstr ""
+
+#: ../ex_docmd.c:6655
+msgid "E188: Obtaining window position not implemented for this platform"
+msgstr ""
+
+#: ../ex_docmd.c:6662
+msgid "E466: :winpos requires two number arguments"
+msgstr ""
+
+#: ../ex_docmd.c:7241
+#, fuzzy, c-format
+msgid "E739: Cannot create directory: %s"
+msgstr "E482: Cannot create file %s"
+
+#: ../ex_docmd.c:7268
+#, fuzzy, c-format
+msgid "E189: \"%s\" exists (add ! to override)"
+msgstr "E510: Cannot make backup file (add ! to override)"
+
+#: ../ex_docmd.c:7273
+#, fuzzy, c-format
+msgid "E190: Cannot open \"%s\" for writing"
+msgstr "E212: Cannot open file for writing"
+
+#. set mark
+#: ../ex_docmd.c:7294
+msgid "E191: Argument must be a letter or forward/backward quote"
+msgstr ""
+
+#: ../ex_docmd.c:7333
+msgid "E192: Recursive use of :normal too deep"
+msgstr ""
+
+#: ../ex_docmd.c:7807
+msgid "E194: No alternate file name to substitute for '#'"
+msgstr ""
+
+#: ../ex_docmd.c:7841
+msgid "E495: no autocommand file name to substitute for \"<afile>\""
+msgstr ""
+
+#: ../ex_docmd.c:7850
+msgid "E496: no autocommand buffer number to substitute for \"<abuf>\""
+msgstr ""
+
+#: ../ex_docmd.c:7861
+msgid "E497: no autocommand match name to substitute for \"<amatch>\""
+msgstr ""
+
+#: ../ex_docmd.c:7870
+msgid "E498: no :source file name to substitute for \"<sfile>\""
+msgstr ""
+
+#: ../ex_docmd.c:7876
+msgid "E842: no line number to use for \"<slnum>\""
+msgstr ""
+
+#: ../ex_docmd.c:7903
+#, c-format
+msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
+msgstr ""
+
+#: ../ex_docmd.c:7905
+msgid "E500: Evaluates to an empty string"
+msgstr ""
+
+#: ../ex_docmd.c:8838
+#, fuzzy
+msgid "E195: Cannot open viminfo file for reading"
+msgstr "E166: Cannot open linked file for writing"
+
+#: ../ex_eval.c:464
+msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
+msgstr ""
+
+#. always scroll up, don't overwrite
+#: ../ex_eval.c:496
+#, c-format
+msgid "Exception thrown: %s"
+msgstr ""
+
+#: ../ex_eval.c:545
+#, c-format
+msgid "Exception finished: %s"
+msgstr ""
+
+#: ../ex_eval.c:546
+#, c-format
+msgid "Exception discarded: %s"
+msgstr ""
+
+#: ../ex_eval.c:588 ../ex_eval.c:634
+#, c-format
+msgid "%s, line %<PRId64>"
+msgstr ""
+
+#. always scroll up, don't overwrite
+#: ../ex_eval.c:608
+#, c-format
+msgid "Exception caught: %s"
+msgstr ""
+
+#: ../ex_eval.c:676
+#, c-format
+msgid "%s made pending"
+msgstr ""
+
+#: ../ex_eval.c:679
+#, c-format
+msgid "%s resumed"
+msgstr ""
+
+#: ../ex_eval.c:683
+#, c-format
+msgid "%s discarded"
+msgstr ""
+
+#: ../ex_eval.c:708
+msgid "Exception"
+msgstr ""
+
+#: ../ex_eval.c:713
+msgid "Error and interrupt"
+msgstr ""
+
+#: ../ex_eval.c:715
+msgid "Error"
+msgstr ""
+
+#. if (pending & CSTP_INTERRUPT)
+#: ../ex_eval.c:717
+msgid "Interrupt"
+msgstr ""
+
+#: ../ex_eval.c:795
+msgid "E579: :if nesting too deep"
+msgstr ""
+
+#: ../ex_eval.c:830
+msgid "E580: :endif without :if"
+msgstr ""
+
+#: ../ex_eval.c:873
+msgid "E581: :else without :if"
+msgstr ""
+
+#: ../ex_eval.c:876
+msgid "E582: :elseif without :if"
+msgstr ""
+
+#: ../ex_eval.c:880
+msgid "E583: multiple :else"
+msgstr ""
+
+#: ../ex_eval.c:883
+msgid "E584: :elseif after :else"
+msgstr ""
+
+#: ../ex_eval.c:941
+msgid "E585: :while/:for nesting too deep"
+msgstr ""
+
+#: ../ex_eval.c:1028
+msgid "E586: :continue without :while or :for"
+msgstr ""
+
+#: ../ex_eval.c:1061
+msgid "E587: :break without :while or :for"
+msgstr ""
+
+#: ../ex_eval.c:1102
+msgid "E732: Using :endfor with :while"
+msgstr ""
+
+#: ../ex_eval.c:1104
+msgid "E733: Using :endwhile with :for"
+msgstr ""
+
+#: ../ex_eval.c:1247
+msgid "E601: :try nesting too deep"
+msgstr ""
+
+#: ../ex_eval.c:1317
+msgid "E603: :catch without :try"
+msgstr ""
+
+#. Give up for a ":catch" after ":finally" and ignore it.
+#. * Just parse.
+#: ../ex_eval.c:1332
+msgid "E604: :catch after :finally"
+msgstr ""
+
+#: ../ex_eval.c:1451
+msgid "E606: :finally without :try"
+msgstr ""
+
+#. Give up for a multiple ":finally" and ignore it.
+#: ../ex_eval.c:1467
+msgid "E607: multiple :finally"
+msgstr ""
+
+#: ../ex_eval.c:1571
+msgid "E602: :endtry without :try"
+msgstr ""
+
+#: ../ex_eval.c:2026
+msgid "E193: :endfunction not inside a function"
+msgstr ""
+
+#: ../ex_getln.c:1643
+msgid "E788: Not allowed to edit another buffer now"
+msgstr ""
+
+#: ../ex_getln.c:1656
+msgid "E811: Not allowed to change buffer information now"
+msgstr ""
+
+#: ../ex_getln.c:3178
+msgid "tagname"
+msgstr ""
+
+#: ../ex_getln.c:3181
+msgid " kind file\n"
+msgstr ""
+
+#: ../ex_getln.c:4799
+msgid "'history' option is zero"
+msgstr ""
+
+#: ../ex_getln.c:5046
+#, c-format
+msgid ""
+"\n"
+"# %s History (newest to oldest):\n"
+msgstr ""
+
+#: ../ex_getln.c:5047
+msgid "Command Line"
+msgstr ""
+
+#: ../ex_getln.c:5048
+msgid "Search String"
+msgstr ""
+
+#: ../ex_getln.c:5049
+msgid "Expression"
+msgstr ""
+
+#: ../ex_getln.c:5050
+msgid "Input Line"
+msgstr ""
+
+#: ../ex_getln.c:5117
+msgid "E198: cmd_pchar beyond the command length"
+msgstr ""
+
+#: ../ex_getln.c:5279
+msgid "E199: Active window or buffer deleted"
+msgstr ""
+
+#: ../file_search.c:203
+msgid "E854: path too long for completion"
+msgstr ""
+
+#: ../file_search.c:446
+#, c-format
+msgid ""
+"E343: Invalid path: '**[number]' must be at the end of the path or be "
+"followed by '%s'."
+msgstr ""
+
+#: ../file_search.c:1505
+#, c-format
+msgid "E344: Can't find directory \"%s\" in cdpath"
+msgstr "E344: Cannot find directory \"%s\" in cdpath"
+
+#: ../file_search.c:1508
+#, c-format
+msgid "E345: Can't find file \"%s\" in path"
+msgstr "E345: Cannot find file \"%s\" in path"
+
+#: ../file_search.c:1512
+#, fuzzy, c-format
+msgid "E346: No more directory \"%s\" found in cdpath"
+msgstr "E344: Cannot find directory \"%s\" in cdpath"
+
+#: ../file_search.c:1515
+#, fuzzy, c-format
+msgid "E347: No more file \"%s\" found in path"
+msgstr "E447: Cannot find file \"%s\" in path"
+
+#: ../fileio.c:137
+msgid "E812: Autocommands changed buffer or buffer name"
+msgstr ""
+
+#: ../fileio.c:368
+msgid "Illegal file name"
+msgstr ""
+
+#: ../fileio.c:395 ../fileio.c:476 ../fileio.c:2543 ../fileio.c:2578
+msgid "is a directory"
+msgstr ""
+
+#: ../fileio.c:397
+msgid "is not a file"
+msgstr ""
+
+#: ../fileio.c:508 ../fileio.c:3522
+msgid "[New File]"
+msgstr ""
+
+#: ../fileio.c:511
+msgid "[New DIRECTORY]"
+msgstr ""
+
+#: ../fileio.c:529 ../fileio.c:532
+msgid "[File too big]"
+msgstr ""
+
+#: ../fileio.c:534
+msgid "[Permission Denied]"
+msgstr ""
+
+#: ../fileio.c:653
+msgid "E200: *ReadPre autocommands made the file unreadable"
+msgstr ""
+
+#: ../fileio.c:655
+msgid "E201: *ReadPre autocommands must not change current buffer"
+msgstr ""
+
+#: ../fileio.c:672
+msgid "Vim: Reading from stdin...\n"
+msgstr ""
+
+#. Re-opening the original file failed!
+#: ../fileio.c:909
+msgid "E202: Conversion made file unreadable!"
+msgstr ""
+
+#. fifo or socket
+#: ../fileio.c:1782
+msgid "[fifo/socket]"
+msgstr ""
+
+#. fifo
+#: ../fileio.c:1788
+msgid "[fifo]"
+msgstr ""
+
+#. or socket
+#: ../fileio.c:1794
+msgid "[socket]"
+msgstr ""
+
+#. or character special
+#: ../fileio.c:1801
+msgid "[character special]"
+msgstr ""
+
+#: ../fileio.c:1815
+msgid "[CR missing]"
+msgstr ""
+
+#: ../fileio.c:1819
+msgid "[long lines split]"
+msgstr ""
+
+#: ../fileio.c:1823 ../fileio.c:3512
+msgid "[NOT converted]"
+msgstr ""
+
+#: ../fileio.c:1826 ../fileio.c:3515
+msgid "[converted]"
+msgstr ""
+
+#: ../fileio.c:1831
+#, c-format
+msgid "[CONVERSION ERROR in line %<PRId64>]"
+msgstr ""
+
+#: ../fileio.c:1835
+#, c-format
+msgid "[ILLEGAL BYTE in line %<PRId64>]"
+msgstr ""
+
+#: ../fileio.c:1838
+msgid "[READ ERRORS]"
+msgstr ""
+
+#: ../fileio.c:2104
+msgid "Can't find temp file for conversion"
+msgstr "Cannot find temp file for conversion"
+
+#: ../fileio.c:2110
+msgid "Conversion with 'charconvert' failed"
+msgstr ""
+
+#: ../fileio.c:2113
+msgid "can't read output of 'charconvert'"
+msgstr "cannot read output of 'charconvert'"
+
+#: ../fileio.c:2437
+msgid "E676: No matching autocommands for acwrite buffer"
+msgstr ""
+
+#: ../fileio.c:2466
+msgid "E203: Autocommands deleted or unloaded buffer to be written"
+msgstr ""
+
+#: ../fileio.c:2486
+msgid "E204: Autocommand changed number of lines in unexpected way"
+msgstr ""
+
+#: ../fileio.c:2548 ../fileio.c:2565
+msgid "is not a file or writable device"
+msgstr ""
+
+#: ../fileio.c:2601
+#, fuzzy
+msgid "is read-only (add ! to override)"
+msgstr "E508: Cannot read file for backup (add ! to override)"
+
+#: ../fileio.c:2886
+msgid "E506: Can't write to backup file (add ! to override)"
+msgstr "E506: Cannot write to backup file (add ! to override)"
+
+#: ../fileio.c:2898
+#, fuzzy
+msgid "E507: Close error for backup file (add ! to override)"
+msgstr "E506: Cannot write to backup file (add ! to override)"
+
+#: ../fileio.c:2901
+msgid "E508: Can't read file for backup (add ! to override)"
+msgstr "E508: Cannot read file for backup (add ! to override)"
+
+#: ../fileio.c:2923
+#, fuzzy
+msgid "E509: Cannot create backup file (add ! to override)"
+msgstr "E510: Cannot make backup file (add ! to override)"
+
+#: ../fileio.c:3008
+msgid "E510: Can't make backup file (add ! to override)"
+msgstr "E510: Cannot make backup file (add ! to override)"
+
+#. Can't write without a tempfile!
+#: ../fileio.c:3121
+msgid "E214: Can't find temp file for writing"
+msgstr "E214: Cannot find temp file for writing"
+
+#: ../fileio.c:3134
+msgid "E213: Cannot convert (add ! to write without conversion)"
+msgstr ""
+
+#: ../fileio.c:3169
+msgid "E166: Can't open linked file for writing"
+msgstr "E166: Cannot open linked file for writing"
+
+#: ../fileio.c:3173
+msgid "E212: Can't open file for writing"
+msgstr "E212: Cannot open file for writing"
+
+#: ../fileio.c:3363
+msgid "E667: Fsync failed"
+msgstr ""
+
+#: ../fileio.c:3398
+msgid "E512: Close failed"
+msgstr ""
+
+#: ../fileio.c:3436
+msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
+msgstr ""
+
+#: ../fileio.c:3441
+#, c-format
+msgid ""
+"E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
+"override)"
+msgstr ""
+
+#: ../fileio.c:3448
+msgid "E514: write error (file system full?)"
+msgstr ""
+
+#: ../fileio.c:3506
+msgid " CONVERSION ERROR"
+msgstr ""
+
+#: ../fileio.c:3509
+#, c-format
+msgid " in line %<PRId64>;"
+msgstr ""
+
+#: ../fileio.c:3519
+msgid "[Device]"
+msgstr ""
+
+#: ../fileio.c:3522
+msgid "[New]"
+msgstr ""
+
+#: ../fileio.c:3535
+msgid " [a]"
+msgstr ""
+
+#: ../fileio.c:3535
+msgid " appended"
+msgstr ""
+
+#: ../fileio.c:3537
+msgid " [w]"
+msgstr ""
+
+#: ../fileio.c:3537
+msgid " written"
+msgstr ""
+
+#: ../fileio.c:3579
+msgid "E205: Patchmode: can't save original file"
+msgstr "E205: Patchmode: cannot save original file"
+
+#: ../fileio.c:3602
+msgid "E206: patchmode: can't touch empty original file"
+msgstr "E206: patchmode: cannot touch empty original file"
+
+#: ../fileio.c:3616
+msgid "E207: Can't delete backup file"
+msgstr "E207: Cannot delete backup file"
+
+#: ../fileio.c:3672
+msgid ""
+"\n"
+"WARNING: Original file may be lost or damaged\n"
+msgstr ""
+
+#: ../fileio.c:3675
+msgid "don't quit the editor until the file is successfully written!"
+msgstr "do not quit the editor until the file is successfully written!"
+
+#: ../fileio.c:3795
+msgid "[dos]"
+msgstr ""
+
+#: ../fileio.c:3795
+msgid "[dos format]"
+msgstr ""
+
+#: ../fileio.c:3801
+msgid "[mac]"
+msgstr ""
+
+#: ../fileio.c:3801
+msgid "[mac format]"
+msgstr ""
+
+#: ../fileio.c:3807
+msgid "[unix]"
+msgstr ""
+
+#: ../fileio.c:3807
+msgid "[unix format]"
+msgstr ""
+
+#: ../fileio.c:3831
+msgid "1 line, "
+msgstr ""
+
+#: ../fileio.c:3833
+#, c-format
+msgid "%<PRId64> lines, "
+msgstr ""
+
+#: ../fileio.c:3836
+msgid "1 character"
+msgstr ""
+
+#: ../fileio.c:3838
+#, c-format
+msgid "%<PRId64> characters"
+msgstr ""
+
+#: ../fileio.c:3849
+msgid "[noeol]"
+msgstr ""
+
+#: ../fileio.c:3849
+msgid "[Incomplete last line]"
+msgstr ""
+
+#. don't overwrite messages here
+#. must give this prompt
+#. don't use emsg() here, don't want to flush the buffers
+#: ../fileio.c:3865
+msgid "WARNING: The file has been changed since reading it!!!"
+msgstr ""
+
+#: ../fileio.c:3867
+msgid "Do you really want to write to it"
+msgstr ""
+
+#: ../fileio.c:4648
+#, c-format
+msgid "E208: Error writing to \"%s\""
+msgstr ""
+
+#: ../fileio.c:4655
+#, c-format
+msgid "E209: Error closing \"%s\""
+msgstr ""
+
+#: ../fileio.c:4657
+#, c-format
+msgid "E210: Error reading \"%s\""
+msgstr ""
+
+#: ../fileio.c:4883
+msgid "E246: FileChangedShell autocommand deleted buffer"
+msgstr ""
+
+#: ../fileio.c:4894
+#, c-format
+msgid "E211: File \"%s\" no longer available"
+msgstr ""
+
+#: ../fileio.c:4906
+#, c-format
+msgid ""
+"W12: Warning: File \"%s\" has changed and the buffer was changed in Vim as "
+"well"
+msgstr ""
+
+#: ../fileio.c:4907
+msgid "See \":help W12\" for more info."
+msgstr ""
+
+#: ../fileio.c:4910
+#, c-format
+msgid "W11: Warning: File \"%s\" has changed since editing started"
+msgstr ""
+
+#: ../fileio.c:4911
+msgid "See \":help W11\" for more info."
+msgstr ""
+
+#: ../fileio.c:4914
+#, c-format
+msgid "W16: Warning: Mode of file \"%s\" has changed since editing started"
+msgstr ""
+
+#: ../fileio.c:4915
+msgid "See \":help W16\" for more info."
+msgstr ""
+
+#: ../fileio.c:4927
+#, c-format
+msgid "W13: Warning: File \"%s\" has been created after editing started"
+msgstr ""
+
+#: ../fileio.c:4947
+msgid "Warning"
+msgstr ""
+
+#: ../fileio.c:4948
+msgid ""
+"&OK\n"
+"&Load File"
+msgstr ""
+
+#: ../fileio.c:5065
+#, c-format
+msgid "E462: Could not prepare for reloading \"%s\""
+msgstr ""
+
+#: ../fileio.c:5078
+#, fuzzy, c-format
+msgid "E321: Could not reload \"%s\""
+msgstr "E255: Could not read in sign data!"
+
+#: ../fileio.c:5601
+msgid "--Deleted--"
+msgstr ""
+
+#: ../fileio.c:5732
+#, c-format
+msgid "auto-removing autocommand: %s <buffer=%d>"
+msgstr ""
+
+#. the group doesn't exist
+#: ../fileio.c:5772
+#, c-format
+msgid "E367: No such group: \"%s\""
+msgstr ""
+
+#: ../fileio.c:5897
+#, c-format
+msgid "E215: Illegal character after *: %s"
+msgstr ""
+
+#: ../fileio.c:5905
+#, c-format
+msgid "E216: No such event: %s"
+msgstr ""
+
+#: ../fileio.c:5907
+#, c-format
+msgid "E216: No such group or event: %s"
+msgstr ""
+
+#. Highlight title
+#: ../fileio.c:6090
+msgid ""
+"\n"
+"--- Auto-Commands ---"
+msgstr ""
+
+#: ../fileio.c:6293
+#, c-format
+msgid "E680: <buffer=%d>: invalid buffer number "
+msgstr ""
+
+#: ../fileio.c:6370
+msgid "E217: Can't execute autocommands for ALL events"
+msgstr "E217: Cannot execute autocommands for ALL events"
+
+#: ../fileio.c:6393
+msgid "No matching autocommands"
+msgstr ""
+
+#: ../fileio.c:6831
+msgid "E218: autocommand nesting too deep"
+msgstr ""
+
+#: ../fileio.c:7143
+#, c-format
+msgid "%s Auto commands for \"%s\""
+msgstr ""
+
+#: ../fileio.c:7149
+#, c-format
+msgid "Executing %s"
+msgstr ""
+
+#: ../fileio.c:7211
+#, c-format
+msgid "autocommand %s"
+msgstr ""
+
+#: ../fileio.c:7795
+msgid "E219: Missing {."
+msgstr ""
+
+#: ../fileio.c:7797
+msgid "E220: Missing }."
+msgstr ""
+
+#: ../fold.c:93
+msgid "E490: No fold found"
+msgstr ""
+
+#: ../fold.c:544
+msgid "E350: Cannot create fold with current 'foldmethod'"
+msgstr ""
+
+#: ../fold.c:546
+msgid "E351: Cannot delete fold with current 'foldmethod'"
+msgstr ""
+
+#: ../fold.c:1784
+#, c-format
+msgid "+--%3ld lines folded "
+msgstr ""
+
+#. buffer has already been read
+#: ../getchar.c:273
+msgid "E222: Add to read buffer"
+msgstr ""
+
+#: ../getchar.c:2040
+msgid "E223: recursive mapping"
+msgstr ""
+
+#: ../getchar.c:2849
+#, c-format
+msgid "E224: global abbreviation already exists for %s"
+msgstr ""
+
+#: ../getchar.c:2852
+#, c-format
+msgid "E225: global mapping already exists for %s"
+msgstr ""
+
+#: ../getchar.c:2952
+#, c-format
+msgid "E226: abbreviation already exists for %s"
+msgstr ""
+
+#: ../getchar.c:2955
+#, c-format
+msgid "E227: mapping already exists for %s"
+msgstr ""
+
+#: ../getchar.c:3008
+msgid "No abbreviation found"
+msgstr ""
+
+#: ../getchar.c:3010
+msgid "No mapping found"
+msgstr ""
+
+#: ../getchar.c:3974
+msgid "E228: makemap: Illegal mode"
+msgstr ""
+
+#. key value of 'cedit' option
+#. type of cmdline window or 0
+#. result of cmdline window or 0
+#: ../globals.h:924
+msgid "--No lines in buffer--"
+msgstr ""
+
+#.
+#. * The error messages that can be shared are included here.
+#. * Excluded are errors that are only used once and debugging messages.
+#.
+#: ../globals.h:996
+msgid "E470: Command aborted"
+msgstr ""
+
+#: ../globals.h:997
+msgid "E471: Argument required"
+msgstr ""
+
+#: ../globals.h:998
+msgid "E10: \\ should be followed by /, ? or &"
+msgstr ""
+
+#: ../globals.h:1000
+msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
+msgstr ""
+
+#: ../globals.h:1002
+msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
+msgstr ""
+
+#: ../globals.h:1003
+msgid "E171: Missing :endif"
+msgstr ""
+
+#: ../globals.h:1004
+msgid "E600: Missing :endtry"
+msgstr ""
+
+#: ../globals.h:1005
+msgid "E170: Missing :endwhile"
+msgstr ""
+
+#: ../globals.h:1006
+msgid "E170: Missing :endfor"
+msgstr ""
+
+#: ../globals.h:1007
+msgid "E588: :endwhile without :while"
+msgstr ""
+
+#: ../globals.h:1008
+msgid "E588: :endfor without :for"
+msgstr ""
+
+#: ../globals.h:1009
+#, fuzzy
+msgid "E13: File exists (add ! to override)"
+msgstr "E510: Cannot make backup file (add ! to override)"
+
+#: ../globals.h:1010
+msgid "E472: Command failed"
+msgstr ""
+
+#: ../globals.h:1011
+msgid "E473: Internal error"
+msgstr ""
+
+#: ../globals.h:1012
+msgid "Interrupted"
+msgstr ""
+
+#: ../globals.h:1013
+msgid "E14: Invalid address"
+msgstr ""
+
+#: ../globals.h:1014
+msgid "E474: Invalid argument"
+msgstr ""
+
+#: ../globals.h:1015
+#, c-format
+msgid "E475: Invalid argument: %s"
+msgstr ""
+
+#: ../globals.h:1016
+#, c-format
+msgid "E15: Invalid expression: %s"
+msgstr ""
+
+#: ../globals.h:1017
+msgid "E16: Invalid range"
+msgstr ""
+
+#: ../globals.h:1018
+msgid "E476: Invalid command"
+msgstr ""
+
+#: ../globals.h:1019
+#, c-format
+msgid "E17: \"%s\" is a directory"
+msgstr ""
+
+#: ../globals.h:1020
+msgid "E900: Invalid job id"
+msgstr ""
+
+#: ../globals.h:1021
+msgid "E901: Job table is full"
+msgstr ""
+
+#: ../globals.h:1022
+#, c-format
+msgid "E902: \"%s\" is not an executable"
+msgstr ""
+
+#: ../globals.h:1024
+#, c-format
+msgid "E364: Library call failed for \"%s()\""
+msgstr ""
+
+#: ../globals.h:1026
+msgid "E19: Mark has invalid line number"
+msgstr ""
+
+#: ../globals.h:1027
+msgid "E20: Mark not set"
+msgstr ""
+
+#: ../globals.h:1029
+msgid "E21: Cannot make changes, 'modifiable' is off"
+msgstr ""
+
+#: ../globals.h:1030
+msgid "E22: Scripts nested too deep"
+msgstr ""
+
+#: ../globals.h:1031
+#, fuzzy
+msgid "E23: No alternate file"
+msgstr "E482: Cannot create file %s"
+
+#: ../globals.h:1032
+msgid "E24: No such abbreviation"
+msgstr ""
+
+#: ../globals.h:1033
+msgid "E477: No ! allowed"
+msgstr ""
+
+#: ../globals.h:1035
+msgid "E25: GUI cannot be used: Not enabled at compile time"
+msgstr ""
+
+#: ../globals.h:1036
+#, c-format
+msgid "E28: No such highlight group name: %s"
+msgstr ""
+
+#: ../globals.h:1037
+msgid "E29: No inserted text yet"
+msgstr ""
+
+#: ../globals.h:1038
+msgid "E30: No previous command line"
+msgstr ""
+
+#: ../globals.h:1039
+msgid "E31: No such mapping"
+msgstr ""
+
+#: ../globals.h:1040
+msgid "E479: No match"
+msgstr ""
+
+#: ../globals.h:1041
+#, c-format
+msgid "E480: No match: %s"
+msgstr ""
+
+#: ../globals.h:1042
+msgid "E32: No file name"
+msgstr ""
+
+#: ../globals.h:1044
+msgid "E33: No previous substitute regular expression"
+msgstr ""
+
+#: ../globals.h:1045
+msgid "E34: No previous command"
+msgstr ""
+
+#: ../globals.h:1046
+msgid "E35: No previous regular expression"
+msgstr ""
+
+#: ../globals.h:1047
+msgid "E481: No range allowed"
+msgstr ""
+
+#: ../globals.h:1048
+msgid "E36: Not enough room"
+msgstr ""
+
+#: ../globals.h:1049
+#, c-format
+msgid "E482: Can't create file %s"
+msgstr "E482: Cannot create file %s"
+
+#: ../globals.h:1050
+msgid "E483: Can't get temp file name"
+msgstr "E483: Cannot get temp file name"
+
+#: ../globals.h:1051
+#, c-format
+msgid "E484: Can't open file %s"
+msgstr "E484: Cannot open file %s"
+
+#: ../globals.h:1052
+#, c-format
+msgid "E485: Can't read file %s"
+msgstr "E485: Cannot read file %s"
+
+#: ../globals.h:1054
+#, fuzzy
+msgid "E37: No write since last change (add ! to override)"
+msgstr "E506: Cannot write to backup file (add ! to override)"
+
+#: ../globals.h:1055
+msgid "E37: No write since last change"
+msgstr ""
+
+#: ../globals.h:1056
+msgid "E38: Null argument"
+msgstr ""
+
+#: ../globals.h:1057
+msgid "E39: Number expected"
+msgstr ""
+
+#: ../globals.h:1058
+#, c-format
+msgid "E40: Can't open errorfile %s"
+msgstr "E40: Cannot open errorfile %s"
+
+#: ../globals.h:1059
+msgid "E41: Out of memory!"
+msgstr ""
+
+#: ../globals.h:1060
+msgid "Pattern not found"
+msgstr ""
+
+#: ../globals.h:1061
+#, c-format
+msgid "E486: Pattern not found: %s"
+msgstr ""
+
+#: ../globals.h:1062
+msgid "E487: Argument must be positive"
+msgstr ""
+
+#: ../globals.h:1064
+msgid "E459: Cannot go back to previous directory"
+msgstr ""
+
+#: ../globals.h:1066
+msgid "E42: No Errors"
+msgstr ""
+
+#: ../globals.h:1067
+msgid "E776: No location list"
+msgstr ""
+
+#: ../globals.h:1068
+msgid "E43: Damaged match string"
+msgstr ""
+
+#: ../globals.h:1069
+msgid "E44: Corrupted regexp program"
+msgstr ""
+
+#: ../globals.h:1071
+#, fuzzy
+msgid "E45: 'readonly' option is set (add ! to override)"
+msgstr "E510: Cannot make backup file (add ! to override)"
+
+#: ../globals.h:1073
+#, fuzzy, c-format
+msgid "E46: Cannot change read-only variable \"%s\""
+msgstr "E456: Cannot open file \"%s\""
+
+#: ../globals.h:1075
+#, fuzzy, c-format
+msgid "E794: Cannot set variable in the sandbox: \"%s\""
+msgstr "E738: Cannot list variables for %s"
+
+#: ../globals.h:1076
+msgid "E47: Error while reading errorfile"
+msgstr ""
+
+#: ../globals.h:1078
+msgid "E48: Not allowed in sandbox"
+msgstr ""
+
+#: ../globals.h:1080
+msgid "E523: Not allowed here"
+msgstr ""
+
+#: ../globals.h:1082
+msgid "E359: Screen mode setting not supported"
+msgstr ""
+
+#: ../globals.h:1083
+msgid "E49: Invalid scroll size"
+msgstr ""
+
+#: ../globals.h:1084
+msgid "E91: 'shell' option is empty"
+msgstr ""
+
+#: ../globals.h:1085
+msgid "E255: Couldn't read in sign data!"
+msgstr "E255: Could not read in sign data!"
+
+#: ../globals.h:1086
+msgid "E72: Close error on swap file"
+msgstr ""
+
+#: ../globals.h:1087
+msgid "E73: tag stack empty"
+msgstr ""
+
+#: ../globals.h:1088
+msgid "E74: Command too complex"
+msgstr ""
+
+#: ../globals.h:1089
+msgid "E75: Name too long"
+msgstr ""
+
+#: ../globals.h:1090
+msgid "E76: Too many ["
+msgstr ""
+
+#: ../globals.h:1091
+msgid "E77: Too many file names"
+msgstr ""
+
+#: ../globals.h:1092
+msgid "E488: Trailing characters"
+msgstr ""
+
+#: ../globals.h:1093
+msgid "E78: Unknown mark"
+msgstr ""
+
+#: ../globals.h:1094
+#, fuzzy
+msgid "E79: Cannot expand wildcards"
+msgstr "--literal\t\tDo not expand wildcards"
+
+#: ../globals.h:1096
+msgid "E591: 'winheight' cannot be smaller than 'winminheight'"
+msgstr ""
+
+#: ../globals.h:1098
+msgid "E592: 'winwidth' cannot be smaller than 'winminwidth'"
+msgstr ""
+
+#: ../globals.h:1099
+msgid "E80: Error while writing"
+msgstr ""
+
+#: ../globals.h:1100
+msgid "Zero count"
+msgstr ""
+
+#: ../globals.h:1101
+msgid "E81: Using <SID> not in a script context"
+msgstr ""
+
+#: ../globals.h:1102
+#, fuzzy, c-format
+msgid "E685: Internal error: %s"
+msgstr "E40: Cannot open errorfile %s"
+
+#: ../globals.h:1104
+msgid "E363: pattern uses more memory than 'maxmempattern'"
+msgstr ""
+
+#: ../globals.h:1105
+msgid "E749: empty buffer"
+msgstr ""
+
+#: ../globals.h:1108
+msgid "E682: Invalid search pattern or delimiter"
+msgstr ""
+
+#: ../globals.h:1109
+msgid "E139: File is loaded in another buffer"
+msgstr ""
+
+#: ../globals.h:1110
+#, c-format
+msgid "E764: Option '%s' is not set"
+msgstr ""
+
+#: ../globals.h:1111
+msgid "E850: Invalid register name"
+msgstr ""
+
+#: ../globals.h:1114
+msgid "search hit TOP, continuing at BOTTOM"
+msgstr ""
+
+#: ../globals.h:1115
+msgid "search hit BOTTOM, continuing at TOP"
+msgstr ""
+
+#: ../hardcopy.c:240
+msgid "E550: Missing colon"
+msgstr ""
+
+#: ../hardcopy.c:252
+msgid "E551: Illegal component"
+msgstr ""
+
+#: ../hardcopy.c:259
+msgid "E552: digit expected"
+msgstr ""
+
+#: ../hardcopy.c:473
+#, c-format
+msgid "Page %d"
+msgstr ""
+
+#: ../hardcopy.c:597
+msgid "No text to be printed"
+msgstr ""
+
+#: ../hardcopy.c:668
+#, c-format
+msgid "Printing page %d (%d%%)"
+msgstr ""
+
+#: ../hardcopy.c:680
+#, c-format
+msgid " Copy %d of %d"
+msgstr ""
+
+#: ../hardcopy.c:733
+#, c-format
+msgid "Printed: %s"
+msgstr ""
+
+#: ../hardcopy.c:740
+msgid "Printing aborted"
+msgstr ""
+
+#: ../hardcopy.c:1365
+#, fuzzy
+msgid "E455: Error writing to PostScript output file"
+msgstr "E324: Cannot open PostScript output file"
+
+#: ../hardcopy.c:1747
+#, c-format
+msgid "E624: Can't open file \"%s\""
+msgstr "E624: Cannot open file \"%s\""
+
+#: ../hardcopy.c:1756 ../hardcopy.c:2470
+#, c-format
+msgid "E457: Can't read PostScript resource file \"%s\""
+msgstr "E457: Cannot read PostScript resource file \"%s\""
+
+#: ../hardcopy.c:1772
+#, fuzzy, c-format
+msgid "E618: file \"%s\" is not a PostScript resource file"
+msgstr "E457: Cannot read PostScript resource file \"%s\""
+
+#: ../hardcopy.c:1788 ../hardcopy.c:1805 ../hardcopy.c:1844
+#, fuzzy, c-format
+msgid "E619: file \"%s\" is not a supported PostScript resource file"
+msgstr "E457: Cannot read PostScript resource file \"%s\""
+
+#: ../hardcopy.c:1856
+#, c-format
+msgid "E621: \"%s\" resource file has wrong version"
+msgstr ""
+
+#: ../hardcopy.c:2225
+msgid "E673: Incompatible multi-byte encoding and character set."
+msgstr ""
+
+#: ../hardcopy.c:2238
+msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
+msgstr ""
+
+#: ../hardcopy.c:2254
+msgid "E675: No default font specified for multi-byte printing."
+msgstr ""
+
+#: ../hardcopy.c:2426
+msgid "E324: Can't open PostScript output file"
+msgstr "E324: Cannot open PostScript output file"
+
+#: ../hardcopy.c:2458
+#, c-format
+msgid "E456: Can't open file \"%s\""
+msgstr "E456: Cannot open file \"%s\""
+
+#: ../hardcopy.c:2583
+msgid "E456: Can't find PostScript resource file \"prolog.ps\""
+msgstr "E456: Cannot find PostScript resource file \"prolog.ps\""
+
+#: ../hardcopy.c:2593
+msgid "E456: Can't find PostScript resource file \"cidfont.ps\""
+msgstr "E456: Cannot find PostScript resource file \"cidfont.ps\""
+
+#: ../hardcopy.c:2622 ../hardcopy.c:2639 ../hardcopy.c:2665
+#, c-format
+msgid "E456: Can't find PostScript resource file \"%s.ps\""
+msgstr "E456: Cannot find PostScript resource file \"%s.ps\""
+
+#: ../hardcopy.c:2654
+#, c-format
+msgid "E620: Unable to convert to print encoding \"%s\""
+msgstr ""
+
+#: ../hardcopy.c:2877
+msgid "Sending to printer..."
+msgstr ""
+
+#: ../hardcopy.c:2881
+#, fuzzy
+msgid "E365: Failed to print PostScript file"
+msgstr "E324: Cannot open PostScript output file"
+
+#: ../hardcopy.c:2883
+msgid "Print job sent."
+msgstr ""
+
+#: ../if_cscope.c:85
+msgid "Add a new database"
+msgstr ""
+
+#: ../if_cscope.c:87
+msgid "Query for a pattern"
+msgstr ""
+
+#: ../if_cscope.c:89
+msgid "Show this message"
+msgstr ""
+
+#: ../if_cscope.c:91
+msgid "Kill a connection"
+msgstr ""
+
+#: ../if_cscope.c:93
+msgid "Reinit all connections"
+msgstr ""
+
+#: ../if_cscope.c:95
+msgid "Show connections"
+msgstr ""
+
+#: ../if_cscope.c:101
+#, c-format
+msgid "E560: Usage: cs[cope] %s"
+msgstr ""
+
+#: ../if_cscope.c:225
+msgid "This cscope command does not support splitting the window.\n"
+msgstr ""
+
+#: ../if_cscope.c:266
+msgid "E562: Usage: cstag <ident>"
+msgstr ""
+
+#: ../if_cscope.c:313
+msgid "E257: cstag: tag not found"
+msgstr ""
+
+#: ../if_cscope.c:461
+#, c-format
+msgid "E563: stat(%s) error: %d"
+msgstr ""
+
+#: ../if_cscope.c:551
+#, c-format
+msgid "E564: %s is not a directory or a valid cscope database"
+msgstr ""
+
+#: ../if_cscope.c:566
+#, c-format
+msgid "Added cscope database %s"
+msgstr ""
+
+#: ../if_cscope.c:616
+#, c-format
+msgid "E262: error reading cscope connection %<PRId64>"
+msgstr ""
+
+#: ../if_cscope.c:711
+msgid "E561: unknown cscope search type"
+msgstr ""
+
+#: ../if_cscope.c:752 ../if_cscope.c:789
+msgid "E566: Could not create cscope pipes"
+msgstr ""
+
+#: ../if_cscope.c:767
+msgid "E622: Could not fork for cscope"
+msgstr ""
+
+#: ../if_cscope.c:849
+msgid "cs_create_connection setpgid failed"
+msgstr ""
+
+#: ../if_cscope.c:853 ../if_cscope.c:889
+msgid "cs_create_connection exec failed"
+msgstr ""
+
+#: ../if_cscope.c:863 ../if_cscope.c:902
+msgid "cs_create_connection: fdopen for to_fp failed"
+msgstr ""
+
+#: ../if_cscope.c:865 ../if_cscope.c:906
+msgid "cs_create_connection: fdopen for fr_fp failed"
+msgstr ""
+
+#: ../if_cscope.c:890
+msgid "E623: Could not spawn cscope process"
+msgstr ""
+
+#: ../if_cscope.c:932
+msgid "E567: no cscope connections"
+msgstr ""
+
+#: ../if_cscope.c:1009
+#, c-format
+msgid "E469: invalid cscopequickfix flag %c for %c"
+msgstr ""
+
+#: ../if_cscope.c:1058
+#, c-format
+msgid "E259: no matches found for cscope query %s of %s"
+msgstr ""
+
+#: ../if_cscope.c:1142
+msgid "cscope commands:\n"
+msgstr ""
+
+#: ../if_cscope.c:1150
+#, c-format
+msgid "%-5s: %s%*s (Usage: %s)"
+msgstr ""
+
+#: ../if_cscope.c:1155
+msgid ""
+"\n"
+"       c: Find functions calling this function\n"
+"       d: Find functions called by this function\n"
+"       e: Find this egrep pattern\n"
+"       f: Find this file\n"
+"       g: Find this definition\n"
+"       i: Find files #including this file\n"
+"       s: Find this C symbol\n"
+"       t: Find this text string\n"
+msgstr ""
+
+#: ../if_cscope.c:1226
+msgid "E568: duplicate cscope database not added"
+msgstr ""
+
+#: ../if_cscope.c:1335
+#, c-format
+msgid "E261: cscope connection %s not found"
+msgstr ""
+
+#: ../if_cscope.c:1364
+#, c-format
+msgid "cscope connection %s closed"
+msgstr ""
+
+#. should not reach here
+#: ../if_cscope.c:1486
+msgid "E570: fatal error in cs_manage_matches"
+msgstr ""
+
+#: ../if_cscope.c:1693
+#, c-format
+msgid "Cscope tag: %s"
+msgstr ""
+
+#: ../if_cscope.c:1711
+msgid ""
+"\n"
+"   #   line"
+msgstr ""
+
+#: ../if_cscope.c:1713
+msgid "filename / context / line\n"
+msgstr ""
+
+#: ../if_cscope.c:1809
+#, fuzzy, c-format
+msgid "E609: Cscope error: %s"
+msgstr "E40: Cannot open errorfile %s"
+
+#: ../if_cscope.c:2053
+msgid "All cscope databases reset"
+msgstr ""
+
+#: ../if_cscope.c:2123
+msgid "no cscope connections\n"
+msgstr ""
+
+#: ../if_cscope.c:2126
+msgid " # pid    database name                       prepend path\n"
+msgstr ""
+
+#: ../main.c:144
+msgid "Unknown option argument"
+msgstr ""
+
+#: ../main.c:146
+msgid "Too many edit arguments"
+msgstr ""
+
+#: ../main.c:148
+msgid "Argument missing after"
+msgstr ""
+
+#: ../main.c:150
+msgid "Garbage after option argument"
+msgstr ""
+
+#: ../main.c:152
+msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
+msgstr ""
+
+#: ../main.c:154
+msgid "Invalid argument for"
+msgstr ""
+
+#: ../main.c:294
+#, c-format
+msgid "%d files to edit\n"
+msgstr ""
+
+#: ../main.c:1342
+msgid "Attempt to open script file again: \""
+msgstr ""
+
+#: ../main.c:1350
+#, fuzzy
+msgid "Cannot open for reading: \""
+msgstr "E212: Cannot open file for writing"
+
+#: ../main.c:1393
+#, fuzzy
+msgid "Cannot open for script output: \""
+msgstr "E324: Cannot open PostScript output file"
+
+#: ../main.c:1622
+msgid "Vim: Warning: Output is not to a terminal\n"
+msgstr ""
+
+#: ../main.c:1624
+msgid "Vim: Warning: Input is not from a terminal\n"
+msgstr ""
+
+#. just in case..
+#: ../main.c:1891
+msgid "pre-vimrc command line"
+msgstr ""
+
+#: ../main.c:1964
+#, fuzzy, c-format
+msgid "E282: Cannot read from \"%s\""
+msgstr "E485: Cannot read file %s"
+
+#: ../main.c:2149
+msgid ""
+"\n"
+"More info with: \"vim -h\"\n"
+msgstr ""
+
+#: ../main.c:2178
+msgid "[file ..]       edit specified file(s)"
+msgstr ""
+
+#: ../main.c:2179
+msgid "-               read text from stdin"
+msgstr ""
+
+#: ../main.c:2180
+msgid "-t tag          edit file where tag is defined"
+msgstr ""
+
+#: ../main.c:2181
+msgid "-q [errorfile]  edit file with first error"
+msgstr ""
+
+#: ../main.c:2187
+msgid ""
+"\n"
+"\n"
+"usage:"
+msgstr ""
+
+#: ../main.c:2189
+msgid " vim [arguments] "
+msgstr ""
+
+#: ../main.c:2193
+msgid ""
+"\n"
+"   or:"
+msgstr ""
+
+#: ../main.c:2196
+msgid ""
+"\n"
+"\n"
+"Arguments:\n"
+msgstr ""
+
+#: ../main.c:2197
+msgid "--\t\t\tOnly file names after this"
+msgstr ""
+
+#: ../main.c:2199
+msgid "--literal\t\tDon't expand wildcards"
+msgstr "--literal\t\tDo not expand wildcards"
+
+#: ../main.c:2201
+msgid "-v\t\t\tVi mode (like \"vi\")"
+msgstr ""
+
+#: ../main.c:2202
+msgid "-e\t\t\tEx mode (like \"ex\")"
+msgstr ""
+
+#: ../main.c:2203
+msgid "-E\t\t\tImproved Ex mode"
+msgstr ""
+
+#: ../main.c:2204
+msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
+msgstr ""
+
+#: ../main.c:2205
+msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
+msgstr ""
+
+#: ../main.c:2206
+msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
+msgstr ""
+
+#: ../main.c:2207
+msgid "-R\t\t\tReadonly mode (like \"view\")"
+msgstr ""
+
+#: ../main.c:2208
+msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
+msgstr ""
+
+#: ../main.c:2209
+msgid "-m\t\t\tModifications (writing files) not allowed"
+msgstr ""
+
+#: ../main.c:2210
+msgid "-M\t\t\tModifications in text not allowed"
+msgstr ""
+
+#: ../main.c:2211
+msgid "-b\t\t\tBinary mode"
+msgstr ""
+
+#: ../main.c:2212
+msgid "-l\t\t\tLisp mode"
+msgstr ""
+
+#: ../main.c:2213
+msgid "-C\t\t\tCompatible with Vi: 'compatible'"
+msgstr ""
+
+#: ../main.c:2214
+msgid "-N\t\t\tNot fully Vi compatible: 'nocompatible'"
+msgstr ""
+
+#: ../main.c:2215
+msgid "-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"
+msgstr ""
+
+#: ../main.c:2216
+msgid "-D\t\t\tDebugging mode"
+msgstr ""
+
+#: ../main.c:2217
+msgid "-n\t\t\tNo swap file, use memory only"
+msgstr ""
+
+#: ../main.c:2218
+msgid "-r\t\t\tList swap files and exit"
+msgstr ""
+
+#: ../main.c:2219
+msgid "-r (with file name)\tRecover crashed session"
+msgstr ""
+
+#: ../main.c:2220
+msgid "-L\t\t\tSame as -r"
+msgstr ""
+
+#: ../main.c:2221
+msgid "-A\t\t\tstart in Arabic mode"
+msgstr ""
+
+#: ../main.c:2222
+msgid "-H\t\t\tStart in Hebrew mode"
+msgstr ""
+
+#: ../main.c:2223
+msgid "-F\t\t\tStart in Farsi mode"
+msgstr ""
+
+#: ../main.c:2224
+msgid "-T <terminal>\tSet terminal type to <terminal>"
+msgstr ""
+
+#: ../main.c:2225
+msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
+msgstr ""
+
+#: ../main.c:2226
+msgid "--noplugin\t\tDon't load plugin scripts"
+msgstr "--noplugin\t\tDo not load plugin scripts"
+
+#: ../main.c:2227
+msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
+msgstr ""
+
+#: ../main.c:2228
+msgid "-o[N]\t\tOpen N windows (default: one for each file)"
+msgstr ""
+
+#: ../main.c:2229
+msgid "-O[N]\t\tLike -o but split vertically"
+msgstr ""
+
+#: ../main.c:2230
+msgid "+\t\t\tStart at end of file"
+msgstr ""
+
+#: ../main.c:2231
+msgid "+<lnum>\t\tStart at line <lnum>"
+msgstr ""
+
+#: ../main.c:2232
+msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
+msgstr ""
+
+#: ../main.c:2233
+msgid "-c <command>\t\tExecute <command> after loading the first file"
+msgstr ""
+
+#: ../main.c:2235
+msgid "-S <session>\t\tSource file <session> after loading the first file"
+msgstr ""
+
+#: ../main.c:2236
+msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
+msgstr ""
+
+#: ../main.c:2237
+msgid "-w <scriptout>\tAppend all typed commands to file <scriptout>"
+msgstr ""
+
+#: ../main.c:2238
+msgid "-W <scriptout>\tWrite all typed commands to file <scriptout>"
+msgstr ""
+
+#: ../main.c:2240
+msgid "--startuptime <file>\tWrite startup timing messages to <file>"
+msgstr ""
+
+#: ../main.c:2242
+msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
+msgstr ""
+
+#: ../main.c:2243
+msgid "-h  or  --help\tPrint Help (this message) and exit"
+msgstr ""
+
+#: ../main.c:2244
+msgid "--version\t\tPrint version information and exit"
+msgstr ""
+
+#: ../mark.c:676
+msgid "No marks set"
+msgstr ""
+
+#: ../mark.c:678
+#, c-format
+msgid "E283: No marks matching \"%s\""
+msgstr ""
+
+#. Highlight title
+#: ../mark.c:687
+msgid ""
+"\n"
+"mark line  col file/text"
+msgstr ""
+
+#. Highlight title
+#: ../mark.c:789
+msgid ""
+"\n"
+" jump line  col file/text"
+msgstr ""
+
+#. Highlight title
+#: ../mark.c:831
+msgid ""
+"\n"
+"change line  col text"
+msgstr ""
+
+#: ../mark.c:1238
+msgid ""
+"\n"
+"# File marks:\n"
+msgstr ""
+
+#. Write the jumplist with -'
+#: ../mark.c:1271
+msgid ""
+"\n"
+"# Jumplist (newest first):\n"
+msgstr ""
+
+#: ../mark.c:1352
+msgid ""
+"\n"
+"# History of marks within files (newest to oldest):\n"
+msgstr ""
+
+#: ../mark.c:1431
+msgid "Missing '>'"
+msgstr ""
+
+#: ../memfile.c:426
+msgid "E293: block was not locked"
+msgstr ""
+
+#: ../memfile.c:799
+msgid "E294: Seek error in swap file read"
+msgstr ""
+
+#: ../memfile.c:803
+msgid "E295: Read error in swap file"
+msgstr ""
+
+#: ../memfile.c:849
+msgid "E296: Seek error in swap file write"
+msgstr ""
+
+#: ../memfile.c:865
+msgid "E297: Write error in swap file"
+msgstr ""
+
+#: ../memfile.c:1036
+msgid "E300: Swap file already exists (symlink attack?)"
+msgstr ""
+
+#: ../memline.c:318
+msgid "E298: Didn't get block nr 0?"
+msgstr "E298: Did not get block nr 0?"
+
+#: ../memline.c:361
+msgid "E298: Didn't get block nr 1?"
+msgstr "E298: Did not get block nr 1?"
+
+#: ../memline.c:377
+msgid "E298: Didn't get block nr 2?"
+msgstr "E298: Did not get block nr 2?"
+
+#. could not (re)open the swap file, what can we do????
+#: ../memline.c:465
+msgid "E301: Oops, lost the swap file!!!"
+msgstr ""
+
+#: ../memline.c:477
+msgid "E302: Could not rename swap file"
+msgstr ""
+
+#: ../memline.c:554
+#, c-format
+msgid "E303: Unable to open swap file for \"%s\", recovery impossible"
+msgstr ""
+
+#: ../memline.c:666
+msgid "E304: ml_upd_block0(): Didn't get block 0??"
+msgstr "E304: ml_upd_block0(): Did not get block 0??"
+
+#. no swap files found
+#: ../memline.c:830
+#, c-format
+msgid "E305: No swap file found for %s"
+msgstr ""
+
+#: ../memline.c:839
+msgid "Enter number of swap file to use (0 to quit): "
+msgstr ""
+
+#: ../memline.c:879
+#, fuzzy, c-format
+msgid "E306: Cannot open %s"
+msgstr "E456: Cannot open file \"%s\""
+
+#: ../memline.c:897
+msgid "Unable to read block 0 from "
+msgstr ""
+
+#: ../memline.c:900
+msgid ""
+"\n"
+"Maybe no changes were made or Vim did not update the swap file."
+msgstr ""
+
+#: ../memline.c:909
+msgid " cannot be used with this version of Vim.\n"
+msgstr ""
+
+#: ../memline.c:911
+msgid "Use Vim version 3.0.\n"
+msgstr ""
+
+#: ../memline.c:916
+#, c-format
+msgid "E307: %s does not look like a Vim swap file"
+msgstr ""
+
+#: ../memline.c:922
+msgid " cannot be used on this computer.\n"
+msgstr ""
+
+#: ../memline.c:924
+msgid "The file was created on "
+msgstr ""
+
+#: ../memline.c:928
+msgid ""
+",\n"
+"or the file has been damaged."
+msgstr ""
+
+#: ../memline.c:945
+msgid " has been damaged (page size is smaller than minimum value).\n"
+msgstr ""
+
+#: ../memline.c:974
+#, c-format
+msgid "Using swap file \"%s\""
+msgstr ""
+
+#: ../memline.c:980
+#, c-format
+msgid "Original file \"%s\""
+msgstr ""
+
+#: ../memline.c:995
+msgid "E308: Warning: Original file may have been changed"
+msgstr ""
+
+#: ../memline.c:1061
+#, c-format
+msgid "E309: Unable to read block 1 from %s"
+msgstr ""
+
+#: ../memline.c:1065
+msgid "???MANY LINES MISSING"
+msgstr ""
+
+#: ../memline.c:1076
+msgid "???LINE COUNT WRONG"
+msgstr ""
+
+#: ../memline.c:1082
+msgid "???EMPTY BLOCK"
+msgstr ""
+
+#: ../memline.c:1103
+msgid "???LINES MISSING"
+msgstr ""
+
+#: ../memline.c:1128
+#, c-format
+msgid "E310: Block 1 ID wrong (%s not a .swp file?)"
+msgstr ""
+
+#: ../memline.c:1133
+msgid "???BLOCK MISSING"
+msgstr ""
+
+#: ../memline.c:1147
+msgid "??? from here until ???END lines may be messed up"
+msgstr ""
+
+#: ../memline.c:1164
+msgid "??? from here until ???END lines may have been inserted/deleted"
+msgstr ""
+
+#: ../memline.c:1181
+msgid "???END"
+msgstr ""
+
+#: ../memline.c:1238
+msgid "E311: Recovery Interrupted"
+msgstr ""
+
+#: ../memline.c:1243
+msgid ""
+"E312: Errors detected while recovering; look for lines starting with ???"
+msgstr ""
+
+#: ../memline.c:1245
+msgid "See \":help E312\" for more information."
+msgstr ""
+
+#: ../memline.c:1249
+msgid "Recovery completed. You should check if everything is OK."
+msgstr ""
+
+#: ../memline.c:1251
+msgid ""
+"\n"
+"(You might want to write out this file under another name\n"
+msgstr ""
+
+#: ../memline.c:1252
+msgid "and run diff with the original file to check for changes)"
+msgstr ""
+
+#: ../memline.c:1254
+msgid "Recovery completed. Buffer contents equals file contents."
+msgstr ""
+
+#: ../memline.c:1255
+msgid ""
+"\n"
+"You may want to delete the .swp file now.\n"
+"\n"
+msgstr ""
+
+#. use msg() to start the scrolling properly
+#: ../memline.c:1327
+msgid "Swap files found:"
+msgstr ""
+
+#: ../memline.c:1446
+msgid "   In current directory:\n"
+msgstr ""
+
+#: ../memline.c:1448
+msgid "   Using specified name:\n"
+msgstr ""
+
+#: ../memline.c:1450
+msgid "   In directory "
+msgstr ""
+
+#: ../memline.c:1465
+msgid "      -- none --\n"
+msgstr ""
+
+#: ../memline.c:1527
+msgid "          owned by: "
+msgstr ""
+
+#: ../memline.c:1529
+msgid "   dated: "
+msgstr ""
+
+#: ../memline.c:1532 ../memline.c:3231
+msgid "             dated: "
+msgstr ""
+
+#: ../memline.c:1548
+msgid "         [from Vim version 3.0]"
+msgstr ""
+
+#: ../memline.c:1550
+msgid "         [does not look like a Vim swap file]"
+msgstr ""
+
+#: ../memline.c:1552
+msgid "         file name: "
+msgstr ""
+
+#: ../memline.c:1558
+msgid ""
+"\n"
+"          modified: "
+msgstr ""
+
+#: ../memline.c:1559
+msgid "YES"
+msgstr ""
+
+#: ../memline.c:1559
+msgid "no"
+msgstr ""
+
+#: ../memline.c:1562
+msgid ""
+"\n"
+"         user name: "
+msgstr ""
+
+#: ../memline.c:1568
+msgid "   host name: "
+msgstr ""
+
+#: ../memline.c:1570
+msgid ""
+"\n"
+"         host name: "
+msgstr ""
+
+#: ../memline.c:1575
+msgid ""
+"\n"
+"        process ID: "
+msgstr ""
+
+#: ../memline.c:1579
+msgid " (still running)"
+msgstr ""
+
+#: ../memline.c:1586
+msgid ""
+"\n"
+"         [not usable on this computer]"
+msgstr ""
+
+#: ../memline.c:1590
+msgid "         [cannot be read]"
+msgstr ""
+
+#: ../memline.c:1593
+msgid "         [cannot be opened]"
+msgstr ""
+
+#: ../memline.c:1698
+msgid "E313: Cannot preserve, there is no swap file"
+msgstr ""
+
+#: ../memline.c:1747
+msgid "File preserved"
+msgstr ""
+
+#: ../memline.c:1749
+msgid "E314: Preserve failed"
+msgstr ""
+
+#: ../memline.c:1819
+#, c-format
+msgid "E315: ml_get: invalid lnum: %<PRId64>"
+msgstr ""
+
+#: ../memline.c:1851
+#, c-format
+msgid "E316: ml_get: cannot find line %<PRId64>"
+msgstr ""
+
+#: ../memline.c:2236
+msgid "E317: pointer block id wrong 3"
+msgstr ""
+
+#: ../memline.c:2311
+msgid "stack_idx should be 0"
+msgstr ""
+
+#: ../memline.c:2369
+msgid "E318: Updated too many blocks?"
+msgstr ""
+
+#: ../memline.c:2511
+msgid "E317: pointer block id wrong 4"
+msgstr ""
+
+#: ../memline.c:2536
+msgid "deleted block 1?"
+msgstr ""
+
+#: ../memline.c:2707
+#, c-format
+msgid "E320: Cannot find line %<PRId64>"
+msgstr ""
+
+#: ../memline.c:2916
+msgid "E317: pointer block id wrong"
+msgstr ""
+
+#: ../memline.c:2930
+msgid "pe_line_count is zero"
+msgstr ""
+
+#: ../memline.c:2955
+#, c-format
+msgid "E322: line number out of range: %<PRId64> past the end"
+msgstr ""
+
+#: ../memline.c:2959
+#, c-format
+msgid "E323: line count wrong in block %<PRId64>"
+msgstr ""
+
+#: ../memline.c:2999
+msgid "Stack size increases"
+msgstr ""
+
+#: ../memline.c:3038
+msgid "E317: pointer block id wrong 2"
+msgstr ""
+
+#: ../memline.c:3070
+#, c-format
+msgid "E773: Symlink loop for \"%s\""
+msgstr ""
+
+#: ../memline.c:3221
+msgid "E325: ATTENTION"
+msgstr ""
+
+#: ../memline.c:3222
+msgid ""
+"\n"
+"Found a swap file by the name \""
+msgstr ""
+
+#: ../memline.c:3226
+msgid "While opening file \""
+msgstr ""
+
+#: ../memline.c:3239
+msgid "      NEWER than swap file!\n"
+msgstr ""
+
+#: ../memline.c:3244
+msgid ""
+"\n"
+"(1) Another program may be editing the same file.  If this is the case,\n"
+"    be careful not to end up with two different instances of the same\n"
+"    file when making changes."
+msgstr ""
+
+#: ../memline.c:3245
+msgid "  Quit, or continue with caution.\n"
+msgstr ""
+
+#: ../memline.c:3246
+msgid "(2) An edit session for this file crashed.\n"
+msgstr ""
+
+#: ../memline.c:3247
+msgid "    If this is the case, use \":recover\" or \"vim -r "
+msgstr ""
+
+#: ../memline.c:3249
+msgid ""
+"\"\n"
+"    to recover the changes (see \":help recovery\").\n"
+msgstr ""
+
+#: ../memline.c:3250
+msgid "    If you did this already, delete the swap file \""
+msgstr ""
+
+#: ../memline.c:3252
+msgid ""
+"\"\n"
+"    to avoid this message.\n"
+msgstr ""
+
+#: ../memline.c:3450 ../memline.c:3452
+msgid "Swap file \""
+msgstr ""
+
+#: ../memline.c:3451 ../memline.c:3455
+msgid "\" already exists!"
+msgstr ""
+
+#: ../memline.c:3457
+msgid "VIM - ATTENTION"
+msgstr ""
+
+#: ../memline.c:3459
+msgid "Swap file already exists!"
+msgstr ""
+
+#: ../memline.c:3464
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+
+#: ../memline.c:3467
+msgid ""
+"&Open Read-Only\n"
+"&Edit anyway\n"
+"&Recover\n"
+"&Delete it\n"
+"&Quit\n"
+"&Abort"
+msgstr ""
+
+#.
+#. * Change the ".swp" extension to find another file that can be used.
+#. * First decrement the last char: ".swo", ".swn", etc.
+#. * If that still isn't enough decrement the last but one char: ".svz"
+#. * Can happen when editing many "No Name" buffers.
+#.
+#. ".s?a"
+#. ".saa": tried enough, give up
+#: ../memline.c:3528
+msgid "E326: Too many swap files found"
+msgstr ""
+
+#: ../memory.c:227
+#, c-format
+msgid "E342: Out of memory!  (allocating %<PRIu64> bytes)"
+msgstr ""
+
+#: ../menu.c:62
+msgid "E327: Part of menu-item path is not sub-menu"
+msgstr ""
+
+#: ../menu.c:63
+msgid "E328: Menu only exists in another mode"
+msgstr ""
+
+#: ../menu.c:64
+#, c-format
+msgid "E329: No menu \"%s\""
+msgstr ""
+
+#. Only a mnemonic or accelerator is not valid.
+#: ../menu.c:329
+msgid "E792: Empty menu name"
+msgstr ""
+
+#: ../menu.c:340
+msgid "E330: Menu path must not lead to a sub-menu"
+msgstr ""
+
+#: ../menu.c:365
+msgid "E331: Must not add menu items directly to menu bar"
+msgstr ""
+
+#: ../menu.c:370
+msgid "E332: Separator cannot be part of a menu path"
+msgstr ""
+
+#. Now we have found the matching menu, and we list the mappings
+#. Highlight title
+#: ../menu.c:762
+msgid ""
+"\n"
+"--- Menus ---"
+msgstr ""
+
+#: ../menu.c:1313
+msgid "E333: Menu path must lead to a menu item"
+msgstr ""
+
+#: ../menu.c:1330
+#, c-format
+msgid "E334: Menu not found: %s"
+msgstr ""
+
+#: ../menu.c:1396
+#, c-format
+msgid "E335: Menu not defined for %s mode"
+msgstr ""
+
+#: ../menu.c:1426
+msgid "E336: Menu path must lead to a sub-menu"
+msgstr ""
+
+#: ../menu.c:1447
+msgid "E337: Menu not found - check menu names"
+msgstr ""
+
+#: ../message.c:423
+#, c-format
+msgid "Error detected while processing %s:"
+msgstr ""
+
+#: ../message.c:445
+#, c-format
+msgid "line %4ld:"
+msgstr ""
+
+#: ../message.c:617
+#, c-format
+msgid "E354: Invalid register name: '%s'"
+msgstr ""
+
+#: ../message.c:745
+msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
+msgstr "Messages maintainer: Mike Williams <mrw@eandem.co.uk>"
+
+#: ../message.c:986
+msgid "Interrupt: "
+msgstr ""
+
+#: ../message.c:988
+msgid "Press ENTER or type command to continue"
+msgstr ""
+
+#: ../message.c:1843
+#, c-format
+msgid "%s line %<PRId64>"
+msgstr ""
+
+#: ../message.c:2392
+msgid "-- More --"
+msgstr ""
+
+#: ../message.c:2398
+msgid " SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "
+msgstr ""
+
+#: ../message.c:3021 ../message.c:3031
+msgid "Question"
+msgstr ""
+
+#: ../message.c:3023
+msgid ""
+"&Yes\n"
+"&No"
+msgstr ""
+
+#: ../message.c:3033
+msgid ""
+"&Yes\n"
+"&No\n"
+"&Cancel"
+msgstr ""
+
+#: ../message.c:3045
+msgid ""
+"&Yes\n"
+"&No\n"
+"Save &All\n"
+"&Discard All\n"
+"&Cancel"
+msgstr ""
+
+#: ../message.c:3058
+msgid "E766: Insufficient arguments for printf()"
+msgstr ""
+
+#: ../message.c:3119
+msgid "E807: Expected Float argument for printf()"
+msgstr ""
+
+#: ../message.c:3873
+msgid "E767: Too many arguments to printf()"
+msgstr ""
+
+#: ../misc1.c:2256
+msgid "W10: Warning: Changing a readonly file"
+msgstr ""
+
+#: ../misc1.c:2537
+msgid "Type number and <Enter> or click with mouse (empty cancels): "
+msgstr ""
+
+#: ../misc1.c:2539
+msgid "Type number and <Enter> (empty cancels): "
+msgstr ""
+
+#: ../misc1.c:2585
+msgid "1 more line"
+msgstr ""
+
+#: ../misc1.c:2588
+msgid "1 line less"
+msgstr ""
+
+#: ../misc1.c:2593
+#, c-format
+msgid "%<PRId64> more lines"
+msgstr ""
+
+#: ../misc1.c:2596
+#, c-format
+msgid "%<PRId64> fewer lines"
+msgstr ""
+
+#: ../misc1.c:2599
+msgid " (Interrupted)"
+msgstr ""
+
+#: ../misc1.c:2635
+msgid "Beep!"
+msgstr ""
+
+#: ../misc2.c:738
+#, c-format
+msgid "Calling shell to execute: \"%s\""
+msgstr ""
+
+#: ../normal.c:183
+msgid "E349: No identifier under cursor"
+msgstr ""
+
+#: ../normal.c:1866
+msgid "E774: 'operatorfunc' is empty"
+msgstr ""
+
+#: ../normal.c:2637
+msgid "Warning: terminal cannot highlight"
+msgstr ""
+
+#: ../normal.c:2807
+msgid "E348: No string under cursor"
+msgstr ""
+
+#: ../normal.c:3937
+msgid "E352: Cannot erase folds with current 'foldmethod'"
+msgstr ""
+
+#: ../normal.c:5897
+msgid "E664: changelist is empty"
+msgstr ""
+
+#: ../normal.c:5899
+msgid "E662: At start of changelist"
+msgstr ""
+
+#: ../normal.c:5901
+msgid "E663: At end of changelist"
+msgstr ""
+
+#: ../normal.c:7053
+msgid "Type  :quit<Enter>  to exit Vim"
+msgstr ""
+
+#: ../ops.c:248
+#, c-format
+msgid "1 line %sed 1 time"
+msgstr ""
+
+#: ../ops.c:250
+#, c-format
+msgid "1 line %sed %d times"
+msgstr ""
+
+#: ../ops.c:253
+#, c-format
+msgid "%<PRId64> lines %sed 1 time"
+msgstr ""
+
+#: ../ops.c:256
+#, c-format
+msgid "%<PRId64> lines %sed %d times"
+msgstr ""
+
+#: ../ops.c:592
+#, c-format
+msgid "%<PRId64> lines to indent... "
+msgstr ""
+
+#: ../ops.c:634
+msgid "1 line indented "
+msgstr ""
+
+#: ../ops.c:636
+#, c-format
+msgid "%<PRId64> lines indented "
+msgstr ""
+
+#: ../ops.c:938
+msgid "E748: No previously used register"
+msgstr ""
+
+#. must display the prompt
+#: ../ops.c:1433
+msgid "cannot yank; delete anyway"
+msgstr ""
+
+#: ../ops.c:1929
+msgid "1 line changed"
+msgstr ""
+
+#: ../ops.c:1931
+#, c-format
+msgid "%<PRId64> lines changed"
+msgstr ""
+
+#: ../ops.c:2521
+msgid "block of 1 line yanked"
+msgstr ""
+
+#: ../ops.c:2523
+msgid "1 line yanked"
+msgstr ""
+
+#: ../ops.c:2525
+#, c-format
+msgid "block of %<PRId64> lines yanked"
+msgstr ""
+
+#: ../ops.c:2528
+#, c-format
+msgid "%<PRId64> lines yanked"
+msgstr ""
+
+#: ../ops.c:2710
+#, fuzzy, c-format
+msgid "E353: Nothing in register %s"
+msgstr "E394: Did not find region item for %s"
+
+#. Highlight title
+#: ../ops.c:3185
+msgid ""
+"\n"
+"--- Registers ---"
+msgstr ""
+
+#: ../ops.c:4455
+msgid "Illegal register name"
+msgstr ""
+
+#: ../ops.c:4533
+msgid ""
+"\n"
+"# Registers:\n"
+msgstr ""
+
+#: ../ops.c:4575
+#, c-format
+msgid "E574: Unknown register type %d"
+msgstr ""
+
+#: ../ops.c:5089
+#, c-format
+msgid "%<PRId64> Cols; "
+msgstr ""
+
+#: ../ops.c:5097
+#, c-format
+msgid ""
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
+"%<PRId64> of %<PRId64> Bytes"
+msgstr ""
+
+#: ../ops.c:5105
+#, c-format
+msgid ""
+"Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
+"%<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> Bytes"
+msgstr ""
+
+#: ../ops.c:5123
+#, c-format
+msgid ""
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Byte "
+"%<PRId64> of %<PRId64>"
+msgstr ""
+
+#: ../ops.c:5133
+#, c-format
+msgid ""
+"Col %s of %s; Line %<PRId64> of %<PRId64>; Word %<PRId64> of %<PRId64>; Char "
+"%<PRId64> of %<PRId64>; Byte %<PRId64> of %<PRId64>"
+msgstr ""
+
+#: ../ops.c:5146
+#, c-format
+msgid "(+%<PRId64> for BOM)"
+msgstr ""
+
+#: ../option.c:1238
+msgid "%<%f%h%m%=Page %N"
+msgstr ""
+
+#: ../option.c:1574
+msgid "Thanks for flying Vim"
+msgstr ""
+
+#. found a mismatch: skip
+#: ../option.c:2698
+msgid "E518: Unknown option"
+msgstr ""
+
+#: ../option.c:2709
+msgid "E519: Option not supported"
+msgstr ""
+
+#: ../option.c:2740
+msgid "E520: Not allowed in a modeline"
+msgstr ""
+
+#: ../option.c:2815
+msgid "E846: Key code not set"
+msgstr ""
+
+#: ../option.c:2924
+msgid "E521: Number required after ="
+msgstr ""
+
+#: ../option.c:3226 ../option.c:3864
+msgid "E522: Not found in termcap"
+msgstr ""
+
+#: ../option.c:3335
+#, c-format
+msgid "E539: Illegal character <%s>"
+msgstr ""
+
+#: ../option.c:3862
+msgid "E529: Cannot set 'term' to empty string"
+msgstr ""
+
+#: ../option.c:3885
+msgid "E589: 'backupext' and 'patchmode' are equal"
+msgstr ""
+
+#: ../option.c:3964
+msgid "E834: Conflicts with value of 'listchars'"
+msgstr ""
+
+#: ../option.c:3966
+msgid "E835: Conflicts with value of 'fillchars'"
+msgstr ""
+
+#: ../option.c:4163
+msgid "E524: Missing colon"
+msgstr ""
+
+#: ../option.c:4165
+msgid "E525: Zero length string"
+msgstr ""
+
+#: ../option.c:4220
+#, c-format
+msgid "E526: Missing number after <%s>"
+msgstr ""
+
+#: ../option.c:4232
+msgid "E527: Missing comma"
+msgstr ""
+
+#: ../option.c:4239
+msgid "E528: Must specify a ' value"
+msgstr ""
+
+#: ../option.c:4271
+msgid "E595: contains unprintable or wide character"
+msgstr ""
+
+#: ../option.c:4469
+#, c-format
+msgid "E535: Illegal character after <%c>"
+msgstr ""
+
+#: ../option.c:4534
+msgid "E536: comma required"
+msgstr ""
+
+#: ../option.c:4543
+#, c-format
+msgid "E537: 'commentstring' must be empty or contain %s"
+msgstr ""
+
+#: ../option.c:4928
+msgid "E540: Unclosed expression sequence"
+msgstr ""
+
+#: ../option.c:4932
+msgid "E541: too many items"
+msgstr ""
+
+#: ../option.c:4934
+msgid "E542: unbalanced groups"
+msgstr ""
+
+#: ../option.c:5148
+msgid "E590: A preview window already exists"
+msgstr ""
+
+#: ../option.c:5311
+msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
+msgstr ""
+
+#: ../option.c:5623
+#, c-format
+msgid "E593: Need at least %d lines"
+msgstr ""
+
+#: ../option.c:5631
+#, c-format
+msgid "E594: Need at least %d columns"
+msgstr ""
+
+#: ../option.c:6011
+#, c-format
+msgid "E355: Unknown option: %s"
+msgstr ""
+
+#. There's another character after zeros or the string
+#. * is empty.  In both cases, we are trying to set a
+#. * num option using a string.
+#: ../option.c:6037
+#, c-format
+msgid "E521: Number required: &%s = '%s'"
+msgstr ""
+
+#: ../option.c:6149
+msgid ""
+"\n"
+"--- Terminal codes ---"
+msgstr ""
+
+#: ../option.c:6151
+msgid ""
+"\n"
+"--- Global option values ---"
+msgstr ""
+
+#: ../option.c:6153
+msgid ""
+"\n"
+"--- Local option values ---"
+msgstr ""
+
+#: ../option.c:6155
+msgid ""
+"\n"
+"--- Options ---"
+msgstr ""
+
+#: ../option.c:6816
+msgid "E356: get_varp ERROR"
+msgstr ""
+
+#: ../option.c:7696
+#, c-format
+msgid "E357: 'langmap': Matching character missing for %s"
+msgstr ""
+
+#: ../option.c:7715
+#, c-format
+msgid "E358: 'langmap': Extra characters after semicolon: %s"
+msgstr ""
+
+#: ../os/shell.c:194
+msgid ""
+"\n"
+"Cannot execute shell "
+msgstr ""
+
+#: ../os/shell.c:439
+msgid ""
+"\n"
+"shell returned "
+msgstr ""
+
+#: ../os_unix.c:465 ../os_unix.c:471
+msgid ""
+"\n"
+"Could not get security context for "
+msgstr ""
+
+#: ../os_unix.c:479
+msgid ""
+"\n"
+"Could not set security context for "
+msgstr ""
+
+#: ../os_unix.c:1558 ../os_unix.c:1647
+#, c-format
+msgid "dlerror = \"%s\""
+msgstr ""
+
+#: ../path.c:1449
+#, c-format
+msgid "E447: Can't find file \"%s\" in path"
+msgstr "E447: Cannot find file \"%s\" in path"
+
+#: ../quickfix.c:359
+#, c-format
+msgid "E372: Too many %%%c in format string"
+msgstr ""
+
+#: ../quickfix.c:371
+#, c-format
+msgid "E373: Unexpected %%%c in format string"
+msgstr ""
+
+#: ../quickfix.c:420
+msgid "E374: Missing ] in format string"
+msgstr ""
+
+#: ../quickfix.c:431
+#, c-format
+msgid "E375: Unsupported %%%c in format string"
+msgstr ""
+
+#: ../quickfix.c:448
+#, c-format
+msgid "E376: Invalid %%%c in format string prefix"
+msgstr ""
+
+#: ../quickfix.c:454
+#, c-format
+msgid "E377: Invalid %%%c in format string"
+msgstr ""
+
+#. nothing found
+#: ../quickfix.c:477
+msgid "E378: 'errorformat' contains no pattern"
+msgstr ""
+
+#: ../quickfix.c:695
+msgid "E379: Missing or empty directory name"
+msgstr ""
+
+#: ../quickfix.c:1305
+msgid "E553: No more items"
+msgstr ""
+
+#: ../quickfix.c:1674
+#, c-format
+msgid "(%d of %d)%s%s: "
+msgstr ""
+
+#: ../quickfix.c:1676
+msgid " (line deleted)"
+msgstr ""
+
+#: ../quickfix.c:1863
+msgid "E380: At bottom of quickfix stack"
+msgstr ""
+
+#: ../quickfix.c:1869
+msgid "E381: At top of quickfix stack"
+msgstr ""
+
+#: ../quickfix.c:1880
+#, c-format
+msgid "error list %d of %d; %d errors"
+msgstr ""
+
+#: ../quickfix.c:2427
+msgid "E382: Cannot write, 'buftype' option is set"
+msgstr ""
+
+#: ../quickfix.c:2812
+msgid "E683: File name missing or invalid pattern"
+msgstr ""
+
+#: ../quickfix.c:2911
+#, fuzzy, c-format
+msgid "Cannot open file \"%s\""
+msgstr "E624: Cannot open file \"%s\""
+
+#: ../quickfix.c:3429
+msgid "E681: Buffer is not loaded"
+msgstr ""
+
+#: ../quickfix.c:3487
+msgid "E777: String or List expected"
+msgstr ""
+
+#: ../regexp.c:359
+#, c-format
+msgid "E369: invalid item in %s%%[]"
+msgstr ""
+
+#: ../regexp.c:374
+#, c-format
+msgid "E769: Missing ] after %s["
+msgstr ""
+
+#: ../regexp.c:375
+#, c-format
+msgid "E53: Unmatched %s%%("
+msgstr ""
+
+#: ../regexp.c:376
+#, c-format
+msgid "E54: Unmatched %s("
+msgstr ""
+
+#: ../regexp.c:377
+#, c-format
+msgid "E55: Unmatched %s)"
+msgstr ""
+
+#: ../regexp.c:378
+msgid "E66: \\z( not allowed here"
+msgstr ""
+
+#: ../regexp.c:379
+msgid "E67: \\z1 et al. not allowed here"
+msgstr ""
+
+#: ../regexp.c:380
+#, c-format
+msgid "E69: Missing ] after %s%%["
+msgstr ""
+
+#: ../regexp.c:381
+#, c-format
+msgid "E70: Empty %s%%[]"
+msgstr ""
+
+#: ../regexp.c:1209 ../regexp.c:1224
+msgid "E339: Pattern too long"
+msgstr ""
+
+#: ../regexp.c:1371
+msgid "E50: Too many \\z("
+msgstr ""
+
+#: ../regexp.c:1378
+#, c-format
+msgid "E51: Too many %s("
+msgstr ""
+
+#: ../regexp.c:1427
+msgid "E52: Unmatched \\z("
+msgstr ""
+
+#: ../regexp.c:1637
+#, c-format
+msgid "E59: invalid character after %s@"
+msgstr ""
+
+#: ../regexp.c:1672
+#, c-format
+msgid "E60: Too many complex %s{...}s"
+msgstr ""
+
+#: ../regexp.c:1687
+#, c-format
+msgid "E61: Nested %s*"
+msgstr ""
+
+#: ../regexp.c:1690
+#, c-format
+msgid "E62: Nested %s%c"
+msgstr ""
+
+#: ../regexp.c:1800
+msgid "E63: invalid use of \\_"
+msgstr ""
+
+#: ../regexp.c:1850
+#, c-format
+msgid "E64: %s%c follows nothing"
+msgstr ""
+
+#: ../regexp.c:1902
+msgid "E65: Illegal back reference"
+msgstr ""
+
+#: ../regexp.c:1943
+msgid "E68: Invalid character after \\z"
+msgstr ""
+
+#: ../regexp.c:2049 ../regexp_nfa.c:1296
+#, c-format
+msgid "E678: Invalid character after %s%%[dxouU]"
+msgstr ""
+
+#: ../regexp.c:2107
+#, c-format
+msgid "E71: Invalid character after %s%%"
+msgstr ""
+
+#: ../regexp.c:3017
+#, c-format
+msgid "E554: Syntax error in %s{...}"
+msgstr ""
+
+#: ../regexp.c:3805
+msgid "External submatches:\n"
+msgstr ""
+
+#: ../regexp.c:7022
+msgid ""
+"E864: \\%#= can only be followed by 0, 1, or 2. The automatic engine will be "
+"used "
+msgstr ""
+
+#: ../regexp_nfa.c:239
+msgid "E865: (NFA) Regexp end encountered prematurely"
+msgstr ""
+
+#: ../regexp_nfa.c:240
+#, c-format
+msgid "E866: (NFA regexp) Misplaced %c"
+msgstr ""
+
+#: ../regexp_nfa.c:242
+#, c-format
+msgid "E877: (NFA regexp) Invalid character class: %<PRId64>"
+msgstr ""
+
+#: ../regexp_nfa.c:1261
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\z%c'"
+msgstr ""
+
+#: ../regexp_nfa.c:1387
+#, c-format
+msgid "E867: (NFA) Unknown operator '\\%%%c'"
+msgstr ""
+
+#: ../regexp_nfa.c:1802
+#, c-format
+msgid "E869: (NFA) Unknown operator '\\@%c'"
+msgstr ""
+
+#: ../regexp_nfa.c:1831
+msgid "E870: (NFA regexp) Error reading repetition limits"
+msgstr ""
+
+#. Can't have a multi follow a multi.
+#: ../regexp_nfa.c:1895
+msgid "E871: (NFA regexp) Can't have a multi follow a multi !"
+msgstr ""
+
+#. Too many `('
+#: ../regexp_nfa.c:2037
+msgid "E872: (NFA regexp) Too many '('"
+msgstr ""
+
+#: ../regexp_nfa.c:2042
+msgid "E879: (NFA regexp) Too many \\z("
+msgstr ""
+
+#: ../regexp_nfa.c:2066
+msgid "E873: (NFA regexp) proper termination error"
+msgstr ""
+
+#: ../regexp_nfa.c:2599
+msgid "E874: (NFA) Could not pop the stack !"
+msgstr ""
+
+#: ../regexp_nfa.c:3298
+msgid ""
+"E875: (NFA regexp) (While converting from postfix to NFA), too many states "
+"left on stack"
+msgstr ""
+
+#: ../regexp_nfa.c:3302
+msgid "E876: (NFA regexp) Not enough space to store the whole NFA "
+msgstr ""
+
+#: ../regexp_nfa.c:4571 ../regexp_nfa.c:4869
+msgid ""
+"Could not open temporary log file for writing, displaying on stderr ... "
+msgstr ""
+
+#: ../regexp_nfa.c:4840
+#, c-format
+msgid "(NFA) COULD NOT OPEN %s !"
+msgstr ""
+
+#: ../regexp_nfa.c:6049
+#, fuzzy
+msgid "Could not open temporary log file for writing "
+msgstr "E214: Cannot find temp file for writing"
+
+#: ../screen.c:7435
+msgid " VREPLACE"
+msgstr ""
+
+#: ../screen.c:7437
+msgid " REPLACE"
+msgstr ""
+
+#: ../screen.c:7440
+msgid " REVERSE"
+msgstr ""
+
+#: ../screen.c:7441
+msgid " INSERT"
+msgstr ""
+
+#: ../screen.c:7443
+msgid " (insert)"
+msgstr ""
+
+#: ../screen.c:7445
+msgid " (replace)"
+msgstr ""
+
+#: ../screen.c:7447
+msgid " (vreplace)"
+msgstr ""
+
+#: ../screen.c:7449
+msgid " Hebrew"
+msgstr ""
+
+#: ../screen.c:7454
+msgid " Arabic"
+msgstr ""
+
+#: ../screen.c:7456
+msgid " (lang)"
+msgstr ""
+
+#: ../screen.c:7459
+msgid " (paste)"
+msgstr ""
+
+#: ../screen.c:7469
+msgid " VISUAL"
+msgstr ""
+
+#: ../screen.c:7470
+msgid " VISUAL LINE"
+msgstr ""
+
+#: ../screen.c:7471
+msgid " VISUAL BLOCK"
+msgstr ""
+
+#: ../screen.c:7472
+msgid " SELECT"
+msgstr ""
+
+#: ../screen.c:7473
+msgid " SELECT LINE"
+msgstr ""
+
+#: ../screen.c:7474
+msgid " SELECT BLOCK"
+msgstr ""
+
+#: ../screen.c:7486 ../screen.c:7541
+msgid "recording"
+msgstr ""
+
+#: ../search.c:487
+#, c-format
+msgid "E383: Invalid search string: %s"
+msgstr ""
+
+#: ../search.c:832
+#, c-format
+msgid "E384: search hit TOP without match for: %s"
+msgstr ""
+
+#: ../search.c:835
+#, c-format
+msgid "E385: search hit BOTTOM without match for: %s"
+msgstr ""
+
+#: ../search.c:1200
+msgid "E386: Expected '?' or '/'  after ';'"
+msgstr ""
+
+#: ../search.c:4085
+msgid " (includes previously listed match)"
+msgstr ""
+
+#. cursor at status line
+#: ../search.c:4104
+msgid "--- Included files "
+msgstr ""
+
+#: ../search.c:4106
+msgid "not found "
+msgstr ""
+
+#: ../search.c:4107
+msgid "in path ---\n"
+msgstr ""
+
+#: ../search.c:4168
+msgid "  (Already listed)"
+msgstr ""
+
+#: ../search.c:4170
+msgid "  NOT FOUND"
+msgstr ""
+
+#: ../search.c:4211
+#, c-format
+msgid "Scanning included file: %s"
+msgstr ""
+
+#: ../search.c:4216
+#, c-format
+msgid "Searching included file %s"
+msgstr ""
+
+#: ../search.c:4405
+msgid "E387: Match is on current line"
+msgstr ""
+
+#: ../search.c:4517
+msgid "All included files were found"
+msgstr ""
+
+#: ../search.c:4519
+msgid "No included files"
+msgstr ""
+
+#: ../search.c:4527
+msgid "E388: Couldn't find definition"
+msgstr "E388: Could not find definition"
+
+#: ../search.c:4529
+msgid "E389: Couldn't find pattern"
+msgstr "E389: Could not find pattern"
+
+#: ../search.c:4668
+msgid "Substitute "
+msgstr ""
+
+#: ../search.c:4681
+#, c-format
+msgid ""
+"\n"
+"# Last %sSearch Pattern:\n"
+"~"
+msgstr ""
+
+#: ../spell.c:951
+msgid "E759: Format error in spell file"
+msgstr ""
+
+#: ../spell.c:952
+msgid "E758: Truncated spell file"
+msgstr ""
+
+#: ../spell.c:953
+#, fuzzy, c-format
+msgid "Trailing text in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:954
+#, fuzzy, c-format
+msgid "Affix name too long in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:955
+msgid "E761: Format error in affix file FOL, LOW or UPP"
+msgstr ""
+
+#: ../spell.c:957
+msgid "E762: Character in FOL, LOW or UPP is out of range"
+msgstr ""
+
+#: ../spell.c:958
+msgid "Compressing word tree..."
+msgstr ""
+
+#: ../spell.c:1951
+msgid "E756: Spell checking is not enabled"
+msgstr ""
+
+#: ../spell.c:2249
+#, c-format
+msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
+msgstr ""
+
+#: ../spell.c:2473
+#, fuzzy, c-format
+msgid "Reading spell file \"%s\""
+msgstr "E624: Cannot open file \"%s\""
+
+#: ../spell.c:2496
+msgid "E757: This does not look like a spell file"
+msgstr ""
+
+#: ../spell.c:2501
+msgid "E771: Old spell file, needs to be updated"
+msgstr ""
+
+#: ../spell.c:2504
+msgid "E772: Spell file is for newer version of Vim"
+msgstr ""
+
+#: ../spell.c:2602
+msgid "E770: Unsupported section in spell file"
+msgstr ""
+
+#: ../spell.c:3762
+#, c-format
+msgid "Warning: region %s not supported"
+msgstr ""
+
+#: ../spell.c:4550
+#, c-format
+msgid "Reading affix file %s ..."
+msgstr ""
+
+#: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
+#, fuzzy, c-format
+msgid "Conversion failure for word in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:4630 ../spell.c:6170
+#, c-format
+msgid "Conversion in %s not supported: from %s to %s"
+msgstr ""
+
+#: ../spell.c:4642
+#, fuzzy, c-format
+msgid "Invalid value for FLAG in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:4655
+#, fuzzy, c-format
+msgid "FLAG after using flags in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:4723
+#, c-format
+msgid ""
+"Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
+"%d"
+msgstr ""
+
+#: ../spell.c:4731
+#, c-format
+msgid ""
+"Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
+"%d"
+msgstr ""
+
+#: ../spell.c:4747
+#, c-format
+msgid "Wrong COMPOUNDRULES value in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:4771
+#, c-format
+msgid "Wrong COMPOUNDWORDMAX value in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:4777
+#, c-format
+msgid "Wrong COMPOUNDMIN value in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:4783
+#, c-format
+msgid "Wrong COMPOUNDSYLMAX value in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:4795
+#, c-format
+msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:4847
+#, c-format
+msgid "Different combining flag in continued affix block in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:4850
+#, fuzzy, c-format
+msgid "Duplicate affix in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:4871
+#, c-format
+msgid ""
+"Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in %s "
+"line %d: %s"
+msgstr ""
+
+#: ../spell.c:4893
+#, fuzzy, c-format
+msgid "Expected Y or N in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:4968
+#, fuzzy, c-format
+msgid "Broken condition in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:5091
+#, c-format
+msgid "Expected REP(SAL) count in %s line %d"
+msgstr ""
+
+#: ../spell.c:5120
+#, c-format
+msgid "Expected MAP count in %s line %d"
+msgstr ""
+
+#: ../spell.c:5132
+#, c-format
+msgid "Duplicate character in MAP in %s line %d"
+msgstr ""
+
+#: ../spell.c:5176
+#, c-format
+msgid "Unrecognized or duplicate item in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:5197
+#, c-format
+msgid "Missing FOL/LOW/UPP line in %s"
+msgstr ""
+
+#: ../spell.c:5220
+msgid "COMPOUNDSYLMAX used without SYLLABLE"
+msgstr ""
+
+#: ../spell.c:5236
+msgid "Too many postponed prefixes"
+msgstr ""
+
+#: ../spell.c:5238
+msgid "Too many compound flags"
+msgstr ""
+
+#: ../spell.c:5240
+msgid "Too many postponed prefixes and/or compound flags"
+msgstr ""
+
+#: ../spell.c:5250
+#, c-format
+msgid "Missing SOFO%s line in %s"
+msgstr ""
+
+#: ../spell.c:5253
+#, c-format
+msgid "Both SAL and SOFO lines in %s"
+msgstr ""
+
+#: ../spell.c:5331
+#, fuzzy, c-format
+msgid "Flag is not a number in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:5334
+#, fuzzy, c-format
+msgid "Illegal flag in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:5493 ../spell.c:5501
+#, c-format
+msgid "%s value differs from what is used in another .aff file"
+msgstr ""
+
+#: ../spell.c:5602
+#, c-format
+msgid "Reading dictionary file %s ..."
+msgstr ""
+
+#: ../spell.c:5611
+#, c-format
+msgid "E760: No word count in %s"
+msgstr ""
+
+#: ../spell.c:5669
+#, c-format
+msgid "line %6d, word %6d - %s"
+msgstr ""
+
+#: ../spell.c:5691
+#, fuzzy, c-format
+msgid "Duplicate word in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:5694
+#, fuzzy, c-format
+msgid "First duplicate word in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:5746
+#, c-format
+msgid "%d duplicate word(s) in %s"
+msgstr ""
+
+#: ../spell.c:5748
+#, c-format
+msgid "Ignored %d word(s) with non-ASCII characters in %s"
+msgstr ""
+
+#: ../spell.c:6115
+#, c-format
+msgid "Reading word file %s ..."
+msgstr ""
+
+#: ../spell.c:6155
+#, c-format
+msgid "Duplicate /encoding= line ignored in %s line %d: %s"
+msgstr ""
+
+#: ../spell.c:6159
+#, fuzzy, c-format
+msgid "/encoding= line after word ignored in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:6180
+#, fuzzy, c-format
+msgid "Duplicate /regions= line ignored in %s line %d: %s"
+msgstr "Unrecognised or duplicate item in %s line %d: %s"
+
+#: ../spell.c:6185
+#, fuzzy, c-format
+msgid "Too many regions in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:6198
+#, fuzzy, c-format
+msgid "/ line ignored in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:6224
+#, fuzzy, c-format
+msgid "Invalid region nr in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:6230
+#, c-format
+msgid "Unrecognized flags in %s line %d: %s"
+msgstr "Unrecognised flags in %s line %d: %s"
+
+#: ../spell.c:6257
+#, c-format
+msgid "Ignored %d words with non-ASCII characters"
+msgstr ""
+
+#: ../spell.c:6656
+#, c-format
+msgid "Compressed %d of %d nodes; %d (%d%%) remaining"
+msgstr ""
+
+#: ../spell.c:7340
+msgid "Reading back spell file..."
+msgstr ""
+
+#. Go through the trie of good words, soundfold each word and add it to
+#. the soundfold trie.
+#: ../spell.c:7357
+msgid "Performing soundfolding..."
+msgstr ""
+
+#: ../spell.c:7368
+#, c-format
+msgid "Number of words after soundfolding: %<PRId64>"
+msgstr ""
+
+#: ../spell.c:7476
+#, c-format
+msgid "Total number of words: %d"
+msgstr ""
+
+#: ../spell.c:7655
+#, c-format
+msgid "Writing suggestion file %s ..."
+msgstr ""
+
+#: ../spell.c:7707 ../spell.c:7927
+#, c-format
+msgid "Estimated runtime memory use: %d bytes"
+msgstr ""
+
+#: ../spell.c:7820
+msgid "E751: Output file name must not have region name"
+msgstr ""
+
+#: ../spell.c:7822
+msgid "E754: Only up to 8 regions supported"
+msgstr ""
+
+#: ../spell.c:7846
+#, c-format
+msgid "E755: Invalid region in %s"
+msgstr ""
+
+#: ../spell.c:7907
+msgid "Warning: both compounding and NOBREAK specified"
+msgstr ""
+
+#: ../spell.c:7920
+#, c-format
+msgid "Writing spell file %s ..."
+msgstr ""
+
+#: ../spell.c:7925
+msgid "Done!"
+msgstr ""
+
+#: ../spell.c:8034
+#, c-format
+msgid "E765: 'spellfile' does not have %<PRId64> entries"
+msgstr ""
+
+#: ../spell.c:8074
+#, c-format
+msgid "Word '%.*s' removed from %s"
+msgstr ""
+
+#: ../spell.c:8117
+#, c-format
+msgid "Word '%.*s' added to %s"
+msgstr ""
+
+#: ../spell.c:8381
+msgid "E763: Word characters differ between spell files"
+msgstr ""
+
+#: ../spell.c:8684
+msgid "Sorry, no suggestions"
+msgstr ""
+
+#: ../spell.c:8687
+#, c-format
+msgid "Sorry, only %<PRId64> suggestions"
+msgstr ""
+
+#. for when 'cmdheight' > 1
+#. avoid more prompt
+#: ../spell.c:8704
+#, c-format
+msgid "Change \"%.*s\" to:"
+msgstr ""
+
+#: ../spell.c:8737
+#, c-format
+msgid " < \"%.*s\""
+msgstr ""
+
+#: ../spell.c:8882
+msgid "E752: No previous spell replacement"
+msgstr ""
+
+#: ../spell.c:8925
+#, c-format
+msgid "E753: Not found: %s"
+msgstr ""
+
+#: ../spell.c:9276
+#, fuzzy, c-format
+msgid "E778: This does not look like a .sug file: %s"
+msgstr "E781: .sug file does not match .spl file: %s"
+
+#: ../spell.c:9282
+#, c-format
+msgid "E779: Old .sug file, needs to be updated: %s"
+msgstr ""
+
+#: ../spell.c:9286
+#, c-format
+msgid "E780: .sug file is for newer version of Vim: %s"
+msgstr ""
+
+#: ../spell.c:9295
+#, c-format
+msgid "E781: .sug file doesn't match .spl file: %s"
+msgstr "E781: .sug file does not match .spl file: %s"
+
+#: ../spell.c:9305
+#, c-format
+msgid "E782: error while reading .sug file: %s"
+msgstr ""
+
+#. This should have been checked when generating the .spl
+#. file.
+#: ../spell.c:11575
+msgid "E783: duplicate char in MAP entry"
+msgstr ""
+
+#: ../syntax.c:266
+msgid "No Syntax items defined for this buffer"
+msgstr ""
+
+#: ../syntax.c:3083 ../syntax.c:3104 ../syntax.c:3127
+#, c-format
+msgid "E390: Illegal argument: %s"
+msgstr ""
+
+#: ../syntax.c:3299
+#, c-format
+msgid "E391: No such syntax cluster: %s"
+msgstr ""
+
+#: ../syntax.c:3433
+msgid "syncing on C-style comments"
+msgstr ""
+
+#: ../syntax.c:3439
+msgid "no syncing"
+msgstr ""
+
+#: ../syntax.c:3441
+msgid "syncing starts "
+msgstr ""
+
+#: ../syntax.c:3443 ../syntax.c:3506
+msgid " lines before top line"
+msgstr ""
+
+#: ../syntax.c:3448
+msgid ""
+"\n"
+"--- Syntax sync items ---"
+msgstr ""
+
+#: ../syntax.c:3452
+msgid ""
+"\n"
+"syncing on items"
+msgstr ""
+
+#: ../syntax.c:3457
+msgid ""
+"\n"
+"--- Syntax items ---"
+msgstr ""
+
+#: ../syntax.c:3475
+#, c-format
+msgid "E392: No such syntax cluster: %s"
+msgstr ""
+
+#: ../syntax.c:3497
+msgid "minimal "
+msgstr ""
+
+#: ../syntax.c:3503
+msgid "maximal "
+msgstr ""
+
+#: ../syntax.c:3513
+msgid "; match "
+msgstr ""
+
+#: ../syntax.c:3515
+msgid " line breaks"
+msgstr ""
+
+#: ../syntax.c:4076
+msgid "E395: contains argument not accepted here"
+msgstr ""
+
+#: ../syntax.c:4096
+msgid "E844: invalid cchar value"
+msgstr ""
+
+#: ../syntax.c:4107
+msgid "E393: group[t]here not accepted here"
+msgstr ""
+
+#: ../syntax.c:4126
+#, c-format
+msgid "E394: Didn't find region item for %s"
+msgstr "E394: Did not find region item for %s"
+
+#: ../syntax.c:4188
+msgid "E397: Filename required"
+msgstr ""
+
+#: ../syntax.c:4221
+msgid "E847: Too many syntax includes"
+msgstr ""
+
+#: ../syntax.c:4303
+#, c-format
+msgid "E789: Missing ']': %s"
+msgstr ""
+
+#: ../syntax.c:4531
+#, c-format
+msgid "E398: Missing '=': %s"
+msgstr ""
+
+#: ../syntax.c:4666
+#, c-format
+msgid "E399: Not enough arguments: syntax region %s"
+msgstr ""
+
+#: ../syntax.c:4870
+msgid "E848: Too many syntax clusters"
+msgstr ""
+
+#: ../syntax.c:4954
+msgid "E400: No cluster specified"
+msgstr ""
+
+#. end delimiter not found
+#: ../syntax.c:4986
+#, c-format
+msgid "E401: Pattern delimiter not found: %s"
+msgstr ""
+
+#: ../syntax.c:5049
+#, c-format
+msgid "E402: Garbage after pattern: %s"
+msgstr ""
+
+#: ../syntax.c:5120
+msgid "E403: syntax sync: line continuations pattern specified twice"
+msgstr ""
+
+#: ../syntax.c:5169
+#, c-format
+msgid "E404: Illegal arguments: %s"
+msgstr ""
+
+#: ../syntax.c:5217
+#, c-format
+msgid "E405: Missing equal sign: %s"
+msgstr ""
+
+#: ../syntax.c:5222
+#, c-format
+msgid "E406: Empty argument: %s"
+msgstr ""
+
+#: ../syntax.c:5240
+#, c-format
+msgid "E407: %s not allowed here"
+msgstr ""
+
+#: ../syntax.c:5246
+#, c-format
+msgid "E408: %s must be first in contains list"
+msgstr ""
+
+#: ../syntax.c:5304
+#, c-format
+msgid "E409: Unknown group name: %s"
+msgstr ""
+
+#: ../syntax.c:5512
+#, c-format
+msgid "E410: Invalid :syntax subcommand: %s"
+msgstr ""
+
+#: ../syntax.c:5854
+msgid ""
+"  TOTAL      COUNT  MATCH   SLOWEST     AVERAGE   NAME               PATTERN"
+msgstr ""
+
+#: ../syntax.c:6146
+msgid "E679: recursive loop loading syncolor.vim"
+msgstr ""
+
+#: ../syntax.c:6256
+#, c-format
+msgid "E411: highlight group not found: %s"
+msgstr ""
+
+#: ../syntax.c:6278
+#, c-format
+msgid "E412: Not enough arguments: \":highlight link %s\""
+msgstr ""
+
+#: ../syntax.c:6284
+#, c-format
+msgid "E413: Too many arguments: \":highlight link %s\""
+msgstr ""
+
+#: ../syntax.c:6302
+msgid "E414: group has settings, highlight link ignored"
+msgstr ""
+
+#: ../syntax.c:6367
+#, c-format
+msgid "E415: unexpected equal sign: %s"
+msgstr ""
+
+#: ../syntax.c:6395
+#, c-format
+msgid "E416: missing equal sign: %s"
+msgstr ""
+
+#: ../syntax.c:6418
+#, c-format
+msgid "E417: missing argument: %s"
+msgstr ""
+
+#: ../syntax.c:6446
+#, c-format
+msgid "E418: Illegal value: %s"
+msgstr ""
+
+#: ../syntax.c:6496
+msgid "E419: FG color unknown"
+msgstr "E419: FG colour unknown"
+
+#: ../syntax.c:6504
+msgid "E420: BG color unknown"
+msgstr "E420: BG colour unknown"
+
+#: ../syntax.c:6564
+#, c-format
+msgid "E421: Color name or number not recognized: %s"
+msgstr "E421: Colour name or number not recognised: %s"
+
+#: ../syntax.c:6714
+#, c-format
+msgid "E422: terminal code too long: %s"
+msgstr ""
+
+#: ../syntax.c:6753
+#, c-format
+msgid "E423: Illegal argument: %s"
+msgstr ""
+
+#: ../syntax.c:6925
+msgid "E424: Too many different highlighting attributes in use"
+msgstr ""
+
+#: ../syntax.c:7427
+msgid "E669: Unprintable character in group name"
+msgstr ""
+
+#: ../syntax.c:7434
+msgid "W18: Invalid character in group name"
+msgstr ""
+
+#: ../syntax.c:7448
+msgid "E849: Too many highlight and syntax groups"
+msgstr ""
+
+#: ../tag.c:104
+msgid "E555: at bottom of tag stack"
+msgstr ""
+
+#: ../tag.c:105
+msgid "E556: at top of tag stack"
+msgstr ""
+
+#: ../tag.c:380
+msgid "E425: Cannot go before first matching tag"
+msgstr ""
+
+#: ../tag.c:504
+#, c-format
+msgid "E426: tag not found: %s"
+msgstr ""
+
+#: ../tag.c:528
+msgid "  # pri kind tag"
+msgstr ""
+
+#: ../tag.c:531
+msgid "file\n"
+msgstr ""
+
+#: ../tag.c:829
+msgid "E427: There is only one matching tag"
+msgstr ""
+
+#: ../tag.c:831
+msgid "E428: Cannot go beyond last matching tag"
+msgstr ""
+
+#: ../tag.c:850
+#, c-format
+msgid "File \"%s\" does not exist"
+msgstr ""
+
+#. Give an indication of the number of matching tags
+#: ../tag.c:859
+#, c-format
+msgid "tag %d of %d%s"
+msgstr ""
+
+#: ../tag.c:862
+msgid " or more"
+msgstr ""
+
+#: ../tag.c:864
+msgid "  Using tag with different case!"
+msgstr ""
+
+#: ../tag.c:909
+#, c-format
+msgid "E429: File \"%s\" does not exist"
+msgstr ""
+
+#. Highlight title
+#: ../tag.c:960
+msgid ""
+"\n"
+"  # TO tag         FROM line  in file/text"
+msgstr ""
+
+#: ../tag.c:1303
+#, c-format
+msgid "Searching tags file %s"
+msgstr ""
+
+#: ../tag.c:1545
+msgid "Ignoring long line in tags file"
+msgstr ""
+
+#: ../tag.c:1915
+#, fuzzy, c-format
+msgid "E431: Format error in tags file \"%s\""
+msgstr "E624: Cannot open file \"%s\""
+
+#: ../tag.c:1917
+#, c-format
+msgid "Before byte %<PRId64>"
+msgstr ""
+
+#: ../tag.c:1929
+#, c-format
+msgid "E432: Tags file not sorted: %s"
+msgstr ""
+
+#. never opened any tags file
+#: ../tag.c:1960
+msgid "E433: No tags file"
+msgstr ""
+
+#: ../tag.c:2536
+msgid "E434: Can't find tag pattern"
+msgstr "E434: Cannot find tag pattern"
+
+#: ../tag.c:2544
+msgid "E435: Couldn't find tag, just guessing!"
+msgstr "E435: Could not find tag, just guessing!"
+
+#: ../tag.c:2797
+#, c-format
+msgid "Duplicate field name: %s"
+msgstr ""
+
+#: ../term.c:1442
+msgid "' not known. Available builtin terminals are:"
+msgstr ""
+
+#: ../term.c:1463
+msgid "defaulting to '"
+msgstr ""
+
+#: ../term.c:1731
+#, fuzzy
+msgid "E557: Cannot open termcap file"
+msgstr "E40: Cannot open errorfile %s"
+
+#: ../term.c:1735
+msgid "E558: Terminal entry not found in terminfo"
+msgstr ""
+
+#: ../term.c:1737
+msgid "E559: Terminal entry not found in termcap"
+msgstr ""
+
+#: ../term.c:1878
+#, c-format
+msgid "E436: No \"%s\" entry in termcap"
+msgstr ""
+
+#: ../term.c:2249
+msgid "E437: terminal capability \"cm\" required"
+msgstr ""
+
+#. Highlight title
+#: ../term.c:4376
+msgid ""
+"\n"
+"--- Terminal keys ---"
+msgstr ""
+
+#: ../ui.c:481
+msgid "Vim: Error reading input, exiting...\n"
+msgstr ""
+
+#. This happens when the FileChangedRO autocommand changes the
+#. * file in a way it becomes shorter.
+#: ../undo.c:379
+msgid "E881: Line count changed unexpectedly"
+msgstr ""
+
+#: ../undo.c:627
+#, fuzzy, c-format
+msgid "E828: Cannot open undo file for writing: %s"
+msgstr "E212: Cannot open file for writing"
+
+#: ../undo.c:717
+#, c-format
+msgid "E825: Corrupted undo file (%s): %s"
+msgstr ""
+
+#: ../undo.c:1039
+msgid "Cannot write undo file in any directory in 'undodir'"
+msgstr ""
+
+#: ../undo.c:1074
+#, c-format
+msgid "Will not overwrite with undo file, cannot read: %s"
+msgstr ""
+
+#: ../undo.c:1092
+#, c-format
+msgid "Will not overwrite, this is not an undo file: %s"
+msgstr ""
+
+#: ../undo.c:1108
+msgid "Skipping undo file write, nothing to undo"
+msgstr ""
+
+#: ../undo.c:1121
+#, c-format
+msgid "Writing undo file: %s"
+msgstr ""
+
+#: ../undo.c:1213
+#, fuzzy, c-format
+msgid "E829: write error in undo file: %s"
+msgstr "E138: Cannot write viminfo file %s!"
+
+#: ../undo.c:1280
+#, c-format
+msgid "Not reading undo file, owner differs: %s"
+msgstr ""
+
+#: ../undo.c:1292
+#, c-format
+msgid "Reading undo file: %s"
+msgstr ""
+
+#: ../undo.c:1299
+#, fuzzy, c-format
+msgid "E822: Cannot open undo file for reading: %s"
+msgstr "E212: Cannot open file for writing"
+
+#: ../undo.c:1308
+#, fuzzy, c-format
+msgid "E823: Not an undo file: %s"
+msgstr "E484: Cannot open file %s"
+
+#: ../undo.c:1313
+#, fuzzy, c-format
+msgid "E824: Incompatible undo file: %s"
+msgstr "E484: Cannot open file %s"
+
+#: ../undo.c:1328
+msgid "File contents changed, cannot use undo info"
+msgstr ""
+
+#: ../undo.c:1497
+#, c-format
+msgid "Finished reading undo file %s"
+msgstr ""
+
+#: ../undo.c:1586 ../undo.c:1812
+msgid "Already at oldest change"
+msgstr ""
+
+#: ../undo.c:1597 ../undo.c:1814
+msgid "Already at newest change"
+msgstr ""
+
+#: ../undo.c:1806
+#, c-format
+msgid "E830: Undo number %<PRId64> not found"
+msgstr ""
+
+#: ../undo.c:1979
+msgid "E438: u_undo: line numbers wrong"
+msgstr ""
+
+#: ../undo.c:2183
+msgid "more line"
+msgstr ""
+
+#: ../undo.c:2185
+msgid "more lines"
+msgstr ""
+
+#: ../undo.c:2187
+msgid "line less"
+msgstr ""
+
+#: ../undo.c:2189
+msgid "fewer lines"
+msgstr ""
+
+#: ../undo.c:2193
+msgid "change"
+msgstr ""
+
+#: ../undo.c:2195
+msgid "changes"
+msgstr ""
+
+#: ../undo.c:2225
+#, c-format
+msgid "%<PRId64> %s; %s #%<PRId64>  %s"
+msgstr ""
+
+#: ../undo.c:2228
+msgid "before"
+msgstr ""
+
+#: ../undo.c:2228
+msgid "after"
+msgstr ""
+
+#: ../undo.c:2325
+msgid "Nothing to undo"
+msgstr ""
+
+#: ../undo.c:2330
+msgid "number changes  when               saved"
+msgstr ""
+
+#: ../undo.c:2360
+#, c-format
+msgid "%<PRId64> seconds ago"
+msgstr ""
+
+#: ../undo.c:2372
+msgid "E790: undojoin is not allowed after undo"
+msgstr ""
+
+#: ../undo.c:2466
+msgid "E439: undo list corrupt"
+msgstr ""
+
+#: ../undo.c:2495
+msgid "E440: undo line missing"
+msgstr ""
+
+#: ../version.c:600
+msgid ""
+"\n"
+"Included patches: "
+msgstr ""
+
+#: ../version.c:627
+msgid ""
+"\n"
+"Extra patches: "
+msgstr ""
+
+#: ../version.c:639 ../version.c:864
+msgid "Modified by "
+msgstr ""
+
+#: ../version.c:646
+msgid ""
+"\n"
+"Compiled "
+msgstr ""
+
+#: ../version.c:649
+msgid "by "
+msgstr ""
+
+#: ../version.c:660
+msgid ""
+"\n"
+"Huge version "
+msgstr ""
+
+#: ../version.c:661
+msgid "without GUI."
+msgstr ""
+
+#: ../version.c:662
+msgid "  Features included (+) or not (-):\n"
+msgstr ""
+
+#: ../version.c:667
+msgid "   system vimrc file: \""
+msgstr ""
+
+#: ../version.c:672
+msgid "     user vimrc file: \""
+msgstr ""
+
+#: ../version.c:677
+msgid " 2nd user vimrc file: \""
+msgstr ""
+
+#: ../version.c:682
+msgid " 3rd user vimrc file: \""
+msgstr ""
+
+#: ../version.c:687
+msgid "      user exrc file: \""
+msgstr ""
+
+#: ../version.c:692
+msgid "  2nd user exrc file: \""
+msgstr ""
+
+#: ../version.c:699
+msgid "  fall-back for $VIM: \""
+msgstr ""
+
+#: ../version.c:705
+msgid " f-b for $VIMRUNTIME: \""
+msgstr ""
+
+#: ../version.c:709
+msgid "Compilation: "
+msgstr ""
+
+#: ../version.c:712
+msgid "Linking: "
+msgstr ""
+
+#: ../version.c:717
+msgid "  DEBUG BUILD"
+msgstr ""
+
+#: ../version.c:767
+msgid "VIM - Vi IMproved"
+msgstr ""
+
+#: ../version.c:769
+msgid "version "
+msgstr ""
+
+#: ../version.c:770
+msgid "by Bram Moolenaar et al."
+msgstr ""
+
+#: ../version.c:774
+msgid "Vim is open source and freely distributable"
+msgstr ""
+
+#: ../version.c:776
+msgid "Help poor children in Uganda!"
+msgstr ""
+
+#: ../version.c:777
+msgid "type  :help iccf<Enter>       for information "
+msgstr ""
+
+#: ../version.c:779
+msgid "type  :q<Enter>               to exit         "
+msgstr ""
+
+#: ../version.c:780
+msgid "type  :help<Enter>  or  <F1>  for on-line help"
+msgstr ""
+
+#: ../version.c:781
+msgid "type  :help version7<Enter>   for version info"
+msgstr ""
+
+#: ../version.c:784
+msgid "Running in Vi compatible mode"
+msgstr ""
+
+#: ../version.c:785
+msgid "type  :set nocp<Enter>        for Vim defaults"
+msgstr ""
+
+#: ../version.c:786
+msgid "type  :help cp-default<Enter> for info on this"
+msgstr ""
+
+#: ../version.c:827
+msgid "Sponsor Vim development!"
+msgstr ""
+
+#: ../version.c:828
+msgid "Become a registered Vim user!"
+msgstr ""
+
+#: ../version.c:831
+msgid "type  :help sponsor<Enter>    for information "
+msgstr ""
+
+#: ../version.c:832
+msgid "type  :help register<Enter>   for information "
+msgstr ""
+
+#: ../version.c:834
+msgid "menu  Help->Sponsor/Register  for information    "
+msgstr ""
+
+#: ../window.c:119
+msgid "Already only one window"
+msgstr ""
+
+#: ../window.c:224
+msgid "E441: There is no preview window"
+msgstr ""
+
+#: ../window.c:559
+msgid "E442: Can't split topleft and botright at the same time"
+msgstr "E442: Cannot split topleft and botright at the same time"
+
+#: ../window.c:1228
+msgid "E443: Cannot rotate when another window is split"
+msgstr ""
+
+#: ../window.c:1803
+msgid "E444: Cannot close last window"
+msgstr ""
+
+#: ../window.c:1810
+msgid "E813: Cannot close autocmd window"
+msgstr ""
+
+#: ../window.c:1814
+msgid "E814: Cannot close window, only autocmd window would remain"
+msgstr ""
+
+#: ../window.c:2717
+msgid "E445: Other window contains changes"
+msgstr ""
+
+#: ../window.c:4805
+msgid "E446: No file name under cursor"
+msgstr ""
+
+#~ msgid "E616: vim_SelFile: can't get font %s"
+#~ msgstr "E616: vim_SelFile: cannot get font %s"
+
+#~ msgid "E614: vim_SelFile: can't return to current directory"
+#~ msgstr "E614: vim_SelFile: cannot return to current directory"
+
+#~ msgid "E615: vim_SelFile: can't get current directory"
+#~ msgstr "E615: vim_SelFile: cannot get current directory"
+
+#~ msgid ""
+#~ "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
+#~ msgstr ""
+#~ "Vim E458: Cannot allocate colourmap entry, some colours may be incorrect"
+
+#~ msgid "couldn't open buffer"
+#~ msgstr "could not open buffer"
+
+#~ msgid "can't delete OutputObject attributes"
+#~ msgstr "cannot delete OutputObject attributes"
+
+#~ msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
+#~ msgstr "-f  or  --nofork\tForeground: Do not fork when starting GUI"
+
+#~ msgid "-f\t\t\tDon't use newcli to open window"
+#~ msgstr "-f\t\t\tDo not use newcli to open window"
+
+#~ msgid "--remote-silent <files>  Same, don't complain if there is no server"
+#~ msgstr ""
+#~ "--remote-silent <files>  Same, do not complain if there is no server"
+
+#~ msgid ""
+#~ "--remote-wait-silent <files>  Same, don't complain if there is no server"
+#~ msgstr ""
+#~ "--remote-wait-silent <files>  Same, do not complain if there is no server"
+
+#~ msgid "-background <color>\tUse <color> for the background (also: -bg)"
+#~ msgstr "-background <colour>\tUse <colour> for the background (also: -bg)"
+
+#~ msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
+#~ msgstr "-foreground <colour>\tUse <colour> for normal text (also: -fg)"
+
+#~ msgid "+reverse\t\tDon't use reverse video (also: +rv)"
+#~ msgstr "+reverse\t\tDo not use reverse video (also: +rv)"
+
+#~ msgid "E288: input method doesn't support any style"
+#~ msgstr "E288: input method does not support any style"
+
+#~ msgid "E289: input method doesn't support my preedit type"
+#~ msgstr "E289: input method does not support my preedit type"
+
+#~ msgid "E597: can't select fontset"
+#~ msgstr "E597: cannot select fontset"
+
+#~ msgid "E533: can't select wide font"
+#~ msgstr "E533: cannot select wide font"
+
+#~ msgid "VIM: Can't open window!\n"
+#~ msgstr "VIM: Cannot open window!\n"

@@ -1,0 +1,20 @@
+[ The mve awk script was posted on the vimdev mailing list ]
+
+From: jimmer@barney.mdhc.mdc.com (J. McGlasson)
+Date: Mon, 31 Mar 1997 13:16:49 -0700 (Mar)
+
+My compiler (SGI MIPSpro C compiler - IRIX 6.4) works like this.
+I have written a script mve (make vim errors), through which I pipe my make
+output, which translates output of the following form:
+
+cfe: Error: syntax.c, line 4: Syntax Error
+     int i[12;
+ ------------^
+
+into:
+
+ cl.c, line 4, col 12 :  Syntax Error
+
+(in vim notation:  %f, line %l, col %c : %m)
+
+You might be able to tailor this for your compiler's output.

@@ -1,0 +1,101 @@
+
+Test Visual block mode commands
+And test "U" in Visual mode, also on German sharp S.
+
+STARTTEST
+:so small.vim
+:so mbyte.vim
+:" This only works when 'encoding' is "latin1", don't depend on the environment
+:set enc=latin1
+/^abcde
+:" Test shift-right of a block
+jlllljj>wlljlll>
+:" Test shift-left of a block
+G$hhhhkk<
+:" Test block-insert
+GklkkkIxyz
+:" Test block-replace
+Gllllkkklllrq
+:" Test block-change
+G$khhhhhkkcmno
+:$-4,$w! test.out
+:" Test block-insert using cursor keys for movement
+/^aaaa/
+:exe ":norm! l\<C-V>jjjlllI\<Right>\<Right>  \<Esc>"
+:/^aa/,/^$/w >> test.out
+/xaaa$/
+:exe ":norm! \<C-V>jjjI<>\<Left>p\<Esc>"
+:/xaaa$/,/^$/w >> test.out
+:" Test for Visual block was created with the last <C-v>$
+/^A23$/
+:exe ":norm! l\<C-V>j$Aab\<Esc>"
+:.,/^$/w >> test.out
+:" Test for Visual block was created with the middle <C-v>$ (1)
+/^B23$/
+:exe ":norm! l\<C-V>j$hAab\<Esc>"
+:.,/^$/w >> test.out
+:" Test for Visual block was created with the middle <C-v>$ (2)
+/^C23$/
+:exe ":norm! l\<C-V>j$hhAab\<Esc>"
+:.,/^$/w >> test.out
+:" Test for Visual block insert when virtualedit=all
+:set ve=all
+:/\t\tline
+:exe ":norm! 07l\<C-V>jjIx\<Esc>"
+:set ve=
+:.,/^$/w >> test.out
+:" gUe must uppercase a whole word, also when ﬂ changes to SS
+Gothe youtuﬂeuu endYpk0wgUe
+:" gUfx must uppercase until x, inclusive.
+O- youﬂtuﬂexu -0fogUfx
+:" VU must uppercase a whole line
+YpkVU
+:" same, when it's the last line in the buffer
+YPGi111VUddP
+:" Uppercase two lines
+Oblah di
+doh dutVkUj
+:" Uppercase part of two lines
+ddppi333k0i222fyllvjfuUk
+:" visual replace using Enter or NL
+G3o1234567892k05l2jrG3o987652k02l2jr
+G3o1234567892k05l2jr
+G3o987652k02l2jr
+:"
+:" Test cursor position. When ve=block and Visual block mode and $gj
+:set ve=block
+:exe ":norm! 2k\<C-V>$gj\<Esc>"
+:let cpos=getpos("'>")
+:$put ='col:'.cpos[2].' off:'.cpos[3]
+:/^the/,$w >> test.out
+:qa!
+ENDTEST
+
+		line1
+		line2
+		line3
+
+aaaaaa
+bbbbbb
+cccccc
+dddddd
+
+xaaa
+bbbb
+cccc
+dddd
+
+A23
+4567
+
+B23
+4567
+
+C23
+4567
+
+abcdefghijklm
+abcdefghijklm
+abcdefghijklm
+abcdefghijklm
+abcdefghijklm

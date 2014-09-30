@@ -1,0 +1,46 @@
+.TH VIMDIFF 1 "2001 Mar 30"
+.SH NAZWA
+vimdiff \- edytuj dwie, trzy lub cztery wersje pliku w Vimie i zobacz różnice
+.SH SYNOPSIS
+.br
+.B vimdiff
+[opcje] plik1 plik2 [plik3 [plik4]]
+.PP
+.B gvimdiff
+.SH OPIS
+.B Vimdiff
+uruchomi
+.B Vima
+z dwoma (trzema lub czterema plikami), każdy z nich we własnym oknie.
+Różnice między plikami zostaną podświetlone.
+Jest to dobry sposób by przeanalizować różnice i przenieść zmiany z jednej
+wersji pliku do innej.
+.PP
+Zobacz vim(1) by poznać więcej szczegółów o samym Vimie.
+.PP
+Kiedy uruchomiony jako
+.B gvimdiff
+zostanie uruchomione GUI (jeśli dostępne).
+.PP
+W każdym oknie zostanie ustawiona opcja 'diff', która spowoduje
+podświetlenie różnic.
+.br
+Opcje 'wrap' i 'scrollbind' zostaną ustawione by tekst się
+wygodnie przeglądało.
+.br
+Opcja 'foldmethod' zostanie ustawiona na "diff", dzięki czemu
+niezmienione linie zostaną zwinięte. 'foldcolumn' będzie równe 2 aby
+łatwo wyszukiwać, otwierać i zamykać zwinięcia.
+.SH OPCJE
+Pionowy podział zostanie użyty do wyrównania linii, tak jakby użyto
+opcji "\-O". Aby uzyskać poziomy podział użyj opcji "\-o".
+.PP
+Aby poznać inne opcje zobacz vim(1).
+.SH ZOBACZ TAKŻE
+vim(1)
+.SH AUTOR
+Większość
+.B Vima
+została napisana przez Brama Moolenaara przy pomocy wielu innych osób.
+Zobacz ":help credits w
+.B Vimie.

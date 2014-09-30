@@ -1,0 +1,101 @@
+*job_control.txt*    For Nvim.						 {Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Nvim's facilities for job control				  *job-control*
+
+1. Introduction			|job-control-intro|
+2. Usage			|job-control-usage|
+
+==============================================================================
+1. Introduction						    *job-control-intro*
+
+Job control is a simple way to perform multitasking in vimscript. Wikipedia
+contains a more generic/detailed description: 
+
+"Job control in computing refers to the control of multiple tasks or Jobs on a
+computer system, ensuring that they each have access to adequate resources to
+perform correctly, that competition for limited resources does not cause a
+deadlock where two or more jobs are unable to complete, resolving such
+situations where they do occur, and terminating jobs that, for any reason, are
+not performing as expected."
+
+In a few words: It allows a vimscript programmer to concurrently spawn and
+control multiple processes without blocking the current Nvim instance.
+
+Nvim's job control was designed to be simple and familiar to vimscript
+programmers, instead of being very powerful but complex. Unlike Vim's
+facilities for calling with external commands, job control does not depend 
+on installed shells, calling OS functions for process management directly.
+
+Internally, Nvim job control is powered by libuv, which has a nice
+cross-platform API for managing processes. See https://github.com/joyent/libuv
+for details
+
+==============================================================================
+2. Usage						*job-control-usage*
+
+Job control is achieved by calling a combination of the |jobstart()|,
+|jobsend()| and |jobstop()| functions, and by listening to the |JobActivity|
+event. The best way to understand is with a complete example:
+>
+    set nocp
+    let job1 = jobstart('shell1', 'bash')
+    let job2 = jobstart('shell2', 'bash', ['-c', 'for ((i = 0; i < 10; i++)); do echo -n hello $i!; sleep 2; done'])
+    
+    function JobHandler()
+      if v:job_data[1] == 'stdout'
+        let str = 'shell '. v:job_data[0].' stdout: '.v:job_data[2]
+      elseif v:job_data[1] == 'stderr'
+        let str = 'shell '.v:job_data[0].' stderr: '.v:job_data[2]
+      else
+        let str = 'shell '.v:job_data[0].' exited'
+      endif
+    
+      call append(line('$'), str)
+    endfunction
+    
+    au JobActivity shell* call JobHandler()
+<
+To test the above, copy it to the ~/jobcontrol.vim file and start with a clean
+nvim instance:
+  >
+      nvim -u NONE -S ~/jobcontrol.vim
+<
+Here's what is happening:
+
+- Two bash instances are spawned by |jobstart()| and their stdin/stdout/stderr
+  are connected to nvim.
+- The first shell is idle, waiting to read commands from it's stdin
+- The second shell is passed the -c option to execute a command and exit. In
+  our case, the command is a for loop that will print numbers and exit after
+  a while.
+- The JobHandler function is called by the JobActivity autocommand(notice how
+  the shell* pattern matches the `shell1` and `shell2` names passed to
+  |jobstart()|), and it takes care of displaying stdout/stderr received from
+  the shells.
+- The v:job_data is an array set by the JobActivity event. It has the
+  following elements:
+  0: The job id
+  1: The kind of activity: one of "stdout", "stderr" or "exit"
+  2: When "activity" is "stdout" or "stderr", this will contain the data read
+     from stdout or stderr
+
+To send data to the job's stdin, one can use the |jobsend()| function, like
+this:
+>
+    :call jobsend(job1, 'ls\n')
+    :call jobsend(job1, 'invalid-command\n')
+    :call jobsend(job1, 'exit\n')
+<
+A job may be killed at any time with the |jobstop()| function:
+>
+    :call jobstop(job1)
+<
+When |jobstop()| is called, it will send `SIGTERM` to the job. If a job
+doesn't exit after a while, `SIGKILL` will be sent.
+    
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

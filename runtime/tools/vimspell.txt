@@ -1,0 +1,22 @@
+vimspell.sh
+===========
+
+This is a simple script to spell check a file and generate the syntax
+statements necessary to highlight the errors in vim.  It is based on a
+similar program by Krishna Gadepalli <krishna@stdavids.picker.com>.
+
+To use this script, first place it in a directory in your path.  Next,
+you should add some convenient key mappings.  I use the following (in
+.vimrc):
+
+	noremap <F8> :so `vimspell.sh %`<CR><CR>
+	noremap <F7> :syntax clear SpellErrors<CR>
+
+This program requires the old Unix "spell" command.  On my Debian
+system, "spell" is a wrapper around "ispell".  For better security,
+you should uncomment the line in the script that uses "tempfile" to
+create a temporary file.  As all systems don't have "tempfile" the
+insecure "pid method" is used.
+
+
+    Neil Schemenauer <nascheme@ucalgary.ca>

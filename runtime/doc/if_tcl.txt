@@ -1,0 +1,533 @@
+*if_tcl.txt*    For Vim version 7.4.  Last change: 2012 Aug 02
+
+
+		  VIM REFERENCE MANUAL    by Ingo Wilken
+
+
+The Tcl Interface to Vim				*tcl* *Tcl* *TCL*
+
+1. Commands				|tcl-ex-commands|
+2. Tcl commands				|tcl-commands|
+3. Tcl variables			|tcl-variables|
+4. Tcl window commands			|tcl-window-cmds|
+5. Tcl buffer commands			|tcl-buffer-cmds|
+6. Miscellaneous; Output from Tcl	|tcl-misc| |tcl-output|
+7. Known bugs & problems		|tcl-bugs|
+8. Examples				|tcl-examples|
+9. Dynamic loading			|tcl-dynamic|
+
+{Vi does not have any of these commands} *E280* *E281*
+
+The Tcl interface only works when Vim was compiled with the |+tcl| feature.
+
+WARNING: There are probably still some bugs.  Please send bug reports,
+comments, ideas etc to <Ingo.Wilken@informatik.uni-oldenburg.de>
+
+==============================================================================
+1. Commands				*tcl-ex-commands* *E571* *E572*
+
+							*:tcl* *:tc*
+:tc[l] {cmd}		Execute Tcl command {cmd}.  A simple check if `:tcl`
+			is working: >
+				:tcl puts "Hello"
+
+:[range]tc[l] << {endmarker}
+{script}
+{endmarker}
+			Execute Tcl script {script}.
+			Note: This command doesn't work when the Tcl feature
+			wasn't compiled in.  To avoid errors, see
+			|script-here|.
+
+{endmarker} must NOT be preceded by any white space.  If {endmarker} is
+omitted from after the "<<", a dot '.' must be used after {script}, like for
+the |:append| and |:insert| commands.
+This form of the |:tcl| command is mainly useful for including tcl code in Vim
+scripts.
+
+Example: >
+	function! DefineDate()
+	    tcl << EOF
+	    proc date {} {
+		return [clock format [clock seconds]]
+	    }
+	EOF
+	endfunction
+<
+
+							*:tcldo* *:tcld*
+:[range]tcld[o] {cmd}	Execute Tcl command {cmd} for each line in [range]
+			with the variable "line" being set to the text of each
+			line in turn, and "lnum" to the line number.  Setting
+			"line" will change the text, but note that it is not
+			possible to add or delete lines using this command.
+			If {cmd} returns an error, the command is interrupted.
+			The default for [range] is the whole file: "1,$".
+			See |tcl-var-line| and |tcl-var-lnum|.  {not in Vi}
+
+							*:tclfile* *:tclf*
+:tclf[ile] {file}	Execute the Tcl script in {file}.  This is the same as
+			":tcl source {file}", but allows file name completion.
+			{not in Vi}
+
+
+Note that Tcl objects (like variables) persist from one command to the next,
+just as in the Tcl shell.
+
+Executing Tcl commands is not possible in the |sandbox|.
+
+==============================================================================
+2. Tcl commands						*tcl-commands*
+
+Tcl code gets all of its access to vim via commands in the "::vim" namespace.
+The following commands are implemented: >
+
+	::vim::beep			# Guess.
+	::vim::buffer {n}		# Create Tcl command for one buffer.
+	::vim::buffer list		# Create Tcl commands for all buffers.
+	::vim::command [-quiet] {cmd}	# Execute an Ex command.
+	::vim::expr {expr}		# Use Vim's expression evaluator.
+	::vim::option {opt}		# Get vim option.
+	::vim::option {opt} {val}	# Set vim option.
+	::vim::window list		# Create Tcl commands for all windows.
+
+Commands:
+	::vim::beep					*tcl-beep*
+	Honk.  Does not return a result.
+
+	::vim::buffer {n}				*tcl-buffer*
+	::vim::buffer exists {n}
+	::vim::buffer list
+	Provides access to vim buffers.  With an integer argument, creates a
+	buffer command (see |tcl-buffer-cmds|) for the buffer with that
+	number, and returns its name as the result.  Invalid buffer numbers
+	result in a standard Tcl error.  To test for valid buffer numbers,
+	vim's internal functions can be used: >
+		set nbufs [::vim::expr bufnr("$")]
+		set isvalid [::vim::expr "bufexists($n)"]
+<	The "list" option creates a buffer command for each valid buffer, and
+	returns a list of the command names as the result.
+	Example: >
+		set bufs [::vim::buffer list]
+		foreach b $bufs { $b append end "The End!" }
+<	The "exists" option checks if a buffer with the given number exists.
+	Example: >
+		if { [::vim::buffer exists $n] } { ::vim::command ":e #$n" }
+<	This command might be replaced by a variable in future versions.
+	See also |tcl-var-current| for the current buffer.
+
+	::vim::command {cmd}				*tcl-command*
+	::vim::command -quiet {cmd}
+	Execute the vim (ex-mode) command {cmd}.  Any Ex command that affects
+	a buffer or window uses the current buffer/current window.  Does not
+	return a result other than a standard Tcl error code.  After this
+	command is completed, the "::vim::current" variable is updated.
+	The "-quiet" flag suppresses any error messages from vim.
+	Examples: >
+		::vim::command "set ts=8"
+		::vim::command "%s/foo/bar/g"
+<	To execute normal-mode commands, use "normal" (see |:normal|): >
+		set cmd "jj"
+		::vim::command "normal $cmd"
+<	See also |tcl-window-command| and |tcl-buffer-command|.
+
+	::vim::expr {expr}				*tcl-expr*
+	Evaluates the expression {expr} using vim's internal expression
+	evaluator (see |expression|).   Any expression that queries a buffer
+	or window property uses the current buffer/current window.  Returns
+	the result as a string.  A |List| is turned into a string by joining
+	the items and inserting line breaks.
+	Examples: >
+		set perl_available [::vim::expr has("perl")]
+<	See also |tcl-window-expr| and |tcl-buffer-expr|.
+
+	::vim::option {opt}				*tcl-option*
+	::vim::option {opt} {value}
+	Without second argument, queries the value of a vim option.  With this
+	argument, sets the vim option to {value}, and returns the previous
+	value as the result.  Any options that are marked as 'local to buffer'
+	or 'local to window' affect the current buffer/current window.  The
+	global value is not changed, use the ":set" command for that.  For
+	boolean options, {value} should be "0" or "1", or any of the keywords
+	"on", "off" or "toggle".  See |option-summary| for a list of options.
+	Example: >
+		::vim::option ts 8
+<	See also |tcl-window-option| and |tcl-buffer-option|.
+
+	::vim::window {option}				*tcl-window*
+	Provides access to vim windows.  Currently only the "list" option is
+	implemented.  This creates a window command (see |tcl-window-cmds|) for
+	each window, and returns a list of the command names as the result.
+	Example: >
+		set wins [::vim::window list]
+		foreach w $wins { $w height 4 }
+<	This command might be replaced by a variable in future versions.
+	See also |tcl-var-current| for the current window.
+
+==============================================================================
+3. Tcl variables					*tcl-variables*
+
+The ::vim namespace contains a few variables.  These are created when the Tcl
+interpreter is called from vim and set to current values. >
+
+	::vim::current		# array containing "current" objects
+	::vim::lbase		# number of first line
+	::vim::range		# array containing current range numbers
+	line			# current line as a string (:tcldo only)
+	lnum			# current line number (:tcldo only)
+
+Variables:
+	::vim::current					*tcl-var-current*
+	This is an array providing access to various "current" objects
+	available in vim.  The contents of this array are updated after
+	"::vim::command" is called, as this might change vim's current
+	settings (e.g., by deleting the current buffer).
+	The "buffer" element contains the name of the buffer command for the
+	current buffer.  This can be used directly to invoke buffer commands
+	(see |tcl-buffer-cmds|).  This element is read-only.
+	Example: >
+		$::vim::current(buffer) insert begin "Hello world"
+<	The "window" element contains the name of the window command for the
+	current window.  This can be used directly to invoke window commands
+	(see |tcl-window-cmds|).  This element is read-only.
+	Example: >
+		$::vim::current(window) height 10
+<
+	::vim::lbase					*tcl-var-lbase*
+	This variable controls how Tcl treats line numbers.  If it is set to
+	'1', then lines and columns start at 1.  This way, line numbers from
+	Tcl commands and vim expressions are compatible.  If this variable is
+	set to '0', then line numbers and columns start at 0 in Tcl.  This is
+	useful if you want to treat a buffer as a Tcl list or a line as a Tcl
+	string and use standard Tcl commands that return an index ("lsort" or
+	"string first", for example).  The default value is '1'.  Currently,
+	any non-zero values is treated as '1', but your scripts should not
+	rely on this.  See also |tcl-linenumbers|.
+
+	::vim::range					*tcl-var-range*
+	This is an array with three elements, "start", "begin" and "end".  It
+	contains the line numbers of the start and end row of the current
+	range.  "begin" is the same as "start".  This variable is read-only.
+	See |tcl-examples|.
+
+	line						*tcl-var-line*
+	lnum						*tcl-var-lnum*
+	These global variables are only available if the ":tcldo" Ex command
+	is being executed.  They contain the text and line number of the
+	current line.  When the Tcl command invoked by ":tcldo" is completed,
+	the current line is set to the contents of the "line" variable, unless
+	the variable was unset by the Tcl command.  The "lnum" variable is
+	read-only.  These variables are not in the "::vim" namespace so they
+	can be used in ":tcldo" without much typing (this might be changed in
+	future versions).  See also |tcl-linenumbers|.
+
+==============================================================================
+4. Tcl window commands					*tcl-window-cmds*
+
+Window commands represent vim windows.  They are created by several commands:
+	::vim::window list			|tcl-window|
+	"windows" option of a buffer command	|tcl-buffer-windows|
+The ::vim::current(window) variable contains the name of the window command
+for the current window.  A window command is automatically deleted when the
+corresponding vim window is closed.
+
+Let's assume the name of the window command is stored in the Tcl variable "win",
+i.e. "$win" calls the command.  The following options are available: >
+
+	$win buffer		# Create Tcl command for window's buffer.
+	$win command {cmd}	# Execute Ex command in windows context.
+	$win cursor		# Get current cursor position.
+	$win cursor {var}	# Set cursor position from array variable.
+	$win cursor {row} {col}	# Set cursor position.
+	$win delcmd {cmd}	# Call Tcl command when window is closed.
+	$win expr {expr}	# Evaluate vim expression in windows context.
+	$win height		# Report the window's height.
+	$win height {n}		# Set the window's height.
+	$win option {opt} [val]	# Get/Set vim option in windows context.
+
+Options:
+	$win buffer					*tcl-window-buffer*
+	Creates a Tcl command for the window's buffer, and returns its name as
+	the result.  The name should be stored in a variable: >
+		set buf [$win buffer]
+<	$buf is now a valid Tcl command.  See |tcl-buffer-cmds| for the
+	available options.
+
+	$win cursor					*tcl-window-cursor*
+	$win cursor {var}
+	$win cursor {row} {col}
+	Without argument, reports the current cursor position as a string.
+	This can be converted to a Tcl array variable: >
+		array set here [$win cursor]
+<	"here(row)" and "here(column)" now contain the cursor position.
+	With a single argument, the argument is interpreted as the name of a
+	Tcl array variable, which must contain two elements "row" and "column".
+	These are used to set the cursor to the new position: >
+		$win cursor here	;# not $here !
+<	With two arguments, sets the cursor to the specified row and column: >
+		$win cursor $here(row) $here(column)
+<	Invalid positions result in a standard Tcl error, which can be caught
+	with "catch".  The row and column values depend on the "::vim::lbase"
+	variable.  See |tcl-var-lbase|.
+
+	$win delcmd {cmd}				*tcl-window-delcmd*
+	Registers the Tcl command {cmd} as a deletion callback for the window.
+	This command is executed (in the global scope) just before the window
+	is closed.  Complex commands should be build with "list": >
+		$win delcmd [list puts vimerr "window deleted"]
+<	See also |tcl-buffer-delcmd|.
+
+	$win height					*tcl-window-height*
+	$win height {n}
+	Without argument, reports the window's current height.  With an
+	argument, tries to set the window's height to {n}, then reports the
+	new height (which might be different from {n}).
+
+	$win command [-quiet] {cmd}			*tcl-window-command*
+	$win expr {expr}				*tcl-window-expr*
+	$win option {opt} [val]				*tcl-window-option*
+	These are similar to "::vim::command" etc., except that everything is
+	done in the context of the window represented by $win, instead of the
+	current window.  For example, setting an option that is marked 'local
+	to window' affects the window $win.  Anything that affects or queries
+	a buffer uses the buffer displayed in this window (i.e. the buffer
+	that is represented by "$win buffer").  See |tcl-command|, |tcl-expr|
+	and |tcl-option| for more information.
+	Example: >
+		$win option number on
+
+==============================================================================
+5. Tcl buffer commands					*tcl-buffer-cmds*
+
+Buffer commands represent vim buffers.  They are created by several commands:
+	::vim::buffer {N}			|tcl-buffer|
+	::vim::buffer list			|tcl-buffer|
+	"buffer" option of a window command	|tcl-window-buffer|
+The ::vim::current(buffer) variable contains the name of the buffer command
+for the current buffer.  A buffer command is automatically deleted when the
+corresponding vim buffer is destroyed.  Whenever the buffer's contents are
+changed, all marks in the buffer are automatically adjusted.  Any changes to
+the buffer's contents made by Tcl commands can be undone with the "undo" vim
+command (see |undo|).
+
+Let's assume the name of the buffer command is stored in the Tcl variable "buf",
+i.e. "$buf" calls the command.  The following options are available: >
+
+	$buf append {n} {str}	# Append a line to buffer, after line {n}.
+	$buf command {cmd}	# Execute Ex command in buffers context.
+	$buf count		# Report number of lines in buffer.
+	$buf delcmd {cmd}	# Call Tcl command when buffer is deleted.
+	$buf delete {n}		# Delete a single line.
+	$buf delete {n} {m}	# Delete several lines.
+	$buf expr {expr}	# Evaluate vim expression in buffers context.
+	$buf get {n}		# Get a single line as a string.
+	$buf get {n} {m}	# Get several lines as a list.
+	$buf insert {n} {str}	# Insert a line in buffer, as line {n}.
+	$buf last		# Report line number of last line in buffer.
+	$buf mark {mark}	# Report position of buffer mark.
+	$buf name		# Report name of file in buffer.
+	$buf number		# Report number of this buffer.
+	$buf option {opt} [val]	# Get/Set vim option in buffers context.
+	$buf set {n} {text}	# Replace a single line.
+	$buf set {n} {m} {list}	# Replace several lines.
+	$buf windows		# Create Tcl commands for buffer's windows.
+<
+							*tcl-linenumbers*
+Most buffer commands take line numbers as arguments.  How Tcl treats these
+numbers depends on the "::vim::lbase" variable (see |tcl-var-lbase|).  Instead
+of line numbers, several keywords can be also used: "top", "start", "begin",
+"first", "bottom", "end" and "last".
+
+Options:
+	$buf append {n} {str}				*tcl-buffer-append*
+	$buf insert {n} {str}				*tcl-buffer-insert*
+	Add a line to the buffer.  With the "insert" option, the string
+	becomes the new line {n}, with "append" it is inserted after line {n}.
+	Example: >
+		$buf insert top "This is the beginning."
+		$buf append end "This is the end."
+<	To add a list of lines to the buffer, use a loop: >
+		foreach line $list { $buf append $num $line ; incr num }
+<
+	$buf count					*tcl-buffer-count*
+	Reports the total number of lines in the buffer.
+
+	$buf delcmd {cmd}				*tcl-buffer-delcmd*
+	Registers the Tcl command {cmd} as a deletion callback for the buffer.
+	This command is executed (in the global scope) just before the buffer
+	is deleted.  Complex commands should be build with "list": >
+		$buf delcmd [list puts vimerr "buffer [$buf number] gone"]
+<	See also |tcl-window-delcmd|.
+
+	$buf delete {n}					*tcl-buffer-delete*
+	$buf delete {n} {m}
+	Deletes line {n} or lines {n} through {m} from the buffer.
+	This example deletes everything except the last line: >
+		$buf delete first [expr [$buf last] - 1]
+<
+	$buf get {n}					*tcl-buffer-get*
+	$buf get {n} {m}
+	Gets one or more lines from the buffer.  For a single line, the result
+	is a string; for several lines, a list of strings.
+	Example: >
+		set topline [$buf get top]
+<
+	$buf last					*tcl-buffer-last*
+	Reports the line number of the last line.  This value depends on the
+	"::vim::lbase" variable.  See |tcl-var-lbase|.
+
+	$buf mark {mark}				*tcl-buffer-mark*
+	Reports the position of the named mark as a string, similar to the
+	cursor position of the "cursor" option of a window command (see
+	|tcl-window-cursor|).  This can be converted to a Tcl array variable: >
+		array set mpos [$buf mark "a"]
+<	"mpos(column)" and "mpos(row)" now contain the position of the mark.
+	If the mark is not set, a standard Tcl error results.
+
+	$buf name
+	Reports the name of the file in the buffer.  For a buffer without a
+	file, this is an empty string.
+
+	$buf number
+	Reports the number of this buffer.  See |:buffers|.
+	This example deletes a buffer from vim: >
+		::vim::command "bdelete [$buf number]"
+<
+	$buf set {n} {string}				*tcl-buffer-set*
+	$buf set {n} {m} {list}
+	Replace one or several lines in the buffer.  If the list contains more
+	elements than there are lines to replace, they are inserted into the
+	buffer.  If the list contains fewer elements, any unreplaced line is
+	deleted from the buffer.
+
+	$buf windows					*tcl-buffer-windows*
+	Creates a window command for each window that displays this buffer, and
+	returns a list of the command names as the result.
+	Example: >
+		set winlist [$buf windows]
+		foreach win $winlist { $win height 4 }
+<	See |tcl-window-cmds| for the available options.
+
+	$buf command [-quiet] {cmd}			*tcl-buffer-command*
+	$buf expr {expr}				*tcl-buffer-expr*
+	$buf option {opt} [val]				*tcl-buffer-option*
+	These are similar to "::vim::command" etc., except that everything is
+	done in the context of the buffer represented by $buf, instead of the
+	current buffer.  For example, setting an option that is marked 'local
+	to buffer' affects the buffer $buf.  Anything that affects or queries
+	a window uses the first window in vim's window list that displays this
+	buffer (i.e. the first entry in the list returned by "$buf windows").
+	See |tcl-command|, |tcl-expr| and |tcl-option| for more information.
+	Example: >
+		if { [$buf option modified] } { $buf command "w" }
+
+==============================================================================
+6. Miscellaneous; Output from Tcl		*tcl-misc* *tcl-output*
+
+The standard Tcl commands "exit" and "catch" are replaced by custom versions.
+"exit" terminates the current Tcl script and returns to vim, which deletes the
+Tcl interpreter.  Another call to ":tcl" then creates a new Tcl interpreter.
+"exit" does NOT terminate vim!  "catch" works as before, except that it does
+not prevent script termination from "exit".  An exit code != 0 causes the ex
+command that invoked the Tcl script to return an error.
+
+Two new I/O streams are available in Tcl, "vimout" and "vimerr".  All output
+directed to them is displayed in the vim message area, as information messages
+and error messages, respectively.  The standard Tcl output streams stdout and
+stderr are mapped to vimout and vimerr, so that a normal "puts" command can be
+used to display messages in vim.
+
+==============================================================================
+7. Known bugs & problems				*tcl-bugs*
+
+Calling one of the Tcl Ex commands from inside Tcl (via "::vim::command") may
+have unexpected side effects.  The command creates a new interpreter, which
+has the same abilities as the standard interpreter - making "::vim::command"
+available in a safe child interpreter therefore makes the child unsafe.  (It
+would be trivial to block nested :tcl* calls or ensure that such calls from a
+safe interpreter create only new safe interpreters, but quite pointless -
+depending on vim's configuration, "::vim::command" may execute arbitrary code
+in any number of other scripting languages.)  A call to "exit" within this new
+interpreter does not affect the old interpreter; it only terminates the new
+interpreter, then script processing continues normally in the old interpreter.
+
+Input from stdin is currently not supported.
+
+==============================================================================
+8. Examples:						*tcl-examples*
+
+Here are a few small (and maybe useful) Tcl scripts.
+
+This script sorts the lines of the entire buffer (assume it contains a list
+of names or something similar):
+	set buf $::vim::current(buffer)
+	set lines [$buf get top bottom]
+	set lines [lsort -dictionary $lines]
+	$buf set top bottom $lines
+
+This script reverses the lines in the buffer.  Note the use of "::vim::lbase"
+and "$buf last" to work with any line number setting.
+	set buf $::vim::current(buffer)
+	set t $::vim::lbase
+	set b [$buf last]
+	while { $t < $b } {
+		set tl [$buf get $t]
+		set bl [$buf get $b]
+		$buf set $t $bl
+		$buf set $b $tl
+		incr t
+		incr b -1
+	}
+
+This script adds a consecutive number to each line in the current range:
+	set buf $::vim::current(buffer)
+	set i $::vim::range(start)
+	set n 1
+	while { $i <= $::vim::range(end) } {
+		set line [$buf get $i]
+		$buf set $i "$n\t$line"
+		incr i ; incr n
+	}
+
+The same can also be done quickly with two Ex commands, using ":tcldo":
+	:tcl set n 1
+	:[range]tcldo set line "$n\t$line" ; incr n
+
+This procedure runs an Ex command on each buffer (idea stolen from Ron Aaron):
+	proc eachbuf { cmd } {
+		foreach b [::vim::buffer list] {
+			$b command $cmd
+		}
+	}
+Use it like this:
+	:tcl eachbuf %s/foo/bar/g
+Be careful with Tcl's string and backslash substitution, tough.  If in doubt,
+surround the Ex command with curly braces.
+
+
+If you want to add some Tcl procedures permanently to vim, just place them in
+a file (e.g. "~/.vimrc.tcl" on Unix machines), and add these lines to your
+startup file (usually "~/.vimrc" on Unix):
+	if has("tcl")
+		tclfile ~/.vimrc.tcl
+	endif
+
+==============================================================================
+9. Dynamic loading					*tcl-dynamic*
+
+On MS-Windows the Tcl library can be loaded dynamically.  The |:version|
+output then includes |+tcl/dyn|.
+
+This means that Vim will search for the Tcl DLL file only when needed.  When
+you don't use the Tcl interface you don't need it, thus you can use Vim
+without this DLL file.
+
+To use the Tcl interface the Tcl DLL must be in your search path.  In a
+console window type "path" to see what directories are used.
+
+The name of the DLL must match the Tcl version Vim was compiled with.
+Currently the name is "tcl83.dll".  That is for Tcl 8.3.  To know for sure
+edit "gvim.exe" and search for "tcl\d*.dll\c".
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

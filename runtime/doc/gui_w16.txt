@@ -1,0 +1,186 @@
+*gui_w16.txt*   For Vim version 7.4.  Last change: 2005 Mar 29
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Vim's Graphical User Interface				*gui-w16* *win16-gui*
+
+1. Starting the GUI		|win16-start|
+2. Vim as default editor	|win16-default-editor|
+3. Using the clipboard		|win16-clipboard|
+4. Shell Commands		|win16-shell|
+5. Special colors		|win16-colors|
+6. Windows dialogs & browsers	|win16-dialogs|
+7. Various			|win16-various|
+
+Other relevant documentation:
+|gui.txt|	For generic items of the GUI.
+|os_msdos.txt|	For items common to DOS and Windows.
+|gui_w32.txt|	Some items here are also applicable to the Win16 version.
+
+{Vi does not have a Windows GUI}
+
+The Win16 version of Vim will run on Windows 3.1 or later.  It has not been
+tested on 3.0, it probably won't work without being recompiled and
+modified.  (But you really should upgrade to 3.11 anyway. :)
+
+In most respects it behaves identically to the Win32 GUI version, including
+having a flat-style toolbar(!).  The chief differences:
+
+1) Bold/Italic text is not available, to speed up repaint/reduce resource
+   usage.  (You can re-instate this by undefining MSWIN16_FASTTEXT.)
+2) No tearoff menu emulation.
+3) No OLE interface.
+4) No long filename support (of course).
+5) No tooltips on toolbar buttons - instead they produce command-line tips
+   like menu items do.
+6) Line length limited to 32767 characters (like 16-bit DOS version).
+
+
+==============================================================================
+1. Starting the GUI					*win16-start*
+
+The Win16 GUI version of Vim will always start the GUI, no matter how you
+start it or what it's called.  There is no 'console' version as such, but you
+can use one of the DOS versions in a DOS box.
+
+The Win16 GUI has an extra menu item:  "Window/Select Font".  It brings up the
+standard Windows font selector.  Note that bold and italic fonts are not
+supported in an attempt to maximize GDI drawing speed.
+
+Setting the menu height doesn't work for the Win16 GUI.
+
+							*win16-maximized*
+If you want Vim to start with a maximized window, add this command to your
+vimrc or gvimrc file: >
+	au GUIEnter * simalt ~x
+<
+
+There is a specific version of gvim.exe that runs under the Win32s subsystem
+of Windows 3.1 or 3.11.  See |win32s|.
+
+==============================================================================
+2. Vim as default editor				*win16-default-editor*
+
+To set Vim as the default editor for a file type you can use File Manager's
+"Associate" feature.
+
+When you open a file in Vim by double clicking it, Vim changes to that
+file's directory.
+
+See also |notepad|.
+
+==============================================================================
+3. Using the clipboard					*win16-clipboard*
+
+Windows has a clipboard, where you can copy text to, and paste text from.  Vim
+supports this in several ways.
+The clipboard works in the same way as the Win32 version: see |gui-clipboard|.
+
+==============================================================================
+4. Shell Commands					*win16-shell*
+
+Vim spawns a DOS window for external commands, to make it possible to run any
+DOS command.  The window uses the _default.pif settings.
+
+							*win16-!start*
+Normally, Vim waits for a command to complete before continuing (this makes
+sense for most shell commands which produce output for Vim to use).  If you
+want Vim to start a program and return immediately, you can use the following
+syntax:
+	:!start {command}
+This may only work for a Windows program though.
+Don't forget that you must tell Windows 3.1x to keep executing a DOS command
+in the background while you switch back to Vim.
+
+==============================================================================
+5. Special colors					*win16-colors*
+
+On Win16, the normal DOS colors can be used.  See |dos-colors|.
+
+Additionally the system configured colors can also be used.  These are known
+by the names Sys_XXX, where XXX is the appropriate system color name, from the
+following list (see the Win32 documentation for full descriptions).  Case is
+ignored.
+
+Sys_BTNFace		Sys_BTNShadow			Sys_ActiveBorder
+Sys_ActiveCaption	Sys_AppWorkspace		Sys_Background
+Sys_BTNText		Sys_CaptionText			Sys_GrayText
+Sys_Highlight		Sys_HighlightText		Sys_InactiveBorder
+Sys_InactiveCaption	Sys_InactiveCaptionText		Sys_Menu
+Sys_MenuText		Sys_ScrollBar			Sys_Window
+Sys_WindowFrame		Sys_WindowText
+
+Probably the most useful values are
+	Sys_Window	    Normal window background
+	Sys_WindowText      Normal window text
+	Sys_Highlight       Highlighted background
+	Sys_HighlightText   Highlighted text
+
+These extra colors are also available:
+Gray, Grey, LightYellow, SeaGreen, Orange, Purple, SlateBlue, Violet,
+
+
+See also |rgb.txt|.
+
+==============================================================================
+						*win16-dialogs*
+6. Windows dialogs & browsers
+
+The Win16 GUI can use familiar Windows components for some operations, as well
+as the traditional interface shared with the console version.
+
+
+6.1 Dialogs
+
+The dialogs displayed by the "confirm" family (i.e. the 'confirm' option,
+|:confirm| command and |confirm()| function) are GUI-based rather than the
+console-based ones used by other versions.  There is no option to change this.
+
+
+6.2 File Browsers
+
+When prepending ":browse" before file editing commands, a file requester is
+used to allow you to select an existing file.  See |:browse|.
+
+
+==============================================================================
+7. Various						*win16-various*
+
+							*win16-printing*
+The "File/Print" menu uses Notepad to print the current buffer.  This is a bit
+clumsy, but it's portable.  If you want something else, you can define your
+own print command.  For example, you could look for the 16-bit version of
+PrintFile.  See $VIMRUNTIME/menu.vim for how it works by default.
+
+Using this should also work: >
+	:w >>prn
+
+Vim supports a number of standard MS Windows features.  Some of these are
+detailed elsewhere: see |'mouse'|, |win32-hidden-menus|.
+Also see |:simalt|
+
+							*win16-drag-n-drop*
+You can drag and drop one or more files into the vim window, where they will
+be opened as normal.  If you hold down Shift while doing this, Vim changes to
+the (first) dropped file's directory.  If you hold Ctrl, Vim will always split
+a new window for the file.  Otherwise it's only done if the current buffer has
+been changed.
+You can also drop a directory's icon, but rather than open all files in the
+directory (which wouldn't usually be what you want) Vim instead changes to
+that directory and begins a new file.
+If Vim happens to be editing a command line, the names of the dropped files
+and directories will be inserted at the cursor.  This allows you to use these
+names with any Ex command.
+
+							*win16-truetype*
+It is recommended that you use a raster font and not a TrueType
+fixed-pitch font.  E.g. use Courier, not Courier New.  This is not just
+to use less resources but because there are subtle bugs in the
+handling of fixed-pitch TrueType in Win3.1x.  In particular, when you move
+a block cursor over a pipe character '|', the cursor is drawn in the wrong
+size and bits get left behind.  This is a bug in the Win3.1x GDI, it doesn't
+happen if you run the exe under 95/NT.
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:

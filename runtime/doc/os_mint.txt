@@ -1,0 +1,39 @@
+*os_mint.txt*   For Vim version 7.4.  Last change: 2005 Mar 29
+
+
+		  VIM REFERENCE MANUAL    by Jens M. Felderhoff
+
+
+							*MiNT* *Atari*
+This file contains the particularities for the Atari MiNT version of Vim.
+
+For compiling Vim on the Atari running MiNT see "INSTALL" and "Makefile"
+in the src directory.
+
+Vim for MiNT behaves almost exactly like the Unix version.
+The Unix behavior described in the documentation also refers to the
+MiNT version of Vim unless explicitly stated otherwise.
+
+For wildcard expansion of <~> (home directory) you need a shell that
+expands the tilde.  The vanilla Bourne shell doesn't recognize it.
+With csh and ksh it should work OK.
+
+The MiNT version of vim needs the termcap file /etc/termcap with the
+terminal capabilities of your terminal.  Builtin termcaps are
+supported for the vt52 terminal.  Termcap entries for the TOSWIN window
+manager and the virtual console terminals have been appended to the
+termcap file that comes with the Vim distribution.
+
+If you should encounter problems with swapped <BS> and <Del> keys, see
+|:fixdel|.
+
+Because terminal updating under MiNT is often slow (e.g. serial line
+terminal), the 'showcmd' and 'ruler' options are default off.
+If you have a fast terminal, try setting them on.  You might
+also want to set 'ttyfast'.
+
+Send bug reports to
+
+	Jens M. Felderhoff, e-mail: <jmf@infko.uni-koblenz.de>
+
+ vim:tw=78:ts=8:ft=help:norl:

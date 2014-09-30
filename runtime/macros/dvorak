@@ -1,0 +1,164 @@
+When using a dvorak keyboard this file may be of help to you.
+These mappings have been made by Lawrence Kesteloot <kesteloo@cs.unc.edu>.
+What they do is that the most often used keys, like hjkl, are put in a more
+easy to use position.
+It may take some time to learn using this.
+
+Put these lines in your .vimrc:
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+" Key to go into dvorak mode:
+map ,d :source ~/.dvorak
+" Key to get out of dvorak mode:
+map ,q :source ~/.qwerty
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+write these lines into the file ~/.dvorak:
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+" Dvorak keyboard, only in insert mode and ex mode.
+" You may want to add a list of map's too.
+imap! a a
+imap! b x
+imap! c j
+imap! d e
+imap! e .
+imap! f u
+imap! g i
+imap! h d
+imap! i c
+imap! j h
+imap! k t
+imap! l n
+imap! m m
+imap! n b
+imap! o r
+imap! p l
+imap! q '
+imap! r p
+imap! s o
+imap! t y
+imap! u g
+imap! v k
+imap! w ,
+imap! x q
+imap! y f
+imap! z ;
+imap! ; s
+imap! ' -
+imap! " _
+imap! , w
+imap! . v
+imap! / z
+imap! A A
+imap! B X
+imap! C J
+imap! D E
+imap! E >
+imap! F U
+imap! G I
+imap! H D
+imap! I C
+imap! J H
+imap! K T
+imap! L N
+imap! M M
+imap! N B
+imap! O R
+imap! P L
+imap! Q "
+imap! R P
+imap! S O
+imap! T Y
+imap! U G
+imap! V K
+imap! W <
+imap! X Q
+imap! Y F
+imap! Z :
+imap! < W
+imap! > V
+imap! ? Z
+imap! : S
+imap! [ /
+imap! ] =
+imap! { ?
+imap! } +
+imap! - [
+imap! _ {
+imap! = ]
+imap! + }
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+write these lines into the file ~/.qwerty
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+" Qwerty keyboard
+unmap! a
+unmap! b
+unmap! c
+unmap! d
+unmap! e
+unmap! f
+unmap! g
+unmap! h
+unmap! i
+unmap! j
+unmap! k
+unmap! l
+unmap! m
+unmap! n
+unmap! o
+unmap! p
+unmap! q
+unmap! r
+unmap! s
+unmap! t
+unmap! u
+unmap! v
+unmap! w
+unmap! x
+unmap! y
+unmap! z
+unmap! ;
+unmap! '
+unmap! \"
+unmap! ,
+unmap! .
+unmap! /
+unmap! A
+unmap! B
+unmap! C
+unmap! D
+unmap! E
+unmap! F
+unmap! G
+unmap! H
+unmap! I
+unmap! J
+unmap! K
+unmap! L
+unmap! M
+unmap! N
+unmap! O
+unmap! P
+unmap! Q
+unmap! R
+unmap! S
+unmap! T
+unmap! U
+unmap! V
+unmap! W
+unmap! X
+unmap! Y
+unmap! Z
+unmap! <
+unmap! >
+unmap! ?
+unmap! :
+unmap! [
+unmap! ]
+unmap! {
+unmap! }
+unmap! -
+unmap! _
+unmap! =
+unmap! +
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

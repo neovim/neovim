@@ -1,0 +1,13 @@
+Vim(function):E128: Function name must start with a capital or "s:": g:test()
+Vim(function):E128: Function name must start with a capital or "s:": test2() "#
+Vim(function):E128: Function name must start with a capital or "s:": b:test()
+called Foo(1)
+called Foo(2)
+called Foo(3)
+s:Testje exists: 0
+func s:Testje exists: 1
+Bar exists: 1
+func Bar exists: 1
+Vim(call):E116: Invalid arguments for function append
+{{{1 getcurpos/setpos
+6

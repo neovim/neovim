@@ -1,0 +1,201 @@
+Test for *sub-replace-special* and *sub-replace-expression* on substitue().
+Test for submatch() on substitue().
+Test for *:s%* on :substitute.
+
+STARTTEST
+:so small.vim
+ENDTEST
+
+TEST_1:
+
+STARTTEST
+:set magic
+:set cpo&
+:$put =\"\n\nTEST_1:\"
+:$put =substitute('A', 'A', '&&', '')
+:$put =substitute('B', 'B', '\&', '')
+:$put =substitute('C123456789', 'C\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\0\9\8\7\6\5\4\3\2\1', '')
+:$put =substitute('D', 'D', 'd', '')
+:$put =substitute('E', 'E', '~', '')
+:$put =substitute('F', 'F', '\~', '')
+:$put =substitute('G', 'G', '\ugg', '')
+:$put =substitute('H', 'H', '\Uh\Eh', '')
+:$put =substitute('I', 'I', '\lII', '')
+:$put =substitute('J', 'J', '\LJ\EJ', '')
+:$put =substitute('K', 'K', '\Uk\ek', '')
+:$put =substitute('lLl', 'L', '', '')
+:$put =substitute('mMm', 'M', '\r', '')
+:$put =substitute('nNn', 'N', '\', '')
+:$put =substitute('oOo', 'O', '\n', '')
+:$put =substitute('pPp', 'P', '\b', '')
+:$put =substitute('qQq', 'Q', '\t', '')
+:$put =substitute('rRr', 'R', '\\', '')
+:$put =substitute('sSs', 'S', '\c', '')
+:$put =substitute('uUu', 'U', \"\n\", '')
+:$put =substitute('vVv', 'V', \"\b\", '')
+:$put =substitute('wWw', 'W', \"\\\", '')
+:$put =substitute('xXx', 'X', \"\r\", '')
+:$put =substitute('Y', 'Y', '\L\uyYy\l\EY', '')
+:$put =substitute('Z', 'Z', '\U\lZzZ\u\Ez', '')
+/^TEST_2
+ENDTEST
+
+TEST_2:
+
+STARTTEST
+:set nomagic
+:set cpo&
+:$put =\"\n\nTEST_2:\"
+:$put =substitute('A', 'A', '&&', '')
+:$put =substitute('B', 'B', '\&', '')
+:$put =substitute('C123456789', 'C\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\0\9\8\7\6\5\4\3\2\1', '')
+:$put =substitute('D', 'D', 'd', '')
+:$put =substitute('E', 'E', '~', '')
+:$put =substitute('F', 'F', '\~', '')
+:$put =substitute('G', 'G', '\ugg', '')
+:$put =substitute('H', 'H', '\Uh\Eh', '')
+:$put =substitute('I', 'I', '\lII', '')
+:$put =substitute('J', 'J', '\LJ\EJ', '')
+:$put =substitute('K', 'K', '\Uk\ek', '')
+:$put =substitute('lLl', 'L', '', '')
+:$put =substitute('mMm', 'M', '\r', '')
+:$put =substitute('nNn', 'N', '\', '')
+:$put =substitute('oOo', 'O', '\n', '')
+:$put =substitute('pPp', 'P', '\b', '')
+:$put =substitute('qQq', 'Q', '\t', '')
+:$put =substitute('rRr', 'R', '\\', '')
+:$put =substitute('sSs', 'S', '\c', '')
+:$put =substitute('tTt', 'T', \"\r\", '')
+:$put =substitute('uUu', 'U', \"\n\", '')
+:$put =substitute('vVv', 'V', \"\b\", '')
+:$put =substitute('wWw', 'W', \"\\\", '')
+:$put =substitute('X', 'X', '\L\uxXx\l\EX', '')
+:$put =substitute('Y', 'Y', '\U\lYyY\u\Ey', '')
+/^TEST_3
+ENDTEST
+
+TEST_3:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_3:\"
+:let y = substitute('aAa', 'A', '\="\\"', '')           | $put =y
+:let y = substitute('bBb', 'B', '\="\\\\"', '')         | $put =y
+:let y = substitute('cCc', 'C', '\=""', '')         | $put =y
+:let y = substitute('dDd', 'D', '\="\\"', '')       | $put =y
+:let y = substitute('eEe', 'E', '\="\\\\"', '')     | $put =y
+:let y = substitute('fFf', 'F', '\="\\r"', '')          | $put =y
+:let y = substitute('jJj', 'J', '\="\\n"', '')          | $put =y
+:let y = substitute('kKk', 'K', '\="\r"', '')           | $put =y
+:let y = substitute('lLl', 'L', '\="\n"', '')           | $put =y
+/^TEST_4
+ENDTEST
+
+TEST_4:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_4:\"
+:let y = substitute('aAa', 'A', '\=substitute(submatch(0), ".", "\\", "")', '')       | $put =y
+:let y = substitute('bBb', 'B', '\=substitute(submatch(0), ".", "\\\\", "")', '')     | $put =y
+:let y = substitute('cCc', 'C', '\=substitute(submatch(0), ".", "", "")', '')     | $put =y
+:let y = substitute('dDd', 'D', '\=substitute(submatch(0), ".", "\\", "")', '')   | $put =y
+:let y = substitute('eEe', 'E', '\=substitute(submatch(0), ".", "\\\\", "")', '') | $put =y
+:let y = substitute('fFf', 'F', '\=substitute(submatch(0), ".", "\\r", "")', '')      | $put =y
+:let y = substitute('jJj', 'J', '\=substitute(submatch(0), ".", "\\n", "")', '')      | $put =y
+:let y = substitute('kKk', 'K', '\=substitute(submatch(0), ".", "\r", "")', '')       | $put =y
+:let y = substitute('lLl', 'L', '\=substitute(submatch(0), ".", "\n", "")', '')       | $put =y
+/^TEST_5
+ENDTEST
+
+TEST_5:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_5:\"
+:$put =substitute('A123456789', 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\=submatch(0) . submatch(9) . submatch(8) . submatch(7) . submatch(6) . submatch(5) . submatch(4) . submatch(3) . submatch(2) . submatch(1)', '')
+:$put =substitute('A123456789', 'A\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)\(.\)', '\=string([submatch(0, 1), submatch(9, 1), submatch(8, 1), submatch(7, 1), submatch(6, 1), submatch(5, 1), submatch(4, 1), submatch(3, 1), submatch(2, 1), submatch(1, 1)])', '')
+/^TEST_6
+ENDTEST
+
+TEST_6:
+
+STARTTEST
+:set magic&
+:$put =\"\n\nTEST_6:\"
+:set cpo+=/
+:$put =substitute('A', 'A', 'a', '')
+:$put =substitute('B', 'B', '%', '')
+:set cpo-=/
+:$put =substitute('C', 'C', 'c', '')
+:$put =substitute('D', 'D', '%', '')
+/^TEST_7
+ENDTEST
+
+TEST_7:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_7:\"
+:$put =substitute('AA', 'A.', '\=submatch(0)', '')
+:$put =substitute(\"B\nB\", 'B.', '\=submatch(0)', '')
+:$put =substitute(\"B\nB\", 'B.', '\=string(submatch(0, 1))', '')
+:$put =substitute('-bb', '\zeb', 'a', 'g')
+:$put =substitute('-bb', '\ze', 'c', 'g')
+/^TEST_8
+ENDTEST
+
+TEST_8:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_8:\"
+:$put =',,X'
+:s/\(^\|,\)\ze\(,\|X\)/\1N/g
+:$put =',,Y'
+:s/\(^\|,\)\ze\(,\|Y\)/\1N/gc
+a:$put =',,Z'
+:s/\(^\|,\)\ze\(,\|Z\)/\1N/gc
+yy/^TEST_9:
+ENDTEST
+
+TEST_9:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_9:\"
+:$put ='xxx'
+:s/x/X/gc
+yyq/^TEST_10:
+ENDTEST
+
+TEST_10:
+
+STARTTEST
+:set magic&
+:set cpo&
+:$put =\"\n\nTEST_10:\"
+:let y = substitute('123', '\zs', 'a', 'g')             | $put =y
+:let y = substitute('123', '\zs.', 'a', 'g')            | $put =y
+:let y = substitute('123', '.\zs', 'a', 'g')            | $put =y
+:let y = substitute('123', '\ze', 'a', 'g')             | $put =y
+:let y = substitute('123', '\ze.', 'a', 'g')            | $put =y
+:let y = substitute('123', '.\ze', 'a', 'g')            | $put =y
+:let y = substitute('123', '1\|\ze', 'a', 'g')          | $put =y
+:let y = substitute('123', '1\zs\|[23]', 'a', 'g')      | $put =y
+/^TEST_11
+ENDTEST
+
+TEST_11:
+
+STARTTEST
+:/^Results/,$wq! test.out
+ENDTEST
+
+Results of test72:

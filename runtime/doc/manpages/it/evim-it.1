@@ -1,0 +1,54 @@
+.TH EVIM 1 "16 febbraio 2002 "
+.SH NOME
+evim \- Vim "facile", Vim impostato in modo da poter essere usato
+facilmente per modificare file, anche da chi non abbia familiarità
+con i comandi.
+.SH SINTASSI
+.br
+.B evim
+[opzioni] [file ..]
+.br
+.B eview
+.SH DESCRIZIONE
+.B evim
+Inizia
+.B Vim
+e imposta le opzioni per farlo comportare come un editore "modeless".
+State sempre usando Vim, ma come un editore "posizionati-e-clicca".
+Simile all'uso di Notepad in MS-Windows.
+.B evim
+richiede la presenza della GUI, per avere a disposizione menù e barra
+strumenti.
+.PP
+Da usarsi soltanto se non si è in grado di lavorare con Vim nella
+maniera usuale.
+La modifica file sarà molto meno efficiente.
+.PP
+.B eview
+come sopra, ma parte in modalità "Sola Lettura".  Funziona come evim \-R.
+.PP
+Vedere vim(1) per dettagli riguardo a Vim, opzioni, etc.
+.PP
+L'opzione 'insertmode' è impostata per poter immettere del testo direttamente.
+.br
+Sono definite delle mappature che consentono di usare COPIA e INCOLLA con i
+familiari tasti usati sotto MS-Windows.
+CTRL-X taglia testo, CTRL-C copia testo e CTRL-V incolla testo.
+Usate CTRL-Q per ottenere quello che si otterrebbe con CTRL-V in Vim nativo.
+.SH OPZIONI
+Vedere vim(1).
+.SH FILE
+.TP 15
+/usr/local/lib/vim/evim.vim
+Lo script caricato per inizializzare eVim.
+.SH NAC [NOTO ANCHE COME]
+Noto Anche Come "Vim per semplici".
+Quando usate evim si suppone che prendiate un fazzoletto,
+facciate un nodo ad ogni angolo e ve lo mettiate in testa.
+.SH VEDERE ANCHE
+vim(1)
+.SH AUTORE
+Buona parte di
+.B Vim
+è stato scritto da Bram Moolenaar, con molto aiuto da altri.
+Vedere il menù "Aiuto/Crediti".

@@ -1,0 +1,79 @@
+Test for breakindent
+
+STARTTEST
+:so small.vim
+:if !exists("+breakindent") | e! test.ok | w! test.out | qa! | endif
+:10new|:vsp|:vert resize 20
+:put =\"\tabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOP\"
+:set ts=4 sw=4 sts=4 breakindent
+:fu! ScreenChar(width)
+:	let c=''
+:	for i in range(1,a:width)
+:		let c.=nr2char(screenchar(line('.'), i))
+:	endfor
+:       let c.="\n"
+:	for i in range(1,a:width)
+:		let c.=nr2char(screenchar(line('.')+1, i))
+:	endfor
+:       let c.="\n"
+:	for i in range(1,a:width)
+:		let c.=nr2char(screenchar(line('.')+2, i))
+:	endfor
+:	return c
+:endfu
+:fu DoRecordScreen()
+:	wincmd l
+:	$put =printf(\"\n%s\", g:test)
+:	$put =g:line1
+:	wincmd p
+:endfu
+:let g:test="Test 1: Simple breakindent"
+:let line1=ScreenChar(8)
+:call DoRecordScreen()
+:let g:test="Test 2: Simple breakindent + sbr=>>"
+:set sbr=>>
+:let line1=ScreenChar(8)
+:call DoRecordScreen()
+:let g:test ="Test 3: Simple breakindent + briopt:sbr"
+:set briopt=sbr,min:0 sbr=++
+:let line1=ScreenChar(8)
+:call DoRecordScreen()
+:let g:test ="Test 4: Simple breakindent + min width: 18"
+:set sbr= briopt=min:18
+:let line1=ScreenChar(8)
+:call DoRecordScreen()
+:let g:test =" Test 5: Simple breakindent + shift by 2"
+:set briopt=shift:2,min:0
+:let line1=ScreenChar(8)
+:call DoRecordScreen()
+:let g:test=" Test 6: Simple breakindent + shift by -1"
+:set briopt=shift:-1,min:0
+:let line1=ScreenChar(8)
+:call DoRecordScreen()
+:let g:test=" Test 7: breakindent + shift by +1 + nu + sbr=? briopt:sbr"
+:set briopt=shift:1,sbr,min:0 nu sbr=? nuw=4
+:let line1=ScreenChar(10)
+:call DoRecordScreen()
+:let g:test=" Test 8: breakindent + shift:1 + nu + sbr=# list briopt:sbr"
+:set briopt=shift:1,sbr,min:0 nu sbr=# list
+:let line1=ScreenChar(10)
+:call DoRecordScreen()
+:let g:test=" Test 9: breakindent + shift by +1 + 'nu' + sbr=# list"
+:set briopt-=sbr
+:let line1=ScreenChar(10)
+:call DoRecordScreen()
+:let g:test=" Test 10: breakindent + shift by +1 + 'nu' + sbr=~ cpo+=n"
+:set cpo+=n sbr=~ nu nuw=4 nolist briopt=sbr,min:0
+:let line1=ScreenChar(10)
+:call DoRecordScreen()
+:wincmd p
+:let g:test="\n Test 11: strdisplaywidth when breakindent is on"
+:set cpo-=n sbr=>> nu nuw=4 nolist briopt= ts=4
+:let text=getline(2) "skip leading tab when calculating text width
+:let width = strlen(text[1:])+indent(2)*4+strlen(&sbr)*3 " text wraps 3 times
+:$put =g:test
+:$put =printf(\"strdisplaywidth: %d == calculated: %d\", strdisplaywidth(text), width)
+:%w! test.out
+:qa!
+ENDTEST
+dummy text

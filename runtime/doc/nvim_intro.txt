@@ -1,0 +1,22 @@
+*nvim_intro.txt*    For Nvim.						 {Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Introduction to Nvim						   *nvim-intro*
+
+This is an introduction to Vim users that are just getting started with Nvim.
+It is not meant for Vim beginners. For a basic introduction to Vim,
+see |help.txt|.
+
+For now, it is just an index with the most relevant topics/features that
+differentiate Nvim from Vim:
+
+1. Msgpack-RPC			|msgpack-rpc|
+2. Job control			|job-control|
+3. Python plugins		|nvim-python|
+4. Clipboard integration	|nvim-clipboard|
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

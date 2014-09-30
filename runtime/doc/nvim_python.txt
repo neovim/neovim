@@ -1,0 +1,40 @@
+*nvim_python.txt*    For Nvim.						 {Nvim}
+
+
+		 NVIM REFERENCE MANUAL    by Thiago de Arruda
+
+
+Python plugins and scripting in Nvim				  *nvim-python*
+
+1. Introduction			|nvim-python-intro|
+2. Quickstart			|nvim-python-quickstart|
+
+==============================================================================
+1. Introduction						    *nvim-python-intro*
+
+Through an external python interpreter connected via |msgpack-rpc|, Nvim
+offers some support for the classic |python-vim| interface. For now only the
+old Vim 7.3 API is supported.
+
+==============================================================================
+2. Quickstart					       *nvim-python-quickstart*
+
+If you just want to start using python plugins with Nvim quickly, here's a
+simple step-by-step:
+
+- Make sure python 2.6 or 2.7 is available on your `$PATH`
+- Install the `neovim` python package:
+  >
+      $ pip install neovim
+<
+- Add the following snippet to your `vimrc`, before any python plugins are
+  loaded:
+>
+  if has('nvim')
+    runtime! plugin/python_setup.vim
+  endif
+<
+Most python plugins created for Vim 7.3 should work after these steps.
+
+==============================================================================
+ vim:tw=78:ts=8:noet:ft=help:norl:

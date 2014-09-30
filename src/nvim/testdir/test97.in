@@ -1,0 +1,23 @@
+Test whether glob()/globpath() return correct results with certain escaped
+characters.
+
+STARTTEST
+:so small.vim
+:" make sure glob() doesn't use the shell
+:set shell=doesnotexist
+:" consistent sorting of file names
+:set nofileignorecase
+:e test.out
+:$put =glob('Xxx\{')
+:$put =glob('Xxx\$')
+:w! Xxx{
+:w! Xxx\$
+:$put =glob('Xxx\{')
+:$put =glob('Xxx\$')
+:"
+:$put =string(globpath('sautest/autoload', '*.vim'))
+:$put =string(globpath('sautest/autoload', '*.vim', 0, 1))
+:w
+:qa!
+ENDTEST
+

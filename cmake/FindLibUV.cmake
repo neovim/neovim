@@ -21,10 +21,8 @@ else()
   set(LIMIT_SEARCH NO_DEFAULT_PATH)
 endif()
 
-set(CMAKE_PREFIX_PATH "${DEPS_INSTALL_DIR}")
 find_path(LIBUV_INCLUDE_DIR uv.h
   HINTS ${PC_LIBUV_INCLUDEDIR} ${PC_LIBUV_INCLUDE_DIRS}
-  PATHS "${DEPS_INSTALL_DIR}"
   ${LIMIT_SEARCH})
 
 # If we're asked to use static linkage, add libuv.a as a preferred library name.
@@ -35,10 +33,8 @@ endif(LIBUV_USE_STATIC)
 
 list(APPEND LIBUV_NAMES uv)
 
-set(CMAKE_PREFIX_PATH "${DEPS_INSTALL_DIR}")
 find_library(LIBUV_LIBRARY NAMES ${LIBUV_NAMES}
   HINTS ${PC_LIBUV_LIBDIR} ${PC_LIBUV_LIBRARY_DIRS}
-  PATHS "${DEPS_INSTALL_DIR}"
   ${LIMIT_SEARCH})
 
 mark_as_advanced(LIBUV_INCLUDE_DIR LIBUV_LIBRARY)
