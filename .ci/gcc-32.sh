@@ -1,6 +1,9 @@
 . "$CI_SCRIPTS/common.sh"
 
-install_vroom
+# To install lupa, a temporarary functional test dependency, we require the
+# 64-bit luajit since travis version of python is 64-bit.
+export PKG_CONFIG_PATH="/opt/neovim-deps/64/usr/lib/pkgconfig"
+install_functional_test_deps
 
 set_environment /opt/neovim-deps/32
 
@@ -22,5 +25,6 @@ CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 	-DFIND_LIBRARY_USE_LIB64_PATHS=OFF \
 	-DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib \
 	-DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake"
+
 $MAKE_CMD CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" unittest
 $MAKE_CMD test

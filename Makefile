@@ -74,9 +74,11 @@ endif
 	mkdir -p build
 	touch $@
 
-test: | nvim
+oldtest: | nvim
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
-	PATH="$$(pwd)/build/bin:$$PATH" vroom --neovim --crawl test
+
+test: | nvim
+	+$(BUILD_CMD) -C build test
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
