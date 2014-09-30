@@ -1,56 +1,32 @@
 valgrind_check() {
-	# For some strange reason, now we need to give ubuntu some time to flush it's
-	# FS cache in order to see valgrind logs, even though the script executes
-	# synchronously
-	sleep 1
-	(
-	cd $1
-	set -- valgrind-[*] valgrind-*
-	case $1$2 in
-		'valgrind-[*]valgrind-*')
-			;;
-		*)
-			shift
-			local err=''
-			for valgrind_log in "$@"; do
-				# Remove useless warning
-				sed -i "$valgrind_log" \
-					-e '/Warning: noted but unhandled ioctl/d' \
-					-e '/could cause spurious value errors to appear/d' \
-					-e '/See README_MISSING_SYSCALL_OR_IOCTL for guidance/d'
-				if [ "$(stat -c %s $valgrind_log)" != "0" ]; then
-					# if after removing the warning, the log still has errors, show its
-					# contents and set the flag so we exit with non-zero status
-					cat "$valgrind_log"
-					err=1
-				fi
-			done
-			if [ -n "$err" ]; then
-				echo "Runtime errors detected"
-				exit 1
-			fi
-			;;
-	esac
-	)
+	check_logs "$1" "valgrind-*"
 }
 
 asan_check() {
-	# See valgrind_check
+	check_logs "$1" "*san.*"
+}
+
+check_logs() {
+	# For some strange reason, now we need to give ubuntu some time to flush it's
+	# FS cache in order to see error logs, even though all commands are executing
+	# synchronously
 	sleep 1
-	(
-	cd $1
-	set -- [*]san.[*] *san.*
-	case $1$2 in
-		'[*]san.[*]*san.*')
-			;;
-		*)
-			shift
-			cat "$@"
-			echo "Runtime errors detected"
-			exit 1
-			;;
-	esac
-	)
+	# Iterate through each log to remove an useless warning
+	for log in $(find "$1" -type f -name "$2"); do
+		sed -i "$log" \
+			-e '/Warning: noted but unhandled ioctl/d' \
+			-e '/could cause spurious value errors to appear/d' \
+			-e '/See README_MISSING_SYSCALL_OR_IOCTL for guidance/d'
+	done
+	# Now do it again, but only consider files with size > 0
+	for log in $(find "$1" -type f -name "$2" -size +0); do
+		cat "$log"
+		err=1
+	done
+	if [ -n "$err" ]; then
+		echo "Runtime errors detected"
+		exit 1
+	fi
 }
 
 set_environment() {
