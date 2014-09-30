@@ -1161,7 +1161,9 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
   i = call_shell(
       command,
       shellopts,
-      extra_shell_arg
+      extra_shell_arg,
+      NULL,
+      NULL
       );
 
   /* When running in the background, give it some time to create the temp
