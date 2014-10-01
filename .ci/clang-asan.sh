@@ -26,15 +26,19 @@ export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
 install_dir="$(pwd)/dist"
 $MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
-$MAKE_CMD test
+if ! $MAKE_CMD test; then
+	asan_check "$tmpdir"
+	exit 1
+fi
 asan_check "$tmpdir"
+
 if ! $MAKE_CMD oldtest; then
 	reset
 	asan_check "$tmpdir"
 	exit 1
 fi
-
 asan_check "$tmpdir"
+
 coveralls --encoding iso-8859-1 || echo 'coveralls upload failed.'
 
 $MAKE_CMD install
