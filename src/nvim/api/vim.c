@@ -117,15 +117,19 @@ Object vim_eval(String str, Error *err)
   try_start();
   typval_T *expr_result = eval_expr((char_u *) str.data, NULL);
 
+  if (try_end(err)) {
+    goto end;
+  }
+
   if (!expr_result) {
     api_set_error(err, Exception, _("Failed to evaluate expression"));
+    goto end;
   }
 
-  if (!try_end(err)) {
-    // No errors, convert the result
-    rv = vim_to_object(expr_result);
-  }
+  // No errors, convert the result
+  rv = vim_to_object(expr_result);
 
+end:
   // Free the vim object
   free_tv(expr_result);
   return rv;
@@ -507,20 +511,15 @@ void vim_unsubscribe(uint64_t channel_id, String event)
   channel_unsubscribe(channel_id, e);
 }
 
-/// Registers the channel as the provider for `feature`. This fails if
-/// a provider for `feature` is already provided by another channel.
+/// Registers a provider for `feature`. This fails if `feature` is already
+/// provided by another extension.
 ///
 /// @param channel_id The channel id
 /// @param feature The feature name
 /// @param[out] err Details of an error that may have occurred
-void vim_register_provider(uint64_t channel_id, String feature, Error *err)
+void vim_register_provider(String feature, Dictionary handlers, Error *err)
 {
-  char buf[METHOD_MAXLEN];
-  xstrlcpy(buf, feature.data, sizeof(buf));
-
-  if (!provider_register(buf, channel_id)) {
-    api_set_error(err, Validation, _("Feature doesn't exist"));
-  }
+  provider_register(feature.data, handlers, err);
 }
 
 Array vim_get_api_info(uint64_t channel_id)

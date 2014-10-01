@@ -83,6 +83,7 @@
 #include "nvim/os/time.h"
 #include "nvim/os/channel.h"
 #include "nvim/api/private/helpers.h"
+#include "nvim/api/private/defs.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/provider.h"
@@ -95,6 +96,7 @@
 #define AUTOLOAD_CHAR '#'       /* Character used as separator in autoload 
                                    function/variable names. */
 
+static int func_nr = 0;         // number for nameless function
 /*
  * In a hashtab item "hi_key" points to "di_key" in a dictitem.
  * This avoids adding a pointer to the hashtab item.
@@ -248,6 +250,7 @@ struct ufunc {
   scid_T uf_script_ID;          /* ID of script where function was defined,
                                    used for s: variables */
   int uf_refcount;              /* for numbered function: reference count */
+  Function ext_function;        // Actual Function implementation
   char_u uf_name[1];            /* name of function (actually longer); can
                                    start with <SNR>123_ (<SNR> is K_SPECIAL
                                    KS_EXTRA KE_SNR) */
@@ -257,6 +260,7 @@ struct ufunc {
 #define FC_ABORT    1           /* abort function on error */
 #define FC_RANGE    2           /* function accepts range */
 #define FC_DICT     4           /* Dict function, uses "self" */
+#define FC_EXT      8           // Function came from a API extension
 
 /*
  * All user-defined functions are found in this hashtable.
@@ -11645,7 +11649,7 @@ static void f_pumvisible(typval_T *argvars, typval_T *rettv)
  */
 static void f_pyeval(typval_T *argvars, typval_T *rettv)
 {
-  script_host_eval("python_eval", argvars, rettv);
+  script_host_eval("python", "eval", argvars, rettv);
 }
 
 /*
@@ -17000,6 +17004,33 @@ static char_u *find_option_end(char_u **arg, int *opt_flags)
   return p;
 }
 
+char *eval_wrap_function(Function function)
+{
+  char *name = xmalloc(20 * sizeof(char));
+  sprintf(name, "%d", ++func_nr);
+  ufunc_T *fp = xmalloc(sizeof(ufunc_T) + strlen(name));
+
+  // insert the new function in the function list
+  STRCPY(fp->uf_name, name);
+  hash_add(&func_hashtab, UF2HIKEY(fp));
+
+  ga_init(&fp->uf_args, (int)sizeof(char_u *), 3);
+  ga_init(&fp->uf_lines, (int)sizeof(char_u *), 3);
+  fp->uf_tml_count = NULL;
+  fp->uf_tml_total = NULL;
+  fp->uf_tml_self = NULL;
+  fp->uf_profiling = FALSE;
+  if (prof_def_func())
+    func_do_profile(fp);
+  fp->uf_varargs = true;
+  fp->uf_flags = FC_EXT;
+  fp->uf_calls = 0;
+  fp->uf_script_ID = current_SID;
+  fp->ext_function = function;
+
+  return name;
+}
+
 /*
  * ":function"
  */
@@ -17024,7 +17055,6 @@ void ex_function(exarg_T *eap)
   char_u      *skip_until = NULL;
   dictitem_T  *v;
   funcdict_T fudi;
-  static int func_nr = 0;           /* number for nameless function */
   int paren;
   hashtab_T   *ht;
   int todo;
@@ -17549,6 +17579,7 @@ void ex_function(exarg_T *eap)
   fp->uf_flags = flags;
   fp->uf_calls = 0;
   fp->uf_script_ID = current_SID;
+  fp->ext_function = (Function) FUNCTION_INIT;
   goto ret_free;
 
 erret:
@@ -18323,6 +18354,30 @@ call_user_func (
   char_u      *name;
   proftime_T wait_start;
   proftime_T call_start;
+
+  if (fp->uf_flags & FC_EXT) {
+    // Convert arguments and call the extension
+    Array args = ARRAY_DICT_INIT;
+
+    for (typval_T *tv = argvars + 2; tv->v_type != VAR_UNKNOWN; tv++) {
+      ADD(args, vim_to_object(tv));
+    }
+
+    Error err = ERROR_INIT;
+    Object result = api_call_function(&fp->ext_function, args, &err);
+    if (err.set) {
+      vim_report_error(cstr_as_string(err.msg));
+      goto end;
+    }
+
+    if (!object_to_vim(result, rettv, &err)) {
+      EMSG2(_("Error converting the call result: %s"), err.msg);
+    }
+
+  end:
+    api_free_object(result);
+    return;
+  }
 
   /* If depth of calling is getting too high, don't execute the function */
   if (depth >= p_mfd) {
@@ -19562,11 +19617,14 @@ static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
   apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
 }
 
-static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
+static void script_host_eval(char *feature,
+                             char *method,
+                             typval_T *argvars,
+                             typval_T *rettv)
 {
   Array args = ARRAY_DICT_INIT;
   ADD(args, vim_to_object(argvars));
-  Object result = provider_call(method, args);
+  Object result = provider_call(feature, method, args);
 
   if (result.type == kObjectTypeNil) {
     return;

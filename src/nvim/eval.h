@@ -1,6 +1,7 @@
 #ifndef NVIM_EVAL_H
 #define NVIM_EVAL_H
 
+#include "nvim/api/private/defs.h"
 #include "nvim/profile.h"
 
 /* Defines for Vim variables.  These must match vimvars[] in eval.c! */

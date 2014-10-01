@@ -1,11 +1,15 @@
 #include <stdint.h>
+#include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 
 #include <msgpack.h>
 
 #include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/os/channel.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
+#include "nvim/api/private/helpers.h"
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/msgpack_rpc_helpers.c.generated.h"
@@ -15,7 +19,7 @@ static msgpack_zone zone;
 static msgpack_sbuffer sbuffer;
 
 #define HANDLE_TYPE_CONVERSION_IMPL(t, lt)                                  \
-  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg)                     \
+  bool msgpack_rpc_to_##lt(msgpack_object *obj, t *arg, uint64_t channel)   \
     FUNC_ATTR_NONNULL_ALL                                                   \
   {                                                                         \
     if (obj->type != MSGPACK_OBJECT_EXT                                     \
@@ -59,15 +63,19 @@ HANDLE_TYPE_CONVERSION_IMPL(Buffer, buffer)
 HANDLE_TYPE_CONVERSION_IMPL(Window, window)
 HANDLE_TYPE_CONVERSION_IMPL(Tabpage, tabpage)
 
-bool msgpack_rpc_to_boolean(msgpack_object *obj, Boolean *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_boolean(msgpack_object *obj,
+                            Boolean *arg,
+                            uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   *arg = obj->via.boolean;
   return obj->type == MSGPACK_OBJECT_BOOLEAN;
 }
 
-bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_integer(msgpack_object *obj,
+                            Integer *arg,
+                            uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (obj->type == MSGPACK_OBJECT_POSITIVE_INTEGER
       && obj->via.u64 <= INT64_MAX) {
@@ -79,15 +87,19 @@ bool msgpack_rpc_to_integer(msgpack_object *obj, Integer *arg)
   return obj->type == MSGPACK_OBJECT_NEGATIVE_INTEGER;
 }
 
-bool msgpack_rpc_to_float(msgpack_object *obj, Float *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_float(msgpack_object *obj,
+                          Float *arg,
+                          uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   *arg = obj->via.dec;
   return obj->type == MSGPACK_OBJECT_DOUBLE;
 }
 
-bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_string(msgpack_object *obj,
+                           String *arg,
+                           uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (obj->type == MSGPACK_OBJECT_BIN || obj->type == MSGPACK_OBJECT_STR) {
     arg->data = xmemdupz(obj->via.bin.ptr, obj->via.bin.size);
@@ -99,8 +111,10 @@ bool msgpack_rpc_to_string(msgpack_object *obj, String *arg)
   return true;
 }
 
-bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_object(msgpack_object *obj,
+                           Object *arg,
+                           uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   switch (obj->type) {
     case MSGPACK_OBJECT_NIL:
@@ -109,46 +123,53 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
 
     case MSGPACK_OBJECT_BOOLEAN:
       arg->type = kObjectTypeBoolean;
-      return msgpack_rpc_to_boolean(obj, &arg->data.boolean);
+      return msgpack_rpc_to_boolean(obj, &arg->data.boolean, channel);
 
     case MSGPACK_OBJECT_POSITIVE_INTEGER:
     case MSGPACK_OBJECT_NEGATIVE_INTEGER:
       arg->type = kObjectTypeInteger;
-      return msgpack_rpc_to_integer(obj, &arg->data.integer);
+      return msgpack_rpc_to_integer(obj, &arg->data.integer, channel);
 
     case MSGPACK_OBJECT_DOUBLE:
       arg->type = kObjectTypeFloat;
-      return msgpack_rpc_to_float(obj, &arg->data.floating);
+      return msgpack_rpc_to_float(obj, &arg->data.floating, channel);
 
     case MSGPACK_OBJECT_BIN:
     case MSGPACK_OBJECT_STR:
       arg->type = kObjectTypeString;
-      return msgpack_rpc_to_string(obj, &arg->data.string);
+      return msgpack_rpc_to_string(obj, &arg->data.string, channel);
 
     case MSGPACK_OBJECT_ARRAY:
       arg->type = kObjectTypeArray;
-      return msgpack_rpc_to_array(obj, &arg->data.array);
+      return msgpack_rpc_to_array(obj, &arg->data.array, channel);
 
     case MSGPACK_OBJECT_MAP:
       arg->type = kObjectTypeDictionary;
-      return msgpack_rpc_to_dictionary(obj, &arg->data.dictionary);
+      return msgpack_rpc_to_dictionary(obj, &arg->data.dictionary, channel);
 
     case MSGPACK_OBJECT_EXT:
+      arg->type = obj->via.ext.type;
       switch (obj->via.ext.type) {
         case kObjectTypeBuffer:
-          return msgpack_rpc_to_buffer(obj, &arg->data.buffer);
+          return msgpack_rpc_to_buffer(obj, &arg->data.buffer, channel);
         case kObjectTypeWindow:
-          return msgpack_rpc_to_window(obj, &arg->data.window);
+          return msgpack_rpc_to_window(obj, &arg->data.window, channel);
         case kObjectTypeTabpage:
-          return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage);
+          return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage, channel);
+        case kObjectTypeFunction:
+          return msgpack_rpc_to_function(obj, &arg->data.function, channel);
+        default:
+          arg->type = kObjectTypeNil;
       }
     default:
       return false;
   }
 }
 
-bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_array(msgpack_object *obj,
+                          Array *arg,
+                          uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (obj->type != MSGPACK_OBJECT_ARRAY) {
     return false;
@@ -158,7 +179,7 @@ bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
   arg->items = xcalloc(obj->via.array.size, sizeof(Object));
 
   for (uint32_t i = 0; i < obj->via.array.size; i++) {
-    if (!msgpack_rpc_to_object(obj->via.array.ptr + i, &arg->items[i])) {
+    if (!msgpack_rpc_to_object(obj->via.array.ptr + i, &arg->items[i], channel)) {
       return false;
     }
   }
@@ -166,8 +187,10 @@ bool msgpack_rpc_to_array(msgpack_object *obj, Array *arg)
   return true;
 }
 
-bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg)
-  FUNC_ATTR_NONNULL_ALL
+bool msgpack_rpc_to_dictionary(msgpack_object *obj,
+                               Dictionary *arg,
+                               uint64_t channel)
+  FUNC_ATTR_NONNULL_ARG(1, 2)
 {
   if (obj->type != MSGPACK_OBJECT_MAP) {
     return false;
@@ -179,16 +202,43 @@ bool msgpack_rpc_to_dictionary(msgpack_object *obj, Dictionary *arg)
 
   for (uint32_t i = 0; i < obj->via.map.size; i++) {
     if (!msgpack_rpc_to_string(&obj->via.map.ptr[i].key,
-          &arg->items[i].key)) {
+          &arg->items[i].key, channel)) {
       return false;
     }
 
     if (!msgpack_rpc_to_object(&obj->via.map.ptr[i].val,
-          &arg->items[i].value)) {
+          &arg->items[i].value, channel)) {
       return false;
     }
   }
 
+  return true;
+}
+
+bool msgpack_rpc_to_function(msgpack_object *obj,
+                             Function *arg,
+                             uint64_t channel)
+  FUNC_ATTR_NONNULL_ALL
+{
+  if (obj->type != MSGPACK_OBJECT_EXT
+      || obj->via.ext.type != kObjectTypeFunction) {
+    return false;
+  }
+
+  msgpack_object data;
+  msgpack_unpack_return ret = msgpack_unpack(obj->via.ext.ptr,
+                                             obj->via.ext.size,
+                                             NULL,
+                                             &zone,
+                                             &data);
+
+  if (ret != MSGPACK_UNPACK_SUCCESS || data.type != MSGPACK_OBJECT_BIN) {
+    return false;
+  }
+
+  arg->data.name = xmemdupz(data.via.bin.ptr, data.via.bin.size);
+  arg->data.channel = channel;
+  arg->ptr = channel_callback;
   return true;
 }
 
@@ -264,6 +314,10 @@ void msgpack_rpc_from_object(Object result, msgpack_packer *res)
     case kObjectTypeDictionary:
       msgpack_rpc_from_dictionary(result.data.dictionary, res);
       break;
+
+    case kObjectTypeFunction:
+      msgpack_rpc_from_function(result.data.function, res);
+      break;
   }
 }
 
@@ -286,4 +340,36 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
     msgpack_rpc_from_string(result.items[i].key, res);
     msgpack_rpc_from_object(result.items[i].value, res);
   }
+}
+
+void msgpack_rpc_from_function(Function result, msgpack_packer *res)
+  FUNC_ATTR_NONNULL_ARG(2)
+{
+  msgpack_packer pac;
+  msgpack_packer_init(&pac, &sbuffer, msgpack_sbuffer_write);
+  msgpack_rpc_from_string(cstr_as_string(result.data.name), &pac);
+  msgpack_pack_ext(res, sbuffer.size, kObjectTypeFunction);
+  msgpack_pack_ext_body(res, sbuffer.data, sbuffer.size);
+  msgpack_sbuffer_clear(&sbuffer);
+}
+
+static Object channel_callback(FunctionData *data, Array args, Error *err)
+{
+  assert(data->channel);
+
+  if (data->async) {
+    if (!channel_send_event(data->channel, data->name, args)) {
+      api_set_error(err, Exception, _("Invalid channel id"));
+    }
+
+    return NIL;
+  }
+
+  Object rv = channel_send_call(data->channel, data->name, args, err);
+
+  if (err->set) {
+    return NIL;
+  }
+
+  return rv;
 }

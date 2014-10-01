@@ -6,6 +6,7 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/handle.h"
+#include "nvim/os/channel.h"
 #include "nvim/os/provider.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -475,6 +476,12 @@ bool object_to_vim(Object obj, typval_T *tv, Error *err)
       }
       tv->vval.v_dict->dv_refcount++;
       break;
+
+    case kObjectTypeFunction:
+      tv->v_type = VAR_FUNC;
+      tv->vval.v_string = (uint8_t *)eval_wrap_function(obj.data.function);
+      break;
+
     default:
       abort();
   }
@@ -515,6 +522,10 @@ void api_free_object(Object value)
       api_free_dictionary(value.data.dictionary);
       break;
 
+    case kObjectTypeFunction:
+      api_free_function(value.data.function);
+      break;
+
     default:
       abort();
   }
@@ -537,6 +548,15 @@ void api_free_dictionary(Dictionary value)
   }
 
   free(value.items);
+}
+
+void api_free_function(Function value)
+{
+  if (!value.data.name) {
+    return;
+  }
+
+  free(value.data.name);
 }
 
 Dictionary api_metadata(void)
@@ -568,6 +588,18 @@ static void init_error_type_metadata(Dictionary *metadata)
 
   PUT(*metadata, "error_types", DICTIONARY_OBJ(types));
 }
+
+/// Wrapper to call function->ptr passing function->data;
+Object api_call_function(Function *function, Array args, Error *err)
+{
+  return function->ptr(&function->data, args, err);
+}
+
+bool api_function_is_valid(Function *function)
+{
+  return channel_exists(function->data.channel);
+}
+
 static void init_type_metadata(Dictionary *metadata)
 {
   Dictionary types = ARRAY_DICT_INIT;
@@ -581,9 +613,13 @@ static void init_type_metadata(Dictionary *metadata)
   Dictionary tabpage_metadata = ARRAY_DICT_INIT;
   PUT(tabpage_metadata, "id", INTEGER_OBJ(kObjectTypeTabpage));
 
+  Dictionary function_metadata = ARRAY_DICT_INIT;
+  PUT(function_metadata, "id", INTEGER_OBJ(kObjectTypeFunction));
+
   PUT(types, "Buffer", DICTIONARY_OBJ(buffer_metadata));
   PUT(types, "Window", DICTIONARY_OBJ(window_metadata));
   PUT(types, "Tabpage", DICTIONARY_OBJ(tabpage_metadata));
+  PUT(types, "Function", DICTIONARY_OBJ(function_metadata));
 
   PUT(*metadata, "types", DICTIONARY_OBJ(types));
 }

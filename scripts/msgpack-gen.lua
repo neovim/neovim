@@ -133,7 +133,7 @@ void msgpack_rpc_init_function_metadata(Dictionary *metadata)
     abort();
   }
   Object functions;
-  msgpack_rpc_to_object(&unpacked.data, &functions);
+  msgpack_rpc_to_object(&unpacked.data, &functions, 0);
   msgpack_unpacked_destroy(&unpacked);
   PUT(*metadata, "functions", functions);
 }
@@ -182,7 +182,7 @@ for i = 1, #functions do
     arg = '(req->via.array.ptr[3].via.array.ptr + '..(j - 1)..')'
     converted = 'arg_'..j
     convert_arg = 'msgpack_rpc_to_'..real_type(param[1]):lower()
-    output:write('\n  if (!'..convert_arg..'('..arg..', &'..converted..')) {')
+    output:write('\n  if (!'..convert_arg..'('..arg..', &'..converted..', channel_id)) {')
     output:write('\n    snprintf(error->msg, sizeof(error->msg), "Wrong type for argument '..j..', expecting '..param[1]..'");')
     output:write('\n    error->set = true;')
     output:write('\n    goto cleanup;')
