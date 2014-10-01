@@ -4903,10 +4903,9 @@ static void str_to_reg(struct yankreg *y_ptr,
    * Find the end of each line and save it into the array.
    */
   for (start = 0; start < len + extraline; start += i + 1) {
-    for (i = start; i < len; ++i)       /* find the end of the line */
-      if (str[i] == '\n')
-        break;
-    i -= start;                         /* i is now length of line */
+    // Let i represent the length of one line.
+    const char_u *p = str + start;
+    i = (char_u *)xmemscan(p, '\n', len - start) - p;
     if (i > maxlen)
       maxlen = i;
     if (append) {

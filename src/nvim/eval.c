@@ -4686,12 +4686,13 @@ list_T *list_alloc(void) FUNC_ATTR_NONNULL_RET
 /*
  * Allocate an empty list for a return value.
  */
-static void rettv_list_alloc(typval_T *rettv)
+static list_T *rettv_list_alloc(typval_T *rettv)
 {
   list_T *l = list_alloc();
   rettv->vval.v_list = l;
   rettv->v_type = VAR_LIST;
   ++l->lv_refcount;
+  return l;
 }
 
 /*
@@ -6543,6 +6544,7 @@ static struct fst {
   {"synconcealed",    2, 2, f_synconcealed},
   {"synstack",        2, 2, f_synstack},
   {"system",          1, 2, f_system},
+  {"systemlist",      1, 2, f_systemlist},
   {"tabpagebuflist",  0, 1, f_tabpagebuflist},
   {"tabpagenr",       0, 1, f_tabpagenr},
   {"tabpagewinnr",    1, 2, f_tabpagewinnr},
@@ -9407,16 +9409,15 @@ static void f_getpid(typval_T *argvars, typval_T *rettv)
 static void getpos_both(typval_T *argvars, typval_T *rettv, bool getcurpos)
 {
   pos_T *fp;
-  list_T *l;
   int fnum = -1;
 
-  rettv_list_alloc(rettv);
-  l = rettv->vval.v_list;
   if (getcurpos) {
     fp = &curwin->w_cursor;
   } else {
     fp = var2fpos(&argvars[0], true, &fnum);
   }
+
+  list_T *l = rettv_list_alloc(rettv);
   list_append_number(l, (fnum != -1) ? (varnumber_T)fnum : (varnumber_T)0);
   list_append_number(l, (fp != NULL) ? (varnumber_T)fp->lnum : (varnumber_T)0);
   list_append_number(l,
@@ -9873,7 +9874,7 @@ static void f_has(typval_T *argvars, typval_T *rettv)
     "spell",
     "syntax",
 #if !defined(UNIX)
-    "system",
+    "system",  // TODO(SplinterOfChaos): This IS defined for UNIX!
 #endif
     "tag_binary",
     "tag_old_static",
@@ -12009,8 +12010,7 @@ static void f_remove(typval_T *argvars, typval_T *rettv)
             EMSG(_(e_invrange));
           else {
             vim_list_remove(l, item, item2);
-            rettv_list_alloc(rettv);
-            l = rettv->vval.v_list;
+            l = rettv_list_alloc(rettv);
             l->lv_first = item;
             l->lv_last = item2;
             item->li_prev = NULL;
@@ -14415,8 +14415,8 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
-/// f_system - the VimL system() function
-static void f_system(typval_T *argvars, typval_T *rettv)
+static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, 
+                                       bool retlist)
 {
   rettv->v_type = VAR_STRING;
   rettv->vval.v_string = NULL;
@@ -14426,10 +14426,11 @@ static void f_system(typval_T *argvars, typval_T *rettv)
   }
 
   // get input to the shell command (if any), and its length
-  char_u buf[NUMBUFLEN];
-  const char *input = (argvars[1].v_type != VAR_UNKNOWN)
-      ? (char *) get_tv_string_buf_chk(&argvars[1], buf): NULL;
-  size_t input_len = input ? strlen(input) : 0;
+  ssize_t input_len;
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len);
+  if (input_len == -1) {
+    return;
+  }
 
   // get shell command to execute
   const char *cmd = (char *) get_tv_string(&argvars[0]);
@@ -14439,11 +14440,40 @@ static void f_system(typval_T *argvars, typval_T *rettv)
   char *res = NULL;
   int status = os_system(cmd, input, input_len, &res, &nread);
 
+  free(input);
+
   set_vim_var_nr(VV_SHELL_ERROR, (long) status);
 
+  if (res == NULL) {
+    return;
+  }
+
+  if (retlist) {
+    list_T *list = rettv_list_alloc(rettv);
+
+    // Copy each line to a list element using NL as the delimiter.
+    for (size_t i = 0; i < nread; i++) {
+      char_u *start = (char_u *) res + i;
+      size_t len = (char_u *) xmemscan(start, NL, nread - i) - start;
+      i += len;
+
+      // Don't use a str function to copy res as it may contains NULs.
+      char_u *s = xmemdupz(start, len);
+      memchrsub(s, NUL, NL, len);  // Replace NUL with NL to avoid truncation.
+
+      listitem_T  *li = listitem_alloc();
+      li->li_tv.v_type = VAR_STRING;
+      li->li_tv.vval.v_string = s;
+      list_append(list, li);
+    }
+
+    free(res);
+  } else {
+    // res may contain several NULs before the final terminating one.
+    // Replace them with SOH (1) like in get_cmd_output() to avoid truncation.
+    memchrsub(res, NUL, 1, nread);
 #ifdef USE_CRNL
-  // translate <CR><NL> into <NL>
-  if (res != NULL) {
+    // translate <CR><NL> into <NL>
     char *d = res;
     for (char *s = res; *s; ++s) {
       if (s[0] == CAR && s[1] == NL) {
@@ -14454,11 +14484,22 @@ static void f_system(typval_T *argvars, typval_T *rettv)
     }
 
     *d = NUL;
-  }
 #endif
-
-  rettv->vval.v_string = (char_u *) res;
+    rettv->vval.v_string = (char_u *) res;
+  }
 }
+
+/// f_system - the VimL system() function
+static void f_system(typval_T *argvars, typval_T *rettv)
+{
+  get_system_output_as_rettv(argvars, rettv, false);
+}
+
+static void f_systemlist(typval_T *argvars, typval_T *rettv)
+{
+  get_system_output_as_rettv(argvars, rettv, true);
+}
+
 
 /*
  * "tabpagebuflist()" function
@@ -14600,8 +14641,7 @@ static void f_taglist(typval_T *argvars, typval_T *rettv)
   if (*tag_pattern == NUL)
     return;
 
-  rettv_list_alloc(rettv);
-  (void)get_tags(rettv->vval.v_list, tag_pattern);
+  (void)get_tags(rettv_list_alloc(rettv), tag_pattern);
 }
 
 /*
@@ -15058,6 +15098,89 @@ static void f_winsaveview(typval_T *argvars, typval_T *rettv)
   dict_add_nr_str(dict, "skipcol", (long)curwin->w_skipcol, NULL);
 }
 
+/// Writes list of strings to file
+static bool write_list(FILE *fd, list_T *list, bool binary)
+{
+  int ret = true;
+
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; ++s) {
+      if (putc(*s == '\n' ? NUL : *s, fd) == EOF) {
+        ret = false;
+        break;
+      }
+    }
+    if (!binary || li->li_next != NULL) {
+      if (putc('\n', fd) == EOF) {
+        ret = false;
+        break;
+      }
+    }
+    if (ret == false) {
+      EMSG(_(e_write));
+      break;
+    }
+  }
+  return ret;
+}
+
+/// Saves a typval_T as a string.
+///
+/// For lists, replaces NLs with NUL and separates items with NLs.
+///
+/// @param[in]  tv   A value to store as a string.
+/// @param[out] len  The length of the resulting string or -1 on error.
+/// @returns an allocated string if `tv` represents a VimL string, list, or
+///          number; NULL otherwise.
+static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
+  FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
+{
+  if (tv->v_type == VAR_UNKNOWN) {
+    *len = 0;
+    return NULL;
+  }
+
+  // For types other than list, let get_tv_string_buf_chk() get the value or
+  // print an error.
+  if (tv->v_type != VAR_LIST) {
+    char_u *ret = get_tv_string_chk(tv);
+    if (ret && (*len = STRLEN(ret))) {
+      ret = vim_strsave(ret);
+    } else {
+      ret = NULL;
+    }
+    if (tv->v_type != VAR_STRING) {
+      *len = -1;
+    }
+    return ret;
+  }
+
+  // Pre-calculate the resulting length.
+  *len = 0;
+  list_T *list = tv->vval.v_list;
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    *len += STRLEN(get_tv_string(&li->li_tv)) + 1;
+  }
+
+  if (*len == 0) {
+    return NULL;
+  }
+
+  char_u *ret = xmalloc(*len);
+  char_u *end = ret;
+  for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
+    for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; s++) {
+      *end++ = (*s == '\n') ? NUL : *s;
+    }
+    if (li->li_next != NULL) {
+      *end++ = '\n';
+    }
+  }
+  *end = NUL;
+  *len = end - ret;
+  return ret;
+}
+
 /*
  * "winwidth(nr)" function
  */
@@ -15072,68 +15195,43 @@ static void f_winwidth(typval_T *argvars, typval_T *rettv)
     rettv->vval.v_number = wp->w_width;
 }
 
-/*
- * "writefile()" function
- */
+/// "writefile()" function
 static void f_writefile(typval_T *argvars, typval_T *rettv)
 {
-  int binary = FALSE;
-  char_u      *fname;
-  FILE        *fd;
-  listitem_T  *li;
-  char_u      *s;
-  int ret = 0;
-  int c;
+  rettv->vval.v_number = 0;  // Assuming success.
 
-  if (check_restricted() || check_secure())
+  if (check_restricted() || check_secure()) {
     return;
+  }
 
   if (argvars[0].v_type != VAR_LIST) {
     EMSG2(_(e_listarg), "writefile()");
     return;
   }
-  if (argvars[0].vval.v_list == NULL)
+  if (argvars[0].vval.v_list == NULL) {
     return;
+  }
 
+  bool binary = false;
   if (argvars[2].v_type != VAR_UNKNOWN
-      && STRCMP(get_tv_string(&argvars[2]), "b") == 0)
-    binary = TRUE;
+      && STRCMP(get_tv_string(&argvars[2]), "b") == 0) {
+    binary = true;
+  }
 
-  /* Always open the file in binary mode, library functions have a mind of
-   * their own about CR-LF conversion. */
-  fname = get_tv_string(&argvars[1]);
+  // Always open the file in binary mode, library functions have a mind of
+  // their own about CR-LF conversion.
+  char_u *fname = get_tv_string(&argvars[1]);
+  FILE *fd;
   if (*fname == NUL || (fd = mch_fopen((char *)fname, WRITEBIN)) == NULL) {
     EMSG2(_(e_notcreate), *fname == NUL ? (char_u *)_("<empty>") : fname);
-    ret = -1;
+    rettv->vval.v_number = -1;
   } else {
-    for (li = argvars[0].vval.v_list->lv_first; li != NULL;
-         li = li->li_next) {
-      for (s = get_tv_string(&li->li_tv); *s != NUL; ++s) {
-        if (*s == '\n')
-          c = putc(NUL, fd);
-        else
-          c = putc(*s, fd);
-        if (c == EOF) {
-          ret = -1;
-          break;
-        }
-      }
-      if (!binary || li->li_next != NULL)
-        if (putc('\n', fd) == EOF) {
-          ret = -1;
-          break;
-        }
-      if (ret < 0) {
-        EMSG(_(e_write));
-        break;
-      }
+    if (write_list(fd, argvars[0].vval.v_list, binary) == false) {
+      rettv->vval.v_number = -1;
     }
     fclose(fd);
   }
-
-  rettv->vval.v_number = ret;
 }
-
 /*
  * "xor(expr, expr)" function
  */

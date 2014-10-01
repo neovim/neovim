@@ -1172,7 +1172,7 @@ expand_backtick (
     buffer = eval_to_string(cmd + 1, &p, TRUE);
   else
     buffer = get_cmd_output(cmd, NULL,
-        (flags & EW_SILENT) ? kShellOptSilent : 0);
+        (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
   free(cmd);
   if (buffer == NULL)
     return 0;
