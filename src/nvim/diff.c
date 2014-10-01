@@ -620,6 +620,17 @@ static int diff_write(buf_T *buf, char_u *fname)
   return r;
 }
 
+/// A structure holding the information necessary to call `diff_read_cb()`.
+struct diff_data {
+  int idx_orig;  ///< Index of the original file.
+  int idx_new;   ///< Index of the new file.
+
+  // Variables used by diff_read_cb().
+  bool notset;
+  diff_T *dprev;
+  diff_T *dp;
+};
+
 /// Completely update the diffs for the buffers involved.
 ///
 /// This uses the ordinary "diff" command.
@@ -660,9 +671,8 @@ void ex_diffupdate(exarg_T *eap)
   // We need three temp file names.
   char_u *tmp_orig = vim_tempname();
   char_u *tmp_new = vim_tempname();
-  char_u *tmp_diff = vim_tempname();
 
-  if ((tmp_orig == NULL) || (tmp_new == NULL) || (tmp_diff == NULL)) {
+  if ((tmp_orig == NULL) || (tmp_new == NULL)) {
     goto theend;
   }
 
@@ -692,27 +702,7 @@ void ex_diffupdate(exarg_T *eap)
           io_error = TRUE;
         }
         fclose(fd);
-        diff_file(tmp_orig, tmp_new, tmp_diff);
-        fd = mch_fopen((char *)tmp_diff, "r");
-
-        if (fd == NULL) {
-          io_error = TRUE;
-        } else {
-          char_u linebuf[LBUFLEN];
-
-          for (;;) {
-            // There must be a line that contains "1c1".
-            if (vim_fgets(linebuf, LBUFLEN, fd)) {
-              break;
-            }
-
-            if (STRNCMP(linebuf, "1c1", 3) == 0) {
-              ok = TRUE;
-            }
-          }
-          fclose(fd);
-        }
-        os_remove((char *)tmp_diff);
+        diff_file(tmp_orig, tmp_new, diff_check_cb, &ok);
         os_remove((char *)tmp_new);
       }
       os_remove((char *)tmp_orig);
@@ -770,11 +760,14 @@ void ex_diffupdate(exarg_T *eap)
     if (diff_write(buf, tmp_new) == FAIL) {
       continue;
     }
-    diff_file(tmp_orig, tmp_new, tmp_diff);
-
-    // Read the diff output and add each entry to the diff list.
-    diff_read(idx_orig, idx_new, tmp_diff);
-    os_remove((char *)tmp_diff);
+    struct diff_data data = {
+      .idx_orig = idx_orig,
+      .idx_new = idx_new,
+      .dp = curtab->tp_first_diff,
+      .dprev = NULL,
+      .notset = true,
+    };
+    diff_file(tmp_orig, tmp_new, diff_read_cb, &data);
     os_remove((char *)tmp_new);
   }
   os_remove((char *)tmp_orig);
@@ -787,22 +780,36 @@ void ex_diffupdate(exarg_T *eap)
 theend:
   free(tmp_orig);
   free(tmp_new);
-  free(tmp_diff);
 }
 
-/// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
+/// Checks that the diff program works.
+static void diff_check_cb(char_u *buf, size_t len, void *ok, bool eof)
+{
+  const char_u *end = buf + len;
+  for (const char_u *p = buf; p < end - 3; p++) {
+    // The diff program must produce a line that looks like this:
+    if (STRNCMP(p, "1c1", 3) == 0) {
+      *((bool *)ok) = true;
+      break;
+    }
+  }
+}
+
+/// Make a diff between files "tmp_orig" and "tmp_new".
 ///
 /// @param tmp_orig
 /// @param tmp_new
-/// @param tmp_diff
-static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
+/// @param read A callback to send to `call_shell()`.
+/// @param data `read`'s associated data.
+static void diff_file(char_u *tmp_orig, char_u *tmp_new,
+                      shell_read_cb read, void *data)
 {
   if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
+    char_u *tmp_diff = vim_tempname();
     eval_diff(tmp_orig, tmp_new, tmp_diff);
   } else {
-    size_t len = STRLEN(tmp_orig) + STRLEN(tmp_new) + STRLEN(tmp_diff)
-        + STRLEN(p_srr) + 27;
+    size_t len = STRLEN(tmp_orig) + STRLEN(tmp_new) + STRLEN(p_srr) + 27;
     char_u *cmd = xmalloc(len);
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
@@ -819,14 +826,13 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
                  tmp_orig, tmp_new);
-    append_redir(cmd, (int)len, p_srr, tmp_diff);
     block_autocmds(); /* Avoid ShellCmdPost stuff */
     (void)call_shell(
         cmd,
         kShellOptFilter | kShellOptSilent | kShellOptDoOut,
         NULL,
-        NULL,
-        NULL
+        read,
+        data
         );
     unblock_autocmds();
     free(cmd);
@@ -1178,39 +1184,33 @@ void ex_diffoff(exarg_T *eap)
   }
 }
 
-/// Read the diff output and add each entry to the diff list.
+/// Reads diff data from a string and builds the diff blocks.
 ///
-/// @param idx_orig idx of original file
-/// @param idx_new idx of new file
-/// @param fname name of diff output file
-static void diff_read(int idx_orig, int idx_new, char_u *fname)
+/// May be called many times, but the final call must set `eof` to `true`.
+///
+/// @param buf The output of a diff program.
+/// @param len The length of `buf`.
+/// @param vdata The `diff_data` structure.
+/// @param eof Set to true if this call finalizes the input.
+static void diff_read_cb(char_u *buf, size_t len, void *vdata, bool eof)
 {
-  FILE *fd;
-  diff_T *dprev = NULL;
-  diff_T *dp = curtab->tp_first_diff;
-  diff_T *dn, *dpl;
-  long f1, l1, f2, l2;
-  char_u linebuf[LBUFLEN]; // only need to hold the diff line
-  int difftype;
-  char_u *p;
-  long off;
-  int i;
-  linenr_T lnum_orig, lnum_new;
-  long count_orig, count_new;
-  int notset = TRUE; // block "*dp" not set yet
+  struct diff_data *data = vdata;
+  diff_T *dp = data->dp, *dprev = data->dprev;
+  bool notset = data->notset;
 
-  fd = mch_fopen((char *)fname, "r");
+  char_u *end = buf + len;
 
-  if (fd == NULL) {
-    EMSG(_("E98: Cannot read diff output"));
-    return;
-  }
-
-  for (;;) {
-    if (vim_fgets(linebuf, LBUFLEN, fd)) {
-      // end of file
-      break;
+  int idx_orig = data->idx_orig;
+  int idx_new = data->idx_new;
+  char_u linebuf[LBUFLEN];  // only need to hold the diff line
+  while (buf < end) {
+    char_u *eol = xmemscan(buf, NL, end - buf);
+    size_t line_len = eol - buf + 1;  // Include the NL.
+    if (line_len >= LBUFLEN) {
+      line_len = LBUFLEN - 1;
     }
+    STRLCPY(linebuf, buf, line_len);
+    buf = eol + 1;  // Point buf to /after/ the NL.
 
     if (!isdigit(*linebuf)) {
       // not the start of a diff block
@@ -1221,9 +1221,10 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
     // {first}[,{last}]c{first}[,{last}]
     // {first}a{first}[,{last}]
     // {first}[,{last}]d{first}
-    p = linebuf;
-    f1 = getdigits(&p);
+    char_u *p = linebuf;
+    long f1 = getdigits(&p);
 
+    long l1;
     if (*p == ',') {
       ++p;
       l1 = getdigits(&p);
@@ -1235,9 +1236,10 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       // invalid diff format
       continue;
     }
-    difftype = *p++;
-    f2 = getdigits(&p);
+    int difftype = *p++;
+    long f2 = getdigits(&p);
 
+    long l2;
     if (*p == ',') {
       ++p;
       l2 = getdigits(&p);
@@ -1250,6 +1252,8 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       continue;
     }
 
+    long count_orig;
+    linenr_T lnum_orig;
     if (difftype == 'a') {
       lnum_orig = f1 + 1;
       count_orig = 0;
@@ -1258,6 +1262,8 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       count_orig = l1 - f1 + 1;
     }
 
+    linenr_T lnum_new;
+    long count_new;
     if (difftype == 'd') {
       lnum_new = f2 + 1;
       count_new = 0;
@@ -1273,9 +1279,9 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       if (notset) {
         diff_copy_entry(dprev, dp, idx_orig, idx_new);
       }
-      dprev = dp;
-      dp = dp->df_next;
-      notset = TRUE;
+      data->dprev = dprev = dp;
+      data->dp = dp = data->dp->df_next;
+      data->notset = notset = true;
     }
 
     if ((dp != NULL)
@@ -1283,6 +1289,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
         && (lnum_orig + count_orig >= dp->df_lnum[idx_orig])) {
       // New block overlaps with existing block(s).
       // First find last block that overlaps.
+      diff_T *dpl;
       for (dpl = dp; dpl->df_next != NULL; dpl = dpl->df_next) {
         if (lnum_orig + count_orig < dpl->df_next->df_lnum[idx_orig]) {
           break;
@@ -1291,10 +1298,10 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
 
       // If the newly found block starts before the old one, set the
       // start back a number of lines.
-      off = dp->df_lnum[idx_orig] - lnum_orig;
+      long off = data->dp->df_lnum[idx_orig] - lnum_orig;
 
       if (off > 0) {
-        for (i = idx_orig; i < idx_new; ++i) {
+        for (int i = idx_orig; i < idx_new; ++i) {
           if (curtab->tp_diffbuf[i] != NULL) {
             dp->df_lnum[i] -= off;
           }
@@ -1328,15 +1335,15 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
         off = 0;
       }
 
-      for (i = idx_orig; i < idx_new; ++i) {
+      for (int i = idx_orig; i < idx_new; ++i) {
         if (curtab->tp_diffbuf[i] != NULL) {
-          dp->df_count[i] = dpl->df_lnum[i] + dpl->df_count[i]
-                            - dp->df_lnum[i] + off;
+          data->dp->df_count[i] = dpl->df_lnum[i] + dpl->df_count[i]
+                            - data->dp->df_lnum[i] + off;
         }
       }
 
       // Delete the diff blocks that have been merged into one.
-      dn = dp->df_next;
+      diff_T *dn = data->dp->df_next;
       dp->df_next = dpl->df_next;
 
       while (dn != dp->df_next) {
@@ -1346,7 +1353,7 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       }
     } else {
       // Allocate a new diffblock.
-      dp = diff_alloc_new(curtab, dprev, dp);
+      data->dp = dp = diff_alloc_new(curtab, data->dprev, data->dp);
 
       dp->df_lnum[idx_orig] = lnum_orig;
       dp->df_count[idx_orig] = count_orig;
@@ -1356,26 +1363,27 @@ static void diff_read(int idx_orig, int idx_new, char_u *fname)
       // Set values for other buffers, these must be equal to the
       // original buffer, otherwise there would have been a change
       // already.
-      for (i = idx_orig + 1; i < idx_new; ++i) {
+      for (int i = idx_orig + 1; i < idx_new; ++i) {
         if (curtab->tp_diffbuf[i] != NULL) {
           diff_copy_entry(dprev, dp, idx_orig, i);
         }
       }
     }
-    notset = FALSE; // "*dp" has been set
+    data->notset = notset = false; // "*dp" has been set
   }
 
-  // for remaining diff blocks orig and new are equal
-  while (dp != NULL) {
-    if (notset) {
-      diff_copy_entry(dprev, dp, idx_orig, idx_new);
+  if (eof) {
+    // for remaining diff blocks orig and new are equal
+    while (dp != NULL) {
+      if (notset) {
+        diff_copy_entry(dprev, dp, idx_orig, idx_new);
+      }
+      // Don't bother updating the `diff_data`; we won't be called again.
+      dprev = dp;
+      dp = dp->df_next;
+      notset = TRUE;
     }
-    dprev = dp;
-    dp = dp->df_next;
-    notset = TRUE;
   }
-
-  fclose(fd);
 }
 
 /// Copy an entry at "dp" from "idx_orig" to "idx_new".
