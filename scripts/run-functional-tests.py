@@ -4,7 +4,7 @@ import os
 import sys
 import textwrap
 
-from lupa import LuaRuntime
+from lupa import LuaRuntime, as_attrgetter
 from neovim import Nvim, spawn_session
 
 
@@ -33,6 +33,14 @@ function(d)
 end
 ''')
 
+def to_table(obj):
+    if type(obj) in [tuple, list]:
+        return list_to_table(list(to_table(e) for e in obj))
+    if type(obj) is dict:
+        return dict_to_table(as_attrgetter(
+            dict((k, to_table(v)) for k, v in obj.items())))
+    return obj
+
 nvim_prog = os.environ.get('NVIM_PROG', 'build/bin/nvim')
 nvim_argv = [nvim_prog, '-u', 'NONE', '--embed']
 
@@ -51,6 +59,9 @@ nvim = Nvim.from_session(session)
 def nvim_command(cmd):
     nvim.command(cmd)
 
+def nvim_eval(expr):
+    return to_table(nvim.eval(expr))
+
 def nvim_feed(input, mode=''):
     nvim.feedkeys(input)
 
@@ -63,6 +74,7 @@ def nvim_replace_termcodes(input, *opts):
 
 expose = [
     nvim_command,
+    nvim_eval,
     nvim_feed,
     nvim_replace_termcodes,
     buffer_slice,

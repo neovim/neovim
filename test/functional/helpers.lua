@@ -31,9 +31,24 @@ local function execute(...)
   end
 end
 
+local  function eval(expr)
+  local status, result = pcall(function() return nvim_eval(expr) end)
+  if not status then
+    error('Failed to evaluate expression "' .. expr .. '"')
+  end
+  return result
+end
+
+local function eq(expected, actual)
+  return assert.are.same(expected, actual)
+end
+
+local function neq(expected, actual)
+  return assert.are_not.same(expected, actual)
+end
+
 local function expect(contents, first, last, buffer_index)
-  return assert.are.same(dedent(contents),
-                         buffer_slice(first, last, buffer_idx))
+  return eq(dedent(contents), buffer_slice(first, last, buffer_idx))
 end
 
 rawfeed([[:function BeforeEachTest()
@@ -80,5 +95,8 @@ return {
   insert = insert,
   feed = feed,
   execute = execute,
+  eval = eval,
+  eq = eq,
+  neq = neq,
   expect = expect 
 }
