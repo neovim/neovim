@@ -293,19 +293,15 @@ int os_system(const char *cmd,
   if (input) {
     WBuffer *input_buffer = wstream_new_buffer((char *) input, len, 1, NULL);
 
-    // we want to be notified when the write completes
-    job_write_cb(job, system_write_cb);
-
     if (!job_write(job, input_buffer)) {
       // couldn't write, stop the job and tell the user about it
       job_stop(job);
       return -1;
     }
-  } else {
-    // close the input stream, let the process know that no input is coming
-    job_close_in(job);
   }
 
+  // close the input stream, let the process know that no more input is coming
+  job_close_in(job);
   int status = job_wait(job, -1);
 
   // prepare the out parameters if requested
@@ -351,17 +347,6 @@ static void system_data_cb(RStream *rstream, void *data, bool eof)
   rstream_read(rstream, buf->data + buf->len, nread);
 
   buf->len += nread;
-}
-
-static void system_write_cb(WStream *wstream,
-                            void *data,
-                            size_t pending,
-                            int status)
-{
-  if (pending == 0) {
-    Job *job = data;
-    job_close_in(job);
-  }
 }
 
 /// Parses a command string into a sequence of words, taking quotes into

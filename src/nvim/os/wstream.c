@@ -208,14 +208,13 @@ static void write_cb(uv_write_t *req, int status)
 
   release_wbuffer(data->buffer);
 
-  data->wstream->pending_reqs--;
-
   if (data->wstream->cb) {
     data->wstream->cb(data->wstream,
                       data->wstream->data,
-                      data->wstream->pending_reqs,
                       status);
   }
+
+  data->wstream->pending_reqs--;
 
   if (data->wstream->freed && data->wstream->pending_reqs == 0) {
     // Last pending write, free the wstream;
