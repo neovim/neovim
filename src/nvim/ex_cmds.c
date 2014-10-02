@@ -1203,15 +1203,14 @@ filterend:
   free(otmp);
 }
 
-/*
- * Call a shell to execute a command.
- * When "cmd" is NULL start an interactive shell.
- */
-void 
-do_shell (
-    char_u *cmd,
-    int flags              /* may be SHELL_DOOUT when output is redirected */
-)
+/// Calls a shell to execute a command.
+///
+/// When "cmd" is NULL start an interactive shell.
+///
+/// @param cmd   The command string to execute.
+/// @param flags Flags to send to `os_call_shell()`. May be `kShellOptDoOut`
+///              when redirecting output.
+void do_shell(char_u *cmd, int flags)
 {
   int save_nwr;
 
