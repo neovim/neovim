@@ -945,7 +945,7 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
     msg_clr_eos();
     windgoto(msg_row, msg_col);
 
-    do_shell(newcmd, 0);
+    do_shell(newcmd, 0, NULL, NULL);
   } else {                            /* :range! */
     /* Careful: This may recursively call do_bang() again! (because of
      * autocommands) */
@@ -1207,10 +1207,13 @@ filterend:
 ///
 /// When "cmd" is NULL start an interactive shell.
 ///
+///
 /// @param cmd   The command string to execute.
-/// @param flags Flags to send to `os_call_shell()`. May be `kShellOptDoOut`
-///              when redirecting output.
-void do_shell(char_u *cmd, int flags)
+/// @param flags Flags to send to @ref `os_call_shell()`.
+///              May be @ref `kShellOptDoOut` when redirecting output.
+/// @param shell_read A callback to execute on stdout.
+/// @param data  Data associated with `shell_read`.
+void do_shell(char_u *cmd, int flags, shell_read_cb shell_read, void *data)
 {
   int save_nwr;
 
@@ -1251,7 +1254,7 @@ void do_shell(char_u *cmd, int flags)
   if (!swapping_screen())
     windgoto(msg_row, msg_col);
   cursor_on();
-  (void)call_shell(cmd, kShellOptCooked | flags, NULL, NULL, NULL);
+  (void)call_shell(cmd, kShellOptCooked | flags, NULL, shell_read, data);
   did_check_timestamps = FALSE;
   need_check_timestamps = TRUE;
 
