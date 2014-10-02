@@ -15148,8 +15148,6 @@ static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
       ret = vim_strsave(ret);
     } else {
       ret = NULL;
-    }
-    if (tv->v_type != VAR_STRING) {
       *len = -1;
     }
     return ret;
