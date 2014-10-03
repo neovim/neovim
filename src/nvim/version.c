@@ -25,7 +25,6 @@
 #include "nvim/version_defs.h"
 
 char *Version = VIM_VERSION_SHORT;
-static char *mediumVersion = VIM_VERSION_MEDIUM;
 
 char *longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
 
@@ -800,12 +799,6 @@ void list_version(void)
     }
   }
 
-#ifdef MODIFIED_BY
-  MSG_PUTS("\n");
-  MSG_PUTS(_("Modified by "));
-  MSG_PUTS(MODIFIED_BY);
-#endif  // ifdef MODIFIED_BY
-
 #ifdef HAVE_PATHDEF
 
   if ((*compiled_user != NUL) || (*compiled_sys != NUL)) {
@@ -926,17 +919,9 @@ void intro_message(int colon)
   int i;
   int row;
   int blanklines;
-  int sponsor;
   char *p;
   static char *(lines[]) = {
-    N_("VIM - Vi IMproved"),
-    "",
-    N_("version "),
-    N_("by Bram Moolenaar et al."),
-#ifdef MODIFIED_BY
-    " ",
-#endif  // ifdef MODIFIED_BY
-    N_("Vim is open source and freely distributable"),
+    N_("NEOVIM"),
     "",
     N_("Help poor children in Uganda!"),
     N_("type  :help iccf<Enter>       for information "),
@@ -968,11 +953,6 @@ void intro_message(int colon)
     blanklines = 0;
   }
 
-  // Show the sponsor and register message one out of four times, the Uganda
-  // message two out of four times.
-  sponsor = (int)time(NULL);
-  sponsor = ((sponsor & 2) == 0) - ((sponsor & 4) == 0);
-
   // start displaying the message lines after half of the blank lines
   row = blanklines / 2;
 
@@ -986,22 +966,8 @@ void intro_message(int colon)
         continue;
       }
 
-      if (sponsor != 0) {
-        if (strstr(p, "children") != NULL) {
-          p = sponsor < 0
-              ? N_("Sponsor Vim development!")
-              : N_("Become a registered Vim user!");
-        } else if (strstr(p, "iccf") != NULL) {
-          p = sponsor < 0
-              ? N_("type  :help sponsor<Enter>    for information ")
-              : N_("type  :help register<Enter>   for information ");
-        } else if (strstr(p, "Orphans") != NULL) {
-          p = N_("menu  Help->Sponsor/Register  for information    ");
-        }
-      }
-
       if (*p != NUL) {
-        do_intro_line(row, (char_u *)_(p), i == 2, 0);
+        do_intro_line(row, (char_u *)_(p));
       }
       row++;
     }
@@ -1013,45 +979,16 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
+static void do_intro_line(int row, char_u *mesg)
 {
-  char_u vers[20];
   int col;
   char_u *p;
   int l;
   int clen;
 
-#ifdef MODIFIED_BY
-# define MODBY_LEN 150
-  char_u modby[MODBY_LEN];
-
-  if (*mesg == ' ') {
-    l = STRLCPY(modby, _("Modified by "), MODBY_LEN);
-    if (l < MODBY_LEN - 1) {
-      STRLCPY(modby + l, MODIFIED_BY, MODBY_LEN - l);
-    }
-    mesg = modby;
-  }
-#endif  // ifdef MODIFIED_BY
-
   // Center the message horizontally.
   col = vim_strsize(mesg);
 
-  if (add_version) {
-    STRCPY(vers, mediumVersion);
-
-    if (highest_patch()) {
-      // Check for 9.9x or 9.9xx, alpha/beta version
-      if (isalpha((int)vers[3])) {
-        int len = (isalpha((int)vers[4])) ? 5 : 4;
-        sprintf((char *)vers + len, ".%d%s", highest_patch(),
-                mediumVersion + len);
-      } else {
-        sprintf((char *)vers + 3,   ".%d",   highest_patch());
-      }
-    }
-    col += (int)STRLEN(vers);
-  }
   col = (Columns - col) / 2;
 
   if (col < 0) {
@@ -1071,13 +1008,8 @@ static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
         clen += byte2cells(p[l]);
       }
     }
-    screen_puts_len(p, l, row, col, *p == '<' ? hl_attr(HLF_8) : attr);
+    screen_puts_len(p, l, row, col, *p == '<' ? hl_attr(HLF_8) : 0);
     col += clen;
-  }
-
-  // Add the version number to the version line.
-  if (add_version) {
-    screen_puts(vers, row, col, 0);
   }
 }
 
