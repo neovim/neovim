@@ -856,7 +856,6 @@ Short explanation of each option:		*option-list*
 'shellredir'	  'srr'     string to put output of filter in a temp file
 'shellslash'	  'ssl'     use forward slash for shell file names
 'shelltemp'	  'stmp'    whether to use a temp file for shell commands
-'shelltype'	  'st'	    Amiga: influences how to use a shell
 'shellxescape'	  'sxe'     characters to escape when 'shellxquote' is (
 'shellxquote'	  'sxq'     like 'shellquote', but include redirection
 'shiftround'	  'sr'	    round indent to multiple of shiftwidth

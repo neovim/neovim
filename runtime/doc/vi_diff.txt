@@ -620,9 +620,6 @@ all currently set marks.  The commands "']" and "`]" jump to the end of the
 previous operator or end of the text inserted with the put command.  "'[" and
 "`[" do jump to the start.
 
-The 'shelltype' option can be set to reflect the type of shell used on the
-Amiga.
-
 The 'highlight' option can be set for the highlight mode to be used for
 several commands.
 
