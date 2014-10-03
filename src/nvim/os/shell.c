@@ -33,7 +33,6 @@ typedef struct {
   size_t rpos;
   uv_buf_t bufs[2];
   uv_stream_t *shell_stdin;
-  garray_T ga;
   shell_read_cb shell_read;
   void *userdata;
 } ProcessData;
@@ -132,7 +131,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
     .wbuffer = NULL,
     .rpos = 0,
     .shell_read = out_cb ? out_cb : do_read_cb,
-    .userdata = data ? data : &pdata.ga,
+    .userdata = data,
   };
 
   out_flush();
@@ -190,7 +189,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
       proc_stdout.data = &pdata;
       proc_stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
       proc_stdio[1].data.stream = (uv_stream_t *)&proc_stdout;
-      ga_init(&pdata.ga, 1, BUFFER_LENGTH);
     }
   }
 
@@ -232,18 +230,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
       uv_process_kill(&proc, SIGINT);
       got_int = false;
     }
-  }
-
-  if (opts & kShellOptRead) {
-    if (!GA_EMPTY(&pdata.ga)) {
-      // If there's an unfinished line in the growable array, append it now.
-      append_ga_line(&pdata.ga);
-      // remember that the NL was missing
-      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-    } else {
-      curbuf->b_no_eol_lnum = 0;
-    }
-    ga_clear(&pdata.ga);
   }
 
   if (opts & kShellOptWrite) {
@@ -514,19 +500,25 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 
 static void do_read_cb(char_u *buf, size_t cnt, void *data, bool eof)
 {
-  // TODO(tarruda): avoid using a growable array for this, refactor the
-  // algorithm to call `ml_append` directly(skip unnecessary copies/resizes)
-  garray_T *ga = data;
-  for (size_t i = 0; i < cnt; ++i) {
-    if (buf[i] == NL) {
-      // Insert the line
-      append_ga_line(ga);
-    } else if (buf[i] == NUL) {
-      // Translate NUL to NL
-      ga_append(ga, NL);
+  char_u *end = buf + cnt;
+  bool ended_in_nl = true;
+  for (char_u *ptr = buf; ptr < end; ) {
+    char_u *next = xmemscan(ptr, NL, end - ptr);
+    ended_in_nl = (next != end && *next == NL);
+    memchrsub(ptr, NUL, NL, next - ptr);
+
+    if (next != end) {
+      *(next++) = NUL;  // Include the terminating character.
+    }
+
+    ml_append(curwin->w_cursor.lnum++, ptr, next - ptr, false);
+    ptr = next;
+  }
+  if (eof) {
+    if (ended_in_nl) {
+      curbuf->b_no_eol_lnum = 0;
     } else {
-      // buffer data into the grow array
-      ga_append(ga, buf[i]);
+      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
     }
   }
 
