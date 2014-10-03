@@ -831,6 +831,8 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new,
         cmd,
         kShellOptFilter | kShellOptSilent | kShellOptDoOut,
         NULL,
+        NULL,
+        0,
         read,
         data
         );
@@ -926,7 +928,8 @@ void ex_diffpatch(exarg_T *eap)
 #endif  // ifdef UNIX
     // Avoid ShellCmdPost stuff
     block_autocmds();
-    (void)call_shell(buf, kShellOptFilter | kShellOptCooked, NULL, NULL, NULL);
+    (void)call_shell(buf, kShellOptFilter | kShellOptCooked, NULL, NULL, 0,
+                     NULL, NULL);
     unblock_autocmds();
   }
 

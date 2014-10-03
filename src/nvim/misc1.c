@@ -3437,7 +3437,7 @@ get_cmd_output (
    */
   ++no_check_timestamps;
   call_shell(command, kShellOptDoOut | kShellOptExpand | flags, NULL,
-             (shell_read_cb) cmd_output_cb, &gout);
+             NULL, 0, (shell_read_cb) cmd_output_cb, &gout);
   --no_check_timestamps;
 
   free(command);

@@ -1097,6 +1097,8 @@ do_filter (
         kShellOptFilter | kShellOptCooked | shell_flags,
         NULL,
         NULL,
+        0,
+        NULL,
         NULL
         )) {
     redraw_later_clear();
@@ -1254,7 +1256,8 @@ void do_shell(char_u *cmd, int flags, shell_read_cb shell_read, void *data)
   if (!swapping_screen())
     windgoto(msg_row, msg_col);
   cursor_on();
-  (void)call_shell(cmd, kShellOptCooked | flags, NULL, shell_read, data);
+  (void)call_shell(cmd, kShellOptCooked | flags, NULL, NULL, 0,
+                   shell_read, data);
   did_check_timestamps = FALSE;
   need_check_timestamps = TRUE;
 

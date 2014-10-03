@@ -1163,6 +1163,8 @@ int mch_expand_wildcards(int num_pat, char_u **pat, int *num_file,
       shellopts,
       extra_shell_arg,
       NULL,
+      0,
+      NULL,
       NULL
       );
 

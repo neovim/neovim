@@ -28,7 +28,6 @@
 typedef struct {
   bool reading;
   int old_state, old_mode, exit_status, exited;
-  char *wbuffer;
   char rbuffer[BUFFER_LENGTH];
   size_t rpos;
   uv_buf_t bufs[2];
@@ -110,10 +109,13 @@ void shell_free_argv(char **argv)
 ///        shell
 /// @param opts Various options that control how the shell will work
 /// @param extra_shell_arg Extra argument to be passed to the shell
+/// @param input Input to send to stdin.
+/// @param input_len The number of bytes in `input`.
 /// @param out_cb A callback to call on every read, or NULL.
 ///               Incompatible with kShellOptRead.
 /// @param data Data associated with `out_cb`.
 int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
+                  char_u *input, size_t input_len,
                   shell_read_cb out_cb, void *data)
 {
   uv_stdio_container_t proc_stdio[3];
@@ -128,7 +130,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
     .old_mode = cur_tmode,
     .old_state = State,
     .shell_stdin = (uv_stream_t *)&proc_stdin,
-    .wbuffer = NULL,
     .rpos = 0,
     .shell_read = out_cb ? out_cb : do_read_cb,
     .userdata = data,
@@ -173,11 +174,11 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
     proc_stdio[1].flags = UV_IGNORE;
     proc_stdio[2].flags = UV_IGNORE;
   }
-  if (!(opts & (kShellOptHideMess | kShellOptExpand)) || out_cb)
+  if (!(opts & (kShellOptHideMess | kShellOptExpand)) || out_cb || input)
   {
     State = EXTERNCMD;
 
-    if (opts & kShellOptWrite) {
+    if (opts & kShellOptWrite || input) {
       // Write from the current buffer into the process stdin
       uv_pipe_init(uv_default_loop(), &proc_stdin, 0);
       write_req.data = &pdata;
@@ -208,9 +209,17 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
   // Assign the flag address after `proc` is initialized by `uv_spawn`
   proc.data = &pdata;
 
-  if (opts & kShellOptWrite) {
+  bool must_free_input = false;
+  if (opts & kShellOptWrite || input) {
+    if (!input) {
+      input = save_selection(&input_len);
+      must_free_input = true;
+    }
+    uv_buf_t uvbuf;
+    uvbuf.base = (char *) input;
+    uvbuf.len = input_len;
     // Queue everything for writing to the shell stdin
-    write_selection(&write_req);
+    uv_write(&write_req, pdata.shell_stdin, &uvbuf, 1, write_cb);
     expected_exits++;
   }
 
@@ -234,8 +243,8 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
     }
   }
 
-  if (opts & kShellOptWrite) {
-    free(pdata.wbuffer);
+  if (must_free_input) {
+    free(input);
   }
 
   return proc_cleanup_exit(&pdata, &proc_opts, opts);
@@ -409,16 +418,15 @@ static int word_length(const char_u *str)
 /// before we finish writing.
 /// Queues selected range for writing to the child process stdin.
 ///
-/// @param req The structure containing information to peform the write
-static void write_selection(uv_write_t *req)
+/// @param[out] size The length of the output.
+/// @returns an allocated string holding the selection's contents.
+static char_u *save_selection(size_t *size)
 {
-  ProcessData *pdata = (ProcessData *)req->data;
   // TODO(tarruda): use a static buffer for up to a limit(BUFFER_LENGTH) and
   // only after filled we should start allocating memory(skip unnecessary
   // allocations for small writes)
   int buflen = BUFFER_LENGTH;
-  pdata->wbuffer = (char *)xmalloc(buflen);
-  uv_buf_t uvbuf;
+  char_u *buf = xmalloc(buflen);
   linenr_T lnum = curbuf->b_op_start.lnum;
   int off = 0;
   int written = 0;
@@ -436,18 +444,18 @@ static void write_selection(uv_write_t *req)
       if (off + len >= buflen) {
         // Resize the buffer
         buflen *= 2;
-        pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
+        buf = xrealloc(buf, buflen);
       }
-      pdata->wbuffer[off++] = NUL;
+      buf[off++] = NUL;
     } else {
       char_u  *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : s - (lp + written);
       while (off + len >= buflen) {
         // Resize the buffer
         buflen *= 2;
-        pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
+        buf = xrealloc(buf, buflen);
       }
-      memcpy(pdata->wbuffer + off, lp + written, len);
+      memcpy(buf + off, lp + written, len);
       off += len;
     }
     if (len == l) {
@@ -463,9 +471,9 @@ static void write_selection(uv_write_t *req)
         if (off + 1 >= buflen) {
           // Resize the buffer
           buflen *= 2;
-          pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
+          buf = xrealloc(buf, buflen);
         }
-        pdata->wbuffer[off++] = NL;
+        buf[off++] = NL;
       }
       ++lnum;
       if (lnum > curbuf->b_op_end.lnum) {
@@ -478,10 +486,8 @@ static void write_selection(uv_write_t *req)
     }
   }
 
-  uvbuf.base = pdata->wbuffer;
-  uvbuf.len = off;
-
-  uv_write(req, pdata->shell_stdin, &uvbuf, 1, write_cb);
+  *size = off;
+  return buf;
 }
 
 // "Allocates" a buffer for reading from the shell stdout.
