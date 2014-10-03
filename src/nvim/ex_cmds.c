@@ -4614,7 +4614,7 @@ prepare_tagpreview (
    */
   if (!curwin->w_p_pvw) {
     bool found_win = false;
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_pvw) {
         win_enter(wp, undo_sync);
         found_win = true;

@@ -7399,7 +7399,7 @@ static void f_bufwinnr(typval_T *argvars, typval_T *rettv)
   buf_T *buf = get_buf_tv(&argvars[0], TRUE);
   int winnr = 0;
   bool found_buf = false;
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     ++winnr;
     if (wp->w_buffer == buf) {
       found_buf = true;
@@ -15028,7 +15028,7 @@ static void f_winrestcmd(typval_T *argvars, typval_T *rettv)
   char_u buf[50];
 
   ga_init(&ga, (int)sizeof(char), 70);
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     sprintf((char *)buf, "%dresize %d|", winnr, wp->w_height);
     ga_concat(&ga, buf);
     sprintf((char *)buf, "vert %dresize %d|", winnr, wp->w_width);

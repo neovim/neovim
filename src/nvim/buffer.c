@@ -1760,7 +1760,7 @@ buflist_findpat (
               /* Ignore the match if the buffer is not open in
                * the current tab. */
               bool found_window = false;
-              FOR_ALL_WINDOWS(wp) {
+              FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
                 if (wp->w_buffer == buf) {
                   found_window = true;
                   break;
@@ -2025,7 +2025,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
 static bool wininfo_other_tab_diff(wininfo_T *wip)
 {
   if (wip->wi_opt.wo_diff) {
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       /* return false when it's a window in the current tab page, thus
        * the buffer was in diff mode here */
       if (wip->wi_win == wp) {
@@ -3761,7 +3761,7 @@ do_arg_all (
     if (opened[i] > 0) {
       /* Move the already present window to below the current window */
       if (curwin->w_arg_idx != i) {
-        FOR_ALL_WINDOWS(wp) {
+        FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
           if (wp->w_arg_idx == i) {
             if (keep_tabs) {
               new_curwin = wp;

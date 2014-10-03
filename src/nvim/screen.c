@@ -206,7 +206,7 @@ void redraw_later_clear(void)
  */
 void redraw_all_later(int type)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     redraw_win_later(wp, type);
   }
 }
@@ -221,7 +221,7 @@ void redraw_curbuf_later(int type)
 
 void redraw_buf_later(buf_T *buf, int type)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer == buf) {
       redraw_win_later(wp, type);
     }
@@ -432,7 +432,7 @@ void update_screen(int type)
       check_for_delay(FALSE);
       if (screen_ins_lines(0, 0, msg_scrolled, (int)Rows, NULL) == FAIL)
         type = CLEAR;
-      FOR_ALL_WINDOWS(wp) {
+      FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
         if (wp->w_winrow < msg_scrolled) {
           if (wp->w_winrow + wp->w_height > msg_scrolled
               && wp->w_redr_type < REDRAW_TOP
@@ -506,7 +506,7 @@ void update_screen(int type)
    * Correct stored syntax highlighting info for changes in each displayed
    * buffer.  Each buffer must only be done once.
    */
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_buffer->b_mod_set) {
       win_T       *wwp;
 
@@ -527,7 +527,7 @@ void update_screen(int type)
    */
   did_one = FALSE;
   search_hl.rm.regprog = NULL;
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_type != 0) {
       cursor_off();
       if (!did_one) {
@@ -550,7 +550,7 @@ void update_screen(int type)
 
   /* Reset b_mod_set flags.  Going through all windows is probably faster
    * than going through all buffers (there could be many buffers). */
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     wp->w_buffer->b_mod_set = FALSE;
   }
 
@@ -659,7 +659,7 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
     win_foldinfo.fi_level = 0;
 
     /* update/delete a specific mark */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (buf != NULL && lnum > 0) {
         if (wp->w_buffer == buf && lnum >= wp->w_topline
             && lnum < wp->w_botline) {
@@ -688,7 +688,7 @@ void update_debug_sign(buf_T *buf, linenr_T lnum)
     /* update all windows that need updating */
     update_prepare();
 
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_redr_type != 0) {
         win_update(wp);
       }
@@ -4566,7 +4566,7 @@ void rl_mirror(char_u *str)
 void status_redraw_all(void)
 {
 
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
@@ -4579,7 +4579,7 @@ void status_redraw_all(void)
  */
 void status_redraw_curbuf(void)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_status_height != 0 && wp->w_buffer == curbuf) {
       wp->w_redr_status = TRUE;
       redraw_later(VALID);
@@ -4592,7 +4592,7 @@ void status_redraw_curbuf(void)
  */
 void redraw_statuslines(void)
 {
-  FOR_ALL_WINDOWS(wp) {
+  FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
     if (wp->w_redr_status) {
       win_redr_status(wp);
     }
@@ -6938,7 +6938,7 @@ int win_ins_lines(win_T *wp, int row, int line_count, int invalid, int mayclear)
     /* deletion will have messed up other windows */
     if (did_delete) {
       wp->w_redr_status = TRUE;
-      win_rest_invalid(W_NEXT(wp));
+      win_rest_invalid(wp->w_next);
     }
     return FAIL;
   }

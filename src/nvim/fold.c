@@ -463,7 +463,7 @@ void newFoldLevel(void)
     /*
      * Set the same foldlevel in other windows in diff mode.
      */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
         wp->w_p_fdl = curwin->w_p_fdl;
         newFoldLevelWin(wp);
@@ -1143,7 +1143,7 @@ setManualFold (
      * Do the same operation in other windows in diff mode.  Calculate the
      * line number from the diffs.
      */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp != curwin && foldmethodIsDiff(wp) && wp->w_p_scb) {
         dlnum = diff_lnum_win(curwin->w_cursor.lnum, wp);
         if (dlnum != 0) {

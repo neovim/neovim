@@ -475,7 +475,7 @@ int main(int argc, char **argv)
 
   if (params.diff_mode) {
     /* set options in each window for "vimdiff". */
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       diff_win_options(wp, TRUE);
     }
   }

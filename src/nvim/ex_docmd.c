@@ -5188,7 +5188,7 @@ static void ex_close(exarg_T *eap)
  */
 static void ex_pclose(exarg_T *eap)
 {
-  FOR_ALL_WINDOWS(win) {
+  FOR_ALL_WINDOWS_IN_TAB(win, curtab) {
     if (win->w_p_pvw) {
       ex_win_close(eap->forceit, win, NULL);
       break;
@@ -6137,7 +6137,7 @@ static void ex_syncbind(exarg_T *eap)
    */
   if (curwin->w_p_scb) {
     topline = curwin->w_topline;
-    FOR_ALL_WINDOWS(wp) {
+    FOR_ALL_WINDOWS_IN_TAB(wp, curtab) {
       if (wp->w_p_scb && wp->w_buffer) {
         y = wp->w_buffer->b_ml.ml_line_count - p_so;
         if (topline > y) {
@@ -8025,7 +8025,7 @@ makeopens (
      * Remember the window number of the current window after restoring.
      */
     nr = 0;
-    for (wp = tab_firstwin; wp != NULL; wp = W_NEXT(wp)) {
+    for (wp = tab_firstwin; wp != NULL; wp = wp->w_next) {
       if (ses_do_win(wp))
         ++nr;
       else
