@@ -12,9 +12,14 @@ set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
 
 list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
 
-set(NEOVIM_VERSION_MAJOR 0)
-set(NEOVIM_VERSION_MINOR 0)
-set(NEOVIM_VERSION_PATCH 0)
+include(GetGitRevisionDescription)
+get_git_head_revision(GIT_REFSPEC GIT_SHA1)
+set(NVIM_VERSION_MAJOR 0)
+set(NVIM_VERSION_MINOR 0)
+set(NVIM_VERSION_PATCH 0)
+set(NVIM_VERSION_PRERELEASE "-alpha")
+# TODO(justinmk): do not set this for "release" builds #1071
+set(NVIM_VERSION_BUILD "+${GIT_SHA1}")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
