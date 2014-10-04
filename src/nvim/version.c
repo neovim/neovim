@@ -1,14 +1,7 @@
 /// @file version.c
 ///
-/// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred)
-/// It has been changed beyond recognition since then.
-///
-/// Differences between version 6.x and 7.x can be found with ":help version7".
-/// Differences between version 5.x and 6.x can be found with ":help version6".
-/// Differences between version 4.x and 5.x can be found with ":help version5".
-/// Differences between version 3.0 and 4.x can be found with ":help version4".
-/// All the remarks about older versions have been removed, they are not very
-/// interesting.
+/// Nvim was forked from Vim 7.4.160.
+/// Vim originated from Stevie version 3.6 (Fish disk 217) by GRWalter (Fred).
 
 #include <inttypes.h>
 
@@ -25,9 +18,8 @@
 #include "nvim/version_defs.h"
 
 char *Version = VIM_VERSION_SHORT;
-static char *mediumVersion = VIM_VERSION_MEDIUM;
 
-char *longVersion = VIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
+char *longVersion = NVIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
 
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -800,12 +792,6 @@ void list_version(void)
     }
   }
 
-#ifdef MODIFIED_BY
-  MSG_PUTS("\n");
-  MSG_PUTS(_("Modified by "));
-  MSG_PUTS(MODIFIED_BY);
-#endif  // ifdef MODIFIED_BY
-
 #ifdef HAVE_PATHDEF
 
   if ((*compiled_user != NUL) || (*compiled_sys != NUL)) {
@@ -929,13 +915,9 @@ void intro_message(int colon)
   int sponsor;
   char *p;
   static char *(lines[]) = {
-    N_("VIM - Vi IMproved"),
+    N_(NVIM_VERSION_LONG),
     "",
-    N_("version "),
     N_("by Bram Moolenaar et al."),
-#ifdef MODIFIED_BY
-    " ",
-#endif  // ifdef MODIFIED_BY
     N_("Vim is open source and freely distributable"),
     "",
     N_("Help poor children in Uganda!"),
@@ -943,7 +925,6 @@ void intro_message(int colon)
     "",
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>  or  <F1>  for on-line help"),
-    N_("type  :help version7<Enter>   for version info"),
     NULL,
     "",
     N_("Running in Vi compatible mode"),
@@ -1001,7 +982,7 @@ void intro_message(int colon)
       }
 
       if (*p != NUL) {
-        do_intro_line(row, (char_u *)_(p), i == 2, 0);
+        do_intro_line(row, (char_u *)_(p), 0);
       }
       row++;
     }
@@ -1013,45 +994,16 @@ void intro_message(int colon)
   }
 }
 
-static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
+static void do_intro_line(int row, char_u *mesg, int attr)
 {
-  char_u vers[20];
   int col;
   char_u *p;
   int l;
   int clen;
 
-#ifdef MODIFIED_BY
-# define MODBY_LEN 150
-  char_u modby[MODBY_LEN];
-
-  if (*mesg == ' ') {
-    l = STRLCPY(modby, _("Modified by "), MODBY_LEN);
-    if (l < MODBY_LEN - 1) {
-      STRLCPY(modby + l, MODIFIED_BY, MODBY_LEN - l);
-    }
-    mesg = modby;
-  }
-#endif  // ifdef MODIFIED_BY
-
   // Center the message horizontally.
   col = vim_strsize(mesg);
 
-  if (add_version) {
-    STRCPY(vers, mediumVersion);
-
-    if (highest_patch()) {
-      // Check for 9.9x or 9.9xx, alpha/beta version
-      if (isalpha((int)vers[3])) {
-        int len = (isalpha((int)vers[4])) ? 5 : 4;
-        sprintf((char *)vers + len, ".%d%s", highest_patch(),
-                mediumVersion + len);
-      } else {
-        sprintf((char *)vers + 3,   ".%d",   highest_patch());
-      }
-    }
-    col += (int)STRLEN(vers);
-  }
   col = (Columns - col) / 2;
 
   if (col < 0) {
@@ -1073,11 +1025,6 @@ static void do_intro_line(int row, char_u *mesg, int add_version, int attr)
     }
     screen_puts_len(p, l, row, col, *p == '<' ? hl_attr(HLF_8) : attr);
     col += clen;
-  }
-
-  // Add the version number to the version line.
-  if (add_version) {
-    screen_puts(vers, row, col, 0);
   }
 }
 
