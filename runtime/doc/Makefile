@@ -40,7 +40,6 @@ DOCS = \
 	if_perl.txt \
 	if_pyth.txt \
 	if_ruby.txt \
-	if_sniff.txt \
 	if_tcl.txt \
 	indent.txt \
 	index.txt \
@@ -162,7 +161,6 @@ HTMLS = \
 	if_perl.html \
 	if_pyth.html \
 	if_ruby.html \
-	if_sniff.html \
 	if_tcl.html \
 	indent.html \
 	index.html \

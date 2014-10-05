@@ -1486,7 +1486,6 @@ tag	      command	      action ~
 |:smenu|	:sme[nu]	add menu for Select mode
 |:snext|	:sn[ext]	split window and go to next file in the
 				argument list
-|:sniff|	:sni[ff]	send request to sniff
 |:snomagic|	:sno[magic]	:substitute with 'nomagic'
 |:snoremap|	:snor[emap]	like ":noremap" but for Select mode
 |:snoremenu|	:snoreme[nu]	like ":noremenu" but for Select mode

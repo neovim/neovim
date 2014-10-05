@@ -264,9 +264,6 @@ doesn't work if the tags file isn't sorted.
 The 'taglength' option can be used to tell Vim the number of significant
 characters in a tag.
 
-When you use the SNiFF+ program, you can use the Vim interface to it |sniff|.
-SNiFF+ is a commercial program.
-
 Cscope is a free program.  It does not only find places where an identifier is
 declared, but also where it is used.  See |cscope|.
 

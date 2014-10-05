@@ -409,7 +409,6 @@ m  *+ruby/dyn*		Ruby interface |ruby-dynamic| |/dyn|
 N  *+scrollbind*	|'scrollbind'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
-m  *+sniff*		SniFF interface |sniff|
 N  *+startuptime*	|--startuptime| argument
 N  *+statusline*	Options 'statusline', 'rulerformat' and special
 			formats of 'titlestring' and 'iconstring'
