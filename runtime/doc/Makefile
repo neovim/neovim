@@ -51,7 +51,6 @@ DOCS = \
 	mlang.txt \
 	motion.txt \
 	msgpack_rpc.txt \
-	netbeans.txt \
 	nvim_clipboard.txt \
 	nvim_intro.txt \
 	nvim_python.txt \
@@ -170,7 +169,6 @@ HTMLS = \
 	mlang.html \
 	motion.html \
 	msgpack_rpc.html \
-	netbeans.html \
 	nvim_clipboard.html \
 	nvim_intro.html \
 	nvim_python.html \

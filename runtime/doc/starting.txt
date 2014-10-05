@@ -372,8 +372,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		Can also be done with ":set updatecount=0".  You can switch it
 		on again by setting the 'updatecount' option to some value,
 		e.g., ":set uc=100".
-		NOTE: Don't combine -n with -b, making -nb, because that has a
-		different meaning: |-nb|.
 		'updatecount' is set to 0 AFTER executing commands from a
 		vimrc file, but before the GUI initializations.  Thus it
 		overrides a setting for 'updatecount' in a vimrc file, but not
@@ -603,16 +601,6 @@ a slash.  Thus "-R" means recovery and "-/R" readonly.
 		application.  Make sure that it is specific enough.
 		Note that the implementation is still primitive.  It won't
 		work with all applications and the menu doesn't work.
-
--nb							*-nb*
--nb={fname}
--nb:{hostname}:{addr}:{password}
-		Attempt connecting to Netbeans and become an editor server for
-		it.  The second form specifies a file to read connection info
-		from.  The third form specifies the hostname, address and
-		password for connecting to Netbeans. |netbeans-run|
-		{only available when compiled with the |+netbeans_intg|
-		feature; if not then -nb will make Vim exit}
 
 If the executable is called "view", Vim will start in Readonly mode.  This is
 useful if you can make a hard or symbolic link from "view" to "vim".

@@ -1350,9 +1350,6 @@ tag	      command	      action ~
 |:mode|		:mod[e]		show or change the screen mode
 |:mzscheme|	:mz[scheme]	execute MzScheme command
 |:mzfile|	:mzf[ile]	execute MzScheme script file
-|:nbclose|	:nbc[lose]	close the current Netbeans session
-|:nbkey|	:nb[key]	pass a key to Netbeans
-|:nbstart|	:nbs[art]	start a new Netbeans session
 |:next|		:n[ext]		go to next file in the argument list
 |:new|		:new		create a new empty window
 |:nmap|		:nm[ap]		like ":map" but for Normal mode
