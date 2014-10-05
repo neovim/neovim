@@ -59,17 +59,9 @@ DOCS = \
 	nvim_intro.txt \
 	nvim_python.txt \
 	options.txt \
-	os_390.txt \
-	os_amiga.txt \
-	os_beos.txt \
 	os_dos.txt \
 	os_mac.txt \
-	os_mint.txt \
-	os_os2.txt \
-	os_qnx.txt \
-	os_risc.txt \
 	os_unix.txt \
-	os_vms.txt \
 	os_win32.txt \
 	pattern.txt \
 	pi_getscript.txt \
@@ -190,17 +182,9 @@ HTMLS = \
 	nvim_intro.html \
 	nvim_python.html \
 	options.html \
-	os_390.html \
-	os_amiga.html \
-	os_beos.html \
 	os_dos.html \
 	os_mac.html \
-	os_mint.html \
-	os_os2.html \
-	os_qnx.html \
-	os_risc.html \
 	os_unix.html \
-	os_vms.html \
 	os_win32.html \
 	pattern.html \
 	pi_getscript.html \

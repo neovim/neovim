@@ -355,7 +355,6 @@ N  *+gettext*		message translations |multi-lang|
    *+GUI_neXtaw*	Unix only: neXtaw |GUI|
    *+GUI_GTK*		Unix only: GTK+ |GUI|
    *+GUI_Motif*		Unix only: Motif |GUI|
-   *+GUI_Photon*	QNX only:  Photon |GUI|
 m  *+hangul_input*	Hangul input support hangul
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
@@ -379,7 +378,6 @@ N  *+mouseshape*	|'mouseshape'|
 B  *+mouse_dec*		Unix only: Dec terminal mouse handling |dec-mouse|
 N  *+mouse_gpm*		Unix only: Linux console mouse handling |gpm-mouse|
 B  *+mouse_netterm*	Unix only: netterm mouse handling |netterm-mouse|
-N  *+mouse_pterm*	QNX only: pterm mouse handling |qnx-terminal|
 N  *+mouse_sysmouse*	Unix only: *BSD console mouse handling |sysmouse|
 B  *+mouse_sgr*		Unix only: sgr mouse handling |sgr-mouse|
 B  *+mouse_urxvt*	Unix only: urxvt mouse handling |urxvt-mouse|
