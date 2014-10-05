@@ -411,7 +411,6 @@ N  *+smartindent*	|'smartindent'|
 N  *+startuptime*	|--startuptime| argument
 N  *+statusline*	Options 'statusline', 'rulerformat' and special
 			formats of 'titlestring' and 'iconstring'
-m  *+sun_workshop*	|workshop|
 N  *+syntax*		Syntax highlighting |syntax|
    *+system()*		Unix only: opposite of |+fork|
 N  *+tag_binary*	binary searching in tags file |tag-binary-search|

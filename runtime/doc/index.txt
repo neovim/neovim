@@ -1600,7 +1600,6 @@ tag	      command	      action ~
 				argument list
 |:wq|		:wq		write to a file and quit window or Vim
 |:wqall|	:wqa[ll]	write all changed buffers and quit Vim
-|:wsverb|	:ws[verb]	pass the verb to workshop over IPC
 |:wundo|	:wu[ndo]	write undo information to a file
 |:wviminfo|	:wv[iminfo]	write to viminfo file
 |:xit|		:x[it]		write if buffer changed and quit window or Vim

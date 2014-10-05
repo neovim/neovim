@@ -127,8 +127,7 @@ DOCS = \
 	various.txt \
 	vi_diff.txt \
 	visual.txt \
-	windows.txt \
-	workshop.txt
+	windows.txt
 
 HTMLS = \
 	arabic.html \
@@ -249,8 +248,7 @@ HTMLS = \
 	vi_diff.html \
 	vimindex.html \
 	visual.html \
-	windows.html \
-	workshop.html
+	windows.html
 
 MANPAGES = \
 	manpages/vim.man \
