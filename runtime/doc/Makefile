@@ -36,7 +36,6 @@ DOCS = \
 	if_cscop.txt \
 	if_lua.txt \
 	if_mzsch.txt \
-	if_ole.txt \
 	if_perl.txt \
 	if_pyth.txt \
 	if_ruby.txt \
@@ -157,7 +156,6 @@ HTMLS = \
 	if_cscop.html \
 	if_lua.html \
 	if_mzsch.html \
-	if_ole.html \
 	if_perl.html \
 	if_pyth.html \
 	if_ruby.html \
