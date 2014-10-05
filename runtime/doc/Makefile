@@ -27,7 +27,6 @@ DOCS = \
 	ft_ada.txt \
 	ft_sql.txt \
 	gui.txt \
-	gui_w16.txt \
 	gui_w32.txt \
 	gui_x11.txt \
 	hebrew.txt \
@@ -151,7 +150,6 @@ HTMLS = \
 	ft_ada.html \
 	ft_sql.html \
 	gui.html \
-	gui_w16.html \
 	gui_w32.html \
 	gui_x11.html \
 	hebrew.html \
