@@ -301,7 +301,7 @@ doctags: doctags.c
 
 manpages: $(MANPAGES)
 
-# OSX groff dosn't support utf-8 as input encoding, so this won't work there.
+# OSX groff doesn't support utf-8 as input encoding, so this won't work there.
 .1.man:
 	groff -k -mandoc -Tutf8 $< | sed -e s/.^H//g > $@
 
@@ -327,12 +327,6 @@ vimindex.html: index.txt
 
 tags.ref tags.html: tags
 	$(AWK) -f maketags.awk tags >tags.html
-
-# Perl version of .txt to .html conversion.
-# There can't be two rules to produce a .html from a .txt file.
-# Just run over all .txt files each time one changes.  It's fast anyway.
-perlhtml: tags $(DOCS)
-	./vim2html.pl tags $(DOCS)
 
 clean:
 	-rm -f doctags *.html tags.ref $(MANPAGES) $(HTMLS) errors.log
