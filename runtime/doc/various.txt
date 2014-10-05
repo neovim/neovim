@@ -221,15 +221,8 @@ g8			Print the hex values of the bytes used in the
 			{not available when |+ex_extra| feature was disabled
 			at compile time}
 
-							*:sh* *:shell* *E371*
-:sh[ell]		This command starts a shell.  When the shell exits
-			(after the "exit" command) you return to Vim.  The
-			name for the shell command comes from 'shell' option.
-							*E360*
-			Note: This doesn't work when Vim on the Amiga was
-			started in QuickFix mode from a compiler, because the
-			compiler will have set stdin to a non-interactive
-			mode.
+						  *:sh* *:shell* *E371* *E360*
+:sh[ell]		Removed. {Nvim}
 
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with the shell. See also 'shell'.

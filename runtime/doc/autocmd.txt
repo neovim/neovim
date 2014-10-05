@@ -772,8 +772,10 @@ SessionLoadPost			After loading the session file created using
 				the |:mksession| command.
 							*ShellCmdPost*
 ShellCmdPost			After executing a shell command with |:!cmd|,
-				|:shell|, |:make| and |:grep|.  Can be used to
-				check for any changed files.
+				|:make| and |:grep|.  Can be used to check for
+				any changed files.
+				For non-blocking shell commands, see
+				|JobActivity|.
 							*ShellFilterPost*
 ShellFilterPost			After executing a shell command with
 				":{range}!cmd", ":w !cmd" or ":r !cmd".
