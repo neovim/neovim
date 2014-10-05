@@ -26,7 +26,6 @@
 #define BUFFER_LENGTH 1024
 
 typedef struct {
-  bool reading;
   int old_state, old_mode, exit_status, exited;
   char rbuffer[BUFFER_LENGTH];
   size_t rpos;
@@ -125,7 +124,6 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
   uv_write_t write_req;
   int expected_exits = 1;
   ProcessData pdata = {
-    .reading = false,
     .exited = 0,
     .old_mode = cur_tmode,
     .old_state = State,
@@ -495,15 +493,8 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   ProcessData *pdata = (ProcessData *)handle->data;
 
-  if (pdata->reading) {
-    buf->len = 0;
-    return;
-  }
-
   buf->base = pdata->rbuffer + pdata->rpos;
   buf->len = BUFFER_LENGTH - pdata->rpos;
-  // Avoid `alloc_cb`, `alloc_cb` sequences on windows
-  pdata->reading = true;
 }
 
 static void do_read_cb(char_u *buf, size_t cnt, void *data, bool eof)
@@ -556,7 +547,6 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
     // may need to know input has ended.
   }
 
-  pdata->reading = false;
   pdata->rpos += cnt;
 
   // Set `cnt` to the total number of bytes we'll consume this round.
