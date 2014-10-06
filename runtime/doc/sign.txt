@@ -28,10 +28,8 @@ Microsystem's dtterm does support this it's the only terminal emulator I know
 of which does).  A text sign and the highlight should be feasible in any color
 terminal emulator.
 
-Signs and highlights are not useful just for debuggers.  Sun's Visual
-WorkShop uses signs and highlights to mark build errors and SourceBrowser
-hits.  Additionally, the debugger supports 8 to 10 different signs and
-highlight colors. |workshop|  Same for Netbeans |netbeans|.
+Signs and highlights are not useful just for debuggers.  There are plugins
+that use signs to mark build errors or display version control status.
 
 There are two steps in using signs:
 

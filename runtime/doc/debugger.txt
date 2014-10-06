@@ -132,9 +132,5 @@ all the above flags:
 ==============================================================================
 3. Integrated Debuggers					*debugger-integration*
 
-One fully integrated debugger/IPE/IDE is Sun's Visual WorkShop Integrated
-Programming Environment.
-
-For Sun NetBeans support see |netbeans|.
 
  vim:tw=78:sw=4:ts=8:ft=help:norl:

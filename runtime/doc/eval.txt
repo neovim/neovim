@@ -4027,7 +4027,7 @@ jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
 		See |job-control| for more information.
 
 jobstop({job})						{Nvim} *jobstop()*
-		Stop a job created with |jobstart| by sending a `SIGTERM`
+		Stop a job created with |jobstart()| by sending a `SIGTERM`
 		to the corresponding process. If the process doesn't exit
 		cleanly soon, a `SIGKILL` will be sent. When the job is
 		finally closed, a |JobActivity| event will trigger with
@@ -5094,12 +5094,12 @@ rpcstart({prog}[, {argv}])				   {Nvim} *rpcstart()*
 		    |rpcnotify()| and |rpcstop()|
 		  - 0 on failure.
 		Example: >
-			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2']) 
+			:let rpc_chan = rpcstart('prog', ['arg1', 'arg2'])
 
 rpcstop({channel})					    {Nvim} *rpcstop()*
 		Closes a |msgpack-rpc| channel, possibly created via
-		|rpcspawn()| (Though it will also close channels created by
-		connections to |NVIM_LISTEN_ADDRESS|). It accepts the rpc 
+		|rpcstart()| (Though it will also close channels created by
+		connections to |$NVIM_LISTEN_ADDRESS|). It accepts the rpc
 		channel id as only argument.
 
 screenattr(row, col)						*screenattr()*
@@ -6714,7 +6714,6 @@ gui_photon		Compiled with Photon GUI.
 gui_running		Vim is running in the GUI, or it will start soon.
 gui_win32		Compiled with MS Windows Win32 GUI.
 gui_win32s		idem, and Win32s system being used (Windows 3.1)
-hangul_input		Compiled with Hangul input support.
 iconv			Can use iconv() for conversion.
 insert_expand		Compiled with support for CTRL-X expansion commands in
 			Insert mode.
@@ -6749,8 +6748,6 @@ multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
 mzscheme		Compiled with MzScheme interface |mzscheme|.
-netbeans_enabled	Compiled with support for |netbeans| and connected.
-netbeans_intg		Compiled with support for |netbeans|.
 ole			Compiled with OLE automation support for Win32.
 os2			OS/2 version of Vim.
 path_extra		Compiled with up/downwards search in 'path' and 'tags'
@@ -6775,7 +6772,6 @@ spell			Compiled with spell checking support |spell|.
 startuptime		Compiled with |--startuptime| support.
 statusline		Compiled with support for 'statusline', 'rulerformat'
 			and special formats of 'titlestring' and 'iconstring'.
-sun_workshop		Compiled with support for Sun |workshop|.
 syntax			Compiled with syntax highlighting support |syntax|.
 syntax_items		There are active syntax highlighting items for the
 			current buffer.

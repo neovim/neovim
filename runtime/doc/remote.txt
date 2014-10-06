@@ -194,8 +194,7 @@ version compiled with OLE.  Windows messages are used, this works on any
 version of MS-Windows.  But only communication within one system is possible.
 
 Since MS-Windows messages are used, any other application should be able to
-communicate with a Vim server.  An alternative is using the OLE functionality
-|ole-interface|.
+communicate with a Vim server.
 
 When using gvim, the --remote-wait only works properly this way: >
 

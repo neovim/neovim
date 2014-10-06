@@ -340,10 +340,6 @@ internally.  Look in the GTK documentation for how they are used:
 	--display	(GTK+ counterpart of -display; works the same way.)
 	--screen	(The screen number; for GTK+ 2.2 multihead support.)
 
-These arguments are ignored when the |+netbeans_intg| feature is used:
-	-xrm
-	-mf
-
 As for colors, Vim's color settings (for syntax highlighting) is still
 done the traditional Vim way.  See |:highlight| for more help.
 

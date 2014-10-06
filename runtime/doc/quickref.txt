@@ -967,7 +967,6 @@ Short explanation of each option:		*option-list*
 ------------------------------------------------------------------------------
 *Q_et*		External commands
 
-|:shell|	:sh[ell]	start a shell
 |:!|		:!{command}	execute {command} with a shell
 |K|		   K		lookup keyword under the cursor with
 				   'keywordprg' program (default: "man")

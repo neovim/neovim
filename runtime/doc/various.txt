@@ -221,15 +221,8 @@ g8			Print the hex values of the bytes used in the
 			{not available when |+ex_extra| feature was disabled
 			at compile time}
 
-							*:sh* *:shell* *E371*
-:sh[ell]		This command starts a shell.  When the shell exits
-			(after the "exit" command) you return to Vim.  The
-			name for the shell command comes from 'shell' option.
-							*E360*
-			Note: This doesn't work when Vim on the Amiga was
-			started in QuickFix mode from a compiler, because the
-			compiler will have set stdin to a non-interactive
-			mode.
+						  *:sh* *:shell* *E371* *E360*
+:sh[ell]		Removed. {Nvim}
 
 							*:!cmd* *:!* *E34*
 :!{cmd}			Execute {cmd} with the shell. See also 'shell'.
@@ -355,8 +348,6 @@ N  *+gettext*		message translations |multi-lang|
    *+GUI_neXtaw*	Unix only: neXtaw |GUI|
    *+GUI_GTK*		Unix only: GTK+ |GUI|
    *+GUI_Motif*		Unix only: Motif |GUI|
-   *+GUI_Photon*	QNX only:  Photon |GUI|
-m  *+hangul_input*	Hangul input support hangul
    *+iconv*		Compiled with the |iconv()| function
    *+iconv/dyn*		Likewise |iconv-dynamic| |/dyn|
 N  *+insert_expand*	|insert_expand| Insert mode completion
@@ -379,7 +370,6 @@ N  *+mouseshape*	|'mouseshape'|
 B  *+mouse_dec*		Unix only: Dec terminal mouse handling |dec-mouse|
 N  *+mouse_gpm*		Unix only: Linux console mouse handling |gpm-mouse|
 B  *+mouse_netterm*	Unix only: netterm mouse handling |netterm-mouse|
-N  *+mouse_pterm*	QNX only: pterm mouse handling |qnx-terminal|
 N  *+mouse_sysmouse*	Unix only: *BSD console mouse handling |sysmouse|
 B  *+mouse_sgr*		Unix only: sgr mouse handling |sgr-mouse|
 B  *+mouse_urxvt*	Unix only: urxvt mouse handling |urxvt-mouse|
@@ -389,8 +379,6 @@ N  *+multi_byte*	16 and 32 bit characters |multibyte|
 N  *+multi_lang*	non-English language support |multi-lang|
 m  *+mzscheme*		Mzscheme interface |mzscheme|
 m  *+mzscheme/dyn*	Mzscheme interface |mzscheme-dynamic| |/dyn|
-m  *+netbeans_intg*	|netbeans|
-m  *+ole*		Win32 GUI only: |ole-interface|
 N  *+path_extra*	Up/downwards search in 'path' and 'tags'
 m  *+perl*		Perl interface |perl|
 m  *+perl/dyn*		Perl interface |perl-dynamic| |/dyn|
@@ -411,11 +399,9 @@ m  *+ruby/dyn*		Ruby interface |ruby-dynamic| |/dyn|
 N  *+scrollbind*	|'scrollbind'|
 B  *+signs*		|:sign|
 N  *+smartindent*	|'smartindent'|
-m  *+sniff*		SniFF interface |sniff|
 N  *+startuptime*	|--startuptime| argument
 N  *+statusline*	Options 'statusline', 'rulerformat' and special
 			formats of 'titlestring' and 'iconstring'
-m  *+sun_workshop*	|workshop|
 N  *+syntax*		Syntax highlighting |syntax|
    *+system()*		Unix only: opposite of |+fork|
 N  *+tag_binary*	binary searching in tags file |tag-binary-search|
@@ -635,9 +621,6 @@ K			Run a program to lookup the keyword under the
 			"gs" stands for "goto sleep".
 			While sleeping the cursor is positioned in the text,
 			if at a visible position.  {not in Vi}
-			Also process the received netbeans messages. {only
-			available when compiled with the |+netbeans_intg|
-			feature}
 
 
 							*g_CTRL-A*
