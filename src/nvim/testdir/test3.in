@@ -1432,7 +1432,7 @@ int main ()
 
 STARTTEST
 :set cino=(0,ts
-2kdd=][
+2kdd2j=][
 ENDTEST
 
 void func(int a
@@ -1446,7 +1446,7 @@ void func(int a
 
 STARTTEST
 :set cino=(0
-2kdd=][
+2kdd2j=][
 ENDTEST
 
 void
@@ -1461,7 +1461,7 @@ func(int a
 
 STARTTEST
 :set cino&
-2kdd=7][
+2kdd2j=7][
 ENDTEST
 
 void func(void)
@@ -1538,7 +1538,7 @@ func6(
 STARTTEST
 :set cino&
 :set cino+=l1
-2kdd=][
+2kdd2j=][
 ENDTEST
 
 void func(void)
@@ -1567,7 +1567,7 @@ break;
 
 STARTTEST
 :set cino&
-2kdd=][
+2kdd2j=][
 ENDTEST
 
 void func(void)
@@ -1592,7 +1592,7 @@ void func(void)
 
 STARTTEST
 :set cino&
-2kdd=][
+2kdd2j=][
 ENDTEST
 
 void func(void)
@@ -1919,10 +1919,10 @@ ENDTEST
 
 JSSTART
 var foo = [
-1,  // indent 8 more
+1,
 2,
 3
-];  // indent 8 less
+];
 JSEND
 
 STARTTEST
@@ -1937,7 +1937,7 @@ var foo = [
 1,
 2,
 3
-];  // indent 16 less
+];
 }
 JSEND
 
@@ -1954,6 +1954,8 @@ if (cond &&
 cond) {
 stmt;
 }
+window.something.left =
+(width - 50 + offset) + "px";
 var class_name='myclass';
 
 function private_method() {
@@ -1969,15 +1971,15 @@ function init(options) {
 
 $(this).data(class_name+'_public',$.extend({},{
 foo: 'bar',
-bar: 2,  // indent 8 more
-foobar: [  // indent 8 more
-1,  // indent 8 more
-2,  // indent 16 more
-3   // indent 16 more
+bar: 2,
+foobar: [
+1,
+2,
+3
 ],
-callback: function(){  // indent 8 more
-return true;  // indent 8 more
-}  // indent 8 more
+callback: function(){
+return true;
+}
 }, options||{}));
 }
 
@@ -2018,9 +2020,9 @@ $(this).data(class_name+'_public',$.extend({},{
 foo: 'bar',
 bar: 2,
 foobar: [
-1,  // indent 8 more
-2,  // indent 8 more
-3   // indent 8 more
+1,
+2,
+3
 ],
 callback: function(){
 return true;
@@ -2040,15 +2042,15 @@ JSSTART
 function init(options) {
 $(this).data(class_name+'_public',$.extend({},{
 foo: 'bar',
-bar: 2,  // indent 8 more
-foobar: [  // indent 8 more
-1,  // indent 8 more
-2,  // indent 16 more
-3  // indent 16 more
+bar: 2,
+foobar: [
+1,
+2,
+3
 ],
-callback: function(){  // indent 8 more
-return true;  // indent 8 more
-}  // indent 8 more
+callback: function(){
+return true;
+}
 }, options||{}));
 }
 })(jQuery);

@@ -1707,10 +1707,10 @@ JSEND
 
 JSSTART
 var foo = [
-1,  // indent 8 more
+	1,
 	2,
 	3
-	];  // indent 8 less
+];
 JSEND
 
 
@@ -1720,7 +1720,7 @@ function bar() {
 		1,
 		2,
 		3
-			];  // indent 16 less
+	];
 }
 JSEND
 
@@ -1732,6 +1732,8 @@ JSSTART
 			cond) {
 		stmt;
 	}
+	window.something.left =
+		(width - 50 + offset) + "px";
 	var class_name='myclass';
 
 	function private_method() {
@@ -1747,15 +1749,15 @@ JSSTART
 
 		$(this).data(class_name+'_public',$.extend({},{
 			foo: 'bar',
-		bar: 2,  // indent 8 more
-		foobar: [  // indent 8 more
-			1,  // indent 8 more
-		2,  // indent 16 more
-		3   // indent 16 more
+			bar: 2,
+			foobar: [
+				1,
+				2,
+				3
 			],
-		callback: function(){  // indent 8 more
-			return true;  // indent 8 more
-		}  // indent 8 more
+			callback: function(){
+				return true;
+			}
 		}, options||{}));
 	}
 
@@ -1791,9 +1793,9 @@ function init(options) {
 		foo: 'bar',
 		bar: 2,
 		foobar: [
-		1,  // indent 8 more
-		2,  // indent 8 more
-		3   // indent 8 more
+			1,
+			2,
+			3
 		],
 		callback: function(){
 			return true;
@@ -1808,15 +1810,15 @@ JSSTART
 	function init(options) {
 		$(this).data(class_name+'_public',$.extend({},{
 			foo: 'bar',
-		bar: 2,  // indent 8 more
-		foobar: [  // indent 8 more
-			1,  // indent 8 more
-		2,  // indent 16 more
-		3  // indent 16 more
+			bar: 2,
+			foobar: [
+				1,
+				2,
+				3
 			],
-		callback: function(){  // indent 8 more
-			return true;  // indent 8 more
-		}  // indent 8 more
+			callback: function(){
+				return true;
+			}
 		}, options||{}));
 	}
 })(jQuery);

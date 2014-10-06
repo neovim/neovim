@@ -210,9 +210,36 @@ static pos_T *find_line_comment(void)   /* XXX */
   return NULL;
 }
 
-/*
- * Check if string matches "label:"; move to character after ':' if true.
- */
+/// Checks if `text` starts with "key:".
+static bool cin_has_js_key(char_u *text)
+{
+  char_u *s = skipwhite(text);
+
+  char_u quote = 0;
+  if (*s == '\'' || *s == '"') {
+    // can be 'key': or "key":
+    quote = *s;
+    ++s;
+  }
+  if (!vim_isIDc(*s))	{   // need at least one ID character
+    return FALSE;
+  }
+
+  while (vim_isIDc(*s)) {
+    ++s;
+  }
+  if (*s && *s == quote) {
+    ++s;
+  }
+
+  s = cin_skipcomment(s);
+
+  // "::" is not a label, it's C++
+  return (*s == ':' && s[1] != ':');
+}
+
+/// Checks if string matches "label:"; move to character after ':' if true.
+/// "*s" must point to the start of the label, if there is one.
 static int cin_islabel_skip(char_u **s)
 {
   if (!vim_isIDc(**s))              /* need at least one ID character */
@@ -1202,12 +1229,17 @@ static pos_T *find_start_brace(void)
 /// @returns NULL or the found match.
 static pos_T *find_match_paren(int ind_maxparen)
 {
+  return find_match_char('(', ind_maxparen);
+}
+
+static pos_T * find_match_char(char_u c, int ind_maxparen)
+{
   pos_T cursor_save;
   pos_T       *trypos;
   static pos_T pos_copy;
 
   cursor_save = curwin->w_cursor;
-  if ((trypos = findmatchlimit(NULL, '(', 0, ind_maxparen)) != NULL) {
+  if ((trypos = findmatchlimit(NULL, c, 0, ind_maxparen)) != NULL) {
     /* check if the ( is in a // comment */
     if ((colnr_T)cin_skip2pos(trypos) > trypos->col)
       trypos = NULL;
@@ -1535,6 +1567,8 @@ int get_c_indent(void)
 #define LOOKFOR_NOBREAK         8
 #define LOOKFOR_CPP_BASECLASS   9
 #define LOOKFOR_ENUM_OR_INIT    10
+#define LOOKFOR_JS_KEY          11
+#define LOOKFOR_NO_COMMA        12
 
   int whilelevel;
   linenr_T lnum;
@@ -1748,6 +1782,12 @@ int get_c_indent(void)
           amount += curbuf->b_ind_in_comment;
       }
     }
+  }
+  // Are we looking at a ']' that has a match?
+  else if (*skipwhite(theline) == ']'
+           && (trypos = find_match_char('[', curbuf->b_ind_maxparen)) != NULL) {
+    // align with the line containing the '['.
+    amount = get_indent_lnum(trypos->lnum);
   }
   /*
    * Are we inside parentheses or braces?
@@ -1983,13 +2023,10 @@ int get_c_indent(void)
       /* add extra indent for a comment */
       if (cin_iscomment(theline))
         amount += curbuf->b_ind_comment;
-    }
-    /*
-     * Are we at least inside braces, then?
-     */
-    else {
+    } else {
+      // We are inside braces, there is a { before this line at the position
+      // stored in tryposBrace.
       trypos = tryposBrace;
-
       ourscope = trypos->lnum;
       start = ml_get(ourscope);
 
@@ -2008,28 +2045,22 @@ int get_c_indent(void)
         else
           start_brace = BRACE_AT_START;
       } else {
-        /*
-         * that opening brace might have been on a continuation
-         * line.  if so, find the start of the line.
-         */
+        // That opening brace might have been on a continuation
+        // line.  If so, find the start of the line.
         curwin->w_cursor.lnum = ourscope;
 
-        /*
-         * position the cursor over the rightmost paren, so that
-         * matching it will take us back to the start of the line.
-         */
+        // Position the cursor over the rightmost paren, so that
+        // matching it will take us back to the start of the line.
         lnum = ourscope;
         if (find_last_paren(start, '(', ')')
-            && (trypos = find_match_paren(curbuf->b_ind_maxparen))
-            != NULL)
+            && (trypos = find_match_paren(curbuf->b_ind_maxparen)) != NULL) {
           lnum = trypos->lnum;
+        }
 
-        /*
-         * It could have been something like
-         *	   case 1: if (asdf &&
-         *			ldfd) {
-         *		    }
-         */
+        // It could have been something like
+        //	   case 1: if (asdf &&
+        //			ldfd) {
+        //		    }
         if ((curbuf->b_ind_js || curbuf->b_ind_keep_case_label)
             && cin_iscase(skipwhite(get_cursor_line_ptr()), FALSE)) {
           amount = get_indent();
@@ -2042,11 +2073,12 @@ int get_c_indent(void)
         start_brace = BRACE_AT_END;
       }
 
-      /*
-       * if we're looking at a closing brace, that's where
-       * we want to be.  otherwise, add the amount of room
-       * that an indent is supposed to be.
-       */
+      // For Javascript check if the line starts with "key:".
+      bool js_cur_has_key = curbuf->b_ind_js ? cin_has_js_key(theline) : false;
+
+      // If we're looking at a closing brace, that's where
+      // we want to be.  Otherwise, add the amount of room
+      // that an indent is supposed to be.
       if (theline[0] == '}') {
         /*
          * they may want closing braces to line up with something
@@ -2128,14 +2160,12 @@ int get_c_indent(void)
         scope_amount = amount;
         whilelevel = 0;
 
-        /*
-         * Search backwards.  If we find something we recognize, line up
-         * with that.
-         *
-         * if we're looking at an open brace, indent
-         * the usual amount relative to the conditional
-         * that opens the block.
-         */
+        // Search backwards.  If we find something we recognize, line up
+        // with that.
+        //
+        // If we're looking at an open brace, indent
+        // the usual amount relative to the conditional
+        // that opens the block.
         curwin->w_cursor = cur_curpos;
         for (;; ) {
           curwin->w_cursor.lnum--;
@@ -2504,26 +2534,58 @@ int get_c_indent(void)
            */
           terminated = cin_isterminated(l, FALSE, TRUE);
 
+          if (js_cur_has_key) {
+            js_cur_has_key = false; // only check the first line
+            if (curbuf->b_ind_js && terminated == ',') {
+              // For Javascript we might be inside an object:
+              //   key: something,  <- align with this
+              //   key: something
+              // or:
+              //   key: something +  <- align with this
+              //       something,
+              //   key: something
+              lookfor = LOOKFOR_JS_KEY;
+            }
+          }
+          if (lookfor == LOOKFOR_JS_KEY && cin_has_js_key(l)) {
+            amount = get_indent();
+            break;
+          }
+          if (lookfor == LOOKFOR_NO_COMMA) {
+            if (terminated != ',') {
+              // Line below current line is the one that starts a
+              // (possibly broken) line ending in a comma.
+              break;
+            }
+            amount = get_indent();
+            if (curwin->w_cursor.lnum - 1 == ourscope) {
+              // line above is start of the scope, thus current line
+              // is the one that stars a (possibly broken) line
+              // ending in a comma.
+              break;
+            }
+          }
+
           if (terminated == 0 || (lookfor != LOOKFOR_UNTERM
                                   && terminated == ',')) {
-            /*
-             * if we're in the middle of a paren thing,
-             * go back to the line that starts it so
-             * we can get the right prevailing indent
-             *	   if ( foo &&
-             *		    bar )
-             */
-            /*
-             * position the cursor over the rightmost paren, so that
-             * matching it will take us back to the start of the line.
-             */
+            // If we're in the middle of a paren thing, Go back to the line
+            // that starts it so we can get the right prevailing indent
+            //	   if ( foo &&
+            //		    bar )
+
+            // Position the cursor over the rightmost paren, so that
+            // matching it will take us back to the start of the line.
+            // Ignore a match before the start of the block.
             (void)find_last_paren(l, '(', ')');
             trypos = find_match_paren(corr_ind_maxparen(&cur_curpos));
+            if (trypos != NULL && (trypos->lnum < tryposBrace->lnum
+                                   || (trypos->lnum == tryposBrace->lnum
+                                       && trypos->col < tryposBrace->col))) {
+              trypos = NULL;
+            }
 
-            /*
-             * If we are looking for ',', we also look for matching
-             * braces.
-             */
+            // If we are looking for ',', we also look for matching
+            // braces.
             if (trypos == NULL && terminated == ','
                 && find_last_paren(l, '{', '}'))
               trypos = find_start_brace();
@@ -2565,10 +2627,11 @@ int get_c_indent(void)
              * Get indent and pointer to text for current line,
              * ignoring any jump label.	    XXX
              */
-            if (!curbuf->b_ind_js)
-              cur_amount = skip_label(curwin->w_cursor.lnum, &l);
-            else
+            if (curbuf->b_ind_js) {
               cur_amount = get_indent();
+            } else {
+              cur_amount = skip_label(curwin->w_cursor.lnum, &l);
+            }
             /*
              * If this is just above the line we are indenting, and it
              * starts with a '{', line it up with this line.
@@ -2589,7 +2652,7 @@ int get_c_indent(void)
               if (*skipwhite(l) != '{')
                 amount += curbuf->b_ind_open_extra;
 
-              if (curbuf->b_ind_cpp_baseclass) {
+              if (curbuf->b_ind_cpp_baseclass && !curbuf->b_ind_js) {
                 /* have to look back, whether it is a cpp base
                  * class declaration or initialization */
                 lookfor = LOOKFOR_CPP_BASECLASS;
@@ -2735,17 +2798,43 @@ int get_c_indent(void)
                  * yet.
                  */
                 if (lookfor == LOOKFOR_INITIAL && terminated == ',') {
-                  lookfor = LOOKFOR_ENUM_OR_INIT;
-                  cont_amount = cin_first_id_amount();
+                  if (curbuf->b_ind_js) {
+                    // Search for a line ending in a comma
+                    // and line up with the line below it
+                    // (could be the current line).
+                    // some = [
+                    //     1,     <- line up here
+                    //     2,
+                    // some = [
+                    //     3 +    <- line up here
+                    //       4 *
+                    //        5,
+                    //     6,
+                    lookfor = LOOKFOR_NO_COMMA;
+                    amount = get_indent();      // XXX
+                    trypos = find_match_char('[', curbuf->b_ind_maxparen);
+                    if (trypos != NULL) {
+                      if (trypos->lnum == curwin->w_cursor.lnum - 1) {
+                        // Current line is first inside
+                        // [], line up with it.
+                        break;
+                      }
+                      ourscope = trypos->lnum;
+                    }
+                  } else {
+                    lookfor = LOOKFOR_ENUM_OR_INIT;
+                    cont_amount = cin_first_id_amount();
+                  }
                 } else {
                   if (lookfor == LOOKFOR_INITIAL
                       && *l != NUL
-                      && l[STRLEN(l) - 1] == '\\')
-                    /* XXX */
-                    cont_amount = cin_get_equal_amount(
-                        curwin->w_cursor.lnum);
-                  if (lookfor != LOOKFOR_TERM)
+                      && l[STRLEN(l) - 1] == '\\') {
+                    // XXX
+                    cont_amount = cin_get_equal_amount( curwin->w_cursor.lnum);
+                  }
+                  if (lookfor != LOOKFOR_TERM && lookfor != LOOKFOR_JS_KEY) {
                     lookfor = LOOKFOR_UNTERM;
+                  }
                 }
               }
             }
@@ -2754,8 +2843,7 @@ int get_c_indent(void)
            * Check if we are after a while (cond);
            * If so: Ignore until the matching "do".
            */
-          /* XXX */
-          else if (cin_iswhileofdo_end(terminated)) {
+          else if (cin_iswhileofdo_end(terminated)) {  // XXX
             /*
              * Found an unterminated line after a while ();, line up
              * with the last one.
@@ -2952,21 +3040,17 @@ term_again:
     if (curbuf->b_ind_jump_label > 0 && original_line_islabel)
       amount -= curbuf->b_ind_jump_label;
   }
-  /*
-   * ok -- we're not inside any sort of structure at all!
-   *
-   * this means we're at the top level, and everything should
-   * basically just match where the previous line is, except
-   * for the lines immediately following a function declaration,
-   * which are K&R-style parameters and need to be indented.
-   */
   else {
-    /*
-     * if our line starts with an open brace, forget about any
-     * prevailing indent and make sure it looks like the start
-     * of a function
-     */
+    // Ok -- we're not inside any sort of structure at all!
+    //
+    // this means we're at the top level, and everything should
+    // basically just match where the previous line is, except
+    // for the lines immediately following a function declaration,
+    // which are K&R-style parameters and need to be indented.
 
+    // if our line starts with an open brace, forget about any
+    // prevailing indent and make sure it looks like the start
+    // of a function
     if (theline[0] == '{') {
       amount = curbuf->b_ind_first_open;
     }
@@ -3099,6 +3183,15 @@ term_again:
          */
         if (cin_ends_in(l, (char_u *)"};", NULL))
           break;
+
+        // If the previous line ends on '[' we are probably in an
+        // array constant:
+        // something = [
+        //     234,  <- extra indent
+        if (cin_ends_in(l, (char_u *)"[", NULL)) {
+          amount = get_indent() + ind_continuation;
+          break;
+        }
 
         /*
          * Find a line only has a semicolon that belongs to a previous
