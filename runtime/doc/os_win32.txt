@@ -12,9 +12,6 @@ Windows 7.  There are both console and GUI versions.
 
 The 32 bit version also runs on 64 bit MS-Windows systems.
 
-There is GUI version for use in the Win32s subsystem in Windows 3.1[1].  You
-can also use the 32-bit DOS version of Vim instead.  See |os_msdos.txt|.
-
 1. Known problems		|win32-problems|
 2. Startup			|win32-startup|
 3. Restore screen contents	|win32-restore|

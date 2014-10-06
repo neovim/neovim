@@ -147,12 +147,10 @@ Special issues ~
 |russian.txt|	Russian language support and editing
 |ft_ada.txt|	Ada (the programming language) support
 |ft_sql.txt|	about the SQL filetype plugin
-|hangulin.txt|	Hangul (Korean) input mode
 |rileft.txt|	right-to-left editing mode
 
 GUI ~
 |gui.txt|	Graphical User Interface (GUI)
-|gui_w16.txt|	Windows 3.1 GUI
 |gui_w32.txt|	Win32 GUI
 |gui_x11.txt|	X11 GUI
 
@@ -162,31 +160,17 @@ Interfaces ~
 |if_mzsch.txt|	MzScheme interface
 |if_perl.txt|	Perl interface
 |if_pyth.txt|	Python interface
-|if_sniff.txt|	SNiFF+ interface
 |if_tcl.txt|	Tcl interface
-|if_ole.txt|	OLE automation interface for Win32
 |if_ruby.txt|	Ruby interface
 |debugger.txt|	Interface with a debugger
-|workshop.txt|	Sun Visual Workshop interface
-|netbeans.txt|	NetBeans External Editor interface
 |sign.txt|	debugging signs
 
 Versions ~
 |vi_diff.txt|	Main differences between Vim and Vi
 						*sys-file-list*
 Remarks about specific systems ~
-|os_390.txt|	OS/390 Unix
-|os_amiga.txt|	Amiga
-|os_beos.txt|	BeOS and BeBox
-|os_dos.txt|	MS-DOS and MS-Windows NT/95 common items
 |os_mac.txt|	Macintosh
-|os_mint.txt|	Atari MiNT
-|os_msdos.txt|	MS-DOS (plain DOS and DOS box under Windows)
-|os_os2.txt|	OS/2
-|os_qnx.txt|	QNX
-|os_risc.txt|	RISC-OS
 |os_unix.txt|	Unix
-|os_vms.txt|	VMS
 |os_win32.txt|	MS-Windows 95/98/NT
 						*standard-plugin-list*
 Standard plugins ~
