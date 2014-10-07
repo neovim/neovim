@@ -18,9 +18,8 @@
 #include "nvim/version_defs.h"
 
 char *Version = VIM_VERSION_SHORT;
-
-char *longVersion = NVIM_VERSION_LONG_DATE __DATE__ " " __TIME__ ")";
-
+char *longVersion = NVIM_VERSION_LONG " (compiled " __DATE__ " " __TIME__ ")";
+char *version_commit = "Commit: " NVIM_VERSION_COMMIT;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "version.c.generated.h"
@@ -747,6 +746,7 @@ void list_version(void)
   // When adding features here, don't forget to update the list of
   // internal variables in eval.c!
   MSG(longVersion);
+  MSG(version_commit);
 
   // Print the list of extra patch descriptions if there is at least one.
   char *s = "";

@@ -126,6 +126,35 @@ function(git_describe _var)
   set(${_var} "${out}" PARENT_SCOPE)
 endfunction()
 
+function(git_timestamp _var)
+  if(NOT GIT_FOUND)
+    find_package(Git QUIET)
+  endif()
+  get_git_head_revision(refspec hash)
+  if(NOT GIT_FOUND)
+    set(${_var} "GIT-NOTFOUND" PARENT_SCOPE)
+    return()
+  endif()
+  if(NOT hash)
+    set(${_var} "HEAD-HASH-NOTFOUND" PARENT_SCOPE)
+    return()
+  endif()
+
+  execute_process(COMMAND "${GIT_EXECUTABLE}" log -1 --format="%ci" ${hash} ${ARGN}
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    RESULT_VARIABLE res
+    OUTPUT_VARIABLE out
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT res EQUAL 0)
+    set(out "${out}-${res}-NOTFOUND")
+  endif()
+  string(REGEX REPLACE "[-\" :]" "" out ${out})
+  string(SUBSTRING ${out} 0 12 out)
+
+  set(${_var} ${out} PARENT_SCOPE)
+endfunction()
+
 function(git_get_exact_tag _var)
   git_describe(out --exact-match ${ARGN})
   set(${_var} "${out}" PARENT_SCOPE)

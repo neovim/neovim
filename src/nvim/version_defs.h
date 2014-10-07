@@ -27,11 +27,13 @@
 #ifndef NVIM_VERSION_BUILD
 #define NVIM_VERSION_BUILD
 #endif
+#ifndef NVIM_VERSION_COMMIT
+#define NVIM_VERSION_COMMIT
+#endif
 // for the startup-screen
 #define NVIM_VERSION_MEDIUM STR(NVIM_VERSION_MAJOR) "." STR(NVIM_VERSION_MINOR)
 // for the ":version" command and "nvim -h"
 #define NVIM_VERSION_LONG "NVIM " NVIM_VERSION_MEDIUM "." STR(NVIM_VERSION_PATCH) NVIM_VERSION_PRERELEASE NVIM_VERSION_BUILD
-#define NVIM_VERSION_LONG_DATE NVIM_VERSION_LONG " (compiled "
 
 //
 // Vim version number, name, etc. Patchlevel is defined in version.c.
