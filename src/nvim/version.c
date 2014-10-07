@@ -825,11 +825,6 @@ void list_version(void)
     version_msg((char *)default_vimruntime_dir);
     version_msg("\"\n");
   }
-  version_msg(_("Compilation: "));
-  version_msg((char *)all_cflags);
-  version_msg("\n");
-  version_msg(_("Linking: "));
-  version_msg((char *)all_lflags);
 #endif  // ifdef HAVE_PATHDEF
 #ifdef DEBUG
   version_msg("\n");
