@@ -8414,7 +8414,7 @@ static void f_feedkeys(typval_T *argvars, typval_T *rettv)
     }
 
     vim_feedkeys(cstr_as_string((char *)keys),
-		    cstr_as_string((char *)flags));
+		    cstr_as_string((char *)flags), true);
   }
 }
 
