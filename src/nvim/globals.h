@@ -996,8 +996,6 @@ extern char *longVersion;
 #ifdef HAVE_PATHDEF
 extern char_u *default_vim_dir;
 extern char_u *default_vimruntime_dir;
-extern char_u *all_cflags;
-extern char_u *all_lflags;
 extern char_u *compiled_user;
 extern char_u *compiled_sys;
 #endif
