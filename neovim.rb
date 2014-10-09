@@ -11,6 +11,6 @@ class Neovim < Formula
 
   def install
     ENV.deparallelize
-    system "make", "CMAKE_EXTRA_FLAGS=\"-DCMAKE_PREFIX_PATH=#{prefix}\"", "install"
+    system "make", "CMAKE_EXTRA_FLAGS=\"-DCMAKE_INSTALL_PREFIX:PATH=#{prefix}\"", "install"
   end
 end
