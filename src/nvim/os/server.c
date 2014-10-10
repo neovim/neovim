@@ -49,6 +49,36 @@ static PMap(cstr_t) *servers = NULL;
 # include "os/server.c.generated.h"
 #endif
 
+static int server_try_init(char *path, bool always_report)
+{
+  int res = server_start(path);
+
+  if (res == -EACCES && !os_file_exists((char_u *) path)) {
+    // libuv converts ENOENT to EACCESS for Windows compatibility.
+    // Convert it back for better error reporting.
+    res = -ENOENT;
+  }
+
+  // Don't trust EADDRINUSE!
+  if (!always_report && res == -EADDRINUSE) {
+    int32_t perm = os_getperm((char_u *) path);
+#ifdef UNIX
+    bool is_uv_pipe = S_ISSOCK(perm);
+#else
+    bool is_uv_pipe = S_SFIFO(perm);
+#endif
+    if (!is_uv_pipe) {
+      res = -ENOTSOCK;
+    }
+  }
+
+  if (res < 0 && (always_report || res != -EADDRINUSE)) {
+    EMSG2("Failed to start server: %s", uv_strerror(res));
+  }
+
+  return res;
+}
+
 /// Initializes the module
 void server_init(void)
 {
@@ -65,6 +95,7 @@ void server_init(void)
   int res = 1;  // The return value of server_start().
 
   char_u *p = (char_u *) listen_address;
+  bool serious_error = false;
   while (res != 0 && *p != NUL) {
     char_u path[MAXPATHL];
     copy_option_part(&p, path, MAXPATHL, ";");
@@ -78,21 +109,17 @@ void server_init(void)
       *tail = save;
     }
 
-    res = server_start((char *) path);
-    if (res == -EACCES && !os_file_exists(path)) {
-      // libuv converts ENOENT to EACCESS for Windows compatibility.
-      // Convert it back for better error reporting.
-      res = -ENOENT;
-    }
+    res = server_try_init((char *) path, false);
+    serious_error = (res != -EADDRINUSE);
   }
 
-  if (res == -EADDRINUSE) {
-    // Another nvim instance may be bound to this address.
+  // If the socket(s) are being used by other nvim instances, and no errors
+  // that require the user's attention occurred...
+  if (res == -EADDRINUSE && !serious_error) {
+    // ...try to start the server with a new socket and add it to the
+    // environment if successful.
     char *tmp = (char *)vim_tempname();
-
-    // Try to start the server with the temp and add it to the environment if
-    // successful.
-    res = server_start(tmp);
+    res = server_try_init(tmp, true);
     if (!res) {
       char *new_env = xmallocz(STRLEN(listen_address) + STRLEN(tmp) + 1);
       char *p = new_env;
@@ -102,12 +129,7 @@ void server_init(void)
       os_setenv(LISTEN_ADDRESS_ENV_VAR, new_env, 1);
       free(new_env);
     }
-
     free(tmp);
-  }
-
-  if (res < 0) {
-    EMSG2("Failed to start server: %s", uv_strerror(res));
   }
 
   if (must_free) {
