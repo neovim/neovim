@@ -512,6 +512,20 @@ static void block_insert(oparg_T *oap, char_u *s, int b_insert, struct block_def
       }
     }
 
+    if (has_mbyte && spaces > 0) {
+      // Avoid starting halfway a multi-byte character.
+      if (b_insert) {
+        int off = (*mb_head_off)(oldp, oldp + offset + spaces);
+        spaces -= off;
+        count -= off;
+      } else {
+        int off = (*mb_off_next)(oldp, oldp + offset);
+        offset += off;
+        spaces = 0;
+        count = 0;
+      }
+    }
+
     newp = (char_u *) xmalloc((size_t)(STRLEN(oldp) + s_len + count + 1));
 
     /* copy up to shifted part */
