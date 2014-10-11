@@ -1464,8 +1464,7 @@ static char_u * do_one_cmd(char_u **cmdlinep,
   if (p != NULL && ea.cmdidx == CMD_SIZE && !ea.skip
       && ASCII_ISUPPER(*ea.cmd)
       && has_cmdundefined()) {
-    char_u *p = ea.cmd;
-
+    p = ea.cmd;
     while (ASCII_ISALNUM(*p)) {
       ++p;
     }
