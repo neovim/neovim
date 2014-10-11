@@ -72,25 +72,25 @@
  * The result is an array of Autopat lists, which point to AutoCmd lists:
  *
  * first_autopat[0] --> Autopat.next  -->  Autopat.next -->  NULL
- *			Autopat.cmds	   Autopat.cmds
- *			    |			 |
- *			    V			 V
- *			AutoCmd.next	   AutoCmd.next
- *			    |			 |
- *			    V			 V
- *			AutoCmd.next		NULL
- *			    |
- *			    V
- *			   NULL
+ *                      Autopat.cmds       Autopat.cmds
+ *                          |                    |
+ *                          V                    V
+ *                      AutoCmd.next       AutoCmd.next
+ *                          |                    |
+ *                          V                    V
+ *                      AutoCmd.next            NULL
+ *                          |
+ *                          V
+ *                         NULL
  *
  * first_autopat[1] --> Autopat.next  -->  NULL
- *			Autopat.cmds
- *			    |
- *			    V
- *			AutoCmd.next
- *			    |
- *			    V
- *			   NULL
+ *                      Autopat.cmds
+ *                          |
+ *                          V
+ *                      AutoCmd.next
+ *                          |
+ *                          V
+ *                         NULL
  *   etc.
  *
  *   The order of AutoCmds is important, this is the order in which they were
