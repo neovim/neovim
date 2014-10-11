@@ -3481,7 +3481,7 @@ static void didset_options(void)
   (void)compile_cap_prog(curwin->w_s);
   /* set cedit_key */
   (void)check_cedit();
-  briopt_check();
+  briopt_check(curwin);
 }
 
 /*
@@ -3818,7 +3818,7 @@ did_set_string_option (
   }
   /* 'breakindentopt' */
   else if (varp == &curwin->w_p_briopt) {
-    if (briopt_check() == FAIL)
+    if (briopt_check(curwin) == FAIL)
       errmsg = e_invarg;
   }
   /*
@@ -6771,6 +6771,7 @@ void win_copy_options(win_T *wp_from, win_T *wp_to)
   copy_winopt(&wp_from->w_allbuf_opt, &wp_to->w_allbuf_opt);
   /* Is this right? */
   wp_to->w_farsi = wp_from->w_farsi;
+  briopt_check(wp_to);
 }
 
 /*
@@ -8143,16 +8144,15 @@ void find_mps_values(int *initc, int *findc, int *backwards, int switchit)
   }
 }
 
-/* This is called when 'breakindentopt' is changed and when a window is
-   initialized */
-int briopt_check(void) 
+/// This is called when 'breakindentopt' is changed and when a window is
+/// initialized
+static bool briopt_check(win_T *wp)
 {
-  char_u	*p;
   int bri_shift = 0;
   long bri_min = 20;
   bool bri_sbr = false;
 
-  p = curwin->w_p_briopt;
+  char_u *p = wp->w_p_briopt;
   while (*p != NUL)
   {
     if (STRNCMP(p, "shift:", 6) == 0
@@ -8172,15 +8172,15 @@ int briopt_check(void)
       bri_sbr = true;
     }
     if (*p != ',' && *p != NUL)
-      return FAIL;
+      return false;
     if (*p == ',')
       ++p;
   }
 
-  curwin->w_p_brishift = bri_shift;
-  curwin->w_p_brimin   = bri_min;
-  curwin->w_p_brisbr   = bri_sbr;
+  wp->w_p_brishift = bri_shift;
+  wp->w_p_brimin   = bri_min;
+  wp->w_p_brisbr   = bri_sbr;
 
-  return OK;
+  return true;
 }
 

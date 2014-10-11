@@ -27,6 +27,7 @@ STARTTEST
 :	$put =g:line1
 :	wincmd p
 :endfu
+:set briopt=min:0
 :let g:test="Test 1: Simple breakindent"
 :let line1=ScreenChar(8)
 :call DoRecordScreen()
