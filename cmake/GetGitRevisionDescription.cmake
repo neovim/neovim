@@ -42,7 +42,7 @@ set(__get_git_revision_description YES)
 get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(get_git_dir _gitdir)
-  # .git dir not found, search parent directories
+  # check GIT_DIR in environment first
   set(GIT_DIR "$ENV{GIT_DIR}")
   if(NOT GIT_DIR)
     set(GIT_PARENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
