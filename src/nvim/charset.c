@@ -1072,12 +1072,7 @@ int win_lbr_chartabsize(win_T *wp, char_u *line, char_u *s, colnr_T col, int *he
       if (wp->w_p_bri)
         added += get_breakindent_win(wp, line);
 
-      if (tab_corr) {
-        size += (added / wp->w_buffer->b_p_ts) * wp->w_buffer->b_p_ts;
-      } else {
-        size += added;
-      }
-
+      size += added;
       if (col != 0) {
         added = 0;
       }
