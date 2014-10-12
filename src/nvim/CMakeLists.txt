@@ -47,6 +47,7 @@ set(CONV_SRCS
   memory.c
   misc2.c
   map.c
+  popupmnu.c
   profile.c
   os/env.c
   os/event.c
