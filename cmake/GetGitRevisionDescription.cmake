@@ -70,8 +70,6 @@ endfunction()
 function(get_git_head_revision _refspecvar _hashvar)
   get_git_dir(GIT_DIR)
   if(NOT GIT_DIR)
-    set(${_refspecvar} "GITDIR-NOTFOUND" PARENT_SCOPE)
-    set(${_hashvar} "GITDIR-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
 
@@ -96,6 +94,11 @@ function(get_git_head_revision _refspecvar _hashvar)
 endfunction()
 
 function(git_describe _var)
+  get_git_dir(GIT_DIR)
+  if(NOT GIT_DIR)
+    return()
+  endif()
+
   if(NOT GIT_FOUND)
     find_package(Git QUIET)
   endif()
@@ -103,26 +106,12 @@ function(git_describe _var)
     set(${_var} "GIT-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
-  get_git_dir(GIT_DIR)
-  if(NOT GIT_DIR)
-    set(${_var} "GITDIR-NOTFOUND" PARENT_SCOPE)
-    return()
-  endif()
+
   get_git_head_revision(refspec hash)
   if(NOT hash)
     set(${_var} "HEAD-HASH-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
-
-  # TODO sanitize
-  #if((${ARGN}" MATCHES "&&") OR
-  #	(ARGN MATCHES "||") OR
-  #	(ARGN MATCHES "\\;"))
-  #	message("Please report the following error to the project!")
-  #	message(FATAL_ERROR "Looks like someone's doing something nefarious with git_describe! Passed arguments ${ARGN}")
-  #endif()
-
-  #message(STATUS "Arguments to execute_process: ${ARGN}")
 
   execute_process(COMMAND
     "${GIT_EXECUTABLE}"
@@ -145,18 +134,18 @@ function(git_describe _var)
 endfunction()
 
 function(git_timestamp _var)
+  get_git_dir(GIT_DIR)
+  if(NOT GIT_DIR)
+    return()
+  endif()
+
   if(NOT GIT_FOUND)
     find_package(Git QUIET)
   endif()
   if(NOT GIT_FOUND)
-    set(${_var} "GIT-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
-  get_git_dir(GIT_DIR)
-  if(NOT GIT_DIR)
-    set(${_var} "GITDIR-NOTFOUND" PARENT_SCOPE)
-    return()
-  endif()
+
   get_git_head_revision(refspec hash)
   if(NOT hash)
     set(${_var} "HEAD-HASH-NOTFOUND" PARENT_SCOPE)
