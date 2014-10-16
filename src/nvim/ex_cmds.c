@@ -3183,10 +3183,16 @@ void ex_append(exarg_T *eap)
       if (*p != NUL)
         ++p;
       eap->nextcmd = p;
-    } else
+    } else {
+      // Set State to avoid the cursor shape to be set to INSERT mode
+      // when getline() returns.
+      int save_State = State;
+      State = CMDLINE;
       theline = eap->getline(
           eap->cstack->cs_looplevel > 0 ? -1 :
           NUL, eap->cookie, indent);
+      State = save_State;
+    }
     lines_left = Rows - 1;
     if (theline == NULL)
       break;
