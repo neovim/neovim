@@ -5088,6 +5088,13 @@ A jump table for the options with a short description can be found at |Q_op|.
 
 	The 'mousemodel' option is set by the |:behave| command.
 
+						*'mousescroll'* *'mscr'*
+'mousescroll' 'mscr'	number	(default 1)
+			global
+			{not in Vim}
+	This option tells NVim how many lines to scroll when a mouse scroll
+	keycode is recieved. Also allows for deactivation of scrolling when 0
+
 					*'mouseshape'* *'mouses'* *E547*
 'mouseshape' 'mouses'	string	(default "i:beam,r:beam,s:updown,sd:cross,
 					m:no,ml:up-arrow,v:rightup-arrow")
