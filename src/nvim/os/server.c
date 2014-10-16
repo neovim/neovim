@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
@@ -13,6 +14,7 @@
 #include "nvim/message.h"
 #include "nvim/tempfile.h"
 #include "nvim/map.h"
+#include "nvim/path.h"
 
 #define MAX_CONNECTIONS 32
 #define ADDRESS_MAX_SIZE 256
@@ -48,7 +50,7 @@ static PMap(cstr_t) *servers = NULL;
 #endif
 
 /// Initializes the module
-void server_init(void)
+bool server_init(void)
 {
   servers = pmap_new(cstr_t)();
 
@@ -58,7 +60,7 @@ void server_init(void)
     free(listen_address);
   }
 
-  server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR));
+  return server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0;
 }
 
 /// Teardown the server module
@@ -89,7 +91,10 @@ void server_teardown(void)
 /// @param endpoint Address of the server. Either a 'ip[:port]' string or an
 ///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
 ///        named pipe.
-void server_start(char *endpoint)
+/// @returns zero if successful, one on a regular error, and negative errno
+///          on failure to bind or connect.
+int server_start(const char *endpoint)
+  FUNC_ATTR_NONNULL_ALL
 {
   char addr[ADDRESS_MAX_SIZE];
 
@@ -103,7 +108,7 @@ void server_start(char *endpoint)
   // Check if the server already exists
   if (pmap_has(cstr_t)(servers, addr)) {
     EMSG2("Already listening on %s", addr);
-    return;
+    return 1;
   }
 
   ServerType server_type = kServerTypeTcp;
@@ -151,40 +156,56 @@ void server_start(char *endpoint)
     // Listen on tcp address/port
     uv_tcp_init(uv_default_loop(), &server->socket.tcp.handle);
     server->socket.tcp.handle.data = server;
-    uv_tcp_bind(&server->socket.tcp.handle,
+    result = uv_tcp_bind(&server->socket.tcp.handle,
                          (const struct sockaddr *)&server->socket.tcp.addr,
                          0);
-    result = uv_listen((uv_stream_t *)&server->socket.tcp.handle,
-               MAX_CONNECTIONS,
-               connection_cb);
-    if (result) {
-      uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
+    if (result == 0) {
+      result = uv_listen((uv_stream_t *)&server->socket.tcp.handle,
+                         MAX_CONNECTIONS,
+                         connection_cb);
+      if (result) {
+        uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
+      }
     }
   } else {
     // Listen on named pipe or unix socket
     xstrlcpy(server->socket.pipe.addr, addr, sizeof(server->socket.pipe.addr));
     uv_pipe_init(uv_default_loop(), &server->socket.pipe.handle, 0);
     server->socket.pipe.handle.data = server;
-    uv_pipe_bind(&server->socket.pipe.handle, server->socket.pipe.addr);
-    result = uv_listen((uv_stream_t *)&server->socket.pipe.handle,
-               MAX_CONNECTIONS,
-               connection_cb);
+    result = uv_pipe_bind(&server->socket.pipe.handle,
+                          server->socket.pipe.addr);
+    if (result == 0) {
+      result = uv_listen((uv_stream_t *)&server->socket.pipe.handle,
+                         MAX_CONNECTIONS,
+                         connection_cb);
 
-    if (result) {
-      uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
+      if (result) {
+        uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
+      }
     }
   }
 
-  if (result) {
+  assert(result <= 0);  // libuv should have returned -errno or zero.
+  if (result < 0) {
+    if (result == -EACCES) {
+      // Libuv converts ENOENT to EACCES for Windows compatibility, but if
+      // the parent directory does not exist, ENOENT would be more accurate.
+      *path_tail((char_u *) addr) = NUL;
+      if (!os_file_exists((char_u *) addr)) {
+        result = -ENOENT;
+      }
+    }
     EMSG2("Failed to start server: %s", uv_strerror(result));
-    return;
+    free(server);
+    return result;
   }
-
 
   server->type = server_type;
 
   // Add the server to the hash table
   pmap_put(cstr_t)(servers, addr, server);
+
+  return 0;
 }
 
 /// Stops listening on the address specified by `endpoint`.
