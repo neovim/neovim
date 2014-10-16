@@ -15,6 +15,9 @@ list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
 # Version tokens
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
+if (NOT NVIM_VERSION_COMMIT)
+  set(NVIM_VERSION_COMMIT "?")
+endif()
 set(NVIM_VERSION_MAJOR 0)
 set(NVIM_VERSION_MINOR 0)
 set(NVIM_VERSION_PATCH 0)
@@ -22,7 +25,9 @@ set(NVIM_VERSION_PRERELEASE "-alpha")
 # TODO(justinmk): UTC time would be nice here #1071
 git_timestamp(GIT_TIMESTAMP)
 # TODO(justinmk): do not set this for "release" builds #1071
-set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
+if (GIT_TIMESTAMP)
+  set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

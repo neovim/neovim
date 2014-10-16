@@ -41,16 +41,18 @@ set(__get_git_revision_description YES)
 # to find the path to this module rather than the path to a calling list file
 get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
-function(get_git_head_revision _refspecvar _hashvar)
-  set(GIT_PARENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-  set(GIT_DIR "${GIT_PARENT_DIR}/.git")
-  while(NOT EXISTS "${GIT_DIR}")	# .git dir not found, search parent directories
+function(get_git_dir _gitdir)
+  # check GIT_DIR in environment first
+  set(GIT_DIR "$ENV{GIT_DIR}")
+  if(NOT GIT_DIR)
+    set(GIT_PARENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+    set(GIT_DIR "${GIT_PARENT_DIR}/.git")
+  endif()
+  # .git dir not found, search parent directories
+  while(NOT EXISTS "${GIT_DIR}")
     set(GIT_PREVIOUS_PARENT "${GIT_PARENT_DIR}")
     get_filename_component(GIT_PARENT_DIR ${GIT_PARENT_DIR} PATH)
     if(GIT_PARENT_DIR STREQUAL GIT_PREVIOUS_PARENT)
-      # We have reached the root directory, we are not in git
-      set(${_refspecvar} "GITDIR-NOTFOUND" PARENT_SCOPE)
-      set(${_hashvar} "GITDIR-NOTFOUND" PARENT_SCOPE)
       return()
     endif()
     set(GIT_DIR "${GIT_PARENT_DIR}/.git")
@@ -62,6 +64,15 @@ function(get_git_head_revision _refspecvar _hashvar)
     get_filename_component(SUBMODULE_DIR ${GIT_DIR} PATH)
     get_filename_component(GIT_DIR ${SUBMODULE_DIR}/${GIT_DIR_RELATIVE} ABSOLUTE)
   endif()
+  set(${_gitdir} ${GIT_DIR} PARENT_SCOPE)
+endfunction()
+
+function(get_git_head_revision _refspecvar _hashvar)
+  get_git_dir(GIT_DIR)
+  if(NOT GIT_DIR)
+    return()
+  endif()
+
   set(GIT_DATA "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/git-data")
   if(NOT EXISTS "${GIT_DATA}")
     file(MAKE_DIRECTORY "${GIT_DATA}")
@@ -83,28 +94,24 @@ function(get_git_head_revision _refspecvar _hashvar)
 endfunction()
 
 function(git_describe _var)
+  get_git_dir(GIT_DIR)
+  if(NOT GIT_DIR)
+    return()
+  endif()
+
   if(NOT GIT_FOUND)
     find_package(Git QUIET)
   endif()
-  get_git_head_revision(refspec hash)
   if(NOT GIT_FOUND)
     set(${_var} "GIT-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
+
+  get_git_head_revision(refspec hash)
   if(NOT hash)
     set(${_var} "HEAD-HASH-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
-
-  # TODO sanitize
-  #if((${ARGN}" MATCHES "&&") OR
-  #	(ARGN MATCHES "||") OR
-  #	(ARGN MATCHES "\\;"))
-  #	message("Please report the following error to the project!")
-  #	message(FATAL_ERROR "Looks like someone's doing something nefarious with git_describe! Passed arguments ${ARGN}")
-  #endif()
-
-  #message(STATUS "Arguments to execute_process: ${ARGN}")
 
   execute_process(COMMAND
     "${GIT_EXECUTABLE}"
@@ -112,7 +119,7 @@ function(git_describe _var)
     ${hash}
     ${ARGN}
     WORKING_DIRECTORY
-    "${CMAKE_SOURCE_DIR}"
+    "${GIT_DIR}"
     RESULT_VARIABLE
     res
     OUTPUT_VARIABLE
@@ -127,21 +134,26 @@ function(git_describe _var)
 endfunction()
 
 function(git_timestamp _var)
+  get_git_dir(GIT_DIR)
+  if(NOT GIT_DIR)
+    return()
+  endif()
+
   if(NOT GIT_FOUND)
     find_package(Git QUIET)
   endif()
-  get_git_head_revision(refspec hash)
   if(NOT GIT_FOUND)
-    set(${_var} "GIT-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
+
+  get_git_head_revision(refspec hash)
   if(NOT hash)
     set(${_var} "HEAD-HASH-NOTFOUND" PARENT_SCOPE)
     return()
   endif()
 
   execute_process(COMMAND "${GIT_EXECUTABLE}" log -1 --format="%ci" ${hash} ${ARGN}
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    WORKING_DIRECTORY "${GIT_DIR}"
     RESULT_VARIABLE res
     OUTPUT_VARIABLE out
     ERROR_QUIET

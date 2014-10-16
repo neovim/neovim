@@ -10,6 +10,7 @@ class Neovim < Formula
   depends_on "autoconf" => :build
 
   def install
+    ENV["GIT_DIR"] = cached_download/".git" if build.head?
     ENV.deparallelize
     system "make", "CMAKE_EXTRA_FLAGS=\"-DCMAKE_INSTALL_PREFIX:PATH=#{prefix}\"", "install"
   end
