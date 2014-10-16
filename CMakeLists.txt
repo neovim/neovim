@@ -228,17 +228,9 @@ if(BUSTED_PRG)
       -P ${CMAKE_MODULE_PATH}/RunTests.cmake
     DEPENDS nvim-test unittest-headers)
 
-  # For the functional tests we need the full path to the real busted script,
-  # which will be included by run-functional-tests.py.
-  get_filename_component(LUA_PRG_DIR ${LUA_PRG} PATH)
-  get_filename_component(LUA_PREFIX_DIR ${LUA_PRG_DIR} PATH)
-  file(GLOB_RECURSE BUSTED_REAL_PRG
-    ${LUA_PREFIX_DIR}/lib/luarocks/rocks/busted/*busted)
-
   add_custom_target(test
     COMMAND ${CMAKE_COMMAND}
-      -DBUSTED_PRG=${PROJECT_SOURCE_DIR}/scripts/run-functional-tests.py
-      -DBUSTED_REAL_PRG=${BUSTED_REAL_PRG}
+      -DBUSTED_PRG=${BUSTED_PRG}
       -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
       -DBUSTED_OUTPUT_TYPE=${BUSTED_OUTPUT_TYPE}
       -DTEST_DIR=${CMAKE_CURRENT_SOURCE_DIR}/test
