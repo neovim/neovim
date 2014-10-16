@@ -37,7 +37,7 @@
 typedef struct cursor_entry {
   int shape;                    /* one of the SHAPE_ defines */
   int mshape;                   /* one of the MSHAPE defines */
-  int percentage;               /* percentage of cell for bar */
+  long percentage;              /* percentage of cell for bar */
   long blinkwait;               /* blinking, wait time before blinking starts */
   long blinkon;                 /* blinking, on time */
   long blinkoff;                /* blinking, off time */
