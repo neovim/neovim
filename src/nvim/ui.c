@@ -41,6 +41,7 @@
 #include "nvim/screen.h"
 #include "nvim/term.h"
 #include "nvim/window.h"
+#include "nvim/ascii.h"
 
 void ui_write(char_u *s, int len)
 {
@@ -305,53 +306,48 @@ void set_input_buf(char_u *p)
   }
 }
 
-#if defined(FEAT_GUI) \
-  || defined(FEAT_MOUSE_GPM) || defined(FEAT_SYSMOUSE) \
-  || defined(FEAT_XCLIPBOARD) || defined(PROTO)
 /*
  * Add the given bytes to the input buffer
  * Special keys start with CSI.  A real CSI must have been translated to
  * CSI KS_EXTRA KE_CSI.  K_SPECIAL doesn't require translation.
+ *
+ * Returns the amount of bytes written
  */
-void add_to_input_buf(char_u *s, int len)
+size_t add_to_input_buf(char_u *s, size_t len)
 {
   if (inbufcount + len > INBUFLEN + MAX_KEY_CODE_LEN)
-    return;         /* Shouldn't ever happen! */
+    return 0;         /* Shouldn't ever happen! */
 
-  if ((State & (INSERT|CMDLINE)) && hangul_input_state_get())
-    if ((len = hangul_input_process(s, len)) == 0)
-      return;
-
-  while (len--)
+  size_t i = len;
+  while (i--)
     inbuf[inbufcount++] = *s++;
+  return len;
 }
-#endif
 
-#if ((defined(FEAT_XIM) || defined(FEAT_DND)) && defined(FEAT_GUI_GTK)) \
-  || defined(FEAT_GUI_MSWIN) \
-  || defined(FEAT_GUI_MAC) \
-  || defined(FEAT_MBYTE_IME) \
-  || defined(FEAT_GUI) \
-  || defined(PROTO)
 /*
  * Add "str[len]" to the input buffer while escaping CSI bytes.
  */
-void add_to_input_buf_csi(char_u *str, int len)          {
-  int i;
-  char_u buf[2];
+size_t add_to_input_buf_csi(char_u *str, size_t len)
+{
+  size_t i;
+  char_u buf[3] = {CSI, KS_EXTRA, KE_CSI};
 
-  for (i = 0; i < len; ++i) {
-    add_to_input_buf(str + i, 1);
+  for (i = 0; i < len; i++) {
+    int64_t written;
     if (str[i] == CSI) {
       /* Turn CSI into K_CSI. */
-      buf[0] = KS_EXTRA;
-      buf[1] = (int)KE_CSI;
-      add_to_input_buf(buf, 2);
+      written = add_to_input_buf(buf, 3);
+    } else {
+      written = add_to_input_buf(str + i, 1);
+    }
+
+    if (written == 0) {
+      return i;
     }
   }
-}
 
-#endif
+  return i;
+}
 
 /* Remove everything from the input buffer.  Called when ^C is found */
 void trash_input_buf(void)

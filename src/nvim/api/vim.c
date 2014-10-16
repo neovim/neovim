@@ -24,6 +24,7 @@
 #include "nvim/misc2.h"
 #include "nvim/term.h"
 #include "nvim/getchar.h"
+#include "nvim/ui.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -34,9 +35,10 @@
 /// Send keys to vim input buffer, simulating user input.
 ///
 /// @param str The keys to send
-void vim_push_keys(String str)
+/// @return The amount of bytes from str written into the input buffer
+Integer vim_push_keys(String str)
 {
-  abort();
+  return (Integer)add_to_input_buf_csi((char_u *) str.data, str.size);
 }
 
 /// Executes an ex-mode command str
