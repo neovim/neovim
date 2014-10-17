@@ -13,6 +13,8 @@
 #include "nvim/message.h"
 #include "nvim/tempfile.h"
 #include "nvim/map.h"
+#include "nvim/path.h"
+#include "nvim/misc2.h"
 
 #define MAX_CONNECTIONS 32
 #define ADDRESS_MAX_SIZE 256
@@ -47,18 +49,92 @@ static PMap(cstr_t) *servers = NULL;
 # include "os/server.c.generated.h"
 #endif
 
+static int server_try_init(char *path, bool always_report)
+{
+  int res = server_start(path);
+
+  if (res == -EACCES && !os_file_exists((char_u *) path)) {
+    // libuv converts ENOENT to EACCESS for Windows compatibility.
+    // Convert it back for better error reporting.
+    res = -ENOENT;
+  }
+
+  // Don't trust EADDRINUSE!
+  if (!always_report && res == -EADDRINUSE) {
+    int32_t perm = os_getperm((char_u *) path);
+#ifdef UNIX
+    bool is_uv_pipe = S_ISSOCK(perm);
+#else
+    bool is_uv_pipe = S_SFIFO(perm);
+#endif
+    if (!is_uv_pipe) {
+      res = -ENOTSOCK;
+    }
+  }
+
+  if (res < 0 && (always_report || res != -EADDRINUSE)) {
+    EMSG2("Failed to start server: %s", uv_strerror(res));
+  }
+
+  return res;
+}
+
 /// Initializes the module
 void server_init(void)
 {
   servers = pmap_new(cstr_t)();
 
-  if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
-    char *listen_address = (char *)vim_tempname();
+  const char *listen_address = os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  bool must_free = false;
+  if (!listen_address) {
+    must_free = true;
+    listen_address = (char *)vim_tempname();
     os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
-    free(listen_address);
   }
 
-  server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR));
+  int res = 1;  // The return value of server_start().
+
+  char_u *p = (char_u *) listen_address;
+  bool serious_error = false;
+  while (res != 0 && *p != NUL) {
+    char_u path[MAXPATHL];
+    copy_option_part(&p, path, MAXPATHL, ";");
+
+    if (!path_with_url(path)) {
+      // This address might refer to a temp dir. We may need to recreate it.
+      char_u *tail = path_tail(path);
+      char_u save = *tail;
+      *tail = NUL;
+      (void) os_mkdir((char *) path, 0666);  // Doesn't matter if this fails.
+      *tail = save;
+    }
+
+    res = server_try_init((char *) path, false);
+    serious_error = (res != -EADDRINUSE);
+  }
+
+  // If the socket(s) are being used by other nvim instances, and no errors
+  // that require the user's attention occurred...
+  if (res == -EADDRINUSE && !serious_error) {
+    // ...try to start the server with a new socket and add it to the
+    // environment if successful.
+    char *tmp = (char *)vim_tempname();
+    res = server_try_init(tmp, true);
+    if (!res) {
+      char *new_env = xmallocz(STRLEN(listen_address) + STRLEN(tmp) + 1);
+      char *p = new_env;
+      p = xstpcpy(p, listen_address);
+      p = xstpcpy(p, ";");
+      p = xstpcpy(p, tmp);
+      os_setenv(LISTEN_ADDRESS_ENV_VAR, new_env, 1);
+      free(new_env);
+    }
+    free(tmp);
+  }
+
+  if (must_free) {
+    free((char *) listen_address);
+  }
 }
 
 /// Teardown the server module
@@ -89,7 +165,9 @@ void server_teardown(void)
 /// @param endpoint Address of the server. Either a 'ip[:port]' string or an
 ///        arbitrary identifier(trimmed to 256 bytes) for the unix socket or
 ///        named pipe.
-void server_start(char *endpoint)
+/// @returns 0 on success, a positive number for regular errors,
+///          or negative errno if bind or listen failed.
+int server_start(char *endpoint)
 {
   char addr[ADDRESS_MAX_SIZE];
 
@@ -103,7 +181,7 @@ void server_start(char *endpoint)
   // Check if the server already exists
   if (pmap_has(cstr_t)(servers, addr)) {
     EMSG2("Already listening on %s", addr);
-    return;
+    return 1;
   }
 
   ServerType server_type = kServerTypeTcp;
@@ -151,12 +229,14 @@ void server_start(char *endpoint)
     // Listen on tcp address/port
     uv_tcp_init(uv_default_loop(), &server->socket.tcp.handle);
     server->socket.tcp.handle.data = server;
-    uv_tcp_bind(&server->socket.tcp.handle,
+    result = uv_tcp_bind(&server->socket.tcp.handle,
                          (const struct sockaddr *)&server->socket.tcp.addr,
                          0);
-    result = uv_listen((uv_stream_t *)&server->socket.tcp.handle,
-               MAX_CONNECTIONS,
-               connection_cb);
+    if (result == 0) {
+      result = uv_listen((uv_stream_t *)&server->socket.tcp.handle,
+                         MAX_CONNECTIONS,
+                         connection_cb);
+    }
     if (result) {
       uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
     }
@@ -165,26 +245,26 @@ void server_start(char *endpoint)
     xstrlcpy(server->socket.pipe.addr, addr, sizeof(server->socket.pipe.addr));
     uv_pipe_init(uv_default_loop(), &server->socket.pipe.handle, 0);
     server->socket.pipe.handle.data = server;
-    uv_pipe_bind(&server->socket.pipe.handle, server->socket.pipe.addr);
-    result = uv_listen((uv_stream_t *)&server->socket.pipe.handle,
-               MAX_CONNECTIONS,
-               connection_cb);
-
+    result = uv_pipe_bind(&server->socket.pipe.handle,
+                          server->socket.pipe.addr);
+    if (result == 0) {
+      result = uv_listen((uv_stream_t *)&server->socket.pipe.handle,
+                         MAX_CONNECTIONS,
+                         connection_cb);
+    }
     if (result) {
       uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
     }
   }
 
-  if (result) {
-    EMSG2("Failed to start server: %s", uv_strerror(result));
-    return;
+  if (result == 0) {
+    server->type = server_type;
+
+    // Add the server to the hash table
+    pmap_put(cstr_t)(servers, addr, server);
   }
 
-
-  server->type = server_type;
-
-  // Add the server to the hash table
-  pmap_put(cstr_t)(servers, addr, server);
+  return result;
 }
 
 /// Stops listening on the address specified by `endpoint`.
