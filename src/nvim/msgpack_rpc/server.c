@@ -50,17 +50,28 @@ static PMap(cstr_t) *servers = NULL;
 #endif
 
 /// Initializes the module
-bool server_init(void)
+bool server_init(char *listen_address)
 {
   servers = pmap_new(cstr_t)();
 
-  if (!os_getenv(LISTEN_ADDRESS_ENV_VAR)) {
-    char *listen_address = (char *)vim_tempname();
-    os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
+  if (!listen_address) {
+    listen_address = (char *) os_getenv(LISTEN_ADDRESS_ENV_VAR);
+  }
+
+  bool must_free = false;
+  if (!listen_address) {
+    must_free = true;
+    listen_address = (char *)vim_tempname();
+  }
+
+  os_setenv(LISTEN_ADDRESS_ENV_VAR, listen_address, 1);
+
+  int ret = server_start(listen_address);
+  if (must_free) {
     free(listen_address);
   }
 
-  return server_start((char *)os_getenv(LISTEN_ADDRESS_ENV_VAR)) == 0;
+  return ret == 0;
 }
 
 /// Teardown the server module

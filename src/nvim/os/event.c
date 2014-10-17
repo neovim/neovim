@@ -63,7 +63,6 @@ void event_init(void)
   job_init();
   // finish mspgack-rpc initialization
   channel_init();
-  server_init();
 }
 
 void event_teardown(void)

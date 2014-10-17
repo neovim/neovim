@@ -65,6 +65,7 @@
 #include "nvim/os/event.h"
 #include "nvim/os/signal.h"
 #include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/api/private/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/handle.h"
@@ -291,6 +292,7 @@ int main(int argc, char **argv)
   }
 
   event_init();
+  init_server(&params);
 
   if (abstract_ui) {
     t_colors = 256;
@@ -1069,6 +1071,9 @@ static void command_line_scan(mparm_T *parmp)
           } else if (STRNICMP(argv[0] + argv_idx, "startuptime", 11) == 0) {
             want_argument = TRUE;
             argv_idx += 11;
+          } else if (STRNICMP(argv[0] + argv_idx, "server", 6) == 0) {
+            want_argument = true;
+            argv_idx += 6;
           } else {
             if (argv[0][argv_idx])
               mainerr(ME_UNKNOWN_OPTION, (char_u *)argv[0]);
@@ -1500,6 +1505,20 @@ static void init_startuptime(mparm_T *paramp)
   }
 
   starttime = time(NULL);
+}
+
+/// Initializes the neovim server.
+static void init_server(mparm_T *paramp)
+{
+  char *server_address = NULL;
+  for (int i = 1; i < paramp->argc; i++) {
+    if (STRICMP(paramp->argv[i], "--servername") == 0 && i + 1 < paramp->argc) {
+      server_address = paramp->argv[i + 1];
+      break;
+    }
+  }
+
+  server_init(server_address);
 }
 
 /*
