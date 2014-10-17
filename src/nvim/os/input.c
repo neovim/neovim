@@ -39,7 +39,10 @@ void input_init(void)
     return;
   }
 
-  read_stream = rstream_new(read_cb, READ_BUFFER_SIZE, NULL, NULL);
+  read_stream = rstream_new(read_cb,
+                            rbuffer_new(READ_BUFFER_SIZE),
+                            NULL,
+                            NULL);
   rstream_set_file(read_stream, read_cmd_fd);
 }
 
@@ -167,7 +170,7 @@ static InbufPollResult inbuf_poll(int32_t ms)
   }
 
   if (input_poll(ms)) {
-    return eof && rstream_available(read_stream) == 0 ?
+    return eof && rstream_pending(read_stream) == 0 ?
       kInputEof :
       kInputAvail;
   }
@@ -227,6 +230,6 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 bool input_ready(void)
 {
-  return rstream_available(read_stream) > 0 || eof;
+  return rstream_pending(read_stream) > 0 || eof;
 }
 
