@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "nvim/api/private/defs.h"
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/input.h.generated.h"
 #endif

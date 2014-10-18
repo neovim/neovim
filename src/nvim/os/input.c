@@ -4,6 +4,7 @@
 
 #include <uv.h>
 
+#include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/event.h"
 #include "nvim/os/signal.h"
@@ -12,11 +13,15 @@
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/ui.h"
+#include "nvim/memory.h"
+#include "nvim/keymap.h"
+#include "nvim/mbyte.h"
 #include "nvim/fileio.h"
 #include "nvim/getchar.h"
 #include "nvim/term.h"
 
-#define READ_BUFFER_SIZE 256
+#define READ_BUFFER_SIZE 0xffff
+#define INPUT_BUFFER_SIZE 4096
 
 typedef enum {
   kInputNone,
@@ -25,6 +30,7 @@ typedef enum {
 } InbufPollResult;
 
 static RStream *read_stream;
+static RBuffer *read_buffer, *input_buffer;
 static bool eof = false, started_reading = false;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -35,12 +41,15 @@ static bool eof = false, started_reading = false;
 
 void input_init(void)
 {
+  input_buffer = rbuffer_new(INPUT_BUFFER_SIZE + MAX_KEY_CODE_LEN);
+
   if (embedded_mode) {
     return;
   }
 
+  read_buffer = rbuffer_new(READ_BUFFER_SIZE);
   read_stream = rstream_new(read_cb,
-                            rbuffer_new(READ_BUFFER_SIZE),
+                            read_buffer,
                             NULL,
                             NULL);
   rstream_set_file(read_stream, read_cmd_fd);
@@ -65,17 +74,6 @@ void input_stop(void)
 
   rstream_stop(read_stream);
 }
-
-// Copies (at most `count`) of was read from `read_cmd_fd` into `buf`
-uint32_t input_read(char *buf, uint32_t count)
-{
-  if (embedded_mode) {
-    return 0;
-  }
-
-  return rstream_read(read_stream, buf, count);
-}
-
 
 // Low level input function.
 int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
@@ -121,7 +119,8 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
     return 0;
   }
 
-  return read_from_input_buf(buf, (int64_t)maxlen);
+  convert_input();
+  return rbuffer_read(input_buffer, (char *)buf, maxlen);
 }
 
 // Check if a character is available for reading
@@ -135,7 +134,7 @@ bool os_char_avail(void)
 void os_breakcheck(void)
 {
   if (curr_tmode == TMODE_RAW && input_poll(0))
-    fill_input_buf(false);
+    convert_input();
 }
 
 /// Test whether a file descriptor refers to a terminal.
@@ -145,6 +144,27 @@ void os_breakcheck(void)
 bool os_isatty(int fd)
 {
     return uv_guess_handle(fd) == UV_TTY;
+}
+
+/// Return the contents of the input buffer and make it empty. The returned
+/// pointer must be passed to `input_buffer_restore()` later.
+String input_buffer_save(void)
+{
+  size_t inbuf_size = rbuffer_pending(input_buffer);
+  String rv = {
+    .data = xmemdup(rbuffer_data(input_buffer), inbuf_size),
+    .size = inbuf_size
+  };
+  rbuffer_consumed(input_buffer, inbuf_size);
+  return rv;
+}
+
+/// Restore the contents of the input buffer and free `str`
+void input_buffer_restore(String str)
+{
+  rbuffer_consumed(input_buffer, rbuffer_pending(input_buffer));
+  rbuffer_write(input_buffer, str.data, str.size);
+  free(str.data);
 }
 
 static bool input_poll(int32_t ms)
@@ -165,7 +185,7 @@ static bool input_poll(int32_t ms)
 // This is a replacement for the old `WaitForChar` function in os_unix.c
 static InbufPollResult inbuf_poll(int32_t ms)
 {
-  if (input_available()) {
+  if (typebuf_was_filled || rbuffer_pending(input_buffer)) {
     return kInputAvail;
   }
 
@@ -213,6 +233,60 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
   started_reading = true;
 }
 
+static void convert_input(void)
+{
+  if (!rbuffer_available(input_buffer)) {
+    // No input buffer space
+    return;
+  }
+
+  bool convert = input_conv.vc_type != CONV_NONE;
+  // Set unconverted data/length
+  char *data = rbuffer_data(read_buffer);
+  size_t data_length = rbuffer_pending(read_buffer);
+  size_t converted_length = data_length;
+
+  if (convert) {
+    // Perform input conversion according to `input_conv`
+    size_t unconverted_length;
+    data = (char *)string_convert_ext(&input_conv,
+                                      (uint8_t *)data,
+                                      (int *)&converted_length,
+                                      (int *)&unconverted_length);
+    data_length = rbuffer_pending(read_buffer) - unconverted_length;
+  }
+
+  // Write processed data to input buffer
+  size_t consumed = rbuffer_write(input_buffer, data, data_length);
+  // Adjust raw buffer pointers
+  rbuffer_consumed(read_buffer, consumed);
+
+  if (convert) {
+    // data points to memory allocated by `string_convert_ext`, free it.
+    free(data);
+  }
+
+  if (!ctrl_c_interrupts) {
+    return;
+  }
+
+  char *inbuf = rbuffer_data(input_buffer);
+  size_t count = rbuffer_pending(input_buffer), consume_count = 0;
+
+  for (int i = count - 1; i >= 0; i--) {
+    if (inbuf[i] == 3) {
+      consume_count = i + 1;
+      break;
+    }
+  }
+
+  if (consume_count) {
+    // Remove everything typed before the CTRL-C
+    rbuffer_consumed(input_buffer, consume_count);
+    got_int = true;
+  }
+}
+
 static int push_event_key(uint8_t *buf, int maxlen)
 {
   static const uint8_t key[3] = { K_SPECIAL, KS_EXTRA, KE_EVENT };
@@ -228,7 +302,7 @@ static int push_event_key(uint8_t *buf, int maxlen)
 }
 
 // Check if there's pending input
-bool input_ready(void)
+static bool input_ready(void)
 {
   return rstream_pending(read_stream) > 0 || eof;
 }

@@ -50,6 +50,7 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/os/event.h"
+#include "nvim/os/input.h"
 
 /*
  * These buffers are used for storing:
@@ -1201,9 +1202,7 @@ void save_typeahead(tasave_T *tp)
   readbuf1.bh_first.b_next = NULL;
   tp->save_readbuf2 = readbuf2;
   readbuf2.bh_first.b_next = NULL;
-# ifdef USE_INPUT_BUF
-  tp->save_inputbuf = get_input_buf();
-# endif
+  tp->save_inputbuf = input_buffer_save();
 }
 
 /*
@@ -1224,9 +1223,7 @@ void restore_typeahead(tasave_T *tp)
   readbuf1 = tp->save_readbuf1;
   free_buff(&readbuf2);
   readbuf2 = tp->save_readbuf2;
-# ifdef USE_INPUT_BUF
-  set_input_buf(tp->save_inputbuf);
-# endif
+  input_buffer_restore(tp->save_inputbuf);
 }
 
 /*
@@ -2550,21 +2547,6 @@ fix_input_buffer (
   *p = NUL;             /* add trailing NUL */
   return len;
 }
-
-#if defined(USE_INPUT_BUF) || defined(PROTO)
-/*
- * Return TRUE when bytes are in the input buffer or in the typeahead buffer.
- * Normally the input buffer would be sufficient, but feedkeys() may insert
- * characters in the typeahead buffer while we are waiting for input to arrive.
- */
-int input_available(void)
-{
-  return !vim_is_input_buf_empty()
-         || typebuf_was_filled
-  ;
-}
-
-#endif
 
 /*
  * map[!]		    : show all key mappings
