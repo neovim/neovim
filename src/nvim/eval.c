@@ -19531,7 +19531,7 @@ static void on_job_exit(Job *job, void *data)
 static void on_job_data(RStream *rstream, void *data, bool eof, char *type)
 {
   Job *job = data;
-  uint32_t read_count = rstream_available(rstream);
+  uint32_t read_count = rstream_pending(rstream);
   char *str = xmalloc(read_count + 1);
 
   rstream_read(rstream, str, read_count);

@@ -21,6 +21,8 @@
 #include "nvim/eval_defs.h"
 // for proftime_T
 #include "nvim/profile.h"
+// for String
+#include "nvim/api/private/defs.h"
 
 /*
  * Flags for w_valid.
@@ -311,9 +313,7 @@ typedef struct {
   int old_mod_mask;
   buffheader_T save_readbuf1;
   buffheader_T save_readbuf2;
-#ifdef USE_INPUT_BUF
-  char_u              *save_inputbuf;
-#endif
+  String save_inputbuf;
 } tasave_T;
 
 /*

@@ -339,10 +339,6 @@ enum {
 #define fnamencmp(x, y, n) vim_fnamencmp((char_u *)(x), (char_u *)(y), \
     (size_t)(n))
 
-#if defined(UNIX) || defined(FEAT_GUI)
-# define USE_INPUT_BUF
-#endif
-
 #ifndef EINTR
 # define read_eintr(fd, buf, count) vim_read((fd), (buf), (count))
 # define write_eintr(fd, buf, count) vim_write((fd), (buf), (count))

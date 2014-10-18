@@ -3803,50 +3803,6 @@ int convert_setup_ext(vimconv_T *vcp, char_u *from, bool from_unicode_is_utf8,
   return OK;
 }
 
-#if defined(FEAT_GUI) || defined(WIN3264) || defined(PROTO)
-/*
- * Do conversion on typed input characters in-place.
- * The input and output are not NUL terminated!
- * Returns the length after conversion.
- */
-int convert_input(char_u *ptr, int len, int maxlen)
-{
-  return convert_input_safe(ptr, len, maxlen, NULL, NULL);
-}
-#endif
-
-/*
- * Like convert_input(), but when there is an incomplete byte sequence at the
- * end return that as an allocated string in "restp" and set "*restlenp" to
- * the length.  If "restp" is NULL it is not used.
- */
-int convert_input_safe(char_u *ptr, int len, int maxlen, char_u **restp,
-                       int *restlenp)
-{
-  char_u      *d;
-  int dlen = len;
-  int unconvertlen = 0;
-
-  d = string_convert_ext(&input_conv, ptr, &dlen,
-      restp == NULL ? NULL : &unconvertlen);
-  if (d != NULL) {
-    if (dlen <= maxlen) {
-      if (unconvertlen > 0) {
-        /* Move the unconverted characters to allocated memory. */
-        *restp = xmalloc(unconvertlen);
-        memmove(*restp, ptr + len - unconvertlen, unconvertlen);
-        *restlenp = unconvertlen;
-      }
-      memmove(ptr, d, dlen);
-    } else
-      /* result is too long, keep the unconverted text (the caller must
-       * have done something wrong!) */
-      dlen = len;
-    free(d);
-  }
-  return dlen;
-}
-
 /*
  * Convert text "ptr[*lenp]" according to "vcp".
  * Returns the result in allocated memory and sets "*lenp".

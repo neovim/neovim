@@ -127,7 +127,7 @@ void channel_from_stream(uv_stream_t *stream)
   channel->is_job = false;
   // read stream
   channel->data.streams.read = rstream_new(parse_msgpack,
-                                           CHANNEL_BUFFER_SIZE,
+                                           rbuffer_new(CHANNEL_BUFFER_SIZE),
                                            channel,
                                            NULL);
   rstream_set_stream(channel->data.streams.read, stream);
@@ -290,7 +290,7 @@ static void channel_from_stdio(void)
   channel->is_job = false;
   // read stream
   channel->data.streams.read = rstream_new(parse_msgpack,
-                                           CHANNEL_BUFFER_SIZE,
+                                           rbuffer_new(CHANNEL_BUFFER_SIZE),
                                            channel,
                                            NULL);
   rstream_set_file(channel->data.streams.read, 0);
@@ -313,7 +313,7 @@ static void job_err(RStream *rstream, void *data, bool eof)
   char buf[256];
   Channel *channel = job_data(data);
 
-  while ((count = rstream_available(rstream))) {
+  while ((count = rstream_pending(rstream))) {
     size_t read = rstream_read(rstream, buf, sizeof(buf) - 1);
     buf[read] = NUL;
     ELOG("Channel %" PRIu64 " stderr: %s", channel->id, buf);
@@ -336,7 +336,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     goto end;
   }
 
-  uint32_t count = rstream_available(rstream);
+  uint32_t count = rstream_pending(rstream);
   DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
        count,
        rstream);

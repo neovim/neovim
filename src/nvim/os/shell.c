@@ -341,7 +341,7 @@ static void system_data_cb(RStream *rstream, void *data, bool eof)
   Job *job = data;
   dyn_buffer_t *buf = job_data(job);
 
-  size_t nread = rstream_available(rstream);
+  size_t nread = rstream_pending(rstream);
 
   dyn_buf_ensure(buf, buf->len + nread + 1);
   rstream_read(rstream, buf->data + buf->len, nread);
