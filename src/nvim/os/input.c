@@ -152,7 +152,7 @@ String input_buffer_save(void)
 {
   size_t inbuf_size = rbuffer_pending(input_buffer);
   String rv = {
-    .data = xmemdup(rbuffer_data(input_buffer), inbuf_size),
+    .data = xmemdup(rbuffer_read_ptr(input_buffer), inbuf_size),
     .size = inbuf_size
   };
   rbuffer_consumed(input_buffer, inbuf_size);
@@ -242,7 +242,7 @@ static void convert_input(void)
 
   bool convert = input_conv.vc_type != CONV_NONE;
   // Set unconverted data/length
-  char *data = rbuffer_data(read_buffer);
+  char *data = rbuffer_read_ptr(read_buffer);
   size_t data_length = rbuffer_pending(read_buffer);
   size_t converted_length = data_length;
 
@@ -270,7 +270,7 @@ static void convert_input(void)
     return;
   }
 
-  char *inbuf = rbuffer_data(input_buffer);
+  char *inbuf = rbuffer_read_ptr(input_buffer);
   size_t count = rbuffer_pending(input_buffer), consume_count = 0;
 
   for (int i = count - 1; i >= 0; i--) {
