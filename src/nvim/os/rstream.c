@@ -47,6 +47,7 @@ RBuffer *rbuffer_new(size_t capacity)
   rv->data = xmalloc(capacity);
   rv->capacity = capacity;
   rv->rpos = rv->wpos = 0;
+  rv->rstream = NULL;
   return rv;
 }
 
