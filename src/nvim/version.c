@@ -892,11 +892,6 @@ void intro_message(int colon)
   // blanklines = screen height - # message lines
   blanklines = (int)Rows - ((sizeof(lines) / sizeof(char *)) - 1);
 
-  if (!p_cp) {
-    // add 4 for not showing "Vi compatible" message
-    blanklines += 4;
-  }
-
   // Don't overwrite a statusline.  Depends on 'cmdheight'.
   if (p_ls > 1) {
     blanklines -= Rows - topframe->fr_height;
