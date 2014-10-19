@@ -887,11 +887,6 @@ void intro_message(int colon)
     "",
     N_("type  :q<Enter>               to exit         "),
     N_("type  :help<Enter>  or  <F1>  for on-line help"),
-    NULL,
-    "",
-    N_("Running in Vi compatible mode"),
-    N_("type  :set nocp<Enter>        for Vim defaults"),
-    N_("type  :help cp-default<Enter> for info on this"),
   };
 
   // blanklines = screen height - # message lines
