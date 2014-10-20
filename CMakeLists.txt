@@ -4,13 +4,15 @@ project (NEOVIM)
 # Point CMake at any custom modules we may ship
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-# Prefer our bundled versions of dependencies.
-set(DEPS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/.deps")
-set(DEPS_BUILD_DIR "${DEPS_DIR}/build")
-set(DEPS_INSTALL_DIR "${DEPS_DIR}/usr")
-set(DEPS_BIN_DIR "${DEPS_INSTALL_DIR}/bin")
+option(USE_BUNDLED_DEPS "Use bundled dependencies" ON)
+if (USE_BUNDLED_DEPS)
+  include(BuildDeps)
+  message(STATUS "Building bundled dependencies")
+  build_deps(${CMAKE_SOURCE_DIR}/third-party ${CMAKE_BINARY_DIR}/deps) 
 
-list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
+  # Prefer our bundled versions of dependencies.
+  list(APPEND CMAKE_PREFIX_PATH ${CMAKE_BINARY_DIR}/deps/usr)
+endif()
 
 # Version tokens
 include(GetGitRevisionDescription)

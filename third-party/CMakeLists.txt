@@ -2,11 +2,7 @@
 cmake_minimum_required (VERSION 2.8.7)
 project(NEOVIM_DEPS)
 
-if(NOT DEPS_DIR)
-  get_filename_component(PARENT_DIR ${CMAKE_CURRENT_SOURCE_DIR} PATH)
-  set(DEPS_DIR ${PARENT_DIR}/.deps)
-endif()
-
+set(DEPS_DIR ${CMAKE_BINARY_DIR})
 set(DEPS_INSTALL_DIR "${DEPS_DIR}/usr")
 set(DEPS_BIN_DIR "${DEPS_DIR}/usr/bin")
 set(DEPS_LIB_DIR "${DEPS_DIR}/usr/lib")
