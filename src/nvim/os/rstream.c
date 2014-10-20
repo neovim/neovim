@@ -430,7 +430,7 @@ static void emit_read_event(RStream *rstream, bool eof)
 {
   Event event = {
     .source = rstream_event_source(rstream),
-    .type = kEventRStreamData,
+    .handler = rstream_read_event,
     .data.rstream = {
       .ptr = rstream,
       .eof = eof

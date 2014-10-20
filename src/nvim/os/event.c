@@ -170,19 +170,7 @@ static size_t process_from(klist_t(Event) *queue)
   Event event;
 
   while (kl_shift(Event, queue, &event) == 0) {
-    switch (event.type) {
-      case kEventSignal:
-        signal_handle(event);
-        break;
-      case kEventRStreamData:
-        rstream_read_event(event);
-        break;
-      case kEventJobExit:
-        job_exit_event(event);
-        break;
-      default:
-        abort();
-    }
+    event.handler(event);
     count++;
   }
 

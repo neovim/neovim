@@ -489,7 +489,7 @@ static void emit_exit_event(Job *job)
 {
   Event event = {
     .source = job_event_source(job),
-    .type = kEventJobExit,
+    .handler = job_exit_event,
     .data.job = job
   };
   event_push(event);

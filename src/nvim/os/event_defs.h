@@ -7,16 +7,12 @@
 #include "nvim/os/rstream_defs.h"
 
 typedef void * EventSource;
+typedef struct event Event;
+typedef void (*event_handler)(Event event);
 
-typedef enum {
-  kEventSignal,
-  kEventRStreamData,
-  kEventJobExit
-} EventType;
-
-typedef struct {
+struct event {
   EventSource source;
-  EventType type;
+  event_handler handler;
   union {
     int signum;
     struct {
@@ -25,6 +21,6 @@ typedef struct {
     } rstream;
     Job *job;
   } data;
-} Event;
+}; 
 
 #endif  // NVIM_OS_EVENT_DEFS_H

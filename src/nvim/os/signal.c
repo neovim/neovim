@@ -164,7 +164,7 @@ static void signal_cb(uv_signal_t *handle, int signum)
 
   Event event = {
     .source = signal_event_source(),
-    .type = kEventSignal,
+    .handler = signal_handle,
     .data = {
       .signum = signum
     }
