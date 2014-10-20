@@ -26,7 +26,8 @@ cmake -DTRAVIS_CI_BUILD=ON \
 	-DCMAKE_SYSTEM_LIBRARY_PATH=/lib32:/usr/lib32:/usr/local/lib32 \
 	-DFIND_LIBRARY_USE_LIB64_PATHS=OFF \
 	-DCMAKE_IGNORE_PATH=/lib:/usr/lib:/usr/local/lib \
-	-DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake
+	-DCMAKE_TOOLCHAIN_FILE=cmake/i386-linux-gnu.toolchain.cmake \
+	..
 
 $MAKE_CMD unittest
 $MAKE_CMD test

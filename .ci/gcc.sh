@@ -12,7 +12,7 @@ export VALGRIND=1
 export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 mkdir build
 cd build
-cmake -DTRAVIS_CI_BUILD=ON -DUSE_GCOV=ON
+cmake -DTRAVIS_CI_BUILD=ON -DUSE_GCOV=ON ..
 $MAKE_CMD unittest
 $MAKE_CMD test
 valgrind_check "$tmpdir"
