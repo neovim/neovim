@@ -19571,11 +19571,11 @@ static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
   }
 
   Error err = ERROR_INIT;
-  object_to_vim(result, rettv, &err);
-  api_free_object(result);
 
-  if (err.set) {
+  if (!object_to_vim(result, rettv, &err)){
     EMSG("Error converting value back to vim");
   }
+
+  api_free_object(result);
 }
 
