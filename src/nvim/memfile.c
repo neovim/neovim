@@ -43,8 +43,10 @@
 /// mf_trans_del()    may translate negative to positive block number
 /// mf_fullname()     make file name full path (use before first :cd)
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <string.h>
 
 #include "nvim/vim.h"
@@ -116,7 +118,8 @@ memfile_T *mf_open(char_u *fname, int flags)
   if (mfp->mf_fd >= 0 && os_fileinfo_fd(mfp->mf_fd, &file_info)) {
     uint64_t blocksize = os_fileinfo_blocksize(&file_info);
     if (blocksize >= MIN_SWAP_PAGE_SIZE && blocksize <= MAX_SWAP_PAGE_SIZE) {
-      mfp->mf_page_size = blocksize;
+      assert(blocksize <= UINT_MAX);
+      mfp->mf_page_size = (unsigned)blocksize;
     }
   }
 
@@ -147,7 +150,9 @@ memfile_T *mf_open(char_u *fname, int flags)
       --shift;
     }
 
-    mfp->mf_used_count_max = (p_mm << shift) / page_size;
+    assert(p_mm << shift >= p_mm);  // check we don't overflow
+    assert(p_mm < UINT_MAX);        // check we can cast to unsigned
+    mfp->mf_used_count_max = (unsigned)(p_mm << shift) / page_size;
     if (mfp->mf_used_count_max < 10)
       mfp->mf_used_count_max = 10;
   }
@@ -254,7 +259,7 @@ void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 /// 
 /// @param negative    TRUE if negative block number desired (data block)
 /// @param page_count  Desired number of pages.
-bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
+bhdr_T *mf_new(memfile_T *mfp, int negative, unsigned page_count)
 {
   // If we reached the maximum size for the used memory blocks, release one.
   // If a bhdr_T is returned, use it and adjust the page_count if necessary.
@@ -311,8 +316,7 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
 
   // Init the data to all zero, to avoid reading uninitialized data.
   // This also avoids that the passwd file ends up in the swap file!
-  (void)memset((char *)(hp->bh_data), 0,
-               (size_t)mfp->mf_page_size * page_count);
+  (void)memset((char *)(hp->bh_data), 0, mfp->mf_page_size * page_count);
 
   return hp;
 }
@@ -322,7 +326,7 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, int page_count)
 // Caller should first check a negative nr with mf_trans_del().
 //
 // @return  NULL if not found
-bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, int page_count)
+bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
 {
   // check block number exists
   if (nr >= mfp->mf_blocknr_max || nr <= mfp->mf_blocknr_min)
@@ -369,7 +373,7 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, int page_count)
 /// @param infile  Block should be in file (needed for recovery).
 void mf_put(memfile_T *mfp, bhdr_T *hp, int dirty, int infile)
 {
-  int flags = hp->bh_flags;
+  unsigned flags = hp->bh_flags;
 
   if ((flags & BH_LOCKED) == 0)
     EMSG(_("E293: block was not locked"));
@@ -558,7 +562,7 @@ static void mf_rem_used(memfile_T *mfp, bhdr_T *hp)
 ///              - Tried to create swap file but couldn't.
 ///              - All blocks are locked.
 ///              - Unlocked dirty block found, but flush failed.
-static bhdr_T *mf_release(memfile_T *mfp, int page_count)
+static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
 {
   // don't release while in mf_close_file()
   if (mf_dont_release)
@@ -654,7 +658,7 @@ int mf_release_all(void)
 }
 
 /// Allocate a block header and a block of memory for it.
-static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, int page_count)
+static bhdr_T *mf_alloc_bhdr(memfile_T *mfp, unsigned page_count)
 {
   bhdr_T *hp = xmalloc(sizeof(bhdr_T));
   hp->bh_data = xmalloc(mfp->mf_page_size * page_count);
@@ -811,7 +815,7 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
   // Otherwise use mf_blocknr_max.
   blocknr_T new_bnum;
   bhdr_T *freep = mfp->mf_free_first;
-  int page_count = hp->bh_page_count;
+  unsigned page_count = hp->bh_page_count;
   if (freep != NULL && freep->bh_page_count >= page_count) {
     new_bnum = freep->bh_bnum;
     // If the page count of the free block was larger, reduce it.
@@ -980,7 +984,7 @@ static void mf_hash_free_all(mf_hashtab_T *mht)
 /// @return  A pointer to a mf_hashitem_T or NULL if the item was not found.
 static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
 {
-  mf_hashitem_T *mhi = mht->mht_buckets[key & mht->mht_mask];
+  mf_hashitem_T *mhi = mht->mht_buckets[(unsigned long)key & mht->mht_mask];
   while (mhi != NULL && mhi->mhi_key != key)
     mhi = mhi->mhi_next;
   return mhi;
@@ -989,7 +993,7 @@ static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
 /// Add item to hashtable. Item must not be NULL.
 static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
-  long_u idx = mhi->mhi_key & mht->mht_mask;
+  long_u idx = (unsigned long)mhi->mhi_key & mht->mht_mask;
   mhi->mhi_next = mht->mht_buckets[idx];
   mhi->mhi_prev = NULL;
   if (mhi->mhi_next != NULL)
@@ -1010,7 +1014,8 @@ static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 static void mf_hash_rem_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
   if (mhi->mhi_prev == NULL)
-    mht->mht_buckets[mhi->mhi_key & mht->mht_mask] = mhi->mhi_next;
+    mht->mht_buckets[(unsigned long)mhi->mhi_key & mht->mht_mask] =
+      mhi->mhi_next;
   else
     mhi->mhi_prev->mhi_next = mhi->mhi_next;
 

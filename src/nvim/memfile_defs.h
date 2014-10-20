@@ -64,11 +64,11 @@ typedef struct bhdr {
   struct bhdr *bh_next;              /// next block header in free or used list
   struct bhdr *bh_prev;              /// previous block header in used list
   char_u *bh_data;                   /// pointer to memory (for used block)
-  int bh_page_count;                 /// number of pages in this block
+  unsigned bh_page_count;            /// number of pages in this block
 
-#define BH_DIRTY    1
-#define BH_LOCKED   2
-  char bh_flags;                     // BH_DIRTY or BH_LOCKED
+#define BH_DIRTY    1U
+#define BH_LOCKED   2U
+  unsigned bh_flags;                 // BH_DIRTY or BH_LOCKED
 } bhdr_T;
 
 /// A block number translation list item.

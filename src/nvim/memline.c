@@ -41,6 +41,7 @@
  *  mf_get().
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <string.h>
@@ -2725,7 +2726,8 @@ static void ml_flush_line(buf_T *buf)
  */
 static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
 {
-  bhdr_T *hp = mf_new(mfp, negative, page_count);
+  assert(page_count >= 0);
+  bhdr_T *hp = mf_new(mfp, negative, (unsigned)page_count);
   DATA_BL *dp = (DATA_BL *)(hp->bh_data);
   dp->db_id = DATA_ID;
   dp->db_txt_start = dp->db_txt_end = page_count * mfp->mf_page_size;

@@ -45,6 +45,7 @@ set(CONV_SOURCES
   hashtab.c
   log.c
   map.c
+  memfile.c
   memory.c
   misc2.c
   profile.c
