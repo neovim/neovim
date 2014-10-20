@@ -8,8 +8,6 @@
 #include "nvim/os/uv_helpers.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
-#include "nvim/os/event_defs.h"
-#include "nvim/os/event.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
@@ -33,7 +31,6 @@ struct rstream {
   uv_file fd;
   rstream_cb cb;
   bool free_handle;
-  EventSource source_override;
 };
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
@@ -76,18 +73,13 @@ void rbuffer_consumed(RBuffer *rbuffer, size_t count)
 void rbuffer_produced(RBuffer *rbuffer, size_t count)
 {
   rbuffer->wpos += count;
-  DLOG("Received %u bytes from RStream(address: %p, source: %p)",
-       (size_t)cnt,
-       rbuffer->rstream,
-       rstream_event_source(rbuffer->rstream));
+  DLOG("Received %u bytes from RStream(%p)", (size_t)cnt, rbuffer->rstream);
 
   rbuffer_relocate(rbuffer);
   if (rbuffer->rstream && rbuffer->wpos == rbuffer->capacity) {
     // The last read filled the buffer, stop reading for now
     rstream_stop(rbuffer->rstream);
-    DLOG("Buffer for RStream(address: %p, source: %p) is full, stopping it",
-         rstream,
-         rstream_event_source(rstream));
+    DLOG("Buffer for RStream(%p) is full, stopping it", rstream);
   }
 }
 
@@ -180,13 +172,8 @@ void rbuffer_free(RBuffer *rbuffer)
 ///        for reading with `rstream_read`
 /// @param buffer RBuffer instance to associate with the RStream
 /// @param data Some state to associate with the `RStream` instance
-/// @param source_override Replacement for the default source used in events
-///        emitted by this RStream. If NULL, the default is used.
 /// @return The newly-allocated `RStream` instance
-RStream * rstream_new(rstream_cb cb,
-                      RBuffer *buffer,
-                      void *data,
-                      EventSource source_override)
+RStream * rstream_new(rstream_cb cb, RBuffer *buffer, void *data)
 {
   RStream *rv = xmalloc(sizeof(RStream));
   rv->buffer = buffer;
@@ -198,7 +185,6 @@ RStream * rstream_new(rstream_cb cb,
   rv->fread_idle = NULL;
   rv->free_handle = false;
   rv->file_type = UV_UNKNOWN_HANDLE;
-  rv->source_override = source_override ? source_override : rv;
 
   return rv;
 }
@@ -322,21 +308,6 @@ size_t rstream_read(RStream *rstream, char *buffer, size_t count)
   return rbuffer_read(rstream->buffer, buffer, count);
 }
 
-/// Runs the read callback associated with the rstream
-///
-/// @param event Object containing data necessary to invoke the callback
-void rstream_read_event(Event event)
-{
-  RStream *rstream = event.data.rstream.ptr;
-
-  rstream->cb(rstream, rstream->data, event.data.rstream.eof);
-}
-
-EventSource rstream_event_source(RStream *rstream)
-{
-  return rstream->source_override;
-}
-
 // Callbacks used by libuv
 
 // Called by libuv to allocate memory for reading.
@@ -357,13 +328,11 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
 
   if (cnt <= 0) {
     if (cnt != UV_ENOBUFS) {
-      DLOG("Closing RStream(address: %p, source: %p)",
-           rstream,
-           rstream_event_source(rstream));
+      DLOG("Closing RStream(%p)", rstream);
       // Read error or EOF, either way stop the stream and invoke the callback
       // with eof == true
       uv_read_stop(stream);
-      emit_read_event(rstream, true);
+      rstream->cb(rstream, rstream->data, true);
     }
     return;
   }
@@ -374,7 +343,7 @@ static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
   // Data was already written, so all we need is to update 'wpos' to reflect
   // the space actually used in the buffer.
   rbuffer_produced(rstream->buffer, nread);
-  emit_read_event(rstream, false);
+  rstream->cb(rstream, rstream->data, false);
 }
 
 // Called by the by the 'idle' handle to emulate a reading event
@@ -409,7 +378,6 @@ static void fread_idle_cb(uv_idle_t *handle)
 
   if (req.result <= 0) {
     uv_idle_stop(rstream->fread_idle);
-    emit_read_event(rstream, true);
     return;
   }
 
@@ -417,26 +385,12 @@ static void fread_idle_cb(uv_idle_t *handle)
   size_t nread = (size_t) req.result;
   rbuffer_produced(rstream->buffer, nread);
   rstream->fpos += nread;
-  emit_read_event(rstream, false);
 }
 
 static void close_cb(uv_handle_t *handle)
 {
   free(handle->data);
   free(handle);
-}
-
-static void emit_read_event(RStream *rstream, bool eof)
-{
-  Event event = {
-    .source = rstream_event_source(rstream),
-    .handler = rstream_read_event,
-    .data.rstream = {
-      .ptr = rstream,
-      .eof = eof
-    }
-  };
-  event_push(event);
 }
 
 static void rbuffer_relocate(RBuffer *rbuffer)

@@ -34,12 +34,7 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/event.c.generated.h"
 #endif
-static klist_t(Event) *deferred_events, *immediate_events;
-// NULL-terminated array of event sources that we should process immediately.
-//
-// Events from sources that are not contained in this array are processed
-// later when `event_process` is called
-static EventSource *immediate_sources = NULL;
+static klist_t(Event) *pending_events;
 
 void event_init(void)
 {
@@ -47,8 +42,7 @@ void event_init(void)
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
   // Initialize the event queues
-  deferred_events = kl_init(Event);
-  immediate_events = kl_init(Event);
+  pending_events = kl_init(Event);
   // Initialize input events
   input_init();
   // Timer to wake the event loop if a timeout argument is passed to
@@ -72,8 +66,7 @@ void event_teardown(void)
 }
 
 // Wait for some event
-bool event_poll(int32_t ms, EventSource sources[])
-  FUNC_ATTR_NONNULL_ARG(2)
+bool event_poll(int32_t ms)
 {
   uv_run_mode run_mode = UV_RUN_ONCE;
 
@@ -104,18 +97,7 @@ bool event_poll(int32_t ms, EventSource sources[])
     run_mode = UV_RUN_NOWAIT;
   }
 
-  size_t processed_events;
-
-  do {
-    // Run one event loop iteration, blocking for events if run_mode is
-    // UV_RUN_ONCE
-    processed_events = loop(run_mode, sources);
-  } while (
-      // Continue running if ...
-      !processed_events &&   // we didn't process any immediate events
-      !event_has_deferred() &&   // no events are waiting to be processed
-      run_mode != UV_RUN_NOWAIT &&   // ms != 0
-      !timer_data.timed_out);  // we didn't get a timeout
+  loop(run_mode);
 
   if (!(--recursive)) {
     // Again, only stop when we leave the top-level invocation
@@ -127,56 +109,31 @@ bool event_poll(int32_t ms, EventSource sources[])
     // once more to let libuv perform it's cleanup
     uv_close((uv_handle_t *)&timer, NULL);
     uv_close((uv_handle_t *)&timer_prepare, NULL);
-    processed_events += loop(UV_RUN_NOWAIT, sources);
+    loop(UV_RUN_NOWAIT);
   }
 
-  return !timer_data.timed_out && (processed_events || event_has_deferred());
+  return !timer_data.timed_out && event_has_deferred();
 }
 
 bool event_has_deferred(void)
 {
-  return !kl_empty(deferred_events);
+  return !kl_empty(pending_events);
 }
 
 // Queue an event
 void event_push(Event event)
 {
-  bool defer = true;
-
-  if (immediate_sources) {
-    size_t i;
-    EventSource src;
-
-    for (src = immediate_sources[i = 0]; src; src = immediate_sources[++i]) {
-      if (src == event.source) {
-        defer = false;
-        break;
-      }
-    }
-  }
-
-  *kl_pushp(Event, defer ? deferred_events : immediate_events) = event;
+  *kl_pushp(Event, pending_events) = event;
 }
+
 
 void event_process(void)
 {
-  process_from(deferred_events);
-}
-
-// Runs the appropriate action for each queued event
-static size_t process_from(klist_t(Event) *queue)
-{
-  size_t count = 0;
   Event event;
 
-  while (kl_shift(Event, queue, &event) == 0) {
+  while (kl_shift(Event, pending_events, &event) == 0) {
     event.handler(event);
-    count++;
   }
-
-  DLOG("Processed %u events", count);
-
-  return count;
 }
 
 // Set a flag in the `event_poll` loop for signaling of a timeout
@@ -194,42 +151,9 @@ static void timer_prepare_cb(uv_prepare_t *handle)
   uv_prepare_stop(handle);
 }
 
-static void requeue_deferred_events(void)
+static void loop(uv_run_mode run_mode)
 {
-  size_t remaining = deferred_events->size;
-
-  DLOG("Number of deferred events: %u", remaining);
-
-  while (remaining--) {
-    // Re-push each deferred event to ensure it will be in the right queue
-    Event event;
-    kl_shift(Event, deferred_events, &event);
-    event_push(event);
-    DLOG("Re-queueing event");
-  }
-
-  DLOG("Number of deferred events: %u", deferred_events->size);
-}
-
-static size_t loop(uv_run_mode run_mode, EventSource *sources)
-{
-  size_t count;
-  immediate_sources = sources;
-  // It's possible that some events from the immediate sources are waiting
-  // in the deferred queue. If so, move them to the immediate queue so they
-  // will be processed in order of arrival by the next `process_from` call.
-  requeue_deferred_events();
-  count = process_from(immediate_events);
-
-  if (count) {
-    // No need to enter libuv, events were already processed
-    return count;
-  }
-
   DLOG("Enter event loop");
   uv_run(uv_default_loop(), run_mode);
   DLOG("Exit event loop");
-  immediate_sources = NULL;
-  count = process_from(immediate_events);
-  return count;
 }

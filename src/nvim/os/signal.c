@@ -12,8 +12,6 @@
 #include "nvim/memory.h"
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
-#include "nvim/os/event_defs.h"
-#include "nvim/os/event.h"
 #include "nvim/os/signal.h"
 
 static uv_signal_t sint, spipe, shup, squit, sterm, swinch;
@@ -72,45 +70,6 @@ void signal_accept_deadly(void)
   rejecting_deadly = false;
 }
 
-void signal_handle(Event event)
-{
-  int signum = event.data.signum;
-
-  switch (signum) {
-    case SIGINT:
-      got_int = true;
-      break;
-#ifdef SIGPWR
-    case SIGPWR:
-      // Signal of a power failure(eg batteries low), flush the swap files to
-      // be safe
-      ml_sync_all(false, false);
-      break;
-#endif
-    case SIGPIPE:
-      // Ignore
-      break;
-    case SIGWINCH:
-      shell_resized();
-      break;
-    case SIGTERM:
-    case SIGQUIT:
-    case SIGHUP:
-      if (!rejecting_deadly) {
-        deadly_signal(signum);
-      }
-      break;
-    default:
-      fprintf(stderr, "Invalid signal %d", signum);
-      break;
-  }
-}
-
-EventSource signal_event_source(void)
-{
-  return &sint;
-}
-
 static char * signal_name(int signum)
 {
   switch (signum) {
@@ -154,20 +113,32 @@ static void deadly_signal(int signum)
 
 static void signal_cb(uv_signal_t *handle, int signum)
 {
-  if (rejecting_deadly) {
-    if (signum == SIGINT) {
+  switch (signum) {
+    case SIGINT:
       got_int = true;
-    }
-
-    return;
+      break;
+#ifdef SIGPWR
+    case SIGPWR:
+      // Signal of a power failure(eg batteries low), flush the swap files to
+      // be safe
+      ml_sync_all(false, false);
+      break;
+#endif
+    case SIGPIPE:
+      // Ignore
+      break;
+    case SIGWINCH:
+      shell_resized();
+      break;
+    case SIGTERM:
+    case SIGQUIT:
+    case SIGHUP:
+      if (!rejecting_deadly) {
+        deadly_signal(signum);
+      }
+      break;
+    default:
+      fprintf(stderr, "Invalid signal %d", signum);
+      break;
   }
-
-  Event event = {
-    .source = signal_event_source(),
-    .handler = signal_handle,
-    .data = {
-      .signum = signum
-    }
-  };
-  event_push(event);
 }

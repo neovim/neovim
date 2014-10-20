@@ -7,7 +7,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/event.h"
-#include "nvim/os/signal.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/ascii.h"
@@ -48,10 +47,7 @@ void input_init(void)
   }
 
   read_buffer = rbuffer_new(READ_BUFFER_SIZE);
-  read_stream = rstream_new(read_cb,
-                            read_buffer,
-                            NULL,
-                            NULL);
+  read_stream = rstream_new(read_cb, read_buffer, NULL);
   rstream_set_file(read_stream, read_cmd_fd);
 }
 
@@ -170,16 +166,10 @@ void input_buffer_restore(String str)
 static bool input_poll(int32_t ms)
 {
   if (embedded_mode) {
-    EventSource input_sources[] = { signal_event_source(), NULL };
-    return event_poll(ms, input_sources);
+    return event_poll(ms);
   }
 
-  EventSource input_sources[] = {
-    rstream_event_source(read_stream),
-    NULL
-  };
-
-  return input_ready() || event_poll(ms, input_sources) || input_ready();
+  return input_ready() || event_poll(ms) || input_ready();
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
@@ -235,7 +225,7 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
 
 static void convert_input(void)
 {
-  if (!rbuffer_available(input_buffer)) {
+  if (embedded_mode || !rbuffer_available(input_buffer)) {
     // No input buffer space
     return;
   }

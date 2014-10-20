@@ -126,8 +126,7 @@ void channel_from_stream(uv_stream_t *stream)
   // read stream
   channel->data.streams.read = rstream_new(parse_msgpack,
                                            rbuffer_new(CHANNEL_BUFFER_SIZE),
-                                           channel,
-                                           NULL);
+                                           channel);
   rstream_set_stream(channel->data.streams.read, stream);
   rstream_start(channel->data.streams.read);
   // write stream
@@ -201,17 +200,12 @@ Object channel_send_call(uint64_t id,
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
 
-  EventSource channel_source = channel->is_job
-    ? job_event_source(channel->data.job)
-    : rstream_event_source(channel->data.streams.read);
-  EventSource sources[] = {channel_source, NULL};
-
   // Push the frame
   ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
 
   do {
-    event_poll(-1, sources);
+    event_poll(-1);
   } while (!frame.returned);
 
   (void)kv_pop(channel->call_stack);
@@ -286,8 +280,7 @@ static void channel_from_stdio(void)
   // read stream
   channel->data.streams.read = rstream_new(parse_msgpack,
                                            rbuffer_new(CHANNEL_BUFFER_SIZE),
-                                           channel,
-                                           NULL);
+                                           channel);
   rstream_set_file(channel->data.streams.read, 0);
   rstream_start(channel->data.streams.read);
   // write stream
