@@ -5,8 +5,8 @@
 
 #include <uv.h>
 
-#include "nvim/os/channel.h"
-#include "nvim/os/server.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -46,7 +46,7 @@ typedef struct {
 static PMap(cstr_t) *servers = NULL;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/server.c.generated.h"
+# include "msgpack_rpc/server.c.generated.h"
 #endif
 
 /// Initializes the module

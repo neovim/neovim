@@ -32,8 +32,6 @@ src/nvim/os/job.c
 src/nvim/os/job.h
 src/nvim/os/job_defs.h
 src/nvim/os/mem.c
-src/nvim/os/msgpack_rpc.c
-src/nvim/os/msgpack_rpc.h
 src/nvim/os/os.h
 src/nvim/os/rstream.c
 src/nvim/os/rstream.h
@@ -44,10 +42,12 @@ src/nvim/os/signal.c
 src/nvim/os/signal.h
 src/nvim/os/time.c
 src/nvim/os/time.h
-src/nvim/os/server.c
-src/nvim/os/server.h
-src/nvim/os/channel.c
-src/nvim/os/channel.h
+src/nvim/msgpack_rpc/server.c
+src/nvim/msgpack_rpc/server.h
+src/nvim/msgpack_rpc/channel.c
+src/nvim/msgpack_rpc/channel.h
+src/nvim/msgpack_rpc/helpers.c
+src/nvim/msgpack_rpc/helpers.h
 src/nvim/tempfile.c
 src/nvim/tempfile.h
 src/nvim/profile.c

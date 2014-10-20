@@ -7,8 +7,10 @@
 
 #include "nvim/os/event.h"
 #include "nvim/os/input.h"
-#include "nvim/os/channel.h"
-#include "nvim/os/server.h"
+#include "nvim/msgpack_rpc/defs.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/server.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/os/provider.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/rstream.h"
@@ -41,6 +43,9 @@ static EventSource *immediate_sources = NULL;
 
 void event_init(void)
 {
+  // early msgpack-rpc initialization
+  msgpack_rpc_init_method_table();
+  msgpack_rpc_helpers_init();
   // Initialize the event queues
   deferred_events = kl_init(Event);
   immediate_events = kl_init(Event);
@@ -52,9 +57,8 @@ void event_init(void)
   signal_init();
   // Jobs
   job_init();
-  // Channels
+  // finish mspgack-rpc initialization
   channel_init();
-  // Servers
   server_init();
   // Providers
   provider_init();

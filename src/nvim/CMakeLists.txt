@@ -3,7 +3,7 @@ include(CheckLibraryExists)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
 file(GLOB API_HEADERS api/*.h)
-set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/nvim/os/msgpack_rpc.h)
+file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
@@ -19,12 +19,14 @@ file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/api/private)
+file(MAKE_DIRECTORY ${GENERATED_DIR}/msgpack_rpc)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
+file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/msgpack_rpc)
 
-file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c)
+file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c)
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 
 foreach(sfile ${NEOVIM_SOURCES})
@@ -126,7 +128,7 @@ add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
   COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${MSGPACK_DISPATCH}
   DEPENDS
     ${API_HEADERS}
-    ${MSGPACK_RPC_HEADER}
+    ${MSGPACK_RPC_HEADERS}
     ${DISPATCH_GENERATOR}
 )
 

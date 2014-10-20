@@ -6,7 +6,7 @@
 #include "nvim/map_defs.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
-#include "nvim/os/msgpack_rpc.h"
+#include "nvim/msgpack_rpc/defs.h"
 
 #include "nvim/lib/khash.h"
 

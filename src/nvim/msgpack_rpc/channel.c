@@ -7,7 +7,7 @@
 
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
-#include "nvim/os/channel.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/event.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
@@ -15,8 +15,7 @@
 #include "nvim/os/wstream_defs.h"
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
-#include "nvim/os/msgpack_rpc.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
@@ -60,7 +59,7 @@ static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer out_buffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/channel.c.generated.h"
+# include "msgpack_rpc/channel.c.generated.h"
 #endif
 
 /// Initializes the module

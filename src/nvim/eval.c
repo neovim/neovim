@@ -81,7 +81,7 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
-#include "nvim/os/channel.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"

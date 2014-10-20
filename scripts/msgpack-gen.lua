@@ -92,8 +92,8 @@ output:write([[
 #include "nvim/map.h"
 #include "nvim/log.h"
 #include "nvim/vim.h"
-#include "nvim/os/msgpack_rpc.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/msgpack_rpc/helpers.h"
+#include "nvim/msgpack_rpc/defs.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 ]])
@@ -249,7 +249,7 @@ end
 output:write([[
 static Map(String, rpc_method_handler_fn) *methods = NULL;
 
-void msgpack_rpc_init(void)
+void msgpack_rpc_init_method_table(void)
 {
   methods = map_new(String, rpc_method_handler_fn)();
 

@@ -5,7 +5,7 @@
 
 #include "nvim/map_defs.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/os/msgpack_rpc.h"
+#include "nvim/msgpack_rpc/defs.h"
 
 #define MAP_DECLS(T, U)                                                       \
   KHASH_DECLARE(T##_##U##_map, T, U)                                          \

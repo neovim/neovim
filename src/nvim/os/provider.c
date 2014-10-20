@@ -8,7 +8,7 @@
 #include "nvim/api/vim.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/os/channel.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/os.h"
 #include "nvim/log.h"
