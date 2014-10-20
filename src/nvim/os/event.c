@@ -27,7 +27,7 @@ KLIST_INIT(Event, Event, _destroy_event)
 
 typedef struct {
   bool timed_out;
-  int32_t ms;
+  int ms;
   uv_timer_t *timer;
 } TimerData;
 
@@ -66,7 +66,7 @@ void event_teardown(void)
 }
 
 // Wait for some event
-bool event_poll(int32_t ms)
+void event_poll(int ms)
 {
   uv_run_mode run_mode = UV_RUN_ONCE;
 
@@ -111,8 +111,6 @@ bool event_poll(int32_t ms)
     uv_close((uv_handle_t *)&timer_prepare, NULL);
     loop(UV_RUN_NOWAIT);
   }
-
-  return !timer_data.timed_out && event_has_deferred();
 }
 
 bool event_has_deferred(void)

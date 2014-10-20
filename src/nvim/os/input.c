@@ -163,13 +163,10 @@ void input_buffer_restore(String str)
   free(str.data);
 }
 
-static bool input_poll(int32_t ms)
+static bool input_poll(int ms)
 {
-  if (embedded_mode) {
-    return event_poll(ms);
-  }
-
-  return input_ready() || event_poll(ms) || input_ready();
+  event_poll_until(ms, input_ready());
+  return input_ready();
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
@@ -294,6 +291,10 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return rstream_pending(read_stream) > 0 || eof;
+  return typebuf_was_filled ||                   // API call filled typeahead
+         event_has_deferred() ||                 // Events must be processed
+         (!embedded_mode && (
+            rstream_pending(read_stream) > 0 ||  // Stdin input
+            eof));                               // Stdin closed
 }
 

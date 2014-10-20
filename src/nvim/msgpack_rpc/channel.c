@@ -203,11 +203,7 @@ Object channel_send_call(uint64_t id,
   // Push the frame
   ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
-
-  do {
-    event_poll(-1);
-  } while (!frame.returned);
-
+  event_poll_until(-1, frame.returned);
   (void)kv_pop(channel->call_stack);
 
   if (frame.errored) {

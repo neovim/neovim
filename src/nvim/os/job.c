@@ -12,7 +12,6 @@
 #include "nvim/os/wstream_defs.h"
 #include "nvim/os/event.h"
 #include "nvim/os/event_defs.h"
-#include "nvim/os/time.h"
 #include "nvim/os/shell.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
@@ -273,45 +272,33 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   int old_mode = cur_tmode;
   settmode(TMODE_COOK);
 
-  // keep track of the elapsed time if ms > 0
-  uint64_t before = (ms > 0) ? os_hrtime() : 0;
+  // Increase pending_refs to stop the exit_cb from being called, which
+  // could result in the job being freed before we have a chance
+  // to get the status.
+  job->pending_refs++;
+  event_poll_until(ms,
+      // Until...
+      got_int ||                // interrupted by the user
+      job->pending_refs == 1);  // job exited
+  job->pending_refs--;
 
-  while (1) {
-    // check if the job has exited (and the status is available).
-    if (job->pending_refs == 0) {
-      break;
-    }
-
-    event_poll(ms);
-
-    // we'll assume that a user frantically hitting interrupt doesn't like
-    // the current job. Signal that it has to be killed.
-    if (got_int) {
-      job_stop(job);
-    }
-
-    if (ms == 0) {
-      break;
-    }
-
-    // check if the poll timed out, if not, decrease the ms to wait for the
-    // next run
-    if (ms > 0) {
-      uint64_t now = os_hrtime();
-      ms -= (int) ((now - before) / 1000000);
-      before = now;
-
-      // if the time elapsed is greater than the `ms` wait time, break
-      if (ms <= 0) {
-        break;
-      }
-    }
+  // we'll assume that a user frantically hitting interrupt doesn't like
+  // the current job. Signal that it has to be killed.
+  if (got_int) {
+    job_stop(job);
+    event_poll(0);
   }
 
   settmode(old_mode);
 
-  // return -1 for a timeout, the job status otherwise
-  return (job->pending_refs) ? -1 : (int) job->status;
+  if (!job->pending_refs) {
+    int status = (int) job->status;
+    job_exit_callback(job);
+    return status;
+  }
+
+  // return -1 for a timeout
+  return  -1;
 }
 
 /// Close the pipe used to write to the job.
