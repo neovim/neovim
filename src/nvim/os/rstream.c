@@ -47,14 +47,16 @@ RBuffer *rbuffer_new(size_t capacity)
   rv->data = xmalloc(capacity);
   rv->capacity = capacity;
   rv->rpos = rv->wpos = 0;
+  rv->rstream = NULL;
   return rv;
 }
 
 /// Advances `rbuffer` read pointers to consume data. If the associated
 /// RStream had stopped because the buffer was full, this will restart it.
 ///
-/// This is called automatically by rbuffer_read, but when using `rbuffer_data`
-/// directly, this needs to called after the data was consumed.
+/// This is called automatically by rbuffer_read, but when using
+/// `rbuffer_read_ptr` directly, this needs to called after the data was
+/// consumed.
 void rbuffer_consumed(RBuffer *rbuffer, size_t count)
 {
   rbuffer->rpos += count;
@@ -104,7 +106,7 @@ size_t rbuffer_read(RBuffer *rbuffer, char *buffer, size_t count)
   }
 
   if (read_count > 0) {
-    memcpy(buffer, rbuffer_data(rbuffer), read_count);
+    memcpy(buffer, rbuffer_read_ptr(rbuffer), read_count);
     rbuffer_consumed(rbuffer, read_count);
   }
 
@@ -126,7 +128,7 @@ size_t rbuffer_write(RBuffer *rbuffer, char *buffer, size_t count)
   }
 
   if (write_count > 0) {
-    memcpy(rbuffer_data(rbuffer), buffer, write_count);
+    memcpy(rbuffer_write_ptr(rbuffer), buffer, write_count);
     rbuffer_produced(rbuffer, write_count);
   }
 
@@ -135,9 +137,16 @@ size_t rbuffer_write(RBuffer *rbuffer, char *buffer, size_t count)
 
 /// Returns a pointer to a raw buffer containing the first byte available for
 /// reading.
-char *rbuffer_data(RBuffer *rbuffer)
+char *rbuffer_read_ptr(RBuffer *rbuffer)
 {
   return rbuffer->data + rbuffer->rpos;
+}
+
+/// Returns a pointer to a raw buffer containing the first byte available for
+/// write.
+char *rbuffer_write_ptr(RBuffer *rbuffer)
+{
+  return rbuffer->data + rbuffer->wpos;
 }
 
 /// Returns the number of bytes ready for consumption in `rbuffer`
@@ -336,7 +345,7 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
   RStream *rstream = handle_get_rstream(handle);
 
   buf->len = rbuffer_available(rstream->buffer);
-  buf->base = rbuffer_data(rstream->buffer);
+  buf->base = rbuffer_write_ptr(rstream->buffer);
 }
 
 // Callback invoked by libuv after it copies the data into the buffer provided
@@ -374,8 +383,8 @@ static void fread_idle_cb(uv_idle_t *handle)
   uv_fs_t req;
   RStream *rstream = handle_get_rstream((uv_handle_t *)handle);
 
-  rstream->uvbuf.len = rstream->buffer->capacity - rstream->buffer->wpos;
-  rstream->uvbuf.base = rstream->buffer->data + rstream->buffer->wpos;
+  rstream->uvbuf.len = rbuffer_available(rstream->buffer);
+  rstream->uvbuf.base = rbuffer_write_ptr(rstream->buffer);
 
   // the offset argument to uv_fs_read is int64_t, could someone really try
   // to read more than 9 quintillion (9e18) bytes?
