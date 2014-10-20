@@ -58,7 +58,6 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/os/event.h"
 
 /*
  * definitions used for CTRL-X submode
@@ -943,10 +942,6 @@ doESCkey:
       did_cursorhold = TRUE;
       break;
 
-    case K_EVENT:
-      event_process();
-      break;
-
     case K_HOME:        /* <Home> */
     case K_KHOME:
     case K_S_HOME:
@@ -1224,8 +1219,7 @@ force_cindent:
  * Only redraw when there are no characters available.  This speeds up
  * inserting sequences of characters (e.g., for CTRL-R).
  */
-static void 
-ins_redraw (
+void ins_redraw (
     int ready                   /* not busy with something */
 )
 {

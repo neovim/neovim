@@ -59,7 +59,6 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/os/event.h"
 
 /*
  * The Visual area is remembered for reselection.
@@ -312,7 +311,6 @@ static const struct nv_cmd {
   {K_F8,      farsi_fkey,     0,                      0},
   {K_F9,      farsi_fkey,     0,                      0},
   {K_CURSORHOLD, nv_cursorhold, NV_KEEPREG,           0},
-  {K_EVENT,   nv_event,       NV_KEEPREG,             0},
 };
 
 /* Number of commands in nv_cmds[]. */
@@ -7372,9 +7370,4 @@ static void nv_cursorhold(cmdarg_T *cap)
   apply_autocmds(EVENT_CURSORHOLD, NULL, NULL, FALSE, curbuf);
   did_cursorhold = TRUE;
   cap->retval |= CA_COMMAND_BUSY;       /* don't call edit() now */
-}
-
-static void nv_event(cmdarg_T *cap)
-{
-  event_process();
 }
