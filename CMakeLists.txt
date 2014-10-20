@@ -7,7 +7,6 @@ set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 option(USE_BUNDLED_DEPS "Use bundled dependencies" ON)
 if (USE_BUNDLED_DEPS)
   include(BuildDeps)
-  message(STATUS "Building bundled dependencies")
   build_deps(${CMAKE_SOURCE_DIR}/third-party ${CMAKE_BINARY_DIR}/deps) 
 
   # Prefer our bundled versions of dependencies.
