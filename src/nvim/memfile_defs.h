@@ -3,8 +3,6 @@
 
 #include "nvim/types.h"
 
-typedef struct block_hdr bhdr_T;
-
 /// A block number.
 ///
 /// Blocks numbered from 0 upwards have been assigned a place in the actual
@@ -19,13 +17,11 @@ typedef long blocknr_T;
 ///
 /// Therefore, items can be arbitrary data structures beginning with pointers
 /// for the list and and a block number key.
-typedef struct mf_hashitem_S mf_hashitem_T;
-
-struct mf_hashitem_S {
-  mf_hashitem_T   *mhi_next;
-  mf_hashitem_T   *mhi_prev;
+typedef struct mf_hashitem_S {
+  struct mf_hashitem_S *mhi_next;
+  struct mf_hashitem_S *mhi_prev;
   blocknr_T mhi_key;
-};
+} mf_hashitem_T;
 
 /// Initial size for a hashtable.
 #define MHT_INIT_SIZE   64
@@ -61,19 +57,19 @@ typedef struct mf_hashtab_S {
 /// The free list is a single linked list, not sorted.
 /// The blocks in the free list have no block of memory allocated and
 /// the contents of the block in the file (if any) is irrelevant.
-struct block_hdr {
+typedef struct block_hdr {
   mf_hashitem_T bh_hashitem;         /// header for hash table and key
 #define bh_bnum bh_hashitem.mhi_key  /// block number, part of bh_hashitem
 
-  bhdr_T *bh_next;                   /// next block_hdr in free or used list
-  bhdr_T *bh_prev;                   /// previous block_hdr in used list
+  struct block_hdr *bh_next;         /// next block_hdr in free or used list
+  struct block_hdr *bh_prev;         /// previous block_hdr in used list
   char_u *bh_data;                   /// pointer to memory (for used block)
   int bh_page_count;                 /// number of pages in this block
 
 #define BH_DIRTY    1
 #define BH_LOCKED   2
   char bh_flags;                     // BH_DIRTY or BH_LOCKED
-};
+} bhdr_T;
 
 /// A block number translation list item.
 ///
@@ -81,16 +77,14 @@ struct block_hdr {
 /// a positive number. Because the reference to the block is still the negative
 /// number, we remember the translation to the new positive number in the
 /// double linked trans lists. The structure is the same as the hash lists.
-typedef struct nr_trans NR_TRANS;
-
-struct nr_trans {
+typedef struct nr_trans {
   mf_hashitem_T nt_hashitem;             /// header for hash table and key
 #define nt_old_bnum nt_hashitem.mhi_key  /// old, negative, number
   blocknr_T nt_new_bnum;                 /// new, positive, number
-};
+} NR_TRANS;
 
 /// A memory file.
-struct memfile {
+typedef struct memfile {
   char_u *mf_fname;                  /// name of the file
   char_u *mf_ffname;                 /// idem, full path
   int mf_fd;                         /// file descriptor
@@ -107,6 +101,6 @@ struct memfile {
   blocknr_T mf_infile_count;         /// number of pages in the file
   unsigned mf_page_size;             /// number of bytes in a page
   int mf_dirty;                      /// TRUE if there are dirty blocks
-};
+} memfile_T;
 
 #endif // NVIM_MEMFILE_DEFS_H
