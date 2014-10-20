@@ -804,7 +804,7 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
   if (hp->bh_bnum >= 0)                     // it's already positive
     return OK;
 
-  NR_TRANS *np = xmalloc(sizeof(NR_TRANS));
+  mf_blocknr_trans_item_T *np = xmalloc(sizeof(mf_blocknr_trans_item_T));
 
   // Get a new number for the block.
   // If the first item in the free list has sufficient pages, use its number.
@@ -847,7 +847,8 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
 ///          The old number           When not found.
 blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 {
-  NR_TRANS *np = (NR_TRANS *)mf_hash_find(&mfp->mf_trans, old_nr);
+  mf_blocknr_trans_item_T *np =
+    (mf_blocknr_trans_item_T *)mf_hash_find(&mfp->mf_trans, old_nr);
 
   if (np == NULL)    // not found
     return old_nr;

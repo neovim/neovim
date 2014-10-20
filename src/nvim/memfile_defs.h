@@ -17,9 +17,9 @@ typedef long blocknr_T;
 ///
 /// Therefore, items can be arbitrary data structures beginning with pointers
 /// for the list and and a block number key.
-typedef struct mf_hashitem_S {
-  struct mf_hashitem_S *mhi_next;
-  struct mf_hashitem_S *mhi_prev;
+typedef struct mf_hashitem {
+  struct mf_hashitem *mhi_next;
+  struct mf_hashitem *mhi_prev;
   blocknr_T mhi_key;
 } mf_hashitem_T;
 
@@ -32,7 +32,7 @@ typedef struct mf_hashitem_S {
 /// This is an intrusive data structure: we require that items begin with
 /// mf_hashitem_T which contains the key and linked list pointers. List of items
 /// in each bucket is doubly-linked.
-typedef struct mf_hashtab_S {
+typedef struct mf_hashtab {
   long_u mht_mask;              /// mask used to mod hash value to array index
                                 /// (nr of items in array is 'mht_mask + 1')
   long_u mht_count;             /// number of items inserted
@@ -57,12 +57,12 @@ typedef struct mf_hashtab_S {
 /// The free list is a single linked list, not sorted.
 /// The blocks in the free list have no block of memory allocated and
 /// the contents of the block in the file (if any) is irrelevant.
-typedef struct block_hdr {
+typedef struct bhdr {
   mf_hashitem_T bh_hashitem;         /// header for hash table and key
 #define bh_bnum bh_hashitem.mhi_key  /// block number, part of bh_hashitem
 
-  struct block_hdr *bh_next;         /// next block_hdr in free or used list
-  struct block_hdr *bh_prev;         /// previous block_hdr in used list
+  struct bhdr *bh_next;              /// next block header in free or used list
+  struct bhdr *bh_prev;              /// previous block header in used list
   char_u *bh_data;                   /// pointer to memory (for used block)
   int bh_page_count;                 /// number of pages in this block
 
@@ -77,20 +77,20 @@ typedef struct block_hdr {
 /// a positive number. Because the reference to the block is still the negative
 /// number, we remember the translation to the new positive number in the
 /// double linked trans lists. The structure is the same as the hash lists.
-typedef struct nr_trans {
+typedef struct mf_blocknr_trans_item {
   mf_hashitem_T nt_hashitem;             /// header for hash table and key
 #define nt_old_bnum nt_hashitem.mhi_key  /// old, negative, number
   blocknr_T nt_new_bnum;                 /// new, positive, number
-} NR_TRANS;
+} mf_blocknr_trans_item_T;
 
 /// A memory file.
 typedef struct memfile {
   char_u *mf_fname;                  /// name of the file
   char_u *mf_ffname;                 /// idem, full path
   int mf_fd;                         /// file descriptor
-  bhdr_T *mf_free_first;             /// first block_hdr in free list
-  bhdr_T *mf_used_first;             /// mru block_hdr in used list
-  bhdr_T *mf_used_last;              /// lru block_hdr in used list
+  bhdr_T *mf_free_first;             /// first block header in free list
+  bhdr_T *mf_used_first;             /// mru block header in used list
+  bhdr_T *mf_used_last;              /// lru block header in used list
   unsigned mf_used_count;            /// number of pages in used list
   unsigned mf_used_count_max;        /// maximum number of pages in memory
   mf_hashtab_T mf_hash;              /// hash lists
