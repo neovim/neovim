@@ -66,7 +66,7 @@
 #define MEMFILE_PAGE_SIZE 4096       /// default page size
 
 
-static long_u total_mem_used = 0;    /// total memory used for memfiles
+static size_t total_mem_used = 0;    /// total memory used for memfiles
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "memfile.c.generated.h"
@@ -251,7 +251,11 @@ void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 {
   // Correct the memory used for block 0 to the new size, because it will be
   // freed with that size later on.
-  total_mem_used += new_size - mfp->mf_page_size;
+  if (new_size >= mfp->mf_page_size) {
+    total_mem_used += new_size - mfp->mf_page_size;
+  } else {
+    total_mem_used -= mfp->mf_page_size - new_size;
+  }
   mfp->mf_page_size = new_size;
 }
 
@@ -571,7 +575,7 @@ static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
   /// Need to release a block if the number of blocks for this memfile is
   /// higher than the maximum one or total memory used is over 'maxmemtot'.
   int need_release = (mfp->mf_used_count >= mfp->mf_used_count_max
-                      || (total_mem_used >> 10) >= (long_u)p_mmt);
+                      || (total_mem_used >> 10) >= (size_t)p_mmt);
 
   /// Try to create swap file if the amount of memory used is getting too high.
   if (mfp->mf_fd < 0 && need_release && p_uc) {
@@ -970,7 +974,7 @@ static void mf_hash_free_all(mf_hashtab_T *mht)
 {
   mf_hashitem_T *next;
 
-  for (long_u idx = 0; idx <= mht->mht_mask; idx++)
+  for (size_t idx = 0; idx <= mht->mht_mask; idx++)
     for (mf_hashitem_T *mhi = mht->mht_buckets[idx]; mhi != NULL; mhi = next) {
       next = mhi->mhi_next;
       free(mhi);
@@ -984,7 +988,7 @@ static void mf_hash_free_all(mf_hashtab_T *mht)
 /// @return  A pointer to a mf_hashitem_T or NULL if the item was not found.
 static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
 {
-  mf_hashitem_T *mhi = mht->mht_buckets[(unsigned long)key & mht->mht_mask];
+  mf_hashitem_T *mhi = mht->mht_buckets[(size_t)key & mht->mht_mask];
   while (mhi != NULL && mhi->mhi_key != key)
     mhi = mhi->mhi_next;
   return mhi;
@@ -993,7 +997,7 @@ static mf_hashitem_T *mf_hash_find(mf_hashtab_T *mht, blocknr_T key)
 /// Add item to hashtable. Item must not be NULL.
 static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
-  long_u idx = (unsigned long)mhi->mhi_key & mht->mht_mask;
+  size_t idx = (size_t)mhi->mhi_key & mht->mht_mask;
   mhi->mhi_next = mht->mht_buckets[idx];
   mhi->mhi_prev = NULL;
   if (mhi->mhi_next != NULL)
@@ -1014,7 +1018,7 @@ static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 static void mf_hash_rem_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 {
   if (mhi->mhi_prev == NULL)
-    mht->mht_buckets[(unsigned long)mhi->mhi_key & mht->mht_mask] =
+    mht->mht_buckets[(size_t)mhi->mhi_key & mht->mht_mask] =
       mhi->mhi_next;
   else
     mhi->mhi_prev->mhi_next = mhi->mhi_next;
@@ -1039,7 +1043,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
   while ((mht->mht_mask >> shift) != 0)
     shift++;
 
-  for (long_u i = 0; i <= mht->mht_mask; i++) {
+  for (size_t i = 0; i <= mht->mht_mask; i++) {
     /// Traverse the items in the i-th original bucket and move them into
     /// MHT_GROWTH_FACTOR new buckets, preserving their relative order
     /// within each new bucket. Preserving the order is important because
@@ -1054,7 +1058,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
 
     for (mf_hashitem_T *mhi = mht->mht_buckets[i];
          mhi != NULL; mhi = mhi->mhi_next) {
-      long_u j = (mhi->mhi_key >> shift) & (MHT_GROWTH_FACTOR - 1);
+      size_t j = (mhi->mhi_key >> shift) & (MHT_GROWTH_FACTOR - 1);
       if (tails[j] == NULL) {
         buckets[i + (j << shift)] = mhi;
         tails[j] = mhi;
@@ -1066,7 +1070,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
       }
     }
 
-    for (long_u j = 0; j < MHT_GROWTH_FACTOR; j++)
+    for (size_t j = 0; j < MHT_GROWTH_FACTOR; j++)
       if (tails[j] != NULL)
         tails[j]->mhi_next = NULL;
   }

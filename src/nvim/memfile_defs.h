@@ -1,6 +1,7 @@
 #ifndef NVIM_MEMFILE_DEFS_H
 #define NVIM_MEMFILE_DEFS_H
 
+#include <stdint.h>
 #include "nvim/types.h"
 
 /// A block number.
@@ -24,7 +25,7 @@ typedef struct mf_hashitem {
 } mf_hashitem_T;
 
 /// Initial size for a hashtable.
-#define MHT_INIT_SIZE   64
+#define MHT_INIT_SIZE 64
 
 /// A chained hashtable with block numbers as keys and arbitrary data structures
 /// as items.
@@ -33,9 +34,9 @@ typedef struct mf_hashitem {
 /// mf_hashitem_T which contains the key and linked list pointers. List of items
 /// in each bucket is doubly-linked.
 typedef struct mf_hashtab {
-  long_u mht_mask;              /// mask used to mod hash value to array index
+  size_t mht_mask;              /// mask used to mod hash value to array index
                                 /// (nr of items in array is 'mht_mask + 1')
-  long_u mht_count;             /// number of items inserted
+  size_t mht_count;             /// number of items inserted
   mf_hashitem_T **mht_buckets;  /// points to the array of buckets (can be
                                 /// mht_small_buckets or a newly allocated array
                                 /// when mht_small_buckets becomes too small)
