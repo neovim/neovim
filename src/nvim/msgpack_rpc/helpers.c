@@ -140,10 +140,13 @@ bool msgpack_rpc_to_object(msgpack_object *obj, Object *arg)
     case MSGPACK_OBJECT_EXT:
       switch (obj->via.ext.type) {
         case kObjectTypeBuffer:
+          arg->type = kObjectTypeBuffer;
           return msgpack_rpc_to_buffer(obj, &arg->data.buffer);
         case kObjectTypeWindow:
+          arg->type = kObjectTypeWindow;
           return msgpack_rpc_to_window(obj, &arg->data.window);
         case kObjectTypeTabpage:
+          arg->type = kObjectTypeTabpage;
           return msgpack_rpc_to_tabpage(obj, &arg->data.tabpage);
       }
     default:
@@ -292,44 +295,6 @@ void msgpack_rpc_from_dictionary(Dictionary result, msgpack_packer *res)
   }
 }
 
-/// Validates the basic structure of the msgpack-rpc call and fills `res`
-/// with the basic response structure.
-///
-/// @param channel_id The channel id
-/// @param req The parsed request object
-/// @param res A packer that contains the response
-WBuffer *msgpack_rpc_call(uint64_t channel_id,
-                          msgpack_object *req,
-                          msgpack_sbuffer *sbuffer)
-  FUNC_ATTR_NONNULL_ARG(2)
-  FUNC_ATTR_NONNULL_ARG(3)
-{
-  uint64_t response_id;
-  Error error = ERROR_INIT;
-  msgpack_rpc_validate(&response_id, req, &error);
-
-  if (error.set) {
-    return serialize_response(response_id, &error, NIL, sbuffer);
-  }
-
-  // dispatch the call
-  Object rv = msgpack_rpc_dispatch(channel_id, req, &error);
-  // send the response
-  msgpack_packer response;
-  msgpack_packer_init(&response, sbuffer, msgpack_sbuffer_write);
-
-  if (error.set) {
-    ELOG("Error dispatching msgpack-rpc call: %s(request: id %" PRIu64 ")",
-         error.msg,
-         response_id);
-    return serialize_response(response_id, &error, NIL, sbuffer);
-  }
-
-  DLOG("Successfully completed mspgack-rpc call(request id: %" PRIu64 ")",
-       response_id);
-  return serialize_response(response_id, &error, rv, sbuffer);
-}
-
 /// Finishes the msgpack-rpc call with an error message.
 ///
 /// @param msg The error message
@@ -348,7 +313,8 @@ void msgpack_rpc_error(char *msg, msgpack_packer *res)
 
 /// Handler executed when an invalid method name is passed
 Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
-                                         msgpack_object *req,
+                                         uint64_t request_id,
+                                         Array args,
                                          Error *error)
 {
   snprintf(error->msg, sizeof(error->msg), "Invalid method name");
