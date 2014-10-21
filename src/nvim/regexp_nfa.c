@@ -1259,10 +1259,16 @@ static int nfa_regatom(void)
     switch (c) {
     case 's':
       EMIT(NFA_ZSTART);
+      if (!re_mult_next("\\zs")) {
+        return false;
+      }
       break;
     case 'e':
       EMIT(NFA_ZEND);
-      nfa_has_zend = TRUE;
+      nfa_has_zend = true;
+      if (!re_mult_next("\\zs")) {
+        return false;
+      }
       break;
     case '1':
     case '2':
@@ -1739,6 +1745,15 @@ nfa_do_multibyte:
   }
 
   return OK;
+}
+
+/// Used in a place where no * or \+ can follow.
+static bool re_mult_next(char *what)
+{
+  if (re_multi_type(peekchr()) == MULTI_MULT) {
+    EMSG2_RET_FAIL(_("E888: (NFA regexp) cannot repeat %s"), what);
+  }
+  return true;
 }
 
 /*
