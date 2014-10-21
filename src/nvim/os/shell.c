@@ -8,6 +8,7 @@
 #include "nvim/ascii.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
+#include "nvim/os/event.h"
 #include "nvim/os/job.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/shell.h"
@@ -213,7 +214,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
   // Keep running the loop until all three handles are completely closed
   while (pdata.exited < expected_exits) {
-    uv_run(uv_default_loop(), UV_RUN_ONCE);
+    event_poll(0);
 
     if (got_int) {
       // Forward SIGINT to the shell

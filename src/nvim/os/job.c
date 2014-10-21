@@ -97,7 +97,7 @@ void job_teardown(void)
   // their status with `wait` or handling SIGCHLD. libuv does that
   // automatically (and then calls `exit_cb`) but we have to give it a chance
   // by running the loop one more time
-  uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  event_poll(0);
 
   // Prepare to start shooting
   for (i = 0; i < MAX_RUNNING_JOBS; i++) {
@@ -107,8 +107,8 @@ void job_teardown(void)
     while (job && is_alive(job) && remaining_tries--) {
       os_delay(50, 0);
       // Acknowledge child exits
-      uv_run(uv_default_loop(), UV_RUN_NOWAIT);
-      // It's possible that the uv_run call removed the job from the table,
+      event_poll(0);
+      // It's possible that the event_poll call removed the job from the table,
       // reset 'job' so the next iteration won't run in that case.
       job = table[i];
     }
@@ -118,7 +118,7 @@ void job_teardown(void)
     }
   }
   // Last run to ensure all children were removed
-  uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  event_poll(0);
 }
 
 /// Tries to start a new job.
