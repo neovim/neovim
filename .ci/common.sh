@@ -47,12 +47,6 @@ install_prebuilt_deps() {
 	fi
 }
 
-install_functional_test_deps() {
-	sudo pip install git+https://github.com/neovim/python-client.git
-	# Pass -E to let pip use PKG_CONFIG_PATH for luajit
-	sudo -E pip install lupa
-}
-
 tmpdir="$(pwd)/tmp"
 rm -rf "$tmpdir"
 mkdir -p "$tmpdir"

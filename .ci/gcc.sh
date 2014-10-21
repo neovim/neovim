@@ -2,8 +2,6 @@
 
 set_environment /opt/neovim-deps/64
 
-install_functional_test_deps
-
 sudo pip install cpp-coveralls
 
 sudo apt-get install valgrind

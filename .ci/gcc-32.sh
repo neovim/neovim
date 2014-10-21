@@ -1,10 +1,5 @@
 . "$CI_SCRIPTS/common.sh"
 
-# To install lupa, a temporarary functional test dependency, we require the
-# 64-bit luajit since travis version of python is 64-bit.
-export PKG_CONFIG_PATH="/opt/neovim-deps/64/usr/lib/pkgconfig"
-install_functional_test_deps
-
 set_environment /opt/neovim-deps/32
 
 # Need this to keep apt-get from removing gcc when installing libncurses
