@@ -23,6 +23,7 @@
 #define VIF_GET_OLDFILES        8       /* load v:oldfiles */
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
+#include "nvim/os/shell.h"  // So ex_cmds.h.gen has access to shell_read_cb.
 # include "ex_cmds.h.generated.h"
 #endif
 #endif  // NVIM_EX_CMDS_H

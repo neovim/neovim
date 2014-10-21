@@ -15,6 +15,8 @@ typedef enum {
   kShellOptHideMess = 128,  ///< previously a global variable from os_unix.c
 } ShellOpts;
 
+typedef void (*shell_read_cb)(char_u* buf, size_t cnt, void *data, bool eof);
+
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.h.generated.h"
 #endif

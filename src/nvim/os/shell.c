@@ -26,13 +26,13 @@
 #define BUFFER_LENGTH 1024
 
 typedef struct {
-  bool reading;
   int old_state, old_mode, exit_status, exited;
-  char *wbuffer;
   char rbuffer[BUFFER_LENGTH];
+  size_t rpos;
   uv_buf_t bufs[2];
   uv_stream_t *shell_stdin;
-  garray_T ga;
+  shell_read_cb shell_read;
+  void *userdata;
 } ProcessData;
 
 typedef struct {
@@ -108,7 +108,14 @@ void shell_free_argv(char **argv)
 ///        shell
 /// @param opts Various options that control how the shell will work
 /// @param extra_shell_arg Extra argument to be passed to the shell
-int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
+/// @param input Input to send to stdin.
+/// @param input_len The number of bytes in `input`.
+/// @param out_cb A callback to call on every read, or NULL.
+///               Incompatible with kShellOptRead.
+/// @param data Data associated with `out_cb`.
+int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg,
+                  char_u *input, size_t input_len,
+                  shell_read_cb out_cb, void *data)
 {
   uv_stdio_container_t proc_stdio[3];
   uv_process_options_t proc_opts;
@@ -117,12 +124,13 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   uv_write_t write_req;
   int expected_exits = 1;
   ProcessData pdata = {
-    .reading = false,
     .exited = 0,
     .old_mode = cur_tmode,
     .old_state = State,
     .shell_stdin = (uv_stream_t *)&proc_stdin,
-    .wbuffer = NULL,
+    .rpos = 0,
+    .shell_read = out_cb ? out_cb : do_read_cb,
+    .userdata = data,
   };
 
   out_flush();
@@ -163,10 +171,12 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     proc_stdio[0].flags = UV_IGNORE;
     proc_stdio[1].flags = UV_IGNORE;
     proc_stdio[2].flags = UV_IGNORE;
-  } else {
+  }
+  if (!(opts & (kShellOptHideMess | kShellOptExpand)) || out_cb || input)
+  {
     State = EXTERNCMD;
 
-    if (opts & kShellOptWrite) {
+    if (opts & kShellOptWrite || input) {
       // Write from the current buffer into the process stdin
       uv_pipe_init(uv_default_loop(), &proc_stdin, 0);
       write_req.data = &pdata;
@@ -174,13 +184,12 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
       proc_stdio[0].data.stream = (uv_stream_t *)&proc_stdin;
     }
 
-    if (opts & kShellOptRead) {
+    if (opts & kShellOptRead || out_cb) {
       // Read from the process stdout into the current buffer
       uv_pipe_init(uv_default_loop(), &proc_stdout, 0);
       proc_stdout.data = &pdata;
       proc_stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
       proc_stdio[1].data.stream = (uv_stream_t *)&proc_stdout;
-      ga_init(&pdata.ga, 1, BUFFER_LENGTH);
     }
   }
 
@@ -198,13 +207,21 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
   // Assign the flag address after `proc` is initialized by `uv_spawn`
   proc.data = &pdata;
 
-  if (opts & kShellOptWrite) {
+  bool must_free_input = false;
+  if (opts & kShellOptWrite || input) {
+    if (!input) {
+      input = save_selection(&input_len);
+      must_free_input = true;
+    }
+    uv_buf_t uvbuf;
+    uvbuf.base = (char *) input;
+    uvbuf.len = input_len;
     // Queue everything for writing to the shell stdin
-    write_selection(&write_req);
+    uv_write(&write_req, pdata.shell_stdin, &uvbuf, 1, write_cb);
     expected_exits++;
   }
 
-  if (opts & kShellOptRead) {
+  if (opts & kShellOptRead || out_cb) {
     // Start the read stream for the shell stdout
     uv_read_start((uv_stream_t *)&proc_stdout, alloc_cb, read_cb);
     expected_exits++;
@@ -224,20 +241,8 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
     }
   }
 
-  if (opts & kShellOptRead) {
-    if (!GA_EMPTY(&pdata.ga)) {
-      // If there's an unfinished line in the growable array, append it now.
-      append_ga_line(&pdata.ga);
-      // remember that the NL was missing
-      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
-    } else {
-      curbuf->b_no_eol_lnum = 0;
-    }
-    ga_clear(&pdata.ga);
-  }
-
-  if (opts & kShellOptWrite) {
-    free(pdata.wbuffer);
+  if (must_free_input) {
+    free(input);
   }
 
   return proc_cleanup_exit(&pdata, &proc_opts, opts);
@@ -411,16 +416,15 @@ static int word_length(const char_u *str)
 /// before we finish writing.
 /// Queues selected range for writing to the child process stdin.
 ///
-/// @param req The structure containing information to peform the write
-static void write_selection(uv_write_t *req)
+/// @param[out] size The length of the output.
+/// @returns an allocated string holding the selection's contents.
+static char_u *save_selection(size_t *size)
 {
-  ProcessData *pdata = (ProcessData *)req->data;
   // TODO(tarruda): use a static buffer for up to a limit(BUFFER_LENGTH) and
   // only after filled we should start allocating memory(skip unnecessary
   // allocations for small writes)
   int buflen = BUFFER_LENGTH;
-  pdata->wbuffer = (char *)xmalloc(buflen);
-  uv_buf_t uvbuf;
+  char_u *buf = xmalloc(buflen);
   linenr_T lnum = curbuf->b_op_start.lnum;
   int off = 0;
   int written = 0;
@@ -438,18 +442,18 @@ static void write_selection(uv_write_t *req)
       if (off + len >= buflen) {
         // Resize the buffer
         buflen *= 2;
-        pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
+        buf = xrealloc(buf, buflen);
       }
-      pdata->wbuffer[off++] = NUL;
+      buf[off++] = NUL;
     } else {
       char_u  *s = vim_strchr(lp + written, NL);
       len = s == NULL ? l : s - (lp + written);
       while (off + len >= buflen) {
         // Resize the buffer
         buflen *= 2;
-        pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
+        buf = xrealloc(buf, buflen);
       }
-      memcpy(pdata->wbuffer + off, lp + written, len);
+      memcpy(buf + off, lp + written, len);
       off += len;
     }
     if (len == l) {
@@ -465,9 +469,9 @@ static void write_selection(uv_write_t *req)
         if (off + 1 >= buflen) {
           // Resize the buffer
           buflen *= 2;
-          pdata->wbuffer = xrealloc(pdata->wbuffer, buflen);
+          buf = xrealloc(buf, buflen);
         }
-        pdata->wbuffer[off++] = NL;
+        buf[off++] = NL;
       }
       ++lnum;
       if (lnum > curbuf->b_op_end.lnum) {
@@ -480,10 +484,8 @@ static void write_selection(uv_write_t *req)
     }
   }
 
-  uvbuf.base = pdata->wbuffer;
-  uvbuf.len = off;
-
-  uv_write(req, pdata->shell_stdin, &uvbuf, 1, write_cb);
+  *size = off;
+  return buf;
 }
 
 // "Allocates" a buffer for reading from the shell stdout.
@@ -491,51 +493,87 @@ static void alloc_cb(uv_handle_t *handle, size_t suggested, uv_buf_t *buf)
 {
   ProcessData *pdata = (ProcessData *)handle->data;
 
-  if (pdata->reading) {
-    buf->len = 0;
-    return;
-  }
-
-  buf->base = pdata->rbuffer;
-  buf->len = BUFFER_LENGTH;
-  // Avoid `alloc_cb`, `alloc_cb` sequences on windows
-  pdata->reading = true;
+  buf->base = pdata->rbuffer + pdata->rpos;
+  buf->len = BUFFER_LENGTH - pdata->rpos;
 }
 
-static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
+static void do_read_cb(char_u *buf, size_t cnt, void *data, bool eof)
 {
-  // TODO(tarruda): avoid using a growable array for this, refactor the
-  // algorithm to call `ml_append` directly(skip unnecessary copies/resizes)
-  int i;
-  ProcessData *pdata = (ProcessData *)stream->data;
+  char_u *end = buf + cnt;
+  bool ended_in_nl = true;
+  for (char_u *ptr = buf; ptr < end; ) {
+    char_u *next = xmemscan(ptr, NL, end - ptr);
+    ended_in_nl = (next != end && *next == NL);
+    memchrsub(ptr, NUL, NL, next - ptr);
 
-  if (cnt <= 0) {
-    if (cnt != UV_ENOBUFS) {
-      uv_read_stop(stream);
-      uv_close((uv_handle_t *)stream, NULL);
-      pdata->exited++;
+    if (next != end) {
+      *(next++) = NUL;  // Include the terminating character.
     }
-    return;
-  }
 
-  for (i = 0; i < cnt; ++i) {
-    if (pdata->rbuffer[i] == NL) {
-      // Insert the line
-      append_ga_line(&pdata->ga);
-    } else if (pdata->rbuffer[i] == NUL) {
-      // Translate NUL to NL
-      ga_append(&pdata->ga, NL);
+    ml_append(curwin->w_cursor.lnum++, ptr, next - ptr, false);
+    ptr = next;
+  }
+  if (eof) {
+    if (ended_in_nl) {
+      curbuf->b_no_eol_lnum = 0;
     } else {
-      // buffer data into the grow array
-      ga_append(&pdata->ga, pdata->rbuffer[i]);
+      curbuf->b_no_eol_lnum = curwin->w_cursor.lnum;
     }
   }
 
   windgoto(msg_row, msg_col);
   cursor_on();
   out_flush();
+}
 
-  pdata->reading = false;
+static void read_cb(uv_stream_t *stream, ssize_t cnt, const uv_buf_t *buf)
+{
+  ProcessData *pdata = (ProcessData *)stream->data;
+
+  if (cnt == 0) {
+    return;  // May happen when uv doesn't use the buffer, but calls us anyway.
+  }
+
+  bool eof = false;
+  if (cnt < 0) {  // Error or EOF.
+    eof = true;
+    if (cnt != UV_ENOBUFS) {
+      uv_read_stop(stream);
+      uv_close((uv_handle_t *)stream, NULL);
+      pdata->exited++;
+    }
+    cnt = 0;
+    // Don't return yet! We may have to flush the read buffer and the callback
+    // may need to know input has ended.
+  }
+
+  pdata->rpos += cnt;
+
+  // Set `cnt` to the total number of bytes we'll consume this round.
+  if (!eof) {
+    // Consume up to the last NL character.
+    char *lastnl = xmemrchr(pdata->rbuffer, NL, pdata->rpos);
+    if (lastnl) {
+      lastnl++;  // Include the NL.
+    } else if (pdata->rpos < BUFFER_LENGTH - 1) {
+      return;  // We might receive a NL on the next read.
+    } else {
+      // Buffer full; flush everything.
+      lastnl = pdata->rbuffer + BUFFER_LENGTH;
+    }
+    cnt = lastnl - pdata->rbuffer;
+  } else {
+    // Input has been exhausted. Flush it all.
+    cnt = pdata->rpos;
+  }
+
+  pdata->shell_read((char_u *) pdata->rbuffer, cnt, pdata->userdata, eof);
+
+  // Move the unread bytes to the beginning of the buffer.
+  // This may seem inefficient, but since all or most of the data should have
+  // been consumed, very little will have to move.
+  memmove(pdata->rbuffer, pdata->rbuffer + cnt, pdata->rpos - cnt);
+  pdata->rpos -= cnt;
 }
 
 static void write_cb(uv_write_t *req, int status)
