@@ -61,6 +61,7 @@
 #include "nvim/tag.h"
 #include "nvim/tempfile.h"
 #include "nvim/term.h"
+#include "nvim/title.h"
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"

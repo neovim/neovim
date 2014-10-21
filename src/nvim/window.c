@@ -52,6 +52,7 @@
 #include "nvim/strings.h"
 #include "nvim/syntax.h"
 #include "nvim/term.h"
+#include "nvim/title.h"
 #include "nvim/undo.h"
 #include "nvim/os/os.h"
 
