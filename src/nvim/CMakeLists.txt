@@ -38,8 +38,7 @@ endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 
-set(CONV_SRCS
-  api.c
+set(CONV_SOURCES
   arabic.c
   cursor.c
   garray.c
@@ -48,31 +47,24 @@ set(CONV_SRCS
   map.c
   memory.c
   misc2.c
-  map.c
   profile.c
-  os/env.c
-  os/event.c
-  os/job.c
-  os/mem.c
-  os/rstream.c
-  os/signal.c
-  os/users.c
-  os/provider.c
-  os/uv_helpers.c
-  os/wstream.c
-  os/msgpack_rpc.c
   tempfile.c
-  api/buffer.c
-  api/private/helpers.c
-  api/private/handle.c
-  api/tabpage.c
-  api/window.c
-  api/vim.h
-  api/vim.c
   )
 
+foreach(sfile ${CONV_SOURCES})
+  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/src/nvim/${sfile}")
+    message(FATAL_ERROR "${sfile} doesn't exist(it was added to CONV_SOURCES)")
+  endif()
+endforeach()
+
+file(GLOB_RECURSE EXTRA_CONV_SOURCES os/*.c api/*.c msgpack_rpc/*.c)
+foreach(sfile ${EXTRA_CONV_SOURCES})
+  file(RELATIVE_PATH f "${PROJECT_SOURCE_DIR}/src/nvim" "${sfile}")
+  list(APPEND CONV_SOURCES ${f})
+endforeach()
+
 set_source_files_properties(
-  ${CONV_SRCS} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wconversion")
+  ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wconversion")
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   if(DEFINED ENV{SANITIZE})

@@ -331,7 +331,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     goto end;
   }
 
-  uint32_t count = rstream_pending(rstream);
+  size_t count = rstream_pending(rstream);
   DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
        count,
        rstream);

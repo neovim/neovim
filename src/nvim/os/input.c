@@ -72,7 +72,7 @@ void input_stop(void)
 }
 
 // Low level input function.
-int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
+int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
@@ -86,7 +86,7 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
       return 0;
     }
   } else {
-    if ((result = inbuf_poll(p_ut)) == kInputNone) {
+    if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
       if (trigger_cursorhold() && maxlen >= 3
           && !typebuf_changed(tb_change_cnt)) {
         buf[0] = K_SPECIAL;
@@ -116,7 +116,9 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
   }
 
   convert_input();
-  return rbuffer_read(input_buffer, (char *)buf, maxlen);
+  // Safe to convert rbuffer_read to int, it will never overflow since
+  // we use relatively small buffers.
+  return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
 }
 
 // Check if a character is available for reading
@@ -170,7 +172,7 @@ static bool input_poll(int ms)
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
-static InbufPollResult inbuf_poll(int32_t ms)
+static InbufPollResult inbuf_poll(int ms)
 {
   if (typebuf_was_filled || rbuffer_pending(input_buffer)) {
     return kInputAvail;
@@ -260,9 +262,9 @@ static void convert_input(void)
   char *inbuf = rbuffer_read_ptr(input_buffer);
   size_t count = rbuffer_pending(input_buffer), consume_count = 0;
 
-  for (int i = count - 1; i >= 0; i--) {
+  for (int i = (int)count - 1; i >= 0; i--) {
     if (inbuf[i] == 3) {
-      consume_count = i + 1;
+      consume_count = (size_t)(i + 1);
       break;
     }
   }
