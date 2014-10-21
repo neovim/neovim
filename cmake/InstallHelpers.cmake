@@ -89,6 +89,13 @@ function(install_helper)
       WORLD_READ)
   endif()
 
+  if(NOT _install_helper_PROGRAM_PERMISSIONS)
+    set(_install_helper_PROGRAM_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE)
+  endif()
+
   if(_install_helper_RENAME)
     set(RENAME RENAME ${_install_helper_RENAME})
   endif()
@@ -130,7 +137,7 @@ function(install_helper)
     install(
       PROGRAMS ${_install_helper_PROGRAMS}
       DESTINATION ${_install_helper_DESTINATION}
-      PERMISSIONS ${_install_helper_FILE_PERMISSIONS}
+      PERMISSIONS ${_install_helper_PROGRAM_PERMISSIONS}
       ${RENAME})
   endif()
 endfunction()
