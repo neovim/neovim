@@ -23,6 +23,15 @@ end
 describe('system()', function()
   before_each(clear)
 
+  it('sets the v:shell_error variable', function()
+    eval([[system("sh -c 'exit'")]])
+    eq(0, eval('v:shell_error'))
+    eval([[system("sh -c 'exit 1'")]])
+    eq(1, eval('v:shell_error'))
+    eval([[system("sh -c 'exit 5'")]])
+    eq(5, eval('v:shell_error'))
+  end)
+
   describe('passing no input', function()
     it('returns the program output', function()
       eq("echoed", eval('system("echo -n echoed")'))
@@ -82,6 +91,15 @@ describe('systemlist()', function()
   -- behavior is similar to `system()` but it returns a list instead of a
   -- string.
   before_each(clear)
+
+  it('sets the v:shell_error variable', function()
+    eval([[systemlist("sh -c 'exit'")]])
+    eq(0, eval('v:shell_error'))
+    eval([[systemlist("sh -c 'exit 1'")]])
+    eq(1, eval('v:shell_error'))
+    eval([[systemlist("sh -c 'exit 5'")]])
+    eq(5, eval('v:shell_error'))
+  end)
 
   describe('passing string with linefeed characters as input', function()
     it('splits the output on linefeed characters', function()
