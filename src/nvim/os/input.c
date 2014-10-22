@@ -264,7 +264,7 @@ static void convert_input(void)
 
   for (int i = (int)count - 1; i >= 0; i--) {
     if (inbuf[i] == 3) {
-      consume_count = (size_t)(i + 1);
+      consume_count = (size_t)i;
       break;
     }
   }
