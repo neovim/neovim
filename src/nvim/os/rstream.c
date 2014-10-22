@@ -73,13 +73,14 @@ void rbuffer_consumed(RBuffer *rbuffer, size_t count)
 void rbuffer_produced(RBuffer *rbuffer, size_t count)
 {
   rbuffer->wpos += count;
-  DLOG("Received %u bytes from RStream(%p)", (size_t)cnt, rbuffer->rstream);
+  DLOG("Received %u bytes from RStream(%p)", (size_t)count, rbuffer->rstream);
 
   rbuffer_relocate(rbuffer);
   if (rbuffer->rstream && rbuffer->wpos == rbuffer->capacity) {
     // The last read filled the buffer, stop reading for now
+    //
     rstream_stop(rbuffer->rstream);
-    DLOG("Buffer for RStream(%p) is full, stopping it", rstream);
+    DLOG("Buffer for RStream(%p) is full, stopping it", rbuffer->rstream);
   }
 }
 
