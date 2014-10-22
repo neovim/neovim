@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -551,6 +552,103 @@ Dictionary api_metadata(void)
   }
 
   return copy_object(DICTIONARY_OBJ(metadata)).data.dictionary;
+}
+
+char *api_stringify(Object obj)
+{
+  Array array = ARRAY_DICT_INIT;
+  print_to_array(obj, &array);
+  size_t size = 0;
+  for (size_t i = 0; i < array.size; i++) {
+    size += array.items[i].data.string.size;
+  }
+
+  char *rv = xmalloc(size + 1);
+  size_t pos = 0;
+  for (size_t i = 0; i < array.size; i++) {
+    String str = array.items[i].data.string;
+    memcpy(rv + pos, str.data, str.size);
+    pos += str.size;
+    free(str.data);
+  }
+  rv[pos] = NUL;
+  free(array.items);
+  return rv;
+}
+
+static void print_to_array(Object obj, Array *array)
+{
+  char buf[32];
+
+  switch (obj.type) {
+    case kObjectTypeNil:
+      ADD(*array, STRING_OBJ(cstr_to_string("nil")));
+      break;
+
+    case kObjectTypeBoolean:
+      ADD(*array,
+          STRING_OBJ(cstr_to_string(obj.data.boolean ? "true" : "false")));
+      break;
+
+    case kObjectTypeInteger:
+      snprintf(buf, sizeof(buf), "%" PRId64, obj.data.integer);
+      ADD(*array, STRING_OBJ(cstr_to_string(buf)));
+      break;
+
+    case kObjectTypeFloat:
+      snprintf(buf, sizeof(buf), "%f", obj.data.floating);
+      ADD(*array, STRING_OBJ(cstr_to_string(buf)));
+      break;
+
+    case kObjectTypeBuffer:
+      snprintf(buf, sizeof(buf), "Buffer(%" PRIu64 ")", obj.data.buffer);
+      ADD(*array, STRING_OBJ(cstr_to_string(buf)));
+      break;
+
+    case kObjectTypeWindow:
+      snprintf(buf, sizeof(buf), "Window(%" PRIu64 ")", obj.data.window);
+      ADD(*array, STRING_OBJ(cstr_to_string(buf)));
+      break;
+
+    case kObjectTypeTabpage:
+      snprintf(buf, sizeof(buf), "Tabpage(%" PRIu64 ")", obj.data.tabpage);
+      ADD(*array, STRING_OBJ(cstr_to_string(buf)));
+      break;
+
+    case kObjectTypeString:
+      ADD(*array, STRING_OBJ(cstr_to_string("\"")));
+      ADD(*array, STRING_OBJ(cstr_to_string(obj.data.string.data)));
+      ADD(*array, STRING_OBJ(cstr_to_string("\"")));
+      break;
+
+    case kObjectTypeArray:
+      ADD(*array, STRING_OBJ(cstr_to_string("[")));
+      for (size_t i = 0; i < obj.data.array.size; i++) {
+        print_to_array(obj.data.array.items[i], array);
+        if (i < obj.data.array.size - 1) {
+          ADD(*array, STRING_OBJ(cstr_to_string(", ")));
+        }
+      }
+      ADD(*array, STRING_OBJ(cstr_to_string("]")));
+      break;
+
+    case kObjectTypeDictionary:
+      ADD(*array, STRING_OBJ(cstr_to_string("{")));
+      for (size_t i = 0; i < obj.data.dictionary.size; i++) {
+        ADD(*array,
+            STRING_OBJ(cstr_to_string(obj.data.dictionary.items[i].key.data)));
+        ADD(*array, STRING_OBJ(cstr_to_string(": ")));
+        print_to_array(obj.data.dictionary.items[i].value, array);
+        if (i < obj.data.array.size - 1) {
+          ADD(*array, STRING_OBJ(cstr_to_string(", ")));
+        }
+      }
+      ADD(*array, STRING_OBJ(cstr_to_string("}")));
+      break;
+
+    default:
+      ADD(*array, STRING_OBJ(cstr_to_string("INVALID")));
+  }
 }
 
 static void init_error_type_metadata(Dictionary *metadata)
