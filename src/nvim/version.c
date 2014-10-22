@@ -226,7 +226,7 @@ static int included_patches[] = {
   //409 NA
   408,
   407,
-  //406,
+  406,
   405,
   //404 NA
   //403 NA
