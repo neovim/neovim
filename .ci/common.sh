@@ -67,3 +67,5 @@ install_prebuilt_deps
 sudo apt-mark hold oracle-java7-installer oracle-java8-installer
 
 sudo apt-get update
+
+export CFLAGS='-DMIN_LOG_LEVEL=0'  # force verification of DLOG macros
