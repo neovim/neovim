@@ -208,6 +208,7 @@ install(SCRIPT ${CMAKE_MODULE_PATH}/GenerateHelptags.cmake)
 
 add_subdirectory(config)
 add_subdirectory(src/nvim)
+#add_subdirectory(runtime/doc)
 add_subdirectory(test/includes)
 
 # Setup some test-related bits.  We do this after going down the tree because we
