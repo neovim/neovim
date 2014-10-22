@@ -264,15 +264,15 @@ static void convert_input(void)
 
   for (int i = (int)count - 1; i >= 0; i--) {
     if (inbuf[i] == 3) {
+      got_int = true;
       consume_count = (size_t)i;
       break;
     }
   }
 
-  if (consume_count) {
+  if (got_int) {
     // Remove everything typed before the CTRL-C
     rbuffer_consumed(input_buffer, consume_count);
-    got_int = true;
   }
 }
 
