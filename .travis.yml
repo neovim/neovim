@@ -2,6 +2,7 @@ language: c
 env:
   global:
     - PROJECT_ROOT="$(pwd)"
+    - BUSTED_OUTPUT_TYPE=plainTerminal
     - CI_SCRIPTS="$PROJECT_ROOT/.ci"
     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
     # via the "travis encrypt" command using the project repo's public key
