@@ -461,15 +461,10 @@ static void call_request_handler(Channel *channel,
   msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
 
   if (error.set) {
-    ELOG("Error dispatching msgpack-rpc call: %s(request: id %" PRIu64 ")",
-         error.msg,
-         request_id);
     channel_write(channel,
                   serialize_response(request_id, &error, NIL, &out_buffer));
   }
 
-  DLOG("Successfully completed mspgack-rpc call(request id: %" PRIu64 ")",
-       request_id);
   channel_write(channel,
                 serialize_response(request_id, &error, result, &out_buffer));
 }
