@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <time.h>
@@ -64,23 +65,6 @@ void os_microdelay(uint64_t microseconds, bool ignoreinput)
   }
 }
 
-static void microdelay(uint64_t microseconds)
-{
-  uint64_t hrtime;
-  int64_t ns = microseconds * 1000;  // convert to nanoseconds
-
-  uv_mutex_lock(&delay_mutex);
-
-  while (ns > 0) {
-    hrtime =  uv_hrtime();
-    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns) == UV_ETIMEDOUT)
-      break;
-    ns -= uv_hrtime() - hrtime;
-  }
-
-  uv_mutex_unlock(&delay_mutex);
-}
-
 /// Portable version of POSIX localtime_r()
 ///
 /// @return NULL in case of error
@@ -111,4 +95,24 @@ struct tm *os_get_localtime(struct tm *result) FUNC_ATTR_NONNULL_ALL
 {
   time_t rawtime = time(NULL);
   return os_localtime_r(&rawtime, result);
+}
+
+static void microdelay(uint64_t microseconds)
+{
+  uint64_t elapsed = 0;
+  uint64_t ns = microseconds * 1000;  // convert to nanoseconds
+  uint64_t base = uv_hrtime();
+
+  uv_mutex_lock(&delay_mutex);
+
+  while (elapsed < ns) {
+    if (uv_cond_timedwait(&delay_cond, &delay_mutex, ns - elapsed)
+        == UV_ETIMEDOUT)
+      break;
+    uint64_t now = uv_hrtime();
+    elapsed += now - base;
+    base = now;
+  }
+
+  uv_mutex_unlock(&delay_mutex);
 }

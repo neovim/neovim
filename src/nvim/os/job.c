@@ -12,9 +12,7 @@
 #include "nvim/os/wstream_defs.h"
 #include "nvim/os/event.h"
 #include "nvim/os/event_defs.h"
-#include "nvim/os/time.h"
 #include "nvim/os/shell.h"
-#include "nvim/os/signal.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 #include "nvim/term.h"
@@ -99,25 +97,28 @@ void job_teardown(void)
   // their status with `wait` or handling SIGCHLD. libuv does that
   // automatically (and then calls `exit_cb`) but we have to give it a chance
   // by running the loop one more time
-  uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+  event_poll(0);
 
   // Prepare to start shooting
   for (i = 0; i < MAX_RUNNING_JOBS; i++) {
-    if ((job = table[i]) == NULL) {
-      continue;
-    }
+    job = table[i];
 
     // Still alive
-    while (is_alive(job) && remaining_tries--) {
+    while (job && is_alive(job) && remaining_tries--) {
       os_delay(50, 0);
       // Acknowledge child exits
-      uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+      event_poll(0);
+      // It's possible that the event_poll call removed the job from the table,
+      // reset 'job' so the next iteration won't run in that case.
+      job = table[i];
     }
 
-    if (is_alive(job)) {
+    if (job && is_alive(job)) {
       uv_process_kill(&job->proc, SIGKILL);
     }
   }
+  // Last run to ensure all children were removed
+  event_poll(0);
 }
 
 /// Tries to start a new job.
@@ -213,14 +214,8 @@ Job *job_start(char **argv,
   job->in = wstream_new(maxmem);
   wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
   // Start the readable streams
-  job->out = rstream_new(read_cb,
-                         rbuffer_new(JOB_BUFFER_SIZE),
-                         job,
-                         job_event_source(job));
-  job->err = rstream_new(read_cb,
-                         rbuffer_new(JOB_BUFFER_SIZE),
-                         job,
-                         job_event_source(job));
+  job->out = rstream_new(read_cb, rbuffer_new(JOB_BUFFER_SIZE), job);
+  job->err = rstream_new(read_cb, rbuffer_new(JOB_BUFFER_SIZE), job);
   rstream_set_stream(job->out, (uv_stream_t *)&job->proc_stdout);
   rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
   rstream_start(job->out);
@@ -277,47 +272,33 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   int old_mode = cur_tmode;
   settmode(TMODE_COOK);
 
-  EventSource sources[] = {job_event_source(job), signal_event_source(), NULL};
+  // Increase pending_refs to stop the exit_cb from being called, which
+  // could result in the job being freed before we have a chance
+  // to get the status.
+  job->pending_refs++;
+  event_poll_until(ms,
+      // Until...
+      got_int ||                // interrupted by the user
+      job->pending_refs == 1);  // job exited
+  job->pending_refs--;
 
-  // keep track of the elapsed time if ms > 0
-  uint64_t before = (ms > 0) ? os_hrtime() : 0;
-
-  while (1) {
-    // check if the job has exited (and the status is available).
-    if (job->pending_refs == 0) {
-      break;
-    }
-
-    event_poll(ms, sources);
-
-    // we'll assume that a user frantically hitting interrupt doesn't like
-    // the current job. Signal that it has to be killed.
-    if (got_int) {
-      job_stop(job);
-    }
-
-    if (ms == 0) {
-      break;
-    }
-
-    // check if the poll timed out, if not, decrease the ms to wait for the
-    // next run
-    if (ms > 0) {
-      uint64_t now = os_hrtime();
-      ms -= (int) ((now - before) / 1000000);
-      before = now;
-
-      // if the time elapsed is greater than the `ms` wait time, break
-      if (ms <= 0) {
-        break;
-      }
-    }
+  // we'll assume that a user frantically hitting interrupt doesn't like
+  // the current job. Signal that it has to be killed.
+  if (got_int) {
+    job_stop(job);
+    event_poll(0);
   }
 
   settmode(old_mode);
 
-  // return -1 for a timeout, the job status otherwise
-  return (job->pending_refs) ? -1 : (int) job->status;
+  if (!job->pending_refs) {
+    int status = (int) job->status;
+    job_exit_callback(job);
+    return status;
+  }
+
+  // return -1 for a timeout
+  return  -1;
 }
 
 /// Close the pipe used to write to the job.
@@ -369,14 +350,6 @@ bool job_write(Job *job, WBuffer *buffer)
   return wstream_write(job->in, buffer);
 }
 
-/// Runs the read callback associated with the job exit event
-///
-/// @param event Object containing data necessary to invoke the callback
-void job_exit_event(Event event)
-{
-  job_exit_callback(event.data.job);
-}
-
 /// Get the job id
 ///
 /// @param job A pointer to the job
@@ -393,11 +366,6 @@ int job_id(Job *job)
 void *job_data(Job *job)
 {
   return job->data;
-}
-
-EventSource job_event_source(Job *job)
-{
-  return job;
 }
 
 static void job_exit_callback(Job *job)
@@ -470,7 +438,7 @@ static void read_cb(RStream *rstream, void *data, bool eof)
   }
 
   if (eof && --job->pending_refs == 0) {
-    emit_exit_event(job);
+    job_exit_callback(job);
   }
 }
 
@@ -481,18 +449,8 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 
   job->status = status;
   if (--job->pending_refs == 0) {
-    emit_exit_event(job);
+    job_exit_callback(job);
   }
-}
-
-static void emit_exit_event(Job *job)
-{
-  Event event = {
-    .source = job_event_source(job),
-    .type = kEventJobExit,
-    .data.job = job
-  };
-  event_push(event);
 }
 
 static void close_cb(uv_handle_t *handle)

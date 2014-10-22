@@ -5,8 +5,8 @@
 
 #include <uv.h>
 
-#include "nvim/os/channel.h"
-#include "nvim/os/server.h"
+#include "nvim/msgpack_rpc/channel.h"
+#include "nvim/msgpack_rpc/server.h"
 #include "nvim/os/os.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -46,7 +46,7 @@ typedef struct {
 static PMap(cstr_t) *servers = NULL;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/server.c.generated.h"
+# include "msgpack_rpc/server.c.generated.h"
 #endif
 
 /// Initializes the module
@@ -119,7 +119,8 @@ int server_start(const char *endpoint)
     ip_end = strchr(addr, NUL);
   }
 
-  uint32_t addr_len = ip_end - addr;
+  // (ip_end - addr) is always > 0, so convert to size_t
+  size_t addr_len = (size_t)(ip_end - addr);
 
   if (addr_len > sizeof(ip) - 1) {
     // Maximum length of an IP address buffer is 15(eg: 255.255.255.255)

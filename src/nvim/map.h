@@ -5,7 +5,7 @@
 
 #include "nvim/map_defs.h"
 #include "nvim/api/private/defs.h"
-#include "nvim/os/msgpack_rpc.h"
+#include "nvim/msgpack_rpc/defs.h"
 
 #define MAP_DECLS(T, U)                                                       \
   KHASH_DECLARE(T##_##U##_map, T, U)                                          \
@@ -25,7 +25,7 @@ MAP_DECLS(cstr_t, uint64_t)
 MAP_DECLS(cstr_t, ptr_t)
 MAP_DECLS(ptr_t, ptr_t)
 MAP_DECLS(uint64_t, ptr_t)
-MAP_DECLS(String, rpc_method_handler_fn)
+MAP_DECLS(String, MsgpackRpcRequestHandler)
 
 #define map_new(T, U) map_##T##_##U##_new
 #define map_free(T, U) map_##T##_##U##_free

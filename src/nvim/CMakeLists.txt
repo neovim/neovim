@@ -3,7 +3,7 @@ include(CheckLibraryExists)
 set(GENERATED_DIR ${PROJECT_BINARY_DIR}/src/nvim/auto)
 set(DISPATCH_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/msgpack-gen.lua)
 file(GLOB API_HEADERS api/*.h)
-set(MSGPACK_RPC_HEADER ${PROJECT_SOURCE_DIR}/src/nvim/os/msgpack_rpc.h)
+file(GLOB MSGPACK_RPC_HEADERS msgpack_rpc/*.h)
 set(MSGPACK_DISPATCH ${GENERATED_DIR}/msgpack_dispatch.c)
 set(HEADER_GENERATOR ${PROJECT_SOURCE_DIR}/scripts/gendeclarations.lua)
 set(GENERATED_INCLUDES_DIR ${PROJECT_BINARY_DIR}/include)
@@ -19,12 +19,14 @@ file(MAKE_DIRECTORY ${GENERATED_DIR})
 file(MAKE_DIRECTORY ${GENERATED_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_DIR}/api/private)
+file(MAKE_DIRECTORY ${GENERATED_DIR}/msgpack_rpc)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR})
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/os)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api)
 file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/api/private)
+file(MAKE_DIRECTORY ${GENERATED_INCLUDES_DIR}/msgpack_rpc)
 
-file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c)
+file(GLOB NEOVIM_SOURCES *.c os/*.c api/*.c api/private/*.c msgpack_rpc/*.c)
 file(GLOB_RECURSE NEOVIM_HEADERS *.h)
 
 foreach(sfile ${NEOVIM_SOURCES})
@@ -36,8 +38,7 @@ endforeach()
 
 list(REMOVE_ITEM NEOVIM_SOURCES ${to_remove})
 
-set(CONV_SRCS
-  api.c
+set(CONV_SOURCES
   arabic.c
   cursor.c
   garray.c
@@ -46,31 +47,24 @@ set(CONV_SRCS
   map.c
   memory.c
   misc2.c
-  map.c
   profile.c
-  os/env.c
-  os/event.c
-  os/job.c
-  os/mem.c
-  os/rstream.c
-  os/signal.c
-  os/users.c
-  os/provider.c
-  os/uv_helpers.c
-  os/wstream.c
-  os/msgpack_rpc.c
   tempfile.c
-  api/buffer.c
-  api/private/helpers.c
-  api/private/handle.c
-  api/tabpage.c
-  api/window.c
-  api/vim.h
-  api/vim.c
   )
 
+foreach(sfile ${CONV_SOURCES})
+  if(NOT EXISTS "${PROJECT_SOURCE_DIR}/src/nvim/${sfile}")
+    message(FATAL_ERROR "${sfile} doesn't exist(it was added to CONV_SOURCES)")
+  endif()
+endforeach()
+
+file(GLOB_RECURSE EXTRA_CONV_SOURCES os/*.c api/*.c msgpack_rpc/*.c)
+foreach(sfile ${EXTRA_CONV_SOURCES})
+  file(RELATIVE_PATH f "${PROJECT_SOURCE_DIR}/src/nvim" "${sfile}")
+  list(APPEND CONV_SOURCES ${f})
+endforeach()
+
 set_source_files_properties(
-  ${CONV_SRCS} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wconversion")
+  ${CONV_SOURCES} PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS} -Wconversion")
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang")
   if(DEFINED ENV{SANITIZE})
@@ -126,7 +120,7 @@ add_custom_command(OUTPUT ${MSGPACK_DISPATCH}
   COMMAND ${LUA_PRG} ${DISPATCH_GENERATOR} ${API_HEADERS} ${MSGPACK_DISPATCH}
   DEPENDS
     ${API_HEADERS}
-    ${MSGPACK_RPC_HEADER}
+    ${MSGPACK_RPC_HEADERS}
     ${DISPATCH_GENERATOR}
 )
 

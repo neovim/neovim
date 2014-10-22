@@ -1,29 +1,23 @@
-#ifndef NVIM_OS_MSGPACK_RPC_H
-#define NVIM_OS_MSGPACK_RPC_H
-
-#include <stdint.h>
+#ifndef NVIM_MSGPACK_RPC_DEFS_H
+#define NVIM_MSGPACK_RPC_DEFS_H
 
 #include <msgpack.h>
 
-#include "nvim/func_attr.h"
-#include "nvim/api/private/defs.h"
-#include "nvim/os/wstream.h"
-
-typedef enum {
-  kUnpackResultOk,        /// Successfully parsed a document
-  kUnpackResultFail,      /// Got unexpected input
-  kUnpackResultNeedMore   /// Need more data
-} UnpackResult;
 
 /// The rpc_method_handlers table, used in msgpack_rpc_dispatch(), stores
 /// functions of this type.
-typedef Object (*rpc_method_handler_fn)(uint64_t channel_id,
-                                        msgpack_object *req,
-                                        Error *error);
-
+typedef struct {
+  Object (*fn)(uint64_t channel_id,
+               uint64_t request_id,
+               Array args,
+               Error *error);
+  bool defer;  // Should the call be deferred to the main loop? This should
+               // be true if the function mutates editor data structures such
+               // as buffers, windows, tabs, or if it executes vimscript code.
+} MsgpackRpcRequestHandler;
 
 /// Initializes the msgpack-rpc method table
-void msgpack_rpc_init(void);
+void msgpack_rpc_init_method_table(void);
 
 void msgpack_rpc_init_function_metadata(Dictionary *metadata);
 
@@ -43,9 +37,7 @@ Object msgpack_rpc_dispatch(uint64_t channel_id,
                             Error *error)
   FUNC_ATTR_NONNULL_ARG(2) FUNC_ATTR_NONNULL_ARG(3);
 
-
-#ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/msgpack_rpc.h.generated.h"
-#endif
-
-#endif  // NVIM_OS_MSGPACK_RPC_H
+MsgpackRpcRequestHandler msgpack_rpc_get_handler_for(const char *name,
+                                                     size_t name_len)
+  FUNC_ATTR_NONNULL_ARG(1);
+#endif  // NVIM_MSGPACK_RPC_DEFS_H

@@ -7,7 +7,6 @@
 #include "nvim/api/private/defs.h"
 #include "nvim/os/input.h"
 #include "nvim/os/event.h"
-#include "nvim/os/signal.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/rstream.h"
 #include "nvim/ascii.h"
@@ -48,10 +47,7 @@ void input_init(void)
   }
 
   read_buffer = rbuffer_new(READ_BUFFER_SIZE);
-  read_stream = rstream_new(read_cb,
-                            read_buffer,
-                            NULL,
-                            NULL);
+  read_stream = rstream_new(read_cb, read_buffer, NULL);
   rstream_set_file(read_stream, read_cmd_fd);
 }
 
@@ -76,7 +72,7 @@ void input_stop(void)
 }
 
 // Low level input function.
-int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
+int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
 {
   InbufPollResult result;
 
@@ -90,7 +86,7 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
       return 0;
     }
   } else {
-    if ((result = inbuf_poll(p_ut)) == kInputNone) {
+    if ((result = inbuf_poll((int)p_ut)) == kInputNone) {
       if (trigger_cursorhold() && maxlen >= 3
           && !typebuf_changed(tb_change_cnt)) {
         buf[0] = K_SPECIAL;
@@ -120,7 +116,9 @@ int os_inchar(uint8_t *buf, int maxlen, int32_t ms, int tb_change_cnt)
   }
 
   convert_input();
-  return rbuffer_read(input_buffer, (char *)buf, maxlen);
+  // Safe to convert rbuffer_read to int, it will never overflow since
+  // we use relatively small buffers.
+  return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
 }
 
 // Check if a character is available for reading
@@ -167,23 +165,14 @@ void input_buffer_restore(String str)
   free(str.data);
 }
 
-static bool input_poll(int32_t ms)
+static bool input_poll(int ms)
 {
-  if (embedded_mode) {
-    EventSource input_sources[] = { signal_event_source(), NULL };
-    return event_poll(ms, input_sources);
-  }
-
-  EventSource input_sources[] = {
-    rstream_event_source(read_stream),
-    NULL
-  };
-
-  return input_ready() || event_poll(ms, input_sources) || input_ready();
+  event_poll_until(ms, input_ready());
+  return input_ready();
 }
 
 // This is a replacement for the old `WaitForChar` function in os_unix.c
-static InbufPollResult inbuf_poll(int32_t ms)
+static InbufPollResult inbuf_poll(int ms)
 {
   if (typebuf_was_filled || rbuffer_pending(input_buffer)) {
     return kInputAvail;
@@ -235,7 +224,7 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
 
 static void convert_input(void)
 {
-  if (!rbuffer_available(input_buffer)) {
+  if (embedded_mode || !rbuffer_available(input_buffer)) {
     // No input buffer space
     return;
   }
@@ -273,9 +262,9 @@ static void convert_input(void)
   char *inbuf = rbuffer_read_ptr(input_buffer);
   size_t count = rbuffer_pending(input_buffer), consume_count = 0;
 
-  for (int i = count - 1; i >= 0; i--) {
+  for (int i = (int)count - 1; i >= 0; i--) {
     if (inbuf[i] == 3) {
-      consume_count = i + 1;
+      consume_count = (size_t)i;
       break;
     }
   }
@@ -304,6 +293,10 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return rstream_pending(read_stream) > 0 || eof;
+  return typebuf_was_filled ||                   // API call filled typeahead
+         event_has_deferred() ||                 // Events must be processed
+         (!embedded_mode && (
+            rstream_pending(read_stream) > 0 ||  // Stdin input
+            eof));                               // Stdin closed
 }
 

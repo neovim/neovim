@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -7,6 +8,7 @@
 #include "nvim/ascii.h"
 #include "nvim/lib/kvec.h"
 #include "nvim/log.h"
+#include "nvim/os/event.h"
 #include "nvim/os/job.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/shell.h"
@@ -58,11 +60,11 @@ typedef struct {
 ///         `shell_free_argv` when no longer needed.
 char **shell_build_argv(const char_u *cmd, const char_u *extra_shell_opt)
 {
-  int argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
+  size_t argc = tokenize(p_sh, NULL) + tokenize(p_shcf, NULL);
   char **rv = xmalloc((unsigned)((argc + 4) * sizeof(char *)));
 
   // Split 'shell'
-  int i = tokenize(p_sh, rv);
+  size_t i = tokenize(p_sh, rv);
 
   if (extra_shell_opt != NULL) {
     // Push a copy of `extra_shell_opt`
@@ -212,7 +214,7 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 
   // Keep running the loop until all three handles are completely closed
   while (pdata.exited < expected_exits) {
-    uv_run(uv_default_loop(), UV_RUN_ONCE);
+    event_poll(0);
 
     if (got_int) {
       // Forward SIGINT to the shell
@@ -356,9 +358,9 @@ static void system_data_cb(RStream *rstream, void *data, bool eof)
 /// @param argv The vector that will be filled with copies of the parsed
 ///        words. It can be NULL if the caller only needs to count words.
 /// @return The number of words parsed.
-static int tokenize(const char_u *str, char **argv)
+static size_t tokenize(const char_u *str, char **argv)
 {
-  int argc = 0, len;
+  size_t argc = 0, len;
   char_u *p = (char_u *) str;
 
   while (*p != NUL) {
@@ -383,11 +385,11 @@ static int tokenize(const char_u *str, char **argv)
 ///
 /// @param str A pointer to the first character of the word
 /// @return The offset from `str` at which the word ends.
-static int word_length(const char_u *str)
+static size_t word_length(const char_u *str)
 {
   const char_u *p = str;
   bool inquote = false;
-  int length = 0;
+  size_t length = 0;
 
   // Move `p` to the end of shell word by advancing the pointer while it's
   // inside a quote or it's a non-whitespace character
@@ -418,15 +420,15 @@ static void write_selection(uv_write_t *req)
   // TODO(tarruda): use a static buffer for up to a limit(BUFFER_LENGTH) and
   // only after filled we should start allocating memory(skip unnecessary
   // allocations for small writes)
-  int buflen = BUFFER_LENGTH;
+  size_t buflen = BUFFER_LENGTH;
   pdata->wbuffer = (char *)xmalloc(buflen);
   uv_buf_t uvbuf;
   linenr_T lnum = curbuf->b_op_start.lnum;
-  int off = 0;
-  int written = 0;
+  size_t off = 0;
+  size_t written = 0;
   char_u      *lp = ml_get(lnum);
-  int l;
-  int len;
+  size_t l;
+  size_t len;
 
   for (;;) {
     l = strlen((char *)lp + written);
@@ -443,7 +445,7 @@ static void write_selection(uv_write_t *req)
       pdata->wbuffer[off++] = NUL;
     } else {
       char_u  *s = vim_strchr(lp + written, NL);
-      len = s == NULL ? l : s - (lp + written);
+      len = s == NULL ? l : (size_t)(s - (lp + written));
       while (off + len >= buflen) {
         // Resize the buffer
         buflen *= 2;
@@ -584,6 +586,7 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 {
   ProcessData *data = (ProcessData *)proc->data;
   data->exited++;
-  data->exit_status = status;
+  assert(status <= INT_MAX);
+  data->exit_status = (int)status;
   uv_close((uv_handle_t *)proc, NULL);
 }

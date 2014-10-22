@@ -5,9 +5,11 @@
 #include <uv.h>
 #include <msgpack.h>
 
+#include "nvim/lib/klist.h"
+
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
-#include "nvim/os/channel.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/os/event.h"
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
@@ -15,8 +17,7 @@
 #include "nvim/os/wstream_defs.h"
 #include "nvim/os/job.h"
 #include "nvim/os/job_defs.h"
-#include "nvim/os/msgpack_rpc.h"
-#include "nvim/os/msgpack_rpc_helpers.h"
+#include "nvim/msgpack_rpc/helpers.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/memory.h"
@@ -32,14 +33,14 @@
 
 typedef struct {
   uint64_t request_id;
-  bool errored;
+  bool returned, errored;
   Object result;
 } ChannelCallFrame;
 
 typedef struct {
   uint64_t id;
   PMap(cstr_t) *subscribed_events;
-  bool is_job, enabled;
+  bool is_job, closed;
   msgpack_unpacker *unpacker;
   union {
     Job *job;
@@ -51,8 +52,18 @@ typedef struct {
   } data;
   uint64_t next_request_id;
   kvec_t(ChannelCallFrame *) call_stack;
-  size_t rpc_call_level;
 } Channel;
+
+typedef struct {
+  Channel *channel;
+  MsgpackRpcRequestHandler handler;
+  Array args;
+  uint64_t request_id;
+} RequestEvent;
+
+#define RequestEventFreer(x)
+KMEMPOOL_INIT(RequestEventPool, RequestEvent, RequestEventFreer)
+kmempool_t(RequestEventPool) *request_event_pool = NULL;
 
 static uint64_t next_id = 1;
 static PMap(uint64_t) *channels = NULL;
@@ -60,12 +71,13 @@ static PMap(cstr_t) *event_strings = NULL;
 static msgpack_sbuffer out_buffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
-# include "os/channel.c.generated.h"
+# include "msgpack_rpc/channel.c.generated.h"
 #endif
 
 /// Initializes the module
 void channel_init(void)
 {
+  request_event_pool = kmp_init(RequestEventPool);
   channels = pmap_new(uint64_t)();
   event_strings = pmap_new(cstr_t)();
   msgpack_sbuffer_init(&out_buffer);
@@ -104,12 +116,12 @@ uint64_t channel_from_job(char **argv)
                                 channel,
                                 job_out,
                                 job_err,
-                                NULL,
+                                job_exit,
                                 0,
                                 &status);
 
   if (status <= 0) {
-    close_channel(channel);
+    free_channel(channel);
     return 0;
   }
 
@@ -128,8 +140,7 @@ void channel_from_stream(uv_stream_t *stream)
   // read stream
   channel->data.streams.read = rstream_new(parse_msgpack,
                                            rbuffer_new(CHANNEL_BUFFER_SIZE),
-                                           channel,
-                                           NULL);
+                                           channel);
   rstream_set_stream(channel->data.streams.read, stream);
   rstream_start(channel->data.streams.read);
   // write stream
@@ -142,7 +153,7 @@ bool channel_exists(uint64_t id)
 {
   Channel *channel;
   return (channel = pmap_get(uint64_t)(channels, id)) != NULL
-    && channel->enabled;
+    && !channel->closed;
 }
 
 /// Sends event/arguments to channel
@@ -157,7 +168,7 @@ bool channel_send_event(uint64_t id, char *name, Array args)
   Channel *channel = NULL;
 
   if (id > 0) {
-    if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+    if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
       api_free_array(args);
       return false;
     }
@@ -183,7 +194,7 @@ Object channel_send_call(uint64_t id,
 {
   Channel *channel = NULL;
 
-  if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+  if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
     api_set_error(err, Exception, _("Invalid channel \"%" PRIu64 "\""), id);
     api_free_array(args);
     return NIL;
@@ -203,22 +214,11 @@ Object channel_send_call(uint64_t id,
   // Send the msgpack-rpc request
   send_request(channel, request_id, method_name, args);
 
-  EventSource channel_source = channel->is_job
-    ? job_event_source(channel->data.job)
-    : rstream_event_source(channel->data.streams.read);
-  EventSource sources[] = {channel_source, NULL};
-
   // Push the frame
-  ChannelCallFrame frame = {request_id, false, NIL};
+  ChannelCallFrame frame = {request_id, false, false, NIL};
   kv_push(ChannelCallFrame *, channel->call_stack, &frame);
-  size_t size = kv_size(channel->call_stack);
-
-  do {
-    event_poll(-1, sources);
-  } while (
-      // Continue running if ...
-      channel->enabled &&  // the channel is still enabled
-      kv_size(channel->call_stack) >= size);  // the call didn't return
+  event_poll_until(-1, frame.returned);
+  (void)kv_pop(channel->call_stack);
 
   if (frame.errored) {
     api_set_error(err, Exception, "%s", frame.result.data.string.data);
@@ -236,7 +236,7 @@ void channel_subscribe(uint64_t id, char *event)
 {
   Channel *channel;
 
-  if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+  if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
     abort();
   }
 
@@ -258,7 +258,7 @@ void channel_unsubscribe(uint64_t id, char *event)
 {
   Channel *channel;
 
-  if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+  if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
     abort();
   }
 
@@ -273,12 +273,11 @@ bool channel_close(uint64_t id)
 {
   Channel *channel;
 
-  if (!(channel = pmap_get(uint64_t)(channels, id)) || !channel->enabled) {
+  if (!(channel = pmap_get(uint64_t)(channels, id)) || channel->closed) {
     return false;
   }
 
-  channel_kill(channel);
-  channel->enabled = false;
+  close_channel(channel);
   return true;
 }
 
@@ -291,8 +290,7 @@ static void channel_from_stdio(void)
   // read stream
   channel->data.streams.read = rstream_new(parse_msgpack,
                                            rbuffer_new(CHANNEL_BUFFER_SIZE),
-                                           channel,
-                                           NULL);
+                                           channel);
   rstream_set_file(channel->data.streams.read, 0);
   rstream_start(channel->data.streams.read);
   // write stream
@@ -320,23 +318,20 @@ static void job_err(RStream *rstream, void *data, bool eof)
   }
 }
 
+static void job_exit(Job *job, void *data)
+{
+  free_channel((Channel *)data);
+}
+
 static void parse_msgpack(RStream *rstream, void *data, bool eof)
 {
   Channel *channel = data;
-  channel->rpc_call_level++;
 
   if (eof) {
-    char buf[256];
-    snprintf(buf,
-             sizeof(buf),
-             "Before returning from a RPC call, channel %" PRIu64 " was "
-             "closed by the client",
-             channel->id);
-    call_set_error(channel, buf);
     goto end;
   }
 
-  uint32_t count = rstream_pending(rstream);
+  size_t count = rstream_pending(rstream);
   DLOG("Feeding the msgpack parser with %u bytes of data from RStream(%p)",
        count,
        rstream);
@@ -355,7 +350,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
       MSGPACK_UNPACK_SUCCESS) {
     if (kv_size(channel->call_stack) && is_rpc_response(&unpacked.data)) {
       if (is_valid_rpc_response(&unpacked.data, channel)) {
-        call_stack_pop(&unpacked.data, channel);
+        complete_call(&unpacked.data, channel);
       } else {
         char buf[256];
         snprintf(buf,
@@ -371,12 +366,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
       goto end;
     }
 
-    // Perform the call
-    WBuffer *resp = msgpack_rpc_call(channel->id, &unpacked.data, &out_buffer);
-    // write the response
-    if (!channel_write(channel, resp)) {
-      goto end;
-    }
+    handle_request(channel, &unpacked.data);
   }
 
   if (result == MSGPACK_UNPACK_NOMEM_ERROR) {
@@ -398,11 +388,90 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   }
 
 end:
-  channel->rpc_call_level--;
-  if (!channel->enabled && !kv_size(channel->call_stack)) {
-    // Now it's safe to destroy the channel
-    close_channel(channel);
+  if (eof && !channel->is_job && !kv_size(channel->call_stack)) {
+    // The free_channel call is deferred for jobs because it's possible that
+    // job_stderr will called after this. For non-job channels, this is the
+    // last callback so it must be freed now.
+    free_channel(channel);
   }
+}
+
+static void handle_request(Channel *channel, msgpack_object *request)
+  FUNC_ATTR_NONNULL_ALL
+{
+  uint64_t request_id;
+  Error error = ERROR_INIT;
+  msgpack_rpc_validate(&request_id, request, &error);
+
+  if (error.set) {
+    // Validation failed, send response with error
+    channel_write(channel,
+                  serialize_response(request_id, &error, NIL, &out_buffer));
+    return;
+  }
+
+  // Retrieve the request handler
+  MsgpackRpcRequestHandler handler;
+  msgpack_object method = request->via.array.ptr[2];
+
+  if (method.type == MSGPACK_OBJECT_BIN || method.type == MSGPACK_OBJECT_STR) {
+    handler = msgpack_rpc_get_handler_for(method.via.bin.ptr,
+                                          method.via.bin.size);
+  } else {
+    handler.fn = msgpack_rpc_handle_missing_method;
+    handler.defer = false;
+  }
+
+  Array args;
+  msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
+
+  if (kv_size(channel->call_stack) || !handler.defer) {
+    call_request_handler(channel, handler, args, request_id);
+    return;
+  }
+
+  // Defer calling the request handler.
+  RequestEvent *event_data = kmp_alloc(RequestEventPool, request_event_pool);
+  event_data->channel = channel;
+  event_data->handler = handler;
+  event_data->args = args;
+  event_data->request_id = request_id;
+  event_push((Event) {
+    .handler = on_request_event,
+    .data = event_data
+  });
+}
+
+static void on_request_event(Event event)
+{
+  RequestEvent *e = event.data;
+  call_request_handler(e->channel, e->handler, e->args, e->request_id);
+  kmp_free(RequestEventPool, request_event_pool, e);
+}
+
+static void call_request_handler(Channel *channel,
+                                 MsgpackRpcRequestHandler handler,
+                                 Array args,
+                                 uint64_t request_id)
+{
+  Error error = ERROR_INIT;
+  Object result = handler.fn(channel->id, request_id, args, &error);
+  // send the response
+  msgpack_packer response;
+  msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
+
+  if (error.set) {
+    ELOG("Error dispatching msgpack-rpc call: %s(request: id %" PRIu64 ")",
+         error.msg,
+         request_id);
+    channel_write(channel,
+                  serialize_response(request_id, &error, NIL, &out_buffer));
+  }
+
+  DLOG("Successfully completed mspgack-rpc call(request id: %" PRIu64 ")",
+       request_id);
+  channel_write(channel,
+                serialize_response(request_id, &error, result, &out_buffer));
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
@@ -501,26 +570,11 @@ static void unsubscribe(Channel *channel, char *event)
   free(event_string);
 }
 
+/// Close the channel streams/job. The channel resources will be freed by
+/// free_channel later.
 static void close_channel(Channel *channel)
 {
-  pmap_del(uint64_t)(channels, channel->id);
-  msgpack_unpacker_free(channel->unpacker);
-
-  // Unsubscribe from all events
-  char *event_string;
-  map_foreach_value(channel->subscribed_events, event_string, {
-    unsubscribe(channel, event_string);
-  });
-
-  pmap_free(cstr_t)(channel->subscribed_events);
-  kv_destroy(channel->call_stack);
-  channel_kill(channel);
-
-  free(channel);
-}
-
-static void channel_kill(Channel *channel)
-{
+  channel->closed = true;
   if (channel->is_job) {
     if (channel->data.job) {
       job_stop(channel->data.job);
@@ -537,6 +591,22 @@ static void channel_kill(Channel *channel)
   }
 }
 
+static void free_channel(Channel *channel)
+{
+  pmap_del(uint64_t)(channels, channel->id);
+  msgpack_unpacker_free(channel->unpacker);
+
+  // Unsubscribe from all events
+  char *event_string;
+  map_foreach_value(channel->subscribed_events, event_string, {
+    unsubscribe(channel, event_string);
+  });
+
+  pmap_free(cstr_t)(channel->subscribed_events);
+  kv_destroy(channel->call_stack);
+  free(channel);
+}
+
 static void close_cb(uv_handle_t *handle)
 {
   free(handle->data);
@@ -546,8 +616,7 @@ static void close_cb(uv_handle_t *handle)
 static Channel *register_channel(void)
 {
   Channel *rv = xmalloc(sizeof(Channel));
-  rv->enabled = true;
-  rv->rpc_call_level = 0;
+  rv->closed = false;
   rv->unpacker = msgpack_unpacker_new(MSGPACK_UNPACKER_INIT_BUFFER_SIZE);
   rv->id = next_id++;
   rv->subscribed_events = pmap_new(cstr_t)();
@@ -574,9 +643,11 @@ static bool is_valid_rpc_response(msgpack_object *obj, Channel *channel)
                              kv_size(channel->call_stack) - 1)->request_id;
 }
 
-static void call_stack_pop(msgpack_object *obj, Channel *channel)
+static void complete_call(msgpack_object *obj, Channel *channel)
 {
-  ChannelCallFrame *frame = kv_pop(channel->call_stack);
+  ChannelCallFrame *frame = kv_A(channel->call_stack,
+                             kv_size(channel->call_stack) - 1);
+  frame->returned = true;
   frame->errored = obj->via.array.ptr[2].type != MSGPACK_OBJECT_NIL;
 
   if (frame->errored) {
@@ -589,10 +660,11 @@ static void call_stack_pop(msgpack_object *obj, Channel *channel)
 static void call_set_error(Channel *channel, char *msg)
 {
   for (size_t i = 0; i < kv_size(channel->call_stack); i++) {
-    ChannelCallFrame *frame = kv_pop(channel->call_stack);
+    ChannelCallFrame *frame = kv_A(channel->call_stack, i);
+    frame->returned = true;
     frame->errored = true;
     frame->result = STRING_OBJ(cstr_to_string(msg));
   }
 
-  channel->enabled = false;
+  close_channel(channel);
 }

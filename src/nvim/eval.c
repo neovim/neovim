@@ -18,6 +18,8 @@
 #include <stdbool.h>
 #include <math.h>
 
+#include "nvim/lib/klist.h"
+
 #include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -81,11 +83,12 @@
 #include "nvim/os/rstream.h"
 #include "nvim/os/rstream_defs.h"
 #include "nvim/os/time.h"
-#include "nvim/os/channel.h"
+#include "nvim/msgpack_rpc/channel.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
 #include "nvim/os/provider.h"
+#include "nvim/os/event.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */
 
@@ -443,6 +446,16 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 #define FNE_CHECK_START 2       /* find_name_end(): check name starts with
                                    valid character */
 
+// Memory pool for reusing JobEvent structures
+typedef struct {
+  Job *job;
+  RStream *rstream;
+  char *type;
+} JobEvent;
+#define JobEventFreer(x)
+KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
+kmempool_t(JobEventPool) *job_event_pool = NULL;
+
 /*
  * Initialize the global and v: variables.
  */
@@ -478,6 +491,7 @@ void eval_init(void)
   set_vim_var_nr(VV_HLSEARCH, 1L);
   set_reg_var(0);    /* default for v:register is not 0 but '"' */
 
+  job_event_pool = kmp_init(JobEventPool);
 }
 
 #if defined(EXITFREE) || defined(PROTO)
@@ -19508,35 +19522,55 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
   return ret;
 }
 
+// JobActivity autocommands will execute vimscript code, so it must be executed
+// on Nvim main loop
+#define push_job_event(j, r, t)                                      \
+  do {                                                               \
+    JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);  \
+    event_data->job = j;                                             \
+    event_data->rstream = r;                                         \
+    event_data->type = t;                                            \
+    event_push((Event) {                                             \
+      .handler = on_job_event,                                       \
+      .data = event_data                                             \
+    });                                                              \
+  } while(0)
+
 static void on_job_stdout(RStream *rstream, void *data, bool eof)
 {
   if (!eof) {
-    on_job_data(rstream, data, eof, "stdout");
+    push_job_event(data, rstream, "stdout");
   }
 }
 
 static void on_job_stderr(RStream *rstream, void *data, bool eof)
 {
   if (!eof) {
-    on_job_data(rstream, data, eof, "stderr");
+    push_job_event(data, rstream, "stderr");
   }
 }
 
 static void on_job_exit(Job *job, void *data)
 {
-  apply_job_autocmds(job, data, "exit", NULL);
-  free(data);
+  push_job_event(data, NULL, "exit");
 }
 
-static void on_job_data(RStream *rstream, void *data, bool eof, char *type)
+static void on_job_event(Event event)
 {
-  Job *job = data;
-  uint32_t read_count = rstream_pending(rstream);
-  char *str = xmalloc(read_count + 1);
+  JobEvent *data = event.data;
+  Job *job = data->job;
+  char *str = NULL;
 
-  rstream_read(rstream, str, read_count);
-  str[read_count] = NUL;
-  apply_job_autocmds(job, job_data(job), type, str);
+  if (data->rstream) {
+    // Read event
+    size_t read_count = rstream_pending(data->rstream);
+    str = xmalloc(read_count + 1);
+
+    rstream_read(data->rstream, str, read_count);
+    str[read_count] = NUL;
+  }
+  apply_job_autocmds(job, job_data(job), data->type, str);
+  kmp_free(JobEventPool, job_event_pool, data);
 }
 
 static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
