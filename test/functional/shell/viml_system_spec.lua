@@ -19,6 +19,15 @@ local function delete_file(name)
   end
 end
 
+-- Some tests require the xclip program and a x server.
+local xclip = nil
+do 
+  if os.getenv('DISPLAY') then
+    local proc = io.popen('which xclip') 
+    xclip = proc:read()
+    proc:close()
+  end
+end
 
 describe('system()', function()
   before_each(clear)
@@ -85,6 +94,15 @@ describe('system()', function()
       end)
     end)
   end)
+
+  if xclip then
+    describe("with a program that doesn't close stdout", function()
+      it('will exit properly after passing input', function()
+        eq(nil, eval([[system('xclip -i -selection clipboard', 'clip-data')]]))
+        eq('clip-data', eval([[system('xclip -o -selection clipboard')]]))
+      end)
+    end)
+  end
 end)
 
 describe('systemlist()', function()
@@ -140,4 +158,15 @@ describe('systemlist()', function()
       end)
     end)
   end)
+
+  if xclip then
+    describe("with a program that doesn't close stdout", function()
+      it('will exit properly after passing input', function()
+        eq(nil, eval(
+          "systemlist('xclip -i -selection clipboard', ['clip', 'data'])"))
+        eq({'clip', 'data'}, eval(
+          "systemlist('xclip -o -selection clipboard')"))
+      end)
+    end)
+  end
 end)
