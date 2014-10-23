@@ -46,6 +46,16 @@ STARTTEST
 :redraw!
 :let line=ScreenChar(winwidth(0))
 :call DoRecordScreen()
+:let line="_S_\t bla"
+:$put =line
+:$
+:norm! zt
+:let g:test ="Test 5: set linebreak with conceal and set list and tab displayed by different char (line may not be truncated)"
+:set cpo&vim list linebreak conceallevel=2 concealcursor=nv listchars=tab:ab
+:syn match ConcealVar contained /_/ conceal
+:syn match All /.*/ contains=ConcealVar
+:let line=ScreenChar(winwidth(0))
+:call DoRecordScreen()
 :%w! test.out
 :qa!
 ENDTEST

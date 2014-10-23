@@ -3478,6 +3478,11 @@ win_line (
             int    i;
             int    saved_nextra = n_extra;
 
+            if (is_concealing && vcol_off > 0) {
+              // there are characters to conceal
+              tab_len += vcol_off;
+            }
+
             /* if n_extra > 0, it gives the number of chars to use for
              * a tab, else we need to calculate the width for a tab */
             len = (tab_len * mb_char2len(lcs_tab2));
@@ -3495,6 +3500,12 @@ win_line (
               n_extra += mb_char2len(lcs_tab2) - (saved_nextra > 0 ? 1: 0);
             }
             p_extra = p_extra_free;
+
+            // n_extra will be increased by FIX_FOX_BOGUSCOLS
+            // macro below, so need to adjust for that here
+            if (is_concealing && vcol_off > 0) {
+              n_extra -= vcol_off;
+            }
           }
           /* Tab alignment should be identical regardless of
            * 'conceallevel' value. So tab compensates of all
