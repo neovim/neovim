@@ -225,6 +225,10 @@ Object channel_send_call(uint64_t id,
     return NIL;
   }
 
+  if (channel->closed && !kv_size(channel->call_stack)) {
+    free_channel(channel);
+  }
+
   return frame.result;
 }
 
@@ -328,7 +332,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
   Channel *channel = data;
 
   if (eof) {
-    goto end;
+    close_channel(channel);
   }
 
   size_t count = rstream_pending(rstream);
@@ -363,7 +367,7 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
       }
       msgpack_unpacked_destroy(&unpacked);
       // Bail out from this event loop iteration
-      goto end;
+      return;
     }
 
     handle_request(channel, &unpacked.data);
@@ -385,14 +389,6 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
     send_error(channel, 0, "Invalid msgpack payload. "
                            "This error can also happen when deserializing "
                            "an object with high level of nesting");
-  }
-
-end:
-  if (eof && !channel->is_job && !kv_size(channel->call_stack)) {
-    // The free_channel call is deferred for jobs because it's possible that
-    // job_stderr will called after this. For non-job channels, this is the
-    // last callback so it must be freed now.
-    free_channel(channel);
   }
 }
 
@@ -569,6 +565,10 @@ static void unsubscribe(Channel *channel, char *event)
 /// free_channel later.
 static void close_channel(Channel *channel)
 {
+  if (channel->closed) {
+    return;
+  }
+
   channel->closed = true;
   if (channel->is_job) {
     if (channel->data.job) {
@@ -577,10 +577,10 @@ static void close_channel(Channel *channel)
   } else {
     rstream_free(channel->data.streams.read);
     wstream_free(channel->data.streams.write);
-    if (channel->data.streams.uv) {
-      uv_close((uv_handle_t *)channel->data.streams.uv, close_cb);
+    uv_handle_t *handle = (uv_handle_t *)channel->data.streams.uv;
+    if (handle) {
+      uv_close(handle, close_cb);
     } else {
-      // When the stdin channel closes, it's time to go
       mch_exit(0);
     }
   }
