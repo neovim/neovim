@@ -280,7 +280,6 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
       // Until...
       got_int ||                // interrupted by the user
       job->pending_refs == 1);  // job exited
-  job->pending_refs--;
 
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
@@ -290,6 +289,7 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   }
 
   settmode(old_mode);
+  job->pending_refs--;
 
   if (!job->pending_refs) {
     int status = (int) job->status;
