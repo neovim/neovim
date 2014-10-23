@@ -291,7 +291,6 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
       // Until...
       got_int ||                // interrupted by the user
       job->refcount == 1);  // job exited
-  job->refcount--;
 
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
@@ -302,7 +301,7 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
 
   settmode(old_mode);
 
-  if (!job->refcount) {
+  if (!--job->refcount) {
     int status = (int) job->status;
     // Manually invoke close_cb to free the job resources
     close_cb((uv_handle_t *)&job->proc);
