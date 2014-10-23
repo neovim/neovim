@@ -455,14 +455,12 @@ static void call_request_handler(Channel *channel,
   // send the response
   msgpack_packer response;
   msgpack_packer_init(&response, &out_buffer, msgpack_sbuffer_write);
-
-  if (error.set) {
-    channel_write(channel,
-                  serialize_response(request_id, &error, NIL, &out_buffer));
-  }
-
-  channel_write(channel,
-                serialize_response(request_id, &error, result, &out_buffer));
+  channel_write(channel, serialize_response(request_id,
+                                            &error,
+                                            result,
+                                            &out_buffer));
+  // All arguments were freed already, but we still need to free the array
+  free(args.items);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
