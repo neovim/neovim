@@ -323,68 +323,48 @@ Object msgpack_rpc_handle_missing_method(uint64_t channel_id,
 }
 
 /// Serializes a msgpack-rpc request or notification(id == 0)
-WBuffer *serialize_request(uint64_t request_id,
-                           String method,
-                           Array args,
-                           msgpack_sbuffer *sbuffer,
-                           size_t refcount)
+void msgpack_rpc_serialize_request(uint64_t request_id,
+                                   String method,
+                                   Array args,
+                                   msgpack_packer *pac)
   FUNC_ATTR_NONNULL_ARG(4)
 {
-  msgpack_packer pac;
-  msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
-  msgpack_pack_array(&pac, request_id ? 4 : 3);
-  msgpack_pack_int(&pac, request_id ? 0 : 2);
+  msgpack_pack_array(pac, request_id ? 4 : 3);
+  msgpack_pack_int(pac, request_id ? 0 : 2);
 
   if (request_id) {
-    msgpack_pack_uint64(&pac, request_id);
+    msgpack_pack_uint64(pac, request_id);
   }
 
-  msgpack_pack_bin(&pac, method.size);
-  msgpack_pack_bin_body(&pac, method.data, method.size);
-  msgpack_rpc_from_array(args, &pac);
-  WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
-                                   sbuffer->size,
-                                   refcount,
-                                   free);
-  api_free_array(args);
-  msgpack_sbuffer_clear(sbuffer);
-  return rv;
+  msgpack_pack_bin(pac, method.size);
+  msgpack_pack_bin_body(pac, method.data, method.size);
+  msgpack_rpc_from_array(args, pac);
 }
 
 /// Serializes a msgpack-rpc response
-WBuffer *serialize_response(uint64_t response_id,
-                            Error *err,
-                            Object arg,
-                            msgpack_sbuffer *sbuffer)
+void msgpack_rpc_serialize_response(uint64_t response_id,
+                                    Error *err,
+                                    Object arg,
+                                    msgpack_packer *pac)
   FUNC_ATTR_NONNULL_ARG(2, 4)
 {
-  msgpack_packer pac;
-  msgpack_packer_init(&pac, sbuffer, msgpack_sbuffer_write);
-  msgpack_pack_array(&pac, 4);
-  msgpack_pack_int(&pac, 1);
-  msgpack_pack_uint64(&pac, response_id);
+  msgpack_pack_array(pac, 4);
+  msgpack_pack_int(pac, 1);
+  msgpack_pack_uint64(pac, response_id);
 
   if (err->set) {
     // error represented by a [type, message] array
-    msgpack_pack_array(&pac, 2);
-    msgpack_rpc_from_integer(err->type, &pac);
-    msgpack_rpc_from_string(cstr_as_string(err->msg), &pac);
+    msgpack_pack_array(pac, 2);
+    msgpack_rpc_from_integer(err->type, pac);
+    msgpack_rpc_from_string(cstr_as_string(err->msg), pac);
     // Nil result
-    msgpack_pack_nil(&pac);
+    msgpack_pack_nil(pac);
   } else {
     // Nil error
-    msgpack_pack_nil(&pac);
+    msgpack_pack_nil(pac);
     // Return value
-    msgpack_rpc_from_object(arg, &pac);
+    msgpack_rpc_from_object(arg, pac);
   }
-
-  WBuffer *rv = wstream_new_buffer(xmemdup(sbuffer->data, sbuffer->size),
-                                   sbuffer->size,
-                                   1,  // responses only go though 1 channel
-                                   free);
-  api_free_object(arg);
-  msgpack_sbuffer_clear(sbuffer);
-  return rv;
 }
 
 void msgpack_rpc_validate(uint64_t *response_id,

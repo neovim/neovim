@@ -164,13 +164,6 @@ for i = 1, #functions do
 
   output:write('static Object handle_'..fn.name..'(uint64_t channel_id, uint64_t request_id, Array args, Error *error)')
   output:write('\n{')
-  output:write('\n')
-  output:write('\n#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL\n  {')
-  output:write('\n    char *args_repr = api_stringify(ARRAY_OBJ(args));')
-  output:write('\n    DLOG("msgpack-rpc request received(id: %" PRIu64 ", method: '..fn.name..' , arguments: %s)", request_id, args_repr);')
-  output:write('\n    free(args_repr);')
-  output:write('\n  }\n#endif')
-  output:write('\n')
   output:write('\n  Object ret = NIL;')
   -- Declare/initialize variables that will hold converted arguments
   for j = 1, #fn.parameters do
@@ -235,7 +228,6 @@ for i = 1, #functions do
     end
     -- and check for the error
     output:write('\n  if (error->set) {')
-    output:write('\n    DLOG("msgpack-rpc request failed(id: %" PRIu64 ", method: '..fn.name..' , error: %s)", request_id, error->msg);')
     output:write('\n    goto cleanup;')
     output:write('\n  }\n')
   else
@@ -245,11 +237,6 @@ for i = 1, #functions do
   if fn.return_type ~= 'void' then
     output:write('\n  ret = '..string.upper(real_type(fn.return_type))..'_OBJ(rv);')
   end
-  output:write('\n#if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL\n  {')
-  output:write('\n    char *rv_repr = api_stringify(ret);')
-  output:write('\n    DLOG("msgpack-rpc request succeeded(id: %" PRIu64 ", method: '..fn.name..' , return value: %s)", request_id, rv_repr);')
-  output:write('\n    free(rv_repr);')
-  output:write('\n  }\n#endif')
   -- Now generate the cleanup label for freeing memory allocated for the
   -- arguments
   output:write('\n\ncleanup:');
