@@ -17,6 +17,10 @@ before_install:
   # That allows to test changing the group of the file by `os_fchown`.
   - sudo groupadd chown_test
   - sudo usermod -a -G chown_test ${USER}
+  # Need xvfb for running some tests with xclip
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - sudo apt-get install xclip
 script:
   # This will pass the environment variables down to a bash process which runs
   # as $USER, while retaining the environment variables defined and belonging
