@@ -6361,18 +6361,6 @@ msgstr "オンラインヘルプは     :help<Enter> か <F1>   "
 msgid "type  :help version7<Enter>   for version info"
 msgstr "バージョン情報は       :help version7<Enter>  "
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Vi互換モードで動作中"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "Vim推奨値にするには    :set nocp<Enter>       "
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "詳細な情報は           :help cp-default<Enter>"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Vimの開発を応援してください!"

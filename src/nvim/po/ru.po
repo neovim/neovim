@@ -6410,18 +6410,6 @@ msgstr "наберите :help<Enter> или <F1>   для получения с
 msgid "type  :help version7<Enter>   for version info"
 msgstr "наберите :help version7<Enter>   чтобы узнать об этой версии  "
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Работа в Vi-совместимом режиме"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "наберите :set nocp<Enter>        для перехода в режим Vim     "
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "наберите :help cp-default<Enter> для дополнительной информации"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Помогите в разработке Vim!"

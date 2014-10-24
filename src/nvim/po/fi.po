@@ -2,15 +2,15 @@
 # Copyright (C) 2003-2006 Free Software Foundation, Inc.
 # 2007-2010, Flammie Pirinen <flammie@iki.fi>
 #
-# Vimin käyttäjät on nörttejä. Sanasto on jargonia :-p
+# Vimin kï¿½yttï¿½jï¿½t on nï¿½rttejï¿½. Sanasto on jargonia :-p
 #
-# Lähinnä latin-1:tä, sillä vim pitää portata ilmeisen obskuureille
-# alustoille. Myös: pluralit puuttuu, ohjelman käyttöliittymän fontti
-# tasavälinen, tila rajattu, jne. jne., luovia ratkaisuja edessä.
+# Lï¿½hinnï¿½ latin-1:tï¿½, sillï¿½ vim pitï¿½ï¿½ portata ilmeisen obskuureille
+# alustoille. Myï¿½s: pluralit puuttuu, ohjelman kï¿½yttï¿½liittymï¿½n fontti
+# tasavï¿½linen, tila rajattu, jne. jne., luovia ratkaisuja edessï¿½.
 #
 # Sanastosta:
-# Fold on sellainen moderneissa ohjelmointi-IDE:issä oleva toiminto, jolla
-#   lohko koodia esim. funktio piilotetaan näkymästä: suom. taitos alkup.
+# Fold on sellainen moderneissa ohjelmointi-IDE:issï¿½ oleva toiminto, jolla
+#   lohko koodia esim. funktio piilotetaan nï¿½kymï¿½stï¿½: suom. taitos alkup.
 #   analogian mukaan
 # source v. lataa tiedoston, kuten bash-komento source (tai .)
 #
@@ -30,7 +30,7 @@ msgstr ""
 #: ../api/private/helpers.c:201
 #, fuzzy
 msgid "Unable to get option value"
-msgstr "Roskaa argumentin perässä"
+msgstr "Roskaa argumentin perï¿½ssï¿½"
 
 #: ../api/private/helpers.c:204
 msgid "internal error: unknown option type"
@@ -51,11 +51,11 @@ msgstr "E812: Autocommands muutti puskurin tai sen nimen"
 
 #: ../buffer.c:135
 msgid "E82: Cannot allocate any buffer, exiting..."
-msgstr "E82: Mitään puskuria ei voitu varata, lopetetaan..."
+msgstr "E82: Mitï¿½ï¿½n puskuria ei voitu varata, lopetetaan..."
 
 #: ../buffer.c:138
 msgid "E83: Cannot allocate buffer, using other one..."
-msgstr "E83: Puskuria ei voitu varata, käytetään toista..."
+msgstr "E83: Puskuria ei voitu varata, kï¿½ytetï¿½ï¿½n toista..."
 
 #: ../buffer.c:763
 msgid "E515: No buffers were unloaded"
@@ -98,7 +98,7 @@ msgstr "%d puskuria pyyhitty"
 
 #: ../buffer.c:806
 msgid "E90: Cannot unload last buffer"
-msgstr "E90: Ei voi vapauttaa viimeistä puskuria"
+msgstr "E90: Ei voi vapauttaa viimeistï¿½ puskuria"
 
 #: ../buffer.c:874
 msgid "E84: No modified buffer found"
@@ -116,18 +116,18 @@ msgstr "E86: Puskuria %<PRId64> ei ole"
 
 #: ../buffer.c:915
 msgid "E87: Cannot go beyond last buffer"
-msgstr "E87: Viimeisen puskurin ohi ei voi edetä"
+msgstr "E87: Viimeisen puskurin ohi ei voi edetï¿½"
 
 #: ../buffer.c:917
 msgid "E88: Cannot go before first buffer"
-msgstr "E88: Ensimmäisen puskurin ohi ei voi edetä"
+msgstr "E88: Ensimmï¿½isen puskurin ohi ei voi edetï¿½"
 
 #: ../buffer.c:945
 #, c-format
 msgid ""
 "E89: No write since last change for buffer %<PRId64> (add ! to override)"
 msgstr ""
-"E89: Puskurin %<PRId64> muutoksia ei ole tallennettu (lisää komentoon ! "
+"E89: Puskurin %<PRId64> muutoksia ei ole tallennettu (lisï¿½ï¿½ komentoon ! "
 "ohittaaksesi)"
 
 #. wrap around (may cause duplicates)
@@ -138,17 +138,17 @@ msgstr "W14: Varoitus: Tiedostonimiluettelon ylivuoto"
 #: ../buffer.c:1555 ../quickfix.c:3361
 #, c-format
 msgid "E92: Buffer %<PRId64> not found"
-msgstr "E92: Puskuria %<PRId64> ei löydy"
+msgstr "E92: Puskuria %<PRId64> ei lï¿½ydy"
 
 #: ../buffer.c:1798
 #, c-format
 msgid "E93: More than one match for %s"
-msgstr "E93: %s täsmää useampaan kuin yhteen puskuriin"
+msgstr "E93: %s tï¿½smï¿½ï¿½ useampaan kuin yhteen puskuriin"
 
 #: ../buffer.c:1800
 #, c-format
 msgid "E94: No matching buffer for %s"
-msgstr "E94: %s ei täsmää yhteenkään puskuriin"
+msgstr "E94: %s ei tï¿½smï¿½ï¿½ yhteenkï¿½ï¿½n puskuriin"
 
 #: ../buffer.c:2161
 #, c-format
@@ -173,7 +173,7 @@ msgstr "[Uusi tiedosto]"
 
 #: ../buffer.c:2505
 msgid "[Read errors]"
-msgstr "[Lukuvirheitä]"
+msgstr "[Lukuvirheitï¿½]"
 
 #: ../buffer.c:2506 ../buffer.c:3217 ../fileio.c:1807 ../screen.c:4895
 msgid "[RO]"
@@ -191,7 +191,7 @@ msgstr "1 rivi --%d %%--"
 #: ../buffer.c:2526
 #, c-format
 msgid "%<PRId64> lines --%d%%--"
-msgstr "%<PRId64> riviä --%d %%--"
+msgstr "%<PRId64> riviï¿½ --%d %%--"
 
 #: ../buffer.c:2530
 #, c-format
@@ -200,7 +200,7 @@ msgstr "rivi %<PRId64>/%<PRId64> --%d %%-- sarake "
 
 #: ../buffer.c:2632 ../buffer.c:4292 ../memline.c:1554
 msgid "[No Name]"
-msgstr "[Nimetön]"
+msgstr "[Nimetï¿½n]"
 
 #. must be a help buffer
 #: ../buffer.c:2667
@@ -216,7 +216,7 @@ msgid "[Preview]"
 msgstr "[Esikatselu]"
 
 # sijainti tiedostossa -indikaattoreja:
-# 4 merkkiä sais riittää
+# 4 merkkiï¿½ sais riittï¿½ï¿½
 #: ../buffer.c:3528
 msgid "All"
 msgstr "Kaik"
@@ -269,7 +269,7 @@ msgstr "E546: Virheellinen tila"
 
 #: ../cursor_shape.c:134
 msgid "E548: digit expected"
-msgstr "E548: pitää olla numero"
+msgstr "E548: pitï¿½ï¿½ olla numero"
 
 #: ../cursor_shape.c:138
 msgid "E549: Illegal percentage"
@@ -278,15 +278,15 @@ msgstr "E549: Virheellinen prosenttiluku"
 #: ../diff.c:146
 #, c-format
 msgid "E96: Can not diff more than %<PRId64> buffers"
-msgstr "E96: Ei voi diffata enempää kuin %<PRId64> puskuria"
+msgstr "E96: Ei voi diffata enempï¿½ï¿½ kuin %<PRId64> puskuria"
 
 #: ../diff.c:753
 msgid "E810: Cannot read or write temp files"
-msgstr "E810: Ei voi lukea tai kirjoittaa väliaikaistiedostoja"
+msgstr "E810: Ei voi lukea tai kirjoittaa vï¿½liaikaistiedostoja"
 
 #: ../diff.c:755
 msgid "E97: Cannot create diffs"
-msgstr "E97: Ei voi luoda diffejä"
+msgstr "E97: Ei voi luoda diffejï¿½"
 
 #: ../diff.c:966
 msgid "E816: Cannot read patch output"
@@ -298,24 +298,24 @@ msgstr "E98: Ei voi lukea diffin tulostetta"
 
 #: ../diff.c:2081
 msgid "E99: Current buffer is not in diff mode"
-msgstr "E99: Tämä puskuri ei ole diff-tilassa"
+msgstr "E99: Tï¿½mï¿½ puskuri ei ole diff-tilassa"
 
 #: ../diff.c:2100
 msgid "E793: No other buffer in diff mode is modifiable"
-msgstr "E793: Yksikään muu diff-tilan puskurit ei ole muokattavissa"
+msgstr "E793: Yksikï¿½ï¿½n muu diff-tilan puskurit ei ole muokattavissa"
 
 #: ../diff.c:2102
 msgid "E100: No other buffer in diff mode"
-msgstr "E100: Yksikään muu puskuri ei ole diff-tilassa"
+msgstr "E100: Yksikï¿½ï¿½n muu puskuri ei ole diff-tilassa"
 
 #: ../diff.c:2112
 msgid "E101: More than two buffers in diff mode, don't know which one to use"
-msgstr "E101: Monta puskuria on diff-tilassa, käytettävän valinta ei onnistu"
+msgstr "E101: Monta puskuria on diff-tilassa, kï¿½ytettï¿½vï¿½n valinta ei onnistu"
 
 #: ../diff.c:2141
 #, c-format
 msgid "E102: Can't find buffer \"%s\""
-msgstr "E102: Puskuria %s ei löydy"
+msgstr "E102: Puskuria %s ei lï¿½ydy"
 
 #: ../diff.c:2152
 #, c-format
@@ -328,23 +328,23 @@ msgstr "E787: Puskuri vaihtui odottamatta"
 
 #: ../digraph.c:1598
 msgid "E104: Escape not allowed in digraph"
-msgstr "E104: Escapea ei voi käyttää digraafissa"
+msgstr "E104: Escapea ei voi kï¿½yttï¿½ï¿½ digraafissa"
 
 #: ../digraph.c:1760
 msgid "E544: Keymap file not found"
-msgstr "E544: Näppäinkarttaa ei löydy"
+msgstr "E544: Nï¿½ppï¿½inkarttaa ei lï¿½ydy"
 
 #: ../digraph.c:1785
 msgid "E105: Using :loadkeymap not in a sourced file"
-msgstr "E105: Käytetään :loadkeymapia ladatun tiedoston ulkopuolella"
+msgstr "E105: Kï¿½ytetï¿½ï¿½n :loadkeymapia ladatun tiedoston ulkopuolella"
 
 #: ../digraph.c:1821
 msgid "E791: Empty keymap entry"
-msgstr "E791: Tyhjä keymap-kenttä"
+msgstr "E791: Tyhjï¿½ keymap-kenttï¿½"
 
 #: ../edit.c:82
 msgid " Keyword completion (^N^P)"
-msgstr " Avainsanatäydennys (^N^P)"
+msgstr " Avainsanatï¿½ydennys (^N^P)"
 
 #. ctrl_x_mode == 0, ^P/^N compl.
 #: ../edit.c:83
@@ -353,43 +353,43 @@ msgstr " ^X-tila (^]^D^E^F^I^K^L^N^O^Ps^U^V^Y)"
 
 #: ../edit.c:85
 msgid " Whole line completion (^L^N^P)"
-msgstr " Täysrivitäydennys (^L^N^P)"
+msgstr " Tï¿½ysrivitï¿½ydennys (^L^N^P)"
 
 #: ../edit.c:86
 msgid " File name completion (^F^N^P)"
-msgstr " Tiedostonimitäydennys (^F^N^P)"
+msgstr " Tiedostonimitï¿½ydennys (^F^N^P)"
 
 #: ../edit.c:87
 msgid " Tag completion (^]^N^P)"
-msgstr " Tägitäydennys (^]^N^P)"
+msgstr " Tï¿½gitï¿½ydennys (^]^N^P)"
 
 #: ../edit.c:88
 msgid " Path pattern completion (^N^P)"
-msgstr " Polkukuviotäydennys (^N^P)"
+msgstr " Polkukuviotï¿½ydennys (^N^P)"
 
 #: ../edit.c:89
 msgid " Definition completion (^D^N^P)"
-msgstr " Määritelmätäydennys (^D^N^P)"
+msgstr " Mï¿½ï¿½ritelmï¿½tï¿½ydennys (^D^N^P)"
 
 #: ../edit.c:91
 msgid " Dictionary completion (^K^N^P)"
-msgstr " Sanakirjatäydennys (^K^N^P)"
+msgstr " Sanakirjatï¿½ydennys (^K^N^P)"
 
 #: ../edit.c:92
 msgid " Thesaurus completion (^T^N^P)"
-msgstr " Thesaurus-täydennys (^T^N^P)"
+msgstr " Thesaurus-tï¿½ydennys (^T^N^P)"
 
 #: ../edit.c:93
 msgid " Command-line completion (^V^N^P)"
-msgstr " Komentorivitäydennys (^V^N^P)"
+msgstr " Komentorivitï¿½ydennys (^V^N^P)"
 
 #: ../edit.c:94
 msgid " User defined completion (^U^N^P)"
-msgstr " Käyttäjän määrittelemä täydennys (^U^N^P)"
+msgstr " Kï¿½yttï¿½jï¿½n mï¿½ï¿½rittelemï¿½ tï¿½ydennys (^U^N^P)"
 
 #: ../edit.c:95
 msgid " Omni completion (^O^N^P)"
-msgstr " Omnitäydennys (^O^N^P)"
+msgstr " Omnitï¿½ydennys (^O^N^P)"
 
 #: ../edit.c:96
 msgid " Spelling suggestion (s^N^P)"
@@ -397,7 +397,7 @@ msgstr " Oikaisulukuehdotus (s^N^P)"
 
 #: ../edit.c:97
 msgid " Keyword Local completion (^N^P)"
-msgstr " Avainsanan paikallinen täydennys (^N^P)"
+msgstr " Avainsanan paikallinen tï¿½ydennys (^N^P)"
 
 #: ../edit.c:100
 msgid "Hit end of paragraph"
@@ -414,11 +414,11 @@ msgstr ""
 
 #: ../edit.c:1847
 msgid "'dictionary' option is empty"
-msgstr "dictionary-asetus on tyhjä"
+msgstr "dictionary-asetus on tyhjï¿½"
 
 #: ../edit.c:1848
 msgid "'thesaurus' option is empty"
-msgstr "thesaurus-asetus on tyhjä"
+msgstr "thesaurus-asetus on tyhjï¿½"
 
 #: ../edit.c:2655
 #, c-format
@@ -427,7 +427,7 @@ msgstr "Luetaan sanakirjaa: %s"
 
 #: ../edit.c:3079
 msgid " (insert) Scroll (^E/^Y)"
-msgstr " (syöttö) Vieritys (^E/^Y)"
+msgstr " (syï¿½ttï¿½) Vieritys (^E/^Y)"
 
 #: ../edit.c:3081
 msgid " (replace) Scroll (^E/^Y)"
@@ -440,11 +440,11 @@ msgstr "Luetaan: %s"
 
 #: ../edit.c:3614
 msgid "Scanning tags."
-msgstr "Luetaan tägejä."
+msgstr "Luetaan tï¿½gejï¿½."
 
 #: ../edit.c:4519
 msgid " Adding"
-msgstr " Lisätään"
+msgstr " Lisï¿½tï¿½ï¿½n"
 
 #. showmode might reset the internal line pointers, so it must
 #. * be called before line = ml_get(), or when this address is no
@@ -456,29 +456,29 @@ msgstr "-- Haetaan..."
 
 #: ../edit.c:4618
 msgid "Back at original"
-msgstr "Takaisin lähtöpisteessä"
+msgstr "Takaisin lï¿½htï¿½pisteessï¿½"
 
 #: ../edit.c:4621
 msgid "Word from other line"
-msgstr "Sana toisella rivillä"
+msgstr "Sana toisella rivillï¿½"
 
 #: ../edit.c:4624
 msgid "The only match"
-msgstr "Ainoa täsmäys"
+msgstr "Ainoa tï¿½smï¿½ys"
 
 #: ../edit.c:4680
 #, c-format
 msgid "match %d of %d"
-msgstr "täsmäys %d/%d"
+msgstr "tï¿½smï¿½ys %d/%d"
 
 #: ../edit.c:4684
 #, c-format
 msgid "match %d"
-msgstr "täsmäys %d"
+msgstr "tï¿½smï¿½ys %d"
 
 #: ../eval.c:137
 msgid "E18: Unexpected characters in :let"
-msgstr "E18: Odottamattomia merkkejä komennossa :let"
+msgstr "E18: Odottamattomia merkkejï¿½ komennossa :let"
 
 #: ../eval.c:138
 #, c-format
@@ -488,7 +488,7 @@ msgstr "E684: Indeksi %<PRId64> luettelon rajojen ulkopuolella"
 #: ../eval.c:139
 #, c-format
 msgid "E121: Undefined variable: %s"
-msgstr "E121: Määrittelemätön muuttuja: %s"
+msgstr "E121: Mï¿½ï¿½rittelemï¿½tï¿½n muuttuja: %s"
 
 #: ../eval.c:140
 msgid "E111: Missing ']'"
@@ -497,17 +497,17 @@ msgstr "E111: ] puuttuu"
 #: ../eval.c:141
 #, c-format
 msgid "E686: Argument of %s must be a List"
-msgstr "E686: Argumentin %s pitää olla lista"
+msgstr "E686: Argumentin %s pitï¿½ï¿½ olla lista"
 
 # datarakenteita
 #: ../eval.c:143
 #, c-format
 msgid "E712: Argument of %s must be a List or Dictionary"
-msgstr "E712: Argumentin %s pitää olla lista tai sanakirja"
+msgstr "E712: Argumentin %s pitï¿½ï¿½ olla lista tai sanakirja"
 
 #: ../eval.c:144
 msgid "E713: Cannot use empty key for Dictionary"
-msgstr "E713: Sanakirjassa ei voi olla tyhjiä avaimia"
+msgstr "E713: Sanakirjassa ei voi olla tyhjiï¿½ avaimia"
 
 #: ../eval.c:145
 msgid "E714: List required"
@@ -530,7 +530,7 @@ msgstr "E716: Avainta %s ei ole sanakirjassa"
 #: ../eval.c:150
 #, c-format
 msgid "E122: Function %s already exists, add ! to replace it"
-msgstr "E122: Funktio %s on jo olemassa, lisää ! korvataksesi"
+msgstr "E122: Funktio %s on jo olemassa, lisï¿½ï¿½ ! korvataksesi"
 
 #: ../eval.c:151
 msgid "E717: Dictionary entry already exists"
@@ -542,12 +542,12 @@ msgstr "E718: Funcref tarvitaan"
 
 #: ../eval.c:153
 msgid "E719: Cannot use [:] with a Dictionary"
-msgstr "E719: Sanakirjassa ei voi käyttää merkintää [:]"
+msgstr "E719: Sanakirjassa ei voi kï¿½yttï¿½ï¿½ merkintï¿½ï¿½ [:]"
 
 #: ../eval.c:154
 #, c-format
 msgid "E734: Wrong variable type for %s="
-msgstr "E734: Väärä muuttujatyyppi muuttujalle %s="
+msgstr "E734: Vï¿½ï¿½rï¿½ muuttujatyyppi muuttujalle %s="
 
 #: ../eval.c:155
 #, c-format
@@ -561,19 +561,19 @@ msgstr "E461: Virheellinen muuttujanimi: %s"
 
 #: ../eval.c:157
 msgid "E806: using Float as a String"
-msgstr "E806: Float ei käy merkkijonosta"
+msgstr "E806: Float ei kï¿½y merkkijonosta"
 
 #: ../eval.c:1830
 msgid "E687: Less targets than List items"
-msgstr "E687: Kohteita on vähemmän kuin listan alkioita"
+msgstr "E687: Kohteita on vï¿½hemmï¿½n kuin listan alkioita"
 
 #: ../eval.c:1834
 msgid "E688: More targets than List items"
-msgstr "E688: Kohteita on enemmän kuin listan alkioita"
+msgstr "E688: Kohteita on enemmï¿½n kuin listan alkioita"
 
 #: ../eval.c:1906
 msgid "Double ; in list of variables"
-msgstr "Kaksi ;:ttä listan muuttujissa"
+msgstr "Kaksi ;:ttï¿½ listan muuttujissa"
 
 #: ../eval.c:2078
 #, c-format
@@ -582,11 +582,11 @@ msgstr "E738: Kohteen %s muuttujia ei voi listata"
 
 #: ../eval.c:2391
 msgid "E689: Can only index a List or Dictionary"
-msgstr "E689: Vain listalla ja sanakirjalla voi olla indeksejä"
+msgstr "E689: Vain listalla ja sanakirjalla voi olla indeksejï¿½"
 
 #: ../eval.c:2396
 msgid "E708: [:] must come last"
-msgstr "E708: [:]:n pitää olla viimeisenä"
+msgstr "E708: [:]:n pitï¿½ï¿½ olla viimeisenï¿½"
 
 #: ../eval.c:2439
 msgid "E709: [:] requires a List value"
@@ -594,7 +594,7 @@ msgstr "E709: [:] toimii vain listalla"
 
 #: ../eval.c:2674
 msgid "E710: List value has more items than target"
-msgstr "E710: Listalla on enemmän alkioita kuin kohteella"
+msgstr "E710: Listalla on enemmï¿½n alkioita kuin kohteella"
 
 #: ../eval.c:2678
 msgid "E711: List value has not enough items"
@@ -616,11 +616,11 @@ msgstr "E108: Muuttujaa %s ei ole"
 
 #: ../eval.c:3333
 msgid "E743: variable nested too deep for (un)lock"
-msgstr "E743: muuttujassa liian monta tasoa lukituksen käsittelyyn"
+msgstr "E743: muuttujassa liian monta tasoa lukituksen kï¿½sittelyyn"
 
 #: ../eval.c:3630
 msgid "E109: Missing ':' after '?'"
-msgstr "E109: ?:n jälkeen puuttuu :"
+msgstr "E109: ?:n jï¿½lkeen puuttuu :"
 
 #: ../eval.c:3893
 msgid "E691: Can only compare List with List"
@@ -640,7 +640,7 @@ msgstr "E736: Virheellinen toiminto sanakirjalle"
 
 #: ../eval.c:3932
 msgid "E693: Can only compare Funcref with Funcref"
-msgstr "E693: Funcrefiä voi verrata vain funcrefiin"
+msgstr "E693: Funcrefiï¿½ voi verrata vain funcrefiin"
 
 #: ../eval.c:3934
 msgid "E694: Invalid operation for Funcrefs"
@@ -648,7 +648,7 @@ msgstr "E694: Virheellinen toiminto funcrefille"
 
 #: ../eval.c:4277
 msgid "E804: Cannot use '%' with Float"
-msgstr "E804: Ei voi käyttää '%':a Floatin kanssa"
+msgstr "E804: Ei voi kï¿½yttï¿½ï¿½ '%':a Floatin kanssa"
 
 #: ../eval.c:4478
 msgid "E110: Missing ')'"
@@ -656,7 +656,7 @@ msgstr "E110: ) puuttuu"
 
 #: ../eval.c:4609
 msgid "E695: Cannot index a Funcref"
-msgstr "E695: Funcrefiä ei voi indeksoida"
+msgstr "E695: Funcrefiï¿½ ei voi indeksoida"
 
 #: ../eval.c:4839
 #, c-format
@@ -710,7 +710,7 @@ msgstr "E723: Sanakirjan lopusta puuttuu }: %s"
 
 #: ../eval.c:6555
 msgid "E724: variable nested too deep for displaying"
-msgstr "E724: muuttuja on upotettu liian syvälle näytettäväksi"
+msgstr "E724: muuttuja on upotettu liian syvï¿½lle nï¿½ytettï¿½vï¿½ksi"
 
 #: ../eval.c:7188
 #, c-format
@@ -720,7 +720,7 @@ msgstr "E740: Liikaa argumentteja funktiolle %s"
 #: ../eval.c:7190
 #, c-format
 msgid "E116: Invalid arguments for function %s"
-msgstr "E116: Vääriä argumentteja funktiolle %s"
+msgstr "E116: Vï¿½ï¿½riï¿½ argumentteja funktiolle %s"
 
 #: ../eval.c:7377
 #, c-format
@@ -757,7 +757,7 @@ msgstr "E699: Liikaa argumentteja"
 
 #: ../eval.c:8073
 msgid "E785: complete() can only be used in Insert mode"
-msgstr "E785: complete() toimii vain syöttötilassa"
+msgstr "E785: complete() toimii vain syï¿½ttï¿½tilassa"
 
 #: ../eval.c:8156
 msgid "&Ok"
@@ -786,7 +786,7 @@ msgstr "-c-argumentti"
 #: ../eval.c:9229
 #, c-format
 msgid "+-%s%3ld lines: "
-msgstr "+-%s%3ld riviä: "
+msgstr "+-%s%3ld riviï¿½: "
 
 #: ../eval.c:9291
 #, c-format
@@ -804,7 +804,7 @@ msgstr "-c-argumentti"
 
 #: ../eval.c:10841
 msgid "E786: Range not allowed"
-msgstr "E786: Aluetta ei voi käyttää"
+msgstr "E786: Aluetta ei voi kï¿½yttï¿½ï¿½"
 
 #: ../eval.c:11140
 msgid "E701: Invalid type for len()"
@@ -816,11 +816,11 @@ msgstr "E726: Stride on nolla"
 
 #: ../eval.c:11982
 msgid "E727: Start past end"
-msgstr "E727: Alku on lopun jälkeen"
+msgstr "E727: Alku on lopun jï¿½lkeen"
 
 #: ../eval.c:12024 ../eval.c:15297
 msgid "<empty>"
-msgstr "<tyhjä>"
+msgstr "<tyhjï¿½>"
 
 #: ../eval.c:12282
 #, fuzzy
@@ -829,7 +829,7 @@ msgstr "--cmd-argumentti"
 
 #: ../eval.c:12466
 msgid "E655: Too many symbolic links (cycle?)"
-msgstr "E655: Liikaa symbolisia linkkejä (mahdollinen sykli)"
+msgstr "E655: Liikaa symbolisia linkkejï¿½ (mahdollinen sykli)"
 
 #: ../eval.c:12593
 #, fuzzy
@@ -861,40 +861,40 @@ msgstr "(Virheellinen)"
 
 #: ../eval.c:14590
 msgid "E677: Error writing temp file"
-msgstr "E677: Väliaikaistiedostoon kirjoittaminen ei onnistunut"
+msgstr "E677: Vï¿½liaikaistiedostoon kirjoittaminen ei onnistunut"
 
 #: ../eval.c:16159
 msgid "E805: Using a Float as a Number"
-msgstr "E805: Float ei käy Numberista"
+msgstr "E805: Float ei kï¿½y Numberista"
 
 #: ../eval.c:16162
 msgid "E703: Using a Funcref as a Number"
-msgstr "E703: Funcref ei käy Numberista"
+msgstr "E703: Funcref ei kï¿½y Numberista"
 
 #: ../eval.c:16170
 msgid "E745: Using a List as a Number"
-msgstr "E745: Lista ei käy Numberista"
+msgstr "E745: Lista ei kï¿½y Numberista"
 
 #: ../eval.c:16173
 msgid "E728: Using a Dictionary as a Number"
-msgstr "E728: Sanakirja ei käy Numberista"
+msgstr "E728: Sanakirja ei kï¿½y Numberista"
 
 #: ../eval.c:16259
 msgid "E729: using Funcref as a String"
-msgstr "E729: Funcref ei käy merkkijonosta"
+msgstr "E729: Funcref ei kï¿½y merkkijonosta"
 
 #: ../eval.c:16262
 msgid "E730: using List as a String"
-msgstr "E730: Lista ei käy merkkijonosta"
+msgstr "E730: Lista ei kï¿½y merkkijonosta"
 
 #: ../eval.c:16265
 msgid "E731: using Dictionary as a String"
-msgstr "E731: Sanakirja ei käy merkkijonosta"
+msgstr "E731: Sanakirja ei kï¿½y merkkijonosta"
 
 #: ../eval.c:16619
 #, c-format
 msgid "E706: Variable type mismatch for: %s"
-msgstr "E706: Muuttujatyyppi ei täsmää: %s"
+msgstr "E706: Muuttujatyyppi ei tï¿½smï¿½ï¿½: %s"
 
 #: ../eval.c:16705
 #, c-format
@@ -904,7 +904,7 @@ msgstr "E795: Muuttujaa %s ei voi poistaa"
 #: ../eval.c:16724
 #, c-format
 msgid "E704: Funcref variable name must start with a capital: %s"
-msgstr "E704: Funcrefin muuttujanimen pitää alkaa suuraakkosella: %s"
+msgstr "E704: Funcrefin muuttujanimen pitï¿½ï¿½ alkaa suuraakkosella: %s"
 
 #: ../eval.c:16732
 #, c-format
@@ -927,7 +927,7 @@ msgstr "E742: Ei voi muuttaa muuttujan %s arvoa"
 
 #: ../eval.c:16838
 msgid "E698: variable nested too deep for making a copy"
-msgstr "E698: muuttuja on upotettu liian syvälle kopioitavaksi"
+msgstr "E698: muuttuja on upotettu liian syvï¿½lle kopioitavaksi"
 
 #: ../eval.c:17249
 #, c-format
@@ -952,7 +952,7 @@ msgstr "E125: Virheellinen argumentti: %s"
 #: ../eval.c:17323
 #, fuzzy, c-format
 msgid "E853: Duplicate argument name: %s"
-msgstr "Kaksoiskappale kentän nimestä: %s"
+msgstr "Kaksoiskappale kentï¿½n nimestï¿½: %s"
 
 #: ../eval.c:17416
 msgid "E126: Missing :endfunction"
@@ -966,7 +966,7 @@ msgstr "E707: Funktion nimi on ristiriidassa muuttujan kanssa: %s"
 #: ../eval.c:17549
 #, c-format
 msgid "E127: Cannot redefine function %s: It is in use"
-msgstr "E127: Funktiota %s ei voi määritellä uudestaan, koska se on käytössä"
+msgstr "E127: Funktiota %s ei voi mï¿½ï¿½ritellï¿½ uudestaan, koska se on kï¿½ytï¿½ssï¿½"
 
 #: ../eval.c:17604
 #, c-format
@@ -981,14 +981,14 @@ msgstr "E129: Funktion nimi puuttuu"
 #, fuzzy, c-format
 msgid "E128: Function name must start with a capital or \"s:\": %s"
 msgstr ""
-"E128: Funktion nimen pitää alkaa suuraakkosella tai sisältää kaksoispisteen: "
+"E128: Funktion nimen pitï¿½ï¿½ alkaa suuraakkosella tai sisï¿½ltï¿½ï¿½ kaksoispisteen: "
 "%s"
 
 #: ../eval.c:17833
 #, fuzzy, c-format
 msgid "E884: Function name cannot contain a colon: %s"
 msgstr ""
-"E128: Funktion nimen pitää alkaa suuraakkosella tai sisältää kaksoispisteen: "
+"E128: Funktion nimen pitï¿½ï¿½ alkaa suuraakkosella tai sisï¿½ltï¿½ï¿½ kaksoispisteen: "
 "%s"
 
 #: ../eval.c:18336
@@ -998,7 +998,7 @@ msgstr "E131: Funktiota %s ei voi poistaa"
 
 #: ../eval.c:18441
 msgid "E132: Function call depth is higher than 'maxfuncdepth'"
-msgstr "E132: Funktiokutsujen syvyys on enemmän kuin maxfuncdepth"
+msgstr "E132: Funktiokutsujen syvyys on enemmï¿½n kuin maxfuncdepth"
 
 #: ../eval.c:18568
 #, c-format
@@ -1027,7 +1027,7 @@ msgstr "jatkaa kohdassa %s"
 
 #: ../eval.c:18795
 msgid "E133: :return not inside a function"
-msgstr "E133: :return ei ole funktion sisällä"
+msgstr "E133: :return ei ole funktion sisï¿½llï¿½"
 
 #: ../eval.c:19159
 msgid ""
@@ -1067,7 +1067,7 @@ msgstr "> %d, hekdana %08x, oktaalina %o"
 
 #: ../ex_cmds.c:684
 msgid "E134: Move lines into themselves"
-msgstr "E134: Rivien siirto itsejensä päälle"
+msgstr "E134: Rivien siirto itsejensï¿½ pï¿½ï¿½lle"
 
 #: ../ex_cmds.c:747
 msgid "1 line moved"
@@ -1076,12 +1076,12 @@ msgstr "1 rivi siirretty"
 #: ../ex_cmds.c:749
 #, c-format
 msgid "%<PRId64> lines moved"
-msgstr "%<PRId64> riviä siirretty"
+msgstr "%<PRId64> riviï¿½ siirretty"
 
 #: ../ex_cmds.c:1175
 #, c-format
 msgid "%<PRId64> lines filtered"
-msgstr "%<PRId64> riviä suodatettu"
+msgstr "%<PRId64> riviï¿½ suodatettu"
 
 #: ../ex_cmds.c:1194
 msgid "E135: *Filter* Autocommands must not change current buffer"
@@ -1089,16 +1089,16 @@ msgstr "E135: *Filter*-autocommand ei voi vaihtaa puskuria"
 
 #: ../ex_cmds.c:1244
 msgid "[No write since last change]\n"
-msgstr "[Viimeisintä muutosta ei ole kirjoitettu]\n"
+msgstr "[Viimeisintï¿½ muutosta ei ole kirjoitettu]\n"
 
 #: ../ex_cmds.c:1424
 #, c-format
 msgid "%sviminfo: %s in line: "
-msgstr "%sviminfo: %s rivillä: "
+msgstr "%sviminfo: %s rivillï¿½: "
 
 #: ../ex_cmds.c:1431
 msgid "E136: viminfo: Too many errors, skipping rest of file"
-msgstr "E136: viminfo: liikaa virheitä, ohitetaan lopputiedosto"
+msgstr "E136: viminfo: liikaa virheitï¿½, ohitetaan lopputiedosto"
 
 #: ../ex_cmds.c:1458
 #, c-format
@@ -1119,7 +1119,7 @@ msgstr " vanhaatiedostoa"
 
 #: ../ex_cmds.c:1463
 msgid " FAILED"
-msgstr " EPÄONNISTUI"
+msgstr " EPï¿½ONNISTUI"
 
 #. avoid a wait_return for this message, it's annoying
 #: ../ex_cmds.c:1541
@@ -1165,7 +1165,7 @@ msgstr "Kirjoita osittainen tiedosto"
 
 #: ../ex_cmds.c:2166
 msgid "E140: Use ! to write partial buffer"
-msgstr "E140: Käytä !-komentoa osittaisen puskurin kirjoittamiseen"
+msgstr "E140: Kï¿½ytï¿½ !-komentoa osittaisen puskurin kirjoittamiseen"
 
 #: ../ex_cmds.c:2281
 #, c-format
@@ -1185,12 +1185,12 @@ msgstr "E768: Swap-tiedosto on jo olemassa: %s (komento :silent! ohittaa)"
 #: ../ex_cmds.c:2381
 #, c-format
 msgid "E141: No file name for buffer %<PRId64>"
-msgstr "E141: Ei tiedostonimeä puskurille %<PRId64>"
+msgstr "E141: Ei tiedostonimeï¿½ puskurille %<PRId64>"
 
 #: ../ex_cmds.c:2412
 msgid "E142: File not written: Writing is disabled by 'write' option"
 msgstr ""
-"E142: Tiedostoa ei kirjoitettu; write-asetus poistaa kirjoituksen käytöstä"
+"E142: Tiedostoa ei kirjoitettu; write-asetus poistaa kirjoituksen kï¿½ytï¿½stï¿½"
 
 #: ../ex_cmds.c:2434
 #, c-format
@@ -1210,12 +1210,12 @@ msgid ""
 msgstr ""
 "Tiedosto %s on kirjoitussuojattu.\n"
 "Siihen saattaa voida silti kirjoittaa.\n"
-"Yritetäänkö?"
+"Yritetï¿½ï¿½nkï¿½?"
 
 #: ../ex_cmds.c:2451
 #, c-format
 msgid "E505: \"%s\" is read-only (add ! to override)"
-msgstr "E505: %s on kirjoitussuojattu (lisää komentoon ! ohittaaksesi)"
+msgstr "E505: %s on kirjoitussuojattu (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #: ../ex_cmds.c:3120
 #, c-format
@@ -1228,11 +1228,11 @@ msgstr "E144: :z:n argumentti ei ole numero"
 
 #: ../ex_cmds.c:3404
 msgid "E145: Shell commands not allowed in rvim"
-msgstr "E145: Kuoren komennot eivät toimi rvimissä"
+msgstr "E145: Kuoren komennot eivï¿½t toimi rvimissï¿½"
 
 #: ../ex_cmds.c:3498
 msgid "E146: Regular expressions can't be delimited by letters"
-msgstr "E146: Säännöllistä ilmausta ei voi rajata kirjaimilla"
+msgstr "E146: Sï¿½ï¿½nnï¿½llistï¿½ ilmausta ei voi rajata kirjaimilla"
 
 #: ../ex_cmds.c:3964
 #, c-format
@@ -1245,7 +1245,7 @@ msgstr "(Keskeytetty)"
 
 #: ../ex_cmds.c:4384
 msgid "1 match"
-msgstr "1 täsmäys"
+msgstr "1 tï¿½smï¿½ys"
 
 #: ../ex_cmds.c:4384
 msgid "1 substitution"
@@ -1254,7 +1254,7 @@ msgstr "1 korvaus"
 #: ../ex_cmds.c:4387
 #, c-format
 msgid "%<PRId64> matches"
-msgstr "%<PRId64> täsmäystä"
+msgstr "%<PRId64> tï¿½smï¿½ystï¿½"
 
 #: ../ex_cmds.c:4388
 #, c-format
@@ -1263,12 +1263,12 @@ msgstr "%<PRId64> korvausta"
 
 #: ../ex_cmds.c:4392
 msgid " on 1 line"
-msgstr " 1 rivillä"
+msgstr " 1 rivillï¿½"
 
 #: ../ex_cmds.c:4395
 #, c-format
 msgid " on %<PRId64> lines"
-msgstr " %<PRId64> rivillä"
+msgstr " %<PRId64> rivillï¿½"
 
 #: ../ex_cmds.c:4438
 msgid "E147: Cannot do :global recursive"
@@ -1276,17 +1276,17 @@ msgstr "E147: :globalia ei voi suorittaa rekursiivisesti"
 
 #: ../ex_cmds.c:4467
 msgid "E148: Regular expression missing from global"
-msgstr "E148: Säännöllinen ilmaus puuttuu globaalista"
+msgstr "E148: Sï¿½ï¿½nnï¿½llinen ilmaus puuttuu globaalista"
 
 #: ../ex_cmds.c:4508
 #, c-format
 msgid "Pattern found in every line: %s"
-msgstr "Kuvio löytyi joka riviltä: %s"
+msgstr "Kuvio lï¿½ytyi joka riviltï¿½: %s"
 
 #: ../ex_cmds.c:4510
 #, fuzzy, c-format
 msgid "Pattern not found: %s"
-msgstr "Kuviota ei löydy"
+msgstr "Kuviota ei lï¿½ydy"
 
 #: ../ex_cmds.c:4587
 msgid ""
@@ -1300,22 +1300,22 @@ msgstr ""
 
 #: ../ex_cmds.c:4679
 msgid "E478: Don't panic!"
-msgstr "E478: Älä panikoi."
+msgstr "E478: ï¿½lï¿½ panikoi."
 
 #: ../ex_cmds.c:4717
 #, c-format
 msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E661: Sori, ei löydy %s-ohjetta kohteelle %s"
+msgstr "E661: Sori, ei lï¿½ydy %s-ohjetta kohteelle %s"
 
 #: ../ex_cmds.c:4719
 #, c-format
 msgid "E149: Sorry, no help for %s"
-msgstr "E149: Sori, ei löydy ohjetta kohteelle %s"
+msgstr "E149: Sori, ei lï¿½ydy ohjetta kohteelle %s"
 
 #: ../ex_cmds.c:4751
 #, c-format
 msgid "Sorry, help file \"%s\" not found"
-msgstr "Sori, ohjetiedostoa %s ei löydy"
+msgstr "Sori, ohjetiedostoa %s ei lï¿½ydy"
 
 #: ../ex_cmds.c:5323
 #, c-format
@@ -1335,12 +1335,12 @@ msgstr "E153: Ei voi avata tiedostoa %s lukemista varten"
 #: ../ex_cmds.c:5500
 #, c-format
 msgid "E670: Mix of help file encodings within a language: %s"
-msgstr "E670: Monia ohjetiedostokoodauksia kielessä: %s"
+msgstr "E670: Monia ohjetiedostokoodauksia kielessï¿½: %s"
 
 #: ../ex_cmds.c:5565
 #, c-format
 msgid "E154: Duplicate tag \"%s\" in file %s/%s"
-msgstr "E154: Kaksoiskappale tägistä %s tiedostossa %s/%s"
+msgstr "E154: Kaksoiskappale tï¿½gistï¿½ %s tiedostossa %s/%s"
 
 #: ../ex_cmds.c:5687
 #, c-format
@@ -1353,7 +1353,7 @@ msgstr "E156: Merkki puuttuu"
 
 #: ../ex_cmds.c:5746
 msgid "E612: Too many signs defined"
-msgstr "E612: Liikaa merkkejä määritelty"
+msgstr "E612: Liikaa merkkejï¿½ mï¿½ï¿½ritelty"
 
 #: ../ex_cmds.c:5813
 #, c-format
@@ -1389,7 +1389,7 @@ msgstr "[Poistettu]"
 
 #: ../ex_cmds2.c:139
 msgid "Entering Debug mode.  Type \"cont\" to continue."
-msgstr "Siirrytään vianetsintätilaan, kirjoita cont jatkaaksesi."
+msgstr "Siirrytï¿½ï¿½n vianetsintï¿½tilaan, kirjoita cont jatkaaksesi."
 
 #: ../ex_cmds2.c:143 ../ex_docmd.c:759
 #, c-format
@@ -1404,7 +1404,7 @@ msgstr "kmnt: %s"
 #: ../ex_cmds2.c:322
 #, c-format
 msgid "Breakpoint in \"%s%s\" line %<PRId64>"
-msgstr "Katkaisukohta %s%s rivillä %<PRId64>"
+msgstr "Katkaisukohta %s%s rivillï¿½ %<PRId64>"
 
 #: ../ex_cmds2.c:581
 #, c-format
@@ -1422,7 +1422,7 @@ msgstr "%3d  %s %s  rivi %<PRId64>"
 
 #: ../ex_cmds2.c:942
 msgid "E750: First use \":profile start {fname}\""
-msgstr "E750: Aloita käskyllä :profile start {fname}"
+msgstr "E750: Aloita kï¿½skyllï¿½ :profile start {fname}"
 
 #: ../ex_cmds2.c:1269
 #, c-format
@@ -1431,12 +1431,12 @@ msgstr "Tallennetaanko muutokset tiedostoon %s?"
 
 #: ../ex_cmds2.c:1271 ../ex_docmd.c:8851
 msgid "Untitled"
-msgstr "Nimetön"
+msgstr "Nimetï¿½n"
 
 #: ../ex_cmds2.c:1421
 #, c-format
 msgid "E162: No write since last change for buffer \"%s\""
-msgstr "E162: Muutoksia ei ole kirjoitettu puskurin %s viime muutoksen jälkeen"
+msgstr "E162: Muutoksia ei ole kirjoitettu puskurin %s viime muutoksen jï¿½lkeen"
 
 #: ../ex_cmds2.c:1480
 msgid "Warning: Entered other buffer unexpectedly (check autocommands)"
@@ -1448,31 +1448,31 @@ msgstr "E163: Vain yksi tiedosto muokattavana"
 
 #: ../ex_cmds2.c:1828
 msgid "E164: Cannot go before first file"
-msgstr "E164: Ensimmäisen tiedoston ohi ei voi mennä"
+msgstr "E164: Ensimmï¿½isen tiedoston ohi ei voi mennï¿½"
 
 #: ../ex_cmds2.c:1830
 msgid "E165: Cannot go beyond last file"
-msgstr "E165: Viimeisen tiedoston ohi ei voi mennä"
+msgstr "E165: Viimeisen tiedoston ohi ei voi mennï¿½"
 
 #: ../ex_cmds2.c:2175
 #, c-format
 msgid "E666: compiler not supported: %s"
-msgstr "E666: kääntäjää ei tueta: %s"
+msgstr "E666: kï¿½ï¿½ntï¿½jï¿½ï¿½ ei tueta: %s"
 
 #: ../ex_cmds2.c:2257
 #, c-format
 msgid "Searching for \"%s\" in \"%s\""
-msgstr "Etsitään ilmausta %s kohteesta %s"
+msgstr "Etsitï¿½ï¿½n ilmausta %s kohteesta %s"
 
 #: ../ex_cmds2.c:2284
 #, c-format
 msgid "Searching for \"%s\""
-msgstr "Etsitään ilmausta %s"
+msgstr "Etsitï¿½ï¿½n ilmausta %s"
 
 #: ../ex_cmds2.c:2307
 #, c-format
 msgid "not found in 'runtimepath': \"%s\""
-msgstr "ei löydy runtimepathista: %s"
+msgstr "ei lï¿½ydy runtimepathista: %s"
 
 #: ../ex_cmds2.c:2472
 #, c-format
@@ -1518,15 +1518,15 @@ msgstr "-c-argumentti"
 
 #: ../ex_cmds2.c:2771
 msgid "environment variable"
-msgstr "ympäristömuuttuja"
+msgstr "ympï¿½ristï¿½muuttuja"
 
 #: ../ex_cmds2.c:2773
 msgid "error handler"
-msgstr "virhekäsittelin"
+msgstr "virhekï¿½sittelin"
 
 #: ../ex_cmds2.c:3020
 msgid "W15: Warning: Wrong line separator, ^M may be missing"
-msgstr "W15: Varoitus: Väärä rivierotin, ^M saattaa puuttua"
+msgstr "W15: Varoitus: Vï¿½ï¿½rï¿½ rivierotin, ^M saattaa puuttua"
 
 #: ../ex_cmds2.c:3139
 msgid "E167: :scriptencoding used outside of a sourced file"
@@ -1539,18 +1539,18 @@ msgstr "E168: :finish ladatun tiedoston ulkopuolella"
 #: ../ex_cmds2.c:3389
 #, c-format
 msgid "Current %slanguage: \"%s\""
-msgstr "Käytössä oleva %skieli: %s"
+msgstr "Kï¿½ytï¿½ssï¿½ oleva %skieli: %s"
 
 #: ../ex_cmds2.c:3404
 #, c-format
 msgid "E197: Cannot set language to \"%s\""
-msgstr "E197: Kieleksi ei voitu asettaa kieltä %s"
+msgstr "E197: Kieleksi ei voitu asettaa kieltï¿½ %s"
 
 #. don't redisplay the window
 #. don't wait for return
 #: ../ex_docmd.c:387
 msgid "Entering Ex mode.  Type \"visual\" to go to Normal mode."
-msgstr "Siirrytään Ex-tilaan, kirjoita visual palataksesi normaaliin tilaan."
+msgstr "Siirrytï¿½ï¿½n Ex-tilaan, kirjoita visual palataksesi normaaliin tilaan."
 
 #: ../ex_docmd.c:428
 msgid "E501: At end-of-file"
@@ -1575,7 +1575,7 @@ msgstr "Funktion loppu"
 
 #: ../ex_docmd.c:1628
 msgid "E464: Ambiguous use of user-defined command"
-msgstr "E464: Käyttäjän määrittelemän komennon monimerkityksinen käyttö"
+msgstr "E464: Kï¿½yttï¿½jï¿½n mï¿½ï¿½rittelemï¿½n komennon monimerkityksinen kï¿½yttï¿½"
 
 #: ../ex_docmd.c:1638
 msgid "E492: Not an editor command"
@@ -1587,17 +1587,17 @@ msgstr "E493: Takaperoinen arvoalue annettu"
 
 #: ../ex_docmd.c:1733
 msgid "Backwards range given, OK to swap"
-msgstr "Takaperoinen arvoalue annettu, OK kääntää"
+msgstr "Takaperoinen arvoalue annettu, OK kï¿½ï¿½ntï¿½ï¿½"
 
 #. append
 #. typed wrong
 #: ../ex_docmd.c:1787
 msgid "E494: Use w or w>>"
-msgstr "E494: Käytä w:tä tai w>>:aa"
+msgstr "E494: Kï¿½ytï¿½ w:tï¿½ tai w>>:aa"
 
 #: ../ex_docmd.c:3454
 msgid "E319: Sorry, the command is not available in this version"
-msgstr "E319: Komento ei ole käytettävissä tässä versiossa"
+msgstr "E319: Komento ei ole kï¿½ytettï¿½vissï¿½ tï¿½ssï¿½ versiossa"
 
 #: ../ex_docmd.c:3752
 msgid "E172: Only one file name allowed"
@@ -1605,25 +1605,25 @@ msgstr "E172: Vain yksi tiedostonimi sallitaan"
 
 #: ../ex_docmd.c:4238
 msgid "1 more file to edit.  Quit anyway?"
-msgstr "vielä 1 tiedosto muokattavana, lopetaanko silti?"
+msgstr "vielï¿½ 1 tiedosto muokattavana, lopetaanko silti?"
 
 #: ../ex_docmd.c:4242
 #, c-format
 msgid "%d more files to edit.  Quit anyway?"
-msgstr "vielä %d tiedostoa muokattavana, lopetetaanko silti?"
+msgstr "vielï¿½ %d tiedostoa muokattavana, lopetetaanko silti?"
 
 #: ../ex_docmd.c:4248
 msgid "E173: 1 more file to edit"
-msgstr "E173: vielä 1 tiedosto muokattavana"
+msgstr "E173: vielï¿½ 1 tiedosto muokattavana"
 
 #: ../ex_docmd.c:4250
 #, c-format
 msgid "E173: %<PRId64> more files to edit"
-msgstr "E173: vielä %<PRId64> tiedostoa muokattavana"
+msgstr "E173: vielï¿½ %<PRId64> tiedostoa muokattavana"
 
 #: ../ex_docmd.c:4320
 msgid "E174: Command already exists: add ! to replace it"
-msgstr "E174: Komento on jo olemassa, käytä !:ä korvataksesi"
+msgstr "E174: Komento on jo olemassa, kï¿½ytï¿½ !:ï¿½ korvataksesi"
 
 #: ../ex_docmd.c:4432
 msgid ""
@@ -1631,27 +1631,27 @@ msgid ""
 "    Name        Args Range Complete  Definition"
 msgstr ""
 "\n"
-"    Nimi        Arg  Arvot Valmis    Määritelmä"
+"    Nimi        Arg  Arvot Valmis    Mï¿½ï¿½ritelmï¿½"
 
 #: ../ex_docmd.c:4516
 msgid "No user-defined commands found"
-msgstr "Ei käyttäjän määrittelemiä komentoja"
+msgstr "Ei kï¿½yttï¿½jï¿½n mï¿½ï¿½rittelemiï¿½ komentoja"
 
 #: ../ex_docmd.c:4538
 msgid "E175: No attribute specified"
-msgstr "E175: Ei attribuutteja määriteltynä"
+msgstr "E175: Ei attribuutteja mï¿½ï¿½riteltynï¿½"
 
 #: ../ex_docmd.c:4583
 msgid "E176: Invalid number of arguments"
-msgstr "E176: Väärä määrä attribuutteja"
+msgstr "E176: Vï¿½ï¿½rï¿½ mï¿½ï¿½rï¿½ attribuutteja"
 
 #: ../ex_docmd.c:4594
 msgid "E177: Count cannot be specified twice"
-msgstr "E177: Lukumäärää ei voi määritellä kahdesti"
+msgstr "E177: Lukumï¿½ï¿½rï¿½ï¿½ ei voi mï¿½ï¿½ritellï¿½ kahdesti"
 
 #: ../ex_docmd.c:4603
 msgid "E178: Invalid default value for count"
-msgstr "E178: Lukumäärän oletusarvo on väärä"
+msgstr "E178: Lukumï¿½ï¿½rï¿½n oletusarvo on vï¿½ï¿½rï¿½"
 
 #: ../ex_docmd.c:4625
 msgid "E179: argument required for -complete"
@@ -1668,47 +1668,47 @@ msgstr "E182: Virheellinen komennon nimi"
 
 #: ../ex_docmd.c:4691
 msgid "E183: User defined commands must start with an uppercase letter"
-msgstr "E183: Käyttäjän määrittelemän komennon pitää alkaa suuraakkosella"
+msgstr "E183: Kï¿½yttï¿½jï¿½n mï¿½ï¿½rittelemï¿½n komennon pitï¿½ï¿½ alkaa suuraakkosella"
 
 #: ../ex_docmd.c:4696
 #, fuzzy
 msgid "E841: Reserved name, cannot be used for user defined command"
-msgstr "E464: Käyttäjän määrittelemän komennon monimerkityksinen käyttö"
+msgstr "E464: Kï¿½yttï¿½jï¿½n mï¿½ï¿½rittelemï¿½n komennon monimerkityksinen kï¿½yttï¿½"
 
 #: ../ex_docmd.c:4751
 #, c-format
 msgid "E184: No such user-defined command: %s"
-msgstr "E184: Käyttäjän komentoa ei ole olemassa: %s"
+msgstr "E184: Kï¿½yttï¿½jï¿½n komentoa ei ole olemassa: %s"
 
 #: ../ex_docmd.c:5219
 #, c-format
 msgid "E180: Invalid complete value: %s"
-msgstr "E180: Virheellinen täydennysarvo: %s"
+msgstr "E180: Virheellinen tï¿½ydennysarvo: %s"
 
 #: ../ex_docmd.c:5225
 msgid "E468: Completion argument only allowed for custom completion"
-msgstr "E468: Täydennysargumentti sopii vain itse määriteltyyn täydennykseen"
+msgstr "E468: Tï¿½ydennysargumentti sopii vain itse mï¿½ï¿½riteltyyn tï¿½ydennykseen"
 
 #: ../ex_docmd.c:5231
 msgid "E467: Custom completion requires a function argument"
-msgstr "E467: Itse määritelty täydennys vaatii funktioargumentin"
+msgstr "E467: Itse mï¿½ï¿½ritelty tï¿½ydennys vaatii funktioargumentin"
 
 #: ../ex_docmd.c:5257
 #, fuzzy, c-format
 msgid "E185: Cannot find color scheme '%s'"
-msgstr "E185: Väriteemaa %s ei löydy"
+msgstr "E185: Vï¿½riteemaa %s ei lï¿½ydy"
 
 #: ../ex_docmd.c:5263
 msgid "Greetings, Vim user!"
-msgstr "Tervehdys, Vimin käyttäjä."
+msgstr "Tervehdys, Vimin kï¿½yttï¿½jï¿½."
 
 #: ../ex_docmd.c:5431
 msgid "E784: Cannot close last tab page"
-msgstr "E784: Viimeistä välilehteä ei voi sulkea"
+msgstr "E784: Viimeistï¿½ vï¿½lilehteï¿½ ei voi sulkea"
 
 #: ../ex_docmd.c:5462
 msgid "Already only one tab page"
-msgstr "Vain yksi välilehti jäljellä enää"
+msgstr "Vain yksi vï¿½lilehti jï¿½ljellï¿½ enï¿½ï¿½"
 
 #: ../ex_docmd.c:6004
 #, c-format
@@ -1722,12 +1722,12 @@ msgstr "Ei swap-tiedostoa"
 #: ../ex_docmd.c:6478
 msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
 msgstr ""
-"E747: Hakemistoa ei voida muuttaa, puskuria on muokattu (lisää komentoon ! "
+"E747: Hakemistoa ei voida muuttaa, puskuria on muokattu (lisï¿½ï¿½ komentoon ! "
 "ohittaaksesi"
 
 #: ../ex_docmd.c:6485
 msgid "E186: No previous directory"
-msgstr "E186: Ei edellistä hakemistoa"
+msgstr "E186: Ei edellistï¿½ hakemistoa"
 
 #: ../ex_docmd.c:6530
 msgid "E187: Unknown"
@@ -1739,7 +1739,7 @@ msgstr "E465: :winsize vaatii kaksi numeroargumenttia"
 
 #: ../ex_docmd.c:6655
 msgid "E188: Obtaining window position not implemented for this platform"
-msgstr "E188: Ikkunan sijainnin selvitys ei toimi tällä alustalla"
+msgstr "E188: Ikkunan sijainnin selvitys ei toimi tï¿½llï¿½ alustalla"
 
 #: ../ex_docmd.c:6662
 msgid "E466: :winpos requires two number arguments"
@@ -1753,7 +1753,7 @@ msgstr "E739: hakemistoa ei voi luoda: %s"
 #: ../ex_docmd.c:7268
 #, c-format
 msgid "E189: \"%s\" exists (add ! to override)"
-msgstr "E189: %s on jo olemassa (lisää komentoon ! ohittaaksesi)"
+msgstr "E189: %s on jo olemassa (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #: ../ex_docmd.c:7273
 #, c-format
@@ -1763,15 +1763,15 @@ msgstr "E190: Tiedostoa %s ei voitu avata kirjoittamista varten"
 #. set mark
 #: ../ex_docmd.c:7294
 msgid "E191: Argument must be a letter or forward/backward quote"
-msgstr "E191: Argumentin eteen- tai taaksepäin lainaukseen pitää olla kirjain"
+msgstr "E191: Argumentin eteen- tai taaksepï¿½in lainaukseen pitï¿½ï¿½ olla kirjain"
 
 #: ../ex_docmd.c:7333
 msgid "E192: Recursive use of :normal too deep"
-msgstr "E192: :normalin liian syvä rekursio"
+msgstr "E192: :normalin liian syvï¿½ rekursio"
 
 #: ../ex_docmd.c:7807
 msgid "E194: No alternate file name to substitute for '#'"
-msgstr "E194: Ei vaihtoehtoista tiedostonimeä #:lle"
+msgstr "E194: Ei vaihtoehtoista tiedostonimeï¿½ #:lle"
 
 #: ../ex_docmd.c:7841
 msgid "E495: no autocommand file name to substitute for \"<afile>\""
@@ -1783,25 +1783,25 @@ msgstr "E496: ei autocommand-puskurinumeroa kohteelle <abuf>"
 
 #: ../ex_docmd.c:7861
 msgid "E497: no autocommand match name to substitute for \"<amatch>\""
-msgstr "E497: ei autocommand-täsmäysnimeä kohteella <amatch>"
+msgstr "E497: ei autocommand-tï¿½smï¿½ysnimeï¿½ kohteella <amatch>"
 
 #: ../ex_docmd.c:7870
 msgid "E498: no :source file name to substitute for \"<sfile>\""
-msgstr "E498: ei :source-tiedostonimeä kohteelle <sfile>"
+msgstr "E498: ei :source-tiedostonimeï¿½ kohteelle <sfile>"
 
 #: ../ex_docmd.c:7876
 #, fuzzy
 msgid "E842: no line number to use for \"<slnum>\""
-msgstr "E498: ei :source-tiedostonimeä kohteelle <sfile>"
+msgstr "E498: ei :source-tiedostonimeï¿½ kohteelle <sfile>"
 
 #: ../ex_docmd.c:7903
 #, fuzzy, c-format
 msgid "E499: Empty file name for '%' or '#', only works with \":p:h\""
-msgstr "E499: Tyhjä tiedostonimi kohteissa % tai #  toimii vain :p:h"
+msgstr "E499: Tyhjï¿½ tiedostonimi kohteissa % tai #  toimii vain :p:h"
 
 #: ../ex_docmd.c:7905
 msgid "E500: Evaluates to an empty string"
-msgstr "E500: Loppuarvo on tyhjä merkkijono"
+msgstr "E500: Loppuarvo on tyhjï¿½ merkkijono"
 
 #: ../ex_docmd.c:8838
 msgid "E195: Cannot open viminfo file for reading"
@@ -1809,7 +1809,7 @@ msgstr "E195: Viminfoa ei voi avata lukemista varten"
 
 #: ../ex_eval.c:464
 msgid "E608: Cannot :throw exceptions with 'Vim' prefix"
-msgstr "E608: Vim-alkuisia poikkeuksia ei voi heittää :throw-komennolla"
+msgstr "E608: Vim-alkuisia poikkeuksia ei voi heittï¿½ï¿½ :throw-komennolla"
 
 #. always scroll up, don't overwrite
 #: ../ex_eval.c:496
@@ -1892,7 +1892,7 @@ msgstr "E583: :else monta kertaa"
 
 #: ../ex_eval.c:883
 msgid "E584: :elseif after :else"
-msgstr "E584: :elseif komennon :else jälkeen"
+msgstr "E584: :elseif komennon :else jï¿½lkeen"
 
 #: ../ex_eval.c:941
 msgid "E585: :while/:for nesting too deep"
@@ -1955,7 +1955,7 @@ msgstr "E811: Puskuria ei voi vaihtaa nyt"
 
 #: ../ex_getln.c:3178
 msgid "tagname"
-msgstr "täginimi"
+msgstr "tï¿½ginimi"
 
 #: ../ex_getln.c:3181
 msgid " kind file\n"
@@ -1988,7 +1988,7 @@ msgstr "Ilmaus"
 
 #: ../ex_getln.c:5050
 msgid "Input Line"
-msgstr "Syöterivi"
+msgstr "Syï¿½terivi"
 
 #: ../ex_getln.c:5117
 msgid "E198: cmd_pchar beyond the command length"
@@ -2014,22 +2014,22 @@ msgstr ""
 #: ../file_search.c:1505
 #, c-format
 msgid "E344: Can't find directory \"%s\" in cdpath"
-msgstr "E344: Hakemistoa %s ei löydy cdpathista"
+msgstr "E344: Hakemistoa %s ei lï¿½ydy cdpathista"
 
 #: ../file_search.c:1508
 #, c-format
 msgid "E345: Can't find file \"%s\" in path"
-msgstr "E345: Tiedostoa %s ei löydy polulta"
+msgstr "E345: Tiedostoa %s ei lï¿½ydy polulta"
 
 #: ../file_search.c:1512
 #, c-format
 msgid "E346: No more directory \"%s\" found in cdpath"
-msgstr "E346: Hakemisto %s ei ole enää cdpathissa"
+msgstr "E346: Hakemisto %s ei ole enï¿½ï¿½ cdpathissa"
 
 #: ../file_search.c:1515
 #, c-format
 msgid "E347: No more file \"%s\" found in path"
-msgstr "E347: Tiedosto %s ei ole enää polulla"
+msgstr "E347: Tiedosto %s ei ole enï¿½ï¿½ polulla"
 
 #: ../fileio.c:137
 msgid "E812: Autocommands changed buffer or buffer name"
@@ -2066,15 +2066,15 @@ msgstr "[Lupa kielletty]"
 #: ../fileio.c:653
 msgid "E200: *ReadPre autocommands made the file unreadable"
 msgstr ""
-"E200: *ReadPre-autocommand-komennot tekivät tiedostosta lukukelvottoman"
+"E200: *ReadPre-autocommand-komennot tekivï¿½t tiedostosta lukukelvottoman"
 
 #: ../fileio.c:655
 msgid "E201: *ReadPre autocommands must not change current buffer"
-msgstr "E201: *ReadPre-autocommand-komennot eivät saa muuttaa puskuria"
+msgstr "E201: *ReadPre-autocommand-komennot eivï¿½t saa muuttaa puskuria"
 
 #: ../fileio.c:672
 msgid "Vim: Reading from stdin...\n"
-msgstr "Vim: Luetaan vakiosyötteestä...\n"
+msgstr "Vim: Luetaan vakiosyï¿½tteestï¿½...\n"
 
 #. Re-opening the original file failed!
 #: ../fileio.c:909
@@ -2101,14 +2101,14 @@ msgstr "[soketti]"
 msgid "[character special]"
 msgstr "[merkki erikoinen]"
 
-# Carriage Return elikkä rivinvaihtomerkin eräs muoto/osa (vrt. LF)
+# Carriage Return elikkï¿½ rivinvaihtomerkin erï¿½s muoto/osa (vrt. LF)
 #: ../fileio.c:1815
 msgid "[CR missing]"
 msgstr "[CR puuttuu]"
 
 #: ../fileio.c:1819
 msgid "[long lines split]"
-msgstr "[pitkät rivit hajotettu]"
+msgstr "[pitkï¿½t rivit hajotettu]"
 
 #: ../fileio.c:1823 ../fileio.c:3512
 msgid "[NOT converted]"
@@ -2121,24 +2121,24 @@ msgstr "[muunnettu]"
 #: ../fileio.c:1831
 #, c-format
 msgid "[CONVERSION ERROR in line %<PRId64>]"
-msgstr "[MUUNNOSVIRHE rivillä %<PRId64>]"
+msgstr "[MUUNNOSVIRHE rivillï¿½ %<PRId64>]"
 
 #: ../fileio.c:1835
 #, c-format
 msgid "[ILLEGAL BYTE in line %<PRId64>]"
-msgstr "[VIRHEELLINEN OKTETTI rivillä %<PRId64>]"
+msgstr "[VIRHEELLINEN OKTETTI rivillï¿½ %<PRId64>]"
 
 #: ../fileio.c:1838
 msgid "[READ ERRORS]"
-msgstr "[LUKUVIRHEITÄ]"
+msgstr "[LUKUVIRHEITï¿½]"
 
 #: ../fileio.c:2104
 msgid "Can't find temp file for conversion"
-msgstr "Ei voi löytää väliaikaistiedstoa muuntamiseksi"
+msgstr "Ei voi lï¿½ytï¿½ï¿½ vï¿½liaikaistiedstoa muuntamiseksi"
 
 #: ../fileio.c:2110
 msgid "Conversion with 'charconvert' failed"
-msgstr "Muunnos charconvert epäonnistui"
+msgstr "Muunnos charconvert epï¿½onnistui"
 
 #: ../fileio.c:2113
 msgid "can't read output of 'charconvert'"
@@ -2156,7 +2156,7 @@ msgstr ""
 
 #: ../fileio.c:2486
 msgid "E204: Autocommand changed number of lines in unexpected way"
-msgstr "E204: Autocommand-komento muutti rivien määrä odottamatta"
+msgstr "E204: Autocommand-komento muutti rivien mï¿½ï¿½rï¿½ odottamatta"
 
 #: ../fileio.c:2548 ../fileio.c:2565
 msgid "is not a file or writable device"
@@ -2164,44 +2164,44 @@ msgstr "ei ole tiedosto tai kirjoitettava laite"
 
 #: ../fileio.c:2601
 msgid "is read-only (add ! to override)"
-msgstr "on kirjoitussuojattu (lisää komentoon ! ohittaaksesi)"
+msgstr "on kirjoitussuojattu (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #: ../fileio.c:2886
 msgid "E506: Can't write to backup file (add ! to override)"
 msgstr ""
-"E506: Ei voi kirjoittaa varmuuskopiotiedostoon (lisää komentoon ! "
+"E506: Ei voi kirjoittaa varmuuskopiotiedostoon (lisï¿½ï¿½ komentoon ! "
 "ohittaaksesi)"
 
 #: ../fileio.c:2898
 msgid "E507: Close error for backup file (add ! to override)"
 msgstr ""
-"E507: Varmuuskopiotiedoston sulkeminen ei onnistu (lisää komentoon ! "
+"E507: Varmuuskopiotiedoston sulkeminen ei onnistu (lisï¿½ï¿½ komentoon ! "
 "ohittaaksesi)"
 
 #: ../fileio.c:2901
 msgid "E508: Can't read file for backup (add ! to override)"
 msgstr ""
-"E508: Varmuuskopiotiedostoa ei voi lukea (lisää komentoon ! ohittaaksesi)"
+"E508: Varmuuskopiotiedostoa ei voi lukea (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #: ../fileio.c:2923
 msgid "E509: Cannot create backup file (add ! to override)"
 msgstr ""
-"E509: Ei voi luoda varmuuskopiotiedostoa (lisää komentoon ! ohittaaksesi)"
+"E509: Ei voi luoda varmuuskopiotiedostoa (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #: ../fileio.c:3008
 msgid "E510: Can't make backup file (add ! to override)"
 msgstr ""
-"E510: Ei voi tehdä varmuuskopiotiedostoa (lisää komentoon ! ohittaaksesi)"
+"E510: Ei voi tehdï¿½ varmuuskopiotiedostoa (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #. Can't write without a tempfile!
 #: ../fileio.c:3121
 msgid "E214: Can't find temp file for writing"
-msgstr "E214: Ei voi löytää väliaikaistiedostoa kirjoitettavaksi"
+msgstr "E214: Ei voi lï¿½ytï¿½ï¿½ vï¿½liaikaistiedostoa kirjoitettavaksi"
 
 #: ../fileio.c:3134
 msgid "E213: Cannot convert (add ! to write without conversion)"
 msgstr ""
-"E213: Muunnos ei onnistu (lisää komentoon ! kirjoittaaksesi muuntamatta)"
+"E213: Muunnos ei onnistu (lisï¿½ï¿½ komentoon ! kirjoittaaksesi muuntamatta)"
 
 #: ../fileio.c:3169
 msgid "E166: Can't open linked file for writing"
@@ -2221,7 +2221,7 @@ msgstr "E512: Sulkeminen ei onnistunut"
 
 #: ../fileio.c:3436
 msgid "E513: write error, conversion failed (make 'fenc' empty to override)"
-msgstr "E513: kirjoitusvirhe, muunnos epäonnistui (tyhjää fenc ohittaaksesi)"
+msgstr "E513: kirjoitusvirhe, muunnos epï¿½onnistui (tyhjï¿½ï¿½ fenc ohittaaksesi)"
 
 #: ../fileio.c:3441
 #, c-format
@@ -2229,12 +2229,12 @@ msgid ""
 "E513: write error, conversion failed in line %<PRId64> (make 'fenc' empty to "
 "override)"
 msgstr ""
-"E513: kirjoitusvirhe, muunnos epäonnistui rivillä %<PRId64>(tyhjää fenc "
+"E513: kirjoitusvirhe, muunnos epï¿½onnistui rivillï¿½ %<PRId64>(tyhjï¿½ï¿½ fenc "
 "ohittaaksesi)"
 
 #: ../fileio.c:3448
 msgid "E514: write error (file system full?)"
-msgstr "E514: kirjoitusvirhe (tiedostojärjestelmä täysi)"
+msgstr "E514: kirjoitusvirhe (tiedostojï¿½rjestelmï¿½ tï¿½ysi)"
 
 #: ../fileio.c:3506
 msgid " CONVERSION ERROR"
@@ -2243,7 +2243,7 @@ msgstr " MUUNNOSVIRHE"
 #: ../fileio.c:3509
 #, c-format
 msgid " in line %<PRId64>;"
-msgstr " rivillä %<PRId64>"
+msgstr " rivillï¿½ %<PRId64>"
 
 #: ../fileio.c:3519
 msgid "[Device]"
@@ -2259,7 +2259,7 @@ msgstr " [a]"
 
 #: ../fileio.c:3535
 msgid " appended"
-msgstr " lisätty"
+msgstr " lisï¿½tty"
 
 #: ../fileio.c:3537
 msgid " [w]"
@@ -2271,11 +2271,11 @@ msgstr " kirjoitettu"
 
 #: ../fileio.c:3579
 msgid "E205: Patchmode: can't save original file"
-msgstr "E205: Patch-tilassa ei voi tallentaa alkuperäistiedostoa"
+msgstr "E205: Patch-tilassa ei voi tallentaa alkuperï¿½istiedostoa"
 
 #: ../fileio.c:3602
 msgid "E206: patchmode: can't touch empty original file"
-msgstr "E206: patch-tilassa ei voi muuttaa tyhjää alkuperäistiedostoa"
+msgstr "E206: patch-tilassa ei voi muuttaa tyhjï¿½ï¿½ alkuperï¿½istiedostoa"
 
 #: ../fileio.c:3616
 msgid "E207: Can't delete backup file"
@@ -2287,11 +2287,11 @@ msgid ""
 "WARNING: Original file may be lost or damaged\n"
 msgstr ""
 "\n"
-"VAROITUS: Alkuperäistiedosto voi hävitä tai vahingoittua\n"
+"VAROITUS: Alkuperï¿½istiedosto voi hï¿½vitï¿½ tai vahingoittua\n"
 
 #: ../fileio.c:3675
 msgid "don't quit the editor until the file is successfully written!"
-msgstr "älä lopeta editoria kesken tallentamisen."
+msgstr "ï¿½lï¿½ lopeta editoria kesken tallentamisen."
 
 #: ../fileio.c:3795
 msgid "[dos]"
@@ -2324,7 +2324,7 @@ msgstr "1 rivi, "
 #: ../fileio.c:3833
 #, c-format
 msgid "%<PRId64> lines, "
-msgstr "%<PRId64> riviä, "
+msgstr "%<PRId64> riviï¿½, "
 
 #: ../fileio.c:3836
 msgid "1 character"
@@ -2333,7 +2333,7 @@ msgstr "1 merkki"
 #: ../fileio.c:3838
 #, c-format
 msgid "%<PRId64> characters"
-msgstr "%<PRId64> merkkiä"
+msgstr "%<PRId64> merkkiï¿½"
 
 # ei rivinvaihtoja
 #: ../fileio.c:3849
@@ -2344,13 +2344,13 @@ msgstr "[eiriviv.]"
 msgid "[Incomplete last line]"
 msgstr "[Vajaa viimeinen rivi]"
 
-# Jos aukiolevaa tiedostoa sörkkii toisella ohjelmalla
+# Jos aukiolevaa tiedostoa sï¿½rkkii toisella ohjelmalla
 #. don't overwrite messages here
 #. must give this prompt
 #. don't use emsg() here, don't want to flush the buffers
 #: ../fileio.c:3865
 msgid "WARNING: The file has been changed since reading it!!!"
-msgstr "VAROITUS: tiedosto on muuttunut viime lukukerran jälkeen!"
+msgstr "VAROITUS: tiedosto on muuttunut viime lukukerran jï¿½lkeen!"
 
 #: ../fileio.c:3867
 msgid "Do you really want to write to it"
@@ -2378,7 +2378,7 @@ msgstr "E246: FileChangedShell-autocommand poisti puskurin"
 #: ../fileio.c:4894
 #, c-format
 msgid "E211: File \"%s\" no longer available"
-msgstr "E211: Tiedostoa %s ei ole enää"
+msgstr "E211: Tiedostoa %s ei ole enï¿½ï¿½"
 
 #: ../fileio.c:4906
 #, c-format
@@ -2391,38 +2391,38 @@ msgstr ""
 
 #: ../fileio.c:4907
 msgid "See \":help W12\" for more info."
-msgstr ":help W12 kertoo lisätietoja."
+msgstr ":help W12 kertoo lisï¿½tietoja."
 
 #: ../fileio.c:4910
 #, c-format
 msgid "W11: Warning: File \"%s\" has changed since editing started"
-msgstr "W11: Varoitus: Tiedostoa %s on muutettu muokkauksen aloituksen jälkeen"
+msgstr "W11: Varoitus: Tiedostoa %s on muutettu muokkauksen aloituksen jï¿½lkeen"
 
 #: ../fileio.c:4911
 msgid "See \":help W11\" for more info."
-msgstr ":help W11 kertoo lisätietoja."
+msgstr ":help W11 kertoo lisï¿½tietoja."
 
 #: ../fileio.c:4914
 #, c-format
 msgid "W16: Warning: Mode of file \"%s\" has changed since editing started"
 msgstr ""
 "W16: Varoitus: Tiedoston %s oikeuksia on muutettu muokkauksen aloituksen "
-"jälkeen"
+"jï¿½lkeen"
 
 #: ../fileio.c:4915
 msgid "See \":help W16\" for more info."
-msgstr ":help W16 kertoo lisätietoja."
+msgstr ":help W16 kertoo lisï¿½tietoja."
 
 #: ../fileio.c:4927
 #, c-format
 msgid "W13: Warning: File \"%s\" has been created after editing started"
-msgstr "W13: Varoitus: Tiedosto %s on luotu muokkauksen aloituksen jälkeen"
+msgstr "W13: Varoitus: Tiedosto %s on luotu muokkauksen aloituksen jï¿½lkeen"
 
 #: ../fileio.c:4947
 msgid "Warning"
 msgstr "Varoitus"
 
-# yllä olevien varoitusten ratkaisut
+# yllï¿½ olevien varoitusten ratkaisut
 #: ../fileio.c:4948
 msgid ""
 "&OK\n"
@@ -2454,22 +2454,22 @@ msgstr "poistetaan autocommand automaattisesti: %s <puskuri=%d>"
 #: ../fileio.c:5772
 #, c-format
 msgid "E367: No such group: \"%s\""
-msgstr "E367: Ryhmää ei ole: %s"
+msgstr "E367: Ryhmï¿½ï¿½ ei ole: %s"
 
 #: ../fileio.c:5897
 #, c-format
 msgid "E215: Illegal character after *: %s"
-msgstr "E215: Virheellinen merkki *:n jälkeen: %s"
+msgstr "E215: Virheellinen merkki *:n jï¿½lkeen: %s"
 
 #: ../fileio.c:5905
 #, c-format
 msgid "E216: No such event: %s"
-msgstr "E216: Eventtiä ei ole: %s"
+msgstr "E216: Eventtiï¿½ ei ole: %s"
 
 #: ../fileio.c:5907
 #, c-format
 msgid "E216: No such group or event: %s"
-msgstr "E216: Ryhmää tai eventtiä ei ole: %s"
+msgstr "E216: Ryhmï¿½ï¿½ tai eventtiï¿½ ei ole: %s"
 
 #. Highlight title
 #: ../fileio.c:6090
@@ -2491,7 +2491,7 @@ msgstr "E217: Ei voi suorittaa autocommandsia kaikille eventeille"
 
 #: ../fileio.c:6393
 msgid "No matching autocommands"
-msgstr "Ei täsmääviä autocommandsia"
+msgstr "Ei tï¿½smï¿½ï¿½viï¿½ autocommandsia"
 
 #: ../fileio.c:6831
 msgid "E218: autocommand nesting too deep"
@@ -2526,21 +2526,21 @@ msgstr "E490: taitos puuttuu"
 
 #: ../fold.c:544
 msgid "E350: Cannot create fold with current 'foldmethod'"
-msgstr "E350: Taitoksia ei voi tehdä tällä foldmethodilla"
+msgstr "E350: Taitoksia ei voi tehdï¿½ tï¿½llï¿½ foldmethodilla"
 
 #: ../fold.c:546
 msgid "E351: Cannot delete fold with current 'foldmethod'"
-msgstr "E351: Taitosta ei voi poistaa tällä foldmethodilla"
+msgstr "E351: Taitosta ei voi poistaa tï¿½llï¿½ foldmethodilla"
 
 #: ../fold.c:1784
 #, c-format
 msgid "+--%3ld lines folded "
-msgstr "+--%3ld riviä taitettu pois "
+msgstr "+--%3ld riviï¿½ taitettu pois "
 
 #. buffer has already been read
 #: ../getchar.c:273
 msgid "E222: Add to read buffer"
-msgstr "E222: Lisää lukupuskuriin"
+msgstr "E222: Lisï¿½ï¿½ lukupuskuriin"
 
 #: ../getchar.c:2040
 msgid "E223: recursive mapping"
@@ -2549,12 +2549,12 @@ msgstr "E223: rekursiivinen kuvaus"
 #: ../getchar.c:2849
 #, c-format
 msgid "E224: global abbreviation already exists for %s"
-msgstr "E224: globaali lyhenne merkinnälle %s on jo olemassa"
+msgstr "E224: globaali lyhenne merkinnï¿½lle %s on jo olemassa"
 
 #: ../getchar.c:2852
 #, c-format
 msgid "E225: global mapping already exists for %s"
-msgstr "E225: globaali kuvaus merkinnälle %s on jo olemassa"
+msgstr "E225: globaali kuvaus merkinnï¿½lle %s on jo olemassa"
 
 #: ../getchar.c:2952
 #, c-format
@@ -2568,11 +2568,11 @@ msgstr "E227: kuvaus on jo olemassa %s"
 
 #: ../getchar.c:3008
 msgid "No abbreviation found"
-msgstr "Lyhennettä ei löydy"
+msgstr "Lyhennettï¿½ ei lï¿½ydy"
 
 #: ../getchar.c:3010
 msgid "No mapping found"
-msgstr "Kuvausta ei löydy"
+msgstr "Kuvausta ei lï¿½ydy"
 
 #: ../getchar.c:3974
 msgid "E228: makemap: Illegal mode"
@@ -2583,7 +2583,7 @@ msgstr "E228: makemap: Virheellinen tila"
 #. result of cmdline window or 0
 #: ../globals.h:924
 msgid "--No lines in buffer--"
-msgstr "--Ei rivejä puskurissa--"
+msgstr "--Ei rivejï¿½ puskurissa--"
 
 #.
 #. * The error messages that can be shared are included here.
@@ -2599,7 +2599,7 @@ msgstr "E471: Argumentti puuttuu"
 
 #: ../globals.h:998
 msgid "E10: \\ should be followed by /, ? or &"
-msgstr "E10: \\:n jälkeen pitää tulla /, ? tai &"
+msgstr "E10: \\:n jï¿½lkeen pitï¿½ï¿½ tulla /, ? tai &"
 
 #: ../globals.h:1000
 msgid "E11: Invalid in command-line window; <CR> executes, CTRL-C quits"
@@ -2608,8 +2608,8 @@ msgstr "E11: Virheellinen komentorivi-ikkuna, <CR> suorittaa, Ctrl C lopettaa"
 #: ../globals.h:1002
 msgid "E12: Command not allowed from exrc/vimrc in current dir or tag search"
 msgstr ""
-"E12: Komentoa ei tueta exrc:ssä tai vimrc:ssä tässä hakemistossa tai "
-"tägihaussa"
+"E12: Komentoa ei tueta exrc:ssï¿½ tai vimrc:ssï¿½ tï¿½ssï¿½ hakemistossa tai "
+"tï¿½gihaussa"
 
 #: ../globals.h:1003
 msgid "E171: Missing :endif"
@@ -2637,15 +2637,15 @@ msgstr "E588: :endfor ilman komentoa :for"
 
 #: ../globals.h:1009
 msgid "E13: File exists (add ! to override)"
-msgstr "E13: Tiedosto on jo olemassa (lisää ! ohittaaksesi)"
+msgstr "E13: Tiedosto on jo olemassa (lisï¿½ï¿½ ! ohittaaksesi)"
 
 #: ../globals.h:1010
 msgid "E472: Command failed"
-msgstr "E472: Komento epäonnistui"
+msgstr "E472: Komento epï¿½onnistui"
 
 #: ../globals.h:1011
 msgid "E473: Internal error"
-msgstr "E473: Sisäinen virhe"
+msgstr "E473: Sisï¿½inen virhe"
 
 #: ../globals.h:1012
 msgid "Interrupted"
@@ -2699,23 +2699,23 @@ msgstr ""
 #: ../globals.h:1024
 #, c-format
 msgid "E364: Library call failed for \"%s()\""
-msgstr "E364: Kirjastukutsu %s() epäonnistui"
+msgstr "E364: Kirjastukutsu %s() epï¿½onnistui"
 
 #: ../globals.h:1026
 msgid "E19: Mark has invalid line number"
-msgstr "E19: Merkillä on virheellinen rivinumero"
+msgstr "E19: Merkillï¿½ on virheellinen rivinumero"
 
 #: ../globals.h:1027
 msgid "E20: Mark not set"
-msgstr "E20: Merkkiä ei asetettu"
+msgstr "E20: Merkkiï¿½ ei asetettu"
 
 #: ../globals.h:1029
 msgid "E21: Cannot make changes, 'modifiable' is off"
-msgstr "E21: Ei voi tehdä muutoksia, modifiable on pois päältä"
+msgstr "E21: Ei voi tehdï¿½ muutoksia, modifiable on pois pï¿½ï¿½ltï¿½"
 
 #: ../globals.h:1030
 msgid "E22: Scripts nested too deep"
-msgstr "E22: Liian monta tasoa skripteissä"
+msgstr "E22: Liian monta tasoa skripteissï¿½"
 
 #: ../globals.h:1031
 msgid "E23: No alternate file"
@@ -2723,7 +2723,7 @@ msgstr "E23: Eo vaihtoehtoista tiedostoa"
 
 #: ../globals.h:1032
 msgid "E24: No such abbreviation"
-msgstr "E24: Lyhennettä ei ole"
+msgstr "E24: Lyhennettï¿½ ei ole"
 
 #: ../globals.h:1033
 msgid "E477: No ! allowed"
@@ -2731,20 +2731,20 @@ msgstr "E477: ! ei sallittu"
 
 #: ../globals.h:1035
 msgid "E25: GUI cannot be used: Not enabled at compile time"
-msgstr "E25: GUIta ei voi käyttää, koska sitä ei käännetty mukaan"
+msgstr "E25: GUIta ei voi kï¿½yttï¿½ï¿½, koska sitï¿½ ei kï¿½ï¿½nnetty mukaan"
 
 #: ../globals.h:1036
 #, c-format
 msgid "E28: No such highlight group name: %s"
-msgstr "E28: Korostusryhmää ei ole nimellä: %s"
+msgstr "E28: Korostusryhmï¿½ï¿½ ei ole nimellï¿½: %s"
 
 #: ../globals.h:1037
 msgid "E29: No inserted text yet"
-msgstr "E29: Tekstiä ei ole syötetty vielä"
+msgstr "E29: Tekstiï¿½ ei ole syï¿½tetty vielï¿½"
 
 #: ../globals.h:1038
 msgid "E30: No previous command line"
-msgstr "E30: Ei edellistä komentoriviä"
+msgstr "E30: Ei edellistï¿½ komentoriviï¿½"
 
 #: ../globals.h:1039
 msgid "E31: No such mapping"
@@ -2752,28 +2752,28 @@ msgstr "E31: Kuvausta ei ole"
 
 #: ../globals.h:1040
 msgid "E479: No match"
-msgstr "E479: Ei täsmää"
+msgstr "E479: Ei tï¿½smï¿½ï¿½"
 
 #: ../globals.h:1041
 #, c-format
 msgid "E480: No match: %s"
-msgstr "E480: Ei tsämää: %s"
+msgstr "E480: Ei tsï¿½mï¿½ï¿½: %s"
 
 #: ../globals.h:1042
 msgid "E32: No file name"
-msgstr "E32: Ei tiedostonimeä"
+msgstr "E32: Ei tiedostonimeï¿½"
 
 #: ../globals.h:1044
 msgid "E33: No previous substitute regular expression"
-msgstr "E33: Ei edellistä korvausta säännölliselle ilmaukselle"
+msgstr "E33: Ei edellistï¿½ korvausta sï¿½ï¿½nnï¿½lliselle ilmaukselle"
 
 #: ../globals.h:1045
 msgid "E34: No previous command"
-msgstr "E34: Ei edellistä komentoa"
+msgstr "E34: Ei edellistï¿½ komentoa"
 
 #: ../globals.h:1046
 msgid "E35: No previous regular expression"
-msgstr "E35: Ei edellistä säännöllistä ilmausta"
+msgstr "E35: Ei edellistï¿½ sï¿½ï¿½nnï¿½llistï¿½ ilmausta"
 
 #: ../globals.h:1047
 msgid "E481: No range allowed"
@@ -2781,7 +2781,7 @@ msgstr "E481: Arvoalue ei sallittu"
 
 #: ../globals.h:1048
 msgid "E36: Not enough room"
-msgstr "E36: Tila ei riitä"
+msgstr "E36: Tila ei riitï¿½"
 
 #: ../globals.h:1049
 #, c-format
@@ -2790,7 +2790,7 @@ msgstr "E482: Tiedostoa %s ei voi luoda"
 
 #: ../globals.h:1050
 msgid "E483: Can't get temp file name"
-msgstr "E483: väliaikaistiedoston nimeä ei saada selville"
+msgstr "E483: vï¿½liaikaistiedoston nimeï¿½ ei saada selville"
 
 #: ../globals.h:1051
 #, c-format
@@ -2805,12 +2805,12 @@ msgstr "E485: Ei voi lukea tiedostoa %s"
 #: ../globals.h:1054
 msgid "E37: No write since last change (add ! to override)"
 msgstr ""
-"E37: Viimeisen muutoksen jälkeen ei ole kirjoitettu (lisää ! ohittaaksesi)"
+"E37: Viimeisen muutoksen jï¿½lkeen ei ole kirjoitettu (lisï¿½ï¿½ ! ohittaaksesi)"
 
 #: ../globals.h:1055
 #, fuzzy
 msgid "E37: No write since last change"
-msgstr "[Viimeisintä muutosta ei ole kirjoitettu]\n"
+msgstr "[Viimeisintï¿½ muutosta ei ole kirjoitettu]\n"
 
 #: ../globals.h:1056
 msgid "E38: Null argument"
@@ -2818,7 +2818,7 @@ msgstr "E38: Null-argumentti"
 
 #: ../globals.h:1057
 msgid "E39: Number expected"
-msgstr "E39: Pitää olla numero"
+msgstr "E39: Pitï¿½ï¿½ olla numero"
 
 #: ../globals.h:1058
 #, c-format
@@ -2831,25 +2831,25 @@ msgstr "E41: Muisti loppui"
 
 #: ../globals.h:1060
 msgid "Pattern not found"
-msgstr "Kuviota ei löydy"
+msgstr "Kuviota ei lï¿½ydy"
 
 #: ../globals.h:1061
 #, c-format
 msgid "E486: Pattern not found: %s"
-msgstr "E486: Kuviota ei löydy: %s"
+msgstr "E486: Kuviota ei lï¿½ydy: %s"
 
 #: ../globals.h:1062
 msgid "E487: Argument must be positive"
-msgstr "E487: Argumentin pitää olla positiivinen"
+msgstr "E487: Argumentin pitï¿½ï¿½ olla positiivinen"
 
 #: ../globals.h:1064
 msgid "E459: Cannot go back to previous directory"
-msgstr "E459: Ei voi siirtyä edelliseen hakemistoon"
+msgstr "E459: Ei voi siirtyï¿½ edelliseen hakemistoon"
 
 # ;-)
 #: ../globals.h:1066
 msgid "E42: No Errors"
-msgstr "E42: Ei virheitä"
+msgstr "E42: Ei virheitï¿½"
 
 #: ../globals.h:1067
 msgid "E776: No location list"
@@ -2857,7 +2857,7 @@ msgstr "E776: Ei sijaintilistaa"
 
 #: ../globals.h:1068
 msgid "E43: Damaged match string"
-msgstr "E43: Viallinen täsmäysmerkkijono"
+msgstr "E43: Viallinen tï¿½smï¿½ysmerkkijono"
 
 #: ../globals.h:1069
 msgid "E44: Corrupted regexp program"
@@ -2865,7 +2865,7 @@ msgstr "E44: Viallinen regexp-ohjelma"
 
 #: ../globals.h:1071
 msgid "E45: 'readonly' option is set (add ! to override)"
-msgstr "E45: readonly asetettu (lisää ! ohittaaksesi)"
+msgstr "E45: readonly asetettu (lisï¿½ï¿½ ! ohittaaksesi)"
 
 #: ../globals.h:1073
 #, c-format
@@ -2887,11 +2887,11 @@ msgstr "E48: Ei sallittu hiekkalaatikossa"
 
 #: ../globals.h:1080
 msgid "E523: Not allowed here"
-msgstr "E523: Ei sallittu täällä"
+msgstr "E523: Ei sallittu tï¿½ï¿½llï¿½"
 
 #: ../globals.h:1082
 msgid "E359: Screen mode setting not supported"
-msgstr "E359: Näyttötila-asetus ei tuettu"
+msgstr "E359: Nï¿½yttï¿½tila-asetus ei tuettu"
 
 #: ../globals.h:1083
 msgid "E49: Invalid scroll size"
@@ -2899,7 +2899,7 @@ msgstr "E49: Virheellinen vierityskoko"
 
 #: ../globals.h:1084
 msgid "E91: 'shell' option is empty"
-msgstr "E91: shell-asetus on tyhjä"
+msgstr "E91: shell-asetus on tyhjï¿½"
 
 #: ../globals.h:1085
 msgid "E255: Couldn't read in sign data!"
@@ -2911,7 +2911,7 @@ msgstr "E72: Swap-tiedoston sulkemisvirhe"
 
 #: ../globals.h:1087
 msgid "E73: tag stack empty"
-msgstr "E73: tägipino tyhjä"
+msgstr "E73: tï¿½gipino tyhjï¿½"
 
 #: ../globals.h:1088
 msgid "E74: Command too complex"
@@ -2919,7 +2919,7 @@ msgstr "E74: Liian monimutkainen komento"
 
 #: ../globals.h:1089
 msgid "E75: Name too long"
-msgstr "E75: Liian pitkä nimi"
+msgstr "E75: Liian pitkï¿½ nimi"
 
 #: ../globals.h:1090
 msgid "E76: Too many ["
@@ -2927,11 +2927,11 @@ msgstr "E76: Liian monta [:a"
 
 #: ../globals.h:1091
 msgid "E77: Too many file names"
-msgstr "E77: Liikaa tiedostonimiä"
+msgstr "E77: Liikaa tiedostonimiï¿½"
 
 #: ../globals.h:1092
 msgid "E488: Trailing characters"
-msgstr "E488: Ylimääräisiä merkkejä perässä"
+msgstr "E488: Ylimï¿½ï¿½rï¿½isiï¿½ merkkejï¿½ perï¿½ssï¿½"
 
 #: ../globals.h:1093
 msgid "E78: Unknown mark"
@@ -2964,15 +2964,15 @@ msgstr "E81: <SID> skriptin ulkopuolella"
 #: ../globals.h:1102
 #, c-format
 msgid "E685: Internal error: %s"
-msgstr "E685: Sisäinen virhe: %s"
+msgstr "E685: Sisï¿½inen virhe: %s"
 
 #: ../globals.h:1104
 msgid "E363: pattern uses more memory than 'maxmempattern'"
-msgstr "E363: kuvio käyttää enemmän muistia kuin maxmempattern on"
+msgstr "E363: kuvio kï¿½yttï¿½ï¿½ enemmï¿½n muistia kuin maxmempattern on"
 
 #: ../globals.h:1105
 msgid "E749: empty buffer"
-msgstr "E749: tyhjä puskuri"
+msgstr "E749: tyhjï¿½ puskuri"
 
 #: ../globals.h:1108
 msgid "E682: Invalid search pattern or delimiter"
@@ -2994,11 +2994,11 @@ msgstr "E354: Virheellinen rekisterin nimi: %s"
 
 #: ../globals.h:1114
 msgid "search hit TOP, continuing at BOTTOM"
-msgstr "haku pääsi ALKUUN, jatketaan LOPUSTA"
+msgstr "haku pï¿½ï¿½si ALKUUN, jatketaan LOPUSTA"
 
 #: ../globals.h:1115
 msgid "search hit BOTTOM, continuing at TOP"
-msgstr "haku pääsi LOPPUUN, jatketaan ALUSTA"
+msgstr "haku pï¿½ï¿½si LOPPUUN, jatketaan ALUSTA"
 
 #: ../hardcopy.c:240
 msgid "E550: Missing colon"
@@ -3010,7 +3010,7 @@ msgstr "E551: Virheellinen komponentti"
 
 #: ../hardcopy.c:259
 msgid "E552: digit expected"
-msgstr "E552: pitäisi olla numero"
+msgstr "E552: pitï¿½isi olla numero"
 
 #: ../hardcopy.c:473
 #, c-format
@@ -3019,7 +3019,7 @@ msgstr "Sivu %d"
 
 #: ../hardcopy.c:597
 msgid "No text to be printed"
-msgstr "Ei tekstiä tulostettavaksi"
+msgstr "Ei tekstiï¿½ tulostettavaksi"
 
 #: ../hardcopy.c:668
 #, c-format
@@ -3042,7 +3042,7 @@ msgstr "Tulostus peruttu"
 
 #: ../hardcopy.c:1365
 msgid "E455: Error writing to PostScript output file"
-msgstr "E455: Virhe kirjoitettaessa PostScriptiä tiedostoon"
+msgstr "E455: Virhe kirjoitettaessa PostScriptiï¿½ tiedostoon"
 
 #: ../hardcopy.c:1747
 #, c-format
@@ -3067,15 +3067,15 @@ msgstr "E619: tiedosto %s ei ole tuettu PostScript-resurssitiedosto"
 #: ../hardcopy.c:1856
 #, c-format
 msgid "E621: \"%s\" resource file has wrong version"
-msgstr "E621: resurssitiedoston %s versio on väärä"
+msgstr "E621: resurssitiedoston %s versio on vï¿½ï¿½rï¿½"
 
 #: ../hardcopy.c:2225
 msgid "E673: Incompatible multi-byte encoding and character set."
-msgstr "E673: Tukematon monitvauinen merkistökoodaus ja merkistö."
+msgstr "E673: Tukematon monitvauinen merkistï¿½koodaus ja merkistï¿½."
 
 #: ../hardcopy.c:2238
 msgid "E674: printmbcharset cannot be empty with multi-byte encoding."
-msgstr "E674: printmbcharset ei voi olla tyhjä monitavuiselle koodaukselle."
+msgstr "E674: printmbcharset ei voi olla tyhjï¿½ monitavuiselle koodaukselle."
 
 #: ../hardcopy.c:2254
 msgid "E675: No default font specified for multi-byte printing."
@@ -3092,16 +3092,16 @@ msgstr "E456: Tiedoston %s avaus ei onnistu"
 
 #: ../hardcopy.c:2583
 msgid "E456: Can't find PostScript resource file \"prolog.ps\""
-msgstr "E456: PostScript-resurssitiedostoa prolog.ps ei löydy"
+msgstr "E456: PostScript-resurssitiedostoa prolog.ps ei lï¿½ydy"
 
 #: ../hardcopy.c:2593
 msgid "E456: Can't find PostScript resource file \"cidfont.ps\""
-msgstr "E456: PostScript-resurssitiedostoa cidfont.ps ei löydy"
+msgstr "E456: PostScript-resurssitiedostoa cidfont.ps ei lï¿½ydy"
 
 #: ../hardcopy.c:2622 ../hardcopy.c:2639 ../hardcopy.c:2665
 #, c-format
 msgid "E456: Can't find PostScript resource file \"%s.ps\""
-msgstr "E456: Postscript-resurssitiedosta %s.ps ei löydy"
+msgstr "E456: Postscript-resurssitiedosta %s.ps ei lï¿½ydy"
 
 #: ../hardcopy.c:2654
 #, c-format
@@ -3110,19 +3110,19 @@ msgstr "E620: Tulostuskoodaukseen %s muunto ei onnistu"
 
 #: ../hardcopy.c:2877
 msgid "Sending to printer..."
-msgstr "Lähetetään tulostimelle..."
+msgstr "Lï¿½hetetï¿½ï¿½n tulostimelle..."
 
 #: ../hardcopy.c:2881
 msgid "E365: Failed to print PostScript file"
-msgstr "E365: PostScript-tiedoston tulostus epäonnistui"
+msgstr "E365: PostScript-tiedoston tulostus epï¿½onnistui"
 
 #: ../hardcopy.c:2883
 msgid "Print job sent."
-msgstr "Tulostustyö lähetetty."
+msgstr "Tulostustyï¿½ lï¿½hetetty."
 
 #: ../if_cscope.c:85
 msgid "Add a new database"
-msgstr "Lisää uusi tietokanta"
+msgstr "Lisï¿½ï¿½ uusi tietokanta"
 
 #: ../if_cscope.c:87
 msgid "Query for a pattern"
@@ -3130,7 +3130,7 @@ msgstr "Hae kuviota"
 
 #: ../if_cscope.c:89
 msgid "Show this message"
-msgstr "Näytä tämä viesti"
+msgstr "Nï¿½ytï¿½ tï¿½mï¿½ viesti"
 
 #: ../if_cscope.c:91
 msgid "Kill a connection"
@@ -3142,24 +3142,24 @@ msgstr "Alusta uudelleen yhteydet"
 
 #: ../if_cscope.c:95
 msgid "Show connections"
-msgstr "Näytä yhteydet"
+msgstr "Nï¿½ytï¿½ yhteydet"
 
 #: ../if_cscope.c:101
 #, c-format
 msgid "E560: Usage: cs[cope] %s"
-msgstr "E560: Käyttö: cs[cope] %s"
+msgstr "E560: Kï¿½yttï¿½: cs[cope] %s"
 
 #: ../if_cscope.c:225
 msgid "This cscope command does not support splitting the window.\n"
-msgstr "Tämä cscope-komento ei tue ikkunan jakamista.\n"
+msgstr "Tï¿½mï¿½ cscope-komento ei tue ikkunan jakamista.\n"
 
 #: ../if_cscope.c:266
 msgid "E562: Usage: cstag <ident>"
-msgstr "E562: Käyttö: cstag <ident>"
+msgstr "E562: Kï¿½yttï¿½: cstag <ident>"
 
 #: ../if_cscope.c:313
 msgid "E257: cstag: tag not found"
-msgstr "E257: cstag: tägia ei löydy"
+msgstr "E257: cstag: tï¿½gia ei lï¿½ydy"
 
 #: ../if_cscope.c:461
 #, c-format
@@ -3169,17 +3169,17 @@ msgstr "E563: stat(%s)-virhe: %d"
 #: ../if_cscope.c:551
 #, c-format
 msgid "E564: %s is not a directory or a valid cscope database"
-msgstr "E564: %s ei ole hakemisto eikä cscope-tietokanta"
+msgstr "E564: %s ei ole hakemisto eikï¿½ cscope-tietokanta"
 
 #: ../if_cscope.c:566
 #, c-format
 msgid "Added cscope database %s"
-msgstr "Lisätty cscope-tietokanta %s"
+msgstr "Lisï¿½tty cscope-tietokanta %s"
 
 #: ../if_cscope.c:616
 #, c-format
 msgid "E262: error reading cscope connection %<PRId64>"
-msgstr "E262: Virhe luettaessa cscope-yhteyttä %<PRId64>"
+msgstr "E262: Virhe luettaessa cscope-yhteyttï¿½ %<PRId64>"
 
 #: ../if_cscope.c:711
 msgid "E561: unknown cscope search type"
@@ -3196,27 +3196,27 @@ msgstr "E622: Ei voitu haarauttaa cscopea"
 #: ../if_cscope.c:849
 #, fuzzy
 msgid "cs_create_connection setpgid failed"
-msgstr "cs_create_connection epäonnistui"
+msgstr "cs_create_connection epï¿½onnistui"
 
 #: ../if_cscope.c:853 ../if_cscope.c:889
 msgid "cs_create_connection exec failed"
-msgstr "cs_create_connection epäonnistui"
+msgstr "cs_create_connection epï¿½onnistui"
 
 #: ../if_cscope.c:863 ../if_cscope.c:902
 msgid "cs_create_connection: fdopen for to_fp failed"
-msgstr "cs_create_connection: fdopen to_fp epäonnistui"
+msgstr "cs_create_connection: fdopen to_fp epï¿½onnistui"
 
 #: ../if_cscope.c:865 ../if_cscope.c:906
 msgid "cs_create_connection: fdopen for fr_fp failed"
-msgstr "cs_create_connection: fdopen fr_fp epäonnistui"
+msgstr "cs_create_connection: fdopen fr_fp epï¿½onnistui"
 
 #: ../if_cscope.c:890
 msgid "E623: Could not spawn cscope process"
-msgstr "E623: Cscope-prosessin luonti epäonnistui"
+msgstr "E623: Cscope-prosessin luonti epï¿½onnistui"
 
 #: ../if_cscope.c:932
 msgid "E567: no cscope connections"
-msgstr "E567: ei cscope-yhteyksiä"
+msgstr "E567: ei cscope-yhteyksiï¿½"
 
 #: ../if_cscope.c:1009
 #, c-format
@@ -3226,7 +3226,7 @@ msgstr "E469: virheellinen cscopequickfix-asetus %c kohteelle %c"
 #: ../if_cscope.c:1058
 #, c-format
 msgid "E259: no matches found for cscope query %s of %s"
-msgstr "E259: ei täsmäyksiä cscope-hakuun %s/%s"
+msgstr "E259: ei tï¿½smï¿½yksiï¿½ cscope-hakuun %s/%s"
 
 #: ../if_cscope.c:1142
 msgid "cscope commands:\n"
@@ -3235,7 +3235,7 @@ msgstr "cscope-komennot:\n"
 #: ../if_cscope.c:1150
 #, c-format
 msgid "%-5s: %s%*s (Usage: %s)"
-msgstr "%-5s: %s%*s (Käyttö: %s)"
+msgstr "%-5s: %s%*s (Kï¿½yttï¿½: %s)"
 
 #: ../if_cscope.c:1155
 #, fuzzy
@@ -3251,18 +3251,18 @@ msgid ""
 "       t: Find this text string\n"
 msgstr ""
 "\n"
-"       c: Etsi tätä funktiota kutsuvat funktiot\n"
-"       d: Etsi tämän funktion kutsumat funktiot\n"
-"       e: Etsi tämä egrep-lauseke\n"
-"       f: Find tämä tiedosto\n"
-"       g: Etsi tämä määritys\n"
-"       i: Etsi tiedostoja jotka #inkluudaavat tämän\n"
-"       s: Etsi tämä C-symboli\n"
+"       c: Etsi tï¿½tï¿½ funktiota kutsuvat funktiot\n"
+"       d: Etsi tï¿½mï¿½n funktion kutsumat funktiot\n"
+"       e: Etsi tï¿½mï¿½ egrep-lauseke\n"
+"       f: Find tï¿½mï¿½ tiedosto\n"
+"       g: Etsi tï¿½mï¿½ mï¿½ï¿½ritys\n"
+"       i: Etsi tiedostoja jotka #inkluudaavat tï¿½mï¿½n\n"
+"       s: Etsi tï¿½mï¿½ C-symboli\n"
 "       t: Etsi sijoitukset muuttujaan \n"
 
 #: ../if_cscope.c:1226
 msgid "E568: duplicate cscope database not added"
-msgstr "E568: kaksoiskappaletta cscope-tietokannasta ei lisätty"
+msgstr "E568: kaksoiskappaletta cscope-tietokannasta ei lisï¿½tty"
 
 #: ../if_cscope.c:1335
 #, c-format
@@ -3282,7 +3282,7 @@ msgstr "E570: kriittinen virhe cs_manage_matches-funktiossa"
 #: ../if_cscope.c:1693
 #, c-format
 msgid "Cscope tag: %s"
-msgstr "Cscope-tägi: %s"
+msgstr "Cscope-tï¿½gi: %s"
 
 #: ../if_cscope.c:1711
 msgid ""
@@ -3307,11 +3307,11 @@ msgstr "Kaikki cscope-tietokannat nollattu"
 
 #: ../if_cscope.c:2123
 msgid "no cscope connections\n"
-msgstr "ei cscope-yhteyksiä\n"
+msgstr "ei cscope-yhteyksiï¿½\n"
 
 #: ../if_cscope.c:2126
 msgid " # pid    database name                       prepend path\n"
-msgstr " # pid    tietokanta                          lisäyspolku\n"
+msgstr " # pid    tietokanta                          lisï¿½yspolku\n"
 
 #: ../main.c:144
 msgid "Unknown option argument"
@@ -3327,7 +3327,7 @@ msgstr "Argumentti puuttuu kohdasta"
 
 #: ../main.c:150
 msgid "Garbage after option argument"
-msgstr "Roskaa argumentin perässä"
+msgstr "Roskaa argumentin perï¿½ssï¿½"
 
 #: ../main.c:152
 msgid "Too many \"+command\", \"-c command\" or \"--cmd command\" arguments"
@@ -3335,7 +3335,7 @@ msgstr "Liikaa +komentoja, -c-komentoja tai --cmd-komentoja"
 
 #: ../main.c:154
 msgid "Invalid argument for"
-msgstr "Väärä argumentti valitsimelle"
+msgstr "Vï¿½ï¿½rï¿½ argumentti valitsimelle"
 
 #: ../main.c:294
 #, c-format
@@ -3360,7 +3360,7 @@ msgstr "Vim: Varoitus: Tuloste ei mene terminaalille\n"
 
 #: ../main.c:1624
 msgid "Vim: Warning: Input is not from a terminal\n"
-msgstr "Vim: Varoitus: Syöte ei tule terminaalilta\n"
+msgstr "Vim: Varoitus: Syï¿½te ei tule terminaalilta\n"
 
 #. just in case..
 #: ../main.c:1891
@@ -3378,7 +3378,7 @@ msgid ""
 "More info with: \"vim -h\"\n"
 msgstr ""
 "\n"
-"Lisätietoja: \"vim -h\"\n"
+"Lisï¿½tietoja: \"vim -h\"\n"
 
 #: ../main.c:2178
 msgid "[file ..]       edit specified file(s)"
@@ -3386,15 +3386,15 @@ msgstr "[tiedosto ..]       muokkaa tiedostoja"
 
 #: ../main.c:2179
 msgid "-               read text from stdin"
-msgstr "-                   lue vakiosyötteestä"
+msgstr "-                   lue vakiosyï¿½tteestï¿½"
 
 #: ../main.c:2180
 msgid "-t tag          edit file where tag is defined"
-msgstr "-t tägi             muokkaa tiedostoa tägistä"
+msgstr "-t tï¿½gi             muokkaa tiedostoa tï¿½gistï¿½"
 
 #: ../main.c:2181
 msgid "-q [errorfile]  edit file with first error"
-msgstr "-q [virhetiedosto]  muokkaa tiedostoa ensimmäisestä virheestä"
+msgstr "-q [virhetiedosto]  muokkaa tiedostoa ensimmï¿½isestï¿½ virheestï¿½"
 
 #: ../main.c:2187
 msgid ""
@@ -3404,7 +3404,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"käyttö:"
+"kï¿½yttï¿½:"
 
 #: ../main.c:2189
 msgid " vim [arguments] "
@@ -3430,19 +3430,19 @@ msgstr ""
 
 #: ../main.c:2197
 msgid "--\t\t\tOnly file names after this"
-msgstr "--\t\t\tvain tiedostonimiä tämän jälkeen"
+msgstr "--\t\t\tvain tiedostonimiï¿½ tï¿½mï¿½n jï¿½lkeen"
 
 #: ../main.c:2199
 msgid "--literal\t\tDon't expand wildcards"
-msgstr "--literal\t\tÄlä käsittele jokerimerkkejä "
+msgstr "--literal\t\tï¿½lï¿½ kï¿½sittele jokerimerkkejï¿½ "
 
 #: ../main.c:2201
 msgid "-v\t\t\tVi mode (like \"vi\")"
-msgstr "-v\t\t\tVi-tila (kuten villä)"
+msgstr "-v\t\t\tVi-tila (kuten villï¿½)"
 
 #: ../main.c:2202
 msgid "-e\t\t\tEx mode (like \"ex\")"
-msgstr "-e\t\t\tEx-tila (kute exillä)"
+msgstr "-e\t\t\tEx-tila (kute exillï¿½)"
 
 #: ../main.c:2203
 msgid "-E\t\t\tImproved Ex mode"
@@ -3450,15 +3450,15 @@ msgstr ""
 
 #: ../main.c:2204
 msgid "-s\t\t\tSilent (batch) mode (only for \"ex\")"
-msgstr "-s\t\t\tHiljainen (eräajo)tila (vain exillä)"
+msgstr "-s\t\t\tHiljainen (erï¿½ajo)tila (vain exillï¿½)"
 
 #: ../main.c:2205
 msgid "-d\t\t\tDiff mode (like \"vimdiff\")"
-msgstr "-d\t\t\tDiff-tila (kuten vimdiffillä)"
+msgstr "-d\t\t\tDiff-tila (kuten vimdiffillï¿½)"
 
 #: ../main.c:2206
 msgid "-y\t\t\tEasy mode (like \"evim\", modeless)"
-msgstr "-y\t\t\tHelppokäyttötila (kuten evimissä, ilman tiloja)"
+msgstr "-y\t\t\tHelppokï¿½yttï¿½tila (kuten evimissï¿½, ilman tiloja)"
 
 #: ../main.c:2207
 msgid "-R\t\t\tReadonly mode (like \"view\")"
@@ -3466,19 +3466,19 @@ msgstr "-R\t\t\tKirjoitussuojattu tila (kuten view'lla)"
 
 #: ../main.c:2208
 msgid "-Z\t\t\tRestricted mode (like \"rvim\")"
-msgstr "-Z\t\t\tRajoitettu tila (kuten rvimillä)"
+msgstr "-Z\t\t\tRajoitettu tila (kuten rvimillï¿½)"
 
 #: ../main.c:2209
 msgid "-m\t\t\tModifications (writing files) not allowed"
-msgstr "-m\t\t\tMuokkaukset (kirjoittaminen tiedostoon) pois käytöstä"
+msgstr "-m\t\t\tMuokkaukset (kirjoittaminen tiedostoon) pois kï¿½ytï¿½stï¿½"
 
 #: ../main.c:2210
 msgid "-M\t\t\tModifications in text not allowed"
-msgstr "-M\t\t\tTekstin muokkaus pois käytöstä"
+msgstr "-M\t\t\tTekstin muokkaus pois kï¿½ytï¿½stï¿½"
 
 #: ../main.c:2211
 msgid "-b\t\t\tBinary mode"
-msgstr "-b\t\t\tBinääritila"
+msgstr "-b\t\t\tBinï¿½ï¿½ritila"
 
 #: ../main.c:2212
 msgid "-l\t\t\tLisp mode"
@@ -3499,11 +3499,11 @@ msgstr ""
 
 #: ../main.c:2216
 msgid "-D\t\t\tDebugging mode"
-msgstr "-D\t\t\tVianetsintätila"
+msgstr "-D\t\t\tVianetsintï¿½tila"
 
 #: ../main.c:2217
 msgid "-n\t\t\tNo swap file, use memory only"
-msgstr "-n\t\t\tEi swap-tiedostoja, käytä muistia"
+msgstr "-n\t\t\tEi swap-tiedostoja, kï¿½ytï¿½ muistia"
 
 #: ../main.c:2218
 msgid "-r\t\t\tList swap files and exit"
@@ -3519,15 +3519,15 @@ msgstr "-L\t\t\tkuten -r"
 
 #: ../main.c:2221
 msgid "-A\t\t\tstart in Arabic mode"
-msgstr "-A\t\t\tkäynnistä arabia-tilassa"
+msgstr "-A\t\t\tkï¿½ynnistï¿½ arabia-tilassa"
 
 #: ../main.c:2222
 msgid "-H\t\t\tStart in Hebrew mode"
-msgstr "-H\t\t\tkäynnistä heprea-tilassa"
+msgstr "-H\t\t\tkï¿½ynnistï¿½ heprea-tilassa"
 
 #: ../main.c:2223
 msgid "-F\t\t\tStart in Farsi mode"
-msgstr "-F\t\t\tkäynnistä farsi-tilassa"
+msgstr "-F\t\t\tkï¿½ynnistï¿½ farsi-tilassa"
 
 #: ../main.c:2224
 msgid "-T <terminal>\tSet terminal type to <terminal>"
@@ -3535,15 +3535,15 @@ msgstr "-T <terminaali>\tAseta terminaalin tyypiksi <terminaali>"
 
 #: ../main.c:2225
 msgid "-u <vimrc>\t\tUse <vimrc> instead of any .vimrc"
-msgstr "-u <vimrc>\t\tKäytä <vimrc>-tiedostoa .vimrc:iden sijasta"
+msgstr "-u <vimrc>\t\tKï¿½ytï¿½ <vimrc>-tiedostoa .vimrc:iden sijasta"
 
 #: ../main.c:2226
 msgid "--noplugin\t\tDon't load plugin scripts"
-msgstr "--noplugin\t\tÄlä lataa liitännäisiä"
+msgstr "--noplugin\t\tï¿½lï¿½ lataa liitï¿½nnï¿½isiï¿½"
 
 #: ../main.c:2227
 msgid "-p[N]\t\tOpen N tab pages (default: one for each file)"
-msgstr "-p[N]\t\tAvaa N välilehteä (oletus: yksi per tiedosto)"
+msgstr "-p[N]\t\tAvaa N vï¿½lilehteï¿½ (oletus: yksi per tiedosto)"
 
 #: ../main.c:2228
 msgid "-o[N]\t\tOpen N windows (default: one for each file)"
@@ -3559,7 +3559,7 @@ msgstr "+\t\t\tAloita tiedoston lopusta"
 
 #: ../main.c:2231
 msgid "+<lnum>\t\tStart at line <lnum>"
-msgstr "+<rivi>\t\t\tAloita riviltä <rivi>"
+msgstr "+<rivi>\t\t\tAloita riviltï¿½ <rivi>"
 
 #: ../main.c:2232
 msgid "--cmd <command>\tExecute <command> before loading any vimrc file"
@@ -3567,11 +3567,11 @@ msgstr "--cmd <komento>\tSuorita <komento> ennen vimrc:iden latausta"
 
 #: ../main.c:2233
 msgid "-c <command>\t\tExecute <command> after loading the first file"
-msgstr "-c <komento>\t\tSuorita <komento> ensimmäisen tiedoston latauduttua"
+msgstr "-c <komento>\t\tSuorita <komento> ensimmï¿½isen tiedoston latauduttua"
 
 #: ../main.c:2235
 msgid "-S <session>\t\tSource file <session> after loading the first file"
-msgstr "-S <sessio>\t\tLataa <sessio> ensimmäisen tiedoston latauduttua"
+msgstr "-S <sessio>\t\tLataa <sessio> ensimmï¿½isen tiedoston latauduttua"
 
 #: ../main.c:2236
 msgid "-s <scriptin>\tRead Normal mode commands from file <scriptin>"
@@ -3579,7 +3579,7 @@ msgstr "-s <skripti>\tLue normaalitilan komentoja <skripti>-tiedostosta"
 
 #: ../main.c:2237
 msgid "-w <scriptout>\tAppend all typed commands to file <scriptout>"
-msgstr "-w <skripti>\tLisää kirjoitetut komennot <skripti>-tiedostoon"
+msgstr "-w <skripti>\tLisï¿½ï¿½ kirjoitetut komennot <skripti>-tiedostoon"
 
 #: ../main.c:2238
 msgid "-W <scriptout>\tWrite all typed commands to file <scriptout>"
@@ -3587,15 +3587,15 @@ msgstr "-W <skripti>\tKirjoita komennot <skripti>-tiedostoon"
 
 #: ../main.c:2240
 msgid "--startuptime <file>\tWrite startup timing messages to <file>"
-msgstr "--startuptime <file>\tKirjoita käynnistysaikaviestit tiedostoon <file>"
+msgstr "--startuptime <file>\tKirjoita kï¿½ynnistysaikaviestit tiedostoon <file>"
 
 #: ../main.c:2242
 msgid "-i <viminfo>\t\tUse <viminfo> instead of .viminfo"
-msgstr "-i <viminfo>\t\tKäytä <viminfo>-tiedostoa .viminfon sijaan"
+msgstr "-i <viminfo>\t\tKï¿½ytï¿½ <viminfo>-tiedostoa .viminfon sijaan"
 
 #: ../main.c:2243
 msgid "-h  or  --help\tPrint Help (this message) and exit"
-msgstr "-h tai --help\tTulosta ohje (tämä viesti) ja lopeta"
+msgstr "-h tai --help\tTulosta ohje (tï¿½mï¿½ viesti) ja lopeta"
 
 #: ../main.c:2244
 msgid "--version\t\tPrint version information and exit"
@@ -3603,12 +3603,12 @@ msgstr "--version\t\t\tTulosta versiotiedot ja lopeta"
 
 #: ../mark.c:676
 msgid "No marks set"
-msgstr "Ei asetettuja merkkejä"
+msgstr "Ei asetettuja merkkejï¿½"
 
 #: ../mark.c:678
 #, c-format
 msgid "E283: No marks matching \"%s\""
-msgstr "E283: Mikään merkki ei täsmää ilmaukseen \"%s\""
+msgstr "E283: Mikï¿½ï¿½n merkki ei tï¿½smï¿½ï¿½ ilmaukseen \"%s\""
 
 #. Highlight title
 #: ../mark.c:687
@@ -3688,7 +3688,7 @@ msgstr "E297: Kirjoitusvirhe swap-tiedostossa"
 
 #: ../memfile.c:1036
 msgid "E300: Swap file already exists (symlink attack?)"
-msgstr "E300: Swaptiedosto on jo olemassa (symlink-hyökkäys?)"
+msgstr "E300: Swaptiedosto on jo olemassa (symlink-hyï¿½kkï¿½ys?)"
 
 #: ../memline.c:318
 msgid "E298: Didn't get block nr 0?"
@@ -3696,7 +3696,7 @@ msgstr "E298: Lohko 0:aa ei saatu?"
 
 #: ../memline.c:361
 msgid "E298: Didn't get block nr 1?"
-msgstr "E298: Lohko 1:tä ei saatu?"
+msgstr "E298: Lohko 1:tï¿½ ei saatu?"
 
 #: ../memline.c:377
 msgid "E298: Didn't get block nr 2?"
@@ -3705,7 +3705,7 @@ msgstr "E298: Lohko 2:ta ei saatu?"
 #. could not (re)open the swap file, what can we do????
 #: ../memline.c:465
 msgid "E301: Oops, lost the swap file!!!"
-msgstr "E301: Hups, swap-tiedosto hävisi!"
+msgstr "E301: Hups, swap-tiedosto hï¿½visi!"
 
 #: ../memline.c:477
 msgid "E302: Could not rename swap file"
@@ -3745,15 +3745,15 @@ msgid ""
 "Maybe no changes were made or Vim did not update the swap file."
 msgstr ""
 "\n"
-"Muutoksia ei tehty, tai Vim ei päivittänyt swap-tiedostoa."
+"Muutoksia ei tehty, tai Vim ei pï¿½ivittï¿½nyt swap-tiedostoa."
 
 #: ../memline.c:909
 msgid " cannot be used with this version of Vim.\n"
-msgstr " ei toimi tämän version Vimin kanssa.\n"
+msgstr " ei toimi tï¿½mï¿½n version Vimin kanssa.\n"
 
 #: ../memline.c:911
 msgid "Use Vim version 3.0.\n"
-msgstr "Käytä Vimin versiota 3.0\n"
+msgstr "Kï¿½ytï¿½ Vimin versiota 3.0\n"
 
 #: ../memline.c:916
 #, c-format
@@ -3762,7 +3762,7 @@ msgstr "E307: %s ei ole Vimin swap-tiedosto"
 
 #: ../memline.c:922
 msgid " cannot be used on this computer.\n"
-msgstr " ei toimi tällä koneella.\n"
+msgstr " ei toimi tï¿½llï¿½ koneella.\n"
 
 #: ../memline.c:924
 msgid "The file was created on "
@@ -3778,21 +3778,21 @@ msgstr ""
 
 #: ../memline.c:945
 msgid " has been damaged (page size is smaller than minimum value).\n"
-msgstr " on vioittunut (sivun koko on vähimmäisarvoa pienempi).\n"
+msgstr " on vioittunut (sivun koko on vï¿½himmï¿½isarvoa pienempi).\n"
 
 #: ../memline.c:974
 #, c-format
 msgid "Using swap file \"%s\""
-msgstr "Käytetään swap-tiedostoa %s"
+msgstr "Kï¿½ytetï¿½ï¿½n swap-tiedostoa %s"
 
 #: ../memline.c:980
 #, c-format
 msgid "Original file \"%s\""
-msgstr "Alkuperäinen tiedosto %s"
+msgstr "Alkuperï¿½inen tiedosto %s"
 
 #: ../memline.c:995
 msgid "E308: Warning: Original file may have been changed"
-msgstr "E308: Varoitus: Alkuperäistä tiedostoa saattaa olla muutettu"
+msgstr "E308: Varoitus: Alkuperï¿½istï¿½ tiedostoa saattaa olla muutettu"
 
 #: ../memline.c:1061
 #, c-format
@@ -3801,24 +3801,24 @@ msgstr "E309: Ei voitu lukea lohkoa 1 tiedostosta %s"
 
 #: ../memline.c:1065
 msgid "???MANY LINES MISSING"
-msgstr "???PALJON RIVEJÄ PUUTTUU"
+msgstr "???PALJON RIVEJï¿½ PUUTTUU"
 
 #: ../memline.c:1076
 msgid "???LINE COUNT WRONG"
-msgstr "???RIVIMÄÄRÄ PIELESSÄ"
+msgstr "???RIVIMï¿½ï¿½Rï¿½ PIELESSï¿½"
 
 #: ../memline.c:1082
 msgid "???EMPTY BLOCK"
-msgstr "???TYHJÄ LOHKO"
+msgstr "???TYHJï¿½ LOHKO"
 
 #: ../memline.c:1103
 msgid "???LINES MISSING"
-msgstr "???RIVEJÄ PUUTTUU"
+msgstr "???RIVEJï¿½ PUUTTUU"
 
 #: ../memline.c:1128
 #, c-format
 msgid "E310: Block 1 ID wrong (%s not a .swp file?)"
-msgstr "E310: Lohon 1 tunniste väärä (%s ei ole .swp-tiedosto?)"
+msgstr "E310: Lohon 1 tunniste vï¿½ï¿½rï¿½ (%s ei ole .swp-tiedosto?)"
 
 #: ../memline.c:1133
 msgid "???BLOCK MISSING"
@@ -3826,11 +3826,11 @@ msgstr "???LOHKO PUUTTUU"
 
 #: ../memline.c:1147
 msgid "??? from here until ???END lines may be messed up"
-msgstr "??? tästä kohtaan ???LOPPU rivejä sekaisin"
+msgstr "??? tï¿½stï¿½ kohtaan ???LOPPU rivejï¿½ sekaisin"
 
 #: ../memline.c:1164
 msgid "??? from here until ???END lines may have been inserted/deleted"
-msgstr "??? tästä kohtaan ???LOPPU rivejä saattaa olla lisätty tai poistettu"
+msgstr "??? tï¿½stï¿½ kohtaan ???LOPPU rivejï¿½ saattaa olla lisï¿½tty tai poistettu"
 
 #: ../memline.c:1181
 msgid "???END"
@@ -3843,15 +3843,15 @@ msgstr "E311: Palautus keskeytetty"
 #: ../memline.c:1243
 msgid ""
 "E312: Errors detected while recovering; look for lines starting with ???"
-msgstr "E312: Palautuksessa oli virheitä, etsi rivejä, jotka alkavat ???"
+msgstr "E312: Palautuksessa oli virheitï¿½, etsi rivejï¿½, jotka alkavat ???"
 
 #: ../memline.c:1245
 msgid "See \":help E312\" for more information."
-msgstr ":help E312 kertoo lisätietoja"
+msgstr ":help E312 kertoo lisï¿½tietoja"
 
 #: ../memline.c:1249
 msgid "Recovery completed. You should check if everything is OK."
-msgstr "Palautus onnistui. Tarkista, että kaikki on kunnossa."
+msgstr "Palautus onnistui. Tarkista, ettï¿½ kaikki on kunnossa."
 
 #: ../memline.c:1251
 msgid ""
@@ -3859,15 +3859,15 @@ msgid ""
 "(You might want to write out this file under another name\n"
 msgstr ""
 "\n"
-"(Saattaa kannattaa kirjoittaa tämä tiedosto toisella nimellä\n"
+"(Saattaa kannattaa kirjoittaa tï¿½mï¿½ tiedosto toisella nimellï¿½\n"
 
 #: ../memline.c:1252
 msgid "and run diff with the original file to check for changes)"
-msgstr "ja katso diffillä muutokset alkuperäiseen tiedostoon)"
+msgstr "ja katso diffillï¿½ muutokset alkuperï¿½iseen tiedostoon)"
 
 #: ../memline.c:1254
 msgid "Recovery completed. Buffer contents equals file contents."
-msgstr "Palautus onnistui. Puskurin ja tiedoston sisällöt täsmäävät."
+msgstr "Palautus onnistui. Puskurin ja tiedoston sisï¿½llï¿½t tï¿½smï¿½ï¿½vï¿½t."
 
 #: ../memline.c:1255
 msgid ""
@@ -3882,15 +3882,15 @@ msgstr ""
 #. use msg() to start the scrolling properly
 #: ../memline.c:1327
 msgid "Swap files found:"
-msgstr "Swap-tiedostoja löytyi:"
+msgstr "Swap-tiedostoja lï¿½ytyi:"
 
 #: ../memline.c:1446
 msgid "   In current directory:\n"
-msgstr "   Tässä hakemistossa:\n"
+msgstr "   Tï¿½ssï¿½ hakemistossa:\n"
 
 #: ../memline.c:1448
 msgid "   Using specified name:\n"
-msgstr "   Määritellyllä nimellä:\n"
+msgstr "   Mï¿½ï¿½ritellyllï¿½ nimellï¿½:\n"
 
 #: ../memline.c:1450
 msgid "   In directory "
@@ -3898,7 +3898,7 @@ msgstr "   Hakemistossa "
 
 #: ../memline.c:1465
 msgid "      -- none --\n"
-msgstr " -- ei mitään --\n"
+msgstr " -- ei mitï¿½ï¿½n --\n"
 
 #: ../memline.c:1527
 msgid "          owned by: "
@@ -3918,7 +3918,7 @@ msgstr "         [Vimin 3.0-versiosta]"
 
 #: ../memline.c:1550
 msgid "         [does not look like a Vim swap file]"
-msgstr "         [ei näytä Vimin swap-tiedostolta]"
+msgstr "         [ei nï¿½ytï¿½ Vimin swap-tiedostolta]"
 
 #: ../memline.c:1552
 msgid "         file name: "
@@ -3934,7 +3934,7 @@ msgstr ""
 
 #: ../memline.c:1559
 msgid "YES"
-msgstr "KYLLÄ"
+msgstr "KYLLï¿½"
 
 #: ../memline.c:1559
 msgid "no"
@@ -3946,7 +3946,7 @@ msgid ""
 "         user name: "
 msgstr ""
 "\n"
-"         käyttäjänimi: "
+"         kï¿½yttï¿½jï¿½nimi: "
 
 #: ../memline.c:1568
 msgid "   host name: "
@@ -3970,7 +3970,7 @@ msgstr ""
 
 #: ../memline.c:1579
 msgid " (still running)"
-msgstr " (käynnissä)"
+msgstr " (kï¿½ynnissï¿½)"
 
 #: ../memline.c:1586
 msgid ""
@@ -3978,7 +3978,7 @@ msgid ""
 "         [not usable on this computer]"
 msgstr ""
 "\n"
-"         [ei toimi tällä koneella]"
+"         [ei toimi tï¿½llï¿½ koneella]"
 
 #: ../memline.c:1590
 msgid "         [cannot be read]"
@@ -3990,15 +3990,15 @@ msgstr "         [ei voi avata]"
 
 #: ../memline.c:1698
 msgid "E313: Cannot preserve, there is no swap file"
-msgstr "E313: Ei voi säilyttää, swap-tiedostoa ei ole"
+msgstr "E313: Ei voi sï¿½ilyttï¿½ï¿½, swap-tiedostoa ei ole"
 
 #: ../memline.c:1747
 msgid "File preserved"
-msgstr "Tiedosto säilytetty"
+msgstr "Tiedosto sï¿½ilytetty"
 
 #: ../memline.c:1749
 msgid "E314: Preserve failed"
-msgstr "E314: Säilyttäminen epäonnistui"
+msgstr "E314: Sï¿½ilyttï¿½minen epï¿½onnistui"
 
 #: ../memline.c:1819
 #, c-format
@@ -4008,23 +4008,23 @@ msgstr "E315: ml_get: virheellinen lnum: %<PRId64>"
 #: ../memline.c:1851
 #, c-format
 msgid "E316: ml_get: cannot find line %<PRId64>"
-msgstr "E316: ml_get: riviä %<PRId64> ei löydy"
+msgstr "E316: ml_get: riviï¿½ %<PRId64> ei lï¿½ydy"
 
 #: ../memline.c:2236
 msgid "E317: pointer block id wrong 3"
-msgstr "E317: osoitinlohkon tunnus väärä 3"
+msgstr "E317: osoitinlohkon tunnus vï¿½ï¿½rï¿½ 3"
 
 #: ../memline.c:2311
 msgid "stack_idx should be 0"
-msgstr "stack_idx pitää olla 0"
+msgstr "stack_idx pitï¿½ï¿½ olla 0"
 
 #: ../memline.c:2369
 msgid "E318: Updated too many blocks?"
-msgstr "E318: Päivitetty liikaa lohkoja"
+msgstr "E318: Pï¿½ivitetty liikaa lohkoja"
 
 #: ../memline.c:2511
 msgid "E317: pointer block id wrong 4"
-msgstr "E317: osoitinlohkon tunnus väärä 4"
+msgstr "E317: osoitinlohkon tunnus vï¿½ï¿½rï¿½ 4"
 
 #: ../memline.c:2536
 msgid "deleted block 1?"
@@ -4033,11 +4033,11 @@ msgstr "poistettu lohko 1?"
 #: ../memline.c:2707
 #, c-format
 msgid "E320: Cannot find line %<PRId64>"
-msgstr "E320: Riviä %<PRId64> ei löydy"
+msgstr "E320: Riviï¿½ %<PRId64> ei lï¿½ydy"
 
 #: ../memline.c:2916
 msgid "E317: pointer block id wrong"
-msgstr "E317: osoitinlohkon tunnus väärä"
+msgstr "E317: osoitinlohkon tunnus vï¿½ï¿½rï¿½"
 
 #: ../memline.c:2930
 msgid "pe_line_count is zero"
@@ -4051,7 +4051,7 @@ msgstr "E322: rivinumero arvoalueen ulkopuoleta: %<PRId64> on loppua suurempi"
 #: ../memline.c:2959
 #, c-format
 msgid "E323: line count wrong in block %<PRId64>"
-msgstr "E323: rivimäärä väärin lohkossa %<PRId64>"
+msgstr "E323: rivimï¿½ï¿½rï¿½ vï¿½ï¿½rin lohkossa %<PRId64>"
 
 #: ../memline.c:2999
 msgid "Stack size increases"
@@ -4059,7 +4059,7 @@ msgstr "Pinon koko kasvaa"
 
 #: ../memline.c:3038
 msgid "E317: pointer block id wrong 2"
-msgstr "E317: osoitinlohon tunnus väärä 2"
+msgstr "E317: osoitinlohon tunnus vï¿½ï¿½rï¿½ 2"
 
 #: ../memline.c:3070
 #, c-format
@@ -4076,7 +4076,7 @@ msgid ""
 "Found a swap file by the name \""
 msgstr ""
 "\n"
-"Swap-tiedosto löytyi: \""
+"Swap-tiedosto lï¿½ytyi: \""
 
 #: ../memline.c:3226
 msgid "While opening file \""
@@ -4095,9 +4095,9 @@ msgid ""
 "    file when making changes."
 msgstr ""
 "\n"
-"(1) Toinen ohjelma saattaa käyttää samaa tiedostoa.\n"
-"    Jos näin on, varo, ettet muokkaa saman tiedoston\n"
-"    kahta instanssia yhtä aikaa.\n"
+"(1) Toinen ohjelma saattaa kï¿½yttï¿½ï¿½ samaa tiedostoa.\n"
+"    Jos nï¿½in on, varo, ettet muokkaa saman tiedoston\n"
+"    kahta instanssia yhtï¿½ aikaa.\n"
 
 #: ../memline.c:3245
 #, fuzzy
@@ -4113,7 +4113,7 @@ msgstr ""
 
 #: ../memline.c:3247
 msgid "    If this is the case, use \":recover\" or \"vim -r "
-msgstr "    Jos näin on, käytä komentoa :recover tai vim -r "
+msgstr "    Jos nï¿½in on, kï¿½ytï¿½ komentoa :recover tai vim -r "
 
 #: ../memline.c:3249
 msgid ""
@@ -4121,11 +4121,11 @@ msgid ""
 "    to recover the changes (see \":help recovery\").\n"
 msgstr ""
 "\"\n"
-"    palauttaaksesi muutokset (lisätietoja: \":help recovery\").\n"
+"    palauttaaksesi muutokset (lisï¿½tietoja: \":help recovery\").\n"
 
 #: ../memline.c:3250
 msgid "    If you did this already, delete the swap file \""
-msgstr "    Jos teit jo näin, poista swap-tiedosto "
+msgstr "    Jos teit jo nï¿½in, poista swap-tiedosto "
 
 #: ../memline.c:3252
 msgid ""
@@ -4133,7 +4133,7 @@ msgid ""
 "    to avoid this message.\n"
 msgstr ""
 "\"\n"
-"    välttääksesi tämän viestin.\n"
+"    vï¿½lttï¿½ï¿½ksesi tï¿½mï¿½n viestin.\n"
 
 #: ../memline.c:3450 ../memline.c:3452
 msgid "Swap file \""
@@ -4214,7 +4214,7 @@ msgstr "E329: Ei valikkoa %s"
 #. Only a mnemonic or accelerator is not valid.
 #: ../menu.c:329
 msgid "E792: Empty menu name"
-msgstr "E792: tyhjä valikkonimi"
+msgstr "E792: tyhjï¿½ valikkonimi"
 
 #: ../menu.c:340
 msgid "E330: Menu path must not lead to a sub-menu"
@@ -4222,7 +4222,7 @@ msgstr "E330: Valikkopolku ei saa johtaa alivalikkoon"
 
 #: ../menu.c:365
 msgid "E331: Must not add menu items directly to menu bar"
-msgstr "E331: Valikkokohtia ei saa lisätä suoraan valikkopalkkiin"
+msgstr "E331: Valikkokohtia ei saa lisï¿½tï¿½ suoraan valikkopalkkiin"
 
 #: ../menu.c:370
 msgid "E332: Separator cannot be part of a menu path"
@@ -4245,20 +4245,20 @@ msgstr "E333: Valikkopolun on johdettava valikkokohtaan"
 #: ../menu.c:1330
 #, c-format
 msgid "E334: Menu not found: %s"
-msgstr "E334: Valikkoa ei löydy: %s"
+msgstr "E334: Valikkoa ei lï¿½ydy: %s"
 
 #: ../menu.c:1396
 #, c-format
 msgid "E335: Menu not defined for %s mode"
-msgstr "E335: Valikkoa ei ole määritelty %s-tilassa"
+msgstr "E335: Valikkoa ei ole mï¿½ï¿½ritelty %s-tilassa"
 
 #: ../menu.c:1426
 msgid "E336: Menu path must lead to a sub-menu"
-msgstr "E336: Valikkopolun pitää johtaa alivalikkoon"
+msgstr "E336: Valikkopolun pitï¿½ï¿½ johtaa alivalikkoon"
 
 #: ../menu.c:1447
 msgid "E337: Menu not found - check menu names"
-msgstr "E337: Valikkoa ei löytynyt - tarkista valikkojen nimet"
+msgstr "E337: Valikkoa ei lï¿½ytynyt - tarkista valikkojen nimet"
 
 #: ../message.c:423
 #, c-format
@@ -4277,7 +4277,7 @@ msgstr "E354: Virheellinen rekisterin nimi: %s"
 
 #: ../message.c:745
 msgid "Messages maintainer: Bram Moolenaar <Bram@vim.org>"
-msgstr "Käännöksen ylläpitäjä: Flammie Pirinen <flammie@iki.fi>"
+msgstr "Kï¿½ï¿½nnï¿½ksen yllï¿½pitï¿½jï¿½: Flammie Pirinen <flammie@iki.fi>"
 
 #: ../message.c:986
 msgid "Interrupt: "
@@ -4285,7 +4285,7 @@ msgstr "Keskeytys: "
 
 #: ../message.c:988
 msgid "Press ENTER or type command to continue"
-msgstr "Paina enteriä tai kirjoita komento aloittaaksesi "
+msgstr "Paina enteriï¿½ tai kirjoita komento aloittaaksesi "
 
 #: ../message.c:1843
 #, c-format
@@ -4294,11 +4294,11 @@ msgstr "%s rivi %<PRId64>"
 
 #: ../message.c:2392
 msgid "-- More --"
-msgstr "-- Lisää --"
+msgstr "-- Lisï¿½ï¿½ --"
 
 #: ../message.c:2398
 msgid " SPACE/d/j: screen/page/line down, b/u/k: up, q: quit "
-msgstr " SPACE/d/j: ruutu/sivu/rivi alas, b/u/k: ylös, q: lopeta "
+msgstr " SPACE/d/j: ruutu/sivu/rivi alas, b/u/k: ylï¿½s, q: lopeta "
 
 #: ../message.c:3021 ../message.c:3031
 msgid "Question"
@@ -4309,7 +4309,7 @@ msgid ""
 "&Yes\n"
 "&No"
 msgstr ""
-"&Kyllä\n"
+"&Kyllï¿½\n"
 "&Ei"
 
 #: ../message.c:3033
@@ -4318,7 +4318,7 @@ msgid ""
 "&No\n"
 "&Cancel"
 msgstr ""
-"&Kyllä\n"
+"&Kyllï¿½\n"
 "&Ei\n"
 "&Peru"
 
@@ -4330,7 +4330,7 @@ msgid ""
 "&Discard All\n"
 "&Cancel"
 msgstr ""
-"&Kyllä\n"
+"&Kyllï¿½\n"
 "&Ei\n"
 "&Tallenna kaikki\n"
 "T&uhoa kaikki\n"
@@ -4354,29 +4354,29 @@ msgstr "W10: Varoitus: Muutetaan kirjoitussuojattua tiedostoa"
 
 #: ../misc1.c:2537
 msgid "Type number and <Enter> or click with mouse (empty cancels): "
-msgstr "Kirjoita numero ja <Enter> tai valitse hiirellä (tyhjä peruu): "
+msgstr "Kirjoita numero ja <Enter> tai valitse hiirellï¿½ (tyhjï¿½ peruu): "
 
 #: ../misc1.c:2539
 msgid "Type number and <Enter> (empty cancels): "
-msgstr "Valitse numero ja <Enter> (tyhjä peruu): "
+msgstr "Valitse numero ja <Enter> (tyhjï¿½ peruu): "
 
 #: ../misc1.c:2585
 msgid "1 more line"
-msgstr "1 rivi lisää"
+msgstr "1 rivi lisï¿½ï¿½"
 
 #: ../misc1.c:2588
 msgid "1 line less"
-msgstr "1 rivi vähemmän"
+msgstr "1 rivi vï¿½hemmï¿½n"
 
 #: ../misc1.c:2593
 #, c-format
 msgid "%<PRId64> more lines"
-msgstr "%<PRId64> riviä lisää"
+msgstr "%<PRId64> riviï¿½ lisï¿½ï¿½"
 
 #: ../misc1.c:2596
 #, c-format
 msgid "%<PRId64> fewer lines"
-msgstr "%<PRId64> riviä vähemmän"
+msgstr "%<PRId64> riviï¿½ vï¿½hemmï¿½n"
 
 #: ../misc1.c:2599
 msgid " (Interrupted)"
@@ -4397,7 +4397,7 @@ msgstr "E349: Ei tunnistetta osoittimen alla"
 
 #: ../normal.c:1866
 msgid "E774: 'operatorfunc' is empty"
-msgstr "E774: operatorfunc on tyhjä"
+msgstr "E774: operatorfunc on tyhjï¿½"
 
 #: ../normal.c:2637
 msgid "Warning: terminal cannot highlight"
@@ -4409,11 +4409,11 @@ msgstr "E348: Ei merkkijonoa kursorin alla"
 
 #: ../normal.c:3937
 msgid "E352: Cannot erase folds with current 'foldmethod'"
-msgstr "E352: taitoksia ei voi poistaa tällä foldmethodilla"
+msgstr "E352: taitoksia ei voi poistaa tï¿½llï¿½ foldmethodilla"
 
 #: ../normal.c:5897
 msgid "E664: changelist is empty"
-msgstr "E664: muutoslista on tyhjä"
+msgstr "E664: muutoslista on tyhjï¿½"
 
 #: ../normal.c:5899
 msgid "E662: At start of changelist"
@@ -4430,27 +4430,27 @@ msgstr "Komento :quit<Enter> lopettaa Vimin"
 #: ../ops.c:248
 #, c-format
 msgid "1 line %sed 1 time"
-msgstr "1 riviä %s kerran"
+msgstr "1 riviï¿½ %s kerran"
 
 #: ../ops.c:250
 #, c-format
 msgid "1 line %sed %d times"
-msgstr "1 riviä %s %d kertaa"
+msgstr "1 riviï¿½ %s %d kertaa"
 
 #: ../ops.c:253
 #, c-format
 msgid "%<PRId64> lines %sed 1 time"
-msgstr "%<PRId64> riviä %s kerran"
+msgstr "%<PRId64> riviï¿½ %s kerran"
 
 #: ../ops.c:256
 #, c-format
 msgid "%<PRId64> lines %sed %d times"
-msgstr "%<PRId64> riviä %s %d kertaa"
+msgstr "%<PRId64> riviï¿½ %s %d kertaa"
 
 #: ../ops.c:592
 #, c-format
 msgid "%<PRId64> lines to indent... "
-msgstr "%<PRId64> riviä sisennettävänä..."
+msgstr "%<PRId64> riviï¿½ sisennettï¿½vï¿½nï¿½..."
 
 #: ../ops.c:634
 msgid "1 line indented "
@@ -4459,11 +4459,11 @@ msgstr "1 rivi sisennetty "
 #: ../ops.c:636
 #, c-format
 msgid "%<PRId64> lines indented "
-msgstr "%<PRId64> riviä sisennetty "
+msgstr "%<PRId64> riviï¿½ sisennetty "
 
 #: ../ops.c:938
 msgid "E748: No previously used register"
-msgstr "E748: Ei aiemmin käytettyjä rekisterejä"
+msgstr "E748: Ei aiemmin kï¿½ytettyjï¿½ rekisterejï¿½"
 
 #. must display the prompt
 #: ../ops.c:1433
@@ -4477,7 +4477,7 @@ msgstr "1 rivi muuttui"
 #: ../ops.c:1931
 #, c-format
 msgid "%<PRId64> lines changed"
-msgstr "%<PRId64> riviä muuttui"
+msgstr "%<PRId64> riviï¿½ muuttui"
 
 #: ../ops.c:2521
 msgid "block of 1 line yanked"
@@ -4490,17 +4490,17 @@ msgstr "1 rivi kopioitu"
 #: ../ops.c:2525
 #, c-format
 msgid "block of %<PRId64> lines yanked"
-msgstr "lohko %<PRId64> riviltä kopioitu"
+msgstr "lohko %<PRId64> riviltï¿½ kopioitu"
 
 #: ../ops.c:2528
 #, c-format
 msgid "%<PRId64> lines yanked"
-msgstr "%<PRId64> riviä kopioitu"
+msgstr "%<PRId64> riviï¿½ kopioitu"
 
 #: ../ops.c:2710
 #, c-format
 msgid "E353: Nothing in register %s"
-msgstr "E353: Rekisterissä %s ei ole mitään"
+msgstr "E353: Rekisterissï¿½ %s ei ole mitï¿½ï¿½n"
 
 #. Highlight title
 #: ../ops.c:3185
@@ -4539,7 +4539,7 @@ msgid ""
 "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
 "%<PRId64> of %<PRId64> Bytes"
 msgstr ""
-"Valittu %s%<PRId64>/%<PRId64> riviä, %<PRId64>/%<PRId64> sanaa, %<PRId64>/"
+"Valittu %s%<PRId64>/%<PRId64> riviï¿½, %<PRId64>/%<PRId64> sanaa, %<PRId64>/"
 "%<PRId64> tavua"
 
 #: ../ops.c:5105
@@ -4548,8 +4548,8 @@ msgid ""
 "Selected %s%<PRId64> of %<PRId64> Lines; %<PRId64> of %<PRId64> Words; "
 "%<PRId64> of %<PRId64> Chars; %<PRId64> of %<PRId64> Bytes"
 msgstr ""
-"Valittu %s%<PRId64>/%<PRId64> riviä, %<PRId64>/%<PRId64> sanaa, %<PRId64>/"
-"%<PRId64> merkkiä, %<PRId64>/%<PRId64> tavua"
+"Valittu %s%<PRId64>/%<PRId64> riviï¿½, %<PRId64>/%<PRId64> sanaa, %<PRId64>/"
+"%<PRId64> merkkiï¿½, %<PRId64>/%<PRId64> tavua"
 
 #: ../ops.c:5123
 #, c-format
@@ -4581,7 +4581,7 @@ msgstr "%<%f%h%m%=Sivu %N"
 
 #: ../option.c:1574
 msgid "Thanks for flying Vim"
-msgstr "Kiitos että ajoit Vimiä"
+msgstr "Kiitos ettï¿½ ajoit Vimiï¿½"
 
 #. found a mismatch: skip
 #: ../option.c:2698
@@ -4594,7 +4594,7 @@ msgstr "E519: Asetusta ei tueta"
 
 #: ../option.c:2740
 msgid "E520: Not allowed in a modeline"
-msgstr "E520: Ei sallitu modeline-rivillä"
+msgstr "E520: Ei sallitu modeline-rivillï¿½"
 
 #: ../option.c:2815
 msgid "E846: Key code not set"
@@ -4602,7 +4602,7 @@ msgstr ""
 
 #: ../option.c:2924
 msgid "E521: Number required after ="
-msgstr "E521: =:n jälkeen tarvitaan luku"
+msgstr "E521: =:n jï¿½lkeen tarvitaan luku"
 
 #: ../option.c:3226 ../option.c:3864
 msgid "E522: Not found in termcap"
@@ -4615,7 +4615,7 @@ msgstr "E539: Virheellinen merkki <%s>"
 
 #: ../option.c:3862
 msgid "E529: Cannot set 'term' to empty string"
-msgstr "E529: Termiä ei voi asettaa tyhjäksi merkkijonoksi"
+msgstr "E529: Termiï¿½ ei voi asettaa tyhjï¿½ksi merkkijonoksi"
 
 #: ../option.c:3885
 msgid "E589: 'backupext' and 'patchmode' are equal"
@@ -4640,7 +4640,7 @@ msgstr "E525: Nollan pituinen merkkijono"
 #: ../option.c:4220
 #, c-format
 msgid "E526: Missing number after <%s>"
-msgstr "E526: Lukuarvo puuttuu merkkijonon <%s> jälkeen"
+msgstr "E526: Lukuarvo puuttuu merkkijonon <%s> jï¿½lkeen"
 
 #: ../option.c:4232
 msgid "E527: Missing comma"
@@ -4648,16 +4648,16 @@ msgstr "E527: Pilkku puuttuu"
 
 #: ../option.c:4239
 msgid "E528: Must specify a ' value"
-msgstr "E528: '-arvo pitää antaa"
+msgstr "E528: '-arvo pitï¿½ï¿½ antaa"
 
 #: ../option.c:4271
 msgid "E595: contains unprintable or wide character"
-msgstr "E595: Sisältää tulostumattomia tai leveitä merkkejä"
+msgstr "E595: Sisï¿½ltï¿½ï¿½ tulostumattomia tai leveitï¿½ merkkejï¿½"
 
 #: ../option.c:4469
 #, c-format
 msgid "E535: Illegal character after <%c>"
-msgstr "E535: Virheellinen merkki merkin <%c> jälkeen"
+msgstr "E535: Virheellinen merkki merkin <%c> jï¿½lkeen"
 
 #: ../option.c:4534
 msgid "E536: comma required"
@@ -4666,7 +4666,7 @@ msgstr "E536: pilkku puuttuu"
 #: ../option.c:4543
 #, c-format
 msgid "E537: 'commentstring' must be empty or contain %s"
-msgstr "E537: commentstringin pitää olla tyhjä tai sisältää %s"
+msgstr "E537: commentstringin pitï¿½ï¿½ olla tyhjï¿½ tai sisï¿½ltï¿½ï¿½ %s"
 
 #: ../option.c:4928
 msgid "E540: Unclosed expression sequence"
@@ -4678,7 +4678,7 @@ msgstr "E541: liikaa kohteita"
 
 #: ../option.c:4934
 msgid "E542: unbalanced groups"
-msgstr "E542: epätasapainoisia ryhmiä"
+msgstr "E542: epï¿½tasapainoisia ryhmiï¿½"
 
 #: ../option.c:5148
 msgid "E590: A preview window already exists"
@@ -4686,12 +4686,12 @@ msgstr "E590: Esikatseluikkuna on jo olemassa"
 
 #: ../option.c:5311
 msgid "W17: Arabic requires UTF-8, do ':set encoding=utf-8'"
-msgstr "W17: Arabialle pitää olla UTF-8:aa, aseta :set encoding=utf-8"
+msgstr "W17: Arabialle pitï¿½ï¿½ olla UTF-8:aa, aseta :set encoding=utf-8"
 
 #: ../option.c:5623
 #, c-format
 msgid "E593: Need at least %d lines"
-msgstr "E593: Tarvitaan ainakin %d riviä"
+msgstr "E593: Tarvitaan ainakin %d riviï¿½"
 
 #: ../option.c:5631
 #, c-format
@@ -4750,12 +4750,12 @@ msgstr "E356: get_varp-virhe"
 #: ../option.c:7696
 #, c-format
 msgid "E357: 'langmap': Matching character missing for %s"
-msgstr "E357: langmap: Merkkiin %s täsmäävä merkki puuttuu"
+msgstr "E357: langmap: Merkkiin %s tï¿½smï¿½ï¿½vï¿½ merkki puuttuu"
 
 #: ../option.c:7715
 #, c-format
 msgid "E358: 'langmap': Extra characters after semicolon: %s"
-msgstr "E358: langmap: ylimääräisiä merkkejä puolipisteen jälkeen: %s"
+msgstr "E358: langmap: ylimï¿½ï¿½rï¿½isiï¿½ merkkejï¿½ puolipisteen jï¿½lkeen: %s"
 
 #: ../os/shell.c:194
 msgid ""
@@ -4773,7 +4773,7 @@ msgstr ""
 "\n"
 "kuoren palautusarvo "
 
-# mikä security context?
+# mikï¿½ security context?
 #: ../os_unix.c:465 ../os_unix.c:471
 msgid ""
 "\n"
@@ -4798,7 +4798,7 @@ msgstr "dlerror = %s"
 #: ../path.c:1449
 #, c-format
 msgid "E447: Can't find file \"%s\" in path"
-msgstr "E447: Tiedosto %s ei löydy polulta"
+msgstr "E447: Tiedosto %s ei lï¿½ydy polulta"
 
 #: ../quickfix.c:359
 #, c-format
@@ -4836,11 +4836,11 @@ msgstr "E378: errorformatissa ei ole kuvioita"
 
 #: ../quickfix.c:695
 msgid "E379: Missing or empty directory name"
-msgstr "E379: Puuttuva tai tyhjä hakemiston nimi"
+msgstr "E379: Puuttuva tai tyhjï¿½ hakemiston nimi"
 
 #: ../quickfix.c:1305
 msgid "E553: No more items"
-msgstr "E553: Ei enää kohteita"
+msgstr "E553: Ei enï¿½ï¿½ kohteita"
 
 #: ../quickfix.c:1674
 #, c-format
@@ -4862,7 +4862,7 @@ msgstr "E381: quickfix-pinon huipulla"
 #: ../quickfix.c:1880
 #, c-format
 msgid "error list %d of %d; %d errors"
-msgstr "virhelista %d/%d, %d virhettä"
+msgstr "virhelista %d/%d, %d virhettï¿½"
 
 #: ../quickfix.c:2427
 msgid "E382: Cannot write, 'buftype' option is set"
@@ -4883,7 +4883,7 @@ msgstr "E681: Puskuria ei ole ladattu"
 
 #: ../quickfix.c:3487
 msgid "E777: String or List expected"
-msgstr "E777: Pitää olla merkkijono tai lista"
+msgstr "E777: Pitï¿½ï¿½ olla merkkijono tai lista"
 
 #: ../regexp.c:359
 #, c-format
@@ -4893,7 +4893,7 @@ msgstr "E369: virheellinen olio kohdassa %s%%[]"
 #: ../regexp.c:374
 #, c-format
 msgid "E769: Missing ] after %s["
-msgstr "E769: ] puuttuu merkinnän %s[ jäljestä"
+msgstr "E769: ] puuttuu merkinnï¿½n %s[ jï¿½ljestï¿½"
 
 #: ../regexp.c:375
 #, c-format
@@ -4912,34 +4912,34 @@ msgstr "E55: Pariton %s)"
 
 #: ../regexp.c:378
 msgid "E66: \\z( not allowed here"
-msgstr "E66: \\z( ei ole sallittu tässä"
+msgstr "E66: \\z( ei ole sallittu tï¿½ssï¿½"
 
 #: ../regexp.c:379
 msgid "E67: \\z1 et al. not allowed here"
-msgstr "E67: \\z1 jne. ei ole sallittu tässä"
+msgstr "E67: \\z1 jne. ei ole sallittu tï¿½ssï¿½"
 
 #: ../regexp.c:380
 #, c-format
 msgid "E69: Missing ] after %s%%["
-msgstr "E69: ] puuttuu merkinnän %s%%[ jäljestä"
+msgstr "E69: ] puuttuu merkinnï¿½n %s%%[ jï¿½ljestï¿½"
 
 #: ../regexp.c:381
 #, c-format
 msgid "E70: Empty %s%%[]"
-msgstr "E70: Tyhjä %s%%[]"
+msgstr "E70: Tyhjï¿½ %s%%[]"
 
 #: ../regexp.c:1209 ../regexp.c:1224
 msgid "E339: Pattern too long"
-msgstr "E339: Liian pitkä kuvio"
+msgstr "E339: Liian pitkï¿½ kuvio"
 
 #: ../regexp.c:1371
 msgid "E50: Too many \\z("
-msgstr "E50: Liikaa merkkejä \\z("
+msgstr "E50: Liikaa merkkejï¿½ \\z("
 
 #: ../regexp.c:1378
 #, c-format
 msgid "E51: Too many %s("
-msgstr "E51: Liikaa merkkejä %s("
+msgstr "E51: Liikaa merkkejï¿½ %s("
 
 #: ../regexp.c:1427
 msgid "E52: Unmatched \\z("
@@ -4948,7 +4948,7 @@ msgstr "E52: Pariton \\z("
 #: ../regexp.c:1637
 #, c-format
 msgid "E59: invalid character after %s@"
-msgstr "E59: virheellinen merkki kohdan %s@ jälkeen"
+msgstr "E59: virheellinen merkki kohdan %s@ jï¿½lkeen"
 
 #: ../regexp.c:1672
 #, c-format
@@ -4958,39 +4958,39 @@ msgstr "E60: Liikaa monimutkaisia ilmauksia %s{...}s"
 #: ../regexp.c:1687
 #, c-format
 msgid "E61: Nested %s*"
-msgstr "E61: Sisäkkäistetty %s*"
+msgstr "E61: Sisï¿½kkï¿½istetty %s*"
 
 #: ../regexp.c:1690
 #, c-format
 msgid "E62: Nested %s%c"
-msgstr "E62: Sisäkkäistetty %s%c"
+msgstr "E62: Sisï¿½kkï¿½istetty %s%c"
 
 #: ../regexp.c:1800
 msgid "E63: invalid use of \\_"
-msgstr "E63: väärinkäytetty \\_"
+msgstr "E63: vï¿½ï¿½rinkï¿½ytetty \\_"
 
 #: ../regexp.c:1850
 #, c-format
 msgid "E64: %s%c follows nothing"
-msgstr "E64: %s%c jälkeen ei minkään"
+msgstr "E64: %s%c jï¿½lkeen ei minkï¿½ï¿½n"
 
 #: ../regexp.c:1902
 msgid "E65: Illegal back reference"
-msgstr "E65: Virheellinen täsmäysviittaus"
+msgstr "E65: Virheellinen tï¿½smï¿½ysviittaus"
 
 #: ../regexp.c:1943
 msgid "E68: Invalid character after \\z"
-msgstr "E68: Virheellinen merkki ilmauksen \\z jälkeen"
+msgstr "E68: Virheellinen merkki ilmauksen \\z jï¿½lkeen"
 
 #: ../regexp.c:2049 ../regexp_nfa.c:1296
 #, c-format
 msgid "E678: Invalid character after %s%%[dxouU]"
-msgstr "E678: Virheellinen merkki merkinnän %s%%[dxouU] jäljessä"
+msgstr "E678: Virheellinen merkki merkinnï¿½n %s%%[dxouU] jï¿½ljessï¿½"
 
 #: ../regexp.c:2107
 #, c-format
 msgid "E71: Invalid character after %s%%"
-msgstr "E71: Virheellinen merkki merkinnän %s%% jäljessä"
+msgstr "E71: Virheellinen merkki merkinnï¿½n %s%% jï¿½ljessï¿½"
 
 #: ../regexp.c:3017
 #, c-format
@@ -4999,7 +4999,7 @@ msgstr "E554: Syntaksivirhe ilmauksessa %s{...}"
 
 #: ../regexp.c:3805
 msgid "External submatches:\n"
-msgstr "Ulkoisia alitäsmäyksiä:\n"
+msgstr "Ulkoisia alitï¿½smï¿½yksiï¿½:\n"
 
 #: ../regexp.c:7022
 msgid ""
@@ -5053,7 +5053,7 @@ msgstr ""
 #: ../regexp_nfa.c:2042
 #, fuzzy
 msgid "E879: (NFA regexp) Too many \\z("
-msgstr "E50: Liikaa merkkejä \\z("
+msgstr "E50: Liikaa merkkejï¿½ \\z("
 
 #: ../regexp_nfa.c:2066
 msgid "E873: (NFA regexp) proper termination error"
@@ -5099,15 +5099,15 @@ msgstr " KORVAUS"
 
 #: ../screen.c:7440
 msgid " REVERSE"
-msgstr " KÄÄNTEIS"
+msgstr " Kï¿½ï¿½NTEIS"
 
 #: ../screen.c:7441
 msgid " INSERT"
-msgstr " SYÖTTÖ"
+msgstr " SYï¿½TTï¿½"
 
 #: ../screen.c:7443
 msgid " (insert)"
-msgstr " (syöttö)"
+msgstr " (syï¿½ttï¿½)"
 
 #: ../screen.c:7445
 msgid " (replace)"
@@ -5169,29 +5169,29 @@ msgstr "E383: Viallinen hakujono: %s"
 #: ../search.c:832
 #, c-format
 msgid "E384: search hit TOP without match for: %s"
-msgstr "E384: Haku pääsi alkuun löytämättä jonoa: %s"
+msgstr "E384: Haku pï¿½ï¿½si alkuun lï¿½ytï¿½mï¿½ttï¿½ jonoa: %s"
 
 #: ../search.c:835
 #, c-format
 msgid "E385: search hit BOTTOM without match for: %s"
-msgstr "E385: Haku pääsi loppuun löytämättä jonoa: %s"
+msgstr "E385: Haku pï¿½ï¿½si loppuun lï¿½ytï¿½mï¿½ttï¿½ jonoa: %s"
 
 #: ../search.c:1200
 msgid "E386: Expected '?' or '/'  after ';'"
-msgstr "E386: ;:n jälkeen pitää olla ? tai /"
+msgstr "E386: ;:n jï¿½lkeen pitï¿½ï¿½ olla ? tai /"
 
 #: ../search.c:4085
 msgid " (includes previously listed match)"
-msgstr " (sisältää viimeksi luetellun täsmäyksen)"
+msgstr " (sisï¿½ltï¿½ï¿½ viimeksi luetellun tï¿½smï¿½yksen)"
 
 #. cursor at status line
 #: ../search.c:4104
 msgid "--- Included files "
-msgstr "--- Sisällytetyt tiedostot "
+msgstr "--- Sisï¿½llytetyt tiedostot "
 
 #: ../search.c:4106
 msgid "not found "
-msgstr "ei löytynyt "
+msgstr "ei lï¿½ytynyt "
 
 #: ../search.c:4107
 msgid "in path ---\n"
@@ -5203,37 +5203,37 @@ msgstr "  (Jo lueteltu)"
 
 #: ../search.c:4170
 msgid "  NOT FOUND"
-msgstr "  EI LÖYTYNYT"
+msgstr "  EI Lï¿½YTYNYT"
 
 #: ../search.c:4211
 #, c-format
 msgid "Scanning included file: %s"
-msgstr "Haku sisälsi tiedoston: %s"
+msgstr "Haku sisï¿½lsi tiedoston: %s"
 
 #: ../search.c:4216
 #, c-format
 msgid "Searching included file %s"
-msgstr "Haku sisälsi tiedoston %s"
+msgstr "Haku sisï¿½lsi tiedoston %s"
 
 #: ../search.c:4405
 msgid "E387: Match is on current line"
-msgstr "E387: Täsmäys tällä rivillä"
+msgstr "E387: Tï¿½smï¿½ys tï¿½llï¿½ rivillï¿½"
 
 #: ../search.c:4517
 msgid "All included files were found"
-msgstr "Kaikki sisällytetyt rivit löytyivät"
+msgstr "Kaikki sisï¿½llytetyt rivit lï¿½ytyivï¿½t"
 
 #: ../search.c:4519
 msgid "No included files"
-msgstr "Ei sisällytettyjä tiedostoja"
+msgstr "Ei sisï¿½llytettyjï¿½ tiedostoja"
 
 #: ../search.c:4527
 msgid "E388: Couldn't find definition"
-msgstr "E388: Määritelmä ei löydy"
+msgstr "E388: Mï¿½ï¿½ritelmï¿½ ei lï¿½ydy"
 
 #: ../search.c:4529
 msgid "E389: Couldn't find pattern"
-msgstr "E389: kuvio ei löydy"
+msgstr "E389: kuvio ei lï¿½ydy"
 
 #: ../search.c:4668
 msgid "Substitute "
@@ -5261,12 +5261,12 @@ msgstr "E758: Oikolukutiedosto katkaistu"
 #: ../spell.c:953
 #, c-format
 msgid "Trailing text in %s line %d: %s"
-msgstr "Tekstiä rivin perässä tiedostossa %s rivillä %d: %s"
+msgstr "Tekstiï¿½ rivin perï¿½ssï¿½ tiedostossa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:954
 #, c-format
 msgid "Affix name too long in %s line %d: %s"
-msgstr "Affiksin nimi on liian pitkä tiedostossa %s rivillä %d: %s"
+msgstr "Affiksin nimi on liian pitkï¿½ tiedostossa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:955
 msgid "E761: Format error in affix file FOL, LOW or UPP"
@@ -5274,20 +5274,20 @@ msgstr "E761: Affiksitiedoston FOL-, LOW- tai UPP-muotovirhe "
 
 #: ../spell.c:957
 msgid "E762: Character in FOL, LOW or UPP is out of range"
-msgstr "E762: Merkki FOL:ssä, LOW:ssä tai UPP:ssä ei kuulu arvoalueeseen"
+msgstr "E762: Merkki FOL:ssï¿½, LOW:ssï¿½ tai UPP:ssï¿½ ei kuulu arvoalueeseen"
 
 #: ../spell.c:958
 msgid "Compressing word tree..."
-msgstr "Tiivistetään sanapuuta..."
+msgstr "Tiivistetï¿½ï¿½n sanapuuta..."
 
 #: ../spell.c:1951
 msgid "E756: Spell checking is not enabled"
-msgstr "E756: Oikaisuluku ei ole päällä"
+msgstr "E756: Oikaisuluku ei ole pï¿½ï¿½llï¿½"
 
 #: ../spell.c:2249
 #, c-format
 msgid "Warning: Cannot find word list \"%s.%s.spl\" or \"%s.ascii.spl\""
-msgstr "Varoitus: Ei löydetty sanalistaa %s.%s.spl tai %s.ascii.spl"
+msgstr "Varoitus: Ei lï¿½ydetty sanalistaa %s.%s.spl tai %s.ascii.spl"
 
 #: ../spell.c:2473
 #, c-format
@@ -5300,7 +5300,7 @@ msgstr "E757: Ei vaikuta oikaisulukutiedostolta"
 
 #: ../spell.c:2501
 msgid "E771: Old spell file, needs to be updated"
-msgstr "E771: Vanha oikaisulukutiedosto vaatii päivittämistä"
+msgstr "E771: Vanha oikaisulukutiedosto vaatii pï¿½ivittï¿½mistï¿½"
 
 #: ../spell.c:2504
 msgid "E772: Spell file is for newer version of Vim"
@@ -5323,7 +5323,7 @@ msgstr "Luetaan affiksitiedostoa %s..."
 #: ../spell.c:4589 ../spell.c:5635 ../spell.c:6140
 #, c-format
 msgid "Conversion failure for word in %s line %d: %s"
-msgstr "Muunnosvirhe sanalle %s rivillä %d: %s"
+msgstr "Muunnosvirhe sanalle %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4630 ../spell.c:6170
 #, c-format
@@ -5333,12 +5333,12 @@ msgstr "Muunnosta kohteessa %s ei tueta: kohteesta %s kohteeseen %s"
 #: ../spell.c:4642
 #, c-format
 msgid "Invalid value for FLAG in %s line %d: %s"
-msgstr "Tuntematon FLAG kohteessa %s rivillä %d: %s"
+msgstr "Tuntematon FLAG kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4655
 #, c-format
 msgid "FLAG after using flags in %s line %d: %s"
-msgstr "FLAG kohteessa %s lippujen jälkeen rivillä %d: %s"
+msgstr "FLAG kohteessa %s lippujen jï¿½lkeen rivillï¿½ %d: %s"
 
 #: ../spell.c:4723
 #, c-format
@@ -5346,8 +5346,8 @@ msgid ""
 "Defining COMPOUNDFORBIDFLAG after PFX item may give wrong results in %s line "
 "%d"
 msgstr ""
-"COMPOUNDFORBIDFLAG PFX:n jälkeen voi antaa vääriä tuloksia kohteessa %s "
-"rivillä %d"
+"COMPOUNDFORBIDFLAG PFX:n jï¿½lkeen voi antaa vï¿½ï¿½riï¿½ tuloksia kohteessa %s "
+"rivillï¿½ %d"
 
 #: ../spell.c:4731
 #, c-format
@@ -5355,44 +5355,44 @@ msgid ""
 "Defining COMPOUNDPERMITFLAG after PFX item may give wrong results in %s line "
 "%d"
 msgstr ""
-"COMPOUNDPERMITFLAG PFX:n jälkeen voi antaa vääriä tuloksia kohteessa %s "
-"rivillä %d"
+"COMPOUNDPERMITFLAG PFX:n jï¿½lkeen voi antaa vï¿½ï¿½riï¿½ tuloksia kohteessa %s "
+"rivillï¿½ %d"
 
 #: ../spell.c:4747
 #, c-format
 msgid "Wrong COMPOUNDRULES value in %s line %d: %s"
-msgstr "Väärä COMPOUNDRULES-arvo kohteessa %s rivillä %d: %s"
+msgstr "Vï¿½ï¿½rï¿½ COMPOUNDRULES-arvo kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4771
 #, c-format
 msgid "Wrong COMPOUNDWORDMAX value in %s line %d: %s"
-msgstr "Väärä COMPOUNDWORDMAX-arvo kohteessa %s rivillä %d: %s"
+msgstr "Vï¿½ï¿½rï¿½ COMPOUNDWORDMAX-arvo kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4777
 #, c-format
 msgid "Wrong COMPOUNDMIN value in %s line %d: %s"
-msgstr "Väärä COMPOUNDMIN-arvo kohteessa %s rivillä %d: %s"
+msgstr "Vï¿½ï¿½rï¿½ COMPOUNDMIN-arvo kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4783
 #, c-format
 msgid "Wrong COMPOUNDSYLMAX value in %s line %d: %s"
-msgstr "Väärä COMPOUNDSYLMAX-arvo kohteessa %s rivillä %d: %s"
+msgstr "Vï¿½ï¿½rï¿½ COMPOUNDSYLMAX-arvo kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4795
 #, c-format
 msgid "Wrong CHECKCOMPOUNDPATTERN value in %s line %d: %s"
-msgstr "Väärä CHECKCOMPOUNDPATTERN-arvo kohteessa %s rivillä %d: %s"
+msgstr "Vï¿½ï¿½rï¿½ CHECKCOMPOUNDPATTERN-arvo kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4847
 #, c-format
 msgid "Different combining flag in continued affix block in %s line %d: %s"
 msgstr ""
-"Eri yhdistelmälippu jatketussa affiksilohkossa kohteessa %s rivillä %d: %s"
+"Eri yhdistelmï¿½lippu jatketussa affiksilohkossa kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4850
 #, c-format
 msgid "Duplicate affix in %s line %d: %s"
-msgstr "Kaksoiskappale affiksista kohteessa %s rivillä %d: %s"
+msgstr "Kaksoiskappale affiksista kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4871
 #, c-format
@@ -5400,38 +5400,38 @@ msgid ""
 "Affix also used for BAD/RARE/KEEPCASE/NEEDAFFIX/NEEDCOMPOUND/NOSUGGEST in %s "
 "line %d: %s"
 msgstr ""
-"Affiksia käytetty myös BAD-, RARE-, KEEPCASE-, NEEDAFFIX-, NEEDCOMPOUND- tai "
-"NOSUGGEST-arvossa kohteessa %s rivillä %d: %s"
+"Affiksia kï¿½ytetty myï¿½s BAD-, RARE-, KEEPCASE-, NEEDAFFIX-, NEEDCOMPOUND- tai "
+"NOSUGGEST-arvossa kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4893
 #, c-format
 msgid "Expected Y or N in %s line %d: %s"
-msgstr "Odotettiin Y:tä tai N:ää kohteessa %s rivillä %d: %s"
+msgstr "Odotettiin Y:tï¿½ tai N:ï¿½ï¿½ kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:4968
 #, c-format
 msgid "Broken condition in %s line %d: %s"
-msgstr "Viallinen ehto kohteessa %s rivillä %d: %s"
+msgstr "Viallinen ehto kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:5091
 #, c-format
 msgid "Expected REP(SAL) count in %s line %d"
-msgstr "Odotettiin REP(SAL)-arvoa kohteessa %s rivillä %d"
+msgstr "Odotettiin REP(SAL)-arvoa kohteessa %s rivillï¿½ %d"
 
 #: ../spell.c:5120
 #, c-format
 msgid "Expected MAP count in %s line %d"
-msgstr "Odotettiin MAP-arvoa kohteessa %s rivillä %d"
+msgstr "Odotettiin MAP-arvoa kohteessa %s rivillï¿½ %d"
 
 #: ../spell.c:5132
 #, c-format
 msgid "Duplicate character in MAP in %s line %d"
-msgstr "Kaksoiskappale merkistä MAP:ssä kohteessa %s rivillä %d"
+msgstr "Kaksoiskappale merkistï¿½ MAP:ssï¿½ kohteessa %s rivillï¿½ %d"
 
 #: ../spell.c:5176
 #, c-format
 msgid "Unrecognized or duplicate item in %s line %d: %s"
-msgstr "Tunnistamaton tai kaksoiskappale arvosta kohteessa %s rivillä %d: %s"
+msgstr "Tunnistamaton tai kaksoiskappale arvosta kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:5197
 #, c-format
@@ -5444,7 +5444,7 @@ msgstr "COMPOUNDSYLMAX ilman SYLLABLEa"
 
 #: ../spell.c:5236
 msgid "Too many postponed prefixes"
-msgstr "Liikaa jälkikäteistettyjä prefiksejä"
+msgstr "Liikaa jï¿½lkikï¿½teistettyjï¿½ prefiksejï¿½"
 
 #: ../spell.c:5238
 msgid "Too many compound flags"
@@ -5452,7 +5452,7 @@ msgstr "Liikaa yhdyssanalippuja"
 
 #: ../spell.c:5240
 msgid "Too many postponed prefixes and/or compound flags"
-msgstr "Liikaa jälkikäteistettyjä prefiksejä tai yhdyssanalippuja"
+msgstr "Liikaa jï¿½lkikï¿½teistettyjï¿½ prefiksejï¿½ tai yhdyssanalippuja"
 
 #: ../spell.c:5250
 #, c-format
@@ -5467,12 +5467,12 @@ msgstr "SAL- ja SOFO-rivit kohteessa %s"
 #: ../spell.c:5331
 #, c-format
 msgid "Flag is not a number in %s line %d: %s"
-msgstr "Lippu ei ole lukuarvo kohteessa %s rivillä %d: %s"
+msgstr "Lippu ei ole lukuarvo kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:5334
 #, c-format
 msgid "Illegal flag in %s line %d: %s"
-msgstr "Tuntematon lippu kohteessa %s rivillä %d: %s"
+msgstr "Tuntematon lippu kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:5493 ../spell.c:5501
 #, c-format
@@ -5497,12 +5497,12 @@ msgstr "rivi %6d, sana %6d - %s"
 #: ../spell.c:5691
 #, c-format
 msgid "Duplicate word in %s line %d: %s"
-msgstr "Toistettu sana kohteessa %s rivillä %d: %s"
+msgstr "Toistettu sana kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:5694
 #, c-format
 msgid "First duplicate word in %s line %d: %s"
-msgstr "Ensimmäinen kappale kohteessa %s rivillä %d: %s"
+msgstr "Ensimmï¿½inen kappale kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:5746
 #, c-format
@@ -5522,37 +5522,37 @@ msgstr "Luetaan sanatiedostoa %s..."
 #: ../spell.c:6155
 #, c-format
 msgid "Duplicate /encoding= line ignored in %s line %d: %s"
-msgstr "Toistettu /encoding= ohitettu kohteessa %s rivillä %d: %s"
+msgstr "Toistettu /encoding= ohitettu kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6159
 #, c-format
 msgid "/encoding= line after word ignored in %s line %d: %s"
-msgstr "/encoding= sanojen jälkeen ohitettu kohteessa %s rivillä %d: %s"
+msgstr "/encoding= sanojen jï¿½lkeen ohitettu kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6180
 #, c-format
 msgid "Duplicate /regions= line ignored in %s line %d: %s"
-msgstr "Toistettu /regions= ohitettu kohteessa %s rivillä %d: %s"
+msgstr "Toistettu /regions= ohitettu kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6185
 #, c-format
 msgid "Too many regions in %s line %d: %s"
-msgstr "Liikaa regionseja kohteessa %s rivillä %d: %s"
+msgstr "Liikaa regionseja kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6198
 #, c-format
 msgid "/ line ignored in %s line %d: %s"
-msgstr "/ ohitettu kohteessa %s rivillä %d: %s"
+msgstr "/ ohitettu kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6224
 #, c-format
 msgid "Invalid region nr in %s line %d: %s"
-msgstr "Virheellinen region-luku kohteessa %s rivillä %d: %s"
+msgstr "Virheellinen region-luku kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6230
 #, c-format
 msgid "Unrecognized flags in %s line %d: %s"
-msgstr "Tunnistamaton lippu kohteessa %s rivillä %d: %s"
+msgstr "Tunnistamaton lippu kohteessa %s rivillï¿½ %d: %s"
 
 #: ../spell.c:6257
 #, c-format
@@ -5562,7 +5562,7 @@ msgstr "Ei-ASCIIn takia ohitettuja sanoja %d"
 #: ../spell.c:6656
 #, c-format
 msgid "Compressed %d of %d nodes; %d (%d%%) remaining"
-msgstr "Tiivistetty %d/%d noodia. %d (%d %%) jäljellä"
+msgstr "Tiivistetty %d/%d noodia. %d (%d %%) jï¿½ljellï¿½"
 
 #: ../spell.c:7340
 msgid "Reading back spell file..."
@@ -5572,17 +5572,17 @@ msgstr "Luetaan taas oikaisulukutiedostoa..."
 #. the soundfold trie.
 #: ../spell.c:7357
 msgid "Performing soundfolding..."
-msgstr "Ääntämyksen mukaan yhdistellään..."
+msgstr "ï¿½ï¿½ntï¿½myksen mukaan yhdistellï¿½ï¿½n..."
 
 #: ../spell.c:7368
 #, c-format
 msgid "Number of words after soundfolding: %<PRId64>"
-msgstr "Sanoja ääntämysyhdistelyn jälkeen: %<PRId64>"
+msgstr "Sanoja ï¿½ï¿½ntï¿½mysyhdistelyn jï¿½lkeen: %<PRId64>"
 
 #: ../spell.c:7476
 #, c-format
 msgid "Total number of words: %d"
-msgstr "Sanoja yhteensä: %d"
+msgstr "Sanoja yhteensï¿½: %d"
 
 #: ../spell.c:7655
 #, c-format
@@ -5592,15 +5592,15 @@ msgstr "Kirjoitetaan ehdotustiedostoa %s..."
 #: ../spell.c:7707 ../spell.c:7927
 #, c-format
 msgid "Estimated runtime memory use: %d bytes"
-msgstr "Arvioitu käyttömuisti: %d tavua"
+msgstr "Arvioitu kï¿½yttï¿½muisti: %d tavua"
 
 #: ../spell.c:7820
 msgid "E751: Output file name must not have region name"
-msgstr "E751: Tulostetiedostonimessä ei saa olla alueen nimeä"
+msgstr "E751: Tulostetiedostonimessï¿½ ei saa olla alueen nimeï¿½"
 
 #: ../spell.c:7822
 msgid "E754: Only up to 8 regions supported"
-msgstr "E754: Enintään 8 aluetta tuetaan"
+msgstr "E754: Enintï¿½ï¿½n 8 aluetta tuetaan"
 
 #: ../spell.c:7846
 #, c-format
@@ -5609,7 +5609,7 @@ msgstr "E755: Virheellinen alue kohteelle %s"
 
 #: ../spell.c:7907
 msgid "Warning: both compounding and NOBREAK specified"
-msgstr "Varoitus: sekä yhdyssanamuodostus että NOBREAK käytössä"
+msgstr "Varoitus: sekï¿½ yhdyssanamuodostus ettï¿½ NOBREAK kï¿½ytï¿½ssï¿½"
 
 #: ../spell.c:7920
 #, c-format
@@ -5623,7 +5623,7 @@ msgstr "Valmista."
 #: ../spell.c:8034
 #, c-format
 msgid "E765: 'spellfile' does not have %<PRId64> entries"
-msgstr "E765: spellfile ei sisällä %<PRId64> kohtaa"
+msgstr "E765: spellfile ei sisï¿½llï¿½ %<PRId64> kohtaa"
 
 #: ../spell.c:8074
 #, fuzzy, c-format
@@ -5633,11 +5633,11 @@ msgstr "Sana poistettu kohteesta %s"
 #: ../spell.c:8117
 #, fuzzy, c-format
 msgid "Word '%.*s' added to %s"
-msgstr "Sana lisätty kohteeseen %s"
+msgstr "Sana lisï¿½tty kohteeseen %s"
 
 #: ../spell.c:8381
 msgid "E763: Word characters differ between spell files"
-msgstr "E763: Sanan merkit muuttuvat oikaisulukutiedostojen välillä"
+msgstr "E763: Sanan merkit muuttuvat oikaisulukutiedostojen vï¿½lillï¿½"
 
 #: ../spell.c:8684
 msgid "Sorry, no suggestions"
@@ -5662,12 +5662,12 @@ msgstr " < %.*s"
 
 #: ../spell.c:8882
 msgid "E752: No previous spell replacement"
-msgstr "E752: Ei edellistä oikaisulukukorjausta"
+msgstr "E752: Ei edellistï¿½ oikaisulukukorjausta"
 
 #: ../spell.c:8925
 #, c-format
 msgid "E753: Not found: %s"
-msgstr "E753: Ei löytynyt: %s"
+msgstr "E753: Ei lï¿½ytynyt: %s"
 
 #: ../spell.c:9276
 #, c-format
@@ -5677,7 +5677,7 @@ msgstr "E778: Ei vaikuta .sug-tiedostolta: %s"
 #: ../spell.c:9282
 #, c-format
 msgid "E779: Old .sug file, needs to be updated: %s"
-msgstr "E779: Vanha .sug-tiedosto pitää päivittää: %s"
+msgstr "E779: Vanha .sug-tiedosto pitï¿½ï¿½ pï¿½ivittï¿½ï¿½: %s"
 
 #: ../spell.c:9286
 #, c-format
@@ -5687,7 +5687,7 @@ msgstr "E780: .sug-tiedosto on uudemmalle Vimille: %s"
 #: ../spell.c:9295
 #, c-format
 msgid "E781: .sug file doesn't match .spl file: %s"
-msgstr "E781: .sug-tiedosto ei täsmää .spl-tiedostoon: %s"
+msgstr "E781: .sug-tiedosto ei tï¿½smï¿½ï¿½ .spl-tiedostoon: %s"
 
 #: ../spell.c:9305
 #, c-format
@@ -5698,11 +5698,11 @@ msgstr "E782: virhe luettaessa .sug-tiedostoa: %s"
 #. file.
 #: ../spell.c:11575
 msgid "E783: duplicate char in MAP entry"
-msgstr "E783: kaksoiskappale merkistä MAP-kohdassa"
+msgstr "E783: kaksoiskappale merkistï¿½ MAP-kohdassa"
 
 #: ../syntax.c:266
 msgid "No Syntax items defined for this buffer"
-msgstr "Ei syntaksikohteita tälle puskurille"
+msgstr "Ei syntaksikohteita tï¿½lle puskurille"
 
 #: ../syntax.c:3083 ../syntax.c:3104 ../syntax.c:3127
 #, c-format
@@ -5728,7 +5728,7 @@ msgstr "synkkaus aloitettu "
 
 #: ../syntax.c:3443 ../syntax.c:3506
 msgid " lines before top line"
-msgstr " riviä ennen alkua"
+msgstr " riviï¿½ ennen alkua"
 
 #: ../syntax.c:3448
 msgid ""
@@ -5761,15 +5761,15 @@ msgstr "E392: syntaksiklusteria ei ole: %s"
 
 #: ../syntax.c:3497
 msgid "minimal "
-msgstr "vähintään "
+msgstr "vï¿½hintï¿½ï¿½n "
 
 #: ../syntax.c:3503
 msgid "maximal "
-msgstr "enitntään "
+msgstr "enitntï¿½ï¿½n "
 
 #: ../syntax.c:3513
 msgid "; match "
-msgstr "; täsmää "
+msgstr "; tï¿½smï¿½ï¿½ "
 
 #: ../syntax.c:3515
 msgid " line breaks"
@@ -5777,7 +5777,7 @@ msgstr " rivinvaihdot"
 
 #: ../syntax.c:4076
 msgid "E395: contains argument not accepted here"
-msgstr "E395: contains ei sovi tähän"
+msgstr "E395: contains ei sovi tï¿½hï¿½n"
 
 #: ../syntax.c:4096
 #, fuzzy
@@ -5786,12 +5786,12 @@ msgstr "E474: Virheellinen argumentti"
 
 #: ../syntax.c:4107
 msgid "E393: group[t]here not accepted here"
-msgstr "E393: group[t]here ei sovi tähän"
+msgstr "E393: group[t]here ei sovi tï¿½hï¿½n"
 
 #: ../syntax.c:4126
 #, c-format
 msgid "E394: Didn't find region item for %s"
-msgstr "E394: Aluetta nimelle %s ei löydy"
+msgstr "E394: Aluetta nimelle %s ei lï¿½ydy"
 
 #: ../syntax.c:4188
 msgid "E397: Filename required"
@@ -5800,7 +5800,7 @@ msgstr "E397: Tiedostonimi puuttuu"
 #: ../syntax.c:4221
 #, fuzzy
 msgid "E847: Too many syntax includes"
-msgstr "E77: Liikaa tiedostonimiä"
+msgstr "E77: Liikaa tiedostonimiï¿½"
 
 #: ../syntax.c:4303
 #, c-format
@@ -5824,7 +5824,7 @@ msgstr "E391: Syntaksiklusteri puuttuu: %s"
 
 #: ../syntax.c:4954
 msgid "E400: No cluster specified"
-msgstr "E400: klusteri määrittelemättä"
+msgstr "E400: klusteri mï¿½ï¿½rittelemï¿½ttï¿½"
 
 #. end delimiter not found
 #: ../syntax.c:4986
@@ -5835,11 +5835,11 @@ msgstr "E401: Kuvoin erotin puuttuu: %s"
 #: ../syntax.c:5049
 #, c-format
 msgid "E402: Garbage after pattern: %s"
-msgstr "E402: Roskia kuvion jäljessä: %s"
+msgstr "E402: Roskia kuvion jï¿½ljessï¿½: %s"
 
 #: ../syntax.c:5120
 msgid "E403: syntax sync: line continuations pattern specified twice"
-msgstr "E403: syntax sync: rivinjatkamiskuvio määritelty kahdesti"
+msgstr "E403: syntax sync: rivinjatkamiskuvio mï¿½ï¿½ritelty kahdesti"
 
 #: ../syntax.c:5169
 #, c-format
@@ -5854,12 +5854,12 @@ msgstr "E405: = puuttuu: %s"
 #: ../syntax.c:5222
 #, c-format
 msgid "E406: Empty argument: %s"
-msgstr "E406: Tyhjä argumentti: %s"
+msgstr "E406: Tyhjï¿½ argumentti: %s"
 
 #: ../syntax.c:5240
 #, c-format
 msgid "E407: %s not allowed here"
-msgstr "E407: %s ei sovi tähän"
+msgstr "E407: %s ei sovi tï¿½hï¿½n"
 
 #: ../syntax.c:5246
 #, c-format
@@ -5869,7 +5869,7 @@ msgstr "E408: %s kuuluu contains-listan alkuun"
 #: ../syntax.c:5304
 #, c-format
 msgid "E409: Unknown group name: %s"
-msgstr "E409: Tuntematon ryhmän nimi: %s"
+msgstr "E409: Tuntematon ryhmï¿½n nimi: %s"
 
 #: ../syntax.c:5512
 #, c-format
@@ -5883,12 +5883,12 @@ msgstr ""
 
 #: ../syntax.c:6146
 msgid "E679: recursive loop loading syncolor.vim"
-msgstr "E679: rekursiivinen silmukka syncolor.vimissä"
+msgstr "E679: rekursiivinen silmukka syncolor.vimissï¿½"
 
 #: ../syntax.c:6256
 #, c-format
 msgid "E411: highlight group not found: %s"
-msgstr "E411: korostusryhmää ei löytynyt: %s"
+msgstr "E411: korostusryhmï¿½ï¿½ ei lï¿½ytynyt: %s"
 
 #: ../syntax.c:6278
 #, c-format
@@ -5902,7 +5902,7 @@ msgstr "E413: Liikaa argumentteja: :highlight link %s"
 
 #: ../syntax.c:6302
 msgid "E414: group has settings, highlight link ignored"
-msgstr "E414: ryhmällä on asetuksia, highlight link -komento ohitetaan"
+msgstr "E414: ryhmï¿½llï¿½ on asetuksia, highlight link -komento ohitetaan"
 
 #: ../syntax.c:6367
 #, c-format
@@ -5926,21 +5926,21 @@ msgstr "E418: Viallinen arvo: %s"
 
 #: ../syntax.c:6496
 msgid "E419: FG color unknown"
-msgstr "E419: edustaväri tuntematon"
+msgstr "E419: edustavï¿½ri tuntematon"
 
 #: ../syntax.c:6504
 msgid "E420: BG color unknown"
-msgstr "E420: taustaväri tuntematon"
+msgstr "E420: taustavï¿½ri tuntematon"
 
 #: ../syntax.c:6564
 #, c-format
 msgid "E421: Color name or number not recognized: %s"
-msgstr "E421: Värin nimi tai numero tuntematon: %s"
+msgstr "E421: Vï¿½rin nimi tai numero tuntematon: %s"
 
 #: ../syntax.c:6714
 #, c-format
 msgid "E422: terminal code too long: %s"
-msgstr "E422: terminaalikoodi liian pitkä: %s"
+msgstr "E422: terminaalikoodi liian pitkï¿½: %s"
 
 #: ../syntax.c:6753
 #, c-format
@@ -5953,11 +5953,11 @@ msgstr "E424: Liikaa eri korostusattribuutteja"
 
 #: ../syntax.c:7427
 msgid "E669: Unprintable character in group name"
-msgstr "E669: Tulostuskelvoton merkki ryhmän nimessä"
+msgstr "E669: Tulostuskelvoton merkki ryhmï¿½n nimessï¿½"
 
 #: ../syntax.c:7434
 msgid "W18: Invalid character in group name"
-msgstr "W18: Virheellinen merkki ryhmän nimessä"
+msgstr "W18: Virheellinen merkki ryhmï¿½n nimessï¿½"
 
 #: ../syntax.c:7448
 msgid "E849: Too many highlight and syntax groups"
@@ -5965,24 +5965,24 @@ msgstr ""
 
 #: ../tag.c:104
 msgid "E555: at bottom of tag stack"
-msgstr "E555: tägipinon pohja"
+msgstr "E555: tï¿½gipinon pohja"
 
 #: ../tag.c:105
 msgid "E556: at top of tag stack"
-msgstr "E556: tägipinon huippu"
+msgstr "E556: tï¿½gipinon huippu"
 
 #: ../tag.c:380
 msgid "E425: Cannot go before first matching tag"
-msgstr "E425: Ei voida mennä ensimmäistä täsmäävää tägiä alummaksi"
+msgstr "E425: Ei voida mennï¿½ ensimmï¿½istï¿½ tï¿½smï¿½ï¿½vï¿½ï¿½ tï¿½giï¿½ alummaksi"
 
 #: ../tag.c:504
 #, c-format
 msgid "E426: tag not found: %s"
-msgstr "E426: tägi puuttuu: %s"
+msgstr "E426: tï¿½gi puuttuu: %s"
 
 #: ../tag.c:528
 msgid "  # pri kind tag"
-msgstr "  # arvo tyyppi tägi"
+msgstr "  # arvo tyyppi tï¿½gi"
 
 #: ../tag.c:531
 msgid "file\n"
@@ -5990,11 +5990,11 @@ msgstr "tiedosto\n"
 
 #: ../tag.c:829
 msgid "E427: There is only one matching tag"
-msgstr "E427: Vain yksi tägi täsmää"
+msgstr "E427: Vain yksi tï¿½gi tï¿½smï¿½ï¿½"
 
 #: ../tag.c:831
 msgid "E428: Cannot go beyond last matching tag"
-msgstr "E428: Ei voida edetä viimeisen täsmäävän tägin ohi"
+msgstr "E428: Ei voida edetï¿½ viimeisen tï¿½smï¿½ï¿½vï¿½n tï¿½gin ohi"
 
 #: ../tag.c:850
 #, c-format
@@ -6005,7 +6005,7 @@ msgstr "Tiedostoa %s ei ole"
 #: ../tag.c:859
 #, c-format
 msgid "tag %d of %d%s"
-msgstr "tägi %d/%d%s"
+msgstr "tï¿½gi %d/%d%s"
 
 #: ../tag.c:862
 msgid " or more"
@@ -6013,7 +6013,7 @@ msgstr " tai useammasta"
 
 #: ../tag.c:864
 msgid "  Using tag with different case!"
-msgstr "  Tägissä eri kirjaintaso"
+msgstr "  Tï¿½gissï¿½ eri kirjaintaso"
 
 #: ../tag.c:909
 #, c-format
@@ -6027,21 +6027,21 @@ msgid ""
 "  # TO tag         FROM line  in file/text"
 msgstr ""
 "\n"
-"  # TILL tagg          FRÅN LINJE  i fil/text"
+"  # TILL tagg          FRï¿½N LINJE  i fil/text"
 
 #: ../tag.c:1303
 #, c-format
 msgid "Searching tags file %s"
-msgstr "Etsitään tägitiedostoa %s"
+msgstr "Etsitï¿½ï¿½n tï¿½gitiedostoa %s"
 
 #: ../tag.c:1545
 msgid "Ignoring long line in tags file"
-msgstr "Ohitetaan pitkä rivi tägitiedostossa"
+msgstr "Ohitetaan pitkï¿½ rivi tï¿½gitiedostossa"
 
 #: ../tag.c:1915
 #, c-format
 msgid "E431: Format error in tags file \"%s\""
-msgstr "E431: Muotovirh tägitiedostossa %s"
+msgstr "E431: Muotovirh tï¿½gitiedostossa %s"
 
 #: ../tag.c:1917
 #, c-format
@@ -6051,25 +6051,25 @@ msgstr "Ennen tavua %<PRId64>"
 #: ../tag.c:1929
 #, c-format
 msgid "E432: Tags file not sorted: %s"
-msgstr "E432: Tägitiedosto ei ole järjestetty: %s"
+msgstr "E432: Tï¿½gitiedosto ei ole jï¿½rjestetty: %s"
 
 #. never opened any tags file
 #: ../tag.c:1960
 msgid "E433: No tags file"
-msgstr "E433: Ei tägitiedostoja"
+msgstr "E433: Ei tï¿½gitiedostoja"
 
 #: ../tag.c:2536
 msgid "E434: Can't find tag pattern"
-msgstr "E434: Tägikuviota ei löydy"
+msgstr "E434: Tï¿½gikuviota ei lï¿½ydy"
 
 #: ../tag.c:2544
 msgid "E435: Couldn't find tag, just guessing!"
-msgstr "E435: Tägiä ei löydy, arvataan."
+msgstr "E435: Tï¿½giï¿½ ei lï¿½ydy, arvataan."
 
 #: ../tag.c:2797
 #, c-format
 msgid "Duplicate field name: %s"
-msgstr "Kaksoiskappale kentän nimestä: %s"
+msgstr "Kaksoiskappale kentï¿½n nimestï¿½: %s"
 
 #: ../term.c:1442
 msgid "' not known. Available builtin terminals are:"
@@ -6085,20 +6085,20 @@ msgstr "E557: Ei voi avata termcap-tiedostoa"
 
 #: ../term.c:1735
 msgid "E558: Terminal entry not found in terminfo"
-msgstr "E558: Terminaalia ei löytynyt terminfosta"
+msgstr "E558: Terminaalia ei lï¿½ytynyt terminfosta"
 
 #: ../term.c:1737
 msgid "E559: Terminal entry not found in termcap"
-msgstr "E559: Terminaalia ei löytynyt termcapista"
+msgstr "E559: Terminaalia ei lï¿½ytynyt termcapista"
 
 #: ../term.c:1878
 #, c-format
 msgid "E436: No \"%s\" entry in termcap"
-msgstr "E436: %s ei löytynyt termcapista"
+msgstr "E436: %s ei lï¿½ytynyt termcapista"
 
 #: ../term.c:2249
 msgid "E437: terminal capability \"cm\" required"
-msgstr "E437: terminaalilla pitää olla cm kyvyissään"
+msgstr "E437: terminaalilla pitï¿½ï¿½ olla cm kyvyissï¿½ï¿½n"
 
 #. Highlight title
 #: ../term.c:4376
@@ -6107,18 +6107,18 @@ msgid ""
 "--- Terminal keys ---"
 msgstr ""
 "\n"
-"--- Terminaalinäppäimet ---"
+"--- Terminaalinï¿½ppï¿½imet ---"
 
 #: ../ui.c:481
 msgid "Vim: Error reading input, exiting...\n"
-msgstr "Vim: Virhe luettaessa syötettä, poistutaan...\n"
+msgstr "Vim: Virhe luettaessa syï¿½tettï¿½, poistutaan...\n"
 
 #. This happens when the FileChangedRO autocommand changes the
 #. * file in a way it becomes shorter.
 #: ../undo.c:379
 #, fuzzy
 msgid "E881: Line count changed unexpectedly"
-msgstr "E834: Rivimäärä vaihtui odottamatta"
+msgstr "E834: Rivimï¿½ï¿½rï¿½ vaihtui odottamatta"
 
 #: ../undo.c:627
 #, c-format
@@ -6132,7 +6132,7 @@ msgstr "E825: Pilaanntunut kumoustiedosto (%s): %s"
 
 #: ../undo.c:1039
 msgid "Cannot write undo file in any directory in 'undodir'"
-msgstr "Ei voitu lukea kumoustiedostoa mistään undodir-muuttujan hakemistosta"
+msgstr "Ei voitu lukea kumoustiedostoa mistï¿½ï¿½n undodir-muuttujan hakemistosta"
 
 #: ../undo.c:1074
 #, c-format
@@ -6142,7 +6142,7 @@ msgstr "Ei ylikirjoitetat kumoustiedostolla, koska ei voida lukea: %s"
 #: ../undo.c:1092
 #, c-format
 msgid "Will not overwrite, this is not an undo file: %s"
-msgstr "Ei ylikirjoiteta, koska tämä ei ole kumoustiedosto: %s"
+msgstr "Ei ylikirjoiteta, koska tï¿½mï¿½ ei ole kumoustiedosto: %s"
 
 #: ../undo.c:1108
 msgid "Skipping undo file write, nothing to undo"
@@ -6181,12 +6181,12 @@ msgstr "E823: Ei ole kumoustiedosto: %s"
 #: ../undo.c:1313
 #, c-format
 msgid "E824: Incompatible undo file: %s"
-msgstr "E824: Epäyhteensopiva kumoustiedosto: %s"
+msgstr "E824: Epï¿½yhteensopiva kumoustiedosto: %s"
 
 #: ../undo.c:1328
 msgid "File contents changed, cannot use undo info"
 msgstr ""
-"Tiedoston sisältö on muuttunut, joen kumoustiedot ovat käyttökelvottomia"
+"Tiedoston sisï¿½ltï¿½ on muuttunut, joen kumoustiedot ovat kï¿½yttï¿½kelvottomia"
 
 #: ../undo.c:1497
 #, c-format
@@ -6204,27 +6204,27 @@ msgstr "Nuorimmassa muutoksessa"
 #: ../undo.c:1806
 #, c-format
 msgid "E830: Undo number %<PRId64> not found"
-msgstr "E830: Kumouslukua %<PRId64> ei löydy"
+msgstr "E830: Kumouslukua %<PRId64> ei lï¿½ydy"
 
 #: ../undo.c:1979
 msgid "E438: u_undo: line numbers wrong"
-msgstr "E438: u_undo: väärät rivinumerot"
+msgstr "E438: u_undo: vï¿½ï¿½rï¿½t rivinumerot"
 
 #: ../undo.c:2183
 msgid "more line"
-msgstr "rivi lisää"
+msgstr "rivi lisï¿½ï¿½"
 
 #: ../undo.c:2185
 msgid "more lines"
-msgstr "riviä lisää"
+msgstr "riviï¿½ lisï¿½ï¿½"
 
 #: ../undo.c:2187
 msgid "line less"
-msgstr "rivi vähemmän"
+msgstr "rivi vï¿½hemmï¿½n"
 
 #: ../undo.c:2189
 msgid "fewer lines"
-msgstr "riviä vähemmän"
+msgstr "riviï¿½ vï¿½hemmï¿½n"
 
 #: ../undo.c:2193
 msgid "change"
@@ -6234,7 +6234,7 @@ msgstr "muutos"
 msgid "changes"
 msgstr "muutosta"
 
-# eka %s yläpuolelta, toka %s alapuolelta, kolmas %s aika
+# eka %s ylï¿½puolelta, toka %s alapuolelta, kolmas %s aika
 #: ../undo.c:2225
 #, c-format
 msgid "%<PRId64> %s; %s #%<PRId64>  %s"
@@ -6246,7 +6246,7 @@ msgstr "ennen muutosta"
 
 #: ../undo.c:2228
 msgid "after"
-msgstr "jälkeen muutoksen"
+msgstr "jï¿½lkeen muutoksen"
 
 #: ../undo.c:2325
 msgid "Nothing to undo"
@@ -6264,7 +6264,7 @@ msgstr "%<PRId64> sekuntia sitten"
 
 #: ../undo.c:2372
 msgid "E790: undojoin is not allowed after undo"
-msgstr "E790: undojoin ei toimi undon jälkeen"
+msgstr "E790: undojoin ei toimi undon jï¿½lkeen"
 
 #: ../undo.c:2466
 msgid "E439: undo list corrupt"
@@ -6280,7 +6280,7 @@ msgid ""
 "Included patches: "
 msgstr ""
 "\n"
-"Pätsit: "
+"Pï¿½tsit: "
 
 #: ../version.c:627
 msgid ""
@@ -6288,7 +6288,7 @@ msgid ""
 "Extra patches: "
 msgstr ""
 "\n"
-"Muita pätsejä: "
+"Muita pï¿½tsejï¿½: "
 
 #: ../version.c:639 ../version.c:864
 msgid "Modified by "
@@ -6300,7 +6300,7 @@ msgid ""
 "Compiled "
 msgstr ""
 "\n"
-"Kääntänyt "
+"Kï¿½ï¿½ntï¿½nyt "
 
 #: ../version.c:649
 msgid "by "
@@ -6324,27 +6324,27 @@ msgstr " Ominaisuudet mukana (+) ja poissa (-):\n"
 
 #: ../version.c:667
 msgid "   system vimrc file: \""
-msgstr "   järjestelmän vimrc: \""
+msgstr "   jï¿½rjestelmï¿½n vimrc: \""
 
 #: ../version.c:672
 msgid "     user vimrc file: \""
-msgstr "     käyttäjän vimrc: \""
+msgstr "     kï¿½yttï¿½jï¿½n vimrc: \""
 
 #: ../version.c:677
 msgid " 2nd user vimrc file: \""
-msgstr " 2. käyttäjän vimrc: \""
+msgstr " 2. kï¿½yttï¿½jï¿½n vimrc: \""
 
 #: ../version.c:682
 msgid " 3rd user vimrc file: \""
-msgstr " 3. käyttäjän vimrc: \""
+msgstr " 3. kï¿½yttï¿½jï¿½n vimrc: \""
 
 #: ../version.c:687
 msgid "      user exrc file: \""
-msgstr "      käyttäjän exrc: \""
+msgstr "      kï¿½yttï¿½jï¿½n exrc: \""
 
 #: ../version.c:692
 msgid "  2nd user exrc file: \""
-msgstr "  2. käyttäjän exrc: \""
+msgstr "  2. kï¿½yttï¿½jï¿½n exrc: \""
 
 #: ../version.c:699
 msgid "  fall-back for $VIM: \""
@@ -6356,7 +6356,7 @@ msgstr " $VIMRUNTIMEn f-b: \""
 
 #: ../version.c:709
 msgid "Compilation: "
-msgstr "Käännös: "
+msgstr "Kï¿½ï¿½nnï¿½s: "
 
 #: ../version.c:712
 msgid "Linking: "
@@ -6376,19 +6376,19 @@ msgstr "versio "
 
 #: ../version.c:770
 msgid "by Bram Moolenaar et al."
-msgstr "tekijät Bram Moolenaar et al."
+msgstr "tekijï¿½t Bram Moolenaar et al."
 
 #: ../version.c:774
 msgid "Vim is open source and freely distributable"
-msgstr "Vim on avointa lähdekoodia ja vapaasti jaossa"
+msgstr "Vim on avointa lï¿½hdekoodia ja vapaasti jaossa"
 
 #: ../version.c:776
 msgid "Help poor children in Uganda!"
-msgstr "Auta Ugandan köyhiä lapsia"
+msgstr "Auta Ugandan kï¿½yhiï¿½ lapsia"
 
 #: ../version.c:777
 msgid "type  :help iccf<Enter>       for information "
-msgstr "kirjoita :help iccf<Enter>    lisätietoa varten            "
+msgstr "kirjoita :help iccf<Enter>    lisï¿½tietoa varten            "
 
 #: ../version.c:779
 msgid "type  :q<Enter>               to exit         "
@@ -6402,41 +6402,29 @@ msgstr "kirjoita :help<Enter> tai <F1> ohjetta varten              "
 msgid "type  :help version7<Enter>   for version info"
 msgstr "kirjoita :help version7<Enter> versiotietoja varten        "
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Suoritetaan Vi-yhteensopivuustilaa"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "kirjoita :set nocp<Enter>      Vimin oletuksiin            "
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "kirjoita :help cp-default<Enter> ohjetta oletuksista varten"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
-msgstr "Tue Vimin kehitystä"
+msgstr "Tue Vimin kehitystï¿½"
 
 #: ../version.c:828
 msgid "Become a registered Vim user!"
-msgstr "Rekisteröidy Vim-käyttäjäksi."
+msgstr "Rekisterï¿½idy Vim-kï¿½yttï¿½jï¿½ksi."
 
 #: ../version.c:831
 msgid "type  :help sponsor<Enter>    for information "
-msgstr "kirjoita :help sponsor<Enter>  lisätietoja varten"
+msgstr "kirjoita :help sponsor<Enter>  lisï¿½tietoja varten"
 
 #: ../version.c:832
 msgid "type  :help register<Enter>   for information "
-msgstr "kirjoita :help register<Enter> lisätietoja varten"
+msgstr "kirjoita :help register<Enter> lisï¿½tietoja varten"
 
 #: ../version.c:834
 msgid "menu  Help->Sponsor/Register  for information    "
-msgstr "valikko Ohje->Sponsoroi/Rekisteröi lisätietoja varten"
+msgstr "valikko Ohje->Sponsoroi/Rekisterï¿½i lisï¿½tietoja varten"
 
 #: ../window.c:119
 msgid "Already only one window"
-msgstr "Enää yksi ikkuna jäljellä"
+msgstr "Enï¿½ï¿½ yksi ikkuna jï¿½ljellï¿½"
 
 #: ../window.c:224
 msgid "E441: There is no preview window"
@@ -6444,15 +6432,15 @@ msgstr "E441: Ei esikatseluikkunaa"
 
 #: ../window.c:559
 msgid "E442: Can't split topleft and botright at the same time"
-msgstr "E442: Ei voi jakaa vasenta ylänurkkaa ja oikeaa alanurkkaa yhtäaikaa"
+msgstr "E442: Ei voi jakaa vasenta ylï¿½nurkkaa ja oikeaa alanurkkaa yhtï¿½aikaa"
 
 #: ../window.c:1228
 msgid "E443: Cannot rotate when another window is split"
-msgstr "E443: Ei voi kiertää kun toinen ikkuna on jaettu"
+msgstr "E443: Ei voi kiertï¿½ï¿½ kun toinen ikkuna on jaettu"
 
 #: ../window.c:1803
 msgid "E444: Cannot close last window"
-msgstr "E444: Ei voi sulkea viimeistä ikkunaa"
+msgstr "E444: Ei voi sulkea viimeistï¿½ ikkunaa"
 
 #: ../window.c:1810
 msgid "E813: Cannot close autocmd window"
@@ -6460,30 +6448,30 @@ msgstr "E813: Ei voi sulkea autocmd-ikkunaa"
 
 #: ../window.c:1814
 msgid "E814: Cannot close window, only autocmd window would remain"
-msgstr "E814: Ei voi sulkea viimeistä ikkunaa, joka ei ole autocmd-ikkuna"
+msgstr "E814: Ei voi sulkea viimeistï¿½ ikkunaa, joka ei ole autocmd-ikkuna"
 
 #: ../window.c:2717
 msgid "E445: Other window contains changes"
-msgstr "E445: Toinen ikkuna sisältää muutoksia"
+msgstr "E445: Toinen ikkuna sisï¿½ltï¿½ï¿½ muutoksia"
 
 #: ../window.c:4805
 msgid "E446: No file name under cursor"
-msgstr "E446: Ei tiedostonimeä kursorin alla"
+msgstr "E446: Ei tiedostonimeï¿½ kursorin alla"
 
 #~ msgid "E831: bf_key_init() called with empty password"
-#~ msgstr "E831: bf_key_init() tyhjällä salasanalla"
+#~ msgstr "E831: bf_key_init() tyhjï¿½llï¿½ salasanalla"
 
 #~ msgid "E820: sizeof(uint32_t) != 4"
 #~ msgstr "E820: sizeof(uint32_t) != 4"
 
 #~ msgid "E817: Blowfish big/little endian use wrong"
-#~ msgstr "E817: Blowfishin tavujärjestys väärä"
+#~ msgstr "E817: Blowfishin tavujï¿½rjestys vï¿½ï¿½rï¿½"
 
 #~ msgid "E818: sha256 test failed"
-#~ msgstr "E818: sha256-testi epäonnistui failed"
+#~ msgstr "E818: sha256-testi epï¿½onnistui failed"
 
 #~ msgid "E819: Blowfish test failed"
-#~ msgstr "E819: Blowfish-testi epäonnistui"
+#~ msgstr "E819: Blowfish-testi epï¿½onnistui"
 
 #~ msgid "Patch file"
 #~ msgstr "Patch-tiedosto"
@@ -6496,19 +6484,19 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "&Peru"
 
 #~ msgid "E240: No connection to Vim server"
-#~ msgstr "E240: Ei yhteyttä vim-palvelimeen"
+#~ msgstr "E240: Ei yhteyttï¿½ vim-palvelimeen"
 
 #~ msgid "E241: Unable to send to %s"
-#~ msgstr "E241: Kohteeseen %s lähettäminen ei onnistunut"
+#~ msgstr "E241: Kohteeseen %s lï¿½hettï¿½minen ei onnistunut"
 
 #~ msgid "E277: Unable to read a server reply"
 #~ msgstr "E277: Palvelimen vastauksen lukeminen ei onnistunut"
 
 #~ msgid "E258: Unable to send to client"
-#~ msgstr "E258: Asiakkaalle lähetys ei onnistunut"
+#~ msgstr "E258: Asiakkaalle lï¿½hetys ei onnistunut"
 
 #~ msgid "Save As"
-#~ msgstr "Tallenna nimellä"
+#~ msgstr "Tallenna nimellï¿½"
 
 #~ msgid "Source Vim script"
 #~ msgstr "Lataa vim-skripti"
@@ -6517,7 +6505,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Muokkaa tiedostoa"
 
 #~ msgid " (NOT FOUND)"
-#~ msgstr " (EI LÖYTYNYT)"
+#~ msgstr " (EI Lï¿½YTYNYT)"
 
 #~ msgid "unknown"
 #~ msgstr "tuntematon"
@@ -6526,7 +6514,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Muokkaa uudessa ikkunassa"
 
 #~ msgid "Append File"
-#~ msgstr "Lisää tiedostoon"
+#~ msgstr "Lisï¿½ï¿½ tiedostoon"
 
 #~ msgid "Window position: X %d, Y %d"
 #~ msgstr "Ikkunan sijainti: X %d, Y %d"
@@ -6535,7 +6523,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Tallenna uudelleenosoitus"
 
 #~ msgid "Save View"
-#~ msgstr "Tallenna näkymä"
+#~ msgstr "Tallenna nï¿½kymï¿½"
 
 #~ msgid "Save Session"
 #~ msgstr "Tallenna sessio"
@@ -6544,16 +6532,16 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Tallenna asetukset"
 
 #~ msgid "E809: #< is not available without the +eval feature"
-#~ msgstr "E809: #< ei ole käytössä jollei +eval ole päällä"
+#~ msgstr "E809: #< ei ole kï¿½ytï¿½ssï¿½ jollei +eval ole pï¿½ï¿½llï¿½"
 
 #~ msgid "E196: No digraphs in this version"
-#~ msgstr "E196: Digraafeja ei ole tässä versiossa"
+#~ msgstr "E196: Digraafeja ei ole tï¿½ssï¿½ versiossa"
 
 #~ msgid "is a device (disabled with 'opendevice' option)"
-#~ msgstr "on laite (ei käytössä opendevice-asetuksen takia)"
+#~ msgstr "on laite (ei kï¿½ytï¿½ssï¿½ opendevice-asetuksen takia)"
 
 #~ msgid "Reading from stdin..."
-#~ msgstr "Luetaan vakiosyötteestä"
+#~ msgstr "Luetaan vakiosyï¿½tteestï¿½"
 
 #~ msgid "[crypted]"
 #~ msgstr "[salattu]"
@@ -6568,11 +6556,11 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Osittaiset kirjoitukset kielletty NetBeans-puskureissa"
 
 #~ msgid "writing to device disabled with 'opendevice' option"
-#~ msgstr "laitteeseen kirjoittaminen pois käytöstä opendevice-asetuksella"
+#~ msgstr "laitteeseen kirjoittaminen pois kï¿½ytï¿½stï¿½ opendevice-asetuksella"
 
-# tietääkseni resurssiforkki on applen tiedostojärjestelmän tunnistejuttujuttu
+# tietï¿½ï¿½kseni resurssiforkki on applen tiedostojï¿½rjestelmï¿½n tunnistejuttujuttu
 #~ msgid "E460: The resource fork would be lost (add ! to override)"
-#~ msgstr "E460: resurssiosa häviäisi (lisää komentoon ! ohittaaksesi)"
+#~ msgstr "E460: resurssiosa hï¿½viï¿½isi (lisï¿½ï¿½ komentoon ! ohittaaksesi)"
 
 #~ msgid "<cannot open> "
 #~ msgstr "<ei voi avata> "
@@ -6587,7 +6575,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Polku:"
 
 #~ msgid "E615: vim_SelFile: can't get current directory"
-#~ msgstr "E615: vim_SelFile: nykyistä hakemistoa ei saada selville"
+#~ msgstr "E615: vim_SelFile: nykyistï¿½ hakemistoa ei saada selville"
 
 #~ msgid "OK"
 #~ msgstr "OK"
@@ -6599,19 +6587,19 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Vim-ikkuna"
 
 #~ msgid "Scrollbar Widget: Could not get geometry of thumb pixmap."
-#~ msgstr "Vierityspalkki: Pixmapin geometria ei selviä"
+#~ msgstr "Vierityspalkki: Pixmapin geometria ei selviï¿½"
 
 #~ msgid "E232: Cannot create BalloonEval with both message and callback"
 #~ msgstr "E232: Ei voi luoda BalloonEvalia viestille ja callbackille"
 
 #~ msgid "E229: Cannot start the GUI"
-#~ msgstr "E229: GUIn käynnistys ei onnistu"
+#~ msgstr "E229: GUIn kï¿½ynnistys ei onnistu"
 
 #~ msgid "E230: Cannot read from \"%s\""
 #~ msgstr "E230: Ei voi lukea kohteesta %s"
 
 #~ msgid "E665: Cannot start GUI, no valid font found"
-#~ msgstr "E665: Ei voi avata GUIta, sopivaa fonttia ei löydy"
+#~ msgstr "E665: Ei voi avata GUIta, sopivaa fonttia ei lï¿½ydy"
 
 #~ msgid "E231: 'guifontwide' invalid"
 #~ msgstr "E231: guifontwide virheellinen"
@@ -6620,13 +6608,13 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E599: imactivatekeyn arvo on virheellinen"
 
 #~ msgid "E254: Cannot allocate color %s"
-#~ msgstr "E254: Väriä %s ei voi määritellä"
+#~ msgstr "E254: Vï¿½riï¿½ %s ei voi mï¿½ï¿½ritellï¿½"
 
 #~ msgid "No match at cursor, finding next"
-#~ msgstr "Ei täsmäystä kursorin alla, etsitään seuraava"
+#~ msgstr "Ei tï¿½smï¿½ystï¿½ kursorin alla, etsitï¿½ï¿½n seuraava"
 
 #~ msgid "Input _Methods"
-#~ msgstr "Syöte_menetelmät"
+#~ msgstr "Syï¿½te_menetelmï¿½t"
 
 #~ msgid "VIM - Search and Replace..."
 #~ msgstr "VIM - Etsi ja korvaa..."
@@ -6650,7 +6638,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Suunta"
 
 #~ msgid "Up"
-#~ msgstr "Ylös"
+#~ msgstr "Ylï¿½s"
 
 #~ msgid "Down"
 #~ msgstr "Alas"
@@ -6665,19 +6653,19 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Korvaa kaikki"
 
 #~ msgid "Vim: Received \"die\" request from session manager\n"
-#~ msgstr "Vim: sessiomanageri lähetti die-pyynnön\n"
+#~ msgstr "Vim: sessiomanageri lï¿½hetti die-pyynnï¿½n\n"
 
 #~ msgid "Close"
 #~ msgstr "Sulje"
 
 #~ msgid "New tab"
-#~ msgstr "Uusi välilehti"
+#~ msgstr "Uusi vï¿½lilehti"
 
 #~ msgid "Open Tab..."
-#~ msgstr "Avaa välilehti..."
+#~ msgstr "Avaa vï¿½lilehti..."
 
 #~ msgid "Vim: Main window unexpectedly destroyed\n"
-#~ msgstr "Vim: Pääikkuna tuhoutui odottamatta\n"
+#~ msgstr "Vim: Pï¿½ï¿½ikkuna tuhoutui odottamatta\n"
 
 #~ msgid "&Filter"
 #~ msgstr "&Suodata"
@@ -6716,30 +6704,30 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "&Kumoa"
 
 #~ msgid "E671: Cannot find window title \"%s\""
-#~ msgstr "E671: Ikkunan otsikkoa ei löydy %s"
+#~ msgstr "E671: Ikkunan otsikkoa ei lï¿½ydy %s"
 
-# OLE on object linking and embedding på windowska
+# OLE on object linking and embedding pï¿½ windowska
 #~ msgid "E243: Argument not supported: \"-%s\"; Use the OLE version."
-#~ msgstr "E243: Argumenttia ei tueta: -%s, käytä OLE-versiota"
+#~ msgstr "E243: Argumenttia ei tueta: -%s, kï¿½ytï¿½ OLE-versiota"
 
 # MDI eli windowsin moni-ikkunasovellus
 #~ msgid "E672: Unable to open window inside MDI application"
 #~ msgstr "E672: Ikkunaa ei voitu avata MDI-sovellukseen"
 
 #~ msgid "Close tab"
-#~ msgstr "Sulje välilehti"
+#~ msgstr "Sulje vï¿½lilehti"
 
 #~ msgid "Open tab..."
-#~ msgstr "Avaa välilehti..."
+#~ msgstr "Avaa vï¿½lilehti..."
 
 #~ msgid "Find string (use '\\\\' to find  a '\\')"
-#~ msgstr "Etsi merkkijonoa (\\\\:llä löytää \\:t)"
+#~ msgstr "Etsi merkkijonoa (\\\\:llï¿½ lï¿½ytï¿½ï¿½ \\:t)"
 
 #~ msgid "Find & Replace (use '\\\\' to find  a '\\')"
-#~ msgstr "Etsi ja korvaa (\\\\:llä löytää \\:t)"
+#~ msgstr "Etsi ja korvaa (\\\\:llï¿½ lï¿½ytï¿½ï¿½ \\:t)"
 
 #~ msgid "Not Used"
-#~ msgstr "Ei käytössä"
+#~ msgstr "Ei kï¿½ytï¿½ssï¿½"
 
 #~ msgid "Directory\t*.nothing\n"
 #~ msgstr "Hakemisto\t*.nothing\n"
@@ -6747,16 +6735,16 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgid ""
 #~ "Vim E458: Cannot allocate colormap entry, some colors may be incorrect"
 #~ msgstr ""
-#~ "Vim E458: Ei voi varata värikartan alkiota, värit voivat mennä väärin"
+#~ "Vim E458: Ei voi varata vï¿½rikartan alkiota, vï¿½rit voivat mennï¿½ vï¿½ï¿½rin"
 
 #~ msgid "E250: Fonts for the following charsets are missing in fontset %s:"
-#~ msgstr "E250: Seuraavien merkistöjoukkojen fontit puuttuvat fontsetistä %s:"
+#~ msgstr "E250: Seuraavien merkistï¿½joukkojen fontit puuttuvat fontsetistï¿½ %s:"
 
 #~ msgid "E252: Fontset name: %s"
 #~ msgstr "E252: Fontsetin nimi: %s"
 
 #~ msgid "Font '%s' is not fixed-width"
-#~ msgstr "Fontti %s ei ole tasavälinen"
+#~ msgstr "Fontti %s ei ole tasavï¿½linen"
 
 #~ msgid "E253: Fontset name: %s\n"
 #~ msgstr "E253: Fontsetin nimi: %s\n"
@@ -6781,13 +6769,13 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "\n"
 
 #~ msgid "Invalid font specification"
-#~ msgstr "Virheellinen fonttimääritys"
+#~ msgstr "Virheellinen fonttimï¿½ï¿½ritys"
 
 #~ msgid "&Dismiss"
 #~ msgstr "&Ohita"
 
 #~ msgid "no specific match"
-#~ msgstr "ei tarkkaa täsmäystä"
+#~ msgstr "ei tarkkaa tï¿½smï¿½ystï¿½"
 
 #~ msgid "Vim - Font Selector"
 #~ msgstr "Vim - fonttivalitsin"
@@ -6796,7 +6784,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Nimi:"
 
 #~ msgid "Show size in Points"
-#~ msgstr "Näytä koko pisteinä"
+#~ msgstr "Nï¿½ytï¿½ koko pisteinï¿½"
 
 #~ msgid "Encoding:"
 #~ msgstr "Koodaus:"
@@ -6837,7 +6825,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "virheellinen ilmaus"
 
 #~ msgid "expressions disabled at compile time"
-#~ msgstr "ilmaukset poistettu käytöstä käännösaikana"
+#~ msgstr "ilmaukset poistettu kï¿½ytï¿½stï¿½ kï¿½ï¿½nnï¿½saikana"
 
 #~ msgid "hidden option"
 #~ msgstr "piilotettu asetus"
@@ -6852,16 +6840,16 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "ei voitu avata puskuria"
 
 #~ msgid "cannot delete line"
-#~ msgstr "ei voitu poistaa riviä"
+#~ msgstr "ei voitu poistaa riviï¿½"
 
 #~ msgid "cannot replace line"
-#~ msgstr "ei voitu korvata riviä"
+#~ msgstr "ei voitu korvata riviï¿½"
 
 #~ msgid "cannot insert line"
-#~ msgstr "ei voitu lisätä riviä"
+#~ msgstr "ei voitu lisï¿½tï¿½ riviï¿½"
 
 #~ msgid "string cannot contain newlines"
-#~ msgstr "merkkijono ei saa sisältää rivinvaihtoja"
+#~ msgstr "merkkijono ei saa sisï¿½ltï¿½ï¿½ rivinvaihtoja"
 
 #~ msgid "Vim error: ~a"
 #~ msgstr "Vim-virhe: ~a"
@@ -6883,11 +6871,11 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 
 #~ msgid "E836: This Vim cannot execute :python after using :py3"
 #~ msgstr ""
-#~ "E836: Python: Ei voi käyttää komentoja :py ja :py3 samassa istunnossa"
+#~ "E836: Python: Ei voi kï¿½yttï¿½ï¿½ komentoja :py ja :py3 samassa istunnossa"
 
 #~ msgid "E837: This Vim cannot execute :py3 after using :python"
 #~ msgstr ""
-#~ "E837: Python: Ei voi käyttää komentoja :py ja :py3 samassa istunnossa"
+#~ "E837: Python: Ei voi kï¿½yttï¿½ï¿½ komentoja :py ja :py3 samassa istunnossa"
 
 #~ msgid ""
 #~ "E263: Sorry, this command is disabled, the Python library could not be "
@@ -6899,7 +6887,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "ei voi poistaa OutputObject-attribuutteja"
 
 #~ msgid "softspace must be an integer"
-#~ msgstr "softspacen pitää olla kokonaisluku"
+#~ msgstr "softspacen pitï¿½ï¿½ olla kokonaisluku"
 
 #~ msgid "invalid attribute"
 #~ msgstr "virheellinen attribuutti"
@@ -6911,7 +6899,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E659: Pythonia ei voi kutsua rekursiivisesti"
 
 #~ msgid "E265: $_ must be an instance of String"
-#~ msgstr "E265: muuttujan $_ pitää olla Stringin instanssi"
+#~ msgstr "E265: muuttujan $_ pitï¿½ï¿½ olla Stringin instanssi"
 
 #~ msgid ""
 #~ "E266: Sorry, this command is disabled, the Ruby library could not be "
@@ -6934,34 +6922,34 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E271: retry rescuen ulkopuolella"
 
 #~ msgid "E272: unhandled exception"
-#~ msgstr "E272: käsittelemätön poikkeus"
+#~ msgstr "E272: kï¿½sittelemï¿½tï¿½n poikkeus"
 
 #~ msgid "E273: unknown longjmp status %d"
 #~ msgstr "E273: tuntematon longjmp-tila %d"
 
 #~ msgid "Toggle implementation/definition"
-#~ msgstr "Vaihda toteutuksen ja määritelmän välillä"
+#~ msgstr "Vaihda toteutuksen ja mï¿½ï¿½ritelmï¿½n vï¿½lillï¿½"
 
 #~ msgid "Show base class of"
-#~ msgstr "Näytä kantaluokka kohteelle"
+#~ msgstr "Nï¿½ytï¿½ kantaluokka kohteelle"
 
 #~ msgid "Show overridden member function"
-#~ msgstr "Näytä korvattu jäsenfunktio"
+#~ msgstr "Nï¿½ytï¿½ korvattu jï¿½senfunktio"
 
 #~ msgid "Retrieve from file"
-#~ msgstr "Jäljitä tiedostosta"
+#~ msgstr "Jï¿½ljitï¿½ tiedostosta"
 
 #~ msgid "Retrieve from project"
-#~ msgstr "Jäljitä projektista"
+#~ msgstr "Jï¿½ljitï¿½ projektista"
 
 #~ msgid "Retrieve from all projects"
-#~ msgstr "Jäljitä kaikista projekteista"
+#~ msgstr "Jï¿½ljitï¿½ kaikista projekteista"
 
 #~ msgid "Retrieve"
-#~ msgstr "Jäljitä"
+#~ msgstr "Jï¿½ljitï¿½"
 
 #~ msgid "Show source of"
-#~ msgstr "Näytä lähdekoodi kohteelle"
+#~ msgstr "Nï¿½ytï¿½ lï¿½hdekoodi kohteelle"
 
 #~ msgid "Find symbol"
 #~ msgstr "Etsi symboli"
@@ -6970,10 +6958,10 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Selaa luokkaa"
 
 #~ msgid "Show class in hierarchy"
-#~ msgstr "Näytä luokka hierarkiassa"
+#~ msgstr "Nï¿½ytï¿½ luokka hierarkiassa"
 
 #~ msgid "Show class in restricted hierarchy"
-#~ msgstr "Näytä luokka rajoitetussa hierarkiassa"
+#~ msgstr "Nï¿½ytï¿½ luokka rajoitetussa hierarkiassa"
 
 #~ msgid "Xref refers to"
 #~ msgstr "Xref viittaa kohteeseen"
@@ -6982,13 +6970,13 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Xref viitattu kohteesta"
 
 #~ msgid "Xref has a"
-#~ msgstr "Xref sisältää kohteen"
+#~ msgstr "Xref sisï¿½ltï¿½ï¿½ kohteen"
 
 #~ msgid "Xref used by"
-#~ msgstr "Xrefiä käyttää"
+#~ msgstr "Xrefiï¿½ kï¿½yttï¿½ï¿½"
 
 #~ msgid "Show docu of"
-#~ msgstr "Näytä dokumentti kohteelle"
+#~ msgstr "Nï¿½ytï¿½ dokumentti kohteelle"
 
 #~ msgid "Generate docu for"
 #~ msgstr "Luo dokumentti kohteelle"
@@ -6997,8 +6985,8 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "Cannot connect to SNiFF+. Check environment (sniffemacs must be found in "
 #~ "$PATH).\n"
 #~ msgstr ""
-#~ "Ei voida yhdistää SNiFF+:aan. Tarkista ympäristömuuttujat (sniffemacsin "
-#~ "löytyä polkumuuttujasta $PATH).\n"
+#~ "Ei voida yhdistï¿½ï¿½ SNiFF+:aan. Tarkista ympï¿½ristï¿½muuttujat (sniffemacsin "
+#~ "lï¿½ytyï¿½ polkumuuttujasta $PATH).\n"
 
 #~ msgid "E274: Sniff: Error during read. Disconnected"
 #~ msgstr "E274: Sniff: Virhe luettaessa, yhteys katkaistu"
@@ -7013,10 +7001,10 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "yhdistetty"
 
 #~ msgid "E275: Unknown SNiFF+ request: %s"
-#~ msgstr "E275: Tuntematon SNiFF+-pyyntö: %s"
+#~ msgstr "E275: Tuntematon SNiFF+-pyyntï¿½: %s"
 
 #~ msgid "E276: Error connecting to SNiFF+"
-#~ msgstr "E276: Virhe yhdistettäessä SNiFF+:aan"
+#~ msgstr "E276: Virhe yhdistettï¿½essï¿½ SNiFF+:aan"
 
 #~ msgid "E278: SNiFF+ not connected"
 #~ msgstr "E278: SNiFF+ ei ole yhdistetty"
@@ -7034,7 +7022,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "ei toteutettu"
 
 #~ msgid "cannot set line(s)"
-#~ msgstr "ei voi asettaa rivejä"
+#~ msgstr "ei voi asettaa rivejï¿½"
 
 #~ msgid "invalid mark name"
 #~ msgstr "virheellinen merkin nimi"
@@ -7046,7 +7034,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "rivi %d sarake %d"
 
 #~ msgid "cannot insert/append line"
-#~ msgstr "rivin lisäys ei onnistu"
+#~ msgstr "rivin lisï¿½ys ei onnistu"
 
 #~ msgid "line number out of range"
 #~ msgstr "rivinumero arvoalueen ulkopuolella"
@@ -7058,7 +7046,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "tuntematon vimOption"
 
 #~ msgid "keyboard interrupt"
-#~ msgstr "näppäimistökeskeytys"
+#~ msgstr "nï¿½ppï¿½imistï¿½keskeytys"
 
 #~ msgid "vim error"
 #~ msgstr "vim-virhe"
@@ -7068,7 +7056,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 
 #~ msgid ""
 #~ "cannot register callback command: buffer/window is already being deleted"
-#~ msgstr "callbackia ei voi rekisteröidä: puskuri tai ikkuna on poistettu"
+#~ msgstr "callbackia ei voi rekisterï¿½idï¿½: puskuri tai ikkuna on poistettu"
 
 #~ msgid ""
 #~ "E280: TCL FATAL ERROR: reflist corrupt!? Please report this to vim-"
@@ -7079,7 +7067,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 
 #~ msgid "cannot register callback command: buffer/window reference not found"
 #~ msgstr ""
-#~ "callbackia ei voi rekisteröidä: puskurin tai ikkunan viitettä ei löydy"
+#~ "callbackia ei voi rekisterï¿½idï¿½: puskurin tai ikkunan viitettï¿½ ei lï¿½ydy"
 
 #~ msgid ""
 #~ "E571: Sorry, this command is disabled: the Tcl library could not be "
@@ -7097,13 +7085,13 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E572: palautusarvo %d"
 
 #~ msgid "cannot get line"
-#~ msgstr "ei voida hakea riviä"
+#~ msgstr "ei voida hakea riviï¿½"
 
 #~ msgid "Unable to register a command server name"
-#~ msgstr "Komentopalvelimen nimen rekisteröinti ei onnistu"
+#~ msgstr "Komentopalvelimen nimen rekisterï¿½inti ei onnistu"
 
 #~ msgid "E248: Failed to send command to the destination program"
-#~ msgstr "E248: Komennon lähetys kohdeohjelmalle ei onnistu"
+#~ msgstr "E248: Komennon lï¿½hetys kohdeohjelmalle ei onnistu"
 
 #~ msgid "E573: Invalid server id used: %s"
 #~ msgstr "E573: Virheellinen palvelimen tunniste: %s"
@@ -7112,54 +7100,54 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E251: VIMin instanssin rekisteriarvo on virheellinen, poistettiin."
 
 #~ msgid "netbeans is not supported with this GUI\n"
-#~ msgstr "netbeans ei toimi tässä käyttöliittymässä\n"
+#~ msgstr "netbeans ei toimi tï¿½ssï¿½ kï¿½yttï¿½liittymï¿½ssï¿½\n"
 
 #~ msgid "This Vim was not compiled with the diff feature."
-#~ msgstr "Tähän Vimiin ei ole käännetty diff-toimintoja mukaan."
+#~ msgstr "Tï¿½hï¿½n Vimiin ei ole kï¿½ï¿½nnetty diff-toimintoja mukaan."
 
 #~ msgid "'-nb' cannot be used: not enabled at compile time\n"
-#~ msgstr "-nb:tä ei voi käyttää, koska sitä ei käännetty mukaan\n"
+#~ msgstr "-nb:tï¿½ ei voi kï¿½yttï¿½ï¿½, koska sitï¿½ ei kï¿½ï¿½nnetty mukaan\n"
 
 #~ msgid "Vim: Error: Failure to start gvim from NetBeans\n"
-#~ msgstr "Vim: Virhe: Gvimin käynnistys NetBeansistä ei onnistu\n"
+#~ msgstr "Vim: Virhe: Gvimin kï¿½ynnistys NetBeansistï¿½ ei onnistu\n"
 
 #~ msgid ""
 #~ "\n"
 #~ "Where case is ignored prepend / to make flag upper case"
 #~ msgstr ""
 #~ "\n"
-#~ "Jos aakkoslaji on ohitettu, lisää alkuun / tehdäksesi asetuksesta "
+#~ "Jos aakkoslaji on ohitettu, lisï¿½ï¿½ alkuun / tehdï¿½ksesi asetuksesta "
 #~ "suuraakkosia"
 
 #~ msgid "-register\t\tRegister this gvim for OLE"
-#~ msgstr "-register\t\trekisteröi gvim OLEa varten"
+#~ msgstr "-register\t\trekisterï¿½i gvim OLEa varten"
 
 #~ msgid "-unregister\t\tUnregister gvim for OLE"
-#~ msgstr "-unregister\t\tPoista gvim OLE-rekisteristä"
+#~ msgstr "-unregister\t\tPoista gvim OLE-rekisteristï¿½"
 
 #~ msgid "-g\t\t\tRun using GUI (like \"gvim\")"
-#~ msgstr "-g\t\t\tAvaa GUI (kuten gvimillä)"
+#~ msgstr "-g\t\t\tAvaa GUI (kuten gvimillï¿½)"
 
 #~ msgid "-f  or  --nofork\tForeground: Don't fork when starting GUI"
-#~ msgstr "-f tai --nofork\tEdustalle: Älä haarauta GUIn käynnistyksessä"
+#~ msgstr "-f tai --nofork\tEdustalle: ï¿½lï¿½ haarauta GUIn kï¿½ynnistyksessï¿½"
 
 #~ msgid "-f\t\t\tDon't use newcli to open window"
-#~ msgstr "-f\t\t\tÄlä käytä newcli:tä ikkunan avaamiseen"
+#~ msgstr "-f\t\t\tï¿½lï¿½ kï¿½ytï¿½ newcli:tï¿½ ikkunan avaamiseen"
 
 #~ msgid "-dev <device>\t\tUse <device> for I/O"
-#~ msgstr "-dev <laite>\t\tKäytä <laitetta> IO:hon"
+#~ msgstr "-dev <laite>\t\tKï¿½ytï¿½ <laitetta> IO:hon"
 
 #~ msgid "-U <gvimrc>\t\tUse <gvimrc> instead of any .gvimrc"
-#~ msgstr "-U <gvimrc>\t\tKäytä <gvimrc>-tiedostoa .gvimrc:iden sijasta"
+#~ msgstr "-U <gvimrc>\t\tKï¿½ytï¿½ <gvimrc>-tiedostoa .gvimrc:iden sijasta"
 
 #~ msgid "-x\t\t\tEdit encrypted files"
 #~ msgstr "-x\t\t\tMuokkaa salattua tiedostoa"
 
 #~ msgid "-display <display>\tConnect vim to this particular X-server"
-#~ msgstr "-display <näyttö>\tYhdistä vim tiettyyn X-palvelimeen"
+#~ msgstr "-display <nï¿½yttï¿½>\tYhdistï¿½ vim tiettyyn X-palvelimeen"
 
 #~ msgid "-X\t\t\tDo not connect to X server"
-#~ msgstr "-X\t\t\tÄlä yhdistä X-palvelimeen"
+#~ msgstr "-X\t\t\tï¿½lï¿½ yhdistï¿½ X-palvelimeen"
 
 #~ msgid "--remote <files>\tEdit <files> in a Vim server if possible"
 #~ msgstr ""
@@ -7168,7 +7156,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 
 #~ msgid "--remote-silent <files>  Same, don't complain if there is no server"
 #~ msgstr ""
-#~ "--remote-silent <tiedostoja>\tSama, mutta älä ilmoita puuttuvasta "
+#~ "--remote-silent <tiedostoja>\tSama, mutta ï¿½lï¿½ ilmoita puuttuvasta "
 #~ "palvelimesta"
 
 #~ msgid ""
@@ -7180,7 +7168,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgid ""
 #~ "--remote-wait-silent <files>  Same, don't complain if there is no server"
 #~ msgstr ""
-#~ "--remote-wait-silent <tiedostoja>  sama, mutta älä ilmoita puuttuvasta "
+#~ "--remote-wait-silent <tiedostoja>  sama, mutta ï¿½lï¿½ ilmoita puuttuvasta "
 #~ "palvelimesta"
 
 #~ msgid ""
@@ -7188,24 +7176,24 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "file"
 #~ msgstr ""
 #~ "--remote-tab[-wait][-silent] <tiedostoja>  kuten --remote, mutta avaa "
-#~ "välilehti joka tiedostolle"
+#~ "vï¿½lilehti joka tiedostolle"
 
 #~ msgid "--remote-send <keys>\tSend <keys> to a Vim server and exit"
 #~ msgstr ""
-#~ "--remote-send <näppäimiä>\tLähetä <näppäimiä> painalluksina Vimille ja "
+#~ "--remote-send <nï¿½ppï¿½imiï¿½>\tLï¿½hetï¿½ <nï¿½ppï¿½imiï¿½> painalluksina Vimille ja "
 #~ "lopeta"
 
 #~ msgid ""
 #~ "--remote-expr <expr>\tEvaluate <expr> in a Vim server and print result"
 #~ msgstr ""
-#~ "--remote-expr <ilmaus>\tKäsittele <ilmaus> Vim-palvelimella ja tulosta "
+#~ "--remote-expr <ilmaus>\tKï¿½sittele <ilmaus> Vim-palvelimella ja tulosta "
 #~ "tulos"
 
 #~ msgid "--serverlist\t\tList available Vim server names and exit"
 #~ msgstr "--serverlist\t\tLuettele Vim-palvelinten nimet ja lopeta"
 
 #~ msgid "--servername <name>\tSend to/become the Vim server <name>"
-#~ msgstr "--servername <nimi>\tLähetä Vim-palvelimelle <nimi> tai luo se"
+#~ msgstr "--servername <nimi>\tLï¿½hetï¿½ Vim-palvelimelle <nimi> tai luo se"
 
 #~ msgid ""
 #~ "\n"
@@ -7229,46 +7217,46 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "Gvimin (Athena-version) tuntemat argumentit:\n"
 
 #~ msgid "-display <display>\tRun vim on <display>"
-#~ msgstr "-display <näyttö>\tSuorita vim <näytössä>"
+#~ msgstr "-display <nï¿½yttï¿½>\tSuorita vim <nï¿½ytï¿½ssï¿½>"
 
 #~ msgid "-iconic\t\tStart vim iconified"
-#~ msgstr "-iconic\t\tKäynnistä pienennettynä"
+#~ msgstr "-iconic\t\tKï¿½ynnistï¿½ pienennettynï¿½"
 
 #~ msgid "-background <color>\tUse <color> for the background (also: -bg)"
-#~ msgstr "-background <väri>\tKäytä <väriä> taustavärinä (myös: -bg)"
+#~ msgstr "-background <vï¿½ri>\tKï¿½ytï¿½ <vï¿½riï¿½> taustavï¿½rinï¿½ (myï¿½s: -bg)"
 
 #~ msgid "-foreground <color>\tUse <color> for normal text (also: -fg)"
-#~ msgstr "-foreground <väri>\tKäytä <väriä> tekstin värinä (myös: -fg)"
+#~ msgstr "-foreground <vï¿½ri>\tKï¿½ytï¿½ <vï¿½riï¿½> tekstin vï¿½rinï¿½ (myï¿½s: -fg)"
 
 #~ msgid "-font <font>\t\tUse <font> for normal text (also: -fn)"
-#~ msgstr "-font <fontti>\t\tKäytä <fonttia> tekstissä (myös: -fn)"
+#~ msgstr "-font <fontti>\t\tKï¿½ytï¿½ <fonttia> tekstissï¿½ (myï¿½s: -fn)"
 
 #~ msgid "-boldfont <font>\tUse <font> for bold text"
-#~ msgstr "-boldfont <fontti>\tKäytä <fonttia> lihavoidussa tekstissä"
+#~ msgstr "-boldfont <fontti>\tKï¿½ytï¿½ <fonttia> lihavoidussa tekstissï¿½"
 
 #~ msgid "-italicfont <font>\tUse <font> for italic text"
-#~ msgstr "-italicfont <fontti>\tKäytä <fonttia> kursivoidussa tekstissä"
+#~ msgstr "-italicfont <fontti>\tKï¿½ytï¿½ <fonttia> kursivoidussa tekstissï¿½"
 
 #~ msgid "-geometry <geom>\tUse <geom> for initial geometry (also: -geom)"
 #~ msgstr ""
-#~ "-geometry <geom>\tKäytä mittoja <geom> ikkunan asetteluun (myös: -geom)"
+#~ "-geometry <geom>\tKï¿½ytï¿½ mittoja <geom> ikkunan asetteluun (myï¿½s: -geom)"
 
 #~ msgid "-borderwidth <width>\tUse a border width of <width> (also: -bw)"
-#~ msgstr "-borderwidt <leveys>\tKäytä <leveyttä> reunuksissa (myös: -bw) "
+#~ msgstr "-borderwidt <leveys>\tKï¿½ytï¿½ <leveyttï¿½> reunuksissa (myï¿½s: -bw) "
 
 #~ msgid ""
 #~ "-scrollbarwidth <width>  Use a scrollbar width of <width> (also: -sw)"
 #~ msgstr ""
-#~ "-scrollbarwidth <leveys>  Käytä <leveyttä> vierityspalkissa (myös: -sw)"
+#~ "-scrollbarwidth <leveys>  Kï¿½ytï¿½ <leveyttï¿½> vierityspalkissa (myï¿½s: -sw)"
 
 #~ msgid "-menuheight <height>\tUse a menu bar height of <height> (also: -mh)"
-#~ msgstr "-menuheight <korkeus>\tKäytä <korkeutta> valikossa (myös: -mh)"
+#~ msgstr "-menuheight <korkeus>\tKï¿½ytï¿½ <korkeutta> valikossa (myï¿½s: -mh)"
 
 #~ msgid "-reverse\t\tUse reverse video (also: -rv)"
-#~ msgstr "-reverse\t\tKäytä käänteisvärejä (myös: -rv) "
+#~ msgstr "-reverse\t\tKï¿½ytï¿½ kï¿½ï¿½nteisvï¿½rejï¿½ (myï¿½s: -rv) "
 
 #~ msgid "+reverse\t\tDon't use reverse video (also: +rv)"
-#~ msgstr "+reverse\t\tÄlä käytä käänteisvärejä (myös: +rv)"
+#~ msgstr "+reverse\t\tï¿½lï¿½ kï¿½ytï¿½ kï¿½ï¿½nteisvï¿½rejï¿½ (myï¿½s: +rv)"
 
 #~ msgid "-xrm <resource>\tSet the specified resource"
 #~ msgstr "-xrm <resurssi>\tAseta resurssi"
@@ -7284,7 +7272,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "--columns <luku>\tIkkunan alkuleveys sarakkeina"
 
 #~ msgid "--rows <number>\tInitial height of window in rows"
-#~ msgstr "--rows <luku>\tIkkunan alkukorkeus riveinä"
+#~ msgstr "--rows <luku>\tIkkunan alkukorkeus riveinï¿½"
 
 #~ msgid ""
 #~ "\n"
@@ -7294,63 +7282,63 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "Gvimin (GTK+-version) tuntemat argumentit:\n"
 
 #~ msgid "-display <display>\tRun vim on <display> (also: --display)"
-#~ msgstr "-display <näyttö>\tSuorita vim näytöllä <näyttö> (myös: --display)"
+#~ msgstr "-display <nï¿½yttï¿½>\tSuorita vim nï¿½ytï¿½llï¿½ <nï¿½yttï¿½> (myï¿½s: --display)"
 
-# X-ikkunointijärjestelmässä saman sovelluksen saman luokan ikkunat
+# X-ikkunointijï¿½rjestelmï¿½ssï¿½ saman sovelluksen saman luokan ikkunat
 # tunnistetaan rooliresursseista
 #~ msgid "--role <role>\tSet a unique role to identify the main window"
 #~ msgstr ""
-#~ "--role <rooli>\tAseta pääikkunalle ainutlaatuinen rooli tunnisteeksi"
+#~ "--role <rooli>\tAseta pï¿½ï¿½ikkunalle ainutlaatuinen rooli tunnisteeksi"
 
 #~ msgid "--socketid <xid>\tOpen Vim inside another GTK widget"
 #~ msgstr "--socketid <xid>\tAvaa Vim annettuun GTK-olioon "
 
 #~ msgid "-P <parent title>\tOpen Vim inside parent application"
-#~ msgstr "-P <otsikko>\tAvaa Vim isäntäohjelman sisään"
+#~ msgstr "-P <otsikko>\tAvaa Vim isï¿½ntï¿½ohjelman sisï¿½ï¿½n"
 
 #~ msgid "--windowid <HWND>\tOpen Vim inside another win32 widget"
 #~ msgstr "--windowid <HWND>\tAvaa Vim annettuun win32-olioon "
 
 #~ msgid "No display"
-#~ msgstr "Ei näyttöä"
+#~ msgstr "Ei nï¿½yttï¿½ï¿½"
 
 #~ msgid ": Send failed.\n"
-#~ msgstr ": Lähetys epäonnistui.\n"
+#~ msgstr ": Lï¿½hetys epï¿½onnistui.\n"
 
 #~ msgid ": Send failed. Trying to execute locally\n"
-#~ msgstr ": Lähetys epäonnistui. Yritetään suorittaa paikallisena\n"
+#~ msgstr ": Lï¿½hetys epï¿½onnistui. Yritetï¿½ï¿½n suorittaa paikallisena\n"
 
 #~ msgid "%d of %d edited"
 #~ msgstr "%d/%d muokattu"
 
 #~ msgid "No display: Send expression failed.\n"
-#~ msgstr "Ei näyttöä: Ilmauksen lähetys epäonnistui.\n"
+#~ msgstr "Ei nï¿½yttï¿½ï¿½: Ilmauksen lï¿½hetys epï¿½onnistui.\n"
 
 #~ msgid ": Send expression failed.\n"
-#~ msgstr ": Ilmauksen lähetys epäonnistui.\n"
+#~ msgstr ": Ilmauksen lï¿½hetys epï¿½onnistui.\n"
 
 #~ msgid "E543: Not a valid codepage"
-#~ msgstr "E543: Koodisivu ei ole käypä"
+#~ msgstr "E543: Koodisivu ei ole kï¿½ypï¿½"
 
 #~ msgid "E285: Failed to create input context"
-#~ msgstr "E285: Syötekontekstin luonti ei onnistu"
+#~ msgstr "E285: Syï¿½tekontekstin luonti ei onnistu"
 
 #~ msgid "E286: Failed to open input method"
-#~ msgstr "E286: Syötemetodin avaus ei onnistu"
+#~ msgstr "E286: Syï¿½temetodin avaus ei onnistu"
 
 #~ msgid "E287: Warning: Could not set destroy callback to IM"
 #~ msgstr ""
-#~ "E287: Varoitus: Ei voitu asettaa destroy-kutsua syötemetodipalvelimelle"
+#~ "E287: Varoitus: Ei voitu asettaa destroy-kutsua syï¿½temetodipalvelimelle"
 
 #~ msgid "E288: input method doesn't support any style"
-#~ msgstr "E288: syötemetodi ei tue tyylejä"
+#~ msgstr "E288: syï¿½temetodi ei tue tyylejï¿½"
 
 #~ msgid "E289: input method doesn't support my preedit type"
-#~ msgstr "E289: syötemetodi ei tue tätä preedit-tyyppiä"
+#~ msgstr "E289: syï¿½temetodi ei tue tï¿½tï¿½ preedit-tyyppiï¿½"
 
 #~ msgid ""
 #~ "E833: %s is encrypted and this version of Vim does not support encryption"
-#~ msgstr "E833: %s on salattu eikä tämä Vim tue salausta"
+#~ msgstr "E833: %s on salattu eikï¿½ tï¿½mï¿½ Vim tue salausta"
 
 #~ msgid "Swap file is encrypted: \"%s\""
 #~ msgstr "Swap-tiedosto on salattu: %s"
@@ -7360,7 +7348,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "If you entered a new crypt key but did not write the text file,"
 #~ msgstr ""
 #~ "\n"
-#~ "Jos käytit uutta salausavainta muttet kirjoittanut tekstitiedostoa,"
+#~ "Jos kï¿½ytit uutta salausavainta muttet kirjoittanut tekstitiedostoa,"
 
 #~ msgid ""
 #~ "\n"
@@ -7374,27 +7362,27 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "If you wrote the text file after changing the crypt key press enter"
 #~ msgstr ""
 #~ "\n"
-#~ "Jos kirjoitit tekstitiedoston salausavaimen vaihdon jälkeen paina enteriä"
+#~ "Jos kirjoitit tekstitiedoston salausavaimen vaihdon jï¿½lkeen paina enteriï¿½"
 
 #~ msgid ""
 #~ "\n"
 #~ "to use the same key for text file and swap file"
 #~ msgstr ""
 #~ "\n"
-#~ "käyttääksesi samaa avainta teksti- ja swäppitiedostoille"
+#~ "kï¿½yttï¿½ï¿½ksesi samaa avainta teksti- ja swï¿½ppitiedostoille"
 
 #~ msgid "Using crypt key from swap file for the text file.\n"
-#~ msgstr "Käytetään swäpin salausavainta tekstitiedostolle\n"
+#~ msgstr "Kï¿½ytetï¿½ï¿½n swï¿½pin salausavainta tekstitiedostolle\n"
 
 #~ msgid ""
 #~ "\n"
 #~ "         [not usable with this version of Vim]"
 #~ msgstr ""
 #~ "\n"
-#~ "         [ei toimi tämän Vim-version kanssa]"
+#~ "         [ei toimi tï¿½mï¿½n Vim-version kanssa]"
 
 #~ msgid "Tear off this menu"
-#~ msgstr "Repäise valikko irti"
+#~ msgstr "Repï¿½ise valikko irti"
 
 #~ msgid "Select Directory dialog"
 #~ msgstr "Hakemiston valintaikkuna"
@@ -7409,7 +7397,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E338: Sori, tiedostonselain puuttuu konsolitilasta"
 
 #~ msgid "Vim: preserving files...\n"
-#~ msgstr "Vim: säästetään tiedostoja...\n"
+#~ msgstr "Vim: sï¿½ï¿½stetï¿½ï¿½n tiedostoja...\n"
 
 #~ msgid "Vim: Finished.\n"
 #~ msgstr "Vim: Valmis.\n"
@@ -7423,8 +7411,8 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "%<PRIu64>\n"
 #~ msgstr ""
 #~ "\n"
-#~ "[tavua] yht. alloc-free %<PRIu64>-%<PRIu64>, käytössä %<PRIu64>, "
-#~ "käyttöhuippu %<PRIu64>\n"
+#~ "[tavua] yht. alloc-free %<PRIu64>-%<PRIu64>, kï¿½ytï¿½ssï¿½ %<PRIu64>, "
+#~ "kï¿½yttï¿½huippu %<PRIu64>\n"
 
 #~ msgid ""
 #~ "[calls] total re/malloc()'s %<PRIu64>, total free()'s %<PRIu64>\n"
@@ -7434,10 +7422,10 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "\n"
 
 #~ msgid "E340: Line is becoming too long"
-#~ msgstr "E340: Rivistä tulee liian pitkä"
+#~ msgstr "E340: Rivistï¿½ tulee liian pitkï¿½"
 
 #~ msgid "E341: Internal error: lalloc(%<PRId64>, )"
-#~ msgstr "E341: Sisäinen virhe: lalloc(%<PRId64>, )"
+#~ msgstr "E341: Sisï¿½inen virhe: lalloc(%<PRId64>, )"
 
 #~ msgid "E547: Illegal mouseshape"
 #~ msgstr "E547: Virheellinen hiiren muoto"
@@ -7449,16 +7437,16 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Anna sama avain uudestaan: "
 
 #~ msgid "Keys don't match!"
-#~ msgstr "Avaimet eivät täsmää!"
+#~ msgstr "Avaimet eivï¿½t tï¿½smï¿½ï¿½!"
 
 #~ msgid "Cannot connect to Netbeans #2"
-#~ msgstr "Ei voi yhdistää Netbeans #2:een"
+#~ msgstr "Ei voi yhdistï¿½ï¿½ Netbeans #2:een"
 
 #~ msgid "Cannot connect to Netbeans"
-#~ msgstr "Ei voi yhdistää Netbeansiin"
+#~ msgstr "Ei voi yhdistï¿½ï¿½ Netbeansiin"
 
 #~ msgid "E668: Wrong access mode for NetBeans connection info file: \"%s\""
-#~ msgstr "E668: Väärä avaustila NetBeans-yhteyden infotiedostolle: %s"
+#~ msgstr "E668: Vï¿½ï¿½rï¿½ avaustila NetBeans-yhteyden infotiedostolle: %s"
 
 #~ msgid "read from Netbeans socket"
 #~ msgstr "luettu Netbeans-soketista"
@@ -7473,16 +7461,16 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E505: "
 
 #~ msgid "E775: Eval feature not available"
-#~ msgstr "E775: Eval ei ole käytettävissä"
+#~ msgstr "E775: Eval ei ole kï¿½ytettï¿½vissï¿½"
 
 #~ msgid "freeing %<PRId64> lines"
-#~ msgstr "vapautetaan %<PRId64> riviä"
+#~ msgstr "vapautetaan %<PRId64> riviï¿½"
 
 #~ msgid "E530: Cannot change term in GUI"
-#~ msgstr "E530: Ei voi vaihtaa termiä GUIssa"
+#~ msgstr "E530: Ei voi vaihtaa termiï¿½ GUIssa"
 
 #~ msgid "E531: Use \":gui\" to start the GUI"
-#~ msgstr "E531: Käytä komentoa :gui GUIn käynnistämiseen"
+#~ msgstr "E531: Kï¿½ytï¿½ komentoa :gui GUIn kï¿½ynnistï¿½miseen"
 
 #~ msgid "E617: Cannot be changed in the GTK+ 2 GUI"
 #~ msgstr "E617: Ei voi muuttaa GTK+2-GUIssa"
@@ -7497,13 +7485,13 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E598: Viallinen fontset"
 
 #~ msgid "E533: can't select wide font"
-#~ msgstr "E533: Leveän fontin valinta ei onnistu"
+#~ msgstr "E533: Leveï¿½n fontin valinta ei onnistu"
 
 #~ msgid "E534: Invalid wide font"
-#~ msgstr "E534: Viallinen leveä fontti"
+#~ msgstr "E534: Viallinen leveï¿½ fontti"
 
 #~ msgid "E538: No mouse support"
-#~ msgstr "E538: Hiirtä ei tueta"
+#~ msgstr "E538: Hiirtï¿½ ei tueta"
 
 #~ msgid "cannot open "
 #~ msgstr "ei voi avata "
@@ -7518,7 +7506,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Tarvitaan %s versio %<PRId64>\n"
 
 #~ msgid "Cannot open NIL:\n"
-#~ msgstr "Ei voi avata NILiä:\n"
+#~ msgstr "Ei voi avata NILiï¿½:\n"
 
 #~ msgid "Cannot create "
 #~ msgstr "Ei voi luoda "
@@ -7557,7 +7545,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "columns ei ole 80, ei voi suorittaa ulkoista komentoa"
 
 #~ msgid "E237: Printer selection failed"
-#~ msgstr "E237: Tulostimen valinta epäonnistui"
+#~ msgstr "E237: Tulostimen valinta epï¿½onnistui"
 
 #~ msgid "to %s on %s"
 #~ msgstr "tulostimelle %s kohteessa %s"
@@ -7572,10 +7560,10 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Tulostetaan %s"
 
 #~ msgid "E244: Illegal charset name \"%s\" in font name \"%s\""
-#~ msgstr "E244: Virheellinen merkistön nimi %s fontin nimessä %s"
+#~ msgstr "E244: Virheellinen merkistï¿½n nimi %s fontin nimessï¿½ %s"
 
 #~ msgid "E245: Illegal char '%c' in font name \"%s\""
-#~ msgstr "E245: Virheellinen merkki %c fontin nimessä %s"
+#~ msgstr "E245: Virheellinen merkki %c fontin nimessï¿½ %s"
 
 #~ msgid "Vim: Double signal, exiting\n"
 #~ msgstr "Vim: Kaksoissignaali, lopetetaan\n"
@@ -7587,7 +7575,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Vim: Tappava signaali\n"
 
 #~ msgid "Opening the X display took %<PRId64> msec"
-#~ msgstr "X-näytön avaus vei %<PRId64> millisekuntia"
+#~ msgstr "X-nï¿½ytï¿½n avaus vei %<PRId64> millisekuntia"
 
 #~ msgid ""
 #~ "\n"
@@ -7597,10 +7585,10 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "Vim: X-virhe\n"
 
 #~ msgid "Testing the X display failed"
-#~ msgstr "X-näytön testaus epäonnistui"
+#~ msgstr "X-nï¿½ytï¿½n testaus epï¿½onnistui"
 
 #~ msgid "Opening the X display timed out"
-#~ msgstr "X-näytön avaus aikakatkaistiin"
+#~ msgstr "X-nï¿½ytï¿½n avaus aikakatkaistiin"
 
 #~ msgid ""
 #~ "\n"
@@ -7614,7 +7602,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ "Cannot create pipes\n"
 #~ msgstr ""
 #~ "\n"
-#~ "Putkia ei voi tehdä\n"
+#~ "Putkia ei voi tehdï¿½\n"
 
 #~ msgid ""
 #~ "\n"
@@ -7634,31 +7622,31 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "XSMP kadotti ICE-yhteyden"
 
 #~ msgid "Opening the X display failed"
-#~ msgstr "X-näytön avaus epäonnistui"
+#~ msgstr "X-nï¿½ytï¿½n avaus epï¿½onnistui"
 
 #~ msgid "XSMP handling save-yourself request"
-#~ msgstr "XSMP käsittelee save-yourself-pyyntöä"
+#~ msgstr "XSMP kï¿½sittelee save-yourself-pyyntï¿½ï¿½"
 
 #~ msgid "XSMP opening connection"
-#~ msgstr "XSMP avaa yhteyttä"
+#~ msgstr "XSMP avaa yhteyttï¿½"
 
 #~ msgid "XSMP ICE connection watch failed"
-#~ msgstr "XSMP:n ICE-yhteyden tarkkailu epäonnistui"
+#~ msgstr "XSMP:n ICE-yhteyden tarkkailu epï¿½onnistui"
 
 #~ msgid "XSMP SmcOpenConnection failed: %s"
-#~ msgstr "XSMP SmcOpenConnection epäonnistui: %s"
+#~ msgstr "XSMP SmcOpenConnection epï¿½onnistui: %s"
 
 #~ msgid "At line"
-#~ msgstr "Rivillä"
+#~ msgstr "Rivillï¿½"
 
 #~ msgid "Could not load vim32.dll!"
-#~ msgstr "Vim32.dll:ää ei voitu ladata"
+#~ msgstr "Vim32.dll:ï¿½ï¿½ ei voitu ladata"
 
 #~ msgid "VIM Error"
 #~ msgstr "VIM-virhe"
 
 #~ msgid "Could not fix up function pointers to the DLL!"
-#~ msgstr "Ei voitu korjata funktio-osoittimia DLL:ssä"
+#~ msgstr "Ei voitu korjata funktio-osoittimia DLL:ssï¿½"
 
 #~ msgid "shell returned %d"
 #~ msgstr "kuori palautti arvon %d"
@@ -7676,16 +7664,16 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "sammutus"
 
 #~ msgid "E371: Command not found"
-#~ msgstr "E371: Komentoa ei löydy"
+#~ msgstr "E371: Komentoa ei lï¿½ydy"
 
 #~ msgid ""
 #~ "VIMRUN.EXE not found in your $PATH.\n"
 #~ "External commands will not pause after completion.\n"
 #~ "See  :help win32-vimrun  for more information."
 #~ msgstr ""
-#~ "VIMRUN.EXEä ei löydy muuttujasta $PATH.\n"
-#~ "Ulkoiset komennot eivät pysähdy suorituksen lopussa.\n"
-#~ "Lisätietoja komennolla  :help win32-vimrun"
+#~ "VIMRUN.EXEï¿½ ei lï¿½ydy muuttujasta $PATH.\n"
+#~ "Ulkoiset komennot eivï¿½t pysï¿½hdy suorituksen lopussa.\n"
+#~ "Lisï¿½tietoja komennolla  :help win32-vimrun"
 
 #~ msgid "Vim Warning"
 #~ msgstr "Vim-varoitus"
@@ -7697,13 +7685,13 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Muutosta kohteessa %s ei tueta"
 
 #~ msgid "E430: Tag file path truncated for %s\n"
-#~ msgstr "E430: Tägitiedoston polku katkaistu kohdassa %s\n"
+#~ msgstr "E430: Tï¿½gitiedoston polku katkaistu kohdassa %s\n"
 
 #~ msgid "new shell started\n"
 #~ msgstr "uusi kuori avattu\n"
 
 #~ msgid "Used CUT_BUFFER0 instead of empty selection"
-#~ msgstr "Käytettiin CUT_BUFFER0:aa tyhjän valinnan sijaan"
+#~ msgstr "Kï¿½ytettiin CUT_BUFFER0:aa tyhjï¿½n valinnan sijaan"
 
 #~ msgid "No undo possible; continue anyway"
 #~ msgstr "Ei voi kumota, jatketaan silti"
@@ -7712,7 +7700,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E832: Salaamattomalla tiedostolla on salattu kumoustiedosto: %s"
 
 #~ msgid "E826: Undo file decryption failed: %s"
-#~ msgstr "E826: Kumoustiedoston purku epäonnistui: %s"
+#~ msgstr "E826: Kumoustiedoston purku epï¿½onnistui: %s"
 
 #~ msgid "E827: Undo file is encrypted: %s"
 #~ msgstr "E827: Kumoustiedosto on salattu: %s"
@@ -7870,34 +7858,34 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Cocoa-GUIlla."
 
 #~ msgid "with (classic) GUI."
-#~ msgstr "perinteisellä GUIlla."
+#~ msgstr "perinteisellï¿½ GUIlla."
 
 #~ msgid "  system gvimrc file: \""
-#~ msgstr "  järjestelmän gvimrc: \""
+#~ msgstr "  jï¿½rjestelmï¿½n gvimrc: \""
 
 #~ msgid "    user gvimrc file: \""
-#~ msgstr "    käyttäjän gvimrc: \""
+#~ msgstr "    kï¿½yttï¿½jï¿½n gvimrc: \""
 
 #~ msgid "2nd user gvimrc file: \""
-#~ msgstr "2. käyttäjän gvimrc: \""
+#~ msgstr "2. kï¿½yttï¿½jï¿½n gvimrc: \""
 
 #~ msgid "3rd user gvimrc file: \""
-#~ msgstr "3. käyttäjän gvimrc: \""
+#~ msgstr "3. kï¿½yttï¿½jï¿½n gvimrc: \""
 
 #~ msgid "    system menu file: \""
-#~ msgstr "    järjestelmävalikko: \""
+#~ msgstr "    jï¿½rjestelmï¿½valikko: \""
 
 #~ msgid "Compiler: "
-#~ msgstr "Käännin: "
+#~ msgstr "Kï¿½ï¿½nnin: "
 
 #~ msgid "menu  Help->Orphans           for information    "
-#~ msgstr "valikko Ohje->Orvot            lisätietoja varten          "
+#~ msgstr "valikko Ohje->Orvot            lisï¿½tietoja varten          "
 
 #~ msgid "Running modeless, typed text is inserted"
-#~ msgstr "Suoritetaan tilattomana, kirjoitettu teksti syötetään"
+#~ msgstr "Suoritetaan tilattomana, kirjoitettu teksti syï¿½tetï¿½ï¿½n"
 
 #~ msgid "menu  Edit->Global Settings->Toggle Insert Mode  "
-#~ msgstr "valikko Muokkaa->Yleiset asetukset->Vaihda syötetilaa"
+#~ msgstr "valikko Muokkaa->Yleiset asetukset->Vaihda syï¿½tetilaa"
 
 #~ msgid "                              for two modes      "
 #~ msgstr "                              kahta tilaa varten "
@@ -7912,7 +7900,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "VAROITUS: Window 95/98/ME havaittu"
 
 #~ msgid "type  :help windows95<Enter>  for info on this"
-#~ msgstr "kirjoita :help windows95<Enter> lisätietoja varten"
+#~ msgstr "kirjoita :help windows95<Enter> lisï¿½tietoja varten"
 
 #~ msgid "E370: Could not load library %s"
 #~ msgstr "E370: Kirjaston %s lataaminen ei onnistu"
@@ -7925,31 +7913,31 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E299: Perl-suoritus kielletty hiekkalaatikossa ilman Safe-moduulia"
 
 #~ msgid "Edit with &multiple Vims"
-#~ msgstr "&Muokkaa usealla Vimillä"
+#~ msgstr "&Muokkaa usealla Vimillï¿½"
 
 #~ msgid "Edit with single &Vim"
-#~ msgstr "Muokkaa yhdellä &Vimillä"
+#~ msgstr "Muokkaa yhdellï¿½ &Vimillï¿½"
 
 #~ msgid "Diff with Vim"
-#~ msgstr "Diffi Vimillä"
+#~ msgstr "Diffi Vimillï¿½"
 
 #~ msgid "Edit with &Vim"
-#~ msgstr "Muokkaa &Vimillä"
+#~ msgstr "Muokkaa &Vimillï¿½"
 
 #~ msgid "Edit with existing Vim - "
-#~ msgstr "Muokkaa olemassaolevalla Vimillä - "
+#~ msgstr "Muokkaa olemassaolevalla Vimillï¿½ - "
 
 #~ msgid "Edits the selected file(s) with Vim"
-#~ msgstr "Muokkaa valittuja tiedostoja Vimillä"
+#~ msgstr "Muokkaa valittuja tiedostoja Vimillï¿½"
 
 #~ msgid "Error creating process: Check if gvim is in your path!"
-#~ msgstr "Virhe prosessin käynnistämisessä, varmista että gvim on polulla"
+#~ msgstr "Virhe prosessin kï¿½ynnistï¿½misessï¿½, varmista ettï¿½ gvim on polulla"
 
 #~ msgid "gvimext.dll error"
 #~ msgstr "gvimext.dll-virhe"
 
 #~ msgid "Path length too long!"
-#~ msgstr "Liian pitkä polku"
+#~ msgstr "Liian pitkï¿½ polku"
 
 #~ msgid "E234: Unknown fontset: %s"
 #~ msgstr "E234: Tuntematon fontset: %s"
@@ -7958,25 +7946,25 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "E235: Tuntematon fontti: %s"
 
 #~ msgid "E236: Font \"%s\" is not fixed-width"
-#~ msgstr "E236: Fontti %s ei ole tasavälinen"
+#~ msgstr "E236: Fontti %s ei ole tasavï¿½linen"
 
 #~ msgid "E448: Could not load library function %s"
 #~ msgstr "E448: Ei voitu ladta kirjastofunktiota %s"
 
 #~ msgid "E26: Hebrew cannot be used: Not enabled at compile time\n"
-#~ msgstr "E26: Hepreaa ei voi käyttää, koska sitä ei käännetty mukaan\n"
+#~ msgstr "E26: Hepreaa ei voi kï¿½yttï¿½ï¿½, koska sitï¿½ ei kï¿½ï¿½nnetty mukaan\n"
 
 #~ msgid "E27: Farsi cannot be used: Not enabled at compile time\n"
-#~ msgstr "E27: Farsia ei voi käyttää, koska sitä ei käännetty mukaan\n"
+#~ msgstr "E27: Farsia ei voi kï¿½yttï¿½ï¿½, koska sitï¿½ ei kï¿½ï¿½nnetty mukaan\n"
 
 #~ msgid "E800: Arabic cannot be used: Not enabled at compile time\n"
-#~ msgstr "E800: Arabiaa ei voi käyttää, koska sitä ei käännetty mukaan\n"
+#~ msgstr "E800: Arabiaa ei voi kï¿½yttï¿½ï¿½, koska sitï¿½ ei kï¿½ï¿½nnetty mukaan\n"
 
 #~ msgid "E247: no registered server named \"%s\""
-#~ msgstr "E247: palvelinta %s ei ole rekisteröitynä"
+#~ msgstr "E247: palvelinta %s ei ole rekisterï¿½itynï¿½"
 
 #~ msgid "E233: cannot open display"
-#~ msgstr "E233: näyttöä ei voi avata"
+#~ msgstr "E233: nï¿½yttï¿½ï¿½ ei voi avata"
 
 #~ msgid "E449: Invalid expression received"
 #~ msgstr "E449: Virheellinen ilmaus saatu"
@@ -7991,7 +7979,7 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Tarvitaan salausavain kohteelle %s "
 
 #~ msgid "writelines() requires list of strings"
-#~ msgstr "writelines()-komennolle pitää antaa merkkijonolista"
+#~ msgstr "writelines()-komennolle pitï¿½ï¿½ antaa merkkijonolista"
 
 #~ msgid "E264: Python: Error initialising I/O objects"
 #~ msgstr "E264: Python: Virhe IO-olioiden alustuksessa"
@@ -8034,25 +8022,25 @@ msgstr "E446: Ei tiedostonimeä kursorin alla"
 #~ msgstr "Fontin valinta"
 
 #~ msgid "E569: maximum number of cscope connections reached"
-#~ msgstr "E569: enimmäismäärä cscope-yhteyksiä otettu"
+#~ msgstr "E569: enimmï¿½ismï¿½ï¿½rï¿½ cscope-yhteyksiï¿½ otettu"
 
 #~ msgid "-name <name>\t\tUse resource as if vim was <name>"
-#~ msgstr "-name <nimi>\t\tKäytä resurssia vim <nimenä>"
+#~ msgstr "-name <nimi>\t\tKï¿½ytï¿½ resurssia vim <nimenï¿½>"
 
 #~ msgid "\t\t\t  (Unimplemented)\n"
 #~ msgstr "\t\t\t  (toteuttamatta)\n"
 
 #~ msgid "E290: over-the-spot style requires fontset"
-#~ msgstr "E290: over-the-spot-tyylissä pitää olla fontset"
+#~ msgstr "E290: over-the-spot-tyylissï¿½ pitï¿½ï¿½ olla fontset"
 
 #~ msgid "E291: Your GTK+ is older than 1.2.3. Status area disabled"
-#~ msgstr "E291: GTK+-versio vanhempi kuin 1.2.3: Tila-alue poistettu käytöstä"
+#~ msgstr "E291: GTK+-versio vanhempi kuin 1.2.3: Tila-alue poistettu kï¿½ytï¿½stï¿½"
 
 #~ msgid "E292: Input Method Server is not running"
-#~ msgstr "E292: Syötemetodipalvelin ei ole käynnissä"
+#~ msgstr "E292: Syï¿½temetodipalvelin ei ole kï¿½ynnissï¿½"
 
 #~ msgid "E396: containedin argument not accepted here"
-#~ msgstr "E396: containedin ei sovi tähän"
+#~ msgstr "E396: containedin ei sovi tï¿½hï¿½n"
 
 #~ msgid "with GTK-GNOME GUI."
 #~ msgstr "GTK-Gnome-GUIlla."

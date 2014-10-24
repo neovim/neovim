@@ -6380,18 +6380,6 @@ msgstr "输入  :help<Enter>  或  <F1>  查看在线帮助    "
 msgid "type  :help version7<Enter>   for version info"
 msgstr "输入  :help version7<Enter>   查看版本信息    "
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "运行于 Vi 兼容模式"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "输入  :set nocp<Enter>        恢复默认的 Vim  "
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "输入  :help cp-default<Enter> 查看相关说明    "
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "赞助 Vim 的开发！"

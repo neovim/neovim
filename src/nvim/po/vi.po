@@ -6443,18 +6443,6 @@ msgstr " hãy gõ :help<Enter> hoặc <F1>  để có được trợ giúp      
 msgid "type  :help version7<Enter>   for version info"
 msgstr "hãy gõ :help version7<Enter>   để biết về phiên bản này  "
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Làm việc trong chế độ tương thích với Vi"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "hãy gõ :set nocp<Enter>        để chuyển vào chế độ Vim     "
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "hãy gõ :help cp-default<Enter> để có thêm thông tin về điều này"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Hãy giúp đỡ phát triển Vim!"

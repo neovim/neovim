@@ -6370,18 +6370,6 @@ msgstr "wprowadź :help<Enter>  lub  <F1>  pomoc na bieżąco       "
 msgid "type  :help version7<Enter>   for version info"
 msgstr "wprowadź :help version7<Enter>    dla informacji o wersji"
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Działam w trybie zgodności z Vi"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "wprowadź :set nocp<Enter>         wartości domyślne Vim-a"
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "wprowadź :help cp-default<Enter>  dla informacji to tym  "
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Sponsoruj rozwój Vima!"

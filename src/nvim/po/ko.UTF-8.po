@@ -6343,18 +6343,6 @@ msgstr "온라인 도움말을 보려면     :help<엔터> 또는 <F1>  입력"
 msgid "type  :help version7<Enter>   for version info"
 msgstr "판 정보를 보려면           :help version7<엔터>   입력"
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Vi 호환 상태로 실행중입니다"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "빔 기본값을 사용하려면     :set nocp<엔터>        입력"
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "이에 대한 정보를 보려면    :help cp-default<엔터> 입력"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "빔 개발을 후원해 주세요!"

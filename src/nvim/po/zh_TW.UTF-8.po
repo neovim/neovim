@@ -32,8 +32,8 @@
 #   So please change [行"] to [行 "]
 #
 # Q. How to use UTF8 mode on Win32?
-# A. A simple configuration: 
-#   set encoding=utf-8; let $LANG='zh_TW.UTF-8'; 
+# A. A simple configuration:
+#   set encoding=utf-8; let $LANG='zh_TW.UTF-8';
 #   (set langmenu=none or ..)
 #   set termencoding=utf-8
 #   set fileencodings=ucs-bom,utf-8,japan,taiwan,prc
@@ -6437,18 +6437,6 @@ msgstr "線上說明請輸入                :help<Enter>         "
 #: ../version.c:781
 msgid "type  :help version7<Enter>   for version info"
 msgstr "新版本資訊請輸入              :help version7<Enter>"
-
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Vi 相容模式"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "如果要完全模擬傳統 Vi 請輸入 :set nocp<Enter>"
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "如果需要對 Vi 相容模式的進一步說明請輸入 :help cp-default<Enter>"
 
 #: ../version.c:827
 msgid "Sponsor Vim development!"

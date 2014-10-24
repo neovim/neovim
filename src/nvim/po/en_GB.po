@@ -6179,18 +6179,6 @@ msgstr ""
 msgid "type  :help version7<Enter>   for version info"
 msgstr ""
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr ""
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr ""
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr ""
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr ""

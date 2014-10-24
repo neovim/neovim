@@ -6393,20 +6393,6 @@ msgstr "tajpu  :help<Enenklavo>  aŭ  <F1> por aliri la helpon  "
 msgid "type  :help version7<Enter>   for version info"
 msgstr "tajpu  :help version7<Enenklavo>  por informo de versio"
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Ruliĝas en reĝimo kongrua kun Vi"
-
-# DP: atentu al la spacetoj: ĉiuj ĉenoj devas havi la saman longon
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "tajpu :set nocp<Enenklavo>        por Vim defaŭltoj    "
-
-# DP: atentu al la spacetoj: ĉiuj ĉenoj devas havi la saman longon
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "tajpu :help cp-default<Enenklavo> por pliaj informoj   "
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Subtenu la programadon de Vim!"
