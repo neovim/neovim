@@ -132,7 +132,12 @@ ArrayOf(String) buffer_get_line_slice(Buffer buffer,
     }
 
     const char *bufstr = (char *) ml_get_buf(buf, (linenr_T) lnum, false);
-    rv.items[i] = STRING_OBJ(cstr_to_string(bufstr));
+    Object str = STRING_OBJ(cstr_to_string(bufstr));
+
+    // Vim represents NULs as NLs, but this may confuse clients.
+    strchrsub(str.data.string.data, '\n', '\0');
+
+    rv.items[i] = str;
   }
 
 end:
@@ -201,7 +206,18 @@ void buffer_set_line_slice(Buffer buffer,
     }
 
     String l = replacement.items[i].data.string;
-    lines[i] = xmemdupz(l.data, l.size);
+
+    // Fill lines[i] with l's contents. Disallow newlines in the middle of a
+    // line and convert NULs to newlines to avoid truncation.
+    lines[i] = xmallocz(l.size);
+    for (size_t j = 0; j < l.size; j++) {
+      if (l.data[j] == '\n') {
+        api_set_error(err, Exception, _("string cannot contain newlines"));
+        new_len = i + 1;
+        goto end;
+      }
+      lines[i][j] = (char) (l.data[j] == '\0' ? '\n' : l.data[j]);
+    }
   }
 
   try_start();

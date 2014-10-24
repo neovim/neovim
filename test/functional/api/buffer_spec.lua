@@ -34,6 +34,11 @@ describe('buffer_* functions', function()
       curbuf('del_line', 0)
       eq('', curbuf('get_line', 0))
     end)
+
+    it('can handle NULs', function()
+      curbuf('set_line', 0, 'ab\0cd')
+      eq('ab\0cd', curbuf('get_line', 0))
+    end)
   end)
 
 
