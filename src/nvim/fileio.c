@@ -5234,6 +5234,7 @@ static struct event_name {
   {"InsertCharPre",   EVENT_INSERTCHARPRE},
   {"JobActivity",     EVENT_JOBACTIVITY},
   {"MenuPopup",       EVENT_MENUPOPUP},
+  {"ProviderCall",    EVENT_PROVIDERCALL},
   {"QuickFixCmdPost", EVENT_QUICKFIXCMDPOST},
   {"QuickFixCmdPre",  EVENT_QUICKFIXCMDPRE},
   {"QuitPre",         EVENT_QUITPRE},
@@ -7481,5 +7482,6 @@ static bool should_expand_filename(event_T event)
        && event != EVENT_QUICKFIXCMDPRE
        && event != EVENT_COLORSCHEME
        && event != EVENT_QUICKFIXCMDPOST
-       && event != EVENT_JOBACTIVITY);
+       && event != EVENT_JOBACTIVITY
+       && event != EVENT_PROVIDERCALL);
 }
