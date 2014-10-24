@@ -144,7 +144,7 @@ memfile_T *mf_open(char_u *fname, int flags)
   mfp->mf_infile_count = mfp->mf_blocknr_max;
 
   // Compute maximum number of pages ('maxmem' is in Kbytes):
-  //	'mammem' * 1Kbyte / page-size-in-bytes.
+  //         'mammem' * 1Kbyte / page-size-in-bytes.
   // Avoid overflow by first reducing page size as much as possible.
   {
     int shift = 10;
@@ -222,7 +222,7 @@ void mf_close(memfile_T *mfp, bool del_file)
 /// Close the swap file for a memfile. Used when 'swapfile' is reset.
 ///
 /// @param getlines  Whether to get all lines into memory.
-void mf_close_file (buf_T *buf, bool getlines)
+void mf_close_file(buf_T *buf, bool getlines)
 {
   memfile_T *mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL || mfp->mf_fd < 0)     // nothing to close
@@ -230,11 +230,11 @@ void mf_close_file (buf_T *buf, bool getlines)
 
   if (getlines) {
     // get all blocks in memory by accessing all lines (clumsy!)
-    mf_dont_release = TRUE;
+    mf_dont_release = true;
     for (linenr_T lnum = 1; lnum <= buf->b_ml.ml_line_count; ++lnum)
-      (void)ml_get_buf(buf, lnum, FALSE);
-    mf_dont_release = FALSE;
-    // TODO: should check if all blocks are really in core
+      (void)ml_get_buf(buf, lnum, false);
+    mf_dont_release = false;
+    // TODO(elmart): should check if all blocks are really in core
   }
 
   if (close(mfp->mf_fd) < 0)             // close the file
@@ -265,7 +265,7 @@ void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 }
 
 /// Get a new block
-/// 
+///
 /// @param negative    Whether a negative block number is desired (data block).
 /// @param page_count  Desired number of pages.
 bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
@@ -283,10 +283,10 @@ bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
   if (!negative && freep != NULL && freep->bh_page_count >= page_count) {
     // If the block in the free list has more pages, take only the number
     // of pages needed and allocate a new bhdr_T with data.
-    // 
+    //
     // If the number of pages matches and mf_release() did not return a
     // bhdr_T, use the bhdr_T from the free list and allocate the data.
-    // 
+    //
     // If the number of pages matches and mf_release() returned a bhdr_T,
     // just use the number and free the bhdr_T from the free list
     if (freep->bh_page_count > page_count) {
@@ -377,7 +377,7 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
 }
 
 /// Release the block *hp.
-/// 
+///
 /// @param dirty   Whether block must be written to file later.
 /// @param infile  Whether block should be in file (needed for recovery).
 void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
@@ -405,8 +405,9 @@ void mf_free(memfile_T *mfp, bhdr_T *hp)
   if (hp->bh_bnum < 0) {
     free(hp);                   // don't want negative numbers in free list
     mfp->mf_neg_count--;
-  } else
+  } else {
     mf_ins_free(mfp, hp);       // put *hp in the free list
+  }
 }
 
 /// Sync memory file to disk.
@@ -418,7 +419,7 @@ void mf_free(memfile_T *mfp, bhdr_T *hp)
 ///               MFS_FLUSH  Make sure buffers are flushed to disk, so they will
 ///                          survive a system crash.
 ///               MFS_ZERO   Only write block 0.
-/// 
+///
 /// @return FAIL  If failure. Possible causes:
 ///               - No file (nothing to do).
 ///               - Write error (probably full disk).
@@ -433,7 +434,7 @@ int mf_sync(memfile_T *mfp, int flags)
   }
 
   // Only a CTRL-C while writing will break us here, not one typed previously.
-  got_int = FALSE;
+  got_int = false;
 
   // Sync from last to first (may reduce the probability of an inconsistent
   // file). If a write fails, it is very likely caused by a full filesystem.
@@ -456,8 +457,9 @@ int mf_sync(memfile_T *mfp, int flags)
       if (flags & MFS_STOP) {   // Stop when char available now.
         if (ui_char_avail())
           break;
-      } else
+      } else {
         ui_breakcheck();
+      }
       if (got_int)
         break;
     }
@@ -473,7 +475,7 @@ int mf_sync(memfile_T *mfp, int flags)
     if (STRCMP(p_sws, "fsync") == 0) {
       if (fsync(mfp->mf_fd))
         status = FAIL;
-    } else
+    } else {
 # endif
     // OpenNT is strictly POSIX (Benzinger).
     // Tandem/Himalaya NSK-OSS doesn't have sync()
@@ -481,6 +483,9 @@ int mf_sync(memfile_T *mfp, int flags)
     fflush(NULL);
 # else
     sync();
+# endif
+# ifdef HAVE_FSYNC
+    }
 # endif
 #endif
 # ifdef SYNC_DUP_CLOSE
@@ -559,7 +564,7 @@ static void mf_rem_used(memfile_T *mfp, bhdr_T *hp)
 
 /// Try to release the least recently used block from the used list if the
 /// number of used memory blocks gets too big.
-/// 
+///
 /// @return  The block header, when release needed and possible.
 ///              Resulting block header includes memory block, so it can be
 ///              reused.  Page count is checked to be right.
@@ -633,7 +638,7 @@ static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
 /// Release as many blocks as possible.
 ///
 /// Used in case of out of memory
-/// 
+///
 /// @return  Whether any memory was released.
 bool mf_release_all(void)
 {
@@ -656,8 +661,9 @@ bool mf_release_all(void)
             mf_free_bhdr(hp);
             hp = mfp->mf_used_last;    // restart, list was changed
             retval = true;
-          } else
+          } else {
             hp = hp->bh_prev;
+          }
         }
       }
     }
@@ -699,7 +705,7 @@ static bhdr_T *mf_rem_free(memfile_T *mfp)
 }
 
 /// Read a block from disk.
-/// 
+///
 /// @return  OK    On success.
 ///          FAIL  On failure. Could be:
 ///                - No file.
@@ -728,7 +734,7 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
 }
 
 /// Write a block to disk.
-/// 
+///
 /// @return  OK    On success.
 ///          FAIL  On failure. Could be:
 ///                - No file.
@@ -762,8 +768,9 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
     if (nr > mfp->mf_infile_count) {            // beyond end of file
       nr = mfp->mf_infile_count;
       hp2 = mf_find_hash(mfp, nr);              // NULL caught below
-    } else
+    } else {
       hp2 = hp;
+    }
 
     // TODO(elmart): Check (page_size * nr) within off_t bounds.
     offset = (off_t)(page_size * nr);
@@ -783,10 +790,10 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
       /// space becomes available.
       if (!did_swapwrite_msg)
         EMSG(_("E297: Write error in swap file"));
-      did_swapwrite_msg = TRUE;
+      did_swapwrite_msg = true;
       return FAIL;
     }
-    did_swapwrite_msg = FALSE;
+    did_swapwrite_msg = false;
     if (hp2 != NULL)                               // written a non-dummy block
       hp2->bh_flags &= ~BH_DIRTY;
     if (nr + (blocknr_T)page_count > mfp->mf_infile_count)  // appended to file
@@ -812,7 +819,7 @@ static int mf_write_block(memfile_T *mfp, bhdr_T *hp,
 }
 
 /// Make block number positive and add it to the translation list.
-/// 
+///
 /// @return  OK    On success.
 ///          FAIL  On failure.
 static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
@@ -858,7 +865,7 @@ static int mf_trans_add(memfile_T *mfp, bhdr_T *hp)
 }
 
 /// Lookup translation from trans list and delete the entry.
-/// 
+///
 /// @return  The positive new number  When found.
 ///          The old number           When not found.
 blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
@@ -887,7 +894,7 @@ blocknr_T mf_trans_del(memfile_T *mfp, blocknr_T old_nr)
 /// name so we must work out the full path name.
 void mf_set_ffname(memfile_T *mfp)
 {
-  mfp->mf_ffname = FullName_save(mfp->mf_fname, FALSE);
+  mfp->mf_ffname = FullName_save(mfp->mf_fname, false);
 }
 
 /// Make name of memfile's swapfile a full path.
@@ -913,7 +920,7 @@ bool mf_need_trans(memfile_T *mfp)
 /// "fname" must be in allocated memory, and is consumed (also when error).
 ///
 /// @param  flags  Flags for open().
-static void mf_do_open (memfile_T *mfp, char_u *fname, int flags)
+static void mf_do_open(memfile_T *mfp, char_u *fname, int flags)
 {
   // fname cannot be NameBuff, because it must have been allocated.
   mfp->mf_fname = fname;
@@ -951,9 +958,9 @@ static void mf_do_open (memfile_T *mfp, char_u *fname, int flags)
   }
 }
 
-// 
+//
 // Implementation of mf_hashtab_T.
-// 
+//
 
 /// The number of buckets in the hashtable is increased by a factor of
 /// MHT_GROWTH_FACTOR when the average number of items per bucket
@@ -1056,7 +1063,7 @@ static void mf_hash_grow(mf_hashtab_T *mht)
     /// within each new bucket. Preserving the order is important because
     /// mf_get() tries to keep most recently used items at the front of
     /// each bucket.
-    /// 
+    ///
     /// Here we strongly rely on the fact that hashes are computed modulo
     /// a power of two.
 

@@ -105,4 +105,4 @@ typedef struct memfile {
   bool mf_dirty;                      /// TRUE if there are dirty blocks
 } memfile_T;
 
-#endif // NVIM_MEMFILE_DEFS_H
+#endif  // NVIM_MEMFILE_DEFS_H
