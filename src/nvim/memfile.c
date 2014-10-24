@@ -129,12 +129,16 @@ memfile_T *mf_open(char_u *fname, int flags)
   // must be rounded up.
   if (mfp->mf_fd < 0
       || (flags & (O_TRUNC|O_EXCL))
-      || (size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0)
+      || (size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0) {
     // no file or empty file
     mfp->mf_blocknr_max = 0;
-  else
-    mfp->mf_blocknr_max = (blocknr_T)((size + mfp->mf_page_size - 1)
-                                      / mfp->mf_page_size);
+  } else {
+    assert(sizeof(off_t) <= sizeof(blocknr_T)
+           && mfp->mf_page_size > 0
+           && mfp->mf_page_size - 1 <= INT64_MAX - size);
+    mfp->mf_blocknr_max = (((blocknr_T)size + mfp->mf_page_size - 1)
+                           / mfp->mf_page_size);
+  }
   mfp->mf_blocknr_min = -1;
   mfp->mf_neg_count = 0;
   mfp->mf_infile_count = mfp->mf_blocknr_max;
@@ -151,8 +155,8 @@ memfile_T *mf_open(char_u *fname, int flags)
       --shift;
     }
 
-    assert(p_mm << shift >= p_mm);  // check we don't overflow
-    assert(p_mm < UINT_MAX);        // check we can cast to unsigned
+    assert(p_mm <= LONG_MAX >> shift);  // check we don't overflow
+    assert((uintmax_t)(p_mm << shift) <= UINT_MAX);  // check we can cast safely
     mfp->mf_used_count_max = (unsigned)(p_mm << shift) / page_size;
     if (mfp->mf_used_count_max < 10)
       mfp->mf_used_count_max = 10;
@@ -706,12 +710,15 @@ static int mf_read(memfile_T *mfp, bhdr_T *hp)
     return FAIL;
 
   unsigned page_size = mfp->mf_page_size;
-  off_t offset = (off_t)page_size * hp->bh_bnum;
-  unsigned size = page_size * hp->bh_page_count;
+  // TODO(elmart): Check (page_size * hp->bh_bnum) within off_t bounds.
+  off_t offset = (off_t)(page_size * hp->bh_bnum);
   if (lseek(mfp->mf_fd, offset, SEEK_SET) != offset) {
     PERROR(_("E294: Seek error in swap file read"));
     return FAIL;
   }
+  // check for overflow; we know that page_size must be > 0
+  assert(hp->bh_page_count <= UINT_MAX / page_size);
+  unsigned size = page_size * hp->bh_page_count;
   if ((unsigned)read_eintr(mfp->mf_fd, hp->bh_data, size) != size) {
     PERROR(_("E295: Read error in swap file"));
     return FAIL;
@@ -758,7 +765,8 @@ static int mf_write(memfile_T *mfp, bhdr_T *hp)
     } else
       hp2 = hp;
 
-    offset = (off_t)page_size * nr;
+    // TODO(elmart): Check (page_size * nr) within off_t bounds.
+    offset = (off_t)(page_size * nr);
     if (lseek(mfp->mf_fd, offset, SEEK_SET) != offset) {
       PERROR(_("E296: Seek error in swap file write"));
       return FAIL;

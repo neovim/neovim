@@ -639,7 +639,7 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
   ZERO_BL     *b0p;
 
   mfp = buf->b_ml.ml_mfp;
-  if (mfp == NULL || (hp = mf_get(mfp, (blocknr_T)0, 1)) == NULL)
+  if (mfp == NULL || (hp = mf_get(mfp, 0, 1)) == NULL)
     return;
   b0p = hp->bh_data;
   if (ml_check_b0_id(b0p) == FAIL)
@@ -867,7 +867,7 @@ void ml_recover(void)
   /*
    * try to read block 0
    */
-  if ((hp = mf_get(mfp, (blocknr_T)0, 1)) == NULL) {
+  if ((hp = mf_get(mfp, 0, 1)) == NULL) {
     msg_start();
     MSG_PUTS_ATTR(_("Unable to read block 0 from "), attr | MSG_HIST);
     msg_outtrans_attr(mfp->mf_fname, attr | MSG_HIST);
@@ -925,7 +925,7 @@ void ml_recover(void)
     if ((size = lseek(mfp->mf_fd, (off_t)0L, SEEK_END)) <= 0)
       mfp->mf_blocknr_max = 0;              /* no file or empty file */
     else
-      mfp->mf_blocknr_max = (blocknr_T)(size / mfp->mf_page_size);
+      mfp->mf_blocknr_max = size / mfp->mf_page_size;
     mfp->mf_infile_count = mfp->mf_blocknr_max;
 
     /* need to reallocate the memory used to store the data */
@@ -1031,7 +1031,7 @@ void ml_recover(void)
     /*
      * get block
      */
-    if ((hp = mf_get(mfp, (blocknr_T)bnum, page_count)) == NULL) {
+    if ((hp = mf_get(mfp, bnum, page_count)) == NULL) {
       if (bnum == 1) {
         EMSG2(_("E309: Unable to read block 1 from %s"), mfp->mf_fname);
         goto theend;

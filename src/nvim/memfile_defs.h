@@ -11,7 +11,7 @@
 /// Blocks numbered from 0 upwards have been assigned a place in the actual
 /// file. The block number is equal to the page number in the file. The blocks
 /// with negative numbers are currently in memory only.
-typedef long blocknr_T;
+typedef int64_t blocknr_T;
 
 /// A hash item.
 ///
