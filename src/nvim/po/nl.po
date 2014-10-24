@@ -6371,19 +6371,6 @@ msgstr "typ :help<Enter> of <F1> voor on-line hulp"
 msgid "type  :help version7<Enter>   for version info"
 msgstr "typ :help version7<Enter> voor versieinformatie"
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "wordt uitgevoerd in Vi compatible-modus"
-
-#: ../version.c:785
-#, fuzzy
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr "typ :set nocp<Enter>  voor standaardinstellingen van Vim"
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr "typ :help cp-default<Enter> voor informatie hierover"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Ondersteun de ontwikkeling van Vim!"

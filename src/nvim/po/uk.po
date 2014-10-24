@@ -6556,18 +6556,6 @@ msgstr ":help<Enter> або <F1>     перегляд допомоги        "
 msgid "type  :help version7<Enter>   for version info"
 msgstr ":help version7<Enter>     інформація про версію    "
 
-#: ../version.c:784
-msgid "Running in Vi compatible mode"
-msgstr "Ви працюєте в режимі сумісному з Vi"
-
-#: ../version.c:785
-msgid "type  :set nocp<Enter>        for Vim defaults"
-msgstr ":set nocp<Enter>          режим несумісний з Vi    "
-
-#: ../version.c:786
-msgid "type  :help cp-default<Enter> for info on this"
-msgstr ":help cp-default<Enter>   інформація про сумісність"
-
 #: ../version.c:827
 msgid "Sponsor Vim development!"
 msgstr "Підтримайте розробку редактора Vim!"
