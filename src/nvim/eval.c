@@ -16553,7 +16553,7 @@ set_var (
     if (var_check_ro(v->di_flags, name)
         || tv_check_lock(v->di_tv.v_lock, name))
       return;
-    if (v->di_tv.v_type != tv->v_type
+    if (v->di_tv.v_type != VAR_UNKNOWN && v->di_tv.v_type != tv->v_type
         && !((v->di_tv.v_type == VAR_STRING
               || v->di_tv.v_type == VAR_NUMBER)
              && (tv->v_type == VAR_STRING
@@ -16572,7 +16572,10 @@ set_var (
      * the type.
      */
     if (ht == &vimvarht) {
-      if (v->di_tv.v_type == VAR_STRING) {
+      if (v->di_tv.v_type == VAR_UNKNOWN) {
+        // Allow setting variables of unknown type
+        copy_tv(tv, &v->di_tv);
+      } else if (v->di_tv.v_type == VAR_STRING) {
         free(v->di_tv.vval.v_string);
         if (copy || tv->v_type != VAR_STRING)
           v->di_tv.vval.v_string = vim_strsave(get_tv_string(tv));
