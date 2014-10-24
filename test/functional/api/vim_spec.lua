@@ -36,6 +36,10 @@ describe('vim_* functions', function()
       -- 19 * 2 (each japanese character occupies two cells)
       eq(44, nvim('strwidth', 'neovimのデザインかなりまともなのになってる。'))
     end)
+
+    it('cannot handle NULs', function()
+      eq(0, nvim('strwidth', '\0abc'))
+    end)
   end)
 
   describe('{get,set}_current_line', function()
@@ -51,6 +55,11 @@ describe('vim_* functions', function()
       nvim('set_var', 'lua', {1, 2, {['3'] = 1}})
       eq({1, 2, {['3'] = 1}}, nvim('get_var', 'lua'))
       eq({1, 2, {['3'] = 1}}, nvim('eval', 'g:lua'))
+    end)
+
+    it('truncates values with NULs in them', function()
+      nvim('set_var', 'xxx', 'ab\0cd')
+      eq('ab', nvim('get_var', 'xxx'))
     end)
   end)
 
