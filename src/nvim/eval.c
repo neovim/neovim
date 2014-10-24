@@ -89,7 +89,6 @@
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/vim.h"
 #include "nvim/os/dl.h"
-#include "nvim/os/provider.h"
 #include "nvim/os/event.h"
 
 #define DICT_MAXNEST 100        /* maximum nesting of lists and dicts */

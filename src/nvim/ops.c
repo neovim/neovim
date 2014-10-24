@@ -48,7 +48,6 @@
 #include "nvim/ui.h"
 #include "nvim/undo.h"
 #include "nvim/window.h"
-#include "nvim/os/provider.h"
 #include "nvim/api/private/helpers.h"
 
 /*

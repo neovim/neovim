@@ -55,7 +55,6 @@
 #include "nvim/os/os.h"
 #include "nvim/os/shell.h"
 #include "nvim/os/fs_defs.h"
-#include "nvim/os/provider.h"
 #include "nvim/api/private/helpers.h"
 #include "nvim/api/private/defs.h"
 
