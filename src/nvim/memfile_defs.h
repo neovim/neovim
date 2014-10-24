@@ -41,7 +41,6 @@ typedef struct mf_hashtab {
                                 /// mht_small_buckets or a newly allocated array
                                 /// when mht_small_buckets becomes too small)
   mf_hashitem_T *mht_small_buckets[MHT_INIT_SIZE];     /// initial buckets
-  char mht_fixed;               /// non-zero value forbids growth
 } mf_hashtab_T;
 
 /// A block header.

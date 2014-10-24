@@ -1008,8 +1008,7 @@ static void mf_hash_add_item(mf_hashtab_T *mht, mf_hashitem_T *mhi)
 
   /// Grow hashtable when we have more thank 2^MHT_LOG_LOAD_FACTOR
   /// items per bucket on average.
-  if (mht->mht_fixed == 0
-      && (mht->mht_count >> MHT_LOG_LOAD_FACTOR) > mht->mht_mask) {
+  if ((mht->mht_count >> MHT_LOG_LOAD_FACTOR) > mht->mht_mask) {
     mf_hash_grow(mht);
   }
 }
