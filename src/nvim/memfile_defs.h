@@ -63,7 +63,7 @@ typedef struct bhdr {
 
   struct bhdr *bh_next;              /// next block header in free or used list
   struct bhdr *bh_prev;              /// previous block header in used list
-  char_u *bh_data;                   /// pointer to memory (for used block)
+  void *bh_data;                     /// pointer to memory (for used block)
   unsigned bh_page_count;            /// number of pages in this block
 
 #define BH_DIRTY    1U

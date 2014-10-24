@@ -302,7 +302,7 @@ int ml_open(buf_T *buf)
     EMSG(_("E298: Didn't get block nr 0?"));
     goto error;
   }
-  b0p = (ZERO_BL *)(hp->bh_data);
+  b0p = hp->bh_data;
 
   b0p->b0_id[0] = BLOCK0_ID0;
   b0p->b0_id[1] = BLOCK0_ID1;
@@ -344,7 +344,7 @@ int ml_open(buf_T *buf)
     EMSG(_("E298: Didn't get block nr 1?"));
     goto error;
   }
-  pp = (PTR_BL *)(hp->bh_data);
+  pp = hp->bh_data;
   pp->pb_count = 1;
   pp->pb_pointer[0].pe_bnum = 2;
   pp->pb_pointer[0].pe_page_count = 1;
@@ -361,7 +361,7 @@ int ml_open(buf_T *buf)
     goto error;
   }
 
-  dp = (DATA_BL *)(hp->bh_data);
+  dp = hp->bh_data;
   dp->db_index[0] = --dp->db_txt_start;         /* at end of block */
   dp->db_free -= 1 + INDEX_SIZE;
   dp->db_line_count = 1;
@@ -641,7 +641,7 @@ static void ml_upd_block0(buf_T *buf, upd_block0_T what)
   mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL || (hp = mf_get(mfp, (blocknr_T)0, 1)) == NULL)
     return;
-  b0p = (ZERO_BL *)(hp->bh_data);
+  b0p = hp->bh_data;
   if (ml_check_b0_id(b0p) == FAIL)
     EMSG(_("E304: ml_upd_block0(): Didn't get block 0??"));
   else {
@@ -877,7 +877,7 @@ void ml_recover(void)
     msg_end();
     goto theend;
   }
-  b0p = (ZERO_BL *)(hp->bh_data);
+  b0p = hp->bh_data;
   if (STRNCMP(b0p->b0_version, "VIM 3.0", 7) == 0) {
     msg_start();
     msg_outtrans_attr(mfp->mf_fname, MSG_HIST);
@@ -933,7 +933,7 @@ void ml_recover(void)
     memmove(p, hp->bh_data, previous_page_size);
     free(hp->bh_data);
     hp->bh_data = p;
-    b0p = (ZERO_BL *)(hp->bh_data);
+    b0p = hp->bh_data;
   }
 
   /*
@@ -1040,7 +1040,7 @@ void ml_recover(void)
       ml_append(lnum++, (char_u *)_("???MANY LINES MISSING"),
           (colnr_T)0, TRUE);
     } else {          /* there is a block */
-      pp = (PTR_BL *)(hp->bh_data);
+      pp = hp->bh_data;
       if (pp->pb_id == PTR_ID) {                /* it is a pointer block */
         /* check line count when using pointer block first time */
         if (idx == 0 && line_count != 0) {
@@ -1097,7 +1097,7 @@ void ml_recover(void)
           continue;
         }
       } else {            /* not a pointer block */
-        dp = (DATA_BL *)(hp->bh_data);
+        dp = hp->bh_data;
         if (dp->db_id != DATA_ID) {             /* block id wrong */
           if (bnum == 1) {
             EMSG2(_("E310: Block 1 ID wrong (%s not a .swp file?)"),
@@ -1810,7 +1810,7 @@ errorret:
       goto errorret;
     }
 
-    dp = (DATA_BL *)(hp->bh_data);
+    dp = hp->bh_data;
 
     ptr = (char_u *)dp +
           ((dp->db_index[lnum - buf->b_ml.ml_locked_low]) & DB_INDEX_MASK);
@@ -1939,7 +1939,7 @@ ml_append_int (
   /* get line count before the insertion */
   line_count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low;
 
-  dp = (DATA_BL *)(hp->bh_data);
+  dp = hp->bh_data;
 
   /*
    * If
@@ -1965,7 +1965,7 @@ ml_append_int (
     line_count = buf->b_ml.ml_locked_high - buf->b_ml.ml_locked_low;
     CHECK(buf->b_ml.ml_locked_low != lnum + 1, "locked_low != lnum + 1");
 
-    dp = (DATA_BL *)(hp->bh_data);
+    dp = hp->bh_data;
   }
 
   ++buf->b_ml.ml_line_count;
@@ -2084,8 +2084,8 @@ ml_append_int (
       line_count_left = line_count;
       line_count_right = 0;
     }
-    dp_right = (DATA_BL *)(hp_right->bh_data);
-    dp_left = (DATA_BL *)(hp_left->bh_data);
+    dp_right = hp_right->bh_data;
+    dp_left = hp_left->bh_data;
     bnum_left = hp_left->bh_bnum;
     bnum_right = hp_right->bh_bnum;
     page_count_left = hp_left->bh_page_count;
@@ -2187,7 +2187,7 @@ ml_append_int (
       pb_idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL)
         return FAIL;
-      pp = (PTR_BL *)(hp->bh_data);         /* must be pointer block */
+      pp = hp->bh_data;         /* must be pointer block */
       if (pp->pb_id != PTR_ID) {
         EMSG(_("E317: pointer block id wrong 3"));
         mf_put(mfp, hp, FALSE, FALSE);
@@ -2244,7 +2244,7 @@ ml_append_int (
           hp_new = ml_new_ptr(mfp);
           if (hp_new == NULL)               /* TODO: try to fix tree */
             return FAIL;
-          pp_new = (PTR_BL *)(hp_new->bh_data);
+          pp_new = hp_new->bh_data;
 
           if (hp->bh_bnum != 1)
             break;
@@ -2427,7 +2427,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
   if ((hp = ml_find_line(buf, lnum, ML_DELETE)) == NULL)
     return FAIL;
 
-  dp = (DATA_BL *)(hp->bh_data);
+  dp = hp->bh_data;
   /* compute line count before the delete */
   count = (long)(buf->b_ml.ml_locked_high)
           - (long)(buf->b_ml.ml_locked_low) + 2;
@@ -2461,7 +2461,7 @@ static int ml_delete_int(buf_T *buf, linenr_T lnum, int message)
       idx = ip->ip_index;
       if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL)
         return FAIL;
-      pp = (PTR_BL *)(hp->bh_data);         /* must be pointer block */
+      pp = hp->bh_data;         /* must be pointer block */
       if (pp->pb_id != PTR_ID) {
         EMSG(_("E317: pointer block id wrong 4"));
         mf_put(mfp, hp, FALSE, FALSE);
@@ -2541,7 +2541,7 @@ void ml_setmarked(linenr_T lnum)
   if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL)
     return;                 /* give error message? */
 
-  dp = (DATA_BL *)(hp->bh_data);
+  dp = hp->bh_data;
   dp->db_index[lnum - curbuf->b_ml.ml_locked_low] |= DB_MARKED;
   curbuf->b_ml.ml_flags |= ML_LOCKED_DIRTY;
 }
@@ -2572,7 +2572,7 @@ linenr_T ml_firstmarked(void)
     if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL)
       return (linenr_T)0;                   /* give error message? */
 
-    dp = (DATA_BL *)(hp->bh_data);
+    dp = hp->bh_data;
 
     for (i = lnum - curbuf->b_ml.ml_locked_low;
          lnum <= curbuf->b_ml.ml_locked_high; ++i, ++lnum)
@@ -2612,7 +2612,7 @@ void ml_clearmarked(void)
     if ((hp = ml_find_line(curbuf, lnum, ML_FIND)) == NULL)
       return;                   /* give error message? */
 
-    dp = (DATA_BL *)(hp->bh_data);
+    dp = hp->bh_data;
 
     for (i = lnum - curbuf->b_ml.ml_locked_low;
          lnum <= curbuf->b_ml.ml_locked_high; ++i, ++lnum)
@@ -2661,7 +2661,7 @@ static void ml_flush_line(buf_T *buf)
     if (hp == NULL)
       EMSGN(_("E320: Cannot find line %" PRId64), lnum);
     else {
-      dp = (DATA_BL *)(hp->bh_data);
+      dp = hp->bh_data;
       idx = lnum - buf->b_ml.ml_locked_low;
       start = ((dp->db_index[idx]) & DB_INDEX_MASK);
       old_line = (char_u *)dp + start;
@@ -2728,7 +2728,7 @@ static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
 {
   assert(page_count >= 0);
   bhdr_T *hp = mf_new(mfp, negative, (unsigned)page_count);
-  DATA_BL *dp = (DATA_BL *)(hp->bh_data);
+  DATA_BL *dp = hp->bh_data;
   dp->db_id = DATA_ID;
   dp->db_txt_start = dp->db_txt_end = page_count * mfp->mf_page_size;
   dp->db_free = dp->db_txt_start - HEADER_SIZE;
@@ -2743,7 +2743,7 @@ static bhdr_T *ml_new_data(memfile_T *mfp, int negative, int page_count)
 static bhdr_T *ml_new_ptr(memfile_T *mfp)
 {
   bhdr_T *hp = mf_new(mfp, FALSE, 1);
-  PTR_BL *pp = (PTR_BL *)(hp->bh_data);
+  PTR_BL *pp = hp->bh_data;
   pp->pb_id = PTR_ID;
   pp->pb_count = 0;
   pp->pb_count_max = (mfp->mf_page_size - sizeof(PTR_BL)) / sizeof(PTR_EN) + 1;
@@ -2857,7 +2857,7 @@ static bhdr_T *ml_find_line(buf_T *buf, linenr_T lnum, int action)
     else if (action == ML_DELETE)
       --high;
 
-    dp = (DATA_BL *)(hp->bh_data);
+    dp = hp->bh_data;
     if (dp->db_id == DATA_ID) {         /* data block */
       buf->b_ml.ml_locked = hp;
       buf->b_ml.ml_locked_low = low;
@@ -2988,7 +2988,7 @@ static void ml_lineadd(buf_T *buf, int count)
     ip = &(buf->b_ml.ml_stack[idx]);
     if ((hp = mf_get(mfp, ip->ip_bnum, 1)) == NULL)
       break;
-    pp = (PTR_BL *)(hp->bh_data);       /* must be pointer block */
+    pp = hp->bh_data;       /* must be pointer block */
     if (pp->pb_id != PTR_ID) {
       mf_put(mfp, hp, FALSE, FALSE);
       EMSG(_("E317: pointer block id wrong 2"));
@@ -3641,7 +3641,7 @@ void ml_setflags(buf_T *buf)
     return;
   for (hp = buf->b_ml.ml_mfp->mf_used_last; hp != NULL; hp = hp->bh_prev) {
     if (hp->bh_bnum == 0) {
-      b0p = (ZERO_BL *)(hp->bh_data);
+      b0p = hp->bh_data;
       b0p->b0_dirty = buf->b_changed ? B0_DIRTY : 0;
       b0p->b0_flags = (b0p->b0_flags & ~B0_FF_MASK)
                       | (get_fileformat(buf) + 1);
@@ -3753,7 +3753,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
           buf->b_ml.ml_usedchunks = -1;
           return;
         }
-        dp = (DATA_BL *)(hp->bh_data);
+        dp = hp->bh_data;
         count = (long)(buf->b_ml.ml_locked_high) -
                 (long)(buf->b_ml.ml_locked_low) + 1;
         idx = curline - buf->b_ml.ml_locked_low;
@@ -3802,7 +3802,7 @@ static void ml_updatechunk(buf_T *buf, linenr_T line, long len, int updtype)
           buf->b_ml.ml_usedchunks = -1;
           return;
         }
-        dp = (DATA_BL *)(hp->bh_data);
+        dp = hp->bh_data;
         if (dp->db_line_count == 1)
           rest = dp->db_txt_end - dp->db_txt_start;
         else
@@ -3913,7 +3913,7 @@ long ml_find_line_or_offset(buf_T *buf, linenr_T lnum, long *offp)
     if (curline > buf->b_ml.ml_line_count
         || (hp = ml_find_line(buf, curline, ML_FIND)) == NULL)
       return -1;
-    dp = (DATA_BL *)(hp->bh_data);
+    dp = hp->bh_data;
     count = (long)(buf->b_ml.ml_locked_high) -
             (long)(buf->b_ml.ml_locked_low) + 1;
     start_idx = idx = curline - buf->b_ml.ml_locked_low;
