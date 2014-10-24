@@ -19668,3 +19668,80 @@ static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
   api_free_object(result);
 }
 
+typval_T eval_call_provider(char *method, list_T *args)
+{
+  if (!has_provider_method(method)) {
+    EMSG2(_("No provider for method \"%s\""), method);
+    return (typval_T) {.v_type = VAR_UNKNOWN};
+  }
+
+  typval_T dummy, rv;
+  // enable v:provider_args/v:provider_result(make visible to userland)
+  prepare_vimvar(VV_PROVIDER_ARGS, &dummy);
+  prepare_vimvar(VV_PROVIDER_RESULT, &dummy);
+  // set v:provider_args with the argument list
+  vimvars[VV_PROVIDER_ARGS].vv_type = VAR_LIST;
+  vimvars[VV_PROVIDER_ARGS].vv_list = args;
+  args->lv_refcount++;
+  // run the autocommands
+  apply_autocmds(EVENT_PROVIDERCALL, (uint8_t *)method, NULL, TRUE, NULL);
+  args->lv_refcount--;
+  // get the result
+  rv = vimvars[VV_PROVIDER_RESULT].vv_tv;
+  // disable v:provider_args/v:provider_result
+  restore_vimvar(VV_PROVIDER_ARGS, &dummy);
+  restore_vimvar(VV_PROVIDER_RESULT, &dummy);
+  return rv;
+}
+
+bool eval_has_provider(char *name)
+{
+#define provider_exists(method) \
+  has_autocmd(EVENT_PROVIDERCALL, (uint8_t *)method, NULL)
+
+#define source_provider(name) \
+  do_source((uint8_t *)"$VIMRUNTIME/provider/" name "/init.vim", \
+                       false, \
+                       false)
+
+  // Cache the result of "has" in these static variables
+  static int has_clipboard = -1, has_python = -1;
+
+  if (!strcmp(name, "clipboard")) {
+
+    if (has_clipboard == -1) {
+      source_provider("clipboard");
+      has_clipboard = provider_exists("clipboard_get")
+                   && provider_exists("clipboard_get");
+    }
+    return has_clipboard;
+
+  } else if (!strcmp(name, "python")) {
+
+    if (has_python == -1) {
+      source_provider("python");
+      has_python = provider_exists("python_execute")
+                && provider_exists("python_execute_file")
+                && provider_exists("python_do_range")
+                && provider_exists("python_eval");
+    }
+    return has_python;
+
+  }
+  return false;
+}
+
+static bool has_provider_method(char *name)
+{
+#define matches(_method, _provider) \
+  (!strncmp(_method, _provider, sizeof(_provider) - 1))
+
+  if (matches(name, "clipboard_")) {
+    return eval_has_provider("clipboard");
+  } else if (matches(name, "python_")) {
+    return eval_has_provider("python");
+  }
+
+  return false;
+}
+
