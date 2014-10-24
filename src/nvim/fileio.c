@@ -6614,20 +6614,11 @@ apply_autocmds_group (
     fname = vim_strsave(fname);         /* make a copy, so we can change it */
   } else {
     sfname = vim_strsave(fname);
-    /* Don't try expanding FileType, Syntax, FuncUndefined, WindowID,
-     * ColorScheme, QuickFixCmd or JobActivity */
-    if (event == EVENT_FILETYPE
-        || event == EVENT_SYNTAX
-        || event == EVENT_FUNCUNDEFINED
-        || event == EVENT_REMOTEREPLY
-        || event == EVENT_SPELLFILEMISSING
-        || event == EVENT_QUICKFIXCMDPRE
-        || event == EVENT_COLORSCHEME
-        || event == EVENT_QUICKFIXCMDPOST
-        || event == EVENT_JOBACTIVITY)
-      fname = vim_strsave(fname);
-    else
+    if (should_expand_filename(event)) {
       fname = FullName_save(fname, FALSE);
+    } else {
+      fname = vim_strsave(fname);
+    }
   }
   if (fname == NULL) {      /* out of memory */
     free(sfname);
@@ -7475,3 +7466,16 @@ long write_eintr(int fd, void *buf, size_t bufsize)
   return ret;
 }
 #endif
+
+static bool should_expand_filename(event_T event)
+{
+  return (event != EVENT_FILETYPE
+       && event != EVENT_SYNTAX
+       && event != EVENT_FUNCUNDEFINED
+       && event != EVENT_REMOTEREPLY
+       && event != EVENT_SPELLFILEMISSING
+       && event != EVENT_QUICKFIXCMDPRE
+       && event != EVENT_COLORSCHEME
+       && event != EVENT_QUICKFIXCMDPOST
+       && event != EVENT_JOBACTIVITY);
+}
