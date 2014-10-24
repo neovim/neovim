@@ -42,5 +42,5 @@ let s:pyhost_id = rpcstart(s:python_interpreter,
 " by the user's vimrc would not get has('python') == 1
 if rpcrequest(s:pyhost_id, 'python_eval', '"o"+"k"') != 'ok' || !has('python')
   " Something went wrong
-  rpcstop(s:pyhost_id)
+  call rpcstop(s:pyhost_id)
 endif

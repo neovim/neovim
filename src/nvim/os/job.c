@@ -21,6 +21,21 @@
 #define MAX_RUNNING_JOBS 100
 #define JOB_BUFFER_SIZE 0xFFFF
 
+#define close_job_stream(job, stream, type)                                \
+  do {                                                                     \
+    if (job->stream) {                                                     \
+      type##stream_free(job->stream);                                      \
+      job->stream = NULL;                                                  \
+      if (!uv_is_closing((uv_handle_t *)&job->proc_std##stream)) {         \
+        uv_close((uv_handle_t *)&job->proc_std##stream, close_cb);         \
+      }                                                                    \
+    }                                                                      \
+  } while (0)
+
+#define close_job_in(job) close_job_stream(job, in, w)
+#define close_job_out(job) close_job_stream(job, out, r)
+#define close_job_err(job) close_job_stream(job, err, r)
+
 struct job {
   // Job id the index in the job table plus one.
   int id;
@@ -28,13 +43,9 @@ struct job {
   int64_t status;
   // Number of polls after a SIGTERM that will trigger a SIGKILL
   int exit_timeout;
-  // exit_cb may be called while there's still pending data from stdout/stderr.
-  // We use this reference count to ensure the JobExit event is only emitted
-  // when stdout/stderr are drained
-  int pending_refs;
-  // Same as above, but for freeing the job memory which contains
-  // libuv handles. Only after all are closed the job can be safely freed.
-  int pending_closes;
+  // Number of references to the job. The job resources will only be freed by
+  // close_cb when this is 0
+  int refcount;
   // If the job was already stopped
   bool stopped;
   // Data associated with the job
@@ -164,8 +175,7 @@ Job *job_start(char **argv,
   job->id = i + 1;
   *status = job->id;
   job->status = -1;
-  job->pending_refs = 3;
-  job->pending_closes = 4;
+  job->refcount = 4;
   job->data = data;
   job->stdout_cb = stdout_cb;
   job->stderr_cb = stderr_cb;
@@ -206,7 +216,9 @@ Job *job_start(char **argv,
 
   // Spawn the job
   if (uv_spawn(uv_default_loop(), &job->proc, &job->proc_opts) != 0) {
-    free_job(job);
+    close_job_in(job);
+    close_job_out(job);
+    close_job_err(job);
     *status = -1;
     return NULL;
   }
@@ -272,15 +284,13 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
   int old_mode = cur_tmode;
   settmode(TMODE_COOK);
 
-  // Increase pending_refs to stop the exit_cb from being called, which
-  // could result in the job being freed before we have a chance
-  // to get the status.
-  job->pending_refs++;
+  // Increase refcount to stop the job from being freed before we have a
+  // chance to get the status.
+  job->refcount++;
   event_poll_until(ms,
       // Until...
       got_int ||                // interrupted by the user
-      job->pending_refs == 1);  // job exited
-  job->pending_refs--;
+      job->refcount == 1);  // job exited
 
   // we'll assume that a user frantically hitting interrupt doesn't like
   // the current job. Signal that it has to be killed.
@@ -291,9 +301,10 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
 
   settmode(old_mode);
 
-  if (!job->pending_refs) {
+  if (!--job->refcount) {
     int status = (int) job->status;
-    job_exit_callback(job);
+    // Manually invoke close_cb to free the job resources
+    close_cb((uv_handle_t *)&job->proc);
     return status;
   }
 
@@ -312,15 +323,7 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
 /// @param job The job instance
 void job_close_in(Job *job) FUNC_ATTR_NONNULL_ALL
 {
-  if (!job->in) {
-    return;
-  }
-
-  // let other functions in the job module know that the in pipe is no more
-  wstream_free(job->in);
-  job->in = NULL;
-
-  uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+  close_job_in(job);
 }
 
 /// All writes that complete after calling this function will be reported
@@ -379,9 +382,6 @@ static void job_exit_callback(Job *job)
     job->exit_cb(job, job->data);
   }
 
-  // Free the job resources
-  free_job(job);
-
   // Stop polling job status if this was the last
   job_count--;
   if (job_count == 0) {
@@ -392,16 +392,6 @@ static void job_exit_callback(Job *job)
 static bool is_alive(Job *job)
 {
   return uv_process_kill(&job->proc, 0) == 0;
-}
-
-static void free_job(Job *job)
-{
-  uv_close((uv_handle_t *)&job->proc_stdout, close_cb);
-  if (job->in) {
-    uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
-  }
-  uv_close((uv_handle_t *)&job->proc_stderr, close_cb);
-  uv_close((uv_handle_t *)&job->proc, close_cb);
 }
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
@@ -433,12 +423,14 @@ static void read_cb(RStream *rstream, void *data, bool eof)
 
   if (rstream == job->out) {
     job->stdout_cb(rstream, data, eof);
+    if (eof) {
+      close_job_out(job);
+    }
   } else {
     job->stderr_cb(rstream, data, eof);
-  }
-
-  if (eof && --job->pending_refs == 0) {
-    job_exit_callback(job);
+    if (eof) {
+      close_job_err(job);
+    }
   }
 }
 
@@ -448,31 +440,29 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
   Job *job = handle_get_job((uv_handle_t *)proc);
 
   job->status = status;
-  if (--job->pending_refs == 0) {
-    job_exit_callback(job);
-  }
+  uv_close((uv_handle_t *)&job->proc, close_cb);
 }
 
 static void close_cb(uv_handle_t *handle)
 {
   Job *job = handle_get_job(handle);
 
-  if (--job->pending_closes == 0) {
-    // Only free the job memory after all the associated handles are properly
-    // closed by libuv
-    rstream_free(job->out);
-    rstream_free(job->err);
-    if (job->in) {
-      wstream_free(job->in);
-    }
+  if (handle == (uv_handle_t *)&job->proc) {
+    // Make sure all streams are properly closed to trigger callback invocation
+    // when job->proc is closed
+    close_job_in(job);
+    close_job_out(job);
+    close_job_err(job);
+  }
 
-    // Free data memory of process and pipe handles, that was allocated
-    // by handle_set_job in job_start.
+  if (--job->refcount == 0) {
+    // Invoke the exit_cb
+    job_exit_callback(job);
+    // Free all memory allocated for the job
     free(job->proc.data);
     free(job->proc_stdin.data);
     free(job->proc_stdout.data);
     free(job->proc_stderr.data);
-
     shell_free_argv(job->proc_opts.args);
     free(job);
   }

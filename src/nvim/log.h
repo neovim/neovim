@@ -1,6 +1,7 @@
 #ifndef NVIM_LOG_H
 #define NVIM_LOG_H
 
+#include <stdio.h>
 #include <stdbool.h>
 
 #define DEBUG_LOG_LEVEL 0
@@ -9,9 +10,13 @@
 #define ERROR_LOG_LEVEL 3
 
 #define DLOG(...)
+#define DLOGN(...)
 #define ILOG(...)
+#define ILOGN(...)
 #define WLOG(...)
+#define WLOGN(...)
 #define ELOG(...)
+#define ELOGN(...)
 
 // Logging is disabled if NDEBUG or DISABLE_LOG is defined.
 #ifdef NDEBUG
@@ -28,22 +33,38 @@
 
 #  if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
 #    undef DLOG
-#    define DLOG(...) do_log(DEBUG_LOG_LEVEL, __func__, __LINE__, __VA_ARGS__)
+#    undef DLOGN
+#    define DLOG(...) do_log(DEBUG_LOG_LEVEL, __func__, __LINE__, true, \
+       __VA_ARGS__)
+#    define DLOGN(...) do_log(DEBUG_LOG_LEVEL, __func__, __LINE__, false, \
+       __VA_ARGS__)
 #  endif
 
 #  if MIN_LOG_LEVEL <= INFO_LOG_LEVEL
 #    undef ILOG
-#    define ILOG(...) do_log(INFO_LOG_LEVEL, __func__, __LINE__, __VA_ARGS__)
+#    undef ILOGN
+#    define ILOG(...) do_log(INFO_LOG_LEVEL, __func__, __LINE__, true, \
+       __VA_ARGS__)
+#    define ILOGN(...) do_log(INFO_LOG_LEVEL, __func__, __LINE__, false, \
+       __VA_ARGS__)
 #  endif
 
 #  if MIN_LOG_LEVEL <= WARNING_LOG_LEVEL
 #    undef WLOG
-#    define WLOG(...) do_log(WARNING_LOG_LEVEL, __func__, __LINE__, __VA_ARGS__)
+#    undef WLOGN
+#    define WLOG(...) do_log(WARNING_LOG_LEVEL, __func__, __LINE__, true, \
+       __VA_ARGS__)
+#    define WLOGN(...) do_log(WARNING_LOG_LEVEL, __func__, __LINE__, false, \
+       __VA_ARGS__)
 #  endif
 
 #  if MIN_LOG_LEVEL <= ERROR_LOG_LEVEL
 #    undef ELOG
-#    define ELOG(...) do_log(ERROR_LOG_LEVEL, __func__, __LINE__, __VA_ARGS__)
+#    undef ELOGN
+#    define ELOG(...) do_log(ERROR_LOG_LEVEL, __func__, __LINE__, true, \
+       __VA_ARGS__)
+#    define ELOGN(...) do_log(ERROR_LOG_LEVEL, __func__, __LINE__, false, \
+       __VA_ARGS__)
 #  endif
 
 #endif
