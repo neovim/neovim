@@ -338,6 +338,8 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
   if (eof) {
     close_channel(channel);
+    call_set_error(channel, "Channel was closed by the client");
+    return;
   }
 
   size_t count = rstream_pending(rstream);
