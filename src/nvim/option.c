@@ -1870,9 +1870,6 @@ void set_init_1(void)
 
   langmap_init();
 
-  /* Be Vi compatible by default */
-  p_cp = TRUE;
-
   /* Use POSIX compatibility when $VIM_POSIX is set. */
   if (os_getenv("VIM_POSIX") != NULL) {
     set_string_default("cpo", (char_u *)CPO_ALL);
