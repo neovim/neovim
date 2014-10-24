@@ -6497,6 +6497,7 @@ apply_autocmds_group (
   long save_cmdbang;
   static int filechangeshell_busy = FALSE;
   proftime_T wait_time;
+  struct caller_scope save_provider_caller_scope;
 
   /*
    * Quickly return if there are no autocommands for this event or
@@ -6659,6 +6660,21 @@ apply_autocmds_group (
   /* Don't use local function variables, if called from a function */
   save_funccalp = save_funccal();
 
+  if (event == EVENT_PROVIDERCALL) {
+    save_provider_caller_scope = provider_caller_scope;
+    provider_caller_scope = (struct caller_scope) {
+      .SID = save_current_SID,
+      .sourcing_name = save_sourcing_name,
+      .autocmd_fname = save_autocmd_fname,
+      .autocmd_match = save_autocmd_match,
+      .sourcing_lnum = save_sourcing_lnum,
+      .autocmd_fname_full = save_autocmd_fname_full,
+      .autocmd_bufnr = save_autocmd_bufnr,
+      .funccalp = save_funccalp
+    };
+    provider_call_nesting++;
+  }
+
   /*
    * When starting to execute autocommands, save the search patterns.
    */
@@ -6737,6 +6753,12 @@ apply_autocmds_group (
   autocmd_bufnr = save_autocmd_bufnr;
   autocmd_match = save_autocmd_match;
   current_SID = save_current_SID;
+
+  if (event == EVENT_PROVIDERCALL) {
+    provider_caller_scope = save_provider_caller_scope;
+    provider_call_nesting--;
+  }
+
   restore_funccal(save_funccalp);
   if (do_profiling == PROF_YES)
     prof_child_exit(&wait_time);

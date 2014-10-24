@@ -12514,11 +12514,51 @@ static void f_rpcrequest(typval_T *argvars, typval_T *rettv)
     ADD(args, vim_to_object(tv));
   }
 
+  scid_T save_current_SID;
+  uint8_t *save_sourcing_name, *save_autocmd_fname, *save_autocmd_match;
+  linenr_T save_sourcing_lnum;
+  int save_autocmd_fname_full, save_autocmd_bufnr;
+  void *save_funccalp;
+
+  if (provider_call_nesting) {
+    // If this is called from a ProviderCall autocommand, restore the scope
+    // information of the caller.
+    save_current_SID = current_SID;
+    save_sourcing_name = sourcing_name;
+    save_autocmd_fname = autocmd_fname;
+    save_autocmd_match = autocmd_match;
+    save_sourcing_lnum = sourcing_lnum;
+    save_autocmd_fname_full = autocmd_fname_full;
+    save_autocmd_bufnr = autocmd_bufnr;
+    save_funccalp = save_funccal();
+    //
+    current_SID = provider_caller_scope.SID;
+    sourcing_name = provider_caller_scope.sourcing_name;
+    autocmd_fname = provider_caller_scope.autocmd_fname;
+    autocmd_match = provider_caller_scope.autocmd_match;
+    sourcing_lnum = provider_caller_scope.sourcing_lnum;
+    autocmd_fname_full = provider_caller_scope.autocmd_fname_full;
+    autocmd_bufnr = provider_caller_scope.autocmd_bufnr;
+    restore_funccal(provider_caller_scope.funccalp);
+  }
+
   Error err = ERROR_INIT;
   Object result = channel_send_call((uint64_t)argvars[0].vval.v_number,
                                     (char *)argvars[1].vval.v_string,
                                     args,
                                     &err);
+
+  if (provider_call_nesting) {
+    current_SID = save_current_SID;
+    sourcing_name = save_sourcing_name;
+    autocmd_fname = save_autocmd_fname;
+    autocmd_match = save_autocmd_match;
+    sourcing_lnum = save_sourcing_lnum;
+    autocmd_fname_full = save_autocmd_fname_full;
+    autocmd_bufnr = save_autocmd_bufnr;
+    restore_funccal(save_funccalp);
+  }
+
   if (err.set) {
     vim_report_error(cstr_as_string(err.msg));
     goto end;
