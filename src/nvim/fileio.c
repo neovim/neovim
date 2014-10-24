@@ -6938,20 +6938,21 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
   char_u      *fname;
   char_u      *tail = path_tail(sfname);
   int retval = FALSE;
+  bool expand_fname = should_expand_filename(event);
 
-  fname = FullName_save(sfname, FALSE);
-  if (fname == NULL)
-    return FALSE;
+  if (expand_fname) {
+    fname = FullName_save(sfname, FALSE);
+    if (fname == NULL)
+      return false;
 
 #ifdef BACKSLASH_IN_FILENAME
-  /*
-   * Replace all backslashes with forward slashes.  This makes the
-   * autocommand patterns portable between Unix and MS-DOS.
-   */
-  sfname = vim_strsave(sfname);
-  forward_slash(sfname);
-  forward_slash(fname);
+    // Replace all backslashes with forward slashes.  This makes the
+    // autocommand patterns portable between Unix and MS-DOS.
+    sfname = vim_strsave(sfname);
+    forward_slash(sfname);
+    forward_slash(fname);
 #endif
+  }
 
   for (ap = first_autopat[(int)event]; ap != NULL; ap = ap->next)
     if (ap->pat != NULL && ap->cmds != NULL
@@ -6964,7 +6965,10 @@ int has_autocmd(event_T event, char_u *sfname, buf_T *buf)
       break;
     }
 
-  free(fname);
+  if (expand_fname) {
+    free(fname);
+  }
+
 #ifdef BACKSLASH_IN_FILENAME
   free(sfname);
 #endif
