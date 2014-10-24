@@ -48,6 +48,7 @@
 #include <inttypes.h>
 #include <limits.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
@@ -107,7 +108,7 @@ memfile_T *mf_open(char_u *fname, int flags)
   mfp->mf_free_first = NULL;         // free list is empty
   mfp->mf_used_first = NULL;         // used list is empty
   mfp->mf_used_last = NULL;
-  mfp->mf_dirty = FALSE;
+  mfp->mf_dirty = false;
   mfp->mf_used_count = 0;
   mf_hash_init(&mfp->mf_hash);
   mf_hash_init(&mfp->mf_trans);
@@ -180,14 +181,14 @@ int mf_open_file(memfile_T *mfp, char_u *fname)
   if (mfp->mf_fd < 0)
     return FAIL;
 
-  mfp->mf_dirty = TRUE;
+  mfp->mf_dirty = true;
   return OK;
 }
 
 /// Close a memory file and optionally delete the associated file.
 ///
-/// @param del_file  TRUE to delete associated file.
-void mf_close(memfile_T *mfp, int del_file)
+/// @param del_file  Whether to delete associated file.
+void mf_close(memfile_T *mfp, bool del_file)
 {
   bhdr_T      *hp, *nextp;
 
@@ -216,8 +217,8 @@ void mf_close(memfile_T *mfp, int del_file)
 
 /// Close the swap file for a memfile. Used when 'swapfile' is reset.
 ///
-/// @param getlines  TRUE to get all lines into memory.
-void mf_close_file (buf_T *buf, int getlines)
+/// @param getlines  Whether to get all lines into memory.
+void mf_close_file (buf_T *buf, bool getlines)
 {
   memfile_T *mfp = buf->b_ml.ml_mfp;
   if (mfp == NULL || mfp->mf_fd < 0)     // nothing to close
@@ -261,9 +262,9 @@ void mf_new_page_size(memfile_T *mfp, unsigned new_size)
 
 /// Get a new block
 /// 
-/// @param negative    TRUE if negative block number desired (data block)
+/// @param negative    Whether a negative block number is desired (data block).
 /// @param page_count  Desired number of pages.
-bhdr_T *mf_new(memfile_T *mfp, int negative, unsigned page_count)
+bhdr_T *mf_new(memfile_T *mfp, bool negative, unsigned page_count)
 {
   // If we reached the maximum size for the used memory blocks, release one.
   // If a bhdr_T is returned, use it and adjust the page_count if necessary.
@@ -313,7 +314,7 @@ bhdr_T *mf_new(memfile_T *mfp, int negative, unsigned page_count)
     }
   }
   hp->bh_flags = BH_LOCKED | BH_DIRTY;    // new block is always dirty
-  mfp->mf_dirty = TRUE;
+  mfp->mf_dirty = true;
   hp->bh_page_count = page_count;
   mf_ins_used(mfp, hp);
   mf_ins_hash(mfp, hp);
@@ -373,9 +374,9 @@ bhdr_T *mf_get(memfile_T *mfp, blocknr_T nr, unsigned page_count)
 
 /// Release the block *hp.
 /// 
-/// @param dirty   Block must be written to file later.
-/// @param infile  Block should be in file (needed for recovery).
-void mf_put(memfile_T *mfp, bhdr_T *hp, int dirty, int infile)
+/// @param dirty   Whether block must be written to file later.
+/// @param infile  Whether block should be in file (needed for recovery).
+void mf_put(memfile_T *mfp, bhdr_T *hp, bool dirty, bool infile)
 {
   unsigned flags = hp->bh_flags;
 
@@ -384,7 +385,7 @@ void mf_put(memfile_T *mfp, bhdr_T *hp, int dirty, int infile)
   flags &= ~BH_LOCKED;
   if (dirty) {
     flags |= BH_DIRTY;
-    mfp->mf_dirty = TRUE;
+    mfp->mf_dirty = true;
   }
   hp->bh_flags = flags;
   if (infile)
@@ -423,7 +424,7 @@ int mf_sync(memfile_T *mfp, int flags)
   int got_int_save = got_int;
 
   if (mfp->mf_fd < 0) {         // there is no file, nothing to do
-    mfp->mf_dirty = FALSE;
+    mfp->mf_dirty = false;
     return FAIL;
   }
 
@@ -460,7 +461,7 @@ int mf_sync(memfile_T *mfp, int flags)
   // If the whole list is flushed, the memfile is not dirty anymore.
   // In case of an error, dirty flag is also set, to avoid trying all the time.
   if (hp == NULL || status == FAIL)
-    mfp->mf_dirty = FALSE;
+    mfp->mf_dirty = false;
 
   if ((flags & MFS_FLUSH) && *p_sws != NUL) {
 #if defined(UNIX)
@@ -500,7 +501,7 @@ void mf_set_dirty(memfile_T *mfp)
   for (hp = mfp->mf_used_last; hp != NULL; hp = hp->bh_prev)
     if (hp->bh_bnum > 0)
       hp->bh_flags |= BH_DIRTY;
-  mfp->mf_dirty = TRUE;
+  mfp->mf_dirty = true;
 }
 
 /// Insert block in front of memfile's hash list.
@@ -574,8 +575,8 @@ static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
 
   /// Need to release a block if the number of blocks for this memfile is
   /// higher than the maximum one or total memory used is over 'maxmemtot'.
-  int need_release = (mfp->mf_used_count >= mfp->mf_used_count_max
-                      || (total_mem_used >> 10) >= (size_t)p_mmt);
+  bool need_release = (mfp->mf_used_count >= mfp->mf_used_count_max
+                       || (total_mem_used >> 10) >= (size_t)p_mmt);
 
   /// Try to create swap file if the amount of memory used is getting too high.
   if (mfp->mf_fd < 0 && need_release && p_uc) {
@@ -629,11 +630,10 @@ static bhdr_T *mf_release(memfile_T *mfp, unsigned page_count)
 ///
 /// Used in case of out of memory
 /// 
-/// @return  TRUE   If any memory was released.
-///          FALSE  If not.
-int mf_release_all(void)
+/// @return  Whether any memory was released.
+bool mf_release_all(void)
 {
-  int retval = FALSE;
+  bool retval = false;
   FOR_ALL_BUFFERS(buf) {
     memfile_T *mfp = buf->b_ml.ml_mfp;
     if (mfp != NULL) {
@@ -651,7 +651,7 @@ int mf_release_all(void)
             mf_rem_hash(mfp, hp);
             mf_free_bhdr(hp);
             hp = mfp->mf_used_last;    // restart, list was changed
-            retval = TRUE;
+            retval = true;
           } else
             hp = hp->bh_prev;
         }
@@ -895,7 +895,7 @@ void mf_fullname(memfile_T *mfp)
 }
 
 /// Return TRUE if there are any translations pending for memfile.
-int mf_need_trans(memfile_T *mfp)
+bool mf_need_trans(memfile_T *mfp)
 {
   return mfp->mf_fname != NULL && mfp->mf_neg_count > 0;
 }
