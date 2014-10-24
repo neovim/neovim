@@ -730,7 +730,7 @@ static WBuffer *serialize_response(uint64_t channel_id,
 }
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-#define REQ "[response]     "
+#define REQ "[request]      "
 #define RES "[response]     "
 #define NOT "[notification] "
 
