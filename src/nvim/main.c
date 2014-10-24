@@ -2181,7 +2181,6 @@ static void usage(void)
 #if !defined(UNIX)
   main_msg(_("--literal\t\tDon't expand wildcards"));
 #endif
-  main_msg(_("-v\t\t\tVi mode (like \"vi\")"));
   main_msg(_("-e\t\t\tEx mode (like \"ex\")"));
   main_msg(_("-E\t\t\tImproved Ex mode"));
   main_msg(_("-s\t\t\tSilent (batch) mode (only for \"ex\")"));
@@ -2193,8 +2192,6 @@ static void usage(void)
   main_msg(_("-M\t\t\tModifications in text not allowed"));
   main_msg(_("-b\t\t\tBinary mode"));
   main_msg(_("-l\t\t\tLisp mode"));
-  main_msg(_("-C\t\t\tCompatible with Vi: 'compatible'"));
-  main_msg(_("-N\t\t\tNot fully Vi compatible: 'nocompatible'"));
   main_msg(_("-V[N][fname]\t\tBe verbose [level N] [log messages to fname]"));
   main_msg(_("-D\t\t\tDebugging mode"));
   main_msg(_("-n\t\t\tNo swap file, use memory only"));
