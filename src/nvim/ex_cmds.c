@@ -2830,7 +2830,7 @@ do_ecmd (
   if ((flags & ECMD_SET_HELP) || keep_help_flag) {
     char_u  *p;
 
-    curbuf->b_help = TRUE;
+    curbuf->b_help = true;
     set_string_option_direct((char_u *)"buftype", -1,
         (char_u *)"help", OPT_FREE|OPT_LOCAL, 0);
 

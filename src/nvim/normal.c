@@ -413,7 +413,7 @@ static int find_command(int cmdchar)
 /*
  * Execute a command in Normal mode.
  */
-void 
+void
 normal_cmd (
     oparg_T *oap,
     bool toplevel                    /* true when called from main() */
@@ -3244,7 +3244,7 @@ static void nv_page(cmdarg_T *cap)
 /*
  * Implementation of "gd" and "gD" command.
  */
-static void 
+static void
 nv_gd (
     oparg_T *oap,
     int nchar,
@@ -4832,7 +4832,7 @@ static void nv_next(cmdarg_T *cap)
  * Search for "pat" in direction "dir" ('/' or '?', 0 for repeat).
  * Uses only cap->count1 and cap->oap from "cap".
  */
-static void 
+static void
 normal_search (
     cmdarg_T *cap,
     int dir,
@@ -7060,7 +7060,7 @@ static void nv_edit(cmdarg_T *cap)
 /*
  * Invoke edit() and take care of "restart_edit" and the return value.
  */
-static void 
+static void
 invoke_edit (
     cmdarg_T *cap,
     int repl,                       /* "r" or "gr" command */

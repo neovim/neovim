@@ -1673,7 +1673,7 @@ void scroll_cursor_halfway(int atend)
     curwin->w_topline = topline;
   curwin->w_topfill = topfill;
   if (old_topline > curwin->w_topline + curwin->w_height)
-    curwin->w_botfill = FALSE;
+    curwin->w_botfill = false;
   check_topfill(curwin, false);
   curwin->w_valid &= ~(VALID_WROW|VALID_CROW|VALID_BOTLINE|VALID_BOTLINE_AP);
   curwin->w_valid |= VALID_TOPLINE;

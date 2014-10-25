@@ -1745,11 +1745,11 @@ void diff_set_topline(win_T *fromwin, win_T *towin)
   }
 
   // safety check (if diff info gets outdated strange things may happen)
-  towin->w_botfill = FALSE;
+  towin->w_botfill = false;
 
   if (towin->w_topline > towin->w_buffer->b_ml.ml_line_count) {
     towin->w_topline = towin->w_buffer->b_ml.ml_line_count;
-    towin->w_botfill = TRUE;
+    towin->w_botfill = true;
   }
 
   if (towin->w_topline < 1) {

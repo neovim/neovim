@@ -1849,19 +1849,19 @@ int win_close(win_T *win, int free_buf)
      */
     if (wp->w_buffer != curbuf) {
       other_buffer = TRUE;
-      win->w_closing = TRUE;
+      win->w_closing = true;
       apply_autocmds(EVENT_BUFLEAVE, NULL, NULL, FALSE, curbuf);
       if (!win_valid(win))
         return FAIL;
-      win->w_closing = FALSE;
+      win->w_closing = false;
       if (last_window())
         return FAIL;
     }
-    win->w_closing = TRUE;
+    win->w_closing = true;
     apply_autocmds(EVENT_WINLEAVE, NULL, NULL, FALSE, curbuf);
     if (!win_valid(win))
       return FAIL;
-    win->w_closing = FALSE;
+    win->w_closing = false;
     if (last_window())
       return FAIL;
     /* autocmds may abort script processing */
@@ -1878,10 +1878,10 @@ int win_close(win_T *win, int free_buf)
    * Close the link to the buffer.
    */
   if (win->w_buffer != NULL) {
-    win->w_closing = TRUE;
+    win->w_closing = true;
     close_buffer(win, win->w_buffer, free_buf ? DOBUF_UNLOAD : 0, TRUE);
     if (win_valid(win))
-      win->w_closing = FALSE;
+      win->w_closing = false;
   }
 
   if (only_one_window() && win_valid(win) && win->w_buffer == NULL
@@ -5404,7 +5404,7 @@ int match_add(win_T *wp, char_u *grp, char_u *pat, int prio, int id, list_T *pos
           wp->w_buffer->b_mod_bot = botlnum;
         }
       } else {
-        wp->w_buffer->b_mod_set = TRUE;
+        wp->w_buffer->b_mod_set = true;
         wp->w_buffer->b_mod_top = toplnum;
         wp->w_buffer->b_mod_bot = botlnum;
         wp->w_buffer->b_mod_xlines = 0;
@@ -5478,7 +5478,7 @@ int match_delete(win_T *wp, int id, int perr)
         wp->w_buffer->b_mod_bot = cur->pos.botlnum;
       }
     } else {
-      wp->w_buffer->b_mod_set = TRUE;
+      wp->w_buffer->b_mod_set = true;
       wp->w_buffer->b_mod_top = cur->pos.toplnum;
       wp->w_buffer->b_mod_bot = cur->pos.botlnum;
       wp->w_buffer->b_mod_xlines = 0;

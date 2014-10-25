@@ -243,9 +243,9 @@ struct wininfo_S {
   wininfo_T   *wi_prev;         /* previous entry or NULL for first entry */
   win_T       *wi_win;          /* pointer to window that did set wi_fpos */
   pos_T wi_fpos;                /* last cursor position in the file */
-  int wi_optset;                /* TRUE when wi_opt has useful values */
+  bool wi_optset;               /* true when wi_opt has useful values */
   winopt_T wi_opt;              /* local window options */
-  int wi_fold_manual;           /* copy of w_fold_manual */
+  bool wi_fold_manual;          /* copy of w_fold_manual */
   garray_T wi_folds;            /* clone of w_folds */
 };
 
@@ -464,7 +464,7 @@ struct file_buffer {
   int b_nwindows;               /* nr of windows open on this buffer */
 
   int b_flags;                  /* various BF_ flags */
-  int b_closing;                /* buffer is being closed, don't let
+  bool b_closing;               /* buffer is being closed, don't let
                                    autocommands close it too. */
 
   /*
@@ -482,18 +482,18 @@ struct file_buffer {
 
   int b_fnum;                   /* buffer number for this file. */
 
-  int b_changed;                /* 'modified': Set to TRUE if something in the
+  bool b_changed;               /* 'modified': Set to true if something in the
                                    file has been changed and not written out. */
   int b_changedtick;            /* incremented for each change, also for undo */
 
-  int b_saving;                 /* Set to TRUE if we are in the middle of
+  bool b_saving;                /* Set to true if we are in the middle of
                                    saving the buffer. */
 
   /*
    * Changes to a buffer require updating of the display.  To minimize the
    * work, remember changes made and update everything at once.
    */
-  int b_mod_set;                /* TRUE when there are changes since the last
+  bool b_mod_set;               /* true when there are changes since the last
                                    time the display was updated */
   linenr_T b_mod_top;           /* topmost lnum that was changed */
   linenr_T b_mod_bot;           /* lnum below last changed line, AFTER the
@@ -524,7 +524,7 @@ struct file_buffer {
    */
   pos_T b_changelist[JUMPLISTSIZE];
   int b_changelistlen;                  /* number of active entries */
-  int b_new_change;                     /* set by u_savecommon() */
+  bool b_new_change;                    /* set by u_savecommon() */
 
   /*
    * Character table, only used in charset.c for 'iskeyword'
@@ -546,7 +546,7 @@ struct file_buffer {
   pos_T b_op_start_orig;  // used for Insstart_orig
   pos_T b_op_end;
 
-  int b_marks_read;             /* Have we read viminfo marks yet? */
+  bool b_marks_read;            /* Have we read viminfo marks yet? */
 
   /*
    * The following only used in undo.c.
@@ -556,7 +556,7 @@ struct file_buffer {
                                    if b_u_curhead is not NULL */
   u_header_T  *b_u_curhead;     /* pointer to current header */
   int b_u_numhead;              /* current number of headers */
-  int b_u_synced;               /* entry lists are synced */
+  bool b_u_synced;              /* entry lists are synced */
   long b_u_seq_last;            /* last used undo sequence number */
   long b_u_save_nr_last;          /* counter for last file write */
   long b_u_seq_cur;             /* hu_seq of header below which we are now */
@@ -570,7 +570,7 @@ struct file_buffer {
   linenr_T b_u_line_lnum;       /* line number of line in u_line */
   colnr_T b_u_line_colnr;       /* optional column number */
 
-  int b_scanned;                /* ^N/^P have scanned this buffer */
+  bool b_scanned;               /* ^N/^P have scanned this buffer */
 
   /* flags for use of ":lmap" and IM control */
   long b_p_iminsert;            /* input mode for insert */
@@ -595,7 +595,7 @@ struct file_buffer {
    * They are here because their value depends on the type of file
    * or contents of the file being edited.
    */
-  int b_p_initialized;                  /* set when options initialized */
+  bool b_p_initialized;                 /* set when options initialized */
 
   int b_p_scriptID[BV_COUNT];           /* SIDs for buffer-local options */
 
@@ -731,8 +731,8 @@ struct file_buffer {
    * then set to indicate that a swap file may be opened later.  It is reset
    * if a swap file could not be opened.
    */
-  int b_may_swap;
-  int b_did_warn;               /* Set to 1 if user has been warned on first
+  bool b_may_swap;
+  bool b_did_warn;              /* Set to true if user has been warned on first
                                    change of a read-only file */
 
   /* Two special kinds of buffers:
@@ -740,7 +740,7 @@ struct file_buffer {
    * spell buffer - used for spell info, never displayed and doesn't have a
    *		      file name.
    */
-  int b_help;                   /* TRUE for help file buffer (when set b_p_bt
+  bool b_help;                  /* TRUE for help file buffer (when set b_p_bt
                                    is "help") */
   bool b_spell;                 /* True for a spell file buffer, most fields
                                    are not used!  Use the B_SPELL macro to
@@ -925,7 +925,7 @@ struct window_S {
 
   win_T       *w_prev;              /* link to previous window */
   win_T       *w_next;              /* link to next window */
-  int w_closing;                    /* window is being closed, don't let
+  bool w_closing;                   /* window is being closed, don't let
                                        autocommands close it too. */
 
   frame_T     *w_frame;             /* frame containing this window */
@@ -961,9 +961,9 @@ struct window_S {
                                        e.g. by winrestview() */
   int w_topfill;                    /* number of filler lines above w_topline */
   int w_old_topfill;                /* w_topfill at last redraw */
-  int w_botfill;                    /* TRUE when filler lines are actually
+  bool w_botfill;                   /* true when filler lines are actually
                                        below w_topline (at end of file) */
-  int w_old_botfill;                /* w_botfill at last redraw */
+  bool w_old_botfill;               /* w_botfill at last redraw */
   colnr_T w_leftcol;                /* window column number of the left most
                                        character in the window; used when
                                        'wrap' is off */
@@ -1039,9 +1039,9 @@ struct window_S {
   wline_T     *w_lines;
 
   garray_T w_folds;                 /* array of nested folds */
-  char w_fold_manual;               /* when TRUE: some folds are opened/closed
+  bool w_fold_manual;               /* when true: some folds are opened/closed
                                        manually */
-  char w_foldinvalid;               /* when TRUE: folding needs to be
+  bool w_foldinvalid;               /* when true: folding needs to be
                                        recomputed */
   int w_nrwidth;                    /* width of 'number' and 'relativenumber'
                                        column being used */

@@ -235,7 +235,7 @@ static int did_add_space = FALSE;       /* auto_format() added an extra space
  *
  * Return TRUE if a CTRL-O command caused the return (insert mode pending).
  */
-int 
+int
 edit (
     int cmdchar,
     int startln,                    /* if set, insert at start of line */
@@ -1224,7 +1224,7 @@ force_cindent:
  * Only redraw when there are no characters available.  This speeds up
  * inserting sequences of characters (e.g., for CTRL-R).
  */
-static void 
+static void
 ins_redraw (
     int ready                   /* not busy with something */
 )
@@ -1440,7 +1440,7 @@ static void undisplay_dollar(void)
  * type == INDENT_SET	set indent to "amount"
  * if round is TRUE, round the indent to 'shiftwidth' (only with _INC and _Dec).
  */
-void 
+void
 change_indent (
     int type,
     int amount,
@@ -1986,7 +1986,7 @@ int ins_compl_add_infercase(char_u *str, int len, int icase, char_u *fname, int 
  * NOTDONE, otherwise add it to the list and return OK.  If there is an error
  * then FAIL is returned.
  */
-static int 
+static int
 ins_compl_add (
     char_u *str,
     int len,
@@ -2450,7 +2450,7 @@ void ins_compl_show_pum(void)
  * Add any identifiers that match the given pattern in the list of dictionary
  * files "dict_start" to the list of completions.
  */
-static void 
+static void
 ins_compl_dictionaries (
     char_u *dict_start,
     char_u *pat,
@@ -3255,7 +3255,7 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
  * Execute user defined complete function 'completefunc' or 'omnifunc', and
  * get matches in "matches".
  */
-static void 
+static void
 expand_by_function (
     int type,                   /* CTRL_X_OMNI or CTRL_X_FUNCTION */
     char_u *base
@@ -3438,7 +3438,7 @@ static int ins_compl_get_exp(pos_T *ini)
 
   if (!compl_started) {
     FOR_ALL_BUFFERS(buf) {
-      buf->b_scanned = 0;
+      buf->b_scanned = false;
     }
     found_all = FALSE;
     ins_buf = curbuf;
@@ -3764,7 +3764,7 @@ static int ins_compl_get_exp(pos_T *ini)
       /* Mark a buffer scanned when it has been scanned completely */
       if (type == 0 || type == CTRL_X_PATH_PATTERNS) {
         assert(ins_buf);
-        ins_buf->b_scanned = TRUE;
+        ins_buf->b_scanned = true;
       }
 
       compl_started = FALSE;
@@ -3833,7 +3833,7 @@ static void ins_compl_insert(void)
  * "allow_get_expansion" TRUE, which calls ins_compl_get_exp(), which in turn
  * calls this function with "allow_get_expansion" FALSE.
  */
-static int 
+static int
 ins_compl_next (
     int allow_get_expansion,
     int count,                      /* repeat completion this many times; should
@@ -4792,7 +4792,7 @@ int get_literal(void)
 /*
  * Insert character, taking care of special keys and mod_mask
  */
-static void 
+static void
 insert_special (
     int c,
     int allow_modmask,
@@ -4852,7 +4852,7 @@ insert_special (
  *	    INSCHAR_DO_COM   - format comments
  *	    INSCHAR_COM_LIST - format comments with num list or 2nd line indent
  */
-void 
+void
 insertchar (
     int c,                                  /* character to insert or NUL */
     int flags,                              /* INSCHAR_FORMAT, etc. */
@@ -5055,7 +5055,7 @@ insertchar (
  * If the INSCHAR_COM_LIST flag is present, then the value of second_indent
  * will be the comment leader length sent to open_line().
  */
-static void 
+static void
 internal_format (
     int textwidth,
     int second_indent,
@@ -5376,7 +5376,7 @@ internal_format (
  * The caller must have saved the cursor line for undo, following ones will be
  * saved here.
  */
-void 
+void
 auto_format (
     int trailblank,                 /* when TRUE also format with trailing blank */
     int prev_line                  /* may start in previous line */
@@ -5478,7 +5478,7 @@ auto_format (
  * delete it now.  The space must be under the cursor, just after the insert
  * position.
  */
-static void 
+static void
 check_auto_format (
     int end_insert                     /* TRUE when ending Insert mode */
 )
@@ -5513,7 +5513,7 @@ check_auto_format (
  *	if invalid value, use 0.
  *	Set default to window width (maximum 79) for "gq" operator.
  */
-int 
+int
 comp_textwidth (
     int ff                 /* force formatting (for "gq" command) */
 )
@@ -5566,7 +5566,7 @@ static void redo_literal(int c)
  * start_arrow() is called when an arrow key is used in insert mode.
  * For undo/redo it resembles hitting the <ESC> key.
  */
-static void 
+static void
 start_arrow (
     pos_T *end_insert_pos           /* can be NULL */
 )
@@ -5650,7 +5650,7 @@ int stop_arrow(void)
  * "end_insert_pos" is where insert ended.  It is NULL when we already jumped
  * to another window/buffer.
  */
-static void 
+static void
 stop_insert (
     pos_T *end_insert_pos,
     int esc,                                /* called by ins_esc() */
@@ -5910,8 +5910,8 @@ int oneleft(void)
     width = 1;
     for (;; ) {
       coladvance(v - width);
-      /* getviscol() is slow, skip it when 'showbreak' is empty, 
-         'breakindent' is not set and there are no multi-byte 
+      /* getviscol() is slow, skip it when 'showbreak' is empty,
+         'breakindent' is not set and there are no multi-byte
          characters */
       if ((*p_sbr == NUL
            && !curwin->w_p_bri
@@ -5949,7 +5949,7 @@ int oneleft(void)
   return OK;
 }
 
-int 
+int
 cursor_up (
     long n,
     int upd_topline                    /* When TRUE: update topline */
@@ -6002,7 +6002,7 @@ cursor_up (
 /*
  * Cursor down a number of logical lines.
  */
-int 
+int
 cursor_down (
     long n,
     int upd_topline                    /* When TRUE: update topline */
@@ -6055,7 +6055,7 @@ cursor_down (
  * Last_insert actually is a copy of the redo buffer, so we
  * first have to remove the command.
  */
-int 
+int
 stuff_inserted (
     int c,                  /* Command character to be inserted */
     long count,             /* Repeat this many times */
@@ -6226,7 +6226,7 @@ static int replace_pop(void)
  * Join the top two items on the replace stack.  This removes to "off"'th NUL
  * encountered.
  */
-static void 
+static void
 replace_join (
     int off                /* offset for which NUL to remove */
 )
@@ -6889,7 +6889,7 @@ static void ins_ctrl_hat(void)
  * Returns TRUE when leaving insert mode, FALSE when going to repeat the
  * insert.
  */
-static int 
+static int
 ins_esc (
     long *count,
     int cmdchar,
@@ -7730,7 +7730,7 @@ static void ins_s_right(void)
     vim_beep();
 }
 
-static void 
+static void
 ins_up (
     int startcol                   /* when TRUE move to Insstart.col */
 )
@@ -7777,7 +7777,7 @@ static void ins_pageup(void)
     vim_beep();
 }
 
-static void 
+static void
 ins_down (
     int startcol                   /* when TRUE move to Insstart.col */
 )

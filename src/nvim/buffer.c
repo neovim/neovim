@@ -332,7 +332,7 @@ close_buffer (
 
   /* When the buffer is no longer in a window, trigger BufWinLeave */
   if (buf->b_nwindows == 1) {
-    buf->b_closing = TRUE;
+    buf->b_closing = true;
     apply_autocmds(EVENT_BUFWINLEAVE, buf->b_fname, buf->b_fname,
         FALSE, buf);
     if (!buf_valid(buf)) {
@@ -340,7 +340,7 @@ close_buffer (
       EMSG(_(e_auabort));
       return;
     }
-    buf->b_closing = FALSE;
+    buf->b_closing = false;
     if (abort_if_last && one_window()) {
       /* Autocommands made this the only window. */
       EMSG(_(e_auabort));
@@ -350,7 +350,7 @@ close_buffer (
     /* When the buffer becomes hidden, but is not unloaded, trigger
      * BufHidden */
     if (!unload_buf) {
-      buf->b_closing = TRUE;
+      buf->b_closing = true;
       apply_autocmds(EVENT_BUFHIDDEN, buf->b_fname, buf->b_fname,
           FALSE, buf);
       if (!buf_valid(buf)) {
@@ -358,7 +358,7 @@ close_buffer (
         EMSG(_(e_auabort));
         return;
       }
-      buf->b_closing = FALSE;
+      buf->b_closing = false;
       if (abort_if_last && one_window()) {
         /* Autocommands made this the only window. */
         EMSG(_(e_auabort));
@@ -447,7 +447,7 @@ close_buffer (
       buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
 
       /* Init the options when loaded again. */
-      buf->b_p_initialized = FALSE;
+      buf->b_p_initialized = false;
     }
     buf_clear_file(buf);
     if (del_buf)
@@ -481,7 +481,7 @@ void buf_freeall(buf_T *buf, int flags)
 {
   bool is_curbuf = (buf == curbuf);
 
-  buf->b_closing = TRUE;
+  buf->b_closing = true;
   apply_autocmds(EVENT_BUFUNLOAD, buf->b_fname, buf->b_fname, FALSE, buf);
   if (!buf_valid(buf))              /* autocommands may delete the buffer */
     return;
@@ -496,7 +496,7 @@ void buf_freeall(buf_T *buf, int flags)
     if (!buf_valid(buf))            /* autocommands may delete the buffer */
       return;
   }
-  buf->b_closing = FALSE;
+  buf->b_closing = false;
   if (aborting())           /* autocmds may abort script processing */
     return;
 
@@ -1398,7 +1398,7 @@ buflist_new (
     free_buffer_stuff(buf, FALSE);      /* delete local variables et al. */
 
     /* Init the options. */
-    buf->b_p_initialized = FALSE;
+    buf->b_p_initialized = false;
     buf_copy_options(buf, BCO_ENTER);
 
     /* need to reload lmaps and set b:keymap_name */
@@ -1446,7 +1446,7 @@ buflist_new (
     buf->file_id_valid = true;
     buf->file_id = file_id;
   }
-  buf->b_u_synced = TRUE;
+  buf->b_u_synced = true;
   buf->b_flags = BF_CHECK_RO | BF_NEVERLOADED;
   if (flags & BLN_DUMMY)
     buf->b_flags |= BF_DUMMY;
@@ -2004,7 +2004,7 @@ static void buflist_setfpos(buf_T *buf, win_T *win, linenr_T lnum, colnr_T col, 
     copy_winopt(&win->w_onebuf_opt, &wip->wi_opt);
     wip->wi_fold_manual = win->w_fold_manual;
     cloneFoldGrowArray(&win->w_folds, &wip->wi_folds);
-    wip->wi_optset = TRUE;
+    wip->wi_optset = true;
   }
 
   /* insert the entry in front of the list */
@@ -2084,7 +2084,7 @@ void get_winopts(buf_T *buf)
   if (wip != NULL && wip->wi_optset) {
     copy_winopt(&wip->wi_opt, &curwin->w_onebuf_opt);
     curwin->w_fold_manual = wip->wi_fold_manual;
-    curwin->w_foldinvalid = TRUE;
+    curwin->w_foldinvalid = true;
     cloneFoldGrowArray(&wip->wi_folds, &curwin->w_folds);
   } else
     copy_winopt(&curwin->w_allbuf_opt, &curwin->w_onebuf_opt);
