@@ -1747,15 +1747,6 @@ nfa_do_multibyte:
   return OK;
 }
 
-/// Used in a place where no * or \+ can follow.
-static bool re_mult_next(char *what)
-{
-  if (re_multi_type(peekchr()) == MULTI_MULT) {
-    EMSG2_RET_FAIL(_("E888: (NFA regexp) cannot repeat %s"), what);
-  }
-  return true;
-}
-
 /*
  * Parse something followed by possible [*+=].
  *
