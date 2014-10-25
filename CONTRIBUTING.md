@@ -9,11 +9,6 @@
 - Look at [Waffle][waffle] to see who is working on what issues.
 - Refer to the [the wiki][wiki] for detailed guidance.
 
-### What not to do
-
-Please avoid broad cosmetic/style changes which increase merge conflicts and add
-excessive noise to `git blame`.
-
 ## Issues
 
 - Search existing issues before raising a new one.
@@ -56,11 +51,20 @@ When submitting pull requests, include one of the following tokens in the title:
 
 #### Coding style
 
-Code changes should follow the [Neovim style guide][style].
+We have a [style guide][style] that all new code should follow. However, vast
+swathes of the existing vim codebase violate it to some degree, and fixing
+them would increase merge conflicts and add noise to `git blame`. Please weigh
+those costs when making cosmetic changes. As a rule of thumb, avoid pull
+requests dominated by style changes. Feel free to fix up lines that you happen
+to be modifying anyway, as long as they look consistent with their
+surroundings. Fix anything that looks outright
+[barbarous](http://www.orwell.ru/library/essays/politics/english/e_polit) --
+especially if you can't find any editor settings that make it look ok -- but
+otherwise err on the side of leaving things as they are.
 
-Please run [`clint.py`][clint] to detect style errors. It is not perfect and may
-have false positives and negatives. To have `clint.py` ignore certain special
-cases, put `// NOLINT` at the end of the line.
+For new code, please run [`clint.py`][clint] to detect style errors. It is not
+perfect and may have false positives and negatives. To have `clint.py` ignore
+certain special cases, put `// NOLINT` at the end of the line.
 
 #### Commit guidelines
 
