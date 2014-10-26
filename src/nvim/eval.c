@@ -14434,6 +14434,29 @@ static void f_synstack(typval_T *argvars, typval_T *rettv)
   }
 }
 
+static list_T* string_to_list(char_u *str, size_t len)
+{
+  list_T *list = list_alloc();
+
+  // Copy each line to a list element using NL as the delimiter.
+  for (size_t i = 0; i < len; i++) {
+    char_u *start = str + i;
+    size_t line_len = (char_u *) xmemscan(start, NL, len - i) - start;
+    i += line_len;
+
+    // Don't use a str function to copy res as it may contains NULs.
+    char_u *s = xmemdupz(start, line_len);
+    memchrsub(s, NUL, NL, line_len);  // Replace NUL with NL to avoid truncation
+
+    listitem_T  *li = listitem_alloc();
+    li->li_tv.v_type = VAR_STRING;
+    li->li_tv.vval.v_string = s;
+    list_append(list, li);
+  }
+
+  return list;
+}
+
 static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv, 
                                        bool retlist)
 {
@@ -14468,23 +14491,9 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
   }
 
   if (retlist) {
-    list_T *list = rettv_list_alloc(rettv);
-
-    // Copy each line to a list element using NL as the delimiter.
-    for (size_t i = 0; i < nread; i++) {
-      char_u *start = (char_u *) res + i;
-      size_t len = (char_u *) xmemscan(start, NL, nread - i) - start;
-      i += len;
-
-      // Don't use a str function to copy res as it may contains NULs.
-      char_u *s = xmemdupz(start, len);
-      memchrsub(s, NUL, NL, len);  // Replace NUL with NL to avoid truncation.
-
-      listitem_T  *li = listitem_alloc();
-      li->li_tv.v_type = VAR_STRING;
-      li->li_tv.vval.v_string = s;
-      list_append(list, li);
-    }
+    rettv->vval.v_list = string_to_list((char_u *) res, nread);
+    rettv->vval.v_list->lv_refcount++;
+    rettv->v_type = VAR_LIST;
 
     free(res);
   } else {
@@ -19603,10 +19612,14 @@ static void apply_job_autocmds(int id, char *name, char *type,
 
   if (received) {
     listitem_T *str_slot = listitem_alloc();
-    str_slot->li_tv.v_type = VAR_STRING;
+    str_slot->li_tv.v_type = VAR_LIST;
     str_slot->li_tv.v_lock = 0;
-    str_slot->li_tv.vval.v_string = (uint8_t *)received;
+    str_slot->li_tv.vval.v_list =
+      string_to_list((char_u *) received, received_len);
+    str_slot->li_tv.vval.v_list->lv_refcount++;
     list_append(list, str_slot);
+
+    free(received);
   }
 
   // Update v:job_data for the autocommands
