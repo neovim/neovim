@@ -23,6 +23,7 @@ static const int kLibuvSuccess = 0;
 ///
 /// @return `0` on success, a libuv error code on failure.
 int os_chdir(const char *path)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (p_verbose >= 5) {
     verbose_enter();
@@ -38,6 +39,7 @@ int os_chdir(const char *path)
 /// @param len Length of `buf`.
 /// @return `OK` for success, `FAIL` for failure.
 int os_dirname(char_u *buf, size_t len)
+  FUNC_ATTR_NONNULL_ALL
 {
   assert(buf && len);
 
@@ -53,6 +55,7 @@ int os_dirname(char_u *buf, size_t len)
 ///
 /// @return `true` if `fname` is a directory.
 bool os_isdir(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int32_t mode = os_getperm(name);
   if (mode < 0) {
@@ -78,6 +81,7 @@ bool os_isdir(const char_u *name)
 ///
 /// @return `false` otherwise.
 bool os_can_exe(const char_u *name, char_u **abspath)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   // If it's an absolute or relative path don't need to use $PATH.
   if (path_is_absolute_path(name) ||
@@ -100,6 +104,7 @@ bool os_can_exe(const char_u *name, char_u **abspath)
 // Return true if "name" is an executable file, false if not or it doesn't
 // exist.
 static bool is_executable(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   int32_t mode = os_getperm(name);
 
@@ -121,6 +126,7 @@ static bool is_executable(const char_u *name)
 ///
 /// @return `true` if `name` is an executable inside `$PATH`.
 static bool is_executable_in_path(const char_u *name, char_u **abspath)
+  FUNC_ATTR_NONNULL_ARG(1)
 {
   const char *path = getenv("PATH");
   // PATH environment variable does not exist or is empty.
@@ -176,6 +182,7 @@ static bool is_executable_in_path(const char_u *name, char_u **abspath)
 ///        not `O_CREAT` or `O_TMPFILE`), subject to the current umask
 /// @return file descriptor, or negative `errno` on failure
 int os_open(const char* path, int flags, int mode)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t open_req;
   int r = uv_fs_open(uv_default_loop(), &open_req, path, flags, mode, NULL);
@@ -188,6 +195,7 @@ int os_open(const char* path, int flags, int mode)
 ///
 /// @return OK on success, FAIL if a failure occurred.
 static bool os_stat(const char *name, uv_stat_t *statbuf)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_stat(uv_default_loop(), &request, name, NULL);
@@ -200,6 +208,7 @@ static bool os_stat(const char *name, uv_stat_t *statbuf)
 ///
 /// @return `-1` when `name` doesn't exist.
 int32_t os_getperm(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   if (os_stat((char *)name, &statbuf)) {
@@ -213,6 +222,7 @@ int32_t os_getperm(const char_u *name)
 ///
 /// @return `OK` for success, `FAIL` for failure.
 int os_setperm(const char_u *name, int perm)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_chmod(uv_default_loop(), &request,
@@ -233,6 +243,7 @@ int os_setperm(const char_u *name, int perm)
 /// @note If the `owner` or `group` is specified as `-1`, then that ID is not
 /// changed.
 int os_fchown(int file_descriptor, uv_uid_t owner, uv_gid_t group)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_fchown(uv_default_loop(), &request, file_descriptor,
@@ -245,6 +256,7 @@ int os_fchown(int file_descriptor, uv_uid_t owner, uv_gid_t group)
 ///
 /// @return `true` if `name` exists.
 bool os_file_exists(const char_u *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   return os_stat((char *)name, &statbuf);
@@ -254,6 +266,7 @@ bool os_file_exists(const char_u *name)
 ///
 /// @return `true` if `name` is readonly.
 bool os_file_is_readonly(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   return access(name, W_OK) != 0;
 }
@@ -264,6 +277,7 @@ bool os_file_is_readonly(const char *name)
 /// @return `1` if `name` is writable,
 /// @return `2` for a directory which we have rights to write into.
 int os_file_is_writable(const char *name)
+  FUNC_ATTR_NONNULL_ALL
 {
   if (access(name, W_OK) == 0) {
     if (os_isdir((char_u *)name)) {
@@ -278,6 +292,7 @@ int os_file_is_writable(const char *name)
 ///
 /// @return `OK` for success, `FAIL` for failure.
 int os_rename(const char_u *path, const char_u *new_path)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_rename(uv_default_loop(), &request,
@@ -295,6 +310,7 @@ int os_rename(const char_u *path, const char_u *new_path)
 ///
 /// @return `0` for success, non-zero for failure.
 int os_mkdir(const char *path, int32_t mode)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_mkdir(uv_default_loop(), &request, path, mode, NULL);
@@ -310,6 +326,7 @@ int os_mkdir(const char *path, int32_t mode)
 ///                  failure.
 /// @return `0` for success, non-zero for failure.
 int os_mkdtemp(const char *template, char *path)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_mkdtemp(uv_default_loop(), &request, template, NULL);
@@ -324,6 +341,7 @@ int os_mkdtemp(const char *template, char *path)
 ///
 /// @return `0` for success, non-zero for failure.
 int os_rmdir(const char *path)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_rmdir(uv_default_loop(), &request, path, NULL);
@@ -335,6 +353,7 @@ int os_rmdir(const char *path)
 ///
 /// @return `0` for success, non-zero for failure.
 int os_remove(const char *path)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_unlink(uv_default_loop(), &request, path, NULL);
@@ -348,6 +367,7 @@ int os_remove(const char *path)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo(const char *path, FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
 {
   return os_stat(path, &(file_info->stat));
 }
@@ -358,6 +378,7 @@ bool os_fileinfo(const char *path, FileInfo *file_info)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo_link(const char *path, FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_lstat(uv_default_loop(), &request, path, NULL);
@@ -372,6 +393,7 @@ bool os_fileinfo_link(const char *path, FileInfo *file_info)
 /// @param[out] file_info Pointer to a FileInfo to put the information in.
 /// @return `true` on success, `false` for failure.
 bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_fs_t request;
   int result = uv_fs_fstat(uv_default_loop(), &request, file_descriptor, NULL);
@@ -385,6 +407,7 @@ bool os_fileinfo_fd(int file_descriptor, FileInfo *file_info)
 /// @return `true` if the two FileInfos represent the same file.
 bool os_fileinfo_id_equal(const FileInfo *file_info_1,
                            const FileInfo *file_info_2)
+  FUNC_ATTR_NONNULL_ALL
 {
   return file_info_1->stat.st_ino == file_info_2->stat.st_ino
          && file_info_1->stat.st_dev == file_info_2->stat.st_dev;
@@ -395,6 +418,7 @@ bool os_fileinfo_id_equal(const FileInfo *file_info_1,
 /// @param file_info Pointer to the `FileInfo`
 /// @param[out] file_id Pointer to a `FileID`
 void os_fileinfo_id(const FileInfo *file_info, FileID *file_id)
+  FUNC_ATTR_NONNULL_ALL
 {
   file_id->inode = file_info->stat.st_ino;
   file_id->device_id = file_info->stat.st_dev;
@@ -406,6 +430,7 @@ void os_fileinfo_id(const FileInfo *file_info, FileID *file_id)
 /// @param file_info Pointer to the `FileInfo`
 /// @return the inode number
 uint64_t os_fileinfo_inode(const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
 {
   return file_info->stat.st_ino;
 }
@@ -443,6 +468,7 @@ uint64_t os_fileinfo_blocksize(const FileInfo *file_info)
 /// @param[out] file_info Pointer to a `FileID` to fill in.
 /// @return `true` on sucess, `false` for failure.
 bool os_fileid(const char *path, FileID *file_id)
+  FUNC_ATTR_NONNULL_ALL
 {
   uv_stat_t statbuf;
   if (os_stat(path, &statbuf)) {
@@ -459,6 +485,7 @@ bool os_fileid(const char *path, FileID *file_id)
 /// @param file_id_2 Pointer to second `FileID`
 /// @return `true` if the two `FileID`s represent te same file.
 bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
+  FUNC_ATTR_NONNULL_ALL
 {
   return file_id_1->inode == file_id_2->inode
          && file_id_1->device_id == file_id_2->device_id;
@@ -471,6 +498,7 @@ bool os_fileid_equal(const FileID *file_id_1, const FileID *file_id_2)
 /// @return `true` if the `FileID` and the `FileInfo` represent te same file.
 bool os_fileid_equal_fileinfo(const FileID *file_id,
                                 const FileInfo *file_info)
+  FUNC_ATTR_NONNULL_ALL
 {
   return file_id->inode == file_info->stat.st_ino
          && file_id->device_id == file_info->stat.st_dev;
