@@ -25,6 +25,10 @@ if imported == nil then
   imported = Set:new()
 end
 
+if pragma_pack_id == nil then
+  pragma_pack_id = 1
+end
+
 -- some things are just too complex for the LuaJIT C parser to digest. We
 -- usually don't need them anyway.
 local function filter_complex_blocks(body)
@@ -81,7 +85,16 @@ local function cimport(...)
   -- add the formatted lines to a set
   local new_cdefs = Set:new()
   for line in body:gmatch("[^\r\n]+") do
-    new_cdefs:add(trim(line))
+    line = trim(line)
+    -- give each #pragma pack an unique id, so that they don't get removed
+    -- if they are inserted into the set
+    -- (they are needed in the right order with the struct definitions,
+    -- otherwise luajit has wrong memory layouts for the sturcts)
+    if line:match("#pragma%s+pack") then
+      line = line .. " // " .. pragma_pack_id
+      pragma_pack_id = pragma_pack_id + 1
+    end
+    new_cdefs:add(line)
   end
 
   -- subtract the lines we've already imported from the new lines, then add
