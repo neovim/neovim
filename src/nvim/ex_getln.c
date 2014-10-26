@@ -4459,10 +4459,9 @@ in_history (
  * When "name" is empty, return "cmd" history.
  * Returns -1 for unknown history name.
  */
-int get_histtype(char_u *name)
+int get_histtype(char_u *name, size_t len)
 {
   int i;
-  int len = (int)STRLEN(name);
 
   /* No argument: use current history. */
   if (len == 0)
@@ -4472,8 +4471,9 @@ int get_histtype(char_u *name)
     if (STRNICMP(name, history_names[i], len) == 0)
       return i;
 
-  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && name[1] == NUL)
+  if (vim_strchr((char_u *)":=@>?/", name[0]) != NULL && len == 1) {
     return hist_char2type(name[0]);
+  }
 
   return -1;
 }
@@ -4847,23 +4847,20 @@ void ex_history(exarg_T *eap)
     while (ASCII_ISALPHA(*end)
            || vim_strchr((char_u *)":=@>/?", *end) != NULL)
       end++;
-    i = *end;
-    *end = NUL;
-    histype1 = get_histtype(arg);
-    if (histype1 == -1) {
-      if (STRNICMP(arg, "all", STRLEN(arg)) == 0) {
+    histype1 = get_histtype(arg, end - arg);
+    if (histype1 == HIST_INVALID) {
+      if (STRNICMP(arg, "all", end - arg) == 0) {
         histype1 = 0;
         histype2 = HIST_COUNT-1;
       } else {
-        *end = i;
         EMSG(_(e_trailing));
         return;
       }
     } else
       histype2 = histype1;
-    *end = i;
-  } else
+  } else {
     end = arg;
+  }
   if (!get_list_range(&end, &hisidx1, &hisidx2) || *end != NUL) {
     EMSG(_(e_trailing));
     return;
