@@ -50,7 +50,14 @@ When submitting pull requests, include one of the following tokens in the title:
 
 #### Testing
 
-- We are unlikely to merge your PR if the Travis build fails.
+- Please run all tests before submitting a pull request:
+
+    ```shell
+    $ make test
+    $ make unittest
+    $ cd src/nvim/testdir && make  # legacy vim tests
+    ```
+  We are unlikely to merge your PR if the Travis build fails.
 - The Travis build does not currently run the tests under valgrind, but you
   are encouraged to do so locally.
 
