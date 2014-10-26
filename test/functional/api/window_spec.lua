@@ -1,9 +1,28 @@
 -- Sanity checks for window_* API calls via msgpack-rpc
 local helpers = require('test.functional.helpers')
 local clear, nvim, buffer, curbuf, curbuf_contents, window, curwin, eq, neq,
-  ok = helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf,
+  ok, feed, rawfeed, insert, eval = helpers.clear, helpers.nvim, helpers.buffer, helpers.curbuf,
   helpers.curbuf_contents, helpers.window, helpers.curwin, helpers.eq,
-  helpers.neq, helpers.ok
+  helpers.neq, helpers.ok, helpers.feed, helpers.rawfeed, helpers.insert, helpers.eval
+
+-- check if str is visible at the beginning of some line
+local function is_visible(str)
+    local slen = string.len(str)
+    local nlines = eval("&lines")
+    for i = 1,nlines do
+        local iseq = true
+        for j = 1,slen do
+            if string.byte(str,j) ~= eval("screenchar("..i..","..j..")") then
+                iseq = false
+                break
+            end
+        end
+        if iseq then
+            return true
+        end
+    end
+    return false
+end
 
 describe('window_* functions', function()
   before_each(clear)
@@ -29,6 +48,52 @@ describe('window_* functions', function()
       nvim('command', 'normal i dumb')
       eq('typing\n  some dumb text', curbuf_contents())
     end)
+
+    it('updates the screen, and also when the window is unfocused', function()
+      insert("prologue")
+      feed('100o<esc>')
+      insert("epilogue")
+      win = curwin()
+      feed('gg')
+
+      -- cursor position is at beginning
+      eq({1, 0}, window('get_cursor', win))
+      eq(true, is_visible("prologue"))
+      eq(false, is_visible("epilogue"))
+
+      -- move cursor to end
+      window('set_cursor', win, {101, 0})
+      eq(false, is_visible("prologue"))
+      eq(true, is_visible("epilogue"))
+
+      -- move cursor to the beginning again
+      window('set_cursor', win, {1, 0})
+      eq(true, is_visible("prologue"))
+      eq(false, is_visible("epilogue"))
+
+      -- move focus to new window
+      nvim('command',"new")
+      neq(win, curwin())
+
+      -- sanity check, cursor position is kept
+      eq({1, 0}, window('get_cursor', win))
+      eq(true, is_visible("prologue"))
+      eq(false, is_visible("epilogue"))
+
+      -- move cursor to end
+      window('set_cursor', win, {101, 0})
+      eq(false, is_visible("prologue"))
+      eq(true, is_visible("epilogue"))
+
+      -- move cursor to the beginning again
+      window('set_cursor', win, {1, 0})
+      eq(true, is_visible("prologue"))
+      eq(false, is_visible("epilogue"))
+
+      -- curwin didn't change back
+      neq(win, curwin())
+    end)
+
   end)
 
   describe('{get,set}_height', function()
