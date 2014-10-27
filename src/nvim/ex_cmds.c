@@ -5908,12 +5908,13 @@ void ex_sign(exarg_T *eap)
 		arg = skipwhite(arg);
 		if (idx == SIGNCMD_UNPLACE && *arg == NUL)
 		{
-		    /* ":sign unplace {id}": remove placed sign by number */
-         FOR_ALL_BUFFERS(buf) {
-           if ((lnum = buf_delsign(buf, id)) != 0)
-               update_debug_sign(buf, lnum);
-            return;
-         }
+		  // ":sign unplace {id}": remove placed sign by number
+		  FOR_ALL_BUFFERS(buf) {
+		    if ((lnum = buf_delsign(buf, id)) != 0) {
+		      update_debug_sign(buf, lnum);
+                    }
+		  }
+		  return;
 		}
 	    }
 	}
@@ -5923,7 +5924,7 @@ void ex_sign(exarg_T *eap)
 	 * Leave "arg" pointing to {fname}.
 	 */
 
-   buf_T *buf = NULL;
+        buf_T *buf = NULL;
 	for (;;)
 	{
 	    if (STRNCMP(arg, "line=", 5) == 0)
@@ -6343,3 +6344,4 @@ void set_context_in_sign_cmd(expand_T *xp, char_u *arg)
   }
 }
 
+// vim: tabstop=8
