@@ -216,9 +216,6 @@ Job *job_start(char **argv,
 
   // Spawn the job
   if (uv_spawn(uv_default_loop(), &job->proc, &job->proc_opts) != 0) {
-    close_job_in(job);
-    close_job_out(job);
-    close_job_err(job);
     *status = -1;
     return NULL;
   }
