@@ -25,19 +25,63 @@ end
 
 local session
 
+local rawfeed
 local function restart()
   local loop = Loop.new()
   local msgpack_stream = MsgpackStream.new(loop)
   local async_session = AsyncSession.new(msgpack_stream)
   session = Session.new(async_session)
   loop:spawn(nvim_argv)
+  rawfeed([[:function BeforeEachTest()
+    set all&
+    redir => groups
+    silent augroup
+    redir END
+    for group in split(groups)
+      exe 'augroup '.group
+      autocmd!
+      augroup END
+    endfor
+    autocmd!
+    tabnew
+    let curbufnum = eval(bufnr('%'))
+    redir => buflist
+    silent ls!
+    redir END
+    let bufnums = []
+    for buf in split(buflist, '\n')
+      let bufnum = eval(split(buf, '[ u]')[0])
+      if bufnum != curbufnum
+        call add(bufnums, bufnum)
+      endif
+    endfor
+    if len(bufnums) > 0
+      exe 'silent bwipeout! '.join(bufnums, ' ')
+    endif
+    silent tabonly
+    for k in keys(g:)
+      exe 'unlet g:'.k
+    endfor
+    filetype plugin indent off
+    mapclear
+    mapclear!
+    abclear
+    comclear
+  endfunction
+  ]])
 end
-restart()
+
+local loop_running, last_error
 
 local function request(method, ...)
   local status, rv = session:request(method, ...)
   if not status then
-    error(rv[2])
+    if loop_running then
+      last_error = rv[2]
+      session:stop()
+    else
+      error(rv[2])
+    end
   end
   return rv
 end
@@ -47,7 +91,14 @@ local function next_message()
 end
 
 local function run(request_cb, notification_cb, setup_cb)
+  loop_running = true
   session:run(request_cb, notification_cb, setup_cb)
+  loop_running = false
+  if last_error then
+    local err = last_error
+    last_error = nil
+    error(err)
+  end
 end
 
 local function stop()
@@ -115,7 +166,7 @@ local function feed(...)
   end
 end
 
-local function rawfeed(...)
+function rawfeed(...)
   for _, v in ipairs({...}) do
     nvim_feed(dedent(v), 'nt')
   end
@@ -138,14 +189,6 @@ local function execute(...)
   end
 end
 
-local  function eval(expr)
-  local status, result = pcall(function() return nvim_eval(expr) end)
-  if not status then
-    error('Failed to evaluate expression "' .. expr .. '"')
-  end
-  return result
-end
-
 local function eq(expected, actual)
   return assert.are.same(expected, actual)
 end
@@ -157,44 +200,6 @@ end
 local function expect(contents, first, last, buffer_index)
   return eq(dedent(contents), buffer_slice(first, last, buffer_index))
 end
-
-rawfeed([[:function BeforeEachTest()
-  set all&
-  redir => groups
-  silent augroup
-  redir END
-  for group in split(groups)
-    exe 'augroup '.group
-    autocmd!
-    augroup END
-  endfor
-  autocmd!
-  tabnew
-  let curbufnum = eval(bufnr('%'))
-  redir => buflist
-  silent ls!
-  redir END
-  let bufnums = []
-  for buf in split(buflist, '\n')
-    let bufnum = eval(split(buf, '[ u]')[0])
-    if bufnum != curbufnum
-      call add(bufnums, bufnum)
-    endif
-  endfor
-  if len(bufnums) > 0
-    exe 'silent bwipeout! '.join(bufnums, ' ')
-  endif
-  silent tabonly
-  for k in keys(g:)
-    exe 'unlet g:'.k
-  endfor
-  filetype plugin indent off
-  mapclear
-  mapclear!
-  abclear
-  comclear
-endfunction
-]])
 
 
 local function ok(expr)
@@ -245,6 +250,8 @@ local function curtab(method, ...)
   return tabpage(method, tab, ...)
 end
 
+restart()
+
 return {
   clear = clear,
   restart = restart,
@@ -252,7 +259,8 @@ return {
   insert = insert,
   feed = feed,
   execute = execute,
-  eval = eval,
+  eval = nvim_eval,
+  command = nvim_command,
   request = request,
   next_message = next_message,
   run = run,
