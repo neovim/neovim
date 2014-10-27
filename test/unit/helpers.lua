@@ -66,7 +66,7 @@ local function cimport(...)
   end
 
   local body = nil
-  for i=1, 3 do
+  for i=1, 10 do
     local stream = Preprocess.preprocess_stream(unpack(paths))
     body = stream:read("*a")
     stream:close()
