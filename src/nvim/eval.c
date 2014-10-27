@@ -448,9 +448,8 @@ static dictitem_T vimvars_var;                  /* variable used for v: */
 
 // Memory pool for reusing JobEvent structures
 typedef struct {
-  Job *job;
-  RStream *rstream;
-  char *type;
+  int id;
+  char *name, *type, *received;
 } JobEvent;
 #define JobEventFreer(x)
 KMEMPOOL_INIT(JobEventPool, JobEvent, JobEventFreer)
@@ -19527,8 +19526,15 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
 #define push_job_event(j, r, t)                                      \
   do {                                                               \
     JobEvent *event_data = kmp_alloc(JobEventPool, job_event_pool);  \
-    event_data->job = j;                                             \
-    event_data->rstream = r;                                         \
+    event_data->received = NULL;                                     \
+    if (r) {                                                         \
+      size_t read_count = rstream_pending(r);                        \
+      event_data->received = xmalloc(read_count + 1);                \
+      rstream_read(r, event_data->received, read_count);             \
+      event_data->received[read_count] = NUL;                        \
+    }                                                                \
+    event_data->id = job_id(j);                                      \
+    event_data->name = job_data(j);                                  \
     event_data->type = t;                                            \
     event_push((Event) {                                             \
       .handler = on_job_event,                                       \
@@ -19552,39 +19558,28 @@ static void on_job_stderr(RStream *rstream, void *data, bool eof)
 
 static void on_job_exit(Job *job, void *data)
 {
-  push_job_event(data, NULL, "exit");
+  push_job_event(job, NULL, "exit");
 }
 
 static void on_job_event(Event event)
 {
   JobEvent *data = event.data;
-  Job *job = data->job;
-  char *str = NULL;
-
-  if (data->rstream) {
-    // Read event
-    size_t read_count = rstream_pending(data->rstream);
-    str = xmalloc(read_count + 1);
-
-    rstream_read(data->rstream, str, read_count);
-    str[read_count] = NUL;
-  }
-  apply_job_autocmds(job, job_data(job), data->type, str);
+  apply_job_autocmds(data->id, data->name, data->type, data->received);
   kmp_free(JobEventPool, job_event_pool, data);
 }
 
-static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
+static void apply_job_autocmds(int id, char *name, char *type, char *received)
 {
   // Create the list which will be set to v:job_data
   list_T *list = list_alloc();
-  list_append_number(list, job_id(job));
+  list_append_number(list, id);
   list_append_string(list, (uint8_t *)type, -1);
 
-  if (str) {
+  if (received) {
     listitem_T *str_slot = listitem_alloc();
     str_slot->li_tv.v_type = VAR_STRING;
     str_slot->li_tv.v_lock = 0;
-    str_slot->li_tv.vval.v_string = (uint8_t *)str;
+    str_slot->li_tv.vval.v_string = (uint8_t *)received;
     list_append(list, str_slot);
   }
 
@@ -19592,6 +19587,11 @@ static void apply_job_autocmds(Job *job, char *name, char *type, char *str)
   set_vim_var_list(VV_JOB_DATA, list);
   // Call JobActivity autocommands
   apply_autocmds(EVENT_JOBACTIVITY, (uint8_t *)name, NULL, TRUE, NULL);
+
+  if (!received) {
+    // This must be the exit event. Free the name.
+    free(name);
+  }
 }
 
 static void script_host_eval(char *method, typval_T *argvars, typval_T *rettv)
