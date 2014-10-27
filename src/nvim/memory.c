@@ -530,7 +530,7 @@ void free_all_mem(void)
   p_acd = FALSE;
   for (buf = firstbuf; buf != NULL; ) {
     nextbuf = buf->b_next;
-    close_buffer(NULL, buf, DOBUF_WIPE, FALSE);
+    close_buffer(NULL, buf, DOBUF_WIPE, false);
     if (buf_valid(buf))
       buf = nextbuf;            /* didn't work, try next one */
     else

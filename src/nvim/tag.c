@@ -150,13 +150,12 @@ static taggy_T ptag_entry = {NULL, {INIT_POS_T(0, 0, 0), 0}, 0, 0};
  *
  * for cscope, returns TRUE if we jumped to tag or aborted, FALSE otherwise
  */
-int 
-do_tag (
+bool do_tag (
     char_u *tag,               /* tag (pattern) to jump to */
     int type,
     int count,
-    int forceit,                    /* :ta with ! */
-    int verbose                    /* print "tag not found" message */
+    bool forceit,                  /* :ta with ! */
+    bool verbose                   /* print "tag not found" message */
 )
 {
   taggy_T     *tagstack = curwin->w_tagstack;
@@ -180,7 +179,7 @@ do_tag (
   int save_pos = FALSE;
   fmark_T saved_fmark;
   int taglen;
-  int jumped_to_tag = FALSE;
+  bool jumped_to_tag = false;
   tagptrs_T tagp, tagp2;
   int new_num_matches;
   char_u      **new_matches;
@@ -820,7 +819,7 @@ do_tag (
             tagstackidx = prevtagstackidx;
           }
           cs_free_tags();
-          jumped_to_tag = TRUE;
+          jumped_to_tag = true;
           break;
         }
         cur_match = i - 1;
@@ -919,7 +918,7 @@ do_tag (
          * tagstackidx is still valid. */
         if (use_tagstack && tagstackidx > curwin->w_tagstacklen)
           tagstackidx = curwin->w_tagstackidx;
-        jumped_to_tag = TRUE;
+        jumped_to_tag = true;
       }
     }
     break;
@@ -1125,7 +1124,7 @@ find_tags (
 
   int cmplen;
   int match;                    /* matches */
-  int match_no_ic = 0;          /* matches with rm_ic == FALSE */
+  bool match_no_ic = false;     /* matches with rm_ic == FALSE */
   int match_re;                 /* match with regexp */
   int matchoff = 0;
   int save_emsg_off;
@@ -1983,7 +1982,7 @@ static void found_tagfile_cb(char_u *fname, void *cookie)
 void free_tag_stuff(void)
 {
   ga_clear_strings(&tag_fnames);
-  do_tag(NULL, DT_FREE, 0, 0, 0);
+  do_tag(NULL, DT_FREE, 0, false, false);
   tag_freematch();
 
   if (ptag_entry.tagname) {
@@ -2024,7 +2023,7 @@ get_tagfname (
       ga_init(&tag_fnames, (int)sizeof(char_u *), 10);
       do_in_runtimepath((char_u *)
           "doc/tags doc/tags-??"
-          , TRUE, found_tagfile_cb, NULL);
+          , true, found_tagfile_cb, NULL);
     }
 
     if (tnp->tn_hf_idx >= tag_fnames.ga_len) {
@@ -2553,7 +2552,7 @@ jumpto_tag (
   } else {
     --RedrawingDisabled;
     if (postponed_split) {              /* close the window */
-      win_close(curwin, FALSE);
+      win_close(curwin, false);
       postponed_split = 0;
     }
   }

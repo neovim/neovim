@@ -1117,11 +1117,11 @@ static char *(key_names[]) =
 
 /*
  * Set terminal options for terminal "term".
- * Return OK if terminal 'term' was found in a termcap, FAIL otherwise.
+ * Return true if terminal 'term' was found in a termcap, false otherwise.
  *
  * While doing this, until ttest(), some options may be NULL, be careful.
  */
-int set_termname(char_u *term)
+bool set_termname(char_u *term)
 {
 #ifdef HAVE_TGETENT
   int builtin_first = p_tbi;
@@ -1134,7 +1134,7 @@ int set_termname(char_u *term)
 
   /* In silect mode (ex -s) we don't use the 'term' option. */
   if (silent_mode)
-    return OK;
+    return true;
 
   detected_8bit = false;                // reset 8-bit detection
 
@@ -1321,7 +1321,7 @@ int set_termname(char_u *term)
       if (starting != NO_SCREEN) {
         screen_start();                 /* don't know where cursor is now */
         wait_return(TRUE);
-        return FAIL;
+        return false;
       }
       term = DEFAULT_TERM;
       mch_errmsg(_("defaulting to '"));
@@ -1421,7 +1421,7 @@ int set_termname(char_u *term)
   set_mouse_termcode(KS_MOUSE, (char_u *)"\233M");
 # endif
 
-  ttest(TRUE);          /* make sure we have a valid set of terminal codes */
+  ttest(true);          /* make sure we have a valid set of terminal codes */
 
   full_screen = TRUE;           /* we can use termcap codes from now on */
   set_term_defaults();          /* use current values as defaults */
@@ -1447,7 +1447,7 @@ int set_termname(char_u *term)
     width = 80;
     height = 24;            /* most terminals are 24 lines */
   }
-  set_shellsize(width, height, FALSE);          /* may change Rows */
+  set_shellsize(width, height, false);          /* may change Rows */
   if (starting != NO_SCREEN) {
     if (scroll_region)
       scroll_region_reset();                    /* In case Rows changed */
@@ -1471,7 +1471,7 @@ int set_termname(char_u *term)
 
   may_req_termresponse();
 
-  return OK;
+  return true;
 }
 
 
@@ -1601,9 +1601,9 @@ getlinecol (
  * Used for <t_xx> special keys.
  * Give an error message for failure when not sourcing.
  * If force given, replace an existing entry.
- * Return FAIL if the entry was not found, OK if the entry was added.
+ * Return false if the entry was not found, true if the entry was added.
  */
-int add_termcap_entry(char_u *name, int force)
+bool add_termcap_entry(char_u *name, bool force)
 {
   char_u  *term;
   int key;
@@ -1624,11 +1624,11 @@ int add_termcap_entry(char_u *name, int force)
    */
 
   if (!force && find_termcode(name) != NULL)        /* it's already there */
-    return OK;
+    return true;
 
   term = T_NAME;
   if (term == NULL || *term == NUL)         /* 'term' not defined yet */
-    return FAIL;
+    return false;
 
   if (term_is_builtin(term)) {              /* name starts with "builtin_" */
     term += 8;
@@ -1662,7 +1662,7 @@ int add_termcap_entry(char_u *name, int force)
         if ((int)termp->bt_entry == key) {
           add_termcode(name, (char_u *)termp->bt_string,
               term_is_8bit(term));
-          return OK;
+          return true;
         }
         ++termp;
       }
@@ -1678,7 +1678,7 @@ int add_termcap_entry(char_u *name, int force)
       string = TGETSTR((char *)name, &tp);
       if (string != NULL && *string != NUL) {
         add_termcode(name, string, FALSE);
-        return OK;
+        return true;
       }
     }
   }
@@ -1693,10 +1693,10 @@ int add_termcap_entry(char_u *name, int force)
 #endif
     EMSG2(_("E436: No \"%s\" entry in termcap"), name);
   }
-  return FAIL;
+  return false;
 }
 
-static int term_is_builtin(char_u *name)
+static bool term_is_builtin(char_u *name)
 {
   return STRNCMP(name, "builtin_", (size_t)8) == 0;
 }
@@ -2041,7 +2041,7 @@ void term_settitle(char_u *title)
  * Make sure we have a valid set or terminal options.
  * Replace all entries that are NULL by empty_option
  */
-void ttest(int pairs)
+void ttest(bool pairs)
 {
   check_options();                  /* make sure no options are NULL */
 
@@ -2240,7 +2240,7 @@ void win_new_shellsize(void)
  */
 void shell_resized(void)
 {
-  set_shellsize(0, 0, FALSE);
+  set_shellsize(0, 0, false);
 }
 
 /*
@@ -2263,12 +2263,12 @@ void shell_resized_check(void)
 
 /*
  * Set size of the Vim shell.
- * If 'mustset' is TRUE, we must set Rows and Columns, do not get the real
+ * If 'mustset' is true, we must set Rows and Columns, do not get the real
  * window size (this is used for the :win command).
- * If 'mustset' is FALSE, we may try to get the real window size and if
+ * If 'mustset' is false, we may try to get the real window size and if
  * it fails use 'width' and 'height'.
  */
-void set_shellsize(int width, int height, int mustset)
+void set_shellsize(int width, int height, bool mustset)
 {
   static int busy = FALSE;
 
@@ -2336,7 +2336,7 @@ void set_shellsize(int width, int height, int mustset)
       repeat_message();
     } else {
       if (curwin->w_p_scb)
-        do_check_scrollbind(TRUE);
+        do_check_scrollbind(true);
       if (State & CMDLINE) {
         update_screen(NOT_VALID);
         redrawcmdline();
@@ -2584,9 +2584,9 @@ static void log_tr(char *msg)                 {
 # endif
 
 /*
- * Return TRUE when saving and restoring the screen.
+ * Return true when saving and restoring the screen.
  */
-int swapping_screen(void)
+bool swapping_screen(void)
 {
   return full_screen && *T_TI != NUL;
 }
@@ -2635,25 +2635,25 @@ void setmouse(void)
  * - the current buffer is a help file and 'h' is in 'mouse' and we are in a
  *   normal editing mode (not at hit-return message).
  */
-int mouse_has(int c)
+bool mouse_has(int c)
 {
   for (char_u *p = p_mouse; *p; ++p)
     switch (*p) {
     case 'a': if (vim_strchr((char_u *)MOUSE_A, c) != NULL)
-        return TRUE;
+        return true;
       break;
     case MOUSE_HELP: if (c != MOUSE_RETURN && curbuf->b_help)
-        return TRUE;
+        return true;
       break;
-    default: if (c == *p) return TRUE; break;
+    default: if (c == *p) return true; break;
     }
-  return FALSE;
+  return false;
 }
 
 /*
- * Return TRUE when 'mousemodel' is set to "popup" or "popup_setpos".
+ * Return true when 'mousemodel' is set to "popup" or "popup_setpos".
  */
-int mouse_model_popup(void)
+bool mouse_model_popup(void)
 {
   return p_mousem[0] == 'p';
 }
@@ -2672,7 +2672,7 @@ void scroll_start(void)
   }
 }
 
-static int cursor_is_off = FALSE;
+static bool cursor_is_off = false;
 
 /*
  * Enable the cursor.
@@ -2681,7 +2681,7 @@ void cursor_on(void)
 {
   if (cursor_is_off) {
     out_str(T_VE);
-    cursor_is_off = FALSE;
+    cursor_is_off = false;
   }
 }
 
@@ -2693,7 +2693,7 @@ void cursor_off(void)
   if (full_screen) {
     if (!cursor_is_off)
       out_str(T_VI);                /* disable cursor */
-    cursor_is_off = TRUE;
+    cursor_is_off = true;
   }
 }
 
@@ -3830,18 +3830,17 @@ int check_termcode(int max_offset, char_u *buf, int bufsize, int *buflen)
  * pointer to it is returned. If something fails *bufp is set to NULL and from
  * is returned.
  *
- * CTRL-V characters are removed.  When "from_part" is TRUE, a trailing CTRL-V
+ * CTRL-V characters are removed.  When "from_part" is true, a trailing CTRL-V
  * is included, otherwise it is removed (for ":map xx ^V", maps xx to
  * nothing).  When 'cpoptions' does not contain 'B', a backslash can be used
  * instead of a CTRL-V.
  */
-char_u *
-replace_termcodes (
+char_u *replace_termcodes (
     char_u *from,
     char_u **bufp,
-    int from_part,
-    int do_lt,                      /* also translate <lt> */
-    int special                    /* always accept <key> notation */
+    bool from_part,
+    bool do_lt,                    /* also translate <lt> */
+    bool special                   /* always accept <key> notation */
 )
 {
   int i;
@@ -4079,7 +4078,7 @@ void show_termcodes(void)
     item_count = 0;
     for (i = 0; i < tc_len; i++) {
       len = show_one_termcode(termcodes[i].name,
-          termcodes[i].code, FALSE);
+          termcodes[i].code, false);
       if (len <= INC3 - GAP ? run == 1
           : len <= INC2 - GAP ? run == 2
           : run == 3)
@@ -4104,7 +4103,7 @@ void show_termcodes(void)
       for (i = row; i < item_count; i += rows) {
         msg_col = col;                          /* make columns */
         show_one_termcode(termcodes[items[i]].name,
-            termcodes[items[i]].code, TRUE);
+            termcodes[items[i]].code, true);
         if (run == 2)
           col += INC2;
         else
@@ -4121,7 +4120,7 @@ void show_termcodes(void)
  * Show one termcode entry.
  * Output goes into IObuff[]
  */
-int show_one_termcode(char_u *name, char_u *code, int printit)
+int show_one_termcode(char_u *name, char_u *code, bool printit)
 {
   char_u      *p;
   int len;
@@ -4338,10 +4337,9 @@ static void check_for_codes_from_term(void)
  *
  * Returns NULL when there is a problem.
  */
-char_u *
-translate_mapping (
+char_u *translate_mapping (
     char_u *str,
-    int expmap              /* TRUE when expanding mappings on command-line */
+    bool expmap             /* true when expanding mappings on command-line */
 )
 {
   garray_T ga;

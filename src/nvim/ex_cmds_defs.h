@@ -98,8 +98,8 @@ struct exarg {
   char_u      **cmdlinep;       ///< pointer to pointer of allocated cmdline
   cmdidx_T cmdidx;              ///< the index for the command
   long argt;                    ///< flags for the command
-  int skip;                     ///< don't execute the command, only parse it
-  int forceit;                  ///< TRUE if ! present
+  bool skip;                    ///< don't execute the command, only parse it
+  bool forceit;                 ///< TRUE if ! present
   int addr_count;               ///< the number of addresses given
   linenr_T line1;               ///< the first line number
   linenr_T line2;               ///< the second line number or count
@@ -141,7 +141,7 @@ typedef struct expand {
   int xp_scriptID;                      /* SID for completion function */
   int xp_backslash;                     /* one of the XP_BS_ values */
 #ifndef BACKSLASH_IN_FILENAME
-  int xp_shell;                         /* TRUE for a shell command, more
+  bool xp_shell;                        /* true for a shell command, more
                                            characters need to be escaped */
 #endif
   int xp_numfiles;                      /* number of files found by

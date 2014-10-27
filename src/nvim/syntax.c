@@ -3187,8 +3187,8 @@ static void syn_cmd_clear(exarg_T *eap, int syncing)
     else {
       syntax_clear(curwin->w_s);
       if (curwin->w_s == &curwin->w_buffer->b_s)
-        do_unlet((char_u *)"b:current_syntax", TRUE);
-      do_unlet((char_u *)"w:current_syntax", TRUE);
+        do_unlet((char_u *)"b:current_syntax", true);
+      do_unlet((char_u *)"w:current_syntax", true);
     }
   } else {
     /*
@@ -3264,7 +3264,7 @@ static void syn_cmd_enable(exarg_T *eap, int syncing)
 {
   set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"enable");
   syn_cmd_onoff(eap, "syntax");
-  do_unlet((char_u *)"g:syntax_cmd", TRUE);
+  do_unlet((char_u *)"g:syntax_cmd", true);
 }
 
 /*
@@ -3276,7 +3276,7 @@ static void syn_cmd_reset(exarg_T *eap, int syncing)
   if (!eap->skip) {
     set_internal_string_var((char_u *)"syntax_cmd", (char_u *)"reset");
     do_cmdline_cmd((char_u *)"runtime! syntax/syncolor.vim");
-    do_unlet((char_u *)"g:syntax_cmd", TRUE);
+    do_unlet((char_u *)"g:syntax_cmd", true);
   }
 }
 
@@ -4120,8 +4120,8 @@ static void syn_cmd_include(exarg_T *eap, int syncing)
   current_syn_inc_tag = ++running_syn_inc_tag;
   prev_toplvl_grp = curwin->w_s->b_syn_topgrp;
   curwin->w_s->b_syn_topgrp = sgl_id;
-  if (source ? do_source(eap->arg, FALSE, DOSO_NONE) == FAIL
-      : source_runtime(eap->arg, TRUE) == FAIL)
+  if (source ? do_source(eap->arg, false, DOSO_NONE) == FAIL
+      : source_runtime(eap->arg, true) == FAIL)
     EMSG2(_(e_notopen), eap->arg);
   curwin->w_s->b_syn_topgrp = prev_toplvl_grp;
   current_syn_inc_tag = prev_syn_inc_tag;
@@ -5433,7 +5433,7 @@ void ex_ownsyntax(exarg_T *eap)
 
   /* restore value of b:current_syntax */
   if (old_value == NULL)
-    do_unlet((char_u *)"b:current_syntax", TRUE);
+    do_unlet((char_u *)"b:current_syntax", true);
   else {
     set_internal_string_var((char_u *)"b:current_syntax", old_value);
     free(old_value);
@@ -6007,7 +6007,7 @@ init_highlight (
       EMSG(_("E679: recursive loop loading syncolor.vim"));
     else {
       ++recursive;
-      (void)source_runtime((char_u *)"syntax/syncolor.vim", TRUE);
+      (void)source_runtime((char_u *)"syntax/syncolor.vim", true);
       --recursive;
     }
   }
@@ -6032,7 +6032,7 @@ int load_colors(char_u *name)
   recursive = TRUE;
   buf = xmalloc(STRLEN(name) + 12);
   sprintf((char *)buf, "colors/%s.vim", name);
-  retval = source_runtime(buf, FALSE);
+  retval = source_runtime(buf, false);
   free(buf);
   apply_autocmds(EVENT_COLORSCHEME, name, curbuf->b_fname, FALSE, curbuf);
 
@@ -6182,7 +6182,7 @@ do_highlight (
      */
     line = linep;
     if (ends_excmd(*line)) {
-      do_unlet((char_u *)"colors_name", TRUE);
+      do_unlet((char_u *)"colors_name", true);
       restore_cterm_colors();
 
       /*

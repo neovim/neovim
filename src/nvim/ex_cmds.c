@@ -166,7 +166,7 @@ void ex_align(exarg_T *eap)
   int len;
   int indent = 0;
   int new_indent;
-  int has_tab;
+  bool has_tab;
   int width;
 
   if (curwin->w_p_rl) {
@@ -250,7 +250,7 @@ void ex_align(exarg_T *eap)
 /*
  * Get the length of the current line, excluding trailing white space.
  */
-static int linelen(int *has_tab)
+static int linelen(bool *has_tab)
 {
   char_u  *line;
   char_u  *first;
@@ -670,9 +670,9 @@ void ex_retab(exarg_T *eap)
 /*
  * :move command - move lines line1-line2 to line dest
  *
- * return FAIL for failure, OK otherwise
+ * return false for failure, true otherwise
  */
-int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
+bool do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 {
   char_u      *str;
   linenr_T l;
@@ -682,7 +682,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
 
   if (dest >= line1 && dest < line2) {
     EMSG(_("E134: Move lines into themselves"));
-    return FAIL;
+    return false;
   }
 
   num_lines = line2 - line1 + 1;
@@ -691,8 +691,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
    * First we copy the old text to its new location -- webb
    * Also copy the flag that ":global" command uses.
    */
-  if (u_save(dest, dest + 1) == FAIL)
-    return FAIL;
+  if (u_save(dest, dest + 1) == FAIL) {
+    return false;
+  }
   for (extra = 0, l = line1; l <= line2; l++) {
     str = vim_strsave(ml_get(l + extra));
     ml_append(dest + l - line1, str, (colnr_T)0, FALSE);
@@ -736,8 +737,9 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   /*
    * Now we delete the original text -- webb
    */
-  if (u_save(line1 + extra - 1, line2 + extra + 1) == FAIL)
-    return FAIL;
+  if (u_save(line1 + extra - 1, line2 + extra + 1) == FAIL) {
+    return false;
+  }
 
   for (l = line1; l <= line2; l++)
     ml_delete(line1 + extra, TRUE);
@@ -766,7 +768,7 @@ int do_move(linenr_T line1, linenr_T line2, linenr_T dest)
   } else
     changed_lines(dest + 1, 0, line1 + num_lines, 0L);
 
-  return OK;
+  return true;
 }
 
 /*
@@ -835,7 +837,7 @@ void free_prev_shellcmd(void)
  * Bangs in the argument are replaced with the previously entered command.
  * Remember the argument.
  */
-void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
+void do_bang(int addr_count, exarg_T *eap, bool forceit, bool do_in, bool do_out)
 {
   char_u              *arg = eap->arg;          /* command */
   linenr_T line1 = eap->line1;                  /* start of range */
@@ -971,14 +973,13 @@ void do_bang(int addr_count, exarg_T *eap, int forceit, int do_in, int do_out)
  * We use input redirection if do_in is TRUE.
  * We use output redirection if do_out is TRUE.
  */
-static void 
-do_filter (
+static void do_filter (
     linenr_T line1,
     linenr_T line2,
     exarg_T *eap,               /* for forced 'ff' and 'fenc' */
     char_u *cmd,
-    int do_in,
-    int do_out
+    bool do_in,
+    bool do_out
 )
 {
   char_u      *itmp = NULL;
@@ -1045,7 +1046,7 @@ do_filter (
    */
   ++no_wait_return;             /* don't call wait_return() while busy */
   if (itmp != NULL && buf_write(curbuf, itmp, NULL, line1, line2, eap,
-          FALSE, FALSE, FALSE, TRUE) == FAIL) {
+          false, false, false, true) == FAIL) {
     msg_putchar('\n');                  /* keep message from buf_write() */
     --no_wait_return;
     if (!aborting())
@@ -1414,7 +1415,7 @@ void append_redir(char_u *buf, int buflen, char_u *opt, char_u *fname)
 
 static int viminfo_errcnt;
 
-static int no_viminfo(void)
+static bool no_viminfo(void)
 {
   /* "vim -i NONE" does not read or write a viminfo file */
   return use_viminfo != NULL && STRCMP(use_viminfo, "NONE") == 0;
@@ -1422,29 +1423,29 @@ static int no_viminfo(void)
 
 /*
  * Report an error for reading a viminfo file.
- * Count the number of errors.	When there are more than 10, return TRUE.
+ * Count the number of errors.	When there are more than 10, return true.
  */
-int viminfo_error(char *errnum, char *message, char_u *line)
+bool viminfo_error(char *errnum, char *message, char_u *line)
 {
   vim_snprintf((char *)IObuff, IOSIZE, _("%sviminfo: %s in line: "),
       errnum, message);
   STRNCAT(IObuff, line, IOSIZE - STRLEN(IObuff) - 1);
-  if (IObuff[STRLEN(IObuff) - 1] == '\n')
+  if (IObuff[STRLEN(IObuff) - 1] == '\n') {
     IObuff[STRLEN(IObuff) - 1] = NUL;
+  }
   emsg(IObuff);
   if (++viminfo_errcnt >= 10) {
     EMSG(_("E136: viminfo: Too many errors, skipping rest of file"));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
  * read_viminfo() -- Read the viminfo file.  Registers etc. which are already
  * set are not over-written unless "flags" includes VIF_FORCEIT. -- webb
  */
-int 
-read_viminfo (
+bool read_viminfo (
     char_u *file,          /* file name or NULL to use default name */
     int flags                  /* VIF_WANT_INFO et al. */
 )
@@ -1452,8 +1453,9 @@ read_viminfo (
   FILE        *fp;
   char_u      *fname;
 
-  if (no_viminfo())
-    return FAIL;
+  if (no_viminfo()) {
+    return false;
+  }
 
   fname = viminfo_filename(file);       /* get file name in allocated buffer */
   fp = mch_fopen((char *)fname, READBIN);
@@ -1470,14 +1472,15 @@ read_viminfo (
   }
 
   free(fname);
-  if (fp == NULL)
-    return FAIL;
+  if (fp == NULL) {
+    return false;
+  }
 
   viminfo_errcnt = 0;
   do_viminfo(fp, NULL, flags);
 
   fclose(fp);
-  return OK;
+  return true;
 }
 
 /*
@@ -1487,7 +1490,7 @@ read_viminfo (
  * If "forceit" is TRUE, then the old file is not read in, and only internal
  * info is written to the file.
  */
-void write_viminfo(char_u *file, int forceit)
+void write_viminfo(char_u *file, bool forceit)
 {
   char_u      *fname;
   FILE        *fp_in = NULL;    /* input viminfo file, if any */
@@ -1551,7 +1554,7 @@ void write_viminfo(char_u *file, int forceit)
 #endif
 
     // Make tempname
-    tempname = modname(fname, (char_u *)".tmp", FALSE);
+    tempname = modname(fname, (char_u *)".tmp", false);
     if (tempname != NULL) {
       /*
        * Check if tempfile already exists.  Never overwrite an
@@ -1705,7 +1708,7 @@ static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags)
   int count = 0;
   int eof = FALSE;
   vir_T vir;
-  int merge = FALSE;
+  bool merge = false;
 
   vir.vir_line = xmalloc(LSIZE);
   vir.vir_fd = fp_in;
@@ -1715,7 +1718,7 @@ static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags)
     if (flags & VIF_WANT_INFO) {
       eof = read_viminfo_up_to_marks(&vir,
           flags & VIF_FORCEIT, fp_out != NULL);
-      merge = TRUE;
+      merge = true;
     } else if (flags != 0)
       /* Skip info, find start of marks */
       while (!(eof = viminfo_readline(&vir))
@@ -1752,7 +1755,7 @@ static void do_viminfo(FILE *fp_in, FILE *fp_out, int flags)
  * first part of the viminfo file which contains everything but the marks that
  * are local to a file.  Returns TRUE when end-of-file is reached. -- webb
  */
-static int read_viminfo_up_to_marks(vir_T *virp, int forceit, int writing)
+static int read_viminfo_up_to_marks(vir_T *virp, int forceit, bool writing)
 {
   int eof;
 
@@ -1829,7 +1832,7 @@ static int read_viminfo_up_to_marks(vir_T *virp, int forceit, int writing)
  * 'encoding'.  If different and the 'c' flag is in 'viminfo', setup for
  * conversion of text with iconv() in viminfo_readstring().
  */
-static int viminfo_encoding(vir_T *virp)
+static bool viminfo_encoding(vir_T *virp)
 {
   char_u      *p;
   int i;
@@ -1851,9 +1854,9 @@ static int viminfo_encoding(vir_T *virp)
 
 /*
  * Read a line from the viminfo file.
- * Returns TRUE for end-of-file;
+ * Returns true for end-of-file;
  */
-int viminfo_readline(vir_T *virp)
+bool viminfo_readline(vir_T *virp)
 {
   return vim_fgets(virp->vir_line, LSIZE, virp->vir_fd);
 }
@@ -1868,11 +1871,10 @@ int viminfo_readline(vir_T *virp)
  *
  * Return the string in allocated memory (or NULL to indicate failure).
  */
-char_u *
-viminfo_readstring (
+char_u *viminfo_readstring (
     vir_T *virp,
     int off,                            /* offset for virp->vir_line */
-    int convert                 /* convert the string */
+    bool convert                /* convert the string */
 )
 {
   char_u      *retval;
@@ -1969,7 +1971,7 @@ void do_fixdel(exarg_T *eap)
       && *p == DEL ? (char_u *)CTRL_H_STR : DEL_STR, FALSE);
 }
 
-void print_line_no_prefix(linenr_T lnum, int use_number, int list)
+void print_line_no_prefix(linenr_T lnum, bool use_number, bool list)
 {
   char_u numbuf[30];
 
@@ -1984,7 +1986,7 @@ void print_line_no_prefix(linenr_T lnum, int use_number, int list)
 /*
  * Print a text line.  Also in silent mode ("ex -s").
  */
-void print_line(linenr_T lnum, int use_number, int list)
+void print_line(linenr_T lnum, bool use_number, bool list)
 {
   int save_silent = silent_mode;
 
@@ -2001,7 +2003,7 @@ void print_line(linenr_T lnum, int use_number, int list)
   info_message = FALSE;
 }
 
-int rename_buffer(char_u *new_fname)
+bool rename_buffer(char_u *new_fname)
 {
   char_u      *fname, *sfname, *xfname;
   buf_T       *buf;
@@ -2009,10 +2011,12 @@ int rename_buffer(char_u *new_fname)
   buf = curbuf;
   apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, curbuf);
   /* buffer changed, don't change name now */
-  if (buf != curbuf)
-    return FAIL;
-  if (aborting())           /* autocmds may abort script processing */
-    return FAIL;
+  if (buf != curbuf) {
+    return false;
+  }
+  if (aborting()) {         /* autocmds may abort script processing */
+    return false;
+  }
   /*
    * The name of the current buffer will be changed.
    * A new (unlisted) buffer entry needs to be made to hold the old file
@@ -2025,10 +2029,10 @@ int rename_buffer(char_u *new_fname)
   xfname = curbuf->b_fname;
   curbuf->b_ffname = NULL;
   curbuf->b_sfname = NULL;
-  if (setfname(curbuf, new_fname, NULL, TRUE) == FAIL) {
+  if (setfname(curbuf, new_fname, NULL, true) == FAIL) {
     curbuf->b_ffname = fname;
     curbuf->b_sfname = sfname;
-    return FAIL;
+    return false;
   }
   curbuf->b_flags |= BF_NOTEDITED;
   if (xfname != NULL && *xfname != NUL) {
@@ -2041,7 +2045,7 @@ int rename_buffer(char_u *new_fname)
   apply_autocmds(EVENT_BUFFILEPOST, NULL, NULL, FALSE, curbuf);
   /* Change directories when the 'acd' option is set. */
   do_autochdir();
-  return OK;
+  return true;
 }
 
 /*
@@ -2064,7 +2068,7 @@ void ex_file(exarg_T *eap)
       return;
   }
   /* print full file name if :cd used */
-  fileinfo(FALSE, FALSE, eap->forceit);
+  fileinfo(false, false, eap->forceit);
 }
 
 /*
@@ -2082,7 +2086,7 @@ void ex_update(exarg_T *eap)
 void ex_write(exarg_T *eap)
 {
   if (eap->usefilter)           /* input lines to shell command */
-    do_bang(1, eap, FALSE, TRUE, FALSE);
+    do_bang(1, eap, false, true, false);
   else
     (void)do_write(eap);
 }
@@ -2095,17 +2099,17 @@ void ex_write(exarg_T *eap)
  *
  * return FAIL for failure, OK otherwise
  */
-int do_write(exarg_T *eap)
+bool do_write(exarg_T *eap)
 {
-  int other;
+  bool other;
   char_u      *fname = NULL;            /* init to shut up gcc */
   char_u      *ffname;
-  int retval = FAIL;
+  bool retval = false;
   char_u      *free_fname = NULL;
   buf_T       *alt_buf = NULL;
 
   if (not_writing())            /* check 'write' option */
-    return FAIL;
+    return false;
 
   ffname = eap->arg;
   if (*ffname == NUL) {
@@ -2113,7 +2117,7 @@ int do_write(exarg_T *eap)
       EMSG(_(e_argreq));
       goto theend;
     }
-    other = FALSE;
+    other = false;
   } else {
     fname = ffname;
     free_fname = fix_fname(ffname);
@@ -2184,7 +2188,7 @@ int do_write(exarg_T *eap)
       apply_autocmds(EVENT_BUFFILEPRE, NULL, NULL, FALSE, alt_buf);
       if (curbuf != was_curbuf || aborting()) {
         /* buffer changed, don't change name now */
-        retval = FAIL;
+        retval = false;
         goto theend;
       }
       /* Exchange the file names for the current and the alternate
@@ -2210,7 +2214,7 @@ int do_write(exarg_T *eap)
       }
       if (curbuf != was_curbuf || aborting()) {
         /* buffer changed, don't write the file */
-        retval = FAIL;
+        retval = false;
         goto theend;
       }
 
@@ -2232,7 +2236,7 @@ int do_write(exarg_T *eap)
 
     /* After ":saveas fname" reset 'readonly'. */
     if (eap->cmdidx == CMD_saveas) {
-      if (retval == OK) {
+      if (retval) {
         curbuf->b_p_ro = FALSE;
         redraw_tabline = TRUE;
       }
@@ -2250,16 +2254,15 @@ theend:
  * Check if it is allowed to overwrite a file.  If b_flags has BF_NOTEDITED,
  * BF_NEW or BF_READERR, check for overwriting current file.
  * May set eap->forceit if a dialog says it's OK to overwrite.
- * Return OK if it's OK, FAIL if it is not.
+ * Return true if it's OK, false if it is not.
  */
-int 
-check_overwrite (
+bool check_overwrite (
     exarg_T *eap,
     buf_T *buf,
     char_u *fname,         /* file name to be used (can differ from
                                buf->ffname) */
     char_u *ffname,        /* full path version of fname */
-    int other                  /* writing under other name */
+    bool other                 /* writing under other name */
 )
 {
   /*
@@ -2279,7 +2282,7 @@ check_overwrite (
       /* with UNIX it is possible to open a directory */
       if (os_isdir(ffname)) {
         EMSG2(_(e_isadir2), ffname);
-        return FAIL;
+        return false;
       }
 #endif
       if (p_confirm || cmdmod.confirm) {
@@ -2287,11 +2290,11 @@ check_overwrite (
 
         dialog_msg(buff, _("Overwrite existing file \"%s\"?"), fname);
         if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) != VIM_YES)
-          return FAIL;
+          return false;
         eap->forceit = TRUE;
       } else {
         EMSG(_(e_exists));
-        return FAIL;
+        return false;
       }
     }
 
@@ -2326,20 +2329,20 @@ check_overwrite (
           if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2)
               != VIM_YES) {
             free(swapname);
-            return FAIL;
+            return false;
           }
           eap->forceit = TRUE;
         } else {
           EMSG2(_("E768: Swap file exists: %s (:silent! overrides)"),
               swapname);
           free(swapname);
-          return FAIL;
+          return false;
         }
       }
       free(swapname);
     }
   }
-  return OK;
+  return true;
 }
 
 /*
@@ -2388,7 +2391,7 @@ void do_wqall(exarg_T *eap)
         ++error;
       } else if (check_readonly(&eap->forceit, buf)
                  || check_overwrite(eap, buf, buf->b_fname, buf->b_ffname,
-                     FALSE) == FAIL) {
+                     false) == FAIL) {
         ++error;
       } else {
         if (buf_write_all(buf, eap->forceit) == FAIL)
@@ -2411,12 +2414,13 @@ void do_wqall(exarg_T *eap)
  * Check the 'write' option.
  * Return TRUE and give a message when it's not st.
  */
-int not_writing(void)
+bool not_writing(void)
 {
-  if (p_write)
-    return FALSE;
+  if (p_write) {
+    return false;
+  }
   EMSG(_("E142: File not written: Writing is disabled by 'write' option"));
-  return TRUE;
+  return true;
 }
 
 /*
@@ -2424,7 +2428,7 @@ int not_writing(void)
  * read-only). Ask for overruling in a dialog. Return TRUE and give an error
  * message when the buffer is readonly.
  */
-static int check_readonly(int *forceit, buf_T *buf)
+static bool check_readonly(bool *forceit, buf_T *buf)
 {
   /* Handle a file being readonly when the 'readonly' option is set or when
    * the file exists and permissions are read-only. */
@@ -2434,32 +2438,35 @@ static int check_readonly(int *forceit, buf_T *buf)
     if ((p_confirm || cmdmod.confirm) && buf->b_fname != NULL) {
       char_u buff[DIALOG_MSG_SIZE];
 
-      if (buf->b_p_ro)
+      if (buf->b_p_ro) {
         dialog_msg(buff,
             _(
                 "'readonly' option is set for \"%s\".\nDo you wish to write anyway?"),
             buf->b_fname);
-      else
+      } else {
         dialog_msg(buff,
             _(
                 "File permissions of \"%s\" are read-only.\nIt may still be possible to write it.\nDo you wish to try?"),
             buf->b_fname);
+      }
 
       if (vim_dialog_yesno(VIM_QUESTION, NULL, buff, 2) == VIM_YES) {
         /* Set forceit, to force the writing of a readonly file */
         *forceit = TRUE;
-        return FALSE;
-      } else
-        return TRUE;
-    } else if (buf->b_p_ro)
+        return false;
+      } else {
+        return true;
+      }
+    } else if (buf->b_p_ro) {
       EMSG(_(e_readonly));
-    else
+    } else {
       EMSG2(_("E505: \"%s\" is read-only (add ! to override)"),
           buf->b_fname);
-    return TRUE;
+    }
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2470,9 +2477,15 @@ static int check_readonly(int *forceit, buf_T *buf)
  * -1 for successfully opening another file.
  * 'lnum' is the line number for the cursor in the new file (if non-zero).
  */
-int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, int forceit)
+int getfile(
+    int fnum,
+    char_u *ffname,
+    char_u *sfname,
+    bool setpm,
+    linenr_T lnum,
+    bool forceit)
 {
-  int other;
+  bool other;
   int retval;
   char_u      *free_me = NULL;
 
@@ -2494,7 +2507,7 @@ int getfile(int fnum, char_u *ffname, char_u *sfname, int setpm, linenr_T lnum, 
   if (other && !forceit && curbuf->b_nwindows == 1 && !P_HID(curbuf)
       && curbufIsChanged() && autowrite(curbuf, forceit) == FAIL) {
     if (p_confirm && p_write)
-      dialog_changed(curbuf, FALSE);
+      dialog_changed(curbuf, false);
     if (curbufIsChanged()) {
       if (other)
         --no_wait_return;
@@ -2554,8 +2567,7 @@ theend:
  *
  * return FAIL for failure, OK otherwise
  */
-int 
-do_ecmd (
+bool do_ecmd (
     int fnum,
     char_u *ffname,
     char_u *sfname,
@@ -2574,7 +2586,7 @@ do_ecmd (
   buf_T       *buf;
   buf_T       *old_curbuf = curbuf;
   char_u      *free_fname = NULL;
-  int retval = FAIL;
+  bool retval = false;
   long n;
   linenr_T lnum;
   linenr_T topline = 0;
@@ -2590,7 +2602,7 @@ do_ecmd (
 
   if (fnum != 0) {
     if (fnum == curbuf->b_fnum)         /* file is already being edited */
-      return OK;                        /* nothing to do */
+      return true;                        /* nothing to do */
     other_file = TRUE;
   } else {
     /* if no short name given, use ffname for short name */
@@ -2757,16 +2769,17 @@ do_ecmd (
           buf_copy_options(buf, BCO_ENTER);
 
         /* close the link to the current buffer */
-        u_sync(FALSE);
+        u_sync(false);
         close_buffer(oldwin, curbuf,
-            (flags & ECMD_HIDE) ? 0 : DOBUF_UNLOAD, FALSE);
+            (flags & ECMD_HIDE) ? 0 : DOBUF_UNLOAD, false);
 
         /* Autocommands may open a new window and leave oldwin open
          * which leads to crashes since the above call sets
          * oldwin->w_buffer to NULL. */
         if (curwin != oldwin && oldwin != aucmd_win
-            && win_valid(oldwin) && oldwin->w_buffer == NULL)
-          win_close(oldwin, FALSE);
+            && win_valid(oldwin) && oldwin->w_buffer == NULL) {
+          win_close(oldwin, false);
+        }
 
         if (aborting()) {           /* autocmds may abort script processing */
           free(new_name);
@@ -2860,13 +2873,13 @@ do_ecmd (
     curwin->w_p_spell = FALSE;          /* No spell checking */
 
     buf = curbuf;
-    set_buflisted(FALSE);
+    set_buflisted(false);
   } else {
     buf = curbuf;
     /* Don't make a buffer listed if it's a help buffer.  Useful when
      * using CTRL-O to go back to a help file. */
     if (!curbuf->b_help)
-      set_buflisted(TRUE);
+      set_buflisted(true);
   }
 
   /* If autocommands change buffers under our fingers, forget about
@@ -2902,10 +2915,11 @@ do_ecmd (
     if (p_ur < 0 || curbuf->b_ml.ml_line_count <= p_ur) {
       /* Save all the text, so that the reload can be undone.
        * Sync first so that this is a separate undo-able action. */
-      u_sync(FALSE);
-      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, TRUE)
-          == FAIL)
+      u_sync(false);
+      if (u_savecommon(0, curbuf->b_ml.ml_line_count + 1, 0, true)
+          == FAIL) {
         goto theend;
+      }
       u_unchanged(curbuf);
       buf_freeall(curbuf, BFA_KEEP_UNDO);
 
@@ -2940,7 +2954,7 @@ do_ecmd (
   ++RedrawingDisabled;
 
   /* Assume success now */
-  retval = OK;
+  retval = true;
 
   /*
    * Reset cursor position, could be used by autocommands.
@@ -2986,12 +3000,12 @@ do_ecmd (
       /*
        * Open the buffer and read the file.
        */
-      if (should_abort(open_buffer(FALSE, eap, readfile_flags)))
-        retval = FAIL;
+      if (should_abort(open_buffer(false, eap, readfile_flags)))
+        retval = false;
 
 #if defined(HAS_SWAP_EXISTS_ACTION)
       if (swap_exists_action == SEA_QUIT)
-        retval = FAIL;
+        retval = false;
       handle_swap_exists(old_curbuf);
 #endif
     } else {
@@ -3061,7 +3075,7 @@ do_ecmd (
   }
 
   /* Check if cursors in other windows on the same buffer are still valid */
-  check_lnums(FALSE);
+  check_lnums(false);
 
   /*
    * Did not read the file, need to show some info about the file.
@@ -3082,7 +3096,7 @@ do_ecmd (
     msg_scroll = msg_scroll_save;
     msg_scrolled_ign = TRUE;
 
-    fileinfo(FALSE, TRUE, FALSE);
+    fileinfo(false, true, false);
 
     msg_scrolled_ign = FALSE;
   }
@@ -3407,26 +3421,26 @@ void ex_z(exarg_T *eap)
  * If so, give an error message and return TRUE.
  * Otherwise, return FALSE.
  */
-int check_restricted(void)
+bool check_restricted(void)
 {
   if (restricted) {
     EMSG(_("E145: Shell commands not allowed in rvim"));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
  * Check if the secure flag is set (.exrc or .vimrc in current directory).
- * If so, give an error message and return TRUE.
- * Otherwise, return FALSE.
+ * If so, give an error message and return true.
+ * Otherwise, return false.
  */
-int check_secure(void)
+bool check_secure(void)
 {
   if (secure) {
     secure = 2;
     EMSG(_(e_curdir));
-    return TRUE;
+    return true;
   }
 #ifdef HAVE_SANDBOX
   /*
@@ -3435,14 +3449,14 @@ int check_secure(void)
    */
   if (sandbox != 0) {
     EMSG(_(e_sandbox));
-    return TRUE;
+    return true;
   }
 #endif
-  return FALSE;
+  return false;
 }
 
 static char_u   *old_sub = NULL;        /* previous substitute pattern */
-static int global_need_beginline;       /* call beginline() after ":g" */
+static bool global_need_beginline;       /* call beginline() after ":g" */
 
 /* do_sub()
  *
@@ -3463,8 +3477,8 @@ void do_sub(exarg_T *eap)
   static bool do_count = false;         /* count only */
   static int do_error = TRUE;           /* if false, ignore errors */
   static int do_print = FALSE;          /* print last line with subs. */
-  static int do_list = FALSE;           /* list last line with subs. */
-  static int do_number = FALSE;         /* list last line with line nr*/
+  static bool do_list = false;          /* list last line with subs. */
+  static bool do_number = false;        /* list last line with line nr*/
   static int do_ic = 0;                 /* ignore case flag */
   char_u      *pat = NULL, *sub = NULL;         /* init for GCC */
   int delimiter;
@@ -3621,7 +3635,7 @@ void do_sub(exarg_T *eap)
     do_error = TRUE;
     do_print = FALSE;
     do_count = false;
-    do_number = FALSE;
+    do_number = false;
     do_ic = 0;
   }
   while (*cmd) {
@@ -3643,10 +3657,10 @@ void do_sub(exarg_T *eap)
       do_print = TRUE;
     else if (*cmd == '#') {
       do_print = TRUE;
-      do_number = TRUE;
+      do_number = true;
     } else if (*cmd == 'l') {
       do_print = TRUE;
-      do_list = TRUE;
+      do_list = true;
     } else if (*cmd == 'i')         /* ignore case */
       do_ic = 'i';
     else if (*cmd == 'I')           /* don't ignore case */
@@ -3989,7 +4003,7 @@ void do_sub(exarg_T *eap)
               /* clear the question */
               msg_didout = FALSE;               /* don't scroll up */
               msg_col = 0;
-              gotocmdline(TRUE);
+              gotocmdline(true);
 
               /* restore the line */
               if (orig_line != NULL)
@@ -4346,7 +4360,7 @@ skip:
       if (!do_sub_msg(do_count) && do_ask)
         MSG("");
     } else
-      global_need_beginline = TRUE;
+      global_need_beginline = true;
     if (do_print)
       print_line(curwin->w_cursor.lnum, do_number, do_list);
   } else if (!global_busy) {
@@ -4368,10 +4382,9 @@ skip:
 /*
  * Give message for number of substitutions.
  * Can also be used after a ":global" command.
- * Return TRUE if a message was given.
+ * Return true if a message was given.
  */
-bool
-do_sub_msg (
+bool do_sub_msg (
     bool count_only                /* used 'n' flag for ":s" */
 )
 {
@@ -4545,7 +4558,7 @@ void global_exe(char_u *cmd)
 
   sub_nsubs = 0;
   sub_nlines = 0;
-  global_need_beginline = FALSE;
+  global_need_beginline = false;
   global_busy = 1;
   old_lcount = curbuf->b_ml.ml_line_count;
   while (!got_int && (lnum = ml_firstmarked()) != 0 && global_busy == 1) {
@@ -4581,12 +4594,14 @@ void global_exe(char_u *cmd)
     msgmore(curbuf->b_ml.ml_line_count - old_lcount);
 }
 
-int read_viminfo_sub_string(vir_T *virp, int force)
+bool read_viminfo_sub_string(vir_T *virp, bool force)
 {
-  if (force)
+  if (force) {
     free(old_sub);
-  if (force || old_sub == NULL)
-    old_sub = viminfo_readstring(virp, 1, TRUE);
+  }
+  if (force || old_sub == NULL) {
+    old_sub = viminfo_readstring(virp, 1, true);
+  }
   return viminfo_readline(virp);
 }
 
@@ -4608,10 +4623,9 @@ void free_old_sub(void)
 
 /*
  * Set up for a tagpreview.
- * Return TRUE when it was created.
+ * Return true when it was created.
  */
-bool
-prepare_tagpreview (
+bool prepare_tagpreview (
     bool undo_sync                  /* sync undo when leaving the window */
 )
 {
@@ -4645,8 +4659,6 @@ prepare_tagpreview (
   }
   return false;
 }
-
-
 
 /*
  * ":help": open a read-only window on a help file
@@ -4799,7 +4811,7 @@ void ex_help(exarg_T *eap)
   KeyTyped = old_KeyTyped;
 
   if (tag != NULL)
-    do_tag(tag, DT_HELP, 1, FALSE, TRUE);
+    do_tag(tag, DT_HELP, 1, false, true);
 
   /* Delete the empty buffer if we're not using it.  Careful: autocommands
    * may have jumped to another window, check that the buffer is not in a
@@ -4807,7 +4819,7 @@ void ex_help(exarg_T *eap)
   if (empty_fnum != 0 && curbuf->b_fnum != empty_fnum) {
     buf = buflist_findnr(empty_fnum);
     if (buf != NULL && buf->b_nwindows == 0)
-      wipe_buffer(buf, TRUE);
+      wipe_buffer(buf, true);
   }
 
   /* keep the previous alternate file */
@@ -4847,11 +4859,10 @@ char_u *check_help_lang(char_u *arg)
  * Assumption is made that the matched_string passed has already been found to
  * match some string for which help is requested.  webb.
  */
-int 
-help_heuristic (
+int help_heuristic (
     char_u *matched_string,
     int offset,                             /* offset for match */
-    int wrong_case                         /* no matching case */
+    bool wrong_case                         /* no matching case */
 )
 {
   int num_letters;
@@ -4903,9 +4914,13 @@ static int help_compare(const void *s1, const void *s2)
  * Find all help tags matching "arg", sort them and return in matches[], with
  * the number of matches in num_matches.
  * The matches will be sorted with a "best" match algorithm.
- * When "keep_lang" is TRUE try keeping the language of the current buffer.
+ * When "keep_lang" is true try keeping the language of the current buffer.
  */
-int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_lang)
+bool find_help_tags(
+    char_u *arg,
+    int *num_matches,
+    char_u ***matches,
+    bool keep_lang)
 {
   char_u      *s, *d;
   int i;
@@ -5081,7 +5096,7 @@ int find_help_tags(char_u *arg, int *num_matches, char_u ***matches, int keep_la
     while (*num_matches > TAG_MANY)
       free((*matches)[--*num_matches]);
   }
-  return OK;
+  return true;
 }
 
 /*
@@ -5317,11 +5332,11 @@ void ex_helptags(exarg_T *eap)
   char_u fname[8];
   int filecount;
   char_u      **files;
-  int add_help_tags = FALSE;
+  bool add_help_tags = false;
 
   /* Check for ":helptags ++t {dir}". */
   if (STRNCMP(eap->arg, "++t", 3) == 0 && vim_iswhite(eap->arg[3])) {
-    add_help_tags = TRUE;
+    add_help_tags = true;
     eap->arg = skipwhite(eap->arg + 3);
   }
 
@@ -5410,12 +5425,11 @@ void ex_helptags(exarg_T *eap)
   free(dirname);
 }
 
-static void 
-helptags_one (
+static void helptags_one (
     char_u *dir,               /* doc directory */
     char_u *ext,               /* suffix, ".txt", ".itx", ".frx", etc. */
     char_u *tagfname,          /* "tags" for English, "tags-fr" for French. */
-    int add_help_tags              /* add "help-tags" tag */
+    bool add_help_tags         /* add "help-tags" tag */
 )
 {
   FILE        *fd_tags;
@@ -6112,9 +6126,9 @@ static void sign_undefine(sign_T *sp, sign_T *sp_prev)
 
 /*
  * Get highlighting attribute for sign "typenr".
- * If "line" is TRUE: line highl, if FALSE: text highl.
+ * If "line" is true: line highl, if false: text highl.
  */
-int sign_get_attr(int typenr, int line)
+int sign_get_attr(int typenr, bool line)
 {
   sign_T  *sp;
 

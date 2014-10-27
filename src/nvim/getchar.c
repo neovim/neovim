@@ -1132,7 +1132,7 @@ static void may_sync_undo(void)
 {
   if ((!(State & (INSERT + CMDLINE)) || arrow_used)
       && scriptin[curscript] == NULL)
-    u_sync(FALSE);
+    u_sync(false);
 }
 
 /*
@@ -1280,7 +1280,7 @@ openscript (
     oldcurscript = curscript;
     do {
       update_topline_cursor();          /* update cursor position and topline */
-      normal_cmd(&oa, FALSE);           /* execute one command */
+      normal_cmd(&oa, false);           /* execute one command */
       vpeekc();                         /* check for end of file */
     } while (scriptin[oldcurscript] != NULL);
 
@@ -2616,7 +2616,7 @@ do_map (
   int unique = FALSE;
   int nowait = FALSE;
   int silent = FALSE;
-  int special = FALSE;
+  bool special = false;
   int expr = FALSE;
   int noremap;
   char_u      *orig_rhs;
@@ -2667,7 +2667,7 @@ do_map (
      */
     if (STRNCMP(keys, "<special>", 9) == 0) {
       keys = skipwhite(keys + 9);
-      special = TRUE;
+      special = true;
       continue;
     }
 
@@ -2737,13 +2737,13 @@ do_map (
    * replace_termcodes() also removes CTRL-Vs and sometimes backslashes.
    */
   if (haskey)
-    keys = replace_termcodes(keys, &keys_buf, TRUE, TRUE, special);
+    keys = replace_termcodes(keys, &keys_buf, true, true, special);
   orig_rhs = rhs;
   if (hasarg) {
     if (STRICMP(rhs, "<nop>") == 0)         /* "<Nop>" means nothing */
       rhs = (char_u *)"";
     else
-      rhs = replace_termcodes(rhs, &arg_buf, FALSE, TRUE, special);
+      rhs = replace_termcodes(rhs, &arg_buf, false, true, special);
   }
 
   /*
@@ -3295,7 +3295,7 @@ int map_to_exists(char_u *str, char_u *modechars, int abbr)
   char_u      *buf;
   int retval;
 
-  rhs = replace_termcodes(str, &buf, FALSE, TRUE, FALSE);
+  rhs = replace_termcodes(str, &buf, false, true, false);
 
   if (vim_strchr(modechars, 'n') != NULL)
     mode |= NORMAL;
@@ -3490,7 +3490,7 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
         mp = maphash[hash];
       for (; mp; mp = mp->m_next) {
         if (mp->m_mode & expand_mapmodes) {
-          p = translate_mapping(mp->m_keys, TRUE);
+          p = translate_mapping(mp->m_keys, true);
           if (p != NULL && vim_regexec(regmatch, p, (colnr_T)0)) {
             if (round == 1)
               ++count;
@@ -3553,9 +3553,9 @@ int ExpandMappings(regmatch_T *regmatch, int *num_file, char_u ***file)
  * Vim addition: Allow for abbreviations that end in a non-keyword character.
  * Then there must be white space before the abbr.
  *
- * return TRUE if there is an abbreviation, FALSE if not
+ * return true if there is an abbreviation, false if not
  */
-int check_abbr(int c, char_u *ptr, int col, int mincol)
+bool check_abbr(int c, char_u *ptr, int col, int mincol)
 {
   int len;
   int scol;                     /* starting column of the abbr. */
@@ -3569,11 +3569,11 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
   int vim_abbr;
 
   if (typebuf.tb_no_abbr_cnt)   /* abbrev. are not recursive */
-    return FALSE;
+    return false;
 
   /* no remapping implies no abbreviation, except for CTRL-] */
   if ((KeyNoremap & (RM_NONE|RM_SCRIPT)) != 0 && c != Ctrl_RSB)
-    return FALSE;
+    return false;
 
   /*
    * Check for word before the cursor: If it ends in a keyword char all
@@ -3582,7 +3582,7 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
    * before it except white space.
    */
   if (col == 0)                                 /* cannot be an abbr. */
-    return FALSE;
+    return false;
 
   if (has_mbyte) {
     char_u *p;
@@ -3693,10 +3693,10 @@ int check_abbr(int c, char_u *ptr, int col, int mincol)
         len = clen;             /* Delete characters instead of bytes */
       while (len-- > 0)                 /* delete the from string */
         (void)ins_typebuf(tb, 1, 0, TRUE, mp->m_silent);
-      return TRUE;
+      return true;
     }
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -3732,7 +3732,7 @@ eval_map_expr (
   save_cursor = curwin->w_cursor;
   save_msg_col = msg_col;
   save_msg_row = msg_row;
-  p = eval_to_string(expr, NULL, FALSE);
+  p = eval_to_string(expr, NULL, false);
   --textlock;
   --ex_normal_lock;
   curwin->w_cursor = save_cursor;
@@ -4161,7 +4161,7 @@ void check_map_keycodes(void)
                   buf[0] = p[0];
                   buf[1] = p[1];
                   buf[2] = NUL;
-                  (void)add_termcap_entry(buf, FALSE);
+                  (void)add_termcap_entry(buf, false);
                 }
                 ++p;
               }

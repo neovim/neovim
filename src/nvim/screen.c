@@ -2473,7 +2473,7 @@ win_line (
   /* If this line has a sign with line highlighting set line_attr. */
   v = buf_getsigntype(wp->w_buffer, lnum, SIGN_LINEHL);
   if (v != 0)
-      line_attr = sign_get_attr((int)v, TRUE);
+      line_attr = sign_get_attr((int)v, true);
 
   /* Highlight the current line in the quickfix window. */
   if (bt_quickfix(wp->w_buffer) && qf_current_entry(wp) == lnum)
@@ -5067,7 +5067,7 @@ get_keymap_str (
     curwin = wp;
     STRCPY(buf, "b:keymap_name");       /* must be writable */
     ++emsg_skip;
-    s = p = eval_to_string(buf, NULL, FALSE);
+    s = p = eval_to_string(buf, NULL, false);
     --emsg_skip;
     curbuf = old_curbuf;
     curwin = old_curwin;

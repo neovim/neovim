@@ -80,10 +80,10 @@
  * error messages on parsing errors during the expression evaluation are given
  * (even if a try conditional is active).
  */
-static int cause_abort = FALSE;
+static bool cause_abort = false;
 
 /*
- * Return TRUE when immediately aborting on error, or when an interrupt
+ * Return true when immediately aborting on error, or when an interrupt
  * occurred or an exception was thrown but not caught.  Use for ":{range}call"
  * to check whether an aborted function that does not handle a range itself
  * should be called again for the next line in the range.  Also used for
@@ -93,7 +93,7 @@ static int cause_abort = FALSE;
  * cancellation of an expression evaluation after an aborting function call or
  * due to a parsing error, aborting() always returns the same value.
  */
-int aborting(void)
+bool aborting(void)
 {
   return (did_emsg && force_abort) || got_int || did_throw;
 }
@@ -107,27 +107,27 @@ int aborting(void)
 void update_force_abort(void)
 {
   if (cause_abort)
-    force_abort = TRUE;
+    force_abort = true;
 }
 
 /*
- * Return TRUE if a command with a subcommand resulting in "retcode" should
+ * Return true if a command with a subcommand resulting in "retcode" should
  * abort the script processing.  Can be used to suppress an autocommand after
  * execution of a failing subcommand as long as the error message has not been
  * displayed and actually caused the abortion.
  */
-int should_abort(int retcode)
+bool should_abort(bool retcode)
 {
   return (retcode == FAIL && trylevel != 0 && !emsg_silent) || aborting();
 }
 
 /*
- * Return TRUE if a function with the "abort" flag should not be considered
+ * Return true if a function with the "abort" flag should not be considered
  * ended on an error.  This means that parsing commands is continued in order
  * to find finally clauses to be executed, and that some errors in skipped
  * commands are still reported.
  */
-int aborted_in_try(void)
+bool aborted_in_try(void)
 {
   /* This function is only called after an error.  In this case, "force_abort"
    * determines whether searching for finally clauses is necessary. */
@@ -168,7 +168,7 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
    */
   if (!did_emsg) {
     cause_abort = force_abort;
-    force_abort = FALSE;
+    force_abort = false;
   }
 
   /*
@@ -198,7 +198,7 @@ int cause_errthrow(char_u *mesg, int severe, int *ignore)
    * Ensure that all commands in nested function calls and sourced files
    * are aborted immediately.
    */
-  cause_abort = TRUE;
+  cause_abort = true;
 
   /*
    * When an exception is being thrown, some commands (like conditionals) are
@@ -311,8 +311,8 @@ void do_errthrow(struct condstack *cstack, char_u *cmdname)
    * are aborted immediately.
    */
   if (cause_abort) {
-    cause_abort = FALSE;
-    force_abort = TRUE;
+    cause_abort = false;
+    force_abort = true;
   }
 
   /* If no exception is to be thrown or the conversion should be done after
@@ -786,9 +786,9 @@ void report_discard_pending(int pending, void *value)
  */
 void ex_if(exarg_T *eap)
 {
-  int error;
-  int skip;
-  int result;
+  bool error;
+  bool skip;
+  bool result;
   struct condstack    *cstack = eap->cstack;
 
   if (cstack->cs_idx == CSTACK_LEN - 1)
@@ -851,8 +851,8 @@ void ex_endif(exarg_T *eap)
  */
 void ex_else(exarg_T *eap)
 {
-  int error;
-  int skip;
+  bool error;
+  bool skip;
   int result;
   struct condstack    *cstack = eap->cstack;
 
@@ -874,21 +874,21 @@ void ex_else(exarg_T *eap)
       return;
     }
     eap->errmsg = (char_u *)N_("E582: :elseif without :if");
-    skip = TRUE;
+    skip = true;
   } else if (cstack->cs_flags[cstack->cs_idx] & CSF_ELSE) {
     if (eap->cmdidx == CMD_else) {
       eap->errmsg = (char_u *)N_("E583: multiple :else");
       return;
     }
     eap->errmsg = (char_u *)N_("E584: :elseif after :else");
-    skip = TRUE;
+    skip = true;
   }
 
   /* if skipping or the ":if" was TRUE, reset ACTIVE, otherwise set it */
   if (skip || cstack->cs_flags[cstack->cs_idx] & CSF_TRUE) {
     if (eap->errmsg == NULL)
       cstack->cs_flags[cstack->cs_idx] = CSF_TRUE;
-    skip = TRUE;        /* don't evaluate an ":elseif" */
+    skip = true;        /* don't evaluate an ":elseif" */
   } else
     cstack->cs_flags[cstack->cs_idx] = CSF_ACTIVE;
 
@@ -904,7 +904,7 @@ void ex_else(exarg_T *eap)
    */
   if (!skip && dbg_check_skipped(eap) && got_int) {
     (void)do_intthrow(cstack);
-    skip = TRUE;
+    skip = true;
   }
 
   if (eap->cmdidx == CMD_elseif) {
@@ -932,8 +932,8 @@ void ex_else(exarg_T *eap)
  */
 void ex_while(exarg_T *eap)
 {
-  int error;
-  int skip;
+  bool error;
+  bool skip;
   int result;
   struct condstack    *cstack = eap->cstack;
 
@@ -977,7 +977,7 @@ void ex_while(exarg_T *eap)
         /* Jumping here from a ":continue" or ":endfor": use the
          * previously evaluated list. */
         fi = cstack->cs_forinfo[cstack->cs_idx];
-        error = FALSE;
+        error = false;
       } else {
         /* Evaluate the argument and get the info in a structure. */
         fi = eval_for_line(eap->arg, &error, &eap->nextcmd, skip);
@@ -1696,10 +1696,10 @@ void ex_endtry(exarg_T *eap)
         ex_break(eap);
         break;
       case CSTP_RETURN:
-        do_return(eap, FALSE, FALSE, rettv);
+        do_return(eap, false, false, rettv);
         break;
       case CSTP_FINISH:
-        do_finish(eap, FALSE);
+        do_finish(eap, false);
         break;
 
       /* When the finally clause was entered due to an error,
@@ -1774,7 +1774,7 @@ void enter_cleanup(cleanup_T *csp)
       csp->exception = NULL;
       if (did_emsg) {
         force_abort |= cause_abort;
-        cause_abort = FALSE;
+        cause_abort = false;
       }
     }
     did_emsg = got_int = did_throw = need_rethrow = FALSE;
@@ -1846,7 +1846,7 @@ void leave_cleanup(cleanup_T *csp)
      */
     else if (pending & CSTP_ERROR) {
       cause_abort = force_abort;
-      force_abort = FALSE;
+      force_abort = false;
     }
 
     /*

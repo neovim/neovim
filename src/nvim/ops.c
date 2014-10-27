@@ -699,7 +699,7 @@ char_u *get_expr_line(void)
     return expr_copy;
 
   ++nested;
-  rv = eval_to_string(expr_copy, NULL, TRUE);
+  rv = eval_to_string(expr_copy, NULL, true);
   --nested;
   free(expr_copy);
   return rv;
@@ -1105,7 +1105,7 @@ insert_reg (
   long i;
   int retval = OK;
   char_u      *arg;
-  int allocated;
+  bool allocated;
 
   /*
    * It is possible to get into an endless loop by having CTRL-R a in
@@ -1124,7 +1124,7 @@ insert_reg (
 
   if (regname == '.')                   /* insert last inserted text */
     retval = stuff_inserted(NUL, 1L, TRUE);
-  else if (get_spec_reg(regname, &arg, &allocated, TRUE)) {
+  else if (get_spec_reg(regname, &arg, &allocated, true)) {
     if (arg == NULL)
       return FAIL;
     stuffescaped(arg, literally);
@@ -1183,81 +1183,80 @@ static void stuffescaped(char_u *arg, int literally)
 }
 
 /*
- * If "regname" is a special register, return TRUE and store a pointer to its
+ * If "regname" is a special register, return true and store a pointer to its
  * value in "argp".
  */
-int 
-get_spec_reg (
+bool get_spec_reg (
     int regname,
     char_u **argp,
-    int *allocated,         /* return: TRUE when value was allocated */
-    int errmsg                     /* give error message when failing */
+    bool *allocated,         /* return: true when value was allocated */
+    bool errmsg                    /* give error message when failing */
 )
 {
   int cnt;
 
   *argp = NULL;
-  *allocated = FALSE;
+  *allocated = false;
   switch (regname) {
   case '%':                     /* file name */
     if (errmsg)
       check_fname();            /* will give emsg if not set */
     *argp = curbuf->b_fname;
-    return TRUE;
+    return true;
 
   case '#':                     /* alternate file name */
     *argp = getaltfname(errmsg);                /* may give emsg if not set */
-    return TRUE;
+    return true;
 
   case '=':                     /* result of expression */
     *argp = get_expr_line();
-    *allocated = TRUE;
-    return TRUE;
+    *allocated = true;
+    return true;
 
   case ':':                     /* last command line */
     if (last_cmdline == NULL && errmsg)
       EMSG(_(e_nolastcmd));
     *argp = last_cmdline;
-    return TRUE;
+    return true;
 
   case '/':                     /* last search-pattern */
     if (last_search_pat() == NULL && errmsg)
       EMSG(_(e_noprevre));
     *argp = last_search_pat();
-    return TRUE;
+    return true;
 
   case '.':                     /* last inserted text */
     *argp = get_last_insert_save();
-    *allocated = TRUE;
+    *allocated = true;
     if (*argp == NULL && errmsg)
       EMSG(_(e_noinstext));
-    return TRUE;
+    return true;
 
   case Ctrl_F:                  /* Filename under cursor */
   case Ctrl_P:                  /* Path under cursor, expand via "path" */
     if (!errmsg)
-      return FALSE;
+      return false;
     *argp = file_name_at_cursor(FNAME_MESS | FNAME_HYP
         | (regname == Ctrl_P ? FNAME_EXP : 0), 1L, NULL);
-    *allocated = TRUE;
-    return TRUE;
+    *allocated = true;
+    return true;
 
   case Ctrl_W:                  /* word under cursor */
   case Ctrl_A:                  /* WORD (mnemonic All) under cursor */
     if (!errmsg)
-      return FALSE;
+      return false;
     cnt = find_ident_under_cursor(argp, regname == Ctrl_W
         ?  (FIND_IDENT|FIND_STRING) : FIND_STRING);
     *argp = cnt ? vim_strnsave(*argp, cnt) : NULL;
-    *allocated = TRUE;
-    return TRUE;
+    *allocated = true;
+    return true;
 
   case '_':                     /* black hole: always empty */
     *argp = (char_u *)"";
-    return TRUE;
+    return true;
   }
 
-  return FALSE;
+  return false;
 }
 
 /*
@@ -2620,7 +2619,7 @@ do_put (
   int lendiff = 0;
   pos_T old_pos;
   char_u      *insert_string = NULL;
-  int allocated = FALSE;
+  bool allocated = false;
   long cnt;
 
   adjust_clipboard_register(&regname);
@@ -2650,7 +2649,7 @@ do_put (
    * For special registers '%' (file name), '#' (alternate file name) and
    * ':' (last command line), etc. we have to create a fake yank register.
    */
-  if (get_spec_reg(regname, &insert_string, &allocated, TRUE)) {
+  if (get_spec_reg(regname, &insert_string, &allocated, true)) {
     if (insert_string == NULL)
       return;
   }
@@ -4526,7 +4525,7 @@ int read_viminfo_register(vir_T *virp, int force)
         limit *= 2;
         array = y_current->y_array;
       }
-      str = viminfo_readstring(virp, 1, TRUE);
+      str = viminfo_readstring(virp, 1, true);
       if (str != NULL)
         array[size++] = str;
       else
@@ -4685,7 +4684,7 @@ get_reg_contents (
 {
   long i;
   char_u      *retval;
-  int allocated;
+  bool allocated;
 
   /* Don't allow using an expression register inside an expression */
   if (regname == '=') {
@@ -4706,7 +4705,7 @@ get_reg_contents (
 
   get_clipboard(regname);
 
-  if (get_spec_reg(regname, &retval, &allocated, FALSE)) {
+  if (get_spec_reg(regname, &retval, &allocated, false)) {
     if (retval == NULL)
       return NULL;
     if (!allocated)

@@ -47,9 +47,9 @@ int getviscol2(colnr_T col, colnr_T coladd)
  * cursor in that column.
  * The caller must have saved the cursor line for undo!
  */
-int coladvance_force(colnr_T wcol)
+bool coladvance_force(colnr_T wcol)
 {
-  int rc = coladvance2(&curwin->w_cursor, true, false, wcol);
+  bool rc = coladvance2(&curwin->w_cursor, true, false, wcol);
 
   if (wcol == MAXCOL) {
     curwin->w_valid &= ~VALID_VIRTCOL;
@@ -68,11 +68,11 @@ int coladvance_force(colnr_T wcol)
  * a curwin->w_cursor.col value (n.b. this is equal to STRLEN(line)),
  * beginning at coladd 0.
  *
- * return OK if desired column is reached, FAIL if not
+ * return true if desired column is reached, false if not
  */
-int coladvance(colnr_T wcol)
+bool coladvance(colnr_T wcol)
 {
-  int rc = getvpos(&curwin->w_cursor, wcol);
+  bool rc = getvpos(&curwin->w_cursor, wcol);
 
   if (wcol == MAXCOL || rc == FAIL)
     curwin->w_valid &= ~VALID_VIRTCOL;
@@ -84,7 +84,7 @@ int coladvance(colnr_T wcol)
   return rc;
 }
 
-static int coladvance2(
+static bool coladvance2(
     pos_T *pos,
     bool addspaces,                /* change the text to achieve our goal? */
     bool finetune,                 /* change char offset for the exact column */
@@ -180,7 +180,7 @@ static int coladvance2(
         char_u  *newline;
 
         if (-correct > csize)
-          return FAIL;
+          return false;
 
         newline = xmallocz((size_t)(linelen - 1 + csize));
         // Copy first idx chars
@@ -231,15 +231,15 @@ static int coladvance2(
     mb_adjustpos(curbuf, pos);
 
   if (col < wcol)
-    return FAIL;
-  return OK;
+    return false;
+  return true;
 }
 
 /*
  * Return in "pos" the position of the cursor advanced to screen column "wcol".
- * return OK if desired column is reached, FAIL if not
+ * return true if desired column is reached, false if not
  */
-int getvpos(pos_T *pos, colnr_T wcol)
+bool getvpos(pos_T *pos, colnr_T wcol)
 {
   return coladvance2(pos, false, virtual_active(), wcol);
 }

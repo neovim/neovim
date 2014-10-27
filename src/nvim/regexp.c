@@ -3254,10 +3254,9 @@ static lpos_T reg_endzpos[NSUBEXP];     /* idem, end pos */
  * Uses curbuf for line count and 'iskeyword'.
  * If "line_lbr" is true, consider a "\n" in "line" to be a line break.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Return true if there is a match, false if not.
  */
-static int 
-bt_regexec_nl (
+static bool bt_regexec_nl (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */
     colnr_T col,       /* column to start looking for match */
@@ -6485,7 +6484,7 @@ static int vim_regsub_both(char_u *source, char_u *dest, int copy, int magic, in
       save_ireg_ic = ireg_ic;
       can_f_submatch = TRUE;
 
-      eval_result = eval_to_string(source + 2, NULL, TRUE);
+      eval_result = eval_to_string(source + 2, NULL, true);
       if (eval_result != NULL) {
         int had_backslash = FALSE;
 
@@ -7010,10 +7009,9 @@ void vim_regfree(regprog_T *prog)
  * "rmp->regprog" is a compiled regexp as returned by vim_regcomp().
  * Uses curbuf for line count and 'iskeyword'.
  *
- * Return TRUE if there is a match, FALSE if not.
+ * Return true if there is a match, false if not.
  */
-int 
-vim_regexec (
+bool vim_regexec (
     regmatch_T *rmp,
     char_u *line,      /* string to match against */
     colnr_T col            /* column to start looking for match */
@@ -7025,7 +7023,7 @@ vim_regexec (
 /*
  * Like vim_regexec(), but consider a "\n" in "line" to be a line break.
  */
-int vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
+bool vim_regexec_nl(regmatch_T *rmp, char_u *line, colnr_T col)
 {
   return rmp->regprog->engine->regexec_nl(rmp, line, col, true);
 }

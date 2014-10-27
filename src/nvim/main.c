@@ -275,7 +275,7 @@ int main(int argc, char **argv)
       // initial screen size of 80x20
       full_screen = true;
       set_shellsize(80, 20, false);
-    } else { 
+    } else {
       // set terminal name and get terminal capabilities (will set full_screen)
       // Do some initialization of the screen
       termcapinit(params.term);
@@ -463,7 +463,7 @@ int main(int argc, char **argv)
    * When started with "-q errorfile" jump to first error now.
    */
   if (params.edit_type == EDIT_QF) {
-    qf_jump(NULL, 0, 0, FALSE);
+    qf_jump(NULL, 0, 0, false);
     TIME_MSG("jump to first error");
   }
 
@@ -483,7 +483,7 @@ int main(int argc, char **argv)
   /*
    * Shorten any of the filenames, but only when absolute.
    */
-  shorten_fnames(FALSE);
+  shorten_fnames(false);
 
   /*
    * Need to jump to the tag before executing the '-c command'.
@@ -567,7 +567,7 @@ main_loop (
     if (stuff_empty()) {
       did_check_timestamps = FALSE;
       if (need_check_timestamps)
-        check_timestamps(FALSE);
+        check_timestamps(false);
       if (need_wait_return)             /* if wait_return still needed ... */
         wait_return(FALSE);             /* ... call it now */
       if (need_start_insertmode && goto_im()
@@ -689,7 +689,7 @@ main_loop (
         free(p);
       }
       if (need_fileinfo) {              /* show file info after redraw */
-        fileinfo(FALSE, TRUE, FALSE);
+        fileinfo(false, true, false);
         need_fileinfo = FALSE;
       }
 
@@ -748,7 +748,7 @@ main_loop (
         return;
       do_exmode(exmode_active == EXMODE_VIM);
     } else
-      normal_cmd(&oa, TRUE);
+      normal_cmd(&oa, true);
   }
 }
 
@@ -1541,7 +1541,7 @@ static void set_window_layout(mparm_T *paramp)
 static void load_plugins(void)
 {
   if (p_lpl) {
-    source_runtime((char_u *)"plugin/**/*.vim", TRUE);
+    source_runtime((char_u *)"plugin/**/*.vim", true);
     TIME_MSG("loading plugins");
   }
 }
@@ -1625,8 +1625,8 @@ static void read_stdin(void)
 #endif
   no_wait_return = TRUE;
   i = msg_didany;
-  set_buflisted(TRUE);
-  (void)open_buffer(TRUE, NULL, 0);     /* create memfile and read file */
+  set_buflisted(true);
+  (void)open_buffer(true, NULL, 0);     /* create memfile and read file */
   no_wait_return = FALSE;
   msg_didany = i;
   TIME_MSG("reading stdin");
@@ -1718,10 +1718,10 @@ static void create_windows(mparm_T *parmp)
         /* When getting the ATTENTION prompt here, use a dialog */
         swap_exists_action = SEA_DIALOG;
 #endif
-        set_buflisted(TRUE);
+        set_buflisted(true);
 
         /* create memfile, read file */
-        (void)open_buffer(FALSE, NULL, 0);
+        (void)open_buffer(false, NULL, 0);
 
 #if defined(HAS_SWAP_EXISTS_ACTION)
         if (swap_exists_action == SEA_QUIT) {
@@ -1733,7 +1733,7 @@ static void create_windows(mparm_T *parmp)
           /* We can't close the window, it would disturb what
            * happens next.  Clear the file name and set the arg
            * index to -1 to delete it later. */
-          setfname(curbuf, NULL, NULL, FALSE);
+          setfname(curbuf, NULL, NULL, false);
           curwin->w_arg_idx = -1;
           swap_exists_action = SEA_NONE;
         } else
@@ -1776,7 +1776,7 @@ static void edit_buffers(mparm_T *parmp)
 
   /* When w_arg_idx is -1 remove the window (see create_windows()). */
   if (curwin->w_arg_idx == -1) {
-    win_close(curwin, TRUE);
+    win_close(curwin, true);
     advance = FALSE;
   }
 
@@ -1785,7 +1785,7 @@ static void edit_buffers(mparm_T *parmp)
     /* When w_arg_idx is -1 remove the window (see create_windows()). */
     if (curwin->w_arg_idx == -1) {
       ++arg_idx;
-      win_close(curwin, TRUE);
+      win_close(curwin, true);
       advance = FALSE;
       continue;
     }
@@ -1823,7 +1823,7 @@ static void edit_buffers(mparm_T *parmp)
           did_emsg = FALSE;             /* avoid hit-enter prompt */
           getout(1);
         }
-        win_close(curwin, TRUE);
+        win_close(curwin, true);
         advance = FALSE;
       }
 # endif
@@ -1857,7 +1857,7 @@ static void edit_buffers(mparm_T *parmp)
   --autocmd_no_leave;
   TIME_MSG("editing files in windows");
   if (parmp->window_count > 1 && parmp->window_layout != WIN_TABS)
-    win_equal(curwin, FALSE, 'b');      /* adjust heights */
+    win_equal(curwin, false, 'b');      /* adjust heights */
 }
 
 /*
@@ -1912,8 +1912,9 @@ static void exe_commands(mparm_T *parmp)
     msg_scroll = FALSE;
 
   /* When started with "-q errorfile" jump to first error again. */
-  if (parmp->edit_type == EDIT_QF)
-    qf_jump(NULL, 0, 0, FALSE);
+  if (parmp->edit_type == EDIT_QF) {
+    qf_jump(NULL, 0, 0, false);
+  }
   TIME_MSG("executing command arguments");
 }
 
@@ -1929,7 +1930,7 @@ static void source_startup_scripts(mparm_T *parmp)
    * any things he doesn't like.
    */
   if (parmp->evim_mode) {
-    (void)do_source((char_u *)EVIM_FILE, FALSE, DOSO_NONE);
+    (void)do_source((char_u *)EVIM_FILE, false, DOSO_NONE);
     TIME_MSG("source evim file");
   }
 
@@ -1943,7 +1944,7 @@ static void source_startup_scripts(mparm_T *parmp)
       if (parmp->use_vimrc[2] == 'N')
         p_lpl = FALSE;                      /* don't load plugins either */
     } else {
-      if (do_source(parmp->use_vimrc, FALSE, DOSO_NONE) != OK)
+      if (do_source(parmp->use_vimrc, false, DOSO_NONE) != OK)
         EMSG2(_("E282: Cannot read from \"%s\""), parmp->use_vimrc);
     }
   } else if (!silent_mode) {
@@ -1952,7 +1953,7 @@ static void source_startup_scripts(mparm_T *parmp)
      * Get system wide defaults, if the file name is defined.
      */
 #ifdef SYS_VIMRC_FILE
-    (void)do_source((char_u *)SYS_VIMRC_FILE, FALSE, DOSO_NONE);
+    (void)do_source((char_u *)SYS_VIMRC_FILE, false, DOSO_NONE);
 #endif
 
     /*
@@ -1966,23 +1967,23 @@ static void source_startup_scripts(mparm_T *parmp)
      * The first that exists is used, the rest is ignored.
      */
     if (process_env((char_u *)"VIMINIT", TRUE) != OK) {
-      if (do_source((char_u *)USR_VIMRC_FILE, TRUE, DOSO_VIMRC) == FAIL
+      if (do_source((char_u *)USR_VIMRC_FILE, true, DOSO_VIMRC) == FAIL
 #ifdef USR_VIMRC_FILE2
-          && do_source((char_u *)USR_VIMRC_FILE2, TRUE,
+          && do_source((char_u *)USR_VIMRC_FILE2, true,
             DOSO_VIMRC) == FAIL
 #endif
 #ifdef USR_VIMRC_FILE3
-          && do_source((char_u *)USR_VIMRC_FILE3, TRUE,
+          && do_source((char_u *)USR_VIMRC_FILE3, true,
             DOSO_VIMRC) == FAIL
 #endif
 #ifdef USR_VIMRC_FILE4
-          && do_source((char_u *)USR_VIMRC_FILE4, TRUE,
+          && do_source((char_u *)USR_VIMRC_FILE4, true,
             DOSO_VIMRC) == FAIL
 #endif
           && process_env((char_u *)"EXINIT", FALSE) == FAIL
-          && do_source((char_u *)USR_EXRC_FILE, FALSE, DOSO_NONE) == FAIL) {
+          && do_source((char_u *)USR_EXRC_FILE, false, DOSO_NONE) == FAIL) {
 #ifdef USR_EXRC_FILE2
-        (void)do_source((char_u *)USR_EXRC_FILE2, FALSE, DOSO_NONE);
+        (void)do_source((char_u *)USR_EXRC_FILE2, false, DOSO_NONE);
 #endif
       }
     }
@@ -2019,7 +2020,7 @@ static void source_startup_scripts(mparm_T *parmp)
             (char_u *)VIMRC_FILE, FALSE) != kEqualFiles
 #endif
          )
-        i = do_source((char_u *)VIMRC_FILE, TRUE, DOSO_VIMRC);
+        i = do_source((char_u *)VIMRC_FILE, true, DOSO_VIMRC);
 
       if (i == FAIL) {
 #if defined(UNIX)
@@ -2036,7 +2037,7 @@ static void source_startup_scripts(mparm_T *parmp)
               (char_u *)EXRC_FILE, FALSE) != kEqualFiles
 #endif
            )
-          (void)do_source((char_u *)EXRC_FILE, FALSE, DOSO_NONE);
+          (void)do_source((char_u *)EXRC_FILE, false, DOSO_NONE);
       }
     }
     if (secure == 2)

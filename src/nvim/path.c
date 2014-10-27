@@ -508,7 +508,7 @@ unix_expandpath (
 
   /* convert the file pattern to a regexp pattern */
   starts_with_dot = (*s == '.');
-  pat = file_pat_to_reg_pat(s, e, NULL, FALSE);
+  pat = file_pat_to_reg_pat(s, e, NULL, false);
   if (pat == NULL) {
     free(buf);
     return 0;
@@ -1000,13 +1000,12 @@ static int has_special_wildchar(char_u *p)
  * Characters in "pat" that should not be expanded must be preceded with a
  * backslash. E.g., "/path\ with\ spaces/my\*star*"
  *
- * Return FAIL when no single file was found.  In this case "num_file" is not
+ * Return false when no single file was found.  In this case "num_file" is not
  * set, and "file" may contain an error message.
- * Return OK when some files found.  "num_file" is set to the number of
+ * Return true when some files found.  "num_file" is set to the number of
  * matches, "file" to the array of matches.  Call FreeWild() later.
  */
-int 
-gen_expand_wildcards (
+bool gen_expand_wildcards (
     int num_pat,                    /* number of input patterns */
     char_u **pat,              /* array of input patterns */
     int *num_file,          /* resulting number of files */
@@ -1017,7 +1016,7 @@ gen_expand_wildcards (
   int i;
   garray_T ga;
   char_u              *p;
-  static int recursive = FALSE;
+  static bool recursive = false;
   int add_pat;
   int did_expand_in_path = FALSE;
 
@@ -1025,13 +1024,13 @@ gen_expand_wildcards (
    * expand_env() is called to expand things like "~user".  If this fails,
    * it calls ExpandOne(), which brings us back here.  In this case, always
    * call the machine specific expansion function, if possible.  Otherwise,
-   * return FAIL.
+   * return false.
    */
   if (recursive)
 #ifdef SPECIAL_WILDCHAR
     return mch_expand_wildcards(num_pat, pat, num_file, file, flags);
 #else
-    return FAIL;
+    return false;
 #endif
 
 #ifdef SPECIAL_WILDCHAR
@@ -1049,7 +1048,7 @@ gen_expand_wildcards (
   }
 #endif
 
-  recursive = TRUE;
+  recursive = true;
 
   /*
    * The matching file names are stored in a growarray.  Init it empty.
@@ -1081,7 +1080,7 @@ gen_expand_wildcards (
           ga_clear_strings(&ga);
           i = mch_expand_wildcards(num_pat, pat, num_file, file,
               flags);
-          recursive = FALSE;
+          recursive = false;
           return i;
         }
 #endif
@@ -1103,9 +1102,9 @@ gen_expand_wildcards (
             ) {
           /* :find completion where 'path' is used.
            * Recursiveness is OK here. */
-          recursive = FALSE;
+          recursive = false;
           add_pat = expand_in_path(&ga, p, flags);
-          recursive = TRUE;
+          recursive = true;
           did_expand_in_path = TRUE;
         } else
           add_pat = mch_expandpath(&ga, p, flags);
@@ -1133,9 +1132,9 @@ gen_expand_wildcards (
   *num_file = ga.ga_len;
   *file = (ga.ga_data != NULL) ? (char_u **)ga.ga_data : (char_u **)"";
 
-  recursive = FALSE;
+  recursive = false;
 
-  return (ga.ga_data != NULL) ? OK : FAIL;
+  return ga.ga_data != NULL;
 }
 
 
@@ -1169,7 +1168,7 @@ expand_backtick (
   cmd = vim_strnsave(pat + 1, (int)STRLEN(pat) - 2);
 
   if (*cmd == '=')          /* `={expr}`: Expand expression */
-    buffer = eval_to_string(cmd + 1, &p, TRUE);
+    buffer = eval_to_string(cmd + 1, &p, true);
   else
     buffer = get_cmd_output(cmd, NULL,
         (flags & EW_SILENT) ? kShellOptSilent : 0, NULL);
@@ -1761,11 +1760,10 @@ char_u *path_shorten_fname(char_u *full_path, char_u *dir_name)
 /// @param[out]  file      Array of resulting files.
 /// @param[in]   flags     Flags passed to expand_wildcards().
 ///
-/// @return OK or FAIL.
-int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
-                          int flags)
+bool expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
+                           int flags)
 {
-  int ret = FAIL;
+  bool ret = false;
   char_u      *eval_pat = NULL;
   char_u      *exp_pat = *pat;
   char_u      *ignored_msg;
@@ -1794,10 +1792,9 @@ int expand_wildcards_eval(char_u **pat, int *num_file, char_u ***file,
 /*
  * Expand wildcards.  Calls gen_expand_wildcards() and removes files matching
  * 'wildignore'.
- * Returns OK or FAIL.  When FAIL then "num_file" won't be set.
+ * Returns true or false.  When false then "num_file" won't be set.
  */
-int 
-expand_wildcards (
+bool expand_wildcards (
     int num_pat,                    /* number of input patterns */
     char_u **pat,             /* array of input patterns */
     int *num_file,        /* resulting number of files */
@@ -1805,7 +1802,7 @@ expand_wildcards (
     int flags                      /* EW_DIR, etc. */
 )
 {
-  int retval;
+  bool retval;
   int i, j;
   char_u      *p;
   int non_suf_match;            /* number without matching suffix */

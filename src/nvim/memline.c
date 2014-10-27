@@ -940,7 +940,7 @@ void ml_recover(void)
    */
   if (directly) {
     expand_env(b0p->b0_fname, NameBuff, MAXPATHL);
-    if (setfname(curbuf, NameBuff, NULL, TRUE) == FAIL)
+    if (setfname(curbuf, NameBuff, NULL, true) == FAIL)
       goto theend;
   }
 
@@ -1377,7 +1377,7 @@ recover_names (
      * Try finding a swap file by simply adding ".swp" to the file name.
      */
     if (*dirp == NUL && file_count + num_files == 0 && fname != NULL) {
-      char_u *swapname = modname(fname_res, (char_u *)".swp", TRUE);
+      char_u *swapname = modname(fname_res, (char_u *)".swp", true);
       if (swapname != NULL) {
         if (os_file_exists(swapname)) {
           files = (char_u **)xmalloc(sizeof(char_u *));
@@ -1583,7 +1583,7 @@ static int recov_file_names(char_u **names, char_u *path, int prepend_dot)
    * dir as original file.
    */
   if (prepend_dot) {
-    names[num_names] = modname(path, (char_u *)".sw?", TRUE);
+    names[num_names] = modname(path, (char_u *)".sw?", true);
     if (names[num_names] == NULL)
       return num_names;
     ++num_names;
@@ -1853,7 +1853,7 @@ ml_append (
 )
 {
   /* When starting up, we might still need to create the memfile */
-  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
+  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL)
     return FAIL;
 
   if (curbuf->b_ml.ml_line_lnum != 0)
@@ -2348,7 +2348,7 @@ int ml_replace(linenr_T lnum, char_u *line, int copy)
     return FAIL;
 
   /* When starting up, we might still need to create the memfile */
-  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(FALSE, NULL, 0) == FAIL)
+  if (curbuf->b_ml.ml_mfp == NULL && open_buffer(false, NULL, 0) == FAIL)
     return FAIL;
 
   if (copy) {
@@ -3087,7 +3087,7 @@ char_u *makeswapname(char_u *fname, char_u *ffname, buf_T *buf, char_u *dir_name
   if (after_pathsep(dir_name, s) && s[-1] == s[-2]) { /* Ends with '//', Use Full path */
     r = NULL;
     if ((s = make_percent_swname(dir_name, fname)) != NULL) {
-      r = modname(s, (char_u *)".swp", FALSE);
+      r = modname(s, (char_u *)".swp", false);
       free(s);
     }
     return r;

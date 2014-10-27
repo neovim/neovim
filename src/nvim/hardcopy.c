@@ -1537,10 +1537,10 @@ static void prt_resource_name(char_u *filename, void *cookie)
     STRCPY(resource_filename, filename);
 }
 
-static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
+static bool prt_find_resource(char *name, struct prt_ps_resource_S *resource)
 {
   char_u      *buffer;
-  int retval;
+  bool retval;
 
   buffer = xmallocz(MAXPATHL);
 
@@ -1551,7 +1551,7 @@ static int prt_find_resource(char *name, struct prt_ps_resource_S *resource)
   vim_strcat(buffer, (char_u *)name, MAXPATHL);
   vim_strcat(buffer, (char_u *)".ps", MAXPATHL);
   resource->filename[0] = NUL;
-  retval = (do_in_runtimepath(buffer, FALSE, prt_resource_name,
+  retval = (do_in_runtimepath(buffer, false, prt_resource_name,
                 resource->filename)
             && resource->filename[0] != NUL);
   free(buffer);

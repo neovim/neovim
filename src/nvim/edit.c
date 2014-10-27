@@ -233,12 +233,11 @@ static int did_add_space = FALSE;       /* auto_format() added an extra space
  * This function is not called recursively.  For CTRL-O commands, it returns
  * and lets the caller handle the Normal-mode command.
  *
- * Return TRUE if a CTRL-O command caused the return (insert mode pending).
+ * Return true if a CTRL-O command caused the return (insert mode pending).
  */
-int 
-edit (
+bool edit (
     int cmdchar,
-    int startln,                    /* if set, insert at start of line */
+    bool startln,                   /* if set, insert at start of line */
     long count
 )
 {
@@ -513,8 +512,9 @@ edit (
      * menu invoked a shell command). */
     if (stuff_empty()) {
       did_check_timestamps = FALSE;
-      if (need_check_timestamps)
-        check_timestamps(FALSE);
+      if (need_check_timestamps) {
+        check_timestamps(false);
+      }
     }
 
     /*
@@ -577,7 +577,7 @@ edit (
     ins_redraw(TRUE);
 
     if (curwin->w_p_scb)
-      do_check_scrollbind(TRUE);
+      do_check_scrollbind(true);
 
     if (curwin->w_p_crb)
       do_check_cursorbind();
@@ -3282,7 +3282,7 @@ expand_by_function (
   curbuf_save = curbuf;
 
   /* Call a function, which returns a list or dict. */
-  if (call_vim_function(funcname, 2, args, FALSE, FALSE, &rettv) == OK) {
+  if (call_vim_function(funcname, 2, args, false, false, &rettv) == OK) {
     switch (rettv.v_type) {
     case VAR_LIST:
       matchlist = rettv.vval.v_list;
@@ -3377,20 +3377,20 @@ int ins_compl_add_tv(typval_T *tv, int dir)
   char_u      *(cptext[CPT_COUNT]);
 
   if (tv->v_type == VAR_DICT && tv->vval.v_dict != NULL) {
-    word = get_dict_string(tv->vval.v_dict, (char_u *)"word", FALSE);
+    word = get_dict_string(tv->vval.v_dict, (char_u *)"word", false);
     cptext[CPT_ABBR] = get_dict_string(tv->vval.v_dict,
-        (char_u *)"abbr", FALSE);
+        (char_u *)"abbr", false);
     cptext[CPT_MENU] = get_dict_string(tv->vval.v_dict,
-        (char_u *)"menu", FALSE);
+        (char_u *)"menu", false);
     cptext[CPT_KIND] = get_dict_string(tv->vval.v_dict,
-        (char_u *)"kind", FALSE);
+        (char_u *)"kind", false);
     cptext[CPT_INFO] = get_dict_string(tv->vval.v_dict,
-        (char_u *)"info", FALSE);
-    if (get_dict_string(tv->vval.v_dict, (char_u *)"icase", FALSE) != NULL)
+        (char_u *)"info", false);
+    if (get_dict_string(tv->vval.v_dict, (char_u *)"icase", false) != NULL)
       icase = get_dict_number(tv->vval.v_dict, (char_u *)"icase");
-    if (get_dict_string(tv->vval.v_dict, (char_u *)"dup", FALSE) != NULL)
+    if (get_dict_string(tv->vval.v_dict, (char_u *)"dup", false) != NULL)
       adup = get_dict_number(tv->vval.v_dict, (char_u *)"dup");
-    if (get_dict_string(tv->vval.v_dict, (char_u *)"empty", FALSE) != NULL)
+    if (get_dict_string(tv->vval.v_dict, (char_u *)"empty", false) != NULL)
       aempty = get_dict_number(tv->vval.v_dict, (char_u *)"empty");
   } else {
     word = get_tv_string_chk(tv);
@@ -4363,7 +4363,7 @@ static int ins_complete(int c)
       pos = curwin->w_cursor;
       curwin_save = curwin;
       curbuf_save = curbuf;
-      col = call_func_retnr(funcname, 2, args, FALSE);
+      col = call_func_retnr(funcname, 2, args, false);
       if (curwin_save != curwin || curbuf_save != curbuf) {
         EMSG(_(e_complwin));
         return FAIL;
@@ -6827,7 +6827,7 @@ static void ins_ctrl_g(void)
     break;
 
   /* CTRL-G u: start new undoable edit */
-  case 'u': u_sync(TRUE);
+  case 'u': u_sync(true);
     ins_need_undo = TRUE;
 
     /* Need to reset Insstart, esp. because a BS that joins

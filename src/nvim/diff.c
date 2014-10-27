@@ -895,7 +895,7 @@ void ex_diffpatch(exarg_T *eap)
       tempdir = "/tmp";
     }
     os_chdir(tempdir);
-    shorten_fnames(TRUE);
+    shorten_fnames(true);
   }
 #endif  // ifdef UNIX
 
@@ -927,7 +927,7 @@ void ex_diffpatch(exarg_T *eap)
     if (os_chdir((char *)dirbuf) != 0) {
       EMSG(_(e_prev_dir));
     }
-    shorten_fnames(TRUE);
+    shorten_fnames(true);
   }
 #endif  // ifdef UNIX
 
@@ -2333,7 +2333,7 @@ void ex_diffgetput(exarg_T *eap)
     // another buffer.  Sync undo if the command was typed.  This isn't
     // 100% right when ":diffput" is used in a function or mapping.
     if (KeyTyped) {
-      u_sync(FALSE);
+      u_sync(false);
     }
     aucmd_restbuf(&aco);
   }

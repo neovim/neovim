@@ -107,7 +107,7 @@ typedef struct hist_entry {
 /*
  * Type used by call_user_expand_func
  */
-typedef void *(*user_expand_func_T)(char_u *, int, char_u **, int);
+typedef void *(*user_expand_func_T)(char_u *, int, char_u **, bool);
 
 static histentry_T *(history[HIST_COUNT]) = {NULL, NULL, NULL, NULL, NULL};
 static int hisidx[HIST_COUNT] = {-1, -1, -1, -1, -1};       /* lastused entry */
@@ -232,7 +232,7 @@ getcmdline (
   if (!cmd_silent) {
     i = msg_scrolled;
     msg_scrolled = 0;                   /* avoid wait_return message */
-    gotocmdline(TRUE);
+    gotocmdline(true);
     msg_scrolled += i;
     redrawcmdprompt();                  /* draw prompt or indent */
     set_cmdspos();
@@ -240,7 +240,7 @@ getcmdline (
   xpc.xp_context = EXPAND_NOTHING;
   xpc.xp_backslash = XP_BS_NONE;
 #ifndef BACKSLASH_IN_FILENAME
-  xpc.xp_shell = FALSE;
+  xpc.xp_shell = false;
 #endif
 
   if (ccline.input_fn) {
@@ -412,7 +412,7 @@ getcmdline (
           /* restore 'laststatus' and 'winminheight' */
           p_ls = save_p_ls;
           p_wmh = save_p_wmh;
-          last_status(FALSE);
+          last_status(false);
           save_cmdline(&save_ccline);
           update_screen(VALID);                 /* redraw the screen NOW */
           restore_cmdline(&save_ccline);
@@ -541,7 +541,7 @@ getcmdline (
           /* TODO this is only for DOS/UNIX systems - need to put in
            * machine-specific stuff here and in upseg init */
           cmdline_del(j);
-          put_on_cmdline(upseg + 1, 3, FALSE);
+          put_on_cmdline(upseg + 1, 3, false);
         } else if (ccline.cmdpos > i)
           cmdline_del(i);
 
@@ -676,7 +676,7 @@ getcmdline (
         if (xpc.xp_numfiles > 1
             && !did_wild_list
             && (wim_flags[wim_index] & WIM_LIST)) {
-          (void)showmatches(&xpc, FALSE);
+          (void)showmatches(&xpc, false);
           redrawcmd();
           did_wild_list = TRUE;
         }
@@ -934,7 +934,7 @@ getcmdline (
 #ifdef USE_ON_FLY_SCROLL
       dont_scroll = TRUE;               /* disallow scrolling here */
 #endif
-      putcmdline('"', TRUE);
+      putcmdline('"', true);
       ++no_mapping;
       i = c = plain_vgetc();            /* CTRL-R <char> */
       if (i == Ctrl_O)
@@ -959,7 +959,7 @@ getcmdline (
         }
       }
       if (c != ESC) {               /* use ESC to cancel inserting register */
-        cmdline_paste(c, i == Ctrl_R, FALSE);
+        cmdline_paste(c, i == Ctrl_R, false);
 
         /* When there was a serious error abort getting the
          * command line. */
@@ -981,7 +981,7 @@ getcmdline (
       goto cmdline_changed;
 
     case Ctrl_D:
-      if (showmatches(&xpc, FALSE) == EXPAND_NOTHING)
+      if (showmatches(&xpc, false) == EXPAND_NOTHING)
         break;                  /* Use ^D as normal char instead */
 
       redrawcmd();
@@ -1040,7 +1040,7 @@ getcmdline (
     case K_MIDDLEMOUSE:
       if (!mouse_has(MOUSE_COMMAND))
         goto cmdline_not_changed;                   /* Ignore mouse */
-      cmdline_paste(0, TRUE, TRUE);
+      cmdline_paste(0, true, true);
       redrawcmd();
       goto cmdline_changed;
 
@@ -1283,7 +1283,7 @@ getcmdline (
     case Ctrl_V:
     case Ctrl_Q:
       ignore_drag_release = TRUE;
-      putcmdline('^', TRUE);
+      putcmdline('^', true);
       c = get_literal();                    /* get next (two) character(s) */
       do_abbr = FALSE;                      /* don't do abbreviation now */
       /* may need to remove ^ when composing char was typed */
@@ -1296,7 +1296,7 @@ getcmdline (
 
     case Ctrl_K:
       ignore_drag_release = TRUE;
-      putcmdline('?', TRUE);
+      putcmdline('?', true);
 #ifdef USE_ON_FLY_SCROLL
       dont_scroll = TRUE;                   /* disallow scrolling here */
 #endif
@@ -1355,15 +1355,15 @@ getcmdline (
      * put the character in the command line
      */
     if (IS_SPECIAL(c) || mod_mask != 0)
-      put_on_cmdline(get_special_key_name(c, mod_mask), -1, TRUE);
+      put_on_cmdline(get_special_key_name(c, mod_mask), -1, true);
     else {
       if (has_mbyte) {
         j = (*mb_char2bytes)(c, IObuff);
         IObuff[j] = NUL;                /* exclude composing chars */
-        put_on_cmdline(IObuff, j, TRUE);
+        put_on_cmdline(IObuff, j, true);
       } else {
         IObuff[0] = c;
-        put_on_cmdline(IObuff, 1, TRUE);
+        put_on_cmdline(IObuff, 1, true);
       }
     }
     goto cmdline_changed;
@@ -1508,7 +1508,7 @@ returncmd:
      */
     if (ccline.cmdlen && firstc != NUL
         && (some_key_typed || histype == HIST_SEARCH)) {
-      add_to_history(histype, ccline.cmdbuff, TRUE,
+      add_to_history(histype, ccline.cmdbuff, true,
           histype == HIST_SEARCH ? firstc : NUL);
       if (firstc == ':') {
         free(new_last_cmdline);
@@ -1595,12 +1595,13 @@ getcmdline_prompt (
 }
 
 /*
- * Return TRUE when the text must not be changed and we can't switch to
+ * Return true when the text must not be changed and we can't switch to
  * another window or buffer.  Used when editing the command line etc.
  */
-int text_locked(void) {
-  if (cmdwin_type != 0)
-    return TRUE;
+bool text_locked(void) {
+  if (cmdwin_type != 0) {
+    return true;
+  }
   return textlock != 0;
 }
 
@@ -1620,26 +1621,26 @@ void text_locked_msg(void)
  * Check if "curbuf_lock" or "allbuf_lock" is set and return TRUE when it is
  * and give an error message.
  */
-int curbuf_locked(void)
+bool curbuf_locked(void)
 {
   if (curbuf_lock > 0) {
     EMSG(_("E788: Not allowed to edit another buffer now"));
-    return TRUE;
+    return true;
   }
   return allbuf_locked();
 }
 
 /*
- * Check if "allbuf_lock" is set and return TRUE when it is and give an error
+ * Check if "allbuf_lock" is set and return true when it is and give an error
  * message.
  */
-int allbuf_locked(void)
+bool allbuf_locked(void)
 {
   if (allbuf_lock > 0) {
     EMSG(_("E811: Not allowed to change buffer information now"));
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 static int cmdline_charsize(int idx)
@@ -2118,20 +2119,21 @@ static void draw_cmdline(int start, int len)
  * right when "shift" is TRUE.  Used for CTRL-V, CTRL-K, etc.
  * "c" must be printable (fit in one display cell)!
  */
-void putcmdline(int c, int shift)
+void putcmdline(int c, bool shift)
 {
   if (cmd_silent)
     return;
   msg_no_more = TRUE;
   msg_putchar(c);
-  if (shift)
+  if (shift) {
     draw_cmdline(ccline.cmdpos, ccline.cmdlen - ccline.cmdpos);
+  }
   msg_no_more = FALSE;
   cursorcmd();
 }
 
 /*
- * Undo a putcmdline(c, FALSE).
+ * Undo a putcmdline(c, false).
  */
 void unputcmdline(void)
 {
@@ -2152,12 +2154,12 @@ void unputcmdline(void)
 /*
  * Put the given string, of the given length, onto the command line.
  * If len is -1, then STRLEN() is used to calculate the length.
- * If 'redraw' is TRUE then the new part of the command line, and the remaining
+ * If 'redraw' is true then the new part of the command line, and the remaining
  * part will be redrawn, otherwise it will not.  If this function is called
- * twice in a row, then 'redraw' should be FALSE and redrawcmd() should be
+ * twice in a row, then 'redraw' should be false and redrawcmd() should be
  * called afterwards.
  */
-void put_on_cmdline(char_u *str, int len, int redraw)
+void put_on_cmdline(char_u *str, int len, bool redraw)
 {
   int i;
   int m;
@@ -2334,46 +2336,44 @@ void restore_cmdline_alloc(char_u *p)
  * insert_reg() can't be used here, because special characters from the
  * register contents will be interpreted as commands.
  *
- * return FAIL for failure, OK otherwise
+ * return false for failure, true otherwise
  */
-static int 
-cmdline_paste (
+static bool cmdline_paste (
     int regname,
-    int literally,          /* Insert text literally instead of "as typed" */
-    int remcr              /* remove trailing CR */
+    bool literally,        /* Insert text literally instead of "as typed" */
+    bool remcr             /* remove trailing CR */
 )
 {
-  long i;
   char_u              *arg;
   char_u              *p;
-  int allocated;
+  bool allocated;
   struct cmdline_info save_ccline;
 
   /* check for valid regname; also accept special characters for CTRL-R in
    * the command line */
   if (regname != Ctrl_F && regname != Ctrl_P && regname != Ctrl_W
       && regname != Ctrl_A && !valid_yank_reg(regname, FALSE))
-    return FAIL;
+    return false;
 
   /* A register containing CTRL-R can cause an endless loop.  Allow using
    * CTRL-C to break the loop. */
   line_breakcheck();
   if (got_int)
-    return FAIL;
+    return false;
 
 
   /* Need to save and restore ccline.  And set "textlock" to avoid nasty
    * things like going to another buffer when evaluating an expression. */
   save_cmdline(&save_ccline);
   ++textlock;
-  i = get_spec_reg(regname, &arg, &allocated, TRUE);
+  bool i = get_spec_reg(regname, &arg, &allocated, true);
   --textlock;
   restore_cmdline(&save_ccline);
 
   if (i) {
     /* Got the value of a special register in "arg". */
     if (arg == NULL)
-      return FAIL;
+      return false;
 
     /* When 'incsearch' is set and CTRL-R CTRL-W used: skip the duplicate
      * part of the word. */
@@ -2403,7 +2403,7 @@ cmdline_paste (
     cmdline_paste_str(p, literally);
     if (allocated)
       free(arg);
-    return OK;
+    return true;
   }
 
   return cmdline_paste_reg(regname, literally, remcr);
@@ -2411,16 +2411,16 @@ cmdline_paste (
 
 /*
  * Put a string on the command line.
- * When "literally" is TRUE, insert literally.
- * When "literally" is FALSE, insert as typed, but don't leave the command
+ * When "literally" is true, insert literally.
+ * When "literally" is false, insert as typed, but don't leave the command
  * line.
  */
-void cmdline_paste_str(char_u *s, int literally)
+void cmdline_paste_str(char_u *s, bool literally)
 {
   int c, cv;
 
   if (literally)
-    put_on_cmdline(s, -1, TRUE);
+    put_on_cmdline(s, -1, true);
   else
     while (*s != NUL) {
       cv = *s;
@@ -2552,7 +2552,7 @@ static void cursorcmd(void)
   windgoto(msg_row, msg_col);
 }
 
-void gotocmdline(int clr)
+void gotocmdline(bool clr)
 {
   msg_start();
   if (cmdmsg_rl)
@@ -2570,10 +2570,11 @@ void gotocmdline(int clr)
  * When an abbreviation is recognized it is removed from the text with
  * backspaces and the replacement string is inserted, followed by "c".
  */
-static int ccheck_abbr(int c)
+static bool ccheck_abbr(int c)
 {
-  if (p_paste || no_abbr)           /* no abbreviations or in paste mode */
-    return FALSE;
+  if (p_paste || no_abbr) {         /* no abbreviations or in paste mode */
+    return false;
+  }
 
   return check_abbr(c, ccline.cmdbuff, ccline.cmdpos, 0);
 }
@@ -2589,17 +2590,16 @@ static int sort_func_compare(const void *s1, const void *s2)
 }
 
 /*
- * Return FAIL if this is not an appropriate context in which to do
- * completion of anything, return OK if it is (even if there are no matches).
+ * Return false if this is not an appropriate context in which to do
+ * completion of anything, return ok if it is (even if there are no matches).
  * For the caller, this means that the character is just passed through like a
  * normal character (instead of being expanded).  This allows :s/^I^D etc.
  */
-static int 
-nextwild (
+static bool nextwild (
     expand_T *xp,
     int type,
-    int options,                    /* extra options for ExpandOne() */
-    int escape                     /* if TRUE, escape the returned matches */
+    int options,                   /* extra options for ExpandOne() */
+    bool escape                    /* if true, escape the returned matches */
 )
 {
   int i, j;
@@ -2614,11 +2614,11 @@ nextwild (
 
   if (xp->xp_context == EXPAND_UNSUCCESSFUL) {
     beep_flush();
-    return OK;      /* Something illegal on command line */
+    return true;      /* Something illegal on command line */
   }
   if (xp->xp_context == EXPAND_NOTHING) {
     /* Caller can use the character as a normal char instead */
-    return FAIL;
+    return false;
   }
 
   MSG_PUTS("...");          /* show that we are busy */
@@ -2686,7 +2686,7 @@ nextwild (
   /* When expanding a ":map" command and no matches are found, assume that
    * the key is supposed to be inserted literally */
   if (xp->xp_context == EXPAND_MAPPINGS && p2 == NULL)
-    return FAIL;
+    return false;
 
   if (xp->xp_numfiles <= 0 && p2 == NULL)
     beep_flush();
@@ -2694,7 +2694,7 @@ nextwild (
     /* free expanded pattern */
     (void)ExpandOne(xp, NULL, NULL, 0, WILD_FREE);
 
-  return OK;
+  return true;
 }
 
 /*
@@ -2920,7 +2920,7 @@ void ExpandInit(expand_T *xp)
   xp->xp_pattern_len = 0;
   xp->xp_backslash = XP_BS_NONE;
 #ifndef BACKSLASH_IN_FILENAME
-  xp->xp_shell = FALSE;
+  xp->xp_shell = false;
 #endif
   xp->xp_numfiles = -1;
   xp->xp_files = NULL;
@@ -2973,7 +2973,7 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
 #endif
         }
 #ifdef BACKSLASH_IN_FILENAME
-        p = vim_strsave_fnameescape(files[i], FALSE);
+        p = vim_strsave_fnameescape(files[i], false);
 #else
         p = vim_strsave_fnameescape(files[i], xp->xp_shell);
 #endif
@@ -3010,7 +3010,7 @@ void ExpandEscape(expand_T *xp, char_u *str, int numfiles, char_u **files, int o
  * after a Vim command, or, when "shell" is non-zero, a shell command.
  * Returns the result in allocated memory.
  */
-char_u *vim_strsave_fnameescape(char_u *fname, int shell) FUNC_ATTR_NONNULL_RET
+char_u *vim_strsave_fnameescape(char_u *fname, bool shell) FUNC_ATTR_NONNULL_RET
 {
   char_u      *p;
 #ifdef BACKSLASH_IN_FILENAME
@@ -3083,7 +3083,7 @@ void tilde_replace(char_u *orig_pat, int num_files, char_u **files)
  * Returns EXPAND_NOTHING when the character that triggered expansion should
  * be inserted like a normal character.
  */
-static int showmatches(expand_T *xp, int wildmenu)
+static int showmatches(expand_T *xp, bool wildmenu)
 {
 #define L_SHOWFILE(m) (showtail ? sm_gettail(files_found[m]) : files_found[m])
   int num_files;
@@ -3259,11 +3259,11 @@ char_u *sm_gettail(char_u *s)
 }
 
 /*
- * Return TRUE if we only need to show the tail of completion matches.
+ * Return true if we only need to show the tail of completion matches.
  * When not completing file names or there is a wildcard in the path FALSE is
  * returned.
  */
-static int expand_showtail(expand_T *xp)
+static bool expand_showtail(expand_T *xp)
 {
   char_u      *s;
   char_u      *end;
@@ -3272,11 +3272,11 @@ static int expand_showtail(expand_T *xp)
   if (xp->xp_context != EXPAND_FILES
       && xp->xp_context != EXPAND_SHELLCMD
       && xp->xp_context != EXPAND_DIRECTORIES)
-    return FALSE;
+    return false;
 
   end = path_tail(xp->xp_pattern);
   if (end == xp->xp_pattern)            /* there is no path separator */
-    return FALSE;
+    return false;
 
   for (s = xp->xp_pattern; s < end; s++) {
     /* Skip escaped wildcards.  Only when the backslash is not a path
@@ -3284,9 +3284,9 @@ static int expand_showtail(expand_T *xp)
     if (rem_backslash(s))
       ++s;
     else if (vim_strchr((char_u *)"*?[", *s) != NULL)
-      return FALSE;
+      return false;
   }
-  return TRUE;
+  return true;
 }
 
 /*
@@ -3587,8 +3587,7 @@ static void cleanup_help_tags(int num_file, char_u **file)
 /*
  * Do the expansion based on xp->xp_context and "pat".
  */
-static int 
-ExpandFromContext (
+static bool ExpandFromContext (
     expand_T *xp,
     char_u *pat,
     int *num_file,
@@ -3659,20 +3658,20 @@ ExpandFromContext (
     /* With an empty argument we would get all the help tags, which is
      * very slow.  Get matches for "help" instead. */
     if (find_help_tags(*pat == NUL ? (char_u *)"help" : pat,
-            num_file, file, FALSE) == OK) {
+            num_file, file, false) == OK) {
       cleanup_help_tags(*num_file, *file);
-      return OK;
+      return true;
     }
-    return FAIL;
+    return false;
   }
 
   if (xp->xp_context == EXPAND_SHELLCMD) {
     expand_shellcmd(pat, num_file, file, flags);
-    return OK;
+    return true;
   }
   if (xp->xp_context == EXPAND_OLD_SETTING) {
     ExpandOldSetting(num_file, file);
-    return OK;
+    return true;
   }
   if (xp->xp_context == EXPAND_BUFFERS)
     return ExpandBufnames(pat, num_file, file, options);
@@ -3700,7 +3699,7 @@ ExpandFromContext (
 
   regmatch.regprog = vim_regcomp(pat, p_magic ? RE_MAGIC : 0);
   if (regmatch.regprog == NULL)
-    return FAIL;
+    return false;
 
   /* set ignore-case according to p_ic, p_scs and pat */
   regmatch.rm_ic = ignorecase(pat);
@@ -3753,7 +3752,7 @@ ExpandFromContext (
      * Find a context in the table and call the ExpandGeneric() with the
      * right function to do the expansion.
      */
-    ret = FAIL;
+    ret = false;
     for (i = 0; i < (int)(sizeof(tab) / sizeof(struct expgen)); ++i)
       if (xp->xp_context == tab[i].context) {
         if (tab[i].ic) {
@@ -3761,7 +3760,7 @@ ExpandFromContext (
         }
         ExpandGeneric(xp, &regmatch, num_file, file, tab[i].func,
                       tab[i].escaped);
-        ret = OK;
+        ret = true;
         break;
       }
   }
@@ -3784,7 +3783,7 @@ void ExpandGeneric(
     int         *num_file,
     char_u      ***file,
     CompleteListItemGetter func, /* returns a string from the list */
-    int escaped
+    bool escaped
     )
 {
   int i;
@@ -3989,7 +3988,7 @@ static void * call_user_expand_func(user_expand_func_T user_expand_func,
 /*
  * Expand names with a function defined by the user.
  */
-static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
+static bool ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, char_u ***file)
 {
   char_u      *retstr;
   char_u      *s;
@@ -3999,7 +3998,7 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
 
   retstr = call_user_expand_func(call_func_retstr, xp, num_file, file);
   if (retstr == NULL)
-    return FAIL;
+    return false;
 
   ga_init(&ga, (int)sizeof(char *), 3);
   for (s = retstr; *s != NUL; s = e) {
@@ -4025,13 +4024,13 @@ static int ExpandUserDefined(expand_T *xp, regmatch_T *regmatch, int *num_file, 
   free(retstr);
   *file = ga.ga_data;
   *num_file = ga.ga_len;
-  return OK;
+  return true;
 }
 
 /*
  * Expand names with a list returned by a function defined by the user.
  */
-static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
+static bool ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 {
   list_T      *retlist;
   listitem_T  *li;
@@ -4039,7 +4038,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 
   retlist = call_user_expand_func(call_func_retlist, xp, num_file, file);
   if (retlist == NULL)
-    return FAIL;
+    return false;
 
   ga_init(&ga, (int)sizeof(char *), 3);
   /* Loop over the items in the list. */
@@ -4053,7 +4052,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
-  return OK;
+  return true;
 }
 
 /*
@@ -4061,7 +4060,7 @@ static int ExpandUserList(expand_T *xp, int *num_file, char_u ***file)
  * 'runtimepath'/{dirnames}/{pat}.vim
  * "dirnames" is an array with one or more directory names.
  */
-static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
+static bool ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirnames[])
 {
   *num_file = 0;
   *file = NULL;
@@ -4096,7 +4095,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
   }
 
   if (GA_EMPTY(&ga))
-    return FAIL;
+    return false;
 
   /* Sort and remove duplicates which can happen when specifying multiple
    * directories in dirnames. */
@@ -4104,7 +4103,7 @@ static int ExpandRTDir(char_u *pat, int *num_file, char_u ***file, char *dirname
 
   *file = ga.ga_data;
   *num_file = ga.ga_len;
-  return OK;
+  return true;
 }
 
 
@@ -4271,15 +4270,14 @@ static void clear_hist_entry(histentry_T *hisptr)
 
 /*
  * Check if command line 'str' is already in history.
- * If 'move_to_front' is TRUE, matching entry is moved to end of history.
+ * If 'move_to_front' is true, matching entry is moved to end of history.
  */
-static int 
-in_history (
+static bool in_history (
     int type,
     char_u *str,
-    int move_to_front,              /* Move the entry to the front if it exists */
+    bool move_to_front,            /* Move the entry to the front if it exists */
     int sep,
-    int writing                    /* ignore entries read from viminfo */
+    bool writing                   /* ignore entries read from viminfo */
 )
 {
   int i;
@@ -4287,11 +4285,11 @@ in_history (
   char_u  *p;
 
   if (hisidx[type] < 0)
-    return FALSE;
+    return false;
   i = hisidx[type];
   do {
     if (history[type][i].hisstr == NULL)
-      return FALSE;
+      return false;
 
     /* For search history, check that the separator character matches as
      * well. */
@@ -4300,7 +4298,7 @@ in_history (
         && !(writing && history[type][i].viminfo)
         && (type != HIST_SEARCH || sep == p[STRLEN(p) + 1])) {
       if (!move_to_front)
-        return TRUE;
+        return true;
       last_i = i;
       break;
     }
@@ -4319,9 +4317,9 @@ in_history (
     history[type][i].hisnum = ++hisnum[type];
     history[type][i].viminfo = FALSE;
     history[type][i].hisstr = str;
-    return TRUE;
+    return true;
   }
-  return FALSE;
+  return false;
 }
 
 /*
@@ -4355,11 +4353,10 @@ static int last_maptick = -1;           /* last seen maptick */
  * history then it is moved to the front.  "histype" may be one of he HIST_
  * values.
  */
-void 
-add_to_history (
+void add_to_history (
     int histype,
     char_u *new_entry,
-    int in_map,                     /* consider maptick when inside a mapping */
+    bool in_map,                   /* consider maptick when inside a mapping */
     int sep                        /* separator character used (search hist) */
 )
 {
@@ -4389,7 +4386,7 @@ add_to_history (
     }
     last_maptick = -1;
   }
-  if (!in_history(histype, new_entry, TRUE, sep, FALSE)) {
+  if (!in_history(histype, new_entry, true, sep, false)) {
     if (++hisidx[histype] == hislen)
       hisidx[histype] = 0;
     hisptr = &history[histype][hisidx[histype]];
@@ -4558,7 +4555,7 @@ char_u *get_history_entry(int histype, int idx)
  * Clear all entries of a history.
  * "histype" may be one of the HIST_ values.
  */
-int clr_history(int histype)
+bool clr_history(int histype)
 {
   int i;
   histentry_T *hisptr;
@@ -4571,23 +4568,23 @@ int clr_history(int histype)
     }
     hisidx[histype] = -1;       /* mark history as cleared */
     hisnum[histype] = 0;        /* reset identifier counter */
-    return OK;
+    return true;
   }
-  return FAIL;
+  return false;
 }
 
 /*
  * Remove all entries matching {str} from a history.
  * "histype" may be one of the HIST_ values.
  */
-int del_history_entry(int histype, char_u *str)
+bool del_history_entry(int histype, char_u *str)
 {
   regmatch_T regmatch;
   histentry_T *hisptr;
   int idx;
   int i;
   int last;
-  int found = FALSE;
+  bool found = false;
 
   regmatch.regprog = NULL;
   regmatch.rm_ic = FALSE;       /* always match case */
@@ -4604,7 +4601,7 @@ int del_history_entry(int histype, char_u *str)
       if (hisptr->hisstr == NULL)
         break;
       if (vim_regexec(&regmatch, hisptr->hisstr, (colnr_T)0)) {
-        found = TRUE;
+        found = true;
         free(hisptr->hisstr);
         clear_hist_entry(hisptr);
       } else {
@@ -4629,13 +4626,13 @@ int del_history_entry(int histype, char_u *str)
  * Remove an indexed entry from a history.
  * "histype" may be one of the HIST_ values.
  */
-int del_history_idx(int histype, int idx)
+bool del_history_idx(int histype, int idx)
 {
   int i, j;
 
   i = calc_hist_idx(histype, idx);
   if (i < 0)
-    return FALSE;
+    return false;
   idx = hisidx[histype];
   free(history[histype][i].hisstr);
 
@@ -4654,7 +4651,7 @@ int del_history_idx(int histype, int idx)
   if (--i < 0)
     i += hislen;
   hisidx[histype] = i;
-  return TRUE;
+  return true;
 }
 
 
@@ -4689,9 +4686,9 @@ void remove_key_from_history(void)
 /*
  * Get indices "num1,num2" that specify a range within a list (not a range of
  * text lines in a buffer!) from a string.  Used for ":history" and ":clist".
- * Returns OK if parsed successfully, otherwise FAIL.
+ * Returns true if parsed successfully, otherwise false.
  */
-int get_list_range(char_u **str, int *num1, int *num2)
+bool get_list_range(char_u **str, int *num1, int *num2)
 {
   int len;
   int first = FALSE;
@@ -4712,10 +4709,10 @@ int get_list_range(char_u **str, int *num1, int *num2)
       *num2 = (int)num;
       *str = skipwhite(*str + len);
     } else if (!first)                  /* no number given at all */
-      return FAIL;
+      return false;
   } else if (first)                     /* only one number given */
     *num2 = *num1;
-  return OK;
+  return true;
 }
 
 /*
@@ -4806,16 +4803,15 @@ void ex_history(exarg_T *eap)
 static char_u **viminfo_history[HIST_COUNT] = {NULL, NULL, NULL, NULL};
 static int viminfo_hisidx[HIST_COUNT] = {0, 0, 0, 0};
 static int viminfo_hislen[HIST_COUNT] = {0, 0, 0, 0};
-static int viminfo_add_at_front = FALSE;
+static bool viminfo_add_at_front = false;
 
 
 /*
  * Translate a history type number to the associated character.
  */
-static int 
-hist_type2char (
+static int hist_type2char (
     int type,
-    int use_question                   /* use '?' instead of '/' */
+    bool use_question                  /* use '?' instead of '/' */
 )
 {
   if (type == HIST_CMD)
@@ -4835,7 +4831,7 @@ hist_type2char (
  * Prepare for reading the history from the viminfo file.
  * This allocates history arrays to store the read history lines.
  */
-void prepare_viminfo_history(int asklen, int writing)
+void prepare_viminfo_history(int asklen, bool writing)
 {
   int i;
   int num;
@@ -4870,14 +4866,14 @@ void prepare_viminfo_history(int asklen, int writing)
  * Accept a line from the viminfo, store it in the history array when it's
  * new.
  */
-int read_viminfo_history(vir_T *virp, int writing)
+bool read_viminfo_history(vir_T *virp, bool writing)
 {
   int type;
   char_u      *val;
 
   type = hist_char2type(virp->vir_line[0]);
   if (viminfo_hisidx[type] < viminfo_hislen[type]) {
-    val = viminfo_readstring(virp, 1, TRUE);
+    val = viminfo_readstring(virp, 1, true);
     if (val != NULL && *val != NUL) {
       int sep = (*val == ' ' ? NUL : *val);
 
@@ -4958,11 +4954,11 @@ void finish_viminfo_history(void)
 
 /*
  * Write history to viminfo file in "fp".
- * When "merge" is TRUE merge history lines with a previously read viminfo
+ * When "merge" is true merge history lines with a previously read viminfo
  * file, data is in viminfo_history[].
- * When "merge" is FALSE just write all history lines.  Used for ":wviminfo!".
+ * When "merge" is false just write all history lines.  Used for ":wviminfo!".
  */
-void write_viminfo_history(FILE *fp, int merge)
+void write_viminfo_history(FILE *fp, bool merge)
 {
   int i;
   int type;
@@ -4975,7 +4971,7 @@ void write_viminfo_history(FILE *fp, int merge)
   if (hislen == 0)
     return;
   for (type = 0; type < HIST_COUNT; ++type) {
-    num_saved = get_viminfo_parameter(hist_type2char(type, FALSE));
+    num_saved = get_viminfo_parameter(hist_type2char(type, false));
     if (num_saved == 0)
       continue;
     if (num_saved < 0)      /* Use default */
@@ -5013,7 +5009,7 @@ void write_viminfo_history(FILE *fp, int merge)
                             || !merge
                             || !history[type][i].viminfo)) {
             --num_saved;
-            fputc(hist_type2char(type, TRUE), fp);
+            fputc(hist_type2char(type, true), fp);
             /* For the search history: put the separator in the
             * second column; use a space if there isn't one. */
             if (type == HIST_SEARCH) {
@@ -5118,7 +5114,7 @@ static int ex_window(void)
 
   /* Create the command-line buffer empty. */
   (void)do_ecmd(0, NULL, NULL, NULL, ECMD_ONE, ECMD_HIDE, NULL);
-  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, TRUE);
+  (void)setfname(curbuf, (char_u *)"[Command Line]", NULL, true);
   set_option_value((char_u *)"bt", 0L, (char_u *)"nofile", OPT_LOCAL);
   set_option_value((char_u *)"swf", 0L, NULL, OPT_LOCAL);
   curbuf->b_p_ma = TRUE;
@@ -5271,8 +5267,9 @@ static int ex_window(void)
 
     /* win_close() may have already wiped the buffer when 'bh' is
      * set to 'wipe' */
-    if (buf_valid(bp))
-      close_buffer(NULL, bp, DOBUF_WIPE, FALSE);
+    if (buf_valid(bp)) {
+      close_buffer(NULL, bp, DOBUF_WIPE, false);
+    }
 
     /* Restore window sizes. */
     win_size_restore(&winsizes);

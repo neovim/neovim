@@ -54,7 +54,7 @@ static cscmd_T cs_cmds[] =
 {
   { "add",    cs_add,
     N_("Add a new database"),     "add file|dir [pre-path] [flags]", 0 },
-  { "find",   cs_find,
+  { "find",   cs_find_int,
     N_("Query for a pattern"),    "find c|d|e|f|g|i|s|t name", 1 },
   { "help",   cs_help,
     N_("Show this message"),      "help", 0 },
@@ -177,10 +177,9 @@ void set_context_in_cscope_cmd(expand_T *xp, char_u *arg, cmdidx_T cmdidx)
  * Find the command, print help if invalid, and then call the corresponding
  * command function.
  */
-static void 
-do_cscope_general (
+static void do_cscope_general (
     exarg_T *eap,
-    int make_split             /* whether to split window */
+    bool make_split             /* whether to split window */
 )
 {
   cscmd_T *cmdp;
@@ -231,7 +230,7 @@ void do_scscope(exarg_T *eap)
  */
 void do_cstag(exarg_T *eap)
 {
-  int ret = FALSE;
+  bool ret = false;
 
   if (*eap->arg == NUL) {
     (void)EMSG(_("E562: Usage: cstag <ident>"));
@@ -241,37 +240,37 @@ void do_cstag(exarg_T *eap)
   switch (p_csto) {
   case 0:
     if (cs_check_for_connections()) {
-      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, FALSE,
-          FALSE, *eap->cmdlinep);
-      if (ret == FALSE) {
+      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, false,
+          false, *eap->cmdlinep);
+      if (!ret) {
         cs_free_tags();
         if (msg_col)
           msg_putchar('\n');
 
         if (cs_check_for_tags())
-          ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
+          ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, false);
       }
     } else if (cs_check_for_tags()) {
-      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
+      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, false);
     }
     break;
   case 1:
     if (cs_check_for_tags()) {
-      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, FALSE);
+      ret = do_tag(eap->arg, DT_JUMP, 0, eap->forceit, false);
       if (ret == FALSE) {
         if (msg_col)
           msg_putchar('\n');
 
         if (cs_check_for_connections()) {
           ret = cs_find_common("g", (char *)(eap->arg), eap->forceit,
-              FALSE, FALSE, *eap->cmdlinep);
+              false, false, *eap->cmdlinep);
           if (ret == FALSE)
             cs_free_tags();
         }
       }
     } else if (cs_check_for_connections()) {
-      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, FALSE,
-          FALSE, *eap->cmdlinep);
+      ret = cs_find_common("g", (char *)(eap->arg), eap->forceit, false,
+          false, *eap->cmdlinep);
       if (ret == FALSE)
         cs_free_tags();
     }
@@ -296,15 +295,15 @@ void do_cstag(exarg_T *eap)
  *
  * returns TRUE if eof, FALSE otherwise
  */
-int cs_fgets(char_u *buf, int size)
+bool cs_fgets(char_u *buf, int size)
 {
   char *p;
 
   if ((p = cs_manage_matches(NULL, NULL, -1, Get)) == NULL)
-    return TRUE;
+    return true;
   STRLCPY(buf, p, size);
 
-  return FALSE;
+  return false;
 } /* cs_fgets */
 
 
@@ -355,28 +354,28 @@ void cs_print_tags(void)
  *
  *		Note: All string comparisons are case sensitive!
  */
-int cs_connection(int num, char_u *dbpath, char_u *ppath)
+bool cs_connection(int num, char_u *dbpath, char_u *ppath)
 {
   int i;
 
   if (num < 0 || num > 4 || (num > 0 && !dbpath))
-    return FALSE;
+    return false;
 
   for (i = 0; i < csinfo_size; i++) {
     if (!csinfo[i].fname)
       continue;
 
     if (num == 0)
-      return TRUE;
+      return true;
 
     switch (num) {
     case 1:
       if (strstr(csinfo[i].fname, (char *)dbpath))
-        return TRUE;
+        return true;
       break;
     case 2:
       if (strcmp(csinfo[i].fname, (char *)dbpath) == 0)
-        return TRUE;
+        return true;
       break;
     case 3:
       if (strstr(csinfo[i].fname, (char *)dbpath)
@@ -384,7 +383,7 @@ int cs_connection(int num, char_u *dbpath, char_u *ppath)
               || (ppath
                   && csinfo[i].ppath
                   && strstr(csinfo[i].ppath, (char *)ppath))))
-        return TRUE;
+        return true;
       break;
     case 4:
       if ((strcmp(csinfo[i].fname, (char *)dbpath) == 0)
@@ -392,12 +391,12 @@ int cs_connection(int num, char_u *dbpath, char_u *ppath)
               || (ppath
                   && csinfo[i].ppath
                   && (strcmp(csinfo[i].ppath, (char *)ppath) == 0))))
-        return TRUE;
+        return true;
       break;
     }
   }
 
-  return FALSE;
+  return false;
 } /* cs_connection */
 
 
@@ -527,7 +526,7 @@ staterr:
   if (i != -1) {
     if (cs_create_connection(i) == CSCOPE_FAILURE
         || cs_read_prompt(i) == CSCOPE_FAILURE) {
-      cs_release_csp(i, TRUE);
+      cs_release_csp(i, true);
       goto add_err;
     }
 
@@ -552,12 +551,12 @@ add_err:
 } /* cs_add_common */
 
 
-static int cs_check_for_connections(void)
+static bool cs_check_for_connections(void)
 {
   return cs_cnt_connections() > 0;
 } /* cs_check_for_connections */
 
-static int cs_check_for_tags(void)
+static bool cs_check_for_tags(void)
 {
   return p_tags[0] != NUL && curbuf->b_p_tags != NULL;
 } /* cs_check_for_tags */
@@ -892,27 +891,27 @@ err_closing:
  * query cscope using command line interface.  parse the output and use tselect
  * to allow choices.  like Nvi, creates a pipe to send to/from query/cscope.
  *
- * returns TRUE if we jump to a tag or abort, FALSE if not.
+ * returns true if we jump to a tag or abort, false if not.
  */
-static int cs_find(exarg_T *eap)
+static bool cs_find(exarg_T *eap)
 {
   char *opt, *pat;
   int i;
 
   if (cs_check_for_connections() == FALSE) {
     (void)EMSG(_("E567: no cscope connections"));
-    return FALSE;
+    return false;
   }
 
   if ((opt = strtok((char *)NULL, (const char *)" ")) == NULL) {
     cs_usage_msg(Find);
-    return FALSE;
+    return false;
   }
 
   pat = opt + strlen(opt) + 1;
   if (pat >= (char *)eap->arg + eap_arg_len) {
     cs_usage_msg(Find);
-    return FALSE;
+    return false;
   }
 
   /*
@@ -923,17 +922,30 @@ static int cs_find(exarg_T *eap)
     if (NUL == eap->arg[i])
       eap->arg[i] = ' ';
 
-  return cs_find_common(opt, pat, eap->forceit, TRUE,
+  return cs_find_common(opt, pat, eap->forceit, true,
       eap->cmdidx == CMD_lcscope, *eap->cmdlinep);
 } /* cs_find */
 
+/**
+ * Wrapper for cs_find so that it can be added to the cs_cmds array.
+ **/
+static int cs_find_int(exarg_T *eap)
+{
+   return (int) cs_find(eap);
+}
 
 /*
  * PRIVATE: cs_find_common
  *
  * common code for cscope find, shared by cs_find() and do_cstag()
  */
-static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int use_ll, char_u *cmdline)
+static bool cs_find_common(
+    char *opt,
+    char *pat,
+    bool forceit,
+    bool verbose,
+    bool use_ll,
+    char_u *cmdline)
 {
   int i;
   char *cmd;
@@ -984,21 +996,21 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
       sprintf(buf, nf, *qfpos, *(qfpos-1));
       (void)EMSG(buf);
       free(buf);
-      return FALSE;
+      return false;
     }
 
     if (*qfpos != '0') {
       apply_autocmds(EVENT_QUICKFIXCMDPRE, (char_u *)"cscope",
           curbuf->b_fname, TRUE, curbuf);
       if (did_throw || force_abort)
-        return FALSE;
+        return false;
     }
   }
 
   /* create the actual command to send to cscope */
   cmd = cs_create_cmd(opt, pat);
   if (cmd == NULL)
-    return FALSE;
+    return false;
 
   nummatches = xmalloc(sizeof(int) * csinfo_size);
 
@@ -1031,7 +1043,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
 
     if (!verbose) {
       free(nummatches);
-      return FALSE;
+      return false;
     }
 
     buf = xmalloc(strlen(opt) + strlen(pat) + strlen(nf));
@@ -1039,7 +1051,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     (void)EMSG(buf);
     free(buf);
     free(nummatches);
-    return FALSE;
+    return false;
   }
 
   if (qfpos != NULL && *qfpos != '0' && totmatches > 0) {
@@ -1082,7 +1094,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
     os_remove((char *)tmp);
     free(tmp);
     free(nummatches);
-    return TRUE;
+    return true;
   } else {
     char **matches = NULL, **contexts = NULL;
     int matched = 0;
@@ -1092,7 +1104,7 @@ static int cs_find_common(char *opt, char *pat, int forceit, int verbose, int us
         &contexts, &matched);
     free(nummatches);
     if (matches == NULL)
-      return FALSE;
+      return false;
 
     (void)cs_manage_matches(matches, contexts, matched, Store);
 
@@ -1321,7 +1333,7 @@ cs_kill_execute (
     (void)smsg_attr(hl_attr(HLF_R) | MSG_HIST,
         (char_u *)_("cscope connection %s closed"), cname);
   }
-  cs_release_csp(i, TRUE);
+  cs_release_csp(i, true);
 }
 
 
@@ -1804,11 +1816,12 @@ static int cs_read_prompt(int i)
         ch = getc(csinfo[i].fr_fp);
       if (ch == EOF) {
         PERROR("cs_read_prompt EOF");
-        if (buf != NULL && buf[0] != NUL)
+        if (buf != NULL && buf[0] != NUL) {
           (void)EMSG2(cs_emsg, buf);
-        else if (p_csverbose)
+        } else if (p_csverbose) {
           cs_reading_emsg(i);           /* don't have additional information */
-        cs_release_csp(i, TRUE);
+        }
+        cs_release_csp(i, true);
         free(buf);
         return CSCOPE_FAILURE;
       }
@@ -1846,7 +1859,7 @@ sig_handler SIGDEFARG(sigarg) {
  * Does the actual free'ing for the cs ptr with an optional flag of whether
  * or not to free the filename.  Called by cs_kill and cs_reset.
  */
-static void cs_release_csp(int i, int freefnpp)
+static void cs_release_csp(int i, bool freefnpp)
 {
   /*
    * Trying to exit normally (not sure whether it is fit to UNIX cscope
@@ -1982,8 +1995,9 @@ static int cs_reset(exarg_T *eap)
     dblist[i] = csinfo[i].fname;
     pplist[i] = csinfo[i].ppath;
     fllist[i] = csinfo[i].flags;
-    if (csinfo[i].fname != NULL)
-      cs_release_csp(i, FALSE);
+    if (csinfo[i].fname != NULL) {
+      cs_release_csp(i, false);
+    }
   }
 
   /* rebuild the cscope connection list */
@@ -2110,8 +2124,9 @@ void cs_end(void)
 {
   int i;
 
-  for (i = 0; i < csinfo_size; i++)
-    cs_release_csp(i, TRUE);
+  for (i = 0; i < csinfo_size; i++) {
+    cs_release_csp(i, true);
+  }
   free(csinfo);
   csinfo_size = 0;
 }
