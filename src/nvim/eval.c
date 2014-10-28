@@ -10593,9 +10593,9 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type != VAR_STRING) {
-    // First argument is the job id and second is the string to write to 
-    // the job's stdin
+  if (argvars[0].v_type != VAR_NUMBER || argvars[1].v_type == VAR_UNKNOWN) {
+    // First argument is the job id and second is the string or list to write
+    // to the job's stdin
     EMSG(_(e_invarg));
     return;
   }
@@ -10608,10 +10608,15 @@ static void f_jobsend(typval_T *argvars, typval_T *rettv)
     return;
   }
 
-  WBuffer *buf = wstream_new_buffer(xstrdup((char *)argvars[1].vval.v_string),
-                                    strlen((char *)argvars[1].vval.v_string),
-                                    1,
-                                    free);
+  ssize_t input_len;
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, true);
+  if (input_len < 0) {
+    return;  // Error handled by save_tv_as_string().
+  } else if (input_len == 0) {
+    return;  // Not an error, but nothing to do.
+  }
+
+  WBuffer *buf = wstream_new_buffer(input, input_len, 1, free);
   rettv->vval.v_number = job_write(job, buf);
 }
 
@@ -14469,7 +14474,7 @@ static void get_system_output_as_rettv(typval_T *argvars, typval_T *rettv,
 
   // get input to the shell command (if any), and its length
   ssize_t input_len;
-  char *input = (char *) save_tv_as_string(&argvars[1], &input_len);
+  char *input = (char *) save_tv_as_string(&argvars[1], &input_len, false);
   if (input_len == -1) {
     return;
   }
@@ -15158,9 +15163,10 @@ static bool write_list(FILE *fd, list_T *list, bool binary)
 ///
 /// @param[in]  tv   A value to store as a string.
 /// @param[out] len  The length of the resulting string or -1 on error.
+/// @param[in]  endnl If true, the output will end in a newline (if a list).
 /// @returns an allocated string if `tv` represents a VimL string, list, or
 ///          number; NULL otherwise.
-static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
+static char_u *save_tv_as_string(typval_T *tv, ssize_t *len, bool endnl)
   FUNC_ATTR_MALLOC FUNC_ATTR_NONNULL_ALL
 {
   if (tv->v_type == VAR_UNKNOWN) {
@@ -15192,13 +15198,13 @@ static char_u *save_tv_as_string(typval_T *tv, ssize_t *len)
     return NULL;
   }
 
-  char_u *ret = xmalloc(*len);
+  char_u *ret = xmalloc(*len + endnl);
   char_u *end = ret;
   for (listitem_T *li = list->lv_first; li != NULL; li = li->li_next) {
     for (char_u *s = get_tv_string(&li->li_tv); *s != NUL; s++) {
       *end++ = (*s == '\n') ? NUL : *s;
     }
-    if (li->li_next != NULL) {
+    if (endnl || li->li_next != NULL) {
       *end++ = '\n';
     }
   }

@@ -4014,7 +4014,14 @@ items({dict})						*items()*
 
 jobsend({job}, {data})					{Nvim} *jobsend()*
 		Send data to {job} by writing it to the stdin of the process.
+		Returns 1 if the write succeeded, 0 otherwise.
 		See |job-control| for more information.
+
+		{data} may be a string, string convertible, or a list.  If
+		{data} is a list, the items will be separated by newlines and
+		any newlines in an item will be sent as a NUL.  For example: >
+			:call jobsend(j, ["abc", "123\n456"])
+< 		will send "abc<NL>123<NUL>456<NL>".
 
 jobstart({name}, {prog}[, {argv}])			{Nvim} *jobstart()*
 		Spawns {prog} as a job and associate it with the {name} string,
