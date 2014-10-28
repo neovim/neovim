@@ -44,9 +44,31 @@ describe('jobs', function()
     eq({'notification', 'stdout', {{'abc'}}}, next_message())
     nvim('command', 'call jobsend(j, "123\\nxyz\\n")')
     eq({'notification', 'stdout', {{'123', 'xyz'}}}, next_message())
+    nvim('command', 'call jobsend(j, [123, "xyz"])')
+    eq({'notification', 'stdout', {{'123', 'xyz'}}}, next_message())
     nvim('command', notify_str('v:job_data[1])'))
     nvim('command', "call jobstop(j)")
     eq({'notification', 'exit', {}}, next_message())
+  end)
+
+  it('preserves NULs', function()
+    -- Make a file with NULs in it.
+    local filename = os.tmpname()
+    local file = io.open(filename, "w")
+    file:write("abc\0def\n")
+    file:close()
+
+    -- v:job_data preserves NULs.
+    nvim('command', notify_str('v:job_data[1]', 'v:job_data[2]'))
+    nvim('command', "let j = jobstart('xxx', 'cat', ['"..filename.."'])")
+    eq({'notification', 'stdout', {{'abc\ndef'}}}, next_message())
+    os.remove(filename)
+
+    -- jobsend() preserves NULs.
+    nvim('command', "let j = jobstart('xxx', 'cat', ['-'])")
+    nvim('command', [[call jobsend(j, ["123\n456"])]])
+    eq({'notification', 'stdout', {{'123\n456'}}}, next_message())
+    nvim('command', "call jobstop(j)")
   end)
 
   it('will hold data if it does not end in a newline', function()
@@ -57,7 +79,6 @@ describe('jobs', function()
     nvim('command', "call jobstop(j)")
     eq({'notification', 'stdout', {{'xyz'}}}, next_message())
   end)
-
 
   it('will not allow jobsend/stop on a non-existent job', function()
     eq(false, pcall(eval, "jobsend(-1, 'lol')"))
