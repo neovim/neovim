@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -237,18 +238,23 @@ static void convert_input(void)
 
   if (convert) {
     // Perform input conversion according to `input_conv`
-    size_t unconverted_length;
+    size_t unconverted_length = 0;
     data = (char *)string_convert_ext(&input_conv,
                                       (uint8_t *)data,
                                       (int *)&converted_length,
                                       (int *)&unconverted_length);
-    data_length = rbuffer_pending(read_buffer) - unconverted_length;
+    data_length -= unconverted_length;
   }
 
-  // Write processed data to input buffer
-  size_t consumed = rbuffer_write(input_buffer, data, data_length);
+  // The conversion code will be gone eventually, for now assume `input_buffer`
+  // always has space for the converted data(it's many times the size of
+  // `read_buffer`, so it's hard to imagine a scenario where the converted data
+  // doesn't fit)
+  assert(converted_length <= rbuffer_available(input_buffer));
+  // Write processed data to input buffer.
+  (void)rbuffer_write(input_buffer, data, converted_length);
   // Adjust raw buffer pointers
-  rbuffer_consumed(read_buffer, consumed);
+  rbuffer_consumed(read_buffer, data_length);
 
   if (convert) {
     // data points to memory allocated by `string_convert_ext`, free it.

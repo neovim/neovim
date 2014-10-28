@@ -396,6 +396,7 @@ static void close_cb(uv_handle_t *handle)
 
 static void rbuffer_relocate(RBuffer *rbuffer)
 {
+  assert(rbuffer->rpos <= rbuffer->wpos);
   // Move data ...
   memmove(
       rbuffer->data,  // ...to the beginning of the buffer(rpos 0)

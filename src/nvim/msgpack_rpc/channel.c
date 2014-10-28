@@ -338,6 +338,8 @@ static void parse_msgpack(RStream *rstream, void *data, bool eof)
 
   if (eof) {
     close_channel(channel);
+    call_set_error(channel, "Channel was closed by the client");
+    return;
   }
 
   size_t count = rstream_pending(rstream);
@@ -730,7 +732,7 @@ static WBuffer *serialize_response(uint64_t channel_id,
 }
 
 #if MIN_LOG_LEVEL <= DEBUG_LOG_LEVEL
-#define REQ "[response]     "
+#define REQ "[request]      "
 #define RES "[response]     "
 #define NOT "[notification] "
 
