@@ -2301,56 +2301,6 @@ GUI:
     currently.  This is very obvious on a 66Mhz 486.
 
 
-MSDOS/DJGPP:
-9   Pressing CTRL-C often crashes the console Vim runs in. (Ken Liao)
-    When 'bioskey' isn't set it doesn't happen.  Could be a problem with the
-    BIOS emulation of the console.  Version 5.6 already had this problem.
-8   DJGPP: "cd c:" can take us to a directory that no longer exists.
-    change_drive() doesn't check this.  How to check for this error?
-9   The 16 bit version runs out of memory very quickly.  Should find unused
-    code and reduce static data.  Resetting 'writebackup' helps to be able to
-    write a file.
-9   Crash when running on Windows 98 in a console window and pressing CTRL-C.
-    Happens now and then.  When debugging Vim in gdb this also happens.  Since
-    the console crashes, might be a bug in the DOS console.  Resetting
-    'bioskey' avoids it, but then CTRL-C doesn't work.
-9   DOS: Make CTRL-Fx and ALT-Fx work.
-    CTRL-F1 = CE-5E, CTRL-F2 = CE-5F, .., CTRL-F10 = CE-67
-    ALT-F1 = CE-68, ALT-F2 = CE-69, .., ALT-F10 = CE-71
-    Shifted cursor keys produce same codes as unshifted keys.  Use bioskey(2)
-    to get modifier mask for <S-C-M-Fx>.
-    Use K_SPECIAL/KS_MODIFIER codes to insert modifier mask in input stream?
-    Make this work like in Win32 console.
-    Mapping things like <M-A> doesn't work, because it generates an extended
-    key code.  Use a translation table?
-9   Can't read an opened swap file when the "share" command has not been used.
-    At least ignore the swap files that Vim has opened itself.
-8   Use DJGPP 2.03.
-8   The Dos32 version (DJGPP) can't use long file names on Windows NT.
-    Check if new package can be used (v2misc/ntlfn08[bs].zip).
-8   setlocale() is bogus.
-8   Vim busy waits for new characters or mouse clicks.	Should put in some
-    sort of sleep, to avoid eating 50% of the CPU time.  Test on an unpatched
-    Windows 95 system!
-8   DJGPP: when shell is bash, make fails. (Donahoe)
-7   Hitting CTRL-P twice quickly (e.g., in keyword completion) on a 8088
-    machine, starts printer echo! (John Mullin).
-7   MSDOS 16 bit version can't work with COMSPEC that has an argument, e.g.:
-    COMSPEC=C:\WINDOWS\COMMAND.COM /E:4096    (Bradley)
-    Caused by BCC system() function (Borland "make" has the same problem).
-8   Mouse: handle left&right button pressed as middle button pressed.  Add
-    modifier keys shift, ctrl and alt.
-7   When too many files are open (depends on FILES), strange things happen.
-    The Dos16 version runs out of memory, in the Dos32 version "!ls" causes a
-    crash.  Another symptom: .swp files are not deleted, existing files are
-    "[New file]".
-7   DJGPP version doesn't work with graphics display mode.  Switch to a mode
-    that is supported?
-8   DJGPP: ":mode" doesn't work for many modes.  Disable them.
-8   DJGPP: When starting in Ex mode, shouldn't clear the screen. (Walter
-    Briscoe)
-
-
 MSDOS, OS/2 and Win32:
 8   OS/2: Add backtick expansion.  Undefine NO_EXPANDPATH and use
     gen_expand_wildcards().
@@ -2405,8 +2355,6 @@ Win32 console:
 	and the file is not saved.
     Use FindFirstFile() to expand a file name and directory in the path to its
     long name.
-8   Also implement 'conskey' option for the Win32 console version?  Look at
-    how Xvi does console I/O under Windows NT.
 7   Re-install the use of $TERM and support the use of different terminals,
     besides the console.
 8   Use of <altgr> modifier doesn't work?  5.3 was OK. (Garcia-Suarez/Guckes)

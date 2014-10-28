@@ -1109,12 +1109,6 @@ endif
 
 if has("msdos") || has("os2") || has("win16") || has("win32") || has("osfiletype")
   call <SID>Header("system specific")
-  if has("msdos")
-    call append("$", "bioskey\tcall the BIOS to get a keyoard character")
-    call <SID>BinOptionG("biosk", &biosk)
-    call append("$", "conskey\tuse direct console I/O to get a keyboard character")
-    call <SID>BinOptionG("consk", &consk)
-  endif
   if has("osfiletype")
     call append("$", "osfiletype\tOS-specific information about the type of file")
     call append("$", "\t(local to buffer)")
