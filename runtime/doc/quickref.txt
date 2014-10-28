@@ -621,7 +621,6 @@ Short explanation of each option:		*option-list*
 'ballooneval'	  'beval'   switch on balloon evaluation
 'balloonexpr'	  'bexpr'   expression to show in balloon
 'binary'	  'bin'     read/write/edit file in binary mode
-'bioskey'	  'biosk'   MS-DOS: use bios calls for input characters
 'bomb'			    prepend a Byte Order Mark to the file
 'breakat'	  'brk'     characters that may cause a line break
 'breakindent'	  'bri'     wrapped line repeats indent 
@@ -652,7 +651,6 @@ Short explanation of each option:		*option-list*
 'concealcursor'	  'cocu'    whether concealable text is hidden in cursor line
 'conceallevel'	  'cole'    whether concealable text is shown or hidden
 'confirm'	  'cf'	    ask what to do about unsaved/read-only files
-'conskey'	  'consk'   get keys directly from console (MS-DOS only)
 'copyindent'	  'ci'	    make 'autoindent' use existing indent structure
 'cpoptions'	  'cpo'     flags for Vi-compatible behavior
 'cryptmethod'	  'cm'	    type of encryption to use for file writing
