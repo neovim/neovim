@@ -36,21 +36,25 @@ else
   finish
 endif
 
+" Make sure we pick correct python version on path.
+let s:python_interpreter_path = exepath(s:python_interpreter)
+let s:python_version = systemlist(s:python_interpreter_path . ' --version')[0]
+
 " Execute python, import neovim and print a string. If import_result matches
 " the printed string, we can probably start the host
-let s:import_result = system(s:python_interpreter .
+let s:import_result = system(s:python_interpreter_path .
       \ ' -c "import neovim, sys; sys.stdout.write(\"ok\")"')
 if s:import_result != 'ok'
-  call s:ShowError('No neovim module found')
+  call s:ShowError('No neovim module found for ' . s:python_version)
   finish
 endif
 
-let s:pyhost_id = rpcstart(s:python_interpreter,
+let s:pyhost_id = rpcstart(s:python_interpreter_path,
       \ ['-c', 'import neovim; neovim.start_host()'])
 " Evaluate an expression in the script host as an additional sanity check, and
 " to block until all providers have been registered(or else some plugins loaded
 " by the user's vimrc would not get has('python') == 1
 if rpcrequest(s:pyhost_id, 'python_eval', '"o"+"k"') != 'ok' || !has('python')
-  call s:ShowError('Something went wrong')
+  call s:ShowError('Something went wrong setting up ' . s:python_version)
   call rpcstop(s:pyhost_id)
 endif
