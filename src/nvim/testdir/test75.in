@@ -23,16 +23,16 @@ STARTTEST
 Go:"
 :" Outside of the range, minimum
 :inoremap <Char-0x1040> a
-:call feedkeys("a\u1040\<Esc>")
+:execute "normal a\u1040\<Esc>"
 :" Inside of the range, minimum
 :inoremap <Char-0x103f> b
-:call feedkeys("a\u103f\<Esc>")
+:execute "normal a\u103f\<Esc>"
 :" Inside of the range, maximum
 :inoremap <Char-0xf03f> c
-:call feedkeys("a\uf03f\<Esc>")
+:execute "normal a\uf03f\<Esc>"
 :" Outside of the range, maximum
 :inoremap <Char-0xf040> d
-:call feedkeys("a\uf040\<Esc>")
+:execute "normal a\uf040\<Esc>"
 :"
 :/^eof/+1,$w! test.out
 :qa!
