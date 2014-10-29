@@ -116,7 +116,6 @@ int os_inchar(uint8_t *buf, int maxlen, int ms, int tb_change_cnt)
     return 0;
   }
 
-  convert_input();
   // Safe to convert rbuffer_read to int, it will never overflow since
   // we use relatively small buffers.
   return (int)rbuffer_read(input_buffer, (char *)buf, (size_t)maxlen);
@@ -132,8 +131,8 @@ bool os_char_avail(void)
 // In cooked mode we should get SIGINT, no need to check.
 void os_breakcheck(void)
 {
-  if (curr_tmode == TMODE_RAW && input_poll(0))
-    convert_input();
+  if (curr_tmode == TMODE_RAW)
+    input_poll(0);
 }
 
 /// Test whether a file descriptor refers to a terminal.
@@ -220,6 +219,8 @@ static void read_cb(RStream *rstream, void *data, bool at_eof)
     }
   }
 
+  convert_input();
+  process_interrupts();
   started_reading = true;
 }
 
@@ -260,7 +261,10 @@ static void convert_input(void)
     // data points to memory allocated by `string_convert_ext`, free it.
     free(data);
   }
+}
 
+static void process_interrupts(void)
+{
   if (!ctrl_c_interrupts) {
     return;
   }
@@ -299,10 +303,10 @@ static int push_event_key(uint8_t *buf, int maxlen)
 // Check if there's pending input
 static bool input_ready(void)
 {
-  return typebuf_was_filled ||                   // API call filled typeahead
-         event_has_deferred() ||                 // Events must be processed
+  return typebuf_was_filled ||                    // API call filled typeahead
+         event_has_deferred() ||                  // Events must be processed
          (!embedded_mode && (
-            rstream_pending(read_stream) > 0 ||  // Stdin input
-            eof));                               // Stdin closed
+            rbuffer_pending(input_buffer) > 0 ||  // Stdin input
+            eof));                                // Stdin closed
 }
 
