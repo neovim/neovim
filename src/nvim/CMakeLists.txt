@@ -178,3 +178,4 @@ if(NOT DEFINED ENV{SKIP_UNITTEST})
 endif()
 
 add_subdirectory(po)
+add_subdirectory(testdir)

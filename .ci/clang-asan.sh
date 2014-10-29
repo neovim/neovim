@@ -23,7 +23,9 @@ export SKIP_UNITTEST=1
 export UBSAN_OPTIONS="log_path=$tmpdir/ubsan" # not sure if this works
 
 install_dir="$(pwd)/dist"
-$MAKE_CMD cmake CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON"
+mkdir build
+cd build
+cmake -DTRAVIS_CI_BUILD=ON -DCMAKE_INSTALL_PREFIX=$install_dir -DUSE_GCOV=ON ..
 if ! $MAKE_CMD test; then
 	asan_check "$tmpdir"
 	exit 1
