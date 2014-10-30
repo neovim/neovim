@@ -24,6 +24,7 @@
 #include "nvim/misc2.h"
 #include "nvim/term.h"
 #include "nvim/getchar.h"
+#include "nvim/os/input.h"
 
 #define LINE_BUFFER_SIZE 4096
 
@@ -51,6 +52,7 @@ void vim_command(String str, Error *err)
 /// @param mode specifies the mapping options
 /// @see feedkeys()
 void vim_feedkeys(String keys, String mode)
+  FUNC_ATTR_DEFERRED
 {
   bool remap = true;
   bool typed = false;
@@ -76,6 +78,18 @@ void vim_feedkeys(String keys, String mode)
 
   if (vgetc_busy)
     typebuf_was_filled = true;
+}
+
+/// Pass input keys to Neovim. Unlike `vim_feedkeys`, this will use a
+/// lower-level input buffer and the call is not deferred.
+/// This is the most reliable way to emulate real user input.
+///
+/// @param keys to be typed
+/// @return The number bytes actually written, which can be lower than
+///         requested if the buffer becomes full.
+Integer vim_input(String keys)
+{
+  return (Integer)input_enqueue(keys);
 }
 
 /// Replace any terminal codes with the internal representation

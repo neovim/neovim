@@ -165,6 +165,13 @@ void input_buffer_restore(String str)
   free(str.data);
 }
 
+size_t input_enqueue(String keys)
+{
+  size_t rv = rbuffer_write(input_buffer, keys.data, keys.size);
+  process_interrupts();
+  return rv;
+}
+
 static bool input_poll(int ms)
 {
   event_poll_until(ms, input_ready());
