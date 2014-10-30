@@ -20,8 +20,8 @@
 #include "nvim/getchar.h"
 #include "nvim/term.h"
 
-#define READ_BUFFER_SIZE 0xffff
-#define INPUT_BUFFER_SIZE 4096
+#define READ_BUFFER_SIZE 0xfff
+#define INPUT_BUFFER_SIZE (READ_BUFFER_SIZE * 4)
 
 typedef enum {
   kInputNone,
