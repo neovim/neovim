@@ -25,6 +25,7 @@
 #include "nvim/charset.h"
 #include "nvim/strings.h"
 
+#define DYNAMIC_BUFFER_INIT {NULL, 0, 0}
 #define BUFFER_LENGTH 1024
 
 typedef struct {
@@ -39,9 +40,8 @@ typedef struct {
 
 typedef struct {
   char *data;
-  size_t cap;
-  size_t len;
-} dyn_buffer_t;
+  size_t cap, len;
+} DynamicBuffer;
 
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/shell.c.generated.h"
@@ -271,8 +271,7 @@ int os_system(const char *cmd,
               size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
   // the output buffer
-  dyn_buffer_t buf;
-  memset(&buf, 0, sizeof(buf));
+  DynamicBuffer buf = DYNAMIC_BUFFER_INIT;
 
   char **argv = shell_build_argv((char_u *) cmd, NULL);
 
@@ -328,10 +327,10 @@ int os_system(const char *cmd,
   return status;
 }
 
-/// dyn_buf_ensure - ensures at least `desired` bytes in buffer
+///  - ensures at least `desired` bytes in buffer
 ///
 /// TODO(aktau): fold with kvec/garray
-static void dyn_buf_ensure(dyn_buffer_t *buf, size_t desired)
+static void dynamic_buffer_ensure(DynamicBuffer *buf, size_t desired)
 {
   if (buf->cap >= desired) {
     return;
@@ -345,11 +344,11 @@ static void dyn_buf_ensure(dyn_buffer_t *buf, size_t desired)
 static void system_data_cb(RStream *rstream, void *data, bool eof)
 {
   Job *job = data;
-  dyn_buffer_t *buf = job_data(job);
+  DynamicBuffer *buf = job_data(job);
 
   size_t nread = rstream_pending(rstream);
 
-  dyn_buf_ensure(buf, buf->len + nread + 1);
+  dynamic_buffer_ensure(buf, buf->len + nread + 1);
   rstream_read(rstream, buf->data + buf->len, nread);
 
   buf->len += nread;
