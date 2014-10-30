@@ -15,7 +15,6 @@
 #include "nvim/os/shell.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
-#include "nvim/term.h"
 
 #define EXIT_TIMEOUT 25
 #define MAX_RUNNING_JOBS 100
@@ -277,10 +276,6 @@ void job_stop(Job *job)
 ///         is possible on some OS.
 int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
 {
-  // switch to cooked so `got_int` will be set if the user interrupts
-  int old_mode = cur_tmode;
-  settmode(TMODE_COOK);
-
   // Increase refcount to stop the job from being freed before we have a
   // chance to get the status.
   job->refcount++;
@@ -295,8 +290,6 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
     job_stop(job);
     event_poll(0);
   }
-
-  settmode(old_mode);
 
   if (!--job->refcount) {
     int status = (int) job->status;
