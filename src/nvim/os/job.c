@@ -215,6 +215,10 @@ Job *job_start(char **argv,
 
   // Spawn the job
   if (uv_spawn(uv_default_loop(), &job->proc, &job->proc_opts) != 0) {
+    uv_close((uv_handle_t *)&job->proc_stdin, NULL);
+    uv_close((uv_handle_t *)&job->proc_stdout, NULL);
+    uv_close((uv_handle_t *)&job->proc_stderr, NULL);
+    event_poll(0);
     *status = -1;
     return NULL;
   }
