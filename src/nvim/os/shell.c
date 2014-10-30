@@ -258,8 +258,8 @@ int os_call_shell(char_u *cmd, ShellOpts opts, char_u *extra_shell_arg)
 /// @param len The length of the input buffer (not used if `input` == NULL)
 /// @param[out] output A pointer to to a location where the output will be
 ///                    allocated and stored. Will point to NULL if the shell
-///                    command did not output anything. NOTE: it's not
-///                    allowed to pass NULL yet
+///                    command did not output anything. If NULL is passed,
+///                    the shell output will be ignored.
 /// @param[out] nread the number of bytes in the returned buffer (if the
 ///             returned buffer is not NULL)
 /// @return the return code of the process, -1 if the process couldn't be
@@ -268,7 +268,7 @@ int os_system(const char *cmd,
               const char *input,
               size_t len,
               char **output,
-              size_t *nread) FUNC_ATTR_NONNULL_ARG(1, 4)
+              size_t *nread) FUNC_ATTR_NONNULL_ARG(1)
 {
   // the output buffer
   dyn_buffer_t buf;
@@ -279,8 +279,9 @@ int os_system(const char *cmd,
   int i;
   Job *job = job_start(argv,
                        &buf,
-                       system_data_cb,
-                       system_data_cb,
+                       input != NULL,
+                       output ? system_data_cb : NULL,
+                       output ? system_data_cb : NULL,
                        NULL,
                        0,
                        &i);
@@ -300,25 +301,28 @@ int os_system(const char *cmd,
       job_stop(job);
       return -1;
     }
+    // close the input stream, let the process know that no more input is
+    // coming
+    job_close_in(job);
   }
 
-  // close the input stream, let the process know that no more input is coming
-  job_close_in(job);
   int status = job_wait(job, -1);
 
   // prepare the out parameters if requested
-  if (buf.len == 0) {
-    // no data received from the process, return NULL
-    *output = NULL;
-    free(buf.data);
-  } else {
-    // NUL-terminate to make the output directly usable as a C string
-    buf.data[buf.len] = NUL;
-    *output = buf.data;
-  }
+  if (output) {
+    if (buf.len == 0) {
+      // no data received from the process, return NULL
+      *output = NULL;
+      free(buf.data);
+    } else {
+      // NUL-terminate to make the output directly usable as a C string
+      buf.data[buf.len] = NUL;
+      *output = buf.data;
+    }
 
-  if (nread) {
-    *nread = buf.len;
+    if (nread) {
+      *nread = buf.len;
+    }
   }
 
   return status;

@@ -136,10 +136,12 @@ void job_teardown(void)
 /// @param argv Argument vector for the process. The first item is the
 ///        executable to run.
 /// @param data Caller data that will be associated with the job
+/// @param writable If true the job stdin will be available for writing with
+///                 job_write, otherwise it will be redirected to /dev/null
 /// @param stdout_cb Callback that will be invoked when data is available
-///        on stdout
+///        on stdout. If NULL stdout will be redirected to /dev/null.
 /// @param stderr_cb Callback that will be invoked when data is available
-///        on stderr
+///        on stderr. If NULL stderr will be redirected to /dev/null.
 /// @param job_exit_cb Callback that will be invoked when the job exits
 /// @param maxmem Maximum amount of memory used by the job WStream
 /// @param[out] status The job id if the job started successfully, 0 if the job
@@ -147,6 +149,7 @@ void job_teardown(void)
 /// @return The job pointer if the job started successfully, NULL otherwise
 Job *job_start(char **argv,
                void *data,
+               bool writable,
                rstream_cb stdout_cb,
                rstream_cb stderr_cb,
                job_exit_cb job_exit_cb,
@@ -174,7 +177,7 @@ Job *job_start(char **argv,
   job->id = i + 1;
   *status = job->id;
   job->status = -1;
-  job->refcount = 4;
+  job->refcount = 1;
   job->data = data;
   job->stdout_cb = stdout_cb;
   job->stderr_cb = stderr_cb;
@@ -193,45 +196,76 @@ Job *job_start(char **argv,
   job->proc_stdin.data = NULL;
   job->proc_stdout.data = NULL;
   job->proc_stderr.data = NULL;
+  job->in = NULL;
+  job->out = NULL;
+  job->err = NULL;
 
   // Initialize the job std{in,out,err}
-  uv_pipe_init(uv_default_loop(), &job->proc_stdin, 0);
-  job->stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
-  job->stdio[0].data.stream = (uv_stream_t *)&job->proc_stdin;
+  job->stdio[0].flags = UV_IGNORE;
+  job->stdio[1].flags = UV_IGNORE;
+  job->stdio[2].flags = UV_IGNORE;
 
-  uv_pipe_init(uv_default_loop(), &job->proc_stdout, 0);
-  job->stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-  job->stdio[1].data.stream = (uv_stream_t *)&job->proc_stdout;
+  if (writable) {
+    uv_pipe_init(uv_default_loop(), &job->proc_stdin, 0);
+    job->stdio[0].flags = UV_CREATE_PIPE | UV_READABLE_PIPE;
+    job->stdio[0].data.stream = (uv_stream_t *)&job->proc_stdin;
+    handle_set_job((uv_handle_t *)&job->proc_stdin, job);
+    job->refcount++;
+  }
 
-  uv_pipe_init(uv_default_loop(), &job->proc_stderr, 0);
-  job->stdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
-  job->stdio[2].data.stream = (uv_stream_t *)&job->proc_stderr;
+  if (stdout_cb) {
+    uv_pipe_init(uv_default_loop(), &job->proc_stdout, 0);
+    job->stdio[1].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+    job->stdio[1].data.stream = (uv_stream_t *)&job->proc_stdout;
+    handle_set_job((uv_handle_t *)&job->proc_stdout, job);
+    job->refcount++;
+  }
 
-  // Give all handles a reference to the job
+  if (stderr_cb) {
+    uv_pipe_init(uv_default_loop(), &job->proc_stderr, 0);
+    job->stdio[2].flags = UV_CREATE_PIPE | UV_WRITABLE_PIPE;
+    job->stdio[2].data.stream = (uv_stream_t *)&job->proc_stderr;
+    handle_set_job((uv_handle_t *)&job->proc_stderr, job);
+    job->refcount++;
+  }
+
   handle_set_job((uv_handle_t *)&job->proc, job);
-  handle_set_job((uv_handle_t *)&job->proc_stdin, job);
-  handle_set_job((uv_handle_t *)&job->proc_stdout, job);
-  handle_set_job((uv_handle_t *)&job->proc_stderr, job);
 
   // Spawn the job
   if (uv_spawn(uv_default_loop(), &job->proc, &job->proc_opts) != 0) {
-    uv_close((uv_handle_t *)&job->proc_stdin, NULL);
-    uv_close((uv_handle_t *)&job->proc_stdout, NULL);
-    uv_close((uv_handle_t *)&job->proc_stderr, NULL);
+    if (writable) {
+      uv_close((uv_handle_t *)&job->proc_stdin, close_cb);
+    }
+    if (stdout_cb) {
+      uv_close((uv_handle_t *)&job->proc_stdout, close_cb);
+    }
+    if (stderr_cb) {
+      uv_close((uv_handle_t *)&job->proc_stderr, close_cb);
+    }
+    uv_close((uv_handle_t *)&job->proc, close_cb);
     event_poll(0);
+    // Manually invoke the close_cb to free the job resources
     *status = -1;
     return NULL;
   }
 
-  job->in = wstream_new(maxmem);
-  wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
+  if (writable) {
+    job->in = wstream_new(maxmem);
+    wstream_set_stream(job->in, (uv_stream_t *)&job->proc_stdin);
+  }
+
   // Start the readable streams
-  job->out = rstream_new(read_cb, rbuffer_new(JOB_BUFFER_SIZE), job);
-  job->err = rstream_new(read_cb, rbuffer_new(JOB_BUFFER_SIZE), job);
-  rstream_set_stream(job->out, (uv_stream_t *)&job->proc_stdout);
-  rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
-  rstream_start(job->out);
-  rstream_start(job->err);
+  if (stdout_cb) {
+    job->out = rstream_new(read_cb, rbuffer_new(JOB_BUFFER_SIZE), job);
+    rstream_set_stream(job->out, (uv_stream_t *)&job->proc_stdout);
+    rstream_start(job->out);
+  }
+
+  if (stderr_cb) {
+    job->err = rstream_new(read_cb, rbuffer_new(JOB_BUFFER_SIZE), job);
+    rstream_set_stream(job->err, (uv_stream_t *)&job->proc_stderr);
+    rstream_start(job->err);
+  }
   // Save the job to the table
   table[i] = job;
 

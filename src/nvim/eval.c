@@ -10675,6 +10675,7 @@ static void f_jobstart(typval_T *argvars, typval_T *rettv)
 
   job_start(argv,
             xstrdup((char *)argvars[0].vval.v_string),
+            true,
             on_job_stdout,
             on_job_stderr,
             on_job_exit,
