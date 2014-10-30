@@ -3520,8 +3520,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
   size_t tolen;
   size_t len = 0;
   size_t done = 0;
-  char_u      *result = NULL;
-  char_u      *p;
+  char_u *result = NULL;
   int l;
 
   from = (char *)str;
@@ -3531,11 +3530,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       /* Allocate enough room for most conversions.  When re-allocating
        * increase the buffer size. */
       len = len + fromlen * 2 + 40;
-      p = xmalloc(len);
-      if (done > 0)
-        memmove(p, result, done);
-      free(result);
-      result = p;
+      result = xrealloc(result, len);
     }
 
     to = (char *)result + done;
