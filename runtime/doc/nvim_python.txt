@@ -31,7 +31,7 @@ simple step-by-step:
   loaded:
 >
   if has('nvim')
-    runtime! plugin/python_setup.vim
+    runtime! python_setup.vim
   endif
 <
 Most python plugins created for Vim 7.3 should work after these steps.
