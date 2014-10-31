@@ -20,6 +20,8 @@
 - Make it clear in the issue tracker what you are working on.
 - Be descriptive in your PR message: what is it for, why is it needed, etc.
 - Don't make cosmetic changes to unrelated files in the same PR.
+- If you're a first-time contributor, please sign the
+  [Neovim Contributor License Agreement (CLA)][cla] before submitting your PR.
 
 #### Tagging in the issue tracker
 
@@ -89,6 +91,7 @@ The purpose of these guidelines is to *make reviews easier* and make the VCS log
 - Use the imperative voice: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
 
+[cla]: https://docs.google.com/forms/d/1u54bpbwzneDIRltFx1TGi2evKxY3w0cOV3vlpj8DPbg/viewform
 [clint]: clint.py
 [entry]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [imperative]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
