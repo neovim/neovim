@@ -45,9 +45,17 @@ When submitting pull requests, include one of the following tokens in the title:
 
 #### Testing
 
-- We are unlikely to merge your PR if the Travis build fails.
+- Please run all tests before submitting a pull request:
+
+    ```shell
+    $ make test
+    $ make unittest
+    $ make oldtest  # legacy vim tests
+    ```
+  We are unlikely to merge your PR if the Travis build fails.
 - The Travis build does not currently run the tests under valgrind, but you
-  are encouraged to do so locally.
+  are encouraged to do so locally. The most up-to-date instructions for doing so
+  may be found at [`.ci/gcc.sh`][ci-gcc].
 
 #### Coding style
 
@@ -88,7 +96,7 @@ The purpose of these guidelines is to *make reviews easier* and make the VCS log
     - Granularity helps, but it's conceptual size that matters, not extent size.
 - Use the imperative voice: "Fix bug" rather than "Fixed bug" or "Fixes bug."
 
-
+[ci-gcc]: .ci/gcc.sh
 [clint]: clint.py
 [entry]: https://github.com/neovim/neovim/issues?labels=entry-level&state=open
 [imperative]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
