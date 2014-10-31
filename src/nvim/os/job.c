@@ -327,6 +327,9 @@ void job_stop(Job *job)
 ///         is possible on some OS.
 int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
 {
+  // The default status is -1, which represents a timeout
+  int status = -1;
+
   // Increase refcount to stop the job from being freed before we have a
   // chance to get the status.
   job->refcount++;
@@ -342,15 +345,16 @@ int job_wait(Job *job, int ms) FUNC_ATTR_NONNULL_ALL
     event_poll(0);
   }
 
-  if (!--job->refcount) {
-    int status = (int) job->status;
-    // Manually invoke close_cb to free the job resources
+  if (job->refcount == 1) {
+    // Job exited, collect status and manually invoke close_cb to free the job
+    // resources
+    status = job->status;
     close_cb((uv_handle_t *)&job->proc);
-    return status;
+  } else {
+    job->refcount--;
   }
 
-  // return -1 for a timeout
-  return  -1;
+  return status;
 }
 
 /// Close the pipe used to write to the job.
