@@ -13,10 +13,14 @@
 #include "nvim/os/event.h"
 #include "nvim/os/event_defs.h"
 #include "nvim/os/shell.h"
+#include "nvim/os/time.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
 
-#define EXIT_TIMEOUT 25
+// {SIGNAL}_TIMEOUT is the time (in nanoseconds) that a job has to cleanly exit
+// before we send SIGNAL to it
+#define TERM_TIMEOUT 1000000000
+#define KILL_TIMEOUT (TERM_TIMEOUT * 2)
 #define MAX_RUNNING_JOBS 100
 #define JOB_BUFFER_SIZE 0xFFFF
 
@@ -39,14 +43,14 @@ struct job {
   // Job id the index in the job table plus one.
   int id;
   // Exit status code of the job process
-  int64_t status;
-  // Number of polls after a SIGTERM that will trigger a SIGKILL
-  int exit_timeout;
+  int status;
   // Number of references to the job. The job resources will only be freed by
   // close_cb when this is 0
   int refcount;
-  // If the job was already stopped
-  bool stopped;
+  // Time when job_stop was called for the job.
+  uint64_t stopped_time;
+  // If SIGTERM was already sent to the job(only send one before SIGKILL)
+  bool term_sent;
   // Data associated with the job
   void *data;
   // Callbacks
@@ -64,8 +68,8 @@ struct job {
 };
 
 static Job *table[MAX_RUNNING_JOBS] = {NULL};
-static uint32_t job_count = 0;
-static uv_prepare_t job_prepare;
+size_t stop_requests = 0;
+static uv_timer_t job_stop_timer;
 
 // Some helpers shared in this module
 
@@ -78,7 +82,7 @@ static uv_prepare_t job_prepare;
 void job_init(void)
 {
   uv_disable_stdio_inheritance();
-  uv_prepare_init(uv_default_loop(), &job_prepare);
+  uv_timer_init(uv_default_loop(), &job_stop_timer);
 }
 
 /// Releases job control resources and terminates running jobs
@@ -182,8 +186,8 @@ Job *job_start(char **argv,
   job->stdout_cb = stdout_cb;
   job->stderr_cb = stderr_cb;
   job->exit_cb = job_exit_cb;
-  job->stopped = false;
-  job->exit_timeout = EXIT_TIMEOUT;
+  job->stopped_time = 0;
+  job->term_sent = false;
   job->proc_opts.file = argv[0];
   job->proc_opts.args = argv;
   job->proc_opts.stdio = job->stdio;
@@ -269,12 +273,6 @@ Job *job_start(char **argv,
   // Save the job to the table
   table[i] = job;
 
-  // Start polling job status if this is the first
-  if (job_count == 0) {
-    uv_prepare_start(&job_prepare, job_prepare_cb);
-  }
-  job_count++;
-
   return job;
 }
 
@@ -287,7 +285,7 @@ Job *job_find(int id)
   Job *job;
 
   if (id <= 0 || id > MAX_RUNNING_JOBS || !(job = table[id - 1])
-      || job->stopped) {
+      || job->stopped_time) {
     return NULL;
   }
 
@@ -300,7 +298,22 @@ Job *job_find(int id)
 /// @param job The Job instance
 void job_stop(Job *job)
 {
-  job->stopped = true;
+  if (job->stopped_time) {
+    return;
+  }
+
+  job->stopped_time = os_hrtime();
+  // Close the standard streams of the job
+  close_job_in(job);
+  close_job_out(job);
+  close_job_err(job);
+
+  if (!stop_requests++) {
+    // When there's at least one stop request pending, start a timer that
+    // will periodically check if a signal should be send to a to the job
+    DLOG("Starting job kill timer");
+    uv_timer_start(&job_stop_timer, job_stop_timer_cb, 100, 100);
+  }
 }
 
 /// job_wait - synchronously wait for a job to finish
@@ -410,10 +423,10 @@ static void job_exit_callback(Job *job)
     job->exit_cb(job, job->data);
   }
 
-  // Stop polling job status if this was the last
-  job_count--;
-  if (job_count == 0) {
-    uv_prepare_stop(&job_prepare);
+  if (!--stop_requests) {
+    // Stop the timer if no more stop requests are pending
+    DLOG("Stopping job kill timer");
+    uv_timer_stop(&job_stop_timer);
   }
 }
 
@@ -424,21 +437,24 @@ static bool is_alive(Job *job)
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
 /// that didn't die from SIGTERM after a while(exit_timeout is 0).
-static void job_prepare_cb(uv_prepare_t *handle)
+static void job_stop_timer_cb(uv_timer_t *handle)
 {
   Job *job;
-  int i;
+  uint64_t now = os_hrtime();
 
-  for (i = 0; i < MAX_RUNNING_JOBS; i++) {
-    if ((job = table[i]) == NULL || !job->stopped) {
+  for (size_t i = 0; i < MAX_RUNNING_JOBS; i++) {
+    if ((job = table[i]) == NULL || !job->stopped_time) {
       continue;
     }
 
-    if ((job->exit_timeout--) == EXIT_TIMEOUT) {
-      // Job was just stopped, close all stdio handles and send SIGTERM
+    uint64_t elapsed = now - job->stopped_time;
+
+    if (!job->term_sent && elapsed >= TERM_TIMEOUT) {
+      ILOG("Sending SIGTERM to job(id: %d)", job->id);
       uv_process_kill(&job->proc, SIGTERM);
-    } else if (job->exit_timeout == 0) {
-      // We've waited long enough, send SIGKILL
+      job->term_sent = true;
+    } else if (elapsed >= KILL_TIMEOUT) {
+      ILOG("Sending SIGKILL to job(id: %d)", job->id);
       uv_process_kill(&job->proc, SIGKILL);
     }
   }
@@ -467,7 +483,7 @@ static void exit_cb(uv_process_t *proc, int64_t status, int term_signal)
 {
   Job *job = handle_get_job((uv_handle_t *)proc);
 
-  job->status = status;
+  job->status = (int)status;
   uv_close((uv_handle_t *)&job->proc, close_cb);
 }
 
