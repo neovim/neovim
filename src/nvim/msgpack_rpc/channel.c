@@ -433,7 +433,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
     handler.defer = false;
   }
 
-  Array args;
+  Array args = ARRAY_DICT_INIT;
   msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
 
   if (kv_size(channel->call_stack) || !handler.defer) {
