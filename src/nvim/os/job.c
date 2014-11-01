@@ -88,51 +88,18 @@ void job_init(void)
 /// Releases job control resources and terminates running jobs
 void job_teardown(void)
 {
-  // 20 tries will give processes about 1 sec to exit cleanly
-  uint32_t remaining_tries = 20;
-  bool all_dead = true;
-  int i;
-  Job *job;
-
-  // Politely ask each job to terminate
-  for (i = 0; i < MAX_RUNNING_JOBS; i++) {
+  // Stop all jobs
+  for (int i = 0; i < MAX_RUNNING_JOBS; i++) {
+    Job *job;
     if ((job = table[i]) != NULL) {
-      all_dead = false;
-      uv_process_kill(&job->proc, SIGTERM);
+      job_stop(job);
     }
   }
 
-  if (all_dead) {
-    return;
-  }
-
-  os_delay(10, 0);
-  // Right now any exited process are zombies waiting for us to acknowledge
-  // their status with `wait` or handling SIGCHLD. libuv does that
-  // automatically (and then calls `exit_cb`) but we have to give it a chance
-  // by running the loop one more time
-  event_poll(0);
-
-  // Prepare to start shooting
-  for (i = 0; i < MAX_RUNNING_JOBS; i++) {
-    job = table[i];
-
-    // Still alive
-    while (job && is_alive(job) && remaining_tries--) {
-      os_delay(50, 0);
-      // Acknowledge child exits
-      event_poll(0);
-      // It's possible that the event_poll call removed the job from the table,
-      // reset 'job' so the next iteration won't run in that case.
-      job = table[i];
-    }
-
-    if (job && is_alive(job)) {
-      uv_process_kill(&job->proc, SIGKILL);
-    }
-  }
-  // Last run to ensure all children were removed
-  event_poll(0);
+  // Wait until all jobs are closed
+  event_poll_until(-1, !stop_requests);
+  // Close the timer
+  uv_close((uv_handle_t *)&job_stop_timer, NULL);
 }
 
 /// Tries to start a new job.
@@ -427,16 +394,11 @@ static void job_exit_callback(Job *job)
     job->exit_cb(job, job->data);
   }
 
-  if (!--stop_requests) {
+  if (stop_requests && !--stop_requests) {
     // Stop the timer if no more stop requests are pending
     DLOG("Stopping job kill timer");
     uv_timer_stop(&job_stop_timer);
   }
-}
-
-static bool is_alive(Job *job)
-{
-  return uv_process_kill(&job->proc, 0) == 0;
 }
 
 /// Iterates the table, sending SIGTERM to stopped jobs and SIGKILL to those
