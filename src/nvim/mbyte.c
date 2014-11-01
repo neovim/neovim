@@ -88,6 +88,7 @@
 #ifdef HAVE_LOCALE_H
 # include <locale.h>
 #endif
+#include "nvim/iconv.h"
 #include "nvim/mbyte.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
