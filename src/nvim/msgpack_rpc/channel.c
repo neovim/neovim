@@ -119,6 +119,7 @@ uint64_t channel_from_job(char **argv)
   int status;
   channel->data.job = job_start(argv,
                                 channel,
+                                true,
                                 job_out,
                                 job_err,
                                 job_exit,

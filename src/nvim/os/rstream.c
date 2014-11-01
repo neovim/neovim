@@ -309,6 +309,11 @@ size_t rstream_read(RStream *rstream, char *buffer, size_t count)
   return rbuffer_read(rstream->buffer, buffer, count);
 }
 
+RBuffer *rstream_buffer(RStream *rstream)
+{
+  return rstream->buffer;
+}
+
 // Callbacks used by libuv
 
 // Called by libuv to allocate memory for reading.
