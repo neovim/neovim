@@ -11,6 +11,8 @@
 #include "nvim/pos.h"
 // for the number window-local and buffer-local options
 #include "nvim/option_defs.h"
+// for optional iconv support
+#include "nvim/iconv.h"
 // for jump list and tag stack sizes in a buffer and mark types
 #include "nvim/mark_defs.h"
 // for u_header_T
@@ -280,15 +282,6 @@ typedef struct argentry {
 #define GARGCOUNT       (global_alist.al_ga.ga_len)
 #define ARGCOUNT        (ALIST(curwin)->al_ga.ga_len)
 #define WARGCOUNT(wp)   (ALIST(wp)->al_ga.ga_len)
-
-#ifdef USE_ICONV
-# ifdef HAVE_ICONV_H
-#  include <iconv.h>
-# else
-#    include <errno.h>
-typedef void *iconv_t;
-# endif
-#endif
 
 /*
  * Used for the typeahead buffer: typebuf.

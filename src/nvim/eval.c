@@ -42,6 +42,7 @@
 #include "nvim/fold.h"
 #include "nvim/getchar.h"
 #include "nvim/hashtab.h"
+#include "nvim/iconv.h"
 #include "nvim/if_cscope.h"
 #include "nvim/indent_c.h"
 #include "nvim/indent.h"

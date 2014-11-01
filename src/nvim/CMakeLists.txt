@@ -156,6 +156,10 @@ else()
   endif()
 endif()
 
+if (APPLE)
+  list(APPEND NVIM_LINK_LIBRARIES iconv)
+endif()
+
 # Put these last on the link line, since multiple things may depend on them.
 list(APPEND NVIM_LINK_LIBRARIES
     ${LIBUV_LIBRARIES}
