@@ -14,6 +14,7 @@
 #include "nvim/os/provider.h"
 #include "nvim/os/signal.h"
 #include "nvim/os/rstream.h"
+#include "nvim/os/wstream.h"
 #include "nvim/os/job.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
@@ -43,6 +44,7 @@ void event_init(void)
   msgpack_rpc_helpers_init();
   // Initialize the event queues
   pending_events = kl_init(Event);
+  wstream_init();
   // Initialize input events
   input_init();
   // Timer to wake the event loop if a timeout argument is passed to
