@@ -121,7 +121,7 @@ functions can be called interactively:
 
 Nvim is still alpha and there's no in-depth documentation explaining how to
 properly implement a client library. The python client(neovim pip package)
-will be always up-to-date with the latest API changes, so it's source code is
+will be always up-to-date with the latest API changes, so its source code is
 the best documentation currently available. There are some guidelines however:
 
 - Separate the transport layer from the rest of the library(See
