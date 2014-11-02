@@ -2,6 +2,8 @@
 
 #include <uv.h>
 
+#include "nvim/lib/klist.h"
+
 #include "nvim/types.h"
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
@@ -13,6 +15,11 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/os/signal.h"
+#include "nvim/os/event.h"
+
+#define SignalEventFreer(x)
+KMEMPOOL_INIT(SignalEventPool, int, SignalEventFreer)
+kmempool_t(SignalEventPool) *signal_event_pool = NULL;
 
 static uv_signal_t sint, spipe, shup, squit, sterm, swinch;
 #ifdef SIGPWR
@@ -26,6 +33,7 @@ static bool rejecting_deadly;
 #endif
 void signal_init(void)
 {
+  signal_event_pool = kmp_init(SignalEventPool);
   uv_signal_init(uv_default_loop(), &sint);
   uv_signal_init(uv_default_loop(), &spipe);
   uv_signal_init(uv_default_loop(), &shup);
@@ -113,6 +121,19 @@ static void deadly_signal(int signum)
 
 static void signal_cb(uv_signal_t *handle, int signum)
 {
+  int *n = kmp_alloc(SignalEventPool, signal_event_pool);
+  *n = signum;
+  event_push((Event) {
+    .handler = on_signal_event,
+    .data = n
+  }, false);
+}
+
+static void on_signal_event(Event event)
+{
+  int signum = *((int *)event.data);
+  kmp_free(SignalEventPool, signal_event_pool, event.data);
+
   switch (signum) {
     case SIGINT:
       got_int = true;
@@ -142,3 +163,4 @@ static void signal_cb(uv_signal_t *handle, int signum)
       break;
   }
 }
+

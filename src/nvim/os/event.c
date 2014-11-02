@@ -35,18 +35,24 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/event.c.generated.h"
 #endif
-static klist_t(Event) *deferred_events;
+// deferred_events:  Events that should be processed as the K_EVENT special key
+// immediate_events: Events that should be processed after exiting libuv event
+//                   loop(to avoid recursion), but before returning from
+//                   `event_poll`
+static klist_t(Event) *deferred_events, *immediate_events;
 
 void event_init(void)
 {
   // Initialize the event queues
   deferred_events = kl_init(Event);
+  immediate_events = kl_init(Event);
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
   wstream_init();
   // Initialize input events
   input_init();
+  input_start();
   // Timer to wake the event loop if a timeout argument is passed to
   // `event_poll`
   // Signals
@@ -65,20 +71,19 @@ void event_teardown(void)
   channel_teardown();
   job_teardown();
   server_teardown();
+  input_stop();
 }
 
 // Wait for some event
 void event_poll(int ms)
 {
-  uv_run_mode run_mode = UV_RUN_ONCE;
-
   static int recursive = 0;
 
-  if (!(recursive++)) {
-    // Only needs to start the libuv handle the first time we enter here
-    input_start();
+  if (recursive++) {
+    abort();  // Should not re-enter uv_run
   }
 
+  uv_run_mode run_mode = UV_RUN_ONCE;
   uv_timer_t timer;
   uv_prepare_t timer_prepare;
   TimerData timer_data = {.ms = ms, .timed_out = false, .timer = &timer};
@@ -101,18 +106,18 @@ void event_poll(int ms)
 
   loop(run_mode);
 
-  if (!(--recursive)) {
-    // Again, only stop when we leave the top-level invocation
-    input_stop();
-  }
-
   if (ms > 0) {
     // Ensure the timer-related handles are closed and run the event loop
     // once more to let libuv perform it's cleanup
+    uv_timer_stop(&timer);
+    uv_prepare_stop(&timer_prepare);
     uv_close((uv_handle_t *)&timer, NULL);
     uv_close((uv_handle_t *)&timer_prepare, NULL);
     loop(UV_RUN_NOWAIT);
   }
+
+  recursive--;  // Can re-enter uv_run now
+  process_events_from(immediate_events);
 }
 
 bool event_has_deferred(void)
@@ -121,17 +126,21 @@ bool event_has_deferred(void)
 }
 
 // Queue an event
-void event_push(Event event)
+void event_push(Event event, bool deferred)
 {
-  *kl_pushp(Event, deferred_events) = event;
+  *kl_pushp(Event, deferred ? deferred_events : immediate_events) = event;
 }
-
 
 void event_process(void)
 {
+  process_events_from(deferred_events);
+}
+
+static void process_events_from(klist_t(Event) *queue)
+{
   Event event;
 
-  while (kl_shift(Event, deferred_events, &event) == 0) {
+  while (kl_shift(Event, queue, &event) == 0) {
     event.handler(event);
   }
 }
