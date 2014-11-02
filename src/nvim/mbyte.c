@@ -130,7 +130,7 @@ struct interval {
  * Bytes which are illegal when used as the first byte have a 1.
  * The NUL byte has length 1.
  */
-static char utf8len_tab[256] =
+static const char utf8len_tab[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -145,7 +145,7 @@ static char utf8len_tab[256] =
 /*
  * Like utf8len_tab above, but using a zero for illegal lead bytes.
  */
-static char utf8len_tab_zero[256] =
+static const char utf8len_tab_zero[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -1633,12 +1633,19 @@ int utf_ptr2len(const char_u *p)
   return len;
 }
 
-/*
- * Return length of UTF-8 character, obtained from the first byte.
- * "b" must be between 0 and 255!
- * Returns 1 for an invalid first byte value.
- */
-int utf_byte2len(int b)
+/// Calculate the length of UTF-8 character, obtained from the first byte.
+///
+/// @note This function reads from global memory (`utf8len_tab`) which would
+/// ordinarily mean that it has to be declared "pure" and not "const".
+/// However, the memory in question is read-only, so the const declaration
+/// is valid. Said another way, the lookup in utf8len_tab could be replaced
+/// by a if-else tree without ill effects, it's basically an encoded
+/// decision tree.
+///
+/// @param b The first byte from which the length is to be derived, must be
+///   between 0 and 255
+/// @return 1 for an invalid first byte value, the length otherwise
+int utf_byte2len(int b) FUNC_ATTR_CONST
 {
   return utf8len_tab[b];
 }
