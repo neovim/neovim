@@ -35,15 +35,15 @@ typedef struct {
 #ifdef INCLUDE_GENERATED_DECLARATIONS
 # include "os/event.c.generated.h"
 #endif
-static klist_t(Event) *pending_events;
+static klist_t(Event) *deferred_events;
 
 void event_init(void)
 {
+  // Initialize the event queues
+  deferred_events = kl_init(Event);
   // early msgpack-rpc initialization
   msgpack_rpc_init_method_table();
   msgpack_rpc_helpers_init();
-  // Initialize the event queues
-  pending_events = kl_init(Event);
   wstream_init();
   // Initialize input events
   input_init();
@@ -117,13 +117,13 @@ void event_poll(int ms)
 
 bool event_has_deferred(void)
 {
-  return !kl_empty(pending_events);
+  return !kl_empty(deferred_events);
 }
 
 // Queue an event
 void event_push(Event event)
 {
-  *kl_pushp(Event, pending_events) = event;
+  *kl_pushp(Event, deferred_events) = event;
 }
 
 
@@ -131,7 +131,7 @@ void event_process(void)
 {
   Event event;
 
-  while (kl_shift(Event, pending_events, &event) == 0) {
+  while (kl_shift(Event, deferred_events, &event) == 0) {
     event.handler(event);
   }
 }
