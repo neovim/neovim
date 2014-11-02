@@ -19541,7 +19541,7 @@ char_u *do_string_sub(char_u *str, char_u *pat, char_u *sub, char_u *flags)
     event_push((Event) {                                             \
       .handler = on_job_event,                                       \
       .data = event_data                                             \
-    });                                                              \
+    }, true);                                                        \
   } while(0)
 
 static void on_job_stdout(RStream *rstream, void *data, bool eof)

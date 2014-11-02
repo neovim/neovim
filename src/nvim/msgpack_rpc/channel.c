@@ -435,13 +435,7 @@ static void handle_request(Channel *channel, msgpack_object *request)
 
   Array args = ARRAY_DICT_INIT;
   msgpack_rpc_to_array(request->via.array.ptr + 3, &args);
-
-  if (kv_size(channel->call_stack) || !handler.defer) {
-    call_request_handler(channel, handler, args, request_id);
-    return;
-  }
-
-  // Defer calling the request handler.
+  bool defer = (!kv_size(channel->call_stack) && handler.defer);
   RequestEvent *event_data = kmp_alloc(RequestEventPool, request_event_pool);
   event_data->channel = channel;
   event_data->handler = handler;
@@ -450,21 +444,16 @@ static void handle_request(Channel *channel, msgpack_object *request)
   event_push((Event) {
     .handler = on_request_event,
     .data = event_data
-  });
+  }, defer);
 }
 
 static void on_request_event(Event event)
 {
   RequestEvent *e = event.data;
-  call_request_handler(e->channel, e->handler, e->args, e->request_id);
-  kmp_free(RequestEventPool, request_event_pool, e);
-}
-
-static void call_request_handler(Channel *channel,
-                                 MsgpackRpcRequestHandler handler,
-                                 Array args,
-                                 uint64_t request_id)
-{
+  Channel *channel = e->channel;
+  MsgpackRpcRequestHandler handler = e->handler;
+  Array args = e->args;
+  uint64_t request_id = e->request_id;
   Error error = ERROR_INIT;
   Object result = handler.fn(channel->id, request_id, args, &error);
   // send the response
@@ -477,6 +466,7 @@ static void call_request_handler(Channel *channel,
                                             &out_buffer));
   // All arguments were freed already, but we still need to free the array
   free(args.items);
+  kmp_free(RequestEventPool, request_event_pool, e);
 }
 
 static bool channel_write(Channel *channel, WBuffer *buffer)
