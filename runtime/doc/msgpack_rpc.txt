@@ -113,7 +113,9 @@ string 'hello world!' on the current nvim instance:
 A better way is to use the python REPL with the `neovim` package, where API
 functions can be called interactively:
 >
-    >>> import neovim; nvim = neovim.connect('[address]')
+    >>> from neovim import socket_session, Nvim
+    >>> session = socket_session('[address]')
+    >>> nvim = Nvim.from_session(session)
     >>> nvim.command('echo "hello world!"')
 <
 ==============================================================================
