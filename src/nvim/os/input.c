@@ -52,6 +52,15 @@ void input_init(void)
   rstream_set_file(read_stream, read_cmd_fd);
 }
 
+void input_teardown(void)
+{
+  if (embedded_mode) {
+    return;
+  }
+
+  rstream_free(read_stream);
+}
+
 // Listen for input
 void input_start(void)
 {

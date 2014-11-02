@@ -55,6 +55,20 @@ void signal_init(void)
 #endif
 }
 
+void signal_teardown(void)
+{
+  signal_stop();
+  uv_close((uv_handle_t *)&sint, NULL);
+  uv_close((uv_handle_t *)&spipe, NULL);
+  uv_close((uv_handle_t *)&shup, NULL);
+  uv_close((uv_handle_t *)&squit, NULL);
+  uv_close((uv_handle_t *)&sterm, NULL);
+  uv_close((uv_handle_t *)&swinch, NULL);
+#ifdef SIGPWR
+  uv_close((uv_handle_t *)&spwr, NULL);
+#endif
+}
+
 void signal_stop(void)
 {
   uv_signal_stop(&sint);

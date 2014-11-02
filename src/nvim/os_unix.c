@@ -522,8 +522,6 @@ void mch_exit(int r)
 {
   exiting = TRUE;
 
-  event_teardown();
-
   {
     settmode(TMODE_COOK);
     mch_restore_title(3);       /* restore xterm title and icon name */
@@ -559,7 +557,7 @@ void mch_exit(int r)
   mac_conv_cleanup();
 #endif
 
-
+  event_teardown();
 
 #ifdef EXITFREE
   free_all_mem();

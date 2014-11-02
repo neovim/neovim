@@ -71,7 +71,15 @@ void event_teardown(void)
   channel_teardown();
   job_teardown();
   server_teardown();
+  signal_teardown();
   input_stop();
+  input_teardown();
+  do {
+    // This will loop forever if we leave any unclosed handles. Currently it is
+    // the most reliable way to use travis for verifying the no libuv-related
+    // bugs(which can be hard to track later) were introduced on a PR.
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+  } while (uv_loop_close(uv_default_loop()));
 }
 
 // Wait for some event
