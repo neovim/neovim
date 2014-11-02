@@ -11,7 +11,7 @@
 #include "nvim/ascii.h"
 #include "nvim/vim.h"
 #include "nvim/memory.h"
-#include "nvim/message.h"
+#include "nvim/log.h"
 #include "nvim/tempfile.h"
 #include "nvim/map.h"
 #include "nvim/path.h"
@@ -102,12 +102,12 @@ int server_start(const char *endpoint)
   if (xstrlcpy(addr, endpoint, sizeof(addr)) >= sizeof(addr)) {
     // TODO(aktau): since this is not what the user wanted, perhaps we
     // should return an error here
-    EMSG2("Address was too long, truncated to %s", addr);
+    WLOG("Address was too long, truncated to %s", addr);
   }
 
   // Check if the server already exists
   if (pmap_has(cstr_t)(servers, addr)) {
-    EMSG2("Already listening on %s", addr);
+    ELOG("Already listening on %s", addr);
     return 1;
   }
 
@@ -152,38 +152,30 @@ int server_start(const char *endpoint)
   }
 
   int result;
+  uv_stream_t *stream = NULL;
 
   if (server_type == kServerTypeTcp) {
     // Listen on tcp address/port
     uv_tcp_init(uv_default_loop(), &server->socket.tcp.handle);
-    server->socket.tcp.handle.data = server;
     result = uv_tcp_bind(&server->socket.tcp.handle,
                          (const struct sockaddr *)&server->socket.tcp.addr,
                          0);
-    if (result == 0) {
-      result = uv_listen((uv_stream_t *)&server->socket.tcp.handle,
-                         MAX_CONNECTIONS,
-                         connection_cb);
-      if (result) {
-        uv_close((uv_handle_t *)&server->socket.tcp.handle, free_server);
-      }
-    }
+    stream = (uv_stream_t *)&server->socket.tcp.handle;
   } else {
     // Listen on named pipe or unix socket
     xstrlcpy(server->socket.pipe.addr, addr, sizeof(server->socket.pipe.addr));
     uv_pipe_init(uv_default_loop(), &server->socket.pipe.handle, 0);
-    server->socket.pipe.handle.data = server;
     result = uv_pipe_bind(&server->socket.pipe.handle,
                           server->socket.pipe.addr);
-    if (result == 0) {
-      result = uv_listen((uv_stream_t *)&server->socket.pipe.handle,
-                         MAX_CONNECTIONS,
-                         connection_cb);
+    stream = (uv_stream_t *)&server->socket.pipe.handle;
+  }
 
-      if (result) {
-        uv_close((uv_handle_t *)&server->socket.pipe.handle, free_server);
-      }
-    }
+  stream->data = server;
+
+  if (result == 0) {
+    result = uv_listen((uv_stream_t *)&server->socket.tcp.handle,
+                       MAX_CONNECTIONS,
+                       connection_cb);
   }
 
   assert(result <= 0);  // libuv should have returned -errno or zero.
@@ -196,13 +188,12 @@ int server_start(const char *endpoint)
         result = -ENOENT;
       }
     }
-    EMSG2("Failed to start server: %s", uv_strerror(result));
-    free(server);
+    uv_close((uv_handle_t *)stream, free_server);
+    ELOG("Failed to start server: %s", uv_strerror(result));
     return result;
   }
 
   server->type = server_type;
-
   // Add the server to the hash table
   pmap_put(cstr_t)(servers, addr, server);
 
@@ -221,7 +212,7 @@ void server_stop(char *endpoint)
   xstrlcpy(addr, endpoint, sizeof(addr));
 
   if ((server = pmap_get(cstr_t)(servers, addr)) == NULL) {
-    EMSG2("Not listening on %s", addr);
+    ELOG("Not listening on %s", addr);
     return;
   }
 
@@ -255,7 +246,7 @@ static void connection_cb(uv_stream_t *server, int status)
   result = uv_accept(server, client);
 
   if (result) {
-    EMSG2("Failed to accept connection: %s", uv_strerror(result));
+    ELOG("Failed to accept connection: %s", uv_strerror(result));
     uv_close((uv_handle_t *)client, free_client);
     return;
   }
