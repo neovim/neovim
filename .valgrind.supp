@@ -30,3 +30,10 @@
    fun:vim_strsave
    fun:ex_function
 }
+{
+  uv_spawn_with_optimizations
+  Memcheck:Leak
+  fun:malloc
+  fun:uv_spawn
+  fun:job_start
+}
