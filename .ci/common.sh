@@ -7,10 +7,7 @@ asan_check() {
 }
 
 check_logs() {
-	# For some strange reason, now we need to give ubuntu some time to flush it's
-	# FS cache in order to see error logs, even though all commands are executing
-	# synchronously
-	sleep 1
+	check_core_dumps
 	# Iterate through each log to remove an useless warning
 	for log in $(find "$1" -type f -name "$2"); do
 		sed -i "$log" \
@@ -27,6 +24,15 @@ check_logs() {
 		echo "Runtime errors detected"
 		exit 1
 	fi
+}
+
+check_core_dumps() {
+	sleep 2
+	local c
+	for c in $(find ./ -name '*core*' -print); do
+	 	gdb -q -n -batch -ex bt build/bin/nvim $c
+		exit 1
+	done
 }
 
 set_environment() {

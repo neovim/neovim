@@ -23,4 +23,6 @@ CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON \
 
 $MAKE_CMD CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" unittest
 $MAKE_CMD test
+check_core_dumps
 $MAKE_CMD oldtest
+check_core_dumps
