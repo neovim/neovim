@@ -11,6 +11,7 @@ export VALGRIND_LOG="$tmpdir/valgrind-%p.log"
 CMAKE_EXTRA_FLAGS="-DTRAVIS_CI_BUILD=ON -DUSE_GCOV=ON"
 
 $MAKE_CMD CMAKE_EXTRA_FLAGS="${CMAKE_EXTRA_FLAGS}" unittest
+build/bin/nvim --version
 if ! $MAKE_CMD test; then
 	valgrind_check "$tmpdir"
 	exit 1
