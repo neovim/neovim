@@ -9,6 +9,7 @@
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/diff.h"
+#include "nvim/dynamic_buffer.h"
 #include "nvim/buffer.h"
 #include "nvim/charset.h"
 #include "nvim/cursor.h"
@@ -659,10 +660,9 @@ void ex_diffupdate(exarg_T *eap)
 
   // We need three temp file names.
   char_u *tmp_orig = vim_tempname();
-  char_u *tmp_new = vim_tempname();
   char_u *tmp_diff = vim_tempname();
 
-  if ((tmp_orig == NULL) || (tmp_new == NULL) || (tmp_diff == NULL)) {
+  if ((tmp_orig == NULL) || (tmp_diff == NULL)) {
     goto theend;
   }
 
@@ -683,16 +683,9 @@ void ex_diffupdate(exarg_T *eap)
         io_error = TRUE;
       }
       fclose(fd);
-      fd = mch_fopen((char *)tmp_new, "w");
 
-      if (fd == NULL) {
-        io_error = TRUE;
-      } else {
-        if (fwrite("line2\n", (size_t)6, (size_t)1, fd) != 1) {
-          io_error = TRUE;
-        }
-        fclose(fd);
-        diff_file(tmp_orig, tmp_new, tmp_diff);
+      {
+        diff_file(tmp_orig, "line2\n", 0, tmp_diff);
         fd = mch_fopen((char *)tmp_diff, "r");
 
         if (fd == NULL) {
@@ -713,7 +706,6 @@ void ex_diffupdate(exarg_T *eap)
           fclose(fd);
         }
         os_remove((char *)tmp_diff);
-        os_remove((char *)tmp_new);
       }
       os_remove((char *)tmp_orig);
     }
@@ -767,15 +759,22 @@ void ex_diffupdate(exarg_T *eap)
       continue;
     }
 
-    if (diff_write(buf, tmp_new) == FAIL) {
-      continue;
+    // Write the contents of `buf` to a garray to send to diff_file().
+    // TODO(SplinterOfChaos): Can we know how much space this will take?
+    DynamicBuffer db = DYNAMIC_BUFFER_INIT;
+    for (linenr_T lnum = 1; lnum < buf->b_ml.ml_line_count + 1; lnum++) {
+      size_t pos = db.len;
+      dynamic_buffer_concat(&db, ml_get_buf(buf, lnum, false), -1);
+      strchrsub(db.data + pos, NL, NUL);
+      dynamic_buffer_append(&db, '\n');
     }
-    diff_file(tmp_orig, tmp_new, tmp_diff);
+
+    diff_file(tmp_orig, db.data, db.len, tmp_diff);
 
     // Read the diff output and add each entry to the diff list.
     diff_read(idx_orig, idx_new, tmp_diff);
     os_remove((char *)tmp_diff);
-    os_remove((char *)tmp_new);
+    dynamic_buffer_clear(&db);
   }
   os_remove((char *)tmp_orig);
 
@@ -786,24 +785,26 @@ void ex_diffupdate(exarg_T *eap)
 
 theend:
   free(tmp_orig);
-  free(tmp_new);
   free(tmp_diff);
 }
 
 /// Make a diff between files "tmp_orig" and "tmp_new", results in "tmp_diff".
 ///
 /// @param tmp_orig
-/// @param tmp_new
+/// @param cmp      The text of the file to compare with `tmp_orig`.
+/// @param cmp_len  The length of `cmp`.
 /// @param tmp_diff
-static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
+static void diff_file(char_u *tmp_orig, const char *cmp, size_t cmp_len,
+                      char_u *tmp_diff)
 {
   if (*p_dex != NUL) {
     // Use 'diffexpr' to generate the diff file.
+    char_u *tmp_new = vim_tempname();
     eval_diff(tmp_orig, tmp_new, tmp_diff);
+    free(tmp_new);
   } else {
-    size_t len = STRLEN(tmp_orig) + STRLEN(tmp_new) + STRLEN(tmp_diff)
-        + STRLEN(p_srr) + 27;
-    char_u *cmd = xmalloc(len);
+    size_t len = STRLEN(tmp_orig) + STRLEN(tmp_diff) + STRLEN(p_srr) + 27;
+    char *cmd = xmalloc(len);
 
     /* We don't want $DIFF_OPTIONS to get in the way. */
     if (os_getenv("DIFF_OPTIONS")) {
@@ -813,20 +814,14 @@ static void diff_file(char_u *tmp_orig, char_u *tmp_new, char_u *tmp_diff)
     /* Build the diff command and execute it.  Always use -a, binary
      * differences are of no use.  Ignore errors, diff returns
      * non-zero when differences have been found. */
-    vim_snprintf((char *)cmd, len, "diff %s%s%s%s%s %s",
+    vim_snprintf(cmd, len, "diff %s%s%s%s%s -",
                  diff_a_works == FALSE ? "" : "-a ",
                  "",
                  (diff_flags & DIFF_IWHITE) ? "-b " : "",
                  (diff_flags & DIFF_ICASE) ? "-i " : "",
-                 tmp_orig, tmp_new);
-    append_redir(cmd, (int)len, p_srr, tmp_diff);
-    block_autocmds(); /* Avoid ShellCmdPost stuff */
-    (void)call_shell(
-        cmd,
-        kShellOptFilter | kShellOptSilent | kShellOptDoOut,
-        NULL
-        );
-    unblock_autocmds();
+                 tmp_orig);
+    append_redir((char_u *) cmd, (int)len, p_srr, tmp_diff);
+    os_system(cmd, cmp, cmp_len ? cmp_len : strlen(cmp), NULL, NULL);
     free(cmd);
   }
 }
