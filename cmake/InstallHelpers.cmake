@@ -23,6 +23,7 @@ function(create_install_dir_with_perms)
   install(CODE
     "
     if(ENV{DESTDIR})
+      # TODO(fwalch): Is this branch ever taken (#1381, #1387)?
       set(PREFIX \$ENV{DESTDIR}/\${CMAKE_INSTALL_PREFIX})
     else()
       set(PREFIX \${CMAKE_INSTALL_PREFIX})
