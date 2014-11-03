@@ -1611,23 +1611,49 @@ int utfc_char2bytes(int off, char_u *buf)
   return len;
 }
 
-/*
- * Get the length of a UTF-8 byte sequence, not including any following
- * composing characters.
- * Returns 0 for "".
- * Returns 1 for an illegal byte sequence.
- */
-int utf_ptr2len(const char_u *p)
+/// Validate whether a multi-byte codepoint encoding has the expected length
+/// (as predicted by the initial byte, passed as parameter `exp`).
+///
+/// In effect, this checks if there are no non-continuation bytes between
+/// `s[1]` and `s[exp - 1]` inclusive. Encountering a non-continuation byte
+/// would make the byte sequence invalid (== not the expected length).
+///
+/// @return true if the s[1:exp-1] (NOT s[0:exp-1]) only contains
+///   continuation characters, false otherwise.
+static inline bool utf_is_expected_len(const char *s, size_t exp) FUNC_ATTR_PURE
 {
-  int len;
-  int i;
+  // start looking from index 1 forward, we could manually get the predicted
+  // size by looking at utf8len_tab for s[0] but this has probably already
+  // been done by the caller (and was passed as `exp`)
+  for (size_t i = 1; i < exp; i++) {
+    // Return illegal byte sequence if s[i] is not a continuation byte
+    // extract the top two bits and check for inequality: (s[i] & 11 00 00
+    // 00) != 10 00 00 00. In UTF-8, all bytes that begin with the bit
+    // pattern 10 are subsequent bytes of a multi-byte sequence.
+    if ((s[i] & 0xc0) != 0x80)  {
+      return false;
+    }
+  }
 
-  if (*p == NUL)
+  return true;
+}
+
+/// Get the length of a UTF-8 byte sequence, not including any following
+/// composing characters.
+///
+/// @return 0 for the empty string, 1 for an illegal byte sequence, n
+///   otherwise
+int utf_ptr2len(const char_u *p) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  if (*p == NUL) {
     return 0;
-  len = utf8len_tab[*p];
-  for (i = 1; i < len; ++i)
-    if ((p[i] & 0xc0) != 0x80)
-      return 1;
+  }
+
+  int len = utf8len_tab[*p];
+  if (!utf_is_expected_len((char *) p, len)) {
+    return 1;
+  }
+
   return len;
 }
 
@@ -1648,30 +1674,36 @@ int utf_byte2len(int b) FUNC_ATTR_CONST
   return utf8len_tab[b];
 }
 
-/*
- * Get the length of UTF-8 byte sequence "p[size]".  Does not include any
- * following composing characters.
- * Returns 1 for "".
- * Returns 1 for an illegal byte sequence (also in incomplete byte seq.).
- * Returns number > "size" for an incomplete byte sequence.
- * Never returns zero.
- */
+/// Get the length of UTF-8 byte sequence which starts at `p`. Does not
+/// include any following composing characters. Never reads more than `size`
+/// bytes from `p`.
+///
+/// @note It's possible that `p[0:size]` doesn't contain sufficient bytes
+///       for the predicted size `utf8len_tab[p[0]]`, in that case,
+///       `utf8len_tab[p[0]]` (> `size`) will be returned as long as there
+///       are no illegal sequences in `p[0:size]`.
+///
+/// @return 1 for the empty string (""), a single byte codepoint or an
+///         illegal byte sequence (also when this illegal byte sequence is
+///         incomplete). Returns num > `size` for a valid incomplete byte sequence.
+///         Never returns 0.
 int utf_ptr2len_len(const char_u *p, int size)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  int len;
-  int i;
-  int m;
+  int len = utf8len_tab[*p];
+  if (len == 1) {
+    return 1;  // NUL, ascii or illegal lead byte
+  }
 
-  len = utf8len_tab[*p];
-  if (len == 1)
-    return 1;           /* NUL, ascii or illegal lead byte */
-  if (len > size)
-    m = size;           /* incomplete byte sequence. */
-  else
-    m = len;
-  for (i = 1; i < m; ++i)
-    if ((p[i] & 0xc0) != 0x80)
-      return 1;
+  // check the sequence for validity, up to min(len, size) to avoid
+  // overshooting the buffer
+  if (!utf_is_expected_len((char *) p, minsz(size, len))) {
+    return 1;
+  }
+
+  // everything ok, note that in this case the byte sequence could still be
+  // incomplete (len > size), but at least all the bytes we could check are
+  // valid
   return len;
 }
 
