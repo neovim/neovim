@@ -22,7 +22,7 @@ function(create_install_dir_with_perms)
 
   install(CODE
     "
-    if(DEFINED ENV{DESTDIR})
+    if(ENV{DESTDIR})
       set(PREFIX \$ENV{DESTDIR}/\${CMAKE_INSTALL_PREFIX})
     else()
       set(PREFIX \${CMAKE_INSTALL_PREFIX})
