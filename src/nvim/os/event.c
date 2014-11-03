@@ -39,7 +39,7 @@ typedef struct {
 // immediate_events: Events that should be processed after exiting libuv event
 //                   loop(to avoid recursion), but before returning from
 //                   `event_poll`
-static klist_t(Event) *deferred_events, *immediate_events;
+static klist_t(Event) *deferred_events = NULL, *immediate_events = NULL;
 
 void event_init(void)
 {
@@ -68,6 +68,11 @@ void event_init(void)
 
 void event_teardown(void)
 {
+  if (!deferred_events) {
+    // Not initialized(possibly a --version invocation)
+    return;
+  }
+
   channel_teardown();
   job_teardown();
   server_teardown();
