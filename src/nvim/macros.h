@@ -19,6 +19,33 @@
 /// erroneous types be passed to the macro
 #define NELEM(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
 
+/// Typesafe min/max functions (not macros) with hopefully predictable
+/// suffixes. Yes, defined these functions with the help of some macro would
+/// probably save some typing, but it would break ctags navigation. Too bad
+/// we can't use C11's _Generic, alas, we plan to support MSVC. When/if MSVC
+/// supports _Generic, we can make this easier to use.
+static inline int mini(int x, int y) { return y < x ? y : x; }
+static inline unsigned minu(unsigned x, unsigned y) { return y < x ? y : x; }
+static inline long minl(long x, long y) { return y < x ? y : x; }
+static inline unsigned long minul(unsigned long x, unsigned long y) { return y < x ? y : x; }
+static inline long long minll(long long x, long long y) { return y < x ? y : x; }
+static inline unsigned long long minull(unsigned long long x, unsigned long long y) { return y < x ? y : x; }
+static inline float minf(float x, float y) { return y < x ? y : x; }
+static inline double mind(double x, double y) { return y < x ? y : x; }
+static inline long double minld(long double x, long double y) { return y < x ? y : x; }
+static inline size_t minsz(size_t x, size_t y) { return y < x ? y : x; }
+
+static inline int maxi(int x, int y) { return x < y ? y : x; }
+static inline unsigned maxu(unsigned x, unsigned y) { return x < y ? y : x; }
+static inline long maxl(long x, long y) { return x < y ? y : x; }
+static inline unsigned long maxul(unsigned long x, unsigned long y) { return x < y ? y : x; }
+static inline long long maxll(long long x, long long y) { return x < y ? y : x; }
+static inline unsigned long long maxull(unsigned long long x, unsigned long long y) { return x < y ? y : x; }
+static inline float maxf(float x, float y) { return x < y ? y : x; }
+static inline double maxd(double x, double y) { return x < y ? y : x; }
+static inline long double maxld(long double x, long double y) { return x < y ? y : x; }
+static inline size_t maxsz(size_t x, size_t y) { return x < y ? y : x; }
+
 /*
  * Position comparisons
  */
