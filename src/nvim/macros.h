@@ -12,6 +12,13 @@
  * macros.h: macro definitions for often used code
  */
 
+/// general utility macros
+
+/// get the number of items in a statically sized array, looks more
+/// complicated than it should be to provide better warnings should
+/// erroneous types be passed to the macro
+#define NELEM(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+
 /*
  * Position comparisons
  */
