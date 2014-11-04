@@ -11,6 +11,7 @@
  *	  op_change, op_yank, do_put, do_join
  */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -3436,7 +3437,7 @@ int do_join(long count,
                         && has_format_option(FO_REMOVE_COMS);
   int prev_was_comment;
 
-
+  assert(count > 1);
   if (save_undo && u_save((linenr_T)(curwin->w_cursor.lnum - 1),
           (linenr_T)(curwin->w_cursor.lnum + count)) == FAIL)
     return FAIL;
