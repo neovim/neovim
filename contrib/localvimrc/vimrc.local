@@ -1,0 +1,10 @@
+
+let s:srcroot = fnamemodify(expand("<afile>", 1), ":p:h:h:h")
+
+" Add to 'path' so that :find always searches from the source root.
+exe 'set path+='.s:srcroot.'/**'
+
+augroup LOCAL_SETUP
+  autocmd!
+  autocmd FileType c setlocal comments=:///,://
+augroup end
