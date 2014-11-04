@@ -3477,7 +3477,6 @@ win_line (
             n_extra = tab_len;
           } else {
             char_u *p;
-            int    len = n_extra;
             int    i;
             int    saved_nextra = n_extra;
 
@@ -3488,7 +3487,7 @@ win_line (
 
             /* if n_extra > 0, it gives the number of chars to use for
              * a tab, else we need to calculate the width for a tab */
-            len = (tab_len * mb_char2len(lcs_tab2));
+            int len = (tab_len * mb_char2len(lcs_tab2));
             if (n_extra > 0) {
               len += n_extra - tab_len;
             }
