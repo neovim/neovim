@@ -3257,6 +3257,9 @@ static void script_host_execute(char *method, exarg_T *eap)
   if (!eap->skip) {
     Array args = ARRAY_DICT_INIT;
     ADD(args, STRING_OBJ(cstr_to_string(script ? script : (char *)eap->arg)));
+    // add current range
+    ADD(args, INTEGER_OBJ(eap->line1));
+    ADD(args, INTEGER_OBJ(eap->line2));
     Object result = provider_call(method, args);
     // We don't care about the result, so free it just in case a bad provider
     // returned something
@@ -3273,6 +3276,9 @@ static void script_host_execute_file(char *method, exarg_T *eap)
 
   Array args = ARRAY_DICT_INIT;
   ADD(args, STRING_OBJ(cstr_to_string(buffer)));
+  // add current range
+  ADD(args, INTEGER_OBJ(eap->line1));
+  ADD(args, INTEGER_OBJ(eap->line2));
   Object result = provider_call(method, args);
   api_free_object(result);
 }
