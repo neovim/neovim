@@ -5028,6 +5028,8 @@ void cursor_pos_info(void)
   pos_T min_pos, max_pos;
   oparg_T oparg;
   struct block_def bd;
+  const int l_VIsual_active = VIsual_active;
+  const int l_VIsual_mode = VIsual_mode;
 
   /*
    * Compute the length of the file in characters.
@@ -5040,7 +5042,7 @@ void cursor_pos_info(void)
     else
       eol_size = 1;
 
-    if (VIsual_active) {
+    if (l_VIsual_active) {
       if (lt(VIsual, curwin->w_cursor)) {
         min_pos = VIsual;
         max_pos = curwin->w_cursor;
@@ -5051,7 +5053,7 @@ void cursor_pos_info(void)
       if (*p_sel == 'e' && max_pos.col > 0)
         --max_pos.col;
 
-      if (VIsual_mode == Ctrl_V) {
+      if (l_VIsual_mode == Ctrl_V) {
         char_u * saved_sbr = p_sbr;
 
         /* Make 'sbr' empty for a moment to get the correct size. */
@@ -5084,12 +5086,12 @@ void cursor_pos_info(void)
       }
 
       /* Do extra processing for VIsual mode. */
-      if (VIsual_active
+      if (l_VIsual_active
           && lnum >= min_pos.lnum && lnum <= max_pos.lnum) {
         char_u      *s = NULL;
         long len = 0L;
 
-        switch (VIsual_mode) {
+        switch (l_VIsual_mode) {
         case Ctrl_V:
           virtual_op = virtual_active();
           block_prep(&oparg, &bd, lnum, 0);
@@ -5142,8 +5144,8 @@ void cursor_pos_info(void)
     if (!curbuf->b_p_eol && curbuf->b_p_bin)
       byte_count -= eol_size;
 
-    if (VIsual_active) {
-      if (VIsual_mode == Ctrl_V && curwin->w_curswant < MAXCOL) {
+    if (l_VIsual_active) {
+      if (l_VIsual_mode == Ctrl_V && curwin->w_curswant < MAXCOL) {
         getvcols(curwin, &min_pos, &max_pos, &min_pos.col,
             &max_pos.col);
         vim_snprintf((char *)buf1, sizeof(buf1), _("%" PRId64 " Cols; "),
