@@ -43,6 +43,7 @@
 /* #undef REGEXP_DEBUG */
 /* #define REGEXP_DEBUG */
 
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -5625,6 +5626,8 @@ static int match_with_backref(linenr_T start_lnum, colnr_T start_col, linenr_T e
 
     /* Get the line to compare with. */
     p = reg_getline(clnum);
+    assert(p);
+
     if (clnum == end_lnum)
       len = end_col - ccol;
     else
