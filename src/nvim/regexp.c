@@ -1297,16 +1297,18 @@ static regprog_T *bt_regcomp(char_u *expr, int re_flags)
         r->regstart = (*mb_ptr2char)(OPERAND(scan));
       else
         r->regstart = *OPERAND(scan);
-    } else if ((OP(scan) == BOW
-                || OP(scan) == EOW
-                || OP(scan) == NOTHING
-                || OP(scan) == MOPEN + 0 || OP(scan) == NOPEN
-                || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE)
-               && OP(regnext(scan)) == EXACTLY) {
-      if (has_mbyte)
-        r->regstart = (*mb_ptr2char)(OPERAND(regnext(scan)));
-      else
-        r->regstart = *OPERAND(regnext(scan));
+    } else if (OP(scan) == BOW
+               || OP(scan) == EOW
+               || OP(scan) == NOTHING
+               || OP(scan) == MOPEN  + 0 || OP(scan) == NOPEN
+               || OP(scan) == MCLOSE + 0 || OP(scan) == NCLOSE) {
+      char_u *regnext_scan = regnext(scan);
+      if (OP(regnext_scan) == EXACTLY) {
+        if (has_mbyte)
+          r->regstart = (*mb_ptr2char)(OPERAND(regnext_scan));
+        else
+          r->regstart = *OPERAND(regnext_scan);
+      }
     }
 
     /*
