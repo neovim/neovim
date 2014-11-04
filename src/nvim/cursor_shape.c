@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #include "nvim/cursor_shape.h"
@@ -76,6 +77,7 @@ char_u *parse_shape_opt(int what)
        * For the 'a' mode, we loop to handle all the modes.
        */
       all_idx = -1;
+      assert(modep < colonp);
       while (modep < colonp || all_idx >= 0) {
         if (all_idx < 0) {
           /* Find the mode. */
