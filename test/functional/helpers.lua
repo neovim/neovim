@@ -67,6 +67,25 @@ local function restart()
     mapclear!
     abclear
     comclear
+    let regs = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-"'
+    let i = 0
+    while i < strlen(regs)
+      call setreg(regs[i], '')
+      let i = i+1
+    endwhile
+    redir => funcs
+    silent! function
+    redir END
+    for fname in split(funcs, '\n')
+      let matches = matchlist(fname, '\v^function ([^()<>]+)')
+      if type([]) == type(matches) && matches[1] !~ 'BeforeEachTest'
+        exe 'silent! delfunc '.matches[1]
+      endif
+    endfor
+    let options = ['shell', 'fileignorecase']
+    for option in options
+      exe 'set '.option.'&'
+    endfor
   endfunction
   ]])
 end
@@ -83,6 +102,9 @@ local function request(method, ...)
       error(rv[2])
     end
   end
+  -- Make sure this will only return after all buffered characters have been
+  -- processed
+  session:request('vim_eval', '1')
   return rv
 end
 
@@ -201,7 +223,6 @@ local function expect(contents, first, last, buffer_index)
   return eq(dedent(contents), buffer_slice(first, last, buffer_index))
 end
 
-
 local function ok(expr)
   assert.is_true(expr)
 end
@@ -254,6 +275,7 @@ restart()
 
 return {
   clear = clear,
+  dedent = dedent,
   restart = restart,
   rawfeed = rawfeed,
   insert = insert,
