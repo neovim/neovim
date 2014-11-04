@@ -1199,10 +1199,7 @@ char_u *skip_regexp(char_u *startp, int dirc, int magic, char_u **newp)
           *newp = vim_strsave(startp);
           p = *newp + (p - startp);
         }
-        if (*newp != NULL)
-          STRMOVE(p, p + 1);
-        else
-          ++p;
+        STRMOVE(p, p + 1);
       } else
         ++p;            /* skip next character */
       if (*p == 'v')
