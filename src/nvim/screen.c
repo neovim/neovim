@@ -7709,7 +7709,6 @@ static void draw_tabline(void)
 
     attr = attr_nosel;
     tabcount = 0;
-    scol = 0;
 
     FOR_ALL_TABS(tp) {
       if (col >= Columns - 4) {
