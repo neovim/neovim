@@ -3867,7 +3867,7 @@ win_line (
       /* Get rid of the boguscols now, we want to draw until the right
        * edge for 'cursorcolumn'. */
       col -= boguscols;
-      boguscols = 0;
+      // boguscols = 0;  // Disabled because value never read after this
 
       if (draw_color_col)
         draw_color_col = advance_color_col(VCOL_HLC, &color_cols);
