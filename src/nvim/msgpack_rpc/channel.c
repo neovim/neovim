@@ -600,9 +600,14 @@ static void close_channel(Channel *channel)
     if (handle) {
       uv_close(handle, close_cb);
     } else {
-      mch_exit(0);
+      event_push((Event) { .handler = on_stdio_close }, false);
     }
   }
+}
+
+static void on_stdio_close(Event e)
+{
+  mch_exit(0);
 }
 
 static void free_channel(Channel *channel)

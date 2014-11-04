@@ -39,7 +39,7 @@ typedef struct {
 // immediate_events: Events that should be processed after exiting libuv event
 //                   loop(to avoid recursion), but before returning from
 //                   `event_poll`
-static klist_t(Event) *deferred_events, *immediate_events;
+static klist_t(Event) *deferred_events = NULL, *immediate_events = NULL;
 
 void event_init(void)
 {
@@ -68,18 +68,25 @@ void event_init(void)
 
 void event_teardown(void)
 {
+  if (!deferred_events) {
+    // Not initialized(possibly a --version invocation)
+    return;
+  }
+
   channel_teardown();
   job_teardown();
   server_teardown();
   signal_teardown();
   input_stop();
   input_teardown();
-  do {
-    // This will loop forever if we leave any unclosed handles. Currently it is
-    // the most reliable way to use travis for verifying the no libuv-related
-    // bugs(which can be hard to track later) were introduced on a PR.
-    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
-  } while (uv_loop_close(uv_default_loop()));
+  // this last `uv_run` will return after all handles are stopped, it will
+  // also take care of finishing any uv_close calls made by other *_teardown
+  // functions.
+  uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+  // abort that if we left unclosed handles
+  if (uv_loop_close(uv_default_loop())) {
+    abort();
+  }
 }
 
 // Wait for some event
