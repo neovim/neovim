@@ -1,20 +1,14 @@
--- Test for ":options".
+-- Test if ":options" throws any exception. The options window seems to mess
+-- other tests, so restart nvim in the teardown hook
 
 local helpers = require('test.functional.helpers')
-local clear, feed, insert = helpers.clear, helpers.feed, helpers.insert
-local execute, expect = helpers.execute, helpers.expect
+local restart, command, clear = helpers.restart, helpers.command, helpers.clear
 
 describe('options', function()
   setup(clear)
+  teardown(restart)
 
   it('is working', function()
-    insert('result')
-
-    execute("let caught = 'ok'")
-    execute('try', 'options', 'catch', 'let caught = v:throwpoint . "\n" . v:exception', 'endtry')
-    execute('buf 1')
-    execute('$put =caught')
-
-    expect("result\nok")
+    command('options')
   end)
 end)
