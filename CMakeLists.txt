@@ -15,7 +15,7 @@ list(APPEND CMAKE_PREFIX_PATH ${DEPS_INSTALL_DIR})
 # Version tokens
 include(GetGitRevisionDescription)
 get_git_head_revision(GIT_REFSPEC NVIM_VERSION_COMMIT)
-if (NOT NVIM_VERSION_COMMIT)
+if(NOT NVIM_VERSION_COMMIT)
   set(NVIM_VERSION_COMMIT "?")
 endif()
 set(NVIM_VERSION_MAJOR 0)
@@ -25,7 +25,7 @@ set(NVIM_VERSION_PRERELEASE "-alpha")
 # TODO(justinmk): UTC time would be nice here #1071
 git_timestamp(GIT_TIMESTAMP)
 # TODO(justinmk): do not set this for "release" builds #1071
-if (GIT_TIMESTAMP)
+if(GIT_TIMESTAMP)
   set(NVIM_VERSION_BUILD "+${GIT_TIMESTAMP}")
 endif()
 
@@ -45,7 +45,8 @@ endif()
 # gcc 4.0 and better turn on _FORTIFY_SOURCE=2 automatically.  This currently
 # does not work with Neovim due to some uses of dynamically-sized structures.
 # See https://github.com/neovim/neovim/issues/223 for details.
-if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_C_COMPILER_VERSION VERSION_LESS "4")
+if(CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_C_COMPILER_VERSION VERSION_LESS "4"
+    AND CMAKE_BUILD_TYPE MATCHES "^Rel")
   # -U in add_definitions doesn't end up in the correct spot, so we add it to
   # the flags variable instead.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1")
