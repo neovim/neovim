@@ -3613,6 +3613,7 @@ static int ins_compl_get_exp(pos_T *ini)
        * If 'infercase' is set, don't use 'smartcase' here
        */
       save_p_scs = p_scs;
+      assert(ins_buf);
       if (ins_buf->b_p_inf)
         p_scs = FALSE;
 
@@ -3761,8 +3762,10 @@ static int ins_compl_get_exp(pos_T *ini)
       compl_started = TRUE;
     } else {
       /* Mark a buffer scanned when it has been scanned completely */
-      if (type == 0 || type == CTRL_X_PATH_PATTERNS)
+      if (type == 0 || type == CTRL_X_PATH_PATTERNS) {
+        assert(ins_buf);
         ins_buf->b_scanned = TRUE;
+      }
 
       compl_started = FALSE;
     }
