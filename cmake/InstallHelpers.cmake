@@ -22,19 +22,21 @@ function(create_install_dir_with_perms)
 
   install(CODE
     "
-    if(ENV{DESTDIR})
-      # TODO(fwalch): Is this branch ever taken (#1381, #1387)?
-      set(PREFIX \$ENV{DESTDIR}/\${CMAKE_INSTALL_PREFIX})
-    else()
-      set(PREFIX \${CMAKE_INSTALL_PREFIX})
+    if(DEFINED ENV{DESTDIR} AND NOT IS_ABSOLUTE \${CMAKE_INSTALL_PREFIX})
+      message(FATAL_ERROR \"Install prefix must be absolute when using DESTDIR\")
     endif()
 
-    set(_current_dir \"\${PREFIX}/${_install_dir_DESTINATION}\")
+    set(_current_dir \"\${CMAKE_INSTALL_PREFIX}/${_install_dir_DESTINATION}\")
     set(_dir_permissions \"${_install_dir_DIRECTORY_PERMISSIONS}\")
 
     set(_parent_dirs)
-    while(NOT EXISTS \${_current_dir})
+    set(_prev_dir)
+
+    # Explicitly prepend DESTDIR when using EXISTS.
+    # file(INSTALL ...) implicitly respects DESTDIR, but EXISTS does not.
+    while(NOT EXISTS \$ENV{DESTDIR}\${_current_dir} AND NOT \${_prev_dir} STREQUAL \${_current_dir})
       list(APPEND _parent_dirs \${_current_dir})
+      set(_prev_dir \${_current_dir})
       get_filename_component(_current_dir \${_current_dir} PATH)
     endwhile()
 
@@ -47,6 +49,8 @@ function(create_install_dir_with_perms)
     # 3.0.2.
     foreach(_current_dir \${_parent_dirs})
       if(NOT IS_DIRECTORY \${_current_dir})
+        # file(INSTALL ...) implicitly respects DESTDIR, so there's no need to
+        # prepend it here.
         file(INSTALL DESTINATION \${_current_dir}
           TYPE DIRECTORY
           DIR_PERMISSIONS \${_dir_permissions}
