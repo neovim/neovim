@@ -3231,6 +3231,7 @@ static buf_T *ins_compl_next_buf(buf_T *buf, int flag)
   if (flag == 'w') {            /* just windows */
     if (buf == curbuf)          /* first call for this flag/expansion */
       wp = curwin;
+    assert(wp);
     while ((wp = (wp->w_next != NULL ? wp->w_next : firstwin)) != curwin
            && wp->w_buffer->b_scanned)
       ;
