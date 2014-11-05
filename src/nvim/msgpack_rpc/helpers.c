@@ -410,7 +410,7 @@ void msgpack_rpc_validate(uint64_t *response_id,
   }
 
   if (req->via.array.ptr[3].type != MSGPACK_OBJECT_ARRAY) {
-    api_set_error(err, Validation, _("Paremeters must be an array"));
+    api_set_error(err, Validation, _("Parameters must be an array"));
     return;
   }
 }
