@@ -249,7 +249,7 @@ if(BUSTED_PRG)
       -P ${CMAKE_MODULE_PATH}/RunTests.cmake
     DEPENDS nvim-test unittest-headers)
 
-  add_custom_target(test
+  add_custom_target(functionaltest
     COMMAND ${CMAKE_COMMAND}
       -DBUSTED_PRG=${BUSTED_PRG}
       -DWORKING_DIR=${CMAKE_CURRENT_SOURCE_DIR}
@@ -258,5 +258,5 @@ if(BUSTED_PRG)
       -DBUILD_DIR=${CMAKE_BINARY_DIR}
       -DTEST_TYPE=functional
       -P ${CMAKE_MODULE_PATH}/RunTests.cmake
-    DEPENDS nvim) 
+    DEPENDS nvim)
 endif()

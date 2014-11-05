@@ -77,8 +77,10 @@ endif
 oldtest: | nvim
 	+$(SINGLE_MAKE) -C src/nvim/testdir $(MAKEOVERRIDES)
 
-test: | nvim
-	+$(BUILD_CMD) -C build test
+functionaltest: | nvim
+	+$(BUILD_CMD) -C build functionaltest
+
+test: functionaltest
 
 unittest: | nvim
 	+$(BUILD_CMD) -C build unittest
@@ -93,4 +95,4 @@ distclean: clean
 install: | nvim
 	+$(BUILD_CMD) -C build install
 
-.PHONY: test unittest clean distclean nvim cmake deps install
+.PHONY: test functionaltest unittest clean distclean nvim cmake deps install
