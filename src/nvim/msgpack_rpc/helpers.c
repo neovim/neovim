@@ -377,14 +377,17 @@ void msgpack_rpc_validate(uint64_t *response_id,
   // Validate the basic structure of the msgpack-rpc payload
   if (req->type != MSGPACK_OBJECT_ARRAY) {
     api_set_error(err, Validation, _("Request is not an array"));
+    return;
   }
 
   if (req->via.array.size != 4) {
     api_set_error(err, Validation, _("Request array size should be 4"));
+    return;
   }
 
   if (req->via.array.ptr[1].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
     api_set_error(err, Validation, _("Id must be a positive integer"));
+    return;
   }
 
   // Set the response id, which is the same as the request
@@ -392,18 +395,22 @@ void msgpack_rpc_validate(uint64_t *response_id,
 
   if (req->via.array.ptr[0].type != MSGPACK_OBJECT_POSITIVE_INTEGER) {
     api_set_error(err, Validation, _("Message type must be an integer"));
+    return;
   }
 
   if (req->via.array.ptr[0].via.u64 != 0) {
     api_set_error(err, Validation, _("Message type must be 0"));
+    return;
   }
 
   if (req->via.array.ptr[2].type != MSGPACK_OBJECT_BIN
     && req->via.array.ptr[2].type != MSGPACK_OBJECT_STR) {
     api_set_error(err, Validation, _("Method must be a string"));
+    return;
   }
 
   if (req->via.array.ptr[3].type != MSGPACK_OBJECT_ARRAY) {
     api_set_error(err, Validation, _("Paremeters must be an array"));
+    return;
   }
 }
