@@ -6290,6 +6290,7 @@ static void mb_replace_pop_ins(int cc)
         break;
       } else {
         buf[0] = c;
+        assert(n > 1);
         for (i = 1; i < n; ++i)
           buf[i] = replace_pop();
         if (utf_iscomposing(utf_ptr2char(buf)))
