@@ -7455,7 +7455,9 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
         if (State & REPLACE_FLAG)
           replace_do_bs(-1);
         else {
-          if (enc_utf8 && p_deco)
+          const bool l_enc_utf8 = enc_utf8;
+          const int l_p_deco = p_deco;
+          if (l_enc_utf8 && l_p_deco)
             (void)utfc_ptr2char(get_cursor_pos_ptr(), cpc);
           (void)del_char(FALSE);
           /*
@@ -7463,7 +7465,7 @@ static int ins_bs(int c, int mode, int *inserted_space_p)
            * move the cursor back.  Don't back up before the base
            * character.
            */
-          if (enc_utf8 && p_deco && cpc[0] != NUL)
+          if (l_enc_utf8 && l_p_deco && cpc[0] != NUL)
             inc_cursor();
           if (revins_chars) {
             revins_chars--;
