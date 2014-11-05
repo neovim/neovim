@@ -83,6 +83,7 @@
 #include <wchar.h>
 #include <wctype.h>
 
+#include "nvim/assert.h"
 #include "nvim/vim.h"
 #include "nvim/ascii.h"
 #ifdef HAVE_LOCALE_H
@@ -98,6 +99,7 @@
 #include "nvim/misc1.h"
 #include "nvim/misc2.h"
 #include "nvim/memory.h"
+#include "nvim/macros.h"
 #include "nvim/option.h"
 #include "nvim/screen.h"
 #include "nvim/spell.h"
@@ -130,7 +132,7 @@ struct interval {
  * Bytes which are illegal when used as the first byte have a 1.
  * The NUL byte has length 1.
  */
-static char utf8len_tab[256] =
+static const char utf8len_tab[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -145,7 +147,7 @@ static char utf8len_tab[256] =
 /*
  * Like utf8len_tab above, but using a zero for illegal lead bytes.
  */
-static char utf8len_tab_zero[256] =
+static const char utf8len_tab_zero[256] =
 {
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
@@ -404,68 +406,62 @@ int enc_canon_props(char_u *name)
   return 0;
 }
 
-/*
- * Set up for using multi-byte characters.
- * Called in three cases:
- * - by main() to initialize (p_enc == NULL)
- * - by set_init_1() after 'encoding' was set to its default.
- * - by do_set() when 'encoding' has been set.
- * p_enc must have been passed through enc_canonize() already.
- * Sets the "enc_unicode", "enc_utf8", "enc_dbcs" and "has_mbyte" flags.
- * Fills mb_bytelen_tab[] and returns NULL when there are no problems.
- * When there is something wrong: Returns an error message and doesn't change
- * anything.
- */
-char_u * mb_init(void)
+/// Set up for using multi-byte characters.  Called in three cases:
+///
+/// - by main() to initialize (p_enc == NULL)
+/// - by set_init_1() after 'encoding' was set to its default.
+/// - by do_set() when 'encoding' has been set.
+///
+/// p_enc must have been passed through enc_canonize() already. Sets the
+/// `enc_unicode`, `enc_utf8`, `enc_dbcs` and `has_mbyte` flags. Fills
+/// mb_bytelen_tab[] and returns NULL when there are no problems.
+///
+/// @return returns an error message and changes nothing when something is
+///   wrong, otherwise returns NULL
+char_u *mb_init(void)
 {
-  int i;
-  int idx;
-  int n;
-  int enc_dbcs_new = 0;
-#if defined(USE_ICONV) && !defined(WIN3264) && !defined(WIN32UNIX) \
-  && !defined(MACOS)
-# define LEN_FROM_CONV
-  vimconv_T vimconv;
-  char_u      *p;
-#endif
-
   if (p_enc == NULL) {
-    /* Just starting up: set the whole table to one's. */
-    for (i = 0; i < 256; ++i)
-      mb_bytelen_tab[i] = 1;
+    // just starting up: set the whole table to one's
+    memset(mb_bytelen_tab, 1, 256 * sizeof(*mb_bytelen_tab));
     input_conv.vc_type = CONV_NONE;
     input_conv.vc_factor = 1;
     output_conv.vc_type = CONV_NONE;
+
     return NULL;
-  } else if (STRNCMP(p_enc, "8bit-", 5) == 0
-      || STRNCMP(p_enc, "iso-8859-", 9) == 0) {
-    /* Accept any "8bit-" or "iso-8859-" name. */
+  }
+
+  int idx;
+  int enc_dbcs_new = 0;
+  if (STRNCMP(p_enc, "8bit-", 5) == 0 || STRNCMP(p_enc, "iso-8859-", 9) == 0) {
+    // accept any "8bit-" or "iso-8859-" name
     enc_unicode = 0;
     enc_utf8 = false;
   } else if (STRNCMP(p_enc, "2byte-", 6) == 0) {
-    /* Unix: accept any "2byte-" name, assume current locale. */
+    // unix: accept any "2byte-" name, assume current locale
     enc_dbcs_new = DBCS_2BYTE;
   } else if ((idx = enc_canon_search(p_enc)) >= 0) {
-    i = enc_canon_table[idx].prop;
+    int i = enc_canon_table[idx].prop;
     if (i & ENC_UNICODE) {
-      /* Unicode */
+      // unicode
       enc_utf8 = true;
-      if (i & (ENC_2BYTE | ENC_2WORD))
+      if (i & (ENC_2BYTE | ENC_2WORD)) {
         enc_unicode = 2;
-      else if (i & ENC_4BYTE)
+      } else if (i & ENC_4BYTE) {
         enc_unicode = 4;
-      else
+      } else {
         enc_unicode = 0;
+      }
     } else if (i & ENC_DBCS) {
-      /* 2byte, handle below */
+      // 2byte, handle below
       enc_dbcs_new = enc_canon_table[idx].codepage;
     } else {
-      /* Must be 8-bit. */
+      // must be 8-bit
       enc_unicode = 0;
       enc_utf8 = false;
     }
-  } else    /* Don't know what encoding this is, reject it. */
+  } else {  // don't know what encoding this is, reject it
     return e_invarg;
+  }
 
   if (enc_dbcs_new != 0) {
     enc_unicode = 0;
@@ -474,14 +470,11 @@ char_u * mb_init(void)
   enc_dbcs = enc_dbcs_new;
   has_mbyte = (enc_dbcs != 0 || enc_utf8);
 
-
-  /* Detect an encoding that uses latin1 characters. */
+  // detect an encoding that uses latin1 characters
   enc_latin1like = (enc_utf8 || STRCMP(p_enc, "latin1") == 0
       || STRCMP(p_enc, "iso-8859-15") == 0);
 
-  /*
-   * Set the function pointers.
-   */
+  // set the function pointers
   if (enc_utf8) {
     mb_ptr2len = utfc_ptr2len;
     mb_ptr2len_len = utfc_ptr2len_len;
@@ -517,97 +510,102 @@ char_u * mb_init(void)
     mb_head_off = latin_head_off;
   }
 
-  /*
-   * Fill the mb_bytelen_tab[] for MB_BYTE2LEN().
-   */
-#ifdef LEN_FROM_CONV
-  /* When 'encoding' is different from the current locale mblen() won't
-   * work.  Use conversion to "utf-8" instead. */
-  vimconv.vc_type = CONV_NONE;
-  if (enc_dbcs) {
-    p = enc_locale();
-    if (p == NULL || STRCMP(p, p_enc) != 0) {
-      convert_setup(&vimconv, p_enc, (char_u *)"utf-8");
-      vimconv.vc_fail = true;
-    }
-    free(p);
-  }
+  // fill the mb_bytelen_tab[] for MB_BYTE2LEN()
+
+  STATIC_ASSERT(sizeof(utf8len_tab) == sizeof(mb_bytelen_tab) &&
+                NELEM(utf8len_tab) == NELEM(mb_bytelen_tab),
+                "incongruous byte length LUTs");
+
+  // setup mb_bytelen_tab[], a lookup table which records the length (in
+  // bytes) of every character, as determined by its first byte
+  if (enc_utf8) {
+    // UTF-8 (multi-byte), we use our own static table to reliably check the
+    // length of UTF-8 characters, independent of mblen()
+    memcpy(mb_bytelen_tab, utf8len_tab, sizeof(utf8len_tab));
+  } else if (enc_dbcs == 0) {
+    // fixed 1-byte encoding (latin), every byte _is_ a character
+    memset(mb_bytelen_tab, 1, 256 * sizeof(*mb_bytelen_tab));
+  } else {
+    // dbcs, use string_convert() or mblen() to calculate the character
+    // length in bytes at each index
+
+#if defined(USE_ICONV) && !defined(WIN3264) && !defined(WIN32UNIX) \
+  && !defined(MACOS)
+#  define LEN_FROM_CONV
+    vimconv_T vimconv;
 #endif
 
-  for (i = 0; i < 256; ++i) {
-    /* Our own function to reliably check the length of UTF-8 characters,
-     * independent of mblen(). */
-    if (enc_utf8)
-      n = utf8len_tab[i];
-    else if (enc_dbcs == 0)
-      n = 1;
-    else {
-      char buf[MB_MAXBYTES + 1];
-      if (i == NUL)             /* just in case mblen() can't handle "" */
-        n = 1;
-      else {
-        buf[0] = i;
-        buf[1] = 0;
 #ifdef LEN_FROM_CONV
-        if (vimconv.vc_type != CONV_NONE) {
-          /*
-           * string_convert() should fail when converting the first
-           * byte of a double-byte character.
-           */
-          p = string_convert(&vimconv, (char_u *)buf, NULL);
-          if (p != NULL) {
-            free(p);
-            n = 1;
-          } else
-            n = 2;
-        } else
-#endif
-        {
-          /*
-           * mblen() should return -1 for invalid (means the leading
-           * multibyte) character.  However there are some platforms
-           * where mblen() returns 0 for invalid character.
-           * Therefore, following condition includes 0.
-           */
-          ignored = mblen(NULL, 0);             /* First reset the state. */
-          if (mblen(buf, (size_t)1) <= 0)
-            n = 2;
-          else
-            n = 1;
-        }
+    // when 'encoding' is different from the current locale mblen() won't
+    // work, use conversion to "utf-8" instead
+    vimconv.vc_type = CONV_NONE;
+    if (enc_dbcs) {
+      char_u *p = enc_locale();
+      if (p == NULL || STRCMP(p, p_enc) != 0) {
+        convert_setup(&vimconv, p_enc, (char_u *)"utf-8");
+        vimconv.vc_fail = true;
       }
+      free(p);
     }
-    mb_bytelen_tab[i] = n;
-  }
-
-#ifdef LEN_FROM_CONV
-  convert_setup(&vimconv, NULL, NULL);
 #endif
 
-  /* The cell width depends on the type of multi-byte characters. */
+    // just in case mblen() can't handle '\0', special case it and count
+    // from 1 in the loop
+    mb_bytelen_tab[0] = 1;
+
+    for (int i = 1; i < 256; i++) {
+      char buf[MB_MAXBYTES + 1] = { i, 0 };
+      int n;
+
+#ifdef LEN_FROM_CONV
+      if (vimconv.vc_type != CONV_NONE) {
+        // string_convert() should fail when converting the first byte of
+        // a double-byte character
+        char_u *p = string_convert(&vimconv, (char_u *)buf, NULL);
+        n = p ? 1 : 2;
+        free(p);
+      } else
+#endif
+      {
+        // mblen() should return -1 for invalid (means the leading
+        // multibyte) character. However there are some platforms
+        // where mblen() returns 0 for invalid character.
+        // Therefore, following condition includes 0.
+        ignored = mblen(NULL, 0); // first reset the state
+        n = (mblen(buf, 1) > 0) ? 1 : 2;
+      }
+
+      mb_bytelen_tab[i] = n;
+    }
+
+#ifdef LEN_FROM_CONV
+    convert_setup(&vimconv, NULL, NULL);
+#endif
+  }
+
+  // the cell width depends on the type of multi-byte characters
   (void)init_chartab();
 
-  /* When enc_utf8 is set or reset, (de)allocate ScreenLinesUC[] */
+  // when enc_utf8 is set or reset, (de)allocate ScreenLinesUC[]
   screenalloc(false);
 
-  /* When using Unicode, set default for 'fileencodings'. */
-  if (enc_utf8 && !option_was_set((char_u *)"fencs"))
+  // when using Unicode, set default for 'fileencodings'
+  if (enc_utf8 && !option_was_set((char_u *)"fencs")) {
     set_string_option_direct((char_u *)"fencs", -1,
         (char_u *)"ucs-bom,utf-8,default,latin1", OPT_FREE, 0);
+  }
 
 #ifdef HAVE_WORKING_LIBINTL
-  /* GNU gettext 0.10.37 supports this feature: set the codeset used for
-   * translated messages independently from the current locale. */
-  (void)bind_textdomain_codeset(VIMPACKAGE,
-      enc_utf8 ? "utf-8" : (char *)p_enc);
+  // GNU gettext 0.10.37 supports this feature: set the codeset used for
+  // translated messages independently from the current locale
+  (void)bind_textdomain_codeset(VIMPACKAGE, enc_utf8 ? "utf-8" : (char *)p_enc);
 #endif
 
-
-  /* Fire an autocommand to let people do custom font setup. This must be
-   * after Vim has been setup for the new encoding. */
+  // fire an autocommand to let people do custom font setup, this must be
+  // after Vim has been setup for the new encoding
   apply_autocmds(EVENT_ENCODINGCHANGED, NULL, (char_u *)"", FALSE, curbuf);
 
-  /* Need to reload spell dictionaries */
+  // need to reload spell dictionaries
   spell_reload();
 
   return NULL;
@@ -1613,60 +1611,99 @@ int utfc_char2bytes(int off, char_u *buf)
   return len;
 }
 
-/*
- * Get the length of a UTF-8 byte sequence, not including any following
- * composing characters.
- * Returns 0 for "".
- * Returns 1 for an illegal byte sequence.
- */
-int utf_ptr2len(const char_u *p)
+/// Validate whether a multi-byte codepoint encoding has the expected length
+/// (as predicted by the initial byte, passed as parameter `exp`).
+///
+/// In effect, this checks if there are no non-continuation bytes between
+/// `s[1]` and `s[exp - 1]` inclusive. Encountering a non-continuation byte
+/// would make the byte sequence invalid (== not the expected length).
+///
+/// @return true if the s[1:exp-1] (NOT s[0:exp-1]) only contains
+///   continuation characters, false otherwise.
+static inline bool utf_is_expected_len(const char *s, size_t exp) FUNC_ATTR_PURE
 {
-  int len;
-  int i;
+  // start looking from index 1 forward, we could manually get the predicted
+  // size by looking at utf8len_tab for s[0] but this has probably already
+  // been done by the caller (and was passed as `exp`)
+  for (size_t i = 1; i < exp; i++) {
+    // Return illegal byte sequence if s[i] is not a continuation byte
+    // extract the top two bits and check for inequality: (s[i] & 11 00 00
+    // 00) != 10 00 00 00. In UTF-8, all bytes that begin with the bit
+    // pattern 10 are subsequent bytes of a multi-byte sequence.
+    if ((s[i] & 0xc0) != 0x80)  {
+      return false;
+    }
+  }
 
-  if (*p == NUL)
+  return true;
+}
+
+/// Get the length of a UTF-8 byte sequence, not including any following
+/// composing characters.
+///
+/// @return 0 for the empty string, 1 for an illegal byte sequence, n
+///   otherwise
+int utf_ptr2len(const char_u *p) FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
+{
+  if (*p == NUL) {
     return 0;
-  len = utf8len_tab[*p];
-  for (i = 1; i < len; ++i)
-    if ((p[i] & 0xc0) != 0x80)
-      return 1;
+  }
+
+  int len = utf8len_tab[*p];
+  if (!utf_is_expected_len((char *) p, len)) {
+    return 1;
+  }
+
   return len;
 }
 
-/*
- * Return length of UTF-8 character, obtained from the first byte.
- * "b" must be between 0 and 255!
- * Returns 1 for an invalid first byte value.
- */
-int utf_byte2len(int b)
+/// Calculate the length of UTF-8 character, obtained from the first byte.
+///
+/// @note This function reads from global memory (`utf8len_tab`) which would
+/// ordinarily mean that it has to be declared "pure" and not "const".
+/// However, the memory in question is read-only, so the const declaration
+/// is valid. Said another way, the lookup in utf8len_tab could be replaced
+/// by a if-else tree without ill effects, it's basically an encoded
+/// decision tree.
+///
+/// @param b The first byte from which the length is to be derived, must be
+///   between 0 and 255
+/// @return 1 for an invalid first byte value, the length otherwise
+int utf_byte2len(int b) FUNC_ATTR_CONST
 {
   return utf8len_tab[b];
 }
 
-/*
- * Get the length of UTF-8 byte sequence "p[size]".  Does not include any
- * following composing characters.
- * Returns 1 for "".
- * Returns 1 for an illegal byte sequence (also in incomplete byte seq.).
- * Returns number > "size" for an incomplete byte sequence.
- * Never returns zero.
- */
+/// Get the length of UTF-8 byte sequence which starts at `p`. Does not
+/// include any following composing characters. Never reads more than `size`
+/// bytes from `p`.
+///
+/// @note It's possible that `p[0:size]` doesn't contain sufficient bytes
+///       for the predicted size `utf8len_tab[p[0]]`, in that case,
+///       `utf8len_tab[p[0]]` (> `size`) will be returned as long as there
+///       are no illegal sequences in `p[0:size]`.
+///
+/// @return 1 for the empty string (""), a single byte codepoint or an
+///         illegal byte sequence (also when this illegal byte sequence is
+///         incomplete). Returns num > `size` for a valid incomplete byte sequence.
+///         Never returns 0.
 int utf_ptr2len_len(const char_u *p, int size)
+  FUNC_ATTR_PURE FUNC_ATTR_NONNULL_ALL
 {
-  int len;
-  int i;
-  int m;
+  int len = utf8len_tab[*p];
+  if (len == 1) {
+    return 1;  // NUL, ascii or illegal lead byte
+  }
 
-  len = utf8len_tab[*p];
-  if (len == 1)
-    return 1;           /* NUL, ascii or illegal lead byte */
-  if (len > size)
-    m = size;           /* incomplete byte sequence. */
-  else
-    m = len;
-  for (i = 1; i < m; ++i)
-    if ((p[i] & 0xc0) != 0x80)
-      return 1;
+  // check the sequence for validity, up to min(len, size) to avoid
+  // overshooting the buffer
+  if (!utf_is_expected_len((char *) p, minsz(size, len))) {
+    return 1;
+  }
+
+  // everything ok, note that in this case the byte sequence could still be
+  // incomplete (len > size), but at least all the bytes we could check are
+  // valid
   return len;
 }
 
@@ -3520,8 +3557,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
   size_t tolen;
   size_t len = 0;
   size_t done = 0;
-  char_u      *result = NULL;
-  char_u      *p;
+  char_u *result = NULL;
   int l;
 
   from = (char *)str;
@@ -3531,11 +3567,7 @@ static char_u * iconv_string(vimconv_T *vcp, char_u *str, int slen, int *unconvl
       /* Allocate enough room for most conversions.  When re-allocating
        * increase the buffer size. */
       len = len + fromlen * 2 + 40;
-      p = xmalloc(len);
-      if (done > 0)
-        memmove(p, result, done);
-      free(result);
-      result = p;
+      result = xrealloc(result, len);
     }
 
     to = (char *)result + done;
@@ -3939,28 +3971,6 @@ char_u * string_convert_ext(vimconv_T *vcp, char_u *ptr, int *lenp,
       if (lenp != NULL)
         *lenp = (int)(d - retval);
       break;
-
-# ifdef MACOS_CONVERT
-    case CONV_MAC_LATIN1:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'm', 'l', unconvlenp);
-      break;
-
-    case CONV_LATIN1_MAC:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'l', 'm', unconvlenp);
-      break;
-
-    case CONV_MAC_UTF8:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'm', 'u', unconvlenp);
-      break;
-
-    case CONV_UTF8_MAC:
-      retval = mac_string_convert(ptr, len, lenp, vcp->vc_fail,
-          'u', 'm', unconvlenp);
-      break;
-# endif
 
 # ifdef USE_ICONV
     case CONV_ICONV:              /* conversion with output_conv.vc_fd */
