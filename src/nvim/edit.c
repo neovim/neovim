@@ -6336,10 +6336,11 @@ static void replace_do_bs(int limit_col)
   char_u      *p;
   int i;
   int vcol;
+  const int l_State = State;
 
   cc = replace_pop();
   if (cc > 0) {
-    if (State & VREPLACE_FLAG) {
+    if (l_State & VREPLACE_FLAG) {
       /* Get the number of screen cells used by the character we are
        * going to delete. */
       getvcol(curwin, &curwin->w_cursor, NULL, &start_vcol, NULL);
@@ -6347,17 +6348,17 @@ static void replace_do_bs(int limit_col)
     }
     if (has_mbyte) {
       (void)del_char_after_col(limit_col);
-      if (State & VREPLACE_FLAG)
+      if (l_State & VREPLACE_FLAG)
         orig_len = (int)STRLEN(get_cursor_pos_ptr());
       replace_push(cc);
     } else {
       pchar_cursor(cc);
-      if (State & VREPLACE_FLAG)
+      if (l_State & VREPLACE_FLAG)
         orig_len = (int)STRLEN(get_cursor_pos_ptr()) - 1;
     }
     replace_pop_ins();
 
-    if (State & VREPLACE_FLAG) {
+    if (l_State & VREPLACE_FLAG) {
       /* Get the number of screen cells used by the inserted characters */
       p = get_cursor_pos_ptr();
       ins_len = (int)STRLEN(p) - orig_len;
