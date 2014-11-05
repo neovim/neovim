@@ -1,5 +1,9 @@
 get_filename_component(BUSTED_DIR ${BUSTED_PRG} PATH)
 set(ENV{PATH} "${BUSTED_DIR}:$ENV{PATH}")
+if(NVIM_PRG)
+  set(ENV{NVIM_PROG} "${NVIM_PRG}")
+endif()
+
 if(DEFINED ENV{TEST_FILE})
   set(TEST_DIR $ENV{TEST_FILE})
 endif()
